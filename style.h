@@ -12,7 +12,7 @@
 // standard styles; I envision being able to add more dynamically,
 // but to have this set always available by default
 enum Style {
-  ST_ZERO,                 // not used; 0 is used to signal EOL during lexing
+  ST_ZERO=0,               // not used; 0 is used to signal EOL during lexing
   ST_NORMAL,               // normal text
   ST_SELECTION,            // selected text
   ST_HITS,                 // buffer text that matches a search string

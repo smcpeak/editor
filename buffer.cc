@@ -15,7 +15,8 @@ BufferCore::BufferCore()
   : lines(),               // empty sequence of lines
     recent(-1),
     recentLine(),
-    longestLengthSoFar(0)
+    longestLengthSoFar(0),
+    observers()
 {}
 
 BufferCore::~BufferCore()
@@ -125,7 +126,11 @@ void BufferCore::getLine(int line, int col, char *dest, int destLen) const
 }
 
 
-void BufferCore::insertLine(int line)
+// 'line' is marked 'const' to ensure its value is not changed before
+// being passed to the observers; the same thing is done in the other
+// three mutator functions; the C++ standard explicitly allows 'const'
+// to be added here despite not having it in the .h file
+void BufferCore::insertLine(int const line)
 {
   // insert a blank line
   lines.insert(line, NULL /*value*/);
@@ -134,10 +139,14 @@ void BufferCore::insertLine(int line)
   if (recent >= line) {
     recent++;
   }
+
+  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+    iter.data()->insertLine(*this, line);
+  }
 }
 
 
-void BufferCore::deleteLine(int line)
+void BufferCore::deleteLine(int const line)
 {
   if (line == recent) {
     xassert(recentLine.length() == 0);
@@ -154,10 +163,15 @@ void BufferCore::deleteLine(int line)
   if (recent > line) {
     recent--;
   }
+
+  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+    iter.data()->deleteLine(*this, line);
+  }
 }
 
 
-void BufferCore::insertText(int line, int col, char const *text, int length)
+void BufferCore::insertText(int const line, int const col,
+                            char const * const text, int const length)
 {
   bc(line);
 
@@ -180,13 +194,17 @@ void BufferCore::insertText(int line, int col, char const *text, int length)
     // use recent
     attachRecent(line, col, length);
     recentLine.insertMany(col, text, length);
-    
+
     seenLineLength(recentLine.length());
+  }
+
+  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+    iter.data()->insertText(*this, line, col, text, length);
   }
 }
 
 
-void BufferCore::deleteText(int line, int col, int length)
+void BufferCore::deleteText(int const line, int const col, int const length)
 {
   bc(line);
 
@@ -202,6 +220,10 @@ void BufferCore::deleteText(int line, int col, int length)
     // use recent
     attachRecent(line, col, 0);
     recentLine.removeMany(col, length);
+  }
+
+  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+    iter.data()->deleteText(*this, line, col, length);
   }
 }
 
@@ -564,14 +586,28 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
 }
 
 
+// -------------------- BufferObserver ------------------
+void BufferObserver::insertLine(BufferCore const &, int)
+{}
+
+void BufferObserver::deleteLine(BufferCore const &, int)
+{}
+
+void BufferObserver::insertText(BufferCore const &, int, int, char const *, int)
+{}
+
+void BufferObserver::deleteText(BufferCore const &, int, int, int)
+{}
+
+
 // --------------------- test code -----------------------
 #ifdef TEST_BUFFER
 
 #include "ckheap.h"        // malloc_stats
 #include <stdlib.h>        // system
-     
+
 // test Buffer::getTextRange
-void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2, 
+void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2,
                                char const *expect)
 {
   string actual = buf.getTextRange(line1, col1, line2, col2);

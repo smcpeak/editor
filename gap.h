@@ -47,6 +47,9 @@ private:     // funcs
   //   - gap >= gapSize
   void makeGapAt(int elt, int gapSize=1);
 
+  // stuff common to the insert() routines
+  void prepareToInsert(int elt, int insLen);
+
 public:      // funcs
   GapArray();      // empty sequence
   ~GapArray();     // release storage
@@ -66,6 +69,10 @@ public:      // funcs
   // insert a sequence of elements at 'elt'; equivalent to
   //   while (srcLen--) { insert(elt++, *src++); }
   void insertMany(int elt, T const *src, int srcLen);
+
+  // use memset(0) to clear 'insLen' elements at 'elt'; equivalent to
+  //   while (insLen--) { insert(elt++, 0); }
+  void insertManyZeroes(int elt, int insLen);
 
   // remove an element; all elements with original index 'elt' or
   // greater are shifted down one
@@ -125,13 +132,20 @@ T &GapArray<T>::eltRef(int elt) const
 
 
 template <class T>
-void GapArray<T>::insert(int elt, T value)
+void GapArray<T>::prepareToInsert(int elt, int insLen)
 {
   xassert(0 <= elt && elt <= length());
   if (elt != left ||
-      gap == 0) {
-    makeGapAt(elt);
+      gap < insLen) {
+    makeGapAt(elt, insLen);
   }
+}
+
+
+template <class T>
+void GapArray<T>::insert(int elt, T value)
+{
+  prepareToInsert(elt, 1 /*insLen*/);
 
   // add at left edge of the gap
   array[left] = value;
@@ -143,16 +157,24 @@ void GapArray<T>::insert(int elt, T value)
 template <class T>
 void GapArray<T>::insertMany(int elt, T const *src, int srcLen)
 {
-  xassert(0 <= elt && elt <= length());
-  if (elt != left ||
-      gap < srcLen) {
-    makeGapAt(elt, srcLen);
-  }
+  prepareToInsert(elt, srcLen);
 
   // copy elements into the left edge of the gap
   memcpy(array+left /*dest*/, src, srcLen * sizeof(T));
   left += srcLen;
   gap -= srcLen;
+}
+
+
+template <class T>
+void GapArray<T>::insertManyZeroes(int elt, int insLen)
+{
+  prepareToInsert(elt, insLen);
+
+  // zero the elements at the left edge of the gap
+  memset(array+left /*dest*/, 0, insLen * sizeof(T));
+  left += insLen;
+  gap -= insLen;
 }
 
 

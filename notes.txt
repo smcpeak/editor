@@ -295,6 +295,17 @@ start 2/22/03 23:09
 more.. getting comment.lex to work, then we'll see about using
 it for highlighting
 
+there's a problem with the representation of the 'changed'
+region, in that a 'changed' line near the end that never gets
+highlighted will keep most of the table polluted for a long
+time.. I really need a proper relative interval map, and I need
+that for later as well, so perhaps next time I can implement
+that
+
+I need to test the implementation I have, though I'm kind of
+out of steam...
+
+end 2/23/03 03:19
 
 
 

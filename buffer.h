@@ -6,6 +6,11 @@
 
 #include "gap.h"        // GapArray
 #include "str.h"        // string
+#include "sobjlist.h"   // SObjList
+
+// fwd in this file
+class BufferObserver;
+
 
 // the contents of a file; any attempt to read or write the contents
 // must go through this interface
@@ -36,6 +41,10 @@ private:   // data
   //   - if recent<0, recentLine.length() == 0
   //   - every lines[n] is NULL or valid
   //   - longestLineSoFar >= 0
+
+public:    // data
+  // list of observers
+  mutable SObjList<BufferObserver> observers;
 
 private:   // funcs
   // strlen, but NULL yields 0 and '\n' is terminator
@@ -166,6 +175,23 @@ public:
   // delete the characters between line1/col1 and line/col2, both
   // of which must be valid locations (no; change this)
   void deleteTextRange(int line1, int col1, int line2, int col2);
+};
+
+
+// interface for observing changes to a BufferCore
+class BufferObserver {
+public:
+  virtual ~BufferObserver() {}       // silence warning
+  
+  // These are analogues of the BufferCore manipulation interface, but
+  // we also pass the BufferCore itself so the observer doesn't need
+  // to remember which buffer it's observing.  These are called
+  // *after* the BufferCore updates its internal representation.  The
+  // default implementations do nothing.
+  virtual void insertLine(BufferCore const &buf, int line);
+  virtual void deleteLine(BufferCore const &buf, int line);
+  virtual void insertText(BufferCore const &buf, int line, int col, char const *text, int length);
+  virtual void deleteText(BufferCore const &buf, int line, int col, int length);
 };
 
 
