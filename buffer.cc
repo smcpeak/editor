@@ -216,6 +216,14 @@ void Buffer::ensureLineExists(int n)
 }
 
 
+int Buffer::totColumns() const
+{
+  // TODO: implement properly once I've fixed the interface so I
+  // can do this efficiently
+  return 100;
+}
+
+
 void Buffer::insertLinesAt(int n, int howmany)
 {
   changed = true;

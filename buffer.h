@@ -57,6 +57,9 @@ public:    // data
 
   int totLines() const { return numLines; }
 
+  // length of longest line
+  int totColumns() const;
+
   TextLine const *getLineC(int lineNumber) const;
   TextLine *getLine(int lineNumber)
     { changed=true; return const_cast<TextLine*>(getLineC(lineNumber)); }

@@ -10,24 +10,25 @@
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
 #include <qfontmetrics.h>    // QFontMetrics
+#include <qrangecontrol.h>   // QRangeControl
 
 #include <stdio.h>           // printf, for debugging
 
 
 // ---------------------- Editor --------------------------------
 Editor::Editor(Buffer *buf,
-               QWidget *parent=NULL, const char *name=NULL)        
-    // turned off gravity because with it I don't get repaint events
-    // while resizing inward, which means I don't recompute the
-    // visible line/col ...
-  : QWidget(parent, name, WRepaintNoErase /*| WNorthWestGravity*/),
+               QWidget *parent=NULL, const char *name=NULL)
+  : QWidget(parent, name, WRepaintNoErase | WNorthWestGravity),
+    horizScroll(NULL),
+    vertScroll(NULL),
     buffer(buf),
     cursor(buf),
-    // visible line/col inited by resetView
+    // visible line/col inited by resetView()
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
     ctrlShiftDistance(10)
+    // font metrics inited by setFont()
 {
   QFont font;
   font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
@@ -39,6 +40,64 @@ Editor::Editor(Buffer *buf,
   
   resetView();
 }
+
+
+void Editor::setFont(QFont &f)
+{
+  QWidget::setFont(f);
+
+  // info about the current font
+  QFontMetrics fm(fontMetrics());
+
+  ascent = fm.ascent();
+  descent = fm.descent() + 1;
+  fontHeight = ascent + descent;
+  fontWidth = fm.maxWidth();
+
+  // natural # of blank pixels between lines
+  //int leading = fm.leading();
+  //printf("ascent=%d descent=%d fontHeight=%d fontWidth=%d leading=%d\n",
+  //       ascent, descent, fontHeight, fontWidth, leading);
+}
+
+
+void Editor::update()
+{                   
+  updateView();
+  QWidget::update();
+}
+
+void Editor::updateView()
+{
+  // calculate viewport stats
+  // why -1?  suppose width==height==0, then the "first" visible isn't
+  // visible at all, so we'd want the one before (not that that's visible
+  // either, but it suggests what we want in nondegenerate cases too)
+  lastVisibleLine = firstVisibleLine
+    + (height() - topMargin) / (fontHeight + interLineSpace) - 1;
+  lastVisibleCol = firstVisibleCol
+    + (width() - leftMargin) / fontWidth - 1;
+
+  // set the scrollbars
+  if (horizScroll) {
+    horizScroll->setRange(0, max(buffer->totColumns(), firstVisibleCol));
+    horizScroll->setSteps(1, visCols());
+    horizScroll->setValue(firstVisibleCol);
+  }
+
+  if (vertScroll) {
+    vertScroll->setRange(0, max(buffer->totLines(), firstVisibleLine));
+    vertScroll->setSteps(1, visLines());
+    vertScroll->setValue(firstVisibleLine);
+  }
+}
+
+
+void Editor::resizeEvent(QResizeEvent *r)
+{
+  QWidget::resizeEvent(r);
+  updateView();
+}                                         
 
 
 void Editor::resetView()
@@ -55,29 +114,11 @@ void Editor::resetView()
 // of which are drawn twice when it is visible.
 void Editor::paintEvent(QPaintEvent *ev)
 {
-  // make a painter, and get info about the current font
+  // make a painter
   QPainter paint(this);
-  QFontMetrics fm(paint.fontMetrics());
 
   // when drawing text, erase background automatically
   paint.setBackgroundMode(OpaqueMode);
-
-  // number of pixels in a character cell that are above the
-  // base line, including the base line itself
-  int ascent = fm.ascent();
-
-  // number of pixels below the base line, not including the
-  // base line itself
-  int descent = fm.descent() + 1;
-
-  // total # of pixels in each cell
-  int fontHeight = ascent + descent;
-  int fontWidth = fm.maxWidth();
-
-  // natural # of blank pixels between lines
-  //int leading = fm.leading();
-  //printf("ascent=%d descent=%d fontHeight=%d fontWidth=%d leading=%d\n",
-  //       ascent, descent, fontHeight, fontWidth, leading);
 
   // top edge of what has not been painted
   int y = 0;
@@ -149,18 +190,9 @@ void Editor::paintEvent(QPaintEvent *ev)
   // fill the remainder
   paint.eraseRect(0, y,
                   width(), height()-y);
-                  
-  // calculate viewport stats
-  // why -1?  suppose width==height==0, then the "first" visible isn't
-  // visible at all, so we'd want the one before (not that that's visible
-  // either, but it suggests what we want in nondegenerate cases too)
-  lastVisibleLine = firstVisibleLine
-    + (height() - topMargin) / (fontHeight + interLineSpace) - 1;
-  lastVisibleCol = firstVisibleCol
-    + (width() - leftMargin) / fontWidth - 1;
 }
 
-                           
+
 // increment, but don't allow result to go below 0
 static void inc(int &val, int amt)
 {

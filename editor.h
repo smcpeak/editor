@@ -9,6 +9,7 @@
 #include "position.h"       // Position
 
 class Buffer;               // buffer.h
+class QRangeControl;        // qrangecontrol.h
 
 
 // control to edit the contents of a buffer; it's possible (and
@@ -18,19 +19,24 @@ class Editor : public QWidget {
   Q_OBJECT
 
 public:      // data
+  // ------ associated controls ------       
+  // (nullable serf) when the view changes, these scrollbars will
+  // be updated, if they're not NULL
+  QRangeControl *horizScroll, *vertScroll;
+
+  // ------ editing state -----
   // buffer whose text we're editing
   Buffer *buffer;           // (serf)
 
-  // ------ editing state -----
   // cursor position
   Position cursor;
 
   // scrolling offset
   int firstVisibleLine, firstVisibleCol;
 
-  // information about viewable area; these are set by the paint()
-  // routine and should be treated as read-only by other code; by
-  // "visible", I mean the entire line or column is visible
+  // information about viewable area; these are set by the
+  // updateView() routine and should be treated as read-only by other
+  // code; by "visible", I mean the entire line or column is visible
   int lastVisibleLine, lastVisibleCol;
 
   // ------ rendering options ------
@@ -44,20 +50,41 @@ public:      // data
   // distance to move view for Ctrl-Shift-<arrow key>
   int ctrlShiftDistance;
 
-protected:   // funcs
-  // respond to a paint request by repainting the control
-  virtual void paintEvent(QPaintEvent *);
+  // ------ font metrics ------
+  // these should be treated as read-only by all functions except
+  // Editor::setFont()
 
-  // handle keyboard input
+  // number of pixels in a character cell that are above the
+  // base line, including the base line itself
+  int ascent;
+
+  // number of pixels below the base line, not including the
+  // base line itself
+  int descent;
+
+  // total # of pixels in each cell
+  int fontHeight;
+  int fontWidth;
+
+protected:   // funcs
+  // QWidget funcs
+  virtual void paintEvent(QPaintEvent *);
   virtual void keyPressEvent(QKeyEvent *k);
+  virtual void resizeEvent(QResizeEvent *);
 
 public:      // funcs
   Editor(Buffer *buf,
          QWidget *parent=NULL, const char *name=NULL);
-                   
+
+  // QWidget funcs
+  virtual void setFont(QFont &f);
+
+  // recompute lastVisibleLine/Col, and set the scrollbars
+  void updateView();
+
   // set cursor and view to 0,0
   void resetView();
-  
+
   // scroll the view the minimum amount so that the cursor line/col
   // is visible; if it's already visible, do nothing
   void scrollToCursor();
@@ -68,6 +95,10 @@ public:      // funcs
   // size of view in lines/cols
   int visLines() const { return lastVisibleLine-firstVisibleLine+1; }
   int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
+
+public slots:           
+  // automatically calls updateView()
+  virtual void update();
 };
 
 #endif // EDITOR_H

@@ -59,8 +59,10 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   editor->setFocus();
 
   vertScroll = new QScrollBar(QScrollBar::Vertical, editArea, "vertical scrollbar");
+  editor->vertScroll = vertScroll;
 
   horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
+  editor->horizScroll = horizScroll;
 
   QHBox *statusArea = new QHBox(mainArea, "status area");
   statusArea->setFixedHeight(20);
