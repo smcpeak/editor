@@ -64,6 +64,7 @@ void Editor::setFont(QFont &f)
 void Editor::update()
 {                   
   updateView();
+  emit viewChanged();
   QWidget::update();
 }
 
@@ -77,8 +78,6 @@ void Editor::updateView()
     + (height() - topMargin) / (fontHeight + interLineSpace) - 1;
   lastVisibleCol = firstVisibleCol
     + (width() - leftMargin) / fontWidth - 1;
-
-  emit viewChanged();
 }
 
 
@@ -220,11 +219,27 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_W:
+        inc(firstVisibleLine, -1);
+        updateView();
+        if (cursor.line() > lastVisibleLine) {
+          cursor.setLine(lastVisibleLine);
+        }
+        update();
+        break;
+
+      case Key_Z:
+        inc(firstVisibleLine, +1);
+        updateView();
+        if (cursor.line() < firstVisibleLine) {
+          cursor.setLine(firstVisibleLine);
+        }
+        update();
+        break;
+
       case Key_Up:
         moveView(-1, 0);
         break;
 
-      case Key_Z:
       case Key_Down:
         moveView(+1, 0);
         break;

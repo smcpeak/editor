@@ -75,8 +75,7 @@ public:      // funcs
   // QWidget funcs
   virtual void setFont(QFont &f);
 
-  // recompute lastVisibleLine/Col, and set the scrollbars;
-  // calls viewChanged()
+  // recompute lastVisibleLine/Col
   void updateView();
 
   // set cursor and view to 0,0

@@ -25,6 +25,8 @@ void Buffer::init()
   numLines = 0;
   linesAllocated = 0;
   changed = false;
+  
+  printf("Buffer::init()\n");
 }
 
 Buffer::~Buffer()
@@ -294,7 +296,7 @@ void Buffer::insertLinesAt(int n, int howmany)
 
 void Buffer::insertText(Position &c, char const *text, int length)
 {
-  // 'changed' automatically set to true by accessors
+  changed = true;
 
   int curLine = c.line();
   int curCol = c.col();

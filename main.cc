@@ -80,6 +80,12 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   // initialize things the way File|New does
   fileNew();
 
+  // temporary: insert some dummy text into the buffer
+  {
+    Position start(&theBuffer);
+    theBuffer.readFile("buffer.cc");
+  }
+
   setIcon(QPixmap((char const**)icon_xpm));
 
   setGeometry(200,200,      // initial location
@@ -89,18 +95,13 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
 
 void EditorWindow::fileNew()
-{           
+{
   // delete all text
   theBuffer.clear();
   editor->cursor.set(0,0);
+  editor->buffer->changed = false;
 
-  // temporary: insert some dummy text into the buffer
-  {
-    Position start(&theBuffer);
-    theBuffer.readFile("buffer.cc");
-  }
-
-  position->setText("0:0");
+  editorViewChanged();
   setFileName("untitled.txt");
 }
 
@@ -123,7 +124,9 @@ void EditorWindow::fileOpen()
   editor->cursor.set(0,0);
 
   try {
+    // this sets 'changed' to false
     theBuffer.readFile(name);
+    editorViewChanged();
     setFileName(name);
   }
   catch (XOpen &x) {
@@ -147,6 +150,7 @@ void EditorWindow::writeTheFile()
   try {
     theBuffer.writeFile(theBuffer.filename);
     theBuffer.changed = false;
+    editorViewChanged();
   }
   catch (XOpen &x) {
     QMessageBox::information(this, "Can't write file", QString(x.why()));
@@ -193,7 +197,9 @@ void EditorWindow::editorViewChanged()
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the Buffer interface uses 0:0
   position->setText(QString(stringc << (editor->cursor.line()+1) << ":"
-                                    << (editor->cursor.col()+1)));
+                                    << (editor->cursor.col()+1)
+                                    << (editor->buffer->changed? " *" : "")
+                                    ));
 }
 
 

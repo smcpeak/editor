@@ -160,4 +160,8 @@ fixed the bug last night.. now can I save and load?  yes
 let's now get the text-rendering procedure working a bit better,
 and in the process implement scrolling
 
+major todos:
+  - support for multiple simultanous files
+  - syntax highlighting!
+  - undo
 
