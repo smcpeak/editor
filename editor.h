@@ -172,8 +172,10 @@ public:      // funcs
   void resetView();
 
   // scroll the view the minimum amount so that the cursor line/col
-  // is visible; if it's already visible, do nothing
-  void scrollToCursor();
+  // is visible; if it's already visible, do nothing; 'edgeGap' says
+  // how many lines/cols of extra space on the far side of the cursor
+  // we want
+  void scrollToCursor(int edgeGap=0);
 
   // redraw window, etc.; calls updateView() and viewChanged()
   void redraw();

@@ -619,6 +619,18 @@ string Buffer::getWordAfter(int line, int col) const
 }
 
 
+void Buffer::getLastPos(int &line, int &col) const
+{
+  line = numLines()-1;
+  if (line >= 0) {
+    col = lineLength(line);
+  }
+  else {
+    col = 0;
+  }
+}
+
+
 void Buffer::advanceWithWrap(int &line, int &col, bool backwards) const
 {
   if (!backwards) {

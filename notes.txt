@@ -371,7 +371,7 @@ start 2/28/03 07:26
 i-search ideas:
   - "not found" box that appears near the cursor when match isn't found;
     it says whether ctrl+s would get another match after cycling
-  - key bindings in status bar instead of the match string
+  * key bindings in status bar instead of the match string
   - key to toggle whether all onscreen hits are highlighted
   - require enter or Esc to exit, so I can more flexibly bind add'l keys;
     in particular, allow scrolling to work normally by letting it go
@@ -390,5 +390,6 @@ i-search ideas:
   - key to show all buffer matches on the scrollbar
   * key to change direction of search (forward vs. backward)
 
+end 2/28/03 11:09
 
 

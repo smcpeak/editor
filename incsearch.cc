@@ -189,7 +189,7 @@ bool IncSearch::keyPressEvent(QKeyEvent *k)
       case Qt::Key_Right:
       case Qt::Key_Up:
       case Qt::Key_Down:
-      case Qt::Key_W:
+      case Qt::Key_W:       // and this is a conflicting binding...
       case Qt::Key_Z:
         // pass these through to editor, so it can scroll
         return false;
@@ -216,7 +216,7 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
     ed->selectCol = curCol;
     ed->selectEnabled = true;
 
-    ed->scrollToCursor();
+    ed->scrollToCursor(3);
   }
 
   updateStatus();
@@ -232,7 +232,22 @@ void IncSearch::updateStatus()
   }
   
   if (!match) {
-    ed->showInfo(stringc << "not found: \"" << text << "\"");
+    string message = stringc << "not found: \"" << text << "\"";
+    
+    // suppose I did a wrap around, would I then find a match, other
+    // than the one I'm (possibly) on now?
+    int line=0, col=0;
+    if (curFlags & Buffer::FS_BACKWARDS) {
+      ed->buffer->getLastPos(line, col);
+    }
+
+    if (ed->buffer->findString(line, col, text, curFlags) &&
+        line!=curLine && col!=curCol) {
+      // yes, wrapping finds another
+      message &= " (can wrap)";
+    }
+
+    ed->showInfo(message);
   }
   else {
     ed->hideInfo();

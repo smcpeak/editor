@@ -873,23 +873,23 @@ void Editor::normalizeSelect()
 }
 
 
-void Editor::scrollToCursor()
+void Editor::scrollToCursor(int edgeGap)
 {
   int fvline = firstVisibleLine;
   int fvcol = firstVisibleCol;
 
-  if (cursorCol < firstVisibleCol) {
-    fvcol = cursorCol;
+  if (cursorCol-edgeGap < firstVisibleCol) {
+    fvcol = max(0, cursorCol-edgeGap);
   }
-  else if (cursorCol > lastVisibleCol) {
-    fvcol += (cursorCol - lastVisibleCol);
+  else if (cursorCol+edgeGap > lastVisibleCol) {
+    fvcol += (cursorCol+edgeGap - lastVisibleCol);
   }
 
-  if (cursorLine < firstVisibleLine) {
-    fvline = cursorLine;
+  if (cursorLine-edgeGap < firstVisibleLine) {
+    fvline = max(0, cursorLine-edgeGap);
   }
-  else if (cursorLine > lastVisibleLine) {
-    fvline += (cursorLine - lastVisibleLine);
+  else if (cursorLine+edgeGap > lastVisibleLine) {
+    fvline += (cursorLine+edgeGap - lastVisibleLine);
   }
   
   setView(fvline, fvcol);
