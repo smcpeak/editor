@@ -70,7 +70,8 @@ protected:   // funcs
   // QWidget funcs
   virtual void paintEvent(QPaintEvent *);
   virtual void keyPressEvent(QKeyEvent *k);
-  virtual void resizeEvent(QResizeEvent *);
+  virtual void resizeEvent(QResizeEvent *r);
+  virtual void mousePressEvent(QMouseEvent *m);
 
 public:      // funcs
   Editor(Buffer *buf,

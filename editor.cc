@@ -418,3 +418,28 @@ void Editor::scrollToCol(int col)
   firstVisibleCol = col;
   update();
 }
+
+
+void Editor::mousePressEvent(QMouseEvent *m)
+{
+  int x = m->x();
+  int y = m->y();
+                      
+  // subtract off the margin, but don't let either coord go negative
+  inc(x, -leftMargin);                                   
+  inc(y, -topMargin);
+
+  int newLine = y/(fontHeight+interLineSpace) + firstVisibleLine;
+  int newCol = x/fontWidth + firstVisibleCol;
+
+  //printf("click: (%d,%d)     goto line %d, col %d\n",
+  //       x, y, newLine, newCol);
+
+  cursor.set(newLine, newCol);
+
+  // it's possible the cursor has been placed outside the "visible"
+  // lines/cols (i.e. at the edge), but even if so, don't scroll,
+  // because it messes up coherence with where the user clicked
+  
+  update();
+}
