@@ -25,8 +25,6 @@ void Buffer::init()
   numLines = 0;
   linesAllocated = 0;
   changed = false;
-  
-  printf("Buffer::init()\n");
 }
 
 Buffer::~Buffer()
