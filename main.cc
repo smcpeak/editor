@@ -230,17 +230,17 @@ void EditorWindow::editorViewChanged()
 {
   // set the scrollbars
   if (horizScroll) {
+    horizScroll->setValue(editor->firstVisibleCol);
     horizScroll->setRange(0, max(editor->buffer->maxLineLength(),
                                  editor->firstVisibleCol));
     horizScroll->setSteps(1, editor->visCols());
-    horizScroll->setValue(editor->firstVisibleCol);
   }
 
   if (vertScroll) {
+    vertScroll->setValue(editor->firstVisibleLine);
     vertScroll->setRange(0, max(editor->buffer->numLines(),
                                 editor->firstVisibleLine));
     vertScroll->setSteps(1, editor->visLines());
-    vertScroll->setValue(editor->firstVisibleLine);
   }
 
   // I want the user to interact with line/col with a 1:1 origin,

@@ -6,13 +6,14 @@
 
 #include "inputproxy.h"     // AttachInputProxy
 #include "str.h"            // string
+#include "buffer.h"         // Buffer
 #include <qstring.h>        // QString
 
 class QLabel;               // qlabel.h
 
 
 class IncSearch : public AttachInputProxy {
-private:
+private:     // data
   // label for reporing status
   QLabel *status;              // (nullable serf)
   QString prevStatusText;      // text previously in 'status'
@@ -23,6 +24,9 @@ private:
   // view position where search began
   int beginFVLine, beginFVCol;
 
+  // current search options
+  Buffer::FindStringFlags curFlags;
+
   // ----- transient state: what I'd have before implementing Backspace -----
   // text we're searching for
   string text;
@@ -31,7 +35,26 @@ private:
   // a match, or beginning of closest-match prefix
   int curLine, curCol;
 
-public:
+  // whether the last search found a match
+  bool match;
+
+private:     // funcs
+  // search from curLine/curCol to find 'text'; return true
+  // if we find a match
+  bool findString(Buffer::FindStringFlags flags);
+  bool findString() { return findString(curFlags); }
+
+  // find next/prev occurrence, return true if found
+  bool nextMatch();
+  bool prevMatch();
+
+  // string for status line
+  QString statusText() const;
+
+  // put statusText() in the label, if it exists
+  void updateStatus();
+
+public:      // funcs
   IncSearch(QLabel *status);
   ~IncSearch();
 

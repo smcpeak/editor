@@ -588,35 +588,91 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
 }
 
 
-bool Buffer::findString(int &userLine, int &userCol, char const *text) const
+void Buffer::advanceWithWrap(int &line, int &col, bool backwards) const
+{
+  if (!backwards) {
+    if (0 <= line &&
+        line < numLines() &&
+        col < lineLength(line)) {
+      col++;
+    }
+    else {
+      line++;
+      col = 0;
+    }
+  }
+
+  else {
+    if (0 <= line &&
+        line < numLines() &&
+        col >= 0) {
+      col--;
+    }
+    else if (line > 0) {
+      line--;
+      col = lineLength(line);
+    }
+    else {
+      line--;
+      col = 0;
+    }
+  }
+}
+
+
+bool Buffer::findString(int &userLine, int &userCol, char const *text,
+                        FindStringFlags flags) const
 {
   int line = userLine;
   int col = userCol;
   int textLen = strlen(text);
 
+  if (flags & FS_ADVANCE_ONCE) {
+    advanceWithWrap(line, col, !!(flags & FS_BACKWARDS));
+  }
+
   // contents of current line, in a growable buffer
   GrowArray<char> contents(10);
 
-  while (line < numLines()) {
+  while (0 <= line && line < numLines()) {
     // get line contents
     int lineLen = lineLength(line);
     contents.ensureIndexDoubler(lineLen);
     getLine(line, 0, contents.getDangerousWritableArray(), lineLen);
 
     // search for 'text' using naive algorithm, starting at 'col'
-    while (col+textLen <= lineLen) {
-      if (0==strncasecmp(contents.getArray()+col, text, textLen)) {
+    while (0 <= col && col+textLen <= lineLen) {
+      bool found =
+        (flags & FS_CASE_INSENSITIVE) ?
+          (0==strncasecmp(contents.getArray()+col, text, textLen)) :
+          (0==strncmp(contents.getArray()+col, text, textLen))     ;
+
+      if (found) {
         // found match
         userLine = line;
         userCol = col;
         return true;
       }
-      col++;
+
+      if (flags & FS_BACKWARDS) {
+        col--;
+      }
+      else {
+        col++;
+      }
     }
 
     // wrap to next line
-    col = 0;
-    line++;
+    if (flags & FS_BACKWARDS) {
+      line--;
+      if (line >= 0) {
+        col = lineLength(line)-textLen;
+      }
+    }
+    else {
+      col = 0;
+      line++;
+    }
   }
 
   return false;
@@ -659,12 +715,12 @@ void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2,
 }
 
 
-// test Buffer::findString  
+// test Buffer::findString
 void testFind(Buffer const &buf, int line, int col, char const *text,
-              int ansLine, int ansCol)
+              int ansLine, int ansCol, Buffer::FindStringFlags flags)
 {
   bool expect = ansLine>=0;
-  bool actual = buf.findString(line, col, text);
+  bool actual = buf.findString(line, col, text, flags);
 
   if (expect != actual) {
     cout << "find(\"" << text << "\"): expected " << expect
@@ -845,14 +901,34 @@ void entry()
   xassert(buf.lineLength(0) == 0);
 
   
-  line=0; col=0;
-  buf.insertTextRange(line, col, "foofoofbar\n");
-  testFind(buf, 0,0, "foo", 0,0);
-  testFind(buf, 0,1, "foo", 0,3);
-  testFind(buf, 0,3, "foof", 0,3);
-  testFind(buf, 0,4, "foof", -1,-1);
-  testFind(buf, 0,0, "foofgraf", -1,-1);
+  Buffer::FindStringFlags
+    none = Buffer::FS_NONE,
+    insens = Buffer::FS_CASE_INSENSITIVE,
+    back = Buffer::FS_BACKWARDS,
+    advance = Buffer::FS_ADVANCE_ONCE;
 
+  line=0; col=0;
+  buf.insertTextRange(line, col, "foofoofbar\n"
+                                 "ooFoo arg\n");
+  testFind(buf, 0,0, "foo", 0,0, none);
+  testFind(buf, 0,1, "foo", 0,3, none);
+  testFind(buf, 0,3, "foof", 0,3, none);
+  testFind(buf, 0,4, "foof", -1,-1, none);
+  testFind(buf, 0,0, "foofgraf", -1,-1, none);
+
+  testFind(buf, 0,7, "foo", -1,-1, none);
+  testFind(buf, 0,7, "foo", 1,2, insens);
+  testFind(buf, 0,0, "foo", 0,3, advance);
+  testFind(buf, 0,2, "foo", 0,0, back);
+  testFind(buf, 0,3, "foo", 0,0, back|advance);
+  testFind(buf, 0,4, "foo", 0,3, back|advance);
+  testFind(buf, 1,3, "foo", 0,3, back);
+  testFind(buf, 1,3, "foo", 1,2, back|insens);
+  testFind(buf, 1,2, "foo", 0,3, back|insens|advance);
+  testFind(buf, 1,3, "goo", -1,-1, back|insens|advance);
+  testFind(buf, 1,3, "goo", -1,-1, back|insens);
+  testFind(buf, 1,3, "goo", -1,-1, back);
+  testFind(buf, 1,3, "goo", -1,-1, none);
 
   printf("buffer is ok\n");
 }

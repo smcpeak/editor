@@ -255,6 +255,11 @@ TICK          [\']
   return ST_SPECIAL;
 }
 
+  /* additional words to highlight as keywords */
+"string" {
+  return ST_KEYWORD;
+}
+
   /* identifiers */
 {LETTER}{ALNUM}*   return ST_NORMAL;
 

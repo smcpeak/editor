@@ -772,6 +772,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
       }
 
+      case Key_Enter:
       case Key_Return: {
         fillToCursor();
         buffer->changed = true;
@@ -793,7 +794,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       default: {
         QString text = k->text();
-        if (text.length()) {
+        if (text.length() && text[0].isPrint()) {
           fillToCursor();
           buffer->changed = true;
 

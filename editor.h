@@ -120,9 +120,6 @@ private:     // funcs
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
 
-  // redraw window, etc.; calls updateView() and viewChanged()
-  void redraw();
-       
   // draw text etc. on a QPainter
   void drawBufferContents(QPainter &paint);
   void setDrawStyle(QPainter &paint, bool &underlining,
@@ -173,6 +170,9 @@ public:      // funcs
   // is visible; if it's already visible, do nothing
   void scrollToCursor();
 
+  // redraw window, etc.; calls updateView() and viewChanged()
+  void redraw();
+       
   // move the cursor and the view by a set increment, and repaint;
   // truncation at low end is automatic
   void moveViewAndCursor(int deltaLine, int deltaCol);

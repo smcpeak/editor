@@ -158,6 +158,12 @@ public:
   string getWholeLine(int line) const
     { return getTextRange(line, 0, line, lineLength(line)); }
 
+
+  // advance a cursor position forwards or backwards, wrapping
+  // to the next/prev line at line edges
+  void advanceWithWrap(int &line, int &col, bool backwards) const;
+
+
   // split 'line' into two, putting everything after 'col' into the
   // next line; if 'col' is beyond the end of the line, spaces are
   // *not* appended to 'line' before inserting a blank line after it;
@@ -180,12 +186,27 @@ public:
   // of which must be valid locations (no; change this)
   void deleteTextRange(int line1, int col1, int line2, int col2);
 
+
+  // flags for findString()
+  enum FindStringFlags {
+    FS_NONE                = 0x00, // nothing special
+
+    FS_CASE_INSENSITIVE    = 0x01, // case insensitive
+    FS_BACKWARDS           = 0x02, // search backwards in file
+    FS_ADVANCE_ONCE        = 0x04, // advance meta-cursor once before searching
+
+    FS_ALL                 = 0x07  // all flags
+  };   
+
   // search from line/col to find the first occurrence of
   // 'text', and update line/col to the beginning of the
   // match; return false for no match; 'text' will not be
   // tested for matches that span multiple lines
-  bool findString(int &line, int &col, char const *text) const;
+  bool findString(int &line, int &col, char const *text,
+                  FindStringFlags flags = FS_NONE) const;
 };
+
+ENUM_BITWISE_OPS(Buffer::FindStringFlags, Buffer::FS_ALL)
 
 
 // interface for observing changes to a BufferCore
