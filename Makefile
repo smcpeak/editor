@@ -1,7 +1,7 @@
 # Makefile for editor
 
 # main target
-all: buffer editor dialogs
+all: buffer editor
 
 
 # directories of other software
@@ -12,21 +12,27 @@ SMBASE := smbase
 CXX := g++
 
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -I/usr/X11/include -I$(SMBASE)
+CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE)
 
 # flags for the linker
-LDFLAGS := -g -Wall $(SMBASE)/libsmbase.a -L/usr/X11/lib -lX11
+LDFLAGS := -g -Wall $(SMBASE)/libsmbase.a -lqt
 
 
 # patterns of files to delete in the 'clean' target
 TOCLEAN =
 
 
+# ---------------- pattern rules --------------------
 # compile .cc to .o
 TOCLEAN += *.o *.d
 %.o : %.cc
 	$(CXX) -c -o $@ $< $(CCFLAGS)
 	@perl $(SMBASE)/depend.pl -o $@ $< $(CCFLAGS) > $*.d
+
+
+# Qt meta-object compiler
+moc_%.cc: %.h
+	moc -o $@ $^
 
 
 # -------------- buffer test program ----------------
@@ -38,7 +44,7 @@ buffer: array.h $(BUFFER_OBJS)
 
 # ------------------ the editor ---------------------
 TOCLEAN += editor
-EDITOR_OBJS = editor.o buffer.o textline.o position.o
+EDITOR_OBJS = editor.o moc_editor.o buffer.o textline.o position.o
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
 -include $(EDITOR_OBJS:.o=.d)

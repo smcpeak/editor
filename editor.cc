@@ -1,12 +1,19 @@
 // editor.cc
 // tiny editor using Xlib only
 
+#if 0
 #include <X11/Xlib.h>        // X library
 #include <X11/Xutil.h>       // XComposeStatus
 #include <X11/Xatom.h>       // XA_FONT
 
 #define XK_MISCELLANY        // why do I have to jump this hoop?
 #include <X11/keysymdef.h>   // XK_xxx constants
+#endif // 0
+
+#include "editor.h"          // this module
+
+#include <qapplication.h>    // QApplication
+#include <qpushbutton.h>     // QPushButton
 
 #include <stdio.h>           // printf
 #include <assert.h>          // assert
@@ -24,13 +31,16 @@ Buffer buffer;
 Position cursor(&buffer);
 
 
+#if 0
 // the font I want to use
 char const *myFontName = "-*-editor-medium-r-*-*-14-*-*-*-*-*-*-*";
 Atom myFontAtom;
 Font myFontId;
 XFontStruct *myFontStruct;
+#endif // 0
 
 
+#if 0
 // info to name a window
 class WindowName {
 public:
@@ -42,10 +52,12 @@ public:
   WindowName(Display *d, int s)
     : display(d), screen(s) {}
 };
+#endif // 0
 
 
-void drawBuffer(WindowName &win, Buffer &buffer)
+void Editor::paintEvent(QPaintEvent *ev)
 {
+  #if 0
   static char const *lotsOfSpaces = "                                                                      ";
 
   // create a graphics context (GC)
@@ -153,43 +165,25 @@ void drawBuffer(WindowName &win, Buffer &buffer)
   XFlush(win.display);
 
   XFreeGC(win.display, gc);
+  #endif // 0
 }
 
 
-int myErrorHandler(Display *dis, XErrorEvent *ev)
+int main(int argc, char **argv)
 {
-  char buf[80];
-  XGetErrorText(dis, ev->error_code, buf, 80);
+  QApplication a(argc, argv);
 
-  printf("my error handler: [%d] %s\n",
-         ev->error_code, buf);
-  exit(1);
-  return 0;    // silence warning
-}
+  Editor editor(&buffer, NULL /*parent*/, "An Editor");
+  editor.resize(300,300);
 
-int myIOErrorHandler(Display *dis)
-{
-  // tried to use an exception, but it doesn't work .. ?
+  //QPushButton hello("Hello world!", NULL /*parent*/);
+  //hello.resize(100, 30);
 
-  printf("connection died!\n");
-  exit(1);
-  return 0;    // silence warning
-}
+  a.setMainWidget(&editor);
+  editor.show();
+  return a.exec();
 
-
-int main()
-{
-  // open a network connection to host specified in DISPLAY
-  // environment variable
-  // the Display structure is defined around line 546 in Xlib.h
-  Display *display = XOpenDisplay(NULL);
-  printf("display: %p\n", display);
-  assert(display);
-
-  // set the error handlers
-  XSetErrorHandler(myErrorHandler);
-  XSetIOErrorHandler(myIOErrorHandler);
-
+  #if 0
   // make an atom for the font name I want to use
   myFontAtom = XInternAtom(display, myFontName, False /*must_exist*/);
   printf("myFontAtom: %ld\n", myFontAtom);
@@ -219,19 +213,10 @@ int main()
       printf("font name: %s\n", name);
       XFree(name);
     }
-  }
+  }    
+  #endif // 0
 
-  // figure out which screen we are (already?) connected to
-  int screen = DefaultScreen(display);
-  printf("screen: %d\n", screen);
-
-  // print some info about the screen
-  int screenWidth = DisplayWidth(display, screen);
-  int screenHeight = DisplayHeight(display, screen);
-  int screenDepth = DefaultDepth(display, screen);
-  printf("width: %d   height: %d   depth: %d\n",
-         screenWidth, screenHeight, screenDepth);
-
+  #if 0
   // create a window
   WindowName win(display, screen);
   {
@@ -268,6 +253,7 @@ int main()
     );
     printf("window: %ld\n", win.window);
   }
+  #endif // 0
 
   // give some display hints to the WM
   #if 0     // this fn doesn't exist, and it's not clear what the right one is
@@ -290,6 +276,7 @@ int main()
   // when they fail; one generally need not check the return values
   // (questionable design decision, but tolerable in the current context)
 
+  #if 0
   // set the window's caption
   XStoreName(display, win.window, "El Editor Suprémo");
     // this character is decimal 233,            ^
@@ -436,9 +423,11 @@ int main()
         break;
     }
   }
+  #endif // 0
 
   // clean up
 
+  #if 0
   // free the 'fs' .. the 'names' stuff is confusing..
   // (does *not* use XFreeFont, b/c of using the GC id above..)
   //XFreeFontInfo(NULL, fs, 0);
@@ -446,6 +435,7 @@ int main()
 
   XDestroyWindow(display, win.window);
   XCloseDisplay(display);
+  #endif // 0
 
   printf("returning from main\n");
   return 0;
