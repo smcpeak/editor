@@ -45,9 +45,10 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   vertScroll = new QScrollBar(QScrollBar::Vertical, editArea, "vertical scrollbar");
   connect(vertScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToLine(int) ));
-
-  horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
-  connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
+    
+  // disabling horiz scroll for now..
+  //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
+  //connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
 
   QHBox *statusArea = new QHBox(mainArea, "status area");
   statusArea->setFixedHeight(20);
@@ -197,15 +198,19 @@ void EditorWindow::helpAbout()
 void EditorWindow::editorViewChanged()
 {
   // set the scrollbars
-  horizScroll->setRange(0, max(editor->buffer->maxLineLength(), 
-                               editor->firstVisibleCol));
-  horizScroll->setSteps(1, editor->visCols());
-  horizScroll->setValue(editor->firstVisibleCol);
+  if (horizScroll) {
+    horizScroll->setRange(0, max(editor->buffer->maxLineLength(),
+                                 editor->firstVisibleCol));
+    horizScroll->setSteps(1, editor->visCols());
+    horizScroll->setValue(editor->firstVisibleCol);
+  }
 
-  vertScroll->setRange(0, max(editor->buffer->numLines(), 
-                              editor->firstVisibleLine));
-  vertScroll->setSteps(1, editor->visLines());
-  vertScroll->setValue(editor->firstVisibleLine);
+  if (vertScroll) {
+    vertScroll->setRange(0, max(editor->buffer->numLines(),
+                                editor->firstVisibleLine));
+    vertScroll->setSteps(1, editor->visLines());
+    vertScroll->setValue(editor->firstVisibleLine);
+  }
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the Buffer interface uses 0:0

@@ -124,7 +124,7 @@ void C_Highlighter::deleteLine(BufferCore const &, int line)
 {
   // if region ends after 'line', then now it ends one line earlier
   if (!changedIsEmpty() &&
-      changedEnd > line+1) {
+      changedEnd > line) {
     changedEnd--;
   }
 
