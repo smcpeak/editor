@@ -350,7 +350,7 @@ more todo:
   - bookmarks, with markers on the scrollbar
   - paren-matching indication
   - search+replace
-  - Ctrl+L: center window vertically
+  * Ctrl+L: center window vertically
 
 end 2/26/03 06:54
 
@@ -410,3 +410,4 @@ implement Ctrl+A, etc. emacs bindings
 
 next: auto-indent.. done
 
+alt+left/right..

@@ -625,6 +625,19 @@ void Editor::keyPressEvent(QKeyEvent *k)
     }
   }
 
+  // Alt+<key>
+  else if (state == AltButton) {
+    switch (k->key()) {
+      case Key_Left:
+        blockIndent(-2);
+        break;
+        
+      case Key_Right:
+        blockIndent(+2);
+        break;
+    }
+  }
+
   // Ctrl+Alt+<key>
   else if (state == (ControlButton|AltButton)) {
     switch (k->key()) {
@@ -768,16 +781,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
         
         // auto-indent
         int ind = buffer->getAboveIndentation(cursorLine-1);
-        while (ind) {
-          // insert lots of spaces at once, maybe to make the undo log
-          // look nicer?
-          static char const spaces[] = "                          ";
-          int amt = min((int)sizeof(spaces), ind);
-          xassert(amt > 0);
-          buffer->insertText(cursorLine, cursorCol, spaces, amt);
-          cursorCol += amt;
-          ind -= amt;
-        }
+        buffer->indentLine(cursorLine, ind);
+        cursorCol += ind;
 
         scrollToCursor();
         break;
@@ -1192,6 +1197,24 @@ void Editor::deleteCharAtCursor()
   }
 
   scrollToCursor();
+}
+
+
+void Editor::blockIndent(int amt)
+{
+  if (!selectEnabled) {
+    return;      // nop
+  }
+  
+  normalizeSelect();              
+  
+  int endLine = (selHighCol==0? selHighLine-1 : selHighLine);
+  endLine = min(endLine, buffer->numLines()-1);
+  for (int line=selLowLine; line<=endLine; line++) {
+    buffer->indentLine(line, amt);
+  }
+  
+  redraw();
 }
 
 

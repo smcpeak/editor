@@ -170,10 +170,15 @@ public:
   // to the next/prev line at line edges
   void advanceWithWrap(int &line, int &col, bool backwards) const;
 
+  // on a particular line, get # of whitespace chars before first 
+  // non-ws char, or -1 if there are no non-ws chars
+  int getIndentation(int line) const;
+  
   // starting at 'line', go up until we find a line that is not
   // entirely blank (whitespace), and return the # of whitespace 
   // chars to the left of the first non-whitespace char
   int getAboveIndentation(int line) const;
+
 
   // split 'line' into two, putting everything after 'col' into the
   // next line; if 'col' is beyond the end of the line, spaces are
@@ -186,6 +191,11 @@ public:
   // position at the end of the inserted text; line/col must be
   // a position within the defined portion of the buffer
   void insertTextRange(int &line, int &col, char const *text);
+  
+  // indent (or un-indent, if ind<0) the given line by some # of spaces;
+  // if unindenting, but there are not enough spaces, then the line
+  // is unindented as much as possible w/o removing non-ws chars
+  void indentLine(int line, int ind);
 
 
   // move the contents of 'line+1' onto the end of 'line'; it's

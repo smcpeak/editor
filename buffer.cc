@@ -519,6 +519,37 @@ void Buffer::insertNewline(int &line, int &col)
 }
 
 
+void Buffer::indentLine(int line, int ind)
+{
+  if (!( line < numLines() )) {
+    return;
+  }
+
+  while (ind > 0) {
+    // insert lots of spaces at once, maybe to make the undo log
+    // look nicer?
+    static char const spaces[] = "                          ";
+    int amt = min((int)sizeof(spaces), ind);
+    xassert(amt > 0);
+    insertText(line, 0, spaces, amt);
+    ind -= amt;
+  }
+
+  if (ind < 0) {
+    ind = -ind;
+    int lineInd = getIndentation(line);
+    if (lineInd >= 0) {                      
+      // remove up to 'ind' chars of indentation
+      deleteText(line, 0, min(ind, lineInd));
+    }
+    else {
+      // no non-ws chars; remove up to 'ind' of them
+      deleteText(line, 0, min(ind, lineLength(line)));
+    }
+  }
+}
+
+
 void Buffer::spliceNextLine(int line)
 {
   xassert(0 <= line && line < numLines());
@@ -663,15 +694,25 @@ void Buffer::advanceWithWrap(int &line, int &col, bool backwards) const
 }
 
 
+int Buffer::getIndentation(int line) const
+{
+  string contents = getWholeLine(line);
+  for (char const *p = contents.pcharc(); *p; p++) {
+    if (!isspace(*p)) {
+      // found non-ws char
+      return p - contents.pcharc();
+    }
+  }
+  return -1;   // no non-ws
+}
+
+
 int Buffer::getAboveIndentation(int line) const
 {
   while (line >= 0) {
-    string contents = getWholeLine(line);
-    for (char const *p = contents.pcharc(); *p; p++) {
-      if (!isspace(*p)) {
-        // found non-ws char
-        return p - contents.pcharc();
-      }
+    int ind = getIndentation(line);
+    if (ind >= 0) {
+      return ind;
     }
     line--;
   }

@@ -217,6 +217,7 @@ public:      // funcs
 
   // some other commands...
   void deleteCharAtCursor();
+  void blockIndent(int amt);
 
 public slots:
   // slots to respond to scrollbars
