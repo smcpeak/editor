@@ -192,7 +192,7 @@ void Editor::redraw()
   }
   
   // redraw
-  update();
+  //update();
 
   // I think that update() should work, but it does not: it erases
   // the window first.  I've tried lots of different things to fix
@@ -206,6 +206,12 @@ void Editor::redraw()
   // due to a bug in XFree86's implementation of XDrawImageSting.
   // So I've switched to a server-side pixmap double-buffer method,
   // which of course eliminates the flickering.
+  
+  // update: Let's call paintEvent directly, because otherwise
+  // I can't tell the difference between a redraw prompted by
+  // internal editor actions, and one prompted by exposure due to
+  // another window moving out of the way.
+  paintEvent(NULL /*ev*/);
 }
 
 
@@ -293,24 +299,15 @@ void Editor::paintEvent(QPaintEvent *ev)
   }
   #endif // 0/1
 
-  // make a pixmap, so as to avoid flickering by double-buffering
-  QPixmap pixmap(size());
-
-  // set up the painter; we have to copy over some settings explicitly
-  QPainter paint(&pixmap);
-  paint.setFont(font());
-
-  long start = getMilliseconds();
-  
   try {
     // draw on the pixmap
     if (!listening) {
       // usual case, draw cursor in usual location
-      drawBufferContents(paint, cursorLine(), cursorCol());
+      updateFrame(ev, cursorLine(), cursorCol());
     }
     else {
       // nonfocus synchronized update: use alternate location
-      drawBufferContents(paint, nonfocusCursorLine, nonfocusCursorCol);
+      updateFrame(ev, nonfocusCursorLine, nonfocusCursorCol);
       trace("nonfocus") << "drawing at " << nonfocusCursorLine
                         << ":" << nonfocusCursorCol;
     }
@@ -318,32 +315,49 @@ void Editor::paintEvent(QPaintEvent *ev)
   catch (xBase &x) {
     // I can't pop up a message box because then when that
     // is dismissed it might trigger another exception, etc.
+    QPainter paint(this);
     paint.setFont(normalFont);
     paint.setPen(white);
+    paint.setBackgroundMode(OpaqueMode);
     paint.setBackgroundColor(red);
     paint.drawText(0, 30,                 // baseline start coordinate
                    QString(x.why()), strlen(x.why()));
   }
-
-  paint.end();
-
-  long middle = getMilliseconds();
-  
-  // blit the pixmap.. Qt docs claim the pixmap is entirely server-side,
-  // so this should *not* entail a network copy of a big image...
-  paint.begin(this);
-  paint.drawPixmap(0,0, pixmap);
-  paint.flush();     // to improve accuracy of timing information
-  
-  long end = getMilliseconds();
-  
-  trace("paint") << "frame: paint=" << (middle-start)
-                 << ", blit=" << (end-middle) << "\n";
 }
 
-void Editor::drawBufferContents(QPainter &paint,
-  int cursorLine, int cursorCol)
+void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 {
+  // debug info
+  {
+    string rect = "(none)";
+    if (ev) {
+      QRect const &r = ev->rect();  
+      rect = stringf("(%d,%d,%d,%d)", r.left(), r.top(),
+                                      r.right(), r.bottom());
+    }
+    trace("paint") << "frame: rect=" << rect << "\n";
+  }
+                 
+  // ---- setup painters ----
+  // make a pixmap, so as to avoid flickering by double-buffering; the
+  // pixmap is the entire width of the window, but only one line high,
+  // so as to improve drawing locality and avoid excessive allocation
+  // in the server
+  int lineWidth = width();
+  int fullLineHeight = fontHeight + interLineSpace;
+  QPixmap pixmap(lineWidth, fullLineHeight);
+  
+  // make the main painter, which will draw on the line pixmap; the
+  // font setting must be copied over manually
+  QPainter paint(&pixmap);  
+  paint.setFont(font());
+
+  // Another painter will go to the window directly.  A key property
+  // is that every pixel painted via 'winPaint' must be painted exactly
+  // once, to avoid flickering.
+  QPainter winPaint(this);
+  
+  // ---- setup style info ----    
   // when drawing text, erase background automatically
   paint.setBackgroundMode(OpaqueMode);
 
@@ -356,24 +370,20 @@ void Editor::drawBufferContents(QPainter &paint,
   bool underlining = false;     // whether drawing underlines
   StyleDB *styleDB = StyleDB::instance();
   setDrawStyle(paint, underlining, styleDB, currentStyle);
+  
+  // do same for 'winPaint', just to set the background color
+  setDrawStyle(winPaint, underlining, styleDB, currentStyle);
 
-  // it turns out my 'editor' font has a bold variant
-  // with one pixel less of descent.. this causes lines to be incompletely
-  // erased.. so for now, erase the whole thing in advance (HACK!)
-  paint.eraseRect(0,0, width(),height());
-
-  // top edge of what has not been painted
+  // ---- margins ----
+  // top edge of what has not been painted, in window coordinates
   int y = 0;
 
   if (topMargin) {
-    paint.eraseRect(0, y, width(), topMargin);
+    winPaint.eraseRect(0, y, width(), topMargin);
     y += topMargin;
   }
 
-  if (leftMargin) {
-    paint.eraseRect(0, 0, leftMargin, height());
-  }
-
+  // ---- remaining setup ----
   // I think it might be useful to support negative values for these
   // variables, but the code below is not prepared to deal with such
   // values at this time
@@ -383,15 +393,16 @@ void Editor::drawBufferContents(QPainter &paint,
   // another santiy check
   xassert(lineHeight() > 0);
 
-  // buffer for text to print
+  // buffer for each line of text that will be printed
   int visibleCols = lastVisibleCol - firstVisibleCol + 2;
   Array<char> text(visibleCols);
 
   // set sel{Low,High}{Line,Col}
   normalizeSelect(cursorLine, cursorCol);
 
-  // paint the window
+  // paint the window, one line at a time
   for (int line = firstVisibleLine; y < height(); line++) {
+    // ---- compute style segments ----
     // fill the text with spaces, as the nominal text to display;
     // these will only be used if there is style information out
     // beyond the actual line character data
@@ -461,14 +472,21 @@ void Editor::drawBufferContents(QPainter &paint,
     LineStyleIter style(styles);
     style.advanceChars(firstVisibleCol);
 
-    // right edge of what has not been painted
+    // ---- render text+style segments -----
+    // right edge of what has not been painted, relative to
+    // the pixels in the pixmap
     int x = leftMargin;
 
     // number of characters printed
     int printed = 0;
 
+    // it turns out my 'editor' font has a bold variant
+    // with one pixel less of descent.. this causes lines to be incompletely
+    // erased.. so for now, erase the whole thing in advance (HACK!)
+    paint.eraseRect(0,0, lineWidth, fullLineHeight);
+  
     // loop over segments with different styles
-    while (x < width()) {
+    while (x < lineWidth) {
       xassert(printed < visibleCols);
 
       // set style
@@ -487,7 +505,7 @@ void Editor::drawBufferContents(QPainter &paint,
           // one the last style run; for efficiency of communication
           // with the X server, render the remainder of this line with
           // a single rectangle
-          paint.eraseRect(x,y, width()-x, fontHeight);
+          paint.eraseRect(x,0, lineWidth-x, fullLineHeight);
           break;   // out of loop over line segments
         }
 
@@ -504,7 +522,7 @@ void Editor::drawBufferContents(QPainter &paint,
       // make a QString for drawText() to use; I think Qt should have
       // made drawText() accept an ordinary char const* ...
       string segment(text+printed, len);
-      int baseline = y+ascent-1;
+      int baseline = ascent-1;
       paint.drawText(x, baseline,                 // baseline start coordinate
                      QString(segment), len);      // text, length
 
@@ -517,7 +535,7 @@ void Editor::drawBufferContents(QPainter &paint,
         paint.drawLine(x, baseline, x + fontWidth*len, baseline);
       }
 
-      // advance
+      // advance to next style segment
       x += fontWidth * len;
       printed += len;
       style.advanceChars(len);
@@ -535,24 +553,23 @@ void Editor::drawBufferContents(QPainter &paint,
 
       paint.setPen(cursorColor);
       x = leftMargin + fontWidth * (cursorCol - firstVisibleCol);
-      paint.drawLine(x,y, x, y+fontHeight-1);
-      paint.drawLine(x-1,y, x-1, y+fontHeight-1);
+      paint.drawLine(x,0, x, fontHeight-1);
+      paint.drawLine(x-1,0, x-1, fontHeight-1);
 
       paint.restore();
     }
 
-    y += fontHeight;
-
-    if (interLineSpace > 0) {
-      // I haven't tested this code...
-      paint.eraseRect(0, y, width(), interLineSpace);
-      y += interLineSpace;
-    }
+    // draw the line buffer to the window
+    paint.flush();     // server-side pixmap is now complete
+    winPaint.drawPixmap(0,y, pixmap);    // draw it
+    
+    // advance to next line    
+    y += fullLineHeight;
   }
 
   // fill the remainder
-  paint.eraseRect(0, y,
-                  width(), height()-y);
+  winPaint.eraseRect(leftMargin, y,
+                     0, height()-y);
 }
 
 
@@ -1040,7 +1057,7 @@ void Editor::spliceNextLine()
 }
 
 
-void Editor::scrollToCursor(int edgeGap)
+void Editor::scrollToCursor_noRedraw(int edgeGap)
 {
   int fvline = firstVisibleLine;
   int fvcol = firstVisibleCol;
@@ -1060,7 +1077,11 @@ void Editor::scrollToCursor(int edgeGap)
   }
   
   setView(fvline, fvcol);
+}
   
+void Editor::scrollToCursor(int edgeGap)
+{
+  scrollToCursor_noRedraw(edgeGap);
   redraw();
 }
 
@@ -1078,7 +1099,7 @@ void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
      << ", delta=" << lineColStr(deltaLine, deltaCol));
 
   // first make sure the view contains the cursor
-  scrollToCursor();
+  scrollToCursor_noRedraw();
 
   // move viewport, but remember original so we can tell
   // when there's truncation

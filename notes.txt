@@ -25,6 +25,10 @@ TODOs:
     the directory in which the current file resides by default
   - case-sensitive search by default if any chars are capitals
   - parenthesis balancing
+  - Alt+G: goto line
+  - bug: selection in nonfocused window causes assertion failure
+  - Ctrl+K: kill (to clipboard) the line
+  - Ctrl+J: justify paragraph
   
 working on:
   - performance!  smarter updates, etc.
@@ -763,3 +767,16 @@ my drawing requests and then blitting
 
 so a key difficulty at this point is I don't have a way to measure
 the current performance
+
+in any event, I can try to make some provements.  basic plan is
+to install an observer that can track buffer/cursor/sel(?) changes
+between frames, and try to build as much of the new frame as
+possible out of pieces of the old frame, translated as necessary
+
+state that contributes to a frame:
+  - buffer contents
+  - view upper-left coordinates
+  - cursor location
+  - selection state (active, mark location)
+  - search highlight string
+  

@@ -152,9 +152,12 @@ private:     // funcs
 
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
+  
+  // intermediate paint step
+  void updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol);
 
   // draw text etc. on a QPainter
-  void drawBufferContents(QPainter &paint, int cursorLine, int cursorCol);
+  //void drawBufferContents(QPainter &paint, int cursorLine, int cursorCol);
   void setDrawStyle(QPainter &paint, bool &underlining,
                     StyleDB *db, Style s);
 
@@ -236,6 +239,7 @@ public:      // funcs
   // how many lines/cols of extra space on the far side of the cursor
   // we want
   void scrollToCursor(int edgeGap=0);
+  void scrollToCursor_noRedraw(int edgeGap=0);
 
   // redraw window, etc.; calls updateView() and viewChanged()
   void redraw();
