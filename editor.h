@@ -17,7 +17,7 @@ class Buffer;               // buffer.h
 class Editor : public QWidget {
   Q_OBJECT
 
-private:      // data
+public:      // data
   // buffer whose text we're editing
   Buffer *buffer;           // (serf)
 

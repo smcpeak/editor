@@ -22,6 +22,10 @@ Editor::Editor(Buffer *buf,
   QFont font;
   font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
   setFont(font);
+                                 
+  // use the color scheme for text widgets; typically this means
+  // a white background, instead of a gray background
+  setBackgroundMode(PaletteBase);
 }
 
 void Editor::paintEvent(QPaintEvent *ev)

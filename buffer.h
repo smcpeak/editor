@@ -24,6 +24,12 @@ private:   // data
   // TODO: implement a gap in 'lines' so lines can usually be inserted
   // without copying large pieces of the array
 
+public:    // data
+  // true if the contents have changed since the last readFile();
+  // caller must explicitly clear after a writeFile() if that is
+  // desired
+  bool changed;
+
 private:   // funcs
   // zero everything
   void init();
@@ -45,6 +51,7 @@ public:    // data
   bool operator == (Buffer const &obj) const;
   NOTEQUAL_OPERATOR(Buffer)     // defines !=
 
+  // these might throw XOpen
   void readFile(char const *fname);
   void writeFile(char const *fname) const;
 
@@ -52,7 +59,7 @@ public:    // data
 
   TextLine const *getLineC(int lineNumber) const;
   TextLine *getLine(int lineNumber)
-    { return const_cast<TextLine*>(getLineC(lineNumber)); }
+    { changed=true; return const_cast<TextLine*>(getLineC(lineNumber)); }
 
   TextLine const *lastLineC() const
     { return getLineC(totLines()-1); }
@@ -61,9 +68,6 @@ public:    // data
   // new line will be line number 'n' (0-based)
   void insertLinesAt(int n, int howmany);
   void insertLineAt(int n) { insertLinesAt(n, 1); }
-
-  // remove some lines
-  void removeLines(int startLine, int linesToRemove);
 
   // the following functions can accept Positions that are
   // not inText(), by inserting spaces if necessary
@@ -76,6 +80,12 @@ public:    // data
   // delete the text between two positions; p1 must be
   // less than p2; updates 'p2'
   void deleteText(Position const &p1, Position &p2);
+
+  // remove some lines
+  void removeLines(int startLine, int linesToRemove);
+
+  // delete all text
+  void clear();
 
   // debugging: print internal rep
   void dumpRepresentation() const;

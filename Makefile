@@ -53,7 +53,9 @@ EDITOR_OBJS := \
   buffer.o \
   textline.o \
   position.o \
-  main.o
+  main.o \
+  moc_main.o \
+  bufferstate.o
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
 -include $(EDITOR_OBJS:.o=.d)

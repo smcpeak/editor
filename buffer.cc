@@ -23,6 +23,7 @@ void Buffer::init()
   lines = NULL;
   numLines = 0;
   linesAllocated = 0;
+  changed = false;
 }
 
 Buffer::~Buffer()
@@ -36,10 +37,10 @@ Buffer::~Buffer()
 
 Buffer::Buffer(char const *initText, int initLen)
 {
-  init();             
-  
+  init();
+
   // insert with a 0,0 position
-  Position position(this);       
+  Position position(this);
   insertText(position, initText, initLen);
 }
 
@@ -49,13 +50,13 @@ bool Buffer::operator == (Buffer const &obj) const
   if (numLines != obj.numLines) {
     return false;
   }
-  
+
   for (int i=0; i<numLines; i++) {
     if (lines[i] != obj.lines[i]) {
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -69,6 +70,9 @@ bool Buffer::operator == (Buffer const &obj) const
 // always uses a margin calculation
 void Buffer::setNumLines(int newLines)
 {
+  if (newLines == numLines) { return; }
+  changed = true;
+
   // dealloc any lines now not part of the buffer
   int i;
   for (i=newLines; i<numLines; i++) {
@@ -121,7 +125,7 @@ void Buffer::readFile(char const *fname)
 
   int fd = open(fname, O_RDONLY);
   if (fd < 0) {
-    xsyserror("open");
+    throw_XOpen(fname);
   }
 
   // make a position to keep track of where to insert
@@ -135,7 +139,7 @@ void Buffer::readFile(char const *fname)
     if (len < 0) {
       xsyserror("read");
     }
-  
+
     // this updates the position
     insertText(position, buf, len);
   }
@@ -143,6 +147,8 @@ void Buffer::readFile(char const *fname)
   if (close(fd) < 0) {
     xsyserror("close");
   }
+
+  changed = false;
 }
 
 
@@ -153,7 +159,7 @@ void Buffer::writeFile(char const *fname) const
 
   FILE *fp = fopen(fname, "w");
   if (!fp) {
-    xsyserror("open");
+    throw_XOpen(fname);
   }
 
   for (int line=0; line<numLines; line++) {
@@ -175,12 +181,17 @@ void Buffer::writeFile(char const *fname) const
   if (0 != fclose(fp)) {
     xsyserror("close");
   }
+
+  // caller must do this, because this method is 'const', and I
+  // don't want to make it non-const, nor make 'changed' mutable
+  //changed = false;
 }
 
 
 void Buffer::dumpRepresentation() const
 {
-  printf("-- buffer --\n");
+  printf("-- buffer -- (changed: %s)\n",
+         changed? "yes" : "no");
 
   for (int i=0; i<numLines; i++) {
     printf("line %d: [%d/%d] \"%s\"\n",
@@ -209,23 +220,25 @@ void Buffer::ensureLineExists(int n)
 
 void Buffer::insertLinesAt(int n, int howmany)
 {
+  changed = true;
+
   if (n >= numLines) {
     // easy case: just expand the array
     setNumLines(n+howmany);
   }
   else {
     // harder case: must move existing lines down
-    
+
     // first, make room
     int oldNumLines = numLines;
     setNumLines(numLines + howmany);
-    
+
     // then shift the original lines below the insertion
     // point downward
     memmove(lines+oldNumLines+howmany,              // dest
             lines+oldNumLines,                      // src
             (oldNumLines-n) * sizeof(TextLine));    // size to move
-                     
+
     // the lines in the gap now are defunct, though they
     // still point to some of the shifted lines; re-init
     // them so they are empty and so they don't deallocate
@@ -239,6 +252,8 @@ void Buffer::insertLinesAt(int n, int howmany)
 
 void Buffer::insertText(Position &c, char const *text, int length)
 {
+  // 'changed' automatically set to true by accessors
+
   int curLine = c.line();
   int curCol = c.col();
 
@@ -314,6 +329,8 @@ void Buffer::insertText(Position &c, char const *text, int length)
 
 void Buffer::deleteText(Position const &c1, Position &c2)
 {
+  // 'changed' automatically set to true by accessors
+
   xassert(c1 <= c2);
 
   if (c1.beyondEnd()) {
@@ -374,15 +391,22 @@ void Buffer::removeLines(int startLine, int linesToRemove)
   if (linesToRemove == 0) {
     return;
   }
+  changed = true;
 
   // move the 2nd half lines up to cover the gap
   memmove(lines+startLine,                    // dest
           lines+startLine+linesToRemove,      // src
-          linesToRemove * sizeof(TextLine));  // bytes to move
+          (numLines - linesToRemove) * sizeof(TextLine));  // bytes to move
 
   // we'll simply adjust the # of lines; this should cause
   // us to ignore the (valid-looking) lines beyond the end
   numLines -= linesToRemove;
+}
+
+
+void Buffer::clear()
+{
+  removeLines(0, numLines);
 }
 
 
