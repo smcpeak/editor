@@ -21,7 +21,7 @@ private:      // data
   HE_group history;
 
   // where are we in that history?  usually,
-  // time==history.seqLength()-1, meaning we're at the end of the
+  // time==history.seqLength(), meaning we're at the end of the
   // recorded history; undo/redo modifies 'time' and 'buf' but not
   // 'history'
   int time;
@@ -97,6 +97,11 @@ public:      // funcs
 
   void undo();
   void redo();
+           
+
+  // print the history in a textual format, with the current time
+  // marked (or no mark if time is at the end)
+  void printHistory(stringBuilder &sb) const;
 };
 
 

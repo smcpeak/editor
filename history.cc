@@ -3,6 +3,7 @@
 
 #include "history.h"       // this module
 #include "array.h"         // Array
+#include "strutil.h"       // encodeWithEscapes
 
 
 static void rollbackMismatch()
@@ -85,6 +86,34 @@ STATICDEF void HE_cursor::static_apply
     ROLLBACK( move1dim(buf.line, origLine, line, !reverse) );
     throw;
   }
+}
+
+
+STATICDEF void HE_cursor::print1dim(stringBuilder &sb, int orig, int val)
+{
+  if (orig == -1) {
+    // relative
+    if (val >= 0) {
+      sb << "+" << val;
+    }
+    else {
+      sb << val;
+    }
+  }
+  else {
+    // absolute
+    sb << orig << "->" << val;
+  }
+}
+
+void HE_cursor::print(stringBuilder &sb, int indent) const
+{
+  sb.indent(indent);
+  sb << "move(";
+  print1dim(sb, origLine, line);
+  sb << ", ";
+  print1dim(sb, origCol, col);
+  sb << ");\n";
 }
 
 
@@ -358,6 +387,15 @@ void HE_text::computeText(CursorBuffer const &buf, int count)
 }
 
 
+void HE_text::print(stringBuilder &sb, int indent) const
+{
+  sb.indent(indent);
+  sb << (left? "left" : "right") 
+     << (insertion? "Ins" : "Del") 
+     << "(" << encodeWithEscapes(text, textLen) << ");\n";
+}
+
+
 // ----------------------- HE_group -----------------------
 HE_group::HE_group()
   : seq()
@@ -432,6 +470,35 @@ void HE_group::applyOne(CursorBuffer &buf, int index, bool reverse)
 void HE_group::apply(CursorBuffer &buf, bool reverse)
 {
   applySeq(buf, 0, seqLength(), reverse);
+}
+
+
+void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
+{
+  sb.indent(indent) << "group {\n";
+  for (int i=0; i < seqLength(); i++) {
+    if (i==n) {
+      // print mark in left margin
+      sb << "->";
+      seq.getC(i)->print(sb, indent);
+    }
+    else {
+      seq.getC(i)->print(sb, indent+2);
+    }
+  }
+  sb.indent(indent) << "}";
+  
+  //if (n >= 0) {
+  //  sb << " /""*time=" << n << "*/";
+  //} 
+
+  sb << "\n";
+}
+
+
+void HE_group::print(stringBuilder &sb, int indent) const
+{
+  printWithMark(sb, indent, -1 /*mark*/);
 }
 
 

@@ -1,9 +1,9 @@
 # Makefile for editor
 
-#tmptarget: buffercore buffer
+tmptarget: historybuf
 
 # main target
-all: testgap buffer style c_hilite editor
+all: testgap buffercore history buffer style c_hilite editor
 
 
 # directories of other software
@@ -51,6 +51,13 @@ BUFFERCORE_OBJS := buffercore.cc
 buffercore: gap.h $(BUFFERCORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFERCORE $(BUFFERCORE_OBJS) -g -Wall $(LIBSMBASE)
 	./buffercore >/dev/null 2>&1
+
+# -------------- historybuf test program ----------------
+TOCLEAN += historybuf historybuf.tmp
+HISTORYBUF_OBJS := historybuf.cc history.o buffercore.o
+historybuf: gap.h $(HISTORYBUF_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_HISTORYBUF $(HISTORYBUF_OBJS) -g -Wall $(LIBSMBASE)
+#	./historybuf >/dev/null 2>&1
 
 # -------------- buffer test program ----------------
 TOCLEAN += buffer

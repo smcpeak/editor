@@ -3,12 +3,14 @@
 
 #include "historybuf.h"       // this module
 #include "autofile.h"         // AutoFILE
+#include "mysig.h"            // printSegfaultAddrs
 
 
 HistoryBuffer::HistoryBuffer()
   : buf(),
     history(),
-    time(0)
+    time(0),
+    groupStack()
 {}
 
 
@@ -21,6 +23,7 @@ void HistoryBuffer::clearHistory()
 {
   time = 0;
   history.truncate(time);
+  groupStack.clear();
 }
 
 
@@ -77,7 +80,10 @@ void HistoryBuffer::deleteLR(bool left, int count)
 void HistoryBuffer::appendElement(HistoryElt *e)
 {
   if (groupStack.isEmpty()) {
+    // for now, adding a new element means truncating the history
+    history.truncate(time);
     history.append(e);
+    time++;
   }
   else {
     groupStack.top()->append(e);
@@ -137,4 +143,75 @@ void HistoryBuffer::redo()
 }
 
 
-// EOF
+void HistoryBuffer::printHistory(stringBuilder &sb) const
+{
+  history.printWithMark(sb, 0 /*indent*/, time);
+}
+
+
+// -------------------- test code -------------------
+#ifdef TEST_HISTORYBUF
+
+#include "test.h"       // USUAL_MAIN
+#include "datablok.h"   // DataBlock
+
+#include <unistd.h>     // unlink
+#include <stdio.h>      // printf
+
+
+void expect(HistoryBuffer const &buf, int line, int col, char const *text)
+{
+  xassert(buf.line()==line &&
+          buf.col()==col);
+
+  writeFile(buf.core(), "historybuf.tmp");
+  DataBlock block;
+  block.readFromFile("historybuf.tmp");
+
+  // compare contents to what is expected
+  if (0!=memcmp(text, block.getDataC(), block.getDataLen()) ||
+      (int)strlen(text)!=(int)block.getDataLen()) {
+    xfailure("text mismatch");
+  }
+
+}
+
+
+void printHistory(HistoryBuffer const &buf)
+{
+  stringBuilder sb;
+  buf.printHistory(sb);
+  cout << sb;
+}
+
+
+void entry()
+{
+  printSegfaultAddrs();
+
+  HistoryBuffer buf;
+
+  buf.insertLR(false /*left*/, "a", 1);
+  buf.insertLR(false /*left*/, "b", 1);
+  buf.insertLR(false /*left*/, "c", 1);
+  buf.insertLR(false /*left*/, "d", 1);
+  printHistory(buf);
+  expect(buf, 0,4, "abcd");
+
+  buf.undo();
+  printHistory(buf);
+  expect(buf, 0,3, "abc");
+
+  buf.insertLR(false /*left*/, "e", 1);
+  printHistory(buf);
+  expect(buf, 0,4, "abce");
+
+  unlink("historybuf.tmp");
+
+  printf("historybuf is ok\n");
+}
+
+USUAL_MAIN
+
+
+#endif // TEST_HISTORYBUF

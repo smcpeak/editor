@@ -77,7 +77,9 @@ void Editor::cursorTo(int line, int col)
 
 void Editor::resetView()
 {
-  cursorTo(0, 0);
+  if (buffer) {
+    cursorTo(0, 0);
+  }
   selectLine = 0;
   selectCol = 0;
   selectEnabled = false;

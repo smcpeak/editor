@@ -7,6 +7,7 @@
 #include "buffercore.h"      // BufferCore
 #include "exc.h"             // xBase
 #include "ogap.h"            // OGapArray
+#include "str.h"             // stringBuilder
 
 
 // buffer + cursor, the object that the history manipulates
@@ -47,6 +48,9 @@ public:
   // if the event does not match the current state of the buffer,
   // but in this case the buffer must not be modified
   virtual void apply(CursorBuffer &buf, bool reverse)=0;
+  
+  // render this command as a text line, indented by 'indent' spaces
+  virtual void print(stringBuilder &sb, int indent) const=0;
 };
 
 
@@ -60,9 +64,10 @@ public:      // data
 
   // similar encoding for column movement
   int origCol, col;
-        
+
 private:     // funcs
   static void move1dim(int &value, int orig, int update, bool reverse);
+  static void print1dim(stringBuilder &sb, int orig, int val);
 
 public:      // funcs
   HE_cursor(int ol, int l, int oc, int c)
@@ -70,6 +75,7 @@ public:      // funcs
 
   // HistoryElt funcs
   virtual void apply(CursorBuffer &buf, bool reverse);
+  virtual void print(stringBuilder &sb, int indent) const;
 
   // 'apply' as a static member, to allow HE_group to represent
   // HE_cursors more efficiently but still use the same implementation
@@ -107,6 +113,7 @@ public:      // funcs
 
   // HistoryElt funcs
   virtual void apply(CursorBuffer &buf, bool reverse);
+  virtual void print(stringBuilder &sb, int indent) const;
 
   // 'apply', but static
   static void static_apply(
@@ -165,9 +172,15 @@ public:      // funcs
   // apply a single element of the sequence, possibly in reverse
   void applyOne(CursorBuffer &buf, int index, bool reverse);
 
+  // print, and mark the nth element of the history in the left
+  // margin; if 'n' is outside the range of valid indices, no mark is
+  // printed
+  void printWithMark(stringBuilder &sb, int indent, int n) const;
+
 
   // HistoryElt funcs
   virtual void apply(CursorBuffer &buf, bool reverse);
+  virtual void print(stringBuilder &sb, int indent) const;
 };
 
 

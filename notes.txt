@@ -639,3 +639,17 @@ files' on-disk repr., in-memory repr., and the cursor.  I've now
 figured that out and know how to fix it, will document in
 buffercore.h
 
+ok, got the editor to compile and run again!  still haven't
+hooked up or measured the undo/redo, but supposedly it's
+back there working...
+
+end 6/01/03 00:30
+
+-------------------------
+start 6/01/03 03:01
+
+need to hook up and test the undo/redo facility; also need
+measurements of space usage, etc.
+
+
+

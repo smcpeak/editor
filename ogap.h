@@ -35,7 +35,7 @@ public:
                      
   // remove an element, returning it as an owner pointer
   T *remove(int elt) {
-    T *temp = (T*)arr.get(0); 
+    T *temp = (T*)arr.get(elt); 
     arr.remove(elt);
     return temp;
   }

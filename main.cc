@@ -316,7 +316,7 @@ int main(int argc, char **argv)
   TRACE_ARGS();
   QApplication a(argc, argv);
 
-  {   
+  if (false) {   
     static char const * const names[] = {
       "Foreground",
       "Button",

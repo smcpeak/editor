@@ -11,3 +11,5 @@ style
 c_hilite
 *.lex.backup
 *.yy.cc
+buffercore
+historybuf
