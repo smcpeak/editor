@@ -436,3 +436,80 @@ start 3/01/03 06:59
 
 will implement replacing.. ok, seems to work
 
+thinking about how to handle multiple buffers.. Window menu approach
+doesn't leave a place for other metadata about the buffers.. dialog-only
+approach is rather heavy-weight.. emacs' buffer list is clunky and
+unintuitive.. 
+
+one idea is some kind of widget that is related to the status bar
+display of the current buffer's file name.. like you click there and
+something unrolls to show the buffer info.. but that ends up not being
+all that different from a Window menu
+
+tabs take up space and don't provide much information
+
+bug:
+  - File|Open, then switch to another app, then back to Open dialog,
+    choose new file: editor view doesn't redraw
+
+----------------------------
+start 3/27/03 15:09
+
+needed to finish up the multi-file support.  that's now basically
+done, but with several todos:
+  - need File|Close menu option
+  - need the search+replace interface to interact with buffer
+    cycling correctly (need to decide just what that is)
+  - better naming of buffers?  command-line name is relative, while
+    names from the dialog are absolute.. also unique untitled.txt
+    variant for each File|New
+  - allow many files to be spec'd on command line
+
+
+design for an undo/history system:
+  
+goals:
+  - editing sequence should be largely location independent, so
+    they still work after changing some prior commands
+    - so, the editing *cursor* is part of the abstraction
+  - the concrete syntax is both readable (clear meaning) and writable
+    (compact notation)
+  - every command is reversible, *without* checkpointing.  needed b/c:
+    - state must not be hidden, so script can be edited as text
+    - checkpointing doesn't scale
+  - open problem: handling correspondence mismatch
+    - approach 1: automatic repair; but this is likely to do the wrong
+      thing most of the time
+    - approach 2: stop and demand manual repair (prefer this)
+  - do *not* include the selection in the log
+    - minimal information to lose
+    - contributes nothing to location independence
+    - highly non-orthogonal, making reversibility much harder
+  - would like language to have non-reversible degenerate forms, to allow
+    scripts to be written by hand and essentially become reversible when
+    instantiated (like a macro); or, since I want macros to be a more
+    powerful language generally, maybe I just want entirely different
+    languages for the different purposes...
+
+constructs of language:
+  - cursor movement: move(L, C)
+    - each L and C can be either a relative offset or an absolute value
+    - relative is +n or -n; +0 ad -0 are synonyms
+    - absolute is n<-m, meaning go to n and we're at m now (for reversing)
+  - insertLeft and insertRight: insert text, and leave cursor to left
+    or right; "insert" is then an alias for insertRight
+  - deleteLeft and deleteRight: delete text; command accepts string argument
+    saying what text is deleted; "delete" an alias for deleteLeft so it's
+    the natural inverse of insert
+  - both insert and delete take add'l argument, saying how many chars of
+    whitespace fill are added to end of line/file before inserting/deleting;
+    this is always a sequence of newlines followed by a sequence of spaces;
+    fill defaults to 0 if not specified (in the concrete syntax)
+  - group ["label"] { ... } to group constructs so the interactive undo/redo
+    does them all together
+  - reverse ["label"] { ... } like "group" but actions are done in reverse
+
+  
+
+
+

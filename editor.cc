@@ -30,18 +30,14 @@
 Editor::Editor(BufferState *buf,
                QWidget *parent=NULL, const char *name=NULL)
   : QWidget(parent, name, WRepaintNoErase | WResizeNoErase | WNorthWestGravity),
+    EditingState(),
     infoBox(NULL),
     buffer(buf),
-    // cursor, select inited by resetView()
-    firstVisibleLine(0),
-    firstVisibleCol(0),
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
     cursorColor(0x00, 0xFF, 0xFF),  // cyan
     // fonts set by setFont()
-    hitText(),                      // empty string, no hit highlighting
-    hitTextFlags(Buffer::FS_NONE),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -123,6 +119,21 @@ void Editor::setFont(QFont &f)
 }
 
 
+void Editor::setBuffer(BufferState *buf)
+{                          
+  // save current editing state in current 'buffer'
+  if (buffer) {     // allow initial buffer to be NULL
+    buffer->savedState.copy(*this);
+  }
+
+  // switch to the new buffer, and retrieve its editing state
+  buffer = buf;
+  EditingState::copy(buf->savedState);
+
+  redraw();
+}
+
+
 void Editor::redraw()
 {
   updateView();
@@ -161,9 +172,7 @@ void Editor::setView(int newFirstLine, int newFirstCol)
     // nop
   }
   else {
-    // this is the one function allowed to change these
-    const_cast<int&>(firstVisibleLine) = newFirstLine;
-    const_cast<int&>(firstVisibleCol) = newFirstCol;
+    setFirstVisibleLC(newFirstLine, newFirstCol);
 
     updateView();
 
@@ -876,31 +885,6 @@ void Editor::spliceNextLine()
   xassert(cursorCol == buffer->lineLength(cursorLine));
 
   buffer->spliceNextLine(cursorLine);
-}
-
-
-bool Editor::cursorBeforeSelect() const
-{
-  if (cursorLine < selectLine) return true;
-  if (cursorLine > selectLine) return false;
-  return cursorCol < selectCol;
-}
-
-
-void Editor::normalizeSelect()
-{
-  if (cursorBeforeSelect()) {
-    selLowLine = cursorLine;
-    selLowCol = cursorCol;
-    selHighLine = selectLine;
-    selHighCol = selectCol;
-  }
-  else {
-    selLowLine = selectLine;
-    selLowCol = selectCol;
-    selHighLine = cursorLine;
-    selHighCol = cursorCol;
-  }
 }
 
 

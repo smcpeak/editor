@@ -8,6 +8,7 @@
 #include "trace.h"           // TRACE_ARGS
 #include "c_hilite.h"        // C_Highlighter
 #include "incsearch.h"       // IncSearch
+#include "strutil.h"         // sm_basename
 
 #include <qapplication.h>    // QApplication
 #include <qmenubar.h>        // QMenuBar
@@ -33,8 +34,8 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
     horizScroll(NULL),
     position(NULL),
     filename(NULL),
-    theBuffer()
-{
+    buffers()
+{                                                             
   // will build a layout tree to manage sizes of child widgets
   QVBoxLayout *mainAreaMgr = new QVBoxLayout(this);
   QVBox *mainArea = new QVBox(this, "main area");
@@ -42,13 +43,13 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   QGrid *editArea = new QGrid(2 /*cols*/, QGrid::Horizontal, mainArea, "edit area");
 
-  editor = new Editor(&theBuffer, editArea, "editor widget");
+  editor = new Editor(NULL /*temporary*/, editArea, "editor widget");
   editor->setFocus();
   connect(editor, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
 
   vertScroll = new QScrollBar(QScrollBar::Vertical, editArea, "vertical scrollbar");
   connect(vertScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToLine(int) ));
-    
+
   // disabling horiz scroll for now..
   //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
   //connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
@@ -100,6 +101,7 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
     menuBar->insertItem("&Window", window);
     window->insertItem("Occupy Left", this, SLOT(windowOccupyLeft()), CTRL+ALT+Key_Left);
     window->insertItem("Occupy Right", this, SLOT(windowOccupyRight()), CTRL+ALT+Key_Right);
+    window->insertItem("Cycle buffer", this, SLOT(windowCycleBuffer()), Key_F6);  // for now
 
     QPopupMenu *help = new QPopupMenu(this);
     menuBar->insertItem("&Help", help);
@@ -111,15 +113,13 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   setGeometry(200,200,      // initial location
               400,400);     // initial size
 
-  // initialize things the way File|New does
+  // initialize things the way File|New does; this does the initial
+  // call to editor->setBuffer() to remove the NULL value
   fileNew();
 
   // temporary: insert some dummy text into the buffer
   //theBuffer.readFile("buffer.cc");
   
-  // temporary: make and attach a C++ highlighter
-  theBuffer.highlighter = new C_Highlighter(theBuffer);
-                                    
   // i-search; use filename as status display
   isearch = new IncSearch(filename);
 }
@@ -131,23 +131,42 @@ EditorWindow::~EditorWindow()
 }
 
 
+// not inline because main.h doesn't see editor.h
+BufferState *EditorWindow::theBuffer()
+{
+  return editor->buffer;
+}
+
+
 void EditorWindow::fileNew()
 {
-  // delete all text
-  theBuffer.clear();
-  editor->resetView();
+  BufferState *b = new BufferState();
+  b->filename = "untitled.txt";    // TODO: find a unique variant of this name
+  buffers.append(b);
+
+  // temporary: make and attach a C++ highlighter
+  b->highlighter = new C_Highlighter(*b);
+
+  setBuffer(b);
+}
+
+void EditorWindow::setBuffer(BufferState *b)
+{
+  editor->setBuffer(b);
+
+  //editor->resetView();
   editor->updateView();
   editorViewChanged();
-  editor->buffer->changed = false;
 
-  setFileName("untitled.txt");
+  setFileName(theBuffer()->filename);
 }
 
 
 void EditorWindow::setFileName(char const *name)
 {
-  theBuffer.filename = name;
+  theBuffer()->filename = name;
   filename->setText(name);
+  setCaption(QString(stringc << "An Editor: " << sm_basename(name)));
 }
 
 
@@ -162,24 +181,30 @@ void EditorWindow::fileOpen()
 
 void EditorWindow::fileOpenFile(char const *name)
 {
-  theBuffer.clear();
-  editor->resetView();
-
+  BufferState *b = new BufferState();
+  b->filename = name;
+  
   try {
-    theBuffer.readFile(name);
-    theBuffer.changed = false;
-    editorViewChanged();
-    setFileName(name);
+    b->readFile(name);
   }
   catch (XOpen &x) {
     QMessageBox::information(this, "Can't open file", QString(x.why()));
+    delete b;
+    return;
   }
+
+  // temporary: make and attach a C++ highlighter
+  b->highlighter = new C_Highlighter(*b);
+
+  // now that we've opened the file, set the editor widget to edit it
+  buffers.append(b);
+  setBuffer(b);
 }
 
 
 void EditorWindow::fileSave()
 {
-  if (theBuffer.filename.equals("untitled.txt")) {
+  if (theBuffer()->filename.equals("untitled.txt")) {
     fileSaveAs();
     return;
   }
@@ -190,8 +215,8 @@ void EditorWindow::fileSave()
 void EditorWindow::writeTheFile()
 {
   try {
-    theBuffer.writeFile(theBuffer.filename);
-    theBuffer.changed = false;
+    theBuffer()->writeFile(theBuffer()->filename);
+    theBuffer()->changed = false;
     editorViewChanged();
   }
   catch (XOpen &x) {
@@ -202,7 +227,7 @@ void EditorWindow::writeTheFile()
 
 void EditorWindow::fileSaveAs()
 {
-  QString s = QFileDialog::getSaveFileName(QString(theBuffer.filename),
+  QString s = QFileDialog::getSaveFileName(QString(theBuffer()->filename),
                                            "Files (*)", this);
   if (s.isEmpty()) {
     return;
@@ -228,6 +253,15 @@ void EditorWindow::windowOccupyLeft()
 void EditorWindow::windowOccupyRight()
 {
   setGeometry(493, 55, 781, 867);
+}
+
+
+void EditorWindow::windowCycleBuffer()
+{
+  int cur = buffers.indexOf(theBuffer());
+  xassert(cur >= 0);
+  cur = (cur + 1) % buffers.count();     // cycle
+  setBuffer(buffers.nth(cur));
 }
 
 
@@ -280,6 +314,9 @@ int main(int argc, char **argv)
   }
 
   EditorWindow ed(NULL /*parent*/, "main editor window");
+  
+  // this caption is immediately replaced with another one, at the moment,
+  // since I call fileNew() right away
   ed.setCaption("An Editor");
   
   if (argc >= 2) {

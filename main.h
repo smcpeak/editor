@@ -8,6 +8,7 @@
 #include <qwindowsstyle.h>   // QWindowsStyle
 
 #include "bufferstate.h"     // BufferState
+#include "objlist.h"         // ObjList
 
 class QMenuBar;
 class QScrollBar;
@@ -28,8 +29,8 @@ public:      // data
   QScrollBar *vertScroll, *horizScroll;
   QLabel *position, *filename;
 
-  // right now, one buffer
-  BufferState theBuffer;
+  // list of open files (buffers)
+  ObjList<BufferState> buffers;
 
   // incremental search system
   IncSearch *isearch;          // (owner)
@@ -37,6 +38,7 @@ public:      // data
 private:     // funcs
   void setFileName(char const *name);
   void writeTheFile();
+  void setBuffer(BufferState *b);
 
 public:      // funcs
   EditorWindow(QWidget *parent=0, char const *name=0);
@@ -45,6 +47,9 @@ public:      // funcs
   // open and begin editing a particular file
   void fileOpenFile(char const *fname);
 
+  // buffer user is editing: returns editor->buffer
+  BufferState *theBuffer();
+  
 public slots:
   void fileNew();
   void fileOpen();
@@ -55,6 +60,7 @@ public slots:
   
   void windowOccupyLeft();
   void windowOccupyRight();
+  void windowCycleBuffer();
   
   void helpAbout();
   

@@ -114,7 +114,7 @@ public:    // funcs
 
 
 // a convenience layer on top of BufferCore; the implementations of
-// thefunctions in Buffer are restricted to using BufferCore's
+// the functions in Buffer are restricted to using BufferCore's
 // public methods
 class Buffer : public BufferCore {
 private:                                                         

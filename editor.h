@@ -17,7 +17,7 @@ class InputProxy;           // inputproxy.h
 // control to edit the contents of a buffer; it's possible (and
 // expected) to change which buffer a given Editor edits after
 // creating the Editor object
-class Editor : public QWidget {
+class Editor : public QWidget, public EditingState {
   Q_OBJECT
 
 private:     // data
@@ -26,9 +26,12 @@ private:     // data
 
 public:      // data
   // ------ editing state -----
-  // buffer whose text we're editing
+  // buffer whose text we're editing; it can be set to NULL when
+  // the ctor is called, but must if so, must be set to a non-NULL
+  // value via setBuffer() before any drawing or editing is done
   BufferState *buffer;           // (serf)
 
+  #if 0      // stored in EditingState
   // cursor position (0-based)
   int cursorLine;
   int cursorCol;
@@ -50,6 +53,13 @@ public:      // data
   // updateView() routine and should be treated as read-only by other
   // code; by "visible", I mean the entire line or column is visible
   int lastVisibleLine, lastVisibleCol;
+  
+  // when nonempty, any buffer text matching this string will
+  // be highlighted in the 'hit' style; match is carried out
+  // under influence of 'hitTextFlags'
+  string hitText;
+  Buffer::FindStringFlags hitTextFlags;
+  #endif // 0
 
   // ------ rendering options ------
   // amount of blank space at top/left edge of widget
@@ -66,12 +76,6 @@ public:      // data
   // fonts, corresponding to 'enum FontVariant' (styledb.h); note
   // that these fonts all need to use the same character size
   QFont normalFont, italicFont, boldFont;
-
-  // when nonempty, any buffer text matching this string will
-  // be highlighted in the 'hit' style; match is carried out
-  // under influence of 'hitTextFlags'
-  string hitText;
-  Buffer::FindStringFlags hitTextFlags;
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
@@ -112,9 +116,6 @@ private:     // funcs
   // with the next one
   void spliceNextLine();
 
-  // true if the cursor is before (above/left) the select point
-  bool cursorBeforeSelect() const;
-  
   // ctrl-pageup/pagedown
   void cursorToTop();
   void cursorToBottom();
@@ -158,6 +159,9 @@ public:      // funcs
   // QWidget funcs
   virtual void setFont(QFont &f);
 
+  // change which buffer this editor widget is editing
+  void setBuffer(BufferState *buf);
+  
   // change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor
   void setView(int newFirstLine, int newFirstCol);
@@ -173,9 +177,6 @@ public:      // funcs
   //   - topMargin, leftMargin, interLineSpace
   //   - fontHeight, fontWidth
   void updateView();
-
-  // set sel{Low,High}{Line,Col}
-  void normalizeSelect();
 
   // set cursor and view to 0,0
   void resetView();
