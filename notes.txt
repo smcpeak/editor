@@ -343,7 +343,7 @@ playing with it a bit more
 more todo:
   - alt+ins to toggle ins/overwrite
   * auto-indent
-  - alt+left/right
+  * alt+left/right
   * ctrl+alt+left/right
   - tabs
   - File|Rename, that writes to a new name and deletes the old one
@@ -406,8 +406,33 @@ end 2/28/03 12:06
 --------------
 start 2/28/03 13:33
 
-implement Ctrl+A, etc. emacs bindings
+implemented Ctrl+A, etc. emacs bindings
 
 next: auto-indent.. done
 
-alt+left/right..
+alt+left/right.. done
+
+thinking about design for search+replace.. current ideas:
+  - three modes: search, entering replacement, replacing
+  - enter moves forward, esc moves back, among modes
+  - replacing, replacement text is in buffer, selected, in place of
+    first match (replacing it is implicit once enter pressed, unless esc)
+    - printable: add chars
+    - backspace: remove char
+    - enter: done
+    - esc: back
+    - up/down: history of replacement texts
+  - replacing:
+    - left/right: move to next/prev occurrence
+    - y: replace
+    - n: next occurrence
+    - !: replace all, done
+    - q: done
+
+end 2/28/03 16:17
+
+-----------------------
+start 3/01/03 06:59
+
+will implement replacing.. ok, seems to work
+

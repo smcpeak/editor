@@ -27,7 +27,6 @@ private:     // data
   // current search options
   Buffer::FindStringFlags curFlags;
 
-  // ----- transient state: what I'd have before implementing Backspace -----
   // text we're searching for
   string text;
 
@@ -38,6 +37,19 @@ private:     // data
   // whether the last search found a match
   bool match;
 
+  // mode
+  enum Mode {
+    M_SEARCH,           // searching for matching text
+    M_GET_REPLACEMENT,  // get the replacement text
+    M_REPLACE,          // applying replacement text
+  } mode;
+
+  // buffer text removed during M_GET_REPLACEMENT
+  string removedText;
+    
+  // replacement text
+  string replaceText;
+  
 private:     // funcs
   // search from curLine/curCol to find 'text'; return true
   // if we find a match
@@ -59,6 +71,21 @@ private:     // funcs
   // if a match is found
   bool tryWrapSearch(int &line, int &col) const;
 
+  // key handlers for the three modes
+  bool searchKeyMap(QKeyEvent *k, int state);
+  bool getReplacementKeyMap(QKeyEvent *k, int state);
+  bool replaceKeyMap(QKeyEvent *k, int state);
+  
+  // switch modes, and update status line
+  void setMode(Mode m);
+                 
+  // delete selection, insert 'text'
+  void putBackMatchText();
+  
+  // replace current match with 'replaceText', go to next
+  // match; return false and call detach() if no such match 
+  bool replace();
+    
 public:      // funcs
   IncSearch(QLabel *status);
   ~IncSearch();

@@ -219,6 +219,14 @@ public:      // funcs
   void deleteCharAtCursor();
   void blockIndent(int amt);
 
+  // insert or delete small amounts of text (not guaranteed
+  // to be efficient for large amounts of text)
+  void insertAtCursor(char const *text);
+  void deleteAtCursor(int numChars);
+
+  // get selected text, or "" if nothing selected
+  string getSelectedText();
+    
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);

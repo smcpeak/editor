@@ -826,6 +826,33 @@ void Editor::keyPressEvent(QKeyEvent *k)
 }
 
 
+void Editor::insertAtCursor(char const *text)
+{
+  buffer->changed = true;
+  buffer->insertTextRange(cursorLine, cursorCol, text);
+  scrollToCursor();
+}
+
+void Editor::deleteAtCursor(int amt)
+{
+  xassert(amt >= 0);
+  if (amt == 0) {
+    return;
+  }
+
+  fillToCursor();
+
+  int line=cursorLine, col=cursorCol;
+  while (amt--) {
+    buffer->advanceWithWrap(line, col, false /*back*/);
+  }
+
+  buffer->changed = true;
+  buffer->deleteTextRange(cursorLine, cursorCol, line, col);
+  scrollToCursor();
+}
+
+
 void Editor::fillToCursor()
 {
   // fill with blank lines
@@ -1028,8 +1055,7 @@ void Editor::editCopy()
 {
   if (selectEnabled) {
     // get selected text
-    normalizeSelect();
-    string sel = buffer->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    string sel = getSelectedText();
 
     // put it into the clipboard
     QClipboard *cb = QApplication::clipboard();
@@ -1058,10 +1084,7 @@ void Editor::editPaste()
     editDelete();
 
     // insert at cursor
-    buffer->changed = true;
-    buffer->insertTextRange(cursorLine, cursorCol, text);
-
-    scrollToCursor();
+    insertAtCursor(text);
   }
 }
 
@@ -1215,6 +1238,18 @@ void Editor::blockIndent(int amt)
   }
   
   redraw();
+}
+
+
+string Editor::getSelectedText()
+{
+  if (!selectEnabled) {
+    return "";
+  }
+  else {
+    normalizeSelect();   // this is why this method is not 'const' ...
+    return buffer->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+  }
 }
 
 
