@@ -162,6 +162,27 @@ void drawBuffer(WindowName &win, Buffer &buffer)
 }
 
 
+int myErrorHandler(Display *dis, XErrorEvent *ev)
+{
+  char buf[80];
+  XGetErrorText(dis, ev->error_code, buf, 80);
+
+  printf("my error handler: [%d] %s\n",
+         ev->error_code, buf);
+  exit(1);
+  return 0;    // silence warning
+}
+
+int myIOErrorHandler(Display *dis)
+{
+  // tried to use an exception, but it doesn't work .. ?
+
+  printf("connection died!\n");
+  exit(1);
+  return 0;    // silence warning
+}
+
+
 int main()
 {
   // open a network connection to host specified in DISPLAY
@@ -170,6 +191,10 @@ int main()
   Display *display = XOpenDisplay(NULL);
   printf("display: %p\n", display);
   assert(display);
+
+  // set the error handlers
+  XSetErrorHandler(myErrorHandler);
+  XSetIOErrorHandler(myIOErrorHandler);
 
   // figure out which screen we are (already?) connected to
   int screen = DefaultScreen(display);
@@ -196,6 +221,7 @@ int main()
       ButtonReleaseMask |                                      // mouse button release
       KeyPressMask |                                           // keyboard key press
       KeyReleaseMask |                                         // keyboard key release
+      StructureNotifyMask |                                    // window destruction?
       0;
     attr.override_redirect = False;                          // don't override window mgr
 
@@ -240,7 +266,7 @@ int main()
   // (questionable design decision, but tolerable in the current context)
 
   // set the window's caption
-  XStoreName(display, win.window, "Hello, world!");
+  XStoreName(display, win.window, "El Editor Supremo");
 
   // display the window
   XMapWindow(display, win.window);      // make it visible
@@ -263,6 +289,22 @@ int main()
         printf("expose\n");
         drawBuffer(win, theBuffer);
         break;
+
+      #define WATCH_FOR(type)              \
+      case type:                           \
+        printf("saw %s event\n", #type);   \
+        break;                             
+      WATCH_FOR(CirculateNotify)
+      WATCH_FOR(ConfigureNotify)
+      WATCH_FOR(CreateNotify)
+      WATCH_FOR(DestroyNotify)
+      WATCH_FOR(GravityNotify)
+      WATCH_FOR(MapNotify)
+      WATCH_FOR(MappingNotify)
+      WATCH_FOR(ReparentNotify)
+      WATCH_FOR(UnmapNotify)
+      WATCH_FOR(VisibilityNotify)
+      #undef WATCH_FOR
 
       case MotionNotify:
         printf("pointer motion at %d, %d\n",
@@ -326,6 +368,8 @@ int main()
             case XK_Left:   theBuffer.moveCursor(-1);  break;
             case XK_Right:  theBuffer.moveCursor(+1);  break;
             case XK_BackSpace:  theBuffer.backspace(); break;
+            case XK_Home:       theBuffer.moveCursor(-999);  break;
+            case XK_End:        theBuffer.moveCursor(+999);  break;
           }
 
           // redraw
