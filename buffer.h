@@ -1,123 +1,18 @@
 // buffer.h
-// a buffer of text (one file) in the editor
+// buffer as used by the editor:
+//   - core representation (BufferCore)
+//   - undo/redo history (HistoryBuffer)
+//   - convenience functions (this module)
 
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "gap.h"        // GapArray
-#include "str.h"        // string
-#include "sobjlist.h"   // SObjList
-
-// fwd in this file
-class BufferObserver;
+#include "historybuf.h"   // HistoryBuffer
 
 
-// the contents of a file; any attempt to read or write the contents
-// must go through this interface
-// NOTE: lines and columns are 0-based
-class BufferCore {
-private:   // data
-  // the spine of the editor; every element is either NULL, meaning a
-  // blank line, or is an owner pointer to a '\n'-terminated array of
-  // chars that represent the line's contents
-  GapArray<char*> lines;
-
-  // the most-recently edited line number, or -1 to mean that
-  // no line's contents are stored
-  int recent;
-
-  // if recent != -1, then this holds the contents of that line,
-  // and lines[recent] is NULL
-  GapArray<char> recentLine;
-
-  // length of the longest line this file has ever had; this is
-  // my poor-man's substitute for a proper interval map, etc., to
-  // be able to answer to 'maxLineLength()' query
-  int longestLengthSoFar;
-
-  // invariants:
-  //   - recent >= -1
-  //   - if recent>=0, lines[recent] == NULL
-  //   - if recent<0, recentLine.length() == 0
-  //   - every lines[n] is NULL or valid
-  //   - longestLineSoFar >= 0
-
-public:    // data
-  // list of observers
-  mutable SObjList<BufferObserver> observers;
-
-private:   // funcs
-  // strlen, but NULL yields 0 and '\n' is terminator
-  static int bufStrlen(char const *p);
-
-  // bounds check line
-  void bc(int line) const { xassert(0 <= line && line < numLines()); }
-
-  // copy the given line into 'recentLine', with given hints as to
-  // where the gap should go and how big it should be
-  // postcondition: recent==line
-  void attachRecent(int line, int insCol, int insLength);
-
-  // copy contents of 'recentLine', if any, back into lines[];
-  // postcondition: recent==-1
-  void detachRecent();
-
-  // update 'longestLineSoFar', given the existence of a line
-  // that is 'len' long
-  void seenLineLength(int len);
-
-public:    // funcs
-  BufferCore();
-  ~BufferCore();
-
-
-  // ---- queries ----
-  // # of lines stored
-  int numLines() const { return lines.length(); }
-
-  // length of a given line, not including the '\n'
-  int lineLength(int line) const;
-
-  // get part of a line's contents, starting at 'col' and getting
-  // 'destLen' chars; all chars must be in the line now; the retrieved
-  // text never includes the '\n' character
-  void getLine(int line, int col, char *dest, int destLen) const;
-
-  // maximum length of a line; TODO: implement this
-  int maxLineLength() const { return longestLengthSoFar; }
-
-
-  // ---- manipulation interface ----
-  // insert a new blank line, where the new line will be line 'line';
-  // 'line' must be in [0,numLines()]
-  void insertLine(int line);
-
-  // delete a blank line; the line must *already* be blank!
-  void deleteLine(int line);
-
-  // insert text into a given line, starting at the given column;
-  // 'col' must be in [0,lineLength(line)]; the inserted text must
-  // *not* contain the '\n' character
-  void insertText(int line, int col, char const *text, int length);
-
-  // delete text
-  void deleteText(int line, int col, int length);
-
-
-  // ---- debugging ----
-  // print internal rep
-  void dumpRepresentation() const;
-
-  // how much memory am I using?
-  void printMemStats() const;
-};
-
-
-// a convenience layer on top of BufferCore; the implementations of
-// the functions in Buffer are restricted to using BufferCore's
-// public methods
-class Buffer : public BufferCore {
-private:                                                         
+// a convenience layer on top of HistoryBuffer
+class Buffer : public HistoryBuffer {
+private:
   // check that line/col is positive
   static void pos(int line, int col);
 
@@ -125,25 +20,23 @@ private:
   // the buffer (it's ok to be at the end of a line)
   void bc(int line, int col) const;
 
-public:    
-  // initializes with a single empty line, which is expected to
-  // be the representation an empty file (to accomodate files that
-  // don't end with newlines)
+public:
+  // initially empty
   Buffer();
 
-  // insert the contents of 'fname' into the top of this buffer
-  void readFile(char const *fname);
 
-  // write the entire buffer contents to 'fname'
-  void writeFile(char const *fname) const;
-  
-  
-  // line length, or 0 if it's beyond the end
+  // write the entire buffer contents to 'fname' ('readFile' is
+  // available as a method of HistoryBuffer)
+  void writeFile(char const *fname) const
+    { writeFile(getCoreC(), fname); }
+
+
+  // line length, or 0 if it's beyond the end of the file
   int lineLengthLoose(int line) const;
 
   // get a range of text from a line, but if the position is outside
   // the defined range, pretend the line exists (if necessary) and
-  // that there are space characters up to 'col' (if necessary)
+  // that there are space characters up to 'col+destLen' (if necessary)
   void getLineLoose(int line, int col, char *dest, int destLen) const;
 
 
@@ -163,34 +56,35 @@ public:
   string getWordAfter(int line, int col) const;
      
 
-  // get last cursor position
+  // get position of last+1 char in file
   void getLastPos(int &line, int &col) const;
 
-  // advance a cursor position forwards or backwards, wrapping
+  // advance cursor position forwards or backwards, wrapping
   // to the next/prev line at line edges
-  void advanceWithWrap(int &line, int &col, bool backwards) const;
+  void advanceWithWrap(bool backwards) const;
 
-  // on a particular line, get # of whitespace chars before first 
+  // on a particular line, get # of whitespace chars before first
   // non-ws char, or -1 if there are no non-ws chars
   int getIndentation(int line) const;
-  
+
   // starting at 'line', go up until we find a line that is not
-  // entirely blank (whitespace), and return the # of whitespace 
+  // entirely blank (whitespace), and return the # of whitespace
   // chars to the left of the first non-whitespace char
   int getAboveIndentation(int line) const;
 
 
-  // split 'line' into two, putting everything after 'col' into the
-  // next line; if 'col' is beyond the end of the line, spaces are
-  // *not* appended to 'line' before inserting a blank line after it;
-  // the function returns with line incremented by 1 and col==0
-  void insertNewline(int &line, int &col);
+  // split 'line' into two, putting everything after cursor column
+  // into the next line; if 'col' is beyond the end of the line,
+  // spaces are *not* appended to 'line' before inserting a blank line
+  // after it; the function returns with line incremented by 1 and
+  // col==0
+  void insertNewline();
 
-  // insert text that might have newline characters at a particular
-  // point in the buffer; line/col are updated to indicate the
-  // position at the end of the inserted text; line/col must be
-  // a position within the defined portion of the buffer
-  void insertTextRange(int &line, int &col, char const *text);
+  // insert text that might have newline characters at the cursor;
+  // line/col are updated to indicate the position at the end of the
+  // inserted text; cursor must be a position within the defined
+  // portion of the buffer
+  void insertTextRange(char const *text);
   
   // indent (or un-indent, if ind<0) the given line by some # of spaces;
   // if unindenting, but there are not enough spaces, then the line

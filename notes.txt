@@ -494,7 +494,7 @@ goals:
 constructs of language:
   - cursor movement: move(L, C)
     - each L and C can be either a relative offset or an absolute value
-    - relative is +n or -n; +0 ad -0 are synonyms
+    - relative is +n or -n; +0 and -0 are synonyms
     - absolute is n<-m, meaning go to n and we're at m now (for reversing)
   - insertLeft and insertRight: insert text, and leave cursor to left
     or right; "insert" is then an alias for insertRight
@@ -512,5 +512,115 @@ constructs of language:
   
 end 3/27/03 16:45
 
+
+---------------------
+start 3/27/03 19:01
+
+plan for history is to start by inserting a layer directly above BufferCore,
+called BufferHistory, that exposes exactly the interface above for manipulating
+text.  it will also provide read-only access directly to BufferCore.  then
+Buffer will be modified to provide the same services it does now, but using
+the BufferHistory manipulation mechanism instead of that of BufferCore
+
+difficulty: buffers with multiple views open..
+
+end 3/27/03 20:18
+
+
+----------------------
+start 5/19/03 18:04
+
+want to get the editor working.. need undo facility
+
+as above, architecture is:
+
+         +--------+
+         | Buffer |  (exposed)
+         +------------------+
+         | HistoryBuffer    |
+         +------------------+
+         | CursorBufferCore |    (BufferCore + line/col)
+         +------------------+
+         | BufferCore       |
+         +------------------+
+         
+internal to HistoryBuffer will be a representation of that history
+as a GapArray of 'long'.  when LSB is 0, it's a pointer to an object
+implementing an interface that can apply itself in forward or reverse
+to a CursorBufferCore.  when LSB is 1, it's one of three special cases:
+  RelRelCursor:
+    signed int dline : 8;     // delta in lines
+    signed int dcol  : 8;     // delta in cols
+  AbsColumn:
+    unsigned int dest : 8;    // col to move to
+    unsigned int src  : 8;    // col moving from
+    // line does not change
+  CharInsDel:
+    unsigned int ch   : 17;   // unicode character code
+    bool ins          : 1;    // 1=insert, 0=delete
+    bool left         : 1;    // 1=left, 0=right
+    unsigned int fill : 8;    // fill chars
+and I'll use a 3-bit opcode to pick among these and any future codes,
+leaving 1 unused bit in CharInsDel, the most bit-hungry record
+
+end 5/19/03 19:30
+
+-------------------
+start 5/20/03 01:34
+
+will implement basic object-oriented history sequence..
+
+got part of it.. it's a bit more complicated than I initially
+realized, because the system needs unsynchronized operations to
+avoid modifying the buffer.. but I now think I know how to
+structure the operations to accomplish that
+
+end 5/20/03 03:20
+
+--------------------
+start 5/20/03 22:48
+
+trouble of a new sort: I want to be able to re-use the machinery
+used to verify that a HistoryElt is consistent, to also fill in
+that consistency information in the first place
+
+for fill, it's relatively easy, since I can just compute line/col fill
+and use that for both purposes.  however, for deletions (esp. left
+deletions), it's not as clear whether one can design an interface to
+the computation that is then easy to use for both purposes, or whether
+'apply' should get yet more complicated and have an option to 'fix'..
+that option might be useful in its own right when the info is found
+to be wrong, or perhaps just as easily the redesigned interface could
+be used in a third way, for patching inconsistent histories..
+
+hmmm....
+
+end 5/21/03 02:06
+
+----------------
+start 5/30/03 14:10
+
+plan: factor out the 'compute' part of the record verification, and
+expose that to make it easier to construct records
+
+hmm..
+
+end 5/30/03 17:00
+
+---------------
+start 5/31/03 01:27
+
+new plan: 
+  - first, remove 'fill' from the insert/delete records
+  - implement grouping
+  - plan on having lots of groups, and a mechanism to recognize
+    and special-case empty and singleton groups
+    
+essentially, open a group at the beginning of the UI processing
+switch(), and close it at the end, so that all UI actions are
+exactly undoable in one step; don't optimize particular combinations,
+because in fact the one combination I tried to optimize is a rather
+rare one, I'm now convinced, having seen and implemented several
+other combinations
 
 

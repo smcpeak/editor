@@ -62,6 +62,9 @@ public:      // funcs
   T get(int elt) const              { return eltRef(elt); }
   void set(int elt, T value)        { eltRef(elt) = value; }
 
+  // set an element, yielding the old value as the return value
+  T swap(int elt, T value);
+
   // insert an element; index becomes 'elt' and all elements with
   // original index 'elt' or greater are shifted up one
   void insert(int elt, T value);
@@ -139,6 +142,15 @@ void GapArray<T>::prepareToInsert(int elt, int insLen)
       gap < insLen) {
     makeGapAt(elt, insLen);
   }
+}
+
+  
+template <class T>
+T GapArray<T>::swap(int elt, T value)
+{
+  T ret = get(elt);
+  set(elt, value);
+  return ret;
 }
 
 

@@ -3,355 +3,21 @@
 
 #include "buffer.h"        // this module
 
-#include "strutil.h"       // encodeWithEscapes
-#include "syserr.h"        // xsyserror
-#include "test.h"          // USUAL_MAIN, PVAL
-#include "autofile.h"      // AutoFILE
-#include "array.h"         // Array
+//#include "strutil.h"       // encodeWithEscapes
+//#include "syserr.h"        // xsyserror
+//#include "test.h"          // USUAL_MAIN, PVAL
+//#include "autofile.h"      // AutoFILE
+//#include "array.h"         // Array
 
 #include <string.h>        // strncasecmp
 #include <ctype.h>         // isalnum, isspace
 
 
-// ---------------------- BufferCore --------------------------
-BufferCore::BufferCore()
-  : lines(),               // empty sequence of lines
-    recent(-1),
-    recentLine(),
-    longestLengthSoFar(0),
-    observers()
-{}
-
-BufferCore::~BufferCore()
-{
-  // deallocate the non-NULL lines
-  for (int i=0; i < lines.length(); i++) {
-    char *p = lines.get(i);
-    if (p) {
-      delete[] p;
-    }
-  }
-}
-
-
-void BufferCore::detachRecent()
-{
-  if (recent == -1) { return; }
-
-  xassert(lines.get(recent) == NULL);
-
-  // copy 'recentLine' into lines[recent]
-  int len = recentLine.length();
-  if (len) {
-    char *p = new char[len+1];
-    p[len] = '\n';
-    recentLine.writeIntoArray(p, len);
-    xassert(p[len] == '\n');   // may as well check for overrun..
-
-    lines.set(recent, p);
-
-    recentLine.clear();
-  }
-  else {
-    // it's already NULL, nothing needs to be done
-  }
-
-  recent = -1;
-}
-
-
-void BufferCore::attachRecent(int line, int insCol, int insLength)
-{
-  if (recent == line) { return; }
-  detachRecent();
-
-  char const *p = lines.get(line);
-  int len = bufStrlen(p);
-  if (len) {
-    // copy contents into 'recentLine'
-    recentLine.fillFromArray(p, len, insCol, insLength);
-
-    // deallocate the source
-    delete[] p;
-    lines.set(line, NULL);
-  }
-  else {
-    xassert(recentLine.length() == 0);
-  }
-
-  recent = line;
-}
-
-
-int BufferCore::lineLength(int line) const
-{
-  bc(line);
-
-  if (line == recent) {
-    return recentLine.length();
-  }
-  else {
-    return bufStrlen(lines.get(line));
-  }
-}
-
-STATICDEF int BufferCore::bufStrlen(char const *p)
-{
-  if (p) {
-    int ret = 0;
-    while (*p != '\n') {
-      ret++;
-      p++;
-    }
-    return ret;
-  }
-  else {
-    return 0;
-  }
-}
-
-
-void BufferCore::getLine(int line, int col, char *dest, int destLen) const
-{
-  bc(line);
-  xassert(destLen >= 0);
-
-  if (line == recent) {
-    recentLine.writeIntoArray(dest, destLen, col);
-  }
-  else {
-    char const *p = lines.get(line);
-    int len = bufStrlen(p);
-    xassert(0 <= col && col+destLen <= len);
-
-    memcpy(dest, p+col, destLen);
-  }
-}
-
-
-// 'line' is marked 'const' to ensure its value is not changed before
-// being passed to the observers; the same thing is done in the other
-// three mutator functions; the C++ standard explicitly allows 'const'
-// to be added here despite not having it in the .h file
-void BufferCore::insertLine(int const line)
-{
-  // insert a blank line
-  lines.insert(line, NULL /*value*/);
-
-  // adjust which line is 'recent'
-  if (recent >= line) {
-    recent++;
-  }
-
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->insertLine(*this, line);
-  }
-}
-
-
-void BufferCore::deleteLine(int const line)
-{
-  if (line == recent) {
-    xassert(recentLine.length() == 0);
-    detachRecent();
-  }
-
-  // make sure line is empty
-  xassert(lines.get(line) == NULL);
-
-  // remove the line
-  lines.remove(line);
-
-  // adjust which line is 'recent'
-  if (recent > line) {
-    recent--;
-  }
-
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->deleteLine(*this, line);
-  }
-}
-
-
-void BufferCore::insertText(int const line, int const col,
-                            char const * const text, int const length)
-{
-  bc(line);
-
-  #ifndef NDEBUG
-    for (int i=0; i<length; i++) {
-      xassert(text[i] != '\n');
-    }
-  #endif
-
-  if (col==0 && lineLength(line)==0 && line!=recent) {
-    // setting a new line, can leave 'recent' alone
-    char *p = new char[length+1];
-    memcpy(p, text, length);
-    p[length] = '\n';
-    lines.set(line, p);
-
-    seenLineLength(length);
-  }
-  else {
-    // use recent
-    attachRecent(line, col, length);
-    recentLine.insertMany(col, text, length);
-
-    seenLineLength(recentLine.length());
-  }
-
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->insertText(*this, line, col, text, length);
-  }
-}
-
-
-void BufferCore::deleteText(int const line, int const col, int const length)
-{
-  bc(line);
-
-  if (col==0 && length==lineLength(line) && line!=recent) {
-    // removing entire line, no need to move 'recent'
-    char *p = lines.get(line);
-    if (p) {
-      delete[] p;
-    }
-    lines.set(line, NULL);
-  }
-  else {
-    // use recent
-    attachRecent(line, col, 0);
-    recentLine.removeMany(col, length);
-  }
-
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->deleteText(*this, line, col, length);
-  }
-}
-
-
-void BufferCore::dumpRepresentation() const
-{
-  printf("-- buffer --\n");
-
-  // lines
-  int L, G, R;
-  lines.getInternals(L, G, R);
-  printf("  lines: L=%d G=%d R=%d, num=%d\n", L,G,R, numLines());
-
-  // recent
-  recentLine.getInternals(L, G, R);
-  printf("  recent=%d: L=%d G=%d R=%d, L+R=%d\n", recent, L,G,R, L+R);
-
-  // line contents
-  for (int i=0; i<numLines(); i++) {
-    int len = lineLength(i);
-    char *p = NULL;
-    if (len) {
-      p = new char[len];
-      getLine(i, 0, p, len);
-    }
-
-    printf("  line %d: \"%s\"\n", i,
-           encodeWithEscapes(p, len).pchar());
-
-    if (len) {
-      delete[] p;
-    }
-  }
-}
-
-
-void BufferCore::printMemStats() const
-{
-  // lines
-  int L, G, R;
-  lines.getInternals(L, G, R);
-  int linesBytes = (L+G+R) * sizeof(char*);
-  printf("  lines: L=%d G=%d R=%d, L+R=%d, bytes=%d\n", L,G,R, L+R, linesBytes);
-
-  // recent
-  recentLine.getInternals(L, G, R);
-  int recentBytes = (L+G+R) * sizeof(char);
-  printf("  recentLine: L=%d G=%d R=%d, bytes=%d\n", L,G,R, recentBytes);
-
-  // line contents
-  int textBytes = 0;
-  int intFragBytes = 0;
-  int overheadBytes = 0;
-
-  for (int i=0; i<numLines(); i++) {
-    char const *p = lines.get(i);
-
-    textBytes += bufStrlen(p);
-
-    int alloc = 0;
-    if (p) {
-      alloc = textBytes+1;   // for '\n'
-      overheadBytes += 4;    // malloc's internal 'size' field
-    }
-    intFragBytes = (alloc%4)? (4 - alloc%4) : 0;    // bytes to round up to 4
-  }
-
-  PVAL(textBytes);
-  PVAL(intFragBytes);
-  PVAL(overheadBytes);
-
-  printf("total: %d\n",
-         linesBytes + recentBytes +
-         textBytes + intFragBytes + overheadBytes);
-}
-
-
-void BufferCore::seenLineLength(int len)
-{
-  if (len > longestLengthSoFar) {
-    longestLengthSoFar = len;
-  }
-}
-
-
 // ---------------------- Buffer -------------------------
 Buffer::Buffer()
-  : BufferCore()
+  : HistoryBuffer()
 {
-  insertLine(0);
-}
-
-
-void Buffer::readFile(char const *fname)
-{
-  AutoFILE fp(fname, "r");
-
-  // assume the lines don't have embedded NULs
-  enum { BUFSIZE=256 };
-  char buffer[BUFSIZE];
-
-  int line = 0;
-  int col = 0;
-  while (fgets(buffer, BUFSIZE, fp)) {
-    insertTextRange(line, col, buffer);
-  }
-}
-
-
-void Buffer::writeFile(char const *fname) const
-{
-  AutoFILE fp(fname, "w");
-
-  enum { BUFSIZE=256 };
-  char buffer[BUFSIZE];
-
-  for (int line=0; line < numLines(); line++) {
-    int len = min((int)BUFSIZE, lineLength(line));
-
-    getLine(line, 0, buffer, len);
-    fprintf(fp, "%.*s", len, buffer);
-    if (line < numLines()-1) {    // last gets no newline
-      fprintf(fp, "\n");
-    }
-  }
+  //insertLine(0);     // still need this hack?
 }
 
 
@@ -453,68 +119,46 @@ void Buffer::bc(int line, int col) const
 }
 
 
-void Buffer::insertTextRange(int &line, int &col, char const *text)
+void Buffer::insertTextRange(char const *text)
 {
-  bc(line, col);
-
-  while (*text) {
-    // find next newline
-    char const *nl = strchr(text, '\n');
-
-    // length of this segment
-    int len;
-    if (nl) {
-      len = nl-text;
-    }
-    else {
-      len = strlen(text);    // no newline, take it all
-    }
-
-    // insert this text at line/col
-    insertText(line, col, text, len);
-    col += len;
-
-    // insert newline
-    if (nl) {
-      insertNewline(line, col);
-      len++;
-    }
-
-    // skip consumed text
-    text += len;
-  }
+  insertLR(false /*left*/, text, strlen(text));
 }
 
 
-void Buffer::insertNewline(int &line, int &col)
+
+class Grouper {
+  Buffer &buf;
+  
+public:
+  Grouper(Buffer &b) : buf(b)
+    { buf.beginGroup(); }
+  ~Grouper()
+    { buf.endGroup(); }
+};
+
+#define GROUP_THESE Grouper grouper(*this)
+
+
+void Buffer::insertNewline()
 {
-  bc(line, col);
+  // this pair of actions raises two points:
+  //   - they should be a single action in the undo/redo history,
+  //     so I need to implement grouping thing
+  //   - maybe combining fill and insert/delete was a mistake,
+  //     since it's certainly the uncommon case and could have
+  //     been handled by grouping ...
 
-  if (col >= lineLength(line)) {
-    // add a blank line after this one
-    line++;
-    col = 0;
-    insertLine(line);
+  GROUP_THESE;
+
+  int overEdge = col() - lineLengthLoose(line());
+  if (overEdge > 0) {
+    // move back to the end of this line
+    moveCursor(true /*relLine*/, 0 /*line*/,
+               true /*relCol*/, -overEdge /*col*/);
   }
-  else if (col == 0) {
-    // insert blank line and go to the next
-    insertLine(line);
-    line++;
-  }
-  else {
-    // steal text after the cursor
-    int len = lineLength(line) - col;
-    Array<char> temp(len);
-    getLine(line, col, temp, len);
-    deleteText(line, col, len);
 
-    // insert a line and move down
-    line++;
-    col = 0;
-    insertLine(line);
-
-    // insert the stolen text
-    insertText(line, 0, temp, len);
+  if (core().locationInDefined(line(), col())) {
+    insertTextRange("\n");
   }
 }
 
@@ -524,6 +168,8 @@ void Buffer::indentLine(int line, int ind)
   if (!( line < numLines() )) {
     return;
   }
+
+  GROUP_THESE;
 
   while (ind > 0) {
     // insert lots of spaces at once, maybe to make the undo log

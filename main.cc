@@ -64,13 +64,14 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   position = new QLabel(statusArea, "cursor position label");
   position->setFixedWidth(100);
+  //position->setBackgroundColor(QColor(0x60, 0x00, 0x80));   // purple
   //position->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   //position->setLineWidth(1);
 
   filename = new QLabel(statusArea, "filename label");
   //filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   //filename->setLineWidth(1);
-               
+
   // corner resize widget
   QSizeGrip *corner = new QSizeGrip(statusArea, "corner grip");
   corner->setFixedSize(20,20);
@@ -314,6 +315,32 @@ int main(int argc, char **argv)
 {
   TRACE_ARGS();
   QApplication a(argc, argv);
+
+  {   
+    static char const * const names[] = {
+      "Foreground",
+      "Button",
+      "Light",
+      "Midlight",
+      "Dark",
+      "Mid",
+      "Text",
+      "BrightText",
+      "ButtonText",
+      "Base",
+      "Background",
+      "Shadow",
+      "Highlight",
+      "HighlightedText",
+    };
+
+    QPalette pal(a.palette());
+    QColorGroup cg(pal.active());
+    for (int i=0; i < QColorGroup::NColorRoles; i++) {
+      QColor c = cg.color((QColorGroup::ColorRole)i);
+      printf("%-20s: 0x%X,0x%X,0x%X\n", names[i], c.red(), c.green(), c.blue());
+    }
+  }
 
   // use my variant of the Windows style, if we're using Windows at all
   if (0==strcmp("QWindowsStyle", a.style().className())) {

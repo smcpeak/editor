@@ -1,0 +1,121 @@
+// historybuf.h
+// buffer with undo/redo history attached to it
+
+#ifndef HISTORYBUF_H
+#define HISTORYBUF_H
+
+#include "history.h"      // history representation
+
+
+// buffer that records all of the manipulations in its undo
+// history; on top of this spartan interface I'll build the
+// Buffer class itself, with many convenience functions that
+// all map onto calls into this class
+class HistoryBuffer {
+private:      // data
+  // current buffer contents and cursor location
+  CursorBuffer buf;
+
+  // modification history
+  HE_group history;
+  
+  // where are we in that history?  usually,
+  // time==history.seqLength()-1, meaning we're at the end of the
+  // recorded history, but undo/redo modifies 'time' and 'buf'
+  // but not 'history'
+  int time;
+
+public:
+  HistoryBuffer();      // empty buffer, empty history, cursor at 0,0
+  ~HistoryBuffer();
+
+  // ---- queries ----
+  // read-only access to the underlying representation (use sparingly)
+  CursorBuffer const &core() const        { return buf; }
+
+  // BufferCore's queries, directly exposed
+  int numLines() const                    { return buf.numLines(); }
+  int lineLength(int line) const          { return buf.lineLength(line); }
+  void getLine(int line, int col, char *dest, int destLen) const
+    { return buf.getLine(line, col, dest, destLen); }
+  int maxLineLength() const               { return buf.maxLineLength(); }
+
+  // cursor
+  int line() const { return buf.line; }
+  int col() const { return buf.col; }
+
+
+  // ---- global changes ----
+  // clear history, leaving only the current buffer contents
+  void clearHistory();
+
+  // replace current contents with a new file, and reset cursor
+  // to 0,0; clears the history
+  void readFile(char const *fname);
+
+
+  // ---- manipulate and append to history ----
+  // cursor motion; line/col are relative if their respective 'rel'
+  // flag is true
+  void moveCursor(bool relLine, int line, bool relCol, int col);
+
+  // insertion at cursor; 'left' or 'right' refers to where the 
+  // cursor ends up after the insertion; if the cursor is beyond
+  // the end of the line or file, newlines/spaces are inserted to
+  // fill to the cursor first
+  void insertLR(bool left, char const *text, int textLen);
+
+  // deletion at cursor; 'left' or 'right' refers to which side of
+  // the cursor has the text to be deleted; space is filled before
+  // the deletion, if necessary
+  void deleteLR(bool left, int count);
+
+
+  // TODO: implement this facility for grouping actions with HE_group
+  void beginGroup() {}
+  void endGroup() {}
+
+
+  // ---- undo/redo ----
+  bool canUndo() const        { return time > 0; }
+  bool canRedo() const        { return time < history.seqLength()-1; }
+  
+  void undo();
+  void redo();
+};
+
+
+
+
+
+#if 0      // high-level stuff to put in Buffer
+  // relative cursor movement
+  void moveDown(int dy);
+  void moveRight(int dx);
+
+  // absolute cursor movement
+  void gotoLine(int newLine);
+  void gotoCol(int newCol);
+  void gotoLC(int newLine, int newCol);
+
+  // insertion at cursor; 'left' or 'right' refers to where the
+  // cursor ends up after the insertion; if the cursor is beyond
+  // the end of the line or file, newlines/spaces are inserted to
+  // fill to the cursor first
+  void insertLeft(char const *text, int length);
+  void insertRight(char const *text, int length);
+
+  // deletion at cursor; 'left' or 'right' refers to which side of
+  // the cursor has the text to be deleted; space is filled before
+  // the deletion, if necessary
+  void deleteLeft(int count);
+  void deleteRight(int count);
+#endif // 0
+
+
+  // HERE:
+  // problem: need to introduce notion of additional cursors, to
+  // support having multiple views into the same buffer, it seems..
+
+
+#endif // HISTORYBUF_H
