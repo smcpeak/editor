@@ -16,11 +16,13 @@ enum Style {
   ST_NORMAL,               // normal text
   ST_SELECTION,            // selected text
   ST_HITS,                 // buffer text that matches a search string
+  ST_ERROR,                // text that can't be lexed
   ST_COMMENT,              // comment
   ST_STRING,               // string literal
   ST_KEYWORD,              // keyword
+  ST_SPECIAL,              // special value: true, false, NULL
   ST_NUMBER,               // numeric literal
-  ST_NUMBER2,              // numeric literal
+  ST_NUMBER2,              // numeric literal, alternate (I use this for octal)
   ST_OPERATOR,             // operator
   ST_PREPROCESSOR,         // preprocessor directive
 };

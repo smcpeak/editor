@@ -5,8 +5,7 @@
 #define LEX_HILITE_H
 
 #include "hilite.h"        // Highlighter interface
-
-class IncLexer;            // inclexer.h
+#include "inclexer.h"      // IncLexer, LexerState
 
 
 // the highlighter
@@ -45,12 +44,12 @@ private:     // funcs
   void addToChanged(int line);
 
   // get saved state for the end of a line, returning 0 for negative lines
-  LineState getSavedState(int line);
+  LexerState getSavedState(int line);
 
   // set the saved state for 'line' to 'state', adjusting the changed
   // regions to exclude 'line'; the expectation is we're doing this
   // to one of the lines at the top edge of a contiguous changed region
-  void saveLineState(int line, LineState state);
+  void saveLineState(int line, LexerState state);
 
 public:      // funcs
   LexHighlighter(BufferCore const &buf, IncLexer &lex);

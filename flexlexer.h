@@ -9,7 +9,7 @@ class BufferCore;        // buffer.h
 
 // state for supplying flex with input from a line of a buffer
 class BufferLineSource {
-private:     // data
+public:      // data
   // source of text to lex
   BufferCore const *buffer;          // (serf)
 

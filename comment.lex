@@ -26,8 +26,8 @@ public:      // funcs
 
   virtual int yylex();
   
-  void setState(int state) { BEGIN(state); }
-  int getState() const     { return YY_START; }
+  void setState(LexerState state) { BEGIN((int)state); }
+  LexerState getState() const     { return (LexerState)(YY_START); }
 };
 
 %}
@@ -184,22 +184,34 @@ CommentLexer::~CommentLexer()
 }
 
 
-void CommentLexer::beginScan(BufferCore const *buffer, int line, int state)
+void CommentLexer::beginScan(BufferCore const *buffer, int line, LexerState state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);
 }
 
 
-int CommentLexer::getNextToken(int &len)
+int CommentLexer::getNextToken(Style &code)
 {
-  int code = lexer->yylex();
-  len = lexer->YYLeng();
-  return code;
+  int result = lexer->yylex();
+
+  if (result == 0) {
+    // end of line
+    switch ((int)lexer->getState()) {
+      case STRING:  code = ST_STRING;  break;
+      case COMMENT: code = ST_COMMENT; break;
+      default:      code = ST_NORMAL;  break;
+    }
+    return 0;
+  }
+  else {
+    code = (Style)result;
+    return lexer->YYLeng();
+  }
 }
 
 
-int CommentLexer::getState() const
+LexerState CommentLexer::getState() const
 {
   return lexer->getState();
 }

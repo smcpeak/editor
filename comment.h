@@ -22,9 +22,9 @@ public:      // funcs
   ~CommentLexer();
 
   // IncLexer funcs
-  virtual void beginScan(BufferCore const *buffer, int line, int state);
-  virtual int getNextToken(int &len);
-  virtual int getState() const;
+  virtual void beginScan(BufferCore const *buffer, int line, LexerState state);
+  virtual int getNextToken(Style &len);
+  virtual LexerState getState() const;
 };
 
 

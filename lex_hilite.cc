@@ -92,13 +92,13 @@ void LexHighlighter::addToChanged(int line)
 }
 
 
-LexHighlighter::LineState LexHighlighter::getSavedState(int line)
+LexerState LexHighlighter::getSavedState(int line)
 {
   if (line < 0) {
-    return 0;
+    return LS_INITIAL;
   }
   else {
-    return savedState.get(line);
+    return (LexerState)savedState.get(line);
   }
 }
 
@@ -156,8 +156,11 @@ void LexHighlighter::deleteText(BufferCore const &, int line, int, int)
 }
 
 
-void LexHighlighter::saveLineState(int line, LineState state)
+void LexHighlighter::saveLineState(int line, LexerState _state)
 {
+  LineState state = (LineState)_state;
+  xassert(state == _state);      // make sure didn't truncate; if did, need to enlarge LineState's representation size
+
   LineState prev = savedState.get(line);
 
   if (line >= waterline) {
@@ -198,13 +201,13 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
   xassert(&buf == &buffer);
 
   // push the changed region down to the line of interest
-  int prevState = getSavedState(changedBegin-1);
+  LexerState prevState = getSavedState(changedBegin-1);
   while (!changedIsEmpty() && changedBegin < line) {
     TRACE("highlight", "push changed: scanning line " << changedBegin);
     lexer.beginScan(&buf, changedBegin, prevState);
 
-    int len;
-    while (lexer.getNextToken(len))
+    Style code;
+    while (lexer.getNextToken(code))
       {}
 
     prevState = lexer.getState();
@@ -223,8 +226,8 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
     TRACE("highlight", "push waterline: scanning line " << waterline);
     lexer.beginScan(&buf, waterline, prevState);
 
-    int len;
-    while (lexer.getNextToken(len))
+    Style code;
+    while (lexer.getNextToken(code))
       {}
 
     prevState = lexer.getState();
@@ -235,16 +238,18 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
 
   // recall the saved state for the line of interest
   TRACE("highlight", "at requested: scanning line " << line);
-  lexer.beginScan(&buf, line, getSavedState(line-1));
+  prevState = getSavedState(line-1);
+  lexer.beginScan(&buf, line, prevState);
 
   // append each styled segment
-  int len, code;
-  code = lexer.getNextToken(len);
-  while (code) {
-    style.append((Style)code, len);
-    code = lexer.getNextToken(len);
+  Style code;
+  int len = lexer.getNextToken(code);
+  while (len) {
+    style.append(code, len);
+    len = lexer.getNextToken(code);
   }
-  
+  style.endStyle = code;    // line trails off with the final code
+
   saveLineState(line, lexer.getState());
 }
 

@@ -26,8 +26,8 @@ public:      // funcs
 
   virtual int yylex();
 
-  void setState(int state) { BEGIN(state); }
-  int getState() const     { return YY_START; }
+  void setState(LexerState state) { BEGIN((int)state); }
+  LexerState getState() const     { return (LexerState)(YY_START); }
 };
 
 %}
@@ -67,6 +67,7 @@ public:      // funcs
    because the highlighter only sees one line at a time */
 %x STRING
 %x COMMENT
+%x PREPROC
 
 
 /* ------------------- definitions -------------------- */
@@ -82,21 +83,200 @@ ANY           ({NOTNL}|{NL})
 /* backslash */
 BACKSL        "\\"
 
+/* letter or underscore */
+LETTER        [A-Za-z_]
+
+/* letter or underscore or digit */
+ALNUM         [A-Za-z_0-9]
+
+/* decimal digit */
+DIGIT         [0-9]
+
+/* sequence of decimal digits */
+DIGITS        ({DIGIT}+)
+
+/* sign of a number */
+SIGN          ("+"|"-")
+
+/* integer suffix */
+/* added 'LL' option for GNU long long compatibility.. */
+ELL_SUFFIX    [lL]([lL]?)
+INT_SUFFIX    ([uU]{ELL_SUFFIX}?|{ELL_SUFFIX}[uU]?)
+
+/* floating-point suffix letter */
+FLOAT_SUFFIX  [flFL]
+
 /* normal string character: any but quote, newline, or backslash */
 STRCHAR       [^\"\n\\]
 
 /* double quote */
 QUOTE         [\"]
 
+/* normal character literal character: any but single-quote, newline, or backslash */
+CCCHAR        [^\'\n\\]
+
+/* single quote */
+TICK          [\']
+
 
 /* ------------- token definition rules --------------- */
 %%
 
-  /* keywords */
-"int"                        return ST_KEYWORD;
+  /* keywords other than true and false */
+"asm"              |
+"auto"             |
+"break"            |
+"bool"             |
+"case"             |
+"catch"            |
+"cdecl"            |
+"char"             |
+"class"            |
+"const"            |
+"const_cast"       |
+"continue"         |
+"default"          |
+"delete"           |
+"do"               |
+"double"           |
+"dynamic_cast"     |
+"else"             |
+"enum"             |
+"explicit"         |
+"export"           |
+"extern"           |
+"float"            |
+"for"              |
+"friend"           |
+"goto"             |
+"if"               |
+"inline"           |
+"int"              |
+"long"             |
+"mutable"          |
+"namespace"        |
+"new"              |
+"operator"         |
+"pascal"           |
+"private"          |
+"protected"        |
+"public"           |
+"register"         |
+"reinterpret_cast" |
+"return"           |
+"short"            |
+"signed"           |
+"sizeof"           |
+"static"           |
+"static_cast"      |
+"struct"           |
+"switch"           |
+"template"         |
+"this"             |
+"throw"            |
+"try"              |
+"typedef"          |
+"typeid"           |
+"typename"         |
+"union"            |
+"unsigned"         |
+"using"            |
+"virtual"          |
+"void"             |
+"volatile"         |
+"wchar_t"          |
+"while"            return ST_KEYWORD;
+
+  /* GNU keywords */
+"__attribute__"    |
+"__extension__"    |
+"__typeof__"       |
+"typeof"           return ST_KEYWORD;
+
+  /* operators, punctuators */
+"("                |
+")"                |
+"["                |
+"]"                |
+"->"               |
+"::"               |
+"."                |
+"!"                |
+"~"                |
+"+"                |
+"-"                |
+"++"               |
+"--"               |
+"&"                |
+"*"                |
+".*"               |
+"->*"              |
+"/"                |
+"%"                |
+"<<"               |
+">>"               |
+"<"                |
+"<="               |
+">"                |
+">="               |
+"=="               |
+"!="               |
+"^"                |
+"|"                |
+"&&"               |
+"||"               |
+"?"                |
+":"                |
+"="                |
+"*="               |
+"/="               |
+"%="               |
+"+="               |
+"-="               |
+"&="               |
+"^="               |
+"|="               |
+"<<="              |
+">>="              |
+","                |
+"..."              |
+";"                |
+"{"                |
+"}"                return ST_OPERATOR;
+
+  /* my extension */
+"==>"              return ST_OPERATOR;
+
+  /* to avoid backing up */
+".."               return ST_NORMAL;
+
+  /* special values */
+"true"|"false"|"null"|"TRUE"|"FALSE"|"NULL" {
+  return ST_SPECIAL;
+}
 
   /* identifiers */
-[_a-zA-Z][_a-zA-Z0-9]*       return ST_NORMAL;
+{LETTER}{ALNUM}*   return ST_NORMAL;
+
+
+  /* integer literal; dec or hex */
+"0"{INT_SUFFIX}?                   |
+[1-9][0-9]*{INT_SUFFIX}?           |
+[0][xX][0-9A-Fa-f]*{INT_SUFFIX}?   {
+  return ST_NUMBER;
+}
+
+  /* integer literal; oct */
+[0][0-7]+{INT_SUFFIX}?             {
+  return ST_NUMBER2;
+}
+
+  /* floating literal */
+{DIGITS}"."{DIGITS}?([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?   |
+{DIGITS}"."?([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?	    |
+"."{DIGITS}([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?	    {
+  return ST_NUMBER;
+}
 
 
   /* string literal, including one that does not end with
@@ -134,6 +314,11 @@ QUOTE         [\"]
 }
 
 
+  /* character literal, possibly unterminated */
+"L"?{TICK}({CCCHAR}|{BACKSL}{ANY})*{TICK}?{BACKSL}?   {
+  return ST_STRING;
+}
+
   /* C++ comment */
 "//"{ANY}* {
   return ST_COMMENT;
@@ -163,9 +348,47 @@ QUOTE         [\"]
 }
 
 
+  /* preprocessor, continuing to next line */
+^[ \t]*"#"{ANY}*{BACKSL} {
+  BEGIN(PREPROC);
+  return ST_PREPROCESSOR;
+}
+
+  /* preprocessor, one line */
+^[ \t]*"#"{ANY}* {
+  return ST_PREPROCESSOR;
+}
+
+  /* continuation of preprocessor, continuing to next line */
+<PREPROC>{ANY}*{BACKSL} {
+  return ST_PREPROCESSOR;
+}
+
+  /* continuation of preprocessor, ending here */
+<PREPROC>{ANY}+ {
+  BEGIN(INITIAL);
+  return ST_PREPROCESSOR;
+}
+
+  /* continuation of preprocessor, empty line */
+<PREPROC><<EOF>> {
+  if (bufsrc.nextSlurpCol == 0) {
+    // buffer was empty
+    BEGIN(INITIAL);
+  }
+  yyterminate();
+}
+
+
+  /* whitespace */
+[ \t\n\f\v\r]+ {
+  return ST_NORMAL;
+}
+
+
   /* anything else */
 {ANY} {
-  return ST_NORMAL;
+  return ST_ERROR;
 }
 
 
@@ -191,22 +414,35 @@ C_Lexer::~C_Lexer()
 }
 
 
-void C_Lexer::beginScan(BufferCore const *buffer, int line, int state)
+void C_Lexer::beginScan(BufferCore const *buffer, int line, LexerState state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);
 }
 
 
-int C_Lexer::getNextToken(int &len)
+int C_Lexer::getNextToken(Style &code)
 {
-  int code = lexer->yylex();
-  len = lexer->YYLeng();
-  return code;
+  int result = lexer->yylex();
+
+  if (result == 0) {
+    // end of line
+    switch ((int)lexer->getState()) {
+      case STRING:  code = ST_STRING;       break;
+      case COMMENT: code = ST_COMMENT;      break;
+      case PREPROC: code = ST_PREPROCESSOR; break;
+      default:      code = ST_NORMAL;       break;
+    }
+    return 0;
+  }
+  else {
+    code = (Style)result;
+    return lexer->YYLeng();
+  }
 }
 
 
-int C_Lexer::getState() const
+LexerState C_Lexer::getState() const
 {
   return lexer->getState();
 }

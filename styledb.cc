@@ -14,6 +14,7 @@ StyleDB::StyleDB()
   QColor bg(0x00, 0x00, 0xA0);        // background: darkish blue
   QColor selectBG(0x00, 0x00, 0xF0);  // selection background: light blue
   QColor hitBG(0x00, 0xE0, 0x50);     // hit background: lime
+  QColor errorBG(0x00, 0x00, 0x00);   // error background: black
 
   #define ENTRY(index, variant, fr, fg, fb, back) \
     xassert(arr.length() == index);               \
@@ -24,9 +25,11 @@ StyleDB::StyleDB()
   ENTRY(ST_NORMAL,       FV_NORMAL,  0xFF, 0xFF, 0xFF,  bg);
   ENTRY(ST_SELECTION,    FV_NORMAL,  0xFF, 0xFF, 0xFF,  selectBG);
   ENTRY(ST_HITS,         FV_NORMAL,  0xFF, 0xFF, 0xFF,  hitBG);
+  ENTRY(ST_ERROR,        FV_NORMAL,  0xFF, 0xFF, 0xFF,  errorBG);
   ENTRY(ST_COMMENT,      FV_ITALIC,  0xB0, 0xC0, 0xA0,  bg);
   ENTRY(ST_STRING,       FV_NORMAL,  0xFF, 0xFF, 0x00,  bg);
   ENTRY(ST_KEYWORD,      FV_NORMAL,  0x60, 0xFF, 0x70,  bg);
+  ENTRY(ST_SPECIAL,      FV_BOLD,    0xFF, 0x80, 0x00,  bg);
   ENTRY(ST_NUMBER,       FV_BOLD,    0xFF, 0x80, 0x00,  bg);
   ENTRY(ST_NUMBER2,      FV_BOLD,    0xFF, 0x40, 0x00,  bg);
   ENTRY(ST_OPERATOR,     FV_BOLD,    0xE0, 0x00, 0xB0,  bg);
