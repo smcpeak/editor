@@ -2,498 +2,295 @@
 // code for buffer.h
 
 #include "buffer.h"        // this module
-#include "textline.h"      // TextLine
-#include "position.h"      // Position
 
 #include "strutil.h"       // encodeWithEscapes
 #include "syserr.h"        // xsyserror
-#include "ckheap.h"        // checkHeap
 #include "test.h"          // USUAL_MAIN, PVAL
-
-#include <sys/types.h>     // ?
-#include <sys/stat.h>      // O_RDONLY, etc.
-#include <fcntl.h>         // open, close
-#include <unistd.h>        // read, write
-#include <stdio.h>         // FILE, etc.
-#include <stdlib.h>        // system
-#include <string.h>        // memmove
+#include "autofile.h"      // AutoFILE
 
 
-void Buffer::init()
-{
-  lines = NULL;
-  numLines = 0;
-  linesAllocated = 0;
-  changed = false;
-}
+Buffer::Buffer()
+  : lines(),               // empty sequence of lines
+    recent(-1),
+    recentLine()
+{}
 
 Buffer::~Buffer()
 {
-  for (int i=0; i<numLines; i++) {
-    lines[i].dealloc();
-  }
-  delete[] lines;
-}
-
-
-Buffer::Buffer(char const *initText, int initLen)
-{
-  init();
-
-  // insert with a 0,0 position
-  Position position(this);
-  insertText(position, initText, initLen);
-}
-
-
-bool Buffer::operator == (Buffer const &obj) const
-{
-  if (numLines != obj.numLines) {
-    return false;
-  }
-
-  for (int i=0; i<numLines; i++) {
-    if (lines[i] != obj.lines[i]) {
-      return false;
+  // deallocate the non-NULL lines
+  for (int i=0; i < lines.length(); i++) {
+    char *p = lines.get(i);
+    if (p) {
+      delete[] p;
     }
-  }
-
-  return true;
-}
-
-
-// adjustable parameters (don't parenthesize)
-#define LINES_SHRINK_RATIO 1 / 4
-#define LINES_GROW_RATIO 3 / 2
-#define LINES_GROW_STEP 20
-
-
-// always uses a margin calculation
-void Buffer::setNumLines(int newLines)
-{
-  if (newLines == numLines) { return; }
-  changed = true;
-
-  // dealloc any lines now not part of the buffer
-  while (numLines > newLines) {
-    numLines--;
-    lines[numLines].dealloc();
-  }
-
-  if (linesAllocated < newLines  ||
-      newLines < linesAllocated * LINES_SHRINK_RATIO - LINES_GROW_STEP) {
-    int newAllocated = newLines * LINES_GROW_RATIO + LINES_GROW_STEP;
-
-    // realloc and copy
-    TextLine *newArray = new TextLine[newAllocated];
-
-    // copy common prefix ('numLines' lines)
-    memcpy(newArray, lines, numLines * sizeof(TextLine));
-
-    // dealloc old array
-    if (lines) {
-      delete[] lines;    // does *not* call dtors!  essential!
-    }
-
-    // reassign to new
-    lines = newArray;
-    linesAllocated = newAllocated;
-  }
-
-  // init any lines that are now part of the buffer
-  while (numLines < newLines) {
-    lines[numLines].init();
-    numLines++;
   }
 }
 
 
-void Buffer::readFile(char const *fname)
+void Buffer::detachRecent()
 {
-  // use raw 'read' calls and my own buffer to avoid unnecessary
-  // overhead from FILE functions; a large buffer will minimize
-  // the IPC (interprocess communication)
+  if (recent == -1) { return; }
 
-  #ifdef TEST_BUFFER
-    enum { BUFSIZE=16 };       // small so I can easily test boundary issues
-  #else
-    enum { BUFSIZE=8192 };
-  #endif
-  char buf[BUFSIZE];
+  xassert(lines.get(recent) == NULL);
 
-  int fd = open(fname, O_RDONLY);
-  if (fd < 0) {
-    throw_XOpen(fname);
+  // copy 'recentLine' into lines[recent]
+  int len = recentLine.length();
+  if (len) {
+    char *p = new char[len+1];
+    p[len] = '\n';
+    recentLine.writeIntoArray(p, len);
+    xassert(p[len] == '\n');   // may as well check for overrun..
+
+    lines.set(recent, p);
+
+    recentLine.clear();
+  }
+  else {
+    // it's already NULL, nothing needs to be done
   }
 
-  // make a position to keep track of where to insert
-  Position position(this);       // inits to 0,0
-
-  for (;;) {
-    int len = read(fd, buf, BUFSIZE);
-    if (len == 0) {
-      break;    // EOF
-    }
-    if (len < 0) {
-      xsyserror("read");
-    }
-
-    // this updates the position
-    insertText(position, buf, len);
-  }
-
-  if (close(fd) < 0) {
-    xsyserror("close");
-  }
-
-  changed = false;
+  recent = -1;
 }
 
 
-void Buffer::writeFile(char const *fname) const
+void Buffer::attachRecent(int line, int insCol, int insLength)
 {
-  // use FILE ops for writing so we don't do an IPC for
-  // each line; in this case automatic buffering is good
+  if (recent == line) { return; }
+  detachRecent();
 
-  FILE *fp = fopen(fname, "w");
-  if (!fp) {
-    throw_XOpen(fname);
+  char const *p = lines.get(line);
+  int len = bufStrlen(p);
+  if (len) {
+    // copy contents into 'recentLine'
+    recentLine.fillFromArray(p, len, insCol, insLength);
+
+    // deallocate the source
+    delete[] p;
+    lines.set(line, NULL);
   }
+  else {
+    xassert(recentLine.length() == 0);
+  }
+  
+  recent = line;
+}
 
-  for (int line=0; line<numLines; line++) {
-    TextLine const &tl = lines[line];
-    if (tl.getLength()) {
-      if (1 != fwrite(tl.getText(), tl.getLength(), 1, fp)) {
-        xsyserror("write");
-      }
+
+int Buffer::lineLength(int line) const
+{
+  bc(line);
+
+  if (line == recent) {
+    return recentLine.length();
+  }
+  else {
+    return bufStrlen(lines.get(line));
+  }
+}
+
+STATICDEF int Buffer::bufStrlen(char const *p)
+{
+  if (p) {
+    int ret = 0;
+    while (*p != '\n') {
+      ret++;
+      p++;
     }
+    return ret;
+  }
+  else {
+    return 0;
+  }
+}
 
-    if (line+1 < numLines) {
-      // newline separator
-      if (1 != fwrite("\n", 1, 1, fp)) {
-        xsyserror("write");
-      }
-    }
+
+void Buffer::getLine(int line, int col, char *dest, int destLen) const
+{
+  bc(line);
+  xassert(destLen >= 0);
+
+  if (line == recent) {
+    recentLine.writeIntoArray(dest, destLen, col);
+  }
+  else {
+    char const *p = lines.get(line);
+    int len = bufStrlen(p);
+    xassert(0 <= col && col+destLen <= len);
+
+    memcpy(dest, p+col, destLen);
+  }
+}
+
+
+void Buffer::insertLine(int line)
+{
+  // insert a blank line
+  lines.insert(line, NULL /*value*/);
+
+  // adjust which line is 'recent'
+  if (recent >= line) {
+    recent++;
+  }
+}
+
+
+void Buffer::deleteLine(int line)
+{
+  if (line == recent) {
+    xassert(recentLine.length() == 0);
+    detachRecent();
   }
 
-  if (0 != fclose(fp)) {
-    xsyserror("close");
-  }
+  // make sure line is empty
+  xassert(lines.get(line) == NULL);
 
-  // caller must do this, because this method is 'const', and I
-  // don't want to make it non-const, nor make 'changed' mutable
-  //changed = false;
+  // remove the line
+  lines.remove(line);
+
+  // adjust which line is 'recent'
+  if (recent > line) {
+    recent--;
+  }
+}
+
+
+void Buffer::insertText(int line, int col, char const *text, int length)
+{
+  bc(line);
+  attachRecent(line, col, length);
+
+  recentLine.insertMany(col, text, length);
+}
+
+
+void Buffer::deleteText(int line, int col, int length)
+{
+  bc(line);
+  attachRecent(line, col, 0);
+
+  recentLine.removeMany(col, length);
 }
 
 
 void Buffer::dumpRepresentation() const
 {
-  printf("-- buffer -- (changed: %s)\n",
-         changed? "yes" : "no");
+  printf("-- buffer --\n");
 
-  for (int i=0; i<numLines; i++) {
-    printf("line %d: [%d/%d] \"%s\"\n",
-           i, lines[i].getLength(), lines[i]._please_getAllocated(),
-           encodeWithEscapes(lines[i].getText(),
-                             lines[i].getLength()).pchar());
-  }
-}
+  // lines
+  int L, G, R;
+  lines.getInternals(L, G, R);
+  printf("  lines: L=%d G=%d R=%d, num=%d\n", L,G,R, numLines());
 
+  // recent
+  recentLine.getInternals(L, G, R);
+  printf("  recent=%d: L=%d G=%d R=%d, L+R=%d\n", recent, L,G,R, L+R);
 
-TextLine const *Buffer::getLineC(int n) const
-{
-  xassert(n < numLines);
-
-  return lines + n;
-}
-
-
-void Buffer::ensureLineExists(int n)
-{
-  if (n >= numLines) {
-    setNumLines(n+1);
-  }
-}
-
-
-int Buffer::totColumns() const
-{
-  // TODO: implement properly once I've fixed the interface so I
-  // can do this efficiently
-  return 100;
-}
-
-
-void Buffer::insertLinesAt(int n, int howmany)
-{
-  changed = true;
-
-  if (n >= numLines) {
-    // easy case: just expand the array
-    setNumLines(n+howmany);
-  }
-  else {
-    // harder case: must move existing lines down
-
-    // first, make room
-    int oldNumLines = numLines;
-    setNumLines(numLines + howmany);
-
-    /* lines[] state now:
-     *
-     * lines ---> +--------------+  \
-     *            | old line 0   |   \
-     *            |              |    > n
-     *            |              |   /
-     *            | old line n-1 |  /
-     *   src ---> + old line n   +  \
-     *            + old line n+1 +   > howmany (to insert)
-     *            +              +  /
-     *  dest ---> |              |  \
-     *            |              |   \
-     *            |              |    > (oldNumLines-n)
-     *            |              |   /
-     *            +--------------+  /
-     */
-
-    // then shift the original lines below the insertion point
-    // downward (I've written this memmove incorrectly twice now,
-    // which is why I've now got the verbose comments above and
-    // below...)
-    memmove(lines+n+howmany,                        // dest
-            lines+n,                                // src
-            (oldNumLines-n) * sizeof(TextLine));    // size to move
-
-    // the lines in the gap now are defunct, though they
-    // still point to some of the shifted lines; re-init
-    // them so they are empty and so they don't deallocate
-    // the pointed-at data
-    for (int i=n; i < n+howmany; i++) {
-      lines[i].init();
+  // line contents
+  for (int i=0; i<numLines(); i++) {
+    int len = lineLength(i);
+    char *p = NULL;
+    if (len) {
+      p = new char[len];
+      getLine(i, 0, p, len);
     }
 
-    /* lines[] state now:
-     *
-     * lines ---> +--------------+  \
-     *            | old line 0   |   \
-     *            |              |    > n
-     *            |              |   /
-     *            | old line n-1 |  /
-     *   src ---> + empty        +  \
-     *            + empty        +   > howmany (to insert)
-     *            + empty        +  /
-     *  dest ---> | old line n   |  \
-     *            | old line n+1 |   \
-     *            |              |    > (oldNumLines-n)
-     *            |              |   /
-     *            +--------------+  /
-     */
-  }
-}
+    printf("  line %d: \"%s\"\n", i,
+           encodeWithEscapes(p, len).pchar());
 
-
-void Buffer::insertText(Position &c, char const *text, int length)
-{
-  changed = true;
-
-  int curLine = c.line();
-  int curCol = c.col();
-
-  ensureLineExists(curLine);
-
-  // mark the start of the new text to assimilate
-  char const *start = text;
-
-  // loop over all line fragments in the buffer
-  while (start < text+length) {
-    // look for a newline
-    char const *end = start;
-    while (*end != '\n' &&
-           end < text+length) {
-      end++;
-    }
-
-    if (end < text+length) {
-      // we found a newline
-
-      if (curCol == 0) {
-        // push subsequent lines down
-        insertLineAt(curLine);
-
-        // set a complete line, with no margin
-        lines[curLine].setText(start, end-start);
-      }
-
-      else {
-        int oldLen = lines[curLine].getLength();
-
-        // push the rest of the current line down into the next line
-        insertLineAt(curLine+1);
-        lines[curLine+1].setText(lines[curLine].getText()+curCol,
-                                 oldLen-curCol);
-
-        // remove that text from the end of this line
-        lines[curLine].remove(curCol, oldLen-curCol);
-
-        // append to what's still in this line, and take
-        // the hit of the margin
-        lines[curLine].insert(curCol, start, end-start);
-      }
-
-      // move our insertion point into the newly-created line
-      curLine++;
-      curCol = 0;
-
-      // move our read-from-next point
-      start = end+1;                      // skip newline char
-    }
-
-    else {
-      // we ran into the end of the buffer; add this text
-      // but don't move to the next line
-      lines[curLine].insert(curCol, start, end-start);
-
-      // move insertion point w/in the line
-      curCol += end-start;
-
-      // and read-from-next point (will cause us to
-      // break the inner loop)
-      start = end;
+    if (len) {
+      delete[] p;
     }
   }
-
-  // update the position
-  c.set(curLine, curCol);
-
-  // POSSIBLE TODO: update other positions, based on the insertion
-}
-
-
-void Buffer::deleteText(Position const &c1, Position &c2)
-{
-  // 'changed' automatically set to true by accessors
-
-  xassert(c1 <= c2);
-
-  if (c1.beyondEnd()) {
-    // nothing out here
-    return;
-  }
-
-  if (c1.beyondLineEnd()) {
-    // insert spaces to the left of c1
-    c1.getBufLine()->setLengthNoMargin(c1.col());
-  }
-
-  c2.clampToText();
-
-  xassert(c1.inText() &&
-          c2.inText() &&
-          c1 <= c2);
-
-  if (c1.line() == c2.line()) {
-    // easy case: intra-line deletion
-    lines[c1.line()].remove(c1.col(), c2.col() - c1.col());
-  }
-
-  else {
-    // at least one line will be deleted
-
-    // first, delete the right half of c1's line
-    lines[c1.line()].remove(
-      c1.col(),                                   // start
-      lines[c1.line()].getLength() - c1.col());  // len to del
-
-    // splice the 2nd half of c2's line onto the 1st half of c1
-    lines[c1.line()].insert(
-      c1.col(),                                   // ins point
-      lines[c2.line()].getText() + c2.col(),     // text
-      lines[c2.line()].getLength() - c2.col());  // text length
-
-    // remove all of the lines between c1 and c2, excluding
-    // c1's line but including c2's line
-    removeLines(c1.line() + 1, c2.line() - c1.line());
-  }
-
-  // update c2 (kind of degenerate..)
-  c2 = c1;
-}
-
-
-void Buffer::removeLines(int startLine, int linesToRemove)
-{
-  xassert(linesToRemove >= 0);
-
-  ensureLineExists(startLine);
-  if (startLine + linesToRemove > numLines) {
-    // trim to what's there
-    linesToRemove = numLines - startLine;
-  }
-
-  if (linesToRemove == 0) {
-    return;
-  }
-  changed = true;
-
-  // deallocate the lines being removed
-  for (int i=0; i<linesToRemove; i++) {
-    lines[startLine+i].dealloc();
-  }
-
-  // move the 2nd half lines up to cover the gap
-  memmove(lines+startLine,                    // dest
-          lines+startLine+linesToRemove,      // src
-          (numLines - linesToRemove) * sizeof(TextLine));  // bytes to move
-
-  // we'll simply adjust the # of lines; this should cause
-  // us to ignore the (valid-looking) lines beyond the end
-  numLines -= linesToRemove;
-}
-
-
-void Buffer::clear()
-{
-  removeLines(0, numLines);
 }
 
 
 void Buffer::printMemStats() const
 {
-  PVAL(numLines);
-  PVAL(linesAllocated);
-  PVAL(linesAllocated * sizeof(TextLine));
+  // lines
+  int L, G, R;
+  lines.getInternals(L, G, R);
+  int linesBytes = (L+G+R) * sizeof(char*);
+  printf("  lines: L=%d G=%d R=%d, L+R=%d, bytes=%d\n", L,G,R, L+R, linesBytes);
 
+  // recent
+  recentLine.getInternals(L, G, R);
+  int recentBytes = (L+G+R) * sizeof(char);
+  printf("  recentLine: L=%d G=%d R=%d, bytes=%d\n", L,G,R, recentBytes);
+
+  // line contents
   int textBytes = 0;
-  int allocBytes = 0;
   int intFragBytes = 0;
   int overheadBytes = 0;
 
-  for (int i=0; i<numLines; i++) {
-    TextLine const &tl = lines[i];
+  for (int i=0; i<numLines(); i++) {
+    char const *p = lines.get(i);
 
-    textBytes += tl.getLength();
+    textBytes += bufStrlen(p);
 
-    int alloc = tl._please_getAllocated();
-    allocBytes += alloc;
+    int alloc = 0;
+    if (p) {
+      alloc = textBytes+1;   // for '\n'
+      overheadBytes += 4;    // malloc's internal 'size' field
+    }
     intFragBytes = (alloc%4)? (4 - alloc%4) : 0;    // bytes to round up to 4
-    overheadBytes += 4;
   }
 
   PVAL(textBytes);
-  PVAL(allocBytes);
   PVAL(intFragBytes);
   PVAL(overheadBytes);
-  
+
   printf("total: %d\n",
-         linesAllocated * sizeof(TextLine) +
-         allocBytes + intFragBytes + overheadBytes);
+         linesBytes + recentBytes +
+         textBytes + intFragBytes + overheadBytes);
+}
+
+
+void readFile(Buffer &buf, char const *fname)
+{ 
+  AutoFILE fp(fname, "r");
+
+  // assume the lines aren't very big, and don't have embedded NULs
+  enum { BUFSIZE=256 };
+  char buffer[BUFSIZE];
+
+  int line = 0;
+  while (fgets(buffer, BUFSIZE, fp)) {
+    buf.insertLine(line);
+
+    int len = strlen(buffer);
+    if (len && buffer[len-1]=='\n') {
+      buffer[--len] = 0;
+    }
+
+    if (len) {
+      buf.insertText(line, 0 /*col*/, buffer, len);
+    }
+    line++;
+  }
+}
+
+
+void writeFile(Buffer const &buf, char const *fname)
+{
+  AutoFILE fp(fname, "w");
+
+  enum { BUFSIZE=256 };
+  char buffer[BUFSIZE];
+
+  for (int line=0; line < buf.numLines(); line++) {
+    int len = min((int)BUFSIZE, buf.lineLength(line));
+
+    buf.getLine(line, 0, buffer, len);
+    fprintf(fp, "%.*s\n", len, buffer);
+  }
 }
 
 
 // --------------------- test code -----------------------
 #ifdef TEST_BUFFER
 
-#include "malloc.h"    // malloc_stats
+#include "ckheap.h"        // malloc_stats
+#include <stdlib.h>        // system
 
 void entry()
 {
@@ -502,37 +299,33 @@ void entry()
     malloc_stats();
 
     // build a text file
-    FILE *fp = fopen("buffer.tmp", "w");
-    if (!fp) {
-      xsyserror("open");
-    }
+    {
+      AutoFILE fp("buffer.tmp", "w");
 
-    for (int i=0; i<2; i++) {
-      for (int j=0; j<53; j++) {
-        for (int k=0; k<j; k++) {
-          fputc('0' + (k%10), fp);
+      for (int i=0; i<2; i++) {
+        for (int j=0; j<53; j++) {
+          for (int k=0; k<j; k++) {
+            fputc('0' + (k%10), fp);
+          }
+          fputc('\n', fp);
         }
-        fputc('\n', fp);
       }
     }
-    fprintf(fp, "last line no newline");
-
-    fclose(fp);
 
     {
       // read it as a buffer
       Buffer buf;
-      buf.readFile("buffer.tmp");
+      readFile(buf, "buffer.tmp");
 
       // dump its repr
       buf.dumpRepresentation();
 
       // write it out again
-      buf.writeFile("buffer.tmp2");
+      writeFile(buf, "buffer.tmp2");
 
       printf("stats before dealloc:\n");
       malloc_stats();
-      
+
       printf("\nbuffer mem usage stats:\n");
       buf.printMemStats();
     }
@@ -547,32 +340,19 @@ void entry()
     remove("buffer.tmp");
     remove("buffer.tmp2");
 
-
-    // make a buffer for more testing..
-    //#define STR(str) str, strlen(str)
-    //Buffer buf(STR("hi\nthere\nfoo\nbar\n"));
-
-
-
-
-
-
-
-
-
-
-
-
     printf("stats after:\n");
     malloc_stats();
   }
-  
-  {                     
+
+  {
     printf("reading buffer.cc ...\n");
     Buffer buf;
-    buf.readFile("buffer.cc");
+    readFile(buf, "buffer.cc");
     buf.printMemStats();              
   }
+
+  printf("stats after:\n");
+  malloc_stats();
 }
 
 USUAL_MAIN

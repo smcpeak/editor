@@ -4,8 +4,7 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "macros.h"      // NOTEQUAL_OPERATOR
-#include "gaparray.h"    // GapArray
+#include "gap.h"        // GapArray
 
 // the contents of a file; any attempt to read or write the contents
 // must go through this interface
@@ -19,28 +18,50 @@ private:   // data
 
   // the most-recently edited line number, or -1 to mean that
   // no line's contents are stored
-  int recentLineNum;
+  int recent;
 
-  // if recentLineNum != -1, then this holds the contents of that line,
-  // overriding the contents stored in lines[recentLineNum]
+  // if recent != -1, then this holds the contents of that line,
+  // and lines[recent] is NULL
   GapArray<char> recentLine;
 
-public:    // data
+  // invariants:
+  //   - recent >= -1
+  //   - if recent>=0, lines[recent] == NULL
+  //   - if recent<0, recentLine.length() == 0
+  //   - every lines[n] is NULL or valid
+
+private:   // funcs
+  // strlen, but NULL yields 0 and '\n' is terminator
+  static int bufStrlen(char const *p);
+
+  // bounds check line
+  void bc(int line) const { xassert(0 <= line && line < numLines()); }
+
+  // copy the given line into 'recentLine', with given hints as to
+  // where the gap should go and how big it should be
+  // postcondition: recent==line
+  void attachRecent(int line, int insCol, int insLength);
+
+  // copy contents of 'recentLine', if any, back into lines[];
+  // postcondition: recent==-1
+  void detachRecent();
+
+public:    // funcs
   Buffer();
   ~Buffer();
 
 
   // ---- queries ----
-  // two buffers are equal if they have the same number
-  // of lines, and every line is equal
-  bool operator == (Buffer const &obj) const;
-  NOTEQUAL_OPERATOR(Buffer)     // defines !=
-
   // # of lines stored
   int numLines() const { return lines.length(); }
 
-  // length of a given line
+  // length of a given line, not including the '\n'
   int lineLength(int line) const;
+
+  // get part of a line's contents, starting at 'col' and getting
+  // 'destLen' chars; all chars must be in the line now; the retrieved
+  // text never includes the '\n' character
+  void getLine(int line, int col, char *dest, int destLen) const;
 
 
   // ---- manipulation interface ----
@@ -52,7 +73,8 @@ public:    // data
   void deleteLine(int line);
 
   // insert text into a given line, starting at the given column;
-  // that 'col' must be in [0,lineLength(line)]
+  // 'col' must be in [0,lineLength(line)]; the inserted text must
+  // *not* contain the '\n' character
   void insertText(int line, int col, char const *text, int length);
 
   // delete text

@@ -5,6 +5,8 @@
 #define GAPARRAY_H
 
 #include <string.h>     // memcpy, etc.
+//#include <stdio.h>      // printf, for debugging
+
 #include "xassert.h"    // xassert
 
 // abstractly models a sequence
@@ -84,6 +86,10 @@ public:      // funcs
   // big; first source element written is 'elt' (first destination
   // element is always dest[0], *not* dest[elt])
   void writeIntoArray(T *dest, int destLen, int elt=0) const;
+  
+  // debugging
+  void getInternals(int &L, int &G, int &R) const
+    { L=left; G=gap; R=right; }
 };
 
 
@@ -139,7 +145,7 @@ void GapArray<T>::insertMany(int elt, T const *src, int srcLen)
 {
   xassert(0 <= elt && elt <= length());
   if (elt != left ||
-      gap >= srcLen) {
+      gap < srcLen) {
     makeGapAt(elt, srcLen);
   }
 
@@ -229,12 +235,18 @@ void GapArray<T>::makeGapAt(int elt, int gapSize)
   xassert(elt == left);
 
   // must widen gap?
-  if (gap < gapSize) {
-    // new gap size: 50% of existing array size, plus 10
-    int newGap = (left+right) / 2 + 10;
+  if (gap < gapSize) {                                     
+    // new array size: 150% of existing array size, plus 10
+    int newSize = (left+gap+right) * 3 / 2 + 10;
+    int newGap = newSize-left-right;
     if (newGap < gapSize) {
       newGap = gapSize;     // or desired size, if that's bigger
     }
+
+    //printf("expanding from %d to %d (eltsize=%d, gapSize=%d)\n",
+    //       left+gap+right,
+    //       left+newGap+right,
+    //       sizeof(T), gapSize);
 
     // allocate some new space
     T *newArray = new T[left+newGap+right];

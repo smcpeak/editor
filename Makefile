@@ -1,9 +1,9 @@
 # Makefile for editor
 
-# main target
-tmp: testgap
+tmp: testgap buffer
 
-all: buffer editor
+# main target
+all: testgap buffer editor
 
 
 # directories of other software
@@ -46,11 +46,8 @@ testgap: gap.h testgap.cc
 
 # -------------- buffer test program ----------------
 TOCLEAN += buffer buffer.tmp
-BUFFER_OBJS := \
-  buffer.cc \
-  textline.o \
-  position.o
-buffer: array.h $(BUFFER_OBJS)
+BUFFER_OBJS := buffer.cc
+buffer: gap.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) -g -Wall $(SMBASE)/libsmbase.a
 
 
