@@ -629,4 +629,13 @@ failed assertion, so I'll debug that next time
 
 end 5/31/03 03:59
 
+-------------------------
+start 5/31/03 20:49
+
+debugging the assertion failure..
+
+found the problem: inadequate planning of the interaction between
+files' on-disk repr., in-memory repr., and the cursor.  I've now
+figured that out and know how to fix it, will document in
+buffercore.h
 

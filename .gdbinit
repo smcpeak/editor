@@ -1,8 +1,8 @@
 # .gdbinit  -*- sh -*-
  
-file editor
+file buffercore
 #file c_hilite
-set args -tr setView
+#set args -tr setView
 
 break breaker
 break main

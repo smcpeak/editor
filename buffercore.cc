@@ -20,7 +20,10 @@ BufferCore::BufferCore()
     recentLine(),
     longestLengthSoFar(0),
     observers()
-{}
+{
+  // always at least one line; see comments at end of buffercore.h
+  lines.insert(0 /*line*/, NULL /*value*/);
+}
 
 BufferCore::~BufferCore()
 {
@@ -165,6 +168,9 @@ void BufferCore::deleteLine(int const line)
 
   // make sure line is empty
   xassert(lines.get(line) == NULL);
+
+  // make sure we're not deleting the last line
+  xassert(numLines() > 1);
 
   // remove the line
   lines.remove(line);
@@ -322,10 +328,13 @@ void BufferCore::seenLineLength(int len)
 // ------------------- BufferCore utilities --------------------
 void clear(BufferCore &buf)
 {
-  while (buf.numLines() > 0) {
+  while (buf.numLines() > 1) {
     buf.deleteText(0, 0, buf.lineLength(0));
     buf.deleteLine(0);
   }
+  
+  // delete contents of last remaining line
+  buf.deleteText(0, 0, buf.lineLength(0));
 }
 
 
@@ -367,8 +376,8 @@ void readFile(BufferCore &buf, char const *fname)
       if (nl < end) {
         // skip newline
         nl++;
-        buf.insertLine(line);
         line++;
+        buf.insertLine(line);
         col=0;
       }
       p = nl;
@@ -439,18 +448,10 @@ bool walkCursor(BufferCore const &buf, int &line, int &col, int len)
 
 void truncateCursor(BufferCore const &buf, int &line, int &col)
 {
-  if (buf.numLines()==0) {
-    // strange special case.. not sure what the best course of action is
-    line=0;
-    col=0;
-    cout << "warning: truncateCursor on empty buffer ...\n";
-    return;
-  }        
-  
   line = max(0, line);
   col = max(0, col);
   
-  line = min(line, buf.numLines()-1);
+  line = min(line, buf.numLines()-1);      // numLines>=1 always
   col = min(col, buf.lineLength(line));
 }
 
@@ -617,7 +618,7 @@ void entry()
 
   {
     printf("reading buffer.cc ...\n");
-    Buffer buf;
+    BufferCore buf;
     readFile(buf, "buffer.cc");
     buf.printMemStats();
   }

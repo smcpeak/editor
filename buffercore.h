@@ -1,6 +1,9 @@
 // buffercore.h
 // representation of a buffer of text (one file) in the editor
 
+// see disussion at end of file, regarding mapping between a
+// file's on-disk representation and this in-memory representation
+
 #ifndef BUFFERCORE_H
 #define BUFFERCORE_H
 
@@ -67,12 +70,12 @@ private:   // funcs
   void seenLineLength(int len);
 
 public:    // funcs
-  BufferCore();
+  BufferCore();        // file initially contains one empty line (see comments at end)
   ~BufferCore();
 
 
   // ---- queries ----
-  // # of lines stored
+  // # of lines stored; always at least 1
   int numLines() const { return lines.length(); }
 
   // length of a given line, not including the '\n'
@@ -96,7 +99,8 @@ public:    // funcs
   // 'line' must be in [0,numLines()]
   void insertLine(int line);
 
-  // delete a blank line; the line must *already* be blank!
+  // delete a blank line; the line must *already* be blank!  also,
+  // you can't delete the last line
   void deleteLine(int line);
 
   // insert text into a given line, starting at the given column;
@@ -121,7 +125,7 @@ public:    // funcs
 // The functions here are organizationally like methods of BufferCore,
 // except they cannot access that class's private fields.
 
-// clear buffer contents
+// clear buffer contents, returning to just one empty line
 void clear(BufferCore &buf);
 
 // clear, then read a file
@@ -188,5 +192,64 @@ public:
   virtual void deleteText(BufferCore const &buf, int line, int col, int length);
 };
 
+
+
+/*
+
+  For my purposes, mathematically a file is a sequence of lines, each
+  of which is a sequence of characters.  BufferCore embodies this
+  abstraction of what a file is.
+
+  On disk, however, a file is a sequence of bytes.  (For now I'm going
+  to ignore the distinction between bytes and characters.)  Obviously,
+  we need to describe the mapping between the on-disk and in-memory
+  abstractions.
+  
+  One possibility is to interpret an on-disk file as a sequence of
+  line records, terminated by newlines.  Unfortunately, this doesn't
+  work well for two reasons:
+    - It can't handle files whose last line lacks a newline.
+    - It doesn't match well with an editing paradigm where one can
+      insert new text at an arbitrary cursor location, that text
+      possibly containing newline characters.
+      
+  Therefore I adopt a slightly different interpretation, where an
+  on-disk file is a sequence of lines *separated* by newlines.  Thus,
+  even a 0-length file is interpreted as having one (empty) line.  By
+  seeing newlines as separators instead of terminators, files lacking
+  a newline are easy to handle, as are insertions that contain
+  newlines.
+  
+  The one unexpected consequence of this mapping is that, since I want
+  the mapping to be invertible, I must disallow the possibility of a
+  file containing no lines at all, since there's no corresponding
+  on-disk representation of that condition.  BufferCore maintains the
+  invariant that there is always at least one line, so that we never
+  have to deal with a file that it outside the disk-to-memory map
+  range.
+
+
+  The next key concept is that of a cursor.  Thinking of a file in
+  its on-disk form, a cursor is a location between any two bytes,
+  or at the beginning or end (which might be the same place).
+  Isomorphically, in the in-memory or mathematical descriptions, a
+  cursor is "on" some line, and between any two bytes on that line,
+  or at the beginning or end of that line.
+
+  For example, the 0,0 line/col cursor, i.e. at the beginning of the
+  first line, corresponds to the on-disk location of 0, i.e. at the
+  beginning of the file.  The end of the first line is isomorphic
+  with the location just before the first on-disk newline, and the
+  beginning of the second line is just after that newline.  The
+  end of the last line is the end of the file.
+
+  CursorBuffer itself doesn't deal with cursors much, except in
+  its locationInDefined() method, but the surrounding functions
+  and classes (esp. HistoryBuffer and Buffer) do, and since
+  BufferCore's design is motivated by the desire to support the
+  notion of editing with a cursor, I include that notion in this
+  discussion.
+
+*/
 
 #endif // BUFFERCORE_H
