@@ -1,7 +1,7 @@
 // editor.cc
 // code for editor.h
 
-// tweak ...
+// tweak ....
 
 #include "editor.h"          // this module
 #include "buffer.h"          // Buffer
