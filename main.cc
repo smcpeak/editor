@@ -94,7 +94,14 @@ void EditorWindow::fileNew()
   }
 
   position->setText("0:0");
-  filename->setText("untitled.txt");
+  setFileName("untitled.txt");
+}
+
+
+void EditorWindow::setFileName(char const *name)
+{
+  theBuffer.filename = name;
+  filename->setText(name);
 }
 
 
@@ -107,9 +114,10 @@ void EditorWindow::fileOpen()
 
   theBuffer.clear();
   editor->cursor.set(0,0);
-                           
+
   try {
     theBuffer.readFile(name);
+    setFileName(name);
   }
   catch (XOpen &x) {
     QMessageBox::information(this, "Can't open file", QString(x.why()));
@@ -123,7 +131,7 @@ void EditorWindow::fileSave()
     fileSaveAs();
     return;
   }
-  
+
   writeTheFile();
 }
 
@@ -147,7 +155,7 @@ void EditorWindow::fileSaveAs()
     return;
   }
   
-  theBuffer.filename = string(s);
+  setFileName(s);
   writeTheFile();
 }
 

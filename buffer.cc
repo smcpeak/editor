@@ -380,9 +380,9 @@ void Buffer::removeLines(int startLine, int linesToRemove)
   xassert(linesToRemove >= 0);
 
   ensureLineExists(startLine);
-  if (startLine + linesToRemove >= numLines) {
+  if (startLine + linesToRemove > numLines) {
     // trim to what's there
-    linesToRemove = numLines - (startLine+1);
+    linesToRemove = numLines - startLine;
   }
 
   if (linesToRemove == 0) {

@@ -151,3 +151,13 @@ that's causing me to trash memory.. will switch on the debug heap
 to find it next time
 
 end 2/09/03 17:15
+
+--------------
+start 2/10/03 17:58
+
+fixed the bug last night.. now can I save and load?  yes
+
+let's now get the text-rendering procedure working a bit better,
+and in the process implement scrolling
+
+

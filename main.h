@@ -28,6 +28,7 @@ public:      // data
   BufferState theBuffer;
 
 private:     // funcs
+  void setFileName(char const *name);
   void writeTheFile();
 
 public:      // funcs

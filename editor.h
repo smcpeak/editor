@@ -21,19 +21,42 @@ public:      // data
   // buffer whose text we're editing
   Buffer *buffer;           // (serf)
 
+  // ------ editing state -----
   // cursor position
   Position cursor;
+
+  // scrolling offset
+  int firstVisibleLine, firstVisibleCol;
+
+  // information about viewable area; these are set by the paint()
+  // routine and should be treated as read-only by other code; by
+  // "visible", I mean the entire line or column is visible
+  int lastVisibleLine, lastVisibleCol;
+
+  // ------ rendering options ------
+  // amount of blank space at top/left edge of widget
+  int topMargin, leftMargin;
+
+  // # of blank lines of pixels between lines of text ("leading")
+  int interLineSpace;
 
 protected:   // funcs
   // respond to a paint request by repainting the control
   virtual void paintEvent(QPaintEvent *);
-  
+
   // handle keyboard input
   virtual void keyPressEvent(QKeyEvent *k);
 
 public:      // funcs
   Editor(Buffer *buf,
          QWidget *parent=NULL, const char *name=NULL);
+                   
+  // set cursor and view to 0,0
+  void resetView();
+  
+  // scroll the view the minimum amount so that the cursor line/col
+  // is visible; if it's already visible, do nothing
+  void scrollToCursor();
 };
 
 #endif // EDITOR_H
