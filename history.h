@@ -41,7 +41,7 @@ public:
 // inconsistent some buffer contents.
 class XHistory : public xBase {
 public:
-  XHistory(char const *msg) : xBase(msg) {}
+  XHistory(char const *msg) : xBase(stringc << "XHistory: " << msg) {}
   XHistory(XHistory const &obj) : xBase(obj) {}
 };
 

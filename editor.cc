@@ -578,8 +578,47 @@ void Editor::clearSelIfEmpty()
 }
 
 
+void printUnhandled(QWidget *parent, char const *msg)
+{
+  QMessageBox::information(parent, "Oops",
+    QString(stringc << "Unhandled exception: " << msg << "\n"
+                    << "Save your buffers if you can!"));
+}
+
+
+// unfortunately, this doesn't work if Qt is compiled without
+// exception support, as is apparently the case on many (most?)
+// linux systems; see e.g.
+//   http://lists.trolltech.com/qt-interest/2002-11/msg00048.html
+// you therefore have to ensure that exceptions do not propagate into
+// Qt stack frames
+bool Editor::event(QEvent *e)
+{
+  try {
+    return QWidget::event(e);
+  }
+  catch (xBase &x) {
+    printUnhandled(this, x.why());
+    return true;   // clearly it was handled by someone
+  }
+}
+
+
+// therefore I'll try this
+#define GENERIC_CATCH_BEGIN         \
+  try {
+
+#define GENERIC_CATCH_END           \
+  }                                 \
+  catch (xBase &x) {                \
+    printUnhandled(this, x.why());  \
+  }
+
+
 void Editor::keyPressEvent(QKeyEvent *k)
 {
+  GENERIC_CATCH_BEGIN
+
   TRACE("input", "keyPress: " << toString(*k));
   HBGrouper hbgrouper(*buffer);
 
@@ -703,6 +742,23 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_B: {
         breaker();     // breakpoint for debugger
+        break;
+      }
+
+      case Key_X: {                              
+        // test exception mechanism...
+        THROW(xBase("gratuitous exception"));
+        break;
+      }
+
+      case Key_Y: {
+        try {
+          xbase("another exc");
+        }
+        catch (xBase &x) {
+          QMessageBox::information(this, "got it",
+            "got it");
+        }
         break;
       }
 
@@ -872,6 +928,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
   else {
     k->ignore();
   }
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1049,6 +1107,31 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
 
 
 // ----------------------- edit menu -----------------------
+void Editor::editUndo()
+{
+  if (buffer->canUndo()) {
+    buffer->undo();
+    redraw();
+  }
+  else {
+    QMessageBox::information(this, "Can't undo",
+      "There are no actions to undo in the history.");
+  }
+}
+
+void Editor::editRedo()
+{
+  if (buffer->canRedo()) {
+    buffer->redo();
+    redraw();
+  }
+  else {
+    QMessageBox::information(this, "Can't redo",
+      "There are no actions to redo in the history.");
+  }                                        
+}
+
+
 void Editor::editCut()
 {
   if (selectEnabled) {

@@ -147,6 +147,7 @@ private:     // funcs
 
 protected:   // funcs
   // QWidget funcs
+  virtual bool event(QEvent *e);
   virtual void paintEvent(QPaintEvent *);
   virtual void keyPressEvent(QKeyEvent *k);
   virtual void resizeEvent(QResizeEvent *r);
@@ -254,6 +255,8 @@ public slots:
   void scrollToCol(int col);
 
   // edit menu
+  void editUndo();
+  void editRedo();
   void editCut();
   void editCopy();
   void editPaste();

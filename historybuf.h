@@ -93,7 +93,7 @@ public:      // funcs
 
   // ---- undo/redo ----
   bool canUndo() const        { return time > 0; }
-  bool canRedo() const        { return time < history.seqLength()-1; }
+  bool canRedo() const        { return time < history.seqLength(); }
 
   void undo();
   void redo();

@@ -251,7 +251,11 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
 // ---------------- Buffer: modifications ------------------
 
 void Buffer::moveRelCursor(int deltaLine, int deltaCol)
-{
+{                              
+  // prevent moving into negative territory
+  deltaLine = max(deltaLine, -line());
+  deltaCol = max(deltaCol, -col());
+
   if (deltaLine || deltaCol) {
     moveCursor(true /*relLine*/, deltaLine,
                true /*relCol*/, deltaCol);

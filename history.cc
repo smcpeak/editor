@@ -46,7 +46,7 @@ STATICDEF void HE_cursor::move1dim(int &value, int orig, int update, bool revers
       update = -update;
     }
     if (value + update < 0) {
-      throw XHistory("relative update yields negative result");
+      THROW(XHistory("relative update yields negative result"));
     }
     // ==> committed
     value += update;
@@ -61,7 +61,7 @@ STATICDEF void HE_cursor::move1dim(int &value, int orig, int update, bool revers
     }
 
     if (orig != value) {
-      throw XHistory("absolute update has wrong original value");
+      THROW(XHistory("absolute update has wrong original value"));
     }
     xassert(update >= 0);
     // ==> committed
@@ -170,7 +170,7 @@ STATICDEF void HE_text::static_apply(
 
 static void deletionMismatch()
 {
-  throw XHistory("deletion text does not match buffer contents");
+  THROW(XHistory("deletion text does not match buffer contents"));
 }
 
 // insert (=forward) or delete (=reverse) some text at the cursor
@@ -180,7 +180,7 @@ STATICDEF void HE_text::insert(
 {
   // cursor should now be within the text area
   if (!buf.cursorInDefined()) {
-    throw XHistory("cursor is not within text area");
+    THROW(XHistory("cursor is not within text area"));
   }
 
   if (!reverse) {

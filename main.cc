@@ -93,6 +93,9 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
     QPopupMenu *edit = new QPopupMenu(this);
     menuBar->insertItem("&Edit", edit);
+    edit->insertItem("&Undo", editor, SLOT(editUndo()), ALT+Key_Backspace);
+    edit->insertItem("&Redo", editor, SLOT(editRedo()), ALT+SHIFT+Key_Backspace);
+    edit->insertSeparator();
     edit->insertItem("Cu&t", editor, SLOT(editCut()), CTRL+Key_X);
     edit->insertItem("&Copy", editor, SLOT(editCopy()), CTRL+Key_C);
     edit->insertItem("&Paste", editor, SLOT(editPaste()), CTRL+Key_V);
