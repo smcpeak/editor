@@ -11,6 +11,7 @@
 #include "trace.h"           // TRACE
 #include "qtutil.h"          // toString(QKeyEvent&)
 #include "macros.h"          // Restorer
+#include "styledb.h"         // StyleDB
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -35,10 +36,12 @@ Editor::Editor(BufferState *buf,
     leftMargin(1),
     interLineSpace(0),
     cursorColor(0x00, 0xFF, 0xFF),  // cyan
+    #if 0    // obsolete
     normalFG(0xFF, 0xFF, 0xFF),     // white
     normalBG(0x00, 0x00, 0xA0),     // darkish blue
     selectFG(0xFF, 0xFF, 0xFF),     // white
     selectBG(0x00, 0x00, 0xF0),     // light blue
+    #endif
     ctrlShiftDistance(10),
     // font metrics inited by setFont()
     ignoreScrollSignals(false)
@@ -77,6 +80,24 @@ void Editor::resetView()
 
 void Editor::setFont(QFont &f)
 {
+  normalFont = f;
+
+  italicFont = f;
+  italicFont.setItalic(true);
+
+  boldFont = f;
+  boldFont.setBold(true);
+
+  // I might print the raw names to verify the system is using the
+  // predefined variants, instead of, say, synthesizing its own
+  TRACE("fontNames", ""
+    << "\n  normal: " << (char const*)normalFont.rawName()
+    << "\n  italic: " << (char const*)italicFont.rawName()
+    << "\n  bold  : " << (char const*)boldFont.rawName());
+
+  // I don't use setUnderline() because I'm a little suspicious of
+  // what that really does... might experiment some..
+
   QWidget::setFont(f);
 
   // info about the current font
@@ -236,8 +257,14 @@ void Editor::drawBufferContents(QPainter &paint)
   // currently selected style (so we can avoid possibly expensive
   // calls to change styles)
   Style currentStyle = ST_NORMAL;
-  paint.setPen(normalFG);
-  paint.setBackgroundColor(normalBG);
+  bool underlining = false;     // whether drawing underlines
+  StyleDB *styleDB = StyleDB::instance();
+  setDrawStyle(paint, underlining, styleDB, currentStyle);
+
+  // it turns out my 'editor' font has a bold variant
+  // with one pixel less of descent.. this causes lines to be incompletely
+  // erased.. so for now, erase the whole thing in advance (HACK!)
+  paint.eraseRect(0,0, width(),height());
 
   // top edge of what has not been painted
   int y = 0;
@@ -335,20 +362,8 @@ void Editor::drawBufferContents(QPainter &paint)
 
       // set style
       if (style.style != currentStyle) {
-        if (style.style == 0) {
-          // normal
-          paint.setPen(normalFG);
-          paint.setBackgroundColor(normalBG);
-        }
-        else if (style.style == 1) {
-          // selected
-          paint.setPen(selectFG);
-          paint.setBackgroundColor(selectBG);
-        }
-        else {
-          xfailure("bad style code");
-        }
         currentStyle = style.style;
+        setDrawStyle(paint, underlining, styleDB, currentStyle);
       }
 
       // compute how many characters to print in this segment
@@ -378,8 +393,18 @@ void Editor::drawBufferContents(QPainter &paint)
       // make a QString for drawText() to use; I think Qt should have
       // made drawText() accept an ordinary char const* ...
       string segment(text+printed, len);
-      paint.drawText(x, y+ascent-1,               // baseline start coordinate
+      int baseline = y+ascent-1;
+      paint.drawText(x, baseline,                 // baseline start coordinate
                      QString(segment), len);      // text, length
+
+      if (underlining) {
+        // want to draw a line on top of where underscores would be; this
+        // might not be consistent across fonts, so I might want to have
+        // a user-specifiable underlining offset.. also, I don't want this
+        // going into the next line, so truncate according to descent
+        baseline += min(2 /*nominal underline offset*/, descent);
+        paint.drawLine(x, baseline, x + fontWidth*len, baseline);
+      }
 
       // advance
       x += fontWidth * len;
@@ -411,6 +436,23 @@ void Editor::drawBufferContents(QPainter &paint)
   // fill the remainder
   paint.eraseRect(0, y,
                   width(), height()-y);
+}
+
+
+void Editor::setDrawStyle(QPainter &paint, bool &underlining,
+                          StyleDB *db, Style s)
+{
+  TextStyle const &ts = db->getStyle(s);
+  paint.setPen(ts.foreground);
+  paint.setBackgroundColor(ts.background);
+  underlining = false;
+  switch (ts.variant) {
+    default: xfailure("bad variant code");
+    case FV_UNDERLINE:  underlining = true;   // drop through to next
+    case FV_NORMAL:     paint.setFont(normalFont);  break;
+    case FV_ITALIC:     paint.setFont(italicFont);  break;
+    case FV_BOLD:       paint.setFont(boldFont);    break;
+  }
 }
 
 

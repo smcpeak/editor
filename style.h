@@ -18,8 +18,10 @@ enum Style {
   ST_COMMENT,              // comment
   ST_STRING,               // string literal
   ST_KEYWORD,              // keyword
-  ST_NUMERIC,              // numeric literal
+  ST_NUMBER,               // numeric literal
+  ST_NUMBER2,              // numeric literal
   ST_OPERATOR,             // operator
+  ST_PREPROCESSOR,         // preprocessor directive
 };
 
 

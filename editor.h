@@ -6,8 +6,10 @@
 
 #include <qwidget.h>        // QWidget
 #include "bufferstate.h"    // BufferState
+#include "style.h"          // Style
 
 class QRangeControl;        // qrangecontrol.h
+class StyleDB;              // styledb.h
 
 
 // control to edit the contents of a buffer; it's possible (and
@@ -52,8 +54,12 @@ public:      // data
 
   // colors
   QColor cursorColor;               // color of text cursor
-  QColor normalFG, normalBG;        // normal text
-  QColor selectFG, selectBG;        // selected text
+  //QColor normalFG, normalBG;        // normal text
+  //QColor selectFG, selectBG;        // selected text
+
+  // fonts, corresponding to 'enum FontVariant' (styledb.h); note
+  // that these fonts all need to use the same character size
+  QFont normalFont, italicFont, boldFont;
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
@@ -68,7 +74,7 @@ public:      // data
   int ascent;
 
   // number of pixels below the base line, not including the
-  // base line itself
+  // base line
   int descent;
 
   // total # of pixels in each cell
@@ -115,6 +121,8 @@ private:     // funcs
        
   // draw text etc. on a QPainter
   void drawBufferContents(QPainter &paint);
+  void setDrawStyle(QPainter &paint, bool &underlining,
+                    StyleDB *db, Style s);
 
   // debugging
   static string lineColStr(int line, int col);

@@ -271,6 +271,10 @@ plan:
    
 end 2/15/03 04:30
 
+----------------
+start 2/16/03 01:28
+
+will implement a few of the highlighting things..
 
 
 
