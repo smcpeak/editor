@@ -348,6 +348,25 @@ TICK          [\']
 }
 
 
+  /* preprocessor, with C++ comment */
+  /* (handling of comments w/in preprocessor directives is fairly
+   * ad-hoc right now..) */
+^[ \t]*"#"{ANY}*"//"{ANY}* {
+  // find the start of the comment
+  char const *p = strchr(yytext, '/');
+  while (p && p[1]!='/') {
+    p = strchr(p+1, '/');
+  }
+  if (p) {
+    // put the comment back; it will be matched as ST_COMMENT
+    yyless((int)p-(int)yytext);
+  }
+  else {
+    // shouldn't happen, but not catastrophic if it does..
+  }
+  return ST_PREPROCESSOR;
+}
+
   /* preprocessor, continuing to next line */
 ^[ \t]*"#"{ANY}*{BACKSL} {
   BEGIN(PREPROC);
