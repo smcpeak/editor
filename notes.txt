@@ -233,6 +233,9 @@ will modify surrounding editor to use new Buffer interface.. first
 up is BufferState, which needs to acquire some of the convenience
 functions that Buffer had
 
+ok, I've now hooked everything up adequately that I'm editing this
+very line in the new editor!  that's pretty cool.  all the functions
+appear to work correctly.
 
 
 

@@ -328,6 +328,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_BackSpace: {
         fillToCursor();
+        buffer->changed = true;
 
         if (cursorCol == 0) {
           if (cursorLine == 0) {
@@ -354,6 +355,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_Delete: {
         fillToCursor();
+        buffer->changed = true;
 
         if (cursorCol == buffer->lineLength(cursorLine)) {
           // splice next line onto this one
@@ -370,10 +372,11 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_Return: {
         fillToCursor();
+        buffer->changed = true;
 
         if (cursorCol == buffer->lineLength(cursorLine)) {
           // add a blank line after this one
-          cursorLine++;                  
+          cursorLine++;
           cursorCol = 0;
           buffer->insertLine(cursorLine);
         }
@@ -388,12 +391,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
           Array<char> temp(len);
           buffer->getLine(cursorLine, cursorCol, temp, len);
           buffer->deleteText(cursorLine, cursorCol, len);
-          
+
           // insert a line and move down
           cursorLine++;
           cursorCol = 0;
           buffer->insertLine(cursorLine);
-          
+
           // insert the stolen text
           buffer->insertText(cursorLine, 0, temp, len);
         }
@@ -405,8 +408,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
       default: {
         QString text = k->text();
         if (text.length()) {
+          fillToCursor();
+          buffer->changed = true;
+
           // insert this character at the cursor
           buffer->insertText(cursorLine, cursorCol, text, text.length());
+          cursorCol += text.length();
           scrollToCursor();
         }
         else {
@@ -494,7 +501,7 @@ void Editor::moveView(int deltaLine, int deltaCol)
 
   // now move cursor by the amount that the viewport moved
   inc(cursorLine, firstVisibleLine-origVL);
-  inc(cursorLine, firstVisibleCol-origVC);
+  inc(cursorCol, firstVisibleCol-origVC);
 
   // redraw display
   update();
