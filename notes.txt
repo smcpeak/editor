@@ -651,5 +651,17 @@ start 6/01/03 03:01
 need to hook up and test the undo/redo facility; also need
 measurements of space usage, etc.
 
+fixed a bug in ogap.h, spent quite a while trying to make
+a signal handler that would automatically diagnose part
+of the cause, eventually leading to a kernel bug with the
+sigaltstack() function, from which I retreated
+
+anyway, extremely simple undo/redo is working, need to test
+it some more
+
+end 6/01/03 06:21
+
+-----------------------
+start 6/06/03 17:02
 
 

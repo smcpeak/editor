@@ -5,6 +5,8 @@
 #include "array.h"         // Array
 #include "strutil.h"       // encodeWithEscapes
 
+#include <stdio.h>         // printf
+
 
 static void rollbackMismatch()
 {
@@ -114,6 +116,14 @@ void HE_cursor::print(stringBuilder &sb, int indent) const
   sb << ", ";
   print1dim(sb, origCol, col);
   sb << ");\n";
+}
+
+
+void HE_cursor::stats(HistoryStats &stats) const
+{
+  stats.records++;
+  stats.memUsage += sizeof(*this);
+  stats.mallocObjects++;
 }
 
 
@@ -392,7 +402,19 @@ void HE_text::print(stringBuilder &sb, int indent) const
   sb.indent(indent);
   sb << (left? "left" : "right") 
      << (insertion? "Ins" : "Del") 
-     << "(" << encodeWithEscapes(text, textLen) << ");\n";
+     << "(\"" << encodeWithEscapes(text, textLen) << "\");\n";
+}
+
+
+void HE_text::stats(HistoryStats &stats) const
+{
+  stats.records++;
+  stats.memUsage += sizeof(*this);
+  stats.mallocObjects++;
+  if (text) {
+    stats.memUsage += textLen;
+    stats.mallocObjects++;
+  }
 }
 
 
@@ -499,6 +521,56 @@ void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
 void HE_group::print(stringBuilder &sb, int indent) const
 {
   printWithMark(sb, indent, -1 /*mark*/);
+}
+
+
+void HE_group::stats(HistoryStats &stats) const
+{
+  stats.groups++;
+
+  // for me
+  stats.memUsage += sizeof(*this);
+  stats.mallocObjects++;
+
+  // for 'seq' storage
+  int L, G, R;
+  seq.getInternals(L, G, R);
+  stats.memUsage += (L+R) * sizeof(HistoryElt*);
+  stats.mallocObjects++;
+  stats.reservedSpace = G * sizeof(HistoryElt*);
+
+  // for 'seq' contents
+  for (int i=0; i < seq.length(); i++) {
+    seq.getC(i)->stats(stats);
+  }
+}
+
+
+// -------------------- HistoryStats --------------------
+HistoryStats::HistoryStats()
+  : records(0),
+    groups(0),
+    memUsage(0),
+    mallocObjects(0),
+    reservedSpace(0)
+{}
+
+
+int HistoryStats::totalUsage() const
+{
+  return memUsage + mallocObjects*sizeof(int) + reservedSpace;
+}
+
+
+void HistoryStats::printInfo() const
+{
+  printf("history stats:\n");
+  printf("  records      : %d\n", records);
+  printf("  groups       : %d\n", groups);
+  printf("  memUsage     : %d\n", memUsage);
+  printf("  mallocObjects: %d\n", mallocObjects);
+  printf("  reservedSpace: %d\n", reservedSpace);
+  printf("  totalUsage() : %d\n", totalUsage());
 }
 
 

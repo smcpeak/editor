@@ -10,6 +10,10 @@
 #include "str.h"             // stringBuilder
 
 
+// fwd in this file
+class HistoryStats;
+
+
 // buffer + cursor, the object that the history manipulates
 class CursorBuffer : public BufferCore {
 public:
@@ -48,9 +52,12 @@ public:
   // if the event does not match the current state of the buffer,
   // but in this case the buffer must not be modified
   virtual void apply(CursorBuffer &buf, bool reverse)=0;
-  
+
   // render this command as a text line, indented by 'indent' spaces
   virtual void print(stringBuilder &sb, int indent) const=0;
+  
+  // account for this history record
+  virtual void stats(HistoryStats &stats) const=0;
 };
 
 
@@ -76,6 +83,7 @@ public:      // funcs
   // HistoryElt funcs
   virtual void apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
+  virtual void stats(HistoryStats &stats) const;
 
   // 'apply' as a static member, to allow HE_group to represent
   // HE_cursors more efficiently but still use the same implementation
@@ -114,6 +122,7 @@ public:      // funcs
   // HistoryElt funcs
   virtual void apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
+  virtual void stats(HistoryStats &stats) const;
 
   // 'apply', but static
   static void static_apply(
@@ -181,6 +190,39 @@ public:      // funcs
   // HistoryElt funcs
   virtual void apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
+  virtual void stats(HistoryStats &stats) const;
+};
+
+
+// memory allocation and other resource statistics about a
+// history sequence
+class HistoryStats {
+public:
+  // # of leaf (non-group) records
+  int records;
+
+  // # of grouping constructs
+  int groups;
+  
+  // memory used by the objects in the sequence
+  int memUsage;
+
+  // # of malloc (or 'new') objects allocated; used to estimate
+  // heap data structure overhead
+  int mallocObjects;
+
+  // space reserved for future expansion by some data structure,
+  // for example the space in the gap for HE_group
+  int reservedSpace;
+
+public:
+  HistoryStats();
+  
+  // estimate total space usage from current totals
+  int totalUsage() const;
+  
+  // print all info
+  void printInfo() const;
 };
 
 

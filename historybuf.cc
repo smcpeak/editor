@@ -152,8 +152,8 @@ void HistoryBuffer::printHistory(stringBuilder &sb) const
 // -------------------- test code -------------------
 #ifdef TEST_HISTORYBUF
 
-#include "test.h"       // USUAL_MAIN
 #include "datablok.h"   // DataBlock
+#include "ckheap.h"     // malloc_stats
 
 #include <unistd.h>     // unlink
 #include <stdio.h>      // printf
@@ -161,8 +161,15 @@ void HistoryBuffer::printHistory(stringBuilder &sb) const
 
 void expect(HistoryBuffer const &buf, int line, int col, char const *text)
 {
-  xassert(buf.line()==line &&
-          buf.col()==col);
+  if (buf.line()==line &&
+      buf.col()==col) {
+    // ok
+  }
+  else {
+    printf("expect %d:%d\n", line, col);
+    printf("actual %d:%d\n", buf.line(), buf.col());
+    xfailure("cursor location mismatch");
+  }
 
   writeFile(buf.core(), "historybuf.tmp");
   DataBlock block;
@@ -185,33 +192,110 @@ void printHistory(HistoryBuffer const &buf)
 }
 
 
+void chars(HistoryBuffer &buf, char const *str)
+{
+  while (*str) {
+    buf.insertLR(false /*left*/, str, 1);
+    str++;
+  }
+}
+
+
 void entry()
 {
   printSegfaultAddrs();
 
   HistoryBuffer buf;
 
-  buf.insertLR(false /*left*/, "a", 1);
-  buf.insertLR(false /*left*/, "b", 1);
-  buf.insertLR(false /*left*/, "c", 1);
-  buf.insertLR(false /*left*/, "d", 1);
-  printHistory(buf);
+  chars(buf, "abcd");
+  //printHistory(buf);
   expect(buf, 0,4, "abcd");
 
   buf.undo();
-  printHistory(buf);
+  //printHistory(buf);
   expect(buf, 0,3, "abc");
 
-  buf.insertLR(false /*left*/, "e", 1);
-  printHistory(buf);
+  chars(buf, "e");
+  //printHistory(buf);
   expect(buf, 0,4, "abce");
+
+  chars(buf, "\nThis is the second line.\n");
+  expect(buf, 2,0, "abce\n"
+                   "This is the second line.\n"
+                   "");
+
+  buf.moveCursor(true /*relLine*/, -1, true /*relCol*/, 2);
+  chars(buf, "z");
+  expect(buf, 1,3, "abce\n"
+                   "Thzis is the second line.\n"
+                   "");
+
+  buf.undo();
+  buf.undo();
+  chars(buf, "now on third");
+  expect(buf, 2,12, "abce\n"
+                    "This is the second line.\n"
+                    "now on third");
+
+  buf.undo();
+  buf.undo();
+  buf.undo();
+  expect(buf, 2,9,  "abce\n"
+                    "This is the second line.\n"
+                    "now on th");
+
+  buf.redo();
+  expect(buf, 2,10, "abce\n"
+                    "This is the second line.\n"
+                    "now on thi");
+
+  buf.redo();
+  expect(buf, 2,11, "abce\n"
+                    "This is the second line.\n"
+                    "now on thir");
+
+  buf.deleteLR(true /*left*/, 6);
+  expect(buf, 2,5,  "abce\n"
+                    "This is the second line.\n"
+                    "now o");
+
+  chars(buf, "z");
+  expect(buf, 2,6,  "abce\n"
+                    "This is the second line.\n"
+                    "now oz");
+
+  buf.undo();
+  buf.undo();
+  expect(buf, 2,11, "abce\n"
+                    "This is the second line.\n"
+                    "now on thir");
+  //printHistory(buf);
+              
+  {
+    HistoryStats stats;
+    buf.historyStats(stats);
+    stats.printInfo();
+  }
+
 
   unlink("historybuf.tmp");
 
   printf("historybuf is ok\n");
 }
 
-USUAL_MAIN
+
+int main()
+{
+  try {
+    entry();
+    malloc_stats();
+    return 0;
+  }
+  catch (xBase &x) {
+    cout << x << endl;
+    return 4;
+  }
+}
 
 
 #endif // TEST_HISTORYBUF

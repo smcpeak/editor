@@ -45,6 +45,10 @@ public:
   
   // delete all elements
   void clear();
+  
+  // debugging
+  void getInternals(int &L, int &G, int &R) const
+    { arr.getInternals(L, G, R); }
 };
 
 

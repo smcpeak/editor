@@ -102,6 +102,10 @@ public:      // funcs
   // print the history in a textual format, with the current time
   // marked (or no mark if time is at the end)
   void printHistory(stringBuilder &sb) const;
+  
+  // get statistics about history memory usage
+  void historyStats(HistoryStats &stats) const 
+    { history.stats(stats); }
 };
 
 
