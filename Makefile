@@ -72,6 +72,7 @@ C_HILITE_OBJS := \
   buffer.o \
   style.o \
   lex_hilite.o \
+  flexlexer.o \
   comment.yy.o
 #-include $(C_HILITE_OBJS:.o=.d)   # redundant with EDITOR_OBJS
 
@@ -95,6 +96,7 @@ EDITOR_OBJS := \
   styledb.o \
   c_hilite.o \
   lex_hilite.o \
+  flexlexer.o \
   comment.yy.o
 -include $(EDITOR_OBJS:.o=.d)
 
