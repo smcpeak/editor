@@ -252,8 +252,10 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
 
 void Buffer::moveRelCursor(int deltaLine, int deltaCol)
 {
-  moveCursor(true /*relLine*/, deltaLine,
-             true /*relCol*/, deltaCol);
+  if (deltaLine || deltaCol) {
+    moveCursor(true /*relLine*/, deltaLine,
+               true /*relCol*/, deltaCol);
+  }
 }
 
 void Buffer::moveAbsCursor(int newLine, int newCol)

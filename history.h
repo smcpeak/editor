@@ -31,9 +31,14 @@ public:
 };
 
   
-// thrown when a history event finds it cannot be applied because
-// the CursorBuffer state isn't consistent with the information
-// stored in the event
+// XHistory is thrown when a history event finds it cannot be applied
+// because the CursorBuffer state isn't consistent with the
+// information stored in the event.
+//
+// NOTE:  All of the code paths that use XHistory are, as yet,
+// untested.  To test them I need to implement a parser for the
+// history concrete syntax, and make some histories that are
+// inconsistent some buffer contents.
 class XHistory : public xBase {
 public:
   XHistory(char const *msg) : xBase(msg) {}

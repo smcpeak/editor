@@ -1,9 +1,9 @@
 # Makefile for editor
 
-tmptarget: historybuf
+#tmptarget: historybuf
 
 # main target
-all: testgap buffercore history buffer style c_hilite editor
+all: testgap buffercore historybuf buffer style c_hilite editor
 
 
 # directories of other software

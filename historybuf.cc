@@ -99,7 +99,12 @@ void HistoryBuffer::beginGroup()
 void HistoryBuffer::endGroup()
 {
   HE_group *g = groupStack.pop();
-  appendElement(g);
+  if (g->seqLength() > 0) {
+    appendElement(g);
+  }
+  else {
+    delete g;    // empty sequence, just drop it
+  }
 }
 
 
@@ -124,6 +129,21 @@ void HistoryBuffer::redo()
 void HistoryBuffer::printHistory(stringBuilder &sb) const
 {
   history.printWithMark(sb, 0 /*indent*/, time);
+}
+
+void HistoryBuffer::printHistory() const
+{
+  stringBuilder sb;
+  printHistory(sb);
+  cout << sb;
+}
+
+
+void HistoryBuffer::printHistoryStats() const
+{
+  HistoryStats stats;
+  historyStats(stats);
+  stats.printInfo();
 }
 
 
@@ -248,12 +268,8 @@ void entry()
                     "This is the second line.\n"
                     "now on thir");
   //printHistory(buf);
-              
-  {
-    HistoryStats stats;
-    buf.historyStats(stats);
-    stats.printInfo();
-  }
+
+  buf.printHistoryStats();
 
 
   unlink("historybuf.tmp");

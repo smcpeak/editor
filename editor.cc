@@ -13,6 +13,7 @@
 #include "macros.h"          // Restorer
 #include "styledb.h"         // StyleDB
 #include "inputproxy.h"      // InputProxy
+#include "ckheap.h"          // malloc_stats
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -580,6 +581,7 @@ void Editor::clearSelIfEmpty()
 void Editor::keyPressEvent(QKeyEvent *k)
 {
   TRACE("input", "keyPress: " << toString(*k));
+  HBGrouper hbgrouper(*buffer);
 
   if (inputProxy && inputProxy->keyPressEvent(k)) {
     return;
@@ -596,6 +598,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_U:
         buffer->core().dumpRepresentation();
+        malloc_stats();
+        break;
+
+      case Key_H:
+        buffer->printHistory();
+        buffer->printHistoryStats();
         break;
 
       case Key_PageUp:
@@ -692,6 +700,11 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
       }                                         
       #endif // 0
+
+      case Key_B: {
+        breaker();     // breakpoint for debugger
+        break;
+      }
 
       default:
         k->ignore();

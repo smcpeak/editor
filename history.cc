@@ -432,9 +432,7 @@ HE_group::~HE_group()
 void HE_group::append(HistoryElt *e)
 {
   HistoryEltCode code = encode(e);
-  if (code) {
-    seq.insert(seqLength(), code);
-  }
+  seq.insert(seqLength(), code);
 }
 
 
@@ -536,7 +534,12 @@ HE_group::HistoryEltCode HE_group::encode(HistoryElt * /*owner*/ e)
         // since I'm planning on opening/closing groups for every UI
         // action, many of which won't actually try to add a history
         // element
-        RETURN(0);   // special code to caller
+        //RETURN(0);   // special code to caller
+        
+        // update: I have to add exactly one element to the sequence
+        // because the caller believes the sequence has increased in
+        // length by exactly one.  So the caller takes care of this
+        // particular optimization.
       }
 
       if (g->seqLength() == 1) {
@@ -741,7 +744,7 @@ void HE_group::stats(HistoryStats &stats) const
   if (L+G+R > 0) {
     stats.mallocObjects++;
   }
-  stats.reservedSpace = G * sizeof(HistoryElt*);
+  stats.reservedSpace += G * sizeof(HistoryElt*);
 
   // for 'seq' contents
   for (int i=0; i < seq.length(); i++) {
