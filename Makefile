@@ -1,40 +1,55 @@
 # Makefile for editor
 
+# main target
 all: buffer editor dialogs
 
+
+# directories of other software
 SMBASE := smbase
 
-ccflags = -g -Wall
-includes = -I/usr/X11/include -I$(SMBASE)
-#libraries = -L$(SMBASE) -l$(SMBASE) -L/usr/X11/lib -lXm -lXt
-libraries = -L$(SMBASE) -l$(SMBASE) -L/usr/X11/lib -lX11
-compile = g++ -c ${ccflags} ${defines} ${includes}
-ccompile = gcc -c ${ccflags} ${defines} ${includes}
-link = g++ ${ccflags} ${defines} ${includes}
-linkend = ${libraries}
-makelib = ar -r
 
+# C++ compiler, etc.
+CXX := g++
+
+# flags for the C and C++ compilers (and preprocessor)
+CCFLAGS := -g -Wall -I/usr/X11/include -I$(SMBASE)
+
+# flags for the linker
+LDFLAGS := -g -Wall $(SMBASE)/libsmbase.a -L/usr/X11/lib -lX11
+
+
+# patterns of files to delete in the 'clean' target
 TOCLEAN =
 
+
+# compile .cc to .o
 TOCLEAN += *.o *.d
 %.o : %.cc
-	${compile} -o $@ $<
-	@perl $(SMBASE)/depend.pl -o $@ $< $(ccflags) $(defines) $(includes) > $*.d
+	$(CXX) -c -o $@ $< $(CCFLAGS)
+	@perl $(SMBASE)/depend.pl -o $@ $< $(CCFLAGS) > $*.d
 
-TOCLEAN += editor
-editor-src = editor.o buffer.o textline.o position.o
-editor: ${editor-src} buffer.h textline.h position.h
-	${link} -o editor ${editor-src} ${linkend}
--include $(editor-src:.o=.d)
 
+# -------------- buffer test program ----------------
 TOCLEAN += buffer buffer.tmp
-buffer-src = buffer.cc textline.o position.o
-buffer: array.h ${buffer-src}
-	${link} -o buffer -DTEST_BUFFER ${buffer-src} ${linkend}
+BUFFER_OBJS = buffer.cc textline.o position.o
+buffer: array.h $(BUFFER_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) $(LDFLAGS)
 
+
+# ------------------ the editor ---------------------
+TOCLEAN += editor
+EDITOR_OBJS = editor.o buffer.o textline.o position.o
+editor: $(EDITOR_OBJS) buffer.h textline.h position.h
+	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
+-include $(EDITOR_OBJS:.o=.d)
+
+
+# -------------- another test program ---------------
 TOCLEAN += dialogs
 dialogs: dialogs.cc
-	${link} -o dialogs dialogs.cc -lXm -lXt ${linkend}
+	$(CXX) -o $@ $(CCFLAGS) dialogs.cc -lXm -lXt $(LDFLAGS)
 
+
+# --------------------- misc ------------------------
 clean:
 	rm -f $(TOCLEAN)
