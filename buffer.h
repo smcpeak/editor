@@ -170,6 +170,10 @@ public:
   // to the next/prev line at line edges
   void advanceWithWrap(int &line, int &col, bool backwards) const;
 
+  // starting at 'line', go up until we find a line that is not
+  // entirely blank (whitespace), and return the # of whitespace 
+  // chars to the left of the first non-whitespace char
+  int getAboveIndentation(int line) const;
 
   // split 'line' into two, putting everything after 'col' into the
   // next line; if 'col' is beyond the end of the line, spaces are

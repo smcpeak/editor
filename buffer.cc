@@ -10,7 +10,7 @@
 #include "array.h"         // Array
 
 #include <string.h>        // strncasecmp
-#include <ctype.h>         // isalnum
+#include <ctype.h>         // isalnum, isspace
 
 
 // ---------------------- BufferCore --------------------------
@@ -660,6 +660,22 @@ void Buffer::advanceWithWrap(int &line, int &col, bool backwards) const
       col = 0;
     }
   }
+}
+
+
+int Buffer::getAboveIndentation(int line) const
+{
+  while (line >= 0) {
+    string contents = getWholeLine(line);
+    for (char const *p = contents.pcharc(); *p; p++) {
+      if (!isspace(*p)) {
+        // found non-ws char
+        return p - contents.pcharc();
+      }
+    }
+    line--;
+  }
+  return 0;
 }
 
 

@@ -757,6 +757,22 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
 
         buffer->insertNewline(cursorLine, cursorCol);
+        
+        // make sure we can see as much to the left as possible
+        setFirstVisibleCol(0);
+        
+        // auto-indent
+        int ind = buffer->getAboveIndentation(cursorLine-1);
+        while (ind) {
+          // insert lots of spaces at once, maybe to make the undo log
+          // look nicer?
+          static char const spaces[] = "                          ";
+          int amt = min((int)sizeof(spaces), ind);
+          xassert(amt > 0);
+          buffer->insertText(cursorLine, cursorCol, spaces, amt);
+          cursorCol += amt;
+          ind -= amt;
+        }
 
         scrollToCursor();
         break;
