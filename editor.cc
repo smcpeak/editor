@@ -403,3 +403,18 @@ void Editor::moveView(int deltaLine, int deltaCol)
   // redraw display
   update();
 }
+
+
+void Editor::scrollToLine(int line)
+{
+  xassert(line >= 0);
+  firstVisibleLine = line;
+  update();
+}
+
+void Editor::scrollToCol(int col)
+{
+  xassert(col >= 0);
+  firstVisibleCol = col;
+  update();
+}

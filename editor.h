@@ -96,9 +96,13 @@ public:      // funcs
   int visLines() const { return lastVisibleLine-firstVisibleLine+1; }
   int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
 
-public slots:           
+public slots:
   // automatically calls updateView()
   virtual void update();
+
+  // slots to respond to scrollbars
+  virtual void scrollToLine(int line);
+  virtual void scrollToCol(int col);
 };
 
 #endif // EDITOR_H
