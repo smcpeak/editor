@@ -422,6 +422,9 @@ void Editor::scrollToCol(int col)
 
 void Editor::mousePressEvent(QMouseEvent *m)
 {
+  // get rid of popups?
+  QWidget::mousePressEvent(m);
+
   int x = m->x();
   int y = m->y();
                       
