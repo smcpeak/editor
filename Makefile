@@ -1,6 +1,6 @@
 # Makefile for editor
 
-#tmp: c_hilite.yy.o
+#tmp: buffer
 
 # main target
 all: testgap buffer style c_hilite editor
@@ -102,7 +102,9 @@ EDITOR_OBJS := \
   c_hilite.yy.o \
   lex_hilite.o \
   flexlexer.o \
-  comment.yy.o
+  comment.yy.o \
+  inputproxy.o \
+  incsearch.o
 -include $(EDITOR_OBJS:.o=.d)
 
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h

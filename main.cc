@@ -7,6 +7,7 @@
 #include "exc.h"             // XOpen
 #include "trace.h"           // TRACE_ARGS
 #include "c_hilite.h"        // C_Highlighter
+#include "incsearch.h"       // IncSearch
 
 #include <qapplication.h>    // QApplication
 #include <qmenubar.h>        // QMenuBar
@@ -92,6 +93,8 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
     edit->insertItem("&Copy", editor, SLOT(editCopy()), CTRL+Key_C);
     edit->insertItem("&Paste", editor, SLOT(editPaste()), CTRL+Key_V);
     edit->insertItem("&Delete", editor, SLOT(editDelete()));
+    edit->insertSeparator();
+    edit->insertItem("Inc. &Search", this, SLOT(editISearch()), CTRL+Key_S);
 
     QPopupMenu *help = new QPopupMenu(this);
     menuBar->insertItem("&Help", help);
@@ -111,6 +114,15 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   
   // temporary: make and attach a C++ highlighter
   theBuffer.highlighter = new C_Highlighter(theBuffer);
+                                    
+  // i-search; use filename as status display
+  isearch = new IncSearch(filename);
+}
+
+
+EditorWindow::~EditorWindow()
+{
+  delete isearch;
 }
 
 
@@ -193,6 +205,12 @@ void EditorWindow::fileSaveAs()
   
   setFileName(s);
   writeTheFile();
+}
+
+
+void EditorWindow::editISearch()
+{
+  isearch->attach(editor);
 }
 
 

@@ -9,6 +9,8 @@
 #include "autofile.h"      // AutoFILE
 #include "array.h"         // Array
 
+#include <string.h>        // strncasecmp
+
 
 // ---------------------- BufferCore --------------------------
 BufferCore::BufferCore()
@@ -586,6 +588,41 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
 }
 
 
+bool Buffer::findString(int &userLine, int &userCol, char const *text) const
+{
+  int line = userLine;
+  int col = userCol;
+  int textLen = strlen(text);
+
+  // contents of current line, in a growable buffer
+  GrowArray<char> contents(10);
+
+  while (line < numLines()) {
+    // get line contents
+    int lineLen = lineLength(line);
+    contents.ensureIndexDoubler(lineLen);
+    getLine(line, 0, contents.getDangerousWritableArray(), lineLen);
+
+    // search for 'text' using naive algorithm, starting at 'col'
+    while (col+textLen <= lineLen) {
+      if (0==strncasecmp(contents.getArray()+col, text, textLen)) {
+        // found match
+        userLine = line;
+        userCol = col;
+        return true;
+      }
+      col++;
+    }
+
+    // wrap to next line
+    col = 0;
+    line++;
+  }
+
+  return false;
+}
+
+
 // -------------------- BufferObserver ------------------
 void BufferObserver::insertLine(BufferCore const &, int)
 {}
@@ -617,6 +654,27 @@ void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2,
                             << line2 << "," << col2 << "):\n";
     cout << "  actual: " << quoted(actual) << "\n";
     cout << "  expect: " << quoted(expect) << "\n";
+    exit(2);
+  }
+}
+
+
+// test Buffer::findString  
+void testFind(Buffer const &buf, int line, int col, char const *text,
+              int ansLine, int ansCol)
+{
+  bool expect = ansLine>=0;
+  bool actual = buf.findString(line, col, text);
+
+  if (expect != actual) {
+    cout << "find(\"" << text << "\"): expected " << expect
+         << ", got " << actual << endl;
+    exit(2);
+  }
+
+  if (actual && (line!=ansLine || col!=ansCol)) {
+    cout << "find(\"" << text << "\"): expected " << ansLine << ":" << ansCol
+         << ", got " << line << ":" << col << endl;
     exit(2);
   }
 }
@@ -785,6 +843,16 @@ void entry()
   testGetRange(buf, 0,0, 0,0, "");
   xassert(buf.numLines() == 1);
   xassert(buf.lineLength(0) == 0);
+
+  
+  line=0; col=0;
+  buf.insertTextRange(line, col, "foofoofbar\n");
+  testFind(buf, 0,0, "foo", 0,0);
+  testFind(buf, 0,1, "foo", 0,3);
+  testFind(buf, 0,3, "foof", 0,3);
+  testFind(buf, 0,4, "foof", -1,-1);
+  testFind(buf, 0,0, "foofgraf", -1,-1);
+
 
   printf("buffer is ok\n");
 }

@@ -179,6 +179,12 @@ public:
   // delete the characters between line1/col1 and line/col2, both
   // of which must be valid locations (no; change this)
   void deleteTextRange(int line1, int col1, int line2, int col2);
+
+  // search from line/col to find the first occurrence of
+  // 'text', and update line/col to the beginning of the
+  // match; return false for no match; 'text' will not be
+  // tested for matches that span multiple lines
+  bool findString(int &line, int &col, char const *text) const;
 };
 
 

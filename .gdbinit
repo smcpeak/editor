@@ -1,6 +1,6 @@
 # .gdbinit  -*- sh -*-
  
-file editor
+file buffer
 #file c_hilite
 #set args -tr setView
 

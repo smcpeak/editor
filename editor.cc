@@ -12,6 +12,7 @@
 #include "qtutil.h"          // toString(QKeyEvent&)
 #include "macros.h"          // Restorer
 #include "styledb.h"         // StyleDB
+#include "inputproxy.h"      // InputProxy
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -43,6 +44,7 @@ Editor::Editor(BufferState *buf,
     selectBG(0x00, 0x00, 0xF0),     // light blue
     #endif
     ctrlShiftDistance(10),
+    inputProxy(NULL),
     // font metrics inited by setFont()
     ignoreScrollSignals(false)
 {
@@ -63,6 +65,13 @@ Editor::Editor(BufferState *buf,
   //setBackgroundColor(normalBG);
 
   resetView();
+}
+
+Editor::~Editor()
+{
+  if (inputProxy) {
+    inputProxy->detach();
+  }
 }
 
 
@@ -525,6 +534,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
 {
   TRACE("input", "keyPress: " << toString(*k));
 
+  if (inputProxy && inputProxy->keyPressEvent(k)) {
+    return;
+  }
+
   int state = k->state() & KeyButtonMask;
 
   // control-<key>
@@ -586,6 +599,27 @@ void Editor::keyPressEvent(QKeyEvent *k)
     }
   }
 
+  // Ctrl+Alt+<key>
+  else if (state == (ControlButton|AltButton)) {
+    switch (k->key()) {
+      case Key_Left: {
+        QWidget *top = qApp->mainWidget();
+        top->setGeometry(83, 55, 565, 867);
+        break;
+      }
+
+      case Key_Right: {
+        QWidget *top = qApp->mainWidget();
+        top->setGeometry(493, 55, 781, 867);
+        break;
+      }
+
+      default:
+        k->ignore();
+        break;
+    }
+  }
+
   // Ctrl+Shift+<key>
   else if (state == (ControlButton|ShiftButton)) {
     xassert(ctrlShiftDistance > 0);
@@ -615,6 +649,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_PageDown:
         turnOnSelection();
         cursorToBottom();
+        break;
+       
+      default:
+        k->ignore();
         break;
     }
   }
@@ -748,6 +786,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
         scrollToCursor();
         break;
       }
+
+      case Key_Escape:
+        // do nothing; in other modes this will cancel out
+        break;
 
       default: {
         QString text = k->text();
@@ -1034,3 +1076,6 @@ void Editor::editDelete()
     scrollToCursor();
   }
 }
+
+
+// EOF

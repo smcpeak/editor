@@ -344,12 +344,21 @@ more todo:
   - alt+ins to toggle ins/overwrite
   - auto-indent
   - alt+left/right
-  - ctrl+alt+left/right
+  * ctrl+alt+left/right
   - tabs
   - File|Rename, that writes to a new name and deletes the old one
   - bookmarks, with markers on the scrollbar
-  
+  - paren-matching indication
+  - search+replace
+
 end 2/26/03 06:54
 
-    
+---------------------
+start 2/28/03 04:14
+   
+bugs:
+  - open editor.cc, go to end of file, open editor.h: now at end
+    of that file, should be at start
+  - open nonexistent file, shouldn't clear current contents
+
 

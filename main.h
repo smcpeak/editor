@@ -12,7 +12,9 @@
 class QMenuBar;
 class QScrollBar;
 class QLabel;
+
 class Editor;                // editor.h
+class IncSearch;             // incsearch.h
 
 
 // toplevel window containing an editor pane
@@ -29,12 +31,16 @@ public:      // data
   // right now, one buffer
   BufferState theBuffer;
 
+  // incremental search system
+  IncSearch *isearch;          // (owner)
+
 private:     // funcs
   void setFileName(char const *name);
   void writeTheFile();
 
 public:      // funcs
   EditorWindow(QWidget *parent=0, char const *name=0);
+  ~EditorWindow();
 
   // open and begin editing a particular file
   void fileOpenFile(char const *fname);
@@ -44,6 +50,7 @@ public slots:
   void fileOpen();
   void fileSave();
   void fileSaveAs();
+  void editISearch();
   void helpAbout();
   
   void editorViewChanged();

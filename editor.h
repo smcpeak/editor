@@ -10,6 +10,7 @@
 
 class QRangeControl;        // qrangecontrol.h
 class StyleDB;              // styledb.h
+class InputProxy;           // inputproxy.h
 
 
 // control to edit the contents of a buffer; it's possible (and
@@ -64,6 +65,9 @@ public:      // data
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
   int ctrlShiftDistance;
+
+  // current input proxy, if any
+  InputProxy *inputProxy;           // (nullable serf)
 
   // ------ font metrics ------
   // these should be treated as read-only by all functions except
@@ -141,6 +145,7 @@ protected:   // funcs
 public:      // funcs
   Editor(BufferState *buf,
          QWidget *parent=NULL, const char *name=NULL);
+  ~Editor();
 
   // QWidget funcs
   virtual void setFont(QFont &f);
