@@ -10,6 +10,8 @@
 #include "incsearch.h"       // IncSearch
 #include "strutil.h"         // sm_basename
 
+#include <string.h>          // strrchr
+
 #include <qapplication.h>    // QApplication
 #include <qmenubar.h>        // QMenuBar
 #include <qscrollbar.h>      // QScrollBar
@@ -144,9 +146,6 @@ void EditorWindow::fileNew()
   b->filename = "untitled.txt";    // TODO: find a unique variant of this name
   buffers.append(b);
 
-  // temporary: make and attach a C++ highlighter
-  b->highlighter = new C_Highlighter(*b);
-
   setBuffer(b);
 }
 
@@ -192,9 +191,17 @@ void EditorWindow::fileOpenFile(char const *name)
     delete b;
     return;
   }
-
-  // temporary: make and attach a C++ highlighter
-  b->highlighter = new C_Highlighter(*b);
+  
+  // get file extension
+  char const *dot = strrchr(name, '.');
+  if (dot) {
+    string ext = string(dot+1);
+    if (ext.equals("h") ||
+        ext.equals("cc")) {
+      // make and attach a C++ highlighter for C/C++ files
+      b->highlighter = new C_Highlighter(*b);
+    }
+  }
 
   // now that we've opened the file, set the editor widget to edit it
   buffers.append(b);
