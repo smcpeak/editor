@@ -1005,6 +1005,8 @@ void Editor::editPaste()
     QMessageBox::information(this, "Info", "The clipboard is empty.");
   }
   else {
+    fillToCursor();
+
     // remove what's selected, if anything
     editDelete();
 

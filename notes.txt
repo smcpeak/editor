@@ -161,7 +161,7 @@ let's now get the text-rendering procedure working a bit better,
 and in the process implement scrolling
 
 major todos:
-  - support for multiple simultanous files
+  - support for multiple simultaneous files
   * syntax highlighting!
   - undo
   - incremental search
@@ -345,5 +345,11 @@ more todo:
   - auto-indent
   - alt+left/right
   - ctrl+alt+left/right
+  - tabs
+  - File|Rename, that writes to a new name and deletes the old one
+  - bookmarks, with markers on the scrollbar
   
+end 2/26/03 06:54
+
+    
 

@@ -11,7 +11,7 @@ StyleDB::StyleDB()
   // distribute several default color schemes, instead of making mine
   // the only default.
 
-  QColor bg(0x00, 0x00, 0xA0);        // background: darkish blue
+  QColor bg(0x00, 0x00, 0x9C);        // background: darkish blue
   QColor selectBG(0x00, 0x00, 0xF0);  // selection background: light blue
   QColor hitBG(0x00, 0xE0, 0x50);     // hit background: lime
   QColor errorBG(0x00, 0x00, 0x00);   // error background: black
