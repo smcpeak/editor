@@ -228,13 +228,33 @@ void Buffer::insertLinesAt(int n, int howmany)
     // harder case: must move existing lines down
 
     // first, make room
+    int oldNumLines = numLines;
     setNumLines(numLines + howmany);
 
-    // then shift the original lines below the insertion
-    // point downward
-    memmove(lines+n+howmany,                // dest
-            lines+n,                        // src
-            howmany * sizeof(TextLine));    // size to move
+    /* lines[] state now:
+     *
+     * lines ---> +--------------+  \
+     *            | old line 0   |   \
+     *            |              |    > n
+     *            |              |   /
+     *            | old line n-1 |  /
+     *   src ---> + old line n   +  \
+     *            + old line n+1 +   > howmany (to insert)
+     *            +              +  /
+     *  dest ---> |              |  \
+     *            |              |   \
+     *            |              |    > (oldNumLines-n)
+     *            |              |   /
+     *            +--------------+  /
+     */
+
+    // then shift the original lines below the insertion point
+    // downward (I've written this memmove incorrectly twice now,
+    // which is why I've now got the verbose comments above and
+    // below...)
+    memmove(lines+n+howmany,                        // dest
+            lines+n,                                // src
+            (oldNumLines-n) * sizeof(TextLine));    // size to move
 
     // the lines in the gap now are defunct, though they
     // still point to some of the shifted lines; re-init
@@ -243,6 +263,23 @@ void Buffer::insertLinesAt(int n, int howmany)
     for (int i=n; i < n+howmany; i++) {
       lines[i].init();
     }
+
+    /* lines[] state now:
+     *
+     * lines ---> +--------------+  \
+     *            | old line 0   |   \
+     *            |              |    > n
+     *            |              |   /
+     *            | old line n-1 |  /
+     *   src ---> + empty        +  \
+     *            + empty        +   > howmany (to insert)
+     *            + empty        +  /
+     *  dest ---> | old line n   |  \
+     *            | old line n+1 |   \
+     *            |              |    > (oldNumLines-n)
+     *            |              |   /
+     *            +--------------+  /
+     */
   }
 }
 
