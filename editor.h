@@ -40,6 +40,10 @@ public:      // data
   // # of blank lines of pixels between lines of text ("leading")
   int interLineSpace;
 
+  // ------ input options ------
+  // distance to move view for Ctrl-Shift-<arrow key>
+  int ctrlShiftDistance;
+
 protected:   // funcs
   // respond to a paint request by repainting the control
   virtual void paintEvent(QPaintEvent *);
@@ -57,6 +61,13 @@ public:      // funcs
   // scroll the view the minimum amount so that the cursor line/col
   // is visible; if it's already visible, do nothing
   void scrollToCursor();
+
+  // move the cursor and the view by a set increment, and repaint
+  void moveView(int deltaLine, int deltaCol);
+
+  // size of view in lines/cols
+  int visLines() const { return lastVisibleLine-firstVisibleLine+1; }
+  int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
 };
 
 #endif // EDITOR_H

@@ -79,8 +79,8 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   setIcon(QPixmap((char const**)icon_xpm));
 
-  // initial size
-  resize(400,400);
+  setGeometry(200,200,      // initial location
+              400,400);     // initial size
 
 }
 
@@ -94,7 +94,7 @@ void EditorWindow::fileNew()
   // temporary: insert some dummy text into the buffer
   {
     Position start(&theBuffer);
-    theBuffer.insertText(start, "hi there", 8);
+    theBuffer.readFile("buffer.cc");
   }
 
   position->setText("0:0");

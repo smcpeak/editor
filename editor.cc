@@ -26,7 +26,8 @@ Editor::Editor(Buffer *buf,
     // visible line/col inited by resetView
     topMargin(1),
     leftMargin(1),
-    interLineSpace(0)
+    interLineSpace(0),
+    ctrlShiftDistance(10)
 {
   QFont font;
   font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
@@ -139,6 +140,7 @@ void Editor::paintEvent(QPaintEvent *ev)
     if (line == cursor.line()) {
       x = leftMargin + fontWidth * (cursor.col() - firstVisibleCol);
       paint.drawLine(x,y, x, y+fontHeight-1);
+      paint.drawLine(x-1,y, x-1, y+fontHeight-1);
     }
     
     y += fontHeight + interLineSpace;
@@ -158,28 +160,91 @@ void Editor::paintEvent(QPaintEvent *ev)
     + (width() - leftMargin) / fontWidth - 1;
 }
 
+                           
+// increment, but don't allow result to go below 0
+static void inc(int &val, int amt)
+{
+  val += amt;
+  if (val < 0) {
+    val = 0;
+  }
+}
+
 
 void Editor::keyPressEvent(QKeyEvent *k)
-{     
+{
   int state = k->state() & KeyButtonMask;
-                 
+
   // control-<key>
   if (state == ControlButton) {
     switch (k->key()) {
       case Key_U:
         buffer->dumpRepresentation();
         break;
-        
+
       case Key_C:
         QApplication::exit();     // this *does* return
         break;
-        
+
+      case Key_PageUp:
+        cursor.set(0,0);
+        scrollToCursor();
+        update();
+        break;
+
+      case Key_PageDown:
+        cursor.set(max(buffer->totLines()-1,0), 0);
+        scrollToCursor();
+        update();
+        break;
+
+      case Key_W:
+      case Key_Up:
+        moveView(-1, 0);
+        break;
+
+      case Key_Z:
+      case Key_Down:
+        moveView(+1, 0);
+        break;
+
+      case Key_Left:
+        moveView(0, -1);
+        break;
+
+      case Key_Right:
+        moveView(0, +1);
+        break;
+
       default:
         k->ignore();
         break;
-    }         
+    }
   }
-                        
+
+  // Ctrl+Shift+<key>
+  else if (state == (ControlButton|ShiftButton)) {
+    xassert(ctrlShiftDistance > 0);
+
+    switch (k->key()) {
+      case Key_Up:
+        moveView(-ctrlShiftDistance, 0);
+        break;
+
+      case Key_Down:
+        moveView(+ctrlShiftDistance, 0);
+        break;
+
+      case Key_Left:
+        moveView(0, -ctrlShiftDistance);
+        break;
+
+      case Key_Right:
+        moveView(0, +ctrlShiftDistance);
+        break;
+    }
+  }
+
   // <key>
   else if (state == NoButton || state == ShiftButton) {
     switch (k->key()) {
@@ -212,6 +277,14 @@ void Editor::keyPressEvent(QKeyEvent *k)
         // allows cursor past EOF..
         cursor.move(+1,0);
         scrollToCursor();
+        break;
+
+      case Key_PageUp:
+        moveView(-visLines(), 0);
+        break;
+
+      case Key_PageDown:
+        moveView(+visLines(), 0);
         break;
 
       case Key_BackSpace: {
@@ -276,4 +349,25 @@ void Editor::scrollToCursor()
   else if (cursor.line() > lastVisibleLine) {
     firstVisibleLine += (cursor.line() - lastVisibleLine);
   }
+}
+
+
+void Editor::moveView(int deltaLine, int deltaCol)
+{
+  // first make sure the view contains the cursor
+  scrollToCursor();
+  
+  // move viewport, but remember original so we can tell
+  // when there's truncation
+  int origVL = firstVisibleLine;
+  int origVC = firstVisibleCol;
+  inc(firstVisibleLine, deltaLine);
+  inc(firstVisibleCol, deltaCol);
+
+  // now move cursor by the amount that the viewport moved
+  cursor.move(firstVisibleLine-origVL, 
+              firstVisibleCol-origVC);
+
+  // redraw display
+  update();
 }
