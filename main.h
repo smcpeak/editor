@@ -48,7 +48,7 @@ public:      // data
   IncSearch *isearch;                // (owner)
 
 private:     // funcs
-  void setFileName(char const *name);
+  void setFileName(char const *name, char const *hotkey);
   void writeTheFile();
   void setBuffer(BufferState *b);
   void rebuildWindowMenu();

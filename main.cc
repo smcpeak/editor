@@ -178,14 +178,21 @@ void EditorWindow::setBuffer(BufferState *b)
   editor->updateView();
   editorViewChanged();
 
-  setFileName(theBuffer()->title);
+  setFileName(theBuffer()->title, theBuffer()->hotkeyDesc());
 }
 
 
-void EditorWindow::setFileName(char const *name)
+void EditorWindow::setFileName(char const *name, char const *hotkey)
 {
   statusArea->status->setText(name);
-  setCaption(QString(stringc << appName << ": " << sm_basename(name)));
+  
+  string s = string(appName) & ": ";
+  if (hotkey && hotkey[0]) {
+    s &= stringc << "[" << hotkey << "] ";
+  }
+  s &= sm_basename(name);
+    
+  setCaption(QString(s));
 }
 
 
@@ -290,7 +297,7 @@ void EditorWindow::fileSaveAs()
   char const *name = s;
   theBuffer()->filename = name;
   theBuffer()->title = sm_basename(name);
-  setFileName(name);
+  setFileName(name, theBuffer()->hotkeyDesc());
   writeTheFile();
 }
 
@@ -329,7 +336,7 @@ void EditorWindow::windowOccupyLeft()
     setGeometry(83, 49, 465, 660);
   }
   else {    // 1280x1024
-    setGeometry(83, 55, 565, 867);
+    setGeometry(83, 59, 565, 867);
   }
 }
 
@@ -340,7 +347,7 @@ void EditorWindow::windowOccupyRight()
     setGeometry(390, 49, 630, 660);
   }
   else {    // 1280x1024
-    setGeometry(493, 55, 781, 867);
+    setGeometry(493, 59, 783, 867);
   }
 }
 

@@ -1,8 +1,6 @@
 // editor.cc
 // code for editor.h
 
-// tweak ....
-
 #include "editor.h"          // this module
 #include "buffer.h"          // Buffer
 #include "position.h"        // Position
@@ -17,6 +15,7 @@
 #include "inputproxy.h"      // InputProxy
 #include "ckheap.h"          // malloc_stats
 #include "status.h"          // StatusDisplay
+#include "nonport.h"         // getMilliseconds
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -28,6 +27,7 @@
 #include <qlabel.h>          // QLabel
 
 #include <stdio.h>           // printf, for debugging
+#include <time.h>            // time(), localtime()
 
 
 // ---------------------- Editor --------------------------------
@@ -300,6 +300,8 @@ void Editor::paintEvent(QPaintEvent *ev)
   QPainter paint(&pixmap);
   paint.setFont(font());
 
+  long start = getMilliseconds();
+  
   try {
     // draw on the pixmap
     if (!listening) {
@@ -325,10 +327,18 @@ void Editor::paintEvent(QPaintEvent *ev)
 
   paint.end();
 
+  long middle = getMilliseconds();
+  
   // blit the pixmap.. Qt docs claim the pixmap is entirely server-side,
   // so this should *not* entail a network copy of a big image...
   paint.begin(this);
   paint.drawPixmap(0,0, pixmap);
+  paint.flush();     // to improve accuracy of timing information
+  
+  long end = getMilliseconds();
+  
+  trace("paint") << "frame: paint=" << (middle-start)
+                 << ", blit=" << (end-middle) << "\n";
 }
 
 void Editor::drawBufferContents(QPainter &paint,
@@ -763,6 +773,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_Right:
         blockIndent(+2);
         break;
+        
+      case Key_D: {
+        time_t t = time(NULL);
+        struct tm *tm = localtime(&t);
+        string s = stringf("%02d/%02d/%02d %02d:%02d",
+                           tm->tm_mon, tm->tm_mday, tm->tm_year % 100,
+                           tm->tm_hour, tm->tm_min);
+        insertAtCursor(s);
+        break;
+      }
     }
   }
 

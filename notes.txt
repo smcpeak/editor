@@ -1,5 +1,50 @@
 
+TODOs:
+  - ctrl-tab buffer switching sort of like alt-tab
+  - multiple cursor mode options; include an emacs-like mode
+  - compilation mode
+  - save/restore set of open buffers
+  - ask before quitting when files have unsaved changes
+  - periodic autosave; do that when receiving SIGTERM/QUIT/INT also
+  - do not open the same file more than once
+  - ctrl-i: open file at cursor
+  - analog to M-x grep
+  - ctrl-f4: close a buffer
+  - visual indication of where EOF is
+  - if I press Delete while the cursor is at the left edge of a blank
+    line, make it delete that line even if there is whitespace on it
+  - highlight .cpp like .cc
+  - print tabs as (e.g.) 8 spaces
+  - implement ctrl+alt+up
+  - fix problem where this sequence leads to the menu having kbd focus:
+    - alt depressed
+    - '1' depressed
+    - alt released     - in windows-style mode, alt-release normally gives focus..
+    - '1' released
+  - find-files enhanced to have several directories available, and to use
+    the directory in which the current file resides by default
+  - case-sensitive search by default if any chars are capitals
+  - parenthesis balancing
+  
+working on:
+  - performance!  smarter updates, etc.
 
+implemented:
+  + ctrl-z, ctrl-w should work while in search mode
+    (ctrl-w already does something else in that mode..)
+  * make the window title reflect the Alt-n key that gets you there
+  * in search mode, 
+    / home/end should be like enter, home/end
+      but home already scrolls towards left edge w/o getting
+      out of search...
+    * up and down can scroll window
+  / window menu Alt-n numbers should be underlined to act as simple
+    hotkeys when the window is open (quite difficult)
+  * alt-d: insert date/time
+
+
+
+----------------------------
 3/28/01 03:31
 
 got the font stuff working after looking in many places.
@@ -702,4 +747,19 @@ start 9/26/03 00:06
 
 brought over things from the laptop, finally
 
+ctrl-z, ctrl-w should work while in search mode
 
+implemented a few things
+
+end 9/26/03 01:33
+
+-------------------------
+start 9/26/03 17:10
+
+looking at performance issues... I cannot measure any significant
+time spent inside the editor itself, and 'top' is indicating that
+most time is spent in the X server, presumably responding to all
+my drawing requests and then blitting
+
+so a key difficulty at this point is I don't have a way to measure
+the current performance

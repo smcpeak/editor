@@ -197,6 +197,16 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
         prevMatch();
         return true;
 
+      case Qt::Key_Down:
+        ed->moveView(+1, 0);
+        ed->redraw();
+        return true;
+        
+      case Qt::Key_Up:
+        ed->moveView(-1, 0);
+        ed->redraw();
+        return true;
+        
       case Qt::Key_Home:     
         // make as much of the left side visible as possible
         ed->setFirstVisibleCol(0);
@@ -263,11 +273,14 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
       case Qt::Key_Up:
       case Qt::Key_Down:
       case Qt::Key_W:       // and this is a conflicting binding...
+      #endif // 0
+      
+      // even though it's a little inconsistent that Ctrl-W extends the
+      // selection while Ctrl-Z scrolls, it's the latter functionality
+      // that I need most often....
       case Qt::Key_Z:
         // pass these through to editor, so it can scroll
         return false;
-      #endif // 0
-
     }
   }
 

@@ -1,8 +1,6 @@
 // editor.h
 // widget for editing text
 
-// (this is a tweak to test CVS) ....
-
 #ifndef EDITOR_H
 #define EDITOR_H
 

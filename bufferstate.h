@@ -98,6 +98,10 @@ public:      // data
 public:      // funcs
   BufferState();
   ~BufferState();
+  
+  // human-readable description of 'hotkey'; 
+  // might return ""
+  string hotkeyDesc();
 };
 
 #endif // BUFFERSTATE_H
