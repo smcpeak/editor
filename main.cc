@@ -36,26 +36,6 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   QVBox *mainArea = new QVBox(this, "main area");
   mainAreaMgr->addWidget(mainArea);    // get 'mainArea' to fill the dialog
 
-  // menu
-  {
-    menuBar = new QMenuBar(mainArea, "main menu bar");
-    menuBar->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    menuBar->setLineWidth(1);
-
-    QPopupMenu *file = new QPopupMenu(this);
-    menuBar->insertItem("&File", file);
-    file->insertItem("&New", this, SLOT(fileNew()));
-    file->insertItem("&Open ...", this, SLOT(fileOpen()), Key_F3);
-    file->insertItem("&Save", this, SLOT(fileSave()), Key_F2);
-    file->insertItem("Save &as ...", this, SLOT(fileSaveAs()));
-    file->insertSeparator();
-    file->insertItem("E&xit", this, SLOT(close()));
-
-    QPopupMenu *help = new QPopupMenu(this);
-    menuBar->insertItem("&Help", help);
-    help->insertItem("&About ...", this, SLOT(helpAbout()));
-  }
-
   QGrid *editArea = new QGrid(2 /*cols*/, QGrid::Horizontal, mainArea, "edit area");
 
   editor = new Editor(&theBuffer, editArea, "editor widget");
@@ -79,6 +59,33 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   filename = new QLabel(statusArea, "filename label");
   filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   filename->setLineWidth(1);
+
+  // menu
+  {
+    menuBar = new QMenuBar(mainArea, "main menu bar");
+    menuBar->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    menuBar->setLineWidth(1);
+
+    QPopupMenu *file = new QPopupMenu(this);
+    menuBar->insertItem("&File", file);
+    file->insertItem("&New", this, SLOT(fileNew()));
+    file->insertItem("&Open ...", this, SLOT(fileOpen()), Key_F3);
+    file->insertItem("&Save", this, SLOT(fileSave()), Key_F2);
+    file->insertItem("Save &as ...", this, SLOT(fileSaveAs()));
+    file->insertSeparator();
+    file->insertItem("E&xit", this, SLOT(close()));
+
+    QPopupMenu *edit = new QPopupMenu(this);
+    menuBar->insertItem("&Edit", edit);
+    edit->insertItem("Cu&t", editor, SLOT(editCut()), CTRL+Key_X);
+    edit->insertItem("&Copy", editor, SLOT(editCopy()), CTRL+Key_C);
+    edit->insertItem("&Paste", editor, SLOT(editPaste()), CTRL+Key_V);
+    edit->insertItem("&Delete", editor, SLOT(editDelete()));
+
+    QPopupMenu *help = new QPopupMenu(this);
+    menuBar->insertItem("&Help", help);
+    help->insertItem("&About ...", this, SLOT(helpAbout()));
+  }
 
   setIcon(QPixmap((char const**)icon_xpm));
 

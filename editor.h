@@ -174,8 +174,8 @@ public slots:
   void scrollToCol(int col);
 
   // edit menu
-  void editCopy();
   void editCut();
+  void editCopy();
   void editPaste();
   void editDelete();
 

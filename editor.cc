@@ -17,6 +17,8 @@
 #include <qfontmetrics.h>    // QFontMetrics
 #include <qrangecontrol.h>   // QRangeControl
 #include <qpixmap.h>         // QPixmap
+#include <qmessagebox.h>     // QMessageBox
+#include <qclipboard.h>      // QClipboard
 
 #include <stdio.h>           // printf, for debugging
 
@@ -903,34 +905,58 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
 
 
 // ----------------------- edit menu -----------------------
-void Editor::editCopy()
-{
-  if (!selectEnabled) {
-    // nothing to copy, do nothing
-    return;
-  }
-
-  // TODO
-}
-
-
 void Editor::editCut()
 {
-  // TODO
+  editCopy();
+  editDelete();
 }
+
+
+void Editor::editCopy()
+{
+  if (selectEnabled) {
+    // get selected text
+    normalizeSelect();
+    string sel = buffer->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+
+    // put it into the clipboard
+    QClipboard *cb = QApplication::clipboard();
+    cb->setText(QString(sel));
+  }
+}
+
 
 void Editor::editPaste()
 {
-  // TODO
+  // get contents of clipboard
+  QClipboard *cb = QApplication::clipboard();
+  QString text = cb->text();
+  if (!text) {
+    QMessageBox::information(this, "Info", "The clipboard is empty.");
+  }
+  else {
+    // remove what's selected, if anything
+    editDelete();
+
+    // insert at cursor
+    buffer->insertTextRange(cursorLine, cursorCol, text);
+
+    scrollToCursor();
+  }
 }
 
 
 void Editor::editDelete()
 {
-  normalizeSelect();
-  buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+  if (selectEnabled) {
+    normalizeSelect();
+    buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
-  cursorLine = selLowLine;
-  cursorCol = selLowCol;
-  fillToCursor();
+    cursorLine = selLowLine;
+    cursorCol = selLowCol;
+    selectEnabled = false;
+    fillToCursor();
+
+    scrollToCursor();
+  }
 }
