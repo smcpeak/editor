@@ -329,8 +329,16 @@ end 2/25/03 16:20
 --------------------
 start 2/26/03 02:01
 
-ok, will hack it for now
+ok, will hack it for now.. done
 
+got C++ highlighting working pretty well!
+
+end 2/26/03 04:01
+
+----------------
+start 2/26/03 05:10
+
+playing with it a bit more
 
 
 

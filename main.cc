@@ -18,6 +18,8 @@
 #include <qlayout.h>         // QVBoxLayout
 #include <qhbox.h>           // QHBox
 #include <qgrid.h>           // QGrid
+#include <qsizegrip.h>       // QSizeGrip
+#include <qstatusbar.h>      // QStatusBar
 
 #include "icon.xpm"          // icon_xpm[]
 
@@ -53,14 +55,21 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   QHBox *statusArea = new QHBox(mainArea, "status area");
   statusArea->setFixedHeight(20);
 
+  //QStatusBar *statusArea = new QStatusBar(mainArea, "status area");
+  //statusArea->setFixedHeight(20);
+
   position = new QLabel(statusArea, "cursor position label");
   position->setFixedWidth(100);
-  position->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  position->setLineWidth(1);
+  //position->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+  //position->setLineWidth(1);
 
   filename = new QLabel(statusArea, "filename label");
-  filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  filename->setLineWidth(1);
+  //filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+  //filename->setLineWidth(1);
+               
+  // corner resize widget
+  QSizeGrip *corner = new QSizeGrip(statusArea, "corner grip");
+  corner->setFixedSize(20,20);
 
   // menu
   {
@@ -214,7 +223,7 @@ void EditorWindow::editorViewChanged()
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the Buffer interface uses 0:0
-  position->setText(QString(stringc << (editor->cursorLine+1) << ":"
+  position->setText(QString(stringc << " " << (editor->cursorLine+1) << ":"
                                     << (editor->cursorCol+1)
                                     << (editor->buffer->changed? " *" : "")
                                     ));
