@@ -60,6 +60,9 @@ public:      // funcs
   // clear history, leaving only the current buffer contents
   void clearHistory();
 
+  // clear buffer contents *and* history
+  void clearContentsAndHistory();
+
   // replace current contents with a new file, and reset cursor
   // to 0,0; clears the history
   void readFile(char const *fname);

@@ -70,15 +70,44 @@ Editor::~Editor()
 }
 
 
+void Editor::cursorTo(int line, int col)
+{
+  buffer->moveAbsCursor(line, col);
+}
+
 void Editor::resetView()
 {
-  cursorLine = 0;
-  cursorCol = 0;
+  cursorTo(0, 0);
   selectLine = 0;
   selectCol = 0;
   selectEnabled = false;
   selLowLine = selLowCol = selHighLine = selHighCol = 0;   // make it deterministic..
   setView(0,0);
+}
+
+
+bool Editor::cursorBeforeSelect() const
+{
+  if (cursorLine() < selectLine) return true;
+  if (cursorLine() > selectLine) return false;
+  return cursorCol() < selectCol;
+}
+
+
+void Editor::normalizeSelect()
+{
+  if (cursorBeforeSelect()) {
+    selLowLine = cursorLine();
+    selLowCol = cursorCol();
+    selHighLine = selectLine;
+    selHighCol = selectCol;
+  }
+  else {
+    selLowLine = selectLine;
+    selLowCol = selectCol;
+    selHighLine = cursorLine();
+    selHighCol = cursorCol();
+  }
 }
 
 
@@ -335,7 +364,7 @@ void Editor::drawBufferContents(QPainter &paint)
 
       // apply highlighting
       if (buffer->highlighter) {
-        buffer->highlighter->highlight(*buffer, line, styles);
+        buffer->highlighter->highlight(buffer->core(), line, styles);
       }
     }
     xassert(visibleLineChars <= visibleCols);
@@ -445,11 +474,11 @@ void Editor::drawBufferContents(QPainter &paint)
     }
 
     // draw the cursor as a line
-    if (line == cursorLine) {
+    if (line == cursorLine()) {
       paint.save();
 
       paint.setPen(cursorColor);
-      x = leftMargin + fontWidth * (cursorCol - firstVisibleCol);
+      x = leftMargin + fontWidth * (cursorCol() - firstVisibleCol);
       paint.drawLine(x,y, x, y+fontHeight-1);
       paint.drawLine(x-1,y, x-1, y+fontHeight-1);
 
@@ -500,15 +529,13 @@ static void inc(int &val, int amt)
 
 void Editor::cursorToTop()
 {
-  cursorLine = 0;
-  cursorCol = 0;
+  cursorTo(0, 0);
   scrollToCursor();
 }
 
 void Editor::cursorToBottom()
 {
-  cursorLine = max(buffer->numLines()-1,0);
-  cursorCol = 0;
+  cursorTo(max(buffer->numLines()-1,0), 0);
   scrollToCursor();
   redraw();
 }
@@ -522,8 +549,8 @@ void Editor::turnOffSelection()
 void Editor::turnOnSelection()
 {
   if (!selectEnabled) {
-    selectLine = cursorLine;
-    selectCol = cursorCol;
+    selectLine = cursorLine();
+    selectCol = cursorCol();
     selectEnabled = true;
   }
 }
@@ -541,8 +568,8 @@ void Editor::turnSelection(bool on)
 void Editor::clearSelIfEmpty()
 {
   if (selectEnabled &&
-      cursorLine==selectLine &&
-      cursorCol==selectCol) {
+      cursorLine()==selectLine &&
+      cursorCol()==selectCol) {
     turnOffSelection();
   }
 }
@@ -566,7 +593,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_U:
-        buffer->dumpRepresentation();
+        buffer->core().dumpRepresentation();
         break;
 
       case Key_PageUp:
@@ -581,16 +608,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_W:
         moveView(-1, 0);
-        if (cursorLine > lastVisibleLine) {
-          cursorLine = lastVisibleLine;
+        if (cursorLine() > lastVisibleLine) {
+          cursorUpBy(cursorLine() - lastVisibleLine);
         }
         redraw();
         break;
 
       case Key_Z:
         moveView(+1, 0);
-        if (cursorLine < firstVisibleLine) {
-          cursorLine = firstVisibleLine;
+        if (cursorLine() < firstVisibleLine) {
+          cursorDownBy(firstVisibleLine - cursorLine());
         }
         redraw();
         break;
@@ -624,7 +651,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_D:      deleteCharAtCursor(); break;
 
       case Key_L:
-        setView(max(0, cursorLine - visLines()/2), 0);
+        setView(max(0, cursorLine() - visLines()/2), 0);
         scrollToCursor();
         break;
 
@@ -742,14 +769,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
         if (selectEnabled) {
           editDelete();
         }
-        else if (cursorCol == 0) {
-          if (cursorLine == 0) {
+        else if (cursorCol() == 0) {
+          if (cursorLine() == 0) {
             // do nothing
           }
           else {
             // move to end of previous line
-            cursorLine--;
-            cursorCol = buffer->lineLength(cursorLine);
+            buffer->moveToPrevLineEnd();
 
             // splice them together
             spliceNextLine();
@@ -757,8 +783,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
         else {
           // remove the character to the left of the cursor
-          cursorCol--;
-          buffer->deleteText(cursorLine, cursorCol, 1);
+          buffer->deleteLR(true /*left*/, 1);
         }
 
         scrollToCursor();
@@ -785,15 +810,14 @@ void Editor::keyPressEvent(QKeyEvent *k)
           editDelete();
         }
 
-        buffer->insertNewline(cursorLine, cursorCol);
-        
+        buffer->insertNewline();
+
         // make sure we can see as much to the left as possible
         setFirstVisibleCol(0);
-        
+
         // auto-indent
-        int ind = buffer->getAboveIndentation(cursorLine-1);
-        buffer->indentLine(cursorLine, ind);
-        cursorCol += ind;
+        int ind = buffer->getAboveIndentation(cursorLine()-1);
+        buffer->insertSpaces(ind);
 
         scrollToCursor();
         break;
@@ -818,8 +842,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
             editDelete();
           }
           // insert this character at the cursor
-          buffer->insertText(cursorLine, cursorCol, text, text.length());
-          cursorCol += text.length();
+          buffer->insertLR(false /*left*/, text, text.length());
           scrollToCursor();
         }
         else {
@@ -840,7 +863,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 void Editor::insertAtCursor(char const *text)
 {
   buffer->changed = true;
-  buffer->insertTextRange(cursorLine, cursorCol, text);
+  buffer->insertText(text);
   scrollToCursor();
 }
 
@@ -852,39 +875,24 @@ void Editor::deleteAtCursor(int amt)
   }
 
   fillToCursor();
-
-  int line=cursorLine, col=cursorCol;
-  while (amt--) {
-    buffer->advanceWithWrap(line, col, false /*back*/);
-  }
-
+  buffer->deleteLR(true /*left*/, amt);
   buffer->changed = true;
-  buffer->deleteTextRange(cursorLine, cursorCol, line, col);
   scrollToCursor();
 }
 
 
 void Editor::fillToCursor()
 {
-  // fill with blank lines
-  while (cursorLine >= buffer->numLines()) {
-    buffer->insertLine(buffer->numLines());
-  }
-
-  // fill with spaces
-  while (cursorCol > buffer->lineLength(cursorLine)) {
-    buffer->insertText(cursorLine, buffer->lineLength(cursorLine),
-                       " ", 1);
-  }
+  buffer->fillToCursor();
 }
 
 
 void Editor::spliceNextLine()
 {
   // cursor must be at the end of a line
-  xassert(cursorCol == buffer->lineLength(cursorLine));
+  xassert(cursorCol() == buffer->lineLength(cursorLine()));
 
-  buffer->spliceNextLine(cursorLine);
+  buffer->deleteChar();
 }
 
 
@@ -893,18 +901,18 @@ void Editor::scrollToCursor(int edgeGap)
   int fvline = firstVisibleLine;
   int fvcol = firstVisibleCol;
 
-  if (cursorCol-edgeGap < firstVisibleCol) {
-    fvcol = max(0, cursorCol-edgeGap);
+  if (cursorCol()-edgeGap < firstVisibleCol) {
+    fvcol = max(0, cursorCol()-edgeGap);
   }
-  else if (cursorCol+edgeGap > lastVisibleCol) {
-    fvcol += (cursorCol+edgeGap - lastVisibleCol);
+  else if (cursorCol()+edgeGap > lastVisibleCol) {
+    fvcol += (cursorCol()+edgeGap - lastVisibleCol);
   }
 
-  if (cursorLine-edgeGap < firstVisibleLine) {
-    fvline = max(0, cursorLine-edgeGap);
+  if (cursorLine()-edgeGap < firstVisibleLine) {
+    fvline = max(0, cursorLine()-edgeGap);
   }
-  else if (cursorLine+edgeGap > lastVisibleLine) {
-    fvline += (cursorLine+edgeGap - lastVisibleLine);
+  else if (cursorLine()+edgeGap > lastVisibleLine) {
+    fvline += (cursorLine()+edgeGap - lastVisibleLine);
   }
   
   setView(fvline, fvcol);
@@ -935,12 +943,12 @@ void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
   moveView(deltaLine, deltaCol);
 
   // now move cursor by the amount that the viewport moved
-  inc(cursorLine, firstVisibleLine-origVL);
-  inc(cursorCol, firstVisibleCol-origVC);
+  moveCursorBy(firstVisibleLine - origVL,
+               firstVisibleCol - origVC);
 
   TRACE("moveViewAndCursor",
-        "end: firstVis=" << firstVisStr()
-     << ", cursor=" << cursorStr());
+        "end: firstVis=" << firstVisStr() <<
+        ", cursor=" << cursorStr());
 
   // redraw display
   redraw();
@@ -981,8 +989,7 @@ void Editor::setCursorToClickLoc(QMouseEvent *m)
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
 
-  cursorLine = newLine;
-  cursorCol = newCol;
+  cursorTo(newLine, newCol);
 
   // it's possible the cursor has been placed outside the "visible"
   // lines/cols (i.e. at the edge), but even if so, don't scroll,
@@ -1082,11 +1089,7 @@ void Editor::editDelete()
     buffer->changed = true;
     buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
-    cursorLine = selLowLine;
-    cursorCol = selLowCol;
     selectEnabled = false;
-    fillToCursor();
-
     scrollToCursor();
   }
 }
@@ -1112,8 +1115,8 @@ void Editor::showInfo(char const *infoString)
   infoBox->resize(sz.width() + 2, sz.height() + 2);
 
   infoBox->move(mapTo(main,
-    QPoint((cursorCol - firstVisibleCol) * fontWidth,
-           (cursorLine - firstVisibleLine + 1) * fontHeight + 1)));
+    QPoint((cursorCol() - firstVisibleCol) * fontWidth,
+           (cursorLine() - firstVisibleLine + 1) * fontHeight + 1)));
            
   // try to position the box inside the main widget, so it will show up
   if (infoBox->x() + infoBox->width() > main->width()) {
@@ -1135,35 +1138,35 @@ void Editor::hideInfo()
 void Editor::cursorLeft(bool shift)
 {
   turnSelection(shift);
-  inc(cursorCol, -1);
+  cursorLeftBy(1);
   scrollToCursor();
 }
 
 void Editor::cursorRight(bool shift)
 {
   turnSelection(shift);
-  inc(cursorCol, +1);
+  cursorRightBy(1);
   scrollToCursor();
 }
 
 void Editor::cursorHome(bool shift)
 {
   turnSelection(shift);
-  cursorCol = 0;
+  buffer->moveAbsColumn(0);
   scrollToCursor();
 }
 
 void Editor::cursorEnd(bool shift)
 {
   turnSelection(shift);
-  cursorCol = buffer->lineLength(cursorLine);
+  buffer->moveAbsColumn(buffer->lineLength(cursorLine()));
   scrollToCursor();
 }
 
 void Editor::cursorUp(bool shift)
 {
   turnSelection(shift);
-  inc(cursorLine, -1);
+  cursorUpBy(1);
   scrollToCursor();
 }
 
@@ -1171,7 +1174,7 @@ void Editor::cursorDown(bool shift)
 {
   // allows cursor past EOF..
   turnSelection(shift);
-  inc(cursorLine, +1);
+  cursorDownBy(1);
   scrollToCursor();
 }
 
@@ -1196,13 +1199,13 @@ void Editor::deleteCharAtCursor()
   if (selectEnabled) {
     editDelete();
   }
-  else if (cursorCol == buffer->lineLength(cursorLine)) {
+  else if (cursorCol() == buffer->lineLength(cursorLine())) {
     // splice next line onto this one
     spliceNextLine();
   }
   else /* cursor < lineLength */ {
     // delete character to right of cursor
-    buffer->deleteText(cursorLine, cursorCol, 1);
+    buffer->deleteText(1);
   }
 
   scrollToCursor();
@@ -1219,9 +1222,7 @@ void Editor::blockIndent(int amt)
   
   int endLine = (selHighCol==0? selHighLine-1 : selHighLine);
   endLine = min(endLine, buffer->numLines()-1);
-  for (int line=selLowLine; line<=endLine; line++) {
-    buffer->indentLine(line, amt);
-  }
+  buffer->indentLines(selLowLine, endLine-selLowLine+1, amt);
   
   redraw();
 }

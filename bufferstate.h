@@ -17,18 +17,23 @@
 class EditingState {
 public:      // data
   // cursor position (0-based)
-  int cursorLine;
-  int cursorCol;
+  //int cursorLine;
+  //int cursorCol;
+  // UPDATE: The cursor has been moved into Buffer itself (via
+  // HistoryBuffer and CursorBuffer), and so is no longer present
+  // in this class.
 
   // selection state: a location, and a flag to enable it
   int selectLine;
   int selectCol;
   bool selectEnabled;
 
+  #if 0     // moved back into Editor
   // the following fields are valid only after normalizeSelect(),
   // and before any subsequent modification to cursor or select
   int selLowLine, selLowCol;     // whichever of cursor/select comes first
   int selHighLine, selHighCol;   // whichever comes second
+  #endif // 0
 
   // scrolling offset; must change via setView()
   int const firstVisibleLine, firstVisibleCol;
@@ -37,31 +42,24 @@ public:      // data
   // Editor::updateView() routine and should be treated as read-only by
   // other code; by "visible", I mean the entire line or column is visible
   int lastVisibleLine, lastVisibleCol;
-             
+
   // when nonempty, any buffer text matching this string will
   // be highlighted in the 'hit' style; match is carried out
   // under influence of 'hitTextFlags'
   string hitText;
   Buffer::FindStringFlags hitTextFlags;
 
-private:
-  // true if the cursor is before (above/left) the select point
-  bool cursorBeforeSelect() const;
-  
 protected:   // funcs
   // set firstVisibleLine/Col; for internal use by
   // EditingState::copy, and Editor::setView()
   void setFirstVisibleLC(int newFirstLine, int newFirstCol);
-  
+
 public:      // funcs
   EditingState();
   ~EditingState();
-  
+
   // copy editing state from 'src'
   void copy(EditingState const &src);
-  
-  // set sel{Low,High}{Line,Col}
-  void normalizeSelect();
 };
   
 
@@ -86,9 +84,6 @@ public:      // data
 public:      // funcs
   BufferState();
   ~BufferState();
-               
-  // empty buffer
-  void clear();
 };
 
 #endif // BUFFERSTATE_H

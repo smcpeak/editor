@@ -261,7 +261,7 @@ static Buffer *buf;
 static void printLine(LexHighlighter &hi, int line)
 {
   LineStyle style(ST_NORMAL);
-  hi.highlight(*buf, line, style);
+  hi.highlight(buf->core(), line, style);
 
   cout << "line " << line << ":\n"
        << "  text : " << buf->getWholeLine(line) << "\n"
@@ -282,24 +282,26 @@ static void insert(int line, int col, char const *text)
 {
   cout << "insert(" << line << ", " << col << ", "
        << quoted(text) << ")\n";
-  buf->insertTextRange(line, col, text);
+  buf->moveAbsCursor(line, col);
+  buf->insertText(text);
 }
 
 static void del(int line, int col, int len)
 {
   cout << "del(" << line << ", " << col << ", " << len << ")\n";
-  buf->deleteText(line, col, len);
+  buf->moveAbsCursor(line, col);
+  buf->deleteText(len);
 }
 
 static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
   LineStyle style1(ST_NORMAL);
-  hi.highlight(*buf, i, style1);
+  hi.highlight(buf->core(), i, style1);
   string rendered1 = style1.asUnaryString();
 
   LineStyle style2(ST_NORMAL);
-  batch.highlight(*buf, i, style2);
+  batch.highlight(buf->core(), i, style2);
   string rendered2 = style2.asUnaryString();
 
   // compare using rendered strings, instead of looking at
@@ -320,7 +322,7 @@ static void innerCheckLine(LexHighlighter &hi,
 // check that the incremental highlighter matches a batch highlighter
 static void check(LexHighlighter &hi)
 {
-  LexHighlighter *batch = makeHigh(*buf);    // batch because it has no initial info
+  LexHighlighter *batch = makeHigh(buf->core());    // batch because it has no initial info
 
   // go backwards in hopes of finding more incrementality bugs
   for (int i = buf->numLines()-1; i>=0; i--) {
@@ -333,7 +335,7 @@ static void check(LexHighlighter &hi)
 
 static void checkLine(LexHighlighter &hi, int line)
 {
-  LexHighlighter *batch = makeHigh(*buf);
+  LexHighlighter *batch = makeHigh(buf->core());
 
   innerCheckLine(hi, *batch, line);
 
@@ -349,11 +351,12 @@ void exerciseHighlighter(MakeHighlighterFunc func)
   buf = &_buf;
 
   makeHigh = func;
-  LexHighlighter *_hi = makeHigh(*buf);
+  LexHighlighter *_hi = makeHigh(buf->core());
   LexHighlighter &hi = *_hi;
 
   int line=0, col=0;
-  buf->insertTextRange(line, col,
+  buf->moveAbsCursor(line, col);
+  buf->insertText(
     "hi there\n"
     "here is \"a string\" ok?\n"
     "and how about /*a comment*/ yo\n"

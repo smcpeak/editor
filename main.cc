@@ -200,7 +200,7 @@ void EditorWindow::fileOpenFile(char const *name)
     if (ext.equals("h") ||
         ext.equals("cc")) {
       // make and attach a C++ highlighter for C/C++ files
-      b->highlighter = new C_Highlighter(*b);
+      b->highlighter = new C_Highlighter(b->core());
     }
   }
 
@@ -304,8 +304,8 @@ void EditorWindow::editorViewChanged()
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the Buffer interface uses 0:0
-  position->setText(QString(stringc << " " << (editor->cursorLine+1) << ":"
-                                    << (editor->cursorCol+1)
+  position->setText(QString(stringc << " " << (editor->cursorLine()+1) << ":"
+                                    << (editor->cursorCol()+1)
                                     << (editor->buffer->changed? " *" : "")
                                     ));
 }

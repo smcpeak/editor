@@ -1,6 +1,6 @@
 # Makefile for editor
 
-tmptarget: buffercore buffer
+#tmptarget: buffercore buffer
 
 # main target
 all: testgap buffer style c_hilite editor
@@ -80,6 +80,9 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 	rm $*.tmp
 
 C_HILITE_OBJS := \
+  buffercore.o \
+  history.o \
+  historybuf.o \
   buffer.o \
   style.o \
   lex_hilite.o \
@@ -95,11 +98,13 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 
 
 # ------------------ the editor ---------------------
-TOCLEAN += editor
 EDITOR_OBJS := \
   incsearch.o \
   editor.o \
   moc_editor.o \
+  buffercore.o \
+  history.o \
+  historybuf.o \
   buffer.o \
   main.o \
   moc_main.o \
@@ -114,6 +119,7 @@ EDITOR_OBJS := \
   inputproxy.o
 -include $(EDITOR_OBJS:.o=.d)
 
+TOCLEAN += editor
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
 

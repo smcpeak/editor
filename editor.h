@@ -41,11 +41,6 @@ public:      // data
   int selectCol;
   bool selectEnabled;
 
-  // the following fields are valid only after normalizeSelect(),
-  // and before any subsequent modification to cursor or select
-  int selLowLine, selLowCol;     // whichever of cursor/select comes first
-  int selHighLine, selHighCol;   // whichever comes second
-
   // scrolling offset; must change via setView()
   int const firstVisibleLine, firstVisibleCol;
 
@@ -53,13 +48,18 @@ public:      // data
   // updateView() routine and should be treated as read-only by other
   // code; by "visible", I mean the entire line or column is visible
   int lastVisibleLine, lastVisibleCol;
-  
+
   // when nonempty, any buffer text matching this string will
   // be highlighted in the 'hit' style; match is carried out
   // under influence of 'hitTextFlags'
   string hitText;
   Buffer::FindStringFlags hitTextFlags;
   #endif // 0
+
+  // the following fields are valid only after normalizeSelect(),
+  // and before any subsequent modification to cursor or select
+  int selLowLine, selLowCol;     // whichever of cursor/select comes first
+  int selHighLine, selHighCol;   // whichever comes second
 
   // ------ rendering options ------
   // amount of blank space at top/left edge of widget
@@ -126,6 +126,9 @@ private:     // funcs
   void turnSelection(bool on);
   void clearSelIfEmpty();
 
+  // true if the cursor is before (above/left) the select point
+  bool cursorBeforeSelect() const;
+
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
 
@@ -140,7 +143,7 @@ private:     // funcs
   // debugging
   static string lineColStr(int line, int col);
   string firstVisStr() const { return lineColStr(firstVisibleLine, firstVisibleCol); }
-  string cursorStr() const { return lineColStr(cursorLine, cursorCol); }
+  string cursorStr() const { return lineColStr(cursorLine(), cursorCol()); }
 
 protected:   // funcs
   // QWidget funcs
@@ -161,7 +164,24 @@ public:      // funcs
 
   // change which buffer this editor widget is editing
   void setBuffer(BufferState *buf);
-  
+
+  // cursor location
+  int cursorLine() const                  { return buffer->line(); }
+  int cursorCol() const                   { return buffer->col(); }
+
+  // absolute cursor movement
+  void cursorTo(int line, int col);
+
+  // relative cursor movement
+  void moveCursorBy(int dline, int dcol)  { buffer->moveRelCursor(dline, dcol); }
+  void cursorLeftBy(int amt)              { moveCursorBy(0, -amt); }
+  void cursorRightBy(int amt)             { moveCursorBy(0, +amt); }
+  void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
+  void cursorDownBy(int amt)              { moveCursorBy(+amt, 0); }
+
+  // set sel{Low,High}{Line,Col}
+  void normalizeSelect();
+
   // change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor
   void setView(int newFirstLine, int newFirstCol);
@@ -189,7 +209,7 @@ public:      // funcs
 
   // redraw window, etc.; calls updateView() and viewChanged()
   void redraw();
-       
+
   // move the cursor and the view by a set increment, and repaint;
   // truncation at low end is automatic
   void moveViewAndCursor(int deltaLine, int deltaCol);
@@ -199,7 +219,7 @@ public:      // funcs
   int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
 
   // show the info box near the cursor
-  void showInfo(char const *info);    
+  void showInfo(char const *info);
 
   // hide the info box if it's visible
   void hideInfo();
@@ -223,7 +243,7 @@ public:      // funcs
   // insert or delete small amounts of text (not guaranteed
   // to be efficient for large amounts of text)
   void insertAtCursor(char const *text);
-  void deleteAtCursor(int numChars);
+  void deleteAtCursor(int numChars);    // deletes to the left of cursor
 
   // get selected text, or "" if nothing selected
   string getSelectedText();

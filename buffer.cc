@@ -263,6 +263,13 @@ void Buffer::moveAbsCursor(int newLine, int newCol)
 }
 
 
+void Buffer::moveAbsColumn(int newCol)
+{
+  moveCursor(true /*relLine*/, 0,
+             false /*relCol*/, newCol);
+}
+
+
 void Buffer::moveRelCursorTo(int newLine, int newCol)
 {
   moveRelCursor(newLine-line(), newCol-col());
@@ -346,6 +353,14 @@ void Buffer::insertText(char const *text)
   insertLR(false /*left*/, text, strlen(text));
 }
 
+
+void Buffer::insertSpaces(int howMany)
+{
+  // simple for now
+  while (howMany--) {
+    insertSpace();
+  }
+}
 
 
 void Buffer::insertNewline()

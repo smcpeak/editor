@@ -102,6 +102,9 @@ public:
   // used for restoring the cursor position after some sequence
   // of edits
   void moveRelCursorTo(int newLine, int newCol);
+                                 
+  // relative to same line, absolute to given column
+  void moveAbsColumn(int newCol);
 
   // line++, col=0
   void moveToNextLineStart();
@@ -126,6 +129,7 @@ public:
   void insertText(char const *text);
 
   void insertSpace() { insertText(" "); }
+  void insertSpaces(int howMany);
 
   // split 'line' into two, putting everything after cursor column
   // into the next line; if 'col' is beyond the end of the line,

@@ -24,9 +24,16 @@ void HistoryBuffer::clearHistory()
 }
 
 
+void HistoryBuffer::clearContentsAndHistory()
+{
+  clearHistory();
+  clear(buf);
+}
+
+
 void HistoryBuffer::readFile(char const *fname)
 {
-  ::readFile(buf, fname);              // might throw exception         
+  ::readFile(buf, fname);              // might throw exception
 
   // clear after file's been successfully read
   clearHistory();

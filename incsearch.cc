@@ -43,8 +43,8 @@ void IncSearch::attach(Editor *newEd)
     prevStatusText = status->text();
   }
 
-  beginLine = ed->cursorLine;
-  beginCol = ed->cursorCol;
+  beginLine = ed->cursorLine();
+  beginCol = ed->cursorCol();
 
   beginFVLine = ed->firstVisibleLine;
   beginFVCol = ed->firstVisibleCol;
@@ -161,8 +161,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
     switch (k->key()) {
       case Qt::Key_Escape:
         // return to original location
-        ed->cursorLine = beginLine;
-        ed->cursorCol = beginCol;
+        ed->cursorTo(beginLine, beginCol);
         ed->selectEnabled = false;
         ed->hitText = "";
 
@@ -228,7 +227,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
       case Qt::Key_W:
         // grab chars from cursor up to end of next word
         // or end of line
-        text &= ed->buffer->getWordAfter(ed->cursorLine, ed->cursorCol);
+        text &= ed->buffer->getWordAfter(ed->cursorLine(), ed->cursorCol());
         findString();
         return true;
 
@@ -246,7 +245,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
         removedText = ed->getSelectedText();
 
         // remove the selected occurrence of the match string
-        ed->cursorCol -= text.length();
+        ed->cursorLeftBy(text.length());
         ed->deleteAtCursor(text.length());
 
         // change mode
@@ -278,8 +277,7 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
   match = ed->buffer->findString(curLine, curCol, text, flags);
   if (match) {
     // move editor cursor to end of match
-    ed->cursorLine = curLine;
-    ed->cursorCol = curCol + text.length();
+    ed->cursorTo(curLine, curCol + text.length());
 
     // put selection start at beginning of match
     ed->selectLine = curLine;
@@ -405,7 +403,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
 
       case Qt::Key_Backspace:
         if (replaceText.length() > 0) {
-          ed->cursorCol--;
+          ed->cursorLeftBy(1);
           ed->deleteAtCursor(1);
 
           replaceText = string(replaceText, replaceText.length()-1);
@@ -436,7 +434,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
 bool IncSearch::replace()
 {
   // remove match text
-  ed->cursorCol -= text.length();
+  ed->cursorLeftBy(text.length());
   ed->deleteAtCursor(text.length());
 
   // insert replacement text
