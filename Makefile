@@ -1,9 +1,9 @@
 # Makefile for editor
 
-#tmp: buffer
+#tmp: c_hilite
 
 # main target
-all: testgap buffer style editor
+all: testgap buffer style c_hilite editor
 
 
 # directories of other software
@@ -59,6 +59,27 @@ style: style.h style.cc
 	./style >/dev/null
 
 
+# ------------- highlighting stuff --------------------
+# lexer for comments and strings (-b makes lex.backup)
+TOCLEAN += comment.yy.cc lex.backup
+comment.yy.cc: comment.lex comment.h
+	flex -o$@ comment.lex
+	mv $@ comment.tmp
+	sed -e 's/class istream;/#include <iostream.h>/' <comment.tmp >$@
+	rm comment.tmp
+
+C_HILITE_OBJS := \
+  buffer.o \
+  style.o \
+  comment.yy.o
+-include $(C_HILITE_OBJS:.o=.d)
+
+TOCLEAN += c_hilite
+c_hilite: $(C_HILITE_OBJS) c_hilite.cc
+	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(LIBSMBASE)
+	./$@ >/dev/null
+
+
 # ------------------ the editor ---------------------
 TOCLEAN += editor
 EDITOR_OBJS := \
@@ -71,9 +92,10 @@ EDITOR_OBJS := \
   style.o \
   qtutil.o \
   styledb.o
+-include $(EDITOR_OBJS:.o=.d)
+
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
--include $(EDITOR_OBJS:.o=.d)
 
 
 # -------------- another test program ---------------

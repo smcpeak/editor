@@ -4,6 +4,7 @@
 #include "styledb.h"     // this module
 
 StyleDB::StyleDB()
+  : arr(ST_PREPROCESSOR+1)    // initial size
 {
   // These colors are the ones I like for C++ code.  They're vaguely
   // based on the Turbo C++ IDE default color scheme.  I'd like to
@@ -17,6 +18,8 @@ StyleDB::StyleDB()
   #define ENTRY(index, variant, fr, fg, fb, back) \
     xassert(arr.length() == index);               \
     arr.push(TextStyle(variant, QColor(fr, fg, fb), back)) /* user ; */
+
+  ENTRY(ST_ZERO,         FV_NORMAL,  0xFF, 0xFF, 0xFF,  bg);  // not used
 
   ENTRY(ST_NORMAL,       FV_NORMAL,  0xFF, 0xFF, 0xFF,  bg);
   ENTRY(ST_SELECTION,    FV_NORMAL,  0xFF, 0xFF, 0xFF,  selectBG);

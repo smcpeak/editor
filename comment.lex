@@ -5,7 +5,8 @@
 /* ----------------------- C definitions ---------------------- */
 %{
 
-//#include "lexer.h"       // Lexer class
+#include "comment.h"       // CommentLexer class
+#include "style.h"         // ST_XXX constants
 
 // this works around a problem with cygwin & fileno
 #define YY_NEVER_INTERACTIVE 1
@@ -84,7 +85,7 @@ QUOTE         [\"]
      we're in a string literal so the next line will be
      highlighted accordingly */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{BACKSL} {
-  BEGIN(STRINGLIT);
+  BEGIN(STRING);
   return ST_STRING;
 }
 
@@ -142,5 +143,65 @@ QUOTE         [\"]
 }
 
 
+%%
+// -------- add'l C++ code ---------
+
+#include "buffer.h"      // BufferCore
 
 
+// -------------------- CommentLexer -------------------
+CommentLexer::CommentLexer()
+  : buffer(NULL),
+    bufferLine(0),
+    lineLength(0),
+    nextSlurpCol(0)
+{}
+
+
+CommentLexer::~CommentLexer()
+{}
+
+
+void CommentLexer::beginScan(BufferCore const *b, int line, int state)
+{
+  // set up variables so we'll be able to do LexerInput()
+  buffer = b;
+  bufferLine = line;
+  lineLength = buffer->lineLength(line);
+  nextSlurpCol = 0;
+  BEGIN(state);
+}
+
+
+// this is called by the Flex lexer when it needs more data for
+// its internal buffer; interface is similar to read(2)
+int CommentLexer::LexerInput(char* buf, int max_size)
+{
+  if (nextSlurpCol == lineLength) {
+    return 0;         // EOL
+  }
+
+  int len = min(max_size, lineLength-nextSlurpCol);
+  buffer->getLine(bufferLine, nextSlurpCol, buf, len);
+  nextSlurpCol += len;
+
+  return len;
+}
+
+
+bool CommentLexer::getNextToken(int &len, int &code)
+{
+  code = yylex();
+  if (!code) {
+    return false;     // EOL
+  }                   
+  
+  len = yyleng;
+  return true;
+}
+
+
+int CommentLexer::getState() const
+{
+  return YY_START;
+}

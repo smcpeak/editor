@@ -4,14 +4,15 @@
 #ifndef HILITE_H
 #define HILITE_H
 
-#include "style.h"         // LineStyle
+class LineStyle;           // style.h
+class BufferCore;          // buffer.h
 
 class Highlighter {
 public:
   virtual ~Highlighter() {}     // silence warning
 
   // fill 'style' with the styles for 'line' in 'buf'
-  virtual void highlight(Buffer const &buf, int line, LineStyle &style);
+  virtual void highlight(BufferCore const &buf, int line, LineStyle &style)=0;
 };
 
 
