@@ -276,6 +276,25 @@ start 2/16/03 01:28
 
 will implement a few of the highlighting things..
 
+closer to understanding how to hijack a flex lexer
+for my purposes..
+
+end 2/16/03 04:14
+
+------------------------
+start 2/16/03 10:55
+
+I'll experiment with the interface by trying to implement
+a highlighter for comments and strings only
+
+end 2/16/03 12:17
+
+------------------
+start 2/22/03 23:09
+
+more.. getting comment.lex to work, then we'll see about using
+it for highlighting
+
 
 
 
