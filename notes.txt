@@ -162,7 +162,7 @@ and in the process implement scrolling
 
 major todos:
   - support for multiple simultanous files
-  - syntax highlighting!
+  * syntax highlighting!
   - undo
   - incremental search
   * redesign buffer representation, interface (think about undo...)
@@ -264,9 +264,9 @@ need to implement copy, cut, paste.. done!
 looking at syntax highlighting...
 
 plan:
-  - styledb: module to maintain global list of font/fg/bg triples
-  - hilite: interface to highlighter (very simple)
-  - c_hilite: module to highlight C/C++, configurable map from
+  * styledb: module to maintain global list of font/fg/bg triples
+  * hilite: interface to highlighter (very simple)
+  * c_hilite: module to highlight C/C++, configurable map from
     lexical concepts to styles in the styledb
    
 end 2/15/03 04:30
@@ -340,5 +340,10 @@ start 2/26/03 05:10
 
 playing with it a bit more
 
-
+more todo:
+  - alt+ins to toggle ins/overwrite
+  - auto-indent
+  - alt+left/right
+  - ctrl+alt+left/right
+  
 

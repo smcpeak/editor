@@ -530,12 +530,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
   // control-<key>
   if (state == ControlButton) {
     switch (k->key()) {
+      case Key_Insert:
+        editCopy();
+        break;
+        
       case Key_U:
         buffer->dumpRepresentation();
-        break;
-
-      case Key_C:
-        QApplication::exit();     // this *does* return
         break;
 
       case Key_PageUp:
@@ -622,6 +622,15 @@ void Editor::keyPressEvent(QKeyEvent *k)
   // <key> and shift-<key>
   else if (state == NoButton || state == ShiftButton) {
     switch (k->key()) {
+      case Key_Insert:
+        if (state == ShiftButton) {
+          editPaste();
+        }
+        else {
+          // TODO: toggle insert/overwrite mode
+        }
+        break;
+
       case Key_Left:
         turnSelection(state==ShiftButton);
         inc(cursorCol, -1);
@@ -700,22 +709,28 @@ void Editor::keyPressEvent(QKeyEvent *k)
       }
 
       case Key_Delete: {
-        fillToCursor();
-        buffer->changed = true;
+        if (state == NoButton) {
+          fillToCursor();
+          buffer->changed = true;
 
-        if (selectEnabled) {
-          editDelete();
-        }
-        else if (cursorCol == buffer->lineLength(cursorLine)) {
-          // splice next line onto this one
-          spliceNextLine();
-        }
-        else /* cursor < lineLength */ {
-          // delete character to right of cursor
-          buffer->deleteText(cursorLine, cursorCol, 1);
-        }
+          if (selectEnabled) {
+            editDelete();
+          }
+          else if (cursorCol == buffer->lineLength(cursorLine)) {
+            // splice next line onto this one
+            spliceNextLine();
+          }
+          else /* cursor < lineLength */ {
+            // delete character to right of cursor
+            buffer->deleteText(cursorLine, cursorCol, 1);
+          }
 
-        scrollToCursor();
+          scrollToCursor();
+        }
+        
+        else {   // shift-delete
+          editCut();
+        }
         break;
       }
 
@@ -954,8 +969,11 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
 // ----------------------- edit menu -----------------------
 void Editor::editCut()
 {
-  editCopy();
-  editDelete();
+  if (selectEnabled) {
+    editCopy();
+    selectEnabled = true;    // counteract something editCopy() does
+    editDelete();
+  }
 }
 
 
