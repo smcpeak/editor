@@ -13,7 +13,7 @@ StyleDB::StyleDB()
 
   QColor bg(0x00, 0x00, 0x9C);        // background: darkish blue
   QColor selectBG(0x00, 0x00, 0xF0);  // selection background: light blue
-  QColor hitBG(0x00, 0xE0, 0x50);     // hit background: lime
+  QColor hitBG(0x00, 0x80, 0x40);     // hit background: lime
   QColor errorBG(0x00, 0x00, 0x00);   // error background: black
 
   #define ENTRY(index, variant, fr, fg, fb, back) \

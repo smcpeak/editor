@@ -67,6 +67,12 @@ public:      // data
   // that these fonts all need to use the same character size
   QFont normalFont, italicFont, boldFont;
 
+  // when nonempty, any buffer text matching this string will
+  // be highlighted in the 'hit' style; match is carried out
+  // under influence of 'hitTextFlags'
+  string hitText;
+  Buffer::FindStringFlags hitTextFlags;
+
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
   int ctrlShiftDistance;

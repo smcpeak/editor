@@ -705,6 +705,10 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
       }
     }
 
+    if (flags & FS_ONE_LINE) {
+      break;
+    }
+
     // wrap to next line
     if (flags & FS_BACKWARDS) {
       line--;

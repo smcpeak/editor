@@ -54,6 +54,11 @@ private:     // funcs
   // put statusText() in the label, if it exists
   void updateStatus();
 
+  // attempt to find a match by wrapping to end/beginning of file;
+  // don't update internal stats, just set line/col and return true
+  // if a match is found
+  bool tryWrapSearch(int &line, int &col) const;
+
 public:      // funcs
   IncSearch(QLabel *status);
   ~IncSearch();

@@ -201,8 +201,9 @@ public:
     FS_CASE_INSENSITIVE    = 0x01, // case insensitive
     FS_BACKWARDS           = 0x02, // search backwards in file
     FS_ADVANCE_ONCE        = 0x04, // advance meta-cursor once before searching
+    FS_ONE_LINE            = 0x08, // only search the named line
 
-    FS_ALL                 = 0x07  // all flags
+    FS_ALL                 = 0x0F  // all flags
   };   
 
   // search from line/col to find the first occurrence of

@@ -23,11 +23,25 @@ void IncSearch::attach(Editor *newEd)
   if (ed) {
     // we're already attached, the user just pressed Ctrl-S while
     // we're searching, so search to next spot
-    findString(curFlags | Buffer::FS_ADVANCE_ONCE);
+    bool prevMatch = match;
+    if (!findString(curFlags | Buffer::FS_ADVANCE_ONCE) &&
+        !prevMatch) {
+      // can't find now, and weren't on a match before, so wrap
+      int line, col;
+      if (tryWrapSearch(line, col)) {
+        curLine = line;
+        curCol = col;
+        findString();    // update visuals to reflect new match
+      }
+    }
     return;
   }
 
   AttachInputProxy::attach(newEd);
+
+  if (status) {
+    prevStatusText = status->text();
+  }
 
   beginLine = ed->cursorLine;
   beginCol = ed->cursorCol;
@@ -88,6 +102,9 @@ QString IncSearch::statusText() const
 void IncSearch::detach()
 {
   ed->hideInfo();
+  
+  // leave the hitText alone, user can press Esc to eliminate it
+
   if (status) {
     status->setText(prevStatusText);
   }
@@ -117,6 +134,7 @@ bool IncSearch::keyPressEvent(QKeyEvent *k)
         ed->cursorLine = beginLine;
         ed->cursorCol = beginCol;
         ed->selectEnabled = false;
+        ed->hitText = "";
 
         ed->setView(beginFVLine, beginFVCol);
         ed->redraw();
@@ -219,6 +237,12 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
     ed->scrollToCursor(3);
   }
 
+  ed->hitText = text;                                       
+  
+  // the only flag I want the editor using for hit text, for now,
+  // is the case sensitivity flag
+  ed->hitTextFlags = curFlags & Buffer::FS_CASE_INSENSITIVE;
+
   updateStatus();
 
   return match;
@@ -236,14 +260,8 @@ void IncSearch::updateStatus()
     
     // suppose I did a wrap around, would I then find a match, other
     // than the one I'm (possibly) on now?
-    int line=0, col=0;
-    if (curFlags & Buffer::FS_BACKWARDS) {
-      ed->buffer->getLastPos(line, col);
-    }
-
-    if (ed->buffer->findString(line, col, text, curFlags) &&
-        line!=curLine && col!=curCol) {
-      // yes, wrapping finds another
+    int line, col;
+    if (tryWrapSearch(line, col)) {
       message &= " (can wrap)";
     }
 
@@ -251,6 +269,27 @@ void IncSearch::updateStatus()
   }
   else {
     ed->hideInfo();
+  }
+}
+
+
+bool IncSearch::tryWrapSearch(int &line, int &col) const
+{   
+  // wrap
+  line=0;
+  col=0;
+  if (curFlags & Buffer::FS_BACKWARDS) {
+    ed->buffer->getLastPos(line, col);
+  }
+
+  // search
+  if (ed->buffer->findString(line, col, text, curFlags) &&
+      !(line==curLine && col==curCol)) {
+    // yes, wrapping finds another
+    return true;
+  }
+  else {
+    return false;
   }
 }
 

@@ -39,12 +39,9 @@ Editor::Editor(BufferState *buf,
     leftMargin(1),
     interLineSpace(0),
     cursorColor(0x00, 0xFF, 0xFF),  // cyan
-    #if 0    // obsolete
-    normalFG(0xFF, 0xFF, 0xFF),     // white
-    normalBG(0x00, 0x00, 0xA0),     // darkish blue
-    selectFG(0xFF, 0xFF, 0xFF),     // white
-    selectBG(0x00, 0x00, 0xF0),     // light blue
-    #endif
+    // fonts set by setFont()
+    hitText(),                      // empty string, no hit highlighting
+    hitTextFlags(Buffer::FS_NONE),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -333,6 +330,16 @@ void Editor::drawBufferContents(QPainter &paint)
       }
     }
     xassert(visibleLineChars <= visibleCols);
+
+    // show hits
+    if (hitText.length() > 0) {
+      int hitLine=line, hitCol=0;
+      while (buffer->findString(hitLine, hitCol, hitText, 
+                                (hitTextFlags | Buffer::FS_ONE_LINE))) {
+        styles.overlay(hitCol, hitText.length(), ST_HITS);
+        hitCol++;
+      }
+    }
 
     // incorporate effect of selection
     if (selectEnabled &&
@@ -792,6 +799,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_Escape:
         // do nothing; in other modes this will cancel out
+        
+        // well, almost nothing
+        hitText = "";
+        redraw();
         break;
 
       default: {
