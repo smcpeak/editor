@@ -38,6 +38,8 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   // menu
   {
     menuBar = new QMenuBar(mainArea, "main menu bar");
+    menuBar->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    menuBar->setLineWidth(1);
 
     QPopupMenu *file = new QPopupMenu(this);
     menuBar->insertItem("&File", file);

@@ -165,7 +165,7 @@ major todos:
   - syntax highlighting!
   - undo
   - incremental search
-  - redesign buffer representation, interface (think about undo...)
+  * redesign buffer representation, interface (think about undo...)
   - selections, copy, paste
 
 bug: backspace causes segfault!

@@ -284,7 +284,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
     }
   }
 
-  // <key>
+  // <key> and shift-<key>
   else if (state == NoButton || state == ShiftButton) {
     switch (k->key()) {
       case Key_Left:
