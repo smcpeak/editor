@@ -263,6 +263,16 @@ need to implement copy, cut, paste.. done!
 
 looking at syntax highlighting...
 
+plan:
+  - styledb: module to maintain global list of font/fg/bg triples
+  - hilite: interface to highlighter (very simple)
+  - c_hilite: module to highlight C/C++, configurable map from
+    lexical concepts to styles in the styledb
+   
+end 2/15/03 04:30
+
+
+
 
 
 

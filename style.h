@@ -14,8 +14,12 @@
 enum Style {
   ST_NORMAL,               // normal text
   ST_SELECTION,            // selected text
-  ST_COMMENT,              // programming language comment
+  ST_HITS,                 // buffer text that matches a search string
+  ST_COMMENT,              // comment
   ST_STRING,               // string literal
+  ST_KEYWORD,              // keyword
+  ST_NUMERIC,              // numeric literal
+  ST_OPERATOR,             // operator
 };
 
 
