@@ -641,6 +641,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
   // Ctrl+Alt+<key>
   else if (state == (ControlButton|AltButton)) {
     switch (k->key()) {
+      #if 0     // moved into EditorWindow class
       case Key_Left: {
         QWidget *top = qApp->mainWidget();
         top->setGeometry(83, 55, 565, 867);
@@ -651,7 +652,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
         QWidget *top = qApp->mainWidget();
         top->setGeometry(493, 55, 781, 867);
         break;
-      }
+      }                                         
+      #endif // 0
 
       default:
         k->ignore();

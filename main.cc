@@ -96,6 +96,11 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
     edit->insertSeparator();
     edit->insertItem("Inc. &Search", this, SLOT(editISearch()), CTRL+Key_S);
 
+    QPopupMenu *window = new QPopupMenu(this);
+    menuBar->insertItem("&Window", window);
+    window->insertItem("Occupy Left", this, SLOT(windowOccupyLeft()), CTRL+ALT+Key_Left);
+    window->insertItem("Occupy Right", this, SLOT(windowOccupyRight()), CTRL+ALT+Key_Right);
+
     QPopupMenu *help = new QPopupMenu(this);
     menuBar->insertItem("&Help", help);
     help->insertItem("&About ...", this, SLOT(helpAbout()));
@@ -211,6 +216,18 @@ void EditorWindow::fileSaveAs()
 void EditorWindow::editISearch()
 {
   isearch->attach(editor);
+}
+
+
+void EditorWindow::windowOccupyLeft() 
+{
+  setGeometry(83, 55, 565, 867);
+}
+
+
+void EditorWindow::windowOccupyRight()
+{
+  setGeometry(493, 55, 781, 867);
 }
 
 

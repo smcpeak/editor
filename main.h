@@ -50,7 +50,12 @@ public slots:
   void fileOpen();
   void fileSave();
   void fileSaveAs();
+  
   void editISearch();
+  
+  void windowOccupyLeft();
+  void windowOccupyRight();
+  
   void helpAbout();
   
   void editorViewChanged();

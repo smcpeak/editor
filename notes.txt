@@ -349,7 +349,7 @@ more todo:
   - File|Rename, that writes to a new name and deletes the old one
   - bookmarks, with markers on the scrollbar
   - paren-matching indication
-  - search+replace
+  * search+replace
   * Ctrl+L: center window vertically
 
 end 2/26/03 06:54
@@ -378,7 +378,7 @@ i-search ideas:
   - require enter or Esc to exit, so I can more flexibly bind add'l keys;
     in particular, allow scrolling to work normally by letting it go
     through
-  - incremental replace works just like i-search, but when you press enter
+  * incremental replace works just like i-search, but when you press enter
     you're in a mode to enter the replacement text (directly into the
     buffer?), and then another mode for successive replacements
   - could do incremental regexp search/replace by popping up a new window
