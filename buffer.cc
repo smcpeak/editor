@@ -157,18 +157,45 @@ void Buffer::deleteLine(int line)
 void Buffer::insertText(int line, int col, char const *text, int length)
 {
   bc(line);
-  attachRecent(line, col, length);
+  
+  #ifndef NDEBUG
+    for (int i=0; i<length; i++) {
+      xassert(text[i] != '\n');
+    }
+  #endif
 
-  recentLine.insertMany(col, text, length);
+  if (col==0 && lineLength(line)==0 && line!=recent) {
+    // setting a new line, can leave 'recent' alone
+    char *p = new char[length+1];
+    memcpy(p, text, length);
+    p[length] = '\n';
+    lines.set(line, p);
+  }
+  else {
+    // use recent
+    attachRecent(line, col, length);
+    recentLine.insertMany(col, text, length);
+  }
 }
 
 
 void Buffer::deleteText(int line, int col, int length)
 {
   bc(line);
-  attachRecent(line, col, 0);
 
-  recentLine.removeMany(col, length);
+  if (col==0 && length==lineLength(line) && line!=recent) {
+    // removing entire line, no need to move 'recent'
+    char *p = lines.get(line);
+    if (p) {
+      delete[] p;
+    }
+    lines.set(line, NULL);
+  }
+  else {
+    // use recent
+    attachRecent(line, col, 0);
+    recentLine.removeMany(col, length);
+  }
 }
 
 
@@ -245,8 +272,8 @@ void Buffer::printMemStats() const
 }
 
 
-void readFile(Buffer &buf, char const *fname)
-{ 
+void Buffer::readFile(char const *fname)
+{
   AutoFILE fp(fname, "r");
 
   // assume the lines aren't very big, and don't have embedded NULs
@@ -255,7 +282,7 @@ void readFile(Buffer &buf, char const *fname)
 
   int line = 0;
   while (fgets(buffer, BUFSIZE, fp)) {
-    buf.insertLine(line);
+    insertLine(line);
 
     int len = strlen(buffer);
     if (len && buffer[len-1]=='\n') {
@@ -263,24 +290,24 @@ void readFile(Buffer &buf, char const *fname)
     }
 
     if (len) {
-      buf.insertText(line, 0 /*col*/, buffer, len);
+      insertText(line, 0 /*col*/, buffer, len);
     }
     line++;
   }
 }
 
 
-void writeFile(Buffer const &buf, char const *fname)
+void Buffer::writeFile(char const *fname) const
 {
   AutoFILE fp(fname, "w");
 
   enum { BUFSIZE=256 };
   char buffer[BUFSIZE];
 
-  for (int line=0; line < buf.numLines(); line++) {
-    int len = min((int)BUFSIZE, buf.lineLength(line));
+  for (int line=0; line < numLines(); line++) {
+    int len = min((int)BUFSIZE, lineLength(line));
 
-    buf.getLine(line, 0, buffer, len);
+    getLine(line, 0, buffer, len);
     fprintf(fp, "%.*s\n", len, buffer);
   }
 }
@@ -315,13 +342,13 @@ void entry()
     {
       // read it as a buffer
       Buffer buf;
-      readFile(buf, "buffer.tmp");
+      buf.readFile("buffer.tmp");
 
       // dump its repr
       buf.dumpRepresentation();
 
       // write it out again
-      writeFile(buf, "buffer.tmp2");
+      buf.writeFile("buffer.tmp2");
 
       printf("stats before dealloc:\n");
       malloc_stats();
@@ -347,7 +374,7 @@ void entry()
   {
     printf("reading buffer.cc ...\n");
     Buffer buf;
-    readFile(buf, "buffer.cc");
+    buf.readFile("buffer.cc");
     buf.printMemStats();              
   }
 

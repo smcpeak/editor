@@ -226,6 +226,14 @@ finished coding Buffer, seems to work
 
 end 2/11/03 18:34
 
+--------------
+start 2/11/03 20:18
+
+will modify surrounding editor to use new Buffer interface.. first
+up is BufferState, which needs to acquire some of the convenience
+functions that Buffer had
+
+
 
 
 

@@ -63,6 +63,9 @@ public:    // funcs
   // text never includes the '\n' character
   void getLine(int line, int col, char *dest, int destLen) const;
 
+  // maximum length of a line; TODO: implement this
+  int maxLineLength() const { return 100; }
+
 
   // ---- manipulation interface ----
   // insert a new blank line, where the new line will be line 'line';
@@ -79,6 +82,14 @@ public:    // funcs
 
   // delete text
   void deleteText(int line, int col, int length);
+
+  
+  // ---- convenience ----         
+  // insert the contents of 'fname' into the top of this buffer
+  void readFile(char const *fname);
+
+  // write the entire buffer contents to 'fname'
+  void writeFile(char const *fname) const;
 
 
   // ---- debugging ----

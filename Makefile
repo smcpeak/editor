@@ -1,6 +1,6 @@
 # Makefile for editor
 
-tmp: testgap buffer
+#tmp: testgap buffer
 
 # main target
 all: testgap buffer editor
@@ -49,6 +49,7 @@ TOCLEAN += buffer buffer.tmp
 BUFFER_OBJS := buffer.cc
 buffer: gap.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) -g -Wall $(SMBASE)/libsmbase.a
+	./buffer >/dev/null 2>&1
 
 
 # ------------------ the editor ---------------------
@@ -57,8 +58,6 @@ EDITOR_OBJS := \
   editor.o \
   moc_editor.o \
   buffer.o \
-  textline.o \
-  position.o \
   main.o \
   moc_main.o \
   bufferstate.o

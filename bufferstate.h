@@ -7,14 +7,21 @@
 #include "buffer.h"     // Buffer
 #include "str.h"        // string
 
+             
 class BufferState : public Buffer {
-public:      // data
-  string filename;           // name of file being edited
-  bool changed;        // ... 
+public:      // data         
+  // name of file being edited
+  string filename;            
+                    
+  // true when there are unsaved changes
+  bool changed;
 
 public:      // funcs
   BufferState();
   ~BufferState();
+               
+  // empty buffer
+  void clear();
 };
 
 #endif // BUFFERSTATE_H

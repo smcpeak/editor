@@ -77,20 +77,16 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   filename->setLineWidth(1);
 
-  // initialize things the way File|New does
-  fileNew();
-
-  // temporary: insert some dummy text into the buffer
-  {
-    Position start(&theBuffer);
-    theBuffer.readFile("buffer.cc");
-  }
-
   setIcon(QPixmap((char const**)icon_xpm));
 
   setGeometry(200,200,      // initial location
               400,400);     // initial size
 
+  // initialize things the way File|New does
+  fileNew();
+
+  // temporary: insert some dummy text into the buffer
+  theBuffer.readFile("buffer.cc");
 }
 
 
@@ -98,10 +94,11 @@ void EditorWindow::fileNew()
 {
   // delete all text
   theBuffer.clear();
-  editor->cursor.set(0,0);
+  editor->resetView();
+  editor->updateView();
+  editorViewChanged();
   editor->buffer->changed = false;
 
-  editorViewChanged();
   setFileName("untitled.txt");
 }
 
@@ -121,7 +118,7 @@ void EditorWindow::fileOpen()
   }
 
   theBuffer.clear();
-  editor->cursor.set(0,0);
+  editor->resetView();
 
   try {
     // this sets 'changed' to false
@@ -186,18 +183,20 @@ void EditorWindow::helpAbout()
 void EditorWindow::editorViewChanged()
 {
   // set the scrollbars
-  horizScroll->setRange(0, max(editor->buffer->totColumns(), editor->firstVisibleCol));
+  horizScroll->setRange(0, max(editor->buffer->maxLineLength(), 
+                               editor->firstVisibleCol));
   horizScroll->setSteps(1, editor->visCols());
   horizScroll->setValue(editor->firstVisibleCol);
 
-  vertScroll->setRange(0, max(editor->buffer->totLines(), editor->firstVisibleLine));
+  vertScroll->setRange(0, max(editor->buffer->numLines(), 
+                              editor->firstVisibleLine));
   vertScroll->setSteps(1, editor->visLines());
   vertScroll->setValue(editor->firstVisibleLine);
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the Buffer interface uses 0:0
-  position->setText(QString(stringc << (editor->cursor.line()+1) << ":"
-                                    << (editor->cursor.col()+1)
+  position->setText(QString(stringc << (editor->cursorLine+1) << ":"
+                                    << (editor->cursorCol+1)
                                     << (editor->buffer->changed? " *" : "")
                                     ));
 }

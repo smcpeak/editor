@@ -5,10 +5,8 @@
 #define EDITOR_H
 
 #include <qwidget.h>        // QWidget
+#include "bufferstate.h"    // BufferState
 
-#include "position.h"       // Position
-
-class Buffer;               // buffer.h
 class QRangeControl;        // qrangecontrol.h
 
 
@@ -21,10 +19,11 @@ class Editor : public QWidget {
 public:      // data
   // ------ editing state -----
   // buffer whose text we're editing
-  Buffer *buffer;           // (serf)
+  BufferState *buffer;           // (serf)
 
-  // cursor position
-  Position cursor;
+  // cursor position (0-based)
+  int cursorLine;
+  int cursorCol;
 
   // scrolling offset
   int firstVisibleLine, firstVisibleCol;
@@ -61,6 +60,17 @@ public:      // data
   int fontHeight;
   int fontWidth;
 
+private:     // funcs
+  // fill buffer with whitespace, if necessary, so that the current
+  // cursor position is on a valid character, i.e.:
+  //   - cursorLine < buffer->numLines()
+  //   - cursorCol <= buffer->lineLength(cursorLine)
+  void fillToCursor();
+                        
+  // given that the cursor is at the end of a line, join this line
+  // with the next one
+  void spliceNextLine();
+
 protected:   // funcs
   // QWidget funcs
   virtual void paintEvent(QPaintEvent *);
@@ -69,7 +79,7 @@ protected:   // funcs
   virtual void mousePressEvent(QMouseEvent *m);
 
 public:      // funcs
-  Editor(Buffer *buf,
+  Editor(BufferState *buf,
          QWidget *parent=NULL, const char *name=NULL);
 
   // QWidget funcs

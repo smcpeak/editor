@@ -6,6 +6,7 @@
 #include "position.h"        // Position
 #include "textline.h"        // TextLine
 #include "xassert.h"         // xassert
+#include "array.h"           // Array
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -16,12 +17,11 @@
 
 
 // ---------------------- Editor --------------------------------
-Editor::Editor(Buffer *buf,
+Editor::Editor(BufferState *buf,
                QWidget *parent=NULL, const char *name=NULL)
   : QWidget(parent, name, WRepaintNoErase | WNorthWestGravity),
     buffer(buf),
-    cursor(buf),
-    // visible line/col inited by resetView()
+    // cursor and visible line/col inited by resetView()
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
@@ -37,7 +37,7 @@ Editor::Editor(Buffer *buf,
   // use the color scheme for text widgets; typically this means
   // a white background, instead of a gray background
   setBackgroundMode(PaletteBase);
-  
+
   resetView();
 }
 
@@ -62,7 +62,7 @@ void Editor::setFont(QFont &f)
 
 
 void Editor::update()
-{                   
+{
   updateView();
   emit viewChanged();
   QWidget::update();
@@ -70,14 +70,17 @@ void Editor::update()
 
 void Editor::updateView()
 {
+  int h = height();
+  int w = width();
+
   // calculate viewport stats
   // why -1?  suppose width==height==0, then the "first" visible isn't
   // visible at all, so we'd want the one before (not that that's visible
   // either, but it suggests what we want in nondegenerate cases too)
   lastVisibleLine = firstVisibleLine
-    + (height() - topMargin) / (fontHeight + interLineSpace) - 1;
+    + (h - topMargin) / (fontHeight + interLineSpace) - 1;
   lastVisibleCol = firstVisibleCol
-    + (width() - leftMargin) / fontWidth - 1;
+    + (w - leftMargin) / fontWidth - 1;
 }
 
 
@@ -85,12 +88,14 @@ void Editor::resizeEvent(QResizeEvent *r)
 {
   QWidget::resizeEvent(r);
   updateView();
-}                                         
+  emit viewChanged();
+}
 
 
 void Editor::resetView()
 {
-  cursor.set(0,0);
+  cursorLine = 0;
+  cursorCol = 0;
   firstVisibleLine = 0;
   firstVisibleCol = 0;
 }
@@ -130,32 +135,28 @@ void Editor::paintEvent(QPaintEvent *ev)
   xassert(fontHeight + interLineSpace > 0);
 
   // last line where there's something to print
-  int lastPrintLine = max(buffer->totLines()-1, cursor.line());
+  int lastPrintLine = max(buffer->numLines()-1, cursorLine);
+
+  // buffer for text to print
+  int visibleCols = lastVisibleCol - firstVisibleCol + 2;
+  Array<char> text(visibleCols);
 
   for (int line = firstVisibleLine;
        line <= lastPrintLine && y < height();
        line++) {
     // figure out what to draw
-    char const *text = NULL;
     int len = 0;
-    if (line < buffer->totLines()) {
-      TextLine const *tl = buffer->getLineC(line);
-      text = tl->getText();
-      len = tl->getLength();
 
-      if (firstVisibleCol < len) {
-        text += firstVisibleCol;
-        len -= firstVisibleCol;
-      }
-      else {
-        len = 0;
-      }
+    if (line < buffer->numLines() &&
+        firstVisibleCol < buffer->lineLength(line)) {
+      len = min(buffer->lineLength(line) - firstVisibleCol, visibleCols);
+      buffer->getLine(line, firstVisibleCol, text, len);
     }
 
     // draw line's text
     if (len > 0) {
       paint.drawText(leftMargin, y+ascent-1,      // baseline start coordinate
-                     text, len);                  // text, length
+                     QString(text), len);         // text, length
     }
 
     // right edge of what has not been painted
@@ -166,8 +167,8 @@ void Editor::paintEvent(QPaintEvent *ev)
                     width()-x, fontHeight);
 
     // draw the cursor as a line
-    if (line == cursor.line()) {
-      x = leftMargin + fontWidth * (cursor.col() - firstVisibleCol);
+    if (line == cursorLine) {
+      x = leftMargin + fontWidth * (cursorCol - firstVisibleCol);
       paint.drawLine(x,y, x, y+fontHeight-1);
       paint.drawLine(x-1,y, x-1, y+fontHeight-1);
     }
@@ -207,13 +208,15 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_PageUp:
-        cursor.set(0,0);
+        cursorLine = 0;
+        cursorCol = 0;
         scrollToCursor();
         update();
         break;
 
       case Key_PageDown:
-        cursor.set(max(buffer->totLines()-1,0), 0);
+        cursorLine = max(buffer->numLines(),0);
+        cursorCol = 0;
         scrollToCursor();
         update();
         break;
@@ -221,8 +224,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_W:
         inc(firstVisibleLine, -1);
         updateView();
-        if (cursor.line() > lastVisibleLine) {
-          cursor.setLine(lastVisibleLine);
+        if (cursorLine > lastVisibleLine) {
+          cursorLine = lastVisibleLine;
         }
         update();
         break;
@@ -230,8 +233,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_Z:
         inc(firstVisibleLine, +1);
         updateView();
-        if (cursor.line() < firstVisibleLine) {
-          cursor.setLine(firstVisibleLine);
+        if (cursorLine < firstVisibleLine) {
+          cursorLine = firstVisibleLine;
         }
         update();
         break;
@@ -284,34 +287,34 @@ void Editor::keyPressEvent(QKeyEvent *k)
   // <key>
   else if (state == NoButton || state == ShiftButton) {
     switch (k->key()) {
-      case Key_Left:       
-        cursor.move(0,-1);
+      case Key_Left:
+        inc(cursorCol, -1);
         scrollToCursor();
         break;
 
       case Key_Right:
-        cursor.move(0,+1);
+        inc(cursorCol, +1);
         scrollToCursor();
         break;
 
       case Key_Home:
-        cursor.setCol(0);
+        cursorCol = 0;
         scrollToCursor();
         break;
 
       case Key_End:
-        cursor.setCol(buffer->getLineC(cursor.line())->getLength());
+        cursorCol = buffer->lineLength(cursorLine);
         scrollToCursor();
         break;
 
       case Key_Up:
-        cursor.move(-1,0);
+        inc(cursorLine, -1);
         scrollToCursor();
         break;
 
       case Key_Down:
         // allows cursor past EOF..
-        cursor.move(+1,0);
+        inc(cursorLine, +1);
         scrollToCursor();
         break;
 
@@ -324,23 +327,77 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_BackSpace: {
-        Position oneLeft(cursor);
-        oneLeft.moveLeftWrap();
-        buffer->deleteText(oneLeft, cursor);
+        fillToCursor();
+
+        if (cursorCol == 0) {
+          if (cursorLine == 0) {
+            // do nothing
+          }
+          else {
+            // move to end of previous line
+            cursorLine--;
+            cursorCol = buffer->lineLength(cursorLine);
+
+            // splice them together
+            spliceNextLine();
+          }
+        }
+        else {
+          // remove the character to the left of the cursor
+          cursorCol--;
+          buffer->deleteText(cursorLine, cursorCol, 1);
+        }
+
         scrollToCursor();
         break;
       }
 
       case Key_Delete: {
-        Position oneRight(cursor);
-        oneRight.moveRightWrap();
-        buffer->deleteText(cursor, oneRight);
+        fillToCursor();
+
+        if (cursorCol == buffer->lineLength(cursorLine)) {
+          // splice next line onto this one
+          spliceNextLine();
+        }
+        else /* cursor < lineLength */ {
+          // delete character to right of cursor
+          buffer->deleteText(cursorLine, cursorCol, 1);
+        }
+
         scrollToCursor();
         break;
       }
 
       case Key_Return: {
-        buffer->insertText(cursor, "\n", 1);
+        fillToCursor();
+
+        if (cursorCol == buffer->lineLength(cursorLine)) {
+          // add a blank line after this one
+          cursorLine++;                  
+          cursorCol = 0;
+          buffer->insertLine(cursorLine);
+        }
+        else if (cursorCol == 0) {
+          // insert blank line and go to the next
+          buffer->insertLine(cursorLine);
+          cursorLine++;
+        }
+        else {
+          // steal text after the cursor
+          int len = buffer->lineLength(cursorLine) - cursorCol;
+          Array<char> temp(len);
+          buffer->getLine(cursorLine, cursorCol, temp, len);
+          buffer->deleteText(cursorLine, cursorCol, len);
+          
+          // insert a line and move down
+          cursorLine++;
+          cursorCol = 0;
+          buffer->insertLine(cursorLine);
+          
+          // insert the stolen text
+          buffer->insertText(cursorLine, 0, temp, len);
+        }
+
         scrollToCursor();
         break;
       }
@@ -349,7 +406,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         QString text = k->text();
         if (text.length()) {
           // insert this character at the cursor
-          buffer->insertText(cursor, text, text.length());
+          buffer->insertText(cursorLine, cursorCol, text, text.length());
           scrollToCursor();
         }
         else {
@@ -370,20 +427,55 @@ void Editor::keyPressEvent(QKeyEvent *k)
 }
 
 
-void Editor::scrollToCursor()
-{
-  if (cursor.col() < firstVisibleCol) {
-    firstVisibleCol = cursor.col();
-  }
-  else if (cursor.col() > lastVisibleCol) {
-    firstVisibleCol += (cursor.col() - lastVisibleCol);
+void Editor::fillToCursor()
+{                                         
+  // fill with blank lines
+  while (cursorLine >= buffer->numLines()) {
+    buffer->insertLine(buffer->numLines());
   }
 
-  if (cursor.line() < firstVisibleLine) {
-    firstVisibleLine = cursor.line();
+  // fill with spaces
+  while (cursorCol > buffer->lineLength(cursorLine)) {
+    buffer->insertText(cursorLine, buffer->lineLength(cursorLine),
+                       " ", 1);
   }
-  else if (cursor.line() > lastVisibleLine) {
-    firstVisibleLine += (cursor.line() - lastVisibleLine);
+}
+
+
+void Editor::spliceNextLine()
+{
+  // cursor must be at the end of a line
+  xassert(cursorCol == buffer->lineLength(cursorLine));
+
+  // splice this line with the next
+  if (cursorLine+1 < buffer->numLines()) {
+    // append the contents of the next line
+    int len = buffer->lineLength(cursorLine+1);
+    Array<char> temp(len);
+    buffer->getLine(cursorLine+1, 0 /*col*/, temp, len);
+    buffer->insertText(cursorLine, cursorCol, temp, len);
+
+    // now remove the next line
+    buffer->deleteText(cursorLine+1, 0 /*col*/, len);
+    buffer->deleteLine(cursorLine+1);
+  }
+}
+
+
+void Editor::scrollToCursor()
+{
+  if (cursorCol < firstVisibleCol) {
+    firstVisibleCol = cursorCol;
+  }
+  else if (cursorCol > lastVisibleCol) {
+    firstVisibleCol += (cursorCol - lastVisibleCol);
+  }
+
+  if (cursorLine < firstVisibleLine) {
+    firstVisibleLine = cursorLine;
+  }
+  else if (cursorLine > lastVisibleLine) {
+    firstVisibleLine += (cursorLine - lastVisibleLine);
   }
 }
 
@@ -401,8 +493,8 @@ void Editor::moveView(int deltaLine, int deltaCol)
   inc(firstVisibleCol, deltaCol);
 
   // now move cursor by the amount that the viewport moved
-  cursor.move(firstVisibleLine-origVL, 
-              firstVisibleCol-origVC);
+  inc(cursorLine, firstVisibleLine-origVL);
+  inc(cursorLine, firstVisibleCol-origVC);
 
   // redraw display
   update();
@@ -442,7 +534,8 @@ void Editor::mousePressEvent(QMouseEvent *m)
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
 
-  cursor.set(newLine, newCol);
+  cursorLine = newLine;
+  cursorCol = newCol;
 
   // it's possible the cursor has been placed outside the "visible"
   // lines/cols (i.e. at the edge), but even if so, don't scroll,

@@ -10,3 +10,12 @@ BufferState::BufferState()
 
 BufferState::~BufferState()
 {}
+
+
+void BufferState::clear()
+{
+  while (numLines() > 0) {
+    deleteText(0,0, lineLength(0));
+    deleteLine(0);
+  }
+}
