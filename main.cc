@@ -17,6 +17,8 @@
 #include <qhbox.h>           // QHBox
 #include <qgrid.h>           // QGrid
 
+#include "icon.xpm"          // icon_xpm[]
+
 
 EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   : QWidget(parent, name),
@@ -74,6 +76,8 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   // initialize things the way File|New does
   fileNew();
+
+  setIcon(QPixmap((char const**)icon_xpm));
 
   // initial size
   resize(400,400);
