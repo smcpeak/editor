@@ -222,7 +222,7 @@ void GapArray<T>::makeGapAt(int elt, int gapSize)
 
       // update stats
       left += amt;
-      right += amt;
+      right -= amt;
     }
   }
   xassert(elt == left);
