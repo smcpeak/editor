@@ -8,11 +8,13 @@
 // the base class yyFlexLexer.
 #include <FlexLexer.h>
 
+#include "inclexer.h"    // IncLexer
+
 class BufferCore;        // buffer.h
 
 
 // lexer object
-class CommentLexer : private yyFlexLexer {
+class CommentLexer : public IncLexer, private yyFlexLexer {
 private:     // data
   // source of text to lex
   BufferCore const *buffer;
@@ -34,18 +36,10 @@ public:      // funcs
   CommentLexer();
   ~CommentLexer();
 
-  // begin scanning a buffer line; must call this before any calls
-  // to 'getNextToken'; 'state' is the result of a prior getState()
-  // call, where 0 is the beginning-of-file state
-  void beginScan(BufferCore const *buffer, int line, int state);
-
-  // get next token in line; returns false at end of line;
-  // 'code' is numeric code returned by lexer action
-  bool getNextToken(int &len, int &code);
-
-  // get the lexing state now; usually called at end-of-line to
-  // remember the start state for the next line
-  int getState() const;
+  // IncLexer functions
+  virtual void beginScan(BufferCore const *buffer, int line, int state);
+  virtual bool getNextToken(int &len, int &code);
+  virtual int getState() const;
 };
 
 
