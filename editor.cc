@@ -1,6 +1,8 @@
 // editor.cc
 // code for editor.h
 
+// tweak ...
+
 #include "editor.h"          // this module
 #include "buffer.h"          // Buffer
 #include "position.h"        // Position
