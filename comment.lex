@@ -37,7 +37,7 @@
 %option never-interactive
 
 /* and I will define the class */
-%option yyclass="CommentLexer"
+%option yyclass="CommentFlexLexer"
 
 /* output file name */
 %option outfile="comment.yy.cc"
@@ -149,33 +149,51 @@ QUOTE         [\"]
 #include "buffer.h"      // BufferCore
 
 
-// -------------------- CommentLexer -------------------
-CommentLexer::CommentLexer()
-  : buffer(NULL),
+// -------------------- RawFlexLexer -------------------
+void RawFlexLexer::setState(int state)
+{
+  BEGIN(state);
+}
+
+int RawFlexLexer::getState() const
+{
+  return YY_START;
+}
+
+
+// -------------------- IncFlexLexer -------------------
+IncFlexLexer::IncFlexLexer(RawFlexLexer * /*owner*/ raw)
+  : rawLexer(raw),
+    buffer(NULL),
     bufferLine(0),
     lineLength(0),
     nextSlurpCol(0)
-{}
+{
+  rawLexer->bufferFunc = &IncFlexLexer::fillBuffer;
+  rawLexer->ths = (void*)this;
+}
 
 
-CommentLexer::~CommentLexer()
-{}
+IncFlexLexer::~IncFlexLexer()
+{
+  delete rawLexer;
+}
 
 
-void CommentLexer::beginScan(BufferCore const *b, int line, int state)
+void IncFlexLexer::beginScan(BufferCore const *b, int line, int state)
 {
   // set up variables so we'll be able to do LexerInput()
   buffer = b;
   bufferLine = line;
   lineLength = buffer->lineLength(line);
   nextSlurpCol = 0;
-  BEGIN(state);
+  rawLexer->setState(state);
 }
 
 
 // this is called by the Flex lexer when it needs more data for
 // its internal buffer; interface is similar to read(2)
-int CommentLexer::LexerInput(char* buf, int max_size)
+inline int IncFlexLexer::innerFillBuffer(char* buf, int max_size)
 {
   if (nextSlurpCol == lineLength) {
     return 0;         // EOL
@@ -188,20 +206,25 @@ int CommentLexer::LexerInput(char* buf, int max_size)
   return len;
 }
 
-
-bool CommentLexer::getNextToken(int &len, int &code)
+STATICDEF int IncFlexLexer::fillBuffer(void *ths, char* buf, int max_size)
 {
-  code = yylex();
+  return ((IncFlexLexer*)ths)->innerFillBuffer(buf, max_size);
+}
+
+
+bool IncFlexLexer::getNextToken(int &len, int &code)
+{
+  code = rawLexer->yylex();
   if (!code) {
     return false;     // EOL
-  }                   
-  
-  len = yyleng;
+  }
+
+  len = rawLexer->YYLeng();
   return true;
 }
 
 
-int CommentLexer::getState() const
+int IncFlexLexer::getState() const
 {
-  return YY_START;
+  return rawLexer->getState();
 }
