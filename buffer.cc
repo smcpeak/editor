@@ -8,6 +8,7 @@
 #include "strutil.h"       // encodeWithEscapes
 #include "syserr.h"        // xsyserror
 #include "ckheap.h"        // checkHeap
+#include "test.h"          // USUAL_MAIN, PVAL
 
 #include <sys/types.h>     // ?
 #include <sys/stat.h>      // O_RDONLY, etc.
@@ -63,7 +64,7 @@ bool Buffer::operator == (Buffer const &obj) const
 
 // adjustable parameters (don't parenthesize)
 #define LINES_SHRINK_RATIO 1 / 4
-#define LINES_GROW_RATIO 2
+#define LINES_GROW_RATIO 3 / 2
 #define LINES_GROW_STEP 20
 
 
@@ -74,21 +75,20 @@ void Buffer::setNumLines(int newLines)
   changed = true;
 
   // dealloc any lines now not part of the buffer
-  int i;
-  for (i=newLines; i<numLines; i++) {
-    lines[i].dealloc();
+  while (numLines > newLines) {
+    numLines--;
+    lines[numLines].dealloc();
   }
 
   if (linesAllocated < newLines  ||
-      newLines < linesAllocated * LINES_SHRINK_RATIO) {
+      newLines < linesAllocated * LINES_SHRINK_RATIO - LINES_GROW_STEP) {
     int newAllocated = newLines * LINES_GROW_RATIO + LINES_GROW_STEP;
 
     // realloc and copy
     TextLine *newArray = new TextLine[newAllocated];
 
-    // copy common prefix
-    int preserved = min(numLines, newLines);
-    memcpy(newArray, lines, preserved * sizeof(TextLine));
+    // copy common prefix ('numLines' lines)
+    memcpy(newArray, lines, numLines * sizeof(TextLine));
 
     // dealloc old array
     if (lines) {
@@ -101,12 +101,10 @@ void Buffer::setNumLines(int newLines)
   }
 
   // init any lines that are now part of the buffer
-  for (i=numLines; i<newLines; i++) {
-    lines[i].init();
+  while (numLines < newLines) {
+    lines[numLines].init();
+    numLines++;
   }
-
-  // set length
-  numLines = newLines;
 }
 
 
@@ -230,14 +228,13 @@ void Buffer::insertLinesAt(int n, int howmany)
     // harder case: must move existing lines down
 
     // first, make room
-    int oldNumLines = numLines;
     setNumLines(numLines + howmany);
 
     // then shift the original lines below the insertion
     // point downward
-    memmove(lines+oldNumLines+howmany,              // dest
-            lines+oldNumLines,                      // src
-            (oldNumLines-n) * sizeof(TextLine));    // size to move
+    memmove(lines+n+howmany,                // dest
+            lines+n,                        // src
+            howmany * sizeof(TextLine));    // size to move
 
     // the lines in the gap now are defunct, though they
     // still point to some of the shifted lines; re-init
@@ -393,6 +390,11 @@ void Buffer::removeLines(int startLine, int linesToRemove)
   }
   changed = true;
 
+  // deallocate the lines being removed
+  for (int i=0; i<linesToRemove; i++) {
+    lines[startLine+i].dealloc();
+  }
+
   // move the 2nd half lines up to cover the gap
   memmove(lines+startLine,                    // dest
           lines+startLine+linesToRemove,      // src
@@ -410,10 +412,42 @@ void Buffer::clear()
 }
 
 
+void Buffer::printMemStats() const
+{
+  PVAL(numLines);
+  PVAL(linesAllocated);
+  PVAL(linesAllocated * sizeof(TextLine));
+
+  int textBytes = 0;
+  int allocBytes = 0;
+  int intFragBytes = 0;
+  int overheadBytes = 0;
+
+  for (int i=0; i<numLines; i++) {
+    TextLine const &tl = lines[i];
+
+    textBytes += tl.getLength();
+
+    int alloc = tl._please_getAllocated();
+    allocBytes += alloc;
+    intFragBytes = (alloc%4)? (4 - alloc%4) : 0;    // bytes to round up to 4
+    overheadBytes += 4;
+  }
+
+  PVAL(textBytes);
+  PVAL(allocBytes);
+  PVAL(intFragBytes);
+  PVAL(overheadBytes);
+  
+  printf("total: %d\n",
+         linesAllocated * sizeof(TextLine) +
+         allocBytes + intFragBytes + overheadBytes);
+}
+
+
 // --------------------- test code -----------------------
 #ifdef TEST_BUFFER
 
-#include "test.h"      // USUAL_MAIN
 #include "malloc.h"    // malloc_stats
 
 void entry()
@@ -428,7 +462,7 @@ void entry()
       xsyserror("open");
     }
 
-    for (int i=0; i<5; i++) {
+    for (int i=0; i<2; i++) {
       for (int j=0; j<53; j++) {
         for (int k=0; k<j; k++) {
           fputc('0' + (k%10), fp);
@@ -453,6 +487,9 @@ void entry()
 
       printf("stats before dealloc:\n");
       malloc_stats();
+      
+      printf("\nbuffer mem usage stats:\n");
+      buf.printMemStats();
     }
 
     // make sure they're the same
@@ -483,6 +520,13 @@ void entry()
 
     printf("stats after:\n");
     malloc_stats();
+  }
+  
+  {                     
+    printf("reading buffer.cc ...\n");
+    Buffer buf;
+    buf.readFile("buffer.cc");
+    buf.printMemStats();              
   }
 }
 

@@ -12,6 +12,10 @@
 #include <qlabel.h>          // QLabel
 #include <qfiledialog.h>     // QFileDialog
 #include <qmessagebox.h>     // QMessageBox
+#include <qvbox.h>           // QVBox
+#include <qlayout.h>         // QVBoxLayout
+#include <qhbox.h>           // QHBox
+#include <qgrid.h>           // QGrid
 
 
 EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
@@ -24,14 +28,14 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
     filename(NULL),
     theBuffer()
 {
-  // for now, fixed size
-  resize(400,400);      
-  setFixedSize(400,400);
-  
+  // will build a layout tree to manage sizes of child widgets
+  QVBoxLayout *mainAreaMgr = new QVBoxLayout(this);
+  QVBox *mainArea = new QVBox(this, "main area");
+  mainAreaMgr->addWidget(mainArea);    // get 'mainArea' to fill the dialog
+
   // menu
   {
-    menuBar = new QMenuBar(this, "main menu bar");
-    // geometry?
+    menuBar = new QMenuBar(mainArea, "main menu bar");
 
     QPopupMenu *file = new QPopupMenu(this);
     menuBar->insertItem("&File", file);
@@ -47,28 +51,33 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
     help->insertItem("&About ...", this, SLOT(helpAbout()));
   }
 
-  editor = new Editor(&theBuffer, this, "editor widget");
-  editor->setGeometry(0,20, 380,340);
+  QGrid *editArea = new QGrid(2 /*cols*/, QGrid::Horizontal, mainArea, "edit area");
+
+  editor = new Editor(&theBuffer, editArea, "editor widget");
   editor->setFocus();
 
-  vertScroll = new QScrollBar(QScrollBar::Vertical, this, "vertical scrollbar");
-  vertScroll->setGeometry(380,20, 20,340);
+  vertScroll = new QScrollBar(QScrollBar::Vertical, editArea, "vertical scrollbar");
 
-  horizScroll = new QScrollBar(QScrollBar::Horizontal, this, "horizontal scrollbar");
-  horizScroll->setGeometry(0,360, 380,20);
-  
-  position = new QLabel(this, "cursor position label");
-  position->setGeometry(0,380, 100,20);
+  horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
+
+  QHBox *statusArea = new QHBox(mainArea, "status area");
+  statusArea->setFixedHeight(20);
+
+  position = new QLabel(statusArea, "cursor position label");
+  position->setFixedWidth(100);
   position->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  position->setLineWidth(2);
+  position->setLineWidth(1);
 
-  filename = new QLabel(this, "filename label");
-  filename->setGeometry(100,380, 100,20);
+  filename = new QLabel(statusArea, "filename label");
   filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  filename->setLineWidth(2);
+  filename->setLineWidth(1);
 
   // initialize things the way File|New does
   fileNew();
+
+  // initial size
+  resize(400,400);
+
 }
 
 

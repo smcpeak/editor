@@ -42,7 +42,7 @@ BUFFER_OBJS := \
   textline.o \
   position.o
 buffer: array.h $(BUFFER_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) $(LDFLAGS)
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) -g -Wall $(SMBASE)/libsmbase.a
 
 
 # ------------------ the editor ---------------------

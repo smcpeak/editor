@@ -88,13 +88,6 @@ void Editor::paintEvent(QPaintEvent *ev)
     paint.drawLine(leftMargin+width-1, botDescent,     // bottom of descent
                    leftMargin+width-1, topAscent);     // top of ascent
   }
-
-  // cue to quit app
-  char const *msg = "Ctrl-C to quit";
-  paint.drawText(
-    5,295,                     // left edge, baseline coordinate
-    msg                        // text
-  );
 }
 
 

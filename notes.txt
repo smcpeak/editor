@@ -146,3 +146,8 @@ todo:
   - save file
   - scrolling
   
+did load and save, but I've got a bug in my Buffer implementation
+that's causing me to trash memory.. will switch on the debug heap
+to find it next time
+
+end 2/09/03 17:15

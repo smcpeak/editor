@@ -89,6 +89,9 @@ public:    // data
 
   // debugging: print internal rep
   void dumpRepresentation() const;
+  
+  // debugging: how much memory am I using?
+  void printMemStats() const;
 };
 
 #endif // BUFFER_H
