@@ -123,3 +123,8 @@ framework instead of an X11 framework
 also made a tentative decision to use Guile for my scripting
 engine when the time comes
 
+---------------
+start 2/09/03 00:07
+
+continuing to get what I had to work under Qt
+

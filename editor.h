@@ -5,7 +5,9 @@
 #define EDITOR_H
 
 #include <qwidget.h>        // QWidget
-         
+
+#include "position.h"       // Position
+
 class Buffer;               // buffer.h
 
 
@@ -15,20 +17,23 @@ class Buffer;               // buffer.h
 class Editor : public QWidget {
   Q_OBJECT
 
-public:      // data
+private:      // data
   // buffer whose text we're editing
   Buffer *buffer;           // (serf)
+
+  // cursor position
+  Position cursor;
 
 protected:   // funcs
   // respond to a paint request by repainting the control
   virtual void paintEvent(QPaintEvent *);
+  
+  // handle keyboard input
+  virtual void keyPressEvent(QKeyEvent *k);
 
 public:      // funcs
   Editor(Buffer *buf,
-         QWidget *parent=NULL, const char *name=NULL)
-    : QWidget(parent, name),
-      buffer(buf)
-  {}
+         QWidget *parent=NULL, const char *name=NULL);
 };
 
 #endif // EDITOR_H

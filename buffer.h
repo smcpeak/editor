@@ -63,7 +63,8 @@ public:    // data
   void removeLines(int startLine, int linesToRemove);
 
   // insert some text at a position; this will parse any
-  // newlines into additional line separators
+  // newlines into additional line separators; the position
+  // is changed to just after the inserted text
   void insertText(Position *p, char const *text, int length);
 
   // delete the text between two positions; p1 must be
