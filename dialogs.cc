@@ -15,14 +15,12 @@
 #include <Xm/RowColumn.h>      // XmCreateMenuBar
 #include <stdio.h>             // printf
 
-// my types
-typedef int bool;
-enum { false=0, true=1 };
+#include "typ.h"               // bool
 
 bool doMyPopup = false;
 Widget myPopupParent, popupDialog;
 
-// prototypes
+// prototypes for my stuff
 bool stringPromptDialog(Widget parent, char *prompt, char *defaultValue,
                         char *destString, int destLength);
 void promptCallback(Widget wt, XtPointer client_data,
@@ -35,7 +33,21 @@ void do_my_prompt_pop_up(Widget parent);
 void printStateInfo(char const *context);
 
 
+// prototypes for existing stuff
 void ScrubDial(Widget, int);
+void
+prompt_pop_up(Widget cascade_button, char *text,
+XmPushButtonCallbackStruct *cbs);
+void
+info_pop_up(Widget cascade_button, char *text,
+XmPushButtonCallbackStruct *cbs);
+void quit_pop_up(Widget cascade_button, char *text,
+XmPushButtonCallbackStruct *cbs);
+void prompt_activate(Widget widget, XtPointer client_data,
+XmSelectionBoxCallbackStruct *selection);
+void
+quit_activate(Widget dialog, void*, void*);
+
 
 Widget top_wid;
 XtAppContext app;
@@ -43,7 +55,6 @@ XtAppContext app;
 int main(int argc, char *argv[])
 {
     Widget main_w, menu_bar, info, prompt, quit;
-    void info_pop_up(), quit_pop_up(), prompt_pop_up();
 
     
     top_wid = XtVaAppInitialize(&app, "Demos", NULL, 0,
@@ -81,7 +92,7 @@ int main(int argc, char *argv[])
 
     /* Callback has data passed to */
     XtAddCallback(prompt, XmNactivateCallback,
-                  (void (*)())my_prompt_pop_up, NULL);
+                  my_prompt_pop_up, NULL);
     // ----- end mine ------
 
 
@@ -227,7 +238,7 @@ bool stringPromptDialog(Widget parent, char *prompt, char *defaultValue,
   XmStringFree(xm_string3);
 
   XtAddCallback(dialog, XmNokCallback,
-                (void (*)())promptCallback, &info);
+                promptCallback, &info);
   //XtAddCallback(dialog, XmNcancelCallback,
   //              (void (*)())promptCallback, &info);
   //XtAddCallback(dialog, XmNpopdownCallback,
@@ -345,7 +356,6 @@ XmPushButtonCallbackStruct *cbs)
 
 {   Widget dialog, remove;
     XmString xm_string1, xm_string2;
-    void prompt_activate();
     Arg args[3];
 
     /* label the dialog */
@@ -387,7 +397,6 @@ XmPushButtonCallbackStruct *cbs)
 
 {   Widget dialog;
     XmString xm_string;
-    extern void info_activate();
     Arg args[2];
 
     printStateInfo("info");
@@ -419,7 +428,6 @@ void quit_pop_up(Widget cascade_button, char *text,
 XmPushButtonCallbackStruct *cbs)
 {   Widget dialog;
     XmString xm_string;
-    void quit_activate();
     Arg args[1];
 
     /* label the dialog */
@@ -485,7 +493,7 @@ XmSelectionBoxCallbackStruct *selection)
 
 
 void
-quit_activate(Widget dialog)
+quit_activate(Widget dialog, void*, void*)
 {
     printf("Quit Ok was pressed.\n");
     exit(0);

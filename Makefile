@@ -26,6 +26,9 @@ buffer-src = buffer.cc textline.o cursor.o
 buffer: array.h ${buffer-src}
 	${link} -o buffer -DTEST_BUFFER ${buffer-src} ${linkend}
 
+dialogs: dialogs.cc
+	${link} -o dialogs dialogs.cc -lXm -lXt ${linkend}
+
 clean:
 	rm -f *.o
 	rm editor buffer

@@ -84,3 +84,9 @@ the event queue is quiescent
 actually, since the sample code just says it wants to make sure
 the widget is "destroyed", I think the XtIsManaged should be
 sufficient..
+
+------------------------
+start 4/09/01 11:26
+
+more dialog stuff ...
+
