@@ -38,7 +38,7 @@ void Editor::paintEvent(QPaintEvent *ev)
 
   //XFontStruct *fs = myFontStruct;
   int ascent = fm.ascent();
-  int descent = fm.descent();
+  int descent = fm.descent() + 1;    // this is X's notion of descent
   int fontHeight = ascent + descent;
   int fontWidth = fm.maxWidth();
 
@@ -54,12 +54,12 @@ void Editor::paintEvent(QPaintEvent *ev)
     lastBotDescent = botDescent;
 
     // erase left margin
-    paint.drawText(0, baseLine-1, QString(" "), 1);
+    paint.drawText(0, baseLine, QString(" "), 1);
 
     // draw line's text
     TextLine const *tl = buffer->getLineC(line);
     QString text(tl->getText());
-    paint.drawText(leftMargin, baseLine-1,      // lower,base coordinate
+    paint.drawText(leftMargin, baseLine,        // lower,base coordinate
                    text, tl->getLength());      // text, length
 
     // calc width of whole string
@@ -118,8 +118,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
   // <key>
   else if (state == NoButton || state == ShiftButton) {
     switch (k->key()) {
-      case Key_Left:       cursor.move(0, -1);   break;
-      case Key_Right:      cursor.move(0, +1);   break;
+      case Key_Left:       cursor.move(0,-1);    break;
+      case Key_Right:      cursor.move(0,+1);    break;
       case Key_Home:       cursor.setCol(0);     break;
       case Key_End:
         cursor.setCol(
@@ -130,21 +130,28 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_BackSpace: {
         Position oneLeft(cursor);
-        oneLeft.move(0,-1);
-        buffer->deleteText(&oneLeft, &cursor);
+        oneLeft.moveLeftWrap();
+        buffer->deleteText(oneLeft, cursor);
+        break;
+      }
+
+      case Key_Delete: {
+        Position oneRight(cursor);
+        oneRight.moveRightWrap();
+        buffer->deleteText(cursor, oneRight);
         break;
       }
 
       case Key_Return: {
-        buffer->insertText(&cursor, "\n", 1);
+        buffer->insertText(cursor, "\n", 1);
         break;
       }
-      
+
       default: {
         QString text = k->text();
         if (text.length()) {
           // insert this character at the cursor
-          buffer->insertText(&cursor, text, text.length());
+          buffer->insertText(cursor, text, text.length());
         }
         else {   
           k->ignore();
@@ -176,7 +183,7 @@ int main(int argc, char **argv)
   // insert some dummy text into the buffer
   {
     Position start(&theBuffer);
-    theBuffer.insertText(&start, "hi there", 8);
+    theBuffer.insertText(start, "hi there", 8);
   }
 
   Editor editor(&theBuffer, NULL /*parent*/, "An Editor");

@@ -62,14 +62,17 @@ public:    // data
   // remove some lines
   void removeLines(int startLine, int linesToRemove);
 
+  // the following functions can accept Positions that are
+  // not inText(), by inserting spaces if necessary
+
   // insert some text at a position; this will parse any
   // newlines into additional line separators; the position
   // is changed to just after the inserted text
-  void insertText(Position *p, char const *text, int length);
+  void insertText(Position &p, char const *text, int length);
 
   // delete the text between two positions; p1 must be
   // less than p2; updates 'p2'
-  void deleteText(Position const *p1, Position *p2);
+  void deleteText(Position const &p1, Position &p2);
 
   // debugging: print internal rep
   void dumpRepresentation() const;

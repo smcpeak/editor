@@ -65,8 +65,8 @@ void TextLine::setLength(int newLength, bool margin)
     newAllocated = newLength;
   }
   else {               // reasonable margin
-    if (allocated < newLength  ||                       // too small
-        newLength < allocated * LINE_SHRINK_RATIO) {    // too big
+    if (allocated < newLength  ||                                       // too small
+        newLength < (allocated * LINE_SHRINK_RATIO) - LINE_GROW_STEP) { // too big
       // new space will be 20% larger, plus 20
       newAllocated = newLength * LINE_GROW_RATIO + LINE_GROW_STEP;
     }
@@ -138,14 +138,11 @@ void TextLine::remove(int startPos, int delLength)
     delLength = length - startPos;
   }
 
-  // slightly inefficient because we may copy some text twice
-  int oldLength = length;
-  setLengthMargin(length - delLength);
-
   // move left: the text to the right of the insertion point
   memmove(text+startPos,                      // dest
           text+startPos+delLength,            // src
-          oldLength-(startPos+delLength));    // how much to move
+          length-(startPos+delLength));    // how much to move
 
-  // new length is already set
+  // slightly inefficient because we may copy some text twice
+  setLengthMargin(length - delLength);
 }

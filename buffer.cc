@@ -40,7 +40,7 @@ Buffer::Buffer(char const *initText, int initLen)
   
   // insert with a 0,0 position
   Position position(this);       
-  insertText(&position, initText, initLen);
+  insertText(position, initText, initLen);
 }
 
 
@@ -137,7 +137,7 @@ void Buffer::readFile(char const *fname)
     }
   
     // this updates the position
-    insertText(&position, buf, len);
+    insertText(position, buf, len);
   }
 
   if (close(fd) < 0) {
@@ -237,10 +237,10 @@ void Buffer::insertLinesAt(int n, int howmany)
 }
 
 
-void Buffer::insertText(Position *c, char const *text, int length)
+void Buffer::insertText(Position &c, char const *text, int length)
 {
-  int curLine = c->line();
-  int curCol = c->col();
+  int curLine = c.line();
+  int curCol = c.col();
 
   ensureLineExists(curLine);
 
@@ -306,56 +306,63 @@ void Buffer::insertText(Position *c, char const *text, int length)
   }
 
   // update the position
-  c->set(curLine, curCol);
-  
+  c.set(curLine, curCol);
+
   // POSSIBLE TODO: update other positions, based on the insertion
 }
 
 
-void Buffer::deleteText(Position const *c1, Position *c2)
+void Buffer::deleteText(Position const &c1, Position &c2)
 {
-  xassert(*c1 <= *c2);
+  xassert(c1 <= c2);
 
-  if (c1->beyondEnd()) {
+  if (c1.beyondEnd()) {
     // nothing out here
     return;
   }
 
-  if (c2->beyondEnd()) {
-    c2->setToEnd();
+  if (c1.beyondLineEnd()) {
+    // insert spaces to the left of c1
+    c1.getBufLine()->setLengthNoMargin(c1.col());
   }
 
-  if (c1->line() == c2->line()) {
+  c2.clampToText();
+
+  xassert(c1.inText() &&
+          c2.inText() &&
+          c1 <= c2);
+
+  if (c1.line() == c2.line()) {
     // easy case: intra-line deletion
-    lines[c1->line()].remove(c1->col(), c2->col() - c1->col());
+    lines[c1.line()].remove(c1.col(), c2.col() - c1.col());
   }
 
   else {
     // at least one line will be deleted
-    
+
     // first, delete the right half of c1's line
-    lines[c1->line()].remove(
-      c1->col(),                                   // start
-      lines[c1->line()].getLength() - c1->col());  // len to del
+    lines[c1.line()].remove(
+      c1.col(),                                   // start
+      lines[c1.line()].getLength() - c1.col());  // len to del
 
     // splice the 2nd half of c2's line onto the 1st half of c1
-    lines[c1->line()].insert(
-      c1->col(),                                   // ins point
-      lines[c2->line()].getText() + c2->col(),     // text
-      lines[c2->line()].getLength() - c2->col());  // text length
-      
+    lines[c1.line()].insert(
+      c1.col(),                                   // ins point
+      lines[c2.line()].getText() + c2.col(),     // text
+      lines[c2.line()].getLength() - c2.col());  // text length
+
     // remove all of the lines between c1 and c2, excluding
     // c1's line but including c2's line
-    removeLines(c1->line() + 1, c2->line() - c1->line());
+    removeLines(c1.line() + 1, c2.line() - c1.line());
   }
 
   // update c2 (kind of degenerate..)
-  *c2 = *c1;
+  c2 = c1;
 }
 
 
 void Buffer::removeLines(int startLine, int linesToRemove)
-{ 
+{
   xassert(linesToRemove >= 0);
 
   ensureLineExists(startLine);

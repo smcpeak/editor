@@ -7,6 +7,7 @@
 #include "macros.h"      // NOTEQUAL_OPERATOR, etc.
 
 class Buffer;            // buffer.h
+class TextLine;          // textline.h
 
 // Position is a position in a buffer.  I explicitly *allow* the position
 // to be beyond the right edge of a line.  Positions are always compared
@@ -24,9 +25,21 @@ public:
   Position(Position const &obj);
   ~Position();
 
+  // assign one position to another; both must *already*
+  // refer to the same buffer
+  Position& operator = (Position const &obj);
+
+  // comparisons, in terms of line/col (line dominates)
+  bool operator == (Position const &obj) const;
+  bool operator < (Position const &obj) const;
+  RELATIONAL_OPERATORS(Position)        // relationals in terms of == and <
+
   // the defining accessors
   int line() const { return _line; }
   int col() const { return _col; }
+
+  // underlying buffer line
+  TextLine *getBufLine() const;
 
   // move the position
   void set(int newLine, int newCol);
@@ -44,14 +57,20 @@ public:
   // the last line
   void setToEnd();
 
-  // assign one position to another; both must *already*
-  // refer to the same buffer
-  Position& operator = (Position const &obj);
+  // true if position is beyond the end of the text in the current
+  // line
+  bool beyondLineEnd() const;
 
-  // comparisons, in terms of line/col (line dominates)
-  bool operator == (Position const &obj) const;
-  bool operator < (Position const &obj) const;
-  RELATIONAL_OPERATORS(Position)        // relationals in terms of == and <
+  // set to end of current line
+  void setToLineEnd();
+
+  // true if the position is not outside text
+  bool inText() const;
+  void clampToText();
+
+  // move left or right one space, wrapping at line edges
+  void moveLeftWrap();
+  void moveRightWrap();
 };
 
 
