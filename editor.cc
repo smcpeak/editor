@@ -6,6 +6,7 @@
 
 #include <X11/Xlib.h>        // X library
 #include <X11/Xutil.h>       // XComposeStatus
+#include <X11/Xatom.h>       // XA_FONT
 
 #define XK_MISCELLANY        // why do I have to jump this hoop?
 #include <X11/keysymdef.h>   // XK_xxx constants
@@ -27,6 +28,13 @@
 // right now, one buffer and one cursor
 Buffer buffer;                         
 Cursor cursor(&buffer);
+
+
+// the font I want to use
+char const *myFontName = "-*-courier-medium-r-*-*-14-*-*-*-*-*-*-*";
+Atom myFontAtom;
+Font myFontId;
+XFontStruct *myFontStruct;
 
 
 // info to name a window
@@ -62,22 +70,20 @@ void drawBuffer(WindowName &win, Buffer &buffer)
   XSetForeground(win.display, gc, BlackPixel(win.display, win.screen));
   XSetBackground(win.display, gc, WhitePixel(win.display, win.screen));
 
-  int fontHeight = 15;    // guess for now
+  // use my font!
+  XSetFont(win.display, gc, myFontId);
+
+  XFontStruct *fs = myFontStruct;
+  int fontHeight = fs->ascent + fs->descent;
 
   // erase left-side cursor if necessary
   int line;
   for (line=0; line < buffer.totLines()+1; line++) {
     XDrawImageString(
       win.display, win.window, gc,       // dest
-      3, 15 + line*fontHeight,           // lower,base coordinate
+      3, 5 + (line+1)*fontHeight,        // lower,base coordinate
       " ", 1                             // text, length
     );
-  }
-
-  // want to be able to compute font info
-  XFontStruct *fs = XQueryFont(win.display, XGContextFromGC(gc));
-  if (!fs) {
-    printf("font does not exist (?!)\n");
   }
 
   // some text *with* erasing background
@@ -85,7 +91,7 @@ void drawBuffer(WindowName &win, Buffer &buffer)
     TextLine const *tl = buffer.getLineC(line);
     XDrawImageString(
       win.display, win.window, gc,       // dest
-      5, 15 + line*fontHeight,           // lower,base coordinate
+      5, 5 + (line+1)*fontHeight,        // lower,base coordinate
       tl->getText(), tl->getLength()     // text, length
     );
 
@@ -95,7 +101,7 @@ void drawBuffer(WindowName &win, Buffer &buffer)
     // overwrite after last char in case of backspace
     XDrawImageString(
       win.display, win.window, gc,       // dest
-      5+width, 15 + line*fontHeight,     // lower,base coordinate
+      5+width, 5 + (line+1)*fontHeight,  // lower,base coordinate
       " ", 1                             // text, length
     );
 
@@ -107,14 +113,11 @@ void drawBuffer(WindowName &win, Buffer &buffer)
 
       // draw the cursor as a line
       XDrawLine(win.display, win.window, gc,
-                5+width-1, 16 + line*fontHeight,
-                5+width-1, 4 + line*fontHeight);
+                5+width-1, 5 + (line+1)*fontHeight + fs->descent - 1,     // bottom of descent
+                5+width-1, 5 + (line+0)*fontHeight + fs->descent);        // top of ascent
     }
   }
 
-  // free the 'fs' .. the 'names' stuff is confusing..
-  XFreeFontInfo(NULL, fs, 0);
-      
   // cue to quit app
   XDrawString(
     win.display, win.window, gc,       // dest
@@ -162,6 +165,37 @@ int main()
   // set the error handlers
   XSetErrorHandler(myErrorHandler);
   XSetIOErrorHandler(myIOErrorHandler);
+
+  // make an atom for the font name I want to use
+  myFontAtom = XInternAtom(display, myFontName, False /*must_exist*/);
+  printf("myFontAtom: %ld\n", myFontAtom);
+
+  // make an id for it (doesn't actually need the Atom ..)
+  myFontId = XLoadFont(display, myFontName);
+  printf("myFontId: %ld\n", myFontId);
+
+  // query its info
+  myFontStruct = XQueryFont(display, myFontId);
+  XFontStruct *fs = myFontStruct;
+  if (!myFontStruct) {
+    printf("font does not exist (?!)\n");
+  }
+
+  // try to get font's name
+  {
+    Atom nameAtom;
+    if (!XGetFontProperty(fs, XA_FONT, &nameAtom)) {
+      printf("XA_FONT isn't defined?\n");
+    }
+    else {
+      printf("XA_FONT: %ld\n", nameAtom);
+
+      // how to handle errors?
+      char *name = XGetAtomName(display, nameAtom);
+      printf("font name: %s\n", name);
+      XFree(name);
+    }
+  }
 
   // figure out which screen we are (already?) connected to
   int screen = DefaultScreen(display);
@@ -234,6 +268,8 @@ int main()
 
   // set the window's caption
   XStoreName(display, win.window, "El Editor Suprémo");
+    // this character is decimal 233,            ^
+    // an accented 'e'
 
   // display the window
   XMapWindow(display, win.window);      // make it visible
@@ -281,7 +317,7 @@ int main()
       case ButtonPress:
         printf("button press at %d, %d\n",
                event.xbutton.x, event.xbutton.y);
-        if (event.xbutton.x < 100 && event.xbutton.y > 285) {
+        if (event.xbutton.x < 165 && event.xbutton.y > 285) {
           // click in lower-left; quit
           quit = True;
         }
@@ -307,6 +343,7 @@ int main()
         );
         buf[length] = 0;                  // terminating null
 
+        #if 0
         printf("Key %s, length=%d, text=",
                event.type==KeyPress? "pressed" : "released",
                length);
@@ -324,6 +361,9 @@ int main()
         if (keysym == XK_Shift_L) {
           printf(" (it's left-shift)");
         }
+
+        printf("\n");
+        #endif // 0
 
         if (event.type == KeyPress) {
           if (length==1 && buf[0] == 4) {  // ctrl-d
@@ -362,8 +402,6 @@ int main()
           // redraw
           drawBuffer(win, buffer);
         }
-
-        printf("\n");
         break;
       }
 
@@ -374,6 +412,12 @@ int main()
   }
 
   // clean up
+
+  // free the 'fs' .. the 'names' stuff is confusing..
+  // (does *not* use XFreeFont, b/c of using the GC id above..)
+  //XFreeFontInfo(NULL, fs, 0);
+  XFreeFont(display, myFontStruct);    // now?
+
   XDestroyWindow(display, win.window);
   XCloseDisplay(display);
 

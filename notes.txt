@@ -1,0 +1,27 @@
+
+
+3/28/01 03:31
+
+got the font stuff working after looking in many places.
+
+to find out the name of the current font:
+
+  myFontStruct = XQueryFont(display, XGContextFromGC(gc));
+  XGetFontProperty(fs, XA_FONT, &nameAtom);
+  char *name = XGetAtomName(display, nameAtom);
+  printf("font name: %s\n", name);
+  
+to set it to use a new font:
+
+  myFontId = XLoadFont(display, myFontName);
+  XSetFont(display, gc, myFontId);
+
+so current list of todos:
+
+  - get the cursor update working right
+  - make the cursor bigger, proper height by font, etc.
+  - ability to load and save files
+  - different colors than black/white
+  - more keybindings ....
+  - scrolling
+  
