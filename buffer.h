@@ -5,11 +5,12 @@
 #define BUFFER_H
 
 #include "gap.h"        // GapArray
+#include "str.h"        // string
 
 // the contents of a file; any attempt to read or write the contents
 // must go through this interface
 // NOTE: lines and columns are 0-based
-class Buffer {
+class BufferCore {
 private:   // data
   // the spine of the editor; every element is either NULL, meaning a
   // blank line, or is an owner pointer to a '\n'-terminated array of
@@ -57,8 +58,8 @@ private:   // funcs
   void seenLineLength(int len);
 
 public:    // funcs
-  Buffer();
-  ~Buffer();
+  BufferCore();
+  ~BufferCore();
 
 
   // ---- queries ----
@@ -93,14 +94,6 @@ public:    // funcs
   // delete text
   void deleteText(int line, int col, int length);
 
-  
-  // ---- convenience ----         
-  // insert the contents of 'fname' into the top of this buffer
-  void readFile(char const *fname);
-
-  // write the entire buffer contents to 'fname'
-  void writeFile(char const *fname) const;
-
 
   // ---- debugging ----
   // print internal rep
@@ -109,5 +102,71 @@ public:    // funcs
   // how much memory am I using?
   void printMemStats() const;
 };
+
+
+// a convenience layer on top of BufferCore; the implementations of
+// thefunctions in Buffer are restricted to using BufferCore's
+// public methods
+class Buffer : public BufferCore {
+private:                                                         
+  // check that line/col is positive
+  static void pos(int line, int col);
+
+  // check that a given line/col is within the defined portion of
+  // the buffer (it's ok to be at the end of a line)
+  void bc(int line, int col) const;
+
+public:    
+  // initializes with a single empty line, which is expected to
+  // be the representation an empty file (to accomodate files that
+  // don't end with newlines)
+  Buffer();
+
+  // insert the contents of 'fname' into the top of this buffer
+  void readFile(char const *fname);
+
+  // write the entire buffer contents to 'fname'
+  void writeFile(char const *fname) const;
+  
+  
+  // line length, or 0 if it's beyond the end
+  int lineLengthLoose(int line) const;
+
+  // get a range of text from a line, but if the position is outside
+  // the defined range, pretend the line exists (if necessary) and
+  // that there are space characters up to 'col' (if necessary)
+  void getLineLoose(int line, int col, char *dest, int destLen) const;
+
+
+  // retrieve the text between two positions, as in a text editor
+  // where the positions are the selection endpoints and the user
+  // wants a string to put in the clipboard; it must be the case
+  // that line1/col1 <= line2/col2; characters outside defined area
+  // are taken to be whitespace
+  string getTextRange(int line1, int col1, int line2, int col2) const;
+                                        
+  // split 'line' into two, putting everything after 'col' into the
+  // next line; if 'col' is beyond the end of the line, spaces are
+  // *not* appended to 'line' before inserting a blank line after it;
+  // the function returns with line incremented by 1 and col==0
+  void insertNewline(int &line, int &col);
+
+  // insert text that might have newline characters at a particular
+  // point in the buffer; line/col are updated to indicate the
+  // position at the end of the inserted text; line/col must be
+  // a position within the defined portion of the buffer
+  void insertTextRange(int &line, int &col, char const *text);
+
+
+  // move the contents of 'line+1' onto the end of 'line'; it's
+  // ok if 'line' is the last line (it's like deleting the newline
+  // at the end of 'line')
+  void spliceNextLine(int line);
+  
+  // delete the characters between line1/col1 and line/col2, both
+  // of which must be valid locations (no; change this)
+  void deleteTextRange(int line1, int col1, int line2, int col2);
+};
+
 
 #endif // BUFFER_H

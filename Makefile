@@ -1,5 +1,7 @@
 # Makefile for editor
 
+#tmp: buffer
+
 # main target
 all: testgap buffer style editor
 

@@ -18,4 +18,7 @@ void BufferState::clear()
     deleteText(0,0, lineLength(0));
     deleteLine(0);
   }
+  
+  // always keep one empty line
+  insertLine(0);
 }

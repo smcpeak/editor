@@ -256,10 +256,10 @@ end 2/12/03 03:19
 -------------------------------
 start 2/14/03 22:47
 
-need to implement copy, cut, paste
-
 first: fix pageup bug.. fixed by cutting an event loop.. not
 perfect, but is probably good anway, and it solves my problem
+
+need to implement copy, cut, paste
 
 
 

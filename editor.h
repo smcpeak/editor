@@ -30,6 +30,11 @@ public:      // data
   int selectCol;
   bool selectEnabled;
 
+  // the following fields are valid only after normalizeSelection(),
+  // and before any subsequent modification to cursor or select
+  int selLowLine, selLowCol;    // whichever of cursor/select comes first
+  int selHighLine, selHighCol;  // whichever comes second
+
   // scrolling offset; must change via setView()
   int const firstVisibleLine, firstVisibleCol;
 
@@ -88,6 +93,9 @@ private:     // funcs
 
   // true if the cursor is before (above/left) the select point
   bool cursorBeforeSelect() const;
+  
+  // set sel{Low,High}{Line,Col}
+  void normalizeSelect();
 
   // ctrl-pageup/pagedown
   void cursorToTop();
@@ -162,8 +170,14 @@ public:      // funcs
 
 public slots:
   // slots to respond to scrollbars
-  virtual void scrollToLine(int line);
-  virtual void scrollToCol(int col);
+  void scrollToLine(int line);
+  void scrollToCol(int col);
+
+  // edit menu
+  void editCopy();
+  void editCut();
+  void editPaste();
+  void editDelete();
 
 signals:
   // emitted when the buffer view port or cursor changes

@@ -68,6 +68,7 @@ void Editor::resetView()
   selectLine = 0;
   selectCol = 0;
   selectEnabled = false;
+  selLowLine = selLowCol = selHighLine = selHighCol = 0;   // make it deterministic..
   setView(0,0);
 }
 
@@ -185,7 +186,7 @@ int flushPainter(QPainter &p)
   return 0;
 }
 
-
+  
 // In general, to avoid flickering, I try to paint every pixel
 // exactly once (this idea comes straight from the Qt tutorial).
 // So far, the only place I violate that is the cursor, the pixels
@@ -261,21 +262,8 @@ void Editor::drawBufferContents(QPainter &paint)
   int visibleCols = lastVisibleCol - firstVisibleCol + 2;
   Array<char> text(visibleCols);
 
-  // stats on cursor/selection
-  int selLowLine, selLowCol;    // whichever of cursor/select comes first
-  int selHighLine, selHighCol;  // whichever comes second
-  if (cursorBeforeSelect()) {
-    selLowLine = cursorLine;
-    selLowCol = cursorCol;
-    selHighLine = selectLine;
-    selHighCol = selectCol;
-  }
-  else {
-    selLowLine = selectLine;
-    selLowCol = selectCol;
-    selHighLine = cursorLine;
-    selHighCol = cursorCol;
-  }
+  // set sel{Low,High}{Line,Col}
+  normalizeSelect();
 
   // paint the window
   for (int line = firstVisibleLine; y < height(); line++) {
@@ -443,7 +431,7 @@ void Editor::cursorToTop()
 
 void Editor::cursorToBottom()
 {
-  cursorLine = max(buffer->numLines(),0);
+  cursorLine = max(buffer->numLines()-1,0);
   cursorCol = 0;
   scrollToCursor();
   redraw();
@@ -636,7 +624,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
         fillToCursor();
         buffer->changed = true;
 
-        if (cursorCol == 0) {
+        if (selectEnabled) {
+          editDelete();
+        }
+        else if (cursorCol == 0) {
           if (cursorLine == 0) {
             // do nothing
           }
@@ -663,7 +654,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
         fillToCursor();
         buffer->changed = true;
 
-        if (cursorCol == buffer->lineLength(cursorLine)) {
+        if (selectEnabled) {
+          editDelete();
+        }
+        else if (cursorCol == buffer->lineLength(cursorLine)) {
           // splice next line onto this one
           spliceNextLine();
         }
@@ -680,32 +674,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
         fillToCursor();
         buffer->changed = true;
 
-        if (cursorCol == buffer->lineLength(cursorLine)) {
-          // add a blank line after this one
-          cursorLine++;
-          cursorCol = 0;
-          buffer->insertLine(cursorLine);
+        // typing replaces selection
+        if (selectEnabled) {
+          editDelete();
         }
-        else if (cursorCol == 0) {
-          // insert blank line and go to the next
-          buffer->insertLine(cursorLine);
-          cursorLine++;
-        }
-        else {
-          // steal text after the cursor
-          int len = buffer->lineLength(cursorLine) - cursorCol;
-          Array<char> temp(len);
-          buffer->getLine(cursorLine, cursorCol, temp, len);
-          buffer->deleteText(cursorLine, cursorCol, len);
 
-          // insert a line and move down
-          cursorLine++;
-          cursorCol = 0;
-          buffer->insertLine(cursorLine);
-
-          // insert the stolen text
-          buffer->insertText(cursorLine, 0, temp, len);
-        }
+        buffer->insertNewline(cursorLine, cursorCol);
 
         scrollToCursor();
         break;
@@ -717,6 +691,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
           fillToCursor();
           buffer->changed = true;
 
+          // typing replaces selection
+          if (selectEnabled) {
+            editDelete();
+          }
           // insert this character at the cursor
           buffer->insertText(cursorLine, cursorCol, text, text.length());
           cursorCol += text.length();
@@ -757,18 +735,7 @@ void Editor::spliceNextLine()
   // cursor must be at the end of a line
   xassert(cursorCol == buffer->lineLength(cursorLine));
 
-  // splice this line with the next
-  if (cursorLine+1 < buffer->numLines()) {
-    // append the contents of the next line
-    int len = buffer->lineLength(cursorLine+1);
-    Array<char> temp(len);
-    buffer->getLine(cursorLine+1, 0 /*col*/, temp, len);
-    buffer->insertText(cursorLine, cursorCol, temp, len);
-
-    // now remove the next line
-    buffer->deleteText(cursorLine+1, 0 /*col*/, len);
-    buffer->deleteLine(cursorLine+1);
-  }
+  buffer->spliceNextLine(cursorLine);
 }
 
 
@@ -777,6 +744,23 @@ bool Editor::cursorBeforeSelect() const
   if (cursorLine < selectLine) return true;
   if (cursorLine > selectLine) return false;
   return cursorCol < selectCol;
+}
+
+
+void Editor::normalizeSelect()
+{
+  if (cursorBeforeSelect()) {
+    selLowLine = cursorLine;
+    selLowCol = cursorCol;
+    selHighLine = selectLine;
+    selHighCol = selectCol;
+  }
+  else {
+    selLowLine = selectLine;
+    selLowCol = selectCol;
+    selHighLine = cursorLine;
+    selHighCol = cursorCol;
+  }
 }
 
 
@@ -917,3 +901,36 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
   redraw();
 }
 
+
+// ----------------------- edit menu -----------------------
+void Editor::editCopy()
+{
+  if (!selectEnabled) {
+    // nothing to copy, do nothing
+    return;
+  }
+
+  // TODO
+}
+
+
+void Editor::editCut()
+{
+  // TODO
+}
+
+void Editor::editPaste()
+{
+  // TODO
+}
+
+
+void Editor::editDelete()
+{
+  normalizeSelect();
+  buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+
+  cursorLine = selLowLine;
+  cursorCol = selLowCol;
+  fillToCursor();
+}
