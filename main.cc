@@ -131,8 +131,8 @@ void EditorWindow::fileOpen()
   editor->resetView();
 
   try {
-    // this sets 'changed' to false
     theBuffer.readFile(name);
+    theBuffer.changed = false;
     editorViewChanged();
     setFileName(name);
   }

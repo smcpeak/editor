@@ -922,6 +922,11 @@ void Editor::editCopy()
     // put it into the clipboard
     QClipboard *cb = QApplication::clipboard();
     cb->setText(QString(sel));
+    
+    // un-highlight the selection, which is what emacs does and
+    // I'm now used to
+    selectEnabled = false;
+    redraw();
   }
 }
 
@@ -939,6 +944,7 @@ void Editor::editPaste()
     editDelete();
 
     // insert at cursor
+    buffer->changed = true;
     buffer->insertTextRange(cursorLine, cursorCol, text);
 
     scrollToCursor();
@@ -950,6 +956,7 @@ void Editor::editDelete()
 {
   if (selectEnabled) {
     normalizeSelect();
+    buffer->changed = true;
     buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
     cursorLine = selLowLine;
