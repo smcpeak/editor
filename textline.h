@@ -4,6 +4,8 @@
 #ifndef TEXTLINE_H
 #define TEXTLINE_H
 
+#include "macros.h"       // NOTEQUAL_OPERATOR
+
 // a single line of text; bit-zero-initable, and bit-copyable
 // if the old copy is destroyed without 'dealloc'
 class TextLine {
@@ -13,10 +15,27 @@ private:   // data
   int length;         // # of chars in this line
   int allocated;      // # of bytes allocated to 'text'
 
-public:
-  // no ctor or dtor so we can make arrays w/o C++ stuff going on
+  // invariants: 
+  //   length <= allocated
+  //   the memory pointed to by 'text' is exclusively pointed
+  //     by 'text', and has size 'allocated'
+
+private:   // disallowed
+  // for now, no implicit copying
+  TextLine(TextLine&);
+  void operator = (TextLine&);                 
+
+public:    // funcs
+  // empty ctor, no dtor, so we can make arrays w/o C++ stuff going on
+  TextLine() {}
+
   void init();        // set all to 0
   void dealloc();     // dealloc 'text' if not NULL
+
+  // two text lines are equal if they have the same
+  // length and the same characters in 0 thru length-1
+  bool operator == (TextLine const &obj) const;
+  NOTEQUAL_OPERATOR(TextLine)    // defines !=
 
   // accessors
   char const *getText() const { return text; }
@@ -31,7 +50,8 @@ public:
 
   // set the length, and realloc if necessary; if 'margin'
   // is true, make 'allocated' a bit bigger in expectation
-  // of more data being added
+  // of more data being added; if new length > old length, 
+  // the gap is filled with spaces
   void setLength(int newLength, bool margin);
   void setLengthMargin(int n) { setLength(n, true); }
   void setLengthNoMargin(int n) { setLength(n, false); }

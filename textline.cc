@@ -23,6 +23,13 @@ void TextLine::dealloc()
 }
 
 
+bool TextLine::operator == (TextLine const &obj) const
+{
+  return length == obj.length &&
+         0==memcmp(text, obj.text, length);
+}
+
+
 void TextLine::setText(char const *src, int len)
 {
   if (allocated != len) {
@@ -83,6 +90,14 @@ void TextLine::setLength(int newLength, bool margin)
     allocated = newAllocated;
   }
 
+  // somewhat editor-centric: if the new length is bigger than
+  // the old length, then we will init the gap with spaces
+  // (could make the fill char a parameter, but until I need
+  // something other than spaces, I will leave it like this)
+  if (newLength > length) {
+    memset(text+length, ' ', newLength-length);
+  }
+
   // set length
   length = newLength;
 }
@@ -90,10 +105,14 @@ void TextLine::setLength(int newLength, bool margin)
 
 void TextLine::insert(int startPos, char const *insText, int insLength)
 {
+  if (startPos >= length) {
+    // start by expanding it to the full length
+    setLengthMargin(startPos);
+  }
+
   // slightly inefficient because we may copy some text twice
   int oldLength = length;
   setLengthMargin(length + insLength);
-  xassert(oldLength + insLength <= allocated);
 
   // move right: the text to the right of the insertion point
   memmove(text+startPos+insLength,     // dest
@@ -109,6 +128,16 @@ void TextLine::insert(int startPos, char const *insText, int insLength)
 
 void TextLine::remove(int startPos, int delLength)
 {
+  if (startPos >= length) {
+    // nothing out here..
+    return;
+  }
+  
+  if (startPos + delLength >= length) {
+    // trim the deletion length so we are only removing what's there
+    delLength = length - startPos;
+  }
+
   // slightly inefficient because we may copy some text twice
   int oldLength = length;
   setLengthMargin(length - delLength);

@@ -16,17 +16,33 @@ class Buffer;            // buffer.h
 class Cursor {
 private:    // data
   Buffer *buffer;    // (serf) which buffer we refer to
-  int line;          // which line (0-based)
-  int col;           // which column (0-based)
+  int _line;         // which line (0-based)
+  int _col;          // which column (0-based)
 
 public:
   Cursor(Buffer *buf);
   Cursor(Cursor const &obj);
-  ~Cursor();                
+  ~Cursor();
 
   // the defining accessors
-  int getLine() const { return line; }
-  int getCol() const { return col; }
+  int line() const { return _line; }
+  int col() const { return _col; }
+
+  // move the cursor
+  void set(int newLine, int newCol);
+  void setLine(int line) { set(line, col()); }
+  void setCol(int col) { set(line(), col); }
+
+  void move(int deltaLines, int deltaCols)
+    { set(_line+deltaLines, _col+deltaCols); }
+
+  // true if the cursor is positioned after the
+  // last character in the last line
+  bool beyondEnd() const;           
+                  
+  // move the cursor to the last character of
+  // the last line
+  void setToEnd();
 
   // assign one cursor to another; both must *already*
   // refer to the same buffer

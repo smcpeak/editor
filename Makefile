@@ -1,6 +1,6 @@
 # Makefile
 
-all: editor buffer
+all: buffer editor
 
 ccflags = -g -Wall
 includes = -I/usr/X11/include -Ismbase
@@ -18,8 +18,14 @@ makelib = ar -r
 %.o : %.c
 	${ccompile} $<
 
-editor: editor.o buffer.o
-	${link} -o editor editor.o ${linkend}
+editor-src = editor.o buffer.o textline.o cursor.o
+editor: ${editor-src} buffer.h textline.h cursor.h
+	${link} -o editor ${editor-src} ${linkend}
 
-buffer: buffer.cc array.h textline.o
-	${link} -o buffer -DTEST_BUFFER textline.o buffer.cc ${linkend}
+buffer-src = buffer.cc textline.o cursor.o
+buffer: array.h ${buffer-src}
+	${link} -o buffer -DTEST_BUFFER ${buffer-src} ${linkend}
+
+clean:
+	rm -f *.o
+	rm editor buffer

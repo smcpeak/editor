@@ -3,6 +3,8 @@
 
 #include "buffer.h"        // this module
 #include "textline.h"      // TextLine
+#include "cursor.h"        // Cursor
+
 #include "strutil.h"       // encodeWithEscapes
 #include "syserr.h"        // xsyserror
 #include "ckheap.h"        // checkHeap
@@ -13,9 +15,10 @@
 #include <unistd.h>        // read, write
 #include <stdio.h>         // FILE, etc.
 #include <stdlib.h>        // system
+#include <string.h>        // memmove
 
 
-Buffer::Buffer()
+void Buffer::init()
 {
   lines = NULL;
   numLines = 0;
@@ -29,7 +32,33 @@ Buffer::~Buffer()
   }
   delete[] lines;
 }
-                                                       
+
+
+Buffer::Buffer(char const *initText, int initLen)
+{
+  init();             
+  
+  // insert with a 0,0 cursor
+  Cursor cursor(this);       
+  insertText(&cursor, initText, initLen);
+}
+
+
+bool Buffer::operator == (Buffer const &obj) const
+{
+  if (numLines != obj.numLines) {
+    return false;
+  }
+  
+  for (int i=0; i<numLines; i++) {
+    if (lines[i] != obj.lines[i]) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 
 // adjustable parameters (don't parenthesize)
 #define LINES_SHRINK_RATIO 1 / 4
@@ -83,8 +112,11 @@ void Buffer::readFile(char const *fname)
   // overhead from FILE functions; a large buffer will minimize
   // the IPC (interprocess communication)
 
-  //enum { BUFSIZE=16 };       // DEBUG: small so I can easily test boundary issues
-  enum { BUFSIZE=8192 };
+  #ifdef TEST_BUFFER
+    enum { BUFSIZE=16 };       // small so I can easily test boundary issues
+  #else
+    enum { BUFSIZE=8192 };
+  #endif
   char buf[BUFSIZE];
 
   int fd = open(fname, O_RDONLY);
@@ -92,8 +124,9 @@ void Buffer::readFile(char const *fname)
     xsyserror("open");
   }
 
-  int curLine = 0;
-  int curCol = 0;
+  // make a cursor to keep track of where to insert
+  Cursor cursor(this);       // inits to 0,0
+
   for (;;) {
     int len = read(fd, buf, BUFSIZE);
     if (len == 0) {
@@ -102,59 +135,10 @@ void Buffer::readFile(char const *fname)
     if (len < 0) {
       xsyserror("read");
     }
-
-    // mark the start of the new text to assimilate
-    char *start = buf;
-
-    // loop over all line fragments in the buffer
-    while (start < buf+len) {
-      // look for a newline
-      char *end = start;
-      while (*end != '\n' &&
-             end < buf+len) {
-        end++;
-      }
-
-      if (end < buf+len) {
-        // we found a newline; add this text to the buffer
-        setNumLines(curLine+1);
-        if (curCol == 0) {
-          // set a complete line, with no margin
-          lines[curLine].setText(start, end-start);
-        }
-        else {
-          // append to what's there, and take the hit of the margin
-          lines[curLine].insert(curCol, start, end-start);
-        }
-
-        // move our insertion point
-        curLine++;
-        curCol = 0;
-
-        // move our read-from-next point
-        start = end+1;                      // skip newline char
-      }
-
-      else {
-        // we ran into the end of the buffer; add this text
-        // but don't move to the next line
-        setNumLines(curLine+1);
-        lines[curLine].insert(curCol, start, end-start);
-
-        // move insertion point w/in the line
-        curCol += end-start;
-
-        // and read-from-next point (will cause us to
-        // break the inner loop)
-        start = end;
-      }
-    }
+  
+    // this updates the cursor
+    insertText(&cursor, buf, len);
   }
-
-  // record the total number of lines
-  // (also catches EOF & EOL at buffer boundary, which is
-  // otherwise tricky)
-  setNumLines(curLine+1);
 
   if (close(fd) < 0) {
     xsyserror("close");
@@ -204,7 +188,180 @@ void Buffer::dumpRepresentation()
   }
 }
 
+
+TextLine const *Buffer::getLineC(int n) const
+{
+  xassert(n < numLines);
+
+  return lines + n;
+}
+
+
+void Buffer::ensureLineExists(int n)
+{
+  if (n >= numLines) {
+    setNumLines(n+1);
+  }
+}
+
+
+void Buffer::insertLinesAt(int n, int howmany)
+{
+  if (n >= numLines) {
+    // easy case: just expand the array
+    setNumLines(n+howmany);
+  }
+  else {
+    // harder case: must move existing lines down
+    
+    // first, make room
+    int oldNumLines = numLines;
+    setNumLines(numLines + howmany);
+    
+    // then shift the original lines below the insertion
+    // point downward
+    memmove(lines+oldNumLines+howmany,              // dest
+            lines+oldNumLines,                      // src
+            (oldNumLines-n) * sizeof(TextLine));    // size to move
+                     
+    // the lines in the gap now are defunct, though they
+    // still point to some of the shifted lines; re-init
+    // them so they are empty and so they don't deallocate
+    // the pointed-at data
+    for (int i=n; i < n+howmany; i++) {
+      lines[i].init();
+    }
+  }
+}
+
+
+void Buffer::insertText(Cursor *c, char const *text, int length)
+{
+  int curLine = c->line();
+  int curCol = c->col();
+
+  ensureLineExists(curLine);
+
+  // mark the start of the new text to assimilate
+  char const *start = text;
+
+  // loop over all line fragments in the buffer
+  while (start < text+length) {
+    // look for a newline
+    char const *end = start;
+    while (*end != '\n' &&
+           end < text+length) {
+      end++;
+    }
+
+    if (end < text+length) {
+      // we found a newline; add this text to the buffer
+      if (curCol == 0) {
+        // set a complete line, with no margin
+        lines[curLine].setText(start, end-start);
+      }
+      else {
+        // append to what's there, and take the hit of the margin
+        lines[curLine].insert(curCol, start, end-start);
+      }
+
+      // move our insertion point
+      curLine++;
+      insertLineAt(curLine);
+      curCol = 0;
+
+      // move our read-from-next point
+      start = end+1;                      // skip newline char
+    }
+
+    else {
+      // we ran into the end of the buffer; add this text
+      // but don't move to the next line
+      lines[curLine].insert(curCol, start, end-start);
+
+      // move insertion point w/in the line
+      curCol += end-start;
+
+      // and read-from-next point (will cause us to
+      // break the inner loop)
+      start = end;
+    }
+  }
+
+  // update the cursor
+  c->set(curLine, curCol);
   
+  // POSSIBLE TODO: update other cursors, based on the insertion
+}
+
+
+void Buffer::deleteText(Cursor const *c1, Cursor *c2)
+{
+  xassert(*c1 <= *c2);
+
+  if (c1->beyondEnd()) {
+    // nothing out here
+    return;
+  }
+
+  if (c2->beyondEnd()) {
+    c2->setToEnd();
+  }
+
+  if (c1->line() == c2->line()) {
+    // easy case: intra-line deletion
+    lines[c1->line()].remove(c1->col(), c2->col() - c1->col());
+  }
+
+  else {
+    // at least one line will be deleted
+    
+    // first, delete the right half of c1's line
+    lines[c1->line()].remove(
+      c1->col(),                                   // start
+      lines[c1->line()].getLength() - c1->col());  // len to del
+
+    // splice the 2nd half of c2's line onto the 1st half of c1
+    lines[c1->line()].insert(
+      c1->col(),                                   // ins point
+      lines[c2->line()].getText() + c2->col(),     // text
+      lines[c2->line()].getLength() - c2->col());  // text length
+      
+    // remove all of the lines between c1 and c2, excluding
+    // c1's line but including c2's line
+    removeLines(c1->line() + 1, c2->line() - c1->line());
+  }
+
+  // update c2 (kind of degenerate..)
+  *c2 = *c1;
+}
+
+
+void Buffer::removeLines(int startLine, int linesToRemove)
+{ 
+  xassert(linesToRemove >= 0);
+
+  ensureLineExists(startLine);
+  if (startLine + linesToRemove >= numLines) {
+    // trim to what's there
+    linesToRemove = numLines - (startLine+1);
+  }
+
+  if (linesToRemove == 0) {
+    return;
+  }
+
+  // move the 2nd half lines up to cover the gap
+  memmove(lines+startLine,                    // dest
+          lines+startLine+linesToRemove,      // src
+          linesToRemove * sizeof(TextLine));  // bytes to move
+
+  // we'll simply adjust the # of lines; this should cause
+  // us to ignore the (valid-looking) lines beyond the end
+  numLines -= linesToRemove;
+}
+
+
 // --------------------- test code -----------------------
 #ifdef TEST_BUFFER
 
@@ -260,6 +417,22 @@ int entry()
     system("ls -l buffer.tmp");
     remove("buffer.tmp");
     remove("buffer.tmp2");
+
+    
+    // make a buffer for more testing..
+    //#define STR(str) str, strlen(str)
+    //Buffer buf(STR("hi\nthere\nfoo\nbar\n"));
+    
+    
+
+
+
+
+
+
+
+
+
 
     printf("stats after:\n");
     malloc_stats();

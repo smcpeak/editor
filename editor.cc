@@ -1,11 +1,17 @@
 // editor.cc
 // tiny editor using Xlib only
 
+// resolve a name collision
+#define Cursor XCursor
+
 #include <X11/Xlib.h>        // X library
 #include <X11/Xutil.h>       // XComposeStatus
 
 #define XK_MISCELLANY        // why do I have to jump this hoop?
 #include <X11/keysymdef.h>   // XK_xxx constants
+
+#undef Cursor
+
 
 #include <stdio.h>           // printf
 #include <assert.h>          // assert
@@ -13,64 +19,14 @@
 #include <ctype.h>           // isprint
 #include <string.h>          // memmove
 
-
-// buffer of text being edited
-class Buffer {
-public:
-  char text[80];
-  int cursor;
-
-public:
-  Buffer() {
-    strcpy(text, "initial text");
-    cursor = 5;
-  }
-
-  int length() const { return strlen(text); }
-
-  void insert(char c);
-  void moveCursor(int delta);
-  void backspace();
-};
+#include "buffer.h"          // Buffer
+#include "cursor.h"          // Cursor
+#include "textline.h"        // TextLine
 
 
-void Buffer::insert(char c)
-{
-  if (length() < 79) {
-    // shift everything to the right of the cursor over by 1
-    memmove(text+cursor+1, text+cursor, length()-cursor);
-
-    // put the new char at the cursor pos
-    text[cursor] = c;
-
-    // move the cursor over 1
-    cursor++;
-  }
-  else {
-    printf("buffer is full\n");
-  }
-}
-
-
-void Buffer::moveCursor(int delta)
-{
-  cursor += delta;
-  if (cursor < 0) { cursor = 0; }
-  if (cursor > length()) { cursor = length(); }
-}
-
-
-void Buffer::backspace()
-{
-  if (cursor > 0) {
-    memmove(text+cursor-1, text+cursor, length()-cursor+1);  // inc null term
-    cursor--;
-  }
-}
-
-
-// right now, one buffer
-Buffer theBuffer;
+// right now, one buffer and one cursor
+Buffer buffer;                         
+Cursor cursor(&buffer);
 
 
 // info to name a window
@@ -79,10 +35,10 @@ public:
   Display *display;      // which X server we're talking to
   int screen;            // ?
   Window window;         // which window id on that server
-  
+
 public:
   WindowName(Display *d, int s)
-    : display(d), screen(s) {}  
+    : display(d), screen(s) {}
 };
 
 
@@ -106,48 +62,59 @@ void drawBuffer(WindowName &win, Buffer &buffer)
   XSetForeground(win.display, gc, BlackPixel(win.display, win.screen));
   XSetBackground(win.display, gc, WhitePixel(win.display, win.screen));
 
+  int fontHeight = 15;    // guess for now
+
   // erase left-side cursor if necessary
-  XDrawImageString(
-    win.display, win.window, gc,       // dest
-    3,15, //10,35,                     // lower,base coordinate
-    " ", 1                             // text, length
-  );
+  int line;
+  for (line=0; line < buffer.totLines()+1; line++) {
+    XDrawImageString(
+      win.display, win.window, gc,       // dest
+      3, 15 + line*fontHeight,           // lower,base coordinate
+      " ", 1                             // text, length
+    );
+  }
 
-  // and some text *with* erasing background
-  XDrawImageString(
-    win.display, win.window, gc,       // dest
-    5,15, //10,35,                     // lower,base coordinate
-    buffer.text, buffer.length()       // text, length
-  );
-
-
-  // try to print a cursor
+  // want to be able to compute font info
   XFontStruct *fs = XQueryFont(win.display, XGContextFromGC(gc));
   if (!fs) {
     printf("font does not exist (?!)\n");
   }
 
-  // compute width of text before cursor
-  int width = XTextWidth(fs, buffer.text, buffer.cursor);
+  // some text *with* erasing background
+  for (line=0; line < buffer.totLines(); line++) {
+    TextLine const *tl = buffer.getLineC(line);
+    XDrawImageString(
+      win.display, win.window, gc,       // dest
+      5, 15 + line*fontHeight,           // lower,base coordinate
+      tl->getText(), tl->getLength()     // text, length
+    );
 
-  // draw the cursor as a line
-  XDrawLine(win.display, win.window, gc,
-            5+width-1, 16, 5+width-1, 4);
+    // calc width of whole string
+    int width = XTextWidth(fs, tl->getText(), tl->getLength());
 
-  // calc width of whole string
-  width = XTextWidth(fs, buffer.text, buffer.length());
+    // overwrite after last char in case of backspace
+    XDrawImageString(
+      win.display, win.window, gc,       // dest
+      5+width, 15 + line*fontHeight,     // lower,base coordinate
+      " ", 1                             // text, length
+    );
 
-  // overwrite after last char in case of backspace
-  XDrawImageString(
-    win.display, win.window, gc,       // dest
-    5+width,15,                        // lower,base coordinate
-    " ", 1                             // text, length
-  );
+    if (cursor.line() == line) {
+      // try to print a cursor
+
+      // compute width of text before cursor
+      width = XTextWidth(fs, tl->getText(), cursor.col());
+
+      // draw the cursor as a line
+      XDrawLine(win.display, win.window, gc,
+                5+width-1, 16 + line*fontHeight,
+                5+width-1, 4 + line*fontHeight);
+    }
+  }
 
   // free the 'fs' .. the 'names' stuff is confusing..
   XFreeFontInfo(NULL, fs, 0);
-
-
+      
   // cue to quit app
   XDrawString(
     win.display, win.window, gc,       // dest
@@ -266,7 +233,7 @@ int main()
   // (questionable design decision, but tolerable in the current context)
 
   // set the window's caption
-  XStoreName(display, win.window, "El Editor Supremo");
+  XStoreName(display, win.window, "El Editor Suprémo");
 
   // display the window
   XMapWindow(display, win.window);      // make it visible
@@ -277,7 +244,7 @@ int main()
 
   // draw some stuff (this is actually unnecessary, since the
   // window system sends an 'expose' initially)
-  drawBuffer(win, theBuffer);
+  drawBuffer(win, buffer);
 
   // event loop
   int quit = False;
@@ -287,7 +254,7 @@ int main()
     switch (event.type) {
       case Expose:
         printf("expose\n");
-        drawBuffer(win, theBuffer);
+        drawBuffer(win, buffer);
         break;
 
       #define WATCH_FOR(type)              \
@@ -359,21 +326,41 @@ int main()
         }
 
         if (event.type == KeyPress) {
+          if (length==1 && buf[0] == 4) {  // ctrl-d
+            buffer.dumpRepresentation();
+          }
+
           if (length==1 && isprint(buf[0])) {
             // insert this character at the cursor
-            theBuffer.insert(buf[0]);
+            buffer.insertText(&cursor, buf, 1);
           }
 
           switch (keysym) {
-            case XK_Left:   theBuffer.moveCursor(-1);  break;
-            case XK_Right:  theBuffer.moveCursor(+1);  break;
-            case XK_BackSpace:  theBuffer.backspace(); break;
-            case XK_Home:       theBuffer.moveCursor(-999);  break;
-            case XK_End:        theBuffer.moveCursor(+999);  break;
+            case XK_Left:       cursor.move(0, -1);   break;
+            case XK_Right:      cursor.move(0, +1);   break;
+            case XK_Home:       cursor.setCol(0);     break;
+            case XK_End:
+              cursor.setCol(
+                buffer.getLineC(cursor.line())->getLength());
+              break;
+            case XK_Up:         cursor.move(-1,0);    break;
+            case XK_Down:       cursor.move(+1,0);    break;  // allows cursor past EOF..
+
+            case XK_BackSpace: {
+              Cursor oneLeft(cursor);
+              oneLeft.move(0,-1);
+              buffer.deleteText(&oneLeft, &cursor);
+              break;
+            }
+            
+            case XK_Return: {
+              buffer.insertText(&cursor, "\n", 1);
+              break;
+            }
           }
 
           // redraw
-          drawBuffer(win, theBuffer);
+          drawBuffer(win, buffer);
         }
 
         printf("\n");
