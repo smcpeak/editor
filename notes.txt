@@ -623,4 +623,10 @@ because in fact the one combination I tried to optimize is a rather
 rare one, I'm now convinced, having seen and implemented several
 other combinations
 
+ok, this all worked pretty well, and I've got Buffer reimplemented
+on top of HistoryBuffer.  the test program 'buffer' dies with a
+failed assertion, so I'll debug that next time
+
+end 5/31/03 03:59
+
 

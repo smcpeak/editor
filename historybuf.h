@@ -5,6 +5,7 @@
 #define HISTORYBUF_H
 
 #include "history.h"      // history representation
+#include "objstack.h"     // ObjStack
 
 
 // buffer that records all of the manipulations in its undo
@@ -18,19 +19,29 @@ private:      // data
 
   // modification history
   HE_group history;
-  
+
   // where are we in that history?  usually,
   // time==history.seqLength()-1, meaning we're at the end of the
-  // recorded history, but undo/redo modifies 'time' and 'buf'
-  // but not 'history'
+  // recorded history; undo/redo modifies 'time' and 'buf' but not
+  // 'history'
   int time;
 
-public:
+  // stack of open history groups, which will soon be collapsed
+  // and added to their parent group, or 'history' for the last
+  // (outermost) group; typically this stack is empty, or has
+  // just one element between beginGroup() and endGroup(), but
+  // I allow for the generality of a stack anyway
+  ObjStack<HE_group> groupStack;
+
+private:     // funcs
+  void appendElement(HistoryElt *e);
+
+public:      // funcs
   HistoryBuffer();      // empty buffer, empty history, cursor at 0,0
   ~HistoryBuffer();
 
   // ---- queries ----
-  // read-only access to the underlying representation (use sparingly)
+  // read-only access to the underlying representation
   CursorBuffer const &core() const        { return buf; }
 
   // BufferCore's queries, directly exposed
@@ -59,31 +70,42 @@ public:
   // flag is true
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
-  // insertion at cursor; 'left' or 'right' refers to where the 
-  // cursor ends up after the insertion; if the cursor is beyond
-  // the end of the line or file, newlines/spaces are inserted to
-  // fill to the cursor first
+  // insertion at cursor; 'left' or 'right' refers to where the cursor
+  // ends up after the insertion; cursor must be in defined area
   void insertLR(bool left, char const *text, int textLen);
 
   // deletion at cursor; 'left' or 'right' refers to which side of
-  // the cursor has the text to be deleted; space is filled before
-  // the deletion, if necessary
+  // the cursor has the text to be deleted
   void deleteLR(bool left, int count);
 
 
-  // TODO: implement this facility for grouping actions with HE_group
-  void beginGroup() {}
-  void endGroup() {}
+  // facility for grouping actions with HE_group
+  void beginGroup();
+  void endGroup();
+  
+  // true if we have an open group; note that undo/redo is not allowed
+  // in that case, even though canUndo/Redo() may return true
+  bool inGroup() const        { return groupStack.isNotEmpty(); }
 
 
   // ---- undo/redo ----
   bool canUndo() const        { return time > 0; }
   bool canRedo() const        { return time < history.seqLength()-1; }
-  
+
   void undo();
   void redo();
 };
 
+
+class HBGrouper {
+  HistoryBuffer &buf;
+
+public:
+  HBGrouper(HistoryBuffer &b) : buf(b)
+    { buf.beginGroup(); }
+  ~HBGrouper()
+    { buf.endGroup(); }
+};
 
 
 

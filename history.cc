@@ -1,6 +1,9 @@
 // history.cc
 // code for history.h
 
+#include "history.h"       // this module
+#include "array.h"         // Array
+
 
 static void rollbackMismatch()
 {
@@ -32,7 +35,7 @@ HistoryElt::~HistoryElt()
 
 
 // --------------------- HE_cursor ----------------------
-STATICDEF void HE_text::move1dim(int &value, int orig, int update, bool reverse)
+STATICDEF void HE_cursor::move1dim(int &value, int orig, int update, bool reverse)
 {
   if (orig == -1) {
     // relative update
@@ -69,8 +72,9 @@ void HE_cursor::apply(CursorBuffer &buf, bool reverse)
   static_apply(buf, origLine, line, origCol, col, reverse);
 }
 
-STATICDEF void HE_cursor::move(CursorBuffer &buf, int origLine, int line,
-                               int origCol, int col, bool reverse)
+STATICDEF void HE_cursor::static_apply
+  (CursorBuffer &buf, int origLine, int line,
+   int origCol, int col, bool reverse)
 {
   move1dim(buf.line, origLine, line, reverse);
   try {
@@ -85,9 +89,9 @@ STATICDEF void HE_cursor::move(CursorBuffer &buf, int origLine, int line,
 
 
 // ------------------------ HE_text ----------------------
-HE_text::HE_text(bool i, bool l, int f,
-                 char const *t, int len);
-  : insertion(i), left(l), fill(f), textLen(len)
+HE_text::HE_text(bool i, bool l,
+                 char const *t, int len)
+  : insertion(i), left(l), textLen(len)
 {
   text = new char[textLen];
   memcpy(text, t, textLen);
@@ -102,199 +106,19 @@ HE_text::~HE_text()
 
 void HE_text::apply(CursorBuffer &buf, bool reverse)
 {
-  static_apply(buf, insertion, left, fill, text, textLen, reverse);
+  static_apply(buf, insertion, left, text, textLen, reverse);
 }
 
 STATICDEF void HE_text::static_apply(
-  CursorBuffer &buf, bool insertion, bool left, int fill, 
+  CursorBuffer &buf, bool insertion, bool left,
   char const *text, int textLen, bool reverse)
 {
-  if (!fill) {
-    // this is the common case, and is much simpler than what follows
-    if (insertion) {
-      insert(buf, text, textLen, left, reverse);
-    }
-    else {
-      insert(buf, text, textLen, !left, !reverse);
-    }
+  if (insertion) {
+    insert(buf, text, textLen, left, reverse);
   }
-
-  // the logic here is a little complicated because this operation is
-  // essentially the composition of two simpler ones (fill and
-  // insert/delete), and I need to make sure that the buffer isn't
-  // modified if an XHistory gets thrown, which means a successful
-  // first operation might have to be undone if the second one fails
-
-  // also, since the inverse of a LEFT insertion is a RIGHT deletion,
-  // and vice-versa, 'left' must be effectively XOR'd with whether
-  // we're doing a deletion
-
-  if (!reverse) {
-    // forward insertion or deletion
-    fill(buf, fill, false /*reverse*/);    // might throw, that's ok
-    try {
-      if (insertion) {
-        insert(buf, text, textLen, left, false /*reverse*/);
-      }
-      else {
-        // 'left' deletion == reverse NOT('left') insertion
-        insert(buf, text, textLen, !left, true /*reverse*/);
-      }
-    }
-    catch (XHistory &x) {
-      // undo the fill
-      ROLLBACK( fill(buf, fill, true /*reverse*/) );
-      throw;
-    }
-  }
-
   else {
-    if (insertion) {                   
-      // reverse 'left' insertion
-      insert(buf, text, textLen, left, true /*reverse*/);
-    }
-    else {
-      // reverse 'left' deletion == forward NOT('left') insertion
-      insert(buf, text, textLen, !left, false /*reverse*/);
-    }
-    try {
-      fill(buf, fill, true /*reverse*/);
-    }
-    catch (XHistory &x) {
-      // undo the insertion/deletion
-      if (insertion) {
-        ROLLBACK( insert(buf, text, textLen, left, false /*reverse*/) );
-      }
-      else {
-        ROLLBACK( insert(buf, text, textLen, !left, true /*reverse*/) );
-      }
-      throw;
-    }
+    insert(buf, text, textLen, !left, !reverse);
   }
-}
-
-
-STATICDEF void HE_text::fill(CursorBuffer &buf, int fill, bool reverse)
-{
-  if (!fill) { return; }
-  xassert(fill > 0);
-
-  // NOTE: since fill and un-fill are rare, I don't worry about
-  // making them fast
-
-  if (!reverse) {
-    // fill to cursor
-    int rowfill, int colfill;
-    computeBothFill(buf, rowfill, colfill);
-
-    if (fill < rowfill+colfill) {
-      throw XHistory("insufficient fill chars");
-    }
-    else if (fill > rowfill+colfill) {
-      throw XHistory("too many fill chars");
-    }
-
-    // ==> committed
-    while (rowfill > 0) {
-      buf.insertLine(buf.numLines());
-      rowfill--;
-    }
-    fillRight(buf, colfill);
-  }
-
-  else {
-    // un-fill
-
-    // we have to be at the end of the cursor's line
-    if (buf.col != buf.lineLength(buf.line)) {
-      throw XHistory("unfill: cursor is not at EOL");
-    }
-
-    if (buf.lineLength(buf.line) >= fill) {
-      // case 1: just remove spaces from the end of some line
-
-      // check that it's all spaces
-      if (!onlySpaces(buf, fill)) {
-        throw XHistory("unfill: found non-space char at EOL");
-      }
-
-      // ==> committed
-      
-      // remove them
-      buf.deleteText(buf.line, buf.col - fill, fill);
-    }
-
-    else {
-      // case 2: remove all of last line, plus some lines at EOF
-      if (buf.line != buf.numLines()-1) {
-        throw XHistory("unfill: fill exceeds line length, but cursor not at EOF");
-      }
-
-      int colGap = buf.lineLength(buf.line);
-      int lineGap = fill - colGap;
-
-      xassert(colGap >= 0);
-      xassert(lineGap > 0);
-
-      // check that last line is entirely spaces
-      if (!onlySpaces(buf, colGap)) {
-        throw XHistory("unfill: found non-space char at EOL");
-      }
-
-      // check that lines in the gap, other than the last (that's why
-      // the loop starts at 1 and not 0), are all empty
-      int i;
-      for (i=1; i<lineGap; i++) {
-        if (buf.lineLength(buf.line-i) != 0) {
-          throw XHistory("unfill: non-empty fill line at EOF");
-        }
-      }
-
-      // ==> committed
-
-      // remove contents of last line
-      buf.deleteText(buf.line, buf.col - colGap, colGap);
-
-      // remove last 'lineGap' lines
-      for (i=0; i<lineGap; i++) {
-        buf.deleteLine(buf.line - i);
-      }
-    }
-  }
-}
-
-
-// add spaces to the end of the line, so that the cursor is
-// referring to the edge of defined text
-STATICDEF void HE_text::fillRight(CursorBuffer &buf, int fill)
-{
-  while (fill > 0) {
-    buf.insertText(line, buf.col - fill, " ", 1);
-    fill--;
-  }
-}
-
-
-// check that there are only spaces in the 'amt' characters
-// to the left of the cursor
-STATICDEF bool HE_text::onlySpaces(CursorBuffer &buf, int amt)
-{
-  for (int i=0; i < amt; i++) {
-    char ch;
-    buf.getLine(buf.line, buf.col-i-1, &ch, 1);
-    if (ch != ' ') {
-      return false;
-    }
-  }
-  return true;
-}
-
-
-void HE_text::computeFill(CursorBuffer &buf)
-{
-  int rowfill, int colfill;
-  computeBothFill(buf, rowfill, colfill);
-  fill = rowfill+colfill;
 }
 
 
@@ -305,7 +129,7 @@ static void deletionMismatch()
 
 // insert (=forward) or delete (=reverse) some text at the cursor
 STATICDEF void HE_text::insert(
-  CursorBuffer &buf, char const *text, int textLen, 
+  CursorBuffer &buf, char const *text, int textLen,
   bool left, bool reverse)
 {
   // cursor should now be within the text area
@@ -332,7 +156,7 @@ STATICDEF void HE_text::insert(
       int len = nl-p;
 
       // insert this text at line/col
-      insertText(line, col, p, len);
+      buf.insertText(line, col, p, len);
       col += len;
 
       // insert newline
@@ -395,7 +219,7 @@ STATICDEF void HE_text::insert(
     if (!getTextSpan(buf, line, col, actualText, textLen)) {
       deletionMismatch();      // span isn't valid
     }
-    if (0!=memcmp(text, actualText, textLen)) {
+    if (0!=memcmp(text, (char const*)actualText, textLen)) {
       deletionMismatch();      // text doesn't match
     }
 
@@ -404,7 +228,8 @@ STATICDEF void HE_text::insert(
     // contents are known to match, so delete the text
     line = beginLine;
     col = beginCol;
-    p = text;
+    char const *p = text;
+    char const *end = text+textLen;
     while (p < end) {
       // find next newline, or 'end'
       char const *nl = p;
@@ -491,6 +316,12 @@ void HE_group::append(HistoryElt *e)
 }
 
 
+HistoryElt *HE_group::stealFirstElt()
+{
+  return seq.remove(0);
+}
+
+
 void HE_group::truncate(int newLength)
 {
   xassert(0 <= newLength && newLength <= seqLength());
@@ -506,7 +337,7 @@ HistoryElt *HE_group::elt(int start, int end, bool reverse, int offset)
   if (reverse) {
     offset = (end-start) - offset - 1;
   }
-  return seq.get(start+index);
+  return seq.get(start+offset);
 }
 
 

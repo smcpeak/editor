@@ -130,11 +130,20 @@ void readFile(BufferCore &buf, char const *fname);
 // write a file
 void writeFile(BufferCore const &buf, char const *fname);
 
-// walk the cursor backwards (left, then up) through the defined
-// contents of the file; line/col must initially be in the defined
-// area, but if by walking we get out of bounds, then the function
-// simply returns false (otherwise true)
-bool walkBackwards(BufferCore const &buf, int &line, int &col, int len);
+
+// walk the cursor forwards (right, then down; len>0) or backwards
+// (left, then up; len<0) through the defined contents of the file;
+// line/col must initially be in the defined area, but if by walking
+// we get out of bounds, then the function simply returns false
+// (otherwise true)
+bool walkCursor(BufferCore const &buf, int &line, int &col, int len);
+
+inline bool walkBackwards(BufferCore const &buf, int &line, int &col, int len)
+  { return walkCursor(buf, line, col, -len); }
+
+// truncate the given line/col so it's within the defined area
+void truncateCursor(BufferCore const &buf, int &line, int &col);
+
 
 // retrieve text that may span line boundaries; line boundaries are
 // represented in the returned string as newlines; the span begins at
@@ -149,8 +158,14 @@ bool getTextSpan(BufferCore const &buf, int line, int col,
 // both be nonnegative), compute how many rows and spaces need to
 // be added (to EOF, and 'line', respectively) so that line/col will
 // be in the defined area
-void computeSpaceFill(BufferCore &buf, int line, int col,
+void computeSpaceFill(BufferCore const &buf, int line, int col,
                       int &rowfill, int &colfill);
+
+// given two locations that are within the defined area, and with
+// line1/col1 <= line2/col2, compute the # of chars between them,
+// counting line boundaries as one char
+int computeSpanLength(BufferCore const &buf, int line1, int col1,
+                      int line2, int col2);
 
 
 // interface for observing changes to a BufferCore

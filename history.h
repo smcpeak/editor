@@ -6,6 +6,7 @@
 
 #include "buffercore.h"      // BufferCore
 #include "exc.h"             // xBase
+#include "ogap.h"            // OGapArray
 
 
 // buffer + cursor, the object that the history manipulates
@@ -77,7 +78,7 @@ public:      // funcs
 };
 
 
-// text insertion/deletion
+// text insertion/deletion, when cursor is in defined text area
 class HE_text : public HistoryElt {
 public:      // data
   // if true, this is an insertion; otherwise a deletion
@@ -91,25 +92,16 @@ public:      // data
   //   deletion: delete text to the right of the cursor
   bool left;
 
-  // number of lines or spaces of fill to add at the end of
-  // the line and/or buffer to make the cursor be within
-  // the defined text area
-  int fill;
-
   // text to insert or delete; may contain embedded NULs
   char *text;          // (owner)
   int textLen;
 
 private:     // funcs
-  static void fill(CursorBuffer &buf, int fill, bool reverse);
-  static void fillRight(CursorBuffer &buf, int fill);
-  static bool onlySpaces(CursorBuffer &buf, int amt);
   static void insert(CursorBuffer &buf, char const *text,
-                     int textLen, bool left, bool reverse)
-  static void computeBothFill(CursorBuffer &buf, int &rowfill, int &colfill);
+                     int textLen, bool left, bool reverse);
 
 public:      // funcs
-  HE_text(bool insertion, bool left, int fill,
+  HE_text(bool insertion, bool left,
           char const *text, int textLen);
   ~HE_text();
 
@@ -118,16 +110,13 @@ public:      // funcs
 
   // 'apply', but static
   static void static_apply(
-    CursorBuffer &buf, bool insertion, bool left, int fill,
+    CursorBuffer &buf, bool insertion, bool left,
     char const *text, int textLen, bool reverse);
-
-  // compute the correct 'fill' for forward application
-  void computeFill(CursorBuffer &buf);
 
   // compute correct 'text' and 'textLen' for forward application of a
   // deletion of 'count' characters; entire span of deleted text must
   // be in defined area
-  void computeText(CursorBuffer &buf, int count);
+  void computeText(CursorBuffer const &buf, int count);
 };
 
 
@@ -157,6 +146,10 @@ public:      // funcs
   int seqLength() const         { return seq.length(); }
 
   void append(HistoryElt *e);
+
+  // remove the first element in the sequence (there must be at
+  // least one), and return an owner pointer to it
+  HistoryElt *stealFirstElt();
 
   // remove all elements with index 'newLength' or greater; it must
   // be that 0 <= newLength <= seqLength()

@@ -3,11 +3,8 @@
 
 #include "buffer.h"        // this module
 
-//#include "strutil.h"       // encodeWithEscapes
-//#include "syserr.h"        // xsyserror
-//#include "test.h"          // USUAL_MAIN, PVAL
-//#include "autofile.h"      // AutoFILE
-//#include "array.h"         // Array
+#include "strutil.h"       // quoted
+#include "array.h"         // GrowArray
 
 #include <string.h>        // strncasecmp
 #include <ctype.h>         // isalnum, isspace
@@ -17,9 +14,25 @@
 Buffer::Buffer()
   : HistoryBuffer()
 {
-  //insertLine(0);     // still need this hack?
+  //insertLine(0);     // can I remove this hack?
 }
 
+
+STATICDEF void Buffer::pos(int line, int col)
+{
+  xassert(line >= 0);
+  xassert(col >= 0);
+}
+
+void Buffer::bc(int line, int col) const
+{
+  pos(line, col);
+  xassert(line < numLines());
+  xassert(col <= lineLength(line));
+}
+
+
+// ---------------- Buffer: queries ------------------
 
 int Buffer::lineLengthLoose(int line) const
 {
@@ -101,171 +114,6 @@ string Buffer::getTextRange(int line1, int col1, int line2, int col2) const
 }
 
 
-STATICDEF void Buffer::pos(int line, int col)
-{
-  xassert(line >= 0);
-  xassert(col >= 0);
-}
-
-void Buffer::bc(int line, int col) const
-{
-  pos(line, col);
-  xassert(line < numLines());
-  xassert(col <= lineLength(line));
-  
-  // NOTE: we do *not* allow line==numLines(); rather, it is expected
-  // that the editor will make sure there's an extra line at the end
-  // if it wants to let the user put the cursor on the "last" line
-}
-
-
-void Buffer::insertTextRange(char const *text)
-{
-  insertLR(false /*left*/, text, strlen(text));
-}
-
-
-
-class Grouper {
-  Buffer &buf;
-  
-public:
-  Grouper(Buffer &b) : buf(b)
-    { buf.beginGroup(); }
-  ~Grouper()
-    { buf.endGroup(); }
-};
-
-#define GROUP_THESE Grouper grouper(*this)
-
-
-void Buffer::insertNewline()
-{
-  // this pair of actions raises two points:
-  //   - they should be a single action in the undo/redo history,
-  //     so I need to implement grouping thing
-  //   - maybe combining fill and insert/delete was a mistake,
-  //     since it's certainly the uncommon case and could have
-  //     been handled by grouping ...
-
-  GROUP_THESE;
-
-  int overEdge = col() - lineLengthLoose(line());
-  if (overEdge > 0) {
-    // move back to the end of this line
-    moveCursor(true /*relLine*/, 0 /*line*/,
-               true /*relCol*/, -overEdge /*col*/);
-  }
-
-  if (core().locationInDefined(line(), col())) {
-    insertTextRange("\n");
-  }
-}
-
-
-void Buffer::indentLine(int line, int ind)
-{
-  if (!( line < numLines() )) {
-    return;
-  }
-
-  GROUP_THESE;
-
-  while (ind > 0) {
-    // insert lots of spaces at once, maybe to make the undo log
-    // look nicer?
-    static char const spaces[] = "                          ";
-    int amt = min((int)sizeof(spaces), ind);
-    xassert(amt > 0);
-    insertText(line, 0, spaces, amt);
-    ind -= amt;
-  }
-
-  if (ind < 0) {
-    ind = -ind;
-    int lineInd = getIndentation(line);
-    if (lineInd >= 0) {                      
-      // remove up to 'ind' chars of indentation
-      deleteText(line, 0, min(ind, lineInd));
-    }
-    else {
-      // no non-ws chars; remove up to 'ind' of them
-      deleteText(line, 0, min(ind, lineLength(line)));
-    }
-  }
-}
-
-
-void Buffer::spliceNextLine(int line)
-{
-  xassert(0 <= line && line < numLines());
-
-  // splice this line with the next
-  if (line+1 < numLines()) {
-    // append the contents of the next line
-    int len = lineLength(line+1);
-    Array<char> temp(len);
-    getLine(line+1, 0 /*col*/, temp, len);
-    insertText(line, lineLength(line), temp, len);
-
-    // now remove the next line
-    deleteText(line+1, 0 /*col*/, len);
-    deleteLine(line+1);
-  }
-}
-
-
-void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
-{          
-  pos(line1, col1);
-  pos(line2, col2);
-
-  if (line1 == line2) {
-    // delete within one line
-    xassert(col1 <= col2);
-    if (line1 < numLines()) {
-      int len = lineLength(line1);
-      col1 = min(col1, len);
-      col2 = min(col2, len);
-      deleteText(line1, col1, col2-col1);
-    }
-    return;
-  }
-
-  xassert(line1 < line2);
-
-  if (line1 >= numLines()) {
-    return;
-  }
-
-  // delete tail of first line
-  int len = lineLength(line1);
-  col1 = min(col1, len);
-  deleteText(line1, col1, len-col1);
-
-  // line we're working on now
-  int line = line1+1;
-
-  // intervening complete lines
-  for (int i=line; i < line2 && line < numLines(); i++) {
-    // because we keep deleting lines, the next one is always
-    // called 'line'
-    deleteText(line, 0, lineLength(line));
-    deleteLine(line);
-  }
-
-  // what was called 'line2' before is now called 'line'
-
-  // delete beginning of last line
-  if (line < numLines()) {
-    deleteText(line, 0, min(col2, lineLength(line)));
-  }
-
-  // splice 'line' onto 'line1'
-  spliceNextLine(line1);
-}
-
-
 string Buffer::getWordAfter(int line, int col) const
 {
   stringBuilder sb;
@@ -308,38 +156,6 @@ void Buffer::getLastPos(int &line, int &col) const
 }
 
 
-void Buffer::advanceWithWrap(int &line, int &col, bool backwards) const
-{
-  if (!backwards) {
-    if (0 <= line &&
-        line < numLines() &&
-        col < lineLength(line)) {
-      col++;
-    }
-    else {
-      line++;
-      col = 0;
-    }
-  }
-
-  else {
-    if (0 <= line &&
-        line < numLines() &&
-        col >= 0) {
-      col--;
-    }
-    else if (line > 0) {
-      line--;
-      col = lineLength(line);
-    }
-    else {
-      line--;
-      col = 0;
-    }
-  }
-}
-
-
 int Buffer::getIndentation(int line) const
 {
   string contents = getWholeLine(line);
@@ -373,8 +189,11 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
   int col = userCol;
   int textLen = strlen(text);
 
+  truncateCursor(core(), line, col);
+
   if (flags & FS_ADVANCE_ONCE) {
-    advanceWithWrap(line, col, !!(flags & FS_BACKWARDS));
+    walkCursor(core(), line, col,
+               flags&FS_BACKWARDS? -1 : +1);
   }
 
   // contents of current line, in a growable buffer
@@ -429,24 +248,223 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
 }
 
 
-// -------------------- BufferObserver ------------------
-void BufferObserver::insertLine(BufferCore const &, int)
+// ---------------- Buffer: modifications ------------------
+
+void Buffer::moveRelCursor(int deltaLine, int deltaCol)
+{
+  moveCursor(true /*relLine*/, deltaLine,
+             true /*relCol*/, deltaCol);
+}
+
+void Buffer::moveAbsCursor(int newLine, int newCol)
+{
+  moveCursor(false /*relLine*/, newLine,
+             false /*relCol*/, newCol);
+}
+
+
+void Buffer::moveRelCursorTo(int newLine, int newCol)
+{
+  moveRelCursor(newLine-line(), newCol-col());
+}
+
+void Buffer::moveToNextLineStart()
+{
+  moveCursor(true /*relLine*/, +1,
+             false /*relCol*/, 0);
+}
+
+void Buffer::moveToPrevLineEnd()
+{
+  moveCursor(true /*relLine*/, -1,
+             false /*relCol*/, lineLength(line()-1));
+}
+
+
+void Buffer::advanceWithWrap(bool backwards)
+{
+  if (!backwards) {
+    if (0 <= line() &&
+        line() < numLines() &&
+        col() < lineLength(line())) {
+      moveRelCursor(0, 1);
+    }
+    else {
+      moveToNextLineStart();
+    }
+  }
+
+  else {
+    if (0 <= line() &&
+        line() < numLines() &&
+        col() >= 0) {
+      moveRelCursor(0, -1);
+    }
+    else if (line() > 0) {
+      moveToPrevLineEnd();
+    }
+    else {
+      // cursor at buffer start.. do nothing, I guess
+    }
+  }
+}
+
+
+void Buffer::fillToCursor()
+{
+  int rowfill, colfill;
+  computeSpaceFill(core(), line(), col(), rowfill, colfill);
+
+  if (rowfill==0 && colfill==0) {
+    return;     // nothing to do
+  }
+
+  int origLine = line();
+  int origCol = col();
+
+  // move back to defined area
+  moveRelCursor(-rowfill, -colfill);
+  bc();
+
+  // add newlines
+  while (rowfill--) {
+    insertText("\n");
+  }
+
+  // add spaces
+  while (colfill--) {
+    insertSpace();
+  }
+
+  // should have ended up in the same place we started
+  xassert(origLine==line() && origCol==col());
+}
+
+
+void Buffer::insertText(char const *text)
+{
+  insertLR(false /*left*/, text, strlen(text));
+}
+
+
+
+void Buffer::insertNewline()
+{
+  int overEdge = col() - lineLengthLoose(line());
+  if (overEdge > 0) {
+    // move back to the end of this line
+    moveRelCursor(0, -overEdge);
+  }
+
+  fillToCursor();      // might add newlines up to this point
+  insertText("\n");
+}
+
+
+#if 0     // old?
+void Buffer::spliceNextLine(int line)
+{
+  xassert(0 <= line && line < numLines());
+
+  // splice this line with the next
+  if (line+1 < numLines()) {
+    // append the contents of the next line
+    int len = lineLength(line+1);
+    Array<char> temp(len);
+    getLine(line+1, 0 /*col*/, temp, len);
+    insertText(line, lineLength(line), temp, len);
+
+    // now remove the next line
+    deleteText(line+1, 0 /*col*/, len);
+    deleteLine(line+1);
+  }
+}
+#endif // 0
+
+
+void Buffer::deleteText(int len)
+{
+  deleteLR(false /*left*/, len);
+}
+
+
+void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
+{
+  pos(line1, col1);
+  pos(line2, col2);
+  xassert(line1 < line2 ||
+          (line1==line2 && col1<=col2));
+
+  CursorRestorer cr(*this);
+
+  // ensure validity of the two endpoints, leaving the cursor
+  // at line2/col2
+  moveRelCursorTo(line1, col1);
+  fillToCursor();
+  moveRelCursorTo(line2, col2);
+  fillToCursor();
+
+  // compute # of chars in span
+  int length = computeSpanLength(core(), line1, col1, line2, col2);
+
+  // delete them as a left deletion; the idea is I suspect the original
+  // and final cursor are line2/col2, in which case all of the cursor
+  // movements can be elided (by automatic history compression)
+  deleteLR(true /*left*/, length);
+
+  // (implicitly, cursor is restored by 'cr')
+}
+
+
+void Buffer::indentLines(int start, int lines, int ind)
+{
+  if (start >= numLines() ||   // entire range beyond defined area
+      lines <= 0 ||            // empty range
+      ind == 0) {              // no actual change to the lines
+    return;
+  }
+
+  CursorRestorer cr(*this);
+
+  for (int line=start; line < start+lines &&
+                       line < numLines(); line++) {
+    moveRelCursorTo(line, 0);
+
+    if (ind > 0) {
+      for (int i=0; i<ind; i++) {
+        insertSpace();
+      }
+    }
+
+    else {
+      int lineInd = getIndentation(line);
+      for (int i=0; i<ind && i<lineInd; i++) {
+        deleteChar();
+      }
+    }
+  }
+}
+
+
+// -------------------- CursorRestorer ------------------
+CursorRestorer::CursorRestorer(Buffer &b)
+  : buf(b),
+    origLine(b.line()),
+    origCol(b.col())
 {}
 
-void BufferObserver::deleteLine(BufferCore const &, int)
-{}
-
-void BufferObserver::insertText(BufferCore const &, int, int, char const *, int)
-{}
-
-void BufferObserver::deleteText(BufferCore const &, int, int, int)
-{}
+CursorRestorer::~CursorRestorer()
+{
+  buf.moveRelCursorTo(origLine, origCol);
+}
 
 
 // --------------------- test code -----------------------
 #ifdef TEST_BUFFER
 
 #include "ckheap.h"        // malloc_stats
+#include "test.h"          // USUAL_MAIN
+
 #include <stdlib.h>        // system
 
 // test Buffer::getTextRange
@@ -455,7 +473,7 @@ void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2,
 {
   string actual = buf.getTextRange(line1, col1, line2, col2);
   if (!actual.equals(expect)) {
-    buf.dumpRepresentation();
+    buf.core().dumpRepresentation();
     cout << "getTextRange(" << line1 << "," << col1 << ", "
                             << line2 << "," << col2 << "):\n";
     cout << "  actual: " << quoted(actual) << "\n";
@@ -488,80 +506,12 @@ void testFind(Buffer const &buf, int line, int col, char const *text,
 
 void entry()
 {
-  // ---------- test BufferCore storage,read,write -------------
-  printf("testing core functionality...\n");
-
-  for (int looper=0; looper<2; looper++) {
-    printf("stats before:\n");
-    malloc_stats();
-
-    // build a text file
-    {
-      AutoFILE fp("buffer.tmp", "w");
-
-      for (int i=0; i<2; i++) {
-        for (int j=0; j<53; j++) {
-          for (int k=0; k<j; k++) {
-            fputc('0' + (k%10), fp);
-          }
-          fputc('\n', fp);
-        }
-      }
-    }
-
-    {
-      // read it as a buffer
-      Buffer buf;
-      buf.readFile("buffer.tmp");
-
-      // dump its repr
-      //buf.dumpRepresentation();
-
-      // write it out again
-      buf.writeFile("buffer.tmp2");
-
-      printf("stats before dealloc:\n");
-      malloc_stats();
-
-      printf("\nbuffer mem usage stats:\n");
-      buf.printMemStats();
-    }
-
-    // make sure they're the same
-    if (system("diff buffer.tmp buffer.tmp2 >/dev/null") != 0) {
-      xbase("the files were different!\n");
-    }
-
-    // ok
-    system("ls -l buffer.tmp");
-    remove("buffer.tmp");
-    remove("buffer.tmp2");
-
-    printf("stats after:\n");
-    malloc_stats();
-  }
-
-  {
-    printf("reading buffer.cc ...\n");
-    Buffer buf;
-    buf.readFile("buffer.cc");
-    buf.printMemStats();
-  }
-
-  printf("stats after:\n");
-  malloc_stats();
-  
-
-  // ---------------- test Buffer convenience functions ----------------
-  printf("\ntesting convenience functions...\n");
-
   Buffer buf;
-  int line=0, col=0;
-  buf.insertTextRange(line,col, "foo\nbar\n");
+  buf.insertText("foo\nbar\n");
     // result: foo\n
     //         bar\n
-  xassert(line == 2);
-  xassert(col == 0);
+  xassert(buf.line() == 2);
+  xassert(buf.col() == 0);
   xassert(buf.numLines() == 3);    // so final 'line' is valid
 
   testGetRange(buf, 0,0, 2,0, "foo\nbar\n");
@@ -572,23 +522,23 @@ void entry()
   testGetRange(buf, 1,2, 1,3, "r");
   testGetRange(buf, 1,3, 1,3, "");
 
-  line=0; col=1;
-  buf.insertTextRange(line, col, "arf\ngak");
+  buf.moveAbsCursor(0, 1);
+  buf.insertText("arf\ngak");
     // result: farf\n
     //         gakoo\n
     //         bar\n
-  xassert(line == 1);
-  xassert(col == 3);
+  xassert(buf.line() == 1);
+  xassert(buf.col() == 3);
   xassert(buf.numLines() == 4);
   testGetRange(buf, 0,0, 3,0, "farf\ngakoo\nbar\n");
 
-  buf.insertNewline(line, col);
+  buf.insertNewline();
     // result: farf\n
     //         gak\n
     //         oo\n
     //         bar\n
-  xassert(line == 2);
-  xassert(col == 0);
+  xassert(buf.line() == 2);
+  xassert(buf.col() == 0);
   xassert(buf.numLines() == 5);
   testGetRange(buf, 0,0, 4,0, "farf\ngak\noo\nbar\n");
 
@@ -657,9 +607,9 @@ void entry()
     back = Buffer::FS_BACKWARDS,
     advance = Buffer::FS_ADVANCE_ONCE;
 
-  line=0; col=0;
-  buf.insertTextRange(line, col, "foofoofbar\n"
-                                 "ooFoo arg\n");
+  buf.moveAbsCursor(0,0);
+  buf.insertText("foofoofbar\n"
+                 "ooFoo arg\n");
   testFind(buf, 0,0, "foo", 0,0, none);
   testFind(buf, 0,1, "foo", 0,3, none);
   testFind(buf, 0,3, "foof", 0,3, none);
@@ -680,7 +630,7 @@ void entry()
   testFind(buf, 1,3, "goo", -1,-1, back);
   testFind(buf, 1,3, "goo", -1,-1, none);
 
-  printf("buffer is ok\n");
+  cout << "\nbuffer is ok\n";
 }
 
 USUAL_MAIN

@@ -401,26 +401,57 @@ void writeFile(BufferCore const &buf, char const *fname)
 }
 
 
-bool walkBackwards(BufferCore const &buf, int &line, int &col, int textLen)
+bool walkCursor(BufferCore const &buf, int &line, int &col, int len)
 {
   xassert(buf.locationInDefined(line, col));
 
-  for (; textLen > 0; textLen--) {
+  for (; len > 0; len--) {
+    if (col == buf.lineLength(line)) {
+      // cycle to next line
+      line++;
+      if (line >= buf.numLines()) {
+        return false;      // beyond EOF
+      }
+      col=0;
+    }
+    else {
+      col++;
+    }
+  }
+
+  for (; len < 0; len++) {
     if (col == 0) {
       // cycle up to end of preceding line
       line--;
       if (line < 0) {
-        return false;
+        return false;      // before BOF
       }
       col = buf.lineLength(line);
     }
     else {
-      // move left
       col--;
     }
   }
 
   return true;
+}
+
+
+void truncateCursor(BufferCore const &buf, int &line, int &col)
+{
+  if (buf.numLines()==0) {
+    // strange special case.. not sure what the best course of action is
+    line=0;
+    col=0;
+    cout << "warning: truncateCursor on empty buffer ...\n";
+    return;
+  }        
+  
+  line = max(0, line);
+  col = max(0, col);
+  
+  line = min(line, buf.numLines()-1);
+  col = min(col, buf.lineLength(line));
 }
 
 
@@ -458,7 +489,7 @@ bool getTextSpan(BufferCore const &buf, int line, int col,
 }
 
 
-void computeSpaceFill(CursorBuffer &buf, int line, int col,
+void computeSpaceFill(BufferCore const &buf, int line, int col,
                       int &rowfill, int &colfill)
 {
   if (line < buf.numLines()) {
@@ -480,6 +511,36 @@ void computeSpaceFill(CursorBuffer &buf, int line, int col,
   xassert(rowfill >= 0);
   xassert(colfill >= 0);
 }
+
+
+int computeSpanLength(BufferCore const &buf, int line1, int col1,
+                      int line2, int col2)
+{
+  xassert(line1 < line2 ||
+          (line1==line2 && col1<=col2));
+
+  if (line1 == line2) {
+    return col2-col1;
+  }
+  
+  // tail of first line
+  int length = buf.lineLength(line1)+1;
+
+  // line we're working on now
+  line1++;
+
+  // intervening complete lines
+  for (; line1 < line2; line1++) {
+    // because we keep deleting lines, the next one is always
+    // called 'line'
+    length += buf.lineLength(line1)+1;
+  }
+
+  // beginning of last line
+  length += col2;
+  
+  return length;
+}  
 
 
 // -------------------- BufferObserver ------------------
@@ -563,6 +624,8 @@ void entry()
 
   printf("stats after:\n");
   malloc_stats();
+  
+  printf("\nbuffercore is ok\n");
 }
 
 USUAL_MAIN

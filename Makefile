@@ -1,6 +1,6 @@
 # Makefile for editor
 
-tmptarget: buffer.o
+tmptarget: buffer
 
 # main target
 all: testgap buffer style c_hilite editor
@@ -47,7 +47,7 @@ testgap: gap.h testgap.cc
 
 # -------------- buffer test program ----------------
 TOCLEAN += buffer buffer.tmp
-BUFFER_OBJS := buffer.cc
+BUFFER_OBJS := buffer.cc buffercore.o history.o historybuf.o
 buffer: gap.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) -g -Wall $(LIBSMBASE)
 	./buffer >/dev/null 2>&1

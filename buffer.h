@@ -19,17 +19,13 @@ private:
   // check that a given line/col is within the defined portion of
   // the buffer (it's ok to be at the end of a line)
   void bc(int line, int col) const;
+  void bc() const { bc(line(), col()); }
 
 public:
   // initially empty
   Buffer();
 
-
-  // write the entire buffer contents to 'fname' ('readFile' is
-  // available as a method of HistoryBuffer)
-  void writeFile(char const *fname) const
-    { writeFile(getCoreC(), fname); }
-
+  // -------------------- queries -----------------------
 
   // line length, or 0 if it's beyond the end of the file
   int lineLengthLoose(int line) const;
@@ -51,17 +47,13 @@ public:
   string getWholeLine(int line) const
     { return getTextRange(line, 0, line, lineLength(line)); }
 
-  // get the word following the cursor, including any non-word
-  // characters that preceed that word; stop at end of line
+  // get the word following the given line/col, including any non-word
+  // characters that precede that word; stop at end of line
   string getWordAfter(int line, int col) const;
-     
+
 
   // get position of last+1 char in file
   void getLastPos(int &line, int &col) const;
-
-  // advance cursor position forwards or backwards, wrapping
-  // to the next/prev line at line edges
-  void advanceWithWrap(bool backwards) const;
 
   // on a particular line, get # of whitespace chars before first
   // non-ws char, or -1 if there are no non-ws chars
@@ -71,35 +63,6 @@ public:
   // entirely blank (whitespace), and return the # of whitespace
   // chars to the left of the first non-whitespace char
   int getAboveIndentation(int line) const;
-
-
-  // split 'line' into two, putting everything after cursor column
-  // into the next line; if 'col' is beyond the end of the line,
-  // spaces are *not* appended to 'line' before inserting a blank line
-  // after it; the function returns with line incremented by 1 and
-  // col==0
-  void insertNewline();
-
-  // insert text that might have newline characters at the cursor;
-  // line/col are updated to indicate the position at the end of the
-  // inserted text; cursor must be a position within the defined
-  // portion of the buffer
-  void insertTextRange(char const *text);
-  
-  // indent (or un-indent, if ind<0) the given line by some # of spaces;
-  // if unindenting, but there are not enough spaces, then the line
-  // is unindented as much as possible w/o removing non-ws chars
-  void indentLine(int line, int ind);
-
-
-  // move the contents of 'line+1' onto the end of 'line'; it's
-  // ok if 'line' is the last line (it's like deleting the newline
-  // at the end of 'line')
-  void spliceNextLine(int line);
-  
-  // delete the characters between line1/col1 and line/col2, both
-  // of which must be valid locations (no; change this)
-  void deleteTextRange(int line1, int col1, int line2, int col2);
 
 
   // flags for findString()
@@ -120,29 +83,98 @@ public:
   // tested for matches that span multiple lines
   bool findString(int &line, int &col, char const *text,
                   FindStringFlags flags = FS_NONE) const;
+
+
+  // -------------------- modifications ------------------------
+  // write the entire buffer contents to 'fname' ('readFile' is
+  // available as a method of HistoryBuffer)
+  void writeFile(char const *fname) const
+    { ::writeFile(core(), fname); }
+
+
+  // move by relative line/col
+  void moveRelCursor(int deltaLine, int deltaCol);
+
+  // move to absolute line/col
+  void moveAbsCursor(int newLine, int newCol);
+
+  // use a relative movement to go to a specific line/col; this is
+  // used for restoring the cursor position after some sequence
+  // of edits
+  void moveRelCursorTo(int newLine, int newCol);
+
+  // line++, col=0
+  void moveToNextLineStart();
+
+  // line--, col=length(line-1)
+  void moveToPrevLineEnd();
+
+  // advance cursor position forwards or backwards, wrapping
+  // to the next/prev line at line edges
+  void advanceWithWrap(bool backwards);
+
+
+  // add whitespace to buffer as necessary so that the cursor becomes
+  // within the defined buffer area
+  void fillToCursor();
+
+
+  // insert text that might have newline characters at the cursor;
+  // line/col are updated to indicate the position at the end of the
+  // inserted text; cursor must be a position within the defined
+  // portion of the buffer
+  void insertText(char const *text);
+
+  void insertSpace() { insertText(" "); }
+
+  // split 'line' into two, putting everything after cursor column
+  // into the next line; if 'col' is beyond the end of the line,
+  // spaces are *not* appended to 'line' before inserting a blank line
+  // after it; the function returns with line incremented by 1 and
+  // col==0
+  void insertNewline();
+
+
+  // move the contents of 'line+1' onto the end of 'line'; it's
+  // ok if 'line' is the last line (it's like deleting the newline
+  // at the end of 'line')
+  //void spliceNextLine(int line);
+
+  // delete some characters to the right of the cursor; the cursor
+  // must be in the defined area, and there must be at least 'len'
+  // defined characters after it (possibly found by wrapping),
+  // including newlines
+  void deleteText(int len);
+
+  void deleteChar() { deleteText(1); }
+
+  // delete the characters between line1/col1 and line/col2; both
+  // are ws-filled to ensure validity; final cursor is left unchanged
+  void deleteTextRange(int line1, int col1, int line2, int col2);
+
+
+  // indent (or un-indent, if ind<0) the line range
+  // [start,start+lines-1] by some # of spaces; if unindenting, but
+  // there are not enough spaces, then the line is unindented as much
+  // as possible w/o removing non-ws chars; the cursor is left in its
+  // original position at the end
+  void indentLines(int start, int lines, int ind);
+
 };
 
 ENUM_BITWISE_OPS(Buffer::FindStringFlags, Buffer::FS_ALL)
 
 
-// interface for observing changes to a BufferCore
-class BufferObserver {
-protected:
-  // this is to silence a g++ warning; it is *not* the case that
-  // clients are allowed to delete objects known only as
-  // BufferObserver implementors
-  virtual ~BufferObserver() {}
+// save/restore cursor across an operation; uses a relative
+// cursor movement to restore at the end, so the presumption
+// is that only relative movements has appeared in between
+class CursorRestorer {
+  Buffer &buf;
+  int origLine, origCol;
 
 public:
-  // These are analogues of the BufferCore manipulation interface, but
-  // we also pass the BufferCore itself so the observer doesn't need
-  // to remember which buffer it's observing.  These are called
-  // *after* the BufferCore updates its internal representation.  The
-  // default implementations do nothing.
-  virtual void insertLine(BufferCore const &buf, int line);
-  virtual void deleteLine(BufferCore const &buf, int line);
-  virtual void insertText(BufferCore const &buf, int line, int col, char const *text, int length);
-  virtual void deleteText(BufferCore const &buf, int line, int col, int length);
+  CursorRestorer(Buffer &b);
+  ~CursorRestorer();
 };
 
 

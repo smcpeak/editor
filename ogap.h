@@ -34,7 +34,11 @@ public:
   void insert(int elt, T *value)  { arr.insert(elt, value); }
                      
   // remove an element, returning it as an owner pointer
-  T *remove(int elt)              { return (T*)arr.remove(elt); }
+  T *remove(int elt) {
+    T *temp = (T*)arr.get(0); 
+    arr.remove(elt);
+    return temp;
+  }
   
   // delete an element directly
   void deleteElt(int elt)         { delete remove(elt); }
