@@ -549,13 +549,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
   int state = k->state() & KeyButtonMask;
 
-  // control-<key>
+  // Ctrl+<key>
   if (state == ControlButton) {
     switch (k->key()) {
       case Key_Insert:
         editCopy();
         break;
-        
+
       case Key_U:
         buffer->dumpRepresentation();
         break;
@@ -601,6 +601,18 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_Right:
         moveViewAndCursor(0, +1);
         break;
+
+      case Key_B:      cursorLeft(false); break;
+      case Key_F:      cursorRight(false); break;
+      case Key_A:      cursorHome(false); break;
+      case Key_E:      cursorEnd(false); break;
+      case Key_P:      cursorUp(false); break;
+      case Key_N:      cursorDown(false); break;
+      // emacs' pageup/pagedown are ctrl-v and alt-v, but the
+      // latter should be reserved for accessing the menu, so I'm
+      // not going to bind either by default
+
+      case Key_D:      deleteCharAtCursor(); break;
 
       default:
         k->ignore();
@@ -660,6 +672,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
         cursorToBottom();
         break;
        
+      case Key_B:      cursorLeft(true); break;
+      case Key_F:      cursorRight(true); break;
+      case Key_A:      cursorHome(true); break;
+      case Key_E:      cursorEnd(true); break;
+      case Key_P:      cursorUp(true); break;
+      case Key_N:      cursorDown(true); break;
+
       default:
         k->ignore();
         break;
@@ -678,52 +697,14 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
         break;
 
-      case Key_Left:
-        turnSelection(state==ShiftButton);
-        inc(cursorCol, -1);
-        scrollToCursor();
-        break;
-
-      case Key_Right:
-        turnSelection(state==ShiftButton);
-        inc(cursorCol, +1);
-        scrollToCursor();
-        break;
-
-      case Key_Home:
-        turnSelection(state==ShiftButton);
-        cursorCol = 0;
-        scrollToCursor();
-        break;
-
-      case Key_End:
-        turnSelection(state==ShiftButton);
-        cursorCol = buffer->lineLength(cursorLine);
-        scrollToCursor();
-        break;
-
-      case Key_Up:
-        turnSelection(state==ShiftButton);
-        inc(cursorLine, -1);
-        scrollToCursor();
-        break;
-
-      case Key_Down:
-        // allows cursor past EOF..
-        turnSelection(state==ShiftButton);
-        inc(cursorLine, +1);
-        scrollToCursor();
-        break;
-
-      case Key_PageUp:
-        turnSelection(state==ShiftButton);
-        moveViewAndCursor(-visLines(), 0);
-        break;
-
-      case Key_PageDown:
-        turnSelection(state==ShiftButton);
-        moveViewAndCursor(+visLines(), 0);
-        break;
+      case Key_Left:     cursorLeft(state==ShiftButton); break;
+      case Key_Right:    cursorRight(state==ShiftButton); break;
+      case Key_Home:     cursorHome(state==ShiftButton); break;
+      case Key_End:      cursorEnd(state==ShiftButton); break;
+      case Key_Up:       cursorUp(state==ShiftButton); break;
+      case Key_Down:     cursorDown(state==ShiftButton); break;
+      case Key_PageUp:   cursorPageUp(state==ShiftButton); break;
+      case Key_PageDown: cursorPageDown(state==ShiftButton); break;
 
       case Key_BackSpace: {
         fillToCursor();
@@ -757,24 +738,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_Delete: {
         if (state == NoButton) {
-          fillToCursor();
-          buffer->changed = true;
-
-          if (selectEnabled) {
-            editDelete();
-          }
-          else if (cursorCol == buffer->lineLength(cursorLine)) {
-            // splice next line onto this one
-            spliceNextLine();
-          }
-          else /* cursor < lineLength */ {
-            // delete character to right of cursor
-            buffer->deleteText(cursorLine, cursorCol, 1);
-          }
-
-          scrollToCursor();
+          deleteCharAtCursor();
         }
-        
         else {   // shift-delete
           editCut();
         }
@@ -1129,6 +1094,83 @@ void Editor::hideInfo()
     delete infoBox;
     infoBox = NULL;
   }
+}
+                    
+
+void Editor::cursorLeft(bool shift)
+{
+  turnSelection(shift);
+  inc(cursorCol, -1);
+  scrollToCursor();
+}
+
+void Editor::cursorRight(bool shift)
+{
+  turnSelection(shift);
+  inc(cursorCol, +1);
+  scrollToCursor();
+}
+
+void Editor::cursorHome(bool shift)
+{
+  turnSelection(shift);
+  cursorCol = 0;
+  scrollToCursor();
+}
+
+void Editor::cursorEnd(bool shift)
+{
+  turnSelection(shift);
+  cursorCol = buffer->lineLength(cursorLine);
+  scrollToCursor();
+}
+
+void Editor::cursorUp(bool shift)
+{
+  turnSelection(shift);
+  inc(cursorLine, -1);
+  scrollToCursor();
+}
+
+void Editor::cursorDown(bool shift)
+{
+  // allows cursor past EOF..
+  turnSelection(shift);
+  inc(cursorLine, +1);
+  scrollToCursor();
+}
+
+void Editor::cursorPageUp(bool shift)
+{
+  turnSelection(shift);
+  moveViewAndCursor(-visLines(), 0);
+}
+
+void Editor::cursorPageDown(bool shift)
+{
+  turnSelection(shift);
+  moveViewAndCursor(+visLines(), 0);
+}
+
+
+void Editor::deleteCharAtCursor()
+{
+  fillToCursor();
+  buffer->changed = true;
+
+  if (selectEnabled) {
+    editDelete();
+  }
+  else if (cursorCol == buffer->lineLength(cursorLine)) {
+    // splice next line onto this one
+    spliceNextLine();
+  }
+  else /* cursor < lineLength */ {
+    // delete character to right of cursor
+    buffer->deleteText(cursorLine, cursorCol, 1);
+  }
+
+  scrollToCursor();
 }
 
 

@@ -200,6 +200,21 @@ public:      // funcs
   // hide the info box if it's visible
   void hideInfo();
 
+  // things often bound to cursor, etc. keys; 'shift' indicates
+  // whether the shift key is held (so the selection should be turned
+  // on, or remain on)
+  void cursorLeft(bool shift);
+  void cursorRight(bool shift);
+  void cursorHome(bool shift);
+  void cursorEnd(bool shift);
+  void cursorUp(bool shift);
+  void cursorDown(bool shift);
+  void cursorPageUp(bool shift);
+  void cursorPageDown(bool shift);
+
+  // some other commands...
+  void deleteCharAtCursor();
+
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);

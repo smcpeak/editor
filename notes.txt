@@ -164,7 +164,7 @@ major todos:
   - support for multiple simultaneous files
   * syntax highlighting!
   - undo
-  - incremental search
+  * incremental search
   * redesign buffer representation, interface (think about undo...)
   * selections, copy, paste
 
@@ -402,3 +402,5 @@ implemented cool hit-text thing!
 
 end 2/28/03 12:06
 
+--------------
+start 2/28/03 13:33
