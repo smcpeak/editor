@@ -12,7 +12,8 @@
 Buffer::Buffer()
   : lines(),               // empty sequence of lines
     recent(-1),
-    recentLine()
+    recentLine(),
+    longestLengthSoFar(0)
 {}
 
 Buffer::~Buffer()
@@ -71,7 +72,7 @@ void Buffer::attachRecent(int line, int insCol, int insLength)
   else {
     xassert(recentLine.length() == 0);
   }
-  
+
   recent = line;
 }
 
@@ -157,7 +158,7 @@ void Buffer::deleteLine(int line)
 void Buffer::insertText(int line, int col, char const *text, int length)
 {
   bc(line);
-  
+
   #ifndef NDEBUG
     for (int i=0; i<length; i++) {
       xassert(text[i] != '\n');
@@ -170,11 +171,15 @@ void Buffer::insertText(int line, int col, char const *text, int length)
     memcpy(p, text, length);
     p[length] = '\n';
     lines.set(line, p);
+
+    seenLineLength(length);
   }
   else {
     // use recent
     attachRecent(line, col, length);
     recentLine.insertMany(col, text, length);
+    
+    seenLineLength(recentLine.length());
   }
 }
 
@@ -309,6 +314,14 @@ void Buffer::writeFile(char const *fname) const
 
     getLine(line, 0, buffer, len);
     fprintf(fp, "%.*s\n", len, buffer);
+  }
+}
+
+
+void Buffer::seenLineLength(int len)
+{
+  if (len > longestLengthSoFar) {
+    longestLengthSoFar = len;
   }
 }
 

@@ -24,11 +24,17 @@ private:   // data
   // and lines[recent] is NULL
   GapArray<char> recentLine;
 
+  // length of the longest line this file has ever had; this is
+  // my poor-man's substitute for a proper interval map, etc., to
+  // be able to answer to 'maxLineLength()' query
+  int longestLengthSoFar;
+
   // invariants:
   //   - recent >= -1
   //   - if recent>=0, lines[recent] == NULL
   //   - if recent<0, recentLine.length() == 0
   //   - every lines[n] is NULL or valid
+  //   - longestLineSoFar >= 0
 
 private:   // funcs
   // strlen, but NULL yields 0 and '\n' is terminator
@@ -45,6 +51,10 @@ private:   // funcs
   // copy contents of 'recentLine', if any, back into lines[];
   // postcondition: recent==-1
   void detachRecent();
+
+  // update 'longestLineSoFar', given the existence of a line
+  // that is 'len' long
+  void seenLineLength(int len);
 
 public:    // funcs
   Buffer();
@@ -64,7 +74,7 @@ public:    // funcs
   void getLine(int line, int col, char *dest, int destLen) const;
 
   // maximum length of a line; TODO: implement this
-  int maxLineLength() const { return 100; }
+  int maxLineLength() const { return longestLengthSoFar; }
 
 
   // ---- manipulation interface ----
