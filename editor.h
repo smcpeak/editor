@@ -76,7 +76,7 @@ private:     // funcs
   //   - cursorLine < buffer->numLines()
   //   - cursorCol <= buffer->lineLength(cursorLine)
   void fillToCursor();
-                        
+
   // given that the cursor is at the end of a line, join this line
   // with the next one
   void spliceNextLine();
@@ -93,9 +93,15 @@ private:     // funcs
   void turnOnSelection();
   void turnSelection(bool on);
   void clearSelIfEmpty();
-                                           
+
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
+
+  // redraw window, etc.; calls updateView() and viewChanged()
+  void redraw();
+       
+  // draw text etc. on a QPainter
+  void drawBufferContents(QPainter &paint);
 
 protected:   // funcs
   // QWidget funcs
@@ -131,13 +137,10 @@ public:      // funcs
   int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
 
 public slots:
-  // automatically calls updateView() and viewChanged()
-  virtual void update();
-
   // slots to respond to scrollbars
   virtual void scrollToLine(int line);
   virtual void scrollToCol(int col);
-  
+
 signals:
   // emitted when the buffer view port or cursor changes
   void viewChanged();

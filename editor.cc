@@ -13,6 +13,7 @@
 #include <qpainter.h>        // QPainter
 #include <qfontmetrics.h>    // QFontMetrics
 #include <qrangecontrol.h>   // QRangeControl
+#include <qpixmap.h>         // QPixmap
 
 #include <stdio.h>           // printf, for debugging
 
@@ -20,7 +21,7 @@
 // ---------------------- Editor --------------------------------
 Editor::Editor(BufferState *buf,
                QWidget *parent=NULL, const char *name=NULL)
-  : QWidget(parent, name, WRepaintNoErase | WNorthWestGravity),
+  : QWidget(parent, name, WRepaintNoErase | WResizeNoErase | WNorthWestGravity),
     buffer(buf),
     // cursor, select and visible line/col inited by resetView()
     topMargin(1),
@@ -44,8 +45,11 @@ Editor::Editor(BufferState *buf,
   // a white background, instead of a gray background
   //setBackgroundMode(PaletteBase);
 
+  // needed to cause Qt not to erase window?
+  setBackgroundMode(NoBackground);
+
   // fixed color
-  setBackgroundColor(normalBG);
+  //setBackgroundColor(normalBG);
 
   resetView();
 }
@@ -82,12 +86,28 @@ void Editor::setFont(QFont &f)
 }
 
 
-void Editor::update()
+void Editor::redraw()
 {
   updateView();
   emit viewChanged();
-  QWidget::update();
+  
+  // redraw
+  update();
+
+  // I think that update() should work, but it does not: it erases
+  // the window first.  I've tried lots of different things to fix
+  // it, but can't find the solution.  repaint(false) does seem to
+  // work, however
+  //repaint(false /*erase*/);
+  
+  // update: It turns out that update() and repaint(false) *were*
+  // doing the same thing, but that the PaintEvent::erase flag was
+  // simply wrong.  Moreover, the flicker was actually server-side,
+  // due to a bug in XFree86's implementation of XDrawImageSting.
+  // So I've switched to a server-side pixmap double-buffer method,
+  // which of course eliminates the flickering.
 }
+
 
 void Editor::updateView()
 {
@@ -112,19 +132,65 @@ void Editor::resizeEvent(QResizeEvent *r)
   emit viewChanged();
 }
 
+ 
+// for calling from gdb..
+int flushPainter(QPainter &p)
+{
+  p.flush();
+  return 0;
+}
+
 
 // In general, to avoid flickering, I try to paint every pixel
 // exactly once (this idea comes straight from the Qt tutorial).
 // So far, the only place I violate that is the cursor, the pixels
 // of which are drawn twice when it is visible.
+// UPDATE: It's irrelevant now that I've been forced into double-
+// buffering by a bug in XFree86 (see redraw()).
 void Editor::paintEvent(QPaintEvent *ev)
 {
-  // make a painter
-  QPainter paint(this);
+  // testing... it turns out this flag is not accurate, because
+  // when the PaintEvent is dispatched a new PaintEvent object
+  // is created, and that one doesn't have the 'erase' flag set
+  // properly, even though in fact no erasing was done
+  #if 0
+  if (ev->erased()) {
+    printf("erased! noerase:%d\n",
+           (int)testWFlags(WRepaintNoErase));
+  }
+  #endif // 0/1
 
+  // make a pixmap, so as to avoid flickering by double-buffering
+  QPixmap pixmap(size());
+
+  // set up the painter; we have to copy over some settings explicitly
+  QPainter paint(&pixmap);
+  paint.setFont(font());
+
+  // draw on the pixmap
+  drawBufferContents(paint);
+  paint.end();
+
+  // blit the pixmap.. Qt docs claim the pixmap is entirely server-side,
+  // so this should *not* entail a network copy of a big image...
+  paint.begin(this);
+  paint.drawPixmap(0,0, pixmap);
+}
+
+void Editor::drawBufferContents(QPainter &paint)
+{
   // when drawing text, erase background automatically
   paint.setBackgroundMode(OpaqueMode);
-                                       
+
+  // character style info
+  LineStyle styles(0 /*normal*/);
+
+  // currently selected style (so we can avoid possibly expensive
+  // calls to change styles)
+  int currentStyle = 0 /*normal*/;
+  paint.setPen(normalFG);
+  paint.setBackgroundColor(normalBG);
+
   // top edge of what has not been painted
   int y = 0;
 
@@ -149,15 +215,6 @@ void Editor::paintEvent(QPaintEvent *ev)
   // buffer for text to print
   int visibleCols = lastVisibleCol - firstVisibleCol + 2;
   Array<char> text(visibleCols);
-
-  // character style info
-  LineStyle styles(0 /*normal*/);
-
-  // currently selected style (so we can avoid possibly expensive
-  // calls to change styles)
-  int currentStyle = 0 /*normal*/;
-  paint.setPen(normalFG);
-  paint.setBackgroundColor(normalBG);
 
   // stats on cursor/selection
   int selLowLine, selLowCol;    // whichever of cursor/select comes first
@@ -337,7 +394,6 @@ void Editor::cursorToTop()
   cursorLine = 0;
   cursorCol = 0;
   scrollToCursor();
-  update();
 }
 
 void Editor::cursorToBottom()
@@ -345,7 +401,7 @@ void Editor::cursorToBottom()
   cursorLine = max(buffer->numLines(),0);
   cursorCol = 0;
   scrollToCursor();
-  update();
+  redraw();
 }
 
 
@@ -414,7 +470,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         if (cursorLine > lastVisibleLine) {
           cursorLine = lastVisibleLine;
         }
-        update();
+        redraw();
         break;
 
       case Key_Z:
@@ -423,7 +479,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         if (cursorLine < firstVisibleLine) {
           cursorLine = firstVisibleLine;
         }
-        update();
+        redraw();
         break;
 
       case Key_Up:
@@ -627,9 +683,6 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
       }
     }
-
-    // redraw
-    update();
   }
 
   // other combinations
@@ -640,7 +693,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
 
 void Editor::fillToCursor()
-{                                         
+{
   // fill with blank lines
   while (cursorLine >= buffer->numLines()) {
     buffer->insertLine(buffer->numLines());
@@ -697,6 +750,8 @@ void Editor::scrollToCursor()
   else if (cursorLine > lastVisibleLine) {
     firstVisibleLine += (cursorLine - lastVisibleLine);
   }
+  
+  redraw();
 }
 
 
@@ -717,7 +772,7 @@ void Editor::moveView(int deltaLine, int deltaCol)
   inc(cursorCol, firstVisibleCol-origVC);
 
   // redraw display
-  update();
+  redraw();
 }
 
 
@@ -725,14 +780,14 @@ void Editor::scrollToLine(int line)
 {
   xassert(line >= 0);
   firstVisibleLine = line;
-  update();
+  redraw();
 }
 
 void Editor::scrollToCol(int col)
 {
   xassert(col >= 0);
   firstVisibleCol = col;
-  update();
+  redraw();
 }
 
 
@@ -768,7 +823,7 @@ void Editor::mousePressEvent(QMouseEvent *m)
   turnOffSelection();
   setCursorToClickLoc(m);
 
-  update();
+  redraw();
 }
 
 
@@ -780,7 +835,7 @@ void Editor::mouseMoveEvent(QMouseEvent *m)
   setCursorToClickLoc(m);
   clearSelIfEmpty();
 
-  update();
+  redraw();
 }
 
 
@@ -792,6 +847,6 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
   setCursorToClickLoc(m);
   clearSelIfEmpty();
 
-  update();
+  redraw();
 }
 

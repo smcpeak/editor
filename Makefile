@@ -15,7 +15,7 @@ CXX := g++
 CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE)
 
 # flags for the linker
-LDFLAGS := -g -Wall $(LIBSMBASE) -lqt
+LDFLAGS := -g -Wall $(LIBSMBASE) -L$(QTDIR)/lib -lqt
 
 
 # patterns of files to delete in the 'clean' target
