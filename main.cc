@@ -221,6 +221,11 @@ int main(int argc, char **argv)
   TRACE_ARGS();
   QApplication a(argc, argv);
 
+  // use my variant of the Windows style, if we're using Windows at all
+  if (0==strcmp("QWindowsStyle", a.style().className())) {
+    a.setStyle(new MyWindowsStyle);
+  }
+
   EditorWindow ed(NULL /*parent*/, "main editor window");
   ed.setCaption("An Editor");
 
