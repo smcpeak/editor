@@ -166,7 +166,7 @@ major todos:
   - undo
   - incremental search
   * redesign buffer representation, interface (think about undo...)
-  - selections, copy, paste
+  * selections, copy, paste
 
 bug: backspace causes segfault!
 
@@ -259,7 +259,10 @@ start 2/14/03 22:47
 first: fix pageup bug.. fixed by cutting an event loop.. not
 perfect, but is probably good anway, and it solves my problem
 
-need to implement copy, cut, paste
+need to implement copy, cut, paste.. done!
+
+looking at syntax highlighting...
+
 
 
 

@@ -5,7 +5,7 @@
 
 
 // ----------------------- LineStyle --------------------
-void LineStyle::overlay(int start, int ovlLength, int ovlStyle)
+void LineStyle::overlay(int start, int ovlLength, Style ovlStyle)
 {
   // walk over this style array, making a new one
   LineStyleIter iter(*this);
@@ -57,19 +57,19 @@ void LineStyle::overlay(int start, int ovlLength, int ovlStyle)
   endStyle = dest.endStyle;
   swapWith(dest);
 }
-      
+
 
 string LineStyle::asString() const
 {
   stringBuilder sb;
-  
+
   LineStyleIter iter(*this);
   while (!iter.atEnd()) {
-    sb << "[" << iter.style << "," << iter.length << "]";
+    sb << "[" << (int)iter.style << "," << iter.length << "]";
     iter.nextRun();
   }
-  sb << "[" << endStyle;     // leave last '[' unbalanced
-  
+  sb << "[" << (int)endStyle;     // leave last '[' unbalanced
+
   return sb;
 }
 
@@ -130,69 +130,72 @@ void expect(LineStyle const &style, char const *str)
   }
 }
 
+// less awkward literal casts..
+static inline Style s(int sty) { return (Style)sty; }
+
 void entry()
 {
-  LineStyle style(3);
+  LineStyle style(s(3));
   expect(style, "[3");
   // 3...
 
-  style.append(4,5);
+  style.append(s(4),5);
   expect(style, "[4,5][3");
   // 444443...
 
-  style.append(6,7);
+  style.append(s(6),7);
   expect(style, "[4,5][6,7][3");
   // 4444466666663...
 
-  style.overlay(2, 5, 8);
+  style.overlay(2, 5, s(8));
   expect(style, "[4,2][8,5][6,5][3");
   // 4488888666663...
 
-  style.overlay(0, 9, 1);
+  style.overlay(0, 9, s(1));
   expect(style, "[1,9][6,3][3");
   // 1111111116663...
 
-  style.overlay(3, 4, 5);
+  style.overlay(3, 4, s(5));
   expect(style, "[1,3][5,4][1,2][6,3][3");
   // 1115555116663...
 
-  style.overlay(9, 0, 7);
+  style.overlay(9, 0, s(7));
   expect(style, "[1,3][5,4][1,2][7");
   // 1115555117...
 
-  style.overlay(5, 0, 8);
+  style.overlay(5, 0, s(8));
   expect(style, "[1,3][5,2][8");
   // 111558...
 
-  style.overlay(10, 0, 7);
+  style.overlay(10, 0, s(7));
   expect(style, "[1,3][5,2][8,5][7");
   // 11155888887...
 
-  style.append(4, 3);
+  style.append(s(4), 3);
   expect(style, "[1,3][5,2][8,5][4,3][7");
   // 11155888884447...
 
-  style.overlay(4, 9, 3);
+  style.overlay(4, 9, s(3));
   expect(style, "[1,3][5,1][3,9][7");
   // 11153333333337...
 
-  style.overlay(0, 4, 6);
+  style.overlay(0, 4, s(6));
   expect(style, "[6,4][3,9][7");
   // 66663333333337...
 
-  style.overlay(6, 4, 4);
+  style.overlay(6, 4, s(4));
   expect(style, "[6,4][3,2][4,4][3,3][7");
   // 66663344443337...
 
-  style.overlay(4, 6, 8);
+  style.overlay(4, 6, s(8));
   expect(style, "[6,4][8,6][3,3][7");
   // 66668888883337...
 
-  style.overlay(2, 10, 1);
+  style.overlay(2, 10, s(1));
   expect(style, "[6,2][1,10][3,1][7");
   // 66111111111137...
 
-  style.clear(2);
+  style.clear(s(2));
   expect(style, "[2");
   // 2...
 }

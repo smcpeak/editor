@@ -8,15 +8,26 @@
 #include "array.h"         // ArrayStack
 #include "str.h"           // string
 
+
+// standard styles; I envision being able to add more dynamically,
+// but to have this set always available by default
+enum Style {
+  ST_NORMAL,               // normal text
+  ST_SELECTION,            // selected text
+  ST_COMMENT,              // programming language comment
+  ST_STRING,               // string literal
+};
+
+
 // specify a color/font for a run of characters
 class StyleEntry {
 public:
-  int style;             // color/font to use
+  Style style;           // color/font to use
   int length;            // # of characters covered
 
 public:
-  StyleEntry() : style(-1), length(1) {}
-  StyleEntry(int S, int L) : style(S), length(L) 
+  StyleEntry() : style(ST_NORMAL), length(1) {}
+  StyleEntry(Style S, int L) : style(S), length(L)
     { xassert(length > 0); }
   StyleEntry(StyleEntry const &obj)
     : DMEMB(style), DMEMB(length) {}
@@ -29,23 +40,23 @@ public:
 class LineStyle : public ArrayStack<StyleEntry> {
 public:      // data
   // style of the characters beyond the last entry
-  int endStyle;
+  Style endStyle;
 
 public:
-  LineStyle(int end) : endStyle(end) {}
+  LineStyle(Style end) : endStyle(end) {}
 
   // clear existing runs
-  void clear(int end)
+  void clear(Style end)
     { empty(); endStyle=end; }
 
   // add a new style run to those already present
-  void append(int style, int length)
+  void append(Style style, int length)
     { push(StyleEntry(style, length)); }
 
   // overwrite a subsequence of characters with a given style;
   // 'length' can be 0 to mean infinite
-  void overlay(int start, int length, int style);
-  
+  void overlay(int start, int length, Style style);
+
   // debugging: render the runs as a string
   string asString() const;
 };
@@ -59,7 +70,7 @@ private:
 
 public:
   int length;              // how many chars remain on this run (0=infinite)
-  int style;               // style of the current run
+  Style style;             // style of the current run
 
 public:
   LineStyleIter(LineStyle const &s);

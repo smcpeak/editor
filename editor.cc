@@ -231,11 +231,11 @@ void Editor::drawBufferContents(QPainter &paint)
   paint.setBackgroundMode(OpaqueMode);
 
   // character style info
-  LineStyle styles(0 /*normal*/);
+  LineStyle styles(ST_NORMAL);
 
   // currently selected style (so we can avoid possibly expensive
   // calls to change styles)
-  int currentStyle = 0 /*normal*/;
+  Style currentStyle = ST_NORMAL;
   paint.setPen(normalFG);
   paint.setBackgroundColor(normalBG);
 
@@ -289,29 +289,29 @@ void Editor::drawBufferContents(QPainter &paint)
     xassert(visibleLineChars <= visibleCols);
 
     // nominally the entire line is normal text
-    styles.clear(0 /*normal*/);
+    styles.clear(ST_NORMAL);
 
     // incorporate effect of selection
     if (selectEnabled &&
         selLowLine <= line && line <= selHighLine) {
       if (selLowLine < line && line < selHighLine) {
         // entire line is selected
-        styles.overlay(0, 0 /*infinite*/, 1 /*selected*/);
+        styles.overlay(0, 0 /*infinite*/, ST_SELECTION);
       }
       else if (selLowLine < line && line == selHighLine) {
         // first half of line is selected
         if (selHighCol) {
-          styles.overlay(0, selHighCol, 1 /*selected*/);
+          styles.overlay(0, selHighCol, ST_SELECTION);
         }
       }
       else if (selLowLine == line && line < selHighLine) {
         // right half of line is selected
-        styles.overlay(selLowCol, 0 /*infinite*/, 1 /*selected*/);
+        styles.overlay(selLowCol, 0 /*infinite*/, ST_SELECTION);
       }
       else if (selLowLine == line && line == selHighLine) {
         // middle part of line is selected
         if (selHighCol != selLowCol) {
-          styles.overlay(selLowCol, selHighCol-selLowCol, 1 /*selected*/);
+          styles.overlay(selLowCol, selHighCol-selLowCol, ST_SELECTION);
         }
       }
       else {
