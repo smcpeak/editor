@@ -1,6 +1,8 @@
 # Makefile for editor
 
 # main target
+tmp: testgap
+
 all: buffer editor
 
 
@@ -33,6 +35,12 @@ TOCLEAN += *.o *.d
 # Qt meta-object compiler
 moc_%.cc: %.h
 	moc -o $@ $^
+
+
+# ---------------- gap test program -----------------
+TOCLEAN += testgap
+testgap: gap.h testgap.cc
+	$(CXX) -o $@ $(CCFLAGS) testgap.cc -g -Wall $(SMBASE)/libsmbase.a
 
 
 # -------------- buffer test program ----------------

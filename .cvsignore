@@ -5,3 +5,4 @@ dialogs
 .emacs.desktop
 *.d
 moc_*
+testgap

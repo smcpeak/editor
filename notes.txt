@@ -193,3 +193,16 @@ new buffer repr:
   - NULL spine ptr for blank lines
   
 end 2/11/03 00:03
+
+-----------------
+start 2/11/03 02:15
+
+looked at debugging the backspace-segfault problem, it's not
+so easy..
+
+decided to go ahead and rewrite Buffer since I want to anyway
+and I'm tired of debugging the bad design
+
+wrote a gap-array module, and a unit test, but it doesn't pass yet
+
+
