@@ -48,6 +48,10 @@ public:
   // interface clients can deallocate
   virtual ~HistoryElt();
 
+  // type interrogation
+  enum Tag { HE_CURSOR, HE_TEXT, HE_GROUP, NUM_HE_TYPES };
+  virtual Tag getTag() const=0;
+
   // apply this operator, possibly in reverse; or, throw XHistory
   // if the event does not match the current state of the buffer,
   // but in this case the buffer must not be modified
@@ -55,7 +59,7 @@ public:
 
   // render this command as a text line, indented by 'indent' spaces
   virtual void print(stringBuilder &sb, int indent) const=0;
-  
+
   // account for this history record
   virtual void stats(HistoryStats &stats) const=0;
 };
@@ -81,6 +85,7 @@ public:      // funcs
     : origLine(ol), line(l), origCol(oc), col(c) {}
 
   // HistoryElt funcs
+  virtual Tag getTag() const { return HE_CURSOR; }
   virtual void apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
   virtual void stats(HistoryStats &stats) const;
@@ -120,6 +125,7 @@ public:      // funcs
   ~HE_text();
 
   // HistoryElt funcs
+  virtual Tag getTag() const { return HE_TEXT; }
   virtual void apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
   virtual void stats(HistoryStats &stats) const;
@@ -140,14 +146,28 @@ public:      // funcs
 // purposes of interactive undo/redo
 class HE_group : public HistoryElt {
 private:     // data
+  // single entry in the sequence; see HE_group::encode() in
+  // history.cc for encoding
+  typedef unsigned long HistoryEltCode;
+
   // sequence represented as a growable array for efficient
-  // storage but also insertion; the objects are owned by
-  // this object
-  OGapArray<HistoryElt> seq;
+  // storage but also insertion
+  GapArray<HistoryEltCode> seq;
 
 private:     // funcs
-  // yield elements in reverse order if 'reverse' is true
-  HistoryElt *elt(int start, int end, bool reverse, int offset);
+  // apply elements in reverse order if 'reverse' is true
+  void applySeqElt(CursorBuffer &buf, int start, int end, int offset,
+                   bool reverseIndex, bool reverseOperation);
+
+  // remove the first element in the sequence (there must be at
+  // least one), and return an owner pointer to it
+  HistoryEltCode stealFirstEltCode();
+  
+  // encode a pointer
+  HistoryEltCode encode(HistoryElt * /*owner*/ e);
+  
+  // decode a pointer; returns an owner if 'allocated' is true
+  HistoryElt *decode(HistoryEltCode code, bool &allocated) const;
 
 public:      // funcs
   HE_group();          // initially, seq is empty
@@ -163,13 +183,17 @@ public:      // funcs
 
   void append(HistoryElt *e);
 
-  // remove the first element in the sequence (there must be at
-  // least one), and return an owner pointer to it
-  HistoryElt *stealFirstElt();
+  // squeeze any space that is currently being reserved for future
+  // growth; this is called when the app is fairly certain that
+  // this sequence will not grow any more
+  void squeezeReserved();
 
   // remove all elements with index 'newLength' or greater; it must
   // be that 0 <= newLength <= seqLength()
   void truncate(int newLength);
+
+  // clear the history
+  void clear() { truncate(0); }
 
   // apply some contiguous sequence of the element transformations;
   // the transformations applied are those with index such that
@@ -188,6 +212,7 @@ public:      // funcs
 
 
   // HistoryElt funcs
+  virtual Tag getTag() const { return HE_GROUP; }
   virtual void apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
   virtual void stats(HistoryStats &stats) const;
@@ -203,7 +228,7 @@ public:
 
   // # of grouping constructs
   int groups;
-  
+
   // memory used by the objects in the sequence
   int memUsage;
 

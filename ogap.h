@@ -34,18 +34,17 @@ public:
   void insert(int elt, T *value)  { arr.insert(elt, value); }
                      
   // remove an element, returning it as an owner pointer
-  T *remove(int elt) {
-    T *temp = (T*)arr.get(elt); 
-    arr.remove(elt);
-    return temp;
-  }
+  T *remove(int elt)              { return (T*)arr.remove(elt); }
   
   // delete an element directly
   void deleteElt(int elt)         { delete remove(elt); }
   
   // delete all elements
   void clear();
-  
+
+  // drop gap size to zero
+  void squeezeGap()               { arr.squeezeGap(); }
+
   // debugging
   void getInternals(int &L, int &G, int &R) const
     { arr.getInternals(L, G, R); }

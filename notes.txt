@@ -664,4 +664,20 @@ end 6/01/03 06:21
 -----------------------
 start 6/06/03 17:02
 
+here's what I have right now:
+  records      : 43
+  groups       : 1
+  memUsage     : 928
+  mallocObjects: 88
+  reservedSpace: 16
+  totalUsage() : 1296
 
+will implement some compression schemes..
+
+did the 32-bit encoding stuff:
+  records      : 43
+  groups       : 1
+  memUsage     : 214
+  mallocObjects: 4
+  reservedSpace: 16
+  totalUsage() : 246

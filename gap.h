@@ -79,7 +79,7 @@ public:      // funcs
 
   // remove an element; all elements with original index 'elt' or
   // greater are shifted down one
-  void remove(int elt);
+  T remove(int elt);
 
   // remove many elements; equivalent to
   //   while (numElts--) { remove(elt); }
@@ -87,6 +87,9 @@ public:      // funcs
 
   // remove all elements
   void clear();
+
+  // drop gap size to zero; done when future insertion is not likely
+  void squeezeGap();
 
   // fill from a source array, putting the gap of size at least
   // 'gapSize' at 'elt'; this clears the sequence before filling
@@ -191,9 +194,9 @@ void GapArray<T>::insertManyZeroes(int elt, int insLen)
 
 
 template <class T>
-void GapArray<T>::remove(int elt)
-{
-  bc(elt);
+T GapArray<T>::remove(int elt)
+{         
+  T ret = get(elt);
   if (elt != left) {
     makeGapAt(elt);
   }
@@ -201,6 +204,8 @@ void GapArray<T>::remove(int elt)
   // remove at left edge of right half
   gap++;
   right--;
+  
+  return ret;
 }
 
 
@@ -313,6 +318,42 @@ void GapArray<T>::clear()
   gap += left+right;
   left = 0;
   right = 0;
+}
+
+
+template <class T>
+void GapArray<T>::squeezeGap()
+{
+  if (gap == 0) {
+    return;
+  }
+  
+  if (left+right == 0) {
+    // just deallocate
+    delete[] array;
+    array = NULL;
+    gap = 0;
+    return;
+  }
+
+  // allocate a new, smaller array
+  T *newArray = new T[left+right];
+
+  // array:
+  //   <--- left ---><-- gap --><----- right ----->
+  //   [------------][---------][-----------------]
+  // newArray:
+  //   <--- left ---><----- right ----->
+  //   [------------][-----------------]
+
+  // copy data into it
+  memcpy(newArray, array, left * sizeof(T));
+  memcpy(newArray+left, array+left+gap, right * sizeof(T));
+  gap = 0;
+
+  // deallocate, swap
+  delete[] array;
+  array = newArray;
 }
 
 

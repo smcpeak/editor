@@ -99,29 +99,7 @@ void HistoryBuffer::beginGroup()
 void HistoryBuffer::endGroup()
 {
   HE_group *g = groupStack.pop();
-  
-  if (g->seqLength() == 0) {
-    // nothing in the sequence; I expect this to be rather common,
-    // since I'm planning on opening/closing groups for every UI
-    // action, many of which won't actually try to add a history
-    // element
-    delete g;
-  }
-
-  else if (g->seqLength() == 1) {
-    // only one element; I expect this to also be common, because
-    // the majority of buffer modifications should end up as
-    // singleton groups, again due to making a group for every UI
-    // action
-    HistoryElt *e = g->stealFirstElt();
-    delete g;
-    appendElement(e);
-  }
-
-  else {
-    // more than one element, append it as a group
-    appendElement(g);
-  }
+  appendElement(g);
 }
 
 
