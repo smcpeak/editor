@@ -68,6 +68,19 @@ public:      // data
   // name of file being edited
   string filename;
 
+  // title of the buffer; this will usually be similar
+  // to the filename, but perhaps only the last part of
+  // the fully-qualified path name, etc.
+  string title;
+
+  // id of the menu item that the user can choose to
+  // select this buffer
+  int windowMenuId;
+  
+  // key code the user can press to jump to this buffer,
+  // or 0 for no hotkey
+  int hotkey;
+
   // true when there are unsaved changes
   //bool changed;                       
   // replaced with unsavedChanges() method

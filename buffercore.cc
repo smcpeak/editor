@@ -154,7 +154,7 @@ void BufferCore::insertLine(int const line)
   }
 
   SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->insertLine(*this, line);
+    iter.data()->observeInsertLine(*this, line);
   }
 }
 
@@ -181,7 +181,7 @@ void BufferCore::deleteLine(int const line)
   }
 
   SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->deleteLine(*this, line);
+    iter.data()->observeDeleteLine(*this, line);
   }
 }
 
@@ -215,7 +215,7 @@ void BufferCore::insertText(int const line, int const col,
   }
 
   SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->insertText(*this, line, col, text, length);
+    iter.data()->observeInsertText(*this, line, col, text, length);
   }
 }
 
@@ -239,7 +239,7 @@ void BufferCore::deleteText(int const line, int const col, int const length)
   }
 
   SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
-    iter.data()->deleteText(*this, line, col, length);
+    iter.data()->observeDeleteText(*this, line, col, length);
   }
 }
 
@@ -545,16 +545,16 @@ int computeSpanLength(BufferCore const &buf, int line1, int col1,
 
 
 // -------------------- BufferObserver ------------------
-void BufferObserver::insertLine(BufferCore const &, int)
+void BufferObserver::observeInsertLine(BufferCore const &, int)
 {}
 
-void BufferObserver::deleteLine(BufferCore const &, int)
+void BufferObserver::observeDeleteLine(BufferCore const &, int)
 {}
 
-void BufferObserver::insertText(BufferCore const &, int, int, char const *, int)
+void BufferObserver::observeInsertText(BufferCore const &, int, int, char const *, int)
 {}
 
-void BufferObserver::deleteText(BufferCore const &, int, int, int)
+void BufferObserver::observeDeleteText(BufferCore const &, int, int, int)
 {}
 
 

@@ -46,7 +46,7 @@ private:   // data
   //   - longestLineSoFar >= 0
 
 public:    // data
-  // list of observers
+  // list of observers; changeable even when '*this' is const
   mutable SObjList<BufferObserver> observers;
 
 private:   // funcs
@@ -186,10 +186,10 @@ public:
   // to remember which buffer it's observing.  These are called
   // *after* the BufferCore updates its internal representation.  The
   // default implementations do nothing.
-  virtual void insertLine(BufferCore const &buf, int line);
-  virtual void deleteLine(BufferCore const &buf, int line);
-  virtual void insertText(BufferCore const &buf, int line, int col, char const *text, int length);
-  virtual void deleteText(BufferCore const &buf, int line, int col, int length);
+  virtual void observeInsertLine(BufferCore const &buf, int line);
+  virtual void observeDeleteLine(BufferCore const &buf, int line);
+  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length);
+  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length);
 };
 
 

@@ -691,3 +691,9 @@ todo to get editor usable:
   - multiple frames/windows
   
 end 6/06/03 22:50
+
+
+plan:
+  - pass 1: assign menu ids (positive) and hotkeys
+  - pass 2: build menus
+  

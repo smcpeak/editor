@@ -47,6 +47,7 @@ void AttachInputProxy::attach(Editor *newEd)
 void AttachInputProxy::detach()
 {                       
   if (ed) {
+    ed->inputProxyDetaching();
     ed->inputProxy = NULL;
     ed = NULL;
   }

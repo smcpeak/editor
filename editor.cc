@@ -16,6 +16,7 @@
 #include "styledb.h"         // StyleDB
 #include "inputproxy.h"      // InputProxy
 #include "ckheap.h"          // malloc_stats
+#include "status.h"          // StatusDisplay
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -30,11 +31,12 @@
 
 
 // ---------------------- Editor --------------------------------
-Editor::Editor(BufferState *buf,
-               QWidget *parent=NULL, const char *name=NULL)
+Editor::Editor(BufferState *buf, StatusDisplay *stat,
+               QWidget *parent, const char *name)
   : QWidget(parent, name, WRepaintNoErase | WResizeNoErase | WNorthWestGravity),
     EditingState(),
     infoBox(NULL),
+    status(stat),
     buffer(buf),
     topMargin(1),
     leftMargin(1),
@@ -44,6 +46,8 @@ Editor::Editor(BufferState *buf,
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
+    listening(false),
+    nonfocusCursorLine(0), nonfocusCursorCol(0),
     ignoreScrollSignals(false)
 {
   QFont font;
@@ -99,19 +103,19 @@ bool Editor::cursorBeforeSelect() const
 }
 
 
-void Editor::normalizeSelect()
+void Editor::normalizeSelect(int cursorLine, int cursorCol)
 {
   if (cursorBeforeSelect()) {
-    selLowLine = cursorLine();
-    selLowCol = cursorCol();
+    selLowLine = cursorLine;
+    selLowCol = cursorCol;
     selHighLine = selectLine;
     selHighCol = selectCol;
   }
   else {
     selLowLine = selectLine;
     selLowCol = selectCol;
-    selHighLine = cursorLine();
-    selHighCol = cursorCol();
+    selHighLine = cursorLine;
+    selHighCol = cursorCol;
   }
 }
 
@@ -154,7 +158,12 @@ void Editor::setFont(QFont &f)
 
 
 void Editor::setBuffer(BufferState *buf)
-{                          
+{
+  bool wasListening = listening;
+  if (wasListening) {
+    stopListening();
+  }
+
   // save current editing state in current 'buffer'
   if (buffer) {     // allow initial buffer to be NULL
     buffer->savedState.copy(*this);
@@ -163,6 +172,10 @@ void Editor::setBuffer(BufferState *buf)
   // switch to the new buffer, and retrieve its editing state
   buffer = buf;
   EditingState::copy(buf->savedState);
+
+  if (wasListening) {
+    startListening();
+  }
 
   redraw();
 }
@@ -287,8 +300,29 @@ void Editor::paintEvent(QPaintEvent *ev)
   QPainter paint(&pixmap);
   paint.setFont(font());
 
-  // draw on the pixmap
-  drawBufferContents(paint);
+  try {
+    // draw on the pixmap
+    if (!listening) {
+      // usual case, draw cursor in usual location
+      drawBufferContents(paint, cursorLine(), cursorCol());
+    }
+    else {
+      // nonfocus synchronized update: use alternate location
+      drawBufferContents(paint, nonfocusCursorLine, nonfocusCursorCol);
+      trace("nonfocus") << "drawing at " << nonfocusCursorLine
+                        << ":" << nonfocusCursorCol;
+    }
+  }
+  catch (xBase &x) {
+    // I can't pop up a message box because then when that
+    // is dismissed it might trigger another exception, etc.
+    paint.setFont(normalFont);
+    paint.setPen(white);
+    paint.setBackgroundColor(red);
+    paint.drawText(0, 30,                 // baseline start coordinate
+                   QString(x.why()), strlen(x.why()));
+  }
+
   paint.end();
 
   // blit the pixmap.. Qt docs claim the pixmap is entirely server-side,
@@ -297,7 +331,8 @@ void Editor::paintEvent(QPaintEvent *ev)
   paint.drawPixmap(0,0, pixmap);
 }
 
-void Editor::drawBufferContents(QPainter &paint)
+void Editor::drawBufferContents(QPainter &paint,
+  int cursorLine, int cursorCol)
 {
   // when drawing text, erase background automatically
   paint.setBackgroundMode(OpaqueMode);
@@ -343,7 +378,7 @@ void Editor::drawBufferContents(QPainter &paint)
   Array<char> text(visibleCols);
 
   // set sel{Low,High}{Line,Col}
-  normalizeSelect();
+  normalizeSelect(cursorLine, cursorCol);
 
   // paint the window
   for (int line = firstVisibleLine; y < height(); line++) {
@@ -479,11 +514,17 @@ void Editor::drawBufferContents(QPainter &paint)
     }
 
     // draw the cursor as a line
-    if (line == cursorLine()) {
+    if (line == cursorLine) {
+      // just testing the mechanism that catches exceptions
+      // raised while drawing
+      //if (line == 5) {
+      //  THROW(xBase("aiyee! sample exception!"));
+      //}
+
       paint.save();
 
       paint.setPen(cursorColor);
-      x = leftMargin + fontWidth * (cursorCol() - firstVisibleCol);
+      x = leftMargin + fontWidth * (cursorCol - firstVisibleCol);
       paint.drawLine(x,y, x, y+fontHeight-1);
       paint.drawLine(x-1,y, x-1, y+fontHeight-1);
 
@@ -542,7 +583,7 @@ void Editor::cursorToBottom()
 {
   cursorTo(max(buffer->numLines()-1,0), 0);
   scrollToCursor();
-  redraw();
+  //redraw();    // 'scrollToCursor' does 'redraw()' automatically
 }
 
 
@@ -935,6 +976,14 @@ void Editor::keyPressEvent(QKeyEvent *k)
 }
 
 
+void Editor::keyReleaseEvent(QKeyEvent *k)
+{
+  TRACE("input", "keyRelease: " << toString(*k));
+
+  k->ignore();
+}
+
+
 void Editor::insertAtCursor(char const *text)
 {
   //buffer->changed = true;
@@ -1113,7 +1162,8 @@ void Editor::editUndo()
 {
   if (buffer->canUndo()) {
     buffer->undo();
-    redraw();
+    turnOffSelection();
+    scrollToCursor();
   }
   else {
     QMessageBox::information(this, "Can't undo",
@@ -1125,7 +1175,8 @@ void Editor::editRedo()
 {
   if (buffer->canRedo()) {
     buffer->redo();
-    redraw();
+    turnOffSelection();
+    scrollToCursor();
   }
   else {
     QMessageBox::information(this, "Can't redo",
@@ -1197,7 +1248,8 @@ void Editor::editDelete()
 
 void Editor::showInfo(char const *infoString)
 {
-  QWidget *main = qApp->mainWidget();
+  //QWidget *main = qApp->mainWidget();   // delete me
+  QWidget *main = topLevelWidget();
 
   if (!infoBox) {
     infoBox = new QLabel(main, "infoBox",
@@ -1337,6 +1389,105 @@ string Editor::getSelectedText()
     normalizeSelect();   // this is why this method is not 'const' ...
     return buffer->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
   }
+}
+
+
+// ----------------- nonfocus situation ------------------
+void Editor::focusInEvent(QFocusEvent *e)
+{
+  trace("focus") << "editor(" << (void*)this << "): focus in\n";
+  QWidget::focusInEvent(e);
+
+  // move the editing cursor to where I last had it
+  cursorTo(nonfocusCursorLine, nonfocusCursorCol);
+
+  // I don't want to listen while I'm adding changes of
+  // my own, because the way the view moves (etc.) on
+  // changes is different
+  stopListening();
+}
+
+void Editor::focusOutEvent(QFocusEvent *e)
+{
+  trace("focus") << "editor(" << (void*)this << "): focus out\n";
+  QWidget::focusOutEvent(e);
+
+  stopListening();    // just in case
+
+  // listen to my buffer for any changes coming from
+  // other windows
+  startListening();
+}
+
+
+void Editor::stopListening()
+{
+  if (listening) {
+    // remove myself from the list
+    buffer->core().observers.removeItem(this);
+
+    listening = false;
+  }
+}
+
+void Editor::startListening()
+{
+  xassert(!listening);
+
+  // add myself to the list
+  buffer->core().observers.append(this);
+  listening = true;
+
+  // remember the buffer's current cursor position
+  nonfocusCursorLine = buffer->line();
+  nonfocusCursorCol = buffer->col();
+}
+
+
+// General goal for dealing with inserted lines:  The cursor in the
+// nonfocus window should not change its vertical location within the
+// window (# of pixels from top window edge), and should remain on the
+// same line (sequence of chars).
+
+void Editor::observeInsertLine(BufferCore const &buf, int line)
+{
+  if (line <= nonfocusCursorLine) {
+    nonfocusCursorLine++;
+    moveView(+1, 0);
+  }
+
+  redraw();
+}
+
+void Editor::observeDeleteLine(BufferCore const &buf, int line)
+{
+  if (line < nonfocusCursorLine) {
+    nonfocusCursorLine--;
+    moveView(-1, 0);
+  }
+
+  redraw();
+}
+
+
+// For inserted characters, I don't do anything special, so
+// the cursor says in the same column of text.
+
+void Editor::observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length)
+{
+  redraw();
+}
+
+void Editor::observeDeleteText(BufferCore const &buf, int line, int col, int length)
+{
+  redraw();
+}
+
+
+void Editor::inputProxyDetaching()
+{
+  trace("mode") << "clearing mode pixmap\n";
+  status->mode->setText("");   // no pixmap
 }
 
 

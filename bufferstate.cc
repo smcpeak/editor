@@ -46,6 +46,9 @@ void EditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
 BufferState::BufferState()
   : Buffer(),
     filename(),
+    title(),
+    windowMenuId(0),
+    hotkey(0),
     //changed(false),
     highlighter(NULL),
     savedState()

@@ -103,7 +103,7 @@ LexerState LexHighlighter::getSavedState(int line)
 }
 
 
-void LexHighlighter::insertLine(BufferCore const &, int line)
+void LexHighlighter::observeInsertLine(BufferCore const &, int line)
 {
   // if region ends after 'line', then now it ends one line later
   if (!changedIsEmpty() &&
@@ -124,7 +124,7 @@ void LexHighlighter::insertLine(BufferCore const &, int line)
 }
 
 
-void LexHighlighter::deleteLine(BufferCore const &, int line)
+void LexHighlighter::observeDeleteLine(BufferCore const &, int line)
 {
   // if region ends after 'line', then now it ends one line earlier
   if (!changedIsEmpty() &&
@@ -145,12 +145,12 @@ void LexHighlighter::deleteLine(BufferCore const &, int line)
 
 
 
-void LexHighlighter::insertText(BufferCore const &, int line, int, char const *, int)
+void LexHighlighter::observeInsertText(BufferCore const &, int line, int, char const *, int)
 {
   addToChanged(line);
 }
 
-void LexHighlighter::deleteText(BufferCore const &, int line, int, int)
+void LexHighlighter::observeDeleteText(BufferCore const &, int line, int, int)
 {
   addToChanged(line);
 }

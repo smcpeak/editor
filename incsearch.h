@@ -9,13 +9,14 @@
 #include "buffer.h"         // Buffer
 #include <qstring.h>        // QString
 
-class QLabel;               // qlabel.h
+//class QLabel;               // qlabel.h
+class StatusDisplay;        // status.h
 
 
 class IncSearch : public AttachInputProxy {
 private:     // data
   // label for reporing status
-  QLabel *status;              // (nullable serf)
+  StatusDisplay *status;       // (nullable serf)
   QString prevStatusText;      // text previously in 'status'
 
   // cursor location where search began
@@ -51,6 +52,10 @@ private:     // data
   string replaceText;
   
 private:     // funcs
+  // return the editor to the cursor,view that it had
+  // when the search began
+  void resetToSearchStart();
+
   // search from curLine/curCol to find 'text'; return true
   // if we find a match
   bool findString(Buffer::FindStringFlags flags);
@@ -87,7 +92,7 @@ private:     // funcs
   bool replace();
     
 public:      // funcs
-  IncSearch(QLabel *status);
+  IncSearch(StatusDisplay *status);
   ~IncSearch();
 
   // AttachInputProxy funcs

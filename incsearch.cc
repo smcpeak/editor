@@ -3,12 +3,15 @@
 
 #include "incsearch.h"     // this module
 #include "editor.h"        // Editor
+#include "pixmaps.h"       // Pixmaps
+#include "status.h"        // StatusDisplay
+#include "trace.h"         // trace
 
 #include <qevent.h>        // QKeyEvent
 #include <qlabel.h>        // QLabel
 
 
-IncSearch::IncSearch(QLabel *s)
+IncSearch::IncSearch(StatusDisplay *s)
   : status(s)
 {
   // other fields init'd in attach()
@@ -40,7 +43,7 @@ void IncSearch::attach(Editor *newEd)
   AttachInputProxy::attach(newEd);
 
   if (status) {
-    prevStatusText = status->text();
+    prevStatusText = status->status->text();
   }
 
   beginLine = ed->cursorLine();
@@ -50,7 +53,7 @@ void IncSearch::attach(Editor *newEd)
   beginFVCol = ed->firstVisibleCol;
 
   curFlags = Buffer::FS_CASE_INSENSITIVE;
-  
+
   mode = M_SEARCH;
 
   if (ed->selectEnabled) {
@@ -125,7 +128,7 @@ void IncSearch::detach()
   // leave the hitText alone, user can press Esc to eliminate it
 
   if (status) {
-    status->setText(prevStatusText);
+    status->status->setText(prevStatusText);
   }
 
   AttachInputProxy::detach();
@@ -161,12 +164,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
     switch (k->key()) {
       case Qt::Key_Escape:
         // return to original location
-        ed->cursorTo(beginLine, beginCol);
-        ed->selectEnabled = false;
-        ed->hitText = "";
-
-        ed->setView(beginFVLine, beginFVCol);
-        ed->redraw();
+        resetToSearchStart();
 
         detach();
         return true;
@@ -178,10 +176,16 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
         return true;
 
       case Qt::Key_Backspace:
-        if (text.length() > 0) {               
+        if (text.length() > 0) {
           // remove final character
           text = string(text, text.length()-1);
-          findString();     // adjust match
+          if (text.length() > 0) {
+            findString();     // adjust match
+          }
+          else {
+            // return to the search start position
+            resetToSearchStart();
+          }
         }
         return true;
 
@@ -245,7 +249,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
         removedText = ed->getSelectedText();
 
         // remove the selected occurrence of the match string
-        ed->cursorLeftBy(text.length());
+        //ed->cursorLeftBy(text.length());   // changed semantics of 'deleteAtCursor' to not require this
         ed->deleteAtCursor(text.length());
 
         // change mode
@@ -269,6 +273,16 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
 
   // unknown key: don't let it through, but don't handle it either
   return true;
+}
+
+
+void IncSearch::resetToSearchStart()
+{
+  ed->cursorTo(beginLine, beginCol);
+  ed->setView(beginFVLine, beginFVCol);
+  ed->selectEnabled = false;
+  ed->hitText = "";
+  ed->redraw();
 }
 
 
@@ -302,7 +316,13 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
 void IncSearch::updateStatus()
 {
   if (status) {
-    status->setText(statusText());
+    status->status->setText(statusText());
+
+    trace("mode") << "setting search-mode pixmap\n";
+    status->mode->setPixmap(
+      mode==M_SEARCH?          pixmaps->search :
+      mode==M_GET_REPLACEMENT? pixmaps->getReplace :
+                               pixmaps->replace);
   }
 
   if (!match) {
@@ -403,7 +423,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
 
       case Qt::Key_Backspace:
         if (replaceText.length() > 0) {
-          ed->cursorLeftBy(1);
+          //ed->cursorLeftBy(1);
           ed->deleteAtCursor(1);
 
           replaceText = string(replaceText, replaceText.length()-1);
@@ -434,7 +454,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
 bool IncSearch::replace()
 {
   // remove match text
-  ed->cursorLeftBy(text.length());
+  //ed->cursorLeftBy(text.length());
   ed->deleteAtCursor(text.length());
 
   // insert replacement text

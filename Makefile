@@ -34,6 +34,8 @@ TOCLEAN += *.o *.d
 
 
 # Qt meta-object compiler
+.PRECIOUS: moc_%.cc
+TOCLEAN += moc_*.cc
 moc_%.cc: %.h
 	moc -o $@ $^
 
@@ -106,6 +108,8 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 
 # ------------------ the editor ---------------------
 EDITOR_OBJS := \
+  status.o \
+  pixmaps.o \
   incsearch.o \
   editor.o \
   moc_editor.o \

@@ -14,17 +14,24 @@ class QRangeControl;        // qrangecontrol.h
 class QLabel;               // qlabel.h
 class StyleDB;              // styledb.h
 class InputProxy;           // inputproxy.h
+class StatusDisplay;        // status.h
 
 
 // control to edit the contents of a buffer; it's possible (and
 // expected) to change which buffer a given Editor edits after
 // creating the Editor object
-class Editor : public QWidget, public EditingState {
+class Editor
+  : public QWidget,          // I am a Qt widget
+    public EditingState,     // view offset, selection info, etc.
+    public BufferObserver {  // to watch my file while I don't have focus
   Q_OBJECT
 
 private:     // data
   // floating info box
   QLabel *infoBox;               // (nullable owner)
+
+  // access to the status display
+  StatusDisplay *status;         // (nullable serf)
 
 public:      // data
   // ------ editing state -----
@@ -102,6 +109,20 @@ public:      // data
   int fontHeight;
   int fontWidth;
 
+  // ------ stuff for when I don't have focus ------
+  // when I don't have the focus, two things are different:
+  //   - I'm a listener to my own buffer, to track the
+  //     changes made in another window.
+  //   - nonfocusCursorLine/Col are valid/relevant/correct
+  
+  // true if I've registered myself as a listener; there
+  // are a few cases where I don't have the focus, but
+  // I also am not a listener (like initialization)
+  bool listening;
+
+  // location of the cursor when I left it
+  int nonfocusCursorLine, nonfocusCursorCol;
+
   // ------ event model hacks ------
   // when this is true, we ignore the scrollToLine and scrollToCol
   // signals, to avoid recursion with the scroll bars
@@ -135,13 +156,17 @@ private:     // funcs
   void setCursorToClickLoc(QMouseEvent *m);
 
   // draw text etc. on a QPainter
-  void drawBufferContents(QPainter &paint);
+  void drawBufferContents(QPainter &paint, int cursorLine, int cursorCol);
   void setDrawStyle(QPainter &paint, bool &underlining,
                     StyleDB *db, Style s);
 
   // offset from one line to the next
   int lineHeight() const { return fontHeight+interLineSpace; }
-                    
+
+  // nonfocus listening
+  void startListening();
+  void stopListening();
+
   // debugging
   static string lineColStr(int line, int col);
   string firstVisStr() const { return lineColStr(firstVisibleLine, firstVisibleCol); }
@@ -152,13 +177,16 @@ protected:   // funcs
   virtual bool event(QEvent *e);
   virtual void paintEvent(QPaintEvent *);
   virtual void keyPressEvent(QKeyEvent *k);
+  virtual void keyReleaseEvent(QKeyEvent *k);
   virtual void resizeEvent(QResizeEvent *r);
   virtual void mousePressEvent(QMouseEvent *m);
   virtual void mouseMoveEvent(QMouseEvent *m);
   virtual void mouseReleaseEvent(QMouseEvent *m);
+  virtual void focusInEvent(QFocusEvent *e);
+  virtual void focusOutEvent(QFocusEvent *e);
 
 public:      // funcs
-  Editor(BufferState *buf,
+  Editor(BufferState *buf, StatusDisplay *status,
          QWidget *parent=NULL, const char *name=NULL);
   ~Editor();
 
@@ -183,7 +211,8 @@ public:      // funcs
   void cursorDownBy(int amt)              { moveCursorBy(+amt, 0); }
 
   // set sel{Low,High}{Line,Col}
-  void normalizeSelect();
+  void normalizeSelect(int cursorLine, int cursorCol);
+  void normalizeSelect() { normalizeSelect(cursorLine(), cursorCol()); }
 
   // change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor
@@ -250,7 +279,17 @@ public:      // funcs
 
   // get selected text, or "" if nothing selected
   string getSelectedText();
-    
+
+  // BufferObserver funcs
+  virtual void observeInsertLine(BufferCore const &buf, int line);
+  virtual void observeDeleteLine(BufferCore const &buf, int line);
+  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length);
+  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length);
+
+  // called by an input proxy when it detaches; I can
+  // reset the mode pixmap then
+  virtual void inputProxyDetaching();
+
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);
