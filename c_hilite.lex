@@ -247,8 +247,8 @@ TICK          [\']
   /* my extension */
 "==>"              return ST_OPERATOR;
 
-  /* to avoid backing up */
-".."               return ST_NORMAL;
+  /* to avoid backing up; treat as two consecutive "." */
+".."               return ST_OPERATOR;
 
   /* special values */
 "true"|"false"|"null"|"TRUE"|"FALSE"|"NULL" {

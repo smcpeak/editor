@@ -107,7 +107,7 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
   fileNew();
 
   // temporary: insert some dummy text into the buffer
-  theBuffer.readFile("buffer.cc");
+  //theBuffer.readFile("buffer.cc");
   
   // temporary: make and attach a C++ highlighter
   theBuffer.highlighter = new C_Highlighter(theBuffer);
@@ -140,7 +140,11 @@ void EditorWindow::fileOpen()
   if (name.isEmpty()) {
     return;
   }
+  fileOpenFile(name);
+}
 
+void EditorWindow::fileOpenFile(char const *name)
+{
   theBuffer.clear();
   editor->resetView();
 
@@ -242,6 +246,10 @@ int main(int argc, char **argv)
 
   EditorWindow ed(NULL /*parent*/, "main editor window");
   ed.setCaption("An Editor");
+  
+  if (argc >= 2) {
+    ed.fileOpenFile(argv[1]);
+  }
 
   a.setMainWidget(&ed);
   ed.show();

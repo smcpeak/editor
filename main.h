@@ -36,6 +36,9 @@ private:     // funcs
 public:      // funcs
   EditorWindow(QWidget *parent=0, char const *name=0);
 
+  // open and begin editing a particular file
+  void fileOpenFile(char const *fname);
+
 public slots:
   void fileNew();
   void fileOpen();
