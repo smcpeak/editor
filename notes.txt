@@ -164,4 +164,32 @@ major todos:
   - support for multiple simultanous files
   - syntax highlighting!
   - undo
+  - incremental search
+  - redesign buffer representation, interface (think about undo...)
+  - selections, copy, paste
 
+bug: backspace causes segfault!
+
+new design for buffer interface:
+  - manipulate the spine:
+    - insert a new line at n
+    - delete the blank line at n (must already be blank!)
+  - manipulate a single line:
+    - insert a given string at a given line/col
+    - delete a given # of chars at a given line/col
+  - manipulate the cursor (purely for undo/redo)
+    - move to absolute line/col
+    - move to relative line/col
+
+this interface seems to work well with:
+  - buffer representation itself
+  - undo/redo log
+  - incremental lexer and syntax highlighter
+
+new buffer repr:
+  - spine of char*, terminated by '\n', and with no add'l gap
+  - gap on the spine
+  - *one* most-recently-edited line with gap repr (and NULL spine ptr, maybe)
+  - NULL spine ptr for blank lines
+  
+end 2/11/03 00:03
