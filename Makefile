@@ -72,7 +72,7 @@ C_HILITE_OBJS := \
   buffer.o \
   style.o \
   comment.yy.o
--include $(C_HILITE_OBJS:.o=.d)
+#-include $(C_HILITE_OBJS:.o=.d)   # redundant with EDITOR_OBJS
 
 TOCLEAN += c_hilite
 c_hilite: $(C_HILITE_OBJS) c_hilite.cc
@@ -91,7 +91,9 @@ EDITOR_OBJS := \
   bufferstate.o \
   style.o \
   qtutil.o \
-  styledb.o
+  styledb.o \
+  c_hilite.o \
+  comment.yy.o
 -include $(EDITOR_OBJS:.o=.d)
 
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h

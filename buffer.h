@@ -184,9 +184,13 @@ public:
 
 // interface for observing changes to a BufferCore
 class BufferObserver {
+protected:
+  // this is to silence a g++ warning; it is *not* the case that
+  // clients are allowed to delete objects known only as
+  // BufferObserver implementors
+  virtual ~BufferObserver() {}
+
 public:
-  virtual ~BufferObserver() {}       // silence warning
-  
   // These are analogues of the BufferCore manipulation interface, but
   // we also pass the BufferCore itself so the observer doesn't need
   // to remember which buffer it's observing.  These are called

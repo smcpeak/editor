@@ -25,7 +25,7 @@ StyleDB::StyleDB()
   ENTRY(ST_SELECTION,    FV_NORMAL,  0xFF, 0xFF, 0xFF,  selectBG);
   ENTRY(ST_HITS,         FV_NORMAL,  0xFF, 0xFF, 0xFF,  hitBG);
   ENTRY(ST_COMMENT,      FV_ITALIC,  0xB0, 0xC0, 0xA0,  bg);
-  ENTRY(ST_STRING,       FV_NORMAL,  0xFF, 0xBB, 0x00,  bg);
+  ENTRY(ST_STRING,       FV_NORMAL,  0xFF, 0xFF, 0x00,  bg);
   ENTRY(ST_KEYWORD,      FV_NORMAL,  0x60, 0xFF, 0x70,  bg);
   ENTRY(ST_NUMBER,       FV_BOLD,    0xFF, 0x80, 0x00,  bg);
   ENTRY(ST_NUMBER2,      FV_BOLD,    0xFF, 0x40, 0x00,  bg);

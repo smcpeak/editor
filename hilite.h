@@ -10,7 +10,11 @@ class LineStyle;           // style.h
 
 
 class Highlighter : public BufferObserver {
-public:
+public:                             
+  // clients *are* allowed to delete objects known only as
+  // implementors of Highlighter
+  virtual ~Highlighter() {}
+
   // fill 'style' with the styles for 'line' in 'buf'
   virtual void highlight(BufferCore const &buf, int line, LineStyle &style)=0;
 };

@@ -3,13 +3,19 @@
 
 #include "bufferstate.h"      // this module
 
+
 BufferState::BufferState()
   : Buffer(),
-    filename()
+    filename(),
+    highlighter(NULL)
 {}
 
 BufferState::~BufferState()
-{}
+{
+  if (highlighter) {
+    delete highlighter;
+  }
+}
 
 
 void BufferState::clear()

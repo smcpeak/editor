@@ -304,6 +304,9 @@ void Editor::drawBufferContents(QPainter &paint)
     // number of characters from this line that are visible
     int visibleLineChars = 0;
 
+    // nominally the entire line is normal text
+    styles.clear(ST_NORMAL);
+
     // fill with text from the buffer
     if (line < buffer->numLines()) {
       int lineLen = buffer->lineLength(line);
@@ -312,11 +315,13 @@ void Editor::drawBufferContents(QPainter &paint)
         buffer->getLine(line, firstVisibleCol, text, amt);
         visibleLineChars = amt;
       }
+
+      // apply highlighting
+      if (buffer->highlighter) {
+        buffer->highlighter->highlight(*buffer, line, styles);
+      }
     }
     xassert(visibleLineChars <= visibleCols);
-
-    // nominally the entire line is normal text
-    styles.clear(ST_NORMAL);
 
     // incorporate effect of selection
     if (selectEnabled &&

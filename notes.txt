@@ -319,6 +319,8 @@ scrolling through it, this will highlight only as far as the
 user has seen, which might be a good thing (perhaps want preference
 to demand-highlight the whole thing on startup)
 
+done with waterline implementation
+
 
 
 

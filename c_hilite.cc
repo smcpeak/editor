@@ -80,8 +80,8 @@ void C_Highlighter::addToChanged(int line)
   }
   else {
     // line must be in changed region already, nothing to do
-    xassert(changedEnd <= line &&
-                          line < changedEnd);
+    xassert(changedBegin <= line &&
+                            line < changedEnd);
   }
 
   checkInvar();

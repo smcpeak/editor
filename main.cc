@@ -6,6 +6,7 @@
 #include "editor.h"          // Editor
 #include "exc.h"             // XOpen
 #include "trace.h"           // TRACE_ARGS
+#include "c_hilite.h"        // C_Highlighter
 
 #include <qapplication.h>    // QApplication
 #include <qmenubar.h>        // QMenuBar
@@ -97,6 +98,9 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   // temporary: insert some dummy text into the buffer
   theBuffer.readFile("buffer.cc");
+  
+  // temporary: make and attach a C++ highlighter
+  theBuffer.highlighter = new C_Highlighter(theBuffer);
 }
 
 
