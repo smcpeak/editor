@@ -166,8 +166,13 @@ void EditorWindow::fileSaveAs()
 
 void EditorWindow::helpAbout()
 {
-  QMessageBox::about(this, "An Editor",
-                     "This is a text editor, in case you didn't know.");
+  QMessageBox::about(this, "About...",
+                     "This is a text editor, in case you didn't know.\n"
+                     "It doesn't have a name yet.\n"
+                     "\n"
+                     "Step 1.  Write a good editor.\n"
+                     "Step 2.  ???\n"
+                     "Step 3.  Profit!");
 }
 
 
