@@ -40,6 +40,8 @@ public slots:
   void fileSave();
   void fileSaveAs();
   void helpAbout();
+  
+  void editorViewChanged();
 };
 
 

@@ -19,8 +19,6 @@
 Editor::Editor(Buffer *buf,
                QWidget *parent=NULL, const char *name=NULL)
   : QWidget(parent, name, WRepaintNoErase | WNorthWestGravity),
-    horizScroll(NULL),
-    vertScroll(NULL),
     buffer(buf),
     cursor(buf),
     // visible line/col inited by resetView()
@@ -80,18 +78,7 @@ void Editor::updateView()
   lastVisibleCol = firstVisibleCol
     + (width() - leftMargin) / fontWidth - 1;
 
-  // set the scrollbars
-  if (horizScroll) {
-    horizScroll->setRange(0, max(buffer->totColumns(), firstVisibleCol));
-    horizScroll->setSteps(1, visCols());
-    horizScroll->setValue(firstVisibleCol);
-  }
-
-  if (vertScroll) {
-    vertScroll->setRange(0, max(buffer->totLines(), firstVisibleLine));
-    vertScroll->setSteps(1, visLines());
-    vertScroll->setValue(firstVisibleLine);
-  }
+  emit viewChanged();
 }
 
 

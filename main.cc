@@ -57,13 +57,12 @@ EditorWindow::EditorWindow(QWidget *parent=0, char const *name=0)
 
   editor = new Editor(&theBuffer, editArea, "editor widget");
   editor->setFocus();
+  connect(editor, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
 
   vertScroll = new QScrollBar(QScrollBar::Vertical, editArea, "vertical scrollbar");
-  editor->vertScroll = vertScroll;
   connect(vertScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToLine(int) ));
 
   horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
-  editor->horizScroll = horizScroll;
   connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
 
   QHBox *statusArea = new QHBox(mainArea, "status area");
@@ -177,6 +176,24 @@ void EditorWindow::helpAbout()
                      "Step 1.  Write a good editor.\n"
                      "Step 2.  ???\n"
                      "Step 3.  Profit!");
+}
+
+
+void EditorWindow::editorViewChanged()
+{
+  // set the scrollbars
+  horizScroll->setRange(0, max(editor->buffer->totColumns(), editor->firstVisibleCol));
+  horizScroll->setSteps(1, editor->visCols());
+  horizScroll->setValue(editor->firstVisibleCol);
+
+  vertScroll->setRange(0, max(editor->buffer->totLines(), editor->firstVisibleLine));
+  vertScroll->setSteps(1, editor->visLines());
+  vertScroll->setValue(editor->firstVisibleLine);
+
+  // I want the user to interact with line/col with a 1:1 origin,
+  // even though the Buffer interface uses 0:0
+  position->setText(QString(stringc << (editor->cursor.line()+1) << ":"
+                                    << (editor->cursor.col()+1)));
 }
 
 

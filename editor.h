@@ -19,11 +19,6 @@ class Editor : public QWidget {
   Q_OBJECT
 
 public:      // data
-  // ------ associated controls ------       
-  // (nullable serf) when the view changes, these scrollbars will
-  // be updated, if they're not NULL
-  QRangeControl *horizScroll, *vertScroll;
-
   // ------ editing state -----
   // buffer whose text we're editing
   Buffer *buffer;           // (serf)
@@ -80,7 +75,8 @@ public:      // funcs
   // QWidget funcs
   virtual void setFont(QFont &f);
 
-  // recompute lastVisibleLine/Col, and set the scrollbars
+  // recompute lastVisibleLine/Col, and set the scrollbars;
+  // calls viewChanged()
   void updateView();
 
   // set cursor and view to 0,0
@@ -98,12 +94,16 @@ public:      // funcs
   int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
 
 public slots:
-  // automatically calls updateView()
+  // automatically calls updateView() and viewChanged()
   virtual void update();
 
   // slots to respond to scrollbars
   virtual void scrollToLine(int line);
   virtual void scrollToCol(int col);
+  
+signals:
+  // emitted when the buffer view port or cursor changes
+  void viewChanged();
 };
 
 #endif // EDITOR_H
