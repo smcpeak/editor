@@ -40,6 +40,12 @@ moc_%.cc: %.h
 	moc -o $@ $^
 
 
+# Qt designer translator
+%.h %.cc: %.ui
+	uic -o $*.h $*.ui
+	uic -o $*.cc -i $*.h $*.ui
+
+
 # ---------------- gap test program -----------------
 TOCLEAN += testgap
 testgap: gap.h testgap.cc
@@ -127,7 +133,9 @@ EDITOR_OBJS := \
   lex_hilite.o \
   flexlexer.o \
   comment.yy.o \
-  inputproxy.o
+  inputproxy.o \
+  gotoline.o \
+  moc_gotoline.o
 -include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor

@@ -163,6 +163,9 @@ private:     // funcs
 
   // offset from one line to the next
   int lineHeight() const { return fontHeight+interLineSpace; }
+  
+  // helper
+  int stcHelper(int firstVis, int lastVis, int cur, int gap);
 
   // nonfocus listening
   void startListening();
@@ -237,7 +240,8 @@ public:      // funcs
   // scroll the view the minimum amount so that the cursor line/col
   // is visible; if it's already visible, do nothing; 'edgeGap' says
   // how many lines/cols of extra space on the far side of the cursor
-  // we want
+  // we want; if 'edgeGap' is -1, then if the cursor isn't already visible,
+  // center the viewport
   void scrollToCursor(int edgeGap=0);
   void scrollToCursor_noRedraw(int edgeGap=0);
 

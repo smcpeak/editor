@@ -11,8 +11,10 @@
 #include "strutil.h"         // sm_basename
 #include "mysig.h"           // printSegfaultAddrs
 #include "status.h"          // StatusDisplay
+#include "gotoline.h"        // GotoLine
 
 #include <string.h>          // strrchr
+#include <stdlib.h>          // atoi
 
 #include <qmenubar.h>        // QMenuBar
 #include <qscrollbar.h>      // QScrollBar
@@ -121,6 +123,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     edit->insertItem("&Delete", editor, SLOT(editDelete()));
     edit->insertSeparator();
     edit->insertItem("Inc. &Search", this, SLOT(editISearch()), CTRL+Key_S);
+    edit->insertItem("&Goto Line ...", this, SLOT(editGotoLine()), ALT+Key_G);
 
     QPopupMenu *window = new QPopupMenu(this);
     menuBar->insertItem("&Window", window);
@@ -136,6 +139,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     QPopupMenu *help = new QPopupMenu(this);
     menuBar->insertItem("&Help", help);
     help->insertItem("&About ...", this, SLOT(helpAbout()));
+    help->insertItem("About &Qt ...", this, SLOT(helpAboutQt()));
   }
 
   setIcon(pixmaps->icon);
@@ -327,6 +331,38 @@ void EditorWindow::fileClose()
 void EditorWindow::editISearch()
 {
   isearch->attach(editor);
+}                        
+
+
+void EditorWindow::editGotoLine()
+{
+  GotoLine gl(this, NULL /*name*/, true /*modal*/,
+              // these flags are the defaults for dialogs, as found in
+              // qt/src/kernel/qwidget_x11.cpp line 285, except I
+              // have remove WStyle_ContextHelp
+              WStyle_Customize | WStyle_NormalBorder | WStyle_Title | WStyle_SysMenu);
+              
+  // I find it a bit bothersome to do this manually.. perhaps there
+  // is a way to query the tab order, and always set focus to the
+  // first widget in that order?
+  gl.lineNumber->setFocus();
+              
+  //bool hasWT = gl.testWFlags(WStyle_ContextHelp);
+  //cout << "hasWT: " << hasWT << endl;
+  
+  if (gl.exec()) {
+    // user pressed Ok (or Enter)
+    string s = string(gl.lineNumber->text());
+    //cout << "text is \"" << s << "\"\n";
+    
+    if (s.length()) {
+      int n = atoi(s);
+      
+      cout << "going to line " << n << endl;
+      editor->cursorTo(n-1, 0);
+      editor->scrollToCursor(-1 /*center*/);
+    }
+  }
 }
 
 
@@ -370,6 +406,12 @@ void EditorWindow::helpAbout()
                      "Step 1.  Write a good editor.\n"
                      "Step 2.  ???\n"
                      "Step 3.  Profit!");
+}
+
+
+void EditorWindow::helpAboutQt()
+{
+  QMessageBox::aboutQt(this, "An editor");
 }
 
 

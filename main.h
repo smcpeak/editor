@@ -78,6 +78,7 @@ public slots:
   void fileClose();
 
   void editISearch();
+  void editGotoLine();
 
   void windowNewWindow();
   void windowOccupyLeft();
@@ -87,6 +88,7 @@ public slots:
   void windowBufferChoice();
 
   void helpAbout();
+  void helpAboutQt();
 
   void editorViewChanged();
 };

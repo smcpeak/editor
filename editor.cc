@@ -80,6 +80,13 @@ Editor::~Editor()
 void Editor::cursorTo(int line, int col)
 {
   buffer->moveAbsCursor(line, col);
+  
+  // set the nonfocus location too, in case the we happen to
+  // not have the focus right now (e.g. the Alt+G dialog); 
+  // actually, the need for thisexposes the fact that my current
+  // solution to nonfocus cursor issues isn't very good.. hmm...
+  nonfocusCursorLine = line;
+  nonfocusCursorCol = col;
 }
 
 void Editor::resetView()
@@ -1062,26 +1069,45 @@ void Editor::spliceNextLine()
   buffer->deleteChar();
 }
 
+                     
+// for a particular dimension, return the new start coordinate
+// of the viewport
+int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
+{
+  bool center = false;
+  if (gap == -1) {
+    center = true;
+    gap = 0;
+  }
+
+  int width = lastVis - firstVis + 1;
+      
+  bool changed = false;
+  if (cur-gap < firstVis) {
+    firstVis = max(0, cur-gap);
+    changed = true;
+  }
+  else if (cur+gap > lastVis) {
+    firstVis += cur+gap - lastVis;
+    changed = true;
+  }
+                   
+  if (changed && center) {
+    // we had to adjust the viewport; make it actually centered
+    firstVis = max(0, cur - width/2);
+  }
+  
+  return firstVis;
+}
 
 void Editor::scrollToCursor_noRedraw(int edgeGap)
 {
-  int fvline = firstVisibleLine;
-  int fvcol = firstVisibleCol;
+  int fvline = stcHelper(firstVisibleLine, lastVisibleLine, 
+                         cursorLine(), edgeGap);
+                         
+  int fvcol = stcHelper(firstVisibleCol, lastVisibleCol,
+                        cursorCol(), edgeGap);
 
-  if (cursorCol()-edgeGap < firstVisibleCol) {
-    fvcol = max(0, cursorCol()-edgeGap);
-  }
-  else if (cursorCol()+edgeGap > lastVisibleCol) {
-    fvcol += (cursorCol()+edgeGap - lastVisibleCol);
-  }
-
-  if (cursorLine()-edgeGap < firstVisibleLine) {
-    fvline = max(0, cursorLine()-edgeGap);
-  }
-  else if (cursorLine()+edgeGap > lastVisibleLine) {
-    fvline += (cursorLine()+edgeGap - lastVisibleLine);
-  }
-  
   setView(fvline, fvcol);
 }
   

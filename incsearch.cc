@@ -311,7 +311,7 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
     ed->selectCol = curCol;
     ed->selectEnabled = true;
 
-    ed->scrollToCursor(3);
+    ed->scrollToCursor(-1 /*center*/);
   }
 
   ed->hitText = text;

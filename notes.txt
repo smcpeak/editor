@@ -16,22 +16,24 @@ TODOs:
   - highlight .cpp like .cc
   - print tabs as (e.g.) 8 spaces
   - implement ctrl+alt+up
-  - fix problem where this sequence leads to the menu having kbd focus:
+  - bug: this sequence leads to the menu having kbd focus:
     - alt depressed
     - '1' depressed
-    - alt released     - in windows-style mode, alt-release normally gives focus..
+    - alt released     <- in windows-style mode, alt-release normally gives focus..
     - '1' released
   - find-files enhanced to have several directories available, and to use
     the directory in which the current file resides by default
   - case-sensitive search by default if any chars are capitals
-  - parenthesis balancing
-  - Alt+G: goto line
+  - parenthesis balancing, and Alt-[/] to find matching delimiter
   - bug: selection in nonfocused window causes assertion failure
   - Ctrl+K: kill (to clipboard) the line
   - Ctrl+J: justify paragraph
+  - File|Revert to saved, and keybinding F12
+  - bug: selected text at line start causes bolded characters after it
+    to be underlined
+  - performance!  smarter updates, etc.
   
 working on:
-  - performance!  smarter updates, etc.
 
 implemented:
   + ctrl-z, ctrl-w should work while in search mode
@@ -45,6 +47,9 @@ implemented:
   / window menu Alt-n numbers should be underlined to act as simple
     hotkeys when the window is open (quite difficult)
   * alt-d: insert date/time
+  * Alt+G: goto line
+  * search should scroll the found text into the middle of the window
+    if the window has to be scrolled
 
 
 
@@ -779,4 +784,13 @@ state that contributes to a frame:
   - cursor location
   - selection state (active, mark location)
   - search highlight string
-  
+
+made a significant improvement simply by avoiding the creation
+of a buffer for the entire window
+
+end 08/26/03 22:14
+
+------------------
+start 08/27/03 01:54
+
+EOF
