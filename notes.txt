@@ -97,3 +97,29 @@ resuming work after a long time..
 
 renaming Cursor to Position.. done
 
+end 7/18/02 13:45
+
+---------------
+start 7/18/02 17:36
+
+what I need from a widget set / toolkit:
+  - menus
+  - scroll bars that I can put at the sides of my content windows
+  - file chooser dialog
+  - ability to make simple custom dialogs; needed controls:
+    - static label
+    - text input (with optional dropdown history)
+    - list box with at least single selection
+    - checkbox, radio button
+    - push buttons
+
+-------------------
+start 2/08/03 02:17
+
+looking at this again.  I've found my widget set: Qt.  so the
+short-term project now is to embed what I have inside a Qt
+framework instead of an X11 framework
+
+also made a tentative decision to use Guile for my scripting
+engine when the time comes
+

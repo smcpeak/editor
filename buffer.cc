@@ -146,7 +146,7 @@ void Buffer::readFile(char const *fname)
 }
 
 
-void Buffer::writeFile(char const *fname)
+void Buffer::writeFile(char const *fname) const
 {
   // use FILE ops for writing so we don't do an IPC for
   // each line; in this case automatic buffering is good
@@ -157,9 +157,11 @@ void Buffer::writeFile(char const *fname)
   }
 
   for (int line=0; line<numLines; line++) {
-    if (1 != fwrite(lines[line].getText(), 
-                    lines[line].getLength(), 1, fp)) {
-      xsyserror("write");
+    TextLine const &tl = lines[line];
+    if (tl.getLength()) {
+      if (1 != fwrite(tl.getText(), tl.getLength(), 1, fp)) {
+        xsyserror("write");
+      }
     }
 
     if (line+1 < numLines) {
@@ -176,7 +178,7 @@ void Buffer::writeFile(char const *fname)
 }
 
 
-void Buffer::dumpRepresentation()
+void Buffer::dumpRepresentation() const
 {
   printf("-- buffer --\n");
 
@@ -383,7 +385,7 @@ void Buffer::removeLines(int startLine, int linesToRemove)
 #include "test.h"      // USUAL_MAIN
 #include "malloc.h"    // malloc_stats
 
-int entry()
+void entry()
 {
   for (int looper=0; looper<2; looper++) {
     printf("stats before:\n");
@@ -424,8 +426,7 @@ int entry()
 
     // make sure they're the same
     if (system("diff buffer.tmp buffer.tmp2 >/dev/null") != 0) {
-      printf("the files were different!\n");
-      return 2;
+      xbase("the files were different!\n");
     }
 
     // ok
@@ -433,12 +434,12 @@ int entry()
     remove("buffer.tmp");
     remove("buffer.tmp2");
 
-    
+
     // make a buffer for more testing..
     //#define STR(str) str, strlen(str)
     //Buffer buf(STR("hi\nthere\nfoo\nbar\n"));
-    
-    
+
+
 
 
 
@@ -452,8 +453,6 @@ int entry()
     printf("stats after:\n");
     malloc_stats();
   }
-
-  return 0;
 }
 
 USUAL_MAIN

@@ -3,3 +3,4 @@ buffer
 *.tmp*
 dialogs
 .emacs.desktop
+*.d

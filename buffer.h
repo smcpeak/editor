@@ -43,7 +43,7 @@ public:    // data
   NOTEQUAL_OPERATOR(Buffer)     // defines !=
 
   void readFile(char const *fname);
-  void writeFile(char const *fname);
+  void writeFile(char const *fname) const;
 
   int totLines() const { return numLines; }
 
@@ -52,9 +52,9 @@ public:    // data
     { return const_cast<TextLine*>(getLineC(lineNumber)); }
 
   TextLine const *lastLineC() const
-    { return getLineC(totLines()-1); }    
+    { return getLineC(totLines()-1); }
 
-  // insert some new blank lines, where the first 
+  // insert some new blank lines, where the first
   // new line will be line number 'n' (0-based)
   void insertLinesAt(int n, int howmany);
   void insertLineAt(int n) { insertLinesAt(n, 1); }
@@ -69,9 +69,9 @@ public:    // data
   // delete the text between two positions; p1 must be
   // less than p2; updates 'p2'
   void deleteText(Position const *p1, Position *p2);
-  
+
   // debugging: print internal rep
-  void dumpRepresentation();
+  void dumpRepresentation() const;
 };
 
 #endif // BUFFER_H

@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
     /* Callback has data passed to */
     XtAddCallback(quit, XmNactivateCallback, quit_pop_up,
-                  "Are you sure you want to quit?");
+                  (void*)"Are you sure you want to quit?");
 
 
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         NULL);
 
     XtAddCallback(info, XmNactivateCallback, info_pop_up,
-            "Select Prompt Option To Get Program Going.");
+                  (void*)"Select Prompt Option To Get Program Going.");
 
     XtRealizeWidget(top_wid);
 
