@@ -6,6 +6,9 @@
 #include "style.h"         // LineStyle
 #include "buffer.h"        // BufferCore, Buffer
 #include "trace.h"         // TRACE
+#include "strutil.h"       // quoted
+
+#include <stdlib.h>        // exit
 
 
 LexHighlighter::LexHighlighter(BufferCore const &buf, IncLexer &L)
@@ -245,78 +248,103 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
 
 
 // ---------------------- test code -------------------------
-#ifdef TEST_C_HILITE
+static MakeHighlighterFunc makeHigh;
+static Buffer *buf;
 
-#include "test.h"        // USUAL_MAIN
-
-Buffer buf;
-
-void printLine(LexHighlighter &hi, int line)
+static void printLine(LexHighlighter &hi, int line)
 {
   LineStyle style(ST_NORMAL);
-  hi.highlight(buf, line, style);
+  hi.highlight(*buf, line, style);
 
   cout << "line " << line << ":\n"
-       << "  text : " << buf.getWholeLine(line) << "\n"
+       << "  text : " << buf->getWholeLine(line) << "\n"
        << "  style: " << style.asUnaryString() << endl;
 }
 
-void printStyles(LexHighlighter &hi)
+static void printStyles(LexHighlighter &hi)
 {
   // stop short so I have a waterline
-  for (int i=0; i<buf.numLines()-1; i++) {
+  for (int i=0; i < buf->numLines()-1; i++) {
     printLine(hi, i);
   }
 }
 
-void insert(int line, int col, char const *text)
+static void insert(int line, int col, char const *text)
 {
-  buf.insertTextRange(line, col, text);
+  cout << "insert(" << line << ", " << col << ", "
+       << quoted(text) << ")\n";
+  buf->insertTextRange(line, col, text);
 }
 
-void del(int line, int col, int len)
+static void del(int line, int col, int len)
 {
-  buf.deleteText(line, col, len);
+  cout << "del(" << line << ", " << col << ", " << len << ")\n";
+  buf->deleteText(line, col, len);
 }
 
-// check that the incremental highlighter matches a batch highlighter
-void check(LexHighlighter &hi)
+static void innerCheckLine(LexHighlighter &hi,
+                           LexHighlighter &batch, int i)
 {
-  LexHighlighter batch(buf);    // batch because it has no initial info
+  LineStyle style1(ST_NORMAL);
+  hi.highlight(*buf, i, style1);
+  string rendered1 = style1.asUnaryString();
 
-  for (int i=0; i<buf.numLines(); i++) {
-    LineStyle style1(ST_NORMAL);
-    hi.highlight(buf, i, style1);
-    string rendered1 = style1.asUnaryString();
+  LineStyle style2(ST_NORMAL);
+  batch.highlight(*buf, i, style2);
+  string rendered2 = style2.asUnaryString();
 
-    LineStyle style2(ST_NORMAL);
-    hi.highlight(buf, i, style2);
-    string rendered2 = style1.asUnaryString();
+  // compare using rendered strings, instead of looking at
+  // the run-length ranges, since it's ok if the incrementality
+  // somehow gives rise to slightly different ranges (say, in one
+  // version there are two adjacent ranges of same-style chars)
 
-    // compare using rendered strings, instead of looking at
-    // the run-length ranges, since it's ok if the incrementality
-    // somehow gives rise to slightly different ranges (say, in one
-    // version there are two adjacent ranges of same-style chars)
-
-    if (rendered1 != rendered2) {
-      cout << "check: mismatch at line " << i << ":\n"
-           << "  line: " << buf.getWholeLine(i) << "\n"
-           << "  inc.: " << rendered1 << "\n"
-           << "  bat.: " << rendered2 << "\n"
-           ;
-    }
+  if (rendered1 != rendered2) {
+    cout << "check: mismatch at line " << i << ":\n"
+         << "  line: " << buf->getWholeLine(i) << "\n"
+         << "  inc.: " << rendered1 << "\n"
+         << "  bat.: " << rendered2 << "\n"
+         ;
+    exit(2);
   }
 }
 
-
-void entry()
+// check that the incremental highlighter matches a batch highlighter
+static void check(LexHighlighter &hi)
 {
-  traceAddSys("highlight");
+  LexHighlighter *batch = makeHigh(*buf);    // batch because it has no initial info
 
-  LexHighlighter hi(buf);
+  // go backwards in hopes of finding more incrementality bugs
+  for (int i = buf->numLines()-1; i>=0; i--) {
+    innerCheckLine(hi, *batch, i);
+  }
+
+  delete batch;
+}
+
+
+static void checkLine(LexHighlighter &hi, int line)
+{
+  LexHighlighter *batch = makeHigh(*buf);
+
+  innerCheckLine(hi, *batch, line);
+
+  delete batch;
+}
+
+
+void exerciseHighlighter(MakeHighlighterFunc func)
+{
+  // at first this was global, then I thought of a problem, and then I
+  // forgot what the problem was...
+  Buffer _buf;
+  buf = &_buf;
+
+  makeHigh = func;
+  LexHighlighter *_hi = makeHigh(*buf);
+  LexHighlighter &hi = *_hi;
 
   int line=0, col=0;
-  buf.insertTextRange(line, col,
+  buf->insertTextRange(line, col,
     "hi there\n"
     "here is \"a string\" ok?\n"
     "and how about /*a comment*/ yo\n"
@@ -355,8 +383,15 @@ void entry()
   check(hi);
   printStyles(hi);
 
+  insert(2, 30, "*/");
+  checkLine(hi, 3);
+  check(hi);
+
+  buf = NULL;
+  makeHigh = NULL;
+
+  delete _hi;
 }
 
-USUAL_MAIN
 
-#endif //  TEST_C_HILITE
+// EOF

@@ -54,7 +54,7 @@ private:     // funcs
 
 public:      // funcs
   LexHighlighter(BufferCore const &buf, IncLexer &lex);
-  ~LexHighlighter();
+  virtual ~LexHighlighter();
   
   // BufferObserver funcs
   virtual void insertLine(BufferCore const &buf, int line);
@@ -65,5 +65,13 @@ public:      // funcs
   // Highlighter funcs
   virtual void highlight(BufferCore const &buf, int line, LineStyle &style);
 };
+
+
+// make a highlighter
+typedef LexHighlighter * /*owner*/ (*MakeHighlighterFunc)(BufferCore const &buf);
+
+// exercise a highlighter class, given a factory that makes them
+void exerciseHighlighter(MakeHighlighterFunc func);
+
 
 #endif // LEX_HILITE_H
