@@ -1,18 +1,12 @@
 // editor.cc
 // tiny editor using Xlib only
 
-// resolve a name collision
-#define Cursor XCursor
-
 #include <X11/Xlib.h>        // X library
 #include <X11/Xutil.h>       // XComposeStatus
 #include <X11/Xatom.h>       // XA_FONT
 
 #define XK_MISCELLANY        // why do I have to jump this hoop?
 #include <X11/keysymdef.h>   // XK_xxx constants
-
-#undef Cursor
-
 
 #include <stdio.h>           // printf
 #include <assert.h>          // assert
@@ -21,13 +15,13 @@
 #include <string.h>          // memmove
 
 #include "buffer.h"          // Buffer
-#include "cursor.h"          // Cursor
+#include "position.h"        // Position
 #include "textline.h"        // TextLine
 
 
 // right now, one buffer and one cursor
-Buffer buffer;                         
-Cursor cursor(&buffer);
+Buffer buffer;
+Position cursor(&buffer);
 
 
 // the font I want to use
@@ -419,7 +413,7 @@ int main()
             case XK_Down:       cursor.move(+1,0);    break;  // allows cursor past EOF..
 
             case XK_BackSpace: {
-              Cursor oneLeft(cursor);
+              Position oneLeft(cursor);
               oneLeft.move(0,-1);
               buffer.deleteText(&oneLeft, &cursor);
               break;

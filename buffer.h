@@ -6,7 +6,7 @@
 
 #include "macros.h"     // NOTEQUAL_OPERATOR
 
-class Cursor;           // cursor.h
+class Position;         // position.h
 class TextLine;         // textline.h
 
 // the contents of a file; any attempt to read or write the contents
@@ -62,13 +62,13 @@ public:    // data
   // remove some lines
   void removeLines(int startLine, int linesToRemove);
 
-  // insert some text at a cursor; this will parse any
+  // insert some text at a position; this will parse any
   // newlines into additional line separators
-  void insertText(Cursor *c, char const *text, int length);
+  void insertText(Position *p, char const *text, int length);
 
-  // delete the text between two cursors; c1 must be
-  // less than c2; updates 'c2'
-  void deleteText(Cursor const *c1, Cursor *c2);
+  // delete the text between two positions; p1 must be
+  // less than p2; updates 'p2'
+  void deleteText(Position const *p1, Position *p2);
   
   // debugging: print internal rep
   void dumpRepresentation();

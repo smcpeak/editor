@@ -1,31 +1,31 @@
-// cursor.cc
-// code for cursor.h
+// position.cc
+// code for position.h
 
-#include "cursor.h"      // this module
+#include "position.h"    // this module
 #include "buffer.h"      // Buffer
 #include "textline.h"    // TextLine
 #include "xassert.h"     // xassert
 
 
-Cursor::Cursor(Buffer *buf)
+Position::Position(Buffer *buf)
   : buffer(buf),
     _line(0),
     _col(0)
 {}
 
 
-Cursor::Cursor(Cursor const &obj)
+Position::Position(Position const &obj)
   : DMEMB(buffer),
     DMEMB(_line),
     DMEMB(_col)
 {}
   
 
-Cursor::~Cursor()
+Position::~Position()
 {}
 
 
-Cursor& Cursor::operator = (Cursor const &obj)
+Position& Position::operator = (Position const &obj)
 {
   xassert(buffer == obj.buffer);
   _line = obj._line;
@@ -35,9 +35,9 @@ Cursor& Cursor::operator = (Cursor const &obj)
 
 
 
-bool Cursor::operator == (Cursor const &obj) const
+bool Position::operator == (Position const &obj) const
 {                           
-  // I permit equality checks even between cursors
+  // I permit equality checks even between positions
   // of different buffers..
   return EMEMB(buffer) &&
          EMEMB(_line) &&
@@ -45,7 +45,7 @@ bool Cursor::operator == (Cursor const &obj) const
 }
 
 
-bool Cursor::operator < (Cursor const &obj) const
+bool Position::operator < (Position const &obj) const
 {
   // but relationals only make sense for same buffer
   xassert(buffer == buffer);                        
@@ -56,10 +56,10 @@ bool Cursor::operator < (Cursor const &obj) const
 }
 
 
-void Cursor::set(int newLine, int newCol)
+void Position::set(int newLine, int newCol)
 {
   // automatic limiting is very useful for making the
-  // cursor movement code simple
+  // position movement code simple
   if (newLine < 0) {
     newLine = 0;
   }
@@ -72,16 +72,16 @@ void Cursor::set(int newLine, int newCol)
 }
 
 
-void Cursor::setToEnd()
+void Position::setToEnd()
 {
   set(buffer->totLines(),
       buffer->lastLineC()->getLength());
 }
 
 
-bool Cursor::beyondEnd() const
+bool Position::beyondEnd() const
 {
-  Cursor end(buffer);
+  Position end(buffer);
   end.setToEnd();
   return *this > end;
 }

@@ -3,7 +3,7 @@
 
 #include "buffer.h"        // this module
 #include "textline.h"      // TextLine
-#include "cursor.h"        // Cursor
+#include "position.h"      // Position
 
 #include "strutil.h"       // encodeWithEscapes
 #include "syserr.h"        // xsyserror
@@ -38,9 +38,9 @@ Buffer::Buffer(char const *initText, int initLen)
 {
   init();             
   
-  // insert with a 0,0 cursor
-  Cursor cursor(this);       
-  insertText(&cursor, initText, initLen);
+  // insert with a 0,0 position
+  Position position(this);       
+  insertText(&position, initText, initLen);
 }
 
 
@@ -124,8 +124,8 @@ void Buffer::readFile(char const *fname)
     xsyserror("open");
   }
 
-  // make a cursor to keep track of where to insert
-  Cursor cursor(this);       // inits to 0,0
+  // make a position to keep track of where to insert
+  Position position(this);       // inits to 0,0
 
   for (;;) {
     int len = read(fd, buf, BUFSIZE);
@@ -136,8 +136,8 @@ void Buffer::readFile(char const *fname)
       xsyserror("read");
     }
   
-    // this updates the cursor
-    insertText(&cursor, buf, len);
+    // this updates the position
+    insertText(&position, buf, len);
   }
 
   if (close(fd) < 0) {
@@ -235,7 +235,7 @@ void Buffer::insertLinesAt(int n, int howmany)
 }
 
 
-void Buffer::insertText(Cursor *c, char const *text, int length)
+void Buffer::insertText(Position *c, char const *text, int length)
 {
   int curLine = c->line();
   int curCol = c->col();
@@ -303,14 +303,14 @@ void Buffer::insertText(Cursor *c, char const *text, int length)
     }
   }
 
-  // update the cursor
+  // update the position
   c->set(curLine, curCol);
   
-  // POSSIBLE TODO: update other cursors, based on the insertion
+  // POSSIBLE TODO: update other positions, based on the insertion
 }
 
 
-void Buffer::deleteText(Cursor const *c1, Cursor *c2)
+void Buffer::deleteText(Position const *c1, Position *c2)
 {
   xassert(*c1 <= *c2);
 

@@ -18,11 +18,11 @@ makelib = ar -r
 %.o : %.c
 	${ccompile} $<
 
-editor-src = editor.o buffer.o textline.o cursor.o
-editor: ${editor-src} buffer.h textline.h cursor.h
+editor-src = editor.o buffer.o textline.o position.o
+editor: ${editor-src} buffer.h textline.h position.h
 	${link} -o editor ${editor-src} ${linkend}
 
-buffer-src = buffer.cc textline.o cursor.o
+buffer-src = buffer.cc textline.o position.o
 buffer: array.h ${buffer-src}
 	${link} -o buffer -DTEST_BUFFER ${buffer-src} ${linkend}
 
