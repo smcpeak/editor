@@ -46,3 +46,41 @@ fixed newline problem
 some malloc mischief?  hard to reproduce...
 
 end 3/28/01 04:26
+
+---------------------------------------------
+start 3/29/01 03:59
+
+let's try to make some simple dialog boxes with Motif
+
+so far I've been unable to make it drop into a modal
+loop, which is really required for proper composability..
+
+end 3/29/01 05:32
+
+--------------------------------------
+start 3/31/01 22:39
+
+more attempts to make a file-load dialog box
+
+found that I can make a modal event model by building
+my own event loop.  however:
+  - that does nothing for the app input, which I need to
+    separately disable
+  - I must not create the dialog inside the menu's callback
+    function because it has the mouse input captured (!)
+    until the callback returns
+  - not obvious when to end event loop, because not all window
+    destruction paths go through my callbacks
+    
+this seems to argue for constructing my own callback structure..
+
+solved the when-to-end problem by making the loop guard:
+
+  XtIsManaged(dialog) || XtAppPending(app)
+  
+this makes sure we quit as soon as the dialog disappears, and
+the event queue is quiescent
+
+actually, since the sample code just says it wants to make sure
+the widget is "destroyed", I think the XtIsManaged should be
+sufficient..
