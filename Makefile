@@ -1,6 +1,6 @@
 # Makefile for editor
 
-tmptarget: buffercore
+tmptarget: buffercore buffer
 
 # main target
 all: testgap buffer style c_hilite editor

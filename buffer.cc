@@ -395,24 +395,23 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
   xassert(line1 < line2 ||
           (line1==line2 && col1<=col2));
 
-  CursorRestorer cr(*this);
+  // truncate the endpoints
+  truncateCursor(core(), line1, col1);
+  truncateCursor(core(), line2, col2);
 
-  // ensure validity of the two endpoints, leaving the cursor
-  // at line2/col2
-  moveRelCursorTo(line1, col1);
-  fillToCursor();
+  // go to line2/col2, which is probably where the cursor already is
   moveRelCursorTo(line2, col2);
-  fillToCursor();
 
   // compute # of chars in span
   int length = computeSpanLength(core(), line1, col1, line2, col2);
 
-  // delete them as a left deletion; the idea is I suspect the original
-  // and final cursor are line2/col2, in which case all of the cursor
-  // movements can be elided (by automatic history compression)
+  // delete them as a left deletion; the idea is I suspect the
+  // original and final cursor are line2/col2, in which case the
+  // cursor movement can be elided (by automatic history compression)
   deleteLR(true /*left*/, length);
 
-  // (implicitly, cursor is restored by 'cr')
+  // the cursor automatically ends up at line1/col1, as our spec
+  // demands
 }
 
 
@@ -478,7 +477,7 @@ void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2,
                             << line2 << "," << col2 << "):\n";
     cout << "  actual: " << quoted(actual) << "\n";
     cout << "  expect: " << quoted(expect) << "\n";
-    exit(2);
+    xfailure("testGetRange failed");
   }
 }
 
@@ -493,13 +492,13 @@ void testFind(Buffer const &buf, int line, int col, char const *text,
   if (expect != actual) {
     cout << "find(\"" << text << "\"): expected " << expect
          << ", got " << actual << endl;
-    exit(2);
+    xfailure("testFind failed");
   }
 
   if (actual && (line!=ansLine || col!=ansCol)) {
     cout << "find(\"" << text << "\"): expected " << ansLine << ":" << ansCol
          << ", got " << line << ":" << col << endl;
-    exit(2);
+    xfailure("testFind failed");
   }
 }
 

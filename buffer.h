@@ -149,7 +149,8 @@ public:
   void deleteChar() { deleteText(1); }
 
   // delete the characters between line1/col1 and line/col2; both
-  // are ws-filled to ensure validity; final cursor is left unchanged
+  // are truncated to ensure validity; final cursor is left at
+  // line1/col1
   void deleteTextRange(int line1, int col1, int line2, int col2);
 
 

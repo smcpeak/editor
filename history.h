@@ -93,7 +93,7 @@ public:      // data
   bool left;
 
   // text to insert or delete; may contain embedded NULs
-  char *text;          // (owner)
+  char *text;          // (owner) NULL iff textLen==0
   int textLen;
 
 private:     // funcs

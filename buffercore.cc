@@ -525,7 +525,7 @@ int computeSpanLength(BufferCore const &buf, int line1, int col1,
   }
   
   // tail of first line
-  int length = buf.lineLength(line1)+1;
+  int length = buf.lineLength(line1) - col1 +1;
 
   // line we're working on now
   line1++;

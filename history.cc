@@ -93,13 +93,20 @@ HE_text::HE_text(bool i, bool l,
                  char const *t, int len)
   : insertion(i), left(l), textLen(len)
 {
-  text = new char[textLen];
-  memcpy(text, t, textLen);
+  if (textLen > 0) {
+    text = new char[textLen];
+    memcpy(text, t, textLen);
+  }
+  else {
+    text = NULL;
+  }
 }
 
 HE_text::~HE_text()
 {
-  delete text;
+  if (text) {
+    delete[] text;
+  }
 }
 
 
@@ -143,6 +150,10 @@ STATICDEF void HE_text::insert(
     int line = buf.line;
     int col = buf.col;
 
+    // excess text on the original line that gets floated down
+    // to after the cursor on the last line
+    GrowArray<char> excess(0);
+
     char const *p = text;
     char const *end = text+textLen;
     while (p < end) {
@@ -161,9 +172,25 @@ STATICDEF void HE_text::insert(
 
       // insert newline
       if (nl < end) {
+        // if there is text beyond 'col' on 'line-1', then that text
+        // gets floated down to the end of the insertion
+        if (line==buf.line &&     // optimization: can only happen on first line
+            col < buf.lineLength(line)) {
+          // this can only happen on the first line of the insertion
+          // procedure, so check that we don't already have excess
+          xassert(excess.size()==0);
+
+          // get the excess
+          excess.setSize(buf.lineLength(line) - col);
+          buf.getLine(line, col, excess.getArrayNC(), excess.size());
+
+          // remove it from the buffer
+          buf.deleteText(line, col, excess.size());
+        }
+
         line++;
-        col = 0;
         buf.insertLine(line);
+        col = 0;
         len++;   // so we skip '\n' too
       }
 
@@ -171,6 +198,11 @@ STATICDEF void HE_text::insert(
       p += len;
     }
     xassert(p == end);
+
+    // insert the floated excess text, if any
+    if (excess.size() > 0) {
+      buf.insertText(line, col, excess.getArray(), excess.size());
+    }
 
     if (!left) {
       // put cursor at end of inserted text
@@ -193,6 +225,9 @@ STATICDEF void HE_text::insert(
     // cursor for the purposes of this function
     int line = beginLine;
     int col = beginCol;
+
+    // splice to perform at end?
+    int pendingSplice = 0;
 
     // a reverse left insertion is a right deletion.. so XOR it again..
     left = !left;
@@ -254,15 +289,39 @@ STATICDEF void HE_text::insert(
           buf.deleteLine(line);
         }
         else {
-          // move line/col to beginning of next line
+          // move line/col to beginning of next line, so that from
+          // now on we can work with whole deleted lines, but remember
+          // that there's a pending line splice
           line++;
           col=0;
+          pendingSplice++;
         }
         len++;   // so we skip '\n' too
       }
 
       // skip consumed text
       p += len;
+    }
+
+    if (pendingSplice) {
+      xassert(pendingSplice == 1);       // should only have one splice
+      xassert(col == 0);                 // it's this entire line that goes
+      
+      // grab this line's contents
+      int spliceLen = buf.lineLength(line);
+      Array<char> splice(spliceLen);
+      buf.getLine(line, col, splice, spliceLen);
+      
+      // blow it away
+      buf.deleteText(line, col, spliceLen);
+      buf.deleteLine(line);
+      
+      // move up to end of previous line
+      line--;
+      col = buf.lineLength(line);
+      
+      // append splice text
+      buf.insertText(line, col, splice, spliceLen);
     }
 
     // update buffer cursor; this only changes it if we were doing a
