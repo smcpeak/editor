@@ -342,7 +342,7 @@ playing with it a bit more
 
 more todo:
   - alt+ins to toggle ins/overwrite
-  - auto-indent
+  * auto-indent
   - alt+left/right
   * ctrl+alt+left/right
   - tabs

@@ -192,7 +192,7 @@ void Editor::updateView()
     // visible at all, so we'd want the one before (not that that's visible
     // either, but it suggests what we want in nondegenerate cases too)
     lastVisibleLine = firstVisibleLine
-      + (h - topMargin) / (fontHeight + interLineSpace) - 1;
+      + (h - topMargin) / lineHeight() - 1;
     lastVisibleCol = firstVisibleCol
       + (w - leftMargin) / fontWidth - 1;
   }
@@ -293,7 +293,7 @@ void Editor::drawBufferContents(QPainter &paint)
   xassert(firstVisibleCol >= 0);
 
   // another santiy check
-  xassert(fontHeight + interLineSpace > 0);
+  xassert(lineHeight() > 0);
 
   // buffer for text to print
   int visibleCols = lastVisibleCol - firstVisibleCol + 2;
@@ -613,6 +613,11 @@ void Editor::keyPressEvent(QKeyEvent *k)
       // not going to bind either by default
 
       case Key_D:      deleteCharAtCursor(); break;
+
+      case Key_L:
+        setView(max(0, cursorLine - visLines()/2), 0);
+        scrollToCursor();
+        break;
 
       default:
         k->ignore();
@@ -952,7 +957,7 @@ void Editor::setCursorToClickLoc(QMouseEvent *m)
   inc(x, -leftMargin);
   inc(y, -topMargin);
 
-  int newLine = y/(fontHeight+interLineSpace) + firstVisibleLine;
+  int newLine = y/lineHeight() + firstVisibleLine;
   int newCol = x/fontWidth + firstVisibleCol;
 
   //printf("click: (%d,%d)     goto line %d, col %d\n",

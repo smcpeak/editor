@@ -133,6 +133,9 @@ private:     // funcs
   void setDrawStyle(QPainter &paint, bool &underlining,
                     StyleDB *db, Style s);
 
+  // offset from one line to the next
+  int lineHeight() const { return fontHeight+interLineSpace; }
+                    
   // debugging
   static string lineColStr(int line, int col);
   string firstVisStr() const { return lineColStr(firstVisibleLine, firstVisibleCol); }
