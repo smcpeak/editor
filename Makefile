@@ -20,7 +20,8 @@ CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE)
 LDFLAGS := -g -Wall $(LIBSMBASE) -L$(QTDIR)/lib -lqt
 
 
-# patterns of files to delete in the 'clean' target
+# patterns of files to delete in the 'clean' target; targets below
+# add things to this using "+="
 TOCLEAN =
 
 
@@ -61,9 +62,11 @@ style: style.h style.cc
 
 # ------------- highlighting stuff --------------------
 # lexer (-b makes lex.backup)
-TOCLEAN += comment.yy.cc c_hilite.yy.cc lex.backup
+TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 %.yy.cc: %.lex %.h
-	flex -o$@ -b -P$*_ $*.lex
+	flex -o$@ -b -P$*_yy $*.lex
+	mv lex.backup $*.lex.backup
+	head $*.lex.backup
 	mv $@ $*.tmp
 	sed -e 's|class istream;|#include <iostream.h>|' \
 	  <$*.tmp >$@
@@ -115,3 +118,6 @@ dialogs: dialogs.cc
 # --------------------- misc ------------------------
 clean:
 	rm -f $(TOCLEAN)
+
+check:
+	@echo "no useful 'make check' at this time"
