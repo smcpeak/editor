@@ -204,7 +204,15 @@ decided to go ahead and rewrite Buffer since I want to anyway
 and I'm tired of debugging the bad design
 
 wrote a gap-array module, and a unit test, but it doesn't pass yet
+fixed it
 
-end 2/11/03 04:36
+end 2/11/03 04:56
+
+------------------
+start 2/11/03 15:42
+
+now to rewrite Buffer to use the new GapArray and a better
+interface in general
+
 
 

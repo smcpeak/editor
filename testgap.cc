@@ -52,8 +52,10 @@ public:
     insertMany(0 /*elt*/, src, srcLen);
   }
 
-  void writeIntoArray(int *dest) const {
-    memcpy(dest, arr, len * sizeof(int));
+  void writeIntoArray(int *dest, int destLen, int elt=0) const {
+    xassert(destLen >= 0);
+    xassert(0 <= elt && elt+destLen <= len);
+    memcpy(dest, arr+elt, destLen * sizeof(int));
   }
 };
 
@@ -121,17 +123,36 @@ void checkEqual(GapArray<int> const &seq1, Sequence const &seq2)
   // test writeIntoArray()
   int *temp1 = new int[len+1];
   int *temp2 = new int[len+1];
-  temp1[len] = 0xABCDEF;   // canary
-  temp2[len] = 0xABCDEF;
+  int const CANARY = 0xABCDEF;
+  temp1[len] = CANARY;
+  temp2[len] = CANARY;
 
-  seq1.writeIntoArray(temp1);
-  seq2.writeIntoArray(temp2);
+  seq1.writeIntoArray(temp1, len);
+  seq2.writeIntoArray(temp2, len);
 
-  xassert(temp1[len] == 0xABCDEF);
-  xassert(temp2[len] == 0xABCDEF);
+  xassert(temp1[len] == CANARY);
+  xassert(temp2[len] == CANARY);
 
   xassert(0==memcmp(temp1, temp2, len * sizeof(int)));
-  
+
+  // write selected subsequences
+  for (int elt=0; elt < len; elt += 10) {
+    int amt = min(10, len-elt);
+
+    // write from seq1, and verify it
+    seq1.writeIntoArray(temp1+elt, amt, elt);
+    xassert(temp1[len] == CANARY);
+    xassert(0==memcmp(temp1+elt, temp2+elt, amt*sizeof(int)));
+
+    // write from seq2, and verify it
+    seq2.writeIntoArray(temp2+elt, amt, elt);
+    xassert(temp2[len] == CANARY);
+    xassert(0==memcmp(temp1+elt, temp2+elt, amt*sizeof(int)));
+  }
+
+  xassert(temp1[len] == CANARY);
+  xassert(temp2[len] == CANARY);
+
   delete[] temp1;
   delete[] temp2;
 }
@@ -205,7 +226,7 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
     seq2.removeMany(elt, sz);
   }
 
-  // use fillFromArray
+  // use fillFromArray()
   else if (choice < 99) {
     ctFillFromArray++;
     int sz = rand() % 50;
@@ -255,6 +276,7 @@ void entry(int argc, char *argv[])
 
     for (int i=0; i<iters; i++) {
       mutate(gap, seq);
+      checkHeap();
 
       if (PRINT) {
         printSeq("gap", gap);

@@ -10,6 +10,7 @@
 class BufferState : public Buffer {
 public:      // data
   string filename;           // name of file being edited
+  bool changed;        // ... 
 
 public:      // funcs
   BufferState();

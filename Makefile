@@ -41,6 +41,7 @@ moc_%.cc: %.h
 TOCLEAN += testgap
 testgap: gap.h testgap.cc
 	$(CXX) -o $@ $(CCFLAGS) testgap.cc -g -Wall $(SMBASE)/libsmbase.a
+	./testgap >/dev/null 2>&1
 
 
 # -------------- buffer test program ----------------

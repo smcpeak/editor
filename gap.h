@@ -80,9 +80,10 @@ public:      // funcs
   // 'gapSize' at 'elt'; this clears the sequence before filling
   void fillFromArray(T const *src, int srcLen, int elt=0, int gapSize=10);
 
-  // write the entire length() elements into 'dest', which must
-  // be at least that big
-  void writeIntoArray(T *dest) const;
+  // write 'destLen' elements into 'dest', which must be at least that
+  // big; first source element written is 'elt' (first destination
+  // element is always dest[0], *not* dest[elt])
+  void writeIntoArray(T *dest, int destLen, int elt=0) const;
 };
 
 
@@ -310,19 +311,51 @@ void GapArray<T>::fillFromArray(T const *src, int srcLen, int elt, int gapSize)
   memcpy(array+left+gap /*dest*/, src+left /*src*/, right * sizeof(T));
 }
 
+    //   <-- elt --><-- destLen -->
+    //   <--- left ---><----- right ------->
+    //   [----------**][***********--------]
 
 template <class T>
-void GapArray<T>::writeIntoArray(T *dest) const
+void GapArray<T>::writeIntoArray(T *dest, int destLen, int elt) const
 {
-  // array:
-  //   <--- left ---><-- gap --><----- right ----->
-  //   [------------][---------][-----------------]
-  // dest:
-  //   <--- left ---><----- right ----->
-  //   [------------][-----------------]
+  xassert(destLen >= 0);
+  xassert(0 <= elt && elt+destLen <= length());
 
-  memcpy(dest /*dest*/, array /*src*/, left * sizeof(T));
-  memcpy(dest+left /*dest*/, array+left+gap /*src*/, right * sizeof(T));
+  if (elt < left) {
+    // array:
+    //   <-- elt --><-------- destLen+gap ----->
+    //   <--- left -----><-- gap --><----- right ------->
+    //   [----------****][---------][***********--------]
+    //              <amt>           <-- amt2 -->
+    // dest:
+    //   <--- destLen --->
+    //   ****][***********
+    //   <amt><-- amt2 -->
+
+    int amt = min(left-elt, destLen);
+    memcpy(dest,                     // dest
+           array+elt,                // src
+           amt * sizeof(T));         // size
+
+    int amt2 = destLen-amt;
+    memcpy(dest+amt,                 // dest
+           array+left+gap,           // src
+           amt2 * sizeof(T));        // size
+  }
+
+  else /* elt >= left */ {
+    // array:
+    //   <-------- elt+gap ---------><-- destLen -->
+    //   <--- left ---><-- gap --><----- right ------->
+    //   [------------][---------][--***************--]
+    // dest:
+    //   <-- destLen -->
+    //   ***************
+
+    memcpy(dest,                     // dest
+           array+elt+gap,            // src
+           destLen * sizeof(T));     // size
+  }
 }
 
 #endif // GAPARRAY_H

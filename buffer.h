@@ -4,96 +4,66 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "macros.h"     // NOTEQUAL_OPERATOR
-
-class Position;         // position.h
-class TextLine;         // textline.h
+#include "macros.h"      // NOTEQUAL_OPERATOR
+#include "gaparray.h"    // GapArray
 
 // the contents of a file; any attempt to read or write the contents
-// must go through the Buffer (or TextLine) interface
+// must go through this interface
+// NOTE: lines and columns are 0-based
 class Buffer {
 private:   // data
-  TextLine *lines;       // (owner) array of lines in the file
-  int numLines;          // # of lines in 'lines'
-  int linesAllocated;    // # of entries allocated in 'lines'
+  // the spine of the editor; every element is either NULL, meaning a
+  // blank line, or is an owner pointer to a '\n'-terminated array of
+  // chars that represent the line's contents
+  GapArray<char*> lines;
 
-  // invariant: entries 0 through numLines-1 are properly
-  // initialized TextLines; outside this range, they are
-  // not considered initialized
+  // the most-recently edited line number, or -1 to mean that
+  // no line's contents are stored
+  int recentLineNum;
 
-  // TODO: implement a gap in 'lines' so lines can usually be inserted
-  // without copying large pieces of the array
-
-public:    // data
-  // true if the contents have changed since the last readFile();
-  // caller must explicitly clear after a writeFile() if that is
-  // desired
-  bool changed;
-
-private:   // funcs
-  // zero everything
-  void init();
-
-  // set numLines, realloc if necessary (with margin)
-  void setNumLines(int num);
-
-  // extend the # of lines if necessary so the 
-  // given line number is valid
-  void ensureLineExists(int n);
+  // if recentLineNum != -1, then this holds the contents of that line,
+  // overriding the contents stored in lines[recentLineNum]
+  GapArray<char> recentLine;
 
 public:    // data
-  Buffer() { init(); }
-  Buffer(char const *initText, int initLength);
+  Buffer();
   ~Buffer();
 
+
+  // ---- queries ----
   // two buffers are equal if they have the same number
-  // of lines, and every line is equal (by TextLine's ==)
+  // of lines, and every line is equal
   bool operator == (Buffer const &obj) const;
   NOTEQUAL_OPERATOR(Buffer)     // defines !=
 
-  // these might throw XOpen
-  void readFile(char const *fname);
-  void writeFile(char const *fname) const;
+  // # of lines stored
+  int numLines() const { return lines.length(); }
 
-  int totLines() const { return numLines; }
+  // length of a given line
+  int lineLength(int line) const;
 
-  // length of longest line
-  int totColumns() const;
 
-  TextLine const *getLineC(int lineNumber) const;
-  TextLine *getLine(int lineNumber)
-    { changed=true; return const_cast<TextLine*>(getLineC(lineNumber)); }
+  // ---- manipulation interface ----
+  // insert a new blank line, where the new line will be line 'line';
+  // 'line' must be in [0,numLines()]
+  void insertLine(int line);
 
-  TextLine const *lastLineC() const
-    { return getLineC(totLines()-1); }
+  // delete a blank line; the line must *already* be blank!
+  void deleteLine(int line);
 
-  // insert some new blank lines, where the first
-  // new line will be line number 'n' (0-based)
-  void insertLinesAt(int n, int howmany);
-  void insertLineAt(int n) { insertLinesAt(n, 1); }
+  // insert text into a given line, starting at the given column;
+  // that 'col' must be in [0,lineLength(line)]
+  void insertText(int line, int col, char const *text, int length);
 
-  // the following functions can accept Positions that are
-  // not inText(), by inserting spaces if necessary
+  // delete text
+  void deleteText(int line, int col, int length);
 
-  // insert some text at a position; this will parse any
-  // newlines into additional line separators; the position
-  // is changed to just after the inserted text
-  void insertText(Position &p, char const *text, int length);
 
-  // delete the text between two positions; p1 must be
-  // less than p2; updates 'p2'
-  void deleteText(Position const &p1, Position &p2);
-
-  // remove some lines
-  void removeLines(int startLine, int linesToRemove);
-
-  // delete all text
-  void clear();
-
-  // debugging: print internal rep
+  // ---- debugging ----
+  // print internal rep
   void dumpRepresentation() const;
-  
-  // debugging: how much memory am I using?
+
+  // how much memory am I using?
   void printMemStats() const;
 };
 
