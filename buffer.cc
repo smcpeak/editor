@@ -27,6 +27,7 @@ Buffer::~Buffer()
   for (int i=0; i<numLines; i++) {
     lines[i].dealloc();
   }
+  delete[] lines;
 }
                                                        
 
@@ -212,55 +213,57 @@ void Buffer::dumpRepresentation()
 
 int entry()
 {
-  printf("stats before:\n");
-  malloc_stats();
+  for (int looper=0; looper<2; looper++) {
+    printf("stats before:\n");
+    malloc_stats();
 
-  // build a text file
-  FILE *fp = fopen("buffer.tmp", "w");
-  if (!fp) {
-    xsyserror("open");
-  }
-
-  for (int i=0; i<5; i++) {
-    for (int j=0; j<53; j++) {
-      for (int k=0; k<j; k++) {
-        fputc('0' + (k%10), fp);
-      }
-      fputc('\n', fp);
+    // build a text file
+    FILE *fp = fopen("buffer.tmp", "w");
+    if (!fp) {
+      xsyserror("open");
     }
-  }
-  fprintf(fp, "last line no newline");
-  
-  fclose(fp);
 
-  {
-    // read it as a buffer
-    Buffer buf;
-    buf.readFile("buffer.tmp");
+    for (int i=0; i<5; i++) {
+      for (int j=0; j<53; j++) {
+        for (int k=0; k<j; k++) {
+          fputc('0' + (k%10), fp);
+        }
+        fputc('\n', fp);
+      }
+    }
+    fprintf(fp, "last line no newline");
 
-    // dump its repr
-    buf.dumpRepresentation();
+    fclose(fp);
 
-    // write it out again
-    buf.writeFile("buffer.tmp2");
+    {
+      // read it as a buffer
+      Buffer buf;
+      buf.readFile("buffer.tmp");
 
-    printf("stats before dealloc:\n");
+      // dump its repr
+      buf.dumpRepresentation();
+
+      // write it out again
+      buf.writeFile("buffer.tmp2");
+
+      printf("stats before dealloc:\n");
+      malloc_stats();
+    }
+
+    // make sure they're the same
+    if (system("diff buffer.tmp buffer.tmp2 >/dev/null") != 0) {
+      printf("the files were different!\n");
+      return 2;
+    }
+
+    // ok
+    system("ls -l buffer.tmp");
+    remove("buffer.tmp");
+    remove("buffer.tmp2");
+
+    printf("stats after:\n");
     malloc_stats();
   }
-
-  // make sure they're the same
-  if (system("diff buffer.tmp buffer.tmp2 >/dev/null") != 0) {
-    printf("the files were different!\n");
-    return 2;
-  }
-  
-  // ok
-  system("ls -l buffer.tmp");
-  remove("buffer.tmp");
-  remove("buffer.tmp2");
-
-  printf("stats after:\n");
-  malloc_stats();
 
   return 0;
 }
