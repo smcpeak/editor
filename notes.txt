@@ -244,6 +244,10 @@ start 2/11/03 23:59
 
 will work on selections
 
+have the basic rendering engine working
+
+TODO: there's a bug in the way PageUp behaves at/beyond the bottom
+of the file.. can't quite figure out what's going on..
 
 
 

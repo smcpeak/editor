@@ -84,12 +84,27 @@ private:     // funcs
   // true if the cursor is before (above/left) the select point
   bool cursorBeforeSelect() const;
 
+  // ctrl-pageup/pagedown
+  void cursorToTop();
+  void cursorToBottom();
+
+  // selection manipulation
+  void turnOffSelection();
+  void turnOnSelection();
+  void turnSelection(bool on);
+  void clearSelIfEmpty();
+                                           
+  // set cursorLine/cursorCol to the x/y derived from 'm'
+  void setCursorToClickLoc(QMouseEvent *m);
+
 protected:   // funcs
   // QWidget funcs
   virtual void paintEvent(QPaintEvent *);
   virtual void keyPressEvent(QKeyEvent *k);
   virtual void resizeEvent(QResizeEvent *r);
   virtual void mousePressEvent(QMouseEvent *m);
+  virtual void mouseMoveEvent(QMouseEvent *m);
+  virtual void mouseReleaseEvent(QMouseEvent *m);
 
 public:      // funcs
   Editor(BufferState *buf,

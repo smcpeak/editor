@@ -177,8 +177,13 @@ void Editor::paintEvent(QPaintEvent *ev)
 
   // paint the window
   for (int line = firstVisibleLine; y < height(); line++) {
-    // fill the text with spaces, as the nominal text to display
+    // fill the text with spaces, as the nominal text to display;
+    // these will only be used if there is style information out
+    // beyond the actual line character data
     memset(text, ' ', visibleCols);
+
+    // number of characters from this line that are visible
+    int visibleLineChars = 0;
 
     // fill with text from the buffer
     if (line < buffer->numLines()) {
@@ -186,8 +191,10 @@ void Editor::paintEvent(QPaintEvent *ev)
       if (firstVisibleCol < lineLen) {
         int amt = min(lineLen - firstVisibleCol, visibleCols);
         buffer->getLine(line, firstVisibleCol, text, amt);
+        visibleLineChars = amt;
       }
     }
+    xassert(visibleLineChars <= visibleCols);
 
     // nominally the entire line is normal text
     styles.clear(0 /*normal*/);
@@ -201,7 +208,9 @@ void Editor::paintEvent(QPaintEvent *ev)
       }
       else if (selLowLine < line && line == selHighLine) {
         // first half of line is selected
-        styles.overlay(0, selHighCol, 1 /*selected*/);
+        if (selHighCol) {
+          styles.overlay(0, selHighCol, 1 /*selected*/);
+        }
       }
       else if (selLowLine == line && line < selHighLine) {
         // right half of line is selected
@@ -209,7 +218,9 @@ void Editor::paintEvent(QPaintEvent *ev)
       }
       else if (selLowLine == line && line == selHighLine) {
         // middle part of line is selected
-        styles.overlay(selLowCol, selHighCol-selLowCol, 1 /*selected*/);
+        if (selHighCol != selLowCol) {
+          styles.overlay(selLowCol, selHighCol-selLowCol, 1 /*selected*/);
+        }
       }
       else {
         xfailure("messed up my logic");
@@ -230,15 +241,6 @@ void Editor::paintEvent(QPaintEvent *ev)
     while (x < width()) {
       xassert(printed < visibleCols);
 
-      // compute how many characters to print in this segment
-      int len = style.length;
-      if (style.length == 0) {
-        // actually means infinite length
-        len = visibleCols;
-      }
-      len = min(len, visibleCols-printed);
-      xassert(len > 0);
-
       // set style
       if (style.style != currentStyle) {
         if (style.style == 0) {
@@ -257,6 +259,27 @@ void Editor::paintEvent(QPaintEvent *ev)
         currentStyle = style.style;
       }
 
+      // compute how many characters to print in this segment
+      int len = style.length;
+      if (style.length == 0) {
+        // actually means infinite length
+        if (printed >= visibleLineChars) {
+          // we've printed all the interesting characters on this line
+          // because we're past the end of the line's chars, and we're
+          // one the last style run; for efficiency of communication
+          // with the X server, render the remainder of this line with
+          // a single rectangle
+          paint.eraseRect(x,y, width()-x, fontHeight);
+          break;   // out of loop over line segments
+        }
+
+        // print only the remaining chars on the line, to improve
+        // the chances we'll use the eraseRect() optimization above
+        len = visibleLineChars-printed;
+      }
+      len = min(len, visibleCols-printed);
+      xassert(len > 0);
+
       // draw text; unfortunately this requires making two copies, one
       // to get a NUL-terminated source (could be avoided by
       // temporarily overwriting a character in 'text'), and one to
@@ -269,6 +292,7 @@ void Editor::paintEvent(QPaintEvent *ev)
       // advance
       x += fontWidth * len;
       printed += len;
+      style.advanceChars(len);
     }
 
     // draw the cursor as a line
@@ -308,6 +332,57 @@ static void inc(int &val, int amt)
 }
 
 
+void Editor::cursorToTop()
+{
+  cursorLine = 0;
+  cursorCol = 0;
+  scrollToCursor();
+  update();
+}
+
+void Editor::cursorToBottom()
+{
+  cursorLine = max(buffer->numLines(),0);
+  cursorCol = 0;
+  scrollToCursor();
+  update();
+}
+
+
+void Editor::turnOffSelection()
+{
+  selectEnabled = false;
+}
+
+void Editor::turnOnSelection()
+{
+  if (!selectEnabled) {
+    selectLine = cursorLine;
+    selectCol = cursorCol;
+    selectEnabled = true;
+  }
+}
+
+void Editor::turnSelection(bool on)
+{
+  if (on) {
+    turnOnSelection();
+  }
+  else {
+    turnOffSelection();
+  }
+}
+
+void Editor::clearSelIfEmpty()
+{
+  if (selectEnabled &&
+      cursorLine==selectLine &&
+      cursorCol==selectCol) {
+    turnOffSelection();
+  }
+}
+
+
 void Editor::keyPressEvent(QKeyEvent *k)
 {
   int state = k->state() & KeyButtonMask;
@@ -324,17 +399,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_PageUp:
-        cursorLine = 0;
-        cursorCol = 0;
-        scrollToCursor();
-        update();
+        turnOffSelection();
+        cursorToTop();
         break;
 
       case Key_PageDown:
-        cursorLine = max(buffer->numLines(),0);
-        cursorCol = 0;
-        scrollToCursor();
-        update();
+        turnOffSelection();
+        cursorToBottom();
         break;
 
       case Key_W:
@@ -397,6 +468,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_Right:
         moveView(0, +ctrlShiftDistance);
         break;
+
+      case Key_PageUp:
+        turnOnSelection();
+        cursorToTop();
+        break;
+
+      case Key_PageDown:
+        turnOnSelection();
+        cursorToBottom();
+        break;
     }
   }
 
@@ -404,41 +485,49 @@ void Editor::keyPressEvent(QKeyEvent *k)
   else if (state == NoButton || state == ShiftButton) {
     switch (k->key()) {
       case Key_Left:
+        turnSelection(state==ShiftButton);
         inc(cursorCol, -1);
         scrollToCursor();
         break;
 
       case Key_Right:
+        turnSelection(state==ShiftButton);
         inc(cursorCol, +1);
         scrollToCursor();
         break;
 
       case Key_Home:
+        turnSelection(state==ShiftButton);
         cursorCol = 0;
         scrollToCursor();
         break;
 
       case Key_End:
+        turnSelection(state==ShiftButton);
         cursorCol = buffer->lineLength(cursorLine);
         scrollToCursor();
         break;
 
       case Key_Up:
+        turnSelection(state==ShiftButton);
         inc(cursorLine, -1);
         scrollToCursor();
         break;
 
       case Key_Down:
         // allows cursor past EOF..
+        turnSelection(state==ShiftButton);
         inc(cursorLine, +1);
         scrollToCursor();
         break;
 
       case Key_PageUp:
+        turnSelection(state==ShiftButton);
         moveView(-visLines(), 0);
         break;
 
       case Key_PageDown:
+        turnSelection(state==ShiftButton);
         moveView(+visLines(), 0);
         break;
 
@@ -647,16 +736,13 @@ void Editor::scrollToCol(int col)
 }
 
 
-void Editor::mousePressEvent(QMouseEvent *m)
+void Editor::setCursorToClickLoc(QMouseEvent *m)
 {
-  // get rid of popups?
-  QWidget::mousePressEvent(m);
-
   int x = m->x();
   int y = m->y();
-                      
+
   // subtract off the margin, but don't let either coord go negative
-  inc(x, -leftMargin);                                   
+  inc(x, -leftMargin);
   inc(y, -topMargin);
 
   int newLine = y/(fontHeight+interLineSpace) + firstVisibleLine;
@@ -671,6 +757,41 @@ void Editor::mousePressEvent(QMouseEvent *m)
   // it's possible the cursor has been placed outside the "visible"
   // lines/cols (i.e. at the edge), but even if so, don't scroll,
   // because it messes up coherence with where the user clicked
-  
+}
+
+
+void Editor::mousePressEvent(QMouseEvent *m)
+{
+  // get rid of popups?
+  QWidget::mousePressEvent(m);
+
+  turnOffSelection();
+  setCursorToClickLoc(m);
+
   update();
 }
+
+
+void Editor::mouseMoveEvent(QMouseEvent *m)
+{
+  QWidget::mouseMoveEvent(m);
+
+  turnOnSelection();
+  setCursorToClickLoc(m);
+  clearSelIfEmpty();
+
+  update();
+}
+
+
+void Editor::mouseReleaseEvent(QMouseEvent *m)
+{
+  QWidget::mouseReleaseEvent(m);
+
+  turnOnSelection();
+  setCursorToClickLoc(m);
+  clearSelIfEmpty();
+
+  update();
+}
+
