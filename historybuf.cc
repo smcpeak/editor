@@ -10,7 +10,9 @@ HistoryBuffer::HistoryBuffer()
   : buf(),
     history(),
     time(0),
-    groupStack()
+    savedTime(0),
+    groupStack(),
+    groupEltModifies()
 {}
 
 
@@ -22,6 +24,7 @@ HistoryBuffer::~HistoryBuffer()
 void HistoryBuffer::clearHistory()
 {
   time = 0;
+  savedTime = -1;     // no time is known to correspond to on-disk
   history.truncate(time);
   groupStack.clear();
 }
@@ -34,12 +37,32 @@ void HistoryBuffer::clearContentsAndHistory()
 }
 
 
+bool HistoryBuffer::unsavedChanges() const 
+{
+  if (savedTime != time) {
+    return true;
+  }
+
+  // if there are unclosed groups, check with them; semantically
+  // they come after 'time' but before 'time+1', and we already
+  // know that 'savedTime' equals 'time'
+  for (int i=0; i < groupEltModifies.length(); i++) {
+    if (groupEltModifies[i]) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 void HistoryBuffer::readFile(char const *fname)
 {
   ::readFile(buf, fname);              // might throw exception
 
   // clear after file's been successfully read
   clearHistory();
+  noUnsavedChanges();
 }
 
 
@@ -49,8 +72,8 @@ void HistoryBuffer::moveCursor(bool relLine, int line, bool relCol, int col)
   int origCol  = relCol?  -1 : buf.col;
 
   HistoryElt *e = new HE_cursor(origLine, line, origCol, col);
-  e->apply(buf, false /*reverse*/);
-  appendElement(e);
+  bool mod = e->apply(buf, false /*reverse*/);
+  appendElement(e, mod);
 }
 
 
@@ -60,8 +83,8 @@ void HistoryBuffer::insertLR(bool left, char const *text, int textLen)
 
   HE_text *e = new HE_text(true /*insertion*/, left,
                            text, textLen);
-  e->apply(buf, false /*reverse*/);
-  appendElement(e);
+  bool mod = e->apply(buf, false /*reverse*/);
+  appendElement(e, mod);
 }
 
 
@@ -72,21 +95,26 @@ void HistoryBuffer::deleteLR(bool left, int count)
   HE_text *e = new HE_text(false /*insertion*/, left,
                            NULL /*text*/, 0 /*textLen*/);
   e->computeText(buf, count);
-  e->apply(buf, false /*reverse*/);
-  appendElement(e);
+  bool mod = e->apply(buf, false /*reverse*/);
+  appendElement(e, mod);
 }
 
-                    
-void HistoryBuffer::appendElement(HistoryElt *e)
+
+void HistoryBuffer::appendElement(HistoryElt *e, bool modified)
 {
   if (groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
     history.truncate(time);
     history.append(e);
+
+    if (savedTime==time && !modified) {
+      savedTime++;
+    }
     time++;
   }
   else {
     groupStack.top()->append(e);
+    groupEltModifies.top() = groupEltModifies.top() || modified;
   }
 }
 
@@ -94,15 +122,18 @@ void HistoryBuffer::appendElement(HistoryElt *e)
 void HistoryBuffer::beginGroup()
 {
   groupStack.push(new HE_group);
+  groupEltModifies.push(false);
 }
 
 void HistoryBuffer::endGroup()
 {
   HE_group *g = groupStack.pop();
+  bool modifies = groupEltModifies.pop();
   if (g->seqLength() > 0) {
-    appendElement(g);
+    appendElement(g, modifies);
   }
   else {
+    xassert(!modifies);
     delete g;    // empty sequence, just drop it
   }
 }
@@ -113,15 +144,21 @@ void HistoryBuffer::undo()
   xassert(canUndo() && !inGroup());
 
   time--;
-  history.applyOne(buf, time, true /*reverse*/);
+  if (!history.applyOne(buf, time, true /*reverse*/) &&
+      savedTime-1 == time) {
+    savedTime--;
+  }
 }
 
 
 void HistoryBuffer::redo()
 {
   xassert(canRedo() && !inGroup());
-  
-  history.applyOne(buf, time, false /*reverse*/);
+
+  if (!history.applyOne(buf, time, false /*reverse*/) &&
+      savedTime == time) {
+    savedTime++;
+  }
   time++;
 }
 

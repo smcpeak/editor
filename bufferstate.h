@@ -69,7 +69,8 @@ public:      // data
   string filename;
 
   // true when there are unsaved changes
-  bool changed;
+  //bool changed;                       
+  // replaced with unsavedChanges() method
 
   // current highlighter; clients can come in and replace the
   // highlighter, but it must always be the case that the

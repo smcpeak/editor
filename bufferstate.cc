@@ -46,7 +46,7 @@ void EditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
 BufferState::BufferState()
   : Buffer(),
     filename(),
-    changed(false),
+    //changed(false),
     highlighter(NULL),
     savedState()
 {}

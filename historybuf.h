@@ -6,6 +6,7 @@
 
 #include "history.h"      // history representation
 #include "objstack.h"     // ObjStack
+#include "array.h"        // ArrayStack
 
 
 // buffer that records all of the manipulations in its undo
@@ -26,15 +27,27 @@ private:      // data
   // 'history'
   int time;
 
+  // what time in that history corresponds to the file's on-disk
+  // contents?  the client of this interface has to inform me when
+  // the file gets saved, but I'll track when the changes get away
+  // from that point; 'savedTime' tracks 'time' when the contents
+  // are in correspondence and we're moving across nondestructive
+  // actions
+  int savedTime;         // invariant: -1 <= savedTime <= seq.Length()
+
   // stack of open history groups, which will soon be collapsed
   // and added to their parent group, or 'history' for the last
   // (outermost) group; typically this stack is empty, or has
   // just one element between beginGroup() and endGroup(), but
   // I allow for the generality of a stack anyway
   ObjStack<HE_group> groupStack;
+  
+  // for each element in 'groupStack', keep track of whether any
+  // of its elements modified the buffer when it was applied
+  ArrayStack<bool> groupEltModifies;
 
 private:     // funcs
-  void appendElement(HistoryElt *e);
+  void appendElement(HistoryElt *e, bool modifies);
 
 public:      // funcs
   HistoryBuffer();      // empty buffer, empty history, cursor at 0,0
@@ -55,6 +68,9 @@ public:      // funcs
   int line() const { return buf.line; }
   int col() const { return buf.col; }
 
+  // current contents differ from those on disk?
+  bool unsavedChanges() const;
+
 
   // ---- global changes ----
   // clear history, leaving only the current buffer contents
@@ -66,6 +82,10 @@ public:      // funcs
   // replace current contents with a new file, and reset cursor
   // to 0,0; clears the history
   void readFile(char const *fname);
+
+  // mark the current time as one where the file's contents agree
+  // with those on the disk
+  void noUnsavedChanges() { savedTime = time; }
 
 
   // ---- manipulate and append to history ----

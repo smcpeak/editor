@@ -59,8 +59,10 @@ public:
 
   // apply this operator, possibly in reverse; or, throw XHistory
   // if the event does not match the current state of the buffer,
-  // but in this case the buffer must not be modified
-  virtual void apply(CursorBuffer &buf, bool reverse)=0;
+  // but in this case the buffer must not be modified; return true
+  // if the action actually modified the buffer contents (as opposed
+  // to just the cursor)
+  virtual bool apply(CursorBuffer &buf, bool reverse)=0;
 
   // render this command as a text line, indented by 'indent' spaces
   virtual void print(stringBuilder &sb, int indent) const=0;
@@ -91,13 +93,13 @@ public:      // funcs
 
   // HistoryElt funcs
   virtual Tag getTag() const { return HE_CURSOR; }
-  virtual void apply(CursorBuffer &buf, bool reverse);
+  virtual bool apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
   virtual void stats(HistoryStats &stats) const;
 
   // 'apply' as a static member, to allow HE_group to represent
   // HE_cursors more efficiently but still use the same implementation
-  static void static_apply(CursorBuffer &buf, int origLine, int line,
+  static bool static_apply(CursorBuffer &buf, int origLine, int line,
                            int origCol, int col, bool reverse);
 };
 
@@ -131,12 +133,12 @@ public:      // funcs
 
   // HistoryElt funcs
   virtual Tag getTag() const { return HE_TEXT; }
-  virtual void apply(CursorBuffer &buf, bool reverse);
+  virtual bool apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
   virtual void stats(HistoryStats &stats) const;
 
   // 'apply', but static
-  static void static_apply(
+  static bool static_apply(
     CursorBuffer &buf, bool insertion, bool left,
     char const *text, int textLen, bool reverse);
 
@@ -161,7 +163,7 @@ private:     // data
 
 private:     // funcs
   // apply elements in reverse order if 'reverse' is true
-  void applySeqElt(CursorBuffer &buf, int start, int end, int offset,
+  bool applySeqElt(CursorBuffer &buf, int start, int end, int offset,
                    bool reverseIndex, bool reverseOperation);
 
   // remove the first element in the sequence (there must be at
@@ -205,10 +207,10 @@ public:      // funcs
   // start <= index < end; they are applied start to end-1, unless
   // 'reverse' is true, in which case they are applied end-1 to start,
   // each transformation itself applied with 'reverse' as passed in
-  void applySeq(CursorBuffer &buf, int start, int end, bool reverse);
+  bool applySeq(CursorBuffer &buf, int start, int end, bool reverse);
 
   // apply a single element of the sequence, possibly in reverse
-  void applyOne(CursorBuffer &buf, int index, bool reverse);
+  bool applyOne(CursorBuffer &buf, int index, bool reverse);
 
   // print, and mark the nth element of the history in the left
   // margin; if 'n' is outside the range of valid indices, no mark is
@@ -218,7 +220,7 @@ public:      // funcs
 
   // HistoryElt funcs
   virtual Tag getTag() const { return HE_GROUP; }
-  virtual void apply(CursorBuffer &buf, bool reverse);
+  virtual bool apply(CursorBuffer &buf, bool reverse);
   virtual void print(stringBuilder &sb, int indent) const;
   virtual void stats(HistoryStats &stats) const;
 };

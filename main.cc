@@ -227,7 +227,7 @@ void EditorWindow::writeTheFile()
 {
   try {
     theBuffer()->writeFile(theBuffer()->filename);
-    theBuffer()->changed = false;
+    theBuffer()->noUnsavedChanges();
     editorViewChanged();
   }
   catch (XOpen &x) {
@@ -309,7 +309,7 @@ void EditorWindow::editorViewChanged()
   // even though the Buffer interface uses 0:0
   position->setText(QString(stringc << " " << (editor->cursorLine()+1) << ":"
                                     << (editor->cursorCol()+1)
-                                    << (editor->buffer->changed? " *" : "")
+                                    << (editor->buffer->unsavedChanges()? " *" : "")
                                     ));
 }
 

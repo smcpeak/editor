@@ -681,3 +681,13 @@ did the 32-bit encoding stuff:
   mallocObjects: 4
   reservedSpace: 16
   totalUsage() : 246
+
+implemented a bunch of stuff related to hooking undo/redo up.
+
+todo to get editor usable:
+  - window menu with list of open files
+  - ability to close a file (File|Close I guess)
+  - autosave, incl. when I get a bad signal
+  - multiple frames/windows
+  
+end 6/06/03 22:50

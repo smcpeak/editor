@@ -835,7 +835,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_BackSpace: {
         fillToCursor();
-        buffer->changed = true;
+        //buffer->changed = true;
 
         if (selectEnabled) {
           editDelete();
@@ -874,7 +874,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Key_Enter:
       case Key_Return: {
         fillToCursor();
-        buffer->changed = true;
+        //buffer->changed = true;
 
         // typing replaces selection
         if (selectEnabled) {
@@ -906,7 +906,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         QString text = k->text();
         if (text.length() && text[0].isPrint()) {
           fillToCursor();
-          buffer->changed = true;
+          //buffer->changed = true;
 
           // typing replaces selection
           if (selectEnabled) {
@@ -935,7 +935,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
 void Editor::insertAtCursor(char const *text)
 {
-  buffer->changed = true;
+  //buffer->changed = true;
   buffer->insertText(text);
   scrollToCursor();
 }
@@ -949,7 +949,7 @@ void Editor::deleteAtCursor(int amt)
 
   fillToCursor();
   buffer->deleteLR(true /*left*/, amt);
-  buffer->changed = true;
+  //buffer->changed = true;
   scrollToCursor();
 }
 
@@ -1184,7 +1184,7 @@ void Editor::editDelete()
 {
   if (selectEnabled) {
     normalizeSelect();
-    buffer->changed = true;
+    //buffer->changed = true;
     buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
     selectEnabled = false;
@@ -1292,7 +1292,7 @@ void Editor::cursorPageDown(bool shift)
 void Editor::deleteCharAtCursor()
 {
   fillToCursor();
-  buffer->changed = true;
+  //buffer->changed = true;
 
   if (selectEnabled) {
     editDelete();

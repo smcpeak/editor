@@ -70,12 +70,12 @@ STATICDEF void HE_cursor::move1dim(int &value, int orig, int update, bool revers
 }
 
 
-void HE_cursor::apply(CursorBuffer &buf, bool reverse)
+bool HE_cursor::apply(CursorBuffer &buf, bool reverse)
 {
-  static_apply(buf, origLine, line, origCol, col, reverse);
+  return static_apply(buf, origLine, line, origCol, col, reverse);
 }
 
-STATICDEF void HE_cursor::static_apply
+STATICDEF bool HE_cursor::static_apply
   (CursorBuffer &buf, int origLine, int line,
    int origCol, int col, bool reverse)
 {
@@ -88,6 +88,7 @@ STATICDEF void HE_cursor::static_apply
     ROLLBACK( move1dim(buf.line, origLine, line, !reverse) );
     throw;
   }
+  return false;     // cursor movement doesn't change buffer contents
 }
 
 
@@ -150,12 +151,12 @@ HE_text::~HE_text()
 
 
 
-void HE_text::apply(CursorBuffer &buf, bool reverse)
+bool HE_text::apply(CursorBuffer &buf, bool reverse)
 {
-  static_apply(buf, insertion, left, text, textLen, reverse);
+  return static_apply(buf, insertion, left, text, textLen, reverse);
 }
 
-STATICDEF void HE_text::static_apply(
+STATICDEF bool HE_text::static_apply(
   CursorBuffer &buf, bool insertion, bool left,
   char const *text, int textLen, bool reverse)
 {
@@ -164,7 +165,9 @@ STATICDEF void HE_text::static_apply(
   }
   else {
     insert(buf, text, textLen, !left, !reverse);
-  }
+  }                  
+
+  return textLen > 0;
 }
 
 
@@ -644,22 +647,24 @@ void HE_group::truncate(int newLength)
 }
 
 
-void HE_group::applySeqElt(CursorBuffer &buf, int start, int end, int offset,
+bool HE_group::applySeqElt(CursorBuffer &buf, int start, int end, int offset,
                            bool reverseIndex, bool reverseOperation)
 {
   if (reverseIndex) {
     offset = (end-start) - offset - 1;
   }
-  applyOne(buf, start+offset, reverseOperation);
+  return applyOne(buf, start+offset, reverseOperation);
 }
 
-void HE_group::applySeq(CursorBuffer &buf, int start, int end, bool reverse)
+bool HE_group::applySeq(CursorBuffer &buf, int start, int end, bool reverse)
 {
   int i;
   try {
+    bool modifies = false;
     for (i=0; i < (end-start); i++) {
-      applySeqElt(buf, start, end, i, reverse, reverse);
+      modifies = applySeqElt(buf, start, end, i, reverse, reverse) || modifies;
     }
+    return modifies;
   }
   catch (XHistory &x) {
     // the (start+i)th element failed; roll back all preceding ones
@@ -676,43 +681,48 @@ void HE_group::applySeq(CursorBuffer &buf, int start, int end, bool reverse)
 }
 
 
-void HE_group::applyOne(CursorBuffer &buf, int index, bool reverse)
+bool HE_group::applyOne(CursorBuffer &buf, int index, bool reverse)
 {
   bool allocated;
   HistoryElt *e = decode(seq.get(index), allocated);
-  e->apply(buf, reverse);
+  bool mod = e->apply(buf, reverse);
   if (allocated) {
     delete e;
-  }
+  }          
+  return mod;
 }
 
 
-void HE_group::apply(CursorBuffer &buf, bool reverse)
+bool HE_group::apply(CursorBuffer &buf, bool reverse)
 {
-  applySeq(buf, 0, seqLength(), reverse);
+  return applySeq(buf, 0, seqLength(), reverse);
 }
 
 
 void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
 {
   sb.indent(indent) << "group {\n";
-  for (int i=0; i < seqLength(); i++) {
+  int i;
+  for (i=0; i < seqLength(); i++) {
     bool allocated;
     HistoryElt *e = decode(seq.get(i), allocated);
 
     if (i==n) {
-      // print mark in left margin
-      sb << "->";
-      e->print(sb, indent);
+      // print mark
+      sb << "--->\n";
     }
-    else {
-      e->print(sb, indent+2);
-    }  
-    
+    e->print(sb, indent+2);
+
     if (allocated) {
       delete e;
     }
   }
+
+  if (i==n) {
+    // print mark
+    sb << "--->\n";
+  }
+  
   sb.indent(indent) << "}";
   
   //if (n >= 0) {

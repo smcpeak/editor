@@ -335,8 +335,10 @@ void Buffer::fillToCursor()
   int origLine = line();
   int origCol = col();
 
-  // move back to defined area
-  moveRelCursor(-rowfill, -colfill);
+  // move back to defined area, and end of that line
+  //moveRelCursor(-rowfill, -colfill);    // wrong
+  moveCursor(true /*relLine*/, -rowfill,
+             false /*relCol*/, lineLength(origLine-rowfill));
   bc();
 
   // add newlines
