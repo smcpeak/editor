@@ -31,7 +31,7 @@ Cursor cursor(&buffer);
 
 
 // the font I want to use
-char const *myFontName = "-*-courier-medium-r-*-*-14-*-*-*-*-*-*-*";
+char const *myFontName = "-*-editor-medium-r-*-*-14-*-*-*-*-*-*-*";
 Atom myFontAtom;
 Font myFontId;
 XFontStruct *myFontStruct;

@@ -9,8 +9,8 @@
 class Cursor;           // cursor.h
 class TextLine;         // textline.h
 
-// the contents of a file; any attempt to change the contents
-// must go through the Buffer (or Line) interface
+// the contents of a file; any attempt to read or write the contents
+// must go through the Buffer (or TextLine) interface
 class Buffer {
 private:   // data
   TextLine *lines;       // (owner) array of lines in the file
