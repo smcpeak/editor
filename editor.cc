@@ -346,7 +346,13 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   int lineWidth = width();
   int fullLineHeight = fontHeight + interLineSpace;
   QPixmap pixmap(lineWidth, fullLineHeight);
-  
+
+  // NOTE: This does not preclude drawing objects that span multiple
+  // lines, it just means that those objects need to be drawn one line
+  // segment at a time.  i.e., the interface must have clients insert
+  // objects into a display list, rather than drawing arbitrary things
+  // on a canvas.
+    
   // make the main painter, which will draw on the line pixmap; the
   // font setting must be copied over manually
   QPainter paint(&pixmap);  
@@ -567,9 +573,9 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     y += fullLineHeight;
   }
 
-  // fill the remainder
-  winPaint.eraseRect(leftMargin, y,
-                     0, height()-y);
+  // at this point the entire window has been painted, so there
+  // is no need to "fill the remainder" (there used to be code
+  // here that tried to do that)
 }
 
 
