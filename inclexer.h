@@ -16,10 +16,10 @@ public:
   // call, or 0 for the beginning-of-file state
   virtual void beginScan(BufferCore const *buffer, int line, int state)=0;
 
-  // get next token in line; returns false at end of line; 'code' is
-  // numeric code returned by lexer action, and signifies what text
-  // style to use for the token
-  virtual bool getNextToken(int &len, int &code)=0;
+  // get next token in line; returns 0 at end of line, or a code that
+  // signifies what text style to use for the token; 'len' says how
+  // long that token is
+  virtual int getNextToken(int &len)=0;
 
   // get the lexing state now; usually called at end-of-line to
   // remember the start state for the next line; used for incremetal

@@ -4,17 +4,38 @@
 #ifndef C_HILITE_H
 #define C_HILITE_H
 
+#include "inclexer.h"      // IncLexer
 #include "lex_hilite.h"    // LexHighlighter
-#include "comment.h"       // CommentLexer
 
-class C_Highlighter : public LexHighlighter {
+// lexer context class defined in c_hilite.yy.cc
+class C_FlexLexer;
+
+
+// incremental lexer for C++
+class C_Lexer : public IncLexer {
 private:     // data
-  // for now, we always use this lexer
-  CommentLexer theLexer;
+  C_FlexLexer *lexer;       // (owner)
 
 public:      // funcs
-  C_Highlighter(BufferCore const &buf);
-  ~C_Highlighter();
+  C_Lexer();
+  ~C_Lexer();
+
+  // IncLexer funcs
+  virtual void beginScan(BufferCore const *buffer, int line, int state);
+  virtual int getNextToken(int &len);
+  virtual int getState() const;
 };
+
+
+// highlighter for C++
+class C_Highlighter : public LexHighlighter {
+private:     // data
+  C_Lexer theLexer;
+
+public:      // funcs
+  C_Highlighter(BufferCore const &buf)
+    : LexHighlighter(buf, theLexer) {}
+};
+
 
 #endif // C_HILITE_H

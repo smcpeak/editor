@@ -1,11 +1,11 @@
-/* comment.lex
-   simple lexer for strings and comments, to experiment
-   with using Flex for syntax highlighting */
+/* c_hilite.lex
+   lexer for highlighting C/C++ 
+   based on comment.lex, and elsa's lexer.lex */
 
 /* ----------------------- C definitions ---------------------- */
 %{
 
-#include "comment.h"       // CommentLexer class
+#include "c_hilite.h"      // C_FlexLexer class
 #include "flexlexer.h"     // BufferLineSource
 #include "style.h"         // ST_XXX constants
 
@@ -13,7 +13,7 @@
 #define YY_NEVER_INTERACTIVE 1
 
 // lexer context class
-class CommentFlexLexer : public yyFlexLexer {
+class C_FlexLexer : public yyFlexLexer {
 public:      // data
   BufferLineSource bufsrc;
 
@@ -21,11 +21,11 @@ protected:   // funcs
   virtual int LexerInput(char *buf, int max_size);
 
 public:      // funcs
-  CommentFlexLexer() {}
-  ~CommentFlexLexer() {}
+  C_FlexLexer() {}
+  ~C_FlexLexer() {}
 
   virtual int yylex();
-  
+
   void setState(int state) { BEGIN(state); }
   int getState() const     { return YY_START; }
 };
@@ -56,10 +56,10 @@ public:      // funcs
 %option never-interactive
 
 /* and I will define the class */
-%option yyclass="CommentFlexLexer"
+%option yyclass="C_FlexLexer"
 
 /* output file name */
-%option outfile="comment.yy.cc"
+%option outfile="c_hilite.yy.cc"
 
 
 /* start conditions */
@@ -91,6 +91,13 @@ QUOTE         [\"]
 
 /* ------------- token definition rules --------------- */
 %%
+
+  /* keywords */
+"int"                        return ST_KEYWORD;
+
+  /* identifiers */
+[_a-zA-Z][_a-zA-Z0-9]*       return ST_NORMAL;
+
 
   /* string literal, including one that does not end with
      a quote; that way we'll just highlight the string but
@@ -157,7 +164,7 @@ QUOTE         [\"]
 
 
   /* anything else */
-([^\"/]+)|"/" {
+{ANY} {
   return ST_NORMAL;
 }
 
@@ -166,32 +173,32 @@ QUOTE         [\"]
 // third section: extra C++ code
 
 
-// ----------------------- CommentFlexLexer ---------------------
-int CommentFlexLexer::LexerInput(char *buf, int max_size)
+// ----------------------- C_FlexLexer ---------------------
+int C_FlexLexer::LexerInput(char *buf, int max_size)
 {
   return bufsrc.fillBuffer(buf, max_size);
 }
 
 
-// ------------------------- CommentLexer -----------------------
-CommentLexer::CommentLexer()
-  : lexer(new CommentFlexLexer)
+// ------------------------- C_Lexer -----------------------
+C_Lexer::C_Lexer()
+  : lexer(new C_FlexLexer)
 {}
 
-CommentLexer::~CommentLexer()
+C_Lexer::~C_Lexer()
 {
   delete lexer;
 }
 
 
-void CommentLexer::beginScan(BufferCore const *buffer, int line, int state)
+void C_Lexer::beginScan(BufferCore const *buffer, int line, int state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);
 }
 
 
-int CommentLexer::getNextToken(int &len)
+int C_Lexer::getNextToken(int &len)
 {
   int code = lexer->yylex();
   len = lexer->YYLeng();
@@ -199,7 +206,7 @@ int CommentLexer::getNextToken(int &len)
 }
 
 
-int CommentLexer::getState() const
+int C_Lexer::getState() const
 {
   return lexer->getState();
 }

@@ -57,8 +57,7 @@ public:
     { empty(); endStyle=end; }
 
   // add a new style run to those already present
-  void append(Style style, int length)
-    { push(StyleEntry(style, length)); }
+  void append(Style style, int length);
 
   // overwrite a subsequence of characters with a given style;
   // 'length' can be 0 to mean infinite

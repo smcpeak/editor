@@ -1,22 +1,41 @@
 // comment.h
-// lexer class for comment.lex
+// external interface to highlighter provided by comment.lex
+// implementation in comment.lex's third section
 
 #ifndef COMMENT_H
 #define COMMENT_H
 
-#include "flexlexer.h"   // RawFlexLexer, IncFlexLexer
+#include "inclexer.h"      // IncLexer
+#include "lex_hilite.h"    // LexHighlighter
 
-// raw comment flex lexer
-class CommentFlexLexer : public RawFlexLexer {
+// lexer context class defined in comment.yy.cc
+class CommentFlexLexer;
+
+
+// incremental lexer for comment.lex
+class CommentLexer : public IncLexer {
+private:     // data
+  CommentFlexLexer *lexer;       // (owner)
+
 public:      // funcs
-  virtual int yylex();
+  CommentLexer();
+  ~CommentLexer();
+
+  // IncLexer funcs
+  virtual void beginScan(BufferCore const *buffer, int line, int state);
+  virtual int getNextToken(int &len);
+  virtual int getState() const;
 };
 
 
-// lexer for comment.lex
-class CommentLexer : public IncFlexLexer {
+// highlighter based on CommentLexer
+class CommentHighlighter : public LexHighlighter {
+private:     // data
+  CommentLexer incLexer;
+
 public:      // funcs
-  CommentLexer() : IncFlexLexer(new CommentFlexLexer) {}
+  CommentHighlighter(BufferCore const &buf)
+    : LexHighlighter(buf, incLexer) {}
 };
 
 

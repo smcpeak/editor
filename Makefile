@@ -60,20 +60,22 @@ style: style.h style.cc
 
 
 # ------------- highlighting stuff --------------------
-# lexer for comments and strings (-b makes lex.backup)
-TOCLEAN += comment.yy.cc lex.backup
-comment.yy.cc: comment.lex comment.h
-	flex -o$@ comment.lex
-	mv $@ comment.tmp
-	sed -e 's/class istream;/#include <iostream.h>/' <comment.tmp >$@
-	rm comment.tmp
+# lexer (-b makes lex.backup)
+TOCLEAN += comment.yy.cc c_hilite.yy.cc lex.backup
+%.yy.cc: %.lex %.h
+	flex -o$@ -b -P$*_ $*.lex
+	mv $@ $*.tmp
+	sed -e 's|class istream;|#include <iostream.h>|' \
+	  <$*.tmp >$@
+	rm $*.tmp
 
 C_HILITE_OBJS := \
   buffer.o \
   style.o \
   lex_hilite.o \
   flexlexer.o \
-  comment.yy.o
+  comment.yy.o \
+  c_hilite.yy.o
 #-include $(C_HILITE_OBJS:.o=.d)   # redundant with EDITOR_OBJS
 
 TOCLEAN += c_hilite
@@ -94,7 +96,7 @@ EDITOR_OBJS := \
   style.o \
   qtutil.o \
   styledb.o \
-  c_hilite.o \
+  c_hilite.yy.o \
   lex_hilite.o \
   flexlexer.o \
   comment.yy.o

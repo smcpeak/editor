@@ -9,4 +9,5 @@ testgap
 testing.txt
 style
 c_hilite
-comment.yy.cc
+lex.backup
+*.yy.cc

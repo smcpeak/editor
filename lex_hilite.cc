@@ -203,8 +203,8 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
     TRACE("highlight", "push changed: scanning line " << changedBegin);
     lexer.beginScan(&buf, changedBegin, prevState);
 
-    int len, code;
-    while (lexer.getNextToken(len, code))
+    int len;
+    while (lexer.getNextToken(len))
       {}
 
     prevState = lexer.getState();
@@ -223,8 +223,8 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
     TRACE("highlight", "push waterline: scanning line " << waterline);
     lexer.beginScan(&buf, waterline, prevState);
 
-    int len, code;
-    while (lexer.getNextToken(len, code))
+    int len;
+    while (lexer.getNextToken(len))
       {}
 
     prevState = lexer.getState();
@@ -239,8 +239,10 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
 
   // append each styled segment
   int len, code;
-  while (lexer.getNextToken(len, code)) {
+  code = lexer.getNextToken(len);
+  while (code) {
     style.append((Style)code, len);
+    code = lexer.getNextToken(len);
   }
   
   saveLineState(line, lexer.getState());
@@ -258,7 +260,9 @@ static void printLine(LexHighlighter &hi, int line)
 
   cout << "line " << line << ":\n"
        << "  text : " << buf->getWholeLine(line) << "\n"
-       << "  style: " << style.asUnaryString() << endl;
+       << "  style: " << style.asUnaryString() << "\n"
+       << "  rle  : " << style.asString() << "\n"
+       ;
 }
 
 static void printStyles(LexHighlighter &hi)
@@ -349,7 +353,7 @@ void exerciseHighlighter(MakeHighlighterFunc func)
     "here is \"a string\" ok?\n"
     "and how about /*a comment*/ yo\n"
     "C++ comment: // I like C++\n"
-    "back to normalcy\n"
+    "back to int normalcy\n"
   );
   printStyles(hi);
   check(hi);

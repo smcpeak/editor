@@ -321,6 +321,15 @@ to demand-highlight the whole thing on startup)
 
 done with waterline implementation
 
+struggling with getting flex to output lexers that can be
+linked in each others' presence
+
+end 2/25/03 16:20
+
+--------------------
+start 2/26/03 02:01
+
+ok, will hack it for now
 
 
 

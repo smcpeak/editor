@@ -5,6 +5,19 @@
 
 
 // ----------------------- LineStyle --------------------
+void LineStyle::append(Style style, int length)
+{
+  // same as preceeding style?
+  if (isNotEmpty() && (top().style == style)) {
+    // coalesce
+    top().length += length;
+  }
+  else {
+    // add new
+    push(StyleEntry(style, length));
+  }
+}
+
 void LineStyle::overlay(int start, int ovlLength, Style ovlStyle)
 {
   // walk over this style array, making a new one
