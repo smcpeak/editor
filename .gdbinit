@@ -1,6 +1,6 @@
 
 file editor
-#set args 1000
+set args -tr setView
 
 break breaker
 break main

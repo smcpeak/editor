@@ -30,8 +30,8 @@ public:      // data
   int selectCol;
   bool selectEnabled;
 
-  // scrolling offset
-  int firstVisibleLine, firstVisibleCol;
+  // scrolling offset; must change via setView()
+  int const firstVisibleLine, firstVisibleCol;
 
   // information about viewable area; these are set by the
   // updateView() routine and should be treated as read-only by other
@@ -70,6 +70,11 @@ public:      // data
   int fontHeight;
   int fontWidth;
 
+  // ------ event model hacks ------
+  // when this is true, we ignore the scrollToLine and scrollToCol
+  // signals, to avoid recursion with the scroll bars
+  bool ignoreScrollSignals;
+
 private:     // funcs
   // fill buffer with whitespace, if necessary, so that the current
   // cursor position is on a valid character, i.e.:
@@ -103,6 +108,11 @@ private:     // funcs
   // draw text etc. on a QPainter
   void drawBufferContents(QPainter &paint);
 
+  // debugging
+  static string lineColStr(int line, int col);
+  string firstVisStr() const { return lineColStr(firstVisibleLine, firstVisibleCol); }
+  string cursorStr() const { return lineColStr(cursorLine, cursorCol); }
+
 protected:   // funcs
   // QWidget funcs
   virtual void paintEvent(QPaintEvent *);
@@ -119,7 +129,20 @@ public:      // funcs
   // QWidget funcs
   virtual void setFont(QFont &f);
 
-  // recompute lastVisibleLine/Col
+  // change the current firstVisibleLine/Col (calls updateView());
+  // does *not* move the cursor
+  void setView(int newFirstLine, int newFirstCol);
+  void setFirstVisibleLine(int L) { setView(L, firstVisibleCol); }
+  void setFirstVisibleCol(int C) { setView(firstVisibleLine, C); }
+
+  // move the view by a delta; automatically truncates at the low end
+  void moveView(int deltaLine, int deltaCol);
+
+  // recompute lastVisibleLine/Col, based on:
+  //   - firstVisibleLine/Col
+  //   - width(), height()
+  //   - topMargin, leftMargin, interLineSpace
+  //   - fontHeight, fontWidth
   void updateView();
 
   // set cursor and view to 0,0
@@ -129,8 +152,9 @@ public:      // funcs
   // is visible; if it's already visible, do nothing
   void scrollToCursor();
 
-  // move the cursor and the view by a set increment, and repaint
-  void moveView(int deltaLine, int deltaCol);
+  // move the cursor and the view by a set increment, and repaint;
+  // truncation at low end is automatic
+  void moveViewAndCursor(int deltaLine, int deltaCol);
 
   // size of view in lines/cols
   int visLines() const { return lastVisibleLine-firstVisibleLine+1; }

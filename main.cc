@@ -5,6 +5,7 @@
 #include "buffer.h"          // Buffer
 #include "editor.h"          // Editor
 #include "exc.h"             // XOpen
+#include "trace.h"           // TRACE_ARGS
 
 #include <qapplication.h>    // QApplication
 #include <qmenubar.h>        // QMenuBar
@@ -206,6 +207,7 @@ void EditorWindow::editorViewChanged()
 
 int main(int argc, char **argv)
 {
+  TRACE_ARGS();
   QApplication a(argc, argv);
 
   EditorWindow ed(NULL /*parent*/, "main editor window");

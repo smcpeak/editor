@@ -8,6 +8,9 @@
 #include "xassert.h"         // xassert
 #include "array.h"           // Array
 #include "style.h"           // LineStyle, etc.
+#include "trace.h"           // TRACE
+#include "qtutil.h"          // toString(QKeyEvent&)
+#include "macros.h"          // Restorer
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -23,7 +26,9 @@ Editor::Editor(BufferState *buf,
                QWidget *parent=NULL, const char *name=NULL)
   : QWidget(parent, name, WRepaintNoErase | WResizeNoErase | WNorthWestGravity),
     buffer(buf),
-    // cursor, select and visible line/col inited by resetView()
+    // cursor, select inited by resetView()
+    firstVisibleLine(0),
+    firstVisibleCol(0),
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
@@ -32,8 +37,9 @@ Editor::Editor(BufferState *buf,
     normalBG(0x00, 0x00, 0xA0),     // darkish blue
     selectFG(0xFF, 0xFF, 0xFF),     // white
     selectBG(0x00, 0x00, 0xF0),     // light blue
-    ctrlShiftDistance(10)
+    ctrlShiftDistance(10),
     // font metrics inited by setFont()
+    ignoreScrollSignals(false)
 {
   QFont font;
   font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
@@ -62,8 +68,7 @@ void Editor::resetView()
   selectLine = 0;
   selectCol = 0;
   selectEnabled = false;
-  firstVisibleLine = 0;
-  firstVisibleCol = 0;
+  setView(0,0);
 }
 
 
@@ -89,7 +94,12 @@ void Editor::setFont(QFont &f)
 void Editor::redraw()
 {
   updateView();
-  emit viewChanged();
+  
+  // tell our parent.. but ignore certain messages temporarily
+  {
+    Restorer<bool> restore(ignoreScrollSignals, true);
+    emit viewChanged();
+  }
   
   // redraw
   update();
@@ -109,19 +119,54 @@ void Editor::redraw()
 }
 
 
+void Editor::setView(int newFirstLine, int newFirstCol)
+{
+  xassert(newFirstLine >= 0);
+  xassert(newFirstCol >= 0);
+
+  if (newFirstLine==firstVisibleLine &&
+      newFirstCol==firstVisibleCol) {
+    // nop
+  }
+  else {
+    // this is the one function allowed to change these
+    const_cast<int&>(firstVisibleLine) = newFirstLine;
+    const_cast<int&>(firstVisibleCol) = newFirstCol;
+
+    updateView();
+
+    TRACE("setView", "new firstVis is " << firstVisStr());
+  }
+}
+
+
+void Editor::moveView(int deltaLine, int deltaCol)
+{
+  int line = max(0, firstVisibleLine + deltaLine);
+  int col = max(0, firstVisibleCol + deltaCol);
+
+  setView(line, col);
+}
+
+
 void Editor::updateView()
 {
   int h = height();
   int w = width();
 
-  // calculate viewport stats
-  // why -1?  suppose width==height==0, then the "first" visible isn't
-  // visible at all, so we'd want the one before (not that that's visible
-  // either, but it suggests what we want in nondegenerate cases too)
-  lastVisibleLine = firstVisibleLine
-    + (h - topMargin) / (fontHeight + interLineSpace) - 1;
-  lastVisibleCol = firstVisibleCol
-    + (w - leftMargin) / fontWidth - 1;
+  if (fontHeight && fontWidth) {
+    // calculate viewport stats
+    // why -1?  suppose width==height==0, then the "first" visible isn't
+    // visible at all, so we'd want the one before (not that that's visible
+    // either, but it suggests what we want in nondegenerate cases too)
+    lastVisibleLine = firstVisibleLine
+      + (h - topMargin) / (fontHeight + interLineSpace) - 1;
+    lastVisibleCol = firstVisibleCol
+      + (w - leftMargin) / fontWidth - 1;
+  }
+  else {
+    // font info not set, leave them alone
+  }
 }
 
 
@@ -441,6 +486,8 @@ void Editor::clearSelIfEmpty()
 
 void Editor::keyPressEvent(QKeyEvent *k)
 {
+  TRACE("input", "keyPress: " << toString(*k));
+
   int state = k->state() & KeyButtonMask;
 
   // control-<key>
@@ -465,8 +512,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_W:
-        inc(firstVisibleLine, -1);
-        updateView();
+        moveView(-1, 0);
         if (cursorLine > lastVisibleLine) {
           cursorLine = lastVisibleLine;
         }
@@ -474,8 +520,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_Z:
-        inc(firstVisibleLine, +1);
-        updateView();
+        moveView(+1, 0);
         if (cursorLine < firstVisibleLine) {
           cursorLine = firstVisibleLine;
         }
@@ -483,19 +528,19 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
 
       case Key_Up:
-        moveView(-1, 0);
+        moveViewAndCursor(-1, 0);
         break;
 
       case Key_Down:
-        moveView(+1, 0);
+        moveViewAndCursor(+1, 0);
         break;
 
       case Key_Left:
-        moveView(0, -1);
+        moveViewAndCursor(0, -1);
         break;
 
       case Key_Right:
-        moveView(0, +1);
+        moveViewAndCursor(0, +1);
         break;
 
       default:
@@ -510,19 +555,19 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
     switch (k->key()) {
       case Key_Up:
-        moveView(-ctrlShiftDistance, 0);
+        moveViewAndCursor(-ctrlShiftDistance, 0);
         break;
 
       case Key_Down:
-        moveView(+ctrlShiftDistance, 0);
+        moveViewAndCursor(+ctrlShiftDistance, 0);
         break;
 
       case Key_Left:
-        moveView(0, -ctrlShiftDistance);
+        moveViewAndCursor(0, -ctrlShiftDistance);
         break;
 
       case Key_Right:
-        moveView(0, +ctrlShiftDistance);
+        moveViewAndCursor(0, +ctrlShiftDistance);
         break;
 
       case Key_PageUp:
@@ -579,12 +624,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Key_PageUp:
         turnSelection(state==ShiftButton);
-        moveView(-visLines(), 0);
+        moveViewAndCursor(-visLines(), 0);
         break;
 
       case Key_PageDown:
         turnSelection(state==ShiftButton);
-        moveView(+visLines(), 0);
+        moveViewAndCursor(+visLines(), 0);
         break;
 
       case Key_BackSpace: {
@@ -737,39 +782,57 @@ bool Editor::cursorBeforeSelect() const
 
 void Editor::scrollToCursor()
 {
+  int fvline = firstVisibleLine;
+  int fvcol = firstVisibleCol;
+
   if (cursorCol < firstVisibleCol) {
-    firstVisibleCol = cursorCol;
+    fvcol = cursorCol;
   }
   else if (cursorCol > lastVisibleCol) {
-    firstVisibleCol += (cursorCol - lastVisibleCol);
+    fvcol += (cursorCol - lastVisibleCol);
   }
 
   if (cursorLine < firstVisibleLine) {
-    firstVisibleLine = cursorLine;
+    fvline = cursorLine;
   }
   else if (cursorLine > lastVisibleLine) {
-    firstVisibleLine += (cursorLine - lastVisibleLine);
+    fvline += (cursorLine - lastVisibleLine);
   }
+  
+  setView(fvline, fvcol);
   
   redraw();
 }
 
 
-void Editor::moveView(int deltaLine, int deltaCol)
+STATICDEF string Editor::lineColStr(int line, int col)
 {
+  return stringc << line << ":" << col;
+}
+
+void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
+{
+  TRACE("moveViewAndCursor", 
+        "start: firstVis=" << firstVisStr()
+     << ", cursor=" << cursorStr()
+     << ", delta=" << lineColStr(deltaLine, deltaCol));
+
   // first make sure the view contains the cursor
   scrollToCursor();
-  
+
   // move viewport, but remember original so we can tell
   // when there's truncation
   int origVL = firstVisibleLine;
   int origVC = firstVisibleCol;
-  inc(firstVisibleLine, deltaLine);
-  inc(firstVisibleCol, deltaCol);
+  moveView(deltaLine, deltaCol);
 
   // now move cursor by the amount that the viewport moved
   inc(cursorLine, firstVisibleLine-origVL);
   inc(cursorCol, firstVisibleCol-origVC);
+
+  TRACE("moveViewAndCursor",
+        "end: firstVis=" << firstVisStr()
+     << ", cursor=" << cursorStr());
 
   // redraw display
   redraw();
@@ -778,16 +841,20 @@ void Editor::moveView(int deltaLine, int deltaCol)
 
 void Editor::scrollToLine(int line)
 {
-  xassert(line >= 0);
-  firstVisibleLine = line;
-  redraw();
+  if (!ignoreScrollSignals) {
+    xassert(line >= 0);
+    setFirstVisibleLine(line);
+    redraw();
+  }
 }
 
 void Editor::scrollToCol(int col)
-{
-  xassert(col >= 0);
-  firstVisibleCol = col;
-  redraw();
+{  
+  if (!ignoreScrollSignals) {
+    xassert(col >= 0);
+    setFirstVisibleCol(col);
+    redraw();
+  }
 }
 
 

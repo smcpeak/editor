@@ -253,5 +253,11 @@ selection rendering appears to work!
 
 end 2/12/03 03:19
 
+-------------------------------
+start 2/14/03 22:47
+
+need to implement copy, cut, paste
+
+first: fix pageup bug..
 
 
