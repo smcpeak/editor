@@ -37,37 +37,49 @@ void IncSearch::attach(Editor *newEd)
 
   curFlags = Buffer::FS_CASE_INSENSITIVE;
 
-  text = "";
+  if (ed->selectEnabled) {
+    // initialize the search string with the selection
+    ed->normalizeSelect();
 
-  curLine = beginLine;
-  curCol = beginCol;
-  
-  match = true;
-
-  if (status) {
-    prevStatusText = status->text();
-    status->setText(statusText());
+    curLine = ed->selLowLine;
+    curCol = ed->selLowCol;
+    if (ed->selLowLine == ed->selHighLine) {
+      // expected case
+      text = ed->buffer->getTextRange(ed->selLowLine, ed->selLowCol, 
+        ed->selHighLine, ed->selHighCol);
+    }
+    else {
+      // truncate to one line..
+      text = ed->buffer->getTextRange(ed->selLowLine, ed->selLowCol,
+        ed->selLowLine, ed->buffer->lineLength(ed->selLowLine));
+    }
   }
+
+  else {
+    // empty initial search string (user can add at cursor with ctrl-W)
+    text = "";
+
+    curLine = beginLine;
+    curCol = beginCol;
+  }
+
+  // in either case this should succeed...
+  findString();
 }
 
+
+static void addStatusFlag(stringBuilder &sb, char const *label, bool on)
+{
+  sb << "  " << label << "(" << (on? "x" : " ") << ")";
+}
 
 QString IncSearch::statusText() const
 {
   stringBuilder sb;
-  if (match) {
-    sb << "search";
-  }
-  else {
-    sb << "not found";
-  }
-  sb << ": \"" << text << "\"";
+  sb << "I-search:  F1=help";
 
-  if (curFlags & Buffer::FS_CASE_INSENSITIVE) {
-    sb << " (insens)";
-  }
-  if (curFlags & Buffer::FS_BACKWARDS) {
-    sb << " (back)";
-  }
+  addStatusFlag(sb, "^I=insens", (curFlags & Buffer::FS_CASE_INSENSITIVE));
+  addStatusFlag(sb, "^B=back", (curFlags & Buffer::FS_BACKWARDS));
 
   return QString(sb);
 }
@@ -75,11 +87,12 @@ QString IncSearch::statusText() const
 
 void IncSearch::detach()
 {
-  AttachInputProxy::detach();
-
+  ed->hideInfo();
   if (status) {
     status->setText(prevStatusText);
   }
+
+  AttachInputProxy::detach();
 }
 
 
@@ -133,6 +146,12 @@ bool IncSearch::keyPressEvent(QKeyEvent *k)
         prevMatch();
         return true;
 
+      case Qt::Key_Home:     
+        // make as much of the left side visible as possible
+        ed->setFirstVisibleCol(0);
+        ed->scrollToCursor();                               
+        return true;
+
       default: {
         QString s = k->text();
         if (s.length() && s[0].isPrint()) {
@@ -157,6 +176,25 @@ bool IncSearch::keyPressEvent(QKeyEvent *k)
         curFlags ^= Buffer::FS_BACKWARDS;
         findString();
         return true;
+
+      case Qt::Key_W:
+        // grab chars from cursor up to end of next word
+        // or end of line
+        text &= ed->buffer->getWordAfter(ed->cursorLine, ed->cursorCol);
+        findString();
+        return true;
+
+      #if 0   // they don't work that well b/c of bad interaction with selection..
+      case Qt::Key_Left:
+      case Qt::Key_Right:
+      case Qt::Key_Up:
+      case Qt::Key_Down:
+      case Qt::Key_W:
+      case Qt::Key_Z:
+        // pass these through to editor, so it can scroll
+        return false;
+      #endif // 0
+
     }
   }
 
@@ -191,6 +229,13 @@ void IncSearch::updateStatus()
 {
   if (status) {
     status->setText(statusText());
+  }
+  
+  if (!match) {
+    ed->showInfo(stringc << "not found: \"" << text << "\"");
+  }
+  else {
+    ed->hideInfo();
   }
 }
 

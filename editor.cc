@@ -21,6 +21,7 @@
 #include <qpixmap.h>         // QPixmap
 #include <qmessagebox.h>     // QMessageBox
 #include <qclipboard.h>      // QClipboard
+#include <qlabel.h>          // QLabel
 
 #include <stdio.h>           // printf, for debugging
 
@@ -29,6 +30,7 @@
 Editor::Editor(BufferState *buf,
                QWidget *parent=NULL, const char *name=NULL)
   : QWidget(parent, name, WRepaintNoErase | WResizeNoErase | WNorthWestGravity),
+    infoBox(NULL),
     buffer(buf),
     // cursor, select inited by resetView()
     firstVisibleLine(0),
@@ -1075,6 +1077,46 @@ void Editor::editDelete()
     fillToCursor();
 
     scrollToCursor();
+  }
+}
+
+
+void Editor::showInfo(char const *infoString)
+{
+  QWidget *main = qApp->mainWidget();
+
+  if (!infoBox) {
+    infoBox = new QLabel(main, "infoBox",
+      // style of a QTipLabel for tooltips ($QTDIR/src/widgets/qtooltip.cpp)
+      WStyle_Customize + WStyle_NoBorder + WStyle_Tool);
+
+    infoBox->setBackgroundColor(QColor(0xFF,0xFF,0x80));
+  }
+
+  infoBox->setText(infoString);
+
+  // compute a good size for the label
+  QFontMetrics fm(infoBox->font());
+  QSize sz = fm.size(0, infoString);
+  infoBox->resize(sz.width() + 2, sz.height() + 2);
+
+  infoBox->move(mapTo(main,
+    QPoint((cursorCol - firstVisibleCol) * fontWidth,
+           (cursorLine - firstVisibleLine + 1) * fontHeight + 1)));
+           
+  // try to position the box inside the main widget, so it will show up
+  if (infoBox->x() + infoBox->width() > main->width()) {
+    infoBox->move(main->width() - infoBox->width(), infoBox->y());
+  }
+
+  infoBox->show();
+}
+
+void Editor::hideInfo()
+{
+  if (infoBox) {
+    delete infoBox;
+    infoBox = NULL;
   }
 }
 

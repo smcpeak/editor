@@ -158,6 +158,10 @@ public:
   string getWholeLine(int line) const
     { return getTextRange(line, 0, line, lineLength(line)); }
 
+  // get the word following the cursor, including any non-word
+  // characters that preceed that word; stop at end of line
+  string getWordAfter(int line, int col) const;
+
 
   // advance a cursor position forwards or backwards, wrapping
   // to the next/prev line at line edges

@@ -9,6 +9,7 @@
 #include "style.h"          // Style
 
 class QRangeControl;        // qrangecontrol.h
+class QLabel;               // qlabel.h
 class StyleDB;              // styledb.h
 class InputProxy;           // inputproxy.h
 
@@ -18,6 +19,10 @@ class InputProxy;           // inputproxy.h
 // creating the Editor object
 class Editor : public QWidget {
   Q_OBJECT
+
+private:     // data
+  // floating info box
+  QLabel *infoBox;               // (nullable owner)
 
 public:      // data
   // ------ editing state -----
@@ -33,10 +38,10 @@ public:      // data
   int selectCol;
   bool selectEnabled;
 
-  // the following fields are valid only after normalizeSelection(),
+  // the following fields are valid only after normalizeSelect(),
   // and before any subsequent modification to cursor or select
-  int selLowLine, selLowCol;    // whichever of cursor/select comes first
-  int selHighLine, selHighCol;  // whichever comes second
+  int selLowLine, selLowCol;     // whichever of cursor/select comes first
+  int selHighLine, selHighCol;   // whichever comes second
 
   // scrolling offset; must change via setView()
   int const firstVisibleLine, firstVisibleCol;
@@ -104,9 +109,6 @@ private:     // funcs
   // true if the cursor is before (above/left) the select point
   bool cursorBeforeSelect() const;
   
-  // set sel{Low,High}{Line,Col}
-  void normalizeSelect();
-
   // ctrl-pageup/pagedown
   void cursorToTop();
   void cursorToBottom();
@@ -163,6 +165,9 @@ public:      // funcs
   //   - fontHeight, fontWidth
   void updateView();
 
+  // set sel{Low,High}{Line,Col}
+  void normalizeSelect();
+
   // set cursor and view to 0,0
   void resetView();
 
@@ -180,6 +185,12 @@ public:      // funcs
   // size of view in lines/cols
   int visLines() const { return lastVisibleLine-firstVisibleLine+1; }
   int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
+
+  // show the info box near the cursor
+  void showInfo(char const *info);    
+
+  // hide the info box if it's visible
+  void hideInfo();
 
 public slots:
   // slots to respond to scrollbars

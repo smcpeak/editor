@@ -10,6 +10,7 @@
 #include "array.h"         // Array
 
 #include <string.h>        // strncasecmp
+#include <ctype.h>         // isalnum
 
 
 // ---------------------- BufferCore --------------------------
@@ -585,6 +586,36 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
 
   // splice 'line' onto 'line1'
   spliceNextLine(line1);
+}
+
+
+string Buffer::getWordAfter(int line, int col) const
+{
+  stringBuilder sb;
+         
+  if (!( 0 <= line && line < numLines() )) {
+    return "";
+  }
+                                  
+  bool seenWordChar = false;
+  while (col < lineLength(line)) {
+    char ch = getTextRange(line, col, line, col+1)[0];
+    if (isalnum(ch) || ch=='_') {
+      seenWordChar = true;
+      sb << ch;
+    }
+    else if (seenWordChar) {
+      // done, this is the end of the word
+      break;
+    }
+    else {
+      // consume this character, it precedes any word characters
+      sb << ch;
+    }
+    col++;
+  }
+
+  return sb;
 }
 
 

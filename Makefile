@@ -90,6 +90,7 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 # ------------------ the editor ---------------------
 TOCLEAN += editor
 EDITOR_OBJS := \
+  incsearch.o \
   editor.o \
   moc_editor.o \
   buffer.o \
@@ -103,8 +104,7 @@ EDITOR_OBJS := \
   lex_hilite.o \
   flexlexer.o \
   comment.yy.o \
-  inputproxy.o \
-  incsearch.o
+  inputproxy.o
 -include $(EDITOR_OBJS:.o=.d)
 
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h

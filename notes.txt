@@ -357,7 +357,7 @@ end 2/26/03 06:54
 start 2/28/03 04:14
    
 bugs:
-  - open editor.cc, go to end of file, open editor.h: now at end
+  * open editor.cc, go to end of file, open editor.h: now at end
     of that file, should be at start
   - open nonexistent file, shouldn't clear current contents
 
