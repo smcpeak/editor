@@ -307,6 +307,18 @@ out of steam...
 
 end 2/23/03 03:19
 
+------------------------------
+start 2/25/03 09:30
+
+have a solution to the flaw above: in addition to the 'changed'
+region I'll have a water mark below which no highlighting has
+been done.  of the real set of changed lines, the changed set I
+maintain will be the topmost contiguous region, the remainder
+below the water mark.  for the usual case of opening a file and
+scrolling through it, this will highlight only as far as the
+user has seen, which might be a good thing (perhaps want preference
+to demand-highlight the whole thing on startup)
+
 
 
 

@@ -153,7 +153,11 @@ public:
   // that line1/col1 <= line2/col2; characters outside defined area
   // are taken to be whitespace
   string getTextRange(int line1, int col1, int line2, int col2) const;
-                                        
+
+  // get a complete line
+  string getWholeLine(int line) const
+    { return getTextRange(line, 0, line, lineLength(line)); }
+
   // split 'line' into two, putting everything after 'col' into the
   // next line; if 'col' is beyond the end of the line, spaces are
   // *not* appended to 'line' before inserting a blank line after it;

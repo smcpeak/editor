@@ -65,7 +65,8 @@ public:
   void overlay(int start, int length, Style style);
 
   // debugging: render the runs as a string
-  string asString() const;
+  string asString() const;          // e.g. "[1,4][2,3][4"
+  string asUnaryString() const;     // e.g. "11112224..."
 };
 
 

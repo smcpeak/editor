@@ -74,6 +74,43 @@ string LineStyle::asString() const
 }
 
 
+
+// get a single-character code for the style
+static char styleCodeChar(int style)
+{
+  if (0 <= style && style <= 9) {
+    return style+'0';
+  }
+  else if (style < 36) {
+    return style-10+'A';
+  }
+  else if (style < 62) {
+    return style-36+'a';
+  }
+  else {
+    // I don't expect to have anywhere near 62 styles, so collapsing
+    // the rest into one char shouldn't be a problem
+    return '+';
+  }
+}
+
+string LineStyle::asUnaryString() const
+{
+  stringBuilder sb;
+
+  LineStyleIter iter(*this);
+  while (!iter.atEnd()) {
+    for (int i=0; i<iter.length; i++) {
+      sb << styleCodeChar(iter.style);
+    }
+    iter.nextRun();
+  }
+  sb << styleCodeChar(endStyle) << "...";
+
+  return sb;
+}
+
+
 // ----------------------- LineStyleIter --------------------
 LineStyleIter::LineStyleIter(LineStyle const &s)
   : styles(s),
