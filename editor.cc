@@ -18,7 +18,7 @@ Editor::Editor(Buffer *buf,
   : QWidget(parent, name),
     buffer(buf),
     cursor(buf)
-{            
+{
   QFont font;
   font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
   setFont(font);
@@ -168,28 +168,4 @@ void Editor::keyPressEvent(QKeyEvent *k)
   else {
     k->ignore();
   }
-}
-
-
-// -------------------------- main -----------------------
-// right now, one buffer
-Buffer theBuffer;
-
-
-int main(int argc, char **argv)
-{
-  QApplication a(argc, argv);
-
-  // insert some dummy text into the buffer
-  {
-    Position start(&theBuffer);
-    theBuffer.insertText(start, "hi there", 8);
-  }
-
-  Editor editor(&theBuffer, NULL /*parent*/, "An Editor");
-  editor.resize(300,300);
-
-  a.setMainWidget(&editor);
-  editor.show();
-  return a.exec();
 }

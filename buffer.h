@@ -21,6 +21,9 @@ private:   // data
   // initialized TextLines; outside this range, they are
   // not considered initialized
 
+  // TODO: implement a gap in 'lines' so lines can usually be inserted
+  // without copying large pieces of the array
+
 private:   // funcs
   // zero everything
   void init();

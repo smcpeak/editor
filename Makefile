@@ -37,14 +37,23 @@ moc_%.cc: %.h
 
 # -------------- buffer test program ----------------
 TOCLEAN += buffer buffer.tmp
-BUFFER_OBJS = buffer.cc textline.o position.o
+BUFFER_OBJS := \
+  buffer.cc \
+  textline.o \
+  position.o
 buffer: array.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) $(LDFLAGS)
 
 
 # ------------------ the editor ---------------------
 TOCLEAN += editor
-EDITOR_OBJS = editor.o moc_editor.o buffer.o textline.o position.o
+EDITOR_OBJS := \
+  editor.o \
+  moc_editor.o \
+  buffer.o \
+  textline.o \
+  position.o \
+  main.o
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
 -include $(EDITOR_OBJS:.o=.d)

@@ -6,8 +6,9 @@
 
 #include "macros.h"       // NOTEQUAL_OPERATOR
 
-// a single line of text; bit-zero-initable, and bit-copyable
-// if the old copy is destroyed without 'dealloc'
+// a single line of text                        
+// note: Buffer manipulates (zeroes and copies) arrays of TextLines by
+// directly manipulating the representation, via memset and memcpy
 class TextLine {
 private:   // data
   char *text;         // (owner) text in this line; NULL if no text;
@@ -27,6 +28,7 @@ private:   // disallowed
 
 public:    // funcs
   // empty ctor, no dtor, so we can make arrays w/o C++ stuff going on
+  // (NOTE: that means you have to call init and dealloc explicitly)
   TextLine() {}
 
   void init();        // set all to 0

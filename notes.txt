@@ -128,3 +128,21 @@ start 2/09/03 00:07
 
 continuing to get what I had to work under Qt
 
+ok, everything that was working now does again
+
+fixed some issues with deletion
+
+next task: embed the editor widget into a more fully-functional
+GUI environment (load named file, save named file, scrolling) so
+I can experiment with more realistic files and file sizes
+
+end 2/09/03 02:44
+
+---------------
+start 2/09/03 14:52
+
+todo:
+  - load file
+  - save file
+  - scrolling
+  
