@@ -19,9 +19,30 @@ to set it to use a new font:
 so current list of todos:
 
   - get the cursor update working right
+    - draw the cursor by first snapshotting the image underneath
+      where I want to draw (must calculate a bounding box), then
+      draw whatever I want, then replace the image when I want
+      to move it or flash it or whatever
   - make the cursor bigger, proper height by font, etc.
   - ability to load and save files
   - different colors than black/white
   - more keybindings ....
+  - systematic way of naming keys (the emacs way is close)
   - scrolling
-  
+  - a keyboard-activated menu
+  - some way of prompting for interactive input -- a dialog box
+    - need to make a new window, which prevents interaction
+      with the underlying window
+    - that dialog needs some buttons
+    - and a text widget, ideally with configurable key bindings
+    - and some dialog-wide keyboard navigation
+  - ability to select text
+  - copy+paste       
+  - redraw button, and/or proper redrawing generally
+    - still need window coords
+
+fixed newline problem
+
+some malloc mischief?  hard to reproduce...
+
+end 3/28/01 04:26

@@ -255,19 +255,34 @@ void Buffer::insertText(Cursor *c, char const *text, int length)
     }
 
     if (end < text+length) {
-      // we found a newline; add this text to the buffer
+      // we found a newline
+
       if (curCol == 0) {
+        // push subsequent lines down
+        insertLineAt(curLine);
+
         // set a complete line, with no margin
         lines[curLine].setText(start, end-start);
       }
+
       else {
-        // append to what's there, and take the hit of the margin
+        int oldLen = lines[curLine].getLength();
+
+        // push the rest of the current line down into the next line
+        insertLineAt(curLine+1);
+        lines[curLine+1].setText(lines[curLine].getText()+curCol,
+                                 oldLen-curCol);
+
+        // remove that text from the end of this line
+        lines[curLine].remove(curCol, oldLen-curCol);
+
+        // append to what's still in this line, and take
+        // the hit of the margin
         lines[curLine].insert(curCol, start, end-start);
       }
 
-      // move our insertion point
+      // move our insertion point into the newly-created line
       curLine++;
-      insertLineAt(curLine);
       curCol = 0;
 
       // move our read-from-next point

@@ -52,6 +52,8 @@ public:
 
 void drawBuffer(WindowName &win, Buffer &buffer)
 {
+  static char const *lotsOfSpaces = "                                                                      ";
+
   // create a graphics context (GC)
   GC gc;             // a pointer to an _XGC struct
   {
@@ -75,36 +77,45 @@ void drawBuffer(WindowName &win, Buffer &buffer)
 
   XFontStruct *fs = myFontStruct;
   int fontHeight = fs->ascent + fs->descent;
+  int fontWidth = fs->max_bounds.width;        // ok?
 
-  // erase left-side cursor if necessary
-  int line;
-  for (line=0; line < buffer.totLines()+1; line++) {
+  int lastBotDescent = 0;
+
+  int leftMargin = 5;
+  int topMargin = 5;
+
+  for (int line=0; line < buffer.totLines(); line++) {
+    int baseLine = topMargin + (line+1)*fontHeight;
+    //int topAscent = baseLine - fs->ascent;
+    int botDescent = baseLine + fs->descent;
+    lastBotDescent = botDescent;
+
+    // erase left margin
     XDrawImageString(
       win.display, win.window, gc,       // dest
-      3, 5 + (line+1)*fontHeight,        // lower,base coordinate
+      0, baseLine,                       // lower,base coordinate
       " ", 1                             // text, length
     );
-  }
 
-  // some text *with* erasing background
-  for (line=0; line < buffer.totLines(); line++) {
+    // draw line's text
     TextLine const *tl = buffer.getLineC(line);
     XDrawImageString(
       win.display, win.window, gc,       // dest
-      5, 5 + (line+1)*fontHeight,        // lower,base coordinate
+      leftMargin, baseLine,              // lower,base coordinate
       tl->getText(), tl->getLength()     // text, length
     );
 
     // calc width of whole string
     int width = XTextWidth(fs, tl->getText(), tl->getLength());
 
-    // overwrite after last char in case of backspace
+    // write spaces to right edge of the window
     XDrawImageString(
       win.display, win.window, gc,       // dest
-      5+width, 5 + (line+1)*fontHeight,  // lower,base coordinate
-      " ", 1                             // text, length
+      leftMargin+width, baseLine,        // lower,base coordinate
+      lotsOfSpaces, strlen(lotsOfSpaces) // text, length
     );
 
+    #if 0
     if (cursor.line() == line) {
       // try to print a cursor
 
@@ -113,10 +124,29 @@ void drawBuffer(WindowName &win, Buffer &buffer)
 
       // draw the cursor as a line
       XDrawLine(win.display, win.window, gc,
-                5+width-1, 5 + (line+1)*fontHeight + fs->descent - 1,     // bottom of descent
-                5+width-1, 5 + (line+0)*fontHeight + fs->descent);        // top of ascent
+                leftMargin+width-1, botDescent,     // bottom of descent
+                leftMargin+width-1, topAscent);     // top of ascent
     }
+    #endif // 0
   }
+
+  // fill the remainder with white
+  XClearArea(win.display, win.window,
+             0,lastBotDescent,       // x1,y1
+             500,500,                // width,height
+             False);                 // gen exposures?
+
+  // draw the cursor as a line
+  {
+    int line = cursor.line();
+    int baseLine = topMargin + (line+1)*fontHeight;
+    int topAscent = baseLine - fs->ascent;
+    int botDescent = baseLine + fs->descent;
+    int width = fontWidth * cursor.col();
+    XDrawLine(win.display, win.window, gc,
+              leftMargin+width-1, botDescent,     // bottom of descent
+              leftMargin+width-1, topAscent);     // top of ascent
+  }            
 
   // cue to quit app
   XDrawString(
@@ -343,31 +373,33 @@ int main()
         );
         buf[length] = 0;                  // terminating null
 
-        #if 0
-        printf("Key %s, length=%d, text=",
-               event.type==KeyPress? "pressed" : "released",
-               length);
-        for (int i=0; i<length; i++) {
-          if (isprint(buf[i])) {
-            printf("%c", buf[i]);
-          }
-          else {
-            printf("\\x%02X", buf[i]);
-          }
-        }
-
-        // here's a more low-level way of interrogating keystrokes
-        printf(" keysym=%ld", keysym);
-        if (keysym == XK_Shift_L) {
-          printf(" (it's left-shift)");
-        }
-
-        printf("\n");
-        #endif // 0
-
         if (event.type == KeyPress) {
-          if (length==1 && buf[0] == 4) {  // ctrl-d
+          printf("Key %s, length=%d, text=",
+                 event.type==KeyPress? "pressed" : "released",
+                 length);
+          for (int i=0; i<length; i++) {
+            if (isprint(buf[i])) {
+              printf("%c", buf[i]);
+            }
+            else {
+              printf("\\x%02X", buf[i]);
+            }
+          }
+
+          // here's a more low-level way of interrogating keystrokes
+          printf(" keysym=%ld (0x%lX)", keysym, keysym);
+          if (keysym == XK_Shift_L) {
+            printf(" (it's left-shift)");
+          }
+
+          printf("\n");
+
+          if (length==1 && buf[0] == 'u'-'a'+1) {  // ctrl-u
             buffer.dumpRepresentation();
+          }
+
+          if (length==1 && buf[0] == 'c'-'a'+1) {  // ctrl-c
+            quit = true;
           }
 
           if (length==1 && isprint(buf[0])) {
