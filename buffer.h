@@ -4,33 +4,35 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "array.h"      // Array
-
 class Cursor;           // cursor.h
+class TextLine;         // textline.h
 
 // the contents of a file; any attempt to change the contents
 // must go through the Buffer (or Line) interface
 class Buffer {
-public:    // types
-  // one line in the file
-  class Line : public Array<char> {
-  public:
-    // nothing else yet..
-  };
-
 private:   // data
-  Array<Line> lines;     // array of lines in the file
+  TextLine *lines;       // (owner) array of lines in the file
+  int numLines;          // # of lines in 'lines'
+  int linesAllocated;    // # of entries allocated in 'lines'
 
-public:
+  // invariant: entries 0 through numLines-1 are properly
+  // initialized TextLines; outside this range, they are
+  // not considered initialized
+
+private:   // funcs         
+  // set numLines, realloc if necessary (with margin)
+  void setNumLines(int num);
+
+public:    // data
   Buffer();
   ~Buffer();
 
   void readFile(char const *fname);
   void writeFile(char const *fname);
 
-  Line const *getLineC(int lineNumber);
-  Line *getLine(int lineNumber)
-    { return const_cast<Line*>(getLineC(lineNumber)); }
+  TextLine const *getLineC(int lineNumber);
+  TextLine *getLine(int lineNumber)
+    { return const_cast<TextLine*>(getLineC(lineNumber)); }
 
   // insert some text at a cursor
   void insertText(Cursor *c, char const *text, int length);

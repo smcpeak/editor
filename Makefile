@@ -21,5 +21,5 @@ makelib = ar -r
 editor: editor.o buffer.o
 	${link} -o editor editor.o ${linkend}
 
-buffer: buffer.cc array.h
-	${link} -o buffer -DTEST_BUFFER buffer.cc ${linkend}
+buffer: buffer.cc array.h textline.o
+	${link} -o buffer -DTEST_BUFFER textline.o buffer.cc ${linkend}
