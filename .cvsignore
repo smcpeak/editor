@@ -6,3 +6,5 @@ dialogs
 *.d
 moc_*
 testgap
+testing.txt
+style

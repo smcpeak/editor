@@ -25,6 +25,11 @@ public:      // data
   int cursorLine;
   int cursorCol;
 
+  // selection state: a location, and a flag to enable it
+  int selectLine;
+  int selectCol;
+  bool selectEnabled;
+
   // scrolling offset
   int firstVisibleLine, firstVisibleCol;
 
@@ -39,6 +44,11 @@ public:      // data
 
   // # of blank lines of pixels between lines of text ("leading")
   int interLineSpace;
+
+  // colors
+  QColor cursorColor;               // color of text cursor
+  QColor normalFG, normalBG;        // normal text
+  QColor selectFG, selectBG;        // selected text
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
@@ -70,6 +80,9 @@ private:     // funcs
   // given that the cursor is at the end of a line, join this line
   // with the next one
   void spliceNextLine();
+
+  // true if the cursor is before (above/left) the select point
+  bool cursorBeforeSelect() const;
 
 protected:   // funcs
   // QWidget funcs

@@ -7,6 +7,7 @@
 #include "textline.h"        // TextLine
 #include "xassert.h"         // xassert
 #include "array.h"           // Array
+#include "style.h"           // LineStyle, etc.
 
 #include <qapplication.h>    // QApplication
 #include <qpainter.h>        // QPainter
@@ -21,10 +22,15 @@ Editor::Editor(BufferState *buf,
                QWidget *parent=NULL, const char *name=NULL)
   : QWidget(parent, name, WRepaintNoErase | WNorthWestGravity),
     buffer(buf),
-    // cursor and visible line/col inited by resetView()
+    // cursor, select and visible line/col inited by resetView()
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
+    cursorColor(0x00, 0xFF, 0xFF),  // cyan
+    normalFG(0xFF, 0xFF, 0xFF),     // white
+    normalBG(0x00, 0x00, 0xA0),     // darkish blue
+    selectFG(0xFF, 0xFF, 0xFF),     // white
+    selectBG(0x00, 0x00, 0xF0),     // light blue
     ctrlShiftDistance(10)
     // font metrics inited by setFont()
 {
@@ -36,9 +42,24 @@ Editor::Editor(BufferState *buf,
 
   // use the color scheme for text widgets; typically this means
   // a white background, instead of a gray background
-  setBackgroundMode(PaletteBase);
+  //setBackgroundMode(PaletteBase);
+
+  // fixed color
+  setBackgroundColor(normalBG);
 
   resetView();
+}
+
+
+void Editor::resetView()
+{
+  cursorLine = 0;
+  cursorCol = 0;
+  selectLine = 0;
+  selectCol = 0;
+  selectEnabled = false;
+  firstVisibleLine = 0;
+  firstVisibleCol = 0;
 }
 
 
@@ -92,15 +113,6 @@ void Editor::resizeEvent(QResizeEvent *r)
 }
 
 
-void Editor::resetView()
-{
-  cursorLine = 0;
-  cursorCol = 0;
-  firstVisibleLine = 0;
-  firstVisibleCol = 0;
-}
-
-
 // In general, to avoid flickering, I try to paint every pixel
 // exactly once (this idea comes straight from the Qt tutorial).
 // So far, the only place I violate that is the cursor, the pixels
@@ -112,7 +124,7 @@ void Editor::paintEvent(QPaintEvent *ev)
 
   // when drawing text, erase background automatically
   paint.setBackgroundMode(OpaqueMode);
-
+                                       
   // top edge of what has not been painted
   int y = 0;
 
@@ -134,46 +146,150 @@ void Editor::paintEvent(QPaintEvent *ev)
   // another santiy check
   xassert(fontHeight + interLineSpace > 0);
 
-  // last line where there's something to print
-  int lastPrintLine = max(buffer->numLines()-1, cursorLine);
-
   // buffer for text to print
   int visibleCols = lastVisibleCol - firstVisibleCol + 2;
   Array<char> text(visibleCols);
 
-  for (int line = firstVisibleLine;
-       line <= lastPrintLine && y < height();
-       line++) {
-    // figure out what to draw
-    int len = 0;
+  // character style info
+  LineStyle styles(0 /*normal*/);
 
-    if (line < buffer->numLines() &&
-        firstVisibleCol < buffer->lineLength(line)) {
-      len = min(buffer->lineLength(line) - firstVisibleCol, visibleCols);
-      buffer->getLine(line, firstVisibleCol, text, len);
+  // currently selected style (so we can avoid possibly expensive
+  // calls to change styles)
+  int currentStyle = 0 /*normal*/;
+  paint.setPen(normalFG);
+  paint.setBackgroundColor(normalBG);
+
+  // stats on cursor/selection
+  int selLowLine, selLowCol;    // whichever of cursor/select comes first
+  int selHighLine, selHighCol;  // whichever comes second
+  if (cursorBeforeSelect()) {
+    selLowLine = cursorLine;
+    selLowCol = cursorCol;
+    selHighLine = selectLine;
+    selHighCol = selectCol;
+  }
+  else {
+    selLowLine = selectLine;
+    selLowCol = selectCol;
+    selHighLine = cursorLine;
+    selHighCol = cursorCol;
+  }
+
+  // paint the window
+  for (int line = firstVisibleLine; y < height(); line++) {
+    // fill the text with spaces, as the nominal text to display
+    memset(text, ' ', visibleCols);
+
+    // fill with text from the buffer
+    if (line < buffer->numLines()) {
+      int lineLen = buffer->lineLength(line);
+      if (firstVisibleCol < lineLen) {
+        int amt = min(lineLen - firstVisibleCol, visibleCols);
+        buffer->getLine(line, firstVisibleCol, text, amt);
+      }
     }
 
-    // draw line's text
-    if (len > 0) {
-      paint.drawText(leftMargin, y+ascent-1,      // baseline start coordinate
-                     QString(text), len);         // text, length
+    // nominally the entire line is normal text
+    styles.clear(0 /*normal*/);
+
+    // incorporate effect of selection
+    if (selectEnabled &&
+        selLowLine <= line && line <= selHighLine) {
+      if (selLowLine < line && line < selHighLine) {
+        // entire line is selected
+        styles.overlay(0, 0 /*infinite*/, 1 /*selected*/);
+      }
+      else if (selLowLine < line && line == selHighLine) {
+        // first half of line is selected
+        styles.overlay(0, selHighCol, 1 /*selected*/);
+      }
+      else if (selLowLine == line && line < selHighLine) {
+        // right half of line is selected
+        styles.overlay(selLowCol, 0 /*infinite*/, 1 /*selected*/);
+      }
+      else if (selLowLine == line && line == selHighLine) {
+        // middle part of line is selected
+        styles.overlay(selLowCol, selHighCol-selLowCol, 1 /*selected*/);
+      }
+      else {
+        xfailure("messed up my logic");
+      }
     }
+
+    // next style entry to use
+    LineStyleIter style(styles);
+    style.advanceChars(firstVisibleCol);
 
     // right edge of what has not been painted
-    int x = leftMargin + fontWidth * len;
+    int x = leftMargin;
 
-    // erase to right edge of the window
-    paint.eraseRect(x, y,
-                    width()-x, fontHeight);
+    // number of characters printed
+    int printed = 0;
+
+    // loop over segments with different styles
+    while (x < width()) {
+      xassert(printed < visibleCols);
+
+      // compute how many characters to print in this segment
+      int len = style.length;
+      if (style.length == 0) {
+        // actually means infinite length
+        len = visibleCols;
+      }
+      len = min(len, visibleCols-printed);
+      xassert(len > 0);
+
+      // set style
+      if (style.style != currentStyle) {
+        if (style.style == 0) {
+          // normal
+          paint.setPen(normalFG);
+          paint.setBackgroundColor(normalBG);
+        }
+        else if (style.style == 1) {
+          // selected
+          paint.setPen(selectFG);
+          paint.setBackgroundColor(selectBG);
+        }
+        else {
+          xfailure("bad style code");
+        }
+        currentStyle = style.style;
+      }
+
+      // draw text; unfortunately this requires making two copies, one
+      // to get a NUL-terminated source (could be avoided by
+      // temporarily overwriting a character in 'text'), and one to
+      // make a QString for drawText() to use; I think Qt should have
+      // made drawText() accept an ordinary char const* ...
+      string segment(text+printed, len);
+      paint.drawText(x, y+ascent-1,               // baseline start coordinate
+                     QString(segment), len);      // text, length
+
+      // advance
+      x += fontWidth * len;
+      printed += len;
+    }
 
     // draw the cursor as a line
     if (line == cursorLine) {
+      paint.save();
+
+      paint.setPen(cursorColor);
       x = leftMargin + fontWidth * (cursorCol - firstVisibleCol);
       paint.drawLine(x,y, x, y+fontHeight-1);
       paint.drawLine(x-1,y, x-1, y+fontHeight-1);
+
+      paint.restore();
     }
-    
-    y += fontHeight + interLineSpace;
+
+    y += fontHeight;
+
+    if (interLineSpace > 0) {
+      // I haven't tested this code...
+      paint.eraseRect(0, y, width(), interLineSpace);
+      y += interLineSpace;
+    }
   }
 
   // fill the remainder
@@ -466,6 +582,14 @@ void Editor::spliceNextLine()
     buffer->deleteText(cursorLine+1, 0 /*col*/, len);
     buffer->deleteLine(cursorLine+1);
   }
+}
+
+
+bool Editor::cursorBeforeSelect() const
+{
+  if (cursorLine < selectLine) return true;
+  if (cursorLine > selectLine) return false;
+  return cursorCol < selectCol;
 }
 
 

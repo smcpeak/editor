@@ -1,14 +1,12 @@
 # Makefile for editor
 
-#tmp: testgap buffer
-
 # main target
-all: testgap buffer editor
+all: testgap buffer style editor
 
 
 # directories of other software
 SMBASE := smbase
-
+LIBSMBASE := $(SMBASE)/libsmbase.a
 
 # C++ compiler, etc.
 CXX := g++
@@ -17,7 +15,7 @@ CXX := g++
 CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE)
 
 # flags for the linker
-LDFLAGS := -g -Wall $(SMBASE)/libsmbase.a -lqt
+LDFLAGS := -g -Wall $(LIBSMBASE) -lqt
 
 
 # patterns of files to delete in the 'clean' target
@@ -40,7 +38,7 @@ moc_%.cc: %.h
 # ---------------- gap test program -----------------
 TOCLEAN += testgap
 testgap: gap.h testgap.cc
-	$(CXX) -o $@ $(CCFLAGS) testgap.cc -g -Wall $(SMBASE)/libsmbase.a
+	$(CXX) -o $@ $(CCFLAGS) testgap.cc -g -Wall $(LIBSMBASE)
 	./testgap >/dev/null 2>&1
 
 
@@ -48,8 +46,15 @@ testgap: gap.h testgap.cc
 TOCLEAN += buffer buffer.tmp
 BUFFER_OBJS := buffer.cc
 buffer: gap.h $(BUFFER_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) -g -Wall $(SMBASE)/libsmbase.a
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) -g -Wall $(LIBSMBASE)
 	./buffer >/dev/null 2>&1
+
+
+# --------------- style test program ----------------
+TOCLEAN += style
+style: style.h style.cc
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_STYLE style.cc -g -Wall $(LIBSMBASE)
+	./style >/dev/null
 
 
 # ------------------ the editor ---------------------
@@ -60,7 +65,8 @@ EDITOR_OBJS := \
   buffer.o \
   main.o \
   moc_main.o \
-  bufferstate.o
+  bufferstate.o \
+  style.o
 editor: $(EDITOR_OBJS) buffer.h textline.h position.h
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(LDFLAGS)
 -include $(EDITOR_OBJS:.o=.d)

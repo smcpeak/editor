@@ -237,6 +237,13 @@ ok, I've now hooked everything up adequately that I'm editing this
 very line in the new editor!  that's pretty cool.  all the functions
 appear to work correctly.
 
+end 2/11/03 22:37
+
+---------------
+start 2/11/03 23:59
+
+will work on selections
+
 
 
 
