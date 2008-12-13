@@ -60,7 +60,7 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
   // a white background, instead of a gray background
   //setBackgroundMode(PaletteBase);
 
-  // needed to cause Qt not to erase window?
+  // needed to cause Qt not to erase window
   setBackgroundMode(NoBackground);
 
   // fixed color
