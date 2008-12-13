@@ -48,7 +48,7 @@ public:      // data
   IncSearch *isearch;                // (owner)
 
 private:     // funcs
-  void setFileName(char const *name, char const *hotkey);
+  void setFileName(rostring name, rostring hotkey);
   void writeTheFile();
   void setBuffer(BufferState *b);
   void rebuildWindowMenu();
@@ -94,14 +94,25 @@ public slots:
 };
 
 
+// This test matches /usr/lib/qt-3.3.3/include/qwindowsstyle.h.
+// I do not know how portable it is across versions of Qt.
+#if !defined(QT_NO_STYLE_WINDOWS) || defined(QT_PLUGIN)
+  #define HAS_QWINDOWSSTYLE
+#endif
+
+
+#ifdef HAS_QWINDOWSSTYLE
 // define style as variant of Windows style
 class MyWindowsStyle : public QWindowsStyle {
-  Q_OBJECT
+  // I'm hoping that omitting Q_OBJECT will make 'moc' leave
+  // this class alone...
+  //Q_OBJECT
 
 public:
   // disable "weird jump back" scrolling behavior
   int maximumSliderDragDistance() const { return -1; }
 };
+#endif // HAS_QWINDOWSSTYLE
 
 
 // global state of the editor: buffers, windows, etc.

@@ -267,7 +267,7 @@ void BufferCore::dumpRepresentation() const
     }
 
     printf("  line %d: \"%s\"\n", i,
-           encodeWithEscapes(p, len).pchar());
+           toCStr(encodeWithEscapes(p, len)));
 
     if (len) {
       delete[] p;

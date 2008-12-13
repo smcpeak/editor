@@ -12,6 +12,7 @@
 #include "mysig.h"           // printSegfaultAddrs
 #include "status.h"          // StatusDisplay
 #include "gotoline.h"        // GotoLine
+#include "qtutil.h"          // toQString
 
 #include <string.h>          // strrchr
 #include <stdlib.h>          // atoi
@@ -27,6 +28,7 @@
 #include <qgrid.h>           // QGrid
 #include <qsizegrip.h>       // QSizeGrip
 #include <qstatusbar.h>      // QStatusBar
+#include <qlineedit.h>       // QLineEdit
 
 
 char const appName[] = "An Editor";   // TODO: find better name
@@ -186,17 +188,17 @@ void EditorWindow::setBuffer(BufferState *b)
 }
 
 
-void EditorWindow::setFileName(char const *name, char const *hotkey)
+void EditorWindow::setFileName(rostring name, rostring hotkey)
 {
-  statusArea->status->setText(name);
+  statusArea->status->setText(toQString(name));
   
   string s = string(appName) & ": ";
-  if (hotkey && hotkey[0]) {
+  if (hotkey[0]) {
     s &= stringc << "[" << hotkey << "] ";
   }
   s &= sm_basename(name);
     
-  setCaption(QString(s));
+  setCaption(toQString(s));
 }
 
 
@@ -219,7 +221,7 @@ void EditorWindow::fileOpenFile(char const *name)
     b->readFile(name);
   }
   catch (XOpen &x) {
-    QMessageBox::information(this, "Can't open file", QString(x.why()));
+    QMessageBox::information(this, "Can't open file", toQString(x.why()));
     delete b;
     return;
   }
@@ -280,19 +282,19 @@ void EditorWindow::fileSave()
 void EditorWindow::writeTheFile()
 {
   try {
-    theBuffer()->writeFile(theBuffer()->filename);
+    theBuffer()->writeFile(toCStr(theBuffer()->filename));
     theBuffer()->noUnsavedChanges();
     editorViewChanged();
   }
   catch (XOpen &x) {
-    QMessageBox::information(this, "Can't write file", QString(x.why()));
+    QMessageBox::information(this, "Can't write file", toQString(x.why()));
   }
 }
 
 
 void EditorWindow::fileSaveAs()
 {
-  QString s = QFileDialog::getSaveFileName(QString(theBuffer()->filename),
+  QString s = QFileDialog::getSaveFileName(toQString(theBuffer()->filename),
                                            "Files (*)", this);
   if (s.isEmpty()) {
     return;
@@ -456,7 +458,7 @@ void EditorWindow::rebuildWindowMenu()
     BufferState *b = iter.data();
 
     windowMenu->insertItem(
-      QString(b->title),          // menu item text
+      toQString(b->title),        // menu item text
       this,                       // receiver
       SLOT(windowBufferChoice()), // slot name
       b->hotkey,                  // accelerator
@@ -534,10 +536,12 @@ GlobalState::GlobalState(int argc, char **argv)
     state = this;
   }
 
+#ifdef HAS_QWINDOWSSTYLE
   // use my variant of the Windows style, if we're using Windows at all
   if (0==strcmp("QWindowsStyle", style().className())) {
     setStyle(new MyWindowsStyle);
   }
+#endif // HAS_QWINDOWSSTYLE
 
   EditorWindow *ed = createNewWindow(createNewFile());
 

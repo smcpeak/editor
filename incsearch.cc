@@ -178,7 +178,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
       case Qt::Key_Backspace:
         if (text.length() > 0) {
           // remove final character
-          text = string(text, text.length()-1);
+          text = string(text.c_str(), text.length()-1);
           if (text.length() > 0) {
             findString();     // adjust match
           }
@@ -301,7 +301,7 @@ void IncSearch::resetToSearchStart()
 
 bool IncSearch::findString(Buffer::FindStringFlags flags)
 {
-  match = ed->buffer->findString(curLine, curCol, text, flags);
+  match = ed->buffer->findString(curLine, curCol, toCStr(text), flags);
   if (match) {
     // move editor cursor to end of match
     ed->cursorTo(curLine, curCol + text.length());
@@ -348,7 +348,7 @@ void IncSearch::updateStatus()
       message &= " (can wrap)";
     }
 
-    ed->showInfo(message);
+    ed->showInfo(toCStr(message));
   }
   else {
     ed->hideInfo();
@@ -366,7 +366,7 @@ bool IncSearch::tryWrapSearch(int &line, int &col) const
   }
 
   // search
-  if (ed->buffer->findString(line, col, text, curFlags) &&
+  if (ed->buffer->findString(line, col, toCStr(text), curFlags) &&
       !(line==curLine && col==curCol)) {
     // yes, wrapping finds another
     return true;
@@ -402,7 +402,7 @@ void IncSearch::putBackMatchText()
 {
   // put the matched text back
   ed->editDelete();       // delete replacement text
-  ed->insertAtCursor(removedText);
+  ed->insertAtCursor(toCStr(removedText));
   findString();
 }
 
@@ -439,7 +439,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
           //ed->cursorLeftBy(1);
           ed->deleteAtCursor(1);
 
-          replaceText = string(replaceText, replaceText.length()-1);
+          replaceText = string(toCStr(replaceText), replaceText.length()-1);
         }
         return true;
 
@@ -471,7 +471,7 @@ bool IncSearch::replace()
   ed->deleteAtCursor(text.length());
 
   // insert replacement text
-  ed->insertAtCursor(replaceText);
+  ed->insertAtCursor(toCStr(replaceText));
 
   // find next match
   curCol += replaceText.length();

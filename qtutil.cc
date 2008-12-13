@@ -325,4 +325,10 @@ string toString(QKeyEvent const &k)
 }
 
 
+QString toQString(string const &s)
+{
+  return QString(s.c_str());
+}
+
+
 // EOF

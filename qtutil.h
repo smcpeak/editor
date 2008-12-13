@@ -5,6 +5,7 @@
 #define QTUTIL_H
 
 #include <qnamespace.h>       // ButtonState, Key
+#include <qstring.h>          // QString
 #include "str.h"              // string
 
 class QKeyEvent;              // qevent.h
@@ -16,10 +17,7 @@ char const *toString(Qt::Key k);
 
 string toString(QKeyEvent const &k);
 
-
-
-
-
+QString toQString(string const &s);
 
 
 #endif // QTUTIL_H

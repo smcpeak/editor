@@ -328,7 +328,7 @@ void Editor::paintEvent(QPaintEvent *ev)
     paint.setBackgroundMode(OpaqueMode);
     paint.setBackgroundColor(red);
     paint.drawText(0, 30,                 // baseline start coordinate
-                   QString(x.why()), strlen(x.why()));
+                   toQString(x.why()), strlen(x.why()));
   }
 }
 
@@ -446,7 +446,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     // show hits
     if (hitText.length() > 0) {
       int hitLine=line, hitCol=0;
-      while (buffer->findString(hitLine, hitCol, hitText, 
+      while (buffer->findString(hitLine, hitCol, toCStr(hitText), 
                                 (hitTextFlags | Buffer::FS_ONE_LINE))) {
         styles.overlay(hitCol, hitText.length(), ST_HITS);
         hitCol++;
@@ -537,7 +537,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       string segment(text+printed, len);
       int baseline = ascent-1;
       paint.drawText(x, baseline,                 // baseline start coordinate
-                     QString(segment), len);      // text, length
+                     toQString(segment), len);    // text, length
 
       if (underlining) {
         // want to draw a line on top of where underscores would be; this
@@ -681,7 +681,7 @@ bool Editor::event(QEvent *e)
     return QWidget::event(e);
   }
   catch (xBase &x) {
-    printUnhandled(this, x.why());
+    printUnhandled(this, toCStr(x.why()));
     return true;   // clearly it was handled by someone
   }
 }
@@ -694,7 +694,7 @@ bool Editor::event(QEvent *e)
 #define GENERIC_CATCH_END           \
   }                                 \
   catch (xBase &x) {                \
-    printUnhandled(this, x.why());  \
+    printUnhandled(this, toCStr(x.why()));  \
   }
 
 
@@ -810,7 +810,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         string s = stringf("%02d/%02d/%02d %02d:%02d",
                            tm->tm_mon, tm->tm_mday, tm->tm_year % 100,
                            tm->tm_hour, tm->tm_min);
-        insertAtCursor(s);
+        insertAtCursor(toCStr(s));
         break;
       }
     }
@@ -1276,7 +1276,7 @@ void Editor::editCopy()
 
     // put it into the clipboard
     QClipboard *cb = QApplication::clipboard();
-    cb->setText(QString(sel));
+    cb->setText(toQString(sel));
     
     // un-highlight the selection, which is what emacs does and
     // I'm now used to

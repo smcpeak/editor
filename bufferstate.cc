@@ -69,10 +69,11 @@ string BufferState::hotkeyDesc()
   if (hotkey == 0) {
     return "";
   }
-  
+
   // assume it's Alt+n
   int n = hotkey - (Qt::Key_0 | Qt::ALT);
   return stringc << "Alt+" << n;
 }
 
-  
+
+// EOF

@@ -3,7 +3,7 @@
 #tmptarget: historybuf
 
 # main target
-all: testgap buffercore historybuf buffer style c_hilite editor
+all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
 
 
 # directories of other software
@@ -14,10 +14,13 @@ LIBSMBASE := $(SMBASE)/libsmbase.a
 CXX := g++
 
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE)
+CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE) -Wno-deprecated
 
 # flags for the linker
-LDFLAGS := -g -Wall $(LIBSMBASE) -L$(QTDIR)/lib -lqt
+#
+# The "qt-mt" is the multithreaded version.  I'm not using threads,
+# but it seems that later Qts only have the MT version available.
+LDFLAGS := -g -Wall $(LIBSMBASE) -L$(QTDIR)/lib -lqt-mt
 
 
 # patterns of files to delete in the 'clean' target; targets below
@@ -91,6 +94,7 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 	head $*.lex.backup
 	mv $@ $*.tmp
 	sed -e 's|class istream;|#include <iostream.h>|' \
+	    -e 's|using namespace std;|using std::cout; using std::cin; using std::istream;|' \
 	  <$*.tmp >$@
 	rm $*.tmp
 

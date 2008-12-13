@@ -86,9 +86,19 @@ string Buffer::getTextRange(int line1, int col1, int line2, int col2) const
 
   if (line1 == line2) {
     // extracting text from a single line
-    xassert(col1 <= col2);
-    string ret(col2-col1);     // NUL terminator added automatically
-    getLineLoose(line1, col1, ret.pchar(), col2-col1);
+    xassert(col1 <= col2);   
+    int len = col2-col1;
+    
+    // It is not very efficient to allocate two buffers, one here and
+    // one inside the string object, but the std::string API doesn't
+    // offer a way to do it directly, so I need to refactor my APIs if
+    // I want to avoid the extra allocation.
+    char *buf = new char[len+1];
+
+    buf[len] = 0;              // NUL terminator
+    getLineLoose(line1, col1, buf, len);
+    string ret(buf);
+    delete[] buf;
     return ret;
   }
 
@@ -159,10 +169,10 @@ void Buffer::getLastPos(int &line, int &col) const
 int Buffer::getIndentation(int line) const
 {
   string contents = getWholeLine(line);
-  for (char const *p = contents.pcharc(); *p; p++) {
+  for (char const *p = contents.c_str(); *p; p++) {
     if (!isspace(*p)) {
       // found non-ws char
-      return p - contents.pcharc();
+      return p - contents.c_str();
     }
   }
   return -1;   // no non-ws
