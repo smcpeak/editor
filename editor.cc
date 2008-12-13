@@ -55,6 +55,9 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
   setFont(font);
 
   setCursor(ibeamCursor);
+  
+  // required to accept focus
+  setFocusPolicy(QWidget::StrongFocus);
 
   // use the color scheme for text widgets; typically this means
   // a white background, instead of a gray background
