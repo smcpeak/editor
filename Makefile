@@ -1,6 +1,6 @@
 # Makefile for editor
 
-#tmptarget: historybuf
+tmptarget: qtbdffont
 
 # main target
 all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
@@ -83,6 +83,12 @@ TOCLEAN += style
 style: style.h style.cc
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_STYLE style.cc -g -Wall $(LIBSMBASE)
 	./style >/dev/null
+
+
+# --------------- qtbdffont test program ----------------
+TOCLEAN += qtbdffont
+qtbdffont: qtbdffont.h qtbdffont.cc $(LIBSMBASE)
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_QTBDFFONT qtbdffont.cc $(LDFLAGS)
 
 
 # ------------- highlighting stuff --------------------

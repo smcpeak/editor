@@ -802,17 +802,35 @@ end 08/27/03 03:47
 ---------------
 start 2008-12-13 00:10
 
-convert repo to git .. done
+  convert repo to git .. done
 
-porting to current Qt and smbase .. done
+  porting to current Qt and smbase .. done
 
-get keys to work again .. got it
+  get keys to work again .. got it
 
-  needed to call setFocusPolicy(QWidget::StrongFocus) in
-  the ctor of Editor
+    needed to call setFocusPolicy(QWidget::StrongFocus) in
+    the ctor of Editor
+
+  font .. unsuccessful
   
+  need to make a library for fonts:
+  
+    - BDF font object
+    - BDF renderer to X pixmap with color choice
+    
+end 2008-12-13 02:15
 
+-----------------------
+start 2008-12-13 11:58
 
+  BDF font system
+
+  http://partners.adobe.com/public/developer/en/font/5005.BDF_Spec.pdf
+
+---------------------
+2008-12-15 19:25
+
+  working on qtbdffont module
 
 
 

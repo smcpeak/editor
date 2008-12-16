@@ -51,7 +51,21 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     ignoreScrollSignals(false)
 {
   QFont font;
-  font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
+  
+  // no
+  //font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
+  
+  // no...
+  font.setRawName("-*-*-medium-r-*-*-18-*-*-*-*-*-*-*");
+
+  // still not satisfactory
+#if 0
+  font.setFamily("Courier");
+  font.setPointSize(14);
+  font.setStyleStrategy((QFont::StyleStrategy)
+    (QFont::PreferBitmap | QFont::NoAntialias));
+#endif // 0
+
   setFont(font);
 
   setCursor(ibeamCursor);
