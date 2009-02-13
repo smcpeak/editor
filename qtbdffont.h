@@ -9,11 +9,20 @@
 // that it does not rely on the underlying window system for any font
 // or text rendering services.
 
+// With regard to individual character indices, this module takes the
+// same approach as the 'bdffont' module upon which it is built:
+// characters are named using 'int' and no assumptions are made about
+// the meaning of characters.
+//
+// However, the routines such as 'drawString' that accept a 'string'
+// treat each byte as a character index, and thus are limited to
+// character encoding systems with 256 characters or less.
+
 #ifndef QTBDFFONT_H
 #define QTBDFFONT_H
 
-#include "smbase/array.h"              // GrowArray
-#include "smbase/str.h"                // rostring
+#include "array.h"                     // GrowArray
+#include "str.h"                       // rostring
 
 #include <qbitmap.h>                   // QBitmap, QPixmap
 #include <qcolor.h>                    // QColor
@@ -52,6 +61,9 @@ private:     // types
 
   public:
     Metrics();
+    
+    // Return true if this glyph is present, false if missing.
+    bool isPresent() const;
   };
 
 private:     // data
@@ -69,7 +81,7 @@ private:     // data
   QColor textColor;
 
   // Relative to the origin, the minimal bounding box that encloses
-  // all glyphs in the font.
+  // every glyph in the font.
   QRect allCharsBBox;
 
   // Map from character index to associated metrics.  It does not
@@ -82,12 +94,16 @@ private:     // funcs
 
 public:      // funcs
   // This makes a copy of all required data in 'font'; 'font' can be
-  // destroyed afterward
+  // destroyed afterward.
   QtBDFFont(BDFFont const &font);
   ~QtBDFFont();
 
+  // Return the maximum valid character index, or -1 if there are no
+  // valid indices.
+  int maxValidChar() const;
+
   // Return true if there is a glyph with the given index.
-  bool hasGlyph(int index) const;
+  bool hasChar(int index) const;
 
   // Return the origin-relative bounding box of a glyph.  Will return
   // (0,0,0,0) if the glyph is missing.
@@ -109,12 +125,16 @@ public:      // funcs
   // 'color'.
   //
   // If there is no glyph with the given index, this is a no-op.
-  void drawCharacter(QPaintDevice *dest, QColor const &color,
-                     QPoint pt, int index);
+  void drawChar(QPaintDevice *dest, QColor const &color,
+                QPoint pt, int index);
 };
 
 
 // Draw a string at 'pt'.
+//
+// The individual characters in 'str' are interpreted as 'unsigned
+// char' for purposes of extracting a character index.  (See note at
+// top of file.)
 void drawString(QtBDFFont &font, QPaintDevice *dest,
                 QColor const &color, QPoint pt, rostring str);
 

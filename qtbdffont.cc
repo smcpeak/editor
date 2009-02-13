@@ -3,8 +3,8 @@
 
 #include "qtbdffont.h"                 // this module
 
-#include "smbase/bdffont.h"            // BDFFont
-#include "smbase/bit2d.h"              // Bit2d::Size
+#include "bdffont.h"                   // BDFFont
+#include "bit2d.h"                     // Bit2d::Size
 
 #include <qimage.h>                    // QImage
 #include <qpaintdevice.h>              // QPaintDevice
@@ -16,6 +16,20 @@ QtBDFFont::Metrics::Metrics()
     origin(0,0),
     offset(0,0)
 {}
+
+
+bool QtBDFFont::Metrics::isPresent() const
+{
+  // Must test offset as well as bbox because the glyph for ' ' can
+  // have an empty bbox but still be present for its offset effect.
+  if (bbox.width() == 0 && bbox.height() == 0 &&
+      offset.x() == 0 && offset.y() == 0) {
+    return false;
+  }
+  else {
+    return true;
+  }
+}
 
 
 // ------------------------- QtBDFFont --------------------------
@@ -75,11 +89,16 @@ QtBDFFont::QtBDFFont(BDFFont const &font)
     // system of 'glyphMask').
     metrics[i].origin = QPoint(currentX - gmet.bbOffset.x,
                                gmet.bbSize.y-1 + gmet.bbOffset.y);
+                     
+    // Get movement offset, which might come from 'font'.
+    point dWidth = gmet.hasDWidth()?
+                     gmet.dWidth :
+                     font.metrics.dWidth;
 
-    // Origin movement offset.  Same as 'gmet.dWidth', except again
-    // the 'y' axis inverted.  Except, you'd never know, since in
-    // practice it will always be 0.
-    metrics[i].offset = QPoint(gmet.dWidth.x, -gmet.dWidth.y);
+    // Origin movement offset.  Same as 'dWidth', except again the 'y'
+    // axis inverted.  Except, you'd never know, since in practice it
+    // will always be 0.
+    metrics[i].offset = QPoint(dWidth.x, -dWidth.y);
 
     // bump variables involved in packing calculation
     maxHeight = max(maxHeight, gmet.bbSize.y);
@@ -148,13 +167,20 @@ QtBDFFont::~QtBDFFont()
 {}
 
 
-bool QtBDFFont::hasGlyph(int index) const
+int QtBDFFont::maxValidChar() const
+{
+  int ret = metrics.size() - 1;
+  while (ret >= 0 && !hasChar(ret)) {
+    ret--;
+  }
+  return ret;
+}
+
+
+bool QtBDFFont::hasChar(int index) const
 {
   if (0 <= index && index < metrics.size()) {
-    // Must test offset as well as width because the glyph for ' ' can
-    // have an empty bbox but still be present for its offset effect.
-    return metrics[index].bbox.width() > 0 &&
-           metrics[index].offset.x() != 0;  // cheat a little on this test
+    return metrics[index].isPresent();
   }
   else {
     return false;
@@ -164,7 +190,7 @@ bool QtBDFFont::hasGlyph(int index) const
 
 QRect QtBDFFont::getCharBBox(int index) const
 {
-  if (hasGlyph(index)) {
+  if (hasChar(index)) {
     QRect ret(metrics[index].bbox);
     ret.moveBy(-metrics[index].origin.x(), -metrics[index].origin.y());
     return ret;
@@ -177,7 +203,7 @@ QRect QtBDFFont::getCharBBox(int index) const
 
 QPoint QtBDFFont::getCharOffset(int index) const
 {
-  if (hasGlyph(index)) {
+  if (hasChar(index)) {
     return metrics[index].offset;
   }
   else {
@@ -195,10 +221,10 @@ void QtBDFFont::setColor(QColor const &color)
 }
 
 
-void QtBDFFont::drawCharacter(QPaintDevice *dest, QColor const &color,
-                              QPoint pt, int index)
+void QtBDFFont::drawChar(QPaintDevice *dest, QColor const &color,
+                         QPoint pt, int index)
 {
-  if (!hasGlyph(index)) {
+  if (!hasChar(index)) {
     return;
   }
   Metrics const &met = metrics[index];
@@ -221,8 +247,12 @@ void drawString(QtBDFFont &font, QPaintDevice *dest,
                 QColor const &color, QPoint pt, rostring str)
 {
   for (char const *p = str.c_str(); *p; p++) {
-    font.drawCharacter(dest, color, pt, *p);
-    pt += font.getCharOffset(*p);
+    // Interpret each byte as a character index, unsigned
+    // because no encoding system uses negative indices.
+    int charIndex = (unsigned char)*p;
+
+    font.drawChar(dest, color, pt, charIndex);
+    pt += font.getCharOffset(charIndex);
   }
 }
 
@@ -231,22 +261,25 @@ QRect getStringBBox(QtBDFFont &font, rostring str)
 {
   // Loop to search for the first valid glyph.
   for (char const *p = str.c_str(); *p; p++) {
-    if (font.hasGlyph(*p)) {
+    int charIndex = (unsigned char)*p;
+
+    if (font.hasChar(charIndex)) {
       // Begin actual bbox calculation.
 
       // Accumulated bbox.  Start with first character's bbox.
-      QRect ret(font.getCharBBox(*p));
+      QRect ret(font.getCharBBox(charIndex));
 
       // Virtual cursor; where to place next glyph.
-      QPoint cursor = font.getCharOffset(*p);
+      QPoint cursor = font.getCharOffset(charIndex);
 
       // Add the bboxes for subsequent characters.
       for (p++; *p; p++) {
-        QRect glyphBBox = font.getCharBBox(*p);
+        int charIndex = (unsigned char)*p;
+        QRect glyphBBox = font.getCharBBox(charIndex);
         glyphBBox.moveBy(cursor.x(), cursor.y());
         ret |= glyphBBox;
 
-        cursor += font.getCharOffset(*p);
+        cursor += font.getCharOffset(charIndex);
       }
 
       return ret;
@@ -279,7 +312,7 @@ void drawCenteredString(QtBDFFont &font, QPaintDevice *dest,
 // -------------------------- test code -----------------------------
 #ifdef TEST_QTBDFFONT
 
-#include "smbase/test.h"               // ARGS_MAIN
+#include "test.h"                      // ARGS_MAIN
 
 #include <qapplication.h>              // QApplication
 #include <qlabel.h>                    // QLabel
@@ -287,12 +320,170 @@ void drawCenteredString(QtBDFFont &font, QPaintDevice *dest,
 
 ARGS_MAIN
 
+
+// Test whether 'qfont' has the same information as 'font'.  Throw
+// an exception if not.
+static void compare(BDFFont const &font, QtBDFFont &qfont)
+{
+  xassert(font.maxValidGlyph() == qfont.maxValidChar());
+
+  int glyphCount = 0;
+
+  // Iterate over all potentially valid indices.
+  for (int charIndex=0; charIndex <= font.maxValidGlyph(); charIndex++) {
+    #define CHECK_EQUAL(a,b)                                       \
+      if ((a) == (b)) {                                            \
+        /* fine */                                                 \
+      }                                                            \
+      else {                                                       \
+        xfailure(stringb("expected '" #a "' (" << (a) <<           \
+                         ") to equal '" #b "' (" << (b) << ")"));  \
+      }
+
+    try {
+      // Check for consistent presence in both.
+      BDFFont::Glyph const *fontGlyph = font.getGlyph(charIndex);
+      CHECK_EQUAL(fontGlyph!=NULL, qfont.hasChar(charIndex));
+      if (fontGlyph == NULL) {
+        continue;
+      }
+      glyphCount++;
+
+      // Bounding box.
+      QRect bbox = qfont.getCharBBox(charIndex);
+      {
+        // Compare to bbox from 'font'.  This basically repeats logic
+        // from the QtBDFFont constructor; oh well.
+        CHECK_EQUAL(bbox.width(), fontGlyph->metrics.bbSize.x);
+        CHECK_EQUAL(bbox.height(), fontGlyph->metrics.bbSize.y);
+
+        CHECK_EQUAL(bbox.left(), fontGlyph->metrics.bbOffset.x);
+        
+        // This formula is complicated because the meaning of
+        // increasing 'y' values are reversed, and that in turn means
+        // that the "top" point is a different corner than the
+        // "offset" corner.
+        //
+        // Representative example for lowercase 'j', where X is
+        // a drawn (black) pixel and O is the origin point.
+        //
+        // bbox coords
+        // -----------
+        //     -4       X   ^
+        //     -3           |
+        //     -2       X   |
+        //     -1       X   |height=7
+        //      0    O  X   |
+        //      1    X  X   |
+        //      2     XX    V
+        //
+        // fontGlyph->metrics.bbSize.y and bbox.height() are 7.
+        //
+        // fontGlyph->metrics.bbOffset.y is -2 since the bbox bottom
+        // is 2 pixels below the origin point.
+        //
+        // bbox.top() is -4, which is (-7) + 1 + (-(-2)).
+        //
+        CHECK_EQUAL(bbox.top(), (-fontGlyph->metrics.bbSize.y) + 1 +
+                                (-fontGlyph->metrics.bbOffset.y));
+      }
+      
+      // Offset.
+      QPoint offset = qfont.getCharOffset(charIndex);
+      {
+        // Compare to 'font'.
+        point dWidth = fontGlyph->metrics.hasDWidth()?
+                         fontGlyph->metrics.dWidth :
+                         font.metrics.dWidth;
+                         
+        CHECK_EQUAL(offset.x(), dWidth.x);
+        CHECK_EQUAL(offset.y(), -dWidth.y);
+      }
+      
+      // Now the interesting part: make a temporary pixmap, render
+      // the glyph on to it, then compare it to what is in 'font'.
+              
+      // The temporary pixmap will have 10 pixels of margin around the
+      // sides so that we can detect if the renderer is drawing pixels
+      // outside the claimed bounding box.
+      enum { MARGIN = 10 };
+      QPixmap pixmap(bbox.width() + MARGIN*2, bbox.height() + MARGIN*2);
+      pixmap.fill(Qt::white);
+
+      // Calculate the location of the origin pixel for the glyph if I
+      // want the top-left corner of the bbox to go at (10,10).
+      QPoint origin = QPoint(MARGIN,MARGIN) - bbox.topLeft();
+
+      // Render the glyph.
+      qfont.drawChar(&pixmap, Qt::black, origin, charIndex);
+
+      // Now, convert the QPixmap into a QImage to allow fast access
+      // to individual pixels.
+      QImage image = pixmap.convertToImage();
+
+      // Examine every pixel in 'image'.
+      for (int y=0; y < image.height(); y++) {
+        for (int x=0; x < image.width(); x++) {
+          try {
+            // Is the pixel black or white?
+            bool isBlack;
+            {
+              QRgb rgb = image.pixel(x,y);
+
+              // first, make sure 'rgb' is either black or white,
+              // mostly to confirm my understanding of how this API
+              // works
+              xassert(qBlue(rgb) == qRed(rgb));
+              xassert(qBlue(rgb) == qGreen(rgb));
+              xassert(qBlue(rgb) == 0 || qBlue(rgb) == 255);
+              
+              isBlack = (qBlue(rgb) == 0);
+            }
+
+            // Margin area?
+            if (x < MARGIN ||
+                y < MARGIN ||
+                x >= image.width() - MARGIN ||
+                y >= image.height() - MARGIN) {
+              CHECK_EQUAL(isBlack, false);
+              continue;
+            }
+
+            // Which pixel does this correspond to in
+            // 'fontGlyph->bitmap'?
+            point corresp(x - MARGIN, y - MARGIN);
+            CHECK_EQUAL(isBlack, fontGlyph->bitmap->get(corresp));
+          }
+
+          catch (xBase &exn) {
+            exn.prependContext(stringb("pixel (" << x << ", " << y << ")"));
+            throw;
+          }
+        } // loop over 'x'
+      } // loop over 'y'
+    }
+
+    catch (xBase &x) {
+      x.prependContext(stringb("index " << charIndex));
+      throw;
+    }
+
+    #undef CHECK_EQUAL
+  } // loop over 'charIndex'
+  
+  cout << "successfully compared " << glyphCount << " glyphs\n";
+}
+
+
 void entry(int argc, char **argv)
 {
   BDFFont font;
   parseBDFFile(font, "fonts/editor14r.bdf");
 
   QApplication app(argc, argv);
+
+  QtBDFFont qfont(font);
+  compare(font, qfont);
 
   QLabel widget(NULL /*parent*/);
   widget.resize(300,100);
@@ -304,10 +495,9 @@ void entry(int argc, char **argv)
     QPainter painter(&pixmap);
     painter.drawText(50,20, "QPainter::drawText");
   }
-  
-  QtBDFFont font2(font);
-  drawString(font2, &pixmap, Qt::black, QPoint(50,50),
-             "drawString(QtBDFFont&)");
+
+  drawString(qfont, &pixmap, Qt::black, QPoint(50,50),
+             "drawString(QtBDFFont &)");
 
   widget.setPixmap(pixmap);
 

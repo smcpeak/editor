@@ -1,6 +1,7 @@
 # .gdbinit  -*- sh -*-
  
-file editor
+file qtbdffont
+#file editor
 #file c_hilite
 #set args -tr setView
 

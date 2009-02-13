@@ -7,7 +7,7 @@ all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
 
 
 # directories of other software
-SMBASE := smbase
+SMBASE := ../smbase
 LIBSMBASE := $(SMBASE)/libsmbase.a
 
 # C++ compiler, etc.
