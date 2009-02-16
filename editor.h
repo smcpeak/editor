@@ -8,11 +8,12 @@
 #include "bufferstate.h"    // BufferState
 #include "style.h"          // Style
 
-class QRangeControl;        // qrangecontrol.h
-class QLabel;               // qlabel.h
-class StyleDB;              // styledb.h
 class InputProxy;           // inputproxy.h
+class QLabel;               // qlabel.h
+class QRangeControl;        // qrangecontrol.h
+class QtBDFFont;            // qtbdffont.h
 class StatusDisplay;        // status.h
+class StyleDB;              // styledb.h
 
 
 // control to edit the contents of a buffer; it's possible (and
@@ -82,7 +83,9 @@ public:      // data
 
   // fonts, corresponding to 'enum FontVariant' (styledb.h); note
   // that these fonts all need to use the same character size
-  QFont normalFont, italicFont, boldFont;
+  QtBDFFont *normalFont;            // (owner)
+  QtBDFFont *italicFont;            // (owner)
+  QtBDFFont *boldFont;              // (owner)
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
@@ -93,7 +96,7 @@ public:      // data
 
   // ------ font metrics ------
   // these should be treated as read-only by all functions except
-  // Editor::setFont()
+  // Editor::setFonts()
 
   // number of pixels in a character cell that are above the
   // base line, including the base line itself
@@ -158,7 +161,11 @@ private:     // funcs
 
   // draw text etc. on a QPainter
   //void drawBufferContents(QPainter &paint, int cursorLine, int cursorCol);
-  void setDrawStyle(QPainter &paint, bool &underlining,
+
+  // set 'curFont', 'underline' and 'curColor', plus the foreground
+  // and background colors of 'paint', based on 'db' and 's'
+  void setDrawStyle(QPainter &paint, 
+                    QtBDFFont *&curFont, bool &underlining, QColor &curColor,
                     StyleDB *db, Style s);
 
   // offset from one line to the next
@@ -194,8 +201,8 @@ public:      // funcs
          QWidget *parent=NULL, const char *name=NULL);
   ~Editor();
 
-  // QWidget funcs
-  virtual void setFont(QFont &f);
+  // set fonts, given BDF description data
+  void setFonts(char const *normal, char const *italic, char const *bold);
 
   // change which buffer this editor widget is editing
   void setBuffer(BufferState *buf);

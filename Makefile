@@ -1,9 +1,7 @@
 # Makefile for editor
 
-tmptarget: qtbdffont
-
 # main target
-all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
+all: gensrc comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
 
 
 # directories of other software
@@ -122,30 +120,53 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 	./$@ >/dev/null
 
 
+# ---------------- default fonts --------------------
+%.bdf.gen.cc: fonts/%.bdf
+	perl $(SMBASE)/file-to-strlit.pl bdfFontData_$* $^ $*.bdf.gen.h $@
+
+# This is needed in case 'make' decides it needs the header file.
+# I don't use the multi-target syntax because that is broken in
+# the case of parallel make.
+%.bdf.gen.h: %.bdf.gen.cc
+	@echo "dummy rule to make $@ from $^"
+
+BDFGENSRC :=
+BDFGENSRC += editor14b.bdf.gen.cc
+BDFGENSRC += editor14i.bdf.gen.cc
+BDFGENSRC += editor14r.bdf.gen.cc
+
+.PHONY: gensrc
+gensrc: $(BDFGENSRC)
+
+TOCLEAN += $(BDFGENSRC)
+
+
 # ------------------ the editor ---------------------
 EDITOR_OBJS := \
-  status.o \
-  pixmaps.o \
-  incsearch.o \
-  editor.o \
-  moc_editor.o \
+  $(BDFGENSRC:.cc=.o) \
+  buffer.o \
   buffercore.o \
+  bufferstate.o \
+  c_hilite.yy.o \
+  comment.yy.o \
+  editor.o \
+  flexlexer.o \
+  gotoline.o \
   history.o \
   historybuf.o \
-  buffer.o \
-  main.o \
-  moc_main.o \
-  bufferstate.o \
-  style.o \
-  qtutil.o \
-  styledb.o \
-  c_hilite.yy.o \
-  lex_hilite.o \
-  flexlexer.o \
-  comment.yy.o \
+  incsearch.o \
   inputproxy.o \
-  gotoline.o \
-  moc_gotoline.o
+  lex_hilite.o \
+  main.o \
+  moc_editor.o \
+  moc_gotoline.o \
+  moc_main.o \
+  pixmaps.o \
+  qtbdffont.o \
+  qtutil.o \
+  status.o \
+  style.o \
+  styledb.o
 -include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor

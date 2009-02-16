@@ -2,32 +2,53 @@
 // code for editor.h
 
 #include "editor.h"          // this module
+
+// this dir
 #include "buffer.h"          // Buffer
-#include "position.h"        // Position
-#include "textline.h"        // TextLine
-#include "xassert.h"         // xassert
-#include "array.h"           // Array
-#include "style.h"           // LineStyle, etc.
-#include "trace.h"           // TRACE
-#include "qtutil.h"          // toString(QKeyEvent&)
-#include "macros.h"          // Restorer
-#include "styledb.h"         // StyleDB
 #include "inputproxy.h"      // InputProxy
-#include "ckheap.h"          // malloc_stats
+#include "position.h"        // Position
+#include "qtbdffont.h"       // QtBDFFont
+#include "qtutil.h"          // toString(QKeyEvent&)
 #include "status.h"          // StatusDisplay
+#include "style.h"           // LineStyle, etc.
+#include "styledb.h"         // StyleDB
+#include "textline.h"        // TextLine
+
+// default font definitions (also this dir)
+#include "editor14r.bdf.gen.h"
+#include "editor14i.bdf.gen.h"
+#include "editor14b.bdf.gen.h"
+
+// smbase
+#include "array.h"           // Array
+#include "bdffont.h"         // BDFFont
+#include "ckheap.h"          // malloc_stats
+#include "macros.h"          // Restorer
 #include "nonport.h"         // getMilliseconds
+#include "trace.h"           // TRACE
+#include "xassert.h"         // xassert
 
+// Qt
 #include <qapplication.h>    // QApplication
-#include <qpainter.h>        // QPainter
-#include <qfontmetrics.h>    // QFontMetrics
-#include <qrangecontrol.h>   // QRangeControl
-#include <qpixmap.h>         // QPixmap
-#include <qmessagebox.h>     // QMessageBox
 #include <qclipboard.h>      // QClipboard
+#include <qfontmetrics.h>    // QFontMetrics
 #include <qlabel.h>          // QLabel
+#include <qmessagebox.h>     // QMessageBox
+#include <qpainter.h>        // QPainter
+#include <qpixmap.h>         // QPixmap
+#include <qrangecontrol.h>   // QRangeControl
 
+// libc
 #include <stdio.h>           // printf, for debugging
 #include <time.h>            // time(), localtime()
+
+
+static QtBDFFont *makeQtBDFFont(char const *bdfFontData)
+{
+  BDFFont bdfFont;
+  parseBDFString(bdfFont, bdfFontData);
+  return new QtBDFFont(bdfFont);
+}
 
 
 // ---------------------- Editor --------------------------------
@@ -42,7 +63,9 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     leftMargin(1),
     interLineSpace(0),
     cursorColor(0x00, 0xFF, 0xFF),  // cyan
-    // fonts set by setFont()
+    normalFont(NULL),
+    italicFont(NULL),
+    boldFont(NULL),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -50,23 +73,9 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     nonfocusCursorLine(0), nonfocusCursorCol(0),
     ignoreScrollSignals(false)
 {
-  QFont font;
-  
-  // no
-  //font.setRawName("-scott-editor-medium-r-normal--14-140-75-75-m-90-iso8859-1");
-  
-  // no...
-  font.setRawName("-*-*-medium-r-*-*-18-*-*-*-*-*-*-*");
-
-  // still not satisfactory
-#if 0
-  font.setFamily("Courier");
-  font.setPointSize(14);
-  font.setStyleStrategy((QFont::StyleStrategy)
-    (QFont::PreferBitmap | QFont::NoAntialias));
-#endif // 0
-
-  setFont(font);
+  setFonts(bdfFontData_editor14r,
+           bdfFontData_editor14i,
+           bdfFontData_editor14b);
 
   setCursor(ibeamCursor);
   
@@ -91,6 +100,10 @@ Editor::~Editor()
   if (inputProxy) {
     inputProxy->detach();
   }
+  
+  delete normalFont;
+  delete italicFont;
+  delete boldFont;
 }
 
 
@@ -144,35 +157,30 @@ void Editor::normalizeSelect(int cursorLine, int cursorCol)
 }
 
 
-void Editor::setFont(QFont &f)
+// I use this to delay actually deleting 'ptr' until I am sure I
+// successfully got a 'newValue' (as opposed to throwing an exception).
+template <class T>
+static void replace(T *&ptr, T *newValue)
 {
-  normalFont = f;
+  delete ptr;
+  ptr = newValue;
+}
 
-  italicFont = f;
-  italicFont.setItalic(true);
 
-  boldFont = f;
-  boldFont.setBold(true);
+void Editor::setFonts(char const *normal, char const *italic, char const *bold)
+{
+  // replace the fonts in an approximately exception-safe way
+  replace(normalFont, makeQtBDFFont(normal));
+  replace(italicFont, makeQtBDFFont(italic));
+  replace(boldFont, makeQtBDFFont(bold));
 
-  // I might print the raw names to verify the system is using the
-  // predefined variants, instead of, say, synthesizing its own
-  TRACE("fontNames", ""
-    << "\n  normal: " << (char const*)normalFont.rawName()
-    << "\n  italic: " << (char const*)italicFont.rawName()
-    << "\n  bold  : " << (char const*)boldFont.rawName());
-
-  // I don't use setUnderline() because I'm a little suspicious of
-  // what that really does... might experiment some..
-
-  QWidget::setFont(f);
-
-  // info about the current font
-  QFontMetrics fm(fontMetrics());
-
-  ascent = fm.ascent();
-  descent = fm.descent() + 1;
+  // calculate metrics
+  QRect const &bbox = normalFont->getAllCharsBBox();
+  ascent = -bbox.top();
+  descent = bbox.bottom() + 1;
   fontHeight = ascent + descent;
-  fontWidth = fm.maxWidth();
+  xassert(fontHeight == bbox.height());    // check my assumptions
+  fontWidth = bbox.width();
 
   // natural # of blank pixels between lines
   //int leading = fm.leading();
@@ -340,12 +348,14 @@ void Editor::paintEvent(QPaintEvent *ev)
     // I can't pop up a message box because then when that
     // is dismissed it might trigger another exception, etc.
     QPainter paint(this);
-    paint.setFont(normalFont);
     paint.setPen(white);
     paint.setBackgroundMode(OpaqueMode);
     paint.setBackgroundColor(red);
     paint.drawText(0, 30,                 // baseline start coordinate
                    toQString(x.why()), strlen(x.why()));
+                   
+    // Also write to stderr so rare issues can be seen.
+    cerr << x.why() << endl;
   }
 }
 
@@ -397,12 +407,14 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // currently selected style (so we can avoid possibly expensive
   // calls to change styles)
   Style currentStyle = ST_NORMAL;
+  QtBDFFont *curFont = NULL;
   bool underlining = false;     // whether drawing underlines
+  QColor curColor;
   StyleDB *styleDB = StyleDB::instance();
-  setDrawStyle(paint, underlining, styleDB, currentStyle);
-  
+  setDrawStyle(paint, curFont, underlining, curColor, styleDB, currentStyle);
+
   // do same for 'winPaint', just to set the background color
-  setDrawStyle(winPaint, underlining, styleDB, currentStyle);
+  setDrawStyle(winPaint, curFont, underlining, curColor, styleDB, currentStyle);
 
   // ---- margins ----
   // top edge of what has not been painted, in window coordinates
@@ -510,9 +522,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     // number of characters printed
     int printed = 0;
 
-    // it turns out my 'editor' font has a bold variant
-    // with one pixel less of descent.. this causes lines to be incompletely
-    // erased.. so for now, erase the whole thing in advance (HACK!)
+    // clear the whole line to the background color
     paint.eraseRect(0,0, lineWidth, fullLineHeight);
   
     // loop over segments with different styles
@@ -522,7 +532,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       // set style
       if (style.style != currentStyle) {
         currentStyle = style.style;
-        setDrawStyle(paint, underlining, styleDB, currentStyle);
+        setDrawStyle(paint, curFont, underlining, curColor, styleDB, currentStyle);
       }
 
       // compute how many characters to print in this segment
@@ -546,15 +556,12 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       len = min(len, visibleCols-printed);
       xassert(len > 0);
 
-      // draw text; unfortunately this requires making two copies, one
-      // to get a NUL-terminated source (could be avoided by
-      // temporarily overwriting a character in 'text'), and one to
-      // make a QString for drawText() to use; I think Qt should have
-      // made drawText() accept an ordinary char const* ...
-      string segment(text+printed, len);
+      // draw text
       int baseline = ascent-1;
-      paint.drawText(x, baseline,                 // baseline start coordinate
-                     toQString(segment), len);    // text, length
+      for (int i=0; i < len; i++) {
+        curFont->drawChar(&pixmap, curColor, 
+                          QPoint(x + fontWidth*i, baseline), text[printed+i]);
+      }
 
       if (underlining) {
         // want to draw a line on top of where underscores would be; this
@@ -603,20 +610,22 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 }
 
 
-void Editor::setDrawStyle(QPainter &paint, bool &underlining,
+void Editor::setDrawStyle(QPainter &paint, 
+                          QtBDFFont *&curFont, bool &underlining, QColor &curColor,
                           StyleDB *db, Style s)
 {
   TextStyle const &ts = db->getStyle(s);
+  curColor = ts.foreground;
   paint.setPen(ts.foreground);
   paint.setBackgroundColor(ts.background);
   underlining = false;
   switch (ts.variant) {
-    default: xfailure("bad variant code");
-    case FV_UNDERLINE:  underlining = true;   // drop through to next
-    case FV_NORMAL:     paint.setFont(normalFont);  break;
-    case FV_ITALIC:     paint.setFont(italicFont);  break;
-    case FV_BOLD:       paint.setFont(boldFont);    break;
+    case FV_UNDERLINE:  underlining = true;   // fallthrough to next
+    case FV_NORMAL:     curFont = normalFont;  return;
+    case FV_ITALIC:     curFont = italicFont;  return;
+    case FV_BOLD:       curFont = boldFont;    return;
   }
+  xfailure("bad variant code");
 }
 
 

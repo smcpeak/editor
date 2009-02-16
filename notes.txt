@@ -833,16 +833,28 @@ start 2008-12-13 11:58
   working on qtbdffont module
 
 ---------------------
-2009-02-13 02:31
+start 2009-02-13 02:31
 
   qtbdffont
 
+  stopped using editor/smbase, instead using ../smbase
 
+  added exhausitve rendering tests
 
+  fixed some bugs with zero bbox and zero offset
 
+end 2009-02-13 05:51
 
+--------------------------
+start 2009-02-16 05:01
 
-
+  modify editor to use qtbdffont
+  
+  but now it is much slower!  :(
+  
+  hmmm...
+  
+end 2009-02-16 07:28
 
 
 EOF
