@@ -1,24 +1,27 @@
 # Makefile for editor
 
 # main target
-all: gensrc comment.yy.cc testgap buffercore historybuf buffer style c_hilite qtbdffont editor
+all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
 
 
 # directories of other software
 SMBASE := ../smbase
 LIBSMBASE := $(SMBASE)/libsmbase.a
 
+SMQTUTIL := ../smqtutil
+LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
+
 # C++ compiler, etc.
 CXX := g++
 
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMBASE) -Wno-deprecated
+CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMQTUTIL) -I$(SMBASE) -Wno-deprecated
 
 # flags for the linker
 #
 # The "qt-mt" is the multithreaded version.  I'm not using threads,
 # but it seems that later Qts only have the MT version available.
-LDFLAGS := -g -Wall $(LIBSMBASE) -L$(QTDIR)/lib -lqt-mt
+LDFLAGS := -g -Wall $(LIBSMQTUTIL) $(LIBSMBASE) -L$(QTDIR)/lib -lqt-mt
 
 
 # patterns of files to delete in the 'clean' target; targets below
@@ -83,12 +86,6 @@ style: style.h style.cc
 	./style >/dev/null
 
 
-# --------------- qtbdffont test program ----------------
-TOCLEAN += qtbdffont
-qtbdffont: qtbdffont.h qtbdffont.cc $(LIBSMBASE)
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_QTBDFFONT qtbdffont.cc $(LDFLAGS)
-
-
 # ------------- highlighting stuff --------------------
 # lexer (-b makes lex.backup)
 TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
@@ -120,30 +117,8 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 	./$@ >/dev/null
 
 
-# ---------------- default fonts --------------------
-%.bdf.gen.cc: fonts/%.bdf
-	perl $(SMBASE)/file-to-strlit.pl bdfFontData_$* $^ $*.bdf.gen.h $@
-
-# This is needed in case 'make' decides it needs the header file.
-# I don't use the multi-target syntax because that is broken in
-# the case of parallel make.
-%.bdf.gen.h: %.bdf.gen.cc
-	@echo "dummy rule to make $@ from $^"
-
-BDFGENSRC :=
-BDFGENSRC += editor14b.bdf.gen.cc
-BDFGENSRC += editor14i.bdf.gen.cc
-BDFGENSRC += editor14r.bdf.gen.cc
-
-.PHONY: gensrc
-gensrc: $(BDFGENSRC)
-
-TOCLEAN += $(BDFGENSRC)
-
-
 # ------------------ the editor ---------------------
 EDITOR_OBJS := \
-  $(BDFGENSRC:.cc=.o) \
   buffer.o \
   buffercore.o \
   bufferstate.o \
@@ -162,8 +137,6 @@ EDITOR_OBJS := \
   moc_gotoline.o \
   moc_main.o \
   pixmaps.o \
-  qtbdffont.o \
-  qtutil.o \
   status.o \
   style.o \
   styledb.o
