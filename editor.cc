@@ -43,14 +43,6 @@
 #include <time.h>            // time(), localtime()
 
 
-static QtBDFFont *makeQtBDFFont(char const *bdfFontData)
-{
-  BDFFont bdfFont;
-  parseBDFString(bdfFont, bdfFontData);
-  return new QtBDFFont(bdfFont);
-}
-
-
 // ---------------------- Editor --------------------------------
 Editor::Editor(BufferState *buf, StatusDisplay *stat,
                QWidget *parent, const char *name)
@@ -62,10 +54,8 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
-    cursorColor(0x00, 0xFF, 0xFF),  // cyan
-    normalFont(NULL),
-    italicFont(NULL),
-    boldFont(NULL),
+    cursorColor(0x00, 0xFF, 0xFF),       // cyan
+    fontForStyle(NUM_STANDARD_STYLES),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -100,10 +90,8 @@ Editor::~Editor()
   if (inputProxy) {
     inputProxy->detach();
   }
-  
-  delete normalFont;
-  delete italicFont;
-  delete boldFont;
+
+  fontForStyle.deleteAll();
 }
 
 
@@ -157,35 +145,55 @@ void Editor::normalizeSelect(int cursorLine, int cursorCol)
 }
 
 
-// I use this to delay actually deleting 'ptr' until I am sure I
-// successfully got a 'newValue' (as opposed to throwing an exception).
-template <class T>
-static void replace(T *&ptr, T *newValue)
+static BDFFont *makeBDFFont(char const *bdfData, char const *context)
 {
-  delete ptr;
-  ptr = newValue;
+  try {
+    BDFFont *ret = new BDFFont;
+    parseBDFString(*ret, bdfData);
+    return ret;
+  }
+  catch (xBase &x) {
+    x.prependContext(context);
+    throw;
+  }
 }
 
 
 void Editor::setFonts(char const *normal, char const *italic, char const *bold)
 {
-  // replace the fonts in an approximately exception-safe way
-  replace(normalFont, makeQtBDFFont(normal));
-  replace(italicFont, makeQtBDFFont(italic));
-  replace(boldFont, makeQtBDFFont(bold));
+  // Read the font files, and index the results by FontVariant.
+  ObjArrayStack<BDFFont> bdfFonts(3);
+  STATIC_ASSERT(FV_NORMAL == 0);
+  bdfFonts.push(makeBDFFont(normal, "normal font"));
+  STATIC_ASSERT(FV_ITALIC == 1);
+  bdfFonts.push(makeBDFFont(italic, "italic font"));
+  STATIC_ASSERT(FV_BOLD == 2);
+  bdfFonts.push(makeBDFFont(bold, "bold font"));
+
+  // Using one fixed global style mapping.
+  StyleDB *styleDB = StyleDB::instance();
+
+  // Build the complete set of new fonts.
+  ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_STYLES);
+  for (int style = ST_ZERO; style < NUM_STANDARD_STYLES; style++) {
+    TextStyle const &ts = styleDB->getStyle((Style)style);
+
+    STATIC_ASSERT(FV_BOLD == 2);
+    BDFFont *bdfFont = bdfFonts[ts.variant % 3];
+
+    newFonts.push(new QtBDFFont(*bdfFont, ts.foreground, ts.background));
+  }
+
+  // Substitute the new for the old.
+  fontForStyle.swapWith(newFonts);
 
   // calculate metrics
-  QRect const &bbox = normalFont->getAllCharsBBox();
+  QRect const &bbox = fontForStyle[ST_NORMAL]->getAllCharsBBox();
   ascent = -bbox.top();
   descent = bbox.bottom() + 1;
   fontHeight = ascent + descent;
   xassert(fontHeight == bbox.height());    // check my assumptions
   fontWidth = bbox.width();
-
-  // natural # of blank pixels between lines
-  //int leading = fm.leading();
-  //printf("ascent=%d descent=%d fontHeight=%d fontWidth=%d leading=%d\n",
-  //       ascent, descent, fontHeight, fontWidth, leading);
 }
 
 
@@ -235,7 +243,7 @@ void Editor::redraw()
   // update: It turns out that update() and repaint(false) *were*
   // doing the same thing, but that the PaintEvent::erase flag was
   // simply wrong.  Moreover, the flicker was actually server-side,
-  // due to a bug in XFree86's implementation of XDrawImageSting.
+  // due to a bug in XFree86's implementation of XDrawImageString.
   // So I've switched to a server-side pixmap double-buffer method,
   // which of course eliminates the flickering.
   
@@ -409,12 +417,11 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   Style currentStyle = ST_NORMAL;
   QtBDFFont *curFont = NULL;
   bool underlining = false;     // whether drawing underlines
-  QColor curColor;
   StyleDB *styleDB = StyleDB::instance();
-  setDrawStyle(paint, curFont, underlining, curColor, styleDB, currentStyle);
+  setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
 
   // do same for 'winPaint', just to set the background color
-  setDrawStyle(winPaint, curFont, underlining, curColor, styleDB, currentStyle);
+  setDrawStyle(winPaint, curFont, underlining, styleDB, currentStyle);
 
   // ---- margins ----
   // top edge of what has not been painted, in window coordinates
@@ -532,7 +539,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       // set style
       if (style.style != currentStyle) {
         currentStyle = style.style;
-        setDrawStyle(paint, curFont, underlining, curColor, styleDB, currentStyle);
+        setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
       }
 
       // compute how many characters to print in this segment
@@ -556,10 +563,15 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       len = min(len, visibleCols-printed);
       xassert(len > 0);
 
+      // The QtBDFFont package must be treated as if it draws
+      // characters with transparency, even though the transparency
+      // is only partial...
+      paint.eraseRect(x,0, fontWidth*len, fullLineHeight);
+
       // draw text
       int baseline = ascent-1;
       for (int i=0; i < len; i++) {
-        curFont->drawChar(&pixmap, curColor, 
+        curFont->drawChar(&pixmap,
                           QPoint(x + fontWidth*i, baseline), text[printed+i]);
       }
 
@@ -610,22 +622,18 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 }
 
 
-void Editor::setDrawStyle(QPainter &paint, 
-                          QtBDFFont *&curFont, bool &underlining, QColor &curColor,
+void Editor::setDrawStyle(QPainter &paint,
+                          QtBDFFont *&curFont, bool &underlining,
                           StyleDB *db, Style s)
 {
   TextStyle const &ts = db->getStyle(s);
-  curColor = ts.foreground;
-  paint.setPen(ts.foreground);
+
   paint.setBackgroundColor(ts.background);
-  underlining = false;
-  switch (ts.variant) {
-    case FV_UNDERLINE:  underlining = true;   // fallthrough to next
-    case FV_NORMAL:     curFont = normalFont;  return;
-    case FV_ITALIC:     curFont = italicFont;  return;
-    case FV_BOLD:       curFont = boldFont;    return;
-  }
-  xfailure("bad variant code");
+
+  underlining = (ts.variant == FV_UNDERLINE);
+  
+  curFont = fontForStyle[s];
+  xassert(curFont);
 }
 
 
@@ -878,6 +886,20 @@ void Editor::keyPressEvent(QKeyEvent *k)
           QMessageBox::information(this, "got it",
             "got it");
         }
+        break;
+      }
+
+      case Key_P: {
+        long start = getMilliseconds();
+        int frames = 20;
+        for (int i=0; i < frames; i++) {
+          redraw();
+        }
+        long elapsed = getMilliseconds() - start;
+        QMessageBox::information(this, "perftest",
+          qstringb("drew " << frames << " frames in " << 
+                   elapsed << " milliseconds, or " <<
+                   (elapsed / frames) << " ms/frame"));
         break;
       }
 

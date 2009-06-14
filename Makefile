@@ -1,7 +1,7 @@
 # Makefile for editor
 
 # main target
-all: gensrc comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
+all: gensrc comment.yy.cc testgap buffercore historybuf buffer style c_hilite qtbdffont editor
 
 
 # directories of other software

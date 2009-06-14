@@ -25,6 +25,8 @@ enum Style {
   ST_NUMBER2,              // numeric literal, alternate (I use this for octal)
   ST_OPERATOR,             // operator
   ST_PREPROCESSOR,         // preprocessor directive
+  
+  NUM_STANDARD_STYLES
 };
 
 

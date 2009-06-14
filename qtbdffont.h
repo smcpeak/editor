@@ -18,6 +18,21 @@
 // treat each byte as a character index, and thus are limited to
 // character encoding systems with 256 characters or less.
 
+// 2009-06-13: Originally, the design called for always drawing with a
+// transparent background.  However, I have found that, at least on my
+// machine, blitting with a mask is 20x slower than blitting without a
+// mask, and that causes the display to be noticeable sluggish.  So,
+// I've now switched it so it always draws an opaque background.  As
+// such, the interface has changed so that the user must specify both
+// the foreground and background colors when creating the QtBDFFont
+// object, since changing the colors is as slow as making it in the
+// first place.
+//
+// NOTE: The "opaque background" only covers the glyph's bounding box.
+// So, in practice, clients must still erase the background area first
+// themselves before rendering text.  This also precludes kerning.  I
+// wish I had a better answer here...
+
 #ifndef QTBDFFONT_H
 #define QTBDFFONT_H
 
@@ -61,24 +76,16 @@ private:     // types
 
   public:
     Metrics();
-    
+
     // Return true if this glyph is present, false if missing.
     bool isPresent() const;
   };
 
 private:     // data
-  // Bitmap containing all the font glyphs, packed together such that
-  // no two overlap.  Other packing characteristics are implementation
-  // details.
-  QBitmap glyphMask;
-
-  // A pixmap entirely filled with the current text color.  It is the
-  // same size as 'glyphMask', and has 'glyphMask' as its mask.
-  QPixmap colorPixmap;
-
-  // Current text color.  'colorPixmap' is filled with it.  This is
-  // changed when an attempt is made to draw a different color.
-  QColor textColor;
+  // Pixmap containing all the rendered font glyphs, packed together
+  // such that no two bounding boxes overlap.  Other packing
+  // characteristics are implementation details.
+  QPixmap glyphs;
 
   // Relative to the origin, the minimal bounding box that encloses
   // every glyph in the font.
@@ -88,14 +95,11 @@ private:     // data
   // "grow"; I use GrowArray for its bounds checking.
   GrowArray<Metrics> metrics;
 
-private:     // funcs
-  // Make sure the current text color matches 'color'.
-  void setColor(QColor const &color);
-
 public:      // funcs
   // This makes a copy of all required data in 'font'; 'font' can be
   // destroyed afterward.
-  QtBDFFont(BDFFont const &font);
+  QtBDFFont(BDFFont const &font,
+            QColor const &fgColor, QColor const &bgColor);
   ~QtBDFFont();
 
   // Return the maximum valid character index, or -1 if there are no
@@ -121,12 +125,12 @@ public:      // funcs
   // a given glyph.  Returns (0,0) if the glyph is missing.
   QPoint getCharOffset(int index) const;
 
-  // Render a single character at 'pt'.  The text is drawn with
-  // 'color'.
+  // Render a single character at 'pt'.  Renders the entire *bounding
+  // box* opaquely, using the foreground and background colors
+  // specified in the constructor call.
   //
   // If there is no glyph with the given index, this is a no-op.
-  void drawChar(QPaintDevice *dest, QColor const &color,
-                QPoint pt, int index);
+  void drawChar(QPaintDevice *dest, QPoint pt, int index);
 };
 
 
@@ -136,7 +140,7 @@ public:      // funcs
 // char' for purposes of extracting a character index.  (See note at
 // top of file.)
 void drawString(QtBDFFont &font, QPaintDevice *dest,
-                QColor const &color, QPoint pt, rostring str);
+                QPoint pt, rostring str);
 
 
 // For an entire string, calculate a bounding rectangle, assuming the
@@ -149,7 +153,7 @@ QRect getStringBBox(QtBDFFont &font, rostring str);
 // Draw a string centered both horizontally and vertically about
 // the given point, according to the glyph bbox metrics.
 void drawCenteredString(QtBDFFont &font, QPainter *dest,
-                        QColor const &color, QPoint center,
-                        rostring str);
+                        QPoint center, rostring str);
+
 
 #endif // QTBDFFONT_H

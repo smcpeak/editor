@@ -81,11 +81,10 @@ public:      // data
   //QColor normalFG, normalBG;        // normal text
   //QColor selectFG, selectBG;        // selected text
 
-  // fonts, corresponding to 'enum FontVariant' (styledb.h); note
-  // that these fonts all need to use the same character size
-  QtBDFFont *normalFont;            // (owner)
-  QtBDFFont *italicFont;            // (owner)
-  QtBDFFont *boldFont;              // (owner)
+  // fonts for (indexed by) each text style; all fonts must use the
+  // same character size; some entries may be NULL, indicating we
+  // do not expect to draw text with that style
+  ObjArrayStack<QtBDFFont> fontForStyle;
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
@@ -162,10 +161,10 @@ private:     // funcs
   // draw text etc. on a QPainter
   //void drawBufferContents(QPainter &paint, int cursorLine, int cursorCol);
 
-  // set 'curFont', 'underline' and 'curColor', plus the foreground
+  // set 'curFont' and 'underline', plus the foreground
   // and background colors of 'paint', based on 'db' and 's'
-  void setDrawStyle(QPainter &paint, 
-                    QtBDFFont *&curFont, bool &underlining, QColor &curColor,
+  void setDrawStyle(QPainter &paint,
+                    QtBDFFont *&curFont, bool &underlining,
                     StyleDB *db, Style s);
 
   // offset from one line to the next
@@ -201,7 +200,7 @@ public:      // funcs
          QWidget *parent=NULL, const char *name=NULL);
   ~Editor();
 
-  // set fonts, given BDF description data
+  // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
 
   // change which buffer this editor widget is editing

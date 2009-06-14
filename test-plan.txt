@@ -1,0 +1,16 @@
+test-plan.txt
+Manual tests of functionality
+
+Load a file specifying its name on the command line.
+
+Scrolling the buffer.
+
+Resizing the window.
+
+Selecting text.
+
+Interactive search.
+
+
+
+EOF

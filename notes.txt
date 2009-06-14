@@ -1,5 +1,6 @@
 
 TODOs:
+  - rename Style to TextCategory
   - ctrl-tab buffer switching sort of like alt-tab
   - multiple cursor display options; include an emacs-like mode
   - compilation mode
@@ -854,7 +855,40 @@ start 2009-02-16 05:01
   
   hmmm...
   
+  course of action:
+    - quantify the problem, either with editor or qtbdffont
+    - confirm hypothesis that masked blits are the problem by
+      disabling the mask temporarily
+    - investigate Qt source code to confirm it is doing client-side
+      bltting, and what the conditions on that are
+    - possibly look into a Qt upgrade
+    - or an X configuration issue?
+    - may have to use pre-rendered opaque glyphs
+  
 end 2009-02-16 07:28
+
+--------------
+start 2009-06-13 14:25
+
+  test that mask is the problem, use pre-rendered opaque glyphs
+  
+    at full screen, currently takes 200 ms to draw a frame
+
+    once the mask is removed, it's 10 ms per frame
+    
+    confirmed
+
+  Finished making the opaque rendering changes, but the result
+  is weird because only the bounding box is opaque; the rest of
+  the character cell (which is itself not a very general concept)
+  is left transparnet.  So clients have to erase the background
+  in advance anyway, yet cannot do overlap effects like kerning.
+  Highly non-ideal, but I don't see any better solution unless
+  I can get mask blitting to work fast, and I do not see an
+  obvious solution to that.
+  
+  
+
 
 
 EOF

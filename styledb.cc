@@ -4,7 +4,7 @@
 #include "styledb.h"     // this module
 
 StyleDB::StyleDB()
-  : arr(ST_PREPROCESSOR+1)    // initial size
+  : arr(NUM_STANDARD_STYLES)           // initial size
 {
   // These colors are the ones I like for C++ code.  They're vaguely
   // based on the Turbo C++ IDE default color scheme.  I'd like to

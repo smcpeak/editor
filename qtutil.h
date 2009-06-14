@@ -20,4 +20,7 @@ string toString(QKeyEvent const &k);
 QString toQString(string const &s);
 
 
+#define qstringb(stuff) toQString(stringb(stuff))
+
+
 #endif // QTUTIL_H
