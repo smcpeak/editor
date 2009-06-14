@@ -887,7 +887,86 @@ start 2009-06-13 14:25
   I can get mask blitting to work fast, and I do not see an
   obvious solution to that.
   
+  attempted to update ered to use this font system; problems:
   
+  * lurs12 has some typographical spacing problems; either need
+    to fix them or find another font
+    
+  * interline spacing is too large; BDF does not specify it so
+    we use the bbox which is quite poor
+    
+  * seems to be a bug somewhere making the relation labels show up
+    too low and a little to the right (?)
+    
+  * drawCentered needs to erase the whole BG rectangle
+  
+  * (big one) In general, opaque text drawing causes major
+    problems for both the implementation and the UI.  I think I'm
+    going to only find more and harder to solve problems with it.
+    I think my next attack strategy has to focus on figuring out
+    why I cannot do masked blits efficiently.
+    
+end 2009-06-13 19:55
+
+-------------------
+start 2009-06-14 12:44
+
+  need to see if there is a way to get the mask effect to be
+  fast; options:
+  
+  - play with bit depths, etc., of the original approach
+  
+  - study Qt sources for reasons for slow fallbacks
+  
+  - use instead a 32-bit image with alpha; but that could not
+    possibly be fast on an 8-bit display, right?
+    
+  - do the whole thing using OpenGL instead
+
+  experimenting with performance in 'qtbdffont' program, I can
+  draw the test string "drawString(QtBDFFont &)" 1000 times in:
+
+    2781 ms using the mask
+      23 ms not using the mask
+      
+  study of Qt's bitBlt code (by copying it into my own and then
+  hacking it to compile) reveals:
+  
+  * The code path it's using is the "fast masked blt" path, so
+    there isn't anything majorly wrong with my use.
+
+  * Basic timing shows all the time spent in XCopyArea, although
+    that can of course be misleading due to write-back caching.
+
+  * I can improve speed 5x by calling setOptimization(QPixmap::BestOptim),
+    since that caches the GC that stores the mask.
+    
+  * I can improve by another 5x if I can reduce/eliminate the
+    calls to XSetClipOrigin in the bitBlt implementation.  It
+    is unfortunate that the clip origin is relative to the
+    destination drawable.  Changing it seems to have a major
+    impact on the X server's drawing speed.    
+    
+    - One possible way to do that is to render entire strings
+      at once, creating one mask for the entire string.
+      
+  decisions:
+  
+  * Revert QtBDFFont to expose the transparent drawing interface,
+    since that is what clients need.  Obviously, add the
+    setOptimization() call to get my 5x.
+
+  * Also expose an optional opaque-rendering interface that
+    works by setting the background of the colorpixmap and
+    disabling the mask.  Clients willing to make and maintain
+    a lot of QtBDFFont objects, and deal with opaque rendering,
+    will be able to take advantage of the speed gain.
+
+  * Otherwise, it's up to the client to use its own damage
+    tracking and bulk scrolling mechanisms to reduce the number
+    of calls into the drawCharacter routine.
+
+end 2009-06-14 15:02
 
 
 
