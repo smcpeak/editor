@@ -571,7 +571,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       // draw text
       int baseline = ascent-1;
       for (int i=0; i < len; i++) {
-        curFont->drawChar(&pixmap,
+        curFont->drawChar(paint,
                           QPoint(x + fontWidth*i, baseline), text[printed+i]);
       }
 
