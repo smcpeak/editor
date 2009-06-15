@@ -181,7 +181,11 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
     STATIC_ASSERT(FV_BOLD == 2);
     BDFFont *bdfFont = bdfFonts[ts.variant % 3];
 
-    newFonts.push(new QtBDFFont(*bdfFont, ts.foreground, ts.background));
+    QtBDFFont *qfont = new QtBDFFont(*bdfFont);
+    qfont->setFgColor(ts.foreground);
+    qfont->setBgColor(ts.background);
+    qfont->setTransparent(false);
+    newFonts.push(qfont);
   }
 
   // Substitute the new for the old.

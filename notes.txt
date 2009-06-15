@@ -968,6 +968,18 @@ start 2009-06-14 12:44
 
 end 2009-06-14 15:02
 
+--------------
+start 2009-06-14 21:41
+
+  restore the transparent text capabilities of QtBDFFont
+
+  done; current typical results:
+
+    transparent: 1000 iters in 511 ms
+    opaque: 1000 iters in 45 ms
+    
+end 2009-06-14 23:39    
+  
 
 
 EOF
