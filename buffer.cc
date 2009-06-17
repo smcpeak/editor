@@ -470,7 +470,7 @@ void Buffer::indentLines(int start, int lines, int ind)
 
     else {
       int lineInd = getIndentation(line);
-      for (int i=0; i<ind && i<lineInd; i++) {
+      for (int i=0; i<(-ind) && i<lineInd; i++) {
         deleteChar();
       }
     }
