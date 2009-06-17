@@ -72,6 +72,19 @@ void LineStyle::overlay(int start, int ovlLength, Style ovlStyle)
 }
 
 
+Style LineStyle::getStyleAt(int index) const
+{
+  for (LineStyleIter iter(*this); !iter.atEnd(); iter.nextRun()) {
+    if (index < iter.length) {
+      return iter.style;
+    }
+    index -= iter.length;
+  }
+  
+  return endStyle;
+}
+
+
 string LineStyle::asString() const
 {
   stringBuilder sb;

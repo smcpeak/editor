@@ -54,8 +54,9 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
-    cursorColor(0x00, 0xFF, 0xFF),       // cyan
+    cursorColor(0xFF, 0xFF, 0xFF),       // white
     fontForStyle(NUM_STANDARD_STYLES),
+    cursorFontForFV(FV_BOLD + 1),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -174,22 +175,42 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
   StyleDB *styleDB = StyleDB::instance();
 
   // Build the complete set of new fonts.
-  ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_STYLES);
-  for (int style = ST_ZERO; style < NUM_STANDARD_STYLES; style++) {
-    TextStyle const &ts = styleDB->getStyle((Style)style);
-
-    STATIC_ASSERT(FV_BOLD == 2);
-    BDFFont *bdfFont = bdfFonts[ts.variant % 3];
-
-    QtBDFFont *qfont = new QtBDFFont(*bdfFont);
-    qfont->setFgColor(ts.foreground);
-    qfont->setBgColor(ts.background);
-    qfont->setTransparent(false);
-    newFonts.push(qfont);
+  {
+    ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_STYLES);
+    for (int style = ST_ZERO; style < NUM_STANDARD_STYLES; style++) {
+      TextStyle const &ts = styleDB->getStyle((Style)style);
+  
+      STATIC_ASSERT(FV_BOLD == 2);
+      BDFFont *bdfFont = bdfFonts[ts.variant % 3];
+  
+      QtBDFFont *qfont = new QtBDFFont(*bdfFont);
+      qfont->setFgColor(ts.foreground);
+      qfont->setBgColor(ts.background);
+      qfont->setTransparent(false);
+      newFonts.push(qfont);
+    }
+  
+    // Substitute the new for the old.
+    fontForStyle.swapWith(newFonts);
   }
-
-  // Substitute the new for the old.
-  fontForStyle.swapWith(newFonts);
+  
+  // Repeat the procedure for the cursor fonts.
+  {
+    ObjArrayStack<QtBDFFont> newFonts(FV_BOLD + 1);
+    for (int fv = 0; fv <= FV_BOLD; fv++) {
+      QtBDFFont *qfont = new QtBDFFont(*(bdfFonts[fv]));
+  
+      // The character under the cursor is drawn with the normal background
+      // color, and the cursor box (its background) is drawn in 'cursorColor'.
+      qfont->setFgColor(styleDB->getStyle(ST_NORMAL).background);
+      qfont->setBgColor(cursorColor);          
+      qfont->setTransparent(false);
+      
+      newFonts.push(qfont);
+    }
+    
+    cursorFontForFV.swapWith(newFonts);
+  }
 
   // calculate metrics
   QRect const &bbox = fontForStyle[ST_NORMAL]->getAllCharsBBox();
@@ -532,8 +553,14 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
     // number of characters printed
     int printed = 0;
-
+    
+    // 'y' coordinate of the origin point of characters
+    int baseline = ascent-1;
+    
     // clear the whole line to the background color
+    //
+    // TODO: is this necessary?  The eraseRect calls below would
+    // seem to obviate it.
     paint.eraseRect(0,0, lineWidth, fullLineHeight);
   
     // loop over segments with different styles
@@ -573,7 +600,6 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       paint.eraseRect(x,0, fontWidth*len, fullLineHeight);
 
       // draw text
-      int baseline = ascent-1;
       for (int i=0; i < len; i++) {
         curFont->drawChar(paint,
                           QPoint(x + fontWidth*i, baseline), text[printed+i]);
@@ -604,12 +630,37 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
       paint.save();
 
-      paint.setPen(cursorColor);
-      x = leftMargin + fontWidth * (cursorCol - firstVisibleCol);
-      paint.drawLine(x,0, x, fontHeight-1);
-      paint.drawLine(x-1,0, x-1, fontHeight-1);
+      // 0-based cursor column relative to what is visible
+      int visibleCursorCol = cursorCol - firstVisibleCol;
+      xassert(visibleCursorCol >= 0);
+      
+      // 'x' coordinate of the leftmost column of the character cell
+      // where the cursor is, i.e., the character that would be deleted
+      // if the Delete key were pressed.      
+      x = leftMargin + fontWidth * visibleCursorCol;
 
+      if (false) {     // thin vertical bar
+        paint.setPen(cursorColor);
+        paint.drawLine(x,0, x, fontHeight-1);
+        paint.drawLine(x-1,0, x-1, fontHeight-1);
+      }
+      else {           // emacs-like box
+        // The character shown inside the box should use the same
+        // font as if it were not inside the cursor box, to minimize
+        // the visual disruption caused by the cursor's presence.
+        Style cursorStyle = styles.getStyleAt(cursorCol);
+        FontVariant cursorFV = styleDB->getStyle(cursorStyle).variant;
+        QtBDFFont *cursorFont = cursorFontForFV[cursorFV];
+      
+        paint.setBackgroundColor(cursorFont->getBgColor());
+        paint.eraseRect(x,0, fontWidth, fontHeight);
+        
+        cursorFont->drawChar(paint, QPoint(x, baseline), 
+                             text[visibleCursorCol]);
+      }
+        
       paint.restore();
+
     }
 
     // draw the line buffer to the window

@@ -85,6 +85,10 @@ public:      // data
   // same character size; some entries may be NULL, indicating we
   // do not expect to draw text with that style
   ObjArrayStack<QtBDFFont> fontForStyle;
+  
+  // Font for drawing the character under the cursor, indexed by
+  // the FontVariant (modulo FV_UNDERLINE) there.
+  ObjArrayStack<QtBDFFont> cursorFontForFV;
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>

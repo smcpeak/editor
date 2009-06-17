@@ -8,6 +8,8 @@
 #include "array.h"         // ArrayStack
 #include "str.h"           // string
 
+class LineStyleIter;
+
 
 // standard styles; I envision being able to add more dynamically,
 // but to have this set always available by default
@@ -48,7 +50,9 @@ public:
 
 
 // style info for an entire line
-class LineStyle : public ArrayStack<StyleEntry> {
+class LineStyle : private ArrayStack<StyleEntry> {
+  friend class LineStyleIter;
+
 public:      // data
   // style of the characters beyond the last entry
   Style endStyle;
@@ -67,6 +71,9 @@ public:
   // 'length' can be 0 to mean infinite
   void overlay(int start, int length, Style style);
 
+  // Retrieve the style for the given 0-indexed character.
+  Style getStyleAt(int index) const;
+  
   // debugging: render the runs as a string
   string asString() const;          // e.g. "[1,4][2,3][4"
   string asUnaryString() const;     // e.g. "11112224..."
