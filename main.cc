@@ -360,7 +360,7 @@ void EditorWindow::editGotoLine()
     if (s.length()) {
       int n = atoi(s);
       
-      cout << "going to line " << n << endl;
+      //cout << "going to line " << n << endl;
       editor->cursorTo(n-1, 0);
       editor->scrollToCursor(-1 /*center*/);
     }
