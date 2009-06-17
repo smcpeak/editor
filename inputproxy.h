@@ -9,6 +9,16 @@ class Editor;          // editor.h
 class QKeyEvent;       // qevent.h
 
 
+// Pseudo-keys; operations that might be globally bound to
+// a key but the effect might be something a proxy should
+// handle.
+enum InputPseudoKey {
+  IPK_CANCEL,          // cancel current operation (Esc)
+  
+  NUM_INPUT_PSEUDO_KEYS
+};
+
+
 // main interface
 class InputProxy {
 protected:   // funcs
@@ -22,6 +32,10 @@ public:      // funcs
 
   // the editor to which we're attached is going away
   virtual void detach();
+
+  // Handle a pseudo-key press.  Return true of handled,
+  // false if not.  Default returns false.
+  virtual bool pseudoKeyPress(InputPseudoKey pkey);
 };
 
 

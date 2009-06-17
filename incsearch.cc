@@ -148,6 +148,17 @@ bool IncSearch::keyPressEvent(QKeyEvent *k)
 }
 
 
+bool IncSearch::pseudoKeyPress(InputPseudoKey pkey)
+{
+  switch (mode) {
+    default: xfailure("bad mode");
+    case M_SEARCH:          return searchPseudoKey(pkey);
+    case M_GET_REPLACEMENT: return getReplacementPseudoKey(pkey);
+    case M_REPLACE:         return replacePseudoKey(pkey);
+  }
+}
+
+
 bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
 {
   #if 0
@@ -162,13 +173,6 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
 
   if (state == Qt::NoButton || state == Qt::ShiftButton) {
     switch (k->key()) {
-      case Qt::Key_Escape:
-        // return to original location
-        resetToSearchStart();
-
-        detach();
-        return true;
-
       case Qt::Key_Enter:
       case Qt::Key_Return:
         // stop doing i-search
@@ -286,6 +290,22 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
 
   // unknown key: don't let it through, but don't handle it either
   return true;
+}
+
+
+bool IncSearch::searchPseudoKey(InputPseudoKey pkey)
+{
+  switch (pkey) {
+    case IPK_CANCEL:
+      // return to original location
+      resetToSearchStart();
+      
+      detach();
+      return true;
+      
+    default:
+      return false;
+  }
 }
 
 
@@ -413,12 +433,6 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
 {
   if (state == Qt::NoButton || state == Qt::ShiftButton) {
     switch (k->key()) {
-      case Qt::Key_Escape:
-        // go back to M_SEARCH
-        putBackMatchText();
-        setMode(M_SEARCH);
-        return true;
-
       case Qt::Key_Return:
       case Qt::Key_Enter:
         // move forward to M_REPLACE
@@ -462,6 +476,21 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
   }
 
   return true;    // handled..
+}
+
+
+bool IncSearch::getReplacementPseudoKey(InputPseudoKey pkey)
+{
+  switch (pkey) {   
+    case IPK_CANCEL:
+      // go back to M_SEARCH
+      putBackMatchText();
+      setMode(M_SEARCH);
+      return true;
+      
+    default:
+      return false;
+  }
 }
 
 
@@ -526,6 +555,12 @@ bool IncSearch::replaceKeyMap(QKeyEvent *k, int state)
   }
   
   return true;
+}
+
+
+bool IncSearch::replacePseudoKey(InputPseudoKey pkey)
+{
+  return false;
 }
 
 

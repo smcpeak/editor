@@ -80,7 +80,12 @@ private:     // funcs
   bool searchKeyMap(QKeyEvent *k, int state);
   bool getReplacementKeyMap(QKeyEvent *k, int state);
   bool replaceKeyMap(QKeyEvent *k, int state);
-  
+
+  // pseudo key handlers
+  bool searchPseudoKey(InputPseudoKey pkey);
+  bool getReplacementPseudoKey(InputPseudoKey pkey);
+  bool replacePseudoKey(InputPseudoKey pkey);
+    
   // switch modes, and update status line
   void setMode(Mode m);
                  
@@ -99,6 +104,7 @@ public:      // funcs
   void attach(Editor *ed);
   virtual void detach();
   virtual bool keyPressEvent(QKeyEvent *k);
+  virtual bool pseudoKeyPress(InputPseudoKey pkey);
 };
 
 

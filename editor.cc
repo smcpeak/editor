@@ -794,11 +794,30 @@ void Editor::keyPressEvent(QKeyEvent *k)
   TRACE("input", "keyPress: " << toString(*k));
   HBGrouper hbgrouper(*buffer);
 
+  int state = k->state() & KeyButtonMask;
+
+  // We need to map pseudo-keys before the input proxy sees
+  // them, because otherwise the proxy may swallow them.
+  if (state == NoButton) {
+    switch (k->key()) {  
+      case Key_Escape:
+        pseudoKeyPress(IPK_CANCEL);
+        return;
+    }
+  }
+  
+  if (state == ControlButton) {
+    switch (k->key()) {
+      case Key_G:
+        pseudoKeyPress(IPK_CANCEL);
+        return;
+    }
+  }
+
+  // Now check with the proxy.  
   if (inputProxy && inputProxy->keyPressEvent(k)) {
     return;
   }
-
-  int state = k->state() & KeyButtonMask;
 
   // Ctrl+<key>
   if (state == ControlButton) {
@@ -1089,14 +1108,6 @@ void Editor::keyPressEvent(QKeyEvent *k)
         scrollToCursor();
         break;
       }
-
-      case Key_Escape:
-        // do nothing; in other modes this will cancel out
-        
-        // well, almost nothing
-        hitText = "";
-        redraw();
-        break;
 
       default: {
         QString text = k->text();
@@ -1664,6 +1675,29 @@ void Editor::inputProxyDetaching()
 {
   trace("mode") << "clearing mode pixmap\n";
   status->mode->setText("");   // no pixmap
+}
+
+
+void Editor::pseudoKeyPress(InputPseudoKey pkey)
+{
+  if (inputProxy && inputProxy->pseudoKeyPress(pkey)) {
+    // handled
+    return;
+  }
+  
+  // Handle myself.
+  switch (pkey) {
+    default:
+      xfailure("invalid pseudo key");
+      
+    case IPK_CANCEL:
+      // do nothing; in other modes this will cancel out
+                
+      // well, almost nothing
+      hitText = "";
+      redraw();
+      break;
+  }
 }
 
 

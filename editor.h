@@ -4,11 +4,12 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include <qwidget.h>        // QWidget
 #include "bufferstate.h"    // BufferState
+#include "inputproxy.h"     // InputProxy, InputPseudoKey
 #include "style.h"          // Style
 
-class InputProxy;           // inputproxy.h
+#include <qwidget.h>        // QWidget
+
 class QLabel;               // qlabel.h
 class QRangeControl;        // qrangecontrol.h
 class QtBDFFont;            // qtbdffont.h
@@ -306,6 +307,10 @@ public:      // funcs
   // reset the mode pixmap then
   virtual void inputProxyDetaching();
 
+  // Initial handling of pseudokeys.  First dispatches to the
+  // proxy if any, and then handles what is not yet handled.
+  void pseudoKeyPress(InputPseudoKey pkey);
+  
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);

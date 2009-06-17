@@ -23,6 +23,12 @@ void InputProxy::detach()
 {}
 
 
+bool InputProxy::pseudoKeyPress(InputPseudoKey pkey)
+{
+  return false;    // not handled
+}
+
+
 // ---------------- AttachInputProxy -----------------
 AttachInputProxy::AttachInputProxy()
   : ed(NULL)
