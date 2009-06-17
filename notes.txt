@@ -1,5 +1,8 @@
 
 TODOs:
+  - "*" indicator of unsaved work is invisible once there are
+    5 characters of line and column information
+  - factor out the Qt stuff so I can have a curses version
   - rename Style to TextCategory
   - ctrl-tab buffer switching sort of like alt-tab
   - multiple cursor display options; include an emacs-like mode
@@ -27,18 +30,28 @@ TODOs:
   - case-sensitive search by default if any chars are capitals
   - parenthesis balancing, and Alt-[/] to find matching delimiter
   - bug: selection in nonfocused window causes assertion failure
-  - Ctrl+K: kill (to clipboard) the line
-  - Ctrl+J: justify paragraph
+  - Ctrl+J: justify paragraph, esp. comments
   - File|Revert to saved, and keybinding F12
   - bug: selected text at line start causes bolded characters after it
     to be underlined
   - performance!  smarter updates, etc.
+  - ctrl-enter to move to end of next line
+  - accelerators for the numbers in the Window menu
+  - tabs along the top to show file name, and ability to rearrange
+    so that they are in a natural order
+  - ctrl-A while searching to cancel but stay there and move to
+    the beginning of the line
+  - line number dialog box cuts off the label
+  - reduce the frequency of leaving behind extra spaces; maybe add
+    highlighting for them?
+
 
 postponed or decided against:
   / window menu Alt-n numbers should be underlined to act as simple
     hotkeys when the window is open (quite difficult)
     
 working on:
+  - Ctrl+K: kill (to clipboard) the line
 
 implemented:
   + ctrl-z, ctrl-w should work while in search mode
@@ -53,6 +66,9 @@ implemented:
   * Alt+G: goto line
   * search should scroll the found text into the middle of the window
     if the window has to be scrolled
+  * box cursor like emacs
+  * ctrl-G to cancel search
+  * what happened to alt-left-arrow?
 
 
 
@@ -979,7 +995,19 @@ start 2009-06-14 21:41
     opaque: 1000 iters in 45 ms
     
 end 2009-06-14 23:39    
+
+------------------
+start 2009-06-16 20:00
+
+  trying to make editor usable for day-to-day editing
+
+  implemented:
+    
+    * box cursor like emacs
+    * ctrl-G to cancel search
+    * what happened to alt-left-arrow?
   
+end 2009-06-16 22:12  
 
 
 EOF
