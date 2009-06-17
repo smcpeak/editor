@@ -311,7 +311,7 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
     ed->selectCol = curCol;
     ed->selectEnabled = true;
 
-    ed->scrollToCursor(-1 /*center*/);
+    ed->scrollToCursor_noRedraw(-1 /*center*/);
   }
 
   ed->hitText = text;
@@ -319,6 +319,8 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
   // the only flag I want the editor using for hit text, for now,
   // is the case sensitivity flag
   ed->hitTextFlags = curFlags & Buffer::FS_CASE_INSENSITIVE;
+  
+  ed->redraw();
 
   updateStatus();
 
