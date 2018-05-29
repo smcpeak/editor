@@ -180,7 +180,7 @@ void LineStyleIter::advanceChars(int n)
 #ifdef TEST_STYLE
 
 #include "test.h"        // USUAL_MAIN
-#include <iostream.h>    // cout
+#include "sm-iostream.h" // cout
 
 void expect(LineStyle const &style, char const *str)
 {
