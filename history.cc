@@ -501,8 +501,8 @@ HE_group::HistoryEltCode HE_group::encode(HistoryElt * /*owner*/ e)
         }
 
         if (c->origCol != -1 &&
-            0 <= c->origCol <= 255 &&
-            0 <= c->col <= 255) {
+            0 <= c->origCol && c->origCol <= 255 &&
+            0 <= c->col && c->col <= 255) {
           // code with opcode 2
           RETURN(((c->line & 0xFF) << 24) |
                  ((c->origCol & 0xFF) << 16) |
