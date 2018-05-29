@@ -364,7 +364,7 @@ TICK          [\']
   }
   if (p) {
     // put the comment back; it will be matched as ST_COMMENT
-    yyless((int)p-(int)yytext);
+    yyless((long)p-(long)yytext);
   }
   else {
     // shouldn't happen, but not catastrophic if it does..
