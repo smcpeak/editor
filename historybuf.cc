@@ -238,7 +238,8 @@ void chars(HistoryBuffer &buf, char const *str)
 
 void entry()
 {
-  printSegfaultAddrs();
+  // This isn't implemented in smbase for mingw.
+  //printSegfaultAddrs();
 
   HistoryBuffer buf;
 

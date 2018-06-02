@@ -5,9 +5,9 @@
 /* ----------------------- C definitions ---------------------- */
 %{
 
-#include "c_hilite.h"      // C_FlexLexer class
-#include "flexlexer.h"     // BufferLineSource
-#include "style.h"         // ST_XXX constants
+#include "c_hilite.h"                  // C_FlexLexer class
+#include "bufferlinesource.h"          // BufferLineSource
+#include "style.h"                     // ST_XXX constants
 
 // this works around a problem with cygwin & fileno
 #define YY_NEVER_INTERACTIVE 1
@@ -364,7 +364,7 @@ TICK          [\']
   }
   if (p) {
     // put the comment back; it will be matched as ST_COMMENT
-    yyless((long)p-(long)yytext);
+    yyless(p-yytext);
   }
   else {
     // shouldn't happen, but not catastrophic if it does..

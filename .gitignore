@@ -22,3 +22,7 @@ smbase
 qtbdffont
 *.gen.*
 editor-stable
+*.exe
+.cproject
+.project
+.settings

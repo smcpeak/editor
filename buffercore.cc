@@ -340,7 +340,7 @@ void clear(BufferCore &buf)
 
 void readFile(BufferCore &buf, char const *fname)
 {
-  AutoFILE fp(fname, "r");
+  AutoFILE fp(fname, "rb");
 
   // clear only once the file has been successfully opened
   clear(buf);
@@ -389,7 +389,7 @@ void readFile(BufferCore &buf, char const *fname)
 
 void writeFile(BufferCore const &buf, char const *fname)
 {
-  AutoFILE fp(fname, "w");
+  AutoFILE fp(fname, "wb");
 
   GrowArray<char> buffer(256 /*initial size*/);
 
@@ -603,7 +603,7 @@ void entry()
     }
 
     // make sure they're the same
-    if (system("diff buffer.tmp buffer.tmp2 >/dev/null") != 0) {
+    if (system("diff buffer.tmp buffer.tmp2") != 0) {
       xbase("the files were different!\n");
     }
 

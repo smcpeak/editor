@@ -1,8 +1,8 @@
-// flexlexer.cc
-// code for flexlexer.h
+// bufferlinesource.cc
+// code for bufferlinesource.h
 
-#include "flexlexer.h"     // this module
-#include "buffer.h"        // BufferCore
+#include "bufferlinesource.h"          // this module
+#include "buffer.h"                    // BufferCore
 
 
 BufferLineSource::BufferLineSource()

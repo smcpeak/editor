@@ -8,22 +8,20 @@ all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
 SMBASE := ../smbase
 LIBSMBASE := $(SMBASE)/libsmbase.a
 
-SMQTUTIL := ../smqtutil
-LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
-
 # C++ compiler, etc.
-CXX := g++
+CXX := x86_64-w64-mingw32-g++
 
 # flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -I$(QTDIR)/include -I$(SMQTUTIL) -I$(SMBASE) -Wno-deprecated
+#
+# The "-I." is so that "include <FlexLexer.h>" will pull in the
+# FlexLexer.h in the currect directory, which is a copy of the
+# one that Cygwin put in /usr/include.  I cannot directly use that
+# one because the mingw compiler does not look in /usr/include
+# since that has the native cygwin library headers.
+CCFLAGS := -g -Wall -I. -I$(SMBASE) -Wno-deprecated
 
 # flags for the linker
-#
-# The "qt-mt" is the multithreaded version.  I'm not using threads,
-# but it seems that later Qts only have the MT version available.
-#
-# And now I only have non-MT.
-LDFLAGS := -g -Wall $(LIBSMQTUTIL) $(LIBSMBASE) -L$(QTDIR)/lib -lqt
+LDFLAGS := -g -Wall $(LIBSMBASE)
 
 
 # patterns of files to delete in the 'clean' target; targets below
@@ -37,19 +35,6 @@ TOCLEAN += *.o *.d
 %.o : %.cc
 	$(CXX) -c -o $@ $< $(CCFLAGS)
 	@perl $(SMBASE)/depend.pl -o $@ $< $(CCFLAGS) > $*.d
-
-
-# Qt meta-object compiler
-.PRECIOUS: moc_%.cc
-TOCLEAN += moc_*.cc
-moc_%.cc: %.h
-	moc -o $@ $^
-
-
-# Qt designer translator
-%.h %.cc: %.ui
-	uic -o $*.h $*.ui
-	uic -o $*.cc -i $*.h $*.ui
 
 
 # ---------------- gap test program -----------------
@@ -95,11 +80,11 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 	flex -o$@ -b -P$*_yy $*.lex
 	mv lex.backup $*.lex.backup
 	head $*.lex.backup
-	mv $@ $*.tmp
-	sed -e 's|class istream;|#include <iostream.h>|' \
-	    -e 's|using namespace std;|using std::cout; using std::cin; using std::istream;|' \
-	  <$*.tmp >$@
-	rm $*.tmp
+#	mv $@ $*.tmp
+#	sed -e 's|class istream;|#include <iostream.h>|' \
+#	    -e 's|using namespace std;|using std::cout; using std::cin; using std::istream;|' \
+#	  <$*.tmp >$@
+#	rm $*.tmp
 
 C_HILITE_OBJS := \
   buffercore.o \
@@ -108,7 +93,7 @@ C_HILITE_OBJS := \
   buffer.o \
   style.o \
   lex_hilite.o \
-  flexlexer.o \
+  bufferlinesource.o \
   comment.yy.o \
   c_hilite.yy.o
 #-include $(C_HILITE_OBJS:.o=.d)   # redundant with EDITOR_OBJS
@@ -127,7 +112,7 @@ EDITOR_OBJS := \
   c_hilite.yy.o \
   comment.yy.o \
   editor.o \
-  flexlexer.o \
+  bufferlinesource.o \
   gotoline.o \
   history.o \
   historybuf.o \

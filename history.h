@@ -9,6 +9,8 @@
 #include "ogap.h"            // OGapArray
 #include "str.h"             // stringBuilder
 
+#include <stdint.h>          // uintptr_t
+
 
 // fwd in this file
 class HistoryStats;
@@ -155,7 +157,7 @@ class HE_group : public HistoryElt {
 private:     // data
   // single entry in the sequence; see HE_group::encode() in
   // history.cc for encoding
-  typedef unsigned long HistoryEltCode;
+  typedef uintptr_t HistoryEltCode;
 
   // sequence represented as a growable array for efficient
   // storage but also insertion

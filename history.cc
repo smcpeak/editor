@@ -471,9 +471,9 @@ HE_group::HistoryEltCode HE_group::encode(HistoryElt * /*owner*/ e)
   //   c = newCol
   //
   // Of course, we only use the specialized encodings when the history
-  // elemement values fit into the bits to which they've been assigned.
+  // element values fit into the bits to which they've been assigned.
 
-  // NOTE: Since I only read and write 32 bits at a time from memory,
+  // NOTE: Since I only read and write entire uintptr_t words from memory,
   // the endianness of the machine is irrelevant.
 
   // Also note:  Though I casually refer to the size of 'int' as being

@@ -5,9 +5,9 @@
 /* ----------------------- C definitions ---------------------- */
 %{
 
-#include "comment.h"       // CommentLexer class
-#include "flexlexer.h"     // BufferLineSource
-#include "style.h"         // ST_XXX constants
+#include "comment.h"                   // CommentLexer class
+#include "bufferlinesource.h"          // BufferLineSource
+#include "style.h"                     // ST_XXX constants
 
 // this works around a problem with cygwin & fileno
 #define YY_NEVER_INTERACTIVE 1

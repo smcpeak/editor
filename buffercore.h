@@ -128,7 +128,13 @@ public:    // funcs
 // clear buffer contents, returning to just one empty line
 void clear(BufferCore &buf);
 
-// clear, then read a file
+// Note: Currently, the file I/O operations assume that LF is
+// the sole line terminator.  Any CR characters in the file become
+// part of the in-memory line contents, and will then be written
+// out as such as well, like any other character.  This is not
+// ideal of course.
+
+// Clear 'buf', then read a file into it.
 void readFile(BufferCore &buf, char const *fname);
 
 // write a file

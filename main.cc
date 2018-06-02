@@ -678,7 +678,9 @@ void GlobalState::deleteBuffer(BufferState *b)
 int main(int argc, char **argv)
 {
   TRACE_ARGS();
-  printSegfaultAddrs();
+
+  // Not implemented in smbase for mingw.
+  //printSegfaultAddrs();
 
   GlobalState app(argc, argv);
 
