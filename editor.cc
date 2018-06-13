@@ -36,7 +36,9 @@
 #include <qmessagebox.h>     // QMessageBox
 #include <qpainter.h>        // QPainter
 #include <qpixmap.h>         // QPixmap
-#include <qrangecontrol.h>   // QRangeControl
+
+#include <QKeyEvent>
+#include <QPaintEvent>
 
 // libc
 #include <stdio.h>           // printf, for debugging
@@ -45,8 +47,8 @@
 
 // ---------------------- Editor --------------------------------
 Editor::Editor(BufferState *buf, StatusDisplay *stat,
-               QWidget *parent, const char *name)
-  : QWidget(parent, name, WRepaintNoErase | WResizeNoErase | WNorthWestGravity),
+               QWidget *parent)
+  : QWidget(parent),   // TODO: Are these needed? WRepaintNoErase | WResizeNoErase | WNorthWestGravity
     EditingState(),
     infoBox(NULL),
     status(stat),
@@ -68,17 +70,18 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
            bdfFontData_editor14i,
            bdfFontData_editor14b);
 
-  setCursor(ibeamCursor);
+  setCursor(Qt::IBeamCursor);
   
   // required to accept focus
-  setFocusPolicy(QWidget::StrongFocus);
+  setFocusPolicy(Qt::StrongFocus);
 
   // use the color scheme for text widgets; typically this means
   // a white background, instead of a gray background
   //setBackgroundMode(PaletteBase);
 
   // needed to cause Qt not to erase window
-  setBackgroundMode(NoBackground);
+  // TODO: What is the equivalent in Qt5?
+  //setBackgroundMode(NoBackground);
 
   // fixed color
   //setBackgroundColor(normalBG);
@@ -257,26 +260,7 @@ void Editor::redraw()
   }
   
   // redraw
-  //update();
-
-  // I think that update() should work, but it does not: it erases
-  // the window first.  I've tried lots of different things to fix
-  // it, but can't find the solution.  repaint(false) does seem to
-  // work, however
-  //repaint(false /*erase*/);
-  
-  // update: It turns out that update() and repaint(false) *were*
-  // doing the same thing, but that the PaintEvent::erase flag was
-  // simply wrong.  Moreover, the flicker was actually server-side,
-  // due to a bug in XFree86's implementation of XDrawImageString.
-  // So I've switched to a server-side pixmap double-buffer method,
-  // which of course eliminates the flickering.
-  
-  // update: Let's call paintEvent directly, because otherwise
-  // I can't tell the difference between a redraw prompted by
-  // internal editor actions, and one prompted by exposure due to
-  // another window moving out of the way.
-  paintEvent(NULL /*ev*/);
+  update();
 }
 
 
@@ -340,7 +324,15 @@ void Editor::resizeEvent(QResizeEvent *r)
 // for calling from gdb..
 int flushPainter(QPainter &p)
 {
-  p.flush();
+  // This is what I did with Qt3:
+  //p.flush();
+
+  // This seems like perhaps it is the closest equivalent in Qt5.
+  // But I won't be able to test it until I try debugging this on
+  // Linux.
+  p.beginNativePainting();
+  p.endNativePainting();
+
   return 0;
 }
 
@@ -381,11 +373,11 @@ void Editor::paintEvent(QPaintEvent *ev)
     // I can't pop up a message box because then when that
     // is dismissed it might trigger another exception, etc.
     QPainter paint(this);
-    paint.setPen(white);
-    paint.setBackgroundMode(OpaqueMode);
-    paint.setBackgroundColor(red);
+    paint.setPen(Qt::white);
+    paint.setBackgroundMode(Qt::OpaqueMode);
+    paint.setBackground(Qt::red);
     paint.drawText(0, 30,                 // baseline start coordinate
-                   toQString(x.why()), strlen(x.why()));
+                   toQString(x.why()));
                    
     // Also write to stderr so rare issues can be seen.
     cerr << x.why() << endl;
@@ -398,7 +390,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   {
     string rect = "(none)";
     if (ev) {
-      QRect const &r = ev->rect();  
+      QRect const &r = ev->rect();
       rect = stringf("(%d,%d,%d,%d)", r.left(), r.top(),
                                       r.right(), r.bottom());
     }
@@ -419,7 +411,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // segment at a time.  i.e., the interface must have clients insert
   // objects into a display list, rather than drawing arbitrary things
   // on a canvas.
-    
+
   // make the main painter, which will draw on the line pixmap; the
   // font setting must be copied over manually
   QPainter paint(&pixmap);  
@@ -432,7 +424,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   
   // ---- setup style info ----    
   // when drawing text, erase background automatically
-  paint.setBackgroundMode(OpaqueMode);
+  paint.setBackgroundMode(Qt::OpaqueMode);
 
   // character style info
   LineStyle styles(ST_NORMAL);
@@ -652,7 +644,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         FontVariant cursorFV = styleDB->getStyle(cursorStyle).variant;
         QtBDFFont *cursorFont = cursorFontForFV[cursorFV];
       
-        paint.setBackgroundColor(cursorFont->getBgColor());
+        paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
         
         cursorFont->drawChar(paint, QPoint(x, baseline), 
@@ -664,7 +656,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     }
 
     // draw the line buffer to the window
-    paint.flush();     // server-side pixmap is now complete
+    //needed? //paint.flush();     // server-side pixmap is now complete
     winPaint.drawPixmap(0,y, pixmap);    // draw it
     
     // advance to next line    
@@ -683,7 +675,7 @@ void Editor::setDrawStyle(QPainter &paint,
 {
   TextStyle const &ts = db->getStyle(s);
 
-  paint.setBackgroundColor(ts.background);
+  paint.setBackground(ts.background);
 
   underlining = (ts.variant == FV_UNDERLINE);
   
@@ -794,21 +786,21 @@ void Editor::keyPressEvent(QKeyEvent *k)
   TRACE("input", "keyPress: " << toString(*k));
   HBGrouper hbgrouper(*buffer);
 
-  int state = k->state() & KeyButtonMask;
+  Qt::KeyboardModifiers modifiers = k->modifiers();
 
   // We need to map pseudo-keys before the input proxy sees
   // them, because otherwise the proxy may swallow them.
-  if (state == NoButton) {
+  if (modifiers == Qt::NoModifier) {
     switch (k->key()) {  
-      case Key_Escape:
+      case Qt::Key_Escape:
         pseudoKeyPress(IPK_CANCEL);
         return;
     }
   }
   
-  if (state == ControlButton) {
+  if (modifiers == Qt::ControlModifier) {
     switch (k->key()) {
-      case Key_G:
+      case Qt::Key_G:
         pseudoKeyPress(IPK_CANCEL);
         return;
     }
@@ -820,33 +812,33 @@ void Editor::keyPressEvent(QKeyEvent *k)
   }
 
   // Ctrl+<key>
-  if (state == ControlButton) {
+  if (modifiers == Qt::ControlModifier) {
     switch (k->key()) {
-      case Key_Insert:
+      case Qt::Key_Insert:
         editCopy();
         break;
 
-      case Key_U:
+      case Qt::Key_U:
         buffer->core().dumpRepresentation();
         malloc_stats();
         break;
 
-      case Key_H:
+      case Qt::Key_H:
         buffer->printHistory();
         buffer->printHistoryStats();
         break;
 
-      case Key_PageUp:
+      case Qt::Key_PageUp:
         turnOffSelection();
         cursorToTop();
         break;
 
-      case Key_PageDown:
+      case Qt::Key_PageDown:
         turnOffSelection();
         cursorToBottom();
         break;
 
-      case Key_W:
+      case Qt::Key_W:
         moveView(-1, 0);
         if (cursorLine() > lastVisibleLine) {
           cursorUpBy(cursorLine() - lastVisibleLine);
@@ -854,7 +846,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         redraw();
         break;
 
-      case Key_Z:
+      case Qt::Key_Z:
         moveView(+1, 0);
         if (cursorLine() < firstVisibleLine) {
           cursorDownBy(firstVisibleLine - cursorLine());
@@ -862,35 +854,35 @@ void Editor::keyPressEvent(QKeyEvent *k)
         redraw();
         break;
 
-      case Key_Up:
+      case Qt::Key_Up:
         moveViewAndCursor(-1, 0);
         break;
 
-      case Key_Down:
+      case Qt::Key_Down:
         moveViewAndCursor(+1, 0);
         break;
 
-      case Key_Left:
+      case Qt::Key_Left:
         moveViewAndCursor(0, -1);
         break;
 
-      case Key_Right:
+      case Qt::Key_Right:
         moveViewAndCursor(0, +1);
         break;
 
-      case Key_B:      cursorLeft(false); break;
-      case Key_F:      cursorRight(false); break;
-      case Key_A:      cursorHome(false); break;
-      case Key_E:      cursorEnd(false); break;
-      case Key_P:      cursorUp(false); break;
-      case Key_N:      cursorDown(false); break;
+      case Qt::Key_B:      cursorLeft(false); break;
+      case Qt::Key_F:      cursorRight(false); break;
+      case Qt::Key_A:      cursorHome(false); break;
+      case Qt::Key_E:      cursorEnd(false); break;
+      case Qt::Key_P:      cursorUp(false); break;
+      case Qt::Key_N:      cursorDown(false); break;
       // emacs' pageup/pagedown are ctrl-v and alt-v, but the
       // latter should be reserved for accessing the menu, so I'm
       // not going to bind either by default
 
-      case Key_D:      deleteCharAtCursor(); break;
+      case Qt::Key_D:      deleteCharAtCursor(); break;
 
-      case Key_L:
+      case Qt::Key_L:
         setView(max(0, cursorLine() - visLines()/2), 0);
         scrollToCursor();
         break;
@@ -902,17 +894,17 @@ void Editor::keyPressEvent(QKeyEvent *k)
   }
 
   // Alt+<key>
-  else if (state == AltButton) {
+  else if (modifiers == Qt::AltModifier) {
     switch (k->key()) {
-      case Key_Left:
+      case Qt::Key_Left:
         blockIndent(-2);
         break;
         
-      case Key_Right:
+      case Qt::Key_Right:
         blockIndent(+2);
         break;
         
-      case Key_D: {
+      case Qt::Key_D: {
         time_t t = time(NULL);
         struct tm *tm = localtime(&t);
         string s = stringf("%02d/%02d/%02d %02d:%02d",
@@ -925,34 +917,34 @@ void Editor::keyPressEvent(QKeyEvent *k)
   }
 
   // Ctrl+Alt+<key>
-  else if (state == (ControlButton|AltButton)) {
+  else if (modifiers == (Qt::ControlModifier | Qt::AltModifier)) {
     switch (k->key()) {
       #if 0     // moved into EditorWindow class
-      case Key_Left: {
+      case Qt::Key_Left: {
         QWidget *top = qApp->mainWidget();
         top->setGeometry(83, 55, 565, 867);
         break;
       }
 
-      case Key_Right: {
+      case Qt::Key_Right: {
         QWidget *top = qApp->mainWidget();
         top->setGeometry(493, 55, 781, 867);
         break;
       }                                         
       #endif // 0
 
-      case Key_B: {
+      case Qt::Key_B: {
         breaker();     // breakpoint for debugger
         break;
       }
 
-      case Key_X: {                              
+      case Qt::Key_X: {
         // test exception mechanism...
         THROW(xBase("gratuitous exception"));
         break;
       }
 
-      case Key_Y: {
+      case Qt::Key_Y: {
         try {
           xbase("another exc");
         }
@@ -963,7 +955,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
       }
 
-      case Key_P: {
+      case Qt::Key_P: {
         long start = getMilliseconds();
         int frames = 20;
         for (int i=0; i < frames; i++) {
@@ -984,42 +976,42 @@ void Editor::keyPressEvent(QKeyEvent *k)
   }
 
   // Ctrl+Shift+<key>
-  else if (state == (ControlButton|ShiftButton)) {
+  else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
     xassert(ctrlShiftDistance > 0);
 
     switch (k->key()) {
-      case Key_Up:
+      case Qt::Key_Up:
         moveViewAndCursor(-ctrlShiftDistance, 0);
         break;
 
-      case Key_Down:
+      case Qt::Key_Down:
         moveViewAndCursor(+ctrlShiftDistance, 0);
         break;
 
-      case Key_Left:
+      case Qt::Key_Left:
         moveViewAndCursor(0, -ctrlShiftDistance);
         break;
 
-      case Key_Right:
+      case Qt::Key_Right:
         moveViewAndCursor(0, +ctrlShiftDistance);
         break;
 
-      case Key_PageUp:
+      case Qt::Key_PageUp:
         turnOnSelection();
         cursorToTop();
         break;
 
-      case Key_PageDown:
+      case Qt::Key_PageDown:
         turnOnSelection();
         cursorToBottom();
         break;
        
-      case Key_B:      cursorLeft(true); break;
-      case Key_F:      cursorRight(true); break;
-      case Key_A:      cursorHome(true); break;
-      case Key_E:      cursorEnd(true); break;
-      case Key_P:      cursorUp(true); break;
-      case Key_N:      cursorDown(true); break;
+      case Qt::Key_B:      cursorLeft(true); break;
+      case Qt::Key_F:      cursorRight(true); break;
+      case Qt::Key_A:      cursorHome(true); break;
+      case Qt::Key_E:      cursorEnd(true); break;
+      case Qt::Key_P:      cursorUp(true); break;
+      case Qt::Key_N:      cursorDown(true); break;
 
       default:
         k->ignore();
@@ -1028,10 +1020,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
   }
 
   // <key> and shift-<key>
-  else if (state == NoButton || state == ShiftButton) {
+  else if (modifiers == Qt::NoModifier || modifiers == Qt::ShiftModifier) {
     switch (k->key()) {
-      case Key_Insert:
-        if (state == ShiftButton) {
+      case Qt::Key_Insert:
+        if (modifiers == Qt::ShiftModifier) {
           editPaste();
         }
         else {
@@ -1039,16 +1031,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
         break;
 
-      case Key_Left:     cursorLeft(state==ShiftButton); break;
-      case Key_Right:    cursorRight(state==ShiftButton); break;
-      case Key_Home:     cursorHome(state==ShiftButton); break;
-      case Key_End:      cursorEnd(state==ShiftButton); break;
-      case Key_Up:       cursorUp(state==ShiftButton); break;
-      case Key_Down:     cursorDown(state==ShiftButton); break;
-      case Key_PageUp:   cursorPageUp(state==ShiftButton); break;
-      case Key_PageDown: cursorPageDown(state==ShiftButton); break;
+      case Qt::Key_Left:     cursorLeft(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_Right:    cursorRight(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_Home:     cursorHome(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_End:      cursorEnd(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_Up:       cursorUp(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_Down:     cursorDown(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_PageUp:   cursorPageUp(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_PageDown: cursorPageDown(modifiers==Qt::ShiftModifier); break;
 
-      case Key_BackSpace: {
+      case Qt::Key_Backspace: {
         fillToCursor();
         //buffer->changed = true;
 
@@ -1076,8 +1068,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
       }
 
-      case Key_Delete: {
-        if (state == NoButton) {
+      case Qt::Key_Delete: {
+        if (modifiers == Qt::NoModifier) {
           deleteCharAtCursor();
         }
         else {   // shift-delete
@@ -1086,8 +1078,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
         break;
       }
 
-      case Key_Enter:
-      case Key_Return: {
+      case Qt::Key_Enter:
+      case Qt::Key_Return: {
         fillToCursor();
         //buffer->changed = true;
 
@@ -1120,7 +1112,8 @@ void Editor::keyPressEvent(QKeyEvent *k)
             editDelete();
           }
           // insert this character at the cursor
-          buffer->insertLR(false /*left*/, text, text.length());
+          QByteArray utf8(text.toUtf8());
+          buffer->insertLR(false /*left*/, utf8.constData(), utf8.length());
           scrollToCursor();
         }
         else {
@@ -1405,7 +1398,7 @@ void Editor::editPaste()
   // get contents of clipboard
   QClipboard *cb = QApplication::clipboard();
   QString text = cb->text();
-  if (!text) {
+  if (text.isEmpty()) {
     QMessageBox::information(this, "Info", "The clipboard is empty.");
   }
   else {
@@ -1415,7 +1408,8 @@ void Editor::editPaste()
     editDelete();
 
     // insert at cursor
-    insertAtCursor(text);
+    QByteArray utf8(text.toUtf8());
+    insertAtCursor(utf8.constData());
   }
 }
 
@@ -1435,15 +1429,13 @@ void Editor::editDelete()
 
 void Editor::showInfo(char const *infoString)
 {
-  //QWidget *main = qApp->mainWidget();   // delete me
   QWidget *main = topLevelWidget();
 
   if (!infoBox) {
-    infoBox = new QLabel(main, "infoBox",
-      // style of a QTipLabel for tooltips ($QTDIR/src/widgets/qtooltip.cpp)
-      WStyle_Customize + WStyle_NoBorder + WStyle_Tool);
-
-    infoBox->setBackgroundColor(QColor(0xFF,0xFF,0x80));
+    infoBox = new QLabel(main, Qt::ToolTip);
+    infoBox->setObjectName("infoBox");
+    infoBox->setForegroundRole(QPalette::ToolTipText);
+    infoBox->setBackgroundRole(QPalette::ToolTipBase);
   }
 
   infoBox->setText(infoString);

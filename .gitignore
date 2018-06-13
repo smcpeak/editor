@@ -23,6 +23,7 @@ qtbdffont
 *.gen.*
 editor-stable
 *.exe
+*.dll
 .cproject
 .project
 .settings

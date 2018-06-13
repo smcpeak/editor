@@ -202,7 +202,7 @@ protected:   // funcs
 
 public:      // funcs
   Editor(BufferState *buf, StatusDisplay *status,
-         QWidget *parent=NULL, const char *name=NULL);
+         QWidget *parent=NULL);
   ~Editor();
 
   // set fonts, given actual BDF description data (*not* file names)

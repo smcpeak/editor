@@ -137,13 +137,13 @@ void IncSearch::detach()
 
 bool IncSearch::keyPressEvent(QKeyEvent *k)
 {
-  int state = k->state() & Qt::KeyButtonMask;
+  Qt::KeyboardModifiers modifiers = k->modifiers();
 
   switch (mode) {
     default: xfailure("bad mode");
-    case M_SEARCH:          return searchKeyMap(k, state);
-    case M_GET_REPLACEMENT: return getReplacementKeyMap(k, state);
-    case M_REPLACE:         return replaceKeyMap(k, state);
+    case M_SEARCH:          return searchKeyMap(k, modifiers);
+    case M_GET_REPLACEMENT: return getReplacementKeyMap(k, modifiers);
+    case M_REPLACE:         return replaceKeyMap(k, modifiers);
   }
 }
 
@@ -159,7 +159,7 @@ bool IncSearch::pseudoKeyPress(InputPseudoKey pkey)
 }
 
 
-bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
+bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 {
   #if 0
   // some keys are ignored but shouldn't cause exit from i-search
@@ -171,7 +171,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
   }
   #endif // 0
 
-  if (state == Qt::NoButton || state == Qt::ShiftButton) {
+  if (state == Qt::NoModifier || state == Qt::ShiftModifier) {
     switch (k->key()) {
       case Qt::Key_Enter:
       case Qt::Key_Return:
@@ -220,7 +220,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
       default: {
         QString s = k->text();
         if (s.length() && s[0].isPrint()) {
-          text &= (char const*)s;
+          text &= s.toUtf8().constData();
 
           findString();
           return true;  // handled
@@ -230,7 +230,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, int state)
     }
   }
 
-  if (state == Qt::ControlButton) {
+  if (state == Qt::ControlModifier) {
     switch (k->key()) {
       case Qt::Key_I:
         curFlags ^= Buffer::FS_CASE_INSENSITIVE;
@@ -429,9 +429,9 @@ void IncSearch::putBackMatchText()
 }
 
 
-bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
+bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 {
-  if (state == Qt::NoButton || state == Qt::ShiftButton) {
+  if (state == Qt::NoModifier || state == Qt::ShiftModifier) {
     switch (k->key()) {
       case Qt::Key_Return:
       case Qt::Key_Enter:
@@ -462,7 +462,8 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, int state)
       default: {
         QString s = k->text();
         if (s.length() && s[0].isPrint()) {
-          char const *p = s;
+          QByteArray utf8(s.toUtf8());
+          char const *p = utf8.constData();
 
           ed->insertAtCursor(p);
 
@@ -518,9 +519,9 @@ bool IncSearch::replace()
 }
 
 
-bool IncSearch::replaceKeyMap(QKeyEvent *k, int state)
+bool IncSearch::replaceKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 {
-  if (state == Qt::NoButton || state == Qt::ShiftButton) {
+  if (state == Qt::NoModifier || state == Qt::ShiftModifier) {
     switch (k->key()) {
       case Qt::Key_Return:
       case Qt::Key_Enter:

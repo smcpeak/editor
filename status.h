@@ -4,13 +4,13 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#include <qhbox.h>       // QHBox
+#include <QWidget>
 
 class QLabel;
 class QSizeGrip;
 
 
-class StatusDisplay : public QHBox {
+class StatusDisplay : public QWidget {
 public:
   QLabel *position;           // cursor position
   QLabel *mode;               // mode pixmap
@@ -18,7 +18,7 @@ public:
   QSizeGrip *corner;          // corner resize grippy
 
 public:
-  StatusDisplay(QWidget *parent);
+  StatusDisplay(QWidget *parent = NULL);
   ~StatusDisplay();
 };
 

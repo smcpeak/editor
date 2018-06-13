@@ -73,13 +73,9 @@ public:      // data
   // the fully-qualified path name, etc.
   string title;
 
-  // id of the menu item that the user can choose to
-  // select this buffer
-  int windowMenuId;
-  
-  // key code the user can press to jump to this buffer,
-  // or 0 for no hotkey
-  int hotkey;
+  // Digit the user can press Alt with to jump to this buffer,
+  // or 0 for no hotkey.  It is a number in [0,9].
+  int hotkeyDigit;
 
   // true when there are unsaved changes
   //bool changed;                       

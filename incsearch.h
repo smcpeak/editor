@@ -77,9 +77,9 @@ private:     // funcs
   bool tryWrapSearch(int &line, int &col) const;
 
   // key handlers for the three modes
-  bool searchKeyMap(QKeyEvent *k, int state);
-  bool getReplacementKeyMap(QKeyEvent *k, int state);
-  bool replaceKeyMap(QKeyEvent *k, int state);
+  bool searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state);
+  bool getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state);
+  bool replaceKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state);
 
   // pseudo key handlers
   bool searchPseudoKey(InputPseudoKey pkey);

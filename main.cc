@@ -11,7 +11,7 @@
 #include "strutil.h"         // sm_basename
 #include "mysig.h"           // printSegfaultAddrs
 #include "status.h"          // StatusDisplay
-#include "gotoline.h"        // GotoLine
+#include "gotoline.gen.h"    // Ui_GotoLine
 #include "qtutil.h"          // toQString
 
 #include <string.h>          // strrchr
@@ -22,22 +22,21 @@
 #include <qlabel.h>          // QLabel
 #include <qfiledialog.h>     // QFileDialog
 #include <qmessagebox.h>     // QMessageBox
-#include <qvbox.h>           // QVBox
 #include <qlayout.h>         // QVBoxLayout
-#include <qhbox.h>           // QHBox
-#include <qgrid.h>           // QGrid
 #include <qsizegrip.h>       // QSizeGrip
 #include <qstatusbar.h>      // QStatusBar
 #include <qlineedit.h>       // QLineEdit
+
+#include <QDesktopWidget>
 
 
 char const appName[] = "An Editor";   // TODO: find better name
 
 
 EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
-                           QWidget *parent, char const *name)
-  : QWidget(parent, name),
-    state(theState),
+                           QWidget *parent)
+  : QWidget(parent),
+    globalState(theState),
     menuBar(NULL),
     editor(NULL),
     vertScroll(NULL),
@@ -47,26 +46,38 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     //mode(NULL),
     //filename(NULL),
     windowMenu(NULL),
-    bufferChoiceIds(),
+    bufferChoiceActions(),
     recentMenuBuffer(NULL),
     isearch(NULL)
 {
   // will build a layout tree to manage sizes of child widgets
-  QVBoxLayout *mainAreaMgr = new QVBoxLayout(this);
-  QVBox *mainArea = new QVBox(this, "main area");
-  mainAreaMgr->addWidget(mainArea);    // get 'mainArea' to fill the dialog
+  QVBoxLayout *mainArea = new QVBoxLayout();
+  mainArea->setObjectName("mainArea");
+  mainArea->setSpacing(0);
+  mainArea->setContentsMargins(0, 0, 0, 0);
 
-  QGrid *editArea = new QGrid(2 /*cols*/, QGrid::Horizontal, mainArea, "edit area");
+  this->menuBar = new QMenuBar();
+  this->menuBar->setObjectName("main menu bar");
+  mainArea->addWidget(this->menuBar);
 
-  statusArea = new StatusDisplay(mainArea);
+  QGridLayout *editArea = new QGridLayout();
+  editArea->setObjectName("editArea");
+  mainArea->addLayout(editArea, 1 /*stretch*/);
 
-  editor = new Editor(NULL /*temporary*/, statusArea,
-                      editArea, "editor widget");
-  editor->setFocus();
-  connect(editor, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
+  this->statusArea = new StatusDisplay();
+  this->statusArea->setObjectName("statusArea");
+  mainArea->addWidget(this->statusArea);
 
-  vertScroll = new QScrollBar(QScrollBar::Vertical, editArea, "vertical scrollbar");
-  connect(vertScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToLine(int) ));
+  this->editor = new Editor(NULL /*temporary*/, this->statusArea);
+  this->editor->setObjectName("editor widget");
+  editArea->addWidget(this->editor, 0 /*row*/, 0 /*col*/);
+  this->editor->setFocus();
+  connect(this->editor, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
+
+  this->vertScroll = new QScrollBar(Qt::Vertical);
+  this->vertScroll->setObjectName("vertScroll");
+  editArea->addWidget(this->vertScroll, 0 /*row*/, 1 /*col*/);
+  connect(this->vertScroll, SIGNAL( valueChanged(int) ), this->editor, SLOT( scrollToLine(int) ));
 
   // disabling horiz scroll for now..
   //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
@@ -100,59 +111,56 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
 
   // menu
   {
-    menuBar = new QMenuBar(mainArea, "main menu bar");
-    menuBar->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    menuBar->setLineWidth(1);
+    // TODO: replacement?  menuBar->setFrameStyle(QFrame::Panel | QFrame::Raised);
+    // TODO: replacement?  menuBar->setLineWidth(1);
 
-    QPopupMenu *file = new QPopupMenu(this);
-    menuBar->insertItem("&File", file);
-    file->insertItem("&New", this, SLOT(fileNewFile()));
-    file->insertItem("&Open ...", this, SLOT(fileOpen()), Key_F3);
-    file->insertItem("&Save", this, SLOT(fileSave()), Key_F2);
-    file->insertItem("Save &as ...", this, SLOT(fileSaveAs()));
-    file->insertItem("&Close", this, SLOT(fileClose()));
-    file->insertSeparator();
-    file->insertItem("E&xit", theState, SLOT(quit()));
+    QMenu *file = this->menuBar->addMenu("&File");
+    file->addAction("&New", this, SLOT(fileNewFile()));
+    file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
+    file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
+    file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
+    file->addAction("&Close", this, SLOT(fileClose()));
+    file->addSeparator();
+    file->addAction("E&xit", theState, SLOT(quit()));
 
-    QPopupMenu *edit = new QPopupMenu(this);
-    menuBar->insertItem("&Edit", edit);
-    edit->insertItem("&Undo", editor, SLOT(editUndo()), ALT+Key_Backspace);
-    edit->insertItem("&Redo", editor, SLOT(editRedo()), ALT+SHIFT+Key_Backspace);
-    edit->insertSeparator();
-    edit->insertItem("Cu&t", editor, SLOT(editCut()), CTRL+Key_X);
-    edit->insertItem("&Copy", editor, SLOT(editCopy()), CTRL+Key_C);
-    edit->insertItem("&Paste", editor, SLOT(editPaste()), CTRL+Key_V);
-    edit->insertItem("&Delete", editor, SLOT(editDelete()));
-    edit->insertSeparator();
-    edit->insertItem("Inc. &Search", this, SLOT(editISearch()), CTRL+Key_S);
-    edit->insertItem("&Goto Line ...", this, SLOT(editGotoLine()), ALT+Key_G);
+    QMenu *edit = this->menuBar->addMenu("&Edit");
+    edit->addAction("&Undo", editor, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
+    edit->addAction("&Redo", editor, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+    edit->addSeparator();
+    edit->addAction("Cu&t", editor, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
+    edit->addAction("&Copy", editor, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
+    edit->addAction("&Paste", editor, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
+    edit->addAction("&Delete", editor, SLOT(editDelete()));
+    edit->addSeparator();
+    edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
+    edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
 
-    QPopupMenu *window = new QPopupMenu(this);
-    menuBar->insertItem("&Window", window);
-    window->insertItem("&New Window", this, SLOT(windowNewWindow()));
-    window->insertItem("Occupy Left", this, SLOT(windowOccupyLeft()), CTRL+ALT+Key_Left);
-    window->insertItem("Occupy Right", this, SLOT(windowOccupyRight()), CTRL+ALT+Key_Right);
-    window->insertItem("Cycle buffer", this, SLOT(windowCycleBuffer()), Key_F6);  // for now
-    window->insertSeparator();
-    windowMenu = window;
-    connect(windowMenu, SIGNAL(activated(int)), 
-            this, SLOT(windowBufferChoiceActivated(int)));
+    QMenu *window = this->menuBar->addMenu("&Window");
+    window->addAction("&New Window", this, SLOT(windowNewWindow()));
+    window->addAction("Occupy Left", this, SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
+    window->addAction("Occupy Right", this, SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
+    window->addAction("Cycle buffer", this, SLOT(windowCycleBuffer()), Qt::Key_F6);  // for now
+    window->addSeparator();
+    this->windowMenu = window;
+    connect(this->windowMenu, SIGNAL(triggered(QAction*)),
+            this, SLOT(windowBufferChoiceActivated(QAction*)));
 
-    QPopupMenu *help = new QPopupMenu(this);
-    menuBar->insertItem("&Help", help);
-    help->insertItem("&About ...", this, SLOT(helpAbout()));
-    help->insertItem("About &Qt ...", this, SLOT(helpAboutQt()));
+    QMenu *help = this->menuBar->addMenu("&Help");
+    help->addAction("&About ...", this, SLOT(helpAbout()));
+    help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
   }
 
-  setIcon(pixmaps->icon);
+  this->setWindowIcon(pixmaps->icon);
 
-  setGeometry(200,200,      // initial location
-              400,400);     // initial size
+  this->setLayout(mainArea);
+  this->setGeometry(200,200,      // initial location
+                    400,400);     // initial size
 
-  setBuffer(initBuffer);
+  // Set the BufferState, which was originally set as NULL above.
+  this->setBuffer(initBuffer);
 
-  // i-search; use filename as status display
-  isearch = new IncSearch(statusArea);
+  // i-search; use filename area as the status display.
+  this->isearch = new IncSearch(this->statusArea);
 }
 
 
@@ -171,7 +179,7 @@ BufferState *EditorWindow::theBuffer()
 
 void EditorWindow::fileNewFile()
 {
-  BufferState *b = state->createNewFile();
+  BufferState *b = globalState->createNewFile();
   setBuffer(b);
 }
 
@@ -198,17 +206,17 @@ void EditorWindow::setFileName(rostring name, rostring hotkey)
   }
   s &= sm_basename(name);
     
-  setCaption(toQString(s));
+  this->setWindowTitle(toQString(s));
 }
 
 
 void EditorWindow::fileOpen()
 {
-  QString name = QFileDialog::getOpenFileName(QString::null, "Files (*)", this);
+  QString name = QFileDialog::getOpenFileName(this, "Open File");
   if (name.isEmpty()) {
     return;
   }
-  fileOpenFile(name);
+  this->fileOpenFile(name.toUtf8().constData());
 }
 
 void EditorWindow::fileOpenFile(char const *name)
@@ -239,7 +247,7 @@ void EditorWindow::fileOpenFile(char const *name)
 
   // is there an untitled, empty file hanging around?
   BufferState *untitled = NULL;
-  FOREACH_OBJLIST_NC(BufferState, state->buffers, iter) {
+  FOREACH_OBJLIST_NC(BufferState, globalState->buffers, iter) {
     BufferState *bs = iter.data();
     if (bs->title.equals("untitled.txt") &&
         bs->numLines() == 1 &&
@@ -251,19 +259,19 @@ void EditorWindow::fileOpenFile(char const *name)
       // need to wait until the new buffer is added;
       // but right now I can remove its hotkey so that
       // the new buffer can use it instead
-      untitled->hotkey = 0;
+      untitled->hotkeyDigit = 0;
 
       break;
     }
   }
 
   // now that we've opened the file, set the editor widget to edit it
-  state->trackNewBuffer(b);
+  globalState->trackNewBuffer(b);
   setBuffer(b);
 
   // remove the untitled buffer now, if it exists
   if (untitled) {
-    state->deleteBuffer(untitled);
+    globalState->deleteBuffer(untitled);
   }
 }
 
@@ -294,13 +302,14 @@ void EditorWindow::writeTheFile()
 
 void EditorWindow::fileSaveAs()
 {
-  QString s = QFileDialog::getSaveFileName(toQString(theBuffer()->filename),
-                                           "Files (*)", this);
+  QString s = QFileDialog::getSaveFileName(
+    this, "Save file as", toQString(theBuffer()->filename));
   if (s.isEmpty()) {
     return;
   }
 
-  char const *name = s;
+  QByteArray utf8(s.toUtf8());
+  char const *name = utf8.constData();
   theBuffer()->filename = name;
   theBuffer()->title = sm_basename(name);
   setFileName(name, theBuffer()->hotkeyDesc());
@@ -326,7 +335,7 @@ void EditorWindow::fileClose()
     }
   }
 
-  state->deleteBuffer(b);
+  globalState->deleteBuffer(b);
 }
 
 
@@ -338,23 +347,21 @@ void EditorWindow::editISearch()
 
 void EditorWindow::editGotoLine()
 {
-  GotoLine gl(this, NULL /*name*/, true /*modal*/,
-              // these flags are the defaults for dialogs, as found in
-              // qt/src/kernel/qwidget_x11.cpp line 285, except I
-              // have remove WStyle_ContextHelp
-              WStyle_Customize | WStyle_NormalBorder | WStyle_Title | WStyle_SysMenu);
+  Ui_GotoLine gl;
+  QDialog dialog;
+  gl.setupUi(&dialog);
               
   // I find it a bit bothersome to do this manually.. perhaps there
   // is a way to query the tab order, and always set focus to the
   // first widget in that order?
-  gl.lineNumber->setFocus();
+  gl.lineNumberEdit->setFocus();
               
   //bool hasWT = gl.testWFlags(WStyle_ContextHelp);
   //cout << "hasWT: " << hasWT << endl;
   
-  if (gl.exec()) {
+  if (dialog.exec()) {
     // user pressed Ok (or Enter)
-    string s = string(gl.lineNumber->text());
+    string s = gl.lineNumberEdit->text().toUtf8().constData();
     //cout << "text is \"" << s << "\"\n";
     
     if (s.length()) {
@@ -392,10 +399,10 @@ void EditorWindow::windowOccupyRight()
 
 void EditorWindow::windowCycleBuffer()
 {
-  int cur = state->buffers.indexOf(theBuffer());
+  int cur = globalState->buffers.indexOf(theBuffer());
   xassert(cur >= 0);
-  cur = (cur + 1) % state->buffers.count();     // cycle
-  setBuffer(state->buffers.nth(cur));
+  cur = (cur + 1) % globalState->buffers.count();     // cycle
+  setBuffer(globalState->buffers.nth(cur));
 }
 
 
@@ -424,14 +431,16 @@ void EditorWindow::editorViewChanged()
     horizScroll->setValue(editor->firstVisibleCol);
     horizScroll->setRange(0, max(editor->buffer->maxLineLength(),
                                  editor->firstVisibleCol));
-    horizScroll->setSteps(1, editor->visCols());
+    horizScroll->setSingleStep(1);
+    horizScroll->setPageStep(editor->visCols());
   }
 
   if (vertScroll) {
     vertScroll->setValue(editor->firstVisibleLine);
     vertScroll->setRange(0, max(editor->buffer->numLines(),
                                 editor->firstVisibleLine));
-    vertScroll->setSteps(1, editor->visLines());
+    vertScroll->setSingleStep(1);
+    vertScroll->setPageStep(editor->visLines());
   }
 
   // I want the user to interact with line/col with a 1:1 origin,
@@ -447,24 +456,31 @@ void EditorWindow::editorViewChanged()
 void EditorWindow::rebuildWindowMenu()
 {
   // remove all of the old menu items
-  while (bufferChoiceIds.isNotEmpty()) {
-    int id = bufferChoiceIds.pop();
-    windowMenu->removeItem(id);
+  while (this->bufferChoiceActions.isNotEmpty()) {
+    QAction *action = this->bufferChoiceActions.pop();
+    this->windowMenu->removeAction(action);
+
+    // Removing an action effectively means we take ownership of it.
+    delete action;
   }
 
-  // add new items for all of the open buffers; ids and
+  // add new items for all of the open buffers;
   // hotkeys have already been assigned by now
-  FOREACH_OBJLIST_NC(BufferState, state->buffers, iter) {
+  FOREACH_OBJLIST_NC(BufferState, this->globalState->buffers, iter) {
     BufferState *b = iter.data();
 
-    windowMenu->insertItem(
+    QKeySequence keySequence;
+    if (b->hotkeyDigit) {
+      keySequence = Qt::ALT + (Qt::Key_0 + b->hotkeyDigit);
+    }
+
+    QAction *action = this->windowMenu->addAction(
       toQString(b->title),        // menu item text
       this,                       // receiver
       SLOT(windowBufferChoice()), // slot name
-      b->hotkey,                  // accelerator
-      b->windowMenuId);           // menu id
+      keySequence);               // accelerator
 
-    bufferChoiceIds.push(b->windowMenuId);
+    this->bufferChoiceActions.push(action);
   }
 }
 
@@ -473,24 +489,32 @@ void EditorWindow::rebuildWindowMenu()
 // just before windowBufferChoice(), for menu items that
 // select buffers; this also gets called when the user uses
 // the accelerator keybinding
-void EditorWindow::windowBufferChoiceActivated(int itemId)
+void EditorWindow::windowBufferChoiceActivated(QAction *action)
 {
-  trace("menu") << "window buffer choice activated: " << itemId << endl;
+  trace("menu") << "window buffer choice activated" << endl;
 
   // search through the list of buffers to find the one
-  // that this item id refers to; the buffers were marked
-  // with their is when the buffer menu was built
-  FOREACH_OBJLIST_NC(BufferState, state->buffers, iter) {
+  // that this action refers to; the buffers were marked
+  // with their actions when the buffer menu was built
+  FOREACH_OBJLIST_NC(BufferState, this->globalState->buffers, iter) {
     BufferState *b = iter.data();
-    if (b->windowMenuId == itemId) {
-      recentMenuBuffer = b;
+
+    // TODO: This is not right because the title is not
+    // necessarily unique.  Qt3 had numeric menu IDs that
+    // I could use to distinguish the entries, but Qt5 only
+    // has the QAction pointer, which is not safe to share
+    // across EditorWindows.
+    if (toQString(b->title) == action->text()) {
+      this->recentMenuBuffer = b;
+      trace("menu") << "window buffer choice is: " << b->filename << endl;
       return;
     }
   }
 
   // the id doesn't match any that I'm aware of; this happens
   // for window menu items that do *not* switch to some buffer
-  recentMenuBuffer = NULL;
+  trace("menu") << "window buffer choice did not match any buffer" << endl;
+  this->recentMenuBuffer = NULL;
 }
 
 // respond to a choice of a buffer in the window item
@@ -498,8 +522,8 @@ void EditorWindow::windowBufferChoice()
 {
   trace("menu") << "window buffer choice\n";
 
-  if (recentMenuBuffer) {
-    setBuffer(recentMenuBuffer);
+  if (this->recentMenuBuffer) {
+    setBuffer(this->recentMenuBuffer);
   }
   else {
     // should not be reachable
@@ -517,7 +541,7 @@ void EditorWindow::complain(char const *msg)
 
 void EditorWindow::windowNewWindow()
 {
-  EditorWindow *ed = state->createNewWindow(theBuffer());
+  EditorWindow *ed = this->globalState->createNewWindow(this->theBuffer());
   ed->show();
 }
 
@@ -529,7 +553,6 @@ GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
     pixmaps(),
     buffers(),
-    nextMenuId(1),
     windows()
 {
   if (state == NULL) {
@@ -554,10 +577,13 @@ GlobalState::GlobalState(int argc, char **argv)
     ed->fileOpenFile(argv[i]);
   }
 
+  // TODO: replacement?
+#if 0
   // this gets the user's preferred initial geometry from
   // the -geometry command line, or xrdb database, etc.
   setMainWidget(ed);
   setMainWidget(NULL);    // but don't remember this
+#endif // 0
 
   // instead, to quit the application, close all of the
   // toplevel windows
@@ -569,9 +595,8 @@ GlobalState::GlobalState(int argc, char **argv)
 
 EditorWindow *GlobalState::createNewWindow(BufferState *initBuffer)
 {
-  EditorWindow *ed =
-    new EditorWindow(this, initBuffer,
-                     NULL /*parent*/, "main editor window");
+  EditorWindow *ed = new EditorWindow(this, initBuffer);
+  ed->setObjectName("main editor window");
   windows.append(ed);
   rebuildWindowMenus();
 
@@ -602,16 +627,11 @@ BufferState *GlobalState::createNewFile()
 
 void GlobalState::trackNewBuffer(BufferState *b)
 {
-  // assign menu id
-  b->windowMenuId = nextMenuId++;
-
   // assign hotkey
+  b->hotkeyDigit = 0;
   for (int i=1; i<=10; i++) {
-    int hotkey = i < 10? (i-1+Key_1) | ALT :
-                 i ==10? Key_0 | ALT       :
-                         0 /*no accelerator*/;
-    if (hotkeyAvailable(hotkey)) {
-      b->hotkey = hotkey;
+    if (hotkeyAvailable(i)) {
+      b->hotkeyDigit = i;
       break;
     }
   }
@@ -623,7 +643,7 @@ void GlobalState::trackNewBuffer(BufferState *b)
 bool GlobalState::hotkeyAvailable(int key) const
 {
   FOREACH_OBJLIST(BufferState, buffers, iter) {
-    if (iter.data()->hotkey == key) {
+    if (iter.data()->hotkeyDigit == key) {
       return false;    // not available
     }
   }
@@ -683,32 +703,6 @@ int main(int argc, char **argv)
   //printSegfaultAddrs();
 
   GlobalState app(argc, argv);
-
-  if (false) {
-    static char const * const names[] = {
-      "Foreground",
-      "Button",
-      "Light",
-      "Midlight",
-      "Dark",
-      "Mid",
-      "Text",
-      "BrightText",
-      "ButtonText",
-      "Base",
-      "Background",
-      "Shadow",
-      "Highlight",
-      "HighlightedText",
-    };
-
-    QPalette pal(app.palette());
-    QColorGroup cg(pal.active());
-    for (int i=0; i < QColorGroup::NColorRoles; i++) {
-      QColor c = cg.color((QColorGroup::ColorRole)i);
-      printf("%-20s: 0x%X,0x%X,0x%X\n", names[i], c.red(), c.green(), c.blue());
-    }
-  }
 
   return app.exec();
 }

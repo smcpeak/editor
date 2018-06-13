@@ -49,8 +49,7 @@ BufferState::BufferState()
   : Buffer(),
     filename(),
     title(),
-    windowMenuId(0),
-    hotkey(0),
+    hotkeyDigit(0),
     //changed(false),
     highlighter(NULL),
     savedState()
@@ -66,13 +65,11 @@ BufferState::~BufferState()
 
 string BufferState::hotkeyDesc()
 {
-  if (hotkey == 0) {
+  if (this->hotkeyDigit == 0) {
     return "";
   }
 
-  // assume it's Alt+n
-  int n = hotkey - (Qt::Key_0 | Qt::ALT);
-  return stringc << "Alt+" << n;
+  return stringc << "Alt+" << this->hotkeyDigit;
 }
 
 

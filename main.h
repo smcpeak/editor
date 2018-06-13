@@ -5,16 +5,17 @@
 #define MAIN_H
 
 #include <qwidget.h>         // QWidget
-#include <qwindowsstyle.h>   // QWindowsStyle
+// TODO: replacement?   #include <qwindowsstyle.h>   // QWindowsStyle
 #include <qapplication.h>    // QApplication
 
 #include "bufferstate.h"     // BufferState
 #include "objlist.h"         // ObjList
 #include "pixmaps.h"         // Pixmaps
 
+class QLabel;
+class QMenu;
 class QMenuBar;
 class QScrollBar;
-class QLabel;
 
 class Editor;                // editor.h
 class IncSearch;             // incsearch.h
@@ -29,7 +30,7 @@ class EditorWindow : public QWidget {
 
 public:      // data
   // associated global state
-  GlobalState *state;                // (serf)
+  GlobalState *globalState;                // (serf)
 
   // GUI elements
   QMenuBar *menuBar;
@@ -38,10 +39,17 @@ public:      // data
   StatusDisplay *statusArea;
   //QLabel *position, *mode, *filename;
 
-  // information to maintain the list of buffers in
-  // the window menu
-  QPopupMenu *windowMenu;
-  ArrayStack<int> bufferChoiceIds;   // ids of menu items that select buffers
+  // The Window menu, whose contents changes with the set
+  // of open file buffers.
+  QMenu *windowMenu;
+
+  // Set of Actions in the Window menu that choose a buffer.
+  // These need to be removed from the Window menu when we
+  // rebuild it.  These are not exactly owner pointers, since
+  // normally the Window menu owns the Actions, but when we
+  // pull them out of the Window menu, we have to delete them.
+  ArrayStack<QAction*> bufferChoiceActions;
+
   BufferState *recentMenuBuffer;
 
   // incremental search system
@@ -61,7 +69,7 @@ private:     // funcs
 
 public:      // funcs
   EditorWindow(GlobalState *state, BufferState *initBuffer,
-               QWidget *parent=0, char const *name=0);
+               QWidget *parent = NULL);
   ~EditorWindow();
 
   // open and begin editing a particular file
@@ -84,7 +92,7 @@ public slots:
   void windowOccupyLeft();
   void windowOccupyRight();
   void windowCycleBuffer();
-  void windowBufferChoiceActivated(int itemId);
+  void windowBufferChoiceActivated(QAction *action);
   void windowBufferChoice();
 
   void helpAbout();
@@ -96,9 +104,10 @@ public slots:
 
 // This test matches /usr/lib/qt-3.3.3/include/qwindowsstyle.h.
 // I do not know how portable it is across versions of Qt.
-#if !defined(QT_NO_STYLE_WINDOWS) || defined(QT_PLUGIN)
-  #define HAS_QWINDOWSSTYLE
-#endif
+// TODO: replacement?
+//#if !defined(QT_NO_STYLE_WINDOWS) || defined(QT_PLUGIN)
+//  #define HAS_QWINDOWSSTYLE
+//#endif
 
 
 #ifdef HAS_QWINDOWSSTYLE
@@ -126,9 +135,6 @@ public:       // data
 
   // list of open files (buffers)
   ObjList<BufferState> buffers;
-
-  // next menu id to use for a window menu item
-  int nextMenuId;
 
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits

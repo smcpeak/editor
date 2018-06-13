@@ -10,6 +10,6 @@ set args editor.h
 break breaker
 break main
 
-break editor.cc:1554
+#break editor.cc:1554
 
 run
