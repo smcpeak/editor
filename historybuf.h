@@ -9,10 +9,18 @@
 #include "array.h"        // ArrayStack
 
 
-// buffer that records all of the manipulations in its undo
-// history; on top of this spartan interface I'll build the
-// Buffer class itself, with many convenience functions that
-// all map onto calls into this class
+// Represent a file being edited:
+//   * File contents.
+//   * Cursor location.
+//   * Undo history of changes to them.
+//
+// HistoryBuffer provides the core functionality for manipulating
+// these items.  Buffer is built on top of it and provides a
+// variety of useful composed manipulations.
+//
+// There is no reason to create a HistoryBuffer alone; the division
+// is just to ensure a separation between core and extended
+// functionality in the implementation of Buffer.
 class HistoryBuffer {
 private:      // data
   // current buffer contents and cursor location

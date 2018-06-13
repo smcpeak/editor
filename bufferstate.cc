@@ -8,7 +8,7 @@
 
 
 // ----------------------- EditingState --------------------------
-EditingState::EditingState()
+SavedEditingState::SavedEditingState()
   : selectLine(0),
     selectCol(0),
     selectEnabled(false),
@@ -21,11 +21,11 @@ EditingState::EditingState()
     hitTextFlags(Buffer::FS_NONE)
 {}
 
-EditingState::~EditingState()
+SavedEditingState::~SavedEditingState()
 {}
 
 
-void EditingState::copy(EditingState const &obj)
+void SavedEditingState::copySavedEditingState(SavedEditingState const &obj)
 {
   CMEMB(selectLine);
   CMEMB(selectCol);
@@ -36,7 +36,7 @@ void EditingState::copy(EditingState const &obj)
 }
 
 
-void EditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
+void SavedEditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
 {
   // this is the one function allowed to change these
   const_cast<int&>(firstVisibleLine) = newFirstLine;

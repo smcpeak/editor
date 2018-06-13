@@ -49,7 +49,7 @@
 Editor::Editor(BufferState *buf, StatusDisplay *stat,
                QWidget *parent)
   : QWidget(parent),   // TODO: Are these needed? WRepaintNoErase | WResizeNoErase | WNorthWestGravity
-    EditingState(),
+    SavedEditingState(),
     infoBox(NULL),
     status(stat),
     buffer(buf),
@@ -116,9 +116,9 @@ void Editor::resetView()
   if (buffer) {
     cursorTo(0, 0);
   }
-  selectLine = 0;
-  selectCol = 0;
-  selectEnabled = false;
+  this->selectLine = 0;
+  this->selectCol = 0;
+  this->selectEnabled = false;
   selLowLine = selLowCol = selHighLine = selHighCol = 0;   // make it deterministic..
   setView(0,0);
 }
@@ -126,9 +126,11 @@ void Editor::resetView()
 
 bool Editor::cursorBeforeSelect() const
 {
-  if (cursorLine() < selectLine) return true;
-  if (cursorLine() > selectLine) return false;
-  return cursorCol() < selectCol;
+  // TODO: I should create a class with line+col to better
+  // encapsulate logic like this.
+  if (cursorLine() < this->selectLine) return true;
+  if (cursorLine() > this->selectLine) return false;
+  return cursorCol() < this->selectCol;
 }
 
 
@@ -137,12 +139,12 @@ void Editor::normalizeSelect(int cursorLine, int cursorCol)
   if (cursorBeforeSelect()) {
     selLowLine = cursorLine;
     selLowCol = cursorCol;
-    selHighLine = selectLine;
-    selHighCol = selectCol;
+    selHighLine = this->selectLine;
+    selHighCol = this->selectCol;
   }
   else {
-    selLowLine = selectLine;
-    selLowCol = selectCol;
+    selLowLine = this->selectLine;
+    selLowCol = this->selectCol;
     selHighLine = cursorLine;
     selHighCol = cursorCol;
   }
@@ -227,25 +229,25 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
 
 void Editor::setBuffer(BufferState *buf)
 {
-  bool wasListening = listening;
+  bool wasListening = this->listening;
   if (wasListening) {
-    stopListening();
+    this->stopListening();
   }
 
   // save current editing state in current 'buffer'
-  if (buffer) {     // allow initial buffer to be NULL
-    buffer->savedState.copy(*this);
+  if (this->buffer) {     // allow initial buffer to be NULL
+    this->buffer->savedState.copySavedEditingState(*this);
   }
 
   // switch to the new buffer, and retrieve its editing state
-  buffer = buf;
-  EditingState::copy(buf->savedState);
+  this->buffer = buf;
+  this->copySavedEditingState(buf->savedState);
 
   if (wasListening) {
-    startListening();
+    this->startListening();
   }
 
-  redraw();
+  this->redraw();
 }
 
 
@@ -269,12 +271,12 @@ void Editor::setView(int newFirstLine, int newFirstCol)
   xassert(newFirstLine >= 0);
   xassert(newFirstCol >= 0);
 
-  if (newFirstLine==firstVisibleLine &&
-      newFirstCol==firstVisibleCol) {
+  if (newFirstLine == this->firstVisibleLine &&
+      newFirstCol == this->firstVisibleCol) {
     // nop
   }
   else {
-    setFirstVisibleLC(newFirstLine, newFirstCol);
+    this->setFirstVisibleLC(newFirstLine, newFirstCol);
 
     updateView();
 
@@ -285,27 +287,29 @@ void Editor::setView(int newFirstLine, int newFirstCol)
 
 void Editor::moveView(int deltaLine, int deltaCol)
 {
-  int line = max(0, firstVisibleLine + deltaLine);
-  int col = max(0, firstVisibleCol + deltaCol);
+  int line = max(0, this->firstVisibleLine + deltaLine);
+  int col = max(0, this->firstVisibleCol + deltaCol);
 
-  setView(line, col);
+  this->setView(line, col);
 }
 
 
 void Editor::updateView()
 {
-  int h = height();
-  int w = width();
+  int h = this->height();
+  int w = this->width();
 
-  if (fontHeight && fontWidth) {
+  if (this->fontHeight && this->fontWidth) {
     // calculate viewport stats
     // why -1?  suppose width==height==0, then the "first" visible isn't
     // visible at all, so we'd want the one before (not that that's visible
     // either, but it suggests what we want in nondegenerate cases too)
-    lastVisibleLine = firstVisibleLine
-      + (h - topMargin) / lineHeight() - 1;
-    lastVisibleCol = firstVisibleCol
-      + (w - leftMargin) / fontWidth - 1;
+    this->lastVisibleLine =
+      this->firstVisibleLine +
+      (h - this->topMargin) / this->lineHeight() - 1;
+    this->lastVisibleCol =
+      this->firstVisibleCol +
+      (w - this->leftMargin) / this->fontWidth - 1;
   }
   else {
     // font info not set, leave them alone
@@ -402,8 +406,8 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // pixmap is the entire width of the window, but only one line high,
   // so as to improve drawing locality and avoid excessive allocation
   // in the server
-  int lineWidth = width();
-  int fullLineHeight = fontHeight + interLineSpace;
+  int const lineWidth = width();
+  int const fullLineHeight = fontHeight + interLineSpace;
   QPixmap pixmap(lineWidth, fullLineHeight);
 
   // NOTE: This does not preclude drawing objects that span multiple
@@ -426,7 +430,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // when drawing text, erase background automatically
   paint.setBackgroundMode(Qt::OpaqueMode);
 
-  // character style info
+  // Character style info.  This gets updated as we paint each line.
   LineStyle styles(ST_NORMAL);
 
   // currently selected style (so we can avoid possibly expensive
@@ -445,29 +449,38 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   int y = 0;
 
   if (topMargin) {
-    winPaint.eraseRect(0, y, width(), topMargin);
+    winPaint.eraseRect(0, y, lineWidth, topMargin);
     y += topMargin;
   }
 
   // ---- remaining setup ----
+  // Visible area info.  The +1 here is to include the column after
+  // the last fully visible column, which might be partially visible.
+  int const visibleCols = this->visCols() + 1;
+  int const firstCol = this->firstVisibleCol;
+  int const firstLine = this->firstVisibleLine;
+
   // I think it might be useful to support negative values for these
   // variables, but the code below is not prepared to deal with such
   // values at this time
-  xassert(firstVisibleLine >= 0);
-  xassert(firstVisibleCol >= 0);
+  xassert(firstLine >= 0);
+  xassert(firstCol >= 0);
 
   // another santiy check
   xassert(lineHeight() > 0);
 
-  // buffer for each line of text that will be printed
-  int visibleCols = lastVisibleCol - firstVisibleCol + 2;
+  // Buffer that will be used for each visible line of text.
   Array<char> text(visibleCols);
 
   // set sel{Low,High}{Line,Col}
   normalizeSelect(cursorLine, cursorCol);
 
-  // paint the window, one line at a time
-  for (int line = firstVisibleLine; y < height(); line++) {
+  // Paint the window, one line at a time.  Both 'line' and 'y' act
+  // as loop control variables.
+  for (int line = firstLine;
+       y < this->height();
+       line++, y += fullLineHeight)
+  {
     // ---- compute style segments ----
     // fill the text with spaces, as the nominal text to display;
     // these will only be used if there is style information out
@@ -483,9 +496,9 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     // fill with text from the buffer
     if (line < buffer->numLines()) {
       int lineLen = buffer->lineLength(line);
-      if (firstVisibleCol < lineLen) {
-        int amt = min(lineLen - firstVisibleCol, visibleCols);
-        buffer->getLine(line, firstVisibleCol, text, amt);
+      if (firstCol < lineLen) {
+        int const amt = min(lineLen - firstCol, visibleCols);
+        buffer->getLine(line, firstCol, text, amt);
         visibleLineChars = amt;
       }
 
@@ -496,19 +509,25 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     }
     xassert(visibleLineChars <= visibleCols);
 
-    // show hits
-    if (hitText.length() > 0) {
-      int hitLine=line, hitCol=0;
-      while (buffer->findString(hitLine, hitCol, toCStr(hitText), 
-                                (hitTextFlags | Buffer::FS_ONE_LINE))) {
-        styles.overlay(hitCol, hitText.length(), ST_HITS);
+    // Show search hits.
+    if (this->hitText.length() > 0) {
+      int hitLine = line;
+      int hitCol = 0;
+      Buffer::FindStringFlags const hitTextFlags =
+        this->hitTextFlags | Buffer::FS_ONE_LINE;
+
+      while (buffer->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
+                                toCStr(this->hitText),
+                                hitTextFlags)) {
+        styles.overlay(hitCol, this->hitText.length(), ST_HITS);
         hitCol++;
       }
     }
 
     // incorporate effect of selection
-    if (selectEnabled &&
-        selLowLine <= line && line <= selHighLine) {
+    if (this->selectEnabled &&
+        this->selLowLine <= line && line <= this->selHighLine)
+    {
       if (selLowLine < line && line < selHighLine) {
         // entire line is selected
         styles.overlay(0, 0 /*infinite*/, ST_SELECTION);
@@ -536,7 +555,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
     // next style entry to use
     LineStyleIter style(styles);
-    style.advanceChars(firstVisibleCol);
+    style.advanceChars(firstCol);
 
     // ---- render text+style segments -----
     // right edge of what has not been painted, relative to
@@ -594,7 +613,8 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       // draw text
       for (int i=0; i < len; i++) {
         curFont->drawChar(paint,
-                          QPoint(x + fontWidth*i, baseline), text[printed+i]);
+                          QPoint(x + fontWidth*i, baseline),
+                          text[printed+i]);
       }
 
       if (underlining) {
@@ -602,6 +622,13 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         // might not be consistent across fonts, so I might want to have
         // a user-specifiable underlining offset.. also, I don't want this
         // going into the next line, so truncate according to descent
+        //
+        // TODO: I think this is buggy.  If 'underlining' is true, then we
+        // increase 'baseline' once per segment as we paint?  Except the
+        // truncation at 'descent' keeps it from going crazy, but it still
+        // cannot be what I intended.  I think the intent was to draw a line
+        // up to 2 pixels below the baseline but not change the baseline
+        // itself.  I need to figure out when 'underlining' is true...
         baseline += min(2 /*nominal underline offset*/, descent);
         paint.drawLine(x, baseline, x + fontWidth*len, baseline);
       }
@@ -623,7 +650,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       paint.save();
 
       // 0-based cursor column relative to what is visible
-      int visibleCursorCol = cursorCol - firstVisibleCol;
+      int const visibleCursorCol = cursorCol - firstCol;
       xassert(visibleCursorCol >= 0);
       
       // 'x' coordinate of the leftmost column of the character cell
@@ -658,9 +685,6 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     // draw the line buffer to the window
     //needed? //paint.flush();     // server-side pixmap is now complete
     winPaint.drawPixmap(0,y, pixmap);    // draw it
-    
-    // advance to next line    
-    y += fullLineHeight;
   }
 
   // at this point the entire window has been painted, so there
@@ -710,15 +734,15 @@ void Editor::cursorToBottom()
 
 void Editor::turnOffSelection()
 {
-  selectEnabled = false;
+  this->selectEnabled = false;
 }
 
 void Editor::turnOnSelection()
 {
-  if (!selectEnabled) {
-    selectLine = cursorLine();
-    selectCol = cursorCol();
-    selectEnabled = true;
+  if (!this->selectEnabled) {
+    this->selectLine = cursorLine();
+    this->selectCol = cursorCol();
+    this->selectEnabled = true;
   }
 }
 
@@ -734,9 +758,9 @@ void Editor::turnSelection(bool on)
 
 void Editor::clearSelIfEmpty()
 {
-  if (selectEnabled &&
-      cursorLine()==selectLine &&
-      cursorCol()==selectCol) {
+  if (this->selectEnabled &&
+      cursorLine() == this->selectLine &&
+      cursorCol() == this->selectCol) {
     turnOffSelection();
   }
 }
@@ -840,16 +864,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_W:
         moveView(-1, 0);
-        if (cursorLine() > lastVisibleLine) {
-          cursorUpBy(cursorLine() - lastVisibleLine);
+        if (cursorLine() > this->lastVisibleLine) {
+          cursorUpBy(cursorLine() - this->lastVisibleLine);
         }
         redraw();
         break;
 
       case Qt::Key_Z:
         moveView(+1, 0);
-        if (cursorLine() < firstVisibleLine) {
-          cursorDownBy(firstVisibleLine - cursorLine());
+        if (cursorLine() < this->firstVisibleLine) {
+          cursorDownBy(this->firstVisibleLine - cursorLine());
         }
         redraw();
         break;
@@ -883,7 +907,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Qt::Key_D:      deleteCharAtCursor(); break;
 
       case Qt::Key_L:
-        setView(max(0, cursorLine() - visLines()/2), 0);
+        setView(max(0, cursorLine() - this->visLines()/2), 0);
         scrollToCursor();
         break;
 
@@ -1044,7 +1068,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         fillToCursor();
         //buffer->changed = true;
 
-        if (selectEnabled) {
+        if (this->selectEnabled) {
           editDelete();
         }
         else if (cursorCol() == 0) {
@@ -1084,7 +1108,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         //buffer->changed = true;
 
         // typing replaces selection
-        if (selectEnabled) {
+        if (this->selectEnabled) {
           editDelete();
         }
 
@@ -1108,7 +1132,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
           //buffer->changed = true;
 
           // typing replaces selection
-          if (selectEnabled) {
+          if (this->selectEnabled) {
             editDelete();
           }
           // insert this character at the cursor
@@ -1209,10 +1233,12 @@ int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
 
 void Editor::scrollToCursor_noRedraw(int edgeGap)
 {
-  int fvline = stcHelper(firstVisibleLine, lastVisibleLine, 
+  int fvline = stcHelper(this->firstVisibleLine,
+                         this->lastVisibleLine,
                          cursorLine(), edgeGap);
                          
-  int fvcol = stcHelper(firstVisibleCol, lastVisibleCol,
+  int fvcol = stcHelper(this->firstVisibleCol,
+                        this->lastVisibleCol,
                         cursorCol(), edgeGap);
 
   setView(fvline, fvcol);
@@ -1242,13 +1268,13 @@ void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
 
   // move viewport, but remember original so we can tell
   // when there's truncation
-  int origVL = firstVisibleLine;
-  int origVC = firstVisibleCol;
+  int origVL = this->firstVisibleLine;
+  int origVC = this->firstVisibleCol;
   moveView(deltaLine, deltaCol);
 
   // now move cursor by the amount that the viewport moved
-  moveCursorBy(firstVisibleLine - origVL,
-               firstVisibleCol - origVC);
+  moveCursorBy(this->firstVisibleLine - origVL,
+               this->firstVisibleCol - origVC);
 
   TRACE("moveViewAndCursor",
         "end: firstVis=" << firstVisStr() <<
@@ -1287,8 +1313,8 @@ void Editor::setCursorToClickLoc(QMouseEvent *m)
   inc(x, -leftMargin);
   inc(y, -topMargin);
 
-  int newLine = y/lineHeight() + firstVisibleLine;
-  int newCol = x/fontWidth + firstVisibleCol;
+  int newLine = y/lineHeight() + this->firstVisibleLine;
+  int newCol = x/fontWidth + this->firstVisibleCol;
 
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
@@ -1367,9 +1393,9 @@ void Editor::editRedo()
 
 void Editor::editCut()
 {
-  if (selectEnabled) {
+  if (this->selectEnabled) {
     editCopy();
-    selectEnabled = true;    // counteract something editCopy() does
+    this->selectEnabled = true;    // counteract something editCopy() does
     editDelete();
   }
 }
@@ -1377,7 +1403,7 @@ void Editor::editCut()
 
 void Editor::editCopy()
 {
-  if (selectEnabled) {
+  if (this->selectEnabled) {
     // get selected text
     string sel = getSelectedText();
 
@@ -1387,7 +1413,7 @@ void Editor::editCopy()
     
     // un-highlight the selection, which is what emacs does and
     // I'm now used to
-    selectEnabled = false;
+    this->selectEnabled = false;
     redraw();
   }
 }
@@ -1416,12 +1442,12 @@ void Editor::editPaste()
 
 void Editor::editDelete()
 {
-  if (selectEnabled) {
+  if (this->selectEnabled) {
     normalizeSelect();
     //buffer->changed = true;
     buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
-    selectEnabled = false;
+    this->selectEnabled = false;
     scrollToCursor();
   }
 }
@@ -1446,8 +1472,8 @@ void Editor::showInfo(char const *infoString)
   infoBox->resize(sz.width() + 2, sz.height() + 2);
 
   infoBox->move(mapTo(main,
-    QPoint((cursorCol() - firstVisibleCol) * fontWidth,
-           (cursorLine() - firstVisibleLine + 1) * fontHeight + 1)));
+    QPoint((cursorCol() - this->firstVisibleCol) * fontWidth,
+           (cursorLine() - this->firstVisibleLine + 1) * fontHeight + 1)));
            
   // try to position the box inside the main widget, so it will show up
   if (infoBox->x() + infoBox->width() > main->width()) {
@@ -1512,13 +1538,13 @@ void Editor::cursorDown(bool shift)
 void Editor::cursorPageUp(bool shift)
 {
   turnSelection(shift);
-  moveViewAndCursor(-visLines(), 0);
+  moveViewAndCursor(- this->visLines(), 0);
 }
 
 void Editor::cursorPageDown(bool shift)
 {
   turnSelection(shift);
-  moveViewAndCursor(+visLines(), 0);
+  moveViewAndCursor(+ this->visLines(), 0);
 }
 
 
@@ -1527,7 +1553,7 @@ void Editor::deleteCharAtCursor()
   fillToCursor();
   //buffer->changed = true;
 
-  if (selectEnabled) {
+  if (this->selectEnabled) {
     editDelete();
   }
   else if (cursorCol() == buffer->lineLength(cursorLine())) {
@@ -1545,7 +1571,7 @@ void Editor::deleteCharAtCursor()
 
 void Editor::blockIndent(int amt)
 {
-  if (!selectEnabled) {
+  if (!this->selectEnabled) {
     return;      // nop
   }
   
@@ -1561,7 +1587,7 @@ void Editor::blockIndent(int amt)
 
 string Editor::getSelectedText()
 {
-  if (!selectEnabled) {
+  if (!this->selectEnabled) {
     return "";
   }
   else {
@@ -1686,7 +1712,7 @@ void Editor::pseudoKeyPress(InputPseudoKey pkey)
       // do nothing; in other modes this will cancel out
                 
       // well, almost nothing
-      hitText = "";
+      this->hitText = "";
       redraw();
       break;
   }

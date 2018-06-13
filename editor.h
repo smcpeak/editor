@@ -17,13 +17,26 @@ class StatusDisplay;        // status.h
 class StyleDB;              // styledb.h
 
 
-// control to edit the contents of a buffer; it's possible (and
+// Widget to edit the contents of a buffer; it's possible (and
 // expected) to change which buffer a given Editor edits after
-// creating the Editor object
+// creating the Editor object.
+//
+// This class embeds SavedEditingState.  This is different from
+// 'buffer->savedState' so that it is possible to have two editor
+// widgets both editing the same file but with different cursor
+// locations, etc.
+//
+// It is weird to inherit a data class like this, but the reason
+// for doing it is there is not a major, fundamental difference
+// between the members of Editor and those of EditorState.  The
+// latter just happen to be the things I have chosen to save for
+// hidden buffers, and that set might change over time.  Therefore,
+// I use inheritance to avoid any difference in syntax between the
+// two sets of members.
 class Editor
-  : public QWidget,          // I am a Qt widget
-    public EditingState,     // view offset, selection info, etc.
-    public BufferObserver {  // to watch my file while I don't have focus
+  : public QWidget,            // I am a Qt widget.
+    public SavedEditingState,  // Cursor location, etc.
+    public BufferObserver {    // Watch my file while I don't have focus.
   Q_OBJECT
 
 private:     // data
@@ -35,35 +48,14 @@ private:     // data
 
 public:      // data
   // ------ editing state -----
-  // buffer whose text we're editing; it can be set to NULL when
+  // Buffer whose text we're editing; it can be set to NULL when
   // the ctor is called, but must if so, must be set to a non-NULL
-  // value via setBuffer() before any drawing or editing is done
+  // value via setBuffer() before any drawing or editing is done.
+  //
+  // The Editor's EditingState gets saved to 'buffer->savedState'
+  // when we switch to another buffer, and restored when we come
+  // back.
   BufferState *buffer;           // (serf)
-
-  #if 0      // stored in EditingState
-  // cursor position (0-based)
-  int cursorLine;
-  int cursorCol;
-
-  // selection state: a location, and a flag to enable it
-  int selectLine;
-  int selectCol;
-  bool selectEnabled;
-
-  // scrolling offset; must change via setView()
-  int const firstVisibleLine, firstVisibleCol;
-
-  // information about viewable area; these are set by the
-  // updateView() routine and should be treated as read-only by other
-  // code; by "visible", I mean the entire line or column is visible
-  int lastVisibleLine, lastVisibleCol;
-
-  // when nonempty, any buffer text matching this string will
-  // be highlighted in the 'hit' style; match is carried out
-  // under influence of 'hitTextFlags'
-  string hitText;
-  Buffer::FindStringFlags hitTextFlags;
-  #endif // 0
 
   // the following fields are valid only after normalizeSelect(),
   // and before any subsequent modification to cursor or select
@@ -184,8 +176,11 @@ private:     // funcs
 
   // debugging
   static string lineColStr(int line, int col);
-  string firstVisStr() const { return lineColStr(firstVisibleLine, firstVisibleCol); }
-  string cursorStr() const { return lineColStr(cursorLine(), cursorCol()); }
+  string firstVisStr() const
+    { return lineColStr(this->firstVisibleLine,
+                        this->firstVisibleCol); }
+  string cursorStr() const
+    { return lineColStr(this->cursorLine(), this->cursorCol()); }
 
 protected:   // funcs
   // QWidget funcs
@@ -229,11 +224,13 @@ public:      // funcs
   void normalizeSelect(int cursorLine, int cursorCol);
   void normalizeSelect() { normalizeSelect(cursorLine(), cursorCol()); }
 
-  // change the current firstVisibleLine/Col (calls updateView());
-  // does *not* move the cursor
+  // Change the current firstVisibleLine/Col (calls updateView());
+  // does *not* move the cursor.
   void setView(int newFirstLine, int newFirstCol);
-  void setFirstVisibleLine(int L) { setView(L, firstVisibleCol); }
-  void setFirstVisibleCol(int C) { setView(firstVisibleLine, C); }
+  void setFirstVisibleLine(int L)
+    { this->setView(L, this->firstVisibleCol); }
+  void setFirstVisibleCol(int C)
+    { this->setView(this->firstVisibleLine, C); }
 
   // move the view by a delta; automatically truncates at the low end
   void moveView(int deltaLine, int deltaCol);
@@ -263,9 +260,12 @@ public:      // funcs
   // truncation at low end is automatic
   void moveViewAndCursor(int deltaLine, int deltaCol);
 
-  // size of view in lines/cols
-  int visLines() const { return lastVisibleLine-firstVisibleLine+1; }
-  int visCols() const { return lastVisibleCol-firstVisibleCol+1; }
+  // Number of fully visible lines/columns.  Part of the next
+  // line/col may also be visible.
+  int visLines() const
+    { return this->lastVisibleLine - this->firstVisibleLine + 1; }
+  int visCols() const
+    { return this->lastVisibleCol - this->firstVisibleCol + 1; }
 
   // show the info box near the cursor
   void showInfo(char const *info);

@@ -10,7 +10,14 @@
 #include "historybuf.h"   // HistoryBuffer
 
 
-// a convenience layer on top of HistoryBuffer
+// Represent a file being edited:
+//   * File contents.
+//   * Cursor location.
+//   * Undo history of changes to them.
+//
+// HistoryBuffer provides the core functionality for manipulating
+// these items.  Buffer is built on top of it and provides a
+// variety of useful composed manipulations.
 class Buffer : public HistoryBuffer {
 private:
   // check that line/col is positive

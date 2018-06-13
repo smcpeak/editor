@@ -12,9 +12,11 @@
 #include "hilite.h"     // Highlighter
 
                   
-// editor widget editing state, saved so it can be restored
-// when the user switches back to this buffer
-class EditingState {
+// Editor widget editing state for a Buffer that is *used* when the
+// buffer is shown to the user, and *saved* when it is not.  This data
+// is copied between the Editor widget and the BufferState object as
+// the user cycles among open files.
+class SavedEditingState {
 public:      // data
   // cursor position (0-based)
   //int cursorLine;
@@ -35,12 +37,16 @@ public:      // data
   int selHighLine, selHighCol;   // whichever comes second
   #endif // 0
 
-  // scrolling offset; must change via setView()
+  // Scrolling offset.  Changes are done via Editor::setView(), which
+  // calls EditingState::setFirstVisibleLC().
   int const firstVisibleLine, firstVisibleCol;
 
-  // information about viewable area; these are set by the
+  // Information about viewable area; these are set by the
   // Editor::updateView() routine and should be treated as read-only by
-  // other code; by "visible", I mean the entire line or column is visible
+  // other code.
+  //
+  // By "visible", I mean the entire line or column is visible.  It may
+  // be that a portion of the next line/col is also visible.
   int lastVisibleLine, lastVisibleCol;
 
   // when nonempty, any buffer text matching this string will
@@ -50,19 +56,21 @@ public:      // data
   Buffer::FindStringFlags hitTextFlags;
 
 protected:   // funcs
-  // set firstVisibleLine/Col; for internal use by
-  // EditingState::copy, and Editor::setView()
+  // Set firstVisibleLine/Col; for use by EditingState::copy()
+  // and Editor::setView() *only*.
   void setFirstVisibleLC(int newFirstLine, int newFirstCol);
 
 public:      // funcs
-  EditingState();
-  ~EditingState();
+  SavedEditingState();
+  ~SavedEditingState();
 
   // copy editing state from 'src'
-  void copy(EditingState const &src);
+  void copySavedEditingState(SavedEditingState const &src);
 };
   
 
+// A Buffer, plus additional data about that buffer that the editor
+// UI needs whether or not this buffer is currently shown.
 class BufferState : public Buffer {
 public:      // data
   // name of file being edited
@@ -88,8 +96,9 @@ public:      // data
   // contents)
   Highlighter *highlighter;      // (nullable owner)
 
-  // saved editing state
-  EditingState savedState;
+  // Saved editing state to be restored to an Editor widget when
+  // the buffer becomes visible again.
+  SavedEditingState savedState;
   
 public:      // funcs
   BufferState();
