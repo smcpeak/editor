@@ -77,37 +77,12 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
   this->vertScroll = new QScrollBar(Qt::Vertical);
   this->vertScroll->setObjectName("vertScroll");
   editArea->addWidget(this->vertScroll, 0 /*row*/, 1 /*col*/);
-  connect(this->vertScroll, SIGNAL( valueChanged(int) ), this->editor, SLOT( scrollToLine(int) ));
+  connect(this->vertScroll, SIGNAL( valueChanged(int) ),
+          this->editor, SLOT( scrollToLine(int) ));
 
   // disabling horiz scroll for now..
   //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
   //connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
-
-  #if 0
-  QHBox *statusArea = new QHBox(mainArea, "status area");
-  statusArea->setFixedHeight(20);
-
-  //QStatusBar *statusArea = new QStatusBar(mainArea, "status area");
-  //statusArea->setFixedHeight(20);
-
-  position = new QLabel(statusArea, "cursor position label");
-  position->setFixedWidth(45);
-  //position->setBackgroundColor(QColor(0x60, 0x00, 0x80));   // purple
-  //position->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  //position->setLineWidth(1);
-
-  mode = new QLabel(statusArea);
-  //mode->setPixmap(state->pixSearch);
-  mode->setFixedWidth(65);
-
-  filename = new QLabel(statusArea, "filename label");
-  //filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-  //filename->setLineWidth(1);
-
-  // corner resize widget
-  QSizeGrip *corner = new QSizeGrip(statusArea, "corner grip");
-  corner->setFixedSize(20,20);
-  #endif // 0
 
   // menu
   {
@@ -426,19 +401,23 @@ void EditorWindow::helpAboutQt()
 
 void EditorWindow::editorViewChanged()
 {
-  // set the scrollbars
+  // Set the scrollbars.  In both dimensions, the range includes the
+  // current value so we can scroll arbitrarily far beyond the nominal
+  // size of the file contents.  Also, it is essential to set the range
+  // *before* setting the value, since otherwise the scrollbar's value
+  // will be clamped to the old range.
   if (horizScroll) {
-    horizScroll->setValue(editor->firstVisibleCol);
     horizScroll->setRange(0, max(editor->buffer->maxLineLength(),
                                  editor->firstVisibleCol));
+    horizScroll->setValue(editor->firstVisibleCol);
     horizScroll->setSingleStep(1);
     horizScroll->setPageStep(editor->visCols());
   }
 
   if (vertScroll) {
-    vertScroll->setValue(editor->firstVisibleLine);
     vertScroll->setRange(0, max(editor->buffer->numLines(),
                                 editor->firstVisibleLine));
+    vertScroll->setValue(editor->firstVisibleLine);
     vertScroll->setSingleStep(1);
     vertScroll->setPageStep(editor->visLines());
   }
