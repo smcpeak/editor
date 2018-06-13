@@ -28,6 +28,7 @@
 #include <qlineedit.h>       // QLineEdit
 
 #include <QDesktopWidget>
+#include <QStyleFactory>
 
 
 char const appName[] = "An Editor";   // TODO: find better name
@@ -525,6 +526,23 @@ void EditorWindow::windowNewWindow()
 }
 
 
+// ---------------- EditorProxyStyle ----------------
+int EditorProxyStyle::pixelMetric(
+  PixelMetric metric,
+  const QStyleOption *option,
+  const QWidget *widget) const
+{
+  if (metric == PM_MaximumDragDistance) {
+    // The standard behavior is when the mouse is dragged too far away
+    // from the scrollbar, it jumps back to its original position. I
+    // find that behavior annoying and useless.  This disables it.
+    return -1;
+  }
+
+  return QProxyStyle::pixelMetric(metric, option, widget);
+}
+
+
 // ---------------- GlobalState ----------------
 GlobalState *GlobalState::state = NULL;
 
@@ -538,12 +556,19 @@ GlobalState::GlobalState(int argc, char **argv)
     state = this;
   }
 
-#ifdef HAS_QWINDOWSSTYLE
-  // use my variant of the Windows style, if we're using Windows at all
-  if (0==strcmp("QWindowsStyle", style().className())) {
-    setStyle(new MyWindowsStyle);
+  // Optionally print the list of styles Qt supports.
+  if (tracingSys("style")) {
+    QStringList keys = QStyleFactory::keys();
+    cout << "style keys:\n";
+    for (int i=0; i < keys.size(); i++) {
+      cout << "  " << keys.at(i).toUtf8().constData() << endl;
+    }
   }
-#endif // HAS_QWINDOWSSTYLE
+
+  // Activate my own modification to the Qt style.  This works even
+  // if the user overrides the default style, for example, by passing
+  // "-style Windows" on the command line.
+  this->setStyle(new EditorProxyStyle);
 
   EditorWindow *ed = createNewWindow(createNewFile());
 

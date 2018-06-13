@@ -5,8 +5,9 @@
 #define MAIN_H
 
 #include <qwidget.h>         // QWidget
-// TODO: replacement?   #include <qwindowsstyle.h>   // QWindowsStyle
 #include <qapplication.h>    // QApplication
+
+#include <QProxyStyle>
 
 #include "bufferstate.h"     // BufferState
 #include "objlist.h"         // ObjList
@@ -102,26 +103,14 @@ public slots:
 };
 
 
-// This test matches /usr/lib/qt-3.3.3/include/qwindowsstyle.h.
-// I do not know how portable it is across versions of Qt.
-// TODO: replacement?
-//#if !defined(QT_NO_STYLE_WINDOWS) || defined(QT_PLUGIN)
-//  #define HAS_QWINDOWSSTYLE
-//#endif
-
-
-#ifdef HAS_QWINDOWSSTYLE
-// define style as variant of Windows style
-class MyWindowsStyle : public QWindowsStyle {
-  // I'm hoping that omitting Q_OBJECT will make 'moc' leave
-  // this class alone...
-  //Q_OBJECT
-
+// Define my look and feel overrides.
+class EditorProxyStyle : public QProxyStyle {
 public:
-  // disable "weird jump back" scrolling behavior
-  int maximumSliderDragDistance() const { return -1; }
+  int pixelMetric(
+    PixelMetric metric,
+    const QStyleOption *option = NULL,
+    const QWidget *widget = NULL) const override;
 };
-#endif // HAS_QWINDOWSSTYLE
 
 
 // global state of the editor: buffers, windows, etc.
