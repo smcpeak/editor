@@ -570,7 +570,7 @@ GlobalState::GlobalState(int argc, char **argv)
     ed->fileOpenFile(argv[i]);
   }
 
-  // TODO: replacement?
+  // TODO: replacement?  Need to test on Linux.
 #if 0
   // this gets the user's preferred initial geometry from
   // the -geometry command line, or xrdb database, etc.
