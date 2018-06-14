@@ -79,6 +79,11 @@ moc_%.cc: %.h
 	$(UIC) -o $*.gen.h $*.ui
 
 
+# Encode help files as C string literals.
+%.doc.gen.cc %.doc.gen.h: doc/%.txt
+	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
+
+
 # ---------------- gap test program -----------------
 TOCLEAN += testgap
 testgap: gap.h testgap.cc
@@ -143,6 +148,7 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 
 # ------------------ the editor ---------------------
 main.o: gotoline.gen.h
+main.o: keybindings.doc.gen.h
 
 EDITOR_OBJS := \
   buffer.o \
@@ -156,6 +162,7 @@ EDITOR_OBJS := \
   historybuf.o \
   incsearch.o \
   inputproxy.o \
+  keybindings.doc.gen.o \
   lex_hilite.o \
   main.o \
   moc_editor.o \

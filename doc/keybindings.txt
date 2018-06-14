@@ -1,0 +1,43 @@
+Esc or Ctrl+G: Cancel.
+
+File:
+  F2: Save file.
+  F3: Open file.
+
+Cursor movement:
+  Ctrl+F or Right: Move cursor right one column.
+  Ctrl+B or Left: Move cursor left one column.
+  Ctrl+A or Home: Move cursor to start of line.
+  Ctrl+E or End: Move cursor to end of line.
+  Ctrl+P or Up: Move cursor up.
+  Ctrl+N or Down: Move cursor down.
+  Ctrl+PgUp: Go to top of file.
+  Ctrl+PgDn: Go to bottom of file.
+
+All of the cursor movement commands can be augmented by
+pressing Shift, which will start or extend the selection.
+
+Ctrl+D or Del: Delete character under cursor.
+Backspace: Delete character left of cursor.
+  
+Scrolling:
+  Ctrl+W or Ctrl+Up: Scroll up (toward top of file).
+  Ctrl+Z or Ctrl+Down: Scroll down (toward bottom of file).
+  Ctrl+Left: Scroll left.
+  Ctrl+Right: Scroll right.
+  Ctrl+L: Scroll up/down so cursor line is in center of window.
+
+Clipboard:
+  Ctrl+C or Ctrl+Ins: Copy.
+  Ctrl+V or Shift+Ins: Paste.
+  Ctrl+X or Shift+Del: Cut.
+
+Alt+Backspace: Undo.
+Alt+Shift+Backspace: Redo.
+    
+Alt+Left: Rigidly un-indent selected lines by 2 columns.
+Alt+Right: Rigidly indent selected lines by 2 columns.
+                            
+Ctrl+S: Search.
+Alt+D: Insert current date and time.
+Alt+G: Go to specified line.

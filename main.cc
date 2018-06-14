@@ -1,32 +1,34 @@
 // main.cc
 // code for main.cc, and application main() function
 
-#include "main.h"            // EditorWindow
-#include "buffer.h"          // Buffer
-#include "editor.h"          // Editor
-#include "exc.h"             // XOpen
-#include "trace.h"           // TRACE_ARGS
-#include "c_hilite.h"        // C_Highlighter
-#include "incsearch.h"       // IncSearch
-#include "strutil.h"         // sm_basename
-#include "mysig.h"           // printSegfaultAddrs
-#include "status.h"          // StatusDisplay
-#include "gotoline.gen.h"    // Ui_GotoLine
-#include "qhboxframe.h"      // QHBoxFrame
-#include "qtutil.h"          // toQString
+#include "main.h"                      // EditorWindow
 
-#include <string.h>          // strrchr
-#include <stdlib.h>          // atoi
+#include "buffer.h"                    // Buffer
+#include "c_hilite.h"                  // C_Highlighter
+#include "editor.h"                    // Editor
+#include "exc.h"                       // XOpen
+#include "gotoline.gen.h"              // Ui_GotoLine
+#include "incsearch.h"                 // IncSearch
+#include "keybindings.doc.gen.h"       // doc_keybindings
+#include "mysig.h"                     // printSegfaultAddrs
+#include "qhboxframe.h"                // QHBoxFrame
+#include "qtutil.h"                    // toQString
+#include "status.h"                    // StatusDisplay
+#include "strutil.h"                   // sm_basename
+#include "trace.h"                     // TRACE_ARGS
 
-#include <qmenubar.h>        // QMenuBar
-#include <qscrollbar.h>      // QScrollBar
-#include <qlabel.h>          // QLabel
-#include <qfiledialog.h>     // QFileDialog
-#include <qmessagebox.h>     // QMessageBox
-#include <qlayout.h>         // QVBoxLayout
-#include <qsizegrip.h>       // QSizeGrip
-#include <qstatusbar.h>      // QStatusBar
-#include <qlineedit.h>       // QLineEdit
+#include <string.h>                    // strrchr
+#include <stdlib.h>                    // atoi
+
+#include <qmenubar.h>                  // QMenuBar
+#include <qscrollbar.h>                // QScrollBar
+#include <qlabel.h>                    // QLabel
+#include <qfiledialog.h>               // QFileDialog
+#include <qmessagebox.h>               // QMessageBox
+#include <qlayout.h>                   // QVBoxLayout
+#include <qsizegrip.h>                 // QSizeGrip
+#include <qstatusbar.h>                // QStatusBar
+#include <qlineedit.h>                 // QLineEdit
 
 #include <QDesktopWidget>
 #include <QStyleFactory>
@@ -124,6 +126,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
             this, SLOT(windowBufferChoiceActivated(QAction*)));
 
     QMenu *help = this->menuBar->addMenu("&Help");
+    help->addAction("&Keybindings...", this, SLOT(helpKeybindings()));
     help->addAction("&About ...", this, SLOT(helpAbout()));
     help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
   }
@@ -381,6 +384,15 @@ void EditorWindow::windowCycleBuffer()
   xassert(cur >= 0);
   cur = (cur + 1) % globalState->buffers.count();     // cycle
   setBuffer(globalState->buffers.nth(cur));
+}
+
+
+void EditorWindow::helpKeybindings()
+{
+  QMessageBox m(this);
+  m.setWindowTitle("Keybindings");
+  m.setText(doc_keybindings);
+  m.exec();
 }
 
 

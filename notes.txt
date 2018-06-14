@@ -1,5 +1,10 @@
 
 TODOs:
+  - Ctrl+S (search) does not work
+  - Check for leaking GUI objects
+  - International format for date/time
+  - Tab and Shift-Tab as alternates for rigid indentation
+
   - "*" indicator of unsaved work is invisible once there are
     5 characters of line and column information
   - factor out the Qt stuff so I can have a curses version

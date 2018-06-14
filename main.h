@@ -94,6 +94,7 @@ public slots:
   void windowBufferChoiceActivated(QAction *action);
   void windowBufferChoice();
 
+  void helpKeybindings();
   void helpAbout();
   void helpAboutQt();
 

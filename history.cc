@@ -797,6 +797,7 @@ void HistoryStats::printInfo() const
   printf("  mallocObjects: %d\n", mallocObjects);
   printf("  reservedSpace: %d\n", reservedSpace);
   printf("  totalUsage() : %d\n", totalUsage());
+  fflush(stdout);
 }
 
 

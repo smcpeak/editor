@@ -273,6 +273,8 @@ void BufferCore::dumpRepresentation() const
       delete[] p;
     }
   }
+
+  fflush(stdout);
 }
 
 

@@ -1034,9 +1034,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
   // <key> and shift-<key>
   else if (modifiers == Qt::NoModifier || modifiers == Qt::ShiftModifier) {
+    bool shift = (modifiers == Qt::ShiftModifier);
     switch (k->key()) {
       case Qt::Key_Insert:
-        if (modifiers == Qt::ShiftModifier) {
+        if (shift) {
           editPaste();
         }
         else {
@@ -1044,73 +1045,77 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
         break;
 
-      case Qt::Key_Left:     cursorLeft(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_Right:    cursorRight(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_Home:     cursorHome(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_End:      cursorEnd(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_Up:       cursorUp(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_Down:     cursorDown(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_PageUp:   cursorPageUp(modifiers==Qt::ShiftModifier); break;
-      case Qt::Key_PageDown: cursorPageDown(modifiers==Qt::ShiftModifier); break;
+      case Qt::Key_Left:     cursorLeft(shift); break;
+      case Qt::Key_Right:    cursorRight(shift); break;
+      case Qt::Key_Home:     cursorHome(shift); break;
+      case Qt::Key_End:      cursorEnd(shift); break;
+      case Qt::Key_Up:       cursorUp(shift); break;
+      case Qt::Key_Down:     cursorDown(shift); break;
+      case Qt::Key_PageUp:   cursorPageUp(shift); break;
+      case Qt::Key_PageDown: cursorPageDown(shift); break;
 
       case Qt::Key_Backspace: {
-        fillToCursor();
-        //buffer->changed = true;
+        if (!shift) {
+          fillToCursor();
+          //buffer->changed = true;
 
-        if (this->selectEnabled) {
-          editDelete();
-        }
-        else if (cursorCol() == 0) {
-          if (cursorLine() == 0) {
-            // do nothing
+          if (this->selectEnabled) {
+            editDelete();
+          }
+          else if (cursorCol() == 0) {
+            if (cursorLine() == 0) {
+              // do nothing
+            }
+            else {
+              // move to end of previous line
+              buffer->moveToPrevLineEnd();
+
+              // splice them together
+              spliceNextLine();
+            }
           }
           else {
-            // move to end of previous line
-            buffer->moveToPrevLineEnd();
-
-            // splice them together
-            spliceNextLine();
+            // remove the character to the left of the cursor
+            buffer->deleteLR(true /*left*/, 1);
           }
-        }
-        else {
-          // remove the character to the left of the cursor
-          buffer->deleteLR(true /*left*/, 1);
-        }
 
-        scrollToCursor();
+          scrollToCursor();
+        }
         break;
       }
 
       case Qt::Key_Delete: {
-        if (modifiers == Qt::NoModifier) {
-          deleteCharAtCursor();
-        }
-        else {   // shift-delete
+        if (shift) {
           editCut();
+        }
+        else {
+          deleteCharAtCursor();
         }
         break;
       }
 
       case Qt::Key_Enter:
       case Qt::Key_Return: {
-        fillToCursor();
-        //buffer->changed = true;
+        if (!shift) {
+          fillToCursor();
+          //buffer->changed = true;
 
-        // typing replaces selection
-        if (this->selectEnabled) {
-          editDelete();
+          // typing replaces selection
+          if (this->selectEnabled) {
+            editDelete();
+          }
+
+          buffer->insertNewline();
+
+          // make sure we can see as much to the left as possible
+          setFirstVisibleCol(0);
+
+          // auto-indent
+          int ind = buffer->getAboveIndentation(cursorLine()-1);
+          buffer->insertSpaces(ind);
+
+          scrollToCursor();
         }
-
-        buffer->insertNewline();
-
-        // make sure we can see as much to the left as possible
-        setFirstVisibleCol(0);
-
-        // auto-indent
-        int ind = buffer->getAboveIndentation(cursorLine()-1);
-        buffer->insertSpaces(ind);
-
-        scrollToCursor();
         break;
       }
 
