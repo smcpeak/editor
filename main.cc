@@ -12,6 +12,7 @@
 #include "mysig.h"           // printSegfaultAddrs
 #include "status.h"          // StatusDisplay
 #include "gotoline.gen.h"    // Ui_GotoLine
+#include "qhboxframe.h"      // QHBoxFrame
 #include "qtutil.h"          // toQString
 
 #include <string.h>          // strrchr
@@ -69,9 +70,14 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
   this->statusArea->setObjectName("statusArea");
   mainArea->addWidget(this->statusArea);
 
+  // Put a black one-pixel frame around the editor widget.
+  QHBoxFrame *editorFrame = new QHBoxFrame();
+  editorFrame->setFrameStyle(QFrame::Box);
+  editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
+
   this->editor = new Editor(NULL /*temporary*/, this->statusArea);
   this->editor->setObjectName("editor widget");
-  editArea->addWidget(this->editor, 0 /*row*/, 0 /*col*/);
+  editorFrame->addWidget(this->editor);
   this->editor->setFocus();
   connect(this->editor, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
 
@@ -87,9 +93,6 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
 
   // menu
   {
-    // TODO: replacement?  menuBar->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    // TODO: replacement?  menuBar->setLineWidth(1);
-
     QMenu *file = this->menuBar->addMenu("&File");
     file->addAction("&New", this, SLOT(fileNewFile()));
     file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
