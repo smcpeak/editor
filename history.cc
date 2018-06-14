@@ -363,7 +363,7 @@ STATICDEF void HE_text::insert(
       col = buf.lineLength(line);
       
       // append splice text
-      buf.insertText(line, col, splice, spliceLen);
+      buf.insertText(line, col, splice.ptrC(), spliceLen);
     }
 
     // update buffer cursor; this only changes it if we were doing a
