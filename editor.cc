@@ -48,7 +48,7 @@
 // ---------------------- Editor --------------------------------
 Editor::Editor(BufferState *buf, StatusDisplay *stat,
                QWidget *parent)
-  : QWidget(parent),   // TODO: Are these needed? WRepaintNoErase | WResizeNoErase | WNorthWestGravity
+  : QWidget(parent),
     SavedEditingState(),
     infoBox(NULL),
     status(stat),
@@ -74,17 +74,6 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
   
   // required to accept focus
   setFocusPolicy(Qt::StrongFocus);
-
-  // use the color scheme for text widgets; typically this means
-  // a white background, instead of a gray background
-  //setBackgroundMode(PaletteBase);
-
-  // needed to cause Qt not to erase window
-  // TODO: What is the equivalent in Qt5?
-  //setBackgroundMode(NoBackground);
-
-  // fixed color
-  //setBackgroundColor(normalBG);
 
   resetView();
 }
