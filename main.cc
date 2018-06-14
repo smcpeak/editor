@@ -49,7 +49,6 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     //filename(NULL),
     windowMenu(NULL),
     bufferChoiceActions(),
-    recentMenuBuffer(NULL),
     isearch(NULL)
 {
   // will build a layout tree to manage sizes of child widgets
@@ -463,56 +462,43 @@ void EditorWindow::rebuildWindowMenu()
       SLOT(windowBufferChoice()), // slot name
       keySequence);               // accelerator
 
+    // Associate the action with the BufferState object.
+    action->setData(QVariant(b->windowMenuId));
+
     this->bufferChoiceActions.push(action);
   }
 }
 
-  
-// the user has chosen a window menu item; this is called
-// just before windowBufferChoice(), for menu items that
-// select buffers; this also gets called when the user uses
-// the accelerator keybinding
+
+// Respond to the choice of an entry from the Window menu.
 void EditorWindow::windowBufferChoiceActivated(QAction *action)
 {
-  trace("menu") << "window buffer choice activated" << endl;
+  TRACE("menu", "window buffer choice activated");
 
-  // search through the list of buffers to find the one
-  // that this action refers to; the buffers were marked
-  // with their actions when the buffer menu was built
+  // Search through the list of buffers to find the one
+  // that this action refers to.
   FOREACH_OBJLIST_NC(BufferState, this->globalState->buffers, iter) {
     BufferState *b = iter.data();
 
-    // TODO: This is not right because the title is not
-    // necessarily unique.  Qt3 had numeric menu IDs that
-    // I could use to distinguish the entries, but Qt5 only
-    // has the QAction pointer, which is not safe to share
-    // across EditorWindows.
-    if (toQString(b->title) == action->text()) {
-      this->recentMenuBuffer = b;
-      trace("menu") << "window buffer choice is: " << b->filename << endl;
+    if (b->windowMenuId == action->data().toInt()) {
+      TRACE("menu", "window buffer choice is: " << b->filename);
+      this->setBuffer(b);
       return;
     }
   }
 
   // the id doesn't match any that I'm aware of; this happens
   // for window menu items that do *not* switch to some buffer
-  trace("menu") << "window buffer choice did not match any buffer" << endl;
-  this->recentMenuBuffer = NULL;
+  TRACE("menu", "window buffer choice did not match any buffer");
 }
 
-// respond to a choice of a buffer in the window item
+// This is just a placeholder.  Every QMenu::addAction() that
+// accepts a shortcut also insists on having a receiver, so here
+// we are.  But 'windowBufferChoiceActivated' does all the work.
 void EditorWindow::windowBufferChoice()
 {
-  trace("menu") << "window buffer choice\n";
-
-  if (this->recentMenuBuffer) {
-    setBuffer(this->recentMenuBuffer);
-  }
-  else {
-    // should not be reachable
-    complain("windowBufferChoice() called but recentMenuBuffer "
-             "is NULL!");
-  }
+  TRACE("menu", "window buffer choice");
+  return;
 }
 
 

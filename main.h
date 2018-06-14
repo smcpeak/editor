@@ -51,8 +51,6 @@ public:      // data
   // pull them out of the Window menu, we have to delete them.
   ArrayStack<QAction*> bufferChoiceActions;
 
-  BufferState *recentMenuBuffer;
-
   // incremental search system
   IncSearch *isearch;                // (owner)
 

@@ -45,10 +45,15 @@ void SavedEditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
 
 
 // ----------------------- BufferState ---------------------------
+// Do not start with 0 because QVariant::toInt() returns 0 to
+// indicate failure.
+/*static*/ int BufferState::nextWindowMenuId = 1;
+
 BufferState::BufferState()
   : Buffer(),
     filename(),
     title(),
+    windowMenuId(nextWindowMenuId++),
     hotkeyDigit(0),
     //changed(false),
     highlighter(NULL),

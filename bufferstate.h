@@ -72,6 +72,10 @@ public:      // funcs
 // A Buffer, plus additional data about that buffer that the editor
 // UI needs whether or not this buffer is currently shown.
 class BufferState : public Buffer {
+private:     // static data
+  // Next value to use when assigning menu ids.
+  static int nextWindowMenuId;
+
 public:      // data
   // name of file being edited
   string filename;
@@ -80,6 +84,10 @@ public:      // data
   // to the filename, but perhaps only the last part of
   // the fully-qualified path name, etc.
   string title;
+
+  // Numeric identifier for this buffer.  This is used to identify
+  // it in the Window menu.
+  int const windowMenuId;
 
   // Digit the user can press Alt with to jump to this buffer,
   // or 0 for no hotkey.  It is a number in [0,9].
