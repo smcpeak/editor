@@ -353,7 +353,7 @@ void IncSearch::updateStatus()
   if (status) {
     status->status->setText(statusText());
 
-    trace("mode") << "setting search-mode pixmap\n";
+    TRACE("mode", "setting search-mode pixmap");
     status->mode->setPixmap(
       mode==M_SEARCH?          pixmaps->search :
       mode==M_GET_REPLACEMENT? pixmaps->getReplace :

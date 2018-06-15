@@ -1692,8 +1692,9 @@ void Editor::observeDeleteText(BufferCore const &buf, int line, int col, int len
 
 void Editor::inputProxyDetaching()
 {
-  trace("mode") << "clearing mode pixmap\n";
-  status->mode->setText("");   // no pixmap
+  TRACE("mode", "clearing mode pixmap");
+  QPixmap nullPixmap;
+  this->status->mode->setPixmap(nullPixmap);
 }
 
 
