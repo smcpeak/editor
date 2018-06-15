@@ -5,6 +5,7 @@
 #include "editor.h"        // Editor
 #include "pixmaps.h"       // Pixmaps
 #include "status.h"        // StatusDisplay
+#include "test.h"          // PVAL
 #include "trace.h"         // TRACE
 
 #include <qevent.h>        // QKeyEvent
@@ -199,6 +200,19 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
           // remove final character
           text = string(text.c_str(), text.length()-1);
           if (text.length() > 0) {
+            // This is not right, or at least may not be what the
+            // user expects, since it does not completely undo the
+            // effect of typing.  For example, if the buffer contains
+            // "a ab", and the user types Ctrl+S, A, B, Backspace,
+            // one might expect to end up at the same place as after
+            // Ctrl+S, A, but it does not: the latter highlights the
+            // first "a" while the former highlights the second.
+            //
+            // I speculate that I might get what I want by maintaining
+            // a stack of previous positions, pushing when the user
+            // types and popping on Backspace.  But then what do I do
+            // about Left and Right?  The stack effectively forgets
+            // them after Backspace.
             findString();     // adjust match
           }
           else {
@@ -326,11 +340,14 @@ bool IncSearch::searchPseudoKey(InputPseudoKey pkey)
 
 void IncSearch::resetToSearchStart()
 {
+  this->curLine = this->beginLine;
+  this->curCol = this->beginCol;
   ed->cursorTo(beginLine, beginCol);
   ed->setView(beginFVLine, beginFVCol);
   ed->selectEnabled = false;
   ed->hitText = "";
   ed->redraw();
+  this->updateStatus();
 }
 
 
@@ -365,6 +382,20 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
 
 void IncSearch::updateStatus()
 {
+  if (tracingSys("incsearch")) {
+    // This serves as a crude way to debug state transitions in this
+    // module since nearly everything does 'updateStatus' at the end.
+    cout << "---------\n";
+    PVAL(beginLine);
+    PVAL(beginCol);
+    PVAL(beginFVLine);
+    PVAL(beginFVCol);
+    PVAL(text);
+    PVAL(curLine);
+    PVAL(curCol);
+    PVAL(match);
+  }
+
   if (status) {
     status->status->setText(statusText());
 

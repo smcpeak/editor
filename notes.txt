@@ -1,9 +1,10 @@
 
 TODOs:
-  - search does not go to right place after:
-    Ctrl+S, Q, Backspace, W
+  - weird vertical bars searching for "a" in file "a ab"
   - Tab and Shift-Tab as alternates for rigid indentation
 
+  - Ctrl+S still does not work very well with Backspace;
+    see comments in IncSearch::searchKeyMap
   - fix the date/time time zone
   - "*" indicator of unsaved work is invisible once there are
     5 characters of line and column information
