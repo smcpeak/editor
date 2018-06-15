@@ -70,6 +70,9 @@ private:     // funcs
   // extension of this one, across multiple windows
   friend class GlobalState;
 
+protected:   // funcs
+  void closeEvent(QCloseEvent *event) override;
+
 public:      // funcs
   EditorWindow(GlobalState *state, BufferState *initBuffer,
                QWidget *parent = NULL);
@@ -81,12 +84,21 @@ public:      // funcs
   // buffer user is editing: returns editor->buffer
   BufferState *theBuffer();
 
+  // Return true if either there are no unsaved changes or the user
+  // responds to a GUI dialog and says it is ok to quit.
+  bool canQuitApplication();
+
+  // Interactively ask the user if it is ok to discard changes,
+  // returning true if they say it is.
+  bool okToDiscardChanges(string const &descriptionOfChanges);
+
 public slots:
   void fileNewFile();
   void fileOpen();
   void fileSave();
   void fileSaveAs();
   void fileClose();
+  void fileExit();
 
   void editISearch();
   void editGotoLine();

@@ -31,6 +31,7 @@
 #include <qstatusbar.h>                // QStatusBar
 #include <qlineedit.h>                 // QLineEdit
 
+#include <QCloseEvent>
 #include <QDesktopWidget>
 #include <QStyleFactory>
 
@@ -141,7 +142,7 @@ void EditorWindow::buildMenu()
     file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
     file->addAction("&Close", this, SLOT(fileClose()));
     file->addSeparator();
-    file->addAction("E&xit", this->globalState, SLOT(quit()));
+    file->addAction("E&xit", this, SLOT(fileExit()));
   }
 
   {
@@ -330,21 +331,56 @@ void EditorWindow::fileClose()
 {
   BufferState *b = theBuffer();
   if (b->unsavedChanges()) {
-    int choice =
-      QMessageBox::information(this, "Editor",
-        "This file has unsaved changes.  Do you want to "
-        "close it anyway?",
-        "&Don't Close",
-        "&Close",
-        QString::null,    // no third button
-        0,                // Enter -> Don't close
-        1);               // Escape -> Close
-    if (choice == 0) {
-      return;            // Don't close
+    stringBuilder msg;
+    msg << "The file \"" << b->filename << "\" has unsaved changes.  "
+        << "Discard these changes and close this file anyway?";
+    if (!this->okToDiscardChanges(msg)) {
+      return;
     }
   }
 
   globalState->deleteBuffer(b);
+}
+
+
+bool EditorWindow::canQuitApplication()
+{
+  stringBuilder msg;
+  int ct=0;
+  msg << "The following buffers have unsaved changes:\n\n";
+  FOREACH_OBJLIST(BufferState, this->globalState->buffers, iter) {
+    if (iter.data()->unsavedChanges()) {
+      ct++;
+      msg << " * " << iter.data()->filename << '\n';
+    }
+  }
+
+  if (ct > 0) {
+    msg << "\nDiscard these changes and quit anyway?";
+    return this->okToDiscardChanges(msg);
+  }
+
+  return true;
+}
+
+
+bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
+{
+  QMessageBox box(this);
+  box.setWindowTitle("Unsaved Changes");
+  box.setText(toQString(descriptionOfChanges));
+  box.addButton(QMessageBox::Discard);
+  box.addButton(QMessageBox::Cancel);
+  int ret = box.exec();
+  return (ret == QMessageBox::Discard);
+}
+
+
+void EditorWindow::fileExit()
+{
+  if (this->canQuitApplication()) {
+    GlobalState::quit();
+  }
 }
 
 
@@ -552,6 +588,19 @@ void EditorWindow::windowNewWindow()
 {
   EditorWindow *ed = this->globalState->createNewWindow(this->theBuffer());
   ed->show();
+}
+
+
+void EditorWindow::closeEvent(QCloseEvent *event)
+{
+  if (this->globalState->windows.count() == 1) {
+    if (!this->canQuitApplication()) {
+      event->ignore();    // Prevent app from closing.
+      return;
+    }
+  }
+
+  event->accept();
 }
 
 

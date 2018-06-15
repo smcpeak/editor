@@ -12,7 +12,6 @@ TODOs:
   - multiple cursor display options; include an emacs-like mode
   - compilation mode
   - save/restore set of open buffers
-  - ask before quitting when files have unsaved changes
   - periodic autosave; do that when receiving SIGTERM/QUIT/INT also
   - do not open the same file more than once
   - ctrl-i: open file at cursor
@@ -22,7 +21,6 @@ TODOs:
   - if I press Delete while the cursor is at the left edge of a blank
     line, make it delete that line even if there is whitespace on it
   - highlight .cpp like .cc
-  - print tabs as (e.g.) 8 spaces
   - implement ctrl+alt+up
   - bug: this sequence leads to the menu having kbd focus:
     - alt depressed
