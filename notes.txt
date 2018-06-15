@@ -35,8 +35,6 @@ TODOs:
   - bug: selection in nonfocused window causes assertion failure
   - Ctrl+J: justify paragraph, esp. comments
   - File|Revert to saved, and keybinding F12
-  - bug: selected text at line start causes bolded characters after it
-    to be underlined
   - performance!  smarter updates, etc.
   - ctrl-enter to move to end of next line
   - tabs along the top to show file name, and ability to rearrange

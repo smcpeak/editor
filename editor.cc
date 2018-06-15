@@ -45,6 +45,10 @@
 #include <time.h>            // time(), localtime()
 
 
+// Distance below the baseline to draw an underline.
+int const UNDERLINE_OFFSET = 2;
+
+
 // ---------------------- Editor --------------------------------
 int Editor::objectCount = 0;
 
@@ -613,15 +617,8 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         // might not be consistent across fonts, so I might want to have
         // a user-specifiable underlining offset.. also, I don't want this
         // going into the next line, so truncate according to descent
-        //
-        // TODO: I think this is buggy.  If 'underlining' is true, then we
-        // increase 'baseline' once per segment as we paint?  Except the
-        // truncation at 'descent' keeps it from going crazy, but it still
-        // cannot be what I intended.  I think the intent was to draw a line
-        // up to 2 pixels below the baseline but not change the baseline
-        // itself.  I need to figure out when 'underlining' is true...
-        baseline += min(2 /*nominal underline offset*/, descent);
-        paint.drawLine(x, baseline, x + fontWidth*len, baseline);
+        int ulBaseline = baseline + min(UNDERLINE_OFFSET, descent);
+        paint.drawLine(x, ulBaseline, x + fontWidth*len, ulBaseline);
       }
 
       // advance to next style segment
@@ -658,15 +655,29 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         // The character shown inside the box should use the same
         // font as if it were not inside the cursor box, to minimize
         // the visual disruption caused by the cursor's presence.
+        //
+        // Unfortunately, that leads to some code duplication with the
+        // main painting code.
         Style cursorStyle = styles.getStyleAt(cursorCol);
         FontVariant cursorFV = styleDB->getStyle(cursorStyle).variant;
+        bool underlineCursor = false;
+        if (cursorFV == FV_UNDERLINE) {
+          cursorFV = FV_NORMAL;   // 'cursorFontForFV' does not map FV_UNDERLINE
+          underlineCursor = true;
+        }
         QtBDFFont *cursorFont = cursorFontForFV[cursorFV];
-      
+
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
         
         cursorFont->drawChar(paint, QPoint(x, baseline), 
                              text[visibleCursorCol]);
+
+        if (underlineCursor) {
+          paint.setPen(cursorFont->getFgColor());
+          int ulBaseline = baseline + min(UNDERLINE_OFFSET, descent);
+          paint.drawLine(x, ulBaseline, x + fontWidth, ulBaseline);
+        }
       }
         
       paint.restore();
@@ -689,6 +700,10 @@ void Editor::setDrawStyle(QPainter &paint,
                           StyleDB *db, Style s)
 {
   TextStyle const &ts = db->getStyle(s);
+
+  // This is needed for underlining since we draw that as a line,
+  // whereas otherwise the foreground color comes from the font glyphs.
+  paint.setPen(ts.foreground);
 
   paint.setBackground(ts.background);
 
