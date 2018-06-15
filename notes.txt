@@ -45,7 +45,6 @@ TODOs:
     so that they are in a natural order
   - ctrl-A while searching to cancel but stay there and move to
     the beginning of the line
-  - line number dialog box cuts off the label
   - reduce the frequency of leaving behind extra spaces; maybe add
     highlighting for them?
 

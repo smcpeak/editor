@@ -58,6 +58,7 @@ public:      // data
   IncSearch *isearch;                // (owner)
 
 private:     // funcs
+  void buildMenu();
   void setFileName(rostring name, rostring hotkey);
   void writeTheFile();
   void setBuffer(BufferState *b);

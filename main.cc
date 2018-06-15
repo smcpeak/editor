@@ -95,44 +95,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
   //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
   //connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
 
-  // menu
-  {
-    QMenu *file = this->menuBar->addMenu("&File");
-    file->addAction("&New", this, SLOT(fileNewFile()));
-    file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
-    file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
-    file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
-    file->addAction("&Close", this, SLOT(fileClose()));
-    file->addSeparator();
-    file->addAction("E&xit", theState, SLOT(quit()));
-
-    QMenu *edit = this->menuBar->addMenu("&Edit");
-    edit->addAction("&Undo", editor, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
-    edit->addAction("&Redo", editor, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
-    edit->addSeparator();
-    edit->addAction("Cu&t", editor, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
-    edit->addAction("&Copy", editor, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
-    edit->addAction("&Paste", editor, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
-    edit->addAction("&Delete", editor, SLOT(editDelete()));
-    edit->addSeparator();
-    edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
-    edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
-
-    QMenu *window = this->menuBar->addMenu("&Window");
-    window->addAction("&New Window", this, SLOT(windowNewWindow()));
-    window->addAction("Occupy Left", this, SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
-    window->addAction("Occupy Right", this, SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
-    window->addAction("Cycle buffer", this, SLOT(windowCycleBuffer()), Qt::Key_F6);  // for now
-    window->addSeparator();
-    this->windowMenu = window;
-    connect(this->windowMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(windowBufferChoiceActivated(QAction*)));
-
-    QMenu *help = this->menuBar->addMenu("&Help");
-    help->addAction("&Keybindings...", this, SLOT(helpKeybindings()));
-    help->addAction("&About ...", this, SLOT(helpAbout()));
-    help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
-  }
+  this->buildMenu();
 
   this->setWindowIcon(pixmaps->icon);
 
@@ -165,6 +128,54 @@ EditorWindow::~EditorWindow()
   this->globalState->windows.removeIfPresent(this);
 
   delete this->isearch;
+}
+
+
+void EditorWindow::buildMenu()
+{
+  {
+    QMenu *file = this->menuBar->addMenu("&File");
+    file->addAction("&New", this, SLOT(fileNewFile()));
+    file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
+    file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
+    file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
+    file->addAction("&Close", this, SLOT(fileClose()));
+    file->addSeparator();
+    file->addAction("E&xit", this->globalState, SLOT(quit()));
+  }
+
+  {
+    QMenu *edit = this->menuBar->addMenu("&Edit");
+    edit->addAction("&Undo", editor, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
+    edit->addAction("&Redo", editor, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+    edit->addSeparator();
+    edit->addAction("Cu&t", editor, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
+    edit->addAction("&Copy", editor, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
+    edit->addAction("&Paste", editor, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
+    edit->addAction("&Delete", editor, SLOT(editDelete()));
+    edit->addSeparator();
+    edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
+    edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
+  }
+
+  {
+    QMenu *window = this->menuBar->addMenu("&Window");
+    window->addAction("&New Window", this, SLOT(windowNewWindow()));
+    window->addAction("Occupy Left", this, SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
+    window->addAction("Occupy Right", this, SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
+    window->addAction("Cycle buffer", this, SLOT(windowCycleBuffer()), Qt::Key_F6);  // for now
+    window->addSeparator();
+    this->windowMenu = window;
+    connect(this->windowMenu, SIGNAL(triggered(QAction*)),
+            this, SLOT(windowBufferChoiceActivated(QAction*)));
+  }
+
+  {
+    QMenu *help = this->menuBar->addMenu("&Help");
+    help->addAction("&Keybindings...", this, SLOT(helpKeybindings()));
+    help->addAction("&About ...", this, SLOT(helpAbout()));
+    help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
+  }
 }
 
 
