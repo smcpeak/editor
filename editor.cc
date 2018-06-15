@@ -46,6 +46,8 @@
 
 
 // ---------------------- Editor --------------------------------
+int Editor::objectCount = 0;
+
 Editor::Editor(BufferState *buf, StatusDisplay *stat,
                QWidget *parent)
   : QWidget(parent),
@@ -76,10 +78,13 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
   setFocusPolicy(Qt::StrongFocus);
 
   resetView();
+
+  Editor::objectCount++;
 }
 
 Editor::~Editor()
 {
+  Editor::objectCount--;
   if (inputProxy) {
     inputProxy->detach();
   }

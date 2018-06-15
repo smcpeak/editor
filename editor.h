@@ -39,6 +39,10 @@ class Editor
     public BufferObserver {    // Watch my file while I don't have focus.
   Q_OBJECT
 
+public:     // static data
+  // Instances created minus instances destroyed.
+  static int objectCount;
+
 private:     // data
   // floating info box
   QLabel *infoBox;               // (nullable owner)

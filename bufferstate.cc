@@ -7,7 +7,7 @@
 #include <qnamespace.h>       // Qt class/namespace
 
 
-// ----------------------- EditingState --------------------------
+// ----------------------- SavedEditingState --------------------------
 SavedEditingState::SavedEditingState()
   : selectLine(0),
     selectCol(0),
@@ -47,7 +47,9 @@ void SavedEditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
 // ----------------------- BufferState ---------------------------
 // Do not start with 0 because QVariant::toInt() returns 0 to
 // indicate failure.
-/*static*/ int BufferState::nextWindowMenuId = 1;
+int BufferState::nextWindowMenuId = 1;
+
+int BufferState::objectCount = 0;
 
 BufferState::BufferState()
   : Buffer(),
@@ -58,10 +60,13 @@ BufferState::BufferState()
     //changed(false),
     highlighter(NULL),
     savedState()
-{}
+{
+  BufferState::objectCount++;
+}
 
 BufferState::~BufferState()
 {
+  BufferState::objectCount--;
   if (highlighter) {
     delete highlighter;
   }

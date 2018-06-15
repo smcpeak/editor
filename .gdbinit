@@ -1,4 +1,7 @@
 # .gdbinit  -*- sh -*-
+
+dir ../smbase
+dir ../smqtutil
  
 #file qtbdffont
 file editor

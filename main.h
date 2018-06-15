@@ -29,6 +29,9 @@ class GlobalState;           // this file
 class EditorWindow : public QWidget {
   Q_OBJECT
 
+public:      // static data
+  static int objectCount;
+
 public:      // data
   // associated global state
   GlobalState *globalState;                // (serf)
@@ -116,7 +119,7 @@ public:
 class GlobalState : public QApplication {
 public:       // data
   // the singleton global state object
-  static GlobalState *state;
+  static GlobalState *global_globalState;
 
   // pixmap set
   Pixmaps pixmaps;

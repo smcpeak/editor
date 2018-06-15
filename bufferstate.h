@@ -76,6 +76,9 @@ private:     // static data
   // Next value to use when assigning menu ids.
   static int nextWindowMenuId;
 
+public:      // static data
+  static int objectCount;
+
 public:      // data
   // name of file being edited
   string filename;

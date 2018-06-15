@@ -15,6 +15,7 @@
 #include "qtutil.h"                    // toQString
 #include "status.h"                    // StatusDisplay
 #include "strutil.h"                   // sm_basename
+#include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE_ARGS
 
 #include <string.h>                    // strrchr
@@ -35,6 +36,8 @@
 
 
 char const appName[] = "An Editor";   // TODO: find better name
+
+int EditorWindow::objectCount = 0;
 
 
 EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
@@ -142,12 +145,26 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
 
   // i-search; use filename area as the status display.
   this->isearch = new IncSearch(this->statusArea);
+
+  // I want this object destroyed when it is closed.
+  this->setAttribute(Qt::WA_DeleteOnClose);
+
+  this->globalState->windows.append(this);
+
+  EditorWindow::objectCount++;
 }
 
 
 EditorWindow::~EditorWindow()
 {
-  delete isearch;
+  EditorWindow::objectCount--;
+
+  // This object might have already been removed, for example because
+  // the GlobalState destructor is running, and is in the process of
+  // removing elements from the list and destroying them.
+  this->globalState->windows.removeIfPresent(this);
+
+  delete this->isearch;
 }
 
 
@@ -545,7 +562,7 @@ int EditorProxyStyle::pixelMetric(
 
 
 // ---------------- GlobalState ----------------
-GlobalState *GlobalState::state = NULL;
+GlobalState *GlobalState::global_globalState = NULL;
 
 GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
@@ -553,9 +570,9 @@ GlobalState::GlobalState(int argc, char **argv)
     buffers(),
     windows()
 {
-  if (state == NULL) {
-    state = this;
-  }
+  // There should only be one of these.
+  xassert(global_globalState == NULL);
+  global_globalState = this;
 
   // Optionally print the list of styles Qt supports.
   if (tracingSys("style")) {
@@ -598,24 +615,24 @@ GlobalState::GlobalState(int argc, char **argv)
   ed->show();
 }
 
+
+GlobalState::~GlobalState()
+{
+  if (global_globalState == this) {
+    global_globalState = NULL;
+  }
+}
+
+
 EditorWindow *GlobalState::createNewWindow(BufferState *initBuffer)
 {
   EditorWindow *ed = new EditorWindow(this, initBuffer);
   ed->setObjectName("main editor window");
-  windows.append(ed);
   rebuildWindowMenus();
 
   // NOTE: caller still has to say 'ed->show()'!
 
   return ed;
-}
-
-
-GlobalState::~GlobalState()
-{
-  if (state == this) {
-    state = NULL;
-  }
 }
 
 
@@ -700,6 +717,15 @@ void GlobalState::deleteBuffer(BufferState *b)
 }
 
 
+static void printObjectCounts(char const *when)
+{
+  cout << "Counts " << when << ':' << endl;
+  PVAL(Editor::objectCount);
+  PVAL(EditorWindow::objectCount);
+  PVAL(BufferState::objectCount);
+}
+
+
 int main(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -707,7 +733,19 @@ int main(int argc, char **argv)
   // Not implemented in smbase for mingw.
   //printSegfaultAddrs();
 
-  GlobalState app(argc, argv);
+  int ret;
+  {
+    GlobalState app(argc, argv);
+    ret = app.exec();
 
-  return app.exec();
+    if (tracingSys("objectCount")) {
+      printObjectCounts("before GlobalState destruction");
+    }
+  }
+
+  if (tracingSys("objectCount")) {
+    printObjectCounts("after GlobalState destruction");
+  }
+
+  return ret;
 }
