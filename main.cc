@@ -250,7 +250,7 @@ void EditorWindow::fileOpenFile(char const *name)
     if (bs->title.equals("untitled.txt") &&
         bs->numLines() == 1 &&
         bs->lineLength(0) == 0) {
-      trace("untitled") << "found untitled buffer to remove\n";
+      TRACE("untitled", "found untitled buffer to remove");
       untitled = iter.data();
 
       // I'm going to remove it, but can't yet b/c I
@@ -277,7 +277,7 @@ void EditorWindow::fileOpenFile(char const *name)
 void EditorWindow::fileSave()
 {
   if (theBuffer()->title.equals("untitled.txt")) {
-    trace("untitled") << "file has no title; invoking Save As ...\n";
+    TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
     return;
   }
@@ -638,7 +638,7 @@ EditorWindow *GlobalState::createNewWindow(BufferState *initBuffer)
 
 BufferState *GlobalState::createNewFile()
 {                        
-  trace("untitled") << "creating untitled buffer\n";
+  TRACE("untitled", "creating untitled buffer");
   BufferState *b = new BufferState();
   b->filename = "untitled.txt";    // TODO: find a unique variant of this name
   b->title = b->filename;

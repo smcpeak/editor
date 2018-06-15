@@ -363,8 +363,8 @@ void Editor::paintEvent(QPaintEvent *ev)
     else {
       // nonfocus synchronized update: use alternate location
       updateFrame(ev, nonfocusCursorLine, nonfocusCursorCol);
-      trace("nonfocus") << "drawing at " << nonfocusCursorLine
-                        << ":" << nonfocusCursorCol;
+      TRACE("nonfocus", "drawing at " << nonfocusCursorLine <<
+                        ":" << nonfocusCursorCol);
     }
   }
   catch (xBase &x) {
@@ -392,7 +392,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       rect = stringf("(%d,%d,%d,%d)", r.left(), r.top(),
                                       r.right(), r.bottom());
     }
-    trace("paint") << "frame: rect=" << rect << "\n";
+    TRACE("paint", "frame: rect=" << rect);
   }
                  
   // ---- setup painters ----
@@ -1601,7 +1601,7 @@ string Editor::getSelectedText()
 // ----------------- nonfocus situation ------------------
 void Editor::focusInEvent(QFocusEvent *e)
 {
-  trace("focus") << "editor(" << (void*)this << "): focus in\n";
+  TRACE("focus", "editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
 
   // move the editing cursor to where I last had it
@@ -1615,7 +1615,7 @@ void Editor::focusInEvent(QFocusEvent *e)
 
 void Editor::focusOutEvent(QFocusEvent *e)
 {
-  trace("focus") << "editor(" << (void*)this << "): focus out\n";
+  TRACE("focus", "editor(" << (void*)this << "): focus out");
   QWidget::focusOutEvent(e);
 
   stopListening();    // just in case

@@ -1,6 +1,5 @@
 
 TODOs:
-  - replace all(?) 'trace' with 'TRACE'
   - Ctrl+S (search) shows the "not found" message in a weird place
   - Tab and Shift-Tab as alternates for rigid indentation
 

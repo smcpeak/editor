@@ -5,7 +5,7 @@
 #include "editor.h"        // Editor
 #include "pixmaps.h"       // Pixmaps
 #include "status.h"        // StatusDisplay
-#include "trace.h"         // trace
+#include "trace.h"         // TRACE
 
 #include <qevent.h>        // QKeyEvent
 #include <qlabel.h>        // QLabel
