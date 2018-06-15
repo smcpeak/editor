@@ -547,6 +547,9 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       }
     }
 
+    // Clear the margin to the background color.
+    paint.eraseRect(0,0, leftMargin, fullLineHeight);
+
     // next style entry to use
     LineStyleIter style(styles);
     style.advanceChars(firstCol);
@@ -562,12 +565,6 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     // 'y' coordinate of the origin point of characters
     int baseline = ascent-1;
     
-    // clear the whole line to the background color
-    //
-    // TODO: is this necessary?  The eraseRect calls below would
-    // seem to obviate it.
-    paint.eraseRect(0,0, lineWidth, fullLineHeight);
-  
     // loop over segments with different styles
     while (x < lineWidth) {
       xassert(printed < visibleCols);
