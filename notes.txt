@@ -1,7 +1,6 @@
 
 TODOs:
-  - Tab and Shift-Tab as alternates for rigid indentation
-
+  - allow Tab character; issue is rendering support
   - Ctrl+S still does not work very well with Backspace;
     see comments in IncSearch::searchKeyMap
   - fix the date/time time zone

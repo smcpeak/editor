@@ -298,6 +298,10 @@ public:      // funcs
   void insertAtCursor(char const *text);
   void deleteAtCursor(int numChars);    // deletes to the left of cursor
 
+  // Delete the character to the left of the cursor.  Or, if some
+  // text is selected, delete that.
+  void deleteLeftOfCursor();
+
   // get selected text, or "" if nothing selected
   string getSelectedText();
 

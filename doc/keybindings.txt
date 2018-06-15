@@ -18,7 +18,7 @@ All of the cursor movement commands can be augmented by
 pressing Shift, which will start or extend the selection.
 
 Ctrl+D or Del: Delete character under cursor.
-Backspace: Delete character left of cursor.
+Ctrl+H or Backspace: Delete character left of cursor.
   
 Scrolling:
   Ctrl+W or Ctrl+Up: Scroll up (toward top of file).
@@ -34,10 +34,10 @@ Clipboard:
 
 Alt+Backspace: Undo.
 Alt+Shift+Backspace: Redo.
-    
-Alt+Left: Rigidly un-indent selected lines by 2 columns.
-Alt+Right: Rigidly indent selected lines by 2 columns.
-                            
+
+Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
+Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
+
 Ctrl+S: Search.
 Alt+D: Insert current date and time.
 Alt+G: Go to specified line.

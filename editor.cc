@@ -836,16 +836,6 @@ void Editor::keyPressEvent(QKeyEvent *k)
         editCopy();
         break;
 
-      case Qt::Key_U:
-        buffer->core().dumpRepresentation();
-        malloc_stats();
-        break;
-
-      case Qt::Key_H:
-        buffer->printHistory();
-        buffer->printHistoryStats();
-        break;
-
       case Qt::Key_PageUp:
         turnOffSelection();
         cursorToTop();
@@ -898,7 +888,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
       // latter should be reserved for accessing the menu, so I'm
       // not going to bind either by default
 
-      case Qt::Key_D:      deleteCharAtCursor(); break;
+      case Qt::Key_D:
+        this->deleteCharAtCursor();
+        break;
+
+      case Qt::Key_H:
+        this->deleteLeftOfCursor();
+        break;
 
       case Qt::Key_L:
         setView(max(0, cursorLine() - this->visLines()/2), 0);
@@ -936,23 +932,14 @@ void Editor::keyPressEvent(QKeyEvent *k)
     }
   }
 
-  // Ctrl+Alt+<key>
+  // Ctrl+Alt+<key>.  This is where I put commands mainly meant for
+  // use while debugging, although Ctrl+Alt+Left/Right (which are
+  // handled as menu shortcuts) are ordinary commands.  I recently
+  // learned that Ctrl+Alt is used on some keyboards to compose more
+  // complex characters, so it is probably best to avoid adding many
+  // keybindings for it.
   else if (modifiers == (Qt::ControlModifier | Qt::AltModifier)) {
     switch (k->key()) {
-      #if 0     // moved into EditorWindow class
-      case Qt::Key_Left: {
-        QWidget *top = qApp->mainWidget();
-        top->setGeometry(83, 55, 565, 867);
-        break;
-      }
-
-      case Qt::Key_Right: {
-        QWidget *top = qApp->mainWidget();
-        top->setGeometry(493, 55, 781, 867);
-        break;
-      }                                         
-      #endif // 0
-
       case Qt::Key_B: {
         breaker();     // breakpoint for debugger
         break;
@@ -988,6 +975,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
                    (elapsed / frames) << " ms/frame"));
         break;
       }
+
+      case Qt::Key_U:
+        buffer->core().dumpRepresentation();
+        malloc_stats();
+        break;
+
+      case Qt::Key_H:
+        buffer->printHistory();
+        buffer->printHistoryStats();
+        break;
 
       default:
         k->ignore();
@@ -1063,30 +1060,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_Backspace: {
         if (!shift) {
-          fillToCursor();
-          //buffer->changed = true;
-
-          if (this->selectEnabled) {
-            editDelete();
-          }
-          else if (cursorCol() == 0) {
-            if (cursorLine() == 0) {
-              // do nothing
-            }
-            else {
-              // move to end of previous line
-              buffer->moveToPrevLineEnd();
-
-              // splice them together
-              spliceNextLine();
-            }
-          }
-          else {
-            // remove the character to the left of the cursor
-            buffer->deleteLR(true /*left*/, 1);
-          }
-
-          scrollToCursor();
+          this->deleteLeftOfCursor();
         }
         break;
       }
@@ -1123,6 +1097,29 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
           scrollToCursor();
         }
+        break;
+      }
+
+      case Qt::Key_Tab: {
+        if (shift) {
+          // In my testing on Windows, this does not get executed,
+          // rather the key is delivered as Key_Backtab.  I do not
+          // know if the same is true on Linux and Mac, so I will
+          // leave this here just in case.
+          blockIndent(-2);
+        }
+        else {
+          // TODO: This should insert a Tab character if nothing is
+          // selected.  But right now it does not, and if the file
+          // already has a Tab in it, it is rendered the same as a
+          // space character.
+          blockIndent(+2);
+        }
+        break;
+      }
+
+      case Qt::Key_Backtab: {
+        blockIndent(-2);
         break;
       }
 
@@ -1183,6 +1180,35 @@ void Editor::deleteAtCursor(int amt)
   fillToCursor();
   buffer->deleteLR(true /*left*/, amt);
   //buffer->changed = true;
+  scrollToCursor();
+}
+
+
+void Editor::deleteLeftOfCursor()
+{
+  fillToCursor();
+  //buffer->changed = true;
+
+  if (this->selectEnabled) {
+    editDelete();
+  }
+  else if (cursorCol() == 0) {
+    if (cursorLine() == 0) {
+      // do nothing
+    }
+    else {
+      // move to end of previous line
+      buffer->moveToPrevLineEnd();
+
+      // splice them together
+      spliceNextLine();
+    }
+  }
+  else {
+    // remove the character to the left of the cursor
+    buffer->deleteLR(true /*left*/, 1);
+  }
+
   scrollToCursor();
 }
 
