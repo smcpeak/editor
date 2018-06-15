@@ -199,6 +199,11 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
   int col = userCol;
   int textLen = strlen(text);
 
+  // This is questionable because it can lead to finding matches that
+  // appear before the specified search location.  I originally added
+  // this line in f0169061da, when I added HistoryBuffer support, which
+  // suggests it was needed to deal with cases arising from replaying
+  // history elements.  Probably there is a better solution.
   truncateCursor(core(), line, col);
 
   if (flags & FS_ADVANCE_ONCE) {

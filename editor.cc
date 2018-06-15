@@ -500,23 +500,23 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       if (buffer->highlighter) {
         buffer->highlighter->highlight(buffer->core(), line, styles);
       }
-    }
-    xassert(visibleLineChars <= visibleCols);
 
-    // Show search hits.
-    if (this->hitText.length() > 0) {
-      int hitLine = line;
-      int hitCol = 0;
-      Buffer::FindStringFlags const hitTextFlags =
-        this->hitTextFlags | Buffer::FS_ONE_LINE;
+      // Show search hits.
+      if (this->hitText.length() > 0) {
+        int hitLine = line;
+        int hitCol = 0;
+        Buffer::FindStringFlags const hitTextFlags =
+          this->hitTextFlags | Buffer::FS_ONE_LINE;
 
-      while (buffer->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
-                                toCStr(this->hitText),
-                                hitTextFlags)) {
-        styles.overlay(hitCol, this->hitText.length(), ST_HITS);
-        hitCol++;
+        while (buffer->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
+                                  toCStr(this->hitText),
+                                  hitTextFlags)) {
+          styles.overlay(hitCol, this->hitText.length(), ST_HITS);
+          hitCol++;
+        }
       }
     }
+    xassert(visibleLineChars <= visibleCols);
 
     // incorporate effect of selection
     if (this->selectEnabled &&
