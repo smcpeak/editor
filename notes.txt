@@ -4,8 +4,6 @@ TODOs:
   - Ctrl+S still does not work very well with Backspace;
     see comments in IncSearch::searchKeyMap
   - fix the date/time time zone
-  - "*" indicator of unsaved work is invisible once there are
-    5 characters of line and column information
   - factor out the Qt stuff so I can have a curses version
   - rename Style to TextCategory
   - ctrl-tab buffer switching sort of like alt-tab

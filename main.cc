@@ -101,8 +101,8 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
   this->setWindowIcon(pixmaps->icon);
 
   this->setLayout(mainArea);
-  this->setGeometry(200,200,      // initial location
-                    400,400);     // initial size
+  this->setGeometry(400,100,      // initial location
+                    600,800);     // initial size
 
   // Set the BufferState, which was originally set as NULL above.
   this->setBuffer(initBuffer);

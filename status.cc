@@ -18,7 +18,7 @@ StatusDisplay::StatusDisplay(QWidget *parent)
 
   this->position = new QLabel();
   this->position->setObjectName("cursor position label");
-  this->position->setFixedWidth(60);
+  this->position->setFixedWidth(80);
   //this->position->setBackgroundColor(QColor(0x60, 0x00, 0x80));   // purple
   //this->position->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   //this->position->setLineWidth(1);
