@@ -12,10 +12,25 @@
 
 
 IncSearch::IncSearch(StatusDisplay *s)
-  : status(s)
-{
-  // other fields init'd in attach()
-}
+  : status(s),
+
+    // All of the following values are unimportant because they are
+    // overwritten in attach().  The only reason I initialize here is
+    // to pacify an Eclipse warning that I do not want to disable.
+    prevStatusText(),
+    beginLine(0),
+    beginCol(0),
+    beginFVLine(0),
+    beginFVCol(0),
+    curFlags(Buffer::FS_NONE),
+    text(),
+    curLine(0),
+    curCol(0),
+    match(false),
+    mode(M_SEARCH),
+    removedText(),
+    replaceText()
+{}
 
 IncSearch::~IncSearch()
 {}
