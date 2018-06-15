@@ -12,7 +12,7 @@ StyleDB::StyleDB()
   // the only default.
 
   QColor bg(0x00, 0x00, 0x9C);        // background: darkish blue
-  QColor selectBG(0x00, 0x00, 0xF0);  // selection background: light blue
+  QColor selectBG(0x40, 0x40, 0xF0);  // selection background: light blue/purple
   QColor hitBG(0x00, 0x80, 0x40);     // hit background: lime
   QColor errorBG(0x00, 0x00, 0x00);   // error background: black
 

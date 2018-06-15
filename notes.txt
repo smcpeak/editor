@@ -1,6 +1,7 @@
 
 TODOs:
-  - highlighted text background color is too similar to regular background
+  - search does not go to right place after:
+    Ctrl+S, Q, Backspace, W
   - Tab and Shift-Tab as alternates for rigid indentation
 
   - fix the date/time time zone
