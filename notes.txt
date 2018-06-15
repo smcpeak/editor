@@ -1,6 +1,6 @@
 
 TODOs:
-  - Ctrl+S (search) shows the "not found" message in a weird place
+  - highlighted text background color is too similar to regular background
   - Tab and Shift-Tab as alternates for rigid indentation
 
   - fix the date/time time zone

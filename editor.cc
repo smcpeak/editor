@@ -1456,13 +1456,15 @@ void Editor::editDelete()
 
 void Editor::showInfo(char const *infoString)
 {
-  QWidget *main = topLevelWidget();
+  QWidget *main = this->window();
 
-  if (!infoBox) {
-    infoBox = new QLabel(main, Qt::ToolTip);
+  if (!this->infoBox) {
+    infoBox = new QLabel(main);
     infoBox->setObjectName("infoBox");
     infoBox->setForegroundRole(QPalette::ToolTipText);
     infoBox->setBackgroundRole(QPalette::ToolTipBase);
+    infoBox->setAutoFillBackground(true);
+    infoBox->setIndent(2);
   }
 
   infoBox->setText(infoString);
@@ -1470,13 +1472,20 @@ void Editor::showInfo(char const *infoString)
   // compute a good size for the label
   QFontMetrics fm(infoBox->font());
   QSize sz = fm.size(0, infoString);
-  infoBox->resize(sz.width() + 2, sz.height() + 2);
+  infoBox->resize(sz.width() + 4, sz.height() + 2);
 
-  infoBox->move(mapTo(main,
-    QPoint((cursorCol() - this->firstVisibleCol) * fontWidth,
-           (cursorLine() - this->firstVisibleLine + 1) * fontHeight + 1)));
+  // Compute a position just below the lower-left corner
+  // of the cursor box, in the coordinates of 'this'.
+  QPoint target(
+    (cursorCol() - this->firstVisibleCol) * fontWidth,
+    (cursorLine() - this->firstVisibleLine + 1) * fontHeight + 1);
+
+  // Translate that to the coordinates of 'main'.
+  target = this->mapTo(main, target);
+  infoBox->move(target);
            
-  // try to position the box inside the main widget, so it will show up
+  // If the box goes beyond the right edge of the window, pull it back
+  // to the left to keep it inside.
   if (infoBox->x() + infoBox->width() > main->width()) {
     infoBox->move(main->width() - infoBox->width(), infoBox->y());
   }
