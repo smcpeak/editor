@@ -1,6 +1,5 @@
 
 TODOs:
-  - one-pixel rendering bug with selections
   - strange Window menu entry (Alt+:) when 10 or more buffers open
   - reduce the frequency of leaving behind extra spaces; maybe add
     highlighting for them?

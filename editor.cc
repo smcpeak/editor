@@ -398,7 +398,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     }
     TRACE("paint", "frame: rect=" << rect);
   }
-                 
+
   // ---- setup painters ----
   // make a pixmap, so as to avoid flickering by double-buffering; the
   // pixmap is the entire width of the window, but only one line high,
@@ -551,7 +551,11 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       }
     }
 
-    // Clear the margin to the background color.
+    // Clear the left margin to the normal background color.
+    if (currentStyle != ST_NORMAL) {
+      currentStyle = ST_NORMAL;
+      setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
+    }
     paint.eraseRect(0,0, leftMargin, fullLineHeight);
 
     // next style entry to use
