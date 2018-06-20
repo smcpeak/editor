@@ -11,6 +11,14 @@ Check: Nothing should happen.
 Do: Move the cursor beyond the end of the file and press Backspace.
 Check: Nothing should happen.
 
+Do: Select multiple whole lines of text.
+Check: Selection box should be a clean rectangle containing those
+lines, but not extending into the left margin.
+
+Do: Open 11 files at once.
+Check: The window menu should assign Alt+<digit> shortcuts to the
+10 of the open files.
+
 
 Areas to test (needs refinement into specific tests)
 ----------------------------------------------------

@@ -53,10 +53,11 @@ int BufferState::objectCount = 0;
 
 BufferState::BufferState()
   : Buffer(),
+    hasHotkeyDigit(false),
+    hotkeyDigit(0),
     filename(),
     title(),
     windowMenuId(nextWindowMenuId++),
-    hotkeyDigit(0),
     //changed(false),
     highlighter(NULL),
     savedState()
@@ -73,13 +74,35 @@ BufferState::~BufferState()
 }
 
 
-string BufferState::hotkeyDesc()
+int BufferState::getHotkeyDigit() const
 {
-  if (this->hotkeyDigit == 0) {
+  xassert(this->hasHotkey());
+  return this->hotkeyDigit;
+}
+
+
+string BufferState::hotkeyDesc() const
+{
+  if (!this->hasHotkey()) {
     return "";
   }
 
-  return stringc << "Alt+" << this->hotkeyDigit;
+  return stringc << "Alt+" << this->getHotkeyDigit();
+}
+
+
+void BufferState::clearHotkey()
+{
+  this->hasHotkeyDigit = false;
+  this->hotkeyDigit = 0;
+}
+
+
+void BufferState::setHotkeyDigit(int digit)
+{
+  xassert(0 <= digit && digit <= 9);
+  this->hasHotkeyDigit = true;
+  this->hotkeyDigit = digit;
 }
 
 

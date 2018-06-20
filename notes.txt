@@ -1,6 +1,5 @@
 
 TODOs:
-  - strange Window menu entry (Alt+:) when 10 or more buffers open
   - reduce the frequency of leaving behind extra spaces; maybe add
     highlighting for them?
   - visual indication of where EOF is

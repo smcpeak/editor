@@ -268,8 +268,8 @@ void EditorWindow::fileOpenFile(char const *name)
       // I'm going to remove it, but can't yet b/c I
       // need to wait until the new buffer is added;
       // but right now I can remove its hotkey so that
-      // the new buffer can use it instead
-      untitled->hotkeyDigit = 0;
+      // the new buffer can use it instead.
+      untitled->clearHotkey();
 
       break;
     }
@@ -528,8 +528,8 @@ void EditorWindow::rebuildWindowMenu()
     BufferState *b = iter.data();
 
     QKeySequence keySequence;
-    if (b->hotkeyDigit) {
-      keySequence = Qt::ALT + (Qt::Key_0 + b->hotkeyDigit);
+    if (b->hasHotkey()) {
+      keySequence = Qt::ALT + (Qt::Key_0 + b->getHotkeyDigit());
     }
 
     QAction *action = this->windowMenu->addAction(
@@ -710,10 +710,14 @@ BufferState *GlobalState::createNewFile()
 void GlobalState::trackNewBuffer(BufferState *b)
 {
   // assign hotkey
-  b->hotkeyDigit = 0;
+  b->clearHotkey();
   for (int i=1; i<=10; i++) {
-    if (hotkeyAvailable(i)) {
-      b->hotkeyDigit = i;
+    // Use 0 as the tenth digit in this sequence to match the order
+    // of the digit keys on the keyboard.
+    int digit = (i==10? 0 : i);
+
+    if (hotkeyAvailable(digit)) {
+      b->setHotkeyDigit(digit);
       break;
     }
   }
@@ -725,7 +729,8 @@ void GlobalState::trackNewBuffer(BufferState *b)
 bool GlobalState::hotkeyAvailable(int key) const
 {
   FOREACH_OBJLIST(BufferState, buffers, iter) {
-    if (iter.data()->hotkeyDigit == key) {
+    if (iter.data()->hasHotkey() &&
+        iter.data()->getHotkeyDigit() == key) {
       return false;    // not available
     }
   }

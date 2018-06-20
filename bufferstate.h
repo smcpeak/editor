@@ -79,6 +79,14 @@ private:     // static data
 public:      // static data
   static int objectCount;
 
+private:     // data
+  // True if there is a hotkey the user can use to jump to this buffer.
+  bool hasHotkeyDigit;
+
+  // Digit the user can press Alt with to jump to this buffer, if
+  // 'hasHotkeyDigit'.  It is a number in [0,9].
+  int hotkeyDigit;
+
 public:      // data
   // name of file being edited
   string filename;
@@ -91,10 +99,6 @@ public:      // data
   // Numeric identifier for this buffer.  This is used to identify
   // it in the Window menu.
   int const windowMenuId;
-
-  // Digit the user can press Alt with to jump to this buffer,
-  // or 0 for no hotkey.  It is a number in [0,9].
-  int hotkeyDigit;
 
   // true when there are unsaved changes
   //bool changed;                       
@@ -115,9 +119,20 @@ public:      // funcs
   BufferState();
   ~BufferState();
   
-  // human-readable description of 'hotkey'; 
-  // might return ""
-  string hotkeyDesc();
+  // Return true if this buffer has an assigned hotkey.
+  bool hasHotkey() const { return this->hasHotkeyDigit; }
+
+  // Get the hotkey digit in [0,9].  Asserts 'hasHotkey()'.
+  int getHotkeyDigit() const;
+
+  // Human-readable description of 'hotkey'; might return "".
+  string hotkeyDesc() const;
+
+  // Remove the hotkey, if any.
+  void clearHotkey();
+
+  // Set the hotkey to the indicated digit in [0,9].
+  void setHotkeyDigit(int digit);
 };
 
 #endif // BUFFERSTATE_H
