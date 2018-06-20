@@ -1599,18 +1599,22 @@ void Editor::cursorPageDown(bool shift)
 void Editor::deleteCharAtCursor()
 {
   fillToCursor();
-  //buffer->changed = true;
 
   if (this->selectEnabled) {
     editDelete();
   }
-  else if (cursorCol() == buffer->lineLength(cursorLine())) {
-    // splice next line onto this one
-    spliceNextLine();
-  }
-  else /* cursor < lineLength */ {
-    // delete character to right of cursor
-    buffer->deleteText(1);
+  else {
+    if (this->buffer->cursorAtEnd()) {
+      // Nothing to do since no characters are to the right.
+    }
+    else if (cursorCol() == buffer->lineLength(cursorLine())) {
+      // splice next line onto this one
+      spliceNextLine();
+    }
+    else /* cursor < lineLength */ {
+      // delete character to right of cursor
+      buffer->deleteText(1);
+    }
   }
 
   scrollToCursor();

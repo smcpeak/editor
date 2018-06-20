@@ -139,6 +139,12 @@ bool BufferCore::locationInDefined(int line, int col) const
 }
 
 
+bool BufferCore::locationAtEnd(int line, int col) const
+{
+  return line == numLines()-1 && col == lineLength(line);
+}
+
+
 // 'line' is marked 'const' to ensure its value is not changed before
 // being passed to the observers; the same thing is done in the other
 // three mutator functions; the C++ standard explicitly allows 'const'

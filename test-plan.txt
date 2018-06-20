@@ -1,6 +1,20 @@
 test-plan.txt
 Manual tests of functionality
 
+
+Specific tests
+--------------
+
+Do: Move the cursor beyond the end of the file and press Delete.
+Check: Nothing should happen.
+
+Do: Move the cursor beyond the end of the file and press Backspace.
+Check: Nothing should happen.
+
+
+Areas to test (needs refinement into specific tests)
+----------------------------------------------------
+
 Load a file specifying its name on the command line.
 
 Scrolling the buffer.
@@ -10,7 +24,6 @@ Resizing the window.
 Selecting text.
 
 Interactive search.
-
 
 
 EOF

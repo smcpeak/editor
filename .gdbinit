@@ -4,7 +4,7 @@ dir ../smbase
 dir ../smqtutil
  
 #file qtbdffont
-file editor
+file ./editor
 #file c_hilite
 #set args -tr setView
 

@@ -73,8 +73,9 @@ public:      // funcs
   int maxLineLength() const               { return buf.maxLineLength(); }
 
   // cursor
-  int line() const { return buf.line; }
-  int col() const { return buf.col; }
+  int line() const                        { return buf.line; }
+  int col() const                         { return buf.col; }
+  bool cursorAtEnd() const                { return buf.cursorAtEnd(); }
 
   // current contents differ from those on disk?
   bool unsavedChanges() const;

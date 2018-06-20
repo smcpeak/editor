@@ -29,7 +29,10 @@ public:
   CursorBuffer();
   
   bool cursorInDefined() const
-    { return locationInDefined(line, col); }
+    { return this->locationInDefined(this->line, this->col); }
+
+  bool cursorAtEnd() const
+    { return this->locationAtEnd(this->line, this->col); }
 };
 
   

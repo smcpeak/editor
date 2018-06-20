@@ -93,6 +93,9 @@ public:    // funcs
   // buffer contents (i.e. such that an 'insertText' would be allowed)
   bool locationInDefined(int line, int col) const;
 
+  // True if line/col is the very end of the defined area.
+  bool locationAtEnd(int line, int col) const;
+
 
   // ---- manipulation interface ----
   // insert a new blank line, where the new line will be line 'line';

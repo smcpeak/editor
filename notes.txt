@@ -1,11 +1,20 @@
 
 TODOs:
-  - remove unnecessary triple buffering from render code
-  - visual indication of where EOF is
-  - Ctrl+K: kill (to clipboard) the line
+  - one-pixel rendering bug with selections
+  - strange Window menu entry (Alt+:) when 10 or more buffers open
   - reduce the frequency of leaving behind extra spaces; maybe add
     highlighting for them?
+  - visual indication of where EOF is
+  - ctrl-A while searching to cancel but stay there and move to
+    the beginning of the line
+  - Ctrl+K: kill (to clipboard) the line
   - allow Tab character; issue is rendering support
+  - Ctrl+S, Ctrl+W, Backspace does not work as desired
+  - Ctrl+S, Ctrl+S advances cursor weirdly
+  - mode to show line numbers in left margin
+
+
+  - remove unnecessary triple buffering from render code
 
   - test plan
   - port to Linux
@@ -39,8 +48,6 @@ TODOs:
   - ctrl-enter to move to end of next line
   - tabs along the top to show file name, and ability to rearrange
     so that they are in a natural order
-  - ctrl-A while searching to cancel but stay there and move to
-    the beginning of the line
 
 
 postponed or decided against:
