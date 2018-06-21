@@ -4,6 +4,7 @@
 #include "incsearch.h"     // this module
 #include "editor.h"        // Editor
 #include "pixmaps.h"       // Pixmaps
+#include "qtutil.h"        // toString(QKeyEvent)
 #include "status.h"        // StatusDisplay
 #include "test.h"          // PVAL
 #include "trace.h"         // TRACE
@@ -177,21 +178,20 @@ bool IncSearch::pseudoKeyPress(InputPseudoKey pkey)
 
 bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 {
-  #if 0
-  // some keys are ignored but shouldn't cause exit from i-search
+  // Some keys are ignored but shouldn't cause exit from i-search.
   switch (k->key()) {
     case Qt::Key_Shift:
     case Qt::Key_Alt:
     case Qt::Key_Control:
       return false;
   }
-  #endif // 0
 
   if (state == Qt::NoModifier || state == Qt::ShiftModifier) {
     switch (k->key()) {
       case Qt::Key_Enter:
       case Qt::Key_Return:
         // stop doing i-search
+        TRACE("incsearch", "stopping due to Enter");
         detach();
         return true;
 
@@ -222,6 +222,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
         }
         return true;
 
+      #if 0
       case Qt::Key_Right:
         nextMatch();
         return true;
@@ -245,6 +246,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
         ed->setFirstVisibleCol(0);
         ed->scrollToCursor();
         return true;
+      #endif // 0
 
       default: {
         QString s = k->text();
@@ -312,13 +314,23 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
       // selection while Ctrl-Z scrolls, it's the latter functionality
       // that I need most often....
       case Qt::Key_Z:
+      case Qt::Key_L:
         // pass these through to editor, so it can scroll
         return false;
     }
   }
 
-  // unknown key: don't let it through, but don't handle it either
-  return true;
+  // Ctrl+S itself is handled by the menu hotkey.
+  if (state == (Qt::ShiftModifier | Qt::ControlModifier)) {
+    prevMatch();
+    return true;
+  }
+
+  // Unknown key.  Stop the search and indicate it is unhandled so the
+  // surrounding editor can handle it.
+  TRACE("incsearch", "detaching due to unknown key: " << toString(*k));
+  detach();
+  return false;
 }
 
 

@@ -1,7 +1,5 @@
 
 TODOs:
-  - ctrl-A while searching to cancel but stay there and move to
-    the beginning of the line
   - Ctrl+K: kill (to clipboard) the line
   - allow Tab character; issue is rendering support
   - Ctrl+S, Ctrl+W, Backspace does not work as desired
