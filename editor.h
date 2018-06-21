@@ -299,6 +299,7 @@ public:      // funcs
   void cursorDown(bool shift);
   void cursorPageUp(bool shift);
   void cursorPageDown(bool shift);
+  void cursorToEndOfNextLine(bool shift);
 
   // some other commands...
   void deleteCharAtCursor();

@@ -11,6 +11,7 @@ Cursor movement:
   Ctrl+E or End: Move cursor to end of line.
   Ctrl+P or Up: Move cursor up.
   Ctrl+N or Down: Move cursor down.
+  Ctrl+Enter: Go to end of next line.
   Ctrl+PgUp: Go to top of file.
   Ctrl+PgDn: Go to bottom of file.
 

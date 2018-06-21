@@ -955,6 +955,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
         cursorToBottom();
         break;
 
+      case Qt::Key_Enter:
+      case Qt::Key_Return: {
+        cursorToEndOfNextLine(false);
+        break;
+      }
+
       case Qt::Key_W:
         moveView(-1, 0);
         if (cursorLine() > this->lastVisibleLine) {
@@ -1132,6 +1138,12 @@ void Editor::keyPressEvent(QKeyEvent *k)
         cursorToBottom();
         break;
        
+      case Qt::Key_Enter:
+      case Qt::Key_Return: {
+        cursorToEndOfNextLine(true);
+        break;
+      }
+
       case Qt::Key_B:      cursorLeft(true); break;
       case Qt::Key_F:      cursorRight(true); break;
       case Qt::Key_A:      cursorHome(true); break;
@@ -1709,6 +1721,15 @@ void Editor::cursorPageDown(bool shift)
 {
   turnSelection(shift);
   moveViewAndCursor(+ this->visLines(), 0);
+}
+
+
+void Editor::cursorToEndOfNextLine(bool shift)
+{
+  turnSelection(shift);
+  int line = buffer->line();
+  this->buffer->moveAbsCursor(line+1, buffer->lineLengthLoose(line+1));
+  scrollToCursor();
 }
 
 

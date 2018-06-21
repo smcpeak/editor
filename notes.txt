@@ -1,6 +1,5 @@
 
 TODOs:
-  - ctrl-enter to move to end of next line
   - ctrl-A while searching to cancel but stay there and move to
     the beginning of the line
   - Ctrl+K: kill (to clipboard) the line
