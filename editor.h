@@ -7,7 +7,7 @@
 #include "bufferstate.h"    // BufferState
 #include "inputproxy.h"     // InputProxy, InputPseudoKey
 #include "owner.h"          // Owner
-#include "style.h"          // TextCategory
+#include "textcategory.h"   // TextCategory
 
 #include <qwidget.h>        // QWidget
 
@@ -79,10 +79,10 @@ public:      // data
   //QColor normalFG, normalBG;        // normal text
   //QColor selectFG, selectBG;        // selected text
 
-  // fonts for (indexed by) each text style; all fonts must use the
+  // Fonts for (indexed by) each text category; all fonts must use the
   // same character size; some entries may be NULL, indicating we
-  // do not expect to draw text with that style
-  ObjArrayStack<QtBDFFont> fontForStyle;
+  // do not expect to draw text with that category.
+  ObjArrayStack<QtBDFFont> fontForCategory;
 
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
@@ -173,11 +173,11 @@ private:     // funcs
   // Paint a single character at the given location.
   void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);
 
-  // set 'curFont' and 'underline', plus the foreground
-  // and background colors of 'paint', based on 'db' and 's'
+  // Set 'curFont' and 'underline', plus the foreground
+  // and background colors of 'paint', based on 'db' and 'cat'.
   void setDrawStyle(QPainter &paint,
                     QtBDFFont *&curFont, bool &underlining,
-                    StyleDB *db, TextCategory s);
+                    StyleDB *db, TextCategory cat);
 
   // offset from one line to the next
   int lineHeight() const { return fontHeight+interLineSpace; }

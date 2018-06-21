@@ -1,14 +1,15 @@
 // lex_hilite.cc
 // code for lex_hilite.h
 
-#include "lex_hilite.h"    // this module
-#include "inclexer.h"      // IncLexer
-#include "style.h"         // LineStyle
-#include "buffer.h"        // BufferCore, Buffer
-#include "trace.h"         // TRACE
-#include "strutil.h"       // quoted
+#include "lex_hilite.h"                // this module
 
-#include <stdlib.h>        // exit
+#include "buffer.h"                    // BufferCore, Buffer
+#include "inclexer.h"                  // IncLexer
+#include "strutil.h"                   // quoted
+#include "textcategory.h"              // LineCategories
+#include "trace.h"                     // TRACE
+
+#include <stdlib.h>                    // exit
 
 
 LexHighlighter::LexHighlighter(BufferCore const &buf, IncLexer &L)
@@ -196,7 +197,7 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
 }
 
 
-void LexHighlighter::highlight(BufferCore const &buf, int line, LineCategories &style)
+void LexHighlighter::highlight(BufferCore const &buf, int line, LineCategories &categories)
 {
   xassert(&buf == &buffer);
 
@@ -241,14 +242,14 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineCategories &
   prevState = getSavedState(line-1);
   lexer.beginScan(&buf, line, prevState);
 
-  // append each styled segment
+  // Append each categorized segment.
   TextCategory code;
   int len = lexer.getNextToken(code);
   while (len) {
-    style.append(code, len);
+    categories.append(code, len);
     len = lexer.getNextToken(code);
   }
-  style.endCategory = code;    // line trails off with the final code
+  categories.endCategory = code;    // line trails off with the final code
 
   saveLineState(line, lexer.getState());
 }
@@ -260,17 +261,17 @@ static Buffer *buf;
 
 static void printLine(LexHighlighter &hi, int line)
 {
-  LineCategories style(TC_NORMAL);
-  hi.highlight(buf->core(), line, style);
+  LineCategories category(TC_NORMAL);
+  hi.highlight(buf->core(), line, category);
 
   cout << "line " << line << ":\n"
        << "  text : " << buf->getWholeLine(line) << "\n"
-       << "  style: " << style.asUnaryString() << "\n"
-       << "  rle  : " << style.asString() << "\n"
+       << "  catgy: " << category.asUnaryString() << "\n"
+       << "  rle  : " << category.asString() << "\n"
        ;
 }
 
-static void printStyles(LexHighlighter &hi)
+static void printCategories(LexHighlighter &hi)
 {
   // stop short so I have a waterline
   for (int i=0; i < buf->numLines()-1; i++) {
@@ -296,18 +297,18 @@ static void del(int line, int col, int len)
 static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
-  LineCategories style1(TC_NORMAL);
-  hi.highlight(buf->core(), i, style1);
-  string rendered1 = style1.asUnaryString();
+  LineCategories categories1(TC_NORMAL);
+  hi.highlight(buf->core(), i, categories1);
+  string rendered1 = categories1.asUnaryString();
 
-  LineCategories style2(TC_NORMAL);
-  batch.highlight(buf->core(), i, style2);
-  string rendered2 = style2.asUnaryString();
+  LineCategories categories2(TC_NORMAL);
+  batch.highlight(buf->core(), i, categories2);
+  string rendered2 = categories2.asUnaryString();
 
   // compare using rendered strings, instead of looking at
   // the run-length ranges, since it's ok if the incrementality
   // somehow gives rise to slightly different ranges (say, in one
-  // version there are two adjacent ranges of same-style chars)
+  // version there are two adjacent ranges of same-category chars)
 
   if (rendered1 != rendered2) {
     cout << "check: mismatch at line " << i << ":\n"
@@ -363,7 +364,7 @@ void exerciseHighlighter(MakeHighlighterFunc func)
     "C++ comment: // I like C++\n"
     "back to int normalcy\n"
   );
-  printStyles(hi);
+  printCategories(hi);
   check(hi);
 
   insert(2, 3, " what");
@@ -380,20 +381,20 @@ void exerciseHighlighter(MakeHighlighterFunc func)
 
   insert(0, 7, "/""*");
   printLine(hi, 4);
-  printStyles(hi);
+  printCategories(hi);
   check(hi);
-  printStyles(hi);
+  printCategories(hi);
 
   insert(0, 2, "\"");
   del(2, 35, 2);
   insert(4, 2, "Arg");
   printLine(hi, 4);
   check(hi);
-  printStyles(hi);
+  printCategories(hi);
 
   insert(0, 15, "\\");
   check(hi);
-  printStyles(hi);
+  printCategories(hi);
 
   insert(2, 30, "*/");
   checkLine(hi, 3);

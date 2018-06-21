@@ -56,13 +56,14 @@ public:      // funcs
   virtual ~LexHighlighter();
 
   // BufferObserver funcs
-  virtual void observeInsertLine(BufferCore const &buf, int line);
-  virtual void observeDeleteLine(BufferCore const &buf, int line);
-  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length);
-  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length);
+  virtual void observeInsertLine(BufferCore const &buf, int line) override;
+  virtual void observeDeleteLine(BufferCore const &buf, int line) override;
+  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length) override;
+  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length) override;
 
   // Highlighter funcs
-  virtual void highlight(BufferCore const &buf, int line, LineCategories &style);
+  virtual void highlight(BufferCore const &buf, int line,
+                         LineCategories &categories) override;
 };
 
 

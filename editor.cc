@@ -10,8 +10,8 @@
 #include "qtbdffont.h"       // QtBDFFont
 #include "qtutil.h"          // toString(QKeyEvent&)
 #include "status.h"          // StatusDisplay
-#include "style.h"           // LineStyle, etc.
 #include "styledb.h"         // StyleDB
+#include "textcategory.h"    // LineCategories, etc.
 #include "textline.h"        // TextLine
 
 // default font definitions (in smqtutil directory)
@@ -65,7 +65,7 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     leftMargin(1),
     interLineSpace(0),
     cursorColor(0xFF, 0xFF, 0xFF),       // white
-    fontForStyle(NUM_STANDARD_TEXT_CATEGORIES),
+    fontForCategory(NUM_STANDARD_TEXT_CATEGORIES),
     cursorFontForFV(FV_BOLD + 1),
     minihexFont(),
     visibleWhitespace(true),
@@ -98,7 +98,7 @@ Editor::~Editor()
     inputProxy->detach();
   }
 
-  fontForStyle.deleteAll();
+  fontForCategory.deleteAll();
 }
 
 
@@ -185,8 +185,8 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
   // Build the complete set of new fonts.
   {
     ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_TEXT_CATEGORIES);
-    for (int style = TC_ZERO; style < NUM_STANDARD_TEXT_CATEGORIES; style++) {
-      TextStyle const &ts = styleDB->getStyle((TextCategory)style);
+    for (int category = TC_ZERO; category < NUM_STANDARD_TEXT_CATEGORIES; category++) {
+      TextStyle const &ts = styleDB->getStyle((TextCategory)category);
 
       STATIC_ASSERT(FV_BOLD == 2);
       BDFFont *bdfFont = bdfFonts[ts.variant % 3];
@@ -199,7 +199,7 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
     }
 
     // Substitute the new for the old.
-    fontForStyle.swapWith(newFonts);
+    fontForCategory.swapWith(newFonts);
   }
 
   // Repeat the procedure for the cursor fonts.
@@ -221,7 +221,7 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
   }
 
   // calculate metrics
-  QRect const &bbox = fontForStyle[TC_NORMAL]->getAllCharsBBox();
+  QRect const &bbox = fontForCategory[TC_NORMAL]->getAllCharsBBox();
   ascent = -bbox.top();
   descent = bbox.bottom() + 1;
   fontHeight = ascent + descent;
@@ -439,18 +439,18 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   paint.setBackgroundMode(Qt::OpaqueMode);
 
   // Character style info.  This gets updated as we paint each line.
-  LineCategories styles(TC_NORMAL);
+  LineCategories categories(TC_NORMAL);
 
-  // currently selected style (so we can avoid possibly expensive
-  // calls to change styles)
-  TextCategory currentStyle = TC_NORMAL;
+  // Currently selected category and style (so we can avoid possibly
+  // expensive calls to change styles).
+  TextCategory currentCategory = TC_NORMAL;
   QtBDFFont *curFont = NULL;
   bool underlining = false;     // whether drawing underlines
   StyleDB *styleDB = StyleDB::instance();
-  setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
+  setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
 
   // do same for 'winPaint', just to set the background color
-  setDrawStyle(winPaint, curFont, underlining, styleDB, currentStyle);
+  setDrawStyle(winPaint, curFont, underlining, styleDB, currentCategory);
 
   // ---- margins ----
   // top edge of what has not been painted, in window coordinates
@@ -499,7 +499,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     int visibleLineChars = 0;
 
     // nominally the entire line is normal text
-    styles.clear(TC_NORMAL);
+    categories.clear(TC_NORMAL);
 
     // fill with text from the buffer
     if (line < buffer->numLines()) {
@@ -527,7 +527,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
       // apply highlighting
       if (buffer->highlighter) {
-        buffer->highlighter->highlight(buffer->core(), line, styles);
+        buffer->highlighter->highlight(buffer->core(), line, categories);
       }
 
       // Show search hits.
@@ -540,7 +540,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         while (buffer->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
                                   toCStr(this->hitText),
                                   hitTextFlags)) {
-          styles.overlay(hitCol, this->hitText.length(), TC_HITS);
+          categories.overlay(hitCol, this->hitText.length(), TC_HITS);
           hitCol++;
         }
       }
@@ -553,22 +553,22 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     {
       if (selLowLine < line && line < selHighLine) {
         // entire line is selected
-        styles.overlay(0, 0 /*infinite*/, TC_SELECTION);
+        categories.overlay(0, 0 /*infinite*/, TC_SELECTION);
       }
       else if (selLowLine < line && line == selHighLine) {
         // first half of line is selected
         if (selHighCol) {
-          styles.overlay(0, selHighCol, TC_SELECTION);
+          categories.overlay(0, selHighCol, TC_SELECTION);
         }
       }
       else if (selLowLine == line && line < selHighLine) {
         // right half of line is selected
-        styles.overlay(selLowCol, 0 /*infinite*/, TC_SELECTION);
+        categories.overlay(selLowCol, 0 /*infinite*/, TC_SELECTION);
       }
       else if (selLowLine == line && line == selHighLine) {
         // middle part of line is selected
         if (selHighCol != selLowCol) {
-          styles.overlay(selLowCol, selHighCol-selLowCol, TC_SELECTION);
+          categories.overlay(selLowCol, selHighCol-selLowCol, TC_SELECTION);
         }
       }
       else {
@@ -577,15 +577,15 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     }
 
     // Clear the left margin to the normal background color.
-    if (currentStyle != TC_NORMAL) {
-      currentStyle = TC_NORMAL;
-      setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
+    if (currentCategory != TC_NORMAL) {
+      currentCategory = TC_NORMAL;
+      setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
     }
     paint.eraseRect(0,0, leftMargin, fullLineHeight);
 
-    // next style entry to use
-    LineCategoryIter style(styles);
-    style.advanceChars(firstCol);
+    // Next category entry to use.
+    LineCategoryIter category(categories);
+    category.advanceChars(firstCol);
 
     // ---- render text+style segments -----
     // right edge of what has not been painted, relative to
@@ -603,14 +603,14 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       xassert(printed < visibleCols);
 
       // set style
-      if (style.category != currentStyle) {
-        currentStyle = style.category;
-        setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
+      if (category.category != currentCategory) {
+        currentCategory = category.category;
+        setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
       }
 
       // compute how many characters to print in this segment
-      int len = style.length;
-      if (style.length == 0) {
+      int len = category.length;
+      if (category.length == 0) {
         // actually means infinite length
         if (printed >= visibleLineChars) {
           // we've printed all the interesting characters on this line
@@ -650,10 +650,10 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         paint.drawLine(x, ulBaseline, x + fontWidth*len, ulBaseline);
       }
 
-      // advance to next style segment
+      // Advance to next category segment.
       x += fontWidth * len;
       printed += len;
-      style.advanceChars(len);
+      category.advanceChars(len);
     }
 
     // draw the cursor as a line
@@ -687,8 +687,8 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         //
         // Unfortunately, that leads to some code duplication with the
         // main painting code.
-        TextCategory cursorStyle = styles.getCategoryAt(cursorCol);
-        FontVariant cursorFV = styleDB->getStyle(cursorStyle).variant;
+        TextCategory cursorCategory = categories.getCategoryAt(cursorCol);
+        FontVariant cursorFV = styleDB->getStyle(cursorCategory).variant;
         bool underlineCursor = false;
         if (cursorFV == FV_UNDERLINE) {
           cursorFV = FV_NORMAL;   // 'cursorFontForFV' does not map FV_UNDERLINE
@@ -794,9 +794,9 @@ void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, cha
 
 void Editor::setDrawStyle(QPainter &paint,
                           QtBDFFont *&curFont, bool &underlining,
-                          StyleDB *db, TextCategory s)
+                          StyleDB *db, TextCategory cat)
 {
-  TextStyle const &ts = db->getStyle(s);
+  TextStyle const &ts = db->getStyle(cat);
 
   // This is needed for underlining since we draw that as a line,
   // whereas otherwise the foreground color comes from the font glyphs.
@@ -806,7 +806,7 @@ void Editor::setDrawStyle(QPainter &paint,
 
   underlining = (ts.variant == FV_UNDERLINE);
 
-  curFont = fontForStyle[s];
+  curFont = fontForCategory[cat];
   xassert(curFont);
 }
 

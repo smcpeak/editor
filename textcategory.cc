@@ -1,7 +1,7 @@
-// style.cc
-// code for style.h
+// textcategory.cc
+// code for textcategory.h
 
-#include "style.h"       // this module
+#include "textcategory.h"              // this module
 
 
 // ----------------------- LineCategories --------------------
@@ -177,7 +177,7 @@ void LineCategoryIter::advanceChars(int n)
 
 
 // ----------------------- test code ---------------------
-#ifdef TEST_STYLE
+#ifdef TEST_TEXTCATEGORY
 
 #include "test.h"        // USUAL_MAIN
 #include "sm-iostream.h" // cout
@@ -265,4 +265,4 @@ void entry()
 
 USUAL_MAIN
 
-#endif // TEST_STYLE
+#endif // TEST_TEXTCATEGORY

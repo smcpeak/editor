@@ -18,7 +18,6 @@ TODOs:
   - support for encodings other than Latin-1
 
   - factor out the Qt stuff so I can have a curses version
-  - rename Style to TextCategory
   - ctrl-tab buffer switching sort of like alt-tab
   - multiple cursor display options; include an emacs-like mode
   - compilation mode

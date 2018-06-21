@@ -1,7 +1,7 @@
 # Makefile for editor
 
 # main target
-all: comment.yy.cc testgap buffercore historybuf buffer style c_hilite editor
+all: comment.yy.cc testgap buffercore historybuf buffer textcategory c_hilite editor
 
 
 # directories of other software
@@ -113,11 +113,11 @@ buffer: gap.h $(BUFFER_OBJS)
 	./buffer >/dev/null 2>&1
 
 
-# --------------- style test program ----------------
-TOCLEAN += style
-style: style.h style.cc
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_STYLE style.cc $(CONSOLE_LDFLAGS)
-	./style >/dev/null
+# --------------- textcategory test program ----------------
+TOCLEAN += textcategory
+textcategory: textcategory.h textcategory.cc
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_TEXTCATEGORY textcategory.cc $(CONSOLE_LDFLAGS)
+	./textcategory >/dev/null
 
 
 # ------------- highlighting stuff --------------------
@@ -133,7 +133,7 @@ C_HILITE_OBJS := \
   history.o \
   historybuf.o \
   buffer.o \
-  style.o \
+  textcategory.o \
   lex_hilite.o \
   bufferlinesource.o \
   comment.yy.o \
@@ -169,7 +169,7 @@ EDITOR_OBJS := \
   moc_main.o \
   pixmaps.o \
   status.o \
-  style.o \
+  textcategory.o \
   styledb.o
 -include $(EDITOR_OBJS:.o=.d)
 

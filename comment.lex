@@ -7,7 +7,7 @@
 
 #include "comment.h"                   // CommentLexer class
 #include "bufferlinesource.h"          // BufferLineSource
-#include "style.h"                     // ST_XXX constants
+#include "textcategory.h"              // TC_XXX constants
 
 // this works around a problem with cygwin & fileno
 #define YY_NEVER_INTERACTIVE 1
@@ -97,7 +97,7 @@ QUOTE         [\"]
      subsequent lines are normal, on the assumption the user
      will close the string soon */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* string literal with escaped newline at end: we remember
@@ -105,60 +105,60 @@ QUOTE         [\"]
      highlighted accordingly */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{BACKSL} {
   BEGIN(STRING);
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* string continuation that ends on this line */
 <STRING>({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
   BEGIN(INITIAL);
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* string continuation */
 <STRING>({STRCHAR}|{BACKSL}{ANY})*{BACKSL} {
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* this won't actually happen in the context of the editor, because
    * literal newlines won't be passed, but it makes flex happy since
    * it now thinks all contigencies are handled */
 <STRING>{NL} {
-  return ST_STRING;
+  return TC_STRING;
 }
 
 
   /* C++ comment */
 "//"{ANY}* {
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
 
   /* C comment */
 "/""*"([^*]|"*"[^/])*"*"?"*/" {
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
   /* C comment extending to next line */
 "/""*"([^*]|"*"[^/])*"*"? {
   BEGIN(COMMENT);
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
   /* continuation of C comment, ends here */
 <COMMENT>"*/" {
   BEGIN(INITIAL);
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
   /* continuation of C comment, comment text */
 <COMMENT>([^*]+)|"*" {
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
 
   /* anything else */
 ([^\"/]+)|"/" {
-  return ST_NORMAL;
+  return TC_NORMAL;
 }
 
 
@@ -191,21 +191,21 @@ void CommentLexer::beginScan(BufferCore const *buffer, int line, LexerState stat
 }
 
 
-int CommentLexer::getNextToken(Style &code)
+int CommentLexer::getNextToken(TextCategory &code)
 {
   int result = lexer->yylex();
 
   if (result == 0) {
     // end of line
     switch ((int)lexer->getState()) {
-      case STRING:  code = ST_STRING;  break;
-      case COMMENT: code = ST_COMMENT; break;
-      default:      code = ST_NORMAL;  break;
+      case STRING:  code = TC_STRING;  break;
+      case COMMENT: code = TC_COMMENT; break;
+      default:      code = TC_NORMAL;  break;
     }
     return 0;
   }
   else {
-    code = (Style)result;
+    code = (TextCategory)result;
     return lexer->YYLeng();
   }
 }

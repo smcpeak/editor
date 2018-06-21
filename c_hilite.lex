@@ -7,7 +7,7 @@
 
 #include "c_hilite.h"                  // C_FlexLexer class
 #include "bufferlinesource.h"          // BufferLineSource
-#include "style.h"                     // ST_XXX constants
+#include "textcategory.h"              // TC_XXX constants
 
 // this works around a problem with cygwin & fileno
 #define YY_NEVER_INTERACTIVE 1
@@ -185,13 +185,13 @@ TICK          [\']
 "void"             |
 "volatile"         |
 "wchar_t"          |
-"while"            return ST_KEYWORD;
+"while"            return TC_KEYWORD;
 
   /* GNU keywords */
 "__attribute__"    |
 "__extension__"    |
 "__typeof__"       |
-"typeof"           return ST_KEYWORD;
+"typeof"           return TC_KEYWORD;
 
   /* operators, punctuators */
 "("                |
@@ -242,45 +242,45 @@ TICK          [\']
 "..."              |
 ";"                |
 "{"                |
-"}"                return ST_OPERATOR;
+"}"                return TC_OPERATOR;
 
   /* my extension */
-"==>"              return ST_OPERATOR;
+"==>"              return TC_OPERATOR;
 
   /* to avoid backing up; treat as two consecutive "." */
-".."               return ST_OPERATOR;
+".."               return TC_OPERATOR;
 
   /* special values */
 "true"|"false"|"null"|"TRUE"|"FALSE"|"NULL" {
-  return ST_SPECIAL;
+  return TC_SPECIAL;
 }
 
   /* additional words to highlight as keywords */
 "string" {
-  return ST_KEYWORD;
+  return TC_KEYWORD;
 }
 
   /* identifiers */
-{LETTER}{ALNUM}*   return ST_NORMAL;
+{LETTER}{ALNUM}*   return TC_NORMAL;
 
 
   /* integer literal; dec or hex */
 "0"{INT_SUFFIX}?                   |
 [1-9][0-9]*{INT_SUFFIX}?           |
 [0][xX][0-9A-Fa-f]*{INT_SUFFIX}?   {
-  return ST_NUMBER;
+  return TC_NUMBER;
 }
 
   /* integer literal; oct */
 [0][0-7]+{INT_SUFFIX}?             {
-  return ST_NUMBER2;
+  return TC_NUMBER2;
 }
 
   /* floating literal */
 {DIGITS}"."{DIGITS}?([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?   |
 {DIGITS}"."?([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?	    |
 "."{DIGITS}([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?	    {
-  return ST_NUMBER;
+  return TC_NUMBER;
 }
 
 
@@ -289,7 +289,7 @@ TICK          [\']
      subsequent lines are normal, on the assumption the user
      will close the string soon */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* string literal with escaped newline at end: we remember
@@ -297,59 +297,59 @@ TICK          [\']
      highlighted accordingly */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{BACKSL} {
   BEGIN(STRING);
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* string continuation that ends on this line */
 <STRING>({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
   BEGIN(INITIAL);
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* string continuation */
 <STRING>({STRCHAR}|{BACKSL}{ANY})*{BACKSL} {
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* this won't actually happen in the context of the editor, because
    * literal newlines won't be passed, but it makes flex happy since
    * it now thinks all contigencies are handled */
 <STRING>{NL} {
-  return ST_STRING;
+  return TC_STRING;
 }
 
 
   /* character literal, possibly unterminated */
 "L"?{TICK}({CCCHAR}|{BACKSL}{ANY})*{TICK}?{BACKSL}?   {
-  return ST_STRING;
+  return TC_STRING;
 }
 
   /* C++ comment */
 "//"{ANY}* {
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
 
   /* C comment */
 "/""*"([^*]|"*"[^/])*"*"?"*/" {
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
   /* C comment extending to next line */
 "/""*"([^*]|"*"[^/])*"*"? {
   BEGIN(COMMENT);
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
   /* continuation of C comment, ends here */
 <COMMENT>"*/" {
   BEGIN(INITIAL);
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
   /* continuation of C comment, comment text */
 <COMMENT>([^*]+)|"*" {
-  return ST_COMMENT;
+  return TC_COMMENT;
 }
 
 
@@ -363,35 +363,35 @@ TICK          [\']
     p = strchr(p+1, '/');
   }
   if (p) {
-    // put the comment back; it will be matched as ST_COMMENT
+    // put the comment back; it will be matched as TC_COMMENT
     yyless(p-yytext);
   }
   else {
     // shouldn't happen, but not catastrophic if it does..
   }
-  return ST_PREPROCESSOR;
+  return TC_PREPROCESSOR;
 }
 
   /* preprocessor, continuing to next line */
 ^[ \t]*"#"{ANY}*{BACKSL} {
   BEGIN(PREPROC);
-  return ST_PREPROCESSOR;
+  return TC_PREPROCESSOR;
 }
 
   /* preprocessor, one line */
 ^[ \t]*"#"{ANY}* {
-  return ST_PREPROCESSOR;
+  return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, continuing to next line */
 <PREPROC>{ANY}*{BACKSL} {
-  return ST_PREPROCESSOR;
+  return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, ending here */
 <PREPROC>{ANY}+ {
   BEGIN(INITIAL);
-  return ST_PREPROCESSOR;
+  return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, empty line */
@@ -406,13 +406,13 @@ TICK          [\']
 
   /* whitespace */
 [ \t\n\f\v\r]+ {
-  return ST_NORMAL;
+  return TC_NORMAL;
 }
 
 
   /* anything else */
 {ANY} {
-  return ST_ERROR;
+  return TC_ERROR;
 }
 
 
@@ -445,22 +445,22 @@ void C_Lexer::beginScan(BufferCore const *buffer, int line, LexerState state)
 }
 
 
-int C_Lexer::getNextToken(Style &code)
+int C_Lexer::getNextToken(TextCategory &code)
 {
   int result = lexer->yylex();
 
   if (result == 0) {
     // end of line
     switch ((int)lexer->getState()) {
-      case STRING:  code = ST_STRING;       break;
-      case COMMENT: code = ST_COMMENT;      break;
-      case PREPROC: code = ST_PREPROCESSOR; break;
-      default:      code = ST_NORMAL;       break;
+      case STRING:  code = TC_STRING;       break;
+      case COMMENT: code = TC_COMMENT;      break;
+      case PREPROC: code = TC_PREPROCESSOR; break;
+      default:      code = TC_NORMAL;       break;
     }
     return 0;
   }
   else {
-    code = (Style)result;
+    code = (TextCategory)result;
     return lexer->YYLeng();
   }
 }

@@ -1,8 +1,8 @@
-// style.h
+// textcategory.h
 // data structures to represent descriptions of character styles
 
-#ifndef STYLE_H
-#define STYLE_H
+#ifndef TEXTCATEGORY_H
+#define TEXTCATEGORY_H
 
 #include "macros.h"        // DMEMB, CMEMB
 #include "array.h"         // ArrayStack
@@ -71,7 +71,7 @@ public:
   // 'length' can be 0 to mean infinite.
   void overlay(int start, int length, TextCategory category);
 
-  // Retrieve the style for the given 0-indexed character.
+  // Retrieve the category for the given 0-indexed character.
   TextCategory getCategoryAt(int index) const;
 
   // debugging: render the runs as a string
@@ -80,7 +80,7 @@ public:
 };
 
 
-// iterator for walking over LineStyle descriptors
+// iterator for walking over LineCategory descriptors
 class LineCategoryIter {
 private:
   LineCategories const &categories;    // array of categories
@@ -88,7 +88,7 @@ private:
 
 public:
   int length;                // how many chars remain on this run (0=infinite)
-  TextCategory category;     // style of the current run
+  TextCategory category;     // category of the current run
 
 public:
   LineCategoryIter(LineCategories const &s);
@@ -104,4 +104,4 @@ public:
 };
 
 
-#endif // STYLE_H
+#endif // TEXTCATEGORY_H

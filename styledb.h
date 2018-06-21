@@ -4,11 +4,11 @@
 #ifndef STYLEDB_H
 #define STYLEDB_H
 
-#include "style.h"        // enum TextCategory
-#include "macros.h"       // DMEMB
-#include "array.h"        // GrowArray
+#include "textcategory.h"              // TextCategory
+#include "macros.h"                    // DMEMB
+#include "array.h"                     // GrowArray
 
-#include <qcolor.h>       // QColor
+#include <qcolor.h>                    // QColor
 
 
 // variations on the base font

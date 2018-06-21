@@ -6,7 +6,7 @@
 
 #include "buffer.h"                    // BufferCore, BufferObserver
 
-class LineCategories;                  // style.h
+class LineCategories;                  // textcategory.h
 
 
 class Highlighter : public BufferObserver {
@@ -15,8 +15,9 @@ public:
   // implementors of Highlighter
   virtual ~Highlighter() {}
 
-  // fill 'style' with the styles for 'line' in 'buf'
-  virtual void highlight(BufferCore const &buf, int line, LineCategories &style)=0;
+  // Fill 'categories' with the styles for 'line' in 'buf'.
+  virtual void highlight(BufferCore const &buf, int line,
+                         LineCategories &categories)=0;
 };
 
 
