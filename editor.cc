@@ -611,7 +611,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
       // draw text
       for (int i=0; i < len; i++) {
-        curFont->drawChar(paint,
+        this->drawOneChar(paint, curFont,
                           QPoint(x + fontWidth*i, baseline),
                           text[printed+i]);
       }
@@ -673,9 +673,9 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
-        
-        cursorFont->drawChar(paint, QPoint(x, baseline), 
-                             text[visibleCursorCol]);
+
+        this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
+                          text[visibleCursorCol]);
 
         if (underlineCursor) {
           paint.setPen(cursorFont->getFgColor());
@@ -696,6 +696,19 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // at this point the entire window has been painted, so there
   // is no need to "fill the remainder" (there used to be code
   // here that tried to do that)
+}
+
+
+void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c)
+{
+  // My buffer representation uses 'char' without much regard
+  // to character encoding.  Here, I'm declaring that this whole
+  // time I've been storing some 8-bit encoding consistent with
+  // the font I'm using, which is Latin-1.  At some point I need
+  // to develop and implement a character encoding strategy.
+  int codePoint = (unsigned char)c;
+
+  font->drawChar(paint, pt,  codePoint);
 }
 
 

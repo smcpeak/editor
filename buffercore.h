@@ -20,9 +20,28 @@ class BufferObserver;
 // NOTE: lines and columns are 0-based
 class BufferCore {
 private:   // data
-  // the spine of the editor; every element is either NULL, meaning a
-  // blank line, or is an owner pointer to a '\n'-terminated array of
-  // chars that represent the line's contents
+  // This array is the spine of the editor.  Every element is either
+  // NULL, meaning a blank line, or is an owner pointer to a
+  // '\n'-terminated array of chars that represent the line's contents.
+  //
+  // When I designed this, I didn't pay any attention to character
+  // encodings.  Currently, when it paints the screen, editor.cc
+  // imposes the interpretation that the text is stored as some 8-bit
+  // encoding, and the glyphs in my default (and currently only!) font
+  // further constrain the encoding to specifically be Latin-1.
+  //
+  // That is somewhat at odds with using 'char' rather than 'unsigned
+  // char', since in C++ it is implementation-defined whether plain
+  // 'char' is signed, as I intend to represent values in [0,255].
+  // However, changing everything to 'unsigned char' would accomplish
+  // very little in practice (since I only interpret the meaning of the
+  // data in one place, in editor.cc), and would not address the more
+  // fundamental problem of being restricted to an 8-bit encoding.
+  //
+  // TODO: This unintentional and limited design needs to be replaced.
+  // Note that it affects not just this member but the interface of
+  // every member function that gets or manipulates the stored text,
+  // or that deals with "character" positions or counts.
   GapArray<char*> lines;
 
   // the most-recently edited line number, or -1 to mean that
@@ -86,7 +105,9 @@ public:    // funcs
   // text never includes the '\n' character
   void getLine(int line, int col, char *dest, int destLen) const;
 
-  // maximum length of a line; TODO: implement this
+  // Maximum length of a line.  TODO: Implement this properly (right
+  // now it just uses the length of the longest line ever seen, even
+  // if that line is subsequently deleted).
   int maxLineLength() const { return longestLengthSoFar; }
   
   // check if a given location is within or at the edge of the defined

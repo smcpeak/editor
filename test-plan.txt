@@ -19,6 +19,9 @@ Do: Open 11 files at once.
 Check: The window menu should assign Alt+<digit> shortcuts to the
 10 of the open files.
 
+Do: Open test/allbytes.txt .
+Check: See all the Latin-1 glyphs arranged in a 16x16 grid.
+
 
 Areas to test (needs refinement into specific tests)
 ----------------------------------------------------

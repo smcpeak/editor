@@ -1,0 +1,8 @@
+# .gitattributes
+# adjust file transformations
+
+# Treat this file as binary just to avoid possile problems later
+# since I intend to use it as a test input and want determinism.
+test/allbytes.txt            -text
+
+# EOF

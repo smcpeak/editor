@@ -571,8 +571,8 @@ HE_group::HistoryEltCode HE_group::encode(HistoryElt * /*owner*/ e)
 // return that; this assumes that 'char' is exactly 8 bits
 static int se8bit(unsigned long val)
 {
-  char c = (char)(val & 0xFF);    // signed 8-bit qty
-  return (int)c;                  // sign-extended
+  signed char c = (signed char)(val & 0xFF);  // signed 8-bit qty
+  return (int)c;                              // sign-extended
 }
 
 HistoryElt *HE_group::decode(HistoryEltCode code, bool &allocated) const

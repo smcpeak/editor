@@ -159,8 +159,8 @@ private:     // funcs
   // intermediate paint step
   void updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol);
 
-  // draw text etc. on a QPainter
-  //void drawBufferContents(QPainter &paint, int cursorLine, int cursorCol);
+  // Paint a single character at the given location.
+  void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);
 
   // set 'curFont' and 'underline', plus the foreground
   // and background colors of 'paint', based on 'db' and 's'
