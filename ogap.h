@@ -5,7 +5,7 @@
 #define OGAP_H
 
 #include "gap.h"        // GapArray
-  
+
 template <class T>
 class OGapArray {
 private:     // data
@@ -32,13 +32,13 @@ public:
   // insert a new element; index becomes 'elt', and later elements
   // have their indices shifted by one
   void insert(int elt, T *value)  { arr.insert(elt, value); }
-                     
+
   // remove an element, returning it as an owner pointer
   T *remove(int elt)              { return (T*)arr.remove(elt); }
-  
+
   // delete an element directly
   void deleteElt(int elt)         { delete remove(elt); }
-  
+
   // delete all elements
   void clear();
 

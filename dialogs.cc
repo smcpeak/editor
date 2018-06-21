@@ -56,22 +56,22 @@ int main(int argc, char *argv[])
 {
     Widget main_w, menu_bar, info, prompt, quit;
 
-    
+
     top_wid = XtVaAppInitialize(&app, "Demos", NULL, 0,
         &argc, argv, NULL, NULL);
 
     main_w = XtVaCreateManagedWidget("main_window",
-        xmMainWindowWidgetClass,   top_wid, 
+        xmMainWindowWidgetClass,   top_wid,
         XmNheight, 300,
         XmNwidth,300,
         NULL);
 
-        
-    menu_bar = XmCreateMenuBar(main_w, "main_list", 
-        NULL, 0);        
+
+    menu_bar = XmCreateMenuBar(main_w, "main_list",
+        NULL, 0);
     XtManageChild(menu_bar);
-       
-    /* create prompt widget + callback */       
+
+    /* create prompt widget + callback */
     prompt = XtVaCreateManagedWidget( "Prompt",
         xmCascadeButtonWidgetClass, menu_bar,
         XmNmnemonic, 'P',
@@ -269,7 +269,7 @@ bool stringPromptDialog(Widget parent, char *prompt, char *defaultValue,
   }
 
   printStateInfo("after");
-  
+
   return info.ok;
 }
 
@@ -301,7 +301,7 @@ void promptCallback(Widget wt, XtPointer client_data,
 
       // release the thing it allocated for me
       XFree(userString);
-                      
+
       // tell our caller that 'ok' was pressed
       info->ok = true;
     }
@@ -321,7 +321,7 @@ void printStateInfo(char const *context)
 // general-purpose message box
 void messageBox(Widget parent, char *text)
 {
-  printf("messageBox: %s\n", text);  
+  printf("messageBox: %s\n", text);
 
   #if 0
   Widget dialog;
@@ -364,35 +364,35 @@ XmPushButtonCallbackStruct *cbs)
     /* default text string  */
     xm_string2 = XmStringCreateSimple("Default String");
 
-   
+
     XtSetArg(args[1], XmNtextString, xm_string2);
    /* set up default button for cancel callback */
-    XtSetArg(args[2], XmNdefaultButtonType, 
+    XtSetArg(args[2], XmNdefaultButtonType,
                     XmDIALOG_CANCEL_BUTTON);
 
     /* Create the WarningDialog */
-    dialog = XmCreatePromptDialog(cascade_button, "prompt", 
+    dialog = XmCreatePromptDialog(cascade_button, "prompt",
                                   args, 3);
-    
+
     XmStringFree(xm_string1);
     XmStringFree(xm_string2);
 
-   
-    XtAddCallback(dialog, XmNokCallback, prompt_activate, 
+
+    XtAddCallback(dialog, XmNokCallback, prompt_activate,
                   NULL);
    /* Scrub Prompt Help Button */
-    remove = XmSelectionBoxGetChild(dialog, 
+    remove = XmSelectionBoxGetChild(dialog,
                       XmDIALOG_HELP_BUTTON);
-   
-    XtUnmanageChild(remove);  /* scrub HELP button */ 
-    
+
+    XtUnmanageChild(remove);  /* scrub HELP button */
+
     XtManageChild(dialog);
     XtPopup(XtParent(dialog), XtGrabNone);
 }
 
 
 void
-info_pop_up(Widget cascade_button, char *text, 
+info_pop_up(Widget cascade_button, char *text,
 XmPushButtonCallbackStruct *cbs)
 
 {   Widget dialog;
@@ -434,14 +434,14 @@ XmPushButtonCallbackStruct *cbs)
     xm_string = XmStringCreateSimple(text);
     XtSetArg(args[0], XmNmessageString, xm_string);
     /* set up default button for cancel callback */
-    XtSetArg(args[1], XmNdefaultButtonType, 
+    XtSetArg(args[1], XmNdefaultButtonType,
                    XmDIALOG_CANCEL_BUTTON);
 
 
     /* Create the WarningDialog */
-    dialog = XmCreateWarningDialog(cascade_button, "quit", 
+    dialog = XmCreateWarningDialog(cascade_button, "quit",
                                    args, 1);
-    
+
     ScrubDial(dialog, XmDIALOG_HELP_BUTTON);
 
     XmStringFree(xm_string);
@@ -462,24 +462,24 @@ XmSelectionBoxCallbackStruct *selection)
 {   Widget dialog;
     Arg args[2];
     XmString xm_string;
-    
+
     /* compose InformationDialog output string */
     /* selection->value holds XmString entered to prompt */
-    
+
     xm_string = XmStringCreateSimple("You typed: ");
     xm_string = XmStringConcat(xm_string,selection->value);
 
- 
+
     XtSetArg(args[0], XmNmessageString, xm_string);
     /* set up default button for OK callback */
-    XtSetArg(args[1], XmNdefaultButtonType, 
+    XtSetArg(args[1], XmNdefaultButtonType,
              XmDIALOG_OK_BUTTON);
-  
-    /* Create the InformationDialog to echo 
+
+    /* Create the InformationDialog to echo
        string grabbed from prompt */
-    dialog = XmCreateInformationDialog(top_wid, 
+    dialog = XmCreateInformationDialog(top_wid,
            "prompt_message", args, 2);
-    
+
     ScrubDial(dialog, XmDIALOG_CANCEL_BUTTON);
     ScrubDial(dialog, XmDIALOG_HELP_BUTTON);
 

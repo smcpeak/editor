@@ -11,7 +11,7 @@
 #include "str.h"        // string
 #include "hilite.h"     // Highlighter
 
-                  
+
 // Editor widget editing state for a Buffer that is *used* when the
 // buffer is shown to the user, and *saved* when it is not.  This data
 // is copied between the Editor widget and the BufferState object as
@@ -67,7 +67,7 @@ public:      // funcs
   // copy editing state from 'src'
   void copySavedEditingState(SavedEditingState const &src);
 };
-  
+
 
 // A Buffer, plus additional data about that buffer that the editor
 // UI needs whether or not this buffer is currently shown.
@@ -101,7 +101,7 @@ public:      // data
   int const windowMenuId;
 
   // true when there are unsaved changes
-  //bool changed;                       
+  //bool changed;
   // replaced with unsavedChanges() method
 
   // current highlighter; clients can come in and replace the
@@ -114,11 +114,11 @@ public:      // data
   // Saved editing state to be restored to an Editor widget when
   // the buffer becomes visible again.
   SavedEditingState savedState;
-  
+
 public:      // funcs
   BufferState();
   ~BufferState();
-  
+
   // Return true if this buffer has an assigned hotkey.
   bool hasHotkey() const { return this->hasHotkeyDigit; }
 

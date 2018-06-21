@@ -222,13 +222,13 @@ void EditorWindow::setBuffer(BufferState *b)
 void EditorWindow::setFileName(rostring name, rostring hotkey)
 {
   statusArea->status->setText(toQString(name));
-  
+
   string s = string(appName) & ": ";
   if (hotkey[0]) {
     s &= stringc << "[" << hotkey << "] ";
   }
   s &= sm_basename(name);
-    
+
   this->setWindowTitle(toQString(s));
 }
 
@@ -405,7 +405,7 @@ void EditorWindow::fileExit()
 void EditorWindow::editISearch()
 {
   isearch->attach(editor);
-}                        
+}
 
 
 void EditorWindow::editGotoLine()
@@ -413,23 +413,23 @@ void EditorWindow::editGotoLine()
   Ui_GotoLine gl;
   QDialog dialog;
   gl.setupUi(&dialog);
-              
+
   // I find it a bit bothersome to do this manually.. perhaps there
   // is a way to query the tab order, and always set focus to the
   // first widget in that order?
   gl.lineNumberEdit->setFocus();
-              
+
   //bool hasWT = gl.testWFlags(WStyle_ContextHelp);
   //cout << "hasWT: " << hasWT << endl;
-  
+
   if (dialog.exec()) {
     // user pressed Ok (or Enter)
     string s = gl.lineNumberEdit->text().toUtf8().constData();
     //cout << "text is \"" << s << "\"\n";
-    
+
     if (s.length()) {
       int n = atoi(s);
-      
+
       //cout << "going to line " << n << endl;
       editor->cursorTo(n-1, 0);
       editor->scrollToCursor(-1 /*center*/);
@@ -461,7 +461,7 @@ void EditorWindow::viewSetWhitespaceOpacity()
 }
 
 
-void EditorWindow::windowOccupyLeft() 
+void EditorWindow::windowOccupyLeft()
 {
   if (QApplication::desktop()->width() == 1024) {  // 1024x768
     setGeometry(83, 49, 465, 660);
@@ -738,7 +738,7 @@ EditorWindow *GlobalState::createNewWindow(BufferState *initBuffer)
 
 
 BufferState *GlobalState::createNewFile()
-{                        
+{
   TRACE("untitled", "creating untitled buffer");
   BufferState *b = new BufferState();
   b->filename = "untitled.txt";    // TODO: find a unique variant of this name
@@ -810,11 +810,11 @@ void GlobalState::deleteBuffer(BufferState *b)
   // to whatever is in 'buffers' index slot 'index'
   FOREACH_OBJLIST_NC(EditorWindow, windows, iter) {
     EditorWindow *ed = iter.data();
-    
+
     if (ed->editor->buffer == b) {
       ed->setBuffer(buffers.nth(index));
     }
-    
+
     // also, rebuild all the window menus
     ed->rebuildWindowMenu();
   }

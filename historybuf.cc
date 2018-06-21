@@ -37,7 +37,7 @@ void HistoryBuffer::clearContentsAndHistory()
 }
 
 
-bool HistoryBuffer::unsavedChanges() const 
+bool HistoryBuffer::unsavedChanges() const
 {
   if (savedTime != time) {
     return true;

@@ -82,7 +82,7 @@ public:
     FS_ONE_LINE            = 0x08, // only search the named line
 
     FS_ALL                 = 0x0F  // all flags
-  };   
+  };
 
   // search from line/col to find the first occurrence of
   // 'text', and update line/col to the beginning of the
@@ -109,7 +109,7 @@ public:
   // used for restoring the cursor position after some sequence
   // of edits
   void moveRelCursorTo(int newLine, int newCol);
-                                 
+
   // relative to same line, absolute to given column
   void moveAbsColumn(int newCol);
 

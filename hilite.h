@@ -10,7 +10,7 @@ class LineStyle;           // style.h
 
 
 class Highlighter : public BufferObserver {
-public:                             
+public:
   // clients *are* allowed to delete objects known only as
   // implementors of Highlighter
   virtual ~Highlighter() {}

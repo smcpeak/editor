@@ -1,5 +1,5 @@
 /* c_hilite.lex
-   lexer for highlighting C/C++ 
+   lexer for highlighting C/C++
    based on comment.lex, and elsa's lexer.lex */
 
 /* ----------------------- C definitions ---------------------- */

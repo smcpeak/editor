@@ -49,7 +49,7 @@ private:      // data
   // just one element between beginGroup() and endGroup(), but
   // I allow for the generality of a stack anyway
   ObjStack<HE_group> groupStack;
-  
+
   // for each element in 'groupStack', keep track of whether any
   // of its elements modified the buffer when it was applied
   ArrayStack<bool> groupEltModifies;
@@ -114,7 +114,7 @@ public:      // funcs
   // facility for grouping actions with HE_group
   void beginGroup();
   void endGroup();
-  
+
   // true if we have an open group; note that undo/redo is not allowed
   // in that case, even though canUndo/Redo() may return true
   bool inGroup() const        { return groupStack.isNotEmpty(); }
@@ -126,7 +126,7 @@ public:      // funcs
 
   void undo();
   void redo();
-           
+
 
   // print the history in a textual format, with the current time
   // marked (or no mark if time is at the end)
@@ -134,7 +134,7 @@ public:      // funcs
   void printHistory(/*to stdout*/) const;
 
   // get statistics about history memory usage
-  void historyStats(HistoryStats &stats) const 
+  void historyStats(HistoryStats &stats) const
     { history.stats(stats); }
   void printHistoryStats() const;
 };

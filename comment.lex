@@ -25,7 +25,7 @@ public:      // funcs
   ~CommentFlexLexer() {}
 
   virtual int yylex();
-  
+
   void setState(LexerState state) { BEGIN((int)state); }
   LexerState getState() const     { return (LexerState)(YY_START); }
 };

@@ -12,7 +12,7 @@ StatusDisplay::StatusDisplay(QWidget *parent)
   : QWidget(parent)
 {
   this->setFixedHeight(20);
-  
+
   QHBoxLayout *hb = new QHBoxLayout();
   hb->setContentsMargins(0, 0, 0, 0);
 

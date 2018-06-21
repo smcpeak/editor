@@ -48,7 +48,7 @@ TextStyle const &StyleDB::getStyle(Style index) const
   return arr[index];    // does bounds check
 }
 
-              
+
 StyleDB *StyleDB::inst = NULL;
 
 STATICDEF StyleDB *StyleDB::instance()

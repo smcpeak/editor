@@ -80,7 +80,7 @@ void IncSearch::attach(Editor *newEd)
     curCol = ed->selLowCol;
     if (ed->selLowLine == ed->selHighLine) {
       // expected case
-      text = ed->buffer->getTextRange(ed->selLowLine, ed->selLowCol, 
+      text = ed->buffer->getTextRange(ed->selLowLine, ed->selLowCol,
         ed->selHighLine, ed->selHighCol);
     }
     else {
@@ -111,7 +111,7 @@ static void addStatusFlag(stringBuilder &sb, char const *label, bool on)
 QString IncSearch::statusText() const
 {
   stringBuilder sb;
-  
+
   switch (mode) {
     case M_SEARCH:
       sb << "I-search:  F1=help";
@@ -234,16 +234,16 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
         ed->moveView(+1, 0);
         ed->redraw();
         return true;
-        
+
       case Qt::Key_Up:
         ed->moveView(-1, 0);
         ed->redraw();
         return true;
-        
-      case Qt::Key_Home:     
+
+      case Qt::Key_Home:
         // make as much of the left side visible as possible
         ed->setFirstVisibleCol(0);
-        ed->scrollToCursor();                               
+        ed->scrollToCursor();
         return true;
 
       default: {
@@ -286,7 +286,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 
         if (!findString()) {
           return true;    // nop: no matches
-        }                                   
+        }
 
         // remember what is selected
         removedText = ed->getSelectedText();
@@ -307,7 +307,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
       case Qt::Key_Down:
       case Qt::Key_W:       // and this is a conflicting binding...
       #endif // 0
-      
+
       // even though it's a little inconsistent that Ctrl-W extends the
       // selection while Ctrl-Z scrolls, it's the latter functionality
       // that I need most often....
@@ -328,10 +328,10 @@ bool IncSearch::searchPseudoKey(InputPseudoKey pkey)
     case IPK_CANCEL:
       // return to original location
       resetToSearchStart();
-      
+
       detach();
       return true;
-      
+
     default:
       return false;
   }
@@ -371,7 +371,7 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
   // the only flag I want the editor using for hit text, for now,
   // is the case sensitivity flag
   ed->hitTextFlags = curFlags & Buffer::FS_CASE_INSENSITIVE;
-  
+
   ed->redraw();
 
   updateStatus();
@@ -528,13 +528,13 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 
 bool IncSearch::getReplacementPseudoKey(InputPseudoKey pkey)
 {
-  switch (pkey) {   
+  switch (pkey) {
     case IPK_CANCEL:
       // go back to M_SEARCH
       putBackMatchText();
       setMode(M_SEARCH);
       return true;
-      
+
     default:
       return false;
   }
@@ -600,7 +600,7 @@ bool IncSearch::replaceKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
         return true;
     }
   }
-  
+
   return true;
 }
 

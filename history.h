@@ -24,10 +24,10 @@ public:
 
   // as a possible point of future design variance, I might add more
   // than one cursor to this class at some point..
-  
+
 public:
   CursorBuffer();
-  
+
   bool cursorInDefined() const
     { return this->locationInDefined(this->line, this->col); }
 
@@ -35,7 +35,7 @@ public:
     { return this->locationAtEnd(this->line, this->col); }
 };
 
-  
+
 // XHistory is thrown when a history event finds it cannot be applied
 // because the CursorBuffer state isn't consistent with the
 // information stored in the event.
@@ -174,10 +174,10 @@ private:     // funcs
   // remove the first element in the sequence (there must be at
   // least one), and return an owner pointer to it
   HistoryEltCode stealFirstEltCode();
-  
+
   // encode a pointer
   HistoryEltCode encode(HistoryElt * /*owner*/ e);
-  
+
   // decode a pointer; returns an owner if 'allocated' is true
   HistoryElt *decode(HistoryEltCode code, bool &allocated) const;
 
@@ -254,10 +254,10 @@ public:
 
 public:
   HistoryStats();
-  
+
   // estimate total space usage from current totals
   int totalUsage() const;
-  
+
   // print all info
   void printInfo() const;
 };

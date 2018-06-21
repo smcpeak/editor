@@ -38,7 +38,7 @@ public:
 
 // collection of styles
 class StyleDB {
-private:                          
+private:
   // array of defined styles
   ArrayStack<TextStyle> arr;
 

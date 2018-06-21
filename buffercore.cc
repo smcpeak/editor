@@ -340,7 +340,7 @@ void clear(BufferCore &buf)
     buf.deleteText(0, 0, buf.lineLength(0));
     buf.deleteLine(0);
   }
-  
+
   // delete contents of last remaining line
   buf.deleteText(0, 0, buf.lineLength(0));
 }
@@ -358,7 +358,7 @@ void readFile(BufferCore &buf, char const *fname)
 
   int line = 0;
   int col = 0;
-  
+
   for (;;) {
     int len = fread(buffer, 1, BUFSIZE, fp);
     if (len == 0) {
@@ -458,7 +458,7 @@ void truncateCursor(BufferCore const &buf, int &line, int &col)
 {
   line = max(0, line);
   col = max(0, col);
-  
+
   line = min(line, buf.numLines()-1);      // numLines>=1 always
   col = min(col, buf.lineLength(line));
 }
@@ -531,7 +531,7 @@ int computeSpanLength(BufferCore const &buf, int line1, int col1,
   if (line1 == line2) {
     return col2-col1;
   }
-  
+
   // tail of first line
   int length = buf.lineLength(line1) - col1 +1;
 
@@ -547,9 +547,9 @@ int computeSpanLength(BufferCore const &buf, int line1, int col1,
 
   // beginning of last line
   length += col2;
-  
+
   return length;
-}  
+}
 
 
 // -------------------- BufferObserver ------------------
@@ -633,7 +633,7 @@ void entry()
 
   printf("stats after:\n");
   malloc_stats();
-  
+
   printf("\nbuffercore is ok\n");
 }
 

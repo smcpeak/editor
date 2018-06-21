@@ -14,7 +14,7 @@ class QKeyEvent;       // qevent.h
 // handle.
 enum InputPseudoKey {
   IPK_CANCEL,          // cancel current operation (Esc)
-  
+
   NUM_INPUT_PSEUDO_KEYS
 };
 

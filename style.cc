@@ -80,7 +80,7 @@ Style LineStyle::getStyleAt(int index) const
     }
     index -= iter.length;
   }
-  
+
   return endStyle;
 }
 
@@ -141,7 +141,7 @@ string LineStyle::asUnaryString() const
 LineStyleIter::LineStyleIter(LineStyle const &s)
   : styles(s),
     entry(-1)
-{           
+{
   nextRun();
 }
 

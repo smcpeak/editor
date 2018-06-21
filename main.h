@@ -156,10 +156,10 @@ public:       // funcs
   // intent is to make one of these in main()
   GlobalState(int argc, char **argv);
   ~GlobalState();
-  
+
   // to run the app, use the 'exec()' method, inherited
   // from QApplication
-  
+
   BufferState *createNewFile();
   EditorWindow *createNewWindow(BufferState *initBuffer);
   void trackNewBuffer(BufferState *b);

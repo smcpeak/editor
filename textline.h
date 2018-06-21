@@ -6,7 +6,7 @@
 
 #include "macros.h"       // NOTEQUAL_OPERATOR
 
-// a single line of text                        
+// a single line of text
 // note: Buffer manipulates (zeroes and copies) arrays of TextLines by
 // directly manipulating the representation, via memset and memcpy
 class TextLine {
@@ -16,7 +16,7 @@ private:   // data
   int length;         // # of chars in this line
   int allocated;      // # of bytes allocated to 'text'
 
-  // invariants: 
+  // invariants:
   //   length <= allocated
   //   the memory pointed to by 'text' is exclusively pointed
   //     by 'text', and has size 'allocated'
@@ -24,7 +24,7 @@ private:   // data
 private:   // disallowed
   // for now, no implicit copying
   TextLine(TextLine&);
-  void operator = (TextLine&);                 
+  void operator = (TextLine&);
 
 public:    // funcs
   // empty ctor, no dtor, so we can make arrays w/o C++ stuff going on
@@ -52,7 +52,7 @@ public:    // funcs
 
   // set the length, and realloc if necessary; if 'margin'
   // is true, make 'allocated' a bit bigger in expectation
-  // of more data being added; if new length > old length, 
+  // of more data being added; if new length > old length,
   // the gap is filled with spaces
   void setLength(int newLength, bool margin);
   void setLengthMargin(int n) { setLength(n, true); }

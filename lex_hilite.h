@@ -54,7 +54,7 @@ private:     // funcs
 public:      // funcs
   LexHighlighter(BufferCore const &buf, IncLexer &lex);
   virtual ~LexHighlighter();
-  
+
   // BufferObserver funcs
   virtual void observeInsertLine(BufferCore const &buf, int line);
   virtual void observeDeleteLine(BufferCore const &buf, int line);

@@ -132,7 +132,7 @@ void TextLine::remove(int startPos, int delLength)
     // nothing out here..
     return;
   }
-  
+
   if (startPos + delLength >= length) {
     // trim the deletion length so we are only removing what's there
     delLength = length - startPos;

@@ -109,7 +109,7 @@ public:    // funcs
   // now it just uses the length of the longest line ever seen, even
   // if that line is subsequently deleted).
   int maxLineLength() const { return longestLengthSoFar; }
-  
+
   // check if a given location is within or at the edge of the defined
   // buffer contents (i.e. such that an 'insertText' would be allowed)
   bool locationInDefined(int line, int col) const;
@@ -234,7 +234,7 @@ public:
   to ignore the distinction between bytes and characters.)  Obviously,
   we need to describe the mapping between the on-disk and in-memory
   abstractions.
-  
+
   One possibility is to interpret an on-disk file as a sequence of
   line records, terminated by newlines.  Unfortunately, this doesn't
   work well for two reasons:
@@ -242,14 +242,14 @@ public:
     - It doesn't match well with an editing paradigm where one can
       insert new text at an arbitrary cursor location, that text
       possibly containing newline characters.
-      
+
   Therefore I adopt a slightly different interpretation, where an
   on-disk file is a sequence of lines *separated* by newlines.  Thus,
   even a 0-length file is interpreted as having one (empty) line.  By
   seeing newlines as separators instead of terminators, files lacking
   a newline are easy to handle, as are insertions that contain
   newlines.
-  
+
   The one unexpected consequence of this mapping is that, since I want
   the mapping to be invertible, I must disallow the possibility of a
   file containing no lines at all, since there's no corresponding

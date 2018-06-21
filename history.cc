@@ -29,7 +29,7 @@ CursorBuffer::CursorBuffer()
   : BufferCore(),
     line(0),
     col(0)
-{}  
+{}
 
 
 // -------------------- HistoryElt ----------------------
@@ -165,7 +165,7 @@ STATICDEF bool HE_text::static_apply(
   }
   else {
     insert(buf, text, textLen, !left, !reverse);
-  }                  
+  }
 
   return textLen > 0;
 }
@@ -255,7 +255,7 @@ STATICDEF void HE_text::insert(
 
   else {
     // deletion
-    
+
     // location of the left edge of the text to delete; this will be
     // changed below if we're actually doing a right insertion (I
     // cannot use buf.line/col for this purpose, since I don't want to
@@ -348,20 +348,20 @@ STATICDEF void HE_text::insert(
     if (pendingSplice) {
       xassert(pendingSplice == 1);       // should only have one splice
       xassert(col == 0);                 // it's this entire line that goes
-      
+
       // grab this line's contents
       int spliceLen = buf.lineLength(line);
       Array<char> splice(spliceLen);
       buf.getLine(line, col, splice, spliceLen);
-      
+
       // blow it away
       buf.deleteText(line, col, spliceLen);
       buf.deleteLine(line);
-      
+
       // move up to end of previous line
       line--;
       col = buf.lineLength(line);
-      
+
       // append splice text
       buf.insertText(line, col, splice.ptrC(), spliceLen);
     }
@@ -403,8 +403,8 @@ void HE_text::computeText(CursorBuffer const &buf, int count)
 void HE_text::print(stringBuilder &sb, int indent) const
 {
   sb.indent(indent);
-  sb << (left? "left" : "right") 
-     << (insertion? "Ins" : "Del") 
+  sb << (left? "left" : "right")
+     << (insertion? "Ins" : "Del")
      << "(\"" << encodeWithEscapes(text, textLen) << "\");\n";
 }
 
@@ -538,7 +538,7 @@ HE_group::HistoryEltCode HE_group::encode(HistoryElt * /*owner*/ e)
         // action, many of which won't actually try to add a history
         // element
         //RETURN(0);   // special code to caller
-        
+
         // update: I have to add exactly one element to the sequence
         // because the caller believes the sequence has increased in
         // length by exactly one.  So the caller takes care of this
@@ -566,7 +566,7 @@ HE_group::HistoryEltCode HE_group::encode(HistoryElt * /*owner*/ e)
   return (HistoryEltCode)e;
 }
 
-                                
+
 // take the low 8 bits of 'val', sign-extend them to 32, and
 // return that; this assumes that 'char' is exactly 8 bits
 static int se8bit(unsigned long val)
@@ -632,10 +632,10 @@ void HE_group::squeezeReserved()
 void HE_group::truncate(int newLength)
 {
   xassert(0 <= newLength && newLength <= seqLength());
-  
+
   while (newLength < seqLength()) {
     HistoryEltCode code = seq.remove(newLength);
-    
+
     if (code & 1) {
       // it's not a pointer, nothing to do
     }
@@ -688,7 +688,7 @@ bool HE_group::applyOne(CursorBuffer &buf, int index, bool reverse)
   bool mod = e->apply(buf, reverse);
   if (allocated) {
     delete e;
-  }          
+  }
   return mod;
 }
 
@@ -722,12 +722,12 @@ void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
     // print mark
     sb << "--->\n";
   }
-  
+
   sb.indent(indent) << "}";
-  
+
   //if (n >= 0) {
   //  sb << " /""*time=" << n << "*/";
-  //} 
+  //}
 
   sb << "\n";
 }

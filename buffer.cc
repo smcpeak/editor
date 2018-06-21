@@ -86,9 +86,9 @@ string Buffer::getTextRange(int line1, int col1, int line2, int col2) const
 
   if (line1 == line2) {
     // extracting text from a single line
-    xassert(col1 <= col2);   
+    xassert(col1 <= col2);
     int len = col2-col1;
-    
+
     // It is not very efficient to allocate two buffers, one here and
     // one inside the string object, but the std::string API doesn't
     // offer a way to do it directly, so I need to refactor my APIs if
@@ -127,11 +127,11 @@ string Buffer::getTextRange(int line1, int col1, int line2, int col2) const
 string Buffer::getWordAfter(int line, int col) const
 {
   stringBuilder sb;
-         
+
   if (!( 0 <= line && line < numLines() )) {
     return "";
   }
-                                  
+
   bool seenWordChar = false;
   while (col < lineLength(line)) {
     char ch = getTextRange(line, col, line, col+1)[0];
@@ -266,7 +266,7 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
 // ---------------- Buffer: modifications ------------------
 
 void Buffer::moveRelCursor(int deltaLine, int deltaCol)
-{                              
+{
   // prevent moving into negative territory
   deltaLine = max(deltaLine, -line());
   deltaCol = max(deltaCol, -col());
@@ -637,7 +637,7 @@ void entry()
   xassert(buf.numLines() == 1);
   xassert(buf.lineLength(0) == 0);
 
-  
+
   Buffer::FindStringFlags
     none = Buffer::FS_NONE,
     insens = Buffer::FS_CASE_INSENSITIVE,

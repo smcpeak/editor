@@ -6,7 +6,7 @@
 
 #include "typ.h"               // bool
 #include <X11/Intrinsic.h>     // Widget
-      
+
 
 
 // .. was trying to decide whether Widget == Window ..

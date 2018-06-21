@@ -15,7 +15,7 @@ class Sequence {
 private:
   int *arr;       // all elements in sequence, contiguously
   int len;        // # of elements in sequence, and length of 'arr'
-  
+
 private:
   void bc(int elt) const { xassert(0 <= elt && elt < len); }
 
@@ -94,16 +94,16 @@ void Sequence::remove(int elt)
   len--;
 }
 
-              
+
 template <class Seq>
 void printSeq(char const *prefix, Seq &seq)
-{                                 
+{
   printf("%s:", prefix);
   int len = seq.length();
   for (int i=0; i<len; i++) {
     int v = seq.get(i);
     printf(" %d", v);
-  }                  
+  }
   printf("\n");
 }
 

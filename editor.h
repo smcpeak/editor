@@ -83,7 +83,7 @@ public:      // data
   // same character size; some entries may be NULL, indicating we
   // do not expect to draw text with that style
   ObjArrayStack<QtBDFFont> fontForStyle;
-  
+
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
   ObjArrayStack<QtBDFFont> cursorFontForFV;
@@ -126,7 +126,7 @@ public:      // data
   //   - I'm a listener to my own buffer, to track the
   //     changes made in another window.
   //   - nonfocusCursorLine/Col are valid/relevant/correct
-  
+
   // true if I've registered myself as a listener; there
   // are a few cases where I don't have the focus, but
   // I also am not a listener (like initialization)
@@ -166,7 +166,7 @@ private:     // funcs
 
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
-  
+
   // intermediate paint step
   void updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol);
 
@@ -181,7 +181,7 @@ private:     // funcs
 
   // offset from one line to the next
   int lineHeight() const { return fontHeight+interLineSpace; }
-  
+
   // helper
   int stcHelper(int firstVis, int lastVis, int cur, int gap);
 
@@ -330,7 +330,7 @@ public:      // funcs
   // Initial handling of pseudokeys.  First dispatches to the
   // proxy if any, and then handles what is not yet handled.
   void pseudoKeyPress(InputPseudoKey pkey);
-  
+
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);

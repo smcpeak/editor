@@ -82,7 +82,7 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
            bdfFontData_editor14b);
 
   setCursor(Qt::IBeamCursor);
-  
+
   // required to accept focus
   setFocusPolicy(Qt::StrongFocus);
 
@@ -105,9 +105,9 @@ Editor::~Editor()
 void Editor::cursorTo(int line, int col)
 {
   buffer->moveAbsCursor(line, col);
-  
+
   // set the nonfocus location too, in case the we happen to
-  // not have the focus right now (e.g. the Alt+G dialog); 
+  // not have the focus right now (e.g. the Alt+G dialog);
   // actually, the need for thisexposes the fact that my current
   // solution to nonfocus cursor issues isn't very good.. hmm...
   nonfocusCursorLine = line;
@@ -187,36 +187,36 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
     ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_STYLES);
     for (int style = ST_ZERO; style < NUM_STANDARD_STYLES; style++) {
       TextStyle const &ts = styleDB->getStyle((Style)style);
-  
+
       STATIC_ASSERT(FV_BOLD == 2);
       BDFFont *bdfFont = bdfFonts[ts.variant % 3];
-  
+
       QtBDFFont *qfont = new QtBDFFont(*bdfFont);
       qfont->setFgColor(ts.foreground);
       qfont->setBgColor(ts.background);
       qfont->setTransparent(false);
       newFonts.push(qfont);
     }
-  
+
     // Substitute the new for the old.
     fontForStyle.swapWith(newFonts);
   }
-  
+
   // Repeat the procedure for the cursor fonts.
   {
     ObjArrayStack<QtBDFFont> newFonts(FV_BOLD + 1);
     for (int fv = 0; fv <= FV_BOLD; fv++) {
       QtBDFFont *qfont = new QtBDFFont(*(bdfFonts[fv]));
-  
+
       // The character under the cursor is drawn with the normal background
       // color, and the cursor box (its background) is drawn in 'cursorColor'.
       qfont->setFgColor(styleDB->getStyle(ST_NORMAL).background);
-      qfont->setBgColor(cursorColor);          
+      qfont->setBgColor(cursorColor);
       qfont->setTransparent(false);
-      
+
       newFonts.push(qfont);
     }
-    
+
     cursorFontForFV.swapWith(newFonts);
   }
 
@@ -262,13 +262,13 @@ void Editor::setBuffer(BufferState *buf)
 void Editor::redraw()
 {
   updateView();
-  
+
   // tell our parent.. but ignore certain messages temporarily
   {
     Restorer<bool> restore(ignoreScrollSignals, true);
     emit viewChanged();
   }
-  
+
   // redraw
   update();
 }
@@ -332,7 +332,7 @@ void Editor::resizeEvent(QResizeEvent *r)
   emit viewChanged();
 }
 
- 
+
 // for calling from gdb..
 int flushPainter(QPainter &p)
 {
@@ -348,7 +348,7 @@ int flushPainter(QPainter &p)
   return 0;
 }
 
-  
+
 // In general, to avoid flickering, I try to paint every pixel
 // exactly once (this idea comes straight from the Qt tutorial).
 // So far, the only place I violate that is the cursor, the pixels
@@ -390,7 +390,7 @@ void Editor::paintEvent(QPaintEvent *ev)
     paint.setBackground(Qt::red);
     paint.drawText(0, 30,                 // baseline start coordinate
                    toQString(x.why()));
-                   
+
     // Also write to stderr so rare issues can be seen.
     cerr << x.why() << endl;
   }
@@ -426,15 +426,15 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
   // make the main painter, which will draw on the line pixmap; the
   // font setting must be copied over manually
-  QPainter paint(&pixmap);  
+  QPainter paint(&pixmap);
   paint.setFont(font());
 
   // Another painter will go to the window directly.  A key property
   // is that every pixel painted via 'winPaint' must be painted exactly
   // once, to avoid flickering.
   QPainter winPaint(this);
-  
-  // ---- setup style info ----    
+
+  // ---- setup style info ----
   // when drawing text, erase background automatically
   paint.setBackgroundMode(Qt::OpaqueMode);
 
@@ -594,10 +594,10 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
     // number of characters printed
     int printed = 0;
-    
+
     // 'y' coordinate of the origin point of characters
     int baseline = ascent-1;
-    
+
     // loop over segments with different styles
     while (x < lineWidth) {
       xassert(printed < visibleCols);
@@ -669,10 +669,10 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       // 0-based cursor column relative to what is visible
       int const visibleCursorCol = cursorCol - firstCol;
       xassert(visibleCursorCol >= 0);
-      
+
       // 'x' coordinate of the leftmost column of the character cell
       // where the cursor is, i.e., the character that would be deleted
-      // if the Delete key were pressed.      
+      // if the Delete key were pressed.
       x = leftMargin + fontWidth * visibleCursorCol;
 
       if (false) {     // thin vertical bar
@@ -719,7 +719,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
           paint.drawLine(x, ulBaseline, x + fontWidth, ulBaseline);
         }
       }
-        
+
       paint.restore();
 
     }
@@ -805,7 +805,7 @@ void Editor::setDrawStyle(QPainter &paint,
   paint.setBackground(ts.background);
 
   underlining = (ts.variant == FV_UNDERLINE);
-  
+
   curFont = fontForStyle[s];
   xassert(curFont);
 }
@@ -918,13 +918,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
   // We need to map pseudo-keys before the input proxy sees
   // them, because otherwise the proxy may swallow them.
   if (modifiers == Qt::NoModifier) {
-    switch (k->key()) {  
+    switch (k->key()) {
       case Qt::Key_Escape:
         pseudoKeyPress(IPK_CANCEL);
         return;
     }
   }
-  
+
   if (modifiers == Qt::ControlModifier) {
     switch (k->key()) {
       case Qt::Key_G:
@@ -933,7 +933,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
     }
   }
 
-  // Now check with the proxy.  
+  // Now check with the proxy.
   if (inputProxy && inputProxy->keyPressEvent(k)) {
     return;
   }
@@ -1028,11 +1028,11 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Qt::Key_Left:
         blockIndent(-2);
         break;
-        
+
       case Qt::Key_Right:
         blockIndent(+2);
         break;
-        
+
       case Qt::Key_D: {
         // TODO: This does not work on Windows.  The time zone
         // information is wrong.
@@ -1085,7 +1085,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         }
         long elapsed = getMilliseconds() - start;
         QMessageBox::information(this, "perftest",
-          qstringb("drew " << frames << " frames in " << 
+          qstringb("drew " << frames << " frames in " <<
                    elapsed << " milliseconds, or " <<
                    (elapsed / frames) << " ms/frame"));
         break;
@@ -1137,7 +1137,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
         turnOnSelection();
         cursorToBottom();
         break;
-       
+
       case Qt::Key_Enter:
       case Qt::Key_Return: {
         cursorToEndOfNextLine(true);
@@ -1367,7 +1367,7 @@ void Editor::spliceNextLine()
   buffer->deleteChar();
 }
 
-                     
+
 // for a particular dimension, return the new start coordinate
 // of the viewport
 int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
@@ -1379,7 +1379,7 @@ int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
   }
 
   int width = lastVis - firstVis + 1;
-      
+
   bool changed = false;
   if (cur-gap < firstVis) {
     firstVis = max(0, cur-gap);
@@ -1389,12 +1389,12 @@ int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
     firstVis += cur+gap - lastVis;
     changed = true;
   }
-                   
+
   if (changed && center) {
     // we had to adjust the viewport; make it actually centered
     firstVis = max(0, cur - width/2);
   }
-  
+
   return firstVis;
 }
 
@@ -1403,14 +1403,14 @@ void Editor::scrollToCursor_noRedraw(int edgeGap)
   int fvline = stcHelper(this->firstVisibleLine,
                          this->lastVisibleLine,
                          cursorLine(), edgeGap);
-                         
+
   int fvcol = stcHelper(this->firstVisibleCol,
                         this->lastVisibleCol,
                         cursorCol(), edgeGap);
 
   setView(fvline, fvcol);
 }
-  
+
 void Editor::scrollToCursor(int edgeGap)
 {
   scrollToCursor_noRedraw(edgeGap);
@@ -1425,7 +1425,7 @@ STATICDEF string Editor::lineColStr(int line, int col)
 
 void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
 {
-  TRACE("moveViewAndCursor", 
+  TRACE("moveViewAndCursor",
         "start: firstVis=" << firstVisStr()
      << ", cursor=" << cursorStr()
      << ", delta=" << lineColStr(deltaLine, deltaCol));
@@ -1462,7 +1462,7 @@ void Editor::scrollToLine(int line)
 }
 
 void Editor::scrollToCol(int col)
-{  
+{
   if (!ignoreScrollSignals) {
     xassert(col >= 0);
     setFirstVisibleCol(col);
@@ -1554,7 +1554,7 @@ void Editor::editRedo()
   else {
     QMessageBox::information(this, "Can't redo",
       "There are no actions to redo in the history.");
-  }                                        
+  }
 }
 
 
@@ -1577,7 +1577,7 @@ void Editor::editCopy()
     // put it into the clipboard
     QClipboard *cb = QApplication::clipboard();
     cb->setText(toQString(sel));
-    
+
     // un-highlight the selection, which is what emacs does and
     // I'm now used to
     this->selectEnabled = false;
@@ -1649,7 +1649,7 @@ void Editor::showInfo(char const *infoString)
   // Translate that to the coordinates of 'main'.
   target = this->mapTo(main, target);
   infoBox->move(target);
-           
+
   // If the box goes beyond the right edge of the window, pull it back
   // to the left to keep it inside.
   if (infoBox->x() + infoBox->width() > main->width()) {
@@ -1666,7 +1666,7 @@ void Editor::hideInfo()
     infoBox = NULL;
   }
 }
-                    
+
 
 void Editor::cursorLeft(bool shift)
 {
@@ -1763,13 +1763,13 @@ void Editor::blockIndent(int amt)
   if (!this->selectEnabled) {
     return;      // nop
   }
-  
-  normalizeSelect();              
-  
+
+  normalizeSelect();
+
   int endLine = (selHighCol==0? selHighLine-1 : selHighLine);
   endLine = min(endLine, buffer->numLines()-1);
   buffer->indentLines(selLowLine, endLine-selLowLine+1, amt);
-  
+
   redraw();
 }
 
@@ -1892,15 +1892,15 @@ void Editor::pseudoKeyPress(InputPseudoKey pkey)
     // handled
     return;
   }
-  
+
   // Handle myself.
   switch (pkey) {
     default:
       xfailure("invalid pseudo key");
-      
+
     case IPK_CANCEL:
       // do nothing; in other modes this will cancel out
-                
+
       // well, almost nothing
       this->hitText = "";
       redraw();

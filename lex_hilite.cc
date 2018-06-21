@@ -34,11 +34,11 @@ LexHighlighter::~LexHighlighter()
 
 
 void LexHighlighter::checkInvar() const
-{   
+{
   xassert(0 <= waterline &&
                waterline <= buffer.numLines());
 
-  if (!changedIsEmpty()) {   
+  if (!changedIsEmpty()) {
     xassert(changedBegin < changedEnd);
     xassert(waterline >= changedEnd);
 
@@ -184,7 +184,7 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
       if (changedEnd < waterline) {
         changedEnd++;
       }
-      else {                             
+      else {
         // no need to keep moving the 'changed' region, the waterline
         // has responsibility for marking 'line+1' and beyond as "changed"
         xassert(changedEnd == waterline);

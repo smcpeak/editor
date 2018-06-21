@@ -99,7 +99,7 @@ public:      // funcs
   // big; first source element written is 'elt' (first destination
   // element is always dest[0], *not* dest[elt])
   void writeIntoArray(T *dest, int destLen, int elt=0) const;
-  
+
   // debugging
   void getInternals(int &L, int &G, int &R) const
     { L=left; G=gap; R=right; }
@@ -147,7 +147,7 @@ void GapArray<T>::prepareToInsert(int elt, int insLen)
   }
 }
 
-  
+
 template <class T>
 T GapArray<T>::swap(int elt, T value)
 {
@@ -195,7 +195,7 @@ void GapArray<T>::insertManyZeroes(int elt, int insLen)
 
 template <class T>
 T GapArray<T>::remove(int elt)
-{         
+{
   T ret = get(elt);
   if (elt != left) {
     makeGapAt(elt);
@@ -204,7 +204,7 @@ T GapArray<T>::remove(int elt)
   // remove at left edge of right half
   gap++;
   right--;
-  
+
   return ret;
 }
 
@@ -274,7 +274,7 @@ void GapArray<T>::makeGapAt(int elt, int gapSize)
   xassert(elt == left);
 
   // must widen gap?
-  if (gap < gapSize) {                                     
+  if (gap < gapSize) {
     // new array size: 150% of existing array size, plus 10
     int newSize = (left+gap+right) * 3 / 2 + 10;
     int newGap = newSize-left-right;
@@ -327,7 +327,7 @@ void GapArray<T>::squeezeGap()
   if (gap == 0) {
     return;
   }
-  
+
   if (left+right == 0) {
     // just deallocate
     delete[] array;

@@ -27,7 +27,7 @@ enum Style {
   ST_NUMBER2,              // numeric literal, alternate (I use this for octal)
   ST_OPERATOR,             // operator
   ST_PREPROCESSOR,         // preprocessor directive
-  
+
   NUM_STANDARD_STYLES
 };
 
@@ -73,7 +73,7 @@ public:
 
   // Retrieve the style for the given 0-indexed character.
   Style getStyleAt(int index) const;
-  
+
   // debugging: render the runs as a string
   string asString() const;          // e.g. "[1,4][2,3][4"
   string asUnaryString() const;     // e.g. "11112224..."

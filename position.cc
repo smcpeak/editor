@@ -19,7 +19,7 @@ Position::Position(Position const &obj)
     DMEMB(_line),
     DMEMB(_col)
 {}
-  
+
 
 Position::~Position()
 {}
@@ -36,7 +36,7 @@ Position& Position::operator = (Position const &obj)
 
 
 bool Position::operator == (Position const &obj) const
-{                           
+{
   // I permit equality checks even between positions
   // of different buffers..
   return EMEMB(buffer) &&
@@ -48,17 +48,17 @@ bool Position::operator == (Position const &obj) const
 bool Position::operator < (Position const &obj) const
 {
   // but relationals only make sense for same buffer
-  xassert(buffer == buffer);                        
-  
+  xassert(buffer == buffer);
+
   return _line < obj._line ||
          (_line == obj._line && _col < obj._col);
-         
+
 }
 
 
-TextLine *Position::getBufLine() const 
-{ 
-  return buffer->getLine(line()); 
+TextLine *Position::getBufLine() const
+{
+  return buffer->getLine(line());
 }
 
 
@@ -110,7 +110,7 @@ bool Position::inText() const
 }
 
 void Position::clampToText()
-{              
+{
   if (beyondEnd()) {
     setToEnd();
   }

@@ -49,12 +49,12 @@ TODOs:
 postponed or decided against:
   / window menu Alt-n numbers should be underlined to act as simple
     hotkeys when the window is open (quite difficult)
-    
+
 implemented:
   + ctrl-z, ctrl-w should work while in search mode
     (ctrl-w already does something else in that mode..)
   * make the window title reflect the Alt-n key that gets you there
-  * in search mode, 
+  * in search mode,
     / home/end should be like enter, home/end
       but home already scrolls towards left edge w/o getting
       out of search...
@@ -80,7 +80,7 @@ to find out the name of the current font:
   XGetFontProperty(fs, XA_FONT, &nameAtom);
   char *name = XGetAtomName(display, nameAtom);
   printf("font name: %s\n", name);
-  
+
 to set it to use a new font:
 
   myFontId = XLoadFont(display, myFontName);
@@ -107,7 +107,7 @@ so current list of todos:
     - and a text widget, ideally with configurable key bindings
     - and some dialog-wide keyboard navigation
   - ability to select text
-  - copy+paste       
+  - copy+paste
   - redraw button, and/or proper redrawing generally
     - still need window coords
 
@@ -141,13 +141,13 @@ my own event loop.  however:
     until the callback returns
   - not obvious when to end event loop, because not all window
     destruction paths go through my callbacks
-    
+
 this seems to argue for constructing my own callback structure..
 
 solved the when-to-end problem by making the loop guard:
 
   XtIsManaged(dialog) || XtAppPending(app)
-  
+
 this makes sure we quit as soon as the dialog disappears, and
 the event queue is quiescent
 
@@ -215,7 +215,7 @@ todo:
   - load file
   - save file
   - scrolling
-  
+
 did load and save, but I've got a bug in my Buffer implementation
 that's causing me to trash memory.. will switch on the debug heap
 to find it next time
@@ -261,7 +261,7 @@ new buffer repr:
   - gap on the spine
   - *one* most-recently-edited line with gap repr (and NULL spine ptr, maybe)
   - NULL spine ptr for blank lines
-  
+
 end 2/11/03 00:03
 
 -----------------
@@ -338,7 +338,7 @@ plan:
   * hilite: interface to highlighter (very simple)
   * c_hilite: module to highlight C/C++, configurable map from
     lexical concepts to styles in the styledb
-   
+
 end 2/15/03 04:30
 
 ----------------
@@ -426,7 +426,7 @@ end 2/26/03 06:54
 
 ---------------------
 start 2/28/03 04:14
-   
+
 bugs:
   * open editor.cc, go to end of file, open editor.h: now at end
     of that file, should be at start
@@ -509,7 +509,7 @@ will implement replacing.. ok, seems to work
 thinking about how to handle multiple buffers.. Window menu approach
 doesn't leave a place for other metadata about the buffers.. dialog-only
 approach is rather heavy-weight.. emacs' buffer list is clunky and
-unintuitive.. 
+unintuitive..
 
 one idea is some kind of widget that is related to the status bar
 display of the current buffer's file name.. like you click there and
@@ -537,7 +537,7 @@ done, but with several todos:
 
 
 design for an undo/history system:
-  
+
 goals:
   - editing sequence should be largely location independent, so
     they still work after changing some prior commands
@@ -579,7 +579,7 @@ constructs of language:
     does them all together
   - reverse ["label"] { ... } like "group" but actions are done in reverse
 
-  
+
 end 3/27/03 16:45
 
 
@@ -613,7 +613,7 @@ as above, architecture is:
          +------------------+
          | BufferCore       |
          +------------------+
-         
+
 internal to HistoryBuffer will be a representation of that history
 as a GapArray of 'long'.  when LSB is 0, it's a pointer to an object
 implementing an interface that can apply itself in forward or reverse
@@ -680,12 +680,12 @@ end 5/30/03 17:00
 ---------------
 start 5/31/03 01:27
 
-new plan: 
+new plan:
   - first, remove 'fill' from the insert/delete records
   - implement grouping
   - plan on having lots of groups, and a mechanism to recognize
     and special-case empty and singleton groups
-    
+
 essentially, open a group at the beginning of the UI processing
 switch(), and close it at the end, so that all UI actions are
 exactly undoable in one step; don't optimize particular combinations,
@@ -759,7 +759,7 @@ todo to get editor usable:
   - ability to close a file (File|Close I guess)
   - autosave, incl. when I get a bad signal
   - multiple frames/windows
-  
+
 end 6/06/03 22:50
 
 
@@ -826,12 +826,12 @@ start 2008-12-13 00:10
     the ctor of Editor
 
   font .. unsuccessful
-  
+
   need to make a library for fonts:
-  
+
     - BDF font object
     - BDF renderer to X pixmap with color choice
-    
+
 end 2008-12-13 02:15
 
 -----------------------
@@ -863,11 +863,11 @@ end 2009-02-13 05:51
 start 2009-02-16 05:01
 
   modify editor to use qtbdffont
-  
+
   but now it is much slower!  :(
-  
+
   hmmm...
-  
+
   course of action:
     - quantify the problem, either with editor or qtbdffont
     - confirm hypothesis that masked blits are the problem by
@@ -877,18 +877,18 @@ start 2009-02-16 05:01
     - possibly look into a Qt upgrade
     - or an X configuration issue?
     - may have to use pre-rendered opaque glyphs
-  
+
 end 2009-02-16 07:28
 
 --------------
 start 2009-06-13 14:25
 
   test that mask is the problem, use pre-rendered opaque glyphs
-  
+
     at full screen, currently takes 200 ms to draw a frame
 
     once the mask is removed, it's 10 ms per frame
-    
+
     confirmed
 
   Finished making the opaque rendering changes, but the result
@@ -899,26 +899,26 @@ start 2009-06-13 14:25
   Highly non-ideal, but I don't see any better solution unless
   I can get mask blitting to work fast, and I do not see an
   obvious solution to that.
-  
+
   attempted to update ered to use this font system; problems:
-  
+
   * lurs12 has some typographical spacing problems; either need
     to fix them or find another font
-    
+
   * interline spacing is too large; BDF does not specify it so
     we use the bbox which is quite poor
-    
+
   * seems to be a bug somewhere making the relation labels show up
     too low and a little to the right (?)
-    
+
   * drawCentered needs to erase the whole BG rectangle
-  
+
   * (big one) In general, opaque text drawing causes major
     problems for both the implementation and the UI.  I think I'm
     going to only find more and harder to solve problems with it.
     I think my next attack strategy has to focus on figuring out
     why I cannot do masked blits efficiently.
-    
+
 end 2009-06-13 19:55
 
 -------------------
@@ -926,14 +926,14 @@ start 2009-06-14 12:44
 
   need to see if there is a way to get the mask effect to be
   fast; options:
-  
+
   - play with bit depths, etc., of the original approach
-  
+
   - study Qt sources for reasons for slow fallbacks
-  
+
   - use instead a 32-bit image with alpha; but that could not
     possibly be fast on an 8-bit display, right?
-    
+
   - do the whole thing using OpenGL instead
 
   experimenting with performance in 'qtbdffont' program, I can
@@ -941,10 +941,10 @@ start 2009-06-14 12:44
 
     2781 ms using the mask
       23 ms not using the mask
-      
+
   study of Qt's bitBlt code (by copying it into my own and then
   hacking it to compile) reveals:
-  
+
   * The code path it's using is the "fast masked blt" path, so
     there isn't anything majorly wrong with my use.
 
@@ -953,18 +953,18 @@ start 2009-06-14 12:44
 
   * I can improve speed 5x by calling setOptimization(QPixmap::BestOptim),
     since that caches the GC that stores the mask.
-    
+
   * I can improve by another 5x if I can reduce/eliminate the
     calls to XSetClipOrigin in the bitBlt implementation.  It
     is unfortunate that the clip origin is relative to the
     destination drawable.  Changing it seems to have a major
-    impact on the X server's drawing speed.    
-    
+    impact on the X server's drawing speed.
+
     - One possible way to do that is to render entire strings
       at once, creating one mask for the entire string.
-      
+
   decisions:
-  
+
   * Revert QtBDFFont to expose the transparent drawing interface,
     since that is what clients need.  Obviously, add the
     setOptimization() call to get my 5x.
@@ -990,8 +990,8 @@ start 2009-06-14 21:41
 
     transparent: 1000 iters in 511 ms
     opaque: 1000 iters in 45 ms
-    
-end 2009-06-14 23:39    
+
+end 2009-06-14 23:39
 
 ------------------
 start 2009-06-16 20:00
@@ -999,12 +999,12 @@ start 2009-06-16 20:00
   trying to make editor usable for day-to-day editing
 
   implemented:
-    
+
     * box cursor like emacs
     * ctrl-G to cancel search
     * what happened to alt-left-arrow?
-  
-end 2009-06-16 22:12  
+
+end 2009-06-16 22:12
 
 
 EOF

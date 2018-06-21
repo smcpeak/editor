@@ -47,10 +47,10 @@ private:     // data
 
   // buffer text removed during M_GET_REPLACEMENT
   string removedText;
-    
+
   // replacement text
   string replaceText;
-  
+
 private:     // funcs
   // return the editor to the cursor,view that it had
   // when the search began
@@ -85,17 +85,17 @@ private:     // funcs
   bool searchPseudoKey(InputPseudoKey pkey);
   bool getReplacementPseudoKey(InputPseudoKey pkey);
   bool replacePseudoKey(InputPseudoKey pkey);
-    
+
   // switch modes, and update status line
   void setMode(Mode m);
-                 
+
   // delete selection, insert 'text'
   void putBackMatchText();
-  
+
   // replace current match with 'replaceText', go to next
-  // match; return false and call detach() if no such match 
+  // match; return false and call detach() if no such match
   bool replace();
-    
+
 public:      // funcs
   IncSearch(StatusDisplay *status);
   ~IncSearch();
