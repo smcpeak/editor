@@ -235,7 +235,12 @@ void EditorWindow::setFileName(rostring name, rostring hotkey)
 
 void EditorWindow::fileOpen()
 {
-  QString name = QFileDialog::getOpenFileName(this, "Open File");
+  QString name = QFileDialog::getOpenFileName(this,
+    "Open File",
+    QString(),         // dir
+    QString(),         // filter
+    NULL,              // selectedFilter
+    QFileDialog::Options());    //  QFileDialog::DontUseNativeDialog);
   if (name.isEmpty()) {
     return;
   }
