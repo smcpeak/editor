@@ -106,7 +106,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
 
   this->setLayout(mainArea);
   this->setGeometry(400,100,      // initial location
-                    600,800);     // initial size
+                    800,800);     // initial size
 
   // Set the BufferState, which was originally set as NULL above.
   this->setBuffer(initBuffer);
