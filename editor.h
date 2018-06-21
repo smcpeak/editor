@@ -6,6 +6,7 @@
 
 #include "bufferstate.h"    // BufferState
 #include "inputproxy.h"     // InputProxy, InputPseudoKey
+#include "owner.h"          // Owner
 #include "style.h"          // Style
 
 #include <qwidget.h>        // QWidget
@@ -86,6 +87,10 @@ public:      // data
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
   ObjArrayStack<QtBDFFont> cursorFontForFV;
+
+  // Font containing miniature hexadecimal characters for use when
+  // a glyph is missing.
+  Owner<QtBDFFont> minihexFont;
 
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>

@@ -20,7 +20,8 @@ Check: The window menu should assign Alt+<digit> shortcuts to the
 10 of the open files.
 
 Do: Open test/allbytes.txt .
-Check: See all the Latin-1 glyphs arranged in a 16x16 grid.
+Check: See all the Latin-1 glyphs arranged in a 16x16 grid, including
+hex quads for the nonprintable characters.
 
 
 Areas to test (needs refinement into specific tests)

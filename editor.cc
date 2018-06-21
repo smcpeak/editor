@@ -14,10 +14,12 @@
 #include "styledb.h"         // StyleDB
 #include "textline.h"        // TextLine
 
-// default font definitions (also this dir)
+// default font definitions (in smqtutil directory)
 #include "editor14r.bdf.gen.h"
 #include "editor14i.bdf.gen.h"
 #include "editor14b.bdf.gen.h"
+#include "minihex6.bdf.gen.h"          // bdfFontData_minihex6
+
 
 // smbase
 #include "array.h"           // Array
@@ -222,6 +224,11 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
   fontHeight = ascent + descent;
   xassert(fontHeight == bbox.height());    // check my assumptions
   fontWidth = bbox.width();
+
+  // Font for missing glyphs.
+  Owner<BDFFont> minihexBDFFont(makeBDFFont(bdfFontData_minihex6, "minihex font"));
+  this->minihexFont = new QtBDFFont(*minihexBDFFont);
+  this->minihexFont->setTransparent(false);
 }
 
 
@@ -708,7 +715,19 @@ void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, cha
   // to develop and implement a character encoding strategy.
   int codePoint = (unsigned char)c;
 
-  font->drawChar(paint, pt,  codePoint);
+  if (font->hasChar(codePoint)) {
+    font->drawChar(paint, pt, codePoint);
+  }
+  else {
+    QRect bounds = font->getNominalCharCell(pt);
+
+    // This is a somewhat expensive thing to do because it requires
+    // re-rendering the offscreen glyphs.  Hence, I only do it once
+    // I know I need it.
+    this->minihexFont->setSameFgBgColors(*font);
+
+    drawHexQuad(*(this->minihexFont), paint, bounds, codePoint);
+  }
 }
 
 
