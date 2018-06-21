@@ -703,8 +703,14 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
             cursorCol <= buffer->lineLength(line)) {
           // Drawing the block cursor overwrote the character, so we
           // have to draw it again.
-          this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                            text[visibleCursorCol]);
+          if (line == buffer->numLines() - 1 &&
+              cursorCol == buffer->lineLength(line)) {
+            // Draw nothing at the end of the last line.
+          }
+          else {
+            this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
+                              text[visibleCursorCol]);
+          }
         }
 
         if (underlineCursor) {
