@@ -62,7 +62,7 @@ public:      // funcs
   virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length);
 
   // Highlighter funcs
-  virtual void highlight(BufferCore const &buf, int line, LineStyle &style);
+  virtual void highlight(BufferCore const &buf, int line, LineCategories &style);
 };
 
 

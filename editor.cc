@@ -65,7 +65,7 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     leftMargin(1),
     interLineSpace(0),
     cursorColor(0xFF, 0xFF, 0xFF),       // white
-    fontForStyle(NUM_STANDARD_STYLES),
+    fontForStyle(NUM_STANDARD_TEXT_CATEGORIES),
     cursorFontForFV(FV_BOLD + 1),
     minihexFont(),
     visibleWhitespace(true),
@@ -184,9 +184,9 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
 
   // Build the complete set of new fonts.
   {
-    ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_STYLES);
-    for (int style = ST_ZERO; style < NUM_STANDARD_STYLES; style++) {
-      TextStyle const &ts = styleDB->getStyle((Style)style);
+    ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_TEXT_CATEGORIES);
+    for (int style = TC_ZERO; style < NUM_STANDARD_TEXT_CATEGORIES; style++) {
+      TextStyle const &ts = styleDB->getStyle((TextCategory)style);
 
       STATIC_ASSERT(FV_BOLD == 2);
       BDFFont *bdfFont = bdfFonts[ts.variant % 3];
@@ -210,7 +210,7 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
 
       // The character under the cursor is drawn with the normal background
       // color, and the cursor box (its background) is drawn in 'cursorColor'.
-      qfont->setFgColor(styleDB->getStyle(ST_NORMAL).background);
+      qfont->setFgColor(styleDB->getStyle(TC_NORMAL).background);
       qfont->setBgColor(cursorColor);
       qfont->setTransparent(false);
 
@@ -221,7 +221,7 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
   }
 
   // calculate metrics
-  QRect const &bbox = fontForStyle[ST_NORMAL]->getAllCharsBBox();
+  QRect const &bbox = fontForStyle[TC_NORMAL]->getAllCharsBBox();
   ascent = -bbox.top();
   descent = bbox.bottom() + 1;
   fontHeight = ascent + descent;
@@ -439,11 +439,11 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   paint.setBackgroundMode(Qt::OpaqueMode);
 
   // Character style info.  This gets updated as we paint each line.
-  LineStyle styles(ST_NORMAL);
+  LineCategories styles(TC_NORMAL);
 
   // currently selected style (so we can avoid possibly expensive
   // calls to change styles)
-  Style currentStyle = ST_NORMAL;
+  TextCategory currentStyle = TC_NORMAL;
   QtBDFFont *curFont = NULL;
   bool underlining = false;     // whether drawing underlines
   StyleDB *styleDB = StyleDB::instance();
@@ -499,7 +499,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     int visibleLineChars = 0;
 
     // nominally the entire line is normal text
-    styles.clear(ST_NORMAL);
+    styles.clear(TC_NORMAL);
 
     // fill with text from the buffer
     if (line < buffer->numLines()) {
@@ -540,7 +540,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         while (buffer->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
                                   toCStr(this->hitText),
                                   hitTextFlags)) {
-          styles.overlay(hitCol, this->hitText.length(), ST_HITS);
+          styles.overlay(hitCol, this->hitText.length(), TC_HITS);
           hitCol++;
         }
       }
@@ -553,22 +553,22 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     {
       if (selLowLine < line && line < selHighLine) {
         // entire line is selected
-        styles.overlay(0, 0 /*infinite*/, ST_SELECTION);
+        styles.overlay(0, 0 /*infinite*/, TC_SELECTION);
       }
       else if (selLowLine < line && line == selHighLine) {
         // first half of line is selected
         if (selHighCol) {
-          styles.overlay(0, selHighCol, ST_SELECTION);
+          styles.overlay(0, selHighCol, TC_SELECTION);
         }
       }
       else if (selLowLine == line && line < selHighLine) {
         // right half of line is selected
-        styles.overlay(selLowCol, 0 /*infinite*/, ST_SELECTION);
+        styles.overlay(selLowCol, 0 /*infinite*/, TC_SELECTION);
       }
       else if (selLowLine == line && line == selHighLine) {
         // middle part of line is selected
         if (selHighCol != selLowCol) {
-          styles.overlay(selLowCol, selHighCol-selLowCol, ST_SELECTION);
+          styles.overlay(selLowCol, selHighCol-selLowCol, TC_SELECTION);
         }
       }
       else {
@@ -577,14 +577,14 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     }
 
     // Clear the left margin to the normal background color.
-    if (currentStyle != ST_NORMAL) {
-      currentStyle = ST_NORMAL;
+    if (currentStyle != TC_NORMAL) {
+      currentStyle = TC_NORMAL;
       setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
     }
     paint.eraseRect(0,0, leftMargin, fullLineHeight);
 
     // next style entry to use
-    LineStyleIter style(styles);
+    LineCategoryIter style(styles);
     style.advanceChars(firstCol);
 
     // ---- render text+style segments -----
@@ -603,8 +603,8 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       xassert(printed < visibleCols);
 
       // set style
-      if (style.style != currentStyle) {
-        currentStyle = style.style;
+      if (style.category != currentStyle) {
+        currentStyle = style.category;
         setDrawStyle(paint, curFont, underlining, styleDB, currentStyle);
       }
 
@@ -687,7 +687,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         //
         // Unfortunately, that leads to some code duplication with the
         // main painting code.
-        Style cursorStyle = styles.getStyleAt(cursorCol);
+        TextCategory cursorStyle = styles.getCategoryAt(cursorCol);
         FontVariant cursorFV = styleDB->getStyle(cursorStyle).variant;
         bool underlineCursor = false;
         if (cursorFV == FV_UNDERLINE) {
@@ -794,7 +794,7 @@ void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, cha
 
 void Editor::setDrawStyle(QPainter &paint,
                           QtBDFFont *&curFont, bool &underlining,
-                          StyleDB *db, Style s)
+                          StyleDB *db, TextCategory s)
 {
   TextStyle const &ts = db->getStyle(s);
 

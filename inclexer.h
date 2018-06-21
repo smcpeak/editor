@@ -4,7 +4,7 @@
 #ifndef INCLEXER_H
 #define INCLEXER_H
 
-#include "style.h"       // Style
+#include "style.h"       // TextStyle
 
 class BufferCore;        // buffer.h
 
@@ -25,7 +25,7 @@ public:
   // get next token in line, returning its length; 'code' signifies
   // what text style to use for the token, including the code for
   // the trailing segment (when it returns 0)a
-  virtual int getNextToken(Style &code)=0;
+  virtual int getNextToken(TextCategory &code)=0;
 
   // get the lexing state now; usually called at end-of-line to
   // remember the start state for the next line; used for incremetal

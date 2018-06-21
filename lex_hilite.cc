@@ -196,7 +196,7 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
 }
 
 
-void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style)
+void LexHighlighter::highlight(BufferCore const &buf, int line, LineCategories &style)
 {
   xassert(&buf == &buffer);
 
@@ -206,7 +206,7 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
     TRACE("highlight", "push changed: scanning line " << changedBegin);
     lexer.beginScan(&buf, changedBegin, prevState);
 
-    Style code;
+    TextCategory code;
     while (lexer.getNextToken(code))
       {}
 
@@ -226,7 +226,7 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
     TRACE("highlight", "push waterline: scanning line " << waterline);
     lexer.beginScan(&buf, waterline, prevState);
 
-    Style code;
+    TextCategory code;
     while (lexer.getNextToken(code))
       {}
 
@@ -242,13 +242,13 @@ void LexHighlighter::highlight(BufferCore const &buf, int line, LineStyle &style
   lexer.beginScan(&buf, line, prevState);
 
   // append each styled segment
-  Style code;
+  TextCategory code;
   int len = lexer.getNextToken(code);
   while (len) {
     style.append(code, len);
     len = lexer.getNextToken(code);
   }
-  style.endStyle = code;    // line trails off with the final code
+  style.endCategory = code;    // line trails off with the final code
 
   saveLineState(line, lexer.getState());
 }
@@ -260,7 +260,7 @@ static Buffer *buf;
 
 static void printLine(LexHighlighter &hi, int line)
 {
-  LineStyle style(ST_NORMAL);
+  LineCategories style(TC_NORMAL);
   hi.highlight(buf->core(), line, style);
 
   cout << "line " << line << ":\n"
@@ -296,11 +296,11 @@ static void del(int line, int col, int len)
 static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
-  LineStyle style1(ST_NORMAL);
+  LineCategories style1(TC_NORMAL);
   hi.highlight(buf->core(), i, style1);
   string rendered1 = style1.asUnaryString();
 
-  LineStyle style2(ST_NORMAL);
+  LineCategories style2(TC_NORMAL);
   batch.highlight(buf->core(), i, style2);
   string rendered2 = style2.asUnaryString();
 

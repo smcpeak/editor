@@ -7,7 +7,7 @@
 #include "bufferstate.h"    // BufferState
 #include "inputproxy.h"     // InputProxy, InputPseudoKey
 #include "owner.h"          // Owner
-#include "style.h"          // Style
+#include "style.h"          // TextCategory
 
 #include <qwidget.h>        // QWidget
 
@@ -177,7 +177,7 @@ private:     // funcs
   // and background colors of 'paint', based on 'db' and 's'
   void setDrawStyle(QPainter &paint,
                     QtBDFFont *&curFont, bool &underlining,
-                    StyleDB *db, Style s);
+                    StyleDB *db, TextCategory s);
 
   // offset from one line to the next
   int lineHeight() const { return fontHeight+interLineSpace; }

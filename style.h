@@ -8,71 +8,71 @@
 #include "array.h"         // ArrayStack
 #include "str.h"           // string
 
-class LineStyleIter;
+class LineCategoryIter;
 
 
-// standard styles; I envision being able to add more dynamically,
-// but to have this set always available by default
-enum Style {
-  ST_ZERO=0,               // not used; 0 is used to signal EOL during lexing
-  ST_NORMAL,               // normal text
-  ST_SELECTION,            // selected text
-  ST_HITS,                 // buffer text that matches a search string
-  ST_ERROR,                // text that can't be lexed
-  ST_COMMENT,              // comment
-  ST_STRING,               // string literal
-  ST_KEYWORD,              // keyword
-  ST_SPECIAL,              // special value: true, false, NULL
-  ST_NUMBER,               // numeric literal
-  ST_NUMBER2,              // numeric literal, alternate (I use this for octal)
-  ST_OPERATOR,             // operator
-  ST_PREPROCESSOR,         // preprocessor directive
+// Standard categories; I envision being able to add more dynamically,
+// but to have this set always available by default.
+enum TextCategory {
+  TC_ZERO=0,               // not used; 0 is used to signal EOL during lexing
+  TC_NORMAL,               // normal text
+  TC_SELECTION,            // selected text
+  TC_HITS,                 // buffer text that matches a search string
+  TC_ERROR,                // text that can't be lexed
+  TC_COMMENT,              // comment
+  TC_STRING,               // string literal
+  TC_KEYWORD,              // keyword
+  TC_SPECIAL,              // special value: true, false, NULL
+  TC_NUMBER,               // numeric literal
+  TC_NUMBER2,              // numeric literal, alternate (I use this for octal)
+  TC_OPERATOR,             // operator
+  TC_PREPROCESSOR,         // preprocessor directive
 
-  NUM_STANDARD_STYLES
+  NUM_STANDARD_TEXT_CATEGORIES
 };
 
 
-// specify a color/font for a run of characters
-class StyleEntry {
+// Specify a category for a run of characters.
+class TCSpan {
 public:
-  Style style;           // color/font to use
-  int length;            // # of characters covered
+  TextCategory category;     // color/font to use
+  int length;                // # of characters covered
 
 public:
-  StyleEntry() : style(ST_NORMAL), length(1) {}
-  StyleEntry(Style S, int L) : style(S), length(L)
+  TCSpan() : category(TC_NORMAL), length(1) {}
+  TCSpan(TextCategory S, int L) : category(S), length(L)
     { xassert(length > 0); }
-  StyleEntry(StyleEntry const &obj)
-    : DMEMB(style), DMEMB(length) {}
-  StyleEntry& operator=(StyleEntry const &obj)
-    { CMEMB(style); CMEMB(length); return *this; }
+  TCSpan(TCSpan const &obj)
+    : DMEMB(category), DMEMB(length) {}
+  TCSpan& operator=(TCSpan const &obj)
+    { CMEMB(category); CMEMB(length); return *this; }
 };
 
 
-// style info for an entire line
-class LineStyle : private ArrayStack<StyleEntry> {
-  friend class LineStyleIter;
+// Text category info for an entire line.
+class LineCategories : private ArrayStack<TCSpan> {
+  friend class LineCategoryIter;
 
 public:      // data
-  // style of the characters beyond the last entry
-  Style endStyle;
+  // Category of the characters beyond the last entry.
+  TextCategory endCategory;
 
 public:
-  LineStyle(Style end) : endStyle(end) {}
+  LineCategories(TextCategory end) : endCategory(end) {}
 
   // clear existing runs
-  void clear(Style end)
-    { empty(); endStyle=end; }
+  void clear(TextCategory end)
+    { empty(); endCategory=end; }
 
-  // add a new style run to those already present
-  void append(Style style, int length);
+  // Add a new category run to those already present.
+  void append(TextCategory category, int length);
 
-  // overwrite a subsequence of characters with a given style;
-  // 'length' can be 0 to mean infinite
-  void overlay(int start, int length, Style style);
+  // Overwrite a subsequence of characters with a given category;
+  // 'length' can be 0 to mean infinite.
+  void overlay(int start, int length, TextCategory category);
 
   // Retrieve the style for the given 0-indexed character.
-  Style getStyleAt(int index) const;
+  TextCategory getCategoryAt(int index) const;
 
   // debugging: render the runs as a string
   string asString() const;          // e.g. "[1,4][2,3][4"
@@ -81,17 +81,17 @@ public:
 
 
 // iterator for walking over LineStyle descriptors
-class LineStyleIter {
+class LineCategoryIter {
 private:
-  LineStyle const &styles; // array of styles
-  int entry;               // which entry of 'styles' we're on
+  LineCategories const &categories;    // array of categories
+  int entry;                           // which entry of 'categories' we're on
 
 public:
-  int length;              // how many chars remain on this run (0=infinite)
-  Style style;             // style of the current run
+  int length;                // how many chars remain on this run (0=infinite)
+  TextCategory category;     // style of the current run
 
 public:
-  LineStyleIter(LineStyle const &s);
+  LineCategoryIter(LineCategories const &s);
 
   // advance the iterator a certain number of characters
   void advanceChars(int n);

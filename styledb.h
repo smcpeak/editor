@@ -1,10 +1,10 @@
 // styledb.h
-// database of text styles, indexed by 'enum Style' from style.h
+// database of text styles, indexed by 'enum TextCategory' from style.h
 
 #ifndef STYLEDB_H
 #define STYLEDB_H
 
-#include "style.h"        // enum Style
+#include "style.h"        // enum TextCategory
 #include "macros.h"       // DMEMB
 #include "array.h"        // GrowArray
 
@@ -20,7 +20,7 @@ enum FontVariant {
 };
 
 
-// font and colors; things named by 'Style'
+// font and colors; things named by 'TextCategory'
 class TextStyle {
 public:
   FontVariant variant;    // text font
@@ -49,7 +49,7 @@ public:
   StyleDB();        // create default styles
   ~StyleDB();
 
-  TextStyle const &getStyle(Style index) const;
+  TextStyle const &getStyle(TextCategory index) const;
 
   static StyleDB *instance();
 };

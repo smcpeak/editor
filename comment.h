@@ -23,7 +23,7 @@ public:      // funcs
 
   // IncLexer funcs
   virtual void beginScan(BufferCore const *buffer, int line, LexerState state);
-  virtual int getNextToken(Style &len);
+  virtual int getNextToken(TextCategory &len);
   virtual LexerState getState() const;
 };
 
