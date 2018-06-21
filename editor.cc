@@ -1187,8 +1187,17 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Qt::Key_Enter:
       case Qt::Key_Return: {
         if (!shift) {
+          int lineLength = buffer->lineLength(buffer->line());
+          bool hadCharsToRight = (buffer->col() < lineLength);
+          bool beyondLineEnd = (buffer->col() > lineLength);
+          if (beyondLineEnd) {
+            // Move the cursor to the end of the line so
+            // that fillToCursor will not add spaces.
+            buffer->moveAbsColumn(lineLength);
+          }
+
+          // Add newlines if needed so the cursor is on a valid line.
           fillToCursor();
-          //buffer->changed = true;
 
           // typing replaces selection
           if (this->selectEnabled) {
@@ -1202,7 +1211,17 @@ void Editor::keyPressEvent(QKeyEvent *k)
 
           // auto-indent
           int ind = buffer->getAboveIndentation(cursorLine()-1);
-          buffer->insertSpaces(ind);
+          if (hadCharsToRight) {
+            // Insert spaces so the carried forward text starts
+            // in the auto-indent column.
+            buffer->insertSpaces(ind);
+          }
+          else {
+            // Move the cursor to the auto-indent column but do not
+            // fill with spaces.  This way I can press Enter more
+            // than once without adding lots of spaces.
+            buffer->moveRelCursor(0, ind);
+          }
 
           scrollToCursor();
         }

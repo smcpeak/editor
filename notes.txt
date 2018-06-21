@@ -1,6 +1,6 @@
 
 TODOs:
-  - reduce the frequency of leaving behind extra spaces
+  - ctrl-enter to move to end of next line
   - ctrl-A while searching to cancel but stay there and move to
     the beginning of the line
   - Ctrl+K: kill (to clipboard) the line
@@ -43,7 +43,6 @@ TODOs:
   - Ctrl+J: justify paragraph, esp. comments
   - File|Revert to saved, and keybinding F12
   - performance!  smarter updates, etc.
-  - ctrl-enter to move to end of next line
   - tabs along the top to show file name, and ability to rearrange
     so that they are in a natural order
 
