@@ -67,6 +67,9 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     cursorColor(0xFF, 0xFF, 0xFF),       // white
     fontForStyle(NUM_STANDARD_STYLES),
     cursorFontForFV(FV_BOLD + 1),
+    minihexFont(),
+    visibleWhitespace(false),
+    whitespaceOpacity(64),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -500,11 +503,26 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
     // fill with text from the buffer
     if (line < buffer->numLines()) {
-      int lineLen = buffer->lineLength(line);
+      // 1 if we will behave as though a newline character is
+      // at the end of this line.
+      int newlineAdjust = 0;
+      if (this->visibleWhitespace && line < buffer->numLines()-1) {
+        newlineAdjust = 1;
+      }
+
+      // Line length including possible synthesized newline.
+      int const lineLen = buffer->lineLength(line) + newlineAdjust;
+
       if (firstCol < lineLen) {
-        int const amt = min(lineLen - firstCol, visibleCols);
+        // First get the text without any extra newline.
+        int const amt = min(lineLen-newlineAdjust - firstCol, visibleCols);
         buffer->getLine(line, firstCol, text, amt);
         visibleLineChars = amt;
+
+        // Now possibly add the newline.
+        if (visibleLineChars < visibleCols && newlineAdjust != 0) {
+          text[visibleLineChars++] = '\n';
+        }
       }
 
       // apply highlighting
@@ -681,8 +699,13 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
 
-        this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                          text[visibleCursorCol]);
+        if (line < buffer->numLines() &&
+            cursorCol <= buffer->lineLength(line)) {
+          // Drawing the block cursor overwrote the character, so we
+          // have to draw it again.
+          this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
+                            text[visibleCursorCol]);
+        }
 
         if (underlineCursor) {
           paint.setPen(cursorFont->getFgColor());
@@ -714,6 +737,38 @@ void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, cha
   // the font I'm using, which is Latin-1.  At some point I need
   // to develop and implement a character encoding strategy.
   int codePoint = (unsigned char)c;
+
+  if (this->visibleWhitespace &&
+      (codePoint==' ' || codePoint=='\n')) {
+    QRect bounds = font->getNominalCharCell(pt);
+    QColor fg = font->getFgColor();
+    fg.setAlpha(this->whitespaceOpacity);
+
+    if (codePoint == ' ') {
+      // Centered dot.
+      paint.fillRect(QRect(bounds.center(), QSize(2,2)), fg);
+      return;
+    }
+
+    if (codePoint == '\n') {
+      // Filled triangle.
+      int x1 = bounds.left() + bounds.width() * 1/8;
+      int x7 = bounds.left() + bounds.width() * 7/8;
+      int y1 = bounds.top() + bounds.height() * 1/8;
+      int y7 = bounds.top() + bounds.height() * 7/8;
+
+      paint.setPen(Qt::NoPen);
+      paint.setBrush(fg);
+
+      QPoint pts[] = {
+        QPoint(x1,y7),
+        QPoint(x7,y1),
+        QPoint(x7,y7),
+      };
+      paint.drawConvexPolygon(pts, TABLESIZE(pts));;
+      return;
+    }
+  }
 
   if (font->hasChar(codePoint)) {
     font->drawChar(paint, pt, codePoint);

@@ -33,7 +33,10 @@
 
 #include <QCloseEvent>
 #include <QDesktopWidget>
+#include <QInputDialog>
 #include <QStyleFactory>
+
+#include <stdlib.h>                    // atoi
 
 
 char const appName[] = "An Editor";   // TODO: find better name
@@ -54,6 +57,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     //mode(NULL),
     //filename(NULL),
     windowMenu(NULL),
+    toggleVisibleWhitespaceAction(NULL),
     bufferChoiceActions(),
     isearch(NULL)
 {
@@ -157,6 +161,15 @@ void EditorWindow::buildMenu()
     edit->addSeparator();
     edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
     edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
+  }
+
+  {
+    QMenu *menu = this->menuBar->addMenu("&View");
+    this->toggleVisibleWhitespaceAction =
+      menu->addAction("Visible &whitespace", this, SLOT(viewToggleVisibleWhitespace()));
+    this->toggleVisibleWhitespaceAction->setCheckable(true);
+    this->toggleVisibleWhitespaceAction->setChecked(this->editor->visibleWhitespace);
+    menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
   }
 
   {
@@ -416,6 +429,29 @@ void EditorWindow::editGotoLine()
       editor->cursorTo(n-1, 0);
       editor->scrollToCursor(-1 /*center*/);
     }
+  }
+}
+
+
+void EditorWindow::viewToggleVisibleWhitespace()
+{
+  this->editor->visibleWhitespace = !this->editor->visibleWhitespace;
+  this->toggleVisibleWhitespaceAction->setChecked(this->editor->visibleWhitespace);
+  this->editor->update();
+}
+
+
+void EditorWindow::viewSetWhitespaceOpacity()
+{
+  bool ok;
+  int n = QInputDialog::getInt(this,
+    "Visible Whitespace",
+    "Opacity in [1,255]:",
+    this->editor->whitespaceOpacity,
+    1 /*min*/, 255 /*max*/, 1 /*step*/, &ok);
+  if (ok) {
+    this->editor->whitespaceOpacity = n;
+    this->editor->update();
   }
 }
 

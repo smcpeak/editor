@@ -92,6 +92,12 @@ public:      // data
   // a glyph is missing.
   Owner<QtBDFFont> minihexFont;
 
+  // When true, draw visible markers on whitespace characters.
+  bool visibleWhitespace;
+
+  // Value in [0,255], where 255 is fully opaque.
+  int whitespaceOpacity;
+
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
   int ctrlShiftDistance;

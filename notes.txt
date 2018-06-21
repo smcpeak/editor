@@ -1,8 +1,6 @@
 
 TODOs:
-  - reduce the frequency of leaving behind extra spaces; maybe add
-    highlighting for them?
-  - visual indication of where EOF is
+  - reduce the frequency of leaving behind extra spaces
   - ctrl-A while searching to cancel but stay there and move to
     the beginning of the line
   - Ctrl+K: kill (to clipboard) the line

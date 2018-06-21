@@ -41,11 +41,13 @@ public:      // data
   Editor *editor;
   QScrollBar *vertScroll, *horizScroll;
   StatusDisplay *statusArea;
-  //QLabel *position, *mode, *filename;
 
   // The Window menu, whose contents changes with the set
   // of open file buffers.
   QMenu *windowMenu;
+
+  // The action for toggling visible whitespace.
+  QAction *toggleVisibleWhitespaceAction;
 
   // Set of Actions in the Window menu that choose a buffer.
   // These need to be removed from the Window menu when we
@@ -102,6 +104,9 @@ public slots:
 
   void editISearch();
   void editGotoLine();
+
+  void viewToggleVisibleWhitespace();
+  void viewSetWhitespaceOpacity();
 
   void windowNewWindow();
   void windowOccupyLeft();
