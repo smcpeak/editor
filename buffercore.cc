@@ -9,8 +9,9 @@
 #include "autofile.h"      // AutoFILE
 #include "array.h"         // Array
 
-#include <string.h>        // strncasecmp
+#include <assert.h>        // assert
 #include <ctype.h>         // isalnum, isspace
+#include <string.h>        // strncasecmp
 
 
 // ---------------------- BufferCore --------------------------
@@ -27,6 +28,15 @@ BufferCore::BufferCore()
 
 BufferCore::~BufferCore()
 {
+  // We require that the client code arrange to empty the observer list
+  // before this object is destroyed.  If it is not empty here, the
+  // observer will be left with a dangling pointer, which will cause
+  // problems later of course.
+  //
+  // This uses ordinary 'assert' rather than 'xassert' to avoid
+  // throwing an exception from within a destructor.
+  assert(this->observers.isEmpty());
+
   // deallocate the non-NULL lines
   for (int i=0; i < lines.length(); i++) {
     char *p = lines.get(i);

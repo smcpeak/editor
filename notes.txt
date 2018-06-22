@@ -1,10 +1,20 @@
 
 TODOs:
-  - Ctrl+K: kill (to clipboard) the line
   - allow Tab character; issue is rendering support
+  - Ctrl+K: kill (to clipboard) the line
+  - rethink incremental search
+    - persistent search string
+    - toggle whether matches shown
+    - toggle case insensitivity and interpetation as regex
+    - move through matches at any time
+    - add text to the search string
+    - search string is persistent across all files
+      - set of recent search strings for easy retrieval?
   - Ctrl+S, Ctrl+W, Backspace does not work as desired
   - Ctrl+S, Ctrl+S advances cursor weirdly
   - mode to show line numbers in left margin
+  - in Window menu, show which buffers have unsaved changes
+  - show a soft margin at 72 columns
 
 
   - remove unnecessary triple buffering from render code

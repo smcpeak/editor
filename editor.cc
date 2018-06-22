@@ -94,10 +94,12 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
 Editor::~Editor()
 {
   Editor::objectCount--;
+
   if (inputProxy) {
     inputProxy->detach();
   }
 
+  this->stopListening();
   fontForCategory.deleteAll();
 }
 
@@ -108,7 +110,7 @@ void Editor::cursorTo(int line, int col)
 
   // set the nonfocus location too, in case the we happen to
   // not have the focus right now (e.g. the Alt+G dialog);
-  // actually, the need for thisexposes the fact that my current
+  // actually, the need for this exposes the fact that my current
   // solution to nonfocus cursor issues isn't very good.. hmm...
   nonfocusCursorLine = line;
   nonfocusCursorCol = col;
