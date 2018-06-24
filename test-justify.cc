@@ -411,6 +411,68 @@ static void testJustifyNearLine()
     }
   }
 
+  {
+    char const *in[] = {
+      "one two three.  four five six seven eight nine",
+      "ten eleven",
+      "twelve",
+    };
+
+    {
+      char const *out[] = {
+        //              V
+        "one two three.",
+        "four five six",
+        "seven eight",
+        "nine ten eleven",
+        "twelve",
+      };
+
+      TEST_ONE(in, out, 0, 15);
+      TEST_ONE(in, out, 1, 15);
+      TEST_ONE(in, out, 2, 15);
+    }
+  }
+
+  {
+    char const *in[] = {
+      "one two three.  four five six seven eight nine",
+      "",
+      "ten eleven",
+      "twelve",
+    };
+
+    {
+      char const *out[] = {
+        //              V
+        "one two three.",
+        "four five six",
+        "seven eight",
+        "nine",
+        "",
+        "ten eleven",
+        "twelve",
+      };
+
+      TEST_ONE(in, out, 0, 15);
+    }
+
+    TEST_ONE(in, in, 1, 15);
+
+    {
+      char const *out[] = {
+        //              V
+        "one two three.  four five six seven eight nine",
+        "",
+        "ten eleven",
+        "twelve",
+      };
+
+      TEST_ONE(in, out, 2, 15);
+      TEST_ONE(in, out, 3, 15);
+    }
+  }
+
   #undef TEST_ONE
 }
 

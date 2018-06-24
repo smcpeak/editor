@@ -1,7 +1,6 @@
 
 TODOs:
   - Alt+A to pass selection through a filter command
-  - Ctrl+J: justify paragraph for plain text
   - allow Tab character; issue is rendering support
   - rethink incremental search
     - persistent search string

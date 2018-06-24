@@ -6,8 +6,8 @@ Introduction
 ------------
 
 The Search and Replace function allows one to find instances of text
-within a file and optionally replace them with other text.  Notably,
-it acts like "incremental search" in that matches are immediately
+within a file and optionally replace them with other text.  Notably, it
+acts like "incremental search" in that matches are immediately
 highlighted in all editor windows as the user types.
 
 
@@ -123,8 +123,8 @@ Insens shall be unchecked.
 The Repl combo box behaves in the standard way.
 
 For Find, the dropdown contains up to 20 unique non-empty previously
-used strings, in order of most recently used.  The current text is
-added to the history when:
+used strings, in order of most recently used.  The current text is added
+to the history when:
 
 * The text is replaced with a string from the editor window.
 

@@ -115,17 +115,27 @@ bool justifyNearLine(Buffer &buf, int originLineNumber, int desiredWidth)
 {
   string startLine = buf.getWholeLine(originLineNumber);
 
-  // Does this look like a comment line?
-  QRegularExpression re("^(\\s*)(//|#|;+|--)(\\s*)(\\S.*)$");
+  // Split the line into a prefix of whitespace and framing punctuation,
+  // and a suffix with alphanumeric content.  In a programming language,
+  // the prefix is intended to be the comment symbol and indentation.
+  // In plain text, the prefix may be empty.
+  QRegularExpression re("^([^a-zA-Z'\"0-9`$()_]*)(.*)$");
+  xassert(re.isValid());
   QRegularExpressionMatch match = re.match(toQString(startLine));
   if (!match.hasMatch()) {
     return false;
   }
+  if (match.captured(2).isEmpty()) {
+    // No content.  (Note: I cannot get rid of this test by changing
+    // the regex to end with ".+" instead of ".*" because I want the
+    // prefix to be as long as possible, whereas with ".+" the regex
+    // engine might choose to move a prefix character into the
+    // content text group.)
+    return false;
+  }
 
-  // Assemble the prefix string.
-  QString prefixQString =
-    match.captured(1) + match.captured(2) + match.captured(3);
-  string prefix = toString(prefixQString);
+  // Grab the prefix string.
+  string prefix = toString(match.captured(1));
 
   // Look for adjacent lines that start with the same prefix and have
   // some content after it.
