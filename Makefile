@@ -1,7 +1,15 @@
 # Makefile for editor
 
 # main target
-all: comment.yy.cc testgap buffercore historybuf buffer textcategory c_hilite editor
+all: comment.yy.cc
+all: testgap
+all: buffercore
+all: historybuf
+all: buffer
+all: test-justify
+all: textcategory
+all: c_hilite
+all: editor
 
 
 # directories of other software
@@ -112,6 +120,13 @@ buffer: gap.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) $(CONSOLE_LDFLAGS)
 	./buffer >/dev/null 2>&1
 
+# -------------- justify test program ----------------
+TOCLEAN += test-justify
+JUSTIFY_OBJS := test-justify.o justify.o buffer.o buffercore.o history.o historybuf.o
+test-justify: $(JUSTIFY_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(GUI_LDFLAGS)
+	./test-justify >/dev/null 2>&1
+
 
 # --------------- textcategory test program ----------------
 TOCLEAN += textcategory
@@ -162,6 +177,7 @@ EDITOR_OBJS := \
   historybuf.o \
   incsearch.o \
   inputproxy.o \
+  justify.o \
   keybindings.doc.gen.o \
   lex_hilite.o \
   main.o \

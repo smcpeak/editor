@@ -4,11 +4,12 @@ dir ../smbase
 dir ../smqtutil
  
 #file qtbdffont
-file ./editor
+#file ./editor
+file ./test-justify
 #file c_hilite
 #set args -tr setView
 
-set args tmp
+#set args tmp
 
 break breaker
 break abort

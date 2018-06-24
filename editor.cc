@@ -6,6 +6,7 @@
 // this dir
 #include "buffer.h"          // Buffer
 #include "inputproxy.h"      // InputProxy
+#include "justify.h"         // justifyNearLine
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
 #include "qtutil.h"          // toString(QKeyEvent&)
@@ -1026,6 +1027,18 @@ void Editor::keyPressEvent(QKeyEvent *k)
         scrollToCursor();
         break;
 
+      case Qt::Key_J:
+        if (!editSafetyCheck()) {
+          return;
+        }
+        if (selectEnabled) {
+          QMessageBox::information(this, "Unimp", "unimplemented");
+        }
+        else {
+          this->justifyNearCursorLine();
+        }
+        break;
+
       default:
         k->ignore();
         break;
@@ -1388,6 +1401,13 @@ void Editor::spliceNextLine()
   xassert(cursorCol() == buffer->lineLength(cursorLine()));
 
   buffer->deleteChar();
+}
+
+
+void Editor::justifyNearCursorLine()
+{
+  justifyNearLine(*buffer, this->cursorLine(), this->softMarginColumn);
+  this->scrollToCursor();
 }
 
 

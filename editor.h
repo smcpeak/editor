@@ -161,6 +161,9 @@ private:     // funcs
   // with the next one
   void spliceNextLine();
 
+  // Justify lines near the cursor.
+  void justifyNearCursorLine();
+
   // ctrl-pageup/pagedown
   void cursorToTop();
   void cursorToBottom();
