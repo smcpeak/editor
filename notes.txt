@@ -1,5 +1,7 @@
 
 TODOs:
+  - bug: File|Save As... does not rebuild Window menu, leaves
+    old "untitled.txt"
   - allow Tab character; issue is rendering support
   - Ctrl+K: kill (to clipboard) the line
   - rethink incremental search
@@ -15,6 +17,10 @@ TODOs:
   - mode to show line numbers in left margin
   - in Window menu, show which buffers have unsaved changes
   - show a soft margin at 72 columns
+  - notice if trying to edit a file that has changed on disk
+  - refresh some/all files from disk contents
+  - more efficient file opening
+    - directory tree panel on the left?
 
 
   - remove unnecessary triple buffering from render code
