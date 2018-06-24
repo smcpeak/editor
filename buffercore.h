@@ -158,7 +158,10 @@ void clear(BufferCore &buf);
 // out as such as well, like any other character.  This is not
 // ideal of course.
 
-// Clear 'buf', then read a file into it.
+// Clear 'buf', then read a file into it.  If the file cannot be
+// opened, throws XOpen and does not modify 'buf'.  However, if
+// there is a read error after that point, 'buf' will contain
+// unpredictable partial file contents.
 void readFile(BufferCore &buf, char const *fname);
 
 // write a file

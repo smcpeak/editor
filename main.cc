@@ -146,6 +146,9 @@ void EditorWindow::buildMenu()
     file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
     file->addAction("&Close", this, SLOT(fileClose()));
     file->addSeparator();
+    file->addAction("&Reload", this, SLOT(fileReload()));
+    file->addAction("Reload a&ll", this, SLOT(fileReloadAll()));
+    file->addSeparator();
     file->addAction("E&xit", this, SLOT(fileExit()));
   }
 
@@ -266,7 +269,8 @@ void EditorWindow::fileOpenFile(char const *name)
     b->readFile(name);
   }
   catch (XOpen &x) {
-    QMessageBox::information(this, "Can't open file", toQString(x.why()));
+    this->complain(stringb(
+      "Can't open file \"" << name << "\": " << x.why()));
     delete b;
     return;
   }
@@ -370,10 +374,87 @@ void EditorWindow::fileClose()
 }
 
 
+void EditorWindow::fileReload()
+{
+  if (reloadBuffer(this->theBuffer())) {
+    this->editorViewChanged();
+  }
+}
+
+
+bool EditorWindow::reloadBuffer(BufferState *b)
+{
+  if (b->unsavedChanges()) {
+    if (!this->okToDiscardChanges(stringb(
+          "The file \"" << b->filename << "\" has unsaved changes.  "
+          "Discard those changes and reload this file anyway?"))) {
+      return false;
+    }
+  }
+
+  try {
+    b->readFile(b->filename.c_str());
+    return true;
+  }
+  catch (XOpen &x) {
+    this->complain(stringb(
+      "Can't open file \"" << b->filename << "\": " << x.why() <<
+      "\n\nThe buffer will remain open in the editor with its "
+      "old contents."));
+    return false;
+  }
+  catch (xBase &x) {
+    this->complain(stringb(
+      "Error while reading file \"" << b->filename << "\": " << x.why() <<
+      "\n\nThe buffer will remain open in the editor with the "
+      "partial contents (if any) that were read before the error, "
+      "but this may not match what is on disk."));
+    return false;
+  }
+}
+
+
+void EditorWindow::fileReloadAll()
+{
+  stringBuilder msg;
+  int ct = getUnsavedChanges(msg);
+
+  if (ct > 0) {
+    msg << "\nYou must deal with those individually.";
+    this->complain(msg);
+    return;
+  }
+
+  FOREACH_OBJLIST_NC(BufferState, globalState->buffers, iter) {
+    BufferState *bs = iter.data();
+    if (!this->reloadBuffer(bs)) {
+      // Stop after first error.
+      break;
+    }
+  }
+
+  this->editorViewChanged();
+}
+
+
 bool EditorWindow::canQuitApplication()
 {
   stringBuilder msg;
-  int ct=0;
+  int ct = getUnsavedChanges(msg);
+
+  if (ct > 0) {
+    msg << "\nDiscard these changes and quit anyway?";
+    return this->okToDiscardChanges(msg);
+  }
+
+  return true;
+}
+
+
+int EditorWindow::getUnsavedChanges(stringBuilder &msg)
+{
+  int ct = 0;
+
   msg << "The following buffers have unsaved changes:\n\n";
   FOREACH_OBJLIST(BufferState, this->globalState->buffers, iter) {
     if (iter.data()->unsavedChanges()) {
@@ -382,12 +463,7 @@ bool EditorWindow::canQuitApplication()
     }
   }
 
-  if (ct > 0) {
-    msg << "\nDiscard these changes and quit anyway?";
-    return this->okToDiscardChanges(msg);
-  }
-
-  return true;
+  return ct;
 }
 
 
@@ -845,8 +921,14 @@ int main(int argc, char **argv)
 
   int ret;
   {
-    GlobalState app(argc, argv);
-    ret = app.exec();
+    try {
+      GlobalState app(argc, argv);
+      ret = app.exec();
+    }
+    catch (xBase &x) {
+      cerr << x.why() << endl;
+      return 4;
+    }
 
     if (tracingSys("objectCount")) {
       printObjectCounts("before GlobalState destruction");

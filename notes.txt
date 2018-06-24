@@ -20,7 +20,6 @@ TODOs:
   - in Window menu, show which buffers have unsaved changes
   - show a soft margin at 72 columns
   - notice if trying to edit a file that has changed on disk
-  - refresh some/all files from disk contents
   - more efficient file opening
     - directory tree panel on the left?
   - I would like the Window menu to be more like emacs' buffer

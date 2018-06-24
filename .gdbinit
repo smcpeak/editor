@@ -8,9 +8,10 @@ file ./editor
 #file c_hilite
 #set args -tr setView
 
-set args editor.h
+set args tmp
 
 break breaker
+break abort
 break main
 
 #break editor.cc:1554

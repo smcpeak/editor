@@ -86,9 +86,17 @@ public:      // funcs
   // buffer user is editing: returns editor->buffer
   BufferState *theBuffer();
 
+  // Reload the file for 'b' from disk.  If there is an error, show
+  // an error message box and return false.
+  bool reloadBuffer(BufferState *b);
+
   // Return true if either there are no unsaved changes or the user
   // responds to a GUI dialog and says it is ok to quit.
   bool canQuitApplication();
+
+  // Return the number of buffers that have unsaved changes, and
+  // populate 'msg' with a list of precisely which ones.
+  int getUnsavedChanges(stringBuilder &msg);
 
   // Interactively ask the user if it is ok to discard changes,
   // returning true if they say it is.
@@ -100,6 +108,8 @@ public slots:
   void fileSave();
   void fileSaveAs();
   void fileClose();
+  void fileReload();
+  void fileReloadAll();
   void fileExit();
 
   void editISearch();

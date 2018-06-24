@@ -88,8 +88,12 @@ public:      // funcs
   // clear buffer contents *and* history
   void clearContentsAndHistory();
 
-  // replace current contents with a new file, and reset cursor
-  // to 0,0; clears the history
+  // Replace current contents with a new file, and reset cursor
+  // to 0,0; clears the history.
+  //
+  // Like ::readFile, if the file cannot be opened, then this throws
+  // XOpen and does not modify anything.  But a later read error leaves
+  // this object in an incomplete state.
   void readFile(char const *fname);
 
   // mark the current time as one where the file's contents agree
