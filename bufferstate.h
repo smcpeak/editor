@@ -11,6 +11,8 @@
 #include "str.h"        // string
 #include "hilite.h"     // Highlighter
 
+#include <stdint.h>     // int64_t
+
 
 // Editor widget editing state for a Buffer that is *used* when the
 // buffer is shown to the user, and *saved* when it is not.  This data
@@ -91,6 +93,10 @@ public:      // data
   // name of file being edited
   string filename;
 
+  // Modification timestamp (unix time) the last time we interacted
+  // with it on the file system.
+  int64_t lastFileTimestamp;
+
   // title of the buffer; this will usually be similar
   // to the filename, but perhaps only the last part of
   // the fully-qualified path name, etc.
@@ -133,6 +139,14 @@ public:      // funcs
 
   // Set the hotkey to the indicated digit in [0,9].
   void setHotkeyDigit(int digit);
+
+  // Get the modification time of b->filename without consulting
+  // or modifying 'lastFileTimestamp'.  Return false if it cannot
+  // be obtained.
+  bool getDiskModificationTime(int64_t &modTime);
+
+  // Set 'lastFileTimestamp' to equal the on-disk timestamp.
+  void refreshModificationTime();
 };
 
 #endif // BUFFERSTATE_H

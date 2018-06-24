@@ -267,6 +267,7 @@ void EditorWindow::fileOpenFile(char const *name)
 
   try {
     b->readFile(name);
+    b->refreshModificationTime();
   }
   catch (XOpen &x) {
     this->complain(stringb(
@@ -319,10 +320,37 @@ void EditorWindow::fileOpenFile(char const *name)
 
 void EditorWindow::fileSave()
 {
-  if (theBuffer()->title.equals("untitled.txt")) {
+  BufferState *b = this->theBuffer();
+  if (b->title.equals("untitled.txt")) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
     return;
+  }
+
+  int64_t diskTime;
+  if (b->getDiskModificationTime(diskTime)) {
+    if (diskTime != b->lastFileTimestamp) {
+      QMessageBox box(this);
+      box.setWindowTitle("File Changed");
+      box.setText(toQString(stringb(
+        "The file \"" << b->filename << "\" has changed on disk.  "
+        "If you save, those changes will be overwritten by the text "
+        "in the editor buffer.  Save anyway?")));
+      box.addButton(QMessageBox::Save);
+      box.addButton(QMessageBox::Cancel);
+      int ret = box.exec();
+      if (ret != QMessageBox::Save) {
+        return;
+      }
+    }
+  }
+  else {
+    // Failed to get time for on-disk file.  This is probably due
+    // to the file having been removed, which we are about to resolve
+    // by writing it again.  If the problem is a permission error,
+    // the attempt to write will fail for and report that reason.
+    // Either way, it should be safe to ignore the failure to get the
+    // timestamp here.
   }
 
   writeTheFile();
@@ -331,8 +359,10 @@ void EditorWindow::fileSave()
 void EditorWindow::writeTheFile()
 {
   try {
-    theBuffer()->writeFile(toCStr(theBuffer()->filename));
-    theBuffer()->noUnsavedChanges();
+    BufferState *b = this->theBuffer();
+    b->writeFile(toCStr(b->filename));
+    b->noUnsavedChanges();
+    b->refreshModificationTime();
     editorViewChanged();
   }
   catch (XOpen &x) {
@@ -396,6 +426,7 @@ bool EditorWindow::reloadBuffer(BufferState *b)
 
   try {
     b->readFile(b->filename.c_str());
+    b->refreshModificationTime();
     return true;
   }
   catch (XOpen &x) {

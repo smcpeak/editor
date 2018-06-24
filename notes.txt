@@ -12,17 +12,21 @@ TODOs:
     - add text to the search string
     - search string is persistent across all files
       - set of recent search strings for easy retrieval?
-  - Ctrl+S, Ctrl+W, Backspace does not work as desired
-  - Ctrl+S, Ctrl+S advances cursor weirdly
+    - Ctrl+S, Ctrl+W, Backspace does not work as desired
+    - Ctrl+S, Ctrl+S advances cursor weirdly
   - mode to show line numbers in left margin
-  - in Window menu, show which buffers have unsaved changes
   - show a soft margin at 72 columns
   - notice if trying to edit a file that has changed on disk
   - more efficient file opening
     - directory tree panel on the left?
-  - I would like the Window menu to be more like emacs' buffer
-    list, which is in most recently used order; and the Window
-    menu should not do anything if I choose the first entry
+
+  - redesign how one switches among the buffers
+    - I would like the Window menu to be more like emacs' buffer
+      list, which is in most recently used order; and the Window
+      menu should not do anything if I choose the first entry
+    - in Window menu, show which buffers have unsaved changes
+      - hmmm, this is somewhat annoying to do, and I want to
+        redesign the buffer switching interface anyway
 
 
   - remove unnecessary triple buffering from render code

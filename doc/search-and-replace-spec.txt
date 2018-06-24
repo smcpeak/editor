@@ -117,6 +117,9 @@ the search start location is selected, wrapping around to the beginning
 of the file if necessary.  If there is no match, the selection is not
 changed.
 
+If Insens is checked but a capital letter is entered into Find, then
+Insens shall be unchecked.
+
 The Repl combo box behaves in the standard way.
 
 For Find, the dropdown contains up to 20 unique non-empty previously
