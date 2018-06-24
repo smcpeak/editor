@@ -2,43 +2,59 @@
   "drawFileName": true,
   "entities": [
     {
+      "loc": {
+        "x": 30,
+        "y": 595
+      },
+      "name": "260:15                                  editor.cc",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 25,
+        "w": 650
+      }
+    },
+    {
       "fillColor": "Light Gray",
       "loc": {
-        "x": 20,
+        "x": 30,
         "y": 35
       },
-      "name": "Search and Replace",
+      "name": "Editor",
       "shape": "ES_WINDOW",
       "shapeFlags": [
+        "SF_HAS_MAXIMIZE",
+        "SF_HAS_MINIMIZE",
         "SF_HAS_CLOSE",
         "SF_HAS_WINDOW_OPS"
       ],
       "shapeParams": [
-        545,
-        210
+        690,
+        635
       ],
       "size": {
-        "h": 135,
-        "w": 635
+        "h": 560,
+        "w": 650
       }
     },
     {
       "fillColor": "White",
       "lineColor": "Gray",
       "loc": {
-        "x": 75,
-        "y": 65
+        "x": 85,
+        "y": 495
       },
+      "name": "redraw",
+      "nameAlign": "TA_LEFT",
       "shape": "ES_COMBO_BOX",
       "size": {
         "h": 25,
-        "w": 570
+        "w": 585
       }
     },
     {
       "loc": {
-        "x": 30,
-        "y": 65
+        "x": 40,
+        "y": 495
       },
       "name": "Find:",
       "nameAlign": "TA_LEFT",
@@ -52,21 +68,21 @@
       "fillColor": "White",
       "lineColor": "Gray",
       "loc": {
-        "x": 75,
-        "y": 95
+        "x": 85,
+        "y": 525
       },
       "shape": "ES_COMBO_BOX",
       "size": {
         "h": 25,
-        "w": 570
+        "w": 585
       }
     },
     {
       "loc": {
-        "x": 30,
-        "y": 95
+        "x": 40,
+        "y": 525
       },
-      "name": "With:",
+      "name": "Repl:",
       "nameAlign": "TA_LEFT",
       "shape": "ES_NO_SHAPE",
       "size": {
@@ -76,8 +92,8 @@
     },
     {
       "loc": {
-        "x": 120,
-        "y": 135
+        "x": 130,
+        "y": 565
       },
       "name": "Regex",
       "nameAlign": "TA_LEFT",
@@ -89,8 +105,8 @@
     },
     {
       "loc": {
-        "x": 30,
-        "y": 135
+        "x": 40,
+        "y": 565
       },
       "name": "Insens",
       "nameAlign": "TA_LEFT",
@@ -102,8 +118,8 @@
     },
     {
       "loc": {
-        "x": 465,
-        "y": 130
+        "x": 475,
+        "y": 560
       },
       "name": "14 matches",
       "nameAlign": "TA_LEFT",
@@ -115,8 +131,8 @@
     },
     {
       "loc": {
-        "x": 210,
-        "y": 130
+        "x": 220,
+        "y": 560
       },
       "name": "Next",
       "shape": "ES_PUSHBUTTON",
@@ -127,8 +143,8 @@
     },
     {
       "loc": {
-        "x": 265,
-        "y": 130
+        "x": 275,
+        "y": 560
       },
       "name": "Prev",
       "shape": "ES_PUSHBUTTON",
@@ -139,8 +155,8 @@
     },
     {
       "loc": {
-        "x": 320,
-        "y": 130
+        "x": 330,
+        "y": 560
       },
       "name": "Replace",
       "shape": "ES_PUSHBUTTON",
@@ -151,8 +167,8 @@
     },
     {
       "loc": {
-        "x": 600,
-        "y": 130
+        "x": 625,
+        "y": 560
       },
       "name": "Help",
       "shape": "ES_PUSHBUTTON",
@@ -163,8 +179,8 @@
     },
     {
       "loc": {
-        "x": 395,
-        "y": 130
+        "x": 405,
+        "y": 560
       },
       "name": "+Next",
       "nameAlign": "TA_LEFT",
@@ -177,12 +193,39 @@
     {
       "attributes": "Only\n+Next\n+Prev\nAll\n",
       "loc": {
-        "x": 395,
-        "y": 155
+        "x": 405,
+        "y": 585
       },
       "size": {
         "h": 75,
         "w": 65
+      }
+    },
+    {
+      "imageFileName": "editor-pane-with-search-matches.png",
+      "imageFillStyle": "IFS_LOCK_SIZE",
+      "loc": {
+        "x": 30,
+        "y": 55
+      },
+      "size": {
+        "h": 425,
+        "w": 630
+      }
+    },
+    {
+      "loc": {
+        "x": 660,
+        "y": 55
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        5,
+        10
+      ],
+      "size": {
+        "h": 425,
+        "w": 20
       }
     }
   ],
@@ -191,7 +234,7 @@
   "type": "Diagram Editor Diagram",
   "version": 23,
   "windowSize": {
-    "h": 260,
-    "w": 674
+    "h": 712,
+    "w": 744
   }
 }

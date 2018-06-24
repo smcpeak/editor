@@ -1,5 +1,7 @@
 
 TODOs:
+  - Alt+A to pass selection through a filter command
+  - Ctrl+J: justify paragraph, esp. comments
   - bug: File|Save As... does not rebuild Window menu, leaves
     old "untitled.txt"
   - allow Tab character; issue is rendering support
@@ -53,7 +55,6 @@ TODOs:
   - case-sensitive search by default if any chars are capitals
   - parenthesis balancing, and Alt-[/] to find matching delimiter
   - bug: selection in nonfocused window causes assertion failure
-  - Ctrl+J: justify paragraph, esp. comments
   - File|Revert to saved, and keybinding F12
   - performance!  smarter updates, etc.
   - tabs along the top to show file name, and ability to rearrange
