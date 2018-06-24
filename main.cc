@@ -355,6 +355,8 @@ void EditorWindow::fileSaveAs()
   theBuffer()->title = sm_basename(name);
   setFileName(name, theBuffer()->hotkeyDesc());
   writeTheFile();
+
+  this->globalState->rebuildWindowMenus();
 }
 
 
