@@ -1,0 +1,142 @@
+search-and-replace-spec.txt
+User interface specification for Search and Replace dialog
+
+
+Introduction
+------------
+
+The Search and Replace function allows one to find instances of text
+within a file and optionally replace them with other text.  Notably,
+it acts like "incremental search" in that matches are immediately
+highlighted in all editor windows as the user types.
+
+
+Interaction with Editor Windows
+-------------------------------
+
+Search and Replace is a modeless dialog associated with the entire
+editor application (rather than any particular editor window).
+See search-and-replace.ded(.png) for the wireframe.
+
+Initially, the dialog is hidden.
+
+From an editor window, Ctrl+S shows the dialog if it is hidden and
+puts the focus in the dialog.  Initially after Ctrl+S (whether or not
+the dialog was previously hidden), input focus is placed on the Find
+text box, with all of its text selected (for immediate replacement
+with typing).  If some text was selected in the editor prior to Ctrl+S
+being pressed, then that selected text becomes the initial contents of
+the Find box, pushing prior contents (if not empty) into the dropdown
+history.  If the Regex box was checked, then that initial text is
+properly escaped as a Regex that matches the highlighted text.
+
+If the dialog is shown, one can Alt+(Shift+)Tab to and from it.
+
+If the dialog is shown, then in every editor window, all occurrences
+of matching text are highlighted. These are the "matches".  Matches
+are recognized by scanning forward from the start of the file.  When
+one match is found, the next scan begins with the second character
+after the last in the previous match.  Consequently, matches do not
+overlap or touch.
+
+Furthermore, it is therefore possible for the user to select some
+text, press Ctrl+S, and have that text *not* be a match due to a prior
+overlapping match.
+
+The set of highlighted matches updates immediately in response to all
+changes to the dialog controls.
+
+Certain controls (e.g., the Next button) cause changes to cursor
+location, selection, and contents in the editor window that most
+recently had focus.  This is the "interacting editor".  This is not
+necessarily the window in which Ctrl+S was
+most recently pressed because Alt+Tab and mouse clicks can put the
+focus on another window.  Other editor windows show matches, but their
+state is not otherwise affected by the Search and Replace dialog.
+
+
+Dialog Controls
+---------------
+
+Clicking the window close button or pressing Esc while the dialog
+has focus closes it.  Its size and position are remembered while it
+is closed, and restored when it is shown again.  The state of all
+dialog controls is also retained and restored, including the text
+in the Find and With boxes.  (However, dropdowns always start in
+the "up" state when the dialog is shown, even if one was down when
+the dialog was closed.)  Dialog state is not retained across
+invocations of the editor application.
+
+The Find and With combo boxes behave in the standard way.
+
+For Find, the dropdown contains up to 20 unique non-empty previously
+used strings, in order of most recently used.  The current text is
+added to the history when:
+
+* The text is replaced with a string from the editor window.
+
+* The entire text is highlighted and then deleted either by typing
+or pressing Del or Backspace.
+
+* The Next, Prev, or Replace buttons are pressed.
+
+For Replace, the dropdown also contains a history of up to 20 items.
+An item is added to its history when:
+
+* The entire text is highlighted and then deleted either by typing
+or pressing Del or Backspace.
+
+* The Replace button is pressed.
+
+The Insens checkbox makes searching insensitive to letter case.
+
+The Regex checkbox interprets the Find text as a regular expression
+in Perl syntax, and the With text as regular expression replacement
+text (e.g., with references to match groups in Find), again in Perl
+syntax.
+
+If there is no selected text in the interacting editor, or the
+selected text is not one of the matches, then pressing
+Next selects the first match that starts on or
+after the current cursor location.  If the interacting editor has
+a match selected, then pressing Next selects the first match after
+that one.  Either way, the editor window scrolls if necessary to
+bring the newly selected text into view.  If there is no match
+that would be selected by pressing Next, then it is disabled.
+
+When Prev is pressed, it selects the first match that starts before the
+current cursor, working backwards from the cursor.  (Unlike with
+Next, there is no need to distinguish the case of the selection
+being a match.)  Again, if no new text would be selected then the
+button is disabled.
+
+Replace is enabled if the selected text in the interacting editor
+is a match.  When it is pressed, that selected text is replaced with
+the text in the With box (which may be empty) or, for Regex search
+with backreferences, the appropriately constructed replacement text
+for that match.  Then it does one of the following in the interacting
+editor depending on the setting in the modifier dropdown:
+
+* Only: The inserted replacement text.  If the replacement text is
+  empty, then there is no selection and the cursor is at the place
+  where the found text was.  (It is possible that the replacement
+  is itself a match.)
+
+* +Next: Same as Only, except behaves as if Next was pressed right
+  after if it would have been enabled.
+
+* +Prev: Same as Only followed by Prev.
+
+* All: All matches in the file are replaced.  The set of matches is
+  *not* recalculated while replacement is ongoing.  (This matters if
+  the replacement text potentially creates new matches.)
+
+The label to the right of the modifier dropdown contains the text
+"N matches" where N is the number of matches.  This count updates
+immediately in response to changes in the dialog.
+
+Help displays a dialog with help text.  That text is closely based
+on this specification.
+
+
+EOF

@@ -5,4 +5,6 @@
 # since I intend to use it as a test input and want determinism.
 test/allbytes.txt            -text
 
+*.png                        -text
+
 # EOF

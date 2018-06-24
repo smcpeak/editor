@@ -1,0 +1,197 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 35
+      },
+      "name": "Search and Replace",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        545,
+        210
+      ],
+      "size": {
+        "h": 135,
+        "w": 635
+      }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 75,
+        "y": 65
+      },
+      "shape": "ES_COMBO_BOX",
+      "size": {
+        "h": 25,
+        "w": 570
+      }
+    },
+    {
+      "loc": {
+        "x": 30,
+        "y": 65
+      },
+      "name": "Find:",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 25,
+        "w": 40
+      }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 75,
+        "y": 95
+      },
+      "shape": "ES_COMBO_BOX",
+      "size": {
+        "h": 25,
+        "w": 570
+      }
+    },
+    {
+      "loc": {
+        "x": 30,
+        "y": 95
+      },
+      "name": "With:",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 25,
+        "w": 40
+      }
+    },
+    {
+      "loc": {
+        "x": 120,
+        "y": 135
+      },
+      "name": "Regex",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_CHECK_BOX",
+      "size": {
+        "h": 20,
+        "w": 75
+      }
+    },
+    {
+      "loc": {
+        "x": 30,
+        "y": 135
+      },
+      "name": "Insens",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_CHECK_BOX",
+      "size": {
+        "h": 20,
+        "w": 75
+      }
+    },
+    {
+      "loc": {
+        "x": 465,
+        "y": 130
+      },
+      "name": "14 matches",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 25,
+        "w": 85
+      }
+    },
+    {
+      "loc": {
+        "x": 210,
+        "y": 130
+      },
+      "name": "Next",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 45
+      }
+    },
+    {
+      "loc": {
+        "x": 265,
+        "y": 130
+      },
+      "name": "Prev",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 45
+      }
+    },
+    {
+      "loc": {
+        "x": 320,
+        "y": 130
+      },
+      "name": "Replace",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 65
+      }
+    },
+    {
+      "loc": {
+        "x": 600,
+        "y": 130
+      },
+      "name": "Help",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 45
+      }
+    },
+    {
+      "loc": {
+        "x": 395,
+        "y": 130
+      },
+      "name": "+Next",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_DROPDOWN",
+      "size": {
+        "h": 25,
+        "w": 65
+      }
+    },
+    {
+      "attributes": "Only\n+Next\n+Prev\nAll\n",
+      "loc": {
+        "x": 395,
+        "y": 155
+      },
+      "size": {
+        "h": 75,
+        "w": 65
+      }
+    }
+  ],
+  "inheritances": [],
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 23,
+  "windowSize": {
+    "h": 260,
+    "w": 674
+  }
+}

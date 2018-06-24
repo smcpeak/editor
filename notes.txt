@@ -21,6 +21,7 @@ TODOs:
   - refresh some/all files from disk contents
   - more efficient file opening
     - directory tree panel on the left?
+  - how about renaming it to "Quill"?
 
 
   - remove unnecessary triple buffering from render code
