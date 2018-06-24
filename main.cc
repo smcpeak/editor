@@ -39,7 +39,7 @@
 #include <stdlib.h>                    // atoi
 
 
-char const appName[] = "Scott's Editor";
+char const appName[] = "Editor";
 
 int EditorWindow::objectCount = 0;
 
