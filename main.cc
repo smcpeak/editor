@@ -39,7 +39,7 @@
 #include <stdlib.h>                    // atoi
 
 
-char const appName[] = "An Editor";   // TODO: find better name
+char const appName[] = "Scott's Editor";
 
 int EditorWindow::objectCount = 0;
 
@@ -187,7 +187,7 @@ void EditorWindow::buildMenu()
   {
     QMenu *help = this->menuBar->addMenu("&Help");
     help->addAction("&Keybindings...", this, SLOT(helpKeybindings()));
-    help->addAction("&About ...", this, SLOT(helpAbout()));
+    help->addAction("&About Scott's Editor...", this, SLOT(helpAbout()));
     help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
   }
 }
@@ -503,13 +503,8 @@ void EditorWindow::helpKeybindings()
 
 void EditorWindow::helpAbout()
 {
-  QMessageBox::about(this, "About...",
-                     "This is a text editor, in case you didn't know.\n"
-                     "It doesn't have a name yet.\n"
-                     "\n"
-                     "Step 1.  Write a good editor.\n"
-                     "Step 2.  ???\n"
-                     "Step 3.  Profit!");
+  QMessageBox::about(this, "About Scott's Editor",
+    "This is a text editor that has a user interface I like.");
 }
 
 
