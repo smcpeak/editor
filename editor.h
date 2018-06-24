@@ -331,6 +331,14 @@ public:      // funcs
   // proxy if any, and then handles what is not yet handled.
   void pseudoKeyPress(InputPseudoKey pkey);
 
+  // We are about to edit the text in the buffer.  If we are going from
+  // a "clean" to "dirty" state with respect to unsaved changes, do a
+  // safety check for concurrent on-disk modifications, prompting the
+  // user if necessary.  Return true if it is safe to proceed, false if
+  // the edit should be aborted without doing anything (because the
+  // user has indicated they want to cancel it).
+  bool editSafetyCheck();
+
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);

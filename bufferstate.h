@@ -143,7 +143,12 @@ public:      // funcs
   // Get the modification time of b->filename without consulting
   // or modifying 'lastFileTimestamp'.  Return false if it cannot
   // be obtained.
-  bool getDiskModificationTime(int64_t &modTime);
+  bool getDiskModificationTime(int64_t &modTime) const;
+
+  // Compare 'lastFileTimestamp' to what is on disk.  Return true
+  // if they are different, meaning some on-disk change has happened
+  // since we last interacted with it.
+  bool hasStaleModificationTime() const;
 
   // Set 'lastFileTimestamp' to equal the on-disk timestamp.
   void refreshModificationTime();

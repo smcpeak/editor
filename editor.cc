@@ -1182,6 +1182,9 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Qt::Key_PageDown: cursorPageDown(shift); break;
 
       case Qt::Key_Backspace: {
+        if (!editSafetyCheck()) {
+          return;
+        }
         if (!shift) {
           this->deleteLeftOfCursor();
         }
@@ -1189,6 +1192,9 @@ void Editor::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_Delete: {
+        if (!editSafetyCheck()) {
+          return;
+        }
         if (shift) {
           editCut();
         }
@@ -1201,6 +1207,10 @@ void Editor::keyPressEvent(QKeyEvent *k)
       case Qt::Key_Enter:
       case Qt::Key_Return: {
         if (!shift) {
+          if (!editSafetyCheck()) {
+            return;
+          }
+
           int lineLength = buffer->lineLength(buffer->line());
           bool hadCharsToRight = (buffer->col() < lineLength);
           bool beyondLineEnd = (buffer->col() > lineLength);
@@ -1268,6 +1278,9 @@ void Editor::keyPressEvent(QKeyEvent *k)
       default: {
         QString text = k->text();
         if (text.length() && text[0].isPrint()) {
+          if (!editSafetyCheck()) {
+            return;
+          }
           fillToCursor();
           //buffer->changed = true;
 
@@ -1563,6 +1576,10 @@ void Editor::editRedo()
 void Editor::editCut()
 {
   if (this->selectEnabled) {
+    if (!editSafetyCheck()) {
+      return;
+    }
+
     editCopy();
     this->selectEnabled = true;    // counteract something editCopy() does
     editDelete();
@@ -1590,6 +1607,10 @@ void Editor::editCopy()
 
 void Editor::editPaste()
 {
+  if (!editSafetyCheck()) {
+    return;
+  }
+
   // get contents of clipboard
   QClipboard *cb = QApplication::clipboard();
   QString text = cb->text();
@@ -1612,6 +1633,10 @@ void Editor::editPaste()
 void Editor::editDelete()
 {
   if (this->selectEnabled) {
+    if (!editSafetyCheck()) {
+      return;
+    }
+
     normalizeSelect();
     //buffer->changed = true;
     buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
@@ -1907,6 +1932,57 @@ void Editor::pseudoKeyPress(InputPseudoKey pkey)
       this->hitText = "";
       redraw();
       break;
+  }
+}
+
+
+// This is not called before every possible editing operation, since
+// that would add considerable clutter, just the most common.  A
+// missing edit safety check merely delays the user getting the
+// warning until they try to save.
+//
+// There is a danger in scattering the warnings too widely because I
+// might end up prompting in an inappropriate context, so currently
+// the warnings are only in places where I can clearly see that the
+// user just initiated an edit action and it is therefore safe to
+// cancel it.
+bool Editor::editSafetyCheck()
+{
+  if (buffer->unsavedChanges()) {
+    // We already have unsaved changes, so assume that the safety
+    // check has already passed or its warning dismissed.  (I do not
+    // want to hit the disk for every edit operation.)
+    return true;
+  }
+
+  if (!buffer->hasStaleModificationTime()) {
+    // No concurrent changes, safe to go ahead.
+    return true;
+  }
+
+  // Prompt the user.
+  QMessageBox box(this);
+  box.setWindowTitle("File Changed");
+  box.setText(toQString(stringb(
+    "The file \"" << buffer->filename << "\" has changed on disk.  "
+    "Do you want to proceed with editing the in-memory contents anyway, "
+    "overwriting the on-disk changes when you later save?")));
+  box.addButton(QMessageBox::Yes);
+  box.addButton(QMessageBox::Cancel);
+  int ret = box.exec();
+  if (ret == QMessageBox::Yes) {
+    // Suppress warning later when we save.  Also, if the edit we
+    // are about to do gets canceled for a different reason,
+    // leaving us in the "clean" state after all, this refresh will
+    // ensure we do not prompt the user a second time.
+    buffer->refreshModificationTime();
+
+    // Go ahead with the edit.
+    return true;
+  }
+  else {
+    // Cancel the edit.
+    return false;
   }
 }
 

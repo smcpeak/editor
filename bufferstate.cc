@@ -5,6 +5,7 @@
 
 #include "macros.h"                    // CMEMB
 #include "nonport.h"                   // getFileModificationTime
+#include "trace.h"                     // TRACE
 
 #include <qnamespace.h>                // Qt class/namespace
 
@@ -109,22 +110,52 @@ void BufferState::setHotkeyDigit(int digit)
 }
 
 
-bool BufferState::getDiskModificationTime(int64_t &modTime)
+bool BufferState::getDiskModificationTime(int64_t &modTime) const
 {
-  return getFileModificationTime(this->filename.c_str(), modTime);
+  bool ret = getFileModificationTime(this->filename.c_str(), modTime);
+  TRACE("modtime", "on-disk ts for " << this->filename <<
+                   " is " << modTime);
+  return ret;
+}
+
+
+bool BufferState::hasStaleModificationTime() const
+{
+  int64_t diskTime;
+  if (this->getDiskModificationTime(diskTime)) {
+    bool ret = (diskTime != this->lastFileTimestamp);
+    TRACE("modtime", "hasStale: returning " << ret);
+    return ret;
+  }
+  else {
+    // Failed to get time for on-disk file.  This is probably due
+    // to the file having been removed, which we are about to resolve
+    // by writing it again.  If the problem is a permission error,
+    // the attempt to save will fail for and report that reason.
+    // Either way, it should be safe to ignore the failure to get the
+    // timestamp here and assume it is not stale.
+    return false;
+  }
 }
 
 
 void BufferState::refreshModificationTime()
 {
-  // We ignore the return when calling this function because we only
-  // call this after we have already successfully read the file's
-  // contents, so an error here is quite unlikely.  Furthermore, this
-  // API does not provide a reason.  If it does fail, the timestamp
-  // will be set to 0, which likely will agree with a subsequent call
-  // since that would probably fail too, so at least we won't be
-  // repeatedly bothering the user with spurious errors.
-  (void)this->getDiskModificationTime(this->lastFileTimestamp);
+  TRACE("modtime", "refresh: old ts for " << this->filename <<
+                   " is " << this->lastFileTimestamp);
+
+  if (!this->getDiskModificationTime(this->lastFileTimestamp)) {
+    // We ignore the error because we only
+    // call this after we have already successfully read the file's
+    // contents, so an error here is quite unlikely.  Furthermore, this
+    // API does not provide a reason.  If it does fail, the timestamp
+    // will be set to 0, which likely will agree with a subsequent call
+    // since that would probably fail too, so at least we won't be
+    // repeatedly bothering the user with spurious errors.
+  }
+
+  TRACE("modtime", "refresh: new ts for " << this->filename <<
+                   " is " << this->lastFileTimestamp);
 }
 
 
