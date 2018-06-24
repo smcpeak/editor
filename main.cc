@@ -249,6 +249,15 @@ void EditorWindow::fileOpen()
 
 void EditorWindow::fileOpenFile(char const *name)
 {
+  // If this file is already open, switch to it.
+  FOREACH_OBJLIST_NC(BufferState, globalState->buffers, iter) {
+    BufferState *bs = iter.data();
+    if (bs->filename.equals(name)) {
+      this->setBuffer(bs);
+      return;
+    }
+  }
+
   BufferState *b = new BufferState();
   b->filename = name;
   b->title = sm_basename(name);   // shorter; todo: ensure unique

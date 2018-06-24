@@ -23,6 +23,9 @@ TODOs:
   - refresh some/all files from disk contents
   - more efficient file opening
     - directory tree panel on the left?
+  - I would like the Window menu to be more like emacs' buffer
+    list, which is in most recently used order; and the Window
+    menu should not do anything if I choose the first entry
 
 
   - remove unnecessary triple buffering from render code
@@ -42,6 +45,7 @@ TODOs:
   - save/restore set of open buffers
   - periodic autosave; do that when receiving SIGTERM/QUIT/INT also
   - do not open the same file more than once
+    - more robust identification of same file than just specified name
   - ctrl-i: open file at cursor
   - analog to M-x grep
   - ctrl-f4: close a buffer
