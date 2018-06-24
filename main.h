@@ -49,6 +49,9 @@ public:      // data
   // The action for toggling visible whitespace.
   QAction *toggleVisibleWhitespaceAction;
 
+  // Action for toggling the soft margin display.
+  QAction *toggleVisibleSoftMarginAction;
+
   // Set of Actions in the Window menu that choose a buffer.
   // These need to be removed from the Window menu when we
   // rebuild it.  These are not exactly owner pointers, since
@@ -117,6 +120,8 @@ public slots:
 
   void viewToggleVisibleWhitespace();
   void viewSetWhitespaceOpacity();
+  void viewToggleVisibleSoftMargin();
+  void viewSetSoftMarginColumn();
 
   void windowNewWindow();
   void windowOccupyLeft();

@@ -58,6 +58,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     //filename(NULL),
     windowMenu(NULL),
     toggleVisibleWhitespaceAction(NULL),
+    toggleVisibleSoftMarginAction(NULL),
     bufferChoiceActions(),
     isearch(NULL)
 {
@@ -173,6 +174,11 @@ void EditorWindow::buildMenu()
     this->toggleVisibleWhitespaceAction->setCheckable(true);
     this->toggleVisibleWhitespaceAction->setChecked(this->editor->visibleWhitespace);
     menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
+    this->toggleVisibleSoftMarginAction =
+      menu->addAction("Visible soft &margin", this, SLOT(viewToggleVisibleSoftMargin()));
+    this->toggleVisibleSoftMarginAction->setCheckable(true);
+    this->toggleVisibleSoftMarginAction->setChecked(this->editor->visibleSoftMargin);
+    menu->addAction("Set soft margin column...", this, SLOT(viewSetSoftMarginColumn()));
   }
 
   {
@@ -563,6 +569,29 @@ void EditorWindow::viewSetWhitespaceOpacity()
     1 /*min*/, 255 /*max*/, 1 /*step*/, &ok);
   if (ok) {
     this->editor->whitespaceOpacity = n;
+    this->editor->update();
+  }
+}
+
+
+void EditorWindow::viewToggleVisibleSoftMargin()
+{
+  this->editor->visibleSoftMargin = !this->editor->visibleSoftMargin;
+  this->toggleVisibleSoftMarginAction->setChecked(this->editor->visibleSoftMargin);
+  this->editor->update();
+}
+
+
+void EditorWindow::viewSetSoftMarginColumn()
+{
+  bool ok;
+  int n = QInputDialog::getInt(this,
+    "Soft Margin Column",
+    "Column number (positive):",
+    this->editor->softMarginColumn+1,
+    1 /*min*/, INT_MAX /*max*/, 1 /*step*/, &ok);
+  if (ok) {
+    this->editor->softMarginColumn = n-1;
     this->editor->update();
   }
 }

@@ -15,7 +15,6 @@ TODOs:
     - Ctrl+S, Ctrl+W, Backspace does not work as desired
     - Ctrl+S, Ctrl+S advances cursor weirdly
   - mode to show line numbers in left margin
-  - show a soft margin at 72 columns
   - more efficient file opening
     - directory tree panel on the left?
   - pressing backspace while cursor is beyond EOL should just move

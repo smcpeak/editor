@@ -70,6 +70,9 @@ Editor::Editor(BufferState *buf, StatusDisplay *stat,
     minihexFont(),
     visibleWhitespace(true),
     whitespaceOpacity(32),
+    softMarginColumn(72),
+    visibleSoftMargin(true),
+    softMarginColor(0xFF, 0xFF, 0xFF, 32),
     ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
@@ -723,17 +726,22 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       }
 
       paint.restore();
+    }
 
+    // Draw a soft margin indicator.
+    if (this->visibleSoftMargin) {
+      paint.save();
+      paint.setPen(this->softMarginColor);
+
+      int x = leftMargin + fontWidth * (this->softMarginColumn - firstCol);
+      paint.drawLine(x, 0, x, fontHeight-1);
+
+      paint.restore();
     }
 
     // draw the line buffer to the window
-    //needed? //paint.flush();     // server-side pixmap is now complete
     winPaint.drawPixmap(0,y, pixmap);    // draw it
   }
-
-  // at this point the entire window has been painted, so there
-  // is no need to "fill the remainder" (there used to be code
-  // here that tried to do that)
 }
 
 

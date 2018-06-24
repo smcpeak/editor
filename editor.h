@@ -98,6 +98,16 @@ public:      // data
   // Value in [0,255], where 255 is fully opaque.
   int whitespaceOpacity;
 
+  // Column number for a soft margin.  This is used for text
+  // justification and optionally to draw a margin line.
+  int softMarginColumn;
+
+  // True to draw the soft margin.
+  bool visibleSoftMargin;
+
+  // Color of the line indicating the soft margin.
+  QColor softMarginColor;
+
   // ------ input options ------
   // distance to move view for Ctrl-Shift-<arrow key>
   int ctrlShiftDistance;
