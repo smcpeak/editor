@@ -3,7 +3,6 @@ TODOs:
   - Alt+A to pass selection through a filter command
   - Ctrl+J: justify paragraph for plain text
   - allow Tab character; issue is rendering support
-  - Ctrl+K: kill (to clipboard) the line
   - rethink incremental search
     - persistent search string
     - toggle whether matches shown

@@ -160,6 +160,18 @@ void Editor::normalizeSelect(int cursorLine, int cursorCol)
 }
 
 
+void Editor::selectCursorLine()
+{
+  // Move the cursor to the start of its line.
+  this->buffer->moveAbsColumn(0);
+
+  // Make the selection end at the start of the next line.
+  this->selectLine = this->cursorLine() + 1;
+  this->selectCol = 0;
+  this->selectEnabled = true;
+}
+
+
 static BDFFont *makeBDFFont(char const *bdfData, char const *context)
 {
   try {
@@ -1037,6 +1049,16 @@ void Editor::keyPressEvent(QKeyEvent *k)
         else {
           this->justifyNearCursorLine();
         }
+        break;
+
+      case Qt::Key_K:
+        if (!editSafetyCheck()) {
+          return;
+        }
+        if (!selectEnabled) {
+          selectCursorLine();
+        }
+        editCut();
         break;
 
       default:

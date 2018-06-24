@@ -252,6 +252,9 @@ public:      // funcs
   void normalizeSelect(int cursorLine, int cursorCol);
   void normalizeSelect() { normalizeSelect(cursorLine(), cursorCol()); }
 
+  // Select the entire line the cursor is on.
+  void selectCursorLine();
+
   // Change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor.
   void setView(int newFirstLine, int newFirstCol);

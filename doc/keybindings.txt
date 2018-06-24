@@ -39,7 +39,9 @@ Alt+Shift+Backspace: Redo.
 Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
 Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
 
-Ctrl+J: Justify paragraph.
 Ctrl+S: Search.
+
+Ctrl+K: Cut current line.
+Ctrl+J: Justify paragraph.
 Alt+D: Insert current date and time.
 Alt+G: Go to specified line.
