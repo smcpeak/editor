@@ -17,7 +17,6 @@ TODOs:
   - mode to show line numbers in left margin
   - more efficient file opening
     - directory tree panel on the left?
-  - pressing backspace while cursor is beyond EOL should just move
 
   - redesign how one switches among the buffers
     - I would like the Window menu to be more like emacs' buffer

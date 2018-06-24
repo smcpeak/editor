@@ -1362,15 +1362,16 @@ void Editor::deleteAtCursor(int amt)
 
 void Editor::deleteLeftOfCursor()
 {
-  fillToCursor();
-  //buffer->changed = true;
-
   if (this->selectEnabled) {
     editDelete();
   }
   else if (cursorCol() == 0) {
     if (cursorLine() == 0) {
       // do nothing
+    }
+    else if (cursorLine() > buffer->numLines()-1) {
+      // Move cursor up non-destructively.
+      cursorUp(false /*shift*/);
     }
     else {
       // move to end of previous line
@@ -1379,6 +1380,10 @@ void Editor::deleteLeftOfCursor()
       // splice them together
       spliceNextLine();
     }
+  }
+  else if (cursorCol() > buffer->lineLengthLoose(cursorLine())) {
+    // Move cursor left non-destructively.
+    cursorLeft(false /*shift*/);
   }
   else {
     // remove the character to the left of the cursor
