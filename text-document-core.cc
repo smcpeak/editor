@@ -1,7 +1,7 @@
-// buffercore.cc
-// code for buffercore.h
+// text-document-core.cc
+// code for text-document-core.h
 
-#include "buffercore.h"    // this module
+#include "text-document-core.h"    // this module
 
 #include "strutil.h"       // encodeWithEscapes
 #include "syserr.h"        // xsyserror
@@ -22,7 +22,7 @@ TextDocumentCore::TextDocumentCore()
     longestLengthSoFar(0),
     observers()
 {
-  // always at least one line; see comments at end of buffercore.h
+  // always at least one line; see comments at end of text-document-core.h
   lines.insert(0 /*line*/, NULL /*value*/);
 }
 
@@ -577,7 +577,7 @@ void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, int, int,
 
 
 // --------------------- test code -----------------------
-#ifdef TEST_BUFFERCORE
+#ifdef TEST_TEXT_DOCUMENT_CORE
 
 #include "ckheap.h"        // malloc_stats
 #include <stdlib.h>        // system
@@ -644,10 +644,10 @@ void entry()
   printf("stats after:\n");
   malloc_stats();
 
-  printf("\nbuffercore is ok\n");
+  printf("\ntext-document-core is ok\n");
 }
 
 USUAL_MAIN
 
 
-#endif // TEST_BUFFERCORE
+#endif // TEST_TEXT_DOCUMENT_CORE

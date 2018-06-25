@@ -1,11 +1,11 @@
-// buffercore.h
+// text-document-core.h
 // representation of a buffer of text (one file) in the editor
 
 // see disussion at end of file, regarding mapping between a
 // file's on-disk representation and this in-memory representation
 
-#ifndef BUFFERCORE_H
-#define BUFFERCORE_H
+#ifndef TEXT_DOCUMENT_CORE_H
+#define TEXT_DOCUMENT_CORE_H
 
 #include "gap.h"        // GapArray
 #include "str.h"        // string
@@ -285,4 +285,4 @@ public:
 
 */
 
-#endif // BUFFERCORE_H
+#endif // TEXT_DOCUMENT_CORE_H

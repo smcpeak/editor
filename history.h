@@ -4,12 +4,12 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include "buffercore.h"      // TextDocumentCore
-#include "exc.h"             // xBase
-#include "ogap.h"            // OGapArray
-#include "str.h"             // stringBuilder
+#include "exc.h"                       // xBase
+#include "ogap.h"                      // OGapArray
+#include "str.h"                       // stringBuilder
+#include "text-document-core.h"        // TextDocumentCore
 
-#include <stdint.h>          // uintptr_t
+#include <stdint.h>                    // uintptr_t
 
 
 // fwd in this file
