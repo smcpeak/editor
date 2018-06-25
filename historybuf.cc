@@ -79,7 +79,7 @@ void HistoryBuffer::moveCursor(bool relLine, int line, bool relCol, int col)
 
 void HistoryBuffer::insertLR(bool left, char const *text, int textLen)
 {
-  xassert(buf.cursorInDefined());
+  xassert(buf.validCursor());
 
   HE_text *e = new HE_text(true /*insertion*/, left,
                            text, textLen);
@@ -90,7 +90,7 @@ void HistoryBuffer::insertLR(bool left, char const *text, int textLen)
 
 void HistoryBuffer::deleteLR(bool left, int count)
 {
-  xassert(buf.cursorInDefined());
+  xassert(buf.validCursor());
 
   HE_text *e = new HE_text(false /*insertion*/, left,
                            NULL /*text*/, 0 /*textLen*/);

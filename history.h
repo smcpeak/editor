@@ -34,8 +34,8 @@ public:
   void setCursor(TextCoord tc)
     { this->line = tc.line; this->col = tc.column; }
 
-  bool cursorInDefined() const
-    { return this->locationInDefined(this->cursor()); }
+  bool validCursor() const
+    { return this->validCoord(this->cursor()); }
 
   bool cursorAtEnd() const
     { return this->locationAtEnd(this->cursor()); }

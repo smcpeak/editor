@@ -182,7 +182,7 @@ STATICDEF void HE_text::insert(
   bool left, bool reverse)
 {
   // cursor should now be within the text area
-  if (!buf.cursorInDefined()) {
+  if (!buf.validCursor()) {
     THROW(XHistory("cursor is not within text area"));
   }
 
@@ -363,7 +363,7 @@ STATICDEF void HE_text::insert(
     // update buffer cursor; this only changes it if we were doing a
     // *left* deletion
     buf.setCursor(begin);
-    xassert(buf.cursorInDefined());
+    xassert(buf.validCursor());
   }
 }
 
@@ -372,7 +372,7 @@ void HE_text::computeText(CursorBuffer const &buf, int count)
 {
   xassert(insertion == false);
   xassert(text == NULL);
-  xassert(buf.cursorInDefined());
+  xassert(buf.validCursor());
 
   TextCoord tc = buf.cursor();
 

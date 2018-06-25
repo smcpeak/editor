@@ -142,7 +142,7 @@ void TextDocumentCore::getLine(TextCoord tc, char *dest, int destLen) const
 }
 
 
-bool TextDocumentCore::locationInDefined(TextCoord tc) const
+bool TextDocumentCore::validCoord(TextCoord tc) const
 {
   return 0 <= tc.line && tc.line < numLines() &&
          0 <= tc.column  && tc.column <= lineLength(tc.line); // at EOL is ok
@@ -433,7 +433,7 @@ void writeFile(TextDocumentCore const &doc, char const *fname)
 
 bool walkCursor(TextDocumentCore const &doc, TextCoord &tc, int len)
 {
-  xassert(doc.locationInDefined(tc));
+  xassert(doc.validCoord(tc));
 
   for (; len > 0; len--) {
     if (tc.column == doc.lineLength(tc.line)) {
@@ -480,7 +480,7 @@ void truncateCursor(TextDocumentCore const &doc, TextCoord &tc)
 bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
                  char *text, int textLen)
 {
-  xassert(doc.locationInDefined(tc));
+  xassert(doc.validCoord(tc));
 
   int offset = 0;
   while (offset < textLen) {

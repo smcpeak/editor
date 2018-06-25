@@ -77,7 +77,7 @@ private:   // funcs
   void bc(int line) const { xassert(0 <= line && line < numLines()); }
 
   // Counds check a coordinate.
-  void bctc(TextCoord tc) const { xassert(locationInDefined(tc)); }
+  void bctc(TextCoord tc) const { xassert(validCoord(tc)); }
 
   // copy the given line into 'recentLine', with given hints as to
   // where the gap should go and how big it should be
@@ -106,9 +106,7 @@ public:    // funcs
 
   // check if a given location is within or at the edge of the defined
   // buffer contents (i.e. such that an 'insertText' would be allowed)
-  //
-  // TODO: Rename to 'valid'.
-  bool locationInDefined(TextCoord tc) const;
+  bool validCoord(TextCoord tc) const;
 
   // True if line/col is the very end of the defined area.
   //
@@ -296,7 +294,7 @@ public:
   end of the last line is the end of the file.
 
   CursorBuffer itself doesn't deal with cursors much, except in
-  its locationInDefined() method, but the surrounding functions
+  its validCoord() method, but the surrounding functions
   and classes (esp. HistoryBuffer and Buffer) do, and since
   TextDocumentCore's design is motivated by the desire to support the
   notion of editing with a cursor, I include that notion in this
