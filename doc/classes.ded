@@ -2,14 +2,14 @@
   "drawFileName": true,
   "entities": [
     {
-      "attributes": "lines: string[]\n(plus some caches)\n",
+      "attributes": "lines: string[]\nobservers: BufferObserver[]\n(plus some caches)\n",
       "loc": {
         "x": 485,
         "y": 30
       },
       "name": "BufferCore",
       "size": {
-        "h": 65,
+        "h": 75,
         "w": 200
       }
     },
@@ -17,7 +17,7 @@
       "attributes": "line: int\ncol: int\n",
       "loc": {
         "x": 485,
-        "y": 120
+        "y": 130
       },
       "name": "CursorBuffer",
       "size": {
@@ -29,7 +29,7 @@
       "attributes": "buf: CursorBuffer\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\n",
       "loc": {
         "x": 485,
-        "y": 205
+        "y": 215
       },
       "name": "HistoryBuffer",
       "size": {
@@ -41,7 +41,7 @@
       "attributes": "(no new data)\n",
       "loc": {
         "x": 485,
-        "y": 325
+        "y": 335
       },
       "name": "Buffer",
       "size": {
@@ -53,7 +53,7 @@
       "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\nsavedState: SavedEditingState\n",
       "loc": {
         "x": 485,
-        "y": 400
+        "y": 410
       },
       "name": "BufferState",
       "size": {
@@ -79,7 +79,7 @@
         "x": 40,
         "y": 220
       },
-      "name": "Editor : QWidget",
+      "name": "Editor : QWidget, BufferObserver",
       "size": {
         "h": 200,
         "w": 200
@@ -116,7 +116,7 @@
       "parentRef": 0,
       "pt": {
         "x": 585,
-        "y": 115
+        "y": 125
       }
     },
     {
@@ -124,7 +124,7 @@
       "parentRef": 2,
       "pt": {
         "x": 585,
-        "y": 320
+        "y": 330
       }
     },
     {
@@ -132,7 +132,7 @@
       "parentRef": 3,
       "pt": {
         "x": 585,
-        "y": 395
+        "y": 405
       }
     },
     {
@@ -168,7 +168,7 @@
     {
       "controlPts": [{
         "x": 410,
-        "y": 300
+        "y": 310
       }],
       "end": {
         "arrowStyle": "AS_DOUBLE_ANGLE",
@@ -184,7 +184,7 @@
     {
       "controlPts": [{
         "x": 375,
-        "y": 505
+        "y": 515
       }],
       "end": {"entityRef": 4},
       "label": "buffer",
@@ -225,6 +225,15 @@
       "label": "editor",
       "routingAlg": "RA_DIRECT",
       "start": {"entityRef": 7}
+    },
+    {
+      "controlPts": [{
+        "x": 310,
+        "y": 255
+      }],
+      "end": {"entityRef": 6},
+      "label": "observers[]",
+      "start": {"entityRef": 0}
     }
   ],
   "type": "Diagram Editor Diagram",
