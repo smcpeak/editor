@@ -2,7 +2,7 @@
 // code for incsearch.h
 
 #include "incsearch.h"     // this module
-#include "editor.h"        // Editor
+#include "editor.h"        // EditorWidget
 #include "pixmaps.h"       // Pixmaps
 #include "qtutil.h"        // toString(QKeyEvent)
 #include "status.h"        // StatusDisplay
@@ -38,7 +38,7 @@ IncSearch::~IncSearch()
 {}
 
 
-void IncSearch::attach(Editor *newEd)
+void IncSearch::attach(EditorWidget *newEd)
 {
   if (ed) {
     // we're already attached, the user just pressed Ctrl-S while

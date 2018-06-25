@@ -19,8 +19,8 @@ class StyleDB;                         // styledb.h
 
 
 // Widget to edit the contents of a text file; it's possible (and
-// expected) to change which file a given Editor edits after
-// creating the Editor object.
+// expected) to change which file a given EditorWidget edits after
+// creating the EditorWidget object.
 //
 // This class embeds SavedEditingState.  This is different from
 // 'docFile->savedState' so that it is possible to have two editor
@@ -29,12 +29,12 @@ class StyleDB;                         // styledb.h
 //
 // It is weird to inherit a data class like this, but the reason
 // for doing it is there is not a major, fundamental difference
-// between the members of Editor and those of SavedEditingState.  The
+// between the members of EditorWidget and those of SavedEditingState.  The
 // latter just happen to be the things I have chosen to save for
 // hidden files, and that set might change over time.  Therefore,
 // I use inheritance to avoid any difference in syntax between the
 // two sets of members.
-class Editor
+class EditorWidget
   : public QWidget,               // I am a Qt widget.
     public SavedEditingState,     // Cursor location, etc.
     public TextDocumentObserver { // Watch my file while I don't have focus.
@@ -57,7 +57,7 @@ public:      // data
   // the ctor is called, but must if so, must be set to a non-NULL
   // value via setDocumentFile() before any drawing or editing is done.
   //
-  // The Editor's EditingState gets saved to 'docFile->savedState'
+  // The EditorWidget's EditingState gets saved to 'docFile->savedState'
   // when we switch to another file, and restored when we come
   // back.
   TextDocumentFile *docFile;     // (serf)
@@ -117,7 +117,7 @@ public:      // data
 
   // ------ font metrics ------
   // these should be treated as read-only by all functions except
-  // Editor::setFonts()
+  // EditorWidget::setFonts()
 
   // number of pixels in a character cell that are above the
   // base line, including the base line itself
@@ -224,9 +224,9 @@ protected:   // funcs
   virtual void focusOutEvent(QFocusEvent *e);
 
 public:      // funcs
-  Editor(TextDocumentFile *docFile, StatusDisplay *status,
+  EditorWidget(TextDocumentFile *docFile, StatusDisplay *status,
          QWidget *parent=NULL);
-  ~Editor();
+  ~EditorWidget();
 
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);

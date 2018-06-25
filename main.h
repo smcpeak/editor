@@ -18,7 +18,7 @@ class QMenu;
 class QMenuBar;
 class QScrollBar;
 
-class Editor;                          // editor.h
+class EditorWidget;                    // editor.h
 class IncSearch;                       // incsearch.h
 class StatusDisplay;                   // status.h
 
@@ -38,7 +38,7 @@ public:      // data
 
   // GUI elements
   QMenuBar *menuBar;
-  Editor *editor;
+  EditorWidget *editor;
   QScrollBar *vertScroll, *horizScroll;
   StatusDisplay *statusArea;
 

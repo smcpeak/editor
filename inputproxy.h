@@ -5,8 +5,8 @@
 #ifndef INPUTPROXY_H
 #define INPUTPROXY_H
 
-class Editor;          // editor.h
-class QKeyEvent;       // qevent.h
+class EditorWidget;                    // editor.h
+class QKeyEvent;                       // qevent.h
 
 
 // Pseudo-keys; operations that might be globally bound to
@@ -43,14 +43,14 @@ public:      // funcs
 class AttachInputProxy : public InputProxy {
 protected:     // data
   // which editor we're attached to, if any
-  Editor *ed;           // (nullable serf)
+  EditorWidget *ed;           // (nullable serf)
 
 public:      // funcs
   AttachInputProxy();
   virtual ~AttachInputProxy();
 
   // attach this proxy to an editor
-  void attach(Editor *ed);
+  void attach(EditorWidget *ed);
 
   // detach from current editor
   virtual void detach();

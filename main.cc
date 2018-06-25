@@ -5,7 +5,7 @@
 
 #include "buffer.h"                    // Buffer
 #include "c_hilite.h"                  // C_Highlighter
-#include "editor.h"                    // Editor
+#include "editor.h"                    // EditorWidget
 #include "exc.h"                       // XOpen
 #include "gotoline.gen.h"              // Ui_GotoLine
 #include "incsearch.h"                 // IncSearch
@@ -85,7 +85,7 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
-  this->editor = new Editor(NULL /*temporary*/, this->statusArea);
+  this->editor = new EditorWidget(NULL /*temporary*/, this->statusArea);
   this->editor->setObjectName("editor widget");
   editorFrame->addWidget(this->editor);
   this->editor->setFocus();
@@ -957,7 +957,7 @@ void GlobalState::deleteDocumentFile(TextDocumentFile *b)
 static void printObjectCounts(char const *when)
 {
   cout << "Counts " << when << ':' << endl;
-  PVAL(Editor::objectCount);
+  PVAL(EditorWidget::objectCount);
   PVAL(EditorWindow::objectCount);
   PVAL(TextDocumentFile::objectCount);
 }

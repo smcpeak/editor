@@ -101,7 +101,7 @@ public:      // funcs
   ~IncSearch();
 
   // AttachInputProxy funcs
-  void attach(Editor *ed);
+  void attach(EditorWidget *ed);
   virtual void detach();
   virtual bool keyPressEvent(QKeyEvent *k);
   virtual bool pseudoKeyPress(InputPseudoKey pkey);

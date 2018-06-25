@@ -51,10 +51,10 @@
 int const UNDERLINE_OFFSET = 2;
 
 
-// ---------------------- Editor --------------------------------
-int Editor::objectCount = 0;
+// ---------------------- EditorWidget --------------------------------
+int EditorWidget::objectCount = 0;
 
-Editor::Editor(TextDocumentFile *docFile_, StatusDisplay *stat,
+EditorWidget::EditorWidget(TextDocumentFile *docFile_, StatusDisplay *stat,
                QWidget *parent)
   : QWidget(parent),
     SavedEditingState(),
@@ -91,12 +91,12 @@ Editor::Editor(TextDocumentFile *docFile_, StatusDisplay *stat,
 
   resetView();
 
-  Editor::objectCount++;
+  EditorWidget::objectCount++;
 }
 
-Editor::~Editor()
+EditorWidget::~EditorWidget()
 {
-  Editor::objectCount--;
+  EditorWidget::objectCount--;
 
   if (inputProxy) {
     inputProxy->detach();
@@ -107,7 +107,7 @@ Editor::~Editor()
 }
 
 
-void Editor::cursorTo(int line, int col)
+void EditorWidget::cursorTo(int line, int col)
 {
   docFile->moveAbsCursor(line, col);
 
@@ -119,7 +119,7 @@ void Editor::cursorTo(int line, int col)
   nonfocusCursorCol = col;
 }
 
-void Editor::resetView()
+void EditorWidget::resetView()
 {
   if (docFile) {
     cursorTo(0, 0);
@@ -132,7 +132,7 @@ void Editor::resetView()
 }
 
 
-bool Editor::cursorBeforeSelect() const
+bool EditorWidget::cursorBeforeSelect() const
 {
   // TODO: I should create a class with line+col to better
   // encapsulate logic like this.
@@ -142,7 +142,7 @@ bool Editor::cursorBeforeSelect() const
 }
 
 
-void Editor::normalizeSelect(int cursorLine, int cursorCol)
+void EditorWidget::normalizeSelect(int cursorLine, int cursorCol)
 {
   if (cursorBeforeSelect()) {
     selLowLine = cursorLine;
@@ -159,7 +159,7 @@ void Editor::normalizeSelect(int cursorLine, int cursorCol)
 }
 
 
-void Editor::selectCursorLine()
+void EditorWidget::selectCursorLine()
 {
   // Move the cursor to the start of its line.
   this->docFile->moveAbsColumn(0);
@@ -185,7 +185,7 @@ static BDFFont *makeBDFFont(char const *bdfData, char const *context)
 }
 
 
-void Editor::setFonts(char const *normal, char const *italic, char const *bold)
+void EditorWidget::setFonts(char const *normal, char const *italic, char const *bold)
 {
   // Read the font files, and index the results by FontVariant.
   ObjArrayStack<BDFFont> bdfFonts(3);
@@ -252,7 +252,7 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
 }
 
 
-void Editor::setDocumentFile(TextDocumentFile *buf)
+void EditorWidget::setDocumentFile(TextDocumentFile *buf)
 {
   bool wasListening = this->listening;
   if (wasListening) {
@@ -276,7 +276,7 @@ void Editor::setDocumentFile(TextDocumentFile *buf)
 }
 
 
-void Editor::redraw()
+void EditorWidget::redraw()
 {
   updateView();
 
@@ -291,7 +291,7 @@ void Editor::redraw()
 }
 
 
-void Editor::setView(int newFirstLine, int newFirstCol)
+void EditorWidget::setView(int newFirstLine, int newFirstCol)
 {
   xassert(newFirstLine >= 0);
   xassert(newFirstCol >= 0);
@@ -310,7 +310,7 @@ void Editor::setView(int newFirstLine, int newFirstCol)
 }
 
 
-void Editor::moveView(int deltaLine, int deltaCol)
+void EditorWidget::moveView(int deltaLine, int deltaCol)
 {
   int line = max(0, this->firstVisibleLine + deltaLine);
   int col = max(0, this->firstVisibleCol + deltaCol);
@@ -319,7 +319,7 @@ void Editor::moveView(int deltaLine, int deltaCol)
 }
 
 
-void Editor::updateView()
+void EditorWidget::updateView()
 {
   int h = this->height();
   int w = this->width();
@@ -342,7 +342,7 @@ void Editor::updateView()
 }
 
 
-void Editor::resizeEvent(QResizeEvent *r)
+void EditorWidget::resizeEvent(QResizeEvent *r)
 {
   QWidget::resizeEvent(r);
   updateView();
@@ -372,7 +372,7 @@ int flushPainter(QPainter &p)
 // of which are drawn twice when it is visible.
 // UPDATE: It's irrelevant now that I've been forced into double-
 // buffering by a bug in XFree86 (see redraw()).
-void Editor::paintEvent(QPaintEvent *ev)
+void EditorWidget::paintEvent(QPaintEvent *ev)
 {
   // testing... it turns out this flag is not accurate, because
   // when the PaintEvent is dispatched a new PaintEvent object
@@ -413,7 +413,7 @@ void Editor::paintEvent(QPaintEvent *ev)
   }
 }
 
-void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
+void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 {
   // debug info
   {
@@ -757,7 +757,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 }
 
 
-void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c)
+void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c)
 {
   // My document representation uses 'char' without much regard
   // to character encoding.  Here, I'm declaring that this whole
@@ -814,7 +814,7 @@ void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, cha
 }
 
 
-void Editor::setDrawStyle(QPainter &paint,
+void EditorWidget::setDrawStyle(QPainter &paint,
                           QtBDFFont *&curFont, bool &underlining,
                           StyleDB *db, TextCategory cat)
 {
@@ -843,13 +843,13 @@ static void inc(int &val, int amt)
 }
 
 
-void Editor::cursorToTop()
+void EditorWidget::cursorToTop()
 {
   cursorTo(0, 0);
   scrollToCursor();
 }
 
-void Editor::cursorToBottom()
+void EditorWidget::cursorToBottom()
 {
   cursorTo(max(docFile->numLines()-1,0), 0);
   scrollToCursor();
@@ -857,12 +857,12 @@ void Editor::cursorToBottom()
 }
 
 
-void Editor::turnOffSelection()
+void EditorWidget::turnOffSelection()
 {
   this->selectEnabled = false;
 }
 
-void Editor::turnOnSelection()
+void EditorWidget::turnOnSelection()
 {
   if (!this->selectEnabled) {
     this->selectLine = cursorLine();
@@ -871,7 +871,7 @@ void Editor::turnOnSelection()
   }
 }
 
-void Editor::turnSelection(bool on)
+void EditorWidget::turnSelection(bool on)
 {
   if (on) {
     turnOnSelection();
@@ -881,7 +881,7 @@ void Editor::turnSelection(bool on)
   }
 }
 
-void Editor::clearSelIfEmpty()
+void EditorWidget::clearSelIfEmpty()
 {
   if (this->selectEnabled &&
       cursorLine() == this->selectLine &&
@@ -905,7 +905,7 @@ void printUnhandled(QWidget *parent, char const *msg)
 //   http://lists.trolltech.com/qt-interest/2002-11/msg00048.html
 // you therefore have to ensure that exceptions do not propagate into
 // Qt stack frames
-bool Editor::event(QEvent *e)
+bool EditorWidget::event(QEvent *e)
 {
   try {
     return QWidget::event(e);
@@ -928,7 +928,7 @@ bool Editor::event(QEvent *e)
   }
 
 
-void Editor::keyPressEvent(QKeyEvent *k)
+void EditorWidget::keyPressEvent(QKeyEvent *k)
 {
   GENERIC_CATCH_BEGIN
 
@@ -1352,7 +1352,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
 }
 
 
-void Editor::keyReleaseEvent(QKeyEvent *k)
+void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 {
   TRACE("input", "keyRelease: " << toString(*k));
 
@@ -1360,14 +1360,14 @@ void Editor::keyReleaseEvent(QKeyEvent *k)
 }
 
 
-void Editor::insertAtCursor(char const *text)
+void EditorWidget::insertAtCursor(char const *text)
 {
   //docFile->changed = true;
   docFile->insertText(text);
   scrollToCursor();
 }
 
-void Editor::deleteAtCursor(int amt)
+void EditorWidget::deleteAtCursor(int amt)
 {
   xassert(amt >= 0);
   if (amt == 0) {
@@ -1381,7 +1381,7 @@ void Editor::deleteAtCursor(int amt)
 }
 
 
-void Editor::deleteLeftOfCursor()
+void EditorWidget::deleteLeftOfCursor()
 {
   if (this->selectEnabled) {
     editDelete();
@@ -1415,13 +1415,13 @@ void Editor::deleteLeftOfCursor()
 }
 
 
-void Editor::fillToCursor()
+void EditorWidget::fillToCursor()
 {
   docFile->fillToCursor();
 }
 
 
-void Editor::spliceNextLine()
+void EditorWidget::spliceNextLine()
 {
   // cursor must be at the end of a line
   xassert(cursorCol() == docFile->lineLength(cursorLine()));
@@ -1430,7 +1430,7 @@ void Editor::spliceNextLine()
 }
 
 
-void Editor::justifyNearCursorLine()
+void EditorWidget::justifyNearCursorLine()
 {
   justifyNearLine(*docFile, this->cursorLine(), this->softMarginColumn);
   this->scrollToCursor();
@@ -1439,7 +1439,7 @@ void Editor::justifyNearCursorLine()
 
 // for a particular dimension, return the new start coordinate
 // of the viewport
-int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
+int EditorWidget::stcHelper(int firstVis, int lastVis, int cur, int gap)
 {
   bool center = false;
   if (gap == -1) {
@@ -1467,7 +1467,7 @@ int Editor::stcHelper(int firstVis, int lastVis, int cur, int gap)
   return firstVis;
 }
 
-void Editor::scrollToCursor_noRedraw(int edgeGap)
+void EditorWidget::scrollToCursor_noRedraw(int edgeGap)
 {
   int fvline = stcHelper(this->firstVisibleLine,
                          this->lastVisibleLine,
@@ -1480,19 +1480,19 @@ void Editor::scrollToCursor_noRedraw(int edgeGap)
   setView(fvline, fvcol);
 }
 
-void Editor::scrollToCursor(int edgeGap)
+void EditorWidget::scrollToCursor(int edgeGap)
 {
   scrollToCursor_noRedraw(edgeGap);
   redraw();
 }
 
 
-STATICDEF string Editor::lineColStr(int line, int col)
+STATICDEF string EditorWidget::lineColStr(int line, int col)
 {
   return stringc << line << ":" << col;
 }
 
-void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
+void EditorWidget::moveViewAndCursor(int deltaLine, int deltaCol)
 {
   TRACE("moveViewAndCursor",
         "start: firstVis=" << firstVisStr()
@@ -1521,7 +1521,7 @@ void Editor::moveViewAndCursor(int deltaLine, int deltaCol)
 }
 
 
-void Editor::scrollToLine(int line)
+void EditorWidget::scrollToLine(int line)
 {
   if (!ignoreScrollSignals) {
     xassert(line >= 0);
@@ -1530,7 +1530,7 @@ void Editor::scrollToLine(int line)
   }
 }
 
-void Editor::scrollToCol(int col)
+void EditorWidget::scrollToCol(int col)
 {
   if (!ignoreScrollSignals) {
     xassert(col >= 0);
@@ -1540,7 +1540,7 @@ void Editor::scrollToCol(int col)
 }
 
 
-void Editor::setCursorToClickLoc(QMouseEvent *m)
+void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
 {
   int x = m->x();
   int y = m->y();
@@ -1563,7 +1563,7 @@ void Editor::setCursorToClickLoc(QMouseEvent *m)
 }
 
 
-void Editor::mousePressEvent(QMouseEvent *m)
+void EditorWidget::mousePressEvent(QMouseEvent *m)
 {
   // get rid of popups?
   QWidget::mousePressEvent(m);
@@ -1575,7 +1575,7 @@ void Editor::mousePressEvent(QMouseEvent *m)
 }
 
 
-void Editor::mouseMoveEvent(QMouseEvent *m)
+void EditorWidget::mouseMoveEvent(QMouseEvent *m)
 {
   QWidget::mouseMoveEvent(m);
 
@@ -1587,7 +1587,7 @@ void Editor::mouseMoveEvent(QMouseEvent *m)
 }
 
 
-void Editor::mouseReleaseEvent(QMouseEvent *m)
+void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 {
   QWidget::mouseReleaseEvent(m);
 
@@ -1600,7 +1600,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
 
 
 // ----------------------- edit menu -----------------------
-void Editor::editUndo()
+void EditorWidget::editUndo()
 {
   if (docFile->canUndo()) {
     docFile->undo();
@@ -1613,7 +1613,7 @@ void Editor::editUndo()
   }
 }
 
-void Editor::editRedo()
+void EditorWidget::editRedo()
 {
   if (docFile->canRedo()) {
     docFile->redo();
@@ -1627,7 +1627,7 @@ void Editor::editRedo()
 }
 
 
-void Editor::editCut()
+void EditorWidget::editCut()
 {
   if (this->selectEnabled) {
     if (!editSafetyCheck()) {
@@ -1641,7 +1641,7 @@ void Editor::editCut()
 }
 
 
-void Editor::editCopy()
+void EditorWidget::editCopy()
 {
   if (this->selectEnabled) {
     // get selected text
@@ -1659,7 +1659,7 @@ void Editor::editCopy()
 }
 
 
-void Editor::editPaste()
+void EditorWidget::editPaste()
 {
   if (!editSafetyCheck()) {
     return;
@@ -1684,7 +1684,7 @@ void Editor::editPaste()
 }
 
 
-void Editor::editDelete()
+void EditorWidget::editDelete()
 {
   if (this->selectEnabled) {
     if (!editSafetyCheck()) {
@@ -1701,7 +1701,7 @@ void Editor::editDelete()
 }
 
 
-void Editor::showInfo(char const *infoString)
+void EditorWidget::showInfo(char const *infoString)
 {
   QWidget *main = this->window();
 
@@ -1740,7 +1740,7 @@ void Editor::showInfo(char const *infoString)
   infoBox->show();
 }
 
-void Editor::hideInfo()
+void EditorWidget::hideInfo()
 {
   if (infoBox) {
     delete infoBox;
@@ -1749,42 +1749,42 @@ void Editor::hideInfo()
 }
 
 
-void Editor::cursorLeft(bool shift)
+void EditorWidget::cursorLeft(bool shift)
 {
   turnSelection(shift);
   cursorLeftBy(1);
   scrollToCursor();
 }
 
-void Editor::cursorRight(bool shift)
+void EditorWidget::cursorRight(bool shift)
 {
   turnSelection(shift);
   cursorRightBy(1);
   scrollToCursor();
 }
 
-void Editor::cursorHome(bool shift)
+void EditorWidget::cursorHome(bool shift)
 {
   turnSelection(shift);
   docFile->moveAbsColumn(0);
   scrollToCursor();
 }
 
-void Editor::cursorEnd(bool shift)
+void EditorWidget::cursorEnd(bool shift)
 {
   turnSelection(shift);
   docFile->moveAbsColumn(docFile->lineLength(cursorLine()));
   scrollToCursor();
 }
 
-void Editor::cursorUp(bool shift)
+void EditorWidget::cursorUp(bool shift)
 {
   turnSelection(shift);
   cursorUpBy(1);
   scrollToCursor();
 }
 
-void Editor::cursorDown(bool shift)
+void EditorWidget::cursorDown(bool shift)
 {
   // allows cursor past EOF..
   turnSelection(shift);
@@ -1792,20 +1792,20 @@ void Editor::cursorDown(bool shift)
   scrollToCursor();
 }
 
-void Editor::cursorPageUp(bool shift)
+void EditorWidget::cursorPageUp(bool shift)
 {
   turnSelection(shift);
   moveViewAndCursor(- this->visLines(), 0);
 }
 
-void Editor::cursorPageDown(bool shift)
+void EditorWidget::cursorPageDown(bool shift)
 {
   turnSelection(shift);
   moveViewAndCursor(+ this->visLines(), 0);
 }
 
 
-void Editor::cursorToEndOfNextLine(bool shift)
+void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
   int line = docFile->line();
@@ -1814,7 +1814,7 @@ void Editor::cursorToEndOfNextLine(bool shift)
 }
 
 
-void Editor::deleteCharAtCursor()
+void EditorWidget::deleteCharAtCursor()
 {
   fillToCursor();
 
@@ -1839,7 +1839,7 @@ void Editor::deleteCharAtCursor()
 }
 
 
-void Editor::blockIndent(int amt)
+void EditorWidget::blockIndent(int amt)
 {
   if (!this->selectEnabled) {
     return;      // nop
@@ -1855,7 +1855,7 @@ void Editor::blockIndent(int amt)
 }
 
 
-string Editor::getSelectedText()
+string EditorWidget::getSelectedText()
 {
   if (!this->selectEnabled) {
     return "";
@@ -1868,7 +1868,7 @@ string Editor::getSelectedText()
 
 
 // ----------------- nonfocus situation ------------------
-void Editor::focusInEvent(QFocusEvent *e)
+void EditorWidget::focusInEvent(QFocusEvent *e)
 {
   TRACE("focus", "editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
@@ -1882,7 +1882,7 @@ void Editor::focusInEvent(QFocusEvent *e)
   stopListening();
 }
 
-void Editor::focusOutEvent(QFocusEvent *e)
+void EditorWidget::focusOutEvent(QFocusEvent *e)
 {
   TRACE("focus", "editor(" << (void*)this << "): focus out");
   QWidget::focusOutEvent(e);
@@ -1895,7 +1895,7 @@ void Editor::focusOutEvent(QFocusEvent *e)
 }
 
 
-void Editor::stopListening()
+void EditorWidget::stopListening()
 {
   if (listening) {
     // remove myself from the list
@@ -1905,7 +1905,7 @@ void Editor::stopListening()
   }
 }
 
-void Editor::startListening()
+void EditorWidget::startListening()
 {
   xassert(!listening);
 
@@ -1924,7 +1924,7 @@ void Editor::startListening()
 // window (# of pixels from top window edge), and should remain on the
 // same line (sequence of chars).
 
-void Editor::observeInsertLine(TextDocumentCore const &buf, int line)
+void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 {
   if (line <= nonfocusCursorLine) {
     nonfocusCursorLine++;
@@ -1934,7 +1934,7 @@ void Editor::observeInsertLine(TextDocumentCore const &buf, int line)
   redraw();
 }
 
-void Editor::observeDeleteLine(TextDocumentCore const &buf, int line)
+void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
   if (line < nonfocusCursorLine) {
     nonfocusCursorLine--;
@@ -1948,18 +1948,18 @@ void Editor::observeDeleteLine(TextDocumentCore const &buf, int line)
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void Editor::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int)
+void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int)
 {
   redraw();
 }
 
-void Editor::observeDeleteText(TextDocumentCore const &, TextCoord, int)
+void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int)
 {
   redraw();
 }
 
 
-void Editor::inputProxyDetaching()
+void EditorWidget::inputProxyDetaching()
 {
   TRACE("mode", "clearing mode pixmap");
   QPixmap nullPixmap;
@@ -1967,7 +1967,7 @@ void Editor::inputProxyDetaching()
 }
 
 
-void Editor::pseudoKeyPress(InputPseudoKey pkey)
+void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
 {
   if (inputProxy && inputProxy->pseudoKeyPress(pkey)) {
     // handled
@@ -2000,7 +2000,7 @@ void Editor::pseudoKeyPress(InputPseudoKey pkey)
 // the warnings are only in places where I can clearly see that the
 // user just initiated an edit action and it is therefore safe to
 // cancel it.
-bool Editor::editSafetyCheck()
+bool EditorWidget::editSafetyCheck()
 {
   if (docFile->unsavedChanges()) {
     // We already have unsaved changes, so assume that the safety

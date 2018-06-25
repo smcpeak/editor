@@ -2,7 +2,8 @@
 // code for inputproxy.h
 
 #include "inputproxy.h"      // this module
-#include "editor.h"          // Editor
+
+#include "editor.h"          // EditorWidget
 #include "qevent.h"          // QKeyEvent
 
 #include <stddef.h>          // NULL
@@ -40,7 +41,7 @@ AttachInputProxy::~AttachInputProxy()
 }
 
 
-void AttachInputProxy::attach(Editor *newEd)
+void AttachInputProxy::attach(EditorWidget *newEd)
 {
   if (ed) {
     detach();

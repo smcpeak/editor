@@ -14,9 +14,9 @@
 #include <stdint.h>     // int64_t
 
 
-// Editor widget editing state for a Buffer that is *used* when the
+// EditorWidget editing state for a Buffer that is *used* when the
 // buffer is shown to the user, and *saved* when it is not.  This data
-// is copied between the Editor widget and the TextDocumentFile object as
+// is copied between the EditorWidget and the TextDocumentFile object as
 // the user cycles among open files.
 class SavedEditingState {
 public:      // data
@@ -32,19 +32,19 @@ public:      // data
   int selectCol;
   bool selectEnabled;
 
-  #if 0     // moved back into Editor
+  #if 0     // moved back into EditorWidget
   // the following fields are valid only after normalizeSelect(),
   // and before any subsequent modification to cursor or select
   int selLowLine, selLowCol;     // whichever of cursor/select comes first
   int selHighLine, selHighCol;   // whichever comes second
   #endif // 0
 
-  // Scrolling offset.  Changes are done via Editor::setView(), which
+  // Scrolling offset.  Changes are done via EditorWidget::setView(), which
   // calls EditingState::setFirstVisibleLC().
   int const firstVisibleLine, firstVisibleCol;
 
   // Information about viewable area; these are set by the
-  // Editor::updateView() routine and should be treated as read-only by
+  // EditorWidget::updateView() routine and should be treated as read-only by
   // other code.
   //
   // By "visible", I mean the entire line or column is visible.  It may
@@ -59,7 +59,7 @@ public:      // data
 
 protected:   // funcs
   // Set firstVisibleLine/Col; for use by EditingState::copy()
-  // and Editor::setView() *only*.
+  // and EditorWidget::setView() *only*.
   void setFirstVisibleLC(int newFirstLine, int newFirstCol);
 
 public:      // funcs
@@ -117,7 +117,7 @@ public:      // data
   // contents)
   Highlighter *highlighter;      // (nullable owner)
 
-  // Saved editing state to be restored to an Editor widget when
+  // Saved editing state to be restored to an EditorWidget when
   // the buffer becomes visible again.
   SavedEditingState savedState;
 
