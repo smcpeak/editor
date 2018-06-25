@@ -24,7 +24,7 @@
 // functionality in the implementation of Buffer.
 class TextDocument {
 private:      // data
-  // current buffer contents and cursor location
+  // Current buffer contents and cursor location.
   CursorBuffer buf;
 
   // modification history
@@ -53,12 +53,8 @@ private:      // data
   // I allow for the generality of a stack anyway
   ObjStack<HE_group> groupStack;
 
-  // for each element in 'groupStack', keep track of whether any
-  // of its elements modified the buffer when it was applied
-  ArrayStack<bool> groupEltModifies;
-
 private:     // funcs
-  void appendElement(HistoryElt *e, bool modifies);
+  void appendElement(HistoryElt *e);
 
 public:      // funcs
   TextDocument();      // empty buffer, empty history, cursor at 0,0
@@ -68,9 +64,10 @@ public:      // funcs
   // read-only access to the underlying representation
   CursorBuffer const &core() const        { return buf; }
 
-  // TextDocumentCore's queries, directly exposed
+  // TextDocumentCore's queries, directly exposed.
   int numLines() const                    { return buf.numLines(); }
   int lineLength(int line) const          { return buf.lineLength(line); }
+  bool validCoord(TextCoord tc) const     { return buf.validCoord(tc); }
   void getLine(int line, int col, char *dest, int destLen) const
     { return buf.getLine(TextCoord(line, col), dest, destLen); }
   int maxLineLength() const               { return buf.maxLineLength(); }
@@ -106,6 +103,22 @@ public:      // funcs
 
 
   // ---- manipulate and append to history ----
+
+  // Insert 'text' at 'tc'.  'text' may contain newline characters.
+  // 'tc' must be valid for the document.
+  void insertAt(TextCoord tc, char const *text, int textLen);
+
+  // Delete 'count' characters at (to the right of) 'tc'.  This
+  // may span lines.  Each end-of-line counts as one character.
+  // 'tc' must be valid for the document.
+  void deleteAt(TextCoord tc, int count);
+
+
+  // ---- LEGACY manipulation interface ----
+
+  // TODO: These three methods should be moved into a new class,
+  // TextDocumentEditor.
+
   // cursor motion; line/col are relative if their respective 'rel'
   // flag is true
   void moveCursor(bool relLine, int line, bool relCol, int col);

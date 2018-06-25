@@ -4,10 +4,12 @@ dir ../smbase
 dir ../smqtutil
  
 #file qtbdffont
-#file ./editor
+file ./editor
 #file ./test-justify
 #file c_hilite
-file ./buffer
+#file ./buffer
+#file ./text-document
+
 #set args -tr setView
 
 #set args tmp

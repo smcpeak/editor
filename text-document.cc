@@ -12,8 +12,7 @@ TextDocument::TextDocument()
     history(),
     historyIndex(0),
     savedHistoryIndex(0),
-    groupStack(),
-    groupEltModifies()
+    groupStack()
 {}
 
 
@@ -40,20 +39,7 @@ void TextDocument::clearContentsAndHistory()
 
 bool TextDocument::unsavedChanges() const
 {
-  if (savedHistoryIndex != historyIndex) {
-    return true;
-  }
-
-  // if there are unclosed groups, check with them; semantically they
-  // come after 'historyIndex' but before 'historyIndex+1', and we
-  // already know that 'savedHistoryIndex' equals 'historyIndex'
-  for (int i=0; i < groupEltModifies.length(); i++) {
-    if (groupEltModifies[i]) {
-      return true;
-    }
-  }
-
-  return false;
+  return (savedHistoryIndex != historyIndex);
 }
 
 
@@ -67,14 +53,49 @@ void TextDocument::readFile(char const *fname)
 }
 
 
+void TextDocument::insertAt(TextCoord tc, char const *text, int textLen)
+{
+  // Ignore insertions of nothing.
+  if (textLen > 0) {
+    HE_text *e = new HE_text(buf.cursor(),
+                             true /*insertion*/,
+                             text, textLen);
+    e->apply(buf, false /*reverse*/);
+    appendElement(e);
+  }
+}
+
+
+void TextDocument::deleteAt(TextCoord tc, int count)
+{
+  if (count > 0) {
+    HE_text *e = new HE_text(buf.cursor(),
+                             false /*insertion*/,
+                             NULL /*text*/, 0 /*textLen*/);
+    e->computeText(buf, count);
+    e->apply(buf, false /*reverse*/);
+    appendElement(e);
+  }
+}
+
+
 void TextDocument::moveCursor(bool relLine, int line, bool relCol, int col)
 {
-  int origLine = relLine? -1 : buf.line;
-  int origCol  = relCol?  -1 : buf.col;
+  if (relLine) {
+    buf.line += line;
+  }
+  else {
+    buf.line = line;
+  }
+  xassert(buf.line >= 0);
 
-  HistoryElt *e = new HE_cursor(origLine, line, origCol, col);
-  bool mod = e->apply(buf, false /*reverse*/);
-  appendElement(e, mod);
+  if (relCol) {
+    buf.col += col;
+  }
+  else {
+    buf.col = col;
+  }
+  xassert(buf.col >= 0);
 }
 
 
@@ -82,10 +103,15 @@ void TextDocument::insertLR(bool left, char const *text, int textLen)
 {
   xassert(buf.validCursor());
 
-  HE_text *e = new HE_text(true /*insertion*/, left,
-                           text, textLen);
-  bool mod = e->apply(buf, false /*reverse*/);
-  appendElement(e, mod);
+  this->insertAt(buf.cursor(), text, textLen);
+
+  if (!left) {
+    // Put the cursor at the end of the inserted text.
+    TextCoord tc = buf.cursor();
+    bool ok = walkCursor(buf, tc, textLen);
+    xassert(ok);
+    buf.setCursor(tc);
+  }
 }
 
 
@@ -93,29 +119,28 @@ void TextDocument::deleteLR(bool left, int count)
 {
   xassert(buf.validCursor());
 
-  HE_text *e = new HE_text(false /*insertion*/, left,
-                           NULL /*text*/, 0 /*textLen*/);
-  e->computeText(buf, count);
-  bool mod = e->apply(buf, false /*reverse*/);
-  appendElement(e, mod);
+  if (left) {
+    // Move the cursor to the start of the text to delete.
+    TextCoord tc = buf.cursor();
+    bool ok = walkCursor(buf, tc, -count);
+    xassert(ok);
+    buf.setCursor(tc);
+  }
+
+  this->deleteAt(buf.cursor(), count);
 }
 
 
-void TextDocument::appendElement(HistoryElt *e, bool modified)
+void TextDocument::appendElement(HistoryElt *e)
 {
   if (groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
     history.truncate(historyIndex);
     history.append(e);
-
-    if (savedHistoryIndex==historyIndex && !modified) {
-      savedHistoryIndex++;
-    }
     historyIndex++;
   }
   else {
     groupStack.top()->append(e);
-    groupEltModifies.top() = groupEltModifies.top() || modified;
   }
 }
 
@@ -123,18 +148,20 @@ void TextDocument::appendElement(HistoryElt *e, bool modified)
 void TextDocument::beginGroup()
 {
   groupStack.push(new HE_group);
-  groupEltModifies.push(false);
 }
 
 void TextDocument::endGroup()
 {
   HE_group *g = groupStack.pop();
-  bool modifies = groupEltModifies.pop();
-  if (g->seqLength() > 0) {
-    appendElement(g, modifies);
+  if (g->seqLength() >= 2) {
+    appendElement(g);
+  }
+  else if (g->seqLength() == 1) {
+    // Throw away the useless group container.
+    appendElement(g->popLastElement());
+    delete g;
   }
   else {
-    xassert(!modifies);
     delete g;    // empty sequence, just drop it
   }
 }
@@ -145,10 +172,8 @@ void TextDocument::undo()
   xassert(canUndo() && !inGroup());
 
   historyIndex--;
-  if (!history.applyOne(buf, historyIndex, true /*reverse*/) &&
-      savedHistoryIndex-1 == historyIndex) {
-    savedHistoryIndex--;
-  }
+  TextCoord tc = history.applyOne(buf, historyIndex, true /*reverse*/);
+  buf.setCursor(tc);
 }
 
 
@@ -156,11 +181,9 @@ void TextDocument::redo()
 {
   xassert(canRedo() && !inGroup());
 
-  if (!history.applyOne(buf, historyIndex, false /*reverse*/) &&
-      savedHistoryIndex == historyIndex) {
-    savedHistoryIndex++;
-  }
+  TextCoord tc = history.applyOne(buf, historyIndex, false /*reverse*/);
   historyIndex++;
+  buf.setCursor(tc);
 }
 
 
@@ -204,6 +227,7 @@ void expect(TextDocument const &buf, int line, int col, char const *text)
   else {
     printf("expect %d:%d\n", line, col);
     printf("actual %d:%d\n", buf.line(), buf.col());
+    fflush(stdout);
     xfailure("cursor location mismatch");
   }
 
@@ -225,6 +249,7 @@ void printHistory(TextDocument const &buf)
   stringBuilder sb;
   buf.printHistory(sb);
   cout << sb;
+  cout.flush();
 }
 
 
@@ -268,7 +293,7 @@ void entry()
                    "");
 
   buf.undo();
-  buf.undo();
+  buf.moveCursor(true /*relLine*/, +1, true /*relCol*/, -2);
   chars(buf, "now on third");
   expect(buf, 2,12, "abce\n"
                     "This is the second line.\n"
@@ -282,11 +307,13 @@ void entry()
                     "now on th");
 
   buf.redo();
+  buf.moveCursor(true /*relLine*/, +0, true /*relCol*/, +1);
   expect(buf, 2,10, "abce\n"
                     "This is the second line.\n"
                     "now on thi");
 
   buf.redo();
+  buf.moveCursor(true /*relLine*/, +0, true /*relCol*/, +1);
   expect(buf, 2,11, "abce\n"
                     "This is the second line.\n"
                     "now on thir");
@@ -303,10 +330,35 @@ void entry()
 
   buf.undo();
   buf.undo();
+  buf.moveCursor(true /*relLine*/, +0, true /*relCol*/, +6);
   expect(buf, 2,11, "abce\n"
                     "This is the second line.\n"
                     "now on thir");
   //printHistory(buf);
+
+  buf.beginGroup();
+  chars(buf, "abc");
+  buf.endGroup();
+  expect(buf, 2,14, "abce\n"
+                    "This is the second line.\n"
+                    "now on thirabc");
+
+  buf.undo();
+  expect(buf, 2,11, "abce\n"
+                    "This is the second line.\n"
+                    "now on thir");
+
+  buf.beginGroup();
+  chars(buf, "y");
+  buf.endGroup();
+  expect(buf, 2,12, "abce\n"
+                    "This is the second line.\n"
+                    "now on thiry");
+
+  buf.undo();
+  expect(buf, 2,11, "abce\n"
+                    "This is the second line.\n"
+                    "now on thir");
 
   buf.printHistoryStats();
 
