@@ -81,13 +81,13 @@ void IncSearch::attach(Editor *newEd)
     curCol = ed->selLowCol;
     if (ed->selLowLine == ed->selHighLine) {
       // expected case
-      text = ed->buffer->getTextRange(ed->selLowLine, ed->selLowCol,
+      text = ed->docFile->getTextRange(ed->selLowLine, ed->selLowCol,
         ed->selHighLine, ed->selHighCol);
     }
     else {
       // truncate to one line..
-      text = ed->buffer->getTextRange(ed->selLowLine, ed->selLowCol,
-        ed->selLowLine, ed->buffer->lineLength(ed->selLowLine));
+      text = ed->docFile->getTextRange(ed->selLowLine, ed->selLowCol,
+        ed->selLowLine, ed->docFile->lineLength(ed->selLowLine));
     }
   }
 
@@ -276,7 +276,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
       case Qt::Key_W:
         // grab chars from cursor up to end of next word
         // or end of line
-        text &= ed->buffer->getWordAfter(ed->cursorLine(), ed->cursorCol());
+        text &= ed->docFile->getWordAfter(ed->cursorLine(), ed->cursorCol());
         findString();
         return true;
 
@@ -365,7 +365,7 @@ void IncSearch::resetToSearchStart()
 
 bool IncSearch::findString(Buffer::FindStringFlags flags)
 {
-  match = ed->buffer->findString(curLine, curCol, toCStr(text), flags);
+  match = ed->docFile->findString(curLine, curCol, toCStr(text), flags);
   if (match) {
     // move editor cursor to end of match
     ed->cursorTo(curLine, curCol + text.length());
@@ -442,11 +442,11 @@ bool IncSearch::tryWrapSearch(int &line, int &col) const
   line=0;
   col=0;
   if (curFlags & Buffer::FS_BACKWARDS) {
-    ed->buffer->getLastPos(line, col);
+    ed->docFile->getLastPos(line, col);
   }
 
   // search
-  if (ed->buffer->findString(line, col, toCStr(text), curFlags) &&
+  if (ed->docFile->findString(line, col, toCStr(text), curFlags) &&
       !(line==curLine && col==curCol)) {
     // yes, wrapping finds another
     return true;

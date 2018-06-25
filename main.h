@@ -9,7 +9,7 @@
 
 #include <QProxyStyle>
 
-#include "bufferstate.h"     // BufferState
+#include "bufferstate.h"     // TextDocumentFile
 #include "objlist.h"         // ObjList
 #include "pixmaps.h"         // Pixmaps
 
@@ -43,7 +43,7 @@ public:      // data
   StatusDisplay *statusArea;
 
   // The Window menu, whose contents changes with the set
-  // of open file buffers.
+  // of open file files.
   QMenu *windowMenu;
 
   // The action for toggling visible whitespace.
@@ -52,12 +52,12 @@ public:      // data
   // Action for toggling the soft margin display.
   QAction *toggleVisibleSoftMarginAction;
 
-  // Set of Actions in the Window menu that choose a buffer.
+  // Set of Actions in the Window menu that choose a file.
   // These need to be removed from the Window menu when we
   // rebuild it.  These are not exactly owner pointers, since
   // normally the Window menu owns the Actions, but when we
   // pull them out of the Window menu, we have to delete them.
-  ArrayStack<QAction*> bufferChoiceActions;
+  ArrayStack<QAction*> fileChoiceActions;
 
   // incremental search system
   IncSearch *isearch;                // (owner)
@@ -66,7 +66,7 @@ private:     // funcs
   void buildMenu();
   void setFileName(rostring name, rostring hotkey);
   void writeTheFile();
-  void setBuffer(BufferState *b);
+  void setDocumentFile(TextDocumentFile *b);
   void rebuildWindowMenu();
   void complain(char const *msg);
 
@@ -79,25 +79,25 @@ protected:   // funcs
   void closeEvent(QCloseEvent *event) override;
 
 public:      // funcs
-  EditorWindow(GlobalState *state, BufferState *initBuffer,
+  EditorWindow(GlobalState *state, TextDocumentFile *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
 
   // open and begin editing a particular file
   void fileOpenFile(char const *fname);
 
-  // buffer user is editing: returns editor->buffer
-  BufferState *theBuffer();
+  // File user is editing: returns editor->docFile.
+  TextDocumentFile *theDocFile();
 
   // Reload the file for 'b' from disk.  If there is an error, show
   // an error message box and return false.
-  bool reloadBuffer(BufferState *b);
+  bool reloadFile(TextDocumentFile *b);
 
   // Return true if either there are no unsaved changes or the user
   // responds to a GUI dialog and says it is ok to quit.
   bool canQuitApplication();
 
-  // Return the number of buffers that have unsaved changes, and
+  // Return the number of files that have unsaved changes, and
   // populate 'msg' with a list of precisely which ones.
   int getUnsavedChanges(stringBuilder &msg);
 
@@ -126,9 +126,9 @@ public slots:
   void windowNewWindow();
   void windowOccupyLeft();
   void windowOccupyRight();
-  void windowCycleBuffer();
-  void windowBufferChoiceActivated(QAction *action);
-  void windowBufferChoice();
+  void windowCycleFile();
+  void windowFileChoiceActivated(QAction *action);
+  void windowFileChoice();
 
   void helpKeybindings();
   void helpAbout();
@@ -148,7 +148,7 @@ public:
 };
 
 
-// global state of the editor: buffers, windows, etc.
+// global state of the editor: files, windows, etc.
 class GlobalState : public QApplication {
 public:       // data
   // the singleton global state object
@@ -157,8 +157,8 @@ public:       // data
   // pixmap set
   Pixmaps pixmaps;
 
-  // list of open files (buffers)
-  ObjList<BufferState> buffers;
+  // List of open files.
+  ObjList<TextDocumentFile> documentFiles;
 
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
@@ -175,14 +175,12 @@ public:       // funcs
   // to run the app, use the 'exec()' method, inherited
   // from QApplication
 
-  BufferState *createNewFile();
-  EditorWindow *createNewWindow(BufferState *initBuffer);
-  void trackNewBuffer(BufferState *b);
+  TextDocumentFile *createNewFile();
+  EditorWindow *createNewWindow(TextDocumentFile *initFile);
+  void trackNewDocumentFile(TextDocumentFile *f);
   void rebuildWindowMenus();
-  void deleteBuffer(BufferState *b);
+  void deleteDocumentFile(TextDocumentFile *f);
 };
-
-
 
 
 #endif // MAIN_H

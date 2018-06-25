@@ -44,7 +44,7 @@ char const appName[] = "Editor";
 int EditorWindow::objectCount = 0;
 
 
-EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
+EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
                            QWidget *parent)
   : QWidget(parent),
     globalState(theState),
@@ -59,7 +59,7 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
     windowMenu(NULL),
     toggleVisibleWhitespaceAction(NULL),
     toggleVisibleSoftMarginAction(NULL),
-    bufferChoiceActions(),
+    fileChoiceActions(),
     isearch(NULL)
 {
   // will build a layout tree to manage sizes of child widgets
@@ -109,8 +109,8 @@ EditorWindow::EditorWindow(GlobalState *theState, BufferState *initBuffer,
   this->setGeometry(400,100,      // initial location
                     800,800);     // initial size
 
-  // Set the BufferState, which was originally set as NULL above.
-  this->setBuffer(initBuffer);
+  // Set the TextDocumentFile, which was originally set as NULL above.
+  this->setDocumentFile(initFile);
 
   // i-search; use filename area as the status display.
   this->isearch = new IncSearch(this->statusArea);
@@ -186,11 +186,11 @@ void EditorWindow::buildMenu()
     window->addAction("&New Window", this, SLOT(windowNewWindow()));
     window->addAction("Occupy Left", this, SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
     window->addAction("Occupy Right", this, SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
-    window->addAction("Cycle buffer", this, SLOT(windowCycleBuffer()), Qt::Key_F6);  // for now
+    window->addAction("Cycle through files", this, SLOT(windowCycleFile()), Qt::Key_F6);  // for now
     window->addSeparator();
     this->windowMenu = window;
     connect(this->windowMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(windowBufferChoiceActivated(QAction*)));
+            this, SLOT(windowFileChoiceActivated(QAction*)));
   }
 
   {
@@ -203,28 +203,28 @@ void EditorWindow::buildMenu()
 
 
 // not inline because main.h doesn't see editor.h
-BufferState *EditorWindow::theBuffer()
+TextDocumentFile *EditorWindow::theDocFile()
 {
-  return editor->buffer;
+  return editor->docFile;
 }
 
 
 void EditorWindow::fileNewFile()
 {
-  BufferState *b = globalState->createNewFile();
-  setBuffer(b);
+  TextDocumentFile *b = globalState->createNewFile();
+  setDocumentFile(b);
 }
 
 
-void EditorWindow::setBuffer(BufferState *b)
+void EditorWindow::setDocumentFile(TextDocumentFile *b)
 {
-  editor->setBuffer(b);
+  editor->setDocumentFile(b);
 
   //editor->resetView();
   editor->updateView();
   editorViewChanged();
 
-  setFileName(theBuffer()->title, theBuffer()->hotkeyDesc());
+  setFileName(theDocFile()->title, theDocFile()->hotkeyDesc());
 }
 
 
@@ -259,15 +259,15 @@ void EditorWindow::fileOpen()
 void EditorWindow::fileOpenFile(char const *name)
 {
   // If this file is already open, switch to it.
-  FOREACH_OBJLIST_NC(BufferState, globalState->buffers, iter) {
-    BufferState *bs = iter.data();
+  FOREACH_OBJLIST_NC(TextDocumentFile, globalState->documentFiles, iter) {
+    TextDocumentFile *bs = iter.data();
     if (bs->filename.equals(name)) {
-      this->setBuffer(bs);
+      this->setDocumentFile(bs);
       return;
     }
   }
 
-  BufferState *b = new BufferState();
+  TextDocumentFile *b = new TextDocumentFile();
   b->filename = name;
   b->title = sm_basename(name);   // shorter; todo: ensure unique
 
@@ -294,19 +294,19 @@ void EditorWindow::fileOpenFile(char const *name)
   }
 
   // is there an untitled, empty file hanging around?
-  BufferState *untitled = NULL;
-  FOREACH_OBJLIST_NC(BufferState, globalState->buffers, iter) {
-    BufferState *bs = iter.data();
+  TextDocumentFile *untitled = NULL;
+  FOREACH_OBJLIST_NC(TextDocumentFile, globalState->documentFiles, iter) {
+    TextDocumentFile *bs = iter.data();
     if (bs->title.equals("untitled.txt") &&
         bs->numLines() == 1 &&
         bs->lineLength(0) == 0) {
-      TRACE("untitled", "found untitled buffer to remove");
+      TRACE("untitled", "found untitled file to remove");
       untitled = iter.data();
 
       // I'm going to remove it, but can't yet b/c I
-      // need to wait until the new buffer is added;
+      // need to wait until the new file is added;
       // but right now I can remove its hotkey so that
-      // the new buffer can use it instead.
+      // the new file can use it instead.
       untitled->clearHotkey();
 
       break;
@@ -314,19 +314,19 @@ void EditorWindow::fileOpenFile(char const *name)
   }
 
   // now that we've opened the file, set the editor widget to edit it
-  globalState->trackNewBuffer(b);
-  setBuffer(b);
+  globalState->trackNewDocumentFile(b);
+  setDocumentFile(b);
 
-  // remove the untitled buffer now, if it exists
+  // remove the untitled file now, if it exists
   if (untitled) {
-    globalState->deleteBuffer(untitled);
+    globalState->deleteDocumentFile(untitled);
   }
 }
 
 
 void EditorWindow::fileSave()
 {
-  BufferState *b = this->theBuffer();
+  TextDocumentFile *b = this->theDocFile();
   if (b->title.equals("untitled.txt")) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
@@ -339,7 +339,7 @@ void EditorWindow::fileSave()
     box.setText(toQString(stringb(
       "The file \"" << b->filename << "\" has changed on disk.  "
       "If you save, those changes will be overwritten by the text "
-      "in the editor buffer.  Save anyway?")));
+      "in the editor's memory.  Save anyway?")));
     box.addButton(QMessageBox::Save);
     box.addButton(QMessageBox::Cancel);
     int ret = box.exec();
@@ -354,7 +354,7 @@ void EditorWindow::fileSave()
 void EditorWindow::writeTheFile()
 {
   try {
-    BufferState *b = this->theBuffer();
+    TextDocumentFile *b = this->theDocFile();
     b->writeFile(toCStr(b->filename));
     b->noUnsavedChanges();
     b->refreshModificationTime();
@@ -369,16 +369,16 @@ void EditorWindow::writeTheFile()
 void EditorWindow::fileSaveAs()
 {
   QString s = QFileDialog::getSaveFileName(
-    this, "Save file as", toQString(theBuffer()->filename));
+    this, "Save file as", toQString(theDocFile()->filename));
   if (s.isEmpty()) {
     return;
   }
 
   QByteArray utf8(s.toUtf8());
   char const *name = utf8.constData();
-  theBuffer()->filename = name;
-  theBuffer()->title = sm_basename(name);
-  setFileName(name, theBuffer()->hotkeyDesc());
+  theDocFile()->filename = name;
+  theDocFile()->title = sm_basename(name);
+  setFileName(name, theDocFile()->hotkeyDesc());
   writeTheFile();
 
   this->globalState->rebuildWindowMenus();
@@ -387,7 +387,7 @@ void EditorWindow::fileSaveAs()
 
 void EditorWindow::fileClose()
 {
-  BufferState *b = theBuffer();
+  TextDocumentFile *b = theDocFile();
   if (b->unsavedChanges()) {
     stringBuilder msg;
     msg << "The file \"" << b->filename << "\" has unsaved changes.  "
@@ -397,19 +397,19 @@ void EditorWindow::fileClose()
     }
   }
 
-  globalState->deleteBuffer(b);
+  globalState->deleteDocumentFile(b);
 }
 
 
 void EditorWindow::fileReload()
 {
-  if (reloadBuffer(this->theBuffer())) {
+  if (reloadFile(this->theDocFile())) {
     this->editorViewChanged();
   }
 }
 
 
-bool EditorWindow::reloadBuffer(BufferState *b)
+bool EditorWindow::reloadFile(TextDocumentFile *b)
 {
   if (b->unsavedChanges()) {
     if (!this->okToDiscardChanges(stringb(
@@ -427,14 +427,14 @@ bool EditorWindow::reloadBuffer(BufferState *b)
   catch (XOpen &x) {
     this->complain(stringb(
       "Can't open file \"" << b->filename << "\": " << x.why() <<
-      "\n\nThe buffer will remain open in the editor with its "
+      "\n\nThe file will remain open in the editor with its "
       "old contents."));
     return false;
   }
   catch (xBase &x) {
     this->complain(stringb(
       "Error while reading file \"" << b->filename << "\": " << x.why() <<
-      "\n\nThe buffer will remain open in the editor with the "
+      "\n\nThe file will remain open in the editor with the "
       "partial contents (if any) that were read before the error, "
       "but this may not match what is on disk."));
     return false;
@@ -453,9 +453,9 @@ void EditorWindow::fileReloadAll()
     return;
   }
 
-  FOREACH_OBJLIST_NC(BufferState, globalState->buffers, iter) {
-    BufferState *bs = iter.data();
-    if (!this->reloadBuffer(bs)) {
+  FOREACH_OBJLIST_NC(TextDocumentFile, globalState->documentFiles, iter) {
+    TextDocumentFile *bs = iter.data();
+    if (!this->reloadFile(bs)) {
       // Stop after first error.
       break;
     }
@@ -483,8 +483,8 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
 {
   int ct = 0;
 
-  msg << "The following buffers have unsaved changes:\n\n";
-  FOREACH_OBJLIST(BufferState, this->globalState->buffers, iter) {
+  msg << "The following files have unsaved changes:\n\n";
+  FOREACH_OBJLIST(TextDocumentFile, this->globalState->documentFiles, iter) {
     if (iter.data()->unsavedChanges()) {
       ct++;
       msg << " * " << iter.data()->filename << '\n';
@@ -619,12 +619,12 @@ void EditorWindow::windowOccupyRight()
 }
 
 
-void EditorWindow::windowCycleBuffer()
+void EditorWindow::windowCycleFile()
 {
-  int cur = globalState->buffers.indexOf(theBuffer());
+  int cur = globalState->documentFiles.indexOf(theDocFile());
   xassert(cur >= 0);
-  cur = (cur + 1) % globalState->buffers.count();     // cycle
-  setBuffer(globalState->buffers.nth(cur));
+  cur = (cur + 1) % globalState->documentFiles.count();     // cycle
+  setDocumentFile(globalState->documentFiles.nth(cur));
 }
 
 
@@ -658,7 +658,7 @@ void EditorWindow::editorViewChanged()
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (horizScroll) {
-    horizScroll->setRange(0, max(editor->buffer->maxLineLength(),
+    horizScroll->setRange(0, max(editor->docFile->maxLineLength(),
                                  editor->firstVisibleCol));
     horizScroll->setValue(editor->firstVisibleCol);
     horizScroll->setSingleStep(1);
@@ -666,7 +666,7 @@ void EditorWindow::editorViewChanged()
   }
 
   if (vertScroll) {
-    vertScroll->setRange(0, max(editor->buffer->numLines(),
+    vertScroll->setRange(0, max(editor->docFile->numLines(),
                                 editor->firstVisibleLine));
     vertScroll->setValue(editor->firstVisibleLine);
     vertScroll->setSingleStep(1);
@@ -674,11 +674,11 @@ void EditorWindow::editorViewChanged()
   }
 
   // I want the user to interact with line/col with a 1:1 origin,
-  // even though the Buffer interface uses 0:0
+  // even though the TextDocument interface uses 0:0.
   statusArea->position->setText(QString(
     stringc << " " << (editor->cursorLine()+1) << ":"
             << (editor->cursorCol()+1)
-            << (editor->buffer->unsavedChanges()? " *" : "")
+            << (editor->docFile->unsavedChanges()? " *" : "")
   ));
 }
 
@@ -686,18 +686,18 @@ void EditorWindow::editorViewChanged()
 void EditorWindow::rebuildWindowMenu()
 {
   // remove all of the old menu items
-  while (this->bufferChoiceActions.isNotEmpty()) {
-    QAction *action = this->bufferChoiceActions.pop();
+  while (this->fileChoiceActions.isNotEmpty()) {
+    QAction *action = this->fileChoiceActions.pop();
     this->windowMenu->removeAction(action);
 
     // Removing an action effectively means we take ownership of it.
     delete action;
   }
 
-  // add new items for all of the open buffers;
+  // add new items for all of the open files;
   // hotkeys have already been assigned by now
-  FOREACH_OBJLIST_NC(BufferState, this->globalState->buffers, iter) {
-    BufferState *b = iter.data();
+  FOREACH_OBJLIST_NC(TextDocumentFile, this->globalState->documentFiles, iter) {
+    TextDocumentFile *b = iter.data();
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
@@ -707,45 +707,45 @@ void EditorWindow::rebuildWindowMenu()
     QAction *action = this->windowMenu->addAction(
       toQString(b->title),        // menu item text
       this,                       // receiver
-      SLOT(windowBufferChoice()), // slot name
+      SLOT(windowFileChoice()), // slot name
       keySequence);               // accelerator
 
-    // Associate the action with the BufferState object.
+    // Associate the action with the TextDocumentFile object.
     action->setData(QVariant(b->windowMenuId));
 
-    this->bufferChoiceActions.push(action);
+    this->fileChoiceActions.push(action);
   }
 }
 
 
 // Respond to the choice of an entry from the Window menu.
-void EditorWindow::windowBufferChoiceActivated(QAction *action)
+void EditorWindow::windowFileChoiceActivated(QAction *action)
 {
-  TRACE("menu", "window buffer choice activated");
+  TRACE("menu", "window file choice activated");
 
-  // Search through the list of buffers to find the one
+  // Search through the list of files to find the one
   // that this action refers to.
-  FOREACH_OBJLIST_NC(BufferState, this->globalState->buffers, iter) {
-    BufferState *b = iter.data();
+  FOREACH_OBJLIST_NC(TextDocumentFile, this->globalState->documentFiles, iter) {
+    TextDocumentFile *b = iter.data();
 
     if (b->windowMenuId == action->data().toInt()) {
-      TRACE("menu", "window buffer choice is: " << b->filename);
-      this->setBuffer(b);
+      TRACE("menu", "window file choice is: " << b->filename);
+      this->setDocumentFile(b);
       return;
     }
   }
 
   // the id doesn't match any that I'm aware of; this happens
-  // for window menu items that do *not* switch to some buffer
-  TRACE("menu", "window buffer choice did not match any buffer");
+  // for window menu items that do *not* switch to some file
+  TRACE("menu", "window file choice did not match any file");
 }
 
 // This is just a placeholder.  Every QMenu::addAction() that
 // accepts a shortcut also insists on having a receiver, so here
-// we are.  But 'windowBufferChoiceActivated' does all the work.
-void EditorWindow::windowBufferChoice()
+// we are.  But 'windowFileChoiceActivated' does all the work.
+void EditorWindow::windowFileChoice()
 {
-  TRACE("menu", "window buffer choice");
+  TRACE("menu", "window file choice");
   return;
 }
 
@@ -758,7 +758,7 @@ void EditorWindow::complain(char const *msg)
 
 void EditorWindow::windowNewWindow()
 {
-  EditorWindow *ed = this->globalState->createNewWindow(this->theBuffer());
+  EditorWindow *ed = this->globalState->createNewWindow(this->theDocFile());
   ed->show();
 }
 
@@ -799,7 +799,7 @@ GlobalState *GlobalState::global_globalState = NULL;
 GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
     pixmaps(),
-    buffers(),
+    documentFiles(),
     windows()
 {
   // There should only be one of these.
@@ -856,9 +856,9 @@ GlobalState::~GlobalState()
 }
 
 
-EditorWindow *GlobalState::createNewWindow(BufferState *initBuffer)
+EditorWindow *GlobalState::createNewWindow(TextDocumentFile *initFile)
 {
-  EditorWindow *ed = new EditorWindow(this, initBuffer);
+  EditorWindow *ed = new EditorWindow(this, initFile);
   ed->setObjectName("main editor window");
   rebuildWindowMenus();
 
@@ -868,18 +868,18 @@ EditorWindow *GlobalState::createNewWindow(BufferState *initBuffer)
 }
 
 
-BufferState *GlobalState::createNewFile()
+TextDocumentFile *GlobalState::createNewFile()
 {
-  TRACE("untitled", "creating untitled buffer");
-  BufferState *b = new BufferState();
+  TRACE("untitled", "creating untitled file");
+  TextDocumentFile *b = new TextDocumentFile();
   b->filename = "untitled.txt";    // TODO: find a unique variant of this name
   b->title = b->filename;
-  trackNewBuffer(b);
+  trackNewDocumentFile(b);
   return b;
 }
 
 
-void GlobalState::trackNewBuffer(BufferState *b)
+void GlobalState::trackNewDocumentFile(TextDocumentFile *b)
 {
   // assign hotkey
   b->clearHotkey();
@@ -894,13 +894,13 @@ void GlobalState::trackNewBuffer(BufferState *b)
     }
   }
 
-  buffers.append(b);
+  documentFiles.append(b);
   rebuildWindowMenus();
 }
 
 bool GlobalState::hotkeyAvailable(int key) const
 {
-  FOREACH_OBJLIST(BufferState, buffers, iter) {
+  FOREACH_OBJLIST(TextDocumentFile, documentFiles, iter) {
     if (iter.data()->hasHotkey() &&
         iter.data()->getHotkeyDigit() == key) {
       return false;    // not available
@@ -917,33 +917,33 @@ void GlobalState::rebuildWindowMenus()
 }
 
 
-void GlobalState::deleteBuffer(BufferState *b)
+void GlobalState::deleteDocumentFile(TextDocumentFile *b)
 {
   // where in the list is 'b'?
-  int index = buffers.indexOf(b);
+  int index = documentFiles.indexOf(b);
   xassert(index >= 0);
 
   // remove it
-  buffers.removeItem(b);
+  documentFiles.removeItem(b);
 
-  // select new buffer to display, for every window
+  // select new file to display, for every window
   // that previously was displaying 'b'
   if (index > 0) {
     index--;
   }
 
-  if (buffers.isEmpty()) {
+  if (documentFiles.isEmpty()) {
     createNewFile();    // ensure there's always one
   }
 
   // update any windows that are still referring to 'b'
   // so that instead they (somewhat arbitrarily) refer
-  // to whatever is in 'buffers' index slot 'index'
+  // to whatever is in 'documentFiles' index slot 'index'
   FOREACH_OBJLIST_NC(EditorWindow, windows, iter) {
     EditorWindow *ed = iter.data();
 
-    if (ed->editor->buffer == b) {
-      ed->setBuffer(buffers.nth(index));
+    if (ed->editor->docFile == b) {
+      ed->setDocumentFile(documentFiles.nth(index));
     }
 
     // also, rebuild all the window menus
@@ -959,7 +959,7 @@ static void printObjectCounts(char const *when)
   cout << "Counts " << when << ':' << endl;
   PVAL(Editor::objectCount);
   PVAL(EditorWindow::objectCount);
-  PVAL(BufferState::objectCount);
+  PVAL(TextDocumentFile::objectCount);
 }
 
 

@@ -21,7 +21,6 @@
 #include "editor14b.bdf.gen.h"
 #include "minihex6.bdf.gen.h"          // bdfFontData_minihex6
 
-
 // smbase
 #include "array.h"           // Array
 #include "bdffont.h"         // BDFFont
@@ -55,13 +54,13 @@ int const UNDERLINE_OFFSET = 2;
 // ---------------------- Editor --------------------------------
 int Editor::objectCount = 0;
 
-Editor::Editor(BufferState *buf, StatusDisplay *stat,
+Editor::Editor(TextDocumentFile *docFile_, StatusDisplay *stat,
                QWidget *parent)
   : QWidget(parent),
     SavedEditingState(),
     infoBox(NULL),
     status(stat),
-    buffer(buf),
+    docFile(docFile_),
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
@@ -110,7 +109,7 @@ Editor::~Editor()
 
 void Editor::cursorTo(int line, int col)
 {
-  buffer->moveAbsCursor(line, col);
+  docFile->moveAbsCursor(line, col);
 
   // set the nonfocus location too, in case the we happen to
   // not have the focus right now (e.g. the Alt+G dialog);
@@ -122,7 +121,7 @@ void Editor::cursorTo(int line, int col)
 
 void Editor::resetView()
 {
-  if (buffer) {
+  if (docFile) {
     cursorTo(0, 0);
   }
   this->selectLine = 0;
@@ -163,7 +162,7 @@ void Editor::normalizeSelect(int cursorLine, int cursorCol)
 void Editor::selectCursorLine()
 {
   // Move the cursor to the start of its line.
-  this->buffer->moveAbsColumn(0);
+  this->docFile->moveAbsColumn(0);
 
   // Make the selection end at the start of the next line.
   this->selectLine = this->cursorLine() + 1;
@@ -253,20 +252,20 @@ void Editor::setFonts(char const *normal, char const *italic, char const *bold)
 }
 
 
-void Editor::setBuffer(BufferState *buf)
+void Editor::setDocumentFile(TextDocumentFile *buf)
 {
   bool wasListening = this->listening;
   if (wasListening) {
     this->stopListening();
   }
 
-  // save current editing state in current 'buffer'
-  if (this->buffer) {     // allow initial buffer to be NULL
-    this->buffer->savedState.copySavedEditingState(*this);
+  // save current editing state in current 'docFile'
+  if (this->docFile) {     // allow initial file to be NULL
+    this->docFile->savedState.copySavedEditingState(*this);
   }
 
-  // switch to the new buffer, and retrieve its editing state
-  this->buffer = buf;
+  // switch to the new file, and retrieve its editing state
+  this->docFile = buf;
   this->copySavedEditingState(buf->savedState);
 
   if (wasListening) {
@@ -519,22 +518,22 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     // nominally the entire line is normal text
     categories.clear(TC_NORMAL);
 
-    // fill with text from the buffer
-    if (line < buffer->numLines()) {
+    // fill with text from the file
+    if (line < docFile->numLines()) {
       // 1 if we will behave as though a newline character is
       // at the end of this line.
       int newlineAdjust = 0;
-      if (this->visibleWhitespace && line < buffer->numLines()-1) {
+      if (this->visibleWhitespace && line < docFile->numLines()-1) {
         newlineAdjust = 1;
       }
 
       // Line length including possible synthesized newline.
-      int const lineLen = buffer->lineLength(line) + newlineAdjust;
+      int const lineLen = docFile->lineLength(line) + newlineAdjust;
 
       if (firstCol < lineLen) {
         // First get the text without any extra newline.
         int const amt = min(lineLen-newlineAdjust - firstCol, visibleCols);
-        buffer->getLine(line, firstCol, text, amt);
+        docFile->getLine(line, firstCol, text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.
@@ -544,8 +543,8 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       }
 
       // apply highlighting
-      if (buffer->highlighter) {
-        buffer->highlighter->highlight(buffer->core(), line, categories);
+      if (docFile->highlighter) {
+        docFile->highlighter->highlight(docFile->core(), line, categories);
       }
 
       // Show search hits.
@@ -555,7 +554,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         Buffer::FindStringFlags const hitTextFlags =
           this->hitTextFlags | Buffer::FS_ONE_LINE;
 
-        while (buffer->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
+        while (docFile->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
                                   toCStr(this->hitText),
                                   hitTextFlags)) {
           categories.overlay(hitCol, this->hitText.length(), TC_HITS);
@@ -717,12 +716,12 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
 
-        if (line < buffer->numLines() &&
-            cursorCol <= buffer->lineLength(line)) {
+        if (line < docFile->numLines() &&
+            cursorCol <= docFile->lineLength(line)) {
           // Drawing the block cursor overwrote the character, so we
           // have to draw it again.
-          if (line == buffer->numLines() - 1 &&
-              cursorCol == buffer->lineLength(line)) {
+          if (line == docFile->numLines() - 1 &&
+              cursorCol == docFile->lineLength(line)) {
             // Draw nothing at the end of the last line.
           }
           else {
@@ -760,7 +759,7 @@ void Editor::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
 void Editor::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c)
 {
-  // My buffer representation uses 'char' without much regard
+  // My document representation uses 'char' without much regard
   // to character encoding.  Here, I'm declaring that this whole
   // time I've been storing some 8-bit encoding consistent with
   // the font I'm using, which is Latin-1.  At some point I need
@@ -852,7 +851,7 @@ void Editor::cursorToTop()
 
 void Editor::cursorToBottom()
 {
-  cursorTo(max(buffer->numLines()-1,0), 0);
+  cursorTo(max(docFile->numLines()-1,0), 0);
   scrollToCursor();
   //redraw();    // 'scrollToCursor' does 'redraw()' automatically
 }
@@ -896,7 +895,7 @@ void printUnhandled(QWidget *parent, char const *msg)
 {
   QMessageBox::information(parent, "Oops",
     QString(stringc << "Unhandled exception: " << msg << "\n"
-                    << "Save your buffers if you can!"));
+                    << "Save your files if you can!"));
 }
 
 
@@ -934,7 +933,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
   GENERIC_CATCH_BEGIN
 
   TRACE("input", "keyPress: " << toString(*k));
-  HBGrouper hbgrouper(*buffer);
+  HBGrouper hbgrouper(*docFile);
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
 
@@ -1137,13 +1136,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_U:
-        buffer->core().dumpRepresentation();
+        docFile->core().dumpRepresentation();
         malloc_stats();
         break;
 
       case Qt::Key_H:
-        buffer->printHistory();
-        buffer->printHistoryStats();
+        docFile->printHistory();
+        docFile->printHistoryStats();
         break;
 
       default:
@@ -1254,13 +1253,13 @@ void Editor::keyPressEvent(QKeyEvent *k)
             return;
           }
 
-          int lineLength = buffer->lineLength(buffer->line());
-          bool hadCharsToRight = (buffer->col() < lineLength);
-          bool beyondLineEnd = (buffer->col() > lineLength);
+          int lineLength = docFile->lineLength(docFile->line());
+          bool hadCharsToRight = (docFile->col() < lineLength);
+          bool beyondLineEnd = (docFile->col() > lineLength);
           if (beyondLineEnd) {
             // Move the cursor to the end of the line so
             // that fillToCursor will not add spaces.
-            buffer->moveAbsColumn(lineLength);
+            docFile->moveAbsColumn(lineLength);
           }
 
           // Add newlines if needed so the cursor is on a valid line.
@@ -1271,23 +1270,23 @@ void Editor::keyPressEvent(QKeyEvent *k)
             editDelete();
           }
 
-          buffer->insertNewline();
+          docFile->insertNewline();
 
           // make sure we can see as much to the left as possible
           setFirstVisibleCol(0);
 
           // auto-indent
-          int ind = buffer->getAboveIndentation(cursorLine()-1);
+          int ind = docFile->getAboveIndentation(cursorLine()-1);
           if (hadCharsToRight) {
             // Insert spaces so the carried forward text starts
             // in the auto-indent column.
-            buffer->insertSpaces(ind);
+            docFile->insertSpaces(ind);
           }
           else {
             // Move the cursor to the auto-indent column but do not
             // fill with spaces.  This way I can press Enter more
             // than once without adding lots of spaces.
-            buffer->moveRelCursor(0, ind);
+            docFile->moveRelCursor(0, ind);
           }
 
           scrollToCursor();
@@ -1325,7 +1324,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
             return;
           }
           fillToCursor();
-          //buffer->changed = true;
+          //docFile->changed = true;
 
           // typing replaces selection
           if (this->selectEnabled) {
@@ -1333,7 +1332,7 @@ void Editor::keyPressEvent(QKeyEvent *k)
           }
           // insert this character at the cursor
           QByteArray utf8(text.toUtf8());
-          buffer->insertLR(false /*left*/, utf8.constData(), utf8.length());
+          docFile->insertLR(false /*left*/, utf8.constData(), utf8.length());
           scrollToCursor();
         }
         else {
@@ -1363,8 +1362,8 @@ void Editor::keyReleaseEvent(QKeyEvent *k)
 
 void Editor::insertAtCursor(char const *text)
 {
-  //buffer->changed = true;
-  buffer->insertText(text);
+  //docFile->changed = true;
+  docFile->insertText(text);
   scrollToCursor();
 }
 
@@ -1376,8 +1375,8 @@ void Editor::deleteAtCursor(int amt)
   }
 
   fillToCursor();
-  buffer->deleteLR(true /*left*/, amt);
-  //buffer->changed = true;
+  docFile->deleteLR(true /*left*/, amt);
+  //docFile->changed = true;
   scrollToCursor();
 }
 
@@ -1391,25 +1390,25 @@ void Editor::deleteLeftOfCursor()
     if (cursorLine() == 0) {
       // do nothing
     }
-    else if (cursorLine() > buffer->numLines()-1) {
+    else if (cursorLine() > docFile->numLines()-1) {
       // Move cursor up non-destructively.
       cursorUp(false /*shift*/);
     }
     else {
       // move to end of previous line
-      buffer->moveToPrevLineEnd();
+      docFile->moveToPrevLineEnd();
 
       // splice them together
       spliceNextLine();
     }
   }
-  else if (cursorCol() > buffer->lineLengthLoose(cursorLine())) {
+  else if (cursorCol() > docFile->lineLengthLoose(cursorLine())) {
     // Move cursor left non-destructively.
     cursorLeft(false /*shift*/);
   }
   else {
     // remove the character to the left of the cursor
-    buffer->deleteLR(true /*left*/, 1);
+    docFile->deleteLR(true /*left*/, 1);
   }
 
   scrollToCursor();
@@ -1418,22 +1417,22 @@ void Editor::deleteLeftOfCursor()
 
 void Editor::fillToCursor()
 {
-  buffer->fillToCursor();
+  docFile->fillToCursor();
 }
 
 
 void Editor::spliceNextLine()
 {
   // cursor must be at the end of a line
-  xassert(cursorCol() == buffer->lineLength(cursorLine()));
+  xassert(cursorCol() == docFile->lineLength(cursorLine()));
 
-  buffer->deleteChar();
+  docFile->deleteChar();
 }
 
 
 void Editor::justifyNearCursorLine()
 {
-  justifyNearLine(*buffer, this->cursorLine(), this->softMarginColumn);
+  justifyNearLine(*docFile, this->cursorLine(), this->softMarginColumn);
   this->scrollToCursor();
 }
 
@@ -1603,8 +1602,8 @@ void Editor::mouseReleaseEvent(QMouseEvent *m)
 // ----------------------- edit menu -----------------------
 void Editor::editUndo()
 {
-  if (buffer->canUndo()) {
-    buffer->undo();
+  if (docFile->canUndo()) {
+    docFile->undo();
     turnOffSelection();
     scrollToCursor();
   }
@@ -1616,8 +1615,8 @@ void Editor::editUndo()
 
 void Editor::editRedo()
 {
-  if (buffer->canRedo()) {
-    buffer->redo();
+  if (docFile->canRedo()) {
+    docFile->redo();
     turnOffSelection();
     scrollToCursor();
   }
@@ -1693,8 +1692,8 @@ void Editor::editDelete()
     }
 
     normalizeSelect();
-    //buffer->changed = true;
-    buffer->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    //docFile->changed = true;
+    docFile->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
     this->selectEnabled = false;
     scrollToCursor();
@@ -1767,14 +1766,14 @@ void Editor::cursorRight(bool shift)
 void Editor::cursorHome(bool shift)
 {
   turnSelection(shift);
-  buffer->moveAbsColumn(0);
+  docFile->moveAbsColumn(0);
   scrollToCursor();
 }
 
 void Editor::cursorEnd(bool shift)
 {
   turnSelection(shift);
-  buffer->moveAbsColumn(buffer->lineLength(cursorLine()));
+  docFile->moveAbsColumn(docFile->lineLength(cursorLine()));
   scrollToCursor();
 }
 
@@ -1809,8 +1808,8 @@ void Editor::cursorPageDown(bool shift)
 void Editor::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
-  int line = buffer->line();
-  this->buffer->moveAbsCursor(line+1, buffer->lineLengthLoose(line+1));
+  int line = docFile->line();
+  this->docFile->moveAbsCursor(line+1, docFile->lineLengthLoose(line+1));
   scrollToCursor();
 }
 
@@ -1823,16 +1822,16 @@ void Editor::deleteCharAtCursor()
     editDelete();
   }
   else {
-    if (this->buffer->cursorAtEnd()) {
+    if (this->docFile->cursorAtEnd()) {
       // Nothing to do since no characters are to the right.
     }
-    else if (cursorCol() == buffer->lineLength(cursorLine())) {
+    else if (cursorCol() == docFile->lineLength(cursorLine())) {
       // splice next line onto this one
       spliceNextLine();
     }
     else /* cursor < lineLength */ {
       // delete character to right of cursor
-      buffer->deleteText(1);
+      docFile->deleteText(1);
     }
   }
 
@@ -1849,8 +1848,8 @@ void Editor::blockIndent(int amt)
   normalizeSelect();
 
   int endLine = (selHighCol==0? selHighLine-1 : selHighLine);
-  endLine = min(endLine, buffer->numLines()-1);
-  buffer->indentLines(selLowLine, endLine-selLowLine+1, amt);
+  endLine = min(endLine, docFile->numLines()-1);
+  docFile->indentLines(selLowLine, endLine-selLowLine+1, amt);
 
   redraw();
 }
@@ -1863,7 +1862,7 @@ string Editor::getSelectedText()
   }
   else {
     normalizeSelect();   // this is why this method is not 'const' ...
-    return buffer->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    return docFile->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
   }
 }
 
@@ -1890,7 +1889,7 @@ void Editor::focusOutEvent(QFocusEvent *e)
 
   stopListening();    // just in case
 
-  // listen to my buffer for any changes coming from
+  // listen to my docFile for any changes coming from
   // other windows
   startListening();
 }
@@ -1900,7 +1899,7 @@ void Editor::stopListening()
 {
   if (listening) {
     // remove myself from the list
-    buffer->core().observers.removeItem(this);
+    docFile->core().observers.removeItem(this);
 
     listening = false;
   }
@@ -1911,12 +1910,12 @@ void Editor::startListening()
   xassert(!listening);
 
   // add myself to the list
-  buffer->core().observers.append(this);
+  docFile->core().observers.append(this);
   listening = true;
 
-  // remember the buffer's current cursor position
-  nonfocusCursorLine = buffer->line();
-  nonfocusCursorCol = buffer->col();
+  // remember the docFile's current cursor position
+  nonfocusCursorLine = docFile->line();
+  nonfocusCursorCol = docFile->col();
 }
 
 
@@ -2003,14 +2002,14 @@ void Editor::pseudoKeyPress(InputPseudoKey pkey)
 // cancel it.
 bool Editor::editSafetyCheck()
 {
-  if (buffer->unsavedChanges()) {
+  if (docFile->unsavedChanges()) {
     // We already have unsaved changes, so assume that the safety
     // check has already passed or its warning dismissed.  (I do not
     // want to hit the disk for every edit operation.)
     return true;
   }
 
-  if (!buffer->hasStaleModificationTime()) {
+  if (!docFile->hasStaleModificationTime()) {
     // No concurrent changes, safe to go ahead.
     return true;
   }
@@ -2019,7 +2018,7 @@ bool Editor::editSafetyCheck()
   QMessageBox box(this);
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The file \"" << buffer->filename << "\" has changed on disk.  "
+    "The file \"" << docFile->filename << "\" has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);
@@ -2030,7 +2029,7 @@ bool Editor::editSafetyCheck()
     // are about to do gets canceled for a different reason,
     // leaving us in the "clean" state after all, this refresh will
     // ensure we do not prompt the user a second time.
-    buffer->refreshModificationTime();
+    docFile->refreshModificationTime();
 
     // Go ahead with the edit.
     return true;

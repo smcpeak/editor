@@ -62,7 +62,7 @@
       }
     },
     {
-      "attributes": "documents: TextDocumentFile[]\nwindows: EditorWindow[]\n\npixmaps: Pixmaps\nctrlShiftDistance: int\n",
+      "attributes": "documentFiles: TextDocumentFile[]\nwindows: EditorWindow[]\n\npixmaps: Pixmaps\nctrlShiftDistance: int\n",
       "loc": {
         "x": 255,
         "y": 455
@@ -70,7 +70,7 @@
       "name": "GlobalState : QApplication",
       "size": {
         "h": 110,
-        "w": 205
+        "w": 220
       }
     },
     {
@@ -180,7 +180,7 @@
     },
     {
       "end": {"entityRef": 2},
-      "label": "documents[]",
+      "label": "documentFiles[]",
       "start": {"entityRef": 5}
     },
     {

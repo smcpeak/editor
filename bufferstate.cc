@@ -47,14 +47,14 @@ void SavedEditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
 }
 
 
-// ----------------------- BufferState ---------------------------
+// ----------------------- TextDocumentFile ---------------------------
 // Do not start with 0 because QVariant::toInt() returns 0 to
 // indicate failure.
-int BufferState::nextWindowMenuId = 1;
+int TextDocumentFile::nextWindowMenuId = 1;
 
-int BufferState::objectCount = 0;
+int TextDocumentFile::objectCount = 0;
 
-BufferState::BufferState()
+TextDocumentFile::TextDocumentFile()
   : Buffer(),
     hasHotkeyDigit(false),
     hotkeyDigit(0),
@@ -66,26 +66,26 @@ BufferState::BufferState()
     highlighter(NULL),
     savedState()
 {
-  BufferState::objectCount++;
+  TextDocumentFile::objectCount++;
 }
 
-BufferState::~BufferState()
+TextDocumentFile::~TextDocumentFile()
 {
-  BufferState::objectCount--;
+  TextDocumentFile::objectCount--;
   if (highlighter) {
     delete highlighter;
   }
 }
 
 
-int BufferState::getHotkeyDigit() const
+int TextDocumentFile::getHotkeyDigit() const
 {
   xassert(this->hasHotkey());
   return this->hotkeyDigit;
 }
 
 
-string BufferState::hotkeyDesc() const
+string TextDocumentFile::hotkeyDesc() const
 {
   if (!this->hasHotkey()) {
     return "";
@@ -95,14 +95,14 @@ string BufferState::hotkeyDesc() const
 }
 
 
-void BufferState::clearHotkey()
+void TextDocumentFile::clearHotkey()
 {
   this->hasHotkeyDigit = false;
   this->hotkeyDigit = 0;
 }
 
 
-void BufferState::setHotkeyDigit(int digit)
+void TextDocumentFile::setHotkeyDigit(int digit)
 {
   xassert(0 <= digit && digit <= 9);
   this->hasHotkeyDigit = true;
@@ -110,7 +110,7 @@ void BufferState::setHotkeyDigit(int digit)
 }
 
 
-bool BufferState::getDiskModificationTime(int64_t &modTime) const
+bool TextDocumentFile::getDiskModificationTime(int64_t &modTime) const
 {
   bool ret = getFileModificationTime(this->filename.c_str(), modTime);
   TRACE("modtime", "on-disk ts for " << this->filename <<
@@ -119,7 +119,7 @@ bool BufferState::getDiskModificationTime(int64_t &modTime) const
 }
 
 
-bool BufferState::hasStaleModificationTime() const
+bool TextDocumentFile::hasStaleModificationTime() const
 {
   int64_t diskTime;
   if (this->getDiskModificationTime(diskTime)) {
@@ -139,7 +139,7 @@ bool BufferState::hasStaleModificationTime() const
 }
 
 
-void BufferState::refreshModificationTime()
+void TextDocumentFile::refreshModificationTime()
 {
   TRACE("modtime", "refresh: old ts for " << this->filename <<
                    " is " << this->lastFileTimestamp);

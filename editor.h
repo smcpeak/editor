@@ -4,7 +4,7 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "bufferstate.h"    // BufferState
+#include "bufferstate.h"    // TextDocumentFile
 #include "inputproxy.h"     // InputProxy, InputPseudoKey
 #include "owner.h"          // Owner
 #include "textcategory.h"   // TextCategory
@@ -18,20 +18,20 @@ class StatusDisplay;        // status.h
 class StyleDB;              // styledb.h
 
 
-// Widget to edit the contents of a buffer; it's possible (and
-// expected) to change which buffer a given Editor edits after
+// Widget to edit the contents of a text file; it's possible (and
+// expected) to change which file a given Editor edits after
 // creating the Editor object.
 //
 // This class embeds SavedEditingState.  This is different from
-// 'buffer->savedState' so that it is possible to have two editor
+// 'docFile->savedState' so that it is possible to have two editor
 // widgets both editing the same file but with different cursor
 // locations, etc.
 //
 // It is weird to inherit a data class like this, but the reason
 // for doing it is there is not a major, fundamental difference
-// between the members of Editor and those of EditorState.  The
+// between the members of Editor and those of SavedEditingState.  The
 // latter just happen to be the things I have chosen to save for
-// hidden buffers, and that set might change over time.  Therefore,
+// hidden files, and that set might change over time.  Therefore,
 // I use inheritance to avoid any difference in syntax between the
 // two sets of members.
 class Editor
@@ -53,14 +53,14 @@ private:     // data
 
 public:      // data
   // ------ editing state -----
-  // Buffer whose text we're editing; it can be set to NULL when
+  // File we are editing; it can be set to NULL when
   // the ctor is called, but must if so, must be set to a non-NULL
-  // value via setBuffer() before any drawing or editing is done.
+  // value via setDocumentFile() before any drawing or editing is done.
   //
-  // The Editor's EditingState gets saved to 'buffer->savedState'
-  // when we switch to another buffer, and restored when we come
+  // The Editor's EditingState gets saved to 'docFile->savedState'
+  // when we switch to another file, and restored when we come
   // back.
-  BufferState *buffer;           // (serf)
+  TextDocumentFile *docFile;     // (serf)
 
   // the following fields are valid only after normalizeSelect(),
   // and before any subsequent modification to cursor or select
@@ -133,7 +133,7 @@ public:      // data
 
   // ------ stuff for when I don't have focus ------
   // when I don't have the focus, two things are different:
-  //   - I'm a listener to my own buffer, to track the
+  //   - I'm a listener to my own file, to track the
   //     changes made in another window.
   //   - nonfocusCursorLine/Col are valid/relevant/correct
 
@@ -151,10 +151,10 @@ public:      // data
   bool ignoreScrollSignals;
 
 private:     // funcs
-  // fill buffer with whitespace, if necessary, so that the current
+  // fill document with whitespace, if necessary, so that the current
   // cursor position is on a valid character, i.e.:
-  //   - cursorLine < buffer->numLines()
-  //   - cursorCol <= buffer->lineLength(cursorLine)
+  //   - cursorLine < docFile->numLines()
+  //   - cursorCol <= docFile->lineLength(cursorLine)
   void fillToCursor();
 
   // given that the cursor is at the end of a line, join this line
@@ -224,25 +224,25 @@ protected:   // funcs
   virtual void focusOutEvent(QFocusEvent *e);
 
 public:      // funcs
-  Editor(BufferState *buf, StatusDisplay *status,
+  Editor(TextDocumentFile *docFile, StatusDisplay *status,
          QWidget *parent=NULL);
   ~Editor();
 
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
 
-  // change which buffer this editor widget is editing
-  void setBuffer(BufferState *buf);
+  // Change which file this editor widget is editing.
+  void setDocumentFile(TextDocumentFile *docFile);
 
   // cursor location
-  int cursorLine() const                  { return buffer->line(); }
-  int cursorCol() const                   { return buffer->col(); }
+  int cursorLine() const                  { return docFile->line(); }
+  int cursorCol() const                   { return docFile->col(); }
 
   // absolute cursor movement
   void cursorTo(int line, int col);
 
   // relative cursor movement
-  void moveCursorBy(int dline, int dcol)  { buffer->moveRelCursor(dline, dcol); }
+  void moveCursorBy(int dline, int dcol)  { docFile->moveRelCursor(dline, dcol); }
   void cursorLeftBy(int amt)              { moveCursorBy(0, -amt); }
   void cursorRightBy(int amt)             { moveCursorBy(0, +amt); }
   void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
@@ -347,7 +347,7 @@ public:      // funcs
   // proxy if any, and then handles what is not yet handled.
   void pseudoKeyPress(InputPseudoKey pkey);
 
-  // We are about to edit the text in the buffer.  If we are going from
+  // We are about to edit the text in the file.  If we are going from
   // a "clean" to "dirty" state with respect to unsaved changes, do a
   // safety check for concurrent on-disk modifications, prompting the
   // user if necessary.  Return true if it is safe to proceed, false if
@@ -369,7 +369,7 @@ public slots:
   void editDelete();
 
 signals:
-  // emitted when the buffer view port or cursor changes
+  // Emitted when the document editing viewport or cursor changes.
   void viewChanged();
 };
 

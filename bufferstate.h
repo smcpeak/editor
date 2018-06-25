@@ -1,7 +1,7 @@
 // bufferstate.h
 // a Buffer, plus some state suitable for an editor
 
-// in an editor, the BufferState would contain all the info that is
+// in an editor, the TextDocumentFile would contain all the info that is
 // remembered for *undisplayed* buffers
 
 #ifndef BUFFERSTATE_H
@@ -16,7 +16,7 @@
 
 // Editor widget editing state for a Buffer that is *used* when the
 // buffer is shown to the user, and *saved* when it is not.  This data
-// is copied between the Editor widget and the BufferState object as
+// is copied between the Editor widget and the TextDocumentFile object as
 // the user cycles among open files.
 class SavedEditingState {
 public:      // data
@@ -73,7 +73,7 @@ public:      // funcs
 
 // A Buffer, plus additional data about that buffer that the editor
 // UI needs whether or not this buffer is currently shown.
-class BufferState : public Buffer {
+class TextDocumentFile : public Buffer {
 private:     // static data
   // Next value to use when assigning menu ids.
   static int nextWindowMenuId;
@@ -122,8 +122,8 @@ public:      // data
   SavedEditingState savedState;
 
 public:      // funcs
-  BufferState();
-  ~BufferState();
+  TextDocumentFile();
+  ~TextDocumentFile();
 
   // Return true if this buffer has an assigned hotkey.
   bool hasHotkey() const { return this->hasHotkeyDigit; }
