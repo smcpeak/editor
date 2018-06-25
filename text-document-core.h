@@ -111,9 +111,6 @@ public:    // funcs
   // get part of a line's contents, starting at 'tc' and getting
   // 'destLen' chars; all chars must be in the line now; the retrieved
   // text never includes the '\n' character
-  //
-  // TODO: I want a method to get an arbitrary span.  I also want one
-  // to retrieve an entire line, with or without its newline character.
   void getLine(TextCoord tc, char *dest, int destLen) const;
 
   // Maximum length of a line.  TODO: Implement this properly (right
