@@ -172,7 +172,7 @@ EDITOR_OBJS := \
   text-document-file.o \
   c_hilite.yy.o \
   comment.yy.o \
-  editor.o \
+  editor-widget.o \
   bufferlinesource.o \
   history.o \
   text-document.o \
@@ -182,7 +182,7 @@ EDITOR_OBJS := \
   keybindings.doc.gen.o \
   lex_hilite.o \
   main.o \
-  moc_editor.o \
+  moc_editor-widget.o \
   moc_main.o \
   pixmaps.o \
   status.o \

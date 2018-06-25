@@ -5,7 +5,7 @@
 
 #include "buffer.h"                    // Buffer
 #include "c_hilite.h"                  // C_Highlighter
-#include "editor.h"                    // EditorWidget
+#include "editor-widget.h"             // EditorWidget
 #include "exc.h"                       // XOpen
 #include "gotoline.gen.h"              // Ui_GotoLine
 #include "incsearch.h"                 // IncSearch

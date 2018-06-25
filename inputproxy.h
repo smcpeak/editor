@@ -5,7 +5,7 @@
 #ifndef INPUTPROXY_H
 #define INPUTPROXY_H
 
-class EditorWidget;                    // editor.h
+class EditorWidget;                    // editor-widget.h
 class QKeyEvent;                       // qevent.h
 
 

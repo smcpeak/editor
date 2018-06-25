@@ -1,4 +1,4 @@
-// editor.h
+// editor-widget.h
 // widget for editing text
 
 #ifndef EDITOR_H

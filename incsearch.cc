@@ -2,7 +2,8 @@
 // code for incsearch.h
 
 #include "incsearch.h"     // this module
-#include "editor.h"        // EditorWidget
+
+#include "editor-widget.h" // EditorWidget
 #include "pixmaps.h"       // Pixmaps
 #include "qtutil.h"        // toString(QKeyEvent)
 #include "status.h"        // StatusDisplay

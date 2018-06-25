@@ -18,7 +18,7 @@ class QMenu;
 class QMenuBar;
 class QScrollBar;
 
-class EditorWidget;                    // editor.h
+class EditorWidget;                    // editor-widget.h
 class IncSearch;                       // incsearch.h
 class StatusDisplay;                   // status.h
 

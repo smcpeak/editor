@@ -1,7 +1,7 @@
-// editor.cc
-// code for editor.h
+// editor-widget.cc
+// code for editor-widget.h
 
-#include "editor.h"          // this module
+#include "editor-widget.h"   // this module
 
 // this dir
 #include "buffer.h"          // Buffer

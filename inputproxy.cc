@@ -3,7 +3,7 @@
 
 #include "inputproxy.h"      // this module
 
-#include "editor.h"          // EditorWidget
+#include "editor-widget.h"   // EditorWidget
 #include "qevent.h"          // QKeyEvent
 
 #include <stddef.h>          // NULL
