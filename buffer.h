@@ -1,13 +1,13 @@
 // buffer.h
 // buffer as used by the editor:
 //   - core representation (TextDocumentCore)
-//   - undo/redo history (HistoryBuffer)
+//   - undo/redo history (TextDocument)
 //   - convenience functions (this module)
 
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "historybuf.h"   // HistoryBuffer
+#include "historybuf.h"   // TextDocument
 
 
 // Represent a file being edited:
@@ -15,10 +15,10 @@
 //   * Cursor location.
 //   * Undo history of changes to them.
 //
-// HistoryBuffer provides the core functionality for manipulating
+// TextDocument provides the core functionality for manipulating
 // these items.  Buffer is built on top of it and provides a
 // variety of useful composed manipulations.
-class Buffer : public HistoryBuffer {
+class Buffer : public TextDocument {
 private:
   // check that line/col is positive
   static void pos(int line, int col);
@@ -94,7 +94,7 @@ public:
 
   // -------------------- modifications ------------------------
   // write the entire buffer contents to 'fname' ('readFile' is
-  // available as a method of HistoryBuffer)
+  // available as a method of TextDocument)
   void writeFile(char const *fname) const
     { ::writeFile(core(), fname); }
 

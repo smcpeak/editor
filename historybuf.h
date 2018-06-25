@@ -1,5 +1,5 @@
 // historybuf.h
-// buffer with undo/redo history attached to it
+// Text document with undo/redo history attached to it.
 
 #ifndef HISTORYBUF_H
 #define HISTORYBUF_H
@@ -10,18 +10,19 @@
 
 
 // Represent a file being edited:
+//
 //   * File contents.
 //   * Cursor location.
 //   * Undo history of changes to them.
 //
-// HistoryBuffer provides the core functionality for manipulating
+// TextDocument provides the core functionality for manipulating
 // these items.  Buffer is built on top of it and provides a
 // variety of useful composed manipulations.
 //
-// There is no reason to create a HistoryBuffer alone; the division
+// There is no reason to create a TextDocument alone; the division
 // is just to ensure a separation between core and extended
 // functionality in the implementation of Buffer.
-class HistoryBuffer {
+class TextDocument {
 private:      // data
   // current buffer contents and cursor location
   CursorBuffer buf;
@@ -60,8 +61,8 @@ private:     // funcs
   void appendElement(HistoryElt *e, bool modifies);
 
 public:      // funcs
-  HistoryBuffer();      // empty buffer, empty history, cursor at 0,0
-  ~HistoryBuffer();
+  TextDocument();      // empty buffer, empty history, cursor at 0,0
+  ~TextDocument();
 
   // ---- queries ----
   // read-only access to the underlying representation
@@ -148,10 +149,10 @@ public:      // funcs
 
 
 class HBGrouper {
-  HistoryBuffer &buf;
+  TextDocument &buf;
 
 public:
-  HBGrouper(HistoryBuffer &b) : buf(b)
+  HBGrouper(TextDocument &b) : buf(b)
     { buf.beginGroup(); }
   ~HBGrouper()
     { buf.endGroup(); }

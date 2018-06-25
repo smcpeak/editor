@@ -290,7 +290,7 @@ public:
 
   CursorBuffer itself doesn't deal with cursors much, except in
   its validCoord() method, but the surrounding functions
-  and classes (esp. HistoryBuffer and Buffer) do, and since
+  and classes (esp. TextDocument and Buffer) do, and since
   TextDocumentCore's design is motivated by the desire to support the
   notion of editing with a cursor, I include that notion in this
   discussion.

@@ -6,7 +6,7 @@
 #include "mysig.h"            // printSegfaultAddrs
 
 
-HistoryBuffer::HistoryBuffer()
+TextDocument::TextDocument()
   : buf(),
     history(),
     historyIndex(0),
@@ -16,12 +16,12 @@ HistoryBuffer::HistoryBuffer()
 {}
 
 
-HistoryBuffer::~HistoryBuffer()
+TextDocument::~TextDocument()
 {}
 
 
 
-void HistoryBuffer::clearHistory()
+void TextDocument::clearHistory()
 {
   historyIndex = 0;
   savedHistoryIndex = -1;     // no historyIndex is known to correspond to on-disk
@@ -30,14 +30,14 @@ void HistoryBuffer::clearHistory()
 }
 
 
-void HistoryBuffer::clearContentsAndHistory()
+void TextDocument::clearContentsAndHistory()
 {
   clearHistory();
   clear(buf);
 }
 
 
-bool HistoryBuffer::unsavedChanges() const
+bool TextDocument::unsavedChanges() const
 {
   if (savedHistoryIndex != historyIndex) {
     return true;
@@ -56,7 +56,7 @@ bool HistoryBuffer::unsavedChanges() const
 }
 
 
-void HistoryBuffer::readFile(char const *fname)
+void TextDocument::readFile(char const *fname)
 {
   ::readFile(buf, fname);              // might throw exception
 
@@ -66,7 +66,7 @@ void HistoryBuffer::readFile(char const *fname)
 }
 
 
-void HistoryBuffer::moveCursor(bool relLine, int line, bool relCol, int col)
+void TextDocument::moveCursor(bool relLine, int line, bool relCol, int col)
 {
   int origLine = relLine? -1 : buf.line;
   int origCol  = relCol?  -1 : buf.col;
@@ -77,7 +77,7 @@ void HistoryBuffer::moveCursor(bool relLine, int line, bool relCol, int col)
 }
 
 
-void HistoryBuffer::insertLR(bool left, char const *text, int textLen)
+void TextDocument::insertLR(bool left, char const *text, int textLen)
 {
   xassert(buf.validCursor());
 
@@ -88,7 +88,7 @@ void HistoryBuffer::insertLR(bool left, char const *text, int textLen)
 }
 
 
-void HistoryBuffer::deleteLR(bool left, int count)
+void TextDocument::deleteLR(bool left, int count)
 {
   xassert(buf.validCursor());
 
@@ -100,7 +100,7 @@ void HistoryBuffer::deleteLR(bool left, int count)
 }
 
 
-void HistoryBuffer::appendElement(HistoryElt *e, bool modified)
+void TextDocument::appendElement(HistoryElt *e, bool modified)
 {
   if (groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
@@ -119,13 +119,13 @@ void HistoryBuffer::appendElement(HistoryElt *e, bool modified)
 }
 
 
-void HistoryBuffer::beginGroup()
+void TextDocument::beginGroup()
 {
   groupStack.push(new HE_group);
   groupEltModifies.push(false);
 }
 
-void HistoryBuffer::endGroup()
+void TextDocument::endGroup()
 {
   HE_group *g = groupStack.pop();
   bool modifies = groupEltModifies.pop();
@@ -139,7 +139,7 @@ void HistoryBuffer::endGroup()
 }
 
 
-void HistoryBuffer::undo()
+void TextDocument::undo()
 {
   xassert(canUndo() && !inGroup());
 
@@ -151,7 +151,7 @@ void HistoryBuffer::undo()
 }
 
 
-void HistoryBuffer::redo()
+void TextDocument::redo()
 {
   xassert(canRedo() && !inGroup());
 
@@ -163,12 +163,12 @@ void HistoryBuffer::redo()
 }
 
 
-void HistoryBuffer::printHistory(stringBuilder &sb) const
+void TextDocument::printHistory(stringBuilder &sb) const
 {
   history.printWithMark(sb, 0 /*indent*/, historyIndex);
 }
 
-void HistoryBuffer::printHistory() const
+void TextDocument::printHistory() const
 {
   stringBuilder sb;
   printHistory(sb);
@@ -176,7 +176,7 @@ void HistoryBuffer::printHistory() const
 }
 
 
-void HistoryBuffer::printHistoryStats() const
+void TextDocument::printHistoryStats() const
 {
   HistoryStats stats;
   historyStats(stats);
@@ -194,7 +194,7 @@ void HistoryBuffer::printHistoryStats() const
 #include <stdio.h>      // printf
 
 
-void expect(HistoryBuffer const &buf, int line, int col, char const *text)
+void expect(TextDocument const &buf, int line, int col, char const *text)
 {
   if (buf.line()==line &&
       buf.col()==col) {
@@ -219,7 +219,7 @@ void expect(HistoryBuffer const &buf, int line, int col, char const *text)
 }
 
 
-void printHistory(HistoryBuffer const &buf)
+void printHistory(TextDocument const &buf)
 {
   stringBuilder sb;
   buf.printHistory(sb);
@@ -227,7 +227,7 @@ void printHistory(HistoryBuffer const &buf)
 }
 
 
-void chars(HistoryBuffer &buf, char const *str)
+void chars(TextDocument &buf, char const *str)
 {
   while (*str) {
     buf.insertLR(false /*left*/, str, 1);
@@ -241,7 +241,7 @@ void entry()
   // This isn't implemented in smbase for mingw.
   //printSegfaultAddrs();
 
-  HistoryBuffer buf;
+  TextDocument buf;
 
   chars(buf, "abcd");
   //printHistory(buf);

@@ -24,7 +24,7 @@ public:      // data
   //int cursorLine;
   //int cursorCol;
   // UPDATE: The cursor has been moved into Buffer itself (via
-  // HistoryBuffer and CursorBuffer), and so is no longer present
+  // TextDocument and CursorBuffer), and so is no longer present
   // in this class.
 
   // selection state: a location, and a flag to enable it
