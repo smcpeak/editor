@@ -1,11 +1,11 @@
-// bufferstate.h
+// text-document-file.h
 // a Buffer, plus some state suitable for an editor
 
 // in an editor, the TextDocumentFile would contain all the info that is
 // remembered for *undisplayed* buffers
 
-#ifndef BUFFERSTATE_H
-#define BUFFERSTATE_H
+#ifndef TEXT_DOCUMENT_FILE_H
+#define TEXT_DOCUMENT_FILE_H
 
 #include "buffer.h"     // Buffer
 #include "str.h"        // string
@@ -154,4 +154,4 @@ public:      // funcs
   void refreshModificationTime();
 };
 
-#endif // BUFFERSTATE_H
+#endif // TEXT_DOCUMENT_FILE_H

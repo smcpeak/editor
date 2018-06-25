@@ -4,18 +4,18 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "bufferstate.h"    // TextDocumentFile
-#include "inputproxy.h"     // InputProxy, InputPseudoKey
-#include "owner.h"          // Owner
-#include "textcategory.h"   // TextCategory
+#include "inputproxy.h"                // InputProxy, InputPseudoKey
+#include "owner.h"                     // Owner
+#include "text-document-file.h"        // TextDocumentFile
+#include "textcategory.h"              // TextCategory
 
-#include <qwidget.h>        // QWidget
+#include <qwidget.h>                   // QWidget
 
-class QLabel;               // qlabel.h
-class QRangeControl;        // qrangecontrol.h
-class QtBDFFont;            // qtbdffont.h
-class StatusDisplay;        // status.h
-class StyleDB;              // styledb.h
+class QLabel;                          // qlabel.h
+class QRangeControl;                   // qrangecontrol.h
+class QtBDFFont;                       // qtbdffont.h
+class StatusDisplay;                   // status.h
+class StyleDB;                         // styledb.h
 
 
 // Widget to edit the contents of a text file; it's possible (and

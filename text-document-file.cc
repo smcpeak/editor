@@ -1,7 +1,7 @@
-// bufferstate.cc
-// code for bufferstate.h
+// text-document-file.cc
+// code for text-document-file.h
 
-#include "bufferstate.h"               // this module
+#include "text-document-file.h"        // this module
 
 #include "macros.h"                    // CMEMB
 #include "nonport.h"                   // getFileModificationTime

@@ -4,25 +4,25 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <qwidget.h>         // QWidget
-#include <qapplication.h>    // QApplication
+#include <qwidget.h>                   // QWidget
+#include <qapplication.h>              // QApplication
 
 #include <QProxyStyle>
 
-#include "bufferstate.h"     // TextDocumentFile
-#include "objlist.h"         // ObjList
-#include "pixmaps.h"         // Pixmaps
+#include "objlist.h"                   // ObjList
+#include "pixmaps.h"                   // Pixmaps
+#include "text-document-file.h"        // TextDocumentFile
 
 class QLabel;
 class QMenu;
 class QMenuBar;
 class QScrollBar;
 
-class Editor;                // editor.h
-class IncSearch;             // incsearch.h
-class StatusDisplay;         // status.h
+class Editor;                          // editor.h
+class IncSearch;                       // incsearch.h
+class StatusDisplay;                   // status.h
 
-class GlobalState;           // this file
+class GlobalState;                     // this file
 
 
 // toplevel window containing an editor pane

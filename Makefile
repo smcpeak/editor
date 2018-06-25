@@ -169,7 +169,7 @@ main.o: keybindings.doc.gen.h
 
 EDITOR_OBJS := \
   buffer.o \
-  bufferstate.o \
+  text-document-file.o \
   c_hilite.yy.o \
   comment.yy.o \
   editor.o \
