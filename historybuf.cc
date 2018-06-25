@@ -9,8 +9,8 @@
 HistoryBuffer::HistoryBuffer()
   : buf(),
     history(),
-    time(0),
-    savedTime(0),
+    historyIndex(0),
+    savedHistoryIndex(0),
     groupStack(),
     groupEltModifies()
 {}
@@ -23,9 +23,9 @@ HistoryBuffer::~HistoryBuffer()
 
 void HistoryBuffer::clearHistory()
 {
-  time = 0;
-  savedTime = -1;     // no time is known to correspond to on-disk
-  history.truncate(time);
+  historyIndex = 0;
+  savedHistoryIndex = -1;     // no historyIndex is known to correspond to on-disk
+  history.truncate(historyIndex);
   groupStack.clear();
 }
 
@@ -39,13 +39,13 @@ void HistoryBuffer::clearContentsAndHistory()
 
 bool HistoryBuffer::unsavedChanges() const
 {
-  if (savedTime != time) {
+  if (savedHistoryIndex != historyIndex) {
     return true;
   }
 
-  // if there are unclosed groups, check with them; semantically
-  // they come after 'time' but before 'time+1', and we already
-  // know that 'savedTime' equals 'time'
+  // if there are unclosed groups, check with them; semantically they
+  // come after 'historyIndex' but before 'historyIndex+1', and we
+  // already know that 'savedHistoryIndex' equals 'historyIndex'
   for (int i=0; i < groupEltModifies.length(); i++) {
     if (groupEltModifies[i]) {
       return true;
@@ -104,13 +104,13 @@ void HistoryBuffer::appendElement(HistoryElt *e, bool modified)
 {
   if (groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
-    history.truncate(time);
+    history.truncate(historyIndex);
     history.append(e);
 
-    if (savedTime==time && !modified) {
-      savedTime++;
+    if (savedHistoryIndex==historyIndex && !modified) {
+      savedHistoryIndex++;
     }
-    time++;
+    historyIndex++;
   }
   else {
     groupStack.top()->append(e);
@@ -143,10 +143,10 @@ void HistoryBuffer::undo()
 {
   xassert(canUndo() && !inGroup());
 
-  time--;
-  if (!history.applyOne(buf, time, true /*reverse*/) &&
-      savedTime-1 == time) {
-    savedTime--;
+  historyIndex--;
+  if (!history.applyOne(buf, historyIndex, true /*reverse*/) &&
+      savedHistoryIndex-1 == historyIndex) {
+    savedHistoryIndex--;
   }
 }
 
@@ -155,17 +155,17 @@ void HistoryBuffer::redo()
 {
   xassert(canRedo() && !inGroup());
 
-  if (!history.applyOne(buf, time, false /*reverse*/) &&
-      savedTime == time) {
-    savedTime++;
+  if (!history.applyOne(buf, historyIndex, false /*reverse*/) &&
+      savedHistoryIndex == historyIndex) {
+    savedHistoryIndex++;
   }
-  time++;
+  historyIndex++;
 }
 
 
 void HistoryBuffer::printHistory(stringBuilder &sb) const
 {
-  history.printWithMark(sb, 0 /*indent*/, time);
+  history.printWithMark(sb, 0 /*indent*/, historyIndex);
 }
 
 void HistoryBuffer::printHistory() const

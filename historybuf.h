@@ -30,18 +30,20 @@ private:      // data
   HE_group history;
 
   // where are we in that history?  usually,
-  // time==history.seqLength(), meaning we're at the end of the
-  // recorded history; undo/redo modifies 'time' and 'buf' but not
-  // 'history'
-  int time;
+  // historyIndex==history.seqLength(), meaning we're at the end of the
+  // recorded history; undo/redo modifies 'historyIndex' and 'buf' but
+  // not 'history'
+  int historyIndex;
 
-  // what time in that history corresponds to the file's on-disk
+  // what index in 'history' corresponds to the file's on-disk
   // contents?  the client of this interface has to inform me when
   // the file gets saved, but I'll track when the changes get away
-  // from that point; 'savedTime' tracks 'time' when the contents
-  // are in correspondence and we're moving across nondestructive
-  // actions
-  int savedTime;         // invariant: -1 <= savedTime <= seq.Length()
+  // from that point; 'savedHistoryIndex' tracks 'historyIndex' when
+  // the contents are in correspondence and we're moving across
+  // nondestructive actions
+  //
+  // invariant: -1 <= savedHistoryIndex <= seq.Length()
+  int savedHistoryIndex;
 
   // stack of open history groups, which will soon be collapsed
   // and added to their parent group, or 'history' for the last
@@ -96,9 +98,9 @@ public:      // funcs
   // this object in an incomplete state.
   void readFile(char const *fname);
 
-  // mark the current time as one where the file's contents agree
-  // with those on the disk
-  void noUnsavedChanges() { savedTime = time; }
+  // Remember the current historyIndex as one where the file's contents
+  // agree with those on the disk.
+  void noUnsavedChanges() { savedHistoryIndex = historyIndex; }
 
 
   // ---- manipulate and append to history ----
@@ -125,15 +127,15 @@ public:      // funcs
 
 
   // ---- undo/redo ----
-  bool canUndo() const        { return time > 0; }
-  bool canRedo() const        { return time < history.seqLength(); }
+  bool canUndo() const        { return historyIndex > 0; }
+  bool canRedo() const        { return historyIndex < history.seqLength(); }
 
   void undo();
   void redo();
 
 
-  // print the history in a textual format, with the current time
-  // marked (or no mark if time is at the end)
+  // print the history in a textual format, with the current history
+  // index marked (or no mark if history index is at the end)
   void printHistory(stringBuilder &sb) const;
   void printHistory(/*to stdout*/) const;
 
