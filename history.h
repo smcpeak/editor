@@ -19,7 +19,7 @@ class HistoryStats;
 // buffer + cursor, the object that the history manipulates
 class CursorBuffer : public TextDocumentCore {
 public:
-  // cursor location, intially 0,0
+  // cursor location, initially 0,0
   int line, col;
 
   // as a possible point of future design variance, I might add more
@@ -28,11 +28,17 @@ public:
 public:
   CursorBuffer();
 
+  // TODO: Replace line/col with TextCoord.  This is a stopgap.
+  TextCoord cursor() const
+    { return TextCoord(this->line, this->col); }
+  void setCursor(TextCoord tc)
+    { this->line = tc.line; this->col = tc.column; }
+
   bool cursorInDefined() const
-    { return this->locationInDefined(this->line, this->col); }
+    { return this->locationInDefined(this->cursor()); }
 
   bool cursorAtEnd() const
-    { return this->locationAtEnd(this->line, this->col); }
+    { return this->locationAtEnd(this->cursor()); }
 };
 
 

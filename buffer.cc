@@ -195,8 +195,7 @@ int Buffer::getAboveIndentation(int line) const
 bool Buffer::findString(int &userLine, int &userCol, char const *text,
                         FindStringFlags flags) const
 {
-  int line = userLine;
-  int col = userCol;
+  TextCoord tc(userLine, userCol);
   int textLen = strlen(text);
 
   // This is questionable because it can lead to finding matches that
@@ -204,41 +203,41 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
   // this line in f0169061da, when I added HistoryBuffer support, which
   // suggests it was needed to deal with cases arising from replaying
   // history elements.  Probably there is a better solution.
-  truncateCursor(core(), line, col);
+  truncateCursor(core(), tc);
 
   if (flags & FS_ADVANCE_ONCE) {
-    walkCursor(core(), line, col,
+    walkCursor(core(), tc,
                flags&FS_BACKWARDS? -1 : +1);
   }
 
   // contents of current line, in a growable buffer
   GrowArray<char> contents(10);
 
-  while (0 <= line && line < numLines()) {
+  while (0 <= tc.line && tc.line < numLines()) {
     // get line contents
-    int lineLen = lineLength(line);
+    int lineLen = lineLength(tc.line);
     contents.ensureIndexDoubler(lineLen);
-    getLine(line, 0, contents.getDangerousWritableArray(), lineLen);
+    getLine(tc.line, 0, contents.getDangerousWritableArray(), lineLen);
 
-    // search for 'text' using naive algorithm, starting at 'col'
-    while (0 <= col && col+textLen <= lineLen) {
+    // search for 'text' using naive algorithm, starting at 'tc.column'
+    while (0 <= tc.column && tc.column+textLen <= lineLen) {
       bool found =
         (flags & FS_CASE_INSENSITIVE) ?
-          (0==strncasecmp(contents.getArray()+col, text, textLen)) :
-          (0==strncmp(contents.getArray()+col, text, textLen))     ;
+          (0==strncasecmp(contents.getArray()+tc.column, text, textLen)) :
+          (0==strncmp(contents.getArray()+tc.column, text, textLen))     ;
 
       if (found) {
         // found match
-        userLine = line;
-        userCol = col;
+        userLine = tc.line;
+        userCol = tc.column;
         return true;
       }
 
       if (flags & FS_BACKWARDS) {
-        col--;
+        tc.column--;
       }
       else {
-        col++;
+        tc.column++;
       }
     }
 
@@ -248,14 +247,14 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
 
     // wrap to next line
     if (flags & FS_BACKWARDS) {
-      line--;
-      if (line >= 0) {
-        col = lineLength(line)-textLen;
+      tc.line--;
+      if (tc.line >= 0) {
+        tc.column = lineLength(tc.line)-textLen;
       }
     }
     else {
-      col = 0;
-      line++;
+      tc.column = 0;
+      tc.line++;
     }
   }
 
@@ -341,7 +340,7 @@ void Buffer::advanceWithWrap(bool backwards)
 void Buffer::fillToCursor()
 {
   int rowfill, colfill;
-  computeSpaceFill(core(), line(), col(), rowfill, colfill);
+  computeSpaceFill(core(), cursor(), rowfill, colfill);
 
   if (rowfill==0 && colfill==0) {
     return;     // nothing to do
@@ -430,18 +429,20 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
 {
   pos(line1, col1);
   pos(line2, col2);
-  xassert(line1 < line2 ||
-          (line1==line2 && col1<=col2));
+
+  TextCoord tc1(line1, col1);
+  TextCoord tc2(line2, col2);
+  xassert(tc1 <= tc2);
 
   // truncate the endpoints
-  truncateCursor(core(), line1, col1);
-  truncateCursor(core(), line2, col2);
+  truncateCursor(core(), tc1);
+  truncateCursor(core(), tc2);
 
   // go to line2/col2, which is probably where the cursor already is
-  moveRelCursorTo(line2, col2);
+  moveRelCursorTo(tc2.line, tc2.column);
 
   // compute # of chars in span
-  int length = computeSpanLength(core(), line1, col1, line2, col2);
+  int length = computeSpanLength(core(), tc1, tc2);
 
   // delete them as a left deletion; the idea is I suspect the
   // original and final cursor are line2/col2, in which case the

@@ -189,8 +189,7 @@ STATICDEF void HE_text::insert(
   if (!reverse) {
     // insertion
     // ==> committed
-    int line = buf.line;
-    int col = buf.col;
+    TextCoord tc = buf.cursor();
 
     // excess text on the original line that gets floated down
     // to after the cursor on the last line
@@ -209,30 +208,30 @@ STATICDEF void HE_text::insert(
       int len = nl-p;
 
       // insert this text at line/col
-      buf.insertText(line, col, p, len);
-      col += len;
+      buf.insertText(tc, p, len);
+      tc.column += len;
 
       // insert newline
       if (nl < end) {
         // if there is text beyond 'col' on 'line-1', then that text
         // gets floated down to the end of the insertion
-        if (line==buf.line &&     // optimization: can only happen on first line
-            col < buf.lineLength(line)) {
+        if (tc.line==buf.line &&     // optimization: can only happen on first line
+            tc.column < buf.lineLength(tc.line)) {
           // this can only happen on the first line of the insertion
           // procedure, so check that we don't already have excess
           xassert(excess.size()==0);
 
           // get the excess
-          excess.setSize(buf.lineLength(line) - col);
-          buf.getLine(line, col, excess.getArrayNC(), excess.size());
+          excess.setSize(buf.lineLength(tc.line) - tc.column);
+          buf.getLine(tc, excess.getArrayNC(), excess.size());
 
           // remove it from the buffer
-          buf.deleteText(line, col, excess.size());
+          buf.deleteText(tc, excess.size());
         }
 
-        line++;
-        buf.insertLine(line);
-        col = 0;
+        tc.line++;
+        buf.insertLine(tc.line);
+        tc.column = 0;
         len++;   // so we skip '\n' too
       }
 
@@ -243,13 +242,12 @@ STATICDEF void HE_text::insert(
 
     // insert the floated excess text, if any
     if (excess.size() > 0) {
-      buf.insertText(line, col, excess.getArray(), excess.size());
+      buf.insertText(tc, excess.getArray(), excess.size());
     }
 
     if (!left) {
       // put cursor at end of inserted text
-      buf.line = line;
-      buf.col = col;
+      buf.setCursor(tc);
     }
   }
 
@@ -261,12 +259,10 @@ STATICDEF void HE_text::insert(
     // cannot use buf.line/col for this purpose, since I don't want to
     // modify them until after I'm committed to performing the
     // operation)
-    int beginLine = buf.line;
-    int beginCol = buf.col;
+    TextCoord begin = buf.cursor();
 
     // cursor for the purposes of this function
-    int line = beginLine;
-    int col = beginCol;
+    TextCoord tc = begin;
 
     // splice to perform at end?
     int pendingSplice = 0;
@@ -278,13 +274,12 @@ STATICDEF void HE_text::insert(
       // left deletion: handle this by walking the cursor backwards
       // the length of the expected deletion text to find the location
       // of the start of that text in the buffer
-      if (!walkBackwards(buf, line, col, textLen)) {
+      if (!walkBackwards(buf, tc, textLen)) {
         deletionMismatch();
       }
 
       // this is the actual beginning
-      beginLine = line;
-      beginCol = col;
+      begin = tc;
     }
 
     // from here on we're doing a right deletion, regardless of
@@ -293,7 +288,7 @@ STATICDEF void HE_text::insert(
     // check correspondence between the text in the event record and
     // what's in the buffer, without modifying the buffer yet
     Array<char> actualText(textLen);
-    if (!getTextSpan(buf, line, col, actualText, textLen)) {
+    if (!getTextSpan(buf, tc, actualText, textLen)) {
       deletionMismatch();      // span isn't valid
     }
     if (0!=memcmp(text, (char const*)actualText, textLen)) {
@@ -303,8 +298,7 @@ STATICDEF void HE_text::insert(
     // ==> committed
 
     // contents are known to match, so delete the text
-    line = beginLine;
-    col = beginCol;
+    tc = begin;
     char const *p = text;
     char const *end = text+textLen;
     while (p < end) {
@@ -318,24 +312,24 @@ STATICDEF void HE_text::insert(
       int len = nl-p;
 
       // delete the segment
-      buf.deleteText(line, col, len);
+      buf.deleteText(tc, len);
 
       // bypass newline
       if (nl < end) {
         // we deleted all text on this line after 'col'
-        xassert(buf.lineLength(line) == col);
+        xassert(buf.lineLength(tc.line) == tc.column);
 
-        if (col == 0) {
+        if (tc.column == 0) {
           // we're at the beginning of a line, and it is now empty,
           // so just delete this line
-          buf.deleteLine(line);
+          buf.deleteLine(tc.line);
         }
         else {
           // move line/col to beginning of next line, so that from
           // now on we can work with whole deleted lines, but remember
           // that there's a pending line splice
-          line++;
-          col=0;
+          tc.line++;
+          tc.column=0;
           pendingSplice++;
         }
         len++;   // so we skip '\n' too
@@ -347,29 +341,28 @@ STATICDEF void HE_text::insert(
 
     if (pendingSplice) {
       xassert(pendingSplice == 1);       // should only have one splice
-      xassert(col == 0);                 // it's this entire line that goes
+      xassert(tc.column == 0);                 // it's this entire line that goes
 
       // grab this line's contents
-      int spliceLen = buf.lineLength(line);
+      int spliceLen = buf.lineLength(tc.line);
       Array<char> splice(spliceLen);
-      buf.getLine(line, col, splice, spliceLen);
+      buf.getLine(tc, splice, spliceLen);
 
       // blow it away
-      buf.deleteText(line, col, spliceLen);
-      buf.deleteLine(line);
+      buf.deleteText(tc, spliceLen);
+      buf.deleteLine(tc.line);
 
       // move up to end of previous line
-      line--;
-      col = buf.lineLength(line);
+      tc.line--;
+      tc.column = buf.lineLength(tc.line);
 
       // append splice text
-      buf.insertText(line, col, splice.ptrC(), spliceLen);
+      buf.insertText(tc, splice.ptrC(), spliceLen);
     }
 
     // update buffer cursor; this only changes it if we were doing a
     // *left* deletion
-    buf.line = beginLine;
-    buf.col = beginCol;
+    buf.setCursor(begin);
     xassert(buf.cursorInDefined());
   }
 }
@@ -381,17 +374,16 @@ void HE_text::computeText(CursorBuffer const &buf, int count)
   xassert(text == NULL);
   xassert(buf.cursorInDefined());
 
-  int line = buf.line;
-  int col = buf.col;
+  TextCoord tc = buf.cursor();
 
   if (left) {
-    if (!walkBackwards(buf, line, col, count)) {
+    if (!walkBackwards(buf, tc, count)) {
       xfailure("deletion span is not entirely within defined text area");
     }
   }
 
   text = new char[count];
-  if (!getTextSpan(buf, line, col, text, count)) {
+  if (!getTextSpan(buf, tc, text, count)) {
     delete[] text;
     text = NULL;
     xfailure("deletion span is not entirely within defined text area");

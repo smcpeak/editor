@@ -334,10 +334,10 @@ public:      // funcs
   string getSelectedText();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line);
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line);
-  virtual void observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length);
-  virtual void observeDeleteText(TextDocumentCore const &buf, int line, int col, int length);
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
 
   // called by an input proxy when it detaches; I can
   // reset the mode pixmap then

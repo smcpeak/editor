@@ -58,8 +58,8 @@ public:      // funcs
   // TextDocumentObserver funcs
   virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
   virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length) override;
-  virtual void observeDeleteText(TextDocumentCore const &buf, int line, int col, int length) override;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
 
   // Highlighter funcs
   virtual void highlight(TextDocumentCore const &buf, int line,

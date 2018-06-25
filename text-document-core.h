@@ -1,47 +1,48 @@
 // text-document-core.h
-// representation of a buffer of text (one file) in the editor
+// Representation of a text document for use in a text editor.
 
-// see disussion at end of file, regarding mapping between a
+// see discussion at end of file, regarding mapping between a
 // file's on-disk representation and this in-memory representation
 
 #ifndef TEXT_DOCUMENT_CORE_H
 #define TEXT_DOCUMENT_CORE_H
 
-#include "gap.h"        // GapArray
-#include "str.h"        // string
-#include "sobjlist.h"   // SObjList
+#include "gap.h"                       // GapArray
+#include "textcoord.h"                 // TextCoord
 
-// fwd in this file
+#include "str.h"                       // string
+#include "sobjlist.h"                  // SObjList
+
+// Forward in this file.
 class TextDocumentObserver;
 
 
-// the contents of a file; any attempt to read or write the contents
-// must go through this interface
-// NOTE: lines and columns are 0-based
+// A text document is a non-empty sequence of lines.
+//
+// To convert them to an on-disk text file, a single newline character
+// is inserted *between* every pair of lines.  Consequently, the
+// document consisting of one empty line corresponds to an on-disk file
+// with 0 bytes.
+//
+// A line is a possibly empty sequence of Latin-1 code points, each
+// in [0,255].  TODO: Change to Unicode code points.
+//
+// Column numbers as conveyed by TextCoord are in units of code points.
+// Among other things, that means it is possible to name the pieces of
+// a combining sequence individually.  (But Latin-1 has none.)
+//
+// All uses of char* in this interface use Latin-1 encoding.  If 'char'
+// is signed, the values [-128,-1] are interpreted as naming the code
+// points in [128,255] instead.  TODO: Change to UTF-8 encoding.
+//
+// This class is the "core" of a text document because it does not have
+// any facilities for undo and redo.  Those are added by TextDocument
+// (declared in text-document.h).
 class TextDocumentCore {
 private:   // data
-  // This array is the spine of the editor.  Every element is either
+  // This array is the spine of the document.  Every element is either
   // NULL, meaning a blank line, or is an owner pointer to a
   // '\n'-terminated array of chars that represent the line's contents.
-  //
-  // When I designed this, I didn't pay any attention to character
-  // encodings.  Currently, when it paints the screen, editor.cc
-  // imposes the interpretation that the text is stored as some 8-bit
-  // encoding, and the glyphs in my default (and currently only!) font
-  // further constrain the encoding to specifically be Latin-1.
-  //
-  // That is somewhat at odds with using 'char' rather than 'unsigned
-  // char', since in C++ it is implementation-defined whether plain
-  // 'char' is signed, as I intend to represent values in [0,255].
-  // However, changing everything to 'unsigned char' would accomplish
-  // very little in practice (since I only interpret the meaning of the
-  // data in one place, in editor.cc), and would not address the more
-  // fundamental problem of being restricted to an 8-bit encoding.
-  //
-  // TODO: This unintentional and limited design needs to be replaced.
-  // Note that it affects not just this member but the interface of
-  // every member function that gets or manipulates the stored text,
-  // or that deals with "character" positions or counts.
   GapArray<char*> lines;
 
   // the most-recently edited line number, or -1 to mean that
@@ -75,10 +76,13 @@ private:   // funcs
   // bounds check line
   void bc(int line) const { xassert(0 <= line && line < numLines()); }
 
+  // Counds check a coordinate.
+  void bctc(TextCoord tc) const { xassert(locationInDefined(tc)); }
+
   // copy the given line into 'recentLine', with given hints as to
   // where the gap should go and how big it should be
-  // postcondition: recent==line
-  void attachRecent(int line, int insCol, int insLength);
+  // postcondition: recent==tc.line
+  void attachRecent(TextCoord tc, int insLength);
 
   // copy contents of 'recentLine', if any, back into lines[];
   // postcondition: recent==-1
@@ -89,7 +93,7 @@ private:   // funcs
   void seenLineLength(int len);
 
 public:    // funcs
-  TextDocumentCore();        // file initially contains one empty line (see comments at end)
+  TextDocumentCore();        // one empty line
   ~TextDocumentCore();
 
 
@@ -100,25 +104,37 @@ public:    // funcs
   // length of a given line, not including the '\n'
   int lineLength(int line) const;
 
-  // get part of a line's contents, starting at 'col' and getting
+  // check if a given location is within or at the edge of the defined
+  // buffer contents (i.e. such that an 'insertText' would be allowed)
+  //
+  // TODO: Rename to 'valid'.
+  bool locationInDefined(TextCoord tc) const;
+
+  // True if line/col is the very end of the defined area.
+  //
+  // TODO: Move out of this class.
+  bool locationAtEnd(TextCoord tc) const;
+
+  // get part of a line's contents, starting at 'tc' and getting
   // 'destLen' chars; all chars must be in the line now; the retrieved
   // text never includes the '\n' character
-  void getLine(int line, int col, char *dest, int destLen) const;
+  //
+  // TODO: I want a method to get an arbitrary span.  I also want one
+  // to retrieve an entire line, with or without its newline character.
+  void getLine(TextCoord tc, char *dest, int destLen) const;
 
   // Maximum length of a line.  TODO: Implement this properly (right
   // now it just uses the length of the longest line ever seen, even
   // if that line is subsequently deleted).
   int maxLineLength() const { return longestLengthSoFar; }
 
-  // check if a given location is within or at the edge of the defined
-  // buffer contents (i.e. such that an 'insertText' would be allowed)
-  bool locationInDefined(int line, int col) const;
-
-  // True if line/col is the very end of the defined area.
-  bool locationAtEnd(int line, int col) const;
-
 
   // ---- manipulation interface ----
+
+  // TODO: I would rather the fundamental interface consist of a single
+  // 'insert' and single 'delete' method because this interface makes
+  // the undo/redo history unnecessarily complex.
+
   // insert a new blank line, where the new line will be line 'line';
   // 'line' must be in [0,numLines()]
   void insertLine(int line);
@@ -130,10 +146,10 @@ public:    // funcs
   // insert text into a given line, starting at the given column;
   // 'col' must be in [0,lineLength(line)]; the inserted text must
   // *not* contain the '\n' character
-  void insertText(int line, int col, char const *text, int length);
+  void insertText(TextCoord tc, char const *text, int length);
 
   // delete text
-  void deleteText(int line, int col, int length);
+  void deleteText(TextCoord tc, int length);
 
 
   // ---- debugging ----
@@ -173,36 +189,36 @@ void writeFile(TextDocumentCore const &buf, char const *fname);
 // line/col must initially be in the defined area, but if by walking
 // we get out of bounds, then the function simply returns false
 // (otherwise true)
-bool walkCursor(TextDocumentCore const &buf, int &line, int &col, int len);
+bool walkCursor(TextDocumentCore const &buf, TextCoord &cursor, int len);
 
-inline bool walkBackwards(TextDocumentCore const &buf, int &line, int &col, int len)
-  { return walkCursor(buf, line, col, -len); }
+inline bool walkBackwards(TextDocumentCore const &buf, TextCoord &cursor, int len)
+  { return walkCursor(buf, cursor, -len); }
 
-// truncate the given line/col so it's within the defined area
-void truncateCursor(TextDocumentCore const &buf, int &line, int &col);
+// Truncate the given coordinate so it's within the defined area.
+void truncateCursor(TextDocumentCore const &buf, TextCoord &tc);
 
 
 // retrieve text that may span line boundaries; line boundaries are
 // represented in the returned string as newlines; the span begins at
-// line/col (which must be in the defined area) and proceeds for
+// 'tc' (which must be in the defined area) and proceeds for
 // 'textLen' chars, but if that goes beyond the end then this simply
 // returns false (otherwise true); if it returns true then exactly
 // 'textLen' chars have been written into 'text'
-bool getTextSpan(TextDocumentCore const &buf, int line, int col,
+bool getTextSpan(TextDocumentCore const &buf, TextCoord tc,
                  char *text, int textLen);
 
-// given a line/col that might be outside the buffer area (but must
+// given a coordinate that might be outside the buffer area (but must
 // both be nonnegative), compute how many rows and spaces need to
-// be added (to EOF, and 'line', respectively) so that line/col will
+// be added (to EOF, and 'line', respectively) so that coordinate will
 // be in the defined area
-void computeSpaceFill(TextDocumentCore const &buf, int line, int col,
+void computeSpaceFill(TextDocumentCore const &buf, TextCoord tc,
                       int &rowfill, int &colfill);
 
-// given two locations that are within the defined area, and with
-// line1/col1 <= line2/col2, compute the # of chars between them,
-// counting line boundaries as one char
-int computeSpanLength(TextDocumentCore const &buf, int line1, int col1,
-                      int line2, int col2);
+// Given two locations that are within the defined area, and with
+// tc1 <= tc2, compute the # of chars between them, counting line
+// boundaries as one char.
+int computeSpanLength(TextDocumentCore const &buf, TextCoord tc1,
+                      TextCoord tc2);
 
 
 // interface for observing changes to a TextDocumentCore
@@ -221,13 +237,16 @@ public:
   // default implementations do nothing.
   virtual void observeInsertLine(TextDocumentCore const &buf, int line);
   virtual void observeDeleteLine(TextDocumentCore const &buf, int line);
-  virtual void observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length);
-  virtual void observeDeleteText(TextDocumentCore const &buf, int line, int col, int length);
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length);
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length);
 };
 
 
 
 /*
+  2018-06-25: The following discussion is potentially out of date, as I
+  am in the middle of a major refactoring.  Hopefully I will remember
+  to revise it when I am done.
 
   For my purposes, mathematically a file is a sequence of lines, each
   of which is a sequence of characters.  TextDocumentCore embodies this

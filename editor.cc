@@ -1949,12 +1949,12 @@ void Editor::observeDeleteLine(TextDocumentCore const &buf, int line)
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void Editor::observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length)
+void Editor::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int)
 {
   redraw();
 }
 
-void Editor::observeDeleteText(TextDocumentCore const &buf, int line, int col, int length)
+void Editor::observeDeleteText(TextDocumentCore const &, TextCoord, int)
 {
   redraw();
 }

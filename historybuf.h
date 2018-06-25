@@ -71,12 +71,13 @@ public:      // funcs
   int numLines() const                    { return buf.numLines(); }
   int lineLength(int line) const          { return buf.lineLength(line); }
   void getLine(int line, int col, char *dest, int destLen) const
-    { return buf.getLine(line, col, dest, destLen); }
+    { return buf.getLine(TextCoord(line, col), dest, destLen); }
   int maxLineLength() const               { return buf.maxLineLength(); }
 
   // cursor
   int line() const                        { return buf.line; }
   int col() const                         { return buf.col; }
+  TextCoord cursor() const                { return buf.cursor(); }
   bool cursorAtEnd() const                { return buf.cursorAtEnd(); }
 
   // current contents differ from those on disk?

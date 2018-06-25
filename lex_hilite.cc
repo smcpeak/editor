@@ -146,14 +146,14 @@ void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line)
 
 
 
-void LexHighlighter::observeInsertText(TextDocumentCore const &, int line, int, char const *, int)
+void LexHighlighter::observeInsertText(TextDocumentCore const &, TextCoord tc, char const *, int)
 {
-  addToChanged(line);
+  addToChanged(tc.line);
 }
 
-void LexHighlighter::observeDeleteText(TextDocumentCore const &, int line, int, int)
+void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextCoord tc, int)
 {
-  addToChanged(line);
+  addToChanged(tc.line);
 }
 
 

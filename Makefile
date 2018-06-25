@@ -100,29 +100,29 @@ testgap: gap.h testgap.cc
 
 
 # -------------- text-document-core test program ----------------
-TOCLEAN += text-document-core buffer.tmp
-TEXT_DOCUMENT_CORE_OBJS := text-document-core.cc
+TOCLEAN += text-document-core text-document-core.tmp
+TEXT_DOCUMENT_CORE_OBJS := text-document-core.cc textcoord.o
 text-document-core: gap.h $(TEXT_DOCUMENT_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_TEXT_DOCUMENT_CORE $(TEXT_DOCUMENT_CORE_OBJS) $(CONSOLE_LDFLAGS)
 	./text-document-core >/dev/null 2>&1
 
 # -------------- historybuf test program ----------------
 TOCLEAN += historybuf historybuf.tmp
-HISTORYBUF_OBJS := historybuf.cc history.o text-document-core.o
+HISTORYBUF_OBJS := historybuf.cc history.o text-document-core.o textcoord.o
 historybuf: gap.h $(HISTORYBUF_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_HISTORYBUF $(HISTORYBUF_OBJS) $(CONSOLE_LDFLAGS)
 	./historybuf >/dev/null 2>&1
 
 # -------------- buffer test program ----------------
 TOCLEAN += buffer
-BUFFER_OBJS := buffer.cc text-document-core.o history.o historybuf.o
+BUFFER_OBJS := buffer.cc text-document-core.o textcoord.o history.o historybuf.o
 buffer: gap.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) $(CONSOLE_LDFLAGS)
 	./buffer >/dev/null 2>&1
 
 # -------------- justify test program ----------------
 TOCLEAN += test-justify
-JUSTIFY_OBJS := test-justify.o justify.o buffer.o text-document-core.o history.o historybuf.o
+JUSTIFY_OBJS := test-justify.o justify.o buffer.o text-document-core.o textcoord.o history.o historybuf.o
 test-justify: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(GUI_LDFLAGS)
 	./test-justify >/dev/null 2>&1
@@ -146,6 +146,7 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 
 C_HILITE_OBJS := \
   text-document-core.o \
+  textcoord.o \
   history.o \
   historybuf.o \
   buffer.o \
@@ -168,7 +169,6 @@ main.o: keybindings.doc.gen.h
 
 EDITOR_OBJS := \
   buffer.o \
-  text-document-core.o \
   bufferstate.o \
   c_hilite.yy.o \
   comment.yy.o \
@@ -187,7 +187,9 @@ EDITOR_OBJS := \
   pixmaps.o \
   status.o \
   textcategory.o \
-  styledb.o
+  styledb.o \
+  text-document-core.o \
+  textcoord.o
 -include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor

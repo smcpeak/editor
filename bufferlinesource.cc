@@ -36,7 +36,7 @@ int BufferLineSource::fillBuffer(char* buf, int max_size)
   }
 
   int len = min(max_size, lineLength-nextSlurpCol);
-  buffer->getLine(bufferLine, nextSlurpCol, buf, len);
+  buffer->getLine(TextCoord(bufferLine, nextSlurpCol), buf, len);
   nextSlurpCol += len;
 
   return len;

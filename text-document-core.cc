@@ -1,17 +1,17 @@
 // text-document-core.cc
 // code for text-document-core.h
 
-#include "text-document-core.h"    // this module
+#include "text-document-core.h"        // this module
 
-#include "strutil.h"       // encodeWithEscapes
-#include "syserr.h"        // xsyserror
-#include "test.h"          // USUAL_MAIN, PVAL
-#include "autofile.h"      // AutoFILE
-#include "array.h"         // Array
+#include "array.h"                     // Array
+#include "autofile.h"                  // AutoFILE
+#include "strutil.h"                   // encodeWithEscapes
+#include "syserr.h"                    // xsyserror
+#include "test.h"                      // USUAL_MAIN, PVAL
 
-#include <assert.h>        // assert
-#include <ctype.h>         // isalnum, isspace
-#include <string.h>        // strncasecmp
+#include <assert.h>                    // assert
+#include <ctype.h>                     // isalnum, isspace
+#include <string.h>                    // strncasecmp
 
 
 // ---------------------- TextDocumentCore --------------------------
@@ -73,26 +73,26 @@ void TextDocumentCore::detachRecent()
 }
 
 
-void TextDocumentCore::attachRecent(int line, int insCol, int insLength)
+void TextDocumentCore::attachRecent(TextCoord tc, int insLength)
 {
-  if (recent == line) { return; }
+  if (recent == tc.line) { return; }
   detachRecent();
 
-  char const *p = lines.get(line);
+  char const *p = lines.get(tc.line);
   int len = bufStrlen(p);
   if (len) {
     // copy contents into 'recentLine'
-    recentLine.fillFromArray(p, len, insCol, insLength);
+    recentLine.fillFromArray(p, len, tc.column, insLength);
 
     // deallocate the source
     delete[] p;
-    lines.set(line, NULL);
+    lines.set(tc.line, NULL);
   }
   else {
     xassert(recentLine.length() == 0);
   }
 
-  recent = line;
+  recent = tc.line;
 }
 
 
@@ -124,34 +124,34 @@ STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 }
 
 
-void TextDocumentCore::getLine(int line, int col, char *dest, int destLen) const
+void TextDocumentCore::getLine(TextCoord tc, char *dest, int destLen) const
 {
-  bc(line);
+  bc(tc.line);
   xassert(destLen >= 0);
 
-  if (line == recent) {
-    recentLine.writeIntoArray(dest, destLen, col);
+  if (tc.line == recent) {
+    recentLine.writeIntoArray(dest, destLen, tc.column);
   }
   else {
-    char const *p = lines.get(line);
+    char const *p = lines.get(tc.line);
     int len = bufStrlen(p);
-    xassert(0 <= col && col+destLen <= len);
+    xassert(0 <= tc.column && tc.column + destLen <= len);
 
-    memcpy(dest, p+col, destLen);
+    memcpy(dest, p + tc.column, destLen);
   }
 }
 
 
-bool TextDocumentCore::locationInDefined(int line, int col) const
+bool TextDocumentCore::locationInDefined(TextCoord tc) const
 {
-  return 0 <= line && line < numLines() &&
-         0 <= col  && col <= lineLength(line);     // at EOL is ok
+  return 0 <= tc.line && tc.line < numLines() &&
+         0 <= tc.column  && tc.column <= lineLength(tc.line); // at EOL is ok
 }
 
 
-bool TextDocumentCore::locationAtEnd(int line, int col) const
+bool TextDocumentCore::locationAtEnd(TextCoord tc) const
 {
-  return line == numLines()-1 && col == lineLength(line);
+  return tc.line == numLines()-1 && tc.column == lineLength(tc.line);
 }
 
 
@@ -202,10 +202,11 @@ void TextDocumentCore::deleteLine(int const line)
 }
 
 
-void TextDocumentCore::insertText(int const line, int const col,
-                            char const * const text, int const length)
+void TextDocumentCore::insertText(TextCoord const tc,
+                                  char const * const text,
+                                  int const length)
 {
-  bc(line);
+  bctc(tc);
 
   #ifndef NDEBUG
     for (int i=0; i<length; i++) {
@@ -213,56 +214,56 @@ void TextDocumentCore::insertText(int const line, int const col,
     }
   #endif
 
-  if (col==0 && lineLength(line)==0 && line!=recent) {
+  if (tc.column==0 && lineLength(tc.line)==0 && tc.line!=recent) {
     // setting a new line, can leave 'recent' alone
     char *p = new char[length+1];
     memcpy(p, text, length);
     p[length] = '\n';
-    lines.set(line, p);
+    lines.set(tc.line, p);
 
     seenLineLength(length);
   }
   else {
     // use recent
-    attachRecent(line, col, length);
-    recentLine.insertMany(col, text, length);
+    attachRecent(tc, length);
+    recentLine.insertMany(tc.column, text, length);
 
     seenLineLength(recentLine.length());
   }
 
   SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
-    iter.data()->observeInsertText(*this, line, col, text, length);
+    iter.data()->observeInsertText(*this, tc, text, length);
   }
 }
 
 
-void TextDocumentCore::deleteText(int const line, int const col, int const length)
+void TextDocumentCore::deleteText(TextCoord const tc, int const length)
 {
-  bc(line);
+  bctc(tc);
 
-  if (col==0 && length==lineLength(line) && line!=recent) {
+  if (tc.column==0 && length==lineLength(tc.line) && tc.line!=recent) {
     // removing entire line, no need to move 'recent'
-    char *p = lines.get(line);
+    char *p = lines.get(tc.line);
     if (p) {
       delete[] p;
     }
-    lines.set(line, NULL);
+    lines.set(tc.line, NULL);
   }
   else {
     // use recent
-    attachRecent(line, col, 0);
-    recentLine.removeMany(col, length);
+    attachRecent(tc, 0);
+    recentLine.removeMany(tc.column, length);
   }
 
   SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
-    iter.data()->observeDeleteText(*this, line, col, length);
+    iter.data()->observeDeleteText(*this, tc, length);
   }
 }
 
 
 void TextDocumentCore::dumpRepresentation() const
 {
-  printf("-- buffer --\n");
+  printf("-- text-document-core --\n");
 
   // lines
   int L, G, R;
@@ -279,7 +280,7 @@ void TextDocumentCore::dumpRepresentation() const
     char *p = NULL;
     if (len) {
       p = new char[len];
-      getLine(i, 0, p, len);
+      getLine(TextCoord(i, 0), p, len);
     }
 
     printf("  line %d: \"%s\"\n", i,
@@ -319,10 +320,11 @@ void TextDocumentCore::printMemStats() const
 
     int alloc = 0;
     if (p) {
-      alloc = textBytes+1;   // for '\n'
-      overheadBytes += 4;    // malloc's internal 'size' field
+      alloc = textBytes+1;                // for '\n'
+      overheadBytes += sizeof(size_t);    // malloc's internal 'size' field
     }
-    intFragBytes = (alloc%4)? (4 - alloc%4) : 0;    // bytes to round up to 4
+    int sst = sizeof(size_t);
+    intFragBytes = (alloc%sst)? (sst - alloc%sst) : 0;    // bytes to round up
   }
 
   PVAL(textBytes);
@@ -344,30 +346,30 @@ void TextDocumentCore::seenLineLength(int len)
 
 
 // ------------------- TextDocumentCore utilities --------------------
-void clear(TextDocumentCore &buf)
+void clear(TextDocumentCore &doc)
 {
-  while (buf.numLines() > 1) {
-    buf.deleteText(0, 0, buf.lineLength(0));
-    buf.deleteLine(0);
+  while (doc.numLines() > 1) {
+    doc.deleteText(TextCoord(0, 0), doc.lineLength(0));
+    doc.deleteLine(0);
   }
 
   // delete contents of last remaining line
-  buf.deleteText(0, 0, buf.lineLength(0));
+  doc.deleteText(TextCoord(0, 0), doc.lineLength(0));
 }
 
 
-void readFile(TextDocumentCore &buf, char const *fname)
+void readFile(TextDocumentCore &doc, char const *fname)
 {
   AutoFILE fp(fname, "rb");
 
   // clear only once the file has been successfully opened
-  clear(buf);
+  clear(doc);
 
   enum { BUFSIZE=0x2000 };     // 8k
   char buffer[BUFSIZE];
 
-  int line = 0;
-  int col = 0;
+  // Location of the end of the document as it is being built.
+  TextCoord tc(0,0);
 
   for (;;) {
     int len = fread(buffer, 1, BUFSIZE, fp);
@@ -388,15 +390,15 @@ void readFile(TextDocumentCore &buf, char const *fname)
       }
 
       // insert this line fragment
-      buf.insertText(line, col, p, nl-p);
-      col += nl-p;
+      doc.insertText(tc, p, nl-p);
+      tc.column += nl-p;
 
       if (nl < end) {
         // skip newline
         nl++;
-        line++;
-        buf.insertLine(line);
-        col=0;
+        tc.line++;
+        doc.insertLine(tc.line);
+        tc.column=0;
       }
       p = nl;
     }
@@ -405,18 +407,19 @@ void readFile(TextDocumentCore &buf, char const *fname)
 }
 
 
-void writeFile(TextDocumentCore const &buf, char const *fname)
+void writeFile(TextDocumentCore const &doc, char const *fname)
 {
   AutoFILE fp(fname, "wb");
 
+  // Buffer into which we will copy each line before writing it out.
   GrowArray<char> buffer(256 /*initial size*/);
 
-  for (int line=0; line < buf.numLines(); line++) {
-    int len = buf.lineLength(line);
+  for (int line=0; line < doc.numLines(); line++) {
+    int len = doc.lineLength(line);
     buffer.ensureIndexDoubler(len);       // text + possible newline
 
-    buf.getLine(line, 0, buffer.getArrayNC(), len);
-    if (line < buf.numLines()-1) {        // last gets no newline
+    doc.getLine(TextCoord(line, 0), buffer.getArrayNC(), len);
+    if (line < doc.numLines()-1) {        // last gets no newline
       buffer[len] = '\n';
       len++;
     }
@@ -428,35 +431,35 @@ void writeFile(TextDocumentCore const &buf, char const *fname)
 }
 
 
-bool walkCursor(TextDocumentCore const &buf, int &line, int &col, int len)
+bool walkCursor(TextDocumentCore const &doc, TextCoord &tc, int len)
 {
-  xassert(buf.locationInDefined(line, col));
+  xassert(doc.locationInDefined(tc));
 
   for (; len > 0; len--) {
-    if (col == buf.lineLength(line)) {
+    if (tc.column == doc.lineLength(tc.line)) {
       // cycle to next line
-      line++;
-      if (line >= buf.numLines()) {
+      tc.line++;
+      if (tc.line >= doc.numLines()) {
         return false;      // beyond EOF
       }
-      col=0;
+      tc.column=0;
     }
     else {
-      col++;
+      tc.column++;
     }
   }
 
   for (; len < 0; len++) {
-    if (col == 0) {
+    if (tc.column == 0) {
       // cycle up to end of preceding line
-      line--;
-      if (line < 0) {
+      tc.line--;
+      if (tc.line < 0) {
         return false;      // before BOF
       }
-      col = buf.lineLength(line);
+      tc.column = doc.lineLength(tc.line);
     }
     else {
-      col--;
+      tc.column--;
     }
   }
 
@@ -464,42 +467,42 @@ bool walkCursor(TextDocumentCore const &buf, int &line, int &col, int len)
 }
 
 
-void truncateCursor(TextDocumentCore const &buf, int &line, int &col)
+void truncateCursor(TextDocumentCore const &doc, TextCoord &tc)
 {
-  line = max(0, line);
-  col = max(0, col);
+  tc.line = max(0, tc.line);
+  tc.column = max(0, tc.column);
 
-  line = min(line, buf.numLines()-1);      // numLines>=1 always
-  col = min(col, buf.lineLength(line));
+  tc.line = min(tc.line, doc.numLines()-1);      // numLines>=1 always
+  tc.column = min(tc.column, doc.lineLength(tc.line));
 }
 
 
-bool getTextSpan(TextDocumentCore const &buf, int line, int col,
+bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
                  char *text, int textLen)
 {
-  xassert(buf.locationInDefined(line, col));
+  xassert(doc.locationInDefined(tc));
 
   int offset = 0;
   while (offset < textLen) {
     // how many chars remain on this line?
-    int thisLine = buf.lineLength(line) - col;
+    int thisLine = doc.lineLength(tc.line) - tc.column;
 
     if (textLen-offset <= thisLine) {
       // finish off with text from this line
-      buf.getLine(line, col, text+offset, textLen-offset);
+      doc.getLine(tc, text+offset, textLen-offset);
       return true;
     }
 
     // get all of this line, plus a newline
-    buf.getLine(line, col, text+offset, thisLine);
+    doc.getLine(tc, text+offset, thisLine);
     offset += thisLine;
     text[offset++] = '\n';
 
     // move cursor to beginning of next line
-    line++;
-    col = 0;
+    tc.line++;
+    tc.column = 0;
 
-    if (line >= buf.numLines()) {
+    if (tc.line >= doc.numLines()) {
       return false;     // text span goes beyond end of file
     }
   }
@@ -508,12 +511,12 @@ bool getTextSpan(TextDocumentCore const &buf, int line, int col,
 }
 
 
-void computeSpaceFill(TextDocumentCore const &buf, int line, int col,
+void computeSpaceFill(TextDocumentCore const &doc, TextCoord tc,
                       int &rowfill, int &colfill)
 {
-  if (line < buf.numLines()) {
+  if (tc.line < doc.numLines()) {
     // case 1: only need to add spaces to the end of some line
-    int diff = col - buf.lineLength(line);
+    int diff = tc.column - doc.lineLength(tc.line);
     if (diff < 0) {
       diff = 0;
     }
@@ -523,8 +526,8 @@ void computeSpaceFill(TextDocumentCore const &buf, int line, int col,
 
   else {
     // case 2: need to add lines, then possibly add spaces
-    rowfill = (line - buf.numLines() + 1);    // # of lines to add
-    colfill = col;                            // # of cols to add
+    rowfill = (tc.line - doc.numLines() + 1);    // # of lines to add
+    colfill = tc.column;                         // # of cols to add
   }
 
   xassert(rowfill >= 0);
@@ -532,31 +535,30 @@ void computeSpaceFill(TextDocumentCore const &buf, int line, int col,
 }
 
 
-int computeSpanLength(TextDocumentCore const &buf, int line1, int col1,
-                      int line2, int col2)
+int computeSpanLength(TextDocumentCore const &doc, TextCoord tc1,
+                      TextCoord tc2)
 {
-  xassert(line1 < line2 ||
-          (line1==line2 && col1<=col2));
+  xassert(tc1 <= tc2);
 
-  if (line1 == line2) {
-    return col2-col1;
+  if (tc1.line == tc2.line) {
+    return tc2.column-tc1.column;
   }
 
   // tail of first line
-  int length = buf.lineLength(line1) - col1 +1;
+  int length = doc.lineLength(tc1.line) - tc1.column +1;
 
   // line we're working on now
-  line1++;
+  tc1.line++;
 
   // intervening complete lines
-  for (; line1 < line2; line1++) {
+  for (; tc1.line < tc2.line; tc1.line++) {
     // because we keep deleting lines, the next one is always
     // called 'line'
-    length += buf.lineLength(line1)+1;
+    length += doc.lineLength(tc1.line)+1;
   }
 
   // beginning of last line
-  length += col2;
+  length += tc2.column;
 
   return length;
 }
@@ -569,10 +571,10 @@ void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int)
 void TextDocumentObserver::observeDeleteLine(TextDocumentCore const &, int)
 {}
 
-void TextDocumentObserver::observeInsertText(TextDocumentCore const &, int, int, char const *, int)
+void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int)
 {}
 
-void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, int, int, int)
+void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord, int)
 {}
 
 
@@ -590,7 +592,7 @@ void entry()
 
     // build a text file
     {
-      AutoFILE fp("buffer.tmp", "w");
+      AutoFILE fp("text-document-core.tmp", "w");
 
       for (int i=0; i<2; i++) {
         for (int j=0; j<53; j++) {
@@ -603,42 +605,42 @@ void entry()
     }
 
     {
-      // read it as a buffer
-      TextDocumentCore buf;
-      readFile(buf, "buffer.tmp");
+      // Read it as a text document.
+      TextDocumentCore doc;
+      readFile(doc, "text-document-core.tmp");
 
       // dump its repr
-      //buf.dumpRepresentation();
+      //doc.dumpRepresentation();
 
       // write it out again
-      writeFile(buf, "buffer.tmp2");
+      writeFile(doc, "text-document-core.tmp2");
 
       printf("stats before dealloc:\n");
       malloc_stats();
 
       printf("\nbuffer mem usage stats:\n");
-      buf.printMemStats();
+      doc.printMemStats();
     }
 
     // make sure they're the same
-    if (system("diff buffer.tmp buffer.tmp2") != 0) {
+    if (system("diff text-document-core.tmp text-document-core.tmp2") != 0) {
       xbase("the files were different!\n");
     }
 
     // ok
-    system("ls -l buffer.tmp");
-    remove("buffer.tmp");
-    remove("buffer.tmp2");
+    system("ls -l text-document-core.tmp");
+    remove("text-document-core.tmp");
+    remove("text-document-core.tmp2");
 
     printf("stats after:\n");
     malloc_stats();
   }
 
   {
-    printf("reading buffer.cc ...\n");
-    TextDocumentCore buf;
-    readFile(buf, "buffer.cc");
-    buf.printMemStats();
+    printf("reading text-document-core.cc ...\n");
+    TextDocumentCore doc;
+    readFile(doc, "text-document-core.cc");
+    doc.printMemStats();
   }
 
   printf("stats after:\n");
