@@ -108,11 +108,6 @@ public:    // funcs
   // buffer contents (i.e. such that an 'insertText' would be allowed)
   bool validCoord(TextCoord tc) const;
 
-  // True if line/col is the very end of the defined area.
-  //
-  // TODO: Move out of this class.
-  bool locationAtEnd(TextCoord tc) const;
-
   // get part of a line's contents, starting at 'tc' and getting
   // 'destLen' chars; all chars must be in the line now; the retrieved
   // text never includes the '\n' character
@@ -162,6 +157,9 @@ public:    // funcs
 // utilities:
 // The functions here are organizationally like methods of TextDocumentCore,
 // except they cannot access that class's private fields.
+
+// Return the coordinates of the end of 'doc'.
+TextCoord endCoord(TextDocumentCore const &doc);
 
 // clear buffer contents, returning to just one empty line
 void clear(TextDocumentCore &buf);

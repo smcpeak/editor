@@ -38,7 +38,7 @@ public:
     { return this->validCoord(this->cursor()); }
 
   bool cursorAtEnd() const
-    { return this->locationAtEnd(this->cursor()); }
+    { return this->cursor() == endCoord(*this); }
 };
 
 
