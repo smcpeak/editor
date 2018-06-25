@@ -43,6 +43,11 @@ public:      // funcs
 
   bool isZero() const { return line==0 && column==0; }
 
+  // Although not disallowed, we provide a convenient way to test that
+  // coordinates are non-negative in case clients want to enforce that
+  // in certain places.
+  bool nonNegative() const { return line>=0 && column>=0; }
+
   // Insert as "<line>:<col>".
   void insert(std::ostream &os) const;
   void insert(stringBuilder &sb) const;
