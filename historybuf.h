@@ -67,7 +67,7 @@ public:      // funcs
   // read-only access to the underlying representation
   CursorBuffer const &core() const        { return buf; }
 
-  // BufferCore's queries, directly exposed
+  // TextDocumentCore's queries, directly exposed
   int numLines() const                    { return buf.numLines(); }
   int lineLength(int line) const          { return buf.lineLength(line); }
   void getLine(int line, int col, char *dest, int destLen) const

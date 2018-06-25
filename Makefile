@@ -127,6 +127,7 @@ test-justify: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(GUI_LDFLAGS)
 	./test-justify >/dev/null 2>&1
 
+-include test-justify.d
 
 # --------------- textcategory test program ----------------
 TOCLEAN += textcategory

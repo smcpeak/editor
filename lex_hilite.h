@@ -12,7 +12,7 @@
 class LexHighlighter : public Highlighter {
 private:     // data
   // buffer we're observing
-  BufferCore const &buffer;
+  TextDocumentCore const &buffer;
 
   // the lexer
   IncLexer &lexer;
@@ -52,23 +52,23 @@ private:     // funcs
   void saveLineState(int line, LexerState state);
 
 public:      // funcs
-  LexHighlighter(BufferCore const &buf, IncLexer &lex);
+  LexHighlighter(TextDocumentCore const &buf, IncLexer &lex);
   virtual ~LexHighlighter();
 
-  // BufferObserver funcs
-  virtual void observeInsertLine(BufferCore const &buf, int line) override;
-  virtual void observeDeleteLine(BufferCore const &buf, int line) override;
-  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length) override;
-  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length) override;
+  // TextDocumentObserver funcs
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
+  virtual void observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length) override;
+  virtual void observeDeleteText(TextDocumentCore const &buf, int line, int col, int length) override;
 
   // Highlighter funcs
-  virtual void highlight(BufferCore const &buf, int line,
+  virtual void highlight(TextDocumentCore const &buf, int line,
                          LineCategories &categories) override;
 };
 
 
 // make a highlighter
-typedef LexHighlighter * /*owner*/ (*MakeHighlighterFunc)(BufferCore const &buf);
+typedef LexHighlighter * /*owner*/ (*MakeHighlighterFunc)(TextDocumentCore const &buf);
 
 // exercise a highlighter class, given a factory that makes them
 void exerciseHighlighter(MakeHighlighterFunc func);

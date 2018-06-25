@@ -35,9 +35,9 @@ class StyleDB;              // styledb.h
 // I use inheritance to avoid any difference in syntax between the
 // two sets of members.
 class Editor
-  : public QWidget,            // I am a Qt widget.
-    public SavedEditingState,  // Cursor location, etc.
-    public BufferObserver {    // Watch my file while I don't have focus.
+  : public QWidget,               // I am a Qt widget.
+    public SavedEditingState,     // Cursor location, etc.
+    public TextDocumentObserver { // Watch my file while I don't have focus.
   Q_OBJECT
 
 public:     // static data
@@ -333,11 +333,11 @@ public:      // funcs
   // get selected text, or "" if nothing selected
   string getSelectedText();
 
-  // BufferObserver funcs
-  virtual void observeInsertLine(BufferCore const &buf, int line);
-  virtual void observeDeleteLine(BufferCore const &buf, int line);
-  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length);
-  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length);
+  // TextDocumentObserver funcs
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line);
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line);
+  virtual void observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length);
+  virtual void observeDeleteText(TextDocumentCore const &buf, int line, int col, int length);
 
   // called by an input proxy when it detaches; I can
   // reset the mode pixmap then

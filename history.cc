@@ -26,7 +26,7 @@ static void rollbackMismatch()
 
 // ----------------- CursorBuffer -----------------------
 CursorBuffer::CursorBuffer()
-  : BufferCore(),
+  : TextDocumentCore(),
     line(0),
     col(0)
 {}

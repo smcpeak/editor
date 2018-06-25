@@ -107,6 +107,18 @@
         "h": 50,
         "w": 160
       }
+    },
+    {
+      "attributes": "line: int\ncolumn: int\n",
+      "loc": {
+        "x": 295,
+        "y": 70
+      },
+      "name": "TextCoord",
+      "size": {
+        "h": 60,
+        "w": 75
+      }
     }
   ],
   "inheritances": [
@@ -228,6 +240,10 @@
       "end": {"entityRef": 8},
       "label": "editors[]",
       "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 9},
+      "start": {"entityRef": 6}
     }
   ],
   "type": "Diagram Editor Diagram",

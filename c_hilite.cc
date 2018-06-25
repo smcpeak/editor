@@ -6,12 +6,12 @@
 #include "test.h"          // USUAL_MAIN
 #include "trace.h"         // traceAddSys
 
-LexHighlighter * /*owner*/ makeC_Highlighter(BufferCore const &buf)
+LexHighlighter * /*owner*/ makeC_Highlighter(TextDocumentCore const &buf)
 {
   return new C_Highlighter(buf);
 }
 
-LexHighlighter * /*owner*/ makeCommentHighlighter(BufferCore const &buf)
+LexHighlighter * /*owner*/ makeCommentHighlighter(TextDocumentCore const &buf)
 {
   return new CommentHighlighter(buf);
 }

@@ -6,7 +6,7 @@
 
 #include "textcategory.h"              // TextCategory
 
-class BufferCore;                      // buffer.h
+class TextDocumentCore;                // buffer.h
 
 
 // saved-state value; using enum type so it can't get confused
@@ -21,7 +21,7 @@ public:
   // begin scanning a buffer line; must call this before any calls
   // to 'getNextToken'; 'state' is the result of a prior getState()
   // call, or LS_INITIAL for the beginning-of-file state
-  virtual void beginScan(BufferCore const *buffer, int line, LexerState state)=0;
+  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state)=0;
 
   // get next token in line, returning its length; 'code' signifies
   // what text style to use for the token, including the code for

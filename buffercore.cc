@@ -14,8 +14,8 @@
 #include <string.h>        // strncasecmp
 
 
-// ---------------------- BufferCore --------------------------
-BufferCore::BufferCore()
+// ---------------------- TextDocumentCore --------------------------
+TextDocumentCore::TextDocumentCore()
   : lines(),               // empty sequence of lines
     recent(-1),
     recentLine(),
@@ -26,7 +26,7 @@ BufferCore::BufferCore()
   lines.insert(0 /*line*/, NULL /*value*/);
 }
 
-BufferCore::~BufferCore()
+TextDocumentCore::~TextDocumentCore()
 {
   // We require that the client code arrange to empty the observer list
   // before this object is destroyed.  If it is not empty here, the
@@ -47,7 +47,7 @@ BufferCore::~BufferCore()
 }
 
 
-void BufferCore::detachRecent()
+void TextDocumentCore::detachRecent()
 {
   if (recent == -1) { return; }
 
@@ -73,7 +73,7 @@ void BufferCore::detachRecent()
 }
 
 
-void BufferCore::attachRecent(int line, int insCol, int insLength)
+void TextDocumentCore::attachRecent(int line, int insCol, int insLength)
 {
   if (recent == line) { return; }
   detachRecent();
@@ -96,7 +96,7 @@ void BufferCore::attachRecent(int line, int insCol, int insLength)
 }
 
 
-int BufferCore::lineLength(int line) const
+int TextDocumentCore::lineLength(int line) const
 {
   bc(line);
 
@@ -108,7 +108,7 @@ int BufferCore::lineLength(int line) const
   }
 }
 
-STATICDEF int BufferCore::bufStrlen(char const *p)
+STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 {
   if (p) {
     int ret = 0;
@@ -124,7 +124,7 @@ STATICDEF int BufferCore::bufStrlen(char const *p)
 }
 
 
-void BufferCore::getLine(int line, int col, char *dest, int destLen) const
+void TextDocumentCore::getLine(int line, int col, char *dest, int destLen) const
 {
   bc(line);
   xassert(destLen >= 0);
@@ -142,14 +142,14 @@ void BufferCore::getLine(int line, int col, char *dest, int destLen) const
 }
 
 
-bool BufferCore::locationInDefined(int line, int col) const
+bool TextDocumentCore::locationInDefined(int line, int col) const
 {
   return 0 <= line && line < numLines() &&
          0 <= col  && col <= lineLength(line);     // at EOL is ok
 }
 
 
-bool BufferCore::locationAtEnd(int line, int col) const
+bool TextDocumentCore::locationAtEnd(int line, int col) const
 {
   return line == numLines()-1 && col == lineLength(line);
 }
@@ -159,7 +159,7 @@ bool BufferCore::locationAtEnd(int line, int col) const
 // being passed to the observers; the same thing is done in the other
 // three mutator functions; the C++ standard explicitly allows 'const'
 // to be added here despite not having it in the .h file
-void BufferCore::insertLine(int const line)
+void TextDocumentCore::insertLine(int const line)
 {
   // insert a blank line
   lines.insert(line, NULL /*value*/);
@@ -169,13 +169,13 @@ void BufferCore::insertLine(int const line)
     recent++;
   }
 
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeInsertLine(*this, line);
   }
 }
 
 
-void BufferCore::deleteLine(int const line)
+void TextDocumentCore::deleteLine(int const line)
 {
   if (line == recent) {
     xassert(recentLine.length() == 0);
@@ -196,13 +196,13 @@ void BufferCore::deleteLine(int const line)
     recent--;
   }
 
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeDeleteLine(*this, line);
   }
 }
 
 
-void BufferCore::insertText(int const line, int const col,
+void TextDocumentCore::insertText(int const line, int const col,
                             char const * const text, int const length)
 {
   bc(line);
@@ -230,13 +230,13 @@ void BufferCore::insertText(int const line, int const col,
     seenLineLength(recentLine.length());
   }
 
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeInsertText(*this, line, col, text, length);
   }
 }
 
 
-void BufferCore::deleteText(int const line, int const col, int const length)
+void TextDocumentCore::deleteText(int const line, int const col, int const length)
 {
   bc(line);
 
@@ -254,13 +254,13 @@ void BufferCore::deleteText(int const line, int const col, int const length)
     recentLine.removeMany(col, length);
   }
 
-  SFOREACH_OBJLIST_NC(BufferObserver, observers, iter) {
+  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeDeleteText(*this, line, col, length);
   }
 }
 
 
-void BufferCore::dumpRepresentation() const
+void TextDocumentCore::dumpRepresentation() const
 {
   printf("-- buffer --\n");
 
@@ -294,7 +294,7 @@ void BufferCore::dumpRepresentation() const
 }
 
 
-void BufferCore::printMemStats() const
+void TextDocumentCore::printMemStats() const
 {
   // lines
   int L, G, R;
@@ -335,7 +335,7 @@ void BufferCore::printMemStats() const
 }
 
 
-void BufferCore::seenLineLength(int len)
+void TextDocumentCore::seenLineLength(int len)
 {
   if (len > longestLengthSoFar) {
     longestLengthSoFar = len;
@@ -343,8 +343,8 @@ void BufferCore::seenLineLength(int len)
 }
 
 
-// ------------------- BufferCore utilities --------------------
-void clear(BufferCore &buf)
+// ------------------- TextDocumentCore utilities --------------------
+void clear(TextDocumentCore &buf)
 {
   while (buf.numLines() > 1) {
     buf.deleteText(0, 0, buf.lineLength(0));
@@ -356,7 +356,7 @@ void clear(BufferCore &buf)
 }
 
 
-void readFile(BufferCore &buf, char const *fname)
+void readFile(TextDocumentCore &buf, char const *fname)
 {
   AutoFILE fp(fname, "rb");
 
@@ -405,7 +405,7 @@ void readFile(BufferCore &buf, char const *fname)
 }
 
 
-void writeFile(BufferCore const &buf, char const *fname)
+void writeFile(TextDocumentCore const &buf, char const *fname)
 {
   AutoFILE fp(fname, "wb");
 
@@ -428,7 +428,7 @@ void writeFile(BufferCore const &buf, char const *fname)
 }
 
 
-bool walkCursor(BufferCore const &buf, int &line, int &col, int len)
+bool walkCursor(TextDocumentCore const &buf, int &line, int &col, int len)
 {
   xassert(buf.locationInDefined(line, col));
 
@@ -464,7 +464,7 @@ bool walkCursor(BufferCore const &buf, int &line, int &col, int len)
 }
 
 
-void truncateCursor(BufferCore const &buf, int &line, int &col)
+void truncateCursor(TextDocumentCore const &buf, int &line, int &col)
 {
   line = max(0, line);
   col = max(0, col);
@@ -474,7 +474,7 @@ void truncateCursor(BufferCore const &buf, int &line, int &col)
 }
 
 
-bool getTextSpan(BufferCore const &buf, int line, int col,
+bool getTextSpan(TextDocumentCore const &buf, int line, int col,
                  char *text, int textLen)
 {
   xassert(buf.locationInDefined(line, col));
@@ -508,7 +508,7 @@ bool getTextSpan(BufferCore const &buf, int line, int col,
 }
 
 
-void computeSpaceFill(BufferCore const &buf, int line, int col,
+void computeSpaceFill(TextDocumentCore const &buf, int line, int col,
                       int &rowfill, int &colfill)
 {
   if (line < buf.numLines()) {
@@ -532,7 +532,7 @@ void computeSpaceFill(BufferCore const &buf, int line, int col,
 }
 
 
-int computeSpanLength(BufferCore const &buf, int line1, int col1,
+int computeSpanLength(TextDocumentCore const &buf, int line1, int col1,
                       int line2, int col2)
 {
   xassert(line1 < line2 ||
@@ -562,17 +562,17 @@ int computeSpanLength(BufferCore const &buf, int line1, int col1,
 }
 
 
-// -------------------- BufferObserver ------------------
-void BufferObserver::observeInsertLine(BufferCore const &, int)
+// -------------------- TextDocumentObserver ------------------
+void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int)
 {}
 
-void BufferObserver::observeDeleteLine(BufferCore const &, int)
+void TextDocumentObserver::observeDeleteLine(TextDocumentCore const &, int)
 {}
 
-void BufferObserver::observeInsertText(BufferCore const &, int, int, char const *, int)
+void TextDocumentObserver::observeInsertText(TextDocumentCore const &, int, int, char const *, int)
 {}
 
-void BufferObserver::observeDeleteText(BufferCore const &, int, int, int)
+void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, int, int, int)
 {}
 
 
@@ -604,7 +604,7 @@ void entry()
 
     {
       // read it as a buffer
-      BufferCore buf;
+      TextDocumentCore buf;
       readFile(buf, "buffer.tmp");
 
       // dump its repr
@@ -636,7 +636,7 @@ void entry()
 
   {
     printf("reading buffer.cc ...\n");
-    BufferCore buf;
+    TextDocumentCore buf;
     readFile(buf, "buffer.cc");
     buf.printMemStats();
   }

@@ -3,7 +3,7 @@
 
 #include "lex_hilite.h"                // this module
 
-#include "buffer.h"                    // BufferCore, Buffer
+#include "buffer.h"                    // TextDocumentCore, Buffer
 #include "inclexer.h"                  // IncLexer
 #include "strutil.h"                   // quoted
 #include "textcategory.h"              // LineCategories
@@ -12,7 +12,7 @@
 #include <stdlib.h>                    // exit
 
 
-LexHighlighter::LexHighlighter(BufferCore const &buf, IncLexer &L)
+LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
   : buffer(buf),
     lexer(L),
     savedState(),
@@ -104,7 +104,7 @@ LexerState LexHighlighter::getSavedState(int line)
 }
 
 
-void LexHighlighter::observeInsertLine(BufferCore const &, int line)
+void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line)
 {
   // if region ends after 'line', then now it ends one line later
   if (!changedIsEmpty() &&
@@ -125,7 +125,7 @@ void LexHighlighter::observeInsertLine(BufferCore const &, int line)
 }
 
 
-void LexHighlighter::observeDeleteLine(BufferCore const &, int line)
+void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line)
 {
   // if region ends after 'line', then now it ends one line earlier
   if (!changedIsEmpty() &&
@@ -146,12 +146,12 @@ void LexHighlighter::observeDeleteLine(BufferCore const &, int line)
 
 
 
-void LexHighlighter::observeInsertText(BufferCore const &, int line, int, char const *, int)
+void LexHighlighter::observeInsertText(TextDocumentCore const &, int line, int, char const *, int)
 {
   addToChanged(line);
 }
 
-void LexHighlighter::observeDeleteText(BufferCore const &, int line, int, int)
+void LexHighlighter::observeDeleteText(TextDocumentCore const &, int line, int, int)
 {
   addToChanged(line);
 }
@@ -197,7 +197,7 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
 }
 
 
-void LexHighlighter::highlight(BufferCore const &buf, int line, LineCategories &categories)
+void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCategories &categories)
 {
   xassert(&buf == &buffer);
 

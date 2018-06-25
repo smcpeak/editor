@@ -1,6 +1,6 @@
 // buffer.h
 // buffer as used by the editor:
-//   - core representation (BufferCore)
+//   - core representation (TextDocumentCore)
 //   - undo/redo history (HistoryBuffer)
 //   - convenience functions (this module)
 

@@ -4,7 +4,7 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include "buffercore.h"      // BufferCore
+#include "buffercore.h"      // TextDocumentCore
 #include "exc.h"             // xBase
 #include "ogap.h"            // OGapArray
 #include "str.h"             // stringBuilder
@@ -17,7 +17,7 @@ class HistoryStats;
 
 
 // buffer + cursor, the object that the history manipulates
-class CursorBuffer : public BufferCore {
+class CursorBuffer : public TextDocumentCore {
 public:
   // cursor location, intially 0,0
   int line, col;

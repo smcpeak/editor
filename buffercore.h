@@ -12,13 +12,13 @@
 #include "sobjlist.h"   // SObjList
 
 // fwd in this file
-class BufferObserver;
+class TextDocumentObserver;
 
 
 // the contents of a file; any attempt to read or write the contents
 // must go through this interface
 // NOTE: lines and columns are 0-based
-class BufferCore {
+class TextDocumentCore {
 private:   // data
   // This array is the spine of the editor.  Every element is either
   // NULL, meaning a blank line, or is an owner pointer to a
@@ -66,7 +66,7 @@ private:   // data
 
 public:    // data
   // list of observers; changeable even when '*this' is const
-  mutable SObjList<BufferObserver> observers;
+  mutable SObjList<TextDocumentObserver> observers;
 
 private:   // funcs
   // strlen, but NULL yields 0 and '\n' is terminator
@@ -89,8 +89,8 @@ private:   // funcs
   void seenLineLength(int len);
 
 public:    // funcs
-  BufferCore();        // file initially contains one empty line (see comments at end)
-  ~BufferCore();
+  TextDocumentCore();        // file initially contains one empty line (see comments at end)
+  ~TextDocumentCore();
 
 
   // ---- queries ----
@@ -146,11 +146,11 @@ public:    // funcs
 
 
 // utilities:
-// The functions here are organizationally like methods of BufferCore,
+// The functions here are organizationally like methods of TextDocumentCore,
 // except they cannot access that class's private fields.
 
 // clear buffer contents, returning to just one empty line
-void clear(BufferCore &buf);
+void clear(TextDocumentCore &buf);
 
 // Note: Currently, the file I/O operations assume that LF is
 // the sole line terminator.  Any CR characters in the file become
@@ -162,10 +162,10 @@ void clear(BufferCore &buf);
 // opened, throws XOpen and does not modify 'buf'.  However, if
 // there is a read error after that point, 'buf' will contain
 // unpredictable partial file contents.
-void readFile(BufferCore &buf, char const *fname);
+void readFile(TextDocumentCore &buf, char const *fname);
 
 // write a file
-void writeFile(BufferCore const &buf, char const *fname);
+void writeFile(TextDocumentCore const &buf, char const *fname);
 
 
 // walk the cursor forwards (right, then down; len>0) or backwards
@@ -173,13 +173,13 @@ void writeFile(BufferCore const &buf, char const *fname);
 // line/col must initially be in the defined area, but if by walking
 // we get out of bounds, then the function simply returns false
 // (otherwise true)
-bool walkCursor(BufferCore const &buf, int &line, int &col, int len);
+bool walkCursor(TextDocumentCore const &buf, int &line, int &col, int len);
 
-inline bool walkBackwards(BufferCore const &buf, int &line, int &col, int len)
+inline bool walkBackwards(TextDocumentCore const &buf, int &line, int &col, int len)
   { return walkCursor(buf, line, col, -len); }
 
 // truncate the given line/col so it's within the defined area
-void truncateCursor(BufferCore const &buf, int &line, int &col);
+void truncateCursor(TextDocumentCore const &buf, int &line, int &col);
 
 
 // retrieve text that may span line boundaries; line boundaries are
@@ -188,41 +188,41 @@ void truncateCursor(BufferCore const &buf, int &line, int &col);
 // 'textLen' chars, but if that goes beyond the end then this simply
 // returns false (otherwise true); if it returns true then exactly
 // 'textLen' chars have been written into 'text'
-bool getTextSpan(BufferCore const &buf, int line, int col,
+bool getTextSpan(TextDocumentCore const &buf, int line, int col,
                  char *text, int textLen);
 
 // given a line/col that might be outside the buffer area (but must
 // both be nonnegative), compute how many rows and spaces need to
 // be added (to EOF, and 'line', respectively) so that line/col will
 // be in the defined area
-void computeSpaceFill(BufferCore const &buf, int line, int col,
+void computeSpaceFill(TextDocumentCore const &buf, int line, int col,
                       int &rowfill, int &colfill);
 
 // given two locations that are within the defined area, and with
 // line1/col1 <= line2/col2, compute the # of chars between them,
 // counting line boundaries as one char
-int computeSpanLength(BufferCore const &buf, int line1, int col1,
+int computeSpanLength(TextDocumentCore const &buf, int line1, int col1,
                       int line2, int col2);
 
 
-// interface for observing changes to a BufferCore
-class BufferObserver {
+// interface for observing changes to a TextDocumentCore
+class TextDocumentObserver {
 protected:
   // this is to silence a g++ warning; it is *not* the case that
   // clients are allowed to delete objects known only as
-  // BufferObserver implementors
-  virtual ~BufferObserver() {}
+  // TextDocumentObserver implementors
+  virtual ~TextDocumentObserver() {}
 
 public:
-  // These are analogues of the BufferCore manipulation interface, but
-  // we also pass the BufferCore itself so the observer doesn't need
+  // These are analogues of the TextDocumentCore manipulation interface, but
+  // we also pass the TextDocumentCore itself so the observer doesn't need
   // to remember which buffer it's observing.  These are called
-  // *after* the BufferCore updates its internal representation.  The
+  // *after* the TextDocumentCore updates its internal representation.  The
   // default implementations do nothing.
-  virtual void observeInsertLine(BufferCore const &buf, int line);
-  virtual void observeDeleteLine(BufferCore const &buf, int line);
-  virtual void observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length);
-  virtual void observeDeleteText(BufferCore const &buf, int line, int col, int length);
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line);
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line);
+  virtual void observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length);
+  virtual void observeDeleteText(TextDocumentCore const &buf, int line, int col, int length);
 };
 
 
@@ -230,7 +230,7 @@ public:
 /*
 
   For my purposes, mathematically a file is a sequence of lines, each
-  of which is a sequence of characters.  BufferCore embodies this
+  of which is a sequence of characters.  TextDocumentCore embodies this
   abstraction of what a file is.
 
   On disk, however, a file is a sequence of bytes.  (For now I'm going
@@ -256,7 +256,7 @@ public:
   The one unexpected consequence of this mapping is that, since I want
   the mapping to be invertible, I must disallow the possibility of a
   file containing no lines at all, since there's no corresponding
-  on-disk representation of that condition.  BufferCore maintains the
+  on-disk representation of that condition.  TextDocumentCore maintains the
   invariant that there is always at least one line, so that we never
   have to deal with a file that it outside the disk-to-memory map
   range.
@@ -279,7 +279,7 @@ public:
   CursorBuffer itself doesn't deal with cursors much, except in
   its locationInDefined() method, but the surrounding functions
   and classes (esp. HistoryBuffer and Buffer) do, and since
-  BufferCore's design is motivated by the desire to support the
+  TextDocumentCore's design is motivated by the desire to support the
   notion of editing with a cursor, I include that notion in this
   discussion.
 

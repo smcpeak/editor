@@ -2,7 +2,7 @@
 // code for bufferlinesource.h
 
 #include "bufferlinesource.h"          // this module
-#include "buffer.h"                    // BufferCore
+#include "buffer.h"                    // TextDocumentCore
 
 
 BufferLineSource::BufferLineSource()
@@ -17,7 +17,7 @@ BufferLineSource::~BufferLineSource()
 {}
 
 
-void BufferLineSource::beginScan(BufferCore const *b, int line)
+void BufferLineSource::beginScan(TextDocumentCore const *b, int line)
 {
   // set up variables so we'll be able to do fillBuffer()
   buffer = b;

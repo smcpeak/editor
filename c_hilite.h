@@ -21,7 +21,7 @@ public:      // funcs
   ~C_Lexer();
 
   // IncLexer funcs
-  virtual void beginScan(BufferCore const *buffer, int line, LexerState state);
+  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state);
   virtual int getNextToken(TextCategory &code);
   virtual LexerState getState() const;
 };
@@ -33,7 +33,7 @@ private:     // data
   C_Lexer theLexer;
 
 public:      // funcs
-  C_Highlighter(BufferCore const &buf)
+  C_Highlighter(TextDocumentCore const &buf)
     : LexHighlighter(buf, theLexer) {}
 };
 

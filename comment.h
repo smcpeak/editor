@@ -22,7 +22,7 @@ public:      // funcs
   ~CommentLexer();
 
   // IncLexer funcs
-  virtual void beginScan(BufferCore const *buffer, int line, LexerState state);
+  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state);
   virtual int getNextToken(TextCategory &len);
   virtual LexerState getState() const;
 };
@@ -34,7 +34,7 @@ private:     // data
   CommentLexer incLexer;
 
 public:      // funcs
-  CommentHighlighter(BufferCore const &buf)
+  CommentHighlighter(TextDocumentCore const &buf)
     : LexHighlighter(buf, incLexer) {}
 };
 

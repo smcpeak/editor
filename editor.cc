@@ -1925,7 +1925,7 @@ void Editor::startListening()
 // window (# of pixels from top window edge), and should remain on the
 // same line (sequence of chars).
 
-void Editor::observeInsertLine(BufferCore const &buf, int line)
+void Editor::observeInsertLine(TextDocumentCore const &buf, int line)
 {
   if (line <= nonfocusCursorLine) {
     nonfocusCursorLine++;
@@ -1935,7 +1935,7 @@ void Editor::observeInsertLine(BufferCore const &buf, int line)
   redraw();
 }
 
-void Editor::observeDeleteLine(BufferCore const &buf, int line)
+void Editor::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
   if (line < nonfocusCursorLine) {
     nonfocusCursorLine--;
@@ -1949,12 +1949,12 @@ void Editor::observeDeleteLine(BufferCore const &buf, int line)
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void Editor::observeInsertText(BufferCore const &buf, int line, int col, char const *text, int length)
+void Editor::observeInsertText(TextDocumentCore const &buf, int line, int col, char const *text, int length)
 {
   redraw();
 }
 
-void Editor::observeDeleteText(BufferCore const &buf, int line, int col, int length)
+void Editor::observeDeleteText(TextDocumentCore const &buf, int line, int col, int length)
 {
   redraw();
 }

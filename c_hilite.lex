@@ -438,7 +438,7 @@ C_Lexer::~C_Lexer()
 }
 
 
-void C_Lexer::beginScan(BufferCore const *buffer, int line, LexerState state)
+void C_Lexer::beginScan(TextDocumentCore const *buffer, int line, LexerState state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);
