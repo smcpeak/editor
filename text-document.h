@@ -1,8 +1,8 @@
-// historybuf.h
+// text-document.h
 // Text document with undo/redo history attached to it.
 
-#ifndef HISTORYBUF_H
-#define HISTORYBUF_H
+#ifndef TEXT_DOCUMENT_H
+#define TEXT_DOCUMENT_H
 
 #include "history.h"      // history representation
 #include "objstack.h"     // ObjStack
@@ -191,4 +191,4 @@ public:
   // support having multiple views into the same buffer, it seems..
 
 
-#endif // HISTORYBUF_H
+#endif // TEXT_DOCUMENT_H

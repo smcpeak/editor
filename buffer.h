@@ -7,7 +7,7 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "historybuf.h"   // TextDocument
+#include "text-document.h"             // TextDocument
 
 
 // Represent a file being edited:

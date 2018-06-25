@@ -4,7 +4,7 @@
 all: comment.yy.cc
 all: testgap
 all: text-document-core
-all: historybuf
+all: text-document
 all: buffer
 all: test-justify
 all: textcategory
@@ -106,23 +106,23 @@ text-document-core: gap.h $(TEXT_DOCUMENT_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_TEXT_DOCUMENT_CORE $(TEXT_DOCUMENT_CORE_OBJS) $(CONSOLE_LDFLAGS)
 	./text-document-core >/dev/null 2>&1
 
-# -------------- historybuf test program ----------------
-TOCLEAN += historybuf historybuf.tmp
-HISTORYBUF_OBJS := historybuf.cc history.o text-document-core.o textcoord.o
-historybuf: gap.h $(HISTORYBUF_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_HISTORYBUF $(HISTORYBUF_OBJS) $(CONSOLE_LDFLAGS)
-	./historybuf >/dev/null 2>&1
+# -------------- text-document test program ----------------
+TOCLEAN += text-document text-document.tmp
+TEXT_DOCUMENT_OBJS := text-document.cc history.o text-document-core.o textcoord.o
+text-document: gap.h $(TEXT_DOCUMENT_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) -DTEST_TEXT_DOCUMENT $(TEXT_DOCUMENT_OBJS) $(CONSOLE_LDFLAGS)
+	./text-document >/dev/null 2>&1
 
 # -------------- buffer test program ----------------
 TOCLEAN += buffer
-BUFFER_OBJS := buffer.cc text-document-core.o textcoord.o history.o historybuf.o
+BUFFER_OBJS := buffer.cc text-document-core.o textcoord.o history.o text-document.o
 buffer: gap.h $(BUFFER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_BUFFER $(BUFFER_OBJS) $(CONSOLE_LDFLAGS)
 	./buffer >/dev/null 2>&1
 
 # -------------- justify test program ----------------
 TOCLEAN += test-justify
-JUSTIFY_OBJS := test-justify.o justify.o buffer.o text-document-core.o textcoord.o history.o historybuf.o
+JUSTIFY_OBJS := test-justify.o justify.o buffer.o text-document-core.o textcoord.o history.o text-document.o
 test-justify: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(GUI_LDFLAGS)
 	./test-justify >/dev/null 2>&1
@@ -148,7 +148,7 @@ C_HILITE_OBJS := \
   text-document-core.o \
   textcoord.o \
   history.o \
-  historybuf.o \
+  text-document.o \
   buffer.o \
   textcategory.o \
   lex_hilite.o \
@@ -175,7 +175,7 @@ EDITOR_OBJS := \
   editor.o \
   bufferlinesource.o \
   history.o \
-  historybuf.o \
+  text-document.o \
   incsearch.o \
   inputproxy.o \
   justify.o \

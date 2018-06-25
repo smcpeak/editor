@@ -1,9 +1,10 @@
-// historybuf.cc
-// code for historybuf.h
+// text-document.cc
+// code for text-document.h
 
-#include "historybuf.h"       // this module
-#include "autofile.h"         // AutoFILE
-#include "mysig.h"            // printSegfaultAddrs
+#include "text-document.h"             // this module
+
+#include "autofile.h"                  // AutoFILE
+#include "mysig.h"                     // printSegfaultAddrs
 
 
 TextDocument::TextDocument()
@@ -185,7 +186,7 @@ void TextDocument::printHistoryStats() const
 
 
 // -------------------- test code -------------------
-#ifdef TEST_HISTORYBUF
+#ifdef TEST_TEXT_DOCUMENT
 
 #include "datablok.h"   // DataBlock
 #include "ckheap.h"     // malloc_stats
@@ -206,9 +207,9 @@ void expect(TextDocument const &buf, int line, int col, char const *text)
     xfailure("cursor location mismatch");
   }
 
-  writeFile(buf.core(), "historybuf.tmp");
+  writeFile(buf.core(), "text-document.tmp");
   DataBlock block;
-  block.readFromFile("historybuf.tmp");
+  block.readFromFile("text-document.tmp");
 
   // compare contents to what is expected
   if (0!=memcmp(text, block.getDataC(), block.getDataLen()) ||
@@ -310,9 +311,9 @@ void entry()
   buf.printHistoryStats();
 
 
-  unlink("historybuf.tmp");
+  unlink("text-document.tmp");
 
-  printf("historybuf is ok\n");
+  printf("text-document is ok\n");
 }
 
 
@@ -330,4 +331,4 @@ int main()
 }
 
 
-#endif // TEST_HISTORYBUF
+#endif // TEST_TEXT_DOCUMENT
