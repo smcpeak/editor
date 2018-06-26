@@ -87,7 +87,7 @@ void IncSearch::attach(EditorWidget *newEd)
     else {
       // truncate to one line...
       text = ed->editor->getTextRange(selLow,
-        TextCoord(selLow.line, ed->editor->lineLength(selLow.line)));
+        ed->editor->lineEndCoord(selLow.line));
     }
   }
 

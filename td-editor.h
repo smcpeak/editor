@@ -98,6 +98,9 @@ public:      // funcs
   // Position right after last character in file.
   TextCoord endCoord() const { return doc()->endCoord(); }
 
+  // Position at end of specified line, which may be beyond EOF.
+  TextCoord lineEndCoord(int line) const;
+
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.

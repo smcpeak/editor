@@ -1862,7 +1862,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
   int line = editor->line();
-  this->editor->setCursor(TextCoord(line+1, editor->lineLengthLoose(line+1)));
+  this->editor->setCursor(editor->lineEndCoord(line+1));
   scrollToCursor();
 }
 

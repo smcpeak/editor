@@ -157,8 +157,6 @@ void TextDocumentEditor::redo()
 }
 
 
-// ---------------- TextDocumentEditor: queries ------------------
-
 int TextDocumentEditor::lineLengthLoose(int line) const
 {
   xassert(line >= 0);
@@ -168,6 +166,12 @@ int TextDocumentEditor::lineLengthLoose(int line) const
   else {
     return 0;
   }
+}
+
+
+TextCoord TextDocumentEditor::lineEndCoord(int line) const
+{
+  return TextCoord(line, lineLengthLoose(line));
 }
 
 
@@ -239,7 +243,7 @@ string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
   // full lines between line1 and line2
   for (int i=tc1.line+1; i < tc2.line; i++) {
     sb << "\n";
-    sb << getTextRange(TextCoord(i, 0), TextCoord(i, lineLengthLoose(i)));
+    sb << getTextRange(TextCoord(i, 0), lineEndCoord(i));
   }
 
   // initial fragment of line2
