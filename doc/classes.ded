@@ -2,244 +2,253 @@
   "drawFileName": true,
   "entities": [
     {
-      "attributes": "lines: string[]\nobservers: BufferObserver[]\n(plus some caches)\n",
+      "attributes": "lines: string[]\nobservers: TextDocumentObserver[]\n(plus some caches)\n",
       "loc": {
-        "x": 485,
-        "y": 30
+        "x": 515,
+        "y": 40
       },
-      "name": "BufferCore",
+      "name": "TextDocumentCore",
       "size": {
         "h": 75,
-        "w": 200
+        "w": 250
       }
     },
     {
-      "attributes": "line: int\ncol: int\n",
+      "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\ngroupStack: HE_group[]\n",
       "loc": {
-        "x": 485,
-        "y": 130
+        "x": 515,
+        "y": 150
       },
-      "name": "CursorBuffer",
+      "name": "TextDocument",
       "size": {
-        "h": 65,
-        "w": 200
+        "h": 110,
+        "w": 250
       }
     },
     {
-      "attributes": "buf: CursorBuffer\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\n",
+      "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\n",
       "loc": {
-        "x": 485,
-        "y": 215
+        "x": 515,
+        "y": 295
       },
-      "name": "HistoryBuffer",
-      "size": {
-        "h": 95,
-        "w": 200
-      }
-    },
-    {
-      "attributes": "(no new data)\n",
-      "loc": {
-        "x": 485,
-        "y": 335
-      },
-      "name": "Buffer",
-      "size": {
-        "h": 50,
-        "w": 200
-      }
-    },
-    {
-      "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\nsavedState: SavedEditingState\n",
-      "loc": {
-        "x": 485,
-        "y": 410
-      },
-      "name": "BufferState",
+      "name": "TextDocumentFile",
       "size": {
         "h": 130,
-        "w": 200
+        "w": 250
       }
     },
     {
-      "attributes": "selectLine: int\nselectCol: int\nselectEnabled: bool\nfirstVisibleLine: int\nfirstVisibleCol: int\nlastVisibleLine: int\nlastVisibleCol: int\nhitText: string\nhitTextFlags: FindStringFlags\n",
+      "attributes": "m_editors: TextDocumentFileEditor[]\neditor: TextDocumentFileEditor\n\n// I still don't understand these:\nnonfocusCursorLine: int\nnonfocusCursorCol: int\n\nhitText: string\nhitTextFlags: FindStringFlags\n\ninputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
-        "x": 40,
-        "y": 30
+        "x": 30,
+        "y": 40
       },
-      "name": "SavedEditingState",
+      "name": "EditorWidget : QWidget",
       "size": {
-        "h": 165,
-        "w": 200
+        "h": 305,
+        "w": 215
       }
     },
     {
-      "attributes": "buffer: BufferState\nselLowLine: int\nselLowCol: int\nselHighLine: int\nselHighCol: int\nnonfocusCursorLine: int\nnonfocusCursorCol: int\n\ninputProxy: InputProxy\nctrlShiftDistance: int\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "globalState: GlobalState\neditorWidget: EditorWidget\nisearch: IncSearch\n\n(pointers to other subwidgets)\n",
       "loc": {
-        "x": 40,
-        "y": 220
-      },
-      "name": "Editor : QWidget, BufferObserver",
-      "size": {
-        "h": 200,
-        "w": 200
-      }
-    },
-    {
-      "attributes": "globalState: GlobalState\neditor: Editor\nisearch: IncSearch\n\n(pointers to other subwidgets)\n",
-      "loc": {
-        "x": 40,
-        "y": 445
+        "x": 30,
+        "y": 375
       },
       "name": "EditorWindow : QWidget",
       "size": {
         "h": 75,
-        "w": 200
+        "w": 215
       }
     },
     {
-      "attributes": "pixmaps: Pixmaps\nbuffers: BufferState[]\nwindows: EditorWindow[]\n",
+      "attributes": "documentFiles: TextDocumentFile[]\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
       "loc": {
-        "x": 240,
-        "y": 560
+        "x": 285,
+        "y": 470
       },
       "name": "GlobalState : QApplication",
       "size": {
-        "h": 85,
-        "w": 185
+        "h": 95,
+        "w": 220
+      }
+    },
+    {
+      "attributes": "doc: TextDocument\ncursor: TextCoord\nmark: TextCoord?\nfirstVisible: TextCoord\nlastVisible: TextCoord\n",
+      "loc": {
+        "x": 325,
+        "y": 150
+      },
+      "name": "TextDocumentEditor",
+      "size": {
+        "h": 110,
+        "w": 160
+      }
+    },
+    {
+      "loc": {
+        "x": 285,
+        "y": 40
+      },
+      "name": "TextDocumentObserver",
+      "size": {
+        "h": 20,
+        "w": 150
+      }
+    },
+    {
+      "attributes": "file: TextDocumentFile\n",
+      "loc": {
+        "x": 325,
+        "y": 295
+      },
+      "name": "TextDocumentFileEditor",
+      "size": {
+        "h": 50,
+        "w": 160
+      }
+    },
+    {
+      "attributes": "line: int\ncolumn: int\n",
+      "loc": {
+        "x": 325,
+        "y": 70
+      },
+      "name": "TextCoord",
+      "size": {
+        "h": 60,
+        "w": 75
       }
     }
   ],
   "inheritances": [
     {
       "open": true,
-      "parentRef": 0,
+      "parentRef": 1,
       "pt": {
-        "x": 585,
-        "y": 125
+        "x": 640,
+        "y": 285
       }
     },
     {
       "open": true,
-      "parentRef": 2,
+      "parentRef": 7,
       "pt": {
-        "x": 585,
-        "y": 330
+        "x": 265,
+        "y": 50
       }
     },
     {
       "open": true,
-      "parentRef": 3,
+      "parentRef": 6,
       "pt": {
-        "x": 585,
-        "y": 405
-      }
-    },
-    {
-      "open": true,
-      "parentRef": 5,
-      "pt": {
-        "x": 140,
-        "y": 215
+        "x": 405,
+        "y": 285
       }
     }
   ],
   "relations": [
     {
-      "end": {"inheritanceRef": 0},
-      "start": {"entityRef": 1}
+      "controlPts": [{
+        "x": 320,
+        "y": 305
+      }],
+      "end": {"entityRef": 8},
+      "label": "editor",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "global_globalState",
+      "start": {"pt": {
+        "x": 165,
+        "y": 535
+      }}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "globalState",
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "documentFiles[]",
+      "start": {"entityRef": 5}
+    },
+    {
+      "controlPts": [{
+        "x": 215,
+        "y": 490
+      }],
+      "end": {"entityRef": 4},
+      "label": "windows[]",
+      "start": {"entityRef": 5}
     },
     {
       "end": {
         "arrowStyle": "AS_DOUBLE_ANGLE",
-        "entityRef": 1
+        "entityRef": 3
       },
-      "label": "buf",
+      "label": "editorWidget",
+      "routingAlg": "RA_MANHATTAN_VERT",
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"inheritanceRef": 0},
       "start": {"entityRef": 2}
+    },
+    {
+      "end": {"entityRef": 1},
+      "label": "doc",
+      "start": {"entityRef": 6}
     },
     {
       "end": {"inheritanceRef": 1},
       "start": {"entityRef": 3}
     },
     {
-      "end": {"inheritanceRef": 2},
-      "start": {"entityRef": 4}
-    },
-    {
-      "controlPts": [{
-        "x": 410,
-        "y": 310
-      }],
-      "end": {
-        "arrowStyle": "AS_DOUBLE_ANGLE",
-        "entityRef": 5
-      },
-      "label": "savedState",
-      "start": {"entityRef": 4}
-    },
-    {
-      "end": {"inheritanceRef": 3},
-      "start": {"entityRef": 6}
-    },
-    {
-      "controlPts": [{
-        "x": 375,
-        "y": 515
-      }],
-      "end": {"entityRef": 4},
-      "label": "buffer",
-      "start": {"entityRef": 6}
-    },
-    {
-      "end": {"entityRef": 8},
-      "label": "global_globalState",
-      "start": {"pt": {
-        "x": 120,
-        "y": 615
-      }}
-    },
-    {
-      "end": {"entityRef": 8},
-      "label": "globalState",
-      "start": {"entityRef": 7}
-    },
-    {
-      "end": {"entityRef": 4},
-      "label": "buffers[]",
-      "start": {"entityRef": 8}
-    },
-    {
-      "controlPts": [{
-        "x": 170,
-        "y": 570
-      }],
       "end": {"entityRef": 7},
-      "label": "windows[]",
-      "start": {"entityRef": 8}
-    },
-    {
-      "end": {
-        "arrowStyle": "AS_DOUBLE_ANGLE",
-        "entityRef": 6
-      },
-      "label": "editor",
-      "routingAlg": "RA_DIRECT",
-      "start": {"entityRef": 7}
-    },
-    {
-      "controlPts": [{
-        "x": 310,
-        "y": 255
-      }],
-      "end": {"entityRef": 6},
       "label": "observers[]",
       "start": {"entityRef": 0}
+    },
+    {
+      "end": {"inheritanceRef": 2},
+      "start": {"entityRef": 8}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "file",
+      "start": {"entityRef": 8}
+    },
+    {
+      "controlPts": [{
+        "x": 320,
+        "y": 335
+      }],
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 8
+      },
+      "label": "m_editors[]",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 9},
+      "start": {"entityRef": 6}
+    },
+    {
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 0
+      },
+      "label": "core",
+      "start": {"entityRef": 1}
     }
   ],
   "type": "Diagram Editor Diagram",
   "version": 23,
   "windowSize": {
-    "h": 687,
-    "w": 718
+    "h": 589,
+    "w": 788
   }
 }
