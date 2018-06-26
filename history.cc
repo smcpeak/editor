@@ -24,14 +24,6 @@ static void rollbackMismatch()
   }
 
 
-// ----------------- CursorBuffer -----------------------
-CursorBuffer::CursorBuffer()
-  : TextDocumentCore(),
-    line(0),
-    col(0)
-{}
-
-
 // -------------------- HistoryElt ----------------------
 HistoryElt::~HistoryElt()
 {}

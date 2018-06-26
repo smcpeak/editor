@@ -16,37 +16,8 @@
 class HistoryStats;
 
 
-// buffer + cursor, the object that the history manipulates
-//
-// TODO: This class should be eliminated and the cursor storage moved
-// to a new class, TextDocumentEditor.
-class CursorBuffer : public TextDocumentCore {
-public:
-  // cursor location, initially 0,0
-  int line, col;
-
-  // as a possible point of future design variance, I might add more
-  // than one cursor to this class at some point..
-
-public:
-  CursorBuffer();
-
-  // TODO: Replace line/col with TextCoord.  This is a stopgap.
-  TextCoord cursor() const
-    { return TextCoord(this->line, this->col); }
-  void setCursor(TextCoord tc)
-    { this->line = tc.line; this->col = tc.column; }
-
-  bool validCursor() const
-    { return this->validCoord(this->cursor()); }
-
-  bool cursorAtEnd() const
-    { return this->cursor() == endCoord(*this); }
-};
-
-
 // XHistory is thrown when a history event finds it cannot be applied
-// because the CursorBuffer state isn't consistent with the
+// because the TextDocumentCore state isn't consistent with the
 // information stored in the event.
 //
 // NOTE:  All of the code paths that use XHistory are, as yet,

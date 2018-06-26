@@ -1,5 +1,16 @@
 
 TODOs:
+  - finishing major refactoring
+    - deal with selLineLow junk
+    - moving text editor "business logic" from EditorWidget to TextDocumentEditor
+    - add more automated tests against TextDocumentEditor
+    - change interfaces to use TextCoord
+    - remove direct access to underlying doc(), core(), etc.
+    - make TextDocumentEditor consistently accept "invalid" cursors
+    - IncSearch should work on top of TDE, not EditorWidget
+    
+
+
   - Alt+A to pass selection through a filter command
   - allow Tab character; issue is rendering support
   - rethink incremental search
