@@ -118,19 +118,15 @@ public:      // funcs
   // Set the cursor position.  Asserts is non-negative.
   void setCursor(TextCoord newCursor);
 
+  // Set the cursor column, keeping its line.
+  void setCursorColumn(int newCol);
+
   // Cursor motion; line/col are relative if their respective 'rel'
   // flag is true.
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
-  // ------------------- more cursor movement -------------------
-
-  // TODO: This section duplicates functionality from above.
-
   // move by relative line/col
   void moveRelCursor(int deltaLine, int deltaCol);
-
-  // relative to same line, absolute to given column
-  void moveAbsColumn(int newCol);
 
   // line++, col=0
   void moveToNextLineStart();

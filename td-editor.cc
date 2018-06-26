@@ -395,7 +395,7 @@ void TextDocumentEditor::moveRelCursor(int deltaLine, int deltaCol)
 }
 
 
-void TextDocumentEditor::moveAbsColumn(int newCol)
+void TextDocumentEditor::setCursorColumn(int newCol)
 {
   moveCursor(true /*relLine*/, 0,
              false /*relCol*/, newCol);
@@ -418,7 +418,7 @@ void TextDocumentEditor::moveToPrevLineEnd()
 void TextDocumentEditor::selectCursorLine()
 {
   // Move the cursor to the start of its line.
-  this->moveAbsColumn(0);
+  this->setCursorColumn(0);
 
   // Make the selection end at the start of the next line.
   this->setMark(TextCoord(this->cursor().line + 1, 0));

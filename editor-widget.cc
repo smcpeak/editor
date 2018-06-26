@@ -1302,7 +1302,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           if (beyondLineEnd) {
             // Move the cursor to the end of the line so
             // that fillToCursor will not add spaces.
-            editor->moveAbsColumn(lineLength);
+            editor->setCursorColumn(lineLength);
           }
 
           // Add newlines if needed so the cursor is on a valid line.
@@ -1820,14 +1820,14 @@ void EditorWidget::cursorRight(bool shift)
 void EditorWidget::cursorHome(bool shift)
 {
   turnSelection(shift);
-  editor->moveAbsColumn(0);
+  editor->setCursorColumn(0);
   scrollToCursor();
 }
 
 void EditorWidget::cursorEnd(bool shift)
 {
   turnSelection(shift);
-  editor->moveAbsColumn(editor->lineLength(cursorLine()));
+  editor->setCursorColumn(editor->lineLength(cursorLine()));
   scrollToCursor();
 }
 
