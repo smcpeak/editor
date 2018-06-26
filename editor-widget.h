@@ -292,7 +292,7 @@ public:      // funcs
   int lastVisibleCol() const              { return editor->lastVisible().column; }
 
   // absolute cursor movement
-  void cursorTo(int line, int col);
+  void cursorTo(TextCoord tc);
 
   // relative cursor movement
   void moveCursorBy(int dline, int dcol)  { editor->moveRelCursor(dline, dcol); }

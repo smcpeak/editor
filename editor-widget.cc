@@ -135,21 +135,21 @@ void EditorWidget::selfCheck() const
 }
 
 
-void EditorWidget::cursorTo(int line, int col)
+void EditorWidget::cursorTo(TextCoord tc)
 {
-  editor->setCursor(TextCoord(line, col));
+  editor->setCursor(tc);
 
   // set the nonfocus location too, in case the we happen to
   // not have the focus right now (e.g. the Alt+G dialog);
   // actually, the need for this exposes the fact that my current
   // solution to nonfocus cursor issues isn't very good.. hmm...
-  nonfocusCursor = TextCoord(line, col);
+  nonfocusCursor = tc;
 }
 
 void EditorWidget::resetView()
 {
   if (editor) {
-    cursorTo(0, 0);
+    cursorTo(TextCoord(0, 0));
     editor->clearMark();
   }
   setView(TextCoord(0,0));
@@ -892,13 +892,13 @@ static void inc(int &val, int amt)
 
 void EditorWidget::cursorToTop()
 {
-  cursorTo(0, 0);
+  cursorTo(TextCoord(0, 0));
   scrollToCursor();
 }
 
 void EditorWidget::cursorToBottom()
 {
-  cursorTo(max(editor->numLines()-1,0), 0);
+  cursorTo(TextCoord(editor->numLines()-1, 0));
   scrollToCursor();
   //redraw();    // 'scrollToCursor' does 'redraw()' automatically
 }
@@ -1602,7 +1602,7 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
 
-  cursorTo(newLine, newCol);
+  cursorTo(TextCoord(newLine, newCol));
 
   // it's possible the cursor has been placed outside the "visible"
   // lines/cols (i.e. at the edge), but even if so, don't scroll,
@@ -1929,7 +1929,7 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   QWidget::focusInEvent(e);
 
   // move the editing cursor to where I last had it
-  cursorTo(nonfocusCursor.line, nonfocusCursor.column);
+  cursorTo(nonfocusCursor);
 
   // I don't want to listen while I'm adding changes of
   // my own, because the way the view moves (etc.) on

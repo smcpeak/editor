@@ -554,7 +554,7 @@ void EditorWindow::editGotoLine()
       int n = atoi(s);
 
       //cout << "going to line " << n << endl;
-      editorWidget->cursorTo(n-1, 0);
+      editorWidget->cursorTo(TextCoord(n-1, 0));
       editorWidget->scrollToCursor(-1 /*center*/);
     }
   }

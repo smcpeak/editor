@@ -354,7 +354,7 @@ void IncSearch::resetToSearchStart()
 {
   this->curLine = this->beginLine;
   this->curCol = this->beginCol;
-  ed->cursorTo(beginLine, beginCol);
+  ed->cursorTo(TextCoord(beginLine, beginCol));
   ed->setView(TextCoord(beginFVLine, beginFVCol));
   ed->clearMark();
   ed->hitText = "";
@@ -373,7 +373,7 @@ bool IncSearch::findString(TextDocumentEditor::FindStringFlags flags)
   }
   if (match) {
     // move editor cursor to end of match
-    ed->cursorTo(curLine, curCol + text.length());
+    ed->cursorTo(TextCoord(curLine, curCol + text.length()));
 
     // put selection start at beginning of match
     ed->setMark(TextCoord(curLine, curCol));
