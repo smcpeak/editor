@@ -122,6 +122,35 @@ public:      // funcs
   // flag is true.
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
+  // ------------------- more cursor movement -------------------
+
+  // TODO: This section duplicates functionality from above.
+
+  // move by relative line/col
+  void moveRelCursor(int deltaLine, int deltaCol);
+
+  // Move cursor to 'tc'.
+  void moveAbsCursor(TextCoord tc);
+
+  // use a relative movement to go to a specific line/col; this is
+  // used for restoring the cursor position after some sequence
+  // of edits
+  void moveRelCursorTo(int newLine, int newCol);
+
+  // relative to same line, absolute to given column
+  void moveAbsColumn(int newCol);
+
+  // line++, col=0
+  void moveToNextLineStart();
+
+  // line--, col=length(line-1)
+  void moveToPrevLineEnd();
+
+  // Move cursor position one character forwards or backwards, wrapping
+  // to the next/prev line at line edges.  Stops at the start of the
+  // file, but will advance indefinitely at the end.
+  void advanceWithWrap(bool backwards);
+
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor
   // for defining a selection region.  This asserts that the mark is
@@ -213,32 +242,6 @@ public:      // funcs
   // tested for matches that span multiple lines
   bool findString(TextCoord /*INOUT*/ &tc, char const *text,
                   FindStringFlags flags = FS_NONE) const;
-
-  // ---------------------- cursor movement --------------------
-  // move by relative line/col
-  void moveRelCursor(int deltaLine, int deltaCol);
-
-  // Move cursor to 'tc'.
-  void moveAbsCursor(TextCoord tc);
-
-  // use a relative movement to go to a specific line/col; this is
-  // used for restoring the cursor position after some sequence
-  // of edits
-  void moveRelCursorTo(int newLine, int newCol);
-
-  // relative to same line, absolute to given column
-  void moveAbsColumn(int newCol);
-
-  // line++, col=0
-  void moveToNextLineStart();
-
-  // line--, col=length(line-1)
-  void moveToPrevLineEnd();
-
-  // Move cursor position one character forwards or backwards, wrapping
-  // to the next/prev line at line edges.  Stops at the start of the
-  // file, but will advance indefinitely at the end.
-  void advanceWithWrap(bool backwards);
 
   // --------------------- modify selection ----------------------
   // Select the entire line containing the cursor.
