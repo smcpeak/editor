@@ -187,7 +187,13 @@ static void testFind(TextDocumentEditor const &buf, int line, int col,
                      TextDocumentEditor::FindStringFlags flags)
 {
   bool expect = ansLine>=0;
-  bool actual = buf.findString(line, col, text, flags);
+  bool actual;
+  {
+    TextCoord tc(line, col);
+    actual = buf.findString(tc, text, flags);
+    line = tc.line;
+    col = tc.column;
+  }
 
   if (expect != actual) {
     cout << "find(\"" << text << "\"): expected " << expect

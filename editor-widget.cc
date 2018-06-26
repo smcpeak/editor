@@ -598,16 +598,15 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
       // Show search hits.
       if (this->hitText.length() > 0) {
-        int hitLine = line;
-        int hitCol = 0;
+        TextCoord hitTC(line, 0);
         TextDocumentEditor::FindStringFlags const hitTextFlags =
           this->hitTextFlags | TextDocumentEditor::FS_ONE_LINE;
 
-        while (editor->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
+        while (editor->findString(hitTC /*INOUT*/,
                                   toCStr(this->hitText),
                                   hitTextFlags)) {
-          categories.overlay(hitCol, this->hitText.length(), TC_HITS);
-          hitCol++;
+          categories.overlay(hitTC.column, this->hitText.length(), TC_HITS);
+          hitTC.column++;
         }
       }
     }

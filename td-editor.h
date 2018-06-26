@@ -207,11 +207,11 @@ public:      // funcs
     FS_ALL                 = 0x0F  // all flags
   };
 
-  // search from line/col to find the first occurrence of
-  // 'text', and update line/col to the beginning of the
+  // search from 'tc' to find the first occurrence of
+  // 'text', and update 'tc' to the beginning of the
   // match; return false for no match; 'text' will not be
   // tested for matches that span multiple lines
-  bool findString(int &line, int &col, char const *text,
+  bool findString(TextCoord /*INOUT*/ &tc, char const *text,
                   FindStringFlags flags = FS_NONE) const;
 
   // ---------------------- cursor movement --------------------

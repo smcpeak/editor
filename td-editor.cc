@@ -313,10 +313,9 @@ int TextDocumentEditor::getAboveIndentation(int line) const
 }
 
 
-bool TextDocumentEditor::findString(int &userLine, int &userCol, char const *text,
-                        FindStringFlags flags) const
+bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
+                                    FindStringFlags flags) const
 {
-  TextCoord tc(userLine, userCol);
   int textLen = strlen(text);
 
   // This is questionable because it can lead to finding matches that
@@ -349,8 +348,6 @@ bool TextDocumentEditor::findString(int &userLine, int &userCol, char const *tex
 
       if (found) {
         // found match
-        userLine = tc.line;
-        userCol = tc.column;
         return true;
       }
 

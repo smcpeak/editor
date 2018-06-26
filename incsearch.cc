@@ -365,7 +365,12 @@ void IncSearch::resetToSearchStart()
 
 bool IncSearch::findString(TextDocumentEditor::FindStringFlags flags)
 {
-  match = ed->editor->findString(curLine, curCol, toCStr(text), flags);
+  {
+    TextCoord tc(curLine, curCol);
+    match = ed->editor->findString(tc, toCStr(text), flags);
+    curLine = tc.line;
+    curCol = tc.column;
+  }
   if (match) {
     // move editor cursor to end of match
     ed->cursorTo(curLine, curCol + text.length());
@@ -437,18 +442,17 @@ void IncSearch::updateStatus()
 bool IncSearch::tryWrapSearch(int &line, int &col) const
 {
   // wrap
-  line=0;
-  col=0;
+  TextCoord tc(0,0);
   if (curFlags & TextDocumentEditor::FS_BACKWARDS) {
-    TextCoord end = ed->editor->endCoord();
-    line = end.line;
-    col = end.column;
+    tc = ed->editor->endCoord();
   }
 
   // search
-  if (ed->editor->findString(line, col, toCStr(text), curFlags) &&
-      !(line==curLine && col==curCol)) {
+  if (ed->editor->findString(tc, toCStr(text), curFlags) &&
+      !(tc.line==curLine && tc.column==curCol)) {
     // yes, wrapping finds another
+    line = tc.line;
+    col = tc.column;
     return true;
   }
   else {
