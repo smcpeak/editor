@@ -4,14 +4,14 @@
 #ifndef BUFFERLINESOURCE_H
 #define BUFFERLINESOURCE_H
 
-class TextDocumentCore;        // buffer.h
+class TextDocumentCore;                // text-document-core.h
 
 
 // state for supplying flex with input from a line of a buffer
 class BufferLineSource {
 public:      // data
   // source of text to lex
-  TextDocumentCore const *buffer;          // (serf)
+  TextDocumentCore const *buffer;      // (serf)
 
   // which line we're working on
   int bufferLine;

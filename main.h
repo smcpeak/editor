@@ -67,6 +67,11 @@ private:     // funcs
   void setFileName(rostring name, rostring hotkey);
   void writeTheFile();
   void setDocumentFile(TextDocumentFile *b);
+
+  // Update the status displays to reflect a different file being edited.
+  void updateForChangedFile();
+
+  void forgetAboutFile(TextDocumentFile *file);
   void rebuildWindowMenu();
   void complain(char const *msg);
 
@@ -157,7 +162,8 @@ public:       // data
   // pixmap set
   Pixmaps pixmaps;
 
-  // List of open files.
+  // List of open files.  There is always at least one; if the last
+  // file is closed, we open an "untitled" file.
   ObjList<TextDocumentFile> documentFiles;
 
   // currently open editor windows; nominally, once the

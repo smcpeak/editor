@@ -1,72 +1,101 @@
 // editor-widget.h
-// widget for editing text
+// EditorWidget class.
 
 #ifndef EDITOR_H
 #define EDITOR_H
 
 #include "inputproxy.h"                // InputProxy, InputPseudoKey
 #include "owner.h"                     // Owner
+#include "text-document-editor.h"      // TextDocumentEditor
 #include "text-document-file.h"        // TextDocumentFile
 #include "textcategory.h"              // TextCategory
 
 #include <qwidget.h>                   // QWidget
 
-class QLabel;                          // qlabel.h
-class QRangeControl;                   // qrangecontrol.h
+class IncSearch;                       // incsearch.h
 class QtBDFFont;                       // qtbdffont.h
 class StatusDisplay;                   // status.h
 class StyleDB;                         // styledb.h
 
+class QLabel;                          // qlabel.h
+class QRangeControl;                   // qrangecontrol.h
 
-// Widget to edit the contents of a text file; it's possible (and
-// expected) to change which file a given EditorWidget edits after
-// creating the EditorWidget object.
+
+// Widget to edit the contents of text files.  The widget shows and
+// edits one file at a time, but remembers state about other files.
 //
-// This class embeds SavedEditingState.  This is different from
-// 'docFile->savedState' so that it is possible to have two editor
-// widgets both editing the same file but with different cursor
-// locations, etc.
-//
-// It is weird to inherit a data class like this, but the reason
-// for doing it is there is not a major, fundamental difference
-// between the members of EditorWidget and those of SavedEditingState.  The
-// latter just happen to be the things I have chosen to save for
-// hidden files, and that set might change over time.  Therefore,
-// I use inheritance to avoid any difference in syntax between the
-// two sets of members.
+// This class is intended to be mostly concerned with connecting the
+// user to the TextDocumentEditor API; the latter should do the actual
+// text manipulation.
 class EditorWidget
   : public QWidget,               // I am a Qt widget.
-    public SavedEditingState,     // Cursor location, etc.
     public TextDocumentObserver { // Watch my file while I don't have focus.
   Q_OBJECT
+
+  // TODO: I currently need to let IncSearch access private members
+  // 'docFile', 'selLowLine', etc.  I think IncSearch should be able
+  // to operate on top of TextFileEditor instead of EditorWidget.
+  friend class IncSearch;
 
 public:     // static data
   // Instances created minus instances destroyed.
   static int objectCount;
 
+private:     // types
+  // For this EditorWidget, and for a given TextDocumentFile, this is
+  // the editing state for that file.  This state is *not* shared with
+  // other widgets in the editor application, although it contains a
+  // pointer to a TextDocumentFile, which *is* shared.
+  class TextDocumentFileEditor : public TextDocumentEditor {
+  public:    // data
+    // Process-wide record of the open file.  Not an owner pointer.
+    // Must not be null.
+    TextDocumentFile *file;
+
+  public:
+    TextDocumentFileEditor(TextDocumentFile *f) :
+      TextDocumentEditor(f),
+      file(f)
+    {}
+  };
+
 private:     // data
+  // ------ child widgets -----
   // floating info box
   QLabel *infoBox;               // (nullable owner)
 
   // access to the status display
-  StatusDisplay *status;         // (nullable serf)
+  StatusDisplay *status;         // (serf)
 
-public:      // data
   // ------ editing state -----
-  // File we are editing; it can be set to NULL when
+  // Editor object for the file we are editing; it can be set to NULL when
   // the ctor is called, but must if so, must be set to a non-NULL
   // value via setDocumentFile() before any drawing or editing is done.
   //
-  // The EditorWidget's EditingState gets saved to 'docFile->savedState'
-  // when we switch to another file, and restored when we come
-  // back.
-  TextDocumentFile *docFile;     // (serf)
+  // When non-NULL, this points at one of the elements of 'm_editors'.
+  TextDocumentFileEditor *editor;
+
+  // All of the editors associated with this widget.  An editor is
+  // created on demand when this widget is told to edit its underlying
+  // file, so the set of files here is in general a subset of
+  // GlobalState::documentFiles.
+  ObjList<TextDocumentFileEditor> m_editors;
 
   // the following fields are valid only after normalizeSelect(),
   // and before any subsequent modification to cursor or select
+  //
+  // TODO: These fields should be removed and replaced with queries.
   int selLowLine, selLowCol;     // whichever of cursor/select comes first
   int selHighLine, selHighCol;   // whichever comes second
 
+  // ----- match highlight state -----
+  // when nonempty, any buffer text matching this string will
+  // be highlighted in the 'hit' style; match is carried out
+  // under influence of 'hitTextFlags'
+  string hitText;
+  TextDocumentEditor::FindStringFlags hitTextFlags;
+
+public:      // data
   // ------ rendering options ------
   // amount of blank space at top/left edge of widget
   int topMargin, leftMargin;
@@ -134,7 +163,7 @@ public:      // data
   // ------ stuff for when I don't have focus ------
   // when I don't have the focus, two things are different:
   //   - I'm a listener to my own file, to track the
-  //     changes made in another window.
+  //     changes made in another widget.
   //   - nonfocusCursorLine/Col are valid/relevant/correct
 
   // true if I've registered myself as a listener; there
@@ -202,13 +231,16 @@ private:     // funcs
   void startListening();
   void stopListening();
 
+  // If we already have an editor for 'file', return it.  Otherwise,
+  // make a new editor, add it to 'm_editors', and return that.
+  TextDocumentFileEditor *getOrMakeEditor(TextDocumentFile *file);
+
   // debugging
-  static string lineColStr(int line, int col);
+  static string lineColStr(TextCoord tc);
   string firstVisStr() const
-    { return lineColStr(this->firstVisibleLine,
-                        this->firstVisibleCol); }
+    { return lineColStr(this->editor->firstVisible()); }
   string cursorStr() const
-    { return lineColStr(this->cursorLine(), this->cursorCol()); }
+    { return lineColStr(this->editor->cursor()); }
 
 protected:   // funcs
   // QWidget funcs
@@ -225,43 +257,75 @@ protected:   // funcs
 
 public:      // funcs
   EditorWidget(TextDocumentFile *docFile, StatusDisplay *status,
-         QWidget *parent=NULL);
+               QWidget *parent=NULL);
   ~EditorWidget();
+
+  // Assert internal invariants.
+  void selfCheck() const;
 
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
 
   // Change which file this editor widget is editing.
-  void setDocumentFile(TextDocumentFile *docFile);
+  void setDocumentFile(TextDocumentFile *file);
 
-  // cursor location
-  int cursorLine() const                  { return docFile->line(); }
-  int cursorCol() const                   { return docFile->col(); }
+  // 'file' is going away.  Remove all references to it.  If it is the
+  // open file, pick another from the global list.
+  void forgetAboutFile(TextDocumentFile *file);
+
+  // Current file being edited.  This is 'const' because the file is
+  // shared with other widgets in this process.
+  TextDocumentFile *getDocumentFile() const;
+
+  // Editor associated with current file and this particular widget.
+  // This is not 'const' because the editor is owned by this object.
+  TextDocumentEditor *getDocumentEditor();
+
+  // Text cursor location (as opposed to mouse cursor image).
+  TextCoord textCursor() const            { return editor->cursor(); }
+
+  // These methods are here to help transition the code from having
+  // cursor and mark in EditorWidget to having them in
+  // TextDocumentEditor.
+  //
+  // TODO: I think I should remove these in favor of code directly
+  // calling the editor object.  Anyway, most of the code that invokes
+  // these should be moved into TextDocumentEditor.
+  TextCoord mark() const                  { return editor->mark(); }
+  void setMark(TextCoord tc)              { editor->setMark(tc); }
+  bool selectEnabled() const              { return editor->markActive(); }
+  void clearMark()                        { editor->clearMark(); }
+  int cursorLine() const                  { return textCursor().line; }
+  int cursorCol() const                   { return textCursor().column; }
+  int firstVisibleLine() const            { return editor->firstVisible().line; }
+  int firstVisibleCol() const             { return editor->firstVisible().column; }
+  int lastVisibleLine() const             { return editor->lastVisible().line; }
+  int lastVisibleCol() const              { return editor->lastVisible().column; }
 
   // absolute cursor movement
   void cursorTo(int line, int col);
 
   // relative cursor movement
-  void moveCursorBy(int dline, int dcol)  { docFile->moveRelCursor(dline, dcol); }
+  void moveCursorBy(int dline, int dcol)  { editor->moveRelCursor(dline, dcol); }
   void cursorLeftBy(int amt)              { moveCursorBy(0, -amt); }
   void cursorRightBy(int amt)             { moveCursorBy(0, +amt); }
   void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
   void cursorDownBy(int amt)              { moveCursorBy(+amt, 0); }
 
   // set sel{Low,High}{Line,Col}
-  void normalizeSelect(int cursorLine, int cursorCol);
-  void normalizeSelect() { normalizeSelect(cursorLine(), cursorCol()); }
+  void normalizeSelect(TextCoord cursor);
+  void normalizeSelect() { normalizeSelect(textCursor()); }
 
   // Select the entire line the cursor is on.
   void selectCursorLine();
 
   // Change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor.
-  void setView(int newFirstLine, int newFirstCol);
+  void setView(TextCoord newFirstVisible);
   void setFirstVisibleLine(int L)
-    { this->setView(L, this->firstVisibleCol); }
+    { this->setView(TextCoord(L, editor->firstVisible().column)); }
   void setFirstVisibleCol(int C)
-    { this->setView(this->firstVisibleLine, C); }
+    { this->setView(TextCoord(editor->firstVisible().line, C)); }
 
   // move the view by a delta; automatically truncates at the low end
   void moveView(int deltaLine, int deltaCol);
@@ -284,7 +348,7 @@ public:      // funcs
   void scrollToCursor(int edgeGap=0);
   void scrollToCursor_noRedraw(int edgeGap=0);
 
-  // redraw window, etc.; calls updateView() and viewChanged()
+  // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
 
   // move the cursor and the view by a set increment, and repaint;
@@ -293,10 +357,8 @@ public:      // funcs
 
   // Number of fully visible lines/columns.  Part of the next
   // line/col may also be visible.
-  int visLines() const
-    { return this->lastVisibleLine - this->firstVisibleLine + 1; }
-  int visCols() const
-    { return this->lastVisibleCol - this->firstVisibleCol + 1; }
+  int visLines() const { return this->editor->visLines(); }
+  int visCols() const { return this->editor->visColumns(); }
 
   // show the info box near the cursor
   void showInfo(char const *info);
@@ -354,6 +416,10 @@ public:      // funcs
   // the edit should be aborted without doing anything (because the
   // user has indicated they want to cancel it).
   bool editSafetyCheck();
+
+  // Copy selected text to clipboard.  Clear the mark if
+  // 'clearSelection'.
+  void innerEditCopy(bool clearSelection);
 
 public slots:
   // slots to respond to scrollbars

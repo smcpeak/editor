@@ -4,28 +4,19 @@
 #ifndef TEXT_DOCUMENT_H
 #define TEXT_DOCUMENT_H
 
-#include "history.h"      // history representation
-#include "objstack.h"     // ObjStack
-#include "array.h"        // ArrayStack
+#include "history.h"                   // HE_group
+#include "text-document-core.h"        // TextDocumentCore
+
+#include "array.h"                     // ArrayStack
+#include "objstack.h"                  // ObjStack
 
 
-// Represent a file being edited:
-//
-//   * File contents.
-//   * Cursor location.
-//   * Undo history of changes to them.
-//
-// TextDocument provides the core functionality for manipulating
-// these items.  Buffer is built on top of it and provides a
-// variety of useful composed manipulations.
-//
-// There is no reason to create a TextDocument alone; the division
-// is just to ensure a separation between core and extended
-// functionality in the implementation of Buffer.
+// This class represents a text document (which is a sequence of lines)
+// and its undo/redo history.
 class TextDocument {
 private:      // data
-  // Current buffer contents and cursor location.
-  CursorBuffer buf;
+  // The sequence of text lines without any history information.
+  TextDocumentCore core;
 
   // modification history
   HE_group history;
@@ -62,25 +53,19 @@ public:      // funcs
 
   // ---- queries ----
   // read-only access to the underlying representation
-  CursorBuffer const &core() const        { return buf; }
+  TextDocumentCore const &getCore() const { return core; }
 
   // TextDocumentCore's queries, directly exposed.
-  int numLines() const                    { return buf.numLines(); }
-  int lineLength(int line) const          { return buf.lineLength(line); }
-  bool validCoord(TextCoord tc) const     { return buf.validCoord(tc); }
+  int numLines() const                    { return core.numLines(); }
+  int lineLength(int line) const          { return core.lineLength(line); }
+  bool validCoord(TextCoord tc) const     { return core.validCoord(tc); }
+  // TODO: getLine should accept TextCoord.
   void getLine(int line, int col, char *dest, int destLen) const
-    { return buf.getLine(TextCoord(line, col), dest, destLen); }
-  int maxLineLength() const               { return buf.maxLineLength(); }
-
-  // cursor
-  int line() const                        { return buf.line; }
-  int col() const                         { return buf.col; }
-  TextCoord cursor() const                { return buf.cursor(); }
-  bool cursorAtEnd() const                { return buf.cursorAtEnd(); }
+    { return core.getLine(TextCoord(line, col), dest, destLen); }
+  int maxLineLength() const               { return core.maxLineLength(); }
 
   // current contents differ from those on disk?
   bool unsavedChanges() const;
-
 
   // ---- global changes ----
   // clear history, leaving only the current buffer contents
@@ -114,39 +99,22 @@ public:      // funcs
   void deleteAt(TextCoord tc, int count);
 
 
-  // ---- LEGACY manipulation interface ----
-
-  // TODO: These three methods should be moved into a new class,
-  // TextDocumentEditor.
-
-  // cursor motion; line/col are relative if their respective 'rel'
-  // flag is true
-  void moveCursor(bool relLine, int line, bool relCol, int col);
-
-  // insertion at cursor; 'left' or 'right' refers to where the cursor
-  // ends up after the insertion; cursor must be in defined area
-  void insertLR(bool left, char const *text, int textLen);
-
-  // deletion at cursor; 'left' or 'right' refers to which side of
-  // the cursor has the text to be deleted
-  void deleteLR(bool left, int count);
-
-
   // facility for grouping actions with HE_group
-  void beginGroup();
-  void endGroup();
+  void beginUndoGroup();
+  void endUndoGroup();
 
   // true if we have an open group; note that undo/redo is not allowed
   // in that case, even though canUndo/Redo() may return true
-  bool inGroup() const        { return groupStack.isNotEmpty(); }
+  bool inUndoGroup() const        { return groupStack.isNotEmpty(); }
 
 
   // ---- undo/redo ----
   bool canUndo() const        { return historyIndex > 0; }
   bool canRedo() const        { return historyIndex < history.seqLength(); }
 
-  void undo();
-  void redo();
+  // These return the location at the left edge of the modified text.
+  TextCoord undo();
+  TextCoord redo();
 
 
   // print the history in a textual format, with the current history
@@ -159,49 +127,6 @@ public:      // funcs
     { history.stats(stats); }
   void printHistoryStats() const;
 };
-
-
-class HBGrouper {
-  TextDocument &buf;
-
-public:
-  HBGrouper(TextDocument &b) : buf(b)
-    { buf.beginGroup(); }
-  ~HBGrouper()
-    { buf.endGroup(); }
-};
-
-
-
-
-#if 0      // high-level stuff to put in Buffer
-  // relative cursor movement
-  void moveDown(int dy);
-  void moveRight(int dx);
-
-  // absolute cursor movement
-  void gotoLine(int newLine);
-  void gotoCol(int newCol);
-  void gotoLC(int newLine, int newCol);
-
-  // insertion at cursor; 'left' or 'right' refers to where the
-  // cursor ends up after the insertion; if the cursor is beyond
-  // the end of the line or file, newlines/spaces are inserted to
-  // fill to the cursor first
-  void insertLeft(char const *text, int length);
-  void insertRight(char const *text, int length);
-
-  // deletion at cursor; 'left' or 'right' refers to which side of
-  // the cursor has the text to be deleted; space is filled before
-  // the deletion, if necessary
-  void deleteLeft(int count);
-  void deleteRight(int count);
-#endif // 0
-
-
-  // HERE:
-  // problem: need to introduce notion of additional cursors, to
-  // support having multiple views into the same buffer, it seems..
 
 
 #endif // TEXT_DOCUMENT_H

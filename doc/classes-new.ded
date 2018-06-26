@@ -124,14 +124,6 @@
   "inheritances": [
     {
       "open": true,
-      "parentRef": 0,
-      "pt": {
-        "x": 610,
-        "y": 140
-      }
-    },
-    {
-      "open": true,
       "parentRef": 1,
       "pt": {
         "x": 610,
@@ -203,10 +195,6 @@
     },
     {
       "end": {"inheritanceRef": 0},
-      "start": {"entityRef": 1}
-    },
-    {
-      "end": {"inheritanceRef": 1},
       "start": {"entityRef": 2}
     },
     {
@@ -215,7 +203,7 @@
       "start": {"entityRef": 6}
     },
     {
-      "end": {"inheritanceRef": 2},
+      "end": {"inheritanceRef": 1},
       "start": {"entityRef": 3}
     },
     {
@@ -224,7 +212,7 @@
       "start": {"entityRef": 0}
     },
     {
-      "end": {"inheritanceRef": 3},
+      "end": {"inheritanceRef": 2},
       "start": {"entityRef": 8}
     },
     {
@@ -247,6 +235,14 @@
     {
       "end": {"entityRef": 9},
       "start": {"entityRef": 6}
+    },
+    {
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 0
+      },
+      "label": "core",
+      "start": {"entityRef": 1}
     }
   ],
   "type": "Diagram Editor Diagram",

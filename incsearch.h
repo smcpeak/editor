@@ -4,13 +4,14 @@
 #ifndef INCSEARCH_H
 #define INCSEARCH_H
 
-#include "inputproxy.h"     // AttachInputProxy
-#include "str.h"            // string
-#include "buffer.h"         // Buffer
-#include <qstring.h>        // QString
+#include "inputproxy.h"                // AttachInputProxy
+#include "text-document-editor.h"      // TextDocumentEditor
 
-//class QLabel;               // qlabel.h
-class StatusDisplay;        // status.h
+#include "str.h"                       // string
+
+#include <qstring.h>                   // QString
+
+class StatusDisplay;                   // status.h
 
 
 class IncSearch : public AttachInputProxy {
@@ -26,7 +27,7 @@ private:     // data
   int beginFVLine, beginFVCol;
 
   // current search options
-  Buffer::FindStringFlags curFlags;
+  TextDocumentEditor::FindStringFlags curFlags;
 
   // text we're searching for
   string text;
@@ -45,7 +46,7 @@ private:     // data
     M_REPLACE,          // applying replacement text
   } mode;
 
-  // buffer text removed during M_GET_REPLACEMENT
+  // text removed during M_GET_REPLACEMENT
   string removedText;
 
   // replacement text
@@ -58,7 +59,7 @@ private:     // funcs
 
   // search from curLine/curCol to find 'text'; return true
   // if we find a match
-  bool findString(Buffer::FindStringFlags flags);
+  bool findString(TextDocumentEditor::FindStringFlags flags);
   bool findString() { return findString(curFlags); }
 
   // find next/prev occurrence, return true if found

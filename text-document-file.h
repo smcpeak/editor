@@ -1,79 +1,33 @@
 // text-document-file.h
-// a Buffer, plus some state suitable for an editor
-
-// in an editor, the TextDocumentFile would contain all the info that is
-// remembered for *undisplayed* buffers
+// TextDocumentFile class.
 
 #ifndef TEXT_DOCUMENT_FILE_H
 #define TEXT_DOCUMENT_FILE_H
 
-#include "buffer.h"     // Buffer
-#include "str.h"        // string
-#include "hilite.h"     // Highlighter
+#include "hilite.h"                    // Highlighter
+#include "text-document.h"             // TextDocument
 
-#include <stdint.h>     // int64_t
+#include "str.h"                       // string
 
-
-// EditorWidget editing state for a Buffer that is *used* when the
-// buffer is shown to the user, and *saved* when it is not.  This data
-// is copied between the EditorWidget and the TextDocumentFile object as
-// the user cycles among open files.
-class SavedEditingState {
-public:      // data
-  // cursor position (0-based)
-  //int cursorLine;
-  //int cursorCol;
-  // UPDATE: The cursor has been moved into Buffer itself (via
-  // TextDocument and CursorBuffer), and so is no longer present
-  // in this class.
-
-  // selection state: a location, and a flag to enable it
-  int selectLine;
-  int selectCol;
-  bool selectEnabled;
-
-  #if 0     // moved back into EditorWidget
-  // the following fields are valid only after normalizeSelect(),
-  // and before any subsequent modification to cursor or select
-  int selLowLine, selLowCol;     // whichever of cursor/select comes first
-  int selHighLine, selHighCol;   // whichever comes second
-  #endif // 0
-
-  // Scrolling offset.  Changes are done via EditorWidget::setView(), which
-  // calls EditingState::setFirstVisibleLC().
-  int const firstVisibleLine, firstVisibleCol;
-
-  // Information about viewable area; these are set by the
-  // EditorWidget::updateView() routine and should be treated as read-only by
-  // other code.
-  //
-  // By "visible", I mean the entire line or column is visible.  It may
-  // be that a portion of the next line/col is also visible.
-  int lastVisibleLine, lastVisibleCol;
-
-  // when nonempty, any buffer text matching this string will
-  // be highlighted in the 'hit' style; match is carried out
-  // under influence of 'hitTextFlags'
-  string hitText;
-  Buffer::FindStringFlags hitTextFlags;
-
-protected:   // funcs
-  // Set firstVisibleLine/Col; for use by EditingState::copy()
-  // and EditorWidget::setView() *only*.
-  void setFirstVisibleLC(int newFirstLine, int newFirstCol);
-
-public:      // funcs
-  SavedEditingState();
-  ~SavedEditingState();
-
-  // copy editing state from 'src'
-  void copySavedEditingState(SavedEditingState const &src);
-};
+#include <stdint.h>                    // int64_t
 
 
-// A Buffer, plus additional data about that buffer that the editor
-// UI needs whether or not this buffer is currently shown.
-class TextDocumentFile : public Buffer {
+// This class binds a TextDocument, which is an abstract mathematical
+// object, to a File, which is a resource that exists outside the
+// editor process.  The document is saved to, loaded from, and checked
+// against the resource at appropriate points: hence we have a file
+// name and timestamp.
+//
+// This class further associates that binding with several ways of
+// naming it from within the editor application: the hotkey, the window
+// menu id, and the file title.
+//
+// Finally, it contains an interpretation of the file's meaning in
+// the form of a syntax highlighter.
+//
+// All of the data in this class is shared by all editor windows that
+// operate on a given file.
+class TextDocumentFile : public TextDocument {
 private:     // static data
   // Next value to use when assigning menu ids.
   static int nextWindowMenuId;
@@ -116,10 +70,6 @@ public:      // data
   // to maintain internal incremental state about the buffer
   // contents)
   Highlighter *highlighter;      // (nullable owner)
-
-  // Saved editing state to be restored to an EditorWidget when
-  // the buffer becomes visible again.
-  SavedEditingState savedState;
 
 public:      // funcs
   TextDocumentFile();

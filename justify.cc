@@ -111,9 +111,9 @@ void justifyTextLines(
 }
 
 
-bool justifyNearLine(Buffer &buf, int originLineNumber, int desiredWidth)
+bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredWidth)
 {
-  string startLine = buf.getWholeLine(originLineNumber);
+  string startLine = tde.getWholeLine(originLineNumber);
 
   // Split the line into a prefix of whitespace and framing punctuation,
   // and a suffix with alphanumeric content.  In a programming language,
@@ -141,7 +141,7 @@ bool justifyNearLine(Buffer &buf, int originLineNumber, int desiredWidth)
   // some content after it.
   int upperEdge = originLineNumber;
   while (upperEdge-1 >= 0) {
-    if (properStartsWith(buf.getWholeLine(upperEdge-1), prefix)) {
+    if (properStartsWith(tde.getWholeLine(upperEdge-1), prefix)) {
       upperEdge--;
     }
     else {
@@ -149,8 +149,8 @@ bool justifyNearLine(Buffer &buf, int originLineNumber, int desiredWidth)
     }
   }
   int lowerEdge = originLineNumber;
-  while (lowerEdge+1 < buf.numLines()) {
-    if (properStartsWith(buf.getWholeLine(lowerEdge+1), prefix)) {
+  while (lowerEdge+1 < tde.numLines()) {
+    if (properStartsWith(tde.getWholeLine(lowerEdge+1), prefix)) {
       lowerEdge++;
     }
     else {
@@ -161,7 +161,7 @@ bool justifyNearLine(Buffer &buf, int originLineNumber, int desiredWidth)
   // Put all the content into a sequence of lines.
   ArrayStack<string> originalContent;
   for (int i=upperEdge; i <= lowerEdge; i++) {
-    string line = buf.getWholeLine(i);
+    string line = tde.getWholeLine(i);
     originalContent.push(line.c_str() + prefix.length());
   }
 
@@ -171,11 +171,11 @@ bool justifyNearLine(Buffer &buf, int originLineNumber, int desiredWidth)
     desiredWidth - prefix.length());
 
   // Replace the content.
-  buf.deleteTextRange(upperEdge, 0, lowerEdge+1, 0);
+  tde.deleteTextRange(upperEdge, 0, lowerEdge+1, 0);
   for (int i=0; i < justifiedContent.length(); i++) {
     stringBuilder sb;
     sb << prefix << justifiedContent[i] << '\n';
-    buf.insertText(sb.c_str());
+    tde.insertText(sb.c_str());
   }
 
   return true;

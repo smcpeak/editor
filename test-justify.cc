@@ -241,25 +241,26 @@ static void testJustifyTextLines()
 }
 
 
-static string bufToString(Buffer const &b)
+static string docToString(TextDocumentEditor const &d)
 {
-  int lastLine = b.numLines()-1;
-  return b.getTextRange(0,0, lastLine, b.lineLength(lastLine));
+  int lastLine = d.numLines()-1;
+  return d.getTextRange(0,0, lastLine, d.lineLength(lastLine));
 }
 
 
-static bool equalBuffers(Buffer const &b1, Buffer const &b2)
+static bool equalDocuments(TextDocumentEditor const &d1,
+                           TextDocumentEditor const &d2)
 {
-  string b1s = bufToString(b1);
-  string b2s = bufToString(b2);
+  string b1s = docToString(d1);
+  string b2s = docToString(d2);
   return b1s == b2s;
 }
 
 
-static void print(char const *label, Buffer const &buf)
+static void print(char const *label, TextDocumentEditor const &tde)
 {
   cout << label << ":\n";
-  buf.core().dumpRepresentation();
+  tde.doc()->getCore().dumpRepresentation();
 }
 
 
@@ -268,19 +269,19 @@ static void testOneJustifyNearLine(
   char const **out, int outSize,
   int originLine, int desiredWidth)
 {
-  Buffer original;
+  TextDocumentAndEditor original;
   for (int i=0; i < inSize; i++) {
     original.insertText(in[i]);
     original.insertText("\n");
   }
 
-  Buffer expect;
+  TextDocumentAndEditor expect;
   for (int i=0; i < outSize; i++) {
     expect.insertText(out[i]);
     expect.insertText("\n");
   }
 
-  Buffer actual;
+  TextDocumentAndEditor actual;
   for (int i=0; i < inSize; i++) {
     actual.insertText(in[i]);
     actual.insertText("\n");
@@ -288,7 +289,7 @@ static void testOneJustifyNearLine(
 
   justifyNearLine(actual, originLine, desiredWidth);
 
-  if (!equalBuffers(expect, actual)) {
+  if (!equalDocuments(expect, actual)) {
     cout << "originLine: " << originLine << endl;
     cout << "desiredWidth: " << desiredWidth << endl;
     print("original", original);

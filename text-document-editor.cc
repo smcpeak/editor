@@ -1,40 +1,175 @@
-// buffer.cc
-// code for buffer.h
+// text-document-editor.cc
+// Code for text-document-editor.h.
 
-#include "buffer.h"        // this module
-
-#include "strutil.h"       // quoted
-#include "array.h"         // GrowArray
-
-#include <string.h>        // strncasecmp
-#include <ctype.h>         // isalnum, isspace
+#include "text-document-editor.h"      // this module
 
 
-// ---------------------- Buffer -------------------------
-Buffer::Buffer()
-  : TextDocument()
+TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
+  : m_doc(doc),
+    m_cursor(),
+    m_markActive(false),
+    m_mark(),
+    m_firstVisible(),
+
+    // This size isn't intended to be user-visible since the client
+    // code ought to set the size.  But if they do not, 20x60 will
+    // be distinct and recognizable while also being serviceable.
+    m_lastVisible(19, 59)
 {
-  //insertLine(0);     // can I remove this hack?
+  selfCheck();
 }
 
 
-STATICDEF void Buffer::pos(int line, int col)
+TextDocumentEditor::~TextDocumentEditor()
+{}
+
+
+void TextDocumentEditor::selfCheck() const
+{
+  xassert(m_cursor.nonNegative());
+  if (m_markActive) {
+    xassert(m_mark.nonNegative());
+  }
+  xassert(m_firstVisible.nonNegative());
+  xassert(m_firstVisible.line <= m_lastVisible.line);
+  xassert(m_firstVisible.column <= m_lastVisible.column);
+}
+
+
+bool TextDocumentEditor::validCursor() const
+{
+  return doc()->validCoord(cursor());
+}
+
+
+bool TextDocumentEditor::cursorAtEnd() const
+{
+  return this->m_cursor == endCoord(doc()->getCore());
+}
+
+
+void TextDocumentEditor::setCursor(TextCoord c)
+{
+  xassert(c.nonNegative());
+  m_cursor = c;
+}
+
+
+void TextDocumentEditor::setMark(TextCoord m)
+{
+  xassert(m.nonNegative());
+  m_mark = m;
+  m_markActive = true;
+}
+
+
+void TextDocumentEditor::setFirstVisible(TextCoord fv)
+{
+  xassert(fv.nonNegative());
+  int h = m_lastVisible.line - m_firstVisible.line;
+  int w = m_lastVisible.column - m_firstVisible.column;
+  m_firstVisible = fv;
+  m_lastVisible.line = fv.line + h;
+  m_lastVisible.column = fv.line + w;
+}
+
+
+void TextDocumentEditor::setVisibleSize(int lines, int columns)
+{
+  // If the user resizes the window down to nothing, we might calculate
+  // a visible region with zero width.  Just force it to be
+  // non-negative.
+  lines = max(lines, 1);
+  columns = max(columns, 1);
+  m_lastVisible.line = m_firstVisible.line + lines - 1;
+  m_lastVisible.column = m_firstVisible.column + columns - 1;
+}
+
+
+void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col)
+{
+  if (relLine) {
+    m_cursor.line += line;
+  }
+  else {
+    m_cursor.line = line;
+  }
+  xassert(m_cursor.line >= 0);
+
+  if (relCol) {
+    m_cursor.column += col;
+  }
+  else {
+    m_cursor.column = col;
+  }
+  xassert(m_cursor.column >= 0);
+}
+
+
+TextCoord TextDocumentEditor::mark() const
+{
+  // TODO: I would like to enable this assertion.  That is dependent on
+  // eliminating the awkward selLowLine, etc., since they call this
+  // without checking markActive().
+  //xassert(markActive());
+  return m_mark;
+}
+
+
+void TextDocumentEditor::insertLR(bool left, char const *text, int textLen)
+{
+  xassert(validCursor());
+
+  doc()->insertAt(cursor(), text, textLen);
+
+  if (!left) {
+    // Put the cursor at the end of the inserted text.
+    TextCoord tc = cursor();
+    bool ok = walkCursor(doc()->getCore(), tc, textLen);
+    xassert(ok);
+    setCursor(tc);
+  }
+}
+
+
+void TextDocumentEditor::deleteLR(bool left, int count)
+{
+  xassert(validCursor());
+
+  if (left) {
+    // Move the cursor to the start of the text to delete.
+    TextCoord tc = cursor();
+    bool ok = walkCursor(doc()->getCore(), tc, -count);
+    xassert(ok);
+    setCursor(tc);
+  }
+
+  doc()->deleteAt(cursor(), count);
+}
+
+
+void TextDocumentEditor::undo()
+{
+  setCursor(doc()->undo());
+}
+
+
+void TextDocumentEditor::redo()
+{
+  setCursor(doc()->redo());
+}
+
+
+STATICDEF void TextDocumentEditor::assertNonNegative(int line, int col)
 {
   xassert(line >= 0);
   xassert(col >= 0);
 }
 
-void Buffer::bc(int line, int col) const
-{
-  pos(line, col);
-  xassert(line < numLines());
-  xassert(col <= lineLength(line));
-}
 
+// ---------------- TextDocumentEditor: queries ------------------
 
-// ---------------- Buffer: queries ------------------
-
-int Buffer::lineLengthLoose(int line) const
+int TextDocumentEditor::lineLengthLoose(int line) const
 {
   xassert(line >= 0);
   if (line < numLines()) {
@@ -46,9 +181,9 @@ int Buffer::lineLengthLoose(int line) const
 }
 
 
-void Buffer::getLineLoose(int line, int col, char *dest, int destLen) const
+void TextDocumentEditor::getLineLoose(int line, int col, char *dest, int destLen) const
 {
-  pos(line, col);
+  assertNonNegative(line, col);
 
   // how much of the source is in the defined region?
   int undef = destLen;
@@ -68,7 +203,7 @@ void Buffer::getLineLoose(int line, int col, char *dest, int destLen) const
 
   // initial part in defined region
   if (def) {
-    getLine(line, col, dest, def);
+    doc()->getLine(line, col, dest, def);
   }
 
   // spaces past defined region
@@ -76,10 +211,10 @@ void Buffer::getLineLoose(int line, int col, char *dest, int destLen) const
 }
 
 
-string Buffer::getTextRange(int line1, int col1, int line2, int col2) const
+string TextDocumentEditor::getTextRange(int line1, int col1, int line2, int col2) const
 {
-  pos(line1, col1);
-  pos(line2, col2);
+  assertNonNegative(line1, col1);
+  assertNonNegative(line2, col2);
 
   // this function uses the line1==line2 case as a base case of a two
   // level recursion; it's not terribly efficient
@@ -124,7 +259,7 @@ string Buffer::getTextRange(int line1, int col1, int line2, int col2) const
 }
 
 
-string Buffer::getWordAfter(int line, int col) const
+string TextDocumentEditor::getWordAfter(int line, int col) const
 {
   stringBuilder sb;
 
@@ -154,7 +289,7 @@ string Buffer::getWordAfter(int line, int col) const
 }
 
 
-void Buffer::getLastPos(int &line, int &col) const
+void TextDocumentEditor::getLastPos(int &line, int &col) const
 {
   line = numLines()-1;
   if (line >= 0) {
@@ -166,7 +301,7 @@ void Buffer::getLastPos(int &line, int &col) const
 }
 
 
-int Buffer::getIndentation(int line) const
+int TextDocumentEditor::getIndentation(int line) const
 {
   string contents = getWholeLine(line);
   for (char const *p = contents.c_str(); *p; p++) {
@@ -179,7 +314,7 @@ int Buffer::getIndentation(int line) const
 }
 
 
-int Buffer::getAboveIndentation(int line) const
+int TextDocumentEditor::getAboveIndentation(int line) const
 {
   while (line >= 0) {
     int ind = getIndentation(line);
@@ -192,7 +327,7 @@ int Buffer::getAboveIndentation(int line) const
 }
 
 
-bool Buffer::findString(int &userLine, int &userCol, char const *text,
+bool TextDocumentEditor::findString(int &userLine, int &userCol, char const *text,
                         FindStringFlags flags) const
 {
   TextCoord tc(userLine, userCol);
@@ -203,10 +338,10 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
   // this line in f0169061da, when I added undo/redo support, which
   // suggests it was needed to deal with cases arising from replaying
   // history elements.  Probably there is a better solution.
-  truncateCursor(core(), tc);
+  truncateCursor(doc()->getCore(), tc);
 
   if (flags & FS_ADVANCE_ONCE) {
-    walkCursor(core(), tc,
+    walkCursor(doc()->getCore(), tc,
                flags&FS_BACKWARDS? -1 : +1);
   }
 
@@ -217,7 +352,7 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
     // get line contents
     int lineLen = lineLength(tc.line);
     contents.ensureIndexDoubler(lineLen);
-    getLine(tc.line, 0, contents.getDangerousWritableArray(), lineLen);
+    doc()->getLine(tc.line, 0, contents.getDangerousWritableArray(), lineLen);
 
     // search for 'text' using naive algorithm, starting at 'tc.column'
     while (0 <= tc.column && tc.column+textLen <= lineLen) {
@@ -262,9 +397,9 @@ bool Buffer::findString(int &userLine, int &userCol, char const *text,
 }
 
 
-// ---------------- Buffer: modifications ------------------
+// ---------------- TextDocumentEditor: modifications ------------------
 
-void Buffer::moveRelCursor(int deltaLine, int deltaCol)
+void TextDocumentEditor::moveRelCursor(int deltaLine, int deltaCol)
 {
   // prevent moving into negative territory
   deltaLine = max(deltaLine, -line());
@@ -276,39 +411,49 @@ void Buffer::moveRelCursor(int deltaLine, int deltaCol)
   }
 }
 
-void Buffer::moveAbsCursor(int newLine, int newCol)
+void TextDocumentEditor::moveAbsCursor(int newLine, int newCol)
 {
   moveCursor(false /*relLine*/, newLine,
              false /*relCol*/, newCol);
 }
 
 
-void Buffer::moveAbsColumn(int newCol)
+void TextDocumentEditor::moveAbsColumn(int newCol)
 {
   moveCursor(true /*relLine*/, 0,
              false /*relCol*/, newCol);
 }
 
 
-void Buffer::moveRelCursorTo(int newLine, int newCol)
+void TextDocumentEditor::moveRelCursorTo(int newLine, int newCol)
 {
   moveRelCursor(newLine-line(), newCol-col());
 }
 
-void Buffer::moveToNextLineStart()
+void TextDocumentEditor::moveToNextLineStart()
 {
   moveCursor(true /*relLine*/, +1,
              false /*relCol*/, 0);
 }
 
-void Buffer::moveToPrevLineEnd()
+void TextDocumentEditor::moveToPrevLineEnd()
 {
   moveCursor(true /*relLine*/, -1,
              false /*relCol*/, lineLength(line()-1));
 }
 
 
-void Buffer::advanceWithWrap(bool backwards)
+void TextDocumentEditor::selectCursorLine()
+{
+  // Move the cursor to the start of its line.
+  this->moveAbsColumn(0);
+
+  // Make the selection end at the start of the next line.
+  this->setMark(TextCoord(this->cursor().line + 1, 0));
+}
+
+
+void TextDocumentEditor::advanceWithWrap(bool backwards)
 {
   if (!backwards) {
     if (0 <= line() &&
@@ -337,10 +482,10 @@ void Buffer::advanceWithWrap(bool backwards)
 }
 
 
-void Buffer::fillToCursor()
+void TextDocumentEditor::fillToCursor()
 {
   int rowfill, colfill;
-  computeSpaceFill(core(), cursor(), rowfill, colfill);
+  computeSpaceFill(doc()->getCore(), cursor(), rowfill, colfill);
 
   if (rowfill==0 && colfill==0) {
     return;     // nothing to do
@@ -353,7 +498,7 @@ void Buffer::fillToCursor()
   //moveRelCursor(-rowfill, -colfill);    // wrong
   moveCursor(true /*relLine*/, -rowfill,
              false /*relCol*/, lineLength(origLine-rowfill));
-  bc();
+  xassert(validCursor());
 
   // add newlines
   while (rowfill--) {
@@ -370,13 +515,13 @@ void Buffer::fillToCursor()
 }
 
 
-void Buffer::insertText(char const *text)
+void TextDocumentEditor::insertText(char const *text)
 {
   insertLR(false /*left*/, text, strlen(text));
 }
 
 
-void Buffer::insertSpaces(int howMany)
+void TextDocumentEditor::insertSpaces(int howMany)
 {
   // simple for now
   while (howMany--) {
@@ -385,7 +530,7 @@ void Buffer::insertSpaces(int howMany)
 }
 
 
-void Buffer::insertNewline()
+void TextDocumentEditor::insertNewline()
 {
   int overEdge = col() - lineLengthLoose(line());
   if (overEdge > 0) {
@@ -399,7 +544,7 @@ void Buffer::insertNewline()
 
 
 #if 0     // old?
-void Buffer::spliceNextLine(int line)
+void TextDocumentEditor::spliceNextLine(int line)
 {
   xassert(0 <= line && line < numLines());
 
@@ -419,30 +564,24 @@ void Buffer::spliceNextLine(int line)
 #endif // 0
 
 
-void Buffer::deleteText(int len)
+void TextDocumentEditor::deleteTextRange(int line1, int col1, int line2, int col2)
 {
-  deleteLR(false /*left*/, len);
-}
-
-
-void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
-{
-  pos(line1, col1);
-  pos(line2, col2);
+  assertNonNegative(line1, col1);
+  assertNonNegative(line2, col2);
 
   TextCoord tc1(line1, col1);
   TextCoord tc2(line2, col2);
   xassert(tc1 <= tc2);
 
   // truncate the endpoints
-  truncateCursor(core(), tc1);
-  truncateCursor(core(), tc2);
+  truncateCursor(doc()->getCore(), tc1);
+  truncateCursor(doc()->getCore(), tc2);
 
   // go to line2/col2, which is probably where the cursor already is
   moveRelCursorTo(tc2.line, tc2.column);
 
   // compute # of chars in span
-  int length = computeSpanLength(core(), tc1, tc2);
+  int length = computeSpanLength(doc()->getCore(), tc1, tc2);
 
   // delete them as a left deletion; the idea is I suspect the
   // original and final cursor are line2/col2, in which case the
@@ -454,7 +593,7 @@ void Buffer::deleteTextRange(int line1, int col1, int line2, int col2)
 }
 
 
-void Buffer::indentLines(int start, int lines, int ind)
+void TextDocumentEditor::indentLines(int start, int lines, int ind)
 {
   if (start >= numLines() ||   // entire range beyond defined area
       lines <= 0 ||            // empty range
@@ -485,193 +624,15 @@ void Buffer::indentLines(int start, int lines, int ind)
 
 
 // -------------------- CursorRestorer ------------------
-CursorRestorer::CursorRestorer(Buffer &b)
-  : buf(b),
-    origLine(b.line()),
-    origCol(b.col())
+CursorRestorer::CursorRestorer(TextDocumentEditor &d)
+  : doc(d),
+    orig(d.cursor())
 {}
 
 CursorRestorer::~CursorRestorer()
 {
-  buf.moveRelCursorTo(origLine, origCol);
+  doc.moveRelCursorTo(orig.line, orig.column);
 }
 
 
-// --------------------- test code -----------------------
-#ifdef TEST_BUFFER
-
-#include "ckheap.h"        // malloc_stats
-#include "test.h"          // USUAL_MAIN
-
-#include <stdlib.h>        // system
-
-// test Buffer::getTextRange
-void testGetRange(Buffer &buf, int line1, int col1, int line2, int col2,
-                               char const *expect)
-{
-  string actual = buf.getTextRange(line1, col1, line2, col2);
-  if (!actual.equals(expect)) {
-    buf.core().dumpRepresentation();
-    cout << "getTextRange(" << line1 << "," << col1 << ", "
-                            << line2 << "," << col2 << "):\n";
-    cout << "  actual: " << quoted(actual) << "\n";
-    cout << "  expect: " << quoted(expect) << "\n";
-    xfailure("testGetRange failed");
-  }
-}
-
-
-// test Buffer::findString
-void testFind(Buffer const &buf, int line, int col, char const *text,
-              int ansLine, int ansCol, Buffer::FindStringFlags flags)
-{
-  bool expect = ansLine>=0;
-  bool actual = buf.findString(line, col, text, flags);
-
-  if (expect != actual) {
-    cout << "find(\"" << text << "\"): expected " << expect
-         << ", got " << actual << endl;
-    xfailure("testFind failed");
-  }
-
-  if (actual && (line!=ansLine || col!=ansCol)) {
-    cout << "find(\"" << text << "\"): expected " << ansLine << ":" << ansCol
-         << ", got " << line << ":" << col << endl;
-    xfailure("testFind failed");
-  }
-}
-
-
-void entry()
-{
-  Buffer buf;
-  buf.insertText("foo\nbar\n");
-    // result: foo\n
-    //         bar\n
-  xassert(buf.line() == 2);
-  xassert(buf.col() == 0);
-  xassert(buf.numLines() == 3);    // so final 'line' is valid
-
-  testGetRange(buf, 0,0, 2,0, "foo\nbar\n");
-  testGetRange(buf, 0,1, 2,0, "oo\nbar\n");
-  testGetRange(buf, 0,1, 1,3, "oo\nbar");
-  testGetRange(buf, 0,3, 1,3, "\nbar");
-  testGetRange(buf, 1,0, 1,3, "bar");
-  testGetRange(buf, 1,2, 1,3, "r");
-  testGetRange(buf, 1,3, 1,3, "");
-
-  buf.moveAbsCursor(0, 1);
-  buf.insertText("arf\ngak");
-    // result: farf\n
-    //         gakoo\n
-    //         bar\n
-  xassert(buf.line() == 1);
-  xassert(buf.col() == 3);
-  xassert(buf.numLines() == 4);
-  testGetRange(buf, 0,0, 3,0, "farf\ngakoo\nbar\n");
-
-  buf.insertNewline();
-    // result: farf\n
-    //         gak\n
-    //         oo\n
-    //         bar\n
-  xassert(buf.line() == 2);
-  xassert(buf.col() == 0);
-  xassert(buf.numLines() == 5);
-  testGetRange(buf, 0,0, 4,0, "farf\ngak\noo\nbar\n");
-
-  // some ranges that go beyond the defined area
-  testGetRange(buf, 0,0, 5,0, "farf\ngak\noo\nbar\n\n");
-  testGetRange(buf, 0,0, 6,0, "farf\ngak\noo\nbar\n\n\n");
-  testGetRange(buf, 0,0, 6,2, "farf\ngak\noo\nbar\n\n\n  ");
-
-  testGetRange(buf, 0,0, 2,5, "farf\ngak\noo   ");
-  testGetRange(buf, 0,5, 2,5, "\ngak\noo   ");
-  testGetRange(buf, 2,5, 2,10, "     ");
-  testGetRange(buf, 2,10, 2,10, "");
-  testGetRange(buf, 12,5, 12,10, "     ");
-  testGetRange(buf, 12,5, 14,5, "\n\n     ");
-
-  buf.deleteTextRange(1,1, 1,2);
-    // result: farf\n
-    //         gk\n
-    //         oo\n
-    //         bar\n
-  testGetRange(buf, 0,0, 4,0, "farf\ngk\noo\nbar\n");
-  xassert(buf.numLines() == 5);
-
-  buf.deleteTextRange(0,3, 1,1);
-    // result: fark\n
-    //         oo\n
-    //         bar\n
-  testGetRange(buf, 0,0, 3,0, "fark\noo\nbar\n");
-  xassert(buf.numLines() == 4);
-
-  buf.deleteTextRange(1,3, 1,5);   // nop
-    // result: fark\n
-    //         oo\n
-    //         bar\n
-  testGetRange(buf, 0,0, 3,0, "fark\noo\nbar\n");
-  xassert(buf.numLines() == 4);
-
-  buf.deleteTextRange(2,2, 6,4);
-    // result: fark\n
-    //         oo\n
-    //         ba
-  testGetRange(buf, 0,0, 2,2, "fark\noo\nba");
-  xassert(buf.numLines() == 3);
-
-  buf.deleteTextRange(1,2, 2,2);
-    // result: fark\n
-    //         oo
-  testGetRange(buf, 0,0, 1,2, "fark\noo");
-  xassert(buf.numLines() == 2);
-
-  buf.deleteTextRange(1,0, 1,2);
-    // result: fark\n
-  testGetRange(buf, 0,0, 1,0, "fark\n");
-  xassert(buf.numLines() == 2);
-
-  buf.deleteTextRange(0,0, 1,0);
-    // result: <empty>
-  testGetRange(buf, 0,0, 0,0, "");
-  xassert(buf.numLines() == 1);
-  xassert(buf.lineLength(0) == 0);
-
-
-  Buffer::FindStringFlags
-    none = Buffer::FS_NONE,
-    insens = Buffer::FS_CASE_INSENSITIVE,
-    back = Buffer::FS_BACKWARDS,
-    advance = Buffer::FS_ADVANCE_ONCE;
-
-  buf.moveAbsCursor(0,0);
-  buf.insertText("foofoofbar\n"
-                 "ooFoo arg\n");
-  testFind(buf, 0,0, "foo", 0,0, none);
-  testFind(buf, 0,1, "foo", 0,3, none);
-  testFind(buf, 0,3, "foof", 0,3, none);
-  testFind(buf, 0,4, "foof", -1,-1, none);
-  testFind(buf, 0,0, "foofgraf", -1,-1, none);
-
-  testFind(buf, 0,7, "foo", -1,-1, none);
-  testFind(buf, 0,7, "foo", 1,2, insens);
-  testFind(buf, 0,0, "foo", 0,3, advance);
-  testFind(buf, 0,2, "foo", 0,0, back);
-  testFind(buf, 0,3, "foo", 0,0, back|advance);
-  testFind(buf, 0,4, "foo", 0,3, back|advance);
-  testFind(buf, 1,3, "foo", 0,3, back);
-  testFind(buf, 1,3, "foo", 1,2, back|insens);
-  testFind(buf, 1,2, "foo", 0,3, back|insens|advance);
-  testFind(buf, 1,3, "goo", -1,-1, back|insens|advance);
-  testFind(buf, 1,3, "goo", -1,-1, back|insens);
-  testFind(buf, 1,3, "goo", -1,-1, back);
-  testFind(buf, 1,3, "goo", -1,-1, none);
-
-  cout << "\nbuffer is ok\n";
-}
-
-USUAL_MAIN
-
-
-#endif // TEST_BUFFER
+// EOF

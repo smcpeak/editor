@@ -3,9 +3,10 @@
 
 #include "lex_hilite.h"                // this module
 
-#include "buffer.h"                    // TextDocumentCore, Buffer
 #include "inclexer.h"                  // IncLexer
 #include "strutil.h"                   // quoted
+#include "text-document-core.h"        // TextDocumentCore
+#include "text-document-editor.h"      // TextDocumentEditor
 #include "textcategory.h"              // LineCategories
 #include "trace.h"                     // TRACE
 
@@ -257,15 +258,15 @@ void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCatego
 
 // ---------------------- test code -------------------------
 static MakeHighlighterFunc makeHigh;
-static Buffer *buf;
+static TextDocumentEditor *tde;
 
 static void printLine(LexHighlighter &hi, int line)
 {
   LineCategories category(TC_NORMAL);
-  hi.highlight(buf->core(), line, category);
+  hi.highlight(tde->core(), line, category);
 
   cout << "line " << line << ":\n"
-       << "  text : " << buf->getWholeLine(line) << "\n"
+       << "  text : " << tde->getWholeLine(line) << "\n"
        << "  catgy: " << category.asUnaryString() << "\n"
        << "  rle  : " << category.asString() << "\n"
        ;
@@ -274,7 +275,7 @@ static void printLine(LexHighlighter &hi, int line)
 static void printCategories(LexHighlighter &hi)
 {
   // stop short so I have a waterline
-  for (int i=0; i < buf->numLines()-1; i++) {
+  for (int i=0; i < tde->numLines()-1; i++) {
     printLine(hi, i);
   }
 }
@@ -283,26 +284,26 @@ static void insert(int line, int col, char const *text)
 {
   cout << "insert(" << line << ", " << col << ", "
        << quoted(text) << ")\n";
-  buf->moveAbsCursor(line, col);
-  buf->insertText(text);
+  tde->moveAbsCursor(line, col);
+  tde->insertText(text);
 }
 
 static void del(int line, int col, int len)
 {
   cout << "del(" << line << ", " << col << ", " << len << ")\n";
-  buf->moveAbsCursor(line, col);
-  buf->deleteText(len);
+  tde->moveAbsCursor(line, col);
+  tde->deleteText(len);
 }
 
 static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
   LineCategories categories1(TC_NORMAL);
-  hi.highlight(buf->core(), i, categories1);
+  hi.highlight(tde->core(), i, categories1);
   string rendered1 = categories1.asUnaryString();
 
   LineCategories categories2(TC_NORMAL);
-  batch.highlight(buf->core(), i, categories2);
+  batch.highlight(tde->core(), i, categories2);
   string rendered2 = categories2.asUnaryString();
 
   // compare using rendered strings, instead of looking at
@@ -312,7 +313,7 @@ static void innerCheckLine(LexHighlighter &hi,
 
   if (rendered1 != rendered2) {
     cout << "check: mismatch at line " << i << ":\n"
-         << "  line: " << buf->getWholeLine(i) << "\n"
+         << "  line: " << tde->getWholeLine(i) << "\n"
          << "  inc.: " << rendered1 << "\n"
          << "  bat.: " << rendered2 << "\n"
          ;
@@ -323,10 +324,10 @@ static void innerCheckLine(LexHighlighter &hi,
 // check that the incremental highlighter matches a batch highlighter
 static void check(LexHighlighter &hi)
 {
-  LexHighlighter *batch = makeHigh(buf->core());    // batch because it has no initial info
+  LexHighlighter *batch = makeHigh(tde->core());    // batch because it has no initial info
 
   // go backwards in hopes of finding more incrementality bugs
-  for (int i = buf->numLines()-1; i>=0; i--) {
+  for (int i = tde->numLines()-1; i>=0; i--) {
     innerCheckLine(hi, *batch, i);
   }
 
@@ -336,7 +337,7 @@ static void check(LexHighlighter &hi)
 
 static void checkLine(LexHighlighter &hi, int line)
 {
-  LexHighlighter *batch = makeHigh(buf->core());
+  LexHighlighter *batch = makeHigh(tde->core());
 
   innerCheckLine(hi, *batch, line);
 
@@ -348,16 +349,16 @@ void exerciseHighlighter(MakeHighlighterFunc func)
 {
   // at first this was global, then I thought of a problem, and then I
   // forgot what the problem was...
-  Buffer _buf;
-  buf = &_buf;
+  TextDocumentAndEditor tde_;
+  tde = &tde_;
 
   makeHigh = func;
-  LexHighlighter *_hi = makeHigh(buf->core());
-  LexHighlighter &hi = *_hi;
+  LexHighlighter *hi_ = makeHigh(tde->core());
+  LexHighlighter &hi = *hi_;
 
   int line=0, col=0;
-  buf->moveAbsCursor(line, col);
-  buf->insertText(
+  tde->moveAbsCursor(line, col);
+  tde->insertText(
     "hi there\n"
     "here is \"a string\" ok?\n"
     "and how about /*a comment*/ yo\n"
@@ -400,10 +401,10 @@ void exerciseHighlighter(MakeHighlighterFunc func)
   checkLine(hi, 3);
   check(hi);
 
-  buf = NULL;
+  tde = NULL;
   makeHigh = NULL;
 
-  delete _hi;
+  delete hi_;
 }
 
 

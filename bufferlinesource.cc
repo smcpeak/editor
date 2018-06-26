@@ -2,7 +2,8 @@
 // code for bufferlinesource.h
 
 #include "bufferlinesource.h"          // this module
-#include "buffer.h"                    // TextDocumentCore
+
+#include "text-document-core.h"        // TextDocumentCore
 
 
 BufferLineSource::BufferLineSource()

@@ -10,44 +10,6 @@
 #include <qnamespace.h>                // Qt class/namespace
 
 
-// ----------------------- SavedEditingState --------------------------
-SavedEditingState::SavedEditingState()
-  : selectLine(0),
-    selectCol(0),
-    selectEnabled(false),
-    // selLow, etc. not valid until normalizeSelect()
-    firstVisibleLine(0),
-    firstVisibleCol(0),
-    lastVisibleLine(0),
-    lastVisibleCol(0),
-    hitText(),                      // empty string, no hit highlighting
-    hitTextFlags(Buffer::FS_NONE)
-{}
-
-SavedEditingState::~SavedEditingState()
-{}
-
-
-void SavedEditingState::copySavedEditingState(SavedEditingState const &obj)
-{
-  CMEMB(selectLine);
-  CMEMB(selectCol);
-  CMEMB(selectEnabled);
-  setFirstVisibleLC(obj.firstVisibleLine, obj.firstVisibleCol);
-  CMEMB(hitText);
-  CMEMB(hitTextFlags);
-}
-
-
-void SavedEditingState::setFirstVisibleLC(int newFirstLine, int newFirstCol)
-{
-  // this is the one function allowed to change these
-  const_cast<int&>(firstVisibleLine) = newFirstLine;
-  const_cast<int&>(firstVisibleCol) = newFirstCol;
-}
-
-
-// ----------------------- TextDocumentFile ---------------------------
 // Do not start with 0 because QVariant::toInt() returns 0 to
 // indicate failure.
 int TextDocumentFile::nextWindowMenuId = 1;
@@ -55,7 +17,7 @@ int TextDocumentFile::nextWindowMenuId = 1;
 int TextDocumentFile::objectCount = 0;
 
 TextDocumentFile::TextDocumentFile()
-  : Buffer(),
+  : TextDocument(),
     hasHotkeyDigit(false),
     hotkeyDigit(0),
     filename(),
@@ -63,8 +25,7 @@ TextDocumentFile::TextDocumentFile()
     title(),
     windowMenuId(nextWindowMenuId++),
     //changed(false),
-    highlighter(NULL),
-    savedState()
+    highlighter(NULL)
 {
   TextDocumentFile::objectCount++;
 }

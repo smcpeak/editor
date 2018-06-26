@@ -4,7 +4,7 @@
 #ifndef HILITE_H
 #define HILITE_H
 
-#include "buffer.h"                    // TextDocumentCore, TextDocumentObserver
+#include "text-document-core.h"        // TextDocumentCore, TextDocumentObserver
 
 class LineCategories;                  // textcategory.h
 

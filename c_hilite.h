@@ -21,9 +21,9 @@ public:      // funcs
   ~C_Lexer();
 
   // IncLexer funcs
-  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state);
-  virtual int getNextToken(TextCategory &code);
-  virtual LexerState getState() const;
+  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state) override;
+  virtual int getNextToken(TextCategory &code) override;
+  virtual LexerState getState() const override;
 };
 
 

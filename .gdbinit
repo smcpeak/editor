@@ -10,7 +10,7 @@ file ./editor
 #file ./buffer
 #file ./text-document
 
-#set args -tr setView
+set args -tr objectCount main.h main.cc editor-widget.h editor-widget.cc
 
 #set args tmp
 

@@ -4,7 +4,7 @@
 #ifndef JUSTIFY_H
 #define JUSTIFY_H
 
-#include "buffer.h"                    // Buffer
+#include "text-document-editor.h"      // TextDocumentEditor
 
 #include "array.h"                     // ArrayStack
 #include "str.h"                       // string
@@ -32,10 +32,11 @@ void justifyTextLines(
 // Heuristically identify the textual framing used for the text at
 // and surrounding 'originLine', separate it from the content, wrap the
 // content to the result will fit into 'desiredWidth' columns if
-// possible, and replace the identifed region with its wrapped
+// possible, and replace the identified region with its wrapped
 // version.  Return false if we could not identify a wrappable
 // region.
-bool justifyNearLine(Buffer &buf, int originLine, int desiredWidth);
+bool justifyNearLine(TextDocumentEditor &tde, int originLine,
+                     int desiredWidth);
 
 
 #endif // JUSTIFY_H

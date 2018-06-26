@@ -3,7 +3,6 @@
 
 #include "main.h"                      // EditorWindow
 
-#include "buffer.h"                    // Buffer
 #include "c_hilite.h"                  // C_Highlighter
 #include "editor-widget.h"             // EditorWidget
 #include "exc.h"                       // XOpen
@@ -16,6 +15,7 @@
 #include "status.h"                    // StatusDisplay
 #include "strutil.h"                   // sm_basename
 #include "test.h"                      // PVAL
+#include "text-document-editor.h"      // TextDocumentEditor
 #include "trace.h"                     // TRACE_ARGS
 
 #include <string.h>                    // strrchr
@@ -205,7 +205,7 @@ void EditorWindow::buildMenu()
 // not inline because main.h doesn't see editor.h
 TextDocumentFile *EditorWindow::theDocFile()
 {
-  return editor->docFile;
+  return editor->getDocumentFile();
 }
 
 
@@ -216,15 +216,25 @@ void EditorWindow::fileNewFile()
 }
 
 
-void EditorWindow::setDocumentFile(TextDocumentFile *b)
+void EditorWindow::setDocumentFile(TextDocumentFile *file)
 {
-  editor->setDocumentFile(b);
+  editor->setDocumentFile(file);
+  this->updateForChangedFile();
+}
 
-  //editor->resetView();
+void EditorWindow::updateForChangedFile()
+{
   editor->updateView();
   editorViewChanged();
 
   setFileName(theDocFile()->title, theDocFile()->hotkeyDesc());
+}
+
+
+void EditorWindow::forgetAboutFile(TextDocumentFile *file)
+{
+  editor->forgetAboutFile(file);
+  this->updateForChangedFile();
 }
 
 
@@ -289,7 +299,7 @@ void EditorWindow::fileOpenFile(char const *name)
     if (ext.equals("h") ||
         ext.equals("cc")) {
       // make and attach a C++ highlighter for C/C++ files
-      b->highlighter = new C_Highlighter(b->core());
+      b->highlighter = new C_Highlighter(b->getCore());
     }
   }
 
@@ -355,7 +365,7 @@ void EditorWindow::writeTheFile()
 {
   try {
     TextDocumentFile *b = this->theDocFile();
-    b->writeFile(toCStr(b->filename));
+    writeFile(b->getCore(), toCStr(b->filename));
     b->noUnsavedChanges();
     b->refreshModificationTime();
     editorViewChanged();
@@ -652,23 +662,25 @@ void EditorWindow::helpAboutQt()
 
 void EditorWindow::editorViewChanged()
 {
+  TextDocumentEditor *tde = editor->getDocumentEditor();
+
   // Set the scrollbars.  In both dimensions, the range includes the
   // current value so we can scroll arbitrarily far beyond the nominal
   // size of the file contents.  Also, it is essential to set the range
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (horizScroll) {
-    horizScroll->setRange(0, max(editor->docFile->maxLineLength(),
-                                 editor->firstVisibleCol));
-    horizScroll->setValue(editor->firstVisibleCol);
+    horizScroll->setRange(0, max(tde->doc()->maxLineLength(),
+                                 editor->firstVisibleCol()));
+    horizScroll->setValue(editor->firstVisibleCol());
     horizScroll->setSingleStep(1);
     horizScroll->setPageStep(editor->visCols());
   }
 
   if (vertScroll) {
-    vertScroll->setRange(0, max(editor->docFile->numLines(),
-                                editor->firstVisibleLine));
-    vertScroll->setValue(editor->firstVisibleLine);
+    vertScroll->setRange(0, max(tde->doc()->numLines(),
+                                editor->firstVisibleLine()));
+    vertScroll->setValue(editor->firstVisibleLine());
     vertScroll->setSingleStep(1);
     vertScroll->setPageStep(editor->visLines());
   }
@@ -678,7 +690,7 @@ void EditorWindow::editorViewChanged()
   statusArea->position->setText(QString(
     stringc << " " << (editor->cursorLine()+1) << ":"
             << (editor->cursorCol()+1)
-            << (editor->docFile->unsavedChanges()? " *" : "")
+            << (tde->doc()->unsavedChanges()? " *" : "")
   ));
 }
 
@@ -917,40 +929,24 @@ void GlobalState::rebuildWindowMenus()
 }
 
 
-void GlobalState::deleteDocumentFile(TextDocumentFile *b)
+void GlobalState::deleteDocumentFile(TextDocumentFile *file)
 {
-  // where in the list is 'b'?
-  int index = documentFiles.indexOf(b);
-  xassert(index >= 0);
-
-  // remove it
-  documentFiles.removeItem(b);
-
-  // select new file to display, for every window
-  // that previously was displaying 'b'
-  if (index > 0) {
-    index--;
-  }
-
+  // Remove it from the global list.
+  documentFiles.removeItem(file);
   if (documentFiles.isEmpty()) {
     createNewFile();    // ensure there's always one
   }
 
-  // update any windows that are still referring to 'b'
-  // so that instead they (somewhat arbitrarily) refer
-  // to whatever is in 'documentFiles' index slot 'index'
+  // Inform the windows they need to forget about it too.
   FOREACH_OBJLIST_NC(EditorWindow, windows, iter) {
     EditorWindow *ed = iter.data();
-
-    if (ed->editor->docFile == b) {
-      ed->setDocumentFile(documentFiles.nth(index));
-    }
+    ed->forgetAboutFile(file);
 
     // also, rebuild all the window menus
     ed->rebuildWindowMenu();
   }
 
-  delete b;
+  delete file;
 }
 
 

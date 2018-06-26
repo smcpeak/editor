@@ -25,7 +25,7 @@ IncSearch::IncSearch(StatusDisplay *s)
     beginCol(0),
     beginFVLine(0),
     beginFVCol(0),
-    curFlags(Buffer::FS_NONE),
+    curFlags(TextDocumentEditor::FS_NONE),
     text(),
     curLine(0),
     curCol(0),
@@ -45,7 +45,7 @@ void IncSearch::attach(EditorWidget *newEd)
     // we're already attached, the user just pressed Ctrl-S while
     // we're searching, so search to next spot
     bool prevMatch = match;
-    if (!findString(curFlags | Buffer::FS_ADVANCE_ONCE) &&
+    if (!findString(curFlags | TextDocumentEditor::FS_ADVANCE_ONCE) &&
         !prevMatch) {
       // can't find now, and weren't on a match before, so wrap
       int line, col;
@@ -67,14 +67,14 @@ void IncSearch::attach(EditorWidget *newEd)
   beginLine = ed->cursorLine();
   beginCol = ed->cursorCol();
 
-  beginFVLine = ed->firstVisibleLine;
-  beginFVCol = ed->firstVisibleCol;
+  beginFVLine = ed->firstVisibleLine();
+  beginFVCol = ed->firstVisibleCol();
 
-  curFlags = Buffer::FS_CASE_INSENSITIVE;
+  curFlags = TextDocumentEditor::FS_CASE_INSENSITIVE;
 
   mode = M_SEARCH;
 
-  if (ed->selectEnabled) {
+  if (ed->selectEnabled()) {
     // initialize the search string with the selection
     ed->normalizeSelect();
 
@@ -82,13 +82,13 @@ void IncSearch::attach(EditorWidget *newEd)
     curCol = ed->selLowCol;
     if (ed->selLowLine == ed->selHighLine) {
       // expected case
-      text = ed->docFile->getTextRange(ed->selLowLine, ed->selLowCol,
+      text = ed->editor->getTextRange(ed->selLowLine, ed->selLowCol,
         ed->selHighLine, ed->selHighCol);
     }
     else {
       // truncate to one line..
-      text = ed->docFile->getTextRange(ed->selLowLine, ed->selLowCol,
-        ed->selLowLine, ed->docFile->lineLength(ed->selLowLine));
+      text = ed->editor->getTextRange(ed->selLowLine, ed->selLowCol,
+        ed->selLowLine, ed->editor->lineLength(ed->selLowLine));
     }
   }
 
@@ -117,8 +117,8 @@ QString IncSearch::statusText() const
   switch (mode) {
     case M_SEARCH:
       sb << "I-search:  F1=help";
-      addStatusFlag(sb, "^I=insens", (curFlags & Buffer::FS_CASE_INSENSITIVE));
-      addStatusFlag(sb, "^B=back", (curFlags & Buffer::FS_BACKWARDS));
+      addStatusFlag(sb, "^I=insens", (curFlags & TextDocumentEditor::FS_CASE_INSENSITIVE));
+      addStatusFlag(sb, "^B=back", (curFlags & TextDocumentEditor::FS_BACKWARDS));
       break;
 
     case M_GET_REPLACEMENT:
@@ -265,19 +265,19 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
   if (state == Qt::ControlModifier) {
     switch (k->key()) {
       case Qt::Key_I:
-        curFlags ^= Buffer::FS_CASE_INSENSITIVE;
+        curFlags ^= TextDocumentEditor::FS_CASE_INSENSITIVE;
         findString();
         return true;
 
       case Qt::Key_B:
-        curFlags ^= Buffer::FS_BACKWARDS;
+        curFlags ^= TextDocumentEditor::FS_BACKWARDS;
         findString();
         return true;
 
       case Qt::Key_W:
         // grab chars from cursor up to end of next word
         // or end of line
-        text &= ed->docFile->getWordAfter(ed->cursorLine(), ed->cursorCol());
+        text &= ed->editor->getWordAfter(ed->cursorLine(), ed->cursorCol());
         findString();
         return true;
 
@@ -356,25 +356,23 @@ void IncSearch::resetToSearchStart()
   this->curLine = this->beginLine;
   this->curCol = this->beginCol;
   ed->cursorTo(beginLine, beginCol);
-  ed->setView(beginFVLine, beginFVCol);
-  ed->selectEnabled = false;
+  ed->setView(TextCoord(beginFVLine, beginFVCol));
+  ed->clearMark();
   ed->hitText = "";
   ed->redraw();
   this->updateStatus();
 }
 
 
-bool IncSearch::findString(Buffer::FindStringFlags flags)
+bool IncSearch::findString(TextDocumentEditor::FindStringFlags flags)
 {
-  match = ed->docFile->findString(curLine, curCol, toCStr(text), flags);
+  match = ed->editor->findString(curLine, curCol, toCStr(text), flags);
   if (match) {
     // move editor cursor to end of match
     ed->cursorTo(curLine, curCol + text.length());
 
     // put selection start at beginning of match
-    ed->selectLine = curLine;
-    ed->selectCol = curCol;
-    ed->selectEnabled = true;
+    ed->setMark(TextCoord(curLine, curCol));
 
     ed->scrollToCursor_noRedraw(-1 /*center*/);
   }
@@ -383,7 +381,7 @@ bool IncSearch::findString(Buffer::FindStringFlags flags)
 
   // the only flag I want the editor using for hit text, for now,
   // is the case sensitivity flag
-  ed->hitTextFlags = curFlags & Buffer::FS_CASE_INSENSITIVE;
+  ed->hitTextFlags = curFlags & TextDocumentEditor::FS_CASE_INSENSITIVE;
 
   ed->redraw();
 
@@ -442,12 +440,12 @@ bool IncSearch::tryWrapSearch(int &line, int &col) const
   // wrap
   line=0;
   col=0;
-  if (curFlags & Buffer::FS_BACKWARDS) {
-    ed->docFile->getLastPos(line, col);
+  if (curFlags & TextDocumentEditor::FS_BACKWARDS) {
+    ed->editor->getLastPos(line, col);
   }
 
   // search
-  if (ed->docFile->findString(line, col, toCStr(text), curFlags) &&
+  if (ed->editor->findString(line, col, toCStr(text), curFlags) &&
       !(line==curLine && col==curCol)) {
     // yes, wrapping finds another
     return true;
@@ -460,13 +458,13 @@ bool IncSearch::tryWrapSearch(int &line, int &col) const
 
 bool IncSearch::nextMatch()
 {
-  return findString((curFlags | Buffer::FS_ADVANCE_ONCE) & ~Buffer::FS_BACKWARDS );
+  return findString((curFlags | TextDocumentEditor::FS_ADVANCE_ONCE) & ~TextDocumentEditor::FS_BACKWARDS );
 }
 
 
 bool IncSearch::prevMatch()
 {
-  return findString(curFlags | Buffer::FS_ADVANCE_ONCE | Buffer::FS_BACKWARDS);
+  return findString(curFlags | TextDocumentEditor::FS_ADVANCE_ONCE | TextDocumentEditor::FS_BACKWARDS);
 }
 
 
@@ -590,7 +588,7 @@ bool IncSearch::replaceKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 
       case Qt::Key_N:
         // find next match
-        if (!findString(curFlags | Buffer::FS_ADVANCE_ONCE)) {
+        if (!findString(curFlags | TextDocumentEditor::FS_ADVANCE_ONCE)) {
           detach();
         }
         return true;

@@ -4,9 +4,9 @@
 #include "editor-widget.h"   // this module
 
 // this dir
-#include "buffer.h"          // Buffer
 #include "inputproxy.h"      // InputProxy
 #include "justify.h"         // justifyNearLine
+#include "main.h"            // GlobalState
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
 #include "qtutil.h"          // toString(QKeyEvent&)
@@ -54,13 +54,12 @@ int const UNDERLINE_OFFSET = 2;
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::objectCount = 0;
 
-EditorWidget::EditorWidget(TextDocumentFile *docFile_, StatusDisplay *stat,
-               QWidget *parent)
+EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
+                           QWidget *parent)
   : QWidget(parent),
-    SavedEditingState(),
     infoBox(NULL),
-    status(stat),
-    docFile(docFile_),
+    status(status_),
+    editor(new TextDocumentFileEditor(tdf)),
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
@@ -80,6 +79,8 @@ EditorWidget::EditorWidget(TextDocumentFile *docFile_, StatusDisplay *stat,
     nonfocusCursorLine(0), nonfocusCursorCol(0),
     ignoreScrollSignals(false)
 {
+  xassert(status_);
+
   setFonts(bdfFontData_editor14r,
            bdfFontData_editor14i,
            bdfFontData_editor14b);
@@ -103,13 +104,38 @@ EditorWidget::~EditorWidget()
   }
 
   this->stopListening();
+
+  // Do this explicitly just for clarity.
+  this->editor = NULL;
+  m_editors.deleteAll();
+
   fontForCategory.deleteAll();
+}
+
+
+void EditorWidget::selfCheck() const
+{
+  // Check that 'editor' is among 'm_editors' and that the files in
+  // 'm_editors' are a subset of GlobalState::documentFiles.
+  bool foundEditor = false;
+  FOREACH_OBJLIST(TextDocumentFileEditor, m_editors, iter) {
+    TextDocumentFileEditor const *tdfe = iter.data();
+    if (editor == tdfe) {
+      foundEditor = true;
+    }
+    tdfe->selfCheck();
+    xassert(GlobalState::global_globalState->documentFiles.contains(tdfe->file));
+  }
+  xassert(foundEditor);
+
+  // There should never be more m_editors than documentFiles.
+  xassert(GlobalState::global_globalState->documentFiles.count() >= m_editors.count());
 }
 
 
 void EditorWidget::cursorTo(int line, int col)
 {
-  docFile->moveAbsCursor(line, col);
+  editor->moveAbsCursor(line, col);
 
   // set the nonfocus location too, in case the we happen to
   // not have the focus right now (e.g. the Alt+G dialog);
@@ -121,53 +147,37 @@ void EditorWidget::cursorTo(int line, int col)
 
 void EditorWidget::resetView()
 {
-  if (docFile) {
+  if (editor) {
     cursorTo(0, 0);
+    editor->clearMark();
   }
-  this->selectLine = 0;
-  this->selectCol = 0;
-  this->selectEnabled = false;
   selLowLine = selLowCol = selHighLine = selHighCol = 0;   // make it deterministic..
-  setView(0,0);
+  setView(TextCoord(0,0));
 }
 
 
 bool EditorWidget::cursorBeforeSelect() const
 {
-  // TODO: I should create a class with line+col to better
-  // encapsulate logic like this.
-  if (cursorLine() < this->selectLine) return true;
-  if (cursorLine() > this->selectLine) return false;
-  return cursorCol() < this->selectCol;
+  return textCursor() < mark();
 }
 
 
-void EditorWidget::normalizeSelect(int cursorLine, int cursorCol)
+void EditorWidget::normalizeSelect(TextCoord cursor)
 {
+  // TODO: Why do we test the actual cursor, but then use the passed-in
+  // value to set the values?
   if (cursorBeforeSelect()) {
-    selLowLine = cursorLine;
-    selLowCol = cursorCol;
-    selHighLine = this->selectLine;
-    selHighCol = this->selectCol;
+    selLowLine = cursor.line;
+    selLowCol = cursor.column;
+    selHighLine = this->mark().line;
+    selHighCol = this->mark().column;
   }
   else {
-    selLowLine = this->selectLine;
-    selLowCol = this->selectCol;
-    selHighLine = cursorLine;
-    selHighCol = cursorCol;
+    selLowLine = this->mark().line;
+    selLowCol = this->mark().column;
+    selHighLine = cursor.line;
+    selHighCol = cursor.column;
   }
-}
-
-
-void EditorWidget::selectCursorLine()
-{
-  // Move the cursor to the start of its line.
-  this->docFile->moveAbsColumn(0);
-
-  // Make the selection end at the start of the next line.
-  this->selectLine = this->cursorLine() + 1;
-  this->selectCol = 0;
-  this->selectEnabled = true;
 }
 
 
@@ -252,27 +262,73 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 }
 
 
-void EditorWidget::setDocumentFile(TextDocumentFile *buf)
+void EditorWidget::setDocumentFile(TextDocumentFile *file)
 {
   bool wasListening = this->listening;
   if (wasListening) {
     this->stopListening();
   }
 
-  // save current editing state in current 'docFile'
-  if (this->docFile) {     // allow initial file to be NULL
-    this->docFile->savedState.copySavedEditingState(*this);
-  }
-
-  // switch to the new file, and retrieve its editing state
-  this->docFile = buf;
-  this->copySavedEditingState(buf->savedState);
+  this->editor = this->getOrMakeEditor(file);
 
   if (wasListening) {
     this->startListening();
   }
 
   this->redraw();
+}
+
+
+EditorWidget::TextDocumentFileEditor *
+  EditorWidget::getOrMakeEditor(TextDocumentFile *file)
+{
+  // Look for an existing editor for this file.
+  FOREACH_OBJLIST_NC(TextDocumentFileEditor, m_editors, iter) {
+    if (iter.data()->file == file) {
+      return iter.data();
+    }
+  }
+
+  // Have to make a new one.
+  TextDocumentFileEditor *ret = new TextDocumentFileEditor(file);
+  m_editors.prepend(ret);
+  return ret;
+}
+
+
+void EditorWidget::forgetAboutFile(TextDocumentFile *file)
+{
+  // Remove 'file' from my list.
+  for(ObjListMutator< TextDocumentFileEditor > mut(m_editors); !mut.isDone(); ) {
+    if (mut.data()->file == file) {
+      mut.remove();
+    }
+    else {
+      mut.adv();
+    }
+  }
+
+  // Change files if that was the one we were editing.
+  if (this->editor->file == file) {
+    // This dependence on GlobalState is questionable...
+    this->setDocumentFile(
+      GlobalState::global_globalState->documentFiles.first());
+  }
+}
+
+
+TextDocumentFile *EditorWidget::getDocumentFile() const
+{
+  xassert(this->editor);
+  xassert(this->editor->file);
+  return this->editor->file;
+}
+
+
+TextDocumentEditor *EditorWidget::getDocumentEditor()
+{
+  xassert(this->editor);
+  return this->editor;
 }
 
 
@@ -291,17 +347,18 @@ void EditorWidget::redraw()
 }
 
 
-void EditorWidget::setView(int newFirstLine, int newFirstCol)
+void EditorWidget::selectCursorLine()
 {
-  xassert(newFirstLine >= 0);
-  xassert(newFirstCol >= 0);
+  editor->selectCursorLine();
+}
 
-  if (newFirstLine == this->firstVisibleLine &&
-      newFirstCol == this->firstVisibleCol) {
-    // nop
-  }
-  else {
-    this->setFirstVisibleLC(newFirstLine, newFirstCol);
+
+void EditorWidget::setView(TextCoord newFirstVisible)
+{
+  xassert(newFirstVisible.nonNegative());
+
+  if (newFirstVisible != editor->firstVisible()) {
+    editor->setFirstVisible(newFirstVisible);
 
     updateView();
 
@@ -312,10 +369,10 @@ void EditorWidget::setView(int newFirstLine, int newFirstCol)
 
 void EditorWidget::moveView(int deltaLine, int deltaCol)
 {
-  int line = max(0, this->firstVisibleLine + deltaLine);
-  int col = max(0, this->firstVisibleCol + deltaCol);
+  int line = max(0, editor->firstVisible().line + deltaLine);
+  int col = max(0, editor->firstVisible().column + deltaCol);
 
-  this->setView(line, col);
+  this->setView(TextCoord(line, col));
 }
 
 
@@ -325,16 +382,10 @@ void EditorWidget::updateView()
   int w = this->width();
 
   if (this->fontHeight && this->fontWidth) {
-    // calculate viewport stats
-    // why -1?  suppose width==height==0, then the "first" visible isn't
-    // visible at all, so we'd want the one before (not that that's visible
-    // either, but it suggests what we want in nondegenerate cases too)
-    this->lastVisibleLine =
-      this->firstVisibleLine +
-      (h - this->topMargin) / this->lineHeight() - 1;
-    this->lastVisibleCol =
-      this->firstVisibleCol +
-      (w - this->leftMargin) / this->fontWidth - 1;
+    // calculate viewport size
+    editor->setVisibleSize(
+      (h - this->topMargin) / this->lineHeight(),
+      (w - this->leftMargin) / this->fontWidth);
   }
   else {
     // font info not set, leave them alone
@@ -482,8 +533,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // Visible area info.  The +1 here is to include the column after
   // the last fully visible column, which might be partially visible.
   int const visibleCols = this->visCols() + 1;
-  int const firstCol = this->firstVisibleCol;
-  int const firstLine = this->firstVisibleLine;
+  int const firstCol = this->firstVisibleCol();
+  int const firstLine = this->firstVisibleLine();
 
   // I think it might be useful to support negative values for these
   // variables, but the code below is not prepared to deal with such
@@ -498,7 +549,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   Array<char> text(visibleCols);
 
   // set sel{Low,High}{Line,Col}
-  normalizeSelect(cursorLine, cursorCol);
+  normalizeSelect(TextCoord(cursorLine, cursorCol));
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -519,21 +570,21 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     categories.clear(TC_NORMAL);
 
     // fill with text from the file
-    if (line < docFile->numLines()) {
+    if (line < editor->numLines()) {
       // 1 if we will behave as though a newline character is
       // at the end of this line.
       int newlineAdjust = 0;
-      if (this->visibleWhitespace && line < docFile->numLines()-1) {
+      if (this->visibleWhitespace && line < editor->numLines()-1) {
         newlineAdjust = 1;
       }
 
       // Line length including possible synthesized newline.
-      int const lineLen = docFile->lineLength(line) + newlineAdjust;
+      int const lineLen = editor->lineLength(line) + newlineAdjust;
 
       if (firstCol < lineLen) {
         // First get the text without any extra newline.
         int const amt = min(lineLen-newlineAdjust - firstCol, visibleCols);
-        docFile->getLine(line, firstCol, text, amt);
+        editor->getLine(line, firstCol, text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.
@@ -543,18 +594,19 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       }
 
       // apply highlighting
-      if (docFile->highlighter) {
-        docFile->highlighter->highlight(docFile->core(), line, categories);
+      if (editor->file->highlighter) {
+        editor->file->highlighter->
+          highlight(editor->core(), line, categories);
       }
 
       // Show search hits.
       if (this->hitText.length() > 0) {
         int hitLine = line;
         int hitCol = 0;
-        Buffer::FindStringFlags const hitTextFlags =
-          this->hitTextFlags | Buffer::FS_ONE_LINE;
+        TextDocumentEditor::FindStringFlags const hitTextFlags =
+          this->hitTextFlags | TextDocumentEditor::FS_ONE_LINE;
 
-        while (docFile->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
+        while (editor->findString(hitLine /*INOUT*/, hitCol /*INOUT*/,
                                   toCStr(this->hitText),
                                   hitTextFlags)) {
           categories.overlay(hitCol, this->hitText.length(), TC_HITS);
@@ -565,7 +617,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     xassert(visibleLineChars <= visibleCols);
 
     // incorporate effect of selection
-    if (this->selectEnabled &&
+    if (this->selectEnabled() &&
         this->selLowLine <= line && line <= this->selHighLine)
     {
       if (selLowLine < line && line < selHighLine) {
@@ -716,12 +768,12 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
 
-        if (line < docFile->numLines() &&
-            cursorCol <= docFile->lineLength(line)) {
+        if (line < editor->numLines() &&
+            cursorCol <= editor->lineLength(line)) {
           // Drawing the block cursor overwrote the character, so we
           // have to draw it again.
-          if (line == docFile->numLines() - 1 &&
-              cursorCol == docFile->lineLength(line)) {
+          if (line == editor->numLines() - 1 &&
+              cursorCol == editor->lineLength(line)) {
             // Draw nothing at the end of the last line.
           }
           else {
@@ -851,7 +903,7 @@ void EditorWidget::cursorToTop()
 
 void EditorWidget::cursorToBottom()
 {
-  cursorTo(max(docFile->numLines()-1,0), 0);
+  cursorTo(max(editor->numLines()-1,0), 0);
   scrollToCursor();
   //redraw();    // 'scrollToCursor' does 'redraw()' automatically
 }
@@ -859,15 +911,13 @@ void EditorWidget::cursorToBottom()
 
 void EditorWidget::turnOffSelection()
 {
-  this->selectEnabled = false;
+  this->clearMark();
 }
 
 void EditorWidget::turnOnSelection()
 {
-  if (!this->selectEnabled) {
-    this->selectLine = cursorLine();
-    this->selectCol = cursorCol();
-    this->selectEnabled = true;
+  if (!this->selectEnabled()) {
+    this->setMark(this->textCursor());
   }
 }
 
@@ -883,9 +933,8 @@ void EditorWidget::turnSelection(bool on)
 
 void EditorWidget::clearSelIfEmpty()
 {
-  if (this->selectEnabled &&
-      cursorLine() == this->selectLine &&
-      cursorCol() == this->selectCol) {
+  if (this->selectEnabled() &&
+      this->textCursor() == this->mark()) {
     turnOffSelection();
   }
 }
@@ -933,7 +982,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
   GENERIC_CATCH_BEGIN
 
   TRACE("input", "keyPress: " << toString(*k));
-  HBGrouper hbgrouper(*docFile);
+  UndoHistoryGrouper hbgrouper(*editor);
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
 
@@ -985,16 +1034,16 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_W:
         moveView(-1, 0);
-        if (cursorLine() > this->lastVisibleLine) {
-          cursorUpBy(cursorLine() - this->lastVisibleLine);
+        if (cursorLine() > this->lastVisibleLine()) {
+          cursorUpBy(cursorLine() - this->lastVisibleLine());
         }
         redraw();
         break;
 
       case Qt::Key_Z:
         moveView(+1, 0);
-        if (cursorLine() < this->firstVisibleLine) {
-          cursorDownBy(this->firstVisibleLine - cursorLine());
+        if (cursorLine() < this->firstVisibleLine()) {
+          cursorDownBy(this->firstVisibleLine() - cursorLine());
         }
         redraw();
         break;
@@ -1034,7 +1083,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_L:
-        setView(max(0, cursorLine() - this->visLines()/2), 0);
+        setView(TextCoord(max(0, cursorLine() - this->visLines()/2), 0));
         scrollToCursor();
         break;
 
@@ -1042,7 +1091,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         if (!editSafetyCheck()) {
           return;
         }
-        if (selectEnabled) {
+        if (selectEnabled()) {
           QMessageBox::information(this, "Unimp", "unimplemented");
         }
         else {
@@ -1054,7 +1103,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         if (!editSafetyCheck()) {
           return;
         }
-        if (!selectEnabled) {
+        if (!selectEnabled()) {
           selectCursorLine();
         }
         editCut();
@@ -1136,13 +1185,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_U:
-        docFile->core().dumpRepresentation();
+        editor->core().dumpRepresentation();
         malloc_stats();
         break;
 
       case Qt::Key_H:
-        docFile->printHistory();
-        docFile->printHistoryStats();
+        editor->doc()->printHistory();
+        editor->doc()->printHistoryStats();
         break;
 
       default:
@@ -1253,40 +1302,40 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
             return;
           }
 
-          int lineLength = docFile->lineLength(docFile->line());
-          bool hadCharsToRight = (docFile->col() < lineLength);
-          bool beyondLineEnd = (docFile->col() > lineLength);
+          int lineLength = editor->lineLength(editor->line());
+          bool hadCharsToRight = (editor->col() < lineLength);
+          bool beyondLineEnd = (editor->col() > lineLength);
           if (beyondLineEnd) {
             // Move the cursor to the end of the line so
             // that fillToCursor will not add spaces.
-            docFile->moveAbsColumn(lineLength);
+            editor->moveAbsColumn(lineLength);
           }
 
           // Add newlines if needed so the cursor is on a valid line.
           fillToCursor();
 
           // typing replaces selection
-          if (this->selectEnabled) {
+          if (this->selectEnabled()) {
             editDelete();
           }
 
-          docFile->insertNewline();
+          editor->insertNewline();
 
           // make sure we can see as much to the left as possible
           setFirstVisibleCol(0);
 
           // auto-indent
-          int ind = docFile->getAboveIndentation(cursorLine()-1);
+          int ind = editor->getAboveIndentation(cursorLine()-1);
           if (hadCharsToRight) {
             // Insert spaces so the carried forward text starts
             // in the auto-indent column.
-            docFile->insertSpaces(ind);
+            editor->insertSpaces(ind);
           }
           else {
             // Move the cursor to the auto-indent column but do not
             // fill with spaces.  This way I can press Enter more
             // than once without adding lots of spaces.
-            docFile->moveRelCursor(0, ind);
+            editor->moveRelCursor(0, ind);
           }
 
           scrollToCursor();
@@ -1327,12 +1376,12 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           //docFile->changed = true;
 
           // typing replaces selection
-          if (this->selectEnabled) {
+          if (this->selectEnabled()) {
             editDelete();
           }
           // insert this character at the cursor
           QByteArray utf8(text.toUtf8());
-          docFile->insertLR(false /*left*/, utf8.constData(), utf8.length());
+          editor->insertLR(false /*left*/, utf8.constData(), utf8.length());
           scrollToCursor();
         }
         else {
@@ -1356,6 +1405,10 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 {
   TRACE("input", "keyRelease: " << toString(*k));
 
+  // Not sure if this is the best place for this, but it seems
+  // worth a try.
+  this->selfCheck();
+
   k->ignore();
 }
 
@@ -1363,7 +1416,7 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 void EditorWidget::insertAtCursor(char const *text)
 {
   //docFile->changed = true;
-  docFile->insertText(text);
+  editor->insertText(text);
   scrollToCursor();
 }
 
@@ -1375,7 +1428,7 @@ void EditorWidget::deleteAtCursor(int amt)
   }
 
   fillToCursor();
-  docFile->deleteLR(true /*left*/, amt);
+  editor->deleteLR(true /*left*/, amt);
   //docFile->changed = true;
   scrollToCursor();
 }
@@ -1383,32 +1436,32 @@ void EditorWidget::deleteAtCursor(int amt)
 
 void EditorWidget::deleteLeftOfCursor()
 {
-  if (this->selectEnabled) {
+  if (this->selectEnabled()) {
     editDelete();
   }
   else if (cursorCol() == 0) {
     if (cursorLine() == 0) {
       // do nothing
     }
-    else if (cursorLine() > docFile->numLines()-1) {
+    else if (cursorLine() > editor->numLines()-1) {
       // Move cursor up non-destructively.
       cursorUp(false /*shift*/);
     }
     else {
       // move to end of previous line
-      docFile->moveToPrevLineEnd();
+      editor->moveToPrevLineEnd();
 
       // splice them together
       spliceNextLine();
     }
   }
-  else if (cursorCol() > docFile->lineLengthLoose(cursorLine())) {
+  else if (cursorCol() > editor->lineLengthLoose(cursorLine())) {
     // Move cursor left non-destructively.
     cursorLeft(false /*shift*/);
   }
   else {
     // remove the character to the left of the cursor
-    docFile->deleteLR(true /*left*/, 1);
+    editor->deleteLR(true /*left*/, 1);
   }
 
   scrollToCursor();
@@ -1417,22 +1470,22 @@ void EditorWidget::deleteLeftOfCursor()
 
 void EditorWidget::fillToCursor()
 {
-  docFile->fillToCursor();
+  editor->fillToCursor();
 }
 
 
 void EditorWidget::spliceNextLine()
 {
   // cursor must be at the end of a line
-  xassert(cursorCol() == docFile->lineLength(cursorLine()));
+  xassert(cursorCol() == editor->lineLength(cursorLine()));
 
-  docFile->deleteChar();
+  editor->deleteChar();
 }
 
 
 void EditorWidget::justifyNearCursorLine()
 {
-  justifyNearLine(*docFile, this->cursorLine(), this->softMarginColumn);
+  justifyNearLine(*editor, this->cursorLine(), this->softMarginColumn);
   this->scrollToCursor();
 }
 
@@ -1469,15 +1522,15 @@ int EditorWidget::stcHelper(int firstVis, int lastVis, int cur, int gap)
 
 void EditorWidget::scrollToCursor_noRedraw(int edgeGap)
 {
-  int fvline = stcHelper(this->firstVisibleLine,
-                         this->lastVisibleLine,
+  int fvline = stcHelper(this->firstVisibleLine(),
+                         this->lastVisibleLine(),
                          cursorLine(), edgeGap);
 
-  int fvcol = stcHelper(this->firstVisibleCol,
-                        this->lastVisibleCol,
+  int fvcol = stcHelper(this->firstVisibleCol(),
+                        this->lastVisibleCol(),
                         cursorCol(), edgeGap);
 
-  setView(fvline, fvcol);
+  setView(TextCoord(fvline, fvcol));
 }
 
 void EditorWidget::scrollToCursor(int edgeGap)
@@ -1487,9 +1540,9 @@ void EditorWidget::scrollToCursor(int edgeGap)
 }
 
 
-STATICDEF string EditorWidget::lineColStr(int line, int col)
+STATICDEF string EditorWidget::lineColStr(TextCoord tc)
 {
-  return stringc << line << ":" << col;
+  return stringc << tc;
 }
 
 void EditorWidget::moveViewAndCursor(int deltaLine, int deltaCol)
@@ -1497,20 +1550,20 @@ void EditorWidget::moveViewAndCursor(int deltaLine, int deltaCol)
   TRACE("moveViewAndCursor",
         "start: firstVis=" << firstVisStr()
      << ", cursor=" << cursorStr()
-     << ", delta=" << lineColStr(deltaLine, deltaCol));
+     << ", delta=" << lineColStr(TextCoord(deltaLine, deltaCol)));
 
   // first make sure the view contains the cursor
   scrollToCursor_noRedraw();
 
   // move viewport, but remember original so we can tell
   // when there's truncation
-  int origVL = this->firstVisibleLine;
-  int origVC = this->firstVisibleCol;
+  int origVL = this->firstVisibleLine();
+  int origVC = this->firstVisibleCol();
   moveView(deltaLine, deltaCol);
 
   // now move cursor by the amount that the viewport moved
-  moveCursorBy(this->firstVisibleLine - origVL,
-               this->firstVisibleCol - origVC);
+  moveCursorBy(this->firstVisibleLine() - origVL,
+               this->firstVisibleCol() - origVC);
 
   TRACE("moveViewAndCursor",
         "end: firstVis=" << firstVisStr() <<
@@ -1549,8 +1602,8 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
   inc(x, -leftMargin);
   inc(y, -topMargin);
 
-  int newLine = y/lineHeight() + this->firstVisibleLine;
-  int newCol = x/fontWidth + this->firstVisibleCol;
+  int newLine = y/lineHeight() + this->firstVisibleLine();
+  int newCol = x/fontWidth + this->firstVisibleCol();
 
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
@@ -1602,8 +1655,8 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 // ----------------------- edit menu -----------------------
 void EditorWidget::editUndo()
 {
-  if (docFile->canUndo()) {
-    docFile->undo();
+  if (editor->canUndo()) {
+    editor->undo();
     turnOffSelection();
     scrollToCursor();
   }
@@ -1615,8 +1668,8 @@ void EditorWidget::editUndo()
 
 void EditorWidget::editRedo()
 {
-  if (docFile->canRedo()) {
-    docFile->redo();
+  if (editor->canRedo()) {
+    editor->redo();
     turnOffSelection();
     scrollToCursor();
   }
@@ -1629,21 +1682,28 @@ void EditorWidget::editRedo()
 
 void EditorWidget::editCut()
 {
-  if (this->selectEnabled) {
+  if (this->selectEnabled()) {
     if (!editSafetyCheck()) {
       return;
     }
 
-    editCopy();
-    this->selectEnabled = true;    // counteract something editCopy() does
-    editDelete();
+    this->innerEditCopy(false /*clearSelection*/);
+    this->editDelete();
   }
 }
 
 
 void EditorWidget::editCopy()
 {
-  if (this->selectEnabled) {
+  // un-highlight the selection, which is what emacs does and
+  // I'm now used to
+  this->innerEditCopy(true /*clearSelection*/);
+  redraw();
+}
+
+void EditorWidget::innerEditCopy(bool clearSelection)
+{
+  if (this->selectEnabled()) {
     // get selected text
     string sel = getSelectedText();
 
@@ -1651,10 +1711,9 @@ void EditorWidget::editCopy()
     QClipboard *cb = QApplication::clipboard();
     cb->setText(toQString(sel));
 
-    // un-highlight the selection, which is what emacs does and
-    // I'm now used to
-    this->selectEnabled = false;
-    redraw();
+    if (clearSelection) {
+      this->clearMark();
+    }
   }
 }
 
@@ -1686,16 +1745,16 @@ void EditorWidget::editPaste()
 
 void EditorWidget::editDelete()
 {
-  if (this->selectEnabled) {
+  if (this->selectEnabled()) {
     if (!editSafetyCheck()) {
       return;
     }
 
     normalizeSelect();
     //docFile->changed = true;
-    docFile->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    editor->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
 
-    this->selectEnabled = false;
+    this->clearMark();
     scrollToCursor();
   }
 }
@@ -1724,8 +1783,8 @@ void EditorWidget::showInfo(char const *infoString)
   // Compute a position just below the lower-left corner
   // of the cursor box, in the coordinates of 'this'.
   QPoint target(
-    (cursorCol() - this->firstVisibleCol) * fontWidth,
-    (cursorLine() - this->firstVisibleLine + 1) * fontHeight + 1);
+    (cursorCol() - this->firstVisibleCol()) * fontWidth,
+    (cursorLine() - this->firstVisibleLine() + 1) * fontHeight + 1);
 
   // Translate that to the coordinates of 'main'.
   target = this->mapTo(main, target);
@@ -1766,14 +1825,14 @@ void EditorWidget::cursorRight(bool shift)
 void EditorWidget::cursorHome(bool shift)
 {
   turnSelection(shift);
-  docFile->moveAbsColumn(0);
+  editor->moveAbsColumn(0);
   scrollToCursor();
 }
 
 void EditorWidget::cursorEnd(bool shift)
 {
   turnSelection(shift);
-  docFile->moveAbsColumn(docFile->lineLength(cursorLine()));
+  editor->moveAbsColumn(editor->lineLength(cursorLine()));
   scrollToCursor();
 }
 
@@ -1808,8 +1867,8 @@ void EditorWidget::cursorPageDown(bool shift)
 void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
-  int line = docFile->line();
-  this->docFile->moveAbsCursor(line+1, docFile->lineLengthLoose(line+1));
+  int line = editor->line();
+  this->editor->moveAbsCursor(line+1, editor->lineLengthLoose(line+1));
   scrollToCursor();
 }
 
@@ -1818,20 +1877,20 @@ void EditorWidget::deleteCharAtCursor()
 {
   fillToCursor();
 
-  if (this->selectEnabled) {
+  if (this->selectEnabled()) {
     editDelete();
   }
   else {
-    if (this->docFile->cursorAtEnd()) {
+    if (this->editor->cursorAtEnd()) {
       // Nothing to do since no characters are to the right.
     }
-    else if (cursorCol() == docFile->lineLength(cursorLine())) {
+    else if (cursorCol() == editor->lineLength(cursorLine())) {
       // splice next line onto this one
       spliceNextLine();
     }
     else /* cursor < lineLength */ {
       // delete character to right of cursor
-      docFile->deleteText(1);
+      editor->deleteText(1);
     }
   }
 
@@ -1841,15 +1900,15 @@ void EditorWidget::deleteCharAtCursor()
 
 void EditorWidget::blockIndent(int amt)
 {
-  if (!this->selectEnabled) {
+  if (!this->selectEnabled()) {
     return;      // nop
   }
 
   normalizeSelect();
 
   int endLine = (selHighCol==0? selHighLine-1 : selHighLine);
-  endLine = min(endLine, docFile->numLines()-1);
-  docFile->indentLines(selLowLine, endLine-selLowLine+1, amt);
+  endLine = min(endLine, editor->numLines()-1);
+  editor->indentLines(selLowLine, endLine-selLowLine+1, amt);
 
   redraw();
 }
@@ -1857,12 +1916,12 @@ void EditorWidget::blockIndent(int amt)
 
 string EditorWidget::getSelectedText()
 {
-  if (!this->selectEnabled) {
+  if (!this->selectEnabled()) {
     return "";
   }
   else {
     normalizeSelect();   // this is why this method is not 'const' ...
-    return docFile->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    return editor->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
   }
 }
 
@@ -1899,7 +1958,7 @@ void EditorWidget::stopListening()
 {
   if (listening) {
     // remove myself from the list
-    docFile->core().observers.removeItem(this);
+    editor->core().observers.removeItem(this);
 
     listening = false;
   }
@@ -1910,12 +1969,12 @@ void EditorWidget::startListening()
   xassert(!listening);
 
   // add myself to the list
-  docFile->core().observers.append(this);
+  editor->core().observers.append(this);
   listening = true;
 
   // remember the docFile's current cursor position
-  nonfocusCursorLine = docFile->line();
-  nonfocusCursorCol = docFile->col();
+  nonfocusCursorLine = editor->line();
+  nonfocusCursorCol = editor->col();
 }
 
 
@@ -2002,14 +2061,14 @@ void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
 // cancel it.
 bool EditorWidget::editSafetyCheck()
 {
-  if (docFile->unsavedChanges()) {
+  if (editor->unsavedChanges()) {
     // We already have unsaved changes, so assume that the safety
     // check has already passed or its warning dismissed.  (I do not
     // want to hit the disk for every edit operation.)
     return true;
   }
 
-  if (!docFile->hasStaleModificationTime()) {
+  if (!editor->file->hasStaleModificationTime()) {
     // No concurrent changes, safe to go ahead.
     return true;
   }
@@ -2018,7 +2077,7 @@ bool EditorWidget::editSafetyCheck()
   QMessageBox box(this);
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The file \"" << docFile->filename << "\" has changed on disk.  "
+    "The file \"" << editor->file->filename << "\" has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);
@@ -2029,7 +2088,7 @@ bool EditorWidget::editSafetyCheck()
     // are about to do gets canceled for a different reason,
     // leaving us in the "clean" state after all, this refresh will
     // ensure we do not prompt the user a second time.
-    docFile->refreshModificationTime();
+    editor->file->refreshModificationTime();
 
     // Go ahead with the edit.
     return true;
