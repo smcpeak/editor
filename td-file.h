@@ -1,8 +1,8 @@
-// text-document-file.h
+// td-file.h
 // TextDocumentFile class.
 
-#ifndef TEXT_DOCUMENT_FILE_H
-#define TEXT_DOCUMENT_FILE_H
+#ifndef TD_FILE_H
+#define TD_FILE_H
 
 #include "hilite.h"                    // Highlighter
 #include "text-document.h"             // TextDocument
@@ -104,4 +104,4 @@ public:      // funcs
   void refreshModificationTime();
 };
 
-#endif // TEXT_DOCUMENT_FILE_H
+#endif // TD_FILE_H

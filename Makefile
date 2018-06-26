@@ -178,7 +178,7 @@ main.o: gotoline.gen.h
 main.o: keybindings.doc.gen.h
 
 EDITOR_OBJS := \
-  text-document-file.o \
+  td-file.o \
   c_hilite.yy.o \
   comment.yy.o \
   editor-widget.o \
