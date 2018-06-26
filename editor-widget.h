@@ -199,7 +199,7 @@ private:     // funcs
   void setCursorToClickLoc(QMouseEvent *m);
 
   // intermediate paint step
-  void updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol);
+  void updateFrame(QPaintEvent *ev, TextCoord drawnCursor);
 
   // Paint a single character at the given location.
   void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);

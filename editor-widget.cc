@@ -435,11 +435,11 @@ void EditorWidget::paintEvent(QPaintEvent *ev)
     // draw on the pixmap
     if (!listening) {
       // usual case, draw cursor in usual location
-      updateFrame(ev, cursorLine(), cursorCol());
+      updateFrame(ev, textCursor());
     }
     else {
       // nonfocus synchronized update: use alternate location
-      updateFrame(ev, nonfocusCursor.line, nonfocusCursor.column);
+      updateFrame(ev, nonfocusCursor);
       TRACE("nonfocus", "drawing at " << nonfocusCursor);
     }
   }
@@ -458,7 +458,7 @@ void EditorWidget::paintEvent(QPaintEvent *ev)
   }
 }
 
-void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
+void EditorWidget::updateFrame(QPaintEvent *ev, TextCoord drawnCursor)
 {
   // debug info
   {
@@ -544,7 +544,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
   // Get region of selected text.
   TextCoord selLow, selHigh;
-  this->getSelectRegionForCursor(TextCoord(cursorLine, cursorCol), selLow, selHigh);
+  this->getSelectRegionForCursor(drawnCursor, selLow, selHigh);
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -720,7 +720,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
     }
 
     // draw the cursor as a line
-    if (line == cursorLine) {
+    if (line == drawnCursor.line) {
       // just testing the mechanism that catches exceptions
       // raised while drawing
       //if (line == 5) {
@@ -730,6 +730,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       paint.save();
 
       // 0-based cursor column relative to what is visible
+      int const cursorCol = drawnCursor.column;
       int const visibleCursorCol = cursorCol - firstCol;
       xassert(visibleCursorCol >= 0);
 
