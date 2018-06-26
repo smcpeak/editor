@@ -14,7 +14,7 @@
       }
     },
     {
-      "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\n",
+      "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\ngroupStack: HE_group[]\n",
       "loc": {
         "x": 515,
         "y": 150
@@ -62,14 +62,14 @@
       }
     },
     {
-      "attributes": "documentFiles: TextDocumentFile[]\nwindows: EditorWindow[]\n\npixmaps: Pixmaps\nctrlShiftDistance: int\n",
+      "attributes": "documentFiles: TextDocumentFile[]\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
       "loc": {
         "x": 285,
-        "y": 455
+        "y": 470
       },
       "name": "GlobalState : QApplication",
       "size": {
-        "h": 110,
+        "h": 95,
         "w": 220
       }
     },

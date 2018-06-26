@@ -50,6 +50,9 @@
 // Distance below the baseline to draw an underline.
 int const UNDERLINE_OFFSET = 2;
 
+// Number of columns to move for Ctrl+Shift+<arrow>.
+int const CTRL_SHIFT_DISTANCE = 10;
+
 
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::objectCount = 0;
@@ -72,7 +75,6 @@ EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
     softMarginColumn(72),
     visibleSoftMargin(true),
     softMarginColor(0xFF, 0xFF, 0xFF, 32),
-    ctrlShiftDistance(10),
     inputProxy(NULL),
     // font metrics inited by setFont()
     listening(false),
@@ -1202,23 +1204,21 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
   // Ctrl+Shift+<key>
   else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
-    xassert(ctrlShiftDistance > 0);
-
     switch (k->key()) {
       case Qt::Key_Up:
-        moveViewAndCursor(-ctrlShiftDistance, 0);
+        moveViewAndCursor(-CTRL_SHIFT_DISTANCE, 0);
         break;
 
       case Qt::Key_Down:
-        moveViewAndCursor(+ctrlShiftDistance, 0);
+        moveViewAndCursor(+CTRL_SHIFT_DISTANCE, 0);
         break;
 
       case Qt::Key_Left:
-        moveViewAndCursor(0, -ctrlShiftDistance);
+        moveViewAndCursor(0, -CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_Right:
-        moveViewAndCursor(0, +ctrlShiftDistance);
+        moveViewAndCursor(0, +CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_PageUp:

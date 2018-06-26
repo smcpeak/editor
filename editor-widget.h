@@ -138,9 +138,6 @@ public:      // data
   QColor softMarginColor;
 
   // ------ input options ------
-  // distance to move view for Ctrl-Shift-<arrow key>
-  int ctrlShiftDistance;
-
   // current input proxy, if any
   InputProxy *inputProxy;           // (nullable serf)
 
