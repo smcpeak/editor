@@ -257,17 +257,17 @@ string TextDocumentEditor::getWholeLine(int line) const
 }
 
 
-string TextDocumentEditor::getWordAfter(int line, int col) const
+string TextDocumentEditor::getWordAfter(TextCoord tc) const
 {
   stringBuilder sb;
 
-  if (!( 0 <= line && line < numLines() )) {
+  if (!( 0 <= tc.line && tc.line < numLines() )) {
     return "";
   }
 
   bool seenWordChar = false;
-  while (col < lineLength(line)) {
-    char ch = getTextRange(TextCoord(line, col), TextCoord(line, col+1))[0];
+  while (tc.column < lineLength(tc.line)) {
+    char ch = getTextRange(tc, TextCoord(tc.line, tc.column+1))[0];
     if (isalnum(ch) || ch=='_') {
       seenWordChar = true;
       sb << ch;
@@ -280,7 +280,7 @@ string TextDocumentEditor::getWordAfter(int line, int col) const
       // consume this character, it precedes any word characters
       sb << ch;
     }
-    col++;
+    tc.column++;
   }
 
   return sb;

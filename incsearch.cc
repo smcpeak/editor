@@ -276,7 +276,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
       case Qt::Key_W:
         // grab chars from cursor up to end of next word
         // or end of line
-        text &= ed->editor->getWordAfter(ed->cursorLine(), ed->cursorCol());
+        text &= ed->editor->getWordAfter(ed->editor->cursor());
         findString();
         return true;
 

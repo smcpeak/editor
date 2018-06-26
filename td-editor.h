@@ -180,9 +180,9 @@ public:      // funcs
   // get a complete line
   string getWholeLine(int line) const;
 
-  // get the word following the given line/col, including any non-word
+  // get the word following the given coordinate, including any non-word
   // characters that precede that word; stop at end of line
-  string getWordAfter(int line, int col) const;
+  string getWordAfter(TextCoord tc) const;
 
   // ---------------- whitespace text queries -------------------
   // on a particular line, get # of whitespace chars before first
