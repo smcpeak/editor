@@ -121,9 +121,10 @@ public:    // funcs
 
   // ---- manipulation interface ----
 
-  // TODO: I would rather the fundamental interface consist of a single
-  // 'insert' and single 'delete' method because this interface makes
-  // the undo/redo history unnecessarily complex.
+  // This interface is deliberately very simple to *implement*: you are
+  // either inserting or removing *blank* lines, or are editing the
+  // contents of a *single* line.  TextDocumentEditor, built on top of
+  // this one, provides a more convenient interface for clients.
 
   // insert a new blank line, where the new line will be line 'line';
   // 'line' must be in [0,numLines()]
