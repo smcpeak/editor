@@ -255,10 +255,10 @@ public:      // funcs
 
   void deleteChar() { deleteText(1); }
 
-  // Delete the characters between line1/col1 and line/col2.  Both
-  // are truncated to ensure validity.  line1/col1 must be before
-  // or equal to line2/col2.  Final cursor is left at line1/col1.
-  void deleteTextRange(int line1, int col1, int line2, int col2);
+  // Delete the characters between 'tc1' and 'tc2'.  Both
+  // are truncated to ensure validity.  Required 'tc1 <= tc2'.
+  // Final cursor is left at 'tc1'.
+  void deleteTextRange(TextCoord tc1, TextCoord tc2);
 
   // ---------------------- adding whitespace ----------------------
   // Add whitespace to buffer as necessary to ensure 'validCursor()'.

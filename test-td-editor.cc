@@ -260,7 +260,7 @@ static void testTextManipulation()
   testGetRange(tde, 12,5, 12,10, "     ");
   testGetRange(tde, 12,5, 14,5, "\n\n     ");
 
-  tde.deleteTextRange(1,1, 1,2);
+  tde.deleteTextRange(TextCoord(1,1), TextCoord(1,2));
     // result: farf\n
     //         gk\n
     //         oo\n
@@ -268,39 +268,39 @@ static void testTextManipulation()
   testGetRange(tde, 0,0, 4,0, "farf\ngk\noo\nbar\n");
   xassert(tde.numLines() == 5);
 
-  tde.deleteTextRange(0,3, 1,1);
+  tde.deleteTextRange(TextCoord(0,3), TextCoord(1,1));
     // result: fark\n
     //         oo\n
     //         bar\n
   testGetRange(tde, 0,0, 3,0, "fark\noo\nbar\n");
   xassert(tde.numLines() == 4);
 
-  tde.deleteTextRange(1,3, 1,5);   // nop
+  tde.deleteTextRange(TextCoord(1,3), TextCoord(1,5));   // nop
     // result: fark\n
     //         oo\n
     //         bar\n
   testGetRange(tde, 0,0, 3,0, "fark\noo\nbar\n");
   xassert(tde.numLines() == 4);
 
-  tde.deleteTextRange(2,2, 6,4);
+  tde.deleteTextRange(TextCoord(2,2), TextCoord(6,4));
     // result: fark\n
     //         oo\n
     //         ba
   testGetRange(tde, 0,0, 2,2, "fark\noo\nba");
   xassert(tde.numLines() == 3);
 
-  tde.deleteTextRange(1,2, 2,2);
+  tde.deleteTextRange(TextCoord(1,2), TextCoord(2,2));
     // result: fark\n
     //         oo
   testGetRange(tde, 0,0, 1,2, "fark\noo");
   xassert(tde.numLines() == 2);
 
-  tde.deleteTextRange(1,0, 1,2);
+  tde.deleteTextRange(TextCoord(1,0), TextCoord(1,2));
     // result: fark\n
   testGetRange(tde, 0,0, 1,0, "fark\n");
   xassert(tde.numLines() == 2);
 
-  tde.deleteTextRange(0,0, 1,0);
+  tde.deleteTextRange(TextCoord(0,0), TextCoord(1,0));
     // result: <empty>
   testGetRange(tde, 0,0, 0,0, "");
   xassert(tde.numLines() == 1);

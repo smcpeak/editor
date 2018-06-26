@@ -1746,8 +1746,7 @@ void EditorWidget::editDelete()
 
     TextCoord selLow, selHigh;
     this->getSelectRegion(selLow, selHigh);
-    editor->deleteTextRange(selLow.line, selLow.column,
-                            selHigh.line, selHigh.column);
+    editor->deleteTextRange(selLow, selHigh);
 
     this->clearMark();
     scrollToCursor();

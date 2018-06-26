@@ -536,13 +536,10 @@ void TextDocumentEditor::spliceNextLine(int line)
 #endif // 0
 
 
-void TextDocumentEditor::deleteTextRange(int line1, int col1, int line2, int col2)
+void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
 {
-  xassert(TextCoord(line1, col1).nonNegative());
-  xassert(TextCoord(line2, col2).nonNegative());
-
-  TextCoord tc1(line1, col1);
-  TextCoord tc2(line2, col2);
+  xassert(tc1.nonNegative());
+  xassert(tc2.nonNegative());
   xassert(tc1 <= tc2);
 
   // truncate the endpoints
