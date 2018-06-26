@@ -49,7 +49,7 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
   : QWidget(parent),
     globalState(theState),
     menuBar(NULL),
-    editor(NULL),
+    editorWidget(NULL),
     vertScroll(NULL),
     horizScroll(NULL),
     statusArea(NULL),
@@ -85,17 +85,17 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
-  this->editor = new EditorWidget(NULL /*temporary*/, this->statusArea);
-  this->editor->setObjectName("editor widget");
-  editorFrame->addWidget(this->editor);
-  this->editor->setFocus();
-  connect(this->editor, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
+  this->editorWidget = new EditorWidget(NULL /*temporary*/, this->statusArea);
+  this->editorWidget->setObjectName("editor widget");
+  editorFrame->addWidget(this->editorWidget);
+  this->editorWidget->setFocus();
+  connect(this->editorWidget, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
 
   this->vertScroll = new QScrollBar(Qt::Vertical);
   this->vertScroll->setObjectName("vertScroll");
   editArea->addWidget(this->vertScroll, 0 /*row*/, 1 /*col*/);
   connect(this->vertScroll, SIGNAL( valueChanged(int) ),
-          this->editor, SLOT( scrollToLine(int) ));
+          this->editorWidget, SLOT( scrollToLine(int) ));
 
   // disabling horiz scroll for now..
   //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
@@ -155,13 +155,13 @@ void EditorWindow::buildMenu()
 
   {
     QMenu *edit = this->menuBar->addMenu("&Edit");
-    edit->addAction("&Undo", editor, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
-    edit->addAction("&Redo", editor, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+    edit->addAction("&Undo", editorWidget, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
+    edit->addAction("&Redo", editorWidget, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
     edit->addSeparator();
-    edit->addAction("Cu&t", editor, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
-    edit->addAction("&Copy", editor, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
-    edit->addAction("&Paste", editor, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
-    edit->addAction("&Delete", editor, SLOT(editDelete()));
+    edit->addAction("Cu&t", editorWidget, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
+    edit->addAction("&Copy", editorWidget, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
+    edit->addAction("&Paste", editorWidget, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
+    edit->addAction("&Delete", editorWidget, SLOT(editDelete()));
     edit->addSeparator();
     edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
     edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
@@ -172,12 +172,12 @@ void EditorWindow::buildMenu()
     this->toggleVisibleWhitespaceAction =
       menu->addAction("Visible &whitespace", this, SLOT(viewToggleVisibleWhitespace()));
     this->toggleVisibleWhitespaceAction->setCheckable(true);
-    this->toggleVisibleWhitespaceAction->setChecked(this->editor->visibleWhitespace);
+    this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->visibleWhitespace);
     menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
     this->toggleVisibleSoftMarginAction =
       menu->addAction("Visible soft &margin", this, SLOT(viewToggleVisibleSoftMargin()));
     this->toggleVisibleSoftMarginAction->setCheckable(true);
-    this->toggleVisibleSoftMarginAction->setChecked(this->editor->visibleSoftMargin);
+    this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->visibleSoftMargin);
     menu->addAction("Set soft margin column...", this, SLOT(viewSetSoftMarginColumn()));
   }
 
@@ -205,7 +205,7 @@ void EditorWindow::buildMenu()
 // not inline because main.h doesn't see editor.h
 TextDocumentFile *EditorWindow::theDocFile()
 {
-  return editor->getDocumentFile();
+  return editorWidget->getDocumentFile();
 }
 
 
@@ -218,13 +218,13 @@ void EditorWindow::fileNewFile()
 
 void EditorWindow::setDocumentFile(TextDocumentFile *file)
 {
-  editor->setDocumentFile(file);
+  editorWidget->setDocumentFile(file);
   this->updateForChangedFile();
 }
 
 void EditorWindow::updateForChangedFile()
 {
-  editor->updateView();
+  editorWidget->updateView();
   editorViewChanged();
 
   setFileName(theDocFile()->title, theDocFile()->hotkeyDesc());
@@ -233,7 +233,7 @@ void EditorWindow::updateForChangedFile()
 
 void EditorWindow::forgetAboutFile(TextDocumentFile *file)
 {
-  editor->forgetAboutFile(file);
+  editorWidget->forgetAboutFile(file);
   this->updateForChangedFile();
 }
 
@@ -527,7 +527,7 @@ void EditorWindow::fileExit()
 
 void EditorWindow::editISearch()
 {
-  isearch->attach(editor);
+  isearch->attach(editorWidget);
 }
 
 
@@ -554,8 +554,8 @@ void EditorWindow::editGotoLine()
       int n = atoi(s);
 
       //cout << "going to line " << n << endl;
-      editor->cursorTo(n-1, 0);
-      editor->scrollToCursor(-1 /*center*/);
+      editorWidget->cursorTo(n-1, 0);
+      editorWidget->scrollToCursor(-1 /*center*/);
     }
   }
 }
@@ -563,9 +563,9 @@ void EditorWindow::editGotoLine()
 
 void EditorWindow::viewToggleVisibleWhitespace()
 {
-  this->editor->visibleWhitespace = !this->editor->visibleWhitespace;
-  this->toggleVisibleWhitespaceAction->setChecked(this->editor->visibleWhitespace);
-  this->editor->update();
+  this->editorWidget->visibleWhitespace = !this->editorWidget->visibleWhitespace;
+  this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->visibleWhitespace);
+  this->editorWidget->update();
 }
 
 
@@ -575,20 +575,20 @@ void EditorWindow::viewSetWhitespaceOpacity()
   int n = QInputDialog::getInt(this,
     "Visible Whitespace",
     "Opacity in [1,255]:",
-    this->editor->whitespaceOpacity,
+    this->editorWidget->whitespaceOpacity,
     1 /*min*/, 255 /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->editor->whitespaceOpacity = n;
-    this->editor->update();
+    this->editorWidget->whitespaceOpacity = n;
+    this->editorWidget->update();
   }
 }
 
 
 void EditorWindow::viewToggleVisibleSoftMargin()
 {
-  this->editor->visibleSoftMargin = !this->editor->visibleSoftMargin;
-  this->toggleVisibleSoftMarginAction->setChecked(this->editor->visibleSoftMargin);
-  this->editor->update();
+  this->editorWidget->visibleSoftMargin = !this->editorWidget->visibleSoftMargin;
+  this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->visibleSoftMargin);
+  this->editorWidget->update();
 }
 
 
@@ -598,11 +598,11 @@ void EditorWindow::viewSetSoftMarginColumn()
   int n = QInputDialog::getInt(this,
     "Soft Margin Column",
     "Column number (positive):",
-    this->editor->softMarginColumn+1,
+    this->editorWidget->softMarginColumn+1,
     1 /*min*/, INT_MAX /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->editor->softMarginColumn = n-1;
-    this->editor->update();
+    this->editorWidget->softMarginColumn = n-1;
+    this->editorWidget->update();
   }
 }
 
@@ -662,7 +662,7 @@ void EditorWindow::helpAboutQt()
 
 void EditorWindow::editorViewChanged()
 {
-  TextDocumentEditor *tde = editor->getDocumentEditor();
+  TextDocumentEditor *tde = editorWidget->getDocumentEditor();
 
   // Set the scrollbars.  In both dimensions, the range includes the
   // current value so we can scroll arbitrarily far beyond the nominal
@@ -671,25 +671,25 @@ void EditorWindow::editorViewChanged()
   // will be clamped to the old range.
   if (horizScroll) {
     horizScroll->setRange(0, max(tde->doc()->maxLineLength(),
-                                 editor->firstVisibleCol()));
-    horizScroll->setValue(editor->firstVisibleCol());
+                                 editorWidget->firstVisibleCol()));
+    horizScroll->setValue(editorWidget->firstVisibleCol());
     horizScroll->setSingleStep(1);
-    horizScroll->setPageStep(editor->visCols());
+    horizScroll->setPageStep(editorWidget->visCols());
   }
 
   if (vertScroll) {
     vertScroll->setRange(0, max(tde->doc()->numLines(),
-                                editor->firstVisibleLine()));
-    vertScroll->setValue(editor->firstVisibleLine());
+                                editorWidget->firstVisibleLine()));
+    vertScroll->setValue(editorWidget->firstVisibleLine());
     vertScroll->setSingleStep(1);
-    vertScroll->setPageStep(editor->visLines());
+    vertScroll->setPageStep(editorWidget->visLines());
   }
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
   statusArea->position->setText(QString(
-    stringc << " " << (editor->cursorLine()+1) << ":"
-            << (editor->cursorCol()+1)
+    stringc << " " << (editorWidget->cursorLine()+1) << ":"
+            << (editorWidget->cursorCol()+1)
             << (tde->doc()->unsavedChanges()? " *" : "")
   ));
 }

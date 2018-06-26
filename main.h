@@ -38,7 +38,7 @@ public:      // data
 
   // GUI elements
   QMenuBar *menuBar;
-  EditorWidget *editor;
+  EditorWidget *editorWidget;
   QScrollBar *vertScroll, *horizScroll;
   StatusDisplay *statusArea;
 
