@@ -108,10 +108,7 @@ void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col
 
 TextCoord TextDocumentEditor::mark() const
 {
-  // TODO: I would like to enable this assertion.  That is dependent on
-  // eliminating the awkward selLowLine, etc., since they call this
-  // without checking markActive().
-  //xassert(markActive());
+  xassert(markActive());
   return m_mark;
 }
 

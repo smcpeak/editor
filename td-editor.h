@@ -132,8 +132,8 @@ public:      // funcs
 
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor
-  // for defining a selection region.  If the mark is not active, this
-  // returns 0:0, but that may change in the future.
+  // for defining a selection region.  This asserts that the mark is
+  // active.
   TextCoord mark() const;
 
   // True if the mark is "active", meaning the UI shows a visible
