@@ -106,18 +106,18 @@ td-core: gap.h $(TD_CORE_OBJS)
 	./td-core >/dev/null 2>&1
 
 # -------------- test-td-editor test program ----------------
-TOCLEAN += test-td-editor text-document.tmp
+TOCLEAN += test-td-editor td.tmp
 
-TEXT_DOCUMENT_OBJS :=
-TEXT_DOCUMENT_OBJS += history.o
-TEXT_DOCUMENT_OBJS += test-td-editor.o
-TEXT_DOCUMENT_OBJS += text-document.o
-TEXT_DOCUMENT_OBJS += td-core.o
-TEXT_DOCUMENT_OBJS += td-editor.o
-TEXT_DOCUMENT_OBJS += textcoord.o
+TD_OBJS :=
+TD_OBJS += history.o
+TD_OBJS += test-td-editor.o
+TD_OBJS += td.o
+TD_OBJS += td-core.o
+TD_OBJS += td-editor.o
+TD_OBJS += textcoord.o
 
-test-td-editor: $(TEXT_DOCUMENT_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEXT_DOCUMENT_OBJS) $(CONSOLE_LDFLAGS)
+test-td-editor: $(TD_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(CONSOLE_LDFLAGS)
 	./test-td-editor >/dev/null 2>&1
 
 -include test-td-editor.d
@@ -128,7 +128,7 @@ TOCLEAN += test-justify
 JUSTIFY_OBJS :=
 JUSTIFY_OBJS += history.o
 JUSTIFY_OBJS += justify.o
-JUSTIFY_OBJS += text-document.o
+JUSTIFY_OBJS += td.o
 JUSTIFY_OBJS += td-core.o
 JUSTIFY_OBJS += td-editor.o
 JUSTIFY_OBJS += test-justify.o
@@ -159,7 +159,7 @@ C_HILITE_OBJS := \
   td-editor.o \
   textcoord.o \
   history.o \
-  text-document.o \
+  td.o \
   textcategory.o \
   lex_hilite.o \
   bufferlinesource.o \
@@ -184,7 +184,7 @@ EDITOR_OBJS := \
   editor-widget.o \
   bufferlinesource.o \
   history.o \
-  text-document.o \
+  td.o \
   incsearch.o \
   inputproxy.o \
   justify.o \

@@ -8,7 +8,7 @@ file ./editor
 #file ./test-justify
 #file c_hilite
 #file ./buffer
-#file ./text-document
+#file ./td
 
 set args -tr objectCount main.h main.cc editor-widget.h editor-widget.cc
 

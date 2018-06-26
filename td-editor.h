@@ -4,7 +4,7 @@
 #ifndef TD_EDITOR_H
 #define TD_EDITOR_H
 
-#include "text-document.h"             // TextDocument
+#include "td.h"                        // TextDocument
 
 
 // This class is a "stateful metaphor UI API".  That is, it

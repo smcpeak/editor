@@ -25,9 +25,9 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
     xfailure("cursor location mismatch");
   }
 
-  writeFile(tde.doc()->getCore(), "text-document.tmp");
+  writeFile(tde.doc()->getCore(), "td.tmp");
   DataBlock block;
-  block.readFromFile("text-document.tmp");
+  block.readFromFile("td.tmp");
 
   // compare contents to what is expected
   if (0!=memcmp(text, block.getDataC(), block.getDataLen()) ||
@@ -158,9 +158,9 @@ static void testUndoRedo()
   tde.doc()->printHistoryStats();
 
 
-  unlink("text-document.tmp");
+  unlink("td.tmp");
 
-  printf("text-document is ok\n");
+  printf("td is ok\n");
 }
 
 

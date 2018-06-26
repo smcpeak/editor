@@ -5,7 +5,7 @@
 #define TD_FILE_H
 
 #include "hilite.h"                    // Highlighter
-#include "text-document.h"             // TextDocument
+#include "td.h"                        // TextDocument
 
 #include "str.h"                       // string
 

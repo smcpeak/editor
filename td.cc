@@ -1,7 +1,7 @@
-// text-document.cc
-// code for text-document.h
+// td.cc
+// code for td.h
 
-#include "text-document.h"             // this module
+#include "td.h"                        // this module
 
 #include "autofile.h"                  // AutoFILE
 #include "mysig.h"                     // printSegfaultAddrs

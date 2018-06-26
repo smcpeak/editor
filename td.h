@@ -1,8 +1,8 @@
-// text-document.h
+// td.h
 // Text document with undo/redo history attached to it.
 
-#ifndef TEXT_DOCUMENT_H
-#define TEXT_DOCUMENT_H
+#ifndef TD_H
+#define TD_H
 
 #include "history.h"                   // HE_group
 #include "td-core.h"                   // TextDocumentCore
@@ -129,4 +129,4 @@ public:      // funcs
 };
 
 
-#endif // TEXT_DOCUMENT_H
+#endif // TD_H

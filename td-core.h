@@ -34,7 +34,7 @@ class TextDocumentObserver;
 //
 // This class is the "core" of a text document because it does not have
 // any facilities for undo and redo.  Those are added by TextDocument
-// (declared in text-document.h).
+// (declared in td.h).
 class TextDocumentCore {
 private:   // data
   // This array is the spine of the document.  Every element is either
