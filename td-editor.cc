@@ -200,7 +200,7 @@ void TextDocumentEditor::getLineLoose(int line, int col, char *dest, int destLen
 
   // initial part in defined region
   if (def) {
-    doc()->getLine(line, col, dest, def);
+    doc()->getLine(TextCoord(line, col), dest, def);
   }
 
   // spaces past defined region
@@ -349,7 +349,7 @@ bool TextDocumentEditor::findString(int &userLine, int &userCol, char const *tex
     // get line contents
     int lineLen = lineLength(tc.line);
     contents.ensureIndexDoubler(lineLen);
-    doc()->getLine(tc.line, 0, contents.getDangerousWritableArray(), lineLen);
+    doc()->getLine(TextCoord(tc.line, 0), contents.getDangerousWritableArray(), lineLen);
 
     // search for 'text' using naive algorithm, starting at 'tc.column'
     while (0 <= tc.column && tc.column+textLen <= lineLen) {

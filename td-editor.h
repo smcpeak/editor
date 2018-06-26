@@ -170,8 +170,8 @@ public:      // funcs
   // Get part of a single line's contents, starting at 'line/col' and
   // getting 'destLen' chars.  All the chars must be in the line now.
   // The retrieved text never includes the '\n' character.
-  void getLine(int line, int col, char *dest, int destLen) const
-    { return doc()->getLine(line, col, dest, destLen); }
+  void getLine(TextCoord tc, char *dest, int destLen) const
+    { return doc()->getLine(tc, dest, destLen); }
 
   // get a range of text from a line, but if the position is outside
   // the defined range, pretend the line exists (if necessary) and

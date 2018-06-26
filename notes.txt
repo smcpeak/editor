@@ -1,9 +1,9 @@
 
 TODOs:
   - finishing major refactoring
+    - change interfaces to use TextCoord
     - moving text editor "business logic" from EditorWidget to TextDocumentEditor
     - add more automated tests against TextDocumentEditor
-    - change interfaces to use TextCoord
     - remove direct access to underlying doc(), core(), etc.
     - make TextDocumentEditor consistently accept "invalid" cursors
     - IncSearch should work on top of TDE, not EditorWidget

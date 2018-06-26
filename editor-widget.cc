@@ -581,7 +581,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
       if (firstCol < lineLen) {
         // First get the text without any extra newline.
         int const amt = min(lineLen-newlineAdjust - firstCol, visibleCols);
-        editor->getLine(line, firstCol, text, amt);
+        editor->getLine(TextCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.

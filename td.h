@@ -59,9 +59,8 @@ public:      // funcs
   int numLines() const                    { return core.numLines(); }
   int lineLength(int line) const          { return core.lineLength(line); }
   bool validCoord(TextCoord tc) const     { return core.validCoord(tc); }
-  // TODO: getLine should accept TextCoord.
-  void getLine(int line, int col, char *dest, int destLen) const
-    { return core.getLine(TextCoord(line, col), dest, destLen); }
+  void getLine(TextCoord tc, char *dest, int destLen) const
+    { return core.getLine(tc, dest, destLen); }
   int maxLineLength() const               { return core.maxLineLength(); }
 
   // current contents differ from those on disk?
