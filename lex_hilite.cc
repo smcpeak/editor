@@ -284,14 +284,14 @@ static void insert(int line, int col, char const *text)
 {
   cout << "insert(" << line << ", " << col << ", "
        << quoted(text) << ")\n";
-  tde->moveAbsCursor(TextCoord(line, col));
+  tde->setCursor(TextCoord(line, col));
   tde->insertText(text);
 }
 
 static void del(int line, int col, int len)
 {
   cout << "del(" << line << ", " << col << ", " << len << ")\n";
-  tde->moveAbsCursor(TextCoord(line, col));
+  tde->setCursor(TextCoord(line, col));
   tde->deleteText(len);
 }
 
@@ -357,7 +357,7 @@ void exerciseHighlighter(MakeHighlighterFunc func)
   LexHighlighter &hi = *hi_;
 
   int line=0, col=0;
-  tde->moveAbsCursor(TextCoord(line, col));
+  tde->setCursor(TextCoord(line, col));
   tde->insertText(
     "hi there\n"
     "here is \"a string\" ok?\n"

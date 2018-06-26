@@ -129,9 +129,6 @@ public:      // funcs
   // move by relative line/col
   void moveRelCursor(int deltaLine, int deltaCol);
 
-  // Move cursor to 'tc'.
-  void moveAbsCursor(TextCoord tc);
-
   // use a relative movement to go to a specific line/col; this is
   // used for restoring the cursor position after some sequence
   // of edits
