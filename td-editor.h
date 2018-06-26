@@ -91,6 +91,10 @@ public:      // funcs
   // be non-negative.
   int lineLengthLoose(int line) const;
 
+  // Length of line containing cursor.
+  // Returns 0 when cursor is beyond EOF.
+  int cursorLineLength() const { return lineLengthLoose(cursor().line); }
+
   // Position right after last character in file.
   TextCoord endCoord() const { return doc()->endCoord(); }
 

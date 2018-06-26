@@ -1296,7 +1296,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
             return;
           }
 
-          int lineLength = editor->lineLength(editor->line());
+          int lineLength = editor->cursorLineLength();
           bool hadCharsToRight = (editor->col() < lineLength);
           bool beyondLineEnd = (editor->col() > lineLength);
           if (beyondLineEnd) {
@@ -1449,7 +1449,7 @@ void EditorWidget::deleteLeftOfCursor()
       spliceNextLine();
     }
   }
-  else if (cursorCol() > editor->lineLengthLoose(cursorLine())) {
+  else if (cursorCol() > editor->cursorLineLength()) {
     // Move cursor left non-destructively.
     cursorLeft(false /*shift*/);
   }
@@ -1471,7 +1471,7 @@ void EditorWidget::fillToCursor()
 void EditorWidget::spliceNextLine()
 {
   // cursor must be at the end of a line
-  xassert(cursorCol() == editor->lineLength(cursorLine()));
+  xassert(cursorCol() == editor->cursorLineLength());
 
   editor->deleteChar();
 }
@@ -1826,7 +1826,7 @@ void EditorWidget::cursorHome(bool shift)
 void EditorWidget::cursorEnd(bool shift)
 {
   turnSelection(shift);
-  editor->setCursorColumn(editor->lineLength(cursorLine()));
+  editor->setCursorColumn(editor->cursorLineLength());
   scrollToCursor();
 }
 
@@ -1878,7 +1878,7 @@ void EditorWidget::deleteCharAtCursor()
     if (this->editor->cursorAtEnd()) {
       // Nothing to do since no characters are to the right.
     }
-    else if (cursorCol() == editor->lineLength(cursorLine())) {
+    else if (cursorCol() == editor->cursorLineLength()) {
       // splice next line onto this one
       spliceNextLine();
     }

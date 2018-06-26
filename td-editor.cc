@@ -430,7 +430,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   if (!backwards) {
     if (0 <= line() &&
         line() < numLines() &&
-        col() < lineLength(line())) {
+        col() < cursorLineLength()) {
       moveRelCursor(0, 1);
     }
     else {
@@ -504,7 +504,7 @@ void TextDocumentEditor::insertSpaces(int howMany)
 
 void TextDocumentEditor::insertNewline()
 {
-  int overEdge = col() - lineLengthLoose(line());
+  int overEdge = col() - cursorLineLength();
   if (overEdge > 0) {
     // move back to the end of this line
     moveRelCursor(0, -overEdge);
