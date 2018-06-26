@@ -228,7 +228,7 @@ static void testTextManipulation()
   testGetRange(tde, 1,2, 1,3, "r");
   testGetRange(tde, 1,3, 1,3, "");
 
-  tde.moveAbsCursor(0, 1);
+  tde.moveAbsCursor(TextCoord(0, 1));
   tde.insertText("arf\ngak");
     // result: farf\n
     //         gakoo\n
@@ -313,7 +313,7 @@ static void testTextManipulation()
     back = TextDocumentEditor::FS_BACKWARDS,
     advance = TextDocumentEditor::FS_ADVANCE_ONCE;
 
-  tde.moveAbsCursor(0,0);
+  tde.moveAbsCursor(TextCoord(0,0));
   tde.insertText("foofoofbar\n"
                  "ooFoo arg\n");
   testFind(tde, 0,0, "foo", 0,0, none);

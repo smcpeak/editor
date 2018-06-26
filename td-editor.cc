@@ -394,10 +394,10 @@ void TextDocumentEditor::moveRelCursor(int deltaLine, int deltaCol)
   }
 }
 
-void TextDocumentEditor::moveAbsCursor(int newLine, int newCol)
+void TextDocumentEditor::moveAbsCursor(TextCoord tc)
 {
-  moveCursor(false /*relLine*/, newLine,
-             false /*relCol*/, newCol);
+  moveCursor(false /*relLine*/, tc.line,
+             false /*relCol*/, tc.column);
 }
 
 

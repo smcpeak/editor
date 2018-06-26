@@ -137,7 +137,7 @@ void EditorWidget::selfCheck() const
 
 void EditorWidget::cursorTo(int line, int col)
 {
-  editor->moveAbsCursor(line, col);
+  editor->moveAbsCursor(TextCoord(line, col));
 
   // set the nonfocus location too, in case the we happen to
   // not have the focus right now (e.g. the Alt+G dialog);
@@ -1863,7 +1863,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
   int line = editor->line();
-  this->editor->moveAbsCursor(line+1, editor->lineLengthLoose(line+1));
+  this->editor->moveAbsCursor(TextCoord(line+1, editor->lineLengthLoose(line+1)));
   scrollToCursor();
 }
 
