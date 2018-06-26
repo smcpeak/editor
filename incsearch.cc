@@ -441,7 +441,9 @@ bool IncSearch::tryWrapSearch(int &line, int &col) const
   line=0;
   col=0;
   if (curFlags & TextDocumentEditor::FS_BACKWARDS) {
-    ed->editor->getLastPos(line, col);
+    TextCoord end = ed->editor->endCoord();
+    line = end.line;
+    col = end.column;
   }
 
   // search

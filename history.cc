@@ -324,7 +324,7 @@ TextCoord HE_group::applySeq(TextDocumentCore &buf, int start, int end, bool rev
 {
   int i;
   try {
-    TextCoord leftEdge = endCoord(buf);
+    TextCoord leftEdge = buf.endCoord();
     for (i=0; i < (end-start); i++) {
       TextCoord tc = applySeqElt(buf, start, end, i, reverse, reverse);
       if (tc < leftEdge) {

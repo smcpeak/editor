@@ -59,6 +59,7 @@ public:      // funcs
   int numLines() const                    { return core.numLines(); }
   int lineLength(int line) const          { return core.lineLength(line); }
   bool validCoord(TextCoord tc) const     { return core.validCoord(tc); }
+  TextCoord endCoord() const              { return core.endCoord(); }
   void getLine(TextCoord tc, char *dest, int destLen) const
     { return core.getLine(tc, dest, destLen); }
   int maxLineLength() const               { return core.maxLineLength(); }

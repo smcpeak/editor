@@ -44,7 +44,7 @@ bool TextDocumentEditor::validCursor() const
 
 bool TextDocumentEditor::cursorAtEnd() const
 {
-  return this->m_cursor == endCoord(doc()->getCore());
+  return this->m_cursor == this->endCoord();
 }
 
 
@@ -157,13 +157,6 @@ void TextDocumentEditor::redo()
 }
 
 
-STATICDEF void TextDocumentEditor::assertNonNegative(int line, int col)
-{
-  xassert(line >= 0);
-  xassert(col >= 0);
-}
-
-
 // ---------------- TextDocumentEditor: queries ------------------
 
 int TextDocumentEditor::lineLengthLoose(int line) const
@@ -180,7 +173,7 @@ int TextDocumentEditor::lineLengthLoose(int line) const
 
 void TextDocumentEditor::getLineLoose(int line, int col, char *dest, int destLen) const
 {
-  assertNonNegative(line, col);
+  xassert(TextCoord(line, col).nonNegative());
 
   // how much of the source is in the defined region?
   int undef = destLen;
@@ -210,8 +203,8 @@ void TextDocumentEditor::getLineLoose(int line, int col, char *dest, int destLen
 
 string TextDocumentEditor::getTextRange(int line1, int col1, int line2, int col2) const
 {
-  assertNonNegative(line1, col1);
-  assertNonNegative(line2, col2);
+  xassert(TextCoord(line1, col1).nonNegative());
+  xassert(TextCoord(line2, col2).nonNegative());
 
   // this function uses the line1==line2 case as a base case of a two
   // level recursion; it's not terribly efficient
@@ -283,18 +276,6 @@ string TextDocumentEditor::getWordAfter(int line, int col) const
   }
 
   return sb;
-}
-
-
-void TextDocumentEditor::getLastPos(int &line, int &col) const
-{
-  line = numLines()-1;
-  if (line >= 0) {
-    col = lineLength(line);
-  }
-  else {
-    col = 0;
-  }
 }
 
 
@@ -563,8 +544,8 @@ void TextDocumentEditor::spliceNextLine(int line)
 
 void TextDocumentEditor::deleteTextRange(int line1, int col1, int line2, int col2)
 {
-  assertNonNegative(line1, col1);
-  assertNonNegative(line2, col2);
+  xassert(TextCoord(line1, col1).nonNegative());
+  xassert(TextCoord(line2, col2).nonNegative());
 
   TextCoord tc1(line1, col1);
   TextCoord tc2(line2, col2);

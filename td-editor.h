@@ -67,14 +67,6 @@ private:     // data
   TextCoord m_firstVisible;
   TextCoord m_lastVisible;
 
-private:     // funcs
-  // Check that line/col is non-negative.
-  //
-  // TODO: Change the interface to this class to consistently use
-  // TextCoord, then replace this function with a direct assertion
-  // of TextCoord::nonNegative().
-  static void assertNonNegative(int line, int col);
-
 public:      // funcs
   explicit TextDocumentEditor(TextDocument *doc);
   ~TextDocumentEditor();
@@ -99,8 +91,8 @@ public:      // funcs
   // be non-negative.
   int lineLengthLoose(int line) const;
 
-  // Get position of last+1 char in file.
-  void getLastPos(int &line, int &col) const;
+  // Position right after last character in file.
+  TextCoord endCoord() const { return doc()->endCoord(); }
 
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond

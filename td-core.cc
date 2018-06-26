@@ -149,6 +149,13 @@ bool TextDocumentCore::validCoord(TextCoord tc) const
 }
 
 
+TextCoord TextDocumentCore::endCoord() const
+{
+  int line = this->numLines()-1;
+  return TextCoord(line, this->lineLength(line));
+}
+
+
 // 'line' is marked 'const' to ensure its value is not changed before
 // being passed to the observers; the same thing is done in the other
 // three mutator functions; the C++ standard explicitly allows 'const'
@@ -340,13 +347,6 @@ void TextDocumentCore::seenLineLength(int len)
 
 
 // ------------------- TextDocumentCore utilities --------------------
-TextCoord endCoord(TextDocumentCore const &doc)
-{
-  int line = doc.numLines()-1;
-  return TextCoord(line, doc.lineLength(line));
-}
-
-
 void clear(TextDocumentCore &doc)
 {
   while (doc.numLines() > 1) {

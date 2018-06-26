@@ -105,6 +105,9 @@ public:    // funcs
   // buffer contents (i.e. such that an 'insertText' would be allowed)
   bool validCoord(TextCoord tc) const;
 
+  // Return the last valid coordinate.
+  TextCoord endCoord() const;
+
   // get part of a line's contents, starting at 'tc' and getting
   // 'destLen' chars; all chars must be in the line now; the retrieved
   // text never includes the '\n' character
@@ -152,9 +155,10 @@ public:    // funcs
 // utilities:
 // The functions here are organizationally like methods of TextDocumentCore,
 // except they cannot access that class's private fields.
-
-// Return the coordinates of the end of 'doc'.
-TextCoord endCoord(TextDocumentCore const &doc);
+//
+// In retrospect, I don't think this works very well.  It causes
+// namespace problems as I build out the class hierarchy, and the lack
+// of syntactic encapsulation is misleading.
 
 // clear buffer contents, returning to just one empty line
 void clear(TextDocumentCore &buf);
