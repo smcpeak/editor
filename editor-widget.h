@@ -161,8 +161,10 @@ public:      // data
   // I also am not a listener (like initialization)
   bool listening;
 
-  // location of the cursor when I left it
-  int nonfocusCursorLine, nonfocusCursorCol;
+  // Location of the cursor when I left it.
+  //
+  // Years later, I don't know what this was for...
+  TextCoord nonfocusCursor;
 
   // ------ event model hacks ------
   // when this is true, we ignore the scrollToLine and scrollToCol

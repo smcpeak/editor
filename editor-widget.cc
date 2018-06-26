@@ -78,7 +78,7 @@ EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
     inputProxy(NULL),
     // font metrics inited by setFont()
     listening(false),
-    nonfocusCursorLine(0), nonfocusCursorCol(0),
+    nonfocusCursor(),
     ignoreScrollSignals(false)
 {
   xassert(status_);
@@ -143,8 +143,7 @@ void EditorWidget::cursorTo(int line, int col)
   // not have the focus right now (e.g. the Alt+G dialog);
   // actually, the need for this exposes the fact that my current
   // solution to nonfocus cursor issues isn't very good.. hmm...
-  nonfocusCursorLine = line;
-  nonfocusCursorCol = col;
+  nonfocusCursor = TextCoord(line, col);
 }
 
 void EditorWidget::resetView()
@@ -440,9 +439,8 @@ void EditorWidget::paintEvent(QPaintEvent *ev)
     }
     else {
       // nonfocus synchronized update: use alternate location
-      updateFrame(ev, nonfocusCursorLine, nonfocusCursorCol);
-      TRACE("nonfocus", "drawing at " << nonfocusCursorLine <<
-                        ":" << nonfocusCursorCol);
+      updateFrame(ev, nonfocusCursor.line, nonfocusCursor.column);
+      TRACE("nonfocus", "drawing at " << nonfocusCursor);
     }
   }
   catch (xBase &x) {
@@ -1929,7 +1927,7 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   QWidget::focusInEvent(e);
 
   // move the editing cursor to where I last had it
-  cursorTo(nonfocusCursorLine, nonfocusCursorCol);
+  cursorTo(nonfocusCursor.line, nonfocusCursor.column);
 
   // I don't want to listen while I'm adding changes of
   // my own, because the way the view moves (etc.) on
@@ -1969,8 +1967,7 @@ void EditorWidget::startListening()
   listening = true;
 
   // remember the docFile's current cursor position
-  nonfocusCursorLine = editor->line();
-  nonfocusCursorCol = editor->col();
+  nonfocusCursor = editor->cursor();
 }
 
 
@@ -1981,8 +1978,8 @@ void EditorWidget::startListening()
 
 void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 {
-  if (line <= nonfocusCursorLine) {
-    nonfocusCursorLine++;
+  if (line <= nonfocusCursor.line) {
+    nonfocusCursor.line++;
     moveView(+1, 0);
   }
 
@@ -1991,8 +1988,8 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 
 void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
-  if (line < nonfocusCursorLine) {
-    nonfocusCursorLine--;
+  if (line < nonfocusCursor.line) {
+    nonfocusCursor.line--;
     moveView(-1, 0);
   }
 
