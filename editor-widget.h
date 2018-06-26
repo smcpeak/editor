@@ -193,9 +193,6 @@ private:     // funcs
   void turnSelection(bool on);
   void clearSelIfEmpty();
 
-  // true if the cursor is before (above/left) the select point
-  bool cursorBeforeSelect() const;
-
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
 

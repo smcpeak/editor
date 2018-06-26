@@ -157,12 +157,6 @@ void EditorWidget::resetView()
 }
 
 
-bool EditorWidget::cursorBeforeSelect() const
-{
-  return textCursor() < mark();
-}
-
-
 void EditorWidget::getSelectRegionForCursor(TextCoord cursor,
   TextCoord &selLow, TextCoord &selHigh) const
 {
