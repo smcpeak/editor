@@ -171,29 +171,29 @@ int TextDocumentEditor::lineLengthLoose(int line) const
 }
 
 
-void TextDocumentEditor::getLineLoose(int line, int col, char *dest, int destLen) const
+void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) const
 {
-  xassert(TextCoord(line, col).nonNegative());
+  xassert(tc.nonNegative());
 
   // how much of the source is in the defined region?
   int undef = destLen;
   int def = 0;
 
-  if (line < numLines() &&
-      col < lineLength(line)) {
+  if (tc.line < numLines() &&
+      tc.column < lineLength(tc.line)) {
     //       <----- lineLength -------->
     // line: [-------------------------][..spaces...]
     //       <------ col -----><----- destlen ------>
     //                         <- def -><-- undef -->
     // dest:                   [--------------------]
 
-    undef = max(0, (col+destLen) - lineLength(line));
+    undef = max(0, (tc.column+destLen) - lineLength(tc.line));
     def = max(0, destLen - undef);
   }
 
   // initial part in defined region
   if (def) {
-    doc()->getLine(TextCoord(line, col), dest, def);
+    doc()->getLine(tc, dest, def);
   }
 
   // spaces past defined region
@@ -221,7 +221,7 @@ string TextDocumentEditor::getTextRange(int line1, int col1, int line2, int col2
     char *buf = new char[len+1];
 
     buf[len] = 0;              // NUL terminator
-    getLineLoose(line1, col1, buf, len);
+    getLineLoose(TextCoord(line1, col1), buf, len);
     string ret(buf);
     delete[] buf;
     return ret;

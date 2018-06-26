@@ -168,9 +168,7 @@ public:      // funcs
   // get a range of text from a line, but if the position is outside
   // the defined range, pretend the line exists (if necessary) and
   // that there are space characters up to 'col+destLen' (if necessary)
-  //
-  // TODO: Change this and other methods to accept TextCoord.
-  void getLineLoose(int line, int col, char *dest, int destLen) const;
+  void getLineLoose(TextCoord tc, char *dest, int destLen) const;
 
   // retrieve the text between two positions, as in a text editor
   // where the positions are the selection endpoints and the user
