@@ -1295,8 +1295,9 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           }
 
           int lineLength = editor->cursorLineLength();
-          bool hadCharsToRight = (editor->col() < lineLength);
-          bool beyondLineEnd = (editor->col() > lineLength);
+          int cursorColumn = editor->cursor().column;
+          bool hadCharsToRight = (cursorColumn < lineLength);
+          bool beyondLineEnd = (cursorColumn > lineLength);
           if (beyondLineEnd) {
             // Move the cursor to the end of the line so
             // that fillToCursor will not add spaces.
@@ -1859,7 +1860,7 @@ void EditorWidget::cursorPageDown(bool shift)
 void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
-  int line = editor->line();
+  int line = editor->cursor().line;
   this->editor->setCursor(editor->lineEndCoord(line+1));
   scrollToCursor();
 }

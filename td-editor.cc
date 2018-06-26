@@ -389,8 +389,8 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
 void TextDocumentEditor::moveRelCursor(int deltaLine, int deltaCol)
 {
   // prevent moving into negative territory
-  deltaLine = max(deltaLine, -line());
-  deltaCol = max(deltaCol, -col());
+  deltaLine = max(deltaLine, - cursor().line);
+  deltaCol = max(deltaCol, - cursor().column);
 
   if (deltaLine || deltaCol) {
     moveCursor(true /*relLine*/, deltaLine,
@@ -415,7 +415,7 @@ void TextDocumentEditor::moveToNextLineStart()
 void TextDocumentEditor::moveToPrevLineEnd()
 {
   moveCursor(true /*relLine*/, -1,
-             false /*relCol*/, lineLength(line()-1));
+             false /*relCol*/, lineLength(cursor().line - 1));
 }
 
 
@@ -431,10 +431,13 @@ void TextDocumentEditor::selectCursorLine()
 
 void TextDocumentEditor::advanceWithWrap(bool backwards)
 {
+  int line = cursor().line;
+  int col = cursor().column;
+
   if (!backwards) {
-    if (0 <= line() &&
-        line() < numLines() &&
-        col() < cursorLineLength()) {
+    if (0 <= line &&
+        line < numLines() &&
+        col < cursorLineLength()) {
       moveRelCursor(0, 1);
     }
     else {
@@ -443,12 +446,12 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   }
 
   else {
-    if (0 <= line() &&
-        line() < numLines() &&
-        col() >= 0) {
+    if (0 <= line &&
+        line < numLines() &&
+        col >= 0) {
       moveRelCursor(0, -1);
     }
-    else if (line() > 0) {
+    else if (line > 0) {
       moveToPrevLineEnd();
     }
     else {
@@ -467,13 +470,11 @@ void TextDocumentEditor::fillToCursor()
     return;     // nothing to do
   }
 
-  int origLine = line();
-  int origCol = col();
+  TextCoord orig = cursor();
 
   // move back to defined area, and end of that line
-  //moveRelCursor(-rowfill, -colfill);    // wrong
   moveCursor(true /*relLine*/, -rowfill,
-             false /*relCol*/, lineLength(origLine-rowfill));
+             false /*relCol*/, lineLength(orig.line-rowfill));
   xassert(validCursor());
 
   // add newlines
@@ -487,7 +488,7 @@ void TextDocumentEditor::fillToCursor()
   }
 
   // should have ended up in the same place we started
-  xassert(origLine==line() && origCol==col());
+  xassert(orig == cursor());
 }
 
 
@@ -508,7 +509,7 @@ void TextDocumentEditor::insertSpaces(int howMany)
 
 void TextDocumentEditor::insertNewline()
 {
-  int overEdge = col() - cursorLineLength();
+  int overEdge = cursor().column - cursorLineLength();
   if (overEdge > 0) {
     // move back to the end of this line
     moveRelCursor(0, -overEdge);

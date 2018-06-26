@@ -14,14 +14,10 @@
 
 static void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
-  if (tde.line()==line &&
-      tde.col()==col) {
-    // ok
-  }
-  else {
-    printf("expect %d:%d\n", line, col);
-    printf("actual %d:%d\n", tde.line(), tde.col());
-    fflush(stdout);
+  TextCoord tc(line, col);
+  if (tde.cursor() != tc) {
+    cout << "expect: " << tc << endl
+         << "actual: " << tde.cursor() << endl;
     xfailure("cursor location mismatch");
   }
 
@@ -216,8 +212,7 @@ static void testTextManipulation()
   tde.insertText("foo\nbar\n");
     // result: foo\n
     //         bar\n
-  xassert(tde.line() == 2);
-  xassert(tde.col() == 0);
+  xassert(tde.cursor() == TextCoord(2, 0));
   xassert(tde.numLines() == 3);    // so final 'line' is valid
 
   testGetRange(tde, 0,0, 2,0, "foo\nbar\n");
@@ -233,8 +228,7 @@ static void testTextManipulation()
     // result: farf\n
     //         gakoo\n
     //         bar\n
-  xassert(tde.line() == 1);
-  xassert(tde.col() == 3);
+  xassert(tde.cursor() == TextCoord(1, 3));
   xassert(tde.numLines() == 4);
   testGetRange(tde, 0,0, 3,0, "farf\ngakoo\nbar\n");
 
@@ -243,8 +237,7 @@ static void testTextManipulation()
     //         gak\n
     //         oo\n
     //         bar\n
-  xassert(tde.line() == 2);
-  xassert(tde.col() == 0);
+  xassert(tde.cursor() == TextCoord(2, 0));
   xassert(tde.numLines() == 5);
   testGetRange(tde, 0,0, 4,0, "farf\ngak\noo\nbar\n");
 

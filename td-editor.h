@@ -106,10 +106,6 @@ public:      // funcs
   // the end of its line or the entire file.
   TextCoord cursor() const { return m_cursor; }
 
-  // Legacy interface.  TODO: Remove.
-  int line() const { return cursor().line; }
-  int col() const { return cursor().column; }
-
   // Return true if the cursor is within the current text, i.e.,
   // not beyond the end of a line or beyond the end of the file.
   //
