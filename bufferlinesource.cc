@@ -3,7 +3,7 @@
 
 #include "bufferlinesource.h"          // this module
 
-#include "text-document-core.h"        // TextDocumentCore
+#include "td-core.h"                   // TextDocumentCore
 
 
 BufferLineSource::BufferLineSource()

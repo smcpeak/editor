@@ -1,7 +1,7 @@
-// text-document-core.cc
-// code for text-document-core.h
+// td-core.cc
+// code for td-core.h
 
-#include "text-document-core.h"        // this module
+#include "td-core.h"                   // this module
 
 #include "array.h"                     // Array
 #include "autofile.h"                  // AutoFILE
@@ -22,7 +22,7 @@ TextDocumentCore::TextDocumentCore()
     longestLengthSoFar(0),
     observers()
 {
-  // always at least one line; see comments at end of text-document-core.h
+  // always at least one line; see comments at end of td-core.h
   lines.insert(0 /*line*/, NULL /*value*/);
 }
 
@@ -257,7 +257,7 @@ void TextDocumentCore::deleteText(TextCoord const tc, int const length)
 
 void TextDocumentCore::dumpRepresentation() const
 {
-  printf("-- text-document-core --\n");
+  printf("-- td-core --\n");
 
   // lines
   int L, G, R;
@@ -580,7 +580,7 @@ void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord
 
 
 // --------------------- test code -----------------------
-#ifdef TEST_TEXT_DOCUMENT_CORE
+#ifdef TEST_TD_CORE
 
 #include "ckheap.h"        // malloc_stats
 #include <stdlib.h>        // system
@@ -593,7 +593,7 @@ void entry()
 
     // build a text file
     {
-      AutoFILE fp("text-document-core.tmp", "w");
+      AutoFILE fp("td-core.tmp", "w");
 
       for (int i=0; i<2; i++) {
         for (int j=0; j<53; j++) {
@@ -608,13 +608,13 @@ void entry()
     {
       // Read it as a text document.
       TextDocumentCore doc;
-      readFile(doc, "text-document-core.tmp");
+      readFile(doc, "td-core.tmp");
 
       // dump its repr
       //doc.dumpRepresentation();
 
       // write it out again
-      writeFile(doc, "text-document-core.tmp2");
+      writeFile(doc, "td-core.tmp2");
 
       printf("stats before dealloc:\n");
       malloc_stats();
@@ -624,33 +624,33 @@ void entry()
     }
 
     // make sure they're the same
-    if (system("diff text-document-core.tmp text-document-core.tmp2") != 0) {
+    if (system("diff td-core.tmp td-core.tmp2") != 0) {
       xbase("the files were different!\n");
     }
 
     // ok
-    system("ls -l text-document-core.tmp");
-    remove("text-document-core.tmp");
-    remove("text-document-core.tmp2");
+    system("ls -l td-core.tmp");
+    remove("td-core.tmp");
+    remove("td-core.tmp2");
 
     printf("stats after:\n");
     malloc_stats();
   }
 
   {
-    printf("reading text-document-core.cc ...\n");
+    printf("reading td-core.cc ...\n");
     TextDocumentCore doc;
-    readFile(doc, "text-document-core.cc");
+    readFile(doc, "td-core.cc");
     doc.printMemStats();
   }
 
   printf("stats after:\n");
   malloc_stats();
 
-  printf("\ntext-document-core is ok\n");
+  printf("\ntd-core is ok\n");
 }
 
 USUAL_MAIN
 
 
-#endif // TEST_TEXT_DOCUMENT_CORE
+#endif // TEST_TD_CORE

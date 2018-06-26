@@ -5,7 +5,7 @@
 #define TEXT_DOCUMENT_H
 
 #include "history.h"                   // HE_group
-#include "text-document-core.h"        // TextDocumentCore
+#include "td-core.h"                   // TextDocumentCore
 
 #include "array.h"                     // ArrayStack
 #include "objstack.h"                  // ObjStack

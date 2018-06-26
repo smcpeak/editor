@@ -4,7 +4,7 @@
 #ifndef BUFFERLINESOURCE_H
 #define BUFFERLINESOURCE_H
 
-class TextDocumentCore;                // text-document-core.h
+class TextDocumentCore;                // td-core.h
 
 
 // state for supplying flex with input from a line of a buffer

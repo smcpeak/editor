@@ -7,7 +7,7 @@
 #include "array.h"                     // ObjArrayStack
 #include "exc.h"                       // xBase
 #include "str.h"                       // stringBuilder
-#include "text-document-core.h"        // TextDocumentCore
+#include "td-core.h"                   // TextDocumentCore
 
 #include <stdint.h>                    // uintptr_t
 

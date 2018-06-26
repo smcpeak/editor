@@ -5,7 +5,7 @@
 
 #include "inclexer.h"                  // IncLexer
 #include "strutil.h"                   // quoted
-#include "text-document-core.h"        // TextDocumentCore
+#include "td-core.h"                   // TextDocumentCore
 #include "text-document-editor.h"      // TextDocumentEditor
 #include "textcategory.h"              // LineCategories
 #include "trace.h"                     // TRACE

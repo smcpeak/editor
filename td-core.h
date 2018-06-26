@@ -1,8 +1,8 @@
-// text-document-core.h
+// td-core.h
 // Representation of a text document for use in a text editor.
 
-#ifndef TEXT_DOCUMENT_CORE_H
-#define TEXT_DOCUMENT_CORE_H
+#ifndef TD_CORE_H
+#define TD_CORE_H
 
 #include "gap.h"                       // GapArray
 #include "textcoord.h"                 // TextCoord
@@ -232,4 +232,4 @@ public:
   virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length);
 };
 
-#endif // TEXT_DOCUMENT_CORE_H
+#endif // TD_CORE_H
