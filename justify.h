@@ -4,7 +4,7 @@
 #ifndef JUSTIFY_H
 #define JUSTIFY_H
 
-#include "text-document-editor.h"      // TextDocumentEditor
+#include "td-editor.h"                 // TextDocumentEditor
 
 #include "array.h"                     // ArrayStack
 #include "str.h"                       // string

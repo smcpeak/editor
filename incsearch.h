@@ -5,7 +5,7 @@
 #define INCSEARCH_H
 
 #include "inputproxy.h"                // AttachInputProxy
-#include "text-document-editor.h"      // TextDocumentEditor
+#include "td-editor.h"                 // TextDocumentEditor
 
 #include "str.h"                       // string
 

@@ -1,7 +1,7 @@
-// text-document-editor.cc
-// Code for text-document-editor.h.
+// td-editor.cc
+// Code for td-editor.h.
 
-#include "text-document-editor.h"      // this module
+#include "td-editor.h"                 // this module
 
 
 TextDocumentEditor::TextDocumentEditor(TextDocument *doc)

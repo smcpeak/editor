@@ -4,7 +4,7 @@
 all: comment.yy.cc
 all: testgap
 all: td-core
-all: test-text-document-editor
+all: test-td-editor
 all: test-justify
 all: textcategory
 all: c_hilite
@@ -105,22 +105,22 @@ td-core: gap.h $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_TD_CORE $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
 	./td-core >/dev/null 2>&1
 
-# -------------- test-text-document-editor test program ----------------
-TOCLEAN += test-text-document-editor text-document.tmp
+# -------------- test-td-editor test program ----------------
+TOCLEAN += test-td-editor text-document.tmp
 
 TEXT_DOCUMENT_OBJS :=
 TEXT_DOCUMENT_OBJS += history.o
-TEXT_DOCUMENT_OBJS += test-text-document-editor.o
+TEXT_DOCUMENT_OBJS += test-td-editor.o
 TEXT_DOCUMENT_OBJS += text-document.o
 TEXT_DOCUMENT_OBJS += td-core.o
-TEXT_DOCUMENT_OBJS += text-document-editor.o
+TEXT_DOCUMENT_OBJS += td-editor.o
 TEXT_DOCUMENT_OBJS += textcoord.o
 
-test-text-document-editor: $(TEXT_DOCUMENT_OBJS)
+test-td-editor: $(TEXT_DOCUMENT_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEXT_DOCUMENT_OBJS) $(CONSOLE_LDFLAGS)
-	./test-text-document-editor >/dev/null 2>&1
+	./test-td-editor >/dev/null 2>&1
 
--include test-text-document-editor.d
+-include test-td-editor.d
 
 # -------------- justify test program ----------------
 TOCLEAN += test-justify
@@ -130,7 +130,7 @@ JUSTIFY_OBJS += history.o
 JUSTIFY_OBJS += justify.o
 JUSTIFY_OBJS += text-document.o
 JUSTIFY_OBJS += td-core.o
-JUSTIFY_OBJS += text-document-editor.o
+JUSTIFY_OBJS += td-editor.o
 JUSTIFY_OBJS += test-justify.o
 JUSTIFY_OBJS += textcoord.o
 
@@ -156,7 +156,7 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 
 C_HILITE_OBJS := \
   td-core.o \
-  text-document-editor.o \
+  td-editor.o \
   textcoord.o \
   history.o \
   text-document.o \
@@ -198,7 +198,7 @@ EDITOR_OBJS := \
   textcategory.o \
   styledb.o \
   td-core.o \
-  text-document-editor.o \
+  td-editor.o \
   textcoord.o
 -include $(EDITOR_OBJS:.o=.d)
 

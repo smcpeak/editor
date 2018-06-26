@@ -14,8 +14,8 @@
 #include "qtutil.h"                    // toQString
 #include "status.h"                    // StatusDisplay
 #include "strutil.h"                   // sm_basename
+#include "td-editor.h"                 // TextDocumentEditor
 #include "test.h"                      // PVAL
-#include "text-document-editor.h"      // TextDocumentEditor
 #include "trace.h"                     // TRACE_ARGS
 
 #include <string.h>                    // strrchr

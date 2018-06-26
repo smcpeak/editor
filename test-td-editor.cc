@@ -1,7 +1,7 @@
-// test-text-document-editor.cc
-// Tests for text-document-editor module.
+// test-td-editor.cc
+// Tests for td-editor module.
 
-#include "text-document-editor.h"      // module to test
+#include "td-editor.h"                 // module to test
 
 #include "datablok.h"                  // DataBlock
 #include "ckheap.h"                    // malloc_stats
@@ -340,7 +340,7 @@ int main()
     testTextManipulation();
 
     malloc_stats();
-    cout << "\ntest-text-document-editor is ok" << endl;
+    cout << "\ntest-td-editor is ok" << endl;
     return 0;
   }
   catch (xBase &x) {

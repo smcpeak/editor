@@ -1,8 +1,8 @@
-// text-document-editor.h
+// td-editor.h
 // TextDocumentEditor class.
 
-#ifndef TEXT_DOCUMENT_EDITOR_H
-#define TEXT_DOCUMENT_EDITOR_H
+#ifndef TD_EDITOR_H
+#define TD_EDITOR_H
 
 #include "text-document.h"             // TextDocument
 
@@ -371,4 +371,4 @@ public:
 };
 
 
-#endif // TEXT_DOCUMENT_EDITOR_H
+#endif // TD_EDITOR_H
