@@ -129,11 +129,6 @@ public:      // funcs
   // move by relative line/col
   void moveRelCursor(int deltaLine, int deltaCol);
 
-  // use a relative movement to go to a specific line/col; this is
-  // used for restoring the cursor position after some sequence
-  // of edits
-  void moveRelCursorTo(int newLine, int newCol);
-
   // relative to same line, absolute to given column
   void moveAbsColumn(int newCol);
 
@@ -323,9 +318,7 @@ ENUM_BITWISE_OPS(TextDocumentEditor::FindStringFlags,
                  TextDocumentEditor::FS_ALL)
 
 
-// save/restore cursor across an operation; uses a relative
-// cursor movement to restore at the end, so the presumption
-// is that only relative movements have appeared in between
+// Save/restore cursor across an operation.
 class CursorRestorer {
   TextDocumentEditor &doc;
   TextCoord orig;

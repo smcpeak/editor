@@ -402,11 +402,6 @@ void TextDocumentEditor::moveAbsColumn(int newCol)
 }
 
 
-void TextDocumentEditor::moveRelCursorTo(int newLine, int newCol)
-{
-  moveRelCursor(newLine-line(), newCol-col());
-}
-
 void TextDocumentEditor::moveToNextLineStart()
 {
   moveCursor(true /*relLine*/, +1,
@@ -555,7 +550,7 @@ void TextDocumentEditor::deleteTextRange(int line1, int col1, int line2, int col
   truncateCursor(doc()->getCore(), tc2);
 
   // go to line2/col2, which is probably where the cursor already is
-  moveRelCursorTo(tc2.line, tc2.column);
+  setCursor(tc2);
 
   // compute # of chars in span
   int length = computeSpanLength(doc()->getCore(), tc1, tc2);
@@ -582,7 +577,7 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
 
   for (int line=start; line < start+lines &&
                        line < numLines(); line++) {
-    moveRelCursorTo(line, 0);
+    setCursor(TextCoord(line, 0));
 
     if (ind > 0) {
       for (int i=0; i<ind; i++) {
@@ -608,7 +603,7 @@ CursorRestorer::CursorRestorer(TextDocumentEditor &d)
 
 CursorRestorer::~CursorRestorer()
 {
-  doc.moveRelCursorTo(orig.line, orig.column);
+  doc.setCursor(orig);
 }
 
 
