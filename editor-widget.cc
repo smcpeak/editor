@@ -153,7 +153,6 @@ void EditorWidget::resetView()
     cursorTo(0, 0);
     editor->clearMark();
   }
-  selLowLine = selLowCol = selHighLine = selHighCol = 0;   // make it deterministic..
   setView(TextCoord(0,0));
 }
 
@@ -164,21 +163,22 @@ bool EditorWidget::cursorBeforeSelect() const
 }
 
 
-void EditorWidget::normalizeSelect(TextCoord cursor)
+void EditorWidget::getSelectRegionForCursor(TextCoord cursor,
+  TextCoord &selLow, TextCoord &selHigh) const
 {
-  // TODO: Why do we test the actual cursor, but then use the passed-in
-  // value to set the values?
-  if (cursorBeforeSelect()) {
-    selLowLine = cursor.line;
-    selLowCol = cursor.column;
-    selHighLine = this->mark().line;
-    selHighCol = this->mark().column;
+  if (!this->selectEnabled()) {
+    selLow = selHigh = cursor;
   }
   else {
-    selLowLine = this->mark().line;
-    selLowCol = this->mark().column;
-    selHighLine = cursor.line;
-    selHighCol = cursor.column;
+    TextCoord const m = this->mark();
+    if (cursor <= m) {
+      selLow = cursor;
+      selHigh = m;
+    }
+    else {
+      selLow = m;
+      selHigh = cursor;
+    }
   }
 }
 
@@ -550,8 +550,9 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
   // Buffer that will be used for each visible line of text.
   Array<char> text(visibleCols);
 
-  // set sel{Low,High}{Line,Col}
-  normalizeSelect(TextCoord(cursorLine, cursorCol));
+  // Get region of selected text.
+  TextCoord selLow, selHigh;
+  this->getSelectRegionForCursor(TextCoord(cursorLine, cursorCol), selLow, selHigh);
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -620,26 +621,26 @@ void EditorWidget::updateFrame(QPaintEvent *ev, int cursorLine, int cursorCol)
 
     // incorporate effect of selection
     if (this->selectEnabled() &&
-        this->selLowLine <= line && line <= this->selHighLine)
+        selLow.line <= line && line <= selHigh.line)
     {
-      if (selLowLine < line && line < selHighLine) {
+      if (selLow.line < line && line < selHigh.line) {
         // entire line is selected
         categories.overlay(0, 0 /*infinite*/, TC_SELECTION);
       }
-      else if (selLowLine < line && line == selHighLine) {
+      else if (selLow.line < line && line == selHigh.line) {
         // first half of line is selected
-        if (selHighCol) {
-          categories.overlay(0, selHighCol, TC_SELECTION);
+        if (selHigh.column) {
+          categories.overlay(0, selHigh.column, TC_SELECTION);
         }
       }
-      else if (selLowLine == line && line < selHighLine) {
+      else if (selLow.line == line && line < selHigh.line) {
         // right half of line is selected
-        categories.overlay(selLowCol, 0 /*infinite*/, TC_SELECTION);
+        categories.overlay(selLow.column, 0 /*infinite*/, TC_SELECTION);
       }
-      else if (selLowLine == line && line == selHighLine) {
+      else if (selLow.line == line && line == selHigh.line) {
         // middle part of line is selected
-        if (selHighCol != selLowCol) {
-          categories.overlay(selLowCol, selHighCol-selLowCol, TC_SELECTION);
+        if (selHigh.column != selLow.column) {
+          categories.overlay(selLow.column, selHigh.column-selLow.column, TC_SELECTION);
         }
       }
       else {
@@ -1750,9 +1751,10 @@ void EditorWidget::editDelete()
       return;
     }
 
-    normalizeSelect();
-    //docFile->changed = true;
-    editor->deleteTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    TextCoord selLow, selHigh;
+    this->getSelectRegion(selLow, selHigh);
+    editor->deleteTextRange(selLow.line, selLow.column,
+                            selHigh.line, selHigh.column);
 
     this->clearMark();
     scrollToCursor();
@@ -1904,24 +1906,27 @@ void EditorWidget::blockIndent(int amt)
     return;      // nop
   }
 
-  normalizeSelect();
+  TextCoord selLow, selHigh;
+  this->getSelectRegion(selLow, selHigh);
 
-  int endLine = (selHighCol==0? selHighLine-1 : selHighLine);
+  int endLine = (selHigh.column==0? selHigh.line-1 : selHigh.line);
   endLine = min(endLine, editor->numLines()-1);
-  editor->indentLines(selLowLine, endLine-selLowLine+1, amt);
+  editor->indentLines(selLow.line, endLine-selLow.line+1, amt);
 
   redraw();
 }
 
 
-string EditorWidget::getSelectedText()
+string EditorWidget::getSelectedText() const
 {
   if (!this->selectEnabled()) {
     return "";
   }
   else {
-    normalizeSelect();   // this is why this method is not 'const' ...
-    return editor->getTextRange(selLowLine, selLowCol, selHighLine, selHighCol);
+    TextCoord selLow, selHigh;
+    this->getSelectRegion(selLow, selHigh);
+    return editor->getTextRange(selLow.line, selLow.column,
+                                selHigh.line, selHigh.column);
   }
 }
 

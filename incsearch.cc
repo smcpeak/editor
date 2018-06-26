@@ -75,20 +75,20 @@ void IncSearch::attach(EditorWidget *newEd)
   mode = M_SEARCH;
 
   if (ed->selectEnabled()) {
-    // initialize the search string with the selection
-    ed->normalizeSelect();
-
-    curLine = ed->selLowLine;
-    curCol = ed->selLowCol;
-    if (ed->selLowLine == ed->selHighLine) {
+    // Initialize the search string with the selection.
+    TextCoord selLow, selHigh;
+    ed->getSelectRegion(selLow, selHigh);
+    curLine = selLow.line;
+    curCol = selLow.column;
+    if (selLow.line == selHigh.line) {
       // expected case
-      text = ed->editor->getTextRange(ed->selLowLine, ed->selLowCol,
-        ed->selHighLine, ed->selHighCol);
+      text = ed->editor->getTextRange(selLow.line, selLow.column,
+        selHigh.line, selHigh.column);
     }
     else {
       // truncate to one line..
-      text = ed->editor->getTextRange(ed->selLowLine, ed->selLowCol,
-        ed->selLowLine, ed->editor->lineLength(ed->selLowLine));
+      text = ed->editor->getTextRange(selLow.line, selLow.column,
+        selLow.line, ed->editor->lineLength(selLow.line));
     }
   }
 

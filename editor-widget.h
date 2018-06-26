@@ -81,13 +81,6 @@ private:     // data
   // GlobalState::documentFiles.
   ObjList<TextDocumentFileEditor> m_editors;
 
-  // the following fields are valid only after normalizeSelect(),
-  // and before any subsequent modification to cursor or select
-  //
-  // TODO: These fields should be removed and replaced with queries.
-  int selLowLine, selLowCol;     // whichever of cursor/select comes first
-  int selHighLine, selHighCol;   // whichever comes second
-
   // ----- match highlight state -----
   // when nonempty, any buffer text matching this string will
   // be highlighted in the 'hit' style; match is carried out
@@ -309,9 +302,15 @@ public:      // funcs
   void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
   void cursorDownBy(int amt)              { moveCursorBy(+amt, 0); }
 
-  // set sel{Low,High}{Line,Col}
-  void normalizeSelect(TextCoord cursor);
-  void normalizeSelect() { normalizeSelect(textCursor()); }
+  // Store into 'selLow' the lower of 'cursor' (the parameter) and
+  // 'mark' (the field), and into 'selHigh' the higher.  If the mark
+  // is not active, set both to 'cursor'.
+  void getSelectRegionForCursor(TextCoord cursor,
+    TextCoord &selLow, TextCoord &selHigh) const;
+
+  // Same, but using the normal cursor.
+  void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const
+    { getSelectRegionForCursor(textCursor(), selLow, selHigh); }
 
   // Select the entire line the cursor is on.
   void selectCursorLine();
@@ -390,7 +389,7 @@ public:      // funcs
   void deleteLeftOfCursor();
 
   // get selected text, or "" if nothing selected
-  string getSelectedText();
+  string getSelectedText() const;
 
   // TextDocumentObserver funcs
   virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
