@@ -82,13 +82,12 @@ void IncSearch::attach(EditorWidget *newEd)
     curCol = selLow.column;
     if (selLow.line == selHigh.line) {
       // expected case
-      text = ed->editor->getTextRange(selLow.line, selLow.column,
-        selHigh.line, selHigh.column);
+      text = ed->editor->getTextRange(selLow, selHigh);
     }
     else {
-      // truncate to one line..
-      text = ed->editor->getTextRange(selLow.line, selLow.column,
-        selLow.line, ed->editor->lineLength(selLow.line));
+      // truncate to one line...
+      text = ed->editor->getTextRange(selLow,
+        TextCoord(selLow.line, ed->editor->lineLength(selLow.line)));
     }
   }
 

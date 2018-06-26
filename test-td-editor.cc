@@ -169,7 +169,7 @@ static void testUndoRedo()
 static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
                          int line2, int col2, char const *expect)
 {
-  string actual = tde.getTextRange(line1, col1, line2, col2);
+  string actual = tde.getTextRange(TextCoord(line1, col1), TextCoord(line2, col2));
   if (!actual.equals(expect)) {
     tde.doc()->getCore().dumpRepresentation();
     cout << "getTextRange(" << line1 << "," << col1 << ", "

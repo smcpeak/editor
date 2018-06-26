@@ -173,13 +173,12 @@ public:      // funcs
   // retrieve the text between two positions, as in a text editor
   // where the positions are the selection endpoints and the user
   // wants a string to put in the clipboard; it must be the case
-  // that line1/col1 <= line2/col2; characters outside defined area
+  // that tc1 <= tc2; characters outside defined area
   // are taken to be whitespace
-  string getTextRange(int line1, int col1, int line2, int col2) const;
+  string getTextRange(TextCoord tc1, TextCoord tc2) const;
 
   // get a complete line
-  string getWholeLine(int line) const
-    { return getTextRange(line, 0, line, doc()->lineLength(line)); }
+  string getWholeLine(int line) const;
 
   // get the word following the given line/col, including any non-word
   // characters that precede that word; stop at end of line

@@ -1919,8 +1919,7 @@ string EditorWidget::getSelectedText() const
   else {
     TextCoord selLow, selHigh;
     this->getSelectRegion(selLow, selHigh);
-    return editor->getTextRange(selLow.line, selLow.column,
-                                selHigh.line, selHigh.column);
+    return editor->getTextRange(selLow, selHigh);
   }
 }
 

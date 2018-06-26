@@ -201,18 +201,18 @@ void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) con
 }
 
 
-string TextDocumentEditor::getTextRange(int line1, int col1, int line2, int col2) const
+string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
 {
-  xassert(TextCoord(line1, col1).nonNegative());
-  xassert(TextCoord(line2, col2).nonNegative());
+  xassert(tc1.nonNegative());
+  xassert(tc2.nonNegative());
 
   // this function uses the line1==line2 case as a base case of a two
   // level recursion; it's not terribly efficient
 
-  if (line1 == line2) {
+  if (tc1.line == tc2.line) {
     // extracting text from a single line
-    xassert(col1 <= col2);
-    int len = col2-col1;
+    xassert(tc1.column <= tc2.column);
+    int len = tc2.column-tc1.column;
 
     // It is not very efficient to allocate two buffers, one here and
     // one inside the string object, but the std::string API doesn't
@@ -221,31 +221,39 @@ string TextDocumentEditor::getTextRange(int line1, int col1, int line2, int col2
     char *buf = new char[len+1];
 
     buf[len] = 0;              // NUL terminator
-    getLineLoose(TextCoord(line1, col1), buf, len);
+    getLineLoose(TextCoord(tc1.line, tc1.column), buf, len);
     string ret(buf);
     delete[] buf;
     return ret;
   }
 
-  xassert(line1 < line2);
+  xassert(tc1.line < tc2.line);
 
   // build up returned string
   stringBuilder sb;
 
   // final fragment of line1
-  sb = getTextRange(line1, col1, line1, max(col1, lineLengthLoose(line1)));
+  sb = getTextRange(tc1,
+    TextCoord(tc1.line, max(tc1.column, lineLengthLoose(tc1.line))));
 
   // full lines between line1 and line2
-  for (int i=line1+1; i < line2; i++) {
+  for (int i=tc1.line+1; i < tc2.line; i++) {
     sb << "\n";
-    sb << getTextRange(i, 0, i, lineLengthLoose(i));
+    sb << getTextRange(TextCoord(i, 0), TextCoord(i, lineLengthLoose(i)));
   }
 
   // initial fragment of line2
   sb << "\n";
-  sb << getTextRange(line2, 0, line2, col2);
+  sb << getTextRange(TextCoord(tc2.line, 0), tc2);
 
   return sb;
+}
+
+
+string TextDocumentEditor::getWholeLine(int line) const
+{
+  return getTextRange(TextCoord(line, 0),
+                      TextCoord(line, doc()->lineLength(line)));
 }
 
 
@@ -259,7 +267,7 @@ string TextDocumentEditor::getWordAfter(int line, int col) const
 
   bool seenWordChar = false;
   while (col < lineLength(line)) {
-    char ch = getTextRange(line, col, line, col+1)[0];
+    char ch = getTextRange(TextCoord(line, col), TextCoord(line, col+1))[0];
     if (isalnum(ch) || ch=='_') {
       seenWordChar = true;
       sb << ch;
