@@ -296,13 +296,6 @@ public:      // funcs
   void insertText(char const *text, int textLen);
 
   // --------------------------- deletion ----------------------------
-  // given that the cursor is at the end of a line, join this line
-  // with the next one
-  void spliceNextLine();
-
-  // Delete one character to the right of the cursor.
-  void deleteCharAtCursor();
-
   // Delete any number of characters to the left of cursor, but not
   // more than exist in the document between its start and the cursor.
   void deleteAtCursor(int numChars);

@@ -336,6 +336,26 @@ void TextDocumentEditor::backspaceFunction()
 }
 
 
+void TextDocumentEditor::deleteKeyFunction()
+{
+  if (m_markActive) {
+    this->deleteSelection();
+  }
+  else if (m_cursor >= m_doc->endCoord()) {
+    // Beyond EOF, do nothing.
+  }
+  else {
+    // Add spaces if beyond EOF.
+    this->fillToCursor();
+
+    // Delete next char, which might be newline.
+    this->deleteChar();
+  }
+
+  this->scrollToCursor();
+}
+
+
 void TextDocumentEditor::undo()
 {
   setCursor(m_doc->undo());

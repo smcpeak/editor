@@ -1002,7 +1002,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       // not going to bind either by default
 
       case Qt::Key_D:
-        this->deleteCharAtCursor();
+        this->editor->deleteKeyFunction();
+        this->redraw();
         break;
 
       case Qt::Key_H:
@@ -1216,14 +1217,15 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_Delete: {
-        if (!editSafetyCheck()) {
+        if (!this->editSafetyCheck()) {
           return;
         }
         if (shift) {
-          editCut();
+          this->editCut();
         }
         else {
-          deleteCharAtCursor();
+          this->editor->deleteKeyFunction();
+          this->redraw();
         }
         break;
       }
@@ -1362,15 +1364,6 @@ void EditorWidget::deleteAtCursor(int amt)
   editor->fillToCursor();
   editor->deleteLR(true /*left*/, amt);
   scrollToCursor();
-}
-
-
-void EditorWidget::spliceNextLine()
-{
-  // cursor must be at the end of a line
-  xassert(cursorCol() == editor->cursorLineLength());
-
-  editor->deleteChar();
 }
 
 
@@ -1679,31 +1672,6 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
   turnSelection(shift);
   int line = editor->cursor().line;
   this->editor->setCursor(editor->lineEndCoord(line+1));
-  scrollToCursor();
-}
-
-
-void EditorWidget::deleteCharAtCursor()
-{
-  editor->fillToCursor();
-
-  if (this->selectEnabled()) {
-    editDelete();
-  }
-  else {
-    if (this->editor->cursorAtEnd()) {
-      // Nothing to do since no characters are to the right.
-    }
-    else if (cursorCol() == editor->cursorLineLength()) {
-      // splice next line onto this one
-      spliceNextLine();
-    }
-    else /* cursor < lineLength */ {
-      // delete character to right of cursor
-      editor->deleteText(1);
-    }
-  }
-
   scrollToCursor();
 }
 

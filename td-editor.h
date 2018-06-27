@@ -328,12 +328,19 @@ public:      // funcs
   // Delete the selected text.  Requires markActive().
   void deleteSelection();
 
-  // Do what backspace should do: If text is selected, delete it.
+  // Do what Backspace should do: If text is selected, delete it.
   // Otherwise, delete one character to the left of the cursor,
   // except if the cursor is beyond EOL or EOF, just move one space
   // left if possible, otherwise up, without adding whitespace to
   // the file.
   void backspaceFunction();
+
+  // Do what Delete should do: If text is selected, delete it.
+  // Otherwise, delete one character to the right of the cursor.
+  // If we are beyond EOL but not EOF, fill with spaces and then
+  // delete the newline to splice the next line.  If beyond EOF,
+  // do nothing.
+  void deleteKeyFunction();
 
   // ---------------------- adding whitespace ----------------------
   // Add minimum whitespace near cursor to ensure 'validCursor()'.

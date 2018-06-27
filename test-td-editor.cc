@@ -927,6 +927,51 @@ static void testBackspaceFunction()
 }
 
 
+// ------------------- testDeleteKeyFunction --------------------
+static void testDeleteKeyFunction()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two  \n"
+    "three\n");
+  expect(tde, 3,0,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Delete at EOF: no-op.
+  tde.deleteKeyFunction();
+  expect(tde, 3,0,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Delete with selection.
+  tde.setMark(TextCoord(0,1));
+  tde.setCursor(TextCoord(0,2));
+  tde.deleteKeyFunction();
+  expect(tde, 0,1,
+    "oe\n"
+    "two  \n"
+    "three\n");
+
+  // Delete beyond EOL: fill then splice.
+  tde.setCursor(TextCoord(1, 10));
+  tde.deleteKeyFunction();
+  expect(tde, 1,10,
+    "oe\n"
+    "two       three\n");
+
+  // Delete well beyond EOF: no-op.
+  tde.setCursor(TextCoord(10, 10));
+  tde.deleteKeyFunction();
+  expect(tde, 10,10,
+    "oe\n"
+    "two       three\n");
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -940,6 +985,7 @@ int main()
     testGetAboveIndentation();
     testMoveCursor();
     testBackspaceFunction();
+    testDeleteKeyFunction();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 
