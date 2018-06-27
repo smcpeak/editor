@@ -607,6 +607,47 @@ static void testScrollToCursor()
 }
 
 
+// ---------------------- testGetWordAfter ----------------------
+static void testOneWordAfter(TextDocumentEditor &tde,
+  int line, int col, char const *expect)
+{
+  string actual = tde.getWordAfter(TextCoord(line, col));
+  xassert(actual == expect);
+}
+
+
+static void testGetWordAfter()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two three\n"
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_\n"
+    "x.x,x%x(x)--x\n");
+
+  testOneWordAfter(tde, -1,0, "");
+  testOneWordAfter(tde, 11,0, "");
+
+  testOneWordAfter(tde, 0,0, "one");
+
+  testOneWordAfter(tde, 1,0, "two");
+  testOneWordAfter(tde, 1,3, " three");
+  testOneWordAfter(tde, 1,4, "three");
+  testOneWordAfter(tde, 1,5, "hree");
+
+  testOneWordAfter(tde, 2,0,
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+
+  testOneWordAfter(tde, 3,0, "x");
+  testOneWordAfter(tde, 3,1, ".x");
+  testOneWordAfter(tde, 3,2, "x");
+  testOneWordAfter(tde, 3,4, "x");
+  testOneWordAfter(tde, 3,6, "x");
+  testOneWordAfter(tde, 3,8, "x");
+  testOneWordAfter(tde, 3,12, "x");
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -616,6 +657,7 @@ int main()
     testBlockIndent();
     testFillToCursor();
     testScrollToCursor();
+    testGetWordAfter();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 
