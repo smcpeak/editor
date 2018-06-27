@@ -355,7 +355,7 @@ void IncSearch::resetToSearchStart()
   this->curLine = this->beginLine;
   this->curCol = this->beginCol;
   ed->cursorTo(TextCoord(beginLine, beginCol));
-  ed->setView(TextCoord(beginFVLine, beginFVCol));
+  ed->setFirstVisible(TextCoord(beginFVLine, beginFVCol));
   ed->clearMark();
   ed->hitText = "";
   ed->redraw();

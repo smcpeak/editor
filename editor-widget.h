@@ -276,14 +276,14 @@ public:      // funcs
 
   // Change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor.
-  void setView(TextCoord newFirstVisible);
+  void setFirstVisible(TextCoord newFirstVisible);
   void setFirstVisibleLine(int L)
-    { this->setView(TextCoord(L, editor->firstVisible().column)); }
+    { this->setFirstVisible(TextCoord(L, editor->firstVisible().column)); }
   void setFirstVisibleCol(int C)
-    { this->setView(TextCoord(editor->firstVisible().line, C)); }
+    { this->setFirstVisible(TextCoord(editor->firstVisible().line, C)); }
 
   // move the view by a delta; automatically truncates at the low end
-  void moveView(int deltaLine, int deltaCol);
+  void moveFirstVisibleBy(int deltaLine, int deltaCol);
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col

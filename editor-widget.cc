@@ -152,7 +152,7 @@ void EditorWidget::resetView()
     cursorTo(TextCoord(0, 0));
     editor->clearMark();
   }
-  setView(TextCoord(0,0));
+  setFirstVisible(TextCoord(0,0));
 }
 
 
@@ -328,7 +328,7 @@ void EditorWidget::selectCursorLine()
 }
 
 
-void EditorWidget::setView(TextCoord newFirstVisible)
+void EditorWidget::setFirstVisible(TextCoord newFirstVisible)
 {
   xassert(newFirstVisible.nonNegative());
 
@@ -342,12 +342,12 @@ void EditorWidget::setView(TextCoord newFirstVisible)
 }
 
 
-void EditorWidget::moveView(int deltaLine, int deltaCol)
+void EditorWidget::moveFirstVisibleBy(int deltaLine, int deltaCol)
 {
   int line = max(0, editor->firstVisible().line + deltaLine);
   int col = max(0, editor->firstVisible().column + deltaCol);
 
-  this->setView(TextCoord(line, col));
+  this->setFirstVisible(TextCoord(line, col));
 }
 
 
@@ -1008,7 +1008,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_W:
-        moveView(-1, 0);
+        moveFirstVisibleBy(-1, 0);
         if (cursorLine() > this->lastVisibleLine()) {
           cursorUpBy(cursorLine() - this->lastVisibleLine());
         }
@@ -1016,7 +1016,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_Z:
-        moveView(+1, 0);
+        moveFirstVisibleBy(+1, 0);
         if (cursorLine() < this->firstVisibleLine()) {
           cursorDownBy(this->firstVisibleLine() - cursorLine());
         }
@@ -1058,7 +1058,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_L:
-        setView(TextCoord(max(0, cursorLine() - this->visLines()/2), 0));
+        setFirstVisible(TextCoord(max(0, cursorLine() - this->visLines()/2), 0));
         scrollToCursor();
         break;
 
@@ -1495,7 +1495,7 @@ void EditorWidget::scrollToCursor_noRedraw(int edgeGap)
                         this->lastVisibleCol(),
                         cursorCol(), edgeGap);
 
-  setView(TextCoord(fvline, fvcol));
+  setFirstVisible(TextCoord(fvline, fvcol));
 }
 
 void EditorWidget::scrollToCursor(int edgeGap)
@@ -1524,7 +1524,7 @@ void EditorWidget::moveViewAndCursor(int deltaLine, int deltaCol)
   // when there's truncation
   int origVL = this->firstVisibleLine();
   int origVC = this->firstVisibleCol();
-  moveView(deltaLine, deltaCol);
+  moveFirstVisibleBy(deltaLine, deltaCol);
 
   // now move cursor by the amount that the viewport moved
   moveCursorBy(this->firstVisibleLine() - origVL,
@@ -1943,7 +1943,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 {
   if (line <= nonfocusCursor.line) {
     nonfocusCursor.line++;
-    moveView(+1, 0);
+    moveFirstVisibleBy(+1, 0);
   }
 
   redraw();
@@ -1953,7 +1953,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
   if (line < nonfocusCursor.line) {
     nonfocusCursor.line--;
-    moveView(-1, 0);
+    moveFirstVisibleBy(-1, 0);
   }
 
   redraw();
