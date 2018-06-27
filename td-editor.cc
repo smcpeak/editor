@@ -290,6 +290,52 @@ void TextDocumentEditor::deleteLR(bool left, int count)
 }
 
 
+void TextDocumentEditor::deleteSelection()
+{
+  xassert(this->m_markActive);
+
+  TextCoord selLow, selHigh;
+  this->getSelectRegion(selLow, selHigh);
+  this->deleteTextRange(selLow, selHigh);
+  this->clearMark();
+  this->scrollToCursor();
+}
+
+
+void TextDocumentEditor::backspaceFunction()
+{
+  if (m_markActive) {
+    this->deleteSelection();
+  }
+  else if (m_cursor.column == 0) {
+    if (m_cursor.line == 0) {
+      // BOF, do nothing.
+    }
+    else if (m_cursor.line > m_doc->numLines() - 1) {
+      // Move cursor up non-destructively.
+      this->moveCursorBy(-1, 0);
+    }
+    else {
+      // Move to end of previous line.
+      this->moveToPrevLineEnd();
+
+      // Splice them together.
+      this->deleteChar();
+    }
+  }
+  else if (m_cursor.column > this->cursorLineLength()) {
+    // Move cursor left non-destructively.
+    this->moveCursorBy(0, -1);
+  }
+  else {
+    // Remove the character to the left of the cursor.
+    this->deleteLR(true /*left*/, 1);
+  }
+
+  this->scrollToCursor();
+}
+
+
 void TextDocumentEditor::undo()
 {
   setCursor(m_doc->undo());

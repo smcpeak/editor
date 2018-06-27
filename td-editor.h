@@ -325,6 +325,16 @@ public:      // funcs
   // Final cursor is left at 'tc1'.
   void deleteTextRange(TextCoord tc1, TextCoord tc2);
 
+  // Delete the selected text.  Requires markActive().
+  void deleteSelection();
+
+  // Do what backspace should do: If text is selected, delete it.
+  // Otherwise, delete one character to the left of the cursor,
+  // except if the cursor is beyond EOL or EOF, just move one space
+  // left if possible, otherwise up, without adding whitespace to
+  // the file.
+  void backspaceFunction();
+
   // ---------------------- adding whitespace ----------------------
   // Add minimum whitespace near cursor to ensure 'validCursor()'.
   void fillToCursor();

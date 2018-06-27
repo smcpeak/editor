@@ -1006,7 +1006,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_H:
-        this->deleteLeftOfCursor();
+        this->editor->backspaceFunction();
+        this->redraw();
         break;
 
       case Qt::Key_L:
@@ -1203,8 +1204,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         if (!editSafetyCheck()) {
           return;
         }
-        if (!shift) {
-          this->deleteLeftOfCursor();
+        if (shift) {
+          // I'm deliberately leaving Shift+Backspace unbound in
+          // case I want to use it for something else later.
+        }
+        else {
+          this->editor->backspaceFunction();
+          this->redraw();
         }
         break;
       }
@@ -1355,40 +1361,6 @@ void EditorWidget::deleteAtCursor(int amt)
 
   editor->fillToCursor();
   editor->deleteLR(true /*left*/, amt);
-  scrollToCursor();
-}
-
-
-void EditorWidget::deleteLeftOfCursor()
-{
-  if (this->selectEnabled()) {
-    editDelete();
-  }
-  else if (cursorCol() == 0) {
-    if (cursorLine() == 0) {
-      // do nothing
-    }
-    else if (cursorLine() > editor->numLines()-1) {
-      // Move cursor up non-destructively.
-      cursorUp(false /*shift*/);
-    }
-    else {
-      // move to end of previous line
-      editor->moveToPrevLineEnd();
-
-      // splice them together
-      spliceNextLine();
-    }
-  }
-  else if (cursorCol() > editor->cursorLineLength()) {
-    // Move cursor left non-destructively.
-    cursorLeft(false /*shift*/);
-  }
-  else {
-    // remove the character to the left of the cursor
-    editor->deleteLR(true /*left*/, 1);
-  }
-
   scrollToCursor();
 }
 
@@ -1592,12 +1564,8 @@ void EditorWidget::editDelete()
       return;
     }
 
-    TextCoord selLow, selHigh;
-    editor->getSelectRegion(selLow, selHigh);
-    editor->deleteTextRange(selLow, selHigh);
-
-    this->clearMark();
-    scrollToCursor();
+    editor->deleteSelection();
+    this->redraw();
   }
 }
 

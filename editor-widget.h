@@ -307,10 +307,6 @@ public:      // funcs
   // more than exist in the document between its start and the cursor.
   void deleteAtCursor(int numChars);
 
-  // Delete the character to the left of the cursor.  Or, if some
-  // text is selected, delete that.
-  void deleteLeftOfCursor();
-
   // -------------------- reformatting whitespace ---------------------
   // Indent or unindent selected lines.
   void blockIndent(int amt);

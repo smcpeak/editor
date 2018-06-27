@@ -846,6 +846,87 @@ static void testMoveCursor()
 }
 
 
+// ------------------- testBackspaceFunction --------------------
+static void testBackspaceFunction()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two  \n"
+    "three\n");
+  expect(tde, 3,0,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Backspace the final newline.
+  tde.backspaceFunction();
+  expect(tde, 2,5,
+    "one\n"
+    "two  \n"
+    "three");
+
+  // Backspace selected text.
+  tde.setMark(TextCoord(0,1));
+  tde.setCursor(TextCoord(0,2));
+  tde.backspaceFunction();
+  expect(tde, 0,1,
+    "oe\n"
+    "two  \n"
+    "three");
+
+  // Backspace the first character.
+  tde.backspaceFunction();
+  expect(tde, 0,0,
+    "e\n"
+    "two  \n"
+    "three");
+
+  // Backspace at top: no-op.
+  tde.backspaceFunction();
+  expect(tde, 0,0,
+    "e\n"
+    "two  \n"
+    "three");
+
+  // Backspace beyond EOF: move up.
+  tde.setCursor(TextCoord(4,0));
+  tde.backspaceFunction();
+  expect(tde, 3,0,
+    "e\n"
+    "two  \n"
+    "three");
+
+  // Backspace at left edge to join two lines.
+  tde.setCursor(TextCoord(1,0));
+  tde.backspaceFunction();
+  expect(tde, 0,1,
+    "etwo  \n"
+    "three");
+
+  // Backspace beyond EOL: move left.
+  tde.setCursor(TextCoord(0,7));
+  tde.backspaceFunction();
+  expect(tde, 0,6,
+    "etwo  \n"
+    "three");
+
+  // Backspace at EOL: delete left.
+  tde.backspaceFunction();
+  expect(tde, 0,5,
+    "etwo \n"
+    "three");
+
+  // Scroll induced by backspace.
+  tde.setCursor(TextCoord(1,0));
+  tde.setFirstVisible(TextCoord(1,0));
+  tde.backspaceFunction();
+  expect(tde, 0,5,
+    "etwo three");
+  checkCoord(TextCoord(0,0), tde.firstVisible(), "first visible");
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -858,6 +939,7 @@ int main()
     testGetWordAfter();
     testGetAboveIndentation();
     testMoveCursor();
+    testBackspaceFunction();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 
