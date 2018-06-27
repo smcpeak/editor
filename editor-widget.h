@@ -269,9 +269,8 @@ public:      // funcs
   int lastVisibleLine() const             { return editor->lastVisible().line; }
   int lastVisibleCol() const              { return editor->lastVisible().column; }
 
-  // Change the current firstVisibleLine/Col (calls updateView());
-  // does *not* move the cursor.
-  void setFirstVisible(TextCoord newFirstVisible);
+  void setFirstVisible(TextCoord newFirstVisible)
+    { editor->setFirstVisible(newFirstVisible); }
   void setFirstVisibleLine(int L)
     { this->setFirstVisible(TextCoord(L, editor->firstVisible().column)); }
   void setFirstVisibleCol(int C)
@@ -285,7 +284,7 @@ public:      // funcs
   //   - width(), height()
   //   - topMargin, leftMargin, interLineSpace
   //   - fontHeight, fontWidth
-  void updateView();
+  void recomputeLastVisible();
 
   // scroll the view the minimum amount so that the cursor line/col
   // is visible; if it's already visible, do nothing; 'edgeGap' says

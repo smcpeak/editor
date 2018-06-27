@@ -302,7 +302,7 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 
 void EditorWidget::redraw()
 {
-  updateView();
+  recomputeLastVisible();
 
   // tell our parent.. but ignore certain messages temporarily
   {
@@ -321,20 +321,6 @@ void EditorWidget::selectCursorLine()
 }
 
 
-void EditorWidget::setFirstVisible(TextCoord newFirstVisible)
-{
-  xassert(newFirstVisible.nonNegative());
-
-  if (newFirstVisible != editor->firstVisible()) {
-    editor->setFirstVisible(newFirstVisible);
-
-    updateView();
-
-    TRACE("setView", "new firstVis is " << firstVisStr());
-  }
-}
-
-
 void EditorWidget::moveFirstVisibleBy(int deltaLine, int deltaCol)
 {
   int line = max(0, editor->firstVisible().line + deltaLine);
@@ -344,7 +330,7 @@ void EditorWidget::moveFirstVisibleBy(int deltaLine, int deltaCol)
 }
 
 
-void EditorWidget::updateView()
+void EditorWidget::recomputeLastVisible()
 {
   int h = this->height();
   int w = this->width();
@@ -364,7 +350,7 @@ void EditorWidget::updateView()
 void EditorWidget::resizeEvent(QResizeEvent *r)
 {
   QWidget::resizeEvent(r);
-  updateView();
+  recomputeLastVisible();
   emit viewChanged();
 }
 

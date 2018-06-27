@@ -227,7 +227,7 @@ void EditorWindow::setDocumentFile(TextDocumentFile *file)
 
 void EditorWindow::updateForChangedFile()
 {
-  editorWidget->updateView();
+  editorWidget->recomputeLastVisible();
   editorViewChanged();
 
   setFileName(theDocFile()->title, theDocFile()->hotkeyDesc());
