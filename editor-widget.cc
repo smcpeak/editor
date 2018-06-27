@@ -96,8 +96,6 @@ EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
   // required to accept focus
   setFocusPolicy(Qt::StrongFocus);
 
-  resetView();
-
   EditorWidget::objectCount++;
 }
 
@@ -148,15 +146,6 @@ void EditorWidget::cursorTo(TextCoord tc)
   // actually, the need for this exposes the fact that my current
   // solution to nonfocus cursor issues isn't very good.. hmm...
   nonfocusCursor = tc;
-}
-
-void EditorWidget::resetView()
-{
-  if (editor) {
-    cursorTo(TextCoord(0, 0));
-    editor->clearMark();
-  }
-  setFirstVisible(TextCoord(0,0));
 }
 
 

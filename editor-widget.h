@@ -287,9 +287,6 @@ public:      // funcs
   //   - fontHeight, fontWidth
   void updateView();
 
-  // set cursor and view to 0,0
-  void resetView();
-
   // scroll the view the minimum amount so that the cursor line/col
   // is visible; if it's already visible, do nothing; 'edgeGap' says
   // how many lines/cols of extra space on the far side of the cursor
