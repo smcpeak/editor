@@ -12,14 +12,20 @@
 #include <stdlib.h>                    // system
 
 
+static void checkCoord(TextCoord expect, TextCoord actual, char const *label)
+{
+  if (expect != actual) {
+    cout << "expect: " << expect << endl
+         << "actual: " << actual << endl;
+    xfailure(stringb(label << " coord mismatch"));
+  }
+}
+
+
 static void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
   TextCoord tc(line, col);
-  if (tde.cursor() != tc) {
-    cout << "expect: " << tc << endl
-         << "actual: " << tde.cursor() << endl;
-    xfailure("cursor location mismatch");
-  }
+  checkCoord(tc, tde.cursor(), "cursor");
 
   writeFile(tde.doc()->getCore(), "td.tmp");
   DataBlock block;
@@ -53,11 +59,11 @@ static void chars(TextDocumentEditor &tde, char const *str)
 
 static void testUndoRedo()
 {
-  // This isn't implemented in smbase for mingw.
-  //printSegfaultAddrs();
+  TextDocumentAndEditor tde;
 
-  TextDocument doc;
-  TextDocumentEditor tde(&doc);
+  // This is just to avoid getting an "unused function" warning since
+  // the calls are commented out.
+  printHistory(tde);
 
   chars(tde, "abcd");
   //printHistory(tde);
@@ -150,9 +156,8 @@ static void testUndoRedo()
                     "This is the second line.\n"
                     "now on thir");
 
-  printHistory(tde);
-  tde.doc()->printHistoryStats();
-
+  //printHistory(tde);
+  //tde.doc()->printHistoryStats();
 
   unlink("td.tmp");
 
@@ -328,7 +333,119 @@ static void testTextManipulation()
   testFind(tde, 1,3, "goo", -1,-1, back|insens);
   testFind(tde, 1,3, "goo", -1,-1, back);
   testFind(tde, 1,3, "goo", -1,-1, none);
+}
 
+
+// Expect, including that the mark is inactive.
+static void expectNM(TextDocumentEditor const &tde, int line, int col, char const *text)
+{
+  expect(tde, line, col, text);
+  xassert(!tde.markActive());
+}
+
+
+// Expect, and mark is active.
+static void expectM(TextDocumentEditor const &tde,
+  int cursorLine, int cursorCol,
+  int markLine, int markCol,
+  char const *text)
+{
+  expect(tde, cursorLine, cursorCol, text);
+  xassert(tde.markActive());
+  checkCoord(TextCoord(markLine, markCol), tde.mark(), "mark");
+}
+
+
+static void expectBlockIndent(
+  TextDocumentEditor &tde,
+  int amt,
+  int cursorLine, int cursorCol,
+  int markLine, int markCol,
+  char const *expectText)
+{
+  tde.setCursor(TextCoord(cursorLine, cursorCol));
+  tde.setMark(TextCoord(markLine, markCol));
+  tde.blockIndent(amt);
+  expectM(tde, cursorLine, cursorCol, markLine, markCol, expectText);
+}
+
+
+static void testBlockIndent()
+{
+  TextDocumentAndEditor tde;
+
+  tde.insertText(
+    "one\n"
+    "two\n"
+    "three\n");
+  expectNM(tde, 3,0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  tde.setMark(TextCoord(1, 0));
+  expectM(tde, 3,0, 1,0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  tde.blockIndent(+2);
+  expectM(tde, 3,0, 1,0,
+    "one\n"
+    "  two\n"
+    "  three\n");
+
+  expectBlockIndent(tde, +2, 1,0, 2,0,
+    "one\n"
+    "    two\n"
+    "  three\n");
+
+  expectBlockIndent(tde, -2, 0,0, 3,0,
+    "one\n"
+    "  two\n"
+    "three\n");
+
+  expectBlockIndent(tde, -2, 0,0, 3,0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  expectBlockIndent(tde, -2, 0,0, 3,0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  expectBlockIndent(tde, +2, 0,0, 3,0,
+    "  one\n"
+    "  two\n"
+    "  three\n");
+
+  expectBlockIndent(tde, +2, 0,3, 1,3,
+    "    one\n"
+    "    two\n"
+    "  three\n");
+
+  expectBlockIndent(tde, +2, 1,0, 2,5,
+    "    one\n"
+    "      two\n"
+    "    three\n");
+
+  expectBlockIndent(tde, -2, 0,1, 0,2,
+    "  one\n"
+    "      two\n"
+    "    three\n");
+
+  tde.clearMark();
+  expectNM(tde, 0,1,
+    "  one\n"
+    "      two\n"
+    "    three\n");
+
+  tde.blockIndent(+2);     // no-op, mark not active
+  expectNM(tde, 0,1,
+    "  one\n"
+    "      two\n"
+    "    three\n");
 }
 
 
@@ -337,6 +454,7 @@ int main()
   try {
     testUndoRedo();
     testTextManipulation();
+    testBlockIndent();
 
     malloc_stats();
     cout << "\ntest-td-editor is ok" << endl;
