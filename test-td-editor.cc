@@ -54,10 +54,11 @@ static void printHistory(TextDocumentEditor const &tde)
 }
 
 
+// Insert each character in 'str' as its own edit action.
 static void chars(TextDocumentEditor &tde, char const *str)
 {
   while (*str) {
-    tde.insertLR(false /*left*/, str, 1);
+    tde.insertText(str, 1);
     str++;
   }
 }
@@ -218,7 +219,7 @@ static void testTextManipulation()
 {
   TextDocumentAndEditor tde;
 
-  tde.insertText("foo\nbar\n");
+  tde.insertNulTermText("foo\nbar\n");
     // result: foo\n
     //         bar\n
   xassert(tde.cursor() == TextCoord(2, 0));
@@ -233,7 +234,7 @@ static void testTextManipulation()
   testGetRange(tde, 1,3, 1,3, "");
 
   tde.setCursor(TextCoord(0, 1));
-  tde.insertText("arf\ngak");
+  tde.insertNulTermText("arf\ngak");
     // result: farf\n
     //         gakoo\n
     //         bar\n
@@ -316,7 +317,7 @@ static void testTextManipulation()
     advance = TextDocumentEditor::FS_ADVANCE_ONCE;
 
   tde.setCursor(TextCoord(0,0));
-  tde.insertText("foofoofbar\n"
+  tde.insertNulTermText("foofoofbar\n"
                  "ooFoo arg\n");
   testFind(tde, 0,0, "foo", 0,0, none);
   testFind(tde, 0,1, "foo", 0,3, none);
@@ -379,7 +380,7 @@ static void testBlockIndent()
 {
   TextDocumentAndEditor tde;
 
-  tde.insertText(
+  tde.insertNulTermText(
     "one\n"
     "two\n"
     "three\n");
@@ -476,7 +477,7 @@ static void testFillToCursor()
 {
   TextDocumentAndEditor tde;
 
-  tde.insertText(
+  tde.insertNulTermText(
     "one\n"
     "two\n"
     "three\n");
@@ -544,21 +545,21 @@ static void testScrollToCursor()
   TextDocumentAndEditor tde;
   tde.setVisibleSize(5, 10);
 
-  tde.insertText(
+  tde.insertNulTermText(
     "one\n"
     "two\n"
     "three\n");
   expectFV(tde, 3,0, 0,0, 5,10);
 
-  tde.insertText(
+  tde.insertNulTermText(
     "four\n"
     "five\n");                         // scrolls down
   expectFV(tde, 5,0, 1,0, 5,10);
 
-  tde.insertText("six 1234567890");    // scrolls right
+  tde.insertNulTermText("six 1234567890");    // scrolls right
   expectFV(tde, 5,14, 1,5, 5,10);
 
-  tde.insertText("\n");
+  tde.insertNulTermText("\n");
   expectFV(tde, 6,0, 2,0, 5,10);
 
   tde.setCursor(TextCoord(6, 20));

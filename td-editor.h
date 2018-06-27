@@ -264,12 +264,11 @@ public:      // funcs
   void selectCursorLine();
 
   // ------------------- general text insertion ------------------
-  // Insert at cursor.  'left' or 'right' refers to where the cursor
-  // ends up after the insertion.  Requires validCursor().  Ensures
-  // cursor is in visible region afterward.
+  // Insert text at cursor.  'textLen' is measured in bytes, not
+  // characters.  Ensures cursor is in visible region afterward.
   //
-  // TODO: This is only ever called with left=false.  Remove 'left'.
-  void insertLR(bool left, char const *text, int textLen);
+  // Requires validCursor().
+  void insertText(char const *text, int textLen);
 
   // Insert NUL-terminated text that might have newline characters at
   // the cursor.  The cursor is left at the end of the inserted text,
@@ -277,7 +276,10 @@ public:      // funcs
   // visible.
   //
   // Requires validCursor().
-  void insertText(char const *text);
+  //
+  // TODO: This function is invites bugs because it cannot handle
+  // embedded NULs.  I know some of the call sites are wrong.
+  void insertNulTermText(char const *text);
 
   // ------------------- general text deletion ------------------
   // Delete at cursor.  'left' or 'right' refers to which side of
@@ -298,7 +300,7 @@ public:      // funcs
   // Add minimum whitespace near cursor to ensure 'validCursor()'.
   void fillToCursor();
 
-  void insertSpace() { insertText(" "); }
+  void insertSpace() { insertNulTermText(" "); }
   void insertSpaces(int howMany);
 
   // split 'line' into two, putting everything after cursor column

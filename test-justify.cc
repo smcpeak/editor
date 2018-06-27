@@ -270,20 +270,20 @@ static void testOneJustifyNearLine(
 {
   TextDocumentAndEditor original;
   for (int i=0; i < inSize; i++) {
-    original.insertText(in[i]);
-    original.insertText("\n");
+    original.insertNulTermText(in[i]);
+    original.insertNulTermText("\n");
   }
 
   TextDocumentAndEditor expect;
   for (int i=0; i < outSize; i++) {
-    expect.insertText(out[i]);
-    expect.insertText("\n");
+    expect.insertNulTermText(out[i]);
+    expect.insertNulTermText("\n");
   }
 
   TextDocumentAndEditor actual;
   for (int i=0; i < inSize; i++) {
-    actual.insertText(in[i]);
-    actual.insertText("\n");
+    actual.insertNulTermText(in[i]);
+    actual.insertNulTermText("\n");
   }
 
   justifyNearLine(actual, originLine, desiredWidth);

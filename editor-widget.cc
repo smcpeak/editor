@@ -1358,7 +1358,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           }
           // insert this character at the cursor
           QByteArray utf8(text.toUtf8());
-          editor->insertLR(false /*left*/, utf8.constData(), utf8.length());
+          editor->insertText(utf8.constData(), utf8.length());
           scrollToCursor();
         }
         else {
@@ -1392,7 +1392,7 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 
 void EditorWidget::insertText(char const *text)
 {
-  editor->insertText(text);
+  editor->insertNulTermText(text);
   redraw();
 }
 

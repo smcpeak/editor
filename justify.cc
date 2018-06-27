@@ -175,7 +175,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
   for (int i=0; i < justifiedContent.length(); i++) {
     stringBuilder sb;
     sb << prefix << justifiedContent[i] << '\n';
-    tde.insertText(sb.c_str());
+    tde.insertNulTermText(sb.c_str());
   }
 
   return true;

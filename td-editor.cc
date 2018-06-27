@@ -189,19 +189,17 @@ TextCoord TextDocumentEditor::mark() const
 }
 
 
-void TextDocumentEditor::insertLR(bool left, char const *text, int textLen)
+void TextDocumentEditor::insertText(char const *text, int textLen)
 {
   xassert(validCursor());
 
   doc()->insertAt(cursor(), text, textLen);
 
-  if (!left) {
-    // Put the cursor at the end of the inserted text.
-    TextCoord tc = cursor();
-    bool ok = walkCursor(doc()->getCore(), tc, textLen);
-    xassert(ok);
-    setCursor(tc);
-  }
+  // Put the cursor at the end of the inserted text.
+  TextCoord tc = cursor();
+  bool ok = walkCursor(doc()->getCore(), tc, textLen);
+  xassert(ok);
+  setCursor(tc);
 
   scrollToCursor();
 }
@@ -562,7 +560,7 @@ void TextDocumentEditor::fillToCursor()
 
   // add newlines
   while (rowfill--) {
-    insertText("\n");
+    insertNulTermText("\n");
   }
 
   // add spaces
@@ -575,9 +573,9 @@ void TextDocumentEditor::fillToCursor()
 }
 
 
-void TextDocumentEditor::insertText(char const *text)
+void TextDocumentEditor::insertNulTermText(char const *text)
 {
-  insertLR(false /*left*/, text, strlen(text));
+  insertText(text, strlen(text));
 }
 
 
@@ -599,7 +597,7 @@ void TextDocumentEditor::insertNewline()
   }
 
   fillToCursor();      // might add newlines up to this point
-  insertText("\n");
+  insertNulTermText("\n");
 }
 
 
@@ -614,7 +612,7 @@ void TextDocumentEditor::spliceNextLine(int line)
     int len = lineLength(line+1);
     Array<char> temp(len);
     getLine(line+1, 0 /*col*/, temp, len);
-    insertText(line, lineLength(line), temp, len);
+    insertNulTermText(line, lineLength(line), temp, len);
 
     // now remove the next line
     deleteText(line+1, 0 /*col*/, len);
