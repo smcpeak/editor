@@ -259,16 +259,6 @@ public:      // funcs
   bool selectEnabled() const              { return editor->markActive(); }
   void clearMark()                        { editor->clearMark(); }
 
-  // Store into 'selLow' the lower of 'cursor' (the parameter) and
-  // 'mark' (the field), and into 'selHigh' the higher.  If the mark
-  // is not active, set both to 'cursor'.
-  void getSelectRegionForCursor(TextCoord cursor,
-    TextCoord &selLow, TextCoord &selHigh) const;
-
-  // Same, but using the normal cursor.
-  void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const
-    { getSelectRegionForCursor(textCursor(), selLow, selHigh); }
-
   // get selected text, or "" if nothing selected
   string getSelectedText() const;
 
@@ -348,6 +338,7 @@ public:      // funcs
   void deleteLeftOfCursor();
 
   // -------------------- reformatting whitespace ---------------------
+  // Indent or unindent selected lines.
   void blockIndent(int amt);
 
   // Justify lines near the cursor.

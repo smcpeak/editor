@@ -156,26 +156,6 @@ void EditorWidget::resetView()
 }
 
 
-void EditorWidget::getSelectRegionForCursor(TextCoord cursor,
-  TextCoord &selLow, TextCoord &selHigh) const
-{
-  if (!this->selectEnabled()) {
-    selLow = selHigh = cursor;
-  }
-  else {
-    TextCoord const m = this->mark();
-    if (cursor <= m) {
-      selLow = cursor;
-      selHigh = m;
-    }
-    else {
-      selLow = m;
-      selHigh = cursor;
-    }
-  }
-}
-
-
 static BDFFont *makeBDFFont(char const *bdfData, char const *context)
 {
   try {
@@ -544,7 +524,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, TextCoord drawnCursor)
 
   // Get region of selected text.
   TextCoord selLow, selHigh;
-  this->getSelectRegionForCursor(drawnCursor, selLow, selHigh);
+  editor->getSelectRegionForCursor(drawnCursor, selLow, selHigh);
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -1745,7 +1725,7 @@ void EditorWidget::editDelete()
     }
 
     TextCoord selLow, selHigh;
-    this->getSelectRegion(selLow, selHigh);
+    editor->getSelectRegion(selLow, selHigh);
     editor->deleteTextRange(selLow, selHigh);
 
     this->clearMark();
@@ -1894,20 +1874,10 @@ void EditorWidget::deleteCharAtCursor()
 
 void EditorWidget::blockIndent(int amt)
 {
-  if (!this->selectEnabled()) {
-    return;      // nop
+  if (editor->blockIndent(amt)) {
+    redraw();
   }
-
-  TextCoord selLow, selHigh;
-  this->getSelectRegion(selLow, selHigh);
-
-  int endLine = (selHigh.column==0? selHigh.line-1 : selHigh.line);
-  endLine = min(endLine, editor->numLines()-1);
-  editor->indentLines(selLow.line, endLine-selLow.line+1, amt);
-
-  redraw();
 }
-
 
 string EditorWidget::getSelectedText() const
 {
@@ -1916,7 +1886,7 @@ string EditorWidget::getSelectedText() const
   }
   else {
     TextCoord selLow, selHigh;
-    this->getSelectRegion(selLow, selHigh);
+    editor->getSelectRegion(selLow, selHigh);
     return editor->getTextRange(selLow, selHigh);
   }
 }

@@ -77,7 +77,7 @@ void IncSearch::attach(EditorWidget *newEd)
   if (ed->selectEnabled()) {
     // Initialize the search string with the selection.
     TextCoord selLow, selHigh;
-    ed->getSelectRegion(selLow, selHigh);
+    ed->editor->getSelectRegion(selLow, selHigh);
     curLine = selLow.line;
     curCol = selLow.column;
     if (selLow.line == selHigh.line) {

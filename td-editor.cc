@@ -63,6 +63,26 @@ void TextDocumentEditor::setMark(TextCoord m)
 }
 
 
+void TextDocumentEditor::getSelectRegionForCursor(TextCoord cursor,
+  TextCoord &selLow, TextCoord &selHigh) const
+{
+  if (!this->markActive()) {
+    selLow = selHigh = cursor;
+  }
+  else {
+    TextCoord const m = this->mark();
+    if (cursor <= m) {
+      selLow = cursor;
+      selHigh = m;
+    }
+    else {
+      selLow = m;
+      selHigh = cursor;
+    }
+  }
+}
+
+
 void TextDocumentEditor::setFirstVisible(TextCoord fv)
 {
   xassert(fv.nonNegative());
@@ -594,6 +614,23 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
       }
     }
   }
+}
+
+
+bool TextDocumentEditor::blockIndent(int amt)
+{
+  if (!this->markActive()) {
+    return false;
+  }
+
+  TextCoord selLow, selHigh;
+  this->getSelectRegion(selLow, selHigh);
+
+  int endLine = (selHigh.column==0? selHigh.line-1 : selHigh.line);
+  endLine = min(endLine, this->numLines()-1);
+  this->indentLines(selLow.line, endLine-selLow.line+1, amt);
+
+  return true;
 }
 
 

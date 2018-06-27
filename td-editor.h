@@ -158,6 +158,16 @@ public:      // funcs
   // Make the mark inactive.
   void clearMark() { m_mark = TextCoord(); m_markActive = false; }
 
+  // Store into 'selLow' the lower of 'cursor' (the parameter) and
+  // 'mark' (the field), and into 'selHigh' the higher.  If the mark
+  // is not active, set both to 'cursor'.
+  void getSelectRegionForCursor(TextCoord cursor,
+    TextCoord &selLow, TextCoord &selHigh) const;
+
+  // Same, but using the normal cursor.
+  void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const
+    { getSelectRegionForCursor(cursor(), selLow, selHigh); }
+
   // ---------------- visible region and scrolling -----------------
   // Upper-left grid cell that is visible.
   TextCoord firstVisible() const { return m_firstVisible; }
@@ -283,6 +293,12 @@ public:      // funcs
   // as possible w/o removing non-ws chars; the cursor is left in its
   // original position at the end
   void indentLines(int start, int lines, int ind);
+
+  // Do 'indentLines' for the span of lines corresponding to the
+  // current selection.  Every line that has at least one selected
+  // character is indented.  If nothing is selected, return false
+  // without doing anything.
+  bool blockIndent(int amt);
 
   // -------------------- undo/redo -----------------------
   // True if we can go back another step in the undo history.
