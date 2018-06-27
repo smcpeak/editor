@@ -27,12 +27,16 @@ static void checkCoord(TextCoord expect, TextCoord actual, char const *label)
 }
 
 
+static void expectCursor(TextDocumentEditor const &tde, int line, int col)
+{
+  checkCoord(TextCoord(line, col), tde.cursor(), "cursor");
+}
+
 static void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
   tde.selfCheck();
 
-  TextCoord tc(line, col);
-  checkCoord(tc, tde.cursor(), "cursor");
+  expectCursor(tde, line, col);
 
   writeFile(tde.core(), "td.tmp");
   DataBlock block;
@@ -343,6 +347,12 @@ static void expectNM(TextDocumentEditor const &tde, int line, int col, char cons
 }
 
 
+static void expectMark(TextDocumentEditor const &tde, int line, int col)
+{
+  xassert(tde.markActive());
+  checkCoord(TextCoord(line, col), tde.mark(), "mark");
+}
+
 // Expect, and mark is active.
 static void expectM(TextDocumentEditor const &tde,
   int cursorLine, int cursorCol,
@@ -350,8 +360,7 @@ static void expectM(TextDocumentEditor const &tde,
   char const *text)
 {
   expect(tde, cursorLine, cursorCol, text);
-  xassert(tde.markActive());
-  checkCoord(TextCoord(markLine, markCol), tde.mark(), "mark");
+  expectMark(tde, markLine, markCol);
 }
 
 
@@ -689,6 +698,87 @@ static void testGetAboveIndentation()
 }
 
 
+// ---------------------- testMoveCursor ------------------------
+static void testMoveCursor()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "1\n"
+    "two\n"
+    "three\n");
+  expectCursor(tde, 3,0);
+
+  // Test 'moveRelCursor'.
+  tde.moveRelCursor(-1, +1);
+  expectCursor(tde, 2,1);
+
+  // Test 'setCursorColumn'.
+  tde.setCursorColumn(4);
+  expectCursor(tde, 2,4);
+
+  // Test 'moveToPrevLineEnd'.
+  tde.moveToPrevLineEnd();
+  expectCursor(tde, 1,3);
+  tde.moveToPrevLineEnd();
+  expectCursor(tde, 0,1);
+
+  // Test 'moveToNextLineStart'.
+  tde.moveToNextLineStart();
+  expectCursor(tde, 1,0);
+  tde.moveToNextLineStart();
+  expectCursor(tde, 2,0);
+  tde.moveToNextLineStart();
+  tde.moveToNextLineStart();           // Test beyond EOF.
+  tde.moveToNextLineStart();
+  expectCursor(tde, 5,0);
+
+  // Now come back from EOF using 'moveToPrevLineEnd'.
+  tde.moveToPrevLineEnd();
+  expectCursor(tde, 4,0);
+  tde.moveToPrevLineEnd();
+  tde.moveToPrevLineEnd();
+  tde.moveToPrevLineEnd();
+  tde.moveToPrevLineEnd();
+  expectCursor(tde, 0,1);
+  tde.moveToPrevLineEnd();             // Bump up against BOF.
+  expectCursor(tde, 0,1);
+
+  // Test 'selectCursorLine'.
+  tde.selectCursorLine();
+  expectCursor(tde, 0,0); expectMark(tde, 1,0);
+  tde.setCursor(TextCoord(44,44));
+  tde.selectCursorLine();
+  expectCursor(tde, 44,0); expectMark(tde, 45,0);
+
+  // Test 'advanceWithWrap'.
+  tde.advanceWithWrap(false /*backwards*/);
+  expectCursor(tde, 45,0);
+  tde.advanceWithWrap(true /*backwards*/);
+  expectCursor(tde, 44,0);
+
+  tde.setCursor(TextCoord(1,1));
+  tde.advanceWithWrap(false /*backwards*/);
+  expectCursor(tde, 1,2);
+  tde.advanceWithWrap(false /*backwards*/);
+  expectCursor(tde, 1,3);
+  tde.advanceWithWrap(false /*backwards*/);
+  expectCursor(tde, 2,0);
+  tde.advanceWithWrap(true /*backwards*/);
+  expectCursor(tde, 1,3);
+
+  tde.setCursor(TextCoord(1, 45));
+  tde.advanceWithWrap(false /*backwards*/);
+  expectCursor(tde, 2,0);
+
+  tde.setCursor(TextCoord(1, 45));
+  tde.advanceWithWrap(true /*backwards*/);
+  expectCursor(tde, 1,44);
+
+  tde.setCursor(TextCoord(0, 0));
+  tde.advanceWithWrap(true /*backwards*/);
+  expectCursor(tde, 0,0);
+}
+
 
 // --------------------------- main -----------------------------
 int main()
@@ -701,6 +791,7 @@ int main()
     testScrollToCursor();
     testGetWordAfter();
     testGetAboveIndentation();
+    testMoveCursor();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

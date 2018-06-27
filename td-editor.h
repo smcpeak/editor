@@ -134,21 +134,25 @@ public:      // funcs
   void setCursorColumn(int newCol);
 
   // Cursor motion; line/col are relative if their respective 'rel'
-  // flag is true.
+  // flag is true.  The result must be non-negative.
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
   // move by relative line/col
   void moveRelCursor(int deltaLine, int deltaCol);
 
-  // line++, col=0
+  // line++, col=0.  Ok to move beyond EOF.
   void moveToNextLineStart();
 
-  // line--, col=length(line-1)
+  // line--, col=length(line-1).  Ok to start beyond EOF.  When it hits
+  // BOF, will stop at end of first line.
   void moveToPrevLineEnd();
 
   // Move cursor position one character forwards or backwards, wrapping
   // to the next/prev line at line edges.  Stops at the start of the
   // file, but will advance indefinitely at the end.
+  //
+  // If beyond EOL, going forward will wrap to the start of the next
+  // line, while going backward will move left one column at a time.
   void advanceWithWrap(bool backwards);
 
   // ------------------------- mark ------------------------------

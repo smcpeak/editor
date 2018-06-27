@@ -506,8 +506,9 @@ void TextDocumentEditor::moveToNextLineStart()
 
 void TextDocumentEditor::moveToPrevLineEnd()
 {
-  moveCursor(true /*relLine*/, -1,
-             false /*relCol*/, lineLength(cursor().line - 1));
+  int prevLine = max(0, cursor().line - 1);
+  moveCursor(false /*relLine*/, prevLine,
+             false /*relCol*/, lineLengthLoose(prevLine));
 }
 
 
@@ -540,7 +541,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   else {
     if (0 <= line &&
         line < numLines() &&
-        col >= 0) {
+        col > 0) {
       moveRelCursor(0, -1);
     }
     else if (line > 0) {
