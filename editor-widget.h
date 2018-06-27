@@ -276,8 +276,8 @@ public:      // funcs
   void setFirstVisibleCol(int C)
     { this->setFirstVisible(TextCoord(editor->firstVisible().line, C)); }
 
-  // move the view by a delta; automatically truncates at the low end
-  void moveFirstVisibleBy(int deltaLine, int deltaCol);
+  void moveFirstVisibleBy(int deltaLine, int deltaCol)
+    { editor->moveFirstVisibleBy(deltaLine, deltaCol); }
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col

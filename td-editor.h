@@ -197,6 +197,10 @@ public:      // funcs
   // visible region size.
   void setFirstVisible(TextCoord fv);
 
+  // Move the view by a relative amount.  Any attempt to go negative
+  // is treated as a move to zero.
+  void moveFirstVisibleBy(int deltaLine, int deltaCol);
+
   // Adjust the visible region size, preserving 'firstVisible'.  This
   // will silently ensure both sizes are positive.
   void setVisibleSize(int lines, int columns);

@@ -642,6 +642,16 @@ static void testScrollToCursor()
   tde.moveCursor(false /*relLine*/, 3, false /*relCol*/, 0);
   tde.scrollToCursor();
   expectFV(tde, 3,0, 3,0, 5,10);
+
+  // Test 'moveFirstVisibleBy'.
+  tde.moveFirstVisibleBy(0, +1);
+  expectFV(tde, 3,0, 3,1, 5,10);
+  tde.moveFirstVisibleBy(+1, 0);
+  expectFV(tde, 3,0, 4,1, 5,10);
+  tde.moveFirstVisibleBy(-3, -3);
+  expectFV(tde, 3,0, 1,0, 5,10);
+  tde.moveFirstVisibleBy(-3, -3);
+  expectFV(tde, 3,0, 0,0, 5,10);
 }
 
 

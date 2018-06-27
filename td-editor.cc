@@ -104,6 +104,14 @@ void TextDocumentEditor::setFirstVisible(TextCoord fv)
 }
 
 
+void TextDocumentEditor::moveFirstVisibleBy(int deltaLine, int deltaCol)
+{
+  int line = max(0, m_firstVisible.line + deltaLine);
+  int col = max(0, m_firstVisible.column + deltaCol);
+  this->setFirstVisible(TextCoord(line, col));
+}
+
+
 void TextDocumentEditor::setVisibleSize(int lines, int columns)
 {
   // If the user resizes the window down to nothing, we might calculate

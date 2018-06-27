@@ -321,15 +321,6 @@ void EditorWidget::selectCursorLine()
 }
 
 
-void EditorWidget::moveFirstVisibleBy(int deltaLine, int deltaCol)
-{
-  int line = max(0, editor->firstVisible().line + deltaLine);
-  int col = max(0, editor->firstVisible().column + deltaCol);
-
-  this->setFirstVisible(TextCoord(line, col));
-}
-
-
 void EditorWidget::recomputeLastVisible()
 {
   int h = this->height();
