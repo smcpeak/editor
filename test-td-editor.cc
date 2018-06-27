@@ -160,8 +160,6 @@ static void testUndoRedo()
   //tde.doc()->printHistoryStats();
 
   unlink("td.tmp");
-
-  printf("td is ok\n");
 }
 
 
@@ -446,6 +444,76 @@ static void testBlockIndent()
     "  one\n"
     "      two\n"
     "    three\n");
+
+  // Selection goes beyond EOF; extra ignored.
+  expectBlockIndent(tde, -2, 2,5, 5,2,
+    "  one\n"
+    "      two\n"
+    "  three\n");
+}
+
+
+static void expectFillToCursor(
+  TextDocumentEditor &tde,
+  int cursorLine, int cursorCol,
+  char const *expectText)
+{
+  tde.setCursor(TextCoord(cursorLine, cursorCol));
+  tde.fillToCursor();
+  expect(tde, cursorLine, cursorCol, expectText);
+}
+
+
+static void testFillToCursor()
+{
+  TextDocumentAndEditor tde;
+
+  tde.insertText(
+    "one\n"
+    "two\n"
+    "three\n");
+  expect(tde, 3,0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  expectFillToCursor(tde, 3,0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  expectFillToCursor(tde, 1,5,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  expectFillToCursor(tde, 1,5,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  expectFillToCursor(tde, 5,0,
+    "one\n"
+    "two  \n"
+    "three\n"
+    "\n"
+    "\n");
+
+  expectFillToCursor(tde, 5,3,
+    "one\n"
+    "two  \n"
+    "three\n"
+    "\n"
+    "\n"
+    "   ");
+
+  expectFillToCursor(tde, 4,5,
+    "one\n"
+    "two  \n"
+    "three\n"
+    "\n"
+    "     \n"
+    "   ");
 }
 
 
@@ -455,6 +523,7 @@ int main()
     testUndoRedo();
     testTextManipulation();
     testBlockIndent();
+    testFillToCursor();
 
     malloc_stats();
     cout << "\ntest-td-editor is ok" << endl;

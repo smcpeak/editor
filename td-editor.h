@@ -274,7 +274,7 @@ public:      // funcs
   void deleteTextRange(TextCoord tc1, TextCoord tc2);
 
   // ---------------------- adding whitespace ----------------------
-  // Add whitespace to buffer as necessary to ensure 'validCursor()'.
+  // Add minimum whitespace near cursor to ensure 'validCursor()'.
   void fillToCursor();
 
   void insertSpace() { insertText(" "); }

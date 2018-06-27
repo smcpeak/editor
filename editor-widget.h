@@ -315,12 +315,6 @@ public:      // funcs
   // --------------------------- insertion ---------------------------
   void insertAtCursor(char const *text);
 
-  // fill document with whitespace, if necessary, so that the current
-  // cursor position is on a valid character, i.e.:
-  //   - cursorLine < docFile->numLines()
-  //   - cursorCol <= docFile->lineLength(cursorLine)
-  void fillToCursor();
-
   // --------------------------- deletion ----------------------------
   // given that the cursor is at the end of a line, join this line
   // with the next one

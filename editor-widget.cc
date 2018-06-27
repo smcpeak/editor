@@ -1286,7 +1286,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           }
 
           // Add newlines if needed so the cursor is on a valid line.
-          fillToCursor();
+          editor->fillToCursor();
 
           // typing replaces selection
           if (this->selectEnabled()) {
@@ -1346,8 +1346,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           if (!editSafetyCheck()) {
             return;
           }
-          fillToCursor();
-          //docFile->changed = true;
+          editor->fillToCursor();
 
           // typing replaces selection
           if (this->selectEnabled()) {
@@ -1389,7 +1388,6 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 
 void EditorWidget::insertAtCursor(char const *text)
 {
-  //docFile->changed = true;
   editor->insertText(text);
   scrollToCursor();
 }
@@ -1401,9 +1399,8 @@ void EditorWidget::deleteAtCursor(int amt)
     return;
   }
 
-  fillToCursor();
+  editor->fillToCursor();
   editor->deleteLR(true /*left*/, amt);
-  //docFile->changed = true;
   scrollToCursor();
 }
 
@@ -1439,12 +1436,6 @@ void EditorWidget::deleteLeftOfCursor()
   }
 
   scrollToCursor();
-}
-
-
-void EditorWidget::fillToCursor()
-{
-  editor->fillToCursor();
 }
 
 
@@ -1705,7 +1696,7 @@ void EditorWidget::editPaste()
     QMessageBox::information(this, "Info", "The clipboard is empty.");
   }
   else {
-    fillToCursor();
+    editor->fillToCursor();
 
     // remove what's selected, if anything
     editDelete();
@@ -1849,7 +1840,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 
 void EditorWidget::deleteCharAtCursor()
 {
-  fillToCursor();
+  editor->fillToCursor();
 
   if (this->selectEnabled()) {
     editDelete();
