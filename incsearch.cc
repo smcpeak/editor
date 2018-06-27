@@ -373,12 +373,12 @@ bool IncSearch::findString(TextDocumentEditor::FindStringFlags flags)
   }
   if (match) {
     // move editor cursor to end of match
-    ed->cursorTo(TextCoord(curLine, curCol + text.length()));
+    ed->editor->setCursor(TextCoord(curLine, curCol + text.length()));
 
     // put selection start at beginning of match
-    ed->setMark(TextCoord(curLine, curCol));
+    ed->editor->setMark(TextCoord(curLine, curCol));
 
-    ed->scrollToCursor_noRedraw(-1 /*center*/);
+    ed->editor->scrollToCursor(-1 /*center*/);
   }
 
   ed->hitText = text;
@@ -486,7 +486,7 @@ void IncSearch::putBackMatchText()
 {
   // put the matched text back
   ed->editDelete();       // delete replacement text
-  ed->insertAtCursor(toCStr(removedText));
+  ed->editor->insertText(toCStr(removedText));
   findString();
 }
 
@@ -527,7 +527,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
           QByteArray utf8(s.toUtf8());
           char const *p = utf8.constData();
 
-          ed->insertAtCursor(p);
+          ed->editor->insertText(p);
 
           replaceText &= p;
 
@@ -565,7 +565,7 @@ bool IncSearch::replace()
   ed->deleteAtCursor(text.length());
 
   // insert replacement text
-  ed->insertAtCursor(toCStr(replaceText));
+  ed->editor->insertText(toCStr(replaceText));
 
   // find next match
   curCol += replaceText.length();

@@ -100,7 +100,7 @@ void TextDocumentEditor::setFirstVisible(TextCoord fv)
   int w = m_lastVisible.column - m_firstVisible.column;
   m_firstVisible = fv;
   m_lastVisible.line = fv.line + h;
-  m_lastVisible.column = fv.line + w;
+  m_lastVisible.column = fv.column + w;
 }
 
 
@@ -113,6 +113,52 @@ void TextDocumentEditor::setVisibleSize(int lines, int columns)
   columns = max(columns, 1);
   m_lastVisible.line = m_firstVisible.line + lines - 1;
   m_lastVisible.column = m_firstVisible.column + columns - 1;
+}
+
+
+// For a particular dimension, return the new start coordinate
+// of the viewport.
+static int stcHelper(int firstVis, int lastVis, int cur, int gap)
+{
+  bool center = false;
+  if (gap == -1) {
+    center = true;
+    gap = 0;
+  }
+
+  int width = lastVis - firstVis + 1;
+
+  bool changed = false;
+  if (cur-gap < firstVis) {
+    firstVis = max(0, cur-gap);
+    changed = true;
+  }
+  else if (cur+gap > lastVis) {
+    firstVis += cur+gap - lastVis;
+    changed = true;
+  }
+
+  if (changed && center) {
+    // we had to adjust the viewport; make it actually centered
+    firstVis = max(0, cur - width/2);
+  }
+
+  return firstVis;
+}
+
+void TextDocumentEditor::scrollToCursor(int edgeGap)
+{
+  int fvline = stcHelper(this->firstVisible().line,
+                         this->lastVisible().line,
+                         this->cursor().line,
+                         edgeGap);
+
+  int fvcol = stcHelper(this->firstVisible().column,
+                        this->lastVisible().column,
+                        this->cursor().column,
+                        edgeGap);
+
+  setFirstVisible(TextCoord(fvline, fvcol));
 }
 
 
@@ -156,6 +202,8 @@ void TextDocumentEditor::insertLR(bool left, char const *text, int textLen)
     xassert(ok);
     setCursor(tc);
   }
+
+  scrollToCursor();
 }
 
 
@@ -499,6 +547,11 @@ void TextDocumentEditor::fillToCursor()
   if (rowfill==0 && colfill==0) {
     return;     // nothing to do
   }
+
+  // The cursor itself should automatically end up where it started,
+  // but during that process we might trigger a scroll action.  The
+  // restorer will ensure that too is undone.
+  CursorRestorer restorer(*this);
 
   TextCoord orig = cursor();
 

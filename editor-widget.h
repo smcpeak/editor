@@ -263,9 +263,7 @@ public:      // funcs
   void selectCursorLine();
 
   // --------------------------- scrolling -------------------------
-  // helper
-  int stcHelper(int firstVis, int lastVis, int cur, int gap);
-
+  // Refactoring transition compatibility functions.
   int firstVisibleLine() const            { return editor->firstVisible().line; }
   int firstVisibleCol() const             { return editor->firstVisible().column; }
   int lastVisibleLine() const             { return editor->lastVisible().line; }
@@ -298,7 +296,6 @@ public:      // funcs
   // we want; if 'edgeGap' is -1, then if the cursor isn't already visible,
   // center the viewport
   void scrollToCursor(int edgeGap=0);
-  void scrollToCursor_noRedraw(int edgeGap=0);
 
   // move the cursor and the view by a set increment, and repaint;
   // truncation at low end is automatic
@@ -310,7 +307,9 @@ public:      // funcs
   int visCols() const { return this->editor->visColumns(); }
 
   // --------------------------- insertion ---------------------------
-  void insertAtCursor(char const *text);
+  // Insert 'text' at cursor.  Set cursor to the end of the inserted
+  // text and scroll if necessary so it is visible.
+  void insertText(char const *text);
 
   // --------------------------- deletion ----------------------------
   // given that the cursor is at the end of a line, join this line

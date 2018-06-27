@@ -1113,7 +1113,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         string s = stringf("%d-%02d-%02d %02d:%02d",
                            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
                            tm->tm_hour, tm->tm_min);
-        insertAtCursor(toCStr(s));
+        insertText(toCStr(s));
         break;
       }
     }
@@ -1390,10 +1390,10 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 }
 
 
-void EditorWidget::insertAtCursor(char const *text)
+void EditorWidget::insertText(char const *text)
 {
   editor->insertText(text);
-  scrollToCursor();
+  redraw();
 }
 
 void EditorWidget::deleteAtCursor(int amt)
@@ -1459,52 +1459,9 @@ void EditorWidget::justifyNearCursorLine()
 }
 
 
-// for a particular dimension, return the new start coordinate
-// of the viewport
-int EditorWidget::stcHelper(int firstVis, int lastVis, int cur, int gap)
-{
-  bool center = false;
-  if (gap == -1) {
-    center = true;
-    gap = 0;
-  }
-
-  int width = lastVis - firstVis + 1;
-
-  bool changed = false;
-  if (cur-gap < firstVis) {
-    firstVis = max(0, cur-gap);
-    changed = true;
-  }
-  else if (cur+gap > lastVis) {
-    firstVis += cur+gap - lastVis;
-    changed = true;
-  }
-
-  if (changed && center) {
-    // we had to adjust the viewport; make it actually centered
-    firstVis = max(0, cur - width/2);
-  }
-
-  return firstVis;
-}
-
-void EditorWidget::scrollToCursor_noRedraw(int edgeGap)
-{
-  int fvline = stcHelper(this->firstVisibleLine(),
-                         this->lastVisibleLine(),
-                         cursorLine(), edgeGap);
-
-  int fvcol = stcHelper(this->firstVisibleCol(),
-                        this->lastVisibleCol(),
-                        cursorCol(), edgeGap);
-
-  setFirstVisible(TextCoord(fvline, fvcol));
-}
-
 void EditorWidget::scrollToCursor(int edgeGap)
 {
-  scrollToCursor_noRedraw(edgeGap);
+  editor->scrollToCursor(edgeGap);
   redraw();
 }
 
@@ -1522,7 +1479,7 @@ void EditorWidget::moveViewAndCursor(int deltaLine, int deltaCol)
      << ", delta=" << lineColStr(TextCoord(deltaLine, deltaCol)));
 
   // first make sure the view contains the cursor
-  scrollToCursor_noRedraw();
+  editor->scrollToCursor();
 
   // move viewport, but remember original so we can tell
   // when there's truncation
@@ -1707,7 +1664,7 @@ void EditorWidget::editPaste()
 
     // insert at cursor
     QByteArray utf8(text.toUtf8());
-    insertAtCursor(utf8.constData());
+    insertText(utf8.constData());
   }
 }
 

@@ -12,6 +12,11 @@
 #include <stdlib.h>                    // system
 
 
+// This file is structured as a sequence of mostly-independent
+// sections, each focused on testing one aspect of or function in
+// TextDocumentEditor.
+
+
 static void checkCoord(TextCoord expect, TextCoord actual, char const *label)
 {
   if (expect != actual) {
@@ -39,6 +44,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
 }
 
 
+// --------------------- testUndoRedo -----------------------
 static void printHistory(TextDocumentEditor const &tde)
 {
   stringBuilder sb;
@@ -163,7 +169,7 @@ static void testUndoRedo()
 }
 
 
-
+// --------------------- testTextManipulation -----------------------
 // test TextDocumentEditor::getTextRange
 static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
                          int line2, int col2, char const *expect)
@@ -334,6 +340,7 @@ static void testTextManipulation()
 }
 
 
+// --------------------- testBlockIndent -----------------------
 // Expect, including that the mark is inactive.
 static void expectNM(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
@@ -453,6 +460,7 @@ static void testBlockIndent()
 }
 
 
+// --------------------- testFillToCursor -----------------------
 static void expectFillToCursor(
   TextDocumentEditor &tde,
   int cursorLine, int cursorCol,
@@ -517,6 +525,56 @@ static void testFillToCursor()
 }
 
 
+// --------------------- testScrollToCursor -----------------------
+// Check firstVisible and cursor.  The text itself is ignored since
+// we assume that tests above have exercised that adequately.
+static void expectFV(TextDocumentEditor const &tde,
+  int cursorLine, int cursorCol,
+  int fvLine, int fvCol,
+  int visLines, int visColumns)
+{
+  checkCoord(TextCoord(cursorLine, cursorCol), tde.cursor(), "cursor");
+  checkCoord(TextCoord(fvLine, fvCol), tde.firstVisible(), "firstVisible");
+  xassert(visLines == tde.visLines());
+  xassert(visColumns == tde.visColumns());
+}
+
+static void testScrollToCursor()
+{
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(5, 10);
+
+  tde.insertText(
+    "one\n"
+    "two\n"
+    "three\n");
+  expectFV(tde, 3,0, 0,0, 5,10);
+
+  tde.insertText(
+    "four\n"
+    "five\n");                         // scrolls down
+  expectFV(tde, 5,0, 1,0, 5,10);
+
+  tde.insertText("six 1234567890");    // scrolls right
+  expectFV(tde, 5,14, 1,5, 5,10);
+
+  tde.insertText("\n");
+  expectFV(tde, 6,0, 2,0, 5,10);
+
+  tde.setCursor(TextCoord(6, 20));
+  expectFV(tde, 6,20, 2,0, 5,10);      // did not scroll yet
+  tde.scrollToCursor();
+  expectFV(tde, 6,20, 2,11, 5,10);
+  tde.scrollToCursor(1 /*edgeGap*/);
+  expectFV(tde, 6,20, 3,12, 5,10);
+
+  tde.setCursor(TextCoord(0,0));
+  tde.scrollToCursor(1 /*edgeGap*/);
+  expectFV(tde, 0,0, 0,0, 5,10);
+}
+
+
+// --------------------------- main -----------------------------
 int main()
 {
   try {
@@ -524,6 +582,7 @@ int main()
     testTextManipulation();
     testBlockIndent();
     testFillToCursor();
+    testScrollToCursor();
 
     malloc_stats();
     cout << "\ntest-td-editor is ok" << endl;

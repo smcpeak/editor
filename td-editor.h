@@ -123,6 +123,9 @@ public:      // funcs
   bool cursorAtEnd() const;
 
   // Set the cursor position.  Asserts is non-negative.
+  //
+  // This does *not* automatically scroll the visible region.  But
+  // a client can call 'scrollToCursor()' afterward.
   void setCursor(TextCoord newCursor);
 
   // Set the cursor column, keeping its line.
@@ -192,6 +195,14 @@ public:      // funcs
   // will silently ensure both sizes are positive.
   void setVisibleSize(int lines, int columns);
 
+  // Scroll the view the minimum amount so that the cursor is visible
+  // and at least 'edgeGap' lines/columns from the edge (except that
+  // it can always get to the left and top edges of the document).
+  //
+  // If 'edgeGap' is -1, then if the cursor isn't already visible,
+  // center the visible region on the cursor.
+  void scrollToCursor(int edgeGap=0);
+
   // ---------------- general text queries -------------------
   // Get part of a single line's contents, starting at 'line/col' and
   // getting 'destLen' chars.  All the chars must be in the line now.
@@ -254,11 +265,17 @@ public:      // funcs
 
   // ------------------- general text insertion ------------------
   // Insert at cursor.  'left' or 'right' refers to where the cursor
-  // ends up after the insertion.  Requires validCursor().
+  // ends up after the insertion.  Requires validCursor().  Ensures
+  // cursor is in visible region afterward.
+  //
+  // TODO: This is only ever called with left=false.  Remove 'left'.
   void insertLR(bool left, char const *text, int textLen);
 
   // Insert NUL-terminated text that might have newline characters at
-  // the cursor.  The cursor is left at the end of the inserted text.
+  // the cursor.  The cursor is left at the end of the inserted text,
+  // and the visible region scrolls if necessary so that location is
+  // visible.
+  //
   // Requires validCursor().
   void insertText(char const *text);
 
@@ -287,8 +304,8 @@ public:      // funcs
   // split 'line' into two, putting everything after cursor column
   // into the next line; if 'col' is beyond the end of the line,
   // spaces are *not* appended to 'line' before inserting a blank line
-  // after it; the function returns with line incremented by 1 and
-  // col==0
+  // after it; the function returns with cursor line incremented by 1
+  // and cursor col==0
   void insertNewline();
 
   // indent (or un-indent, if ind<0) the line range
@@ -338,21 +355,25 @@ ENUM_BITWISE_OPS(TextDocumentEditor::FindStringFlags,
 
 
 // Save/restore cursor, mark, and scroll position across an operation.
+//
+// The data members are public as a convenience in case the client
+// wants to refer to the old values.
 class CursorRestorer {
+public:      // data
   // Editor we will restore.
   TextDocumentEditor &tde;
 
   // Values to restore.
-  TextCoord cursor;
-  bool markActive;
-  TextCoord mark;
-  TextCoord firstVisible;
+  TextCoord const cursor;
+  bool const markActive;
+  TextCoord const mark;
+  TextCoord const firstVisible;
 
   // We don't save 'lastVisible' since we assume that the visible
   // region size will not be affected by the operations this class
   // is wrapped around.
 
-public:
+public:      // funcs
   CursorRestorer(TextDocumentEditor &tde);
   ~CursorRestorer();
 };
