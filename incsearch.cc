@@ -486,7 +486,7 @@ void IncSearch::putBackMatchText()
 {
   // put the matched text back
   ed->editDelete();       // delete replacement text
-  ed->editor->insertNulTermText(toCStr(removedText));
+  ed->editor->insertString(removedText);
   findString();
 }
 
@@ -527,8 +527,9 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
           QByteArray utf8(s.toUtf8());
           char const *p = utf8.constData();
 
-          ed->editor->insertNulTermText(p);
+          ed->editor->insertText(utf8.constData(), utf8.size());
 
+          // This does not handle NULs properly...
           replaceText &= p;
 
           return true;  // handled
@@ -565,7 +566,7 @@ bool IncSearch::replace()
   ed->deleteAtCursor(text.length());
 
   // insert replacement text
-  ed->editor->insertNulTermText(toCStr(replaceText));
+  ed->editor->insertString(replaceText);
 
   // find next match
   curCol += replaceText.length();

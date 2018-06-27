@@ -205,6 +205,16 @@ void TextDocumentEditor::insertText(char const *text, int textLen)
 }
 
 
+void TextDocumentEditor::insertString(string text)
+{
+  // This does not actually prevent problems with embedded NULs
+  // because I am still using my own string class which does not
+  // handle them.  But at some point I will switch to std::string,
+  // and then this will work as intended.
+  this->insertText(text.c_str(), text.length());
+}
+
+
 void TextDocumentEditor::deleteLR(bool left, int count)
 {
   xassert(validCursor());
@@ -570,12 +580,6 @@ void TextDocumentEditor::fillToCursor()
 
   // should have ended up in the same place we started
   xassert(orig == cursor());
-}
-
-
-void TextDocumentEditor::insertNulTermText(char const *text)
-{
-  insertText(text, strlen(text));
 }
 
 

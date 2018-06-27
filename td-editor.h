@@ -264,22 +264,25 @@ public:      // funcs
   void selectCursorLine();
 
   // ------------------- general text insertion ------------------
-  // Insert text at cursor.  'textLen' is measured in bytes, not
-  // characters.  Ensures cursor is in visible region afterward.
+  // Insert text, which might have newlines, at cursor.  Place the
+  // cursor at the end of the inserted text, scrolling if necessary to
+  // ensure the cursor is in visible region afterward.
+  //
+  // 'textLen' is measured in bytes, not characters.
   //
   // Requires validCursor().
   void insertText(char const *text, int textLen);
 
-  // Insert NUL-terminated text that might have newline characters at
-  // the cursor.  The cursor is left at the end of the inserted text,
-  // and the visible region scrolls if necessary so that location is
-  // visible.
+  // Same, but using a 'string' object.
   //
-  // Requires validCursor().
-  //
-  // TODO: This function is invites bugs because it cannot handle
-  // embedded NULs.  I know some of the call sites are wrong.
-  void insertNulTermText(char const *text);
+  // This is not called 'insertText' because 'string' has an implicit
+  // conversion from char*, which would make it easy to call the wrong
+  // one if they were overloaded.
+  void insertString(string text);
+
+  // Same, but assuming NUL termination.  Potentially dangerous!
+  void insertNulTermText(char const *text)
+    { insertText(text, strlen(text)); }
 
   // ------------------- general text deletion ------------------
   // Delete at cursor.  'left' or 'right' refers to which side of
