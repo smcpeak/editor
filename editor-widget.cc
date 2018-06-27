@@ -63,6 +63,7 @@ EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
     infoBox(NULL),
     status(status_),
     editor(new TextDocumentFileEditor(tdf)),
+    m_editors(),
     topMargin(1),
     leftMargin(1),
     interLineSpace(0),
@@ -81,7 +82,10 @@ EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
     nonfocusCursor(),
     ignoreScrollSignals(false)
 {
+  xassert(tdf);
   xassert(status_);
+
+  m_editors.prepend(editor);
 
   setFonts(bdfFontData_editor14r,
            bdfFontData_editor14i,
@@ -276,7 +280,7 @@ void EditorWidget::forgetAboutFile(TextDocumentFile *file)
   // Remove 'file' from my list.
   for(ObjListMutator< TextDocumentFileEditor > mut(m_editors); !mut.isDone(); ) {
     if (mut.data()->file == file) {
-      mut.remove();
+      mut.deleteIt();
     }
     else {
       mut.adv();

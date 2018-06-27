@@ -26,6 +26,10 @@ class TextDocumentEditor {
   // want to ensure I do not do it accidentally.
   NO_OBJECT_COPIES(TextDocumentEditor);
 
+public:      // static data
+  // Constructions minus destructions, for bug detection.
+  static int s_objectCount;
+
 private:     // data
   // The document we are editing.  This is the true "document" in the
   // sense of representing an abstract mathematical object of interest

@@ -10,14 +10,12 @@ file ./editor
 #file ./buffer
 #file ./td
 
-set args -tr objectCount main.h main.cc editor-widget.h editor-widget.cc
+set args -tr objectCount td.h
 
 #set args tmp
 
 break breaker
 break abort
 break main
-
-#break editor.cc:1554
 
 run

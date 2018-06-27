@@ -62,6 +62,9 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
     fileChoiceActions(),
     isearch(NULL)
 {
+  xassert(theState);
+  xassert(initFile);
+
   // will build a layout tree to manage sizes of child widgets
   QVBoxLayout *mainArea = new QVBoxLayout();
   mainArea->setObjectName("mainArea");
@@ -85,7 +88,7 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
-  this->editorWidget = new EditorWidget(NULL /*temporary*/, this->statusArea);
+  this->editorWidget = new EditorWidget(initFile, this->statusArea);
   this->editorWidget->setObjectName("editor widget");
   editorFrame->addWidget(this->editorWidget);
   this->editorWidget->setFocus();
@@ -110,7 +113,7 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
                     800,800);     // initial size
 
   // Set the TextDocumentFile, which was originally set as NULL above.
-  this->setDocumentFile(initFile);
+  //this->setDocumentFile(initFile);
 
   // i-search; use filename area as the status display.
   this->isearch = new IncSearch(this->statusArea);
@@ -871,7 +874,7 @@ GlobalState::~GlobalState()
 EditorWindow *GlobalState::createNewWindow(TextDocumentFile *initFile)
 {
   EditorWindow *ed = new EditorWindow(this, initFile);
-  ed->setObjectName("main editor window");
+  ed->setObjectName("Editor Window");
   rebuildWindowMenus();
 
   // NOTE: caller still has to say 'ed->show()'!
@@ -950,12 +953,35 @@ void GlobalState::deleteDocumentFile(TextDocumentFile *file)
 }
 
 
-static void printObjectCounts(char const *when)
+// Possibly print counts of allocated objects.  Return their sum.
+static int printObjectCountsIf(char const *when, bool print)
 {
-  cout << "Counts " << when << ':' << endl;
-  PVAL(EditorWidget::objectCount);
-  PVAL(EditorWindow::objectCount);
-  PVAL(TextDocumentFile::objectCount);
+  if (print) {
+    cout << "Counts " << when << ':' << endl;
+  }
+
+  // Current count of outstanding objects.
+  int sum = 0;
+
+  #define PRINT_COUNT(var) \
+    sum += (var);          \
+    if (print) {           \
+      PVAL(var);           \
+    }
+
+  PRINT_COUNT(EditorWidget::objectCount);
+  PRINT_COUNT(EditorWindow::objectCount);
+  PRINT_COUNT(TextDocumentFile::objectCount);
+  PRINT_COUNT(TextDocumentEditor::s_objectCount);
+
+  #undef PRINT_COUNT
+
+  return sum;
+}
+
+static int maybePrintObjectCounts(char const *when)
+{
+  return printObjectCountsIf(when, tracingSys("objectCount"));
 }
 
 
@@ -977,13 +1003,17 @@ int main(int argc, char **argv)
       return 4;
     }
 
-    if (tracingSys("objectCount")) {
-      printObjectCounts("before GlobalState destruction");
-    }
+    maybePrintObjectCounts("before GlobalState destruction");
   }
 
-  if (tracingSys("objectCount")) {
-    printObjectCounts("after GlobalState destruction");
+  int remaining = maybePrintObjectCounts("after GlobalState destruction");
+  if (remaining != 0) {
+    // Force the counts to be printed so we know more about the problem.
+    printObjectCountsIf("after GlobalState destruction", true);
+
+    cout << "WARNING: Allocated objects at end is " << remaining
+         << ", not zero!\n"
+         << "There is a leak or use-after-free somewhere." << endl;
   }
 
   return ret;

@@ -4,6 +4,9 @@
 #include "td-editor.h"                 // this module
 
 
+int TextDocumentEditor::s_objectCount = 0;
+
+
 TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
   : m_doc(doc),
     m_cursor(),
@@ -18,12 +21,17 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
     // their own size though.
     m_lastVisible(4, 9)
 {
+  xassert(doc);
   selfCheck();
+
+  TextDocumentEditor::s_objectCount++;
 }
 
 
 TextDocumentEditor::~TextDocumentEditor()
-{}
+{
+  TextDocumentEditor::s_objectCount--;
+}
 
 
 void TextDocumentEditor::selfCheck() const

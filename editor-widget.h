@@ -68,11 +68,8 @@ private:     // data
   StatusDisplay *status;         // (serf)
 
   // ------ editing state -----
-  // Editor object for the file we are editing; it can be set to NULL when
-  // the ctor is called, but must if so, must be set to a non-NULL
-  // value via setDocumentFile() before any drawing or editing is done.
-  //
-  // When non-NULL, this points at one of the elements of 'm_editors'.
+  // Editor object for the file we are editing.  Never NULL.
+  // This points at one of the elements of 'm_editors'.
   TextDocumentFileEditor *editor;
 
   // All of the editors associated with this widget.  An editor is
