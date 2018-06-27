@@ -29,6 +29,8 @@ static void checkCoord(TextCoord expect, TextCoord actual, char const *label)
 
 static void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
+  tde.selfCheck();
+
   TextCoord tc(line, col);
   checkCoord(tc, tde.cursor(), "cursor");
 
@@ -162,6 +164,8 @@ static void testUndoRedo()
 static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
                          int line2, int col2, char const *expect)
 {
+  tde.selfCheck();
+
   string actual = tde.getTextRange(TextCoord(line1, col1), TextCoord(line2, col2));
   if (!actual.equals(expect)) {
     tde.core().dumpRepresentation();
@@ -175,15 +179,17 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 
 
 // Test ::findString.
-static void testFind(TextDocumentEditor const &buf, int line, int col,
+static void testFind(TextDocumentEditor const &tde, int line, int col,
                      char const *text, int ansLine, int ansCol,
                      TextDocumentEditor::FindStringFlags flags)
 {
+  tde.selfCheck();
+
   bool expect = ansLine>=0;
   bool actual;
   {
     TextCoord tc(line, col);
-    actual = buf.findString(tc, text, flags);
+    actual = tde.findString(tc, text, flags);
     line = tc.line;
     col = tc.column;
   }
@@ -367,10 +373,11 @@ static void testBlockIndent()
 {
   TextDocumentAndEditor tde;
 
-  tde.insertNulTermText(
+  // Starter text.  Use 'insertString' for this one just to exercise it.
+  tde.insertString(string(
     "one\n"
     "two\n"
-    "three\n");
+    "three\n"));
   expectNM(tde, 3,0,
     "one\n"
     "two\n"
@@ -521,6 +528,8 @@ static void expectFV(TextDocumentEditor const &tde,
   int fvLine, int fvCol,
   int visLines, int visColumns)
 {
+  tde.selfCheck();
+
   checkCoord(TextCoord(cursorLine, cursorCol), tde.cursor(), "cursor");
   checkCoord(TextCoord(fvLine, fvCol), tde.firstVisible(), "firstVisible");
   xassert(visLines == tde.visLines());
@@ -532,33 +541,69 @@ static void testScrollToCursor()
   TextDocumentAndEditor tde;
   tde.setVisibleSize(5, 10);
 
+  xassert(tde.cursorAtEnd() == true);
+
+  // Starter text.
   tde.insertNulTermText(
     "one\n"
     "two\n"
     "three\n");
   expectFV(tde, 3,0, 0,0, 5,10);
 
+  xassert(tde.cursorAtEnd() == true);
+
+  // Insert a test for getSelectRegion with mark inactive.
+  {
+    TextCoord tc1, tc2;
+    tde.getSelectRegion(tc1, tc2);
+    xassert(tc1 == TextCoord(3, 0));
+    xassert(tc2 == TextCoord(3, 0));
+  }
+
+  // Add enough text to start scrolling vertically.
   tde.insertNulTermText(
     "four\n"
-    "five\n");                         // scrolls down
+    "five\n");
   expectFV(tde, 5,0, 1,0, 5,10);
 
-  tde.insertNulTermText("six 1234567890");    // scrolls right
+  // Now make it scroll to the right.
+  tde.insertNulTermText("six 1234567890");
   expectFV(tde, 5,14, 1,5, 5,10);
 
+  // And back to the left.
   tde.insertNulTermText("\n");
   expectFV(tde, 6,0, 2,0, 5,10);
 
+  xassert(tde.cursorAtEnd() == true);
+
+  // Put the cursor beyond EOF.
   tde.setCursor(TextCoord(6, 20));
   expectFV(tde, 6,20, 2,0, 5,10);      // did not scroll yet
   tde.scrollToCursor();
   expectFV(tde, 6,20, 2,11, 5,10);
+
+  // Test with edgeGap > 0.
   tde.scrollToCursor(1 /*edgeGap*/);
   expectFV(tde, 6,20, 3,12, 5,10);
 
+  xassert(tde.cursorAtEnd() == false); // beyond end
+
+  // Back to the start with edgeGap>0, which will have no effect.
   tde.setCursor(TextCoord(0,0));
   tde.scrollToCursor(1 /*edgeGap*/);
   expectFV(tde, 0,0, 0,0, 5,10);
+
+  xassert(tde.cursorAtEnd() == false); // at start
+
+  // Test with -1 edgeGap.
+  tde.setCursor(TextCoord(20, 20));    // offscreen
+  tde.scrollToCursor(-1 /*edgeGap*/);
+  expectFV(tde, 20,20, 18,15, 5,10);
+
+  // Test 'moveCursor' with relLine=false.
+  tde.moveCursor(false /*relLine*/, 3, false /*relCol*/, 0);
+  tde.scrollToCursor();
+  expectFV(tde, 3,0, 3,0, 5,10);
 }
 
 
@@ -571,6 +616,8 @@ int main()
     testBlockIndent();
     testFillToCursor();
     testScrollToCursor();
+
+    xassert(TextDocumentEditor::s_objectCount == 0);
 
     malloc_stats();
     cout << "\ntest-td-editor is ok" << endl;
