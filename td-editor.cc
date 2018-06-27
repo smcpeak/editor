@@ -48,7 +48,7 @@ void TextDocumentEditor::selfCheck() const
 
 bool TextDocumentEditor::validCursor() const
 {
-  return doc()->validCoord(cursor());
+  return m_doc->validCoord(cursor());
 }
 
 
@@ -193,11 +193,11 @@ void TextDocumentEditor::insertText(char const *text, int textLen)
 {
   xassert(validCursor());
 
-  doc()->insertAt(cursor(), text, textLen);
+  m_doc->insertAt(cursor(), text, textLen);
 
   // Put the cursor at the end of the inserted text.
   TextCoord tc = cursor();
-  bool ok = walkCursor(doc()->getCore(), tc, textLen);
+  bool ok = walkCursor(this->core(), tc, textLen);
   xassert(ok);
   setCursor(tc);
 
@@ -222,24 +222,24 @@ void TextDocumentEditor::deleteLR(bool left, int count)
   if (left) {
     // Move the cursor to the start of the text to delete.
     TextCoord tc = cursor();
-    bool ok = walkCursor(doc()->getCore(), tc, -count);
+    bool ok = walkCursor(this->core(), tc, -count);
     xassert(ok);
     setCursor(tc);
   }
 
-  doc()->deleteAt(cursor(), count);
+  m_doc->deleteAt(cursor(), count);
 }
 
 
 void TextDocumentEditor::undo()
 {
-  setCursor(doc()->undo());
+  setCursor(m_doc->undo());
 }
 
 
 void TextDocumentEditor::redo()
 {
-  setCursor(doc()->redo());
+  setCursor(m_doc->redo());
 }
 
 
@@ -283,7 +283,7 @@ void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) con
 
   // initial part in defined region
   if (def) {
-    doc()->getLine(tc, dest, def);
+    m_doc->getLine(tc, dest, def);
   }
 
   // spaces past defined region
@@ -343,7 +343,7 @@ string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
 string TextDocumentEditor::getWholeLine(int line) const
 {
   return getTextRange(TextCoord(line, 0),
-                      TextCoord(line, doc()->lineLength(line)));
+                      TextCoord(line, m_doc->lineLength(line)));
 }
 
 
@@ -413,10 +413,10 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
   // this line in f0169061da, when I added undo/redo support, which
   // suggests it was needed to deal with cases arising from replaying
   // history elements.  Probably there is a better solution.
-  truncateCursor(doc()->getCore(), tc);
+  truncateCursor(this->core(), tc);
 
   if (flags & FS_ADVANCE_ONCE) {
-    walkCursor(doc()->getCore(), tc,
+    walkCursor(this->core(), tc,
                flags&FS_BACKWARDS? -1 : +1);
   }
 
@@ -427,7 +427,7 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
     // get line contents
     int lineLen = lineLength(tc.line);
     contents.ensureIndexDoubler(lineLen);
-    doc()->getLine(TextCoord(tc.line, 0), contents.getDangerousWritableArray(), lineLen);
+    m_doc->getLine(TextCoord(tc.line, 0), contents.getDangerousWritableArray(), lineLen);
 
     // search for 'text' using naive algorithm, starting at 'tc.column'
     while (0 <= tc.column && tc.column+textLen <= lineLen) {
@@ -550,7 +550,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
 void TextDocumentEditor::fillToCursor()
 {
   int rowfill, colfill;
-  computeSpaceFill(doc()->getCore(), cursor(), rowfill, colfill);
+  computeSpaceFill(this->core(), cursor(), rowfill, colfill);
 
   if (rowfill==0 && colfill==0) {
     return;     // nothing to do
@@ -633,14 +633,14 @@ void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
   xassert(tc1 <= tc2);
 
   // truncate the endpoints
-  truncateCursor(doc()->getCore(), tc1);
-  truncateCursor(doc()->getCore(), tc2);
+  truncateCursor(this->core(), tc1);
+  truncateCursor(this->core(), tc2);
 
   // go to line2/col2, which is probably where the cursor already is
   setCursor(tc2);
 
   // compute # of chars in span
-  int length = computeSpanLength(doc()->getCore(), tc1, tc2);
+  int length = computeSpanLength(this->core(), tc1, tc2);
 
   // delete them as a left deletion; the idea is I suspect the
   // original and final cursor are line2/col2, in which case the

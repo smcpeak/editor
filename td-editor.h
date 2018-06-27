@@ -78,18 +78,17 @@ public:      // funcs
   // Check class invariants, failing an assertion if violated.
   void selfCheck() const;
 
-  // TODO: I think I should remove these.  It is confusing to have
-  // clients sometimes directly accessing the underlying documents.
-  TextDocument *doc() const { return m_doc; }
-  TextDocumentCore const &core() const { return doc()->getCore(); }
+  // TODO: I think I should remove this.  It is confusing to have
+  // clients sometimes directly accessing the underlying document.
+  TextDocumentCore const &core() const { return m_doc->getCore(); }
 
   // -------------------- query file dimensions --------------------
   // Number of lines in the document.  Always positive.
-  int numLines() const { return doc()->numLines(); }
+  int numLines() const                 { return m_doc->numLines(); }
 
   // Length of a given line, not including newline.  'line' must be
   // in [0,numLines()-1].
-  int lineLength(int line) const { return doc()->lineLength(line); }
+  int lineLength(int line) const       { return m_doc->lineLength(line); }
 
   // Line length, or 0 if it's beyond the end of the file.  'line' must
   // be non-negative.
@@ -97,10 +96,13 @@ public:      // funcs
 
   // Length of line containing cursor.
   // Returns 0 when cursor is beyond EOF.
-  int cursorLineLength() const { return lineLengthLoose(cursor().line); }
+  int cursorLineLength() const         { return lineLengthLoose(cursor().line); }
+
+  // Length of the longest line.  Note: This may overestimate.
+  int maxLineLength() const            { return m_doc->maxLineLength(); }
 
   // Position right after last character in file.
-  TextCoord endCoord() const { return doc()->endCoord(); }
+  TextCoord endCoord() const           { return m_doc->endCoord(); }
 
   // Position at end of specified line, which may be beyond EOF.
   TextCoord lineEndCoord(int line) const;
@@ -108,7 +110,7 @@ public:      // funcs
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.
-  TextCoord cursor() const { return m_cursor; }
+  TextCoord cursor() const             { return m_cursor; }
 
   // Return true if the cursor is within the current text, i.e.,
   // not beyond the end of a line or beyond the end of the file.
@@ -157,7 +159,7 @@ public:      // funcs
 
   // True if the mark is "active", meaning the UI shows a visible
   // selection region.
-  bool markActive() const { return m_markActive; }
+  bool markActive() const              { return m_markActive; }
 
   // Set the mark and make it active.
   void setMark(TextCoord m);
@@ -177,10 +179,10 @@ public:      // funcs
 
   // ---------------- visible region and scrolling -----------------
   // Upper-left grid cell that is visible.
-  TextCoord firstVisible() const { return m_firstVisible; }
+  TextCoord firstVisible() const       { return m_firstVisible; }
 
   // Lower-right grid cell fully visible (not partial).
-  TextCoord lastVisible() const { return m_lastVisible; }
+  TextCoord lastVisible() const        { return m_lastVisible; }
 
   int visLines() const
     { return m_lastVisible.line - m_firstVisible.line + 1; }
@@ -208,7 +210,7 @@ public:      // funcs
   // getting 'destLen' chars.  All the chars must be in the line now.
   // The retrieved text never includes the '\n' character.
   void getLine(TextCoord tc, char *dest, int destLen) const
-    { return doc()->getLine(tc, dest, destLen); }
+    { return m_doc->getLine(tc, dest, destLen); }
 
   // get a range of text from a line, but if the position is outside
   // the defined range, pretend the line exists (if necessary) and
@@ -290,9 +292,9 @@ public:      // funcs
   // characters.  Requires validCursor().
   void deleteLR(bool left, int count);
 
-  void deleteText(int len) { deleteLR(false /*left*/, len); }
+  void deleteText(int len)             { deleteLR(false /*left*/, len); }
 
-  void deleteChar() { deleteText(1); }
+  void deleteChar()                    { deleteText(1); }
 
   // Delete the characters between 'tc1' and 'tc2'.  Both
   // are truncated to ensure validity.  Required 'tc1 <= tc2'.
@@ -328,10 +330,10 @@ public:      // funcs
 
   // -------------------- undo/redo -----------------------
   // True if we can go back another step in the undo history.
-  bool canUndo() const                 { return doc()->canUndo(); }
+  bool canUndo() const                 { return m_doc->canUndo(); }
 
   // True if we can go forward, redoing undone changes.
-  bool canRedo() const                 { return doc()->canRedo(); }
+  bool canRedo() const                 { return m_doc->canRedo(); }
 
   // Undo a document changes.  Required 'canUndo()'.
   void undo();
@@ -341,17 +343,21 @@ public:      // funcs
 
   // Between begin/end, all document modifications will be grouped
   // together into a single undo action.
-  void beginUndoGroup()                { doc()->beginUndoGroup(); }
-  void endUndoGroup()                  { doc()->endUndoGroup(); }
+  void beginUndoGroup()                { m_doc->beginUndoGroup(); }
+  void endUndoGroup()                  { m_doc->endUndoGroup(); }
 
   // True if we currently have an undo group open.
-  bool inUndoGroup() const             { return doc()->inUndoGroup(); }
+  bool inUndoGroup() const             { return m_doc->inUndoGroup(); }
 
   // True if the document has changed since it was last saved.  This
   // is related to undo/redo because if you save, make a change, then
   // undo, it is the undo/redo mechanism that understands the file now
   // has no unsaved changes.
-  bool unsavedChanges() const { return doc()->unsavedChanges(); }
+  bool unsavedChanges() const          { return m_doc->unsavedChanges(); }
+
+  // Print some debugging information to stdout for use in testing.
+  void printHistory() const            { m_doc->printHistory(); }
+  void printHistoryStats() const       { m_doc->printHistoryStats(); }
 };
 
 

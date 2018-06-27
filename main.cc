@@ -673,7 +673,7 @@ void EditorWindow::editorViewChanged()
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (horizScroll) {
-    horizScroll->setRange(0, max(tde->doc()->maxLineLength(),
+    horizScroll->setRange(0, max(tde->maxLineLength(),
                                  editorWidget->firstVisibleCol()));
     horizScroll->setValue(editorWidget->firstVisibleCol());
     horizScroll->setSingleStep(1);
@@ -681,7 +681,7 @@ void EditorWindow::editorViewChanged()
   }
 
   if (vertScroll) {
-    vertScroll->setRange(0, max(tde->doc()->numLines(),
+    vertScroll->setRange(0, max(tde->numLines(),
                                 editorWidget->firstVisibleLine()));
     vertScroll->setValue(editorWidget->firstVisibleLine());
     vertScroll->setSingleStep(1);
@@ -693,7 +693,7 @@ void EditorWindow::editorViewChanged()
   statusArea->position->setText(QString(
     stringc << " " << (editorWidget->cursorLine()+1) << ":"
             << (editorWidget->cursorCol()+1)
-            << (tde->doc()->unsavedChanges()? " *" : "")
+            << (tde->unsavedChanges()? " *" : "")
   ));
 }
 

@@ -32,7 +32,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   TextCoord tc(line, col);
   checkCoord(tc, tde.cursor(), "cursor");
 
-  writeFile(tde.doc()->getCore(), "td.tmp");
+  writeFile(tde.core(), "td.tmp");
   DataBlock block;
   block.readFromFile("td.tmp");
 
@@ -45,15 +45,6 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
 
 
 // --------------------- testUndoRedo -----------------------
-static void printHistory(TextDocumentEditor const &tde)
-{
-  stringBuilder sb;
-  tde.doc()->printHistory(sb);
-  cout << sb;
-  cout.flush();
-}
-
-
 // Insert each character in 'str' as its own edit action.
 static void chars(TextDocumentEditor &tde, char const *str)
 {
@@ -68,20 +59,16 @@ static void testUndoRedo()
 {
   TextDocumentAndEditor tde;
 
-  // This is just to avoid getting an "unused function" warning since
-  // the calls are commented out.
-  printHistory(tde);
-
   chars(tde, "abcd");
-  //printHistory(tde);
+  //tde.printHistory();
   expect(tde, 0,4, "abcd");
 
   tde.undo();
-  //printHistory(tde);
+  //tde.printHistory();
   expect(tde, 0,3, "abc");
 
   chars(tde, "e");
-  //printHistory(tde);
+  //tde.printHistory();
   expect(tde, 0,4, "abce");
 
   chars(tde, "\nThis is the second line.\n");
@@ -137,7 +124,7 @@ static void testUndoRedo()
   expect(tde, 2,11, "abce\n"
                     "This is the second line.\n"
                     "now on thir");
-  //printHistory(tde);
+  //tde.printHistory();
 
   tde.beginUndoGroup();
   chars(tde, "abc");
@@ -163,8 +150,8 @@ static void testUndoRedo()
                     "This is the second line.\n"
                     "now on thir");
 
-  //printHistory(tde);
-  //tde.doc()->printHistoryStats();
+  //tde.printHistory();
+  //tde.printHistoryStats();
 
   unlink("td.tmp");
 }
@@ -177,7 +164,7 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 {
   string actual = tde.getTextRange(TextCoord(line1, col1), TextCoord(line2, col2));
   if (!actual.equals(expect)) {
-    tde.doc()->getCore().dumpRepresentation();
+    tde.core().dumpRepresentation();
     cout << "getTextRange(" << line1 << "," << col1 << ", "
                             << line2 << "," << col2 << "):\n";
     cout << "  actual: " << quoted(actual) << "\n";

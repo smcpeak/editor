@@ -144,6 +144,7 @@ void TextDocument::printHistory() const
   stringBuilder sb;
   printHistory(sb);
   cout << sb;
+  cout.flush();
 }
 
 

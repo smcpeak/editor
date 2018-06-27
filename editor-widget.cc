@@ -1169,8 +1169,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_H:
-        editor->doc()->printHistory();
-        editor->doc()->printHistoryStats();
+        editor->printHistory();
+        editor->printHistoryStats();
         break;
 
       default:
