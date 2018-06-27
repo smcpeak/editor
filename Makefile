@@ -28,8 +28,17 @@ QTDIR_CPLR := $(shell cygpath -m '$(QTDIR)')
 # C++ compiler, etc.
 CXX := x86_64-w64-mingw32-g++
 
+# Set to 1 to activate coverage (gcov) support.
+COVERAGE := 0
+
 # flags for the C and C++ compilers (and preprocessor)
 CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
+
+
+# Pull in optional local configuration that can override the
+# above variables.
+-include config.mk
+
 
 # The "-I." is so that "include <FlexLexer.h>" will pull in the
 # FlexLexer.h in the currect directory, which is a copy of the
@@ -45,6 +54,10 @@ CCFLAGS += -I$(QTDIR_CPLR)/include
 CCFLAGS += -I$(QTDIR_CPLR)/include/QtCore
 CCFLAGS += -I$(QTDIR_CPLR)/include/QtGui
 CCFLAGS += -I$(QTDIR_CPLR)/include/QtWidgets
+
+ifeq ($(COVERAGE),1)
+  CCFLAGS += -fprofile-arcs -ftest-coverage
+endif
 
 # Flags for the linker for console programs.
 CONSOLE_LDFLAGS := -g
@@ -177,6 +190,8 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 main.o: gotoline.gen.h
 main.o: keybindings.doc.gen.h
 
+TOCLEAN += gotoline.gen.h keybindings.doc.gen.*
+
 EDITOR_OBJS := \
   td-file.o \
   c_hilite.yy.o \
@@ -216,6 +231,7 @@ dialogs: dialogs.cc
 # --------------------- misc ------------------------
 clean:
 	$(RM) $(TOCLEAN)
+	$(RM) *.gcov *.gcda *.gcno
 
 check:
 	@echo "no useful 'make check' at this time"
