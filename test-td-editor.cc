@@ -311,11 +311,12 @@ static void testTextManipulation()
     none = TextDocumentEditor::FS_NONE,
     insens = TextDocumentEditor::FS_CASE_INSENSITIVE,
     back = TextDocumentEditor::FS_BACKWARDS,
-    advance = TextDocumentEditor::FS_ADVANCE_ONCE;
+    advance = TextDocumentEditor::FS_ADVANCE_ONCE,
+    oneLine = TextDocumentEditor::FS_ONE_LINE;
 
   tde.setCursor(TextCoord(0,0));
   tde.insertNulTermText("foofoofbar\n"
-                 "ooFoo arg\n");
+                        "ooFoo arg\n");
   testFind(tde, 0,0, "foo", 0,0, none);
   testFind(tde, 0,1, "foo", 0,3, none);
   testFind(tde, 0,3, "foof", 0,3, none);
@@ -335,6 +336,9 @@ static void testTextManipulation()
   testFind(tde, 1,3, "goo", -1,-1, back|insens);
   testFind(tde, 1,3, "goo", -1,-1, back);
   testFind(tde, 1,3, "goo", -1,-1, none);
+
+  testFind(tde, 0,0, "arg", 1,6, none);
+  testFind(tde, 0,0, "arg", -1,-1, oneLine);
 }
 
 
@@ -460,6 +464,31 @@ static void testBlockIndent()
   expectBlockIndent(tde, -2, 2,5, 5,2,
     "  one\n"
     "      two\n"
+    "  three\n");
+
+  // Test 'insertNewline' while beyond EOL.
+  tde.clearMark();
+  tde.setCursor(TextCoord(1, 40));
+  tde.insertNewline();
+  expectNM(tde, 2,0,
+    "  one\n"
+    "      two\n"
+    "\n"
+    "  three\n");
+
+  // Test 'insertSpaces'.
+  tde.insertSpaces(2);
+  expectNM(tde, 2,2,
+    "  one\n"
+    "      two\n"
+    "  \n"
+    "  three\n");
+
+  // Test block indent entirely beyond EOF.
+  expectBlockIndent(tde, +2, 5,0, 5,2,
+    "  one\n"
+    "      two\n"
+    "  \n"
     "  three\n");
 }
 
