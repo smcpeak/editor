@@ -342,8 +342,14 @@ string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
 
 string TextDocumentEditor::getWholeLine(int line) const
 {
-  return getTextRange(TextCoord(line, 0),
-                      TextCoord(line, m_doc->lineLength(line)));
+  xassert(line >= 0);
+  if (line < m_doc->numLines()) {
+    return getTextRange(TextCoord(line, 0),
+                        TextCoord(line, m_doc->lineLength(line)));
+  }
+  else {
+    return string("");
+  }
 }
 
 

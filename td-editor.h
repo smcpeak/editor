@@ -224,7 +224,8 @@ public:      // funcs
   // are taken to be whitespace
   string getTextRange(TextCoord tc1, TextCoord tc2) const;
 
-  // get a complete line
+  // Get a complete line.  Returns "" when beyond EOF.  'line' must
+  // be non-negative.
   string getWholeLine(int line) const;
 
   // get the word following the given coordinate, including any non-word
@@ -232,13 +233,16 @@ public:      // funcs
   string getWordAfter(TextCoord tc) const;
 
   // ---------------- whitespace text queries -------------------
-  // on a particular line, get # of whitespace chars before first
-  // non-ws char, or -1 if there are no non-ws chars
+  // On a particular line, get # of whitespace chars before first
+  // non-ws char, or -1 if there are no non-ws chars.  Lines beyond
+  // EOF return -1 (as if they are entirely whitespace).
   int getIndentation(int line) const;
 
-  // starting at 'line', go up until we find a line that is not
-  // entirely blank (whitespace), and return the # of whitespace
-  // chars to the left of the first non-whitespace char
+  // Starting at 'line', including that line, search up until we find
+  // a line that is not entirely blank (whitespace), and return the
+  // number of whitespace chars to the left of the first non-whitespace
+  // char.  Lines beyond EOF are treated as entirely whitespace.  If we
+  // hit BOF, return 0.
   int getAboveIndentation(int line) const;
 
   // ---------------------- text search ----------------------

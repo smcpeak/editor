@@ -648,6 +648,48 @@ static void testGetWordAfter()
 }
 
 
+// ------------------ testGetAboveIndentation -------------------
+static void testOneGAI(TextDocumentEditor &tde, int line, int expect)
+{
+  int actual = tde.getAboveIndentation(line);
+  xassert(actual == expect);
+}
+
+static void testGetAboveIndentation()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "\n"                               // line 0
+    "\n"
+    "  hi\n"
+    "\n"
+    "    there\n"
+    "this\n"                           // line 5
+    "is\n"
+    "  some\n"
+    "  indented\n"
+    "\n"
+    "    text\n");                     // line 10
+
+  testOneGAI(tde, -1, 0);
+  testOneGAI(tde, 0, 0);
+  testOneGAI(tde, 1, 0);
+  testOneGAI(tde, 2, 2);
+  testOneGAI(tde, 3, 2);
+  testOneGAI(tde, 4, 4);
+  testOneGAI(tde, 5, 0);
+  testOneGAI(tde, 6, 0);
+  testOneGAI(tde, 7, 2);
+  testOneGAI(tde, 8, 2);
+  testOneGAI(tde, 9, 2);
+  testOneGAI(tde, 10, 4);
+  testOneGAI(tde, 11, 4);
+  testOneGAI(tde, 12, 4);
+  testOneGAI(tde, 13, 4);
+}
+
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -658,6 +700,7 @@ int main()
     testFillToCursor();
     testScrollToCursor();
     testGetWordAfter();
+    testGetAboveIndentation();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 
