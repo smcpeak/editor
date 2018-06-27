@@ -3,6 +3,8 @@
 
 #include "td-editor.h"                 // this module
 
+#include "trace.h"                     // TRACE
+
 
 int TextDocumentEditor::s_objectCount = 0;
 
@@ -109,6 +111,32 @@ void TextDocumentEditor::moveFirstVisibleBy(int deltaLine, int deltaCol)
   int line = max(0, m_firstVisible.line + deltaLine);
   int col = max(0, m_firstVisible.column + deltaCol);
   this->setFirstVisible(TextCoord(line, col));
+}
+
+
+void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
+{
+  TRACE("moveFirstVisibleAndCursor",
+        "start: firstVis=" << m_firstVisible
+     << ", cursor=" << m_cursor
+     << ", delta=" << TextCoord(deltaLine, deltaCol));
+
+  // first make sure the view contains the cursor
+  this->scrollToCursor();
+
+  // move viewport, but remember original so we can tell
+  // when there's truncation
+  int origVL = this->m_firstVisible.line;
+  int origVC = this->m_firstVisible.column;
+  this->moveFirstVisibleBy(deltaLine, deltaCol);
+
+  // now move cursor by the amount that the viewport moved
+  this->moveCursorBy(this->m_firstVisible.line - origVL,
+                     this->m_firstVisible.column - origVC);
+
+  TRACE("moveFirstVisibleAndCursor",
+        "end: firstVis=" << m_firstVisible <<
+        ", cursor=" << m_cursor);
 }
 
 
@@ -486,7 +514,7 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
 
 // ---------------- TextDocumentEditor: modifications ------------------
 
-void TextDocumentEditor::moveRelCursor(int deltaLine, int deltaCol)
+void TextDocumentEditor::moveCursorBy(int deltaLine, int deltaCol)
 {
   // prevent moving into negative territory
   deltaLine = max(deltaLine, - cursor().line);
@@ -539,7 +567,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
     if (0 <= line &&
         line < numLines() &&
         col < cursorLineLength()) {
-      moveRelCursor(0, 1);
+      moveCursorBy(0, 1);
     }
     else {
       moveToNextLineStart();
@@ -550,7 +578,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
     if (0 <= line &&
         line < numLines() &&
         col > 0) {
-      moveRelCursor(0, -1);
+      moveCursorBy(0, -1);
     }
     else if (line > 0) {
       moveToPrevLineEnd();
@@ -612,7 +640,7 @@ void TextDocumentEditor::insertNewline()
   int overEdge = cursor().column - cursorLineLength();
   if (overEdge > 0) {
     // move back to the end of this line
-    moveRelCursor(0, -overEdge);
+    moveCursorBy(0, -overEdge);
   }
 
   fillToCursor();      // might add newlines up to this point

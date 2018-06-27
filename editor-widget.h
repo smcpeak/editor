@@ -172,13 +172,6 @@ private:     // funcs
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
 
-  // debugging
-  static string lineColStr(TextCoord tc);
-  string firstVisStr() const
-    { return lineColStr(this->editor->firstVisible()); }
-  string cursorStr() const
-    { return lineColStr(this->editor->cursor()); }
-
 protected:   // funcs
   // QWidget funcs
   virtual bool event(QEvent *e) override;
@@ -225,7 +218,7 @@ public:      // funcs
   void cursorTo(TextCoord tc);
 
   // relative cursor movement
-  void moveCursorBy(int dline, int dcol)  { editor->moveRelCursor(dline, dcol); }
+  void moveCursorBy(int dline, int dcol)  { editor->moveCursorBy(dline, dcol); }
   void cursorLeftBy(int amt)              { moveCursorBy(0, -amt); }
   void cursorRightBy(int amt)             { moveCursorBy(0, +amt); }
   void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
@@ -279,6 +272,11 @@ public:      // funcs
   void moveFirstVisibleBy(int deltaLine, int deltaCol)
     { editor->moveFirstVisibleBy(deltaLine, deltaCol); }
 
+  // This one calls redraw, whereas the preceding does not, simply
+  // because its call sites all want that right after.
+  void moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
+    { editor->moveFirstVisibleAndCursor(deltaLine, deltaCol); redraw(); }
+
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col
   //   - width(), height()
@@ -292,10 +290,6 @@ public:      // funcs
   // we want; if 'edgeGap' is -1, then if the cursor isn't already visible,
   // center the viewport
   void scrollToCursor(int edgeGap=0);
-
-  // move the cursor and the view by a set increment, and repaint;
-  // truncation at low end is automatic
-  void moveViewAndCursor(int deltaLine, int deltaCol);
 
   // Number of fully visible lines/columns.  Part of the next
   // line/col may also be visible.

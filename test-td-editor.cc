@@ -652,6 +652,20 @@ static void testScrollToCursor()
   expectFV(tde, 3,0, 1,0, 5,10);
   tde.moveFirstVisibleBy(-3, -3);
   expectFV(tde, 3,0, 0,0, 5,10);
+
+  // Test 'moveFirstVisibleAndCursor'.
+  tde.setFirstVisible(TextCoord(10,10));
+  expectFV(tde, 3,0, 10,10, 5,10);
+  tde.moveFirstVisibleAndCursor(0, +1);    // scroll to cursor, then shift right
+  expectFV(tde, 3,1, 3,1, 5,10);
+  tde.setCursor(TextCoord(4,2));           // one in from left/top
+  expectFV(tde, 4,2, 3,1, 5,10);
+  tde.moveFirstVisibleAndCursor(+2, +1);
+  expectFV(tde, 6,3, 5,2, 5,10);
+  tde.moveFirstVisibleAndCursor(0, -10);   // hit left edge
+  expectFV(tde, 6,1, 5,0, 5,10);
+  tde.moveFirstVisibleAndCursor(-10, 0);   // hit top edge
+  expectFV(tde, 1,1, 0,0, 5,10);
 }
 
 
@@ -747,8 +761,8 @@ static void testMoveCursor()
     "three\n");
   expectCursor(tde, 3,0);
 
-  // Test 'moveRelCursor'.
-  tde.moveRelCursor(-1, +1);
+  // Test 'moveCursorBy'.
+  tde.moveCursorBy(-1, +1);
   expectCursor(tde, 2,1);
 
   // Test 'setCursorColumn'.

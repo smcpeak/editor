@@ -994,19 +994,19 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_Up:
-        moveViewAndCursor(-1, 0);
+        moveFirstVisibleAndCursor(-1, 0);
         break;
 
       case Qt::Key_Down:
-        moveViewAndCursor(+1, 0);
+        moveFirstVisibleAndCursor(+1, 0);
         break;
 
       case Qt::Key_Left:
-        moveViewAndCursor(0, -1);
+        moveFirstVisibleAndCursor(0, -1);
         break;
 
       case Qt::Key_Right:
-        moveViewAndCursor(0, +1);
+        moveFirstVisibleAndCursor(0, +1);
         break;
 
       case Qt::Key_B:      cursorLeft(false); break;
@@ -1149,19 +1149,19 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
   else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
     switch (k->key()) {
       case Qt::Key_Up:
-        moveViewAndCursor(-CTRL_SHIFT_DISTANCE, 0);
+        moveFirstVisibleAndCursor(-CTRL_SHIFT_DISTANCE, 0);
         break;
 
       case Qt::Key_Down:
-        moveViewAndCursor(+CTRL_SHIFT_DISTANCE, 0);
+        moveFirstVisibleAndCursor(+CTRL_SHIFT_DISTANCE, 0);
         break;
 
       case Qt::Key_Left:
-        moveViewAndCursor(0, -CTRL_SHIFT_DISTANCE);
+        moveFirstVisibleAndCursor(0, -CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_Right:
-        moveViewAndCursor(0, +CTRL_SHIFT_DISTANCE);
+        moveFirstVisibleAndCursor(0, +CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_PageUp:
@@ -1279,7 +1279,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
             // Move the cursor to the auto-indent column but do not
             // fill with spaces.  This way I can press Enter more
             // than once without adding lots of spaces.
-            editor->moveRelCursor(0, ind);
+            editor->moveCursorBy(0, ind);
           }
 
           scrollToCursor();
@@ -1428,40 +1428,6 @@ void EditorWidget::justifyNearCursorLine()
 void EditorWidget::scrollToCursor(int edgeGap)
 {
   editor->scrollToCursor(edgeGap);
-  redraw();
-}
-
-
-STATICDEF string EditorWidget::lineColStr(TextCoord tc)
-{
-  return stringc << tc;
-}
-
-void EditorWidget::moveViewAndCursor(int deltaLine, int deltaCol)
-{
-  TRACE("moveViewAndCursor",
-        "start: firstVis=" << firstVisStr()
-     << ", cursor=" << cursorStr()
-     << ", delta=" << lineColStr(TextCoord(deltaLine, deltaCol)));
-
-  // first make sure the view contains the cursor
-  editor->scrollToCursor();
-
-  // move viewport, but remember original so we can tell
-  // when there's truncation
-  int origVL = this->firstVisibleLine();
-  int origVC = this->firstVisibleCol();
-  moveFirstVisibleBy(deltaLine, deltaCol);
-
-  // now move cursor by the amount that the viewport moved
-  moveCursorBy(this->firstVisibleLine() - origVL,
-               this->firstVisibleCol() - origVC);
-
-  TRACE("moveViewAndCursor",
-        "end: firstVis=" << firstVisStr() <<
-        ", cursor=" << cursorStr());
-
-  // redraw display
   redraw();
 }
 
@@ -1746,13 +1712,13 @@ void EditorWidget::cursorDown(bool shift)
 void EditorWidget::cursorPageUp(bool shift)
 {
   turnSelection(shift);
-  moveViewAndCursor(- this->visLines(), 0);
+  moveFirstVisibleAndCursor(- this->visLines(), 0);
 }
 
 void EditorWidget::cursorPageDown(bool shift)
 {
   turnSelection(shift);
-  moveViewAndCursor(+ this->visLines(), 0);
+  moveFirstVisibleAndCursor(+ this->visLines(), 0);
 }
 
 

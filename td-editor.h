@@ -138,7 +138,7 @@ public:      // funcs
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
   // move by relative line/col
-  void moveRelCursor(int deltaLine, int deltaCol);
+  void moveCursorBy(int deltaLine, int deltaCol);
 
   // line++, col=0.  Ok to move beyond EOF.
   void moveToNextLineStart();
@@ -200,6 +200,12 @@ public:      // funcs
   // Move the view by a relative amount.  Any attempt to go negative
   // is treated as a move to zero.
   void moveFirstVisibleBy(int deltaLine, int deltaCol);
+
+  // First, scroll the view, if necessary, so the cursor is in the
+  // visible region.  Then, behave like 'moveFirstVisibleBy', but also
+  // move the cursor as necessary so its position on the screen stays
+  // the same.
+  void moveFirstVisibleAndCursor(int deltaLine, int deltaCol);
 
   // Adjust the visible region size, preserving 'firstVisible'.  This
   // will silently ensure both sizes are positive.
