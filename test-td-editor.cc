@@ -490,6 +490,13 @@ static void testBlockIndent()
     "      two\n"
     "  \n"
     "  three\n");
+
+  // Test 'getSelectedText'.
+  tde.clearMark();
+  xassert(tde.getSelectedText() == "");
+  tde.setCursor(TextCoord(0,3));
+  tde.setMark(TextCoord(1,7));
+  xassert(tde.getSelectedText() == "ne\n      t");
 }
 
 

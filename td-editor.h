@@ -171,6 +171,9 @@ public:      // funcs
   // Make the mark inactive.
   void clearMark() { m_mark = TextCoord(); m_markActive = false; }
 
+  // Select the entire line containing the cursor.
+  void selectCursorLine();
+
   // Store into 'selLow' the lower of 'cursor' (the parameter) and
   // 'mark' (the field), and into 'selHigh' the higher.  If the mark
   // is not active, set both to 'cursor'.
@@ -180,6 +183,9 @@ public:      // funcs
   // Same, but using the normal cursor.
   void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const
     { getSelectRegionForCursor(cursor(), selLow, selHigh); }
+
+  // Get selected text, or "" if nothing selected.
+  string getSelectedText() const;
 
   // ---------------- visible region and scrolling -----------------
   // Upper-left grid cell that is visible.
@@ -278,10 +284,6 @@ public:      // funcs
   // tested for matches that span multiple lines
   bool findString(TextCoord /*INOUT*/ &tc, char const *text,
                   FindStringFlags flags = FS_NONE) const;
-
-  // --------------------- modify selection ----------------------
-  // Select the entire line containing the cursor.
-  void selectCursorLine();
 
   // ------------------- general text insertion ------------------
   // Insert text, which might have newlines, at cursor.  Place the

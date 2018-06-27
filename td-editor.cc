@@ -75,6 +75,16 @@ void TextDocumentEditor::setMark(TextCoord m)
 }
 
 
+void TextDocumentEditor::selectCursorLine()
+{
+  // Move the cursor to the start of its line.
+  this->setCursorColumn(0);
+
+  // Make the selection end at the start of the next line.
+  this->setMark(TextCoord(this->cursor().line + 1, 0));
+}
+
+
 void TextDocumentEditor::getSelectRegionForCursor(TextCoord cursor,
   TextCoord &selLow, TextCoord &selHigh) const
 {
@@ -91,6 +101,19 @@ void TextDocumentEditor::getSelectRegionForCursor(TextCoord cursor,
       selLow = m;
       selHigh = cursor;
     }
+  }
+}
+
+
+string TextDocumentEditor::getSelectedText() const
+{
+  if (!this->m_markActive) {
+    return "";
+  }
+  else {
+    TextCoord selLow, selHigh;
+    this->getSelectRegion(selLow, selHigh);
+    return this->getTextRange(selLow, selHigh);
   }
 }
 
@@ -545,16 +568,6 @@ void TextDocumentEditor::moveToPrevLineEnd()
   int prevLine = max(0, cursor().line - 1);
   moveCursor(false /*relLine*/, prevLine,
              false /*relCol*/, lineLengthLoose(prevLine));
-}
-
-
-void TextDocumentEditor::selectCursorLine()
-{
-  // Move the cursor to the start of its line.
-  this->setCursorColumn(0);
-
-  // Make the selection end at the start of the next line.
-  this->setMark(TextCoord(this->cursor().line + 1, 0));
 }
 
 

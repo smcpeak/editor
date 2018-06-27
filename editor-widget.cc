@@ -315,12 +315,6 @@ void EditorWidget::redraw()
 }
 
 
-void EditorWidget::selectCursorLine()
-{
-  editor->selectCursorLine();
-}
-
-
 void EditorWidget::recomputeLastVisible()
 {
   int h = this->height();
@@ -1762,19 +1756,6 @@ void EditorWidget::blockIndent(int amt)
     redraw();
   }
 }
-
-string EditorWidget::getSelectedText() const
-{
-  if (!this->selectEnabled()) {
-    return "";
-  }
-  else {
-    TextCoord selLow, selHigh;
-    editor->getSelectRegion(selLow, selHigh);
-    return editor->getTextRange(selLow, selHigh);
-  }
-}
-
 
 // ----------------- nonfocus situation ------------------
 void EditorWidget::focusInEvent(QFocusEvent *e)

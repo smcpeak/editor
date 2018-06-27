@@ -249,11 +249,9 @@ public:      // funcs
   bool selectEnabled() const              { return editor->markActive(); }
   void clearMark()                        { editor->clearMark(); }
 
-  // get selected text, or "" if nothing selected
-  string getSelectedText() const;
+  string getSelectedText() const          { return editor->getSelectedText(); }
 
-  // Select the entire line the cursor is on.
-  void selectCursorLine();
+  void selectCursorLine()                 { editor->selectCursorLine(); }
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
