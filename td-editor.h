@@ -333,13 +333,23 @@ ENUM_BITWISE_OPS(TextDocumentEditor::FindStringFlags,
                  TextDocumentEditor::FS_ALL)
 
 
-// Save/restore cursor across an operation.
+// Save/restore cursor, mark, and scroll position across an operation.
 class CursorRestorer {
-  TextDocumentEditor &doc;
-  TextCoord orig;
+  // Editor we will restore.
+  TextDocumentEditor &tde;
+
+  // Values to restore.
+  TextCoord cursor;
+  bool markActive;
+  TextCoord mark;
+  TextCoord firstVisible;
+
+  // We don't save 'lastVisible' since we assume that the visible
+  // region size will not be affected by the operations this class
+  // is wrapped around.
 
 public:
-  CursorRestorer(TextDocumentEditor &d);
+  CursorRestorer(TextDocumentEditor &tde);
   ~CursorRestorer();
 };
 

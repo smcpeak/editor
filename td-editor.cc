@@ -637,14 +637,24 @@ bool TextDocumentEditor::blockIndent(int amt)
 
 
 // -------------------- CursorRestorer ------------------
-CursorRestorer::CursorRestorer(TextDocumentEditor &d)
-  : doc(d),
-    orig(d.cursor())
+CursorRestorer::CursorRestorer(TextDocumentEditor &e)
+  : tde(e),
+    cursor(e.cursor()),
+    markActive(e.markActive()),
+    mark(markActive? e.mark() : TextCoord()),
+    firstVisible(e.firstVisible())
 {}
 
 CursorRestorer::~CursorRestorer()
 {
-  doc.setCursor(orig);
+  tde.setCursor(cursor);
+  if (markActive) {
+    tde.setMark(mark);
+  }
+  else {
+    tde.clearMark();
+  }
+  tde.setFirstVisible(firstVisible);
 }
 
 
