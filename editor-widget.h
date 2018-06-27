@@ -295,11 +295,6 @@ public:      // funcs
   // text and scroll if necessary so it is visible.
   void insertText(char const *text, int textLen);
 
-  // --------------------------- deletion ----------------------------
-  // Delete any number of characters to the left of cursor, but not
-  // more than exist in the document between its start and the cursor.
-  void deleteAtCursor(int numChars);
-
   // -------------------- reformatting whitespace ---------------------
   // Indent or unindent selected lines.
   void blockIndent(int amt);

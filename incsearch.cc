@@ -291,11 +291,10 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
         }
 
         // remember what is selected
-        removedText = ed->getSelectedText();
+        removedText = ed->editor->getSelectedText();
 
         // remove the selected occurrence of the match string
-        //ed->cursorLeftBy(text.length());   // changed semantics of 'deleteAtCursor' to not require this
-        ed->deleteAtCursor(text.length());
+        ed->editor->deleteSelection();
 
         // change mode
         setMode(M_GET_REPLACEMENT);
@@ -514,8 +513,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 
       case Qt::Key_Backspace:
         if (replaceText.length() > 0) {
-          //ed->cursorLeftBy(1);
-          ed->deleteAtCursor(1);
+          ed->editor->deleteLR(true /*left*/, 1);
 
           replaceText = string(toCStr(replaceText), replaceText.length()-1);
         }
@@ -562,8 +560,7 @@ bool IncSearch::getReplacementPseudoKey(InputPseudoKey pkey)
 bool IncSearch::replace()
 {
   // remove match text
-  //ed->cursorLeftBy(text.length());
-  ed->deleteAtCursor(text.length());
+  ed->editor->deleteLR(true /*left*/, text.length());
 
   // insert replacement text
   ed->editor->insertString(replaceText);

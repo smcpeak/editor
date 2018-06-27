@@ -1354,18 +1354,6 @@ void EditorWidget::insertText(char const *text, int textLen)
   redraw();
 }
 
-void EditorWidget::deleteAtCursor(int amt)
-{
-  xassert(amt >= 0);
-  if (amt == 0) {
-    return;
-  }
-
-  editor->fillToCursor();
-  editor->deleteLR(true /*left*/, amt);
-  scrollToCursor();
-}
-
 
 void EditorWidget::justifyNearCursorLine()
 {
