@@ -309,7 +309,7 @@ public:      // funcs
   // --------------------------- insertion ---------------------------
   // Insert 'text' at cursor.  Set cursor to the end of the inserted
   // text and scroll if necessary so it is visible.
-  void insertText(char const *text);
+  void insertText(char const *text, int textLen);
 
   // --------------------------- deletion ----------------------------
   // given that the cursor is at the end of a line, join this line

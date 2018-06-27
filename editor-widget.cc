@@ -1113,7 +1113,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         string s = stringf("%d-%02d-%02d %02d:%02d",
                            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
                            tm->tm_hour, tm->tm_min);
-        insertText(toCStr(s));
+        insertText(s.c_str(), s.length());
         break;
       }
     }
@@ -1390,9 +1390,9 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 }
 
 
-void EditorWidget::insertText(char const *text)
+void EditorWidget::insertText(char const *text, int textLen)
 {
-  editor->insertNulTermText(text);
+  editor->insertText(text, textLen);
   redraw();
 }
 
@@ -1664,7 +1664,7 @@ void EditorWidget::editPaste()
 
     // insert at cursor
     QByteArray utf8(text.toUtf8());
-    insertText(utf8.constData());
+    insertText(utf8.constData(), utf8.length());
   }
 }
 
