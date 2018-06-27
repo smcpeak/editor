@@ -12,9 +12,11 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
     m_firstVisible(),
 
     // This size isn't intended to be user-visible since the client
-    // code ought to set the size.  But if they do not, 20x60 will
-    // be distinct and recognizable while also being serviceable.
-    m_lastVisible(19, 59)
+    // code ought to set the size.  But it does get used by the tests,
+    // where I want a small size in order to incidentally exercise the
+    // scrolling code.  Tests that actually check scrolling should set
+    // their own size though.
+    m_lastVisible(4, 9)
 {
   selfCheck();
 }
