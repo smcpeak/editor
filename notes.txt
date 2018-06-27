@@ -6,6 +6,8 @@ TODOs:
     - remove direct access to underlying doc(), core(), etc.
     - make TextDocumentEditor consistently accept "invalid" cursors
     - IncSearch should work on top of TDE, not EditorWidget
+    - put EditorWindow into its own file
+    - maybe GlobalState too
     
 
 

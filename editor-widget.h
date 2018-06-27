@@ -172,57 +172,8 @@ public:      // data
   bool ignoreScrollSignals;
 
 private:     // funcs
-  // fill document with whitespace, if necessary, so that the current
-  // cursor position is on a valid character, i.e.:
-  //   - cursorLine < docFile->numLines()
-  //   - cursorCol <= docFile->lineLength(cursorLine)
-  void fillToCursor();
-
-  // given that the cursor is at the end of a line, join this line
-  // with the next one
-  void spliceNextLine();
-
-  // Justify lines near the cursor.
-  void justifyNearCursorLine();
-
-  // ctrl-pageup/pagedown
-  void cursorToTop();
-  void cursorToBottom();
-
-  // selection manipulation
-  void turnOffSelection();
-  void turnOnSelection();
-  void turnSelection(bool on);
-  void clearSelIfEmpty();
-
-  // set cursorLine/cursorCol to the x/y derived from 'm'
-  void setCursorToClickLoc(QMouseEvent *m);
-
-  // intermediate paint step
-  void updateFrame(QPaintEvent *ev, TextCoord drawnCursor);
-
-  // Paint a single character at the given location.
-  void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);
-
-  // Set 'curFont' and 'underline', plus the foreground
-  // and background colors of 'paint', based on 'db' and 'cat'.
-  void setDrawStyle(QPainter &paint,
-                    QtBDFFont *&curFont, bool &underlining,
-                    StyleDB *db, TextCategory cat);
-
-  // offset from one line to the next
-  int lineHeight() const { return fontHeight+interLineSpace; }
-
-  // helper
-  int stcHelper(int firstVis, int lastVis, int cur, int gap);
-
-  // nonfocus listening
-  void startListening();
-  void stopListening();
-
-  // If we already have an editor for 'file', return it.  Otherwise,
-  // make a new editor, add it to 'm_editors', and return that.
-  TextDocumentFileEditor *getOrMakeEditor(TextDocumentFile *file);
+  // set fonts, given actual BDF description data (*not* file names)
+  void setFonts(char const *normal, char const *italic, char const *bold);
 
   // debugging
   static string lineColStr(TextCoord tc);
@@ -233,16 +184,16 @@ private:     // funcs
 
 protected:   // funcs
   // QWidget funcs
-  virtual bool event(QEvent *e);
-  virtual void paintEvent(QPaintEvent *);
-  virtual void keyPressEvent(QKeyEvent *k);
-  virtual void keyReleaseEvent(QKeyEvent *k);
-  virtual void resizeEvent(QResizeEvent *r);
-  virtual void mousePressEvent(QMouseEvent *m);
-  virtual void mouseMoveEvent(QMouseEvent *m);
-  virtual void mouseReleaseEvent(QMouseEvent *m);
-  virtual void focusInEvent(QFocusEvent *e);
-  virtual void focusOutEvent(QFocusEvent *e);
+  virtual bool event(QEvent *e) override;
+  virtual void paintEvent(QPaintEvent *) override;
+  virtual void keyPressEvent(QKeyEvent *k) override;
+  virtual void keyReleaseEvent(QKeyEvent *k) override;
+  virtual void resizeEvent(QResizeEvent *r) override;
+  virtual void mousePressEvent(QMouseEvent *m) override;
+  virtual void mouseMoveEvent(QMouseEvent *m) override;
+  virtual void mouseReleaseEvent(QMouseEvent *m) override;
+  virtual void focusInEvent(QFocusEvent *e) override;
+  virtual void focusOutEvent(QFocusEvent *e) override;
 
 public:      // funcs
   EditorWidget(TextDocumentFile *docFile, StatusDisplay *status,
@@ -252,23 +203,13 @@ public:      // funcs
   // Assert internal invariants.
   void selfCheck() const;
 
-  // set fonts, given actual BDF description data (*not* file names)
-  void setFonts(char const *normal, char const *italic, char const *bold);
+  // ---------------------------- cursor -----------------------------
+  // ctrl-pageup/pagedown
+  void cursorToTop();
+  void cursorToBottom();
 
-  // Change which file this editor widget is editing.
-  void setDocumentFile(TextDocumentFile *file);
-
-  // 'file' is going away.  Remove all references to it.  If it is the
-  // open file, pick another from the global list.
-  void forgetAboutFile(TextDocumentFile *file);
-
-  // Current file being edited.  This is 'const' because the file is
-  // shared with other widgets in this process.
-  TextDocumentFile *getDocumentFile() const;
-
-  // Editor associated with current file and this particular widget.
-  // This is not 'const' because the editor is owned by this object.
-  TextDocumentEditor *getDocumentEditor();
+  // set cursorLine/cursorCol to the x/y derived from 'm'
+  void setCursorToClickLoc(QMouseEvent *m);
 
   // Text cursor location (as opposed to mouse cursor image).
   TextCoord textCursor() const            { return editor->cursor(); }
@@ -280,16 +221,8 @@ public:      // funcs
   // TODO: I think I should remove these in favor of code directly
   // calling the editor object.  Anyway, most of the code that invokes
   // these should be moved into TextDocumentEditor.
-  TextCoord mark() const                  { return editor->mark(); }
-  void setMark(TextCoord tc)              { editor->setMark(tc); }
-  bool selectEnabled() const              { return editor->markActive(); }
-  void clearMark()                        { editor->clearMark(); }
   int cursorLine() const                  { return textCursor().line; }
   int cursorCol() const                   { return textCursor().column; }
-  int firstVisibleLine() const            { return editor->firstVisible().line; }
-  int firstVisibleCol() const             { return editor->firstVisible().column; }
-  int lastVisibleLine() const             { return editor->lastVisible().line; }
-  int lastVisibleCol() const              { return editor->lastVisible().column; }
 
   // absolute cursor movement
   void cursorTo(TextCoord tc);
@@ -301,6 +234,31 @@ public:      // funcs
   void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
   void cursorDownBy(int amt)              { moveCursorBy(+amt, 0); }
 
+  // things often bound to cursor, etc. keys; 'shift' indicates
+  // whether the shift key is held (so the selection should be turned
+  // on, or remain on)
+  void cursorLeft(bool shift);
+  void cursorRight(bool shift);
+  void cursorHome(bool shift);
+  void cursorEnd(bool shift);
+  void cursorUp(bool shift);
+  void cursorDown(bool shift);
+  void cursorPageUp(bool shift);
+  void cursorPageDown(bool shift);
+  void cursorToEndOfNextLine(bool shift);
+
+  // ----------------------------- mark ------------------------------
+  // selection manipulation
+  void turnOffSelection();
+  void turnOnSelection();
+  void turnSelection(bool on);
+  void clearSelIfEmpty();
+
+  TextCoord mark() const                  { return editor->mark(); }
+  void setMark(TextCoord tc)              { editor->setMark(tc); }
+  bool selectEnabled() const              { return editor->markActive(); }
+  void clearMark()                        { editor->clearMark(); }
+
   // Store into 'selLow' the lower of 'cursor' (the parameter) and
   // 'mark' (the field), and into 'selHigh' the higher.  If the mark
   // is not active, set both to 'cursor'.
@@ -311,8 +269,20 @@ public:      // funcs
   void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const
     { getSelectRegionForCursor(textCursor(), selLow, selHigh); }
 
+  // get selected text, or "" if nothing selected
+  string getSelectedText() const;
+
   // Select the entire line the cursor is on.
   void selectCursorLine();
+
+  // --------------------------- scrolling -------------------------
+  // helper
+  int stcHelper(int firstVis, int lastVis, int cur, int gap);
+
+  int firstVisibleLine() const            { return editor->firstVisible().line; }
+  int firstVisibleCol() const             { return editor->firstVisible().column; }
+  int lastVisibleLine() const             { return editor->lastVisible().line; }
+  int lastVisibleCol() const              { return editor->lastVisible().column; }
 
   // Change the current firstVisibleLine/Col (calls updateView());
   // does *not* move the cursor.
@@ -343,9 +313,6 @@ public:      // funcs
   void scrollToCursor(int edgeGap=0);
   void scrollToCursor_noRedraw(int edgeGap=0);
 
-  // redraw widget, etc.; calls updateView() and viewChanged()
-  void redraw();
-
   // move the cursor and the view by a set increment, and repaint;
   // truncation at low end is automatic
   void moveViewAndCursor(int deltaLine, int deltaCol);
@@ -355,51 +322,62 @@ public:      // funcs
   int visLines() const { return this->editor->visLines(); }
   int visCols() const { return this->editor->visColumns(); }
 
-  // show the info box near the cursor
-  void showInfo(char const *info);
-
-  // hide the info box if it's visible
-  void hideInfo();
-
-  // things often bound to cursor, etc. keys; 'shift' indicates
-  // whether the shift key is held (so the selection should be turned
-  // on, or remain on)
-  void cursorLeft(bool shift);
-  void cursorRight(bool shift);
-  void cursorHome(bool shift);
-  void cursorEnd(bool shift);
-  void cursorUp(bool shift);
-  void cursorDown(bool shift);
-  void cursorPageUp(bool shift);
-  void cursorPageDown(bool shift);
-  void cursorToEndOfNextLine(bool shift);
-
-  // some other commands...
-  void deleteCharAtCursor();
-  void blockIndent(int amt);
-
-  // insert or delete small amounts of text (not guaranteed
-  // to be efficient for large amounts of text)
+  // --------------------------- insertion ---------------------------
   void insertAtCursor(char const *text);
-  void deleteAtCursor(int numChars);    // deletes to the left of cursor
+
+  // fill document with whitespace, if necessary, so that the current
+  // cursor position is on a valid character, i.e.:
+  //   - cursorLine < docFile->numLines()
+  //   - cursorCol <= docFile->lineLength(cursorLine)
+  void fillToCursor();
+
+  // --------------------------- deletion ----------------------------
+  // given that the cursor is at the end of a line, join this line
+  // with the next one
+  void spliceNextLine();
+
+  // Delete one character to the right of the cursor.
+  void deleteCharAtCursor();
+
+  // Delete any number of characters to the left of cursor, but not
+  // more than exist in the document between its start and the cursor.
+  void deleteAtCursor(int numChars);
 
   // Delete the character to the left of the cursor.  Or, if some
   // text is selected, delete that.
   void deleteLeftOfCursor();
 
-  // get selected text, or "" if nothing selected
-  string getSelectedText() const;
+  // -------------------- reformatting whitespace ---------------------
+  void blockIndent(int amt);
 
-  // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
+  // Justify lines near the cursor.
+  void justifyNearCursorLine();
 
-  // called by an input proxy when it detaches; I can
-  // reset the mode pixmap then
-  virtual void inputProxyDetaching();
+  // -------------------- interaction with files ------------------
+  // nonfocus listening
+  void startListening();
+  void stopListening();
 
+  // If we already have an editor for 'file', return it.  Otherwise,
+  // make a new editor, add it to 'm_editors', and return that.
+  TextDocumentFileEditor *getOrMakeEditor(TextDocumentFile *file);
+
+  // Change which file this editor widget is editing.
+  void setDocumentFile(TextDocumentFile *file);
+
+  // 'file' is going away.  Remove all references to it.  If it is the
+  // open file, pick another from the global list.
+  void forgetAboutFile(TextDocumentFile *file);
+
+  // Current file being edited.  This is 'const' because the file is
+  // shared with other widgets in this process.
+  TextDocumentFile *getDocumentFile() const;
+
+  // Editor associated with current file and this particular widget.
+  // This is not 'const' because the editor is owned by this object.
+  TextDocumentEditor *getDocumentEditor();
+
+  // ---------------------------- input -----------------------------
   // Initial handling of pseudokeys.  First dispatches to the
   // proxy if any, and then handles what is not yet handled.
   void pseudoKeyPress(InputPseudoKey pkey);
@@ -412,6 +390,42 @@ public:      // funcs
   // user has indicated they want to cancel it).
   bool editSafetyCheck();
 
+  // TextDocumentObserver funcs
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
+
+  // called by an input proxy when it detaches; I can
+  // reset the mode pixmap then
+  virtual void inputProxyDetaching();
+
+  // -------------------------- output ----------------------------
+  // intermediate paint step
+  void updateFrame(QPaintEvent *ev, TextCoord drawnCursor);
+
+  // Paint a single character at the given location.
+  void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);
+
+  // Set 'curFont' and 'underline', plus the foreground
+  // and background colors of 'paint', based on 'db' and 'cat'.
+  void setDrawStyle(QPainter &paint,
+                    QtBDFFont *&curFont, bool &underlining,
+                    StyleDB *db, TextCategory cat);
+
+  // show the info box near the cursor
+  void showInfo(char const *info);
+
+  // hide the info box if it's visible
+  void hideInfo();
+
+  // Offset from one baseline to the next, in pixels.
+  int lineHeight() const { return fontHeight+interLineSpace; }
+
+  // redraw widget, etc.; calls updateView() and viewChanged()
+  void redraw();
+
+  // ------------------------- clipboard --------------------------
   // Copy selected text to clipboard.  Clear the mark if
   // 'clearSelection'.
   void innerEditCopy(bool clearSelection);
