@@ -834,20 +834,6 @@ static void inc(int &val, int amt)
 }
 
 
-void EditorWidget::cursorToTop()
-{
-  cursorTo(TextCoord(0, 0));
-  scrollToCursor();
-}
-
-void EditorWidget::cursorToBottom()
-{
-  cursorTo(TextCoord(editor->numLines()-1, 0));
-  scrollToCursor();
-  //redraw();    // 'scrollToCursor' does 'redraw()' automatically
-}
-
-
 void EditorWidget::turnOffSelection()
 {
   this->clearMark();
@@ -957,12 +943,14 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_PageUp:
         turnOffSelection();
-        cursorToTop();
+        editor->moveCursorToTop();
+        redraw();
         break;
 
       case Qt::Key_PageDown:
         turnOffSelection();
-        cursorToBottom();
+        editor->moveCursorToBottom();
+        redraw();
         break;
 
       case Qt::Key_Enter:
@@ -1160,12 +1148,14 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_PageUp:
         turnOnSelection();
-        cursorToTop();
+        editor->moveCursorToTop();
+        redraw();
         break;
 
       case Qt::Key_PageDown:
         turnOnSelection();
-        cursorToBottom();
+        editor->moveCursorToBottom();
+        redraw();
         break;
 
       case Qt::Key_Enter:

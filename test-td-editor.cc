@@ -837,6 +837,12 @@ static void testMoveCursor()
   tde.setCursor(TextCoord(0, 0));
   tde.advanceWithWrap(true /*backwards*/);
   expectCursor(tde, 0,0);
+
+  // Test 'moveCursorToTop/Bottom'.
+  tde.moveCursorToBottom();
+  expectCursor(tde, 3,0);
+  tde.moveCursorToTop();
+  expectCursor(tde, 0,0);
 }
 
 

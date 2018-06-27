@@ -194,10 +194,6 @@ public:      // funcs
   void selfCheck() const;
 
   // ---------------------------- cursor -----------------------------
-  // ctrl-pageup/pagedown
-  void cursorToTop();
-  void cursorToBottom();
-
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
 

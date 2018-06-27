@@ -571,6 +571,19 @@ void TextDocumentEditor::moveToPrevLineEnd()
 }
 
 
+void TextDocumentEditor::moveCursorToTop()
+{
+  setCursor(TextCoord(0, 0));
+  scrollToCursor();
+}
+
+void TextDocumentEditor::moveCursorToBottom()
+{
+  setCursor(TextCoord(m_doc->numLines() - 1, 0));
+  scrollToCursor();
+}
+
+
 void TextDocumentEditor::advanceWithWrap(bool backwards)
 {
   int line = cursor().line;

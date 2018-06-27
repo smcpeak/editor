@@ -147,7 +147,11 @@ public:      // funcs
   // BOF, will stop at end of first line.
   void moveToPrevLineEnd();
 
-  // Move cursor position one character forwards or backwards, wrapping
+  // Move to the beginning of the first or last line in the file.
+  void moveCursorToTop();
+  void moveCursorToBottom();
+
+  // Move cursor position one character forward or backward, wrapping
   // to the next/prev line at line edges.  Stops at the start of the
   // file, but will advance indefinitely at the end.
   //
