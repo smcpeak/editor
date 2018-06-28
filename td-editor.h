@@ -191,6 +191,10 @@ public:      // funcs
   // Get selected text, or "" if nothing selected.
   string getSelectedText() const;
 
+  // If the mark is active and greater than the cursor, swap them
+  // so the mark is the lesser of the two.
+  void normalizeCursorGTEMark();
+
   // ---------------- visible region and scrolling -----------------
   // Upper-left grid cell that is visible.
   TextCoord firstVisible() const       { return m_firstVisible; }

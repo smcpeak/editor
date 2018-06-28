@@ -45,6 +45,10 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   // compare contents to what is expected
   if (0!=memcmp(text, block.getDataC(), block.getDataLen()) ||
       (int)strlen(text)!=(int)block.getDataLen()) {
+    cout << "expect: " << quoted(text) << endl;
+    cout << "actual: \""
+         << encodeWithEscapes(block.getDataC(), block.getDataLen())
+         << '"' << endl;
     xfailure("text mismatch");
   }
 }
@@ -517,6 +521,19 @@ static void testBlockIndent()
   tde.setCursor(TextCoord(0,3));
   tde.setMark(TextCoord(1,7));
   xassert(tde.getSelectedText() == "ne\n      t");
+
+  // Test 'insertNewline' while beyond EOF.
+  tde.clearMark();
+  tde.setCursor(TextCoord(6,6));
+  tde.insertNewline();
+  expectNM(tde, 7,0,
+    "  one\n"
+    "      two\n"
+    "  \n"
+    "  three\n"
+    "\n"
+    "\n"
+    "\n");
 }
 
 
@@ -1203,6 +1220,45 @@ static void testInsertNewlineAutoIndent2()
     "    ree\n"
     "\n");
   expectFV(tde, 6,3, 4,1, 3,3);
+
+  // Hit Enter while something is selected.
+  tde.setMark(TextCoord(2,0));
+  tde.setCursor(TextCoord(8,4));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,3,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "   th\n"
+    "    ree\n"
+    "\n");
+
+  // Do the above again but with cursor and mark swapped;
+  // result should be the same.
+  tde.deleteTextRange(TextCoord(0,0), tde.endCoord());
+  tde.setCursor(TextCoord(0,0));
+  tde.insertNulTermText(
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "    th\n"
+    "    ree\n"
+    "\n");
+  tde.setCursor(TextCoord(2,0));
+  tde.setMark(TextCoord(8,4));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,3,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "   th\n"
+    "    ree\n"
+    "\n");
 }
 
 

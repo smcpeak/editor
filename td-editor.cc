@@ -9,6 +9,7 @@
 
 int TextDocumentEditor::s_objectCount = 0;
 
+
 TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
   : m_doc(doc),
     m_cursor(),
@@ -114,6 +115,17 @@ string TextDocumentEditor::getSelectedText() const
     TextCoord selLow, selHigh;
     this->getSelectRegion(selLow, selHigh);
     return this->getTextRange(selLow, selHigh);
+  }
+}
+
+
+void TextDocumentEditor::normalizeCursorGTEMark()
+{
+  if (this->m_markActive &&
+      this->m_mark > this->m_cursor) {
+    TextCoord tmp(this->m_mark);
+    this->m_mark = this->m_cursor;
+    this->m_cursor = tmp;
   }
 }
 
@@ -742,6 +754,9 @@ void TextDocumentEditor::insertNewline()
 
 void TextDocumentEditor::insertNewlineAutoIndent()
 {
+  // The code below this assumes cursor > mark if mark is active.
+  this->normalizeCursorGTEMark();
+
   int lineLength = this->cursorLineLength();
   bool hadCharsToRight = (m_cursor.column < lineLength);
   bool beyondLineEnd =   (m_cursor.column > lineLength);
