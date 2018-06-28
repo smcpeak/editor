@@ -352,7 +352,7 @@ void TextDocumentEditor::deleteKeyFunction()
     this->deleteChar();
   }
 
-  this->scrollToCursor();
+  // No need to scroll; deleteSelection scrolls, other cases do not move.
 }
 
 
