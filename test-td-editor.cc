@@ -866,10 +866,15 @@ static void testMoveCursor()
   tde.advanceWithWrap(true /*backwards*/);
   expectCursor(tde, 0,0);
 
-  // Test 'moveCursorToTop/Bottom'.
+  // Test 'moveCursorToTop/Bottom' with a tiny window.
+  tde.setVisibleSize(2,2);
   tde.moveCursorToBottom();
-  expectCursor(tde, 3,0);
+  expectFV(tde, 3,0, 2,0, 2,2);
   tde.moveCursorToTop();
+  expectFV(tde, 0,0, 0,0, 2,2);
+
+  // Test 'moveCursorBy' attempting to move to negative values.
+  tde.moveCursorBy(-1, -1);
   expectCursor(tde, 0,0);
 }
 
