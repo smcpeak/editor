@@ -182,7 +182,7 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 }
 
 
-// Test ::findString.
+// Test findString.
 static void testFind(TextDocumentEditor const &tde, int line, int col,
                      char const *text, int ansLine, int ansCol,
                      TextDocumentEditor::FindStringFlags flags)
@@ -339,6 +339,26 @@ static void testTextManipulation()
 
   testFind(tde, 0,0, "arg", 1,6, none);
   testFind(tde, 0,0, "arg", -1,-1, oneLine);
+
+  // Search that starts beyond EOL.
+  testFind(tde, 0,20, "arg", 1,6, none);
+  testFind(tde, 0,20, "arg", 1,6, advance);
+}
+
+
+static void testFindInLongLine()
+{
+  TextDocumentAndEditor tde;
+
+  // This test kills the mutant in 'findString' that arises from
+  // removing the call to 'ensureIndexDoubler'.  Without that call,
+  // the subsequent 'getLine' overwrites an array bounds,
+  // corrupting memory.  Of course, whether that is detected depends
+  // on details of the C library, among other things, but fortunately
+  // it seems to be reliably detected under mingw at least.
+  tde.insertNulTermText(
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxZZZ\n");
+  testFind(tde, 0,0, "ZZZ", 0,60, TextDocumentEditor::FS_NONE);
 }
 
 
@@ -1213,6 +1233,7 @@ int main()
   try {
     testUndoRedo();
     testTextManipulation();
+    testFindInLongLine();
     testBlockIndent();
     testFillToCursor();
     testScrollToCursor();
