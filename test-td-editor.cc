@@ -1190,7 +1190,7 @@ static void testInsertNewlineAutoIndent2()
     "    ree\n"
     "\n");
 
-  // Enter while on blank line beyond EOF below indented line.
+  // Enter while on blank line beyond EOL below indented line.
   tde.insertNewlineAutoIndent();
   expectNM(tde, 3,3,
     "  one\n"
@@ -1262,6 +1262,48 @@ static void testInsertNewlineAutoIndent2()
 }
 
 
+static void testInsertNewlineAutoIndent3()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\n");
+
+  // Hit Enter while beyond EOF.
+  tde.setCursor(TextCoord(4,0));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 5,0,
+    "one\n"
+    "two\n"
+    "\n"
+    "\n"
+    "\n");
+  tde.undo();
+
+  // Now with selected text, entirely beyond EOF.
+  tde.setMark(TextCoord(4,0));
+  tde.setCursor(TextCoord(4,4));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 5,0,
+    "one\n"
+    "two\n"
+    "\n"
+    "\n"
+    "\n");
+  tde.undo();
+
+  // Selected text straddling EOF.
+  tde.setMark(TextCoord(1,1));
+  tde.setCursor(TextCoord(4,4));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,0,
+    "one\n"
+    "t\n");
+  tde.undo();
+
+}
+
+
 // -------------------- testSetVisibleSize ----------------------
 static void testSetVisibleSize()
 {
@@ -1306,6 +1348,7 @@ int main()
     testClipboard();
     testInsertNewlineAutoIndent();
     testInsertNewlineAutoIndent2();
+    testInsertNewlineAutoIndent3();
     testSetVisibleSize();
 
     xassert(TextDocumentEditor::s_objectCount == 0);

@@ -757,17 +757,8 @@ void TextDocumentEditor::insertNewlineAutoIndent()
   // The code below this assumes cursor > mark if mark is active.
   this->normalizeCursorGTEMark();
 
-  int lineLength = this->cursorLineLength();
-  bool hadCharsToRight = (m_cursor.column < lineLength);
-  bool beyondLineEnd =   (m_cursor.column > lineLength);
-  if (beyondLineEnd) {
-    // Move the cursor to the end of the line so
-    // that fillToCursor will not add spaces.
-    this->setCursorColumn(lineLength);
-  }
-
-  // Add newlines if needed so the cursor is on a valid line.
-  this->fillToCursor();
+  // Will we be carrying text forward onto the new line?
+  bool hadCharsToRight = (m_cursor.column < this->cursorLineLength());
 
   // typing replaces selection
   this->deleteSelectionIf();
