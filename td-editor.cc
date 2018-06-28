@@ -763,11 +763,9 @@ void TextDocumentEditor::insertNewlineAutoIndent()
   // typing replaces selection
   this->deleteSelectionIf();
 
-  // Actually insert the newline character.
+  // Actually insert the newline character.  This will scroll
+  // to the left edge too.
   this->insertNewline();
-
-  // Scroll back to left edge.
-  this->setFirstVisibleCol(0);
 
   // auto-indent
   int ind = this->getAboveIndentation(m_cursor.line - 1);

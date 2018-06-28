@@ -1300,7 +1300,27 @@ static void testInsertNewlineAutoIndent3()
     "one\n"
     "t\n");
   tde.undo();
+}
 
+
+static void testInsertNewlineAutoIndent4()
+{
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(5, 10);
+  tde.insertNulTermText(
+    "  a\n"
+    "  b\n");
+
+  // Start with the display scrolled to the right.  It should
+  // return to the left edge.
+  tde.setFirstVisible(TextCoord(0,1));
+  tde.setCursor(TextCoord(1,3));
+  tde.insertNewlineAutoIndent();
+  expectFV(tde, 2,2, 0,0, 5,10);
+  expectNM(tde, 2,2,
+    "  a\n"
+    "  b\n"
+    "\n");
 }
 
 
@@ -1349,6 +1369,7 @@ int main()
     testInsertNewlineAutoIndent();
     testInsertNewlineAutoIndent2();
     testInsertNewlineAutoIndent3();
+    testInsertNewlineAutoIndent4();
     testSetVisibleSize();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
