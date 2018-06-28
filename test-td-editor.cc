@@ -1084,6 +1084,13 @@ static void testClipboard()
   expectNM(tde, 1,5,
     "one\n"
     "twxyze\n");
+
+  // Paste while beyond EOL.
+  tde.setCursor(TextCoord(0, 5));
+  tde.clipboardPaste("123", 3);
+  expectNM(tde, 0,8,
+    "one  123\n"
+    "twxyze\n");
 }
 
 
@@ -1350,6 +1357,43 @@ static void testSetVisibleSize()
 }
 
 
+// -------------------- testCursorRestorer ----------------------
+static void testCursorRestorer()
+{
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(5, 10);
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+
+  // Restore an active mark and a scroll position.
+  tde.setMark(TextCoord(2,1));
+  tde.setCursor(TextCoord(2,2));
+  tde.setFirstVisible(TextCoord(1,1));
+  {
+    CursorRestorer restorer(tde);
+    tde.clearMark();
+    tde.setCursor(TextCoord(4,4));
+    tde.setFirstVisible(TextCoord(0,0));
+  }
+  expectMark(tde, 2,1);
+  expectFV(tde, 2,2, 1,1, 5,10);
+
+  // Ensure inactive mark is restored as such.
+  tde.clearMark();
+  {
+    CursorRestorer restorer(tde);
+    tde.setMark(TextCoord(0,0));
+  }
+  expectNM(tde, 2,2,
+    "one\n"
+    "two\n"
+    "three\n");
+}
+
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -1371,6 +1415,7 @@ int main()
     testInsertNewlineAutoIndent3();
     testInsertNewlineAutoIndent4();
     testSetVisibleSize();
+    testCursorRestorer();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 
