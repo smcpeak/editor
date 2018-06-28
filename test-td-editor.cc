@@ -972,6 +972,59 @@ static void testDeleteKeyFunction()
 }
 
 
+// ---------------------- testClipboard -------------------------
+static void testClipboard()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Try with empty strings.
+  xassert(tde.clipboardCopy().isempty());
+  xassert(tde.clipboardCut().isempty());
+  tde.clipboardPaste("", 0);
+  expectNM(tde, 3,0,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Copy.
+  tde.setCursor(TextCoord(0,1));
+  tde.setMark(TextCoord(1,2));
+  xassert(tde.clipboardCopy() == "ne\ntw");
+  expectNM(tde, 0,1,
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Cut with cursor ahead of mark.
+  tde.setCursor(TextCoord(2,4));
+  tde.setMark(TextCoord(2,2));
+  xassert(tde.clipboardCut() == "re");
+  expectNM(tde, 2,2,
+    "one\n"
+    "two  \n"
+    "the\n");
+
+  // Paste with nothing selected.
+  tde.clipboardPaste("ab\nc", 4);
+  expectNM(tde, 3,1,
+    "one\n"
+    "two  \n"
+    "thab\n"
+    "ce\n");
+
+  // Paste, overwriting a selection.
+  tde.setMark(TextCoord(1,2));
+  tde.clipboardPaste("xyz", 3);
+  expectNM(tde, 1,5,
+    "one\n"
+    "twxyze\n");
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -986,6 +1039,7 @@ int main()
     testMoveCursor();
     testBackspaceFunction();
     testDeleteKeyFunction();
+    testClipboard();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

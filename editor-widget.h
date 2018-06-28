@@ -374,11 +374,6 @@ public:      // funcs
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
 
-  // ------------------------- clipboard --------------------------
-  // Copy selected text to clipboard.  Clear the mark if
-  // 'clearSelection'.
-  void innerEditCopy(bool clearSelection);
-
 public slots:
   // slots to respond to scrollbars
   void scrollToLine(int line);

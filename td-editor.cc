@@ -834,6 +834,38 @@ bool TextDocumentEditor::blockIndent(int amt)
 }
 
 
+string TextDocumentEditor::clipboardCopy()
+{
+  string sel = this->getSelectedText();
+
+  // Un-highlight the selection, which is what emacs does and
+  // I'm now used to.
+  this->clearMark();
+
+  return sel;
+}
+
+
+string TextDocumentEditor::clipboardCut()
+{
+  string sel = this->getSelectedText();
+  if (!sel.isempty()) {
+    this->deleteSelection();
+  }
+  return sel;
+}
+
+
+void TextDocumentEditor::clipboardPaste(char const *text, int textLen)
+{
+  this->fillToCursor();
+  if (this->m_markActive) {
+    this->deleteSelection();
+  }
+  this->insertText(text, textLen);
+}
+
+
 // -------------------- CursorRestorer ------------------
 CursorRestorer::CursorRestorer(TextDocumentEditor &e)
   : tde(e),

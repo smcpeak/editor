@@ -369,6 +369,28 @@ public:      // funcs
   // without doing anything.
   bool blockIndent(int amt);
 
+  // -------------------- clipboard -----------------------
+  // The functions here are part of a clipboard implementation, as
+  // they manipulate the document but not the clipboard itself.  The
+  // client is expected to do the clipboard half.
+
+  // If text is selected, return it and turn off the selection.
+  // Otherwise, return an empty string.
+  //
+  // The reason for turning off the selection is it lets the user see
+  // a visible effect of the operation so they know it happened.  (In
+  // Eclipse, which does not do that, I occasionally press Ctrl+C too
+  // lightly and fail to copy the text.)
+  string clipboardCopy();
+
+  // Like 'clipboardCopy', but also delete the selected text.
+  string clipboardCut();
+
+  // Delete any current selection, then insert 'text', which can be
+  // empty, although clients should normally avoid that.  The cursor
+  // is left at the end of the inserted text.
+  void clipboardPaste(char const *text, int textLen);
+
   // -------------------- undo/redo -----------------------
   // True if we can go back another step in the undo history.
   bool canUndo() const                 { return m_doc->canUndo(); }

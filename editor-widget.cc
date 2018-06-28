@@ -1461,6 +1461,7 @@ void EditorWidget::editUndo()
   }
 }
 
+
 void EditorWidget::editRedo()
 {
   if (editor->canRedo()) {
@@ -1477,74 +1478,41 @@ void EditorWidget::editRedo()
 
 void EditorWidget::editCut()
 {
-  if (this->selectEnabled()) {
-    if (!editSafetyCheck()) {
-      return;
-    }
-
-    this->innerEditCopy(false /*clearSelection*/);
-    this->editDelete();
+  if (this->selectEnabled() && editSafetyCheck()) {
+    string sel = editor->clipboardCut();
+    QApplication::clipboard()->setText(toQString(sel));
+    this->redraw();
   }
 }
 
 
 void EditorWidget::editCopy()
 {
-  // un-highlight the selection, which is what emacs does and
-  // I'm now used to
-  this->innerEditCopy(true /*clearSelection*/);
-  redraw();
-}
-
-void EditorWidget::innerEditCopy(bool clearSelection)
-{
   if (this->selectEnabled()) {
-    // get selected text
-    string sel = getSelectedText();
-
-    // put it into the clipboard
-    QClipboard *cb = QApplication::clipboard();
-    cb->setText(toQString(sel));
-
-    if (clearSelection) {
-      this->clearMark();
-    }
+    string sel = editor->clipboardCopy();
+    QApplication::clipboard()->setText(toQString(sel));
+    this->redraw();
   }
 }
 
 
 void EditorWidget::editPaste()
 {
-  if (!editSafetyCheck()) {
-    return;
-  }
-
-  // get contents of clipboard
-  QClipboard *cb = QApplication::clipboard();
-  QString text = cb->text();
+  QString text = QApplication::clipboard()->text();
   if (text.isEmpty()) {
     QMessageBox::information(this, "Info", "The clipboard is empty.");
   }
-  else {
-    editor->fillToCursor();
-
-    // remove what's selected, if anything
-    editDelete();
-
-    // insert at cursor
+  else if (editSafetyCheck()) {
     QByteArray utf8(text.toUtf8());
-    insertText(utf8.constData(), utf8.length());
+    editor->clipboardPaste(utf8.constData(), utf8.length());
+    this->redraw();
   }
 }
 
 
 void EditorWidget::editDelete()
 {
-  if (this->selectEnabled()) {
-    if (!editSafetyCheck()) {
-      return;
-    }
-
+  if (this->selectEnabled() && editSafetyCheck()) {
     editor->deleteSelection();
     this->redraw();
   }
