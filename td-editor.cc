@@ -3,11 +3,11 @@
 
 #include "td-editor.h"                 // this module
 
+#include "array.h"                     // Array
 #include "trace.h"                     // TRACE
 
 
 int TextDocumentEditor::s_objectCount = 0;
-
 
 TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
   : m_doc(doc),
@@ -433,12 +433,12 @@ string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
     // one inside the string object, but the std::string API doesn't
     // offer a way to do it directly, so I need to refactor my APIs if
     // I want to avoid the extra allocation.
-    char *buf = new char[len+1];
+    Array<char> buf(len+1);
 
     buf[len] = 0;              // NUL terminator
     getLineLoose(TextCoord(tc1.line, tc1.column), buf, len);
-    string ret(buf);
-    delete[] buf;
+    string ret(buf.ptrC());    // Explicitly calling 'ptrC' is only needed for Eclipse...
+
     return ret;
   }
 
