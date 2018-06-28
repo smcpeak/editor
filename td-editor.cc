@@ -740,25 +740,45 @@ void TextDocumentEditor::insertNewline()
 }
 
 
-#if 0     // old?
-void TextDocumentEditor::spliceNextLine(int line)
+void TextDocumentEditor::insertNewlineAutoIndent()
 {
-  xassert(0 <= line && line < numLines());
-
-  // splice this line with the next
-  if (line+1 < numLines()) {
-    // append the contents of the next line
-    int len = lineLength(line+1);
-    Array<char> temp(len);
-    getLine(line+1, 0 /*col*/, temp, len);
-    insertNulTermText(line, lineLength(line), temp, len);
-
-    // now remove the next line
-    deleteText(line+1, 0 /*col*/, len);
-    deleteLine(line+1);
+  int lineLength = this->cursorLineLength();
+  bool hadCharsToRight = (m_cursor.column < lineLength);
+  bool beyondLineEnd =   (m_cursor.column > lineLength);
+  if (beyondLineEnd) {
+    // Move the cursor to the end of the line so
+    // that fillToCursor will not add spaces.
+    this->setCursorColumn(lineLength);
   }
+
+  // Add newlines if needed so the cursor is on a valid line.
+  this->fillToCursor();
+
+  // typing replaces selection
+  this->deleteSelectionIf();
+
+  // Actually insert the newline character.
+  this->insertNewline();
+
+  // Scroll back to left edge.
+  this->setFirstVisibleCol(0);
+
+  // auto-indent
+  int ind = this->getAboveIndentation(m_cursor.line - 1);
+  if (hadCharsToRight) {
+    // Insert spaces so the carried forward text starts
+    // in the auto-indent column.
+    this->insertSpaces(ind);
+  }
+  else {
+    // Move the cursor to the auto-indent column but do not
+    // fill with spaces.  This way I can press Enter more
+    // than once without adding lots of spaces.
+    this->moveCursorBy(0, ind);
+  }
+
+  this->scrollToCursor();
 }
-#endif // 0
 
 
 void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
@@ -849,9 +869,7 @@ string TextDocumentEditor::clipboardCopy()
 string TextDocumentEditor::clipboardCut()
 {
   string sel = this->getSelectedText();
-  if (!sel.isempty()) {
-    this->deleteSelection();
-  }
+  this->deleteSelectionIf();
   return sel;
 }
 
@@ -859,9 +877,7 @@ string TextDocumentEditor::clipboardCut()
 void TextDocumentEditor::clipboardPaste(char const *text, int textLen)
 {
   this->fillToCursor();
-  if (this->m_markActive) {
-    this->deleteSelection();
-  }
+  this->deleteSelectionIf();
   this->insertText(text, textLen);
 }
 

@@ -1232,49 +1232,14 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_Enter:
       case Qt::Key_Return: {
-        if (!shift) {
-          if (!editSafetyCheck()) {
-            return;
+        if (shift) {
+          // Shift+Enter is deliberately left unbound.
+        }
+        else {
+          if (this->editSafetyCheck()) {
+            this->editor->insertNewlineAutoIndent();
+            this->redraw();
           }
-
-          int lineLength = editor->cursorLineLength();
-          int cursorColumn = editor->cursor().column;
-          bool hadCharsToRight = (cursorColumn < lineLength);
-          bool beyondLineEnd = (cursorColumn > lineLength);
-          if (beyondLineEnd) {
-            // Move the cursor to the end of the line so
-            // that fillToCursor will not add spaces.
-            editor->setCursorColumn(lineLength);
-          }
-
-          // Add newlines if needed so the cursor is on a valid line.
-          editor->fillToCursor();
-
-          // typing replaces selection
-          if (this->selectEnabled()) {
-            editDelete();
-          }
-
-          editor->insertNewline();
-
-          // make sure we can see as much to the left as possible
-          setFirstVisibleCol(0);
-
-          // auto-indent
-          int ind = editor->getAboveIndentation(cursorLine()-1);
-          if (hadCharsToRight) {
-            // Insert spaces so the carried forward text starts
-            // in the auto-indent column.
-            editor->insertSpaces(ind);
-          }
-          else {
-            // Move the cursor to the auto-indent column but do not
-            // fill with spaces.  This way I can press Enter more
-            // than once without adding lots of spaces.
-            editor->moveCursorBy(0, ind);
-          }
-
-          scrollToCursor();
         }
         break;
       }
@@ -1282,7 +1247,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       case Qt::Key_Tab: {
         if (shift) {
           // In my testing on Windows, this does not get executed,
-          // rather the key is delivered as Key_Backtab.  I do not
+          // rather Shift+Tab is delivered as Key_Backtab.  I do not
           // know if the same is true on Linux and Mac, so I will
           // leave this here just in case.
           blockIndent(-2);

@@ -256,12 +256,9 @@ public:      // funcs
   int lastVisibleLine() const             { return editor->lastVisible().line; }
   int lastVisibleCol() const              { return editor->lastVisible().column; }
 
-  void setFirstVisible(TextCoord newFirstVisible)
-    { editor->setFirstVisible(newFirstVisible); }
-  void setFirstVisibleLine(int L)
-    { this->setFirstVisible(TextCoord(L, editor->firstVisible().column)); }
-  void setFirstVisibleCol(int C)
-    { this->setFirstVisible(TextCoord(editor->firstVisible().line, C)); }
+  void setFirstVisible(TextCoord fv)      { editor->setFirstVisible(fv); }
+  void setFirstVisibleLine(int L)         { editor->setFirstVisibleLine(L); }
+  void setFirstVisibleCol(int C)          { editor->setFirstVisibleCol(C); }
 
   void moveFirstVisibleBy(int deltaLine, int deltaCol)
     { editor->moveFirstVisibleBy(deltaLine, deltaCol); }

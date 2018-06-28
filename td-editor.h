@@ -207,6 +207,12 @@ public:      // funcs
   // visible region size.
   void setFirstVisible(TextCoord fv);
 
+  // Scroll in one dimension.
+  void setFirstVisibleLine(int L)
+    { this->setFirstVisible(TextCoord(L, m_firstVisible.column)); }
+  void setFirstVisibleCol(int C)
+    { this->setFirstVisible(TextCoord(m_firstVisible.line, C)); }
+
   // Move the view by a relative amount.  Any attempt to go negative
   // is treated as a move to zero.
   void moveFirstVisibleBy(int deltaLine, int deltaCol);
@@ -328,6 +334,9 @@ public:      // funcs
   // Delete the selected text.  Requires markActive().
   void deleteSelection();
 
+  // Same as 'deleteSelection', but a no-op if not markActive().
+  void deleteSelectionIf() { if (m_markActive) { deleteSelection(); } }
+
   // Do what Backspace should do: If text is selected, delete it.
   // Otherwise, delete one character to the left of the cursor,
   // except if the cursor is beyond EOL or EOF, just move one space
@@ -355,6 +364,18 @@ public:      // funcs
   // after it; the function returns with cursor line incremented by 1
   // and cursor col==0
   void insertNewline();
+
+  // This is what my Enter key does:
+  //   - If beyond EOL, move back to EOL.
+  //   - If beyond EOF, append newlines to meet cursor.
+  //   - Insert the newline.
+  //   - Scroll to left edge.
+  //   - Auto-indent.
+  //
+  // Automatic indentation means adding as many spaces as there are
+  // before the first non-whitespace character in the first non-blank
+  // line found by searching upward from the newly inserted line.
+  void insertNewlineAutoIndent();
 
   // indent (or un-indent, if ind<0) the line range
   // [start,start+lines-1] by some # of spaces; if unindenting, but

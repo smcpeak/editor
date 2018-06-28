@@ -1025,6 +1025,142 @@ static void testClipboard()
 }
 
 
+// ---------------- testInsertNewlineAutoIndent ------------------
+static void testInsertNewlineAutoIndent()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two  \n"
+    "three\n");
+
+  // Adding to EOF.
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 4,0,
+    "one\n"
+    "two  \n"
+    "three\n"
+    "\n");
+
+  // Enter at left edge, middle of document.
+  tde.setCursor(TextCoord(2, 0));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,0,
+    "one\n"
+    "two  \n"
+    "\n"
+    "three\n"
+    "\n");
+
+  // Enter to break a line.
+  tde.setCursor(TextCoord(3, 2));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 4,0,
+    "one\n"
+    "two  \n"
+    "\n"
+    "th\n"
+    "ree\n"
+    "\n");
+
+  // Not adding extra spaces when beyond EOL.
+  tde.setCursor(TextCoord(1, 10));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,0,
+    "one\n"
+    "two  \n"
+    "\n"
+    "\n"
+    "th\n"
+    "ree\n"
+    "\n");
+}
+
+
+// Like above, but with some indented lines.
+static void testInsertNewlineAutoIndent2()
+{
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(3, 3);
+  tde.insertNulTermText(
+    "  one\n"
+    "   two  \n"
+    " three\n");
+
+  // Adding to EOF.
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 4,1,
+    "  one\n"
+    "   two  \n"
+    " three\n"
+    "\n");
+
+  // Enter at left edge, middle of document.
+  tde.setCursor(TextCoord(2, 0));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,3,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "    three\n"
+    "\n");
+
+  // Enter to break a line.
+  tde.setCursor(TextCoord(3, 6));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 4,4,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "    th\n"
+    "    ree\n"
+    "\n");
+
+  // Not adding extra spaces when beyond EOL.
+  tde.setCursor(TextCoord(1, 10));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,3,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "\n"
+    "    th\n"
+    "    ree\n"
+    "\n");
+
+  // Enter while on blank line beyond EOF below indented line.
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,3,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "\n"
+    "\n"
+    "    th\n"
+    "    ree\n"
+    "\n");
+
+  // Make sure we scroll, including checking that we can see the
+  // indented cursor even if that means not seeing the left edge.
+  tde.insertNewlineAutoIndent();
+  tde.insertNewlineAutoIndent();
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 6,3,
+    "  one\n"
+    "   two  \n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "    th\n"
+    "    ree\n"
+    "\n");
+  expectFV(tde, 6,3, 4,1, 3,3);
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -1040,6 +1176,8 @@ int main()
     testBackspaceFunction();
     testDeleteKeyFunction();
     testClipboard();
+    testInsertNewlineAutoIndent();
+    testInsertNewlineAutoIndent2();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 
