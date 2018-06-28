@@ -813,12 +813,6 @@ void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
 
 void TextDocumentEditor::indentLines(int start, int lines, int ind)
 {
-  if (start >= numLines() ||   // entire range beyond defined area
-      lines <= 0 ||            // empty range
-      ind == 0) {              // no actual change to the lines
-    return;
-  }
-
   CursorRestorer cr(*this);
 
   for (int line=start; line < start+lines &&
@@ -851,7 +845,6 @@ bool TextDocumentEditor::blockIndent(int amt)
   this->getSelectRegion(selLow, selHigh);
 
   int endLine = (selHigh.column==0? selHigh.line-1 : selHigh.line);
-  endLine = min(endLine, this->numLines()-1);
   this->indentLines(selLow.line, endLine-selLow.line+1, amt);
 
   return true;
