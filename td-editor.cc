@@ -520,6 +520,17 @@ string TextDocumentEditor::getWordAfter(TextCoord tc) const
 }
 
 
+int TextDocumentEditor::countLeadingSpaceChars(int line) const
+{
+  string contents = getWholeLine(line);
+  char const *p = contents.c_str();
+  while (*p && isspace(*p)) {
+    p++;
+  }
+  return p - contents.c_str();
+}
+
+
 int TextDocumentEditor::getIndentation(int line) const
 {
   string contents = getWholeLine(line);
@@ -816,19 +827,24 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
   CursorRestorer cr(*this);
 
   for (int line=start; line < start+lines &&
-                       line < numLines(); line++) {
-    setCursor(TextCoord(line, 0));
+                       line < this->numLines(); line++) {
+    this->setCursor(TextCoord(line, 0));
 
     if (ind > 0) {
-      for (int i=0; i<ind; i++) {
-        insertSpace();
+      if (this->lineLength(line) == 0) {
+        // Do not add spaces to a blank line.
+      }
+      else {
+        for (int i=0; i<ind; i++) {
+          this->insertSpace();
+        }
       }
     }
 
     else {
-      int lineInd = getIndentation(line);
+      int lineInd = this->countLeadingSpaceChars(line);
       for (int i=0; i<(-ind) && i<lineInd; i++) {
-        deleteChar();
+        this->deleteChar();
       }
     }
   }

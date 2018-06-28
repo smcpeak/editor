@@ -537,6 +537,31 @@ static void testBlockIndent()
 }
 
 
+static void testBlockIndent2()
+{
+  // Test block indent with blank lines.  Should not add spaces to them.
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "\n"
+    "three\n");
+  expectBlockIndent(tde, +2, 0,0, 3,0,
+    "  one\n"
+    "\n"
+    "  three\n");
+
+  // Meanwhile, when there is a line that only has spaces on it, and
+  // we unindent, that should remove spaces.
+  tde.setCursor(TextCoord(3,0));
+  tde.insertNulTermText("  \n");
+  expectBlockIndent(tde, -1, 0,0, 4,0,
+    " one\n"
+    "\n"
+    " three\n"
+    " \n");      // one space now
+}
+
+
 // --------------------- testFillToCursor -----------------------
 static void expectFillToCursor(
   TextDocumentEditor &tde,
@@ -1402,6 +1427,7 @@ int main()
     testTextManipulation();
     testFindInLongLine();
     testBlockIndent();
+    testBlockIndent2();
     testFillToCursor();
     testScrollToCursor();
     testGetWordAfter();

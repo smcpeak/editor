@@ -267,6 +267,10 @@ public:      // funcs
   string getWordAfter(TextCoord tc) const;
 
   // ---------------- whitespace text queries -------------------
+  // For the given line, count the number of whitespace characters
+  // before either a non-ws character or EOL.  Beyond EOF, return 0.
+  int countLeadingSpaceChars(int line) const;
+
   // On a particular line, get # of whitespace chars before first
   // non-ws char, or -1 if there are no non-ws chars.  Lines beyond
   // EOF return -1 (as if they are entirely whitespace).
