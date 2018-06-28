@@ -939,6 +939,7 @@ static void testBackspaceFunction()
 static void testDeleteKeyFunction()
 {
   TextDocumentAndEditor tde;
+  tde.setVisibleSize(5, 10);
   tde.insertNulTermText(
     "one\n"
     "two  \n"
@@ -977,6 +978,17 @@ static void testDeleteKeyFunction()
   expect(tde, 10,10,
     "oe\n"
     "two       three\n");
+
+  // Selection that is partly offscreen such that after
+  // deletion scrolling changes visible region.
+  tde.setCursor(TextCoord(1, 10));
+  tde.setMark(TextCoord(1, 0));
+  tde.setFirstVisible(TextCoord(1, 10));
+  tde.deleteSelection();
+  expectNM(tde, 1,0,
+    "oe\n"
+    "three\n");
+  checkCoord(TextCoord(1,0), tde.firstVisible(), "first visible");
 }
 
 
