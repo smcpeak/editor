@@ -645,6 +645,14 @@ static void testScrollToCursor()
   tde.scrollToCursor(-1 /*edgeGap*/);
   expectFV(tde, 20,20, 18,15, 5,10);
 
+  // Test with -1 and a coordinate just barely offscreen.  This kills
+  // a testing mutant where, in 'stcHelper', we do not reset the gap
+  // to 0 in the -1 case.
+  tde.setCursor(TextCoord(17,15));     // just above FV
+  expectFV(tde, 17,15, 18,15, 5,10);
+  tde.scrollToCursor(-1 /*edgeGap*/);
+  expectFV(tde, 17,15, 15,15, 5,10);
+
   // Test 'moveCursor' with relLine=false.
   tde.moveCursor(false /*relLine*/, 3, false /*relCol*/, 0);
   tde.scrollToCursor();
@@ -1161,6 +1169,32 @@ static void testInsertNewlineAutoIndent2()
 }
 
 
+// -------------------- testSetVisibleSize ----------------------
+static void testSetVisibleSize()
+{
+  TextDocumentAndEditor tde;
+
+  // Try with negative sizes.
+  tde.setVisibleSize(-1, -1);
+  checkCoord(TextCoord(0,0), tde.firstVisible(), "firstVisible");
+  checkCoord(TextCoord(0,0), tde.lastVisible(), "lastVisible");
+
+  // See if things work at this size.
+  tde.insertNulTermText(
+    "  one\n"
+    "   two  \n"
+    " three");
+  checkCoord(TextCoord(2,6), tde.firstVisible(), "firstVisible");
+  checkCoord(TextCoord(2,6), tde.lastVisible(), "lastVisible");
+
+  // Cursor movement does not automatically scroll.
+  tde.moveCursorBy(-1,0);
+  checkCoord(TextCoord(2,6), tde.firstVisible(), "firstVisible");
+  tde.scrollToCursor();
+  checkCoord(TextCoord(1,6), tde.firstVisible(), "firstVisible");
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -1178,6 +1212,7 @@ int main()
     testClipboard();
     testInsertNewlineAutoIndent();
     testInsertNewlineAutoIndent2();
+    testSetVisibleSize();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

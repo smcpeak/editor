@@ -31,3 +31,7 @@ editor-stable
 *.gcda
 *.gcno
 config.mk
+mutant-compile.sh
+mut
+mutant.cc
+*.mutreport

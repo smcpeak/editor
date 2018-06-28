@@ -11,6 +11,7 @@ TODOs:
   - bug: Press Alt (so menu gets focus), then Alt+Tab away, then Alt+Tab
     back.  Now the editor widget does not have focus; what does?
   - block indent should not add spaces to blank lines!
+  - file-open dialog should start in same dir as current file?
 
 
   - Alt+A to pass selection through a filter command
