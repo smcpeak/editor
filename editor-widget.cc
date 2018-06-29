@@ -493,21 +493,22 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     // nominally the entire line is normal text
     categories.clear(TC_NORMAL);
 
+    // 1 if we will behave as though a newline character is
+    // at the end of this line.
+    int newlineAdjust = 0;
+    if (this->visibleWhitespace && line < editor->numLines()-1) {
+      newlineAdjust = 1;
+    }
+
+    // Number of visible glyphs on this line, including possible
+    // synthesized newline for 'visibleWhitespace'.
+    int const lineGlyphs = editor->lineLengthLoose(line) + newlineAdjust;
+
     // fill with text from the file
     if (line < editor->numLines()) {
-      // 1 if we will behave as though a newline character is
-      // at the end of this line.
-      int newlineAdjust = 0;
-      if (this->visibleWhitespace && line < editor->numLines()-1) {
-        newlineAdjust = 1;
-      }
-
-      // Line length including possible synthesized newline.
-      int const lineLen = editor->lineLength(line) + newlineAdjust;
-
-      if (firstCol < lineLen) {
+      if (firstCol < lineGlyphs) {
         // First get the text without any extra newline.
-        int const amt = min(lineLen-newlineAdjust - firstCol, visibleCols);
+        int const amt = min(lineGlyphs-newlineAdjust - firstCol, visibleCols);
         editor->getLine(TextCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
@@ -627,7 +628,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       paint.eraseRect(x,0, fontWidth*len, fullLineHeight);
 
       // draw text
-      for (int i=0; i < len; i++) {
+      int const charsToDraw = min(len, (lineGlyphs-firstCol)-printed);
+      for (int i=0; i < charsToDraw; i++) {
         this->drawOneChar(paint, curFont,
                           QPoint(x + fontWidth*i, baseline),
                           text[printed+i]);
@@ -692,18 +694,11 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, fontWidth, fontHeight);
 
-        if (line < editor->numLines() &&
-            cursorCol <= editor->lineLength(line)) {
-          // Drawing the block cursor overwrote the character, so we
+        if (cursorCol < lineGlyphs) {
+          // Drawing the block cursor overwrote the glyph, so we
           // have to draw it again.
-          if (line == editor->numLines() - 1 &&
-              cursorCol == editor->lineLength(line)) {
-            // Draw nothing at the end of the last line.
-          }
-          else {
-            this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                              text[visibleCursorCol]);
-          }
+          this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
+                            text[visibleCursorCol]);
         }
 
         if (underlineCursor) {
