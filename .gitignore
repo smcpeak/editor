@@ -35,3 +35,4 @@ mutant-compile.sh
 mut
 mutant.cc
 *.mutreport
+.gdbinit
