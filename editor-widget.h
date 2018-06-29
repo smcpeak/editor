@@ -1,8 +1,8 @@
 // editor-widget.h
 // EditorWidget class.
 
-#ifndef EDITOR_H
-#define EDITOR_H
+#ifndef EDITOR_WIDGET_H
+#define EDITOR_WIDGET_H
 
 #include "inputproxy.h"                // InputProxy, InputPseudoKey
 #include "owner.h"                     // Owner
@@ -389,4 +389,4 @@ signals:
   void viewChanged();
 };
 
-#endif // EDITOR_H
+#endif // EDITOR_WIDGET_H
