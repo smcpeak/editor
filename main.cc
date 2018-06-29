@@ -13,7 +13,7 @@
 #include "qhboxframe.h"                // QHBoxFrame
 #include "qtutil.h"                    // toQString
 #include "status.h"                    // StatusDisplay
-#include "strutil.h"                   // sm_basename
+#include "strutil.h"                   // sm_basename, dirname
 #include "td-editor.h"                 // TextDocumentEditor
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE_ARGS
@@ -260,9 +260,13 @@ void EditorWindow::setFileName(rostring name, rostring hotkey)
 
 void EditorWindow::fileOpen()
 {
+  // Start in the directory containing the file currently shown.
+  string dir = dirname(editorWidget->getDocumentFile()->filename);
+  TRACE("fileOpen", "dir: " << dir);
+
   QString name = QFileDialog::getOpenFileName(this,
     "Open File",
-    QString(),         // dir
+    toQString(dir),    // dir
     QString(),         // filter
     NULL,              // selectedFilter
     QFileDialog::Options());    //  QFileDialog::DontUseNativeDialog);
