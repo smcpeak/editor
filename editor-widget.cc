@@ -5,11 +5,11 @@
 
 // this dir
 #include "inputproxy.h"      // InputProxy
-#include "justify.h"         // justifyNearLine
 #include "main.h"            // GlobalState
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
-#include "qtutil.h"          // toString(QKeyEvent&)
+#include "qtguiutil.h"       // toString(QKeyEvent)
+#include "qtutil.h"          // toString(QString)
 #include "status.h"          // StatusDisplay
 #include "styledb.h"         // StyleDB
 #include "textcategory.h"    // LineCategories, etc.
@@ -967,7 +967,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           QMessageBox::information(this, "Unimp", "unimplemented");
         }
         else {
-          this->justifyNearCursorLine();
+          this->editor->justifyNearCursor(this->softMarginColumn);
+          this->redraw();
         }
         break;
 
@@ -1260,13 +1261,6 @@ void EditorWidget::insertText(char const *text, int textLen)
 {
   editor->insertText(text, textLen);
   redraw();
-}
-
-
-void EditorWidget::justifyNearCursorLine()
-{
-  justifyNearLine(*editor, this->cursorLine(), this->softMarginColumn);
-  this->scrollToCursor();
 }
 
 

@@ -1516,6 +1516,53 @@ static void testConfineCursorToVisible()
 }
 
 
+// ------------------- testJustifyNearCursor --------------------
+// There are already extensive tests of the justification algorithm in
+// test-justify.cc, so here I just do a quick check.
+static void testJustifyNearCursor()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one two three four five six seven\n"
+    "\n"
+    "eight nine ten\n"
+    "eleven twelve\n");
+
+  // Cursor not on anything, no-op.
+  tde.justifyNearCursor(10);
+  expect(tde, 4,0,
+    "one two three four five six seven\n"
+    "\n"
+    "eight nine ten\n"
+    "eleven twelve\n");
+
+  // Cursor on first paragraph.
+  tde.setCursor(TextCoord(0,5));
+  tde.justifyNearCursor(10);
+  expect(tde, 4,0,
+    "one two\n"
+    "three four\n"
+    "five six\n"
+    "seven\n"
+    "\n"
+    "eight nine ten\n"
+    "eleven twelve\n");
+
+  // Cursor on second paragraph.
+  tde.setCursor(TextCoord(6,0));
+  tde.justifyNearCursor(10);
+  expect(tde, 8,0,
+    "one two\n"
+    "three four\n"
+    "five six\n"
+    "seven\n"
+    "\n"
+    "eight nine\n"
+    "ten eleven\n"
+    "twelve\n");
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -1541,6 +1588,7 @@ int main()
     testCursorRestorer();
     testSetMark();
     testConfineCursorToVisible();
+    testJustifyNearCursor();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

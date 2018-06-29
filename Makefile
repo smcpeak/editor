@@ -68,6 +68,12 @@ GUI_LDFLAGS := $(CONSOLE_LDFLAGS)
 GUI_LDFLAGS += $(LIBSMQTUTIL)
 GUI_LDFLAGS += -L$(QTDIR_CPLR)/lib -lQt5Widgets -lQt5Gui -lQt5Core
 
+# Link flags for console programs that use Qt5Core.  Specifically,
+# I am using QRegularExpression in the 'justify' module.
+QT_CONSOLE_LDFLAGS := $(CONSOLE_LDFLAGS)
+QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
+QT_CONSOLE_LDFLAGS += -L$(QTDIR_CPLR)/lib -lQt5Core
+
 # Qt build tools
 MOC := $(QTDIR)/bin/moc
 UIC := $(QTDIR)/bin/uic
@@ -123,6 +129,7 @@ TOCLEAN += test-td-editor td.tmp
 
 TD_OBJS :=
 TD_OBJS += history.o
+TD_OBJS += justify.o
 TD_OBJS += test-td-editor.o
 TD_OBJS += td.o
 TD_OBJS += td-core.o
@@ -130,7 +137,7 @@ TD_OBJS += td-editor.o
 TD_OBJS += textcoord.o
 
 test-td-editor: $(TD_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(CONSOLE_LDFLAGS)
+	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
 	./test-td-editor >/dev/null 2>&1
 
 -include test-td-editor.d
@@ -148,7 +155,7 @@ JUSTIFY_OBJS += test-justify.o
 JUSTIFY_OBJS += textcoord.o
 
 test-justify: $(JUSTIFY_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(GUI_LDFLAGS)
+	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
 	./test-justify >/dev/null 2>&1
 
 -include test-justify.d
@@ -167,22 +174,24 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 	mv lex.backup $*.lex.backup
 	head $*.lex.backup
 
-C_HILITE_OBJS := \
-  td-core.o \
-  td-editor.o \
-  textcoord.o \
-  history.o \
-  td.o \
-  textcategory.o \
-  lex_hilite.o \
-  bufferlinesource.o \
-  comment.yy.o \
-  c_hilite.yy.o
+C_HILITE_OBJS :=
+C_HILITE_OBJS += bufferlinesource.o
+C_HILITE_OBJS += c_hilite.yy.o
+C_HILITE_OBJS += comment.yy.o
+C_HILITE_OBJS += history.o
+C_HILITE_OBJS += justify.o
+C_HILITE_OBJS += lex_hilite.o
+C_HILITE_OBJS += td.o
+C_HILITE_OBJS += td-core.o
+C_HILITE_OBJS += td-editor.o
+C_HILITE_OBJS += textcategory.o
+C_HILITE_OBJS += textcoord.o
+
 #-include $(C_HILITE_OBJS:.o=.d)   # redundant with EDITOR_OBJS
 
 TOCLEAN += c_hilite
 c_hilite: $(C_HILITE_OBJS) c_hilite.cc
-	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(CONSOLE_LDFLAGS)
+	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(QT_CONSOLE_LDFLAGS)
 	./$@ >/dev/null
 
 

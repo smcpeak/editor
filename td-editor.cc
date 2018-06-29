@@ -3,6 +3,8 @@
 
 #include "td-editor.h"                 // this module
 
+#include "justify.h"                   // justifyNearLine
+
 #include "array.h"                     // Array
 #include "trace.h"                     // TRACE
 #include "typ.h"                       // min, max
@@ -909,6 +911,14 @@ bool TextDocumentEditor::blockIndent(int amt)
   this->indentLines(selLow.line, endLine-selLow.line+1, amt);
 
   return true;
+}
+
+
+bool TextDocumentEditor::justifyNearCursor(int desiredWidth)
+{
+  bool ret = justifyNearLine(*this, m_cursor.line, desiredWidth);
+  this->scrollToCursor();
+  return ret;
 }
 
 

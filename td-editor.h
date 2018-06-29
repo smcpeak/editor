@@ -423,6 +423,10 @@ public:      // funcs
   // without doing anything.
   bool blockIndent(int amt);
 
+  // Call ::justifyNearLine on the cursor line, then scroll if needed
+  // to keep the cursor in view.
+  bool justifyNearCursor(int desiredWidth);
+
   // -------------------- clipboard -----------------------
   // The functions here are part of a clipboard implementation, as
   // they manipulate the document but not the clipboard itself.  The

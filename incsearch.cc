@@ -5,7 +5,7 @@
 
 #include "editor-widget.h" // EditorWidget
 #include "pixmaps.h"       // Pixmaps
-#include "qtutil.h"        // toString(QKeyEvent)
+#include "qtguiutil.h"     // toString(QKeyEvent)
 #include "status.h"        // StatusDisplay
 #include "test.h"          // PVAL
 #include "trace.h"         // TRACE

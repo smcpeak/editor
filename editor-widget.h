@@ -279,9 +279,6 @@ public:      // funcs
   // Indent or unindent selected lines.
   void blockIndent(int amt);
 
-  // Justify lines near the cursor.
-  void justifyNearCursorLine();
-
   // -------------------- interaction with files ------------------
   // nonfocus listening
   void startListening();
