@@ -1361,7 +1361,7 @@ void EditorWidget::mousePressEvent(QMouseEvent *m)
   // get rid of popups?
   QWidget::mousePressEvent(m);
 
-  turnOffSelection();
+  turnSelection(!!(m->modifiers() & Qt::ShiftModifier));
   setCursorToClickLoc(m);
 
   redraw();
