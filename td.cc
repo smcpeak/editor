@@ -39,7 +39,30 @@ void TextDocument::clearContentsAndHistory()
 
 bool TextDocument::unsavedChanges() const
 {
-  return (savedHistoryIndex != historyIndex);
+  if (savedHistoryIndex == historyIndex) {
+    // It seems there are no unsaved changes, but we also need to check
+    // the group stack.  If the group stack is non-empty, then there
+    // are changes that haven't been combined and added to the normal
+    // history yet.
+    if (!this->groupStack.isEmpty()) {
+      // Really I should inspect every element of the stack, but my
+      // ObjStack class does not allow that.  Anyway, I happen to know
+      // that we never push more than one element onto it.
+      HE_group const *g = this->groupStack.topC();
+      if (g->seqLength() > 0) {
+        return true;
+      }
+      else {
+        // The editor widget creates an undo group for every keystroke,
+        // even cursor movement.  But those do not add anything to the
+        // group, and hence there are no unsaved changes.
+      }
+    }
+    return false;
+  }
+  else {
+    return true;
+  }
 }
 
 
