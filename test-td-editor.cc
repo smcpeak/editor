@@ -1469,6 +1469,43 @@ static void testSetMark()
 }
 
 
+// ----------------- testConfineCursorToVisible -----------------
+static void testConfineCursorToVisible()
+{
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(3,3);
+
+  // Already visible.
+  tde.confineCursorToVisible();
+  expectCursor(tde, 0,0);
+
+  // Pull in from corner.
+  tde.setFirstVisible(TextCoord(1,1));
+  tde.confineCursorToVisible();
+  expectCursor(tde, 1,1);
+
+  // From top.
+  tde.setCursor(TextCoord(0,2));
+  tde.confineCursorToVisible();
+  expectCursor(tde, 1,2);
+
+  // From bottom.
+  tde.setCursor(TextCoord(4,2));
+  tde.confineCursorToVisible();
+  expectCursor(tde, 3,2);
+
+  // From left.
+  tde.setCursor(TextCoord(2,0));
+  tde.confineCursorToVisible();
+  expectCursor(tde, 2,1);
+
+  // From right.
+  tde.setCursor(TextCoord(2,4));
+  tde.confineCursorToVisible();
+  expectCursor(tde, 2,3);
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -1493,6 +1530,7 @@ int main()
     testSetVisibleSize();
     testCursorRestorer();
     testSetMark();
+    testConfineCursorToVisible();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

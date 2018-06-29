@@ -159,6 +159,10 @@ public:      // funcs
   // line, while going backward will move left one column at a time.
   void advanceWithWrap(bool backwards);
 
+  // Move the cursor by the minimum amount necessary so it becomes
+  // inside the visible region.
+  void confineCursorToVisible();
+
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor
   // for defining a selection region.  This asserts that the mark is
@@ -235,6 +239,11 @@ public:      // funcs
   // move the cursor as necessary so its position on the screen stays
   // the same.
   void moveFirstVisibleAndCursor(int deltaLine, int deltaCol);
+
+  // Like 'moveFirstVisibleBy', but after scrolling, adjust the cursor
+  // by the minimum amount so it is onscreen.
+  void moveFirstVisibleConfineCursor(int deltaLine, int deltaCol)
+    { moveFirstVisibleBy(deltaLine, deltaCol); confineCursorToVisible(); }
 
   // Adjust the visible region size, preserving 'firstVisible'.  This
   // will silently ensure both sizes are positive.

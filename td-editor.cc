@@ -5,6 +5,7 @@
 
 #include "array.h"                     // Array
 #include "trace.h"                     // TRACE
+#include "typ.h"                       // min, max
 
 
 int TextDocumentEditor::s_objectCount = 0;
@@ -726,6 +727,18 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
       // cursor at buffer start.. do nothing, I guess
     }
   }
+}
+
+
+void TextDocumentEditor::confineCursorToVisible()
+{
+  m_cursor.line =
+    max(m_firstVisible.line,
+      min(m_lastVisible.line,   m_cursor.line));
+
+  m_cursor.column =
+    max(m_firstVisible.column,
+      min(m_lastVisible.column, m_cursor.column));
 }
 
 

@@ -909,18 +909,12 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_W:
-        editor->moveFirstVisibleBy(-1, 0);
-        if (cursorLine() > this->lastVisibleLine()) {
-          cursorUpBy(cursorLine() - this->lastVisibleLine());
-        }
+        editor->moveFirstVisibleConfineCursor(-1, 0);
         redraw();
         break;
 
       case Qt::Key_Z:
-        editor->moveFirstVisibleBy(+1, 0);
-        if (cursorLine() < this->firstVisibleLine()) {
-          cursorDownBy(this->firstVisibleLine() - cursorLine());
-        }
+        editor->moveFirstVisibleConfineCursor(+1, 0);
         redraw();
         break;
 
