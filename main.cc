@@ -94,6 +94,9 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
   this->editorWidget->setFocus();
   connect(this->editorWidget, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
 
+  // See explanation in GlobalState::focusChangedHandler().
+  this->setFocusProxy(this->editorWidget);
+
   this->vertScroll = new QScrollBar(Qt::Vertical);
   this->vertScroll->setObjectName("vertScroll");
   editArea->addWidget(this->vertScroll, 0 /*row*/, 1 /*col*/);
@@ -859,6 +862,9 @@ GlobalState::GlobalState(int argc, char **argv)
   connect(this, SIGNAL(lastWindowClosed()),
           this, SLOT(quit()));
 
+  connect(this, SIGNAL(focusChanged(QWidget*, QWidget*)),
+          this, SLOT(focusChangedHandler(QWidget*, QWidget*)));
+
   ed->show();
 }
 
@@ -950,6 +956,44 @@ void GlobalState::deleteDocumentFile(TextDocumentFile *file)
   }
 
   delete file;
+}
+
+
+void GlobalState::focusChangedHandler(QWidget *from, QWidget *to)
+{
+  TRACE("focus", "focus changed from " << qObjectDesc(from) <<
+                 " to " << qObjectDesc(to));
+
+  if (!from && to && qobject_cast<QMenuBar*>(to)) {
+    TRACE("focus", "focus arrived at menu bar from alt-tab");
+    QWidget *p = to->parentWidget();
+    if (p) {
+      // This is part of a workaround for an apparent Qt bug: if I
+      // press Alt, the menu bar gets focus.  If then press Alt+Tab,
+      // another window gets focus.  If then press Alt+Tab again, my
+      // window gets focus again.  So far so good.
+      //
+      // Except the menu bar still has focus from the earlier Alt!  And
+      // pressing Alt again does not help; I have to Tab out of there.
+      //
+      // The fix is in two parts.  First, we recognize the buggy focus
+      // transition here: 'from' is null, meaning focus came from
+      // another window (including another window in my application),
+      // and 'to' is a QMenuBar.  Then we reassign focus to the menu
+      // bar's parent, which will be EditorWindow.
+      //
+      // Finally, EditorWindow has its EditorWidget as a focus proxy,
+      // so focus automatically goes to it instead.
+      //
+      // Found the bug in Qt tracker:
+      // https://bugreports.qt.io/browse/QTBUG-44405
+      TRACE("focus", "setting focus to " << qObjectDesc(p));
+      p->setFocus(Qt::ActiveWindowFocusReason);
+    }
+    else {
+      TRACE("focus", "menu has no parent?");
+    }
+  }
 }
 
 

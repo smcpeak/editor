@@ -155,6 +155,8 @@ public:
 
 // global state of the editor: files, windows, etc.
 class GlobalState : public QApplication {
+  Q_OBJECT
+
 public:       // data
   // the singleton global state object
   static GlobalState *global_globalState;
@@ -172,6 +174,9 @@ public:       // data
 
 private:      // funcs
   bool hotkeyAvailable(int key) const;
+
+public slots:
+  void focusChangedHandler(QWidget *from, QWidget *to);
 
 public:       // funcs
   // intent is to make one of these in main()
