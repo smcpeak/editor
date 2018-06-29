@@ -148,20 +148,10 @@ public:      // data
   int fontWidth;
 
   // ------ stuff for when I don't have focus ------
-  // when I don't have the focus, two things are different:
-  //   - I'm a listener to my own file, to track the
-  //     changes made in another widget.
-  //   - nonfocusCursorLine/Col are valid/relevant/correct
-
-  // true if I've registered myself as a listener; there
+  // True if I've registered myself as a listener.  There
   // are a few cases where I don't have the focus, but
-  // I also am not a listener (like initialization)
+  // I also am not a listener (like initialization).
   bool listening;
-
-  // Location of the cursor when I left it.
-  //
-  // Years later, I don't know what this was for...
-  TextCoord nonfocusCursor;
 
   // ------ event model hacks ------
   // when this is true, we ignore the scrollToLine and scrollToCol
@@ -198,6 +188,8 @@ public:      // funcs
   void setCursorToClickLoc(QMouseEvent *m);
 
   // Text cursor location (as opposed to mouse cursor image).
+  //
+  // TODO: Remove this in favor of 'editor->cursor()'.
   TextCoord textCursor() const            { return editor->cursor(); }
 
   // These methods are here to help transition the code from having
@@ -348,7 +340,7 @@ public:      // funcs
 
   // -------------------------- output ----------------------------
   // intermediate paint step
-  void updateFrame(QPaintEvent *ev, TextCoord drawnCursor);
+  void updateFrame(QPaintEvent *ev);
 
   // Paint a single character at the given location.
   void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);

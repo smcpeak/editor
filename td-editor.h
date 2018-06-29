@@ -178,15 +178,10 @@ public:      // funcs
   // Select the entire line containing the cursor.
   void selectCursorLine();
 
-  // Store into 'selLow' the lower of 'cursor' (the parameter) and
-  // 'mark' (the field), and into 'selHigh' the higher.  If the mark
-  // is not active, set both to 'cursor'.
-  void getSelectRegionForCursor(TextCoord cursor,
-    TextCoord &selLow, TextCoord &selHigh) const;
-
-  // Same, but using the normal cursor.
-  void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const
-    { getSelectRegionForCursor(cursor(), selLow, selHigh); }
+  // Store into 'selLow' the lower of 'cursor' and 'mark', and into
+  // 'selHigh' the higher.  If the mark is not active, set both to
+  // 'cursor'.
+  void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const;
 
   // Get selected text, or "" if nothing selected.
   string getSelectedText() const;

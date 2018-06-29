@@ -24,6 +24,28 @@ Check: See all the Latin-1 glyphs arranged in a 16x16 grid, including
 hex quads for the nonprintable characters.
 
 
+Test name: Multiple window simultaneous edit.
+
+Do: Open the same file in two windows.  In the left window, put the
+cursor on the line halfway through the file and press Ctrl+L to center
+the display on that line.  In the other window, move the cursor a page
+or so above the halfway point.  Now press Ctrl+K repeatedly (or hold it)
+to delete lines including the one containing the cursor in the left
+window.
+
+Check: In the left window, the cursor's distance from the top of the
+window should remain unchanged.  While lines above it are being deleted,
+it should remain on the same line as identified by line contents; i.e.,
+the line number should be decreasing.  The display should show the
+updated file contents and cursor location after every deletion.
+
+Do: Same as previous, but this time with a word selected in the left
+window.
+
+Check: Same basic behavior as before.  The same set of characters
+should remain selected until they are deleted.
+
+
 Areas to test (needs refinement into specific tests)
 ----------------------------------------------------
 

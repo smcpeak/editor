@@ -86,21 +86,20 @@ void TextDocumentEditor::selectCursorLine()
 }
 
 
-void TextDocumentEditor::getSelectRegionForCursor(TextCoord cursor,
+void TextDocumentEditor::getSelectRegion(
   TextCoord &selLow, TextCoord &selHigh) const
 {
-  if (!this->markActive()) {
-    selLow = selHigh = cursor;
+  if (!m_markActive) {
+    selLow = selHigh = m_cursor;
   }
   else {
-    TextCoord const m = this->mark();
-    if (cursor <= m) {
-      selLow = cursor;
-      selHigh = m;
+    if (m_cursor <= m_mark) {
+      selLow = m_cursor;
+      selHigh = m_mark;
     }
     else {
-      selLow = m;
-      selHigh = cursor;
+      selLow = m_mark;
+      selHigh = m_cursor;
     }
   }
 }

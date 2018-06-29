@@ -79,7 +79,6 @@ EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
     inputProxy(NULL),
     // font metrics inited by setFont()
     listening(false),
-    nonfocusCursor(),
     ignoreScrollSignals(false)
 {
   xassert(tdf);
@@ -140,12 +139,6 @@ void EditorWidget::selfCheck() const
 void EditorWidget::cursorTo(TextCoord tc)
 {
   editor->setCursor(tc);
-
-  // set the nonfocus location too, in case the we happen to
-  // not have the focus right now (e.g. the Alt+G dialog);
-  // actually, the need for this exposes the fact that my current
-  // solution to nonfocus cursor issues isn't very good.. hmm...
-  nonfocusCursor = tc;
 }
 
 
@@ -377,15 +370,7 @@ void EditorWidget::paintEvent(QPaintEvent *ev)
 
   try {
     // draw on the pixmap
-    if (!listening) {
-      // usual case, draw cursor in usual location
-      updateFrame(ev, textCursor());
-    }
-    else {
-      // nonfocus synchronized update: use alternate location
-      updateFrame(ev, nonfocusCursor);
-      TRACE("nonfocus", "drawing at " << nonfocusCursor);
-    }
+    updateFrame(ev);
   }
   catch (xBase &x) {
     // I can't pop up a message box because then when that
@@ -402,7 +387,7 @@ void EditorWidget::paintEvent(QPaintEvent *ev)
   }
 }
 
-void EditorWidget::updateFrame(QPaintEvent *ev, TextCoord drawnCursor)
+void EditorWidget::updateFrame(QPaintEvent *ev)
 {
   // debug info
   {
@@ -488,7 +473,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, TextCoord drawnCursor)
 
   // Get region of selected text.
   TextCoord selLow, selHigh;
-  editor->getSelectRegionForCursor(drawnCursor, selLow, selHigh);
+  editor->getSelectRegion(selLow, selHigh);
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -664,7 +649,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, TextCoord drawnCursor)
     }
 
     // draw the cursor as a line
-    if (line == drawnCursor.line) {
+    if (line == editor->cursor().line) {
       // just testing the mechanism that catches exceptions
       // raised while drawing
       //if (line == 5) {
@@ -674,7 +659,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev, TextCoord drawnCursor)
       paint.save();
 
       // 0-based cursor column relative to what is visible
-      int const cursorCol = drawnCursor.column;
+      int const cursorCol = editor->cursor().column;
       int const visibleCursorCol = cursorCol - firstCol;
       xassert(visibleCursorCol >= 0);
 
@@ -1610,12 +1595,9 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   TRACE("focus", "editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
 
-  // move the editing cursor to where I last had it
-  cursorTo(nonfocusCursor);
-
   // I don't want to listen while I'm adding changes of
   // my own, because the way the view moves (etc.) on
-  // changes is different
+  // changes is different.
   stopListening();
 }
 
@@ -1649,21 +1631,19 @@ void EditorWidget::startListening()
   // add myself to the list
   editor->core().observers.append(this);
   listening = true;
-
-  // remember the docFile's current cursor position
-  nonfocusCursor = editor->cursor();
 }
 
 
 // General goal for dealing with inserted lines:  The cursor in the
 // nonfocus window should not change its vertical location within the
 // window (# of pixels from top window edge), and should remain on the
-// same line (sequence of chars).
+// same line (sequence of chars).  See doc/test-plan.txt, test
+// "Multiple window simultaneous edit".
 
 void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 {
-  if (line <= nonfocusCursor.line) {
-    nonfocusCursor.line++;
+  if (line <= editor->cursor().line) {
+    editor->moveCursorBy(+1, 0);
     moveFirstVisibleBy(+1, 0);
   }
 
@@ -1672,8 +1652,8 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 
 void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
-  if (line < nonfocusCursor.line) {
-    nonfocusCursor.line--;
+  if (line < editor->cursor().line) {
+    editor->moveCursorBy(-1, 0);
     moveFirstVisibleBy(-1, 0);
   }
 
