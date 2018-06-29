@@ -814,15 +814,6 @@ static void inc(int &val, int amt)
 }
 
 
-void EditorWidget::clearSelIfEmpty()
-{
-  if (this->selectEnabled() &&
-      this->textCursor() == this->mark()) {
-    turnOffSelection();
-  }
-}
-
-
 void printUnhandled(QWidget *parent, char const *msg)
 {
   QMessageBox::information(parent, "Oops",
@@ -1352,7 +1343,7 @@ void EditorWidget::mouseMoveEvent(QMouseEvent *m)
 
   turnOnSelection();
   setCursorToClickLoc(m);
-  clearSelIfEmpty();
+  editor->turnOffSelectionIfEmpty();
 
   redraw();
 }
@@ -1364,7 +1355,7 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 
   turnOnSelection();
   setCursorToClickLoc(m);
-  clearSelIfEmpty();
+  editor->turnOffSelectionIfEmpty();
 
   redraw();
 }

@@ -1453,6 +1453,19 @@ static void testSetMark()
   xassert(!tde.markActive());
   tde.turnOnSelection();
   expectMark(tde, 2,2);
+
+  // Test 'turnOffSelectionIfEmpty' with empty selection.
+  tde.turnOffSelectionIfEmpty();
+  xassert(!tde.markActive());
+
+  // Test 'turnOffSelectionIfEmpty' with inactive mark.
+  tde.turnOffSelectionIfEmpty();
+  xassert(!tde.markActive());
+
+  // Test 'turnOffSelectionIfEmpty' with non-empty selection.
+  tde.setMark(TextCoord(2,3));
+  tde.turnOffSelectionIfEmpty();
+  expectMark(tde, 2,3);
 }
 
 

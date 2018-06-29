@@ -93,6 +93,14 @@ void TextDocumentEditor::turnOnSelection()
 }
 
 
+void TextDocumentEditor::turnOffSelectionIfEmpty()
+{
+  if (m_markActive && m_mark == m_cursor) {
+    this->clearMark();
+  }
+}
+
+
 void TextDocumentEditor::selectCursorLine()
 {
   // Move the cursor to the start of its line.

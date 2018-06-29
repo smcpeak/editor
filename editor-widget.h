@@ -230,7 +230,6 @@ public:      // funcs
   void turnOffSelection()                 { editor->clearMark(); }
   void turnOnSelection()                  { editor->turnOnSelection(); }
   void turnSelection(bool on)             { editor->turnSelection(on); }
-  void clearSelIfEmpty();
 
   TextCoord mark() const                  { return editor->mark(); }
   void setMark(TextCoord tc)              { editor->setMark(tc); }

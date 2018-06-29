@@ -186,6 +186,9 @@ public:      // funcs
   // Turn selection on or off depending on 'on'.
   void turnSelection(bool on) { on? turnOnSelection() : clearMark(); }
 
+  // If the mark is active but equal to cursor, turn it off.
+  void turnOffSelectionIfEmpty();
+
   // Select the entire line containing the cursor.
   void selectCursorLine();
 
