@@ -115,8 +115,8 @@ EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
   this->setGeometry(400,100,      // initial location
                     800,800);     // initial size
 
-  // Set the TextDocumentFile, which was originally set as NULL above.
-  //this->setDocumentFile(initFile);
+  // Set scrollbar ranges, status bar text, and window title.
+  this->updateForChangedFile();
 
   // i-search; use filename area as the status display.
   this->isearch = new IncSearch(this->statusArea);
