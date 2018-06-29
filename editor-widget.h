@@ -227,9 +227,9 @@ public:      // funcs
 
   // ----------------------------- mark ------------------------------
   // selection manipulation
-  void turnOffSelection();
-  void turnOnSelection();
-  void turnSelection(bool on);
+  void turnOffSelection()                 { editor->clearMark(); }
+  void turnOnSelection()                  { editor->turnOnSelection(); }
+  void turnSelection(bool on)             { editor->turnSelection(on); }
   void clearSelIfEmpty();
 
   TextCoord mark() const                  { return editor->mark(); }

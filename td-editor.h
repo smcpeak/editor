@@ -179,6 +179,13 @@ public:      // funcs
   // markActive().
   void moveMarkBy(int deltaLine, int deltaCol);
 
+  // ----------------- cursor+mark = selection --------------------
+  // If the mark is inactive, activate it at the cursor.
+  void turnOnSelection();
+
+  // Turn selection on or off depending on 'on'.
+  void turnSelection(bool on) { on? turnOnSelection() : clearMark(); }
+
   // Select the entire line containing the cursor.
   void selectCursorLine();
 

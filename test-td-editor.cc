@@ -1442,6 +1442,17 @@ static void testSetMark()
 
   tde.moveMarkBy(0,-10);
   expectMark(tde, 0,0);
+
+  // Test 'turnOnSelection' with mark already active.
+  tde.turnOnSelection();
+  expectMark(tde, 0,0);
+
+  // Test 'turnOnSelection' with mark inactive.
+  tde.clearMark();
+  tde.setCursor(TextCoord(2,2));
+  xassert(!tde.markActive());
+  tde.turnOnSelection();
+  expectMark(tde, 2,2);
 }
 
 

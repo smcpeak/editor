@@ -84,6 +84,15 @@ void TextDocumentEditor::moveMarkBy(int deltaLine, int deltaCol)
 }
 
 
+
+void TextDocumentEditor::turnOnSelection()
+{
+  if (!m_markActive) {
+    this->setMark(m_cursor);
+  }
+}
+
+
 void TextDocumentEditor::selectCursorLine()
 {
   // Move the cursor to the start of its line.

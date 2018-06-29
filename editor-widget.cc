@@ -814,28 +814,6 @@ static void inc(int &val, int amt)
 }
 
 
-void EditorWidget::turnOffSelection()
-{
-  this->clearMark();
-}
-
-void EditorWidget::turnOnSelection()
-{
-  if (!this->selectEnabled()) {
-    this->setMark(this->textCursor());
-  }
-}
-
-void EditorWidget::turnSelection(bool on)
-{
-  if (on) {
-    turnOnSelection();
-  }
-  else {
-    turnOffSelection();
-  }
-}
-
 void EditorWidget::clearSelIfEmpty()
 {
   if (this->selectEnabled() &&
