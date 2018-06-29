@@ -257,6 +257,13 @@ public:      // funcs
   // center the visible region on the cursor.
   void scrollToCursor(int edgeGap=0);
 
+  // Scroll vertically so the cursor line is in the center of the
+  // visible region if possible (it might not be possible due to the
+  // cursor being too near the top of the file).  Also scroll so the
+  // visible region is as far to the left as possible while keeping
+  // the cursor in view.
+  void centerVisibleOnCursorLine();
+
   // ---------------- general text queries -------------------
   // Get part of a single line's contents, starting at 'line/col' and
   // getting 'destLen' chars.  All the chars must be in the line now.

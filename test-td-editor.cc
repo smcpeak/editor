@@ -743,6 +743,16 @@ static void testScrollToCursor()
   expectFV(tde, 6,1, 5,0, 5,10);
   tde.moveFirstVisibleAndCursor(-10, 0);   // hit top edge
   expectFV(tde, 1,1, 0,0, 5,10);
+
+  // Test 'centerVisibleOnCursorLine'.
+  tde.centerVisibleOnCursorLine();         // no-op
+  expectFV(tde, 1,1, 0,0, 5,10);
+  tde.setCursor(TextCoord(50,50));
+  tde.centerVisibleOnCursorLine();         // cursor at right edge
+  expectFV(tde, 50,50, 48,41, 5,10);
+  tde.setCursor(TextCoord(5,1));
+  tde.centerVisibleOnCursorLine();         // back near top-left
+  expectFV(tde, 5,1, 3,0, 5,10);
 }
 
 

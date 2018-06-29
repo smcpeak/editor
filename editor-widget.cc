@@ -955,8 +955,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_L:
-        setFirstVisible(TextCoord(max(0, cursorLine() - this->visLines()/2), 0));
-        scrollToCursor();
+        this->editor->centerVisibleOnCursorLine();
+        this->redraw();
         break;
 
       case Qt::Key_J:

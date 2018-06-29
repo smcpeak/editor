@@ -258,6 +258,14 @@ void TextDocumentEditor::scrollToCursor(int edgeGap)
 }
 
 
+void TextDocumentEditor::centerVisibleOnCursorLine()
+{
+  int newfv = max(0, m_cursor.line - this->visLines()/2);
+  this->setFirstVisible(TextCoord(newfv, 0));
+  this->scrollToCursor();
+}
+
+
 void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col)
 {
   if (relLine) {
