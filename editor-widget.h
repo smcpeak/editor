@@ -187,11 +187,6 @@ public:      // funcs
   // set cursorLine/cursorCol to the x/y derived from 'm'
   void setCursorToClickLoc(QMouseEvent *m);
 
-  // Text cursor location (as opposed to mouse cursor image).
-  //
-  // TODO: Remove this in favor of 'editor->cursor()'.
-  TextCoord textCursor() const            { return editor->cursor(); }
-
   // These methods are here to help transition the code from having
   // cursor and mark in EditorWidget to having them in
   // TextDocumentEditor.
@@ -199,8 +194,8 @@ public:      // funcs
   // TODO: I think I should remove these in favor of code directly
   // calling the editor object.  Anyway, most of the code that invokes
   // these should be moved into TextDocumentEditor.
-  int cursorLine() const                  { return textCursor().line; }
-  int cursorCol() const                   { return textCursor().column; }
+  int cursorLine() const                  { return editor->cursor().line; }
+  int cursorCol() const                   { return editor->cursor().column; }
 
   // absolute cursor movement
   void cursorTo(TextCoord tc);
