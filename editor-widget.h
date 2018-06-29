@@ -252,9 +252,6 @@ public:      // funcs
   void setFirstVisibleLine(int L)         { editor->setFirstVisibleLine(L); }
   void setFirstVisibleCol(int C)          { editor->setFirstVisibleCol(C); }
 
-  void moveFirstVisibleBy(int deltaLine, int deltaCol)
-    { editor->moveFirstVisibleBy(deltaLine, deltaCol); }
-
   // This one calls redraw, whereas the preceding does not, simply
   // because its call sites all want that right after.
   void moveFirstVisibleAndCursor(int deltaLine, int deltaCol)

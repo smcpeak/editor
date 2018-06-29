@@ -945,7 +945,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_W:
-        moveFirstVisibleBy(-1, 0);
+        editor->moveFirstVisibleBy(-1, 0);
         if (cursorLine() > this->lastVisibleLine()) {
           cursorUpBy(cursorLine() - this->lastVisibleLine());
         }
@@ -953,7 +953,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_Z:
-        moveFirstVisibleBy(+1, 0);
+        editor->moveFirstVisibleBy(+1, 0);
         if (cursorLine() < this->firstVisibleLine()) {
           cursorDownBy(this->firstVisibleLine() - cursorLine());
         }
@@ -1644,7 +1644,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 {
   if (line <= editor->cursor().line) {
     editor->moveCursorBy(+1, 0);
-    moveFirstVisibleBy(+1, 0);
+    editor->moveFirstVisibleBy(+1, 0);
   }
 
   redraw();
@@ -1654,7 +1654,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
   if (line < editor->cursor().line) {
     editor->moveCursorBy(-1, 0);
-    moveFirstVisibleBy(-1, 0);
+    editor->moveFirstVisibleBy(-1, 0);
   }
 
   redraw();
