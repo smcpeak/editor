@@ -175,6 +175,10 @@ public:      // funcs
   // Make the mark inactive.
   void clearMark() { m_mark = TextCoord(); m_markActive = false; }
 
+  // Move the mark by the indicated amount, clamping at 0.  Requires
+  // markActive().
+  void moveMarkBy(int deltaLine, int deltaCol);
+
   // Select the entire line containing the cursor.
   void selectCursorLine();
 

@@ -1418,6 +1418,32 @@ static void testCursorRestorer()
 }
 
 
+// ----------------------- testSetMark --------------------------
+static void testSetMark()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+  xassert(!tde.markActive());
+
+  tde.setMark(TextCoord(1,1));
+  expectMark(tde, 1,1);
+
+  tde.moveMarkBy(+1,+1);
+  expectMark(tde, 2,2);
+
+  tde.moveMarkBy(+3,+4);
+  expectMark(tde, 5,6);
+
+  tde.moveMarkBy(-10,+1);
+  expectMark(tde, 0,7);
+
+  tde.moveMarkBy(0,-10);
+  expectMark(tde, 0,0);
+}
+
 
 // --------------------------- main -----------------------------
 int main()
@@ -1442,6 +1468,7 @@ int main()
     testInsertNewlineAutoIndent4();
     testSetVisibleSize();
     testCursorRestorer();
+    testSetMark();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

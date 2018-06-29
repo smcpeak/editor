@@ -1642,9 +1642,24 @@ void EditorWidget::startListening()
 
 void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 {
+  TRACE("observe", "observeInsertLine line=" << line);
+
+  // Internally inside HE_text::insert(), the routine that actually
+  // inserts text, inserting "line N" works by removing the text on
+  // line N, inserting a new line N+1, then putting that text back on
+  // line N+1.  It's sort of weird, and calls into question how much
+  // observers ought to know about the mechanism.  But for now at least
+  // I will compensate here by changing the line number to match what I
+  // think of as the conceptually inserted line.
+  line--;
+
   if (line <= editor->cursor().line) {
     editor->moveCursorBy(+1, 0);
     editor->moveFirstVisibleBy(+1, 0);
+  }
+
+  if (editor->markActive() && line <= editor->mark().line) {
+    editor->moveMarkBy(+1, 0);
   }
 
   redraw();
@@ -1652,9 +1667,15 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
 
 void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
+  TRACE("observe", "observeDeleteLine line=" << line);
+
   if (line < editor->cursor().line) {
     editor->moveCursorBy(-1, 0);
     editor->moveFirstVisibleBy(-1, 0);
+  }
+
+  if (editor->markActive() && line < editor->mark().line) {
+    editor->moveMarkBy(-1, 0);
   }
 
   redraw();

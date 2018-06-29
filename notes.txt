@@ -8,7 +8,8 @@ TODOs:
     - IncSearch should work on top of TDE, not EditorWidget
     - put EditorWindow into its own file
     - maybe GlobalState too
-  - bug: selection active in nonfocused window causes weird behavior
+  - bug: window title is wrong on second and later windows
+  - bug: selection beyond EOL draws misleading ws indicators
   - bug: asterisk indicating file has unsaved changes does not appear
     on first edit, only second
 

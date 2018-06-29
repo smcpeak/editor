@@ -76,6 +76,14 @@ void TextDocumentEditor::setMark(TextCoord m)
 }
 
 
+void TextDocumentEditor::moveMarkBy(int deltaLine, int deltaCol)
+{
+  xassert(m_markActive);
+  m_mark.line = max(0, m_mark.line + deltaLine);
+  m_mark.column = max(0, m_mark.column + deltaCol);
+}
+
+
 void TextDocumentEditor::selectCursorLine()
 {
   // Move the cursor to the start of its line.
