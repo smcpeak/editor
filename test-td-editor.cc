@@ -1567,10 +1567,27 @@ static void testJustifyNearCursor()
 static void testInsertDateTime()
 {
   TextDocumentAndEditor tde;
-  tde.insertDateTime();
 
-  // TODO: This is very weak validation.
-  expectCursor(tde, 0, 16);
+  // First test with a specific time.
+  FixedDateTimeProvider fdtp(1000000000, 0);
+  tde.insertDateTime(&fdtp);
+  expect(tde, 0, 16,
+    "2001-09-09 01:46");
+  tde.insertNewline();
+
+  // Test inserting while text is selected.
+  tde.insertNulTermText("xyz\n");
+  tde.setCursor(TextCoord(1,1));
+  tde.setMark(TextCoord(1,2));
+  tde.insertDateTime(&fdtp);
+  expectNM(tde, 1, 17,
+    "2001-09-09 01:46\n"
+    "x2001-09-09 01:46z\n");
+
+  // Test with current date/time, validating size only.
+  tde.setCursor(TextCoord(2,0));
+  tde.insertDateTime();
+  expectCursor(tde, 2, 16);
 }
 
 

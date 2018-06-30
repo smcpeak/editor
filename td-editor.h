@@ -6,6 +6,8 @@
 
 #include "td.h"                        // TextDocument
 
+#include "datetime.h"                  // DateTimeProvider
+
 
 // This class is a "stateful metaphor UI API".  That is, it
 // encapsulates an aspect of a stateful user interface for manipulating
@@ -429,7 +431,7 @@ public:      // funcs
 
   // --------------------- other insertion ------------------------
   // Insert, at cursor, the local date/time as "YYYY-MM-DD hh:ss".
-  void insertDateTime();
+  void insertDateTime(DateTimeProvider *provider = NULL);
 
   // ------------------------ clipboard ---------------------------
   // The functions here are part of a clipboard implementation, as

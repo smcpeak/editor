@@ -923,10 +923,10 @@ bool TextDocumentEditor::justifyNearCursor(int desiredWidth)
 }
 
 
-void TextDocumentEditor::insertDateTime()
+void TextDocumentEditor::insertDateTime(DateTimeProvider *provider)
 {
   DateTimeSeconds d;
-  d.fromCurrentTime();
+  d.fromCurrentTime(provider);
   string dt = stringf("%04d-%02d-%02d %02d:%02d",
     d.year,
     d.month,
