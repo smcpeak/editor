@@ -8,6 +8,9 @@ TODOs:
     - IncSearch should work on top of TDE, not EditorWidget
     - put EditorWindow into its own file
     - maybe GlobalState too
+  - goto-line dialog should have a history
+  - window menu entries should have unambiguous names
+  - full file path in status bar
 
 
   - Alt+A to pass selection through a filter command
@@ -42,7 +45,6 @@ TODOs:
 
   - Ctrl+S still does not work very well with Backspace;
     see comments in IncSearch::searchKeyMap
-  - fix the date/time time zone
   - support for encodings other than Latin-1
 
   - factor out the Qt stuff so I can have a curses version

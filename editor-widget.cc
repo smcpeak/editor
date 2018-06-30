@@ -44,7 +44,6 @@
 
 // libc
 #include <stdio.h>           // printf, for debugging
-#include <time.h>            // time(), localtime()
 
 
 // Distance below the baseline to draw an underline.
@@ -1000,14 +999,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_D: {
-        // TODO: This does not work on Windows.  The time zone
-        // information is wrong.
-        time_t t = time(NULL);
-        struct tm *tm = localtime(&t);
-        string s = stringf("%d-%02d-%02d %02d:%02d",
-                           tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-                           tm->tm_hour, tm->tm_min);
-        insertText(s.c_str(), s.length());
+        this->editor->insertDateTime();
+        this->redraw();
         break;
       }
     }

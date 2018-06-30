@@ -1563,6 +1563,17 @@ static void testJustifyNearCursor()
 }
 
 
+// --------------------- testInsertDateTime ---------------------
+static void testInsertDateTime()
+{
+  TextDocumentAndEditor tde;
+  tde.insertDateTime();
+
+  // TODO: This is very weak validation.
+  expectCursor(tde, 0, 16);
+}
+
+
 // --------------------------- main -----------------------------
 int main()
 {
@@ -1589,6 +1600,7 @@ int main()
     testSetMark();
     testConfineCursorToVisible();
     testJustifyNearCursor();
+    testInsertDateTime();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

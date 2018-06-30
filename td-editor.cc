@@ -6,6 +6,7 @@
 #include "justify.h"                   // justifyNearLine
 
 #include "array.h"                     // Array
+#include "datetime.h"                  // DateTimeSeconds
 #include "trace.h"                     // TRACE
 #include "typ.h"                       // min, max
 
@@ -919,6 +920,23 @@ bool TextDocumentEditor::justifyNearCursor(int desiredWidth)
   bool ret = justifyNearLine(*this, m_cursor.line, desiredWidth);
   this->scrollToCursor();
   return ret;
+}
+
+
+void TextDocumentEditor::insertDateTime()
+{
+  DateTimeSeconds d;
+  d.fromCurrentTime();
+  string dt = stringf("%04d-%02d-%02d %02d:%02d",
+    d.year,
+    d.month,
+    d.day,
+    d.hour,
+    d.minute);
+
+  this->deleteSelectionIf();
+  this->insertString(dt);
+  this->scrollToCursor();
 }
 
 

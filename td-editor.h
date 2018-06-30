@@ -427,7 +427,11 @@ public:      // funcs
   // to keep the cursor in view.
   bool justifyNearCursor(int desiredWidth);
 
-  // -------------------- clipboard -----------------------
+  // --------------------- other insertion ------------------------
+  // Insert, at cursor, the local date/time as "YYYY-MM-DD hh:ss".
+  void insertDateTime();
+
+  // ------------------------ clipboard ---------------------------
   // The functions here are part of a clipboard implementation, as
   // they manipulate the document but not the clipboard itself.  The
   // client is expected to do the clipboard half.
