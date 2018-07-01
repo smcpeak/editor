@@ -183,13 +183,30 @@ public:       // funcs
   GlobalState(int argc, char **argv);
   ~GlobalState();
 
-  // to run the app, use the 'exec()' method, inherited
-  // from QApplication
+  // To run the app, use the 'exec()' method, inherited
+  // from QApplication.
 
+  // Create an empty "untitled" file, add it to the set of documents,
+  // and return it.
   FileTextDocument *createNewFile();
+
+  // Return true if any file document has a file name that is exactly
+  // 'fname'.
+  bool hasFileWithName(string const &fname) const;
+
+  // Open a new editor window.
   EditorWindow *createNewWindow(FileTextDocument *initFile);
+
+  // Add 'f' to the set of file documents.
   void trackNewDocumentFile(FileTextDocument *f);
+
+  // Tell every window in the application to rebuild its "Window"
+  // menu because the set of files has changed.
   void rebuildWindowMenus();
+
+  // Remove 'f' from the set of file documents and deallocate it.
+  // This will tell all of the editor widgets to forget about it
+  // first so they switch to some other file.
   void deleteDocumentFile(FileTextDocument *f);
 };
 

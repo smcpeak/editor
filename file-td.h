@@ -47,6 +47,10 @@ public:      // data
   // name of file being edited
   string filename;
 
+  // When true, 'filename' is just a meaningless placeholder; there is
+  // no file associated with this content yet.
+  bool isUntitled;
+
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
   int64_t lastFileTimestamp;

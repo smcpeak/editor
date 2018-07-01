@@ -21,6 +21,7 @@ FileTextDocument::FileTextDocument()
     hasHotkeyDigit(false),
     hotkeyDigit(0),
     filename(),
+    isUntitled(true),
     lastFileTimestamp(0),
     title(),
     windowMenuId(nextWindowMenuId++),

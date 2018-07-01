@@ -289,6 +289,7 @@ void EditorWindow::fileOpenFile(char const *name)
 
   FileTextDocument *b = new FileTextDocument();
   b->filename = name;
+  b->isUntitled = false;
   b->title = sm_basename(name);   // shorter; todo: ensure unique
 
   try {
@@ -317,10 +318,10 @@ void EditorWindow::fileOpenFile(char const *name)
   FileTextDocument *untitled = NULL;
   FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
     FileTextDocument *bs = iter.data();
-    if (bs->title.equals("untitled.txt") &&
+    if (bs->isUntitled &&
         bs->numLines() == 1 &&
         bs->lineLength(0) == 0) {
-      TRACE("untitled", "found untitled file to remove");
+      TRACE("untitled", "found untitled file to remove: " << bs->filename);
       untitled = iter.data();
 
       // I'm going to remove it, but can't yet b/c I
@@ -347,7 +348,7 @@ void EditorWindow::fileOpenFile(char const *name)
 void EditorWindow::fileSave()
 {
   FileTextDocument *b = this->theDocFile();
-  if (b->title.equals("untitled.txt")) {
+  if (b->isUntitled) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
     return;
@@ -397,6 +398,7 @@ void EditorWindow::fileSaveAs()
   QByteArray utf8(s.toUtf8());
   char const *name = utf8.constData();
   theDocFile()->filename = name;
+  theDocFile()->isUntitled = false;
   theDocFile()->title = sm_basename(name);
   setFileName(name, theDocFile()->hotkeyDesc());
   writeTheFile();
@@ -897,10 +899,30 @@ FileTextDocument *GlobalState::createNewFile()
 {
   TRACE("untitled", "creating untitled file");
   FileTextDocument *b = new FileTextDocument();
-  b->filename = "untitled.txt";    // TODO: find a unique variant of this name
+
+  // Come up with a unique "untitled" name.
+  b->filename = "untitled.txt";
+  b->isUntitled = true;
+  int n = 1;
+  while (this->hasFileWithName(b->filename)) {
+    n++;
+    b->filename = stringb("untitled" << n << ".txt");
+  }
+
   b->title = b->filename;
   trackNewDocumentFile(b);
   return b;
+}
+
+
+bool GlobalState::hasFileWithName(string const &fname) const
+{
+  FOREACH_OBJLIST(FileTextDocument, this->fileDocuments, iter) {
+    if (iter.data()->filename == fname) {
+      return true;
+    }
+  }
+  return false;
 }
 
 
