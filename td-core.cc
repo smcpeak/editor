@@ -468,7 +468,7 @@ bool walkCursor(TextDocumentCore const &doc, TextCoord &tc, int len)
 }
 
 
-void truncateCursor(TextDocumentCore const &doc, TextCoord &tc)
+void truncateCoord(TextDocumentCore const &doc, TextCoord &tc)
 {
   tc.line = max(0, tc.line);
   tc.column = max(0, tc.column);

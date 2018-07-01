@@ -190,7 +190,7 @@ inline bool walkBackwards(TextDocumentCore const &buf, TextCoord &cursor, int le
   { return walkCursor(buf, cursor, -len); }
 
 // Truncate the given coordinate so it's within the defined area.
-void truncateCursor(TextDocumentCore const &buf, TextCoord &tc);
+void truncateCoord(TextDocumentCore const &buf, TextCoord &tc);
 
 
 // retrieve text that may span line boundaries; line boundaries are

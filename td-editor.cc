@@ -607,7 +607,7 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
   // this line in f0169061da, when I added undo/redo support, which
   // suggests it was needed to deal with cases arising from replaying
   // history elements.  Probably there is a better solution.
-  truncateCursor(this->core(), tc);
+  truncateCoord(this->core(), tc);
 
   if (flags & FS_ADVANCE_ONCE) {
     walkCursor(this->core(), tc,
@@ -855,8 +855,8 @@ void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
   xassert(tc1 <= tc2);
 
   // truncate the endpoints
-  truncateCursor(this->core(), tc1);
-  truncateCursor(this->core(), tc2);
+  truncateCoord(this->core(), tc1);
+  truncateCoord(this->core(), tc2);
 
   // go to line2/col2, which is probably where the cursor already is
   setCursor(tc2);
