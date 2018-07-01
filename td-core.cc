@@ -466,30 +466,6 @@ bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
 }
 
 
-void computeSpaceFill(TextDocumentCore const &doc, TextCoord tc,
-                      int &rowfill, int &colfill)
-{
-  if (tc.line < doc.numLines()) {
-    // case 1: only need to add spaces to the end of some line
-    int diff = tc.column - doc.lineLength(tc.line);
-    if (diff < 0) {
-      diff = 0;
-    }
-    rowfill = 0;
-    colfill = diff;
-  }
-
-  else {
-    // case 2: need to add lines, then possibly add spaces
-    rowfill = (tc.line - doc.numLines() + 1);    // # of lines to add
-    colfill = tc.column;                         // # of cols to add
-  }
-
-  xassert(rowfill >= 0);
-  xassert(colfill >= 0);
-}
-
-
 int computeSpanLength(TextDocumentCore const &doc, TextCoord tc1,
                       TextCoord tc2)
 {

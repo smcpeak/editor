@@ -188,13 +188,6 @@ void writeFile(TextDocumentCore const &buf, char const *fname);
 bool getTextSpan(TextDocumentCore const &buf, TextCoord tc,
                  char *text, int textLen);
 
-// given a coordinate that might be outside the buffer area (but must
-// both be nonnegative), compute how many rows and spaces need to
-// be added (to EOF, and 'line', respectively) so that coordinate will
-// be in the defined area
-void computeSpaceFill(TextDocumentCore const &buf, TextCoord tc,
-                      int &rowfill, int &colfill);
-
 // Given two locations that are within the defined area, and with
 // tc1 <= tc2, compute the # of chars between them, counting line
 // boundaries as one char.

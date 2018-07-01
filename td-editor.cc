@@ -805,10 +805,37 @@ void TextDocumentEditor::walkCursor(int distance)
 }
 
 
+// Given a coordinate that might be outside the buffer area (but must
+// both be nonnegative), compute how many rows and spaces need to
+// be added (to EOF, and 'tc.line', respectively) so that coordinate
+// will be in the defined area.
+static void computeSpaceFill(TextDocumentEditor const &tde, TextCoord tc,
+                             int &rowfill, int &colfill)
+{
+  if (tc.line < tde.numLines()) {
+    // case 1: only need to add spaces to the end of some line
+    int diff = tc.column - tde.lineLength(tc.line);
+    if (diff < 0) {
+      diff = 0;
+    }
+    rowfill = 0;
+    colfill = diff;
+  }
+
+  else {
+    // case 2: need to add lines, then possibly add spaces
+    rowfill = (tc.line - tde.numLines() + 1);    // # of lines to add
+    colfill = tc.column;                         // # of cols to add
+  }
+
+  xassert(rowfill >= 0);
+  xassert(colfill >= 0);
+}
+
 void TextDocumentEditor::fillToCursor()
 {
   int rowfill, colfill;
-  computeSpaceFill(this->core(), cursor(), rowfill, colfill);
+  computeSpaceFill(*this, this->cursor(), rowfill, colfill);
 
   if (rowfill==0 && colfill==0) {
     return;     // nothing to do
