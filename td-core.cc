@@ -466,35 +466,6 @@ bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
 }
 
 
-int computeSpanLength(TextDocumentCore const &doc, TextCoord tc1,
-                      TextCoord tc2)
-{
-  xassert(tc1 <= tc2);
-
-  if (tc1.line == tc2.line) {
-    return tc2.column-tc1.column;
-  }
-
-  // tail of first line
-  int length = doc.lineLength(tc1.line) - tc1.column +1;
-
-  // line we're working on now
-  tc1.line++;
-
-  // intervening complete lines
-  for (; tc1.line < tc2.line; tc1.line++) {
-    // because we keep deleting lines, the next one is always
-    // called 'line'
-    length += doc.lineLength(tc1.line)+1;
-  }
-
-  // beginning of last line
-  length += tc2.column;
-
-  return length;
-}
-
-
 // -------------------- TextDocumentObserver ------------------
 void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int)
 {}

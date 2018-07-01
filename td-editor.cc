@@ -478,6 +478,35 @@ bool TextDocumentEditor::walkCoord(TextCoord &tc, int len) const
 }
 
 
+int TextDocumentEditor::computeSpanLength(
+  TextCoord tc1, TextCoord tc2) const
+{
+  xassert(tc1 <= tc2);
+
+  if (tc1.line == tc2.line) {
+    return tc2.column-tc1.column;
+  }
+
+  // tail of first line
+  int length = this->lineLength(tc1.line) - tc1.column +1;
+
+  // line we're working on now
+  tc1.line++;
+
+  // intervening complete lines
+  for (; tc1.line < tc2.line; tc1.line++) {
+    // because we keep deleting lines, the next one is always
+    // called 'line'
+    length += this->lineLength(tc1.line)+1;
+  }
+
+  // beginning of last line
+  length += tc2.column;
+
+  return length;
+}
+
+
 void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) const
 {
   xassert(tc.nonNegative());
@@ -937,7 +966,7 @@ void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
   setCursor(tc2);
 
   // compute # of chars in span
-  int length = computeSpanLength(this->core(), tc1, tc2);
+  int length = this->computeSpanLength(tc1, tc2);
 
   // delete them as a left deletion; the idea is I suspect the
   // original and final cursor are line2/col2, in which case the

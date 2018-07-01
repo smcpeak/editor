@@ -188,12 +188,6 @@ void writeFile(TextDocumentCore const &buf, char const *fname);
 bool getTextSpan(TextDocumentCore const &buf, TextCoord tc,
                  char *text, int textLen);
 
-// Given two locations that are within the defined area, and with
-// tc1 <= tc2, compute the # of chars between them, counting line
-// boundaries as one char.
-int computeSpanLength(TextDocumentCore const &buf, TextCoord tc1,
-                      TextCoord tc2);
-
 
 // interface for observing changes to a TextDocumentCore
 class TextDocumentObserver {

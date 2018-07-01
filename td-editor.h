@@ -128,6 +128,11 @@ public:      // funcs
   // function simply returns false (otherwise true).
   bool walkCoord(TextCoord &cursor, int distance) const;
 
+  // Given two locations that are within the valid area, and with
+  // tc1 <= tc2, compute the # of chars between them, counting line
+  // boundaries as one char.
+  int computeSpanLength(TextCoord tc1, TextCoord tc2) const;
+
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.
