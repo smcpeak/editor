@@ -51,11 +51,11 @@ public:      // funcs
   TextDocument();      // empty buffer, empty history, cursor at 0,0
   ~TextDocument();
 
-  // ---- queries ----
-  // read-only access to the underlying representation
+  // Read-only access to the underlying representation.  Use of this
+  // should be unusual.
   TextDocumentCore const &getCore() const { return core; }
 
-  // TextDocumentCore's queries, directly exposed.
+  // -------------------- query document shape --------------------
   int numLines() const                    { return core.numLines(); }
   int lineLength(int line) const          { return core.lineLength(line); }
   bool validCoord(TextCoord tc) const     { return core.validCoord(tc); }
@@ -64,10 +64,7 @@ public:      // funcs
     { return core.getLine(tc, dest, destLen); }
   int maxLineLength() const               { return core.maxLineLength(); }
 
-  // current contents differ from those on disk?
-  bool unsavedChanges() const;
-
-  // ---- global changes ----
+  // ------------------------ global changes ----------------------
   // clear history, leaving only the current buffer contents
   void clearHistory();
 
@@ -82,13 +79,7 @@ public:      // funcs
   // this object in an incomplete state.
   void readFile(char const *fname);
 
-  // Remember the current historyIndex as one where the file's contents
-  // agree with those on the disk.
-  void noUnsavedChanges() { savedHistoryIndex = historyIndex; }
-
-
-  // ---- manipulate and append to history ----
-
+  // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.
   // 'tc' must be valid for the document.
   void insertAt(TextCoord tc, char const *text, int textLen);
@@ -98,17 +89,17 @@ public:      // funcs
   // 'tc' must be valid for the document.
   void deleteAt(TextCoord tc, int count);
 
-
-  // facility for grouping actions with HE_group
+  // -------------------------- undo/redo --------------------------
+  // Group actions with HE_group.
   void beginUndoGroup();
   void endUndoGroup();
 
-  // true if we have an open group; note that undo/redo is not allowed
-  // in that case, even though canUndo/Redo() may return true
-  bool inUndoGroup() const        { return groupStack.isNotEmpty(); }
+  // True if we have an open group; note that undo/redo is not allowed
+  // in that case, even though canUndo/Redo() may return true.
+  bool inUndoGroup() const    { return groupStack.isNotEmpty(); }
 
-
-  // ---- undo/redo ----
+  // True if there is additional history available in the corresponding
+  // direction, and hence the operation can be invoked.
   bool canUndo() const        { return historyIndex > 0; }
   bool canRedo() const        { return historyIndex < history.seqLength(); }
 
@@ -116,7 +107,22 @@ public:      // funcs
   TextCoord undo();
   TextCoord redo();
 
+  // Do the current contents differ from those we remember saving?
+  bool unsavedChanges() const;
 
+  // Remember the current historyIndex as one where the file's contents
+  // agree with those on the disk.
+  void noUnsavedChanges() { savedHistoryIndex = historyIndex; }
+
+  // -------------------------- observers ---------------------------
+  // Add a new observer of this document's contents.  This observer
+  // must not already be observing this document.
+  void addObserver(TextDocumentObserver *observer);
+
+  // Remove an observer, which must be observing this document.
+  void removeObserver(TextDocumentObserver *observer);
+
+  // ------------------------- diagnostics --------------------------
   // print the history in a textual format, with the current history
   // index marked (or no mark if history index is at the end)
   void printHistory(stringBuilder &sb) const;

@@ -80,6 +80,13 @@ public:      // funcs
   // Check class invariants, failing an assertion if violated.
   void selfCheck() const;
 
+  // Get the document that was passed to the constructor.  My
+  // preference is to avoid using this, instead going through the
+  // TextDocumentEditor interface when possible, but there are some
+  // operations that make most sense to do with the document itself,
+  // and getting that from the editor is sometimes convenient.
+  TextDocument const *getDocument() const { return m_doc; }
+
   // TODO: I think I should remove this.  It is confusing to have
   // clients sometimes directly accessing the underlying document.
   TextDocumentCore const &core() const { return m_doc->getCore(); }
@@ -481,6 +488,12 @@ public:      // funcs
   // undo, it is the undo/redo mechanism that understands the file now
   // has no unsaved changes.
   bool unsavedChanges() const          { return m_doc->unsavedChanges(); }
+
+  // -------------------------- observers -----------------------------
+  void addObserver(TextDocumentObserver *observer)
+    { m_doc->addObserver(observer); }
+  void removeObserver(TextDocumentObserver *observer)
+    { m_doc->removeObserver(observer); }
 
   // ------------------------- diagnostics ----------------------------
   // Print some debugging information to stdout for use in testing.

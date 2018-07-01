@@ -157,6 +157,17 @@ TextCoord TextDocument::redo()
 }
 
 
+void TextDocument::addObserver(TextDocumentObserver *observer)
+{
+  this->core.observers.appendUnique(observer);
+}
+
+void TextDocument::removeObserver(TextDocumentObserver *observer)
+{
+  this->core.observers.removeItem(observer);
+}
+
+
 void TextDocument::printHistory(stringBuilder &sb) const
 {
   history.printWithMark(sb, 0 /*indent*/, historyIndex);

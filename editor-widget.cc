@@ -1560,9 +1560,7 @@ void EditorWidget::focusOutEvent(QFocusEvent *e)
 void EditorWidget::stopListening()
 {
   if (m_listening) {
-    // remove myself from the list
-    m_editor->core().observers.removeItem(this);
-
+    m_editor->removeObserver(this);
     m_listening = false;
   }
 }
@@ -1570,9 +1568,7 @@ void EditorWidget::stopListening()
 void EditorWidget::startListening()
 {
   xassert(!m_listening);
-
-  // add myself to the list
-  m_editor->core().observers.append(this);
+  m_editor->addObserver(this);
   m_listening = true;
 }
 
