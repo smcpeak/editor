@@ -92,6 +92,9 @@ public:      // funcs
   void fileOpenFile(char const *fname);
 
   // File user is editing: returns editor->docFile.
+  //
+  // TODO: This method should be renamed to 'theFileDoc', along
+  // with EW::getDocumentFile.
   FileTextDocument *theDocFile();
 
   // Reload the file for 'b' from disk.  If there is an error, show
@@ -190,9 +193,15 @@ public:       // funcs
   // and return it.
   FileTextDocument *createNewFile();
 
-  // Return true if any file document has a file name that is exactly
-  // 'fname'.
+  // Return true if any file document has the given file name.
   bool hasFileWithName(string const &fname) const;
+
+  // Return true if any file document has the given title.
+  bool hasFileWithTitle(string const &title) const;
+
+  // Calculate a minimal suffix of path components in 'filename' that
+  // forms a title not shared by any open file.
+  string uniqueTitleFor(string const &filename);
 
   // Open a new editor window.
   EditorWindow *createNewWindow(FileTextDocument *initFile);

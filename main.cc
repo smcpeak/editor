@@ -13,7 +13,8 @@
 #include "qhboxframe.h"                // QHBoxFrame
 #include "qtutil.h"                    // toQString
 #include "status.h"                    // StatusDisplay
-#include "strutil.h"                   // sm_basename, dirname
+#include "strtokp.h"                   // StrtokParse
+#include "strutil.h"                   // dirname
 #include "td-editor.h"                 // TextDocumentEditor
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE_ARGS
@@ -252,7 +253,7 @@ void EditorWindow::setFileName(rostring name, rostring hotkey)
   if (hotkey[0]) {
     s &= stringc << "[" << hotkey << "] ";
   }
-  s &= sm_basename(name);
+  s &= name;
 
   this->setWindowTitle(toQString(s));
 }
@@ -290,7 +291,7 @@ void EditorWindow::fileOpenFile(char const *name)
   FileTextDocument *b = new FileTextDocument();
   b->filename = name;
   b->isUntitled = false;
-  b->title = sm_basename(name);   // shorter; todo: ensure unique
+  b->title = this->globalState->uniqueTitleFor(b->filename);
 
   try {
     b->readFile(name);
@@ -389,18 +390,38 @@ void EditorWindow::writeTheFile()
 
 void EditorWindow::fileSaveAs()
 {
-  QString s = QFileDialog::getSaveFileName(
-    this, "Save file as", toQString(theDocFile()->filename));
-  if (s.isEmpty()) {
-    return;
+  FileTextDocument *fileDoc = theDocFile();
+  string chosenFilename = fileDoc->filename;
+  while (true) {
+    QString s = QFileDialog::getSaveFileName(
+      this, "Save file as", toQString(chosenFilename));
+    if (s.isEmpty()) {
+      return;
+    }
+
+    chosenFilename = s.toUtf8().constData();
+
+    if (!fileDoc->isUntitled &&
+        fileDoc->filename == chosenFilename) {
+      this->fileSave();
+      return;
+    }
+
+    if (this->globalState->hasFileWithName(chosenFilename)) {
+      this->complain(stringb(
+        "There is already an open file with name \"" <<
+        chosenFilename <<
+        "\".  Choose a different name to save as."));
+    }
+    else {
+      break;
+    }
   }
 
-  QByteArray utf8(s.toUtf8());
-  char const *name = utf8.constData();
-  theDocFile()->filename = name;
-  theDocFile()->isUntitled = false;
-  theDocFile()->title = sm_basename(name);
-  setFileName(name, theDocFile()->hotkeyDesc());
+  fileDoc->filename = chosenFilename;
+  fileDoc->isUntitled = false;
+  fileDoc->title = this->globalState->uniqueTitleFor(chosenFilename);
+  setFileName(chosenFilename, fileDoc->hotkeyDesc());
   writeTheFile();
 
   this->globalState->rebuildWindowMenus();
@@ -923,6 +944,55 @@ bool GlobalState::hasFileWithName(string const &fname) const
     }
   }
   return false;
+}
+
+
+bool GlobalState::hasFileWithTitle(string const &fname) const
+{
+  FOREACH_OBJLIST(FileTextDocument, this->fileDocuments, iter) {
+    if (iter.data()->title == fname) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+string GlobalState::uniqueTitleFor(string const &filename)
+{
+  TRACE("title", "computing unique title for: " << filename);
+
+  // Split the filename into path components.
+  StrtokParse tok(filename, "\\/");
+
+  // Find the minimum number of trailing components we need to
+  // include to make the title unique.
+  for (int n = 1; n <= tok.tokc(); n++) {
+    // Construct a title with 'n' trailing components.
+    stringBuilder sb;
+    for (int i = tok.tokc() - n; i < tok.tokc(); i++) {
+      sb << tok[i];
+      if (i < tok.tokc() - 1) {
+        // Make titles exclusively with forward slash.
+        sb << '/';
+      }
+    }
+
+    // Check for another file with this title.
+    if (!this->hasFileWithTitle(sb)) {
+      TRACE("title", "computed title: " << sb);
+      return sb;
+    }
+  }
+
+  // This function should only be called when the filename is known
+  // to be unique, and every title is supposed to be a suffix of its
+  // file name, so we should not get here.  Use the full filename,
+  // potentially with different separators, as a fallback.
+  cerr << "WARNING: Internal bug: Failed to find a unique title for: "
+       << filename << endl;
+  TRACE("title", "using fallback title: " << filename);
+  return filename;
 }
 
 

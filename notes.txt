@@ -9,8 +9,6 @@ TODOs:
     - put EditorWindow into its own file
     - maybe GlobalState too
   - goto-line dialog should have a history
-  - window menu entries should have unambiguous names
-  - full file path in status bar
 
 
   - Alt+A to pass selection through a filter command
