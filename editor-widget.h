@@ -46,14 +46,14 @@ private:     // types
   // the editing state for that file.  This state is *not* shared with
   // other widgets in the editor application, although it contains a
   // pointer to a FileTextDocument, which *is* shared.
-  class TextDocumentFileEditor : public TextDocumentEditor {
+  class FileTextDocumentEditor : public TextDocumentEditor {
   public:    // data
     // Process-wide record of the open file.  Not an owner pointer.
     // Must not be null.
     FileTextDocument *fileDoc;
 
   public:
-    TextDocumentFileEditor(FileTextDocument *f) :
+    FileTextDocumentEditor(FileTextDocument *f) :
       TextDocumentEditor(f),
       fileDoc(f)
     {}
@@ -70,13 +70,13 @@ private:     // data
   // ------ editing state -----
   // Editor object for the file we are editing.  Never NULL.
   // This points at one of the elements of 'm_editors'.
-  TextDocumentFileEditor *editor;
+  FileTextDocumentEditor *editor;
 
   // All of the editors associated with this widget.  An editor is
   // created on demand when this widget is told to edit its underlying
   // file, so the set of files here is in general a subset of
   // GlobalState::documentFiles.
-  ObjList<TextDocumentFileEditor> m_editors;
+  ObjList<FileTextDocumentEditor> m_editors;
 
   // ----- match highlight state -----
   // when nonempty, any buffer text matching this string will
@@ -286,7 +286,7 @@ public:      // funcs
 
   // If we already have an editor for 'file', return it.  Otherwise,
   // make a new editor, add it to 'm_editors', and return that.
-  TextDocumentFileEditor *getOrMakeEditor(FileTextDocument *file);
+  FileTextDocumentEditor *getOrMakeEditor(FileTextDocument *file);
 
   // Change which file this editor widget is editing.
   void setDocumentFile(FileTextDocument *file);

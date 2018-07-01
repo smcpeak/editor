@@ -61,7 +61,7 @@ EditorWidget::EditorWidget(FileTextDocument *tdf, StatusDisplay *status_,
   : QWidget(parent),
     infoBox(NULL),
     status(status_),
-    editor(new TextDocumentFileEditor(tdf)),
+    editor(new FileTextDocumentEditor(tdf)),
     m_editors(),
     topMargin(1),
     leftMargin(1),
@@ -120,8 +120,8 @@ void EditorWidget::selfCheck() const
   // Check that 'editor' is among 'm_editors' and that the files in
   // 'm_editors' are a subset of GlobalState::fileDocuments.
   bool foundEditor = false;
-  FOREACH_OBJLIST(TextDocumentFileEditor, m_editors, iter) {
-    TextDocumentFileEditor const *tdfe = iter.data();
+  FOREACH_OBJLIST(FileTextDocumentEditor, m_editors, iter) {
+    FileTextDocumentEditor const *tdfe = iter.data();
     if (editor == tdfe) {
       foundEditor = true;
     }
@@ -239,18 +239,18 @@ void EditorWidget::setDocumentFile(FileTextDocument *file)
 }
 
 
-EditorWidget::TextDocumentFileEditor *
+EditorWidget::FileTextDocumentEditor *
   EditorWidget::getOrMakeEditor(FileTextDocument *file)
 {
   // Look for an existing editor for this file.
-  FOREACH_OBJLIST_NC(TextDocumentFileEditor, m_editors, iter) {
+  FOREACH_OBJLIST_NC(FileTextDocumentEditor, m_editors, iter) {
     if (iter.data()->fileDoc == file) {
       return iter.data();
     }
   }
 
   // Have to make a new one.
-  TextDocumentFileEditor *ret = new TextDocumentFileEditor(file);
+  FileTextDocumentEditor *ret = new FileTextDocumentEditor(file);
   m_editors.prepend(ret);
   return ret;
 }
@@ -259,7 +259,7 @@ EditorWidget::TextDocumentFileEditor *
 void EditorWidget::forgetAboutFile(FileTextDocument *file)
 {
   // Remove 'file' from my list.
-  for(ObjListMutator< TextDocumentFileEditor > mut(m_editors); !mut.isDone(); ) {
+  for(ObjListMutator< FileTextDocumentEditor > mut(m_editors); !mut.isDone(); ) {
     if (mut.data()->fileDoc == file) {
       mut.deleteIt();
     }
