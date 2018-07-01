@@ -259,7 +259,7 @@ static bool equalDocuments(TextDocumentEditor const &d1,
 static void print(char const *label, TextDocumentEditor const &tde)
 {
   cout << label << ":\n";
-  tde.core().dumpRepresentation();
+  tde.debugPrint();
 }
 
 

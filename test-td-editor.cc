@@ -176,7 +176,7 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 
   string actual = tde.getTextRange(TextCoord(line1, col1), TextCoord(line2, col2));
   if (!actual.equals(expect)) {
-    tde.core().dumpRepresentation();
+    tde.debugPrint();
     cout << "getTextRange(" << line1 << "," << col1 << ", "
                             << line2 << "," << col2 << "):\n";
     cout << "  actual: " << quoted(actual) << "\n";

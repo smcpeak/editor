@@ -482,9 +482,13 @@ public:      // funcs
   // has no unsaved changes.
   bool unsavedChanges() const          { return m_doc->unsavedChanges(); }
 
+  // ------------------------- diagnostics ----------------------------
   // Print some debugging information to stdout for use in testing.
   void printHistory() const            { m_doc->printHistory(); }
   void printHistoryStats() const       { m_doc->printHistoryStats(); }
+
+  // Print the document contents and things like cursor and mark.
+  void debugPrint() const;
 };
 
 

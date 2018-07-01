@@ -1051,7 +1051,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_U:
-        m_editor->core().dumpRepresentation();
+        m_editor->debugPrint();
         malloc_stats();
         break;
 

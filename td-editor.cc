@@ -972,6 +972,17 @@ void TextDocumentEditor::clipboardPaste(char const *text, int textLen)
 }
 
 
+void TextDocumentEditor::debugPrint() const
+{
+  m_doc->getCore().dumpRepresentation();
+  cout << "  cursor: " << m_cursor << endl;
+  cout << "  markActive: " << m_markActive << endl;
+  cout << "  mark: " << m_mark << endl;
+  cout << "  firstVisible: " << m_firstVisible << endl;
+  cout << "  lastVisible: " << m_lastVisible << endl;
+}
+
+
 // -------------------- CursorRestorer ------------------
 CursorRestorer::CursorRestorer(TextDocumentEditor &e)
   : tde(e),
