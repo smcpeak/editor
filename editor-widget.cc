@@ -519,8 +519,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
 
       // apply highlighting
       if (m_editor->m_fileDoc->highlighter) {
-        m_editor->m_fileDoc->highlighter->
-          highlight(m_editor->core(), line, categories);
+        m_editor->m_fileDoc->highlighter
+          ->highlightTDE(m_editor, line, categories);
       }
 
       // Show search hits.

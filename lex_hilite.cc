@@ -263,7 +263,7 @@ static TextDocumentEditor *tde;
 static void printLine(LexHighlighter &hi, int line)
 {
   LineCategories category(TC_NORMAL);
-  hi.highlight(tde->core(), line, category);
+  hi.highlightTDE(tde, line, category);
 
   cout << "line " << line << ":\n"
        << "  text : " << tde->getWholeLine(line) << "\n"
@@ -299,11 +299,11 @@ static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
   LineCategories categories1(TC_NORMAL);
-  hi.highlight(tde->core(), i, categories1);
+  hi.highlightTDE(tde, i, categories1);
   string rendered1 = categories1.asUnaryString();
 
   LineCategories categories2(TC_NORMAL);
-  batch.highlight(tde->core(), i, categories2);
+  batch.highlightTDE(tde, i, categories2);
   string rendered2 = categories2.asUnaryString();
 
   // compare using rendered strings, instead of looking at
@@ -324,7 +324,8 @@ static void innerCheckLine(LexHighlighter &hi,
 // check that the incremental highlighter matches a batch highlighter
 static void check(LexHighlighter &hi)
 {
-  LexHighlighter *batch = makeHigh(tde->core());    // batch because it has no initial info
+  // batch because it has no initial info
+  LexHighlighter *batch = makeHigh(tde->getDocument()->getCore());
 
   // go backwards in hopes of finding more incrementality bugs
   for (int i = tde->numLines()-1; i>=0; i--) {
@@ -337,7 +338,7 @@ static void check(LexHighlighter &hi)
 
 static void checkLine(LexHighlighter &hi, int line)
 {
-  LexHighlighter *batch = makeHigh(tde->core());
+  LexHighlighter *batch = makeHigh(tde->getDocument()->getCore());
 
   innerCheckLine(hi, *batch, line);
 
@@ -353,7 +354,7 @@ void exerciseHighlighter(MakeHighlighterFunc func)
   tde = &tde_;
 
   makeHigh = func;
-  LexHighlighter *hi_ = makeHigh(tde->core());
+  LexHighlighter *hi_ = makeHigh(tde->getDocument()->getCore());
   LexHighlighter &hi = *hi_;
 
   int line=0, col=0;

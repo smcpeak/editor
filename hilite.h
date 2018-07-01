@@ -5,6 +5,7 @@
 #define HILITE_H
 
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
+#include "td-editor.h"                 // TextDocumentEditor
 
 class LineCategories;                  // textcategory.h
 
@@ -28,6 +29,11 @@ public:
   // only be passed a reference to that particular object.
   virtual void highlight(TextDocumentCore const &doc, int line,
                          LineCategories &categories)=0;
+
+  // Convenience method.
+  void highlightTDE(TextDocumentEditor const *tde, int line,
+                    LineCategories &categories)
+    { this->highlight(tde->getDocument()->getCore(), line, categories); }
 };
 
 
