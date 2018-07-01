@@ -432,42 +432,6 @@ void writeFile(TextDocumentCore const &doc, char const *fname)
 }
 
 
-bool walkCursor(TextDocumentCore const &doc, TextCoord &tc, int len)
-{
-  xassert(doc.validCoord(tc));
-
-  for (; len > 0; len--) {
-    if (tc.column == doc.lineLength(tc.line)) {
-      // cycle to next line
-      tc.line++;
-      if (tc.line >= doc.numLines()) {
-        return false;      // beyond EOF
-      }
-      tc.column=0;
-    }
-    else {
-      tc.column++;
-    }
-  }
-
-  for (; len < 0; len++) {
-    if (tc.column == 0) {
-      // cycle up to end of preceding line
-      tc.line--;
-      if (tc.line < 0) {
-        return false;      // before BOF
-      }
-      tc.column = doc.lineLength(tc.line);
-    }
-    else {
-      tc.column--;
-    }
-  }
-
-  return true;
-}
-
-
 bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
                  char *text, int textLen)
 {

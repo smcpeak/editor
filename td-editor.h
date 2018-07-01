@@ -121,6 +121,13 @@ public:      // funcs
   // Clamp the coordinate to the valid region of the document.
   void truncateCoord(TextCoord &tc) const;
 
+  // Walk the given coordinate forwards (right, then down, when
+  // distance>0) or backwards (left, then up, when distance<0) through
+  // the valid coordinates of the file.  It must initially be in the
+  // valid area, but if by walking we get out of bounds, then the
+  // function simply returns false (otherwise true).
+  bool walkCoord(TextCoord &cursor, int distance) const;
+
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.
@@ -176,6 +183,10 @@ public:      // funcs
   // Move the cursor by the minimum amount necessary so it becomes
   // inside the visible region.
   void confineCursorToVisible();
+
+  // Walk the cursor forward or backward by 'distance'.  It must be
+  // possible to do so and remain in the valid area.
+  void walkCursor(int distance);
 
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor

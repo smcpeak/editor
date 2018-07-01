@@ -303,10 +303,7 @@ void TextDocumentEditor::insertText(char const *text, int textLen)
   m_doc->insertAt(cursor(), text, textLen);
 
   // Put the cursor at the end of the inserted text.
-  TextCoord tc = cursor();
-  bool ok = walkCursor(this->core(), tc, textLen);
-  xassert(ok);
-  setCursor(tc);
+  this->walkCursor(textLen);
 
   scrollToCursor();
 }
@@ -328,10 +325,7 @@ void TextDocumentEditor::deleteLR(bool left, int count)
 
   if (left) {
     // Move the cursor to the start of the text to delete.
-    TextCoord tc = cursor();
-    bool ok = walkCursor(this->core(), tc, -count);
-    xassert(ok);
-    setCursor(tc);
+    this->walkCursor(-count);
   }
 
   m_doc->deleteAt(cursor(), count);
@@ -445,6 +439,42 @@ void TextDocumentEditor::truncateCoord(TextCoord &tc) const
 
   tc.line = min(tc.line, this->numLines() - 1); // numLines>=1 always
   tc.column = min(tc.column, this->lineLength(tc.line));
+}
+
+
+bool TextDocumentEditor::walkCoord(TextCoord &tc, int len) const
+{
+  xassert(this->validCoord(tc));
+
+  for (; len > 0; len--) {
+    if (tc.column == this->lineLength(tc.line)) {
+      // cycle to next line
+      tc.line++;
+      if (tc.line >= this->numLines()) {
+        return false;      // beyond EOF
+      }
+      tc.column=0;
+    }
+    else {
+      tc.column++;
+    }
+  }
+
+  for (; len < 0; len++) {
+    if (tc.column == 0) {
+      // cycle up to end of preceding line
+      tc.line--;
+      if (tc.line < 0) {
+        return false;      // before BOF
+      }
+      tc.column = this->lineLength(tc.line);
+    }
+    else {
+      tc.column--;
+    }
+  }
+
+  return true;
 }
 
 
@@ -620,8 +650,7 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
   this->truncateCoord(tc);
 
   if (flags & FS_ADVANCE_ONCE) {
-    walkCursor(this->core(), tc,
-               flags&FS_BACKWARDS? -1 : +1);
+    this->walkCoord(tc, flags&FS_BACKWARDS? -1 : +1);
   }
 
   // contents of current line, in a growable buffer
@@ -764,6 +793,15 @@ void TextDocumentEditor::confineCursorToVisible()
   m_cursor.column =
     max(m_firstVisible.column,
       min(m_lastVisible.column, m_cursor.column));
+}
+
+
+void TextDocumentEditor::walkCursor(int distance)
+{
+  TextCoord tc = m_cursor;
+  bool ok = this->walkCoord(tc, distance);
+  xassert(ok);
+  m_cursor = tc;
 }
 
 

@@ -179,17 +179,6 @@ void readFile(TextDocumentCore &buf, char const *fname);
 void writeFile(TextDocumentCore const &buf, char const *fname);
 
 
-// walk the cursor forwards (right, then down; len>0) or backwards
-// (left, then up; len<0) through the defined contents of the file;
-// line/col must initially be in the defined area, but if by walking
-// we get out of bounds, then the function simply returns false
-// (otherwise true)
-bool walkCursor(TextDocumentCore const &buf, TextCoord &cursor, int len);
-
-inline bool walkBackwards(TextDocumentCore const &buf, TextCoord &cursor, int len)
-  { return walkCursor(buf, cursor, -len); }
-
-
 // retrieve text that may span line boundaries; line boundaries are
 // represented in the returned string as newlines; the span begins at
 // 'tc' (which must be in the defined area) and proceeds for
