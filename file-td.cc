@@ -94,7 +94,11 @@ bool FileTextDocument::hasStaleModificationTime() const
     // to the file having been removed, which we are about to resolve
     // by writing it again.  If the problem is a permission error,
     // the attempt to save will fail for and report that reason.
-    // Either way, it should be safe to ignore the failure to get the
+    //
+    // Another way to get here is to start the editor with a command
+    // line argument for a file that does not exist.
+    //
+    // In all cases, it should be safe to ignore the failure to get the
     // timestamp here and assume it is not stale.
     return false;
   }

@@ -53,6 +53,11 @@ public:      // data
 
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
+  //
+  // This is 0 for an untitled file or a file that does not yet exist,
+  // although there is never a reason to explicitly check for that
+  // since we have 'isUntitled' for the former, and for the latter, we
+  // always try to stat() the file before comparing its timestamp.
   int64_t lastFileTimestamp;
 
   // title of the buffer; this will usually be similar

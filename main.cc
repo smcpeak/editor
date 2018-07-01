@@ -3,20 +3,26 @@
 
 #include "main.h"                      // EditorWindow
 
+// this dir
 #include "c_hilite.h"                  // C_Highlighter
 #include "editor-widget.h"             // EditorWidget
-#include "exc.h"                       // XOpen
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
-#include "mysig.h"                     // printSegfaultAddrs
 #include "qhboxframe.h"                // QHBoxFrame
-#include "qtutil.h"                    // toQString
 #include "status.h"                    // StatusDisplay
+#include "td-editor.h"                 // TextDocumentEditor
+#include "textinput.h"                 // TextInputDialog
+
+// smqtutil
+#include "qtutil.h"                    // toQString
+
+// smbase
+#include "exc.h"                       // XOpen
+#include "mysig.h"                     // printSegfaultAddrs
+#include "nonport.h"                   // fileOrDirectoryExists
 #include "strtokp.h"                   // StrtokParse
 #include "strutil.h"                   // dirname
-#include "td-editor.h"                 // TextDocumentEditor
 #include "test.h"                      // PVAL
-#include "textinput.h"                 // TextInputDialog
 #include "trace.h"                     // TRACE_ARGS
 
 #include <string.h>                    // strrchr
@@ -293,15 +299,20 @@ void EditorWindow::fileOpenFile(char const *name)
   b->isUntitled = false;
   b->title = this->globalState->uniqueTitleFor(b->filename);
 
-  try {
-    b->readFile(name);
-    b->refreshModificationTime();
+  if (fileOrDirectoryExists(b->filename.c_str())) {
+    try {
+      b->readFile(name);
+      b->refreshModificationTime();
+    }
+    catch (XOpen &x) {
+      this->complain(stringb(
+        "Can't open file \"" << name << "\": " << x.why()));
+      delete b;
+      return;
+    }
   }
-  catch (XOpen &x) {
-    this->complain(stringb(
-      "Can't open file \"" << name << "\": " << x.why()));
-    delete b;
-    return;
+  else {
+    // Just have the file open with its name set but no content.
   }
 
   // get file extension
