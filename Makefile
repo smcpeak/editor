@@ -201,29 +201,30 @@ main.o: keybindings.doc.gen.h
 
 TOCLEAN += gotoline.gen.h keybindings.doc.gen.*
 
-EDITOR_OBJS := \
-  file-td.o \
-  c_hilite.yy.o \
-  comment.yy.o \
-  editor-widget.o \
-  bufferlinesource.o \
-  history.o \
-  td.o \
-  incsearch.o \
-  inputproxy.o \
-  justify.o \
-  keybindings.doc.gen.o \
-  lex_hilite.o \
-  main.o \
-  moc_editor-widget.o \
-  moc_main.o \
-  pixmaps.o \
-  status.o \
-  textcategory.o \
-  styledb.o \
-  td-core.o \
-  td-editor.o \
-  textcoord.o
+EDITOR_OBJS :=
+EDITOR_OBJS += bufferlinesource.o
+EDITOR_OBJS += c_hilite.yy.o
+EDITOR_OBJS += comment.yy.o
+EDITOR_OBJS += editor-widget.o
+EDITOR_OBJS += file-td.o
+EDITOR_OBJS += history.o
+EDITOR_OBJS += incsearch.o
+EDITOR_OBJS += inputproxy.o
+EDITOR_OBJS += justify.o
+EDITOR_OBJS += keybindings.doc.gen.o
+EDITOR_OBJS += lex_hilite.o
+EDITOR_OBJS += main.o
+EDITOR_OBJS += moc_editor-widget.o
+EDITOR_OBJS += moc_main.o
+EDITOR_OBJS += pixmaps.o
+EDITOR_OBJS += status.o
+EDITOR_OBJS += styledb.o
+EDITOR_OBJS += td.o
+EDITOR_OBJS += td-core.o
+EDITOR_OBJS += td-editor.o
+EDITOR_OBJS += textcategory.o
+EDITOR_OBJS += textcoord.o
+
 -include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor
