@@ -116,6 +116,11 @@ public:      // funcs
   // Position at end of specified line, which may be beyond EOF.
   TextCoord lineEndCoord(int line) const;
 
+  bool validCoord(TextCoord tc) const  { return m_doc->validCoord(tc); }
+
+  // Clamp the coordinate to the valid region of the document.
+  void truncateCoord(TextCoord &tc) const;
+
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.

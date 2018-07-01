@@ -438,6 +438,16 @@ TextCoord TextDocumentEditor::lineEndCoord(int line) const
 }
 
 
+void TextDocumentEditor::truncateCoord(TextCoord &tc) const
+{
+  tc.line = max(0, tc.line);
+  tc.column = max(0, tc.column);
+
+  tc.line = min(tc.line, this->numLines() - 1); // numLines>=1 always
+  tc.column = min(tc.column, this->lineLength(tc.line));
+}
+
+
 void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) const
 {
   xassert(tc.nonNegative());
@@ -607,7 +617,7 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
   // this line in f0169061da, when I added undo/redo support, which
   // suggests it was needed to deal with cases arising from replaying
   // history elements.  Probably there is a better solution.
-  truncateCoord(this->core(), tc);
+  this->truncateCoord(tc);
 
   if (flags & FS_ADVANCE_ONCE) {
     walkCursor(this->core(), tc,
@@ -855,8 +865,8 @@ void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
   xassert(tc1 <= tc2);
 
   // truncate the endpoints
-  truncateCoord(this->core(), tc1);
-  truncateCoord(this->core(), tc2);
+  this->truncateCoord(tc1);
+  this->truncateCoord(tc2);
 
   // go to line2/col2, which is probably where the cursor already is
   setCursor(tc2);

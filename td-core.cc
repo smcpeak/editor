@@ -468,16 +468,6 @@ bool walkCursor(TextDocumentCore const &doc, TextCoord &tc, int len)
 }
 
 
-void truncateCoord(TextDocumentCore const &doc, TextCoord &tc)
-{
-  tc.line = max(0, tc.line);
-  tc.column = max(0, tc.column);
-
-  tc.line = min(tc.line, doc.numLines()-1);      // numLines>=1 always
-  tc.column = min(tc.column, doc.lineLength(tc.line));
-}
-
-
 bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
                  char *text, int textLen)
 {
