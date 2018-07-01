@@ -7,7 +7,7 @@
 #include "inputproxy.h"                // InputProxy, InputPseudoKey
 #include "owner.h"                     // Owner
 #include "td-editor.h"                 // TextDocumentEditor
-#include "td-file.h"                   // FileTextDocument
+#include "file-td.h"                   // FileTextDocument
 #include "textcategory.h"              // TextCategory
 
 #include <qwidget.h>                   // QWidget

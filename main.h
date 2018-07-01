@@ -11,7 +11,7 @@
 
 #include "objlist.h"                   // ObjList
 #include "pixmaps.h"                   // Pixmaps
-#include "td-file.h"                   // FileTextDocument
+#include "file-td.h"                   // FileTextDocument
 
 class QLabel;
 class QMenu;

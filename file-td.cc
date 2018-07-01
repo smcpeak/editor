@@ -1,7 +1,7 @@
-// td-file.cc
-// code for td-file.h
+// file-td.cc
+// code for file-td.h
 
-#include "td-file.h"                   // this module
+#include "file-td.h"                   // this module
 
 #include "macros.h"                    // CMEMB
 #include "nonport.h"                   // getFileModificationTime

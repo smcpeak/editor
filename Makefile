@@ -202,7 +202,7 @@ main.o: keybindings.doc.gen.h
 TOCLEAN += gotoline.gen.h keybindings.doc.gen.*
 
 EDITOR_OBJS := \
-  td-file.o \
+  file-td.o \
   c_hilite.yy.o \
   comment.yy.o \
   editor-widget.o \
