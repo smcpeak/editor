@@ -82,14 +82,13 @@ public:      // funcs
 
   // Get the document that was passed to the constructor.  My
   // preference is to avoid using this, instead going through the
-  // TextDocumentEditor interface when possible, but there are some
-  // operations that make most sense to do with the document itself,
-  // and getting that from the editor is sometimes convenient.
+  // TextDocumentEditor interface when possible for uniformity.
+  //
+  // However, there are some algorithms, especially syntax
+  // highlighting, that are defined to operate on a TextDocument
+  // (actually TextDocumentCore) since they do not modify the text,
+  // and for that we need the underlying document.
   TextDocument const *getDocument() const { return m_doc; }
-
-  // TODO: I think I should remove this.  It is confusing to have
-  // clients sometimes directly accessing the underlying document.
-  TextDocumentCore const &core() const { return m_doc->getCore(); }
 
   // -------------------- query file dimensions --------------------
   // Number of lines in the document.  Always positive.
@@ -109,6 +108,9 @@ public:      // funcs
 
   // Length of the longest line.  Note: This may overestimate.
   int maxLineLength() const            { return m_doc->maxLineLength(); }
+
+  // First position in the file.
+  TextCoord beginCoord() const         { return TextCoord(0,0); }
 
   // Position right after last character in file.
   TextCoord endCoord() const           { return m_doc->endCoord(); }

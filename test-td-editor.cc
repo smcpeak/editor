@@ -38,17 +38,12 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
 
   expectCursor(tde, line, col);
 
-  writeFile(tde.core(), "td.tmp");
-  DataBlock block;
-  block.readFromFile("td.tmp");
+  string expect(text);
+  string actual = tde.getTextRange(tde.beginCoord(), tde.endCoord());
 
-  // compare contents to what is expected
-  if (0!=memcmp(text, block.getDataC(), block.getDataLen()) ||
-      (int)strlen(text)!=(int)block.getDataLen()) {
-    cout << "expect: " << quoted(text) << endl;
-    cout << "actual: \""
-         << encodeWithEscapes(block.getDataC(), block.getDataLen())
-         << '"' << endl;
+  if (expect != actual) {
+    cout << "expect: " << quoted(expect) << endl;
+    cout << "actual: " << quoted(actual) << endl;
     xfailure("text mismatch");
   }
 }
