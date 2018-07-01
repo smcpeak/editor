@@ -61,7 +61,7 @@ bool TextDocumentEditor::validCursor() const
 
 bool TextDocumentEditor::cursorAtEnd() const
 {
-  return this->m_cursor == this->endCoord();
+  return m_cursor == this->endCoord();
 }
 
 
@@ -136,7 +136,7 @@ void TextDocumentEditor::getSelectRegion(
 
 string TextDocumentEditor::getSelectedText() const
 {
-  if (!this->m_markActive) {
+  if (!m_markActive) {
     return "";
   }
   else {
@@ -149,11 +149,11 @@ string TextDocumentEditor::getSelectedText() const
 
 void TextDocumentEditor::normalizeCursorGTEMark()
 {
-  if (this->m_markActive &&
-      this->m_mark > this->m_cursor) {
-    TextCoord tmp(this->m_mark);
-    this->m_mark = this->m_cursor;
-    this->m_cursor = tmp;
+  if (m_markActive &&
+      m_mark > m_cursor) {
+    TextCoord tmp(m_mark);
+    m_mark = m_cursor;
+    m_cursor = tmp;
   }
 }
 
@@ -189,13 +189,13 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
 
   // move viewport, but remember original so we can tell
   // when there's truncation
-  int origVL = this->m_firstVisible.line;
-  int origVC = this->m_firstVisible.column;
+  int origVL = m_firstVisible.line;
+  int origVC = m_firstVisible.column;
   this->moveFirstVisibleBy(deltaLine, deltaCol);
 
   // now move cursor by the amount that the viewport moved
-  this->moveCursorBy(this->m_firstVisible.line - origVL,
-                     this->m_firstVisible.column - origVC);
+  this->moveCursorBy(m_firstVisible.line - origVL,
+                     m_firstVisible.column - origVC);
 
   TRACE("moveFirstVisibleAndCursor",
         "end: firstVis=" << m_firstVisible <<
@@ -340,7 +340,7 @@ void TextDocumentEditor::deleteLR(bool left, int count)
 
 void TextDocumentEditor::deleteSelection()
 {
-  xassert(this->m_markActive);
+  xassert(m_markActive);
 
   TextCoord selLow, selHigh;
   this->getSelectRegion(selLow, selHigh);

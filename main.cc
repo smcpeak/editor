@@ -185,12 +185,12 @@ void EditorWindow::buildMenu()
     this->toggleVisibleWhitespaceAction =
       menu->addAction("Visible &whitespace", this, SLOT(viewToggleVisibleWhitespace()));
     this->toggleVisibleWhitespaceAction->setCheckable(true);
-    this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->visibleWhitespace);
+    this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->m_visibleWhitespace);
     menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
     this->toggleVisibleSoftMarginAction =
       menu->addAction("Visible soft &margin", this, SLOT(viewToggleVisibleSoftMargin()));
     this->toggleVisibleSoftMarginAction->setCheckable(true);
-    this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->visibleSoftMargin);
+    this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->m_visibleSoftMargin);
     menu->addAction("Set soft margin column...", this, SLOT(viewSetSoftMarginColumn()));
   }
 
@@ -613,8 +613,8 @@ void EditorWindow::editGotoLine()
 
 void EditorWindow::viewToggleVisibleWhitespace()
 {
-  this->editorWidget->visibleWhitespace = !this->editorWidget->visibleWhitespace;
-  this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->visibleWhitespace);
+  this->editorWidget->m_visibleWhitespace = !this->editorWidget->m_visibleWhitespace;
+  this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->m_visibleWhitespace);
   this->editorWidget->update();
 }
 
@@ -625,10 +625,10 @@ void EditorWindow::viewSetWhitespaceOpacity()
   int n = QInputDialog::getInt(this,
     "Visible Whitespace",
     "Opacity in [1,255]:",
-    this->editorWidget->whitespaceOpacity,
+    this->editorWidget->m_whitespaceOpacity,
     1 /*min*/, 255 /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->editorWidget->whitespaceOpacity = n;
+    this->editorWidget->m_whitespaceOpacity = n;
     this->editorWidget->update();
   }
 }
@@ -636,8 +636,8 @@ void EditorWindow::viewSetWhitespaceOpacity()
 
 void EditorWindow::viewToggleVisibleSoftMargin()
 {
-  this->editorWidget->visibleSoftMargin = !this->editorWidget->visibleSoftMargin;
-  this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->visibleSoftMargin);
+  this->editorWidget->m_visibleSoftMargin = !this->editorWidget->m_visibleSoftMargin;
+  this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->m_visibleSoftMargin);
   this->editorWidget->update();
 }
 
@@ -648,10 +648,10 @@ void EditorWindow::viewSetSoftMarginColumn()
   int n = QInputDialog::getInt(this,
     "Soft Margin Column",
     "Column number (positive):",
-    this->editorWidget->softMarginColumn+1,
+    this->editorWidget->m_softMarginColumn+1,
     1 /*min*/, INT_MAX /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->editorWidget->softMarginColumn = n-1;
+    this->editorWidget->m_softMarginColumn = n-1;
     this->editorWidget->update();
   }
 }
@@ -1126,7 +1126,7 @@ static int printObjectCountsIf(char const *when, bool print)
       PVAL(var);           \
     }
 
-  PRINT_COUNT(EditorWidget::objectCount);
+  PRINT_COUNT(EditorWidget::s_objectCount);
   PRINT_COUNT(EditorWindow::objectCount);
   PRINT_COUNT(FileTextDocument::objectCount);
   PRINT_COUNT(TextDocumentEditor::s_objectCount);

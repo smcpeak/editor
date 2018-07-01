@@ -48,14 +48,14 @@ void AttachInputProxy::attach(EditorWidget *newEd)
   }
 
   ed = newEd;
-  ed->inputProxy = this;
+  ed->m_inputProxy = this;
 }
 
 void AttachInputProxy::detach()
 {
   if (ed) {
     ed->inputProxyDetaching();
-    ed->inputProxy = NULL;
+    ed->m_inputProxy = NULL;
     ed = NULL;
   }
 }

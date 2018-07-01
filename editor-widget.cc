@@ -54,36 +54,36 @@ int const CTRL_SHIFT_DISTANCE = 10;
 
 
 // ---------------------- EditorWidget --------------------------------
-int EditorWidget::objectCount = 0;
+int EditorWidget::s_objectCount = 0;
 
 EditorWidget::EditorWidget(FileTextDocument *tdf, StatusDisplay *status_,
                            QWidget *parent)
   : QWidget(parent),
-    infoBox(NULL),
-    status(status_),
-    editor(new FileTextDocumentEditor(tdf)),
-    m_editors(),
-    topMargin(1),
-    leftMargin(1),
-    interLineSpace(0),
-    cursorColor(0xFF, 0xFF, 0xFF),       // white
-    fontForCategory(NUM_STANDARD_TEXT_CATEGORIES),
-    cursorFontForFV(FV_BOLD + 1),
-    minihexFont(),
-    visibleWhitespace(true),
-    whitespaceOpacity(32),
-    softMarginColumn(72),
-    visibleSoftMargin(true),
-    softMarginColor(0xFF, 0xFF, 0xFF, 32),
-    inputProxy(NULL),
+    m_infoBox(NULL),
+    m_status(status_),
+    m_editor(new FileTextDocumentEditor(tdf)),
+    m_editorList(),
+    m_topMargin(1),
+    m_leftMargin(1),
+    m_interLineSpace(0),
+    m_cursorColor(0xFF, 0xFF, 0xFF),       // white
+    m_fontForCategory(NUM_STANDARD_TEXT_CATEGORIES),
+    m_cursorFontForFV(FV_BOLD + 1),
+    m_minihexFont(),
+    m_visibleWhitespace(true),
+    m_whitespaceOpacity(32),
+    m_softMarginColumn(72),
+    m_visibleSoftMargin(true),
+    m_softMarginColor(0xFF, 0xFF, 0xFF, 32),
+    m_inputProxy(NULL),
     // font metrics inited by setFont()
-    listening(false),
-    ignoreScrollSignals(false)
+    m_listening(false),
+    m_ignoreScrollSignals(false)
 {
   xassert(tdf);
   xassert(status_);
 
-  m_editors.prepend(editor);
+  m_editorList.prepend(m_editor);
 
   setFonts(bdfFontData_editor14r,
            bdfFontData_editor14i,
@@ -94,24 +94,24 @@ EditorWidget::EditorWidget(FileTextDocument *tdf, StatusDisplay *status_,
   // required to accept focus
   setFocusPolicy(Qt::StrongFocus);
 
-  EditorWidget::objectCount++;
+  EditorWidget::s_objectCount++;
 }
 
 EditorWidget::~EditorWidget()
 {
-  EditorWidget::objectCount--;
+  EditorWidget::s_objectCount--;
 
-  if (inputProxy) {
-    inputProxy->detach();
+  if (m_inputProxy) {
+    m_inputProxy->detach();
   }
 
   this->stopListening();
 
   // Do this explicitly just for clarity.
-  this->editor = NULL;
-  m_editors.deleteAll();
+  m_editor = NULL;
+  m_editorList.deleteAll();
 
-  fontForCategory.deleteAll();
+  m_fontForCategory.deleteAll();
 }
 
 
@@ -120,24 +120,24 @@ void EditorWidget::selfCheck() const
   // Check that 'editor' is among 'm_editors' and that the files in
   // 'm_editors' are a subset of GlobalState::fileDocuments.
   bool foundEditor = false;
-  FOREACH_OBJLIST(FileTextDocumentEditor, m_editors, iter) {
+  FOREACH_OBJLIST(FileTextDocumentEditor, m_editorList, iter) {
     FileTextDocumentEditor const *tdfe = iter.data();
-    if (editor == tdfe) {
+    if (m_editor == tdfe) {
       foundEditor = true;
     }
     tdfe->selfCheck();
-    xassert(GlobalState::global_globalState->fileDocuments.contains(tdfe->fileDoc));
+    xassert(GlobalState::global_globalState->fileDocuments.contains(tdfe->m_fileDoc));
   }
   xassert(foundEditor);
 
   // There should never be more m_editors than fileDocuments.
-  xassert(GlobalState::global_globalState->fileDocuments.count() >= m_editors.count());
+  xassert(GlobalState::global_globalState->fileDocuments.count() >= m_editorList.count());
 }
 
 
 void EditorWidget::cursorTo(TextCoord tc)
 {
-  editor->setCursor(tc);
+  m_editor->setCursor(tc);
 }
 
 
@@ -186,7 +186,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
     }
 
     // Substitute the new for the old.
-    fontForCategory.swapWith(newFonts);
+    m_fontForCategory.swapWith(newFonts);
   }
 
   // Repeat the procedure for the cursor fonts.
@@ -198,38 +198,38 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
       // The character under the cursor is drawn with the normal background
       // color, and the cursor box (its background) is drawn in 'cursorColor'.
       qfont->setFgColor(styleDB->getStyle(TC_NORMAL).background);
-      qfont->setBgColor(cursorColor);
+      qfont->setBgColor(m_cursorColor);
       qfont->setTransparent(false);
 
       newFonts.push(qfont);
     }
 
-    cursorFontForFV.swapWith(newFonts);
+    m_cursorFontForFV.swapWith(newFonts);
   }
 
   // calculate metrics
-  QRect const &bbox = fontForCategory[TC_NORMAL]->getAllCharsBBox();
-  ascent = -bbox.top();
-  descent = bbox.bottom() + 1;
-  fontHeight = ascent + descent;
-  xassert(fontHeight == bbox.height());    // check my assumptions
-  fontWidth = bbox.width();
+  QRect const &bbox = m_fontForCategory[TC_NORMAL]->getAllCharsBBox();
+  m_fontAscent = -bbox.top();
+  m_fontDescent = bbox.bottom() + 1;
+  m_fontHeight = m_fontAscent + m_fontDescent;
+  xassert(m_fontHeight == bbox.height());    // check my assumptions
+  m_fontWidth = bbox.width();
 
   // Font for missing glyphs.
   Owner<BDFFont> minihexBDFFont(makeBDFFont(bdfFontData_minihex6, "minihex font"));
-  this->minihexFont = new QtBDFFont(*minihexBDFFont);
-  this->minihexFont->setTransparent(false);
+  m_minihexFont = new QtBDFFont(*minihexBDFFont);
+  m_minihexFont->setTransparent(false);
 }
 
 
 void EditorWidget::setDocumentFile(FileTextDocument *file)
 {
-  bool wasListening = this->listening;
+  bool wasListening = m_listening;
   if (wasListening) {
     this->stopListening();
   }
 
-  this->editor = this->getOrMakeEditor(file);
+  m_editor = this->getOrMakeEditor(file);
 
   if (wasListening) {
     this->startListening();
@@ -243,15 +243,15 @@ EditorWidget::FileTextDocumentEditor *
   EditorWidget::getOrMakeEditor(FileTextDocument *file)
 {
   // Look for an existing editor for this file.
-  FOREACH_OBJLIST_NC(FileTextDocumentEditor, m_editors, iter) {
-    if (iter.data()->fileDoc == file) {
+  FOREACH_OBJLIST_NC(FileTextDocumentEditor, m_editorList, iter) {
+    if (iter.data()->m_fileDoc == file) {
       return iter.data();
     }
   }
 
   // Have to make a new one.
   FileTextDocumentEditor *ret = new FileTextDocumentEditor(file);
-  m_editors.prepend(ret);
+  m_editorList.prepend(ret);
   return ret;
 }
 
@@ -259,8 +259,8 @@ EditorWidget::FileTextDocumentEditor *
 void EditorWidget::forgetAboutFile(FileTextDocument *file)
 {
   // Remove 'file' from my list.
-  for(ObjListMutator< FileTextDocumentEditor > mut(m_editors); !mut.isDone(); ) {
-    if (mut.data()->fileDoc == file) {
+  for(ObjListMutator< FileTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
+    if (mut.data()->m_fileDoc == file) {
       mut.deleteIt();
     }
     else {
@@ -269,7 +269,7 @@ void EditorWidget::forgetAboutFile(FileTextDocument *file)
   }
 
   // Change files if that was the one we were editing.
-  if (this->editor->fileDoc == file) {
+  if (m_editor->m_fileDoc == file) {
     // This dependence on GlobalState is questionable...
     this->setDocumentFile(
       GlobalState::global_globalState->fileDocuments.first());
@@ -279,16 +279,16 @@ void EditorWidget::forgetAboutFile(FileTextDocument *file)
 
 FileTextDocument *EditorWidget::getDocumentFile() const
 {
-  xassert(this->editor);
-  xassert(this->editor->fileDoc);
-  return this->editor->fileDoc;
+  xassert(m_editor);
+  xassert(m_editor->m_fileDoc);
+  return m_editor->m_fileDoc;
 }
 
 
 TextDocumentEditor *EditorWidget::getDocumentEditor()
 {
-  xassert(this->editor);
-  return this->editor;
+  xassert(m_editor);
+  return m_editor;
 }
 
 
@@ -298,7 +298,7 @@ void EditorWidget::redraw()
 
   // tell our parent.. but ignore certain messages temporarily
   {
-    Restorer<bool> restore(ignoreScrollSignals, true);
+    Restorer<bool> restore(m_ignoreScrollSignals, true);
     emit viewChanged();
   }
 
@@ -312,11 +312,11 @@ void EditorWidget::recomputeLastVisible()
   int h = this->height();
   int w = this->width();
 
-  if (this->fontHeight && this->fontWidth) {
+  if (m_fontHeight && m_fontWidth) {
     // calculate viewport size
-    editor->setVisibleSize(
-      (h - this->topMargin) / this->lineHeight(),
-      (w - this->leftMargin) / this->fontWidth);
+    m_editor->setVisibleSize(
+      (h - m_topMargin) / this->lineHeight(),
+      (w - m_leftMargin) / m_fontWidth);
   }
   else {
     // font info not set, leave them alone
@@ -405,7 +405,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
   // so as to improve drawing locality and avoid excessive allocation
   // in the server
   int const lineWidth = width();
-  int const fullLineHeight = fontHeight + interLineSpace;
+  int const fullLineHeight = m_fontHeight + m_interLineSpace;
   QPixmap pixmap(lineWidth, fullLineHeight);
 
   // NOTE: This does not preclude drawing objects that span multiple
@@ -446,9 +446,9 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
   // top edge of what has not been painted, in window coordinates
   int y = 0;
 
-  if (topMargin) {
-    winPaint.eraseRect(0, y, lineWidth, topMargin);
-    y += topMargin;
+  if (m_topMargin) {
+    winPaint.eraseRect(0, y, lineWidth, m_topMargin);
+    y += m_topMargin;
   }
 
   // ---- remaining setup ----
@@ -472,7 +472,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
 
   // Get region of selected text.
   TextCoord selLow, selHigh;
-  editor->getSelectRegion(selLow, selHigh);
+  m_editor->getSelectRegion(selLow, selHigh);
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -495,20 +495,20 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     // 1 if we will behave as though a newline character is
     // at the end of this line.
     int newlineAdjust = 0;
-    if (this->visibleWhitespace && line < editor->numLines()-1) {
+    if (m_visibleWhitespace && line < m_editor->numLines()-1) {
       newlineAdjust = 1;
     }
 
     // Number of visible glyphs on this line, including possible
     // synthesized newline for 'visibleWhitespace'.
-    int const lineGlyphs = editor->lineLengthLoose(line) + newlineAdjust;
+    int const lineGlyphs = m_editor->lineLengthLoose(line) + newlineAdjust;
 
     // fill with text from the file
-    if (line < editor->numLines()) {
+    if (line < m_editor->numLines()) {
       if (firstCol < lineGlyphs) {
         // First get the text without any extra newline.
         int const amt = min(lineGlyphs-newlineAdjust - firstCol, visibleCols);
-        editor->getLine(TextCoord(line, firstCol), text, amt);
+        m_editor->getLine(TextCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.
@@ -518,21 +518,21 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       }
 
       // apply highlighting
-      if (editor->fileDoc->highlighter) {
-        editor->fileDoc->highlighter->
-          highlight(editor->core(), line, categories);
+      if (m_editor->m_fileDoc->highlighter) {
+        m_editor->m_fileDoc->highlighter->
+          highlight(m_editor->core(), line, categories);
       }
 
       // Show search hits.
-      if (this->hitText.length() > 0) {
+      if (m_hitText.length() > 0) {
         TextCoord hitTC(line, 0);
         TextDocumentEditor::FindStringFlags const hitTextFlags =
-          this->hitTextFlags | TextDocumentEditor::FS_ONE_LINE;
+          m_hitTextFlags | TextDocumentEditor::FS_ONE_LINE;
 
-        while (editor->findString(hitTC /*INOUT*/,
-                                  toCStr(this->hitText),
+        while (m_editor->findString(hitTC /*INOUT*/,
+                                  toCStr(m_hitText),
                                   hitTextFlags)) {
-          categories.overlay(hitTC.column, this->hitText.length(), TC_HITS);
+          categories.overlay(hitTC.column, m_hitText.length(), TC_HITS);
           hitTC.column++;
         }
       }
@@ -573,7 +573,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       currentCategory = TC_NORMAL;
       setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
     }
-    paint.eraseRect(0,0, leftMargin, fullLineHeight);
+    paint.eraseRect(0,0, m_leftMargin, fullLineHeight);
 
     // Next category entry to use.
     LineCategoryIter category(categories);
@@ -582,13 +582,13 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     // ---- render text+style segments -----
     // right edge of what has not been painted, relative to
     // the pixels in the pixmap
-    int x = leftMargin;
+    int x = m_leftMargin;
 
     // number of characters printed
     int printed = 0;
 
     // 'y' coordinate of the origin point of characters
-    int baseline = ascent-1;
+    int baseline = m_fontAscent-1;
 
     // loop over segments with different styles
     while (x < lineWidth) {
@@ -624,13 +624,13 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       // The QtBDFFont package must be treated as if it draws
       // characters with transparency, even though the transparency
       // is only partial...
-      paint.eraseRect(x,0, fontWidth*len, fullLineHeight);
+      paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
 
       // draw text
       int const charsToDraw = min(len, (lineGlyphs-firstCol)-printed);
       for (int i=0; i < charsToDraw; i++) {
         this->drawOneChar(paint, curFont,
-                          QPoint(x + fontWidth*i, baseline),
+                          QPoint(x + m_fontWidth*i, baseline),
                           text[printed+i]);
       }
 
@@ -639,18 +639,18 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
         // might not be consistent across fonts, so I might want to have
         // a user-specifiable underlining offset.. also, I don't want this
         // going into the next line, so truncate according to descent
-        int ulBaseline = baseline + min(UNDERLINE_OFFSET, descent);
-        paint.drawLine(x, ulBaseline, x + fontWidth*len, ulBaseline);
+        int ulBaseline = baseline + min(UNDERLINE_OFFSET, m_fontDescent);
+        paint.drawLine(x, ulBaseline, x + m_fontWidth*len, ulBaseline);
       }
 
       // Advance to next category segment.
-      x += fontWidth * len;
+      x += m_fontWidth * len;
       printed += len;
       category.advanceChars(len);
     }
 
     // draw the cursor as a line
-    if (line == editor->cursor().line) {
+    if (line == m_editor->cursor().line) {
       // just testing the mechanism that catches exceptions
       // raised while drawing
       //if (line == 5) {
@@ -660,19 +660,19 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       paint.save();
 
       // 0-based cursor column relative to what is visible
-      int const cursorCol = editor->cursor().column;
+      int const cursorCol = m_editor->cursor().column;
       int const visibleCursorCol = cursorCol - firstCol;
       xassert(visibleCursorCol >= 0);
 
       // 'x' coordinate of the leftmost column of the character cell
       // where the cursor is, i.e., the character that would be deleted
       // if the Delete key were pressed.
-      x = leftMargin + fontWidth * visibleCursorCol;
+      x = m_leftMargin + m_fontWidth * visibleCursorCol;
 
       if (false) {     // thin vertical bar
-        paint.setPen(cursorColor);
-        paint.drawLine(x,0, x, fontHeight-1);
-        paint.drawLine(x-1,0, x-1, fontHeight-1);
+        paint.setPen(m_cursorColor);
+        paint.drawLine(x,0, x, m_fontHeight-1);
+        paint.drawLine(x-1,0, x-1, m_fontHeight-1);
       }
       else {           // emacs-like box
         // The character shown inside the box should use the same
@@ -688,10 +688,10 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
           cursorFV = FV_NORMAL;   // 'cursorFontForFV' does not map FV_UNDERLINE
           underlineCursor = true;
         }
-        QtBDFFont *cursorFont = cursorFontForFV[cursorFV];
+        QtBDFFont *cursorFont = m_cursorFontForFV[cursorFV];
 
         paint.setBackground(cursorFont->getBgColor());
-        paint.eraseRect(x,0, fontWidth, fontHeight);
+        paint.eraseRect(x,0, m_fontWidth, m_fontHeight);
 
         if (cursorCol < lineGlyphs) {
           // Drawing the block cursor overwrote the glyph, so we
@@ -702,8 +702,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
 
         if (underlineCursor) {
           paint.setPen(cursorFont->getFgColor());
-          int ulBaseline = baseline + min(UNDERLINE_OFFSET, descent);
-          paint.drawLine(x, ulBaseline, x + fontWidth, ulBaseline);
+          int ulBaseline = baseline + min(UNDERLINE_OFFSET, m_fontDescent);
+          paint.drawLine(x, ulBaseline, x + m_fontWidth, ulBaseline);
         }
       }
 
@@ -711,12 +711,12 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     }
 
     // Draw a soft margin indicator.
-    if (this->visibleSoftMargin) {
+    if (m_visibleSoftMargin) {
       paint.save();
-      paint.setPen(this->softMarginColor);
+      paint.setPen(m_softMarginColor);
 
-      int x = leftMargin + fontWidth * (this->softMarginColumn - firstCol);
-      paint.drawLine(x, 0, x, fontHeight-1);
+      int x = m_leftMargin + m_fontWidth * (m_softMarginColumn - firstCol);
+      paint.drawLine(x, 0, x, m_fontHeight-1);
 
       paint.restore();
     }
@@ -736,11 +736,11 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &p
   // to develop and implement a character encoding strategy.
   int codePoint = (unsigned char)c;
 
-  if (this->visibleWhitespace &&
+  if (m_visibleWhitespace &&
       (codePoint==' ' || codePoint=='\n')) {
     QRect bounds = font->getNominalCharCell(pt);
     QColor fg = font->getFgColor();
-    fg.setAlpha(this->whitespaceOpacity);
+    fg.setAlpha(m_whitespaceOpacity);
 
     if (codePoint == ' ') {
       // Centered dot.
@@ -777,9 +777,9 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &p
     // This is a somewhat expensive thing to do because it requires
     // re-rendering the offscreen glyphs.  Hence, I only do it once
     // I know I need it.
-    this->minihexFont->setSameFgBgColors(*font);
+    m_minihexFont->setSameFgBgColors(*font);
 
-    drawHexQuad(*(this->minihexFont), paint, bounds, codePoint);
+    drawHexQuad(*(m_minihexFont), paint, bounds, codePoint);
   }
 }
 
@@ -798,7 +798,7 @@ void EditorWidget::setDrawStyle(QPainter &paint,
 
   underlining = (ts.variant == FV_UNDERLINE);
 
-  curFont = fontForCategory[cat];
+  curFont = m_fontForCategory[cat];
   xassert(curFont);
 }
 
@@ -855,7 +855,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
   GENERIC_CATCH_BEGIN
 
   TRACE("input", "keyPress: " << toString(*k));
-  UndoHistoryGrouper hbgrouper(*editor);
+  UndoHistoryGrouper hbgrouper(*m_editor);
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
 
@@ -878,7 +878,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
   }
 
   // Now check with the proxy.
-  if (inputProxy && inputProxy->keyPressEvent(k)) {
+  if (m_inputProxy && m_inputProxy->keyPressEvent(k)) {
     return;
   }
 
@@ -891,13 +891,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_PageUp:
         turnOffSelection();
-        editor->moveCursorToTop();
+        m_editor->moveCursorToTop();
         redraw();
         break;
 
       case Qt::Key_PageDown:
         turnOffSelection();
-        editor->moveCursorToBottom();
+        m_editor->moveCursorToBottom();
         redraw();
         break;
 
@@ -908,12 +908,12 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_W:
-        editor->moveFirstVisibleConfineCursor(-1, 0);
+        m_editor->moveFirstVisibleConfineCursor(-1, 0);
         redraw();
         break;
 
       case Qt::Key_Z:
-        editor->moveFirstVisibleConfineCursor(+1, 0);
+        m_editor->moveFirstVisibleConfineCursor(+1, 0);
         redraw();
         break;
 
@@ -944,17 +944,17 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       // not going to bind either by default
 
       case Qt::Key_D:
-        this->editor->deleteKeyFunction();
+        m_editor->deleteKeyFunction();
         this->redraw();
         break;
 
       case Qt::Key_H:
-        this->editor->backspaceFunction();
+        m_editor->backspaceFunction();
         this->redraw();
         break;
 
       case Qt::Key_L:
-        this->editor->centerVisibleOnCursorLine();
+        m_editor->centerVisibleOnCursorLine();
         this->redraw();
         break;
 
@@ -966,7 +966,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           QMessageBox::information(this, "Unimp", "unimplemented");
         }
         else {
-          this->editor->justifyNearCursor(this->softMarginColumn);
+          m_editor->justifyNearCursor(m_softMarginColumn);
           this->redraw();
         }
         break;
@@ -999,7 +999,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_D: {
-        this->editor->insertDateTime();
+        m_editor->insertDateTime();
         this->redraw();
         break;
       }
@@ -1051,13 +1051,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       }
 
       case Qt::Key_U:
-        editor->core().dumpRepresentation();
+        m_editor->core().dumpRepresentation();
         malloc_stats();
         break;
 
       case Qt::Key_H:
-        editor->printHistory();
-        editor->printHistoryStats();
+        m_editor->printHistory();
+        m_editor->printHistoryStats();
         break;
 
       default:
@@ -1087,13 +1087,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_PageUp:
         turnOnSelection();
-        editor->moveCursorToTop();
+        m_editor->moveCursorToTop();
         redraw();
         break;
 
       case Qt::Key_PageDown:
         turnOnSelection();
-        editor->moveCursorToBottom();
+        m_editor->moveCursorToBottom();
         redraw();
         break;
 
@@ -1147,7 +1147,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           // case I want to use it for something else later.
         }
         else {
-          this->editor->backspaceFunction();
+          m_editor->backspaceFunction();
           this->redraw();
         }
         break;
@@ -1161,7 +1161,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           this->editCut();
         }
         else {
-          this->editor->deleteKeyFunction();
+          m_editor->deleteKeyFunction();
           this->redraw();
         }
         break;
@@ -1174,7 +1174,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         }
         else {
           if (this->editSafetyCheck()) {
-            this->editor->insertNewlineAutoIndent();
+            m_editor->insertNewlineAutoIndent();
             this->redraw();
           }
         }
@@ -1210,7 +1210,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           if (!editSafetyCheck()) {
             return;
           }
-          editor->fillToCursor();
+          m_editor->fillToCursor();
 
           // typing replaces selection
           if (this->selectEnabled()) {
@@ -1218,7 +1218,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           }
           // insert this character at the cursor
           QByteArray utf8(text.toUtf8());
-          editor->insertText(utf8.constData(), utf8.length());
+          m_editor->insertText(utf8.constData(), utf8.length());
           scrollToCursor();
         }
         else {
@@ -1252,21 +1252,21 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 
 void EditorWidget::insertText(char const *text, int textLen)
 {
-  editor->insertText(text, textLen);
+  m_editor->insertText(text, textLen);
   redraw();
 }
 
 
 void EditorWidget::scrollToCursor(int edgeGap)
 {
-  editor->scrollToCursor(edgeGap);
+  m_editor->scrollToCursor(edgeGap);
   redraw();
 }
 
 
 void EditorWidget::scrollToLine(int line)
 {
-  if (!ignoreScrollSignals) {
+  if (!m_ignoreScrollSignals) {
     xassert(line >= 0);
     setFirstVisibleLine(line);
     redraw();
@@ -1275,7 +1275,7 @@ void EditorWidget::scrollToLine(int line)
 
 void EditorWidget::scrollToCol(int col)
 {
-  if (!ignoreScrollSignals) {
+  if (!m_ignoreScrollSignals) {
     xassert(col >= 0);
     setFirstVisibleCol(col);
     redraw();
@@ -1289,11 +1289,11 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
   int y = m->y();
 
   // subtract off the margin, but don't let either coord go negative
-  inc(x, -leftMargin);
-  inc(y, -topMargin);
+  inc(x, -m_leftMargin);
+  inc(y, -m_topMargin);
 
   int newLine = y/lineHeight() + this->firstVisibleLine();
-  int newCol = x/fontWidth + this->firstVisibleCol();
+  int newCol = x/m_fontWidth + this->firstVisibleCol();
 
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
@@ -1324,7 +1324,7 @@ void EditorWidget::mouseMoveEvent(QMouseEvent *m)
 
   turnOnSelection();
   setCursorToClickLoc(m);
-  editor->turnOffSelectionIfEmpty();
+  m_editor->turnOffSelectionIfEmpty();
 
   redraw();
 }
@@ -1336,7 +1336,7 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 
   turnOnSelection();
   setCursorToClickLoc(m);
-  editor->turnOffSelectionIfEmpty();
+  m_editor->turnOffSelectionIfEmpty();
 
   redraw();
 }
@@ -1345,8 +1345,8 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 // ----------------------- edit menu -----------------------
 void EditorWidget::editUndo()
 {
-  if (this->editor->canUndo()) {
-    this->editor->undo();
+  if (m_editor->canUndo()) {
+    m_editor->undo();
     this->redraw();
   }
   else {
@@ -1358,8 +1358,8 @@ void EditorWidget::editUndo()
 
 void EditorWidget::editRedo()
 {
-  if (this->editor->canRedo()) {
-    this->editor->redo();
+  if (m_editor->canRedo()) {
+    m_editor->redo();
     this->redraw();
   }
   else {
@@ -1372,7 +1372,7 @@ void EditorWidget::editRedo()
 void EditorWidget::editCut()
 {
   if (this->selectEnabled() && editSafetyCheck()) {
-    string sel = editor->clipboardCut();
+    string sel = m_editor->clipboardCut();
     QApplication::clipboard()->setText(toQString(sel));
     this->redraw();
   }
@@ -1382,7 +1382,7 @@ void EditorWidget::editCut()
 void EditorWidget::editCopy()
 {
   if (this->selectEnabled()) {
-    string sel = editor->clipboardCopy();
+    string sel = m_editor->clipboardCopy();
     QApplication::clipboard()->setText(toQString(sel));
     this->redraw();
   }
@@ -1397,7 +1397,7 @@ void EditorWidget::editPaste()
   }
   else if (editSafetyCheck()) {
     QByteArray utf8(text.toUtf8());
-    editor->clipboardPaste(utf8.constData(), utf8.length());
+    m_editor->clipboardPaste(utf8.constData(), utf8.length());
     this->redraw();
   }
 }
@@ -1406,7 +1406,7 @@ void EditorWidget::editPaste()
 void EditorWidget::editDelete()
 {
   if (this->selectEnabled() && editSafetyCheck()) {
-    editor->deleteSelection();
+    m_editor->deleteSelection();
     this->redraw();
   }
 }
@@ -1416,46 +1416,46 @@ void EditorWidget::showInfo(char const *infoString)
 {
   QWidget *main = this->window();
 
-  if (!this->infoBox) {
-    infoBox = new QLabel(main);
-    infoBox->setObjectName("infoBox");
-    infoBox->setForegroundRole(QPalette::ToolTipText);
-    infoBox->setBackgroundRole(QPalette::ToolTipBase);
-    infoBox->setAutoFillBackground(true);
-    infoBox->setIndent(2);
+  if (!m_infoBox) {
+    m_infoBox = new QLabel(main);
+    m_infoBox->setObjectName("infoBox");
+    m_infoBox->setForegroundRole(QPalette::ToolTipText);
+    m_infoBox->setBackgroundRole(QPalette::ToolTipBase);
+    m_infoBox->setAutoFillBackground(true);
+    m_infoBox->setIndent(2);
   }
 
-  infoBox->setText(infoString);
+  m_infoBox->setText(infoString);
 
   // compute a good size for the label
-  QFontMetrics fm(infoBox->font());
+  QFontMetrics fm(m_infoBox->font());
   QSize sz = fm.size(0, infoString);
-  infoBox->resize(sz.width() + 4, sz.height() + 2);
+  m_infoBox->resize(sz.width() + 4, sz.height() + 2);
 
   // Compute a position just below the lower-left corner
   // of the cursor box, in the coordinates of 'this'.
   QPoint target(
-    (cursorCol() - this->firstVisibleCol()) * fontWidth,
-    (cursorLine() - this->firstVisibleLine() + 1) * fontHeight + 1);
+    (cursorCol() - this->firstVisibleCol()) * m_fontWidth,
+    (cursorLine() - this->firstVisibleLine() + 1) * m_fontHeight + 1);
 
   // Translate that to the coordinates of 'main'.
   target = this->mapTo(main, target);
-  infoBox->move(target);
+  m_infoBox->move(target);
 
   // If the box goes beyond the right edge of the window, pull it back
   // to the left to keep it inside.
-  if (infoBox->x() + infoBox->width() > main->width()) {
-    infoBox->move(main->width() - infoBox->width(), infoBox->y());
+  if (m_infoBox->x() + m_infoBox->width() > main->width()) {
+    m_infoBox->move(main->width() - m_infoBox->width(), m_infoBox->y());
   }
 
-  infoBox->show();
+  m_infoBox->show();
 }
 
 void EditorWidget::hideInfo()
 {
-  if (infoBox) {
-    delete infoBox;
-    infoBox = NULL;
+  if (m_infoBox) {
+    delete m_infoBox;
+    m_infoBox = NULL;
   }
 }
 
@@ -1477,14 +1477,14 @@ void EditorWidget::cursorRight(bool shift)
 void EditorWidget::cursorHome(bool shift)
 {
   turnSelection(shift);
-  editor->setCursorColumn(0);
+  m_editor->setCursorColumn(0);
   scrollToCursor();
 }
 
 void EditorWidget::cursorEnd(bool shift)
 {
   turnSelection(shift);
-  editor->setCursorColumn(editor->cursorLineLength());
+  m_editor->setCursorColumn(m_editor->cursorLineLength());
   scrollToCursor();
 }
 
@@ -1519,15 +1519,15 @@ void EditorWidget::cursorPageDown(bool shift)
 void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   turnSelection(shift);
-  int line = editor->cursor().line;
-  this->editor->setCursor(editor->lineEndCoord(line+1));
+  int line = m_editor->cursor().line;
+  m_editor->setCursor(m_editor->lineEndCoord(line+1));
   scrollToCursor();
 }
 
 
 void EditorWidget::blockIndent(int amt)
 {
-  if (editor->blockIndent(amt)) {
+  if (m_editor->blockIndent(amt)) {
     redraw();
   }
 }
@@ -1559,21 +1559,21 @@ void EditorWidget::focusOutEvent(QFocusEvent *e)
 
 void EditorWidget::stopListening()
 {
-  if (listening) {
+  if (m_listening) {
     // remove myself from the list
-    editor->core().observers.removeItem(this);
+    m_editor->core().observers.removeItem(this);
 
-    listening = false;
+    m_listening = false;
   }
 }
 
 void EditorWidget::startListening()
 {
-  xassert(!listening);
+  xassert(!m_listening);
 
   // add myself to the list
-  editor->core().observers.append(this);
-  listening = true;
+  m_editor->core().observers.append(this);
+  m_listening = true;
 }
 
 
@@ -1596,13 +1596,13 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
   // think of as the conceptually inserted line.
   line--;
 
-  if (line <= editor->cursor().line) {
-    editor->moveCursorBy(+1, 0);
-    editor->moveFirstVisibleBy(+1, 0);
+  if (line <= m_editor->cursor().line) {
+    m_editor->moveCursorBy(+1, 0);
+    m_editor->moveFirstVisibleBy(+1, 0);
   }
 
-  if (editor->markActive() && line <= editor->mark().line) {
-    editor->moveMarkBy(+1, 0);
+  if (m_editor->markActive() && line <= m_editor->mark().line) {
+    m_editor->moveMarkBy(+1, 0);
   }
 
   redraw();
@@ -1612,13 +1612,13 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
 {
   TRACE("observe", "observeDeleteLine line=" << line);
 
-  if (line < editor->cursor().line) {
-    editor->moveCursorBy(-1, 0);
-    editor->moveFirstVisibleBy(-1, 0);
+  if (line < m_editor->cursor().line) {
+    m_editor->moveCursorBy(-1, 0);
+    m_editor->moveFirstVisibleBy(-1, 0);
   }
 
-  if (editor->markActive() && line < editor->mark().line) {
-    editor->moveMarkBy(-1, 0);
+  if (m_editor->markActive() && line < m_editor->mark().line) {
+    m_editor->moveMarkBy(-1, 0);
   }
 
   redraw();
@@ -1643,13 +1643,13 @@ void EditorWidget::inputProxyDetaching()
 {
   TRACE("mode", "clearing mode pixmap");
   QPixmap nullPixmap;
-  this->status->mode->setPixmap(nullPixmap);
+  m_status->mode->setPixmap(nullPixmap);
 }
 
 
 void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
 {
-  if (inputProxy && inputProxy->pseudoKeyPress(pkey)) {
+  if (m_inputProxy && m_inputProxy->pseudoKeyPress(pkey)) {
     // handled
     return;
   }
@@ -1663,7 +1663,7 @@ void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
       // do nothing; in other modes this will cancel out
 
       // well, almost nothing
-      this->hitText = "";
+      m_hitText = "";
       redraw();
       break;
   }
@@ -1682,14 +1682,14 @@ void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
 // cancel it.
 bool EditorWidget::editSafetyCheck()
 {
-  if (editor->unsavedChanges()) {
+  if (m_editor->unsavedChanges()) {
     // We already have unsaved changes, so assume that the safety
     // check has already passed or its warning dismissed.  (I do not
     // want to hit the disk for every edit operation.)
     return true;
   }
 
-  if (!editor->fileDoc->hasStaleModificationTime()) {
+  if (!m_editor->m_fileDoc->hasStaleModificationTime()) {
     // No concurrent changes, safe to go ahead.
     return true;
   }
@@ -1698,7 +1698,7 @@ bool EditorWidget::editSafetyCheck()
   QMessageBox box(this);
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The file \"" << editor->fileDoc->filename << "\" has changed on disk.  "
+    "The file \"" << m_editor->m_fileDoc->filename << "\" has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);
@@ -1709,7 +1709,7 @@ bool EditorWidget::editSafetyCheck()
     // are about to do gets canceled for a different reason,
     // leaving us in the "clean" state after all, this refresh will
     // ensure we do not prompt the user a second time.
-    editor->fileDoc->refreshModificationTime();
+    m_editor->m_fileDoc->refreshModificationTime();
 
     // Go ahead with the edit.
     return true;

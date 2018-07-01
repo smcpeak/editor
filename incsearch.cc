@@ -77,17 +77,17 @@ void IncSearch::attach(EditorWidget *newEd)
   if (ed->selectEnabled()) {
     // Initialize the search string with the selection.
     TextCoord selLow, selHigh;
-    ed->editor->getSelectRegion(selLow, selHigh);
+    ed->m_editor->getSelectRegion(selLow, selHigh);
     curLine = selLow.line;
     curCol = selLow.column;
     if (selLow.line == selHigh.line) {
       // expected case
-      text = ed->editor->getTextRange(selLow, selHigh);
+      text = ed->m_editor->getTextRange(selLow, selHigh);
     }
     else {
       // truncate to one line...
-      text = ed->editor->getTextRange(selLow,
-        ed->editor->lineEndCoord(selLow.line));
+      text = ed->m_editor->getTextRange(selLow,
+        ed->m_editor->lineEndCoord(selLow.line));
     }
   }
 
@@ -276,7 +276,7 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
       case Qt::Key_W:
         // grab chars from cursor up to end of next word
         // or end of line
-        text &= ed->editor->getWordAfter(ed->editor->cursor());
+        text &= ed->m_editor->getWordAfter(ed->m_editor->cursor());
         findString();
         return true;
 
@@ -291,10 +291,10 @@ bool IncSearch::searchKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
         }
 
         // remember what is selected
-        removedText = ed->editor->getSelectedText();
+        removedText = ed->m_editor->getSelectedText();
 
         // remove the selected occurrence of the match string
-        ed->editor->deleteSelection();
+        ed->m_editor->deleteSelection();
 
         // change mode
         setMode(M_GET_REPLACEMENT);
@@ -356,7 +356,7 @@ void IncSearch::resetToSearchStart()
   ed->cursorTo(TextCoord(beginLine, beginCol));
   ed->setFirstVisible(TextCoord(beginFVLine, beginFVCol));
   ed->clearMark();
-  ed->hitText = "";
+  ed->m_hitText = "";
   ed->redraw();
   this->updateStatus();
 }
@@ -366,25 +366,25 @@ bool IncSearch::findString(TextDocumentEditor::FindStringFlags flags)
 {
   {
     TextCoord tc(curLine, curCol);
-    match = ed->editor->findString(tc, toCStr(text), flags);
+    match = ed->m_editor->findString(tc, toCStr(text), flags);
     curLine = tc.line;
     curCol = tc.column;
   }
   if (match) {
     // move editor cursor to end of match
-    ed->editor->setCursor(TextCoord(curLine, curCol + text.length()));
+    ed->m_editor->setCursor(TextCoord(curLine, curCol + text.length()));
 
     // put selection start at beginning of match
-    ed->editor->setMark(TextCoord(curLine, curCol));
+    ed->m_editor->setMark(TextCoord(curLine, curCol));
 
-    ed->editor->scrollToCursor(-1 /*center*/);
+    ed->m_editor->scrollToCursor(-1 /*center*/);
   }
 
-  ed->hitText = text;
+  ed->m_hitText = text;
 
   // the only flag I want the editor using for hit text, for now,
   // is the case sensitivity flag
-  ed->hitTextFlags = curFlags & TextDocumentEditor::FS_CASE_INSENSITIVE;
+  ed->m_hitTextFlags = curFlags & TextDocumentEditor::FS_CASE_INSENSITIVE;
 
   ed->redraw();
 
@@ -443,11 +443,11 @@ bool IncSearch::tryWrapSearch(int &line, int &col) const
   // wrap
   TextCoord tc(0,0);
   if (curFlags & TextDocumentEditor::FS_BACKWARDS) {
-    tc = ed->editor->endCoord();
+    tc = ed->m_editor->endCoord();
   }
 
   // search
-  if (ed->editor->findString(tc, toCStr(text), curFlags) &&
+  if (ed->m_editor->findString(tc, toCStr(text), curFlags) &&
       !(tc.line==curLine && tc.column==curCol)) {
     // yes, wrapping finds another
     line = tc.line;
@@ -485,7 +485,7 @@ void IncSearch::putBackMatchText()
 {
   // put the matched text back
   ed->editDelete();       // delete replacement text
-  ed->editor->insertString(removedText);
+  ed->m_editor->insertString(removedText);
   findString();
 }
 
@@ -513,7 +513,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
 
       case Qt::Key_Backspace:
         if (replaceText.length() > 0) {
-          ed->editor->deleteLR(true /*left*/, 1);
+          ed->m_editor->deleteLR(true /*left*/, 1);
 
           replaceText = string(toCStr(replaceText), replaceText.length()-1);
         }
@@ -525,7 +525,7 @@ bool IncSearch::getReplacementKeyMap(QKeyEvent *k, Qt::KeyboardModifiers state)
           QByteArray utf8(s.toUtf8());
           char const *p = utf8.constData();
 
-          ed->editor->insertText(utf8.constData(), utf8.size());
+          ed->m_editor->insertText(utf8.constData(), utf8.size());
 
           // This does not handle NULs properly...
           replaceText &= p;
@@ -560,10 +560,10 @@ bool IncSearch::getReplacementPseudoKey(InputPseudoKey pkey)
 bool IncSearch::replace()
 {
   // remove match text
-  ed->editor->deleteLR(true /*left*/, text.length());
+  ed->m_editor->deleteLR(true /*left*/, text.length());
 
   // insert replacement text
-  ed->editor->insertString(replaceText);
+  ed->m_editor->insertString(replaceText);
 
   // find next match
   curCol += replaceText.length();

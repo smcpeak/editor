@@ -39,7 +39,7 @@ class EditorWidget
 
 public:     // static data
   // Instances created minus instances destroyed.
-  static int objectCount;
+  static int s_objectCount;
 
 private:     // types
   // For this EditorWidget, and for a given FileTextDocument, this is
@@ -50,86 +50,84 @@ private:     // types
   public:    // data
     // Process-wide record of the open file.  Not an owner pointer.
     // Must not be null.
-    FileTextDocument *fileDoc;
+    FileTextDocument *m_fileDoc;
 
   public:
     FileTextDocumentEditor(FileTextDocument *f) :
       TextDocumentEditor(f),
-      fileDoc(f)
+      m_fileDoc(f)
     {}
   };
 
 private:     // data
   // ------ child widgets -----
   // floating info box
-  QLabel *infoBox;               // (nullable owner)
+  QLabel *m_infoBox;               // (nullable owner)
 
   // access to the status display
-  StatusDisplay *status;         // (serf)
+  StatusDisplay *m_status;         // (serf)
 
   // ------ editing state -----
   // Editor object for the file we are editing.  Never NULL.
   // This points at one of the elements of 'm_editors'.
-  FileTextDocumentEditor *editor;
+  FileTextDocumentEditor *m_editor;
 
   // All of the editors associated with this widget.  An editor is
   // created on demand when this widget is told to edit its underlying
   // file, so the set of files here is in general a subset of
   // GlobalState::documentFiles.
-  ObjList<FileTextDocumentEditor> m_editors;
+  ObjList<FileTextDocumentEditor> m_editorList;
 
   // ----- match highlight state -----
   // when nonempty, any buffer text matching this string will
   // be highlighted in the 'hit' style; match is carried out
   // under influence of 'hitTextFlags'
-  string hitText;
-  TextDocumentEditor::FindStringFlags hitTextFlags;
+  string m_hitText;
+  TextDocumentEditor::FindStringFlags m_hitTextFlags;
 
 public:      // data
   // ------ rendering options ------
   // amount of blank space at top/left edge of widget
-  int topMargin, leftMargin;
+  int m_topMargin, m_leftMargin;
 
   // # of blank lines of pixels between lines of text ("leading")
-  int interLineSpace;
+  int m_interLineSpace;
 
   // colors
-  QColor cursorColor;               // color of text cursor
-  //QColor normalFG, normalBG;        // normal text
-  //QColor selectFG, selectBG;        // selected text
+  QColor m_cursorColor;                // color of text cursor
 
   // Fonts for (indexed by) each text category; all fonts must use the
   // same character size; some entries may be NULL, indicating we
   // do not expect to draw text with that category.
-  ObjArrayStack<QtBDFFont> fontForCategory;
+  ObjArrayStack<QtBDFFont> m_fontForCategory;
 
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
-  ObjArrayStack<QtBDFFont> cursorFontForFV;
+  ObjArrayStack<QtBDFFont> m_cursorFontForFV;
 
   // Font containing miniature hexadecimal characters for use when
   // a glyph is missing.
-  Owner<QtBDFFont> minihexFont;
+  Owner<QtBDFFont> m_minihexFont;
 
   // When true, draw visible markers on whitespace characters.
-  bool visibleWhitespace;
+  bool m_visibleWhitespace;
 
   // Value in [0,255], where 255 is fully opaque.
-  int whitespaceOpacity;
+  int m_whitespaceOpacity;
 
   // Column number for a soft margin.  This is used for text
   // justification and optionally to draw a margin line.
-  int softMarginColumn;
+  int m_softMarginColumn;
 
   // True to draw the soft margin.
-  bool visibleSoftMargin;
+  bool m_visibleSoftMargin;
 
   // Color of the line indicating the soft margin.
-  QColor softMarginColor;
+  QColor m_softMarginColor;
 
   // ------ input options ------
   // current input proxy, if any
-  InputProxy *inputProxy;           // (nullable serf)
+  InputProxy *m_inputProxy;           // (nullable serf)
 
   // ------ font metrics ------
   // these should be treated as read-only by all functions except
@@ -137,26 +135,26 @@ public:      // data
 
   // number of pixels in a character cell that are above the
   // base line, including the base line itself
-  int ascent;
+  int m_fontAscent;
 
   // number of pixels below the base line, not including the
   // base line
-  int descent;
+  int m_fontDescent;
 
   // total # of pixels in each cell
-  int fontHeight;
-  int fontWidth;
+  int m_fontHeight;
+  int m_fontWidth;
 
   // ------ stuff for when I don't have focus ------
   // True if I've registered myself as a listener.  There
   // are a few cases where I don't have the focus, but
   // I also am not a listener (like initialization).
-  bool listening;
+  bool m_listening;
 
   // ------ event model hacks ------
   // when this is true, we ignore the scrollToLine and scrollToCol
   // signals, to avoid recursion with the scroll bars
-  bool ignoreScrollSignals;
+  bool m_ignoreScrollSignals;
 
 private:     // funcs
   // set fonts, given actual BDF description data (*not* file names)
@@ -194,14 +192,14 @@ public:      // funcs
   // TODO: I think I should remove these in favor of code directly
   // calling the editor object.  Anyway, most of the code that invokes
   // these should be moved into TextDocumentEditor.
-  int cursorLine() const                  { return editor->cursor().line; }
-  int cursorCol() const                   { return editor->cursor().column; }
+  int cursorLine() const                  { return m_editor->cursor().line; }
+  int cursorCol() const                   { return m_editor->cursor().column; }
 
   // absolute cursor movement
   void cursorTo(TextCoord tc);
 
   // relative cursor movement
-  void moveCursorBy(int dline, int dcol)  { editor->moveCursorBy(dline, dcol); }
+  void moveCursorBy(int dline, int dcol)  { m_editor->moveCursorBy(dline, dcol); }
   void cursorLeftBy(int amt)              { moveCursorBy(0, -amt); }
   void cursorRightBy(int amt)             { moveCursorBy(0, +amt); }
   void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
@@ -222,34 +220,34 @@ public:      // funcs
 
   // ----------------------------- mark ------------------------------
   // selection manipulation
-  void turnOffSelection()                 { editor->clearMark(); }
-  void turnOnSelection()                  { editor->turnOnSelection(); }
-  void turnSelection(bool on)             { editor->turnSelection(on); }
+  void turnOffSelection()                 { m_editor->clearMark(); }
+  void turnOnSelection()                  { m_editor->turnOnSelection(); }
+  void turnSelection(bool on)             { m_editor->turnSelection(on); }
 
-  TextCoord mark() const                  { return editor->mark(); }
-  void setMark(TextCoord tc)              { editor->setMark(tc); }
-  bool selectEnabled() const              { return editor->markActive(); }
-  void clearMark()                        { editor->clearMark(); }
+  TextCoord mark() const                  { return m_editor->mark(); }
+  void setMark(TextCoord tc)              { m_editor->setMark(tc); }
+  bool selectEnabled() const              { return m_editor->markActive(); }
+  void clearMark()                        { m_editor->clearMark(); }
 
-  string getSelectedText() const          { return editor->getSelectedText(); }
+  string getSelectedText() const          { return m_editor->getSelectedText(); }
 
-  void selectCursorLine()                 { editor->selectCursorLine(); }
+  void selectCursorLine()                 { m_editor->selectCursorLine(); }
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
-  int firstVisibleLine() const            { return editor->firstVisible().line; }
-  int firstVisibleCol() const             { return editor->firstVisible().column; }
-  int lastVisibleLine() const             { return editor->lastVisible().line; }
-  int lastVisibleCol() const              { return editor->lastVisible().column; }
+  int firstVisibleLine() const            { return m_editor->firstVisible().line; }
+  int firstVisibleCol() const             { return m_editor->firstVisible().column; }
+  int lastVisibleLine() const             { return m_editor->lastVisible().line; }
+  int lastVisibleCol() const              { return m_editor->lastVisible().column; }
 
-  void setFirstVisible(TextCoord fv)      { editor->setFirstVisible(fv); }
-  void setFirstVisibleLine(int L)         { editor->setFirstVisibleLine(L); }
-  void setFirstVisibleCol(int C)          { editor->setFirstVisibleCol(C); }
+  void setFirstVisible(TextCoord fv)      { m_editor->setFirstVisible(fv); }
+  void setFirstVisibleLine(int L)         { m_editor->setFirstVisibleLine(L); }
+  void setFirstVisibleCol(int C)          { m_editor->setFirstVisibleCol(C); }
 
   // This one calls redraw, whereas the preceding does not, simply
   // because its call sites all want that right after.
   void moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
-    { editor->moveFirstVisibleAndCursor(deltaLine, deltaCol); redraw(); }
+    { m_editor->moveFirstVisibleAndCursor(deltaLine, deltaCol); redraw(); }
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col
@@ -267,8 +265,8 @@ public:      // funcs
 
   // Number of fully visible lines/columns.  Part of the next
   // line/col may also be visible.
-  int visLines() const { return this->editor->visLines(); }
-  int visCols() const { return this->editor->visColumns(); }
+  int visLines() const { return m_editor->visLines(); }
+  int visCols() const { return m_editor->visColumns(); }
 
   // --------------------------- insertion ---------------------------
   // Insert 'text' at cursor.  Set cursor to the end of the inserted
@@ -346,7 +344,7 @@ public:      // funcs
   void hideInfo();
 
   // Offset from one baseline to the next, in pixels.
-  int lineHeight() const { return fontHeight+interLineSpace; }
+  int lineHeight() const { return m_fontHeight+m_interLineSpace; }
 
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
