@@ -12,11 +12,11 @@
 
 // Do not start with 0 because QVariant::toInt() returns 0 to
 // indicate failure.
-int TextDocumentFile::nextWindowMenuId = 1;
+int FileTextDocument::nextWindowMenuId = 1;
 
-int TextDocumentFile::objectCount = 0;
+int FileTextDocument::objectCount = 0;
 
-TextDocumentFile::TextDocumentFile()
+FileTextDocument::FileTextDocument()
   : TextDocument(),
     hasHotkeyDigit(false),
     hotkeyDigit(0),
@@ -27,26 +27,26 @@ TextDocumentFile::TextDocumentFile()
     //changed(false),
     highlighter(NULL)
 {
-  TextDocumentFile::objectCount++;
+  FileTextDocument::objectCount++;
 }
 
-TextDocumentFile::~TextDocumentFile()
+FileTextDocument::~FileTextDocument()
 {
-  TextDocumentFile::objectCount--;
+  FileTextDocument::objectCount--;
   if (highlighter) {
     delete highlighter;
   }
 }
 
 
-int TextDocumentFile::getHotkeyDigit() const
+int FileTextDocument::getHotkeyDigit() const
 {
   xassert(this->hasHotkey());
   return this->hotkeyDigit;
 }
 
 
-string TextDocumentFile::hotkeyDesc() const
+string FileTextDocument::hotkeyDesc() const
 {
   if (!this->hasHotkey()) {
     return "";
@@ -56,14 +56,14 @@ string TextDocumentFile::hotkeyDesc() const
 }
 
 
-void TextDocumentFile::clearHotkey()
+void FileTextDocument::clearHotkey()
 {
   this->hasHotkeyDigit = false;
   this->hotkeyDigit = 0;
 }
 
 
-void TextDocumentFile::setHotkeyDigit(int digit)
+void FileTextDocument::setHotkeyDigit(int digit)
 {
   xassert(0 <= digit && digit <= 9);
   this->hasHotkeyDigit = true;
@@ -71,7 +71,7 @@ void TextDocumentFile::setHotkeyDigit(int digit)
 }
 
 
-bool TextDocumentFile::getDiskModificationTime(int64_t &modTime) const
+bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
   bool ret = getFileModificationTime(this->filename.c_str(), modTime);
   TRACE("modtime", "on-disk ts for " << this->filename <<
@@ -80,7 +80,7 @@ bool TextDocumentFile::getDiskModificationTime(int64_t &modTime) const
 }
 
 
-bool TextDocumentFile::hasStaleModificationTime() const
+bool FileTextDocument::hasStaleModificationTime() const
 {
   int64_t diskTime;
   if (this->getDiskModificationTime(diskTime)) {
@@ -100,7 +100,7 @@ bool TextDocumentFile::hasStaleModificationTime() const
 }
 
 
-void TextDocumentFile::refreshModificationTime()
+void FileTextDocument::refreshModificationTime()
 {
   TRACE("modtime", "refresh: old ts for " << this->filename <<
                    " is " << this->lastFileTimestamp);

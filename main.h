@@ -11,7 +11,7 @@
 
 #include "objlist.h"                   // ObjList
 #include "pixmaps.h"                   // Pixmaps
-#include "td-file.h"                   // TextDocumentFile
+#include "td-file.h"                   // FileTextDocument
 
 class QLabel;
 class QMenu;
@@ -66,12 +66,12 @@ private:     // funcs
   void buildMenu();
   void setFileName(rostring name, rostring hotkey);
   void writeTheFile();
-  void setDocumentFile(TextDocumentFile *b);
+  void setDocumentFile(FileTextDocument *b);
 
   // Update the status displays to reflect a different file being edited.
   void updateForChangedFile();
 
-  void forgetAboutFile(TextDocumentFile *file);
+  void forgetAboutFile(FileTextDocument *file);
   void rebuildWindowMenu();
   void complain(char const *msg);
 
@@ -84,7 +84,7 @@ protected:   // funcs
   void closeEvent(QCloseEvent *event) override;
 
 public:      // funcs
-  EditorWindow(GlobalState *state, TextDocumentFile *initFile,
+  EditorWindow(GlobalState *state, FileTextDocument *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
 
@@ -92,11 +92,11 @@ public:      // funcs
   void fileOpenFile(char const *fname);
 
   // File user is editing: returns editor->docFile.
-  TextDocumentFile *theDocFile();
+  FileTextDocument *theDocFile();
 
   // Reload the file for 'b' from disk.  If there is an error, show
   // an error message box and return false.
-  bool reloadFile(TextDocumentFile *b);
+  bool reloadFile(FileTextDocument *b);
 
   // Return true if either there are no unsaved changes or the user
   // responds to a GUI dialog and says it is ok to quit.
@@ -166,7 +166,7 @@ public:       // data
 
   // List of open files.  There is always at least one; if the last
   // file is closed, we open an "untitled" file.
-  ObjList<TextDocumentFile> documentFiles;
+  ObjList<FileTextDocument> fileDocuments;
 
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
@@ -186,11 +186,11 @@ public:       // funcs
   // to run the app, use the 'exec()' method, inherited
   // from QApplication
 
-  TextDocumentFile *createNewFile();
-  EditorWindow *createNewWindow(TextDocumentFile *initFile);
-  void trackNewDocumentFile(TextDocumentFile *f);
+  FileTextDocument *createNewFile();
+  EditorWindow *createNewWindow(FileTextDocument *initFile);
+  void trackNewDocumentFile(FileTextDocument *f);
   void rebuildWindowMenus();
-  void deleteDocumentFile(TextDocumentFile *f);
+  void deleteDocumentFile(FileTextDocument *f);
 };
 
 

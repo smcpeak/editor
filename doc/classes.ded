@@ -4,7 +4,7 @@
     {
       "attributes": "lines: string[]\nobservers: TextDocumentObserver[]\n(plus some caches)\n",
       "loc": {
-        "x": 515,
+        "x": 540,
         "y": 40
       },
       "name": "TextDocumentCore",
@@ -16,7 +16,7 @@
     {
       "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\ngroupStack: HE_group[]\n",
       "loc": {
-        "x": 515,
+        "x": 540,
         "y": 150
       },
       "name": "TextDocument",
@@ -28,17 +28,17 @@
     {
       "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\n",
       "loc": {
-        "x": 515,
+        "x": 540,
         "y": 295
       },
-      "name": "TextDocumentFile",
+      "name": "FileTextDocument",
       "size": {
         "h": 130,
         "w": 250
       }
     },
     {
-      "attributes": "m_editors: TextDocumentFileEditor[]\neditor: TextDocumentFileEditor\n\n// I still don't understand these:\nnonfocusCursorLine: int\nnonfocusCursorCol: int\n\nhitText: string\nhitTextFlags: FindStringFlags\n\ninputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: FileTextDocumentEditor[]\neditor: FileTextDocumentEditor\n\nhitText: string\nhitTextFlags: FindStringFlags\n\ninputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40
@@ -62,7 +62,7 @@
       }
     },
     {
-      "attributes": "documentFiles: TextDocumentFile[]\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
+      "attributes": "fileDocuments: FileTextDocument[]\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
       "loc": {
         "x": 285,
         "y": 470
@@ -97,12 +97,12 @@
       }
     },
     {
-      "attributes": "file: TextDocumentFile\n",
+      "attributes": "fileDoc: FileTextDocument\n",
       "loc": {
         "x": 325,
         "y": 295
       },
-      "name": "TextDocumentFileEditor",
+      "name": "FileTextDocumentEditor",
       "size": {
         "h": 50,
         "w": 160
@@ -126,7 +126,7 @@
       "open": true,
       "parentRef": 1,
       "pt": {
-        "x": 640,
+        "x": 665,
         "y": 285
       }
     },
@@ -172,7 +172,7 @@
     },
     {
       "end": {"entityRef": 2},
-      "label": "documentFiles[]",
+      "label": "fileDocuments[]",
       "start": {"entityRef": 5}
     },
     {
@@ -217,7 +217,7 @@
     },
     {
       "end": {"entityRef": 2},
-      "label": "file",
+      "label": "fileDoc",
       "start": {"entityRef": 8}
     },
     {
@@ -249,6 +249,6 @@
   "version": 23,
   "windowSize": {
     "h": 589,
-    "w": 788
+    "w": 819
   }
 }

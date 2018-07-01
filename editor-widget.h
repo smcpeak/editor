@@ -7,7 +7,7 @@
 #include "inputproxy.h"                // InputProxy, InputPseudoKey
 #include "owner.h"                     // Owner
 #include "td-editor.h"                 // TextDocumentEditor
-#include "td-file.h"                   // TextDocumentFile
+#include "td-file.h"                   // FileTextDocument
 #include "textcategory.h"              // TextCategory
 
 #include <qwidget.h>                   // QWidget
@@ -42,20 +42,20 @@ public:     // static data
   static int objectCount;
 
 private:     // types
-  // For this EditorWidget, and for a given TextDocumentFile, this is
+  // For this EditorWidget, and for a given FileTextDocument, this is
   // the editing state for that file.  This state is *not* shared with
   // other widgets in the editor application, although it contains a
-  // pointer to a TextDocumentFile, which *is* shared.
+  // pointer to a FileTextDocument, which *is* shared.
   class TextDocumentFileEditor : public TextDocumentEditor {
   public:    // data
     // Process-wide record of the open file.  Not an owner pointer.
     // Must not be null.
-    TextDocumentFile *file;
+    FileTextDocument *fileDoc;
 
   public:
-    TextDocumentFileEditor(TextDocumentFile *f) :
+    TextDocumentFileEditor(FileTextDocument *f) :
       TextDocumentEditor(f),
-      file(f)
+      fileDoc(f)
     {}
   };
 
@@ -176,7 +176,7 @@ protected:   // funcs
   virtual void focusOutEvent(QFocusEvent *e) override;
 
 public:      // funcs
-  EditorWidget(TextDocumentFile *docFile, StatusDisplay *status,
+  EditorWidget(FileTextDocument *docFile, StatusDisplay *status,
                QWidget *parent=NULL);
   ~EditorWidget();
 
@@ -286,18 +286,18 @@ public:      // funcs
 
   // If we already have an editor for 'file', return it.  Otherwise,
   // make a new editor, add it to 'm_editors', and return that.
-  TextDocumentFileEditor *getOrMakeEditor(TextDocumentFile *file);
+  TextDocumentFileEditor *getOrMakeEditor(FileTextDocument *file);
 
   // Change which file this editor widget is editing.
-  void setDocumentFile(TextDocumentFile *file);
+  void setDocumentFile(FileTextDocument *file);
 
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the global list.
-  void forgetAboutFile(TextDocumentFile *file);
+  void forgetAboutFile(FileTextDocument *file);
 
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process.
-  TextDocumentFile *getDocumentFile() const;
+  FileTextDocument *getDocumentFile() const;
 
   // Editor associated with current file and this particular widget.
   // This is not 'const' because the editor is owned by this object.

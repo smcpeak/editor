@@ -56,7 +56,7 @@ int const CTRL_SHIFT_DISTANCE = 10;
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::objectCount = 0;
 
-EditorWidget::EditorWidget(TextDocumentFile *tdf, StatusDisplay *status_,
+EditorWidget::EditorWidget(FileTextDocument *tdf, StatusDisplay *status_,
                            QWidget *parent)
   : QWidget(parent),
     infoBox(NULL),
@@ -118,7 +118,7 @@ EditorWidget::~EditorWidget()
 void EditorWidget::selfCheck() const
 {
   // Check that 'editor' is among 'm_editors' and that the files in
-  // 'm_editors' are a subset of GlobalState::documentFiles.
+  // 'm_editors' are a subset of GlobalState::fileDocuments.
   bool foundEditor = false;
   FOREACH_OBJLIST(TextDocumentFileEditor, m_editors, iter) {
     TextDocumentFileEditor const *tdfe = iter.data();
@@ -126,12 +126,12 @@ void EditorWidget::selfCheck() const
       foundEditor = true;
     }
     tdfe->selfCheck();
-    xassert(GlobalState::global_globalState->documentFiles.contains(tdfe->file));
+    xassert(GlobalState::global_globalState->fileDocuments.contains(tdfe->fileDoc));
   }
   xassert(foundEditor);
 
-  // There should never be more m_editors than documentFiles.
-  xassert(GlobalState::global_globalState->documentFiles.count() >= m_editors.count());
+  // There should never be more m_editors than fileDocuments.
+  xassert(GlobalState::global_globalState->fileDocuments.count() >= m_editors.count());
 }
 
 
@@ -222,7 +222,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 }
 
 
-void EditorWidget::setDocumentFile(TextDocumentFile *file)
+void EditorWidget::setDocumentFile(FileTextDocument *file)
 {
   bool wasListening = this->listening;
   if (wasListening) {
@@ -240,11 +240,11 @@ void EditorWidget::setDocumentFile(TextDocumentFile *file)
 
 
 EditorWidget::TextDocumentFileEditor *
-  EditorWidget::getOrMakeEditor(TextDocumentFile *file)
+  EditorWidget::getOrMakeEditor(FileTextDocument *file)
 {
   // Look for an existing editor for this file.
   FOREACH_OBJLIST_NC(TextDocumentFileEditor, m_editors, iter) {
-    if (iter.data()->file == file) {
+    if (iter.data()->fileDoc == file) {
       return iter.data();
     }
   }
@@ -256,11 +256,11 @@ EditorWidget::TextDocumentFileEditor *
 }
 
 
-void EditorWidget::forgetAboutFile(TextDocumentFile *file)
+void EditorWidget::forgetAboutFile(FileTextDocument *file)
 {
   // Remove 'file' from my list.
   for(ObjListMutator< TextDocumentFileEditor > mut(m_editors); !mut.isDone(); ) {
-    if (mut.data()->file == file) {
+    if (mut.data()->fileDoc == file) {
       mut.deleteIt();
     }
     else {
@@ -269,19 +269,19 @@ void EditorWidget::forgetAboutFile(TextDocumentFile *file)
   }
 
   // Change files if that was the one we were editing.
-  if (this->editor->file == file) {
+  if (this->editor->fileDoc == file) {
     // This dependence on GlobalState is questionable...
     this->setDocumentFile(
-      GlobalState::global_globalState->documentFiles.first());
+      GlobalState::global_globalState->fileDocuments.first());
   }
 }
 
 
-TextDocumentFile *EditorWidget::getDocumentFile() const
+FileTextDocument *EditorWidget::getDocumentFile() const
 {
   xassert(this->editor);
-  xassert(this->editor->file);
-  return this->editor->file;
+  xassert(this->editor->fileDoc);
+  return this->editor->fileDoc;
 }
 
 
@@ -518,8 +518,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       }
 
       // apply highlighting
-      if (editor->file->highlighter) {
-        editor->file->highlighter->
+      if (editor->fileDoc->highlighter) {
+        editor->fileDoc->highlighter->
           highlight(editor->core(), line, categories);
       }
 
@@ -1691,7 +1691,7 @@ bool EditorWidget::editSafetyCheck()
     return true;
   }
 
-  if (!editor->file->hasStaleModificationTime()) {
+  if (!editor->fileDoc->hasStaleModificationTime()) {
     // No concurrent changes, safe to go ahead.
     return true;
   }
@@ -1700,7 +1700,7 @@ bool EditorWidget::editSafetyCheck()
   QMessageBox box(this);
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The file \"" << editor->file->filename << "\" has changed on disk.  "
+    "The file \"" << editor->fileDoc->filename << "\" has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);
@@ -1711,7 +1711,7 @@ bool EditorWidget::editSafetyCheck()
     // are about to do gets canceled for a different reason,
     // leaving us in the "clean" state after all, this refresh will
     // ensure we do not prompt the user a second time.
-    editor->file->refreshModificationTime();
+    editor->fileDoc->refreshModificationTime();
 
     // Go ahead with the edit.
     return true;

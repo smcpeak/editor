@@ -14,6 +14,7 @@ TODOs:
 
 
   - Alt+A to pass selection through a filter command
+  - handle cygwin paths on the command line (requires Alt+A infra)
   - allow Tab character; issue is rendering support
   - rethink incremental search
     - persistent search string

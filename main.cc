@@ -44,7 +44,7 @@ char const appName[] = "Editor";
 int EditorWindow::objectCount = 0;
 
 
-EditorWindow::EditorWindow(GlobalState *theState, TextDocumentFile *initFile,
+EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
                            QWidget *parent)
   : QWidget(parent),
     globalState(theState),
@@ -209,7 +209,7 @@ void EditorWindow::buildMenu()
 
 
 // not inline because main.h doesn't see editor.h
-TextDocumentFile *EditorWindow::theDocFile()
+FileTextDocument *EditorWindow::theDocFile()
 {
   return editorWidget->getDocumentFile();
 }
@@ -217,12 +217,12 @@ TextDocumentFile *EditorWindow::theDocFile()
 
 void EditorWindow::fileNewFile()
 {
-  TextDocumentFile *b = globalState->createNewFile();
+  FileTextDocument *b = globalState->createNewFile();
   setDocumentFile(b);
 }
 
 
-void EditorWindow::setDocumentFile(TextDocumentFile *file)
+void EditorWindow::setDocumentFile(FileTextDocument *file)
 {
   editorWidget->setDocumentFile(file);
   this->updateForChangedFile();
@@ -237,7 +237,7 @@ void EditorWindow::updateForChangedFile()
 }
 
 
-void EditorWindow::forgetAboutFile(TextDocumentFile *file)
+void EditorWindow::forgetAboutFile(FileTextDocument *file)
 {
   editorWidget->forgetAboutFile(file);
   this->updateForChangedFile();
@@ -279,15 +279,15 @@ void EditorWindow::fileOpen()
 void EditorWindow::fileOpenFile(char const *name)
 {
   // If this file is already open, switch to it.
-  FOREACH_OBJLIST_NC(TextDocumentFile, globalState->documentFiles, iter) {
-    TextDocumentFile *bs = iter.data();
+  FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
+    FileTextDocument *bs = iter.data();
     if (bs->filename.equals(name)) {
       this->setDocumentFile(bs);
       return;
     }
   }
 
-  TextDocumentFile *b = new TextDocumentFile();
+  FileTextDocument *b = new FileTextDocument();
   b->filename = name;
   b->title = sm_basename(name);   // shorter; todo: ensure unique
 
@@ -314,9 +314,9 @@ void EditorWindow::fileOpenFile(char const *name)
   }
 
   // is there an untitled, empty file hanging around?
-  TextDocumentFile *untitled = NULL;
-  FOREACH_OBJLIST_NC(TextDocumentFile, globalState->documentFiles, iter) {
-    TextDocumentFile *bs = iter.data();
+  FileTextDocument *untitled = NULL;
+  FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
+    FileTextDocument *bs = iter.data();
     if (bs->title.equals("untitled.txt") &&
         bs->numLines() == 1 &&
         bs->lineLength(0) == 0) {
@@ -346,7 +346,7 @@ void EditorWindow::fileOpenFile(char const *name)
 
 void EditorWindow::fileSave()
 {
-  TextDocumentFile *b = this->theDocFile();
+  FileTextDocument *b = this->theDocFile();
   if (b->title.equals("untitled.txt")) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
@@ -374,7 +374,7 @@ void EditorWindow::fileSave()
 void EditorWindow::writeTheFile()
 {
   try {
-    TextDocumentFile *b = this->theDocFile();
+    FileTextDocument *b = this->theDocFile();
     writeFile(b->getCore(), toCStr(b->filename));
     b->noUnsavedChanges();
     b->refreshModificationTime();
@@ -407,7 +407,7 @@ void EditorWindow::fileSaveAs()
 
 void EditorWindow::fileClose()
 {
-  TextDocumentFile *b = theDocFile();
+  FileTextDocument *b = theDocFile();
   if (b->unsavedChanges()) {
     stringBuilder msg;
     msg << "The file \"" << b->filename << "\" has unsaved changes.  "
@@ -429,7 +429,7 @@ void EditorWindow::fileReload()
 }
 
 
-bool EditorWindow::reloadFile(TextDocumentFile *b)
+bool EditorWindow::reloadFile(FileTextDocument *b)
 {
   if (b->unsavedChanges()) {
     if (!this->okToDiscardChanges(stringb(
@@ -473,8 +473,8 @@ void EditorWindow::fileReloadAll()
     return;
   }
 
-  FOREACH_OBJLIST_NC(TextDocumentFile, globalState->documentFiles, iter) {
-    TextDocumentFile *bs = iter.data();
+  FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
+    FileTextDocument *bs = iter.data();
     if (!this->reloadFile(bs)) {
       // Stop after first error.
       break;
@@ -504,7 +504,7 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
   int ct = 0;
 
   msg << "The following files have unsaved changes:\n\n";
-  FOREACH_OBJLIST(TextDocumentFile, this->globalState->documentFiles, iter) {
+  FOREACH_OBJLIST(FileTextDocument, this->globalState->fileDocuments, iter) {
     if (iter.data()->unsavedChanges()) {
       ct++;
       msg << " * " << iter.data()->filename << '\n';
@@ -641,10 +641,10 @@ void EditorWindow::windowOccupyRight()
 
 void EditorWindow::windowCycleFile()
 {
-  int cur = globalState->documentFiles.indexOf(theDocFile());
+  int cur = globalState->fileDocuments.indexOf(theDocFile());
   xassert(cur >= 0);
-  cur = (cur + 1) % globalState->documentFiles.count();     // cycle
-  setDocumentFile(globalState->documentFiles.nth(cur));
+  cur = (cur + 1) % globalState->fileDocuments.count();     // cycle
+  setDocumentFile(globalState->fileDocuments.nth(cur));
 }
 
 
@@ -718,8 +718,8 @@ void EditorWindow::rebuildWindowMenu()
 
   // add new items for all of the open files;
   // hotkeys have already been assigned by now
-  FOREACH_OBJLIST_NC(TextDocumentFile, this->globalState->documentFiles, iter) {
-    TextDocumentFile *b = iter.data();
+  FOREACH_OBJLIST_NC(FileTextDocument, this->globalState->fileDocuments, iter) {
+    FileTextDocument *b = iter.data();
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
@@ -732,7 +732,7 @@ void EditorWindow::rebuildWindowMenu()
       SLOT(windowFileChoice()), // slot name
       keySequence);               // accelerator
 
-    // Associate the action with the TextDocumentFile object.
+    // Associate the action with the FileTextDocument object.
     action->setData(QVariant(b->windowMenuId));
 
     this->fileChoiceActions.push(action);
@@ -747,8 +747,8 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
 
   // Search through the list of files to find the one
   // that this action refers to.
-  FOREACH_OBJLIST_NC(TextDocumentFile, this->globalState->documentFiles, iter) {
-    TextDocumentFile *b = iter.data();
+  FOREACH_OBJLIST_NC(FileTextDocument, this->globalState->fileDocuments, iter) {
+    FileTextDocument *b = iter.data();
 
     if (b->windowMenuId == action->data().toInt()) {
       TRACE("menu", "window file choice is: " << b->filename);
@@ -821,7 +821,7 @@ GlobalState *GlobalState::global_globalState = NULL;
 GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
     pixmaps(),
-    documentFiles(),
+    fileDocuments(),
     windows()
 {
   // There should only be one of these.
@@ -881,7 +881,7 @@ GlobalState::~GlobalState()
 }
 
 
-EditorWindow *GlobalState::createNewWindow(TextDocumentFile *initFile)
+EditorWindow *GlobalState::createNewWindow(FileTextDocument *initFile)
 {
   EditorWindow *ed = new EditorWindow(this, initFile);
   ed->setObjectName("Editor Window");
@@ -893,10 +893,10 @@ EditorWindow *GlobalState::createNewWindow(TextDocumentFile *initFile)
 }
 
 
-TextDocumentFile *GlobalState::createNewFile()
+FileTextDocument *GlobalState::createNewFile()
 {
   TRACE("untitled", "creating untitled file");
-  TextDocumentFile *b = new TextDocumentFile();
+  FileTextDocument *b = new FileTextDocument();
   b->filename = "untitled.txt";    // TODO: find a unique variant of this name
   b->title = b->filename;
   trackNewDocumentFile(b);
@@ -904,7 +904,7 @@ TextDocumentFile *GlobalState::createNewFile()
 }
 
 
-void GlobalState::trackNewDocumentFile(TextDocumentFile *b)
+void GlobalState::trackNewDocumentFile(FileTextDocument *b)
 {
   // assign hotkey
   b->clearHotkey();
@@ -919,13 +919,13 @@ void GlobalState::trackNewDocumentFile(TextDocumentFile *b)
     }
   }
 
-  documentFiles.append(b);
+  fileDocuments.append(b);
   rebuildWindowMenus();
 }
 
 bool GlobalState::hotkeyAvailable(int key) const
 {
-  FOREACH_OBJLIST(TextDocumentFile, documentFiles, iter) {
+  FOREACH_OBJLIST(FileTextDocument, fileDocuments, iter) {
     if (iter.data()->hasHotkey() &&
         iter.data()->getHotkeyDigit() == key) {
       return false;    // not available
@@ -942,11 +942,11 @@ void GlobalState::rebuildWindowMenus()
 }
 
 
-void GlobalState::deleteDocumentFile(TextDocumentFile *file)
+void GlobalState::deleteDocumentFile(FileTextDocument *file)
 {
   // Remove it from the global list.
-  documentFiles.removeItem(file);
-  if (documentFiles.isEmpty()) {
+  fileDocuments.removeItem(file);
+  if (fileDocuments.isEmpty()) {
     createNewFile();    // ensure there's always one
   }
 
@@ -1019,7 +1019,7 @@ static int printObjectCountsIf(char const *when, bool print)
 
   PRINT_COUNT(EditorWidget::objectCount);
   PRINT_COUNT(EditorWindow::objectCount);
-  PRINT_COUNT(TextDocumentFile::objectCount);
+  PRINT_COUNT(FileTextDocument::objectCount);
   PRINT_COUNT(TextDocumentEditor::s_objectCount);
 
   #undef PRINT_COUNT

@@ -1,5 +1,5 @@
 // td-file.h
-// TextDocumentFile class.
+// FileTextDocument class.
 
 #ifndef TD_FILE_H
 #define TD_FILE_H
@@ -27,7 +27,7 @@
 //
 // All of the data in this class is shared by all editor windows that
 // operate on a given file.
-class TextDocumentFile : public TextDocument {
+class FileTextDocument : public TextDocument {
 private:     // static data
   // Next value to use when assigning menu ids.
   static int nextWindowMenuId;
@@ -68,8 +68,8 @@ public:      // data
   Highlighter *highlighter;      // (nullable owner)
 
 public:      // funcs
-  TextDocumentFile();
-  ~TextDocumentFile();
+  FileTextDocument();
+  ~FileTextDocument();
 
   // Return true if this buffer has an assigned hotkey.
   bool hasHotkey() const { return this->hasHotkeyDigit; }
