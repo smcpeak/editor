@@ -1345,10 +1345,9 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 // ----------------------- edit menu -----------------------
 void EditorWidget::editUndo()
 {
-  if (editor->canUndo()) {
-    editor->undo();
-    turnOffSelection();
-    scrollToCursor();
+  if (this->editor->canUndo()) {
+    this->editor->undo();
+    this->redraw();
   }
   else {
     QMessageBox::information(this, "Can't undo",
@@ -1359,10 +1358,9 @@ void EditorWidget::editUndo()
 
 void EditorWidget::editRedo()
 {
-  if (editor->canRedo()) {
-    editor->redo();
-    turnOffSelection();
-    scrollToCursor();
+  if (this->editor->canRedo()) {
+    this->editor->redo();
+    this->redraw();
   }
   else {
     QMessageBox::information(this, "Can't redo",

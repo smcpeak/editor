@@ -406,13 +406,17 @@ void TextDocumentEditor::deleteKeyFunction()
 
 void TextDocumentEditor::undo()
 {
-  setCursor(m_doc->undo());
+  this->setCursor(m_doc->undo());
+  this->clearMark();
+  this->scrollToCursor();
 }
 
 
 void TextDocumentEditor::redo()
 {
-  setCursor(m_doc->redo());
+  this->setCursor(m_doc->redo());
+  this->clearMark();
+  this->scrollToCursor();
 }
 
 
