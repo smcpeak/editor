@@ -6,7 +6,6 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "editor-widget.h"             // EditorWidget
 #include "exc.h"                       // XOpen
-#include "gotoline.gen.h"              // Ui_GotoLine
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "mysig.h"                     // printSegfaultAddrs
@@ -17,6 +16,7 @@
 #include "strutil.h"                   // dirname
 #include "td-editor.h"                 // TextDocumentEditor
 #include "test.h"                      // PVAL
+#include "textinput.h"                 // TextInputDialog
 #include "trace.h"                     // TRACE_ARGS
 
 #include <string.h>                    // strrchr
@@ -566,29 +566,35 @@ void EditorWindow::editISearch()
 
 void EditorWindow::editGotoLine()
 {
-  Ui_GotoLine gl;
-  QDialog dialog;
-  gl.setupUi(&dialog);
+  // Use a single dialog instance shared across all windows so they
+  // can share the input history.
+  static TextInputDialog *dialog;
+  if (!dialog) {
+    dialog = new TextInputDialog();
+    dialog->setWindowTitle("Goto Line");
+    dialog->setLabelText("Line number:");
+  }
 
-  // I find it a bit bothersome to do this manually.. perhaps there
-  // is a way to query the tab order, and always set focus to the
-  // first widget in that order?
-  gl.lineNumberEdit->setFocus();
+  // Populate with the current line number.  Among the benefits of that
+  // is the goto-line dialog can act as a crude form of bookmark, where
+  // you hit Alt+G, Enter to quickly add the current line number to the
+  // history so you can later grab it again.
+  dialog->m_text = qstringb(editorWidget->cursorLine() + 1);
 
-  //bool hasWT = gl.testWFlags(WStyle_ContextHelp);
-  //cout << "hasWT: " << hasWT << endl;
+  if (dialog->exec()) {
+    string s = dialog->m_text.toUtf8().constData();
 
-  if (dialog.exec()) {
-    // user pressed Ok (or Enter)
-    string s = gl.lineNumberEdit->text().toUtf8().constData();
-    //cout << "text is \"" << s << "\"\n";
-
-    if (s.length()) {
+    if (!s.isempty()) {
       int n = atoi(s);
+      if (n > 0) {
+        dialog->rememberInput(qstringb(n));
 
-      //cout << "going to line " << n << endl;
-      editorWidget->cursorTo(TextCoord(n-1, 0));
-      editorWidget->scrollToCursor(-1 /*center*/);
+        editorWidget->cursorTo(TextCoord(n-1, 0));
+        editorWidget->scrollToCursor(-1 /*center*/);
+      }
+      else {
+        this->complain(stringb("Invalid line number: " << s));
+      }
     }
   }
 }

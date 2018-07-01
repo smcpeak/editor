@@ -196,10 +196,9 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 
 
 # ------------------ the editor ---------------------
-main.o: gotoline.gen.h
 main.o: keybindings.doc.gen.h
 
-TOCLEAN += gotoline.gen.h keybindings.doc.gen.*
+TOCLEAN += keybindings.doc.gen.*
 
 EDITOR_OBJS :=
 EDITOR_OBJS += bufferlinesource.o
@@ -216,6 +215,7 @@ EDITOR_OBJS += lex_hilite.o
 EDITOR_OBJS += main.o
 EDITOR_OBJS += moc_editor-widget.o
 EDITOR_OBJS += moc_main.o
+EDITOR_OBJS += moc_textinput.o
 EDITOR_OBJS += pixmaps.o
 EDITOR_OBJS += status.o
 EDITOR_OBJS += styledb.o
@@ -224,6 +224,7 @@ EDITOR_OBJS += td-core.o
 EDITOR_OBJS += td-editor.o
 EDITOR_OBJS += textcategory.o
 EDITOR_OBJS += textcoord.o
+EDITOR_OBJS += textinput.o
 
 -include $(EDITOR_OBJS:.o=.d)
 
