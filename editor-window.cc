@@ -95,7 +95,8 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
-  this->editorWidget = new EditorWidget(initFile, this->statusArea);
+  this->editorWidget = new EditorWidget(initFile,
+    &(theState->fileDocuments), this->statusArea);
   this->editorWidget->setObjectName("editor widget");
   editorFrame->addWidget(this->editorWidget);
   this->editorWidget->setFocus();
@@ -115,6 +116,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   //connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
 
   this->buildMenu();
+  this->rebuildWindowMenu();
 
   this->setWindowIcon(pixmaps->icon);
 
@@ -132,6 +134,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   this->setAttribute(Qt::WA_DeleteOnClose);
 
   this->globalState->windows.append(this);
+  this->globalState->fileDocuments.addObserver(this);
 
   EditorWindow::objectCount++;
 }
@@ -140,6 +143,8 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
 EditorWindow::~EditorWindow()
 {
   EditorWindow::objectCount--;
+
+  this->globalState->fileDocuments.removeObserver(this);
 
   // This object might have already been removed, for example because
   // the GlobalState destructor is running, and is in the process of
@@ -239,15 +244,6 @@ void EditorWindow::updateForChangedFile()
 {
   editorWidget->recomputeLastVisible();
   editorViewChanged();
-
-  setFileName(currentDocument()->title, currentDocument()->hotkeyDesc());
-}
-
-
-void EditorWindow::forgetAboutFile(FileTextDocument *file)
-{
-  editorWidget->forgetAboutFile(file);
-  this->updateForChangedFile();
 }
 
 
@@ -286,28 +282,26 @@ void EditorWindow::fileOpen()
 void EditorWindow::fileOpenFile(char const *name)
 {
   // If this file is already open, switch to it.
-  FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
-    FileTextDocument *bs = iter.data();
-    if (bs->filename.equals(name)) {
-      this->setDocumentFile(bs);
-      return;
-    }
+  FileTextDocument *file = globalState->fileDocuments.findFileByName(name);
+  if (file) {
+    this->setDocumentFile(file);
+    return;
   }
 
-  FileTextDocument *b = new FileTextDocument();
-  b->filename = name;
-  b->isUntitled = false;
-  b->title = this->globalState->uniqueTitleFor(b->filename);
+  file = new FileTextDocument();
+  file->filename = name;
+  file->isUntitled = false;
+  file->title = this->globalState->uniqueTitleFor(file->filename);
 
-  if (fileOrDirectoryExists(b->filename.c_str())) {
+  if (fileOrDirectoryExists(file->filename.c_str())) {
     try {
-      b->readFile(name);
-      b->refreshModificationTime();
+      file->readFile(name);
+      file->refreshModificationTime();
     }
     catch (XOpen &x) {
       this->complain(stringb(
         "Can't open file \"" << name << "\": " << x.why()));
-      delete b;
+      delete file;
       return;
     }
   }
@@ -322,33 +316,26 @@ void EditorWindow::fileOpenFile(char const *name)
     if (ext.equals("h") ||
         ext.equals("cc")) {
       // make and attach a C++ highlighter for C/C++ files
-      b->highlighter = new C_Highlighter(b->getCore());
+      file->highlighter = new C_Highlighter(file->getCore());
     }
   }
 
+  // TODO: Move the untitled shenanigans into FileTextDocumentList.
+
   // is there an untitled, empty file hanging around?
-  FileTextDocument *untitled = NULL;
-  FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
-    FileTextDocument *bs = iter.data();
-    if (bs->isUntitled &&
-        bs->numLines() == 1 &&
-        bs->lineLength(0) == 0) {
-      TRACE("untitled", "found untitled file to remove: " << bs->filename);
-      untitled = iter.data();
-
-      // I'm going to remove it, but can't yet b/c I
-      // need to wait until the new file is added;
-      // but right now I can remove its hotkey so that
-      // the new file can use it instead.
-      untitled->clearHotkey();
-
-      break;
-    }
+  FileTextDocument *untitled =
+    this->globalState->fileDocuments.findUntitledUnmodifiedFile();
+  if (untitled) {
+    // I'm going to remove it, but can't yet b/c I
+    // need to wait until the new file is added;
+    // but right now I can remove its hotkey so that
+    // the new file can use it instead.
+    untitled->clearHotkey();
   }
 
   // now that we've opened the file, set the editor widget to edit it
-  globalState->trackNewDocumentFile(b);
-  setDocumentFile(b);
+  globalState->trackNewDocumentFile(file);
+  setDocumentFile(file);
 
   // remove the untitled file now, if it exists
   if (untitled) {
@@ -435,7 +422,8 @@ void EditorWindow::fileSaveAs()
   setFileName(chosenFilename, fileDoc->hotkeyDesc());
   writeTheFile();
 
-  this->globalState->rebuildWindowMenus();
+  // Notify observers of the file name change.
+  this->globalState->fileDocuments.notifyAttributeChanged(fileDoc);
 }
 
 
@@ -507,9 +495,9 @@ void EditorWindow::fileReloadAll()
     return;
   }
 
-  FOREACH_OBJLIST_NC(FileTextDocument, globalState->fileDocuments, iter) {
-    FileTextDocument *bs = iter.data();
-    if (!this->reloadFile(bs)) {
+  for (int i=0; i < this->globalState->fileDocuments.numFiles(); i++) {
+    FileTextDocument *file = this->globalState->fileDocuments.getFileAt(i);
+    if (!this->reloadFile(file)) {
       // Stop after first error.
       break;
     }
@@ -538,10 +526,11 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
   int ct = 0;
 
   msg << "The following files have unsaved changes:\n\n";
-  FOREACH_OBJLIST(FileTextDocument, this->globalState->fileDocuments, iter) {
-    if (iter.data()->unsavedChanges()) {
+  for (int i=0; i < this->globalState->fileDocuments.numFiles(); i++) {
+    FileTextDocument *file = this->globalState->fileDocuments.getFileAt(i);
+    if (file->unsavedChanges()) {
       ct++;
-      msg << " * " << iter.data()->filename << '\n';
+      msg << " * " << file->filename << '\n';
     }
   }
 
@@ -558,6 +547,41 @@ bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
   box.addButton(QMessageBox::Cancel);
   int ret = box.exec();
   return (ret == QMessageBox::Discard);
+}
+
+
+void EditorWindow::fileTextDocumentAdded(
+  FileTextDocumentList *, FileTextDocument *)
+{
+  this->rebuildWindowMenu();
+}
+
+void EditorWindow::fileTextDocumentRemoved(
+  FileTextDocumentList *, FileTextDocument *)
+{
+  this->rebuildWindowMenu();
+
+  // It is possible that the file our widget is editing is being
+  // removed, in which case the widget will switch to another file and
+  // we will have to update the filename display.  But it would be
+  // wrong to assume here that the widget has already updated to the
+  // new file since the order in which observers are notified is
+  // undefined.
+  //
+  // Instead, those updates happen in response to the 'viewChanged'
+  // signal, which the widget will emit when it learns of the change.
+}
+
+void EditorWindow::fileTextDocumentAttributeChanged(
+  FileTextDocumentList *, FileTextDocument *)
+{
+  this->rebuildWindowMenu();
+}
+
+void EditorWindow::fileTextDocumentListOrderChanged(
+  FileTextDocumentList *)
+{
+  this->rebuildWindowMenu();
 }
 
 
@@ -681,10 +705,10 @@ void EditorWindow::windowOccupyRight()
 
 void EditorWindow::windowCycleFile()
 {
-  int cur = globalState->fileDocuments.indexOf(currentDocument());
+  int cur = globalState->fileDocuments.getFileIndex(currentDocument());
   xassert(cur >= 0);
-  cur = (cur + 1) % globalState->fileDocuments.count();     // cycle
-  setDocumentFile(globalState->fileDocuments.nth(cur));
+  cur = (cur + 1) % globalState->fileDocuments.numFiles();     // cycle
+  setDocumentFile(globalState->fileDocuments.getFileAt(cur));
 }
 
 
@@ -742,6 +766,8 @@ void EditorWindow::editorViewChanged()
             << (editorWidget->cursorCol()+1)
             << (tde->unsavedChanges()? " *" : "")
   ));
+
+  setFileName(currentDocument()->title, currentDocument()->hotkeyDesc());
 }
 
 
@@ -758,8 +784,8 @@ void EditorWindow::rebuildWindowMenu()
 
   // add new items for all of the open files;
   // hotkeys have already been assigned by now
-  FOREACH_OBJLIST_NC(FileTextDocument, this->globalState->fileDocuments, iter) {
-    FileTextDocument *b = iter.data();
+  for (int i=0; i < this->globalState->fileDocuments.numFiles(); i++) {
+    FileTextDocument *b = this->globalState->fileDocuments.getFileAt(i);
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
@@ -787,19 +813,18 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
 
   // Search through the list of files to find the one
   // that this action refers to.
-  FOREACH_OBJLIST_NC(FileTextDocument, this->globalState->fileDocuments, iter) {
-    FileTextDocument *b = iter.data();
-
-    if (b->windowMenuId == action->data().toInt()) {
-      TRACE("menu", "window file choice is: " << b->filename);
-      this->setDocumentFile(b);
-      return;
-    }
+  int windowMenuId = action->data().toInt();
+  FileTextDocument *file =
+    this->globalState->fileDocuments.findFileByWindowMenuId(windowMenuId);
+  if (file) {
+    TRACE("menu", "window file choice is: " << file->filename);
+    this->setDocumentFile(file);
   }
-
-  // the id doesn't match any that I'm aware of; this happens
-  // for window menu items that do *not* switch to some file
-  TRACE("menu", "window file choice did not match any file");
+  else {
+    // the id doesn't match any that I'm aware of; this happens
+    // for window menu items that do *not* switch to some file
+    TRACE("menu", "window file choice did not match any file");
+  }
 }
 
 // This is just a placeholder.  Every QMenu::addAction() that

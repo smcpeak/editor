@@ -8,6 +8,7 @@
 #include "owner.h"                     // Owner
 #include "td-editor.h"                 // TextDocumentEditor
 #include "file-td.h"                   // FileTextDocument
+#include "file-td-list.h"              // FileTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
 
 #include <qwidget.h>                   // QWidget
@@ -29,7 +30,8 @@ class QRangeControl;                   // qrangecontrol.h
 // text manipulation.
 class EditorWidget
   : public QWidget,               // I am a Qt widget.
-    public TextDocumentObserver { // Watch my file while I don't have focus.
+    public TextDocumentObserver,  // Watch my file while I don't have focus.
+    public FileTextDocumentListObserver {        // Watch the list of files.
   Q_OBJECT
 
   // TODO: I currently need to let IncSearch access private members
@@ -77,6 +79,11 @@ private:     // data
   // file, so the set of files here is in general a subset of
   // GlobalState::documentFiles.
   ObjList<FileTextDocumentEditor> m_editorList;
+
+  // The list of documents we can potentially switch among.  This is
+  // needed so I can switch to a different file when the open file gets
+  // closed by another widget operating on the same document list.
+  FileTextDocumentList *m_documentList;
 
   // ----- match highlight state -----
   // when nonempty, any buffer text matching this string will
@@ -174,7 +181,9 @@ protected:   // funcs
   virtual void focusOutEvent(QFocusEvent *e) override;
 
 public:      // funcs
-  EditorWidget(FileTextDocument *docFile, StatusDisplay *status,
+  EditorWidget(FileTextDocument *docFile,
+               FileTextDocumentList *documentList,
+               StatusDisplay *status,
                QWidget *parent=NULL);
   ~EditorWidget();
 
@@ -290,8 +299,9 @@ public:      // funcs
   void setDocumentFile(FileTextDocument *file);
 
   // 'file' is going away.  Remove all references to it.  If it is the
-  // open file, pick another from the global list.
-  void forgetAboutFile(FileTextDocument *file);
+  // open file, pick another from the document list.
+  void fileTextDocumentRemoved(
+    FileTextDocumentList *documentList, FileTextDocument *file) override;
 
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process.
@@ -363,7 +373,11 @@ public slots:
   void editDelete();
 
 signals:
-  // Emitted when the document editing viewport or cursor changes.
+  // Emitted when some aspect of the document that is shown outside the
+  // widget's own rectangle changes: scroll viewport, cursor location,
+  // file name, whether there are unsaved changes, etc.  In practice,
+  // this gets emitted on almost every keystroke because of the cursor
+  // location change.
   void viewChanged();
 };
 

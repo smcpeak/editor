@@ -36,18 +36,12 @@ int EditorProxyStyle::pixelMetric(
 
 
 // ---------------- GlobalState ----------------
-GlobalState *GlobalState::global_globalState = NULL;
-
 GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
     pixmaps(),
     fileDocuments(),
     windows()
 {
-  // There should only be one of these.
-  xassert(global_globalState == NULL);
-  global_globalState = this;
-
   // Optionally print the list of styles Qt supports.
   if (tracingSys("style")) {
     QStringList keys = QStyleFactory::keys();
@@ -62,7 +56,9 @@ GlobalState::GlobalState(int argc, char **argv)
   // "-style Windows" on the command line.
   this->setStyle(new EditorProxyStyle);
 
-  EditorWindow *ed = createNewWindow(createNewFile());
+  // Open the first window, initially showing the default "untitled"
+  // file that 'fileDocuments' made in its constructor.
+  EditorWindow *ed = createNewWindow(fileDocuments.getFileAt(0));
 
   // this caption is immediately replaced with another one, at the
   // moment, since I call fileNewFile() right away
@@ -103,18 +99,13 @@ GlobalState::GlobalState(int argc, char **argv)
 
 
 GlobalState::~GlobalState()
-{
-  if (global_globalState == this) {
-    global_globalState = NULL;
-  }
-}
+{}
 
 
 EditorWindow *GlobalState::createNewWindow(FileTextDocument *initFile)
 {
   EditorWindow *ed = new EditorWindow(this, initFile);
   ed->setObjectName("Editor Window");
-  rebuildWindowMenus();
 
   // NOTE: caller still has to say 'ed->show()'!
 
@@ -144,119 +135,37 @@ FileTextDocument *GlobalState::createNewFile()
 
 bool GlobalState::hasFileWithName(string const &fname) const
 {
-  FOREACH_OBJLIST(FileTextDocument, this->fileDocuments, iter) {
-    if (iter.data()->filename == fname) {
-      return true;
-    }
-  }
-  return false;
+  return this->fileDocuments.findFileByNameC(fname) != NULL;
 }
 
 
 bool GlobalState::hasFileWithTitle(string const &fname) const
 {
-  FOREACH_OBJLIST(FileTextDocument, this->fileDocuments, iter) {
-    if (iter.data()->title == fname) {
-      return true;
-    }
-  }
-  return false;
+  return this->fileDocuments.findFileByTitleC(fname) != NULL;
 }
 
 
 string GlobalState::uniqueTitleFor(string const &filename)
 {
-  TRACE("title", "computing unique title for: " << filename);
-
-  // Split the filename into path components.
-  StrtokParse tok(filename, "\\/");
-
-  // Find the minimum number of trailing components we need to
-  // include to make the title unique.
-  for (int n = 1; n <= tok.tokc(); n++) {
-    // Construct a title with 'n' trailing components.
-    stringBuilder sb;
-    for (int i = tok.tokc() - n; i < tok.tokc(); i++) {
-      sb << tok[i];
-      if (i < tok.tokc() - 1) {
-        // Make titles exclusively with forward slash.
-        sb << '/';
-      }
-    }
-
-    // Check for another file with this title.
-    if (!this->hasFileWithTitle(sb)) {
-      TRACE("title", "computed title: " << sb);
-      return sb;
-    }
-  }
-
-  // This function should only be called when the filename is known
-  // to be unique, and every title is supposed to be a suffix of its
-  // file name, so we should not get here.  Use the full filename,
-  // potentially with different separators, as a fallback.
-  cerr << "WARNING: Internal bug: Failed to find a unique title for: "
-       << filename << endl;
-  TRACE("title", "using fallback title: " << filename);
-  return filename;
+  return this->fileDocuments.computeUniqueTitle(filename);
 }
 
 
-void GlobalState::trackNewDocumentFile(FileTextDocument *b)
+void GlobalState::trackNewDocumentFile(FileTextDocument *f)
 {
-  // assign hotkey
-  b->clearHotkey();
-  for (int i=1; i<=10; i++) {
-    // Use 0 as the tenth digit in this sequence to match the order
-    // of the digit keys on the keyboard.
-    int digit = (i==10? 0 : i);
-
-    if (hotkeyAvailable(digit)) {
-      b->setHotkeyDigit(digit);
-      break;
-    }
-  }
-
-  fileDocuments.append(b);
-  rebuildWindowMenus();
+  this->fileDocuments.addFile(f);
 }
+
 
 bool GlobalState::hotkeyAvailable(int key) const
 {
-  FOREACH_OBJLIST(FileTextDocument, fileDocuments, iter) {
-    if (iter.data()->hasHotkey() &&
-        iter.data()->getHotkeyDigit() == key) {
-      return false;    // not available
-    }
-  }
-  return true;         // available
-}
-
-void GlobalState::rebuildWindowMenus()
-{
-  FOREACH_OBJLIST_NC(EditorWindow, windows, iter) {
-    iter.data()->rebuildWindowMenu();
-  }
+  return this->fileDocuments.findFileByHotkeyC(key) == NULL;
 }
 
 
 void GlobalState::deleteDocumentFile(FileTextDocument *file)
 {
-  // Remove it from the global list.
-  fileDocuments.removeItem(file);
-  if (fileDocuments.isEmpty()) {
-    createNewFile();    // ensure there's always one
-  }
-
-  // Inform the windows they need to forget about it too.
-  FOREACH_OBJLIST_NC(EditorWindow, windows, iter) {
-    EditorWindow *ed = iter.data();
-    ed->forgetAboutFile(file);
-
-    // also, rebuild all the window menus
-    ed->rebuildWindowMenu();
-  }
-
+  this->fileDocuments.removeFile(file);
   delete file;
 }
 

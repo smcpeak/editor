@@ -4,7 +4,7 @@
     {
       "attributes": "lines: string[]\nobservers: TextDocumentObserver[]\n(plus some caches)\n",
       "loc": {
-        "x": 540,
+        "x": 635,
         "y": 40
       },
       "name": "TextDocumentCore",
@@ -16,7 +16,7 @@
     {
       "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\ngroupStack: HE_group[]\n",
       "loc": {
-        "x": 540,
+        "x": 635,
         "y": 150
       },
       "name": "TextDocument",
@@ -28,7 +28,7 @@
     {
       "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\n",
       "loc": {
-        "x": 540,
+        "x": 635,
         "y": 295
       },
       "name": "FileTextDocument",
@@ -38,7 +38,7 @@
       }
     },
     {
-      "attributes": "m_editors: FileTextDocumentEditor[]\neditor: FileTextDocumentEditor\n\nhitText: string\nhitTextFlags: FindStringFlags\n\ninputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: FileTextDocumentEditor[]\neditor: FileTextDocumentEditor\n\nFileTextDocumentList: documentList\n\nhitText: string\nhitTextFlags: FindStringFlags\n\ninputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40
@@ -50,27 +50,27 @@
       }
     },
     {
-      "attributes": "globalState: GlobalState\neditorWidget: EditorWidget\nisearch: IncSearch\n\n(pointers to other subwidgets)\n",
+      "attributes": "editorWidget: EditorWidget\nglobalState: GlobalState\nisearch: IncSearch\n(pointers to other subwidgets)\n",
       "loc": {
         "x": 30,
-        "y": 375
+        "y": 385
       },
       "name": "EditorWindow : QWidget",
       "size": {
-        "h": 75,
+        "h": 95,
         "w": 215
       }
     },
     {
-      "attributes": "fileDocuments: FileTextDocument[]\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
+      "attributes": "documentList: FileTextDocumentList\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
       "loc": {
-        "x": 285,
-        "y": 470
+        "x": 30,
+        "y": 505
       },
       "name": "GlobalState : QApplication",
       "size": {
-        "h": 95,
-        "w": 220
+        "h": 85,
+        "w": 215
       }
     },
     {
@@ -82,12 +82,12 @@
       "name": "TextDocumentEditor",
       "size": {
         "h": 110,
-        "w": 160
+        "w": 250
       }
     },
     {
       "loc": {
-        "x": 285,
+        "x": 325,
         "y": 40
       },
       "name": "TextDocumentObserver",
@@ -105,7 +105,7 @@
       "name": "FileTextDocumentEditor",
       "size": {
         "h": 50,
-        "w": 160
+        "w": 250
       }
     },
     {
@@ -119,6 +119,29 @@
         "h": 60,
         "w": 75
       }
+    },
+    {
+      "attributes": "fileDocuments: FileTextDocument[]\nobservers: FileTextDocumentObserver[]\n",
+      "loc": {
+        "x": 635,
+        "y": 475
+      },
+      "name": "FileTextDocumentList",
+      "size": {
+        "h": 65,
+        "w": 250
+      }
+    },
+    {
+      "loc": {
+        "x": 325,
+        "y": 370
+      },
+      "name": "FileTextDocumentListObserver",
+      "size": {
+        "h": 35,
+        "w": 250
+      }
     }
   ],
   "inheritances": [
@@ -126,15 +149,15 @@
       "open": true,
       "parentRef": 1,
       "pt": {
-        "x": 665,
+        "x": 760,
         "y": 285
       }
     },
     {
-      "open": true,
+      "open": false,
       "parentRef": 7,
       "pt": {
-        "x": 265,
+        "x": 275,
         "y": 50
       }
     },
@@ -142,8 +165,24 @@
       "open": true,
       "parentRef": 6,
       "pt": {
-        "x": 405,
+        "x": 455,
         "y": 285
+      }
+    },
+    {
+      "open": false,
+      "parentRef": 11,
+      "pt": {
+        "x": 275,
+        "y": 375
+      }
+    },
+    {
+      "open": false,
+      "parentRef": 11,
+      "pt": {
+        "x": 275,
+        "y": 400
       }
     }
   ],
@@ -158,29 +197,18 @@
       "start": {"entityRef": 3}
     },
     {
-      "end": {"entityRef": 5},
-      "label": "global_globalState",
-      "start": {"pt": {
-        "x": 165,
-        "y": 535
-      }}
-    },
-    {
-      "end": {"entityRef": 5},
-      "label": "globalState",
-      "start": {"entityRef": 4}
-    },
-    {
-      "end": {"entityRef": 2},
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 2
+      },
       "label": "fileDocuments[]",
-      "start": {"entityRef": 5}
+      "start": {"entityRef": 10}
     },
     {
-      "controlPts": [{
-        "x": 215,
-        "y": 490
-      }],
-      "end": {"entityRef": 4},
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 4
+      },
       "label": "windows[]",
       "start": {"entityRef": 5}
     },
@@ -233,7 +261,11 @@
       "start": {"entityRef": 3}
     },
     {
-      "end": {"entityRef": 9},
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 9
+      },
+      "label": "first/lastVisible",
       "start": {"entityRef": 6}
     },
     {
@@ -243,12 +275,81 @@
       },
       "label": "core",
       "start": {"entityRef": 1}
+    },
+    {
+      "controlPts": [{
+        "x": 448,
+        "y": 527
+      }],
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 10
+      },
+      "label": "documentList",
+      "start": {"entityRef": 5}
+    },
+    {
+      "controlPts": [{
+        "x": 150,
+        "y": 500
+      }],
+      "end": {"entityRef": 5},
+      "label": "globalState",
+      "routingAlg": "RA_MANHATTAN_VERT",
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"inheritanceRef": 4},
+      "start": {"entityRef": 4}
+    },
+    {
+      "controlPts": [{
+        "x": 235,
+        "y": 375
+      }],
+      "end": {"inheritanceRef": 3},
+      "routingAlg": "RA_MANHATTAN_VERT",
+      "start": {"entityRef": 3}
+    },
+    {
+      "controlPts": [
+        {
+          "x": 645,
+          "y": 450
+        },
+        {
+          "x": 565,
+          "y": 440
+        }
+      ],
+      "end": {"entityRef": 11},
+      "label": "observers[]",
+      "start": {"entityRef": 10}
+    },
+    {
+      "controlPts": [
+        {
+          "x": 320,
+          "y": 245
+        },
+        {
+          "x": 335,
+          "y": 435
+        },
+        {
+          "x": 460,
+          "y": 485
+        }
+      ],
+      "end": {"entityRef": 10},
+      "label": "documentList",
+      "start": {"entityRef": 3}
     }
   ],
   "type": "Diagram Editor Diagram",
   "version": 23,
   "windowSize": {
-    "h": 589,
-    "w": 819
+    "h": 617,
+    "w": 915
   }
 }

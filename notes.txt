@@ -5,7 +5,7 @@ TODOs:
     - IncSearch should work on top of TDE, not EditorWidget
     - put EditorWindow into its own file
     - maybe GlobalState too
-
+  - when I switch to a file, check if is modified on disk
 
   - Alt+A to pass selection through a filter command
   - handle cygwin paths on the command line (requires Alt+A infra)

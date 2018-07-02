@@ -9,6 +9,7 @@
 #include "objlist.h"                   // ObjList
 #include "pixmaps.h"                   // Pixmaps
 #include "file-td.h"                   // FileTextDocument
+#include "file-td-list.h"              // FileTextDocumentList
 
 #include <QApplication>
 #include <QProxyStyle>
@@ -29,15 +30,13 @@ class GlobalState : public QApplication {
   Q_OBJECT
 
 public:       // data
-  // the singleton global state object
-  static GlobalState *global_globalState;
-
   // pixmap set
   Pixmaps pixmaps;
 
-  // List of open files.  There is always at least one; if the last
-  // file is closed, we open an "untitled" file.
-  ObjList<FileTextDocument> fileDocuments;
+  // List of open files.  Never empty (see FileTextDocumentList).
+  //
+  // TODO: Rename to 'documentList'.
+  FileTextDocumentList fileDocuments;
 
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
@@ -76,10 +75,6 @@ public:       // funcs
 
   // Add 'f' to the set of file documents.
   void trackNewDocumentFile(FileTextDocument *f);
-
-  // Tell every window in the application to rebuild its "Window"
-  // menu because the set of files has changed.
-  void rebuildWindowMenus();
 
   // Remove 'f' from the set of file documents and deallocate it.
   // This will tell all of the editor widgets to forget about it

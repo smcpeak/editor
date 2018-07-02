@@ -5,7 +5,6 @@
 
 // this dir
 #include "inputproxy.h"      // InputProxy
-#include "main.h"            // GlobalState
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
 #include "qtguiutil.h"       // toString(QKeyEvent)
@@ -56,13 +55,16 @@ int const CTRL_SHIFT_DISTANCE = 10;
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::s_objectCount = 0;
 
-EditorWidget::EditorWidget(FileTextDocument *tdf, StatusDisplay *status_,
+EditorWidget::EditorWidget(FileTextDocument *tdf,
+                           FileTextDocumentList *documentList,
+                           StatusDisplay *status_,
                            QWidget *parent)
   : QWidget(parent),
     m_infoBox(NULL),
     m_status(status_),
     m_editor(new FileTextDocumentEditor(tdf)),
     m_editorList(),
+    m_documentList(documentList),
     m_topMargin(1),
     m_leftMargin(1),
     m_interLineSpace(0),
@@ -84,6 +86,7 @@ EditorWidget::EditorWidget(FileTextDocument *tdf, StatusDisplay *status_,
   xassert(status_);
 
   m_editorList.prepend(m_editor);
+  m_documentList->addObserver(this);
 
   setFonts(bdfFontData_editor14r,
            bdfFontData_editor14i,
@@ -107,6 +110,9 @@ EditorWidget::~EditorWidget()
 
   this->stopListening();
 
+  m_documentList->removeObserver(this);
+  m_documentList = NULL;
+
   // Do this explicitly just for clarity.
   m_editor = NULL;
   m_editorList.deleteAll();
@@ -118,7 +124,7 @@ EditorWidget::~EditorWidget()
 void EditorWidget::selfCheck() const
 {
   // Check that 'editor' is among 'm_editors' and that the files in
-  // 'm_editors' are a subset of GlobalState::fileDocuments.
+  // 'm_editors' are a subset of 'm_documentList'.
   bool foundEditor = false;
   FOREACH_OBJLIST(FileTextDocumentEditor, m_editorList, iter) {
     FileTextDocumentEditor const *tdfe = iter.data();
@@ -126,12 +132,12 @@ void EditorWidget::selfCheck() const
       foundEditor = true;
     }
     tdfe->selfCheck();
-    xassert(GlobalState::global_globalState->fileDocuments.contains(tdfe->m_fileDoc));
+    xassert(m_documentList->hasFile(tdfe->m_fileDoc));
   }
   xassert(foundEditor);
 
   // There should never be more m_editors than fileDocuments.
-  xassert(GlobalState::global_globalState->fileDocuments.count() >= m_editorList.count());
+  xassert(m_documentList->numFiles() >= m_editorList.count());
 }
 
 
@@ -256,27 +262,6 @@ EditorWidget::FileTextDocumentEditor *
 }
 
 
-void EditorWidget::forgetAboutFile(FileTextDocument *file)
-{
-  // Remove 'file' from my list.
-  for(ObjListMutator< FileTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
-    if (mut.data()->m_fileDoc == file) {
-      mut.deleteIt();
-    }
-    else {
-      mut.adv();
-    }
-  }
-
-  // Change files if that was the one we were editing.
-  if (m_editor->m_fileDoc == file) {
-    // This dependence on GlobalState is questionable...
-    this->setDocumentFile(
-      GlobalState::global_globalState->fileDocuments.first());
-  }
-}
-
-
 FileTextDocument *EditorWidget::getDocumentFile() const
 {
   xassert(m_editor);
@@ -289,6 +274,28 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 {
   xassert(m_editor);
   return m_editor;
+}
+
+
+void EditorWidget::fileTextDocumentRemoved(
+  FileTextDocumentList *documentList, FileTextDocument *file)
+{
+  xassert(documentList == m_documentList);
+
+  // Remove 'file' from my list if I have it.
+  for(ObjListMutator< FileTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
+    if (mut.data()->m_fileDoc == file) {
+      mut.deleteIt();
+    }
+    else {
+      mut.adv();
+    }
+  }
+
+  // Change files if that was the one we were editing.
+  if (m_editor->m_fileDoc == file) {
+    this->setDocumentFile(documentList->getFileAt(0));
+  }
 }
 
 

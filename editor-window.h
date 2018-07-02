@@ -5,6 +5,7 @@
 #define EDITOR_WINDOW_H
 
 #include "file-td.h"                   // FileTextDocument
+#include "file-td-list.h"              // FileTextDocumentListObserver
 
 #include "str.h"                       // string
 
@@ -22,7 +23,8 @@ class StatusDisplay;                   // status.h
 
 
 // Top-level window containing an editor pane.
-class EditorWindow : public QWidget {
+class EditorWindow : public QWidget,
+                     public FileTextDocumentListObserver {
   Q_OBJECT
 
 public:      // static data
@@ -67,14 +69,8 @@ private:     // funcs
   // Update the status displays to reflect a different file being edited.
   void updateForChangedFile();
 
-  void forgetAboutFile(FileTextDocument *file);
   void rebuildWindowMenu();
   void complain(char const *msg);
-
-  // the above functions are called by GlobalState
-  // in places; that class could be viewed as an
-  // extension of this one, across multiple windows
-  friend class GlobalState;
 
 protected:   // funcs
   void closeEvent(QCloseEvent *event) override;
@@ -105,6 +101,16 @@ public:      // funcs
   // Interactively ask the user if it is ok to discard changes,
   // returning true if they say it is.
   bool okToDiscardChanges(string const &descriptionOfChanges);
+
+  // FileTextDocumentListObserver methods.
+  void fileTextDocumentAdded(
+    FileTextDocumentList *documentList, FileTextDocument *file) override;
+  void fileTextDocumentRemoved(
+    FileTextDocumentList *documentList, FileTextDocument *file) override;
+  void fileTextDocumentAttributeChanged(
+    FileTextDocumentList *documentList, FileTextDocument *file) override;
+  void fileTextDocumentListOrderChanged(
+    FileTextDocumentList *documentList) override;
 
 public slots:
   void fileNewFile();
