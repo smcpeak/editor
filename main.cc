@@ -216,7 +216,7 @@ void EditorWindow::buildMenu()
 
 
 // not inline because main.h doesn't see editor.h
-FileTextDocument *EditorWindow::theDocFile()
+FileTextDocument *EditorWindow::currentDocument()
 {
   return editorWidget->getDocumentFile();
 }
@@ -240,7 +240,7 @@ void EditorWindow::updateForChangedFile()
   editorWidget->recomputeLastVisible();
   editorViewChanged();
 
-  setFileName(theDocFile()->title, theDocFile()->hotkeyDesc());
+  setFileName(currentDocument()->title, currentDocument()->hotkeyDesc());
 }
 
 
@@ -359,7 +359,7 @@ void EditorWindow::fileOpenFile(char const *name)
 
 void EditorWindow::fileSave()
 {
-  FileTextDocument *b = this->theDocFile();
+  FileTextDocument *b = this->currentDocument();
   if (b->isUntitled) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
@@ -387,7 +387,7 @@ void EditorWindow::fileSave()
 void EditorWindow::writeTheFile()
 {
   try {
-    FileTextDocument *b = this->theDocFile();
+    FileTextDocument *b = this->currentDocument();
     writeFile(b->getCore(), toCStr(b->filename));
     b->noUnsavedChanges();
     b->refreshModificationTime();
@@ -401,7 +401,7 @@ void EditorWindow::writeTheFile()
 
 void EditorWindow::fileSaveAs()
 {
-  FileTextDocument *fileDoc = theDocFile();
+  FileTextDocument *fileDoc = currentDocument();
   string chosenFilename = fileDoc->filename;
   while (true) {
     QString s = QFileDialog::getSaveFileName(
@@ -441,7 +441,7 @@ void EditorWindow::fileSaveAs()
 
 void EditorWindow::fileClose()
 {
-  FileTextDocument *b = theDocFile();
+  FileTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
     msg << "The file \"" << b->filename << "\" has unsaved changes.  "
@@ -457,7 +457,7 @@ void EditorWindow::fileClose()
 
 void EditorWindow::fileReload()
 {
-  if (reloadFile(this->theDocFile())) {
+  if (reloadFile(this->currentDocument())) {
     this->editorViewChanged();
   }
 }
@@ -681,7 +681,7 @@ void EditorWindow::windowOccupyRight()
 
 void EditorWindow::windowCycleFile()
 {
-  int cur = globalState->fileDocuments.indexOf(theDocFile());
+  int cur = globalState->fileDocuments.indexOf(currentDocument());
   xassert(cur >= 0);
   cur = (cur + 1) % globalState->fileDocuments.count();     // cycle
   setDocumentFile(globalState->fileDocuments.nth(cur));
@@ -820,7 +820,7 @@ void EditorWindow::complain(char const *msg)
 
 void EditorWindow::windowNewWindow()
 {
-  EditorWindow *ed = this->globalState->createNewWindow(this->theDocFile());
+  EditorWindow *ed = this->globalState->createNewWindow(this->currentDocument());
   ed->show();
 }
 

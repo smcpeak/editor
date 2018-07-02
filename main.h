@@ -92,10 +92,7 @@ public:      // funcs
   void fileOpenFile(char const *fname);
 
   // File user is editing: returns editor->docFile.
-  //
-  // TODO: This method should be renamed to 'theFileDoc', along
-  // with EW::getDocumentFile.
-  FileTextDocument *theDocFile();
+  FileTextDocument *currentDocument();
 
   // Reload the file for 'b' from disk.  If there is an error, show
   // an error message box and return false.
