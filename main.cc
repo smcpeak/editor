@@ -910,6 +910,15 @@ GlobalState::GlobalState(int argc, char **argv)
           this, SLOT(focusChangedHandler(QWidget*, QWidget*)));
 
   ed->show();
+
+  // This is a partial mitigation to a weird bug where, on Windows,
+  // the editor window sometimes does not get focus when I start it.
+  // See details in notes.txt.
+  //
+  // This call does not fix the bug, rather it makes the icon in the
+  // taskbar flash when it happens, reducing the likelihood that I
+  // will start typing into the wrong window.
+  ed->activateWindow();
 }
 
 

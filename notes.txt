@@ -89,6 +89,26 @@ implemented:
   * what happened to alt-left-arrow?
 
 
+Weird focus bug:
+
+In Windows, if run "git commit" with GIT_EDITOR set to my editor, it
+sometimes shows up without the focus and I type into the wrong window.
+
+I made a reproducer; I run this command in a cygwin shell:
+
+  $ while true; do ./run-this-editor main.cc || break; done
+
+where "run-this-editor" is:
+
+  #!/bin/sh
+  cygpath -m main.cc
+  exec ./editor
+
+then every 5th (!) launch will not have focus.  The cygpath call is
+needed there to make it happen.
+
+
+
 
 ----------------------------
 3/28/01 03:31
