@@ -94,9 +94,9 @@ TOCLEAN += *.o *.d
 
 
 # Qt meta-object compiler
-.PRECIOUS: moc_%.cc
-TOCLEAN += moc_*.cc
-moc_%.cc: %.h
+.PRECIOUS: moc-%.cc
+TOCLEAN += moc-*.cc
+moc-%.cc: %.h
 	$(MOC) -o $@ $^
 
 
@@ -196,7 +196,8 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 
 
 # ------------------ the editor ---------------------
-main.o: keybindings.doc.gen.h
+# This file needs a generated file to exist.
+editor-window.o: keybindings.doc.gen.h
 
 TOCLEAN += keybindings.doc.gen.*
 
@@ -214,10 +215,10 @@ EDITOR_OBJS += justify.o
 EDITOR_OBJS += keybindings.doc.gen.o
 EDITOR_OBJS += lex_hilite.o
 EDITOR_OBJS += main.o
-EDITOR_OBJS += moc_editor-widget.o
-EDITOR_OBJS += moc_editor-window.o
-EDITOR_OBJS += moc_main.o
-EDITOR_OBJS += moc_textinput.o
+EDITOR_OBJS += moc-editor-widget.o
+EDITOR_OBJS += moc-editor-window.o
+EDITOR_OBJS += moc-main.o
+EDITOR_OBJS += moc-textinput.o
 EDITOR_OBJS += pixmaps.o
 EDITOR_OBJS += status.o
 EDITOR_OBJS += styledb.o
