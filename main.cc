@@ -38,9 +38,9 @@ int EditorProxyStyle::pixelMetric(
 // ---------------- GlobalState ----------------
 GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
-    pixmaps(),
-    fileDocuments(),
-    windows()
+    m_pixmaps(),
+    m_documentList(),
+    m_windows()
 {
   // Optionally print the list of styles Qt supports.
   if (tracingSys("style")) {
@@ -58,7 +58,7 @@ GlobalState::GlobalState(int argc, char **argv)
 
   // Open the first window, initially showing the default "untitled"
   // file that 'fileDocuments' made in its constructor.
-  EditorWindow *ed = createNewWindow(fileDocuments.getFileAt(0));
+  EditorWindow *ed = createNewWindow(m_documentList.getFileAt(0));
 
   // this caption is immediately replaced with another one, at the
   // moment, since I call fileNewFile() right away
@@ -135,37 +135,37 @@ FileTextDocument *GlobalState::createNewFile()
 
 bool GlobalState::hasFileWithName(string const &fname) const
 {
-  return this->fileDocuments.findFileByNameC(fname) != NULL;
+  return m_documentList.findFileByNameC(fname) != NULL;
 }
 
 
 bool GlobalState::hasFileWithTitle(string const &fname) const
 {
-  return this->fileDocuments.findFileByTitleC(fname) != NULL;
+  return m_documentList.findFileByTitleC(fname) != NULL;
 }
 
 
 string GlobalState::uniqueTitleFor(string const &filename)
 {
-  return this->fileDocuments.computeUniqueTitle(filename);
+  return m_documentList.computeUniqueTitle(filename);
 }
 
 
 void GlobalState::trackNewDocumentFile(FileTextDocument *f)
 {
-  this->fileDocuments.addFile(f);
+  m_documentList.addFile(f);
 }
 
 
 bool GlobalState::hotkeyAvailable(int key) const
 {
-  return this->fileDocuments.findFileByHotkeyC(key) == NULL;
+  return m_documentList.findFileByHotkeyC(key) == NULL;
 }
 
 
 void GlobalState::deleteDocumentFile(FileTextDocument *file)
 {
-  this->fileDocuments.removeFile(file);
+  m_documentList.removeFile(file);
   delete file;
 }
 

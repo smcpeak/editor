@@ -31,16 +31,14 @@ class GlobalState : public QApplication {
 
 public:       // data
   // pixmap set
-  Pixmaps pixmaps;
+  Pixmaps m_pixmaps;
 
   // List of open files.  Never empty (see FileTextDocumentList).
-  //
-  // TODO: Rename to 'documentList'.
-  FileTextDocumentList fileDocuments;
+  FileTextDocumentList m_documentList;
 
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
-  ObjList<EditorWindow> windows;
+  ObjList<EditorWindow> m_windows;
 
 private:      // funcs
   bool hotkeyAvailable(int key) const;

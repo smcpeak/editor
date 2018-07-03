@@ -96,7 +96,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
   this->editorWidget = new EditorWidget(initFile,
-    &(theState->fileDocuments), this->statusArea);
+    &(theState->m_documentList), this->statusArea);
   this->editorWidget->setObjectName("editor widget");
   editorFrame->addWidget(this->editorWidget);
   this->editorWidget->setFocus();
@@ -133,8 +133,8 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   // I want this object destroyed when it is closed.
   this->setAttribute(Qt::WA_DeleteOnClose);
 
-  this->globalState->windows.append(this);
-  this->globalState->fileDocuments.addObserver(this);
+  this->globalState->m_windows.append(this);
+  this->globalState->m_documentList.addObserver(this);
 
   EditorWindow::objectCount++;
 }
@@ -144,12 +144,12 @@ EditorWindow::~EditorWindow()
 {
   EditorWindow::objectCount--;
 
-  this->globalState->fileDocuments.removeObserver(this);
+  this->globalState->m_documentList.removeObserver(this);
 
   // This object might have already been removed, for example because
   // the GlobalState destructor is running, and is in the process of
   // removing elements from the list and destroying them.
-  this->globalState->windows.removeIfPresent(this);
+  this->globalState->m_windows.removeIfPresent(this);
 
   delete this->isearch;
 }
@@ -282,7 +282,7 @@ void EditorWindow::fileOpen()
 void EditorWindow::fileOpenFile(char const *name)
 {
   // If this file is already open, switch to it.
-  FileTextDocument *file = globalState->fileDocuments.findFileByName(name);
+  FileTextDocument *file = globalState->m_documentList.findFileByName(name);
   if (file) {
     this->setDocumentFile(file);
     return;
@@ -324,7 +324,7 @@ void EditorWindow::fileOpenFile(char const *name)
 
   // is there an untitled, empty file hanging around?
   FileTextDocument *untitled =
-    this->globalState->fileDocuments.findUntitledUnmodifiedFile();
+    this->globalState->m_documentList.findUntitledUnmodifiedFile();
   if (untitled) {
     // I'm going to remove it, but can't yet b/c I
     // need to wait until the new file is added;
@@ -423,7 +423,7 @@ void EditorWindow::fileSaveAs()
   writeTheFile();
 
   // Notify observers of the file name change.
-  this->globalState->fileDocuments.notifyAttributeChanged(fileDoc);
+  this->globalState->m_documentList.notifyAttributeChanged(fileDoc);
 }
 
 
@@ -495,8 +495,8 @@ void EditorWindow::fileReloadAll()
     return;
   }
 
-  for (int i=0; i < this->globalState->fileDocuments.numFiles(); i++) {
-    FileTextDocument *file = this->globalState->fileDocuments.getFileAt(i);
+  for (int i=0; i < this->globalState->m_documentList.numFiles(); i++) {
+    FileTextDocument *file = this->globalState->m_documentList.getFileAt(i);
     if (!this->reloadFile(file)) {
       // Stop after first error.
       break;
@@ -526,8 +526,8 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
   int ct = 0;
 
   msg << "The following files have unsaved changes:\n\n";
-  for (int i=0; i < this->globalState->fileDocuments.numFiles(); i++) {
-    FileTextDocument *file = this->globalState->fileDocuments.getFileAt(i);
+  for (int i=0; i < this->globalState->m_documentList.numFiles(); i++) {
+    FileTextDocument *file = this->globalState->m_documentList.getFileAt(i);
     if (file->unsavedChanges()) {
       ct++;
       msg << " * " << file->filename << '\n';
@@ -705,10 +705,10 @@ void EditorWindow::windowOccupyRight()
 
 void EditorWindow::windowCycleFile()
 {
-  int cur = globalState->fileDocuments.getFileIndex(currentDocument());
+  int cur = globalState->m_documentList.getFileIndex(currentDocument());
   xassert(cur >= 0);
-  cur = (cur + 1) % globalState->fileDocuments.numFiles();     // cycle
-  setDocumentFile(globalState->fileDocuments.getFileAt(cur));
+  cur = (cur + 1) % globalState->m_documentList.numFiles();     // cycle
+  setDocumentFile(globalState->m_documentList.getFileAt(cur));
 }
 
 
@@ -784,8 +784,8 @@ void EditorWindow::rebuildWindowMenu()
 
   // add new items for all of the open files;
   // hotkeys have already been assigned by now
-  for (int i=0; i < this->globalState->fileDocuments.numFiles(); i++) {
-    FileTextDocument *b = this->globalState->fileDocuments.getFileAt(i);
+  for (int i=0; i < this->globalState->m_documentList.numFiles(); i++) {
+    FileTextDocument *b = this->globalState->m_documentList.getFileAt(i);
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
@@ -815,7 +815,7 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
   // that this action refers to.
   int windowMenuId = action->data().toInt();
   FileTextDocument *file =
-    this->globalState->fileDocuments.findFileByWindowMenuId(windowMenuId);
+    this->globalState->m_documentList.findFileByWindowMenuId(windowMenuId);
   if (file) {
     TRACE("menu", "window file choice is: " << file->filename);
     this->setDocumentFile(file);
@@ -852,7 +852,7 @@ void EditorWindow::windowNewWindow()
 
 void EditorWindow::closeEvent(QCloseEvent *event)
 {
-  if (this->globalState->windows.count() == 1) {
+  if (this->globalState->m_windows.count() == 1) {
     if (!this->canQuitApplication()) {
       event->ignore();    // Prevent app from closing.
       return;
