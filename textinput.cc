@@ -12,6 +12,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include <qtcoreversion.h>             // QTCORE_VERSION
+
 
 TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
   : QDialog(parent, f),
@@ -23,8 +25,10 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
 {
   this->setWindowTitle("Text Input");
 
+#if QTCORE_VERSION >= 0x050900
   // Remove the "?" button in the title bar.
   this->setWindowFlag(Qt::WindowContextHelpButtonHint, false /*on*/);
+#endif
 
   {
     QVBoxLayout *vbox = new QVBoxLayout();
