@@ -4,7 +4,7 @@ buffer
 dialogs
 .emacs.desktop
 *.d
-moc-*
+*.moc.cc
 testgap
 testing.txt
 style

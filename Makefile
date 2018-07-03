@@ -14,17 +14,7 @@ all: editor
 
 # directories of other software
 SMBASE := ../smbase
-LIBSMBASE := $(SMBASE)/libsmbase.a
-
 SMQTUTIL := ../smqtutil
-LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
-
-# Directory with Qt headers, libraries, and programs.
-QTDIR := /d/bld/qt5/qtbase
-
-# Same, as a path that can be passed to the compiler.
-QTDIR_CPLR := $(shell cygpath -m '$(QTDIR)')
-
 
 # C++ compiler, etc.
 CXX := x86_64-w64-mingw32-g++
@@ -35,10 +25,16 @@ COVERAGE := 0
 # flags for the C and C++ compilers (and preprocessor)
 CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
 
+# Pull in build configuration.  This must provide definitions of
+# QT5INCLUDE, QT5LIB and QT5BIN.  It can optionally override the
+# variables defined above.
+ifeq (,$(wildcard config.mk))
+$(error The file config.mk does not exist.  You have to copy config.mk.template to config.mk and then edit the latter by hand)
+endif
+include config.mk
 
-# Pull in optional local configuration that can override the
-# above variables.
--include config.mk
+# Set QT_CCFLAGS, QT_LDFLAGS, QT_TOCLEAN, and the 'moc' rule.
+include $(SMQTUTIL)/qtvars.mk
 
 
 # The "-I." is so that "include <FlexLexer.h>" will pull in the
@@ -50,15 +46,14 @@ CCFLAGS += -I.
 
 CCFLAGS += -I$(SMBASE)
 CCFLAGS += -I$(SMQTUTIL)
-
-CCFLAGS += -I$(QTDIR_CPLR)/include
-CCFLAGS += -I$(QTDIR_CPLR)/include/QtCore
-CCFLAGS += -I$(QTDIR_CPLR)/include/QtGui
-CCFLAGS += -I$(QTDIR_CPLR)/include/QtWidgets
+CCFLAGS += $(QT_CCFLAGS)
 
 ifeq ($(COVERAGE),1)
   CCFLAGS += -fprofile-arcs -ftest-coverage
 endif
+
+LIBSMBASE := $(SMBASE)/libsmbase.a
+LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
 
 # Flags for the linker for console programs.
 CONSOLE_LDFLAGS := -g
@@ -67,22 +62,18 @@ CONSOLE_LDFLAGS += $(LIBSMBASE)
 # Link flags for GUI programs.
 GUI_LDFLAGS := $(CONSOLE_LDFLAGS)
 GUI_LDFLAGS += $(LIBSMQTUTIL)
-GUI_LDFLAGS += -L$(QTDIR_CPLR)/lib -lQt5Widgets -lQt5Gui -lQt5Core
+GUI_LDFLAGS += $(QT_LDFLAGS)
 
 # Link flags for console programs that use Qt5Core.  Specifically,
 # I am using QRegularExpression in the 'justify' module.
 QT_CONSOLE_LDFLAGS := $(CONSOLE_LDFLAGS)
 QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
-QT_CONSOLE_LDFLAGS += -L$(QTDIR_CPLR)/lib -lQt5Core
-
-# Qt build tools
-MOC := $(QTDIR)/bin/moc
-UIC := $(QTDIR)/bin/uic
+QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core
 
 
 # patterns of files to delete in the 'clean' target; targets below
 # add things to this using "+="
-TOCLEAN =
+TOCLEAN = $(QT_TOCLEAN)
 
 
 # ---------------- pattern rules --------------------
@@ -92,18 +83,6 @@ TOCLEAN =
 TOCLEAN += *.o *.d
 %.o : %.cc
 	$(CXX) -c -MMD -MP -o $@ $< $(CCFLAGS)
-
-
-# Qt meta-object compiler
-.PRECIOUS: moc-%.cc
-TOCLEAN += moc-*.cc
-moc-%.cc: %.h
-	$(MOC) -o $@ $^
-
-
-# Qt designer translator
-%.gen.h: %.ui
-	$(UIC) -o $*.gen.h $*.ui
 
 
 # Encode help files as C string literals.
@@ -215,19 +194,19 @@ editor-window.o: keybindings.doc.gen.h
 TOCLEAN += keybindings.doc.gen.*
 
 EDITOR_OBJS += editor-widget.o
+EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o
+EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += incsearch.o
 EDITOR_OBJS += inputproxy.o
 EDITOR_OBJS += keybindings.doc.gen.o
 EDITOR_OBJS += main.o
-EDITOR_OBJS += moc-editor-widget.o
-EDITOR_OBJS += moc-editor-window.o
-EDITOR_OBJS += moc-main.o
-EDITOR_OBJS += moc-textinput.o
+EDITOR_OBJS += main.moc.o
 EDITOR_OBJS += pixmaps.o
 EDITOR_OBJS += status.o
 EDITOR_OBJS += styledb.o
 EDITOR_OBJS += textinput.o
+EDITOR_OBJS += textinput.moc.o
 
 -include $(EDITOR_OBJS:.o=.d)
 
