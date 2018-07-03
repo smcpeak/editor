@@ -328,6 +328,7 @@ string FileTextDocumentList::computeUniqueTitle(string filename) const
     n++;
   }
 
+  // My tests do not cover these lines.
   TRACE("file-td-list", "failed to compute title!");
   xfailure("Could not generate a unique title string!");
   return filename;

@@ -92,6 +92,17 @@ void TestObserver::expect(NotifyFunction nfunc, FileTextDocument *file)
 }
 
 
+// Add a file with a specific name.
+static FileTextDocument *add(FileTextDocumentList &dlist, string name)
+{
+  FileTextDocument *file = new FileTextDocument;
+  file->filename = name;
+  file->isUntitled = false;
+  dlist.addFile(file);
+  return file;
+}
+
+
 // Just some simple things to get started.
 static void testSimple()
 {
@@ -161,10 +172,7 @@ static void testAddMoveRemove()
 
   observer.expectEmpty();
 
-  FileTextDocument *file1 = new FileTextDocument();
-  file1->filename = "file1";
-  file1->isUntitled = false;
-  dlist.addFile(file1);
+  FileTextDocument *file1 = add(dlist, "file1");
   xassert(file1->title == "file1");
   xassert(file1->hasHotkey());
   xassert(dlist.findFileByName("file1") == file1);
@@ -175,10 +183,7 @@ static void testAddMoveRemove()
 
   observer.expectOnly(NF_ADDED, file1);
 
-  FileTextDocument *file2 = new FileTextDocument();
-  file2->filename = "a/file2";
-  file2->isUntitled = false;
-  dlist.addFile(file2);
+  FileTextDocument *file2 = add(dlist, "a/file2");
   xassert(file2->title == "file2");
   xassert(dlist.findFileByName("a/file2") == file2);
   xassert(dlist.findFileByTitle("file2") == file2);
@@ -188,19 +193,13 @@ static void testAddMoveRemove()
   observer.expectOnly(NF_ADDED, file2);
 
   // Title uniqueness has to include a directory component.
-  FileTextDocument *file3 = new FileTextDocument();
-  file3->filename = "b/file2";
-  file3->isUntitled = false;
-  dlist.addFile(file3);
+  FileTextDocument *file3 = add(dlist, "b/file2");
   xassert(file3->title == "b/file2");
 
   observer.expectOnly(NF_ADDED, file3);
 
   // Title uniqueness has to append a digit.
-  FileTextDocument *file4 = new FileTextDocument();
-  file4->filename = "file2";
-  file4->isUntitled = false;
-  dlist.addFile(file4);
+  FileTextDocument *file4 = add(dlist, "file2");
   xassert(file4->title == "file2:2");
 
   observer.expectOnly(NF_ADDED, file4);
@@ -366,6 +365,34 @@ static void testDuplicateHotkeys()
 }
 
 
+// Provoke a name like "a:3".
+static void testColon3()
+{
+  FileTextDocumentList dlist;
+
+  // Also exercise the no-op observer functions.
+  FileTextDocumentListObserver observer;
+  dlist.addObserver(&observer);
+
+  FileTextDocument *file1 = add(dlist, "a/b");
+  xassert(file1->title == "b");
+
+  FileTextDocument *file2 = add(dlist, "b:2");
+  xassert(file2->title == "b:2");
+
+  FileTextDocument *file3 = add(dlist, "b");
+  xassert(file3->title == "b:3");
+
+  dlist.removeFile(file3);
+  delete file3;
+
+  dlist.moveFile(file2, 0);
+
+  file2->filename = "zoo";
+  dlist.assignUniqueTitle(file2);
+}
+
+
 void entry()
 {
   testSimple();
@@ -374,6 +401,7 @@ void entry()
   testSaveAs();
   testExhaustHotkeys();
   testDuplicateHotkeys();
+  testColon3();
 
   xassert(FileTextDocument::objectCount == 0);
 
