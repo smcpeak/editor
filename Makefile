@@ -17,13 +17,14 @@ SMBASE := ../smbase
 SMQTUTIL := ../smqtutil
 
 # C++ compiler, etc.
-CXX := x86_64-w64-mingw32-g++
+CXX := g++
 
 # Set to 1 to activate coverage (gcov) support.
 COVERAGE := 0
 
-# flags for the C and C++ compilers (and preprocessor)
-CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
+# Additional compile/link flags.
+EXTRA_CCFLAGS :=
+EXTRA_LDFLAGS :=
 
 # Pull in build configuration.  This must provide definitions of
 # QT5INCLUDE, QT5LIB and QT5BIN.  It can optionally override the
@@ -37,6 +38,9 @@ include config.mk
 include $(SMQTUTIL)/qtvars.mk
 
 
+# Flags for the C and C++ compilers (and preprocessor).
+CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
+
 # The "-I." is so that "include <FlexLexer.h>" will pull in the
 # FlexLexer.h in the currect directory, which is a copy of the
 # one that Cygwin put in /usr/include.  I cannot directly use that
@@ -47,6 +51,7 @@ CCFLAGS += -I.
 CCFLAGS += -I$(SMBASE)
 CCFLAGS += -I$(SMQTUTIL)
 CCFLAGS += $(QT_CCFLAGS)
+CCFLAGS += $(EXTRA_CCFLAGS)
 
 ifeq ($(COVERAGE),1)
   CCFLAGS += -fprofile-arcs -ftest-coverage
@@ -58,17 +63,21 @@ LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
 # Flags for the linker for console programs.
 CONSOLE_LDFLAGS := -g
 CONSOLE_LDFLAGS += $(LIBSMBASE)
+CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
 # Link flags for GUI programs.
 GUI_LDFLAGS := $(CONSOLE_LDFLAGS)
 GUI_LDFLAGS += $(LIBSMQTUTIL)
 GUI_LDFLAGS += $(QT_LDFLAGS)
+GUI_LDFLAGS += $(EXTRA_LDFLAGS)
 
 # Link flags for console programs that use Qt5Core.  Specifically,
 # I am using QRegularExpression in the 'justify' module.
-QT_CONSOLE_LDFLAGS := $(CONSOLE_LDFLAGS)
+QT_CONSOLE_LDFLAGS := -g
+QT_CONSOLE_LDFLAGS := $(LIBSMBASE)
 QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
 QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core
+QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
 
 # patterns of files to delete in the 'clean' target; targets below
