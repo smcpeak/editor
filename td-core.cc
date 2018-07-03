@@ -346,25 +346,24 @@ void TextDocumentCore::seenLineLength(int len)
 }
 
 
-// ------------------- TextDocumentCore utilities --------------------
-void clear(TextDocumentCore &doc)
+void TextDocumentCore::clear()
 {
-  while (doc.numLines() > 1) {
-    doc.deleteText(TextCoord(0, 0), doc.lineLength(0));
-    doc.deleteLine(0);
+  while (this->numLines() > 1) {
+    this->deleteText(TextCoord(0, 0), this->lineLength(0));
+    this->deleteLine(0);
   }
 
   // delete contents of last remaining line
-  doc.deleteText(TextCoord(0, 0), doc.lineLength(0));
+  this->deleteText(TextCoord(0, 0), this->lineLength(0));
 }
 
 
-void readFile(TextDocumentCore &doc, char const *fname)
+void TextDocumentCore::readFile(char const *fname)
 {
   AutoFILE fp(fname, "rb");
 
   // clear only once the file has been successfully opened
-  clear(doc);
+  this->clear();
 
   enum { BUFSIZE=0x2000 };     // 8k
   char buffer[BUFSIZE];
@@ -391,14 +390,14 @@ void readFile(TextDocumentCore &doc, char const *fname)
       }
 
       // insert this line fragment
-      doc.insertText(tc, p, nl-p);
+      this->insertText(tc, p, nl-p);
       tc.column += nl-p;
 
       if (nl < end) {
         // skip newline
         nl++;
         tc.line++;
-        doc.insertLine(tc.line);
+        this->insertLine(tc.line);
         tc.column=0;
       }
       p = nl;
@@ -408,19 +407,19 @@ void readFile(TextDocumentCore &doc, char const *fname)
 }
 
 
-void writeFile(TextDocumentCore const &doc, char const *fname)
+void TextDocumentCore::writeFile(char const *fname) const
 {
   AutoFILE fp(fname, "wb");
 
   // Buffer into which we will copy each line before writing it out.
   GrowArray<char> buffer(256 /*initial size*/);
 
-  for (int line=0; line < doc.numLines(); line++) {
-    int len = doc.lineLength(line);
+  for (int line=0; line < this->numLines(); line++) {
+    int len = this->lineLength(line);
     buffer.ensureIndexDoubler(len);       // text + possible newline
 
-    doc.getLine(TextCoord(line, 0), buffer.getArrayNC(), len);
-    if (line < doc.numLines()-1) {        // last gets no newline
+    this->getLine(TextCoord(line, 0), buffer.getArrayNC(), len);
+    if (line < this->numLines()-1) {        // last gets no newline
       buffer[len] = '\n';
       len++;
     }
@@ -432,24 +431,23 @@ void writeFile(TextDocumentCore const &doc, char const *fname)
 }
 
 
-bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
-                 char *text, int textLen)
+bool TextDocumentCore::getTextSpan(TextCoord tc, char *text, int textLen) const
 {
-  xassert(doc.validCoord(tc));
+  xassert(this->validCoord(tc));
 
   int offset = 0;
   while (offset < textLen) {
     // how many chars remain on this line?
-    int thisLine = doc.lineLength(tc.line) - tc.column;
+    int thisLine = this->lineLength(tc.line) - tc.column;
 
     if (textLen-offset <= thisLine) {
       // finish off with text from this line
-      doc.getLine(tc, text+offset, textLen-offset);
+      this->getLine(tc, text+offset, textLen-offset);
       return true;
     }
 
     // get all of this line, plus a newline
-    doc.getLine(tc, text+offset, thisLine);
+    this->getLine(tc, text+offset, thisLine);
     offset += thisLine;
     text[offset++] = '\n';
 
@@ -457,7 +455,7 @@ bool getTextSpan(TextDocumentCore const &doc, TextCoord tc,
     tc.line++;
     tc.column = 0;
 
-    if (tc.line >= doc.numLines()) {
+    if (tc.line >= this->numLines()) {
       return false;     // text span goes beyond end of file
     }
   }
@@ -509,13 +507,13 @@ void entry()
     {
       // Read it as a text document.
       TextDocumentCore doc;
-      readFile(doc, "td-core.tmp");
+      doc.readFile("td-core.tmp");
 
       // dump its repr
       //doc.dumpRepresentation();
 
       // write it out again
-      writeFile(doc, "td-core.tmp2");
+      doc.writeFile("td-core.tmp2");
 
       printf("stats before dealloc:\n");
       malloc_stats();
@@ -541,7 +539,7 @@ void entry()
   {
     printf("reading td-core.cc ...\n");
     TextDocumentCore doc;
-    readFile(doc, "td-core.cc");
+    doc.readFile("td-core.cc");
     doc.printMemStats();
   }
 

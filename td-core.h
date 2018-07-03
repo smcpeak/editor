@@ -93,8 +93,7 @@ public:    // funcs
   TextDocumentCore();        // one empty line
   ~TextDocumentCore();
 
-
-  // ---- queries ----
+  // ---------------------- document shape ------------------------
   // # of lines stored; always at least 1
   int numLines() const { return lines.length(); }
 
@@ -108,19 +107,26 @@ public:    // funcs
   // Return the last valid coordinate.
   TextCoord endCoord() const;
 
-  // get part of a line's contents, starting at 'tc' and getting
-  // 'destLen' chars; all chars must be in the line now; the retrieved
-  // text never includes the '\n' character
-  void getLine(TextCoord tc, char *dest, int destLen) const;
-
   // Maximum length of a line.  TODO: Implement this properly (right
   // now it just uses the length of the longest line ever seen, even
   // if that line is subsequently deleted).
   int maxLineLength() const { return longestLengthSoFar; }
 
+  // --------------------- line contents ------------------------
+  // get part of a line's contents, starting at 'tc' and getting
+  // 'destLen' chars; all chars must be in the line now; the retrieved
+  // text never includes the '\n' character
+  void getLine(TextCoord tc, char *dest, int destLen) const;
 
-  // ---- manipulation interface ----
+  // retrieve text that may span line boundaries; line boundaries are
+  // represented in the returned string as newlines; the span begins at
+  // 'tc' (which must be in the defined area) and proceeds for
+  // 'textLen' chars, but if that goes beyond the end then this simply
+  // returns false (otherwise true); if it returns true then exactly
+  // 'textLen' chars have been written into 'text'
+  bool getTextSpan(TextCoord tc, char *text, int textLen) const;
 
+  // ----------------- manipulation interface -------------------
   // This interface is deliberately very simple to *implement*: you are
   // either inserting or removing *blank* lines, or are editing the
   // contents of a *single* line.  TextDocumentEditor, built on top of
@@ -142,51 +148,32 @@ public:    // funcs
   // delete text
   void deleteText(TextCoord tc, int length);
 
+  // ---------------------- whole file -------------------------
+  // clear buffer contents, returning to just one empty line
+  void clear();
 
-  // ---- debugging ----
+  // write a file
+  void writeFile(char const *fname) const;
+
+  // Note: Currently, the file I/O operations assume that LF is
+  // the sole line terminator.  Any CR characters in the file become
+  // part of the in-memory line contents, and will then be written
+  // out as such as well, like any other character.  This is not
+  // ideal of course.
+
+  // Clear 'buf', then read a file into it.  If the file cannot be
+  // opened, throws XOpen and does not modify 'buf'.  However, if
+  // there is a read error after that point, 'buf' will contain
+  // unpredictable partial file contents.
+  void readFile(char const *fname);
+
+  // ---------------------- debugging ---------------------------
   // print internal rep
   void dumpRepresentation() const;
 
   // how much memory am I using?
   void printMemStats() const;
 };
-
-
-// utilities:
-// The functions here are organizationally like methods of TextDocumentCore,
-// except they cannot access that class's private fields.
-//
-// In retrospect, I don't think this works very well.  It causes
-// namespace problems as I build out the class hierarchy, and the lack
-// of syntactic encapsulation is misleading.
-
-// clear buffer contents, returning to just one empty line
-void clear(TextDocumentCore &buf);
-
-// Note: Currently, the file I/O operations assume that LF is
-// the sole line terminator.  Any CR characters in the file become
-// part of the in-memory line contents, and will then be written
-// out as such as well, like any other character.  This is not
-// ideal of course.
-
-// Clear 'buf', then read a file into it.  If the file cannot be
-// opened, throws XOpen and does not modify 'buf'.  However, if
-// there is a read error after that point, 'buf' will contain
-// unpredictable partial file contents.
-void readFile(TextDocumentCore &buf, char const *fname);
-
-// write a file
-void writeFile(TextDocumentCore const &buf, char const *fname);
-
-
-// retrieve text that may span line boundaries; line boundaries are
-// represented in the returned string as newlines; the span begins at
-// 'tc' (which must be in the defined area) and proceeds for
-// 'textLen' chars, but if that goes beyond the end then this simply
-// returns false (otherwise true); if it returns true then exactly
-// 'textLen' chars have been written into 'text'
-bool getTextSpan(TextDocumentCore const &buf, TextCoord tc,
-                 char *text, int textLen);
 
 
 // interface for observing changes to a TextDocumentCore

@@ -374,7 +374,7 @@ void EditorWindow::writeTheFile()
 {
   try {
     FileTextDocument *b = this->currentDocument();
-    writeFile(b->getCore(), toCStr(b->filename));
+    b->getCore().writeFile(toCStr(b->filename));
     b->noUnsavedChanges();
     b->refreshModificationTime();
     editorViewChanged();

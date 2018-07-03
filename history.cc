@@ -161,7 +161,7 @@ STATICDEF void HE_text::insert(
     // check correspondence between the text in the event record and
     // what's in the buffer, without modifying the buffer yet
     Array<char> actualText(textLen);
-    if (!getTextSpan(buf, tc, actualText, textLen)) {
+    if (!buf.getTextSpan(tc, actualText, textLen)) {
       deletionMismatch();      // span isn't valid
     }
     if (0!=memcmp(text, (char const*)actualText, textLen)) {
@@ -243,7 +243,7 @@ void HE_text::computeText(TextDocumentCore const &buf, int count)
   xassert(buf.validCoord(tc));
 
   text = new char[count];
-  if (!getTextSpan(buf, tc, text, count)) {
+  if (!buf.getTextSpan(tc, text, count)) {
     delete[] text;
     text = NULL;
     xfailure("deletion span is not entirely within defined text area");

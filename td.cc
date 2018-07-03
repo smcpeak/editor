@@ -33,7 +33,7 @@ void TextDocument::clearHistory()
 void TextDocument::clearContentsAndHistory()
 {
   clearHistory();
-  clear(core);
+  core.clear();
 }
 
 
@@ -68,7 +68,7 @@ bool TextDocument::unsavedChanges() const
 
 void TextDocument::readFile(char const *fname)
 {
-  ::readFile(core, fname);              // might throw exception
+  core.readFile(fname);              // might throw exception
 
   // clear after file's been successfully read
   clearHistory();
