@@ -4,15 +4,16 @@
 #ifndef TEXTINPUT_H
 #define TEXTINPUT_H
 
+#include "modal-dialog.h"              // ModalDialog
+
 #include <QComboBox>
-#include <QDialog>
 #include <QLabel>
 #include <QString>
 #include <QStringList>
 
 // Prompt for a single-line text input.  Remembers history of previous
 // inputs.
-class TextInputDialog : public QDialog {
+class TextInputDialog : public ModalDialog {
   Q_OBJECT
 
 private:     // data

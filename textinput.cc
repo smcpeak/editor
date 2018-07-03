@@ -12,11 +12,9 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-#include <qtcoreversion.h>             // QTCORE_VERSION
-
 
 TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
-  : QDialog(parent, f),
+  : ModalDialog(parent, f),
     m_label(NULL),
     m_comboBox(NULL),
     m_history(),
@@ -24,11 +22,6 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
     m_text()
 {
   this->setWindowTitle("Text Input");
-
-#if QTCORE_VERSION >= 0x050900
-  // Remove the "?" button in the title bar.
-  this->setWindowFlag(Qt::WindowContextHelpButtonHint, false /*on*/);
-#endif
 
   {
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -64,23 +57,7 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
 
     vbox->addWidget(m_comboBox);
 
-    {
-      QHBoxLayout *hbox = new QHBoxLayout();
-
-      QPushButton *okButton = new QPushButton("Ok");
-      okButton->setDefault(true);
-      QObject::connect(okButton, SIGNAL(clicked()),
-                       this, SLOT(accept()));
-      hbox->addWidget(okButton);
-
-      QPushButton *cancelButton = new QPushButton("Cancel");
-      QObject::connect(cancelButton, SIGNAL(clicked()),
-                       this, SLOT(reject()));
-      hbox->addWidget(cancelButton);
-
-      vbox->addLayout(hbox);
-    }
-
+    this->createOkAndCancel(vbox);
     this->setLayout(vbox);
   }
 }

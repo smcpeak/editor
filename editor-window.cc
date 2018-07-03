@@ -8,6 +8,7 @@
 #include "editor-widget.h"             // EditorWidget
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
+#include "keys-dialog.h"               // KeysDialog
 #include "main.h"                      // GlobalState
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
@@ -712,10 +713,8 @@ void EditorWindow::windowCycleFile()
 
 void EditorWindow::helpKeybindings()
 {
-  QMessageBox m(this);
-  m.setWindowTitle("Keybindings");
-  m.setText(doc_keybindings);
-  m.exec();
+  KeysDialog d(doc_keybindings, this);
+  d.exec();
 }
 
 
