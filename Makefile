@@ -6,6 +6,7 @@ all: testgap
 all: td-core
 all: test-td-editor
 all: test-justify
+all: test-file-td
 all: test-file-td-list
 all: textcategory
 all: c_hilite
@@ -149,10 +150,24 @@ test-justify: $(JUSTIFY_OBJS)
 	./test-justify >/dev/null 2>&1
 
 
+# ---------------------- test-file-td ----------------------
+TOCLEAN += test-file-td
+
+EDITOR_OBJS += file-td.o
+
+TEST_FILE_TD_OBJS := $(EDITOR_OBJS)
+
+TEST_FILE_TD_OBJS += test-file-td.o
+-include test-file-td.d
+
+test-file-td: $(TEST_FILE_TD_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_FILE_TD_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-file-td >/dev/null 2>&1
+
+
 # -------------------- test-file-td-list --------------------
 TOCLEAN += test-file-td-list
 
-EDITOR_OBJS += file-td.o
 EDITOR_OBJS += file-td-list.o
 
 TEST_FILE_TD_LIST_OBJS := $(EDITOR_OBJS)

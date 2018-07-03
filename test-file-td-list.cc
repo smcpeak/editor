@@ -405,7 +405,7 @@ void entry()
 
   xassert(FileTextDocument::objectCount == 0);
 
-  cout << "test-fd-file passed\n";
+  cout << "test-file-td-list passed\n";
 }
 
 USUAL_MAIN

@@ -83,6 +83,13 @@ bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 
 bool FileTextDocument::hasStaleModificationTime() const
 {
+  if (this->isUntitled) {
+    // The document is not actually associated with any file, the name
+    // is just a placeholder.
+    TRACE("modtime", "hasStale: returning false because isUntitled");
+    return false;
+  }
+
   int64_t diskTime;
   if (this->getDiskModificationTime(diskTime)) {
     bool ret = (diskTime != this->lastFileTimestamp);
@@ -100,6 +107,7 @@ bool FileTextDocument::hasStaleModificationTime() const
     //
     // In all cases, it should be safe to ignore the failure to get the
     // timestamp here and assume it is not stale.
+    TRACE("modtime", "hasStale: returning false because getDiskModificationTime failed");
     return false;
   }
 }
