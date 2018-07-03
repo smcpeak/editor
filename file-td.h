@@ -103,6 +103,9 @@ public:      // funcs
   // Compare 'lastFileTimestamp' to what is on disk.  Return true
   // if they are different, meaning some on-disk change has happened
   // since we last interacted with it.
+  //
+  // If 'isUntitled', then this always returns false, since in that
+  // case we are not really associated with any on-disk file.
   bool hasStaleModificationTime() const;
 
   // Set 'lastFileTimestamp' to equal the on-disk timestamp.

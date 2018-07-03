@@ -6,6 +6,8 @@ TODOs:
     - put EditorWindow into its own file
     - maybe GlobalState too
   - when I switch to a file, check if is modified on disk
+  - saving in one window leaves incorrect "*" in others temporarily
+  - reloading a file in one window scrolls the other weirdly
 
   - Alt+A to pass selection through a filter command
   - handle cygwin paths on the command line (requires Alt+A infra)

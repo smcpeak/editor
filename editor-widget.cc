@@ -241,6 +241,7 @@ void EditorWidget::setDocumentFile(FileTextDocument *file)
     this->startListening();
   }
 
+  this->checkForDiskChanges();
   this->redraw();
 }
 
@@ -259,6 +260,49 @@ EditorWidget::FileTextDocumentEditor *
   FileTextDocumentEditor *ret = new FileTextDocumentEditor(file);
   m_editorList.prepend(ret);
   return ret;
+}
+
+
+void EditorWidget::checkForDiskChanges()
+{
+  FileTextDocument *file = m_editor->m_fileDoc;
+  if (!file->isUntitled &&
+      !file->unsavedChanges() &&
+      file->hasStaleModificationTime())
+  {
+    TRACE("modification",
+      "file \"" << file->filename << "\" has changed on disk, "
+      "but has no unsaved changes, so reloading it");
+    try {
+      // TODO: It is broken to have to explicitly refresh the
+      // modification time here.
+      file->readFile(file->filename.c_str());
+      file->refreshModificationTime();
+      TRACE("modification", "successfully re-read the file");
+    }
+    catch (XOpen &x) {
+      TRACE("modification", "could not open file, keeping existing contents");
+    }
+    catch (xBase &x) {
+      // Call this file untitled in order to prevent more errors.
+      file->isUntitled = true;
+
+      // The only way I know to trigger this is by hacking the code
+      // above.  Permission errors cause 'hasStale' to return false.
+      //
+      // TODO: This is a symptom of a broken design.  Failures should
+      // be atomic, but this is not.
+      TRACE("modification", "got error while re-reading: " << x.why());
+#if 0
+      QMessageBox::warning(this, "Error", qstringb(
+        "The file \"" << file->filename << "\" has changed.  But when I "
+        "tried to re-read it, I got an error: " << x.why() <<
+        "\n\nThe file will remain open in the editor with the "
+        "partial contents (if any) that were read before the error, "
+        "but this may not match what is on disk."));
+#endif // 0
+    }
+  }
 }
 
 
@@ -1548,8 +1592,11 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   // I don't want to listen while I'm adding changes of
   // my own, because the way the view moves (etc.) on
   // changes is different.
-  stopListening();
+  this->stopListening();
+
+  this->checkForDiskChanges();
 }
+
 
 void EditorWidget::focusOutEvent(QFocusEvent *e)
 {

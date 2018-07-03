@@ -298,6 +298,10 @@ public:      // funcs
   // Change which file this editor widget is editing.
   void setDocumentFile(FileTextDocument *file);
 
+  // The editor has just acquired focus or switched to a new file.
+  // Check if the file has been edited while we were away.
+  void checkForDiskChanges();
+
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
   void fileTextDocumentRemoved(
