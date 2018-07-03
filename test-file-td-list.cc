@@ -171,6 +171,7 @@ static void testAddMoveRemove()
   xassert(dlist.findFileByTitle("file1") == file1);
   xassert(dlist.findFileByHotkey(file1->getHotkeyDigit()) == file1);
   xassert(dlist.findFileByWindowMenuId(file1->windowMenuId) == file1);
+  xassert(dlist.findFileByWindowMenuId(-1) == NULL);
 
   observer.expectOnly(NF_ADDED, file1);
 
@@ -337,6 +338,34 @@ static void testExhaustHotkeys()
 }
 
 
+// Add a file that already has an assigned hotkey that clashes with
+// an existing file.
+static void testDuplicateHotkeys()
+{
+  FileTextDocumentList dlist;
+
+  FileTextDocument *file0 = dlist.getFileAt(0);
+  FileTextDocument *file1 = dlist.createUntitledFile();
+
+  xassert(file0->hasHotkey());
+  xassert(file1->hasHotkey());
+
+  dlist.removeFile(file1);
+  file1->setHotkeyDigit(file0->getHotkeyDigit());
+  dlist.addFile(file1);
+
+  // Should have had its hotkey reassigned.
+  xassert(file1->hasHotkey());
+  xassert(file1->getHotkeyDigit() != file0->getHotkeyDigit());
+
+  // Now remove and add, expecting it to retain its hotkey.
+  int hotkey = file1->getHotkeyDigit();
+  dlist.removeFile(file1);
+  dlist.addFile(file1);
+  xassert(file1->getHotkeyDigit() == hotkey);
+}
+
+
 void entry()
 {
   testSimple();
@@ -344,6 +373,7 @@ void entry()
   testCreateUntitled();
   testSaveAs();
   testExhaustHotkeys();
+  testDuplicateHotkeys();
 
   xassert(FileTextDocument::objectCount == 0);
 
