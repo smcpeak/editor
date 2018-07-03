@@ -320,8 +320,6 @@ void EditorWindow::fileOpenFile(char const *name)
     }
   }
 
-  // TODO: Move the untitled shenanigans into FileTextDocumentList.
-
   // is there an untitled, empty file hanging around?
   FileTextDocument *untitled =
     this->globalState->m_documentList.findUntitledUnmodifiedFile();
