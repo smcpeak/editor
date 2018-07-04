@@ -74,10 +74,12 @@ public:      // funcs
   // Replace current contents with a new file, and reset cursor
   // to 0,0; clears the history.
   //
-  // Like ::readFile, if the file cannot be opened, then this throws
-  // XOpen and does not modify anything.  But a later read error leaves
-  // this object in an incomplete state.
-  void readFile(char const *fname);
+  // If there is a read error, throws an exception, but the document
+  // is left unmodified.
+  void readFile(string const &fname);
+
+  // Write the contents to 'fname'.  May throw.
+  void writeFile(string const &fname) const;
 
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.

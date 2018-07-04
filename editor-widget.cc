@@ -271,10 +271,7 @@ void EditorWidget::checkForDiskChanges()
       "File \"" << file->filename << "\" has changed on disk "
       "and has no unsaved changes; reloading it.");
     try {
-      // TODO: It is broken to have to explicitly refresh the
-      // modification time here.
-      file->readFile(file->filename.c_str());
-      file->refreshModificationTime();
+      file->readFile();
       TRACE("modification", "Successfully reloaded.");
     }
     catch (xBase &x) {

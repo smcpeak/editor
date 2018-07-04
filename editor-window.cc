@@ -296,12 +296,11 @@ void EditorWindow::fileOpenFile(char const *name)
 
   if (fileOrDirectoryExists(file->filename.c_str())) {
     try {
-      file->readFile(name);
-      file->refreshModificationTime();
+      file->readFile();
     }
-    catch (XOpen &x) {
+    catch (xBase &x) {
       this->complain(stringb(
-        "Can't open file \"" << name << "\": " << x.why()));
+        "Can't read file \"" << name << "\": " << x.why()));
       delete file;
       return;
     }
@@ -372,15 +371,16 @@ void EditorWindow::fileSave()
 
 void EditorWindow::writeTheFile()
 {
+  FileTextDocument *file = this->currentDocument();
   try {
-    FileTextDocument *b = this->currentDocument();
-    b->getCore().writeFile(toCStr(b->filename));
-    b->noUnsavedChanges();
-    b->refreshModificationTime();
+    file->writeFile();
     editorViewChanged();
   }
-  catch (XOpen &x) {
-    QMessageBox::information(this, "Can't write file", toQString(x.why()));
+  catch (xBase &x) {
+    // There is not a severity between "warning" and "critical",
+    // and "critical" is a bit obnoxious.
+    QMessageBox::warning(this, "Write Error",
+      qstringb("Failed to save file \"" << file->filename << "\": " << x.why()));
   }
 }
 
@@ -461,23 +461,14 @@ bool EditorWindow::reloadFile(FileTextDocument *b)
   }
 
   try {
-    b->readFile(b->filename.c_str());
-    b->refreshModificationTime();
+    b->readFile();
     return true;
-  }
-  catch (XOpen &x) {
-    this->complain(stringb(
-      "Can't open file \"" << b->filename << "\": " << x.why() <<
-      "\n\nThe file will remain open in the editor with its "
-      "old contents."));
-    return false;
   }
   catch (xBase &x) {
     this->complain(stringb(
-      "Error while reading file \"" << b->filename << "\": " << x.why() <<
-      "\n\nThe file will remain open in the editor with the "
-      "partial contents (if any) that were read before the error, "
-      "but this may not match what is on disk."));
+      "Can't read file \"" << b->filename << "\": " << x.why() <<
+      "\n\nThe file will remain open in the editor with its "
+      "old contents."));
     return false;
   }
 }

@@ -72,6 +72,23 @@ void FileTextDocument::setHotkeyDigit(int digit)
 }
 
 
+void FileTextDocument::readFile()
+{
+  xassert(!this->isUntitled);
+  this->TextDocument::readFile(this->filename);
+  this->refreshModificationTime();
+}
+
+
+void FileTextDocument::writeFile()
+{
+  xassert(!this->isUntitled);
+  this->TextDocument::writeFile(this->filename);
+  this->noUnsavedChanges();
+  this->refreshModificationTime();
+}
+
+
 bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
   bool ret = getFileModificationTime(this->filename.c_str(), modTime);

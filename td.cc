@@ -66,13 +66,21 @@ bool TextDocument::unsavedChanges() const
 }
 
 
-void TextDocument::readFile(char const *fname)
+void TextDocument::readFile(string const &fname)
 {
-  core.readFile(fname);              // might throw exception
+  // This might throw an exception, but if so, 'core' will be
+  // left unmodified.
+  this->core.readFile(fname.c_str());
 
-  // clear after file's been successfully read
-  clearHistory();
-  noUnsavedChanges();
+  // Clear history after file has been successfully read.
+  this->clearHistory();
+  this->noUnsavedChanges();
+}
+
+
+void TextDocument::writeFile(string const &fname) const
+{
+  this->core.writeFile(fname.c_str());
 }
 
 

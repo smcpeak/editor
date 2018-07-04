@@ -80,6 +80,7 @@ public:      // funcs
   FileTextDocument();
   ~FileTextDocument();
 
+  // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.
   bool hasHotkey() const { return this->hasHotkeyDigit; }
 
@@ -94,6 +95,18 @@ public:      // funcs
 
   // Set the hotkey to the indicated digit in [0,9].
   void setHotkeyDigit(int digit);
+
+  // -------------------- file system interaction -------------------
+  // Read the from 'filename'.  Requires '!isUntitled'.  Updates the
+  // disk modification time.
+  //
+  // Throws an exception on error, but in that case this object will be
+  // left unmodified.
+  void readFile();
+
+  // Write to 'filename'.  Requires '!isUntitled'.  Updates the disk
+  // modification time.  May throw.
+  void writeFile();
 
   // Get the modification time of b->filename without consulting
   // or modifying 'lastFileTimestamp'.  Return false if it cannot
