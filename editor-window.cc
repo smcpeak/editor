@@ -248,20 +248,6 @@ void EditorWindow::updateForChangedFile()
 }
 
 
-void EditorWindow::setFileName(rostring name, rostring hotkey)
-{
-  statusArea->status->setText(toQString(name));
-
-  string s = string(appName) & ": ";
-  if (hotkey[0]) {
-    s &= stringc << "[" << hotkey << "] ";
-  }
-  s &= name;
-
-  this->setWindowTitle(toQString(s));
-}
-
-
 void EditorWindow::fileOpen()
 {
   // Start in the directory containing the file currently shown.
@@ -757,7 +743,18 @@ void EditorWindow::editorViewChanged()
             << (tde->unsavedChanges()? " *" : "")
   ));
 
-  setFileName(currentDocument()->title, currentDocument()->hotkeyDesc());
+  // Status text: full path name.
+  FileTextDocument *file = currentDocument();
+  statusArea->status->setText(toQString(file->filename));
+
+  // Window title.
+  string s = string(appName) & ": ";
+  string hotkey = file->hotkeyDesc();
+  if (hotkey[0]) {
+    s &= stringc << "[" << hotkey << "] ";
+  }
+  s &= file->title;
+  this->setWindowTitle(toQString(s));
 }
 
 

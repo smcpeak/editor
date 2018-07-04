@@ -62,7 +62,6 @@ public:      // data
 
 private:     // funcs
   void buildMenu();
-  void setFileName(rostring name, rostring hotkey);
   void writeTheFile();
   void setDocumentFile(FileTextDocument *b);
 
