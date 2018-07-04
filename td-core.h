@@ -10,6 +10,8 @@
 #include "str.h"                       // string
 #include "sobjlist.h"                  // SObjList
 
+class TextDocument;                    // td.h
+
 // Forward in this file.
 class TextDocumentObserver;
 
@@ -186,6 +188,9 @@ public:    // funcs
   // Remove an observer.  It must be present now.
   void removeObserver(TextDocumentObserver *observer) const;
 
+  // Send the 'observeUnsavedChangesChange' message to all observers.
+  void notifyUnsavedChangesChange(TextDocument const *doc) const;
+
   // ---------------------- debugging ---------------------------
   // print internal rep
   void dumpRepresentation() const;
@@ -219,6 +224,13 @@ public:
   virtual void observeDeleteLine(TextDocumentCore const &buf, int line);
   virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length);
   virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length);
+
+  // This notification is sent to observers if the observee is actually
+  // a TextDocument (i.e., with undo/redo history) and the "has unsaved
+  // changes" property may have changed.
+  //
+  // This method is a slight abuse of the observer pattern.
+  virtual void observeUnsavedChangesChange(TextDocument const *doc);
 };
 
 #endif // TD_CORE_H

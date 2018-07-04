@@ -5,9 +5,6 @@ TODOs:
     - IncSearch should work on top of TDE, not EditorWidget
     - put EditorWindow into its own file
     - maybe GlobalState too
-  - saving in one window leaves incorrect "*" in others temporarily
-  - reloading a file in one window scrolls the other weirdly
-    - can't reproduce it now...
 
   - Alt+A to pass selection through a filter command
   - handle cygwin paths on the command line (requires Alt+A infra)

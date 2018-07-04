@@ -333,6 +333,7 @@ public:      // funcs
   virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
   virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
   virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
+  virtual void observeUnsavedChangesChange(TextDocument const *doc) override;
 
   // called by an input proxy when it detaches; I can
   // reset the mode pixmap then

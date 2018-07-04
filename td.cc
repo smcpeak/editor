@@ -27,6 +27,8 @@ void TextDocument::clearHistory()
   savedHistoryIndex = -1;     // no historyIndex is known to correspond to on-disk
   history.truncate(historyIndex);
   groupStack.clear();
+
+  this->core.notifyUnsavedChangesChange(this);
 }
 
 
@@ -63,6 +65,16 @@ bool TextDocument::unsavedChanges() const
   else {
     return true;
   }
+}
+
+
+void TextDocument::noUnsavedChanges()
+{
+  this->savedHistoryIndex = this->historyIndex;
+
+  // This method is called rarely, there is no problem with sending the
+  // notification unconditionally.
+  this->core.notifyUnsavedChangesChange(this);
 }
 
 
@@ -110,13 +122,29 @@ void TextDocument::deleteAt(TextCoord tc, int count)
 }
 
 
+void TextDocument::bumpHistoryIndex(int inc)
+{
+  bool equalBefore = (this->historyIndex == this->savedHistoryIndex);
+
+  this->historyIndex += inc;
+
+  bool equalAfter = (this->historyIndex == this->savedHistoryIndex);
+
+  // This is called fairly frequently, so we try to only send the
+  // notification when it might matter.
+  if (equalBefore != equalAfter) {
+    this->core.notifyUnsavedChangesChange(this);
+  }
+}
+
+
 void TextDocument::appendElement(HistoryElt *e)
 {
   if (groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
     history.truncate(historyIndex);
     history.append(e);
-    historyIndex++;
+    this->bumpHistoryIndex(+1);
   }
   else {
     groupStack.top()->append(e);
@@ -150,7 +178,7 @@ TextCoord TextDocument::undo()
 {
   xassert(canUndo() && !inUndoGroup());
 
-  historyIndex--;
+  this->bumpHistoryIndex(-1);
   return history.applyOne(core, historyIndex, true /*reverse*/);
 }
 
@@ -160,7 +188,7 @@ TextCoord TextDocument::redo()
   xassert(canRedo() && !inUndoGroup());
 
   TextCoord tc = history.applyOne(core, historyIndex, false /*reverse*/);
-  historyIndex++;
+  this->bumpHistoryIndex(+1);
   return tc;
 }
 

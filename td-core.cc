@@ -512,6 +512,14 @@ void TextDocumentCore::removeObserver(TextDocumentObserver *observer) const
 }
 
 
+void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
+{
+  SFOREACH_OBJLIST_NC(TextDocumentObserver, this->observers, iter) {
+    iter.data()->observeUnsavedChangesChange(doc);
+  }
+}
+
+
 // -------------------- TextDocumentObserver ------------------
 void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int)
 {}
@@ -523,6 +531,9 @@ void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextCoord
 {}
 
 void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord, int)
+{}
+
+void TextDocumentObserver::observeUnsavedChangesChange(TextDocument const *doc)
 {}
 
 

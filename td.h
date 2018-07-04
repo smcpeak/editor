@@ -45,6 +45,12 @@ private:      // data
   ObjStack<HE_group> groupStack;
 
 private:     // funcs
+  // Change 'historyIndex' by 'inc' and possibly send a notification
+  // event to observers.
+  void bumpHistoryIndex(int inc);
+
+  // Add an element either to the open group or to the undo list,
+  // itself if there is no open group.
   void appendElement(HistoryElt *e);
 
 public:      // funcs
@@ -114,7 +120,7 @@ public:      // funcs
 
   // Remember the current historyIndex as one where the file's contents
   // agree with those on the disk.
-  void noUnsavedChanges() { savedHistoryIndex = historyIndex; }
+  void noUnsavedChanges();
 
   // -------------------------- observers ---------------------------
   // Add a new observer of this document's contents.  This observer

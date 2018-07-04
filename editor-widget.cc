@@ -1672,6 +1672,11 @@ void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int)
   redraw();
 }
 
+void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc)
+{
+  redraw();
+}
+
 
 void EditorWidget::inputProxyDetaching()
 {
