@@ -566,6 +566,9 @@ void EditorWindow::fileTextDocumentAttributeChanged(
   FileTextDocumentList *, FileTextDocument *)
 {
   this->rebuildWindowMenu();
+
+  // The title of the file we are looking at could have changed.
+  this->editorViewChanged();
 }
 
 void EditorWindow::fileTextDocumentListOrderChanged(

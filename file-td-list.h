@@ -205,6 +205,16 @@ public:      // funcs
 
   // An attribute of a file may have changed.  The client has to
   // inspect the file to determine what has changed.
+  //
+  // The attributes that trigger notification are:
+  //   - hotkeyDigit
+  //   - filename, isUntitled
+  //   - title
+  //   - highlighter (currently never changes)
+  //
+  // The existence of this method is a slight abuse of the FTDLO
+  // concept, since we are notifying about a single object, rather
+  // that something intrinsically tied to the "list" aspect.
   virtual void fileTextDocumentAttributeChanged(
     FileTextDocumentList *documentList, FileTextDocument *file);
 
