@@ -1,11 +1,5 @@
 
 TODOs:
-  - finishing major refactoring
-    - make TextDocumentEditor consistently accept "invalid" cursors
-    - IncSearch should work on top of TDE, not EditorWidget
-    - put EditorWindow into its own file
-    - maybe GlobalState too
-
   - Alt+A to pass selection through a filter command
   - handle cygwin paths on the command line (requires Alt+A infra)
   - allow Tab character; issue is rendering support
@@ -35,7 +29,6 @@ TODOs:
   - remove unnecessary triple buffering from render code
 
   - test plan
-  - port to Linux
 
   - Ctrl+S still does not work very well with Backspace;
     see comments in IncSearch::searchKeyMap
