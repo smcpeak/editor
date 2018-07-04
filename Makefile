@@ -238,7 +238,7 @@ EDITOR_OBJS += textinput.moc.o
 -include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor
-editor: $(EDITOR_OBJS)
+editor: $(EDITOR_OBJS) $(LIBSMBASE) $(LIBSMQTUTIL)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
 
 

@@ -10,6 +10,7 @@
 #include "qtutil.h"                    // toQString
 
 // smbase
+#include "sm-file-util.h"              // SMFileUtil
 #include "strtokp.h"                   // StrtokParse
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE
@@ -65,8 +66,11 @@ GlobalState::GlobalState(int argc, char **argv)
   //ed.setCaption("An Editor");
 
   // open all files specified on the command line
+  SMFileUtil sfu;
   for (int i=1; i < argc; i++) {
-    ed->fileOpenFile(argv[i]);
+    string path = sfu.getAbsolutePath(argv[i]);
+    path = sfu.normalizePathSeparators(path);
+    ed->fileOpenFile(path.c_str());
   }
 
   // TODO: replacement?  Need to test on Linux.

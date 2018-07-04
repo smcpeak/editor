@@ -268,6 +268,8 @@ void EditorWindow::fileOpen()
 
 void EditorWindow::fileOpenFile(char const *name)
 {
+  TRACE("fileOpen", "fileOpenFile: " << name);
+
   // If this file is already open, switch to it.
   FileTextDocument *file = globalState->m_documentList.findFileByName(name);
   if (file) {
