@@ -167,12 +167,12 @@ TextCoord TextDocument::redo()
 
 void TextDocument::addObserver(TextDocumentObserver *observer)
 {
-  this->core.observers.appendUnique(observer);
+  this->core.addObserver(observer);
 }
 
 void TextDocument::removeObserver(TextDocumentObserver *observer)
 {
-  this->core.observers.removeItem(observer);
+  this->core.removeObserver(observer);
 }
 
 

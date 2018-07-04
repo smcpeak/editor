@@ -62,8 +62,10 @@ private:   // data
   //   - every lines[n] is NULL or valid
   //   - longestLineSoFar >= 0
 
-public:    // data
-  // list of observers; changeable even when '*this' is const
+  // List of observers.  This is mutable because the highlighter wants
+  // to declare, through its signature, that it does not modify the
+  // document on which it operates, yet it needs to make itself an
+  // observer of that document.
   mutable SObjList<TextDocumentObserver> observers;
 
 private:   // funcs
@@ -175,6 +177,14 @@ public:    // funcs
   // throw an exception.  This function is guaranteed to only modify
   // the object if it succeeds; failure is atomic.
   void readFile(char const *fname);
+
+  // ---------------------- observers ---------------------------
+  // Add an observer.  It must not already be there.  This is 'const'
+  // for the same reason 'observers' is mutable.
+  void addObserver(TextDocumentObserver *observer) const;
+
+  // Remove an observer.  It must be present now.
+  void removeObserver(TextDocumentObserver *observer) const;
 
   // ---------------------- debugging ---------------------------
   // print internal rep

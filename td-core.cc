@@ -501,6 +501,17 @@ bool TextDocumentCore::getTextSpan(TextCoord tc, char *text, int textLen) const
 }
 
 
+void TextDocumentCore::addObserver(TextDocumentObserver *observer) const
+{
+  this->observers.appendUnique(observer);
+}
+
+void TextDocumentCore::removeObserver(TextDocumentObserver *observer) const
+{
+  this->observers.removeItem(observer);
+}
+
+
 // -------------------- TextDocumentObserver ------------------
 void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int)
 {}

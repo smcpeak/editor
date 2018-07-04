@@ -21,7 +21,7 @@ LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
     changedEnd(0),
     waterline(0)
 {
-  buffer.observers.append(this);
+  buffer.addObserver(this);
 
   // all of the saved state is stale
   savedState.insertManyZeroes(0, buf.numLines());
@@ -31,7 +31,7 @@ LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
 
 LexHighlighter::~LexHighlighter()
 {
-  buffer.observers.removeItem(this);
+  buffer.removeObserver(this);
 }
 
 
