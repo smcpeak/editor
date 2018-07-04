@@ -266,41 +266,28 @@ EditorWidget::FileTextDocumentEditor *
 void EditorWidget::checkForDiskChanges()
 {
   FileTextDocument *file = m_editor->m_fileDoc;
-  if (!file->isUntitled &&
-      !file->unsavedChanges() &&
-      file->hasStaleModificationTime())
-  {
+  if (!file->unsavedChanges() && file->hasStaleModificationTime()) {
     TRACE("modification",
-      "file \"" << file->filename << "\" has changed on disk, "
-      "but has no unsaved changes, so reloading it");
+      "File \"" << file->filename << "\" has changed on disk "
+      "and has no unsaved changes; reloading it.");
     try {
       // TODO: It is broken to have to explicitly refresh the
       // modification time here.
       file->readFile(file->filename.c_str());
       file->refreshModificationTime();
-      TRACE("modification", "successfully re-read the file");
-    }
-    catch (XOpen &x) {
-      TRACE("modification", "could not open file, keeping existing contents");
+      TRACE("modification", "Successfully reloaded.");
     }
     catch (xBase &x) {
-      // Call this file untitled in order to prevent more errors.
-      file->isUntitled = true;
-
-      // The only way I know to trigger this is by hacking the code
-      // above.  Permission errors cause 'hasStale' to return false.
+      // Since TextDocumentCore::readFile() fails atomically, I know
+      // that the in-memory contents are undisturbed.  The user did not
+      // explicitly ask for a file refresh, so let's just ignore the
+      // error.  At some point they will explicitly ask to load or
+      // save, and at that point (if the problem persists) they will
+      // be properly notified.
       //
-      // TODO: This is a symptom of a broken design.  Failures should
-      // be atomic, but this is not.
-      TRACE("modification", "got error while re-reading: " << x.why());
-#if 0
-      QMessageBox::warning(this, "Error", qstringb(
-        "The file \"" << file->filename << "\" has changed.  But when I "
-        "tried to re-read it, I got an error: " << x.why() <<
-        "\n\nThe file will remain open in the editor with the "
-        "partial contents (if any) that were read before the error, "
-        "but this may not match what is on disk."));
-#endif // 0
+      // Note: I do not actually know how to trigger this code.  Most
+      // things cause 'hasStale' to return false.
+      TRACE("modification", "Reload failed: " << x.why());
     }
   }
 }
