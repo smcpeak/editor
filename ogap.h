@@ -29,9 +29,9 @@ public:
   T *get(int elt)                 { return (T*)arr.get(elt); }
   T const *getC(int elt) const    { return (T const*)arr.get(elt); }
 
-  // swap an existing element with another one; an owner pointer is
+  // replace an existing element with another one; an owner pointer is
   // passed in, and an owner pointer is returned
-  T *swap(int elt, T *value)      { return (T*)arr.swap(elt, value); }
+  T *replace(int elt, T *value)   { return (T*)arr.replace(elt, value); }
 
   // insert a new element; index becomes 'elt', and later elements
   // have their indices shifted by one

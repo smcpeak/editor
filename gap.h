@@ -63,7 +63,7 @@ public:      // funcs
   void set(int elt, T value)        { eltRef(elt) = value; }
 
   // set an element, yielding the old value as the return value
-  T swap(int elt, T value);
+  T replace(int elt, T value);
 
   // insert an element; index becomes 'elt' and all elements with
   // original index 'elt' or greater are shifted up one
@@ -149,7 +149,7 @@ void GapArray<T>::prepareToInsert(int elt, int insLen)
 
 
 template <class T>
-T GapArray<T>::swap(int elt, T value)
+T GapArray<T>::replace(int elt, T value)
 {
   T ret = get(elt);
   set(elt, value);
