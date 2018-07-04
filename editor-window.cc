@@ -418,10 +418,9 @@ void EditorWindow::fileSaveAs()
   fileDoc->filename = chosenFilename;
   fileDoc->isUntitled = false;
   fileDoc->title = this->globalState->uniqueTitleFor(chosenFilename);
-  setFileName(chosenFilename, fileDoc->hotkeyDesc());
   writeTheFile();
 
-  // Notify observers of the file name change.
+  // Notify observers of the file name change.  This includes myself.
   this->globalState->m_documentList.notifyAttributeChanged(fileDoc);
 }
 

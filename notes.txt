@@ -3,6 +3,7 @@ TODOs:
   - Alt+A to pass selection through a filter command
   - handle cygwin paths on the command line (requires Alt+A infra)
   - allow Tab character; issue is rendering support
+  - handling of files with CRLF line endings
   - rethink incremental search
     - persistent search string
     - toggle whether matches shown
