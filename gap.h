@@ -4,16 +4,19 @@
 #ifndef GAPARRAY_H
 #define GAPARRAY_H
 
-#include <string.h>     // memcpy, etc.
-//#include <stdio.h>      // printf, for debugging
+#include "macros.h"                    // NO_OBJECT_COPIES
+#include "sm-swap.h"                   // swap
+#include "xassert.h"                   // xassert
 
-#include "xassert.h"    // xassert
+#include <string.h>                    // memcpy, etc.
 
 // abstractly models a sequence
 // assumption: objects of type T can be copied with memcpy, etc.,
 // and do not have (nontrivial) constructors or destructors
 template <class T>
 class GapArray {
+  NO_OBJECT_COPIES(GapArray);
+
 private:     // data
   // base array
   T *array;
@@ -88,6 +91,9 @@ public:      // funcs
   // remove all elements
   void clear();
 
+  // Exchange contents with 'other'.
+  void swapWith(GapArray<T> &other) noexcept;
+
   // drop gap size to zero; done when future insertion is not likely
   void squeezeGap();
 
@@ -104,6 +110,13 @@ public:      // funcs
   void getInternals(int &L, int &G, int &R) const
     { L=left; G=gap; R=right; }
 };
+
+
+template <class T>
+void swap(GapArray<T> &a, GapArray<T> &b) noexcept
+{
+  a.swapWith(b);
+}
 
 
 template <class T>
@@ -318,6 +331,18 @@ void GapArray<T>::clear()
   gap += left+right;
   left = 0;
   right = 0;
+}
+
+
+template <class T>
+void GapArray<T>::swapWith(GapArray<T> &other) noexcept
+{
+  if (this != &other) {
+    swap(this->array, other.array);
+    swap(this->left, other.left);
+    swap(this->gap, other.gap);
+    swap(this->right, other.right);
+  }
 }
 
 

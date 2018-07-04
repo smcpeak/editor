@@ -1,13 +1,14 @@
 // testgap.cc
 // test the gap.h module
 
-#include "gap.h"     // module to test
-#include "test.h"    // ARGS_MAIN
-#include "ckheap.h"  // malloc_stats
+#include "gap.h"                       // module to test
 
-#include <stdio.h>   // printf
-#include <stdlib.h>  // rand, srand
-#include <time.h>    // time
+#include "ckheap.h"                    // malloc_stats
+#include "test.h"                      // ARGS_MAIN
+
+#include <stdio.h>                     // printf
+#include <stdlib.h>                    // rand, srand
+#include <time.h>                      // time
 
 
 // reference implementation of a sequence of ints
@@ -158,8 +159,10 @@ void checkEqual(GapArray<int> const &seq1, Sequence const &seq2)
 }
 
 
-int ctSet=0, ctInsert=0, ctInsertMany=0, ctRemove=0, ctRemoveMany=0, ctClear=0,
-    ctFillFromArray=0;
+// Counts of each operation we test so we can tell, at the end, if we
+// have adequately exercised each method.
+int ctSet=0, ctInsert=0, ctInsertMany=0, ctRemove=0, ctRemoveMany=0,
+    ctClear=0, ctFillFromArray=0, ctSwap=0;
 
 
 int randValue()
@@ -217,13 +220,25 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   }
 
   // use removeMany()
-  else if (choice < 98) {
+  else if (choice < 97) {
     ctRemoveMany++;
     int len = seq1.length();
     int sz = rand() % (min(20, len+1));     // # to remove
     int elt = rand() % (len+1 - sz);
     seq1.removeMany(elt, sz);
     seq2.removeMany(elt, sz);
+  }
+
+  // use swapWith()
+  else if (choice < 98) {
+    // Swap into and out of 'tmp'.
+    ctSwap++;
+    GapArray<int> tmp;
+    tmp.swapWith(seq1);
+    xassert(seq1.length() == 0);
+    checkEqual(tmp, seq2);
+    tmp.swapWith(seq1);
+    xassert(tmp.length() == 0);
   }
 
   // use fillFromArray()
@@ -287,9 +302,9 @@ void entry(int argc, char *argv[])
 
     printf("ok!\n");
     printf("ctSet=%d ctInsert=%d ctInsertMany=%d ctRemove=%d\n"
-           "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d\n",
+           "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d ctSwap=%d\n",
            ctSet, ctInsert, ctInsertMany, ctRemove,
-           ctRemoveMany, ctClear, ctFillFromArray);
+           ctRemoveMany, ctClear, ctFillFromArray, ctSwap);
     printf("total: %d\n",
            ctSet + ctInsert + ctInsertMany + ctRemove +
            ctRemoveMany + ctClear + ctFillFromArray);

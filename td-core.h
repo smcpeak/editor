@@ -89,6 +89,10 @@ private:   // funcs
   // that is 'len' long
   void seenLineLength(int len);
 
+  // Non-atomic core of 'readFile'.  Failure will leave the file in
+  // an unpredictable state.
+  void nonAtomicReadFile(char const *fname);
+
 public:    // funcs
   TextDocumentCore();        // one empty line
   ~TextDocumentCore();
@@ -152,6 +156,12 @@ public:    // funcs
   // clear buffer contents, returning to just one empty line
   void clear();
 
+  // Swap the contents of two documents.  Afterward, logically, each
+  // contains the sequence of lines originally in the other.  It is
+  // not guaranteed that internal caches, etc., are swapped, since
+  // those are not visible to clients.
+  void swapWith(TextDocumentCore &other) noexcept;
+
   // write a file
   void writeFile(char const *fname) const;
 
@@ -160,11 +170,10 @@ public:    // funcs
   // part of the in-memory line contents, and will then be written
   // out as such as well, like any other character.  This is not
   // ideal of course.
-
-  // Clear 'buf', then read a file into it.  If the file cannot be
-  // opened, throws XOpen and does not modify 'buf'.  However, if
-  // there is a read error after that point, 'buf' will contain
-  // unpredictable partial file contents.
+  //
+  // Clear 'this', then read a file into it.  If there is an error,
+  // throw an exception.  This function is guaranteed to only modify
+  // the object if it succeeds; failure is atomic.
   void readFile(char const *fname);
 
   // ---------------------- debugging ---------------------------
@@ -174,6 +183,12 @@ public:    // funcs
   // how much memory am I using?
   void printMemStats() const;
 };
+
+
+inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
+{
+  a.swapWith(b);
+}
 
 
 // interface for observing changes to a TextDocumentCore

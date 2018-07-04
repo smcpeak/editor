@@ -358,7 +358,22 @@ void TextDocumentCore::clear()
 }
 
 
-void TextDocumentCore::readFile(char const *fname)
+void TextDocumentCore::swapWith(TextDocumentCore &other) noexcept
+{
+  if (this != &other) {
+    swap(this->lines, other.lines);
+    swap(this->recent, other.recent);
+    swap(this->recentLine, other.recentLine);
+    swap(this->longestLengthSoFar, other.longestLengthSoFar);
+  }
+}
+
+
+// For testing purposes, this can be set to a non-zero value, and after
+// reading this many bytes, an error will be injected.
+static int injectedErrorCountdown = 0;
+
+void TextDocumentCore::nonAtomicReadFile(char const *fname)
 {
   AutoFILE fp(fname, "rb");
 
@@ -378,6 +393,16 @@ void TextDocumentCore::readFile(char const *fname)
     }
     if (len < 0) {
       xsyserror("read", fname);
+    }
+
+    if (injectedErrorCountdown > 0) {
+      if (len < injectedErrorCountdown) {
+        injectedErrorCountdown -= len;
+      }
+      else {
+        injectedErrorCountdown = 0;
+        xfailure("throwing injected error");
+      }
     }
 
     char const *p = buffer;
@@ -404,6 +429,18 @@ void TextDocumentCore::readFile(char const *fname)
     }
     xassert(p == end);
   }
+}
+
+
+void TextDocumentCore::readFile(char const *fname)
+{
+  TextDocumentCore tmp;
+
+  // This will throw on error.
+  tmp.nonAtomicReadFile(fname);
+
+  // At this point success is guaranteed.
+  this->swapWith(tmp);
 }
 
 
@@ -484,7 +521,44 @@ void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord
 #include "ckheap.h"        // malloc_stats
 #include <stdlib.h>        // system
 
-void entry()
+
+static void testAtomicRead()
+{
+  // Write a file that spans several blocks.
+  {
+    AutoFILE fp("td-core.tmp", "wb");
+    for (int i=0; i < 1000; i++) {
+      fputs("                                       \n", fp);  // 40 bytes
+    }
+  }
+
+  // Read it.
+  TextDocumentCore core;
+  core.readFile("td-core.tmp");
+  xassert(core.numLines() == 1001);
+
+  // Read it again with an injected error.
+  try {
+    injectedErrorCountdown = 10000;
+    cout << "This should throw:" << endl;
+    core.readFile("td-core.tmp");
+    assert(!"should not get here");
+  }
+  catch (xBase &x) {
+    // As expected.
+  }
+
+  // Should have consumed this.
+  xassert(injectedErrorCountdown == 0);
+
+  // Confirm that the original contents are still there.
+  xassert(core.numLines() == 1001);
+
+  remove("td-core.tmp");
+}
+
+
+static void entry()
 {
   for (int looper=0; looper<2; looper++) {
     printf("stats before:\n");
@@ -542,6 +616,8 @@ void entry()
     doc.readFile("td-core.cc");
     doc.printMemStats();
   }
+
+  testAtomicRead();
 
   printf("stats after:\n");
   malloc_stats();
