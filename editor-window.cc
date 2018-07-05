@@ -164,7 +164,7 @@ void EditorWindow::buildMenu()
     file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
     file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
     file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
-    file->addAction("&Close", this, SLOT(fileClose()));
+    file->addAction("&Close", this, SLOT(fileClose()), Qt::CTRL + Qt::Key_F4);
     file->addSeparator();
     file->addAction("&Reload", this, SLOT(fileReload()));
     file->addAction("Reload a&ll", this, SLOT(fileReloadAll()));

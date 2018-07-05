@@ -1,6 +1,11 @@
 
 TODOs:
   - Alt+A to pass selection through a filter command
+  - run command to generate entire file; git annotate!
+    - git diff
+    - git show
+    - grep
+  - click on path elements in the status bar to File Open on that directory
   - handle cygwin paths on the command line (requires Alt+A infra)
   - allow Tab character; issue is rendering support
   - handling of files with CRLF line endings
@@ -45,7 +50,6 @@ TODOs:
     - more robust identification of same file than just specified name
   - ctrl-i: open file at cursor
   - analog to M-x grep
-  - ctrl-f4: close a buffer
   - if I press Delete while the cursor is at the left edge of a blank
     line, make it delete that line even if there is whitespace on it
   - highlight .cpp like .cc
