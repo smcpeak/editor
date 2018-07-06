@@ -1,5 +1,9 @@
 
 TODOs:
+  - BUG: open 20-line file, replace it with 116-line file, then
+    painting fails after reload
+  - BUG: Alt+D while beyond EOF fails assertion
+
   - Alt+A to pass selection through a filter command
   - run command to generate entire file; git annotate!
     - git diff

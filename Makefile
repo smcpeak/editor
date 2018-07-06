@@ -6,6 +6,7 @@ all: testgap
 all: td-core
 all: test-td-editor
 all: test-justify
+all: test-command-runner
 all: test-file-td
 all: test-file-td-list
 all: textcategory
@@ -67,16 +68,17 @@ CONSOLE_LDFLAGS += $(LIBSMBASE)
 CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
 # Link flags for GUI programs.
-GUI_LDFLAGS := $(CONSOLE_LDFLAGS)
+GUI_LDFLAGS := -g
 GUI_LDFLAGS += $(LIBSMQTUTIL)
+GUI_LDFLAGS += $(LIBSMBASE)
 GUI_LDFLAGS += $(QT_LDFLAGS)
 GUI_LDFLAGS += $(EXTRA_LDFLAGS)
 
 # Link flags for console programs that use Qt5Core.  Specifically,
 # I am using QRegularExpression in the 'justify' module.
 QT_CONSOLE_LDFLAGS := -g
-QT_CONSOLE_LDFLAGS := $(LIBSMBASE)
 QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
+QT_CONSOLE_LDFLAGS += $(LIBSMBASE)
 QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core
 QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
@@ -148,6 +150,22 @@ JUSTIFY_OBJS += test-justify.o
 test-justify: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
 	./test-justify >/dev/null 2>&1
+
+
+# -------------- command-runner test program ----------------
+TOCLEAN += test-command-runner
+
+EDITOR_OBJS += command-runner.o
+EDITOR_OBJS += command-runner.moc.o
+
+COMMAND_RUNNER_OBJS := $(EDITOR_OBJS)
+
+COMMAND_RUNNER_OBJS += test-command-runner.o
+-include test-command-runner.d
+
+test-command-runner: $(COMMAND_RUNNER_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-command-runner >/dev/null 2>&1
 
 
 # ---------------------- test-file-td ----------------------
@@ -238,7 +256,7 @@ EDITOR_OBJS += textinput.moc.o
 -include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor
-editor: $(EDITOR_OBJS) $(LIBSMBASE) $(LIBSMQTUTIL)
+editor: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
 
 

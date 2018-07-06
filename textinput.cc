@@ -26,6 +26,8 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
   {
     QVBoxLayout *vbox = new QVBoxLayout();
 
+    vbox->addStrut(300);
+
     m_label = new QLabel("Input:");
     vbox->addWidget(m_label);
 

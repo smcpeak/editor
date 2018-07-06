@@ -5,6 +5,7 @@
 
 // this dir
 #include "c_hilite.h"                  // C_Highlighter
+#include "command-runner.h"            // CommandRunner
 #include "editor-widget.h"             // EditorWidget
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
@@ -23,6 +24,7 @@
 #include "exc.h"                       // XOpen
 #include "mysig.h"                     // printSegfaultAddrs
 #include "nonport.h"                   // fileOrDirectoryExists
+#include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE_ARGS
@@ -184,6 +186,8 @@ void EditorWindow::buildMenu()
     edit->addSeparator();
     edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
     edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
+    edit->addAction("&Apply Command ...", this,
+                    SLOT(editApplyCommand()), Qt::ALT + Qt::Key_A);
   }
 
   {
@@ -611,6 +615,100 @@ void EditorWindow::editGotoLine()
         this->complain(stringb("Invalid line number: " << s));
       }
     }
+  }
+}
+
+
+void EditorWindow::editApplyCommand()
+{
+  static TextInputDialog *dialog;
+  if (!dialog) {
+    dialog = new TextInputDialog();
+    dialog->setWindowTitle("Apply Command");
+  }
+
+  // TODO: Run in directory containing file.
+  //FileTextDocument *file = editorWidget->getDocumentFile();
+  //string dir = dirname(file->filename);
+  string dir = SMFileUtil().currentDirectory();
+  dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
+
+  if (!dialog->exec() || dialog->m_text.isEmpty()) {
+    return;
+  }
+  dialog->rememberInput(dialog->m_text);
+
+  TextDocumentEditor *tde = editorWidget->getDocumentEditor();
+  string input = tde->getSelectedText();
+
+  CommandRunner cr;
+
+  // For now, I will assume I have a POSIX shell.
+  cr.setProgram("sh");
+  cr.setArguments(QStringList() << "-c" << dialog->m_text);
+
+  // TODO: This mishandles NUL bytes.
+  cr.setInputData(QByteArray(input.c_str()));
+
+  // It would be bad to hold an undo group open while we pump
+  // the event queue.
+  xassert(!tde->inUndoGroup());
+
+  // This blocks until the program terminates or times out.  However,
+  // it will pump the GUI event queue while waiting.
+  //
+  // TODO: Show a wait cursor?  Block input events?
+  //
+  // TODO: Make timeout adjustable.
+  cr.startAndWait();
+
+  if (cr.getFailed()) {
+    QMessageBox::warning(this, "Command Failed", qstringb(
+      "The command \"" << toString(dialog->m_text) <<
+      "\" failed: " << toString(cr.getErrorMessage()) <<
+      "\n\nError output:\n\n" <<
+      (cr.getErrorData().isEmpty()?
+        "(There was no error output.)" :
+        cr.getErrorData().constData())));
+    return;
+  }
+
+  // We just pumped the event queue.  The editor we had before
+  // could have gone away.
+  if (tde == editorWidget->getDocumentEditor()) {
+    tde->beginUndoGroup();
+    tde->deleteSelectionIf();
+    tde->fillToCursor();
+    tde->insertText(cr.getOutputData().constData(), cr.getOutputData().size());
+    tde->endUndoGroup();
+    editorWidget->scrollToCursor();
+  }
+  else {
+    QMessageBox::warning(this, "Editor Changed", qstringb(
+      "While running command \"" << toString(dialog->m_text) <<
+      "\", the active editor changed.  I will discard "
+      "the output of that command."));
+    return;
+  }
+
+  // For error output or non-zero exit code, we show a warning, but
+  // still insert the text.  Note that we do this *after* inserting
+  // the text because showing a dialog is another way to pump the
+  // event queue.
+  if (!cr.getErrorData().isEmpty()) {
+    // TODO: Limit this to a reasonable amount of error text and
+    // avoid using non-printable characters.
+    QMessageBox::warning(this, "Command Error Output", qstringb(
+      "The command \"" << toString(dialog->m_text) <<
+      "\" exited with code " << cr.getExitCode() <<
+      " and produced some error output:\n\n" <<
+      cr.getErrorData().constData()));
+  }
+  else if (cr.getExitCode() != 0) {
+    QMessageBox::warning(this, "Command Exit Code", qstringb(
+      "The command \"" << toString(dialog->m_text) <<
+      "\" exited with code " << cr.getExitCode() <<
+      ", although it produced no error output."));
   }
 }
 

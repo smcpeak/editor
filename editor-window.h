@@ -123,6 +123,7 @@ public slots:
 
   void editISearch();
   void editGotoLine();
+  void editApplyCommand();
 
   void viewToggleVisibleWhitespace();
   void viewSetWhitespaceOpacity();
