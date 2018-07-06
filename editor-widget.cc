@@ -4,6 +4,7 @@
 #include "editor-widget.h"   // this module
 
 // this dir
+#include "generic-catch.h"   // GENERIC_CATCH_BEGIN/END
 #include "inputproxy.h"      // InputProxy
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
@@ -848,20 +849,14 @@ static void inc(int &val, int amt)
 }
 
 
-void printUnhandled(QWidget *parent, char const *msg)
-{
-  QMessageBox::information(parent, "Oops",
-    QString(stringc << "Unhandled exception: " << msg << "\n"
-                    << "Save your files if you can!"));
-}
-
-
 // unfortunately, this doesn't work if Qt is compiled without
 // exception support, as is apparently the case on many (most?)
 // linux systems; see e.g.
 //   http://lists.trolltech.com/qt-interest/2002-11/msg00048.html
 // you therefore have to ensure that exceptions do not propagate into
 // Qt stack frames
+//
+// TODO: I should remove this.
 bool EditorWidget::event(QEvent *e)
 {
   try {
@@ -872,17 +867,6 @@ bool EditorWidget::event(QEvent *e)
     return true;   // clearly it was handled by someone
   }
 }
-
-
-// therefore I'll try this
-#define GENERIC_CATCH_BEGIN         \
-  try {
-
-#define GENERIC_CATCH_END           \
-  }                                 \
-  catch (xBase &x) {                \
-    printUnhandled(this, toCStr(x.why()));  \
-  }
 
 
 void EditorWidget::keyPressEvent(QKeyEvent *k)

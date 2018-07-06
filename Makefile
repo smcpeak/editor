@@ -239,6 +239,7 @@ EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += editor-window.moc.o
+EDITOR_OBJS += generic-catch.o
 EDITOR_OBJS += incsearch.o
 EDITOR_OBJS += inputproxy.o
 EDITOR_OBJS += keybindings.doc.gen.o
