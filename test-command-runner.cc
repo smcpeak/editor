@@ -8,7 +8,8 @@
 
 // smbase
 #include "datablok.h"                  // DataBlock
-#include "strtokp.h"                   // StrtokParse
+#include "sm-file-util.h"              // SMFileUtil
+#include "strutil.h"                   // replace
 #include "test.h"                      // ARGS_MAIN
 #include "trace.h"                     // TRACE_ARGS
 
@@ -17,17 +18,24 @@
 #include <QProcessEnvironment>
 
 
+// ----------------------- test infrastructure ----------------------------
 // When true, print the byte arrays like a hexdump.
 static bool const printByteArrays = false;
 
 
-static int runCmdArgsIn(QString cmd, QStringList args, char const *input)
+static void printCmdArgs(char const *cmd, QStringList const &args)
 {
-  cout << "running: " << toString(cmd);
+  cout << "run: " << cmd;
   if (!args.isEmpty()) {
     cout << ' ' << toString(args.join(' '));
   }
   cout << endl;
+}
+
+
+static int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
+{
+  printCmdArgs(cmd, args);
   cout << "  input: \"" << input << "\"" << endl;
 
   CommandRunner cr;
@@ -68,17 +76,7 @@ static int runCmdArgsIn(QString cmd, QStringList args, char const *input)
 
 static int runCmdIn(char const *cmd, char const *input)
 {
-  StrtokParse tok(cmd, " ");
-  xassert(tok.tokc() >= 1);
-
-  QString cmdString = toQString(tok.tokv(0));
-
-  QStringList args;
-  for (int i=1; i < tok.tokc(); i++) {
-    args.append(toQString(tok.tokv(i)));
-  }
-
-  return runCmdArgsIn(cmdString, args, input);
+  return runCmdArgsIn(cmd, QStringList(), input);
 }
 
 
@@ -98,13 +96,19 @@ void expectEq(char const *label, T const &actual, T const &expect)
   expectEq(#actual, actual, expect) /* user ; */
 
 
-static void printCmdArgs(char const *cmd, QStringList const &args)
+static void expectEq(char const *label, QByteArray const &actual, char const *expect)
 {
-  cout << "run: " << cmd;
-  if (!args.isEmpty()) {
-    cout << ' ' << toString(args.join(' '));
+  QByteArray expectBA(expect);
+  if (actual != expectBA) {
+    cout << "mismatched " << label << ':' << endl;
+    cout << "  actual: " << actual.constData() << endl;
+    cout << "  expect: " << expect << endl;
+    xfailure(stringb("mismatched " << label));
   }
-  cout << endl;
+  else {
+  cout << "  as expected, " << label << ": \""
+       << actual.constData() << "\"" << endl;
+  }
 }
 
 
@@ -158,9 +162,7 @@ static void runCmdArgsInExpectOut(char const *cmd,
   cr.setInputData(QByteArray(input));
   cr.startAndWait();
   EXPECT_EQ(cr.getFailed(), false);
-  xassert(cr.getOutputData() == QByteArray(output));
-  cout << "  as expected, output: \""
-       << cr.getOutputData().constData() << "\"" << endl;
+  EXPECT_EQ(cr.getOutputData(), output);
 }
 
 
@@ -173,17 +175,63 @@ static void runCmdArgsExpectOutErr(char const *cmd,
   cr.setArguments(args);
   cr.startAndWait();
   EXPECT_EQ(cr.getFailed(), false);
-  xassert(cr.getOutputData() == QByteArray(output));
-  cout << "  as expected, output: \""
-       << cr.getOutputData().constData() << "\"" << endl;
-  xassert(cr.getErrorData() == QByteArray(error));
-  cout << "  as expected, error : \""
-       << cr.getErrorData().constData() << "\"" << endl;
+  EXPECT_EQ(cr.getOutputData(), output);
+  EXPECT_EQ(cr.getErrorData(), error);
 }
 
 
+// Normalize a string that represents a directory path prior to
+// comparing it to an expected value.
+static string normalizeDir(string d)
+{
+  if (SMFileUtil().windowsPathSemantics()) {
+    d = replace(d, "\\", "/");
+    d = translate(d, "A-Z", "a-z");
+    if (d.length() >= 12 &&
+        d.substring(0, 10) == "/cygdrive/" &&
+        d[11] == '/')
+    {
+      char letter = d[10];
+      d = stringb(letter << ":/" << d.substring(12, d.length()-12));
+    }
+  }
+
+  // Paths can have whitespace at either end, but rarely do, and I
+  // need to discard the newline that 'pwd' prints.
+  d = trimWhitespace(d);
+
+  return d;
+}
 
 
+static void runCmdDirExpectOutDir(string const &cmd,
+  string const &wd, string const &expectDir)
+{
+  cout << "run: cmd=" << cmd << " wd=" << wd << endl;
+  CommandRunner cr;
+  cr.setProgram(toQString(cmd));
+  if (!wd.isempty()) {
+    cr.setWorkingDirectory(toQString(wd));
+  }
+  cr.startAndWait();
+  EXPECT_EQ(cr.getFailed(), false);
+
+  string actualDir = cr.getOutputData().constData();
+
+  string expectNormDir = normalizeDir(expectDir);
+  string actualNormDir = normalizeDir(actualDir);
+  EXPECT_EQ(actualNormDir, expectNormDir);
+  cout << "  as expected, got dir: " << trimWhitespace(actualDir) << endl;
+}
+
+
+static void runCmdExpectOutDir(string const &cmd, string const &output)
+{
+  runCmdDirExpectOutDir(cmd, "", output);
+}
+
+
+// ----------------------------- tests ---------------------------------
 static void testProcessError()
 {
   runCmdExpectError("nonexistent-command", QProcess::FailedToStart);
@@ -270,6 +318,28 @@ static void testLargeData2(bool swapOrder)
 }
 
 
+static void testWorkingDirectory()
+{
+  string cwd = SMFileUtil().currentDirectory();
+
+  runCmdExpectOutDir("pwd", cwd);
+  runCmdDirExpectOutDir("pwd", ".", cwd);
+
+  string testDir = stringb(cwd << "/test");
+  runCmdDirExpectOutDir("pwd", testDir, testDir);
+  runCmdDirExpectOutDir("pwd", "test", testDir);
+
+  string testDirA = stringb(cwd << "/test/a");
+  runCmdDirExpectOutDir("pwd", testDirA, testDirA);
+  runCmdDirExpectOutDir("pwd", "test/a", testDirA);
+
+#ifdef __WIN32__
+  runCmdDirExpectOutDir("pwd", "c:/", "/cygdrive/c");
+  runCmdDirExpectOutDir("pwd", "c:/windows", "/cygdrive/c/windows");
+#endif
+}
+
+
 // These aren't tests per se, just things that can be helpful to inspect.
 static void testMiscDiagnostics()
 {
@@ -308,6 +378,7 @@ static void entry(int argc, char **argv)
   testLargeData1();
   testLargeData2(false);
   testLargeData2(true);
+  testWorkingDirectory();
 
   testMiscDiagnostics();
 

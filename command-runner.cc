@@ -194,6 +194,14 @@ void CommandRunner::setEnvironment(QProcessEnvironment const &env)
 }
 
 
+void CommandRunner::setWorkingDirectory(QString const &dir)
+{
+  xassert(!m_startInvoked);
+
+  m_process.setWorkingDirectory(dir);
+}
+
+
 void CommandRunner::setInputData(QByteArray const &data)
 {
   xassert(!m_startInvoked);
@@ -209,6 +217,9 @@ void CommandRunner::startAndWait()
   xassert(m_hasProgramName);
 
   TRACE_CR("startAndWait: cmd: " << toString(m_process.program()));
+  if (!m_process.arguments().isEmpty()) {
+    TRACE_CR("startAndWait: args: " << toString(m_process.arguments().join(' ')));
+  }
 
   // This function can only be used once per object.
   xassert(!m_startInvoked);

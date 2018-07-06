@@ -630,10 +630,8 @@ void EditorWindow::editApplyCommand()
     dialog->setWindowTitle("Apply Command");
   }
 
-  // TODO: Run in directory containing file.
-  //FileTextDocument *file = editorWidget->getDocumentFile();
-  //string dir = dirname(file->filename);
-  string dir = SMFileUtil().currentDirectory();
+  FileTextDocument *file = editorWidget->getDocumentFile();
+  string dir = dirname(file->filename);
   dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
 
   if (!dialog->exec() || dialog->m_text.isEmpty()) {
@@ -649,6 +647,8 @@ void EditorWindow::editApplyCommand()
   // For now, I will assume I have a POSIX shell.
   cr.setProgram("sh");
   cr.setArguments(QStringList() << "-c" << dialog->m_text);
+
+  cr.setWorkingDirectory(toQString(dir));
 
   // TODO: This mishandles NUL bytes.
   cr.setInputData(QByteArray(input.c_str()));

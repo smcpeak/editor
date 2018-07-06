@@ -131,6 +131,10 @@ public:      // funcs
   // 'env' must not be empty.
   void setEnvironment(QProcessEnvironment const &env);
 
+  // Specify the directory in which to start the process.  The default
+  // is the current directory of the parent.
+  void setWorkingDirectory(QString const &dir);
+
   // Specify what to pass on standard input.  Default is nothing.
   void setInputData(QByteArray const &data);
 
