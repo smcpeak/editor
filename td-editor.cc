@@ -313,7 +313,7 @@ void TextDocumentEditor::insertText(char const *text, int textLen)
   // Put the cursor at the end of the inserted text.
   this->walkCursor(textLen);
 
-  scrollToCursor();
+  this->scrollToCursor();
 }
 
 
@@ -1074,9 +1074,7 @@ void TextDocumentEditor::insertDateTime(DateTimeProvider *provider)
     d.hour,
     d.minute);
 
-  this->deleteSelectionIf();
   this->insertString(dt);
-  this->scrollToCursor();
 }
 
 
