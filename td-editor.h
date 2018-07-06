@@ -236,6 +236,9 @@ public:      // funcs
   // Get selected text, or "" if nothing selected.
   string getSelectedText() const;
 
+  // Swap the cursor and mark.  Does nothing if the mark is inactive.
+  void swapCursorAndMark();
+
   // If the mark is active and greater than the cursor, swap them
   // so the mark is the lesser of the two.
   void normalizeCursorGTEMark();
@@ -361,13 +364,15 @@ public:      // funcs
                   FindStringFlags flags = FS_NONE) const;
 
   // ------------------- general text insertion ------------------
-  // Insert text, which might have newlines, at cursor.  Place the
+  // 1. If the mark is active, deleteSelection().
+  //
+  // 2. If the cursor is beyond EOL or EOF, fill with whitespace.
+  //
+  // 3. Insert text, which might have newlines, at cursor.  Place the
   // cursor at the end of the inserted text, scrolling if necessary to
   // ensure the cursor is in visible region afterward.
   //
   // 'textLen' is measured in bytes, not characters.
-  //
-  // Requires validCursor().
   void insertText(char const *text, int textLen);
 
   // Same, but using a 'string' object.
@@ -392,11 +397,13 @@ public:      // funcs
   void deleteChar()                    { deleteText(1); }
 
   // Delete the characters between 'tc1' and 'tc2'.  Both
-  // are truncated to ensure validity.  Required 'tc1 <= tc2'.
-  // Final cursor is left at 'tc1'.
+  // are truncated to ensure validity.  Requires 'tc1 <= tc2'.
+  // Final cursor is left at 'tc1'.  Clears the mark.
   void deleteTextRange(TextCoord tc1, TextCoord tc2);
 
-  // Delete the selected text.  Requires markActive().
+  // Delete the selected text.  Requires markActive().  Cursor is
+  // left at the low end of the selection, mark is cleared.  Scrolls
+  // to the cursor afterward.
   void deleteSelection();
 
   // Same as 'deleteSelection', but a no-op if not markActive().

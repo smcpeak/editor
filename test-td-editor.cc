@@ -1579,10 +1579,90 @@ static void testInsertDateTime()
     "2001-09-09 01:46\n"
     "x2001-09-09 01:46z\n");
 
+  // Test inserting beyond EOF.
+  tde.setCursor(TextCoord(5, 2));
+  tde.insertDateTime(&fdtp);
+  expectNM(tde, 5, 18,
+    "2001-09-09 01:46\n"
+    "x2001-09-09 01:46z\n"
+    "\n"
+    "\n"
+    "\n"
+    "  2001-09-09 01:46");
+
   // Test with current date/time, validating size only.
   tde.setCursor(TextCoord(2,0));
   tde.insertDateTime();
   expectCursor(tde, 2, 16);
+}
+
+
+// --------------------- testReplaceText ---------------------
+// Select from line/col1 to line/col2, replace with 'text'.
+static void replaceText(
+  TextDocumentEditor &tde,
+  int line1, int col1, int line2, int col2, bool swapCM,
+  char const *text)
+{
+  tde.setCursor(TextCoord(line1, col1));
+  tde.setMark(TextCoord(line2, col2));
+  if (swapCM) {
+    tde.swapCursorAndMark();
+  }
+  tde.insertNulTermText(text);
+}
+
+// This tests 'insertText', but specifically exercising the aspect
+// that does 'deleteSelection' first if the mark is active.
+//
+// If 'swapCM', we swap cursor and mark before each insertion.
+static void testReplaceText(bool swapCM)
+{
+  TextDocumentAndEditor tde;
+
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+  expectNM(tde, 3, 0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  // Start beyond EOL and span line boundary.
+  replaceText(tde, 1,4, 2,4, swapCM, "abc");
+  expectNM(tde, 1, 7,
+    "one\n"
+    "two abce\n");
+
+  // Span EOF.
+  replaceText(tde, 1,6, 3,4, swapCM, "q\nr");
+  expectNM(tde, 2, 1,
+    "one\n"
+    "two abq\n"
+    "r");
+
+  // Selection entirely beyond EOL.
+  replaceText(tde, 1,10, 1,15, swapCM, "shazam");
+  expectNM(tde, 1, 16,
+    "one\n"
+    "two abq   shazam\n"
+    "r");
+
+  // Selection entirely beyond EOF.
+  replaceText(tde, 4,2, 5,1, swapCM, "nein");
+  expectNM(tde, 4, 6,
+    "one\n"
+    "two abq   shazam\n"
+    "r\n"
+    "\n"
+    "  nein");
+
+  // Selection covers entire file.
+  replaceText(tde, 0,0, 4,6, swapCM, "gro\nk\n");
+  expectNM(tde, 2,0,
+    "gro\n"
+    "k\n");
 }
 
 
@@ -1613,6 +1693,8 @@ int main()
     testConfineCursorToVisible();
     testJustifyNearCursor();
     testInsertDateTime();
+    testReplaceText(false);
+    testReplaceText(true);
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

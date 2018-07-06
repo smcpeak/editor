@@ -147,13 +147,20 @@ string TextDocumentEditor::getSelectedText() const
 }
 
 
-void TextDocumentEditor::normalizeCursorGTEMark()
+void TextDocumentEditor::swapCursorAndMark()
 {
-  if (m_markActive &&
-      m_mark > m_cursor) {
+  if (m_markActive) {
     TextCoord tmp(m_mark);
     m_mark = m_cursor;
     m_cursor = tmp;
+  }
+}
+
+
+void TextDocumentEditor::normalizeCursorGTEMark()
+{
+  if (m_markActive && m_mark > m_cursor) {
+    this->swapCursorAndMark();
   }
 }
 
@@ -298,7 +305,8 @@ TextCoord TextDocumentEditor::mark() const
 
 void TextDocumentEditor::insertText(char const *text, int textLen)
 {
-  xassert(validCursor());
+  this->deleteSelectionIf();
+  this->fillToCursor();
 
   m_doc->insertAt(cursor(), text, textLen);
 
@@ -952,8 +960,9 @@ void TextDocumentEditor::insertNewlineAutoIndent()
 }
 
 
-void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
+void TextDocumentEditor::deleteTextRange(TextCoord const origTc1, TextCoord tc2)
 {
+  TextCoord tc1(origTc1);
   xassert(tc1.nonNegative());
   xassert(tc2.nonNegative());
   xassert(tc1 <= tc2);
@@ -962,25 +971,48 @@ void TextDocumentEditor::deleteTextRange(TextCoord tc1, TextCoord tc2)
   this->truncateCoord(tc1);
   this->truncateCoord(tc2);
 
-  // go to line2/col2, which is probably where the cursor already is
-  setCursor(tc2);
+  // Go to one end.
+  this->setCursor(tc2);
+  this->clearMark();
 
   // compute # of chars in span
   int length = this->computeSpanLength(tc1, tc2);
+  if (length) {
+    // Delete them as a left deletion.
+    this->deleteLR(true /*left*/, length);
 
-  // delete them as a left deletion; the idea is I suspect the
-  // original and final cursor are line2/col2, in which case the
-  // cursor movement can be elided (by automatic history compression)
-  deleteLR(true /*left*/, length);
+    // We should now be at 'tc1', which should be on the same line as
+    // 'origTc1', but possibly further to the left.
+    xassert(tc1 == m_cursor);
+    xassert(tc1.line <= origTc1.line);
 
-  // the cursor automatically ends up at line1/col1, as our spec
-  // demands
+    if (m_cursor.column < origTc1.column &&
+        m_cursor.column < this->cursorLineLength()) {
+      // We have some text to the right of the cursor, but we are not
+      // at the column we wanted to be on.  Insert spaces to move the
+      // cursor and push the carried text.
+      this->insertSpaces(origTc1.column - m_cursor.column);
+    }
+  }
+  else {
+    // Since 'length' was 0, it might be that origTc1 was beyond EOF,
+    // so could be arbitrarily far away.  Just jump there.  There is
+    // no carried text to worry about.
+    m_cursor = origTc1;
+  }
+
+  // Verify conformance to the spec.
+  xassert(m_cursor == origTc1);
+  xassert(m_markActive == false);
 }
 
 
 void TextDocumentEditor::indentLines(int start, int lines, int ind)
 {
   CursorRestorer cr(*this);
+
+  // Don't let the selection interfere with the text insertions below.
+  this->clearMark();
 
   for (int line=start; line < start+lines &&
                        line < this->numLines(); line++) {
