@@ -7,6 +7,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "editor-widget.h"             // EditorWidget
+#include "generic-catch.h"             // GENERIC_CATCH_BEGIN/END
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
@@ -621,6 +622,8 @@ void EditorWindow::editGotoLine()
 
 void EditorWindow::editApplyCommand()
 {
+  GENERIC_CATCH_BEGIN
+
   static TextInputDialog *dialog;
   if (!dialog) {
     dialog = new TextInputDialog();
@@ -710,6 +713,8 @@ void EditorWindow::editApplyCommand()
       "\" exited with code " << cr.getExitCode() <<
       ", although it produced no error output."));
   }
+
+  GENERIC_CATCH_END
 }
 
 
