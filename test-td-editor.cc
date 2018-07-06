@@ -1663,6 +1663,28 @@ static void testReplaceText(bool swapCM)
   expectNM(tde, 2,0,
     "gro\n"
     "k\n");
+
+  // More beyond EOL stuff.
+  replaceText(tde, 0,10, 1,10, swapCM, "x");
+  expectNM(tde, 0,11,
+    "gro       x\n");
+
+  // More beyond EOF stuff.
+  replaceText(tde, 3,10, 15,210, swapCM, "x");
+  expectNM(tde, 3,11,
+    "gro       x\n"
+    "\n"
+    "\n"
+    "          x");
+  replaceText(tde, 5,2, 15,210, swapCM, "x");
+  expectNM(tde, 5,3,
+    "gro       x\n"
+    "\n"
+    "\n"
+    "          x\n"
+    "\n"
+    "  x");
+
 }
 
 

@@ -120,7 +120,9 @@ public:      // funcs
 
   bool validCoord(TextCoord tc) const  { return m_doc->validCoord(tc); }
 
-  // Clamp the coordinate to the valid region of the document.
+  // Clamp the coordinate to the valid region of the document.  If it
+  // is beyond EOF, it gets set to 'endCoord()', even if that has a
+  // larger column number than 'tc' did originally.
   void truncateCoord(TextCoord &tc) const;
 
   // Walk the given coordinate forwards (right, then down, when

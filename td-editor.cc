@@ -445,8 +445,14 @@ void TextDocumentEditor::truncateCoord(TextCoord &tc) const
   tc.line = max(0, tc.line);
   tc.column = max(0, tc.column);
 
-  tc.line = min(tc.line, this->numLines() - 1); // numLines>=1 always
-  tc.column = min(tc.column, this->lineLength(tc.line));
+  if (tc.line >= this->numLines()) {
+    // Beyond EOF.  Go to end of document *without* preserving
+    // the column.
+    tc = this->endCoord();
+  }
+  else {
+    tc.column = min(tc.column, this->lineLength(tc.line));
+  }
 }
 
 
@@ -984,7 +990,8 @@ void TextDocumentEditor::deleteTextRange(TextCoord const origTc1, TextCoord tc2)
     // We should now be at 'tc1', which should be on the same line as
     // 'origTc1', but possibly further to the left.
     xassert(tc1 == m_cursor);
-    xassert(tc1.line <= origTc1.line);
+    xassert(m_cursor.line == origTc1.line);
+    xassert(m_cursor.column <= origTc1.column);
 
     if (m_cursor.column < origTc1.column &&
         m_cursor.column < this->cursorLineLength()) {
@@ -994,16 +1001,9 @@ void TextDocumentEditor::deleteTextRange(TextCoord const origTc1, TextCoord tc2)
       this->insertSpaces(origTc1.column - m_cursor.column);
     }
   }
-  else {
-    // Since 'length' was 0, it might be that origTc1 was beyond EOF,
-    // so could be arbitrarily far away.  Just jump there.  There is
-    // no carried text to worry about.
-    m_cursor = origTc1;
-  }
 
-  // Verify conformance to the spec.
-  xassert(m_cursor == origTc1);
-  xassert(m_markActive == false);
+  // Restore cursor per spec.
+  m_cursor = origTc1;
 }
 
 

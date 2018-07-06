@@ -1229,16 +1229,11 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           if (!editSafetyCheck()) {
             return;
           }
-          m_editor->fillToCursor();
 
-          // typing replaces selection
-          if (this->selectEnabled()) {
-            editDelete();
-          }
           // insert this character at the cursor
           QByteArray utf8(text.toUtf8());
           m_editor->insertText(utf8.constData(), utf8.length());
-          scrollToCursor();
+          this->redraw();
         }
         else {
           k->ignore();
