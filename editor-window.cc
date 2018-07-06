@@ -679,11 +679,10 @@ void EditorWindow::editApplyCommand()
   // We just pumped the event queue.  The editor we had before
   // could have gone away.
   if (tde == editorWidget->getDocumentEditor()) {
-    tde->beginUndoGroup();
-    tde->deleteSelectionIf();
-    tde->fillToCursor();
-    tde->insertText(cr.getOutputData().constData(), cr.getOutputData().size());
-    tde->endUndoGroup();
+    {
+      UndoHistoryGrouper ugh(*tde);
+      tde->insertText(cr.getOutputData().constData(), cr.getOutputData().size());
+    }
     editorWidget->scrollToCursor();
   }
   else {
