@@ -1102,8 +1102,6 @@ string TextDocumentEditor::clipboardCut()
 
 void TextDocumentEditor::clipboardPaste(char const *text, int textLen)
 {
-  this->fillToCursor();
-  this->deleteSelectionIf();
   this->insertText(text, textLen);
 }
 
