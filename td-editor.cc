@@ -928,7 +928,6 @@ void TextDocumentEditor::insertNewline()
     moveCursorBy(0, -overEdge);
   }
 
-  fillToCursor();      // might add newlines up to this point
   insertNulTermText("\n");
 }
 
