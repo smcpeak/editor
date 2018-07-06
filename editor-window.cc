@@ -208,6 +208,7 @@ void EditorWindow::buildMenu()
   {
     QMenu *window = this->menuBar->addMenu("&Window");
     window->addAction("&New Window", this, SLOT(windowNewWindow()));
+    window->addAction("&Close Window", this, SLOT(windowCloseWindow()));
     window->addAction("Occupy Left", this, SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
     window->addAction("Occupy Right", this, SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
     window->addAction("Cycle through files", this, SLOT(windowCycleFile()), Qt::Key_F6);  // for now
@@ -938,6 +939,14 @@ void EditorWindow::windowNewWindow()
 {
   EditorWindow *ed = this->globalState->createNewWindow(this->currentDocument());
   ed->show();
+}
+
+
+void EditorWindow::windowCloseWindow()
+{
+  // This sends 'closeEvent' and actually closes the window only if
+  // the event is accepted.
+  this->close();
 }
 
 

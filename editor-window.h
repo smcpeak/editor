@@ -131,6 +131,7 @@ public slots:
   void viewSetSoftMarginColumn();
 
   void windowNewWindow();
+  void windowCloseWindow();
   void windowOccupyLeft();
   void windowOccupyRight();
   void windowCycleFile();
