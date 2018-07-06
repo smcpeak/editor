@@ -277,11 +277,6 @@ public:      // funcs
   int visLines() const { return m_editor->visLines(); }
   int visCols() const { return m_editor->visColumns(); }
 
-  // --------------------------- insertion ---------------------------
-  // Insert 'text' at cursor.  Set cursor to the end of the inserted
-  // text and scroll if necessary so it is visible.
-  void insertText(char const *text, int textLen);
-
   // -------------------- reformatting whitespace ---------------------
   // Indent or unindent selected lines.
   void blockIndent(int amt);

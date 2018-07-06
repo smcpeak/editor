@@ -1264,13 +1264,6 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 }
 
 
-void EditorWidget::insertText(char const *text, int textLen)
-{
-  m_editor->insertText(text, textLen);
-  redraw();
-}
-
-
 void EditorWidget::scrollToCursor(int edgeGap)
 {
   m_editor->scrollToCursor(edgeGap);
