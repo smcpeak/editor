@@ -403,7 +403,7 @@ void entry()
   testDuplicateHotkeys();
   testColon3();
 
-  xassert(FileTextDocument::objectCount == 0);
+  xassert(FileTextDocument::s_objectCount == 0);
 
   cout << "test-file-td-list passed\n";
 }

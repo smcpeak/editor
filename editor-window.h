@@ -33,7 +33,7 @@ class EditorWindow : public QWidget,
   Q_OBJECT
 
 public:      // static data
-  static int objectCount;
+  static int s_objectCount;
 
 public:      // data
   // associated global state

@@ -51,7 +51,7 @@
 
 char const appName[] = "Editor";
 
-int EditorWindow::objectCount = 0;
+int EditorWindow::s_objectCount = 0;
 
 
 EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
@@ -139,13 +139,13 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   this->globalState->m_windows.append(this);
   this->globalState->m_documentList.addObserver(this);
 
-  EditorWindow::objectCount++;
+  EditorWindow::s_objectCount++;
 }
 
 
 EditorWindow::~EditorWindow()
 {
-  EditorWindow::objectCount--;
+  EditorWindow::s_objectCount--;
 
   this->globalState->m_documentList.removeObserver(this);
 

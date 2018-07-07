@@ -75,7 +75,7 @@ static void entry()
   testWhenUntitledExists();
   testReadFile();
 
-  xassert(FileTextDocument::objectCount == 0);
+  xassert(FileTextDocument::s_objectCount == 0);
 
   cout << "test-file-fd passed\n";
 

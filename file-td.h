@@ -30,10 +30,10 @@
 class FileTextDocument : public TextDocument {
 private:     // static data
   // Next value to use when assigning menu ids.
-  static int nextWindowMenuId;
+  static int s_nextWindowMenuId;
 
 public:      // static data
-  static int objectCount;
+  static int s_objectCount;
 
 private:     // data
   // True if there is a hotkey the user can use to jump to this buffer.

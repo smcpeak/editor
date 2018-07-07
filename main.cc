@@ -229,8 +229,8 @@ static int printObjectCountsIf(char const *when, bool print)
     }
 
   PRINT_COUNT(EditorWidget::s_objectCount);
-  PRINT_COUNT(EditorWindow::objectCount);
-  PRINT_COUNT(FileTextDocument::objectCount);
+  PRINT_COUNT(EditorWindow::s_objectCount);
+  PRINT_COUNT(FileTextDocument::s_objectCount);
   PRINT_COUNT(TextDocumentEditor::s_objectCount);
 
   #undef PRINT_COUNT

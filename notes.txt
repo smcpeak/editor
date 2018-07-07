@@ -15,7 +15,6 @@ TODOs:
   - longer timeout so "git annotate" can work
     - or progress dialog?
   - Alt+A hourglass
-  - rename 'objectCount' statics to start with "s_"
   - exc.h: remove CAUTIOUS_RELAY
 
 

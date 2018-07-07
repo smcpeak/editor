@@ -12,9 +12,9 @@
 
 // Do not start with 0 because QVariant::toInt() returns 0 to
 // indicate failure.
-int FileTextDocument::nextWindowMenuId = 1;
+int FileTextDocument::s_nextWindowMenuId = 1;
 
-int FileTextDocument::objectCount = 0;
+int FileTextDocument::s_objectCount = 0;
 
 FileTextDocument::FileTextDocument()
   : TextDocument(),
@@ -24,16 +24,16 @@ FileTextDocument::FileTextDocument()
     isUntitled(true),
     lastFileTimestamp(0),
     title(),
-    windowMenuId(nextWindowMenuId++),
+    windowMenuId(s_nextWindowMenuId++),
     //changed(false),
     highlighter(NULL)
 {
-  FileTextDocument::objectCount++;
+  FileTextDocument::s_objectCount++;
 }
 
 FileTextDocument::~FileTextDocument()
 {
-  FileTextDocument::objectCount--;
+  FileTextDocument::s_objectCount--;
   if (highlighter) {
     delete highlighter;
   }
