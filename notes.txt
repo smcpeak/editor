@@ -6,9 +6,6 @@ TODOs:
   - when a new TextEditor is created in a new window, copy the cursor
     from an existing window so I don't end up at the top of the file
     just because I split my view
-  - TDE: getIndentation versus countLeadingSpaceChars
-  - TDE: efficiency of countLeading, etc.
-  - TDE: should I be using 'isspace'?
 
   - run command to generate entire file; git annotate!
     - git diff

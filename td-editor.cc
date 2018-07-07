@@ -643,42 +643,46 @@ string TextDocumentEditor::getWordAfter(TextCoord tc) const
 }
 
 
-int TextDocumentEditor::countLeadingSpaceChars(int line) const
+int TextDocumentEditor::countLeadingSpacesTabs(int line) const
 {
-  // TODO: This is inefficient.
-  string contents = getWholeLine(line);
-  char const *p = contents.c_str();
-  while (*p && isspace(*p)) {      // TODO: wisdom of isspace?
-    p++;
+  xassert(line >= 0);
+  if (line >= m_doc->numLines()) {
+    return 0;
   }
-  return p - contents.c_str();
+  else {
+    return m_doc->countLeadingSpacesTabs(line);
+  }
 }
 
 
-int TextDocumentEditor::countTrailingSpaceChars(int line) const
+int TextDocumentEditor::countTrailingSpacesTabs(int line) const
 {
-  // TODO: This is inefficient.
-  string contents = getWholeLine(line);
-  char const *start = contents.c_str();
-  char const *end = start + contents.length();
-  char const *p = end;
-  while (start < p && isspace(p[-1])) {
-    p--;
+  xassert(line >= 0);
+  if (line >= m_doc->numLines()) {
+    return 0;
   }
-  return end - p;
+  else {
+    return m_doc->countTrailingSpacesTabs(line);
+  }
 }
 
 
 int TextDocumentEditor::getIndentation(int line) const
 {
-  string contents = getWholeLine(line);
-  for (char const *p = contents.c_str(); *p; p++) {
-    if (!isspace(*p)) {
-      // found non-ws char
-      return p - contents.c_str();
+  xassert(line >= 0);
+  if (line >= m_doc->numLines()) {
+    return -1;
+  }
+  else {
+    int lineLen = m_doc->lineLength(line);
+    int leading = m_doc->countLeadingSpacesTabs(line);
+    if (lineLen == leading) {
+      return -1;        // entirely whitespace
+    }
+    else {
+      return leading;
     }
   }
-  return -1;   // no non-ws
 }
 
 
@@ -1044,7 +1048,7 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
     }
 
     else {
-      int lineInd = this->countLeadingSpaceChars(line);
+      int lineInd = this->countLeadingSpacesTabs(line);
       for (int i=0; i<(-ind) && i<lineInd; i++) {
         this->deleteChar();
       }

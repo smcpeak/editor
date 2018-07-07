@@ -546,7 +546,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     int const startOfTrailingWhitespace =
       (line == m_editor->cursor().line)?
         lineLengthLoose :
-        lineLengthLoose - m_editor->countTrailingSpaceChars(line);
+        lineLengthLoose - m_editor->countTrailingSpacesTabs(line);
 
     // Number of visible glyphs on this line, including possible
     // synthesized newline for 'visibleWhitespace'.

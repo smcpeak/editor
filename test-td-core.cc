@@ -5,7 +5,7 @@
 
 #include "autofile.h"                  // AutoFILE
 #include "ckheap.h"                    // malloc_stats
-#include "test.h"                      // USUAL_MAIN
+#include "test.h"                      // USUAL_MAIN, EXPECT_EQ
 
 #include <assert.h>                    // assert
 #include <stdlib.h>                    // system
@@ -44,6 +44,82 @@ static void testAtomicRead()
   xassert(core.numLines() == 1001);
 
   remove("td-core.tmp");
+}
+
+
+static void insText(TextDocumentCore &tdc, int line, int col, char const *text)
+{
+  tdc.insertText(TextCoord(line, col), text, strlen(text));
+}
+
+static void insLine(TextDocumentCore &tdc, int line, int col, char const *text)
+{
+  tdc.insertLine(line);
+  insText(tdc, line, col, text);
+}
+
+
+static void checkSpaces(TextDocumentCore const &tdc,
+  int line, int leading, int trailing)
+{
+  EXPECT_EQ(tdc.countLeadingSpacesTabs(line), leading);
+  EXPECT_EQ(tdc.countTrailingSpacesTabs(line), trailing);
+}
+
+
+static void testVarious()
+{
+  TextDocumentCore tdc;
+
+  EXPECT_EQ(tdc.numLines(), 1);
+  EXPECT_EQ(tdc.lineLength(0), 0);
+  EXPECT_EQ(tdc.validCoord(TextCoord(0,0)), true);
+  EXPECT_EQ(tdc.validCoord(TextCoord(0,1)), false);
+  EXPECT_EQ(tdc.endCoord(), TextCoord(0,0));
+  EXPECT_EQ(tdc.maxLineLength(), 0);
+
+  insLine(tdc, 0,0, "one");
+  insLine(tdc, 1,0, "  two");
+  insLine(tdc, 2,0, "three   ");
+  insLine(tdc, 3,0, "    four    ");
+  insLine(tdc, 4,0, "     ");
+  tdc.insertLine(5);     // Uses NULL representation internally.
+  insText(tdc, 6,0, "      ");
+
+  EXPECT_EQ(tdc.numLines(), 7);
+  EXPECT_EQ(tdc.lineLength(0), 3);
+  EXPECT_EQ(tdc.lineLength(6), 6);
+  EXPECT_EQ(tdc.validCoord(TextCoord(0,0)), true);
+  EXPECT_EQ(tdc.validCoord(TextCoord(0,1)), true);
+  EXPECT_EQ(tdc.validCoord(TextCoord(6,6)), true);
+  EXPECT_EQ(tdc.validCoord(TextCoord(6,7)), false);
+  EXPECT_EQ(tdc.validCoord(TextCoord(7,0)), false);
+  EXPECT_EQ(tdc.endCoord(), TextCoord(6,6));
+  EXPECT_EQ(tdc.maxLineLength(), 12);
+
+  checkSpaces(tdc, 0, 0, 0);
+  checkSpaces(tdc, 1, 2, 0);
+  checkSpaces(tdc, 2, 0, 3);
+  checkSpaces(tdc, 3, 4, 4);
+  checkSpaces(tdc, 4, 5, 5);
+  checkSpaces(tdc, 5, 0, 0);
+  checkSpaces(tdc, 6, 6, 6);
+
+  for (int line=0; line <= 6; line++) {
+    // Tweak 'line' so it is recent and then repeat the whitespace queries.
+    TextCoord tc(line, 0);
+    char c = 'x';
+    tdc.insertText(tc, &c, 1);
+    tdc.deleteText(tc, 1);
+
+    checkSpaces(tdc, 0, 0, 0);
+    checkSpaces(tdc, 1, 2, 0);
+    checkSpaces(tdc, 2, 0, 3);
+    checkSpaces(tdc, 3, 4, 4);
+    checkSpaces(tdc, 4, 5, 5);
+    checkSpaces(tdc, 5, 0, 0);
+    checkSpaces(tdc, 6, 6, 6);
+  }
 }
 
 
@@ -107,6 +183,7 @@ static void entry()
   }
 
   testAtomicRead();
+  testVarious();
 
   printf("stats after:\n");
   malloc_stats();

@@ -331,16 +331,17 @@ public:      // funcs
   // ---------------- whitespace text queries -------------------
   // For the given line, count the number of whitespace characters
   // before either a non-ws character or EOL.  Beyond EOF, return 0.
-  int countLeadingSpaceChars(int line) const;
+  int countLeadingSpacesTabs(int line) const;
 
   // Count them from the end instead.
-  int countTrailingSpaceChars(int line) const;
+  int countTrailingSpacesTabs(int line) const;
 
   // On a particular line, get # of whitespace chars before first
   // non-ws char, or -1 if there are no non-ws chars.  Lines beyond
   // EOF return -1 (as if they are entirely whitespace).
   //
-  // TODO: Why do I have this and also 'countLeadingSpaceChars'?
+  // This is almost the same as 'countLeadingSpaceChars', except that
+  // it returns -1 instead of lineLength for blank lines.
   int getIndentation(int line) const;
 
   // Starting at 'line', including that line, search up until we find

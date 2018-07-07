@@ -503,6 +503,65 @@ bool TextDocumentCore::getTextSpan(TextCoord tc, char *text, int textLen) const
 }
 
 
+inline bool isSpaceOrTab(char c)
+{
+  return c == ' ' || c == '\t';
+}
+
+
+int TextDocumentCore::countLeadingSpacesTabs(int line) const
+{
+  bc(line);
+
+  if (line == recent) {
+    int i=0;
+    while (i < recentLine.length() &&
+           isSpaceOrTab(recentLine.get(i))) {
+      i++;
+    }
+    return i;
+  }
+  else {
+    char const *begin = lines.get(line);
+    if (!begin) {
+      return 0;
+    }
+    char const *p = begin;
+    while (*p != '\n' && isSpaceOrTab(*p)) {
+      p++;
+    }
+    return p - begin;
+  }
+}
+
+
+int TextDocumentCore::countTrailingSpacesTabs(int line) const
+{
+  bc(line);
+
+  if (line == recent) {
+    int i = recentLine.length();
+    while (i > 0 &&
+           isSpaceOrTab(recentLine.get(i-1))) {
+      i--;
+    }
+    return recentLine.length() - i;
+  }
+  else {
+    char const *begin = lines.get(line);
+    if (!begin) {
+      return 0;
+    }
+    char const *end = begin + bufStrlen(begin);
+    char const *p = end;
+    while (p > begin && isSpaceOrTab(p[-1])) {
+      p--;
+    }
+    return end - p;
+  }
+}
+
+
 void TextDocumentCore::addObserver(TextDocumentObserver *observer) const
 {
   this->observers.appendUnique(observer);

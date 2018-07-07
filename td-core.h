@@ -139,6 +139,14 @@ public:    // funcs
   // 'textLen' chars have been written into 'text'
   bool getTextSpan(TextCoord tc, char *text, int textLen) const;
 
+  // Return the number of consecutive spaces and tabs at the start of
+  // the given line.
+  int countLeadingSpacesTabs(int line) const;
+
+  // Return the number of consecutive spaces and tabs at the end of
+  // the given line.
+  int countTrailingSpacesTabs(int line) const;
+
   // ----------------- manipulation interface -------------------
   // This interface is deliberately very simple to *implement*: you are
   // either inserting or removing *blank* lines, or are editing the
@@ -158,7 +166,7 @@ public:    // funcs
   // *not* contain the '\n' character
   void insertText(TextCoord tc, char const *text, int length);
 
-  // delete text
+  // Delete 'length' characters at and the right of 'tc'.
   void deleteText(TextCoord tc, int length);
 
   // ---------------------- whole file -------------------------

@@ -1689,10 +1689,10 @@ static void testReplaceText(bool swapCM)
 static void expectCountSpace(TextDocumentEditor &tde,
   int line, int expectLeading, int expectTrailing)
 {
-  int leading = tde.countLeadingSpaceChars(line);
+  int leading = tde.countLeadingSpacesTabs(line);
   EXPECT_EQ(leading, expectLeading);
 
-  int trailing = tde.countTrailingSpaceChars(line);
+  int trailing = tde.countTrailingSpacesTabs(line);
   EXPECT_EQ(trailing, expectTrailing);
 }
 
