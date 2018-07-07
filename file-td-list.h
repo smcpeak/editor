@@ -13,6 +13,7 @@
 
 // Forward in this file.
 class FileTextDocumentListObserver;
+class FileTextDocumentInitialView;
 
 
 // A list of open files being edited.
@@ -178,6 +179,11 @@ public:      // funcs
 
   // Call 'fileTextDocumentListOrderChanged()' for all observers.
   void notifyListOrderChanged();
+
+  // Call 'getFileTextDocumentInitialView' for all observers until one
+  // returns true; else false if none do so.
+  bool notifyGetInitialView(FileTextDocument *file,
+    FileTextDocumentInitialView /*OUT*/ &view);
 };
 
 
@@ -192,6 +198,8 @@ public:      // funcs
 // These method names are relatively long because it is expected that
 // a class implementing the interface will itself have many members,
 // and these methods need to be uniquely named among that larger set.
+//
+// TODO: These should all be 'noexcept'.
 class FileTextDocumentListObserver {
 public:      // funcs
   // A file was added to the list.
@@ -223,8 +231,27 @@ public:      // funcs
   virtual void fileTextDocumentListOrderChanged(
     FileTextDocumentList *documentList);
 
+  // This is a question, not a notification.  Some widget is about to
+  // show 'file' for the first time and wants to know a good view area
+  // within the file to start at.  If the observer has one, it should
+  // fill in 'view' and return true; else false.
+  virtual bool getFileTextDocumentInitialView(
+    FileTextDocumentList *documentList, FileTextDocument *file,
+    FileTextDocumentInitialView /*OUT*/ &view);
+
   // Silence dumb warnings.
   virtual ~FileTextDocumentListObserver();
+};
+
+
+// Details about a view of a document suitable for another view
+// to be constructed based on it.
+struct FileTextDocumentInitialView {
+  // Upper-left grid spot.
+  TextCoord firstVisible;
+
+  // Location of cursor.
+  TextCoord cursor;
 };
 
 

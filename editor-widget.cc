@@ -63,7 +63,7 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
   : QWidget(parent),
     m_infoBox(NULL),
     m_status(status_),
-    m_editor(new FileTextDocumentEditor(tdf)),
+    m_editor(NULL),
     m_editorList(),
     m_documentList(documentList),
     m_topMargin(1),
@@ -88,7 +88,11 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
   xassert(tdf);
   xassert(status_);
 
-  m_editorList.prepend(m_editor);
+  // This will always make a new editor object since m_editorList is
+  // empty, but it also adds it to m_editorList and may initialize the
+  // view from another window.
+  m_editor = this->getOrMakeEditor(tdf);
+
   m_documentList->addObserver(this);
 
   setFonts(bdfFontData_editor14r,
@@ -259,9 +263,26 @@ EditorWidget::FileTextDocumentEditor *
     }
   }
 
-  // Have to make a new one.
+  // Have to make a new editor.
+  //
+  // Lets ask the other windows if they know a good starting position.
+  // This allows a user to open a new window without losing their
+  // position in all of the open files.
+  FileTextDocumentInitialView view;
+  bool hasView = m_documentList->notifyGetInitialView(file, view);
+
+  // Make the new editor.
   FileTextDocumentEditor *ret = new FileTextDocumentEditor(file);
   m_editorList.prepend(ret);
+  if (hasView) {
+    ret->setFirstVisible(view.firstVisible);
+    ret->setCursor(view.cursor);
+
+    // We do not scroll to cursor here.  If the cursor is offscreen,
+    // scrolling will happen on the first keypress.  Furthermore,
+    // during window creation, this function is called before the
+    // true window size is known.
+  }
   return ret;
 }
 
@@ -327,6 +348,25 @@ void EditorWidget::fileTextDocumentRemoved(
   if (m_editor->m_fileDoc == file) {
     this->setDocumentFile(documentList->getFileAt(0));
   }
+}
+
+
+bool EditorWidget::getFileTextDocumentInitialView(
+  FileTextDocumentList *documentList, FileTextDocument *file,
+  FileTextDocumentInitialView /*OUT*/ &view)
+{
+  FOREACH_OBJLIST(FileTextDocumentEditor, m_editorList, iter) {
+    FileTextDocumentEditor const *ed = iter.data();
+
+    // Only return our view if it has moved away from the top
+    // of the file.
+    if (ed->m_fileDoc == file && !ed->firstVisible().isZero()) {
+      view.firstVisible = ed->firstVisible();
+      view.cursor = ed->cursor();
+      return true;
+    }
+  }
+  return false;
 }
 
 

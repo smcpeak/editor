@@ -449,6 +449,27 @@ void FileTextDocumentList::notifyListOrderChanged()
 }
 
 
+bool FileTextDocumentList::notifyGetInitialView(
+  FileTextDocument *file,
+  FileTextDocumentInitialView /*OUT*/ &view)
+{
+  TRACE("file-td-list",
+    stringb("notifyGetInitialView: file=" << file->filename));
+
+  Restorer<bool> restorer(m_iteratingOverObservers, true);
+  SFOREACH_OBJLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+    if (iter.data()->getFileTextDocumentInitialView(this, file, view)) {
+      TRACE("file-td-list",
+        stringb("notifyGetInitialView: found: fv=" << view.firstVisible));
+      return true;
+    }
+  }
+
+  TRACE("file-td-list", "notifyGetInitialView: not found");
+  return false;
+}
+
+
 // ----------------- FileTextDocumentListObserver -------------------
 void FileTextDocumentListObserver::fileTextDocumentAdded(
   FileTextDocumentList *documentList, FileTextDocument *file)
@@ -465,6 +486,13 @@ void FileTextDocumentListObserver::fileTextDocumentAttributeChanged(
 void FileTextDocumentListObserver::fileTextDocumentListOrderChanged(
   FileTextDocumentList *documentList)
 {}
+
+bool FileTextDocumentListObserver::getFileTextDocumentInitialView(
+  FileTextDocumentList *documentList, FileTextDocument *file,
+  FileTextDocumentInitialView /*OUT*/ &view)
+{
+  return false;
+}
 
 FileTextDocumentListObserver::~FileTextDocumentListObserver()
 {}
