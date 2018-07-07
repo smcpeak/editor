@@ -3,13 +3,18 @@
 
 #include "lex_hilite.h"                // this module
 
+// editor
 #include "inclexer.h"                  // IncLexer
-#include "strutil.h"                   // quoted
 #include "td-core.h"                   // TextDocumentCore
 #include "td-editor.h"                 // TextDocumentEditor
 #include "textcategory.h"              // LineCategories
+
+// smbase
+#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
+#include "strutil.h"                   // quoted
 #include "trace.h"                     // TRACE
 
+// libc
 #include <stdlib.h>                    // exit
 
 
@@ -105,8 +110,10 @@ LexerState LexHighlighter::getSavedState(int line)
 }
 
 
-void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line)
+void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line) noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   // if region ends after 'line', then now it ends one line later
   if (!changedIsEmpty() &&
       changedEnd >= line+1) {
@@ -123,11 +130,15 @@ void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line)
   // insert a new saved state, initialized to the state of the
   // line above it
   savedState.insert(line, getSavedState(line-1));
+
+  GENERIC_CATCH_END
 }
 
 
-void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line)
+void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line) noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   // if region ends after 'line', then now it ends one line earlier
   if (!changedIsEmpty() &&
       changedEnd > line) {
@@ -143,18 +154,39 @@ void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line)
 
   // remove a saved state
   savedState.remove(line);
+
+  GENERIC_CATCH_END
 }
 
 
-
-void LexHighlighter::observeInsertText(TextDocumentCore const &, TextCoord tc, char const *, int)
+void LexHighlighter::observeInsertText(TextDocumentCore const &, TextCoord tc, char const *, int) noexcept
 {
+  GENERIC_CATCH_BEGIN
   addToChanged(tc.line);
+  GENERIC_CATCH_END
 }
 
-void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextCoord tc, int)
+void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextCoord tc, int) noexcept
 {
+  GENERIC_CATCH_BEGIN
   addToChanged(tc.line);
+  GENERIC_CATCH_END
+}
+
+
+void LexHighlighter::observeTotalChange(TextDocumentCore const &doc) noexcept
+{
+  GENERIC_CATCH_BEGIN
+
+  changedBegin = 0;
+  changedEnd = 0;
+  waterline = 0;
+
+  // all of the saved state is stale
+  savedState.clear();
+  savedState.insertManyZeroes(0, doc.numLines());
+
+  GENERIC_CATCH_END
 }
 
 

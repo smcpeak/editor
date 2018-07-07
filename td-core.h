@@ -206,7 +206,12 @@ inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
 }
 
 
-// interface for observing changes to a TextDocumentCore
+// Interface for observing changes to a TextDocumentCore.
+//
+// All methods have 'noexcept'.  From the perspective of the observee,
+// these cannot fail, as there is nothing the observee can do about it
+// nor an appropriate way to report it.  Observers are obligated to
+// catch any exceptions they throw.
 class TextDocumentObserver {
 protected:
   // this is to silence a g++ warning; it is *not* the case that
@@ -220,17 +225,21 @@ public:
   // to remember which buffer it's observing.  These are called
   // *after* the TextDocumentCore updates its internal representation.  The
   // default implementations do nothing.
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line);
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line);
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length);
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length);
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept;
+
+  // The document has changed in some major way that does not easily
+  // allow for incremental updates.  Observers must refresh completely.
+  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept;
 
   // This notification is sent to observers if the observee is actually
   // a TextDocument (i.e., with undo/redo history) and the "has unsaved
   // changes" property may have changed.
   //
   // This method is a slight abuse of the observer pattern.
-  virtual void observeUnsavedChangesChange(TextDocument const *doc);
+  virtual void observeUnsavedChangesChange(TextDocument const *doc) noexcept;
 };
 
 #endif // TD_CORE_H

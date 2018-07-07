@@ -5,12 +5,18 @@
 #define EDITOR_WIDGET_H
 
 #include "inputproxy.h"                // InputProxy, InputPseudoKey
-#include "owner.h"                     // Owner
 #include "td-editor.h"                 // TextDocumentEditor
 #include "file-td.h"                   // FileTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
 
+// smqtutil
+#include "qtguiutil.h"                 // unhandledExceptionMsgbox
+
+// smbase
+#include "owner.h"                     // Owner
+
+// Qt
 #include <qwidget.h>                   // QWidget
 
 class IncSearch;                       // incsearch.h
@@ -324,11 +330,12 @@ public:      // funcs
   bool editSafetyCheck();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
-  virtual void observeUnsavedChangesChange(TextDocument const *doc) override;
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept override;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept override;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept override;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept override;
+  virtual void observeTotalChange(TextDocumentCore const &buf) noexcept override;
+  virtual void observeUnsavedChangesChange(TextDocument const *doc) noexcept override;
 
   // called by an input proxy when it detaches; I can
   // reset the mode pixmap then
@@ -358,6 +365,9 @@ public:      // funcs
 
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
+
+  void printUnhandled(xBase const &x)
+    { unhandledExceptionMsgbox(this, x); }
 
 public slots:
   // slots to respond to scrollbars

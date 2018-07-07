@@ -7,8 +7,13 @@
 #include "file-td.h"                   // FileTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
 
+// smqtutil
+#include "qtguiutil.h"                 // unhandledExceptionMsgbox
+
+// smbase
 #include "str.h"                       // string
 
+// Qt
 #include <QWidget>
 
 class QLabel;
@@ -70,6 +75,9 @@ private:     // funcs
 
   void rebuildWindowMenu();
   void complain(char const *msg);
+
+  void printUnhandled(xBase const &x)
+    { unhandledExceptionMsgbox(this, x); }
 
 protected:   // funcs
   void closeEvent(QCloseEvent *event) override;

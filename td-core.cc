@@ -366,6 +366,10 @@ void TextDocumentCore::swapWith(TextDocumentCore &other) noexcept
     swap(this->recentLine, other.recentLine);
     swap(this->longestLengthSoFar, other.longestLengthSoFar);
   }
+
+  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
+    iter.data()->observeTotalChange(*this);
+  }
 }
 
 
@@ -521,19 +525,22 @@ void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
 
 
 // -------------------- TextDocumentObserver ------------------
-void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int)
+void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int) noexcept
 {}
 
-void TextDocumentObserver::observeDeleteLine(TextDocumentCore const &, int)
+void TextDocumentObserver::observeDeleteLine(TextDocumentCore const &, int) noexcept
 {}
 
-void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int)
+void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) noexcept
 {}
 
-void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord, int)
+void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord, int) noexcept
 {}
 
-void TextDocumentObserver::observeUnsavedChangesChange(TextDocument const *doc)
+void TextDocumentObserver::observeTotalChange(TextDocumentCore const &doc) noexcept
+{}
+
+void TextDocumentObserver::observeUnsavedChangesChange(TextDocument const *doc) noexcept
 {}
 
 

@@ -7,7 +7,6 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "editor-widget.h"             // EditorWidget
-#include "generic-catch.h"             // GENERIC_CATCH_BEGIN/END
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
@@ -22,7 +21,7 @@
 #include "qtutil.h"                    // toQString
 
 // smbase
-#include "exc.h"                       // XOpen
+#include "exc.h"                       // XOpen, GENERIC_CATCH_BEGIN/END
 #include "mysig.h"                     // printSegfaultAddrs
 #include "nonport.h"                   // fileOrDirectoryExists
 #include "sm-file-util.h"              // SMFileUtil
@@ -30,9 +29,11 @@
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE_ARGS
 
+// libc
 #include <string.h>                    // strrchr
 #include <stdlib.h>                    // atoi
 
+// Qt
 #include <qmenubar.h>                  // QMenuBar
 #include <qscrollbar.h>                // QScrollBar
 #include <qlabel.h>                    // QLabel
@@ -46,8 +47,6 @@
 #include <QCloseEvent>
 #include <QDesktopWidget>
 #include <QInputDialog>
-
-#include <stdlib.h>                    // atoi
 
 
 char const appName[] = "Editor";

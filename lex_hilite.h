@@ -56,10 +56,11 @@ public:      // funcs
   virtual ~LexHighlighter();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) override;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) override;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) override;
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept override;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept override;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept override;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept override;
+  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept override;
 
   // Highlighter funcs
   virtual void highlight(TextDocumentCore const &buf, int line,

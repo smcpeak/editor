@@ -1,7 +1,5 @@
 
 TODOs:
-  - BUG: open 20-line file, replace it with 116-line file, then
-    painting fails after reload
   - BUG: Alt+D while beyond EOF fails assertion
   - BUG: Somehow using Alt+A I triggered this:
 
@@ -13,6 +11,12 @@ TODOs:
       QCoreApplication::notify() and catch all exceptions there.
 
       Assertion failed: ok, file td-editor.cc line 832
+
+  - longer timeout so "git annotate" can work
+    - or progress dialog?
+  - Alt+A hourglass
+  - rename 'objectCount' statics to start with "s_"
+  - exc.h: remove CAUTIOUS_RELAY
 
 
   - Alt+A to pass selection through a filter command

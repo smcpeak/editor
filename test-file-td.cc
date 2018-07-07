@@ -35,9 +35,45 @@ static void testWhenUntitledExists()
 }
 
 
+class TestTDO : public TextDocumentObserver {
+public:      // data
+  // Number of calls to 'observeTotalChange;
+  int m_totalChanges;
+
+public:      // funcs
+  TestTDO()
+    : TextDocumentObserver(),
+      m_totalChanges(0)
+  {}
+
+  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept override
+  {
+    m_totalChanges++;
+  }
+};
+
+
+// Make sure that reading a file broadcasts 'observeTotalChange'.
+static void testReadFile()
+{
+  FileTextDocument file;
+  file.filename = "td.h";
+  file.isUntitled = false;
+  file.readFile();
+
+  TestTDO ttdo;
+  file.addObserver(&ttdo);
+  file.readFile();
+  file.removeObserver(&ttdo);
+
+  xassert(ttdo.m_totalChanges == 1);
+}
+
+
 static void entry()
 {
   testWhenUntitledExists();
+  testReadFile();
 
   xassert(FileTextDocument::objectCount == 0);
 

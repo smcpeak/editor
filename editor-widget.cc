@@ -4,7 +4,6 @@
 #include "editor-widget.h"   // this module
 
 // this dir
-#include "generic-catch.h"   // GENERIC_CATCH_BEGIN/END
 #include "inputproxy.h"      // InputProxy
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
@@ -25,6 +24,7 @@
 #include "array.h"           // Array
 #include "bdffont.h"         // BDFFont
 #include "ckheap.h"          // malloc_stats
+#include "exc.h"             // GENERIC_CATCH_BEGIN/END
 #include "macros.h"          // Restorer
 #include "nonport.h"         // getMilliseconds
 #include "trace.h"           // TRACE
@@ -863,7 +863,7 @@ bool EditorWidget::event(QEvent *e)
     return QWidget::event(e);
   }
   catch (xBase &x) {
-    printUnhandled(this, toCStr(x.why()));
+    printUnhandled(x);
     return true;   // clearly it was handled by someone
   }
 }
@@ -1589,8 +1589,9 @@ void EditorWidget::startListening()
 // same line (sequence of chars).  See doc/test-plan.txt, test
 // "Multiple window simultaneous edit".
 
-void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
+void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noexcept
 {
+  GENERIC_CATCH_BEGIN
   TRACE("observe", "observeInsertLine line=" << line);
 
   // Internally inside HE_text::insert(), the routine that actually
@@ -1612,10 +1613,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line)
   }
 
   redraw();
+  GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
+void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) noexcept
 {
+  GENERIC_CATCH_BEGIN
   TRACE("observe", "observeDeleteLine line=" << line);
 
   if (line < m_editor->cursor().line) {
@@ -1628,25 +1631,39 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line)
   }
 
   redraw();
+  GENERIC_CATCH_END
 }
 
 
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int)
+void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) noexcept
 {
+  GENERIC_CATCH_BEGIN
   redraw();
+  GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int)
+void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) noexcept
 {
+  GENERIC_CATCH_BEGIN
   redraw();
+  GENERIC_CATCH_END
 }
 
-void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc)
+void EditorWidget::observeTotalChange(TextDocumentCore const &buf) noexcept
 {
+  GENERIC_CATCH_BEGIN
   redraw();
+  GENERIC_CATCH_END
+}
+
+void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) noexcept
+{
+  GENERIC_CATCH_BEGIN
+  redraw();
+  GENERIC_CATCH_END
 }
 
 
