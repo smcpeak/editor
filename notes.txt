@@ -2,7 +2,6 @@
 TODOs:
   - longer timeout so "git annotate" can work
     - or progress dialog?
-  - Alt+A hourglass
   - when a new TextEditor is created in a new window, copy the cursor
     from an existing window so I don't end up at the top of the file
     just because I split my view

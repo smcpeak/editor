@@ -717,14 +717,16 @@ void EditorWindow::editApplyCommand()
   }
 
   if (runner.getFailed()) {
-    // TODO: Limit this to a reasonable size of error output.
-    QMessageBox::warning(this, "Command Failed", qstringb(
+    QMessageBox mb;
+    mb.setWindowTitle("Command Failed");
+    mb.setText(qstringb(
       "The command \"" << commandString <<
       "\" failed: " << toString(runner.getErrorMessage()) <<
-      "\n\nError output:\n\n" <<
       (runner.getErrorData().isEmpty()?
-        "(There was no error output.)" :
-        runner.getErrorData().constData())));
+        "\n\nThere was no error output." :
+        "\n\nSee details for its error output.")));
+    mb.setDetailedText(QString::fromUtf8(runner.getErrorData()));
+    mb.exec();
     return;
   }
 
@@ -750,19 +752,23 @@ void EditorWindow::editApplyCommand()
   // the text because showing a dialog is another way to pump the
   // event queue.
   if (!runner.getErrorData().isEmpty()) {
-    // TODO: Limit this to a reasonable amount of error text and
-    // avoid using non-printable characters.
-    QMessageBox::warning(this, "Command Error Output", qstringb(
+    QMessageBox mb;
+    mb.setWindowTitle("Command Error Output");
+    mb.setText(qstringb(
       "The command \"" << commandString <<
       "\" exited with code " << runner.getExitCode() <<
-      " and produced some error output:\n\n" <<
-      runner.getErrorData().constData()));
+      " and produced some error output."));
+    mb.setDetailedText(QString::fromUtf8(runner.getErrorData()));
+    mb.exec();
   }
   else if (runner.getExitCode() != 0) {
-    QMessageBox::warning(this, "Command Exit Code", qstringb(
+    QMessageBox mb;
+    mb.setWindowTitle("Command Exit Code");
+    mb.setText(qstringb(
       "The command \"" << commandString <<
       "\" exited with code " << runner.getExitCode() <<
       ", although it produced no error output."));
+    mb.exec();
   }
 
   GENERIC_CATCH_END
