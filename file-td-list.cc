@@ -472,24 +472,24 @@ bool FileTextDocumentList::notifyGetInitialView(
 
 // ----------------- FileTextDocumentListObserver -------------------
 void FileTextDocumentListObserver::fileTextDocumentAdded(
-  FileTextDocumentList *documentList, FileTextDocument *file)
+  FileTextDocumentList *documentList, FileTextDocument *file) noexcept
 {}
 
 void FileTextDocumentListObserver::fileTextDocumentRemoved(
-  FileTextDocumentList *documentList, FileTextDocument *file)
+  FileTextDocumentList *documentList, FileTextDocument *file) noexcept
 {}
 
 void FileTextDocumentListObserver::fileTextDocumentAttributeChanged(
-  FileTextDocumentList *documentList, FileTextDocument *file)
+  FileTextDocumentList *documentList, FileTextDocument *file) noexcept
 {}
 
 void FileTextDocumentListObserver::fileTextDocumentListOrderChanged(
-  FileTextDocumentList *documentList)
+  FileTextDocumentList *documentList) noexcept
 {}
 
 bool FileTextDocumentListObserver::getFileTextDocumentInitialView(
   FileTextDocumentList *documentList, FileTextDocument *file,
-  FileTextDocumentInitialView /*OUT*/ &view)
+  FileTextDocumentInitialView /*OUT*/ &view) noexcept
 {
   return false;
 }

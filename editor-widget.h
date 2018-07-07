@@ -312,12 +312,12 @@ public:      // funcs
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) override;
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
 
   // Answer a query from the FileTextDocumentList.
   virtual bool getFileTextDocumentInitialView(
     FileTextDocumentList *documentList, FileTextDocument *file,
-    FileTextDocumentInitialView /*OUT*/ &view) override;
+    FileTextDocumentInitialView /*OUT*/ &view) noexcept override;
 
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process.

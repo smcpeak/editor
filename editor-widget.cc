@@ -330,8 +330,9 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 
 
 void EditorWidget::fileTextDocumentRemoved(
-  FileTextDocumentList *documentList, FileTextDocument *file)
+  FileTextDocumentList *documentList, FileTextDocument *file) noexcept
 {
+  GENERIC_CATCH_BEGIN
   xassert(documentList == m_documentList);
 
   // Remove 'file' from my list if I have it.
@@ -348,13 +349,17 @@ void EditorWidget::fileTextDocumentRemoved(
   if (m_editor->m_fileDoc == file) {
     this->setDocumentFile(documentList->getFileAt(0));
   }
+
+  GENERIC_CATCH_END
 }
 
 
 bool EditorWidget::getFileTextDocumentInitialView(
   FileTextDocumentList *documentList, FileTextDocument *file,
-  FileTextDocumentInitialView /*OUT*/ &view)
+  FileTextDocumentInitialView /*OUT*/ &view) noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   FOREACH_OBJLIST(FileTextDocumentEditor, m_editorList, iter) {
     FileTextDocumentEditor const *ed = iter.data();
 
@@ -367,6 +372,8 @@ bool EditorWidget::getFileTextDocumentInitialView(
     }
   }
   return false;
+
+  GENERIC_CATCH_END_RET(false)
 }
 
 

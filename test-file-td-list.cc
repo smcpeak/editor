@@ -45,28 +45,28 @@ public:      // funcs
   {}
 
   void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file) override
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ADDED, file));
   }
 
   void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) override
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_REMOVED, file));
   }
 
   void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file) override
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ATTRIBUTE, file));
   }
 
   void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList) override
+    FileTextDocumentList *documentList) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ORDER));

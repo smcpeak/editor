@@ -199,17 +199,17 @@ public:      // funcs
 // a class implementing the interface will itself have many members,
 // and these methods need to be uniquely named among that larger set.
 //
-// TODO: These should all be 'noexcept'.
+// As these are notification methods, they should not throw exceptions.
 class FileTextDocumentListObserver {
 public:      // funcs
   // A file was added to the list.
   virtual void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file);
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept;
 
   // A file was removed.  When this is called, the file has already
   // been removed from the list, but the object is still valid.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file);
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept;
 
   // An attribute of a file may have changed.  The client has to
   // inspect the file to determine what has changed.
@@ -224,12 +224,12 @@ public:      // funcs
   // concept, since we are notifying about a single object, rather
   // that something intrinsically tied to the "list" aspect.
   virtual void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file);
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept;
 
   // The order of files in the list may have changed.  Observers must
   // query the list in order to obtain the new order.
   virtual void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList);
+    FileTextDocumentList *documentList) noexcept;
 
   // This is a question, not a notification.  Some widget is about to
   // show 'file' for the first time and wants to know a good view area
@@ -237,7 +237,7 @@ public:      // funcs
   // fill in 'view' and return true; else false.
   virtual bool getFileTextDocumentInitialView(
     FileTextDocumentList *documentList, FileTextDocument *file,
-    FileTextDocumentInitialView /*OUT*/ &view);
+    FileTextDocumentInitialView /*OUT*/ &view) noexcept;
 
   // Silence dumb warnings.
   virtual ~FileTextDocumentListObserver();

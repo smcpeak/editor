@@ -110,13 +110,13 @@ public:      // funcs
 
   // FileTextDocumentListObserver methods.
   void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file) override;
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
   void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) override;
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
   void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file) override;
+    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
   void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList) override;
+    FileTextDocumentList *documentList) noexcept override;
 
 public slots:
   void fileNewFile();

@@ -551,14 +551,18 @@ bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
 
 
 void EditorWindow::fileTextDocumentAdded(
-  FileTextDocumentList *, FileTextDocument *)
+  FileTextDocumentList *, FileTextDocument *) noexcept
 {
+  GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::fileTextDocumentRemoved(
-  FileTextDocumentList *, FileTextDocument *)
+  FileTextDocumentList *, FileTextDocument *) noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   this->rebuildWindowMenu();
 
   // It is possible that the file our widget is editing is being
@@ -570,21 +574,29 @@ void EditorWindow::fileTextDocumentRemoved(
   //
   // Instead, those updates happen in response to the 'viewChanged'
   // signal, which the widget will emit when it learns of the change.
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::fileTextDocumentAttributeChanged(
-  FileTextDocumentList *, FileTextDocument *)
+  FileTextDocumentList *, FileTextDocument *) noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   this->rebuildWindowMenu();
 
   // The title of the file we are looking at could have changed.
   this->editorViewChanged();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::fileTextDocumentListOrderChanged(
-  FileTextDocumentList *)
+  FileTextDocumentList *) noexcept
 {
+  GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();
+  GENERIC_CATCH_END
 }
 
 
