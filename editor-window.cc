@@ -18,6 +18,7 @@
 #include "textinput.h"                 // TextInputDialog
 
 // smqtutil
+#include "qtguiutil.h"                 // CursorSetRestore
 #include "qtutil.h"                    // toQString
 
 // smbase
@@ -677,12 +678,24 @@ void EditorWindow::editApplyCommand()
   // This blocks until the program terminates or times out.  However,
   // it will pump the GUI event queue while waiting.
   //
-  // TODO: Show a wait cursor?  Block input events?
+  // TODO: Block input events?
   //
   // TODO: Make timeout adjustable.
-  cr.startAndWait();
+  {
+    // Both the window and the widget have to have their cursor
+    // changed, the latter (I think) because it already has a
+    // non-standard cursor set.
+    CursorSetRestore csr(this, Qt::WaitCursor);
+    CursorSetRestore csr2(editorWidget, Qt::WaitCursor);
+
+    cr.startAndWait();
+  }
+
+  // TODO: BUG: I am accessing dialog->m_text below but that could
+  // have changed while I was waiting.
 
   if (cr.getFailed()) {
+    // TODO: Limit this to a reasonable size of error output.
     QMessageBox::warning(this, "Command Failed", qstringb(
       "The command \"" << toString(dialog->m_text) <<
       "\" failed: " << toString(cr.getErrorMessage()) <<
