@@ -642,104 +642,126 @@ void EditorWindow::editApplyCommand()
 {
   GENERIC_CATCH_BEGIN
 
-  static TextInputDialog *dialog;
-  if (!dialog) {
-    dialog = new TextInputDialog();
-    dialog->setWindowTitle("Apply Command");
-  }
+  // Object to manage the child process.
+  CommandRunner runner;
 
-  FileTextDocument *file = editorWidget->getDocumentFile();
-  string dir = dirname(file->filename);
-  dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
+  // The command the user wants to run.
+  string commandString;
 
-  if (!dialog->exec() || dialog->m_text.isEmpty()) {
-    return;
-  }
-  dialog->rememberInput(dialog->m_text);
+  // The active editor when the command was started.
+  TextDocumentEditor *tde = NULL;
 
-  TextDocumentEditor *tde = editorWidget->getDocumentEditor();
-  string input = tde->getSelectedText();
-
-  CommandRunner cr;
-
-  // For now, I will assume I have a POSIX shell.
-  cr.setProgram("sh");
-  cr.setArguments(QStringList() << "-c" << dialog->m_text);
-
-  cr.setWorkingDirectory(toQString(dir));
-
-  // TODO: This mishandles NUL bytes.
-  cr.setInputData(QByteArray(input.c_str()));
-
-  // It would be bad to hold an undo group open while we pump
-  // the event queue.
-  xassert(!tde->inUndoGroup());
-
-  // This blocks until the program terminates or times out.  However,
-  // it will pump the GUI event queue while waiting.
+  // Inside this block are variables and code used before the
+  // child process is launched.  The block ends when the child
+  // process terminates.  At that point, all variables in here
+  // are suspect because we pumped the event queue while waiting,
+  // so the user could have done pretty much anything.
   //
-  // TODO: Block input events?
-  //
-  // TODO: Make timeout adjustable.
+  // Only the variables declared above can be used after the
+  // child exits, and even then only with care.
   {
+    static TextInputDialog *dialog;
+    if (!dialog) {
+      dialog = new TextInputDialog();
+      dialog->setWindowTitle("Apply Command");
+    }
+
+    if (dialog->isVisible()) {
+      // This should be impossible because it is application-modal,
+      // but I will be defensive.
+      QMessageBox::information(this, "Dialog Already Shown",
+        "The apply-command dialog is already visible elsewhere.  "
+        "There can only be one instance of that dialog open.");
+      return;
+    }
+
+    FileTextDocument *file = editorWidget->getDocumentFile();
+    string dir = dirname(file->filename);
+    dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
+
+    if (!dialog->exec() || dialog->m_text.isEmpty()) {
+      return;
+    }
+    dialog->rememberInput(dialog->m_text);
+    commandString = toString(dialog->m_text);
+
+    tde = editorWidget->getDocumentEditor();
+    string input = tde->getSelectedText();
+
+    // For now, I will assume I have a POSIX shell.
+    runner.setProgram("sh");
+    runner.setArguments(QStringList() << "-c" << dialog->m_text);
+
+    runner.setWorkingDirectory(toQString(dir));
+
+    // TODO: This mishandles NUL bytes.
+    runner.setInputData(QByteArray(input.c_str()));
+
+    // It would be bad to hold an undo group open while we pump
+    // the event queue.
+    xassert(!tde->inUndoGroup());
+
     // Both the window and the widget have to have their cursor
     // changed, the latter (I think) because it already has a
     // non-standard cursor set.
     CursorSetRestore csr(this, Qt::WaitCursor);
     CursorSetRestore csr2(editorWidget, Qt::WaitCursor);
 
-    cr.startAndWait();
+    // This blocks until the program terminates or times out.  However,
+    // it will pump the GUI event queue while waiting.
+    //
+    // TODO: Block input events?
+    //
+    // TODO: Make timeout adjustable.
+    runner.startAndWait();
   }
 
-  // TODO: BUG: I am accessing dialog->m_text below but that could
-  // have changed while I was waiting.
-
-  if (cr.getFailed()) {
+  if (runner.getFailed()) {
     // TODO: Limit this to a reasonable size of error output.
     QMessageBox::warning(this, "Command Failed", qstringb(
-      "The command \"" << toString(dialog->m_text) <<
-      "\" failed: " << toString(cr.getErrorMessage()) <<
+      "The command \"" << commandString <<
+      "\" failed: " << toString(runner.getErrorMessage()) <<
       "\n\nError output:\n\n" <<
-      (cr.getErrorData().isEmpty()?
+      (runner.getErrorData().isEmpty()?
         "(There was no error output.)" :
-        cr.getErrorData().constData())));
+        runner.getErrorData().constData())));
     return;
   }
 
   // We just pumped the event queue.  The editor we had before
   // could have gone away.
-  if (tde == editorWidget->getDocumentEditor()) {
-    {
-      UndoHistoryGrouper ugh(*tde);
-      tde->insertText(cr.getOutputData().constData(), cr.getOutputData().size());
-    }
-    editorWidget->scrollToCursor();
-  }
-  else {
+  if (tde != editorWidget->getDocumentEditor()) {
     QMessageBox::warning(this, "Editor Changed", qstringb(
-      "While running command \"" << toString(dialog->m_text) <<
+      "While running command \"" << commandString <<
       "\", the active editor changed.  I will discard "
       "the output of that command."));
     return;
   }
 
+  // Replace the selected text with the command's output.
+  {
+    UndoHistoryGrouper ugh(*tde);
+    tde->insertText(runner.getOutputData().constData(), runner.getOutputData().size());
+  }
+  editorWidget->redraw();
+
   // For error output or non-zero exit code, we show a warning, but
   // still insert the text.  Note that we do this *after* inserting
   // the text because showing a dialog is another way to pump the
   // event queue.
-  if (!cr.getErrorData().isEmpty()) {
+  if (!runner.getErrorData().isEmpty()) {
     // TODO: Limit this to a reasonable amount of error text and
     // avoid using non-printable characters.
     QMessageBox::warning(this, "Command Error Output", qstringb(
-      "The command \"" << toString(dialog->m_text) <<
-      "\" exited with code " << cr.getExitCode() <<
+      "The command \"" << commandString <<
+      "\" exited with code " << runner.getExitCode() <<
       " and produced some error output:\n\n" <<
-      cr.getErrorData().constData()));
+      runner.getErrorData().constData()));
   }
-  else if (cr.getExitCode() != 0) {
+  else if (runner.getExitCode() != 0) {
     QMessageBox::warning(this, "Command Exit Code", qstringb(
-      "The command \"" << toString(dialog->m_text) <<
-      "\" exited with code " << cr.getExitCode() <<
+      "The command \"" << commandString <<
+      "\" exited with code " << runner.getExitCode() <<
       ", although it produced no error output."));
   }
 
