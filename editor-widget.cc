@@ -75,6 +75,8 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
     m_minihexFont(),
     m_visibleWhitespace(true),
     m_whitespaceOpacity(32),
+    m_highlightTrailingWhitespace(true),
+    m_trailingWhitespaceBgColor(255, 0, 0, 64),
     m_softMarginColumn(72),
     m_visibleSoftMargin(true),
     m_softMarginColor(0xFF, 0xFF, 0xFF, 32),
@@ -535,15 +537,26 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       newlineAdjust = 1;
     }
 
+    // Number of characters on the line, excluding newline.
+    int const lineLengthLoose = m_editor->lineLengthLoose(line);
+
+    // Column number (0-based) of first trailing whitespace character.
+    // We say there is no trailing whitespace on the cursor line
+    // because highlighting it there is annoying and unhelpful.
+    int const startOfTrailingWhitespace =
+      (line == m_editor->cursor().line)?
+        lineLengthLoose :
+        lineLengthLoose - m_editor->countTrailingSpaceChars(line);
+
     // Number of visible glyphs on this line, including possible
     // synthesized newline for 'visibleWhitespace'.
-    int const lineGlyphs = m_editor->lineLengthLoose(line) + newlineAdjust;
+    int const lineGlyphs = lineLengthLoose + newlineAdjust;
 
     // fill with text from the file
     if (line < m_editor->numLines()) {
       if (firstCol < lineGlyphs) {
         // First get the text without any extra newline.
-        int const amt = min(lineGlyphs-newlineAdjust - firstCol, visibleCols);
+        int const amt = min(lineLengthLoose - firstCol, visibleCols);
         m_editor->getLine(TextCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
@@ -665,9 +678,12 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       // draw text
       int const charsToDraw = min(len, (lineGlyphs-firstCol)-printed);
       for (int i=0; i < charsToDraw; i++) {
+        bool withinTrailingWhitespace =
+          firstCol + printed + i >= startOfTrailingWhitespace;
         this->drawOneChar(paint, curFont,
                           QPoint(x + m_fontWidth*i, baseline),
-                          text[printed+i]);
+                          text[printed+i],
+                          withinTrailingWhitespace);
       }
 
       if (underlining) {
@@ -733,7 +749,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
           // Drawing the block cursor overwrote the glyph, so we
           // have to draw it again.
           this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                            text[visibleCursorCol]);
+                            text[visibleCursorCol],
+                            false /*withinTrailingWhitespace*/);
         }
 
         if (underlineCursor) {
@@ -763,7 +780,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
 }
 
 
-void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c)
+void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
+  QPoint const &pt, char c, bool withinTrailingWhitespace)
 {
   // My document representation uses 'char' without much regard
   // to character encoding.  Here, I'm declaring that this whole
@@ -779,6 +797,11 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &p
     fg.setAlpha(m_whitespaceOpacity);
 
     if (codePoint == ' ') {
+      // Optionally highlight trailing whitespace.
+      if (withinTrailingWhitespace && m_highlightTrailingWhitespace) {
+        paint.fillRect(bounds, m_trailingWhitespaceBgColor);
+      }
+
       // Centered dot.
       paint.fillRect(QRect(bounds.center(), QSize(2,2)), fg);
       return;

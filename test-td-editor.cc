@@ -6,6 +6,7 @@
 #include "datablok.h"                  // DataBlock
 #include "ckheap.h"                    // malloc_stats
 #include "strutil.h"                   // quoted
+#include "test.h"                      // EXPECT_EQ, expectEq
 
 #include <unistd.h>                    // unlink
 #include <stdio.h>                     // printf
@@ -19,11 +20,9 @@
 
 static void checkCoord(TextCoord expect, TextCoord actual, char const *label)
 {
-  if (expect != actual) {
-    cout << "expect: " << expect << endl
-         << "actual: " << actual << endl;
-    xfailure(stringb(label << " coord mismatch"));
-  }
+  // I swapped the order of actual and expect when defining
+  // these functions...
+  expectEq(label, actual, expect);
 }
 
 
@@ -1684,7 +1683,39 @@ static void testReplaceText(bool swapCM)
     "          x\n"
     "\n"
     "  x");
+}
 
+
+static void expectCountSpace(TextDocumentEditor &tde,
+  int line, int expectLeading, int expectTrailing)
+{
+  int leading = tde.countLeadingSpaceChars(line);
+  EXPECT_EQ(leading, expectLeading);
+
+  int trailing = tde.countTrailingSpaceChars(line);
+  EXPECT_EQ(trailing, expectTrailing);
+}
+
+
+static void testCountSpaceChars()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "  two\n"
+    "three   \n"
+    "    four    \n"
+    "     \n"
+    "      ");
+
+  expectCountSpace(tde, 0, 0, 0);
+  expectCountSpace(tde, 1, 2, 0);
+  expectCountSpace(tde, 2, 0, 3);
+  expectCountSpace(tde, 3, 4, 4);
+  expectCountSpace(tde, 4, 5, 5);
+  expectCountSpace(tde, 5, 6, 6);
+  expectCountSpace(tde, 6, 0, 0);
+  expectCountSpace(tde, 7, 0, 0);
 }
 
 
@@ -1717,6 +1748,7 @@ int main()
     testInsertDateTime();
     testReplaceText(false);
     testReplaceText(true);
+    testCountSpaceChars();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
 

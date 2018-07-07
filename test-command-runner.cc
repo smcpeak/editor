@@ -11,7 +11,7 @@
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // replace
 #include "test.h"                      // ARGS_MAIN
-#include "trace.h"                     // TRACE_ARGS
+#include "trace.h"                     // TRACE_ARGS, EXPECT_EQ
 
 // Qt
 #include <QCoreApplication>
@@ -80,22 +80,6 @@ static int runCmdIn(char const *cmd, char const *input)
 }
 
 
-// This could be moved someplace more general, perhaps test.h?
-template <class T>
-void expectEq(char const *label, T const &actual, T const &expect)
-{
-  if (expect != actual) {
-    cout << "mismatched " << label << ':' << endl;
-    cout << "  actual: " << actual << endl;
-    cout << "  expect: " << expect << endl;
-    xfailure(stringb("mismatched " << label));
-  }
-}
-
-#define EXPECT_EQ(actual, expect) \
-  expectEq(#actual, actual, expect) /* user ; */
-
-
 static void expectEq(char const *label, QByteArray const &actual, char const *expect)
 {
   QByteArray expectBA(expect);
@@ -106,8 +90,8 @@ static void expectEq(char const *label, QByteArray const &actual, char const *ex
     xfailure(stringb("mismatched " << label));
   }
   else {
-  cout << "  as expected, " << label << ": \""
-       << actual.constData() << "\"" << endl;
+    cout << "  as expected, " << label << ": \""
+         << actual.constData() << "\"" << endl;
   }
 }
 

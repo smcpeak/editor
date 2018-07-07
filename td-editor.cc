@@ -645,12 +645,27 @@ string TextDocumentEditor::getWordAfter(TextCoord tc) const
 
 int TextDocumentEditor::countLeadingSpaceChars(int line) const
 {
+  // TODO: This is inefficient.
   string contents = getWholeLine(line);
   char const *p = contents.c_str();
-  while (*p && isspace(*p)) {
+  while (*p && isspace(*p)) {      // TODO: wisdom of isspace?
     p++;
   }
   return p - contents.c_str();
+}
+
+
+int TextDocumentEditor::countTrailingSpaceChars(int line) const
+{
+  // TODO: This is inefficient.
+  string contents = getWholeLine(line);
+  char const *start = contents.c_str();
+  char const *end = start + contents.length();
+  char const *p = end;
+  while (start < p && isspace(p[-1])) {
+    p--;
+  }
+  return end - p;
 }
 
 

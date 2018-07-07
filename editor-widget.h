@@ -128,6 +128,12 @@ public:      // data
   // Value in [0,255], where 255 is fully opaque.
   int m_whitespaceOpacity;
 
+  // True to draw trailing whitespace with 'm_trailingWhitespaceBgColor'.
+  bool m_highlightTrailingWhitespace;
+
+  // Overlay color for trailing whitespace, including its alpha.
+  QColor m_trailingWhitespaceBgColor;
+
   // Column number for a soft margin.  This is used for text
   // justification and optionally to draw a margin line.
   int m_softMarginColumn;
@@ -346,7 +352,8 @@ public:      // funcs
   void updateFrame(QPaintEvent *ev);
 
   // Paint a single character at the given location.
-  void drawOneChar(QPainter &paint, QtBDFFont *font, QPoint const &pt, char c);
+  void drawOneChar(QPainter &paint, QtBDFFont *font,
+    QPoint const &pt, char c, bool withinTrailingWhitespace);
 
   // Set 'curFont' and 'underline', plus the foreground
   // and background colors of 'paint', based on 'db' and 'cat'.

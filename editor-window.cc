@@ -69,6 +69,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
     windowMenu(NULL),
     toggleVisibleWhitespaceAction(NULL),
     toggleVisibleSoftMarginAction(NULL),
+    toggleHighlightTrailingWSAction(NULL),
     fileChoiceActions(),
     isearch(NULL)
 {
@@ -190,19 +191,35 @@ void EditorWindow::buildMenu()
                     SLOT(editApplyCommand()), Qt::ALT + Qt::Key_A);
   }
 
+  #define CHECKABLE_ACTION(field, title, slot, initChecked)  \
+    this->field = menu->addAction(title, this, slot);        \
+    this->field->setCheckable(true);                         \
+    this->field->setChecked(initChecked) /* user ; */
+
   {
     QMenu *menu = this->menuBar->addMenu("&View");
-    this->toggleVisibleWhitespaceAction =
-      menu->addAction("Visible &whitespace", this, SLOT(viewToggleVisibleWhitespace()));
-    this->toggleVisibleWhitespaceAction->setCheckable(true);
-    this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->m_visibleWhitespace);
+
+    CHECKABLE_ACTION(toggleVisibleWhitespaceAction,
+      "Visible &whitespace",
+      SLOT(viewToggleVisibleWhitespace()),
+      this->editorWidget->m_visibleWhitespace);
+
     menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
-    this->toggleVisibleSoftMarginAction =
-      menu->addAction("Visible soft &margin", this, SLOT(viewToggleVisibleSoftMargin()));
-    this->toggleVisibleSoftMarginAction->setCheckable(true);
-    this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->m_visibleSoftMargin);
+
+    CHECKABLE_ACTION(toggleVisibleSoftMarginAction,
+      "Visible soft &margin",
+      SLOT(viewToggleVisibleSoftMargin()),
+      this->editorWidget->m_visibleSoftMargin);
+
     menu->addAction("Set soft margin column...", this, SLOT(viewSetSoftMarginColumn()));
+
+    CHECKABLE_ACTION(toggleHighlightTrailingWSAction,
+      "Highlight &trailing whitespace",
+      SLOT(viewToggleHighlightTrailingWS()),
+      this->editorWidget->m_highlightTrailingWhitespace);
   }
+
+  #undef CHECKABLE_ACTION
 
   {
     QMenu *window = this->menuBar->addMenu("&Window");
@@ -717,11 +734,16 @@ void EditorWindow::editApplyCommand()
 }
 
 
+#define CHECKABLE_MENU_TOGGLE(actionField, sourceBool)  \
+  (sourceBool) = !(sourceBool);                         \
+  this->actionField->setChecked(sourceBool);            \
+  this->editorWidget->update() /* user ; */
+
+
 void EditorWindow::viewToggleVisibleWhitespace()
 {
-  this->editorWidget->m_visibleWhitespace = !this->editorWidget->m_visibleWhitespace;
-  this->toggleVisibleWhitespaceAction->setChecked(this->editorWidget->m_visibleWhitespace);
-  this->editorWidget->update();
+  CHECKABLE_MENU_TOGGLE(toggleVisibleWhitespaceAction,
+    this->editorWidget->m_visibleWhitespace);
 }
 
 
@@ -742,9 +764,8 @@ void EditorWindow::viewSetWhitespaceOpacity()
 
 void EditorWindow::viewToggleVisibleSoftMargin()
 {
-  this->editorWidget->m_visibleSoftMargin = !this->editorWidget->m_visibleSoftMargin;
-  this->toggleVisibleSoftMarginAction->setChecked(this->editorWidget->m_visibleSoftMargin);
-  this->editorWidget->update();
+  CHECKABLE_MENU_TOGGLE(toggleVisibleSoftMarginAction,
+    this->editorWidget->m_visibleSoftMargin);
 }
 
 
@@ -761,6 +782,16 @@ void EditorWindow::viewSetSoftMarginColumn()
     this->editorWidget->update();
   }
 }
+
+
+void EditorWindow::viewToggleHighlightTrailingWS()
+{
+  CHECKABLE_MENU_TOGGLE(toggleHighlightTrailingWSAction,
+    this->editorWidget->m_highlightTrailingWhitespace);
+}
+
+
+#undef CHECKABLE_MENU_TOGGLE
 
 
 void EditorWindow::windowOccupyLeft()

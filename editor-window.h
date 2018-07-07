@@ -49,11 +49,10 @@ public:      // data
   // of open file files.
   QMenu *windowMenu;
 
-  // The action for toggling visible whitespace.
+  // Actions for toggling view options.
   QAction *toggleVisibleWhitespaceAction;
-
-  // Action for toggling the soft margin display.
   QAction *toggleVisibleSoftMarginAction;
+  QAction *toggleHighlightTrailingWSAction;
 
   // Set of Actions in the Window menu that choose a file.
   // These need to be removed from the Window menu when we
@@ -137,6 +136,7 @@ public slots:
   void viewSetWhitespaceOpacity();
   void viewToggleVisibleSoftMargin();
   void viewSetSoftMarginColumn();
+  void viewToggleHighlightTrailingWS();
 
   void windowNewWindow();
   void windowCloseWindow();
