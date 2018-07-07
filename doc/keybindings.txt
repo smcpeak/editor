@@ -20,7 +20,7 @@ pressing Shift, which will start or extend the selection.
 
 Ctrl+D or Del: Delete character under cursor.
 Ctrl+H or Backspace: Delete character left of cursor.
-  
+
 Scrolling:
   Ctrl+W or Ctrl+Up: Scroll up (toward top of file).
   Ctrl+Z or Ctrl+Down: Scroll down (toward bottom of file).
@@ -43,5 +43,7 @@ Ctrl+S: Search.
 
 Ctrl+K: Cut current line.
 Ctrl+J: Justify paragraph.
+Alt+A: Pass selected text through a shell command.
 Alt+D: Insert current date and time.
 Alt+G: Go to specified line.
+

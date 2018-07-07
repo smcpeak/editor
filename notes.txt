@@ -1,7 +1,5 @@
 
 TODOs:
-  - FileTextDocumentListObserver methods should be noexcept
-
   - run command to generate entire file; git annotate!
     - git diff
     - git show
