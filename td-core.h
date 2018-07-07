@@ -38,7 +38,12 @@ class TextDocumentObserver;
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
 class TextDocumentCore {
-private:   // data
+public:      // static data
+  // For testing purposes, this can be set to a non-zero value, and after
+  // reading this many bytes, an error will be injected.
+  static int s_injectedErrorCountdown;
+
+private:     // data
   // This array is the spine of the document.  Every element is either
   // NULL, meaning a blank line, or is an owner pointer to a
   // '\n'-terminated array of chars that represent the line's contents.
@@ -70,7 +75,7 @@ private:   // data
   // observer of that document.
   mutable SObjList<TextDocumentObserver> observers;
 
-private:   // funcs
+private:     // funcs
   // strlen, but NULL yields 0 and '\n' is terminator
   static int bufStrlen(char const *p);
 

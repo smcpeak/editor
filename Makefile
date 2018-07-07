@@ -3,7 +3,7 @@
 # main target
 all: comment.yy.cc
 all: testgap
-all: td-core
+all: test-td-core
 all: test-td-editor
 all: test-justify
 all: test-command-runner
@@ -109,12 +109,15 @@ testgap: gap.h testgap.cc
 	./testgap >/dev/null 2>&1
 
 
-# -------------- td-core test program ----------------
-TOCLEAN += td-core td-core.tmp
-TD_CORE_OBJS := td-core.cc textcoord.o
-td-core: gap.h $(TD_CORE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_TD_CORE $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
-	./td-core >/dev/null 2>&1
+# -------------- test-td-core test program ----------------
+TOCLEAN += test-td-core td-core.tmp
+TD_CORE_OBJS := test-td-core.o td-core.o textcoord.o
+test-td-core: $(TD_CORE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
+	./test-td-core >/dev/null 2>&1
+
+-include test-td-core.d
+
 
 # -------------- test-td-editor test program ----------------
 TOCLEAN += test-td-editor td.tmp
