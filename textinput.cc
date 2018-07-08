@@ -25,11 +25,14 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
 
   {
     QVBoxLayout *vbox = new QVBoxLayout();
+    this->setLayout(vbox);
 
     m_label = new QLabel("Input:");
     vbox->addWidget(m_label);
 
     m_comboBox = new QComboBox();
+    vbox->addWidget(m_comboBox);
+
     m_comboBox->setEditable(true);
 
     // I maintain the list elements myself.  (This flag does not really
@@ -55,10 +58,7 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
     QObject::connect(m_comboBox->lineEdit(), SIGNAL(returnPressed()),
                      this, SLOT(accept()));
 
-    vbox->addWidget(m_comboBox);
-
     this->createOkAndCancel(vbox);
-    this->setLayout(vbox);
 
     // This causes the dialog to start fairly wide, but at its minimum
     // height.  The 80 is a bit smaller than the real minimum, and the
