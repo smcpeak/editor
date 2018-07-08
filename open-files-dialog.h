@@ -7,7 +7,15 @@
 #include "file-td-list.h"              // FileTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
+#include "sm-iostream.h"               // ostream
+
+class QModelIndex;
 class QTableView;
+
+
+// This is mainly for debugging.  I put it here because this is, for
+// the moment, the only module that deals with QModelIndex.
+ostream& operator<< (ostream &os, QModelIndex const &index);
 
 
 // Dialog to show and manipulate the open files in a document list.
@@ -34,6 +42,9 @@ public:      // funcs
   // want to switch to a particular file, return that file.  Otherwise
   // return NULL.
   FileTextDocument *runDialog();
+
+public slots:
+  void on_doubleClicked(QModelIndex const &index);
 };
 
 

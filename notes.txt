@@ -1,7 +1,6 @@
 
 TODOs:
   - working on open-files dialog
-    - double-click an entry to switch to it
     - adjust definition of "lines" to better agree with how users
       think of them
     - get rid of left sliver column?

@@ -57,7 +57,7 @@ FTDLTableModel::~FTDLTableModel()
 
 
 // For use with TRACE.
-static ostream& operator<< (ostream &os, QModelIndex const &index)
+ostream& operator<< (ostream &os, QModelIndex const &index)
 {
   if (!index.isValid()) {
     return os << "root";

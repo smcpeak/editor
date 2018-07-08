@@ -82,6 +82,9 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
     m_tableView->setRowHeight(i, ROW_HEIGHT);
   }
 
+  QObject::connect(m_tableView, &QTableView::doubleClicked,
+                   this, &OpenFilesDialog::on_doubleClicked);
+
   // TODO: This is not what I want.
   this->createOkAndCancel(vbox);
 
@@ -110,6 +113,15 @@ FileTextDocument *OpenFilesDialog::runDialog()
 
   TRACE("OpenFilesDialog", "runDialog: returning NULL");
   return NULL;
+}
+
+
+void OpenFilesDialog::on_doubleClicked(QModelIndex const &index)
+{
+  // I want to switch to the double-clicked item.  This seems to be
+  // sufficient since the clicked item becomes 'current' automatically.
+  TRACE("OpenFilesDialog", "doubleClicked: " << index);
+  this->accept();
 }
 
 
