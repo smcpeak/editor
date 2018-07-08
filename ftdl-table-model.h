@@ -42,6 +42,10 @@ public:      // funcs
   // Return the user-visible column title.
   static char const *columnName(TableColumn tc);
 
+  // Publish two protected QAbstractItemModel methods.
+  using QAbstractItemModel::beginResetModel;
+  using QAbstractItemModel::endResetModel;
+
   // QAbstractItemModel methods.
   virtual int rowCount(QModelIndex const &parent) const override;
   virtual int columnCount(QModelIndex const &parent) const override;

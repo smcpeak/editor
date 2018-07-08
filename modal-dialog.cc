@@ -32,13 +32,13 @@ void ModalDialog::createOkAndCancel(QBoxLayout *layout)
 
   QPushButton *okButton = new QPushButton("Ok");
   okButton->setDefault(true);
-  QObject::connect(okButton, SIGNAL(clicked()),
-                   this, SLOT(accept()));
+  QObject::connect(okButton, &QPushButton::clicked,
+                   this, &ModalDialog::accept);
   hbox->addWidget(okButton);
 
   QPushButton *cancelButton = new QPushButton("Cancel");
-  QObject::connect(cancelButton, SIGNAL(clicked()),
-                   this, SLOT(reject()));
+  QObject::connect(cancelButton, &QPushButton::clicked,
+                   this, &ModalDialog::reject);
   hbox->addWidget(cancelButton);
 
   layout->addLayout(hbox);

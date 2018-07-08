@@ -9,6 +9,7 @@
 
 #include "sm-iostream.h"               // ostream
 
+class FTDLTableModel;                  // ftdl-table-model.h
 class MyTableView;                     // my-table-view.h
 class QModelIndex;
 
@@ -24,11 +25,13 @@ ostream& operator<< (ostream &os, QModelIndex const &index);
 class OpenFilesDialog : public ModalDialog {
   Q_OBJECT
 
-private:     // model data
+private:     // data
   // The list we are showing/editing.
   FileTextDocumentList *m_docList;
 
-private:     // dialog controls
+  // The Qt "model" that wraps m_docList.  It is owned by m_tableView.
+  FTDLTableModel *m_tableModel;
+
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
   MyTableView *m_tableView;
@@ -45,6 +48,8 @@ public:      // funcs
 
 public slots:
   void on_doubleClicked(QModelIndex const &index) noexcept;
+  void on_closeSelected() noexcept;
+  void on_help() noexcept;
 };
 
 
