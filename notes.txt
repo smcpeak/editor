@@ -1,6 +1,5 @@
 
 TODOs:
-  - fix sizing in TextInputDialog?
   - working on open-files dialog
     - double-click an entry to switch to it
     - adjust definition of "lines" to better agree with how users
