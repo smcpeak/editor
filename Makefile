@@ -238,10 +238,12 @@ editor-window.o: keybindings.doc.gen.h
 
 TOCLEAN += keybindings.doc.gen.*
 
+EDITOR_OBJS += dev-warning.o
 EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += editor-window.moc.o
+EDITOR_OBJS += ftdl-table-model.o
 EDITOR_OBJS += incsearch.o
 EDITOR_OBJS += inputproxy.o
 EDITOR_OBJS += keybindings.doc.gen.o
@@ -250,6 +252,8 @@ EDITOR_OBJS += main.o
 EDITOR_OBJS += main.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
+EDITOR_OBJS += open-files-dialog.o
+EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
 EDITOR_OBJS += status.o
 EDITOR_OBJS += styledb.o

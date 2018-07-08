@@ -26,6 +26,10 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
   {
     QVBoxLayout *vbox = new QVBoxLayout();
 
+    // Minimum dialog width.  What I really want is for the dialog to
+    // *start* wider than it does by default, but be adjustable to a
+    // smaller size.  I have not figured out how to do that.  (The
+    // obvious 'resize' call does not seem to work the way I want.)
     vbox->addStrut(300);
 
     m_label = new QLabel("Input:");

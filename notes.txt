@@ -1,5 +1,21 @@
 
 TODOs:
+  - fix sizing in TextInputDialog?
+  - working on open-files dialog
+    - double-click an entry to switch to it
+    - adjust definition of "lines" to better agree with how users
+      think of them
+    - get rid of left sliver column?
+    - automatically fill the available with with the columns?
+    - implement "close selected" button
+    - better selection handling on entry?
+    - in general, order entries from most to least recently used
+    - add column and control for hotkey adjustment and pinning
+  - "save as" should change the highlighting
+  - ctrl+i: open file at cursor
+  - window title should start with file name for more useful
+    information during Alt+Tab
+
   - run command to generate entire file; git annotate!
     - git diff
     - git show
@@ -47,7 +63,6 @@ TODOs:
   - periodic autosave; do that when receiving SIGTERM/QUIT/INT also
   - do not open the same file more than once
     - more robust identification of same file than just specified name
-  - ctrl-i: open file at cursor
   - analog to M-x grep
   - if I press Delete while the cursor is at the left edge of a blank
     line, make it delete that line even if there is whitespace on it
@@ -1041,6 +1056,50 @@ start 2009-06-16 20:00
     * what happened to alt-left-arrow?
 
 end 2009-06-16 22:12
+
+----------------------------
+2018-07-07 23:30
+
+Notes on how QTableView interrogates QAbstractItemModel:
+  - startup
+    - rowCount (multiple times)
+    - columnCount (multiple times)
+    - headerData for each row:
+      - 13: size
+      - 6: font
+      - 0: text
+      - 1: decoration
+    - headerData for each column:
+      - 13, 6, 0, 1
+    - data for each cell, row-major, in order:
+      - 6: font
+      - 7: alignment
+      - 9: foreground brush
+      - 10: check state
+      - 1: decoration
+      - 0: text
+      - 8: background brush
+    - headerData for each row:
+      - 6: font
+      - 7: alignment
+      - 0: text
+      - 1: decoration
+      - 9: fg
+      - 8: bg
+    - headerData for each column:
+      - 6, 7, 0, 1, 9, 8
+  - mouse over a header
+    - repeat headerData query for column 1 (x2)
+    - because it is changing the bg color as mouse goes over
+  - mouse over a cell
+    - data 3: tooltip
+  - something else?
+    - repeat cycle of querying row headers, column headers, cells
+  - scroll
+    - query affected cells: 6, 7, 9, 10, 1, 0, 8
+
+
+
 
 
 EOF

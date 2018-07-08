@@ -11,6 +11,7 @@
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
 #include "main.h"                      // GlobalState
+#include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
 #include "status.h"                    // StatusDisplay
@@ -50,7 +51,7 @@
 #include <QInputDialog>
 
 
-char const appName[] = "Editor";
+static char const appName[] = "Editor";
 
 int EditorWindow::s_objectCount = 0;
 
@@ -224,12 +225,23 @@ void EditorWindow::buildMenu()
 
   {
     QMenu *window = this->menuBar->addMenu("&Window");
+
+    window->addAction("Open &Files List ...", this,
+      SLOT(windowOpenFilesList()), Qt::Key_F8);
+    window->addAction("Cycle Through Files", this,
+      SLOT(windowCycleFile()), Qt::Key_F6);
+
+    window->addSeparator();
+
     window->addAction("&New Window", this, SLOT(windowNewWindow()));
     window->addAction("&Close Window", this, SLOT(windowCloseWindow()));
-    window->addAction("Occupy Left", this, SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
-    window->addAction("Occupy Right", this, SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
-    window->addAction("Cycle through files", this, SLOT(windowCycleFile()), Qt::Key_F6);  // for now
+    window->addAction("Move/size to Left Screen Half", this,
+      SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
+    window->addAction("Move/size to Right Screen Half", this,
+      SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
+
     window->addSeparator();
+
     this->windowMenu = window;
     connect(this->windowMenu, SIGNAL(triggered(QAction*)),
             this, SLOT(windowFileChoiceActivated(QAction*)));
@@ -902,6 +914,25 @@ void EditorWindow::viewToggleHighlightTrailingWS()
 #undef CHECKABLE_MENU_TOGGLE
 
 
+void EditorWindow::windowOpenFilesList()
+{
+  OpenFilesDialog dialog(&( globalState->m_documentList ));
+  FileTextDocument *doc = dialog.runDialog();
+  if (doc) {
+    this->setDocumentFile(doc);
+  }
+}
+
+
+void EditorWindow::windowCycleFile()
+{
+  int cur = globalState->m_documentList.getFileIndex(currentDocument());
+  xassert(cur >= 0);
+  cur = (cur + 1) % globalState->m_documentList.numFiles();     // cycle
+  setDocumentFile(globalState->m_documentList.getFileAt(cur));
+}
+
+
 void EditorWindow::windowOccupyLeft()
 {
   if (QApplication::desktop()->width() == 1024) {  // 1024x768
@@ -921,15 +952,6 @@ void EditorWindow::windowOccupyRight()
   else {    // 1280x1024
     setGeometry(493, 59, 783, 867);
   }
-}
-
-
-void EditorWindow::windowCycleFile()
-{
-  int cur = globalState->m_documentList.getFileIndex(currentDocument());
-  xassert(cur >= 0);
-  cur = (cur + 1) % globalState->m_documentList.numFiles();     // cycle
-  setDocumentFile(globalState->m_documentList.getFileAt(cur));
 }
 
 

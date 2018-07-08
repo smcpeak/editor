@@ -142,11 +142,12 @@ public slots:
   void viewSetSoftMarginColumn();
   void viewToggleHighlightTrailingWS();
 
+  void windowOpenFilesList();
+  void windowCycleFile();
   void windowNewWindow();
   void windowCloseWindow();
   void windowOccupyLeft();
   void windowOccupyRight();
-  void windowCycleFile();
   void windowFileChoiceActivated(QAction *action);
   void windowFileChoice();
 

@@ -1,0 +1,123 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 30,
+        "y": 35
+      },
+      "name": "Open Files",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_MAXIMIZE",
+        "SF_HAS_MINIMIZE",
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        515,
+        325
+      ],
+      "size": {
+        "h": 270,
+        "w": 495
+      }
+    },
+    {
+      "loc": {
+        "x": 45,
+        "y": 265
+      },
+      "name": "Close Selected",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 110
+      }
+    },
+    {
+      "loc": {
+        "x": 445,
+        "y": 265
+      },
+      "name": "Ok",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 65
+      }
+    },
+    {
+      "loc": {
+        "x": 490,
+        "y": 85
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        70
+      ],
+      "size": {
+        "h": 170,
+        "w": 20
+      }
+    },
+    {
+      "attributes": "D:/wrk/editor/notes.txt *\nD:/wrk/face/face-notes/0Todo_json_parser\nD:/wrk/editor/doc/keybindings.txt *\nD:/wrk/editor/.gdbinit\n",
+      "fillColor": "White",
+      "loc": {
+        "x": 45,
+        "y": 85
+      },
+      "size": {
+        "h": 170,
+        "w": 380
+      }
+    },
+    {
+      "attributes": "         1101\n           156\n           137\n             22\n",
+      "fillColor": "White",
+      "loc": {
+        "x": 425,
+        "y": 85
+      },
+      "size": {
+        "h": 170,
+        "w": 65
+      }
+    },
+    {
+      "loc": {
+        "x": 45,
+        "y": 65
+      },
+      "name": "File name",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 380
+      }
+    },
+    {
+      "loc": {
+        "x": 425,
+        "y": 65
+      },
+      "name": "Lines",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 65
+      }
+    }
+  ],
+  "inheritances": [],
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 23,
+  "windowSize": {
+    "h": 382,
+    "w": 578
+  }
+}
