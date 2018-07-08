@@ -244,6 +244,10 @@ void EditorWidget::setDocumentFile(FileTextDocument *file)
 
   m_editor = this->getOrMakeEditor(file);
 
+  // Move the chosen file to the top of the document list since it is
+  // now the most recently used.
+  m_documentList->moveFile(file, 0);
+
   if (wasListening) {
     this->startListening();
   }

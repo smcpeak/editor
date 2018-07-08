@@ -7,7 +7,6 @@ TODOs:
     - automatically fill the available with with the columns?
     - implement "close selected" button
     - better selection handling on entry?
-    - in general, order entries from most to least recently used
     - add column and control for hotkey adjustment and pinning
   - "save as" should change the highlighting
   - ctrl+i: open file at cursor
