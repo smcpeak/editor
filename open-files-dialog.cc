@@ -176,6 +176,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
   // Get the set of documents to close in a first pass so we have them
   // all before doing anything that might jeopardize the indexes.
   ArrayStack<FileTextDocument*> docsToClose;
+  bool someHaveUnsavedChanges = false;
   {
     QItemSelectionModel *selectionModel = m_tableView->selectionModel();
     QModelIndexList selectedRows = selectionModel->selectedRows();
@@ -190,10 +191,26 @@ void OpenFilesDialog::on_closeSelected() noexcept
         int r = index.row();
         if (0 <= r && r < m_docList->numFiles()) {
           FileTextDocument *doc = m_docList->getFileAt(r);
-          docsToClose.push(doc);
           TRACE("OpenFilesDialog", "  toClose: " << doc->filename);
+          docsToClose.push(doc);
+          if (doc->unsavedChanges()) {
+            someHaveUnsavedChanges = true;
+          }
         }
       }
+    }
+  }
+
+  if (someHaveUnsavedChanges) {
+    QMessageBox mb(this);
+    mb.setWindowTitle("Discard Unsaved Changes?");
+    mb.setText(
+      "At least one of the selected files has unsaved changes.  "
+      "Are you sure you want to discard them?");
+    mb.addButton(QMessageBox::Discard);
+    mb.addButton(QMessageBox::Cancel);
+    if (mb.exec() != QMessageBox::Discard) {
+      return;
     }
   }
 
