@@ -69,6 +69,10 @@ private:     // funcs
   void writeTheFile();
   void setDocumentFile(FileTextDocument *b);
 
+  // Start the file chooser.  Return an empty string if it is canceled,
+  // otherwise the chosen file name.
+  string fileChooseDialog(string const &initialName, bool saveAs);
+
   // Update the status displays to reflect a different file being edited.
   void updateForChangedFile();
 
@@ -87,7 +91,7 @@ public:      // funcs
   ~EditorWindow();
 
   // open and begin editing a particular file
-  void fileOpenFile(char const *fname);
+  void fileOpenFile(string const &fname);
 
   // File user is editing: returns editor->docFile.
   FileTextDocument *currentDocument();

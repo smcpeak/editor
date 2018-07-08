@@ -271,26 +271,81 @@ void EditorWindow::updateForChangedFile()
 }
 
 
-void EditorWindow::fileOpen()
+string EditorWindow::fileChooseDialog(string const &initialName, bool saveAs)
 {
   // Start in the directory containing the file currently shown.
-  string dir = dirname(editorWidget->getDocumentFile()->filename);
-  TRACE("fileOpen", "dir: " << dir);
-
-  QString name = QFileDialog::getOpenFileName(this,
-    "Open File",
-    toQString(dir),    // dir
-    QString(),         // filter
-    NULL,              // selectedFilter
-    //QFileDialog::Options());
-    QFileDialog::DontUseNativeDialog);
-  if (name.isEmpty()) {
-    return;
+  string dir = dirname(initialName);
+  TRACE("fileOpen", "saveAs=" << saveAs << " dir: " << dir);
+  if (dir == ".") {
+    // If I pass "." to one of the static members of QFileDialog, it
+    // automatically goes to the current directory.  But when using
+    // QFileDialog directly, I have to pass the real directory name.
+    dir = SMFileUtil().currentDirectory();
+    TRACE("fileOpen", "current dir: " << dir);
   }
-  this->fileOpenFile(name.toUtf8().constData());
+
+  QFileDialog dialog(this);
+
+  // As far as I can tell, the only effect of this is to set the
+  // dialog window title.
+  dialog.setAcceptMode(saveAs?
+    QFileDialog::AcceptSave : QFileDialog::AcceptOpen);
+
+  dialog.setDirectory(toQString(dir));
+
+  // I want to be able to "open" a non-existent file, just like I can
+  // in emacs.  It turns out AnyFile is the default but I make it
+  // explicit.
+  dialog.setFileMode(QFileDialog::AnyFile);
+
+  // The native dialog is causing some problems with desktop icons
+  // refreshing and the dialog hanging.  The Qt version also causes
+  // problems, but less severe?  I need to continue experimenting.
+  dialog.setOptions(QFileDialog::DontUseNativeDialog);
+
+  if (!dialog.exec()) {
+    TRACE("fileOpen", "canceled");
+    return "";
+  }
+
+  QStringList filenames = dialog.selectedFiles();
+  if (filenames.isEmpty()) {
+    // I have been unable to trigger this behavior.
+    TRACE("fileOpen", "dialog returned empty list of files");
+    return "";
+  }
+
+  QString name = filenames.at(0);
+  TRACE("fileOpen", "name: " << toString(name));
+  if (name.isEmpty()) {
+    // I have been unable to trigger this behavior.
+    TRACE("fileOpen", "name is empty");
+    return "";
+  }
+
+  if (filenames.size() > 1) {
+    // I have been unable to trigger this behavior.
+    TRACE("fileOpen", "dialog returned list of " << filenames.size() <<
+                      " files, ignoring all but first");
+  }
+
+  return toString(name);
 }
 
-void EditorWindow::fileOpenFile(char const *name)
+
+void EditorWindow::fileOpen()
+{
+  string name =
+    this->fileChooseDialog(editorWidget->getDocumentFile()->filename,
+                           false /*saveAs*/);
+  if (name.isempty()) {
+    return;
+  }
+
+  this->fileOpenFile(name);
+}
+
+void EditorWindow::fileOpenFile(string const &name)
 {
   TRACE("fileOpen", "fileOpenFile: " << name);
 
@@ -322,11 +377,12 @@ void EditorWindow::fileOpenFile(char const *name)
   }
 
   // get file extension
-  char const *dot = strrchr(name, '.');
+  char const *dot = strrchr(name.c_str(), '.');
   if (dot) {
     string ext = string(dot+1);
     if (ext.equals("h") ||
-        ext.equals("cc")) {
+        ext.equals("cc") ||
+        ext.equals("cpp")) {
       // make and attach a C++ highlighter for C/C++ files
       file->highlighter = new C_Highlighter(file->getCore());
     }
@@ -402,17 +458,11 @@ void EditorWindow::fileSaveAs()
   FileTextDocument *fileDoc = currentDocument();
   string chosenFilename = fileDoc->filename;
   while (true) {
-    QString s = QFileDialog::getSaveFileName(this,
-      "Save file as",                  // window title
-      toQString(chosenFilename),       // initial name
-      QString(),                       // filter
-      NULL,                            // selected filter (?)
-      QFileDialog::DontUseNativeDialog);
-    if (s.isEmpty()) {
+    chosenFilename =
+      this->fileChooseDialog(chosenFilename, true /*saveAs*/);
+    if (chosenFilename.isempty()) {
       return;
     }
-
-    chosenFilename = s.toUtf8().constData();
 
     if (!fileDoc->isUntitled &&
         fileDoc->filename == chosenFilename) {

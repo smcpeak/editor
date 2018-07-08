@@ -70,7 +70,7 @@ GlobalState::GlobalState(int argc, char **argv)
   for (int i=1; i < argc; i++) {
     string path = sfu.getAbsolutePath(argv[i]);
     path = sfu.normalizePathSeparators(path);
-    ed->fileOpenFile(path.c_str());
+    ed->fileOpenFile(path);
   }
 
   // TODO: replacement?  Need to test on Linux.

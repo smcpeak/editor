@@ -51,7 +51,6 @@ TODOs:
   - analog to M-x grep
   - if I press Delete while the cursor is at the left edge of a blank
     line, make it delete that line even if there is whitespace on it
-  - highlight .cpp like .cc
   - implement ctrl+alt+up
   - find-files enhanced to have several directories available, and to use
     the directory in which the current file resides by default
