@@ -1,8 +1,6 @@
 
 TODOs:
   - working on open-files dialog
-    - adjust definition of "lines" to better agree with how users
-      think of them
     - get rid of left sliver column?
     - automatically fill the available width with the columns?
     - add column and control for hotkey adjustment and pinning

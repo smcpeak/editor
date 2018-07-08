@@ -132,7 +132,7 @@ QVariant FTDLTableModel::data(QModelIndex const &index, int role) const
       }
 
       case TC_LINES:
-        return qstringb(doc->numLines());
+        return qstringb(doc->numLinesExceptFinalEmpty());
 
       case NUM_TABLE_COLUMNS:
         DEV_WARNING("impossible!");

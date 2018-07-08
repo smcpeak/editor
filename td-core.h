@@ -125,6 +125,11 @@ public:    // funcs
   // if that line is subsequently deleted).
   int maxLineLength() const { return longestLengthSoFar; }
 
+  // Number of lines in the file as a user would typically view it: if
+  // the file ends in a newline, then return the number of newlines.
+  // Otherwise return newlines+1, the same as numLines().
+  int numLinesExceptFinalEmpty() const;
+
   // --------------------- line contents ------------------------
   // get part of a line's contents, starting at 'tc' and getting
   // 'destLen' chars; all chars must be in the line now; the retrieved

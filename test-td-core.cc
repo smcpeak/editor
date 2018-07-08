@@ -77,9 +77,14 @@ static void testVarious()
   EXPECT_EQ(tdc.validCoord(TextCoord(0,1)), false);
   EXPECT_EQ(tdc.endCoord(), TextCoord(0,0));
   EXPECT_EQ(tdc.maxLineLength(), 0);
+  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
 
   insLine(tdc, 0,0, "one");
+  EXPECT_EQ(tdc.numLines(), 2);
+  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 1);
   insLine(tdc, 1,0, "  two");
+  EXPECT_EQ(tdc.numLines(), 3);
+  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 2);
   insLine(tdc, 2,0, "three   ");
   insLine(tdc, 3,0, "    four    ");
   insLine(tdc, 4,0, "     ");
@@ -87,6 +92,7 @@ static void testVarious()
   insText(tdc, 6,0, "      ");
 
   EXPECT_EQ(tdc.numLines(), 7);
+  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 7);
   EXPECT_EQ(tdc.lineLength(0), 3);
   EXPECT_EQ(tdc.lineLength(6), 6);
   EXPECT_EQ(tdc.validCoord(TextCoord(0,0)), true);

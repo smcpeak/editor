@@ -158,6 +158,21 @@ TextCoord TextDocumentCore::endCoord() const
 }
 
 
+// Interestingly, this is *not* what "wc -l" returns.  Instead, wc -l
+// returns a count of the newline characters.  But that seems like a bug
+// in 'wc' to me.
+int TextDocumentCore::numLinesExceptFinalEmpty() const
+{
+  int lastLine = this->numLines()-1;
+  if (this->lineLength(lastLine) == 0) {
+    return lastLine;
+  }
+  else {
+    return lastLine+1;
+  }
+}
+
+
 // 'line' is marked 'const' to ensure its value is not changed before
 // being passed to the observers; the same thing is done in the other
 // three mutator functions; the C++ standard explicitly allows 'const'
