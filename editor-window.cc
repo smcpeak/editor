@@ -228,8 +228,6 @@ void EditorWindow::buildMenu()
 
     window->addAction("&Pick an Open File ...", this,
       SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_P);
-    window->addAction("Cycle Through Files", this,
-      SLOT(windowCycleFile()), Qt::Key_F6);
 
     window->addSeparator();
 
@@ -921,15 +919,6 @@ void EditorWindow::windowOpenFilesList()
   if (doc) {
     this->setDocumentFile(doc);
   }
-}
-
-
-void EditorWindow::windowCycleFile()
-{
-  int cur = globalState->m_documentList.getFileIndex(currentDocument());
-  xassert(cur >= 0);
-  cur = (cur + 1) % globalState->m_documentList.numFiles();     // cycle
-  setDocumentFile(globalState->m_documentList.getFileAt(cur));
 }
 
 

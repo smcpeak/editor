@@ -143,7 +143,6 @@ public slots:
   void viewToggleHighlightTrailingWS();
 
   void windowOpenFilesList();
-  void windowCycleFile();
   void windowNewWindow();
   void windowCloseWindow();
   void windowOccupyLeft();
