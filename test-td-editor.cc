@@ -3,12 +3,15 @@
 
 #include "td-editor.h"                 // module to test
 
+// smbase
 #include "datablok.h"                  // DataBlock
 #include "ckheap.h"                    // malloc_stats
+#include "nonport.h"                   // removeFile
 #include "strutil.h"                   // quoted
 #include "test.h"                      // EXPECT_EQ, expectEq
+#include "trace.h"                     // traceProcessArg
 
-#include <unistd.h>                    // unlink
+// libc
 #include <stdio.h>                     // printf
 #include <stdlib.h>                    // system
 
@@ -157,7 +160,7 @@ static void testUndoRedo()
   //tde.printHistory();
   //tde.printHistoryStats();
 
-  unlink("td.tmp");
+  removeFile("td.tmp");
 }
 
 
@@ -1720,8 +1723,10 @@ static void testCountSpaceChars()
 
 
 // --------------------------- main -----------------------------
-int main()
+int main(int argc, char **argv)
 {
+  traceProcessArg(argc, argv);
+
   try {
     testUndoRedo();
     testTextManipulation();
@@ -1751,6 +1756,7 @@ int main()
     testCountSpaceChars();
 
     xassert(TextDocumentEditor::s_objectCount == 0);
+    xassert(TextDocument::s_objectCount == 0);
 
     malloc_stats();
     cout << "\ntest-td-editor is ok" << endl;

@@ -339,19 +339,21 @@ void EditorWidget::fileTextDocumentRemoved(
   GENERIC_CATCH_BEGIN
   xassert(documentList == m_documentList);
 
+  // Change files if that was the one we were editing.  Do this before
+  // destroying any editors.
+  if (m_editor->m_fileDoc == file) {
+    this->setDocumentFile(documentList->getFileAt(0));
+  }
+
   // Remove 'file' from my list if I have it.
   for(ObjListMutator< FileTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
     if (mut.data()->m_fileDoc == file) {
+      xassert(mut.data() != m_editor);
       mut.deleteIt();
     }
     else {
       mut.adv();
     }
-  }
-
-  // Change files if that was the one we were editing.
-  if (m_editor->m_fileDoc == file) {
-    this->setDocumentFile(documentList->getFileAt(0));
   }
 
   GENERIC_CATCH_END

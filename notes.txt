@@ -2,7 +2,16 @@
 TODOs:
   - "save as" should change the highlighting
   - ctrl+i: open file at cursor
+  - close document with F4, not Ctrl+F4
+    - Ctrl+F4 to close the window
+  - serf pointers with reference counts to catch use after free
+  - is there a way to activate the MSVCRT debug heap without
+    being in a debugger?  would like that for unit tests
 
+  - infrastructure to check s_objectCounts at exit
+    - static destructors do the checking
+    - by default just print
+    - if flag is set, abort; flag gets set by unit tests
   - run command to generate entire file; git annotate!
     - git diff
     - git show

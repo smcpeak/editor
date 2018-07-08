@@ -404,6 +404,7 @@ void entry()
   testColon3();
 
   xassert(FileTextDocument::s_objectCount == 0);
+  xassert(TextDocument::s_objectCount == 0);
 
   cout << "test-file-td-list passed\n";
 }

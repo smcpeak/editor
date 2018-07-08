@@ -32,12 +32,20 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
   selfCheck();
 
   TextDocumentEditor::s_objectCount++;
+  TRACE("TextDocumentEditor",
+    "created TDE at " << (void*)this <<
+    ", doc=" << (void*)m_doc <<
+    ", oc=" << s_objectCount);
 }
 
 
 TextDocumentEditor::~TextDocumentEditor()
 {
   TextDocumentEditor::s_objectCount--;
+  TRACE("TextDocumentEditor",
+    "destroyed TDE at " << (void*)this <<
+    ", doc=" << (void*)m_doc <<
+    ", oc=" << s_objectCount);
 }
 
 

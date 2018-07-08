@@ -5,6 +5,10 @@
 
 #include "autofile.h"                  // AutoFILE
 #include "mysig.h"                     // printSegfaultAddrs
+#include "trace.h"                     // TRACE
+
+
+int TextDocument::s_objectCount = 0;
 
 
 TextDocument::TextDocument()
@@ -13,12 +17,21 @@ TextDocument::TextDocument()
     historyIndex(0),
     savedHistoryIndex(0),
     groupStack()
-{}
+{
+  s_objectCount++;
+  TRACE("TextDocument",
+    "created TD at " << (void*)this <<
+    ", oc=" << s_objectCount);
+}
 
 
 TextDocument::~TextDocument()
-{}
-
+{
+  s_objectCount--;
+  TRACE("TextDocument",
+    "destroyed TD at " << (void*)this <<
+    ", oc=" << s_objectCount);
+}
 
 
 void TextDocument::clearHistory()

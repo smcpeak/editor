@@ -14,6 +14,9 @@
 // This class represents a text document (which is a sequence of lines)
 // and its undo/redo history.
 class TextDocument {
+public:       // static data
+  static int s_objectCount;
+
 private:      // data
   // The sequence of text lines without any history information.
   TextDocumentCore core;

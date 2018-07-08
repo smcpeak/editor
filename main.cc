@@ -232,6 +232,7 @@ static int printObjectCountsIf(char const *when, bool print)
   PRINT_COUNT(EditorWidget::s_objectCount);
   PRINT_COUNT(EditorWindow::s_objectCount);
   PRINT_COUNT(FileTextDocument::s_objectCount);
+  PRINT_COUNT(TextDocument::s_objectCount);
   PRINT_COUNT(FTDLTableModel::s_objectCount);
   PRINT_COUNT(TextDocumentEditor::s_objectCount);
 
