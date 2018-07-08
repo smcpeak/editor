@@ -226,8 +226,8 @@ void EditorWindow::buildMenu()
   {
     QMenu *window = this->menuBar->addMenu("&Window");
 
-    window->addAction("Open &Files List ...", this,
-      SLOT(windowOpenFilesList()), Qt::Key_F8);
+    window->addAction("&Pick an Open File ...", this,
+      SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_P);
     window->addAction("Cycle Through Files", this,
       SLOT(windowCycleFile()), Qt::Key_F6);
 
