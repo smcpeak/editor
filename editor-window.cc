@@ -1002,13 +1002,17 @@ void EditorWindow::editorViewChanged()
   statusArea->status->setText(toQString(file->filename));
 
   // Window title.
-  string s = string(appName) & ": ";
+  stringBuilder sb;
+  sb << file->title;
+  if (tde->unsavedChanges()) {
+    sb << " *";
+  }
   string hotkey = file->hotkeyDesc();
   if (hotkey[0]) {
-    s &= stringc << "[" << hotkey << "] ";
+    sb << " [" << hotkey << "]";
   }
-  s &= file->title;
-  this->setWindowTitle(toQString(s));
+  sb << " - " << appName;
+  this->setWindowTitle(toQString(sb));
 }
 
 

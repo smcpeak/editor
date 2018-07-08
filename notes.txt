@@ -1,13 +1,8 @@
 
 TODOs:
-  - working on open-files dialog
-    - get rid of left sliver column?
-    - automatically fill the available width with the columns?
-    - add column and control for hotkey adjustment and pinning
+  - file picker will close files with unsaved changes without prompting!
   - "save as" should change the highlighting
   - ctrl+i: open file at cursor
-  - window title should start with file name for more useful
-    information during Alt+Tab
 
   - run command to generate entire file; git annotate!
     - git diff
