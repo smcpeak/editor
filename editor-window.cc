@@ -282,7 +282,8 @@ void EditorWindow::fileOpen()
     toQString(dir),    // dir
     QString(),         // filter
     NULL,              // selectedFilter
-    QFileDialog::Options());    //  QFileDialog::DontUseNativeDialog);
+    //QFileDialog::Options());
+    QFileDialog::DontUseNativeDialog);
   if (name.isEmpty()) {
     return;
   }
@@ -401,8 +402,12 @@ void EditorWindow::fileSaveAs()
   FileTextDocument *fileDoc = currentDocument();
   string chosenFilename = fileDoc->filename;
   while (true) {
-    QString s = QFileDialog::getSaveFileName(
-      this, "Save file as", toQString(chosenFilename));
+    QString s = QFileDialog::getSaveFileName(this,
+      "Save file as",                  // window title
+      toQString(chosenFilename),       // initial name
+      QString(),                       // filter
+      NULL,                            // selected filter (?)
+      QFileDialog::DontUseNativeDialog);
     if (s.isEmpty()) {
       return;
     }
