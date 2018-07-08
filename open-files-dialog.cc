@@ -5,12 +5,16 @@
 
 // editor
 #include "ftdl-table-model.h"          // FTDLTableModel
+#include "my-table-view.h"             // MyTableView
+
+// smqtutil
+#include "qtguiutil.h"                 // toString(QKeyEvent)
 
 // smbase
+#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "trace.h"                     // TRACE
 
 // Qt
-#include <QTableView>
 #include <QVBoxLayout>
 
 
@@ -38,7 +42,7 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
 
-  m_tableView = new QTableView();
+  m_tableView = new MyTableView();
   vbox->addWidget(m_tableView);
 
   // Zebra table.
@@ -55,6 +59,10 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
   //
   // TODO: Can I get rid of the thin left column altogether?
   m_tableView->setCornerButtonEnabled(false);
+
+  // Do not use Tab to move among cells.  Rather, it should move the
+  // focus among controls in the dialog.
+  m_tableView->setTabKeyNavigation(false);
 
   // Do not draw grid lines.  They only add visual clutter.
   m_tableView->setShowGrid(false);
@@ -116,12 +124,16 @@ FileTextDocument *OpenFilesDialog::runDialog()
 }
 
 
-void OpenFilesDialog::on_doubleClicked(QModelIndex const &index)
+void OpenFilesDialog::on_doubleClicked(QModelIndex const &index) noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   // I want to switch to the double-clicked item.  This seems to be
   // sufficient since the clicked item becomes 'current' automatically.
   TRACE("OpenFilesDialog", "doubleClicked: " << index);
   this->accept();
+
+  GENERIC_CATCH_END
 }
 
 

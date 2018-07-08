@@ -6,7 +6,6 @@ TODOs:
     - get rid of left sliver column?
     - automatically fill the available with with the columns?
     - implement "close selected" button
-    - better selection handling on entry?
     - add column and control for hotkey adjustment and pinning
   - "save as" should change the highlighting
   - ctrl+i: open file at cursor

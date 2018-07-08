@@ -9,8 +9,8 @@
 
 #include "sm-iostream.h"               // ostream
 
+class MyTableView;                     // my-table-view.h
 class QModelIndex;
-class QTableView;
 
 
 // This is mainly for debugging.  I put it here because this is, for
@@ -31,7 +31,7 @@ private:     // model data
 private:     // dialog controls
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
-  QTableView *m_tableView;
+  MyTableView *m_tableView;
 
 public:      // funcs
   OpenFilesDialog(FileTextDocumentList *docList,
@@ -44,7 +44,7 @@ public:      // funcs
   FileTextDocument *runDialog();
 
 public slots:
-  void on_doubleClicked(QModelIndex const &index);
+  void on_doubleClicked(QModelIndex const &index) noexcept;
 };
 
 

@@ -252,6 +252,7 @@ EDITOR_OBJS += main.o
 EDITOR_OBJS += main.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
+EDITOR_OBJS += my-table-view.o
 EDITOR_OBJS += open-files-dialog.o
 EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
