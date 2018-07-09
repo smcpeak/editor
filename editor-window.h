@@ -69,12 +69,16 @@ private:     // funcs
   void writeTheFile();
   void setDocumentFile(FileTextDocument *b);
 
+  // Update the status displays to reflect a different file being edited.
+  void updateForChangedFile();
+
+  // Change 'file->highlighter' to agree with its file extension.
+  // This does *not* send the attribute-change notification.
+  void useDefaultHighlighter(FileTextDocument *file);
+
   // Start the file chooser.  Return an empty string if it is canceled,
   // otherwise the chosen file name.
   string fileChooseDialog(string const &initialName, bool saveAs);
-
-  // Update the status displays to reflect a different file being edited.
-  void updateForChangedFile();
 
   void rebuildWindowMenu();
   void complain(char const *msg);
@@ -141,6 +145,7 @@ public slots:
   void viewToggleVisibleSoftMargin();
   void viewSetSoftMarginColumn();
   void viewToggleHighlightTrailingWS();
+  void viewSetHighlighting();
 
   void windowOpenFilesList();
   void windowNewWindow();

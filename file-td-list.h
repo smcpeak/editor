@@ -218,7 +218,7 @@ public:      // funcs
   //   - hotkeyDigit
   //   - filename, isUntitled
   //   - title
-  //   - highlighter (currently never changes)
+  //   - highlighter
   //
   // The existence of this method is a slight abuse of the FTDLO
   // concept, since we are notifying about a single object, rather

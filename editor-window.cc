@@ -222,6 +222,9 @@ void EditorWindow::buildMenu()
       "Highlight &trailing whitespace",
       SLOT(viewToggleHighlightTrailingWS()),
       this->editorWidget->m_highlightTrailingWhitespace);
+
+    menu->addAction("Set &Highlighting...", this,
+      &EditorWindow::viewSetHighlighting);
   }
 
   #undef CHECKABLE_ACTION
@@ -281,6 +284,27 @@ void EditorWindow::updateForChangedFile()
 {
   editorWidget->recomputeLastVisible();
   editorViewChanged();
+}
+
+
+void EditorWindow::useDefaultHighlighter(FileTextDocument *file)
+{
+  if (file->highlighter) {
+    delete file->highlighter;
+    file->highlighter = NULL;
+  }
+
+  // get file extension
+  char const *dot = strrchr(file->filename.c_str(), '.');
+  if (dot) {
+    string ext = string(dot+1);
+    if (ext.equals("h") ||
+        ext.equals("cc") ||
+        ext.equals("cpp")) {
+      // make and attach a C++ highlighter for C/C++ files
+      file->highlighter = new C_Highlighter(file->getCore());
+    }
+  }
 }
 
 
@@ -389,17 +413,7 @@ void EditorWindow::fileOpenFile(string const &name)
     // Just have the file open with its name set but no content.
   }
 
-  // get file extension
-  char const *dot = strrchr(name.c_str(), '.');
-  if (dot) {
-    string ext = string(dot+1);
-    if (ext.equals("h") ||
-        ext.equals("cc") ||
-        ext.equals("cpp")) {
-      // make and attach a C++ highlighter for C/C++ files
-      file->highlighter = new C_Highlighter(file->getCore());
-    }
-  }
+  this->useDefaultHighlighter(file);
 
   // is there an untitled, empty file hanging around?
   FileTextDocument *untitled =
@@ -498,8 +512,10 @@ void EditorWindow::fileSaveAs()
   fileDoc->isUntitled = false;
   fileDoc->title = this->globalState->uniqueTitleFor(chosenFilename);
   writeTheFile();
+  this->useDefaultHighlighter(fileDoc);
 
-  // Notify observers of the file name change.  This includes myself.
+  // Notify observers of the file name and highlighter change.  This
+  // includes myself.
   this->globalState->m_documentList.notifyAttributeChanged(fileDoc);
 }
 
@@ -655,6 +671,9 @@ void EditorWindow::fileTextDocumentAttributeChanged(
 
   // The title of the file we are looking at could have changed.
   this->editorViewChanged();
+
+  // The highlighter might have changed too.
+  this->editorWidget->update();
 
   GENERIC_CATCH_END
 }
@@ -913,6 +932,58 @@ void EditorWindow::viewToggleHighlightTrailingWS()
 
 
 #undef CHECKABLE_MENU_TOGGLE
+
+
+void EditorWindow::viewSetHighlighting()
+{
+  FileTextDocument *doc = this->currentDocument();
+
+  QInputDialog dialog(this);
+  dialog.setWindowTitle("Set Highlighting");
+  dialog.setLabelText("Highlighting to use for this file:");
+  dialog.setComboBoxItems(QStringList() << "None" << "C/C++");
+
+  // One annoying thing is you can't double-click an item to choose
+  // it and simultaneously close the dialog.
+  dialog.setOption(QInputDialog::UseListViewForComboBoxItems);
+
+  if (doc->highlighter) {
+    dialog.setTextValue("C/C++");
+  }
+  else {
+    dialog.setTextValue("None");
+  }
+  if (!dialog.exec()) {
+    return;
+  }
+
+  if (doc != this->currentDocument()) {
+    // Normally this is impossible since the dialog is modal.
+    QMessageBox::information(this, "Document Changed",
+      "The current document changed while that last dialog was "
+      "open, discarding its results.");
+    return;
+  }
+
+  // The QInputDialog documentation is incomplete.  It says that
+  // 'textValue' is only used in TextInput mode without clarifying that
+  // comboBox mode is a form of TextInput mode.  I determined that by
+  // reading the source code.
+  QString chosen = dialog.textValue();
+
+  // We are going to replace the highlighter (even if we replace it with
+  // the same style), so remove the old one.
+  delete doc->highlighter;
+  doc->highlighter = NULL;
+
+  // TODO: Obviously this is not a good method of recognition.
+  if (chosen == "C/C++") {
+    doc->highlighter = new C_Highlighter(doc->getCore());
+  }
+
+  // Notify everyone of the change.
+  this->globalState->m_documentList.notifyAttributeChanged(doc);
+}
 
 
 void EditorWindow::windowOpenFilesList()
