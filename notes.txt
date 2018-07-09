@@ -1,10 +1,7 @@
 
 TODOs:
-  - smbase Makefile: fix backslash lists
   - ctrl+i: open file at cursor
   - serf pointers with reference counts to catch use after free?
-  - is there a way to activate the MSVCRT debug heap without
-    being in a debugger?  would like that for unit tests
   - multiple copy+paste strings
 
   - run command to generate entire file; git annotate!
