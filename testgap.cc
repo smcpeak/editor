@@ -4,8 +4,7 @@
 #include "gap.h"                       // module to test
 
 #include "ckheap.h"                    // malloc_stats
-#include "objcount.h"                  // CheckObjectCount
-#include "test.h"                      // ARGS_MAIN
+#include "test.h"                      // ARGS_TEST_MAIN
 
 #include <stdio.h>                     // printf
 #include <stdlib.h>                    // rand, srand
@@ -270,8 +269,6 @@ int const PRINT = 0;
 
 void entry(int argc, char *argv[])
 {
-  CheckObjectCount::s_exitUponFailure = true;
-
   //srand(time());
 
   malloc_stats();
@@ -317,4 +314,4 @@ void entry(int argc, char *argv[])
 }
 
 
-ARGS_MAIN
+ARGS_TEST_MAIN

@@ -1,7 +1,5 @@
 
 TODOs:
-  - move dev-warning into smbase
-    - then change tests to use it instead of objcount
   - smbase Makefile: fix backslash lists
   - ctrl+i: open file at cursor
   - serf pointers with reference counts to catch use after free?

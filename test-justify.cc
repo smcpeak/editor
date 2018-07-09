@@ -4,7 +4,7 @@
 #include "justify.h"                   // module to test
 
 // smbase
-#include "objcount.h"                  // CheckObjectCount
+#include "test.h"                      // USUAL_TEST_MAIN
 
 // libc
 #include <assert.h>                    // assert
@@ -481,16 +481,15 @@ static void testJustifyNearLine()
 }
 
 
-int main()
+static void entry()
 {
-  CheckObjectCount::s_exitUponFailure = true;
-
   testJustifyTextLines();
   testJustifyNearLine();
 
   cout << "test-justify PASSED\n";
-  return 0;
 }
+
+USUAL_TEST_MAIN
 
 
 // EOF

@@ -7,9 +7,8 @@
 #include "datablok.h"                  // DataBlock
 #include "ckheap.h"                    // malloc_stats
 #include "nonport.h"                   // removeFile
-#include "objcount.h"                  // CheckObjectCount
 #include "strutil.h"                   // quoted
-#include "test.h"                      // EXPECT_EQ, expectEq
+#include "test.h"                      // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
 #include "trace.h"                     // traceProcessArg
 
 // libc
@@ -1724,52 +1723,47 @@ static void testCountSpaceChars()
 
 
 // --------------------------- main -----------------------------
-int main(int argc, char **argv)
+static void entry(int argc, char **argv)
 {
-  CheckObjectCount::s_exitUponFailure = true;
-
   traceProcessArg(argc, argv);
 
-  try {
-    testUndoRedo();
-    testTextManipulation();
-    testFindInLongLine();
-    testBlockIndent();
-    testBlockIndent2();
-    testFillToCursor();
-    testScrollToCursor();
-    testGetWordAfter();
-    testGetAboveIndentation();
-    testMoveCursor();
-    testBackspaceFunction();
-    testDeleteKeyFunction();
-    testClipboard();
-    testInsertNewlineAutoIndent();
-    testInsertNewlineAutoIndent2();
-    testInsertNewlineAutoIndent3();
-    testInsertNewlineAutoIndent4();
-    testSetVisibleSize();
-    testCursorRestorer();
-    testSetMark();
-    testConfineCursorToVisible();
-    testJustifyNearCursor();
-    testInsertDateTime();
-    testReplaceText(false);
-    testReplaceText(true);
-    testCountSpaceChars();
+  testUndoRedo();
+  testTextManipulation();
+  testFindInLongLine();
+  testBlockIndent();
+  testBlockIndent2();
+  testFillToCursor();
+  testScrollToCursor();
+  testGetWordAfter();
+  testGetAboveIndentation();
+  testMoveCursor();
+  testBackspaceFunction();
+  testDeleteKeyFunction();
+  testClipboard();
+  testInsertNewlineAutoIndent();
+  testInsertNewlineAutoIndent2();
+  testInsertNewlineAutoIndent3();
+  testInsertNewlineAutoIndent4();
+  testSetVisibleSize();
+  testCursorRestorer();
+  testSetMark();
+  testConfineCursorToVisible();
+  testJustifyNearCursor();
+  testInsertDateTime();
+  testReplaceText(false);
+  testReplaceText(true);
+  testCountSpaceChars();
 
-    xassert(TextDocumentEditor::s_objectCount == 0);
-    xassert(TextDocument::s_objectCount == 0);
+  // This should be redundant now that I have general infrastructure to
+  // check s_objectCounts, but I will leave these for a while at least.
+  xassert(TextDocumentEditor::s_objectCount == 0);
+  xassert(TextDocument::s_objectCount == 0);
 
-    malloc_stats();
-    cout << "\ntest-td-editor is ok" << endl;
-    return 0;
-  }
-  catch (xBase &x) {
-    cout << x << endl;
-    return 4;
-  }
+  malloc_stats();
+  cout << "\ntest-td-editor is ok" << endl;
 }
+
+ARGS_TEST_MAIN
 
 
 // EOF

@@ -6,7 +6,6 @@
 // smbase
 #include "autofile.h"                  // AutoFILE
 #include "ckheap.h"                    // malloc_stats
-#include "objcount.h"                  // CheckObjectCount
 #include "test.h"                      // USUAL_MAIN, EXPECT_EQ
 
 // libc
@@ -143,8 +142,6 @@ static void testVarious()
 
 static void entry()
 {
-  CheckObjectCount::s_exitUponFailure = true;
-
   for (int looper=0; looper<2; looper++) {
     printf("stats before:\n");
     malloc_stats();
@@ -211,7 +208,7 @@ static void entry()
   printf("\ntd-core is ok\n");
 }
 
-USUAL_MAIN
+USUAL_TEST_MAIN
 
 
 // EOF
