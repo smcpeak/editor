@@ -3,13 +3,11 @@
 
 #include "ftdl-table-model.h"          // this module
 
-// editor
-#include "dev-warning.h"               // DEV_WARNING
-
 // smqtutil
 #include "qtutil.h"                    // toQString(string)
 
 // smbase
+#include "dev-warning.h"               // DEV_WARNING
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "trace.h"                     // TRACE
 
