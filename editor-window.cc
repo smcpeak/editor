@@ -340,7 +340,13 @@ string EditorWindow::fileChooseDialog(string const &initialName, bool saveAs)
   // The native dialog is causing some problems with desktop icons
   // refreshing and the dialog hanging.  The Qt version also causes
   // problems, but less severe?  I need to continue experimenting.
-  dialog.setOptions(QFileDialog::DontUseNativeDialog);
+  //
+  // The problems with hanging, etc., are indeed a little less severe,
+  // but the non-native dialog has a problem: its "file name" text edit
+  // line does not get selected after I press Enter after typing the
+  // name of a directory, so I have to manually delete that before I can
+  // continue navigating.  So, back to the native dialog for a while.
+  //dialog.setOptions(QFileDialog::DontUseNativeDialog);
 
   if (!dialog.exec()) {
     TRACE("fileOpen", "canceled");

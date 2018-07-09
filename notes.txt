@@ -1,7 +1,5 @@
 
 TODOs:
-  - annoying problem with file-open dialog that the edit line is not
-    selected after hitting Enter to move into subdirectory
   - move dev-warning into smbase
     - then change tests to use it instead of objcount
   - ctrl+i: open file at cursor
