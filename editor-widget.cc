@@ -975,6 +975,15 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
     // ahead anyway since my design is intended to be robust against
     // Qt screwing up its focus data and notifications.
     TRACE("focus", "got a keystroke but I do not have focus!");
+
+    // Nevertheless, I do not want to leave things this way because the
+    // menu looks weird and there might be other issues.  This seems to
+    // be an effective way to repair this screwy state.
+    this->setFocus(Qt::PopupFocusReason);
+
+    // At this point the menu bar is still grayed out, but that can be
+    // fixed with a repaint.
+    this->window()->update();
   }
 
   // This is the single most important place to ensure I do not act upon
