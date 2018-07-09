@@ -3,8 +3,11 @@
 
 #include "file-td-list.h"              // module to test
 
+// smbase
+#include "objcount.h"                  // CheckObjectCount
 #include "test.h"                      // USUAL_MAIN
 
+// libc
 #include <stdarg.h>                    // va_start, etc.
 
 
@@ -395,6 +398,8 @@ static void testColon3()
 
 void entry()
 {
+  CheckObjectCount::s_exitUponFailure = true;
+
   testSimple();
   testAddMoveRemove();
   testCreateUntitled();

@@ -206,6 +206,9 @@ public:    // funcs
   // Remove an observer.  It must be present now.
   void removeObserver(TextDocumentObserver *observer) const;
 
+  // Return true if 'observer' is among the current observers.
+  bool hasObserver(TextDocumentObserver const *observer) const;
+
   // Send the 'observeUnsavedChangesChange' message to all observers.
   void notifyUnsavedChangesChange(TextDocument const *doc) const;
 
@@ -231,13 +234,14 @@ inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
 // nor an appropriate way to report it.  Observers are obligated to
 // catch any exceptions they throw.
 class TextDocumentObserver {
-protected:
-  // this is to silence a g++ warning; it is *not* the case that
-  // clients are allowed to delete objects known only as
-  // TextDocumentObserver implementors
-  virtual ~TextDocumentObserver() {}
+public:      // static data
+  static int s_objectCount;
 
-public:
+public:      // funcs
+  TextDocumentObserver();
+  TextDocumentObserver(TextDocumentObserver const &obj);
+  virtual ~TextDocumentObserver();     // virtual to silence warning
+
   // These are analogues of the TextDocumentCore manipulation interface, but
   // we also pass the TextDocumentCore itself so the observer doesn't need
   // to remember which buffer it's observing.  These are called

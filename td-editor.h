@@ -532,6 +532,8 @@ public:      // funcs
     { m_doc->addObserver(observer); }
   void removeObserver(TextDocumentObserver *observer)
     { m_doc->removeObserver(observer); }
+  bool hasObserver(TextDocumentObserver const *observer) const
+    { return m_doc->hasObserver(observer); }
 
   // ------------------------- diagnostics ----------------------------
   // Print some debugging information to stdout for use in testing.

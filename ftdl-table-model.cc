@@ -10,6 +10,7 @@
 #include "qtutil.h"                    // toQString(string)
 
 // smbase
+#include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "trace.h"                     // TRACE
 
 
@@ -27,6 +28,8 @@ bool const ENABLE_TRACE_THIS = false;
 
 
 int FTDLTableModel::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(FTDLTableModel);
 
 
 FTDLTableModel::FTDLTableModel(FileTextDocumentList *docList,

@@ -3,12 +3,16 @@
 
 #include "td.h"                        // this module
 
+// smbase
 #include "autofile.h"                  // AutoFILE
 #include "mysig.h"                     // printSegfaultAddrs
+#include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "trace.h"                     // TRACE
 
 
 int TextDocument::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(TextDocument);
 
 
 TextDocument::TextDocument()
@@ -214,6 +218,11 @@ void TextDocument::addObserver(TextDocumentObserver *observer)
 void TextDocument::removeObserver(TextDocumentObserver *observer)
 {
   this->core.removeObserver(observer);
+}
+
+bool TextDocument::hasObserver(TextDocumentObserver const *observer) const
+{
+  return this->core.hasObserver(observer);
 }
 
 

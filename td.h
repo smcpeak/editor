@@ -139,6 +139,9 @@ public:      // funcs
   // Remove an observer, which must be observing this document.
   void removeObserver(TextDocumentObserver *observer);
 
+  // Return true if 'observer' is among our current observers.
+  bool hasObserver(TextDocumentObserver const *observer) const;
+
   // ------------------------- diagnostics --------------------------
   // print the history in a textual format, with the current history
   // index marked (or no mark if history index is at the end)

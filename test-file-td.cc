@@ -4,6 +4,7 @@
 #include "file-td.h"                   // this module
 
 #include "nonport.h"                   // fileOrDirectoryExists, removeFile
+#include "objcount.h"                  // CheckObjectCount
 #include "test.h"                      // USUAL_MAIN
 
 #include <fstream>                     // ofstream
@@ -72,6 +73,8 @@ static void testReadFile()
 
 static void entry()
 {
+  CheckObjectCount::s_exitUponFailure = true;
+
   testWhenUntitledExists();
   testReadFile();
 

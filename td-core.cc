@@ -3,12 +3,15 @@
 
 #include "td-core.h"                   // this module
 
+// smbase
 #include "array.h"                     // Array
 #include "autofile.h"                  // AutoFILE
+#include "objcount.h"                  // CheckObjectCount
 #include "strutil.h"                   // encodeWithEscapes
 #include "syserr.h"                    // xsyserror
 #include "test.h"                      // USUAL_MAIN, PVAL
 
+// libc
 #include <assert.h>                    // assert
 #include <ctype.h>                     // isalnum, isspace
 #include <string.h>                    // strncasecmp
@@ -587,6 +590,11 @@ void TextDocumentCore::removeObserver(TextDocumentObserver *observer) const
   this->observers.removeItem(observer);
 }
 
+bool TextDocumentCore::hasObserver(TextDocumentObserver const *observer) const
+{
+  return this->observers.contains(observer);
+}
+
 
 void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
 {
@@ -597,6 +605,26 @@ void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
 
 
 // -------------------- TextDocumentObserver ------------------
+int TextDocumentObserver::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(TextDocumentObserver);
+
+
+TextDocumentObserver::TextDocumentObserver()
+{
+  s_objectCount++;
+}
+
+TextDocumentObserver::TextDocumentObserver(TextDocumentObserver const &obj)
+{
+  s_objectCount++;
+}
+
+TextDocumentObserver::~TextDocumentObserver()
+{
+  s_objectCount--;
+}
+
 void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int) noexcept
 {}
 

@@ -8,6 +8,7 @@
 
 // smbase
 #include "datablok.h"                  // DataBlock
+#include "objcount.h"                  // CheckObjectCount
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // replace
 #include "test.h"                      // ARGS_MAIN
@@ -341,6 +342,7 @@ static void testMiscDiagnostics()
 static void entry(int argc, char **argv)
 {
   TRACE_ARGS();
+  CheckObjectCount::s_exitUponFailure = true;
 
   QCoreApplication app(argc, argv);
 

@@ -1,0 +1,101 @@
+qt-focus-issues.txt
+-------------------
+
+Unfortunately, the Qt focus mechanism is unreliable.  The focusInEvent()
+and focusOutEvent() handlers are not reliably called, and hasFocus() is
+not accurate.  Consequently, although I still use Qt focus events and
+data for some things, the code has to be prepared for them to be
+arbitrarily wrong.
+
+Two examples of focus issues follow.
+
+The first issue is https://bugreports.qt.io/browse/QTBUG-44405.  Here,
+through a series of unusual but not rare key combinations, the menu
+bar steals the focus even though it is not supposed to.  The effect is
+mostly just annoying, and does not cause violations of the hasFocus()
+contract, but it suggests that the underlying focus infrastructure is
+buggy, which turns out to be true.
+
+The next issue is a bug I have not yet filed, but I have a reproducer in
+/d/wrk/learn/qt5/nonnative.cc that I intend to file, and the following
+text assumes one has that available.
+
+---- BEGIN: bug report ----
+
+To reproduce it:
+
+1. Launch the non-native (Qt) file-open dialog.  In this test program
+that is done with "File | Open with Qt non-native..."  (The problem
+does not happen when using the native dialog.)
+
+2. *Type* the name of an existing file in the "File name" box.  (The
+problem does not happen with other ways of choosing the name.)
+
+3. With the focus still in the "File name" box, press Enter to close
+the dialog and accept the choice.  (The problem does not happen when
+clicking on Ok, nor when using the keyboard to hit Ok directly.)
+
+Observed behavior: The main window is now in a weird state.  Windows
+draws the active-window border around it.  However, the menu bar is
+drawn grayed out, as if the window did not have focus, and
+qApp->focusWidget() returns NULL.  No QWidget receives a
+focusInEvent, and the last application-wide focusChanged signal is a
+change to NULL.
+
+Furthermore, keystrokes are sent to the QTextEdit, which accumulates
+the characters as normal, even though its hasFocus() is false.  This
+is one reason why the problem is serious; quoting the documentation
+for QWidget::keyPressEvent:
+
+  A widget must [...] have focus in order to receive a key press
+  event.
+
+That property is violated by this bug.  I have a QWidget-derived
+class that was assuming it will not receive keystrokes unless it has
+the focus, using focusIn to prepare for that, which is what led me to
+discover this bug.
+
+There is additional weirdness in this state.  For example, you can
+click in the text edit to cause its focusIn to fire.  Then click on
+"File" in the menu; text gets focusOut.  Now click on "File" again
+to close the popup.  Text edit now has focus, and its hasFocus() is
+true, but it never receives focusIn!
+
+Expected behavior: The main window, specifically its QTextEdit control,
+should receive the Qt focus.  Keystrokes should be delivered if and only
+if hasFocus() is true.  hasFocus() should be true exactly between
+focusInEvent and focusOutEvent.  This is what happens when using the
+native dialog, or when closing the Qt dialog in any other way than as
+described above.
+
+---- END: bug report ----
+
+
+From the above bug reports, we see that the various notions of focus:
+
+1. Which widget actually gets keystrokes.
+
+2. What Windows thinks has focus.
+
+3. QApplication::focusWidget() and QWidget::hasFocus().
+
+4. focusIn/OutEvent history.
+
+can all vary independently.  1 and 2 diverge in QTBUG-44405.  1 diverges
+from 3 and 4 in the main body of the second bug.  3 and 4 diverge in the
+"additional weirdness".
+
+Element 3 actually has two parts, but I can see in the source code (and
+this agrees with my observations) that hasFocus() is implemented in
+terms of focusWidget(), so they should not diverge, except where focus
+proxies are concerned (which is documented behavior).
+
+I therefore conclude that a robust Qt application must regard the Qt
+focus data and events (elements 3 and 4) as unreliable hints.  It is
+perhaps acceptable to use them for painting, but one cannot, for
+example, have a widget that only accepts keystrokes between focusIn and
+focusOut, or while hasFocus() is true.  Keystrokes can be delivered at
+essentially any time.
+
+
+EOF

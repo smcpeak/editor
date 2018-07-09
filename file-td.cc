@@ -3,10 +3,13 @@
 
 #include "file-td.h"                   // this module
 
+// smbase
 #include "macros.h"                    // CMEMB
 #include "nonport.h"                   // getFileModificationTime
+#include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "trace.h"                     // TRACE
 
+// Qt
 #include <qnamespace.h>                // Qt class/namespace
 
 
@@ -15,6 +18,9 @@
 int FileTextDocument::s_nextWindowMenuId = 1;
 
 int FileTextDocument::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(FileTextDocument);
+
 
 FileTextDocument::FileTextDocument()
   : TextDocument(),

@@ -26,6 +26,7 @@
 #include "exc.h"                       // XOpen, GENERIC_CATCH_BEGIN/END
 #include "mysig.h"                     // printSegfaultAddrs
 #include "nonport.h"                   // fileOrDirectoryExists
+#include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname
 #include "test.h"                      // PVAL
@@ -54,6 +55,8 @@
 static char const appName[] = "Editor";
 
 int EditorWindow::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(EditorWindow);
 
 
 EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,

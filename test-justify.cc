@@ -3,6 +3,10 @@
 
 #include "justify.h"                   // module to test
 
+// smbase
+#include "objcount.h"                  // CheckObjectCount
+
+// libc
 #include <assert.h>                    // assert
 
 
@@ -479,6 +483,8 @@ static void testJustifyNearLine()
 
 int main()
 {
+  CheckObjectCount::s_exitUponFailure = true;
+
   testJustifyTextLines();
   testJustifyNearLine();
 

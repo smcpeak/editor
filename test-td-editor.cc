@@ -7,6 +7,7 @@
 #include "datablok.h"                  // DataBlock
 #include "ckheap.h"                    // malloc_stats
 #include "nonport.h"                   // removeFile
+#include "objcount.h"                  // CheckObjectCount
 #include "strutil.h"                   // quoted
 #include "test.h"                      // EXPECT_EQ, expectEq
 #include "trace.h"                     // traceProcessArg
@@ -1725,6 +1726,8 @@ static void testCountSpaceChars()
 // --------------------------- main -----------------------------
 int main(int argc, char **argv)
 {
+  CheckObjectCount::s_exitUponFailure = true;
+
   traceProcessArg(argc, argv);
 
   try {

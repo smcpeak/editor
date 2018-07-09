@@ -168,7 +168,15 @@ public:      // data
   // True if I've registered myself as a listener.  There
   // are a few cases where I don't have the focus, but
   // I also am not a listener (like initialization).
+  //
+  // TODO: This should be removed.  I have discovered that the Qt focus
+  // notifications are unreliable, so I should not use them for such an
+  // important function.
   bool m_listening;
+
+  // When true, ignore any TextDocumentObserver notifications because I
+  // initiated the change.
+  bool m_ignoreTextDocumentNotifications;
 
   // ------ event model hacks ------
   // when this is true, we ignore the scrollToLine and scrollToCol
@@ -219,13 +227,6 @@ public:      // funcs
   // absolute cursor movement
   void cursorTo(TextCoord tc);
 
-  // relative cursor movement
-  void moveCursorBy(int dline, int dcol)  { m_editor->moveCursorBy(dline, dcol); }
-  void cursorLeftBy(int amt)              { moveCursorBy(0, -amt); }
-  void cursorRightBy(int amt)             { moveCursorBy(0, +amt); }
-  void cursorUpBy(int amt)                { moveCursorBy(-amt, 0); }
-  void cursorDownBy(int amt)              { moveCursorBy(+amt, 0); }
-
   // things often bound to cursor, etc. keys; 'shift' indicates
   // whether the shift key is held (so the selection should be turned
   // on, or remain on)
@@ -240,19 +241,9 @@ public:      // funcs
   void cursorToEndOfNextLine(bool shift);
 
   // ----------------------------- mark ------------------------------
-  // selection manipulation
-  void turnOffSelection()                 { m_editor->clearMark(); }
-  void turnOnSelection()                  { m_editor->turnOnSelection(); }
-  void turnSelection(bool on)             { m_editor->turnSelection(on); }
-
   TextCoord mark() const                  { return m_editor->mark(); }
-  void setMark(TextCoord tc)              { m_editor->setMark(tc); }
   bool selectEnabled() const              { return m_editor->markActive(); }
-  void clearMark()                        { m_editor->clearMark(); }
-
   string getSelectedText() const          { return m_editor->getSelectedText(); }
-
-  void selectCursorLine()                 { m_editor->selectCursorLine(); }
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
@@ -261,14 +252,8 @@ public:      // funcs
   int lastVisibleLine() const             { return m_editor->lastVisible().line; }
   int lastVisibleCol() const              { return m_editor->lastVisible().column; }
 
-  void setFirstVisible(TextCoord fv)      { m_editor->setFirstVisible(fv); }
-  void setFirstVisibleLine(int L)         { m_editor->setFirstVisibleLine(L); }
-  void setFirstVisibleCol(int C)          { m_editor->setFirstVisibleCol(C); }
-
-  // This one calls redraw, whereas the preceding does not, simply
-  // because its call sites all want that right after.
-  void moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
-    { m_editor->moveFirstVisibleAndCursor(deltaLine, deltaCol); redraw(); }
+  // Move both the screen and cursor by the same amount.
+  void moveFirstVisibleAndCursor(int deltaLine, int deltaCol);
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col

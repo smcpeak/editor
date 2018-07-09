@@ -3,10 +3,13 @@
 
 #include "td-core.h"                   // module to test
 
+// smbase
 #include "autofile.h"                  // AutoFILE
 #include "ckheap.h"                    // malloc_stats
+#include "objcount.h"                  // CheckObjectCount
 #include "test.h"                      // USUAL_MAIN, EXPECT_EQ
 
+// libc
 #include <assert.h>                    // assert
 #include <stdlib.h>                    // system
 
@@ -126,11 +129,22 @@ static void testVarious()
     checkSpaces(tdc, 5, 0, 0);
     checkSpaces(tdc, 6, 6, 6);
   }
+
+  // This is far from a comprehensive test of observers, but I want to
+  // at least test 'hasObserver'.
+  TextDocumentObserver obs;
+  xassert(!tdc.hasObserver(&obs));
+  tdc.addObserver(&obs);
+  xassert(tdc.hasObserver(&obs));
+  tdc.removeObserver(&obs);
+  xassert(!tdc.hasObserver(&obs));
 }
 
 
 static void entry()
 {
+  CheckObjectCount::s_exitUponFailure = true;
+
   for (int looper=0; looper<2; looper++) {
     printf("stats before:\n");
     malloc_stats();

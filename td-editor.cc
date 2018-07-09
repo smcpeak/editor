@@ -7,11 +7,14 @@
 
 #include "array.h"                     // Array
 #include "datetime.h"                  // DateTimeSeconds
+#include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "trace.h"                     // TRACE
 #include "typ.h"                       // min, max
 
 
 int TextDocumentEditor::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(TextDocumentEditor);
 
 
 TextDocumentEditor::TextDocumentEditor(TextDocument *doc)

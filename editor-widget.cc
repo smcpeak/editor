@@ -27,6 +27,7 @@
 #include "exc.h"             // GENERIC_CATCH_BEGIN/END
 #include "macros.h"          // Restorer
 #include "nonport.h"         // getMilliseconds
+#include "objcount.h"        // CHECK_OBJECT_COUNT
 #include "trace.h"           // TRACE
 #include "xassert.h"         // xassert
 
@@ -46,6 +47,19 @@
 #include <stdio.h>           // printf, for debugging
 
 
+// The basic rule for using this is it should be present in any function
+// that calls a non-const method of TextDocumentEditor.  This includes
+// cursor changes, even though those currently do not have an associated
+// notification event, since they might have one in the future.  In
+// order to not have redundant code, I mostly only use this in those
+// functions that make direct calls.  For consistency, I even do this
+// for the destructor, or when I know I am not listening, since there is
+// essentially no cost to doing it.
+#define INITIATING_DOCUMENT_CHANGE()                       \
+  Restorer<bool> ignoreNotificationsRestorer(              \
+    m_ignoreTextDocumentNotifications, true) /* user ; */
+
+
 // Distance below the baseline to draw an underline.
 int const UNDERLINE_OFFSET = 2;
 
@@ -55,6 +69,9 @@ int const CTRL_SHIFT_DISTANCE = 10;
 
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::s_objectCount = 0;
+
+CHECK_OBJECT_COUNT(EditorWidget);
+
 
 EditorWidget::EditorWidget(FileTextDocument *tdf,
                            FileTextDocumentList *documentList,
@@ -83,6 +100,7 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
     m_inputProxy(NULL),
     // font metrics inited by setFont()
     m_listening(false),
+    m_ignoreTextDocumentNotifications(false),
     m_ignoreScrollSignals(false)
 {
   xassert(tdf);
@@ -145,11 +163,15 @@ void EditorWidget::selfCheck() const
 
   // There should never be more m_editors than fileDocuments.
   xassert(m_documentList->numFiles() >= m_editorList.count());
+
+  // Check that 'm_listening' agrees with the document's observer list.
+  xassert(m_listening == m_editor->hasObserver(this));
 }
 
 
 void EditorWidget::cursorTo(TextCoord tc)
 {
+  INITIATING_DOCUMENT_CHANGE();
   m_editor->setCursor(tc);
 }
 
@@ -279,6 +301,7 @@ EditorWidget::FileTextDocumentEditor *
   FileTextDocumentEditor *ret = new FileTextDocumentEditor(file);
   m_editorList.prepend(ret);
   if (hasView) {
+    INITIATING_DOCUMENT_CHANGE();
     ret->setFirstVisible(view.firstVisible);
     ret->setCursor(view.cursor);
 
@@ -299,6 +322,7 @@ void EditorWidget::checkForDiskChanges()
       "File \"" << file->filename << "\" has changed on disk "
       "and has no unsaved changes; reloading it.");
     try {
+      INITIATING_DOCUMENT_CHANGE();
       file->readFile();
       TRACE("modification", "Successfully reloaded.");
     }
@@ -349,6 +373,7 @@ void EditorWidget::fileTextDocumentRemoved(
   for(ObjListMutator< FileTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
     if (mut.data()->m_fileDoc == file) {
       xassert(mut.data() != m_editor);
+      INITIATING_DOCUMENT_CHANGE();
       mut.deleteIt();
     }
     else {
@@ -398,12 +423,22 @@ void EditorWidget::redraw()
 }
 
 
+void EditorWidget::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
+{
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->moveFirstVisibleAndCursor(deltaLine, deltaCol);
+  this->redraw();
+}
+
+
 void EditorWidget::recomputeLastVisible()
 {
   int h = this->height();
   int w = this->width();
 
   if (m_fontHeight && m_fontWidth) {
+    INITIATING_DOCUMENT_CHANGE();
+
     // calculate viewport size
     m_editor->setVisibleSize(
       (h - m_topMargin) / this->lineHeight(),
@@ -420,22 +455,6 @@ void EditorWidget::resizeEvent(QResizeEvent *r)
   QWidget::resizeEvent(r);
   recomputeLastVisible();
   emit viewChanged();
-}
-
-
-// for calling from gdb..
-int flushPainter(QPainter &p)
-{
-  // This is what I did with Qt3:
-  //p.flush();
-
-  // This seems like perhaps it is the closest equivalent in Qt5.
-  // But I won't be able to test it until I try debugging this on
-  // Linux.
-  p.beginNativePainting();
-  p.endNativePainting();
-
-  return 0;
 }
 
 
@@ -950,6 +969,18 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
   GENERIC_CATCH_BEGIN
 
   TRACE("input", "keyPress: " << toString(*k));
+
+  if (!this->hasFocus()) {
+    // See doc/qt-focus-issues.txt.  This is a weird state, but I go
+    // ahead anyway since my design is intended to be robust against
+    // Qt screwing up its focus data and notifications.
+    TRACE("focus", "got a keystroke but I do not have focus!");
+  }
+
+  // This is the single most important place to ensure I do not act upon
+  // document change notifications.
+  INITIATING_DOCUMENT_CHANGE();
+
   UndoHistoryGrouper hbgrouper(*m_editor);
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
@@ -985,13 +1016,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_PageUp:
-        turnOffSelection();
+        m_editor->clearMark();
         m_editor->moveCursorToTop();
         redraw();
         break;
 
       case Qt::Key_PageDown:
-        turnOffSelection();
+        m_editor->clearMark();
         m_editor->moveCursorToBottom();
         redraw();
         break;
@@ -1071,7 +1102,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           return;
         }
         if (!selectEnabled()) {
-          selectCursorLine();
+          m_editor->selectCursorLine();
         }
         editCut();
         break;
@@ -1181,13 +1212,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_PageUp:
-        turnOnSelection();
+        m_editor->turnOnSelection();
         m_editor->moveCursorToTop();
         redraw();
         break;
 
       case Qt::Key_PageDown:
-        turnOnSelection();
+        m_editor->turnOnSelection();
         m_editor->moveCursorToBottom();
         redraw();
         break;
@@ -1342,6 +1373,7 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 
 void EditorWidget::scrollToCursor(int edgeGap)
 {
+  INITIATING_DOCUMENT_CHANGE();
   m_editor->scrollToCursor(edgeGap);
   redraw();
 }
@@ -1349,18 +1381,20 @@ void EditorWidget::scrollToCursor(int edgeGap)
 
 void EditorWidget::scrollToLine(int line)
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (!m_ignoreScrollSignals) {
     xassert(line >= 0);
-    setFirstVisibleLine(line);
+    m_editor->setFirstVisibleLine(line);
     redraw();
   }
 }
 
 void EditorWidget::scrollToCol(int col)
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (!m_ignoreScrollSignals) {
     xassert(col >= 0);
-    setFirstVisibleCol(col);
+    m_editor->setFirstVisibleCol(col);
     redraw();
   }
 }
@@ -1393,8 +1427,9 @@ void EditorWidget::mousePressEvent(QMouseEvent *m)
 {
   // get rid of popups?
   QWidget::mousePressEvent(m);
+  INITIATING_DOCUMENT_CHANGE();
 
-  turnSelection(!!(m->modifiers() & Qt::ShiftModifier));
+  m_editor->turnSelection(!!(m->modifiers() & Qt::ShiftModifier));
   setCursorToClickLoc(m);
 
   redraw();
@@ -1404,8 +1439,9 @@ void EditorWidget::mousePressEvent(QMouseEvent *m)
 void EditorWidget::mouseMoveEvent(QMouseEvent *m)
 {
   QWidget::mouseMoveEvent(m);
+  INITIATING_DOCUMENT_CHANGE();
 
-  turnOnSelection();
+  m_editor->turnOnSelection();
   setCursorToClickLoc(m);
   m_editor->turnOffSelectionIfEmpty();
 
@@ -1416,8 +1452,9 @@ void EditorWidget::mouseMoveEvent(QMouseEvent *m)
 void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 {
   QWidget::mouseReleaseEvent(m);
+  INITIATING_DOCUMENT_CHANGE();
 
-  turnOnSelection();
+  m_editor->turnOnSelection();
   setCursorToClickLoc(m);
   m_editor->turnOffSelectionIfEmpty();
 
@@ -1428,6 +1465,7 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
 // ----------------------- edit menu -----------------------
 void EditorWidget::editUndo()
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (m_editor->canUndo()) {
     m_editor->undo();
     this->redraw();
@@ -1441,6 +1479,7 @@ void EditorWidget::editUndo()
 
 void EditorWidget::editRedo()
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (m_editor->canRedo()) {
     m_editor->redo();
     this->redraw();
@@ -1454,6 +1493,7 @@ void EditorWidget::editRedo()
 
 void EditorWidget::editCut()
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (this->selectEnabled() && editSafetyCheck()) {
     string sel = m_editor->clipboardCut();
     QApplication::clipboard()->setText(toQString(sel));
@@ -1464,6 +1504,7 @@ void EditorWidget::editCut()
 
 void EditorWidget::editCopy()
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (this->selectEnabled()) {
     string sel = m_editor->clipboardCopy();
     QApplication::clipboard()->setText(toQString(sel));
@@ -1474,6 +1515,7 @@ void EditorWidget::editCopy()
 
 void EditorWidget::editPaste()
 {
+  INITIATING_DOCUMENT_CHANGE();
   QString text = QApplication::clipboard()->text();
   if (text.isEmpty()) {
     QMessageBox::information(this, "Info", "The clipboard is empty.");
@@ -1488,6 +1530,7 @@ void EditorWidget::editPaste()
 
 void EditorWidget::editDelete()
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (this->selectEnabled() && editSafetyCheck()) {
     m_editor->deleteSelection();
     this->redraw();
@@ -1545,63 +1588,71 @@ void EditorWidget::hideInfo()
 
 void EditorWidget::cursorLeft(bool shift)
 {
-  turnSelection(shift);
-  cursorLeftBy(1);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
+  m_editor->moveCursorBy(0, -1);
   scrollToCursor();
 }
 
 void EditorWidget::cursorRight(bool shift)
 {
-  turnSelection(shift);
-  cursorRightBy(1);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
+  m_editor->moveCursorBy(0, +1);
   scrollToCursor();
 }
 
 void EditorWidget::cursorHome(bool shift)
 {
-  turnSelection(shift);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
   m_editor->setCursorColumn(0);
   scrollToCursor();
 }
 
 void EditorWidget::cursorEnd(bool shift)
 {
-  turnSelection(shift);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
   m_editor->setCursorColumn(m_editor->cursorLineLength());
   scrollToCursor();
 }
 
 void EditorWidget::cursorUp(bool shift)
 {
-  turnSelection(shift);
-  cursorUpBy(1);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
+  m_editor->moveCursorBy(-1, 0);
   scrollToCursor();
 }
 
 void EditorWidget::cursorDown(bool shift)
 {
-  // allows cursor past EOF..
-  turnSelection(shift);
-  cursorDownBy(1);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
+  m_editor->moveCursorBy(+1, 0);
   scrollToCursor();
 }
 
 void EditorWidget::cursorPageUp(bool shift)
 {
-  turnSelection(shift);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
   moveFirstVisibleAndCursor(- this->visLines(), 0);
 }
 
 void EditorWidget::cursorPageDown(bool shift)
 {
-  turnSelection(shift);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
   moveFirstVisibleAndCursor(+ this->visLines(), 0);
 }
 
 
 void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
-  turnSelection(shift);
+  INITIATING_DOCUMENT_CHANGE();
+  m_editor->turnSelection(shift);
   int line = m_editor->cursor().line;
   m_editor->setCursor(m_editor->lineEndCoord(line+1));
   scrollToCursor();
@@ -1610,10 +1661,12 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 
 void EditorWidget::blockIndent(int amt)
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (m_editor->blockIndent(amt)) {
     redraw();
   }
 }
+
 
 // ----------------- nonfocus situation ------------------
 void EditorWidget::focusInEvent(QFocusEvent *e)
@@ -1624,6 +1677,8 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   // I don't want to listen while I'm adding changes of
   // my own, because the way the view moves (etc.) on
   // changes is different.
+  //
+  // TODO: This should be removed.  It is not reliable.
   this->stopListening();
 
   this->checkForDiskChanges();
@@ -1645,6 +1700,7 @@ void EditorWidget::focusOutEvent(QFocusEvent *e)
 
 void EditorWidget::stopListening()
 {
+  INITIATING_DOCUMENT_CHANGE();
   if (m_listening) {
     m_editor->removeObserver(this);
     m_listening = false;
@@ -1653,6 +1709,7 @@ void EditorWidget::stopListening()
 
 void EditorWidget::startListening()
 {
+  INITIATING_DOCUMENT_CHANGE();
   xassert(!m_listening);
   m_editor->addObserver(this);
   m_listening = true;
@@ -1668,7 +1725,12 @@ void EditorWidget::startListening()
 void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noexcept
 {
   GENERIC_CATCH_BEGIN
+  if (m_ignoreTextDocumentNotifications) {
+    TRACE("observe", "IGNORING: observeInsertLine line=" << line);
+    return;
+  }
   TRACE("observe", "observeInsertLine line=" << line);
+  INITIATING_DOCUMENT_CHANGE();
 
   // Internally inside HE_text::insert(), the routine that actually
   // inserts text, inserting "line N" works by removing the text on
@@ -1695,7 +1757,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noex
 void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) noexcept
 {
   GENERIC_CATCH_BEGIN
+  if (m_ignoreTextDocumentNotifications) {
+    TRACE("observe", "IGNORING: observeDeleteLine line=" << line);
+    return;
+  }
   TRACE("observe", "observeDeleteLine line=" << line);
+  INITIATING_DOCUMENT_CHANGE();
 
   if (line < m_editor->cursor().line) {
     m_editor->moveCursorBy(-1, 0);
@@ -1717,6 +1784,9 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) noex
 void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) noexcept
 {
   GENERIC_CATCH_BEGIN
+  if (m_ignoreTextDocumentNotifications) {
+    return;
+  }
   redraw();
   GENERIC_CATCH_END
 }
@@ -1724,6 +1794,9 @@ void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char c
 void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) noexcept
 {
   GENERIC_CATCH_BEGIN
+  if (m_ignoreTextDocumentNotifications) {
+    return;
+  }
   redraw();
   GENERIC_CATCH_END
 }
@@ -1731,6 +1804,9 @@ void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) n
 void EditorWidget::observeTotalChange(TextDocumentCore const &buf) noexcept
 {
   GENERIC_CATCH_BEGIN
+  if (m_ignoreTextDocumentNotifications) {
+    return;
+  }
   redraw();
   GENERIC_CATCH_END
 }
@@ -1738,6 +1814,9 @@ void EditorWidget::observeTotalChange(TextDocumentCore const &buf) noexcept
 void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) noexcept
 {
   GENERIC_CATCH_BEGIN
+  if (m_ignoreTextDocumentNotifications) {
+    return;
+  }
   redraw();
   GENERIC_CATCH_END
 }
@@ -1753,6 +1832,12 @@ void EditorWidget::inputProxyDetaching()
 
 void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
 {
+  // The proxy may initiate a document change, and if so, it is
+  // responsible for updating the cursor, etc., to correspond to the
+  // changes it is making.  Hence, I do not want my notification
+  // response functions interfering with that.
+  INITIATING_DOCUMENT_CHANGE();
+
   if (m_inputProxy && m_inputProxy->pseudoKeyPress(pkey)) {
     // handled
     return;
@@ -1813,6 +1898,7 @@ bool EditorWidget::editSafetyCheck()
     // are about to do gets canceled for a different reason,
     // leaving us in the "clean" state after all, this refresh will
     // ensure we do not prompt the user a second time.
+    INITIATING_DOCUMENT_CHANGE();
     m_editor->m_fileDoc->refreshModificationTime();
 
     // Go ahead with the edit.

@@ -1,5 +1,12 @@
 
 TODOs:
+  - was working on:
+
+      menu->addAction("Set &Highlighting...", this
+        &EditorWindow::viewSetHighlighting);
+
+  - move dev-warning into smbase
+  - put version number into About box
   - "save as" should change the highlighting
   - ctrl+i: open file at cursor
   - close document with F4, not Ctrl+F4
@@ -7,6 +14,7 @@ TODOs:
   - serf pointers with reference counts to catch use after free
   - is there a way to activate the MSVCRT debug heap without
     being in a debugger?  would like that for unit tests
+  - multiple copy+paste strings
 
   - infrastructure to check s_objectCounts at exit
     - static destructors do the checking
