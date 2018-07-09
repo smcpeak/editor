@@ -172,7 +172,7 @@ void EditorWindow::buildMenu()
     file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
     file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
     file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
-    file->addAction("&Close", this, SLOT(fileClose()), Qt::CTRL + Qt::Key_F4);
+    file->addAction("&Close", this, SLOT(fileClose()), Qt::Key_F4);
     file->addSeparator();
     file->addAction("&Reload", this, SLOT(fileReload()));
     file->addAction("Reload a&ll", this, SLOT(fileReloadAll()));
@@ -238,7 +238,8 @@ void EditorWindow::buildMenu()
     window->addSeparator();
 
     window->addAction("&New Window", this, SLOT(windowNewWindow()));
-    window->addAction("&Close Window", this, SLOT(windowCloseWindow()));
+    window->addAction("&Close Window", this,
+      SLOT(windowCloseWindow()), Qt::CTRL + Qt::Key_F4);
     window->addAction("Move/size to Left Screen Half", this,
       SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
     window->addAction("Move/size to Right Screen Half", this,

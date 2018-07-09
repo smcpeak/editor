@@ -1,7 +1,5 @@
 
 TODOs:
-  - close document with F4, not Ctrl+F4
-    - Ctrl+F4 to close the window
   - put version number into About box
   - annoying problem with file-open dialog that the edit line is not
     selected after hitting Enter to move into subdirectory
