@@ -7,6 +7,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "editor-widget.h"             // EditorWidget
+#include "git-version.h"               // editor_git_version
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
@@ -1029,7 +1030,10 @@ void EditorWindow::helpKeybindings()
 void EditorWindow::helpAbout()
 {
   QMessageBox::about(this, "About Scott's Editor",
-    "This is a text editor that has a user interface I like.");
+    qstringb(
+      "This is a text editor that has a user interface I like.\n"
+      "\n"
+      "Version: " << editor_git_version));
 }
 
 

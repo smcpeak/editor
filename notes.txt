@@ -1,6 +1,6 @@
 
 TODOs:
-  - put version number into About box
+  - oops, Ctrl+P meant go up!  need another binding for that dialog
   - annoying problem with file-open dialog that the edit line is not
     selected after hitting Enter to move into subdirectory
   - move dev-warning into smbase

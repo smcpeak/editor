@@ -232,6 +232,48 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 -include c_hilite.d
 
 
+# ----------------- git version ---------------------
+# Command to query git for the version.  Output is like:
+# "d36671f 2018-07-09 04:10:32 -0700".
+GIT_VERSION_QUERY := git log -n 1 --format=format:'%h %ai%n'
+
+ifeq (,$(wildcard .git/HEAD))
+
+# Source code is not in a git repository.
+git-version.gen.txt:
+	echo "No git version info available." > $@
+
+else
+
+GIT_HEAD_CONTENTS := $(shell cat .git/HEAD)
+#$(info GIT_HEAD_CONTENTS: $(GIT_HEAD_CONTENTS))
+
+# Is HEAD a reference to a branch?
+ifeq (,$(findstring ref: ,$(GIT_HEAD_CONTENTS)))
+
+# HEAD is detached.
+git-version.gen.txt: .git/HEAD
+	$(GIT_VERSION_QUERY) > $@
+
+else
+
+# HEAD is on branch.
+GIT_BRANCH_REF := $(filter refs/%,$(GIT_HEAD_CONTENTS))
+#$(info GIT_BRANCH_REF: $(GIT_BRANCH_REF))
+
+git-version.gen.txt: .git/HEAD .git/$(GIT_BRANCH_REF)
+	$(GIT_VERSION_QUERY) > $@
+
+endif
+
+endif
+
+# I do not use the generated header file but the generated .cc wants it.
+#
+# TODO: I should change file-to-strlit.pl so it can avoid making that.
+git-version.gen.cc: git-version.gen.txt
+	perl $(SMBASE)/file-to-strlit.pl editor_git_version $^ git-version.gen.h $@
+
 # ------------------ the editor ---------------------
 # editor-window.cc includes keybindings.doc.gen.h.
 editor-window.o: keybindings.doc.gen.h
@@ -244,6 +286,7 @@ EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += ftdl-table-model.o
+EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += incsearch.o
 EDITOR_OBJS += inputproxy.o
 EDITOR_OBJS += keybindings.doc.gen.o
