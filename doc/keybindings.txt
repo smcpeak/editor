@@ -3,7 +3,7 @@ Esc or Ctrl+G: Cancel.
 File:
   F2: Save file.
   F3: Open file.
-  Ctrl+P: Pick an open file to edit.
+  Ctrl+O: Pick an open file to edit.
 
 Cursor movement:
   Ctrl+F or Right: Move cursor right one column.

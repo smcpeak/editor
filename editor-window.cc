@@ -233,8 +233,8 @@ void EditorWindow::buildMenu()
   {
     QMenu *window = this->menuBar->addMenu("&Window");
 
-    window->addAction("&Pick an Open File ...", this,
-      SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_P);
+    window->addAction("Pick an &Open File ...", this,
+      SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_O);
 
     window->addSeparator();
 
