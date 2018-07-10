@@ -4,15 +4,19 @@
 #ifndef LEX_HILITE_H
 #define LEX_HILITE_H
 
+// editor
 #include "hilite.h"        // Highlighter interface
 #include "inclexer.h"      // IncLexer, LexerState
+
+// smbase
+#include "refct-serf.h"    // RCSerf
 
 
 // the highlighter
 class LexHighlighter : public Highlighter {
 private:     // data
-  // buffer we're observing
-  TextDocumentCore const &buffer;
+  // Buffer we're observing.  Not NULL.
+  RCSerf<TextDocumentCore const> buffer;
 
   // the lexer
   IncLexer &lexer;

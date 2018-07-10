@@ -19,14 +19,14 @@
 
 
 LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
-  : buffer(buf),
+  : buffer(&buf),
     lexer(L),
     savedState(),
     changedBegin(0),
     changedEnd(0),
     waterline(0)
 {
-  buffer.addObserver(this);
+  buffer->addObserver(this);
 
   // all of the saved state is stale
   savedState.insertManyZeroes(0, buf.numLines());
@@ -36,21 +36,21 @@ LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
 
 LexHighlighter::~LexHighlighter()
 {
-  buffer.removeObserver(this);
+  buffer->removeObserver(this);
 }
 
 
 void LexHighlighter::checkInvar() const
 {
   xassert(0 <= waterline &&
-               waterline <= buffer.numLines());
+               waterline <= buffer->numLines());
 
   if (!changedIsEmpty()) {
     xassert(changedBegin < changedEnd);
     xassert(waterline >= changedEnd);
 
     xassert(0 <= changedBegin &&
-                 changedEnd <= buffer.numLines());
+                 changedEnd <= buffer->numLines());
   }
 }
 
@@ -232,7 +232,7 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
 
 void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCategories &categories)
 {
-  xassert(&buf == &buffer);
+  xassert(&buf == buffer);
 
   // push the changed region down to the line of interest
   LexerState prevState = getSavedState(changedBegin-1);
