@@ -59,7 +59,7 @@ private:     // types
   public:    // data
     // Process-wide record of the open file.  Not an owner pointer.
     // Must not be null.
-    FileTextDocument *m_fileDoc;
+    RCSerf<FileTextDocument> m_fileDoc;
 
   public:
     FileTextDocumentEditor(FileTextDocument *f) :

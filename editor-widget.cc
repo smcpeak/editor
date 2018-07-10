@@ -317,7 +317,7 @@ EditorWidget::FileTextDocumentEditor *
 
 void EditorWidget::checkForDiskChanges()
 {
-  FileTextDocument *file = m_editor->m_fileDoc;
+  RCSerf<FileTextDocument> file = m_editor->m_fileDoc;
   if (!file->unsavedChanges() && file->hasStaleModificationTime()) {
     TRACE("modification",
       "File \"" << file->filename << "\" has changed on disk "
