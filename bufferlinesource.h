@@ -4,14 +4,16 @@
 #ifndef BUFFERLINESOURCE_H
 #define BUFFERLINESOURCE_H
 
-class TextDocumentCore;                // td-core.h
+#include "td-core.h"                   // TextDocumentCore
+
+#include "refct-serf.h"                // RCSerf
 
 
 // state for supplying flex with input from a line of a buffer
 class BufferLineSource {
 public:      // data
   // source of text to lex
-  TextDocumentCore const *buffer;      // (serf)
+  RCSerf<TextDocumentCore const> buffer;
 
   // which line we're working on
   int bufferLine;

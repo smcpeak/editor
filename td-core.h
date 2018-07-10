@@ -4,11 +4,14 @@
 #ifndef TD_CORE_H
 #define TD_CORE_H
 
+// editor
 #include "gap.h"                       // GapArray
 #include "textcoord.h"                 // TextCoord
 
-#include "str.h"                       // string
+// smbase
+#include "refct-serf.h"                // SerfRefCount
 #include "sobjlist.h"                  // SObjList
+#include "str.h"                       // string
 
 class TextDocument;                    // td.h
 
@@ -37,7 +40,7 @@ class TextDocumentObserver;
 // This class is the "core" of a text document because it does not have
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
-class TextDocumentCore {
+class TextDocumentCore : public SerfRefCount {
 public:      // static data
   // For testing purposes, this can be set to a non-zero value, and after
   // reading this many bytes, an error will be injected.
