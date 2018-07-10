@@ -357,6 +357,31 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 }
 
 
+void EditorWidget::openFileAtCursor()
+{
+  string lineText = m_editor->getWholeLine(m_editor->cursor().line);
+
+  // While I'm developing the feature, use a fixed filename.
+  //string filename = getNearbyFileName(lineText, m_editor->cursor().column);
+  string filename = "d:/wrk/editor/Makefile";
+
+  if (filename.isempty()) {
+    QMessageBox::information(this, "No Filename Found",
+      "Unable to find an existing file name near the cursor.");
+    return;
+  }
+
+  // This should be sent on a Qt::QueuedConnection, meaning the slot
+  // will be invoked later, once the current event is done processing.
+  // That is important because right now we have an open
+  // UndoHistoryGrouper, but opening a new file might close the one we
+  // are currently looking at if it is untitled, which will cause the
+  // RCSerf infrastructure to abort just before memory corruption would
+  // have resulted.
+  emit openFileSignal(toQString(filename));
+}
+
+
 void EditorWidget::fileTextDocumentRemoved(
   FileTextDocumentList *documentList, FileTextDocument *file) noexcept
 {
@@ -1114,6 +1139,10 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           m_editor->selectCursorLine();
         }
         editCut();
+        break;
+
+      case Qt::Key_I:
+        this->openFileAtCursor();
         break;
 
       default:

@@ -1,5 +1,6 @@
 
 TODOs:
+  - file picker should have keyboard accelerator on "close selected"
   - ctrl+i: open file at cursor
   - serf pointers with reference counts to catch use after free?
   - multiple copy+paste strings

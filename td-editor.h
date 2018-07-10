@@ -6,7 +6,9 @@
 
 #include "td.h"                        // TextDocument
 
+// smbase
 #include "datetime.h"                  // DateTimeProvider
+#include "refct-serf.h"                // RCSerf, SerfRefCount
 
 
 // This class is a "stateful metaphor UI API".  That is, it
@@ -23,7 +25,7 @@
 // notion of a "cursor", and this class has the cursor.  It also has
 // the "mark", which is the other endpoint (besides the cursor) in a
 // "selection".
-class TextDocumentEditor {
+class TextDocumentEditor : public SerfRefCount {
   // Copying would not necessarily be a problem, but for the moment I
   // want to ensure I do not do it accidentally.
   NO_OBJECT_COPIES(TextDocumentEditor);
@@ -576,13 +578,20 @@ public:      // funcs
 
 // Class to begin/end an undo group.
 class UndoHistoryGrouper {
-  TextDocumentEditor &editor;
+private:     // data
+  RCSerf<TextDocumentEditor> editor;
 
-public:
-  UndoHistoryGrouper(TextDocumentEditor &e) : editor(e)
-    { editor.beginUndoGroup(); }
+public:      // funcs
+  UndoHistoryGrouper(TextDocumentEditor &e)
+    : editor(&e)
+  {
+    editor->beginUndoGroup();
+  }
+
   ~UndoHistoryGrouper()
-    { editor.endUndoGroup(); }
+  {
+    editor->endUndoGroup();
+  }
 };
 
 

@@ -110,7 +110,13 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   this->editorWidget->setObjectName("editor widget");
   editorFrame->addWidget(this->editorWidget);
   this->editorWidget->setFocus();
-  connect(this->editorWidget, SIGNAL(viewChanged()), this, SLOT(editorViewChanged()));
+  connect(this->editorWidget, SIGNAL(viewChanged()),
+          this, SLOT(editorViewChanged()));
+
+  // See EditorWidget::openFileSignal for why this is a QueuedConnection.
+  connect(this->editorWidget, &EditorWidget::openFileSignal,
+          this, &EditorWindow::on_openFileSignal,
+          Qt::QueuedConnection);
 
   // See explanation in GlobalState::focusChangedHandler().
   this->setFocusProxy(this->editorWidget);
@@ -1098,6 +1104,12 @@ void EditorWindow::editorViewChanged()
   }
   sb << " - " << appName;
   this->setWindowTitle(toQString(sb));
+}
+
+
+void EditorWindow::on_openFileSignal(QString const &filename)
+{
+  this->fileOpenFile(toString(filename));
 }
 
 

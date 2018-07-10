@@ -68,7 +68,7 @@ private:     // types
   };
 
 private:     // data
-  // ------ child widgets -----
+  // ------ widgets -----
   // floating info box
   QLabel *m_infoBox;               // (nullable owner)
 
@@ -312,6 +312,10 @@ public:      // funcs
   // This is not 'const' because the editor is owned by this object.
   TextDocumentEditor *getDocumentEditor();
 
+  // Scan the text near the cursor to try to find the name of a file,
+  // and open it in the editor.
+  void openFileAtCursor();
+
   // ---------------------------- input -----------------------------
   // Initial handling of pseudokeys.  First dispatches to the
   // proxy if any, and then handles what is not yet handled.
@@ -386,6 +390,11 @@ signals:
   // this gets emitted on almost every keystroke because of the cursor
   // location change.
   void viewChanged();
+
+  // Emitted when the user indicates, via some widget functionality,
+  // that they want to open a particular file.  Currently, the file
+  // always exists when this is emitted, and is an absolute path name.
+  void openFileSignal(QString const &filename);
 };
 
 #endif // EDITOR_WIDGET_H
