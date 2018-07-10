@@ -4,10 +4,13 @@
 #ifndef FILE_TD_LIST_H
 #define FILE_TD_LIST_H
 
+// editor
 #include "file-td.h"                   // FileTextDocument
 
+// smbase
 #include "array.h"                     // ObjArrayStack
 #include "macros.h"                    // NO_OBJECT_COPIES
+#include "refct-serf.h"                // SerfRefCount
 #include "sobjlist.h"                  // SObjList
 
 
@@ -29,7 +32,7 @@ class FileTextDocumentInitialView;
 // pixels and keystrokes that is currently in EditorWindow and
 // GlobalState, similar to how TextDocumentEditor encapsulates all of
 // the text editing procedures that previously were in EditorWidget.
-class FileTextDocumentList {
+class FileTextDocumentList : public SerfRefCount {
   // Sensible copying of lists is possible but non-trivial.
   NO_OBJECT_COPIES(FileTextDocumentList);
 

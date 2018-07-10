@@ -93,7 +93,7 @@ private:     // data
   // The list of documents we can potentially switch among.  This is
   // needed so I can switch to a different file when the open file gets
   // closed by another widget operating on the same document list.
-  FileTextDocumentList *m_documentList;
+  RCSerf<FileTextDocumentList> m_documentList;
 
   // ----- match highlight state -----
   // when nonempty, any buffer text matching this string will
