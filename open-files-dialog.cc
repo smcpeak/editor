@@ -103,12 +103,12 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
     QHBoxLayout *hbox = new QHBoxLayout();
     vbox->addLayout(hbox);
 
-    QPushButton *closeSelButton = new QPushButton("Close Selected");
+    QPushButton *closeSelButton = new QPushButton("&Close Selected");
     hbox->addWidget(closeSelButton);
     QObject::connect(closeSelButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_closeSelected);
 
-    QPushButton *helpButton = new QPushButton("Help");
+    QPushButton *helpButton = new QPushButton("&Help");
     hbox->addWidget(helpButton);
     QObject::connect(helpButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_help);
@@ -257,8 +257,8 @@ void OpenFilesDialog::on_help() noexcept
     "Select files and then \"Close Selected\" to close them.  "
     "Use Shift+click and Ctrl+click to multiselect.\n"
     "\n"
-    "Hint: Use N and P in place of Down and Up arrow keys for "
-    "more convenient keyboard interaction."
+    "Hint: While the list box has focus, use N and P in place of Down "
+    "and Up arrow keys for more convenient keyboard interaction."
   );
   mb.exec();
 
