@@ -430,7 +430,7 @@ void EditorWindow::fileOpenFile(string const &name)
   this->useDefaultHighlighter(file);
 
   // is there an untitled, empty file hanging around?
-  FileTextDocument *untitled =
+  RCSerf<FileTextDocument> untitled =
     this->globalState->m_documentList.findUntitledUnmodifiedFile();
   if (untitled) {
     // I'm going to remove it, but can't yet b/c I
@@ -446,7 +446,7 @@ void EditorWindow::fileOpenFile(string const &name)
 
   // remove the untitled file now, if it exists
   if (untitled) {
-    globalState->deleteDocumentFile(untitled);
+    globalState->deleteDocumentFile(untitled.release());
   }
 }
 
@@ -480,7 +480,7 @@ void EditorWindow::fileSave()
 
 void EditorWindow::writeTheFile()
 {
-  FileTextDocument *file = this->currentDocument();
+  RCSerf<FileTextDocument> file = this->currentDocument();
   try {
     file->writeFile();
     editorViewChanged();
@@ -494,6 +494,21 @@ void EditorWindow::writeTheFile()
 }
 
 
+bool EditorWindow::stillCurrentDocument(FileTextDocument *doc)
+{
+  if (doc != currentDocument()) {
+    // Note: It is possible that 'doc' has been deallocated here!
+    QMessageBox::information(this, "Object Changed",
+      "The current file changed while the dialog was open.  "
+      "Aborting operation.");
+    return false;
+  }
+  else {
+    return true;
+  }
+}
+
+
 void EditorWindow::fileSaveAs()
 {
   FileTextDocument *fileDoc = currentDocument();
@@ -502,6 +517,9 @@ void EditorWindow::fileSaveAs()
     chosenFilename =
       this->fileChooseDialog(chosenFilename, true /*saveAs*/);
     if (chosenFilename.isempty()) {
+      return;
+    }
+    if (!stillCurrentDocument(fileDoc)) {
       return;
     }
 
@@ -544,6 +562,9 @@ void EditorWindow::fileClose()
     if (!this->okToDiscardChanges(msg)) {
       return;
     }
+    if (!stillCurrentDocument(b)) {
+      return;
+    }
   }
 
   globalState->deleteDocumentFile(b);
@@ -558,8 +579,15 @@ void EditorWindow::fileReload()
 }
 
 
-bool EditorWindow::reloadFile(FileTextDocument *b)
+bool EditorWindow::reloadFile(FileTextDocument *b_)
 {
+  // TODO: This function's signature is inherently dangerous because I
+  // have no way of re-confirming 'b' after the dialog box closes since
+  // I don't know where it came from.  For now I will just arrange to
+  // abort before memory corruption can happen, but I should change the
+  // callers to use a more reliable pattern.
+  RCSerf<FileTextDocument> b(b_);
+
   if (b->unsavedChanges()) {
     if (!this->okToDiscardChanges(stringb(
           "The file \"" << b->filename << "\" has unsaved changes.  "
@@ -788,8 +816,7 @@ void EditorWindow::editApplyCommand()
       return;
     }
 
-    FileTextDocument *file = editorWidget->getDocumentFile();
-    string dir = dirname(file->filename);
+    string dir = dirname(editorWidget->getDocumentFile()->filename);
     dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
 
     if (!dialog->exec() || dialog->m_text.isEmpty()) {
@@ -971,11 +998,7 @@ void EditorWindow::viewSetHighlighting()
     return;
   }
 
-  if (doc != this->currentDocument()) {
-    // Normally this is impossible since the dialog is modal.
-    QMessageBox::information(this, "Document Changed",
-      "The current document changed while that last dialog was "
-      "open, discarding its results.");
+  if (!stillCurrentDocument(doc)) {
     return;
   }
 
@@ -1057,7 +1080,7 @@ void EditorWindow::helpAboutQt()
 
 void EditorWindow::editorViewChanged()
 {
-  TextDocumentEditor *tde = editorWidget->getDocumentEditor();
+  RCSerf<TextDocumentEditor> tde = editorWidget->getDocumentEditor();
 
   // Set the scrollbars.  In both dimensions, the range includes the
   // current value so we can scroll arbitrarily far beyond the nominal

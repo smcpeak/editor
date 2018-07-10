@@ -405,8 +405,14 @@ void FileTextDocumentList::removeObserver(FileTextDocumentListObserver *observer
 }
 
 
-void FileTextDocumentList::notifyAdded(FileTextDocument *file)
+void FileTextDocumentList::notifyAdded(FileTextDocument *file_)
 {
+  // Here, and in subsequent 'notify' routines, the idea is to hold an
+  // RCSerf pointing at the file to ensure it lives throughout the
+  // entire notification process.  That is, no observer is allowed to
+  // deallocate 'file', either directly or indirectly.
+  RCSerf<FileTextDocument> file(file_);
+
   TRACE("file-td-list", "notifyAdded: " << file->filename);
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
@@ -416,8 +422,9 @@ void FileTextDocumentList::notifyAdded(FileTextDocument *file)
 }
 
 
-void FileTextDocumentList::notifyRemoved(FileTextDocument *file)
+void FileTextDocumentList::notifyRemoved(FileTextDocument *file_)
 {
+  RCSerf<FileTextDocument> file(file_);
   TRACE("file-td-list", "notifyRemoved: " << file->filename);
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
@@ -427,8 +434,9 @@ void FileTextDocumentList::notifyRemoved(FileTextDocument *file)
 }
 
 
-void FileTextDocumentList::notifyAttributeChanged(FileTextDocument *file)
+void FileTextDocumentList::notifyAttributeChanged(FileTextDocument *file_)
 {
+  RCSerf<FileTextDocument> file(file_);
   TRACE("file-td-list", "notifyAttributeChanged: " << file->filename);
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
@@ -450,9 +458,10 @@ void FileTextDocumentList::notifyListOrderChanged()
 
 
 bool FileTextDocumentList::notifyGetInitialView(
-  FileTextDocument *file,
+  FileTextDocument *file_,
   FileTextDocumentInitialView /*OUT*/ &view)
 {
+  RCSerf<FileTextDocument> file(file_);
   TRACE("file-td-list",
     stringb("notifyGetInitialView: file=" << file->filename));
 

@@ -67,6 +67,15 @@ public:      // data
 private:     // funcs
   void buildMenu();
   void writeTheFile();
+
+  // 'doc' is something that was, in the recent past, the
+  // 'currentDocument'.  We opened a dialog to get input from the user,
+  // and that dialog has now been closed with the user indicating their
+  // desire to proceed (not cancel).  But we need to confirm that the
+  // current document is still 'doc'.  If not, show a message box and
+  // return false.  The caller is then expected to cancel the operation.
+  bool stillCurrentDocument(FileTextDocument *doc);
+
   void setDocumentFile(FileTextDocument *b);
 
   // Update the status displays to reflect a different file being edited.
