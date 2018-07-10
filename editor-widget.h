@@ -15,6 +15,7 @@
 
 // smbase
 #include "owner.h"                     // Owner
+#include "refct-serf.h"                // RCSerf
 
 // Qt
 #include <qwidget.h>                   // QWidget
@@ -76,15 +77,18 @@ private:     // data
   StatusDisplay *m_status;         // (serf)
 
   // ------ editing state -----
-  // Editor object for the file we are editing.  Never NULL.
-  // This points at one of the elements of 'm_editors'.
-  FileTextDocumentEditor *m_editor;
-
   // All of the editors associated with this widget.  An editor is
   // created on demand when this widget is told to edit its underlying
   // file, so the set of files here is in general a subset of
   // GlobalState::documentFiles.
   ObjList<FileTextDocumentEditor> m_editorList;
+
+  // Editor object for the file we are editing.  Never NULL.
+  // This points at one of the elements of 'm_editors'.
+  //
+  // Now that this is an RCSerf, it is important that it be declared
+  // after 'm_editorList' so it is destroyed first.
+  RCSerf<FileTextDocumentEditor> m_editor;
 
   // The list of documents we can potentially switch among.  This is
   // needed so I can switch to a different file when the open file gets

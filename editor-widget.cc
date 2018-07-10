@@ -80,8 +80,8 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
   : QWidget(parent),
     m_infoBox(NULL),
     m_status(status_),
-    m_editor(NULL),
     m_editorList(),
+    m_editor(NULL),
     m_documentList(documentList),
     m_topMargin(1),
     m_leftMargin(1),
@@ -138,7 +138,8 @@ EditorWidget::~EditorWidget()
   m_documentList->removeObserver(this);
   m_documentList = NULL;
 
-  // Do this explicitly just for clarity.
+  // Do this explicitly just for clarity, but the automatic destruction
+  // should also work.
   m_editor = NULL;
   m_editorList.deleteAll();
 

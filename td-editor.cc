@@ -1146,7 +1146,7 @@ void TextDocumentEditor::debugPrint() const
 
 // -------------------- CursorRestorer ------------------
 CursorRestorer::CursorRestorer(TextDocumentEditor &e)
-  : tde(e),
+  : tde(&e),
     cursor(e.cursor()),
     markActive(e.markActive()),
     mark(markActive? e.mark() : TextCoord()),
@@ -1155,14 +1155,14 @@ CursorRestorer::CursorRestorer(TextDocumentEditor &e)
 
 CursorRestorer::~CursorRestorer()
 {
-  tde.setCursor(cursor);
+  tde->setCursor(cursor);
   if (markActive) {
-    tde.setMark(mark);
+    tde->setMark(mark);
   }
   else {
-    tde.clearMark();
+    tde->clearMark();
   }
-  tde.setFirstVisible(firstVisible);
+  tde->setFirstVisible(firstVisible);
 }
 
 

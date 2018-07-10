@@ -558,7 +558,7 @@ ENUM_BITWISE_OPS(TextDocumentEditor::FindStringFlags,
 class CursorRestorer {
 public:      // data
   // Editor we will restore.
-  TextDocumentEditor &tde;
+  RCSerf<TextDocumentEditor> tde;
 
   // Values to restore.
   TextCoord const cursor;
