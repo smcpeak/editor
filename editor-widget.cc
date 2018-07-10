@@ -281,8 +281,13 @@ void EditorWidget::setDocumentFile(FileTextDocument *file)
 
 
 EditorWidget::FileTextDocumentEditor *
-  EditorWidget::getOrMakeEditor(FileTextDocument *file)
+  EditorWidget::getOrMakeEditor(FileTextDocument *file_)
 {
+  // Hold 'file' in an RCSerf to ensure it does not go away.  In
+  // particular, this method calls a 'notify' routine, which could
+  // conceivably invoke code all over the place.
+  RCSerf<FileTextDocument> file(file_);
+
   // Look for an existing editor for this file.
   FOREACH_OBJLIST_NC(FileTextDocumentEditor, m_editorList, iter) {
     if (iter.data()->m_fileDoc == file) {
