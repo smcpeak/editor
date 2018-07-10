@@ -9,6 +9,7 @@
 #include "textcoord.h"                 // TextCoord
 
 // smbase
+#include "rcserflist.h"                // RCSerfList
 #include "refct-serf.h"                // SerfRefCount
 #include "sobjlist.h"                  // SObjList
 #include "str.h"                       // string
@@ -76,7 +77,7 @@ private:     // data
   // to declare, through its signature, that it does not modify the
   // document on which it operates, yet it needs to make itself an
   // observer of that document.
-  mutable SObjList<TextDocumentObserver> observers;
+  mutable RCSerfList<TextDocumentObserver> observers;
 
 private:     // funcs
   // strlen, but NULL yields 0 and '\n' is terminator
@@ -236,7 +237,7 @@ inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
 // these cannot fail, as there is nothing the observee can do about it
 // nor an appropriate way to report it.  Observers are obligated to
 // catch any exceptions they throw.
-class TextDocumentObserver {
+class TextDocumentObserver : public SerfRefCount {
 public:      // static data
   static int s_objectCount;
 

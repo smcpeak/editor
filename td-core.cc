@@ -190,7 +190,7 @@ void TextDocumentCore::insertLine(int const line)
     recent++;
   }
 
-  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeInsertLine(*this, line);
   }
 }
@@ -217,7 +217,7 @@ void TextDocumentCore::deleteLine(int const line)
     recent--;
   }
 
-  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeDeleteLine(*this, line);
   }
 }
@@ -252,7 +252,7 @@ void TextDocumentCore::insertText(TextCoord const tc,
     seenLineLength(recentLine.length());
   }
 
-  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeInsertText(*this, tc, text, length);
   }
 }
@@ -276,7 +276,7 @@ void TextDocumentCore::deleteText(TextCoord const tc, int const length)
     recentLine.removeMany(tc.column, length);
   }
 
-  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeDeleteText(*this, tc, length);
   }
 }
@@ -387,7 +387,7 @@ void TextDocumentCore::swapWith(TextDocumentCore &other) noexcept
     swap(this->longestLengthSoFar, other.longestLengthSoFar);
   }
 
-  SFOREACH_OBJLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeTotalChange(*this);
   }
 }
@@ -598,7 +598,7 @@ bool TextDocumentCore::hasObserver(TextDocumentObserver const *observer) const
 
 void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
 {
-  SFOREACH_OBJLIST_NC(TextDocumentObserver, this->observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
     iter.data()->observeUnsavedChangesChange(doc);
   }
 }
