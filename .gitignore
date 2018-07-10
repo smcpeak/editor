@@ -35,7 +35,7 @@ mutant-compile.sh
 mut
 mutant.cc
 *.mutreport
-.gdbinit
+.gdbinit*
 td-core
 test-file-td-list
 test-justify
