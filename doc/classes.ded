@@ -4,7 +4,7 @@
     {
       "attributes": "lines: string[]\nobservers: TextDocumentObserver[]\n(plus some caches)\n",
       "loc": {
-        "x": 635,
+        "x": 650,
         "y": 40
       },
       "name": "TextDocumentCore",
@@ -16,7 +16,7 @@
     {
       "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\ngroupStack: HE_group[]\n",
       "loc": {
-        "x": 635,
+        "x": 650,
         "y": 150
       },
       "name": "TextDocument",
@@ -28,7 +28,7 @@
     {
       "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\n",
       "loc": {
-        "x": 635,
+        "x": 650,
         "y": 295
       },
       "name": "FileTextDocument",
@@ -38,7 +38,7 @@
       }
     },
     {
-      "attributes": "m_editors: FileTextDocumentEditor[]\neditor: FileTextDocumentEditor\n\nFileTextDocumentList: documentList\n\nhitText: string\nhitTextFlags: FindStringFlags\n\ninputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: FileTextDocumentEditor[]\nm_editor: FileTextDocumentEditor\n\nm_documentList: FileTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: FindStringFlags\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40
@@ -62,7 +62,7 @@
       }
     },
     {
-      "attributes": "documentList: FileTextDocumentList\nwindows: EditorWindow[]\npixmaps: Pixmaps\n",
+      "attributes": "m_documentList: FileTextDocumentList\nm_windows: EditorWindow[]\nm_pixmaps: Pixmaps\n",
       "loc": {
         "x": 30,
         "y": 505
@@ -70,13 +70,13 @@
       "name": "GlobalState : QApplication",
       "size": {
         "h": 85,
-        "w": 215
+        "w": 240
       }
     },
     {
-      "attributes": "doc: TextDocument\ncursor: TextCoord\nmark: TextCoord?\nfirstVisible: TextCoord\nlastVisible: TextCoord\n",
+      "attributes": "m_doc: TextDocument\nm_cursor: TextCoord\nm_mark: TextCoord?\nm_firstVisible: TextCoord\nm_lastVisible: TextCoord\n",
       "loc": {
-        "x": 325,
+        "x": 340,
         "y": 150
       },
       "name": "TextDocumentEditor",
@@ -87,7 +87,7 @@
     },
     {
       "loc": {
-        "x": 325,
+        "x": 340,
         "y": 40
       },
       "name": "TextDocumentObserver",
@@ -97,9 +97,9 @@
       }
     },
     {
-      "attributes": "fileDoc: FileTextDocument\n",
+      "attributes": "m_fileDoc: FileTextDocument\n",
       "loc": {
-        "x": 325,
+        "x": 340,
         "y": 295
       },
       "name": "FileTextDocumentEditor",
@@ -111,7 +111,7 @@
     {
       "attributes": "line: int\ncolumn: int\n",
       "loc": {
-        "x": 325,
+        "x": 340,
         "y": 70
       },
       "name": "TextCoord",
@@ -121,9 +121,9 @@
       }
     },
     {
-      "attributes": "fileDocuments: FileTextDocument[]\nobservers: FileTextDocumentObserver[]\n",
+      "attributes": "m_fileDocuments: FileTextDocument[]\nm_observers: FileTextDocumentObserver[]\n",
       "loc": {
-        "x": 635,
+        "x": 650,
         "y": 475
       },
       "name": "FileTextDocumentList",
@@ -134,7 +134,7 @@
     },
     {
       "loc": {
-        "x": 325,
+        "x": 340,
         "y": 370
       },
       "name": "FileTextDocumentListObserver",
@@ -149,7 +149,7 @@
       "open": true,
       "parentRef": 1,
       "pt": {
-        "x": 760,
+        "x": 775,
         "y": 285
       }
     },
@@ -165,7 +165,7 @@
       "open": true,
       "parentRef": 6,
       "pt": {
-        "x": 455,
+        "x": 470,
         "y": 285
       }
     },
@@ -193,7 +193,7 @@
         "y": 305
       }],
       "end": {"entityRef": 8},
-      "label": "editor",
+      "label": "m_editor",
       "start": {"entityRef": 3}
     },
     {
@@ -201,7 +201,7 @@
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 2
       },
-      "label": "fileDocuments[]",
+      "label": "m_fileDocuments[]",
       "start": {"entityRef": 10}
     },
     {
@@ -209,7 +209,7 @@
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 4
       },
-      "label": "windows[]",
+      "label": "m_windows[]",
       "start": {"entityRef": 5}
     },
     {
@@ -227,7 +227,7 @@
     },
     {
       "end": {"entityRef": 1},
-      "label": "doc",
+      "label": "m_doc",
       "start": {"entityRef": 6}
     },
     {
@@ -245,7 +245,7 @@
     },
     {
       "end": {"entityRef": 2},
-      "label": "fileDoc",
+      "label": "m_fileDoc",
       "start": {"entityRef": 8}
     },
     {
@@ -265,7 +265,7 @@
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 9
       },
-      "label": "first/lastVisible",
+      "label": "m_first/lastVisible",
       "start": {"entityRef": 6}
     },
     {
@@ -278,14 +278,14 @@
     },
     {
       "controlPts": [{
-        "x": 448,
+        "x": 463,
         "y": 527
       }],
       "end": {
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 10
       },
-      "label": "documentList",
+      "label": "m_documentList",
       "start": {"entityRef": 5}
     },
     {
@@ -314,35 +314,35 @@
     {
       "controlPts": [
         {
-          "x": 645,
+          "x": 660,
           "y": 450
         },
         {
-          "x": 565,
+          "x": 580,
           "y": 440
         }
       ],
       "end": {"entityRef": 11},
-      "label": "observers[]",
+      "label": "m_observers[]",
       "start": {"entityRef": 10}
     },
     {
       "controlPts": [
         {
-          "x": 320,
+          "x": 335,
           "y": 245
         },
         {
-          "x": 335,
+          "x": 350,
           "y": 435
         },
         {
-          "x": 460,
+          "x": 475,
           "y": 485
         }
       ],
       "end": {"entityRef": 10},
-      "label": "documentList",
+      "label": "m_documentList",
       "start": {"entityRef": 3}
     }
   ],
@@ -350,6 +350,6 @@
   "version": 23,
   "windowSize": {
     "h": 617,
-    "w": 915
+    "w": 925
   }
 }
