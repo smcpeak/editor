@@ -37,7 +37,7 @@ public:      // static data
 
 public:      // data
   // associated global state
-  GlobalState *globalState;                // (serf)
+  RCSerf<GlobalState> globalState;
 
   // GUI elements
   QMenuBar *menuBar;

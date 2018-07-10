@@ -4,13 +4,17 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+// editor
 #include "editor-window.h"             // EditorWindow
-
-#include "objlist.h"                   // ObjList
-#include "pixmaps.h"                   // Pixmaps
 #include "file-td.h"                   // FileTextDocument
 #include "file-td-list.h"              // FileTextDocumentList
+#include "pixmaps.h"                   // Pixmaps
 
+// smbase
+#include "objlist.h"                   // ObjList
+#include "refct-serf.h"                // SerfRefCount
+
+// Qt
 #include <QApplication>
 #include <QProxyStyle>
 
@@ -26,7 +30,7 @@ public:
 
 
 // global state of the editor: files, windows, etc.
-class GlobalState : public QApplication {
+class GlobalState : public QApplication, public SerfRefCount {
   Q_OBJECT
 
 public:       // data
