@@ -7,6 +7,7 @@
 #include "file-td-list.h"              // FileTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
+#include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
 
 class FTDLTableModel;                  // ftdl-table-model.h
@@ -27,7 +28,7 @@ class OpenFilesDialog : public ModalDialog {
 
 private:     // data
   // The list we are showing/editing.
-  FileTextDocumentList *m_docList;
+  RCSerf<FileTextDocumentList> m_docList;
 
   // The Qt "model" that wraps m_docList.  It is owned by m_tableView.
   FTDLTableModel *m_tableModel;
