@@ -249,6 +249,8 @@ static void testAddMoveRemove()
   delete file2;
 
   observer.expectEmpty();
+
+  dlist.removeObserver(&observer);
 }
 
 
@@ -284,6 +286,8 @@ static void testCreateUntitled()
   file0->insertAt(TextCoord(0,0), "\n", 1);
   f = dlist.findUntitledUnmodifiedFile();
   xassert(f == NULL);
+
+  dlist.removeObserver(&observer);
 }
 
 
@@ -300,6 +304,8 @@ static void testSaveAs()
   dlist.assignUniqueTitle(file0);
   observer.expectOnly(NF_ATTRIBUTE, file0);
   xassert(file0->title == "some-name.txt");
+
+  dlist.removeObserver(&observer);
 }
 
 
@@ -392,6 +398,8 @@ static void testColon3()
 
   file2->filename = "zoo";
   dlist.assignUniqueTitle(file2);
+
+  dlist.removeObserver(&observer);
 }
 
 

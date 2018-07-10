@@ -38,7 +38,7 @@ class FileTextDocumentList : public SerfRefCount {
 
 private:     // data
   // Set of observers who will be notified of changes.
-  SObjList<FileTextDocumentListObserver> m_observers;
+  RCSerfList<FileTextDocumentListObserver> m_observers;
 
   // When true, we have an open iterator on 'm_observers', which means
   // it cannot be changed.
@@ -203,7 +203,7 @@ public:      // funcs
 // and these methods need to be uniquely named among that larger set.
 //
 // As these are notification methods, they should not throw exceptions.
-class FileTextDocumentListObserver {
+class FileTextDocumentListObserver : public SerfRefCount {
 public:      // funcs
   // A file was added to the list.
   virtual void fileTextDocumentAdded(

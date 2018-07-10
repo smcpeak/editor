@@ -389,8 +389,7 @@ void FileTextDocumentList::addObserver(FileTextDocumentListObserver *observer)
   TRACE("file-td-list", "addObserver: " << (void*)observer);
 
   xassert(!m_iteratingOverObservers);
-  bool inserted = m_observers.prependUnique(observer);
-  xassert(inserted);
+  m_observers.appendNewItem(observer);
   SELF_CHECK();
 }
 
@@ -416,7 +415,7 @@ void FileTextDocumentList::notifyAdded(FileTextDocument *file_)
   TRACE("file-td-list", "notifyAdded: " << file->filename);
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  SFOREACH_OBJLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentAdded(this, file);
   }
 }
@@ -428,7 +427,7 @@ void FileTextDocumentList::notifyRemoved(FileTextDocument *file_)
   TRACE("file-td-list", "notifyRemoved: " << file->filename);
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  SFOREACH_OBJLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentRemoved(this, file);
   }
 }
@@ -440,7 +439,7 @@ void FileTextDocumentList::notifyAttributeChanged(FileTextDocument *file_)
   TRACE("file-td-list", "notifyAttributeChanged: " << file->filename);
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  SFOREACH_OBJLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentAttributeChanged(this, file);
   }
 }
@@ -451,7 +450,7 @@ void FileTextDocumentList::notifyListOrderChanged()
   TRACE("file-td-list", "notifyListOrderChanged");
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  SFOREACH_OBJLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentListOrderChanged(this);
   }
 }
@@ -466,7 +465,7 @@ bool FileTextDocumentList::notifyGetInitialView(
     stringb("notifyGetInitialView: file=" << file->filename));
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  SFOREACH_OBJLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
     if (iter.data()->getFileTextDocumentInitialView(this, file, view)) {
       TRACE("file-td-list",
         stringb("notifyGetInitialView: found: fv=" << view.firstVisible));

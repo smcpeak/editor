@@ -582,7 +582,7 @@ int TextDocumentCore::countTrailingSpacesTabs(int line) const
 
 void TextDocumentCore::addObserver(TextDocumentObserver *observer) const
 {
-  this->observers.appendUnique(observer);
+  this->observers.appendNewItem(observer);
 }
 
 void TextDocumentCore::removeObserver(TextDocumentObserver *observer) const
