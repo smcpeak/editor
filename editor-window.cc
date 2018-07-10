@@ -12,7 +12,6 @@
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
 #include "main.h"                      // GlobalState
-#include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
 #include "status.h"                    // StatusDisplay
@@ -1025,8 +1024,7 @@ void EditorWindow::viewSetHighlighting()
 
 void EditorWindow::windowOpenFilesList()
 {
-  OpenFilesDialog dialog(&( globalState->m_documentList ));
-  FileTextDocument *doc = dialog.runDialog();
+  FileTextDocument *doc = globalState->runOpenFilesDialog();
   if (doc) {
     this->setDocumentFile(doc);
   }

@@ -1,7 +1,6 @@
 
 TODOs:
   - file picker should have keyboard accelerator on "close selected"
-  - file picker should remember its size if I resize it
   - ctrl+i: open file at cursor
   - multiple copy+paste strings
 

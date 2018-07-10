@@ -175,6 +175,15 @@ void GlobalState::deleteDocumentFile(FileTextDocument *file)
 }
 
 
+FileTextDocument *GlobalState::runOpenFilesDialog()
+{
+  if (!m_openFilesDialog.get()) {
+    m_openFilesDialog = new OpenFilesDialog(&m_documentList);
+  }
+  return m_openFilesDialog->runDialog();
+}
+
+
 void GlobalState::focusChangedHandler(QWidget *from, QWidget *to)
 {
   TRACE("focus", "focus changed from " << qObjectDesc(from) <<

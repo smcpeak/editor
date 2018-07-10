@@ -8,10 +8,12 @@
 #include "editor-window.h"             // EditorWindow
 #include "file-td.h"                   // FileTextDocument
 #include "file-td-list.h"              // FileTextDocumentList
+#include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // Pixmaps
 
 // smbase
 #include "objlist.h"                   // ObjList
+#include "owner.h"                     // Owner
 #include "refct-serf.h"                // SerfRefCount
 
 // Qt
@@ -43,6 +45,13 @@ public:       // data
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
   ObjList<EditorWindow> m_windows;
+
+private:     // data
+  // Dialog that lets the user pick an open file.  We keep the dialog
+  // around persistently so it remembers its size (but not location...)
+  // across invocations.  It contains a pointer to m_documentList, so
+  // must be destroyed before the list.
+  Owner<OpenFilesDialog> m_openFilesDialog;
 
 private:      // funcs
   bool hotkeyAvailable(int key) const;
@@ -82,6 +91,13 @@ public:       // funcs
   // This will tell all of the editor widgets to forget about it
   // first so they switch to some other file.
   void deleteDocumentFile(FileTextDocument *f);
+
+  // Show the open-files dialog and wait for the user to choose a file
+  // or cancel.  If a choice is made, return it.
+  //
+  // Note that the dialog also allows the user to close files, which
+  // uses the FileTextDocumentListObserver notification system.
+  FileTextDocument *runOpenFilesDialog();
 };
 
 

@@ -138,6 +138,11 @@ OpenFilesDialog::~OpenFilesDialog()
 
 FileTextDocument *OpenFilesDialog::runDialog()
 {
+  // The dialog may have been saved from a prior run.  Reset its
+  // controls.
+  m_tableView->selectRow(0);
+  m_tableView->clearSelection();
+
   if (this->exec()) {
     QModelIndex idx = m_tableView->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
