@@ -42,7 +42,7 @@ private:     // data
   // This is not an owner pointer.  It is the client's responsibility
   // to ensure the TextDocumentEditor is destroyed before the
   // TextDocument.
-  TextDocument *m_doc;
+  RCSerf<TextDocument> m_doc;
 
   // Cursor, the point around which editing revolves.  In the UI
   // design of this class, the cursor can go anywhere--it is not
@@ -595,15 +595,31 @@ public:      // funcs
 };
 
 
+// The purpose of this class is to be inherited by TextDocumentAndEditor
+// (TDAE).  It allows TDAE to "inherit" TextDocument without exposing
+// its members, which would cause ambiguities with those of TDE.  The
+// reason TDAE needs to inherit TD instead of just having one as a
+// member is to ensure that TD is constructed before TDE, which is
+// necessary since TDE::m_doc is an RCSerf<TD>.
+class WrappedTextDocument {
+public:
+  TextDocument innerDoc;
+};
+
+
 // Combination of editor and document to edit.  This is mainly useful
 // in test programs.
-class TextDocumentAndEditor : public TextDocumentEditor {
-private:     // data
-  // Embedded document the editor is editing
-  TextDocument innerDoc;
-
+//
+// Incidentally, this is the first time I have used private inheritance
+// without overriding any virtual methods.  This is an interesting
+// little pattern.
+class TextDocumentAndEditor : private WrappedTextDocument,
+                              public TextDocumentEditor {
 public:
-  TextDocumentAndEditor() : TextDocumentEditor(&innerDoc) {}
+  TextDocumentAndEditor()
+    : WrappedTextDocument(),
+      TextDocumentEditor(&innerDoc)
+  {}
 };
 
 

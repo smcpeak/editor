@@ -4,16 +4,19 @@
 #ifndef TD_H
 #define TD_H
 
+// editor
 #include "history.h"                   // HE_group
 #include "td-core.h"                   // TextDocumentCore
 
+// smbase
 #include "array.h"                     // ArrayStack
 #include "objstack.h"                  // ObjStack
+#include "refct-serf.h"                // RCSerf
 
 
 // This class represents a text document (which is a sequence of lines)
 // and its undo/redo history.
-class TextDocument {
+class TextDocument : public SerfRefCount {
 public:       // static data
   static int s_objectCount;
 
