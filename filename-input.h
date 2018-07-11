@@ -27,13 +27,17 @@ class QTextEdit;
 //
 //   * Feedback on possible completions.
 //
-// Planned features:
-//
 //   * Tab completion of unambiguous fragment.
+//
+// Planned features:
 //
 //   * Optional extension filtering.
 //
 //   * Editing keybindings similar to the main editor window.
+//
+//   * Show names of directories differently in completion list.
+//
+//   * Let me double-click on completion list items with mouse.
 //
 class FilenameInputDialog : public ModalDialog {
   Q_OBJECT
