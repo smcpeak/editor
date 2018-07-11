@@ -3,11 +3,14 @@
 
 #include "file-td-list.h"              // this module
 
+// smbase
 #include "macros.h"                    // Restorer
 #include "stringset.h"                 // StringSet
 #include "strtokp.h"                   // StrtokParse
+#include "strutil.h"                   // dirname
 #include "trace.h"                     // TRACE
 
+// libc++
 #include <set>                         // std::set
 
 using std::set;
@@ -381,6 +384,24 @@ void FileTextDocumentList::assignUniqueHotkey(FileTextDocument *file)
 
   this->notifyAttributeChanged(file);
   SELF_CHECK();
+}
+
+
+void FileTextDocumentList::getUniqueDirectories(
+  ArrayStack<string> /*INOUT*/ &dirs) const
+{
+  // Set of directories put into 'dirs' so far.
+  StringSet dirSet;
+
+  for (int i=0; i < m_fileDocuments.length(); i++) {
+    if (!m_fileDocuments[i]->isUntitled) {
+      string dir = dirname(m_fileDocuments[i]->filename);
+      if (!dirSet.contains(dir)) {
+        dirs.push(dir);
+        dirSet.add(dir);
+      }
+    }
+  }
 }
 
 

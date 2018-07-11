@@ -4,6 +4,7 @@
 #include "file-td-list.h"              // module to test
 
 // smbase
+#include "strutil.h"                   // dirname
 #include "test.h"                      // USUAL_TEST_MAIN
 
 // libc
@@ -155,6 +156,8 @@ static void expectOrder(FileTextDocumentList &dlist, FileTextDocument *file0, ..
     i++;
   }
   va_end(args);
+
+  xassert(dlist.numFiles() == i);
 }
 
 
@@ -403,6 +406,63 @@ static void testColon3()
 }
 
 
+// Expect output of 'getUniqueDirectories' to match the NULL-terminated
+// sequence of arguments.
+static void expectDirs(FileTextDocumentList &dlist, char const *dir0, ...)
+{
+  ArrayStack<string> actual;
+  dlist.getUniqueDirectories(actual);
+
+  if (!dir0) {
+    xassert(actual.isEmpty());
+    return;
+  }
+  xassert(!actual.isEmpty());
+
+  xassert(actual[0] == dir0);
+  int i = 1;
+
+  va_list args;
+  va_start(args, dir0);
+  while (char const *dir = va_arg(args, char const *)) {
+    xassert(actual[i] == dir);
+    i++;
+  }
+  va_end(args);
+
+  xassert(actual.length() == i);
+}
+
+
+static void testGetUniqueDirectories()
+{
+  FileTextDocumentList dlist;
+  expectDirs(dlist, NULL);
+
+  add(dlist, "/a/b");
+  expectDirs(dlist, "/a", NULL);
+
+  // Check that existing entries are preserved.
+  {
+    ArrayStack<string> actual;
+    actual.push("existing");
+    dlist.getUniqueDirectories(actual);
+    xassert(actual.length() == 2);
+    xassert(actual[0] == "existing");
+    xassert(actual[1] == "/a");
+  }
+
+  add(dlist, "/a/c");
+  expectDirs(dlist, "/a", NULL);
+
+  add(dlist, "/b/c");
+  expectDirs(dlist, "/a", "/b", NULL);
+
+  add(dlist, "/b/d/e/f/g");
+  expectDirs(dlist, "/a", "/b", "/b/d/e/f", NULL);
+}
+
+
 void entry()
 {
   testSimple();
@@ -412,6 +472,7 @@ void entry()
   testExhaustHotkeys();
   testDuplicateHotkeys();
   testColon3();
+  testGetUniqueDirectories();
 
   xassert(FileTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);

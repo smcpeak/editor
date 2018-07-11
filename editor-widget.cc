@@ -377,8 +377,8 @@ void EditorWidget::openFileAtCursor()
 
   ArrayStack<string> prefixes;
   prefixes.push(this->getDocumentDirectory());
-  // TODO: Push all unique file directories.
-  // TODO: Configurable additional directories.
+  m_documentList->getUniqueDirectories(prefixes);
+  // TODO: User-configurable additional directories.
   prefixes.push("");
 
   string filename =

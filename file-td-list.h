@@ -160,6 +160,11 @@ public:      // funcs
   // unused hotkeys, in which case remove any hotkey from the file.
   void assignUniqueHotkey(FileTextDocument *file);
 
+  // Put into 'dirs' the unique set of directories containing files
+  // currently open, in order from most to least recently used.  Any
+  // existing entries in 'dirs' are *retained* ahead of added entries.
+  void getUniqueDirectories(ArrayStack<string> /*INOUT*/ &dirs) const;
+
   // ------------------------- observers ----------------------------
   // Add an observer.  It must not already be one.
   void addObserver(FileTextDocumentListObserver *observer);
