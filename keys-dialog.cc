@@ -31,7 +31,7 @@ KeysDialog::KeysDialog(QString keysText, QWidget *parent, Qt::WindowFlags f)
     textEdit->setPlainText(keysText);
     vbox->addWidget(textEdit);
 
-    this->createOkAndCancel(vbox);
+    this->createOkAndCancelHBox(vbox);
     this->setLayout(vbox);
   }
 }

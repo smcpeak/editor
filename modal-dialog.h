@@ -15,7 +15,7 @@ class ModalDialog : public QDialog {
 
 protected:   // funcs
   // Create the standard Ok and Cancel buttons and add them to 'layout'.
-  void createOkAndCancel(QBoxLayout *layout);
+  void createOkAndCancelHBox(QBoxLayout *layout);
 
 public:      // funcs
   ModalDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());

@@ -58,7 +58,7 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
     QObject::connect(m_comboBox->lineEdit(), SIGNAL(returnPressed()),
                      this, SLOT(accept()));
 
-    this->createOkAndCancel(vbox);
+    this->createOkAndCancelHBox(vbox);
 
     // This causes the dialog to start fairly wide, but at its minimum
     // height.  The 80 is a bit smaller than the real minimum, and the

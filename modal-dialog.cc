@@ -24,7 +24,7 @@ ModalDialog::~ModalDialog()
 {}
 
 
-void ModalDialog::createOkAndCancel(QBoxLayout *layout)
+void ModalDialog::createOkAndCancelHBox(QBoxLayout *layout)
 {
   QHBoxLayout *hbox = new QHBoxLayout();
 

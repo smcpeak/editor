@@ -53,7 +53,7 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
   vbox->addWidget(m_completionsEdit);
   m_completionsEdit->setReadOnly(true);
 
-  this->createOkAndCancel(vbox);
+  this->createOkAndCancelHBox(vbox);
 
   this->resize(400, 400);
 }
