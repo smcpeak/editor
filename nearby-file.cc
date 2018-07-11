@@ -6,19 +6,32 @@
 #include "sm-file-util.h"              // SMFileUtil
 
 
+// Return true if 'c' is a character that makes up the "core" of a text
+// file name, in the sense that the majority of characters are "core"
+// characters.
+static bool isFilenameCore(char c)
+{
+  return (('A' <= c && c <= 'Z') ||
+          ('a' <= c && c <= 'z') ||
+          ('0' <= c && c <= '9'));
+}
+
+// Return true if 'c' is punctuation that commonly appears in text file
+// names.
+static bool isFilenamePunctuation(char c)
+{
+  return c == '_' ||
+         c == '-' ||
+         c == '/' ||
+         c == '\\' ||       // for Windows
+         c == '.';
+}
 
 // Return true if 'c' is a character that commonly appears in the name
 // of text files.
 static bool isFilenameChar(char c)
 {
-  return (('A' <= c && c <= 'Z') ||
-          ('a' <= c && c <= 'z') ||
-          ('0' <= c && c <= '9') ||
-          c == '_' ||
-          c == '-' ||
-          c == '/' ||
-          c == '\\' ||       // for Windows
-          c == '.');
+  return isFilenameCore(c) || isFilenamePunctuation(c);
 }
 
 
@@ -62,6 +75,15 @@ static void getCandidateSuffixes(
     }
   }
 
+  // File names do not usually end with punctuation, and the cursor
+  // should not be on consecutive puncutation is if is really on a
+  // file name.
+  if (isFilenamePunctuation(haystack[charOffset]) &&
+      (charOffset == haystackLength-1 ||
+       !isFilenameCore(haystack[charOffset+1]))) {
+    return;
+  }
+
   // Expand the range to include as many valid chars as possible.
   int low = charOffset;
   while (low > 0 && isFilenameChar(haystack[low-1])) {
@@ -70,6 +92,12 @@ static void getCandidateSuffixes(
   int high = charOffset;
   while (high < haystackLength-1 && isFilenameChar(haystack[high+1])) {
     high++;
+  }
+
+  // Remove trailing punctuation beyond the original offset.
+  while (high > charOffset &&
+         isFilenamePunctuation(haystack[high])) {
+    high--;
   }
 
   // Return what we found.
@@ -116,9 +144,15 @@ string innerGetNearbyFilename(
     }
   }
 
-  // No combination exists.  Return the first prefix+suffix.  The user
-  // will get an opportunity to edit or cancel.
-  return sfu.joinFilename(candidatePrefixes[0], candidateSuffixes[0]);
+  // No combination exists.  Is the first candidate suffix absolute?
+  if (sfu.isAbsolutePath(candidateSuffixes[0])) {
+    // Yes, return it by itself.
+    return candidateSuffixes[0];
+  }
+  else {
+    // Return the first prefix+suffix.
+    return sfu.joinFilename(candidatePrefixes[0], candidateSuffixes[0]);
+  }
 }
 
 

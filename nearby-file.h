@@ -26,7 +26,8 @@ class SMFileUtil;                      // sm-file-util.h
 //
 // If no combination of string and prefix yields an existing file, then
 // this function returns its best guess about what the intended file
-// name string is, prefixed with the *first* candidate.
+// name string is.  If that is an absolute path, it is returned as-is.
+// Otherwise it is returned prefixed with the *first* candidate.
 //
 // If no candidate file name string can be found, or no candidate
 // prefixes are provided, this returns the empty string.

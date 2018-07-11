@@ -45,8 +45,10 @@ static void test1()
   expectIGNF(sfu, prefixes, "foo.txt", -1, "");
   expectIGNF(sfu, prefixes, "foo.txt", 8, "");
 
-  // No absolute path yet.  This is the default when nothing found.
-  expectIGNF(sfu, prefixes, "/home/foo.txt", 3, "/home/home/foo.txt");
+  // No absolute search path yet, but this is the result when nothing
+  // found and the start string is absolute, so it's hard to see the
+  // effect...
+  expectIGNF(sfu, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
 
   // Now it will work.
   prefixes.push("");
@@ -69,7 +71,8 @@ static void test1()
   // Test inclusion.
   expectIGNF(sfu, prefixes, "ab cAZaz90_d ef", 7,
                          "/home/cAZaz90_d");
-  expectIGNF(sfu, prefixes, "ab z/\\-_.cAZaz90_d ef", 7,
+  expectIGNF(sfu, prefixes, "ab z/\\-_.cAZaz90_d ef", 7, "");
+  expectIGNF(sfu, prefixes, "ab z/\\-_.cAZaz90_d ef", 10,
                          "/home/z/\\-_.cAZaz90_d");
 
   // Test exclusion.
@@ -79,6 +82,15 @@ static void test1()
                           "/home/cd");
   expectIGNF(sfu, prefixes, "ab 'cd' ef", 5,
                           "/home/cd");
+
+  // Test that we ignore starting on "//".
+  expectIGNF(sfu, prefixes, "// blah", 0, "");
+  expectIGNF(sfu, prefixes, "//blah", 0, "");
+  expectIGNF(sfu, prefixes, "/blah", 0, "/blah");
+
+  // Ignore trailing punctuation.
+  expectIGNF(sfu, prefixes, "foo.txt.", 0, "/home/foo.txt");
+  expectIGNF(sfu, prefixes, "foo.txt.", 6, "/home/foo.txt");
 }
 
 
