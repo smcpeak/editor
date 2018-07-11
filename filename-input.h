@@ -49,6 +49,13 @@ private:     // data
   // Text display of possible completions.
   QTextEdit *m_completionsEdit;
 
+  // Name of the directory whose entries are cached in
+  // 'm_cachedDirectoryEntries'.  Empty to indicate nothing is cached.
+  string m_cachedDirectory;
+
+  // Results of 'getDirectoryEntries' on 'm_cachedDirectory'.
+  ArrayStack<string> m_cachedDirectoryEntries;
+
   // List of open documents so we can query it as the user types.
   //
   // This is only non-NULL while 'runDialog' is running.
@@ -57,6 +64,10 @@ private:     // data
 private:     // funcs
   // Set 'm_filenameLabel'.
   void setFilenameLabel();
+
+  // Populate the directory entry cache.  This returns immediately if
+  // the cache already has entries for 'dir'.
+  void getEntries(string const &dir);
 
   // Set 'm_completionsEdit'.
   void setCompletions();

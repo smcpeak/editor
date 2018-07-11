@@ -9,6 +9,7 @@
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname, compareStringPtrs
+#include "trace.h"                     // TRACE
 
 // Qt
 #include <QLabel>
@@ -21,6 +22,9 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
   : ModalDialog(parent, f),
     m_filenameLabel(NULL),
     m_filenameEdit(NULL),
+    m_completionsEdit(NULL),
+    m_cachedDirectory(""),
+    m_cachedDirectoryEntries(),
     m_docList(NULL)
 {
   this->setWindowTitle("Filename Input");
@@ -63,6 +67,7 @@ QString FilenameInputDialog::runDialog(
     restorer(m_docList, docList);
 
   m_filenameEdit->setText(initialChoice);
+  this->m_cachedDirectory = "";
   this->updateFeedback();
 
   if (this->exec()) {
@@ -108,6 +113,39 @@ void FilenameInputDialog::setFilenameLabel()
 }
 
 
+void FilenameInputDialog::getEntries(string const &dir)
+{
+  if (dir == m_cachedDirectory) {
+    // Already cached.
+    return;
+  }
+
+  // Just for safety, clear cache key while we repopulate.
+  m_cachedDirectory = "";
+
+  SMFileUtil sfu;
+  if (sfu.absolutePathExists(dir)) {
+    try {
+      TRACE("FilenameInputDialog", "querying dir: " << dir);
+      sfu.getDirectoryEntries(m_cachedDirectoryEntries, dir);
+
+      // Ensure canonical order.
+      m_cachedDirectoryEntries.sort(&compareStringPtrs);
+    }
+    catch (...) {
+      // In case of failure, clear completions and bail.
+      m_cachedDirectoryEntries.clear();
+    }
+  }
+  else {
+    m_cachedDirectoryEntries.clear();
+  }
+
+  // Ok, cache is ready.
+  m_cachedDirectory = dir;
+}
+
+
 void FilenameInputDialog::setCompletions()
 {
   string filename = toString(m_filenameEdit->text());
@@ -116,28 +154,16 @@ void FilenameInputDialog::setCompletions()
   string dir, base;
   sfu.splitPath(dir, base, filename);
 
+  // Query the dir, if needed.
+  this->getEntries(dir);
+
   // Builder into which we will accumulate completions text.
   stringBuilder sb;
 
-  if (sfu.absolutePathExists(dir)) {
-    // TODO: Cache this.
-    ArrayStack<string> entries;
-    try {
-      sfu.getDirectoryEntries(entries, dir);
-
-      // Ensure canonical order.
-      entries.sort(&compareStringPtrs);
-
-      for (int i=0; i < entries.length(); i++) {
-        if (prefixEquals(entries[i], base)) {
-          sb << entries[i] << '\n';
-        }
-      }
-    }
-    catch (...) {
-      // In case of failure, clear completions and bail.
-      m_completionsEdit->setPlainText("");
-      return;
+  // Include all entries for which 'base' is a prefix.
+  for (int i=0; i < m_cachedDirectoryEntries.length(); i++) {
+    if (prefixEquals(m_cachedDirectoryEntries[i], base)) {
+      sb << m_cachedDirectoryEntries[i] << '\n';
     }
   }
 
