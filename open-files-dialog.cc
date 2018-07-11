@@ -159,16 +159,7 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
 
     hbox->addStretch(1);
 
-    QPushButton *okButton = new QPushButton("Ok");
-    hbox->addWidget(okButton);
-    okButton->setDefault(true);
-    QObject::connect(okButton, &QPushButton::clicked,
-                     this, &OpenFilesDialog::accept);
-
-    QPushButton *cancelButton = new QPushButton("Cancel");
-    hbox->addWidget(cancelButton);
-    QObject::connect(cancelButton, &QPushButton::clicked,
-                     this, &OpenFilesDialog::reject);
+    this->createOkAndCancelButtons(hbox);
   }
 
   // Expand to show plenty of the files and their names.

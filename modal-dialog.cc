@@ -24,24 +24,29 @@ ModalDialog::~ModalDialog()
 {}
 
 
-void ModalDialog::createOkAndCancelHBox(QBoxLayout *layout)
+void ModalDialog::createOkAndCancelHBox(QBoxLayout *vbox)
 {
   QHBoxLayout *hbox = new QHBoxLayout();
+  vbox->addLayout(hbox);
 
   hbox->addStretch(1);
 
+  this->createOkAndCancelButtons(hbox);
+}
+
+
+void ModalDialog::createOkAndCancelButtons(QBoxLayout *hbox)
+{
   QPushButton *okButton = new QPushButton("Ok");
+  hbox->addWidget(okButton);
   okButton->setDefault(true);
   QObject::connect(okButton, &QPushButton::clicked,
                    this, &ModalDialog::accept);
-  hbox->addWidget(okButton);
 
   QPushButton *cancelButton = new QPushButton("Cancel");
+  hbox->addWidget(cancelButton);
   QObject::connect(cancelButton, &QPushButton::clicked,
                    this, &ModalDialog::reject);
-  hbox->addWidget(cancelButton);
-
-  layout->addLayout(hbox);
 }
 
 
