@@ -309,8 +309,15 @@ public:      // funcs
     FileTextDocumentInitialView /*OUT*/ &view) noexcept override;
 
   // Current file being edited.  This is 'const' because the file is
-  // shared with other widgets in this process.
+  // shared with other widgets in this process, so the constness of
+  // this object does not propagate to it.
   FileTextDocument *getDocumentFile() const;
+
+  // Get what the user thinks of as the "current directory" for this
+  // widget.  Normally that is the directory containing the current
+  // document, although under some circumstances the process working
+  // directory may be used.
+  string getDocumentDirectory() const;
 
   // Editor associated with current file and this particular widget.
   // This is not 'const' because the editor is owned by this object.

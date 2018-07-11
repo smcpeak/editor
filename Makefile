@@ -9,6 +9,7 @@ all: test-justify
 all: test-command-runner
 all: test-file-td
 all: test-file-td-list
+all: test-nearby-file
 all: textcategory
 all: c_hilite
 all: editor
@@ -199,6 +200,21 @@ TEST_FILE_TD_LIST_OBJS += test-file-td-list.o
 test-file-td-list: $(TEST_FILE_TD_LIST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_FILE_TD_LIST_OBJS) $(QT_CONSOLE_LDFLAGS)
 	./test-file-td-list >/dev/null 2>&1
+
+
+# -------------------- test-nearby-file --------------------
+TOCLEAN += test-nearby-file
+
+EDITOR_OBJS += nearby-file.o
+
+TEST_NEARBY_FILE_OBJS := $(EDITOR_OBJS)
+
+TEST_NEARBY_FILE_OBJS += test-nearby-file.o
+-include test-nearby-file.d
+
+test-nearby-file: $(TEST_NEARBY_FILE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_NEARBY_FILE_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-nearby-file >/dev/null 2>&1
 
 
 # --------------- textcategory test program ----------------

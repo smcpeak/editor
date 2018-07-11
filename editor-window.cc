@@ -815,7 +815,7 @@ void EditorWindow::editApplyCommand()
       return;
     }
 
-    string dir = dirname(editorWidget->getDocumentFile()->filename);
+    string dir = editorWidget->getDocumentDirectory();
     dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
 
     if (!dialog->exec() || dialog->m_text.isEmpty()) {

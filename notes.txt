@@ -1,5 +1,6 @@
 
 TODOs:
+  - column of #includes in editor-widget.cc
   - ctrl+i: open file at cursor
   - multiple copy+paste strings
 

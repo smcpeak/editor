@@ -5,6 +5,7 @@
 
 // this dir
 #include "inputproxy.h"      // InputProxy
+#include "nearby-file.h"     // getNearbyFilename
 #include "position.h"        // Position
 #include "qtbdffont.h"       // QtBDFFont
 #include "qtguiutil.h"       // toString(QKeyEvent)
@@ -28,6 +29,7 @@
 #include "macros.h"          // Restorer
 #include "nonport.h"         // getMilliseconds
 #include "objcount.h"        // CHECK_OBJECT_COUNT
+#include "strutil.h"         // dirname
 #include "trace.h"           // TRACE
 #include "xassert.h"         // xassert
 
@@ -363,14 +365,26 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 }
 
 
+string EditorWidget::getDocumentDirectory() const
+{
+  return dirname(this->getDocumentFile()->filename);
+}
+
+
 void EditorWidget::openFileAtCursor()
 {
   string lineText = m_editor->getWholeLine(m_editor->cursor().line);
 
-  // While I'm developing the feature, use a fixed filename.
-  //string filename = getNearbyFileName(lineText, m_editor->cursor().column);
-  string filename = "d:/wrk/editor/Makefile";
+  ArrayStack<string> prefixes;
+  prefixes.push(this->getDocumentDirectory());
+  // TODO: Push all unique file directories.
+  // TODO: Configurable additional directories.
+  prefixes.push("");
 
+  string filename =
+    getNearbyFilename(prefixes, lineText, m_editor->cursor().column);
+
+  // TODO: Prompt for filename even in this case.
   if (filename.isempty()) {
     QMessageBox::information(this, "No Filename Found",
       "Unable to find an existing file name near the cursor.");
