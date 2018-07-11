@@ -1,13 +1,11 @@
 
 TODOs:
   - ctrl+i: open file at cursor
-    - if file exists and is not the current document, just open or
-      switch to it without prompting
     - recognize file:line syntax
     - allow Tab to complete partial filenames
     - search directories containing other open files
     - interactively show when the file exists
-      - the file system queries are inaccurate
+      - problem with short strings like "D:/"
   - multiple copy+paste strings
 
   - run command to generate entire file; git annotate!

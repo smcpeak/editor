@@ -81,9 +81,6 @@ void FilenameInputDialog::setFilenameLabel()
   // TODO: These file system queries have some issues:
   //
   //  * With "D:/", complains about "./" not existing.
-  //
-  //  * With "D:/wrk/", says "File exists", even though it is a
-  //    directory.
 
   // Final '/' is a hack for when the "directory" is just a drive
   // letter and colon.  It makes it see it as a valid directory.
@@ -95,12 +92,17 @@ void FilenameInputDialog::setFilenameLabel()
     return;
   }
 
-  if (!sfu.absolutePathExists(filename)) {
-    m_filenameLabel->setText("File does not exist, will be created:");
-    return;
+  if (sfu.absolutePathExists(filename)) {
+    if (sfu.absoluteFileExists(filename)) {
+      m_filenameLabel->setText("File exists:");
+    }
+    else {
+      m_filenameLabel->setText("Is a directory:");
+    }
   }
-
-  m_filenameLabel->setText("File exists:");
+  else {
+    m_filenameLabel->setText("File does not exist, will be created:");
+  }
 }
 
 

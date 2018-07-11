@@ -1132,6 +1132,20 @@ void EditorWindow::editorViewChanged()
 
 void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
 {
+  // Check for fast-open conditions.
+  {
+    SMFileUtil sfu;
+    string fn(toString(filename));
+    if (sfu.absoluteFileExists(fn) &&
+        currentDocument()->filename != fn) {
+      // The file exists, and it is not the current document.  Just
+      // go straight to opening it without prompting.
+      this->fileOpenFile(fn);
+      return;
+    }
+  }
+
+  // Prompt to confirm.
   FilenameInputDialog dialog;
   QString confirmedFilename =
     dialog.runDialog(&(globalState->m_documentList), filename);
