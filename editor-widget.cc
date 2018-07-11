@@ -29,6 +29,7 @@
 #include "macros.h"                    // Restorer
 #include "nonport.h"                   // getMilliseconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
+#include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname
 #include "trace.h"                     // TRACE
 #include "xassert.h"                   // xassert
@@ -367,7 +368,16 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 
 string EditorWidget::getDocumentDirectory() const
 {
-  return dirname(this->getDocumentFile()->filename);
+  SMFileUtil sfu;
+  FileTextDocument *doc = this->getDocumentFile();
+  if (doc->isUntitled) {
+    return sfu.normalizePathSeparators(sfu.currentDirectory());
+  }
+  else {
+    // sfu.splitPathDir leaves the final slash, which is messing up my
+    // logic elsewhere.
+    return dirname(doc->filename);
+  }
 }
 
 

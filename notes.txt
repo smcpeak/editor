@@ -4,8 +4,6 @@ TODOs:
     - recognize file:line syntax
     - allow Tab to complete partial filenames
   - multiple copy+paste strings
-  - with untitled file and nothing under cursor, Ctrl+I prompts
-    with "./" instead of cwd
 
   - run command to generate entire file; git annotate!
     - git diff
