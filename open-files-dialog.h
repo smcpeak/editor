@@ -50,9 +50,7 @@ private:     // instance data
 
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
-  //
-  // TODO: Rename this to 'm_tableWidget'.
-  MyTableWidget *m_tableView;
+  MyTableWidget *m_tableWidget;
 
 private:     // funcs
   // Rebuild the table by copying from 'm_docList'.

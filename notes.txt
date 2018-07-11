@@ -1,6 +1,6 @@
 
 TODOs:
-  - TODO: rename OpenFilesDialog::m_tableView.
+  - TODO: the new open-files table is editable!
   - TODO: rename my-table-view.h.
   - ctrl+i: open file at cursor
     - interactively show when the file exists

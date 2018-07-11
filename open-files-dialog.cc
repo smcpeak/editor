@@ -73,7 +73,7 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
                                  QWidget *parent, Qt::WindowFlags f) :
   ModalDialog(parent, f),
   m_docList(docList),
-  m_tableView(NULL)
+  m_tableWidget(NULL)
 {
   this->setWindowTitle("File Picker");
 
@@ -94,52 +94,52 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
   // post-change broadcasts.  Rather than complicate by design by adding
   // pre-change notifications, I have chosen to just pay the minor cost
   // of having an extra copy of the table in memory.
-  m_tableView = new MyTableWidget();
-  vbox->addWidget(m_tableView);
+  m_tableWidget = new MyTableWidget();
+  vbox->addWidget(m_tableWidget);
 
   // Zebra table.
-  m_tableView->setAlternatingRowColors(true);
+  m_tableWidget->setAlternatingRowColors(true);
 
   // Select entire rows at a time.
-  m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+  m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
 
   // Click to select.  Shift+Click to extend contiguously, Ctrl+Click
   // to toggle one element.
-  m_tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+  m_tableWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
   // Do not respond to clicks in the tiny top-left corner sliver.
   //
   // TODO: Can I get rid of the thin left column altogether?
-  m_tableView->setCornerButtonEnabled(false);
+  m_tableWidget->setCornerButtonEnabled(false);
 
   // Do not use Tab to move among cells.  Rather, it should move the
   // focus among controls in the dialog.
-  m_tableView->setTabKeyNavigation(false);
+  m_tableWidget->setTabKeyNavigation(false);
 
   // Do not draw grid lines.  They only add visual clutter.
-  m_tableView->setShowGrid(false);
+  m_tableWidget->setShowGrid(false);
 
   // Initialize columns.
   {
-    m_tableView->setColumnCount(NUM_TABLE_COLUMNS);
+    m_tableWidget->setColumnCount(NUM_TABLE_COLUMNS);
 
     // Header labels.
     QStringList columnLabels;
     FOREACH_TABLE_COLUMN(tc) {
       columnLabels << s_columnInfo[tc].name;
     }
-    m_tableView->setHorizontalHeaderLabels(columnLabels);
+    m_tableWidget->setHorizontalHeaderLabels(columnLabels);
 
     // Column widths.
     FOREACH_TABLE_COLUMN(tc) {
-      m_tableView->setColumnWidth(tc, s_columnInfo[tc].initialWidth);
+      m_tableWidget->setColumnWidth(tc, s_columnInfo[tc].initialWidth);
     }
   }
 
   // The table rows are set by 'repopulateTable', which is called by
   // 'runDialog'.
 
-  QObject::connect(m_tableView, &QTableView::doubleClicked,
+  QObject::connect(m_tableWidget, &QTableView::doubleClicked,
                    this, &OpenFilesDialog::on_doubleClicked);
 
   {
@@ -181,8 +181,8 @@ OpenFilesDialog::~OpenFilesDialog()
 
 void OpenFilesDialog::repopulateTable()
 {
-  m_tableView->clearContents();
-  m_tableView->setRowCount(m_docList->numFiles());
+  m_tableWidget->clearContents();
+  m_tableWidget->setRowCount(m_docList->numFiles());
 
   // Populate the rows.
   for (int r=0; r < m_docList->numFiles(); r++) {
@@ -190,7 +190,7 @@ void OpenFilesDialog::repopulateTable()
 
     // Remove the row label.  (The default, a NULL item, renders as a
     // row number, which isn't useful here.)
-    m_tableView->setVerticalHeaderItem(r, new QTableWidgetItem(""));
+    m_tableWidget->setVerticalHeaderItem(r, new QTableWidgetItem(""));
 
     // Filename.
     {
@@ -200,7 +200,7 @@ void OpenFilesDialog::repopulateTable()
         sb << " *";
       }
       QTableWidgetItem *item = new QTableWidgetItem(toQString(sb));
-      m_tableView->setItem(r, TC_FILENAME, item);
+      m_tableWidget->setItem(r, TC_FILENAME, item);
     }
 
     // Lines.
@@ -208,12 +208,12 @@ void OpenFilesDialog::repopulateTable()
       QTableWidgetItem *item = new QTableWidgetItem(
         qstringb(doc->numLinesExceptFinalEmpty()));
       item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-      m_tableView->setItem(r, TC_LINES, item);
+      m_tableWidget->setItem(r, TC_LINES, item);
     }
 
     // Apparently I have to set every row's height manually.  QTreeView
     // has a 'uniformRowHeights' property, but QListView does not.
-    m_tableView->setRowHeight(r, ROW_HEIGHT);
+    m_tableWidget->setRowHeight(r, ROW_HEIGHT);
   }
 }
 
@@ -224,7 +224,7 @@ FileTextDocument *OpenFilesDialog::runDialog()
   this->repopulateTable();
 
   if (this->exec()) {
-    QModelIndex idx = m_tableView->currentIndex();
+    QModelIndex idx = m_tableWidget->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();
       if (0 <= r && r < m_docList->numFiles()) {
@@ -263,7 +263,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
   ArrayStack<FileTextDocument*> docsToClose;
   bool someHaveUnsavedChanges = false;
   {
-    QItemSelectionModel *selectionModel = m_tableView->selectionModel();
+    QItemSelectionModel *selectionModel = m_tableWidget->selectionModel();
     QModelIndexList selectedRows = selectionModel->selectedRows();
     for (QModelIndexList::iterator it(selectedRows.begin());
          it != selectedRows.end();
