@@ -1,6 +1,11 @@
 
 TODOs:
   - ctrl+i: open file at cursor
+    - do not prompt with nonsense filename like "//"
+    - interactively show when the file exists
+    - and when the file is already open in editor
+    - allow Tab to complete partial filenames
+    - search directories containing other open files
   - multiple copy+paste strings
 
   - run command to generate entire file; git annotate!

@@ -7,6 +7,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "editor-widget.h"             // EditorWidget
+#include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
 #include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
@@ -112,9 +113,10 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   connect(this->editorWidget, SIGNAL(viewChanged()),
           this, SLOT(editorViewChanged()));
 
-  // See EditorWidget::openFileSignal for why this is a QueuedConnection.
-  connect(this->editorWidget, &EditorWidget::openFileSignal,
-          this, &EditorWindow::on_openFileSignal,
+  // See EditorWidget::openFileAtCursor for why this is a
+  // QueuedConnection.
+  connect(this->editorWidget, &EditorWidget::openFilenameInputDialogSignal,
+          this, &EditorWindow::on_openFilenameInputDialogSignal,
           Qt::QueuedConnection);
 
   // See explanation in GlobalState::focusChangedHandler().
@@ -1128,9 +1130,14 @@ void EditorWindow::editorViewChanged()
 }
 
 
-void EditorWindow::on_openFileSignal(QString const &filename)
+void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
 {
-  this->fileOpenFile(toString(filename));
+  FilenameInputDialog dialog;
+  QString confirmedFilename = dialog.runDialog(filename);
+
+  if (!confirmedFilename.isEmpty()) {
+    this->fileOpenFile(toString(confirmedFilename));
+  }
 }
 
 

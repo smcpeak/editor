@@ -403,9 +403,9 @@ signals:
   void viewChanged();
 
   // Emitted when the user indicates, via some widget functionality,
-  // that they want to open a particular file.  Currently, the file
-  // always exists when this is emitted, and is an absolute path name.
-  void openFileSignal(QString const &filename);
+  // that they want to open a particular file.  It should open a dialog
+  // to allow the user to further edit the name.
+  void openFilenameInputDialogSignal(QString const &filename);
 };
 
 #endif // EDITOR_WIDGET_H

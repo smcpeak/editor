@@ -384,13 +384,14 @@ void EditorWidget::openFileAtCursor()
   string filename =
     getNearbyFilename(prefixes, lineText, m_editor->cursor().column);
 
-  // TODO: Prompt for filename even in this case.
   if (filename.isempty()) {
-    QMessageBox::information(this, "No Filename Found",
-      "Unable to find an existing file name near the cursor.");
-    return;
+    // Prompt with the document directory.
+    filename = stringb(this->getDocumentDirectory() << '/');
   }
 
+  // Prompt the user with the filename to allow confirmation and
+  // changes.
+  //
   // This should be sent on a Qt::QueuedConnection, meaning the slot
   // will be invoked later, once the current event is done processing.
   // That is important because right now we have an open
@@ -398,7 +399,7 @@ void EditorWidget::openFileAtCursor()
   // are currently looking at if it is untitled, which will cause the
   // RCSerf infrastructure to abort just before memory corruption would
   // have resulted.
-  emit openFileSignal(toQString(filename));
+  emit openFilenameInputDialogSignal(toQString(filename));
 }
 
 

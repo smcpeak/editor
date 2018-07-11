@@ -169,7 +169,7 @@ public slots:
   void helpAboutQt();
 
   void editorViewChanged();
-  void on_openFileSignal(QString const &filename);
+  void on_openFilenameInputDialogSignal(QString const &filename);
 };
 
 
