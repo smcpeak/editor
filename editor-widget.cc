@@ -1,19 +1,19 @@
 // editor-widget.cc
 // code for editor-widget.h
 
-#include "editor-widget.h"   // this module
+#include "editor-widget.h"             // this module
 
 // this dir
-#include "inputproxy.h"      // InputProxy
-#include "nearby-file.h"     // getNearbyFilename
-#include "position.h"        // Position
-#include "qtbdffont.h"       // QtBDFFont
-#include "qtguiutil.h"       // toString(QKeyEvent)
-#include "qtutil.h"          // toString(QString)
-#include "status.h"          // StatusDisplay
-#include "styledb.h"         // StyleDB
-#include "textcategory.h"    // LineCategories, etc.
-#include "textline.h"        // TextLine
+#include "inputproxy.h"                // InputProxy
+#include "nearby-file.h"               // getNearbyFilename
+#include "position.h"                  // Position
+#include "qtbdffont.h"                 // QtBDFFont
+#include "qtguiutil.h"                 // toString(QKeyEvent)
+#include "qtutil.h"                    // toString(QString)
+#include "status.h"                    // StatusDisplay
+#include "styledb.h"                   // StyleDB
+#include "textcategory.h"              // LineCategories, etc.
+#include "textline.h"                  // TextLine
 
 // default font definitions (in smqtutil directory)
 #include "editor14r.bdf.gen.h"
@@ -22,31 +22,31 @@
 #include "minihex6.bdf.gen.h"          // bdfFontData_minihex6
 
 // smbase
-#include "array.h"           // Array
-#include "bdffont.h"         // BDFFont
-#include "ckheap.h"          // malloc_stats
-#include "exc.h"             // GENERIC_CATCH_BEGIN/END
-#include "macros.h"          // Restorer
-#include "nonport.h"         // getMilliseconds
-#include "objcount.h"        // CHECK_OBJECT_COUNT
-#include "strutil.h"         // dirname
-#include "trace.h"           // TRACE
-#include "xassert.h"         // xassert
+#include "array.h"                     // Array
+#include "bdffont.h"                   // BDFFont
+#include "ckheap.h"                    // malloc_stats
+#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
+#include "macros.h"                    // Restorer
+#include "nonport.h"                   // getMilliseconds
+#include "objcount.h"                  // CHECK_OBJECT_COUNT
+#include "strutil.h"                   // dirname
+#include "trace.h"                     // TRACE
+#include "xassert.h"                   // xassert
 
 // Qt
-#include <qapplication.h>    // QApplication
-#include <qclipboard.h>      // QClipboard
-#include <qfontmetrics.h>    // QFontMetrics
-#include <qlabel.h>          // QLabel
-#include <qmessagebox.h>     // QMessageBox
-#include <qpainter.h>        // QPainter
-#include <qpixmap.h>         // QPixmap
+#include <qapplication.h>              // QApplication
+#include <qclipboard.h>                // QClipboard
+#include <qfontmetrics.h>              // QFontMetrics
+#include <qlabel.h>                    // QLabel
+#include <qmessagebox.h>               // QMessageBox
+#include <qpainter.h>                  // QPainter
+#include <qpixmap.h>                   // QPixmap
 
 #include <QKeyEvent>
 #include <QPaintEvent>
 
 // libc
-#include <stdio.h>           // printf, for debugging
+#include <stdio.h>                     // printf, for debugging
 
 
 // The basic rule for using this is it should be present in any function
