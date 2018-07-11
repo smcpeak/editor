@@ -229,6 +229,7 @@ FileTextDocument *OpenFilesDialog::runDialog()
 {
   TRACE("OpenFilesDialog", "runDialog started");
   this->repopulateTable();
+  m_tableWidget->setFocus();
 
   if (this->exec()) {
     QModelIndex idx = m_tableWidget->currentIndex();
