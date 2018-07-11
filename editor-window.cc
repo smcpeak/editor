@@ -1133,7 +1133,8 @@ void EditorWindow::editorViewChanged()
 void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
 {
   FilenameInputDialog dialog;
-  QString confirmedFilename = dialog.runDialog(filename);
+  QString confirmedFilename =
+    dialog.runDialog(&(globalState->m_documentList), filename);
 
   if (!confirmedFilename.isEmpty()) {
     this->fileOpenFile(toString(confirmedFilename));

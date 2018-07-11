@@ -4,7 +4,12 @@
 #ifndef FILENAME_INPUT_H
 #define FILENAME_INPUT_H
 
+// editor
+#include "file-td-list.h"              // FileTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
+
+// smbase
+#include "refct-serf.h"                // RCSerf
 
 class QLabel;
 class QLineEdit;
@@ -27,6 +32,11 @@ private:     // data
   // 'this', but deallocated automatically by QObject infrastructure.
   QLineEdit *m_filenameEdit;
 
+  // List of open documents so we can query it as the user types.
+  //
+  // This is only non-NULL while 'runDialog' is running.
+  RCSerf<FileTextDocumentList const> m_docList;
+
 private:     // funcs
   // Set the text of 'm_filenameLabel' based on the text in
   // 'm_filenameEdit'.
@@ -38,7 +48,8 @@ public:      // funcs
 
   // Show the dialog and return the name of the file the user has
   // chosen, or "" if canceled.
-  QString runDialog(QString initialChoice);
+  QString runDialog(FileTextDocumentList const *docList,
+                    QString initialChoice);
 
 public slots:
   void on_textEdited(QString const &);

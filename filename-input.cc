@@ -19,7 +19,8 @@
 FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
   : ModalDialog(parent, f),
     m_filenameLabel(NULL),
-    m_filenameEdit(NULL)
+    m_filenameEdit(NULL),
+    m_docList(NULL)
 {
   this->setWindowTitle("Filename Input");
 
@@ -46,8 +47,13 @@ FilenameInputDialog::~FilenameInputDialog()
 {}
 
 
-QString FilenameInputDialog::runDialog(QString initialChoice)
+QString FilenameInputDialog::runDialog(
+  FileTextDocumentList const *docList,
+  QString initialChoice)
 {
+  Restorer<RCSerf<FileTextDocumentList const> >
+    restorer(m_docList, docList);
+
   m_filenameEdit->setText(initialChoice);
   this->setFilenameLabel();
 
@@ -63,6 +69,12 @@ QString FilenameInputDialog::runDialog(QString initialChoice)
 void FilenameInputDialog::setFilenameLabel()
 {
   string filename = toString(m_filenameEdit->text());
+
+  xassert(m_docList);
+  if (m_docList->findFileByNameC(filename)) {
+    m_filenameLabel->setText("File already open, will switch to:");
+    return;
+  }
 
   SMFileUtil sfu;
 
