@@ -109,7 +109,8 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
 
   // Do not respond to clicks in the tiny top-left corner sliver.
   //
-  // TODO: Can I get rid of the thin left column altogether?
+  // I do not appear to be able to get rid of the thin left column
+  // altogether.
   m_tableWidget->setCornerButtonEnabled(false);
 
   // Do not use Tab to move among cells.  Rather, it should move the
@@ -192,6 +193,10 @@ void OpenFilesDialog::repopulateTable()
     // row number, which isn't useful here.)
     m_tableWidget->setVerticalHeaderItem(r, new QTableWidgetItem(""));
 
+    // Flags for the items.  The point is to omit Qt::ItemIsEditable.
+    Qt::ItemFlags itemFlags =
+      Qt::ItemIsSelectable | Qt::ItemIsEnabled;
+
     // Filename.
     {
       stringBuilder sb;
@@ -200,6 +205,7 @@ void OpenFilesDialog::repopulateTable()
         sb << " *";
       }
       QTableWidgetItem *item = new QTableWidgetItem(toQString(sb));
+      item->setFlags(itemFlags);
       m_tableWidget->setItem(r, TC_FILENAME, item);
     }
 
@@ -207,6 +213,7 @@ void OpenFilesDialog::repopulateTable()
     {
       QTableWidgetItem *item = new QTableWidgetItem(
         qstringb(doc->numLinesExceptFinalEmpty()));
+      item->setFlags(itemFlags);
       item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
       m_tableWidget->setItem(r, TC_LINES, item);
     }
