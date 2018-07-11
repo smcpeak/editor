@@ -1,6 +1,5 @@
 
 TODOs:
-  - TODO: rename my-table-view.h.
   - ctrl+i: open file at cursor
     - interactively show when the file exists
     - and when the file is already open in editor

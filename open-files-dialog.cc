@@ -4,7 +4,7 @@
 #include "open-files-dialog.h"         // this module
 
 // editor
-#include "my-table-view.h"             // MyTableWidget
+#include "my-table-widget.h"           // MyTableWidget
 
 // smqtutil
 #include "qtguiutil.h"                 // toString(QKeyEvent)

@@ -1,7 +1,7 @@
-// my-table-view.cc
-// code for my-table-view.h
+// my-table-widget.cc
+// code for my-table-widget.h
 
-#include "my-table-view.h"             // this module
+#include "my-table-widget.h"             // this module
 
 // smqtutil
 #include "qtguiutil.h"                 // toString(QKeyEvent)

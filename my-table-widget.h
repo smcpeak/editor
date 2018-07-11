@@ -1,4 +1,4 @@
-// my-table-view.h
+// my-table-widget.h
 // MyTableWidget class.
 
 // TODO: Rename this file to my-table-widget.h.

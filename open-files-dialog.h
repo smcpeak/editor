@@ -10,7 +10,7 @@
 #include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
 
-class MyTableWidget;                   // my-table-view.h
+class MyTableWidget;                   // my-table-widget.h
 
 class QModelIndex;
 
