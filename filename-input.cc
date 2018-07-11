@@ -8,11 +8,12 @@
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // dirname
+#include "strutil.h"                   // dirname, compareStringPtrs
 
 // Qt
 #include <QLabel>
 #include <QLineEdit>
+#include <QTextEdit>
 #include <QVBoxLayout>
 
 
@@ -36,10 +37,13 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
   QObject::connect(m_filenameEdit, &QLineEdit::textEdited,
                    this, &FilenameInputDialog::on_textEdited);
 
+  m_completionsEdit = new QTextEdit();
+  vbox->addWidget(m_completionsEdit);
+  m_completionsEdit->setReadOnly(true);
+
   this->createOkAndCancel(vbox);
 
-  // Start with 400 width and minimum height.
-  this->resize(400, 80);
+  this->resize(400, 400);
 }
 
 
@@ -51,11 +55,15 @@ QString FilenameInputDialog::runDialog(
   FileTextDocumentList const *docList,
   QString initialChoice)
 {
+  // This is not re-entrant (for a particular dialog object).
+  xassert(!m_docList);
+
+  // Set 'm_docList' for the lifetime of this routine.
   Restorer<RCSerf<FileTextDocumentList const> >
     restorer(m_docList, docList);
 
   m_filenameEdit->setText(initialChoice);
-  this->setFilenameLabel();
+  this->updateFeedback();
 
   if (this->exec()) {
     return m_filenameEdit->text();
@@ -77,14 +85,8 @@ void FilenameInputDialog::setFilenameLabel()
   }
 
   SMFileUtil sfu;
-
-  // TODO: These file system queries have some issues:
-  //
-  //  * With "D:/", complains about "./" not existing.
-
-  // Final '/' is a hack for when the "directory" is just a drive
-  // letter and colon.  It makes it see it as a valid directory.
-  string dir = stringb(dirname(filename) << '/');
+  string dir, base;
+  sfu.splitPath(dir, base, filename);
 
   if (!sfu.absolutePathExists(dir)) {
     m_filenameLabel->setText(qstringb(
@@ -106,9 +108,53 @@ void FilenameInputDialog::setFilenameLabel()
 }
 
 
-void FilenameInputDialog::on_textEdited(QString const &)
+void FilenameInputDialog::setCompletions()
+{
+  string filename = toString(m_filenameEdit->text());
+
+  SMFileUtil sfu;
+  string dir, base;
+  sfu.splitPath(dir, base, filename);
+
+  // Builder into which we will accumulate completions text.
+  stringBuilder sb;
+
+  if (sfu.absolutePathExists(dir)) {
+    // TODO: Cache this.
+    ArrayStack<string> entries;
+    try {
+      sfu.getDirectoryEntries(entries, dir);
+
+      // Ensure canonical order.
+      entries.sort(&compareStringPtrs);
+
+      for (int i=0; i < entries.length(); i++) {
+        if (prefixEquals(entries[i], base)) {
+          sb << entries[i] << '\n';
+        }
+      }
+    }
+    catch (...) {
+      // In case of failure, clear completions and bail.
+      m_completionsEdit->setPlainText("");
+      return;
+    }
+  }
+
+  m_completionsEdit->setPlainText(toQString(sb));
+}
+
+
+void FilenameInputDialog::updateFeedback()
 {
   this->setFilenameLabel();
+  this->setCompletions();
+}
+
+
+void FilenameInputDialog::on_textEdited(QString const &)
+{
+  this->updateFeedback();
 }
 
 

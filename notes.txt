@@ -3,9 +3,9 @@ TODOs:
   - ctrl+i: open file at cursor
     - recognize file:line syntax
     - allow Tab to complete partial filenames
-    - interactively show when the file exists
-      - problem with short strings like "D:/"
   - multiple copy+paste strings
+  - with untitled file and nothing under cursor, Ctrl+I prompts
+    with "./" instead of cwd
 
   - run command to generate entire file; git annotate!
     - git diff

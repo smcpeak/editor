@@ -13,14 +13,28 @@
 
 class QLabel;
 class QLineEdit;
+class QTextEdit;
 
 
 // Prompt for a file name.
 //
-// My immediate aim is simply to confirm the heuristic selection of a
-// file name using the openFileAtCursor feature, but I could see this
-// growing into a full-fledged file browser optimized for keyboard
-// navigation.
+// I'm trying to develop this into a fairly powerful keyboard-driven
+// interface for selecting a file.  Currently it has:
+//
+//   * Immediate feedback on existence of what has been typed, including
+//     existence, type of entry if so, whether it is already open, and
+//     invalid directory.
+//
+//   * Feedback on possible completions.
+//
+// Planned features:
+//
+//   * Tab completion of unambiguous fragment.
+//
+//   * Optional extension filtering.
+//
+//   * Editing keybindings similar to the main editor window.
+//
 class FilenameInputDialog : public ModalDialog {
   Q_OBJECT
 
@@ -32,15 +46,23 @@ private:     // data
   // 'this', but deallocated automatically by QObject infrastructure.
   QLineEdit *m_filenameEdit;
 
+  // Text display of possible completions.
+  QTextEdit *m_completionsEdit;
+
   // List of open documents so we can query it as the user types.
   //
   // This is only non-NULL while 'runDialog' is running.
   RCSerf<FileTextDocumentList const> m_docList;
 
 private:     // funcs
-  // Set the text of 'm_filenameLabel' based on the text in
-  // 'm_filenameEdit'.
+  // Set 'm_filenameLabel'.
   void setFilenameLabel();
+
+  // Set 'm_completionsEdit'.
+  void setCompletions();
+
+  // Set the feedback displays based on the text in 'm_filenameEdit'.
+  void updateFeedback();
 
 public:      // funcs
   FilenameInputDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
