@@ -18,6 +18,8 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
 #include <QScrollBar>
 #include <QTextEdit>
 #include <QVBoxLayout>
@@ -53,7 +55,19 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
   vbox->addWidget(m_completionsEdit);
   m_completionsEdit->setReadOnly(true);
 
-  this->createOkAndCancelHBox(vbox);
+  {
+    QHBoxLayout *hbox = new QHBoxLayout();
+    vbox->addLayout(hbox);
+
+    QPushButton *helpButton = new QPushButton("&Help");
+    hbox->addWidget(helpButton);
+    QObject::connect(helpButton, &QPushButton::clicked,
+                     this, &FilenameInputDialog::on_help);
+
+    hbox->addStretch(1);
+
+    this->createOkAndCancelButtons(hbox);
+  }
 
   this->resize(400, 400);
 }
@@ -297,6 +311,16 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 void FilenameInputDialog::on_textEdited(QString const &)
 {
   this->updateFeedback();
+}
+
+
+void FilenameInputDialog::on_help()
+{
+  QMessageBox::information(this, "Help",
+    "Type a file name to create or open or switch to it.\n"
+    "\n"
+    "Tab: Complete partial file or directory name.\n"
+    "PageUp/Down: Scroll the completions window.\n");
 }
 
 

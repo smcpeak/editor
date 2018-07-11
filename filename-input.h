@@ -97,6 +97,7 @@ public:      // funcs
 
 public slots:
   void on_textEdited(QString const &);
+  void on_help();
 };
 
 
