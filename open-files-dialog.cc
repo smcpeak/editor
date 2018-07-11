@@ -53,7 +53,7 @@ OpenFilesDialog::ColumnInfo const
 OpenFilesDialog::s_columnInfo[NUM_TABLE_COLUMNS] = {
   {
     "File name",
-    405,
+    400,
   },
   {
     "Lines",
