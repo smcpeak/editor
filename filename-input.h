@@ -6,6 +6,7 @@
 
 #include "modal-dialog.h"              // ModalDialog
 
+class QLabel;
 class QLineEdit;
 
 
@@ -19,9 +20,17 @@ class FilenameInputDialog : public ModalDialog {
   Q_OBJECT
 
 private:     // data
+  // Label above the filename.
+  QLabel *m_filenameLabel;
+
   // Control with the current file name (full path) in it.  Owned by
   // 'this', but deallocated automatically by QObject infrastructure.
   QLineEdit *m_filenameEdit;
+
+private:     // funcs
+  // Set the text of 'm_filenameLabel' based on the text in
+  // 'm_filenameEdit'.
+  void setFilenameLabel();
 
 public:      // funcs
   FilenameInputDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
@@ -30,6 +39,9 @@ public:      // funcs
   // Show the dialog and return the name of the file the user has
   // chosen, or "" if canceled.
   QString runDialog(QString initialChoice);
+
+public slots:
+  void on_textEdited(QString const &);
 };
 
 
