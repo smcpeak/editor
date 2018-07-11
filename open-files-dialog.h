@@ -10,8 +10,8 @@
 #include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
 
-class FTDLTableModel;                  // ftdl-table-model.h
-class MyTableView;                     // my-table-view.h
+class MyTableWidget;                   // my-table-view.h
+
 class QModelIndex;
 
 
@@ -26,16 +26,37 @@ ostream& operator<< (ostream &os, QModelIndex const &index);
 class OpenFilesDialog : public ModalDialog {
   Q_OBJECT
 
-private:     // data
+public:      // types
+  // The columns of this table.
+  enum TableColumn {
+    TC_FILENAME,
+    TC_LINES,
+
+    NUM_TABLE_COLUMNS
+  };
+
+  struct ColumnInfo {
+    QString name;            // User-visible column name.
+    int initialWidth;        // Initial column width in pixels.
+  };
+
+private:     // class data
+  // Information about each column.
+  static ColumnInfo const s_columnInfo[NUM_TABLE_COLUMNS];
+
+private:     // instance data
   // The list we are showing/editing.
   RCSerf<FileTextDocumentList> m_docList;
 
-  // The Qt "model" that wraps m_docList.  It is owned by m_tableView.
-  FTDLTableModel *m_tableModel;
-
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
-  MyTableView *m_tableView;
+  //
+  // TODO: Rename this to 'm_tableWidget'.
+  MyTableWidget *m_tableView;
+
+private:     // funcs
+  // Rebuild the table by copying from 'm_docList'.
+  void repopulateTable();
 
 public:      // funcs
   OpenFilesDialog(FileTextDocumentList *docList,

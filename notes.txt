@@ -1,8 +1,7 @@
 
 TODOs:
-  - BUG: Something is broken about Ctrl+O.  It is only showing some of
-    the open files even though they are all in the Window menu.  I think
-    I am not communicating the addition of items to the model.
+  - TODO: rename OpenFilesDialog::m_tableView.
+  - TODO: rename my-table-view.h.
   - ctrl+i: open file at cursor
     - interactively show when the file exists
     - and when the file is already open in editor

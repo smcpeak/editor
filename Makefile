@@ -302,7 +302,6 @@ EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
-EDITOR_OBJS += ftdl-table-model.o
 EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += incsearch.o
 EDITOR_OBJS += inputproxy.o

@@ -4,11 +4,11 @@
 #include "open-files-dialog.h"         // this module
 
 // editor
-#include "ftdl-table-model.h"          // FTDLTableModel
-#include "my-table-view.h"             // MyTableView
+#include "my-table-view.h"             // MyTableWidget
 
 // smqtutil
 #include "qtguiutil.h"                 // toString(QKeyEvent)
+#include "qtutil.h"                    // toQString
 
 // smbase
 #include "array.h"                     // ArrayStack
@@ -17,28 +17,62 @@
 
 // Qt
 #include <QMessageBox>
+#include <QModelIndex>
 #include <QPushButton>
+#include <QTableWidget>
 #include <QVBoxLayout>
 
 
-// These two are tuned so the columns almost exactly fill the available
+// For use with TRACE.
+ostream& operator<< (ostream &os, QModelIndex const &index)
+{
+  if (!index.isValid()) {
+    return os << "root";
+  }
+  else {
+    return os << index.parent()
+              << ".(r=" << index.row()
+              << ", c=" << index.column() << ')';
+  }
+}
+
+
+// Height of each row in pixels.
+int const ROW_HEIGHT = 20;
+
+// Initial dialog dimensions in pixels.
+int const INIT_DIALOG_WIDTH = 500;
+int const INIT_DIALOG_HEIGHT = 500;
+
+
+// The widths are tuned so the columns almost exactly fill the available
 // area when a vertical scrollbar is present.  I really want the table
 // to automatically ensure its columns fill the width, but I don't know
 // if that is possible.
-int const INIT_WIDTH_FILENAME = 405;
-int const INIT_WIDTH_LINES = 50;
+OpenFilesDialog::ColumnInfo const
+OpenFilesDialog::s_columnInfo[NUM_TABLE_COLUMNS] = {
+  {
+    "File name",
+    405,
+  },
+  {
+    "Lines",
+    50,
+  },
+};
 
-int const ROW_HEIGHT = 20;
 
-int const INIT_DIALOG_WIDTH = 500;
-int const INIT_DIALOG_HEIGHT = 500;
+// Iterate over TableColumn.
+#define FOREACH_TABLE_COLUMN(tc)            \
+  for (TableColumn tc = (TableColumn)0;     \
+       tc < NUM_TABLE_COLUMNS;              \
+       tc = (TableColumn)(tc+1))
 
 
 OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
                                  QWidget *parent, Qt::WindowFlags f) :
   ModalDialog(parent, f),
   m_docList(docList),
-  m_tableModel(NULL),
   m_tableView(NULL)
 {
   this->setWindowTitle("File Picker");
@@ -46,7 +80,21 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
 
-  m_tableView = new MyTableView();
+  // This uses the "convenience" class combining a model and a view,
+  // rather than using a separate model and view.  Originally I used
+  // separate objects since I thought I would be able to take advantage
+  // of my existing change notification infrastructure for
+  // FileTextDocumentList and simply relay to the Qt model change
+  // notifications, thereby saving the cost of building a copy of the
+  // table.
+  //
+  // However, the problem is the Qt model change design requires every
+  // change to be accompanied by a pre-change broadcast and a
+  // post-change broadcast.  In contrast, my own system only uses
+  // post-change broadcasts.  Rather than complicate by design by adding
+  // pre-change notifications, I have chosen to just pay the minor cost
+  // of having an extra copy of the table in memory.
+  m_tableView = new MyTableWidget();
   vbox->addWidget(m_tableView);
 
   // Zebra table.
@@ -71,30 +119,25 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
   // Do not draw grid lines.  They only add visual clutter.
   m_tableView->setShowGrid(false);
 
-  // As recommended in Qt docs, grab old selection model.
-  QItemSelectionModel *oldSelModel = m_tableView->selectionModel();
+  // Initialize columns.
+  {
+    m_tableView->setColumnCount(NUM_TABLE_COLUMNS);
 
-  // Build the table model, put it in the view, and let the view take
-  // ownership of it.
-  m_tableModel = new FTDLTableModel(m_docList, m_tableView);
-  m_tableView->setModel(m_tableModel);
+    // Header labels.
+    QStringList columnLabels;
+    FOREACH_TABLE_COLUMN(tc) {
+      columnLabels << s_columnInfo[tc].name;
+    }
+    m_tableView->setHorizontalHeaderLabels(columnLabels);
 
-  // Per Qt docs: now delete the old selection model.  In my testing,
-  // it is always NULL here, but this won't hurt.
-  delete oldSelModel;
-
-  // Adjust table dimensions.  (I tried responding to 'data()' queries
-  // for Qt::SizeHintRole, but that did not work the way I wanted.)
-  m_tableView->setColumnWidth(FTDLTableModel::TC_FILENAME,
-                                      INIT_WIDTH_FILENAME);
-  m_tableView->setColumnWidth(FTDLTableModel::TC_LINES,
-                                      INIT_WIDTH_LINES);
-
-  // Apparently I have to set every row's height manually.  QTreeView
-  // has a 'uniformRowHeights' property, but QListView does not.
-  for (int i=0; i < m_docList->numFiles(); i++) {
-    m_tableView->setRowHeight(i, ROW_HEIGHT);
+    // Column widths.
+    FOREACH_TABLE_COLUMN(tc) {
+      m_tableView->setColumnWidth(tc, s_columnInfo[tc].initialWidth);
+    }
   }
+
+  // The table rows are set by 'repopulateTable', which is called by
+  // 'runDialog'.
 
   QObject::connect(m_tableView, &QTableView::doubleClicked,
                    this, &OpenFilesDialog::on_doubleClicked);
@@ -136,12 +179,49 @@ OpenFilesDialog::~OpenFilesDialog()
 {}
 
 
+void OpenFilesDialog::repopulateTable()
+{
+  m_tableView->clearContents();
+  m_tableView->setRowCount(m_docList->numFiles());
+
+  // Populate the rows.
+  for (int r=0; r < m_docList->numFiles(); r++) {
+    FileTextDocument const *doc = m_docList->getFileAtC(r);
+
+    // Remove the row label.  (The default, a NULL item, renders as a
+    // row number, which isn't useful here.)
+    m_tableView->setVerticalHeaderItem(r, new QTableWidgetItem(""));
+
+    // Filename.
+    {
+      stringBuilder sb;
+      sb << doc->filename;
+      if (doc->unsavedChanges()) {
+        sb << " *";
+      }
+      QTableWidgetItem *item = new QTableWidgetItem(toQString(sb));
+      m_tableView->setItem(r, TC_FILENAME, item);
+    }
+
+    // Lines.
+    {
+      QTableWidgetItem *item = new QTableWidgetItem(
+        qstringb(doc->numLinesExceptFinalEmpty()));
+      item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+      m_tableView->setItem(r, TC_LINES, item);
+    }
+
+    // Apparently I have to set every row's height manually.  QTreeView
+    // has a 'uniformRowHeights' property, but QListView does not.
+    m_tableView->setRowHeight(r, ROW_HEIGHT);
+  }
+}
+
+
 FileTextDocument *OpenFilesDialog::runDialog()
 {
-  // The dialog may have been saved from a prior run.  Reset its
-  // controls.
-  m_tableView->selectRow(0);
-  m_tableView->clearSelection();
+  TRACE("OpenFilesDialog", "runDialog started");
+  this->repopulateTable();
 
   if (this->exec()) {
     QModelIndex idx = m_tableView->currentIndex();
@@ -219,14 +299,6 @@ void OpenFilesDialog::on_closeSelected() noexcept
     }
   }
 
-  // The table widget must be informed that its contents are changing.
-  // This is the "crude sledgehammer" approach, saying that everything
-  // is changing.  I'm also slightly abusing the Qt model system here
-  // by telling the model to broadcast begin/endResetModel rather than
-  // letting it be in control of that.
-  TRACE("OpenFilesDialog", "  calling beginReset");
-  m_tableModel->beginResetModel();
-
   // Close the files.
   for (int i=0; i < docsToClose.length(); i++) {
     FileTextDocument *doc = docsToClose[i];
@@ -235,10 +307,8 @@ void OpenFilesDialog::on_closeSelected() noexcept
     delete doc;
   }
 
-  // Finish the broadcast notification.
-  TRACE("OpenFilesDialog", "  calling endReset");
-  m_tableModel->endResetModel();
-  TRACE("OpenFilesDialog", "  done reset");
+  // Refresh table contents.
+  this->repopulateTable();
 
   GENERIC_CATCH_END
 }
