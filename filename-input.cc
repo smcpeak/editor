@@ -18,6 +18,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QScrollBar>
 #include <QTextEdit>
 #include <QVBoxLayout>
 
@@ -270,12 +271,23 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 {
   if (watched == m_filenameEdit && event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if (keyEvent->key() == Qt::Key_Tab &&
-        keyEvent->modifiers() == Qt::NoModifier) {
-      // Special tab handling.
-      TRACE("FilenameInputDialog", "saw Tab press");
-      this->filenameCompletion();
-      return true;           // Prevent further processing.
+    if (keyEvent->modifiers() == Qt::NoModifier) {
+      switch (keyEvent->key()) {
+        case Qt::Key_Tab:
+          // Special tab handling.
+          TRACE("FilenameInputDialog", "saw Tab press");
+          this->filenameCompletion();
+          return true;           // Prevent further processing.
+
+        case Qt::Key_PageUp:
+        case Qt::Key_PageDown: {
+          TRACE("FilenameInputDialog", "page up/down");
+          int sense = (keyEvent->key() == Qt::Key_PageDown)? +1 : -1;
+          QScrollBar *scroll = m_completionsEdit->verticalScrollBar();
+          scroll->setValue(scroll->value() + scroll->pageStep() * sense);
+          return true;
+        }
+      }
     }
   }
   return false;

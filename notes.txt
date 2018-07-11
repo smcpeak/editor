@@ -2,7 +2,6 @@
 TODOs:
   - ctrl+i: open file at cursor
     - recognize file:line syntax
-    - PgUp/PgDn to scroll the completions
   - multiple copy+paste strings
 
   - run command to generate entire file; git annotate!
