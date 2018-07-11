@@ -11,7 +11,11 @@
 #include "strutil.h"                   // dirname, compareStringPtrs
 #include "trace.h"                     // TRACE
 
+// libc++
+#include <algorithm>                   // std::min
+
 // Qt
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QTextEdit>
@@ -37,6 +41,9 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
 
   m_filenameEdit = new QLineEdit();    // populated later
   vbox->addWidget(m_filenameEdit);
+
+  // Intercept Tab key.
+  m_filenameEdit->installEventFilter(this);
 
   QObject::connect(m_filenameEdit, &QLineEdit::textEdited,
                    this, &FilenameInputDialog::on_textEdited);
@@ -146,7 +153,8 @@ void FilenameInputDialog::getEntries(string const &dir)
 }
 
 
-void FilenameInputDialog::setCompletions()
+void FilenameInputDialog::getCompletions(
+  ArrayStack<string> /*OUT*/ &completions)
 {
   string filename = toString(m_filenameEdit->text());
 
@@ -157,16 +165,31 @@ void FilenameInputDialog::setCompletions()
   // Query the dir, if needed.
   this->getEntries(dir);
 
-  // Builder into which we will accumulate completions text.
-  stringBuilder sb;
-
-  // Include all entries for which 'base' is a prefix.
+  // Get all entries for which 'base' is a prefix.
+  completions.clear();
   for (int i=0; i < m_cachedDirectoryEntries.length(); i++) {
-    if (prefixEquals(m_cachedDirectoryEntries[i], base)) {
-      sb << m_cachedDirectoryEntries[i] << '\n';
+    string const &entry = m_cachedDirectoryEntries[i];
+    if (prefixEquals(entry, base)) {
+      completions.push(entry);
     }
   }
+}
 
+
+void FilenameInputDialog::setCompletions()
+{
+  // Get the individual entries.
+  ArrayStack<string> completions;
+  this->getCompletions(completions);
+
+  // Assemble them into one string.
+  stringBuilder sb;
+  for (int i=0; i < completions.length(); i++) {
+    string const &entry = completions[i];
+    sb << entry << '\n';
+  }
+
+  // Put that into the control.
   m_completionsEdit->setPlainText(toQString(sb));
 }
 
@@ -175,6 +198,87 @@ void FilenameInputDialog::updateFeedback()
 {
   this->setFilenameLabel();
   this->setCompletions();
+}
+
+
+static int commonPrefixLength(string const &a, string const &b)
+{
+  int aLen = a.length();
+  int bLen = b.length();
+  int i = 0;
+  while (i < aLen && i < bLen && a[i] == b[i]) {
+    i++;
+  }
+  return i;
+}
+
+
+// Return the longest string that is a prefix of every string in
+// 'strings'.  If 'strings' is empty, return the empty string.
+static string longestCommonPrefix(ArrayStack<string> const &strings)
+{
+  if (strings.isEmpty()) {
+    return "";
+  }
+
+  // Starting candidate prefix.  The actual longest common prefix must
+  // be a prefix of this one.
+  string prefix = strings[0];
+
+  // Length of longest common prefix.  Always less than or equal to
+  // the length of 'prefix'.
+  int prefixLength = prefix.length();
+
+  // Compare to each successive string, reducing 'prefixLength' as we go.
+  for (int i=1; i < strings.length(); i++) {
+    int plen = commonPrefixLength(prefix, strings[i]);
+    prefixLength = std::min(prefixLength, plen);
+    if (prefixLength == 0) {
+      break;       // Early exit, cannot get any smaller.
+    }
+  }
+
+  return prefix.substring(0, prefixLength);
+}
+
+
+void FilenameInputDialog::filenameCompletion()
+{
+  // Get the individual entries.
+  ArrayStack<string> completions;
+  this->getCompletions(completions);
+
+  // Longest common prefix.
+  string commonPrefix = longestCommonPrefix(completions);
+
+  // Compare to what we have already.
+  string filename = toString(m_filenameEdit->text());
+  SMFileUtil sfu;
+  string dir, base;
+  sfu.splitPath(dir, base, filename);
+
+  if (commonPrefix.length() > base.length()) {
+    TRACE("FilenameInputDialog", "completed prefix: " << commonPrefix);
+    m_filenameEdit->setText(qstringb(dir << commonPrefix));
+    this->updateFeedback();
+  }
+}
+
+
+// Based on: http://doc.qt.io/qt-5/eventsandfilters.html.
+bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
+{
+  if (watched == m_filenameEdit && event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+    if (keyEvent->key() == Qt::Key_Tab &&
+        keyEvent->modifiers() == Qt::NoModifier) {
+      // Special tab handling.
+      TRACE("FilenameInputDialog", "saw Tab press");
+      this->filenameCompletion();
+      return true;           // Prevent further processing.
+    }
+  }
+  return false;
 }
 
 

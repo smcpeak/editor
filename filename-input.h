@@ -69,11 +69,19 @@ private:     // funcs
   // the cache already has entries for 'dir'.
   void getEntries(string const &dir);
 
+  // Get the set of possible completions of the filename in
+  // 'm_filenameEdit' that would make the name of an existing file.
+  void getCompletions(ArrayStack<string> /*OUT*/ &completions);
+
   // Set 'm_completionsEdit'.
   void setCompletions();
 
   // Set the feedback displays based on the text in 'm_filenameEdit'.
   void updateFeedback();
+
+  // If possible, extend 'm_filenameEdit' to include the longest common
+  // prefix of the candidates in the directory.
+  void filenameCompletion();
 
 public:      // funcs
   FilenameInputDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
@@ -83,6 +91,9 @@ public:      // funcs
   // chosen, or "" if canceled.
   QString runDialog(FileTextDocumentList const *docList,
                     QString initialChoice);
+
+  // QObject methods.
+  virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
 public slots:
   void on_textEdited(QString const &);

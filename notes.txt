@@ -2,7 +2,7 @@
 TODOs:
   - ctrl+i: open file at cursor
     - recognize file:line syntax
-    - allow Tab to complete partial filenames
+    - PgUp/PgDn to scroll the completions
   - multiple copy+paste strings
 
   - run command to generate entire file; git annotate!
