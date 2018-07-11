@@ -4,10 +4,14 @@
 #ifndef FTDL_TABLE_MODEL_H
 #define FTDL_TABLE_MODEL_H
 
+// editor
 #include "file-td-list.h"              // FileTextDocumentList
 
+// smbase
 #include "macros.h"                    // NO_OBJECT_COPIES
+#include "refct-serf.h"                // RCSerf
 
+// Qt
 #include <QAbstractTableModel>
 
 
@@ -33,7 +37,7 @@ public:      // instance data
   // The list we are presenting as a table.  This is not an owner
   // pointer; the client is responsible for ensuring its lifetime
   // is longer than that of 'this' object.
-  FileTextDocumentList *m_docList;
+  RCSerf<FileTextDocumentList> m_docList;
 
 public:      // funcs
   FTDLTableModel(FileTextDocumentList *docList, QObject *parent = NULL);
