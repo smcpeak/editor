@@ -60,6 +60,7 @@ protected:   // funcs
 
 public slots:
   void on_findEditTextChanged(QString const &text);
+  void on_help();
 };
 
 

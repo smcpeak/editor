@@ -17,7 +17,9 @@
 #include <QComboBox>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPainter>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 
@@ -56,6 +58,13 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_replBox->setEditable(true);
     m_replBox->setInsertPolicy(QComboBox::NoInsert);
     m_replBox->installEventFilter(this);
+
+    // I can't seem to get QPushButton to be small, so use QToolButton.
+    QToolButton *helpButton = new QToolButton();
+    hbox->addWidget(helpButton);
+    helpButton->setText("?");
+    QObject::connect(helpButton, &QToolButton::clicked,
+                     this, &SearchAndReplacePanel::on_help);
   }
 }
 
@@ -213,6 +222,27 @@ void SearchAndReplacePanel::on_findEditTextChanged(QString const &)
   }
 
   this->updateEditorHitText(true /*scroll*/);
+}
+
+
+void SearchAndReplacePanel::on_help()
+{
+  QMessageBox::information(this, "Search and Replace Help",
+    "Keys for Search and Replace (SAR):\n"
+    "\n"
+    "Ctrl+S: Toggle focus between SAR and main editor.\n"
+    "Esc: Close the SAR panel.\n"
+    "Tab: Toggle between Find and Repl boxes.\n"
+    "\n"
+    "(Shift+)Enter: Move to next/prev match.\n"
+    "Ctrl+R: Replace selection with Repl text; "
+      "if nothing selected, move to next match.\n"
+    "Shift+Ctrl+R: Replace and move to next match.\n"
+    "\n"
+    "Alt+(Shift+)Backspace: Undo/redo in main editor, "
+      "including SAR changes.\n"
+    "Ctrl+W: Add next word at editor cursor to Find box.\n"
+  );
 }
 
 
