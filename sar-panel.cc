@@ -146,20 +146,23 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
   if ((watched == m_findBox || watched == m_replBox) &&
       event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    bool shift   = (keyEvent->modifiers() & Qt::ShiftModifier);
-    bool control = (keyEvent->modifiers() & Qt::ControlModifier);
-    bool alt     = (keyEvent->modifiers() & Qt::AltModifier);
+    Qt::KeyboardModifiers mods = keyEvent->modifiers();
+    bool shift   = (mods & Qt::ShiftModifier);
+    bool control = (mods & Qt::ControlModifier);
+    bool alt     = (mods & Qt::AltModifier);
 
     switch (keyEvent->key()) {
       case Qt::Key_Return:
-      case Qt::Key_Enter: {
-        TRACE("sar", "next/prev search hit");
-        m_editorWidget->nextSearchHit(shift /*reverse*/);
-        return true;       // no further processing
-      }
+      case Qt::Key_Enter:
+        if (mods == Qt::NoModifier || mods == Qt::ShiftModifier) {
+          TRACE("sar", "next/prev search hit");
+          m_editorWidget->nextSearchHit(shift /*reverse*/);
+          return true;       // no further processing
+        }
+        break;
 
       case Qt::Key_R:
-        if (control) {
+        if (control && !alt) {
           string s = toString(m_replBox->currentText());
           TRACE("sar", "replace: " << s);
           if (m_editorWidget->selectEnabled()) {
@@ -176,23 +179,27 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
         break;
 
       case Qt::Key_Tab:
-        if (watched == m_replBox) {
-          // Cycle back around to find.
-          m_findBox->setFocus();
-          return true;
+        if (mods == Qt::NoModifier) {
+          if (watched == m_replBox) {
+            // Cycle back around to find.
+            m_findBox->setFocus();
+            return true;
+          }
         }
         break;
 
       case Qt::Key_Backtab:
-        if (watched == m_findBox) {
-          // Cycle around to repl.
-          m_replBox->setFocus();
-          return true;
+        if (mods == Qt::NoModifier) {
+          if (watched == m_findBox) {
+            // Cycle around to repl.
+            m_replBox->setFocus();
+            return true;
+          }
         }
         break;
 
       case Qt::Key_Backspace:
-        if (alt) {
+        if (alt && !control) {
           // Rather than undo/redo applying to the text in the find
           // and repl boxes, apply it to the main editor.
           if (shift) {
@@ -206,30 +213,35 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
         break;
 
       case Qt::Key_Escape:
-        m_editorWidget->doCloseSARPanel();
-        return true;
-
-      case Qt::Key_W: {
-        TextDocumentEditor *ed = m_editorWidget->m_editor;
-        ed->normalizeCursorGTEMark();
-        TextCoord tc = ed->cursor();
-        string word = ed->getWordAfter(tc);
-        TRACE("sar", "extend sel by: " << word);
-        if (!word.isempty()) {
-          // Extend or start a selection to include this word.
-          if (!ed->markActive()) {
-            ed->setMark(tc);
-          }
-          ed->walkCursor(word.length());
-
-          // Now set the find text to match the selection.
-          this->setFindText(toQString(ed->getSelectedText()));
-          this->updateEditorHitText(false /*scroll*/);
-
-          m_editorWidget->update();
+        if (mods == Qt::NoModifier) {
+          m_editorWidget->doCloseSARPanel();
+          return true;
         }
-        return true;
-      }
+        break;
+
+      case Qt::Key_W:
+        if (mods == Qt::ControlModifier) {
+          TextDocumentEditor *ed = m_editorWidget->m_editor;
+          ed->normalizeCursorGTEMark();
+          TextCoord tc = ed->cursor();
+          string word = ed->getWordAfter(tc);
+          TRACE("sar", "extend sel by: " << word);
+          if (!word.isempty()) {
+            // Extend or start a selection to include this word.
+            if (!ed->markActive()) {
+              ed->setMark(tc);
+            }
+            ed->walkCursor(word.length());
+
+            // Now set the find text to match the selection.
+            this->setFindText(toQString(ed->getSelectedText()));
+            this->updateEditorHitText(false /*scroll*/);
+
+            m_editorWidget->update();
+          }
+          return true;
+        }
+        break;
     }
   }
 
