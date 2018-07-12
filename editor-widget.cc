@@ -4,7 +4,6 @@
 #include "editor-widget.h"             // this module
 
 // this dir
-#include "inputproxy.h"                // InputProxy
 #include "nearby-file.h"               // getNearbyFilename
 #include "position.h"                  // Position
 #include "qtbdffont.h"                 // QtBDFFont
@@ -103,7 +102,6 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
     m_softMarginColumn(72),
     m_visibleSoftMargin(true),
     m_softMarginColor(0xFF, 0xFF, 0xFF, 32),
-    m_inputProxy(NULL),
     // font metrics inited by setFont()
     m_listening(false),
     m_ignoreTextDocumentNotifications(false),
@@ -134,10 +132,6 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
 EditorWidget::~EditorWidget()
 {
   EditorWidget::s_objectCount--;
-
-  if (m_inputProxy) {
-    m_inputProxy->detach();
-  }
 
   this->stopListening();
 
@@ -1055,29 +1049,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
 
-  // We need to map pseudo-keys before the input proxy sees
-  // them, because otherwise the proxy may swallow them.
-  if (modifiers == Qt::NoModifier) {
-    switch (k->key()) {
-      case Qt::Key_Escape:
-        pseudoKeyPress(IPK_CANCEL);
-        return;
-    }
-  }
-
-  if (modifiers == Qt::ControlModifier) {
-    switch (k->key()) {
-      case Qt::Key_G:
-        pseudoKeyPress(IPK_CANCEL);
-        return;
-    }
-  }
-
-  // Now check with the proxy.
-  if (m_inputProxy && m_inputProxy->keyPressEvent(k)) {
-    return;
-  }
-
   // Ctrl+<key>
   if (modifiers == Qt::ControlModifier) {
     switch (k->key()) {
@@ -1403,6 +1374,12 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         blockIndent(-2);
         break;
       }
+
+      case Qt::Key_Escape:
+        if (!shift) {
+          this->doCloseSARPanel();
+        }
+        break;
 
       default: {
         QString text = k->text();
@@ -1966,44 +1943,9 @@ void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) noexcept
 }
 
 
-void EditorWidget::inputProxyDetaching()
-{
-  TRACE("mode", "clearing mode pixmap");
-  QPixmap nullPixmap;
-  m_status->mode->setPixmap(nullPixmap);
-}
-
-
 void EditorWidget::rescuedKeyPressEvent(QKeyEvent *k)
 {
   this->keyPressEvent(k);
-}
-
-
-void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
-{
-  // The proxy may initiate a document change, and if so, it is
-  // responsible for updating the cursor, etc., to correspond to the
-  // changes it is making.  Hence, I do not want my notification
-  // response functions interfering with that.
-  INITIATING_DOCUMENT_CHANGE();
-
-  if (m_inputProxy && m_inputProxy->pseudoKeyPress(pkey)) {
-    // handled
-    return;
-  }
-
-  // Handle myself.
-  switch (pkey) {
-    default:
-      xfailure("invalid pseudo key");
-
-    case IPK_CANCEL:
-      // This "pseudokey" mechanism is overkill, but anyway, here is
-      // where I respond to Esc: close the SAR panel.
-      this->doCloseSARPanel();
-      break;
-  }
 }
 
 

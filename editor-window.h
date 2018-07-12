@@ -25,7 +25,6 @@ class QScrollBar;
 
 class EditorWidget;                    // editor-widget.h
 class GlobalState;                     // main.h
-class IncSearch;                       // incsearch.h
 class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
 
@@ -64,9 +63,6 @@ public:      // data
   // normally the Window menu owns the Actions, but when we
   // pull them out of the Window menu, we have to delete them.
   ArrayStack<QAction*> fileChoiceActions;
-
-  // incremental search system
-  IncSearch *isearch;                // (owner)
 
 private:     // funcs
   void buildMenu();

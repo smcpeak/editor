@@ -9,7 +9,6 @@
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
-#include "incsearch.h"                 // IncSearch
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
 #include "main.h"                      // GlobalState
@@ -78,8 +77,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
     toggleVisibleWhitespaceAction(NULL),
     toggleVisibleSoftMarginAction(NULL),
     toggleHighlightTrailingWSAction(NULL),
-    fileChoiceActions(),
-    isearch(NULL)
+    fileChoiceActions()
 {
   xassert(theState);
   xassert(initFile);
@@ -159,9 +157,6 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   // Set scrollbar ranges, status bar text, and window title.
   this->updateForChangedFile();
 
-  // i-search; use filename area as the status display.
-  this->isearch = new IncSearch(this->statusArea);
-
   // I want this object destroyed when it is closed.
   this->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -187,8 +182,6 @@ EditorWindow::~EditorWindow()
   // 'm_editorWidget', but the documentation of ~QObject does not
   // specify an order.  Disconnect them here so that either order works.
   m_sarPanel->setEditorWidget(NULL);
-
-  delete this->isearch;
 }
 
 

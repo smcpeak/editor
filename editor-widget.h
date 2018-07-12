@@ -4,7 +4,6 @@
 #ifndef EDITOR_WIDGET_H
 #define EDITOR_WIDGET_H
 
-#include "inputproxy.h"                // InputProxy, InputPseudoKey
 #include "td-editor.h"                 // TextDocumentEditor
 #include "file-td.h"                   // FileTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
@@ -20,7 +19,6 @@
 // Qt
 #include <qwidget.h>                   // QWidget
 
-class IncSearch;                       // incsearch.h
 class QtBDFFont;                       // qtbdffont.h
 class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
@@ -46,12 +44,8 @@ class EditorWidget
     public FileTextDocumentListObserver {        // Watch the list of files.
   Q_OBJECT
 
-  // TODO: I currently need to let IncSearch access private members
-  // 'docFile', 'selLowLine', etc.  I think IncSearch should be able
-  // to operate on top of TextFileEditor instead of EditorWidget.
-  friend class IncSearch;
-
-  // My replacement also needs private access, although somewhat less...
+  // Currently, SAR needs access to m_editor, and I am torn about
+  // whether that is acceptable.
   friend class SearchAndReplacePanel;
 
 public:     // static data
@@ -155,10 +149,6 @@ public:      // data
 
   // Color of the line indicating the soft margin.
   QColor m_softMarginColor;
-
-  // ------ input options ------
-  // current input proxy, if any
-  InputProxy *m_inputProxy;           // (nullable serf)
 
   // ------ font metrics ------
   // these should be treated as read-only by all functions except
@@ -354,10 +344,6 @@ public:      // funcs
   void openFileAtCursor();
 
   // ---------------------------- input -----------------------------
-  // Initial handling of pseudokeys.  First dispatches to the
-  // proxy if any, and then handles what is not yet handled.
-  void pseudoKeyPress(InputPseudoKey pkey);
-
   // We are about to edit the text in the file.  If we are going from
   // a "clean" to "dirty" state with respect to unsaved changes, do a
   // safety check for concurrent on-disk modifications, prompting the
@@ -373,10 +359,6 @@ public:      // funcs
   virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept override;
   virtual void observeTotalChange(TextDocumentCore const &buf) noexcept override;
   virtual void observeUnsavedChangesChange(TextDocument const *doc) noexcept override;
-
-  // called by an input proxy when it detaches; I can
-  // reset the mode pixmap then
-  virtual void inputProxyDetaching();
 
   // This is the same as 'keyPressEvent', but is meant to be callable by
   // other classes in order to pass on a key event that would otherwise

@@ -1,5 +1,3 @@
-Esc or Ctrl+G: Cancel.
-
 File:
   F2: Save file.
   F3: Open file.
@@ -41,6 +39,7 @@ Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
 Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
 
 Ctrl+S: Search.
+Esc: Close search panel.
 
 Ctrl+K: Cut current line.
 Ctrl+J: Justify paragraph.
