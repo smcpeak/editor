@@ -199,7 +199,10 @@ protected:   // funcs
   // QWidget funcs
   virtual bool event(QEvent *e) override;
   virtual void paintEvent(QPaintEvent *) override;
+public:
+  // This one is public so EditorWindow can call it.
   virtual void keyPressEvent(QKeyEvent *k) override;
+protected:
   virtual void keyReleaseEvent(QKeyEvent *k) override;
   virtual void resizeEvent(QResizeEvent *r) override;
   virtual void mousePressEvent(QMouseEvent *m) override;
@@ -252,6 +255,10 @@ public:      // funcs
   TextCoord mark() const                  { return m_editor->mark(); }
   bool selectEnabled() const              { return m_editor->markActive(); }
   string getSelectedText() const          { return m_editor->getSelectedText(); }
+
+  // --------------------------- matches ----------------------------
+  // Change the match string.
+  void setHitText(string const &t);
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.

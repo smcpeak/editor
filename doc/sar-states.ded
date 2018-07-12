@@ -1,0 +1,80 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "attributes": "Panel hidden\nNo matches\nCan edit text\n",
+      "loc": {
+        "x": 120,
+        "y": 90
+      },
+      "name": "Normal",
+      "size": {
+        "h": 85,
+        "w": 125
+      }
+    },
+    {
+      "attributes": "Panel shown\nFocus on \"Find\"\nMatches shown\n  - first match (if any) kept in view\nCan type find string\nCan Ctrl+W to add word at cursor\n  - cursor does not move\nCan recall history\nCan move text cursor to next/prev match\n",
+      "loc": {
+        "x": 330,
+        "y": 90
+      },
+      "name": "Find Focus",
+      "size": {
+        "h": 210,
+        "w": 270
+      }
+    },
+    {
+      "attributes": "Panel shown\nFocus in edit view\nMatches shown\nCan edit text\n",
+      "loc": {
+        "x": 120,
+        "y": 195
+      },
+      "name": "Normal+Panel",
+      "size": {
+        "h": 105,
+        "w": 125
+      }
+    }
+  ],
+  "inheritances": [],
+  "relations": [
+    {
+      "end": {"entityRef": 1},
+      "label": "Ctrl+S",
+      "start": {"entityRef": 0}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "Ctrl+S",
+      "start": {"entityRef": 1}
+    },
+    {
+      "controlPts": [{
+        "x": 260,
+        "y": 145
+      }],
+      "end": {"entityRef": 0},
+      "label": "Esc",
+      "start": {"entityRef": 1}
+    },
+    {
+      "end": {"entityRef": 0},
+      "label": "Esc",
+      "routingAlg": "RA_MANHATTAN_VERT",
+      "start": {"entityRef": 2}
+    },
+    {
+      "end": {"entityRef": 1},
+      "label": "Ctrl+S",
+      "start": {"entityRef": 2}
+    }
+  ],
+  "type": "Diagram Editor Diagram",
+  "version": 23,
+  "windowSize": {
+    "h": 718,
+    "w": 784
+  }
+}

@@ -11,6 +11,8 @@
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
 
 // smbase
+#include "sm-override.h"               // OVERRIDE
+#include "sm-noexcept.h"               // NOEXCEPT
 #include "str.h"                       // string
 
 // Qt
@@ -24,6 +26,7 @@ class QScrollBar;
 class EditorWidget;                    // editor-widget.h
 class GlobalState;                     // main.h
 class IncSearch;                       // incsearch.h
+class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
 
 
@@ -42,6 +45,7 @@ public:      // data
   // GUI elements
   QMenuBar *menuBar;
   EditorWidget *editorWidget;
+  SearchAndReplacePanel *m_sarPanel;
   QScrollBar *vertScroll, *horizScroll;
   StatusDisplay *statusArea;
 
@@ -125,15 +129,18 @@ public:      // funcs
   // returning true if they say it is.
   bool okToDiscardChanges(string const &descriptionOfChanges);
 
+  // QObject methods.
+  virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
+
   // FileTextDocumentListObserver methods.
-  void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
-  void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
-  void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
-  void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList) noexcept override;
+  virtual void fileTextDocumentAdded(
+    FileTextDocumentList *documentList, FileTextDocument *file) NOEXCEPT OVERRIDE;
+  virtual void fileTextDocumentRemoved(
+    FileTextDocumentList *documentList, FileTextDocument *file) NOEXCEPT OVERRIDE;
+  virtual void fileTextDocumentAttributeChanged(
+    FileTextDocumentList *documentList, FileTextDocument *file) NOEXCEPT OVERRIDE;
+  virtual void fileTextDocumentListOrderChanged(
+    FileTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
 public slots:
   void fileNewFile();

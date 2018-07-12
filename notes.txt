@@ -1,5 +1,7 @@
 
 TODOs:
+  - rename data members of EditorWindow to start with "m_"
+  - draw editor widget cursor differently when does not have focus
   - ctrl+i: open file at cursor
     - recognize file:line syntax
   - multiple copy+paste strings

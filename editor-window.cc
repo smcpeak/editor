@@ -15,6 +15,7 @@
 #include "main.h"                      // GlobalState
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
+#include "sar-panel.h"                 // SearchAndReplacePanel
 #include "status.h"                    // StatusDisplay
 #include "td-editor.h"                 // TextDocumentEditor
 #include "textinput.h"                 // TextInputDialog
@@ -66,6 +67,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
     globalState(theState),
     menuBar(NULL),
     editorWidget(NULL),
+    m_sarPanel(NULL),
     vertScroll(NULL),
     horizScroll(NULL),
     statusArea(NULL),
@@ -96,6 +98,10 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   editArea->setObjectName("editArea");
   mainArea->addLayout(editArea, 1 /*stretch*/);
 
+  m_sarPanel = new SearchAndReplacePanel();
+  mainArea->addWidget(m_sarPanel);
+  m_sarPanel->setObjectName("m_sarPanel");
+
   this->statusArea = new StatusDisplay();
   this->statusArea->setObjectName("statusArea");
   mainArea->addWidget(this->statusArea);
@@ -121,6 +127,12 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
 
   // See explanation in GlobalState::focusChangedHandler().
   this->setFocusProxy(this->editorWidget);
+
+  // Needed to ensure Tab gets passed down to the editor widget.
+  this->editorWidget->installEventFilter(this);
+
+  // Connect these, which had to wait until both were constructed.
+  m_sarPanel->setEditorWidget(this->editorWidget);
 
   this->vertScroll = new QScrollBar(Qt::Vertical);
   this->vertScroll->setObjectName("vertScroll");
@@ -168,6 +180,11 @@ EditorWindow::~EditorWindow()
   // removing elements from the list and destroying them.
   this->globalState->m_windows.removeIfPresent(this);
 
+  // The QObject destructor will destroy both 'm_sarPanel' and
+  // 'm_editorWidget', but the documentation of ~QObject does not
+  // specify an order.  Disconnect them here so that either order works.
+  m_sarPanel->setEditorWidget(NULL);
+
   delete this->isearch;
 }
 
@@ -198,7 +215,7 @@ void EditorWindow::buildMenu()
     edit->addAction("&Paste", editorWidget, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
     edit->addAction("&Delete", editorWidget, SLOT(editDelete()));
     edit->addSeparator();
-    edit->addAction("Inc. &Search", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
+    edit->addAction("&Search ...", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
     edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
     edit->addAction("&Apply Command ...", this,
                     SLOT(editApplyCommand()), Qt::ALT + Qt::Key_A);
@@ -677,8 +694,28 @@ bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
 }
 
 
+bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
+{
+  // Within the editor window, I do not use Tab for input focus changes,
+  // but the existence of other focusable controls (when the Search and
+  // Replace panel is open) causes Tab to be treated as such unless I
+  // use an event filter.
+  if (watched == this->editorWidget && event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+    if (keyEvent->key() == Qt::Key_Tab ||
+        keyEvent->key() == Qt::Key_Backtab) {
+      TRACE("input", "EditorWindow passing Tab press on to EditorWidget");
+      this->editorWidget->keyPressEvent(keyEvent);
+      return true;       // no further processing
+    }
+  }
+
+  return false;
+}
+
+
 void EditorWindow::fileTextDocumentAdded(
-  FileTextDocumentList *, FileTextDocument *) noexcept
+  FileTextDocumentList *, FileTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();
@@ -686,7 +723,7 @@ void EditorWindow::fileTextDocumentAdded(
 }
 
 void EditorWindow::fileTextDocumentRemoved(
-  FileTextDocumentList *, FileTextDocument *) noexcept
+  FileTextDocumentList *, FileTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -706,7 +743,7 @@ void EditorWindow::fileTextDocumentRemoved(
 }
 
 void EditorWindow::fileTextDocumentAttributeChanged(
-  FileTextDocumentList *, FileTextDocument *) noexcept
+  FileTextDocumentList *, FileTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -722,7 +759,7 @@ void EditorWindow::fileTextDocumentAttributeChanged(
 }
 
 void EditorWindow::fileTextDocumentListOrderChanged(
-  FileTextDocumentList *) noexcept
+  FileTextDocumentList *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();
@@ -740,7 +777,9 @@ void EditorWindow::fileExit()
 
 void EditorWindow::editISearch()
 {
-  isearch->attach(editorWidget);
+  // I think I want this to be a toggle, but for the moment it just
+  // moves the focus unconditionally.
+  m_sarPanel->setFocusFindBox();
 }
 
 

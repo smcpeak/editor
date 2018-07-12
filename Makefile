@@ -315,6 +315,7 @@ EDITOR_OBJS += my-table-widget.o
 EDITOR_OBJS += open-files-dialog.o
 EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
+EDITOR_OBJS += sar-panel.o
 EDITOR_OBJS += status.o
 EDITOR_OBJS += styledb.o
 EDITOR_OBJS += textinput.o

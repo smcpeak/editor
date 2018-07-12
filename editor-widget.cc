@@ -1728,6 +1728,13 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
+void EditorWidget::setHitText(string const &t)
+{
+  m_hitText = t;
+  redraw();
+}
+
+
 void EditorWidget::blockIndent(int amt)
 {
   INITIATING_DOCUMENT_CHANGE();
