@@ -37,32 +37,32 @@ class EditorWindow : public QWidget,
 public:      // static data
   static int s_objectCount;
 
-public:      // data
+private:     // data
   // associated global state
-  RCSerf<GlobalState> globalState;
+  RCSerf<GlobalState> m_globalState;
 
   // GUI elements
-  QMenuBar *menuBar;
-  EditorWidget *editorWidget;
+  QMenuBar *m_menuBar;
+  EditorWidget *m_editorWidget;
   SearchAndReplacePanel *m_sarPanel;
-  QScrollBar *vertScroll, *horizScroll;
-  StatusDisplay *statusArea;
+  QScrollBar *m_vertScroll, *m_horizScroll;
+  StatusDisplay *m_statusArea;
 
   // The Window menu, whose contents changes with the set
   // of open file files.
-  QMenu *windowMenu;
+  QMenu *m_windowMenu;
 
   // Actions for toggling view options.
-  QAction *toggleVisibleWhitespaceAction;
-  QAction *toggleVisibleSoftMarginAction;
-  QAction *toggleHighlightTrailingWSAction;
+  QAction *m_toggleVisibleWhitespaceAction;
+  QAction *m_toggleVisibleSoftMarginAction;
+  QAction *m_toggleHighlightTrailingWSAction;
 
   // Set of Actions in the Window menu that choose a file.
   // These need to be removed from the Window menu when we
   // rebuild it.  These are not exactly owner pointers, since
   // normally the Window menu owns the Actions, but when we
   // pull them out of the Window menu, we have to delete them.
-  ArrayStack<QAction*> fileChoiceActions;
+  ArrayStack<QAction*> m_fileChoiceActions;
 
 private:     // funcs
   void buildMenu();

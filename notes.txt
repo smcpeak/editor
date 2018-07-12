@@ -1,14 +1,5 @@
 
 TODOs:
-  - rename data members of EditorWindow to start with "m_"
-
-  - search and replace
-    - case sensitivity
-    - whole word?
-    - regex...
-    - history!
-    - better feedback on search: number of hits, at first/last/only/none
-
   - ctrl+i: open file at cursor
     - recognize file:line syntax
   - multiple copy+paste strings
@@ -18,6 +9,15 @@ TODOs:
     - git diff
     - git show
     - grep
+  - search and replace
+    - would like a larger vertical gap on scroll... 5?
+    - allow F2? Ctrl+O? Ctrl+I?
+    - case sensitivity
+    - whole word?
+    - regex...
+    - history!
+    - better feedback on search: number of hits, at first/last/only/none
+
   - click on path elements in the status bar to File Open on that directory
   - handle cygwin paths on the command line (requires Alt+A infra)
   - allow Tab character; issue is rendering support

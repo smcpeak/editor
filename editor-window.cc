@@ -63,21 +63,18 @@ CHECK_OBJECT_COUNT(EditorWindow);
 EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
                            QWidget *parent)
   : QWidget(parent),
-    globalState(theState),
-    menuBar(NULL),
-    editorWidget(NULL),
+    m_globalState(theState),
+    m_menuBar(NULL),
+    m_editorWidget(NULL),
     m_sarPanel(NULL),
-    vertScroll(NULL),
-    horizScroll(NULL),
-    statusArea(NULL),
-    //position(NULL),
-    //mode(NULL),
-    //filename(NULL),
-    windowMenu(NULL),
-    toggleVisibleWhitespaceAction(NULL),
-    toggleVisibleSoftMarginAction(NULL),
-    toggleHighlightTrailingWSAction(NULL),
-    fileChoiceActions()
+    m_vertScroll(NULL),
+    m_horizScroll(NULL),
+    m_statusArea(NULL),
+    m_windowMenu(NULL),
+    m_toggleVisibleWhitespaceAction(NULL),
+    m_toggleVisibleSoftMarginAction(NULL),
+    m_toggleHighlightTrailingWSAction(NULL),
+    m_fileChoiceActions()
 {
   xassert(theState);
   xassert(initFile);
@@ -88,9 +85,9 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   mainArea->setSpacing(0);
   mainArea->setContentsMargins(0, 0, 0, 0);
 
-  this->menuBar = new QMenuBar();
-  this->menuBar->setObjectName("main menu bar");
-  mainArea->addWidget(this->menuBar);
+  this->m_menuBar = new QMenuBar();
+  this->m_menuBar->setObjectName("main menu bar");
+  mainArea->addWidget(this->m_menuBar);
 
   QGridLayout *editArea = new QGridLayout();
   editArea->setObjectName("editArea");
@@ -101,49 +98,49 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   m_sarPanel->setObjectName("m_sarPanel");
   m_sarPanel->hide();      // Initially hidden.
 
-  this->statusArea = new StatusDisplay();
-  this->statusArea->setObjectName("statusArea");
-  mainArea->addWidget(this->statusArea);
+  this->m_statusArea = new StatusDisplay();
+  this->m_statusArea->setObjectName("m_statusArea");
+  mainArea->addWidget(this->m_statusArea);
 
   // Put a black one-pixel frame around the editor widget.
   QHBoxFrame *editorFrame = new QHBoxFrame();
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
-  this->editorWidget = new EditorWidget(initFile,
-    &(theState->m_documentList), this->statusArea);
-  this->editorWidget->setObjectName("editor widget");
-  editorFrame->addWidget(this->editorWidget);
-  this->editorWidget->setFocus();
-  connect(this->editorWidget, SIGNAL(viewChanged()),
+  this->m_editorWidget = new EditorWidget(initFile,
+    &(theState->m_documentList), this->m_statusArea);
+  this->m_editorWidget->setObjectName("editor widget");
+  editorFrame->addWidget(this->m_editorWidget);
+  this->m_editorWidget->setFocus();
+  connect(this->m_editorWidget, SIGNAL(viewChanged()),
           this, SLOT(editorViewChanged()));
-  connect(this->editorWidget, &EditorWidget::closeSARPanel,
+  connect(this->m_editorWidget, &EditorWidget::closeSARPanel,
           this, &EditorWindow::on_closeSARPanel);
 
   // See EditorWidget::openFileAtCursor for why this is a
   // QueuedConnection.
-  connect(this->editorWidget, &EditorWidget::openFilenameInputDialogSignal,
+  connect(this->m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
           this, &EditorWindow::on_openFilenameInputDialogSignal,
           Qt::QueuedConnection);
 
   // See explanation in GlobalState::focusChangedHandler().
-  this->setFocusProxy(this->editorWidget);
+  this->setFocusProxy(this->m_editorWidget);
 
   // Needed to ensure Tab gets passed down to the editor widget.
-  this->editorWidget->installEventFilter(this);
+  this->m_editorWidget->installEventFilter(this);
 
   // Connect these, which had to wait until both were constructed.
-  m_sarPanel->setEditorWidget(this->editorWidget);
+  m_sarPanel->setEditorWidget(this->m_editorWidget);
 
-  this->vertScroll = new QScrollBar(Qt::Vertical);
-  this->vertScroll->setObjectName("vertScroll");
-  editArea->addWidget(this->vertScroll, 0 /*row*/, 1 /*col*/);
-  connect(this->vertScroll, SIGNAL( valueChanged(int) ),
-          this->editorWidget, SLOT( scrollToLine(int) ));
+  this->m_vertScroll = new QScrollBar(Qt::Vertical);
+  this->m_vertScroll->setObjectName("m_vertScroll");
+  editArea->addWidget(this->m_vertScroll, 0 /*row*/, 1 /*col*/);
+  connect(this->m_vertScroll, SIGNAL( valueChanged(int) ),
+          this->m_editorWidget, SLOT( scrollToLine(int) ));
 
   // disabling horiz scroll for now..
-  //horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
-  //connect(horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
+  //m_horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
+  //connect(m_horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
 
   this->buildMenu();
   this->rebuildWindowMenu();
@@ -160,8 +157,8 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   // I want this object destroyed when it is closed.
   this->setAttribute(Qt::WA_DeleteOnClose);
 
-  this->globalState->m_windows.append(this);
-  this->globalState->m_documentList.addObserver(this);
+  this->m_globalState->m_windows.append(this);
+  this->m_globalState->m_documentList.addObserver(this);
 
   EditorWindow::s_objectCount++;
 }
@@ -171,12 +168,12 @@ EditorWindow::~EditorWindow()
 {
   EditorWindow::s_objectCount--;
 
-  this->globalState->m_documentList.removeObserver(this);
+  this->m_globalState->m_documentList.removeObserver(this);
 
   // This object might have already been removed, for example because
   // the GlobalState destructor is running, and is in the process of
   // removing elements from the list and destroying them.
-  this->globalState->m_windows.removeIfPresent(this);
+  this->m_globalState->m_windows.removeIfPresent(this);
 
   // The QObject destructor will destroy both 'm_sarPanel' and
   // 'm_editorWidget', but the documentation of ~QObject does not
@@ -188,7 +185,7 @@ EditorWindow::~EditorWindow()
 void EditorWindow::buildMenu()
 {
   {
-    QMenu *file = this->menuBar->addMenu("&File");
+    QMenu *file = this->m_menuBar->addMenu("&File");
     file->addAction("&New", this, SLOT(fileNewFile()));
     file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
     file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
@@ -202,14 +199,14 @@ void EditorWindow::buildMenu()
   }
 
   {
-    QMenu *edit = this->menuBar->addMenu("&Edit");
-    edit->addAction("&Undo", editorWidget, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
-    edit->addAction("&Redo", editorWidget, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+    QMenu *edit = this->m_menuBar->addMenu("&Edit");
+    edit->addAction("&Undo", m_editorWidget, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
+    edit->addAction("&Redo", m_editorWidget, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
     edit->addSeparator();
-    edit->addAction("Cu&t", editorWidget, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
-    edit->addAction("&Copy", editorWidget, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
-    edit->addAction("&Paste", editorWidget, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
-    edit->addAction("&Delete", editorWidget, SLOT(editDelete()));
+    edit->addAction("Cu&t", m_editorWidget, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
+    edit->addAction("&Copy", m_editorWidget, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
+    edit->addAction("&Paste", m_editorWidget, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
+    edit->addAction("&Delete", m_editorWidget, SLOT(editDelete()));
     edit->addSeparator();
     edit->addAction("&Search ...", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
     edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
@@ -223,26 +220,26 @@ void EditorWindow::buildMenu()
     this->field->setChecked(initChecked) /* user ; */
 
   {
-    QMenu *menu = this->menuBar->addMenu("&View");
+    QMenu *menu = this->m_menuBar->addMenu("&View");
 
-    CHECKABLE_ACTION(toggleVisibleWhitespaceAction,
+    CHECKABLE_ACTION(m_toggleVisibleWhitespaceAction,
       "Visible &whitespace",
       SLOT(viewToggleVisibleWhitespace()),
-      this->editorWidget->m_visibleWhitespace);
+      this->m_editorWidget->m_visibleWhitespace);
 
     menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
 
-    CHECKABLE_ACTION(toggleVisibleSoftMarginAction,
+    CHECKABLE_ACTION(m_toggleVisibleSoftMarginAction,
       "Visible soft &margin",
       SLOT(viewToggleVisibleSoftMargin()),
-      this->editorWidget->m_visibleSoftMargin);
+      this->m_editorWidget->m_visibleSoftMargin);
 
     menu->addAction("Set soft margin column...", this, SLOT(viewSetSoftMarginColumn()));
 
-    CHECKABLE_ACTION(toggleHighlightTrailingWSAction,
+    CHECKABLE_ACTION(m_toggleHighlightTrailingWSAction,
       "Highlight &trailing whitespace",
       SLOT(viewToggleHighlightTrailingWS()),
-      this->editorWidget->m_highlightTrailingWhitespace);
+      this->m_editorWidget->m_highlightTrailingWhitespace);
 
     menu->addAction("Set &Highlighting...", this,
       &EditorWindow::viewSetHighlighting);
@@ -251,7 +248,7 @@ void EditorWindow::buildMenu()
   #undef CHECKABLE_ACTION
 
   {
-    QMenu *window = this->menuBar->addMenu("&Window");
+    QMenu *window = this->m_menuBar->addMenu("&Window");
 
     window->addAction("Pick an &Open File ...", this,
       SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_O);
@@ -268,13 +265,13 @@ void EditorWindow::buildMenu()
 
     window->addSeparator();
 
-    this->windowMenu = window;
-    connect(this->windowMenu, SIGNAL(triggered(QAction*)),
+    this->m_windowMenu = window;
+    connect(this->m_windowMenu, SIGNAL(triggered(QAction*)),
             this, SLOT(windowFileChoiceActivated(QAction*)));
   }
 
   {
-    QMenu *help = this->menuBar->addMenu("&Help");
+    QMenu *help = this->m_menuBar->addMenu("&Help");
     help->addAction("&Keybindings...", this, SLOT(helpKeybindings()));
     help->addAction("&About Scott's Editor...", this, SLOT(helpAbout()));
     help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
@@ -285,26 +282,26 @@ void EditorWindow::buildMenu()
 // not inline because main.h doesn't see editor.h
 FileTextDocument *EditorWindow::currentDocument()
 {
-  return editorWidget->getDocumentFile();
+  return m_editorWidget->getDocumentFile();
 }
 
 
 void EditorWindow::fileNewFile()
 {
-  FileTextDocument *b = globalState->createNewFile();
+  FileTextDocument *b = m_globalState->createNewFile();
   setDocumentFile(b);
 }
 
 
 void EditorWindow::setDocumentFile(FileTextDocument *file)
 {
-  editorWidget->setDocumentFile(file);
+  m_editorWidget->setDocumentFile(file);
   this->updateForChangedFile();
 }
 
 void EditorWindow::updateForChangedFile()
 {
-  editorWidget->recomputeLastVisible();
+  m_editorWidget->recomputeLastVisible();
   editorViewChanged();
 }
 
@@ -401,7 +398,7 @@ string EditorWindow::fileChooseDialog(string const &initialName, bool saveAs)
 void EditorWindow::fileOpen()
 {
   string name =
-    this->fileChooseDialog(editorWidget->getDocumentFile()->filename,
+    this->fileChooseDialog(m_editorWidget->getDocumentFile()->filename,
                            false /*saveAs*/);
   if (name.isempty()) {
     return;
@@ -415,7 +412,7 @@ void EditorWindow::fileOpenFile(string const &name)
   TRACE("fileOpen", "fileOpenFile: " << name);
 
   // If this file is already open, switch to it.
-  FileTextDocument *file = globalState->m_documentList.findFileByName(name);
+  FileTextDocument *file = m_globalState->m_documentList.findFileByName(name);
   if (file) {
     this->setDocumentFile(file);
     return;
@@ -424,7 +421,7 @@ void EditorWindow::fileOpenFile(string const &name)
   file = new FileTextDocument();
   file->filename = name;
   file->isUntitled = false;
-  file->title = this->globalState->uniqueTitleFor(file->filename);
+  file->title = this->m_globalState->uniqueTitleFor(file->filename);
 
   if (fileOrDirectoryExists(file->filename.c_str())) {
     try {
@@ -445,7 +442,7 @@ void EditorWindow::fileOpenFile(string const &name)
 
   // is there an untitled, empty file hanging around?
   RCSerf<FileTextDocument> untitled =
-    this->globalState->m_documentList.findUntitledUnmodifiedFile();
+    this->m_globalState->m_documentList.findUntitledUnmodifiedFile();
   if (untitled) {
     // I'm going to remove it, but can't yet b/c I
     // need to wait until the new file is added;
@@ -455,12 +452,12 @@ void EditorWindow::fileOpenFile(string const &name)
   }
 
   // now that we've opened the file, set the editor widget to edit it
-  globalState->trackNewDocumentFile(file);
+  m_globalState->trackNewDocumentFile(file);
   setDocumentFile(file);
 
   // remove the untitled file now, if it exists
   if (untitled) {
-    globalState->deleteDocumentFile(untitled.release());
+    m_globalState->deleteDocumentFile(untitled.release());
   }
 }
 
@@ -543,7 +540,7 @@ void EditorWindow::fileSaveAs()
       return;
     }
 
-    if (this->globalState->hasFileWithName(chosenFilename)) {
+    if (this->m_globalState->hasFileWithName(chosenFilename)) {
       this->complain(stringb(
         "There is already an open file with name \"" <<
         chosenFilename <<
@@ -556,13 +553,13 @@ void EditorWindow::fileSaveAs()
 
   fileDoc->filename = chosenFilename;
   fileDoc->isUntitled = false;
-  fileDoc->title = this->globalState->uniqueTitleFor(chosenFilename);
+  fileDoc->title = this->m_globalState->uniqueTitleFor(chosenFilename);
   writeTheFile();
   this->useDefaultHighlighter(fileDoc);
 
   // Notify observers of the file name and highlighter change.  This
   // includes myself.
-  this->globalState->m_documentList.notifyAttributeChanged(fileDoc);
+  this->m_globalState->m_documentList.notifyAttributeChanged(fileDoc);
 }
 
 
@@ -581,7 +578,7 @@ void EditorWindow::fileClose()
     }
   }
 
-  globalState->deleteDocumentFile(b);
+  m_globalState->deleteDocumentFile(b);
 }
 
 
@@ -635,8 +632,8 @@ void EditorWindow::fileReloadAll()
     return;
   }
 
-  for (int i=0; i < this->globalState->m_documentList.numFiles(); i++) {
-    FileTextDocument *file = this->globalState->m_documentList.getFileAt(i);
+  for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
+    FileTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
     if (!this->reloadFile(file)) {
       // Stop after first error.
       break;
@@ -666,8 +663,8 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
   int ct = 0;
 
   msg << "The following files have unsaved changes:\n\n";
-  for (int i=0; i < this->globalState->m_documentList.numFiles(); i++) {
-    FileTextDocument *file = this->globalState->m_documentList.getFileAt(i);
+  for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
+    FileTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
     if (file->unsavedChanges()) {
       ct++;
       msg << " * " << file->filename << '\n';
@@ -696,12 +693,12 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
   // but the existence of other focusable controls (when the Search and
   // Replace panel is open) causes Tab to be treated as such unless I
   // use an event filter.
-  if (watched == this->editorWidget && event->type() == QEvent::KeyPress) {
+  if (watched == this->m_editorWidget && event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
     if (keyEvent->key() == Qt::Key_Tab ||
         keyEvent->key() == Qt::Key_Backtab) {
       TRACE("input", "EditorWindow passing Tab press on to EditorWidget");
-      this->editorWidget->rescuedKeyPressEvent(keyEvent);
+      this->m_editorWidget->rescuedKeyPressEvent(keyEvent);
       return true;       // no further processing
     }
   }
@@ -749,7 +746,7 @@ void EditorWindow::fileTextDocumentAttributeChanged(
   this->editorViewChanged();
 
   // The highlighter might have changed too.
-  this->editorWidget->update();
+  this->m_editorWidget->update();
 
   GENERIC_CATCH_END
 }
@@ -792,7 +789,7 @@ void EditorWindow::editGotoLine()
   // is the goto-line dialog can act as a crude form of bookmark, where
   // you hit Alt+G, Enter to quickly add the current line number to the
   // history so you can later grab it again.
-  dialog->m_text = qstringb(editorWidget->cursorLine() + 1);
+  dialog->m_text = qstringb(m_editorWidget->cursorLine() + 1);
 
   if (dialog->exec()) {
     string s = dialog->m_text.toUtf8().constData();
@@ -802,8 +799,8 @@ void EditorWindow::editGotoLine()
       if (n > 0) {
         dialog->rememberInput(qstringb(n));
 
-        editorWidget->cursorTo(TextCoord(n-1, 0));
-        editorWidget->scrollToCursor(-1 /*center*/);
+        m_editorWidget->cursorTo(TextCoord(n-1, 0));
+        m_editorWidget->scrollToCursor(-1 /*center*/);
       }
       else {
         this->complain(stringb("Invalid line number: " << s));
@@ -850,7 +847,7 @@ void EditorWindow::editApplyCommand()
       return;
     }
 
-    string dir = editorWidget->getDocumentDirectory();
+    string dir = m_editorWidget->getDocumentDirectory();
     dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
 
     if (!dialog->exec() || dialog->m_text.isEmpty()) {
@@ -859,7 +856,7 @@ void EditorWindow::editApplyCommand()
     dialog->rememberInput(dialog->m_text);
     commandString = toString(dialog->m_text);
 
-    tde = editorWidget->getDocumentEditor();
+    tde = m_editorWidget->getDocumentEditor();
     string input = tde->getSelectedText();
 
     // For now, I will assume I have a POSIX shell.
@@ -879,7 +876,7 @@ void EditorWindow::editApplyCommand()
     // changed, the latter (I think) because it already has a
     // non-standard cursor set.
     CursorSetRestore csr(this, Qt::WaitCursor);
-    CursorSetRestore csr2(editorWidget, Qt::WaitCursor);
+    CursorSetRestore csr2(m_editorWidget, Qt::WaitCursor);
 
     // This blocks until the program terminates or times out.  However,
     // it will pump the GUI event queue while waiting.
@@ -906,7 +903,7 @@ void EditorWindow::editApplyCommand()
 
   // We just pumped the event queue.  The editor we had before
   // could have gone away.
-  if (tde != editorWidget->getDocumentEditor()) {
+  if (tde != m_editorWidget->getDocumentEditor()) {
     QMessageBox::warning(this, "Editor Changed", qstringb(
       "While running command \"" << commandString <<
       "\", the active editor changed.  I will discard "
@@ -919,7 +916,7 @@ void EditorWindow::editApplyCommand()
     UndoHistoryGrouper ugh(*tde);
     tde->insertText(runner.getOutputData().constData(), runner.getOutputData().size());
   }
-  editorWidget->redraw();
+  m_editorWidget->redraw();
 
   // For error output or non-zero exit code, we show a warning, but
   // still insert the text.  Note that we do this *after* inserting
@@ -952,13 +949,13 @@ void EditorWindow::editApplyCommand()
 #define CHECKABLE_MENU_TOGGLE(actionField, sourceBool)  \
   (sourceBool) = !(sourceBool);                         \
   this->actionField->setChecked(sourceBool);            \
-  this->editorWidget->update() /* user ; */
+  this->m_editorWidget->update() /* user ; */
 
 
 void EditorWindow::viewToggleVisibleWhitespace()
 {
-  CHECKABLE_MENU_TOGGLE(toggleVisibleWhitespaceAction,
-    this->editorWidget->m_visibleWhitespace);
+  CHECKABLE_MENU_TOGGLE(m_toggleVisibleWhitespaceAction,
+    this->m_editorWidget->m_visibleWhitespace);
 }
 
 
@@ -968,19 +965,19 @@ void EditorWindow::viewSetWhitespaceOpacity()
   int n = QInputDialog::getInt(this,
     "Visible Whitespace",
     "Opacity in [1,255]:",
-    this->editorWidget->m_whitespaceOpacity,
+    this->m_editorWidget->m_whitespaceOpacity,
     1 /*min*/, 255 /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->editorWidget->m_whitespaceOpacity = n;
-    this->editorWidget->update();
+    this->m_editorWidget->m_whitespaceOpacity = n;
+    this->m_editorWidget->update();
   }
 }
 
 
 void EditorWindow::viewToggleVisibleSoftMargin()
 {
-  CHECKABLE_MENU_TOGGLE(toggleVisibleSoftMarginAction,
-    this->editorWidget->m_visibleSoftMargin);
+  CHECKABLE_MENU_TOGGLE(m_toggleVisibleSoftMarginAction,
+    this->m_editorWidget->m_visibleSoftMargin);
 }
 
 
@@ -990,19 +987,19 @@ void EditorWindow::viewSetSoftMarginColumn()
   int n = QInputDialog::getInt(this,
     "Soft Margin Column",
     "Column number (positive):",
-    this->editorWidget->m_softMarginColumn+1,
+    this->m_editorWidget->m_softMarginColumn+1,
     1 /*min*/, INT_MAX /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->editorWidget->m_softMarginColumn = n-1;
-    this->editorWidget->update();
+    this->m_editorWidget->m_softMarginColumn = n-1;
+    this->m_editorWidget->update();
   }
 }
 
 
 void EditorWindow::viewToggleHighlightTrailingWS()
 {
-  CHECKABLE_MENU_TOGGLE(toggleHighlightTrailingWSAction,
-    this->editorWidget->m_highlightTrailingWhitespace);
+  CHECKABLE_MENU_TOGGLE(m_toggleHighlightTrailingWSAction,
+    this->m_editorWidget->m_highlightTrailingWhitespace);
 }
 
 
@@ -1053,13 +1050,13 @@ void EditorWindow::viewSetHighlighting()
   }
 
   // Notify everyone of the change.
-  this->globalState->m_documentList.notifyAttributeChanged(doc);
+  this->m_globalState->m_documentList.notifyAttributeChanged(doc);
 }
 
 
 void EditorWindow::windowOpenFilesList()
 {
-  FileTextDocument *doc = globalState->runOpenFilesDialog();
+  FileTextDocument *doc = m_globalState->runOpenFilesDialog();
   if (doc) {
     this->setDocumentFile(doc);
   }
@@ -1113,40 +1110,40 @@ void EditorWindow::helpAboutQt()
 
 void EditorWindow::editorViewChanged()
 {
-  RCSerf<TextDocumentEditor> tde = editorWidget->getDocumentEditor();
+  RCSerf<TextDocumentEditor> tde = m_editorWidget->getDocumentEditor();
 
   // Set the scrollbars.  In both dimensions, the range includes the
   // current value so we can scroll arbitrarily far beyond the nominal
   // size of the file contents.  Also, it is essential to set the range
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
-  if (horizScroll) {
-    horizScroll->setRange(0, max(tde->maxLineLength(),
-                                 editorWidget->firstVisibleCol()));
-    horizScroll->setValue(editorWidget->firstVisibleCol());
-    horizScroll->setSingleStep(1);
-    horizScroll->setPageStep(editorWidget->visCols());
+  if (m_horizScroll) {
+    m_horizScroll->setRange(0, max(tde->maxLineLength(),
+                                   m_editorWidget->firstVisibleCol()));
+    m_horizScroll->setValue(m_editorWidget->firstVisibleCol());
+    m_horizScroll->setSingleStep(1);
+    m_horizScroll->setPageStep(m_editorWidget->visCols());
   }
 
-  if (vertScroll) {
-    vertScroll->setRange(0, max(tde->numLines(),
-                                editorWidget->firstVisibleLine()));
-    vertScroll->setValue(editorWidget->firstVisibleLine());
-    vertScroll->setSingleStep(1);
-    vertScroll->setPageStep(editorWidget->visLines());
+  if (m_vertScroll) {
+    m_vertScroll->setRange(0, max(tde->numLines(),
+                                  m_editorWidget->firstVisibleLine()));
+    m_vertScroll->setValue(m_editorWidget->firstVisibleLine());
+    m_vertScroll->setSingleStep(1);
+    m_vertScroll->setPageStep(m_editorWidget->visLines());
   }
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
-  statusArea->position->setText(QString(
-    stringc << " " << (editorWidget->cursorLine()+1) << ":"
-            << (editorWidget->cursorCol()+1)
+  m_statusArea->position->setText(QString(
+    stringc << " " << (m_editorWidget->cursorLine()+1) << ":"
+            << (m_editorWidget->cursorCol()+1)
             << (tde->unsavedChanges()? " *" : "")
   ));
 
   // Status text: full path name.
   FileTextDocument *file = currentDocument();
-  statusArea->status->setText(toQString(file->filename));
+  m_statusArea->status->setText(toQString(file->filename));
 
   // Window title.
   stringBuilder sb;
@@ -1167,7 +1164,7 @@ void EditorWindow::on_closeSARPanel()
 {
   if (m_sarPanel->isVisible()) {
     m_sarPanel->hide();
-    this->editorWidget->setFocus();
+    this->m_editorWidget->setFocus();
   }
 }
 
@@ -1190,7 +1187,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
   // Prompt to confirm.
   FilenameInputDialog dialog;
   QString confirmedFilename =
-    dialog.runDialog(&(globalState->m_documentList), filename);
+    dialog.runDialog(&(m_globalState->m_documentList), filename);
 
   if (!confirmedFilename.isEmpty()) {
     this->fileOpenFile(toString(confirmedFilename));
@@ -1201,9 +1198,9 @@ void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
 void EditorWindow::rebuildWindowMenu()
 {
   // remove all of the old menu items
-  while (this->fileChoiceActions.isNotEmpty()) {
-    QAction *action = this->fileChoiceActions.pop();
-    this->windowMenu->removeAction(action);
+  while (this->m_fileChoiceActions.isNotEmpty()) {
+    QAction *action = this->m_fileChoiceActions.pop();
+    this->m_windowMenu->removeAction(action);
 
     // Removing an action effectively means we take ownership of it.
     delete action;
@@ -1211,15 +1208,15 @@ void EditorWindow::rebuildWindowMenu()
 
   // add new items for all of the open files;
   // hotkeys have already been assigned by now
-  for (int i=0; i < this->globalState->m_documentList.numFiles(); i++) {
-    FileTextDocument *b = this->globalState->m_documentList.getFileAt(i);
+  for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
+    FileTextDocument *b = this->m_globalState->m_documentList.getFileAt(i);
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
       keySequence = Qt::ALT + (Qt::Key_0 + b->getHotkeyDigit());
     }
 
-    QAction *action = this->windowMenu->addAction(
+    QAction *action = this->m_windowMenu->addAction(
       toQString(b->title),        // menu item text
       this,                       // receiver
       SLOT(windowFileChoice()), // slot name
@@ -1228,7 +1225,7 @@ void EditorWindow::rebuildWindowMenu()
     // Associate the action with the FileTextDocument object.
     action->setData(QVariant(b->windowMenuId));
 
-    this->fileChoiceActions.push(action);
+    this->m_fileChoiceActions.push(action);
   }
 }
 
@@ -1242,7 +1239,7 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
   // that this action refers to.
   int windowMenuId = action->data().toInt();
   FileTextDocument *file =
-    this->globalState->m_documentList.findFileByWindowMenuId(windowMenuId);
+    this->m_globalState->m_documentList.findFileByWindowMenuId(windowMenuId);
   if (file) {
     TRACE("menu", "window file choice is: " << file->filename);
     this->setDocumentFile(file);
@@ -1272,7 +1269,7 @@ void EditorWindow::complain(char const *msg)
 
 void EditorWindow::windowNewWindow()
 {
-  EditorWindow *ed = this->globalState->createNewWindow(this->currentDocument());
+  EditorWindow *ed = this->m_globalState->createNewWindow(this->currentDocument());
   ed->show();
 }
 
@@ -1287,7 +1284,7 @@ void EditorWindow::windowCloseWindow()
 
 void EditorWindow::closeEvent(QCloseEvent *event)
 {
-  if (this->globalState->m_windows.count() == 1) {
+  if (this->m_globalState->m_windows.count() == 1) {
     if (!this->canQuitApplication()) {
       event->ignore();    // Prevent app from closing.
       return;
