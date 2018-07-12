@@ -380,6 +380,13 @@ public:      // funcs
   // reset the mode pixmap then
   virtual void inputProxyDetaching();
 
+  // This is the same as 'keyPressEvent', but is meant to be callable by
+  // other classes in order to pass on a key event that would otherwise
+  // have been intercepted by something in the Qt infrastructure.  This
+  // is *not* meant to be abused to simulate keystrokes!  Instead,
+  // methods with higher-level purpose should be defined and used.
+  void rescuedKeyPressEvent(QKeyEvent *k);
+
   // -------------------------- output ----------------------------
   // intermediate paint step
   void updateFrame(QPaintEvent *ev);

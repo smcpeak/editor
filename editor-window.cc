@@ -708,7 +708,7 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
     if (keyEvent->key() == Qt::Key_Tab ||
         keyEvent->key() == Qt::Key_Backtab) {
       TRACE("input", "EditorWindow passing Tab press on to EditorWidget");
-      this->editorWidget->keyPressEvent(keyEvent);
+      this->editorWidget->rescuedKeyPressEvent(keyEvent);
       return true;       // no further processing
     }
   }

@@ -1966,6 +1966,12 @@ void EditorWidget::inputProxyDetaching()
 }
 
 
+void EditorWidget::rescuedKeyPressEvent(QKeyEvent *k)
+{
+  this->keyPressEvent(k);
+}
+
+
 void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
 {
   // The proxy may initiate a document change, and if so, it is
