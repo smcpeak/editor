@@ -842,14 +842,16 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       // 0-based cursor column relative to what is visible
       int const cursorCol = m_editor->cursor().column;
       int const visibleCursorCol = cursorCol - firstCol;
-      xassert(visibleCursorCol >= 0);
 
       // 'x' coordinate of the leftmost column of the character cell
       // where the cursor is, i.e., the character that would be deleted
       // if the Delete key were pressed.
       x = m_leftMargin + m_fontWidth * visibleCursorCol;
 
-      if (false) {     // thin vertical bar
+      if (visibleCursorCol < 0) {
+        // The cursor is off the left edge, so nothing to show.
+      }
+      else if (false) {     // thin vertical bar
         paint.setPen(m_cursorColor);
         paint.drawLine(x,0, x, m_fontHeight-1);
         paint.drawLine(x-1,0, x-1, m_fontHeight-1);
