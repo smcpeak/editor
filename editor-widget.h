@@ -232,6 +232,9 @@ public:      // funcs
   // TODO: I think I should remove these in favor of code directly
   // calling the editor object.  Anyway, most of the code that invokes
   // these should be moved into TextDocumentEditor.
+  //
+  // Hmmm, m_editor is private.  Maybe I just want to expose the same
+  // interface then?
   int cursorLine() const                  { return m_editor->cursor().line; }
   int cursorCol() const                   { return m_editor->cursor().column; }
 
@@ -291,6 +294,9 @@ public:      // funcs
 
   // Move the cursor to the next/prev instance of matching text.
   void nextSearchHit(bool reverse);
+
+  // Replace the current match with the given text.
+  void replaceSearchHit(string const &t);
 
   // -------------------- reformatting whitespace ---------------------
   // Indent or unindent selected lines.

@@ -2,6 +2,18 @@
 TODOs:
   - rename data members of EditorWindow to start with "m_"
   - draw editor widget cursor differently when does not have focus
+
+  - search and replace
+    - undo/redo commands should act on the main editor widget, not
+      the little text boxes
+    - keybinding help
+    - case sensitivity
+    - whole word?
+    - regex...
+    - factoring
+    - show/hide the panel
+    - history!
+
   - ctrl+i: open file at cursor
     - recognize file:line syntax
   - multiple copy+paste strings

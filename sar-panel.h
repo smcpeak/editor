@@ -23,6 +23,9 @@ private:     // data
   // Combo box where user enters "Find" string.
   QComboBox *m_findBox;
 
+  // And the "Repl" string.
+  QComboBox *m_replBox;
+
   // The editor we are interacting with.
   RCSerf<EditorWidget> m_editorWidget;
 

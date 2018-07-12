@@ -1762,9 +1762,22 @@ void EditorWidget::nextSearchHit(bool reverse)
 
   if (m_editor->findString(tc, m_hitText.c_str(), flags)) {
     m_editor->setCursor(tc);
-    m_editor->scrollToCursor(1 /*gap*/);
+
+    TextCoord m(tc);
+    m_editor->walkCoord(m, +m_hitText.length());
+    m_editor->setMark(m);
+
+    m_editor->scrollToCursor(2 /*gap*/);
     redraw();
   }
+}
+
+
+void EditorWidget::replaceSearchHit(string const &t)
+{
+  UndoHistoryGrouper ugh(*m_editor);
+  m_editor->insertString(t);
+  redraw();
 }
 
 

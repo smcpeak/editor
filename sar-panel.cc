@@ -40,12 +40,19 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     hbox->addWidget(m_findBox, 1 /*stretch*/);
     m_findBox->setEditable(true);
     m_findBox->setInsertPolicy(QComboBox::NoInsert);
+    m_findBox->installEventFilter(this);
 
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::on_findEditTextChanged);
 
-    // Add key bindings to controls.
-    m_findBox->installEventFilter(this);
+    QLabel *replLabel = new QLabel("Repl:");
+    hbox->addWidget(replLabel);
+
+    m_replBox = new QComboBox();
+    hbox->addWidget(m_replBox, 1 /*stretch*/);
+    m_replBox->setEditable(true);
+    m_replBox->setInsertPolicy(QComboBox::NoInsert);
+    m_replBox->installEventFilter(this);
   }
 }
 
@@ -69,14 +76,52 @@ void SearchAndReplacePanel::setFocusFindBox()
 
 bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 {
-  if (watched == m_findBox && event->type() == QEvent::KeyPress) {
+  if ((watched == m_findBox || watched == m_replBox) &&
+      event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if (keyEvent->key() == Qt::Key_Return ||
-        keyEvent->key() == Qt::Key_Enter) {
-      TRACE("sar", "next/prev search hit");
-      bool reverse = (keyEvent->modifiers() & Qt::ShiftModifier);
-      m_editorWidget->nextSearchHit(reverse);
-      return true;       // no further processing
+    bool shift = (keyEvent->modifiers() & Qt::ShiftModifier);
+    bool control = (keyEvent->modifiers() & Qt::ControlModifier);
+
+    switch (keyEvent->key()) {
+      case Qt::Key_Return:
+      case Qt::Key_Enter: {
+        TRACE("sar", "next/prev search hit");
+        m_editorWidget->nextSearchHit(shift /*reverse*/);
+        return true;       // no further processing
+      }
+
+      case Qt::Key_R:
+        if (control) {
+          string s = toString(m_replBox->currentText());
+          TRACE("sar", "replace: " << s);
+          if (m_editorWidget->selectEnabled()) {
+            m_editorWidget->replaceSearchHit(s);
+            if (shift) {
+              m_editorWidget->nextSearchHit(false /*reverse*/);
+            }
+          }
+          else {
+            m_editorWidget->nextSearchHit(false /*reverse*/);
+          }
+          return true;
+        }
+        break;
+
+      case Qt::Key_Tab:
+        if (watched == m_replBox) {
+          // Cycle back around to find.
+          m_findBox->setFocus();
+          return true;
+        }
+        break;
+
+      case Qt::Key_Backtab:
+        if (watched == m_findBox) {
+          // Cycle around to repl.
+          m_replBox->setFocus();
+          return true;
+        }
+        break;
     }
   }
 
