@@ -118,6 +118,8 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   this->editorWidget->setFocus();
   connect(this->editorWidget, SIGNAL(viewChanged()),
           this, SLOT(editorViewChanged()));
+  connect(this->editorWidget, &EditorWidget::closeSARPanel,
+          this, &EditorWindow::on_closeSARPanel);
 
   // See EditorWidget::openFileAtCursor for why this is a
   // QueuedConnection.
@@ -779,9 +781,13 @@ void EditorWindow::editISearch()
 {
   // Toggle focus between editor and SAR panel.
   if (this->editorWidget->hasFocus()) {
-    // TODO: SAR panel should be hideable, in which case I would need
-    // to show it here.
-
+    if (!m_sarPanel->isVisible()) {
+      m_sarPanel->show();
+    }
+    if (this->editorWidget->selectEnabled()) {
+      m_sarPanel->setFindText(toQString(
+        this->editorWidget->getSelectedText()));
+    }
     m_sarPanel->setFocusFindBox();
   }
   else {
@@ -1174,6 +1180,15 @@ void EditorWindow::editorViewChanged()
   }
   sb << " - " << appName;
   this->setWindowTitle(toQString(sb));
+}
+
+
+void EditorWindow::on_closeSARPanel()
+{
+  if (m_sarPanel->isVisible()) {
+    m_sarPanel->hide();
+    this->editorWidget->setFocus();
+  }
 }
 
 

@@ -176,6 +176,7 @@ public slots:
   void helpAboutQt();
 
   void editorViewChanged();
+  void on_closeSARPanel();
   void on_openFilenameInputDialogSignal(QString const &filename);
 };
 

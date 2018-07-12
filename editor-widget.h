@@ -200,7 +200,10 @@ protected:   // funcs
   virtual bool event(QEvent *e) override;
   virtual void paintEvent(QPaintEvent *) override;
 public:
-  // This one is public so EditorWindow can call it.
+  // This one is public so EditorWindow and SearchAndReplacePanel can
+  // call it.
+  //
+  // TODO: I should relay more meaningful events among the controls.
   virtual void keyPressEvent(QKeyEvent *k) override;
 protected:
   virtual void keyReleaseEvent(QKeyEvent *k) override;
@@ -289,8 +292,9 @@ public:      // funcs
   int visCols() const { return m_editor->visColumns(); }
 
   // --------------------------- matches ----------------------------
-  // Change the match string.
-  void setHitText(string const &t);
+  // Change the match string.  If 'scrollToHit', also scroll the view
+  // so the first match is visible.  But, do not change the cursor.
+  void setHitText(string const &t, bool scrollToHit);
 
   // Move the cursor to the next/prev instance of matching text.
   void nextSearchHit(bool reverse);
@@ -426,6 +430,9 @@ signals:
   // that they want to open a particular file.  It should open a dialog
   // to allow the user to further edit the name.
   void openFilenameInputDialogSignal(QString const &filename);
+
+  // The user wants to close the search and replace panel if it is open.
+  void closeSARPanel();
 };
 
 #endif // EDITOR_WIDGET_H

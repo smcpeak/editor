@@ -4,8 +4,7 @@ TODOs:
   - draw editor widget cursor differently when does not have focus
 
   - search and replace
-    - undo/redo commands should act on the main editor widget, not
-      the little text boxes
+    - Ctrl+W
     - keybinding help
     - case sensitivity
     - whole word?

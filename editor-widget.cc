@@ -1728,19 +1728,23 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
-void EditorWidget::setHitText(string const &t)
+void EditorWidget::setHitText(string const &t, bool scrollToHit)
 {
   m_hitText = t;
 
-  // Find the first occurrence after the cursor.
-  TextCoord origCursor(m_editor->cursor());
-  TextCoord tc(origCursor);
-  if (m_editor->findString(tc, m_hitText.c_str(), m_hitTextFlags)) {
-    // HACK: I want to scroll so 'tc' is visible, but I will do it by
-    // temporarily adjusting the cursor.
-    m_editor->setCursor(tc);
-    m_editor->scrollToCursor(1 /*gap*/);
-    m_editor->setCursor(origCursor);
+  if (scrollToHit) {
+    // Find the first occurrence after the cursor.
+    TextCoord origCursor(m_editor->cursor());
+    TextCoord tc(origCursor);
+    if (m_editor->findString(tc, m_hitText.c_str(), m_hitTextFlags)) {
+      // HACK: I want to scroll so 'tc' is visible, but I will do it by
+      // temporarily adjusting the cursor.
+      //
+      // TODO: Add a 'scrollToCoord' method to TDE.
+      m_editor->setCursor(tc);
+      m_editor->scrollToCursor(1 /*gap*/);
+      m_editor->setCursor(origCursor);
+    }
   }
 
   redraw();
@@ -1971,10 +1975,10 @@ void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
       xfailure("invalid pseudo key");
 
     case IPK_CANCEL:
-      // do nothing; in other modes this will cancel out
-
-      // well, almost nothing
+      // This "pseudokey" mechanism is overkill, but anyway, here is
+      // where I respond to Esc: close the SAR panel.
       m_hitText = "";
+      emit closeSARPanel();
       redraw();
       break;
   }

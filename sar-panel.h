@@ -29,6 +29,9 @@ private:     // data
   // The editor we are interacting with.
   RCSerf<EditorWidget> m_editorWidget;
 
+  // When true, ignore the 'findEditTextChanged' signal.
+  bool m_ignore_findEditTextChanged;
+
 public:      // funcs
   SearchAndReplacePanel(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~SearchAndReplacePanel();
@@ -40,6 +43,9 @@ public:      // funcs
 
   // Put the keyboard focus on the Find box.
   void setFocusFindBox();
+
+  // Change the Find box text, but do not scroll to first match.
+  void setFindText(QString const &text);
 
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;

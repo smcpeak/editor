@@ -10,6 +10,7 @@
 #include "qtutil.h"                    // toString
 
 // smbase
+#include "macros.h"                    // Restorer
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -24,7 +25,9 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
                                              Qt::WindowFlags f)
   : QWidget(parent, f),
     m_findBox(NULL),
-    m_editorWidget(NULL)
+    m_replBox(NULL),
+    m_editorWidget(NULL),
+    m_ignore_findEditTextChanged(false)
 {
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
@@ -71,6 +74,19 @@ void SearchAndReplacePanel::setFocusFindBox()
 {
   TRACE("sar", "focus on to Find box");
   m_findBox->setFocus();
+
+  string s(toString(m_findBox->currentText()));
+  m_editorWidget->setHitText(s, false /*scroll*/);
+}
+
+
+void SearchAndReplacePanel::setFindText(QString const &text)
+{
+  // Calling 'setCurrentText' fires 'findEditTextChanged', which will
+  // in turn cause scrolling.  Suppress that.
+  Restorer<bool> restorer(m_ignore_findEditTextChanged, true);
+
+  m_findBox->setCurrentText(text);
 }
 
 
@@ -79,8 +95,9 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
   if ((watched == m_findBox || watched == m_replBox) &&
       event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    bool shift = (keyEvent->modifiers() & Qt::ShiftModifier);
+    bool shift   = (keyEvent->modifiers() & Qt::ShiftModifier);
     bool control = (keyEvent->modifiers() & Qt::ControlModifier);
+    bool alt     = (keyEvent->modifiers() & Qt::AltModifier);
 
     switch (keyEvent->key()) {
       case Qt::Key_Return:
@@ -122,6 +139,24 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
           return true;
         }
         break;
+
+      case Qt::Key_Backspace:
+        if (alt) {
+          // Rather than undo/redo applying to the text in the find
+          // and repl boxes, apply it to the main editor.
+          if (shift) {
+            m_editorWidget->editRedo();
+          }
+          else {
+            m_editorWidget->editUndo();
+          }
+          return true;
+        }
+        break;
+
+      case Qt::Key_Escape:
+        m_editorWidget->keyPressEvent(keyEvent);
+        return true;
     }
   }
 
@@ -142,11 +177,11 @@ void SearchAndReplacePanel::paintEvent(QPaintEvent *event)
 }
 
 
-void SearchAndReplacePanel::on_findEditTextChanged(QString const &text)
+void SearchAndReplacePanel::on_findEditTextChanged(QString const &)
 {
-  string s(toString(text));
+  string s(toString(m_findBox->currentText()));
   TRACE("sar", "Find text: " << s);
-  m_editorWidget->setHitText(s);
+  m_editorWidget->setHitText(s, true /*scroll*/);
 }
 
 
