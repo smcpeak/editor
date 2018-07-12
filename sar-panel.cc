@@ -276,7 +276,9 @@ void SearchAndReplacePanel::on_findEditTextChanged(QString const &)
 
 void SearchAndReplacePanel::on_help()
 {
-  QMessageBox::information(this, "Search and Replace Help",
+  QMessageBox mb(this);
+  mb.setWindowTitle("Search and Replace Help");
+  mb.setText(
     "Keys for Search and Replace (SAR):\n"
     "\n"
     "Ctrl+S: Toggle focus between SAR and main editor.\n"
@@ -291,7 +293,11 @@ void SearchAndReplacePanel::on_help()
     "Alt+(Shift+)Backspace: Undo/redo in main editor, "
       "including SAR changes.\n"
     "Ctrl+W: Add next word at editor cursor to Find box.\n"
+    "\n"
+    "If there is a capital letter in the Find box, search is "
+      "case-sensitive, otherwise not.\n"
   );
+  mb.exec();
 }
 
 
