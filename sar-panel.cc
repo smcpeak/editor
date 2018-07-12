@@ -181,7 +181,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
         break;
 
       case Qt::Key_Escape:
-        m_editorWidget->keyPressEvent(keyEvent);
+        m_editorWidget->doCloseSARPanel();
         return true;
 
       case Qt::Key_W: {

@@ -1795,6 +1795,14 @@ void EditorWidget::replaceSearchHit(string const &t)
 }
 
 
+void EditorWidget::doCloseSARPanel()
+{
+  m_hitText = "";
+  emit closeSARPanel();
+  update();
+}
+
+
 void EditorWidget::blockIndent(int amt)
 {
   INITIATING_DOCUMENT_CHANGE();
@@ -1993,9 +2001,7 @@ void EditorWidget::pseudoKeyPress(InputPseudoKey pkey)
     case IPK_CANCEL:
       // This "pseudokey" mechanism is overkill, but anyway, here is
       // where I respond to Esc: close the SAR panel.
-      m_hitText = "";
-      emit closeSARPanel();
-      redraw();
+      this->doCloseSARPanel();
       break;
   }
 }

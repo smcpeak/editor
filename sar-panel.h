@@ -19,6 +19,8 @@ class QComboBox;
 // Panel meant to be added to an EditorWindow to provide search and
 // replace functionality for an EditorWidget.
 class SearchAndReplacePanel : public QWidget {
+  Q_OBJECT
+
 private:     // data
   // Combo box where user enters "Find" string.
   QComboBox *m_findBox;

@@ -203,13 +203,7 @@ protected:   // funcs
   // QWidget funcs
   virtual bool event(QEvent *e) override;
   virtual void paintEvent(QPaintEvent *) override;
-public:
-  // This one is public so EditorWindow and SearchAndReplacePanel can
-  // call it.
-  //
-  // TODO: I should relay more meaningful events among the controls.
   virtual void keyPressEvent(QKeyEvent *k) override;
-protected:
   virtual void keyReleaseEvent(QKeyEvent *k) override;
   virtual void resizeEvent(QResizeEvent *r) override;
   virtual void mousePressEvent(QMouseEvent *m) override;
@@ -305,6 +299,10 @@ public:      // funcs
 
   // Replace the current match with the given text.
   void replaceSearchHit(string const &t);
+
+  // Begin closing the SAR panel from the widget side, then emit a
+  // signal that will finish the job from the window side.
+  void doCloseSARPanel();
 
   // -------------------- reformatting whitespace ---------------------
   // Indent or unindent selected lines.
