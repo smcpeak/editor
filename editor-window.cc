@@ -777,9 +777,17 @@ void EditorWindow::fileExit()
 
 void EditorWindow::editISearch()
 {
-  // I think I want this to be a toggle, but for the moment it just
-  // moves the focus unconditionally.
-  m_sarPanel->setFocusFindBox();
+  // Toggle focus between editor and SAR panel.
+  if (this->editorWidget->hasFocus()) {
+    // TODO: SAR panel should be hideable, in which case I would need
+    // to show it here.
+
+    m_sarPanel->setFocusFindBox();
+  }
+  else {
+    this->editorWidget->setFocus();
+    this->editorWidget->scrollToCursor();
+  }
 }
 
 

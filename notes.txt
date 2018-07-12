@@ -6,6 +6,7 @@ TODOs:
     - recognize file:line syntax
   - multiple copy+paste strings
 
+  - idea: "edit" a git diff?
   - run command to generate entire file; git annotate!
     - git diff
     - git show

@@ -256,10 +256,6 @@ public:      // funcs
   bool selectEnabled() const              { return m_editor->markActive(); }
   string getSelectedText() const          { return m_editor->getSelectedText(); }
 
-  // --------------------------- matches ----------------------------
-  // Change the match string.
-  void setHitText(string const &t);
-
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
   int firstVisibleLine() const            { return m_editor->firstVisible().line; }
@@ -288,6 +284,13 @@ public:      // funcs
   // line/col may also be visible.
   int visLines() const { return m_editor->visLines(); }
   int visCols() const { return m_editor->visColumns(); }
+
+  // --------------------------- matches ----------------------------
+  // Change the match string.
+  void setHitText(string const &t);
+
+  // Move the cursor to the next/prev instance of matching text.
+  void nextSearchHit(bool reverse);
 
   // -------------------- reformatting whitespace ---------------------
   // Indent or unindent selected lines.

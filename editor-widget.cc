@@ -1731,7 +1731,40 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 void EditorWidget::setHitText(string const &t)
 {
   m_hitText = t;
+
+  // Find the first occurrence after the cursor.
+  TextCoord origCursor(m_editor->cursor());
+  TextCoord tc(origCursor);
+  if (m_editor->findString(tc, m_hitText.c_str(), m_hitTextFlags)) {
+    // HACK: I want to scroll so 'tc' is visible, but I will do it by
+    // temporarily adjusting the cursor.
+    m_editor->setCursor(tc);
+    m_editor->scrollToCursor(1 /*gap*/);
+    m_editor->setCursor(origCursor);
+  }
+
   redraw();
+}
+
+
+void EditorWidget::nextSearchHit(bool reverse)
+{
+  TextCoord tc(m_editor->cursor());
+
+  TextDocumentEditor::FindStringFlags flags = m_hitTextFlags;
+  if (reverse) {
+    flags ^= TextDocumentEditor::FS_BACKWARDS;
+  }
+
+  // Skip a match we are currently on.
+  m_editor->walkCoord(tc,
+    (flags & TextDocumentEditor::FS_BACKWARDS)? -1 : +1);
+
+  if (m_editor->findString(tc, m_hitText.c_str(), flags)) {
+    m_editor->setCursor(tc);
+    m_editor->scrollToCursor(1 /*gap*/);
+    redraw();
+  }
 }
 
 

@@ -38,6 +38,9 @@ public:      // funcs
   // Put the keyboard focus on the Find box.
   void setFocusFindBox();
 
+  // QObject methods.
+  virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
+
 protected:   // funcs
   // QWidget methods.
   virtual void paintEvent(QPaintEvent *event) OVERRIDE;

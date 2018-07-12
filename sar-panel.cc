@@ -14,6 +14,7 @@
 
 // Qt
 #include <QComboBox>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QPainter>
 #include <QVBoxLayout>
@@ -42,6 +43,9 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
 
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::on_findEditTextChanged);
+
+    // Add key bindings to controls.
+    m_findBox->installEventFilter(this);
   }
 }
 
@@ -60,6 +64,23 @@ void SearchAndReplacePanel::setFocusFindBox()
 {
   TRACE("sar", "focus on to Find box");
   m_findBox->setFocus();
+}
+
+
+bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
+{
+  if (watched == m_findBox && event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+    if (keyEvent->key() == Qt::Key_Return ||
+        keyEvent->key() == Qt::Key_Enter) {
+      TRACE("sar", "next/prev search hit");
+      bool reverse = (keyEvent->modifiers() & Qt::ShiftModifier);
+      m_editorWidget->nextSearchHit(reverse);
+      return true;       // no further processing
+    }
+  }
+
+  return false;
 }
 
 
