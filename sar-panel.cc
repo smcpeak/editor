@@ -89,6 +89,31 @@ void SearchAndReplacePanel::setEditorWidget(EditorWidget *w)
 }
 
 
+void SearchAndReplacePanel::toggleSARFocus()
+{
+  if (m_editorWidget->hasFocus()) {
+    if (!this->isVisible()) {
+      this->show();
+    }
+
+    // If there was text selected in the editor, then let that
+    // initialize my Find box.  (Otherwise, leave it alone.)
+    if (m_editorWidget->selectEnabled()) {
+      this->setFindText(toQString(m_editorWidget->getSelectedText()));
+    }
+
+    // Let the user begin typing in the Find box.
+    this->setFocusFindBox();
+  }
+  else {
+    // Give focus back to the editor and return the scroll to near the
+    // cursor.
+    m_editorWidget->setFocus();
+    m_editorWidget->scrollToCursor();
+  }
+}
+
+
 void SearchAndReplacePanel::setFocusFindBox()
 {
   TRACE("sar", "focus on to Find box");

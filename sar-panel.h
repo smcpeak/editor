@@ -43,6 +43,10 @@ public:      // funcs
   // made.
   void setEditorWidget(EditorWidget *w);
 
+  // If the editor has focus, switch to SAR and prepare to search.
+  // Otherwise give focus back to the editor.
+  void toggleSARFocus();
+
   // Put the keyboard focus on the Find box.
   void setFocusFindBox();
 

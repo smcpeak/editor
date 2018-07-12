@@ -11,6 +11,7 @@ TODOs:
       - rip out all of IncSearch and the ProxyInput
       - do not call EditorWidget::keyPressEvent from other classes
     - history!
+    - better feedback on search: number of hits, at first/last/only/none
 
   - ctrl+i: open file at cursor
     - recognize file:line syntax

@@ -780,21 +780,7 @@ void EditorWindow::fileExit()
 
 void EditorWindow::editISearch()
 {
-  // Toggle focus between editor and SAR panel.
-  if (this->editorWidget->hasFocus()) {
-    if (!m_sarPanel->isVisible()) {
-      m_sarPanel->show();
-    }
-    if (this->editorWidget->selectEnabled()) {
-      m_sarPanel->setFindText(toQString(
-        this->editorWidget->getSelectedText()));
-    }
-    m_sarPanel->setFocusFindBox();
-  }
-  else {
-    this->editorWidget->setFocus();
-    this->editorWidget->scrollToCursor();
-  }
+  m_sarPanel->toggleSARFocus();
 }
 
 
