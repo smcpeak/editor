@@ -23,6 +23,13 @@
 #include <QVBoxLayout>
 
 
+// Horizontal space separating the control elements in the panel, in pixels.
+int const SAR_PANEL_SPACING = 5;
+
+// Horizontal and vertical space separating controls from the edges.
+int const SAR_PANEL_MARGIN = 5;
+
+
 SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
                                              Qt::WindowFlags f)
   : QWidget(parent, f),
@@ -33,6 +40,9 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
 {
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
+  vbox->setSpacing(SAR_PANEL_SPACING);
+  vbox->setContentsMargins(SAR_PANEL_MARGIN, SAR_PANEL_MARGIN,
+                           SAR_PANEL_MARGIN, SAR_PANEL_MARGIN);
 
   {
     QHBoxLayout *hbox = new QHBoxLayout();
