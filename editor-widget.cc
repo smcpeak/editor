@@ -69,6 +69,9 @@ int const UNDERLINE_OFFSET = 2;
 // Number of columns to move for Ctrl+Shift+<arrow>.
 int const CTRL_SHIFT_DISTANCE = 10;
 
+// Desired line/column gap between search match and screen edge.
+int const SAR_SCROLL_GAP = 2;
+
 
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::s_objectCount = 0;
@@ -1740,7 +1743,10 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
     TextCoord origCursor(m_editor->cursor());
     TextCoord tc(origCursor);
     if (m_editor->findString(tc, m_hitText.c_str(), m_hitTextFlags)) {
-      m_editor->scrollToCoord(tc, 2 /*gap*/);
+      // Try to show the entire match, giving preference to the right side.
+      m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
+      m_editor->walkCoord(tc, m_hitText.length());
+      m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
     }
   }
 
@@ -1768,7 +1774,8 @@ void EditorWidget::nextSearchHit(bool reverse)
     m_editor->walkCoord(m, +m_hitText.length());
     m_editor->setMark(m);
 
-    m_editor->scrollToCursor(2 /*gap*/);
+    m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(m, SAR_SCROLL_GAP);
     redraw();
   }
 }
