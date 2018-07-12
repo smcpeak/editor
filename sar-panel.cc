@@ -189,7 +189,9 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
         break;
 
       case Qt::Key_Backtab:
-        if (mods == Qt::NoModifier) {
+        // I see Backtab with ShiftModifier, but I could imagine that
+        // changing in another version of Qt.
+        if (mods == Qt::NoModifier || mods == Qt::ShiftModifier) {
           if (watched == m_findBox) {
             // Cycle around to repl.
             m_replBox->setFocus();
