@@ -1738,13 +1738,7 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
     TextCoord origCursor(m_editor->cursor());
     TextCoord tc(origCursor);
     if (m_editor->findString(tc, m_hitText.c_str(), m_hitTextFlags)) {
-      // HACK: I want to scroll so 'tc' is visible, but I will do it by
-      // temporarily adjusting the cursor.
-      //
-      // TODO: Add a 'scrollToCoord' method to TDE.
-      m_editor->setCursor(tc);
-      m_editor->scrollToCursor(1 /*gap*/);
-      m_editor->setCursor(origCursor);
+      m_editor->scrollToCoord(tc, 2 /*gap*/);
     }
   }
 

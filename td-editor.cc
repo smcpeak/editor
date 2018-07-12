@@ -263,16 +263,16 @@ static int stcHelper(int firstVis, int lastVis, int cur, int gap)
   return firstVis;
 }
 
-void TextDocumentEditor::scrollToCursor(int edgeGap)
+void TextDocumentEditor::scrollToCoord(TextCoord tc, int edgeGap)
 {
   int fvline = stcHelper(this->firstVisible().line,
                          this->lastVisible().line,
-                         this->cursor().line,
+                         tc.line,
                          edgeGap);
 
   int fvcol = stcHelper(this->firstVisible().column,
                         this->lastVisible().column,
-                        this->cursor().column,
+                        tc.column,
                         edgeGap);
 
   setFirstVisible(TextCoord(fvline, fvcol));

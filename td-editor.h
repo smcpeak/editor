@@ -288,13 +288,17 @@ public:      // funcs
   // will silently ensure both sizes are positive.
   void setVisibleSize(int lines, int columns);
 
-  // Scroll the view the minimum amount so that the cursor is visible
+  // Scroll the view the minimum amount so that 'tc' is visible
   // and at least 'edgeGap' lines/columns from the edge (except that
   // it can always get to the left and top edges of the document).
   //
-  // If 'edgeGap' is -1, then if the cursor isn't already visible,
-  // center the visible region on the cursor.
-  void scrollToCursor(int edgeGap=0);
+  // If 'edgeGap' is -1, then if 'tc' isn't already visible,
+  // center the visible region on it.
+  void scrollToCoord(TextCoord tc, int edgeGap=0);
+
+  // Same, but for the cursor.
+  void scrollToCursor(int edgeGap=0)
+    { scrollToCoord(cursor(), edgeGap); }
 
   // Scroll vertically so the cursor line is in the center of the
   // visible region if possible (it might not be possible due to the
