@@ -10,7 +10,6 @@ TODOs:
     - git show
     - grep
   - search and replace
-    - would like a larger vertical gap on scroll... 5?
     - allow F2? Ctrl+O? Ctrl+I?
     - case sensitivity
     - whole word?

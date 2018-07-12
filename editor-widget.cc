@@ -69,7 +69,7 @@ int const UNDERLINE_OFFSET = 2;
 int const CTRL_SHIFT_DISTANCE = 10;
 
 // Desired line/column gap between search match and screen edge.
-int const SAR_SCROLL_GAP = 2;
+int const SAR_SCROLL_GAP = 10;
 
 
 // ---------------------- EditorWidget --------------------------------
