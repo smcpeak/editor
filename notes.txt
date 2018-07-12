@@ -1,14 +1,20 @@
 
 TODOs:
-  - ctrl+i: open file at cursor
-    - recognize file:line syntax
-  - multiple copy+paste strings
+  - parenthesis balancing, and Alt-[/] to find matching delimiter
 
-  - idea: "edit" a git diff?
   - run command to generate entire file; git annotate!
     - git diff
     - git show
     - grep
+    - compilation mode
+
+  - allow Tab character; issue is rendering support
+  - handling of files with CRLF line endings
+  - mode to show line numbers in left margin
+  - multiple copy+paste strings
+
+  - ctrl+i: open file at cursor
+    - recognize file:line syntax
   - search and replace
     - allow F2? Ctrl+O? Ctrl+I?
     - case sensitivity
@@ -17,93 +23,19 @@ TODOs:
     - history!
     - better feedback on search: number of hits, at first/last/only/none
 
-  - click on path elements in the status bar to File Open on that directory
   - handle cygwin paths on the command line (requires Alt+A infra)
-  - allow Tab character; issue is rendering support
-  - handling of files with CRLF line endings
-  - rethink incremental search
-    - persistent search string
-    - toggle whether matches shown
-    - toggle case insensitivity and interpetation as regex
-    - move through matches at any time
-    - add text to the search string
-    - search string is persistent across all files
-      - set of recent search strings for easy retrieval?
-    - Ctrl+S, Ctrl+W, Backspace does not work as desired
-    - Ctrl+S, Ctrl+S advances cursor weirdly
-  - mode to show line numbers in left margin
-  - more efficient file opening
-    - directory tree panel on the left?
-
-  - remove unnecessary triple buffering from render code
 
   - test plan
-
-  - Ctrl+S still does not work very well with Backspace;
-    see comments in IncSearch::searchKeyMap
   - support for encodings other than Latin-1
-
-  - factor out the Qt stuff so I can have a curses version
-  - ctrl-tab buffer switching sort of like alt-tab
-  - multiple cursor display options; include an emacs-like mode
-  - compilation mode
   - save/restore set of open buffers
   - periodic autosave; do that when receiving SIGTERM/QUIT/INT also
-  - do not open the same file more than once
-    - more robust identification of same file than just specified name
-  - analog to M-x grep
   - if I press Delete while the cursor is at the left edge of a blank
     line, make it delete that line even if there is whitespace on it
-  - implement ctrl+alt+up
-  - find-files enhanced to have several directories available, and to use
-    the directory in which the current file resides by default
-  - case-sensitive search by default if any chars are capitals
-  - parenthesis balancing, and Alt-[/] to find matching delimiter
-  - File|Revert to saved, and keybinding F12
-  - performance!  smarter updates, etc.
-  - tabs along the top to show file name, and ability to rearrange
-    so that they are in a natural order
+  - remove unnecessary triple buffering from render code
 
+Projects:
+  - idea: "edit" a git diff?
 
-postponed or decided against:
-  / window menu Alt-n numbers should be underlined to act as simple
-    hotkeys when the window is open (quite difficult)
-
-implemented:
-  + ctrl-z, ctrl-w should work while in search mode
-    (ctrl-w already does something else in that mode..)
-  * make the window title reflect the Alt-n key that gets you there
-  * in search mode,
-    / home/end should be like enter, home/end
-      but home already scrolls towards left edge w/o getting
-      out of search...
-    * up and down can scroll window
-  * alt-d: insert date/time
-  * Alt+G: goto line
-  * search should scroll the found text into the middle of the window
-    if the window has to be scrolled
-  * box cursor like emacs
-  * ctrl-G to cancel search
-  * what happened to alt-left-arrow?
-
-
-Weird focus bug:
-
-In Windows, if run "git commit" with GIT_EDITOR set to my editor, it
-sometimes shows up without the focus and I type into the wrong window.
-
-I made a reproducer; I run this command in a cygwin shell:
-
-  $ while true; do ./run-this-editor main.cc || break; done
-
-where "run-this-editor" is:
-
-  #!/bin/sh
-  cygpath -m main.cc
-  exec ./editor
-
-then every 5th (!) launch will not have focus.  The cygpath call is
-needed there to make it happen.
 
 
 
