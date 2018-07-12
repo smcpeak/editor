@@ -1722,6 +1722,16 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
+static bool hasCapitalLetter(string const &t)
+{
+  for (char const *p = t.c_str(); *p; p++) {
+    if ('A' <= *p && *p <= 'Z') {
+      return true;
+    }
+  }
+  return false;
+}
+
 // SAR is not implemented well.  This code should be moved into
 // TextDocumentEditor, but only after overhauling the internals of text
 // search.
@@ -1729,6 +1739,14 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
 {
   TRACE("sar", "EW::setHitText: t=\"" << t << "\" scroll=" << scrollToHit);
   m_hitText = t;
+
+  // Case-sensitive iff capital letter present.
+  if (hasCapitalLetter(t)) {
+    m_hitTextFlags &= ~TextDocumentEditor::FS_CASE_INSENSITIVE;
+  }
+  else {
+    m_hitTextFlags |= TextDocumentEditor::FS_CASE_INSENSITIVE;
+  }
 
   if (scrollToHit) {
     // Find the first occurrence after the cursor.
