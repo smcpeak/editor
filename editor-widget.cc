@@ -853,6 +853,16 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
         paint.drawLine(x,0, x, m_fontHeight-1);
         paint.drawLine(x-1,0, x-1, m_fontHeight-1);
       }
+      else if (!this->hasFocus()) {
+        // emacs-like non-focused unfilled box.
+        paint.setPen(m_cursorColor);
+        paint.setBrush(QBrush());
+
+        // Setting the pen width to 2 does not produce a good result,
+        // so just draw two 1-pixel rectangles.
+        paint.drawRect(x,   0, m_fontWidth,   m_fontHeight-1);
+        paint.drawRect(x+1, 1, m_fontWidth-2, m_fontHeight-3);
+      }
       else {           // emacs-like box
         // The character shown inside the box should use the same
         // font as if it were not inside the cursor box, to minimize
@@ -1747,8 +1757,10 @@ void EditorWidget::nextSearchHit(bool reverse)
   }
 
   // Skip a match we are currently on.
-  m_editor->walkCoord(tc,
-    (flags & TextDocumentEditor::FS_BACKWARDS)? -1 : +1);
+  if (m_editor->validCoord(tc)) {
+    m_editor->walkCoord(tc,
+      (flags & TextDocumentEditor::FS_BACKWARDS)? -1 : +1);
+  }
 
   if (m_editor->findString(tc, m_hitText.c_str(), flags)) {
     m_editor->setCursor(tc);

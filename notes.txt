@@ -1,7 +1,6 @@
 
 TODOs:
   - rename data members of EditorWindow to start with "m_"
-  - draw editor widget cursor differently when does not have focus
 
   - search and replace
     - case sensitivity
