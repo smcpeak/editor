@@ -237,7 +237,12 @@ inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
 // these cannot fail, as there is nothing the observee can do about it
 // nor an appropriate way to report it.  Observers are obligated to
 // catch any exceptions they throw.
-class TextDocumentObserver : public SerfRefCount {
+//
+// This inherits SerfRefCount to catch bugs where an observer is
+// destroyed without removing itself from the document's observer list.
+// The inheritance is virtual in order to allow an object to also
+// implement another observer interface that also inherits SerfRefCount.
+class TextDocumentObserver : virtual public SerfRefCount {
 public:      // static data
   static int s_objectCount;
 

@@ -35,6 +35,10 @@ class QRangeControl;                   // qrangecontrol.h
 // This class is intended to be mostly concerned with connecting the
 // user to the TextDocumentEditor API; the latter should do the actual
 // text manipulation.
+//
+// This class indirectly inherits SerfRefCount through each of the
+// Observer interfaces.  The inheritance is virtual, so there is just
+// one copy of the reference count.
 class EditorWidget
   : public QWidget,               // I am a Qt widget.
     public TextDocumentObserver,  // Watch my file while I don't have focus.

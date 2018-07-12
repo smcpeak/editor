@@ -208,7 +208,10 @@ public:      // funcs
 // and these methods need to be uniquely named among that larger set.
 //
 // As these are notification methods, they should not throw exceptions.
-class FileTextDocumentListObserver : public SerfRefCount {
+//
+// This inherts SerfRefCount for the same reason, and in the same way,
+// that TextDocumentObserver does.
+class FileTextDocumentListObserver : virtual public SerfRefCount {
 public:      // funcs
   // A file was added to the list.
   virtual void fileTextDocumentAdded(
