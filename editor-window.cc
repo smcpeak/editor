@@ -101,6 +101,7 @@ EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
   m_sarPanel = new SearchAndReplacePanel();
   mainArea->addWidget(m_sarPanel);
   m_sarPanel->setObjectName("m_sarPanel");
+  m_sarPanel->hide();      // Initially hidden.
 
   this->statusArea = new StatusDisplay();
   this->statusArea->setObjectName("statusArea");

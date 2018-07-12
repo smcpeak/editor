@@ -1733,6 +1733,9 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
+// SAR is not implemented well.  This code should be moved into
+// TextDocumentEditor, but only after overhauling the internals of text
+// search.
 void EditorWidget::setHitText(string const &t, bool scrollToHit)
 {
   TRACE("sar", "EW::setHitText: t=\"" << t << "\" scroll=" << scrollToHit);
@@ -1754,6 +1757,9 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
 }
 
 
+// SAR is not implemented well.  This code should be moved into
+// TextDocumentEditor, but only after overhauling the internals of text
+// search.
 void EditorWidget::nextSearchHit(bool reverse)
 {
   TextCoord tc(m_editor->cursor());

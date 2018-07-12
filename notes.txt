@@ -8,6 +8,8 @@ TODOs:
     - whole word?
     - regex...
     - factoring
+      - rip out all of IncSearch and the ProxyInput
+      - do not call EditorWidget::keyPressEvent from other classes
     - history!
 
   - ctrl+i: open file at cursor
