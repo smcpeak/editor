@@ -75,8 +75,7 @@ void SearchAndReplacePanel::setFocusFindBox()
   TRACE("sar", "focus on to Find box");
   m_findBox->setFocus();
 
-  string s(toString(m_findBox->currentText()));
-  m_editorWidget->setHitText(s, false /*scroll*/);
+  this->updateEditorHitText(false /*scroll*/);
 }
 
 
@@ -87,6 +86,14 @@ void SearchAndReplacePanel::setFindText(QString const &text)
   Restorer<bool> restorer(m_ignore_findEditTextChanged, true);
 
   m_findBox->setCurrentText(text);
+}
+
+
+void SearchAndReplacePanel::updateEditorHitText(bool scrollToHit)
+{
+  string s(toString(m_findBox->currentText()));
+  TRACE("sar", "update hit text: text=\"" << s << "\" scroll=" << scrollToHit);
+  m_editorWidget->setHitText(s, scrollToHit);
 }
 
 
@@ -157,6 +164,28 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
       case Qt::Key_Escape:
         m_editorWidget->keyPressEvent(keyEvent);
         return true;
+
+      case Qt::Key_W: {
+        TextDocumentEditor *ed = m_editorWidget->m_editor;
+        ed->normalizeCursorGTEMark();
+        TextCoord tc = ed->cursor();
+        string word = ed->getWordAfter(tc);
+        TRACE("sar", "extend sel by: " << word);
+        if (!word.isempty()) {
+          // Extend or start a selection to include this word.
+          if (!ed->markActive()) {
+            ed->setMark(tc);
+          }
+          ed->walkCursor(word.length());
+
+          // Now set the find text to match the selection.
+          this->setFindText(toQString(ed->getSelectedText()));
+          this->updateEditorHitText(false /*scroll*/);
+
+          m_editorWidget->update();
+        }
+        return true;
+      }
     }
   }
 
@@ -179,9 +208,11 @@ void SearchAndReplacePanel::paintEvent(QPaintEvent *event)
 
 void SearchAndReplacePanel::on_findEditTextChanged(QString const &)
 {
-  string s(toString(m_findBox->currentText()));
-  TRACE("sar", "Find text: " << s);
-  m_editorWidget->setHitText(s, true /*scroll*/);
+  if (m_ignore_findEditTextChanged) {
+    return;
+  }
+
+  this->updateEditorHitText(true /*scroll*/);
 }
 
 

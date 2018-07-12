@@ -1730,6 +1730,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 
 void EditorWidget::setHitText(string const &t, bool scrollToHit)
 {
+  TRACE("sar", "EW::setHitText: t=\"" << t << "\" scroll=" << scrollToHit);
   m_hitText = t;
 
   if (scrollToHit) {

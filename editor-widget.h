@@ -22,6 +22,7 @@
 
 class IncSearch;                       // incsearch.h
 class QtBDFFont;                       // qtbdffont.h
+class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
 class StyleDB;                         // styledb.h
 
@@ -49,6 +50,9 @@ class EditorWidget
   // 'docFile', 'selLowLine', etc.  I think IncSearch should be able
   // to operate on top of TextFileEditor instead of EditorWidget.
   friend class IncSearch;
+
+  // My replacement also needs private access, although somewhat less...
+  friend class SearchAndReplacePanel;
 
 public:     // static data
   // Instances created minus instances destroyed.

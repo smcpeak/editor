@@ -4,13 +4,11 @@ TODOs:
   - draw editor widget cursor differently when does not have focus
 
   - search and replace
-    - Ctrl+W
     - keybinding help
     - case sensitivity
     - whole word?
     - regex...
     - factoring
-    - show/hide the panel
     - history!
 
   - ctrl+i: open file at cursor

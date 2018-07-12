@@ -47,6 +47,10 @@ public:      // funcs
   // Change the Find box text, but do not scroll to first match.
   void setFindText(QString const &text);
 
+  // Set the editor's hit text to what is in m_findBox, and optionally
+  // scroll the first hit into view.
+  void updateEditorHitText(bool scrollToHit);
+
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
 
