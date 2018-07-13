@@ -443,11 +443,20 @@ static void testAsyncNoSignals()
 }
 
 
-CRTester::CRTester(CommandRunner *runner)
+CRTester::CRTester(CommandRunner *runner, Protocol protocol)
   : QEventLoop(),
     m_commandRunner(runner),
-    m_state(0)
-{}
+    m_protocol(protocol),
+    m_outputState(0),
+    m_errorState(0)
+{
+  QObject::connect(runner, &CommandRunner::signal_outputLineReady,
+                   this,          &CRTester::slot_outputLineReady);
+  QObject::connect(runner, &CommandRunner::signal_errorLineReady,
+                   this,          &CRTester::slot_errorLineReady);
+  QObject::connect(runner, &CommandRunner::signal_processTerminated,
+                   this,          &CRTester::slot_processTerminated);
+}
 
 CRTester::~CRTester()
 {}
@@ -457,21 +466,48 @@ void CRTester::slot_outputLineReady() NOEXCEPT
 {
   while (m_commandRunner->hasOutputLine()) {
     QString line = m_commandRunner->getOutputLine();
-    switch (m_state) {
-      case 0:
-        assert(line == "hello\n");
-        m_commandRunner->putInputData("second line\n");
-        m_state++;
+    switch (m_protocol) {
+      case P_CAT:
+        switch (m_outputState) {
+          case 0:
+            assert(line == "hello\n");
+            m_commandRunner->putInputData("second line\n");
+            m_outputState++;
+            break;
+
+          case 1:
+            assert(line == "second line\n");
+            m_commandRunner->closeInputChannel();
+            m_outputState++;
+            break;
+
+          default:
+            assert("!not state 1 or 0");
+            break;
+        }
         break;
 
-      case 1:
-        assert(line == "second line\n");
-        m_commandRunner->closeInputChannel();
-        m_state++;
+      case P_ECHO:
+        switch (m_outputState) {
+          case 0:
+            assert(line == "stdout1\n");
+            m_commandRunner->putInputData("dummy value\n");
+            m_outputState++;
+            break;
+
+          case 1:
+            assert(line == "stdout2\n");
+            m_outputState++;
+            break;
+
+          default:
+            assert(!"bad state");
+            break;
+        }
         break;
 
       default:
-        assert("!not state 1 or 0");
+        assert(!"bad protocol");
         break;
     }
   }
@@ -480,7 +516,36 @@ void CRTester::slot_outputLineReady() NOEXCEPT
 
 void CRTester::slot_errorLineReady() NOEXCEPT
 {
-  assert(!"should not be any error data");
+  while (m_commandRunner->hasErrorLine()) {
+    QString line = m_commandRunner->getErrorLine();
+    switch (m_protocol) {
+      case P_CAT:
+        assert(!"should not be any error data");
+        break;
+
+      case P_ECHO:
+        switch (m_errorState) {
+          case 0:
+            assert(line == "stderr1\n");
+            m_errorState++;
+            break;
+
+          case 1:
+            assert(line == "stderr2\n");
+            m_errorState++;
+            break;
+
+          default:
+            assert(!"bad state");
+            break;
+        }
+        break;
+
+      default:
+        assert(!"bad protocol");
+        break;
+    }
+  }
 }
 
 
@@ -498,15 +563,7 @@ void CRTester::slot_processTerminated() NOEXCEPT
 static void testAsyncWithSignals()
 {
   CommandRunner cr;
-  CRTester tester(&cr);
-
-  // Connect signals to slots.
-  QObject::connect(&cr, &CommandRunner::signal_outputLineReady,
-                   &tester,    &CRTester::slot_outputLineReady);
-  QObject::connect(&cr, &CommandRunner::signal_errorLineReady,
-                   &tester,    &CRTester::slot_errorLineReady);
-  QObject::connect(&cr, &CommandRunner::signal_processTerminated,
-                   &tester,    &CRTester::slot_processTerminated);
+  CRTester tester(&cr, CRTester::P_CAT);
 
   cr.setProgram("cat");
   cr.startAsynchronous();
@@ -518,6 +575,27 @@ static void testAsyncWithSignals()
 
   // This is partially redundant with tests in
   // CRTester::slot_processTerminated, but that's ok.
+  xassert(!cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  xassert(!cr.getFailed());
+  xassert(cr.getExitCode() == 0);
+}
+
+
+static void testAsyncBothOutputs()
+{
+  CommandRunner cr;
+  CRTester tester(&cr, CRTester::P_ECHO);
+
+  cr.setProgram("sh");
+  cr.setArguments(QStringList() << "-c" <<
+    "echo stdout1; echo stderr1 1>&2; read dummy; "
+    "echo stdout2; echo stderr2 1>&2");
+  cr.startAsynchronous();
+
+  tester.exec();
+
   xassert(!cr.isRunning());
   xassert(!cr.hasOutputData());
   xassert(!cr.hasErrorData());
@@ -553,6 +631,7 @@ static void entry(int argc, char **argv)
   testWorkingDirectory();
   testAsyncNoSignals();
   testAsyncWithSignals();
+  testAsyncBothOutputs();
 
   testMiscDiagnostics();
 

@@ -16,15 +16,30 @@
 class CRTester : public QEventLoop {
   Q_OBJECT
 
+public:      // types
+  // Which test "protocol", i.e., expected inputs and outputs, are we
+  // using?
+  enum Protocol {
+    P_CAT,
+    P_ECHO,
+  };
+
 public:      // data
   // Runner we are monitoring.
   RCSerf<CommandRunner> m_commandRunner;
 
-  // Where we are in the planned test sequence.
-  int m_state;
+  // Protocol in use.
+  Protocol m_protocol;
+
+  // Where we are in the planned test sequence of stdout output in
+  // 'm_protocol'.
+  int m_outputState;
+
+  // And for stderr.
+  int m_errorState;
 
 public:      // funcs
-  CRTester(CommandRunner *runner);
+  CRTester(CommandRunner *runner, Protocol protocol);
   ~CRTester();
 
 public Q_SLOTS:
