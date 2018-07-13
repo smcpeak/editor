@@ -1,25 +1,35 @@
 
 TODOs:
-  - parenthesis balancing, and Alt-[/] to find matching delimiter
-
   - run command to generate entire file; git annotate!
+    - shell
+      - put a panel on the bottom for input line that will be passed
+        to the child process
     - git diff
     - git show
     - grep
     - compilation mode
 
+  - undo history is never truncated... I should add something to check
+    for excessive memory usage over time
+
   - allow Tab character; issue is rendering support
   - handling of files with CRLF line endings
+  - parenthesis balancing, and Alt-[/] to find matching delimiter
   - mode to show line numbers in left margin
   - multiple copy+paste strings
+
+  - better vertical scrollbar
+    - graphically depict entire file's contents?
 
   - ctrl+i: open file at cursor
     - recognize file:line syntax
   - search and replace
+    - command to jump to next/prev match w/o going back into panel
     - allow F2? Ctrl+O? Ctrl+I?
     - case sensitivity
     - whole word?
     - regex...
+      - needs redesign of how the matching algorithm works
     - history!
     - better feedback on search: number of hits, at first/last/only/none
 
