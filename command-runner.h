@@ -37,7 +37,11 @@ private:     // data
   // True if we already did 'm_process.kill()'.
   bool m_killedProcess;
 
-  // Data to be fed to the process on standard input.
+  // True if the 'startAndWait' was used to start the process.
+  bool m_synchronous;
+
+  // Queue of data to be fed to the process on standard input.  The
+  // bytes still in this array have not yet been sent.
   QByteArray m_inputData;
 
   // Number of bytes from 'm_input' that have been written to the
@@ -45,7 +49,8 @@ private:     // data
   int m_bytesWritten;
 
   // Collected data that the process has written to its standard output.
-  // This grows over time as more data is written.
+  // This grows over time as more data is written.  It is emptied by
+  // 'takeOutputData()'.
   QByteArray m_outputData;
 
   // And what it has written to standard output.
@@ -70,7 +75,7 @@ private:     // data
   // If not 'm_failed', this has the exit code.
   int m_exitCode;
 
-protected:
+protected:   // funcs
   // Set m_failed to true with the given reasons and stop the event
   // loop.  But if m_failed is already true, disregard.
   void setFailed(QProcess::ProcessError pe, QString const &msg);
@@ -78,34 +83,20 @@ protected:
   // Stop the event loop with 'code' if it is running.
   void stopEventLoop(int code);
 
+  // Called when the timer expires.
+  virtual void timerEvent(QTimerEvent *event) override;
+
   // Kill the process if we haven't done so already.
   void killProcess();
 
   // Send some data to the process on its input channel.
   void sendData();
 
-  // Called when the timer expires.
-  virtual void timerEvent(QTimerEvent *event) override;
-
-protected Q_SLOTS:
-  // Handlers for signals emitted by QProcess.
-  void on_errorOccurred(QProcess::ProcessError error);
-  void on_finished(int exitCode, QProcess::ExitStatus exitStatus);
-  void on_readyReadStandardError();
-  void on_readyReadStandardOutput();
-  void on_started();
-  void on_stateChanged(QProcess::ProcessState newState);
-  void on_aboutToClose();
-  void on_bytesWritten(qint64 bytes);
-  void on_channelBytesWritten(int channel, qint64 bytes);
-  void on_channelReadyRead(int channel);
-  void on_readChannelFinished();
-  void on_readyRead();
-
 public:      // funcs
   CommandRunner();
   virtual ~CommandRunner();
 
+  // --------------------- starting the process ----------------------
   // Specify the program to run.  This is required before invoking
   // 'start'.  If this is does not contain any path separators, it will
   // be looked up in the PATH environment variable.
@@ -135,6 +126,7 @@ public:      // funcs
   // is the current directory of the parent.
   void setWorkingDirectory(QString const &dir);
 
+  // ------------------- synchronous interface ---------------------
   // Specify what to pass on standard input.  Default is nothing.
   void setInputData(QByteArray const &data);
 
@@ -149,6 +141,7 @@ public:      // funcs
   // Similar for standard error.
   QByteArray const &getErrorData() const { return m_errorData; }
 
+  // ------------------- process exit result -----------------------
   // Process disposition getters.  See comments on respective fields.
   bool getFailed() const
     { return m_failed; }
@@ -158,6 +151,58 @@ public:      // funcs
     { xassert(m_failed); return m_processError; }
   int getExitCode() const
     { xassert(!m_failed); return m_exitCode; }
+
+  // ------------------- asynchronous interface --------------------
+  // Start the process and return immediately while it runs in the
+  // background.
+  void startAsynchronous();
+
+  // Write some data to the child's standard input.
+  //
+  // It seems that Qt will buffer an arbitrarily large amount of input
+  // data with no way to tell whether the process has consumed it.
+  void putInputData(QByteArray const &input);
+
+  // Close the standard input channel.  Once this is called, no more
+  // data should be passed to 'putInputData'.  Any data already
+  // queued will be sent to the process before the channel is closed.
+  void closeInputChannel();
+
+  // True if the child has written some data to its standard output.
+  bool hasOutputData() const;
+
+  // Get that data, destructively removing it from the output queue.  If
+  // this is called while 'hasOutputData()' is false, it will simply
+  // return an empty array.
+  QByteArray takeOutputData();
+
+  // True if there is stderr data.
+  bool hasErrorData() const;
+
+  // Get the stderr data.
+  QByteArray takeErrorData();
+
+  // ---------------------- process status -------------------------
+  // Return true if the process has started and not terminated.  Only
+  // once it terminates are the process exit result functions
+  // meaningful.
+  bool isRunning() const;
+
+  // -------------------------- slots ------------------------------
+protected Q_SLOTS:
+  // Handlers for signals emitted by QProcess.
+  void on_errorOccurred(QProcess::ProcessError error);
+  void on_finished(int exitCode, QProcess::ExitStatus exitStatus);
+  void on_readyReadStandardError();
+  void on_readyReadStandardOutput();
+  void on_started();
+  void on_stateChanged(QProcess::ProcessState newState);
+  void on_aboutToClose();
+  void on_bytesWritten(qint64 bytes);
+  void on_channelBytesWritten(int channel, qint64 bytes);
+  void on_channelReadyRead(int channel);
+  void on_readChannelFinished();
+  void on_readyRead();
 };
 
 

@@ -338,6 +338,105 @@ static void testMiscDiagnostics()
 }
 
 
+// An event loop and a timer so I can easily pump the event queue for
+// a certain amount of time.
+//
+// TODO: Move to smqtutil.
+class TimerEventLoop : public QEventLoop {
+private:     // data
+  // Running timer or 0 if none.
+  int m_timerId;
+
+protected:   // funcs
+  // QObject methods.
+  virtual void timerEvent(QTimerEvent *Event) OVERRIDE;
+
+  // Stop the timer if it is running.
+  void stopTimerIf();
+
+public:      // funcs
+  TimerEventLoop()
+    : m_timerId(0)
+  {}
+
+  // Wait, while pumping the event queue, for 'msecs'.
+  void waitForMS(int msecs);
+};
+
+void TimerEventLoop::timerEvent(QTimerEvent *Event)
+{
+  // Stop the event loop.
+  this->exit(0);
+
+  this->stopTimerIf();
+}
+
+void TimerEventLoop::stopTimerIf()
+{
+  if (m_timerId != 0) {
+    this->killTimer(m_timerId);
+    m_timerId = 0;
+  }
+}
+
+void TimerEventLoop::waitForMS(int msecs)
+{
+  this->stopTimerIf();
+
+  m_timerId = this->startTimer(msecs);
+  xassert(m_timerId != 0);
+
+  // Start the event loop.
+  this->exec();
+}
+
+
+static void sleepBriefly()
+{
+  TimerEventLoop eventLoop;
+  eventLoop.waitForMS(200);
+}
+
+
+// Running a program asynchronously and not using any signals, just
+// waiting and polling.
+static void testAsyncNoSignals()
+{
+  CommandRunner cr;
+  cr.setProgram("cat");
+  cr.startAsynchronous();
+
+  sleepBriefly();
+  xassert(cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+
+  cr.putInputData(QByteArray("hello\n"));
+  sleepBriefly();
+  xassert(cr.isRunning());
+  xassert(cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  QByteArray output = cr.takeOutputData();
+  xassert(output == QByteArray("hello\n"));
+
+  cr.putInputData(QByteArray("this is a second line\n"));
+  sleepBriefly();
+  xassert(cr.isRunning());
+  xassert(cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  output = cr.takeOutputData();
+  xassert(output == QByteArray("this is a second line\n"));
+
+  cr.closeInputChannel();
+  sleepBriefly();
+  xassert(!cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  xassert(!cr.getFailed());
+  xassert(cr.getExitCode() == 0);
+}
+
+
 static void entry(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -363,6 +462,7 @@ static void entry(int argc, char **argv)
   testLargeData2(false);
   testLargeData2(true);
   testWorkingDirectory();
+  testAsyncNoSignals();
 
   testMiscDiagnostics();
 

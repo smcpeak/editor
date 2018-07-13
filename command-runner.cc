@@ -35,6 +35,7 @@ CommandRunner::CommandRunner()
     m_hasProgramName(false),
     m_closedWriteChannel(false),
     m_killedProcess(false),
+    m_synchronous(false),
     m_inputData(),
     m_bytesWritten(0),
     m_outputData(),
@@ -224,6 +225,7 @@ void CommandRunner::startAndWait()
   // This function can only be used once per object.
   xassert(!m_startInvoked);
   m_startInvoked = true;
+  m_synchronous = true;
 
   // Start the timer.
   m_timerId = this->startTimer(TIME_LIMIT_MS);
@@ -262,12 +264,10 @@ void CommandRunner::sendData()
   // QProcess::write will accept arbitrarily large amounts of data
   // at a time, but I want to limit it in order to better exercise
   // the mechanism that reads in chunks.
-  int maxLen = min(m_inputData.size() - m_bytesWritten, 0x2000);
+  int maxLen = min(m_inputData.size(), 0x2000);
 
-  int len = m_process.write(
-    m_inputData.constData() + m_bytesWritten,
-    maxLen);
-  TRACE_CR("sendData: write(offset=" << m_bytesWritten <<
+  int len = m_process.write(m_inputData.constData(), maxLen);
+  TRACE_CR("sendData: write(written=" << m_bytesWritten <<
            ", maxLen=" << maxLen << "): len=" << len);
 
   if (len < 0) {
@@ -281,24 +281,106 @@ void CommandRunner::sendData()
   }
 
   else {
+    xassert(len <= m_inputData.size());
     m_bytesWritten += len;
-    xassert(m_bytesWritten <= m_inputData.size());
-    if (m_bytesWritten == m_inputData.size()) {
-      if (m_closedWriteChannel) {
-        // I do not know that it would be a problem to close it more
-        // than once, but that seems inelegant.
-        TRACE_CR("sendData: write channel closed already");
-      }
-      else {
-        TRACE_CR("sendData: closing write channel");
-        m_process.closeWriteChannel();
-        m_closedWriteChannel = true;
+
+    // Remove the sent data from m_inputData.
+    m_inputData.remove(0, len);
+
+    if (m_synchronous) {
+      // Check for being done writing.
+      if (m_inputData.isEmpty()) {
+        this->closeInputChannel();
       }
     }
   }
 }
 
 
+void CommandRunner::startAsynchronous()
+{
+  // The program name must have been set.
+  xassert(m_hasProgramName);
+
+  TRACE_CR("startAsync: cmd: " << toString(m_process.program()));
+  if (!m_process.arguments().isEmpty()) {
+    TRACE_CR("startAsync: args: " << toString(m_process.arguments().join(' ')));
+  }
+
+  // This function can only be used once per object.
+  xassert(!m_startInvoked);
+  m_startInvoked = true;
+  m_synchronous = false;     // Just for clarity; it already is false.
+
+  // Begin running the child process.
+  m_process.start();
+
+  if (m_failed) {
+    TRACE_CR("startAsync: process could not start");
+    return;
+  }
+}
+
+
+void CommandRunner::putInputData(QByteArray const &input)
+{
+  m_inputData.append(input);
+  this->sendData();
+}
+
+
+void CommandRunner::closeInputChannel()
+{
+  if (m_closedWriteChannel) {
+    // I do not know that it would be a problem to close it more
+    // than once, but that seems inelegant.
+    TRACE_CR("closeInputChannel: write channel closed already");
+  }
+  else {
+    TRACE_CR("closeInputChannel: closing write channel");
+    m_process.closeWriteChannel();
+    m_closedWriteChannel = true;
+  }
+}
+
+
+bool CommandRunner::hasOutputData() const
+{
+  return !m_outputData.isEmpty();
+}
+
+
+QByteArray CommandRunner::takeOutputData()
+{
+  QByteArray ret(m_outputData);
+  m_outputData.clear();
+  return ret;
+}
+
+
+bool CommandRunner::hasErrorData() const
+{
+  return !m_errorData.isEmpty();
+}
+
+
+QByteArray CommandRunner::takeErrorData()
+{
+  QByteArray ret(m_errorData);
+  m_errorData.clear();
+  return ret;
+}
+
+
+bool CommandRunner::isRunning() const
+{
+  // From my perspective, QProcess::Starting and QProcess::Running are
+  // the same.
+  return (m_process.state() != QProcess::NotRunning);
+}
+
+
+// ---------------------------- slots ------------------------------
 static char const *toString(QProcess::ProcessError error)
 {
   switch (error) {
