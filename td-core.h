@@ -51,20 +51,20 @@ private:     // data
   // This array is the spine of the document.  Every element is either
   // NULL, meaning a blank line, or is an owner pointer to a
   // '\n'-terminated array of chars that represent the line's contents.
-  GapArray<char*> lines;
+  GapArray<char*> m_lines;
 
   // the most-recently edited line number, or -1 to mean that
   // no line's contents are stored
-  int recent;
+  int m_recent;
 
   // if recent != -1, then this holds the contents of that line,
   // and lines[recent] is NULL
-  GapArray<char> recentLine;
+  GapArray<char> m_recentLine;
 
   // length of the longest line this file has ever had; this is
   // my poor-man's substitute for a proper interval map, etc., to
   // be able to answer the 'maxLineLength()' query
-  int longestLengthSoFar;
+  int m_longestLengthSoFar;
 
   // invariants:
   //   - recent >= -1
@@ -77,7 +77,7 @@ private:     // data
   // to declare, through its signature, that it does not modify the
   // document on which it operates, yet it needs to make itself an
   // observer of that document.
-  mutable RCSerfList<TextDocumentObserver> observers;
+  mutable RCSerfList<TextDocumentObserver> m_observers;
 
 private:     // funcs
   // strlen, but NULL yields 0 and '\n' is terminator
@@ -112,7 +112,7 @@ public:    // funcs
 
   // ---------------------- document shape ------------------------
   // # of lines stored; always at least 1
-  int numLines() const { return lines.length(); }
+  int numLines() const { return m_lines.length(); }
 
   // length of a given line, not including the '\n'
   int lineLength(int line) const;
@@ -127,7 +127,7 @@ public:    // funcs
   // Maximum length of a line.  TODO: Implement this properly (right
   // now it just uses the length of the longest line ever seen, even
   // if that line is subsequently deleted).
-  int maxLineLength() const { return longestLengthSoFar; }
+  int maxLineLength() const { return m_longestLengthSoFar; }
 
   // Number of lines in the file as a user would typically view it: if
   // the file ends in a newline, then return the number of newlines.

@@ -191,7 +191,7 @@ void OpenFilesDialog::repopulateTable()
     // Filename.
     {
       stringBuilder sb;
-      sb << doc->filename;
+      sb << doc->m_filename;
       if (doc->unsavedChanges()) {
         sb << " *";
       }
@@ -228,7 +228,7 @@ FileTextDocument *OpenFilesDialog::runDialog()
       int r = idx.row();
       if (0 <= r && r < m_docList->numFiles()) {
         FileTextDocument *doc = m_docList->getFileAt(r);
-        TRACE("OpenFilesDialog", "runDialog: returning: " << doc->filename);
+        TRACE("OpenFilesDialog", "runDialog: returning: " << doc->m_filename);
         return doc;
       }
     }
@@ -275,7 +275,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
         int r = index.row();
         if (0 <= r && r < m_docList->numFiles()) {
           FileTextDocument *doc = m_docList->getFileAt(r);
-          TRACE("OpenFilesDialog", "  toClose: " << doc->filename);
+          TRACE("OpenFilesDialog", "  toClose: " << doc->m_filename);
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
             someHaveUnsavedChanges = true;
@@ -301,7 +301,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
   // Close the files.
   for (int i=0; i < docsToClose.length(); i++) {
     FileTextDocument *doc = docsToClose[i];
-    TRACE("OpenFilesDialog", "  removeFile: " << doc->filename);
+    TRACE("OpenFilesDialog", "  removeFile: " << doc->m_filename);
     m_docList->removeFile(doc);
     delete doc;
   }

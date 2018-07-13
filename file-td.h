@@ -37,19 +37,19 @@ public:      // static data
 
 private:     // data
   // True if there is a hotkey the user can use to jump to this buffer.
-  bool hasHotkeyDigit;
+  bool m_hasHotkeyDigit;
 
   // Digit the user can press Alt with to jump to this buffer, if
   // 'hasHotkeyDigit'.  It is a number in [0,9].
-  int hotkeyDigit;
+  int m_hotkeyDigit;
 
 public:      // data
   // name of file being edited
-  string filename;
+  string m_filename;
 
   // When true, 'filename' is just a meaningless placeholder; there is
   // no file associated with this content yet.
-  bool isUntitled;
+  bool m_isUntitled;
 
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
@@ -58,23 +58,23 @@ public:      // data
   // although there is never a reason to explicitly check for that
   // since we have 'isUntitled' for the former, and for the latter, we
   // always try to stat() the file before comparing its timestamp.
-  int64_t lastFileTimestamp;
+  int64_t m_lastFileTimestamp;
 
   // title of the buffer; this will usually be similar
   // to the filename, but perhaps only the last part of
   // the fully-qualified path name, etc.
-  string title;
+  string m_title;
 
   // Numeric identifier for this buffer.  This is used to identify
   // it in the Window menu.
-  int const windowMenuId;
+  int const m_windowMenuId;
 
   // current highlighter; clients can come in and replace the
   // highlighter, but it must always be the case that the
   // highlighter is attached to 'this' buffer (because it's allowed
   // to maintain internal incremental state about the buffer
   // contents)
-  Highlighter *highlighter;      // (nullable owner)
+  Highlighter *m_highlighter;      // (nullable owner)
 
 public:      // funcs
   FileTextDocument();
@@ -82,7 +82,7 @@ public:      // funcs
 
   // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.
-  bool hasHotkey() const { return this->hasHotkeyDigit; }
+  bool hasHotkey() const { return this->m_hasHotkeyDigit; }
 
   // Get the hotkey digit in [0,9].  Asserts 'hasHotkey()'.
   int getHotkeyDigit() const;

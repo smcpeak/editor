@@ -123,15 +123,15 @@ FileTextDocument *GlobalState::createNewFile()
   FileTextDocument *b = new FileTextDocument();
 
   // Come up with a unique "untitled" name.
-  b->filename = "untitled.txt";
-  b->isUntitled = true;
+  b->m_filename = "untitled.txt";
+  b->m_isUntitled = true;
   int n = 1;
-  while (this->hasFileWithName(b->filename)) {
+  while (this->hasFileWithName(b->m_filename)) {
     n++;
-    b->filename = stringb("untitled" << n << ".txt");
+    b->m_filename = stringb("untitled" << n << ".txt");
   }
 
-  b->title = b->filename;
+  b->m_title = b->m_filename;
   trackNewDocumentFile(b);
   return b;
 }

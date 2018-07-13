@@ -2,7 +2,7 @@
   "drawFileName": true,
   "entities": [
     {
-      "attributes": "lines: string[]\nobservers: TextDocumentObserver[]\n(plus some caches)\n",
+      "attributes": "m_lines: string[]\nm_observers: TextDocumentObserver[]\n(plus some caches)\n",
       "loc": {
         "x": 650,
         "y": 40
@@ -14,7 +14,7 @@
       }
     },
     {
-      "attributes": "core: TextDocumentCore\nhistory: HE_group\nhistoryIndex: int\nsavedHistoryIndex: int\ngroupStack: HE_group[]\n",
+      "attributes": "m_core: TextDocumentCore\nm_history: HE_group\nm_historyIndex: int\nm_savedHistoryIndex: int\nm_groupStack: HE_group[]\n",
       "loc": {
         "x": 650,
         "y": 150
@@ -26,14 +26,14 @@
       }
     },
     {
-      "attributes": "hotkeyDigit: int?\nfilename: string\nlastFileTimestamp: int\ntitle: string\nwindowMenuId: int\nhighlighter: Highlighter\n",
+      "attributes": "m_hotkeyDigit: int?\nm_filename: string\nm_isUntitled: bool\nm_lastFileTimestamp: int\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\n",
       "loc": {
         "x": 650,
         "y": 295
       },
       "name": "FileTextDocument",
       "size": {
-        "h": 130,
+        "h": 135,
         "w": 250
       }
     },
@@ -50,7 +50,7 @@
       }
     },
     {
-      "attributes": "editorWidget: EditorWidget\nglobalState: GlobalState\nisearch: IncSearch\n(pointers to other subwidgets)\n",
+      "attributes": "m_globalState: GlobalState\nm_editorWidget: EditorWidget\n(pointers to other subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 385
@@ -236,7 +236,7 @@
     },
     {
       "end": {"entityRef": 7},
-      "label": "observers[]",
+      "label": "m_observers[]",
       "start": {"entityRef": 0}
     },
     {
@@ -273,7 +273,7 @@
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 0
       },
-      "label": "core",
+      "label": "m_core",
       "start": {"entityRef": 1}
     },
     {

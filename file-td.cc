@@ -24,15 +24,14 @@ CHECK_OBJECT_COUNT(FileTextDocument);
 
 FileTextDocument::FileTextDocument()
   : TextDocument(),
-    hasHotkeyDigit(false),
-    hotkeyDigit(0),
-    filename(),
-    isUntitled(true),
-    lastFileTimestamp(0),
-    title(),
-    windowMenuId(s_nextWindowMenuId++),
-    //changed(false),
-    highlighter(NULL)
+    m_hasHotkeyDigit(false),
+    m_hotkeyDigit(0),
+    m_filename(),
+    m_isUntitled(true),
+    m_lastFileTimestamp(0),
+    m_title(),
+    m_windowMenuId(s_nextWindowMenuId++),
+    m_highlighter(NULL)
 {
   FileTextDocument::s_objectCount++;
 }
@@ -40,8 +39,8 @@ FileTextDocument::FileTextDocument()
 FileTextDocument::~FileTextDocument()
 {
   FileTextDocument::s_objectCount--;
-  if (highlighter) {
-    delete highlighter;
+  if (m_highlighter) {
+    delete m_highlighter;
   }
 }
 
@@ -49,7 +48,7 @@ FileTextDocument::~FileTextDocument()
 int FileTextDocument::getHotkeyDigit() const
 {
   xassert(this->hasHotkey());
-  return this->hotkeyDigit;
+  return this->m_hotkeyDigit;
 }
 
 
@@ -65,31 +64,31 @@ string FileTextDocument::hotkeyDesc() const
 
 void FileTextDocument::clearHotkey()
 {
-  this->hasHotkeyDigit = false;
-  this->hotkeyDigit = 0;
+  this->m_hasHotkeyDigit = false;
+  this->m_hotkeyDigit = 0;
 }
 
 
 void FileTextDocument::setHotkeyDigit(int digit)
 {
   xassert(0 <= digit && digit <= 9);
-  this->hasHotkeyDigit = true;
-  this->hotkeyDigit = digit;
+  this->m_hasHotkeyDigit = true;
+  this->m_hotkeyDigit = digit;
 }
 
 
 void FileTextDocument::readFile()
 {
-  xassert(!this->isUntitled);
-  this->TextDocument::readFile(this->filename);
+  xassert(!this->m_isUntitled);
+  this->TextDocument::readFile(this->m_filename);
   this->refreshModificationTime();
 }
 
 
 void FileTextDocument::writeFile()
 {
-  xassert(!this->isUntitled);
-  this->TextDocument::writeFile(this->filename);
+  xassert(!this->m_isUntitled);
+  this->TextDocument::writeFile(this->m_filename);
   this->noUnsavedChanges();
   this->refreshModificationTime();
 }
@@ -97,8 +96,8 @@ void FileTextDocument::writeFile()
 
 bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
-  bool ret = getFileModificationTime(this->filename.c_str(), modTime);
-  TRACE("modtime", "on-disk ts for " << this->filename <<
+  bool ret = getFileModificationTime(this->m_filename.c_str(), modTime);
+  TRACE("modtime", "on-disk ts for " << this->m_filename <<
                    " is " << modTime);
   return ret;
 }
@@ -106,7 +105,7 @@ bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 
 bool FileTextDocument::hasStaleModificationTime() const
 {
-  if (this->isUntitled) {
+  if (this->m_isUntitled) {
     // The document is not actually associated with any file, the name
     // is just a placeholder.
     TRACE("modtime", "hasStale: returning false because isUntitled");
@@ -115,7 +114,7 @@ bool FileTextDocument::hasStaleModificationTime() const
 
   int64_t diskTime;
   if (this->getDiskModificationTime(diskTime)) {
-    bool ret = (diskTime != this->lastFileTimestamp);
+    bool ret = (diskTime != this->m_lastFileTimestamp);
     TRACE("modtime", "hasStale: returning " << ret);
     return ret;
   }
@@ -138,10 +137,10 @@ bool FileTextDocument::hasStaleModificationTime() const
 
 void FileTextDocument::refreshModificationTime()
 {
-  TRACE("modtime", "refresh: old ts for " << this->filename <<
-                   " is " << this->lastFileTimestamp);
+  TRACE("modtime", "refresh: old ts for " << this->m_filename <<
+                   " is " << this->m_lastFileTimestamp);
 
-  if (!this->getDiskModificationTime(this->lastFileTimestamp)) {
+  if (!this->getDiskModificationTime(this->m_lastFileTimestamp)) {
     // We ignore the error because we only
     // call this after we have already successfully read the file's
     // contents, so an error here is quite unlikely.  Furthermore, this
@@ -151,8 +150,8 @@ void FileTextDocument::refreshModificationTime()
     // repeatedly bothering the user with spurious errors.
   }
 
-  TRACE("modtime", "refresh: new ts for " << this->filename <<
-                   " is " << this->lastFileTimestamp);
+  TRACE("modtime", "refresh: new ts for " << this->m_filename <<
+                   " is " << this->m_lastFileTimestamp);
 }
 
 

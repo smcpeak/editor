@@ -16,11 +16,11 @@ CHECK_OBJECT_COUNT(TextDocument);
 
 
 TextDocument::TextDocument()
-  : core(),
-    history(),
-    historyIndex(0),
-    savedHistoryIndex(0),
-    groupStack()
+  : m_core(),
+    m_history(),
+    m_historyIndex(0),
+    m_savedHistoryIndex(0),
+    m_groupStack()
 {
   s_objectCount++;
   TRACE("TextDocument",
@@ -40,34 +40,34 @@ TextDocument::~TextDocument()
 
 void TextDocument::clearHistory()
 {
-  historyIndex = 0;
-  savedHistoryIndex = -1;     // no historyIndex is known to correspond to on-disk
-  history.truncate(historyIndex);
-  groupStack.clear();
+  m_historyIndex = 0;
+  m_savedHistoryIndex = -1;     // no historyIndex is known to correspond to on-disk
+  m_history.truncate(m_historyIndex);
+  m_groupStack.clear();
 
-  this->core.notifyUnsavedChangesChange(this);
+  this->m_core.notifyUnsavedChangesChange(this);
 }
 
 
 void TextDocument::clearContentsAndHistory()
 {
   clearHistory();
-  core.clear();
+  m_core.clear();
 }
 
 
 bool TextDocument::unsavedChanges() const
 {
-  if (savedHistoryIndex == historyIndex) {
+  if (m_savedHistoryIndex == m_historyIndex) {
     // It seems there are no unsaved changes, but we also need to check
     // the group stack.  If the group stack is non-empty, then there
     // are changes that haven't been combined and added to the normal
     // history yet.
-    if (!this->groupStack.isEmpty()) {
+    if (!this->m_groupStack.isEmpty()) {
       // Really I should inspect every element of the stack, but my
       // ObjStack class does not allow that.  Anyway, I happen to know
       // that we never push more than one element onto it.
-      HE_group const *g = this->groupStack.topC();
+      HE_group const *g = this->m_groupStack.topC();
       if (g->seqLength() > 0) {
         return true;
       }
@@ -87,11 +87,11 @@ bool TextDocument::unsavedChanges() const
 
 void TextDocument::noUnsavedChanges()
 {
-  this->savedHistoryIndex = this->historyIndex;
+  this->m_savedHistoryIndex = this->m_historyIndex;
 
   // This method is called rarely, there is no problem with sending the
   // notification unconditionally.
-  this->core.notifyUnsavedChangesChange(this);
+  this->m_core.notifyUnsavedChangesChange(this);
 }
 
 
@@ -99,7 +99,7 @@ void TextDocument::readFile(string const &fname)
 {
   // This might throw an exception, but if so, 'core' will be
   // left unmodified.
-  this->core.readFile(fname.c_str());
+  this->m_core.readFile(fname.c_str());
 
   // Clear history after file has been successfully read.
   this->clearHistory();
@@ -109,7 +109,7 @@ void TextDocument::readFile(string const &fname)
 
 void TextDocument::writeFile(string const &fname) const
 {
-  this->core.writeFile(fname.c_str());
+  this->m_core.writeFile(fname.c_str());
 }
 
 
@@ -120,7 +120,7 @@ void TextDocument::insertAt(TextCoord tc, char const *text, int textLen)
     HE_text *e = new HE_text(tc,
                              true /*insertion*/,
                              text, textLen);
-    e->apply(core, false /*reverse*/);
+    e->apply(m_core, false /*reverse*/);
     appendElement(e);
   }
 }
@@ -132,8 +132,8 @@ void TextDocument::deleteAt(TextCoord tc, int count)
     HE_text *e = new HE_text(tc,
                              false /*insertion*/,
                              NULL /*text*/, 0 /*textLen*/);
-    e->computeText(core, count);
-    e->apply(core, false /*reverse*/);
+    e->computeText(m_core, count);
+    e->apply(m_core, false /*reverse*/);
     appendElement(e);
   }
 }
@@ -141,42 +141,42 @@ void TextDocument::deleteAt(TextCoord tc, int count)
 
 void TextDocument::bumpHistoryIndex(int inc)
 {
-  bool equalBefore = (this->historyIndex == this->savedHistoryIndex);
+  bool equalBefore = (this->m_historyIndex == this->m_savedHistoryIndex);
 
-  this->historyIndex += inc;
+  this->m_historyIndex += inc;
 
-  bool equalAfter = (this->historyIndex == this->savedHistoryIndex);
+  bool equalAfter = (this->m_historyIndex == this->m_savedHistoryIndex);
 
   // This is called fairly frequently, so we try to only send the
   // notification when it might matter.
   if (equalBefore != equalAfter) {
-    this->core.notifyUnsavedChangesChange(this);
+    this->m_core.notifyUnsavedChangesChange(this);
   }
 }
 
 
 void TextDocument::appendElement(HistoryElt *e)
 {
-  if (groupStack.isEmpty()) {
+  if (m_groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
-    history.truncate(historyIndex);
-    history.append(e);
+    m_history.truncate(m_historyIndex);
+    m_history.append(e);
     this->bumpHistoryIndex(+1);
   }
   else {
-    groupStack.top()->append(e);
+    m_groupStack.top()->append(e);
   }
 }
 
 
 void TextDocument::beginUndoGroup()
 {
-  groupStack.push(new HE_group);
+  m_groupStack.push(new HE_group);
 }
 
 void TextDocument::endUndoGroup()
 {
-  HE_group *g = groupStack.pop();
+  HE_group *g = m_groupStack.pop();
   if (g->seqLength() >= 2) {
     appendElement(g);
   }
@@ -196,7 +196,7 @@ TextCoord TextDocument::undo()
   xassert(canUndo() && !inUndoGroup());
 
   this->bumpHistoryIndex(-1);
-  return history.applyOne(core, historyIndex, true /*reverse*/);
+  return m_history.applyOne(m_core, m_historyIndex, true /*reverse*/);
 }
 
 
@@ -204,7 +204,7 @@ TextCoord TextDocument::redo()
 {
   xassert(canRedo() && !inUndoGroup());
 
-  TextCoord tc = history.applyOne(core, historyIndex, false /*reverse*/);
+  TextCoord tc = m_history.applyOne(m_core, m_historyIndex, false /*reverse*/);
   this->bumpHistoryIndex(+1);
   return tc;
 }
@@ -212,23 +212,23 @@ TextCoord TextDocument::redo()
 
 void TextDocument::addObserver(TextDocumentObserver *observer)
 {
-  this->core.addObserver(observer);
+  this->m_core.addObserver(observer);
 }
 
 void TextDocument::removeObserver(TextDocumentObserver *observer)
 {
-  this->core.removeObserver(observer);
+  this->m_core.removeObserver(observer);
 }
 
 bool TextDocument::hasObserver(TextDocumentObserver const *observer) const
 {
-  return this->core.hasObserver(observer);
+  return this->m_core.hasObserver(observer);
 }
 
 
 void TextDocument::printHistory(stringBuilder &sb) const
 {
-  history.printWithMark(sb, 0 /*indent*/, historyIndex);
+  m_history.printWithMark(sb, 0 /*indent*/, m_historyIndex);
 }
 
 void TextDocument::printHistory() const

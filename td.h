@@ -22,16 +22,16 @@ public:       // static data
 
 private:      // data
   // The sequence of text lines without any history information.
-  TextDocumentCore core;
+  TextDocumentCore m_core;
 
   // modification history
-  HE_group history;
+  HE_group m_history;
 
   // where are we in that history?  usually,
   // historyIndex==history.seqLength(), meaning we're at the end of the
   // recorded history; undo/redo modifies 'historyIndex' and 'buf' but
   // not 'history'
-  int historyIndex;
+  int m_historyIndex;
 
   // what index in 'history' corresponds to the file's on-disk
   // contents?  the client of this interface has to inform me when
@@ -41,14 +41,14 @@ private:      // data
   // nondestructive actions
   //
   // invariant: -1 <= savedHistoryIndex <= seq.Length()
-  int savedHistoryIndex;
+  int m_savedHistoryIndex;
 
   // stack of open history groups, which will soon be collapsed
   // and added to their parent group, or 'history' for the last
   // (outermost) group; typically this stack is empty, or has
   // just one element between beginGroup() and endGroup(), but
   // I allow for the generality of a stack anyway
-  ObjStack<HE_group> groupStack;
+  ObjStack<HE_group> m_groupStack;
 
 private:     // funcs
   // Change 'historyIndex' by 'inc' and possibly send a notification
@@ -65,22 +65,22 @@ public:      // funcs
 
   // Read-only access to the underlying representation.  Use of this
   // should be unusual.
-  TextDocumentCore const &getCore() const { return core; }
+  TextDocumentCore const &getCore() const { return m_core; }
 
   // ------------------------ query document -----------------------
-  int numLines() const                    { return core.numLines(); }
-  int lineLength(int line) const          { return core.lineLength(line); }
-  bool validCoord(TextCoord tc) const     { return core.validCoord(tc); }
-  TextCoord endCoord() const              { return core.endCoord(); }
-  int maxLineLength() const               { return core.maxLineLength(); }
-  int numLinesExceptFinalEmpty() const    { return core.numLinesExceptFinalEmpty(); }
+  int numLines() const                    { return m_core.numLines(); }
+  int lineLength(int line) const          { return m_core.lineLength(line); }
+  bool validCoord(TextCoord tc) const     { return m_core.validCoord(tc); }
+  TextCoord endCoord() const              { return m_core.endCoord(); }
+  int maxLineLength() const               { return m_core.maxLineLength(); }
+  int numLinesExceptFinalEmpty() const    { return m_core.numLinesExceptFinalEmpty(); }
 
   void getLine(TextCoord tc, char *dest, int destLen) const
-    { return core.getLine(tc, dest, destLen); }
+    { return m_core.getLine(tc, dest, destLen); }
   int countLeadingSpacesTabs(int line) const
-    { return core.countLeadingSpacesTabs(line); }
+    { return m_core.countLeadingSpacesTabs(line); }
   int countTrailingSpacesTabs(int line) const
-    { return core.countTrailingSpacesTabs(line); }
+    { return m_core.countTrailingSpacesTabs(line); }
 
   // ------------------------ global changes ----------------------
   // clear history, leaving only the current buffer contents
@@ -116,12 +116,12 @@ public:      // funcs
 
   // True if we have an open group; note that undo/redo is not allowed
   // in that case, even though canUndo/Redo() may return true.
-  bool inUndoGroup() const    { return groupStack.isNotEmpty(); }
+  bool inUndoGroup() const    { return m_groupStack.isNotEmpty(); }
 
   // True if there is additional history available in the corresponding
   // direction, and hence the operation can be invoked.
-  bool canUndo() const        { return historyIndex > 0; }
-  bool canRedo() const        { return historyIndex < history.seqLength(); }
+  bool canUndo() const        { return m_historyIndex > 0; }
+  bool canRedo() const        { return m_historyIndex < m_history.seqLength(); }
 
   // These return the location at the left edge of the modified text.
   TextCoord undo();
@@ -153,7 +153,7 @@ public:      // funcs
 
   // get statistics about history memory usage
   void historyStats(HistoryStats &stats) const
-    { history.stats(stats); }
+    { m_history.stats(stats); }
   void printHistoryStats() const;
 };
 

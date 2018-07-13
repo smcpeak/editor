@@ -21,14 +21,14 @@
 int TextDocumentCore::s_injectedErrorCountdown = 0;
 
 TextDocumentCore::TextDocumentCore()
-  : lines(),               // empty sequence of lines
-    recent(-1),
-    recentLine(),
-    longestLengthSoFar(0),
-    observers()
+  : m_lines(),               // empty sequence of lines
+    m_recent(-1),
+    m_recentLine(),
+    m_longestLengthSoFar(0),
+    m_observers()
 {
   // always at least one line; see comments at end of td-core.h
-  lines.insert(0 /*line*/, NULL /*value*/);
+  m_lines.insert(0 /*line*/, NULL /*value*/);
 }
 
 TextDocumentCore::~TextDocumentCore()
@@ -40,11 +40,11 @@ TextDocumentCore::~TextDocumentCore()
   //
   // This uses ordinary 'assert' rather than 'xassert' to avoid
   // throwing an exception from within a destructor.
-  assert(this->observers.isEmpty());
+  assert(this->m_observers.isEmpty());
 
   // deallocate the non-NULL lines
-  for (int i=0; i < lines.length(); i++) {
-    char *p = lines.get(i);
+  for (int i=0; i < m_lines.length(); i++) {
+    char *p = m_lines.get(i);
     if (p) {
       delete[] p;
     }
@@ -54,50 +54,50 @@ TextDocumentCore::~TextDocumentCore()
 
 void TextDocumentCore::detachRecent()
 {
-  if (recent == -1) { return; }
+  if (m_recent == -1) { return; }
 
-  xassert(lines.get(recent) == NULL);
+  xassert(m_lines.get(m_recent) == NULL);
 
   // copy 'recentLine' into lines[recent]
-  int len = recentLine.length();
+  int len = m_recentLine.length();
   if (len) {
     char *p = new char[len+1];
     p[len] = '\n';
-    recentLine.writeIntoArray(p, len);
+    m_recentLine.writeIntoArray(p, len);
     xassert(p[len] == '\n');   // may as well check for overrun..
 
-    lines.set(recent, p);
+    m_lines.set(m_recent, p);
 
-    recentLine.clear();
+    m_recentLine.clear();
   }
   else {
     // it's already NULL, nothing needs to be done
   }
 
-  recent = -1;
+  m_recent = -1;
 }
 
 
 void TextDocumentCore::attachRecent(TextCoord tc, int insLength)
 {
-  if (recent == tc.line) { return; }
+  if (m_recent == tc.line) { return; }
   detachRecent();
 
-  char const *p = lines.get(tc.line);
+  char const *p = m_lines.get(tc.line);
   int len = bufStrlen(p);
   if (len) {
     // copy contents into 'recentLine'
-    recentLine.fillFromArray(p, len, tc.column, insLength);
+    m_recentLine.fillFromArray(p, len, tc.column, insLength);
 
     // deallocate the source
     delete[] p;
-    lines.set(tc.line, NULL);
+    m_lines.set(tc.line, NULL);
   }
   else {
-    xassert(recentLine.length() == 0);
+    xassert(m_recentLine.length() == 0);
   }
 
-  recent = tc.line;
+  m_recent = tc.line;
 }
 
 
@@ -105,11 +105,11 @@ int TextDocumentCore::lineLength(int line) const
 {
   bc(line);
 
-  if (line == recent) {
-    return recentLine.length();
+  if (line == m_recent) {
+    return m_recentLine.length();
   }
   else {
-    return bufStrlen(lines.get(line));
+    return bufStrlen(m_lines.get(line));
   }
 }
 
@@ -134,11 +134,11 @@ void TextDocumentCore::getLine(TextCoord tc, char *dest, int destLen) const
   bc(tc.line);
   xassert(destLen >= 0);
 
-  if (tc.line == recent) {
-    recentLine.writeIntoArray(dest, destLen, tc.column);
+  if (tc.line == m_recent) {
+    m_recentLine.writeIntoArray(dest, destLen, tc.column);
   }
   else {
-    char const *p = lines.get(tc.line);
+    char const *p = m_lines.get(tc.line);
     int len = bufStrlen(p);
     xassert(0 <= tc.column && tc.column + destLen <= len);
 
@@ -183,14 +183,14 @@ int TextDocumentCore::numLinesExceptFinalEmpty() const
 void TextDocumentCore::insertLine(int const line)
 {
   // insert a blank line
-  lines.insert(line, NULL /*value*/);
+  m_lines.insert(line, NULL /*value*/);
 
   // adjust which line is 'recent'
-  if (recent >= line) {
-    recent++;
+  if (m_recent >= line) {
+    m_recent++;
   }
 
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeInsertLine(*this, line);
   }
 }
@@ -198,26 +198,26 @@ void TextDocumentCore::insertLine(int const line)
 
 void TextDocumentCore::deleteLine(int const line)
 {
-  if (line == recent) {
-    xassert(recentLine.length() == 0);
+  if (line == m_recent) {
+    xassert(m_recentLine.length() == 0);
     detachRecent();
   }
 
   // make sure line is empty
-  xassert(lines.get(line) == NULL);
+  xassert(m_lines.get(line) == NULL);
 
   // make sure we're not deleting the last line
   xassert(numLines() > 1);
 
   // remove the line
-  lines.remove(line);
+  m_lines.remove(line);
 
   // adjust which line is 'recent'
-  if (recent > line) {
-    recent--;
+  if (m_recent > line) {
+    m_recent--;
   }
 
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeDeleteLine(*this, line);
   }
 }
@@ -235,24 +235,24 @@ void TextDocumentCore::insertText(TextCoord const tc,
     }
   #endif
 
-  if (tc.column==0 && lineLength(tc.line)==0 && tc.line!=recent) {
+  if (tc.column==0 && lineLength(tc.line)==0 && tc.line!=m_recent) {
     // setting a new line, can leave 'recent' alone
     char *p = new char[length+1];
     memcpy(p, text, length);
     p[length] = '\n';
-    lines.set(tc.line, p);
+    m_lines.set(tc.line, p);
 
     seenLineLength(length);
   }
   else {
     // use recent
     attachRecent(tc, length);
-    recentLine.insertMany(tc.column, text, length);
+    m_recentLine.insertMany(tc.column, text, length);
 
-    seenLineLength(recentLine.length());
+    seenLineLength(m_recentLine.length());
   }
 
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeInsertText(*this, tc, text, length);
   }
 }
@@ -262,21 +262,21 @@ void TextDocumentCore::deleteText(TextCoord const tc, int const length)
 {
   bctc(tc);
 
-  if (tc.column==0 && length==lineLength(tc.line) && tc.line!=recent) {
+  if (tc.column==0 && length==lineLength(tc.line) && tc.line!=m_recent) {
     // removing entire line, no need to move 'recent'
-    char *p = lines.get(tc.line);
+    char *p = m_lines.get(tc.line);
     if (p) {
       delete[] p;
     }
-    lines.set(tc.line, NULL);
+    m_lines.set(tc.line, NULL);
   }
   else {
     // use recent
     attachRecent(tc, 0);
-    recentLine.removeMany(tc.column, length);
+    m_recentLine.removeMany(tc.column, length);
   }
 
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeDeleteText(*this, tc, length);
   }
 }
@@ -288,12 +288,12 @@ void TextDocumentCore::dumpRepresentation() const
 
   // lines
   int L, G, R;
-  lines.getInternals(L, G, R);
+  m_lines.getInternals(L, G, R);
   printf("  lines: L=%d G=%d R=%d, num=%d\n", L,G,R, numLines());
 
   // recent
-  recentLine.getInternals(L, G, R);
-  printf("  recent=%d: L=%d G=%d R=%d, L+R=%d\n", recent, L,G,R, L+R);
+  m_recentLine.getInternals(L, G, R);
+  printf("  recent=%d: L=%d G=%d R=%d, L+R=%d\n", m_recent, L,G,R, L+R);
 
   // line contents
   for (int i=0; i<numLines(); i++) {
@@ -320,12 +320,12 @@ void TextDocumentCore::printMemStats() const
 {
   // lines
   int L, G, R;
-  lines.getInternals(L, G, R);
+  m_lines.getInternals(L, G, R);
   int linesBytes = (L+G+R) * sizeof(char*);
   printf("  lines: L=%d G=%d R=%d, L+R=%d, bytes=%d\n", L,G,R, L+R, linesBytes);
 
   // recent
-  recentLine.getInternals(L, G, R);
+  m_recentLine.getInternals(L, G, R);
   int recentBytes = (L+G+R) * sizeof(char);
   printf("  recentLine: L=%d G=%d R=%d, bytes=%d\n", L,G,R, recentBytes);
 
@@ -335,7 +335,7 @@ void TextDocumentCore::printMemStats() const
   int overheadBytes = 0;
 
   for (int i=0; i<numLines(); i++) {
-    char const *p = lines.get(i);
+    char const *p = m_lines.get(i);
 
     textBytes += bufStrlen(p);
 
@@ -360,8 +360,8 @@ void TextDocumentCore::printMemStats() const
 
 void TextDocumentCore::seenLineLength(int len)
 {
-  if (len > longestLengthSoFar) {
-    longestLengthSoFar = len;
+  if (len > m_longestLengthSoFar) {
+    m_longestLengthSoFar = len;
   }
 }
 
@@ -381,13 +381,13 @@ void TextDocumentCore::clear()
 void TextDocumentCore::swapWith(TextDocumentCore &other) noexcept
 {
   if (this != &other) {
-    swap(this->lines, other.lines);
-    swap(this->recent, other.recent);
-    swap(this->recentLine, other.recentLine);
-    swap(this->longestLengthSoFar, other.longestLengthSoFar);
+    swap(this->m_lines, other.m_lines);
+    swap(this->m_recent, other.m_recent);
+    swap(this->m_recentLine, other.m_recentLine);
+    swap(this->m_longestLengthSoFar, other.m_longestLengthSoFar);
   }
 
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeTotalChange(*this);
   }
 }
@@ -531,16 +531,16 @@ int TextDocumentCore::countLeadingSpacesTabs(int line) const
 {
   bc(line);
 
-  if (line == recent) {
+  if (line == m_recent) {
     int i=0;
-    while (i < recentLine.length() &&
-           isSpaceOrTab(recentLine.get(i))) {
+    while (i < m_recentLine.length() &&
+           isSpaceOrTab(m_recentLine.get(i))) {
       i++;
     }
     return i;
   }
   else {
-    char const *begin = lines.get(line);
+    char const *begin = m_lines.get(line);
     if (!begin) {
       return 0;
     }
@@ -557,16 +557,16 @@ int TextDocumentCore::countTrailingSpacesTabs(int line) const
 {
   bc(line);
 
-  if (line == recent) {
-    int i = recentLine.length();
+  if (line == m_recent) {
+    int i = m_recentLine.length();
     while (i > 0 &&
-           isSpaceOrTab(recentLine.get(i-1))) {
+           isSpaceOrTab(m_recentLine.get(i-1))) {
       i--;
     }
-    return recentLine.length() - i;
+    return m_recentLine.length() - i;
   }
   else {
-    char const *begin = lines.get(line);
+    char const *begin = m_lines.get(line);
     if (!begin) {
       return 0;
     }
@@ -582,23 +582,23 @@ int TextDocumentCore::countTrailingSpacesTabs(int line) const
 
 void TextDocumentCore::addObserver(TextDocumentObserver *observer) const
 {
-  this->observers.appendNewItem(observer);
+  this->m_observers.appendNewItem(observer);
 }
 
 void TextDocumentCore::removeObserver(TextDocumentObserver *observer) const
 {
-  this->observers.removeItem(observer);
+  this->m_observers.removeItem(observer);
 }
 
 bool TextDocumentCore::hasObserver(TextDocumentObserver const *observer) const
 {
-  return this->observers.contains(observer);
+  return this->m_observers.contains(observer);
 }
 
 
 void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
 {
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, observers, iter) {
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeUnsavedChangesChange(doc);
   }
 }

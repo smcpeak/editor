@@ -99,8 +99,8 @@ void TestObserver::expect(NotifyFunction nfunc, FileTextDocument *file)
 static FileTextDocument *add(FileTextDocumentList &dlist, string name)
 {
   FileTextDocument *file = new FileTextDocument;
-  file->filename = name;
-  file->isUntitled = false;
+  file->m_filename = name;
+  file->m_isUntitled = false;
   dlist.addFile(file);
   return file;
 }
@@ -116,7 +116,7 @@ static void testSimple()
   dlist.addObserver(&observer);
 
   FileTextDocument *file0 = dlist.getFileAt(0);
-  xassert(file0->isUntitled);
+  xassert(file0->m_isUntitled);
   xassert(dlist.getFileIndex(file0) == 0);
   xassert(dlist.hasFile(file0));
   xassert(dlist.getFileIndex(NULL) == -1);
@@ -125,7 +125,7 @@ static void testSimple()
   observer.expectEmpty();
 
   FileTextDocument *file1 = dlist.createUntitledFile();
-  xassert(file1->isUntitled);
+  xassert(file1->m_isUntitled);
   xassert(dlist.numFiles() == 2);
   xassert(dlist.getFileIndex(file1) == 1);
 
@@ -171,41 +171,41 @@ static void testAddMoveRemove()
   dlist.addObserver(&observer);
 
   FileTextDocument *file0 = dlist.getFileAt(0);
-  xassert(file0->isUntitled);
+  xassert(file0->m_isUntitled);
   xassert(dlist.getFileIndex(file0) == 0);
   xassert(dlist.getFileIndex(NULL) == -1);
 
   observer.expectEmpty();
 
   FileTextDocument *file1 = add(dlist, "file1");
-  xassert(file1->title == "file1");
+  xassert(file1->m_title == "file1");
   xassert(file1->hasHotkey());
   xassert(dlist.findFileByName("file1") == file1);
   xassert(dlist.findFileByTitle("file1") == file1);
   xassert(dlist.findFileByHotkey(file1->getHotkeyDigit()) == file1);
-  xassert(dlist.findFileByWindowMenuId(file1->windowMenuId) == file1);
+  xassert(dlist.findFileByWindowMenuId(file1->m_windowMenuId) == file1);
   xassert(dlist.findFileByWindowMenuId(-1) == NULL);
 
   observer.expectOnly(NF_ADDED, file1);
 
   FileTextDocument *file2 = add(dlist, "a/file2");
-  xassert(file2->title == "file2");
+  xassert(file2->m_title == "file2");
   xassert(dlist.findFileByName("a/file2") == file2);
   xassert(dlist.findFileByTitle("file2") == file2);
   xassert(dlist.findFileByHotkey(file2->getHotkeyDigit()) == file2);
-  xassert(dlist.findFileByWindowMenuId(file2->windowMenuId) == file2);
+  xassert(dlist.findFileByWindowMenuId(file2->m_windowMenuId) == file2);
 
   observer.expectOnly(NF_ADDED, file2);
 
   // Title uniqueness has to include a directory component.
   FileTextDocument *file3 = add(dlist, "b/file2");
-  xassert(file3->title == "b/file2");
+  xassert(file3->m_title == "b/file2");
 
   observer.expectOnly(NF_ADDED, file3);
 
   // Title uniqueness has to append a digit.
   FileTextDocument *file4 = add(dlist, "file2");
-  xassert(file4->title == "file2:2");
+  xassert(file4->m_title == "file2:2");
 
   observer.expectOnly(NF_ADDED, file4);
 
@@ -268,11 +268,11 @@ static void testCreateUntitled()
 
   FileTextDocument *file1 = dlist.createUntitledFile();
   observer.expectOnly(NF_ADDED, file1);
-  xassert(file1->filename == "untitled2.txt");
+  xassert(file1->m_filename == "untitled2.txt");
 
   FileTextDocument *file2 = dlist.createUntitledFile();
   observer.expectOnly(NF_ADDED, file2);
-  xassert(file2->filename == "untitled3.txt");
+  xassert(file2->m_filename == "untitled3.txt");
 
   // Test 'findUntitledUnmodifiedFile'.
   FileTextDocument *f = dlist.findUntitledUnmodifiedFile();
@@ -282,7 +282,7 @@ static void testCreateUntitled()
   f = dlist.findUntitledUnmodifiedFile();
   xassert(f == file0 || f == file2);
 
-  file2->isUntitled = false;
+  file2->m_isUntitled = false;
   f = dlist.findUntitledUnmodifiedFile();
   xassert(f == file0);
 
@@ -302,11 +302,11 @@ static void testSaveAs()
   dlist.addObserver(&observer);
 
   FileTextDocument *file0 = dlist.getFileAt(0);
-  file0->filename = "a/some-name.txt";
-  file0->isUntitled = false;
+  file0->m_filename = "a/some-name.txt";
+  file0->m_isUntitled = false;
   dlist.assignUniqueTitle(file0);
   observer.expectOnly(NF_ATTRIBUTE, file0);
-  xassert(file0->title == "some-name.txt");
+  xassert(file0->m_title == "some-name.txt");
 
   dlist.removeObserver(&observer);
 }
@@ -386,20 +386,20 @@ static void testColon3()
   dlist.addObserver(&observer);
 
   FileTextDocument *file1 = add(dlist, "a/b");
-  xassert(file1->title == "b");
+  xassert(file1->m_title == "b");
 
   FileTextDocument *file2 = add(dlist, "b:2");
-  xassert(file2->title == "b:2");
+  xassert(file2->m_title == "b:2");
 
   FileTextDocument *file3 = add(dlist, "b");
-  xassert(file3->title == "b:3");
+  xassert(file3->m_title == "b:3");
 
   dlist.removeFile(file3);
   delete file3;
 
   dlist.moveFile(file2, 0);
 
-  file2->filename = "zoo";
+  file2->m_filename = "zoo";
   dlist.assignUniqueTitle(file2);
 
   dlist.removeObserver(&observer);
