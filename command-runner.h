@@ -4,6 +4,8 @@
 #ifndef COMMAND_RUNNER_H
 #define COMMAND_RUNNER_H
 
+#include "refct-serf.h"                // SerfRefCount
+#include "sm-override.h"               // OVERRIDE
 #include "xassert.h"                   // xassert
 
 #include <QByteArray>
@@ -14,7 +16,7 @@
 #include <QString>
 
 // Run a command on some input, gather the output.
-class CommandRunner : public QObject {
+class CommandRunner : public QObject, public SerfRefCount {
   Q_OBJECT
 
 private:     // data
@@ -37,7 +39,8 @@ private:     // data
   // True if we already did 'm_process.kill()'.
   bool m_killedProcess;
 
-  // True if the 'startAndWait' was used to start the process.
+  // True if the 'startAndWait' was used to start the process.  In this
+  // case, we need to exit the event loop when the process terminates.
   bool m_synchronous;
 
   // Queue of data to be fed to the process on standard input.  The
@@ -84,7 +87,7 @@ protected:   // funcs
   void stopEventLoop(int code);
 
   // Called when the timer expires.
-  virtual void timerEvent(QTimerEvent *event) override;
+  virtual void timerEvent(QTimerEvent *event) OVERRIDE;
 
   // Kill the process if we haven't done so already.
   void killProcess();
@@ -157,7 +160,8 @@ public:      // funcs
   // background.
   void startAsynchronous();
 
-  // Write some data to the child's standard input.
+  // Write some data to the child's standard input.  This cannot be
+  // called until after calling 'startAsynchronous'.
   //
   // It seems that Qt will buffer an arbitrarily large amount of input
   // data with no way to tell whether the process has consumed it.
@@ -187,6 +191,37 @@ public:      // funcs
   // once it terminates are the process exit result functions
   // meaningful.
   bool isRunning() const;
+
+  // ------------------ line-oriented output -----------------------
+  // The methods in this section provide a line-oriented interface to
+  // the output and error data.  They assume that the child process is
+  // using the UTF-8 character encoding.
+
+  // True when there is at least one newline in m_outputData.
+  bool hasOutputLine() const;
+
+  // Retrieve the next complete line of data in m_outputData, terminated
+  // by a newline character.  If there is no newline in m_outputData,
+  // then return what there is, *without* a newline terminator.  That
+  // may be the empty string.
+  QString getOutputLine();
+
+  // True when there is at least one newline in m_errorData.
+  bool hasErrorLine() const;
+
+  // Get the next line with newline, or fragment without.
+  QString getErrorLine();
+
+  // ------------------------- signals -----------------------------
+Q_SIGNALS:
+  // Emitted when 'hasOutputLine()' becomes true.
+  void signal_outputLineReady();
+
+  // Emitted when 'hasErrorLine()' becomes true.
+  void signal_errorLineReady();
+
+  // Emitted when 'isRunning()' becomes false.
+  void signal_processTerminated();
 
   // -------------------------- slots ------------------------------
 protected Q_SLOTS:

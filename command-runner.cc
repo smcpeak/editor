@@ -21,7 +21,7 @@
 #define TRACE_CR_DETAIL(msg) TRACE("cmdrun_detail", msg) /* user ; */
 
 
-// Maximum time for the blocking runner invocation.
+// Maximum time for the synchronous runner invocation.
 static int const TIME_LIMIT_MS = 2000;
 
 // How long to wait after trying to kill a process.
@@ -96,7 +96,6 @@ void CommandRunner::setFailed(QProcess::ProcessError pe, QString const &msg)
     m_processError = pe;
     m_errorMessage = msg;
 
-    TRACE_CR("setFailed: terminating event loop");
     this->stopEventLoop(10);
   }
   else {
@@ -110,11 +109,17 @@ void CommandRunner::setFailed(QProcess::ProcessError pe, QString const &msg)
 
 void CommandRunner::stopEventLoop(int code)
 {
-  if (m_eventLoop.isRunning()) {
-    m_eventLoop.exit(code);
+  if (m_synchronous) {
+    if (m_eventLoop.isRunning()) {
+      TRACE_CR("stopEventLoop: terminating event loop");
+      m_eventLoop.exit(code);
+    }
+    else {
+      TRACE_CR("stopEventLoop: event loop is not running");
+    }
   }
   else {
-    TRACE_CR("stopEventLoop: event loop is not running");
+    TRACE_CR("stopEventLoop: not in synchronous mode, ignoring");
   }
 }
 
@@ -132,6 +137,7 @@ void CommandRunner::timerEvent(QTimerEvent *event)
   TRACE_CR("timerEvent: killing process");
   this->killProcess();
 }
+
 
 void CommandRunner::killProcess()
 {
@@ -164,6 +170,7 @@ void CommandRunner::killProcess()
 }
 
 
+// ---------------------- starting the process -----------------------
 void CommandRunner::setProgram(QString const &program)
 {
   xassert(!m_startInvoked);
@@ -203,6 +210,7 @@ void CommandRunner::setWorkingDirectory(QString const &dir)
 }
 
 
+// -------------------- synchronous interface ----------------------
 void CommandRunner::setInputData(QByteArray const &data)
 {
   xassert(!m_startInvoked);
@@ -216,6 +224,9 @@ void CommandRunner::startAndWait()
 {
   // The program name must have been set.
   xassert(m_hasProgramName);
+
+  // Client should not have caused a problem yet.
+  xassert(!m_failed);
 
   TRACE_CR("startAndWait: cmd: " << toString(m_process.program()));
   if (!m_process.arguments().isEmpty()) {
@@ -297,10 +308,16 @@ void CommandRunner::sendData()
 }
 
 
+// -------------------- asynchronous interface ---------------------
 void CommandRunner::startAsynchronous()
 {
   // The program name must have been set.
   xassert(m_hasProgramName);
+
+  // The client should not already have done anything that triggers
+  // the failure flag to be set, otherwise we'll get confused about
+  // detecting process termination.
+  xassert(!m_failed);
 
   TRACE_CR("startAsync: cmd: " << toString(m_process.program()));
   if (!m_process.arguments().isEmpty()) {
@@ -319,11 +336,20 @@ void CommandRunner::startAsynchronous()
     TRACE_CR("startAsync: process could not start");
     return;
   }
+
+  // If some data has already been submitted by the client, send it to
+  // the child process.
+  if (!m_inputData.isEmpty()) {
+    this->sendData();
+  }
 }
 
 
 void CommandRunner::putInputData(QByteArray const &input)
 {
+  // You can't start putting data until the process is started.
+  xassert(m_startInvoked);
+
   m_inputData.append(input);
   this->sendData();
 }
@@ -372,11 +398,58 @@ QByteArray CommandRunner::takeErrorData()
 }
 
 
+// ----------------------- process status --------------------------
 bool CommandRunner::isRunning() const
 {
   // From my perspective, QProcess::Starting and QProcess::Running are
   // the same.
   return (m_process.state() != QProcess::NotRunning);
+}
+
+
+// -------------------- line-oriented output -----------------------
+static int findUtf8Newline(QByteArray const &arr)
+{
+  return arr.indexOf('\n');
+}
+
+static bool hasUtf8Newline(QByteArray const &arr)
+{
+  return findUtf8Newline(arr) >= 0;
+}
+
+static QString extractUtf8Line(QByteArray &arr)
+{
+  int i = findUtf8Newline(arr);
+
+  int bytesToRemove = (i>=0 ? i+1 : arr.size());
+  QByteArray utf8Line = arr.left(bytesToRemove);
+  arr.remove(0, bytesToRemove);
+  return QString::fromUtf8(utf8Line);
+}
+
+
+bool CommandRunner::hasOutputLine() const
+{
+  return hasUtf8Newline(m_outputData);
+}
+
+
+QString CommandRunner::getOutputLine()
+{
+  return extractUtf8Line(m_outputData);
+}
+
+
+bool CommandRunner::hasErrorLine() const
+{
+  return hasUtf8Newline(m_errorData);
+}
+
+
+QString CommandRunner::getErrorLine()
+{
+  return extractUtf8Line(m_errorData);
 }
 
 
@@ -444,9 +517,12 @@ void CommandRunner::on_finished(int exitCode, QProcess::ExitStatus exitStatus)
   else {
     m_exitCode = exitCode;
 
-    TRACE_CR("on_finished: terminating event loop");
+    TRACE_CR("on_finished: calling stopEventLoop");
     this->stopEventLoop(0);
   }
+
+  TRACE_CR("emitting signal_processTerminated");
+  Q_EMIT signal_processTerminated();
 }
 
 
@@ -512,6 +588,22 @@ void CommandRunner::on_channelBytesWritten(int channel, qint64 bytes)
 }
 
 
+// Append 'buf/len' to 'arr'.  Return true if 'arr' originally did not
+// have a UTF-8 newline and afterward does.
+static bool appendData_gainedUtf8Newline(QByteArray &arr,
+                                         char const *buf, int len)
+{
+  bool before = hasUtf8Newline(arr);
+  arr.append(buf, len);
+  if (!before) {
+    return hasUtf8Newline(arr);
+  }
+  else {
+    return false;
+  }
+}
+
+
 void CommandRunner::on_channelReadyRead(int channelNumber)
 {
   TRACE_CR("on_channelReadyRead: " << channelNumber);
@@ -563,10 +655,16 @@ void CommandRunner::on_channelReadyRead(int channelNumber)
     else {
       TRACE_CR("on_channelReadyRead: got " << len << " bytes");
       if (channel == QProcess::StandardOutput) {
-        m_outputData.append(buf, len);
+        if (appendData_gainedUtf8Newline(m_outputData, buf, len)) {
+          TRACE_CR("emitting signal_outputLineReady");
+          Q_EMIT signal_outputLineReady();
+        }
       }
       else {
-        m_errorData.append(buf, len);
+        if (appendData_gainedUtf8Newline(m_errorData, buf, len)) {
+          TRACE_CR("emitting signal_errorLineReady");
+          Q_EMIT signal_errorLineReady();
+        }
       }
     }
   }

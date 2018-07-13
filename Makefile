@@ -165,11 +165,18 @@ EDITOR_OBJS += command-runner.moc.o
 COMMAND_RUNNER_OBJS := $(EDITOR_OBJS)
 
 COMMAND_RUNNER_OBJS += test-command-runner.o
+COMMAND_RUNNER_OBJS += test-command-runner.moc.o
 -include test-command-runner.d
+-include test-command-runner.moc.d
 
 test-command-runner: $(COMMAND_RUNNER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-command-runner >/dev/null 2>&1
+	timeout 10 ./test-command-runner >/dev/null 2>&1
+
+# In the above command, 'timeout' is used because the command runner
+# is particularly susceptible to bugs that cause hangs.  Plus, when I
+# hit Ctrl+C to kill it, 'make' deletes the executable (!), which is
+# annoying.
 
 
 # ---------------------- test-file-td ----------------------

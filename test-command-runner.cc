@@ -3,6 +3,9 @@
 
 #include "command-runner.h"            // module to test
 
+// editor
+#include "test-command-runner.h"       // helper classes for this module
+
 // smqtutil
 #include "qtutil.h"                    // toString
 
@@ -16,6 +19,9 @@
 // Qt
 #include <QCoreApplication>
 #include <QProcessEnvironment>
+
+// libc
+#include <assert.h>                    // assert
 
 
 // ----------------------- test infrastructure ----------------------------
@@ -437,6 +443,89 @@ static void testAsyncNoSignals()
 }
 
 
+CRTester::CRTester(CommandRunner *runner)
+  : QEventLoop(),
+    m_commandRunner(runner),
+    m_state(0)
+{}
+
+CRTester::~CRTester()
+{}
+
+
+void CRTester::slot_outputLineReady() NOEXCEPT
+{
+  while (m_commandRunner->hasOutputLine()) {
+    QString line = m_commandRunner->getOutputLine();
+    switch (m_state) {
+      case 0:
+        assert(line == "hello\n");
+        m_commandRunner->putInputData("second line\n");
+        m_state++;
+        break;
+
+      case 1:
+        assert(line == "second line\n");
+        m_commandRunner->closeInputChannel();
+        m_state++;
+        break;
+
+      default:
+        assert("!not state 1 or 0");
+        break;
+    }
+  }
+}
+
+
+void CRTester::slot_errorLineReady() NOEXCEPT
+{
+  assert(!"should not be any error data");
+}
+
+
+void CRTester::slot_processTerminated() NOEXCEPT
+{
+  assert(!m_commandRunner->isRunning());
+  assert(!m_commandRunner->getFailed());
+  assert(m_commandRunner->getExitCode() == 0);
+
+  // Terminate the event loop.
+  this->exit(0);
+}
+
+
+static void testAsyncWithSignals()
+{
+  CommandRunner cr;
+  CRTester tester(&cr);
+
+  // Connect signals to slots.
+  QObject::connect(&cr, &CommandRunner::signal_outputLineReady,
+                   &tester,    &CRTester::slot_outputLineReady);
+  QObject::connect(&cr, &CommandRunner::signal_errorLineReady,
+                   &tester,    &CRTester::slot_errorLineReady);
+  QObject::connect(&cr, &CommandRunner::signal_processTerminated,
+                   &tester,    &CRTester::slot_processTerminated);
+
+  cr.setProgram("cat");
+  cr.startAsynchronous();
+
+  cr.putInputData(QByteArray("hello\n"));
+
+  // Run the event loop until the test finishes.
+  tester.exec();
+
+  // This is partially redundant with tests in
+  // CRTester::slot_processTerminated, but that's ok.
+  xassert(!cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  xassert(!cr.getFailed());
+  xassert(cr.getExitCode() == 0);
+}
+
+
 static void entry(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -463,6 +552,7 @@ static void entry(int argc, char **argv)
   testLargeData2(true);
   testWorkingDirectory();
   testAsyncNoSignals();
+  testAsyncWithSignals();
 
   testMiscDiagnostics();
 
