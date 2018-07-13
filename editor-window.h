@@ -138,7 +138,7 @@ public:      // funcs
   virtual void fileTextDocumentListOrderChanged(
     FileTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
-public slots:
+public Q_SLOTS:
   void fileNewFile();
   void fileOpen();
   void fileSave();
@@ -146,6 +146,7 @@ public slots:
   void fileClose();
   void fileReload();
   void fileReloadAll();
+  void fileLaunchCommand();
   void fileExit();
 
   void editISearch();

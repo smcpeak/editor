@@ -116,6 +116,7 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
   // empty, but it also adds it to m_editorList and may initialize the
   // view from another window.
   m_editor = this->getOrMakeEditor(tdf);
+  this->startListening();
 
   m_documentList->addObserver(this);
 
@@ -169,6 +170,9 @@ void EditorWidget::selfCheck() const
 
   // Check that 'm_listening' agrees with the document's observer list.
   xassert(m_listening == m_editor->hasObserver(this));
+
+  // And, at this point, we should always be listening.
+  xassert(m_listening);
 }
 
 
@@ -262,10 +266,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 
 void EditorWidget::setDocumentFile(FileTextDocument *file)
 {
-  bool wasListening = m_listening;
-  if (wasListening) {
-    this->stopListening();
-  }
+  this->stopListening();
 
   m_editor = this->getOrMakeEditor(file);
 
@@ -273,10 +274,7 @@ void EditorWidget::setDocumentFile(FileTextDocument *file)
   // now the most recently used.
   m_documentList->moveFile(file, 0);
 
-  if (wasListening) {
-    this->startListening();
-  }
-
+  this->startListening();
   this->checkForDiskChanges();
   this->redraw();
 }
@@ -1827,13 +1825,6 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   TRACE("focus", "editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
 
-  // I don't want to listen while I'm adding changes of
-  // my own, because the way the view moves (etc.) on
-  // changes is different.
-  //
-  // TODO: This should be removed.  It is not reliable.
-  this->stopListening();
-
   this->checkForDiskChanges();
 }
 
@@ -1842,12 +1833,6 @@ void EditorWidget::focusOutEvent(QFocusEvent *e)
 {
   TRACE("focus", "editor(" << (void*)this << "): focus out");
   QWidget::focusOutEvent(e);
-
-  stopListening();    // just in case
-
-  // listen to my docFile for any changes coming from
-  // other windows
-  startListening();
 }
 
 
@@ -1884,6 +1869,14 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noex
   }
   TRACE("observe", "observeInsertLine line=" << line);
   INITIATING_DOCUMENT_CHANGE();
+
+  if (m_editor->isProcessOutput()) {
+    // Just track the end of the document.
+    m_editor->setCursor(m_editor->endCoord());
+    m_editor->scrollToCursor();
+    this->redraw();
+    return;
+  }
 
   // Internally inside HE_text::insert(), the routine that actually
   // inserts text, inserting "line N" works by removing the text on

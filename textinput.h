@@ -4,12 +4,18 @@
 #ifndef TEXTINPUT_H
 #define TEXTINPUT_H
 
+// editor
 #include "modal-dialog.h"              // ModalDialog
 
+// smbase
+#include "sm-override.h"               // OVERRIDE
+
+// Qt
 #include <QComboBox>
 #include <QLabel>
 #include <QString>
 #include <QStringList>
+
 
 // Prompt for a single-line text input.  Remembers history of previous
 // inputs.
@@ -40,7 +46,8 @@ public:      // data
   QString m_text;
 
 public:      // funcs
-  TextInputDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
+  TextInputDialog(QString windowTitle,
+                  QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~TextInputDialog();
 
   // Set the text that appears in the label above the input control.
@@ -54,10 +61,18 @@ public:      // funcs
 
   // Show the dialog and wait for it to be closed.  Returns 1 on Ok
   // and 0 on Cancel.  Afterward, get the chosen value from 'text'.
-  int exec() override;
+  int exec() OVERRIDE;
+
+  // Like 'exec', except if the dialog is already visible, complain and
+  // return 0.  Otherwise set the label text to 'prompt' and exec().
+  int runPrompt(QString prompt);
+
+  // Like 'runPrompt', except if the entered text is empty, then
+  // return 0, and if not, then enter it into the history.
+  int runPrompt_nonEmpty(QString prompt);
 
   // Called by the dialog infrastructure when the user presses Ok.
-  void accept() override;
+  void accept() OVERRIDE;
 };
 
 #endif // TEXTINPUT_H

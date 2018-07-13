@@ -22,6 +22,7 @@ public:      // types
   enum Protocol {
     P_CAT,
     P_ECHO,
+    P_KILL,
   };
 
 public:      // data

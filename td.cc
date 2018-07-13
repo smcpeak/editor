@@ -20,7 +20,8 @@ TextDocument::TextDocument()
     m_history(),
     m_historyIndex(0),
     m_savedHistoryIndex(0),
-    m_groupStack()
+    m_groupStack(),
+    m_isProcessOutput(false)
 {
   s_objectCount++;
   TRACE("TextDocument",
@@ -58,6 +59,10 @@ void TextDocument::clearContentsAndHistory()
 
 bool TextDocument::unsavedChanges() const
 {
+  if (m_isProcessOutput) {
+    return false;
+  }
+
   if (m_savedHistoryIndex == m_historyIndex) {
     // It seems there are no unsaved changes, but we also need to check
     // the group stack.  If the group stack is non-empty, then there
@@ -113,6 +118,16 @@ void TextDocument::writeFile(string const &fname) const
 }
 
 
+void TextDocument::setIsProcessOutput(bool isProcessOutput)
+{
+  m_isProcessOutput = isProcessOutput;
+  if (m_isProcessOutput) {
+    xassert(m_groupStack.isEmpty());
+  }
+  this->clearHistory();
+}
+
+
 void TextDocument::insertAt(TextCoord tc, char const *text, int textLen)
 {
   // Ignore insertions of nothing.
@@ -139,6 +154,22 @@ void TextDocument::deleteAt(TextCoord tc, int count)
 }
 
 
+void TextDocument::appendText(char const *text, int textLen)
+{
+  this->insertAt(this->endCoord(), text, textLen);
+}
+
+void TextDocument::appendCStr(char const *s)
+{
+  this->appendText(s, strlen(s));
+}
+
+void TextDocument::appendString(string const &s)
+{
+  this->appendCStr(s.c_str());
+}
+
+
 void TextDocument::bumpHistoryIndex(int inc)
 {
   bool equalBefore = (this->m_historyIndex == this->m_savedHistoryIndex);
@@ -157,6 +188,11 @@ void TextDocument::bumpHistoryIndex(int inc)
 
 void TextDocument::appendElement(HistoryElt *e)
 {
+  if (m_isProcessOutput) {
+    delete e;
+    return;
+  }
+
   if (m_groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
     m_history.truncate(m_historyIndex);

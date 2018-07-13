@@ -20,6 +20,8 @@
 #include <QApplication>
 #include <QProxyStyle>
 
+class ProcessWatcher;                  // process-watcher.h
+
 
 // Define my look and feel overrides.
 class EditorProxyStyle : public QProxyStyle {
@@ -32,7 +34,8 @@ public:
 
 
 // global state of the editor: files, windows, etc.
-class GlobalState : public QApplication, public SerfRefCount {
+class GlobalState : public QApplication,
+                    public FileTextDocumentListObserver {
   Q_OBJECT
 
 public:       // data
@@ -47,6 +50,9 @@ public:       // data
   ObjList<EditorWindow> m_windows;
 
 private:     // data
+  // Running child processes.
+  ObjList<ProcessWatcher> m_processes;
+
   // Dialog that lets the user pick an open file.  We keep the dialog
   // around persistently so it remembers its size (but not location...)
   // across invocations.  It contains a pointer to m_documentList, so
@@ -56,8 +62,15 @@ private:     // data
 private:      // funcs
   bool hotkeyAvailable(int key) const;
 
-public slots:
+private Q_SLOTS:
+  // Called when focus changes anywhere in the app.
   void focusChangedHandler(QWidget *from, QWidget *to);
+
+  // Find the watcher feeding data to 'fileDoc', if any.
+  ProcessWatcher *findWatcherForDoc(FileTextDocument *fileDoc);
+
+  // Called when a watched process terminates.
+  void on_processTerminated(ProcessWatcher *watcher);
 
 public:       // funcs
   // intent is to make one of these in main()
@@ -98,6 +111,16 @@ public:       // funcs
   // Note that the dialog also allows the user to close files, which
   // uses the FileTextDocumentListObserver notification system.
   FileTextDocument *runOpenFilesDialog();
+
+  // Start a new child process and return the document into which that
+  // process' output is written.
+  FileTextDocument *runLaunchCommandDialog(QString dir, QString command);
+
+  // GlobalState has to monitor for closing a document that a process
+  // is writing to, since that indicates to kill that process.
+  virtual void fileTextDocumentRemoved(
+    FileTextDocumentList *documentList,
+    FileTextDocument *file) NOEXCEPT OVERRIDE;
 };
 
 

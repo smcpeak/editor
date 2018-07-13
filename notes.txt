@@ -1,6 +1,14 @@
 
 TODOs:
+  - move TimerEventLoop from test-command-runner.cc to smqtutil
   - run command to generate entire file; git annotate!
+    - enhancements
+      - kill without closing buffer
+      - soft end of buffer jumping
+      - do not highlight trailing spaces
+      - "file name" should reflect the command
+      - when switch to output buffer, need to jump to end
+      - rerun terminated command in same buffer
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process
@@ -23,9 +31,13 @@ TODOs:
 
   - ctrl+i: open file at cursor
     - recognize file:line syntax
+    - try with fewer directory components so I can open a file from
+      a name like "a/Makefile" in "git diff" output
   - search and replace
     - command to jump to next/prev match w/o going back into panel
     - highlight Find text on Ctrl+S so I can just start typing to replace
+    - unclear when Ctrl+R will replace versus jump
+    - issues when cursor is sitting on a match but it isn't highlighted
     - allow F2? Ctrl+O? Ctrl+I?
     - case sensitivity
     - whole word?

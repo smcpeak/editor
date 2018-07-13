@@ -506,6 +506,20 @@ void CRTester::slot_outputLineReady() NOEXCEPT
         }
         break;
 
+      case P_KILL:
+        switch (m_outputState) {
+          case 0:
+            assert(line == "hello\n");
+            m_commandRunner->killProcess();
+            m_outputState++;
+            break;
+
+          default:
+            assert(!"bad state");
+            break;
+        }
+        break;
+
       default:
         assert(!"bad protocol");
         break;
@@ -520,6 +534,7 @@ void CRTester::slot_errorLineReady() NOEXCEPT
     QString line = m_commandRunner->getErrorLine();
     switch (m_protocol) {
       case P_CAT:
+      case P_KILL:
         assert(!"should not be any error data");
         break;
 
@@ -551,9 +566,11 @@ void CRTester::slot_errorLineReady() NOEXCEPT
 
 void CRTester::slot_processTerminated() NOEXCEPT
 {
-  assert(!m_commandRunner->isRunning());
-  assert(!m_commandRunner->getFailed());
-  assert(m_commandRunner->getExitCode() == 0);
+  if (m_protocol != P_KILL) {
+    assert(!m_commandRunner->isRunning());
+    assert(!m_commandRunner->getFailed());
+    assert(m_commandRunner->getExitCode() == 0);
+  }
 
   // Terminate the event loop.
   this->exit(0);
@@ -604,6 +621,28 @@ static void testAsyncBothOutputs()
 }
 
 
+static void testAsyncKill()
+{
+  CommandRunner cr;
+  CRTester tester(&cr, CRTester::P_KILL);
+
+  cr.setProgram("cat");
+  cr.startAsynchronous();
+
+  cr.putInputData(QByteArray("hello\n"));
+
+  tester.exec();
+
+  xassert(!cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+
+  xassert(cr.getFailed());
+  PVAL(toString(cr.getErrorMessage()));
+  xassert(cr.getProcessError() == QProcess::Crashed);
+}
+
+
 static void entry(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -632,6 +671,7 @@ static void entry(int argc, char **argv)
   testAsyncNoSignals();
   testAsyncWithSignals();
   testAsyncBothOutputs();
+  testAsyncKill();
 
   testMiscDiagnostics();
 

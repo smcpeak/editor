@@ -89,9 +89,6 @@ protected:   // funcs
   // Called when the timer expires.
   virtual void timerEvent(QTimerEvent *event) OVERRIDE;
 
-  // Kill the process if we haven't done so already.
-  void killProcess();
-
   // Send some data to the process on its input channel.
   void sendData();
 
@@ -185,6 +182,9 @@ public:      // funcs
 
   // Get the stderr data.
   QByteArray takeErrorData();
+
+  // Kill the process if we haven't done so already.
+  void killProcess();
 
   // ---------------------- process status -------------------------
   // Return true if the process has started and not terminated.  Only

@@ -92,6 +92,9 @@ public:      // funcs
   // and for that we need the underlying document.
   TextDocument const *getDocument() const { return m_doc; }
 
+  // True if we're just passively watching some output.
+  bool isProcessOutput() const         { return m_doc->isProcessOutput(); }
+
   // -------------------- query file dimensions --------------------
   // Number of lines in the document.  Always positive.
   int numLines() const                 { return m_doc->numLines(); }

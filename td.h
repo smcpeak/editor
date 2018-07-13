@@ -50,6 +50,13 @@ private:      // data
   // I allow for the generality of a stack anyway
   ObjStack<HE_group> m_groupStack;
 
+  // True if this document is the uneditable output of some process.  In
+  // that case, we do not retain any undo/redo history, and objects
+  // looking at this document may behave differently (for example,
+  // automatically moving their cursor to the end of the document).
+  // Initially false.
+  bool m_isProcessOutput;
+
 private:     // funcs
   // Change 'historyIndex' by 'inc' and possibly send a notification
   // event to observers.
@@ -82,6 +89,8 @@ public:      // funcs
   int countTrailingSpacesTabs(int line) const
     { return m_core.countTrailingSpacesTabs(line); }
 
+  bool isProcessOutput() const            { return m_isProcessOutput; }
+
   // ------------------------ global changes ----------------------
   // clear history, leaving only the current buffer contents
   void clearHistory();
@@ -99,6 +108,11 @@ public:      // funcs
   // Write the contents to 'fname'.  May throw.
   void writeFile(string const &fname) const;
 
+  // Change the 'm_isProcessOutput' setting.  Setting it to true will
+  // immediately discard all undo/redo history.  There must not be any
+  // open history groups.
+  void setIsProcessOutput(bool isProcessOutput);
+
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.
   // 'tc' must be valid for the document.
@@ -108,6 +122,11 @@ public:      // funcs
   // may span lines.  Each end-of-line counts as one character.
   // 'tc' must be valid for the document.
   void deleteAt(TextCoord tc, int count);
+
+  // Convenience functions to append to the end of the document.
+  void appendText(char const *text, int textLen);
+  void appendCStr(char const *s);
+  void appendString(string const &s);
 
   // -------------------------- undo/redo --------------------------
   // Group actions with HE_group.

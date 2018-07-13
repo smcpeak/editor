@@ -195,6 +195,9 @@ void EditorWindow::buildMenu()
     file->addAction("&Reload", this, SLOT(fileReload()));
     file->addAction("Reload a&ll", this, SLOT(fileReloadAll()));
     file->addSeparator();
+    file->addAction("&Launch (run) command ...", this, &fileLaunchCommand,
+                    Qt::ALT + Qt::Key_R);
+    file->addSeparator();
     file->addAction("E&xit", this, SLOT(fileExit()));
   }
 
@@ -644,6 +647,23 @@ void EditorWindow::fileReloadAll()
 }
 
 
+void EditorWindow::fileLaunchCommand()
+{
+  static TextInputDialog *dialog
+    = new TextInputDialog("Launch Command");
+
+  string dir = m_editorWidget->getDocumentDirectory();
+  if (!dialog->runPrompt_nonEmpty(qstringb(
+        "Command to launch in " << dir << ":"))) {
+    return;
+  }
+
+  FileTextDocument *fileDoc =
+    m_globalState->runLaunchCommandDialog(toQString(dir), dialog->m_text);
+  this->setDocumentFile(fileDoc);
+}
+
+
 bool EditorWindow::canQuitApplication()
 {
   stringBuilder msg;
@@ -780,8 +800,7 @@ void EditorWindow::editGotoLine()
   // can share the input history.
   static TextInputDialog *dialog;
   if (!dialog) {
-    dialog = new TextInputDialog();
-    dialog->setWindowTitle("Goto Line");
+    dialog = new TextInputDialog("Goto Line");
     dialog->setLabelText("Line number:");
   }
 
@@ -792,7 +811,7 @@ void EditorWindow::editGotoLine()
   dialog->m_text = qstringb(m_editorWidget->cursorLine() + 1);
 
   if (dialog->exec()) {
-    string s = dialog->m_text.toUtf8().constData();
+    string s(toString(dialog->m_text));
 
     if (!s.isempty()) {
       int n = atoi(s);
@@ -832,28 +851,14 @@ void EditorWindow::editApplyCommand()
   // Only the variables declared above can be used after the
   // child exits, and even then only with care.
   {
-    static TextInputDialog *dialog;
-    if (!dialog) {
-      dialog = new TextInputDialog();
-      dialog->setWindowTitle("Apply Command");
-    }
-
-    if (dialog->isVisible()) {
-      // This should be impossible because it is application-modal,
-      // but I will be defensive.
-      QMessageBox::information(this, "Dialog Already Shown",
-        "The apply-command dialog is already visible elsewhere.  "
-        "There can only be one instance of that dialog open.");
-      return;
-    }
+    static TextInputDialog *dialog =
+      new TextInputDialog("Apply Command");
 
     string dir = m_editorWidget->getDocumentDirectory();
-    dialog->setLabelText(qstringb("Command to run in " << dir << ":"));
-
-    if (!dialog->exec() || dialog->m_text.isEmpty()) {
+    if (!dialog->runPrompt_nonEmpty(qstringb(
+          "Command to run in " << dir << ":"))) {
       return;
     }
-    dialog->rememberInput(dialog->m_text);
     commandString = toString(dialog->m_text);
 
     tde = m_editorWidget->getDocumentEditor();

@@ -5,6 +5,8 @@
 
 // this dir
 #include "editor-widget.h"             // EditorWidget
+#include "process-watcher.h"           // ProcessWatcher
+#include "textinput.h"                 // TextInputDialog
 
 // smqtutil
 #include "qtutil.h"                    // toQString
@@ -16,6 +18,7 @@
 #include "trace.h"                     // TRACE
 
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QStyleFactory>
 
 
@@ -41,8 +44,12 @@ GlobalState::GlobalState(int argc, char **argv)
   : QApplication(argc, argv),
     m_pixmaps(),
     m_documentList(),
-    m_windows()
+    m_windows(),
+    m_processes(),
+    m_openFilesDialog(NULL)
 {
+  m_documentList.addObserver(this);
+
   // Optionally print the list of styles Qt supports.
   if (tracingSys("style")) {
     QStringList keys = QStyleFactory::keys();
@@ -103,7 +110,9 @@ GlobalState::GlobalState(int argc, char **argv)
 
 
 GlobalState::~GlobalState()
-{}
+{
+  m_documentList.removeObserver(this);
+}
 
 
 EditorWindow *GlobalState::createNewWindow(FileTextDocument *initFile)
@@ -180,6 +189,78 @@ FileTextDocument *GlobalState::runOpenFilesDialog()
     m_openFilesDialog = new OpenFilesDialog(&m_documentList);
   }
   return m_openFilesDialog->runDialog();
+}
+
+
+FileTextDocument *GlobalState::runLaunchCommandDialog(
+  QString dir, QString command)
+{
+  // Make a new document to hold the result.
+  FileTextDocument *fileDoc = this->createNewFile();
+
+  // Make the watcher that will populate that file.
+  ProcessWatcher *watcher = new ProcessWatcher(fileDoc);
+  m_processes.prepend(watcher);
+  QObject::connect(watcher, &ProcessWatcher::signal_processTerminated,
+                   this,           &GlobalState::on_processTerminated);
+
+  // Launch the child process.
+  watcher->m_commandRunner.setProgram("sh");
+  watcher->m_commandRunner.setArguments(QStringList() << "-c" << command);
+  watcher->m_commandRunner.setWorkingDirectory(dir);
+  watcher->m_commandRunner.startAsynchronous();
+
+  TRACE("process", "dir: " << toString(dir));
+  TRACE("process", "cmd: " << toString(command));
+  TRACE("process", "started: " << watcher);
+  TRACE("process", "fileDoc: " << fileDoc);
+
+  return fileDoc;
+}
+
+
+ProcessWatcher *GlobalState::findWatcherForDoc(FileTextDocument *fileDoc)
+{
+  FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
+    ProcessWatcher *watcher = iter.data();
+    if (watcher->m_fileDoc == fileDoc) {
+      return watcher;
+    }
+  }
+  return NULL;
+}
+
+
+void GlobalState::fileTextDocumentRemoved(
+  FileTextDocumentList *documentList,
+  FileTextDocument *fileDoc) NOEXCEPT
+{
+  ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
+  if (watcher) {
+    // Closing an output document.  Break the connection to the
+    // document so it can go away safely, and start killing the
+    // process.
+    TRACE("process", "killing: " << watcher);
+    watcher->m_fileDoc = NULL;
+    watcher->m_commandRunner.killProcess();
+  }
+}
+
+
+void GlobalState::on_processTerminated(ProcessWatcher *watcher)
+{
+  TRACE("process", "terminated: " << watcher);
+
+  // Get rid of this watcher.
+  if (!m_processes.removeIfPresent(watcher)) {
+    DEV_WARNING("ProcessWatcher terminated but not in m_processes.");
+
+    // I'm not sure where this rogue watcher came from.  We're now
+    // in recovery mode, so refrain from deallocating it.
+  }
+  else {
+    delete watcher;
+  }
 }
 
 

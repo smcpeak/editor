@@ -9,11 +9,13 @@
 
 #include <QHBoxLayout>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 
 
-TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
+TextInputDialog::TextInputDialog(QString title,
+                                 QWidget *parent, Qt::WindowFlags f)
   : ModalDialog(parent, f),
     m_label(NULL),
     m_comboBox(NULL),
@@ -21,7 +23,7 @@ TextInputDialog::TextInputDialog(QWidget *parent, Qt::WindowFlags f)
     m_maxHistorySize(20),
     m_text()
 {
-  this->setWindowTitle("Text Input");
+  this->setWindowTitle(title);
 
   {
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -127,6 +129,37 @@ int TextInputDialog::exec()
   TRACE("textinput", "TextInputDialog::exec returning: " << ret);
   if (ret) {
     TRACE("textinput", "text: " << toString(m_text));
+  }
+  return ret;
+}
+
+
+int TextInputDialog::runPrompt(QString prompt)
+{
+  // Safety check for an already-shown dialog.
+  if (this->isVisible()) {
+    QMessageBox::information(this, "Dialog Already Shown",
+      qstringb("The \"" << toString(this->windowTitle()) << "\" dialog "
+               "is already visible elsewhere.  There can only be one "
+               "instance of that dialog open."));
+    return 0;
+  }
+
+  this->setLabelText(prompt);
+  return this->exec();
+}
+
+
+int TextInputDialog::runPrompt_nonEmpty(QString prompt)
+{
+  int ret = this->runPrompt(prompt);
+  if (ret) {
+    if (m_text.isEmpty()) {
+      return 0;
+    }
+    else {
+      this->rememberInput(m_text);
+    }
   }
   return ret;
 }
