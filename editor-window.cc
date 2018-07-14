@@ -1207,15 +1207,14 @@ void EditorWindow::editorViewChanged()
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
-  m_statusArea->position->setText(QString(
-    stringc << " " << (m_editorWidget->cursorLine()+1) << ":"
-            << (m_editorWidget->cursorCol()+1)
-            << (tde->unsavedChanges()? " *" : "")
-  ));
+  m_statusArea->position->setText(qstringb(
+    " " << (m_editorWidget->cursorLine()+1) <<
+    ":" << (m_editorWidget->cursorCol()+1)));
 
-  // Status text: full document name.
+  // Status text: full document name plus status indicators.
   NamedTextDocument *file = currentDocument();
-  m_statusArea->status->setText(toQString(file->name()));
+  m_statusArea->status->setText(toQString(
+    file->nameWithStatusIndicators()));
 
   // Window title.
   stringBuilder sb;

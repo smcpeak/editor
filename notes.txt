@@ -1,11 +1,12 @@
 
 TODOs:
+  - normalize directory separators in m_directory
+  - remove slash before '$' in process name
   - run command to generate entire file; git annotate!
     - enhancements
       - visual display that a process is running or terminated, and
         how, when just looking at the document outside the open-files
         dialog
-        - rename all references to "open-files dialog" to "documents"?
       - prompt on closure of document with running process
       - kill without closing buffer
       - soft end of buffer jumping
@@ -22,10 +23,12 @@ TODOs:
     - compilation mode
     - parallel compilation mode that keeps the various output streams
       separate somehow
+  - rename all references to "open-files dialog" to "documents"?
 
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
   - Ctrl+Alt+G to grep for selected string
+    - or with nothing selected, grab identifier cursor is on
   - command line arguments to set window position(s)?
   - undo history is never truncated... I should add something to check
     for excessive memory usage over time

@@ -4,6 +4,7 @@
 #include "named-td.h"                  // this module
 
 // smbase
+#include "dev-warning.h"               // DEV_WARNING
 #include "macros.h"                    // CMEMB
 #include "nonport.h"                   // getFileModificationTime
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
@@ -88,6 +89,31 @@ void NamedTextDocument::setNonFileName(string const &name, string const &dir)
   m_hasFilename = false;
 
   this->setDirectory(dir);
+}
+
+
+static char const *documentProcessStatusIndicator(
+  NamedTextDocument const *doc)
+{
+  switch (doc->documentProcessStatus()) {
+    default:
+      DEV_WARNING("Bad document process status");
+      // fallthrough
+    case DPS_NONE:           return "";
+    case DPS_RUNNING:        return " <running>";
+    case DPS_FINISHED:       return " <finished>";
+  }
+}
+
+string NamedTextDocument::nameWithStatusIndicators() const
+{
+  stringBuilder sb;
+  sb << this->name();
+  sb << documentProcessStatusIndicator(this);
+  if (this->unsavedChanges()) {
+    sb << " *";
+  }
+  return sb;
 }
 
 

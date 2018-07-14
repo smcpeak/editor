@@ -136,6 +136,9 @@ public:      // funcs
   // Get the directory associated with the document.
   string directory() const             { return m_directory; }
 
+  // Document name, process status, and unsaved changes.
+  string nameWithStatusIndicators() const;
+
   // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.
   bool hasHotkey() const { return this->m_hasHotkeyDigit; }
