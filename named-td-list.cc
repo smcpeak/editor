@@ -117,6 +117,7 @@ int NamedTextDocumentList::getDocumentIndex(NamedTextDocument const *file) const
 void NamedTextDocumentList::addDocument(NamedTextDocument *file)
 {
   TRACE("named-td-list", "addFile: " << file->name());
+  xassert(!file->name().empty());
   xassert(!this->hasDocument(file));
 
   // Assign title if necessary.

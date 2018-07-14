@@ -106,8 +106,6 @@ public:      // funcs
   // Create an anonymous document.  The caller must call either
   // 'setFilename' or 'setNonFileName' before adding it to a document
   // list.
-  //
-  // TODO: Should I force those to be passed to the constructor?
   NamedTextDocument();
 
   ~NamedTextDocument();
