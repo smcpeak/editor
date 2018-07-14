@@ -433,8 +433,10 @@ signals:
 
   // Emitted when the user indicates, via some widget functionality,
   // that they want to open a particular file.  It should open a dialog
-  // to allow the user to further edit the name.
-  void openFilenameInputDialogSignal(QString const &filename);
+  // to allow the user to further edit the name.  If 'line' is non-zero,
+  // it indicates where in 'filename' we want to go, as a 1-based line
+  // number.
+  void openFilenameInputDialogSignal(QString const &filename, int line);
 
   // The user wants to close the search and replace panel if it is open.
   void closeSARPanel();

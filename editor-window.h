@@ -174,7 +174,7 @@ public Q_SLOTS:
 
   void editorViewChanged();
   void on_closeSARPanel();
-  void on_openFilenameInputDialogSignal(QString const &filename);
+  void on_openFilenameInputDialogSignal(QString const &filename, int line);
 };
 
 

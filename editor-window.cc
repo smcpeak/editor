@@ -1177,7 +1177,8 @@ void EditorWindow::on_closeSARPanel()
 }
 
 
-void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
+void EditorWindow::on_openFilenameInputDialogSignal(
+  QString const &filename, int line)
 {
   // Check for fast-open conditions.
   {
@@ -1188,6 +1189,11 @@ void EditorWindow::on_openFilenameInputDialogSignal(QString const &filename)
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
       this->fileOpenFile(fn);
+      if (line != 0) {
+        // Also go to line number, if provided.
+        m_editorWidget->cursorTo(TextCoord(line-1, 0));
+        m_editorWidget->scrollToCursor(5 /*gap*/);
+      }
       return;
     }
   }

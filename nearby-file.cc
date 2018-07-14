@@ -6,6 +6,13 @@
 #include "sm-file-util.h"              // SMFileUtil
 
 
+// Return true if 'c' is a digit for the purpose of the file name
+// recognition algorithm.
+static bool isFilenameDigit(char c)
+{
+  return '0' <= c && c <= '9';
+}
+
 // Return true if 'c' is a character that makes up the "core" of a text
 // file name, in the sense that the majority of characters are "core"
 // characters.
@@ -13,7 +20,7 @@ static bool isFilenameCore(char c)
 {
   return (('A' <= c && c <= 'Z') ||
           ('a' <= c && c <= 'z') ||
-          ('0' <= c && c <= '9'));
+          isFilenameDigit(c));
 }
 
 // Return true if 'c' is punctuation that commonly appears in text file
@@ -35,14 +42,40 @@ static bool isFilenameChar(char c)
 }
 
 
+// If the characters at 'haystack[i]' look like a line number in the
+// form ":$N", return the number, otherwise return 0.
+static int getLineNumberAt(string const &haystack, int i)
+{
+  char const *start = haystack.c_str() + i;
+  char const *p = start;
+  if (*p == ':') {
+    p++;
+    int ret = 0;
+    while (isFilenameDigit(*p) && (p-start < 10)) {
+      ret = ret*10 + (*p - '0');
+      p++;
+    }
+
+    // We should have ended on something other than a digit or letter.
+    if (isFilenameCore(*p)) {
+      return 0;
+    }
+
+    return ret;
+  }
+
+  return 0;
+}
+
+
 // Search at 'charOffset' in 'haystack' for candidate file names.
 //
-// Right now this returns at most one string, but I am designing the
+// Right now this returns at most one candidate, but I am designing the
 // interface to anticipate the ability to return multiple candidates.
 // For example, a first candidate might never consider filenames to
 // have spaces, but the next candidate might allow spaces, etc.
-static void getCandidateSuffixes(
-  ArrayStack<string> /*OUT*/ &candidates,
+void getCandidateSuffixes(
+  ArrayStack<FileAndLineOpt> /*OUT*/ &candidates,
   string const &haystack,
   int charOffset)
 {
@@ -75,6 +108,12 @@ static void getCandidateSuffixes(
     }
   }
 
+  // Should not start on a digit.  For example, if the cursor is on the
+  // "3" in "foo:3", I do not want to treat "3" as the file name.
+  if (isFilenameDigit(haystack[charOffset])) {
+    return;
+  }
+
   // File names do not usually end with punctuation, and the cursor
   // should not be on consecutive puncutation is if is really on a
   // file name.
@@ -100,12 +139,16 @@ static void getCandidateSuffixes(
     high--;
   }
 
+  // See if there is a line number here.
+  int line = getLineNumberAt(haystack, high+1);
+
   // Return what we found.
-  candidates.push(haystack.substring(low, high-low+1));
+  candidates.push(FileAndLineOpt(
+    haystack.substring(low, high-low+1), line));
 }
 
 
-string getNearbyFilename(
+FileAndLineOpt getNearbyFilename(
   ArrayStack<string> const &candidatePrefixes,
   string const &haystack,
   int charOffset)
@@ -116,42 +159,45 @@ string getNearbyFilename(
 }
 
 
-string innerGetNearbyFilename(
+FileAndLineOpt innerGetNearbyFilename(
   SMFileUtil &sfu,
   ArrayStack<string> const &candidatePrefixes,
   string const &haystack,
   int charOffset)
 {
   if (candidatePrefixes.isEmpty()) {
-    return "";
+    return FileAndLineOpt();
   }
 
   // Extract candidate suffixes.
-  ArrayStack<string> candidateSuffixes;
+  ArrayStack<FileAndLineOpt> candidateSuffixes;
   getCandidateSuffixes(candidateSuffixes, haystack, charOffset);
   if (candidateSuffixes.isEmpty()) {
-    return "";
+    return FileAndLineOpt();
   }
 
   // Look for a combination that exists on disk.
   for (int prefix=0; prefix < candidatePrefixes.length(); prefix++) {
     for (int suffix=0; suffix < candidateSuffixes.length(); suffix++) {
-      string candidate = sfu.joinFilename(
-        candidatePrefixes[prefix], candidateSuffixes[suffix]);
-      if (sfu.absolutePathExists(candidate)) {
-        return candidate;
+      string candidateName = sfu.joinFilename(
+        candidatePrefixes[prefix], candidateSuffixes[suffix].m_filename);
+      if (sfu.absolutePathExists(candidateName)) {
+        return FileAndLineOpt(candidateName,
+                              candidateSuffixes[suffix].m_line);
       }
     }
   }
 
   // No combination exists.  Is the first candidate suffix absolute?
-  if (sfu.isAbsolutePath(candidateSuffixes[0])) {
+  if (sfu.isAbsolutePath(candidateSuffixes[0].m_filename)) {
     // Yes, return it by itself.
     return candidateSuffixes[0];
   }
   else {
     // Return the first prefix+suffix.
-    return sfu.joinFilename(candidatePrefixes[0], candidateSuffixes[0]);
+    return FileAndLineOpt(
+      sfu.joinFilename(candidatePrefixes[0],
+                       candidateSuffixes[0].m_filename), 0);
   }
 }
 

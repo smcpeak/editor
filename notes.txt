@@ -3,7 +3,6 @@ TODOs:
   - move TimerEventLoop from test-command-runner.cc to smqtutil
   - change F3 to do what ctrl+i does when not on a file name
     - leave a menu option to run that dialog though
-  - ctrl+i: recognize file:line syntax
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process
@@ -22,9 +21,14 @@ TODOs:
     - grep
     - compilation mode
 
+  - highlighting for mismatch parens, braces, etc.
+  - Ctrl+Alt+G to grep for selected string
   - command line arguments to set window position(s)?
   - undo history is never truncated... I should add something to check
     for excessive memory usage over time
+  - for grep and compile, something to (1) recognize lines that have
+    file/line info, and (2) ability to see each in a different pane
+    or window or something
 
   - allow Tab character; issue is rendering support
   - handling of files with CRLF line endings

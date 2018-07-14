@@ -387,12 +387,13 @@ void EditorWidget::openFileAtCursor()
   // TODO: User-configurable additional directories.
   prefixes.push("");
 
-  string filename =
+  FileAndLineOpt fileAndLine =
     getNearbyFilename(prefixes, lineText, m_editor->cursor().column);
 
-  if (filename.isempty()) {
+  if (!fileAndLine.hasFilename()) {
     // Prompt with the document directory.
-    filename = stringb(this->getDocumentDirectory() << '/');
+    fileAndLine.m_filename =
+      stringb(this->getDocumentDirectory() << '/');
   }
 
   // Prompt the user with the filename to allow confirmation and
@@ -405,7 +406,8 @@ void EditorWidget::openFileAtCursor()
   // are currently looking at if it is untitled, which will cause the
   // RCSerf infrastructure to abort just before memory corruption would
   // have resulted.
-  emit openFilenameInputDialogSignal(toQString(filename));
+  Q_EMIT openFilenameInputDialogSignal(
+    toQString(fileAndLine.m_filename), fileAndLine.m_line);
 }
 
 

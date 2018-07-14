@@ -13,11 +13,12 @@ static void expectIGNF(
   ArrayStack<string> const &candidatePrefixes,
   string const &haystack,
   int charOffset,
-  string const &expect)
+  string const &expectName)
 {
-  string actual = innerGetNearbyFilename(sfu,
+  FileAndLineOpt actual = innerGetNearbyFilename(sfu,
     candidatePrefixes, haystack, charOffset);
-  EXPECT_EQ(actual, expect);
+  EXPECT_EQ(actual.m_filename, expectName);
+  EXPECT_EQ(actual.m_line, 0);
 }
 
 
@@ -94,9 +95,57 @@ static void test1()
 }
 
 
+static void expectIGNFL(
+  SMFileUtil &sfu,
+  ArrayStack<string> const &candidatePrefixes,
+  string const &haystack,
+  int charOffset,
+  string const &expectName,
+  int expectLine)     // Hence the final "L" in this function's name.
+{
+  FileAndLineOpt actual = innerGetNearbyFilename(sfu,
+    candidatePrefixes, haystack, charOffset);
+  EXPECT_EQ(actual.m_filename, expectName);
+  EXPECT_EQ(actual.m_line, expectLine);
+}
+
+
+static void testLineNumbers()
+{
+  TestSMFileUtil sfu;
+  sfu.m_existingPaths.add("/home/foo.txt");
+  sfu.m_existingPaths.add("/home/user/foo.txt");
+  sfu.m_existingPaths.add("/home/user/bar.txt");
+
+  ArrayStack<string> prefixes;
+
+  // No prefixes.
+  expectIGNFL(sfu, prefixes, "anything:1", 0, "", 0);
+
+  // Limits on where the search can begin.
+  prefixes.push("/home");
+  expectIGNFL(sfu, prefixes, "foo.txt:3", -1, "", 0);
+  expectIGNFL(sfu, prefixes, "foo.txt:3", 0, "/home/foo.txt", 3);
+  expectIGNFL(sfu, prefixes, "foo.txt:3", 6, "/home/foo.txt", 3);
+  expectIGNFL(sfu, prefixes, "foo.txt:3", 7, "/home/foo.txt", 3);
+  expectIGNFL(sfu, prefixes, "foo.txt:3", 8, "", 0);
+  expectIGNFL(sfu, prefixes, "foo.txt:3", 9, "", 0);
+  expectIGNFL(sfu, prefixes, "foo.txt:3", 10, "", 0);
+
+  // Maximum of 9 digits.
+  expectIGNFL(sfu, prefixes, "foo.txt:123456789", 0, "/home/foo.txt", 123456789);
+  expectIGNFL(sfu, prefixes, "foo.txt:1234567890", 0, "/home/foo.txt", 0);
+
+  // Line number can't run straight into letters.
+  expectIGNFL(sfu, prefixes, "foo.txt:3a", 0, "/home/foo.txt", 0);
+  expectIGNFL(sfu, prefixes, "foo.txt:3 a", 0, "/home/foo.txt", 3);
+}
+
+
 static void entry()
 {
   test1();
+  testLineNumbers();
 
   cout << "test-nearby-file ok" << endl;
 }
