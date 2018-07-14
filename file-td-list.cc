@@ -24,8 +24,8 @@ using std::set;
 #endif
 
 
-// --------------------- FileTextDocumentList -----------------------
-FileTextDocumentList::FileTextDocumentList()
+// --------------------- NamedTextDocumentList -----------------------
+NamedTextDocumentList::NamedTextDocumentList()
   : m_observers(),
     m_iteratingOverObservers(false),
     m_documents()
@@ -35,7 +35,7 @@ FileTextDocumentList::FileTextDocumentList()
 }
 
 
-FileTextDocumentList::~FileTextDocumentList()
+NamedTextDocumentList::~NamedTextDocumentList()
 {
   // Do this explicitly for clarity.
   m_observers.removeAll();
@@ -60,7 +60,7 @@ void insertUnique(set<T> &s, T const &t)
 }
 
 
-void FileTextDocumentList::selfCheck() const
+void NamedTextDocumentList::selfCheck() const
 {
   xassert(m_documents.isNotEmpty());
 
@@ -84,36 +84,36 @@ void FileTextDocumentList::selfCheck() const
 }
 
 
-int FileTextDocumentList::numFiles() const
+int NamedTextDocumentList::numFiles() const
 {
   return m_documents.length();
 }
 
 
-NamedTextDocument *FileTextDocumentList::getFileAt(int index)
+NamedTextDocument *NamedTextDocumentList::getFileAt(int index)
 {
   return const_cast<NamedTextDocument*>(this->getFileAtC(index));
 }
 
-NamedTextDocument const *FileTextDocumentList::getFileAtC(int index) const
+NamedTextDocument const *NamedTextDocumentList::getFileAtC(int index) const
 {
   return m_documents[index];
 }
 
 
-bool FileTextDocumentList::hasFile(NamedTextDocument const *file) const
+bool NamedTextDocumentList::hasFile(NamedTextDocument const *file) const
 {
   return getFileIndex(file) >= 0;
 }
 
 
-int FileTextDocumentList::getFileIndex(NamedTextDocument const *file) const
+int NamedTextDocumentList::getFileIndex(NamedTextDocument const *file) const
 {
   return m_documents.indexOf(file);
 }
 
 
-void FileTextDocumentList::addFile(NamedTextDocument *file)
+void NamedTextDocumentList::addFile(NamedTextDocument *file)
 {
   TRACE("file-td-list", "addFile: " << file->name());
   xassert(!this->hasFile(file));
@@ -142,7 +142,7 @@ void FileTextDocumentList::addFile(NamedTextDocument *file)
 }
 
 
-void FileTextDocumentList::removeFile(NamedTextDocument *file)
+void NamedTextDocumentList::removeFile(NamedTextDocument *file)
 {
   TRACE("file-td-list", "removeFile: " << file->name());
 
@@ -165,7 +165,7 @@ void FileTextDocumentList::removeFile(NamedTextDocument *file)
 }
 
 
-void FileTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
+void NamedTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
 {
   TRACE("file-td-list", "moveFile to " << newIndex <<
                         ": " << file->name());
@@ -180,7 +180,7 @@ void FileTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
 }
 
 
-NamedTextDocument *FileTextDocumentList::createUntitledFile()
+NamedTextDocument *NamedTextDocumentList::createUntitledFile()
 {
   // TODO: Rewrite this code slightly to delay creating the document
   // object until the name has been computed, just to be a bit cleaner.
@@ -202,12 +202,12 @@ NamedTextDocument *FileTextDocumentList::createUntitledFile()
 }
 
 
-NamedTextDocument *FileTextDocumentList::findFileByName(string const &filename)
+NamedTextDocument *NamedTextDocumentList::findFileByName(string const &filename)
 {
   return const_cast<NamedTextDocument*>(this->findFileByNameC(filename));
 }
 
-NamedTextDocument const *FileTextDocumentList::findFileByNameC(
+NamedTextDocument const *NamedTextDocumentList::findFileByNameC(
   string const &name) const
 {
   for (int i=0; i < m_documents.length(); i++) {
@@ -219,12 +219,12 @@ NamedTextDocument const *FileTextDocumentList::findFileByNameC(
 }
 
 
-NamedTextDocument *FileTextDocumentList::findFileByTitle(string const &title)
+NamedTextDocument *NamedTextDocumentList::findFileByTitle(string const &title)
 {
   return const_cast<NamedTextDocument*>(this->findFileByTitleC(title));
 }
 
-NamedTextDocument const *FileTextDocumentList::findFileByTitleC(
+NamedTextDocument const *NamedTextDocumentList::findFileByTitleC(
   string const &title) const
 {
   for (int i=0; i < m_documents.length(); i++) {
@@ -236,12 +236,12 @@ NamedTextDocument const *FileTextDocumentList::findFileByTitleC(
 }
 
 
-NamedTextDocument *FileTextDocumentList::findFileByHotkey(int hotkeyDigit)
+NamedTextDocument *NamedTextDocumentList::findFileByHotkey(int hotkeyDigit)
 {
   return const_cast<NamedTextDocument*>(this->findFileByHotkeyC(hotkeyDigit));
 }
 
-NamedTextDocument const *FileTextDocumentList::findFileByHotkeyC(
+NamedTextDocument const *NamedTextDocumentList::findFileByHotkeyC(
   int hotkeyDigit) const
 {
   for (int i=0; i < m_documents.length(); i++) {
@@ -254,12 +254,12 @@ NamedTextDocument const *FileTextDocumentList::findFileByHotkeyC(
 }
 
 
-NamedTextDocument *FileTextDocumentList::findFileByWindowMenuId (int id)
+NamedTextDocument *NamedTextDocumentList::findFileByWindowMenuId (int id)
 {
   return const_cast<NamedTextDocument*>(this->findFileByWindowMenuIdC(id));
 }
 
-NamedTextDocument const *FileTextDocumentList::findFileByWindowMenuIdC(int id) const
+NamedTextDocument const *NamedTextDocumentList::findFileByWindowMenuIdC(int id) const
 {
   for (int i=0; i < m_documents.length(); i++) {
     if (m_documents[i]->m_windowMenuId == id) {
@@ -270,12 +270,12 @@ NamedTextDocument const *FileTextDocumentList::findFileByWindowMenuIdC(int id) c
 }
 
 
-NamedTextDocument *FileTextDocumentList::findUntitledUnmodifiedFile()
+NamedTextDocument *NamedTextDocumentList::findUntitledUnmodifiedFile()
 {
   return const_cast<NamedTextDocument*>(this->findUntitledUnmodifiedFileC());
 }
 
-NamedTextDocument const *FileTextDocumentList::findUntitledUnmodifiedFileC() const
+NamedTextDocument const *NamedTextDocumentList::findUntitledUnmodifiedFileC() const
 {
   for (int i=0; i < m_documents.length(); i++) {
     NamedTextDocument const *file = m_documents[i];
@@ -291,7 +291,7 @@ NamedTextDocument const *FileTextDocumentList::findUntitledUnmodifiedFileC() con
 }
 
 
-string FileTextDocumentList::computeUniqueTitle(string filename) const
+string NamedTextDocumentList::computeUniqueTitle(string filename) const
 {
   TRACE("file-td-list", "computeUniqueTitle: " << filename);
 
@@ -339,7 +339,7 @@ string FileTextDocumentList::computeUniqueTitle(string filename) const
 }
 
 
-void FileTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
+void NamedTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
 {
   TRACE("file-td-list", "assignUniqueTitle: " << file->name());
 
@@ -354,7 +354,7 @@ void FileTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
 }
 
 
-bool FileTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
+bool NamedTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
 {
   for (int i=1; i<=10; i++) {
     // Use 0 as the tenth digit in this sequence to match the order
@@ -372,7 +372,7 @@ bool FileTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
 }
 
 
-void FileTextDocumentList::assignUniqueHotkey(NamedTextDocument *file)
+void NamedTextDocumentList::assignUniqueHotkey(NamedTextDocument *file)
 {
   TRACE("file-td-list", "assignUniqueHotkey: " << file->name());
 
@@ -388,7 +388,7 @@ void FileTextDocumentList::assignUniqueHotkey(NamedTextDocument *file)
 }
 
 
-void FileTextDocumentList::getUniqueDirectories(
+void NamedTextDocumentList::getUniqueDirectories(
   ArrayStack<string> /*INOUT*/ &dirs) const
 {
   // Set of directories put into 'dirs' so far.
@@ -406,7 +406,7 @@ void FileTextDocumentList::getUniqueDirectories(
 }
 
 
-void FileTextDocumentList::addObserver(FileTextDocumentListObserver *observer)
+void NamedTextDocumentList::addObserver(NamedTextDocumentListObserver *observer)
 {
   TRACE("file-td-list", "addObserver: " << (void*)observer);
 
@@ -416,7 +416,7 @@ void FileTextDocumentList::addObserver(FileTextDocumentListObserver *observer)
 }
 
 
-void FileTextDocumentList::removeObserver(FileTextDocumentListObserver *observer)
+void NamedTextDocumentList::removeObserver(NamedTextDocumentListObserver *observer)
 {
   TRACE("file-td-list", "removeObserver: " << (void*)observer);
 
@@ -426,7 +426,7 @@ void FileTextDocumentList::removeObserver(FileTextDocumentListObserver *observer
 }
 
 
-void FileTextDocumentList::notifyAdded(NamedTextDocument *file_)
+void NamedTextDocumentList::notifyAdded(NamedTextDocument *file_)
 {
   // Here, and in subsequent 'notify' routines, the idea is to hold an
   // RCSerf pointing at the file to ensure it lives throughout the
@@ -437,57 +437,57 @@ void FileTextDocumentList::notifyAdded(NamedTextDocument *file_)
   TRACE("file-td-list", "notifyAdded: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentAdded(this, file);
   }
 }
 
 
-void FileTextDocumentList::notifyRemoved(NamedTextDocument *file_)
+void NamedTextDocumentList::notifyRemoved(NamedTextDocument *file_)
 {
   RCSerf<NamedTextDocument> file(file_);
   TRACE("file-td-list", "notifyRemoved: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentRemoved(this, file);
   }
 }
 
 
-void FileTextDocumentList::notifyAttributeChanged(NamedTextDocument *file_)
+void NamedTextDocumentList::notifyAttributeChanged(NamedTextDocument *file_)
 {
   RCSerf<NamedTextDocument> file(file_);
   TRACE("file-td-list", "notifyAttributeChanged: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentAttributeChanged(this, file);
   }
 }
 
 
-void FileTextDocumentList::notifyListOrderChanged()
+void NamedTextDocumentList::notifyListOrderChanged()
 {
   TRACE("file-td-list", "notifyListOrderChanged");
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->fileTextDocumentListOrderChanged(this);
   }
 }
 
 
-bool FileTextDocumentList::notifyGetInitialView(
+bool NamedTextDocumentList::notifyGetInitialView(
   NamedTextDocument *file_,
-  FileTextDocumentInitialView /*OUT*/ &view)
+  NamedTextDocumentInitialView /*OUT*/ &view)
 {
   RCSerf<NamedTextDocument> file(file_);
   TRACE("file-td-list",
     stringb("notifyGetInitialView: file=" << file->name()));
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
-  FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
+  FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     if (iter.data()->getFileTextDocumentInitialView(this, file, view)) {
       TRACE("file-td-list",
         stringb("notifyGetInitialView: found: fv=" << view.firstVisible));
@@ -500,31 +500,31 @@ bool FileTextDocumentList::notifyGetInitialView(
 }
 
 
-// ----------------- FileTextDocumentListObserver -------------------
-void FileTextDocumentListObserver::fileTextDocumentAdded(
-  FileTextDocumentList *documentList, NamedTextDocument *file) noexcept
+// ----------------- NamedTextDocumentListObserver -------------------
+void NamedTextDocumentListObserver::fileTextDocumentAdded(
+  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {}
 
-void FileTextDocumentListObserver::fileTextDocumentRemoved(
-  FileTextDocumentList *documentList, NamedTextDocument *file) noexcept
+void NamedTextDocumentListObserver::fileTextDocumentRemoved(
+  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {}
 
-void FileTextDocumentListObserver::fileTextDocumentAttributeChanged(
-  FileTextDocumentList *documentList, NamedTextDocument *file) noexcept
+void NamedTextDocumentListObserver::fileTextDocumentAttributeChanged(
+  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {}
 
-void FileTextDocumentListObserver::fileTextDocumentListOrderChanged(
-  FileTextDocumentList *documentList) noexcept
+void NamedTextDocumentListObserver::fileTextDocumentListOrderChanged(
+  NamedTextDocumentList *documentList) noexcept
 {}
 
-bool FileTextDocumentListObserver::getFileTextDocumentInitialView(
-  FileTextDocumentList *documentList, NamedTextDocument *file,
-  FileTextDocumentInitialView /*OUT*/ &view) noexcept
+bool NamedTextDocumentListObserver::getFileTextDocumentInitialView(
+  NamedTextDocumentList *documentList, NamedTextDocument *file,
+  NamedTextDocumentInitialView /*OUT*/ &view) noexcept
 {
   return false;
 }
 
-FileTextDocumentListObserver::~FileTextDocumentListObserver()
+NamedTextDocumentListObserver::~NamedTextDocumentListObserver()
 {}
 
 

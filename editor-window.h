@@ -5,7 +5,7 @@
 #define EDITOR_WINDOW_H
 
 #include "named-td.h"                  // NamedTextDocument
-#include "file-td-list.h"              // FileTextDocumentListObserver
+#include "file-td-list.h"              // NamedTextDocumentListObserver
 
 // smqtutil
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
@@ -31,7 +31,7 @@ class StatusDisplay;                   // status.h
 
 // Top-level window containing an editor pane.
 class EditorWindow : public QWidget,
-                     public FileTextDocumentListObserver {
+                     public NamedTextDocumentListObserver {
   Q_OBJECT
 
 public:      // static data
@@ -128,15 +128,15 @@ public:      // funcs
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
 
-  // FileTextDocumentListObserver methods.
+  // NamedTextDocumentListObserver methods.
   virtual void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList) NOEXCEPT OVERRIDE;
+    NamedTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
 public Q_SLOTS:
   void fileNewFile();

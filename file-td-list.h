@@ -1,5 +1,5 @@
 // file-td-list.h
-// Declaration of FileTextDocumentList class.
+// Declaration of NamedTextDocumentList class.
 
 #ifndef FILE_TD_LIST_H
 #define FILE_TD_LIST_H
@@ -15,8 +15,8 @@
 
 
 // Forward in this file.
-class FileTextDocumentListObserver;
-class FileTextDocumentInitialView;
+class NamedTextDocumentListObserver;
+class NamedTextDocumentInitialView;
 
 
 // A list of named documents being edited.
@@ -28,13 +28,13 @@ class FileTextDocumentInitialView;
 // In addition to storing the list, this class provides various methods
 // for manipulating and querying it, per the requirements of a
 // multi-document interactive text editor.
-class FileTextDocumentList : public SerfRefCount {
+class NamedTextDocumentList : public SerfRefCount {
   // Sensible copying of lists is possible but non-trivial.
-  NO_OBJECT_COPIES(FileTextDocumentList);
+  NO_OBJECT_COPIES(NamedTextDocumentList);
 
 private:     // data
   // Set of observers who will be notified of changes.
-  RCSerfList<FileTextDocumentListObserver> m_observers;
+  RCSerfList<NamedTextDocumentListObserver> m_observers;
 
   // When true, we have an open iterator on 'm_observers', which means
   // it cannot be changed.
@@ -64,10 +64,10 @@ private:     // data
 
 public:      // funcs
   // Initially there is one untitled file.
-  FileTextDocumentList();
+  NamedTextDocumentList();
 
   // The destructor does *not* notify observers.
-  ~FileTextDocumentList();
+  ~NamedTextDocumentList();
 
   // Check that invariants hold.  Throw assertion exception if not.
   void selfCheck() const;
@@ -163,10 +163,10 @@ public:      // funcs
 
   // ------------------------- observers ----------------------------
   // Add an observer.  It must not already be one.
-  void addObserver(FileTextDocumentListObserver *observer);
+  void addObserver(NamedTextDocumentListObserver *observer);
 
   // Remove an observer, which must be one now.
-  void removeObserver(FileTextDocumentListObserver *observer);
+  void removeObserver(NamedTextDocumentListObserver *observer);
 
   // ----------------- observer notification --------------------
   // Call 'fileTextDocumentAdded(file)' for all observers.
@@ -187,11 +187,11 @@ public:      // funcs
   // Call 'getFileTextDocumentInitialView' for all observers until one
   // returns true; else false if none do so.
   bool notifyGetInitialView(NamedTextDocument *file,
-    FileTextDocumentInitialView /*OUT*/ &view);
+    NamedTextDocumentInitialView /*OUT*/ &view);
 };
 
 
-// Interface for an observer of a FileTextDocumentList.
+// Interface for an observer of a NamedTextDocumentList.
 //
 // All methods have default no-op implementations.  There is no need
 // for subclass implementations to call them.
@@ -207,16 +207,16 @@ public:      // funcs
 //
 // This inherts SerfRefCount for the same reason, and in the same way,
 // that TextDocumentObserver does.
-class FileTextDocumentListObserver : virtual public SerfRefCount {
+class NamedTextDocumentListObserver : virtual public SerfRefCount {
 public:      // funcs
   // A file was added to the list.
   virtual void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept;
 
   // A file was removed.  When this is called, the file has already
   // been removed from the list, but the object is still valid.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept;
 
   // An attribute of a file may have changed.  The client has to
   // inspect the file to determine what has changed.
@@ -231,29 +231,29 @@ public:      // funcs
   // concept, since we are notifying about a single object, rather
   // that something intrinsically tied to the "list" aspect.
   virtual void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept;
 
   // The order of files in the list may have changed.  Observers must
   // query the list in order to obtain the new order.
   virtual void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList) noexcept;
+    NamedTextDocumentList *documentList) noexcept;
 
   // This is a question, not a notification.  Some widget is about to
   // show 'file' for the first time and wants to know a good view area
   // within the file to start at.  If the observer has one, it should
   // fill in 'view' and return true; else false.
   virtual bool getFileTextDocumentInitialView(
-    FileTextDocumentList *documentList, NamedTextDocument *file,
-    FileTextDocumentInitialView /*OUT*/ &view) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *file,
+    NamedTextDocumentInitialView /*OUT*/ &view) noexcept;
 
   // Silence dumb warnings.
-  virtual ~FileTextDocumentListObserver();
+  virtual ~NamedTextDocumentListObserver();
 };
 
 
 // Details about a view of a document suitable for another view
 // to be constructed based on it.
-struct FileTextDocumentInitialView {
+struct NamedTextDocumentInitialView {
   // Upper-left grid spot.
   TextCoord firstVisible;
 

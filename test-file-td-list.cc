@@ -22,7 +22,7 @@ enum NotifyFunction {
 
 // An observer that simply accumulates a record of its notifications,
 // then removes them as they are checked for correctness.
-class TestObserver : public FileTextDocumentListObserver {
+class TestObserver : public NamedTextDocumentListObserver {
 public:      // types
   // Record of a received notification.
   struct Notification {
@@ -40,36 +40,36 @@ public:      // data
   ObjList<Notification> m_pendingNotifications;
 
   // We will only use this class with a single list at a time.
-  FileTextDocumentList *m_documentList;
+  NamedTextDocumentList *m_documentList;
 
 public:      // funcs
-  TestObserver(FileTextDocumentList *d)
+  TestObserver(NamedTextDocumentList *d)
     : m_documentList(d)
   {}
 
   void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ADDED, file));
   }
 
   void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_REMOVED, file));
   }
 
   void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ATTRIBUTE, file));
   }
 
   void fileTextDocumentListOrderChanged(
-    FileTextDocumentList *documentList) noexcept override
+    NamedTextDocumentList *documentList) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ORDER));
@@ -96,7 +96,7 @@ void TestObserver::expect(NotifyFunction nfunc, NamedTextDocument *file)
 
 
 // Add a file with a specific name.
-static NamedTextDocument *add(FileTextDocumentList &dlist, string name)
+static NamedTextDocument *add(NamedTextDocumentList &dlist, string name)
 {
   NamedTextDocument *file = new NamedTextDocument;
   file->setFilename(name);
@@ -108,7 +108,7 @@ static NamedTextDocument *add(FileTextDocumentList &dlist, string name)
 // Just some simple things to get started.
 static void testSimple()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
   xassert(dlist.numFiles() == 1);
 
   TestObserver observer(&dlist);
@@ -143,7 +143,7 @@ static void testSimple()
 
 
 // Expect the files to be in a particular order.  NULL ends the list.
-static void expectOrder(FileTextDocumentList &dlist, NamedTextDocument *file0, ...)
+static void expectOrder(NamedTextDocumentList &dlist, NamedTextDocument *file0, ...)
 {
   xassert(dlist.getFileAt(0) == file0);
   int i = 1;
@@ -163,7 +163,7 @@ static void expectOrder(FileTextDocumentList &dlist, NamedTextDocument *file0, .
 // Make several files, rearrange them, then remove them.
 static void testAddMoveRemove()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
   xassert(dlist.numFiles() == 1);
 
   TestObserver observer(&dlist);
@@ -259,7 +259,7 @@ static void testAddMoveRemove()
 // Create several untitled files.
 static void testCreateUntitled()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
@@ -296,7 +296,7 @@ static void testCreateUntitled()
 // Exercise a "Save as..." scenario.
 static void testSaveAs()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
@@ -313,7 +313,7 @@ static void testSaveAs()
 // Exhaust hotkeys.
 static void testExhaustHotkeys()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
@@ -350,7 +350,7 @@ static void testExhaustHotkeys()
 // an existing file.
 static void testDuplicateHotkeys()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
 
   NamedTextDocument *file0 = dlist.getFileAt(0);
   NamedTextDocument *file1 = dlist.createUntitledFile();
@@ -377,10 +377,10 @@ static void testDuplicateHotkeys()
 // Provoke a name like "a:3".
 static void testColon3()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
 
   // Also exercise the no-op observer functions.
-  FileTextDocumentListObserver observer;
+  NamedTextDocumentListObserver observer;
   dlist.addObserver(&observer);
 
   NamedTextDocument *file1 = add(dlist, "a/b");
@@ -406,7 +406,7 @@ static void testColon3()
 
 // Expect output of 'getUniqueDirectories' to match the NULL-terminated
 // sequence of arguments.
-static void expectDirs(FileTextDocumentList &dlist, char const *dir0, ...)
+static void expectDirs(NamedTextDocumentList &dlist, char const *dir0, ...)
 {
   ArrayStack<string> actual;
   dlist.getUniqueDirectories(actual);
@@ -434,7 +434,7 @@ static void expectDirs(FileTextDocumentList &dlist, char const *dir0, ...)
 
 static void testGetUniqueDirectories()
 {
-  FileTextDocumentList dlist;
+  NamedTextDocumentList dlist;
   expectDirs(dlist, NULL);
 
   add(dlist, "/a/b");

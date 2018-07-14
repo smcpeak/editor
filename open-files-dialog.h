@@ -4,7 +4,7 @@
 #ifndef OPEN_FILES_DIALOG_H
 #define OPEN_FILES_DIALOG_H
 
-#include "file-td-list.h"              // FileTextDocumentList
+#include "file-td-list.h"              // NamedTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
 #include "refct-serf.h"                // RCSerf
@@ -22,7 +22,7 @@ ostream& operator<< (ostream &os, QModelIndex const &index);
 
 // Dialog to show and manipulate the open files in a document list.
 //
-// This is sort of like an "editor" for FileTextDocumentList.
+// This is sort of like an "editor" for NamedTextDocumentList.
 class OpenFilesDialog : public ModalDialog {
   Q_OBJECT
 
@@ -46,7 +46,7 @@ private:     // class data
 
 private:     // instance data
   // The list we are showing/editing.
-  RCSerf<FileTextDocumentList> m_docList;
+  RCSerf<NamedTextDocumentList> m_docList;
 
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
@@ -57,7 +57,7 @@ private:     // funcs
   void repopulateTable();
 
 public:      // funcs
-  OpenFilesDialog(FileTextDocumentList *docList,
+  OpenFilesDialog(NamedTextDocumentList *docList,
                   QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~OpenFilesDialog();
 

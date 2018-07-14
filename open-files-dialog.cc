@@ -70,7 +70,7 @@ OpenFilesDialog::s_columnInfo[NUM_TABLE_COLUMNS] = {
        tc = (TableColumn)(tc+1))
 
 
-OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
+OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
                                  QWidget *parent, Qt::WindowFlags f) :
   ModalDialog(parent, f),
   m_docList(docList),
@@ -85,7 +85,7 @@ OpenFilesDialog::OpenFilesDialog(FileTextDocumentList *docList,
   // rather than using a separate model and view.  Originally I used
   // separate objects since I thought I would be able to take advantage
   // of my existing change notification infrastructure for
-  // FileTextDocumentList and simply relay to the Qt model change
+  // NamedTextDocumentList and simply relay to the Qt model change
   // notifications, thereby saving the cost of building a copy of the
   // table.
   //

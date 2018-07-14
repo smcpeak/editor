@@ -735,7 +735,7 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 
 
 void EditorWindow::fileTextDocumentAdded(
-  FileTextDocumentList *, NamedTextDocument *) NOEXCEPT
+  NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();
@@ -743,7 +743,7 @@ void EditorWindow::fileTextDocumentAdded(
 }
 
 void EditorWindow::fileTextDocumentRemoved(
-  FileTextDocumentList *, NamedTextDocument *) NOEXCEPT
+  NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -763,7 +763,7 @@ void EditorWindow::fileTextDocumentRemoved(
 }
 
 void EditorWindow::fileTextDocumentAttributeChanged(
-  FileTextDocumentList *, NamedTextDocument *) NOEXCEPT
+  NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -779,7 +779,7 @@ void EditorWindow::fileTextDocumentAttributeChanged(
 }
 
 void EditorWindow::fileTextDocumentListOrderChanged(
-  FileTextDocumentList *) NOEXCEPT
+  NamedTextDocumentList *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();

@@ -5,7 +5,7 @@
 #define FILENAME_INPUT_H
 
 // editor
-#include "file-td-list.h"              // FileTextDocumentList
+#include "file-td-list.h"              // NamedTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
 // smbase
@@ -63,7 +63,7 @@ private:     // data
   // List of open documents so we can query it as the user types.
   //
   // This is only non-NULL while 'runDialog' is running.
-  RCSerf<FileTextDocumentList const> m_docList;
+  RCSerf<NamedTextDocumentList const> m_docList;
 
 private:     // funcs
   // Set 'm_filenameLabel'.
@@ -93,7 +93,7 @@ public:      // funcs
 
   // Show the dialog and return the name of the file the user has
   // chosen, or "" if canceled.
-  QString runDialog(FileTextDocumentList const *docList,
+  QString runDialog(NamedTextDocumentList const *docList,
                     QString initialChoice);
 
   // QObject methods.

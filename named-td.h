@@ -49,8 +49,8 @@ private:     // data
   // Name of document.  This is a filename if 'm_hasFilename' is true.
   // Otherwise, it is a human-readable string describing the origin of
   // the content.  It must be unique within the list of
-  // FileTextDocuments in its containing FileTextDocumentList.  It must
-  // not be empty.
+  // NamedTextDocuments in its containing NamedTextDocumentList.  It
+  // must not be empty.
   string m_name;
 
   // When true, 'm_name' is the name of a file on disk.
@@ -67,7 +67,7 @@ public:      // data
   int64_t m_lastFileTimestamp;
 
   // Title of the document.  Must be unique within the containing
-  // FileTextDocumentList.  This will usually be similar to the name,
+  // NamedTextDocumentList.  This will usually be similar to the name,
   // but perhaps shortened so long as it remains unique.
   string m_title;
 
@@ -99,7 +99,7 @@ public:      // funcs
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
   // ----------------------------- names ----------------------------
-  // Get the document's unique (within its FileTextDocumentList) name.
+  // Get the document's unique (within its NamedTextDocumentList) name.
   string name() const                  { return m_name; }
 
   // True if the document's name is a file name.
@@ -110,7 +110,7 @@ public:      // funcs
 
   // Set 'm_name' to be 'filename', and 'm_hasFilename' to true.  It is
   // the caller's responsibility to ensure uniqueness within the
-  // containing FileTextDocumentList.
+  // containing NamedTextDocumentList.
   void setFilename(string const &filename);
 
   // Set 'm_name' to 'name' and 'm_hasFilename' to false.  The name

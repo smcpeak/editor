@@ -7,7 +7,7 @@
 // editor
 #include "editor-window.h"             // EditorWindow
 #include "named-td.h"                  // NamedTextDocument
-#include "file-td-list.h"              // FileTextDocumentList
+#include "file-td-list.h"              // NamedTextDocumentList
 #include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // Pixmaps
 
@@ -35,15 +35,15 @@ public:
 
 // global state of the editor: files, windows, etc.
 class GlobalState : public QApplication,
-                    public FileTextDocumentListObserver {
+                    public NamedTextDocumentListObserver {
   Q_OBJECT
 
 public:       // data
   // pixmap set
   Pixmaps m_pixmaps;
 
-  // List of open files.  Never empty (see FileTextDocumentList).
-  FileTextDocumentList m_documentList;
+  // List of open files.  Never empty (see NamedTextDocumentList).
+  NamedTextDocumentList m_documentList;
 
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
@@ -112,7 +112,7 @@ public:       // funcs
   // or cancel.  If a choice is made, return it.
   //
   // Note that the dialog also allows the user to close files, which
-  // uses the FileTextDocumentListObserver notification system.
+  // uses the NamedTextDocumentListObserver notification system.
   NamedTextDocument *runOpenFilesDialog();
 
   // Start a new child process and return the document into which that
@@ -122,7 +122,7 @@ public:       // funcs
   // GlobalState has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList,
+    NamedTextDocumentList *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
 };
 

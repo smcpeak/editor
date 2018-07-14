@@ -1,10 +1,8 @@
 // my-table-widget.h
 // MyTableWidget class.
 
-// TODO: Rename this file to my-table-widget.h.
-
-#ifndef MY_TABLE_VIEW_H
-#define MY_TABLE_VIEW_H
+#ifndef MY_TABLE_WIDGET_H
+#define MY_TABLE_WIDGET_H
 
 #include <QTableWidget>
 
@@ -18,7 +16,7 @@
 // rather than using a separate model and view.  Originally I used
 // separate objects since I thought I would be able to take advantage of
 // my existing change notification infrastructure for
-// FileTextDocumentList and simply relay to the Qt model change
+// NamedTextDocumentList and simply relay to the Qt model change
 // notifications, thereby saving the cost of building a copy of the
 // table.
 //
@@ -42,4 +40,4 @@ public:      // funcs
 };
 
 
-#endif // MY_TABLE_VIEW_H
+#endif // MY_TABLE_WIDGET_H

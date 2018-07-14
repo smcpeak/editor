@@ -78,14 +78,14 @@ FilenameInputDialog::~FilenameInputDialog()
 
 
 QString FilenameInputDialog::runDialog(
-  FileTextDocumentList const *docList,
+  NamedTextDocumentList const *docList,
   QString initialChoice)
 {
   // This is not re-entrant (for a particular dialog object).
   xassert(!m_docList);
 
   // Set 'm_docList' for the lifetime of this routine.
-  Restorer<RCSerf<FileTextDocumentList const> >
+  Restorer<RCSerf<NamedTextDocumentList const> >
     restorer(m_docList, docList);
 
   m_filenameEdit->setText(initialChoice);

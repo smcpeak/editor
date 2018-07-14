@@ -6,7 +6,7 @@
 
 #include "td-editor.h"                 // TextDocumentEditor
 #include "named-td.h"                  // NamedTextDocument
-#include "file-td-list.h"              // FileTextDocumentListObserver
+#include "file-td-list.h"              // NamedTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
 
 // smqtutil
@@ -41,7 +41,7 @@ class QRangeControl;                   // qrangecontrol.h
 class EditorWidget
   : public QWidget,               // I am a Qt widget.
     public TextDocumentObserver,  // Watch my file while I don't have focus.
-    public FileTextDocumentListObserver {        // Watch the list of files.
+    public NamedTextDocumentListObserver {        // Watch the list of files.
   Q_OBJECT
 
   // Currently, SAR needs access to m_editor, and I am torn about
@@ -95,7 +95,7 @@ private:     // data
   // The list of documents we can potentially switch among.  This is
   // needed so I can switch to a different file when the open file gets
   // closed by another widget operating on the same document list.
-  RCSerf<FileTextDocumentList> m_documentList;
+  RCSerf<NamedTextDocumentList> m_documentList;
 
   // ----- match highlight state -----
   // when nonempty, any buffer text matching this string will
@@ -204,7 +204,7 @@ protected:   // funcs
 
 public:      // funcs
   EditorWidget(NamedTextDocument *docFile,
-               FileTextDocumentList *documentList,
+               NamedTextDocumentList *documentList,
                StatusDisplay *status,
                QWidget *parent=NULL);
   ~EditorWidget();
@@ -325,12 +325,12 @@ public:      // funcs
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override;
 
-  // Answer a query from the FileTextDocumentList.
+  // Answer a query from the NamedTextDocumentList.
   virtual bool getFileTextDocumentInitialView(
-    FileTextDocumentList *documentList, NamedTextDocument *file,
-    FileTextDocumentInitialView /*OUT*/ &view) noexcept override;
+    NamedTextDocumentList *documentList, NamedTextDocument *file,
+    NamedTextDocumentInitialView /*OUT*/ &view) noexcept override;
 
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process, so the constness of

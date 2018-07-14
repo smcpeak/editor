@@ -79,7 +79,7 @@ CHECK_OBJECT_COUNT(EditorWidget);
 
 
 EditorWidget::EditorWidget(NamedTextDocument *tdf,
-                           FileTextDocumentList *documentList,
+                           NamedTextDocumentList *documentList,
                            StatusDisplay *status_,
                            QWidget *parent)
   : QWidget(parent),
@@ -299,7 +299,7 @@ EditorWidget::FileTextDocumentEditor *
   // Lets ask the other windows if they know a good starting position.
   // This allows a user to open a new window without losing their
   // position in all of the open files.
-  FileTextDocumentInitialView view;
+  NamedTextDocumentInitialView view;
   bool hasView = m_documentList->notifyGetInitialView(file, view);
 
   // Make the new editor.
@@ -412,7 +412,7 @@ void EditorWidget::openFileAtCursor()
 
 
 void EditorWidget::fileTextDocumentRemoved(
-  FileTextDocumentList *documentList, NamedTextDocument *file) noexcept
+  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {
   GENERIC_CATCH_BEGIN
   xassert(documentList == m_documentList);
@@ -440,8 +440,8 @@ void EditorWidget::fileTextDocumentRemoved(
 
 
 bool EditorWidget::getFileTextDocumentInitialView(
-  FileTextDocumentList *documentList, NamedTextDocument *file,
-  FileTextDocumentInitialView /*OUT*/ &view) noexcept
+  NamedTextDocumentList *documentList, NamedTextDocument *file,
+  NamedTextDocumentInitialView /*OUT*/ &view) noexcept
 {
   GENERIC_CATCH_BEGIN
 

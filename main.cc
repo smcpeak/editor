@@ -273,7 +273,7 @@ ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 
 
 void GlobalState::fileTextDocumentRemoved(
-  FileTextDocumentList *documentList,
+  NamedTextDocumentList *documentList,
   NamedTextDocument *fileDoc) NOEXCEPT
 {
   ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
