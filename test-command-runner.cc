@@ -8,6 +8,7 @@
 
 // smqtutil
 #include "qtutil.h"                    // toString
+#include "timer-event-loop.h"          // TimerEventLoop
 
 // smbase
 #include "datablok.h"                  // DataBlock
@@ -344,63 +345,9 @@ static void testMiscDiagnostics()
 }
 
 
-// An event loop and a timer so I can easily pump the event queue for
-// a certain amount of time.
-//
-// TODO: Move to smqtutil.
-class TimerEventLoop : public QEventLoop {
-private:     // data
-  // Running timer or 0 if none.
-  int m_timerId;
-
-protected:   // funcs
-  // QObject methods.
-  virtual void timerEvent(QTimerEvent *Event) OVERRIDE;
-
-  // Stop the timer if it is running.
-  void stopTimerIf();
-
-public:      // funcs
-  TimerEventLoop()
-    : m_timerId(0)
-  {}
-
-  // Wait, while pumping the event queue, for 'msecs'.
-  void waitForMS(int msecs);
-};
-
-void TimerEventLoop::timerEvent(QTimerEvent *Event)
-{
-  // Stop the event loop.
-  this->exit(0);
-
-  this->stopTimerIf();
-}
-
-void TimerEventLoop::stopTimerIf()
-{
-  if (m_timerId != 0) {
-    this->killTimer(m_timerId);
-    m_timerId = 0;
-  }
-}
-
-void TimerEventLoop::waitForMS(int msecs)
-{
-  this->stopTimerIf();
-
-  m_timerId = this->startTimer(msecs);
-  xassert(m_timerId != 0);
-
-  // Start the event loop.
-  this->exec();
-}
-
-
 static void sleepBriefly()
 {
-  TimerEventLoop eventLoop;
-  eventLoop.waitForMS(200);
+  sleepWhilePumpingEvents(200 /*ms*/);
 }
 
 

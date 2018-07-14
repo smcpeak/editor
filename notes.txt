@@ -1,6 +1,5 @@
 
 TODOs:
-  - move TimerEventLoop from test-command-runner.cc to smqtutil
   - change F3 to do what ctrl+i does when not on a file name
     - leave a menu option to run that dialog though
   - run command to generate entire file; git annotate!
