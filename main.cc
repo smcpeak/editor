@@ -192,11 +192,54 @@ FileTextDocument *GlobalState::runOpenFilesDialog()
 }
 
 
+// Return a document to be populated by running 'command' in 'dir'.
+// The name must be unique, but we will reuse an existing document if
+// its process has terminated.
+FileTextDocument *GlobalState::getNewCommandOutputDocument(
+  QString dir, QString command)
+{
+  // Come up with a unique named based on the command and directory.
+  string base = stringb(toString(dir) << "$ " << toString(command));
+  for (int n = 1; n < 100; n++) {
+    string name = (n==1? base : stringb(base << " (" << n << ')'));
+
+    FileTextDocument *fileDoc = m_documentList.findFileByName(name);
+    if (!fileDoc) {
+      // Nothing with this name, let's use it to make a new one.
+      TRACE("process", "making new document: " << name);
+      FileTextDocument *newDoc = new FileTextDocument();
+      newDoc->m_filename = name;
+      newDoc->m_isUntitled = true;
+      newDoc->m_title = name;
+      trackNewDocumentFile(newDoc);
+      return newDoc;
+    }
+
+    if (!fileDoc->isProcessOutput()) {
+      // Not a process output document, keep looking.
+      continue;
+    }
+
+    ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
+    if (!watcher) {
+      // This is a left-over document from a previous run.  Re-use it.
+      TRACE("process", "reusing existing document: " << name);
+      fileDoc->clearContentsAndHistory();
+      return fileDoc;
+    }
+  }
+
+  // Maybe something went haywire creating commands?
+  xfailure("Hit limit of 100 same-named command output documents!");
+}
+
+
 FileTextDocument *GlobalState::runLaunchCommandDialog(
   QString dir, QString command)
 {
-  // Make a new document to hold the result.
-  FileTextDocument *fileDoc = this->createNewFile();
+  // Find or create a document to hold the result.
+  FileTextDocument *fileDoc =
+    this->getNewCommandOutputDocument(dir, command);
 
   // Make the watcher that will populate that file.
   ProcessWatcher *watcher = new ProcessWatcher(fileDoc);

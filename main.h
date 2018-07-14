@@ -62,6 +62,9 @@ private:     // data
 private:      // funcs
   bool hotkeyAvailable(int key) const;
 
+  FileTextDocument *getNewCommandOutputDocument(
+    QString dir, QString command);
+
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
   void focusChangedHandler(QWidget *from, QWidget *to);

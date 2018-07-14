@@ -1,14 +1,14 @@
 
 TODOs:
   - move TimerEventLoop from test-command-runner.cc to smqtutil
+  - command line arguments to set window position(s)
   - run command to generate entire file; git annotate!
     - enhancements
       - kill without closing buffer
       - soft end of buffer jumping
       - do not highlight trailing spaces
-      - "file name" should reflect the command
       - when switch to output buffer, need to jump to end
-      - rerun terminated command in same buffer
+      - print finish date/time and elapsed time
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process
