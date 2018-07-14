@@ -184,23 +184,21 @@ void NamedTextDocumentList::moveDocument(NamedTextDocument *file, int newIndex)
 NamedTextDocument *NamedTextDocumentList::createUntitledDocument(
   string const &dir)
 {
-  // TODO: Rewrite this code slightly to delay creating the document
-  // object until the name has been computed, just to be a bit cleaner.
-  NamedTextDocument *file = new NamedTextDocument();
-
   // Come up with a unique "untitled" name.
-  file->setNonFileName("untitled.txt", dir);
+  string name = "untitled.txt";
   int n = 1;
-  while (this->findDocumentByName(file->name())) {
+  while (this->findDocumentByName(name)) {
     n++;
-    file->setNonFileName(stringb("untitled" << n << ".txt"), dir);
+    name = stringb("untitled" << n << ".txt");
   }
 
-  TRACE("named-td-list", "createUntitledFile: " << file->name());
-  file->m_title = file->name();
+  TRACE("named-td-list", "createUntitledDocument: " << name);
+  NamedTextDocument *doc = new NamedTextDocument();
+  doc->setNonFileName(name, dir);
+  doc->m_title = this->computeUniqueTitle(name);
+  this->addDocument(doc);
 
-  this->addDocument(file);
-  return file;
+  return doc;
 }
 
 
