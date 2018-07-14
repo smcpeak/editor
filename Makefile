@@ -7,7 +7,7 @@ all: test-td-core
 all: test-td-editor
 all: test-justify
 all: test-command-runner
-all: test-file-td
+all: test-named-td
 all: test-file-td-list
 all: test-nearby-file
 all: textcategory
@@ -179,19 +179,19 @@ test-command-runner: $(COMMAND_RUNNER_OBJS)
 # annoying.
 
 
-# ---------------------- test-file-td ----------------------
-TOCLEAN += test-file-td
+# ---------------------- test-named-td ----------------------
+TOCLEAN += test-named-td
 
-EDITOR_OBJS += file-td.o
+EDITOR_OBJS += named-td.o
 
-TEST_FILE_TD_OBJS := $(EDITOR_OBJS)
+TEST_NAMED_TD_OBJS := $(EDITOR_OBJS)
 
-TEST_FILE_TD_OBJS += test-file-td.o
--include test-file-td.d
+TEST_NAMED_TD_OBJS += test-named-td.o
+-include test-named-td.d
 
-test-file-td: $(TEST_FILE_TD_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_FILE_TD_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-file-td >/dev/null 2>&1
+test-named-td: $(TEST_NAMED_TD_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-named-td >/dev/null 2>&1
 
 
 # -------------------- test-file-td-list --------------------
@@ -296,6 +296,8 @@ endif
 # TODO: I should change file-to-strlit.pl so it can avoid making that.
 git-version.gen.cc: git-version.gen.txt
 	perl $(SMBASE)/file-to-strlit.pl editor_git_version $^ git-version.gen.h $@
+
+TOCLEAN += git-version.gen.*
 
 # ------------------ the editor ---------------------
 # editor-window.cc includes keybindings.doc.gen.h.

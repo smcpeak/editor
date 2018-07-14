@@ -1,4 +1,4 @@
-// file-td.h
+// named-td.h
 // NamedTextDocument class.
 
 #ifndef FILE_TD_H

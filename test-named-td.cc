@@ -1,7 +1,7 @@
-// test-file-td.cc
-// Tests for 'file-td' module.
+// test-named-td.cc
+// Tests for 'named-td' module.
 
-#include "file-td.h"                   // this module
+#include "named-td.h"                  // module to test
 
 #include "nonport.h"                   // fileOrDirectoryExists, removeFile
 #include "test.h"                      // USUAL_MAIN

@@ -4,7 +4,7 @@
 #ifndef EDITOR_WINDOW_H
 #define EDITOR_WINDOW_H
 
-#include "file-td.h"                   // NamedTextDocument
+#include "named-td.h"                  // NamedTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
 
 // smqtutil

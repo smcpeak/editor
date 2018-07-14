@@ -6,7 +6,7 @@
 
 // editor
 #include "command-runner.h"            // CommandRunner
-#include "file-td.h"                   // NamedTextDocument
+#include "named-td.h"                  // NamedTextDocument
 
 // smbase
 #include "datetime.h"                  // UnixTime

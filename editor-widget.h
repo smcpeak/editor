@@ -5,7 +5,7 @@
 #define EDITOR_WIDGET_H
 
 #include "td-editor.h"                 // TextDocumentEditor
-#include "file-td.h"                   // NamedTextDocument
+#include "named-td.h"                  // NamedTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
 

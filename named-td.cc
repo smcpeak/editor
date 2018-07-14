@@ -1,7 +1,7 @@
-// file-td.cc
-// code for file-td.h
+// named-td.cc
+// code for named-td.h
 
-#include "file-td.h"                   // this module
+#include "named-td.h"                  // this module
 
 // smbase
 #include "macros.h"                    // CMEMB

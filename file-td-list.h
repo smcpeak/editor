@@ -5,7 +5,7 @@
 #define FILE_TD_LIST_H
 
 // editor
-#include "file-td.h"                   // NamedTextDocument
+#include "named-td.h"                  // NamedTextDocument
 
 // smbase
 #include "array.h"                     // ObjArrayStack
