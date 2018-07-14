@@ -14,7 +14,7 @@
       }
     },
     {
-      "attributes": "m_core: TextDocumentCore\nm_history: HE_group\nm_historyIndex: int\nm_savedHistoryIndex: int\nm_groupStack: HE_group[]\nm_isProcessOutput: bool\n",
+      "attributes": "m_core: TextDocumentCore\nm_history: HE_group\nm_historyIndex: int\nm_savedHistoryIndex: int\nm_groupStack: HE_group[]\nm_documentProcessStatus: enum {...}\n",
       "loc": {
         "x": 720,
         "y": 140
@@ -26,7 +26,7 @@
       }
     },
     {
-      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_isUntitled: bool\nm_lastFileTimestamp: int\n[TODO: m_directory: string]\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
+      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\n[TODO: m_directory: string]\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
       "loc": {
         "x": 720,
         "y": 295
@@ -169,7 +169,7 @@
       "open": false,
       "parentRef": 7,
       "pt": {
-        "x": 300,
+        "x": 285,
         "y": 50
       }
     },
@@ -185,7 +185,7 @@
       "open": false,
       "parentRef": 11,
       "pt": {
-        "x": 255,
+        "x": 285,
         "y": 375
       }
     }
@@ -206,6 +206,7 @@
         "entityRef": 2
       },
       "label": "m_documents[]",
+      "lineWidth": 2,
       "start": {"entityRef": 10}
     },
     {
@@ -214,6 +215,7 @@
         "entityRef": 4
       },
       "label": "m_windows[]",
+      "lineWidth": 2,
       "start": {"entityRef": 5}
     },
     {
@@ -222,6 +224,7 @@
         "entityRef": 3
       },
       "label": "editorWidget",
+      "lineWidth": 2,
       "routingAlg": "RA_MANHATTAN_VERT",
       "start": {"entityRef": 4}
     },
@@ -254,14 +257,15 @@
     },
     {
       "controlPts": [{
-        "x": 345,
-        "y": 335
+        "x": 360,
+        "y": 325
       }],
       "end": {
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 8
       },
       "label": "m_editors[]",
+      "lineWidth": 2,
       "start": {"entityRef": 3}
     },
     {
@@ -270,6 +274,7 @@
         "entityRef": 9
       },
       "label": "m_first/lastVisible",
+      "lineWidth": 2,
       "start": {"entityRef": 6}
     },
     {
@@ -278,6 +283,7 @@
         "entityRef": 0
       },
       "label": "m_core",
+      "lineWidth": 2,
       "start": {"entityRef": 1}
     },
     {
@@ -290,6 +296,7 @@
         "entityRef": 10
       },
       "label": "m_documentList",
+      "lineWidth": 2,
       "start": {"entityRef": 5}
     },
     {
@@ -304,20 +311,18 @@
     },
     {
       "controlPts": [{
-        "x": 235,
-        "y": 375
+        "x": 285,
+        "y": 395
       }],
       "end": {"inheritanceRef": 3},
-      "routingAlg": "RA_MANHATTAN_VERT",
       "start": {"entityRef": 4}
     },
     {
       "controlPts": [{
-        "x": 235,
-        "y": 375
+        "x": 285,
+        "y": 335
       }],
       "end": {"inheritanceRef": 3},
-      "routingAlg": "RA_MANHATTAN_VERT",
       "start": {"entityRef": 3}
     },
     {
@@ -338,11 +343,11 @@
     {
       "controlPts": [
         {
-          "x": 375,
+          "x": 365,
           "y": 245
         },
         {
-          "x": 390,
+          "x": 385,
           "y": 435
         },
         {
@@ -370,6 +375,7 @@
         "entityRef": 12
       },
       "label": "m_processes[]",
+      "lineWidth": 2,
       "start": {"entityRef": 5}
     },
     {
