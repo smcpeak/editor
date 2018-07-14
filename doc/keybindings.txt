@@ -39,6 +39,7 @@ Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
 Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
 
 Ctrl+S: Search.
+Ctrl+Period or Ctrl+Comma: Next or previous search hit.
 Esc: Close search panel.
 
 Ctrl+K: Cut current line.

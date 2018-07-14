@@ -152,14 +152,23 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
     bool shift   = (mods & Qt::ShiftModifier);
     bool control = (mods & Qt::ControlModifier);
     bool alt     = (mods & Qt::AltModifier);
+    int key = keyEvent->key();
 
-    switch (keyEvent->key()) {
+    switch (key) {
       case Qt::Key_Return:
       case Qt::Key_Enter:
         if (mods == Qt::NoModifier || mods == Qt::ShiftModifier) {
-          TRACE("sar", "next/prev search hit");
           m_editorWidget->nextSearchHit(shift /*reverse*/);
           return true;       // no further processing
+        }
+        break;
+
+      case Qt::Key_Comma:
+      case Qt::Key_Period:
+        if (mods == Qt::ControlModifier) {
+          bool reverse = (key == Qt::Key_Comma);
+          m_editorWidget->nextSearchHit(reverse);
+          return true;
         }
         break;
 
@@ -287,7 +296,7 @@ void SearchAndReplacePanel::on_help()
     "Esc: Close the SAR panel.\n"
     "Tab: Toggle between Find and Repl boxes.\n"
     "\n"
-    "(Shift+)Enter: Move to next/prev match.\n"
+    "Ctrl+Period or Ctrl+Comma: Move to next/prev match.\n"
     "Ctrl+R: Replace selection with Repl text; "
       "if nothing selected, move to next match.\n"
     "Shift+Ctrl+R: Replace and move to next match.\n"

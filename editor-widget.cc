@@ -1162,6 +1162,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         this->openFileAtCursor();
         break;
 
+      case Qt::Key_Comma:
+      case Qt::Key_Period: {
+        bool reverse = (k->key() == Qt::Key_Comma);
+        this->nextSearchHit(reverse);
+        break;
+      }
+
       default:
         k->ignore();
         break;
@@ -1767,6 +1774,8 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
 // search.
 void EditorWidget::nextSearchHit(bool reverse)
 {
+  TRACE("sar", (reverse? "prev" : "next") << " search hit");
+
   TextCoord tc(m_editor->cursor());
 
   TextDocumentEditor::FindStringFlags flags = m_hitTextFlags;
