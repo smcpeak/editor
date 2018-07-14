@@ -182,6 +182,22 @@ EditorWindow::~EditorWindow()
 }
 
 
+// This is a workaround for an Eclipse CDT bug.  If I write the call to
+// 'addAction' in the direct way, Eclipse fails to resolve it and
+// complains.  But when I hide it in a template method, Eclipse knows
+// it does not know, so shuts up.  GCC is fine either way of course.
+//
+// I might move this to smqtutil at some point.
+template <class RECEIVER>
+QAction *addMenuAction(
+  QMenu *menu, char const *title,
+  RECEIVER *rcv, void (RECEIVER::*ptm)(),
+  QKeySequence const &shortcut = QKeySequence(0))
+{
+  return menu->addAction(title, rcv, ptm, shortcut);
+}
+
+
 void EditorWindow::buildMenu()
 {
   {
@@ -195,8 +211,8 @@ void EditorWindow::buildMenu()
     file->addAction("&Reload", this, SLOT(fileReload()));
     file->addAction("Reload a&ll", this, SLOT(fileReloadAll()));
     file->addSeparator();
-    file->addAction("&Launch (run) command ...", this, &fileLaunchCommand,
-                    Qt::ALT + Qt::Key_R);
+    addMenuAction(file, "&Launch (run) command ...",
+      this, &EditorWindow::fileLaunchCommand, Qt::ALT + Qt::Key_R);
     file->addSeparator();
     file->addAction("E&xit", this, SLOT(fileExit()));
   }
@@ -244,8 +260,8 @@ void EditorWindow::buildMenu()
       SLOT(viewToggleHighlightTrailingWS()),
       this->m_editorWidget->highlightTrailingWhitespace());
 
-    menu->addAction("Set &Highlighting...", this,
-      &EditorWindow::viewSetHighlighting);
+    addMenuAction(menu, "Set &Highlighting...",
+      this, &EditorWindow::viewSetHighlighting);
   }
 
   #undef CHECKABLE_ACTION
