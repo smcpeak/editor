@@ -1,5 +1,5 @@
 // file-td.h
-// FileTextDocument class.
+// NamedTextDocument class.
 
 #ifndef FILE_TD_H
 #define FILE_TD_H
@@ -30,9 +30,7 @@
 //
 // All of the data in this class is shared by all editor windows that
 // operate on a given document.
-//
-// TODO: Rename this to NamedTextDocument.
-class FileTextDocument : public TextDocument {
+class NamedTextDocument : public TextDocument {
 private:     // static data
   // Next value to use when assigning menu ids.
   static int s_nextWindowMenuId;
@@ -94,8 +92,8 @@ public:      // data
   bool m_highlightTrailingWhitespace;
 
 public:      // funcs
-  FileTextDocument();
-  ~FileTextDocument();
+  NamedTextDocument();
+  ~NamedTextDocument();
 
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;

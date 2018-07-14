@@ -60,7 +60,7 @@ int EditorWindow::s_objectCount = 0;
 CHECK_OBJECT_COUNT(EditorWindow);
 
 
-EditorWindow::EditorWindow(GlobalState *theState, FileTextDocument *initFile,
+EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
                            QWidget *parent)
   : QWidget(parent),
     m_globalState(theState),
@@ -283,7 +283,7 @@ void EditorWindow::buildMenu()
 
 
 // not inline because main.h doesn't see editor.h
-FileTextDocument *EditorWindow::currentDocument()
+NamedTextDocument *EditorWindow::currentDocument()
 {
   return m_editorWidget->getDocumentFile();
 }
@@ -291,12 +291,12 @@ FileTextDocument *EditorWindow::currentDocument()
 
 void EditorWindow::fileNewFile()
 {
-  FileTextDocument *b = m_globalState->createNewFile();
+  NamedTextDocument *b = m_globalState->createNewFile();
   setDocumentFile(b);
 }
 
 
-void EditorWindow::setDocumentFile(FileTextDocument *file)
+void EditorWindow::setDocumentFile(NamedTextDocument *file)
 {
   m_editorWidget->setDocumentFile(file);
   this->updateForChangedFile();
@@ -309,7 +309,7 @@ void EditorWindow::updateForChangedFile()
 }
 
 
-void EditorWindow::useDefaultHighlighter(FileTextDocument *file)
+void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 {
   if (file->m_highlighter) {
     delete file->m_highlighter;
@@ -420,13 +420,13 @@ void EditorWindow::fileOpenFile(string const &name)
   TRACE("fileOpen", "fileOpenFile: " << name);
 
   // If this file is already open, switch to it.
-  FileTextDocument *file = m_globalState->m_documentList.findFileByName(name);
+  NamedTextDocument *file = m_globalState->m_documentList.findFileByName(name);
   if (file) {
     this->setDocumentFile(file);
     return;
   }
 
-  file = new FileTextDocument();
+  file = new NamedTextDocument();
   file->setFilename(name);
   file->m_title = this->m_globalState->uniqueTitleFor(file->filename());
 
@@ -448,7 +448,7 @@ void EditorWindow::fileOpenFile(string const &name)
   this->useDefaultHighlighter(file);
 
   // is there an untitled, empty file hanging around?
-  RCSerf<FileTextDocument> untitled =
+  RCSerf<NamedTextDocument> untitled =
     this->m_globalState->m_documentList.findUntitledUnmodifiedFile();
   if (untitled) {
     // I'm going to remove it, but can't yet b/c I
@@ -471,7 +471,7 @@ void EditorWindow::fileOpenFile(string const &name)
 
 void EditorWindow::fileSave()
 {
-  FileTextDocument *b = this->currentDocument();
+  NamedTextDocument *b = this->currentDocument();
   if (!b->hasFilename()) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
@@ -498,7 +498,7 @@ void EditorWindow::fileSave()
 
 void EditorWindow::writeTheFile()
 {
-  RCSerf<FileTextDocument> file = this->currentDocument();
+  RCSerf<NamedTextDocument> file = this->currentDocument();
   try {
     file->writeFile();
     editorViewChanged();
@@ -512,7 +512,7 @@ void EditorWindow::writeTheFile()
 }
 
 
-bool EditorWindow::stillCurrentDocument(FileTextDocument *doc)
+bool EditorWindow::stillCurrentDocument(NamedTextDocument *doc)
 {
   if (doc != currentDocument()) {
     // Note: It is possible that 'doc' has been deallocated here!
@@ -529,7 +529,7 @@ bool EditorWindow::stillCurrentDocument(FileTextDocument *doc)
 
 void EditorWindow::fileSaveAs()
 {
-  FileTextDocument *fileDoc = currentDocument();
+  NamedTextDocument *fileDoc = currentDocument();
 
   // TODO: This isn't right for documents that do not have file names.
   // I'm just trusting the dialog to disregard the invalid filenames.
@@ -575,7 +575,7 @@ void EditorWindow::fileSaveAs()
 
 void EditorWindow::fileClose()
 {
-  FileTextDocument *b = currentDocument();
+  NamedTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
     msg << "The document \"" << b->name() << "\" has unsaved changes.  "
@@ -600,14 +600,14 @@ void EditorWindow::fileReload()
 }
 
 
-bool EditorWindow::reloadFile(FileTextDocument *b_)
+bool EditorWindow::reloadFile(NamedTextDocument *b_)
 {
   // TODO: This function's signature is inherently dangerous because I
   // have no way of re-confirming 'b' after the dialog box closes since
   // I don't know where it came from.  For now I will just arrange to
   // abort before memory corruption can happen, but I should change the
   // callers to use a more reliable pattern.
-  RCSerf<FileTextDocument> b(b_);
+  RCSerf<NamedTextDocument> b(b_);
 
   if (b->unsavedChanges()) {
     if (!this->okToDiscardChanges(stringb(
@@ -643,7 +643,7 @@ void EditorWindow::fileReloadAll()
   }
 
   for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
-    FileTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
+    NamedTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
     if (!this->reloadFile(file)) {
       // Stop after first error.
       break;
@@ -665,7 +665,7 @@ void EditorWindow::fileLaunchCommand()
     return;
   }
 
-  FileTextDocument *fileDoc =
+  NamedTextDocument *fileDoc =
     m_globalState->launchCommand(toQString(dir), dialog->m_text);
   this->setDocumentFile(fileDoc);
 }
@@ -691,7 +691,7 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
 
   msg << "The following documents have unsaved changes:\n\n";
   for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
-    FileTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
+    NamedTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
     if (file->unsavedChanges()) {
       ct++;
       msg << " * " << file->name() << '\n';
@@ -735,7 +735,7 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 
 
 void EditorWindow::fileTextDocumentAdded(
-  FileTextDocumentList *, FileTextDocument *) NOEXCEPT
+  FileTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   this->rebuildWindowMenu();
@@ -743,7 +743,7 @@ void EditorWindow::fileTextDocumentAdded(
 }
 
 void EditorWindow::fileTextDocumentRemoved(
-  FileTextDocumentList *, FileTextDocument *) NOEXCEPT
+  FileTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -763,7 +763,7 @@ void EditorWindow::fileTextDocumentRemoved(
 }
 
 void EditorWindow::fileTextDocumentAttributeChanged(
-  FileTextDocumentList *, FileTextDocument *) NOEXCEPT
+  FileTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -1019,7 +1019,7 @@ void EditorWindow::viewToggleHighlightTrailingWS()
 
 void EditorWindow::viewSetHighlighting()
 {
-  FileTextDocument *doc = this->currentDocument();
+  NamedTextDocument *doc = this->currentDocument();
 
   QInputDialog dialog(this);
   dialog.setWindowTitle("Set Highlighting");
@@ -1067,7 +1067,7 @@ void EditorWindow::viewSetHighlighting()
 
 void EditorWindow::windowOpenFilesList()
 {
-  FileTextDocument *doc = m_globalState->runOpenFilesDialog();
+  NamedTextDocument *doc = m_globalState->runOpenFilesDialog();
   if (doc) {
     this->setDocumentFile(doc);
   }
@@ -1153,7 +1153,7 @@ void EditorWindow::editorViewChanged()
   ));
 
   // Status text: full document name.
-  FileTextDocument *file = currentDocument();
+  NamedTextDocument *file = currentDocument();
   m_statusArea->status->setText(toQString(file->name()));
 
   // Window title.
@@ -1230,7 +1230,7 @@ void EditorWindow::rebuildWindowMenu()
   // add new items for all of the open files;
   // hotkeys have already been assigned by now
   for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
-    FileTextDocument *b = this->m_globalState->m_documentList.getFileAt(i);
+    NamedTextDocument *b = this->m_globalState->m_documentList.getFileAt(i);
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
@@ -1243,7 +1243,7 @@ void EditorWindow::rebuildWindowMenu()
       SLOT(windowFileChoice()), // slot name
       keySequence);               // accelerator
 
-    // Associate the action with the FileTextDocument object.
+    // Associate the action with the NamedTextDocument object.
     action->setData(QVariant(b->m_windowMenuId));
 
     this->m_fileChoiceActions.push(action);
@@ -1259,7 +1259,7 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
   // Search through the list of files to find the one
   // that this action refers to.
   int windowMenuId = action->data().toInt();
-  FileTextDocument *file =
+  NamedTextDocument *file =
     this->m_globalState->m_documentList.findFileByWindowMenuId(windowMenuId);
   if (file) {
     TRACE("menu", "window file choice is: " << file->name());

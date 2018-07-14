@@ -5,7 +5,7 @@
 #define FILE_TD_LIST_H
 
 // editor
-#include "file-td.h"                   // FileTextDocument
+#include "file-td.h"                   // NamedTextDocument
 
 // smbase
 #include "array.h"                     // ObjArrayStack
@@ -64,7 +64,7 @@ private:     // data
   // * Every 'windowMenuId' must be unique.  Clients are expected to
   //   ensure this on their own by using a process-wide counter.
   //
-  ObjArrayStack<FileTextDocument> m_fileDocuments;
+  ObjArrayStack<NamedTextDocument> m_fileDocuments;
 
 public:      // funcs
   // Initially there is one untitled file.
@@ -81,21 +81,21 @@ public:      // funcs
   int numFiles() const;
 
   // Get the file at a particular position in [0,numFiles()-1].
-  FileTextDocument       *getFileAt (int index);
-  FileTextDocument const *getFileAtC(int index) const;
+  NamedTextDocument       *getFileAt (int index);
+  NamedTextDocument const *getFileAtC(int index) const;
 
   // Return true if the given file is in the list.
-  bool hasFile(FileTextDocument const *file) const;
+  bool hasFile(NamedTextDocument const *file) const;
 
   // Return the index in [0,numFiles()-1] of the given file, or -1
   // if the file is not in the list.
-  int getFileIndex(FileTextDocument const *file) const;
+  int getFileIndex(NamedTextDocument const *file) const;
 
   // Add the given file to our collection.  It must already have a
   // unique filename.  This routine will modify its title and hotkey,
   // if necessary, to ensure they are unique too.  The file is added
   // to the end of the list.
-  void addFile(FileTextDocument *file);
+  void addFile(NamedTextDocument *file);
 
   // Remove the given file from the collection and notify all
   // observers.  This does *not* deallocate 'file'!  Instead, ownership
@@ -104,40 +104,40 @@ public:      // funcs
   // If 'file' is the last file, this method does 'createUntitledFile',
   // including notifying observers, before removing 'file' (and then
   // notifying again).
-  void removeFile(FileTextDocument *file);
+  void removeFile(NamedTextDocument *file);
 
   // Move the indicated file to the given index, shifting other files
   // to make room.  It must be present in the list and 'newIndex' must
   // be in [0,numFiles()-1].
-  void moveFile(FileTextDocument *file, int newIndex);
+  void moveFile(NamedTextDocument *file, int newIndex);
 
   // --------------- fileDocuments: other operations ----------------
   // Create a new untitled file and add it the end of the list.  It
   // will have a name like "untitled.txt" or "untitled$N.txt" such that
   // it is unique, and its 'isUntitled' field will be true.
-  FileTextDocument *createUntitledFile();
+  NamedTextDocument *createUntitledFile();
 
   // Find and return the document with the given name, else NULL.
-  FileTextDocument       *findFileByName (string const &name);
-  FileTextDocument const *findFileByNameC(string const &name) const;
+  NamedTextDocument       *findFileByName (string const &name);
+  NamedTextDocument const *findFileByNameC(string const &name) const;
 
   // Find and return the document with the given title, else NULL.
-  FileTextDocument       *findFileByTitle (string const &title);
-  FileTextDocument const *findFileByTitleC(string const &title) const;
+  NamedTextDocument       *findFileByTitle (string const &title);
+  NamedTextDocument const *findFileByTitleC(string const &title) const;
 
   // Find and return the document that has a hotkey equal to
   // 'hotkeyDigit', else NULL.
-  FileTextDocument       *findFileByHotkey (int hotkeyDigit);
-  FileTextDocument const *findFileByHotkeyC(int hotkeyDigit) const;
+  NamedTextDocument       *findFileByHotkey (int hotkeyDigit);
+  NamedTextDocument const *findFileByHotkeyC(int hotkeyDigit) const;
 
   // Find and return the document that has the given 'windowMenuId',
   // else NULL.
-  FileTextDocument       *findFileByWindowMenuId (int id);
-  FileTextDocument const *findFileByWindowMenuIdC(int id) const;
+  NamedTextDocument       *findFileByWindowMenuId (int id);
+  NamedTextDocument const *findFileByWindowMenuIdC(int id) const;
 
   // Find a file that is untitled and has no modifications, else NULL.
-  FileTextDocument       *findUntitledUnmodifiedFile ();
-  FileTextDocument const *findUntitledUnmodifiedFileC() const;
+  NamedTextDocument       *findUntitledUnmodifiedFile ();
+  NamedTextDocument const *findUntitledUnmodifiedFileC() const;
 
   // Compute a title based on 'filename' that is not the title of any
   // file in the list.
@@ -150,7 +150,7 @@ public:      // funcs
   // Given a file that is already in the collection (with a unique
   // filename, per usual) compute a new unique title based on the
   // filename and update 'file' to have that title.
-  void assignUniqueTitle(FileTextDocument *file);
+  void assignUniqueTitle(NamedTextDocument *file);
 
   // Compute a hotkey digit that no file is currently using, or return
   // false if all are in use.
@@ -158,7 +158,7 @@ public:      // funcs
 
   // Compute and assign a unique hotkey.  There may not be any
   // unused hotkeys, in which case remove any hotkey from the file.
-  void assignUniqueHotkey(FileTextDocument *file);
+  void assignUniqueHotkey(NamedTextDocument *file);
 
   // Put into 'dirs' the unique set of directories containing files
   // currently open, in order from most to least recently used.  Any
@@ -174,23 +174,23 @@ public:      // funcs
 
   // ----------------- observer notification --------------------
   // Call 'fileTextDocumentAdded(file)' for all observers.
-  void notifyAdded(FileTextDocument *file);
+  void notifyAdded(NamedTextDocument *file);
 
   // Call 'fileTextDocumentRemoved(file)' for all observers.
-  void notifyRemoved(FileTextDocument *file);
+  void notifyRemoved(NamedTextDocument *file);
 
   // Call 'fileTextDocumentAttributeChanged(file)' for all observers.
   //
   // If a client changes an attribute without using one of the methods
   // in this class, the client should call this function.
-  void notifyAttributeChanged(FileTextDocument *file);
+  void notifyAttributeChanged(NamedTextDocument *file);
 
   // Call 'fileTextDocumentListOrderChanged()' for all observers.
   void notifyListOrderChanged();
 
   // Call 'getFileTextDocumentInitialView' for all observers until one
   // returns true; else false if none do so.
-  bool notifyGetInitialView(FileTextDocument *file,
+  bool notifyGetInitialView(NamedTextDocument *file,
     FileTextDocumentInitialView /*OUT*/ &view);
 };
 
@@ -215,12 +215,12 @@ class FileTextDocumentListObserver : virtual public SerfRefCount {
 public:      // funcs
   // A file was added to the list.
   virtual void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept;
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept;
 
   // A file was removed.  When this is called, the file has already
   // been removed from the list, but the object is still valid.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept;
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept;
 
   // An attribute of a file may have changed.  The client has to
   // inspect the file to determine what has changed.
@@ -235,7 +235,7 @@ public:      // funcs
   // concept, since we are notifying about a single object, rather
   // that something intrinsically tied to the "list" aspect.
   virtual void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept;
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept;
 
   // The order of files in the list may have changed.  Observers must
   // query the list in order to obtain the new order.
@@ -247,7 +247,7 @@ public:      // funcs
   // within the file to start at.  If the observer has one, it should
   // fill in 'view' and return true; else false.
   virtual bool getFileTextDocumentInitialView(
-    FileTextDocumentList *documentList, FileTextDocument *file,
+    FileTextDocumentList *documentList, NamedTextDocument *file,
     FileTextDocumentInitialView /*OUT*/ &view) noexcept;
 
   // Silence dumb warnings.

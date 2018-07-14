@@ -5,7 +5,7 @@
 #define EDITOR_WIDGET_H
 
 #include "td-editor.h"                 // TextDocumentEditor
-#include "file-td.h"                   // FileTextDocument
+#include "file-td.h"                   // NamedTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
 
@@ -53,18 +53,18 @@ public:     // static data
   static int s_objectCount;
 
 private:     // types
-  // For this EditorWidget, and for a given FileTextDocument, this is
+  // For this EditorWidget, and for a given NamedTextDocument, this is
   // the editing state for that file.  This state is *not* shared with
   // other widgets in the editor application, although it contains a
-  // pointer to a FileTextDocument, which *is* shared.
+  // pointer to a NamedTextDocument, which *is* shared.
   class FileTextDocumentEditor : public TextDocumentEditor {
   public:    // data
     // Process-wide record of the open file.  Not an owner pointer.
     // Must not be null.
-    RCSerf<FileTextDocument> m_fileDoc;
+    RCSerf<NamedTextDocument> m_fileDoc;
 
   public:
-    FileTextDocumentEditor(FileTextDocument *f) :
+    FileTextDocumentEditor(NamedTextDocument *f) :
       TextDocumentEditor(f),
       m_fileDoc(f)
     {}
@@ -203,7 +203,7 @@ protected:   // funcs
   virtual void focusOutEvent(QFocusEvent *e) override;
 
 public:      // funcs
-  EditorWidget(FileTextDocument *docFile,
+  EditorWidget(NamedTextDocument *docFile,
                FileTextDocumentList *documentList,
                StatusDisplay *status,
                QWidget *parent=NULL);
@@ -313,10 +313,10 @@ public:      // funcs
 
   // If we already have an editor for 'file', return it.  Otherwise,
   // make a new editor, add it to 'm_editors', and return that.
-  FileTextDocumentEditor *getOrMakeEditor(FileTextDocument *file);
+  FileTextDocumentEditor *getOrMakeEditor(NamedTextDocument *file);
 
   // Change which file this editor widget is editing.
-  void setDocumentFile(FileTextDocument *file);
+  void setDocumentFile(NamedTextDocument *file);
 
   // The editor has just acquired focus or switched to a new file.
   // Check if the file has been edited while we were away.
@@ -325,17 +325,17 @@ public:      // funcs
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override;
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override;
 
   // Answer a query from the FileTextDocumentList.
   virtual bool getFileTextDocumentInitialView(
-    FileTextDocumentList *documentList, FileTextDocument *file,
+    FileTextDocumentList *documentList, NamedTextDocument *file,
     FileTextDocumentInitialView /*OUT*/ &view) noexcept override;
 
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process, so the constness of
   // this object does not propagate to it.
-  FileTextDocument *getDocumentFile() const;
+  NamedTextDocument *getDocumentFile() const;
 
   // Get what the user thinks of as the "current directory" for this
   // widget.  Normally that is the directory containing the current

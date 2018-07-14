@@ -115,7 +115,7 @@ GlobalState::~GlobalState()
 }
 
 
-EditorWindow *GlobalState::createNewWindow(FileTextDocument *initFile)
+EditorWindow *GlobalState::createNewWindow(NamedTextDocument *initFile)
 {
   EditorWindow *ed = new EditorWindow(this, initFile);
   ed->setObjectName("Editor Window");
@@ -126,10 +126,10 @@ EditorWindow *GlobalState::createNewWindow(FileTextDocument *initFile)
 }
 
 
-FileTextDocument *GlobalState::createNewFile()
+NamedTextDocument *GlobalState::createNewFile()
 {
   TRACE("untitled", "creating untitled file");
-  FileTextDocument *b = new FileTextDocument();
+  NamedTextDocument *b = new NamedTextDocument();
 
   // Come up with a unique "untitled" name.
   b->setNonFileName("untitled.txt");
@@ -163,7 +163,7 @@ string GlobalState::uniqueTitleFor(string const &filename)
 }
 
 
-void GlobalState::trackNewDocumentFile(FileTextDocument *f)
+void GlobalState::trackNewDocumentFile(NamedTextDocument *f)
 {
   m_documentList.addFile(f);
 }
@@ -175,14 +175,14 @@ bool GlobalState::hotkeyAvailable(int key) const
 }
 
 
-void GlobalState::deleteDocumentFile(FileTextDocument *file)
+void GlobalState::deleteDocumentFile(NamedTextDocument *file)
 {
   m_documentList.removeFile(file);
   delete file;
 }
 
 
-FileTextDocument *GlobalState::runOpenFilesDialog()
+NamedTextDocument *GlobalState::runOpenFilesDialog()
 {
   if (!m_openFilesDialog.get()) {
     m_openFilesDialog = new OpenFilesDialog(&m_documentList);
@@ -194,7 +194,7 @@ FileTextDocument *GlobalState::runOpenFilesDialog()
 // Return a document to be populated by running 'command' in 'dir'.
 // The name must be unique, but we will reuse an existing document if
 // its process has terminated.
-FileTextDocument *GlobalState::getNewCommandOutputDocument(
+NamedTextDocument *GlobalState::getNewCommandOutputDocument(
   QString dir, QString command)
 {
   // Come up with a unique named based on the command and directory.
@@ -202,11 +202,11 @@ FileTextDocument *GlobalState::getNewCommandOutputDocument(
   for (int n = 1; n < 100; n++) {
     string name = (n==1? base : stringb(base << " (" << n << ')'));
 
-    FileTextDocument *fileDoc = m_documentList.findFileByName(name);
+    NamedTextDocument *fileDoc = m_documentList.findFileByName(name);
     if (!fileDoc) {
       // Nothing with this name, let's use it to make a new one.
       TRACE("process", "making new document: " << name);
-      FileTextDocument *newDoc = new FileTextDocument();
+      NamedTextDocument *newDoc = new NamedTextDocument();
       newDoc->setNonFileName(name);
       newDoc->m_title = name;
       trackNewDocumentFile(newDoc);
@@ -233,10 +233,10 @@ FileTextDocument *GlobalState::getNewCommandOutputDocument(
 }
 
 
-FileTextDocument *GlobalState::launchCommand(QString dir, QString command)
+NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
 {
   // Find or create a document to hold the result.
-  FileTextDocument *fileDoc =
+  NamedTextDocument *fileDoc =
     this->getNewCommandOutputDocument(dir, command);
 
   // Make the watcher that will populate that file.
@@ -260,7 +260,7 @@ FileTextDocument *GlobalState::launchCommand(QString dir, QString command)
 }
 
 
-ProcessWatcher *GlobalState::findWatcherForDoc(FileTextDocument *fileDoc)
+ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 {
   FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
     ProcessWatcher *watcher = iter.data();
@@ -274,7 +274,7 @@ ProcessWatcher *GlobalState::findWatcherForDoc(FileTextDocument *fileDoc)
 
 void GlobalState::fileTextDocumentRemoved(
   FileTextDocumentList *documentList,
-  FileTextDocument *fileDoc) NOEXCEPT
+  NamedTextDocument *fileDoc) NOEXCEPT
 {
   ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
   if (watcher) {
@@ -361,7 +361,7 @@ static int printObjectCountsIf(char const *when, bool print)
 
   PRINT_COUNT(EditorWidget::s_objectCount);
   PRINT_COUNT(EditorWindow::s_objectCount);
-  PRINT_COUNT(FileTextDocument::s_objectCount);
+  PRINT_COUNT(NamedTextDocument::s_objectCount);
   PRINT_COUNT(TextDocument::s_objectCount);
   PRINT_COUNT(TextDocumentEditor::s_objectCount);
 

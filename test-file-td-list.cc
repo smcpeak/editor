@@ -27,9 +27,9 @@ public:      // types
   // Record of a received notification.
   struct Notification {
     NotifyFunction m_nfunc;
-    FileTextDocument *m_file;
+    NamedTextDocument *m_file;
 
-    Notification(NotifyFunction n, FileTextDocument *f = NULL)
+    Notification(NotifyFunction n, NamedTextDocument *f = NULL)
       : m_nfunc(n),
         m_file(f)
     {}
@@ -48,21 +48,21 @@ public:      // funcs
   {}
 
   void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ADDED, file));
   }
 
   void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_REMOVED, file));
   }
 
   void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file) noexcept override
+    FileTextDocumentList *documentList, NamedTextDocument *file) noexcept override
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ATTRIBUTE, file));
@@ -76,16 +76,16 @@ public:      // funcs
   }
 
   // Remove the next notification and check its attributes.
-  void expect(NotifyFunction nfunc, FileTextDocument *file = NULL);
+  void expect(NotifyFunction nfunc, NamedTextDocument *file = NULL);
 
   void expectEmpty() { xassert(m_pendingNotifications.isEmpty()); }
 
-  void expectOnly(NotifyFunction nfunc, FileTextDocument *file = NULL)
+  void expectOnly(NotifyFunction nfunc, NamedTextDocument *file = NULL)
     { expect(nfunc, file); expectEmpty(); }
 };
 
 
-void TestObserver::expect(NotifyFunction nfunc, FileTextDocument *file)
+void TestObserver::expect(NotifyFunction nfunc, NamedTextDocument *file)
 {
   xassert(m_pendingNotifications.isNotEmpty());
   Notification *n = m_pendingNotifications.removeFirst();
@@ -96,9 +96,9 @@ void TestObserver::expect(NotifyFunction nfunc, FileTextDocument *file)
 
 
 // Add a file with a specific name.
-static FileTextDocument *add(FileTextDocumentList &dlist, string name)
+static NamedTextDocument *add(FileTextDocumentList &dlist, string name)
 {
-  FileTextDocument *file = new FileTextDocument;
+  NamedTextDocument *file = new NamedTextDocument;
   file->setFilename(name);
   dlist.addFile(file);
   return file;
@@ -114,7 +114,7 @@ static void testSimple()
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
-  FileTextDocument *file0 = dlist.getFileAt(0);
+  NamedTextDocument *file0 = dlist.getFileAt(0);
   xassert(!file0->hasFilename());
   xassert(dlist.getFileIndex(file0) == 0);
   xassert(dlist.hasFile(file0));
@@ -123,7 +123,7 @@ static void testSimple()
 
   observer.expectEmpty();
 
-  FileTextDocument *file1 = dlist.createUntitledFile();
+  NamedTextDocument *file1 = dlist.createUntitledFile();
   xassert(!file1->hasFilename());
   xassert(dlist.numFiles() == 2);
   xassert(dlist.getFileIndex(file1) == 1);
@@ -143,14 +143,14 @@ static void testSimple()
 
 
 // Expect the files to be in a particular order.  NULL ends the list.
-static void expectOrder(FileTextDocumentList &dlist, FileTextDocument *file0, ...)
+static void expectOrder(FileTextDocumentList &dlist, NamedTextDocument *file0, ...)
 {
   xassert(dlist.getFileAt(0) == file0);
   int i = 1;
 
   va_list args;
   va_start(args, file0);
-  while (FileTextDocument *file = va_arg(args, FileTextDocument*)) {
+  while (NamedTextDocument *file = va_arg(args, NamedTextDocument*)) {
     xassert(dlist.getFileAt(i) == file);
     i++;
   }
@@ -169,14 +169,14 @@ static void testAddMoveRemove()
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
-  FileTextDocument *file0 = dlist.getFileAt(0);
+  NamedTextDocument *file0 = dlist.getFileAt(0);
   xassert(!file0->hasFilename());
   xassert(dlist.getFileIndex(file0) == 0);
   xassert(dlist.getFileIndex(NULL) == -1);
 
   observer.expectEmpty();
 
-  FileTextDocument *file1 = add(dlist, "file1");
+  NamedTextDocument *file1 = add(dlist, "file1");
   xassert(file1->m_title == "file1");
   xassert(file1->hasHotkey());
   xassert(dlist.findFileByName("file1") == file1);
@@ -187,7 +187,7 @@ static void testAddMoveRemove()
 
   observer.expectOnly(NF_ADDED, file1);
 
-  FileTextDocument *file2 = add(dlist, "a/file2");
+  NamedTextDocument *file2 = add(dlist, "a/file2");
   xassert(file2->m_title == "file2");
   xassert(dlist.findFileByName("a/file2") == file2);
   xassert(dlist.findFileByTitle("file2") == file2);
@@ -197,13 +197,13 @@ static void testAddMoveRemove()
   observer.expectOnly(NF_ADDED, file2);
 
   // Title uniqueness has to include a directory component.
-  FileTextDocument *file3 = add(dlist, "b/file2");
+  NamedTextDocument *file3 = add(dlist, "b/file2");
   xassert(file3->m_title == "b/file2");
 
   observer.expectOnly(NF_ADDED, file3);
 
   // Title uniqueness has to append a digit.
-  FileTextDocument *file4 = add(dlist, "file2");
+  NamedTextDocument *file4 = add(dlist, "file2");
   xassert(file4->m_title == "file2:2");
 
   observer.expectOnly(NF_ADDED, file4);
@@ -263,18 +263,18 @@ static void testCreateUntitled()
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
-  FileTextDocument *file0 = dlist.getFileAt(0);
+  NamedTextDocument *file0 = dlist.getFileAt(0);
 
-  FileTextDocument *file1 = dlist.createUntitledFile();
+  NamedTextDocument *file1 = dlist.createUntitledFile();
   observer.expectOnly(NF_ADDED, file1);
   xassert(file1->name() == "untitled2.txt");
 
-  FileTextDocument *file2 = dlist.createUntitledFile();
+  NamedTextDocument *file2 = dlist.createUntitledFile();
   observer.expectOnly(NF_ADDED, file2);
   xassert(file2->name() == "untitled3.txt");
 
   // Test 'findUntitledUnmodifiedFile'.
-  FileTextDocument *f = dlist.findUntitledUnmodifiedFile();
+  NamedTextDocument *f = dlist.findUntitledUnmodifiedFile();
   xassert(f != NULL);
 
   file1->insertAt(TextCoord(0,0), "hi", 2);
@@ -300,7 +300,7 @@ static void testSaveAs()
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
 
-  FileTextDocument *file0 = dlist.getFileAt(0);
+  NamedTextDocument *file0 = dlist.getFileAt(0);
   file0->setFilename("a/some-name.txt");
   dlist.assignUniqueTitle(file0);
   observer.expectOnly(NF_ATTRIBUTE, file0);
@@ -318,17 +318,17 @@ static void testExhaustHotkeys()
   dlist.addObserver(&observer);
 
   for (int i=0; i<10; i++) {
-    FileTextDocument *file = dlist.createUntitledFile();
+    NamedTextDocument *file = dlist.createUntitledFile();
     observer.expectOnly(NF_ADDED, file);
   }
 
   xassert(dlist.numFiles() == 11);
-  FileTextDocument *file10 = dlist.getFileAt(10);
+  NamedTextDocument *file10 = dlist.getFileAt(10);
   xassert(!file10->hasHotkey());
 
   // Remove some files.
   for (int i=2; i <= 7; i++) {
-    FileTextDocument *file = dlist.getFileAt(2);
+    NamedTextDocument *file = dlist.getFileAt(2);
     dlist.removeFile(file);
     observer.expectOnly(NF_REMOVED, file);
     delete file;
@@ -352,8 +352,8 @@ static void testDuplicateHotkeys()
 {
   FileTextDocumentList dlist;
 
-  FileTextDocument *file0 = dlist.getFileAt(0);
-  FileTextDocument *file1 = dlist.createUntitledFile();
+  NamedTextDocument *file0 = dlist.getFileAt(0);
+  NamedTextDocument *file1 = dlist.createUntitledFile();
 
   xassert(file0->hasHotkey());
   xassert(file1->hasHotkey());
@@ -383,13 +383,13 @@ static void testColon3()
   FileTextDocumentListObserver observer;
   dlist.addObserver(&observer);
 
-  FileTextDocument *file1 = add(dlist, "a/b");
+  NamedTextDocument *file1 = add(dlist, "a/b");
   xassert(file1->m_title == "b");
 
-  FileTextDocument *file2 = add(dlist, "b:2");
+  NamedTextDocument *file2 = add(dlist, "b:2");
   xassert(file2->m_title == "b:2");
 
-  FileTextDocument *file3 = add(dlist, "b");
+  NamedTextDocument *file3 = add(dlist, "b");
   xassert(file3->m_title == "b:3");
 
   dlist.removeFile(file3);
@@ -472,7 +472,7 @@ void entry()
   testColon3();
   testGetUniqueDirectories();
 
-  xassert(FileTextDocument::s_objectCount == 0);
+  xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
 
   cout << "test-file-td-list passed\n";

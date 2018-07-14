@@ -132,7 +132,7 @@ public:      // funcs
   // There must not be any open history groups.
   //
   // This also has an effect on the highlighting state in
-  // FileTextDocument, which is why it is virtual.
+  // NamedTextDocument, which is why it is virtual.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status);
 
   // ------------- modify document, appending to history -----------

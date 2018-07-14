@@ -31,6 +31,8 @@ TODOs:
     - git show
     - grep
     - compilation mode
+    - parallel compilation mode that keeps the various output streams
+      separate somehow
 
   - Save as that uses the ctrl+i dialog
   - highlighting for mismatch parens, braces, etc.

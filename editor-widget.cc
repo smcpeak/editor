@@ -78,7 +78,7 @@ int EditorWidget::s_objectCount = 0;
 CHECK_OBJECT_COUNT(EditorWidget);
 
 
-EditorWidget::EditorWidget(FileTextDocument *tdf,
+EditorWidget::EditorWidget(NamedTextDocument *tdf,
                            FileTextDocumentList *documentList,
                            StatusDisplay *status_,
                            QWidget *parent)
@@ -263,7 +263,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 }
 
 
-void EditorWidget::setDocumentFile(FileTextDocument *file)
+void EditorWidget::setDocumentFile(NamedTextDocument *file)
 {
   this->stopListening();
 
@@ -280,12 +280,12 @@ void EditorWidget::setDocumentFile(FileTextDocument *file)
 
 
 EditorWidget::FileTextDocumentEditor *
-  EditorWidget::getOrMakeEditor(FileTextDocument *file_)
+  EditorWidget::getOrMakeEditor(NamedTextDocument *file_)
 {
   // Hold 'file' in an RCSerf to ensure it does not go away.  In
   // particular, this method calls a 'notify' routine, which could
   // conceivably invoke code all over the place.
-  RCSerf<FileTextDocument> file(file_);
+  RCSerf<NamedTextDocument> file(file_);
 
   // Look for an existing editor for this file.
   FOREACH_OBJLIST_NC(FileTextDocumentEditor, m_editorList, iter) {
@@ -321,7 +321,7 @@ EditorWidget::FileTextDocumentEditor *
 
 void EditorWidget::checkForDiskChanges()
 {
-  RCSerf<FileTextDocument> file = m_editor->m_fileDoc;
+  RCSerf<NamedTextDocument> file = m_editor->m_fileDoc;
   if (!file->unsavedChanges() && file->hasStaleModificationTime()) {
     TRACE("modification",
       "File \"" << file->name() << "\" has changed on disk "
@@ -347,7 +347,7 @@ void EditorWidget::checkForDiskChanges()
 }
 
 
-FileTextDocument *EditorWidget::getDocumentFile() const
+NamedTextDocument *EditorWidget::getDocumentFile() const
 {
   xassert(m_editor);
   xassert(m_editor->m_fileDoc);
@@ -365,7 +365,7 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 string EditorWidget::getDocumentDirectory() const
 {
   SMFileUtil sfu;
-  FileTextDocument *doc = this->getDocumentFile();
+  NamedTextDocument *doc = this->getDocumentFile();
   if (!doc->hasFilename()) {
     return sfu.normalizePathSeparators(sfu.currentDirectory());
   }
@@ -412,7 +412,7 @@ void EditorWidget::openFileAtCursor()
 
 
 void EditorWidget::fileTextDocumentRemoved(
-  FileTextDocumentList *documentList, FileTextDocument *file) noexcept
+  FileTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {
   GENERIC_CATCH_BEGIN
   xassert(documentList == m_documentList);
@@ -440,7 +440,7 @@ void EditorWidget::fileTextDocumentRemoved(
 
 
 bool EditorWidget::getFileTextDocumentInitialView(
-  FileTextDocumentList *documentList, FileTextDocument *file,
+  FileTextDocumentList *documentList, NamedTextDocument *file,
   FileTextDocumentInitialView /*OUT*/ &view) noexcept
 {
   GENERIC_CATCH_BEGIN

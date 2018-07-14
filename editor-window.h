@@ -4,7 +4,7 @@
 #ifndef EDITOR_WINDOW_H
 #define EDITOR_WINDOW_H
 
-#include "file-td.h"                   // FileTextDocument
+#include "file-td.h"                   // NamedTextDocument
 #include "file-td-list.h"              // FileTextDocumentListObserver
 
 // smqtutil
@@ -74,16 +74,16 @@ private:     // funcs
   // desire to proceed (not cancel).  But we need to confirm that the
   // current document is still 'doc'.  If not, show a message box and
   // return false.  The caller is then expected to cancel the operation.
-  bool stillCurrentDocument(FileTextDocument *doc);
+  bool stillCurrentDocument(NamedTextDocument *doc);
 
-  void setDocumentFile(FileTextDocument *b);
+  void setDocumentFile(NamedTextDocument *b);
 
   // Update the status displays to reflect a different file being edited.
   void updateForChangedFile();
 
   // Change 'file->highlighter' to agree with its file extension.
   // This does *not* send the attribute-change notification.
-  void useDefaultHighlighter(FileTextDocument *file);
+  void useDefaultHighlighter(NamedTextDocument *file);
 
   // Start the file chooser.  Return an empty string if it is canceled,
   // otherwise the chosen file name.
@@ -99,7 +99,7 @@ protected:   // funcs
   void closeEvent(QCloseEvent *event) override;
 
 public:      // funcs
-  EditorWindow(GlobalState *state, FileTextDocument *initFile,
+  EditorWindow(GlobalState *state, NamedTextDocument *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
 
@@ -107,11 +107,11 @@ public:      // funcs
   void fileOpenFile(string const &fname);
 
   // File user is editing: returns editor->docFile.
-  FileTextDocument *currentDocument();
+  NamedTextDocument *currentDocument();
 
   // Reload the file for 'b' from disk.  If there is an error, show
   // an error message box and return false.
-  bool reloadFile(FileTextDocument *b);
+  bool reloadFile(NamedTextDocument *b);
 
   // Return true if either there are no unsaved changes or the user
   // responds to a GUI dialog and says it is ok to quit.
@@ -130,11 +130,11 @@ public:      // funcs
 
   // FileTextDocumentListObserver methods.
   virtual void fileTextDocumentAdded(
-    FileTextDocumentList *documentList, FileTextDocument *file) NOEXCEPT OVERRIDE;
+    FileTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void fileTextDocumentRemoved(
-    FileTextDocumentList *documentList, FileTextDocument *file) NOEXCEPT OVERRIDE;
+    FileTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void fileTextDocumentAttributeChanged(
-    FileTextDocumentList *documentList, FileTextDocument *file) NOEXCEPT OVERRIDE;
+    FileTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void fileTextDocumentListOrderChanged(
     FileTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 

@@ -6,7 +6,7 @@
 
 // editor
 #include "command-runner.h"            // CommandRunner
-#include "file-td.h"                   // FileTextDocument
+#include "file-td.h"                   // NamedTextDocument
 
 // smbase
 #include "datetime.h"                  // UnixTime
@@ -15,7 +15,7 @@
 // Monitor a child process and feed the output to a TextDocumentEditor.
 //
 // This class basically just relays data from CommandRunner to
-// FileTextDocument.
+// NamedTextDocument.
 class ProcessWatcher : public QObject {
   Q_OBJECT
   NO_OBJECT_COPIES(ProcessWatcher);
@@ -24,7 +24,7 @@ public:      // data
   // The document to receive the data.  Although initially it must be
   // non-NULL, it can later be set to NULL in order to discard any
   // extra output while the underlying process is killed.
-  RCSerf<FileTextDocument> m_fileDoc;
+  RCSerf<NamedTextDocument> m_fileDoc;
 
   // The child process producing it.
   CommandRunner m_commandRunner;
@@ -33,7 +33,7 @@ public:      // data
   UnixTime m_startTime;
 
 public:      // funcs
-  ProcessWatcher(FileTextDocument *doc);
+  ProcessWatcher(NamedTextDocument *doc);
   ~ProcessWatcher();
 
 Q_SIGNALS:

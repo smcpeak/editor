@@ -173,7 +173,7 @@ OpenFilesDialog::~OpenFilesDialog()
 
 
 static char const *documentProcessStatusIndicator(
-  FileTextDocument const *doc)
+  NamedTextDocument const *doc)
 {
   switch (doc->documentProcessStatus()) {
     default:
@@ -193,7 +193,7 @@ void OpenFilesDialog::repopulateTable()
 
   // Populate the rows.
   for (int r=0; r < m_docList->numFiles(); r++) {
-    FileTextDocument const *doc = m_docList->getFileAtC(r);
+    NamedTextDocument const *doc = m_docList->getFileAtC(r);
 
     // Remove the row label.  (The default, a NULL item, renders as a
     // row number, which isn't useful here.)
@@ -232,7 +232,7 @@ void OpenFilesDialog::repopulateTable()
 }
 
 
-FileTextDocument *OpenFilesDialog::runDialog()
+NamedTextDocument *OpenFilesDialog::runDialog()
 {
   TRACE("OpenFilesDialog", "runDialog started");
   this->repopulateTable();
@@ -243,7 +243,7 @@ FileTextDocument *OpenFilesDialog::runDialog()
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();
       if (0 <= r && r < m_docList->numFiles()) {
-        FileTextDocument *doc = m_docList->getFileAt(r);
+        NamedTextDocument *doc = m_docList->getFileAt(r);
         TRACE("OpenFilesDialog", "runDialog: returning: " << doc->name());
         return doc;
       }
@@ -275,7 +275,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
 
   // Get the set of documents to close in a first pass so we have them
   // all before doing anything that might jeopardize the indexes.
-  ArrayStack<FileTextDocument*> docsToClose;
+  ArrayStack<NamedTextDocument*> docsToClose;
   bool someHaveUnsavedChanges = false;
   {
     QItemSelectionModel *selectionModel = m_tableWidget->selectionModel();
@@ -290,7 +290,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
       if (index.isValid() && !index.parent().isValid()) {
         int r = index.row();
         if (0 <= r && r < m_docList->numFiles()) {
-          FileTextDocument *doc = m_docList->getFileAt(r);
+          NamedTextDocument *doc = m_docList->getFileAt(r);
           TRACE("OpenFilesDialog", "  toClose: " << doc->name());
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
@@ -316,7 +316,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
 
   // Close the files.
   for (int i=0; i < docsToClose.length(); i++) {
-    FileTextDocument *doc = docsToClose[i];
+    NamedTextDocument *doc = docsToClose[i];
     TRACE("OpenFilesDialog", "  removeFile: " << doc->name());
     m_docList->removeFile(doc);
     delete doc;

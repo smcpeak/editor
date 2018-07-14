@@ -13,7 +13,7 @@ using std::ofstream;
 
 static void testWhenUntitledExists()
 {
-  FileTextDocument file;
+  NamedTextDocument file;
   file.setNonFileName("untitled.txt");
 
   // Create a file with that name.
@@ -55,7 +55,7 @@ public:      // funcs
 // Make sure that reading a file broadcasts 'observeTotalChange'.
 static void testReadFile()
 {
-  FileTextDocument file;
+  NamedTextDocument file;
   file.setFilename("td.h");
   file.readFile();
 
@@ -73,7 +73,7 @@ static void entry()
   testWhenUntitledExists();
   testReadFile();
 
-  xassert(FileTextDocument::s_objectCount == 0);
+  xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
 
   cout << "test-file-fd passed\n";

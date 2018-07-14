@@ -64,7 +64,7 @@ public:      // funcs
   // Show the dialog.  When it closes, if the user has indicated they
   // want to switch to a particular file, return that file.  Otherwise
   // return NULL.
-  FileTextDocument *runDialog();
+  NamedTextDocument *runDialog();
 
 public slots:
   void on_doubleClicked(QModelIndex const &index) noexcept;

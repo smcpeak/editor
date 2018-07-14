@@ -15,14 +15,14 @@
 
 // Do not start with 0 because QVariant::toInt() returns 0 to
 // indicate failure.
-int FileTextDocument::s_nextWindowMenuId = 1;
+int NamedTextDocument::s_nextWindowMenuId = 1;
 
-int FileTextDocument::s_objectCount = 0;
+int NamedTextDocument::s_objectCount = 0;
 
-CHECK_OBJECT_COUNT(FileTextDocument);
+CHECK_OBJECT_COUNT(NamedTextDocument);
 
 
-FileTextDocument::FileTextDocument()
+NamedTextDocument::NamedTextDocument()
   : TextDocument(),
     m_hasHotkeyDigit(false),
     m_hotkeyDigit(0),
@@ -34,19 +34,19 @@ FileTextDocument::FileTextDocument()
     m_highlighter(NULL),
     m_highlightTrailingWhitespace(true)
 {
-  FileTextDocument::s_objectCount++;
+  NamedTextDocument::s_objectCount++;
 }
 
-FileTextDocument::~FileTextDocument()
+NamedTextDocument::~NamedTextDocument()
 {
-  FileTextDocument::s_objectCount--;
+  NamedTextDocument::s_objectCount--;
   if (m_highlighter) {
     delete m_highlighter;
   }
 }
 
 
-void FileTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
+void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 {
   this->TextDocument::setDocumentProcessStatus(status);
 
@@ -56,35 +56,35 @@ void FileTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 }
 
 
-string FileTextDocument::filename() const
+string NamedTextDocument::filename() const
 {
   xassert(this->hasFilename());
   return m_name;
 }
 
 
-void FileTextDocument::setFilename(string const &filename)
+void NamedTextDocument::setFilename(string const &filename)
 {
   m_name = filename;
   m_hasFilename = true;
 }
 
 
-void FileTextDocument::setNonFileName(string const &name)
+void NamedTextDocument::setNonFileName(string const &name)
 {
   m_name = name;
   m_hasFilename = false;
 }
 
 
-int FileTextDocument::getHotkeyDigit() const
+int NamedTextDocument::getHotkeyDigit() const
 {
   xassert(this->hasHotkey());
   return this->m_hotkeyDigit;
 }
 
 
-string FileTextDocument::hotkeyDesc() const
+string NamedTextDocument::hotkeyDesc() const
 {
   if (!this->hasHotkey()) {
     return "";
@@ -94,14 +94,14 @@ string FileTextDocument::hotkeyDesc() const
 }
 
 
-void FileTextDocument::clearHotkey()
+void NamedTextDocument::clearHotkey()
 {
   this->m_hasHotkeyDigit = false;
   this->m_hotkeyDigit = 0;
 }
 
 
-void FileTextDocument::setHotkeyDigit(int digit)
+void NamedTextDocument::setHotkeyDigit(int digit)
 {
   xassert(0 <= digit && digit <= 9);
   this->m_hasHotkeyDigit = true;
@@ -109,7 +109,7 @@ void FileTextDocument::setHotkeyDigit(int digit)
 }
 
 
-void FileTextDocument::readFile()
+void NamedTextDocument::readFile()
 {
   xassert(this->hasFilename());
   this->TextDocument::readFile(this->m_name);
@@ -117,7 +117,7 @@ void FileTextDocument::readFile()
 }
 
 
-void FileTextDocument::writeFile()
+void NamedTextDocument::writeFile()
 {
   xassert(this->hasFilename());
   this->TextDocument::writeFile(this->m_name);
@@ -126,7 +126,7 @@ void FileTextDocument::writeFile()
 }
 
 
-bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
+bool NamedTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
   bool ret = getFileModificationTime(this->m_name.c_str(), modTime);
   TRACE("modtime", "on-disk ts for " << this->m_name <<
@@ -135,7 +135,7 @@ bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 }
 
 
-bool FileTextDocument::hasStaleModificationTime() const
+bool NamedTextDocument::hasStaleModificationTime() const
 {
   if (!this->hasFilename()) {
     // The document is not actually associated with any file, the name
@@ -167,7 +167,7 @@ bool FileTextDocument::hasStaleModificationTime() const
 }
 
 
-void FileTextDocument::refreshModificationTime()
+void NamedTextDocument::refreshModificationTime()
 {
   TRACE("modtime", "refresh: old ts for " << this->m_name <<
                    " is " << this->m_lastFileTimestamp);

@@ -7,7 +7,7 @@
 #include "qtutil.h"                    // toString(QString)
 
 
-ProcessWatcher::ProcessWatcher(FileTextDocument *doc)
+ProcessWatcher::ProcessWatcher(NamedTextDocument *doc)
   : QObject(),
     m_fileDoc(doc),
     m_commandRunner(),

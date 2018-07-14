@@ -6,7 +6,7 @@
 
 // editor
 #include "editor-window.h"             // EditorWindow
-#include "file-td.h"                   // FileTextDocument
+#include "file-td.h"                   // NamedTextDocument
 #include "file-td-list.h"              // FileTextDocumentList
 #include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // Pixmaps
@@ -62,7 +62,7 @@ private:     // data
 private:      // funcs
   bool hotkeyAvailable(int key) const;
 
-  FileTextDocument *getNewCommandOutputDocument(
+  NamedTextDocument *getNewCommandOutputDocument(
     QString dir, QString command);
 
 private Q_SLOTS:
@@ -70,7 +70,7 @@ private Q_SLOTS:
   void focusChangedHandler(QWidget *from, QWidget *to);
 
   // Find the watcher feeding data to 'fileDoc', if any.
-  ProcessWatcher *findWatcherForDoc(FileTextDocument *fileDoc);
+  ProcessWatcher *findWatcherForDoc(NamedTextDocument *fileDoc);
 
   // Called when a watched process terminates.
   void on_processTerminated(ProcessWatcher *watcher);
@@ -85,7 +85,7 @@ public:       // funcs
 
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
-  FileTextDocument *createNewFile();
+  NamedTextDocument *createNewFile();
 
   // Return true if any file document has the given file name.
   bool hasFileWithName(string const &fname) const;
@@ -98,32 +98,32 @@ public:       // funcs
   string uniqueTitleFor(string const &filename);
 
   // Open a new editor window.
-  EditorWindow *createNewWindow(FileTextDocument *initFile);
+  EditorWindow *createNewWindow(NamedTextDocument *initFile);
 
   // Add 'f' to the set of file documents.
-  void trackNewDocumentFile(FileTextDocument *f);
+  void trackNewDocumentFile(NamedTextDocument *f);
 
   // Remove 'f' from the set of file documents and deallocate it.
   // This will tell all of the editor widgets to forget about it
   // first so they switch to some other file.
-  void deleteDocumentFile(FileTextDocument *f);
+  void deleteDocumentFile(NamedTextDocument *f);
 
   // Show the open-files dialog and wait for the user to choose a file
   // or cancel.  If a choice is made, return it.
   //
   // Note that the dialog also allows the user to close files, which
   // uses the FileTextDocumentListObserver notification system.
-  FileTextDocument *runOpenFilesDialog();
+  NamedTextDocument *runOpenFilesDialog();
 
   // Start a new child process and return the document into which that
   // process' output is written.
-  FileTextDocument *launchCommand(QString dir, QString command);
+  NamedTextDocument *launchCommand(QString dir, QString command);
 
   // GlobalState has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.
   virtual void fileTextDocumentRemoved(
     FileTextDocumentList *documentList,
-    FileTextDocument *file) NOEXCEPT OVERRIDE;
+    NamedTextDocument *file) NOEXCEPT OVERRIDE;
 };
 
 
