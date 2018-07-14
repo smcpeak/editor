@@ -1,12 +1,9 @@
 
 TODOs:
   - normalize directory separators in m_directory
-  - remove slash before '$' in process name
   - run command to generate entire file; git annotate!
     - enhancements
-      - visual display that a process is running or terminated, and
-        how, when just looking at the document outside the open-files
-        dialog
+      - after document re-use, scroll back to top
       - prompt on closure of document with running process
       - kill without closing buffer
       - soft end of buffer jumping

@@ -182,10 +182,11 @@ NamedTextDocument *GlobalState::runOpenFilesDialog()
 // The name must be unique, but we will reuse an existing document if
 // its process has terminated.
 NamedTextDocument *GlobalState::getNewCommandOutputDocument(
-  QString dir, QString command)
+  QString origDir, QString command)
 {
   // Come up with a unique named based on the command and directory.
-  string base = stringb(toString(dir) << "$ " << toString(command));
+  string dir = SMFileUtil().stripTrailingDirectorySeparator(toString(origDir));
+  string base = stringb(dir << "$ " << toString(command));
   for (int n = 1; n < 100; n++) {
     string name = (n==1? base : stringb(base << " (" << n << ')'));
 
@@ -194,7 +195,7 @@ NamedTextDocument *GlobalState::getNewCommandOutputDocument(
       // Nothing with this name, let's use it to make a new one.
       TRACE("process", "making new document: " << name);
       NamedTextDocument *newDoc = new NamedTextDocument();
-      newDoc->setNonFileName(name, toString(dir));
+      newDoc->setNonFileName(name, dir);
       newDoc->m_title = name;
       trackNewDocumentFile(newDoc);
       return newDoc;
