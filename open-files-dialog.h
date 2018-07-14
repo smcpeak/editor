@@ -4,7 +4,7 @@
 #ifndef OPEN_FILES_DIALOG_H
 #define OPEN_FILES_DIALOG_H
 
-#include "file-td-list.h"              // NamedTextDocumentList
+#include "named-td-list.h"             // NamedTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
 #include "refct-serf.h"                // RCSerf

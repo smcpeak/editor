@@ -8,7 +8,7 @@ all: test-td-editor
 all: test-justify
 all: test-command-runner
 all: test-named-td
-all: test-file-td-list
+all: test-named-td-list
 all: test-nearby-file
 all: textcategory
 all: c_hilite
@@ -194,19 +194,19 @@ test-named-td: $(TEST_NAMED_TD_OBJS)
 	./test-named-td >/dev/null 2>&1
 
 
-# -------------------- test-file-td-list --------------------
-TOCLEAN += test-file-td-list
+# -------------------- test-named-td-list --------------------
+TOCLEAN += test-named-td-list
 
-EDITOR_OBJS += file-td-list.o
+EDITOR_OBJS += named-td-list.o
 
-TEST_FILE_TD_LIST_OBJS := $(EDITOR_OBJS)
+TEST_NAMED_TD_LIST_OBJS := $(EDITOR_OBJS)
 
-TEST_FILE_TD_LIST_OBJS += test-file-td-list.o
--include test-file-td-list.d
+TEST_NAMED_TD_LIST_OBJS += test-named-td-list.o
+-include test-named-td-list.d
 
-test-file-td-list: $(TEST_FILE_TD_LIST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_FILE_TD_LIST_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-file-td-list >/dev/null 2>&1
+test-named-td-list: $(TEST_NAMED_TD_LIST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_LIST_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-named-td-list >/dev/null 2>&1
 
 
 # -------------------- test-nearby-file --------------------

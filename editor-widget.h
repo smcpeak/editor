@@ -6,7 +6,7 @@
 
 #include "td-editor.h"                 // TextDocumentEditor
 #include "named-td.h"                  // NamedTextDocument
-#include "file-td-list.h"              // NamedTextDocumentListObserver
+#include "named-td-list.h"             // NamedTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
 
 // smqtutil

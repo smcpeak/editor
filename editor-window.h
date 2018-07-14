@@ -5,7 +5,7 @@
 #define EDITOR_WINDOW_H
 
 #include "named-td.h"                  // NamedTextDocument
-#include "file-td-list.h"              // NamedTextDocumentListObserver
+#include "named-td-list.h"             // NamedTextDocumentListObserver
 
 // smqtutil
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox

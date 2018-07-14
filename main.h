@@ -7,7 +7,7 @@
 // editor
 #include "editor-window.h"             // EditorWindow
 #include "named-td.h"                  // NamedTextDocument
-#include "file-td-list.h"              // NamedTextDocumentList
+#include "named-td-list.h"             // NamedTextDocumentList
 #include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // Pixmaps
 

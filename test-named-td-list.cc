@@ -1,7 +1,7 @@
-// test-file-td-list.cc
-// Tests for 'file-td-list' module.
+// test-named-td-list.cc
+// Tests for 'named-td-list' module.
 
-#include "file-td-list.h"              // module to test
+#include "named-td-list.h"             // module to test
 
 // smbase
 #include "strutil.h"                   // dirname
@@ -475,7 +475,7 @@ void entry()
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
 
-  cout << "test-file-td-list passed\n";
+  cout << "test-named-td-list passed\n";
 }
 
 USUAL_TEST_MAIN

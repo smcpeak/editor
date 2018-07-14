@@ -1,7 +1,7 @@
-// file-td-list.cc
-// code for file-td-list.h
+// named-td-list.cc
+// code for named-td-list.h
 
-#include "file-td-list.h"              // this module
+#include "named-td-list.h"             // this module
 
 // smbase
 #include "macros.h"                    // Restorer
@@ -115,7 +115,7 @@ int NamedTextDocumentList::getFileIndex(NamedTextDocument const *file) const
 
 void NamedTextDocumentList::addFile(NamedTextDocument *file)
 {
-  TRACE("file-td-list", "addFile: " << file->name());
+  TRACE("named-td-list", "addFile: " << file->name());
   xassert(!this->hasFile(file));
 
   // Assign title if necessary.
@@ -144,7 +144,7 @@ void NamedTextDocumentList::addFile(NamedTextDocument *file)
 
 void NamedTextDocumentList::removeFile(NamedTextDocument *file)
 {
-  TRACE("file-td-list", "removeFile: " << file->name());
+  TRACE("named-td-list", "removeFile: " << file->name());
 
   // If we make an untitled file, allow it to take the same hotkey.
   file->clearHotkey();
@@ -167,7 +167,7 @@ void NamedTextDocumentList::removeFile(NamedTextDocument *file)
 
 void NamedTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
 {
-  TRACE("file-td-list", "moveFile to " << newIndex <<
+  TRACE("named-td-list", "moveFile to " << newIndex <<
                         ": " << file->name());
 
   int oldIndex = this->getFileIndex(file);
@@ -194,7 +194,7 @@ NamedTextDocument *NamedTextDocumentList::createUntitledFile()
     file->setNonFileName(stringb("untitled" << n << ".txt"));
   }
 
-  TRACE("file-td-list", "createUntitledFile: " << file->name());
+  TRACE("named-td-list", "createUntitledFile: " << file->name());
   file->m_title = file->name();
 
   this->addFile(file);
@@ -282,18 +282,18 @@ NamedTextDocument const *NamedTextDocumentList::findUntitledUnmodifiedFileC() co
     if (!file->hasFilename() &&
         file->numLines() == 1 &&
         file->lineLength(0) == 0) {
-      TRACE("file-td-list", "findUntitledUnmodifiedFile: " << file->name());
+      TRACE("named-td-list", "findUntitledUnmodifiedFile: " << file->name());
       return file;
     }
   }
-  TRACE("file-td-list", "findUntitledUnmodifiedFile: NULL");
+  TRACE("named-td-list", "findUntitledUnmodifiedFile: NULL");
   return NULL;
 }
 
 
 string NamedTextDocumentList::computeUniqueTitle(string filename) const
 {
-  TRACE("file-td-list", "computeUniqueTitle: " << filename);
+  TRACE("named-td-list", "computeUniqueTitle: " << filename);
 
   // Split the filename into path components.
   StrtokParse tok(filename, "\\/");
@@ -313,7 +313,7 @@ string NamedTextDocumentList::computeUniqueTitle(string filename) const
 
     // Check for another file with this title.
     if (!this->findFileByTitleC(sb)) {
-      TRACE("file-td-list", "computed title with " << n <<
+      TRACE("named-td-list", "computed title with " << n <<
                             " components: " << sb);
       return sb;
     }
@@ -325,7 +325,7 @@ string NamedTextDocumentList::computeUniqueTitle(string filename) const
   while (n < 2000000000) {     // Prevent theoretical infinite loop.
     string s = stringb(filename << ':' << n);
     if (!this->findFileByNameC(s)) {
-      TRACE("file-td-list", "computed title by appending " << n <<
+      TRACE("named-td-list", "computed title by appending " << n <<
                             ": " << s);
       return s;
     }
@@ -333,7 +333,7 @@ string NamedTextDocumentList::computeUniqueTitle(string filename) const
   }
 
   // My tests do not cover these lines.
-  TRACE("file-td-list", "failed to compute title!");
+  TRACE("named-td-list", "failed to compute title!");
   xfailure("Could not generate a unique title string!");
   return filename;
 }
@@ -341,7 +341,7 @@ string NamedTextDocumentList::computeUniqueTitle(string filename) const
 
 void NamedTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
 {
-  TRACE("file-td-list", "assignUniqueTitle: " << file->name());
+  TRACE("named-td-list", "assignUniqueTitle: " << file->name());
 
   // Free up the file's current title so it can remain unchanged.
   file->m_title = "";
@@ -362,19 +362,19 @@ bool NamedTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
     digit = (i==10? 0 : i);
 
     if (!this->findFileByHotkeyC(digit)) {
-      TRACE("file-td-list", "computeUniqueHotkey: returning " << digit);
+      TRACE("named-td-list", "computeUniqueHotkey: returning " << digit);
       return true;
     }
   }
 
-  TRACE("file-td-list", "computeUniqueHotkey: not hotkey available");
+  TRACE("named-td-list", "computeUniqueHotkey: not hotkey available");
   return false;
 }
 
 
 void NamedTextDocumentList::assignUniqueHotkey(NamedTextDocument *file)
 {
-  TRACE("file-td-list", "assignUniqueHotkey: " << file->name());
+  TRACE("named-td-list", "assignUniqueHotkey: " << file->name());
 
   file->clearHotkey();
 
@@ -408,7 +408,7 @@ void NamedTextDocumentList::getUniqueDirectories(
 
 void NamedTextDocumentList::addObserver(NamedTextDocumentListObserver *observer)
 {
-  TRACE("file-td-list", "addObserver: " << (void*)observer);
+  TRACE("named-td-list", "addObserver: " << (void*)observer);
 
   xassert(!m_iteratingOverObservers);
   m_observers.appendNewItem(observer);
@@ -418,7 +418,7 @@ void NamedTextDocumentList::addObserver(NamedTextDocumentListObserver *observer)
 
 void NamedTextDocumentList::removeObserver(NamedTextDocumentListObserver *observer)
 {
-  TRACE("file-td-list", "removeObserver: " << (void*)observer);
+  TRACE("named-td-list", "removeObserver: " << (void*)observer);
 
   xassert(!m_iteratingOverObservers);
   m_observers.removeItem(observer);
@@ -434,7 +434,7 @@ void NamedTextDocumentList::notifyAdded(NamedTextDocument *file_)
   // deallocate 'file', either directly or indirectly.
   RCSerf<NamedTextDocument> file(file_);
 
-  TRACE("file-td-list", "notifyAdded: " << file->name());
+  TRACE("named-td-list", "notifyAdded: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
@@ -446,7 +446,7 @@ void NamedTextDocumentList::notifyAdded(NamedTextDocument *file_)
 void NamedTextDocumentList::notifyRemoved(NamedTextDocument *file_)
 {
   RCSerf<NamedTextDocument> file(file_);
-  TRACE("file-td-list", "notifyRemoved: " << file->name());
+  TRACE("named-td-list", "notifyRemoved: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
@@ -458,7 +458,7 @@ void NamedTextDocumentList::notifyRemoved(NamedTextDocument *file_)
 void NamedTextDocumentList::notifyAttributeChanged(NamedTextDocument *file_)
 {
   RCSerf<NamedTextDocument> file(file_);
-  TRACE("file-td-list", "notifyAttributeChanged: " << file->name());
+  TRACE("named-td-list", "notifyAttributeChanged: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
@@ -469,7 +469,7 @@ void NamedTextDocumentList::notifyAttributeChanged(NamedTextDocument *file_)
 
 void NamedTextDocumentList::notifyListOrderChanged()
 {
-  TRACE("file-td-list", "notifyListOrderChanged");
+  TRACE("named-td-list", "notifyListOrderChanged");
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
@@ -483,19 +483,19 @@ bool NamedTextDocumentList::notifyGetInitialView(
   NamedTextDocumentInitialView /*OUT*/ &view)
 {
   RCSerf<NamedTextDocument> file(file_);
-  TRACE("file-td-list",
+  TRACE("named-td-list",
     stringb("notifyGetInitialView: file=" << file->name()));
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     if (iter.data()->getFileTextDocumentInitialView(this, file, view)) {
-      TRACE("file-td-list",
+      TRACE("named-td-list",
         stringb("notifyGetInitialView: found: fv=" << view.firstVisible));
       return true;
     }
   }
 
-  TRACE("file-td-list", "notifyGetInitialView: not found");
+  TRACE("named-td-list", "notifyGetInitialView: not found");
   return false;
 }
 

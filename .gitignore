@@ -37,7 +37,7 @@ mutant.cc
 *.mutreport
 .gdbinit*
 td-core
-test-file-td-list
+test-named-td-list
 test-justify
 test-td-editor
 textcategory

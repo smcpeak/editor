@@ -1,4 +1,4 @@
-// file-td-list.h
+// named-td-list.h
 // Declaration of NamedTextDocumentList class.
 
 #ifndef FILE_TD_LIST_H

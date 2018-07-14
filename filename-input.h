@@ -5,7 +5,7 @@
 #define FILENAME_INPUT_H
 
 // editor
-#include "file-td-list.h"              // NamedTextDocumentList
+#include "named-td-list.h"             // NamedTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
 // smbase
