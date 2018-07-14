@@ -226,6 +226,10 @@ NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
   NamedTextDocument *fileDoc =
     this->getNewCommandOutputDocument(dir, command);
 
+  // Show the directory and command at the top of the document.
+  fileDoc->appendString(stringb("Dir: " << toString(dir) << '\n'));
+  fileDoc->appendString(stringb("Cmd: " << toString(command) << "\n\n"));
+
   // Make the watcher that will populate that file.
   ProcessWatcher *watcher = new ProcessWatcher(fileDoc);
   m_processes.prepend(watcher);

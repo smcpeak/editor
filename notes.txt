@@ -8,16 +8,11 @@ TODOs:
     - leave a menu option to run that dialog though
   - run command to generate entire file; git annotate!
     - enhancements
-      - when a command is run in a certain directory, and that document
-        is open, and I do Alt+R again, it should default to running in
-        the same directory that it did before
-        - maybe default to the same command too, even if not most recent?
       - visual display that a process is running or terminated, and
         how, when just looking at the document outside the open-files
         dialog
         - rename all references to "open-files dialog" to "documents"?
       - prompt on closure of document with running process
-      - print dir and cmd at top of document
       - kill without closing buffer
       - soft end of buffer jumping
       - when switch to output buffer, need to jump to end
