@@ -68,7 +68,7 @@ private:     // funcs
 
 public:      // funcs
   TextDocument();      // empty buffer, empty history, cursor at 0,0
-  ~TextDocument();
+  virtual ~TextDocument();
 
   // Read-only access to the underlying representation.  Use of this
   // should be unusual.
@@ -111,7 +111,10 @@ public:      // funcs
   // Change the 'm_isProcessOutput' setting.  Setting it to true will
   // immediately discard all undo/redo history.  There must not be any
   // open history groups.
-  void setIsProcessOutput(bool isProcessOutput);
+  //
+  // This also has on the highlighting state in FileTextDocument, which
+  // is why it is virtual.
+  virtual void setIsProcessOutput(bool isProcessOutput);
 
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.

@@ -242,7 +242,7 @@ void EditorWindow::buildMenu()
     CHECKABLE_ACTION(m_toggleHighlightTrailingWSAction,
       "Highlight &trailing whitespace",
       SLOT(viewToggleHighlightTrailingWS()),
-      this->m_editorWidget->m_highlightTrailingWhitespace);
+      this->m_editorWidget->highlightTrailingWhitespace());
 
     menu->addAction("Set &Highlighting...", this,
       &EditorWindow::viewSetHighlighting);
@@ -1000,8 +1000,10 @@ void EditorWindow::viewSetSoftMarginColumn()
 
 void EditorWindow::viewToggleHighlightTrailingWS()
 {
-  CHECKABLE_MENU_TOGGLE(m_toggleHighlightTrailingWSAction,
-    this->m_editorWidget->m_highlightTrailingWhitespace);
+  this->m_editorWidget->toggleHighlightTrailingWhitespace();
+
+  // Includes firing 'editorViewChanged'.
+  this->m_editorWidget->redraw();
 }
 
 
@@ -1159,6 +1161,10 @@ void EditorWindow::editorViewChanged()
   }
   sb << " - " << appName;
   this->setWindowTitle(toQString(sb));
+
+  // Trailing whitespace menu checkbox.
+  this->m_toggleHighlightTrailingWSAction->setChecked(
+    this->m_editorWidget->highlightTrailingWhitespace());
 }
 
 

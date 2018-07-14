@@ -76,9 +76,22 @@ public:      // data
   // contents)
   Highlighter *m_highlighter;      // (nullable owner)
 
+  // When true, the widget will highlight instances of whitespace at
+  // the end of a line.  Initially true, but is set to false by
+  // 'setIsProcessOutput(true)'.
+  //
+  // In a sense, this is a sort of "overlay" highlighter, as it acts
+  // after the main highlighter.  I could perhaps generalize the idea
+  // of highlighting compositions at some point.
+  bool m_highlightTrailingWhitespace;
+
 public:      // funcs
   FileTextDocument();
   ~FileTextDocument();
+
+  // Perform additional actions when marking a document as "process
+  // output".
+  virtual void setIsProcessOutput(bool isProcessOutput) OVERRIDE;
 
   // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.

@@ -134,10 +134,10 @@ public:      // data
   // Value in [0,255], where 255 is fully opaque.
   int m_whitespaceOpacity;
 
-  // True to draw trailing whitespace with 'm_trailingWhitespaceBgColor'.
-  bool m_highlightTrailingWhitespace;
-
   // Overlay color for trailing whitespace, including its alpha.
+  //
+  // This is only used when drawing a document whose
+  // 'm_highlightTrailingWhitespace' flag is true.
   QColor m_trailingWhitespaceBgColor;
 
   // Column number for a soft margin.  This is used for text
@@ -397,6 +397,12 @@ public:      // funcs
 
   // Offset from one baseline to the next, in pixels.
   int lineHeight() const { return m_fontHeight+m_interLineSpace; }
+
+  // True if trailing whitespace should be shown.
+  bool highlightTrailingWhitespace() const;
+
+  // Toggle whether trailing whitespace should be shown for this document.
+  void toggleHighlightTrailingWhitespace();
 
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();

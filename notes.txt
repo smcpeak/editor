@@ -6,7 +6,12 @@ TODOs:
   - ctrl+i: recognize file:line syntax
   - run command to generate entire file; git annotate!
     - enhancements
-      - do not highlight trailing spaces
+      - does the highlighter kick in if the command happens to end
+        with ".cc"?
+      - process output documents should not be editable!
+        - but Save As should transition them to normal editable files
+      - in file picker, show which ones are still running
+      - prompt on closure of document with running process
       - print dir and cmd at top of document
       - kill without closing buffer
       - soft end of buffer jumping

@@ -31,7 +31,8 @@ FileTextDocument::FileTextDocument()
     m_lastFileTimestamp(0),
     m_title(),
     m_windowMenuId(s_nextWindowMenuId++),
-    m_highlighter(NULL)
+    m_highlighter(NULL),
+    m_highlightTrailingWhitespace(true)
 {
   FileTextDocument::s_objectCount++;
 }
@@ -41,6 +42,16 @@ FileTextDocument::~FileTextDocument()
   FileTextDocument::s_objectCount--;
   if (m_highlighter) {
     delete m_highlighter;
+  }
+}
+
+
+void FileTextDocument::setIsProcessOutput(bool isProcessOutput)
+{
+  this->TextDocument::setIsProcessOutput(isProcessOutput);
+
+  if (isProcessOutput) {
+    this->m_highlightTrailingWhitespace = false;
   }
 }
 

@@ -99,7 +99,6 @@ EditorWidget::EditorWidget(FileTextDocument *tdf,
     m_minihexFont(),
     m_visibleWhitespace(true),
     m_whitespaceOpacity(32),
-    m_highlightTrailingWhitespace(true),
     m_trailingWhitespaceBgColor(255, 0, 0, 64),
     m_softMarginColumn(72),
     m_visibleSoftMargin(true),
@@ -935,7 +934,8 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
 
     if (codePoint == ' ') {
       // Optionally highlight trailing whitespace.
-      if (withinTrailingWhitespace && m_highlightTrailingWhitespace) {
+      if (withinTrailingWhitespace &&
+          m_editor->m_fileDoc->m_highlightTrailingWhitespace) {
         paint.fillRect(bounds, m_trailingWhitespaceBgColor);
       }
 
@@ -1651,6 +1651,18 @@ void EditorWidget::hideInfo()
     delete m_infoBox;
     m_infoBox = NULL;
   }
+}
+
+
+bool EditorWidget::highlightTrailingWhitespace() const
+{
+  return m_editor->m_fileDoc->m_highlightTrailingWhitespace;
+}
+
+void EditorWidget::toggleHighlightTrailingWhitespace()
+{
+  m_editor->m_fileDoc->m_highlightTrailingWhitespace =
+    !m_editor->m_fileDoc->m_highlightTrailingWhitespace;
 }
 
 

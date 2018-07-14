@@ -26,14 +26,14 @@
       }
     },
     {
-      "attributes": "m_hotkeyDigit: int?\nm_filename: string\nm_isUntitled: bool\nm_lastFileTimestamp: int\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\n",
+      "attributes": "m_hotkeyDigit: int?\nm_filename: string\nm_isUntitled: bool\nm_lastFileTimestamp: int\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
       "loc": {
         "x": 650,
         "y": 295
       },
       "name": "FileTextDocument",
       "size": {
-        "h": 135,
+        "h": 145,
         "w": 250
       }
     },
