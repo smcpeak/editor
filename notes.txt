@@ -2,7 +2,6 @@
 TODOs:
   - run command to generate entire file; git annotate!
     - enhancements
-      - after document re-use, scroll back to top
       - prompt on closure of document with running process
       - kill without closing buffer
       - soft end of buffer jumping
