@@ -26,8 +26,8 @@ FileTextDocument::FileTextDocument()
   : TextDocument(),
     m_hasHotkeyDigit(false),
     m_hotkeyDigit(0),
-    m_filename(),
-    m_isUntitled(true),
+    m_name(),
+    m_hasFilename(false),
     m_lastFileTimestamp(0),
     m_title(),
     m_windowMenuId(s_nextWindowMenuId++),
@@ -53,6 +53,27 @@ void FileTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
   if (this->isProcessOutput()) {
     this->m_highlightTrailingWhitespace = false;
   }
+}
+
+
+string FileTextDocument::filename() const
+{
+  xassert(this->hasFilename());
+  return m_name;
+}
+
+
+void FileTextDocument::setFilename(string const &filename)
+{
+  m_name = filename;
+  m_hasFilename = true;
+}
+
+
+void FileTextDocument::setNonFileName(string const &name)
+{
+  m_name = name;
+  m_hasFilename = false;
 }
 
 
@@ -90,16 +111,16 @@ void FileTextDocument::setHotkeyDigit(int digit)
 
 void FileTextDocument::readFile()
 {
-  xassert(!this->m_isUntitled);
-  this->TextDocument::readFile(this->m_filename);
+  xassert(this->hasFilename());
+  this->TextDocument::readFile(this->m_name);
   this->refreshModificationTime();
 }
 
 
 void FileTextDocument::writeFile()
 {
-  xassert(!this->m_isUntitled);
-  this->TextDocument::writeFile(this->m_filename);
+  xassert(this->hasFilename());
+  this->TextDocument::writeFile(this->m_name);
   this->noUnsavedChanges();
   this->refreshModificationTime();
 }
@@ -107,8 +128,8 @@ void FileTextDocument::writeFile()
 
 bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
-  bool ret = getFileModificationTime(this->m_filename.c_str(), modTime);
-  TRACE("modtime", "on-disk ts for " << this->m_filename <<
+  bool ret = getFileModificationTime(this->m_name.c_str(), modTime);
+  TRACE("modtime", "on-disk ts for " << this->m_name <<
                    " is " << modTime);
   return ret;
 }
@@ -116,7 +137,7 @@ bool FileTextDocument::getDiskModificationTime(int64_t &modTime) const
 
 bool FileTextDocument::hasStaleModificationTime() const
 {
-  if (this->m_isUntitled) {
+  if (!this->hasFilename()) {
     // The document is not actually associated with any file, the name
     // is just a placeholder.
     TRACE("modtime", "hasStale: returning false because isUntitled");
@@ -148,7 +169,7 @@ bool FileTextDocument::hasStaleModificationTime() const
 
 void FileTextDocument::refreshModificationTime()
 {
-  TRACE("modtime", "refresh: old ts for " << this->m_filename <<
+  TRACE("modtime", "refresh: old ts for " << this->m_name <<
                    " is " << this->m_lastFileTimestamp);
 
   if (!this->getDiskModificationTime(this->m_lastFileTimestamp)) {
@@ -161,7 +182,7 @@ void FileTextDocument::refreshModificationTime()
     // repeatedly bothering the user with spurious errors.
   }
 
-  TRACE("modtime", "refresh: new ts for " << this->m_filename <<
+  TRACE("modtime", "refresh: new ts for " << this->m_name <<
                    " is " << this->m_lastFileTimestamp);
 }
 

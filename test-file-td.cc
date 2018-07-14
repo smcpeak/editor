@@ -14,13 +14,12 @@ using std::ofstream;
 static void testWhenUntitledExists()
 {
   FileTextDocument file;
-  file.m_filename = "untitled.txt";
-  file.m_isUntitled = true;     // just being explicit
+  file.setNonFileName("untitled.txt");
 
   // Create a file with that name.
   bool created = false;
-  if (!fileOrDirectoryExists(file.m_filename.c_str())){
-    ofstream of(file.m_filename.c_str());
+  if (!fileOrDirectoryExists(file.name().c_str())){
+    ofstream of(file.name().c_str());
     created = true;
   }
 
@@ -30,7 +29,7 @@ static void testWhenUntitledExists()
   xassert(!file.hasStaleModificationTime());
 
   if (created) {
-    (void)removeFile(file.m_filename.c_str());
+    (void)removeFile(file.name().c_str());
   }
 }
 
@@ -57,8 +56,7 @@ public:      // funcs
 static void testReadFile()
 {
   FileTextDocument file;
-  file.m_filename = "td.h";
-  file.m_isUntitled = false;
+  file.setFilename("td.h");
   file.readFile();
 
   TestTDO ttdo;

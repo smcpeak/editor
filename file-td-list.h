@@ -117,9 +117,9 @@ public:      // funcs
   // it is unique, and its 'isUntitled' field will be true.
   FileTextDocument *createUntitledFile();
 
-  // Find and return the document with the given filename, else NULL.
-  FileTextDocument       *findFileByName (string const &filename);
-  FileTextDocument const *findFileByNameC(string const &filename) const;
+  // Find and return the document with the given name, else NULL.
+  FileTextDocument       *findFileByName (string const &name);
+  FileTextDocument const *findFileByNameC(string const &name) const;
 
   // Find and return the document with the given title, else NULL.
   FileTextDocument       *findFileByTitle (string const &title);

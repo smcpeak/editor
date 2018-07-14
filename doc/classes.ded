@@ -4,7 +4,7 @@
     {
       "attributes": "m_lines: string[]\nm_observers: TextDocumentObserver[]\n(plus some caches)\n",
       "loc": {
-        "x": 650,
+        "x": 720,
         "y": 40
       },
       "name": "TextDocumentCore",
@@ -16,7 +16,7 @@
     {
       "attributes": "m_core: TextDocumentCore\nm_history: HE_group\nm_historyIndex: int\nm_savedHistoryIndex: int\nm_groupStack: HE_group[]\nm_isProcessOutput: bool\n",
       "loc": {
-        "x": 650,
+        "x": 720,
         "y": 140
       },
       "name": "TextDocument",
@@ -26,19 +26,19 @@
       }
     },
     {
-      "attributes": "m_hotkeyDigit: int?\nm_filename: string\nm_isUntitled: bool\nm_lastFileTimestamp: int\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
+      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_isUntitled: bool\nm_lastFileTimestamp: int\n[TODO: m_directory: string]\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
       "loc": {
-        "x": 650,
+        "x": 720,
         "y": 295
       },
-      "name": "FileTextDocument",
+      "name": "NamedTextDocument",
       "size": {
-        "h": 145,
+        "h": 165,
         "w": 250
       }
     },
     {
-      "attributes": "m_editors: FileTextDocumentEditor[]\nm_editor: FileTextDocumentEditor\n\nm_documentList: FileTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: FindStringFlags\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: FindStringFlags\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40
@@ -46,7 +46,7 @@
       "name": "EditorWidget : QWidget",
       "size": {
         "h": 305,
-        "w": 215
+        "w": 245
       }
     },
     {
@@ -62,7 +62,7 @@
       }
     },
     {
-      "attributes": "m_documentList: FileTextDocumentList\nm_windows: EditorWindow[]\nm_processes: ProcessWatcher[]\nm_pixmaps: Pixmaps\n",
+      "attributes": "m_documentList: NamedTextDocumentList\nm_windows: EditorWindow[]\nm_processes: ProcessWatcher[]\nm_pixmaps: Pixmaps\n",
       "loc": {
         "x": 30,
         "y": 505
@@ -76,7 +76,7 @@
     {
       "attributes": "m_doc: TextDocument\nm_cursor: TextCoord\nm_mark: TextCoord?\nm_firstVisible: TextCoord\nm_lastVisible: TextCoord\n",
       "loc": {
-        "x": 340,
+        "x": 380,
         "y": 150
       },
       "name": "TextDocumentEditor",
@@ -87,7 +87,7 @@
     },
     {
       "loc": {
-        "x": 340,
+        "x": 380,
         "y": 40
       },
       "name": "TextDocumentObserver",
@@ -97,12 +97,12 @@
       }
     },
     {
-      "attributes": "m_fileDoc: FileTextDocument\n",
+      "attributes": "m_namedDoc: NamedTextDocument\n",
       "loc": {
-        "x": 340,
+        "x": 380,
         "y": 295
       },
-      "name": "FileTextDocumentEditor",
+      "name": "NamedTextDocumentEditor",
       "size": {
         "h": 50,
         "w": 250
@@ -111,7 +111,7 @@
     {
       "attributes": "line: int\ncolumn: int\n",
       "loc": {
-        "x": 340,
+        "x": 380,
         "y": 70
       },
       "name": "TextCoord",
@@ -121,32 +121,32 @@
       }
     },
     {
-      "attributes": "m_fileDocuments: FileTextDocument[]\nm_observers: FileTextDocumentObserver[]\n",
+      "attributes": "m_documents: NamedTextDocument[]\nm_observers: NamedTextDocumentObserver[]\n",
       "loc": {
-        "x": 650,
-        "y": 475
+        "x": 720,
+        "y": 495
       },
-      "name": "FileTextDocumentList",
+      "name": "NamedTextDocumentList",
       "size": {
         "h": 65,
-        "w": 250
+        "w": 275
       }
     },
     {
       "loc": {
-        "x": 340,
+        "x": 380,
         "y": 365
       },
-      "name": "FileTextDocumentListObserver",
+      "name": "NamedTextDocumentListObserver",
       "size": {
         "h": 20,
         "w": 250
       }
     },
     {
-      "attributes": "m_fileDoc: FileTextDocument\nm_commandRunner: CommandRunner\n",
+      "attributes": "m_namedDoc: NamedTextDocument\nm_commandRunner: CommandRunner\n",
       "loc": {
-        "x": 365,
+        "x": 405,
         "y": 535
       },
       "name": "ProcessWatcher",
@@ -161,7 +161,7 @@
       "open": true,
       "parentRef": 1,
       "pt": {
-        "x": 775,
+        "x": 845,
         "y": 285
       }
     },
@@ -169,7 +169,7 @@
       "open": false,
       "parentRef": 7,
       "pt": {
-        "x": 275,
+        "x": 300,
         "y": 50
       }
     },
@@ -177,7 +177,7 @@
       "open": true,
       "parentRef": 6,
       "pt": {
-        "x": 470,
+        "x": 510,
         "y": 285
       }
     },
@@ -193,7 +193,7 @@
   "relations": [
     {
       "controlPts": [{
-        "x": 320,
+        "x": 345,
         "y": 305
       }],
       "end": {"entityRef": 8},
@@ -205,7 +205,7 @@
         "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 2
       },
-      "label": "m_fileDocuments[]",
+      "label": "m_documents[]",
       "start": {"entityRef": 10}
     },
     {
@@ -249,12 +249,12 @@
     },
     {
       "end": {"entityRef": 2},
-      "label": "m_fileDoc",
+      "label": "m_namedDoc",
       "start": {"entityRef": 8}
     },
     {
       "controlPts": [{
-        "x": 320,
+        "x": 345,
         "y": 335
       }],
       "end": {
@@ -282,7 +282,7 @@
     },
     {
       "controlPts": [{
-        "x": 463,
+        "x": 503,
         "y": 527
       }],
       "end": {
@@ -323,11 +323,11 @@
     {
       "controlPts": [
         {
-          "x": 660,
-          "y": 450
+          "x": 730,
+          "y": 470
         },
         {
-          "x": 580,
+          "x": 650,
           "y": 440
         }
       ],
@@ -338,16 +338,16 @@
     {
       "controlPts": [
         {
-          "x": 335,
+          "x": 375,
           "y": 245
         },
         {
-          "x": 350,
+          "x": 390,
           "y": 435
         },
         {
-          "x": 545,
-          "y": 485
+          "x": 585,
+          "y": 505
         }
       ],
       "end": {"entityRef": 10},
@@ -356,11 +356,11 @@
     },
     {
       "controlPts": [{
-        "x": 490,
-        "y": 475
+        "x": 530,
+        "y": 465
       }],
       "end": {"entityRef": 2},
-      "label": "m_fileDoc",
+      "label": "m_namedDoc",
       "routingAlg": "RA_DIRECT",
       "start": {"entityRef": 12}
     },
@@ -381,6 +381,6 @@
   "version": 23,
   "windowSize": {
     "h": 626,
-    "w": 925
+    "w": 1025
   }
 }

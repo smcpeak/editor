@@ -132,29 +132,28 @@ FileTextDocument *GlobalState::createNewFile()
   FileTextDocument *b = new FileTextDocument();
 
   // Come up with a unique "untitled" name.
-  b->m_filename = "untitled.txt";
-  b->m_isUntitled = true;
+  b->setNonFileName("untitled.txt");
   int n = 1;
-  while (this->hasFileWithName(b->m_filename)) {
+  while (this->hasFileWithName(b->name())) {
     n++;
-    b->m_filename = stringb("untitled" << n << ".txt");
+    b->setNonFileName(stringb("untitled" << n << ".txt"));
   }
 
-  b->m_title = b->m_filename;
+  b->m_title = b->name();
   trackNewDocumentFile(b);
   return b;
 }
 
 
-bool GlobalState::hasFileWithName(string const &fname) const
+bool GlobalState::hasFileWithName(string const &name) const
 {
-  return m_documentList.findFileByNameC(fname) != NULL;
+  return m_documentList.findFileByNameC(name) != NULL;
 }
 
 
-bool GlobalState::hasFileWithTitle(string const &fname) const
+bool GlobalState::hasFileWithTitle(string const &title) const
 {
-  return m_documentList.findFileByTitleC(fname) != NULL;
+  return m_documentList.findFileByTitleC(title) != NULL;
 }
 
 
@@ -208,8 +207,7 @@ FileTextDocument *GlobalState::getNewCommandOutputDocument(
       // Nothing with this name, let's use it to make a new one.
       TRACE("process", "making new document: " << name);
       FileTextDocument *newDoc = new FileTextDocument();
-      newDoc->m_filename = name;
-      newDoc->m_isUntitled = true;
+      newDoc->setNonFileName(name);
       newDoc->m_title = name;
       trackNewDocumentFile(newDoc);
       return newDoc;

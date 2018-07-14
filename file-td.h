@@ -13,20 +13,25 @@
 
 
 // This class binds a TextDocument, which is an abstract mathematical
-// object, to a File, which is a resource that exists outside the
-// editor process.  The document is saved to, loaded from, and checked
-// against the resource at appropriate points: hence we have a file
-// name and timestamp.
+// object, to a name, which refers somehow to the origin of the
+// contents of the document.  Often, this is a file name, but it can
+// also be, for example, a command line.
+//
+// If the name refers to a durable external resource, such as a file,
+// then the document is saved to, loaded from, and checked against the
+// resource at appropriate points.
 //
 // This class further associates that binding with several ways of
 // naming it from within the editor application: the hotkey, the window
 // menu id, and the file title.
 //
-// Finally, it contains an interpretation of the file's meaning in
+// Finally, it contains an interpretation of the document's meaning in
 // the form of a syntax highlighter.
 //
 // All of the data in this class is shared by all editor windows that
-// operate on a given file.
+// operate on a given document.
+//
+// TODO: Rename this to NamedTextDocument.
 class FileTextDocument : public TextDocument {
 private:     // static data
   // Next value to use when assigning menu ids.
@@ -43,14 +48,17 @@ private:     // data
   // 'hasHotkeyDigit'.  It is a number in [0,9].
   int m_hotkeyDigit;
 
+  // Name of document.  This is a filename if 'm_hasFilename' is true.
+  // Otherwise, it is a human-readable string describing the origin of
+  // the content.  It must be unique within the list of
+  // FileTextDocuments in its containing FileTextDocumentList.  It must
+  // not be empty.
+  string m_name;
+
+  // When true, 'm_name' is the name of a file on disk.
+  bool m_hasFilename;
+
 public:      // data
-  // name of file being edited
-  string m_filename;
-
-  // When true, 'filename' is just a meaningless placeholder; there is
-  // no file associated with this content yet.
-  bool m_isUntitled;
-
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
   //
@@ -60,9 +68,9 @@ public:      // data
   // always try to stat() the file before comparing its timestamp.
   int64_t m_lastFileTimestamp;
 
-  // title of the buffer; this will usually be similar
-  // to the filename, but perhaps only the last part of
-  // the fully-qualified path name, etc.
+  // Title of the document.  Must be unique within the containing
+  // FileTextDocumentList.  This will usually be similar to the name,
+  // but perhaps shortened so long as it remains unique.
   string m_title;
 
   // Numeric identifier for this buffer.  This is used to identify
@@ -92,6 +100,25 @@ public:      // funcs
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
+  // ----------------------------- names ----------------------------
+  // Get the document's unique (within its FileTextDocumentList) name.
+  string name() const                  { return m_name; }
+
+  // True if the document's name is a file name.
+  bool hasFilename() const             { return m_hasFilename; }
+
+  // Get the filename for this document.  Requires 'hasFilename()'.
+  string filename() const;
+
+  // Set 'm_name' to be 'filename', and 'm_hasFilename' to true.  It is
+  // the caller's responsibility to ensure uniqueness within the
+  // containing FileTextDocumentList.
+  void setFilename(string const &filename);
+
+  // Set 'm_name' to 'name' and 'm_hasFilename' to false.  The name
+  // still has to be unique.
+  void setNonFileName(string const &name);
+
   // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.
   bool hasHotkey() const { return this->m_hasHotkeyDigit; }
@@ -109,8 +136,8 @@ public:      // funcs
   void setHotkeyDigit(int digit);
 
   // -------------------- file system interaction -------------------
-  // Read the from 'filename'.  Requires '!isUntitled'.  Updates the
-  // disk modification time.
+  // Read the from 'filename()'.  Requires 'hasFilename()'.  Updates
+  // the disk modification time.
   //
   // Throws an exception on error, but in that case this object will be
   // left unmodified.

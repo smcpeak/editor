@@ -324,7 +324,7 @@ void EditorWidget::checkForDiskChanges()
   RCSerf<FileTextDocument> file = m_editor->m_fileDoc;
   if (!file->unsavedChanges() && file->hasStaleModificationTime()) {
     TRACE("modification",
-      "File \"" << file->m_filename << "\" has changed on disk "
+      "File \"" << file->name() << "\" has changed on disk "
       "and has no unsaved changes; reloading it.");
     try {
       INITIATING_DOCUMENT_CHANGE();
@@ -366,13 +366,13 @@ string EditorWidget::getDocumentDirectory() const
 {
   SMFileUtil sfu;
   FileTextDocument *doc = this->getDocumentFile();
-  if (doc->m_isUntitled) {
+  if (!doc->hasFilename()) {
     return sfu.normalizePathSeparators(sfu.currentDirectory());
   }
   else {
     // sfu.splitPathDir leaves the final slash, which is messing up my
     // logic elsewhere.
-    return dirname(doc->m_filename);
+    return dirname(doc->filename());
   }
 }
 
@@ -2046,7 +2046,7 @@ bool EditorWidget::editSafetyCheck()
   QMessageBox box(this);
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The file \"" << m_editor->m_fileDoc->m_filename << "\" has changed on disk.  "
+    "The document \"" << m_editor->m_fileDoc->name() << "\" has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);

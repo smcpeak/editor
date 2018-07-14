@@ -316,8 +316,13 @@ void EditorWindow::useDefaultHighlighter(FileTextDocument *file)
     file->m_highlighter = NULL;
   }
 
+  if (!file->hasFilename()) {
+    return;
+  }
+
   // get file extension
-  char const *dot = strrchr(file->m_filename.c_str(), '.');
+  string filename = file->filename();
+  char const *dot = strrchr(filename.c_str(), '.');
   if (dot) {
     string ext = string(dot+1);
     if (ext.equals("h") ||
@@ -401,7 +406,7 @@ string EditorWindow::fileChooseDialog(string const &initialName, bool saveAs)
 void EditorWindow::fileOpen()
 {
   string name =
-    this->fileChooseDialog(m_editorWidget->getDocumentFile()->m_filename,
+    this->fileChooseDialog(m_editorWidget->getDocumentFile()->name(),
                            false /*saveAs*/);
   if (name.isempty()) {
     return;
@@ -422,11 +427,10 @@ void EditorWindow::fileOpenFile(string const &name)
   }
 
   file = new FileTextDocument();
-  file->m_filename = name;
-  file->m_isUntitled = false;
-  file->m_title = this->m_globalState->uniqueTitleFor(file->m_filename);
+  file->setFilename(name);
+  file->m_title = this->m_globalState->uniqueTitleFor(file->filename());
 
-  if (fileOrDirectoryExists(file->m_filename.c_str())) {
+  if (fileOrDirectoryExists(file->filename().c_str())) {
     try {
       file->readFile();
     }
@@ -468,7 +472,7 @@ void EditorWindow::fileOpenFile(string const &name)
 void EditorWindow::fileSave()
 {
   FileTextDocument *b = this->currentDocument();
-  if (b->m_isUntitled) {
+  if (!b->hasFilename()) {
     TRACE("untitled", "file has no title; invoking Save As ...");
     fileSaveAs();
     return;
@@ -478,7 +482,7 @@ void EditorWindow::fileSave()
     QMessageBox box(this);
     box.setWindowTitle("File Changed");
     box.setText(toQString(stringb(
-      "The file \"" << b->m_filename << "\" has changed on disk.  "
+      "The file \"" << b->name() << "\" has changed on disk.  "
       "If you save, those changes will be overwritten by the text "
       "in the editor's memory.  Save anyway?")));
     box.addButton(QMessageBox::Save);
@@ -503,7 +507,7 @@ void EditorWindow::writeTheFile()
     // There is not a severity between "warning" and "critical",
     // and "critical" is a bit obnoxious.
     QMessageBox::warning(this, "Write Error",
-      qstringb("Failed to save file \"" << file->m_filename << "\": " << x.why()));
+      qstringb("Failed to save file \"" << file->name() << "\": " << x.why()));
   }
 }
 
@@ -526,7 +530,11 @@ bool EditorWindow::stillCurrentDocument(FileTextDocument *doc)
 void EditorWindow::fileSaveAs()
 {
   FileTextDocument *fileDoc = currentDocument();
-  string chosenFilename = fileDoc->m_filename;
+
+  // TODO: This isn't right for documents that do not have file names.
+  // I'm just trusting the dialog to disregard the invalid filenames.
+  string chosenFilename = fileDoc->name();
+
   while (true) {
     chosenFilename =
       this->fileChooseDialog(chosenFilename, true /*saveAs*/);
@@ -537,8 +545,8 @@ void EditorWindow::fileSaveAs()
       return;
     }
 
-    if (!fileDoc->m_isUntitled &&
-        fileDoc->m_filename == chosenFilename) {
+    if (fileDoc->hasFilename() &&
+        fileDoc->filename() == chosenFilename) {
       this->fileSave();
       return;
     }
@@ -554,8 +562,7 @@ void EditorWindow::fileSaveAs()
     }
   }
 
-  fileDoc->m_filename = chosenFilename;
-  fileDoc->m_isUntitled = false;
+  fileDoc->setFilename(chosenFilename);
   fileDoc->m_title = this->m_globalState->uniqueTitleFor(chosenFilename);
   writeTheFile();
   this->useDefaultHighlighter(fileDoc);
@@ -571,8 +578,8 @@ void EditorWindow::fileClose()
   FileTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
-    msg << "The file \"" << b->m_filename << "\" has unsaved changes.  "
-        << "Discard these changes and close this file anyway?";
+    msg << "The document \"" << b->name() << "\" has unsaved changes.  "
+        << "Discard these changes and close it anyway?";
     if (!this->okToDiscardChanges(msg)) {
       return;
     }
@@ -604,7 +611,7 @@ bool EditorWindow::reloadFile(FileTextDocument *b_)
 
   if (b->unsavedChanges()) {
     if (!this->okToDiscardChanges(stringb(
-          "The file \"" << b->m_filename << "\" has unsaved changes.  "
+          "The file \"" << b->name() << "\" has unsaved changes.  "
           "Discard those changes and reload this file anyway?"))) {
       return false;
     }
@@ -616,7 +623,7 @@ bool EditorWindow::reloadFile(FileTextDocument *b_)
   }
   catch (xBase &x) {
     this->complain(stringb(
-      "Can't read file \"" << b->m_filename << "\": " << x.why() <<
+      "Can't read file \"" << b->name() << "\": " << x.why() <<
       "\n\nThe file will remain open in the editor with its "
       "old contents."));
     return false;
@@ -682,12 +689,12 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
 {
   int ct = 0;
 
-  msg << "The following files have unsaved changes:\n\n";
+  msg << "The following documents have unsaved changes:\n\n";
   for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
     FileTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
     if (file->unsavedChanges()) {
       ct++;
-      msg << " * " << file->m_filename << '\n';
+      msg << " * " << file->name() << '\n';
     }
   }
 
@@ -1145,9 +1152,9 @@ void EditorWindow::editorViewChanged()
             << (tde->unsavedChanges()? " *" : "")
   ));
 
-  // Status text: full path name.
+  // Status text: full document name.
   FileTextDocument *file = currentDocument();
-  m_statusArea->status->setText(toQString(file->m_filename));
+  m_statusArea->status->setText(toQString(file->name()));
 
   // Window title.
   stringBuilder sb;
@@ -1185,7 +1192,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
     SMFileUtil sfu;
     string fn(toString(filename));
     if (sfu.absoluteFileExists(fn) &&
-        currentDocument()->m_filename != fn) {
+        currentDocument()->name() != fn) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
       this->fileOpenFile(fn);
@@ -1255,7 +1262,7 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
   FileTextDocument *file =
     this->m_globalState->m_documentList.findFileByWindowMenuId(windowMenuId);
   if (file) {
-    TRACE("menu", "window file choice is: " << file->m_filename);
+    TRACE("menu", "window file choice is: " << file->name());
     this->setDocumentFile(file);
   }
   else {

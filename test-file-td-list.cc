@@ -99,8 +99,7 @@ void TestObserver::expect(NotifyFunction nfunc, FileTextDocument *file)
 static FileTextDocument *add(FileTextDocumentList &dlist, string name)
 {
   FileTextDocument *file = new FileTextDocument;
-  file->m_filename = name;
-  file->m_isUntitled = false;
+  file->setFilename(name);
   dlist.addFile(file);
   return file;
 }
@@ -116,7 +115,7 @@ static void testSimple()
   dlist.addObserver(&observer);
 
   FileTextDocument *file0 = dlist.getFileAt(0);
-  xassert(file0->m_isUntitled);
+  xassert(!file0->hasFilename());
   xassert(dlist.getFileIndex(file0) == 0);
   xassert(dlist.hasFile(file0));
   xassert(dlist.getFileIndex(NULL) == -1);
@@ -125,7 +124,7 @@ static void testSimple()
   observer.expectEmpty();
 
   FileTextDocument *file1 = dlist.createUntitledFile();
-  xassert(file1->m_isUntitled);
+  xassert(!file1->hasFilename());
   xassert(dlist.numFiles() == 2);
   xassert(dlist.getFileIndex(file1) == 1);
 
@@ -171,7 +170,7 @@ static void testAddMoveRemove()
   dlist.addObserver(&observer);
 
   FileTextDocument *file0 = dlist.getFileAt(0);
-  xassert(file0->m_isUntitled);
+  xassert(!file0->hasFilename());
   xassert(dlist.getFileIndex(file0) == 0);
   xassert(dlist.getFileIndex(NULL) == -1);
 
@@ -268,11 +267,11 @@ static void testCreateUntitled()
 
   FileTextDocument *file1 = dlist.createUntitledFile();
   observer.expectOnly(NF_ADDED, file1);
-  xassert(file1->m_filename == "untitled2.txt");
+  xassert(file1->name() == "untitled2.txt");
 
   FileTextDocument *file2 = dlist.createUntitledFile();
   observer.expectOnly(NF_ADDED, file2);
-  xassert(file2->m_filename == "untitled3.txt");
+  xassert(file2->name() == "untitled3.txt");
 
   // Test 'findUntitledUnmodifiedFile'.
   FileTextDocument *f = dlist.findUntitledUnmodifiedFile();
@@ -282,7 +281,7 @@ static void testCreateUntitled()
   f = dlist.findUntitledUnmodifiedFile();
   xassert(f == file0 || f == file2);
 
-  file2->m_isUntitled = false;
+  file2->setFilename(file2->name());      // Make it no longer untitled.
   f = dlist.findUntitledUnmodifiedFile();
   xassert(f == file0);
 
@@ -302,8 +301,7 @@ static void testSaveAs()
   dlist.addObserver(&observer);
 
   FileTextDocument *file0 = dlist.getFileAt(0);
-  file0->m_filename = "a/some-name.txt";
-  file0->m_isUntitled = false;
+  file0->setFilename("a/some-name.txt");
   dlist.assignUniqueTitle(file0);
   observer.expectOnly(NF_ATTRIBUTE, file0);
   xassert(file0->m_title == "some-name.txt");
@@ -399,7 +397,7 @@ static void testColon3()
 
   dlist.moveFile(file2, 0);
 
-  file2->m_filename = "zoo";
+  file2->setFilename("zoo");
   dlist.assignUniqueTitle(file2);
 
   dlist.removeObserver(&observer);

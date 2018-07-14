@@ -72,8 +72,8 @@ void FileTextDocumentList::selfCheck() const
 
   for (int i=0; i < m_fileDocuments.length(); i++) {
     FileTextDocument const *d = m_fileDocuments[i];
-    xassert(!d->m_filename.isempty());
-    filenames.addUnique(d->m_filename);
+    xassert(!d->name().isempty());
+    filenames.addUnique(d->name());
     xassert(!d->m_title.isempty());
     filenames.addUnique(d->m_title);
     if (d->hasHotkey()) {
@@ -115,12 +115,12 @@ int FileTextDocumentList::getFileIndex(FileTextDocument const *file) const
 
 void FileTextDocumentList::addFile(FileTextDocument *file)
 {
-  TRACE("file-td-list", "addFile: " << file->m_filename);
+  TRACE("file-td-list", "addFile: " << file->name());
   xassert(!this->hasFile(file));
 
   // Assign title if necessary.
   if (file->m_title.isempty() || this->findFileByTitle(file->m_title)) {
-    file->m_title = this->computeUniqueTitle(file->m_filename);
+    file->m_title = this->computeUniqueTitle(file->name());
   }
 
   // Assign hotkey if necessary.
@@ -144,7 +144,7 @@ void FileTextDocumentList::addFile(FileTextDocument *file)
 
 void FileTextDocumentList::removeFile(FileTextDocument *file)
 {
-  TRACE("file-td-list", "removeFile: " << file->m_filename);
+  TRACE("file-td-list", "removeFile: " << file->name());
 
   // If we make an untitled file, allow it to take the same hotkey.
   file->clearHotkey();
@@ -168,7 +168,7 @@ void FileTextDocumentList::removeFile(FileTextDocument *file)
 void FileTextDocumentList::moveFile(FileTextDocument *file, int newIndex)
 {
   TRACE("file-td-list", "moveFile to " << newIndex <<
-                        ": " << file->m_filename);
+                        ": " << file->name());
 
   int oldIndex = this->getFileIndex(file);
   xassert(oldIndex >= 0);
@@ -182,19 +182,20 @@ void FileTextDocumentList::moveFile(FileTextDocument *file, int newIndex)
 
 FileTextDocument *FileTextDocumentList::createUntitledFile()
 {
+  // TODO: Rewrite this code slightly to delay creating the document
+  // object until the name has been computed, just to be a bit cleaner.
   FileTextDocument *file = new FileTextDocument();
 
   // Come up with a unique "untitled" name.
-  file->m_filename = "untitled.txt";
-  file->m_isUntitled = true;
+  file->setNonFileName("untitled.txt");
   int n = 1;
-  while (this->findFileByName(file->m_filename)) {
+  while (this->findFileByName(file->name())) {
     n++;
-    file->m_filename = stringb("untitled" << n << ".txt");
+    file->setNonFileName(stringb("untitled" << n << ".txt"));
   }
 
-  TRACE("file-td-list", "createUntitledFile: " << file->m_filename);
-  file->m_title = file->m_filename;
+  TRACE("file-td-list", "createUntitledFile: " << file->name());
+  file->m_title = file->name();
 
   this->addFile(file);
   return file;
@@ -207,10 +208,10 @@ FileTextDocument *FileTextDocumentList::findFileByName(string const &filename)
 }
 
 FileTextDocument const *FileTextDocumentList::findFileByNameC(
-  string const &filename) const
+  string const &name) const
 {
   for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (m_fileDocuments[i]->m_filename == filename) {
+    if (m_fileDocuments[i]->name() == name) {
       return m_fileDocuments[i];
     }
   }
@@ -278,10 +279,10 @@ FileTextDocument const *FileTextDocumentList::findUntitledUnmodifiedFileC() cons
 {
   for (int i=0; i < m_fileDocuments.length(); i++) {
     FileTextDocument const *file = m_fileDocuments[i];
-    if (file->m_isUntitled &&
+    if (!file->hasFilename() &&
         file->numLines() == 1 &&
         file->lineLength(0) == 0) {
-      TRACE("file-td-list", "findUntitledUnmodifiedFile: " << file->m_filename);
+      TRACE("file-td-list", "findUntitledUnmodifiedFile: " << file->name());
       return file;
     }
   }
@@ -340,13 +341,13 @@ string FileTextDocumentList::computeUniqueTitle(string filename) const
 
 void FileTextDocumentList::assignUniqueTitle(FileTextDocument *file)
 {
-  TRACE("file-td-list", "assignUniqueTitle: " << file->m_filename);
+  TRACE("file-td-list", "assignUniqueTitle: " << file->name());
 
   // Free up the file's current title so it can remain unchanged.
   file->m_title = "";
 
   // Compute a new one.
-  file->m_title = this->computeUniqueTitle(file->m_filename);
+  file->m_title = this->computeUniqueTitle(file->name());
 
   this->notifyAttributeChanged(file);
   SELF_CHECK();
@@ -373,7 +374,7 @@ bool FileTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
 
 void FileTextDocumentList::assignUniqueHotkey(FileTextDocument *file)
 {
-  TRACE("file-td-list", "assignUniqueHotkey: " << file->m_filename);
+  TRACE("file-td-list", "assignUniqueHotkey: " << file->name());
 
   file->clearHotkey();
 
@@ -394,8 +395,8 @@ void FileTextDocumentList::getUniqueDirectories(
   StringSet dirSet;
 
   for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (!m_fileDocuments[i]->m_isUntitled) {
-      string dir = dirname(m_fileDocuments[i]->m_filename);
+    if (m_fileDocuments[i]->hasFilename()) {
+      string dir = dirname(m_fileDocuments[i]->filename());
       if (!dirSet.contains(dir)) {
         dirs.push(dir);
         dirSet.add(dir);
@@ -433,7 +434,7 @@ void FileTextDocumentList::notifyAdded(FileTextDocument *file_)
   // deallocate 'file', either directly or indirectly.
   RCSerf<FileTextDocument> file(file_);
 
-  TRACE("file-td-list", "notifyAdded: " << file->m_filename);
+  TRACE("file-td-list", "notifyAdded: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
@@ -445,7 +446,7 @@ void FileTextDocumentList::notifyAdded(FileTextDocument *file_)
 void FileTextDocumentList::notifyRemoved(FileTextDocument *file_)
 {
   RCSerf<FileTextDocument> file(file_);
-  TRACE("file-td-list", "notifyRemoved: " << file->m_filename);
+  TRACE("file-td-list", "notifyRemoved: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
@@ -457,7 +458,7 @@ void FileTextDocumentList::notifyRemoved(FileTextDocument *file_)
 void FileTextDocumentList::notifyAttributeChanged(FileTextDocument *file_)
 {
   RCSerf<FileTextDocument> file(file_);
-  TRACE("file-td-list", "notifyAttributeChanged: " << file->m_filename);
+  TRACE("file-td-list", "notifyAttributeChanged: " << file->name());
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
@@ -483,7 +484,7 @@ bool FileTextDocumentList::notifyGetInitialView(
 {
   RCSerf<FileTextDocument> file(file_);
   TRACE("file-td-list",
-    stringb("notifyGetInitialView: file=" << file->m_filename));
+    stringb("notifyGetInitialView: file=" << file->name()));
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(FileTextDocumentListObserver, m_observers, iter) {
