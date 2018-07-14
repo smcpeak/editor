@@ -1192,7 +1192,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
       if (line != 0) {
         // Also go to line number, if provided.
         m_editorWidget->cursorTo(TextCoord(line-1, 0));
-        m_editorWidget->scrollToCursor(5 /*gap*/);
+        m_editorWidget->scrollToCursor(-1 /*gap*/);
       }
       return;
     }
