@@ -78,7 +78,7 @@ public:      // data
 
   // When true, the widget will highlight instances of whitespace at
   // the end of a line.  Initially true, but is set to false by
-  // 'setIsProcessOutput(true)'.
+  // 'setProcessOutputStatus' for other than DPS_NONE.
   //
   // In a sense, this is a sort of "overlay" highlighter, as it acts
   // after the main highlighter.  I could perhaps generalize the idea
@@ -89,9 +89,8 @@ public:      // funcs
   FileTextDocument();
   ~FileTextDocument();
 
-  // Perform additional actions when marking a document as "process
-  // output".
-  virtual void setIsProcessOutput(bool isProcessOutput) OVERRIDE;
+  // Perform additional actions when setting process status.
+  virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
   // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.

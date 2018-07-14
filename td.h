@@ -14,6 +14,21 @@
 #include "refct-serf.h"                // RCSerf
 
 
+// The state of the process feeding output to a document.
+enum DocumentProcessStatus {
+  // There was never a process associated with this document.
+  DPS_NONE,
+
+  // The process is still running.
+  DPS_RUNNING,
+
+  // The process has finished.
+  DPS_FINISHED,
+
+  NUM_DOCUMENT_PROCESS_STATUSES
+};
+
+
 // This class represents a text document (which is a sequence of lines)
 // and its undo/redo history.
 class TextDocument : public SerfRefCount {
@@ -50,12 +65,13 @@ private:      // data
   // I allow for the generality of a stack anyway
   ObjStack<HE_group> m_groupStack;
 
-  // True if this document is the uneditable output of some process.  In
-  // that case, we do not retain any undo/redo history, and objects
-  // looking at this document may behave differently (for example,
-  // automatically moving their cursor to the end of the document).
-  // Initially false.
-  bool m_isProcessOutput;
+  // State of an associated process, if any.
+  //
+  // If this is not DPS_NONE, which is the default, then we do not
+  // retain any undo/redo history, and objects looking at this document
+  // may behave differently (for example, automatically moving their
+  // cursor to the end of the document).
+  DocumentProcessStatus m_documentProcessStatus;
 
 private:     // funcs
   // Change 'historyIndex' by 'inc' and possibly send a notification
@@ -89,7 +105,10 @@ public:      // funcs
   int countTrailingSpacesTabs(int line) const
     { return m_core.countTrailingSpacesTabs(line); }
 
-  bool isProcessOutput() const            { return m_isProcessOutput; }
+  DocumentProcessStatus documentProcessStatus() const
+    { return m_documentProcessStatus; }
+  bool isProcessOutput() const
+    { return m_documentProcessStatus != DPS_NONE; }
 
   // ------------------------ global changes ----------------------
   // clear history, leaving only the current buffer contents
@@ -108,13 +127,13 @@ public:      // funcs
   // Write the contents to 'fname'.  May throw.
   void writeFile(string const &fname) const;
 
-  // Change the 'm_isProcessOutput' setting.  Setting it to true will
-  // immediately discard all undo/redo history.  There must not be any
-  // open history groups.
+  // Change the 'm_documentProcessStatus' setting.  Setting it to a
+  // value DPS_RUNNING will immediately discard all undo/redo history.
+  // There must not be any open history groups.
   //
-  // This also has on the highlighting state in FileTextDocument, which
-  // is why it is virtual.
-  virtual void setIsProcessOutput(bool isProcessOutput);
+  // This also has an effect on the highlighting state in
+  // FileTextDocument, which is why it is virtual.
+  virtual void setDocumentProcessStatus(DocumentProcessStatus status);
 
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.

@@ -12,6 +12,7 @@
 
 // smbase
 #include "array.h"                     // ArrayStack
+#include "dev-warning.h"               // DEV_WARNING
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "trace.h"                     // TRACE
 
@@ -171,6 +172,20 @@ OpenFilesDialog::~OpenFilesDialog()
 {}
 
 
+static char const *documentProcessStatusIndicator(
+  FileTextDocument const *doc)
+{
+  switch (doc->documentProcessStatus()) {
+    default:
+      DEV_WARNING("Bad document process status");
+      // fallthrough
+    case DPS_NONE:           return "";
+    case DPS_RUNNING:        return " <running>";
+    case DPS_FINISHED:       return " <finished>";
+  }
+}
+
+
 void OpenFilesDialog::repopulateTable()
 {
   m_tableWidget->clearContents();
@@ -192,6 +207,7 @@ void OpenFilesDialog::repopulateTable()
     {
       stringBuilder sb;
       sb << doc->m_filename;
+      sb << documentProcessStatusIndicator(doc);
       if (doc->unsavedChanges()) {
         sb << " *";
       }

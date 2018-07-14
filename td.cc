@@ -21,7 +21,7 @@ TextDocument::TextDocument()
     m_historyIndex(0),
     m_savedHistoryIndex(0),
     m_groupStack(),
-    m_isProcessOutput(false)
+    m_documentProcessStatus(DPS_NONE)
 {
   s_objectCount++;
   TRACE("TextDocument",
@@ -59,7 +59,7 @@ void TextDocument::clearContentsAndHistory()
 
 bool TextDocument::unsavedChanges() const
 {
-  if (m_isProcessOutput) {
+  if (m_documentProcessStatus == DPS_RUNNING) {
     return false;
   }
 
@@ -118,13 +118,16 @@ void TextDocument::writeFile(string const &fname) const
 }
 
 
-void TextDocument::setIsProcessOutput(bool isProcessOutput)
+void TextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 {
-  m_isProcessOutput = isProcessOutput;
-  if (m_isProcessOutput) {
-    xassert(m_groupStack.isEmpty());
+  xassert(m_groupStack.isEmpty());
+  m_documentProcessStatus = status;
+  if (m_documentProcessStatus != DPS_NONE) {
+    // DPS_FINISHED is included here because when the process finishes
+    // I want to be sure to get a document with no "unsaved changes".
+    this->clearHistory();
+    this->noUnsavedChanges();
   }
-  this->clearHistory();
 }
 
 
@@ -188,7 +191,9 @@ void TextDocument::bumpHistoryIndex(int inc)
 
 void TextDocument::appendElement(HistoryElt *e)
 {
-  if (m_isProcessOutput) {
+  if (m_documentProcessStatus == DPS_RUNNING) {
+    // While it is running, discard undo/redo, but once it finishes,
+    // resume tracking history.
     delete e;
     return;
   }

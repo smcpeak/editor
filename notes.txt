@@ -6,16 +6,14 @@ TODOs:
   - ctrl+i: recognize file:line syntax
   - run command to generate entire file; git annotate!
     - enhancements
-      - does the highlighter kick in if the command happens to end
-        with ".cc"?
-      - process output documents should not be editable!
-        - but Save As should transition them to normal editable files
-      - in file picker, show which ones are still running
       - prompt on closure of document with running process
       - print dir and cmd at top of document
       - kill without closing buffer
       - soft end of buffer jumping
       - when switch to output buffer, need to jump to end
+      - process output documents should not be editable!
+        - but Save As should transition them to normal editable files
+      - open-files-dialog: button to close all with finished processes
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process
@@ -30,6 +28,8 @@ TODOs:
 
   - allow Tab character; issue is rendering support
   - handling of files with CRLF line endings
+    - including case of grepping *.cc, which includes *.moc.cc files
+      that have CRLF, along with other *.cc with just LF
   - parenthesis balancing, and Alt-[/] to find matching delimiter
   - mode to show line numbers in left margin
   - multiple copy+paste strings
@@ -41,6 +41,7 @@ TODOs:
     - try with fewer directory components so I can open a file from
       a name like "a/Makefile" in "git diff" output
   - search and replace
+    - allow Ctrl+R from the main editor window too
     - unclear when Ctrl+R will replace versus jump
     - issues when cursor is sitting on a match but it isn't highlighted
     - allow F2? Ctrl+O? Ctrl+I?

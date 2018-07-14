@@ -13,7 +13,7 @@ ProcessWatcher::ProcessWatcher(FileTextDocument *doc)
     m_commandRunner(),
     m_startTime(getCurrentUnixTime())
 {
-  m_fileDoc->setIsProcessOutput(true);
+  m_fileDoc->setDocumentProcessStatus(DPS_RUNNING);
 
   QObject::connect(&m_commandRunner, &CommandRunner::signal_outputLineReady,
                    this,              &ProcessWatcher::slot_outputLineReady);
@@ -78,6 +78,11 @@ void ProcessWatcher::slot_processTerminated() NOEXCEPT
     date.fromUnixTime(endTime, getLocalTzOffsetMinutes());
     m_fileDoc->appendString(stringb(
       "Finished at " << date.dateTimeString() << "\n"));
+
+    // I do this at the end so that observers see the changes above as
+    // happening while the process is still running, and hence
+    // understand the user did not directly make them.
+    m_fileDoc->setDocumentProcessStatus(DPS_FINISHED);
   }
 
   Q_EMIT signal_processTerminated(this);

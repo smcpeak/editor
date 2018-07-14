@@ -215,18 +215,19 @@ FileTextDocument *GlobalState::getNewCommandOutputDocument(
       return newDoc;
     }
 
-    if (!fileDoc->isProcessOutput()) {
-      // Not a process output document, keep looking.
+    if (fileDoc->documentProcessStatus() != DPS_FINISHED) {
+      // Not a finished process output document, keep looking.
       continue;
     }
 
+    // Safety check.  I could remove this later.
     ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
-    if (!watcher) {
-      // This is a left-over document from a previous run.  Re-use it.
-      TRACE("process", "reusing existing document: " << name);
-      fileDoc->clearContentsAndHistory();
-      return fileDoc;
-    }
+    xassert(!watcher);
+
+    // This is a left-over document from a previous run.  Re-use it.
+    TRACE("process", "reusing existing document: " << name);
+    fileDoc->clearContentsAndHistory();
+    return fileDoc;
   }
 
   // Maybe something went haywire creating commands?
@@ -234,8 +235,7 @@ FileTextDocument *GlobalState::getNewCommandOutputDocument(
 }
 
 
-FileTextDocument *GlobalState::runLaunchCommandDialog(
-  QString dir, QString command)
+FileTextDocument *GlobalState::launchCommand(QString dir, QString command)
 {
   // Find or create a document to hold the result.
   FileTextDocument *fileDoc =

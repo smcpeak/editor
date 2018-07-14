@@ -117,7 +117,7 @@ public:       // funcs
 
   // Start a new child process and return the document into which that
   // process' output is written.
-  FileTextDocument *runLaunchCommandDialog(QString dir, QString command);
+  FileTextDocument *launchCommand(QString dir, QString command);
 
   // GlobalState has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.

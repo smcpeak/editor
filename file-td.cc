@@ -46,11 +46,11 @@ FileTextDocument::~FileTextDocument()
 }
 
 
-void FileTextDocument::setIsProcessOutput(bool isProcessOutput)
+void FileTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 {
-  this->TextDocument::setIsProcessOutput(isProcessOutput);
+  this->TextDocument::setDocumentProcessStatus(status);
 
-  if (isProcessOutput) {
+  if (this->isProcessOutput()) {
     this->m_highlightTrailingWhitespace = false;
   }
 }

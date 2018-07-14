@@ -659,7 +659,7 @@ void EditorWindow::fileLaunchCommand()
   }
 
   FileTextDocument *fileDoc =
-    m_globalState->runLaunchCommandDialog(toQString(dir), dialog->m_text);
+    m_globalState->launchCommand(toQString(dir), dialog->m_text);
   this->setDocumentFile(fileDoc);
 }
 

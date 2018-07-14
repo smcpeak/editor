@@ -1908,8 +1908,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noex
   TRACE("observe", "observeInsertLine line=" << line);
   INITIATING_DOCUMENT_CHANGE();
 
-  if (m_editor->isProcessOutput()) {
+  if (m_editor->documentProcessStatus() == DPS_RUNNING) {
     // Just track the end of the document.
+    //
+    // TODO: I want a "soft" tracking here, where I track until the user
+    // moves the cursor away, and then resume tracking if the user moves
+    // the cursor back to the end.
     m_editor->setCursor(m_editor->endCoord());
     m_editor->scrollToCursor();
     this->redraw();
