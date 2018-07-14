@@ -24,7 +24,7 @@ public:      // data
   // The document to receive the data.  Although initially it must be
   // non-NULL, it can later be set to NULL in order to discard any
   // extra output while the underlying process is killed.
-  RCSerf<NamedTextDocument> m_fileDoc;
+  RCSerf<NamedTextDocument> m_namedDoc;
 
   // The child process producing it.
   CommandRunner m_commandRunner;

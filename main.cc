@@ -264,7 +264,7 @@ ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 {
   FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
     ProcessWatcher *watcher = iter.data();
-    if (watcher->m_fileDoc == fileDoc) {
+    if (watcher->m_namedDoc == fileDoc) {
       return watcher;
     }
   }
@@ -282,7 +282,7 @@ void GlobalState::namedTextDocumentRemoved(
     // document so it can go away safely, and start killing the
     // process.
     TRACE("process", "killing: " << watcher);
-    watcher->m_fileDoc = NULL;
+    watcher->m_namedDoc = NULL;
     watcher->m_commandRunner.killProcess();
   }
 }
