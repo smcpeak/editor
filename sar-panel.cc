@@ -17,6 +17,7 @@
 #include <QComboBox>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPainter>
 #include <QToolButton>
@@ -118,6 +119,7 @@ void SearchAndReplacePanel::setFocusFindBox()
 {
   TRACE("sar", "focus on to Find box");
   m_findBox->setFocus();
+  m_findBox->lineEdit()->selectAll();
 
   this->updateEditorHitText(false /*scroll*/);
 }

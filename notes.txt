@@ -35,7 +35,6 @@ TODOs:
       a name like "a/Makefile" in "git diff" output
   - search and replace
     - command to jump to next/prev match w/o going back into panel
-    - highlight Find text on Ctrl+S so I can just start typing to replace
     - unclear when Ctrl+R will replace versus jump
     - issues when cursor is sitting on a match but it isn't highlighted
     - allow F2? Ctrl+O? Ctrl+I?
