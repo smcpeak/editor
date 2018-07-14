@@ -154,7 +154,11 @@ QString CommandRunner::killProcess()
     return "Process is not running.";
   }
 
+  // Remember that we tried to kill already.
   m_killedProcess = true;
+
+  // There is unfortunately no way to get any OS errors from this call.
+  // That is a limitation of QProcess.
   m_process.kill();
 
   TRACE_CR("killProcess: waitForFinished");
