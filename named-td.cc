@@ -7,6 +7,7 @@
 #include "macros.h"                    // CMEMB
 #include "nonport.h"                   // getFileModificationTime
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
+#include "sm-file-util.h"              // SMFileUtil
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -28,6 +29,7 @@ NamedTextDocument::NamedTextDocument()
     m_hotkeyDigit(0),
     m_name(),
     m_hasFilename(false),
+    m_directory(),
     m_lastFileTimestamp(0),
     m_title(),
     m_windowMenuId(s_nextWindowMenuId++),
@@ -63,17 +65,29 @@ string NamedTextDocument::filename() const
 }
 
 
+void NamedTextDocument::setDirectory(string const &dir)
+{
+  m_directory = SMFileUtil().ensureEndsWithDirectorySeparator(dir);
+}
+
+
 void NamedTextDocument::setFilename(string const &filename)
 {
   m_name = filename;
   m_hasFilename = true;
+
+  string dir, base;
+  SMFileUtil().splitPath(dir, base, filename);
+  this->setDirectory(dir);
 }
 
 
-void NamedTextDocument::setNonFileName(string const &name)
+void NamedTextDocument::setNonFileName(string const &name, string const &dir)
 {
   m_name = name;
   m_hasFilename = false;
+
+  this->setDirectory(dir);
 }
 
 

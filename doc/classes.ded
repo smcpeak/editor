@@ -26,7 +26,7 @@
       }
     },
     {
-      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\n[TODO: m_directory: string]\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
+      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\nm_directory: string\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
       "loc": {
         "x": 720,
         "y": 295

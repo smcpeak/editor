@@ -87,7 +87,7 @@ private:     // funcs
 
   // Start the file chooser.  Return an empty string if it is canceled,
   // otherwise the chosen file name.
-  string fileChooseDialog(string const &initialName, bool saveAs);
+  string fileChooseDialog(string const &dir, bool saveAs);
 
   void rebuildWindowMenu();
   void complain(char const *msg);

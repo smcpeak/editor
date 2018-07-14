@@ -5,6 +5,7 @@
 
 // smbase
 #include "macros.h"                    // Restorer
+#include "sm-file-util.h"              // SMFileUtil
 #include "stringset.h"                 // StringSet
 #include "strtokp.h"                   // StrtokParse
 #include "strutil.h"                   // dirname
@@ -30,7 +31,7 @@ NamedTextDocumentList::NamedTextDocumentList()
     m_iteratingOverObservers(false),
     m_documents()
 {
-  this->createUntitledDocument();
+  this->createUntitledDocument(SMFileUtil().currentDirectory());
   SELF_CHECK();
 }
 
@@ -151,7 +152,7 @@ void NamedTextDocumentList::removeDocument(NamedTextDocument *file)
 
   if (this->numDocuments() == 1) {
     // Ensure we will not end up with an empty list.
-    this->createUntitledDocument();
+    this->createUntitledDocument(SMFileUtil().currentDirectory());
   }
 
   int index = this->getDocumentIndex(file);
@@ -180,18 +181,19 @@ void NamedTextDocumentList::moveDocument(NamedTextDocument *file, int newIndex)
 }
 
 
-NamedTextDocument *NamedTextDocumentList::createUntitledDocument()
+NamedTextDocument *NamedTextDocumentList::createUntitledDocument(
+  string const &dir)
 {
   // TODO: Rewrite this code slightly to delay creating the document
   // object until the name has been computed, just to be a bit cleaner.
   NamedTextDocument *file = new NamedTextDocument();
 
   // Come up with a unique "untitled" name.
-  file->setNonFileName("untitled.txt");
+  file->setNonFileName("untitled.txt", dir);
   int n = 1;
   while (this->findDocumentByName(file->name())) {
     n++;
-    file->setNonFileName(stringb("untitled" << n << ".txt"));
+    file->setNonFileName(stringb("untitled" << n << ".txt"), dir);
   }
 
   TRACE("named-td-list", "createUntitledFile: " << file->name());

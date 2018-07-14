@@ -126,22 +126,9 @@ EditorWindow *GlobalState::createNewWindow(NamedTextDocument *initFile)
 }
 
 
-NamedTextDocument *GlobalState::createNewFile()
+NamedTextDocument *GlobalState::createNewFile(string const &dir)
 {
-  TRACE("untitled", "creating untitled file");
-  NamedTextDocument *b = new NamedTextDocument();
-
-  // Come up with a unique "untitled" name.
-  b->setNonFileName("untitled.txt");
-  int n = 1;
-  while (this->hasFileWithName(b->name())) {
-    n++;
-    b->setNonFileName(stringb("untitled" << n << ".txt"));
-  }
-
-  b->m_title = b->name();
-  trackNewDocumentFile(b);
-  return b;
+  return m_documentList.createUntitledDocument(dir);
 }
 
 
@@ -207,7 +194,7 @@ NamedTextDocument *GlobalState::getNewCommandOutputDocument(
       // Nothing with this name, let's use it to make a new one.
       TRACE("process", "making new document: " << name);
       NamedTextDocument *newDoc = new NamedTextDocument();
-      newDoc->setNonFileName(name);
+      newDoc->setNonFileName(name, toString(dir));
       newDoc->m_title = name;
       trackNewDocumentFile(newDoc);
       return newDoc;

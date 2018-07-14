@@ -56,6 +56,14 @@ private:     // data
   // When true, 'm_name' is the name of a file on disk.
   bool m_hasFilename;
 
+  // Directory associated with this document.  For a file, this is the
+  // directory containing the file.  For process output, it is the
+  // working directory of the process.  For others, it's somewhat
+  // arbitrary, with the working directory of the editor itself acting
+  // as the final fallback.  It must always end with a path separator
+  // character.
+  string m_directory;
+
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
@@ -91,8 +99,17 @@ public:      // data
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
 
+private:     // funcs
+  void setDirectory(string const &dir);
+
 public:      // funcs
+  // Create an anonymous document.  The caller must call either
+  // 'setFilename' or 'setNonFileName' before adding it to a document
+  // list.
+  //
+  // TODO: Should I force those to be passed to the constructor?
   NamedTextDocument();
+
   ~NamedTextDocument();
 
   // Perform additional actions when setting process status.
@@ -110,12 +127,16 @@ public:      // funcs
 
   // Set 'm_name' to be 'filename', and 'm_hasFilename' to true.  It is
   // the caller's responsibility to ensure uniqueness within the
-  // containing NamedTextDocumentList.
+  // containing NamedTextDocumentList.  This also sets 'm_directory' to
+  // the directory of the file.
   void setFilename(string const &filename);
 
   // Set 'm_name' to 'name' and 'm_hasFilename' to false.  The name
-  // still has to be unique.
-  void setNonFileName(string const &name);
+  // still has to be unique.  Sets 'm_directory' to 'dir'.
+  void setNonFileName(string const &name, string const &dir);
+
+  // Get the directory associated with the document.
+  string directory() const             { return m_directory; }
 
   // ---------------------------- hotkeys ---------------------------
   // Return true if this buffer has an assigned hotkey.

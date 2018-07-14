@@ -4,6 +4,7 @@
 #include "named-td-list.h"             // module to test
 
 // smbase
+#include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname
 #include "test.h"                      // USUAL_TEST_MAIN
 
@@ -105,6 +106,12 @@ static NamedTextDocument *add(NamedTextDocumentList &dlist, string name)
 }
 
 
+static NamedTextDocument *createUntitled(NamedTextDocumentList &dlist)
+{
+  return dlist.createUntitledDocument(SMFileUtil().currentDirectory());
+}
+
+
 // Just some simple things to get started.
 static void testSimple()
 {
@@ -123,7 +130,7 @@ static void testSimple()
 
   observer.expectEmpty();
 
-  NamedTextDocument *file1 = dlist.createUntitledDocument();
+  NamedTextDocument *file1 = createUntitled(dlist);
   xassert(!file1->hasFilename());
   xassert(dlist.numDocuments() == 2);
   xassert(dlist.getDocumentIndex(file1) == 1);
@@ -265,11 +272,11 @@ static void testCreateUntitled()
 
   NamedTextDocument *file0 = dlist.getDocumentAt(0);
 
-  NamedTextDocument *file1 = dlist.createUntitledDocument();
+  NamedTextDocument *file1 = createUntitled(dlist);
   observer.expectOnly(NF_ADDED, file1);
   xassert(file1->name() == "untitled2.txt");
 
-  NamedTextDocument *file2 = dlist.createUntitledDocument();
+  NamedTextDocument *file2 = createUntitled(dlist);
   observer.expectOnly(NF_ADDED, file2);
   xassert(file2->name() == "untitled3.txt");
 
@@ -318,7 +325,7 @@ static void testExhaustHotkeys()
   dlist.addObserver(&observer);
 
   for (int i=0; i<10; i++) {
-    NamedTextDocument *file = dlist.createUntitledDocument();
+    NamedTextDocument *file = createUntitled(dlist);
     observer.expectOnly(NF_ADDED, file);
   }
 
@@ -341,7 +348,7 @@ static void testExhaustHotkeys()
 
   // Check 'removeObserver' incidentally.
   dlist.removeObserver(&observer);
-  dlist.createUntitledDocument();
+  createUntitled(dlist);
   observer.expectEmpty();
 }
 
@@ -353,7 +360,7 @@ static void testDuplicateHotkeys()
   NamedTextDocumentList dlist;
 
   NamedTextDocument *file0 = dlist.getDocumentAt(0);
-  NamedTextDocument *file1 = dlist.createUntitledDocument();
+  NamedTextDocument *file1 = createUntitled(dlist);
 
   xassert(file0->hasHotkey());
   xassert(file1->hasHotkey());

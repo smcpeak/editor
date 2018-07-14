@@ -366,14 +366,7 @@ string EditorWidget::getDocumentDirectory() const
 {
   SMFileUtil sfu;
   NamedTextDocument *doc = this->getDocumentFile();
-  if (!doc->hasFilename()) {
-    return sfu.normalizePathSeparators(sfu.currentDirectory());
-  }
-  else {
-    // sfu.splitPathDir leaves the final slash, which is messing up my
-    // logic elsewhere.
-    return dirname(doc->filename());
-  }
+  return doc->directory();
 }
 
 
@@ -392,8 +385,7 @@ void EditorWidget::openFileAtCursor()
 
   if (!fileAndLine.hasFilename()) {
     // Prompt with the document directory.
-    fileAndLine.m_filename =
-      stringb(this->getDocumentDirectory() << '/');
+    fileAndLine.m_filename = this->getDocumentDirectory();
   }
 
   // Prompt the user with the filename to allow confirmation and

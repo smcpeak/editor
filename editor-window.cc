@@ -307,7 +307,8 @@ NamedTextDocument *EditorWindow::currentDocument()
 
 void EditorWindow::fileNewFile()
 {
-  NamedTextDocument *b = m_globalState->createNewFile();
+  NamedTextDocument *b = m_globalState->createNewFile(
+    m_editorWidget->getDocumentDirectory());
   setDocumentFile(b);
 }
 
@@ -351,10 +352,9 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 }
 
 
-string EditorWindow::fileChooseDialog(string const &initialName, bool saveAs)
+string EditorWindow::fileChooseDialog(string const &origDir, bool saveAs)
 {
-  // Start in the directory containing the file currently shown.
-  string dir = dirname(initialName);
+  string dir(origDir);
   TRACE("fileOpen", "saveAs=" << saveAs << " dir: " << dir);
   if (dir == ".") {
     // If I pass "." to one of the static members of QFileDialog, it
@@ -422,7 +422,7 @@ string EditorWindow::fileChooseDialog(string const &initialName, bool saveAs)
 void EditorWindow::fileOpen()
 {
   string name =
-    this->fileChooseDialog(m_editorWidget->getDocumentFile()->name(),
+    this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
                            false /*saveAs*/);
   if (name.isempty()) {
     return;
@@ -547,13 +547,13 @@ void EditorWindow::fileSaveAs()
 {
   NamedTextDocument *fileDoc = currentDocument();
 
-  // TODO: This isn't right for documents that do not have file names.
-  // I'm just trusting the dialog to disregard the invalid filenames.
-  string chosenFilename = fileDoc->name();
+  // Directory to start in.  This may change if we prompt the user
+  // more than once.
+  string dir = fileDoc->directory();
 
   while (true) {
-    chosenFilename =
-      this->fileChooseDialog(chosenFilename, true /*saveAs*/);
+    string chosenFilename =
+      this->fileChooseDialog(dir, true /*saveAs*/);
     if (chosenFilename.isempty()) {
       return;
     }
@@ -563,6 +563,7 @@ void EditorWindow::fileSaveAs()
 
     if (fileDoc->hasFilename() &&
         fileDoc->filename() == chosenFilename) {
+      // User chose to save using the same file name.
       this->fileSave();
       return;
     }
@@ -572,20 +573,27 @@ void EditorWindow::fileSaveAs()
         "There is already an open file with name \"" <<
         chosenFilename <<
         "\".  Choose a different name to save as."));
+
+      // Discard name portion, but keep directory.
+      dir = SMFileUtil().splitPathDir(chosenFilename);
+
+      // Now prompt again.
     }
     else {
-      break;
+      fileDoc->setFilename(chosenFilename);
+      fileDoc->m_title = this->m_globalState->uniqueTitleFor(chosenFilename);
+      writeTheFile();
+      this->useDefaultHighlighter(fileDoc);
+
+      // Notify observers of the file name and highlighter change.  This
+      // includes myself.
+      this->m_globalState->m_documentList.notifyAttributeChanged(fileDoc);
+
+      return;
     }
   }
 
-  fileDoc->setFilename(chosenFilename);
-  fileDoc->m_title = this->m_globalState->uniqueTitleFor(chosenFilename);
-  writeTheFile();
-  this->useDefaultHighlighter(fileDoc);
-
-  // Notify observers of the file name and highlighter change.  This
-  // includes myself.
-  this->m_globalState->m_documentList.notifyAttributeChanged(fileDoc);
+  // Never reached.
 }
 
 

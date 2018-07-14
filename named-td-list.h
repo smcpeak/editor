@@ -112,7 +112,7 @@ public:      // funcs
   // Create a new untitled document and add it the end of the list.  It
   // will have a name like "untitled.txt" or "untitled$N.txt" such that
   // it is unique, and its 'hasFilename()' will be false.
-  NamedTextDocument *createUntitledDocument();
+  NamedTextDocument *createUntitledDocument(string const &dir);
 
   // Find and return the document with the given name, else NULL.
   NamedTextDocument       *findDocumentByName (string const &name);

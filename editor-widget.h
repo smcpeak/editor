@@ -340,7 +340,7 @@ public:      // funcs
   // Get what the user thinks of as the "current directory" for this
   // widget.  Normally that is the directory containing the current
   // document, although under some circumstances the process working
-  // directory may be used.
+  // directory may be used.  This contains a final path separator.
   string getDocumentDirectory() const;
 
   // Editor associated with current file and this particular widget.

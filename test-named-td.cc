@@ -3,7 +3,9 @@
 
 #include "named-td.h"                  // module to test
 
+// smbase
 #include "nonport.h"                   // fileOrDirectoryExists, removeFile
+#include "sm-file-util.h"              // SMFileUtil
 #include "test.h"                      // USUAL_MAIN
 
 #include <fstream>                     // ofstream
@@ -14,7 +16,7 @@ using std::ofstream;
 static void testWhenUntitledExists()
 {
   NamedTextDocument file;
-  file.setNonFileName("untitled.txt");
+  file.setNonFileName("untitled.txt", SMFileUtil().currentDirectory());
 
   // Create a file with that name.
   bool created = false;

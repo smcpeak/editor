@@ -85,7 +85,7 @@ public:       // funcs
 
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
-  NamedTextDocument *createNewFile();
+  NamedTextDocument *createNewFile(string const &dir);
 
   // Return true if any file document has the given file name.
   bool hasFileWithName(string const &fname) const;
