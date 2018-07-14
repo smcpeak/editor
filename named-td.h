@@ -1,8 +1,8 @@
 // named-td.h
 // NamedTextDocument class.
 
-#ifndef FILE_TD_H
-#define FILE_TD_H
+#ifndef NAMED_TD_H
+#define NAMED_TD_H
 
 #include "hilite.h"                    // Highlighter
 #include "td.h"                        // TextDocument
@@ -162,4 +162,4 @@ public:      // funcs
   void refreshModificationTime();
 };
 
-#endif // FILE_TD_H
+#endif // NAMED_TD_H

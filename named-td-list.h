@@ -1,8 +1,8 @@
 // named-td-list.h
 // Declaration of NamedTextDocumentList class.
 
-#ifndef FILE_TD_LIST_H
-#define FILE_TD_LIST_H
+#ifndef NAMED_TD_LIST_H
+#define NAMED_TD_LIST_H
 
 // editor
 #include "named-td.h"                  // NamedTextDocument
@@ -262,4 +262,4 @@ struct NamedTextDocumentInitialView {
 };
 
 
-#endif // FILE_TD_LIST_H
+#endif // NAMED_TD_LIST_H
