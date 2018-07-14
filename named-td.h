@@ -23,7 +23,7 @@
 //
 // This class further associates that binding with several ways of
 // naming it from within the editor application: the hotkey, the window
-// menu id, and the file title.
+// menu id, and the document title.
 //
 // Finally, it contains an interpretation of the document's meaning in
 // the form of a syntax highlighter.
@@ -60,9 +60,9 @@ public:      // data
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
   //
-  // This is 0 for an untitled file or a file that does not yet exist,
+  // This is 0 for an untitled document or a file that does not yet exist,
   // although there is never a reason to explicitly check for that
-  // since we have 'isUntitled' for the former, and for the latter, we
+  // since we have 'hasFilename' for the former, and for the latter, we
   // always try to stat() the file before comparing its timestamp.
   int64_t m_lastFileTimestamp;
 
@@ -141,11 +141,11 @@ public:      // funcs
   // left unmodified.
   void readFile();
 
-  // Write to 'filename'.  Requires '!isUntitled'.  Updates the disk
+  // Write to 'filename()'.  Requires 'hasFilename()'.  Updates the disk
   // modification time.  May throw.
   void writeFile();
 
-  // Get the modification time of b->filename without consulting
+  // Get the modification time of filename() without consulting
   // or modifying 'lastFileTimestamp'.  Return false if it cannot
   // be obtained.
   bool getDiskModificationTime(int64_t &modTime) const;
@@ -154,7 +154,7 @@ public:      // funcs
   // if they are different, meaning some on-disk change has happened
   // since we last interacted with it.
   //
-  // If 'isUntitled', then this always returns false, since in that
+  // If '!hasFilename()', then this always returns false, since in that
   // case we are not really associated with any on-disk file.
   bool hasStaleModificationTime() const;
 

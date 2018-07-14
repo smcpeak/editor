@@ -40,20 +40,21 @@ private:     // data
   // it cannot be changed.
   bool m_iteratingOverObservers;
 
-  // The list of open files.  We maintain the invariant that there is
-  // always at least one file, which might be an untitled placeholder.
+  // The list of open documents.  We maintain the invariant that there
+  // is always at least one document, which might be an untitled
+  // placeholder.
   //
   // Additionally, the entries have the following requirements:
   //
-  // * Every 'filename' must be non-empty and unique.  A client must
+  // * Every 'm_name' must be non-empty and unique.  A client must
   //   verify that 'findFileByName(n)==NULL' before changing the
-  //   filename to 'n'.
+  //   name to 'n'.
   //
   // * Every 'title' must be non-empty and unique.  Use
   //   'findFileByTitle' to check, or 'computeUniqueTitle' to generate
   //   a unique title.
   //
-  // * Every 'hotkeyDigit' must be unique among those files for which
+  // * Every 'hotkeyDigit' must be unique among those documents for which
   //   'hasHotkeyDigit' is true.  Use 'findFileByHotkey' to check, or
   //   'computeUniqueHotkey' to generate a unique hotkey.
   //
@@ -63,7 +64,7 @@ private:     // data
   ObjArrayStack<NamedTextDocument> m_documents;
 
 public:      // funcs
-  // Initially there is one untitled file.
+  // Initially there is one untitled document.
   NamedTextDocumentList();
 
   // The destructor does *not* notify observers.
@@ -72,7 +73,7 @@ public:      // funcs
   // Check that invariants hold.  Throw assertion exception if not.
   void selfCheck() const;
 
-  // ------------ fileDocuments: basic list operations --------------
+  // -------------- documents: basic list operations ----------------
   // Get the number of files in the list.  Always at least 1.
   int numFiles() const;
 
@@ -107,7 +108,7 @@ public:      // funcs
   // be in [0,numFiles()-1].
   void moveFile(NamedTextDocument *file, int newIndex);
 
-  // --------------- fileDocuments: other operations ----------------
+  // ----------------- documents: other operations ------------------
   // Create a new untitled file and add it the end of the list.  It
   // will have a name like "untitled.txt" or "untitled$N.txt" such that
   // it is unique, and its 'isUntitled' field will be true.
