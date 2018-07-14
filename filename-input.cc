@@ -106,7 +106,7 @@ void FilenameInputDialog::setFilenameLabel()
   string filename = toString(m_filenameEdit->text());
 
   xassert(m_docList);
-  if (m_docList->findFileByNameC(filename)) {
+  if (m_docList->findDocumentByNameC(filename)) {
     m_filenameLabel->setText("File already open, will switch to:");
     return;
   }

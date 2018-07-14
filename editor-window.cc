@@ -420,7 +420,7 @@ void EditorWindow::fileOpenFile(string const &name)
   TRACE("fileOpen", "fileOpenFile: " << name);
 
   // If this file is already open, switch to it.
-  NamedTextDocument *file = m_globalState->m_documentList.findFileByName(name);
+  NamedTextDocument *file = m_globalState->m_documentList.findDocumentByName(name);
   if (file) {
     this->setDocumentFile(file);
     return;
@@ -449,7 +449,7 @@ void EditorWindow::fileOpenFile(string const &name)
 
   // is there an untitled, empty file hanging around?
   RCSerf<NamedTextDocument> untitled =
-    this->m_globalState->m_documentList.findUntitledUnmodifiedFile();
+    this->m_globalState->m_documentList.findUntitledUnmodifiedDocument();
   if (untitled) {
     // I'm going to remove it, but can't yet b/c I
     // need to wait until the new file is added;
@@ -642,8 +642,8 @@ void EditorWindow::fileReloadAll()
     return;
   }
 
-  for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
-    NamedTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
+  for (int i=0; i < this->m_globalState->m_documentList.numDocuments(); i++) {
+    NamedTextDocument *file = this->m_globalState->m_documentList.getDocumentAt(i);
     if (!this->reloadFile(file)) {
       // Stop after first error.
       break;
@@ -690,8 +690,8 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
   int ct = 0;
 
   msg << "The following documents have unsaved changes:\n\n";
-  for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
-    NamedTextDocument *file = this->m_globalState->m_documentList.getFileAt(i);
+  for (int i=0; i < this->m_globalState->m_documentList.numDocuments(); i++) {
+    NamedTextDocument *file = this->m_globalState->m_documentList.getDocumentAt(i);
     if (file->unsavedChanges()) {
       ct++;
       msg << " * " << file->name() << '\n';
@@ -734,7 +734,7 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 }
 
 
-void EditorWindow::fileTextDocumentAdded(
+void EditorWindow::namedTextDocumentAdded(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -742,7 +742,7 @@ void EditorWindow::fileTextDocumentAdded(
   GENERIC_CATCH_END
 }
 
-void EditorWindow::fileTextDocumentRemoved(
+void EditorWindow::namedTextDocumentRemoved(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -762,7 +762,7 @@ void EditorWindow::fileTextDocumentRemoved(
   GENERIC_CATCH_END
 }
 
-void EditorWindow::fileTextDocumentAttributeChanged(
+void EditorWindow::namedTextDocumentAttributeChanged(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -778,7 +778,7 @@ void EditorWindow::fileTextDocumentAttributeChanged(
   GENERIC_CATCH_END
 }
 
-void EditorWindow::fileTextDocumentListOrderChanged(
+void EditorWindow::namedTextDocumentListOrderChanged(
   NamedTextDocumentList *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -1229,8 +1229,8 @@ void EditorWindow::rebuildWindowMenu()
 
   // add new items for all of the open files;
   // hotkeys have already been assigned by now
-  for (int i=0; i < this->m_globalState->m_documentList.numFiles(); i++) {
-    NamedTextDocument *b = this->m_globalState->m_documentList.getFileAt(i);
+  for (int i=0; i < this->m_globalState->m_documentList.numDocuments(); i++) {
+    NamedTextDocument *b = this->m_globalState->m_documentList.getDocumentAt(i);
 
     QKeySequence keySequence;
     if (b->hasHotkey()) {
@@ -1260,7 +1260,7 @@ void EditorWindow::windowFileChoiceActivated(QAction *action)
   // that this action refers to.
   int windowMenuId = action->data().toInt();
   NamedTextDocument *file =
-    this->m_globalState->m_documentList.findFileByWindowMenuId(windowMenuId);
+    this->m_globalState->m_documentList.findDocumentByWindowMenuId(windowMenuId);
   if (file) {
     TRACE("menu", "window file choice is: " << file->name());
     this->setDocumentFile(file);

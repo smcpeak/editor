@@ -129,13 +129,13 @@ public:      // funcs
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
 
   // NamedTextDocumentListObserver methods.
-  virtual void fileTextDocumentAdded(
+  virtual void namedTextDocumentAdded(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
-  virtual void fileTextDocumentRemoved(
+  virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
-  virtual void fileTextDocumentAttributeChanged(
+  virtual void namedTextDocumentAttributeChanged(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
-  virtual void fileTextDocumentListOrderChanged(
+  virtual void namedTextDocumentListOrderChanged(
     NamedTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
 public Q_SLOTS:

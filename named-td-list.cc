@@ -30,7 +30,7 @@ NamedTextDocumentList::NamedTextDocumentList()
     m_iteratingOverObservers(false),
     m_documents()
 {
-  this->createUntitledFile();
+  this->createUntitledDocument();
   SELF_CHECK();
 }
 
@@ -84,48 +84,48 @@ void NamedTextDocumentList::selfCheck() const
 }
 
 
-int NamedTextDocumentList::numFiles() const
+int NamedTextDocumentList::numDocuments() const
 {
   return m_documents.length();
 }
 
 
-NamedTextDocument *NamedTextDocumentList::getFileAt(int index)
+NamedTextDocument *NamedTextDocumentList::getDocumentAt(int index)
 {
-  return const_cast<NamedTextDocument*>(this->getFileAtC(index));
+  return const_cast<NamedTextDocument*>(this->getDocumentAtC(index));
 }
 
-NamedTextDocument const *NamedTextDocumentList::getFileAtC(int index) const
+NamedTextDocument const *NamedTextDocumentList::getDocumentAtC(int index) const
 {
   return m_documents[index];
 }
 
 
-bool NamedTextDocumentList::hasFile(NamedTextDocument const *file) const
+bool NamedTextDocumentList::hasDocument(NamedTextDocument const *file) const
 {
-  return getFileIndex(file) >= 0;
+  return getDocumentIndex(file) >= 0;
 }
 
 
-int NamedTextDocumentList::getFileIndex(NamedTextDocument const *file) const
+int NamedTextDocumentList::getDocumentIndex(NamedTextDocument const *file) const
 {
   return m_documents.indexOf(file);
 }
 
 
-void NamedTextDocumentList::addFile(NamedTextDocument *file)
+void NamedTextDocumentList::addDocument(NamedTextDocument *file)
 {
   TRACE("named-td-list", "addFile: " << file->name());
-  xassert(!this->hasFile(file));
+  xassert(!this->hasDocument(file));
 
   // Assign title if necessary.
-  if (file->m_title.isempty() || this->findFileByTitle(file->m_title)) {
+  if (file->m_title.isempty() || this->findDocumentByTitle(file->m_title)) {
     file->m_title = this->computeUniqueTitle(file->name());
   }
 
   // Assign hotkey if necessary.
   if (!file->hasHotkey() ||
-      this->findFileByHotkey(file->getHotkeyDigit()) != NULL) {
+      this->findDocumentByHotkey(file->getHotkeyDigit()) != NULL) {
     int digit;
     if (this->computeUniqueHotkey(digit)) {
       file->setHotkeyDigit(digit);
@@ -142,19 +142,19 @@ void NamedTextDocumentList::addFile(NamedTextDocument *file)
 }
 
 
-void NamedTextDocumentList::removeFile(NamedTextDocument *file)
+void NamedTextDocumentList::removeDocument(NamedTextDocument *file)
 {
   TRACE("named-td-list", "removeFile: " << file->name());
 
   // If we make an untitled file, allow it to take the same hotkey.
   file->clearHotkey();
 
-  if (this->numFiles() == 1) {
+  if (this->numDocuments() == 1) {
     // Ensure we will not end up with an empty list.
-    this->createUntitledFile();
+    this->createUntitledDocument();
   }
 
-  int index = this->getFileIndex(file);
+  int index = this->getDocumentIndex(file);
   NamedTextDocument *f = m_documents.removeIntermediate(index);
   xassert(f == file);
   SELF_CHECK();
@@ -165,12 +165,12 @@ void NamedTextDocumentList::removeFile(NamedTextDocument *file)
 }
 
 
-void NamedTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
+void NamedTextDocumentList::moveDocument(NamedTextDocument *file, int newIndex)
 {
   TRACE("named-td-list", "moveFile to " << newIndex <<
                         ": " << file->name());
 
-  int oldIndex = this->getFileIndex(file);
+  int oldIndex = this->getDocumentIndex(file);
   xassert(oldIndex >= 0);
 
   m_documents.moveElement(oldIndex, newIndex);
@@ -180,7 +180,7 @@ void NamedTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
 }
 
 
-NamedTextDocument *NamedTextDocumentList::createUntitledFile()
+NamedTextDocument *NamedTextDocumentList::createUntitledDocument()
 {
   // TODO: Rewrite this code slightly to delay creating the document
   // object until the name has been computed, just to be a bit cleaner.
@@ -189,7 +189,7 @@ NamedTextDocument *NamedTextDocumentList::createUntitledFile()
   // Come up with a unique "untitled" name.
   file->setNonFileName("untitled.txt");
   int n = 1;
-  while (this->findFileByName(file->name())) {
+  while (this->findDocumentByName(file->name())) {
     n++;
     file->setNonFileName(stringb("untitled" << n << ".txt"));
   }
@@ -197,17 +197,17 @@ NamedTextDocument *NamedTextDocumentList::createUntitledFile()
   TRACE("named-td-list", "createUntitledFile: " << file->name());
   file->m_title = file->name();
 
-  this->addFile(file);
+  this->addDocument(file);
   return file;
 }
 
 
-NamedTextDocument *NamedTextDocumentList::findFileByName(string const &filename)
+NamedTextDocument *NamedTextDocumentList::findDocumentByName(string const &filename)
 {
-  return const_cast<NamedTextDocument*>(this->findFileByNameC(filename));
+  return const_cast<NamedTextDocument*>(this->findDocumentByNameC(filename));
 }
 
-NamedTextDocument const *NamedTextDocumentList::findFileByNameC(
+NamedTextDocument const *NamedTextDocumentList::findDocumentByNameC(
   string const &name) const
 {
   for (int i=0; i < m_documents.length(); i++) {
@@ -219,12 +219,12 @@ NamedTextDocument const *NamedTextDocumentList::findFileByNameC(
 }
 
 
-NamedTextDocument *NamedTextDocumentList::findFileByTitle(string const &title)
+NamedTextDocument *NamedTextDocumentList::findDocumentByTitle(string const &title)
 {
-  return const_cast<NamedTextDocument*>(this->findFileByTitleC(title));
+  return const_cast<NamedTextDocument*>(this->findDocumentByTitleC(title));
 }
 
-NamedTextDocument const *NamedTextDocumentList::findFileByTitleC(
+NamedTextDocument const *NamedTextDocumentList::findDocumentByTitleC(
   string const &title) const
 {
   for (int i=0; i < m_documents.length(); i++) {
@@ -236,12 +236,12 @@ NamedTextDocument const *NamedTextDocumentList::findFileByTitleC(
 }
 
 
-NamedTextDocument *NamedTextDocumentList::findFileByHotkey(int hotkeyDigit)
+NamedTextDocument *NamedTextDocumentList::findDocumentByHotkey(int hotkeyDigit)
 {
-  return const_cast<NamedTextDocument*>(this->findFileByHotkeyC(hotkeyDigit));
+  return const_cast<NamedTextDocument*>(this->findDocumentByHotkeyC(hotkeyDigit));
 }
 
-NamedTextDocument const *NamedTextDocumentList::findFileByHotkeyC(
+NamedTextDocument const *NamedTextDocumentList::findDocumentByHotkeyC(
   int hotkeyDigit) const
 {
   for (int i=0; i < m_documents.length(); i++) {
@@ -254,12 +254,12 @@ NamedTextDocument const *NamedTextDocumentList::findFileByHotkeyC(
 }
 
 
-NamedTextDocument *NamedTextDocumentList::findFileByWindowMenuId (int id)
+NamedTextDocument *NamedTextDocumentList::findDocumentByWindowMenuId (int id)
 {
-  return const_cast<NamedTextDocument*>(this->findFileByWindowMenuIdC(id));
+  return const_cast<NamedTextDocument*>(this->findDocumentByWindowMenuIdC(id));
 }
 
-NamedTextDocument const *NamedTextDocumentList::findFileByWindowMenuIdC(int id) const
+NamedTextDocument const *NamedTextDocumentList::findDocumentByWindowMenuIdC(int id) const
 {
   for (int i=0; i < m_documents.length(); i++) {
     if (m_documents[i]->m_windowMenuId == id) {
@@ -270,12 +270,12 @@ NamedTextDocument const *NamedTextDocumentList::findFileByWindowMenuIdC(int id) 
 }
 
 
-NamedTextDocument *NamedTextDocumentList::findUntitledUnmodifiedFile()
+NamedTextDocument *NamedTextDocumentList::findUntitledUnmodifiedDocument()
 {
-  return const_cast<NamedTextDocument*>(this->findUntitledUnmodifiedFileC());
+  return const_cast<NamedTextDocument*>(this->findUntitledUnmodifiedDocumentC());
 }
 
-NamedTextDocument const *NamedTextDocumentList::findUntitledUnmodifiedFileC() const
+NamedTextDocument const *NamedTextDocumentList::findUntitledUnmodifiedDocumentC() const
 {
   for (int i=0; i < m_documents.length(); i++) {
     NamedTextDocument const *file = m_documents[i];
@@ -312,7 +312,7 @@ string NamedTextDocumentList::computeUniqueTitle(string filename) const
     }
 
     // Check for another file with this title.
-    if (!this->findFileByTitleC(sb)) {
+    if (!this->findDocumentByTitleC(sb)) {
       TRACE("named-td-list", "computed title with " << n <<
                             " components: " << sb);
       return sb;
@@ -324,7 +324,7 @@ string NamedTextDocumentList::computeUniqueTitle(string filename) const
   int n=2;
   while (n < 2000000000) {     // Prevent theoretical infinite loop.
     string s = stringb(filename << ':' << n);
-    if (!this->findFileByNameC(s)) {
+    if (!this->findDocumentByNameC(s)) {
       TRACE("named-td-list", "computed title by appending " << n <<
                             ": " << s);
       return s;
@@ -361,7 +361,7 @@ bool NamedTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
     // of the digit keys on the keyboard.
     digit = (i==10? 0 : i);
 
-    if (!this->findFileByHotkeyC(digit)) {
+    if (!this->findDocumentByHotkeyC(digit)) {
       TRACE("named-td-list", "computeUniqueHotkey: returning " << digit);
       return true;
     }
@@ -438,7 +438,7 @@ void NamedTextDocumentList::notifyAdded(NamedTextDocument *file_)
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
-    iter.data()->fileTextDocumentAdded(this, file);
+    iter.data()->namedTextDocumentAdded(this, file);
   }
 }
 
@@ -450,7 +450,7 @@ void NamedTextDocumentList::notifyRemoved(NamedTextDocument *file_)
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
-    iter.data()->fileTextDocumentRemoved(this, file);
+    iter.data()->namedTextDocumentRemoved(this, file);
   }
 }
 
@@ -462,7 +462,7 @@ void NamedTextDocumentList::notifyAttributeChanged(NamedTextDocument *file_)
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
-    iter.data()->fileTextDocumentAttributeChanged(this, file);
+    iter.data()->namedTextDocumentAttributeChanged(this, file);
   }
 }
 
@@ -473,7 +473,7 @@ void NamedTextDocumentList::notifyListOrderChanged()
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
-    iter.data()->fileTextDocumentListOrderChanged(this);
+    iter.data()->namedTextDocumentListOrderChanged(this);
   }
 }
 
@@ -488,7 +488,7 @@ bool NamedTextDocumentList::notifyGetInitialView(
 
   Restorer<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
-    if (iter.data()->getFileTextDocumentInitialView(this, file, view)) {
+    if (iter.data()->getNamedTextDocumentInitialView(this, file, view)) {
       TRACE("named-td-list",
         stringb("notifyGetInitialView: found: fv=" << view.firstVisible));
       return true;
@@ -501,23 +501,23 @@ bool NamedTextDocumentList::notifyGetInitialView(
 
 
 // ----------------- NamedTextDocumentListObserver -------------------
-void NamedTextDocumentListObserver::fileTextDocumentAdded(
+void NamedTextDocumentListObserver::namedTextDocumentAdded(
   NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {}
 
-void NamedTextDocumentListObserver::fileTextDocumentRemoved(
+void NamedTextDocumentListObserver::namedTextDocumentRemoved(
   NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {}
 
-void NamedTextDocumentListObserver::fileTextDocumentAttributeChanged(
+void NamedTextDocumentListObserver::namedTextDocumentAttributeChanged(
   NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {}
 
-void NamedTextDocumentListObserver::fileTextDocumentListOrderChanged(
+void NamedTextDocumentListObserver::namedTextDocumentListOrderChanged(
   NamedTextDocumentList *documentList) noexcept
 {}
 
-bool NamedTextDocumentListObserver::getFileTextDocumentInitialView(
+bool NamedTextDocumentListObserver::getNamedTextDocumentInitialView(
   NamedTextDocumentList *documentList, NamedTextDocument *file,
   NamedTextDocumentInitialView /*OUT*/ &view) noexcept
 {

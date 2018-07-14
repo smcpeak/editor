@@ -189,11 +189,11 @@ static char const *documentProcessStatusIndicator(
 void OpenFilesDialog::repopulateTable()
 {
   m_tableWidget->clearContents();
-  m_tableWidget->setRowCount(m_docList->numFiles());
+  m_tableWidget->setRowCount(m_docList->numDocuments());
 
   // Populate the rows.
-  for (int r=0; r < m_docList->numFiles(); r++) {
-    NamedTextDocument const *doc = m_docList->getFileAtC(r);
+  for (int r=0; r < m_docList->numDocuments(); r++) {
+    NamedTextDocument const *doc = m_docList->getDocumentAtC(r);
 
     // Remove the row label.  (The default, a NULL item, renders as a
     // row number, which isn't useful here.)
@@ -242,8 +242,8 @@ NamedTextDocument *OpenFilesDialog::runDialog()
     QModelIndex idx = m_tableWidget->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();
-      if (0 <= r && r < m_docList->numFiles()) {
-        NamedTextDocument *doc = m_docList->getFileAt(r);
+      if (0 <= r && r < m_docList->numDocuments()) {
+        NamedTextDocument *doc = m_docList->getDocumentAt(r);
         TRACE("OpenFilesDialog", "runDialog: returning: " << doc->name());
         return doc;
       }
@@ -289,8 +289,8 @@ void OpenFilesDialog::on_closeSelected() noexcept
 
       if (index.isValid() && !index.parent().isValid()) {
         int r = index.row();
-        if (0 <= r && r < m_docList->numFiles()) {
-          NamedTextDocument *doc = m_docList->getFileAt(r);
+        if (0 <= r && r < m_docList->numDocuments()) {
+          NamedTextDocument *doc = m_docList->getDocumentAt(r);
           TRACE("OpenFilesDialog", "  toClose: " << doc->name());
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
@@ -318,7 +318,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
   for (int i=0; i < docsToClose.length(); i++) {
     NamedTextDocument *doc = docsToClose[i];
     TRACE("OpenFilesDialog", "  removeFile: " << doc->name());
-    m_docList->removeFile(doc);
+    m_docList->removeDocument(doc);
     delete doc;
   }
 

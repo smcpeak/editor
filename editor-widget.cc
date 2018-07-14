@@ -160,12 +160,12 @@ void EditorWidget::selfCheck() const
       foundEditor = true;
     }
     tdfe->selfCheck();
-    xassert(m_documentList->hasFile(tdfe->m_fileDoc));
+    xassert(m_documentList->hasDocument(tdfe->m_fileDoc));
   }
   xassert(foundEditor);
 
   // There should never be more m_editors than fileDocuments.
-  xassert(m_documentList->numFiles() >= m_editorList.count());
+  xassert(m_documentList->numDocuments() >= m_editorList.count());
 
   // Check that 'm_listening' agrees with the document's observer list.
   xassert(m_listening == m_editor->hasObserver(this));
@@ -271,7 +271,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
 
   // Move the chosen file to the top of the document list since it is
   // now the most recently used.
-  m_documentList->moveFile(file, 0);
+  m_documentList->moveDocument(file, 0);
 
   this->startListening();
   this->checkForDiskChanges();
@@ -411,7 +411,7 @@ void EditorWidget::openFileAtCursor()
 }
 
 
-void EditorWidget::fileTextDocumentRemoved(
+void EditorWidget::namedTextDocumentRemoved(
   NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
 {
   GENERIC_CATCH_BEGIN
@@ -420,7 +420,7 @@ void EditorWidget::fileTextDocumentRemoved(
   // Change files if that was the one we were editing.  Do this before
   // destroying any editors.
   if (m_editor->m_fileDoc == file) {
-    this->setDocumentFile(documentList->getFileAt(0));
+    this->setDocumentFile(documentList->getDocumentAt(0));
   }
 
   // Remove 'file' from my list if I have it.
@@ -439,7 +439,7 @@ void EditorWidget::fileTextDocumentRemoved(
 }
 
 
-bool EditorWidget::getFileTextDocumentInitialView(
+bool EditorWidget::getNamedTextDocumentInitialView(
   NamedTextDocumentList *documentList, NamedTextDocument *file,
   NamedTextDocumentInitialView /*OUT*/ &view) noexcept
 {

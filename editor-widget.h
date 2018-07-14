@@ -324,11 +324,11 @@ public:      // funcs
 
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
-  virtual void fileTextDocumentRemoved(
+  virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override;
 
   // Answer a query from the NamedTextDocumentList.
-  virtual bool getFileTextDocumentInitialView(
+  virtual bool getNamedTextDocumentInitialView(
     NamedTextDocumentList *documentList, NamedTextDocument *file,
     NamedTextDocumentInitialView /*OUT*/ &view) noexcept override;
 

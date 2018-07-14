@@ -66,7 +66,7 @@ GlobalState::GlobalState(int argc, char **argv)
 
   // Open the first window, initially showing the default "untitled"
   // file that 'fileDocuments' made in its constructor.
-  EditorWindow *ed = createNewWindow(m_documentList.getFileAt(0));
+  EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
 
   // this caption is immediately replaced with another one, at the
   // moment, since I call fileNewFile() right away
@@ -147,13 +147,13 @@ NamedTextDocument *GlobalState::createNewFile()
 
 bool GlobalState::hasFileWithName(string const &name) const
 {
-  return m_documentList.findFileByNameC(name) != NULL;
+  return m_documentList.findDocumentByNameC(name) != NULL;
 }
 
 
 bool GlobalState::hasFileWithTitle(string const &title) const
 {
-  return m_documentList.findFileByTitleC(title) != NULL;
+  return m_documentList.findDocumentByTitleC(title) != NULL;
 }
 
 
@@ -165,19 +165,19 @@ string GlobalState::uniqueTitleFor(string const &filename)
 
 void GlobalState::trackNewDocumentFile(NamedTextDocument *f)
 {
-  m_documentList.addFile(f);
+  m_documentList.addDocument(f);
 }
 
 
 bool GlobalState::hotkeyAvailable(int key) const
 {
-  return m_documentList.findFileByHotkeyC(key) == NULL;
+  return m_documentList.findDocumentByHotkeyC(key) == NULL;
 }
 
 
 void GlobalState::deleteDocumentFile(NamedTextDocument *file)
 {
-  m_documentList.removeFile(file);
+  m_documentList.removeDocument(file);
   delete file;
 }
 
@@ -202,7 +202,7 @@ NamedTextDocument *GlobalState::getNewCommandOutputDocument(
   for (int n = 1; n < 100; n++) {
     string name = (n==1? base : stringb(base << " (" << n << ')'));
 
-    NamedTextDocument *fileDoc = m_documentList.findFileByName(name);
+    NamedTextDocument *fileDoc = m_documentList.findDocumentByName(name);
     if (!fileDoc) {
       // Nothing with this name, let's use it to make a new one.
       TRACE("process", "making new document: " << name);
@@ -272,7 +272,7 @@ ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 }
 
 
-void GlobalState::fileTextDocumentRemoved(
+void GlobalState::namedTextDocumentRemoved(
   NamedTextDocumentList *documentList,
   NamedTextDocument *fileDoc) NOEXCEPT
 {
