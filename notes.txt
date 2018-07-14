@@ -1,8 +1,5 @@
 
 TODOs:
-  - BUG: If there is selected text in a command output document, and I
-    re-run that command, the entire (?) document ends up selected in the
-    second output.  Should just clear the mark before re-running.
   - move TimerEventLoop from test-command-runner.cc to smqtutil
   - change F3 to do what ctrl+i does when not on a file name
     - leave a menu option to run that dialog though

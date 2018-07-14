@@ -1909,6 +1909,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noex
     // moves the cursor away, and then resume tracking if the user moves
     // the cursor back to the end.
     m_editor->setCursor(m_editor->endCoord());
+    m_editor->clearMark();
     m_editor->scrollToCursor();
     this->redraw();
     return;
