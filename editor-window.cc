@@ -204,6 +204,13 @@ void EditorWindow::buildMenu()
     QMenu *file = this->m_menuBar->addMenu("&File");
     file->addAction("&New", this, SLOT(fileNewFile()));
     file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
+
+    QMenu *openSubmenu = file->addMenu("Open with traditional dialog");
+    addMenuAction(openSubmenu, "Native ...",
+                  this, &EditorWindow::fileOpenNativeDialog);
+    addMenuAction(openSubmenu, "Qt ...",
+                  this, &EditorWindow::fileOpenQtDialog);
+
     file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
     file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
     file->addAction("&Close", this, SLOT(fileClose()), Qt::Key_F4);
@@ -352,7 +359,8 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 }
 
 
-string EditorWindow::fileChooseDialog(string const &origDir, bool saveAs)
+string EditorWindow::fileChooseDialog(string const &origDir,
+  bool saveAs, bool useNative)
 {
   string dir(origDir);
   TRACE("fileOpen", "saveAs=" << saveAs << " dir: " << dir);
@@ -387,7 +395,13 @@ string EditorWindow::fileChooseDialog(string const &origDir, bool saveAs)
   // line does not get selected after I press Enter after typing the
   // name of a directory, so I have to manually delete that before I can
   // continue navigating.  So, back to the native dialog for a while.
-  //dialog.setOptions(QFileDialog::DontUseNativeDialog);
+  //
+  // 2018-07-14: I have built my own file chooser that is, IMO, much
+  // better than either Windows or Qt's dialogs.  I'm just leaving this
+  // here in case I want to continue experimenting.
+  if (!useNative) {
+    dialog.setOptions(QFileDialog::DontUseNativeDialog);
+  }
 
   if (!dialog.exec()) {
     TRACE("fileOpen", "canceled");
@@ -421,18 +435,32 @@ string EditorWindow::fileChooseDialog(string const &origDir, bool saveAs)
 
 void EditorWindow::fileOpen()
 {
-  string name =
-    this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
-                           false /*saveAs*/);
-  if (name.isempty()) {
-    return;
-  }
+  string dir = m_editorWidget->getDocumentDirectory();
+  this->on_openFilenameInputDialogSignal(toQString(dir), 0);
+}
 
-  this->fileOpenFile(name);
+
+void EditorWindow::fileOpenNativeDialog()
+{
+  this->fileOpenFile(
+    this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
+                           false /*saveAs*/, true /*useNative*/));
+}
+
+void EditorWindow::fileOpenQtDialog()
+{
+  this->fileOpenFile(
+    this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
+                           false /*saveAs*/, false /*useNative*/));
 }
 
 void EditorWindow::fileOpenFile(string const &name)
 {
+  if (name.empty()) {
+    // Dialog was canceled.
+    return;
+  }
+
   TRACE("fileOpen", "fileOpenFile: " << name);
 
   // If this file is already open, switch to it.
@@ -553,7 +581,7 @@ void EditorWindow::fileSaveAs()
 
   while (true) {
     string chosenFilename =
-      this->fileChooseDialog(dir, true /*saveAs*/);
+      this->fileChooseDialog(dir, true /*saveAs*/, true /*native*/);
     if (chosenFilename.isempty()) {
       return;
     }

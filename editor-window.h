@@ -87,7 +87,7 @@ private:     // funcs
 
   // Start the file chooser.  Return an empty string if it is canceled,
   // otherwise the chosen file name.
-  string fileChooseDialog(string const &dir, bool saveAs);
+  string fileChooseDialog(string const &dir, bool saveAs, bool useNative);
 
   void rebuildWindowMenu();
   void complain(char const *msg);
@@ -141,6 +141,8 @@ public:      // funcs
 public Q_SLOTS:
   void fileNewFile();
   void fileOpen();
+  void fileOpenNativeDialog();
+  void fileOpenQtDialog();
   void fileSave();
   void fileSaveAs();
   void fileClose();
