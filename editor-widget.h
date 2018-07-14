@@ -54,19 +54,19 @@ public:     // static data
 
 private:     // types
   // For this EditorWidget, and for a given NamedTextDocument, this is
-  // the editing state for that file.  This state is *not* shared with
+  // the editing state for that document.  This state is *not* shared with
   // other widgets in the editor application, although it contains a
   // pointer to a NamedTextDocument, which *is* shared.
-  class FileTextDocumentEditor : public TextDocumentEditor {
+  class NamedTextDocumentEditor : public TextDocumentEditor {
   public:    // data
     // Process-wide record of the open file.  Not an owner pointer.
     // Must not be null.
-    RCSerf<NamedTextDocument> m_fileDoc;
+    RCSerf<NamedTextDocument> m_namedDoc;
 
   public:
-    FileTextDocumentEditor(NamedTextDocument *f) :
-      TextDocumentEditor(f),
-      m_fileDoc(f)
+    NamedTextDocumentEditor(NamedTextDocument *d) :
+      TextDocumentEditor(d),
+      m_namedDoc(d)
     {}
   };
 
@@ -83,14 +83,14 @@ private:     // data
   // created on demand when this widget is told to edit its underlying
   // file, so the set of files here is in general a subset of
   // GlobalState::documentFiles.
-  ObjList<FileTextDocumentEditor> m_editorList;
+  ObjList<NamedTextDocumentEditor> m_editorList;
 
   // Editor object for the file we are editing.  Never NULL.
   // This points at one of the elements of 'm_editors'.
   //
   // Now that this is an RCSerf, it is important that it be declared
   // after 'm_editorList' so it is destroyed first.
-  RCSerf<FileTextDocumentEditor> m_editor;
+  RCSerf<NamedTextDocumentEditor> m_editor;
 
   // The list of documents we can potentially switch among.  This is
   // needed so I can switch to a different file when the open file gets
@@ -313,7 +313,7 @@ public:      // funcs
 
   // If we already have an editor for 'file', return it.  Otherwise,
   // make a new editor, add it to 'm_editors', and return that.
-  FileTextDocumentEditor *getOrMakeEditor(NamedTextDocument *file);
+  NamedTextDocumentEditor *getOrMakeEditor(NamedTextDocument *file);
 
   // Change which file this editor widget is editing.
   void setDocumentFile(NamedTextDocument *file);

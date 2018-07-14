@@ -34,7 +34,8 @@ TODOs:
     - parallel compilation mode that keeps the various output streams
       separate somehow
 
-  - Save as that uses the ctrl+i dialog
+  - prompt before killing an Alt+A that takes too long
+  - Save As... that uses the ctrl+i dialog
   - highlighting for mismatch parens, braces, etc.
   - Ctrl+Alt+G to grep for selected string
   - command line arguments to set window position(s)?

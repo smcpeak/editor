@@ -154,13 +154,13 @@ void EditorWidget::selfCheck() const
   // Check that 'editor' is among 'm_editors' and that the files in
   // 'm_editors' are a subset of 'm_documentList'.
   bool foundEditor = false;
-  FOREACH_OBJLIST(FileTextDocumentEditor, m_editorList, iter) {
-    FileTextDocumentEditor const *tdfe = iter.data();
+  FOREACH_OBJLIST(NamedTextDocumentEditor, m_editorList, iter) {
+    NamedTextDocumentEditor const *tdfe = iter.data();
     if (m_editor == tdfe) {
       foundEditor = true;
     }
     tdfe->selfCheck();
-    xassert(m_documentList->hasDocument(tdfe->m_fileDoc));
+    xassert(m_documentList->hasDocument(tdfe->m_namedDoc));
   }
   xassert(foundEditor);
 
@@ -279,7 +279,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
 }
 
 
-EditorWidget::FileTextDocumentEditor *
+EditorWidget::NamedTextDocumentEditor *
   EditorWidget::getOrMakeEditor(NamedTextDocument *file_)
 {
   // Hold 'file' in an RCSerf to ensure it does not go away.  In
@@ -288,8 +288,8 @@ EditorWidget::FileTextDocumentEditor *
   RCSerf<NamedTextDocument> file(file_);
 
   // Look for an existing editor for this file.
-  FOREACH_OBJLIST_NC(FileTextDocumentEditor, m_editorList, iter) {
-    if (iter.data()->m_fileDoc == file) {
+  FOREACH_OBJLIST_NC(NamedTextDocumentEditor, m_editorList, iter) {
+    if (iter.data()->m_namedDoc == file) {
       return iter.data();
     }
   }
@@ -303,7 +303,7 @@ EditorWidget::FileTextDocumentEditor *
   bool hasView = m_documentList->notifyGetInitialView(file, view);
 
   // Make the new editor.
-  FileTextDocumentEditor *ret = new FileTextDocumentEditor(file);
+  NamedTextDocumentEditor *ret = new NamedTextDocumentEditor(file);
   m_editorList.prepend(ret);
   if (hasView) {
     INITIATING_DOCUMENT_CHANGE();
@@ -321,7 +321,7 @@ EditorWidget::FileTextDocumentEditor *
 
 void EditorWidget::checkForDiskChanges()
 {
-  RCSerf<NamedTextDocument> file = m_editor->m_fileDoc;
+  RCSerf<NamedTextDocument> file = m_editor->m_namedDoc;
   if (!file->unsavedChanges() && file->hasStaleModificationTime()) {
     TRACE("modification",
       "File \"" << file->name() << "\" has changed on disk "
@@ -350,8 +350,8 @@ void EditorWidget::checkForDiskChanges()
 NamedTextDocument *EditorWidget::getDocumentFile() const
 {
   xassert(m_editor);
-  xassert(m_editor->m_fileDoc);
-  return m_editor->m_fileDoc;
+  xassert(m_editor->m_namedDoc);
+  return m_editor->m_namedDoc;
 }
 
 
@@ -419,13 +419,13 @@ void EditorWidget::namedTextDocumentRemoved(
 
   // Change files if that was the one we were editing.  Do this before
   // destroying any editors.
-  if (m_editor->m_fileDoc == file) {
+  if (m_editor->m_namedDoc == file) {
     this->setDocumentFile(documentList->getDocumentAt(0));
   }
 
   // Remove 'file' from my list if I have it.
-  for(ObjListMutator< FileTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
-    if (mut.data()->m_fileDoc == file) {
+  for(ObjListMutator< NamedTextDocumentEditor > mut(m_editorList); !mut.isDone(); ) {
+    if (mut.data()->m_namedDoc == file) {
       xassert(mut.data() != m_editor);
       INITIATING_DOCUMENT_CHANGE();
       mut.deleteIt();
@@ -445,12 +445,12 @@ bool EditorWidget::getNamedTextDocumentInitialView(
 {
   GENERIC_CATCH_BEGIN
 
-  FOREACH_OBJLIST(FileTextDocumentEditor, m_editorList, iter) {
-    FileTextDocumentEditor const *ed = iter.data();
+  FOREACH_OBJLIST(NamedTextDocumentEditor, m_editorList, iter) {
+    NamedTextDocumentEditor const *ed = iter.data();
 
     // Only return our view if it has moved away from the top
     // of the file.
-    if (ed->m_fileDoc == file && !ed->firstVisible().isZero()) {
+    if (ed->m_namedDoc == file && !ed->firstVisible().isZero()) {
       view.firstVisible = ed->firstVisible();
       view.cursor = ed->cursor();
       return true;
@@ -693,8 +693,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       }
 
       // apply highlighting
-      if (m_editor->m_fileDoc->m_highlighter) {
-        m_editor->m_fileDoc->m_highlighter
+      if (m_editor->m_namedDoc->m_highlighter) {
+        m_editor->m_namedDoc->m_highlighter
           ->highlightTDE(m_editor, line, categories);
       }
 
@@ -937,7 +937,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
     if (codePoint == ' ') {
       // Optionally highlight trailing whitespace.
       if (withinTrailingWhitespace &&
-          m_editor->m_fileDoc->m_highlightTrailingWhitespace) {
+          m_editor->m_namedDoc->m_highlightTrailingWhitespace) {
         paint.fillRect(bounds, m_trailingWhitespaceBgColor);
       }
 
@@ -1658,13 +1658,13 @@ void EditorWidget::hideInfo()
 
 bool EditorWidget::highlightTrailingWhitespace() const
 {
-  return m_editor->m_fileDoc->m_highlightTrailingWhitespace;
+  return m_editor->m_namedDoc->m_highlightTrailingWhitespace;
 }
 
 void EditorWidget::toggleHighlightTrailingWhitespace()
 {
-  m_editor->m_fileDoc->m_highlightTrailingWhitespace =
-    !m_editor->m_fileDoc->m_highlightTrailingWhitespace;
+  m_editor->m_namedDoc->m_highlightTrailingWhitespace =
+    !m_editor->m_namedDoc->m_highlightTrailingWhitespace;
 }
 
 
@@ -2037,7 +2037,7 @@ bool EditorWidget::editSafetyCheck()
     return true;
   }
 
-  if (!m_editor->m_fileDoc->hasStaleModificationTime()) {
+  if (!m_editor->m_namedDoc->hasStaleModificationTime()) {
     // No concurrent changes, safe to go ahead.
     return true;
   }
@@ -2046,7 +2046,7 @@ bool EditorWidget::editSafetyCheck()
   QMessageBox box(this);
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The document \"" << m_editor->m_fileDoc->name() << "\" has changed on disk.  "
+    "The document \"" << m_editor->m_namedDoc->name() << "\" has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);
@@ -2058,7 +2058,7 @@ bool EditorWidget::editSafetyCheck()
     // leaving us in the "clean" state after all, this refresh will
     // ensure we do not prompt the user a second time.
     INITIATING_DOCUMENT_CHANGE();
-    m_editor->m_fileDoc->refreshModificationTime();
+    m_editor->m_namedDoc->refreshModificationTime();
 
     // Go ahead with the edit.
     return true;
