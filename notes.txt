@@ -1,7 +1,9 @@
 
 TODOs:
   - move TimerEventLoop from test-command-runner.cc to smqtutil
-  - command line arguments to set window position(s)
+  - change F3 to do what ctrl+i does when not on a file name
+    - leave a menu option to run that dialog though
+  - ctrl+i: recognize file:line syntax
   - run command to generate entire file; git annotate!
     - enhancements
       - do not highlight trailing spaces
@@ -17,6 +19,7 @@ TODOs:
     - grep
     - compilation mode
 
+  - command line arguments to set window position(s)?
   - undo history is never truncated... I should add something to check
     for excessive memory usage over time
 
@@ -30,7 +33,6 @@ TODOs:
     - graphically depict entire file's contents?
 
   - ctrl+i: open file at cursor
-    - recognize file:line syntax
     - try with fewer directory components so I can open a file from
       a name like "a/Makefile" in "git diff" output
   - search and replace

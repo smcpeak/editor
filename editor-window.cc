@@ -917,11 +917,8 @@ void EditorWindow::editApplyCommand()
   }
 
   // Replace the selected text with the command's output.
-  {
-    UndoHistoryGrouper ugh(*tde);
-    tde->insertText(runner.getOutputData().constData(), runner.getOutputData().size());
-  }
-  m_editorWidget->redraw();
+  m_editorWidget->insertText(runner.getOutputData().constData(),
+                             runner.getOutputData().size());
 
   // For error output or non-zero exit code, we show a warning, but
   // still insert the text.  Note that we do this *after* inserting

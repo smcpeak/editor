@@ -299,9 +299,12 @@ public:      // funcs
   // signal that will finish the job from the window side.
   void doCloseSARPanel();
 
-  // -------------------- reformatting whitespace ---------------------
+  // ---------------------- document changes ----------------------
   // Indent or unindent selected lines.
   void blockIndent(int amt);
+
+  // Insert text at cursor, overwriting selection if active.
+  void insertText(char const *text, int length);
 
   // -------------------- interaction with files ------------------
   // nonfocus listening

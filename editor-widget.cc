@@ -1836,6 +1836,15 @@ void EditorWidget::blockIndent(int amt)
 }
 
 
+void EditorWidget::insertText(char const *text, int length)
+{
+  INITIATING_DOCUMENT_CHANGE();
+  UndoHistoryGrouper ugh(*m_editor);
+  m_editor->insertText(text, length);
+  this->redraw();
+}
+
+
 // ----------------- nonfocus situation ------------------
 void EditorWidget::focusInEvent(QFocusEvent *e)
 {
