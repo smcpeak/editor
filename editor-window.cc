@@ -220,6 +220,8 @@ void EditorWindow::buildMenu()
     file->addSeparator();
     addMenuAction(file, "&Launch (run) command ...",
       this, &EditorWindow::fileLaunchCommand, Qt::ALT + Qt::Key_R);
+    addMenuAction(file, "Kill running process ...",
+      this, &EditorWindow::fileKillProcess);
     file->addSeparator();
     file->addAction("E&xit", this, SLOT(fileExit()));
   }
@@ -717,8 +719,8 @@ void EditorWindow::fileReloadAll()
 
 void EditorWindow::fileLaunchCommand()
 {
-  static TextInputDialog *dialog
-    = new TextInputDialog("Launch Command");
+  static TextInputDialog *dialog =
+    new TextInputDialog("Launch Command");
 
   string dir = m_editorWidget->getDocumentDirectory();
   if (!dialog->runPrompt_nonEmpty(qstringb(
@@ -729,6 +731,43 @@ void EditorWindow::fileLaunchCommand()
   NamedTextDocument *fileDoc =
     m_globalState->launchCommand(toQString(dir), dialog->m_text);
   this->setDocumentFile(fileDoc);
+}
+
+
+void EditorWindow::fileKillProcess()
+{
+  NamedTextDocument *doc = this->currentDocument();
+  DocumentProcessStatus dps = doc->documentProcessStatus();
+
+  switch (dps) {
+    default:
+      DEV_WARNING("bad dps");
+      // fallthrough
+
+    case DPS_NONE:
+      messageBox(this, "Not a Process Document", qstringb(
+        "The document \"" << doc->name() << "\" was not produced by "
+        "running a process, so there is nothing to kill."));
+      break;
+
+    case DPS_RUNNING:
+      if (questionBoxYesCancel(this, "Kill Process?", qstringb(
+            "Kill the process \"" << doc->name() << "\"?"))) {
+        if (this->stillCurrentDocument(doc)) {
+          string problem = m_globalState->killCommand(doc);
+          if (!problem.empty()) {
+            messageBox(this, "Problem Killing Process",
+              toQString(problem));
+          }
+        }
+      }
+      break;
+
+    case DPS_FINISHED:
+      messageBox(this, "Process Finished", qstringb(
+        "The process \"" << doc->name() << "\" has already terminated."));
+      break;
+  }
 }
 
 

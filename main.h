@@ -119,6 +119,10 @@ public:       // funcs
   // process' output is written.
   NamedTextDocument *launchCommand(QString dir, QString command);
 
+  // Kill the process driving 'doc'.  If there is a problem doing that,
+  // return a string explaining it; otherwise "".
+  string killCommand(NamedTextDocument *doc);
+
   // GlobalState has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.
   virtual void namedTextDocumentRemoved(

@@ -139,19 +139,19 @@ void CommandRunner::timerEvent(QTimerEvent *event)
 }
 
 
-void CommandRunner::killProcess()
+QString CommandRunner::killProcess()
 {
   // I do not TRACE here; the caller should have done so, providing
   // a little more context.
 
   if (m_killedProcess) {
     TRACE_CR("killProcess: not killing process again");
-    return;
+    return "Already attempted to kill process.";
   }
 
   if (m_process.state() == QProcess::NotRunning) {
     TRACE_CR("killProcess: not killing process since it is not running");
-    return;
+    return "Process is not running.";
   }
 
   m_killedProcess = true;
@@ -160,12 +160,15 @@ void CommandRunner::killProcess()
   TRACE_CR("killProcess: waitForFinished");
   if (m_process.waitForFinished(KILL_WAIT_TIMEOUT_MS)) {
     TRACE_CR("killProcess: waitForFinished returned true");
+    return "";
   }
   else {
     // This is somewhat bad because, at the very least, m_process is
     // going to complain (to stderr) when it is destroyed but the child
     // has not died yet.
     TRACE_CR("killProcess: waitForFinished returned false");
+    return qstringb("Process did not die after " << KILL_WAIT_TIMEOUT_MS <<
+                    " milliseconds.  I don't know why.");
   }
 }
 

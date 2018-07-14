@@ -1,9 +1,9 @@
 
 TODOs:
+  - bind F9 to running "make"
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process
-      - kill without closing buffer
       - soft end of buffer jumping
       - when switch to output buffer, need to jump to end
       - process output documents should not be editable!

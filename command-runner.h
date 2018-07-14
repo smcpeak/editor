@@ -183,8 +183,9 @@ public:      // funcs
   // Get the stderr data.
   QByteArray takeErrorData();
 
-  // Kill the process if we haven't done so already.
-  void killProcess();
+  // Kill the process if we haven't done so already.  If there is a
+  // problem, return a string describing it; otherwise "".
+  QString killProcess();
 
   // ---------------------- process status -------------------------
   // Return true if the process has started and not terminated.  Only

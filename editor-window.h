@@ -158,6 +158,7 @@ public Q_SLOTS:
   void fileReload();
   void fileReloadAll();
   void fileLaunchCommand();
+  void fileKillProcess();
   void fileExit();
 
   void editISearch();

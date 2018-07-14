@@ -252,6 +252,27 @@ NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
 }
 
 
+string GlobalState::killCommand(NamedTextDocument *doc)
+{
+  ProcessWatcher *watcher = this->findWatcherForDoc(doc);
+  if (!watcher) {
+    if (doc->documentProcessStatus() == DPS_RUNNING) {
+      DEV_WARNING("running process with no watcher");
+      return stringb(
+        "BUG: I lost track of the process that is or was producing the "
+        "document \"" << doc->name() << "\"!  This should not happen.");
+    }
+    else {
+      return stringb("Process \"" << doc->name() <<
+                     "\" died before I could kill it.");
+    }
+  }
+  else {
+    return toString(watcher->m_commandRunner.killProcess());
+  }
+}
+
+
 ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 {
   FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
