@@ -921,7 +921,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
   int codePoint = (unsigned char)c;
 
   if (m_visibleWhitespace &&
-      (codePoint==' ' || codePoint=='\n')) {
+      (codePoint==' ' || codePoint=='\n' || codePoint=='\r')) {
     QRect bounds = font->getNominalCharCell(pt);
     QColor fg = font->getFgColor();
     fg.setAlpha(m_whitespaceOpacity);
@@ -938,7 +938,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
       return;
     }
 
-    if (codePoint == '\n') {
+    if (codePoint == '\n' || codePoint == '\r') {
       // Filled triangle.
       int x1 = bounds.left() + bounds.width() * 1/8;
       int x7 = bounds.left() + bounds.width() * 7/8;
@@ -948,12 +948,24 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
       paint.setPen(Qt::NoPen);
       paint.setBrush(fg);
 
-      QPoint pts[] = {
-        QPoint(x1,y7),
-        QPoint(x7,y1),
-        QPoint(x7,y7),
-      };
-      paint.drawConvexPolygon(pts, TABLESIZE(pts));;
+      if (codePoint == '\n') {
+        // Lower-right.
+        QPoint pts[] = {
+          QPoint(x1,y7),
+          QPoint(x7,y1),
+          QPoint(x7,y7),
+        };
+        paint.drawConvexPolygon(pts, TABLESIZE(pts));
+      }
+      else {
+        // Upper-left.
+        QPoint pts[] = {
+          QPoint(x1,y7),
+          QPoint(x1,y1),
+          QPoint(x7,y1),
+        };
+        paint.drawConvexPolygon(pts, TABLESIZE(pts));
+      }
       return;
     }
   }
@@ -961,7 +973,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
   if (font->hasChar(codePoint)) {
     font->drawChar(paint, pt, codePoint);
   }
-  else {
+  else if (codePoint != '\r') {
     QRect bounds = font->getNominalCharCell(pt);
 
     // This is a somewhat expensive thing to do because it requires

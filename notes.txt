@@ -24,7 +24,6 @@ TODOs:
       separate somehow
 
   - prompt before killing an Alt+A that takes too long
-  - Save As... that uses the ctrl+i dialog
   - highlighting for mismatch parens, braces, etc.
   - Ctrl+Alt+G to grep for selected string
   - command line arguments to set window position(s)?
@@ -36,8 +35,10 @@ TODOs:
 
   - allow Tab character; issue is rendering support
   - handling of files with CRLF line endings
-    - including case of grepping *.cc, which includes *.moc.cc files
-      that have CRLF, along with other *.cc with just LF
+    - highlighting of backslash followed by CR is busted
+      - not recognized as continuation; see a .moc.cc file
+    - ability to make line endings uniform
+    - ability to insert lines with CRLF
   - parenthesis balancing, and Alt-[/] to find matching delimiter
   - mode to show line numbers in left margin
   - multiple copy+paste strings
