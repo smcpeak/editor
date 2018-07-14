@@ -1811,6 +1811,16 @@ void EditorWidget::replaceSearchHit(string const &t)
 }
 
 
+bool EditorWidget::searchHitSelected() const
+{
+  if (m_editor->markActive()) {
+    string sel = m_editor->getSelectedText();
+    return !sel.empty() && sel == m_hitText;
+  }
+  return false;
+}
+
+
 void EditorWidget::doCloseSARPanel()
 {
   m_hitText = "";

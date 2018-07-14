@@ -157,8 +157,14 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
     switch (key) {
       case Qt::Key_Return:
       case Qt::Key_Enter:
-        if (mods == Qt::NoModifier || mods == Qt::ShiftModifier) {
-          m_editorWidget->nextSearchHit(shift /*reverse*/);
+        if (mods == Qt::NoModifier) {
+          // Go to first hit if we are not already on one, then switch
+          // back to the editor widget.  This allows Ctrl+S, <word>,
+          // Enter to go to the first hit.
+          if (!m_editorWidget->searchHitSelected()) {
+            m_editorWidget->nextSearchHit(false /*reverse*/);
+          }
+          this->toggleSARFocus();
           return true;       // no further processing
         }
         break;
@@ -293,8 +299,10 @@ void SearchAndReplacePanel::on_help()
     "Keys for Search and Replace (SAR):\n"
     "\n"
     "Ctrl+S: Toggle focus between SAR and main editor.\n"
-    "Esc: Close the SAR panel.\n"
+    "Enter: Go to first match in editor, unless already on a match, "
+      "in which case just go to editor.\n"
     "Tab: Toggle between Find and Repl boxes.\n"
+    "Esc: Close the SAR panel.\n"
     "\n"
     "Ctrl+Period or Ctrl+Comma: Move to next/prev match.\n"
     "Ctrl+R: Replace selection with Repl text; "
