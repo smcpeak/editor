@@ -322,11 +322,11 @@ public:      // funcs
   // that there are space characters up to 'col+destLen' (if necessary)
   void getLineLoose(TextCoord tc, char *dest, int destLen) const;
 
-  // retrieve the text between two positions, as in a text editor
-  // where the positions are the selection endpoints and the user
-  // wants a string to put in the clipboard; it must be the case
-  // that tc1 <= tc2; characters outside defined area
-  // are taken to be whitespace
+  // Retrieve the text between two positions, as in a text editor where
+  // the positions are the selection endpoints and the user wants a
+  // string to put in the clipboard.  It must be the case that tc1<=tc2.
+  // If tc1==tc2, returns "".  Characters outside the document area are
+  // taken to be whitespace.
   string getTextRange(TextCoord tc1, TextCoord tc2) const;
 
   // Get a complete line.  Returns "" when beyond EOF.  'line' must
@@ -370,6 +370,11 @@ public:      // funcs
     FS_ADVANCE_ONCE        = 0x04, // advance meta-cursor once before searching
     FS_ONE_LINE            = 0x08, // only search the named line
 
+    // These are the flags that affect the interpretation of the search
+    // string itself, as opposed to being instructions to 'findString'
+    // regarding where to search.
+    FS_SEARCH_FLAGS_MASK   = 0x09,
+
     FS_ALL                 = 0x0F  // all flags
   };
 
@@ -379,6 +384,11 @@ public:      // funcs
   // tested for matches that span multiple lines
   bool findString(TextCoord /*INOUT*/ &tc, char const *text,
                   FindStringFlags flags = FS_NONE) const;
+
+  // Return true if the document text in the indicated range, including
+  // 'start' but not including 'end', matches 'searchString'.
+  bool rangeIsMatch(TextCoord const &start, TextCoord const &end,
+                    char const *searchString, FindStringFlags flags) const;
 
   // ------------------- general text insertion ------------------
   // 1. If the mark is active, deleteSelection().

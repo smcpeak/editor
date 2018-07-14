@@ -34,11 +34,10 @@ TODOs:
     - try with fewer directory components so I can open a file from
       a name like "a/Makefile" in "git diff" output
   - search and replace
-    - command to jump to next/prev match w/o going back into panel
     - unclear when Ctrl+R will replace versus jump
     - issues when cursor is sitting on a match but it isn't highlighted
     - allow F2? Ctrl+O? Ctrl+I?
-    - case sensitivity
+    - explicit case sensitivity option
     - whole word?
     - regex...
       - needs redesign of how the matching algorithm works

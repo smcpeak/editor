@@ -125,6 +125,14 @@ void SearchAndReplacePanel::setFocusFindBox()
 }
 
 
+bool SearchAndReplacePanel::findHasNonSelectedText() const
+{
+  QLineEdit *lineEdit = m_findBox->lineEdit();
+  return !lineEdit->text().isEmpty() &&
+         lineEdit->selectedText() != lineEdit->text();
+}
+
+
 void SearchAndReplacePanel::setFindText(QString const &text)
 {
   // Calling 'setCurrentText' fires 'findEditTextChanged', which will
@@ -240,6 +248,14 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
 
       case Qt::Key_W:
         if (mods == Qt::ControlModifier) {
+          if (!m_editorWidget->searchHitSelected() &&
+              this->findHasNonSelectedText()) {
+            // The Find box does not agree with what is currently
+            // selected.  First go to a hit, and we will extend from
+            // there.
+            m_editorWidget->nextSearchHit(false /*reverse*/);
+          }
+
           TextDocumentEditor *ed = m_editorWidget->m_editor;
           ed->normalizeCursorGTEMark();
           TextCoord tc = ed->cursor();
@@ -251,6 +267,11 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
               ed->setMark(tc);
             }
             ed->walkCursor(word.length());
+
+            // Hack: I want these swapped.  TODO: I should turn things
+            // around so SAR creates selections with cursor >= mark,
+            // which elsewhere I call "normal".
+            ed->swapCursorAndMark();
 
             // Now set the find text to match the selection.
             this->setFindText(toQString(ed->getSelectedText()));

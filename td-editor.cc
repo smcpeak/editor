@@ -776,6 +776,31 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
 }
 
 
+bool TextDocumentEditor::rangeIsMatch(
+  TextCoord const &start, TextCoord const &end,
+  char const *searchString, FindStringFlags flags) const
+{
+  // Remove flags that do not affect the interpretation of the search
+  // string, since in this routine we are explicitly given the range of
+  // text to search.
+  flags &= FS_SEARCH_FLAGS_MASK;
+
+  TextCoord tc = start;
+  if (this->findString(tc, searchString, flags) &&
+      tc == start &&
+
+      // TODO: This part is ugly, and will not work when I add regex
+      // support.  'findString' itself ought to return the location of
+      // the end of the string it found.
+      this->getTextRange(start, end).length() == (int)strlen(searchString))
+  {
+    return true;
+  }
+
+  return false;
+}
+
+
 // ---------------- TextDocumentEditor: modifications ------------------
 
 void TextDocumentEditor::moveCursorBy(int deltaLine, int deltaCol)

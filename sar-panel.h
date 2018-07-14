@@ -50,6 +50,10 @@ public:      // funcs
   // Put the keyboard focus on the Find box.
   void setFocusFindBox();
 
+  // True if the Find box has at least one character in it that is not
+  // currently selected.
+  bool findHasNonSelectedText() const;
+
   // Change the Find box text, but do not scroll to first match.
   void setFindText(QString const &text);
 

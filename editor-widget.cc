@@ -1813,11 +1813,9 @@ void EditorWidget::replaceSearchHit(string const &t)
 
 bool EditorWidget::searchHitSelected() const
 {
-  if (m_editor->markActive()) {
-    string sel = m_editor->getSelectedText();
-    return !sel.empty() && sel == m_hitText;
-  }
-  return false;
+  return m_editor->markActive() &&
+         m_editor->rangeIsMatch(m_editor->cursor(), m_editor->mark(),
+                                m_hitText.c_str(), m_hitTextFlags);
 }
 
 
