@@ -28,7 +28,7 @@ using std::set;
 FileTextDocumentList::FileTextDocumentList()
   : m_observers(),
     m_iteratingOverObservers(false),
-    m_fileDocuments()
+    m_documents()
 {
   this->createUntitledFile();
   SELF_CHECK();
@@ -39,7 +39,7 @@ FileTextDocumentList::~FileTextDocumentList()
 {
   // Do this explicitly for clarity.
   m_observers.removeAll();
-  m_fileDocuments.deleteAll();
+  m_documents.deleteAll();
 }
 
 
@@ -62,7 +62,7 @@ void insertUnique(set<T> &s, T const &t)
 
 void FileTextDocumentList::selfCheck() const
 {
-  xassert(m_fileDocuments.isNotEmpty());
+  xassert(m_documents.isNotEmpty());
 
   // Sets of attributes seen, to check for uniqueness.
   StringSet filenames;
@@ -70,8 +70,8 @@ void FileTextDocumentList::selfCheck() const
   set<int> hotkeyDigits;
   set<int> windowMenuIds;
 
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    NamedTextDocument const *d = m_fileDocuments[i];
+  for (int i=0; i < m_documents.length(); i++) {
+    NamedTextDocument const *d = m_documents[i];
     xassert(!d->name().isempty());
     filenames.addUnique(d->name());
     xassert(!d->m_title.isempty());
@@ -86,7 +86,7 @@ void FileTextDocumentList::selfCheck() const
 
 int FileTextDocumentList::numFiles() const
 {
-  return m_fileDocuments.length();
+  return m_documents.length();
 }
 
 
@@ -97,7 +97,7 @@ NamedTextDocument *FileTextDocumentList::getFileAt(int index)
 
 NamedTextDocument const *FileTextDocumentList::getFileAtC(int index) const
 {
-  return m_fileDocuments[index];
+  return m_documents[index];
 }
 
 
@@ -109,7 +109,7 @@ bool FileTextDocumentList::hasFile(NamedTextDocument const *file) const
 
 int FileTextDocumentList::getFileIndex(NamedTextDocument const *file) const
 {
-  return m_fileDocuments.indexOf(file);
+  return m_documents.indexOf(file);
 }
 
 
@@ -135,7 +135,7 @@ void FileTextDocumentList::addFile(NamedTextDocument *file)
     }
   }
 
-  m_fileDocuments.append(file);
+  m_documents.append(file);
 
   this->notifyAdded(file);
   SELF_CHECK();
@@ -155,7 +155,7 @@ void FileTextDocumentList::removeFile(NamedTextDocument *file)
   }
 
   int index = this->getFileIndex(file);
-  NamedTextDocument *f = m_fileDocuments.removeIntermediate(index);
+  NamedTextDocument *f = m_documents.removeIntermediate(index);
   xassert(f == file);
   SELF_CHECK();
 
@@ -173,7 +173,7 @@ void FileTextDocumentList::moveFile(NamedTextDocument *file, int newIndex)
   int oldIndex = this->getFileIndex(file);
   xassert(oldIndex >= 0);
 
-  m_fileDocuments.moveElement(oldIndex, newIndex);
+  m_documents.moveElement(oldIndex, newIndex);
   SELF_CHECK();
 
   this->notifyListOrderChanged();
@@ -210,9 +210,9 @@ NamedTextDocument *FileTextDocumentList::findFileByName(string const &filename)
 NamedTextDocument const *FileTextDocumentList::findFileByNameC(
   string const &name) const
 {
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (m_fileDocuments[i]->name() == name) {
-      return m_fileDocuments[i];
+  for (int i=0; i < m_documents.length(); i++) {
+    if (m_documents[i]->name() == name) {
+      return m_documents[i];
     }
   }
   return NULL;
@@ -227,9 +227,9 @@ NamedTextDocument *FileTextDocumentList::findFileByTitle(string const &title)
 NamedTextDocument const *FileTextDocumentList::findFileByTitleC(
   string const &title) const
 {
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (m_fileDocuments[i]->m_title == title) {
-      return m_fileDocuments[i];
+  for (int i=0; i < m_documents.length(); i++) {
+    if (m_documents[i]->m_title == title) {
+      return m_documents[i];
     }
   }
   return NULL;
@@ -244,10 +244,10 @@ NamedTextDocument *FileTextDocumentList::findFileByHotkey(int hotkeyDigit)
 NamedTextDocument const *FileTextDocumentList::findFileByHotkeyC(
   int hotkeyDigit) const
 {
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (m_fileDocuments[i]->hasHotkey() &&
-        m_fileDocuments[i]->getHotkeyDigit() == hotkeyDigit) {
-      return m_fileDocuments[i];
+  for (int i=0; i < m_documents.length(); i++) {
+    if (m_documents[i]->hasHotkey() &&
+        m_documents[i]->getHotkeyDigit() == hotkeyDigit) {
+      return m_documents[i];
     }
   }
   return NULL;
@@ -261,9 +261,9 @@ NamedTextDocument *FileTextDocumentList::findFileByWindowMenuId (int id)
 
 NamedTextDocument const *FileTextDocumentList::findFileByWindowMenuIdC(int id) const
 {
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (m_fileDocuments[i]->m_windowMenuId == id) {
-      return m_fileDocuments[i];
+  for (int i=0; i < m_documents.length(); i++) {
+    if (m_documents[i]->m_windowMenuId == id) {
+      return m_documents[i];
     }
   }
   return NULL;
@@ -277,8 +277,8 @@ NamedTextDocument *FileTextDocumentList::findUntitledUnmodifiedFile()
 
 NamedTextDocument const *FileTextDocumentList::findUntitledUnmodifiedFileC() const
 {
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    NamedTextDocument const *file = m_fileDocuments[i];
+  for (int i=0; i < m_documents.length(); i++) {
+    NamedTextDocument const *file = m_documents[i];
     if (!file->hasFilename() &&
         file->numLines() == 1 &&
         file->lineLength(0) == 0) {
@@ -394,9 +394,9 @@ void FileTextDocumentList::getUniqueDirectories(
   // Set of directories put into 'dirs' so far.
   StringSet dirSet;
 
-  for (int i=0; i < m_fileDocuments.length(); i++) {
-    if (m_fileDocuments[i]->hasFilename()) {
-      string dir = dirname(m_fileDocuments[i]->filename());
+  for (int i=0; i < m_documents.length(); i++) {
+    if (m_documents[i]->hasFilename()) {
+      string dir = dirname(m_documents[i]->filename());
       if (!dirSet.contains(dir)) {
         dirs.push(dir);
         dirSet.add(dir);

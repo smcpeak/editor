@@ -19,7 +19,7 @@ class FileTextDocumentListObserver;
 class FileTextDocumentInitialView;
 
 
-// A list of open files being edited.
+// A list of named documents being edited.
 //
 // The order is significant; this is another sort of "document" within
 // the editor, and the order of elements within the list is something
@@ -27,11 +27,7 @@ class FileTextDocumentInitialView;
 //
 // In addition to storing the list, this class provides various methods
 // for manipulating and querying it, per the requirements of a
-// multi-document interactive text editor.  My hope is to use this to
-// help encapsulate all of the functionality not directly related to
-// pixels and keystrokes that is currently in EditorWindow and
-// GlobalState, similar to how TextDocumentEditor encapsulates all of
-// the text editing procedures that previously were in EditorWidget.
+// multi-document interactive text editor.
 class FileTextDocumentList : public SerfRefCount {
   // Sensible copying of lists is possible but non-trivial.
   NO_OBJECT_COPIES(FileTextDocumentList);
@@ -64,7 +60,7 @@ private:     // data
   // * Every 'windowMenuId' must be unique.  Clients are expected to
   //   ensure this on their own by using a process-wide counter.
   //
-  ObjArrayStack<NamedTextDocument> m_fileDocuments;
+  ObjArrayStack<NamedTextDocument> m_documents;
 
 public:      // funcs
   // Initially there is one untitled file.
