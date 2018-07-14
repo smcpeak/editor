@@ -182,7 +182,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
         if (control && !alt) {
           string s = toString(m_replBox->currentText());
           TRACE("sar", "replace: " << s);
-          if (m_editorWidget->selectEnabled()) {
+          if (m_editorWidget->searchHitSelected()) {
             m_editorWidget->replaceSearchHit(s);
             if (shift) {
               m_editorWidget->nextSearchHit(false /*reverse*/);
@@ -305,8 +305,8 @@ void SearchAndReplacePanel::on_help()
     "Esc: Close the SAR panel.\n"
     "\n"
     "Ctrl+Period or Ctrl+Comma: Move to next/prev match.\n"
-    "Ctrl+R: Replace selection with Repl text; "
-      "if nothing selected, move to next match.\n"
+    "Ctrl+R: Replace match with Repl text; "
+      "if not on a match, move to next match.\n"
     "Shift+Ctrl+R: Replace and move to next match.\n"
     "\n"
     "Alt+(Shift+)Backspace: Undo/redo in main editor, "
