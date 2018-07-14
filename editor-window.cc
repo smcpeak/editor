@@ -220,6 +220,8 @@ void EditorWindow::buildMenu()
     file->addSeparator();
     addMenuAction(file, "&Launch (run) command ...",
       this, &EditorWindow::fileLaunchCommand, Qt::ALT + Qt::Key_R);
+    addMenuAction(file, "Run \"&make\" ...",
+      this, &EditorWindow::fileRunMake, Qt::Key_F9);
     addMenuAction(file, "Kill running process ...",
       this, &EditorWindow::fileKillProcess);
     file->addSeparator();
@@ -730,6 +732,17 @@ void EditorWindow::fileLaunchCommand()
 
   NamedTextDocument *fileDoc =
     m_globalState->launchCommand(toQString(dir), dialog->m_text);
+  this->setDocumentFile(fileDoc);
+}
+
+
+void EditorWindow::fileRunMake()
+{
+  string dir = m_editorWidget->getDocumentDirectory();
+
+  // TODO: The exact command should be configurable.
+  NamedTextDocument *fileDoc =
+    m_globalState->launchCommand(toQString(dir), "make");
   this->setDocumentFile(fileDoc);
 }
 

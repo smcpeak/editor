@@ -1,6 +1,5 @@
 
 TODOs:
-  - bind F9 to running "make"
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process
