@@ -4,11 +4,11 @@ TODOs:
   - command line arguments to set window position(s)
   - run command to generate entire file; git annotate!
     - enhancements
+      - do not highlight trailing spaces
+      - print dir and cmd at top of document
       - kill without closing buffer
       - soft end of buffer jumping
-      - do not highlight trailing spaces
       - when switch to output buffer, need to jump to end
-      - print finish date/time and elapsed time
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process

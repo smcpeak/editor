@@ -4,8 +4,13 @@
 #ifndef PROCESS_WATCHER_H
 #define PROCESS_WATCHER_H
 
+// editor
 #include "command-runner.h"            // CommandRunner
 #include "file-td.h"                   // FileTextDocument
+
+// smbase
+#include "datetime.h"                  // UnixTime
+
 
 // Monitor a child process and feed the output to a TextDocumentEditor.
 //
@@ -23,6 +28,9 @@ public:      // data
 
   // The child process producing it.
   CommandRunner m_commandRunner;
+
+  // Point in time when process started.
+  UnixTime m_startTime;
 
 public:      // funcs
   ProcessWatcher(FileTextDocument *doc);

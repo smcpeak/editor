@@ -10,7 +10,8 @@
 ProcessWatcher::ProcessWatcher(FileTextDocument *doc)
   : QObject(),
     m_fileDoc(doc),
-    m_commandRunner()
+    m_commandRunner(),
+    m_startTime(getCurrentUnixTime())
 {
   m_fileDoc->setIsProcessOutput(true);
 
@@ -67,6 +68,16 @@ void ProcessWatcher::slot_processTerminated() NOEXCEPT
       m_fileDoc->appendString(stringb("Exit code: " <<
         m_commandRunner.getExitCode() << '\n'));
     }
+
+    UnixTime endTime = getCurrentUnixTime();
+    UnixTime elapsed = endTime - m_startTime;
+    m_fileDoc->appendString(stringb(
+      "Elapsed: " << elapsed << " s\n"));
+
+    DateTimeSeconds date;
+    date.fromUnixTime(endTime, getLocalTzOffsetMinutes());
+    m_fileDoc->appendString(stringb(
+      "Finished at " << date.dateTimeString() << "\n"));
   }
 
   Q_EMIT signal_processTerminated(this);
