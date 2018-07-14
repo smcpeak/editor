@@ -32,7 +32,8 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
     m_completionsEdit(NULL),
     m_cachedDirectory(""),
     m_cachedDirectoryEntries(),
-    m_docList(NULL)
+    m_docList(NULL),
+    m_saveAs(false)
 {
   this->setWindowTitle("Filename Input");
 
@@ -107,7 +108,12 @@ void FilenameInputDialog::setFilenameLabel()
 
   xassert(m_docList);
   if (m_docList->findDocumentByNameC(filename)) {
-    m_filenameLabel->setText("File already open, will switch to:");
+    if (m_saveAs) {
+      m_filenameLabel->setText("File already open, CANNOT save as this name:");
+    }
+    else {
+      m_filenameLabel->setText("File already open, will switch to:");
+    }
     return;
   }
 
@@ -123,7 +129,12 @@ void FilenameInputDialog::setFilenameLabel()
 
   if (sfu.absolutePathExists(filename)) {
     if (sfu.absoluteFileExists(filename)) {
-      m_filenameLabel->setText("File exists:");
+      if (m_saveAs) {
+        m_filenameLabel->setText("File exists, will overwrite:");
+      }
+      else {
+        m_filenameLabel->setText("File exists:");
+      }
     }
     else {
       m_filenameLabel->setText("Is a directory:");
@@ -317,10 +328,35 @@ void FilenameInputDialog::on_textEdited(QString const &)
 void FilenameInputDialog::on_help()
 {
   QMessageBox::information(this, "Help",
-    "Type a file name to create or open or switch to it.\n"
-    "\n"
-    "Tab: Complete partial file or directory name.\n"
-    "PageUp/Down: Scroll the completions window.\n");
+    qstringb(
+      (m_saveAs?
+        "Type a file name to choose the name to save as.\n" :
+        "Type a file name to create or open or switch to it.\n") <<
+      "\n"
+      "Tab: Complete partial file or directory name.\n"
+      "PageUp/Down: Scroll the completions window.\n"));
+}
+
+
+void FilenameInputDialog::accept()
+{
+  string filename = toString(m_filenameEdit->text());
+
+  SMFileUtil sfu;
+  if (m_saveAs && sfu.absoluteFileExists(filename)) {
+    QMessageBox box(this);
+    box.setWindowTitle("Overwrite Existing File?");
+    box.setText(qstringb(
+      "Overwrite existing file \"" << filename << "\"?"));
+    box.addButton(QMessageBox::Yes);
+    box.addButton(QMessageBox::Cancel);
+    if (box.exec() != QMessageBox::Yes) {
+      // Bail out without closing.
+      return;
+    }
+  }
+
+  this->QDialog::accept();
 }
 
 

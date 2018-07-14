@@ -37,6 +37,14 @@ class EditorWindow : public QWidget,
 public:      // static data
   static int s_objectCount;
 
+public:      // types
+  // Various kinds of file choosers available.
+  enum FileChooseDialogKind {
+    FCDK_NATIVE,             // OS native.
+    FCDK_QT,                 // Qt version.
+    FCDK_FILENAME_INPUT,     // My FilenameInputDialog.
+  };
+
 private:     // data
   // associated global state
   RCSerf<GlobalState> m_globalState;
@@ -87,7 +95,8 @@ private:     // funcs
 
   // Start the file chooser.  Return an empty string if it is canceled,
   // otherwise the chosen file name.
-  string fileChooseDialog(string const &dir, bool saveAs, bool useNative);
+  string fileChooseDialog(string const &dir, bool saveAs,
+    FileChooseDialogKind dialogKind);
 
   void rebuildWindowMenu();
   void complain(char const *msg);

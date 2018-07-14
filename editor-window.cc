@@ -360,16 +360,25 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 
 
 string EditorWindow::fileChooseDialog(string const &origDir,
-  bool saveAs, bool useNative)
+  bool saveAs, FileChooseDialogKind dialogKind)
 {
   string dir(origDir);
-  TRACE("fileOpen", "saveAs=" << saveAs << " dir: " << dir);
+  TRACE("fileChooseDialog",
+    "saveAs=" << saveAs << " kind=" << dialogKind << " dir: " << dir);
   if (dir == ".") {
     // If I pass "." to one of the static members of QFileDialog, it
     // automatically goes to the current directory.  But when using
     // QFileDialog directly, I have to pass the real directory name.
     dir = SMFileUtil().currentDirectory();
     TRACE("fileOpen", "current dir: " << dir);
+  }
+
+  if (dialogKind == FCDK_FILENAME_INPUT) {
+    FilenameInputDialog dialog;
+    dialog.setSaveAs(saveAs);
+    QString choice =
+      dialog.runDialog(&(m_globalState->m_documentList), toQString(dir));
+    return toString(choice);
   }
 
   QFileDialog dialog(this);
@@ -399,7 +408,7 @@ string EditorWindow::fileChooseDialog(string const &origDir,
   // 2018-07-14: I have built my own file chooser that is, IMO, much
   // better than either Windows or Qt's dialogs.  I'm just leaving this
   // here in case I want to continue experimenting.
-  if (!useNative) {
+  if (dialogKind == FCDK_QT) {
     dialog.setOptions(QFileDialog::DontUseNativeDialog);
   }
 
@@ -444,14 +453,14 @@ void EditorWindow::fileOpenNativeDialog()
 {
   this->fileOpenFile(
     this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
-                           false /*saveAs*/, true /*useNative*/));
+                           false /*saveAs*/, FCDK_NATIVE));
 }
 
 void EditorWindow::fileOpenQtDialog()
 {
   this->fileOpenFile(
     this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
-                           false /*saveAs*/, false /*useNative*/));
+                           false /*saveAs*/, FCDK_QT));
 }
 
 void EditorWindow::fileOpenFile(string const &name)
@@ -581,7 +590,7 @@ void EditorWindow::fileSaveAs()
 
   while (true) {
     string chosenFilename =
-      this->fileChooseDialog(dir, true /*saveAs*/, true /*native*/);
+      this->fileChooseDialog(dir, true /*saveAs*/, FCDK_FILENAME_INPUT);
     if (chosenFilename.isempty()) {
       return;
     }

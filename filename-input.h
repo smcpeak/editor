@@ -65,6 +65,10 @@ private:     // data
   // This is only non-NULL while 'runDialog' is running.
   RCSerf<NamedTextDocumentList const> m_docList;
 
+  // True if we should be prompting for a file to save.  False means
+  // we are loading.  Initially false.
+  bool m_saveAs;
+
 private:     // funcs
   // Set 'm_filenameLabel'.
   void setFilenameLabel();
@@ -91,6 +95,8 @@ public:      // funcs
   FilenameInputDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~FilenameInputDialog();
 
+  void setSaveAs(bool s) { m_saveAs = s; }
+
   // Show the dialog and return the name of the file the user has
   // chosen, or "" if canceled.
   QString runDialog(NamedTextDocumentList const *docList,
@@ -99,9 +105,12 @@ public:      // funcs
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
-public slots:
+public Q_SLOTS:
   void on_textEdited(QString const &);
   void on_help();
+
+  // QDialog slots.
+  virtual void accept() OVERRIDE;
 };
 
 
