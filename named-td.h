@@ -61,7 +61,7 @@ private:     // data
   // working directory of the process.  For others, it's somewhat
   // arbitrary, with the working directory of the editor itself acting
   // as the final fallback.  It must always end with a path separator
-  // character.
+  // character, and it only uses '/' as the separator, even on Windows.
   string m_directory;
 
 public:      // data

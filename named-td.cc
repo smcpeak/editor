@@ -68,7 +68,9 @@ string NamedTextDocument::filename() const
 
 void NamedTextDocument::setDirectory(string const &dir)
 {
-  m_directory = SMFileUtil().ensureEndsWithDirectorySeparator(dir);
+  SMFileUtil sfu;
+  m_directory = sfu.ensureEndsWithDirectorySeparator(
+    sfu.normalizePathSeparators(dir));
 }
 
 

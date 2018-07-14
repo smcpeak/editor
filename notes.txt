@@ -1,6 +1,5 @@
 
 TODOs:
-  - normalize directory separators in m_directory
   - run command to generate entire file; git annotate!
     - enhancements
       - after document re-use, scroll back to top
