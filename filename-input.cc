@@ -4,6 +4,7 @@
 #include "filename-input.h"            // this module
 
 // smqtutil
+#include "qtguiutil.h"                 // messageBox
 #include "qtutil.h"                    // toString(QString)
 
 // smbase
@@ -327,7 +328,7 @@ void FilenameInputDialog::on_textEdited(QString const &)
 
 void FilenameInputDialog::on_help()
 {
-  QMessageBox::information(this, "Help",
+  messageBox(this, "Help",
     qstringb(
       (m_saveAs?
         "Type a file name to choose the name to save as.\n" :
