@@ -198,57 +198,82 @@ QAction *addMenuAction(
 }
 
 
+#define MENU_TO_WINDOW(title, function) \
+  addMenuAction(menu, title, this, &EditorWindow::function) /* user ; */
+
+#define MENU_TO_WINDOW_KEY(title, function, key) \
+  addMenuAction(menu, title, this, &EditorWindow::function, key) /* user ; */
+
+#define MENU_TO_WIDGET(title, function) \
+  addMenuAction(menu, title, m_editorWidget, &EditorWidget::function) /* user ; */
+
+#define MENU_TO_WIDGET_KEY(title, function, key)                      \
+  addMenuAction(menu, title, m_editorWidget, &EditorWidget::function, \
+                key) /* user ; */
+
+
 void EditorWindow::buildMenu()
 {
   {
-    QMenu *file = this->m_menuBar->addMenu("&File");
-    file->addAction("&New", this, SLOT(fileNewFile()));
-    file->addAction("&Open ...", this, SLOT(fileOpen()), Qt::Key_F3);
+    QMenu *menu = this->m_menuBar->addMenu("&File");
 
-    QMenu *openSubmenu = file->addMenu("Open with traditional dialog");
-    addMenuAction(openSubmenu, "Native ...",
-                  this, &EditorWindow::fileOpenNativeDialog);
-    addMenuAction(openSubmenu, "Qt ...",
-                  this, &EditorWindow::fileOpenQtDialog);
+    MENU_TO_WINDOW    ("&New", fileNewFile);
+    MENU_TO_WINDOW_KEY("&Open ...", fileOpen, Qt::Key_F3);
 
-    file->addAction("&Save", this, SLOT(fileSave()), Qt::Key_F2);
-    file->addAction("Save &as ...", this, SLOT(fileSaveAs()));
-    file->addAction("&Close", this, SLOT(fileClose()), Qt::Key_F4);
-    file->addSeparator();
-    file->addAction("&Reload", this, SLOT(fileReload()));
-    file->addAction("Reload a&ll", this, SLOT(fileReloadAll()));
-    file->addSeparator();
-    addMenuAction(file, "&Launch (run) command ...",
-      this, &EditorWindow::fileLaunchCommand, Qt::ALT + Qt::Key_R);
-    addMenuAction(file, "Run \"&make\" ...",
-      this, &EditorWindow::fileRunMake, Qt::Key_F9);
-    addMenuAction(file, "Kill running process ...",
-      this, &EditorWindow::fileKillProcess);
-    file->addSeparator();
-    file->addAction("E&xit", this, SLOT(fileExit()));
+    {
+      QMenu *submenu = menu->addMenu("Open with traditional dialog");
+      QMenu *menu = submenu;
+      MENU_TO_WINDOW    ("Native ...", fileOpenNativeDialog);
+      MENU_TO_WINDOW    ("Qt ...", fileOpenQtDialog);
+    }
+
+    MENU_TO_WINDOW_KEY("&Save", fileSave, Qt::Key_F2);
+    MENU_TO_WINDOW    ("Save &as ...", fileSaveAs);
+    MENU_TO_WINDOW_KEY("&Close", fileClose, Qt::Key_F4);
+
+    menu->addSeparator();
+
+    MENU_TO_WINDOW    ("&Reload", fileReload);
+    MENU_TO_WINDOW    ("Reload a&ll", fileReloadAll);
+
+    menu->addSeparator();
+
+    MENU_TO_WINDOW_KEY("&Launch (run) command ...", fileLaunchCommand,
+                       Qt::ALT + Qt::Key_R);
+    MENU_TO_WINDOW_KEY("Run \"&make\" ...", fileRunMake, Qt::Key_F9);
+    MENU_TO_WINDOW    ("Kill running process ...", fileKillProcess);
+
+    menu->addSeparator();
+
+    MENU_TO_WINDOW    ("E&xit", fileExit);
   }
 
   {
-    QMenu *edit = this->m_menuBar->addMenu("&Edit");
-    edit->addAction("&Undo", m_editorWidget, SLOT(editUndo()), Qt::ALT + Qt::Key_Backspace);
-    edit->addAction("&Redo", m_editorWidget, SLOT(editRedo()), Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
-    edit->addSeparator();
-    edit->addAction("Cu&t", m_editorWidget, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
-    edit->addAction("&Copy", m_editorWidget, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
-    edit->addAction("&Paste", m_editorWidget, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
-    edit->addAction("&Delete", m_editorWidget, SLOT(editDelete()));
-    addMenuAction(edit, "&Kill (cut) current line",
-                  m_editorWidget, &EditorWidget::editKillLine, Qt::CTRL + Qt::Key_K);
-    edit->addSeparator();
-    edit->addAction("&Search ...", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
-    edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
-    edit->addAction("&Apply Command to Selection...", this,
-                    SLOT(editApplyCommand()), Qt::ALT + Qt::Key_A);
+    QMenu *menu = this->m_menuBar->addMenu("&Edit");
+
+    MENU_TO_WIDGET_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
+    MENU_TO_WIDGET_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+
+    menu->addSeparator();
+
+    MENU_TO_WIDGET_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
+    MENU_TO_WIDGET_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
+    MENU_TO_WIDGET_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
+    MENU_TO_WIDGET    ("&Delete", editDelete);
+    MENU_TO_WIDGET_KEY("&Kill (cut) current line", editKillLine,
+                       Qt::CTRL + Qt::Key_K);
+
+    menu->addSeparator();
+
+    MENU_TO_WINDOW_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
+    MENU_TO_WINDOW_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
+    MENU_TO_WINDOW_KEY("&Apply Command to Selection...",
+                       editApplyCommand, Qt::ALT + Qt::Key_A);
   }
 
-  #define CHECKABLE_ACTION(field, title, slot, initChecked)  \
-    this->field = menu->addAction(title, this, slot);        \
-    this->field->setCheckable(true);                         \
+  #define CHECKABLE_ACTION(field, title, function, initChecked)  \
+    this->field = MENU_TO_WINDOW(title, function);               \
+    this->field->setCheckable(true);                             \
     this->field->setChecked(initChecked) /* user ; */
 
   {
@@ -256,59 +281,65 @@ void EditorWindow::buildMenu()
 
     CHECKABLE_ACTION(m_toggleVisibleWhitespaceAction,
       "Visible &whitespace",
-      SLOT(viewToggleVisibleWhitespace()),
+      viewToggleVisibleWhitespace,
       this->m_editorWidget->m_visibleWhitespace);
 
-    menu->addAction("Set whitespace opacity...", this, SLOT(viewSetWhitespaceOpacity()));
+    MENU_TO_WINDOW    ("Set whitespace opacity...", viewSetWhitespaceOpacity);
 
     CHECKABLE_ACTION(m_toggleVisibleSoftMarginAction,
       "Visible soft &margin",
-      SLOT(viewToggleVisibleSoftMargin()),
+      viewToggleVisibleSoftMargin,
       this->m_editorWidget->m_visibleSoftMargin);
 
-    menu->addAction("Set soft margin column...", this, SLOT(viewSetSoftMarginColumn()));
+    MENU_TO_WINDOW    ("Set soft margin column...", viewSetSoftMarginColumn);
 
     CHECKABLE_ACTION(m_toggleHighlightTrailingWSAction,
       "Highlight &trailing whitespace",
-      SLOT(viewToggleHighlightTrailingWS()),
+      viewToggleHighlightTrailingWS,
       this->m_editorWidget->highlightTrailingWhitespace());
 
-    addMenuAction(menu, "Set &Highlighting...",
-      this, &EditorWindow::viewSetHighlighting);
+    MENU_TO_WINDOW    ("Set &Highlighting...", viewSetHighlighting);
   }
 
   #undef CHECKABLE_ACTION
 
   {
-    QMenu *window = this->m_menuBar->addMenu("&Window");
+    QMenu *menu = this->m_menuBar->addMenu("&Window");
 
-    window->addAction("Choose an &Open Document ...", this,
-      SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_O);
+    MENU_TO_WINDOW_KEY("Choose an &Open Document ...",
+                       windowOpenFilesList, Qt::CTRL + Qt::Key_O);
 
-    window->addSeparator();
+    menu->addSeparator();
 
-    window->addAction("&New Window", this, SLOT(windowNewWindow()));
-    window->addAction("&Close Window", this,
-      SLOT(windowCloseWindow()), Qt::CTRL + Qt::Key_F4);
-    window->addAction("Move/size to Left Screen Half", this,
-      SLOT(windowOccupyLeft()), Qt::CTRL + Qt::ALT + Qt::Key_Left);
-    window->addAction("Move/size to Right Screen Half", this,
-      SLOT(windowOccupyRight()), Qt::CTRL + Qt::ALT + Qt::Key_Right);
+    MENU_TO_WINDOW    ("&New Window", windowNewWindow);
+    MENU_TO_WINDOW_KEY("&Close Window",
+      windowCloseWindow, Qt::CTRL + Qt::Key_F4);
+    MENU_TO_WINDOW_KEY("Move/size to Left Screen Half",
+      windowOccupyLeft, Qt::CTRL + Qt::ALT + Qt::Key_Left);
+    MENU_TO_WINDOW_KEY("Move/size to Right Screen Half",
+      windowOccupyRight, Qt::CTRL + Qt::ALT + Qt::Key_Right);
 
-    window->addSeparator();
+    menu->addSeparator();
 
-    this->m_windowMenu = window;
-    connect(this->m_windowMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(windowFileChoiceActivated(QAction*)));
+    this->m_windowMenu = menu;
+    connect(this->m_windowMenu, &QMenu::triggered,
+            this, &EditorWindow::windowFileChoiceActivated);
   }
 
   {
-    QMenu *help = this->m_menuBar->addMenu("&Help");
-    help->addAction("&Keybindings...", this, SLOT(helpKeybindings()));
-    help->addAction("&About Scott's Editor...", this, SLOT(helpAbout()));
-    help->addAction("About &Qt ...", this, SLOT(helpAboutQt()));
+    QMenu *menu = this->m_menuBar->addMenu("&Help");
+
+    MENU_TO_WINDOW    ("&Keybindings...", helpKeybindings);
+    MENU_TO_WINDOW    ("&About Scott's Editor...", helpAbout);
+    MENU_TO_WINDOW    ("About &Qt ...", helpAboutQt);
   }
 }
+
+
+#undef MENU_TO_WINDOW
+#undef MENU_TO_WINDOW_KEY
+#undef MENU_TO_WIDGET
+#undef MENU_TO_WIDGET_KEY
 
 
 // not inline because main.h doesn't see editor.h
