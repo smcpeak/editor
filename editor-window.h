@@ -162,6 +162,13 @@ public Q_SLOTS:
   void fileKillProcess();
   void fileExit();
 
+  void editUndo();
+  void editRedo();
+  void editCut();
+  void editCopy();
+  void editPaste();
+  void editDelete();
+  void editKillLine() NOEXCEPT;
   void editISearch();
   void editGotoLine();
   void editApplyCommand();

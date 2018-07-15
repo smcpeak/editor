@@ -204,13 +204,6 @@ QAction *addMenuAction(
 #define MENU_TO_WINDOW_KEY(title, function, key) \
   addMenuAction(menu, title, this, &EditorWindow::function, key) /* user ; */
 
-#define MENU_TO_WIDGET(title, function) \
-  addMenuAction(menu, title, m_editorWidget, &EditorWidget::function) /* user ; */
-
-#define MENU_TO_WIDGET_KEY(title, function, key)                      \
-  addMenuAction(menu, title, m_editorWidget, &EditorWidget::function, \
-                key) /* user ; */
-
 
 void EditorWindow::buildMenu()
 {
@@ -251,16 +244,16 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
 
-    MENU_TO_WIDGET_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
-    MENU_TO_WIDGET_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+    MENU_TO_WINDOW_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
+    MENU_TO_WINDOW_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
 
     menu->addSeparator();
 
-    MENU_TO_WIDGET_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
-    MENU_TO_WIDGET_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
-    MENU_TO_WIDGET_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
-    MENU_TO_WIDGET    ("&Delete", editDelete);
-    MENU_TO_WIDGET_KEY("&Kill (cut) current line", editKillLine,
+    MENU_TO_WINDOW_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
+    MENU_TO_WINDOW_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
+    MENU_TO_WINDOW_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
+    MENU_TO_WINDOW    ("&Delete", editDelete);
+    MENU_TO_WINDOW_KEY("&Kill (cut) current line", editKillLine,
                        Qt::CTRL + Qt::Key_K);
 
     menu->addSeparator();
@@ -338,8 +331,6 @@ void EditorWindow::buildMenu()
 
 #undef MENU_TO_WINDOW
 #undef MENU_TO_WINDOW_KEY
-#undef MENU_TO_WIDGET
-#undef MENU_TO_WIDGET_KEY
 
 
 // not inline because main.h doesn't see editor.h
@@ -938,6 +929,44 @@ void EditorWindow::fileExit()
   if (this->canQuitApplication()) {
     GlobalState::quit();
   }
+}
+
+
+void EditorWindow::editUndo()
+{
+  m_editorWidget->editUndo();
+}
+
+void EditorWindow::editRedo()
+{
+  m_editorWidget->editRedo();
+}
+
+void EditorWindow::editCut()
+{
+  m_editorWidget->editCut();
+}
+
+void EditorWindow::editCopy()
+{
+  m_editorWidget->editCopy();
+}
+
+void EditorWindow::editPaste()
+{
+  m_editorWidget->editPaste();
+}
+
+void EditorWindow::editDelete()
+{
+  m_editorWidget->editDelete();
+}
+
+void EditorWindow::editKillLine() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->editKillLine();
+  GENERIC_CATCH_END
 }
 
 

@@ -1606,9 +1606,8 @@ void EditorWidget::editDelete()
 }
 
 
-void EditorWidget::editKillLine() NOEXCEPT
+void EditorWidget::editKillLine()
 {
-  GENERIC_CATCH_BEGIN
   INITIATING_DOCUMENT_CHANGE();
   if (!editSafetyCheck()) {
     return;
@@ -1617,7 +1616,6 @@ void EditorWidget::editKillLine() NOEXCEPT
     m_editor->selectCursorLine();
   }
   editCut();
-  GENERIC_CATCH_END
 }
 
 

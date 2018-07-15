@@ -410,19 +410,19 @@ public:      // funcs
   void printUnhandled(xBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
-public slots:
-  // slots to respond to scrollbars
-  void scrollToLine(int line);
-  void scrollToCol(int col);
-
-  // edit menu
+  // Edit menu functions.
   void editUndo();
   void editRedo();
   void editCut();
   void editCopy();
   void editPaste();
   void editDelete();
-  void editKillLine() NOEXCEPT;
+  void editKillLine();
+
+public Q_SLOTS:
+  // slots to respond to scrollbars
+  void scrollToLine(int line);
+  void scrollToCol(int col);
 
 signals:
   // Emitted when some aspect of the document that is shown outside the
