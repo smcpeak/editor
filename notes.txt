@@ -1,5 +1,9 @@
 
 TODOs:
+  - BUG: search and replace: highlight text, Ctrl+S, Tab, type replacement,
+    Ctrl+R: jumps ahead instead of replacing selection
+  - need to disconnect signals in destructors
+  - remove defunct 'dialogs' module
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process

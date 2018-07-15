@@ -1,0 +1,55 @@
+signals-and-dtors.txt
+---------------------
+
+This document explains is an issue with signals and destructors in Qt.
+
+
+Short version
+-------------
+
+If your constructor calls QObject::connect, connecting other objects'
+signals to your slots, your destructor should *explicitly* call
+QObject::disconnect, for example:
+
+  QObject::disconnect(otherObject, NULL, this, NULL);
+
+for each 'otherObject' that you connected in the constructor.
+
+
+Details
+-------
+
+I'll explain with the example of CommandRunner.  It has a member object
+'m_process', an instance of QProcess.  The CommandRunner constructor
+connects signals from 'm_process' to its own slots, something like:
+
+  QObject::connect(&m_process, &QProcess::errorOccurred,
+                   this, &CommandRunner::on_errorOccurred);
+
+Suppose ~CommandRunner runs and does not explicitly disconnect its
+slots.  After the body finishes, 'm_errorMessage' (a QString) is
+destroyed.  A bit later, 'm_process' is destroyed.  The QProcess
+destructor, if the process is still alive, tries to kill it and then
+waits for up to 30s.  While waiting, if the process dies, it will send
+the errorOccurred signal.
+
+That fires CommandRunner::on_errorOccured, which calls 'setFailed',
+which sets 'm_errorMessage'.  But that object has already been
+destroyed, and its 'd' data member could therefore be pointing at
+deallocated storage, causing memory corruption when it tries to store
+the new string.  Alternatively, 'd' could be NULL (e.g., if nothing had
+previously been stored), so a new object will be allocated and then
+leaked (since the dtor already ran).
+
+Only after all of those fireworks does the embedded QObject destructor,
+as a base class of CommandRunner, run, automatically disconnecting the
+signals.  This is of course too late.
+
+In general, an arbitrarily large amount of code can run between the end
+of a destructor body and the base class subobject QObject destructor.
+If any of that code triggers a signal to one of our slots, we have a
+problem.  Therefore, the safe thing to do is explicitly disconnect
+all slots before the end of the destructor body.
+
+
+EOF

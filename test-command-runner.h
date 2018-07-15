@@ -23,6 +23,7 @@ public:      // types
     P_CAT,
     P_ECHO,
     P_KILL,
+    P_KILL_NO_WAIT,
   };
 
 public:      // data

@@ -1,0 +1,121 @@
+qprocess-hangs.txt
+------------------
+
+Subject: QProcess hangs for 30s if child is unkillable.
+
+If QProcess spawns a child process that ends up being unkillable,
+its destructor will hang for 30 seconds, and there is nothing the user
+of the QProcess API can reasonably do about that.
+
+Here is a demonstration:
+
+  $ ./qproc ./mysetuid 35
+  starting: ./mysetuid 35
+  waiting for 200 ms ...
+  in mysetiud main()
+  geteuid: 0
+  getuid: 1000
+  calling setreuid(0,0)
+  geteuid: 0
+  getuid: 0
+  now ignoring signal 1
+  now ignoring signal 2
+  now ignoring signal 3
+  sleeping for 35 seconds ...
+  QProcess state: Running
+  QProcess error: UnknownError
+  calling QProcess::kill ...
+  waiting for 200 ms again ...
+  QProcess state: Running
+  QProcess error: UnknownError
+  destroying QProcess ...
+  QProcess: Destroyed while process ("./mysetuid") is still running.
+  QProcess has been destroyed                 <--- appears after 30s
+  destruction of QProcess took about 30 seconds
+
+  $ done sleeping                             <--- appears after 35s
+  mysetuid main() terminating
+
+Above, 'qproc' is qproc.cc, a program that uses QProcess to run its
+command line arguments as a child process.  'mysetuid' is mysetuid.c,
+a C program that makes itself unkillable once invoked with setuid-root
+privileges.  It does that with 'setreuid(0,0)' and ignoring signals,
+then sleeping for the specified number of seconds.
+
+The bug is, in essence, "destruction of QProcess took about 30 seconds".
+That is 30s during which the process is completely hung, not servicing
+events.  This is despite having already called QProcess::kill
+explicitly.
+
+One way a client might avoid the 30s hang for an unkillable child to
+allocate the QProcess object on the heap and either leak it and its
+buffers or else run its destructor in a separate thread (which may not
+be safe).  Another might be to bypass the C++ type system to change
+'d->processState' from the outside.  Perhaps another is to interpose
+one's own thunk process that spawns the child with the same disposition
+but is itself always killable (hard to do on Windows).
+
+
+Cause
+-----
+
+The cause of this bug is clear from the QProcess source code:
+
+  // qt5/qtbase/src/corelib/io/qprocess.cpp:1256
+  QProcess::~QProcess()
+  {
+      Q_D(QProcess);
+      if (d->processState != NotRunning) {
+          qWarning().nospace()
+              << "QProcess: Destroyed while process [...] running.";
+          kill();
+          waitForFinished();        <---- hangs here
+      }
+      [...]
+  }
+
+The 'waitForFinished' calls 'WaitForSingleObject' on Windows and either
+'poll' or 'select' on unix, waiting just for file descriptors related
+to the process; they do not pump the event queue.
+
+There is a similar issue in QProcess::close, which waits forever.
+
+
+Solutions
+---------
+
+One possible solution would be to add a "detach" function to QProcess
+that closes all of the handles, deallocates its buffers, and abandons
+the child process to its fate.  A client that has already tried kill()
+and found it ineffective could use that to allow the QProcess destructor
+to run without hanging.
+
+Another would be for 'kill' to indicate that the underlying OS call
+failed (TerminateProcess or the kill system call) and, in that case, not
+try to wait since, if the syscall failed, there is no reason to believe
+the process will die anytime soon.  Reporting errors from 'kill' would
+be a nice enhancement in its own right.
+
+Of course, to do that, QProcess would need a new 'kill' method since
+'kill' itself is a slot and hence cannot return anything.  Also, not all
+unkillable children cause the system call to fail.  For example, on
+Linux, it is not uncommon for a child to become unkillable for a while
+due to NFS issues, and in that case I don't think the 'kill' system call
+reports an error.
+
+An issue with both of the above, and with the current "hang for 30s"
+behavior, is nothing will reap the child process if and when it
+eventually terminates.  In time, that could fill up the OS process
+table.  Ideally, both "detach" and "failed to kill" would hand the child
+off to a small reaper object that would indefinitely wait.  That could
+reasonably be QProcess itself if there were a way to tell it to close
+its handles and deallocate its buffers.
+
+Calling QIODevice::close() will deallocate the buffers.  But that is
+just a one-time thing.  What happens if the unkillable child is also
+generating unbounded amounts of output?  What happens to QIODevice after
+close() is called but more data arrives?  At best it allocates the
+buffers anew, but then I would need a reaper to collect and discard that
+data indefinitely.
+
+

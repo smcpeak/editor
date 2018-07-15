@@ -7,11 +7,15 @@
 #include "qtutil.h"                    // qstringb
 
 // smbase
+#include "sm-iostream.h"               // cerr, etc.
 #include "trace.h"                     // TRACE
 
 // Qt
 #include <qtcoreversion.h>             // QTCORE_VERSION
 #include <QTimerEvent>
+
+// libc
+#include <assert.h>                    // assert
 
 
 // Tracing for this module.
@@ -28,6 +32,17 @@ static int const TIME_LIMIT_MS = 2000;
 static int const KILL_WAIT_TIMEOUT_MS = 500;
 
 
+static char const *toString(QProcess::ProcessState state)
+{
+  switch (state) {
+    case QProcess::NotRunning:   return "NotRunning";
+    case QProcess::Starting:     return "Starting";
+    case QProcess::Running:      return "Running";
+    default:                     return "Invalid ProcessState";
+  }
+}
+
+
 CommandRunner::CommandRunner()
   : m_eventLoop(),
     m_timerId(-1),
@@ -42,6 +57,7 @@ CommandRunner::CommandRunner()
     m_errorData(),
     m_startInvoked(false),
     m_failed(false),
+    m_thisObjectDestroyed(false),
     m_errorMessage(),
     m_processError(QProcess::UnknownError),
     m_exitCode(-1)
@@ -84,7 +100,33 @@ CommandRunner::CommandRunner()
 }
 
 CommandRunner::~CommandRunner()
-{}
+{
+  TRACE_CR("~CommandRunner: state=" << toString(m_process.state()));
+
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(&m_process, NULL, this, NULL);
+
+  if (m_killedProcess && m_process.state() != QProcess::NotRunning) {
+    // We already tried and failed to kill the process.  The QProcess
+    // destructor will try again, but most likely also fail, then
+    // hang for 30s.  See doc/qprocess-hangs.txt.
+    QStringList args(m_process.arguments());
+    cerr << "Warning: The command \"" << toString(m_process.program())
+         << (args.isEmpty()? "" : " ") << toString(args.join(' '))
+         << "\", with process ID " << m_process.processId()
+         << ", is still running, despite a prior attempt to kill it.  "
+            "Most likely, this will cause a 30s hang, during which no "
+            "interaction is possible, due to a limitation in Qt."
+         << endl;
+  }
+
+  // After this line, the members of CommandRunner are destroyed,
+  // including 'm_process'.  That member's destructor does quite a bit,
+  // including sending signals.  I want to be able to verify that my
+  // methods are not being further invoked, since that risks memory
+  // corruption.
+  m_thisObjectDestroyed = true;
+}
 
 
 void CommandRunner::setFailed(QProcess::ProcessError pe, QString const &msg)
@@ -101,7 +143,8 @@ void CommandRunner::setFailed(QProcess::ProcessError pe, QString const &msg)
   else {
     // We already have an error message.  Discard subsequent messages
     // because they may arise from various signals sent as the process
-    // running infrastructure shuts down.
+    // running infrastructure shuts down, but only the first message
+    // arose directly from whatever happened.
     TRACE_CR("setFailed: disregarding due to prior message");
   }
 }
@@ -139,11 +182,8 @@ void CommandRunner::timerEvent(QTimerEvent *event)
 }
 
 
-QString CommandRunner::killProcess()
+QString CommandRunner::killProcessNoWait()
 {
-  // I do not TRACE here; the caller should have done so, providing
-  // a little more context.
-
   if (m_killedProcess) {
     TRACE_CR("killProcess: not killing process again");
     return "Already attempted to kill process.";
@@ -159,8 +199,21 @@ QString CommandRunner::killProcess()
 
   // There is unfortunately no way to get any OS errors from this call.
   // That is a limitation of QProcess.
-  m_process.kill();
+  TRACE_CR("killProcess: calling QProcess::kill");
+  m_process.kill();        // This returns immediately.
+  return "";
+}
 
+
+QString CommandRunner::killProcess()
+{
+  QString ret = this->killProcessNoWait();
+  if (!ret.isEmpty()) {
+    return ret;
+  }
+
+  // The 'wait' call blocks without pumping the event queue, so the
+  // app freezes if this takes time.
   TRACE_CR("killProcess: waitForFinished");
   if (m_process.waitForFinished(KILL_WAIT_TIMEOUT_MS)) {
     TRACE_CR("killProcess: waitForFinished returned true");
@@ -496,6 +549,7 @@ void CommandRunner::on_errorOccurred(QProcess::ProcessError error)
 {
   char const *errorString = toString(error);
   TRACE_CR("on_errorOccurred: e=" << error << ", str: " << errorString);
+  assert(!m_thisObjectDestroyed);
 
   this->setFailed(error, errorString);
 
@@ -517,6 +571,7 @@ void CommandRunner::on_finished(int exitCode, QProcess::ExitStatus exitStatus)
 {
   TRACE_CR("on_finished: exitCode=" << exitCode <<
            ", status=" << toString(exitStatus));
+  assert(!m_thisObjectDestroyed);
 
   if (exitStatus == QProcess::CrashExit) {
     this->setFailed(QProcess::Crashed, toString(QProcess::Crashed));
@@ -553,16 +608,6 @@ void CommandRunner::on_started()
 }
 
 
-static char const *toString(QProcess::ProcessState state)
-{
-  switch (state) {
-    case QProcess::NotRunning:   return "NotRunning";
-    case QProcess::Starting:     return "Starting";
-    case QProcess::Running:      return "Running";
-    default:                     return "Invalid ProcessState";
-  }
-}
-
 void CommandRunner::on_stateChanged(QProcess::ProcessState newState)
 {
   TRACE_CR("on_stateChanged: " << toString(newState));
@@ -584,6 +629,7 @@ void CommandRunner::on_aboutToClose()
 void CommandRunner::on_bytesWritten(qint64 bytes)
 {
   TRACE_CR("on_bytesWritten: " << bytes);
+  assert(!m_thisObjectDestroyed);
   this->sendData();
 }
 
@@ -614,6 +660,7 @@ static bool appendData_gainedUtf8Newline(QByteArray &arr,
 void CommandRunner::on_channelReadyRead(int channelNumber)
 {
   TRACE_CR("on_channelReadyRead: " << channelNumber);
+  assert(!m_thisObjectDestroyed);
 
   // Decode 'channelNumber'.
   QProcess::ProcessChannel channel;

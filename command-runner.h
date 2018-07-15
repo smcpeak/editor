@@ -69,6 +69,9 @@ private:     // data
   // 'm_processError' and 'm_errorMessage' have more detail.
   bool m_failed;
 
+  // True once the body of CommandRunner::~CommandRunner() finishes.
+  bool m_thisObjectDestroyed;
+
   // If non-empty, a human-readable description of what went wrong.
   QString m_errorMessage;
 
@@ -184,8 +187,16 @@ public:      // funcs
   QByteArray takeErrorData();
 
   // Kill the process if we haven't done so already.  If there is a
-  // problem, return a string describing it; otherwise "".
+  // problem, including that we already tried to kill it, return a
+  // string describing it; otherwise "".  This will wait up to half a
+  // second for the process to terminate, during which the event queue
+  // is *not* pumped, so the app freezes.
   QString killProcess();
+
+  // Attempt to kill the process without waiting for it afterward.  It
+  // is best to avoid doing this and then immediately destroying the
+  // CommandRunner object because the QProcess will be confused.
+  QString killProcessNoWait();
 
   // ---------------------- process status -------------------------
   // Return true if the process has started and not terminated.  Only

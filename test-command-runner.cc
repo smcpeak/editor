@@ -467,6 +467,24 @@ void CRTester::slot_outputLineReady() NOEXCEPT
         }
         break;
 
+      case P_KILL_NO_WAIT:
+        switch (m_outputState) {
+          case 0:
+            assert(line == "hello\n");
+            m_commandRunner->killProcessNoWait();
+            m_outputState++;
+
+            // Quit the event loop so I can see the dtor complaint.
+            this->exit(0);
+
+            break;
+
+          default:
+            assert(!"bad state");
+            break;
+        }
+        break;
+
       default:
         assert(!"bad protocol");
         break;
@@ -482,6 +500,7 @@ void CRTester::slot_errorLineReady() NOEXCEPT
     switch (m_protocol) {
       case P_CAT:
       case P_KILL:
+      case P_KILL_NO_WAIT:
         assert(!"should not be any error data");
         break;
 
@@ -513,7 +532,7 @@ void CRTester::slot_errorLineReady() NOEXCEPT
 
 void CRTester::slot_processTerminated() NOEXCEPT
 {
-  if (m_protocol != P_KILL) {
+  if (m_protocol != P_KILL && m_protocol != P_KILL_NO_WAIT) {
     assert(!m_commandRunner->isRunning());
     assert(!m_commandRunner->getFailed());
     assert(m_commandRunner->getExitCode() == 0);
@@ -568,26 +587,55 @@ static void testAsyncBothOutputs()
 }
 
 
-static void testAsyncKill()
+static void testAsyncKill(bool wait)
 {
-  CommandRunner cr;
-  CRTester tester(&cr, CRTester::P_KILL);
+  try {
+    CommandRunner cr;
+    CRTester tester(&cr, wait? CRTester::P_KILL : CRTester::P_KILL_NO_WAIT);
 
-  cr.setProgram("cat");
-  cr.startAsynchronous();
+    char const *cmd = "cat";
+    if (char const *otherCmd = getenv("TEST_CMD_ASYNC")) {
+      // Allow the command to be changed for interactive testing.
+      cmd = otherCmd;
+    }
 
-  cr.putInputData(QByteArray("hello\n"));
+    cr.setProgram(cmd);
+    cr.startAsynchronous();
 
-  tester.exec();
+    cr.putInputData(QByteArray("hello\n"));
 
-  xassert(!cr.isRunning());
-  xassert(!cr.hasOutputData());
-  xassert(!cr.hasErrorData());
+    int res = tester.exec();
+    cout << "testAsyncKill: exec() finished with code " << res << endl;
 
-  xassert(cr.getFailed());
-  PVAL(toString(cr.getErrorMessage()));
-  xassert(cr.getProcessError() == QProcess::Crashed);
+    if (wait) {
+      xassert(!cr.isRunning());
+      xassert(!cr.hasOutputData());
+      xassert(!cr.hasErrorData());
+
+      xassert(cr.getFailed());
+      PVAL(toString(cr.getErrorMessage()));
+      xassert(cr.getProcessError() == QProcess::Crashed);
+    }
+    else {
+      // Since we didn't give the event loop an opportunity to run,
+      // QProcess should still think the process is alive.
+      xassert(cr.isRunning());
+    }
+  }
+  catch (...) {
+    cout << "testAsyncKill: exception propagating out" << endl;
+    throw;
+  }
+
+  cout << "testAsyncKill(" << wait << ") finished" << endl;
 }
+
+
+#define RUN(statement)                                         \
+  if (!oneTest || 0==strcmp(oneTest, #statement)) {            \
+    cout << "------ " << #statement << " ------" << endl;      \
+    statement;                                                 \
+  }
 
 
 static void entry(int argc, char **argv)
@@ -596,31 +644,28 @@ static void entry(int argc, char **argv)
 
   QCoreApplication app(argc, argv);
 
-  if (false) {
-    QProcessEnvironment env(QProcessEnvironment::systemEnvironment());
-    QString path = env.value("PATH");
-    cout << "PATH: " << toString(path) << endl;
-  }
-
   // Cygwin is needed for the build anyway, so this should not be a
   // big deal.  I did give some thought to writing the tests so they
   // work work without cygwin, but plain Windows is a very spartan
   // environment.
   cout << "NOTE: These tests require cygwin on Windows.\n";
 
-  testProcessError();
-  testExitCode();
-  testOutputData();
-  testLargeData1();
-  testLargeData2(false);
-  testLargeData2(true);
-  testWorkingDirectory();
-  testAsyncNoSignals();
-  testAsyncWithSignals();
-  testAsyncBothOutputs();
-  testAsyncKill();
+  char const *oneTest = getenv("TEST_CMD_ONE");
 
-  testMiscDiagnostics();
+  RUN(testProcessError());
+  RUN(testExitCode());
+  RUN(testOutputData());
+  RUN(testLargeData1());
+  RUN(testLargeData2(false));
+  RUN(testLargeData2(true));
+  RUN(testWorkingDirectory());
+  RUN(testAsyncNoSignals());
+  RUN(testAsyncWithSignals());
+  RUN(testAsyncBothOutputs());
+  RUN(testAsyncKill(true));
+  RUN(testAsyncKill(false));
+
+  RUN(testMiscDiagnostics());
 
   cout << "test-command-runner tests passed" << endl;
 }
