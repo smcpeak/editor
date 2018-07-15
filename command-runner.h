@@ -15,6 +15,7 @@
 #include <QProcessEnvironment>
 #include <QString>
 
+
 // Run a command on some input, gather the output.
 class CommandRunner : public QObject, public SerfRefCount {
   Q_OBJECT
@@ -119,6 +120,15 @@ public:      // funcs
   // Specify the command line arguments to pass to the program.  The
   // default is to pass no arguments.
   void setArguments(QStringList const &arguments);
+
+  // Get the current program and arguments as a space-separated string.
+  // This is meant for testing; it doesn't do any quoting.
+  QString getCommandLine() const;
+
+  // Set the program and arguments in order to invoke 'command' as a
+  // POSIX shell command.  This will be "sh -c <command>" if it has any
+  // shell metacharacters.
+  void setShellCommandLine(QString const &command);
 
   // Specify the environment variable bindings to pass to the new
   // process.  The default is to pass those of the current process.

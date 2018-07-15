@@ -626,6 +626,23 @@ static void testAsyncKill(bool wait)
 }
 
 
+static void expectSSCL(char const *input, char const *expect)
+{
+  CommandRunner r;
+  r.setShellCommandLine(input);
+  string actual = toString(r.getCommandLine());
+  EXPECT_EQ(actual, string(expect));
+}
+
+static void testSetShellCommandLine()
+{
+  expectSSCL("date", "date");
+  expectSSCL("echo hi", "echo hi");
+  expectSSCL("date | date", "sh -c date | date");
+  expectSSCL("echo 'hi'", "sh -c echo 'hi'");
+}
+
+
 static void printStatus(CommandRunner &runner)
 {
   cout << "CommandRunner running: " << runner.isRunning() << endl;
@@ -725,7 +742,7 @@ static void entry(int argc, char **argv)
   RUN(testExitCode());
   RUN(testOutputData());
   RUN(testLargeData1());
-  RUN(testLargeData2(false));
+  RUN(testLargeData2(false));    // BUG: This has a race condition!
   RUN(testLargeData2(true));
   RUN(testWorkingDirectory());
   RUN(testAsyncNoSignals());
@@ -733,8 +750,8 @@ static void entry(int argc, char **argv)
   RUN(testAsyncBothOutputs());
   RUN(testAsyncKill(true));
   RUN(testAsyncKill(false));
-
   RUN(testMiscDiagnostics());
+  RUN(testSetShellCommandLine());
 
   cout << "test-command-runner tests passed" << endl;
 }

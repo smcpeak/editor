@@ -248,6 +248,99 @@ void CommandRunner::setArguments(QStringList const &arguments)
 }
 
 
+QString CommandRunner::getCommandLine() const
+{
+  QString ret(m_process.program());
+
+  QStringList args(m_process.arguments());
+  if (!args.isEmpty()) {
+    ret.append(' ');
+    ret.append(args.join(' '));
+  }
+
+  return ret;
+}
+
+
+// True if 'c' is a POSIX shell metacharacter other than space.
+static bool isShellMetacharacter(QChar const &c)
+{
+  switch (c.unicode()) {
+    // Order: Going left to right then top to bottom across a US
+    // qwerty keyboard, unshifted before shifted.
+    case '`':
+    case '~':
+    case '!':      // history substitution (applicable?)
+    // not meta: @
+    case '#':
+    case '$':
+    case '%':      // job control (applicable to "sh -c"?)
+    case '^':      // history substitution (applicable?)
+    case '&':
+    case '*':
+    case '(':
+    case ')':
+    // not meta: - _ +
+    case '=':      // meta if appears before command
+    case '[':      // character range glob
+    case '{':      // alternation glob
+    case ']':
+    case '}':
+    case '\\':
+    case '|':
+    case ';':
+    // not meta: :
+    case '"':
+    case '\'':
+    // not meta: ,
+    case '<':
+    // not meta: .
+    case '>':
+    // not meta: /
+    case '?':
+    case '\t':
+    case '\n':
+      return true;
+
+    default:
+      return false;
+  }
+}
+
+static bool hasShellMetacharacters(QString const &s)
+{
+  for (int i=0; i < s.length(); i++) {
+    if (isShellMetacharacter(s[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void CommandRunner::setShellCommandLine(QString const &command)
+{
+  if (hasShellMetacharacters(command)) {
+    this->setProgram("sh");
+    this->setArguments(QStringList() << "-c" << command);
+  }
+  else {
+    // Split directly.  The advantage of this is I can kill the child
+    // process itself rather than just the shell above it.
+    QStringList words(command.split(' ', QString::SkipEmptyParts));
+    if (!words.isEmpty()) {
+      this->setProgram(words.first());
+      words.removeFirst();
+      this->setArguments(words);
+    }
+    else {
+      // Rather than call this an error, just use the shell.
+      this->setProgram("sh");
+      this->setArguments(QStringList() << "-c" << command);
+    }
+  }
+}
+
+
 void CommandRunner::setEnvironment(QProcessEnvironment const &env)
 {
   xassert(!m_startInvoked);

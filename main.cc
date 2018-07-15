@@ -286,9 +286,10 @@ NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
   QObject::connect(watcher, &ProcessWatcher::signal_processTerminated,
                    this,           &GlobalState::on_processTerminated);
 
-  // Launch the child process.  I rely on having a POSIX shell.
-  watcher->m_commandRunner.setProgram("sh");
-  watcher->m_commandRunner.setArguments(QStringList() << "-c" << command);
+  // Interpret the command string as a program and some arguments.
+  watcher->m_commandRunner.setShellCommandLine(command);
+
+  // Launch the child process.
   watcher->m_commandRunner.setWorkingDirectory(dir);
   watcher->m_commandRunner.startAsynchronous();
 
