@@ -296,8 +296,8 @@ static void testLargeData2(bool swapOrder)
   // by my program, so it is good to test both ways.
   cr.setArguments(QStringList() << "-c" <<
     (swapOrder?
-      "(cat test-td-editor.cc 1>&2) & cat editor-widget.cc" :
-      "cat editor-widget.cc & (cat test-td-editor.cc 1>&2)"));
+      "(cat test-td-editor.cc 1>&2) & cat editor-widget.cc ; wait $!" :
+      "cat editor-widget.cc & (cat test-td-editor.cc 1>&2) ; wait $!"));
 
   cr.startAndWait();
   EXPECT_EQ(cr.getFailed(), false);
@@ -742,7 +742,7 @@ static void entry(int argc, char **argv)
   RUN(testExitCode());
   RUN(testOutputData());
   RUN(testLargeData1());
-  RUN(testLargeData2(false));    // BUG: This has a race condition!
+  RUN(testLargeData2(false));
   RUN(testLargeData2(true));
   RUN(testWorkingDirectory());
   RUN(testAsyncNoSignals());
