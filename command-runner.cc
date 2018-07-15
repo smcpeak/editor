@@ -270,7 +270,7 @@ static bool isShellMetacharacter(QChar const &c)
     // qwerty keyboard, unshifted before shifted.
     case '`':
     case '~':
-    case '!':      // history substitution (applicable?)
+    case '!':      // inverts exit status
     // not meta: @
     case '#':
     case '$':
@@ -307,6 +307,11 @@ static bool isShellMetacharacter(QChar const &c)
   }
 }
 
+// True if any character in 'c' is a shell metacharacter.
+//
+// This does not look for shell reserved words such as "if", but for
+// those to work as intended, some other metacharacter (mainly ';')
+// must also be present, so that shouldn't cause problems.
 static bool hasShellMetacharacters(QString const &s)
 {
   for (int i=0; i < s.length(); i++) {
