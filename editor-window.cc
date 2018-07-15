@@ -198,10 +198,10 @@ QAction *addMenuAction(
 }
 
 
-#define MENU_TO_WINDOW(title, function) \
+#define MENU_ITEM(title, function) \
   addMenuAction(menu, title, this, &EditorWindow::function) /* user ; */
 
-#define MENU_TO_WINDOW_KEY(title, function, key) \
+#define MENU_ITEM_KEY(title, function, key) \
   addMenuAction(menu, title, this, &EditorWindow::function, key) /* user ; */
 
 
@@ -210,62 +210,62 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&File");
 
-    MENU_TO_WINDOW    ("&New", fileNewFile);
-    MENU_TO_WINDOW_KEY("&Open ...", fileOpen, Qt::Key_F3);
+    MENU_ITEM    ("&New", fileNewFile);
+    MENU_ITEM_KEY("&Open ...", fileOpen, Qt::Key_F3);
 
     {
       QMenu *submenu = menu->addMenu("Open with traditional dialog");
       QMenu *menu = submenu;
-      MENU_TO_WINDOW    ("Native ...", fileOpenNativeDialog);
-      MENU_TO_WINDOW    ("Qt ...", fileOpenQtDialog);
+      MENU_ITEM    ("Native ...", fileOpenNativeDialog);
+      MENU_ITEM    ("Qt ...", fileOpenQtDialog);
     }
 
-    MENU_TO_WINDOW_KEY("&Save", fileSave, Qt::Key_F2);
-    MENU_TO_WINDOW    ("Save &as ...", fileSaveAs);
-    MENU_TO_WINDOW_KEY("&Close", fileClose, Qt::Key_F4);
+    MENU_ITEM_KEY("&Save", fileSave, Qt::Key_F2);
+    MENU_ITEM    ("Save &as ...", fileSaveAs);
+    MENU_ITEM_KEY("&Close", fileClose, Qt::Key_F4);
 
     menu->addSeparator();
 
-    MENU_TO_WINDOW    ("&Reload", fileReload);
-    MENU_TO_WINDOW    ("Reload a&ll", fileReloadAll);
+    MENU_ITEM    ("&Reload", fileReload);
+    MENU_ITEM    ("Reload a&ll", fileReloadAll);
 
     menu->addSeparator();
 
-    MENU_TO_WINDOW_KEY("&Launch (run) command ...", fileLaunchCommand,
-                       Qt::ALT + Qt::Key_R);
-    MENU_TO_WINDOW_KEY("Run \"&make\" ...", fileRunMake, Qt::Key_F9);
-    MENU_TO_WINDOW    ("Kill running process ...", fileKillProcess);
+    MENU_ITEM_KEY("&Launch (run) command ...", fileLaunchCommand,
+                  Qt::ALT + Qt::Key_R);
+    MENU_ITEM_KEY("Run \"&make\" ...", fileRunMake, Qt::Key_F9);
+    MENU_ITEM    ("Kill running process ...", fileKillProcess);
 
     menu->addSeparator();
 
-    MENU_TO_WINDOW    ("E&xit", fileExit);
+    MENU_ITEM    ("E&xit", fileExit);
   }
 
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
 
-    MENU_TO_WINDOW_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
-    MENU_TO_WINDOW_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
+    MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
+    MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
 
     menu->addSeparator();
 
-    MENU_TO_WINDOW_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
-    MENU_TO_WINDOW_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
-    MENU_TO_WINDOW_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
-    MENU_TO_WINDOW    ("&Delete", editDelete);
-    MENU_TO_WINDOW_KEY("&Kill (cut) current line", editKillLine,
-                       Qt::CTRL + Qt::Key_K);
+    MENU_ITEM_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
+    MENU_ITEM_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
+    MENU_ITEM_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
+    MENU_ITEM    ("&Delete", editDelete);
+    MENU_ITEM_KEY("&Kill (cut) current line", editKillLine,
+                  Qt::CTRL + Qt::Key_K);
 
     menu->addSeparator();
 
-    MENU_TO_WINDOW_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
-    MENU_TO_WINDOW_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
-    MENU_TO_WINDOW_KEY("&Apply Command to Selection...",
-                       editApplyCommand, Qt::ALT + Qt::Key_A);
+    MENU_ITEM_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
+    MENU_ITEM_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
+    MENU_ITEM_KEY("&Apply Command to Selection...",
+                  editApplyCommand, Qt::ALT + Qt::Key_A);
   }
 
   #define CHECKABLE_ACTION(field, title, function, initChecked)  \
-    this->field = MENU_TO_WINDOW(title, function);               \
+    this->field = MENU_ITEM(title, function);                    \
     this->field->setCheckable(true);                             \
     this->field->setChecked(initChecked) /* user ; */
 
@@ -277,21 +277,21 @@ void EditorWindow::buildMenu()
       viewToggleVisibleWhitespace,
       this->m_editorWidget->m_visibleWhitespace);
 
-    MENU_TO_WINDOW    ("Set whitespace opacity...", viewSetWhitespaceOpacity);
+    MENU_ITEM    ("Set whitespace opacity...", viewSetWhitespaceOpacity);
 
     CHECKABLE_ACTION(m_toggleVisibleSoftMarginAction,
       "Visible soft &margin",
       viewToggleVisibleSoftMargin,
       this->m_editorWidget->m_visibleSoftMargin);
 
-    MENU_TO_WINDOW    ("Set soft margin column...", viewSetSoftMarginColumn);
+    MENU_ITEM    ("Set soft margin column...", viewSetSoftMarginColumn);
 
     CHECKABLE_ACTION(m_toggleHighlightTrailingWSAction,
       "Highlight &trailing whitespace",
       viewToggleHighlightTrailingWS,
       this->m_editorWidget->highlightTrailingWhitespace());
 
-    MENU_TO_WINDOW    ("Set &Highlighting...", viewSetHighlighting);
+    MENU_ITEM    ("Set &Highlighting...", viewSetHighlighting);
   }
 
   #undef CHECKABLE_ACTION
@@ -299,17 +299,17 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Window");
 
-    MENU_TO_WINDOW_KEY("Choose an &Open Document ...",
-                       windowOpenFilesList, Qt::CTRL + Qt::Key_O);
+    MENU_ITEM_KEY("Choose an &Open Document ...",
+                  windowOpenFilesList, Qt::CTRL + Qt::Key_O);
 
     menu->addSeparator();
 
-    MENU_TO_WINDOW    ("&New Window", windowNewWindow);
-    MENU_TO_WINDOW_KEY("&Close Window",
+    MENU_ITEM    ("&New Window", windowNewWindow);
+    MENU_ITEM_KEY("&Close Window",
       windowCloseWindow, Qt::CTRL + Qt::Key_F4);
-    MENU_TO_WINDOW_KEY("Move/size to Left Screen Half",
+    MENU_ITEM_KEY("Move/size to Left Screen Half",
       windowOccupyLeft, Qt::CTRL + Qt::ALT + Qt::Key_Left);
-    MENU_TO_WINDOW_KEY("Move/size to Right Screen Half",
+    MENU_ITEM_KEY("Move/size to Right Screen Half",
       windowOccupyRight, Qt::CTRL + Qt::ALT + Qt::Key_Right);
 
     menu->addSeparator();
@@ -322,15 +322,15 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Help");
 
-    MENU_TO_WINDOW    ("&Keybindings...", helpKeybindings);
-    MENU_TO_WINDOW    ("&About Scott's Editor...", helpAbout);
-    MENU_TO_WINDOW    ("About &Qt ...", helpAboutQt);
+    MENU_ITEM    ("&Keybindings...", helpKeybindings);
+    MENU_ITEM    ("&About Scott's Editor...", helpAbout);
+    MENU_ITEM    ("About &Qt ...", helpAboutQt);
   }
 }
 
 
-#undef MENU_TO_WINDOW
-#undef MENU_TO_WINDOW_KEY
+#undef MENU_ITEM
+#undef MENU_ITEM_KEY
 
 
 // not inline because main.h doesn't see editor.h
