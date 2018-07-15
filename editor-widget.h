@@ -422,6 +422,7 @@ public slots:
   void editCopy();
   void editPaste();
   void editDelete();
+  void editKillLine() NOEXCEPT;
 
 signals:
   // Emitted when some aspect of the document that is shown outside the

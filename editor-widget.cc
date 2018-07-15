@@ -1155,13 +1155,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         break;
 
       case Qt::Key_K:
-        if (!editSafetyCheck()) {
-          return;
-        }
-        if (!selectEnabled()) {
-          m_editor->selectCursorLine();
-        }
-        editCut();
+        this->editKillLine();
         break;
 
       case Qt::Key_I:
@@ -1609,6 +1603,21 @@ void EditorWidget::editDelete()
     m_editor->deleteSelection();
     this->redraw();
   }
+}
+
+
+void EditorWidget::editKillLine() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  INITIATING_DOCUMENT_CHANGE();
+  if (!editSafetyCheck()) {
+    return;
+  }
+  if (!selectEnabled()) {
+    m_editor->selectCursorLine();
+  }
+  editCut();
+  GENERIC_CATCH_END
 }
 
 

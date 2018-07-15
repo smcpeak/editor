@@ -1,7 +1,8 @@
+Keybindings that are not listed in the menu:
+
 File:
-  F2: Save file.
-  F3: Open file.
-  Ctrl+O: Pick an open file to edit.
+  Ctrl+I: Open file whose name is under cursor.
+    Searches directories with currently open files.
 
 Cursor movement:
   Ctrl+F or Right: Move cursor right one column.
@@ -28,23 +29,18 @@ Scrolling:
   Ctrl+L: Scroll up/down so cursor line is in center of window.
 
 Clipboard:
-  Ctrl+C or Ctrl+Ins: Copy.
-  Ctrl+V or Shift+Ins: Paste.
-  Ctrl+X or Shift+Del: Cut.
+  Ctrl+Ins: Copy.
+  Shift+Ins: Paste.
+  Shift+Del: Cut.
+  (In addition to bindings listed in menu.)
 
-Alt+Backspace: Undo.
-Alt+Shift+Backspace: Redo.
+Formatting:
+  Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
+  Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
+  Ctrl+J: Justify paragraph.
 
-Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
-Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
+Search (Ctrl+S):
+  Ctrl+Period or Ctrl+Comma: Next or previous search hit.
+  Esc: Close search panel.
 
-Ctrl+S: Search.
-Ctrl+Period or Ctrl+Comma: Next or previous search hit.
-Esc: Close search panel.
-
-Ctrl+K: Cut current line.
-Ctrl+J: Justify paragraph.
-Alt+A: Pass selected text through a shell command.
 Alt+D: Insert current date and time.
-Alt+G: Go to specified line.
-

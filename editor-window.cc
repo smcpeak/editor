@@ -237,10 +237,12 @@ void EditorWindow::buildMenu()
     edit->addAction("&Copy", m_editorWidget, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
     edit->addAction("&Paste", m_editorWidget, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
     edit->addAction("&Delete", m_editorWidget, SLOT(editDelete()));
+    addMenuAction(edit, "&Kill (cut) current line",
+                  m_editorWidget, &EditorWidget::editKillLine, Qt::CTRL + Qt::Key_K);
     edit->addSeparator();
     edit->addAction("&Search ...", this, SLOT(editISearch()), Qt::CTRL + Qt::Key_S);
     edit->addAction("&Goto Line ...", this, SLOT(editGotoLine()), Qt::ALT + Qt::Key_G);
-    edit->addAction("&Apply Command ...", this,
+    edit->addAction("&Apply Command to Selection...", this,
                     SLOT(editApplyCommand()), Qt::ALT + Qt::Key_A);
   }
 
@@ -280,7 +282,7 @@ void EditorWindow::buildMenu()
   {
     QMenu *window = this->m_menuBar->addMenu("&Window");
 
-    window->addAction("Pick an &Open File ...", this,
+    window->addAction("Choose an &Open Document ...", this,
       SLOT(windowOpenFilesList()), Qt::CTRL + Qt::Key_O);
 
     window->addSeparator();
