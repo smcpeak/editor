@@ -84,6 +84,12 @@ QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core
 QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
 
+# Redirections for test programs.  I do not want to pollute the 'make'
+# output with their diagnostics, but I also do not want to lose the
+# output in case it fails.
+TEST_REDIR := >test.out 2>&1
+
+
 # patterns of files to delete in the 'clean' target; targets below
 # add things to this using "+="
 TOCLEAN = $(QT_TOCLEAN)
@@ -107,7 +113,7 @@ TOCLEAN += *.o *.d
 TOCLEAN += testgap
 testgap: gap.h testgap.cc
 	$(CXX) -o $@ $(CCFLAGS) testgap.cc $(CONSOLE_LDFLAGS)
-	./testgap >/dev/null 2>&1
+	./testgap $(TEST_REDIR)
 
 
 # -------------- test-td-core test program ----------------
@@ -115,7 +121,7 @@ TOCLEAN += test-td-core td-core.tmp
 TD_CORE_OBJS := test-td-core.o td-core.o textcoord.o
 test-td-core: $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
-	./test-td-core >/dev/null 2>&1
+	./test-td-core $(TEST_REDIR)
 
 -include test-td-core.d
 
@@ -140,7 +146,7 @@ TD_OBJS += test-td-editor.o
 
 test-td-editor: $(TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-td-editor >/dev/null 2>&1
+	./test-td-editor $(TEST_REDIR)
 
 
 # -------------- justify test program ----------------
@@ -153,7 +159,7 @@ JUSTIFY_OBJS += test-justify.o
 
 test-justify: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-justify >/dev/null 2>&1
+	./test-justify $(TEST_REDIR)
 
 
 # -------------- command-runner test program ----------------
@@ -171,7 +177,7 @@ COMMAND_RUNNER_OBJS += test-command-runner.moc.o
 
 test-command-runner: $(COMMAND_RUNNER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
-	timeout 10 ./test-command-runner >/dev/null 2>&1
+	timeout 10 ./test-command-runner $(TEST_REDIR)
 
 # In the above command, 'timeout' is used because the command runner
 # is particularly susceptible to bugs that cause hangs.  Plus, when I
@@ -191,7 +197,7 @@ TEST_NAMED_TD_OBJS += test-named-td.o
 
 test-named-td: $(TEST_NAMED_TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-named-td >/dev/null 2>&1
+	./test-named-td $(TEST_REDIR)
 
 
 # -------------------- test-named-td-list --------------------
@@ -206,7 +212,7 @@ TEST_NAMED_TD_LIST_OBJS += test-named-td-list.o
 
 test-named-td-list: $(TEST_NAMED_TD_LIST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_LIST_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-named-td-list >/dev/null 2>&1
+	./test-named-td-list $(TEST_REDIR)
 
 
 # -------------------- test-nearby-file --------------------
@@ -221,7 +227,7 @@ TEST_NEARBY_FILE_OBJS += test-nearby-file.o
 
 test-nearby-file: $(TEST_NEARBY_FILE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_NEARBY_FILE_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-nearby-file >/dev/null 2>&1
+	./test-nearby-file $(TEST_REDIR)
 
 
 # --------------- textcategory test program ----------------

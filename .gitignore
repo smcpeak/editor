@@ -45,3 +45,4 @@ test-command-runner
 test-named-td
 test-nearby-file
 test-td-core
+test.out
