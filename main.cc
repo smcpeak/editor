@@ -227,7 +227,10 @@ NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
   NamedTextDocument *fileDoc =
     this->getNewCommandOutputDocument(dir, command);
 
-  // Show the directory and command at the top of the document.
+  // Show the directory and command at the top of the document.  Among
+  // other things, this is a helpful acknowledgment that something is
+  // happening in case the process does not print anything right away
+  // (or at all!).
   fileDoc->appendString(stringb("Dir: " << toString(dir) << '\n'));
   fileDoc->appendString(stringb("Cmd: " << toString(command) << "\n\n"));
 
@@ -237,7 +240,7 @@ NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
   QObject::connect(watcher, &ProcessWatcher::signal_processTerminated,
                    this,           &GlobalState::on_processTerminated);
 
-  // Launch the child process.
+  // Launch the child process.  I rely on having a POSIX shell.
   watcher->m_commandRunner.setProgram("sh");
   watcher->m_commandRunner.setArguments(QStringList() << "-c" << command);
   watcher->m_commandRunner.setWorkingDirectory(dir);
@@ -268,7 +271,7 @@ string GlobalState::killCommand(NamedTextDocument *doc)
     }
   }
   else {
-    return toString(watcher->m_commandRunner.killProcess());
+    return toString(watcher->m_commandRunner.killProcessNoWait());
   }
 }
 
@@ -296,7 +299,16 @@ void GlobalState::namedTextDocumentRemoved(
     // process.
     TRACE("process", "killing: " << watcher);
     watcher->m_namedDoc = NULL;
-    watcher->m_commandRunner.killProcess();
+    watcher->m_commandRunner.killProcessNoWait();
+
+    // This is a safe way to kill a child process.  We've detached it
+    // from the document, which has been removed from the list and is
+    // about to be deallocated, so we're good there.  And we're not
+    // waiting for the process to exit, but we haven't forgotten about
+    // it either, so we'll reap it if/when it dies.  Finally,
+    // ProcessWatcher is servicing the output and error channels,
+    // discarding any data that arrives, so we don't expend memory
+    // without bound.
   }
 }
 
@@ -313,6 +325,13 @@ void GlobalState::on_processTerminated(ProcessWatcher *watcher)
     // in recovery mode, so refrain from deallocating it.
   }
   else {
+    // This calls ~QProcess which closes handles, deallocates I/O
+    // buffers, and reaps the child process.
+    //
+    // In general, this is potentially dangerous since ~QProcess can
+    // hang for up to 30s, but I should only get here after the child
+    // process has died, meaning ~QProcess won't hang.  See
+    // doc/qprocess-hangs.txt.
     delete watcher;
   }
 }

@@ -121,6 +121,12 @@ public:       // funcs
 
   // Kill the process driving 'doc'.  If there is a problem doing that,
   // return a string explaining it; otherwise "".
+  //
+  // This does not wait to see if the process actually died; if/once it
+  // does, the state of the document will transition to DPS_FINISHED.
+  // Otherwise it can remain in DPS_RUNNING indefinitely for an
+  // unkillable child.  Even in that state, the document can be safely
+  // closed.
   string killCommand(NamedTextDocument *doc);
 
   // GlobalState has to monitor for closing a document that a process

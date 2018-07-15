@@ -36,6 +36,24 @@ void ProcessWatcher::slot_outputLineReady() NOEXCEPT
       string s(toString(line));
       m_namedDoc->appendString(s);
     }
+    else {
+      // This is an interesting situation: we are getting output, but
+      // do not have an associated document.  We make sure to retrieve
+      // and discard the output so the output buffer does not grow
+      // indefinitely (QProcess does not appear to have a bound on what
+      // it will accumulate in memory; I've gotten it to 100 MB).
+      //
+      // One way this could happen is if the child process is unkillable
+      // but keeps delivering output data.  In an ideal world, we could
+      // close all handles related to such a process, forcing an end to
+      // the IPC even if the process continues.  But QProcess does not
+      // offer a way to do that (without incurring a 30s process-wide
+      // hang), so we're stuck spending cycles servicing that output.
+      // See doc/qprocess-hangs.txt.
+      //
+      // If the child does eventually die, we will get a call on
+      // slot_processTerminated and be able to reap it normally.
+    }
   }
 }
 
