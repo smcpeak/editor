@@ -129,6 +129,11 @@ public:      // funcs
   // is the current directory of the parent.
   void setWorkingDirectory(QString const &dir);
 
+  // Arrange to connect the child's stdin, stdout, and stderr to those
+  // of the parent, rather than connecting pipes to them.  In this mode,
+  // 'setInputData', etc., do not do anything.
+  void forwardChannels();
+
   // ------------------- synchronous interface ---------------------
   // Specify what to pass on standard input.  Default is nothing.
   void setInputData(QByteArray const &data);
@@ -251,6 +256,10 @@ protected Q_SLOTS:
   void on_readChannelFinished();
   void on_readyRead();
 };
+
+
+// Return a string interpretation of a ProcessError code.
+char const *toString(QProcess::ProcessError error);
 
 
 #endif // COMMAND_RUNNER_H

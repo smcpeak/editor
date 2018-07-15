@@ -270,6 +270,13 @@ void CommandRunner::setWorkingDirectory(QString const &dir)
 }
 
 
+void CommandRunner::forwardChannels()
+{
+  m_process.setInputChannelMode(QProcess::ForwardedInputChannel);
+  m_process.setProcessChannelMode(QProcess::ForwardedChannels);
+}
+
+
 // -------------------- synchronous interface ----------------------
 void CommandRunner::setInputData(QByteArray const &data)
 {
@@ -514,7 +521,7 @@ QString CommandRunner::getErrorLine()
 
 
 // ---------------------------- slots ------------------------------
-static char const *toString(QProcess::ProcessError error)
+char const *toString(QProcess::ProcessError error)
 {
   switch (error) {
     case QProcess::FailedToStart:

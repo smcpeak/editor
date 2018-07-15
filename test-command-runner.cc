@@ -8,10 +8,11 @@
 
 // smqtutil
 #include "qtutil.h"                    // toString
-#include "timer-event-loop.h"          // TimerEventLoop
+#include "timer-event-loop.h"          // sleepWhilePumpingEvents
 
 // smbase
 #include "datablok.h"                  // DataBlock
+#include "datetime.h"                  // getCurrentUnixTime
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // replace
 #include "test.h"                      // ARGS_MAIN
@@ -593,13 +594,7 @@ static void testAsyncKill(bool wait)
     CommandRunner cr;
     CRTester tester(&cr, wait? CRTester::P_KILL : CRTester::P_KILL_NO_WAIT);
 
-    char const *cmd = "cat";
-    if (char const *otherCmd = getenv("TEST_CMD_ASYNC")) {
-      // Allow the command to be changed for interactive testing.
-      cmd = otherCmd;
-    }
-
-    cr.setProgram(cmd);
+    cr.setProgram("cat");
     cr.startAsynchronous();
 
     cr.putInputData(QByteArray("hello\n"));
@@ -631,6 +626,71 @@ static void testAsyncKill(bool wait)
 }
 
 
+static void printStatus(CommandRunner &runner)
+{
+  cout << "CommandRunner running: " << runner.isRunning() << endl;
+  if (!runner.isRunning()) {
+    cout << "CommandRunner failed: " << runner.getFailed() << endl;
+    if (runner.getFailed()) {
+      cout << "CommandRunner error: "
+           << toString(runner.getProcessError()) << endl;
+      cout << "CommandRunner error message: "
+           << toString(runner.getErrorMessage()) << endl;
+    }
+    else {
+      cout << "CommandRunner exit code: "
+           << runner.getExitCode() << endl;
+    }
+  }
+}
+
+// Run a program and then kill it.
+//
+// Adapted from wrk/learn/qt5/qproc.cc.
+static void runAndKill(int argc, char **argv)
+{
+  UnixTime startTime = 0;
+
+  {
+    CommandRunner runner;
+    runner.setProgram(argv[1]);
+    QStringList args;
+    for (int i=2; i < argc; i++) {
+      args << argv[i];
+    }
+    runner.setArguments(args);
+
+    // Child will inherit stdin/out/err.
+    runner.forwardChannels();
+
+    cout << "starting: " << argv[1] << (args.isEmpty()? "" : " ")
+         << args.join(' ').toUtf8().constData() << endl;
+    runner.startAsynchronous();
+
+    // Wait a moment to reach quiescence.
+    cout << "waiting for 200 ms ..." << endl;
+    sleepWhilePumpingEvents(200);
+    printStatus(runner);
+
+    // Attempt to kill the process.
+    cout << "calling killProcessNoWait ..." << endl;
+    runner.killProcessNoWait();
+
+    // Wait again.
+    cout << "waiting for 200 ms ..." << endl;
+    sleepWhilePumpingEvents(200);
+    printStatus(runner);
+
+    // Now let the destructor run.
+    startTime = getCurrentUnixTime();
+    cout << "destroying CommandRunner ..." << endl;
+  }
+
+  cout << "CommandRunner destructor took about "
+       << (getCurrentUnixTime() - startTime) << " seconds" << endl;
+}
+
+
 #define RUN(statement)                                         \
   if (!oneTest || 0==strcmp(oneTest, #statement)) {            \
     cout << "------ " << #statement << " ------" << endl;      \
@@ -644,12 +704,21 @@ static void entry(int argc, char **argv)
 
   QCoreApplication app(argc, argv);
 
+  if (argc >= 2) {
+    // Special mode for interactive testing of CommandRunner.
+    runAndKill(argc, argv);
+    return;
+  }
+
   // Cygwin is needed for the build anyway, so this should not be a
   // big deal.  I did give some thought to writing the tests so they
   // work work without cygwin, but plain Windows is a very spartan
   // environment.
-  cout << "NOTE: These tests require cygwin on Windows.\n";
+  if (SMFileUtil().windowsPathSemantics()) {
+    cout << "NOTE: These tests require cygwin on Windows.\n";
+  }
 
+  // Optionally run just one test.
   char const *oneTest = getenv("TEST_CMD_ONE");
 
   RUN(testProcessError());
