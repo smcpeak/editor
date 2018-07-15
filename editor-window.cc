@@ -212,6 +212,8 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM    ("&New", fileNewFile);
     MENU_ITEM_KEY("&Open ...", fileOpen, Qt::Key_F3);
+    MENU_ITEM_KEY("Open f&ile at cursor", fileOpenAtCursor,
+                  Qt::CTRL + Qt::Key_I);
 
     {
       QMenu *submenu = menu->addMenu("Open with traditional dialog");
@@ -474,6 +476,12 @@ void EditorWindow::fileOpen()
 {
   string dir = m_editorWidget->getDocumentDirectory();
   this->on_openFilenameInputDialogSignal(toQString(dir), 0);
+}
+
+
+void EditorWindow::fileOpenAtCursor()
+{
+  m_editorWidget->fileOpenAtCursor();
 }
 
 

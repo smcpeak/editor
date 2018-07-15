@@ -349,7 +349,7 @@ public:      // funcs
 
   // Scan the text near the cursor to try to find the name of a file,
   // and open it in the editor.
-  void openFileAtCursor();
+  void fileOpenAtCursor();
 
   // ---------------------------- input -----------------------------
   // We are about to edit the text in the file.  If we are going from

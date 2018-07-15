@@ -370,7 +370,7 @@ string EditorWidget::getDocumentDirectory() const
 }
 
 
-void EditorWidget::openFileAtCursor()
+void EditorWidget::fileOpenAtCursor()
 {
   string lineText = m_editor->getWholeLine(m_editor->cursor().line);
 
@@ -1152,14 +1152,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           m_editor->justifyNearCursor(m_softMarginColumn);
           this->redraw();
         }
-        break;
-
-      case Qt::Key_K:
-        this->editKillLine();
-        break;
-
-      case Qt::Key_I:
-        this->openFileAtCursor();
         break;
 
       case Qt::Key_Comma:

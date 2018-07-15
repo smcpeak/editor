@@ -150,6 +150,7 @@ public:      // funcs
 public Q_SLOTS:
   void fileNewFile();
   void fileOpen();
+  void fileOpenAtCursor();
   void fileOpenNativeDialog();
   void fileOpenQtDialog();
   void fileSave();

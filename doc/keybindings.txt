@@ -1,9 +1,5 @@
 Keybindings that are not listed in the menu:
 
-File:
-  Ctrl+I: Open file whose name is under cursor.
-    Searches directories with currently open files.
-
 Cursor movement:
   Ctrl+F or Right: Move cursor right one column.
   Ctrl+B or Left: Move cursor left one column.
