@@ -41,3 +41,7 @@ test-named-td-list
 test-justify
 test-td-editor
 textcategory
+test-command-runner
+test-named-td
+test-nearby-file
+test-td-core
