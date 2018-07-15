@@ -10,8 +10,10 @@
 
 // smqtutil
 #include "qtutil.h"                    // toQString
+#include "timer-event-loop.h"          // sleepWhilePumpingEvents
 
 // smbase
+#include "objcount.h"                  // CheckObjectCount
 #include "sm-file-util.h"              // SMFileUtil
 #include "strtokp.h"                   // StrtokParse
 #include "test.h"                      // PVAL
@@ -111,7 +113,51 @@ GlobalState::GlobalState(int argc, char **argv)
 
 GlobalState::~GlobalState()
 {
+  // First get rid of the windows so I don't have other entities
+  // watching documents and potentially getting confused and/or sending
+  // signals I am not prepared for.
+  m_windows.deleteAll();
+
+  if (m_processes.isNotEmpty()) {
+    // Now try to kill any running processes.  Do not wait for any of
+    // them, among other things because I do not want to get any signals
+    // during this loop since then I might modify 'm_processes' during
+    // an ongoing iteration.
+    FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
+      ProcessWatcher *watcher = iter.data();
+      TRACE("process", "in ~GlobalState, killing: " << watcher);
+      watcher->m_namedDoc = NULL;
+      watcher->m_commandRunner.killProcessNoWait();
+    }
+
+    // Wait up to one second for all children to die.  Pump the event
+    // queue while waiting so that as they die, I will receive
+    // on_processTerminated signals and can reap them and remove them
+    // from 'm_processes'.
+    for (int waits=0; waits < 10 && m_processes.isNotEmpty(); waits++) {
+      TRACE("process", "in ~GlobalState, waiting 100ms #" << (waits+1));
+      sleepWhilePumpingEvents(100 /*ms*/);
+    }
+
+    if (m_processes.isNotEmpty()) {
+      cerr << "Warning: Some child processes could not be killed." << endl;
+
+      // Discard the remaining process objects rather than incurring
+      // a 30s hang for each as the QProcess destructor runs.
+      while (m_processes.isNotEmpty()) {
+        (void)m_processes.removeFirst();      // Leak it!
+      }
+
+      // We know this will cause leaks.  No need to alarm the user.
+      CheckObjectCount::s_suppressLeakReports = true;
+    }
+  }
+
   m_documentList.removeObserver(this);
+
+  // Disconnect all of the connections made in the constructor.
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(this, 0, this, 0);
 }
 
 

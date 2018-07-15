@@ -12,6 +12,8 @@ TODOs:
       - process output documents should not be editable!
         - but Save As should transition them to normal editable files
       - open-files-dialog: button to close all with finished processes
+      - annoying completion behavior of Qt combo boxes; want more like
+        shell with readline (except less buggy!)
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process
