@@ -290,9 +290,7 @@ public:      // funcs
   // Replace the current match with the given text.
   void replaceSearchHit(string const &t);
 
-  // Return true if the currently selected text is a search hit,
-  // selected in the way the SAR panel does it, meaning the cursor is at
-  // the start of the match and mark is just beyond the end.
+  // Return true if the currently selected text is a search hit.
   bool searchHitSelected() const;
 
   // Begin closing the SAR panel from the widget side, then emit a

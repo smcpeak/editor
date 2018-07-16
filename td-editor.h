@@ -386,7 +386,8 @@ public:      // funcs
                   FindStringFlags flags = FS_NONE) const;
 
   // Return true if the document text in the indicated range, including
-  // 'start' but not including 'end', matches 'searchString'.
+  // 'start' but not including 'end', matches 'searchString'.  If
+  // 'start>end', this function will swap them first.
   bool rangeIsMatch(TextCoord const &start, TextCoord const &end,
                     char const *searchString, FindStringFlags flags) const;
 

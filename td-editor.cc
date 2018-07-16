@@ -3,11 +3,14 @@
 
 #include "td-editor.h"                 // this module
 
+// editor
 #include "justify.h"                   // justifyNearLine
 
+// smbase
 #include "array.h"                     // Array
 #include "datetime.h"                  // DateTimeSeconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
+#include "sm-swap.h"                   // swap
 #include "trace.h"                     // TRACE
 #include "typ.h"                       // min, max
 
@@ -777,9 +780,15 @@ bool TextDocumentEditor::findString(TextCoord /*INOUT*/ &tc, char const *text,
 
 
 bool TextDocumentEditor::rangeIsMatch(
-  TextCoord const &start, TextCoord const &end,
+  TextCoord const &start0, TextCoord const &end0,
   char const *searchString, FindStringFlags flags) const
 {
+  TextCoord start(start0);
+  TextCoord end(end0);
+  if (start > end) {
+    swap(start, end);
+  }
+
   // Remove flags that do not affect the interpretation of the search
   // string, since in this routine we are explicitly given the range of
   // text to search.

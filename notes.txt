@@ -1,7 +1,7 @@
 
 TODOs:
-  - BUG: search and replace: highlight text, Ctrl+S, Tab, type replacement,
-    Ctrl+R: jumps ahead instead of replacing selection
+  - Ctrl+Alt+G to grep for selected string
+    - or with nothing selected, grab identifier cursor is on
   - mechanism to put a highly visible marker onscreen if a DEV_WARNING
     fails?
   - need to disconnect signals in destructors
@@ -11,6 +11,7 @@ TODOs:
   - I think I want the same search string in all windows.  I am often
     having to re-type the string in another window, and rarely if ever
     want them different.
+  - split panes, esp. a vertical split instead of multiple windows
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process
@@ -35,8 +36,6 @@ TODOs:
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
   - highlighting for "git diff" output
-  - Ctrl+Alt+G to grep for selected string
-    - or with nothing selected, grab identifier cursor is on
   - command line arguments to set window position(s)?
   - undo history is never truncated... I should add something to check
     for excessive memory usage over time
