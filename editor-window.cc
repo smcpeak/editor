@@ -262,6 +262,8 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
     MENU_ITEM_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
+    MENU_ITEM_KEY("Grep source for symbol at cursor ...", editGrepSource,
+                  Qt::CTRL + Qt::ALT + Qt::Key_G);
     MENU_ITEM_KEY("&Apply Command to Selection...",
                   editApplyCommand, Qt::ALT + Qt::Key_A);
   }
@@ -1016,6 +1018,30 @@ void EditorWindow::editGotoLine()
       }
     }
   }
+}
+
+
+void EditorWindow::editGrepSource() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  string searchText = m_editorWidget->getSelectedOrIdentifier();
+  if (searchText.empty()) {
+    messageBox(this, "No Search Text Provided",
+      "To use this feature, either select some text to search for, or "
+      "put the text cursor on an identifier and that will act as the "
+      "search text.  You also need a program called \"grepsrc\" in "
+      "the PATH, as that is what the search string is passed to.");
+  }
+  else {
+    string dir = m_editorWidget->getDocumentDirectory();
+    NamedTextDocument *fileDoc =
+      m_globalState->launchCommand(toQString(dir),
+        qstringb("grepsrc " << shellDoubleQuote(searchText)));
+    this->setDocumentFile(fileDoc);
+  }
+
+  GENERIC_CATCH_END
 }
 
 

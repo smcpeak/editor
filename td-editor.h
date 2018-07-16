@@ -243,6 +243,10 @@ public:      // funcs
   // Get selected text, or "" if nothing selected.
   string getSelectedText() const;
 
+  // Get selected text, or if nothing is selected, the identifier the
+  // cursor is on, or "" if the cursor is not on an identifier.
+  string getSelectedOrIdentifier() const;
+
   // Swap the cursor and mark.  Does nothing if the mark is inactive.
   void swapCursorAndMark();
 

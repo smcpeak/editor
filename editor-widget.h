@@ -249,6 +249,7 @@ public:      // funcs
   TextCoord mark() const                  { return m_editor->mark(); }
   bool selectEnabled() const              { return m_editor->markActive(); }
   string getSelectedText() const          { return m_editor->getSelectedText(); }
+  string getSelectedOrIdentifier() const  { return m_editor->getSelectedOrIdentifier(); }
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
@@ -303,6 +304,16 @@ public:      // funcs
 
   // Insert text at cursor, overwriting selection if active.
   void insertText(char const *text, int length);
+
+  // Edit menu functions.
+  void editUndo();
+  void editRedo();
+  void editCut();
+  void editCopy();
+  void editPaste();
+  void editDelete();
+  void editKillLine();
+  void editGrepSource();
 
   // -------------------- interaction with files ------------------
   // nonfocus listening
@@ -407,15 +418,6 @@ public:      // funcs
 
   void printUnhandled(xBase const &x)
     { unhandledExceptionMsgbox(this, x); }
-
-  // Edit menu functions.
-  void editUndo();
-  void editRedo();
-  void editCut();
-  void editCopy();
-  void editPaste();
-  void editDelete();
-  void editKillLine();
 
 public Q_SLOTS:
   // slots to respond to scrollbars

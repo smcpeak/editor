@@ -7,6 +7,7 @@
 #include "qtutil.h"                    // qstringb
 
 // smbase
+#include "codepoint.h"                 // isShellMetacharacter
 #include "sm-iostream.h"               // cerr, etc.
 #include "trace.h"                     // TRACE
 
@@ -262,52 +263,8 @@ QString CommandRunner::getCommandLine() const
 }
 
 
-// True if 'c' is a POSIX shell metacharacter other than space.
-static bool isShellMetacharacter(QChar const &c)
-{
-  switch (c.unicode()) {
-    // Order: Going left to right then top to bottom across a US
-    // qwerty keyboard, unshifted before shifted.
-    case '`':
-    case '~':
-    case '!':      // inverts exit status
-    // not meta: @
-    case '#':
-    case '$':
-    case '%':      // job control (applicable to "sh -c"?)
-    case '^':      // history substitution (applicable?)
-    case '&':
-    case '*':
-    case '(':
-    case ')':
-    // not meta: - _ +
-    case '=':      // meta if appears before command
-    case '[':      // character range glob
-    case '{':      // alternation glob
-    case ']':
-    case '}':
-    case '\\':
-    case '|':
-    case ';':
-    // not meta: :
-    case '"':
-    case '\'':
-    // not meta: ,
-    case '<':
-    // not meta: .
-    case '>':
-    // not meta: /
-    case '?':
-    case '\t':
-    case '\n':
-      return true;
-
-    default:
-      return false;
-  }
-}
-
-// True if any character in 'c' is a shell metacharacter.
+// True if any character in 'c' is a shell metacharacter other than
+// space.
 //
 // This does not look for shell reserved words such as "if", but for
 // those to work as intended, some other metacharacter (mainly ';')
@@ -315,7 +272,8 @@ static bool isShellMetacharacter(QChar const &c)
 static bool hasShellMetacharacters(QString const &s)
 {
   for (int i=0; i < s.length(); i++) {
-    if (isShellMetacharacter(s[i])) {
+    int c = s[i].unicode();
+    if (c != ' ' && isShellMetacharacter(c)) {
       return true;
     }
   }

@@ -95,6 +95,11 @@ TEST_REDIR := >test.out 2>&1
 TOCLEAN = $(QT_TOCLEAN)
 
 
+# Object files for the editor.  This is built up gradually as needed
+# for various test programs, roughly in bottom-up order.
+EDITOR_OBJS :=
+
+
 # ---------------- pattern rules --------------------
 # compile .cc to .o
 # -MMD causes GCC to write .d file.
@@ -107,6 +112,20 @@ TOCLEAN += *.o *.d
 # Encode help files as C string literals.
 %.doc.gen.cc %.doc.gen.h: doc/%.txt
 	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
+
+
+# ------------ test-editor-strutil program -------------
+TOCLEAN += test-editor-strutil
+
+EDITOR_OBJS += editor-strutil.o
+
+TEST_EDITOR_STRUTIL_OBJS := $(EDITOR_OBJS)
+TEST_EDITOR_STRUTIL_OBJS += test-editor-strutil.o
+-include test-editor-strutil.d
+
+test-editor-strutil: $(TEST_EDITOR_STRUTIL_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_EDITOR_STRUTIL_OBJS) $(CONSOLE_LDFLAGS)
+	./test-editor-strutil $(TEST_REDIR)
 
 
 # ---------------- gap test program -----------------
@@ -129,9 +148,6 @@ test-td-core: $(TD_CORE_OBJS)
 # -------------- test-td-editor test program ----------------
 TOCLEAN += test-td-editor td.tmp
 
-# Object files for the editor.  This is built up gradually as needed
-# for various test programs, roughly in bottom-up order.
-EDITOR_OBJS :=
 EDITOR_OBJS += history.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += td.o

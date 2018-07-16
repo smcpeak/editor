@@ -3,6 +3,10 @@
 
 #include "nearby-file.h"               // this module
 
+// editor
+#include "codepoint.h"                 // isDecimalDigit, isLetter, etc.
+
+// smbase
 #include "sm-file-util.h"              // SMFileUtil
 
 
@@ -10,7 +14,7 @@
 // recognition algorithm.
 static bool isFilenameDigit(char c)
 {
-  return '0' <= c && c <= '9';
+  return isDecimalDigit(c);
 }
 
 // Return true if 'c' is a character that makes up the "core" of a text
@@ -18,13 +22,11 @@ static bool isFilenameDigit(char c)
 // characters.
 static bool isFilenameCore(char c)
 {
-  return (('A' <= c && c <= 'Z') ||
-          ('a' <= c && c <= 'z') ||
-          isFilenameDigit(c));
+  return isLetter(c) || isFilenameDigit(c);
 }
 
-// Return true if 'c' is punctuation that commonly appears in text file
-// names.
+// True if 'c' is punctuation that commonly appears in text file names,
+// including as a directory separator.
 static bool isFilenamePunctuation(char c)
 {
   return c == '_' ||

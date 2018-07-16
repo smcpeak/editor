@@ -4,6 +4,7 @@
 #include "editor-widget.h"             // this module
 
 // this dir
+#include "codepoint.h"                 // isUppercaseLetter
 #include "nearby-file.h"               // getNearbyFilename
 #include "position.h"                  // Position
 #include "qtbdffont.h"                 // QtBDFFont
@@ -1745,10 +1746,10 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
-static bool hasCapitalLetter(string const &t)
+static bool hasUppercaseLetter(string const &t)
 {
   for (char const *p = t.c_str(); *p; p++) {
-    if ('A' <= *p && *p <= 'Z') {
+    if (isUppercaseLetter(*p)) {
       return true;
     }
   }
@@ -1763,8 +1764,8 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
   TRACE("sar", "EW::setHitText: t=\"" << t << "\" scroll=" << scrollToHit);
   m_hitText = t;
 
-  // Case-sensitive iff capital letter present.
-  if (hasCapitalLetter(t)) {
+  // Case-sensitive iff uppercase letter present.
+  if (hasUppercaseLetter(t)) {
     m_hitTextFlags &= ~TextDocumentEditor::FS_CASE_INSENSITIVE;
   }
   else {

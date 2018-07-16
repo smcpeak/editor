@@ -1722,6 +1722,50 @@ static void testCountSpaceChars()
 }
 
 
+static void expectGSOI_nm(TextDocumentEditor &tde, int line, int col,
+                          string const &expect)
+{
+  tde.setCursor(TextCoord(line, col));
+  tde.clearMark();
+  string actual = tde.getSelectedOrIdentifier();
+  EXPECT_EQ(actual, expect);
+}
+
+static void testGetSelectedOrIdentifier()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "\n"
+    " \n"
+    "abc\n"
+    " abc \n"
+    " azAZ_09 \n"
+    "$azAZ_09-\n"
+    "      ");
+
+  expectGSOI_nm(tde, 0,0, "");
+  expectGSOI_nm(tde, 0,1, "");
+  expectGSOI_nm(tde, 1,0, "");
+  expectGSOI_nm(tde, 2,0, "abc");
+  expectGSOI_nm(tde, 2,2, "abc");
+  expectGSOI_nm(tde, 2,3, "");
+  expectGSOI_nm(tde, 3,0, "");
+  expectGSOI_nm(tde, 3,1, "abc");
+  expectGSOI_nm(tde, 3,2, "abc");
+  expectGSOI_nm(tde, 3,3, "abc");
+  expectGSOI_nm(tde, 3,4, "");
+  expectGSOI_nm(tde, 4,4, "azAZ_09");
+  expectGSOI_nm(tde, 5,4, "azAZ_09");
+  expectGSOI_nm(tde, 6,4, "");
+
+  // Test with a selection.
+  tde.setCursor(TextCoord(4, 2));
+  tde.setMark(TextCoord(4, 4));
+  string actual = tde.getSelectedOrIdentifier();
+  EXPECT_EQ(actual, string("zA"));
+}
+
+
 // --------------------------- main -----------------------------
 static void entry(int argc, char **argv)
 {
@@ -1753,6 +1797,7 @@ static void entry(int argc, char **argv)
   testReplaceText(false);
   testReplaceText(true);
   testCountSpaceChars();
+  testGetSelectedOrIdentifier();
 
   // This should be redundant now that I have general infrastructure to
   // check s_objectCounts, but I will leave these for a while at least.

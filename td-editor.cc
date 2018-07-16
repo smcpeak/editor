@@ -1,9 +1,10 @@
 // td-editor.cc
-// Code for td-editor.h.
+// code for td-editor.h
 
 #include "td-editor.h"                 // this module
 
 // editor
+#include "editor-strutil.h"            // cIdentifierAt
 #include "justify.h"                   // justifyNearLine
 
 // smbase
@@ -158,6 +159,17 @@ string TextDocumentEditor::getSelectedText() const
     this->getSelectRegion(selLow, selHigh);
     return this->getTextRange(selLow, selHigh);
   }
+}
+
+
+string TextDocumentEditor::getSelectedOrIdentifier() const
+{
+  if (m_markActive) {
+    return this->getSelectedText();
+  }
+
+  string text = this->getWholeLine(m_cursor.line);
+  return cIdentifierAt(text, m_cursor.column);
 }
 
 

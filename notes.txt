@@ -1,8 +1,8 @@
 
 TODOs:
-  - very annoyed by the scrollbar thumb being too light
-  - Ctrl+Alt+G to grep for selected string
-    - or with nothing selected, grab identifier cursor is on
+  - BUG: When Ctrl+I switches to a file, need to clear mark
+  - tab completion in file-open dialog should add the "/" after a
+    directory if it is unambiguous
   - mechanism to put a highly visible marker onscreen if a DEV_WARNING
     fails?
   - need to disconnect signals in destructors
@@ -34,6 +34,9 @@ TODOs:
       separate somehow
   - rename all references to "open-files dialog" to "documents"?
 
+  - very annoyed by the scrollbar thumb being too light
+    - spent a while digging through QStyle docs and (mostly) code,
+      could not figure out how to do this; bailing for now
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
   - highlighting for "git diff" output

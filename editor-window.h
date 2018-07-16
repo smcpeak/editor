@@ -172,6 +172,7 @@ public Q_SLOTS:
   void editKillLine() NOEXCEPT;
   void editISearch();
   void editGotoLine();
+  void editGrepSource() NOEXCEPT;
   void editApplyCommand();
 
   void viewToggleVisibleWhitespace();
