@@ -37,7 +37,8 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_findBox(NULL),
     m_replBox(NULL),
     m_editorWidget(NULL),
-    m_ignore_findEditTextChanged(false)
+    m_ignore_findEditTextChanged(false),
+    m_helpButton(NULL)
 {
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
@@ -71,17 +72,20 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_replBox->installEventFilter(this);
 
     // I can't seem to get QPushButton to be small, so use QToolButton.
-    QToolButton *helpButton = new QToolButton();
-    hbox->addWidget(helpButton);
-    helpButton->setText("?");
-    QObject::connect(helpButton, &QToolButton::clicked,
+    m_helpButton = new QToolButton();
+    hbox->addWidget(m_helpButton);
+    m_helpButton->setText("?");
+    QObject::connect(m_helpButton, &QToolButton::clicked,
                      this, &SearchAndReplacePanel::on_help);
   }
 }
 
 
 SearchAndReplacePanel::~SearchAndReplacePanel()
-{}
+{
+  QObject::disconnect(m_findBox, NULL, this, NULL);
+  QObject::disconnect(m_helpButton, NULL, this, NULL);
+}
 
 
 void SearchAndReplacePanel::setEditorWidget(EditorWidget *w)

@@ -73,9 +73,11 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
                                  QWidget *parent, Qt::WindowFlags f) :
   ModalDialog(parent, f),
   m_docList(docList),
-  m_tableWidget(NULL)
+  m_tableWidget(NULL),
+  m_closeSelButton(NULL),
+  m_helpButton(NULL)
 {
-  this->setWindowTitle("File Picker");
+  this->setWindowTitle("Documents");
 
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
@@ -147,14 +149,14 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
     QHBoxLayout *hbox = new QHBoxLayout();
     vbox->addLayout(hbox);
 
-    QPushButton *closeSelButton = new QPushButton("&Close Selected");
-    hbox->addWidget(closeSelButton);
-    QObject::connect(closeSelButton, &QPushButton::clicked,
+    m_closeSelButton = new QPushButton("&Close Selected");
+    hbox->addWidget(m_closeSelButton);
+    QObject::connect(m_closeSelButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_closeSelected);
 
-    QPushButton *helpButton = new QPushButton("&Help");
-    hbox->addWidget(helpButton);
-    QObject::connect(helpButton, &QPushButton::clicked,
+    m_helpButton = new QPushButton("&Help");
+    hbox->addWidget(m_helpButton);
+    QObject::connect(m_helpButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_help);
 
     hbox->addStretch(1);
@@ -168,7 +170,12 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
 
 
 OpenFilesDialog::~OpenFilesDialog()
-{}
+{
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(m_tableWidget, NULL, this, NULL);
+  QObject::disconnect(m_closeSelButton, NULL, this, NULL);
+  QObject::disconnect(m_helpButton, NULL, this, NULL);
+}
 
 
 void OpenFilesDialog::repopulateTable()

@@ -31,6 +31,7 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
     m_filenameLabel(NULL),
     m_filenameEdit(NULL),
     m_completionsEdit(NULL),
+    m_helpButton(NULL),
     m_cachedDirectory(""),
     m_cachedDirectoryEntries(),
     m_docList(NULL),
@@ -61,9 +62,9 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
     QHBoxLayout *hbox = new QHBoxLayout();
     vbox->addLayout(hbox);
 
-    QPushButton *helpButton = new QPushButton("&Help");
-    hbox->addWidget(helpButton);
-    QObject::connect(helpButton, &QPushButton::clicked,
+    m_helpButton = new QPushButton("&Help");
+    hbox->addWidget(m_helpButton);
+    QObject::connect(m_helpButton, &QPushButton::clicked,
                      this, &FilenameInputDialog::on_help);
 
     hbox->addStretch(1);
@@ -76,7 +77,11 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
 
 
 FilenameInputDialog::~FilenameInputDialog()
-{}
+{
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(m_filenameEdit, NULL, this, NULL);
+  QObject::disconnect(m_helpButton, NULL, this, NULL);
+}
 
 
 QString FilenameInputDialog::runDialog(

@@ -13,6 +13,7 @@
 
 class QLabel;
 class QLineEdit;
+class QPushButton;
 class QTextEdit;
 
 
@@ -52,6 +53,9 @@ private:     // data
 
   // Text display of possible completions.
   QTextEdit *m_completionsEdit;
+
+  // The "help" button.
+  QPushButton *m_helpButton;
 
   // Name of the directory whose entries are cached in
   // 'm_cachedDirectoryEntries'.  Empty to indicate nothing is cached.

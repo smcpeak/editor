@@ -25,7 +25,10 @@ ProcessWatcher::ProcessWatcher(NamedTextDocument *doc)
 
 
 ProcessWatcher::~ProcessWatcher()
-{}
+{
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(&m_commandRunner, NULL, this, NULL);
+}
 
 
 void ProcessWatcher::slot_outputLineReady() NOEXCEPT

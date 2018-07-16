@@ -1,7 +1,9 @@
 
 TODOs:
-  - need to disconnect signals in destructors
+  - change all QObject::connect to use the PTM form
+  - move more bindings into the menus and out of keyboard-help dialog
   - remove defunct 'dialogs' module
+  - redesign search and replace with regex in mind
   - would like Ctrl+S to automatically wrap its search
     - ideally with some form of feedback
   - I think I want the same search string in all windows.  I am often

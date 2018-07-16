@@ -95,11 +95,11 @@ GlobalState::GlobalState(int argc, char **argv)
 
   // instead, to quit the application, close all of the
   // toplevel windows
-  connect(this, SIGNAL(lastWindowClosed()),
-          this, SLOT(quit()));
+  QObject::connect(this, SIGNAL(lastWindowClosed()),
+                   this, SLOT(quit()));
 
-  connect(this, SIGNAL(focusChanged(QWidget*, QWidget*)),
-          this, SLOT(focusChangedHandler(QWidget*, QWidget*)));
+  QObject::connect(this, SIGNAL(focusChanged(QWidget*, QWidget*)),
+                   this, SLOT(focusChangedHandler(QWidget*, QWidget*)));
 
   ed->show();
 
@@ -143,12 +143,23 @@ GlobalState::~GlobalState()
     }
 
     if (m_processes.isNotEmpty()) {
+      // As things stand, this code is nearly impossible to reach
+      // because every direct child process is /bin/sh, which is
+      // generally quite cooperative.  It might spawn an unkillable
+      // grandchild process, but at the moment I have no way to even try
+      // to kill those.
       cerr << "Warning: Some child processes could not be killed." << endl;
 
-      // Discard the remaining process objects rather than incurring
-      // a 30s hang for each as the QProcess destructor runs.
+      // Leak the remaining process objects rather than incurring a 30s
+      // hang for each as the QProcess destructor runs.
       while (m_processes.isNotEmpty()) {
-        (void)m_processes.removeFirst();      // Leak it!
+        ProcessWatcher *watcher = m_processes.removeFirst();
+
+        // Before letting it go, disconnect my slot.
+        // See doc/signals-and-dtors.txt.
+        QObject::disconnect(watcher, NULL, this, NULL);
+
+        // Now leak 'watcher'!
       }
 
       // We know this will cause leaks.  No need to alarm the user.

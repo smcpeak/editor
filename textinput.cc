@@ -72,7 +72,10 @@ TextInputDialog::TextInputDialog(QString title,
 
 
 TextInputDialog::~TextInputDialog()
-{}
+{
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(m_comboBox->lineEdit(), NULL, this, NULL);
+}
 
 
 void TextInputDialog::setLabelText(QString labelText)

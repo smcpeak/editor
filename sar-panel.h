@@ -14,6 +14,7 @@
 class EditorWidget;                    // editor-widget.h
 
 class QComboBox;
+class QToolButton;
 
 
 // Panel meant to be added to an EditorWindow to provide search and
@@ -33,6 +34,9 @@ private:     // data
 
   // When true, ignore the 'findEditTextChanged' signal.
   bool m_ignore_findEditTextChanged;
+
+  // "Help" button.
+  QToolButton *m_helpButton;
 
 public:      // funcs
   SearchAndReplacePanel(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());

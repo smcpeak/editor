@@ -10,18 +10,28 @@
 
 
 ModalDialog::ModalDialog(QWidget *parent, Qt::WindowFlags f)
-  : QDialog(parent, f)
+  : QDialog(parent, f),
+    m_okButton(NULL),
+    m_cancelButton(NULL)
 {
 #if QTCORE_VERSION >= 0x050900
   // Remove the "?" button in the title bar.  I use help buttons
-  // next the controls instead.
+  // instead.
   this->setWindowFlag(Qt::WindowContextHelpButtonHint, false /*on*/);
 #endif
 }
 
 
 ModalDialog::~ModalDialog()
-{}
+{
+  // See doc/signals-and-dtors.txt.
+  if (m_okButton) {
+    QObject::disconnect(m_okButton, NULL, this, NULL);
+  }
+  if (m_cancelButton) {
+    QObject::disconnect(m_cancelButton, NULL, this, NULL);
+  }
+}
 
 
 void ModalDialog::createOkAndCancelHBox(QBoxLayout *vbox)
@@ -37,15 +47,15 @@ void ModalDialog::createOkAndCancelHBox(QBoxLayout *vbox)
 
 void ModalDialog::createOkAndCancelButtons(QBoxLayout *hbox)
 {
-  QPushButton *okButton = new QPushButton("Ok");
-  hbox->addWidget(okButton);
-  okButton->setDefault(true);
-  QObject::connect(okButton, &QPushButton::clicked,
+  m_okButton = new QPushButton("Ok");
+  hbox->addWidget(m_okButton);
+  m_okButton->setDefault(true);
+  QObject::connect(m_okButton, &QPushButton::clicked,
                    this, &ModalDialog::accept);
 
-  QPushButton *cancelButton = new QPushButton("Cancel");
-  hbox->addWidget(cancelButton);
-  QObject::connect(cancelButton, &QPushButton::clicked,
+  m_cancelButton = new QPushButton("Cancel");
+  hbox->addWidget(m_cancelButton);
+  QObject::connect(m_cancelButton, &QPushButton::clicked,
                    this, &ModalDialog::reject);
 }
 

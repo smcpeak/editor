@@ -13,6 +13,7 @@
 class MyTableWidget;                   // my-table-widget.h
 
 class QModelIndex;
+class QPushButton;
 
 
 // This is mainly for debugging.  I put it here because this is, for
@@ -51,6 +52,10 @@ private:     // instance data
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
   MyTableWidget *m_tableWidget;
+
+  // Buttons.
+  QPushButton *m_closeSelButton;
+  QPushButton *m_helpButton;
 
 private:     // funcs
   // Rebuild the table by copying from 'm_docList'.

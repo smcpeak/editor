@@ -112,16 +112,17 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   this->m_editorWidget->setObjectName("editor widget");
   editorFrame->addWidget(this->m_editorWidget);
   this->m_editorWidget->setFocus();
-  connect(this->m_editorWidget, SIGNAL(viewChanged()),
-          this, SLOT(editorViewChanged()));
-  connect(this->m_editorWidget, &EditorWidget::closeSARPanel,
-          this, &EditorWindow::on_closeSARPanel);
+  QObject::connect(this->m_editorWidget, SIGNAL(viewChanged()),
+                   this, SLOT(editorViewChanged()));
+  QObject::connect(this->m_editorWidget, &EditorWidget::closeSARPanel,
+                   this, &EditorWindow::on_closeSARPanel);
 
   // See EditorWidget::fileOpenAtCursor for why this is a
   // QueuedConnection.
-  connect(this->m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
-          this, &EditorWindow::on_openFilenameInputDialogSignal,
-          Qt::QueuedConnection);
+  QObject::connect(
+    this->m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
+    this, &EditorWindow::on_openFilenameInputDialogSignal,
+    Qt::QueuedConnection);
 
   // See explanation in GlobalState::focusChangedHandler().
   this->setFocusProxy(this->m_editorWidget);
@@ -135,12 +136,12 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   this->m_vertScroll = new QScrollBar(Qt::Vertical);
   this->m_vertScroll->setObjectName("m_vertScroll");
   editArea->addWidget(this->m_vertScroll, 0 /*row*/, 1 /*col*/);
-  connect(this->m_vertScroll, SIGNAL( valueChanged(int) ),
-          this->m_editorWidget, SLOT( scrollToLine(int) ));
+  QObject::connect(this->m_vertScroll, SIGNAL( valueChanged(int) ),
+                   this->m_editorWidget, SLOT( scrollToLine(int) ));
 
   // disabling horiz scroll for now..
   //m_horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
-  //connect(m_horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
+  //QObject::connect(m_horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
 
   this->buildMenu();
   this->rebuildWindowMenu();
@@ -179,6 +180,12 @@ EditorWindow::~EditorWindow()
   // 'm_editorWidget', but the documentation of ~QObject does not
   // specify an order.  Disconnect them here so that either order works.
   m_sarPanel->setEditorWidget(NULL);
+
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(this->m_editorWidget, NULL, this, NULL);
+  QObject::disconnect(this->m_vertScroll, NULL,
+                      this->m_editorWidget, NULL);
+  QObject::disconnect(this->m_windowMenu, NULL, this, NULL);
 }
 
 
@@ -319,8 +326,8 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     this->m_windowMenu = menu;
-    connect(this->m_windowMenu, &QMenu::triggered,
-            this, &EditorWindow::windowFileChoiceActivated);
+    QObject::connect(this->m_windowMenu, &QMenu::triggered,
+                     this, &EditorWindow::windowFileChoiceActivated);
   }
 
   {
