@@ -2,8 +2,6 @@
 TODOs:
   - BUG: search and replace: highlight text, Ctrl+S, Tab, type replacement,
     Ctrl+R: jumps ahead instead of replacing selection
-  - maybe put "<finished>" and "<running>" at the beginning of the
-    name in the document list?
   - mechanism to put a highly visible marker onscreen if a DEV_WARNING
     fails?
   - need to disconnect signals in destructors

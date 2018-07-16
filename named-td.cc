@@ -102,16 +102,16 @@ static char const *documentProcessStatusIndicator(
       DEV_WARNING("Bad document process status");
       // fallthrough
     case DPS_NONE:           return "";
-    case DPS_RUNNING:        return " <running>";
-    case DPS_FINISHED:       return " <finished>";
+    case DPS_RUNNING:        return "<running> ";
+    case DPS_FINISHED:       return "<finished> ";
   }
 }
 
 string NamedTextDocument::nameWithStatusIndicators() const
 {
   stringBuilder sb;
-  sb << this->name();
   sb << documentProcessStatusIndicator(this);
+  sb << this->name();
   if (this->unsavedChanges()) {
     sb << " *";
   }
