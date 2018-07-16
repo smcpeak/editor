@@ -407,7 +407,22 @@ CRTester::CRTester(CommandRunner *runner, Protocol protocol)
 }
 
 CRTester::~CRTester()
-{}
+{
+  // For safety, should disconnect slots in destructor.
+  QObject::disconnect(m_commandRunner, NULL, this, NULL);
+}
+
+
+int CRTester::exec()
+{
+  if (m_commandRunner->isRunning()) {
+    return this->QEventLoop::exec();
+  }
+  else {
+    cout << "CRTester::exec: returning immediately" << endl;
+    return 0;
+  }
+}
 
 
 void CRTester::slot_outputLineReady() NOEXCEPT
@@ -533,7 +548,12 @@ void CRTester::slot_errorLineReady() NOEXCEPT
 
 void CRTester::slot_processTerminated() NOEXCEPT
 {
-  if (m_protocol != P_KILL && m_protocol != P_KILL_NO_WAIT) {
+  cout << "CRTester::slot_processTerminated" << endl;
+
+  if (m_protocol == P_CAT || m_protocol == P_ECHO) {
+    // Just for extra checking for these two, double-check the status in
+    // the signal handler, as well as after exec() returns (which is
+    // what all the others do).
     assert(!m_commandRunner->isRunning());
     assert(!m_commandRunner->getFailed());
     assert(m_commandRunner->getExitCode() == 0);
@@ -626,6 +646,26 @@ static void testAsyncKill(bool wait)
 }
 
 
+static void testAsyncFailedStart()
+{
+  CommandRunner cr;
+  CRTester tester(&cr, CRTester::P_FAILED_START);
+
+  cr.setProgram("nonexistent-program");
+  cr.startAsynchronous();
+
+  tester.exec();
+
+  xassert(!cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+
+  xassert(cr.getFailed());
+  PVAL(toString(cr.getErrorMessage()));
+  xassert(cr.getProcessError() == QProcess::FailedToStart);
+}
+
+
 static void expectSSCL(char const *input, char const *expect)
 {
   CommandRunner r;
@@ -661,7 +701,8 @@ static void printStatus(CommandRunner &runner)
   }
 }
 
-// Run a program and then kill it.
+// Run a program and then kill it.  This is meant for interactive
+// testing.
 //
 // Adapted from wrk/learn/qt5/qproc.cc.
 static void runAndKill(int argc, char **argv)
@@ -750,6 +791,7 @@ static void entry(int argc, char **argv)
   RUN(testAsyncBothOutputs());
   RUN(testAsyncKill(true));
   RUN(testAsyncKill(false));
+  RUN(testAsyncFailedStart());
   RUN(testMiscDiagnostics());
   RUN(testSetShellCommandLine());
 

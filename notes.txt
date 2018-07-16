@@ -1,5 +1,13 @@
 
 TODOs:
+  - BUG: Have a file open.  File changes behind the scenes.  Try to edit.
+    Get prompt, say Cancel.  Crash.
+    - Cause: Keypress opened an UndoHistoryGrouper.  The prompt and cancel
+      switched focus away then back.  Returning focus causes EW to
+      refresh the file contents, discarding history stack elements.  Then
+      removing a non-existent element fails an assertion.  Next,
+      ~UndoHistoryGrouper is implicitly 'noexcept' so when the exception
+      reaches it, we abort.
   - BUG: search and replace: highlight text, Ctrl+S, Tab, type replacement,
     Ctrl+R: jumps ahead instead of replacing selection
   - need to disconnect signals in destructors

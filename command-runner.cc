@@ -492,13 +492,19 @@ void CommandRunner::startAsynchronous()
   // This function can only be used once per object.
   xassert(!m_startInvoked);
   m_startInvoked = true;
-  m_synchronous = false;     // Just for clarity; it already is false.
+  xassert(m_synchronous == false); // Should still have its initial value.
 
   // Begin running the child process.
   m_process.start();
 
   if (m_failed) {
     TRACE_CR("startAsync: process could not start");
+
+    // In this state, we are not going to get another signal from
+    // QProcess about termination.  But our client is expecting one, so
+    // emit it now.  This is tested by testAsyncFailedStart().
+    Q_EMIT signal_processTerminated();
+
     return;
   }
 

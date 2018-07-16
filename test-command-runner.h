@@ -24,6 +24,7 @@ public:      // types
     P_ECHO,
     P_KILL,
     P_KILL_NO_WAIT,
+    P_FAILED_START,
   };
 
 public:      // data
@@ -43,6 +44,10 @@ public:      // data
 public:      // funcs
   CRTester(CommandRunner *runner, Protocol protocol);
   ~CRTester();
+
+  // Run the event loop until the process terminates.  If it is not
+  // running, do not even start the loop, just return 0.
+  int exec();
 
 public Q_SLOTS:
   void slot_outputLineReady() NOEXCEPT;
