@@ -1,7 +1,5 @@
 
 TODOs:
-  - tab completion in file-open dialog should add the "/" after a
-    directory if it is unambiguous
   - mechanism to put a highly visible marker onscreen if a DEV_WARNING
     fails?
   - need to disconnect signals in destructors
