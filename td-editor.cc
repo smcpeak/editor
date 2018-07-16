@@ -1178,8 +1178,10 @@ CursorRestorer::CursorRestorer(TextDocumentEditor &e)
     firstVisible(e.firstVisible())
 {}
 
-CursorRestorer::~CursorRestorer()
+CursorRestorer::~CursorRestorer() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   tde->setCursor(cursor);
   if (markActive) {
     tde->setMark(mark);
@@ -1188,6 +1190,23 @@ CursorRestorer::~CursorRestorer()
     tde->clearMark();
   }
   tde->setFirstVisible(firstVisible);
+
+  GENERIC_CATCH_END
+}
+
+
+// --------------------- UndoHistoryGrouper ---------------
+UndoHistoryGrouper::UndoHistoryGrouper(TextDocumentEditor &e)
+  : editor(&e)
+{
+  editor->beginUndoGroup();
+}
+
+UndoHistoryGrouper::~UndoHistoryGrouper() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  editor->endUndoGroup();
+  GENERIC_CATCH_END
 }
 
 

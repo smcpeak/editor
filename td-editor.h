@@ -589,7 +589,7 @@ public:      // data
 
 public:      // funcs
   CursorRestorer(TextDocumentEditor &tde);
-  ~CursorRestorer();
+  ~CursorRestorer() NOEXCEPT;
 };
 
 
@@ -599,16 +599,8 @@ private:     // data
   RCSerf<TextDocumentEditor> editor;
 
 public:      // funcs
-  UndoHistoryGrouper(TextDocumentEditor &e)
-    : editor(&e)
-  {
-    editor->beginUndoGroup();
-  }
-
-  ~UndoHistoryGrouper()
-  {
-    editor->endUndoGroup();
-  }
+  UndoHistoryGrouper(TextDocumentEditor &e);
+  ~UndoHistoryGrouper() NOEXCEPT;
 };
 
 
