@@ -118,7 +118,7 @@ public:      // funcs
   void clearContentsAndHistory();
 
   // Replace current contents with a new file, and reset cursor
-  // to 0,0; clears the history.
+  // to 0,0.  Clears the undo history and undo group stack.
   //
   // If there is a read error, throws an exception, but the document
   // is left unmodified.
@@ -152,6 +152,10 @@ public:      // funcs
 
   // -------------------------- undo/redo --------------------------
   // Group actions with HE_group.
+  //
+  // NOTE: 'readFile' clears the undo group stack, even if there are
+  // open groups.  When that happens 'endUndoGroup' silently does
+  // nothing.
   void beginUndoGroup();
   void endUndoGroup();
 

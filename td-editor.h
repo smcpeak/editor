@@ -526,10 +526,10 @@ public:      // funcs
   // True if we can go forward, redoing undone changes.
   bool canRedo() const                 { return m_doc->canRedo(); }
 
-  // Undo a document changes.  Required 'canUndo()'.
+  // Undo a document changes.  Requires 'canUndo()'.
   void undo();
 
-  // Redo a document change that was undone.  Required 'canRedo()'.
+  // Redo a document change that was undone.  Requires 'canRedo()'.
   void redo();
 
   // Between begin/end, all document modifications will be grouped
@@ -596,7 +596,7 @@ public:      // funcs
 // Class to begin/end an undo group.
 class UndoHistoryGrouper {
 private:     // data
-  RCSerf<TextDocumentEditor> editor;
+  RCSerf<TextDocumentEditor> m_editor;
 
 public:      // funcs
   UndoHistoryGrouper(TextDocumentEditor &e);

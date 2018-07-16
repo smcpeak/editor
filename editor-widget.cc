@@ -339,8 +339,9 @@ void EditorWidget::checkForDiskChanges()
       // save, and at that point (if the problem persists) they will
       // be properly notified.
       //
-      // Note: I do not actually know how to trigger this code.  Most
-      // things cause 'hasStale' to return false.
+      // Note: I do not actually know if it is possible to trigger this
+      // code.  Most things that seem like plausible candidates cause
+      // 'hasStaleModificationTime' to return false.
       TRACE("modification", "Reload failed: " << x.why());
     }
   }

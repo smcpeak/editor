@@ -1197,15 +1197,15 @@ CursorRestorer::~CursorRestorer() NOEXCEPT
 
 // --------------------- UndoHistoryGrouper ---------------
 UndoHistoryGrouper::UndoHistoryGrouper(TextDocumentEditor &e)
-  : editor(&e)
+  : m_editor(&e)
 {
-  editor->beginUndoGroup();
+  m_editor->beginUndoGroup();
 }
 
 UndoHistoryGrouper::~UndoHistoryGrouper() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editor->endUndoGroup();
+  m_editor->endUndoGroup();
   GENERIC_CATCH_END
 }
 

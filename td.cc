@@ -217,6 +217,16 @@ void TextDocument::beginUndoGroup()
 
 void TextDocument::endUndoGroup()
 {
+  if (m_groupStack.isEmpty()) {
+    // Silently ignore.  One way this can happen is if the file is
+    // reloaded while an undo group is open.  The worst case is some
+    // actions the user thinks of as a single action will end up
+    // separate.  This could happen if, for example, we reload the file
+    // and then insert text, all as one UI operation.  But most
+    // commonly, there are no undoable actions anyway.
+    return;
+  }
+
   HE_group *g = m_groupStack.pop();
   if (g->seqLength() >= 2) {
     appendElement(g);
