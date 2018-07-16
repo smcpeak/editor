@@ -1,7 +1,5 @@
 
 TODOs:
-  - mechanism to put a highly visible marker onscreen if a DEV_WARNING
-    fails?
   - need to disconnect signals in destructors
   - remove defunct 'dialogs' module
   - would like Ctrl+S to automatically wrap its search

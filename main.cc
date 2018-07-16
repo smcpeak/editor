@@ -13,6 +13,7 @@
 #include "timer-event-loop.h"          // sleepWhilePumpingEvents
 
 // smbase
+#include "dev-warning.h"               // g_devWarningHandler
 #include "objcount.h"                  // CheckObjectCount
 #include "sm-file-util.h"              // SMFileUtil
 #include "strtokp.h"                   // StrtokParse
@@ -424,6 +425,30 @@ void GlobalState::focusChangedHandler(QWidget *from, QWidget *to)
 }
 
 
+// Respond to a failed DEV_WARNING.
+static void editorDevWarningHandler(char const *file, int line,
+                                    char const *msg)
+{
+  cerr << "DEV_WARNING: " << file << ':' << line << ": " << msg << endl;
+
+  static bool prompted = false;
+  if (!prompted) {
+    prompted = true;
+    messageBox_details(NULL, "Developer Warning Fired",
+      "A warning meant for this application's developer has fired.  "
+      "The details were written to the standard error output (the "
+      "console).  Please report them to the maintainer.\n"
+      "\n"
+      "Although this application will try to keep running, "
+      "beware that the warning might indicate future instability.  "
+      "This message will only appear once per session, but all "
+      "warnings are written to the error output.",
+
+      qstringb(file << ':' << line << ": " << msg));
+  }
+}
+
+
 // Possibly print counts of allocated objects.  Return their sum.
 static int printObjectCountsIf(char const *when, bool print)
 {
@@ -468,6 +493,10 @@ int main(int argc, char **argv)
   {
     try {
       GlobalState app(argc, argv);
+
+      Restorer< void (*)(char const*, int, char const *) >
+        restorer(g_devWarningHandler, &editorDevWarningHandler);
+
       ret = app.exec();
     }
     catch (xBase &x) {

@@ -25,6 +25,7 @@
 #include "array.h"                     // Array
 #include "bdffont.h"                   // BDFFont
 #include "ckheap.h"                    // malloc_stats
+#include "dev-warning.h"               // DEV_WARNING
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "macros.h"                    // Restorer
 #include "nonport.h"                   // getMilliseconds
@@ -1206,6 +1207,10 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         THROW(xBase("gratuitous exception"));
         break;
       }
+
+      case Qt::Key_W:
+        DEV_WARNING("Synthetic DEV_WARNING due to Ctrl+Alt+W");
+        break;
 
       case Qt::Key_Y: {
         try {
