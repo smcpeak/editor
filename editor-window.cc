@@ -117,7 +117,7 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   connect(this->m_editorWidget, &EditorWidget::closeSARPanel,
           this, &EditorWindow::on_closeSARPanel);
 
-  // See EditorWidget::openFileAtCursor for why this is a
+  // See EditorWidget::fileOpenAtCursor for why this is a
   // QueuedConnection.
   connect(this->m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
           this, &EditorWindow::on_openFilenameInputDialogSignal,
@@ -1407,6 +1407,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
       if (line != 0) {
         // Also go to line number, if provided.
         m_editorWidget->cursorTo(TextCoord(line-1, 0));
+        m_editorWidget->clearMark();
         m_editorWidget->scrollToCursor(-1 /*gap*/);
       }
       return;

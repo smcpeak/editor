@@ -248,6 +248,7 @@ public:      // funcs
   // ----------------------------- mark ------------------------------
   TextCoord mark() const                  { return m_editor->mark(); }
   bool selectEnabled() const              { return m_editor->markActive(); }
+  void clearMark()                        { m_editor->clearMark(); }
   string getSelectedText() const          { return m_editor->getSelectedText(); }
   string getSelectedOrIdentifier() const  { return m_editor->getSelectedOrIdentifier(); }
 

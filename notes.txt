@@ -1,6 +1,5 @@
 
 TODOs:
-  - BUG: When Ctrl+I switches to a file, need to clear mark
   - tab completion in file-open dialog should add the "/" after a
     directory if it is unambiguous
   - mechanism to put a highly visible marker onscreen if a DEV_WARNING
