@@ -12,6 +12,8 @@ TODOs:
     Ctrl+R: jumps ahead instead of replacing selection
   - need to disconnect signals in destructors
   - remove defunct 'dialogs' module
+  - would like Ctrl+S to automatically wrap its search
+    - ideally with some form of feedback
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process
@@ -35,6 +37,7 @@ TODOs:
 
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
+  - highlighting for "git diff" output
   - Ctrl+Alt+G to grep for selected string
     - or with nothing selected, grab identifier cursor is on
   - command line arguments to set window position(s)?

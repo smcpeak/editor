@@ -669,11 +669,16 @@ static void testAsyncFailedStart()
 static void expectSSCL(char const *input, char const *expect)
 {
   CommandRunner r;
-  r.setShellCommandLine(input);
+  r.setShellCommandLine(input, false /*alwaysUseSH*/);
   string actual = toString(r.getCommandLine());
   EXPECT_EQ(actual, string(expect));
 }
 
+// This tests 'setShellCommandLine' when 'alwaysUseSH' is *false*,
+// essentially exercising its detection of shell metacharacters.
+//
+// But, as of 2018-07-16, I'm not using that capability in the editor,
+// instead always using 'sh'.
 static void testSetShellCommandLine()
 {
   expectSSCL("date", "date");

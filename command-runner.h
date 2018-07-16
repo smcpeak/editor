@@ -127,8 +127,9 @@ public:      // funcs
 
   // Set the program and arguments in order to invoke 'command' as a
   // POSIX shell command.  This will be "sh -c <command>" if it has any
-  // shell metacharacters.
-  void setShellCommandLine(QString const &command);
+  // shell metacharacters, or if 'alwaysUseSH', which is now the default
+  // because on Windows, only 'sh' knows how to invoke shell scripts.
+  void setShellCommandLine(QString const &command, bool alwaysUseSH = true);
 
   // Specify the environment variable bindings to pass to the new
   // process.  The default is to pass those of the current process.

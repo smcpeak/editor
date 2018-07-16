@@ -322,15 +322,31 @@ static bool hasShellMetacharacters(QString const &s)
   return false;
 }
 
-void CommandRunner::setShellCommandLine(QString const &command)
+// The idea with this function was if I do not use 'sh', then I can
+// kill the child process directly.  Otherwise, I can only kill the
+// shell and just hope the child decides to terminate too.
+//
+// The problem with that is, on Windows, only 'sh' knows how to invoke
+// shell scripts.  Also, the search algorithm of CreateProcess is wonky,
+// implicitly putting C:/Windows/System32 (which has sort.exe, among
+// others) ahead of the first element of PATH.  It's possible there are
+// similar subtle differences on unix between execvp and 'sh', which
+// would lead to inconsistency in behavior depending on the presence of
+// shell metacharacters.  So at least for now I've arranged it so
+// 'alwaysUseSH' is always true (outside of test code).
+//
+// TODO: I'd like to build out proper job management where I can, for
+// example, kill an entire process group.  But I'm not sure how much
+// effort that is, especially on Windows.
+void CommandRunner::setShellCommandLine(QString const &command,
+                                        bool alwaysUseSH)
 {
-  if (hasShellMetacharacters(command)) {
+  if (alwaysUseSH || hasShellMetacharacters(command)) {
     this->setProgram("sh");
     this->setArguments(QStringList() << "-c" << command);
   }
   else {
-    // Split directly.  The advantage of this is I can kill the child
-    // process itself rather than just the shell above it.
+    // Split directly.
     QStringList words(command.split(' ', QString::SkipEmptyParts));
     if (!words.isEmpty()) {
       this->setProgram(words.first());
@@ -338,7 +354,8 @@ void CommandRunner::setShellCommandLine(QString const &command)
       this->setArguments(words);
     }
     else {
-      // Rather than call this an error, just use the shell.
+      // Rather than call this an error, just use the shell to invoke
+      // this program name consisting entirely of whitespace.
       this->setProgram("sh");
       this->setArguments(QStringList() << "-c" << command);
     }
