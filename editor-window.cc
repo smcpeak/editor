@@ -112,8 +112,8 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   this->m_editorWidget->setObjectName("editor widget");
   editorFrame->addWidget(this->m_editorWidget);
   this->m_editorWidget->setFocus();
-  QObject::connect(this->m_editorWidget, SIGNAL(viewChanged()),
-                   this, SLOT(editorViewChanged()));
+  QObject::connect(this->m_editorWidget, &EditorWidget::viewChanged,
+                   this, &EditorWindow::editorViewChanged);
   QObject::connect(this->m_editorWidget, &EditorWidget::closeSARPanel,
                    this, &EditorWindow::on_closeSARPanel);
 
@@ -136,12 +136,12 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   this->m_vertScroll = new QScrollBar(Qt::Vertical);
   this->m_vertScroll->setObjectName("m_vertScroll");
   editArea->addWidget(this->m_vertScroll, 0 /*row*/, 1 /*col*/);
-  QObject::connect(this->m_vertScroll, SIGNAL( valueChanged(int) ),
-                   this->m_editorWidget, SLOT( scrollToLine(int) ));
+  QObject::connect(this->m_vertScroll, &QScrollBar::valueChanged,
+                   this->m_editorWidget, &EditorWidget::scrollToLine);
 
   // disabling horiz scroll for now..
   //m_horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
-  //QObject::connect(m_horizScroll, SIGNAL( valueChanged(int) ), editor, SLOT( scrollToCol(int) ));
+  //QObject::connect(m_horizScroll, &QScrollBar::valueChanged, editor, &EditorWidget::scrollToCol);
 
   this->buildMenu();
   this->rebuildWindowMenu();
@@ -1454,10 +1454,10 @@ void EditorWindow::rebuildWindowMenu()
     }
 
     QAction *action = this->m_windowMenu->addAction(
-      toQString(b->m_title),        // menu item text
-      this,                       // receiver
-      SLOT(windowFileChoice()), // slot name
-      keySequence);               // accelerator
+      toQString(b->m_title),              // menu item text
+      this,                               // receiver
+      &EditorWindow::windowFileChoice,    // slot
+      keySequence);                       // accelerator
 
     // Associate the action with the NamedTextDocument object.
     action->setData(QVariant(b->m_windowMenuId));

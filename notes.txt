@@ -1,6 +1,5 @@
 
 TODOs:
-  - change all QObject::connect to use the PTM form
   - move more bindings into the menus and out of keyboard-help dialog
   - remove defunct 'dialogs' module
   - redesign search and replace with regex in mind

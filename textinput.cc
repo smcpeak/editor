@@ -57,8 +57,8 @@ TextInputDialog::TextInputDialog(QString title,
     //
     // My solution is to connect the returnPressed signal from the
     // underlying QLineEdit to 'accept' of this dialog.
-    QObject::connect(m_comboBox->lineEdit(), SIGNAL(returnPressed()),
-                     this, SLOT(accept()));
+    QObject::connect(m_comboBox->lineEdit(), &QLineEdit::returnPressed,
+                     this, &TextInputDialog::accept);
 
     this->createOkAndCancelHBox(vbox);
 

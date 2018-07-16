@@ -95,11 +95,11 @@ GlobalState::GlobalState(int argc, char **argv)
 
   // instead, to quit the application, close all of the
   // toplevel windows
-  QObject::connect(this, SIGNAL(lastWindowClosed()),
-                   this, SLOT(quit()));
+  QObject::connect(this, &GlobalState::lastWindowClosed,
+                   this, &GlobalState::quit);
 
-  QObject::connect(this, SIGNAL(focusChanged(QWidget*, QWidget*)),
-                   this, SLOT(focusChangedHandler(QWidget*, QWidget*)));
+  QObject::connect(this, &GlobalState::focusChanged,
+                   this, &GlobalState::focusChangedHandler);
 
   ed->show();
 
