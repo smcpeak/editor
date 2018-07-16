@@ -59,6 +59,8 @@ GlobalState::GlobalState(int argc, char **argv)
     for (int i=0; i < keys.size(); i++) {
       cout << "  " << keys.at(i).toUtf8().constData() << endl;
     }
+    QStyle *defaultStyle = this->style();
+    cout << "default style: " << toString(defaultStyle->objectName()) << endl;
   }
 
   // Activate my own modification to the Qt style.  This works even

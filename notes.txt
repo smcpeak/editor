@@ -1,5 +1,6 @@
 
 TODOs:
+  - very annoyed by the scrollbar thumb being too light
   - Ctrl+Alt+G to grep for selected string
     - or with nothing selected, grab identifier cursor is on
   - mechanism to put a highly visible marker onscreen if a DEV_WARNING
