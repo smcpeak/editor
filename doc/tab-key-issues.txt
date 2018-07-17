@@ -42,5 +42,72 @@ bindings take precedence due to an eventFilter I installed.  But I also
 have an eventFilter for Tab there, yet that seems inadequate to prevent
 a shortcut ambiguity from arising.
 
+Update: I found a potential solution: if the menu title has a tab
+character in it, that separates name from shortcut display, but the
+listed shortcut is not active!  So I can continue to handle the keys
+elsewhere but let the menu perform its documentation function.
+
+This solution was suggested here:
+
+  https://stackoverflow.com/questions/1894395/in-qt-how-to-show-keyboard-shortcuts-in-menu-but-disable-them
+
+I was able to confirm by looking at the Qt source code that this is
+intended behavior.  In src/widgets/widgets/qmenu.cpp,
+QMenu::initStyleOption uses the same syntax to denote the real shortcut
+if there is not already a Tab character:
+
+  QString textAndAccel = action->text();
+#ifndef QT_NO_SHORTCUT
+  if (textAndAccel.indexOf(QLatin1Char('\t')) == -1) {
+      QKeySequence seq = action->shortcut();
+      if (!seq.isEmpty())
+          textAndAccel += QLatin1Char('\t') + seq.toString(QKeySequence::NativeText);
+  }
+#endif
+
+That is preparatory to actually drawing the menu label shortcut, which
+happens in QWindowsStyle::drawControl in
+src/widgets/styles/qwindowsstyle.cpp:
+
+  int t = s.indexOf(QLatin1Char('\t'));
+  int text_flags = Qt::AlignVCenter | Qt::TextShowMnemonic | Qt::TextDontClip | Qt::TextSingleLine;
+  if (!proxy()->styleHint(SH_UnderlineShortcut, menuitem, widget))
+      text_flags |= Qt::TextHideMnemonic;
+  text_flags |= Qt::AlignLeft;
+  if (t >= 0) {
+      QRect vShortcutRect = visualRect(opt->direction, menuitem->rect,
+          QRect(textRect.topRight(), QPoint(menuitem->rect.right(), textRect.bottom())));
+      const QString textToDraw = s.mid(t + 1).toString();
+      if (dis && !act && proxy()->styleHint(SH_EtchDisabledText, opt, widget)) {
+          p->setPen(menuitem->palette.light().color());
+          p->drawText(vShortcutRect.adjusted(1, 1, 1, 1), text_flags, textToDraw);
+          p->setPen(discol);
+      }
+      p->drawText(vShortcutRect, text_flags, textToDraw);     <-------
+      s = s.left(t);
+  }
+
+Relatedly, QMenuPrivate::updateActionRects will calculate the label size
+and include the shortcut portion if it is after a Tab, or lacking that,
+there is an installed real shortcut:
+
+  QString s = action->text();
+  int t = s.indexOf(QLatin1Char('\t'));
+  if (t != -1) {
+      tabWidth = qMax(int(tabWidth), qfm.width(s.mid(t+1)));
+      s = s.left(t);
+#ifndef QT_NO_SHORTCUT
+  } else {
+      QKeySequence seq = action->shortcut();
+      if (!seq.isEmpty())
+          tabWidth = qMax(int(tabWidth), qfm.width(seq.toString(QKeySequence::NativeText)));
+#endif
+  }
+
+The above is solid confirmation that (a) this is an intentional feature,
+unlikely to be removed in a later Qt release, and (b) the use of a Tab
+character does not magically install a shortcut (despite the claim by
+"dF" in the linked SO thread).
+
 
 EOF

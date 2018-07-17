@@ -266,7 +266,7 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
     MENU_ITEM_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
     MENU_ITEM_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
-    MENU_ITEM    ("&Delete", editDelete);
+    MENU_ITEM    ("&Delete\tDelete", editDelete);
     MENU_ITEM_KEY("&Kill (cut) current line", editKillLine,
                   Qt::CTRL + Qt::Key_K);
 
@@ -288,9 +288,9 @@ void EditorWindow::buildMenu()
 
     // These two do not have key bindings as proper shortcuts.
     // See doc/tab-key-issues.txt.
-    MENU_ITEM    ("Rigidly indent selected lines (Tab)",
+    MENU_ITEM    ("Rigidly indent selected lines\tTab",
                   editRigidIndent);
-    MENU_ITEM    ("Rigidly un-indent selected lines (Shift+Tab)",
+    MENU_ITEM    ("Rigidly un-indent selected lines\tShift+Tab",
                   editRigidUnindent);
 
     MENU_ITEM_KEY("&Justify paragraph to soft margin",
