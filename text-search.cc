@@ -358,7 +358,7 @@ bool TextSearch::firstMatchBeforeOnOrAfter(
 
   // Consider other lines.
   tc.line += inc;
-  while (0 <= tc.line && tc.line < this->documentLines()) {
+  while (reverse? 0 <= tc.line : tc.line < this->documentLines()) {
     if (countLineMatches(tc.line)) {
       // Grab the extreme match on this line.
       ArrayStack<MatchExtent> const &matches =

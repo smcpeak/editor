@@ -1,7 +1,5 @@
 
 TODOs:
-  - BUG: If cursor is too far beyond EOF, Ctrl+, will not go back to
-    the last search hit
   - rip out the old text search implementation
   - redesign search and replace with regex in mind
     - working on it

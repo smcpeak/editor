@@ -239,6 +239,10 @@ static void testCaseInsensitive()
   expectFMBOOA(ts, true, true, 2,7, true, 2,7,2);
   expectFMBOOA(ts, true, false, 2,7, true, 2,0,2);
 
+  // Starting well beyond EOF, we should still find matches when doing
+  // reverse search.
+  expectFMBOOA(ts, true, false, 12,7, true, 3,9,2);
+
   // Test 'rangeIsMatch'.
   expectRIM(ts, 0,0, 0,0, false);
   expectRIM(ts, 0,0, 0,2, true);
