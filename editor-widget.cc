@@ -1144,19 +1144,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         this->redraw();
         break;
 
-      case Qt::Key_J:
-        if (!editSafetyCheck()) {
-          return;
-        }
-        if (selectEnabled()) {
-          QMessageBox::information(this, "Unimp", "unimplemented");
-        }
-        else {
-          m_editor->justifyNearCursor(m_softMarginColumn);
-          this->redraw();
-        }
-        break;
-
       default:
         k->ignore();
         break;
@@ -1849,6 +1836,25 @@ void EditorWidget::blockIndent(int amt)
   INITIATING_DOCUMENT_CHANGE();
   if (m_editor->blockIndent(amt)) {
     redraw();
+  }
+}
+
+
+void EditorWidget::editJustifyParagraph()
+{
+  if (!editSafetyCheck()) {
+    return;
+  }
+  if (selectEnabled()) {
+    // TODO: This.
+    QMessageBox::information(this, "Unimplemented",
+      "Unimplemented: justification of selected region.");
+  }
+  else {
+    INITIATING_DOCUMENT_CHANGE();
+    UndoHistoryGrouper ugh(*m_editor);
+    m_editor->justifyNearCursor(m_softMarginColumn);
+    this->redraw();
   }
 }
 

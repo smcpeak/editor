@@ -33,6 +33,5 @@ Clipboard:
 Formatting:
   Alt+Right or Tab: Rigidly indent selected lines by 2 columns.
   Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
-  Ctrl+J: Justify paragraph.
 
 Alt+D: Insert current date and time.

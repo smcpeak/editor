@@ -303,6 +303,9 @@ public:      // funcs
   // Indent or unindent selected lines.
   void blockIndent(int amt);
 
+  // Justify paragraph the cursor is on or paragraphs that are selected.
+  void editJustifyParagraph();
+
   // Insert text at cursor, overwriting selection if active.
   void insertText(char const *text, int length);
 

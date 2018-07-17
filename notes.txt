@@ -1,4 +1,31 @@
 
+    m_menuAction_editRigidIndent =
+      MENU_ITEM_KEY("Rigidly indent selected lines",
+                    editRigidIndent, Qt::Key_Tab);
+    MENU_ITEM_KEY("Rigidly un-indent selected lines",
+                  editRigidUnindent, Qt::SHIFT + Qt::Key_Tab);
+
+void EditorWindow::editRigidIndent() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  // TODO: This +2 should be configurable.
+  m_editorWidget->blockIndent(+2);
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editRigidUnindent() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->blockIndent(-2);
+  GENERIC_CATCH_END
+}
+
+
+  void editRigidIndent() NOEXCEPT;
+  void editRigidUnindent() NOEXCEPT;
+
+
 TODOs:
   - move more bindings into the menus and out of keyboard-help dialog
   - remove defunct 'dialogs' module

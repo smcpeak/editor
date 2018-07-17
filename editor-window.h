@@ -175,6 +175,7 @@ public Q_SLOTS:
   void editPreviousSearchHit() NOEXCEPT;
   void editGotoLine();
   void editGrepSource() NOEXCEPT;
+  void editJustifyParagraph() NOEXCEPT;
   void editApplyCommand();
 
   void viewToggleVisibleWhitespace();

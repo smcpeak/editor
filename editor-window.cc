@@ -253,7 +253,7 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
 
-    // Used shortcut letters: ACGKNPRSTU
+    // Used shortcut letters: ACJGKNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
@@ -280,6 +280,11 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
     MENU_ITEM_KEY("Grep source for symbol at cursor ...", editGrepSource,
                   Qt::CTRL + Qt::ALT + Qt::Key_G);
+
+    menu->addSeparator();
+
+    MENU_ITEM_KEY("&Justify paragraph to soft margin",
+                  editJustifyParagraph, Qt::CTRL + Qt::Key_J);
     MENU_ITEM_KEY("&Apply Command to Selection...",
                   editApplyCommand, Qt::ALT + Qt::Key_A);
   }
@@ -1076,6 +1081,14 @@ void EditorWindow::editGrepSource() NOEXCEPT
     this->setDocumentFile(fileDoc);
   }
 
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editJustifyParagraph() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->editJustifyParagraph();
   GENERIC_CATCH_END
 }
 
