@@ -370,37 +370,6 @@ public:      // funcs
   // hit BOF, return 0.
   int getAboveIndentation(int line) const;
 
-  // ---------------------- text search ----------------------
-  // flags for findString()
-  enum FindStringFlags {
-    FS_NONE                = 0x00, // nothing special
-
-    FS_CASE_INSENSITIVE    = 0x01, // case insensitive
-    FS_BACKWARDS           = 0x02, // search backwards in file
-    FS_ADVANCE_ONCE        = 0x04, // advance meta-cursor once before searching
-    FS_ONE_LINE            = 0x08, // only search the named line
-
-    // These are the flags that affect the interpretation of the search
-    // string itself, as opposed to being instructions to 'findString'
-    // regarding where to search.
-    FS_SEARCH_FLAGS_MASK   = 0x09,
-
-    FS_ALL                 = 0x0F  // all flags
-  };
-
-  // search from 'tc' to find the first occurrence of
-  // 'text', and update 'tc' to the beginning of the
-  // match; return false for no match; 'text' will not be
-  // tested for matches that span multiple lines
-  bool findString(TextCoord /*INOUT*/ &tc, char const *text,
-                  FindStringFlags flags = FS_NONE) const;
-
-  // Return true if the document text in the indicated range, including
-  // 'start' but not including 'end', matches 'searchString'.  If
-  // 'start>end', this function will swap them first.
-  bool rangeIsMatch(TextCoord const &start, TextCoord const &end,
-                    char const *searchString, FindStringFlags flags) const;
-
   // ------------------- general text insertion ------------------
   // 1. If the mark is active, deleteSelection().
   //
@@ -573,10 +542,6 @@ public:      // funcs
   // Print the document contents and things like cursor and mark.
   void debugPrint() const;
 };
-
-
-ENUM_BITWISE_OPS(TextDocumentEditor::FindStringFlags,
-                 TextDocumentEditor::FS_ALL)
 
 
 // Save/restore cursor, mark, and scroll position across an operation.

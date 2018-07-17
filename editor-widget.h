@@ -104,7 +104,7 @@ private:     // data
   // be highlighted in the 'hit' style; match is carried out
   // under influence of 'hitTextFlags'
   string m_hitText;
-  TextDocumentEditor::FindStringFlags m_hitTextFlags;
+  TextSearch::SearchStringFlags m_hitTextFlags;
 
   // Incremental search algorithm object.  Its 'searchText' and flags
   // are kept in sync with 'm_hitText' and 'm_hitTextFlags', and its

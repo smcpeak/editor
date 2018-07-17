@@ -182,4 +182,7 @@ public:      // funcs
 };
 
 
+ENUM_BITWISE_OPS(TextSearch::SearchStringFlags, TextSearch::SS_ALL)
+
+
 #endif // TEXT_SEARCH_H

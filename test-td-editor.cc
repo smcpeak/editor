@@ -183,36 +183,6 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 }
 
 
-// Test findString.
-static void testFind(TextDocumentEditor const &tde, int line, int col,
-                     char const *text, int ansLine, int ansCol,
-                     TextDocumentEditor::FindStringFlags flags)
-{
-  tde.selfCheck();
-
-  bool expect = ansLine>=0;
-  bool actual;
-  {
-    TextCoord tc(line, col);
-    actual = tde.findString(tc, text, flags);
-    line = tc.line;
-    col = tc.column;
-  }
-
-  if (expect != actual) {
-    cout << "find(\"" << text << "\"): expected " << expect
-         << ", got " << actual << endl;
-    xfailure("testFind failed");
-  }
-
-  if (actual && (line!=ansLine || col!=ansCol)) {
-    cout << "find(\"" << text << "\"): expected " << ansLine << ":" << ansCol
-         << ", got " << line << ":" << col << endl;
-    xfailure("testFind failed");
-  }
-}
-
-
 static void testTextManipulation()
 {
   TextDocumentAndEditor tde;
@@ -306,60 +276,6 @@ static void testTextManipulation()
   testGetRange(tde, 0,0, 0,0, "");
   xassert(tde.numLines() == 1);
   xassert(tde.lineLength(0) == 0);
-
-
-  TextDocumentEditor::FindStringFlags
-    none = TextDocumentEditor::FS_NONE,
-    insens = TextDocumentEditor::FS_CASE_INSENSITIVE,
-    back = TextDocumentEditor::FS_BACKWARDS,
-    advance = TextDocumentEditor::FS_ADVANCE_ONCE,
-    oneLine = TextDocumentEditor::FS_ONE_LINE;
-
-  tde.setCursor(TextCoord(0,0));
-  tde.insertNulTermText("foofoofbar\n"
-                        "ooFoo arg\n");
-  testFind(tde, 0,0, "foo", 0,0, none);
-  testFind(tde, 0,1, "foo", 0,3, none);
-  testFind(tde, 0,3, "foof", 0,3, none);
-  testFind(tde, 0,4, "foof", -1,-1, none);
-  testFind(tde, 0,0, "foofgraf", -1,-1, none);
-
-  testFind(tde, 0,7, "foo", -1,-1, none);
-  testFind(tde, 0,7, "foo", 1,2, insens);
-  testFind(tde, 0,0, "foo", 0,3, advance);
-  testFind(tde, 0,2, "foo", 0,0, back);
-  testFind(tde, 0,3, "foo", 0,0, back|advance);
-  testFind(tde, 0,4, "foo", 0,3, back|advance);
-  testFind(tde, 1,3, "foo", 0,3, back);
-  testFind(tde, 1,3, "foo", 1,2, back|insens);
-  testFind(tde, 1,2, "foo", 0,3, back|insens|advance);
-  testFind(tde, 1,3, "goo", -1,-1, back|insens|advance);
-  testFind(tde, 1,3, "goo", -1,-1, back|insens);
-  testFind(tde, 1,3, "goo", -1,-1, back);
-  testFind(tde, 1,3, "goo", -1,-1, none);
-
-  testFind(tde, 0,0, "arg", 1,6, none);
-  testFind(tde, 0,0, "arg", -1,-1, oneLine);
-
-  // Search that starts beyond EOL.
-  testFind(tde, 0,20, "arg", 1,6, none);
-  testFind(tde, 0,20, "arg", 1,6, advance);
-}
-
-
-static void testFindInLongLine()
-{
-  TextDocumentAndEditor tde;
-
-  // This test kills the mutant in 'findString' that arises from
-  // removing the call to 'ensureIndexDoubler'.  Without that call,
-  // the subsequent 'getLine' overwrites an array bounds,
-  // corrupting memory.  Of course, whether that is detected depends
-  // on details of the C library, among other things, but fortunately
-  // it seems to be reliably detected under mingw at least.
-  tde.insertNulTermText(
-    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxZZZ\n");
-  testFind(tde, 0,0, "ZZZ", 0,60, TextDocumentEditor::FS_NONE);
 }
 
 
@@ -1773,7 +1689,6 @@ static void entry(int argc, char **argv)
 
   testUndoRedo();
   testTextManipulation();
-  testFindInLongLine();
   testBlockIndent();
   testBlockIndent2();
   testFillToCursor();

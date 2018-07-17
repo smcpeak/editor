@@ -38,7 +38,7 @@
       }
     },
     {
-      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: FindStringFlags\nm_textSearch: (line: int) -> Extent[]\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: SearchStringFlags\nm_textSearch: (line: int) -> Extent[]\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40

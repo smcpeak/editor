@@ -91,7 +91,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_editor(NULL),
     m_documentList(documentList),
     m_hitText(""),
-    m_hitTextFlags(TextDocumentEditor::FS_CASE_INSENSITIVE),
+    m_hitTextFlags(TextSearch::SS_CASE_INSENSITIVE),
     m_textSearch(NULL),
     m_topMargin(1),
     m_leftMargin(1),
@@ -183,8 +183,7 @@ void EditorWidget::selfCheck() const
 
   // Check 'm_textSearch'.
   xassert(m_hitText == m_textSearch->searchString());
-  xassert((m_hitTextFlags & TextDocumentEditor::FS_CASE_INSENSITIVE) ==
-          (m_textSearch->searchStringFlags() & TextSearch::SS_CASE_INSENSITIVE));
+  xassert(m_hitTextFlags == m_textSearch->searchStringFlags());
 }
 
 
@@ -1873,12 +1872,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 
 void EditorWidget::setTextSearchParameters()
 {
-  m_textSearch->setSearchStringAndFlags(
-    m_hitText,
-    (m_hitTextFlags & TextDocumentEditor::FS_CASE_INSENSITIVE)?
-      TextSearch::SS_CASE_INSENSITIVE :
-      TextSearch::SS_NONE
-  );
+  m_textSearch->setSearchStringAndFlags(m_hitText, m_hitTextFlags);
 }
 
 
@@ -1902,10 +1896,10 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
 
   // Case-sensitive iff uppercase letter present.
   if (hasUppercaseLetter(t)) {
-    m_hitTextFlags &= ~TextDocumentEditor::FS_CASE_INSENSITIVE;
+    m_hitTextFlags &= ~TextSearch::SS_CASE_INSENSITIVE;
   }
   else {
-    m_hitTextFlags |= TextDocumentEditor::FS_CASE_INSENSITIVE;
+    m_hitTextFlags |= TextSearch::SS_CASE_INSENSITIVE;
   }
 
   this->setTextSearchParameters();

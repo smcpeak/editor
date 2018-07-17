@@ -1,6 +1,5 @@
 
 TODOs:
-  - rip out the old text search implementation
   - add regex support now that the design can accomodate it
   - option to not prefix "STDERR: " on output lines
     - annoying in compilation mode
