@@ -303,6 +303,10 @@ public:      // funcs
   // Indent or unindent selected lines.
   void blockIndent(int amt);
 
+  // My standard indentation amounts.  TODO: Make configurable.
+  void editRigidIndent()   { this->blockIndent(+2); }
+  void editRigidUnindent() { this->blockIndent(-2); }
+
   // Justify paragraph the cursor is on or paragraphs that are selected.
   void editJustifyParagraph();
 

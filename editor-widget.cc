@@ -1154,11 +1154,11 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
   else if (modifiers == Qt::AltModifier) {
     switch (k->key()) {
       case Qt::Key_Left:
-        blockIndent(-2);
+        this->editRigidUnindent();
         break;
 
       case Qt::Key_Right:
-        blockIndent(+2);
+        this->editRigidIndent();
         break;
 
       case Qt::Key_D: {
@@ -1354,20 +1354,18 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           // rather Shift+Tab is delivered as Key_Backtab.  I do not
           // know if the same is true on Linux and Mac, so I will
           // leave this here just in case.
-          blockIndent(-2);
+          this->editRigidUnindent();
         }
         else {
           // TODO: This should insert a Tab character if nothing is
-          // selected.  But right now it does not, and if the file
-          // already has a Tab in it, it is rendered the same as a
-          // space character.
-          blockIndent(+2);
+          // selected.
+          this->editRigidIndent();
         }
         break;
       }
 
       case Qt::Key_Backtab: {
-        blockIndent(-2);
+        this->editRigidUnindent();
         break;
       }
 
@@ -1826,7 +1824,7 @@ bool EditorWidget::searchHitSelected() const
 void EditorWidget::doCloseSARPanel()
 {
   m_hitText = "";
-  emit closeSARPanel();
+  Q_EMIT closeSARPanel();
   update();
 }
 
@@ -1834,6 +1832,7 @@ void EditorWidget::doCloseSARPanel()
 void EditorWidget::blockIndent(int amt)
 {
   INITIATING_DOCUMENT_CHANGE();
+  UndoHistoryGrouper ugh(*m_editor);
   if (m_editor->blockIndent(amt)) {
     redraw();
   }

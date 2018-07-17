@@ -1,0 +1,46 @@
+tab-key-issues.txt
+==================
+
+The Tab key is troublesome in Qt.  This document explains some of the
+issues I've run into.
+
+
+Receiving Tab in the editor widget
+----------------------------------
+
+Once a widget has multiple focusable child widgets, Qt maps Tab to
+change the focus among them.  I override that in
+EditorWindow::eventFilter, which seems to be the standard approach
+based on some web searching.
+
+
+Shortcuts for rigid indentation
+-------------------------------
+
+Currently I do not install shortcuts for the rigid indentation menu
+items.  The reason is they created conflicts with Tab that, at least
+after a short while, I was unable to resolve.  Part of the issue is I
+implement a modified focus change mechanism in the SAR panel.
+
+One possible solution element is to disable the menu item at certain
+times.  I tried doing that on focus change (using an event filter) but
+it didn't work because when the menu is opened, that is a focus change,
+so the menu item would always appear disabled.
+
+Another possible element is creating a QAction in the SAR panel to
+handle the Tab press.  That could potentially be enabled or disabled if
+I could find the right times to do it.  Focus in/out seemed to work
+there when I tried it (again, with an event filter).
+
+Related: QLineEdit has an interesting interaction: its clipboard
+commands, such as Ctrl+C, work on the line edit even though I have menu
+items with shortcuts that would seem like they should take precedence.
+Well, QLineEdit::event handles something called
+QEvent::ShortcutOverride, and that somehow allows its bindings to
+override mine when the line edit has focus.  Curiously, my Undo/Redo
+bindings take precedence due to an eventFilter I installed.  But I also
+have an eventFilter for Tab there, yet that seems inadequate to prevent
+a shortcut ambiguity from arising.
+
+
+EOF

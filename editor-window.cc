@@ -283,6 +283,13 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
+    // These two do not have key bindings as proper shortcuts.
+    // See doc/tab-key-issues.txt.
+    MENU_ITEM    ("Rigidly indent selected lines (Tab)",
+                  editRigidIndent);
+    MENU_ITEM    ("Rigidly un-indent selected lines (Shift+Tab)",
+                  editRigidUnindent);
+
     MENU_ITEM_KEY("&Justify paragraph to soft margin",
                   editJustifyParagraph, Qt::CTRL + Qt::Key_J);
     MENU_ITEM_KEY("&Apply Command to Selection...",
@@ -884,6 +891,8 @@ bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
 
 bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   // Within the editor window, I do not use Tab for input focus changes,
   // but the existence of other focusable controls (when the Search and
   // Replace panel is open) causes Tab to be treated as such unless I
@@ -899,6 +908,8 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
   }
 
   return false;
+
+  GENERIC_CATCH_END_RET(false)
 }
 
 
@@ -1081,6 +1092,22 @@ void EditorWindow::editGrepSource() NOEXCEPT
     this->setDocumentFile(fileDoc);
   }
 
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editRigidIndent() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->editRigidIndent();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editRigidUnindent() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->editRigidUnindent();
   GENERIC_CATCH_END
 }
 
