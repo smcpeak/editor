@@ -1911,10 +1911,12 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
   this->setTextSearchParameters();
 
   if (scrollToHit) {
-    // Find the first occurrence on or after the cursor.
+    // Find the first occurrence on or after the cursor; or, failing
+    // that, first occurrence before it.
     TextCoord tc(m_editor->cursor());
     TextSearch::MatchExtent match;
-    if (m_textSearch->firstMatchOnOrAfter(match /*OUT*/, tc /*INOUT*/)) {
+    if (m_textSearch->firstMatchOnOrAfter(match /*OUT*/, tc /*INOUT*/) ||
+        m_textSearch->firstMatchOnOrBefore(match /*OUT*/, tc /*INOUT*/)) {
       // Try to show the entire match, giving preference to the right side.
       m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
       m_editor->walkCoord(tc, match.m_length);
@@ -1926,10 +1928,7 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
 }
 
 
-// SAR is not implemented well.  This code should be moved into
-// TextDocumentEditor, but only after overhauling the internals of text
-// search.
-void EditorWidget::nextSearchHit(bool reverse)
+bool EditorWidget::nextSearchHit(bool reverse)
 {
   TRACE("sar", (reverse? "prev" : "next") << " search hit");
 
@@ -1946,7 +1945,10 @@ void EditorWidget::nextSearchHit(bool reverse)
     m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
     m_editor->scrollToCoord(m, SAR_SCROLL_GAP);
     redraw();
+    return true;
   }
+
+  return false;
 }
 
 

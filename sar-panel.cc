@@ -195,8 +195,11 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
           // Go to first hit if we are not already on one, then switch
           // back to the editor widget.  This allows Ctrl+S, <word>,
           // Enter to go to the first hit.
+          //
+          // If there is no next, go to previous.
           if (!m_editorWidget->searchHitSelected()) {
-            m_editorWidget->nextSearchHit(false /*reverse*/);
+            m_editorWidget->nextSearchHit(false /*reverse*/) ||
+              m_editorWidget->nextSearchHit(true /*reverse*/);
           }
           this->toggleSARFocus();
           return true;       // no further processing

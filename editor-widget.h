@@ -307,8 +307,9 @@ public:      // funcs
   // so the first match is visible.  But, do not change the cursor.
   void setHitText(string const &t, bool scrollToHit);
 
-  // Move the cursor to the next/prev instance of matching text.
-  void nextSearchHit(bool reverse);
+  // Move the cursor to the next/prev instance of matching text.  Return
+  // true if we found one to move to.
+  bool nextSearchHit(bool reverse);
 
   // Replace the current match with the given text.
   void replaceSearchHit(string const &t);

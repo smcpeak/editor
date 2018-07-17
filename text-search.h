@@ -154,6 +154,10 @@ public:      // funcs
   bool firstMatchOnOrAfter(
     MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const;
 
+  // Same, but going backward.
+  bool firstMatchOnOrBefore(
+    MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const;
+
   // Similar, but do *not* report a match on 'tc' itself, and if
   // 'reverse', go backwards instead of forwards.
   bool firstMatchBeforeOrAfter(

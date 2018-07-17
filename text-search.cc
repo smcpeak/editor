@@ -297,6 +297,14 @@ bool TextSearch::firstMatchOnOrAfter(
     match /*OUT*/, tc /*INOUT*/);
 }
 
+bool TextSearch::firstMatchOnOrBefore(
+  MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const
+{
+  return this->firstMatchBeforeOnOrAfter(
+    true /*reverse*/, true /*matchAtTC*/,
+    match /*OUT*/, tc /*INOUT*/);
+}
+
 bool TextSearch::firstMatchBeforeOrAfter(
   bool reverse, MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const
 {
