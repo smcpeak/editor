@@ -1160,12 +1160,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
       case Qt::Key_Right:
         this->editRigidIndent();
         break;
-
-      case Qt::Key_D: {
-        m_editor->insertDateTime();
-        this->redraw();
-        break;
-      }
     }
   }
 
@@ -1855,6 +1849,15 @@ void EditorWidget::editJustifyParagraph()
     m_editor->justifyNearCursor(m_softMarginColumn);
     this->redraw();
   }
+}
+
+
+void EditorWidget::editInsertDateTime()
+{
+  INITIATING_DOCUMENT_CHANGE();
+  UndoHistoryGrouper ugh(*m_editor);
+  m_editor->insertDateTime();
+  this->redraw();
 }
 
 

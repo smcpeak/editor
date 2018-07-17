@@ -148,6 +148,8 @@ public:      // funcs
     NamedTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
 public Q_SLOTS:
+  // TODO: All of these should be NOEXCEPT.
+
   void fileNewFile();
   void fileOpen();
   void fileOpenAtCursor();
@@ -179,6 +181,7 @@ public Q_SLOTS:
   void editRigidUnindent() NOEXCEPT;
   void editJustifyParagraph() NOEXCEPT;
   void editApplyCommand();
+  void editInsertDateTime() NOEXCEPT;
 
   void viewToggleVisibleWhitespace();
   void viewSetWhitespaceOpacity();

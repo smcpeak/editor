@@ -253,13 +253,16 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
 
-    // Used shortcut letters: ACJGKNPRSTU
+    // Used shortcut letters: ACDJGKNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
 
     menu->addSeparator();
 
+    // Some of these items have another shortcut (e.g., Shift+Delete
+    // for "Cut"), but even with QAction::setShortcuts they cannot be
+    // shown in the menu item, so I do not bind them here.
     MENU_ITEM_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
     MENU_ITEM_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
     MENU_ITEM_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
@@ -294,6 +297,8 @@ void EditorWindow::buildMenu()
                   editJustifyParagraph, Qt::CTRL + Qt::Key_J);
     MENU_ITEM_KEY("&Apply Command to Selection...",
                   editApplyCommand, Qt::ALT + Qt::Key_A);
+    MENU_ITEM_KEY("Insert current date/time",
+                  editInsertDateTime, Qt::ALT + Qt::Key_D);
   }
 
   #define CHECKABLE_ACTION(field, title, function, initChecked)  \
@@ -1235,6 +1240,14 @@ void EditorWindow::editApplyCommand()
     mb.exec();
   }
 
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editInsertDateTime() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->editInsertDateTime();
   GENERIC_CATCH_END
 }
 
