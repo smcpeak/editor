@@ -203,6 +203,10 @@ private:     // funcs
   // matches that are off the screen.
   void drawOffscreenMatchIndicators(QPainter &paint);
 
+  // Draw one of the indicators.
+  void drawOneOffscreenMatchIndicator(
+    QPainter &paint, QtBDFFont *font, bool above, int numMatches);
+
 protected:   // funcs
   // QWidget funcs
   virtual bool event(QEvent *e) override;

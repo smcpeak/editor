@@ -1030,23 +1030,44 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
     m_editor->lastVisible().line+1, m_editor->numLines());
 
   if (matchesAbove || matchesBelow) {
-    // Use the same color combination as search hits.
+    // Use the same appearance as search hits, as that will help convey
+    // what the numbers mean.
     StyleDB *styleDB = StyleDB::instance();
-    TextStyle const &style = styleDB->getStyle(TC_HITS);
-    paint.setPen(style.foreground);
-    paint.setBackground(style.background);
+    QtBDFFont *font;
+    bool underlining;
+    this->setDrawStyle(paint, font /*OUT*/, underlining /*OUT*/,
+                       styleDB, TC_HITS);
 
-    // For now at least, just draw using the default font.
-    paint.setBackgroundMode(Qt::OpaqueMode);
     if (matchesAbove) {
-      paint.drawText(this->rect(), Qt::AlignRight | Qt::AlignTop,
-        qstringb(matchesAbove));
+      this->drawOneOffscreenMatchIndicator(
+        paint, font, true /*above*/, matchesAbove);
     }
     if (matchesBelow) {
-      paint.drawText(this->rect(), Qt::AlignRight | Qt::AlignBottom,
-        qstringb(matchesBelow));
+      this->drawOneOffscreenMatchIndicator(
+        paint, font, false /*above*/, matchesBelow);
     }
   }
+}
+
+
+void EditorWidget::drawOneOffscreenMatchIndicator(
+  QPainter &paint, QtBDFFont *font, bool above, int numMatches)
+{
+  string s(stringb(numMatches));
+  int labelWidth = m_fontWidth * s.length();
+
+  // This uses the left/top margins for bottom/right in order to achieve
+  // a symmetric apperance.
+  int left = this->width() - labelWidth - m_leftMargin;
+  int top = above?
+              m_topMargin :
+              this->height() - m_fontHeight - m_topMargin;
+
+  QRect rect(left, top, labelWidth, m_fontHeight);
+  paint.eraseRect(rect);
+
+  int baseline = m_fontAscent-1;
+  drawString(*font, paint, QPoint(left, top+baseline), s);
 }
 
 
