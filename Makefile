@@ -5,6 +5,7 @@ all: comment.yy.cc
 all: testgap
 all: test-td-core
 all: test-td-editor
+all: test-text-search
 all: test-justify
 all: test-command-runner
 all: test-named-td
@@ -163,6 +164,21 @@ TD_OBJS += test-td-editor.o
 test-td-editor: $(TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
 	./test-td-editor $(TEST_REDIR)
+
+
+# -------------- test-text-search program ----------------
+TOCLEAN += test-text-search
+
+EDITOR_OBJS += text-search.o
+
+TEST_TEXT_SEARCH_OBJS := $(EDITOR_OBJS)
+
+TEST_TEXT_SEARCH_OBJS += test-text-search.o
+-include test-text-search.d
+
+test-text-search: $(TEST_TEXT_SEARCH_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_TEXT_SEARCH_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-text-search $(TEST_REDIR)
 
 
 # -------------- justify test program ----------------

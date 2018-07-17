@@ -135,9 +135,9 @@ public:    // funcs
   int numLinesExceptFinalEmpty() const;
 
   // --------------------- line contents ------------------------
-  // get part of a line's contents, starting at 'tc' and getting
-  // 'destLen' chars; all chars must be in the line now; the retrieved
-  // text never includes the '\n' character
+  // Get part of a line's contents, starting at 'tc' and getting
+  // 'destLen' chars.  All chars must be in the line now.  The retrieved
+  // text never includes the '\n' character, nor a terminating NUL.
   void getLine(TextCoord tc, char *dest, int destLen) const;
 
   // retrieve text that may span line boundaries; line boundaries are
@@ -186,7 +186,7 @@ public:    // funcs
   // contains the sequence of lines originally in the other.  It is
   // not guaranteed that internal caches, etc., are swapped, since
   // those are not visible to clients.
-  void swapWith(TextDocumentCore &other) noexcept;
+  void swapWith(TextDocumentCore &other) NOEXCEPT;
 
   // write a file
   void writeFile(char const *fname) const;
@@ -225,7 +225,7 @@ public:    // funcs
 };
 
 
-inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
+inline void swap(TextDocumentCore &a, TextDocumentCore &b) NOEXCEPT
 {
   a.swapWith(b);
 }
@@ -233,7 +233,7 @@ inline void swap(TextDocumentCore &a, TextDocumentCore &b) noexcept
 
 // Interface for observing changes to a TextDocumentCore.
 //
-// All methods have 'noexcept'.  From the perspective of the observee,
+// All methods have 'NOEXCEPT'.  From the perspective of the observee,
 // these cannot fail, as there is nothing the observee can do about it
 // nor an appropriate way to report it.  Observers are obligated to
 // catch any exceptions they throw.
@@ -256,21 +256,21 @@ public:      // funcs
   // to remember which buffer it's observing.  These are called
   // *after* the TextDocumentCore updates its internal representation.  The
   // default implementations do nothing.
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept;
+  virtual void observeInsertLine(TextDocumentCore const &doc, int line) NOEXCEPT;
+  virtual void observeDeleteLine(TextDocumentCore const &doc, int line) NOEXCEPT;
+  virtual void observeInsertText(TextDocumentCore const &doc, TextCoord tc, char const *text, int length) NOEXCEPT;
+  virtual void observeDeleteText(TextDocumentCore const &doc, TextCoord tc, int length) NOEXCEPT;
 
   // The document has changed in some major way that does not easily
   // allow for incremental updates.  Observers must refresh completely.
-  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept;
+  virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT;
 
   // This notification is sent to observers if the observee is actually
   // a TextDocument (i.e., with undo/redo history) and the "has unsaved
   // changes" property may have changed.
   //
   // This method is a slight abuse of the observer pattern.
-  virtual void observeUnsavedChangesChange(TextDocument const *doc) noexcept;
+  virtual void observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT;
 };
 
 #endif // TD_CORE_H

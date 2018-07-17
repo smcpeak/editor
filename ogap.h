@@ -1,17 +1,21 @@
 // ogap.h
-// gap array of owner pointers
-
-// I assume it works, but I'm not using it, so there is not much
-// point in maintaining it should that become necessary.
-#error "Note: This class is never used."
+// OGapArray template class.
 
 #ifndef OGAP_H
 #define OGAP_H
 
-#include "gap.h"        // GapArray
+// editor
+#include "gap.h"                       // GapArray
 
+// smbase
+#include "macros.h"                    // NO_OBJECT_COPIES
+
+
+// Gap array of nullable owner pointers.
 template <class T>
 class OGapArray {
+  NO_OBJECT_COPIES(OGapArray);
+
 private:     // data
   // use a GapArray of void*, so that the compiler will only
   // instantiate the underlying template once; I'll use (inline) casts

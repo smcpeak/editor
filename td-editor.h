@@ -92,6 +92,12 @@ public:      // funcs
   // and for that we need the underlying document.
   TextDocument const *getDocument() const { return m_doc; }
 
+  // Similarly for the core.  This is not meant for ordinary application
+  // code to use, rather it is meant to allow connecting components that
+  // explicitly depend on lower-level elements.
+  TextDocumentCore const *getDocumentCore() const
+    { return &(m_doc->getCore()); }
+
   // Status of associated process, if any.
   bool documentProcessStatus() const   { return m_doc->documentProcessStatus(); }
 
@@ -617,7 +623,7 @@ public:      // funcs
 // necessary since TDE::m_doc is an RCSerf<TD>.
 class WrappedTextDocument {
 public:
-  TextDocument innerDoc;
+  TextDocument m_innerDoc;
 };
 
 
@@ -632,8 +638,10 @@ class TextDocumentAndEditor : private WrappedTextDocument,
 public:
   TextDocumentAndEditor()
     : WrappedTextDocument(),
-      TextDocumentEditor(&innerDoc)
+      TextDocumentEditor(&m_innerDoc)
   {}
+
+  TextDocument &writableDoc() { return m_innerDoc; }
 };
 
 

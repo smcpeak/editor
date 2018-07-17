@@ -38,7 +38,7 @@
       }
     },
     {
-      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: FindStringFlags\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: FindStringFlags\nm_textSearch: (line: int) -> Extent[]\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40
@@ -153,6 +153,18 @@
       "size": {
         "h": 65,
         "w": 250
+      }
+    },
+    {
+      "attributes": "m_start: int\nm_length: int\n",
+      "loc": {
+        "x": 275,
+        "y": 165
+      },
+      "name": "Extent",
+      "size": {
+        "h": 65,
+        "w": 85
       }
     }
   ],
@@ -343,8 +355,8 @@
     {
       "controlPts": [
         {
-          "x": 365,
-          "y": 245
+          "x": 370,
+          "y": 275
         },
         {
           "x": 385,

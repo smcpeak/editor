@@ -1,8 +1,12 @@
 
 TODOs:
+  - rip out the old text search implementation
   - redesign search and replace with regex in mind
+    - working on it
   - would like Ctrl+S to automatically wrap its search
     - ideally with some form of feedback
+  - option to not prefix "STDERR: " on output lines
+    - annoying in compilation mode
   - I think I want the same search string in all windows.  I am often
     having to re-type the string in another window, and rarely if ever
     want them different.

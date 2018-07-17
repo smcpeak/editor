@@ -4,10 +4,12 @@
 #ifndef EDITOR_WIDGET_H
 #define EDITOR_WIDGET_H
 
+// editor
 #include "td-editor.h"                 // TextDocumentEditor
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
 #include "textcategory.h"              // TextCategory
+#include "text-search.h"               // TextSearch
 
 // smqtutil
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
@@ -104,6 +106,11 @@ private:     // data
   string m_hitText;
   TextDocumentEditor::FindStringFlags m_hitTextFlags;
 
+  // Incremental search algorithm object.  Its 'searchText' and flags
+  // are kept in sync with 'm_hitText' and 'm_hitTextFlags', and its
+  // document is always 'm_editor->getDocumentCore()'.
+  Owner<TextSearch> m_textSearch;
+
 public:      // data
   // ------ rendering options ------
   // amount of blank space at top/left edge of widget
@@ -188,6 +195,13 @@ public:      // data
 private:     // funcs
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
+
+  // Copy 'm_hitText' and 'm_hitTextFlags' into 'm_textSearch'.
+  void setTextSearchParameters();
+
+  // Draw the digits in the corner that indicate the number of search
+  // matches that are off the screen.
+  void drawOffscreenMatchIndicators(QPainter &paint);
 
 protected:   // funcs
   // QWidget funcs

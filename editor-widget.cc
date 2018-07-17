@@ -92,6 +92,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_documentList(documentList),
     m_hitText(""),
     m_hitTextFlags(TextDocumentEditor::FS_CASE_INSENSITIVE),
+    m_textSearch(NULL),
     m_topMargin(1),
     m_leftMargin(1),
     m_interLineSpace(0),
@@ -119,6 +120,9 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   m_editor = this->getOrMakeEditor(tdf);
   this->startListening();
 
+  m_textSearch = new TextSearch(m_editor->getDocumentCore());
+  this->setTextSearchParameters();
+
   m_documentList->addObserver(this);
 
   setFonts(bdfFontData_editor14r,
@@ -141,6 +145,8 @@ EditorWidget::~EditorWidget()
 
   m_documentList->removeObserver(this);
   m_documentList = NULL;
+
+  m_textSearch.del();
 
   // Do this explicitly just for clarity, but the automatic destruction
   // should also work.
@@ -174,6 +180,11 @@ void EditorWidget::selfCheck() const
 
   // And, at this point, we should always be listening.
   xassert(m_listening);
+
+  // Check 'm_textSearch'.
+  xassert(m_hitText == m_textSearch->searchString());
+  xassert((m_hitTextFlags & TextDocumentEditor::FS_CASE_INSENSITIVE) ==
+          (m_textSearch->searchStringFlags() & TextSearch::SS_CASE_INSENSITIVE));
 }
 
 
@@ -270,6 +281,10 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
   this->stopListening();
 
   m_editor = this->getOrMakeEditor(file);
+
+  // This deallocates the old 'TextSearch'.
+  m_textSearch = new TextSearch(m_editor->getDocumentCore());
+  this->setTextSearchParameters();
 
   // Move the chosen file to the top of the document list since it is
   // now the most recently used.
@@ -694,16 +709,12 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       }
 
       // Show search hits.
-      if (m_hitText.length() > 0) {
-        TextCoord hitTC(line, 0);
-        TextDocumentEditor::FindStringFlags const hitTextFlags =
-          m_hitTextFlags | TextDocumentEditor::FS_ONE_LINE;
-
-        while (m_editor->findString(hitTC /*INOUT*/,
-                                  toCStr(m_hitText),
-                                  hitTextFlags)) {
-          categories.overlay(hitTC.column, m_hitText.length(), TC_HITS);
-          hitTC.column++;
+      if (m_textSearch->countLineMatches(line)) {
+        ArrayStack<TextSearch::MatchExtent> const &matches =
+          m_textSearch->getLineMatches(line);
+        for (int m=0; m < matches.length(); m++) {
+          categories.overlay(matches[m].m_start, matches[m].m_length,
+                             TC_HITS);
         }
       }
     }
@@ -910,6 +921,9 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     // draw the line buffer to the window
     winPaint.drawPixmap(0,y, pixmap);    // draw it
   }
+
+  // Also draw indicators of number of matches offscreen.
+  this->drawOffscreenMatchIndicators(winPaint);
 }
 
 
@@ -1005,6 +1019,34 @@ void EditorWidget::setDrawStyle(QPainter &paint,
 
   curFont = m_fontForCategory[cat];
   xassert(curFont);
+}
+
+
+void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
+{
+  int matchesAbove = m_textSearch->countRangeMatches(
+    0, m_editor->firstVisible().line);
+  int matchesBelow = m_textSearch->countRangeMatches(
+    m_editor->lastVisible().line+1, m_editor->numLines());
+
+  if (matchesAbove || matchesBelow) {
+    // Use the same color combination as search hits.
+    StyleDB *styleDB = StyleDB::instance();
+    TextStyle const &style = styleDB->getStyle(TC_HITS);
+    paint.setPen(style.foreground);
+    paint.setBackground(style.background);
+
+    // For now at least, just draw using the default font.
+    paint.setBackgroundMode(Qt::OpaqueMode);
+    if (matchesAbove) {
+      paint.drawText(this->rect(), Qt::AlignRight | Qt::AlignTop,
+        qstringb(matchesAbove));
+    }
+    if (matchesBelow) {
+      paint.drawText(this->rect(), Qt::AlignRight | Qt::AlignBottom,
+        qstringb(matchesBelow));
+    }
+  }
 }
 
 
@@ -1723,6 +1765,17 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
+void EditorWidget::setTextSearchParameters()
+{
+  m_textSearch->setSearchStringAndFlags(
+    m_hitText,
+    (m_hitTextFlags & TextDocumentEditor::FS_CASE_INSENSITIVE)?
+      TextSearch::SS_CASE_INSENSITIVE :
+      TextSearch::SS_NONE
+  );
+}
+
+
 static bool hasUppercaseLetter(string const &t)
 {
   for (char const *p = t.c_str(); *p; p++) {
@@ -1749,14 +1802,16 @@ void EditorWidget::setHitText(string const &t, bool scrollToHit)
     m_hitTextFlags |= TextDocumentEditor::FS_CASE_INSENSITIVE;
   }
 
+  this->setTextSearchParameters();
+
   if (scrollToHit) {
-    // Find the first occurrence after the cursor.
-    TextCoord origCursor(m_editor->cursor());
-    TextCoord tc(origCursor);
-    if (m_editor->findString(tc, m_hitText.c_str(), m_hitTextFlags)) {
+    // Find the first occurrence on or after the cursor.
+    TextCoord tc(m_editor->cursor());
+    TextSearch::MatchExtent match;
+    if (m_textSearch->firstMatchOnOrAfter(match /*OUT*/, tc /*INOUT*/)) {
       // Try to show the entire match, giving preference to the right side.
       m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
-      m_editor->walkCoord(tc, m_hitText.length());
+      m_editor->walkCoord(tc, match.m_length);
       m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
     }
   }
@@ -1773,23 +1828,13 @@ void EditorWidget::nextSearchHit(bool reverse)
   TRACE("sar", (reverse? "prev" : "next") << " search hit");
 
   TextCoord tc(m_editor->cursor());
-
-  TextDocumentEditor::FindStringFlags flags = m_hitTextFlags;
-  if (reverse) {
-    flags ^= TextDocumentEditor::FS_BACKWARDS;
-  }
-
-  // Skip a match we are currently on.
-  if (m_editor->validCoord(tc)) {
-    m_editor->walkCoord(tc,
-      (flags & TextDocumentEditor::FS_BACKWARDS)? -1 : +1);
-  }
-
-  if (m_editor->findString(tc, m_hitText.c_str(), flags)) {
+  TextSearch::MatchExtent match;
+  if (m_textSearch->firstMatchBeforeOrAfter(reverse, match /*OUT*/,
+                                            tc /*INOUT*/)) {
     m_editor->setCursor(tc);
 
     TextCoord m(tc);
-    m_editor->walkCoord(m, +m_hitText.length());
+    m_editor->walkCoord(m, +match.m_length);
     m_editor->setMark(m);
 
     m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
@@ -1810,14 +1855,14 @@ void EditorWidget::replaceSearchHit(string const &t)
 bool EditorWidget::searchHitSelected() const
 {
   return m_editor->markActive() &&
-         m_editor->rangeIsMatch(m_editor->cursor(), m_editor->mark(),
-                                m_hitText.c_str(), m_hitTextFlags);
+         m_textSearch->rangeIsMatch(m_editor->cursor(), m_editor->mark());
 }
 
 
 void EditorWidget::doCloseSARPanel()
 {
   m_hitText = "";
+  this->setTextSearchParameters();
   Q_EMIT closeSARPanel();
   update();
 }
