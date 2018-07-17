@@ -35,8 +35,4 @@ Formatting:
   Alt+Left or Shift+Tab: Rigidly un-indent selected lines by 2 columns.
   Ctrl+J: Justify paragraph.
 
-Search (Ctrl+S):
-  Ctrl+Period or Ctrl+Comma: Next or previous search hit.
-  Esc: Close search panel.
-
 Alt+D: Insert current date and time.

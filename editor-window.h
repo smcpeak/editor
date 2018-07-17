@@ -171,6 +171,8 @@ public Q_SLOTS:
   void editDelete();
   void editKillLine() NOEXCEPT;
   void editISearch();
+  void editNextSearchHit() NOEXCEPT;
+  void editPreviousSearchHit() NOEXCEPT;
   void editGotoLine();
   void editGrepSource() NOEXCEPT;
   void editApplyCommand();

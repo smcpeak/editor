@@ -1157,13 +1157,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
         }
         break;
 
-      case Qt::Key_Comma:
-      case Qt::Key_Period: {
-        bool reverse = (k->key() == Qt::Key_Comma);
-        this->nextSearchHit(reverse);
-        break;
-      }
-
       default:
         k->ignore();
         break;

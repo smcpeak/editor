@@ -253,6 +253,8 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
 
+    // Used shortcut letters: ACGKNPRSTU
+
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
 
@@ -268,6 +270,13 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     MENU_ITEM_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
+    MENU_ITEM_KEY("&Next search hit", editNextSearchHit,
+                  Qt::CTRL + Qt::Key_Period);
+    MENU_ITEM_KEY("Previous search hit", editPreviousSearchHit,
+                  Qt::CTRL + Qt::Key_Comma);
+
+    menu->addSeparator();
+
     MENU_ITEM_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
     MENU_ITEM_KEY("Grep source for symbol at cursor ...", editGrepSource,
                   Qt::CTRL + Qt::ALT + Qt::Key_G);
@@ -991,6 +1000,25 @@ void EditorWindow::editISearch()
 {
   m_sarPanel->toggleSARFocus();
 }
+
+
+void EditorWindow::editNextSearchHit() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->nextSearchHit(false /*reverse*/);
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editPreviousSearchHit() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->nextSearchHit(true /*reverse*/);
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editPreviousSearchHit() NOEXCEPT;
 
 
 void EditorWindow::editGotoLine()

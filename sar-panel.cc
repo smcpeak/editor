@@ -181,15 +181,6 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
         }
         break;
 
-      case Qt::Key_Comma:
-      case Qt::Key_Period:
-        if (mods == Qt::ControlModifier) {
-          bool reverse = (key == Qt::Key_Comma);
-          m_editorWidget->nextSearchHit(reverse);
-          return true;
-        }
-        break;
-
       case Qt::Key_R:
         if (control && !alt) {
           string s = toString(m_replBox->currentText());
