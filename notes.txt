@@ -1,6 +1,5 @@
 
 TODOs:
-  - remove defunct 'dialogs' module
   - redesign search and replace with regex in mind
   - would like Ctrl+S to automatically wrap its search
     - ideally with some form of feedback
