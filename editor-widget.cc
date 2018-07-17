@@ -479,11 +479,96 @@ void EditorWidget::redraw()
   // tell our parent.. but ignore certain messages temporarily
   {
     Restorer<bool> restore(m_ignoreScrollSignals, true);
-    emit viewChanged();
+    Q_EMIT viewChanged();
   }
+
+  this->emitSearchStatusIndicator();
 
   // redraw
   update();
+}
+
+
+// Compute and broadcast match status indicator.
+void EditorWidget::emitSearchStatusIndicator()
+{
+  // Get effective cursor and mark for this calculation.
+  TextCoord cursor = m_editor->cursor();
+  TextCoord mark = (m_editor->markActive() ? m_editor->mark() : cursor);
+  if (cursor > mark) {
+    swap(cursor, mark);
+  }
+
+  // Matches above and below cursor line.
+  int matchesAbove = m_textSearch->countMatchesAbove(cursor.line);
+  int matchesBelow = m_textSearch->countMatchesBelow(cursor.line);
+
+  // Matches before, at, and after cursor within its line.
+  int matchesBefore=0, matchesOn=0, matchesSelected=0, matchesAfter=0;
+  if (m_textSearch->countLineMatches(cursor.line)) {
+    ArrayStack<TextSearch::MatchExtent> const &matches =
+      m_textSearch->getLineMatches(cursor.line);
+
+    for (int i=0; i < matches.length(); i++) {
+      TextSearch::MatchExtent const &m = matches[i];
+      if (m.m_start < cursor.column) {
+        matchesBefore++;
+      }
+      else if (m.m_start > cursor.column) {
+        matchesAfter++;
+      }
+      else {
+        matchesOn++;
+        if (mark.line == cursor.line &&
+            m.m_length == (mark.column - cursor.column)) {
+          matchesSelected++;
+        }
+      }
+    }
+  }
+
+  /* Sample scenarios and intended presentation:
+                                                  LT  on  GTE
+    *   hit   hit   hit             <1  / 3        0   0    3
+       *hit   hit   hit              1  / 3        0   1    3
+       [hit]  hit   hit             [1] / 3        0   1    3
+       [h]it  hit   hit              1  / 3        0   1    3
+       [hit ] hit   hit              1  / 3        0   1    3
+        h*it  hit   hit             <2  / 3        1   0    2
+        hit * hit   hit             <2  / 3        1   0    2
+        hit  *hit   hit              2  / 3        1   1    2
+        hit   hit * hit             <3  / 3        2   0    1
+        hit   hit  *hit              3  / 3        2   1    1
+        hit   hit  [hit]            [3] / 3        2   1    1
+        hit   hit   h*it             3> / 3        3   0    0
+            *                             0        0   0    0
+  */
+
+  int matchesLT = matchesAbove + matchesBefore;
+  int matchesGTE = matchesOn + matchesAfter + matchesBelow;
+  int totalMatches = matchesLT + matchesGTE;
+
+  stringBuilder sb;
+  if (totalMatches) {
+    if (matchesSelected) {
+      sb << '[' << (matchesLT+1) << "] / " << totalMatches;
+    }
+    else if (matchesOn) {
+      sb << ' ' << (matchesLT+1) << "  / " << totalMatches;
+    }
+    else if (matchesGTE) {
+      sb << '<' << (matchesLT+1) << "  / " << totalMatches;
+    }
+    else {
+      sb << '>' << matchesLT << "  / " << totalMatches;
+    }
+  }
+  else {
+    sb << '0';
+  }
+
+  TRACE("sar", "searchStatusIndicator: " << sb);
+  Q_EMIT signal_searchStatusIndicator(toQString(sb));
 }
 
 
@@ -1024,10 +1109,10 @@ void EditorWidget::setDrawStyle(QPainter &paint,
 
 void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
 {
-  int matchesAbove = m_textSearch->countRangeMatches(
-    0, m_editor->firstVisible().line);
-  int matchesBelow = m_textSearch->countRangeMatches(
-    m_editor->lastVisible().line+1, m_editor->numLines());
+  int matchesAbove = m_textSearch->countMatchesAbove(
+    m_editor->firstVisible().line);
+  int matchesBelow = m_textSearch->countMatchesBelow(
+    m_editor->lastVisible().line);
 
   if (matchesAbove || matchesBelow) {
     // Use the same appearance as search hits, as that will help convey

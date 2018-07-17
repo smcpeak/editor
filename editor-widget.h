@@ -207,6 +207,9 @@ private:     // funcs
   void drawOneOffscreenMatchIndicator(
     QPainter &paint, QtBDFFont *font, bool above, int numMatches);
 
+  // Compute and emit 'signal_searchStatusIndicator'.
+  void emitSearchStatusIndicator();
+
 protected:   // funcs
   // QWidget funcs
   virtual bool event(QEvent *e) override;
@@ -453,7 +456,7 @@ public Q_SLOTS:
   void scrollToLine(int line);
   void scrollToCol(int col);
 
-signals:
+Q_SIGNALS:
   // Emitted when some aspect of the document that is shown outside the
   // widget's own rectangle changes: scroll viewport, cursor location,
   // file name, whether there are unsaved changes, etc.  In practice,
@@ -470,6 +473,10 @@ signals:
 
   // The user wants to close the search and replace panel if it is open.
   void closeSARPanel();
+
+  // Emitted to indicate the number of search hits and the relative
+  // position of the cursor and mark to them.
+  void signal_searchStatusIndicator(QString const &status);
 };
 
 #endif // EDITOR_WIDGET_H

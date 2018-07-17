@@ -126,9 +126,17 @@ public:      // funcs
   // the document's current contents silently yield a 0 count.
   int countRangeMatches(int startLine, int endPlusOneLine) const;
 
+  // Count the matches above a line.
+  int countMatchesAbove(int line) const
+    { return countRangeMatches(0, line); }
+
   // Count the matches on a single line.
   int countLineMatches(int line) const
     { return countRangeMatches(line, line+1); }
+
+  // Count the matches below a line.
+  int countMatchesBelow(int line) const
+    { return countRangeMatches(line+1, this->documentLines()); }
 
   // Get the matches on a single line.  This can only be called if there
   // is at least one match on the line.  The returned reference is

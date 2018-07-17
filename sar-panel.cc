@@ -36,9 +36,9 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
   : QWidget(parent, f),
     m_findBox(NULL),
     m_replBox(NULL),
+    m_helpButton(NULL),
     m_editorWidget(NULL),
-    m_ignore_findEditTextChanged(false),
-    m_helpButton(NULL)
+    m_ignore_findEditTextChanged(false)
 {
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
@@ -49,6 +49,14 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
   {
     QHBoxLayout *hbox = new QHBoxLayout();
     vbox->addLayout(hbox);
+
+    m_matchStatusLabel = new QLabel("");
+    hbox->addWidget(m_matchStatusLabel);
+
+    // Reserve some space so things don't jump around too much.  But the
+    // label will grow, causing the QComboBoxes to shrink, if it needs
+    // to.
+    m_matchStatusLabel->setMinimumWidth(70);
 
     QLabel *findLabel = new QLabel("Find:");
     hbox->addWidget(findLabel);
@@ -83,6 +91,9 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
 
 SearchAndReplacePanel::~SearchAndReplacePanel()
 {
+  // Disconnect the widget and the status label.
+  this->setEditorWidget(NULL);
+
   QObject::disconnect(m_findBox, NULL, this, NULL);
   QObject::disconnect(m_helpButton, NULL, this, NULL);
 }
@@ -90,7 +101,18 @@ SearchAndReplacePanel::~SearchAndReplacePanel()
 
 void SearchAndReplacePanel::setEditorWidget(EditorWidget *w)
 {
+  if (m_editorWidget) {
+    QObject::disconnect(m_editorWidget, NULL,
+                        m_matchStatusLabel, NULL);
+  }
+
   m_editorWidget = w;
+  m_matchStatusLabel->setText("");
+
+  if (m_editorWidget) {
+    QObject::connect(m_editorWidget, &EditorWidget::signal_searchStatusIndicator,
+                     m_matchStatusLabel, &QLabel::setText);
+  }
 }
 
 
@@ -331,6 +353,12 @@ void SearchAndReplacePanel::on_help()
     "\n"
     "If there is a capital letter in the Find box, search is "
       "case-sensitive, otherwise not.\n"
+    "\n"
+    "The numbers in the lower left show the total number of matches "
+    "and the relation of the cursor and selection to them.  For "
+    "example, \"<5 / 9\" means the cursor is to the left of the 5th "
+    "of 9 matches.  Square brackets, like \"[5] / 9\", mean the 5th "
+    "match is selected, and hence can be replaced.\n"
   );
   mb.exec();
 }

@@ -14,6 +14,7 @@
 class EditorWidget;                    // editor-widget.h
 
 class QComboBox;
+class QLabel;
 class QToolButton;
 
 
@@ -29,14 +30,17 @@ private:     // data
   // And the "Repl" string.
   QComboBox *m_replBox;
 
+  // Label with information about current matches.
+  QLabel *m_matchStatusLabel;
+
+  // "Help" button.
+  QToolButton *m_helpButton;
+
   // The editor we are interacting with.
   RCSerf<EditorWidget> m_editorWidget;
 
   // When true, ignore the 'findEditTextChanged' signal.
   bool m_ignore_findEditTextChanged;
-
-  // "Help" button.
-  QToolButton *m_helpButton;
 
 public:      // funcs
   SearchAndReplacePanel(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
