@@ -38,14 +38,14 @@
       }
     },
     {
-      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: SearchStringFlags\nm_textSearch: (line: int) -> Extent[]\n\nm_inputProxy: InputProxy\n\n(various painting options)\n(pointers to subwidgets)\n",
+      "attributes": "m_editors: NamedTextDocumentEditor[]\nm_editor: NamedTextDocumentEditor\n\nm_documentList: NamedTextDocumentList\n\nm_hitText: string\nm_hitTextFlags: SearchStringFlags\nm_textSearch: (line: int) -> Extent[]\n\n(various painting options)\n(pointers to subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 40
       },
       "name": "EditorWidget : QWidget",
       "size": {
-        "h": 305,
+        "h": 300,
         "w": 245
       }
     },
@@ -77,11 +77,11 @@
       "attributes": "m_doc: TextDocument\nm_cursor: TextCoord\nm_mark: TextCoord?\nm_firstVisible: TextCoord\nm_lastVisible: TextCoord\n",
       "loc": {
         "x": 380,
-        "y": 150
+        "y": 140
       },
       "name": "TextDocumentEditor",
       "size": {
-        "h": 110,
+        "h": 120,
         "w": 250
       }
     },
@@ -93,7 +93,7 @@
       "name": "TextDocumentObserver",
       "size": {
         "h": 20,
-        "w": 150
+        "w": 250
       }
     },
     {
@@ -111,8 +111,8 @@
     {
       "attributes": "line: int\ncolumn: int\n",
       "loc": {
-        "x": 380,
-        "y": 70
+        "x": 545,
+        "y": 170
       },
       "name": "TextCoord",
       "size": {
@@ -158,13 +158,24 @@
     {
       "attributes": "m_start: int\nm_length: int\n",
       "loc": {
-        "x": 275,
-        "y": 165
+        "x": 200,
+        "y": 180
       },
       "name": "Extent",
       "size": {
         "h": 65,
         "w": 85
+      }
+    },
+    {
+      "loc": {
+        "x": 165,
+        "y": 350
+      },
+      "name": "SARPanel",
+      "size": {
+        "h": 20,
+        "w": 70
       }
     }
   ],
@@ -283,15 +294,6 @@
     {
       "end": {
         "arrowStyle": "AS_DOUBLE_ANGLE",
-        "entityRef": 9
-      },
-      "label": "m_first/lastVisible",
-      "lineWidth": 2,
-      "start": {"entityRef": 6}
-    },
-    {
-      "end": {
-        "arrowStyle": "AS_DOUBLE_ANGLE",
         "entityRef": 0
       },
       "label": "m_core",
@@ -393,6 +395,18 @@
     {
       "end": {"inheritanceRef": 3},
       "start": {"entityRef": 5}
+    },
+    {
+      "end": {
+        "arrowStyle": "AS_DOUBLE_ANGLE",
+        "entityRef": 14
+      },
+      "lineWidth": 2,
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 3},
+      "start": {"entityRef": 14}
     }
   ],
   "type": "Diagram Editor Diagram",
