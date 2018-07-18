@@ -38,8 +38,8 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
   : QWidget(parent, f),
     m_matchStatusLabel(NULL),
     m_findBox(NULL),
-    m_regexCheckBox(NULL),
     m_replBox(NULL),
+    m_regexCheckBox(NULL),
     m_helpButton(NULL),
     m_editorWidget(NULL),
     m_ignore_findEditTextChanged(false),
@@ -74,14 +74,6 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::slot_findEditTextChanged);
 
-    // This is called "E" because "R" is taken: Ctrl+R means "replace",
-    // and Alt+R means "Run" command.
-    m_regexCheckBox = new QCheckBox("E");
-    hbox->addWidget(m_regexCheckBox);
-    m_regexCheckBox->setChecked(false);
-    QObject::connect(m_regexCheckBox, &QCheckBox::stateChanged,
-                     this, &SearchAndReplacePanel::slot_regexStateChanged);
-
     QLabel *replLabel = new QLabel("Repl:");
     hbox->addWidget(replLabel);
 
@@ -92,6 +84,14 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_replBox->installEventFilter(this);
     QObject::connect(m_replBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::slot_replEditTextChanged);
+
+    // This is called "E" because "R" is taken: Ctrl+R means "replace",
+    // and Alt+R means "Run" command.
+    m_regexCheckBox = new QCheckBox("E");
+    hbox->addWidget(m_regexCheckBox);
+    m_regexCheckBox->setChecked(false);
+    QObject::connect(m_regexCheckBox, &QCheckBox::stateChanged,
+                     this, &SearchAndReplacePanel::slot_regexStateChanged);
 
     // I can't seem to get QPushButton to be small, so use QToolButton.
     m_helpButton = new QToolButton();
@@ -110,8 +110,8 @@ SearchAndReplacePanel::~SearchAndReplacePanel()
 
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_findBox, NULL, this, NULL);
-  QObject::disconnect(m_regexCheckBox, NULL, this, NULL);
   QObject::disconnect(m_replBox, NULL, this, NULL);
+  QObject::disconnect(m_regexCheckBox, NULL, this, NULL);
   QObject::disconnect(m_helpButton, NULL, this, NULL);
 }
 
@@ -483,9 +483,9 @@ void SearchAndReplacePanel::slot_help() NOEXCEPT
     "Keys for Search and Replace (SAR):\n"
     "\n"
     "Ctrl+S: Toggle focus between SAR and main editor.\n"
-    "Ctrl+E: Toggle regEx.\n"
     "Enter: Go to first match in editor and return focus to it.\n"
     "Tab: Toggle between Find and Repl boxes.\n"
+    "Ctrl+E: Toggle regEx.\n"
     "Esc: Close the SAR panel, stop highlighting matches in the editor.\n"
     "\n"
     "Ctrl+Period or Ctrl+Comma: Move to next/prev match.\n"

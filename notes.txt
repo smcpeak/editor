@@ -1,6 +1,5 @@
 
 TODOs:
-  - move "E" to the right side, before "?"
   - add stuff help box about Perl regex
   - buffer list order is not right; visible files should be at top?
   - add regex support now that the design can accomodate it
