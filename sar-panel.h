@@ -31,7 +31,7 @@ private:     // data
   // Combo box where user enters "Find" string.
   QComboBox *m_findBox;
 
-  // Checkbox "R", meaning regular expression.
+  // Checkbox "E", meaning regular Expression.
   QCheckBox *m_regexCheckBox;
 
   // And the "Repl" string.

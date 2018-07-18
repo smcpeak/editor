@@ -74,9 +74,9 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::slot_findEditTextChanged);
 
-    // I do not use 'Alt+R' as a shortcut for this because that is my
-    // "Run" command.
-    m_regexCheckBox = new QCheckBox("R");
+    // This is called "E" because "R" is taken: Ctrl+R means "replace",
+    // and Alt+R means "Run" command.
+    m_regexCheckBox = new QCheckBox("E");
     hbox->addWidget(m_regexCheckBox);
     m_regexCheckBox->setChecked(false);
     QObject::connect(m_regexCheckBox, &QCheckBox::stateChanged,
@@ -361,7 +361,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
       case Qt::Key_Tab:
         if (mods == Qt::NoModifier) {
           if (watched == m_findBox) {
-            // Skip over the "R" checkbox, go to Repl.
+            // Skip over the "E" checkbox, go to Repl.
             m_replBox->setFocus();
             return true;
           }
