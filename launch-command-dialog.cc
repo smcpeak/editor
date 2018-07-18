@@ -18,7 +18,7 @@ LaunchCommandDialog::LaunchCommandDialog(QWidget *parent, Qt::WindowFlags f)
   m_prefixStderrLines =
     new QCheckBox("&Prefix stderr lines with \"STDERR: \".");
   m_vbox->insertWidget(m_vboxNextIndex++, m_prefixStderrLines);
-  m_prefixStderrLines->setChecked(true);
+  m_prefixStderrLines->setChecked(false);
 }
 
 
