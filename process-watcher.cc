@@ -11,7 +11,8 @@ ProcessWatcher::ProcessWatcher(NamedTextDocument *doc)
   : QObject(),
     m_namedDoc(doc),
     m_commandRunner(),
-    m_startTime(getCurrentUnixTime())
+    m_startTime(getCurrentUnixTime()),
+    m_prefixStderrLines(true)
 {
   m_namedDoc->setDocumentProcessStatus(DPS_RUNNING);
 
@@ -67,9 +68,11 @@ void ProcessWatcher::slot_errorLineReady() NOEXCEPT
     QString line = m_commandRunner.getErrorLine();
     if (m_namedDoc) {
       string s(toString(line));
-      // This is a crude indicator of stdout versus stderr.  I would
-      // like to communicate this differently somehow.
-      m_namedDoc->appendCStr("STDERR: ");
+      if (m_prefixStderrLines) {
+        // This is a crude indicator of stdout versus stderr.  I would
+        // like to communicate this differently somehow.
+        m_namedDoc->appendCStr("STDERR: ");
+      }
       m_namedDoc->appendString(s);
     }
   }

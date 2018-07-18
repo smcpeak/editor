@@ -281,7 +281,8 @@ NamedTextDocument *GlobalState::getNewCommandOutputDocument(
 }
 
 
-NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
+NamedTextDocument *GlobalState::launchCommand(QString dir,
+  bool prefixStderrLines, QString command)
 {
   // Find or create a document to hold the result.
   NamedTextDocument *fileDoc =
@@ -297,6 +298,7 @@ NamedTextDocument *GlobalState::launchCommand(QString dir, QString command)
   // Make the watcher that will populate that file.
   ProcessWatcher *watcher = new ProcessWatcher(fileDoc);
   m_processes.prepend(watcher);
+  watcher->m_prefixStderrLines = prefixStderrLines;
   QObject::connect(watcher, &ProcessWatcher::signal_processTerminated,
                    this,           &GlobalState::on_processTerminated);
 

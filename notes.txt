@@ -1,8 +1,6 @@
 
 TODOs:
   - add regex support now that the design can accomodate it
-  - option to not prefix "STDERR: " on output lines
-    - annoying in compilation mode
   - I think I want the same search string in all windows.  I am often
     having to re-type the string in another window, and rarely if ever
     want them different.
@@ -31,6 +29,8 @@ TODOs:
   - very annoyed by the scrollbar thumb being too light
     - spent a while digging through QStyle docs and (mostly) code,
       could not figure out how to do this; bailing for now
+  - document list: instead of N/P, let user type a substring of a doc
+    name?
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
   - highlighting for "git diff" output

@@ -352,6 +352,7 @@ EDITOR_OBJS += filename-input.moc.o
 EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += keybindings.doc.gen.o
 EDITOR_OBJS += keys-dialog.o
+EDITOR_OBJS += launch-command-dialog.o
 EDITOR_OBJS += main.o
 EDITOR_OBJS += main.moc.o
 EDITOR_OBJS += modal-dialog.o

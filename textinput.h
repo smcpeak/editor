@@ -11,10 +11,12 @@
 #include "sm-override.h"               // OVERRIDE
 
 // Qt
-#include <QComboBox>
-#include <QLabel>
 #include <QString>
 #include <QStringList>
+
+class QComboBox;
+class QLabel;
+class QVBoxLayout;
 
 
 // Prompt for a single-line text input.  Remembers history of previous
@@ -22,7 +24,17 @@
 class TextInputDialog : public ModalDialog {
   Q_OBJECT
 
-private:     // data
+protected:   // data
+  // The main vbox containing the controls.  Storing this allows a
+  // derived class to add additional controls.
+  //
+  // I might want to move this into 'ModalDialog'.
+  QVBoxLayout *m_vbox;
+
+  // Position in 'm_vbox' where additional controls should be added
+  // by derived classes.
+  int m_vboxNextIndex;
+
   // Label above the input control.
   QLabel *m_label;
 
@@ -46,7 +58,7 @@ public:      // data
   QString m_text;
 
 public:      // funcs
-  TextInputDialog(QString windowTitle,
+  TextInputDialog(QString const &windowTitle,
                   QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~TextInputDialog();
 

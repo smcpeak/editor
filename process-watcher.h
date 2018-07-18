@@ -32,6 +32,10 @@ public:      // data
   // Point in time when process started.
   UnixTime m_startTime;
 
+  // True to prefix "STDERR: " to lines that were sent to the child's
+  // stderr channel.  Initially true.
+  bool m_prefixStderrLines;
+
 public:      // funcs
   ProcessWatcher(NamedTextDocument *doc);
   ~ProcessWatcher();

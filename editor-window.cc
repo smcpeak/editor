@@ -11,6 +11,7 @@
 #include "git-version.h"               // editor_git_version
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
+#include "launch-command-dialog.h"     // LaunchCommandDialog
 #include "main.h"                      // GlobalState
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
@@ -788,17 +789,19 @@ void EditorWindow::fileReloadAll()
 
 void EditorWindow::fileLaunchCommand()
 {
-  static TextInputDialog *dialog =
-    new TextInputDialog("Launch Command");
+  static LaunchCommandDialog *dialog =
+    new LaunchCommandDialog();
 
   string dir = m_editorWidget->getDocumentDirectory();
   if (!dialog->runPrompt_nonEmpty(qstringb(
-        "Command to launch in " << dir << ":"))) {
+        "&Command to launch in " << dir << ":"))) {
     return;
   }
 
-  NamedTextDocument *fileDoc =
-    m_globalState->launchCommand(toQString(dir), dialog->m_text);
+  NamedTextDocument *fileDoc = m_globalState->launchCommand(
+    toQString(dir),
+    dialog->prefixStderrLines(),
+    dialog->m_text);
   this->setDocumentFile(fileDoc);
 }
 
@@ -808,8 +811,8 @@ void EditorWindow::fileRunMake()
   string dir = m_editorWidget->getDocumentDirectory();
 
   // TODO: The exact command should be configurable.
-  NamedTextDocument *fileDoc =
-    m_globalState->launchCommand(toQString(dir), "make");
+  NamedTextDocument *fileDoc = m_globalState->launchCommand(
+    toQString(dir), false /*prefixStderrLines*/, "make");
   this->setDocumentFile(fileDoc);
 }
 
@@ -1093,6 +1096,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
     string dir = m_editorWidget->getDocumentDirectory();
     NamedTextDocument *fileDoc =
       m_globalState->launchCommand(toQString(dir),
+        true /*prefixStderrLines*/,
         qstringb("grepsrc " << shellDoubleQuote(searchText)));
     this->setDocumentFile(fileDoc);
   }

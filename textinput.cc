@@ -7,16 +7,20 @@
 #include "trace.h"                     // TRACE
 #include "xassert.h"                   // xassert
 
+#include <QComboBox>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 
 
-TextInputDialog::TextInputDialog(QString title,
+TextInputDialog::TextInputDialog(QString const &title,
                                  QWidget *parent, Qt::WindowFlags f)
   : ModalDialog(parent, f),
+    m_vbox(NULL),
+    m_vboxNextIndex(0),
     m_label(NULL),
     m_comboBox(NULL),
     m_history(),
@@ -25,49 +29,55 @@ TextInputDialog::TextInputDialog(QString title,
 {
   this->setWindowTitle(title);
 
-  {
-    QVBoxLayout *vbox = new QVBoxLayout();
-    this->setLayout(vbox);
+  m_vbox = new QVBoxLayout();
+  this->setLayout(m_vbox);
 
-    m_label = new QLabel("Input:");
-    vbox->addWidget(m_label);
+  m_label = new QLabel("Input:");
+  m_vbox->insertWidget(m_vboxNextIndex++, m_label);
 
-    m_comboBox = new QComboBox();
-    vbox->addWidget(m_comboBox);
+  m_comboBox = new QComboBox();
+  m_vbox->insertWidget(m_vboxNextIndex++, m_comboBox);
+  m_comboBox->setEditable(true);
 
-    m_comboBox->setEditable(true);
+  // Associate the label with the combo box.  That allows the client
+  // to provide a label string containing '&' to create a shortcut to
+  // get to the combo box, which is relevant in a derived class that
+  // adds additional controls.
+  m_label->setBuddy(m_comboBox);
 
-    // I maintain the list elements myself.  (This flag does not really
-    // matter since I clear them out every time.)
-    m_comboBox->setInsertPolicy(QComboBox::NoInsert);
+  // I maintain the list elements myself.  (This flag does not really
+  // matter since I clear them out every time.)
+  m_comboBox->setInsertPolicy(QComboBox::NoInsert);
 
-    // The default behavior of QComboBox is such that if Enter is
-    // pressed while the entire edit text is selected, but that text
-    // happens to exactly match one of the entries in the list, then
-    // all that happens is the text becomes deselected.  You then have
-    // to press Enter a second time to cause the dialog to accept and
-    // close.  But if the selected text is not in the list, then one
-    // Enter press suffices.  This of course seems like a bug in Qt.
-    //
-    // I think what is happening is the combo box is confusing the
-    // case of Enter while the edit entry is selected with Enter while
-    // the dropdown is open and the cursor is on one of the list items,
-    // since in that case the behavior is to close the dropdown without
-    // accepting the dialog.
-    //
-    // My solution is to connect the returnPressed signal from the
-    // underlying QLineEdit to 'accept' of this dialog.
-    QObject::connect(m_comboBox->lineEdit(), &QLineEdit::returnPressed,
-                     this, &TextInputDialog::accept);
+  // The default behavior of QComboBox is such that if Enter is
+  // pressed while the entire edit text is selected, but that text
+  // happens to exactly match one of the entries in the list, then
+  // all that happens is the text becomes deselected.  You then have
+  // to press Enter a second time to cause the dialog to accept and
+  // close.  But if the selected text is not in the list, then one
+  // Enter press suffices.  This of course seems like a bug in Qt.
+  //
+  // I think what is happening is the combo box is confusing the
+  // case of Enter while the edit entry is selected with Enter while
+  // the dropdown is open and the cursor is on one of the list items,
+  // since in that case the behavior is to close the dropdown without
+  // accepting the dialog.
+  //
+  // My solution is to connect the returnPressed signal from the
+  // underlying QLineEdit to 'accept' of this dialog.
+  QObject::connect(m_comboBox->lineEdit(), &QLineEdit::returnPressed,
+                   this, &TextInputDialog::accept);
 
-    this->createOkAndCancelHBox(vbox);
+  // Note that we intentionally do not change 'm_vboxNextIndex' when
+  // adding Ok and Cancel, since the point is additional controls should
+  // go above those two.
+  this->createOkAndCancelHBox(m_vbox);
 
-    // This causes the dialog to start fairly wide, but at its minimum
-    // height.  The 80 is a bit smaller than the real minimum, and the
-    // layout should override that.  But I do not pass (e.g.) 0 in case
-    // something goes wrong and the size gets actually used.
-    this->resize(400, 80);
-  }
+  // This causes the dialog to start fairly wide, but at its minimum
+  // height.  The 80 is a bit smaller than the real minimum, and the
+  // layout should override that.  But I do not pass (e.g.) 0 in case
+  // something goes wrong and the size gets actually used.
+  this->resize(400, 80);
 }
 
 

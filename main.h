@@ -117,7 +117,8 @@ public:       // funcs
 
   // Start a new child process and return the document into which that
   // process' output is written.
-  NamedTextDocument *launchCommand(QString dir, QString command);
+  NamedTextDocument *launchCommand(QString dir,
+    bool prefixStderrLines, QString command);
 
   // Kill the process driving 'doc'.  If there is a problem doing that,
   // return a string explaining it; otherwise "".
