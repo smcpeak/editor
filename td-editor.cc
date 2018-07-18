@@ -252,13 +252,16 @@ void TextDocumentEditor::setVisibleSize(int lines, int columns)
 // of the viewport.
 static int stcHelper(int firstVis, int lastVis, int cur, int gap)
 {
+  int width = lastVis - firstVis + 1;
+
   bool center = false;
   if (gap == -1) {
     center = true;
     gap = 0;
   }
-
-  int width = lastVis - firstVis + 1;
+  else if (width+1 < gap*2) {
+    return max(0, cur - width/2);
+  }
 
   bool changed = false;
   if (cur-gap < firstVis) {

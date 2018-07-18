@@ -4,8 +4,6 @@ TODOs:
     - have search, but still need to do regex-aware replacement
   - bug?: select "(foo)" as a regex.  indicator says cursor is before
     first hit, but you have to press Ctrl+Comma (back) to get to it
-  - BUG: if window is too short, next/prev hit does not right because
-    the desired gap is larger than the window
   - draw an indicator when the cursor is offscreen
   - split panes, esp. a vertical split instead of multiple windows
   - run command to generate entire file; git annotate!

@@ -305,6 +305,9 @@ public:      // funcs
   // and at least 'edgeGap' lines/columns from the edge (except that
   // it can always get to the left and top edges of the document).
   //
+  // If there isn't enough room to leave that large a gap, center the
+  // view on 'tc', except do not go past the left/top edge.
+  //
   // If 'edgeGap' is -1, then if 'tc' isn't already visible,
   // center the visible region on it.
   void scrollToCoord(TextCoord tc, int edgeGap=0);

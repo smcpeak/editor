@@ -666,6 +666,16 @@ static void testScrollToCursor()
   tde.setCursor(TextCoord(5,1));
   tde.centerVisibleOnCursorLine();         // back near top-left
   expectFV(tde, 5,1, 3,0, 5,10);
+
+  // Test with a gap size bigger than the viewport.
+  tde.setCursor(TextCoord(10,0));
+  tde.scrollToCursor(10 /*gap*/);
+  expectFV(tde, 10,0, 8,0, 5,10);
+
+  // Again, but near the top edge (don't go negative!).
+  tde.setCursor(TextCoord(1,0));
+  tde.scrollToCursor(10 /*gap*/);
+  expectFV(tde, 1,0, 0,0, 5,10);
 }
 
 
