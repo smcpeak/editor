@@ -487,6 +487,17 @@ void EditorWidget::redraw()
 }
 
 
+void EditorWidget::getEffectiveSearchCursorMark(
+  TextCoord &cursor, TextCoord &mark)
+{
+  cursor = m_editor->cursor();
+  mark = (m_editor->markActive() ? m_editor->mark() : cursor);
+  if (cursor > mark) {
+    swap(cursor, mark);
+  }
+}
+
+
 // Compute and broadcast match status indicator.
 void EditorWidget::emitSearchStatusIndicator()
 {
@@ -501,11 +512,8 @@ void EditorWidget::emitSearchStatusIndicator()
   }
 
   // Get effective cursor and mark for this calculation.
-  TextCoord cursor = m_editor->cursor();
-  TextCoord mark = (m_editor->markActive() ? m_editor->mark() : cursor);
-  if (cursor > mark) {
-    swap(cursor, mark);
-  }
+  TextCoord cursor, mark;
+  this->getEffectiveSearchCursorMark(cursor, mark);
 
   // Matches above and below cursor line.
   int matchesAbove = m_textSearch->countMatchesAbove(cursor.line);
@@ -1928,7 +1936,11 @@ bool EditorWidget::nextSearchHit(bool reverse)
 {
   TRACE("sar", (reverse? "prev" : "next") << " search hit");
 
-  TextCoord tc(m_editor->cursor());
+  // For consistency with the status display, regard the "current"
+  // location for next/prev as the same as the "effective" cursor.
+  TextCoord tc, dummy;
+  this->getEffectiveSearchCursorMark(tc, dummy);
+
   TextSearch::MatchExtent match;
   if (m_textSearch->firstMatchBeforeOrAfter(reverse, match /*OUT*/,
                                             tc /*INOUT*/)) {

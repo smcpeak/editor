@@ -207,6 +207,11 @@ private:     // funcs
   void drawOneOffscreenMatchIndicator(
     QPainter &paint, QtBDFFont *font, bool above, int numMatches);
 
+  // Get the current "effective" cursor and mark for the purpose of
+  // search text calculations.  That is, 'cursor' is the lesser of the
+  // two, and 'mark' equals 'cursor' if the real one is not set.
+  void getEffectiveSearchCursorMark(TextCoord &cursor, TextCoord &mark);
+
   // Compute and emit 'signal_searchStatusIndicator'.
   void emitSearchStatusIndicator();
 
