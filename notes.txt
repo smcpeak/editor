@@ -1,6 +1,5 @@
 
 TODOs:
-  - buffer list order is not right; visible files should be at top?
   - add regex support now that the design can accomodate it
     - have search, but still need to do regex-aware replacement
   - bug?: select "(foo)" as a regex.  indicator says cursor is before

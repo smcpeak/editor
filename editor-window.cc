@@ -392,6 +392,12 @@ void EditorWindow::fileNewFile()
 
 void EditorWindow::setDocumentFile(NamedTextDocument *file)
 {
+  // Before switching documents, put the old one at the top.  The idea
+  // is that this document is the most recently used since it was just
+  // shown to the user, even if it hasn't been explicitly switched to
+  // recently.
+  m_globalState->m_documentList.moveDocument(this->currentDocument(), 0);
+
   m_editorWidget->setDocumentFile(file);
   this->updateForChangedFile();
 }
@@ -1381,6 +1387,11 @@ void EditorWindow::viewSetHighlighting()
 
 void EditorWindow::windowOpenFilesList()
 {
+  // Put the current document on top before opening the dialog so one
+  // can always hit Ctrl+O, Enter and the displayed document won't
+  // change.
+  m_globalState->m_documentList.moveDocument(this->currentDocument(), 0);
+
   NamedTextDocument *doc = m_globalState->runOpenFilesDialog();
   if (doc) {
     this->setDocumentFile(doc);
