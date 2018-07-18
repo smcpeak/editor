@@ -11,10 +11,13 @@
 // smbase
 #include "array.h"                     // ArrayStack
 #include "macros.h"                    // NO_OBJECT_COPIES
+#include "owner.h"                     // Owner
 #include "refct-serf.h"                // RCSerf
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
 #include "str.h"                       // string
+
+class QRegularExpression;
 
 
 // This class computes a set of search hits within a TextDocumentCore,
@@ -28,8 +31,9 @@ public:      // types
     SS_NONE                  = 0x00,   // Text is literal.
 
     SS_CASE_INSENSITIVE      = 0x01,   // Letter case ignored.
+    SS_REGEX                 = 0x02,   // Text is a Perl regular expression.
 
-    SS_ALL                   = 0x01
+    SS_ALL                   = 0x03
   };
 
   // Describes a match within a given line of text.
@@ -70,6 +74,9 @@ private:     // instance data
   // How to interpret 'm_searchString'.  Initially SS_NONE.
   SearchStringFlags m_searchStringFlags;
 
+  // Regular expression object for SS_REGEXP.  May be NULL.
+  Owner<QRegularExpression> m_regex;
+
   // Map from line number to matches for that line.  If there are no
   // matches on the line, stores NULL.
   //
@@ -90,6 +97,9 @@ private:     // funcs
 
   // Recompute a single line.
   void recomputeLine(int line) { recomputeLineRange(line, line+1); }
+
+  // Compute 'm_regex' from the search string and flags.
+  void computeRegex();
 
 public:      // funcs
   TextSearch(TextDocumentCore const *document);
@@ -122,6 +132,20 @@ public:      // funcs
   // Set both string and flags, saving a recomputation.
   void setSearchStringAndFlags(string const &s, SearchStringFlags f);
 
+  // Return false if the search string has a syntax error.  Depends on
+  // the search string flags.  When there is a syntax error, there are
+  // no matches.  The empty search string is always considered valid but
+  // matches nothing.
+  bool searchStringIsValid() const;
+
+  // When '!searchStringIsValid()', a description of what is wrong with
+  // it.  Otherwise, "".
+  string searchStringSyntaxError() const;
+
+  // When '!searchStringIsValid()', the character offset of the first
+  // offending error in the string.  Otherwise -1.
+  int searchStringErrorOffset() const;
+
   // Count the matches within a given range of lines.  Lines beyond
   // the document's current contents silently yield a 0 count.
   int countRangeMatches(int startLine, int endPlusOneLine) const;
@@ -137,6 +161,10 @@ public:      // funcs
   // Count the matches below a line.
   int countMatchesBelow(int line) const
     { return countRangeMatches(line+1, this->documentLines()); }
+
+  // Count all matches.
+  int countAllMatches() const
+    { return countRangeMatches(0, this->documentLines()); }
 
   // Get the matches on a single line.  This can only be called if there
   // is at least one match on the line.  The returned reference is

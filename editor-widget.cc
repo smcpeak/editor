@@ -4,7 +4,6 @@
 #include "editor-widget.h"             // this module
 
 // this dir
-#include "codepoint.h"                 // isUppercaseLetter
 #include "nearby-file.h"               // getNearbyFilename
 #include "position.h"                  // Position
 #include "qtbdffont.h"                 // QtBDFFont
@@ -491,6 +490,16 @@ void EditorWidget::redraw()
 // Compute and broadcast match status indicator.
 void EditorWidget::emitSearchStatusIndicator()
 {
+  if (!m_textSearch->searchStringIsValid()) {
+    // This is a bit crude as an error explanation, but it seems
+    // adequate for an initial implementation.
+    stringBuilder sb;
+    sb << "Err @ " << m_textSearch->searchStringErrorOffset();
+    TRACE("sar", "searchStatusIndicator: " << sb);
+    Q_EMIT signal_searchStatusIndicator(toQString(sb));
+    return;
+  }
+
   // Get effective cursor and mark for this calculation.
   TextCoord cursor = m_editor->cursor();
   TextCoord mark = (m_editor->markActive() ? m_editor->mark() : cursor);
@@ -796,9 +805,19 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       if (m_textSearch->countLineMatches(line)) {
         ArrayStack<TextSearch::MatchExtent> const &matches =
           m_textSearch->getLineMatches(line);
-        for (int m=0; m < matches.length(); m++) {
-          categories.overlay(matches[m].m_start, matches[m].m_length,
-                             TC_HITS);
+        for (int i=0; i < matches.length(); i++) {
+          TextSearch::MatchExtent const &m = matches[i];
+          if (m.m_length) {
+            categories.overlay(m.m_start, m.m_length, TC_HITS);
+          }
+          else {
+            // LineCategories::overlay() interprets a zero length as
+            // meaning "infinite".  I don't currently have a good way to
+            // show 0-length matches, which are possible when using
+            // regexes, so I will just not show them.  It is still
+            // possible to step through them with next/prev match,
+            // though.
+          }
         }
       }
     }
@@ -1876,31 +1895,14 @@ void EditorWidget::setTextSearchParameters()
 }
 
 
-static bool hasUppercaseLetter(string const &t)
+void EditorWidget::setSearchStringParams(string const &searchString,
+  TextSearch::SearchStringFlags flags, bool scrollToHit)
 {
-  for (char const *p = t.c_str(); *p; p++) {
-    if (isUppercaseLetter(*p)) {
-      return true;
-    }
-  }
-  return false;
-}
+  TRACE("sar", "EW::setSearchStringParams: str=\"" << searchString <<
+               "\" flags=" << flags << " scroll=" << scrollToHit);
 
-// SAR is not implemented well.  This code should be moved into
-// TextDocumentEditor, but only after overhauling the internals of text
-// search.
-void EditorWidget::setHitText(string const &t, bool scrollToHit)
-{
-  TRACE("sar", "EW::setHitText: t=\"" << t << "\" scroll=" << scrollToHit);
-  m_hitText = t;
-
-  // Case-sensitive iff uppercase letter present.
-  if (hasUppercaseLetter(t)) {
-    m_hitTextFlags &= ~TextSearch::SS_CASE_INSENSITIVE;
-  }
-  else {
-    m_hitTextFlags |= TextSearch::SS_CASE_INSENSITIVE;
-  }
+  m_hitText = searchString;
+  m_hitTextFlags = flags;
 
   this->setTextSearchParameters();
 

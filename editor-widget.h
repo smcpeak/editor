@@ -303,9 +303,11 @@ public:      // funcs
   int visCols() const { return m_editor->visColumns(); }
 
   // --------------------------- matches ----------------------------
-  // Change the match string.  If 'scrollToHit', also scroll the view
-  // so the first match is visible.  But, do not change the cursor.
-  void setHitText(string const &t, bool scrollToHit);
+  // Change the match string and flags.  If 'scrollToHit', also scroll
+  // the view so the first match is visible.  But, do not change the
+  // cursor.
+  void setSearchStringParams(string const &searchString,
+    TextSearch::SearchStringFlags flags, bool scrollToHit);
 
   // Move the cursor to the next/prev instance of matching text.  Return
   // true if we found one to move to.

@@ -3,10 +3,17 @@
 
 #include "text-search.h"               // this module
 
+// smqtutil
+#include "qtutil.h"                    // toQString(QString)
+
 // smbase
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "objcount.h"                  // CHECK_OBJECT_COUNT(className)
 #include "sm-swap.h"                   // swap
+
+// Qt
+#include <QRegularExpression>
+#include <QString>
 
 // libc
 #include <string.h>                    // strncmp
@@ -53,17 +60,14 @@ int TextSearch::s_objectCount = 0;
 CHECK_OBJECT_COUNT(TextSearch);
 
 
+// This is used by the naive string matcher while doing a batch scan of
+// the document.
 static bool hasMatchAt(
   TextSearch::SearchStringFlags flags,
   char const *candidate,
   char const *searchString,
   int searchStringLength)
 {
-  if (searchStringLength == 0) {
-    // The empty string is defined to never match.
-    return false;
-  }
-
   if (flags & TextSearch::SS_CASE_INSENSITIVE) {
     return 0==strncasecmp(candidate, searchString, searchStringLength);
   }
@@ -98,6 +102,11 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
   char const *searchString = m_searchString.c_str();
   int searchStringLength = m_searchString.length();
 
+  // Treat an invalid regex like an empty search string.
+  if (m_regex.get() && !m_regex->isValid()) {
+    searchStringLength = 0;
+  }
+
   // Temporary array into which we copy line contents.
   GrowArray<char> contents(10);
 
@@ -115,21 +124,53 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
     char *buffer = contents.getArrayNC();
     m_document->getLine(TextCoord(line, 0), buffer, lineLength);
 
-    // Scan it for matches naively.
-    int offset = 0;
-    while (offset+searchStringLength <= lineLength) {
-      if (hasMatchAt(m_searchStringFlags, buffer+offset,
-                     searchString, searchStringLength)) {
-        lineMatches.push(MatchExtent(offset, searchStringLength));
+    // Scan the line for matches.
+    if (searchStringLength == 0) {
+      // Empty string never matches anything.
+    }
+    else if (m_regex.get()) {
+      // TODO: Converting every line from UTF-8 to UTF-16 is
+      // inefficient!  It seems I can't even avoid the memory
+      // allocation; there is almost a fast-path with
+      // QTextDecoder::toUnicode(Qtring*), but it does not quite go all
+      // the way.
+      //
+      // I probably need to find a different regex engine, ideally
+      // something that can operate on UTF-8 directly.
+      QString lineQString(QString::fromUtf8(buffer, lineLength));
 
-        // Move one past the match so that subsequent matches are not
-        // adjacent, since the UI would show adjacent matches as if they
-        // were one long match.
-        offset += searchStringLength+1;
+      QRegularExpressionMatchIterator iter(m_regex->globalMatch(lineQString));
+      while (iter.hasNext()) {
+        QRegularExpressionMatch match(iter.next());
+
+        // TODO UTF-8: This incorrectly equates UTF-16 code units with
+        // UTF-8 octets.
+        lineMatches.push(MatchExtent(
+          match.capturedStart(),
+          match.capturedLength()));
       }
-      else {
-        // This is, of course, very inefficient.
-        offset++;
+    }
+    else {
+      // Naive, slow algorithm of repeated strncmps.
+      int offset = 0;
+      while (offset+searchStringLength <= lineLength) {
+        if (hasMatchAt(m_searchStringFlags, buffer+offset,
+                       searchString, searchStringLength)) {
+          lineMatches.push(MatchExtent(offset, searchStringLength));
+
+          // Move one past the match so that subsequent matches are not
+          // adjacent, since the UI would show adjacent matches as if they
+          // were one long match.
+          //
+          // Note: With the regex engine, I can get both adjacent and
+          // zero-width matches.  The handling in EditorWidget isn't
+          // great, but it is not catastrophic.
+          offset += searchStringLength+1;
+        }
+        else {
+          // This is, of course, very inefficient.
+          offset++;
+        }
       }
     }
 
@@ -217,6 +258,7 @@ TextSearch::TextSearch(TextDocumentCore const *document)
     m_document(document),
     m_searchString(""),
     m_searchStringFlags(SS_NONE),
+    m_regex(NULL),
     m_lineToMatches()
 {
   this->recomputeMatches();
@@ -244,6 +286,7 @@ void TextSearch::selfCheck() const
 void TextSearch::setSearchString(string const &searchString)
 {
   m_searchString = searchString;
+  this->computeRegex();
   this->recomputeMatches();
 }
 
@@ -251,6 +294,7 @@ void TextSearch::setSearchString(string const &searchString)
 void TextSearch::setSearchStringFlags(SearchStringFlags flags)
 {
   m_searchStringFlags = flags;
+  this->computeRegex();
   this->recomputeMatches();
 }
 
@@ -259,7 +303,55 @@ void TextSearch::setSearchStringAndFlags(string const &s, SearchStringFlags f)
 {
   m_searchString = s;
   m_searchStringFlags = f;
+  this->computeRegex();
   this->recomputeMatches();
+}
+
+
+void TextSearch::computeRegex()
+{
+  if (m_searchStringFlags & SS_REGEX) {
+    m_regex = new QRegularExpression(toQString(m_searchString),
+      (m_searchStringFlags & SS_CASE_INSENSITIVE)?
+        QRegularExpression::CaseInsensitiveOption :
+        QRegularExpression::NoPatternOption);
+  }
+  else {
+    m_regex.del();
+  }
+}
+
+
+bool TextSearch::searchStringIsValid() const
+{
+  if (m_regex) {
+    return m_regex->isValid();
+  }
+  else {
+    return true;
+  }
+}
+
+
+string TextSearch::searchStringSyntaxError() const
+{
+  if (m_regex && !m_regex->isValid()) {
+    return toString(m_regex->errorString());
+  }
+  else {
+    return "";
+  }
+}
+
+
+int TextSearch::searchStringErrorOffset() const
+{
+  if (m_regex && !m_regex->isValid()) {
+    return m_regex->patternErrorOffset();
+  }
+  else {
+    return -1;
+  }
 }
 
 

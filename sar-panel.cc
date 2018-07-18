@@ -10,11 +10,13 @@
 #include "qtutil.h"                    // toString
 
 // smbase
+#include "codepoint.h"                 // isUppercaseLetter
 #include "macros.h"                    // Restorer
 #include "trace.h"                     // TRACE
 
 // Qt
 #include <QComboBox>
+#include <QCheckBox>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
@@ -34,7 +36,9 @@ int const SAR_PANEL_MARGIN = 5;
 SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
                                              Qt::WindowFlags f)
   : QWidget(parent, f),
+    m_matchStatusLabel(NULL),
     m_findBox(NULL),
+    m_regexCheckBox(NULL),
     m_replBox(NULL),
     m_helpButton(NULL),
     m_editorWidget(NULL),
@@ -70,6 +74,14 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::slot_findEditTextChanged);
 
+    // I do not use 'Alt+R' as a shortcut for this because that is my
+    // "Run" command.
+    m_regexCheckBox = new QCheckBox("R");
+    hbox->addWidget(m_regexCheckBox);
+    m_regexCheckBox->setChecked(false);
+    QObject::connect(m_regexCheckBox, &QCheckBox::stateChanged,
+                     this, &SearchAndReplacePanel::slot_regexStateChanged);
+
     QLabel *replLabel = new QLabel("Repl:");
     hbox->addWidget(replLabel);
 
@@ -98,6 +110,7 @@ SearchAndReplacePanel::~SearchAndReplacePanel()
 
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_findBox, NULL, this, NULL);
+  QObject::disconnect(m_regexCheckBox, NULL, this, NULL);
   QObject::disconnect(m_replBox, NULL, this, NULL);
   QObject::disconnect(m_helpButton, NULL, this, NULL);
 }
@@ -184,11 +197,33 @@ void SearchAndReplacePanel::setFindText(QString const &text)
 }
 
 
+static bool hasUppercaseLetter(string const &t)
+{
+  for (char const *p = t.c_str(); *p; p++) {
+    if (isUppercaseLetter(*p)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void SearchAndReplacePanel::updateEditorHitText(bool scrollToHit)
 {
   string s(toString(m_findBox->currentText()));
   TRACE("sar", "update hit text: text=\"" << s << "\" scroll=" << scrollToHit);
-  m_editorWidget->setHitText(s, scrollToHit);
+
+  TextSearch::SearchStringFlags flags = TextSearch::SS_NONE;
+
+  // Case-sensitive iff uppercase letter present.
+  if (!hasUppercaseLetter(s)) {
+    flags |= TextSearch::SS_CASE_INSENSITIVE;
+  }
+
+  if (m_regexCheckBox->isChecked()) {
+    flags |= TextSearch::SS_REGEX;
+  }
+
+  m_editorWidget->setSearchStringParams(s, flags, scrollToHit);
 
   if (!m_handlingBroadcastChange) {
     Q_EMIT signal_searchPanelChanged(this);
@@ -206,50 +241,79 @@ void SearchAndReplacePanel::searchPanelChanged(SearchAndReplacePanel *panel)
   // Do not broadcast the changes resulting from receiving this.
   Restorer<bool> restorer(m_handlingBroadcastChange, true);
 
-  if (m_findBox->currentText() != panel->m_findBox->currentText()) {
-    // Remember this new string.
-    QString searchString(panel->m_findBox->currentText());
-    this->setFindText(searchString);
+  // Is anything different?
+  bool changed = false;
 
-    if (this->isVisible()) {
-      // When this SAR panel is shown, have the associated editor show
-      // its matches, but don't scroll its view.
-      TRACE("sar", "received new search string, updating editor: " <<
-        toString(searchString));
-      this->updateEditorHitText(false /*scroll*/);
-    }
-    else {
-      // The SAR panel is not shown, so the editor isn't showing
-      // matches.
-      TRACE("sar", "received new search string, but not updating editor: " <<
-        toString(searchString));
-    }
+  if (m_regexCheckBox->isChecked() != panel->m_regexCheckBox->isChecked()) {
+    m_regexCheckBox->setChecked(panel->m_regexCheckBox->isChecked());
+    changed = true;
   }
 
+  if (m_findBox->currentText() != panel->m_findBox->currentText()) {
+    this->setFindText(panel->m_findBox->currentText());
+    changed = true;
+  }
+
+  // Changes don't matter for this one because it does not affect the
+  // editor's display.
   m_replBox->setCurrentText(panel->m_replBox->currentText());
+
+  if (!changed) {
+    TRACE("sar", "received params, but no visible changes");
+  }
+  else if (this->isVisible()) {
+    // When this SAR panel is shown, have the associated editor show
+    // its matches, but don't scroll its view.
+    TRACE("sar", "received new params, updating editor");
+    this->updateEditorHitText(false /*scroll*/);
+  }
+  else {
+    // The SAR panel is not shown, so the editor isn't showing
+    // matches.
+    TRACE("sar", "received new params, but not updating editor");
+  }
 }
 
 
-void SearchAndReplacePanel::slot_findEditTextChanged(QString const &)
+void SearchAndReplacePanel::slot_findEditTextChanged(QString const &) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if (m_ignore_findEditTextChanged) {
     return;
   }
 
   this->updateEditorHitText(true /*scroll*/);
+
+  GENERIC_CATCH_END
 }
 
 
-void SearchAndReplacePanel::slot_replEditTextChanged(QString const &)
+void SearchAndReplacePanel::slot_replEditTextChanged(QString const &) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
   if (!m_handlingBroadcastChange) {
     Q_EMIT signal_searchPanelChanged(this);
   }
+  GENERIC_CATCH_END
+}
+
+
+void SearchAndReplacePanel::slot_regexStateChanged(int) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  if (!m_handlingBroadcastChange) {
+    this->updateEditorHitText(true /*scroll*/);
+    Q_EMIT signal_searchPanelChanged(this);
+  }
+  GENERIC_CATCH_END
 }
 
 
 bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if ((watched == m_findBox || watched == m_replBox) &&
       event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
@@ -296,7 +360,12 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
 
       case Qt::Key_Tab:
         if (mods == Qt::NoModifier) {
-          if (watched == m_replBox) {
+          if (watched == m_findBox) {
+            // Skip over the "R" checkbox, go to Repl.
+            m_replBox->setFocus();
+            return true;
+          }
+          else if (watched == m_replBox) {
             // Cycle back around to find.
             m_findBox->setFocus();
             return true;
@@ -373,10 +442,19 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
           return true;
         }
         break;
+
+      case Qt::Key_E:
+        if (mods == Qt::ControlModifier) {
+          m_regexCheckBox->toggle();
+          return true;
+        }
+        break;
     }
   }
 
   return false;
+
+  GENERIC_CATCH_END_RET(false)
 }
 
 
@@ -395,14 +473,17 @@ void SearchAndReplacePanel::paintEvent(QPaintEvent *event)
 }
 
 
-void SearchAndReplacePanel::slot_help()
+void SearchAndReplacePanel::slot_help() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   QMessageBox mb(this);
   mb.setWindowTitle("Search and Replace Help");
   mb.setText(
     "Keys for Search and Replace (SAR):\n"
     "\n"
     "Ctrl+S: Toggle focus between SAR and main editor.\n"
+    "Ctrl+E: Toggle regEx.\n"
     "Enter: Go to first match in editor and return focus to it.\n"
     "Tab: Toggle between Find and Repl boxes.\n"
     "Esc: Close the SAR panel, stop highlighting matches in the editor.\n"
@@ -426,6 +507,8 @@ void SearchAndReplacePanel::slot_help()
     "match is selected, and hence can be replaced.\n"
   );
   mb.exec();
+
+  GENERIC_CATCH_END
 }
 
 

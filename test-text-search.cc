@@ -7,6 +7,7 @@
 #include "td-editor.h"                 // TextDocumentAndEditor
 
 // smbase
+#include "nonport.h"                   // getMilliseconds
 #include "sm-iostream.h"               // cout
 #include "test.h"                      // USUAL_TEST_MAIN
 
@@ -253,11 +254,92 @@ static void testCaseInsensitive()
 }
 
 
+static void testRegex()
+{
+  TextDocumentAndEditor tde;
+  TextSearch ts(tde.getDocumentCore());
+  tde.insertNulTermText(
+    "abc\n"              // 0
+    " ABC\n"             // 1
+    "ABRACADABRA\n"      // 2
+    "    advertiser\n"   // 3
+    "  abracadabra  "    // 4: No newline.
+  );
+
+  ts.setSearchStringFlags(TextSearch::SS_REGEX);
+  ts.setSearchString("a[bd]");
+  xassert(ts.searchStringIsValid());
+  expectMatches(ts,
+    "0:[0,2]\n"
+    "3:[4,2]\n"
+    "4:[2,2][7,2][9,2]\n"
+  );
+
+  ts.setSearchStringFlags(
+    TextSearch::SS_REGEX | TextSearch::SS_CASE_INSENSITIVE);
+  xassert(ts.searchStringIsValid());
+  expectMatches(ts,
+    "0:[0,2]\n"
+    "1:[1,2]\n"
+    "2:[0,2][5,2][7,2]\n"
+    "3:[4,2]\n"
+    "4:[2,2][7,2][9,2]\n"
+  );
+
+  // Invalid string.  Should not match anything, but also not blow up.
+  ts.setSearchString("a[");
+  xassert(!ts.searchStringIsValid());
+  EXPECT_EQ(ts.searchStringErrorOffset(), 2);  // Error because string ends early.
+  expectMatches(ts, "");
+  cout << "Expected error message:" << endl;
+  PVAL(ts.searchStringSyntaxError());
+}
+
+
+static void testPerformance()
+{
+  TextDocumentAndEditor tde;
+  TextSearch ts(tde.getDocumentCore());
+  ts.setSearchString("roam");
+
+  // Populate the document.
+  int const NUM_LINES = 1000;
+  for (int i=0; i < NUM_LINES; i++) {
+    // Each line has a line number to ensure the strings are not exactly
+    // identical, which something under the hood might notice and
+    // exploit, making the test not representative.
+    tde.insertString(stringb(i << ". " <<
+      "Animals need lots of room and roads to roam.  "
+      "C++::has->(*funny)(*punctuation).\n"));
+  }
+
+  for (int opts=0; opts <= TextSearch::SS_ALL; opts++) {
+    ts.setSearchStringFlags((TextSearch::SearchStringFlags)opts);
+
+    long start = getMilliseconds();
+    int const ITERS = 200;
+    for (int i=0; i < ITERS; i++) {
+      // Trigger a complete re-evaluation.
+      ts.observeTotalChange(tde.writableDoc().getCore());
+      xassert(ts.countAllMatches() == NUM_LINES);
+    }
+    long end = getMilliseconds();
+
+    cout << "perf: opts=" << opts
+         << " lines=" << NUM_LINES
+         << " iters=" << ITERS
+         << " ms=" << (end-start) << endl;
+  }
+}
+
+
 static void entry()
 {
   testEmpty();
   testSimple();
   testCaseInsensitive();
+  testRegex();
+  testPerformance();
 
   cout << "test-text-search ok" << endl;
 }

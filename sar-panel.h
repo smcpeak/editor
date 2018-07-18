@@ -14,6 +14,7 @@
 class EditorWidget;                    // editor-widget.h
 
 class QComboBox;
+class QCheckBox;
 class QLabel;
 class QToolButton;
 
@@ -24,14 +25,17 @@ class SearchAndReplacePanel : public QWidget {
   Q_OBJECT
 
 private:     // data
+  // Label with information about current matches.
+  QLabel *m_matchStatusLabel;
+
   // Combo box where user enters "Find" string.
   QComboBox *m_findBox;
 
+  // Checkbox "R", meaning regular expression.
+  QCheckBox *m_regexCheckBox;
+
   // And the "Repl" string.
   QComboBox *m_replBox;
-
-  // Label with information about current matches.
-  QLabel *m_matchStatusLabel;
 
   // "Help" button.
   QToolButton *m_helpButton;
@@ -95,9 +99,10 @@ protected:   // funcs
   virtual void paintEvent(QPaintEvent *event) OVERRIDE;
 
 private Q_SLOTS:
-  void slot_findEditTextChanged(QString const &text);
-  void slot_replEditTextChanged(QString const &text);
-  void slot_help();
+  void slot_findEditTextChanged(QString const &text) NOEXCEPT;
+  void slot_replEditTextChanged(QString const &text) NOEXCEPT;
+  void slot_regexStateChanged(int state) NOEXCEPT;
+  void slot_help() NOEXCEPT;
 
 Q_SIGNALS:
   // Emitted when a control in the panel changes.
