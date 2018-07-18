@@ -438,6 +438,20 @@ void GlobalState::focusChangedHandler(QWidget *from, QWidget *to)
 }
 
 
+void GlobalState::slot_broadcastSearchPanelChanged(
+  SearchAndReplacePanel *panel) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE("sar", "GlobalState::slot_broadcastSearchPanelChanged");
+  FOREACH_OBJLIST_NC(EditorWindow, m_windows, iter) {
+    iter.data()->searchPanelChanged(panel);
+  }
+
+  GENERIC_CATCH_END
+}
+
+
 // Respond to a failed DEV_WARNING.
 static void editorDevWarningHandler(char const *file, int line,
                                     char const *msg)

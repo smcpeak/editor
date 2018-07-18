@@ -38,7 +38,8 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_replBox(NULL),
     m_helpButton(NULL),
     m_editorWidget(NULL),
-    m_ignore_findEditTextChanged(false)
+    m_ignore_findEditTextChanged(false),
+    m_handlingBroadcastChange(false)
 {
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
@@ -66,9 +67,8 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_findBox->setEditable(true);
     m_findBox->setInsertPolicy(QComboBox::NoInsert);
     m_findBox->installEventFilter(this);
-
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
-                     this, &SearchAndReplacePanel::on_findEditTextChanged);
+                     this, &SearchAndReplacePanel::slot_findEditTextChanged);
 
     QLabel *replLabel = new QLabel("Repl:");
     hbox->addWidget(replLabel);
@@ -78,13 +78,15 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_replBox->setEditable(true);
     m_replBox->setInsertPolicy(QComboBox::NoInsert);
     m_replBox->installEventFilter(this);
+    QObject::connect(m_replBox, &QComboBox::editTextChanged,
+                     this, &SearchAndReplacePanel::slot_replEditTextChanged);
 
     // I can't seem to get QPushButton to be small, so use QToolButton.
     m_helpButton = new QToolButton();
     hbox->addWidget(m_helpButton);
     m_helpButton->setText("?");
     QObject::connect(m_helpButton, &QToolButton::clicked,
-                     this, &SearchAndReplacePanel::on_help);
+                     this, &SearchAndReplacePanel::slot_help);
   }
 }
 
@@ -94,7 +96,9 @@ SearchAndReplacePanel::~SearchAndReplacePanel()
   // Disconnect the widget and the status label.
   this->setEditorWidget(NULL);
 
+  // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_findBox, NULL, this, NULL);
+  QObject::disconnect(m_replBox, NULL, this, NULL);
   QObject::disconnect(m_helpButton, NULL, this, NULL);
 }
 
@@ -147,6 +151,17 @@ void SearchAndReplacePanel::setFocusFindBox()
   m_findBox->setFocus();
   m_findBox->lineEdit()->selectAll();
 
+  // The editor widget clears its hit text when the SAR panel is hidden
+  // in order to not show the search matches.  When the panel is shown,
+  // we want to restore the widget's hit text to what the SAR panel
+  // remembers.  Also, the panel's text might have just been changed due
+  // to hitting Ctrl+S while text is selected, and the editor widget
+  // will not have known about that string before.
+  //
+  // We do not scroll here because the user should be able to hit Ctrl+S
+  // to freely toggle between the editor and SAR panel without
+  // disrupting their view.  Only when they actively change the search
+  // string will we scroll to matches.
   this->updateEditorHitText(false /*scroll*/);
 }
 
@@ -174,6 +189,62 @@ void SearchAndReplacePanel::updateEditorHitText(bool scrollToHit)
   string s(toString(m_findBox->currentText()));
   TRACE("sar", "update hit text: text=\"" << s << "\" scroll=" << scrollToHit);
   m_editorWidget->setHitText(s, scrollToHit);
+
+  if (!m_handlingBroadcastChange) {
+    Q_EMIT signal_searchPanelChanged(this);
+  }
+}
+
+
+void SearchAndReplacePanel::searchPanelChanged(SearchAndReplacePanel *panel)
+{
+  if (this == panel) {
+    // We originated this change; ignore it.
+    return;
+  }
+
+  // Do not broadcast the changes resulting from receiving this.
+  Restorer<bool> restorer(m_handlingBroadcastChange, true);
+
+  if (m_findBox->currentText() != panel->m_findBox->currentText()) {
+    // Remember this new string.
+    QString searchString(panel->m_findBox->currentText());
+    this->setFindText(searchString);
+
+    if (this->isVisible()) {
+      // When this SAR panel is shown, have the associated editor show
+      // its matches, but don't scroll its view.
+      TRACE("sar", "received new search string, updating editor: " <<
+        toString(searchString));
+      this->updateEditorHitText(false /*scroll*/);
+    }
+    else {
+      // The SAR panel is not shown, so the editor isn't showing
+      // matches.
+      TRACE("sar", "received new search string, but not updating editor: " <<
+        toString(searchString));
+    }
+  }
+
+  m_replBox->setCurrentText(panel->m_replBox->currentText());
+}
+
+
+void SearchAndReplacePanel::slot_findEditTextChanged(QString const &)
+{
+  if (m_ignore_findEditTextChanged) {
+    return;
+  }
+
+  this->updateEditorHitText(true /*scroll*/);
+}
+
+
+void SearchAndReplacePanel::slot_replEditTextChanged(QString const &)
+{
+  if (!m_handlingBroadcastChange) {
+    Q_EMIT signal_searchPanelChanged(this);
+  }
 }
 
 
@@ -313,7 +384,9 @@ void SearchAndReplacePanel::paintEvent(QPaintEvent *event)
 {
   QWidget::paintEvent(event);
 
-  // Draw a divider line on the bottom edge.
+  // Draw a divider line on the bottom edge.  (I would have done this by
+  // inheriting QFrame, but it wants to draw a box around the whole
+  // thing, whereas I just want this one line.)
   QPainter paint(this);
   paint.setPen(QColor(128, 128, 128));
   int w = this->width();
@@ -322,17 +395,7 @@ void SearchAndReplacePanel::paintEvent(QPaintEvent *event)
 }
 
 
-void SearchAndReplacePanel::on_findEditTextChanged(QString const &)
-{
-  if (m_ignore_findEditTextChanged) {
-    return;
-  }
-
-  this->updateEditorHitText(true /*scroll*/);
-}
-
-
-void SearchAndReplacePanel::on_help()
+void SearchAndReplacePanel::slot_help()
 {
   QMessageBox mb(this);
   mb.setWindowTitle("Search and Replace Help");
@@ -340,10 +403,9 @@ void SearchAndReplacePanel::on_help()
     "Keys for Search and Replace (SAR):\n"
     "\n"
     "Ctrl+S: Toggle focus between SAR and main editor.\n"
-    "Enter: Go to first match in editor, unless already on a match, "
-      "in which case just go to editor.\n"
+    "Enter: Go to first match in editor and return focus to it.\n"
     "Tab: Toggle between Find and Repl boxes.\n"
-    "Esc: Close the SAR panel.\n"
+    "Esc: Close the SAR panel, stop highlighting matches in the editor.\n"
     "\n"
     "Ctrl+Period or Ctrl+Comma: Move to next/prev match.\n"
     "Ctrl+R: Replace match with Repl text; "

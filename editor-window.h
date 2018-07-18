@@ -134,6 +134,9 @@ public:      // funcs
   // returning true if they say it is.
   bool okToDiscardChanges(string const &descriptionOfChanges);
 
+  // The search panel in one window has changed.
+  void searchPanelChanged(SearchAndReplacePanel *panel);
+
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
 

@@ -98,6 +98,9 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   mainArea->addWidget(m_sarPanel);
   m_sarPanel->setObjectName("m_sarPanel");
   m_sarPanel->hide();      // Initially hidden.
+  QObject::connect(
+    m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
+    m_globalState, &GlobalState::slot_broadcastSearchPanelChanged);
 
   this->m_statusArea = new StatusDisplay();
   this->m_statusArea->setObjectName("m_statusArea");
@@ -170,12 +173,13 @@ EditorWindow::~EditorWindow()
 {
   EditorWindow::s_objectCount--;
 
-  this->m_globalState->m_documentList.removeObserver(this);
+  m_globalState->m_documentList.removeObserver(this);
 
   // This object might have already been removed, for example because
   // the GlobalState destructor is running, and is in the process of
-  // removing elements from the list and destroying them.
-  this->m_globalState->m_windows.removeIfPresent(this);
+  // removing elements from the list and destroying them.  Hence the
+  // "IfPresent" part of this call.
+  m_globalState->m_windows.removeIfPresent(this);
 
   // The QObject destructor will destroy both 'm_sarPanel' and
   // 'm_editorWidget', but the documentation of ~QObject does not
@@ -183,10 +187,10 @@ EditorWindow::~EditorWindow()
   m_sarPanel->setEditorWidget(NULL);
 
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(this->m_editorWidget, NULL, this, NULL);
-  QObject::disconnect(this->m_vertScroll, NULL,
-                      this->m_editorWidget, NULL);
-  QObject::disconnect(this->m_windowMenu, NULL, this, NULL);
+  QObject::disconnect(m_sarPanel,     NULL, m_globalState,  NULL);
+  QObject::disconnect(m_editorWidget, NULL, this,           NULL);
+  QObject::disconnect(m_vertScroll,   NULL, m_editorWidget, NULL);
+  QObject::disconnect(m_windowMenu,   NULL, this,           NULL);
 }
 
 
@@ -274,9 +278,9 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     MENU_ITEM_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
-    MENU_ITEM_KEY("&Next search hit", editNextSearchHit,
+    MENU_ITEM_KEY("&Next search hit\tCtrl+Period", editNextSearchHit,
                   Qt::CTRL + Qt::Key_Period);
-    MENU_ITEM_KEY("Previous search hit", editPreviousSearchHit,
+    MENU_ITEM_KEY("Previous search hit\tCtrl+Comma", editPreviousSearchHit,
                   Qt::CTRL + Qt::Key_Comma);
 
     menu->addSeparator();
@@ -894,6 +898,15 @@ bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
   box.addButton(QMessageBox::Cancel);
   int ret = box.exec();
   return (ret == QMessageBox::Discard);
+}
+
+
+void EditorWindow::searchPanelChanged(SearchAndReplacePanel *panel)
+{
+  // Pass this on to the SAR panel.  It will check if 'panel==this'
+  // before otherwise reacting (just to keep all the logic in one
+  // place).
+  m_sarPanel->searchPanelChanged(panel);
 }
 
 

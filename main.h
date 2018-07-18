@@ -135,6 +135,11 @@ public:       // funcs
   virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
+
+public Q_SLOTS:
+  // Called when the search panel in some window has changed.  Broadcast
+  // that fact to the others.
+  void slot_broadcastSearchPanelChanged(SearchAndReplacePanel *panel) NOEXCEPT;
 };
 
 

@@ -1,9 +1,6 @@
 
 TODOs:
   - add regex support now that the design can accomodate it
-  - I think I want the same search string in all windows.  I am often
-    having to re-type the string in another window, and rarely if ever
-    want them different.
   - split panes, esp. a vertical split instead of multiple windows
   - run command to generate entire file; git annotate!
     - enhancements
@@ -15,6 +12,9 @@ TODOs:
       - open-files-dialog: button to close all with finished processes
       - annoying completion behavior of Qt combo boxes; want more like
         shell with readline (except less buggy!)
+      - after reusing a document to run the same command, would like
+        the cursor to stay where it was, unless it was at the end
+          - interact with the "soft" end tracking
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process
@@ -31,6 +31,7 @@ TODOs:
       could not figure out how to do this; bailing for now
   - document list: instead of N/P, let user type a substring of a doc
     name?
+    - maybe after Ctrl+S?
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
   - highlighting for "git diff" output

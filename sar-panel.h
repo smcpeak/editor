@@ -37,10 +37,24 @@ private:     // data
   QToolButton *m_helpButton;
 
   // The editor we are interacting with.
+  //
+  // This is NULL during while both objects are being constructed or
+  // destroyed, but while we are receiving UI events, it is assumed to
+  // be not NULL.
+  //
+  // This is a sibling widget, and therefore the common wisdom would be
+  // to interact with it using signals instead of direct calls.  But the
+  // coupling between these two is necessarily tight due to the UI
+  // design, so in this instance I think it works better to store a
+  // pointer and make direct method calls.
   RCSerf<EditorWidget> m_editorWidget;
 
   // When true, ignore the 'findEditTextChanged' signal.
   bool m_ignore_findEditTextChanged;
+
+  // When true, we are responding to a broadcast change, and therefore
+  // should not initiate one of our own.
+  bool m_handlingBroadcastChange;
 
 public:      // funcs
   SearchAndReplacePanel(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
@@ -69,6 +83,10 @@ public:      // funcs
   // scroll the first hit into view.
   void updateEditorHitText(bool scrollToHit);
 
+  // The search panel in one window changed.  This is called to update
+  // the others.
+  void searchPanelChanged(SearchAndReplacePanel *panel);
+
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
 
@@ -76,9 +94,14 @@ protected:   // funcs
   // QWidget methods.
   virtual void paintEvent(QPaintEvent *event) OVERRIDE;
 
-public slots:
-  void on_findEditTextChanged(QString const &text);
-  void on_help();
+private Q_SLOTS:
+  void slot_findEditTextChanged(QString const &text);
+  void slot_replEditTextChanged(QString const &text);
+  void slot_help();
+
+Q_SIGNALS:
+  // Emitted when a control in the panel changes.
+  void signal_searchPanelChanged(SearchAndReplacePanel *panel);
 };
 
 
