@@ -212,6 +212,11 @@ private:     // funcs
   // two, and 'mark' equals 'cursor' if the real one is not set.
   void getEffectiveSearchCursorMark(TextCoord &cursor, TextCoord &mark);
 
+  // Scroll the display to the next/prev search it.  If found, return
+  // true and, if also 'select', set the cursor/mark to select the
+  // match.
+  bool scrollToNextSearchHit(bool reverse, bool select);
+
   // Compute and emit 'signal_searchStatusIndicator'.
   void emitSearchStatusIndicator();
 

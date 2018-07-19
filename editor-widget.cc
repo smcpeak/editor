@@ -1917,46 +1917,56 @@ void EditorWidget::setSearchStringParams(string const &searchString,
   if (scrollToHit) {
     // Find the first occurrence on or after the cursor; or, failing
     // that, first occurrence before it.
-    TextCoord tc(m_editor->cursor());
-    TextSearch::MatchExtent match;
-    if (m_textSearch->firstMatchOnOrAfter(match /*OUT*/, tc /*INOUT*/) ||
-        m_textSearch->firstMatchOnOrBefore(match /*OUT*/, tc /*INOUT*/)) {
-      // Try to show the entire match, giving preference to the right side.
-      m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
-      m_editor->walkCoord(tc, match.m_length);
-      m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
-    }
+    this->scrollToNextSearchHit(false /*reverse*/, false /*select*/) ||
+      this->scrollToNextSearchHit(true /*reverse*/, false /*select*/);
   }
 
   redraw();
 }
 
 
-bool EditorWidget::nextSearchHit(bool reverse)
+bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
 {
-  TRACE("sar", (reverse? "prev" : "next") << " search hit");
-
   // For consistency with the status display, regard the "current"
   // location for next/prev as the same as the "effective" cursor.
-  TextCoord tc, dummy;
-  this->getEffectiveSearchCursorMark(tc, dummy);
+  //
+  // At the moment, this happens to be redundant because 'nextMatch'
+  // internally normalizes its arguments, but I think it is still good
+  // for the display and modification code to explicitly share this
+  // behavior.
+  TextCoord cursor, mark;
+  this->getEffectiveSearchCursorMark(cursor, mark);
 
-  TextSearch::MatchExtent match;
-  if (m_textSearch->firstMatchBeforeOrAfter(reverse, match /*OUT*/,
-                                            tc /*INOUT*/)) {
-    m_editor->setCursor(tc);
+  if (m_textSearch->nextMatch(reverse, cursor, mark)) {
+    TRACE("sar", (reverse? "prev" : "next") <<
+                 " found: " << cursor << " - " << mark);
 
-    TextCoord m(tc);
-    m_editor->walkCoord(m, +match.m_length);
-    m_editor->setMark(m);
+    if (select) {
+      m_editor->setCursor(cursor);
+      m_editor->setMark(mark);
+    }
 
-    m_editor->scrollToCoord(tc, SAR_SCROLL_GAP);
-    m_editor->scrollToCoord(m, SAR_SCROLL_GAP);
+    // Try to show the entire match, giving preference to the right side.
+    m_editor->scrollToCoord(cursor, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(mark, SAR_SCROLL_GAP);
+    return true;
+  }
+  else {
+    TRACE("sar", (reverse? "prev" : "next") << " did not find anything");
+    return false;
+  }
+}
+
+
+bool EditorWidget::nextSearchHit(bool reverse)
+{
+  if (this->scrollToNextSearchHit(reverse, true /*select*/)) {
     redraw();
     return true;
   }
-
-  return false;
+  else {
+    return false;
+  }
 }
 
 

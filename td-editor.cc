@@ -487,37 +487,7 @@ void TextDocumentEditor::truncateCoord(TextCoord &tc) const
 
 bool TextDocumentEditor::walkCoord(TextCoord &tc, int len) const
 {
-  xassert(this->validCoord(tc));
-
-  for (; len > 0; len--) {
-    if (tc.column == this->lineLength(tc.line)) {
-      // cycle to next line
-      tc.line++;
-      if (tc.line >= this->numLines()) {
-        return false;      // beyond EOF
-      }
-      tc.column=0;
-    }
-    else {
-      tc.column++;
-    }
-  }
-
-  for (; len < 0; len++) {
-    if (tc.column == 0) {
-      // cycle up to end of preceding line
-      tc.line--;
-      if (tc.line < 0) {
-        return false;      // before BOF
-      }
-      tc.column = this->lineLength(tc.line);
-    }
-    else {
-      tc.column--;
-    }
-  }
-
-  return true;
+  return m_doc->getCore().walkCoord(tc, len);
 }
 
 

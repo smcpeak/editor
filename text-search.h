@@ -13,6 +13,7 @@
 #include "macros.h"                    // NO_OBJECT_COPIES
 #include "owner.h"                     // Owner
 #include "refct-serf.h"                // RCSerf
+#include "sm-iostream.h"               // ostream
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
 #include "str.h"                       // string
@@ -55,6 +56,10 @@ public:      // types
 
     bool operator== (MatchExtent const &obj) const;
     NOTEQUAL_OPERATOR(MatchExtent);
+
+    // Write as "(s=<start>,l=<length>)".
+    void insertSB(stringBuilder &sb) const;
+    void insertOstream(ostream &os) const;
   };
 
 public:      // class data
@@ -175,27 +180,17 @@ public:      // funcs
   // no duplicates.
   ArrayStack<MatchExtent> const &getLineMatches(int line) const;
 
-  // Starting from 'tc', search forward through the matches until we
-  // find one, including one starting at 'tc' itself.  If one is found,
-  // return true, set 'match', and set 'tc' to the start of the match.
-  // Otherwise return false.
-  bool firstMatchOnOrAfter(
-    MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const;
-
-  // Same, but going backward.
-  bool firstMatchOnOrBefore(
-    MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const;
-
-  // Similar, but do *not* report a match on 'tc' itself, and if
-  // 'reverse', go backwards instead of forwards.
-  bool firstMatchBeforeOrAfter(
-    bool reverse, MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const;
-
-  // Generalization of the above two.  If 'matchAtTC', return a match at
-  // 'tc' itself.
-  bool firstMatchBeforeOnOrAfter(
-    bool reverse, bool matchAtTC,
-    MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const;
+  // Given the current 'cursor' and 'mark', locate the next match
+  // (previous match if 'reverse') and set 'cursor' and 'mark' to
+  // surround it.  If there is no next match, return false.
+  //
+  // This function begins by normalizing 'cursor' and 'mark' so that
+  // 'cursor<=mark'.
+  //
+  // If the return value is false, the output values of 'cursor' and
+  // 'mark' are unspecified.
+  bool nextMatch(bool reverse,
+    TextCoord &cursor /*INOUT*/, TextCoord &mark /*INOUT*/) const;
 
   // Return true if there is a match starting at 'a' and going up to
   // but not including 'b'; or one from 'b' to 'a' in the same manner.
@@ -211,6 +206,22 @@ public:      // funcs
 
 
 ENUM_BITWISE_OPS(TextSearch::SearchStringFlags, TextSearch::SS_ALL)
+
+
+inline stringBuilder& operator<< (stringBuilder &sb,
+                                  TextSearch::MatchExtent const &match)
+{
+  match.insertSB(sb);
+  return sb;
+}
+
+
+inline ostream& operator<< (ostream &os,
+                            TextSearch::MatchExtent const &match)
+{
+  match.insertOstream(os);
+  return os;
+}
 
 
 #endif // TEXT_SEARCH_H

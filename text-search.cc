@@ -54,6 +54,18 @@ bool TextSearch::MatchExtent::operator== (MatchExtent const &obj) const
 }
 
 
+void TextSearch::MatchExtent::insertSB(stringBuilder &sb) const
+{
+  sb << "(s=" << m_start << ",l=" << m_length << ')';
+}
+
+
+void TextSearch::MatchExtent::insertOstream(ostream &os) const
+{
+  os << "(s=" << m_start << ",l=" << m_length << ')';
+}
+
+
 // -------------------------- TextSearch ---------------------------
 int TextSearch::s_objectCount = 0;
 
@@ -381,52 +393,33 @@ ArrayStack<TextSearch::MatchExtent> const &TextSearch::getLineMatches(int line) 
 }
 
 
-bool TextSearch::firstMatchOnOrAfter(
-  MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const
-{
-  return this->firstMatchBeforeOnOrAfter(
-    false /*reverse*/, true /*matchAtTC*/,
-    match /*OUT*/, tc /*INOUT*/);
-}
-
-bool TextSearch::firstMatchOnOrBefore(
-  MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const
-{
-  return this->firstMatchBeforeOnOrAfter(
-    true /*reverse*/, true /*matchAtTC*/,
-    match /*OUT*/, tc /*INOUT*/);
-}
-
-bool TextSearch::firstMatchBeforeOrAfter(
-  bool reverse, MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const
-{
-  return this->firstMatchBeforeOnOrAfter(
-    reverse, false /*matchAtTC*/,
-    match /*OUT*/, tc /*INOUT*/);
-}
-
-
-static bool reversibleLT(bool reverse, int a, int b)
+template <class T>
+static bool reversibleLT(bool reverse, T const &a, T const &b)
 {
   return (reverse? b<a : a<b);
 }
 
-static bool reversibleLTE(bool reverse, int a, int b)
+template <class T>
+static bool reversibleLTE(bool reverse, T const &a, T const &b)
 {
   return (reverse? b<=a : a<=b);
 }
 
-bool TextSearch::firstMatchBeforeOnOrAfter(
-  bool reverse, bool matchAtTC,
-  MatchExtent &match /*OUT*/, TextCoord &tc /*INOUT*/) const
+bool TextSearch::nextMatch(bool reverse,
+  TextCoord &cursor /*INOUT*/, TextCoord &mark /*INOUT*/) const
 {
+  // Normalize coordinates.
+  if (cursor > mark) {
+    swap(cursor, mark);
+  }
+
   // Direction of travel.
   int inc = (reverse? -1 : +1);
 
-  // Consider line with 'tc'.
-  if (countLineMatches(tc.line)) {
+  // Consider line with 'cursor'.
+  if (countLineMatches(cursor.line)) {
     ArrayStack<MatchExtent> const &matches =
-      this->getLineMatches(tc.line);
+      this->getLineMatches(cursor.line);
 
     // Nominally walk forward.
     int begin = 0;
@@ -440,38 +433,62 @@ bool TextSearch::firstMatchBeforeOnOrAfter(
     // Walk the matches in 'inc' direction.
     for (int i=begin; reversibleLTE(reverse, i, end); i += inc) {
       MatchExtent const &m = matches[i];
-      if (reversibleLT(reverse, m.m_start, tc.column)) {
-        // This match occurs $before 'tc'.
-        continue;
-      }
-      if (m.m_start == tc.column && !matchAtTC) {
-        // This match is at 'tc' but we don't want that.
+      if (reversibleLT(reverse, m.m_start, cursor.column)) {
+        // This match occurs before 'cursor'.
         continue;
       }
 
-      // Found first match $after 'tc' on its line.
-      match = m;
-      tc.column = m.m_start;
-      return true;
+      // Where does this match end?
+      TextCoord matchEnd(cursor.line, m.m_start);
+      m_document->walkCoord(matchEnd, +m.m_length);
+
+      // Now, how does its start compare to 'cursor'?
+      if (m.m_start == cursor.column) {
+        // How does the end compare to 'mark'?
+        if (reversibleLTE(reverse, matchEnd, mark)) {
+          // The match end is less than or equal to my current mark.  I
+          // regard that as being the match we are on or already past,
+          // so keep going.
+          continue;
+        }
+        else {
+          // The match end is further than mark.  We will return this
+          // one, effectively extending the selection to get it.  (If
+          // 'reverse', we are actually shrinking the match.)
+          mark = matchEnd;
+          return true;
+        }
+      }
+      else {
+        // This is the first match after the cursor.
+        cursor.column = m.m_start;
+        mark = matchEnd;
+        return true;
+      }
     }
   }
 
   // Consider other lines.
-  tc.line += inc;
-  while (reverse? 0 <= tc.line : tc.line < this->documentLines()) {
-    if (countLineMatches(tc.line)) {
+  cursor.line += inc;
+  while (reverse? 0 <= cursor.line : cursor.line < this->documentLines()) {
+    if (countLineMatches(cursor.line)) {
       // Grab the extreme match on this line.
       ArrayStack<MatchExtent> const &matches =
-        this->getLineMatches(tc.line);
+        this->getLineMatches(cursor.line);
       int i = (reverse? matches.length()-1 : 0);
       MatchExtent const &m = matches[i];
 
-      // Found first match $after 'tc' on another line.
-      match = m;
-      tc.column = m.m_start;
+      // Found first match after 'cursor' on another line.
+      cursor.column = m.m_start;
+
+      // Where does this match end?
+      mark = cursor;
+      m_document->walkCoord(mark, +m.m_length);
       return true;
     }
-    tc.line += inc;
+
+    // Keep looking on subsequent lines.
+    cursor.line += inc;
   }
 
   return false;

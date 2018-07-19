@@ -141,7 +141,7 @@ public:      // funcs
   // the valid coordinates of the file.  It must initially be in the
   // valid area, but if by walking we get out of bounds, then the
   // function simply returns false (otherwise true).
-  bool walkCoord(TextCoord &cursor, int distance) const;
+  bool walkCoord(TextCoord &tc, int distance) const;
 
   // Given two locations that are within the valid area, and with
   // tc1 <= tc2, compute the # of chars between them, counting line

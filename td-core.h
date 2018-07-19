@@ -134,6 +134,9 @@ public:    // funcs
   // Otherwise return newlines+1, the same as numLines().
   int numLinesExceptFinalEmpty() const;
 
+  // Same specification as TextDocumentEditor::walkCoord.
+  bool walkCoord(TextCoord &tc, int distance) const;
+
   // --------------------- line contents ------------------------
   // Get part of a line's contents, starting at 'tc' and getting
   // 'destLen' chars.  All chars must be in the line now.  The retrieved

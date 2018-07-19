@@ -111,58 +111,6 @@ static void testSimple()
 }
 
 
-static void expectFMOOA(TextSearch &ts, int line, int col,
-  bool expectRes, int expectMatchLine,
-  int expectMatchStart, int expectMatchLength)
-{
-  TextSearch::MatchExtent match;
-  TextCoord tc(line,col);
-  bool actualRes = ts.firstMatchOnOrAfter(match, tc);
-  EXPECT_EQ(actualRes, expectRes);
-  if (actualRes) {
-    EXPECT_EQ(tc.line, expectMatchLine);
-    xassert(tc.column == match.m_start);
-    EXPECT_EQ(match.m_start, expectMatchStart);
-    EXPECT_EQ(match.m_length, expectMatchLength);
-  }
-}
-
-
-static void expectFMBOA(TextSearch &ts, bool reverse, int line, int col,
-  bool expectRes, int expectMatchLine,
-  int expectMatchStart, int expectMatchLength)
-{
-  TextSearch::MatchExtent match;
-  TextCoord tc(line,col);
-  bool actualRes = ts.firstMatchBeforeOrAfter(reverse, match, tc);
-  EXPECT_EQ(actualRes, expectRes);
-  if (actualRes) {
-    EXPECT_EQ(tc.line, expectMatchLine);
-    xassert(tc.column == match.m_start);
-    EXPECT_EQ(match.m_start, expectMatchStart);
-    EXPECT_EQ(match.m_length, expectMatchLength);
-  }
-}
-
-
-static void expectFMBOOA(TextSearch &ts,
-  bool reverse, bool matchAtTC, int line, int col,
-  bool expectRes, int expectMatchLine,
-  int expectMatchStart, int expectMatchLength)
-{
-  TextSearch::MatchExtent match;
-  TextCoord tc(line,col);
-  bool actualRes = ts.firstMatchBeforeOnOrAfter(reverse, matchAtTC, match, tc);
-  EXPECT_EQ(actualRes, expectRes);
-  if (actualRes) {
-    EXPECT_EQ(tc.line, expectMatchLine);
-    xassert(tc.column == match.m_start);
-    EXPECT_EQ(match.m_start, expectMatchStart);
-    EXPECT_EQ(match.m_length, expectMatchLength);
-  }
-}
-
-
 static void expectRIM(TextSearch &ts,
   int lineA, int colA, int lineB, int colB, bool expectRes)
 {
@@ -170,6 +118,54 @@ static void expectRIM(TextSearch &ts,
   TextCoord b(lineB,colB);
   bool actualRes = ts.rangeIsMatch(a, b);
   EXPECT_EQ(actualRes, expectRes);
+}
+
+
+static void expectNM_true(TextSearch const &ts,
+  int cursorLine, int cursorCol,
+  int markLine, int markCol,
+  bool reverse,
+  int expectCursorLine, int expectCursorCol,
+  int expectMarkLine, int expectMarkCol)
+{
+  for (int i=0; i < 2; i++) {
+    TextCoord cursor(cursorLine, cursorCol);
+    TextCoord mark(markLine, markCol);
+    if (i==1) {
+      // The result should be independent of the order of 'cursor' and
+      // 'mark'.
+      swap(cursor, mark);
+    }
+
+    bool actualRes = ts.nextMatch(reverse, cursor, mark);
+    EXPECT_EQ(actualRes, true);
+    EXPECT_EQ(cursor.line, expectCursorLine);
+    EXPECT_EQ(cursor.column, expectCursorCol);
+    EXPECT_EQ(mark.line, expectMarkLine);
+    EXPECT_EQ(mark.column, expectMarkCol);
+  }
+}
+
+
+static void expectNM_false(TextSearch const &ts,
+  int cursorLine, int cursorCol,
+  int markLine, int markCol,
+  bool reverse)
+{
+  for (int i=0; i < 2; i++) {
+    TextCoord cursor(cursorLine, cursorCol);
+    TextCoord mark(markLine, markCol);
+    if (i==1) {
+      // The result should be independent of the order of 'cursor' and
+      // 'mark'.
+      swap(cursor, mark);
+    }
+
+    bool actualRes = ts.nextMatch(reverse, cursor, mark);
+    EXPECT_EQ(actualRes, false);
+
+    // Output values of 'cursor' and 'mark' are unspecified.
+  }
 }
 
 
@@ -221,29 +217,6 @@ static void testCaseInsensitive()
     "3:[2,2][9,2]\n"
   );
 
-  // Text 'firstMatch'.
-  expectFMOOA(ts, 0,0, true, 0,0,2);
-  expectFMOOA(ts, 0,1, true, 1,1,2);
-  expectFMOOA(ts, 3,9, true, 3,9,2);
-  expectFMOOA(ts, 3,10, false, 0,0,0);
-
-  expectFMBOA(ts, false, 0,0, true, 1,1,2);
-  expectFMBOA(ts, true, 0,0, false, 0,0,0);
-
-  expectFMBOOA(ts, false, true, 0,0, true, 0,0,2);
-  expectFMBOOA(ts, false, false, 0,0, true, 1,1,2);
-  expectFMBOOA(ts, true, true, 0,0, true, 0,0,2);
-  expectFMBOOA(ts, true, false, 0,0, false, 0,0,0);
-
-  expectFMBOOA(ts, false, true, 2,7, true, 2,7,2);
-  expectFMBOOA(ts, false, false, 2,7, true, 3,2,2);
-  expectFMBOOA(ts, true, true, 2,7, true, 2,7,2);
-  expectFMBOOA(ts, true, false, 2,7, true, 2,0,2);
-
-  // Starting well beyond EOF, we should still find matches when doing
-  // reverse search.
-  expectFMBOOA(ts, true, false, 12,7, true, 3,9,2);
-
   // Test 'rangeIsMatch'.
   expectRIM(ts, 0,0, 0,0, false);
   expectRIM(ts, 0,0, 0,2, true);
@@ -251,6 +224,99 @@ static void testCaseInsensitive()
   expectRIM(ts, 2,7, 2,9, true);
   expectRIM(ts, 2,6, 2,9, false);
   expectRIM(ts, 2,7, 3,9, false);
+
+  // Test 'nextMatch'.
+
+  // Cursor near first match, going forward.
+  expectNM_true (ts, 0,0, 0,0, false, 0,0, 0,2);  // create/expand sel
+  expectNM_true (ts, 0,0, 0,1, false, 0,0, 0,2);  // expand sel
+  expectNM_true (ts, 0,0, 0,2, false, 1,1, 1,3);  // selected; next match
+  expectNM_true (ts, 0,0, 0,3, false, 1,1, 1,3);  // mark past; next match
+
+  expectNM_true (ts, 0,1, 0,1, false, 1,1, 1,3);  // cursor after start; next
+  expectNM_true (ts, 0,1, 0,2, false, 1,1, 1,3);  // cursor after start; next
+  expectNM_true (ts, 0,1, 0,3, false, 1,1, 1,3);  // cursor after start; next
+
+  expectNM_true (ts, 0,2, 0,2, false, 1,1, 1,3);  // cursor at end; next
+  expectNM_true (ts, 0,2, 0,3, false, 1,1, 1,3);  // cursor at end; next
+
+  // Cursor near first match, going backward
+  expectNM_false(ts, 0,0, 0,0, true);             // cursor at start; prev; none
+  expectNM_false(ts, 0,0, 0,1, true);             // cursor at start; prev; none
+  expectNM_false(ts, 0,0, 0,2, true);             // match selected; prev; none
+  expectNM_true (ts, 0,0, 0,3, true, 0,0, 0,2);   // mark past; prev
+
+  expectNM_true (ts, 0,1, 0,1, true, 0,0, 0,2);   // cursor past; prev
+  expectNM_true (ts, 0,1, 0,2, true, 0,0, 0,2);   // cursor past; prev
+
+  // Repeat the matches just for ease of reference within this test.
+  expectMatches(ts,
+    "0:[0,2]\n"
+    "1:[1,2]\n"
+    "2:[0,2][7,2]\n"
+    "3:[2,2][9,2]\n"
+  );
+
+  // Cursor near second match, going forward.
+  expectNM_true (ts, 1,0, 1,0, false, 1,1, 1,3);  // cursor before; next
+  expectNM_true (ts, 1,0, 1,1, false, 1,1, 1,3);  // cursor before; next
+  expectNM_true (ts, 1,0, 1,2, false, 1,1, 1,3);  // cursor before; next
+  expectNM_true (ts, 1,0, 1,3, false, 1,1, 1,3);  // cursor before; next
+  expectNM_true (ts, 1,0, 1,4, false, 1,1, 1,3);  // cursor before; next
+
+  expectNM_true (ts, 1,1, 1,1, false, 1,1, 1,3);  // cursor on start; expand
+  expectNM_true (ts, 1,1, 1,2, false, 1,1, 1,3);  // expand
+  expectNM_true (ts, 1,1, 1,3, false, 2,0, 2,2);  // selected; next
+  expectNM_true (ts, 1,1, 1,4, false, 2,0, 2,2);  // mark past; next
+
+  expectNM_true (ts, 1,2, 1,2, false, 2,0, 2,2);  // cursor past start; next
+  expectNM_true (ts, 1,2, 1,3, false, 2,0, 2,2);  // cursor past start; next
+  expectNM_true (ts, 1,2, 1,4, false, 2,0, 2,2);  // cursor past start; next
+
+  // Near second, going backward.
+  expectNM_true (ts, 1,0, 1,0, true, 0,0, 0,2);   // cursor before; back
+  expectNM_true (ts, 1,0, 1,1, true, 0,0, 0,2);   // cursor before; back
+  expectNM_true (ts, 1,0, 1,2, true, 0,0, 0,2);   // cursor before; back
+  expectNM_true (ts, 1,0, 1,3, true, 0,0, 0,2);   // cursor before; back
+  expectNM_true (ts, 1,0, 1,4, true, 0,0, 0,2);   // cursor before; back
+
+  expectNM_true (ts, 1,1, 1,1, true, 0,0, 0,2);   // cursor on start; back
+  expectNM_true (ts, 1,1, 1,2, true, 0,0, 0,2);   // partial sel; back
+  expectNM_true (ts, 1,1, 1,3, true, 0,0, 0,2);   // selected; back
+  expectNM_true (ts, 1,1, 1,4, true, 1,1, 1,3);   // mark past end; shrink sel
+
+  expectNM_true (ts, 1,2, 1,2, true, 1,1, 1,3);   // cursor past; back
+  expectNM_true (ts, 1,2, 1,3, true, 1,1, 1,3);   // cursor past; back
+  expectNM_true (ts, 1,2, 1,4, true, 1,1, 1,3);   // cursor past; back
+
+  // Repeat the matches just for ease of reference within this test.
+  expectMatches(ts,
+    "0:[0,2]\n"
+    "1:[1,2]\n"
+    "2:[0,2][7,2]\n"
+    "3:[2,2][9,2]\n"
+  );
+
+  // Near last, going forward.
+  expectNM_true (ts, 3,8, 3,8, false, 3,9, 3,11);  // cursor before; next
+  expectNM_true (ts, 3,8, 3,9, false, 3,9, 3,11);  // cursor before; next
+  expectNM_true (ts, 3,8, 3,10, false, 3,9, 3,11); // cursor before; next
+  expectNM_true (ts, 3,8, 3,11, false, 3,9, 3,11); // cursor before; next
+  expectNM_true (ts, 3,8, 3,12, false, 3,9, 3,11); // cursor before; next
+
+  expectNM_true (ts, 3,9, 3,9, false, 3,9, 3,11);  // cursor on; expand
+  expectNM_true (ts, 3,9, 3,10, false, 3,9, 3,11); // cursor on; expand
+  expectNM_false(ts, 3,9, 3,11, false);            // selected; next; none
+  expectNM_false(ts, 3,9, 3,12, false);            // mark past; next; none
+
+  expectNM_false(ts, 3,10, 3,10, false);           // cursor past; next; none
+  expectNM_false(ts, 3,10, 3,11, false);           // cursor past; next; none
+  expectNM_false(ts, 3,10, 3,12, false);           // cursor past; next; none
+
+  // Starting well beyond EOF, we should still find matches when doing
+  // reverse search.
+  expectNM_true (ts, 12,7, 12,7, true, 3,9, 3,11);  // beyond EOF; back
+  expectNM_false(ts, 12,7, 12,7, false);            // beyond EOF; next; none
 }
 
 

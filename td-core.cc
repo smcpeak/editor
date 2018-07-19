@@ -176,6 +176,45 @@ int TextDocumentCore::numLinesExceptFinalEmpty() const
 }
 
 
+// This is tested in 'test-td-editor'.  I think of it primarily as a
+// service provided by TextDocumentEditor, but occasionally I need to
+// do this with a TextDocumentCore, so it is implemented here.
+bool TextDocumentCore::walkCoord(TextCoord &tc, int len) const
+{
+  xassert(this->validCoord(tc));
+
+  for (; len > 0; len--) {
+    if (tc.column == this->lineLength(tc.line)) {
+      // cycle to next line
+      tc.line++;
+      if (tc.line >= this->numLines()) {
+        return false;      // beyond EOF
+      }
+      tc.column=0;
+    }
+    else {
+      tc.column++;
+    }
+  }
+
+  for (; len < 0; len++) {
+    if (tc.column == 0) {
+      // cycle up to end of preceding line
+      tc.line--;
+      if (tc.line < 0) {
+        return false;      // before BOF
+      }
+      tc.column = this->lineLength(tc.line);
+    }
+    else {
+      tc.column--;
+    }
+  }
+
+  return true;
+}
+
+
 // 'line' is marked 'const' to ensure its value is not changed before
 // being passed to the observers; the same thing is done in the other
 // three mutator functions; the C++ standard explicitly allows 'const'
