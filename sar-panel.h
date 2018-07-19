@@ -61,6 +61,11 @@ private:     // data
   bool m_handlingBroadcastChange;
 
 private:     // funcs
+  // If a search hit is selected, replace it with what is in the Repl
+  // box.  Then, if 'advanceOnReplace', go to the next hit.  Otherwise,
+  // just go to the next search hit.
+  void replaceOrNext(bool advanceOnReplace);
+
   // Add the current Find and Repl strings to their respective
   // histories, removing duplicates and trimming overlong histories.
   void rememberFindReplStrings();
@@ -77,6 +82,10 @@ public:      // funcs
   // If the editor has focus, switch to SAR and prepare to search.
   // Otherwise give focus back to the editor.
   void toggleSARFocus();
+
+  // If the SAR panel is not shown, open it and switch focus to it.
+  // Otherwise, do 'replaceOrNext'.
+  void editReplace(bool advanceOnReplace);
 
   // Put the keyboard focus on the Find box.
   void setFocusFindBox();

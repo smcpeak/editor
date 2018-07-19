@@ -168,6 +168,35 @@ void SearchAndReplacePanel::toggleSARFocus()
 }
 
 
+void SearchAndReplacePanel::editReplace(bool advanceOnReplace)
+{
+  if (!this->isVisible()) {
+    // If the panel wasn't shown then no hits are shown, etc.  Just
+    // enable and toggle to the panel.
+    this->toggleSARFocus();
+    return;
+  }
+
+  this->replaceOrNext(advanceOnReplace);
+}
+
+
+void SearchAndReplacePanel::replaceOrNext(bool advanceOnReplace)
+{
+  string s = toString(m_replBox->currentText());
+  TRACE("sar", "replace: " << s);
+  if (m_editorWidget->searchHitSelected()) {
+    m_editorWidget->replaceSearchHit(s);
+    if (advanceOnReplace) {
+      m_editorWidget->nextSearchHit(false /*reverse*/);
+    }
+  }
+  else {
+    m_editorWidget->nextSearchHit(false /*reverse*/);
+  }
+}
+
+
 static void rememberString(QComboBox *cbox, char const *which)
 {
   QString currentString = cbox->currentText();
@@ -391,23 +420,6 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
           }
           this->toggleSARFocus();
           return true;       // no further processing
-        }
-        break;
-
-      case Qt::Key_R:
-        if (control && !alt) {
-          string s = toString(m_replBox->currentText());
-          TRACE("sar", "replace: " << s);
-          if (m_editorWidget->searchHitSelected()) {
-            m_editorWidget->replaceSearchHit(s);
-            if (shift) {
-              m_editorWidget->nextSearchHit(false /*reverse*/);
-            }
-          }
-          else {
-            m_editorWidget->nextSearchHit(false /*reverse*/);
-          }
-          return true;
         }
         break;
 

@@ -1,6 +1,5 @@
 
 TODOs:
-  - bind Ctrl+R in editor widget
   - add regex support now that the design can accomodate it
     - have search, but still need to do regex-aware replacement
   - draw an indicator when the cursor is offscreen

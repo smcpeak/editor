@@ -258,7 +258,7 @@ void EditorWindow::buildMenu()
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
 
-    // Used shortcut letters: ACDJGKNPRSTU
+    // Used shortcut letters: ACDJGKLNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
@@ -277,7 +277,10 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
-    MENU_ITEM_KEY("&Search ...", editISearch, Qt::CTRL + Qt::Key_S);
+    MENU_ITEM_KEY("&Search ...", editSearch, Qt::CTRL + Qt::Key_S);
+    MENU_ITEM_KEY("Rep&lace", editReplace, Qt::CTRL + Qt::Key_R);
+    MENU_ITEM_KEY("Replace and next", editReplaceAndNext,
+                  Qt::CTRL + Qt::SHIFT + Qt::Key_R);
     MENU_ITEM_KEY("&Next search hit\tCtrl+Period", editNextSearchHit,
                   Qt::CTRL + Qt::Key_Period);
     MENU_ITEM_KEY("Previous search hit\tCtrl+Comma", editPreviousSearchHit,
@@ -285,7 +288,7 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
-    MENU_ITEM_KEY("&Goto Line ...", editGotoLine, Qt::ALT + Qt::Key_G);
+    MENU_ITEM_KEY("&Goto line ...", editGotoLine, Qt::ALT + Qt::Key_G);
     MENU_ITEM_KEY("Grep source for symbol at cursor ...", editGrepSource,
                   Qt::CTRL + Qt::ALT + Qt::Key_G);
 
@@ -300,7 +303,7 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Justify paragraph to soft margin",
                   editJustifyParagraph, Qt::CTRL + Qt::Key_J);
-    MENU_ITEM_KEY("&Apply Command to Selection...",
+    MENU_ITEM_KEY("&Apply command to selection...",
                   editApplyCommand, Qt::ALT + Qt::Key_A);
     MENU_ITEM_KEY("Insert current date/time",
                   editInsertDateTime, Qt::ALT + Qt::Key_D);
@@ -1039,9 +1042,27 @@ void EditorWindow::editKillLine() NOEXCEPT
 }
 
 
-void EditorWindow::editISearch()
+void EditorWindow::editSearch() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
   m_sarPanel->toggleSARFocus();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editReplace() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_sarPanel->editReplace(false /*advanceOnReplace*/);
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editReplaceAndNext() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_sarPanel->editReplace(true /*advanceOnReplace*/);
+  GENERIC_CATCH_END
 }
 
 
