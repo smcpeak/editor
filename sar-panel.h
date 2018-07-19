@@ -60,6 +60,11 @@ private:     // data
   // should not initiate one of our own.
   bool m_handlingBroadcastChange;
 
+private:     // funcs
+  // Add the current Find and Repl strings to their respective
+  // histories, removing duplicates and trimming overlong histories.
+  void rememberFindReplStrings();
+
 public:      // funcs
   SearchAndReplacePanel(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~SearchAndReplacePanel();

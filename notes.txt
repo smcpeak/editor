@@ -1,7 +1,5 @@
 
 TODOs:
-  - remove dropdowns on Find and Repl until I am ready to use them
-    - or just implement their history?
   - refactor: Introduce TextSpan?
   - add regex support now that the design can accomodate it
     - have search, but still need to do regex-aware replacement

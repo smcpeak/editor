@@ -161,7 +161,52 @@ void SearchAndReplacePanel::toggleSARFocus()
     // cursor.
     m_editorWidget->setFocus();
     m_editorWidget->scrollToCursor();
+
+    // Additionally, remember find/repl strings in history now.
+    this->rememberFindReplStrings();
   }
+}
+
+
+static void rememberString(QComboBox *cbox, char const *which)
+{
+  QString currentString = cbox->currentText();
+  if (currentString.isEmpty()) {
+    // Ignore the empty string.
+    return;
+  }
+
+  int index = cbox->findText(currentString);
+  if (index == 0) {
+    // The string is already at the top, so nothing to do.
+    return;
+  }
+
+  TRACE("sar", "remembering " << which <<
+               ": \"" << toString(currentString) << "\"");
+  cbox->insertItem(0, currentString);
+
+  // Make the inserted item "current" so I can remove the other copy.
+  // Otherwise, the combo box would switch the current text to be the
+  // index item in the list.
+  cbox->setCurrentIndex(0);
+
+  if (index > 0) {
+    // Remove the second copy of the so it will only appear once.
+    cbox->removeItem(index+1);
+  }
+
+  // Trim the list if it is too long.
+  while (cbox->count() > 30) {
+    cbox->removeItem(cbox->count()-1);
+  }
+}
+
+
+void SearchAndReplacePanel::rememberFindReplStrings()
+{
+  rememberString(m_findBox, "Find");
+  rememberString(m_replBox, "Repl");
 }
 
 
@@ -282,7 +327,7 @@ void SearchAndReplacePanel::searchPanelChanged(SearchAndReplacePanel *panel)
 }
 
 
-void SearchAndReplacePanel::slot_findEditTextChanged(QString const &) NOEXCEPT
+void SearchAndReplacePanel::slot_findEditTextChanged(QString const &text) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -290,6 +335,7 @@ void SearchAndReplacePanel::slot_findEditTextChanged(QString const &) NOEXCEPT
     return;
   }
 
+  TRACE("sar", "slot_findEditTextChanged: " << toString(text));
   this->updateEditorHitText(true /*scroll*/);
 
   GENERIC_CATCH_END

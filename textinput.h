@@ -42,10 +42,10 @@ protected:   // data
   QComboBox *m_comboBox;
 
 public:      // data
-  // History of prior choices, from most to least recent.  This is
-  // *not* automatically populated; the must set it, either directly
-  // or with 'rememberInput'.  The first entry is also the default
-  // value for the input text box.
+  // History of prior choices, from most to least recent.  This is *not*
+  // automatically populated; the user must set it, either directly or
+  // with 'rememberInput'.  The first entry is also the default value
+  // for the input text box.
   QStringList m_history;
 
   // Used by 'rememberInput', this is maximum number of history
