@@ -180,17 +180,15 @@ public:      // funcs
   // no duplicates.
   ArrayStack<MatchExtent> const &getLineMatches(int line) const;
 
-  // Given the current 'cursor' and 'mark', locate the next match
-  // (previous match if 'reverse') and set 'cursor' and 'mark' to
-  // surround it.  If there is no next match, return false.
+  // Given the current 'range', locate the next match (previous match if
+  // 'reverse') and set 'range' to it.  If there is no next match,
+  // return false.
   //
-  // This function begins by normalizing 'cursor' and 'mark' so that
-  // 'cursor<=mark'.
+  // This function begins by rectifying 'range'.
   //
-  // If the return value is false, the output values of 'cursor' and
-  // 'mark' are unspecified.
-  bool nextMatch(bool reverse,
-    TextCoord &cursor /*INOUT*/, TextCoord &mark /*INOUT*/) const;
+  // If the return value is false, the output value of 'range' is
+  // unspecified.
+  bool nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const;
 
   // Return true if there is a match starting at 'a' and going up to
   // but not including 'b'; or one from 'b' to 'a' in the same manner.

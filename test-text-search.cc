@@ -137,12 +137,13 @@ static void expectNM_true(TextSearch const &ts,
       swap(cursor, mark);
     }
 
-    bool actualRes = ts.nextMatch(reverse, cursor, mark);
+    TextCoordRange range(cursor, mark);
+    bool actualRes = ts.nextMatch(reverse, range);
     EXPECT_EQ(actualRes, true);
-    EXPECT_EQ(cursor.line, expectCursorLine);
-    EXPECT_EQ(cursor.column, expectCursorCol);
-    EXPECT_EQ(mark.line, expectMarkLine);
-    EXPECT_EQ(mark.column, expectMarkCol);
+    EXPECT_EQ(range.start.line, expectCursorLine);
+    EXPECT_EQ(range.start.column, expectCursorCol);
+    EXPECT_EQ(range.end.line, expectMarkLine);
+    EXPECT_EQ(range.end.column, expectMarkCol);
   }
 }
 
@@ -161,7 +162,8 @@ static void expectNM_false(TextSearch const &ts,
       swap(cursor, mark);
     }
 
-    bool actualRes = ts.nextMatch(reverse, cursor, mark);
+    TextCoordRange range(cursor, mark);
+    bool actualRes = ts.nextMatch(reverse, range);
     EXPECT_EQ(actualRes, false);
 
     // Output values of 'cursor' and 'mark' are unspecified.

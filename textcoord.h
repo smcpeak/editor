@@ -1,5 +1,5 @@
 // textcoord.h
-// TextCoord class.
+// TextCoord and TextCoordRange classes.
 
 #ifndef TEXTCOORD_H
 #define TEXTCOORD_H
@@ -84,7 +84,7 @@ public:      // data
   // If start==end, the range is empty.
   //
   // It is legal for start to be greater than end, but the range is
-  // again empty.  However, see rectified().
+  // again empty.  However, see rectify() and rectified().
   TextCoord end;
 
 public:      // funcs
@@ -99,17 +99,25 @@ public:      // funcs
   NOTEQUAL_OPERATOR(TextCoordRange);
 
   bool isZero() const { return start.isZero() && end.isZero(); }
+  bool nonNegative() const { return start.nonNegative() && end.nonNegative(); }
 
-  TextCoordRange swapEnds() const {
-    return TextCoordRange(end, start);
-  }
+  // True if both endpoints are on the same line.
+  bool withinOneLine() const { return start.line == end.line; }
+
+  bool isRectified() const { return start <= end; }
+
+  // Swap 'start' and 'end'.
+  void swapEnds();
 
   TextCoordRange rectified() const {
+    TextCoordRange ret(*this);
+    ret.rectify();
+    return ret;
+  }
+
+  void rectify() {
     if (start > end) {
-      return swapEnds();
-    }
-    else {
-      return *this;
+      swapEnds();
     }
   }
 

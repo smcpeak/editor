@@ -3,7 +3,7 @@
 
 #include "textcoord.h"                 // this module
 
-using namespace std;
+#include "sm-swap.h"                   // swap
 
 
 // ------------------------ TextCoord -----------------------------
@@ -58,6 +58,12 @@ TextCoordRange& TextCoordRange::operator= (TextCoordRange const &obj)
 bool TextCoordRange::operator== (TextCoordRange const &obj) const
 {
   return EMEMB(start) && EMEMB(end);
+}
+
+
+void TextCoordRange::swapEnds()
+{
+  swap(start, end);
 }
 
 

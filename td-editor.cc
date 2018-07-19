@@ -130,22 +130,21 @@ void TextDocumentEditor::selectCursorLine()
 }
 
 
-void TextDocumentEditor::getSelectRegion(
-  TextCoord &selLow, TextCoord &selHigh) const
+TextCoordRange TextDocumentEditor::getSelectRange() const
 {
   if (!m_markActive) {
-    selLow = selHigh = m_cursor;
+    return TextCoordRange(m_cursor, m_cursor);
   }
   else {
-    if (m_cursor <= m_mark) {
-      selLow = m_cursor;
-      selHigh = m_mark;
-    }
-    else {
-      selLow = m_mark;
-      selHigh = m_cursor;
-    }
+    return TextCoordRange(m_cursor, m_mark).rectified();
   }
+}
+
+
+void TextDocumentEditor::setSelectRange(TextCoordRange const &range)
+{
+  this->setCursor(range.start);
+  this->setMark(range.end);
 }
 
 
@@ -155,9 +154,7 @@ string TextDocumentEditor::getSelectedText() const
     return "";
   }
   else {
-    TextCoord selLow, selHigh;
-    this->getSelectRegion(selLow, selHigh);
-    return this->getTextRange(selLow, selHigh);
+    return this->getTextRange(this->getSelectRange());
   }
 }
 
@@ -373,9 +370,7 @@ void TextDocumentEditor::deleteSelection()
 {
   xassert(m_markActive);
 
-  TextCoord selLow, selHigh;
-  this->getSelectRegion(selLow, selHigh);
-  this->deleteTextRange(selLow, selHigh);
+  this->deleteTextRange(this->getSelectRange());
   this->clearMark();
   this->scrollToCursor();
 }
@@ -550,18 +545,17 @@ void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) con
 }
 
 
-string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
+string TextDocumentEditor::getTextRange(TextCoordRange const &range) const
 {
-  xassert(tc1.nonNegative());
-  xassert(tc2.nonNegative());
+  xassert(range.nonNegative());
+  xassert(range.isRectified());
 
-  // this function uses the line1==line2 case as a base case of a two
-  // level recursion; it's not terribly efficient
+  // This function uses the 'withinOneLine' case as a base case of a two
+  // level recursion; it's not terribly efficient.
 
-  if (tc1.line == tc2.line) {
+  if (range.withinOneLine()) {
     // extracting text from a single line
-    xassert(tc1.column <= tc2.column);
-    int len = tc2.column-tc1.column;
+    int len = range.end.column - range.start.column;
 
     // It is not very efficient to allocate two buffers, one here and
     // one inside the string object, but the std::string API doesn't
@@ -570,30 +564,29 @@ string TextDocumentEditor::getTextRange(TextCoord tc1, TextCoord tc2) const
     Array<char> buf(len+1);
 
     buf[len] = 0;              // NUL terminator
-    getLineLoose(TextCoord(tc1.line, tc1.column), buf, len);
+    getLineLoose(range.start, buf, len);
     string ret(buf.ptrC());    // Explicitly calling 'ptrC' is only needed for Eclipse...
 
     return ret;
   }
 
-  xassert(tc1.line < tc2.line);
-
   // build up returned string
   stringBuilder sb;
 
-  // final fragment of line1
-  sb = getTextRange(tc1,
-    TextCoord(tc1.line, max(tc1.column, lineLengthLoose(tc1.line))));
+  // Right half of range start line.
+  sb = getTextRange(range.start,
+         TextCoord(range.start.line,
+                   max(range.start.column, lineLengthLoose(range.start.line))));
 
-  // full lines between line1 and line2
-  for (int i=tc1.line+1; i < tc2.line; i++) {
+  // Full lines between start and end.
+  for (int i = range.start.line + 1; i < range.end.line; i++) {
     sb << "\n";
     sb << getTextRange(TextCoord(i, 0), lineEndCoord(i));
   }
 
-  // initial fragment of line2
+  // Left half of end line.
   sb << "\n";
-  sb << getTextRange(TextCoord(tc2.line, 0), tc2);
+  sb << getTextRange(TextCoord(range.end.line, 0), range.end);
 
   return sb;
 }
@@ -917,12 +910,13 @@ void TextDocumentEditor::insertNewlineAutoIndent()
 }
 
 
-void TextDocumentEditor::deleteTextRange(TextCoord const origTc1, TextCoord tc2)
+void TextDocumentEditor::deleteTextRange(TextCoordRange const &range)
 {
-  TextCoord tc1(origTc1);
-  xassert(tc1.nonNegative());
-  xassert(tc2.nonNegative());
-  xassert(tc1 <= tc2);
+  xassert(range.isRectified());
+  xassert(range.nonNegative());
+
+  TextCoord tc1(range.start);
+  TextCoord tc2(range.end);
 
   // truncate the endpoints
   this->truncateCoord(tc1);
@@ -939,22 +933,22 @@ void TextDocumentEditor::deleteTextRange(TextCoord const origTc1, TextCoord tc2)
     this->deleteLR(true /*left*/, length);
 
     // We should now be at 'tc1', which should be on the same line as
-    // 'origTc1', but possibly further to the left.
+    // 'range.start', but possibly further to the left.
     xassert(tc1 == m_cursor);
-    xassert(m_cursor.line == origTc1.line);
-    xassert(m_cursor.column <= origTc1.column);
+    xassert(m_cursor.line == range.start.line);
+    xassert(m_cursor.column <= range.start.column);
 
-    if (m_cursor.column < origTc1.column &&
+    if (m_cursor.column < range.start.column &&
         m_cursor.column < this->cursorLineLength()) {
       // We have some text to the right of the cursor, but we are not
       // at the column we wanted to be on.  Insert spaces to move the
       // cursor and push the carried text.
-      this->insertSpaces(origTc1.column - m_cursor.column);
+      this->insertSpaces(range.start.column - m_cursor.column);
     }
   }
 
   // Restore cursor per spec.
-  m_cursor = origTc1;
+  m_cursor = range.start;
 }
 
 
@@ -996,11 +990,10 @@ bool TextDocumentEditor::blockIndent(int amt)
     return false;
   }
 
-  TextCoord selLow, selHigh;
-  this->getSelectRegion(selLow, selHigh);
+  TextCoordRange range = this->getSelectRange();
 
-  int endLine = (selHigh.column==0? selHigh.line-1 : selHigh.line);
-  this->indentLines(selLow.line, endLine-selLow.line+1, amt);
+  int endLine = (range.end.column==0? range.end.line - 1 : range.end.line);
+  this->indentLines(range.start.line, endLine - range.start.line + 1, amt);
 
   return true;
 }

@@ -126,6 +126,10 @@ public:      // funcs
   // Position right after last character in file.
   TextCoord endCoord() const           { return m_doc->endCoord(); }
 
+  // Range for the entire document.
+  TextCoordRange documentRange() const
+    { return TextCoordRange(beginCoord(), endCoord()); }
+
   // Position at end of specified line, which may be beyond EOF.
   TextCoord lineEndCoord(int line) const;
 
@@ -241,10 +245,13 @@ public:      // funcs
   // Select the entire line containing the cursor.
   void selectCursorLine();
 
-  // Store into 'selLow' the lower of 'cursor' and 'mark', and into
-  // 'selHigh' the higher.  If the mark is not active, set both to
+  // Get a range whose start is the lower of 'cursor' and 'mark', and
+  // whose end is the higher.  If the mark is not active, set both to
   // 'cursor'.
-  void getSelectRegion(TextCoord &selLow, TextCoord &selHigh) const;
+  TextCoordRange getSelectRange() const;
+
+  // Set 'cursor' to the start and 'mark' to the end of 'range'.
+  void setSelectRange(TextCoordRange const &range);
 
   // Get selected text, or "" if nothing selected.
   string getSelectedText() const;
@@ -337,10 +344,12 @@ public:      // funcs
 
   // Retrieve the text between two positions, as in a text editor where
   // the positions are the selection endpoints and the user wants a
-  // string to put in the clipboard.  It must be the case that tc1<=tc2.
-  // If tc1==tc2, returns "".  Characters outside the document area are
+  // string to put in the clipboard.  The range must be rectified.  If
+  // start==end, returns "".  Characters outside the document area are
   // taken to be whitespace.
-  string getTextRange(TextCoord tc1, TextCoord tc2) const;
+  string getTextRange(TextCoordRange const &range) const;
+  string getTextRange(TextCoord const &start, TextCoord const &end) const
+    { return getTextRange(TextCoordRange(start, end)); }
 
   // Get a complete line.  Returns "" when beyond EOF.  'line' must
   // be non-negative.
@@ -406,10 +415,12 @@ public:      // funcs
 
   void deleteChar()                    { deleteText(1); }
 
-  // Delete the characters between 'tc1' and 'tc2'.  Both
-  // are truncated to ensure validity.  Requires 'tc1 <= tc2'.
-  // Final cursor is left at 'tc1'.  Clears the mark.
-  void deleteTextRange(TextCoord tc1, TextCoord tc2);
+  // Delete the characters between the range start and end.  Both are
+  // truncated to ensure validity.  Requires 'range.isRectified()'.
+  // Final cursor is left at range start.  Clears the mark.
+  void deleteTextRange(TextCoordRange const &range);
+  void deleteTextRange(TextCoord const &start, TextCoord const &end)
+    { deleteTextRange(TextCoordRange(start, end)); }
 
   // Delete the selected text.  Requires markActive().  Cursor is
   // left at the low end of the selection, mark is cleared.  Scrolls

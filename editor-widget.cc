@@ -487,14 +487,10 @@ void EditorWidget::redraw()
 }
 
 
-void EditorWidget::getEffectiveSearchCursorMark(
-  TextCoord &cursor, TextCoord &mark)
+// TODO: Remove this function.  Instead, directly call 'getSelectRange'.
+TextCoordRange EditorWidget::getEffectiveSearchCursorRange()
 {
-  cursor = m_editor->cursor();
-  mark = (m_editor->markActive() ? m_editor->mark() : cursor);
-  if (cursor > mark) {
-    swap(cursor, mark);
-  }
+  return m_editor->getSelectRange();
 }
 
 
@@ -511,32 +507,31 @@ void EditorWidget::emitSearchStatusIndicator()
     return;
   }
 
-  // Get effective cursor and mark for this calculation.
-  TextCoord cursor, mark;
-  this->getEffectiveSearchCursorMark(cursor, mark);
+  // Get effective selection range for this calculation.
+  TextCoordRange range = this->getEffectiveSearchCursorRange();
 
-  // Matches above and below cursor line.
-  int matchesAbove = m_textSearch->countMatchesAbove(cursor.line);
-  int matchesBelow = m_textSearch->countMatchesBelow(cursor.line);
+  // Matches above and below range start line.
+  int matchesAbove = m_textSearch->countMatchesAbove(range.start.line);
+  int matchesBelow = m_textSearch->countMatchesBelow(range.start.line);
 
-  // Matches before, at, and after cursor within its line.
+  // Matches before, at, and after range start within its line.
   int matchesBefore=0, matchesOn=0, matchesSelected=0, matchesAfter=0;
-  if (m_textSearch->countLineMatches(cursor.line)) {
+  if (m_textSearch->countLineMatches(range.start.line)) {
     ArrayStack<TextSearch::MatchExtent> const &matches =
-      m_textSearch->getLineMatches(cursor.line);
+      m_textSearch->getLineMatches(range.start.line);
 
     for (int i=0; i < matches.length(); i++) {
       TextSearch::MatchExtent const &m = matches[i];
-      if (m.m_start < cursor.column) {
+      if (m.m_start < range.start.column) {
         matchesBefore++;
       }
-      else if (m.m_start > cursor.column) {
+      else if (m.m_start > range.start.column) {
         matchesAfter++;
       }
       else {
         matchesOn++;
-        if (mark.line == cursor.line &&
-            m.m_length == (mark.column - cursor.column)) {
+        if (range.withinOneLine() &&
+            m.m_length == (range.end.column - range.start.column)) {
           matchesSelected++;
         }
       }
@@ -746,8 +741,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
   Array<char> text(visibleCols);
 
   // Get region of selected text.
-  TextCoord selLow, selHigh;
-  m_editor->getSelectRegion(selLow, selHigh);
+  TextCoordRange selRange = m_editor->getSelectRange();
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -833,26 +827,27 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
 
     // incorporate effect of selection
     if (this->selectEnabled() &&
-        selLow.line <= line && line <= selHigh.line)
+        selRange.start.line <= line && line <= selRange.end.line)
     {
-      if (selLow.line < line && line < selHigh.line) {
+      if (selRange.start.line < line && line < selRange.end.line) {
         // entire line is selected
         categories.overlay(0, 0 /*infinite*/, TC_SELECTION);
       }
-      else if (selLow.line < line && line == selHigh.line) {
-        // first half of line is selected
-        if (selHigh.column) {
-          categories.overlay(0, selHigh.column, TC_SELECTION);
+      else if (selRange.start.line < line && line == selRange.end.line) {
+        // Left half of line is selected.
+        if (selRange.end.column) {
+          categories.overlay(0, selRange.end.column, TC_SELECTION);
         }
       }
-      else if (selLow.line == line && line < selHigh.line) {
-        // right half of line is selected
-        categories.overlay(selLow.column, 0 /*infinite*/, TC_SELECTION);
+      else if (selRange.start.line == line && line < selRange.end.line) {
+        // Right half of line is selected.
+        categories.overlay(selRange.start.column, 0 /*infinite*/, TC_SELECTION);
       }
-      else if (selLow.line == line && line == selHigh.line) {
-        // middle part of line is selected
-        if (selHigh.column != selLow.column) {
-          categories.overlay(selLow.column, selHigh.column-selLow.column, TC_SELECTION);
+      else if (selRange.start.line == line && line == selRange.end.line) {
+        // Middle part of line is selected.
+        if (selRange.end.column != selRange.start.column) {
+          categories.overlay(selRange.start.column,
+            selRange.end.column - selRange.start.column, TC_SELECTION);
         }
       }
       else {
@@ -1927,28 +1922,18 @@ void EditorWidget::setSearchStringParams(string const &searchString,
 
 bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
 {
-  // For consistency with the status display, regard the "current"
-  // location for next/prev as the same as the "effective" cursor.
-  //
-  // At the moment, this happens to be redundant because 'nextMatch'
-  // internally normalizes its arguments, but I think it is still good
-  // for the display and modification code to explicitly share this
-  // behavior.
-  TextCoord cursor, mark;
-  this->getEffectiveSearchCursorMark(cursor, mark);
+  TextCoordRange range = this->getEffectiveSearchCursorRange();
 
-  if (m_textSearch->nextMatch(reverse, cursor, mark)) {
-    TRACE("sar", (reverse? "prev" : "next") <<
-                 " found: " << cursor << " - " << mark);
+  if (m_textSearch->nextMatch(reverse, range)) {
+    TRACE("sar", (reverse? "prev" : "next") << " found: " << range);
 
     if (select) {
-      m_editor->setCursor(cursor);
-      m_editor->setMark(mark);
+      m_editor->setSelectRange(range);
     }
 
-    // Try to show the entire match, giving preference to the right side.
-    m_editor->scrollToCoord(cursor, SAR_SCROLL_GAP);
-    m_editor->scrollToCoord(mark, SAR_SCROLL_GAP);
+    // Try to show the entire match, giving preference to the end.
+    m_editor->scrollToCoord(range.start, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(range.end, SAR_SCROLL_GAP);
     return true;
   }
   else {

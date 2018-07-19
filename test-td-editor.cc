@@ -41,7 +41,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   expectCursor(tde, line, col);
 
   string expect(text);
-  string actual = tde.getTextRange(tde.beginCoord(), tde.endCoord());
+  string actual = tde.getTextRange(tde.documentRange());
 
   if (expect != actual) {
     cout << "expect: " << quoted(expect) << endl;
@@ -572,12 +572,11 @@ static void testScrollToCursor()
 
   xassert(tde.cursorAtEnd() == true);
 
-  // Insert a test for getSelectRegion with mark inactive.
+  // Insert a test for getSelectRange with mark inactive.
   {
-    TextCoord tc1, tc2;
-    tde.getSelectRegion(tc1, tc2);
-    xassert(tc1 == TextCoord(3, 0));
-    xassert(tc2 == TextCoord(3, 0));
+    TextCoordRange range = tde.getSelectRange();
+    xassert(range.start == TextCoord(3, 0));
+    xassert(range.end == TextCoord(3, 0));
   }
 
   // Add enough text to start scrolling vertically.

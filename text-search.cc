@@ -405,21 +405,18 @@ static bool reversibleLTE(bool reverse, T const &a, T const &b)
   return (reverse? b<=a : a<=b);
 }
 
-bool TextSearch::nextMatch(bool reverse,
-  TextCoord &cursor /*INOUT*/, TextCoord &mark /*INOUT*/) const
+bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
 {
   // Normalize coordinates.
-  if (cursor > mark) {
-    swap(cursor, mark);
-  }
+  range.rectify();
 
   // Direction of travel.
   int inc = (reverse? -1 : +1);
 
-  // Consider line with 'cursor'.
-  if (countLineMatches(cursor.line)) {
+  // Consider line with range start.
+  if (countLineMatches(range.start.line)) {
     ArrayStack<MatchExtent> const &matches =
-      this->getLineMatches(cursor.line);
+      this->getLineMatches(range.start.line);
 
     // Nominally walk forward.
     int begin = 0;
@@ -433,19 +430,19 @@ bool TextSearch::nextMatch(bool reverse,
     // Walk the matches in 'inc' direction.
     for (int i=begin; reversibleLTE(reverse, i, end); i += inc) {
       MatchExtent const &m = matches[i];
-      if (reversibleLT(reverse, m.m_start, cursor.column)) {
-        // This match occurs before 'cursor'.
+      if (reversibleLT(reverse, m.m_start, range.start.column)) {
+        // This match occurs before 'range.start'.
         continue;
       }
 
       // Where does this match end?
-      TextCoord matchEnd(cursor.line, m.m_start);
+      TextCoord matchEnd(range.start.line, m.m_start);
       m_document->walkCoord(matchEnd, +m.m_length);
 
-      // Now, how does its start compare to 'cursor'?
-      if (m.m_start == cursor.column) {
-        // How does the end compare to 'mark'?
-        if (reversibleLTE(reverse, matchEnd, mark)) {
+      // Now, how does its start compare to 'range.start'?
+      if (m.m_start == range.start.column) {
+        // How does the end compare to 'range.end'?
+        if (reversibleLTE(reverse, matchEnd, range.end)) {
           // The match end is less than or equal to my current mark.  I
           // regard that as being the match we are on or already past,
           // so keep going.
@@ -455,40 +452,39 @@ bool TextSearch::nextMatch(bool reverse,
           // The match end is further than mark.  We will return this
           // one, effectively extending the selection to get it.  (If
           // 'reverse', we are actually shrinking the match.)
-          mark = matchEnd;
+          range.end = matchEnd;
           return true;
         }
       }
       else {
-        // This is the first match after the cursor.
-        cursor.column = m.m_start;
-        mark = matchEnd;
+        // This is the first match after the range start.
+        range.start.column = m.m_start;
+        range.end = matchEnd;
         return true;
       }
     }
   }
 
   // Consider other lines.
-  cursor.line += inc;
-  while (reverse? 0 <= cursor.line : cursor.line < this->documentLines()) {
-    if (countLineMatches(cursor.line)) {
+  range.start.line += inc;
+  while (reverse? 0 <= range.start.line :
+                  range.start.line < this->documentLines()) {
+    if (countLineMatches(range.start.line)) {
       // Grab the extreme match on this line.
       ArrayStack<MatchExtent> const &matches =
-        this->getLineMatches(cursor.line);
+        this->getLineMatches(range.start.line);
       int i = (reverse? matches.length()-1 : 0);
       MatchExtent const &m = matches[i];
 
-      // Found first match after 'cursor' on another line.
-      cursor.column = m.m_start;
-
-      // Where does this match end?
-      mark = cursor;
-      m_document->walkCoord(mark, +m.m_length);
+      // Found first match after 'range.start' on another line.
+      range.start.column = m.m_start;
+      range.end = range.start;
+      m_document->walkCoord(range.end, +m.m_length);
       return true;
     }
 
     // Keep looking on subsequent lines.
-    cursor.line += inc;
+    range.start.line += inc;
   }
 
   return false;
