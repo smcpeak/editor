@@ -143,7 +143,14 @@ void SearchAndReplacePanel::toggleSARFocus()
     // If there was text selected in the editor, then let that
     // initialize my Find box.  (Otherwise, leave it alone.)
     if (m_editorWidget->selectEnabled()) {
-      this->setFindText(toQString(m_editorWidget->getSelectedText()));
+      if (m_editorWidget->searchHitSelected()) {
+        // Exception: The selected text is already a search hit.  Then
+        // I should not change the search string.  This matters when
+        // using case-insensitive or regex search.
+      }
+      else {
+        this->setFindText(toQString(m_editorWidget->getSelectedText()));
+      }
     }
 
     // Let the user begin typing in the Find box.

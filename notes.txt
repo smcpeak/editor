@@ -1,10 +1,8 @@
 
 TODOs:
-  - BUG: if a match is selected and I hit Ctrl+S to get back to
-    the SAR panel, in regex mode, I throw away my regex!
-  - refactor: Introduce TextSpan?
   - remove dropdowns on Find and Repl until I am ready to use them
     - or just implement their history?
+  - refactor: Introduce TextSpan?
   - add regex support now that the design can accomodate it
     - have search, but still need to do regex-aware replacement
   - draw an indicator when the cursor is offscreen
