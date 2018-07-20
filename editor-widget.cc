@@ -4,6 +4,7 @@
 #include "editor-widget.h"             // this module
 
 // this dir
+#include "debug-values.h"              // DEBUG_VALUES
 #include "nearby-file.h"               // getNearbyFilename
 #include "position.h"                  // Position
 #include "qtbdffont.h"                 // QtBDFFont
@@ -1955,10 +1956,17 @@ bool EditorWidget::nextSearchHit(bool reverse)
 }
 
 
-void EditorWidget::replaceSearchHit(string const &t)
+void EditorWidget::replaceSearchHit(string const &replaceSpec)
 {
+  string existing = this->getSelectedText();
+  string replacement =
+    m_textSearch->getReplacementText(existing, replaceSpec);
+
+  TRACE("sar", "replace: " << DEBUG_VALUES3(existing, replaceSpec, replacement));
+
+  INITIATING_DOCUMENT_CHANGE();
   UndoHistoryGrouper ugh(*m_editor);
-  m_editor->insertString(t);
+  m_editor->insertString(replacement);
   redraw();
 }
 

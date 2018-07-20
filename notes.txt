@@ -1,7 +1,5 @@
 
 TODOs:
-  - add regex support now that the design can accomodate it
-    - have search, but still need to do regex-aware replacement
   - draw an indicator when the cursor is offscreen
   - split panes, esp. a vertical split instead of multiple windows
   - run command to generate entire file; git annotate!

@@ -79,7 +79,7 @@ private:     // instance data
   // How to interpret 'm_searchString'.  Initially SS_NONE.
   SearchStringFlags m_searchStringFlags;
 
-  // Regular expression object for SS_REGEXP.  May be NULL.
+  // Regular expression object for SS_REGEX.  May be NULL.
   Owner<QRegularExpression> m_regex;
 
   // Map from line number to matches for that line.  If there are no
@@ -193,6 +193,11 @@ public:      // funcs
   // Return true if there is a match starting at 'a' and going up to
   // but not including 'b'; or one from 'b' to 'a' in the same manner.
   bool rangeIsMatch(TextCoord const &a, TextCoord const &b) const;
+
+  // Compute the replacement text for 'existing', given 'replaceSpec',
+  // which is non-trivial when using regex search.
+  string getReplacementText(string const &existing,
+                            string const &replaceSpec) const;
 
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;

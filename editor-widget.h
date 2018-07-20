@@ -324,8 +324,10 @@ public:      // funcs
   // true if we found one to move to.
   bool nextSearchHit(bool reverse);
 
-  // Replace the current match with the given text.
-  void replaceSearchHit(string const &t);
+  // Replace the currently selected match with the given replacement
+  // specification string.  This should only be called when
+  // 'searchHitSelected()' is true.
+  void replaceSearchHit(string const &replaceSpec);
 
   // Return true if the currently selected text is a search hit.
   bool searchHitSelected() const;

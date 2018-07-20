@@ -184,14 +184,15 @@ void SearchAndReplacePanel::editReplace(bool advanceOnReplace)
 void SearchAndReplacePanel::replaceOrNext(bool advanceOnReplace)
 {
   string s = toString(m_replBox->currentText());
-  TRACE("sar", "replace: " << s);
   if (m_editorWidget->searchHitSelected()) {
     m_editorWidget->replaceSearchHit(s);
     if (advanceOnReplace) {
+      TRACE("sar", "replace: advancing to next");
       m_editorWidget->nextSearchHit(false /*reverse*/);
     }
   }
   else {
+    TRACE("sar", "replace: advancing to next");
     m_editorWidget->nextSearchHit(false /*reverse*/);
   }
 }
@@ -546,7 +547,7 @@ void SearchAndReplacePanel::slot_help() NOEXCEPT
   mb.setWindowTitle("Search and Replace Help");
   mb.setTextFormat(Qt::RichText);     // For hyperlink to PCRE docs.
   mb.setText(
-    "Keys for Search and Replace (SAR):<br>\n"
+    "Keys and help for Search and Replace (SAR):<br>\n"
     "<br>\n"
     "Ctrl+S: Toggle focus between SAR and main editor.<br>\n"
     "Enter: Go to first match in editor and return focus to it.<br>\n"
@@ -561,12 +562,16 @@ void SearchAndReplacePanel::slot_help() NOEXCEPT
     "Ctrl+R: Replace match with Repl text; "
       "if not on a match, move to next match.<br>\n"
     "Shift+Ctrl+R: Replace and move to next match.<br>\n"
+    "In regEx mode, replace string can have \\0 through \\9 to insert "
+      "capture groups where \\0 is the whole matched string, \\n, \\t, "
+      "and \\t to insert newline, tab, and CR respectively, and "
+      "\\&lt;other&gt; to insert any other.<br>\n"
     "<br>\n"
     "Alt+(Shift+)Backspace: Undo/redo in main editor, "
       "including SAR changes.<br>\n"
     "Ctrl+W: Add next word at editor cursor to Find box.<br>\n"
     "<br>\n"
-    "If there is a capital letter in the Find box, search is "
+    "If there is an uppercase letter in the Find box, search is "
       "case-sensitive, otherwise not.<br>\n"
     "<br>\n"
     "The numbers in the lower left show the total number of matches "
@@ -576,7 +581,7 @@ void SearchAndReplacePanel::slot_help() NOEXCEPT
     "match is selected, and hence can be replaced (with Ctrl+R).<br>\n"
     "<br>\n"
     "A regEx syntax error results in status \"Err @ N\" where N is the "
-      "character number in the pattern where the error is.<br>\n"
+      "character number in the Find box where the error is.<br>\n"
   );
   mb.exec();
 

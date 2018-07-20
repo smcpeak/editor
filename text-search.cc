@@ -3,10 +3,14 @@
 
 #include "text-search.h"               // this module
 
+// editor
+#include "debug-values.h"              // DEBUG_VALUES
+
 // smqtutil
-#include "qtutil.h"                    // toQString(QString)
+#include "qtutil.h"                    // toQString(QString), operator<<(QString)
 
 // smbase
+#include "dev-warning.h"               // DEV_WARNING
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "objcount.h"                  // CHECK_OBJECT_COUNT(className)
 #include "sm-swap.h"                   // swap
@@ -518,6 +522,70 @@ bool TextSearch::rangeIsMatch(TextCoord const &a0, TextCoord const &b0) const
   }
 
   return false;
+}
+
+
+string TextSearch::getReplacementText(string const &existing,
+                                      string const &replaceSpec) const
+{
+  if (m_regex) {
+    // Match the regular expression so we can get the capture groups.
+    QRegularExpressionMatch match = m_regex->match(toQString(existing));
+    if (!match.hasMatch()) {
+      DEV_WARNING("TextSearch::getReplacementText failed to match regex; " <<
+        DEBUG_VALUES4(m_searchString, m_regex->pattern(), existing, replaceSpec));
+      return existing;
+    }
+
+    // Build up the replacement string by interpreting the backslash
+    // escape sequences in 'replaceSpec'.
+    stringBuilder sb;
+
+    for (char const *p = replaceSpec.c_str(); *p; p++) {
+      if (*p == '\\') {
+        p++;
+
+        if (*p == 0) {
+          // Backslash at the end of the replacement string.  Just
+          // interpret it literally and bail.
+          sb << '\\';
+          break;
+        }
+        else if ('0' <= *p && *p <= '9') {
+          // Numbered capture group.
+          int digit = (*p - '0');
+          QString capture = match.captured(digit);
+          sb << toString(capture);
+        }
+        else if (*p == 'n') {
+          sb << '\n';
+        }
+        else if (*p == 't') {
+          sb << '\t';
+        }
+        else if (*p == 'r') {
+          sb << '\r';
+        }
+        else {
+          // Everything else will be treated literally.
+          sb << *p;
+        }
+      }
+      else {
+        sb << *p;
+      }
+    }
+
+    return sb;
+  }
+
+  else {
+    // Non-regex, replacement is treated literally.
+    //
+    // An idea here is to do something like Emacs does in "case fold"
+    // mode, where it will do certain kinds of automatic capitalization.
+    return replaceSpec;
+  }
 }
 
 
