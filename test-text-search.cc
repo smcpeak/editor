@@ -364,6 +364,38 @@ static void testRegex()
 }
 
 
+static void expectGRT(TextSearch const &ts,
+  string const &existing,
+  string const &replaceSpec,
+  string const &expect)
+{
+  string actual = ts.getReplacementText(existing, replaceSpec);
+  EXPECT_EQ(actual, expect);
+}
+
+static void testGetReplacementText()
+{
+  TextDocumentAndEditor tde;
+  TextSearch ts(tde.getDocumentCore());
+
+  ts.setSearchStringFlags(TextSearch::SS_REGEX);
+  ts.setSearchString("foo\\((\\w+)\\)");
+
+  expectGRT(ts, "foo(bar)", "oof(\\1)", "oof(bar)");
+  expectGRT(ts, "foo(bar)", "\\1\\2\\0", "barfoo(bar)");
+  expectGRT(ts, "foo(bar)", "\\t\\n\\r", "\t\n\r");
+  expectGRT(ts, "foo(bar)", "\\z\\", "z\\");
+
+  ts.setSearchStringFlags(TextSearch::SS_NONE);
+  ts.setSearchString("foo(bar)");
+
+  expectGRT(ts, "foo(bar)", "oof(\\1)", "oof(\\1)");
+  expectGRT(ts, "foo(bar)", "\\1\\2\\0", "\\1\\2\\0");
+  expectGRT(ts, "foo(bar)", "\\t\\n\\r", "\\t\\n\\r");
+  expectGRT(ts, "foo(bar)", "\\z\\", "\\z\\");
+}
+
+
 static void testPerformance()
 {
   TextDocumentAndEditor tde;
@@ -407,6 +439,7 @@ static void entry()
   testSimple();
   testCaseInsensitive();
   testRegex();
+  testGetReplacementText();
   testPerformance();
 
   cout << "test-text-search ok" << endl;
