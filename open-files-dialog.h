@@ -71,7 +71,7 @@ public:      // funcs
   // return NULL.
   NamedTextDocument *runDialog();
 
-public slots:
+public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) noexcept;
   void on_closeSelected() noexcept;
   void on_help() noexcept;

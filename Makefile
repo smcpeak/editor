@@ -347,6 +347,8 @@ EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += editor-window.moc.o
+EDITOR_OBJS += event-recorder.o
+EDITOR_OBJS += event-replay.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
 EDITOR_OBJS += git-version.gen.o
@@ -391,7 +393,6 @@ clean:
 	$(RM) *.gcov *.gcda *.gcno
 
 check:
-	@echo "There is no useful 'make check' at this time;"
-	@echo "plain 'make' runs all the automated tests."
+	./editor -ev=test/down.ev td.h
 
 # EOF

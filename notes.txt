@@ -1,7 +1,14 @@
 
 TODOs:
+  - fairly long pause searching for "\b" in d:/bld/jq-1.5/Makefile
+  - BUG: Automatic reloading for events.out.json isn't working?
+  - BUG: in Find box, when QComboBox autocompletes from history, it can
+    add an uppercase letter and ruin a partial match
+  - if I select text, Ctrl+I should open that w/o filename heuristics
+  - working on automated GUI tests
   - draw an indicator when the cursor is offscreen
   - split panes, esp. a vertical split instead of multiple windows
+  - allow Tab character; issue is rendering support
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process
@@ -43,7 +50,6 @@ TODOs:
     file/line info, and (2) ability to see each in a different pane
     or window or something
 
-  - allow Tab character; issue is rendering support
   - handling of files with CRLF line endings
     - highlighting of backslash followed by CR is busted
       - not recognized as continuation; see a .moc.cc file
@@ -1066,6 +1072,148 @@ Notes on how QTableView interrogates QAbstractItemModel:
   - scroll
     - query affected cells: 6, 7, 9, 10, 1, 0, 8
 
+
+---------------------------
+2018-07-20 16:13
+
+Junk to delete:
+
+
+  // QCoreApplication methods.
+  virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
+
+  // QObject methods.
+  virtual bool eventFilter(QObject *receiver, QEvent *event) OVERRIDE;
+
+
+static string objectPath(QObject const *obj)
+{
+  if (!obj) {
+    return "NULL";
+  }
+
+  if (!obj->parent()) {
+    // Root object.
+    return toString(obj->objectName());
+  }
+  else {
+    return stringb(objectPath(obj->parent()) << "." << obj->objectName());
+  }
+}
+
+
+static string objectDesc(QObject const *obj)
+{
+  if (!obj) {
+    return "NULL";
+  }
+
+  stringBuilder sb;
+  sb << "{name=\"" << obj->objectName()
+     << "\" path=\"" << objectPath(obj)
+     << "\" addr=" << (void*)obj
+     << " class=" << obj->metaObject()->className()
+     << "}";
+  return sb;
+}
+
+
+static int g_eventCounter=0;
+
+bool GlobalState::notify(QObject *receiver, QEvent *event)
+{
+  int eventNo = g_eventCounter++;
+
+  if (event->type() == QEvent::KeyPress) {
+    QKeyEvent const *keyEvent = dynamic_cast<QKeyEvent const *>(event);
+    if (keyEvent) {
+      TRACE("input2", eventNo << ": "
+                      "KeyPress to " << objectDesc(receiver) <<
+                      ": ts=" << keyEvent->timestamp() <<
+                      " key=" << toString(*keyEvent) <<
+                      " acc=" << keyEvent->isAccepted() <<
+                      " focus=" << objectDesc(QApplication::focusWidget()));
+    }
+    else {
+      TRACE("input2", eventNo << ": KeyPress has an unknown event class!");
+    }
+
+    bool ret = this->QApplication::notify(receiver, event);
+
+    TRACE("input2", eventNo << ": returns " << ret <<
+                    ", acc=" << keyEvent->isAccepted());
+
+    return ret;
+  }
+
+  if (event->type() == QEvent::Shortcut) {
+    QShortcutEvent const *shortcutEvent =
+      dynamic_cast<QShortcutEvent const *>(event);
+    if (shortcutEvent) {
+      TRACE("input2", eventNo << ": "
+                      "Shortcut to " << objectDesc(receiver) <<
+                      ": ambig=" << shortcutEvent->isAmbiguous() <<
+                      " id=" << shortcutEvent->shortcutId() <<
+                      " keys=" << shortcutEvent->key().toString() <<
+                      " acc=" << shortcutEvent->isAccepted() <<
+                      " focus=" << objectDesc(QApplication::focusWidget()));
+    }
+    else {
+      TRACE("input2", eventNo << ": Shortcut has an unknown event class!");
+    }
+
+    bool ret = this->QApplication::notify(receiver, event);
+
+    TRACE("input2", eventNo << ": returns " << ret <<
+                    ", acc=" << shortcutEvent->isAccepted());
+
+    return ret;
+  }
+
+  return this->QApplication::notify(receiver, event);
+}
+
+
+int g_filterCounter = 0;
+
+bool GlobalState::eventFilter(QObject *receiver, QEvent *event)
+{
+  int eventNo = g_filterCounter++;
+
+  if (event->type() == QEvent::KeyPress) {
+    QKeyEvent const *keyEvent = dynamic_cast<QKeyEvent const *>(event);
+    if (keyEvent) {
+      TRACE("filter", eventNo << ": "
+                      "KeyPress to " << objectDesc(receiver) <<
+                      ": ts=" << keyEvent->timestamp() <<
+                      " key=" << toString(*keyEvent) <<
+                      " acc=" << keyEvent->isAccepted() <<
+                      " focus=" << objectDesc(QApplication::focusWidget()));
+    }
+    else {
+      TRACE("filter", eventNo << ": KeyPress has an unknown event class!");
+    }
+  }
+
+  if (event->type() == QEvent::Shortcut) {
+    QShortcutEvent const *shortcutEvent =
+      dynamic_cast<QShortcutEvent const *>(event);
+    if (shortcutEvent) {
+      TRACE("filter", eventNo << ": "
+                      "Shortcut to " << objectDesc(receiver) <<
+                      ": ambig=" << shortcutEvent->isAmbiguous() <<
+                      " id=" << shortcutEvent->shortcutId() <<
+                      " keys=" << shortcutEvent->key().toString() <<
+                      " acc=" << shortcutEvent->isAccepted() <<
+                      " focus=" << objectDesc(QApplication::focusWidget()));
+    }
+    else {
+      TRACE("filter", eventNo << ": Shortcut has an unknown event class!");
+    }
+  }
+
+  return false;
+}
 
 
 

@@ -615,7 +615,7 @@ void EditorWidget::resizeEvent(QResizeEvent *r)
 {
   QWidget::resizeEvent(r);
   recomputeLastVisible();
-  emit viewChanged();
+  Q_EMIT viewChanged();
 }
 
 

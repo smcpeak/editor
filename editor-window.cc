@@ -87,7 +87,7 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   mainArea->setContentsMargins(0, 0, 0, 0);
 
   this->m_menuBar = new QMenuBar();
-  this->m_menuBar->setObjectName("main menu bar");
+  this->m_menuBar->setObjectName("m_menuBar");
   mainArea->addWidget(this->m_menuBar);
 
   QGridLayout *editArea = new QGridLayout();
@@ -108,12 +108,13 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
 
   // Put a black one-pixel frame around the editor widget.
   QHBoxFrame *editorFrame = new QHBoxFrame();
+  editorFrame->setObjectName("editorFrame");
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
   this->m_editorWidget = new EditorWidget(initFile,
     &(theState->m_documentList), this->m_statusArea);
-  this->m_editorWidget->setObjectName("editor widget");
+  this->m_editorWidget->setObjectName("m_editorWidget");
   editorFrame->addWidget(this->m_editorWidget);
   this->m_editorWidget->setFocus();
   QObject::connect(this->m_editorWidget, &EditorWidget::viewChanged,
@@ -194,33 +195,43 @@ EditorWindow::~EditorWindow()
 }
 
 
-// This is a workaround for an Eclipse CDT bug.  If I write the call to
-// 'addAction' in the direct way, Eclipse fails to resolve it and
-// complains.  But when I hide it in a template method, Eclipse knows
-// it does not know, so shuts up.  GCC is fine either way of course.
+// Create a menu action.
+//
+// This function exists partly to work around an Eclipse CDT bug, as it
+// has trouble with overload resolution when using QMenu::addAction and
+// a pointer-to-member argument.
+//
+// It also exists to set the object name of the QAction in order to help
+// my event record/replay test framework.
 //
 // I might move this to smqtutil at some point.
 template <class RECEIVER>
 QAction *addMenuAction(
   QMenu *menu, char const *title,
   RECEIVER *rcv, void (RECEIVER::*ptm)(),
+  char const *functionName,
   QKeySequence const &shortcut = QKeySequence(0))
 {
-  return menu->addAction(title, rcv, ptm, shortcut);
+  QAction *action = menu->addAction(title, rcv, ptm, shortcut);
+  action->setObjectName(functionName);
+  return action;
 }
 
 
-#define MENU_ITEM(title, function) \
-  addMenuAction(menu, title, this, &EditorWindow::function) /* user ; */
+#define MENU_ITEM(title, function)                          \
+  addMenuAction(menu, title, this, &EditorWindow::function, \
+                #function) /* user ; */
 
-#define MENU_ITEM_KEY(title, function, key) \
-  addMenuAction(menu, title, this, &EditorWindow::function, key) /* user ; */
+#define MENU_ITEM_KEY(title, function, key)                 \
+  addMenuAction(menu, title, this, &EditorWindow::function, \
+                #function, key) /* user ; */
 
 
 void EditorWindow::buildMenu()
 {
   {
     QMenu *menu = this->m_menuBar->addMenu("&File");
+    menu->setObjectName("fileMenu");
 
     MENU_ITEM    ("&New", fileNewFile);
     MENU_ITEM_KEY("&Open ...", fileOpen, Qt::Key_F3);
@@ -257,6 +268,7 @@ void EditorWindow::buildMenu()
 
   {
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
+    menu->setObjectName("editMenu");
 
     // Used shortcut letters: ACDJGKLNPRSTU
 
@@ -316,6 +328,7 @@ void EditorWindow::buildMenu()
 
   {
     QMenu *menu = this->m_menuBar->addMenu("&View");
+    menu->setObjectName("viewMenu");
 
     CHECKABLE_ACTION(m_toggleVisibleWhitespaceAction,
       "Visible &whitespace",
@@ -343,6 +356,7 @@ void EditorWindow::buildMenu()
 
   {
     QMenu *menu = this->m_menuBar->addMenu("&Window");
+    menu->setObjectName("windowMenu");
 
     MENU_ITEM_KEY("Choose an &Open Document ...",
                   windowOpenFilesList, Qt::CTRL + Qt::Key_O);
@@ -366,6 +380,7 @@ void EditorWindow::buildMenu()
 
   {
     QMenu *menu = this->m_menuBar->addMenu("&Help");
+    menu->setObjectName("helpMenu");
 
     MENU_ITEM    ("&Keybindings...", helpKeybindings);
     MENU_ITEM    ("&About Scott's Editor...", helpAbout);
@@ -1492,13 +1507,13 @@ void EditorWindow::editorViewChanged()
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
-  m_statusArea->position->setText(qstringb(
-    " " << (m_editorWidget->cursorLine()+1) <<
-    ":" << (m_editorWidget->cursorCol()+1)));
+  m_statusArea->m_cursor->setText(qstringb(
+    (m_editorWidget->cursorLine()+1) << ':' <<
+    (m_editorWidget->cursorCol()+1)));
 
   // Status text: full document name plus status indicators.
   NamedTextDocument *file = currentDocument();
-  m_statusArea->status->setText(toQString(
+  m_statusArea->m_filename->setText(toQString(
     file->nameWithStatusIndicators()));
 
   // Window title.

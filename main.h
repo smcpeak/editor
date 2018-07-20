@@ -6,6 +6,7 @@
 
 // editor
 #include "editor-window.h"             // EditorWindow
+#include "event-replay.h"              // EventReplayQuery
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentList
 #include "open-files-dialog.h"         // OpenFilesDialog
@@ -35,7 +36,8 @@ public:
 
 // global state of the editor: files, windows, etc.
 class GlobalState : public QApplication,
-                    public NamedTextDocumentListObserver {
+                    public NamedTextDocumentListObserver,
+                    public EventReplayQuery {
   Q_OBJECT
 
 public:       // data
@@ -48,6 +50,12 @@ public:       // data
   // currently open editor windows; nominally, once the
   // last one of these closes, the app quits
   ObjList<EditorWindow> m_windows;
+
+  // True to record input to "events.out" for test case creation.
+  bool m_recordInputEvents;
+
+  // Name of an event file test to run, or empty for none.
+  string m_eventFileTest;
 
 private:     // data
   // Running child processes.
@@ -135,6 +143,9 @@ public:       // funcs
   virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
+
+  // EventReplayQuery methods.
+  virtual string eventReplayQuery(string const &state) OVERRIDE;
 
 public Q_SLOTS:
   // Called when the search panel in some window has changed.  Broadcast

@@ -12,10 +12,10 @@ class QSizeGrip;
 
 class StatusDisplay : public QWidget {
 public:
-  QLabel *position;           // cursor position
-  QLabel *mode;               // mode pixmap
-  QLabel *status;             // general status string
-  QSizeGrip *corner;          // corner resize grippy
+  QLabel *m_cursor;          // cursor position
+  QLabel *m_mode;            // mode pixmap
+  QLabel *m_filename;        // current file name
+  QSizeGrip *m_corner;       // corner resize grippy
 
 public:
   StatusDisplay(QWidget *parent = NULL);

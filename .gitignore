@@ -46,3 +46,4 @@ test-named-td
 test-nearby-file
 test-td-core
 test.out
+events.out

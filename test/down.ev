@@ -1,0 +1,9 @@
+# down.ev
+# Just a couple down-arrow presses.
+
+CheckLabel "window1.m_statusArea.m_cursor" "1:1"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+CheckLabel "window1.m_statusArea.m_cursor" "3:1"
+
+# EOF

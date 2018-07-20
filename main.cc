@@ -5,6 +5,8 @@
 
 // this dir
 #include "editor-widget.h"             // EditorWidget
+#include "event-recorder.h"            // EventRecorder
+#include "event-replay.h"              // EventReplay
 #include "process-watcher.h"           // ProcessWatcher
 #include "textinput.h"                 // TextInputDialog
 
@@ -17,6 +19,7 @@
 #include "objcount.h"                  // CheckObjectCount
 #include "sm-file-util.h"              // SMFileUtil
 #include "strtokp.h"                   // StrtokParse
+#include "strutil.h"                   // prefixEquals
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE
 
@@ -48,6 +51,8 @@ GlobalState::GlobalState(int argc, char **argv)
     m_pixmaps(),
     m_documentList(),
     m_windows(),
+    m_recordInputEvents(false),
+    m_eventFileTest(),
     m_processes(),
     m_openFilesDialog(NULL)
 {
@@ -80,9 +85,18 @@ GlobalState::GlobalState(int argc, char **argv)
   // open all files specified on the command line
   SMFileUtil sfu;
   for (int i=1; i < argc; i++) {
-    string path = sfu.getAbsolutePath(argv[i]);
-    path = sfu.normalizePathSeparators(path);
-    ed->fileOpenFile(path);
+    string arg(argv[i]);
+    if (prefixEquals(arg, "-ev=")) {
+      m_eventFileTest = arg.substring(4, arg.length()-4);
+    }
+    else if (arg == "-record") {
+      m_recordInputEvents = true;
+    }
+    else {
+      string path = sfu.getAbsolutePath(arg);
+      path = sfu.normalizePathSeparators(path);
+      ed->fileOpenFile(path);
+    }
   }
 
   // TODO: replacement?  Need to test on Linux.
@@ -177,8 +191,10 @@ GlobalState::~GlobalState()
 
 EditorWindow *GlobalState::createNewWindow(NamedTextDocument *initFile)
 {
+  static int windowCounter = 1;
+
   EditorWindow *ed = new EditorWindow(this, initFile);
-  ed->setObjectName("Editor Window");
+  ed->setObjectName(qstringb("window" << windowCounter++));
 
   // NOTE: caller still has to say 'ed->show()'!
 
@@ -452,6 +468,14 @@ void GlobalState::slot_broadcastSearchPanelChanged(
 }
 
 
+string GlobalState::eventReplayQuery(string const &state)
+{
+  // I started doing something this way then decided to do it
+  // differently, but I might want this later.
+  return "no queries defined";
+}
+
+
 // Respond to a failed DEV_WARNING.
 static void editorDevWarningHandler(char const *file, int line,
                                     char const *msg)
@@ -521,10 +545,33 @@ int main(int argc, char **argv)
     try {
       GlobalState app(argc, argv);
 
-      Restorer< void (*)(char const*, int, char const *) >
-        restorer(g_devWarningHandler, &editorDevWarningHandler);
+      Owner<EventRecorder> recorder;
+      if (app.m_recordInputEvents) {
+        recorder = new EventRecorder("events.out");
+      }
 
-      ret = app.exec();
+      if (!app.m_eventFileTest.empty()) {
+        // Automated GUI test.
+        g_abortUponDevWarning = true;
+        cout << "running test: " << app.m_eventFileTest << endl;
+        EventReplay replay(app.m_eventFileTest, &app);
+        string error = replay.runTest();
+        if (error.empty()) {
+          cout << "test passed" << endl;
+          ret = 0;      // But it could still fail below.
+        }
+        else {
+          cout << "test FAILED: " << error << endl;
+          ret = 2;
+        }
+      }
+
+      else {
+        // Run the app normally.
+        Restorer< void (*)(char const*, int, char const *) >
+          restorer(g_devWarningHandler, &editorDevWarningHandler);
+        ret = app.exec();
+      }
     }
     catch (xBase &x) {
       cerr << x.why() << endl;
@@ -542,6 +589,10 @@ int main(int argc, char **argv)
     cout << "WARNING: Allocated objects at end is " << remaining
          << ", not zero!\n"
          << "There is a leak or use-after-free somewhere." << endl;
+
+    // Ensure this causes a test failure if it happens during an
+    // automated test.
+    ret = 4;
   }
 
   return ret;
