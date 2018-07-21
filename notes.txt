@@ -1,6 +1,5 @@
 
 TODOs:
-  - during event recording, filter out pure modifier keys (ctrl, shift, alt)
   - fairly long pause searching for "\b" in d:/bld/jq-1.5/Makefile
   - BUG: search for "objectPath".  Then try to search for "objectpath".
     Upon hitting enter the search changes back to "objectPath"!

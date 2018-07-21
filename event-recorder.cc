@@ -43,6 +43,14 @@ EventRecorder::~EventRecorder()
 }
 
 
+static bool isModifierKey(int key)
+{
+  return key == Qt::Key_Shift ||
+         key == Qt::Key_Control ||
+         key == Qt::Key_Alt;
+}
+
+
 bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
 {
   QEvent::Type type = event->type();
@@ -61,10 +69,16 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
     else if (type == QEvent::KeyPress) {
       if (QKeyEvent const *keyEvent =
             dynamic_cast<QKeyEvent const *>(event)) {
-        m_out << "KeyPress " << quoted(qObjectPath(receiver))
-              << " " << quoted(toString(*keyEvent))
-              << " " << quoted(keyEvent->text())
-              << endl;
+        if (isModifierKey(keyEvent->key())) {
+          // Filter out keypresses for isolated modifiers.  They just
+          // add noise to the recording.
+        }
+        else {
+          m_out << "KeyPress " << quoted(qObjectPath(receiver))
+                << " " << quoted(toString(*keyEvent))
+                << " " << quoted(keyEvent->text())
+                << endl;
+        }
       }
     }
     else if (type == QEvent::Shortcut) {
