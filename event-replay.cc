@@ -8,10 +8,12 @@
 #include "qtutil.h"                    // operator<<(QString)
 
 // smbase
+#include "strutil.h"                   // parseQuotedString, quoted
 #include "syserr.h"                    // xsyserror
 
 // Qt
 #include <QApplication>
+#include <QClipboard>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QLabel>
@@ -43,7 +45,7 @@ EventReplay::~EventReplay()
 #define xstringb(msg) throw stringb(msg).str() /* user ; */
 
 
-static QWidget *getWidgetFromPath(string const &path)
+static QObject *getQObjectFromPath(string const &path)
 {
   QStringList elts = toQString(path).split('.');
   if (elts.isEmpty()) {
@@ -51,21 +53,21 @@ static QWidget *getWidgetFromPath(string const &path)
   }
 
   try {
-    Q_FOREACH (QWidget *widget, QApplication::topLevelWidgets()) {
-      if (widget->objectName() == elts.at(0)) {
+    Q_FOREACH (QObject *object, QApplication::topLevelWidgets()) {
+      if (object->objectName() == elts.at(0)) {
         for (int i=1; i < elts.count(); i++) {
           QString elt(elts.at(i));
           if (elt.isEmpty()) {
             xstringb("empty path element " << (i+1));
           }
-          widget = widget->findChild<QWidget*>(elt,
+          object = object->findChild<QObject*>(elt,
                                                Qt::FindDirectChildrenOnly);
-          if (!widget) {
+          if (!object) {
             xstringb("could not find child \"" << elt <<
                      "\" at path element " << (i+1));
           }
         }
-        return widget;
+        return object;
       }
     }
 
@@ -79,15 +81,21 @@ static QWidget *getWidgetFromPath(string const &path)
 
 
 template <class T>
-T *getQObjectFromPath(string const &path)
+T *getObjectFromPath(string const &path)
 {
-  QWidget *w = getWidgetFromPath(path);
-  T *t = qobject_cast<T*>(w);
+  QObject *o = getQObjectFromPath(path);
+  T *t = qobject_cast<T*>(o);
   if (!t) {
-    xstringb("widget at \"" << path <<
+    xstringb("object at \"" << path <<
              "\" is not " << T::staticMetaObject.className());
   }
   return t;
+}
+
+
+static string getCapturedArg(QRegularExpressionMatch &match, int n)
+{
+  return parseQuotedString(toString(match.captured(n)));
 }
 
 
@@ -97,7 +105,7 @@ T *getQObjectFromPath(string const &path)
              funcName << "; " << numArgs <<           \
              " passed but 1 required");               \
   }                                                   \
-  string arg1 = toString(match.captured(2));
+  string arg1 = getCapturedArg(match, 2);
 
 
 #define BIND_ARGS2(arg1, arg2)                        \
@@ -106,8 +114,17 @@ T *getQObjectFromPath(string const &path)
              funcName << "; " << numArgs <<           \
              " passed but 2 required");               \
   }                                                   \
-  string arg1 = toString(match.captured(2));          \
-  string arg2 = toString(match.captured(3));
+  string arg1 = getCapturedArg(match, 2);             \
+  string arg2 = getCapturedArg(match, 3);
+
+
+
+#define EXPECT_EQ(context)                            \
+  if (actual != expect) {                             \
+    xstringb(context << ": should have been " <<      \
+      quoted(expect) << " but was " <<                \
+      quoted(actual) << ".");                         \
+  }
 
 
 string EventReplay::runTest()
@@ -120,8 +137,8 @@ string EventReplay::runTest()
 
   QRegularExpression reCall(
     "^\\s*(\\w+)"                      // 1: Function name
-    "(?:\\s+\"([^\"]*)\")?"            // 2: Quoted optional arg 1
-    "(?:\\s+\"([^\"]*)\")?"            // 3: Quoted optional arg 2
+    "(?:\\s+(\"[^\"]*\"))?"            // 2: Quoted optional arg 1
+    "(?:\\s+(\"[^\"]*\"))?"            // 3: Quoted optional arg 2
     "\\s*$");
 
   // Loop over all input lines.
@@ -155,32 +172,38 @@ string EventReplay::runTest()
           BIND_ARGS2(receiver, keys);
 
           QCoreApplication::postEvent(
-            getWidgetFromPath(receiver),
-            getKeyPressFromString(toString(match.captured(3))));
+            getQObjectFromPath(receiver),
+            getKeyPressEventFromString(keys));
+        }
+
+        else if (funcName == "Shortcut") {
+          BIND_ARGS2(receiver, keys);
+
+          QCoreApplication::postEvent(
+            getQObjectFromPath(receiver),
+            getShortcutEventFromString(keys));
         }
 
         else if (funcName == "Check") {
           BIND_ARGS2(state, expect);
 
           string actual = m_query->eventReplayQuery(state);
-          if (actual != expect) {
-            xstringb(
-              "Check \"" << state <<
-              "\" should have been \"" << expect <<
-              "\" but was \"" << actual << "\".");
-          }
+          EXPECT_EQ("Check \"" << state << "\"");
         }
 
         else if (funcName == "CheckLabel") {
           BIND_ARGS2(path, expect);
 
-          QLabel *label = getQObjectFromPath<QLabel>(path);
-          if (label->text() != toQString(expect)) {
-            xstringb(
-              "CheckLabel: \"" << path <<
-              "\" should have been \"" << expect <<
-              "\" but was \"" << label->text() << "\".");
-          }
+          QLabel *label = getObjectFromPath<QLabel>(path);
+          string actual = toString(label->text());
+          EXPECT_EQ("CheckLabel: \"" << path << "\"");
+        }
+
+        else if (funcName == "CheckClipboard") {
+          BIND_ARGS1(expect);
+
+          string actual = toString(QApplication::clipboard()->text());
+          EXPECT_EQ("CheckClipboard");
         }
 
         else {

@@ -1,0 +1,20 @@
+# copy-paste.ev
+# Simple test of copy and paste.
+# Assumes we start at the top of file1.h.
+
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+KeyPress "window1.editorFrame.m_editorWidget" "ShiftModifier+Key_Down"
+Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+Shortcut "window1.m_menuBar.editMenu.editPaste" "Ctrl+V"
+
+# Check the resulting text.
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Down"
+KeyPress "window1.editorFrame.m_editorWidget" "ShiftModifier+ControlModifier+Key_PageUp"
+Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+CheckClipboard "// file1.h\n// Sample file to edit during tests.\n\n#ifndef TD_H\n// Sample file to edit during tests.\n#define TD_H\n\n"
+
+# EOF

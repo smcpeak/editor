@@ -393,6 +393,7 @@ clean:
 	$(RM) *.gcov *.gcda *.gcno
 
 check:
-	./editor -ev=test/down.ev td.h
+	./editor -ev=test/down.ev test/file1.h
+	./editor -ev=test/copy-paste.ev test/file1.h
 
 # EOF

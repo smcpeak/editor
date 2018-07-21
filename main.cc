@@ -564,6 +564,11 @@ int main(int argc, char **argv)
           cout << "test FAILED: " << error << endl;
           ret = 2;
         }
+
+        if (getenv("NOQUIT")) {
+          // Keep the app running so I can look around.
+          app.exec();
+        }
       }
 
       else {
