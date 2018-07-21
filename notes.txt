@@ -1,7 +1,12 @@
 
 TODOs:
   - fairly long pause searching for "\b" in d:/bld/jq-1.5/Makefile
-  - BUG: Automatic reloading for events.out.json isn't working?
+    - easier reproducer: search for "." in editor-widget.cc
+    - slow behavior only happens under gdb (MSVCRT debug heap)
+  - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
+    - then, when it is not, we get ".." in the document path name
+  - BUG: Automatic reloading for events.out isn't working?
+    - can't reproduce it now ...
   - put "<running>" into the window title
   - if I select text, Ctrl+I should open that w/o filename heuristics
   - working on automated GUI tests

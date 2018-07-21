@@ -5,6 +5,7 @@
 
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
+#include "fasttime.h"                  // fastTimeMilliseconds
 
 // smqtutil
 #include "qtutil.h"                    // toQString(QString), operator<<(QString)
@@ -12,8 +13,10 @@
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
+#include "nonport.h"                   // getMilliseconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT(className)
 #include "sm-swap.h"                   // swap
+#include "trace.h"                     // TRACE
 
 // Qt
 #include <QRegularExpression>
@@ -107,8 +110,28 @@ void TextSearch::recomputeMatches()
 }
 
 
+// Simple accumulator based on 'fastTimeMilliseconds'.
+struct FastTimeAccumulator {
+  unsigned m_start;
+  unsigned &m_acc;
+
+  FastTimeAccumulator(unsigned &acc)
+    : m_start(fastTimeMilliseconds),
+      m_acc(acc)
+  {}
+
+  ~FastTimeAccumulator()
+  {
+    m_acc += fastTimeMilliseconds - m_start;
+  }
+};
+
+
 void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
 {
+  unsigned startTime = fastTimeMilliseconds;
+  unsigned totalDeletionTime = 0;
+
   this->selfCheck();
   xassert(0 <= startLine &&
                startLine <= endLinePlusOne &&
@@ -201,6 +224,7 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
       }
       else {
         // Remove and deallocate.
+        FastTimeAccumulator acc(totalDeletionTime);
         delete m_lineToMatches.replace(line, NULL);
       }
     }
@@ -219,6 +243,12 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
       }
     }
   } // for(line)
+
+  unsigned elapsed = fastTimeMilliseconds - startTime;
+  if (elapsed > 100) {
+    TRACE("TextSearch", "recomputeLineRange took " << elapsed <<
+      " ms; totalDeletionTime=" << totalDeletionTime);
+  }
 }
 
 
@@ -280,6 +310,8 @@ TextSearch::TextSearch(TextDocumentCore const *document)
   this->recomputeMatches();
 
   m_document->addObserver(this);
+
+  fastTimeInitialize();       // This is idempotent.
 
   s_objectCount++;
 }

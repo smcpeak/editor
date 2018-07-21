@@ -10,6 +10,7 @@
 #include "nonport.h"                   // getMilliseconds
 #include "sm-iostream.h"               // cout
 #include "test.h"                      // USUAL_TEST_MAIN
+#include "trace.h"                     // TRACE_ARGS
 
 
 static void expectTotalMatches(TextSearch const &ts, int expect)
@@ -396,15 +397,9 @@ static void testGetReplacementText()
 }
 
 
-static void testPerformance()
+static void populateDocument(TextDocumentEditor &tde, int lines)
 {
-  TextDocumentAndEditor tde;
-  TextSearch ts(tde.getDocumentCore());
-  ts.setSearchString("roam");
-
-  // Populate the document.
-  int const NUM_LINES = 1000;
-  for (int i=0; i < NUM_LINES; i++) {
+  for (int i=0; i < lines; i++) {
     // Each line has a line number to ensure the strings are not exactly
     // identical, which something under the hood might notice and
     // exploit, making the test not representative.
@@ -412,6 +407,17 @@ static void testPerformance()
       "Animals need lots of room and roads to roam.  "
       "C++::has->(*funny)(*punctuation).\n"));
   }
+}
+
+
+static void testPerformance()
+{
+  TextDocumentAndEditor tde;
+  TextSearch ts(tde.getDocumentCore());
+  ts.setSearchString("roam");
+
+  int const NUM_LINES = 1000;
+  populateDocument(tde, NUM_LINES);
 
   for (int opts=0; opts <= TextSearch::SS_ALL; opts++) {
     ts.setSearchStringFlags((TextSearch::SearchStringFlags)opts);
@@ -433,8 +439,46 @@ static void testPerformance()
 }
 
 
-static void entry()
+static void testRegexPerf2()
 {
+  TextDocumentAndEditor tde;
+  TextSearch ts(tde.getDocumentCore());
+
+  int const NUM_LINES = 10000;
+  populateDocument(tde, NUM_LINES);
+
+  ts.setSearchStringFlags(TextSearch::SS_REGEX);
+
+  long start = getMilliseconds();
+  ts.setSearchString(".");
+  long elapsed = getMilliseconds() - start;
+
+  cout << "perf2 init: " << elapsed << endl;
+
+  int const ITERS = 10;
+  for (int i=0; i < ITERS; i++) {
+    start = getMilliseconds();
+    ts.setSearchString("");
+    elapsed = getMilliseconds() - start;
+    cout << "perf2 reset " << i << ": " << elapsed << endl;
+
+    start = getMilliseconds();
+    ts.setSearchString(".");
+    elapsed = getMilliseconds() - start;
+    cout << "perf2 iter " << i << ": " << elapsed << endl;
+  }
+}
+
+
+static void entry(int argc, char **argv)
+{
+  TRACE_ARGS();
+
+  if (argc >= 2 && 0==strcmp(argv[1], "perf2")) {
+    testRegexPerf2();
+    return;
+  }
+
   testEmpty();
   testSimple();
   testCaseInsensitive();
@@ -445,6 +489,6 @@ static void entry()
   cout << "test-text-search ok" << endl;
 }
 
-USUAL_TEST_MAIN
+ARGS_TEST_MAIN
 
 // EOF
