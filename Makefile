@@ -349,6 +349,7 @@ EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += event-recorder.o
 EDITOR_OBJS += event-replay.o
+EDITOR_OBJS += event-replay.moc.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
 EDITOR_OBJS += git-version.gen.o
@@ -395,5 +396,7 @@ clean:
 check:
 	./editor -ev=test/down.ev test/file1.h
 	./editor -ev=test/copy-paste.ev test/file1.h
+	./editor -ev=test/file-open-dialog1.ev test/file1.h
+	./editor -ev=test/simple-text-ins.ev
 
 # EOF

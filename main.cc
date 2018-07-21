@@ -23,9 +23,15 @@
 #include "test.h"                      // PVAL
 #include "trace.h"                     // TRACE
 
+// Qt
+#include <QKeyEvent>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QShortcutEvent>
 #include <QStyleFactory>
+
+// libc
+#include <stdlib.h>                    // atoi
 
 
 // ---------------- EditorProxyStyle ----------------
@@ -476,6 +482,74 @@ string GlobalState::eventReplayQuery(string const &state)
 }
 
 
+static string objectDesc(QObject const *obj)
+{
+  if (!obj) {
+    return "NULL";
+  }
+
+  stringBuilder sb;
+  sb << "{name=\"" << obj->objectName()
+     << "\" path=\"" << qObjectPath(obj)
+     << "\" addr=" << (void*)obj
+     << " class=" << obj->metaObject()->className()
+     << "}";
+  return sb;
+}
+
+
+// For debugging, this function allows me to inspect certain events as
+// they are dispatched.
+bool GlobalState::notify(QObject *receiver, QEvent *event)
+{
+  static int s_eventCounter=0;
+  int const eventNo = s_eventCounter++;
+
+  QEvent::Type const type = event->type();
+
+  if (type == QEvent::KeyPress) {
+    if (QKeyEvent const *keyEvent =
+          dynamic_cast<QKeyEvent const *>(event)) {
+      TRACE("notifyInput", eventNo << ": "
+        "KeyPress to " << objectDesc(receiver) <<
+        ": ts=" << keyEvent->timestamp() <<
+        " key=" << toString(*keyEvent) <<
+        " acc=" << keyEvent->isAccepted() <<
+        " focus=" << objectDesc(QApplication::focusWidget()));
+
+      bool ret = this->QApplication::notify(receiver, event);
+
+      TRACE("notifyInput", eventNo << ": returns " << ret <<
+        ", acc=" << keyEvent->isAccepted());
+
+      return ret;
+    }
+  }
+
+  if (type == QEvent::Shortcut) {
+    if (QShortcutEvent const *shortcutEvent =
+          dynamic_cast<QShortcutEvent const *>(event)) {
+      TRACE("notifyInput", eventNo << ": "
+        "Shortcut to " << objectDesc(receiver) <<
+        ": ambig=" << shortcutEvent->isAmbiguous() <<
+        " id=" << shortcutEvent->shortcutId() <<
+        " keys=" << shortcutEvent->key().toString() <<
+        " acc=" << shortcutEvent->isAccepted() <<
+        " focus=" << objectDesc(QApplication::focusWidget()));
+
+      bool ret = this->QApplication::notify(receiver, event);
+
+      TRACE("notifyInput", eventNo << ": returns " << ret <<
+        ", acc=" << shortcutEvent->isAccepted());
+
+      return ret;
+    }
+  }
+
+  return this->QApplication::notify(receiver, event);
+}
+
+
 // Respond to a failed DEV_WARNING.
 static void editorDevWarningHandler(char const *file, int line,
                                     char const *msg)
@@ -558,16 +632,22 @@ int main(int argc, char **argv)
         string error = replay.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;
-          ret = 0;      // But it could still fail below.
+          ret = 0;   // It could still fail, depending on object counts.
         }
         else {
           cout << "test FAILED: " << error << endl;
           ret = 2;
         }
 
-        if (getenv("NOQUIT")) {
-          // Keep the app running so I can look around.
-          app.exec();
+        if (char const *noQuit = getenv("NOQUIT")) {
+          // If we are going to return at least $NOQUIT, keep the app
+          // running so I can inspect its state.  Often I will use
+          // NOQUIT=1 to stop iff there is a test failure.  NOQUIT=0
+          // will stop unconditionally.
+          if (ret >= atoi(noQuit)) {
+            cout << "leaving app running due to NOQUIT" << endl;
+            app.exec();
+          }
         }
       }
 

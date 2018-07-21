@@ -3,6 +3,8 @@
 
 #include "modal-dialog.h"              // this module
 
+#include "qtutil.h"                    // SET_OBJECT_NAME
+
 #include <qtcoreversion.h>             // QTCORE_VERSION
 
 #include <QBoxLayout>
@@ -49,12 +51,14 @@ void ModalDialog::createOkAndCancelButtons(QBoxLayout *hbox)
 {
   m_okButton = new QPushButton("Ok");
   hbox->addWidget(m_okButton);
+  SET_QOBJECT_NAME(m_okButton);
   m_okButton->setDefault(true);
   QObject::connect(m_okButton, &QPushButton::clicked,
                    this, &ModalDialog::accept);
 
   m_cancelButton = new QPushButton("Cancel");
   hbox->addWidget(m_cancelButton);
+  SET_QOBJECT_NAME(m_cancelButton);
   QObject::connect(m_cancelButton, &QPushButton::clicked,
                    this, &ModalDialog::reject);
 }

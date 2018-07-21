@@ -1,0 +1,18 @@
+# file-open-dialog1.ev
+# Use the file-open dialog to open a file, using Tab completion once.
+
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_A" "a"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_Slash" "/"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_B" "b"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_Slash" "/"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_F" "f"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_O" "o"
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_Tab" ""
+KeyPress "filename_input.m_filenameEdit" "NoModifier+Key_Return" ""
+KeyPress "window1.editorFrame.m_editorWidget" "ShiftModifier+Key_Down" ""
+Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+
+CheckClipboard "foo\n"
+
+# EOF

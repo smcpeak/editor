@@ -37,6 +37,7 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
     m_docList(NULL),
     m_saveAs(false)
 {
+  this->setObjectName("filename_input");
   this->setWindowTitle("Filename Input");
 
   QVBoxLayout *vbox = new QVBoxLayout();
@@ -44,9 +45,11 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
 
   m_filenameLabel = new QLabel();      // will be set later
   vbox->addWidget(m_filenameLabel);
+  SET_QOBJECT_NAME(m_filenameLabel);
 
   m_filenameEdit = new QLineEdit();    // populated later
   vbox->addWidget(m_filenameEdit);
+  SET_QOBJECT_NAME(m_filenameEdit);
 
   // Intercept Tab key.
   m_filenameEdit->installEventFilter(this);
@@ -56,6 +59,7 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
 
   m_completionsEdit = new QTextEdit();
   vbox->addWidget(m_completionsEdit);
+  SET_QOBJECT_NAME(m_completionsEdit);
   m_completionsEdit->setReadOnly(true);
 
   {
@@ -64,6 +68,7 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
 
     m_helpButton = new QPushButton("&Help");
     hbox->addWidget(m_helpButton);
+    SET_QOBJECT_NAME(m_helpButton);
     QObject::connect(m_helpButton, &QPushButton::clicked,
                      this, &FilenameInputDialog::on_help);
 

@@ -147,6 +147,9 @@ public:       // funcs
   // EventReplayQuery methods.
   virtual string eventReplayQuery(string const &state) OVERRIDE;
 
+  // QCoreApplication methods.
+  virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
+
 public Q_SLOTS:
   // Called when the search panel in some window has changed.  Broadcast
   // that fact to the others.

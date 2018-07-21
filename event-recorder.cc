@@ -9,7 +9,10 @@
 
 // smqtutil
 #include "qtguiutil.h"                 // toString(QKeyEvent)
-#include "qtutil.h"                    // operator<<(QString)
+#include "qtutil.h"                    // operator<<(QString), qObjectPath
+
+// smbase
+#include "strutil.h"                   // quoted
 
 // Qt
 #include <QApplication>
@@ -24,7 +27,7 @@
 
 
 EventRecorder::EventRecorder(string const &filename)
-  : m_out(filename.c_str())
+  : m_out(filename.c_str(), std::ios::binary /*use LF line endings*/)
 {
   if (m_out.fail()) {
     xsyserror("open", filename);
@@ -40,23 +43,6 @@ EventRecorder::~EventRecorder()
 }
 
 
-static string objectPath(QObject const *obj)
-{
-  if (!obj) {
-    return "null";
-  }
-
-  if (!obj->parent()) {
-    // Root object.
-    return stringb(obj->objectName());
-  }
-  else {
-    return stringb(objectPath(obj->parent()) <<
-                   "." << obj->objectName());
-  }
-}
-
-
 bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
 {
   QEvent::Type type = event->type();
@@ -68,30 +54,34 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
       // Filter these out.  QWidgetWindow is a private implementation
       // class in Qt, and I don't want to synthesize events for it, so
       // I will not record them either.
+      //
+      // I see "QWidgetWindow" when running Qt on Windows.  I do not
+      // know if it is different on different platforms.
     }
     else if (type == QEvent::KeyPress) {
       if (QKeyEvent const *keyEvent =
             dynamic_cast<QKeyEvent const *>(event)) {
-        m_out << "KeyPress \"" << objectPath(receiver)
-              << "\" \"" << toString(*keyEvent) << "\""
+        m_out << "KeyPress " << quoted(qObjectPath(receiver))
+              << " " << quoted(toString(*keyEvent))
+              << " " << quoted(keyEvent->text())
               << endl;
       }
     }
     else if (type == QEvent::Shortcut) {
       if (QShortcutEvent const *shortcutEvent =
             dynamic_cast<QShortcutEvent const *>(event)) {
-        m_out << "Shortcut \"" << objectPath(receiver)
-              << "\" \"" << shortcutEvent->key().toString()
-              << "\"" << endl;
+        m_out << "Shortcut " << quoted(qObjectPath(receiver))
+              << " " << quoted(shortcutEvent->key().toString())
+              << endl;
       }
     }
     else if (type == QEvent::MouseButtonPress) {
       if (QMouseEvent const *mouseEvent =
             dynamic_cast<QMouseEvent const *>(event)) {
-        m_out << "MouseEvent \"" << objectPath(receiver)
-              << "\" \"" << toString(mouseEvent->buttons())
-              << "\" \"" << toString(mouseEvent->pos())
-              << "\"" << endl;
+        m_out << "MouseEvent " << quoted(qObjectPath(receiver))
+              << " " << quoted(toString(mouseEvent->buttons()))
+              << " " << quoted(toString(mouseEvent->pos()))
+              << endl;
       }
     }
     else {

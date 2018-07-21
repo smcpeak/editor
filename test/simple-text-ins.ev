@@ -1,0 +1,38 @@
+# simple-text-ins.ev
+# Starting with an empty file, insert some text and edit it slightly.
+
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_H" "h"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_E" "e"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_L" "l"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_L" "l"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_O" "o"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Return" "\r"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_S" "s"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_E" "e"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_C" "c"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_O" "o"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_N" "n"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_D" "d"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Return" "\r"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Up" ""
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Right" ""
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Right" ""
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Space" " "
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_I" "i"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_N" "n"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_S" "s"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_E" "e"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_R" "r"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_T" "t"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_E" "e"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_D" "d"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Space" " "
+KeyPress "window1.editorFrame.m_editorWidget" "ControlModifier+Key_A" "\x01"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_Up" ""
+KeyPress "window1.editorFrame.m_editorWidget" "ShiftModifier+Key_Down" ""
+KeyPress "window1.editorFrame.m_editorWidget" "ShiftModifier+Key_Down" ""
+Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+
+CheckClipboard "hello\nse inserted cond\n"
+
+# EOF
