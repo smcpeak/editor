@@ -4,10 +4,11 @@
 #include "sar-panel.h"                 // this module
 
 // editor
+#include "debug-values.h"              // DEBUG_VALUES
 #include "editor-widget.h"             // EditorWidget
 
 // smqtutil
-#include "qtutil.h"                    // toString
+#include "qtutil.h"                    // toString, quoted(QString)
 
 // smbase
 #include "codepoint.h"                 // isUppercaseLetter
@@ -16,6 +17,7 @@
 
 // Qt
 #include <QComboBox>
+#include <QCompleter>
 #include <QCheckBox>
 #include <QKeyEvent>
 #include <QLabel>
@@ -57,6 +59,7 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
 
     m_matchStatusLabel = new QLabel("");
     hbox->addWidget(m_matchStatusLabel);
+    SET_QOBJECT_NAME(m_matchStatusLabel);
 
     // Reserve some space so things don't jump around too much.  But the
     // label will grow, causing the QComboBoxes to shrink, if it needs
@@ -65,10 +68,13 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
 
     QLabel *findLabel = new QLabel("Find:");
     hbox->addWidget(findLabel);
+    SET_QOBJECT_NAME(findLabel);
 
     m_findBox = new QComboBox();
     hbox->addWidget(m_findBox, 1 /*stretch*/);
+    SET_QOBJECT_NAME(m_findBox);
     m_findBox->setEditable(true);
+    m_findBox->completer()->setCaseSensitivity(Qt::CaseSensitive);
     m_findBox->setInsertPolicy(QComboBox::NoInsert);
     m_findBox->installEventFilter(this);
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
@@ -76,10 +82,13 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
 
     QLabel *replLabel = new QLabel("Repl:");
     hbox->addWidget(replLabel);
+    SET_QOBJECT_NAME(replLabel);
 
     m_replBox = new QComboBox();
     hbox->addWidget(m_replBox, 1 /*stretch*/);
+    SET_QOBJECT_NAME(m_replBox);
     m_replBox->setEditable(true);
+    m_replBox->completer()->setCaseSensitivity(Qt::CaseSensitive);
     m_replBox->setInsertPolicy(QComboBox::NoInsert);
     m_replBox->installEventFilter(this);
     QObject::connect(m_replBox, &QComboBox::editTextChanged,
@@ -89,6 +98,7 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     // and Alt+R means "Run" command.
     m_regexCheckBox = new QCheckBox("E");
     hbox->addWidget(m_regexCheckBox);
+    SET_QOBJECT_NAME(m_regexCheckBox);
     m_regexCheckBox->setChecked(false);
     QObject::connect(m_regexCheckBox, &QCheckBox::stateChanged,
                      this, &SearchAndReplacePanel::slot_regexStateChanged);
@@ -96,6 +106,7 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     // I can't seem to get QPushButton to be small, so use QToolButton.
     m_helpButton = new QToolButton();
     hbox->addWidget(m_helpButton);
+    SET_QOBJECT_NAME(m_helpButton);
     m_helpButton->setText("?");
     QObject::connect(m_helpButton, &QToolButton::clicked,
                      this, &SearchAndReplacePanel::slot_help);
@@ -208,12 +219,12 @@ static void rememberString(QComboBox *cbox, char const *which)
 
   int index = cbox->findText(currentString);
   if (index == 0) {
-    // The string is already at the top, so nothing to do.
+    TRACE("sar", "remembering " << which << ": " << quoted(currentString) <<
+                 " already at the top, nothing to do");
     return;
   }
 
-  TRACE("sar", "remembering " << which <<
-               ": \"" << toString(currentString) << "\"");
+  TRACE("sar", "remembering " << which << ": " << quoted(currentString));
   cbox->insertItem(0, currentString);
 
   // Make the inserted item "current" so I can remove the other copy.

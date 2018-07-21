@@ -398,5 +398,7 @@ check:
 	./editor -ev=test/copy-paste.ev test/file1.h
 	./editor -ev=test/file-open-dialog1.ev test/file1.h
 	./editor -ev=test/simple-text-ins.ev
+	./editor -ev=test/sar-find-cs-completion.ev test/file1.h
+	./editor -ev=test/sar-repl-cs-completion.ev test/file1.h
 
 # EOF

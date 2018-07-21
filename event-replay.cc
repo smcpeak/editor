@@ -18,6 +18,7 @@
 // Qt
 #include <QApplication>
 #include <QClipboard>
+#include <QComboBox>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QLabel>
@@ -199,7 +200,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS2(state, expect);
 
     string actual = m_query->eventReplayQuery(state);
-    EXPECT_EQ("Check \"" << state << "\"");
+    EXPECT_EQ("Check " << quoted(state));
   }
 
   else if (funcName == "CheckLabel") {
@@ -207,7 +208,15 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
-    EXPECT_EQ("CheckLabel: \"" << path << "\"");
+    EXPECT_EQ("CheckLabel " << quoted(path));
+  }
+
+  else if (funcName == "CheckComboBoxText") {
+    BIND_ARGS2(path, expect);
+
+    QComboBox *cbox = getObjectFromPath<QComboBox>(path);
+    string actual = toString(cbox->currentText());
+    EXPECT_EQ("CheckComboBoxText " << quoted(path));
   }
 
   else if (funcName == "CheckClipboard") {
@@ -218,7 +227,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   }
 
   else {
-    xstringb("unrecognized function: \"" << funcName << "\"");
+    xstringb("unrecognized function: " << quoted(funcName));
   }
 }
 

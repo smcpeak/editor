@@ -1,0 +1,30 @@
+# sar-repl-cs-completion.ev
+# Test that the SAR "Repl" box does not use case-insensitive completion.
+
+# Expected file: test/file1.h.
+
+# Fill in "other" as a replacement text.
+Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
+KeyPress "window1.m_sarPanel.m_findBox" "NoModifier+Key_Tab" "\t"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_O" "o"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_T" "t"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_H" "h"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_E" "e"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_R" "r"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_Return" "\r"
+
+# Fill in "OTHER" as replacement text.
+Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
+KeyPress "window1.m_sarPanel.m_findBox" "NoModifier+Key_Tab" "\t"
+KeyPress "window1.m_sarPanel.m_replBox" "ControlModifier+Key_A" "\x01"
+KeyPress "window1.m_sarPanel.m_replBox" "ShiftModifier+Key_O" "O"
+KeyPress "window1.m_sarPanel.m_replBox" "ShiftModifier+Key_T" "T"
+KeyPress "window1.m_sarPanel.m_replBox" "ShiftModifier+Key_H" "H"
+KeyPress "window1.m_sarPanel.m_replBox" "ShiftModifier+Key_E" "E"
+KeyPress "window1.m_sarPanel.m_replBox" "ShiftModifier+Key_R" "R"
+KeyPress "window1.m_sarPanel.m_replBox" "NoModifier+Key_Return" "\r"
+
+# Check that it is "OTHER", not "other".
+CheckComboBoxText "window1.m_sarPanel.m_replBox" "OTHER"
+
+# EOF
