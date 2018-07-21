@@ -416,7 +416,7 @@ static void testPerformance()
   TextSearch ts(tde.getDocumentCore());
   ts.setSearchString("roam");
 
-  int const NUM_LINES = 1000;
+  int const NUM_LINES = 1000;      // Right at match limit.
   populateDocument(tde, NUM_LINES);
 
   for (int opts=0; opts <= TextSearch::SS_ALL; opts++) {
@@ -428,6 +428,7 @@ static void testPerformance()
       // Trigger a complete re-evaluation.
       ts.observeTotalChange(tde.writableDoc().getCore());
       xassert(ts.countAllMatches() == NUM_LINES);
+      xassert(ts.hasIncompleteMatches() == false);
     }
     long end = getMilliseconds();
 
@@ -436,16 +437,33 @@ static void testPerformance()
          << " iters=" << ITERS
          << " ms=" << (end-start) << endl;
   }
+
+  // Exercise hitting the match limit.
+  ts.setMatchCountLimit(100);
+  ts.observeTotalChange(tde.writableDoc().getCore());
+  xassert(100 <= ts.countAllMatches() &&
+                 ts.countAllMatches() < NUM_LINES);
+  xassert(ts.hasIncompleteMatches() == true);
+
+  // Then un-hit it.
+  ts.setMatchCountLimit(NUM_LINES);
+  ts.observeTotalChange(tde.writableDoc().getCore());
+  xassert(ts.countAllMatches() == NUM_LINES);
+  xassert(ts.hasIncompleteMatches() == false);
 }
 
 
-static void testRegexPerf2()
+static void testRegexPerf2(bool nolimit)
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
 
   int const NUM_LINES = 10000;
   populateDocument(tde, NUM_LINES);
+
+  if (nolimit) {
+    ts.setMatchCountLimit(100000000);
+  }
 
   ts.setSearchStringFlags(TextSearch::SS_REGEX);
 
@@ -475,7 +493,12 @@ static void entry(int argc, char **argv)
   TRACE_ARGS();
 
   if (argc >= 2 && 0==strcmp(argv[1], "perf2")) {
-    testRegexPerf2();
+    testRegexPerf2(false /*nolimit*/);
+    return;
+  }
+
+  if (argc >= 2 && 0==strcmp(argv[1], "perf2nl")) {
+    testRegexPerf2(true /*nolimit*/);
     return;
   }
 
@@ -485,6 +508,7 @@ static void entry(int argc, char **argv)
   testRegex();
   testGetReplacementText();
   testPerformance();
+  testRegexPerf2(false /*nolimit*/);
 
   cout << "test-text-search ok" << endl;
 }

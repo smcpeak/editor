@@ -79,6 +79,20 @@ private:     // instance data
   // How to interpret 'm_searchString'.  Initially SS_NONE.
   SearchStringFlags m_searchStringFlags;
 
+  // Maximum number of hits to find in a single invocation of
+  // 'recomputeLineRange'.  If this is exceeded, 'm_incompleteMatches'
+  // is set to true and recomputation stops, except that old matches
+  // are still always cleared.  Initially 1000.
+  //
+  // Note that this is not a precise limit.  The point at which it is
+  // hit can vary depending on how matches are arranged on lines and
+  // the way recomputation gets triggered.
+  int m_matchCountLimit;
+
+  // True if we hit the match limit and hence the set of matches is
+  // incmplete.
+  bool m_incompleteMatches;
+
   // Regular expression object for SS_REGEX.  May be NULL.
   Owner<QRegularExpression> m_regex;
 
@@ -150,6 +164,13 @@ public:      // funcs
   // When '!searchStringIsValid()', the character offset of the first
   // offending error in the string.  Otherwise -1.
   int searchStringErrorOffset() const;
+
+  // Set/get limit on matches.
+  int matchCountLimit() const { return m_matchCountLimit; }
+  void setMatchCountLimit(int limit) { m_matchCountLimit = limit; }
+
+  // True if the set of matches is incomplete.
+  bool hasIncompleteMatches() const { return m_incompleteMatches; }
 
   // Count the matches within a given range of lines.  Lines beyond
   // the document's current contents silently yield a 0 count.

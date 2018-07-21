@@ -98,6 +98,9 @@ static bool hasMatchAt(
 
 void TextSearch::recomputeMatches()
 {
+  // Since we are going to recompute everything, reset this flag.
+  m_incompleteMatches = false;
+
   // Adjust sizes to match.
   while (m_lineToMatches.length() < m_document->numLines()) {
     m_lineToMatches.insert(m_lineToMatches.length(), NULL);
@@ -112,13 +115,17 @@ void TextSearch::recomputeMatches()
 
 void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
 {
-  unsigned startTime = fastTimeMilliseconds;
-  unsigned totalDeletionTime = 0;
-
   this->selfCheck();
   xassert(0 <= startLine &&
                startLine <= endLinePlusOne &&
                             endLinePlusOne <= m_document->numLines());
+
+  // Performance measurement.
+  unsigned startTime = fastTimeMilliseconds;
+  unsigned totalDeletionTime = 0;
+
+  // Count of matches during this recomputation.
+  int matchesFound = 0;
 
   // Get search string info into locals.
   char const *searchString = m_searchString.c_str();
@@ -140,59 +147,72 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
     // Discard matches from prior lines.
     lineMatches.clear();
 
-    // Get the line of text.
-    int lineLength = m_document->lineLength(line);
-    contents.ensureIndexDoubler(lineLength);
-    char *buffer = contents.getArrayNC();
-    m_document->getLine(TextCoord(line, 0), buffer, lineLength);
-
     // Scan the line for matches.
     if (searchStringLength == 0) {
       // Empty string never matches anything.
     }
-    else if (m_regex.get()) {
-      // TODO: Converting every line from UTF-8 to UTF-16 is
-      // inefficient!  It seems I can't even avoid the memory
-      // allocation; there is almost a fast-path with
-      // QTextDecoder::toUnicode(Qtring*), but it does not quite go all
-      // the way.
-      //
-      // I probably need to find a different regex engine, ideally
-      // something that can operate on UTF-8 directly.
-      QString lineQString(QString::fromUtf8(buffer, lineLength));
-
-      QRegularExpressionMatchIterator iter(m_regex->globalMatch(lineQString));
-      while (iter.hasNext()) {
-        QRegularExpressionMatch match(iter.next());
-
-        // TODO UTF-8: This incorrectly equates UTF-16 code units with
-        // UTF-8 octets.
-        lineMatches.push(MatchExtent(
-          match.capturedStart(),
-          match.capturedLength()));
-      }
-    }
     else {
-      // Naive, slow algorithm of repeated strncmps.
-      int offset = 0;
-      while (offset+searchStringLength <= lineLength) {
-        if (hasMatchAt(m_searchStringFlags, buffer+offset,
-                       searchString, searchStringLength)) {
-          lineMatches.push(MatchExtent(offset, searchStringLength));
+      // Get the line of text.
+      int lineLength = m_document->lineLength(line);
+      contents.ensureIndexDoubler(lineLength);
+      char *buffer = contents.getArrayNC();
+      m_document->getLine(TextCoord(line, 0), buffer, lineLength);
 
-          // Move one past the match so that subsequent matches are not
-          // adjacent, since the UI would show adjacent matches as if they
-          // were one long match.
-          //
-          // Note: With the regex engine, I can get both adjacent and
-          // zero-width matches.  The handling in EditorWidget isn't
-          // great, but it is not catastrophic.
-          offset += searchStringLength+1;
+      if (m_regex.get()) {
+        // TODO: Converting every line from UTF-8 to UTF-16 is
+        // inefficient!  It seems I can't even avoid the memory
+        // allocation; there is almost a fast-path with
+        // QTextDecoder::toUnicode(Qtring*), but it does not quite go all
+        // the way.
+        //
+        // I probably need to find a different regex engine, ideally
+        // something that can operate on UTF-8 directly.
+        QString lineQString(QString::fromUtf8(buffer, lineLength));
+
+        QRegularExpressionMatchIterator iter(m_regex->globalMatch(lineQString));
+        while (iter.hasNext()) {
+          QRegularExpressionMatch match(iter.next());
+
+          // TODO UTF-8: This incorrectly equates UTF-16 code units with
+          // UTF-8 octets.
+          lineMatches.push(MatchExtent(
+            match.capturedStart(),
+            match.capturedLength()));
         }
-        else {
-          // This is, of course, very inefficient.
-          offset++;
+      }
+      else {
+        // Naive, slow algorithm of repeated strncmps.
+        int offset = 0;
+        while (offset+searchStringLength <= lineLength) {
+          if (hasMatchAt(m_searchStringFlags, buffer+offset,
+                         searchString, searchStringLength)) {
+            lineMatches.push(MatchExtent(offset, searchStringLength));
+
+            // Move one past the match so that subsequent matches are not
+            // adjacent, since the UI would show adjacent matches as if they
+            // were one long match.
+            //
+            // Note: With the regex engine, I can get both adjacent and
+            // zero-width matches.  The handling in EditorWidget isn't
+            // great, but it is not catastrophic.
+            offset += searchStringLength+1;
+          }
+          else {
+            // This is, of course, very inefficient.
+            offset++;
+          }
         }
+      }
+
+      // Check the match limit.
+      matchesFound += lineMatches.length();
+      if (matchesFound > m_matchCountLimit) {
+        m_incompleteMatches = true;
+        TRACE("TextSearch", "hit match limit of " << m_matchCountLimit);
+
+        // Skip all remaining matches, but do continue iterating through
+        // the file in order to discard previous matches.
+        searchStringLength = 0;
       }
     }
 
@@ -287,6 +307,8 @@ TextSearch::TextSearch(TextDocumentCore const *document)
     m_document(document),
     m_searchString(""),
     m_searchStringFlags(SS_NONE),
+    m_matchCountLimit(1000),
+    m_incompleteMatches(false),
     m_regex(NULL),
     m_lineToMatches()
 {
