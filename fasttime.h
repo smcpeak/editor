@@ -26,6 +26,23 @@ extern volatile unsigned fastTimeThread1000Loops;
 void fastTimeInitialize();
 
 
+// Simple accumulator based on 'fastTimeMilliseconds'.
+struct FastTimeAccumulator {
+  unsigned m_start;
+  unsigned &m_acc;
+
+  explicit FastTimeAccumulator(unsigned &acc)
+    : m_start(fastTimeMilliseconds),
+      m_acc(acc)
+  {}
+
+  ~FastTimeAccumulator()
+  {
+    m_acc += fastTimeMilliseconds - m_start;
+  }
+};
+
+
 // Unit tests, in test-fasttime.cc
 int test_fasttime();
 
