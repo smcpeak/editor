@@ -169,6 +169,7 @@ test-td-editor: $(TD_OBJS)
 # -------------- test-text-search program ----------------
 TOCLEAN += test-text-search
 
+EDITOR_OBJS += fasttime.o
 EDITOR_OBJS += text-search.o
 
 TEST_TEXT_SEARCH_OBJS := $(EDITOR_OBJS)
