@@ -1,8 +1,6 @@
 
 TODOs:
-  - fairly long pause searching for "\b" in d:/bld/jq-1.5/Makefile
-    - easier reproducer: search for "." in editor-widget.cc
-    - slow behavior only happens under gdb (MSVCRT debug heap)
+  - extend test/sar-match-limit.ev to look at corner indicators
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
     - then, when it is not, we get ".." in the document path name
   - BUG: Automatic reloading for events.out isn't working?

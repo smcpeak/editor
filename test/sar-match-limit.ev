@@ -1,0 +1,26 @@
+# sar-match-limit.ev
+# Test hitting the match limit.
+
+# Expected file: test/file1.h.
+
+# Search for the regex ".".
+Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
+KeyPress "window1.m_sarPanel.m_findBox" "ControlModifier+Key_E" "\x05"
+KeyPress "window1.m_sarPanel.m_findBox" "NoModifier+Key_Period" "."
+
+# Check for the trailing "+" in the status.  It so happens we reach 1027
+# when the limit is hit.
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" " 1  / 1027+"
+
+# Return to the editor and go down a couple of pages.
+Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_PageDown" ""
+KeyPress "window1.editorFrame.m_editorWidget" "NoModifier+Key_PageDown" ""
+
+# Check the status there.
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" ">1027  / 1027+"
+
+# TODO: It might be nice to check the indicators in the corners as well,
+# but I need some additional infrastructure for that.
+
+# EOF

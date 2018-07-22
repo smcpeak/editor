@@ -591,6 +591,8 @@ void SearchAndReplacePanel::slot_help() NOEXCEPT
     "of 9 matches.  Square brackets, like \"[5] / 9\", mean the 5th "
     "match is selected, and hence can be replaced (with Ctrl+R).<br>\n"
     "<br>\n"
+    "If the total ends with '+', it means the match limit of 1000 was hit.<br>\n"
+    "<br>\n"
     "A regEx syntax error results in status \"Err @ N\" where N is the "
       "character number in the Find box where the error is.<br>\n"
   );

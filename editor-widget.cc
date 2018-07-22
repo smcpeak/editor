@@ -574,6 +574,10 @@ void EditorWidget::emitSearchStatusIndicator()
     else {
       sb << '>' << matchesLT << "  / " << totalMatches;
     }
+
+    if (m_textSearch->hasIncompleteMatches()) {
+      sb << '+';
+    }
   }
   else {
     sb << '0';
@@ -1135,8 +1139,9 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
     m_editor->firstVisible().line);
   int matchesBelow = m_textSearch->countMatchesBelow(
     m_editor->lastVisible().line);
+  bool incomplete = m_textSearch->hasIncompleteMatches();
 
-  if (matchesAbove || matchesBelow) {
+  if (matchesAbove || matchesBelow || incomplete) {
     // Use the same appearance as search hits, as that will help convey
     // what the numbers mean.
     StyleDB *styleDB = StyleDB::instance();
@@ -1145,11 +1150,11 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
     this->setDrawStyle(paint, font /*OUT*/, underlining /*OUT*/,
                        styleDB, TC_HITS);
 
-    if (matchesAbove) {
+    if (matchesAbove || incomplete) {
       this->drawOneOffscreenMatchIndicator(
         paint, font, true /*above*/, matchesAbove);
     }
-    if (matchesBelow) {
+    if (matchesBelow || incomplete) {
       this->drawOneOffscreenMatchIndicator(
         paint, font, false /*above*/, matchesBelow);
     }
@@ -1160,7 +1165,9 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
 void EditorWidget::drawOneOffscreenMatchIndicator(
   QPainter &paint, QtBDFFont *font, bool above, int numMatches)
 {
-  string s(stringb(numMatches));
+  char const *incompleteMarker =
+    (m_textSearch->hasIncompleteMatches()? "+" : "");
+  string s(stringb(numMatches << incompleteMarker));
   int labelWidth = m_fontWidth * s.length();
 
   // This uses the left/top margins for bottom/right in order to achieve
