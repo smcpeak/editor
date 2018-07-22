@@ -1,10 +1,10 @@
 // my-table-widget.cc
 // code for my-table-widget.h
 
-#include "my-table-widget.h"             // this module
+#include "my-table-widget.h"           // this module
 
 // smqtutil
-#include "qtguiutil.h"                 // toString(QKeyEvent)
+#include "qtguiutil.h"                 // keysString(QKeyEvent)
 
 // smbase
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
@@ -39,7 +39,7 @@ void MyTableWidget::keyPressEvent(QKeyEvent *event) noexcept
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("MyTableWidget", "keyPressEvent: " << toString(*event));
+  TRACE("MyTableWidget", "keyPressEvent: " << keysString(*event));
 
   switch (event->key()) {
     case Qt::Key_N: {

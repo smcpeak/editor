@@ -8,7 +8,7 @@
 #include "nearby-file.h"               // getNearbyFilename
 #include "position.h"                  // Position
 #include "qtbdffont.h"                 // QtBDFFont
-#include "qtguiutil.h"                 // toString(QKeyEvent)
+#include "qtguiutil.h"                 // keysString(QKeyEvent)
 #include "qtutil.h"                    // toString(QString)
 #include "status.h"                    // StatusDisplay
 #include "styledb.h"                   // StyleDB
@@ -1244,7 +1244,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("input", "keyPress: " << toString(*k));
+  TRACE("input", "keyPress: " << keysString(*k));
 
   if (!this->hasFocus()) {
     // See doc/qt-focus-issues.txt.  This is a weird state, but I go
@@ -1602,7 +1602,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
 void EditorWidget::keyReleaseEvent(QKeyEvent *k)
 {
-  TRACE("input", "keyRelease: " << toString(*k));
+  TRACE("input", "keyRelease: " << keysString(*k));
 
   // Not sure if this is the best place for this, but it seems
   // worth a try.

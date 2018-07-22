@@ -8,8 +8,8 @@
 #include "syserr.h"                    // xsyserror
 
 // smqtutil
-#include "qtguiutil.h"                 // toString(QKeyEvent)
-#include "qtutil.h"                    // operator<<(QString), qObjectPath
+#include "qtguiutil.h"                 // keysString(QKeyEvent)
+#include "qtutil.h"                    // operator<<(QString), qObjectPath, isModifierKey
 
 // smbase
 #include "strutil.h"                   // quoted
@@ -43,14 +43,6 @@ EventRecorder::~EventRecorder()
 }
 
 
-static bool isModifierKey(int key)
-{
-  return key == Qt::Key_Shift ||
-         key == Qt::Key_Control ||
-         key == Qt::Key_Alt;
-}
-
-
 bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
 {
   QEvent::Type type = event->type();
@@ -75,7 +67,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         }
         else {
           m_out << "KeyPress " << quoted(qObjectPath(receiver))
-                << " " << quoted(toString(*keyEvent))
+                << " " << quoted(keysString(*keyEvent))
                 << " " << quoted(keyEvent->text())
                 << endl;
         }

@@ -7,7 +7,7 @@
 #include "my-table-widget.h"           // MyTableWidget
 
 // smqtutil
-#include "qtguiutil.h"                 // toString(QKeyEvent)
+#include "qtguiutil.h"                 // keysString(QKeyEvent)
 #include "qtutil.h"                    // toQString
 
 // smbase

@@ -513,7 +513,7 @@ bool GlobalState::notify(QObject *receiver, QEvent *event)
       TRACE("notifyInput", eventNo << ": "
         "KeyPress to " << objectDesc(receiver) <<
         ": ts=" << keyEvent->timestamp() <<
-        " key=" << toString(*keyEvent) <<
+        " key=" << keysString(*keyEvent) <<
         " acc=" << keyEvent->isAccepted() <<
         " focus=" << objectDesc(QApplication::focusWidget()));
 
