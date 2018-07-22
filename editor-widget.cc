@@ -15,11 +15,12 @@
 #include "textcategory.h"              // LineCategories, etc.
 #include "textline.h"                  // TextLine
 
-// default font definitions (in smqtutil directory)
+// smqtutil
 #include "editor14r.bdf.gen.h"
 #include "editor14i.bdf.gen.h"
 #include "editor14b.bdf.gen.h"
 #include "minihex6.bdf.gen.h"          // bdfFontData_minihex6
+#include "qtutil.h"                    // SET_QOBJECT_NAME
 
 // smbase
 #include "array.h"                     // Array
@@ -87,6 +88,8 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   : QWidget(parent),
     m_infoBox(NULL),
     m_status(status_),
+    m_matchesAboveLabel(NULL),
+    m_matchesBelowLabel(NULL),
     m_editorList(),
     m_editor(NULL),
     m_documentList(documentList),
@@ -113,6 +116,14 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
 {
   xassert(tdf);
   xassert(status_);
+
+  m_matchesAboveLabel = new QLabel(this);
+  SET_QOBJECT_NAME(m_matchesAboveLabel);
+  m_matchesAboveLabel->setVisible(false);
+
+  m_matchesBelowLabel = new QLabel(this);
+  SET_QOBJECT_NAME(m_matchesBelowLabel);
+  m_matchesBelowLabel->setVisible(false);
 
   // This will always make a new editor object since m_editorList is
   // empty, but it also adds it to m_editorList and may initialize the
@@ -482,6 +493,7 @@ void EditorWidget::redraw()
   }
 
   this->emitSearchStatusIndicator();
+  this->computeOffscreenMatchIndicators();
 
   // redraw
   update();
@@ -588,6 +600,28 @@ void EditorWidget::emitSearchStatusIndicator()
 }
 
 
+void EditorWidget::computeOffscreenMatchIndicator(QLabel *label,
+  int numMatches)
+{
+  bool incomplete = m_textSearch->hasIncompleteMatches();
+  if (numMatches || incomplete) {
+    char const *incompleteMarker = (incomplete? "+" : "");
+    label->setText(qstringb(numMatches << incompleteMarker));
+  }
+  else {
+    label->setText("");
+  }
+}
+
+void EditorWidget::computeOffscreenMatchIndicators()
+{
+  this->computeOffscreenMatchIndicator(m_matchesAboveLabel,
+    m_textSearch->countMatchesAbove(m_editor->firstVisible().line));
+  this->computeOffscreenMatchIndicator(m_matchesBelowLabel,
+    m_textSearch->countMatchesBelow(m_editor->lastVisible().line));
+}
+
+
 void EditorWidget::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
 {
   INITIATING_DOCUMENT_CHANGE();
@@ -618,7 +652,8 @@ void EditorWidget::recomputeLastVisible()
 void EditorWidget::resizeEvent(QResizeEvent *r)
 {
   QWidget::resizeEvent(r);
-  recomputeLastVisible();
+  this->recomputeLastVisible();
+  this->computeOffscreenMatchIndicators();
   Q_EMIT viewChanged();
 }
 
@@ -1135,39 +1170,29 @@ void EditorWidget::setDrawStyle(QPainter &paint,
 
 void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
 {
-  int matchesAbove = m_textSearch->countMatchesAbove(
-    m_editor->firstVisible().line);
-  int matchesBelow = m_textSearch->countMatchesBelow(
-    m_editor->lastVisible().line);
-  bool incomplete = m_textSearch->hasIncompleteMatches();
+  // Use the same appearance as search hits, as that will help convey
+  // what the numbers mean.
+  StyleDB *styleDB = StyleDB::instance();
+  QtBDFFont *font;
+  bool underlining;
+  this->setDrawStyle(paint, font /*OUT*/, underlining /*OUT*/,
+                     styleDB, TC_HITS);
 
-  if (matchesAbove || matchesBelow || incomplete) {
-    // Use the same appearance as search hits, as that will help convey
-    // what the numbers mean.
-    StyleDB *styleDB = StyleDB::instance();
-    QtBDFFont *font;
-    bool underlining;
-    this->setDrawStyle(paint, font /*OUT*/, underlining /*OUT*/,
-                       styleDB, TC_HITS);
-
-    if (matchesAbove || incomplete) {
-      this->drawOneOffscreenMatchIndicator(
-        paint, font, true /*above*/, matchesAbove);
-    }
-    if (matchesBelow || incomplete) {
-      this->drawOneOffscreenMatchIndicator(
-        paint, font, false /*above*/, matchesBelow);
-    }
-  }
+  this->drawOneOffscreenMatchIndicator(
+    paint, font, true /*above*/, m_matchesAboveLabel->text());
+  this->drawOneOffscreenMatchIndicator(
+    paint, font, false /*above*/, m_matchesBelowLabel->text());
 }
 
 
 void EditorWidget::drawOneOffscreenMatchIndicator(
-  QPainter &paint, QtBDFFont *font, bool above, int numMatches)
+  QPainter &paint, QtBDFFont *font, bool above, QString const &text)
 {
-  char const *incompleteMarker =
-    (m_textSearch->hasIncompleteMatches()? "+" : "");
-  string s(stringb(numMatches << incompleteMarker));
+  if (text.isEmpty()) {
+    return;
+  }
+
+  string s(toString(text));
   int labelWidth = m_fontWidth * s.length();
 
   // This uses the left/top margins for bottom/right in order to achieve
@@ -1989,6 +2014,7 @@ void EditorWidget::doCloseSARPanel()
 {
   m_hitText = "";
   this->setTextSearchParameters();
+  this->computeOffscreenMatchIndicators();
   Q_EMIT closeSARPanel();
   update();
 }

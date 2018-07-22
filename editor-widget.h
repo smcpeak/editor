@@ -80,6 +80,13 @@ private:     // data
   // access to the status display
   StatusDisplay *m_status;         // (serf)
 
+  // This is a pair of hidden labels that hold the offscreen match
+  // counts text shown in the corners.  Storing the text here allows
+  // the automated test infrastructure easy access to it.  The objects
+  // are owned by 'this' via the QObject parent system.
+  QLabel *m_matchesAboveLabel;
+  QLabel *m_matchesBelowLabel;
+
   // ------ editing state -----
   // All of the editors associated with this widget.  An editor is
   // created on demand when this widget is told to edit its underlying
@@ -205,7 +212,7 @@ private:     // funcs
 
   // Draw one of the indicators.
   void drawOneOffscreenMatchIndicator(
-    QPainter &paint, QtBDFFont *font, bool above, int numMatches);
+    QPainter &paint, QtBDFFont *font, bool above, QString const &text);
 
   // Get the current "effective" cursor coordinate range the purpose of
   // search text calculations.  This is a range whose 'start' is the
@@ -221,18 +228,24 @@ private:     // funcs
   // Compute and emit 'signal_searchStatusIndicator'.
   void emitSearchStatusIndicator();
 
+  // Store into 'label' the text to show in the corner of the widget.
+  void computeOffscreenMatchIndicator(QLabel *label, int numMatches);
+
+  // Compute both corner labels.
+  void computeOffscreenMatchIndicators();
+
 protected:   // funcs
   // QWidget funcs
-  virtual bool event(QEvent *e) override;
-  virtual void paintEvent(QPaintEvent *) override;
-  virtual void keyPressEvent(QKeyEvent *k) override;
-  virtual void keyReleaseEvent(QKeyEvent *k) override;
-  virtual void resizeEvent(QResizeEvent *r) override;
-  virtual void mousePressEvent(QMouseEvent *m) override;
-  virtual void mouseMoveEvent(QMouseEvent *m) override;
-  virtual void mouseReleaseEvent(QMouseEvent *m) override;
-  virtual void focusInEvent(QFocusEvent *e) override;
-  virtual void focusOutEvent(QFocusEvent *e) override;
+  virtual bool event(QEvent *e) OVERRIDE;
+  virtual void paintEvent(QPaintEvent *) OVERRIDE;
+  virtual void keyPressEvent(QKeyEvent *k) OVERRIDE;
+  virtual void keyReleaseEvent(QKeyEvent *k) OVERRIDE;
+  virtual void resizeEvent(QResizeEvent *r) OVERRIDE;
+  virtual void mousePressEvent(QMouseEvent *m) OVERRIDE;
+  virtual void mouseMoveEvent(QMouseEvent *m) OVERRIDE;
+  virtual void mouseReleaseEvent(QMouseEvent *m) OVERRIDE;
+  virtual void focusInEvent(QFocusEvent *e) OVERRIDE;
+  virtual void focusOutEvent(QFocusEvent *e) OVERRIDE;
 
 public:      // funcs
   EditorWidget(NamedTextDocument *docFile,
@@ -382,12 +395,12 @@ public:      // funcs
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
   virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override;
+    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
 
   // Answer a query from the NamedTextDocumentList.
   virtual bool getNamedTextDocumentInitialView(
     NamedTextDocumentList *documentList, NamedTextDocument *file,
-    NamedTextDocumentInitialView /*OUT*/ &view) noexcept override;
+    NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT OVERRIDE;
 
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process, so the constness of
@@ -418,12 +431,12 @@ public:      // funcs
   bool editSafetyCheck();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept override;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept override;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept override;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept override;
-  virtual void observeTotalChange(TextDocumentCore const &buf) noexcept override;
-  virtual void observeUnsavedChangesChange(TextDocument const *doc) noexcept override;
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) NOEXCEPT OVERRIDE;
+  virtual void observeTotalChange(TextDocumentCore const &buf) NOEXCEPT OVERRIDE;
+  virtual void observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT OVERRIDE;
 
   // This is the same as 'keyPressEvent', but is meant to be callable by
   // other classes in order to pass on a key event that would otherwise

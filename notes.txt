@@ -1,6 +1,5 @@
 
 TODOs:
-  - extend test/sar-match-limit.ev to look at corner indicators
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
     - then, when it is not, we get ".." in the document path name
   - BUG: Automatic reloading for events.out isn't working?
@@ -33,6 +32,8 @@ TODOs:
     - compilation mode
     - parallel compilation mode that keeps the various output streams
       separate somehow
+  - allow event replay to set the editor widget size in order to make
+    tests that depend on that portable
   - rename all references to "open-files dialog" to "documents"?
 
   - very annoyed by the scrollbar thumb being too light
