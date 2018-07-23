@@ -3,13 +3,10 @@ TODOs:
   - allow event replay to set the editor widget size in order to make
     tests that depend on that portable
   - explicitly indicate which file to open
-  - speed up directory query in file-open
   - Ctrl+O dialog: always scroll to the top
   - deal with F4 keybinding collision between SAR and Close document
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
     - then, when it is not, we get ".." in the document path name
-  - BUG: Automatic reloading for events.out isn't working?
-    - can't reproduce it now ...
   - put "<running>" into the window title
   - if I select text, Ctrl+I should open that w/o filename heuristics
   - working on automated GUI tests

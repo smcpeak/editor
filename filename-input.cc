@@ -171,21 +171,21 @@ void FilenameInputDialog::getEntries(string const &dir)
   if (sfu.absolutePathExists(dir)) {
     try {
       TRACE("FilenameInputDialog", "querying dir: " << dir);
-      sfu.getDirectoryEntries(m_cachedDirectoryEntries, dir);
+      ArrayStack<SMFileUtil::DirEntryInfo> entries;
+      sfu.getSortedDirectoryEntries(entries, dir);
 
-      // Ensure canonical order.  Sort *before* adding the slash so
-      // that "." still comes before "..".
-      m_cachedDirectoryEntries.sort(&compareStringPtrs);
-
-      // Probe each one to see if it is a directory.
-      for (int i=0; i < m_cachedDirectoryEntries.length(); i++) {
-        string &e = m_cachedDirectoryEntries[i];
-        if (sfu.directoryExists(sfu.joinFilename(dir, e))) {
+      // Copy them into the cache.
+      m_cachedDirectoryEntries.clear();
+      for (int i=0; i < entries.length(); i++) {
+        if (entries[i].m_kind == SMFileUtil::FK_DIRECTORY) {
           // Add a slash to the name.  This both indicates to the user
           // the type of entity it is and also causes Tab completion to
           // add the slash when it is unambiguous, thus automatically
           // transitioning into the directory.
-          e = stringb(e << '/');
+          m_cachedDirectoryEntries.push(stringb(entries[i].m_name << '/'));
+        }
+        else {
+          m_cachedDirectoryEntries.push(entries[i].m_name);
         }
       }
     }
