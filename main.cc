@@ -474,14 +474,6 @@ void GlobalState::slot_broadcastSearchPanelChanged(
 }
 
 
-string GlobalState::eventReplayQuery(string const &state)
-{
-  // I started doing something this way then decided to do it
-  // differently, but I might want this later.
-  return "no queries defined";
-}
-
-
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {
@@ -628,7 +620,7 @@ int main(int argc, char **argv)
         // Automated GUI test.
         g_abortUponDevWarning = true;
         cout << "running test: " << app.m_eventFileTest << endl;
-        EventReplay replay(app.m_eventFileTest, &app);
+        EventReplay replay(app.m_eventFileTest);
         string error = replay.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;

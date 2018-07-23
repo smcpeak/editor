@@ -2280,4 +2280,18 @@ bool EditorWidget::editSafetyCheck()
 }
 
 
+string EditorWidget::eventReplayQuery(string const &state)
+{
+  if (state == "firstVisible") {
+    return stringb(m_editor->firstVisible());
+  }
+  else if (state == "lastVisible") {
+    return stringb(m_editor->lastVisible());
+  }
+  else {
+    return stringb("unknown state: " << quoted(state));
+  }
+}
+
+
 // EOF

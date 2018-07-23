@@ -402,5 +402,6 @@ check:
 	./editor -ev=test/sar-find-cs-completion.ev test/file1.h
 	./editor -ev=test/sar-repl-cs-completion.ev test/file1.h
 	./editor -ev=test/sar-match-limit.ev test/file1.h
+	./editor -ev=test/resize1.ev test/file1.h
 
 # EOF

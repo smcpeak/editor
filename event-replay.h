@@ -19,12 +19,13 @@
 class QRegularExpressionMatch;
 
 
-// Interface that the replay engine uses to query application state.
-class EventReplayQuery : virtual public SerfRefCount {
+// Interface that the replay engine uses to query arbitrary state
+// elements of objects.
+class EventReplayQueryable {
 public:
   // Return some application-specific state.  This result must match the
-  // argument to the "Check" command in test scripts for the test to
-  // pass.
+  // argument to the "CheckQuery" command in test scripts for the test
+  // to pass.
   //
   // It can throw any exception to indicate a syntax error with 'state';
   // that will cause the test to fail.  It can also just return an error
@@ -59,9 +60,6 @@ private:     // instance data
 
   // Current line number in 'm_in'.
   int m_lineNumber;
-
-  // Mechanism that will respond to queries.  Never NULL.
-  RCSerf<EventReplayQuery> m_query;
 
   // If the test has failed, this describes how.  Otherwise (test still
   // running, or it succeeded) it is "".
@@ -99,7 +97,7 @@ private:     // funcs
   void postQuiescenceEvent();
 
 public:      // funcs
-  EventReplay(string const &fname, EventReplayQuery *query);
+  EventReplay(string const &fname);
   ~EventReplay();
 
   // Inject all the events and check all the assertions.  If everything

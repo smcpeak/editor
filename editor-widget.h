@@ -5,11 +5,12 @@
 #define EDITOR_WIDGET_H
 
 // editor
-#include "td-editor.h"                 // TextDocumentEditor
-#include "named-td.h"                  // NamedTextDocument
+#include "event-replay.h"              // EventReplayQueryable
 #include "named-td-list.h"             // NamedTextDocumentListObserver
-#include "textcategory.h"              // TextCategory
+#include "named-td.h"                  // NamedTextDocument
+#include "td-editor.h"                 // TextDocumentEditor
 #include "text-search.h"               // TextSearch
+#include "textcategory.h"              // TextCategory
 
 // smqtutil
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
@@ -43,7 +44,8 @@ class QRangeControl;                   // qrangecontrol.h
 class EditorWidget
   : public QWidget,               // I am a Qt widget.
     public TextDocumentObserver,  // Watch my file while I don't have focus.
-    public NamedTextDocumentListObserver {        // Watch the list of files.
+    public NamedTextDocumentListObserver,        // Watch the list of files.
+    public EventReplayQueryable { // Respond to test queries.
   Q_OBJECT
 
   // Currently, SAR needs access to m_editor, and I am torn about
@@ -479,6 +481,10 @@ public:      // funcs
 
   void printUnhandled(xBase const &x)
     { unhandledExceptionMsgbox(this, x); }
+
+  // -------------------------- testing ----------------------------
+  // EventReplayQueryable methods.
+  virtual string eventReplayQuery(string const &state) OVERRIDE;
 
 public Q_SLOTS:
   // slots to respond to scrollbars

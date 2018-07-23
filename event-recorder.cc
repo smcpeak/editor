@@ -3,6 +3,9 @@
 
 #include "event-recorder.h"            // this module
 
+// editor
+#include "editor-widget.h"             // EditorWidget
+
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
 #include "syserr.h"                    // xsyserror
@@ -48,7 +51,8 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
   QEvent::Type type = event->type();
   if (type == QEvent::KeyPress ||
       type == QEvent::Shortcut ||
-      type == QEvent::MouseButtonPress) {
+      type == QEvent::MouseButtonPress ||
+      type == QEvent::Resize) {
     if (receiver &&
         0==strcmp(receiver->metaObject()->className(), "QWidgetWindow")) {
       // Filter these out.  QWidgetWindow is a private implementation
@@ -88,6 +92,20 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
               << " " << quoted(toString(mouseEvent->buttons()))
               << " " << quoted(toString(mouseEvent->pos()))
               << endl;
+      }
+    }
+    else if (type == QEvent::Resize) {
+      if (QResizeEvent const *resizeEvent =
+            dynamic_cast<QResizeEvent const *>(event)) {
+        // I only care about resize for the editor widget.  I would
+        // prefer that this module not depend on EditorWidget, so at
+        // some point I may add a different way of recognizing the
+        // widgets I do care about.
+        if (qobject_cast<EditorWidget*>(receiver)) {
+          m_out << "ResizeEvent " << quoted(qObjectPath(receiver))
+                << " " << quoted(toString(resizeEvent->size()))
+                << endl;
+        }
       }
     }
     else {

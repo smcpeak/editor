@@ -28,6 +28,7 @@
 
 // libc++
 #include <string>                      // std::string, getline
+#include <typeinfo>                    // typeid
 
 // libc
 #include <stdlib.h>                    // getenv, atoi
@@ -44,19 +45,19 @@ EventReplay::QuiescenceEvent::~QuiescenceEvent()
 {}
 
 
-EventReplay::EventReplay(string const &fname, EventReplayQuery *query)
+EventReplay::EventReplay(string const &fname)
   : m_fname(fname),
     m_in(m_fname.c_str()),
     m_lineNumber(0),
-    m_query(query),
     m_testResult(),
     m_eventLoop(),
     m_eventReplayDelayMS(0),
     m_timerId(0)
 {
-  xassert(m_query);
   if (m_in.fail()) {
-    xsyserror("open", m_fname.c_str());
+    // Unfortunately there is no portable way to get the error cause
+    // when using std::ifstream.
+    throw xBase(stringb("failed to open " << quoted(m_fname)));
   }
 
   if (s_quiescenceEventType == 0) {
@@ -79,6 +80,40 @@ EventReplay::~EventReplay()
 #define xstringb(msg) throw stringb(msg).str() /* user ; */
 
 
+// Change the size of the top-level window containing 'widget' so that
+// the widget itself reaches the target size.  This assumes that the
+// widget expands or contracts the same amount as its parent windows.
+static void resizeChildWidget(QWidget *widget, QSize const &targetSize)
+{
+  // How much should the target widget's size change?
+  QSize currentSize = widget->size();
+  QSize deltaSize = targetSize - currentSize;
+
+  // Get the top-level window.
+  QWidget *parent = widget;
+  while (parent->parentWidget()) {
+    parent = parent->parentWidget();
+  }
+
+  // Change window size.
+  QSize windowSize = parent->size();
+  windowSize += deltaSize;
+  parent->resize(windowSize);
+
+  // Let the resize event be fully processed so the target widget can
+  // reach its final size.
+  QCoreApplication::processEvents();
+
+  // Check that we got the intended size.
+  if (widget->size() != targetSize) {
+    xstringb("widget " << qObjectPath(widget) << ": size was " <<
+             toString(currentSize) << ", tried to resize to " <<
+             toString(targetSize) << ", but instead its size became " <<
+             toString(widget->size()));
+  }
+}
+
+
 // Get an object from its path from a top-level window, or throw a
 // string if we cannot find it.
 static QObject *getQObjectFromPath(string const &path)
@@ -99,24 +134,24 @@ static QObject *getQObjectFromPath(string const &path)
           object = object->findChild<QObject*>(elt,
                                                Qt::FindDirectChildrenOnly);
           if (!object) {
-            xstringb("could not find child \"" << elt <<
-                     "\" at path element " << (i+1));
+            xstringb("could not find child " << quoted(elt) <<
+                     " at path element " << (i+1));
           }
         }
         return object;
       }
     }
 
-    xstringb("could not find root element \"" <<
-             elts.at(0) << "\"");
+    xstringb("could not find root element " << quoted(elts.at(0)));
   }
   catch (string const &msg) {
-    xstringb("in path \"" << path << "\": " << msg);
+    xstringb("in path " << quoted(path) << ": " << msg);
   }
 }
 
 
-// Get a named object with a particular type.
+// Get a named object with a particular type using 'qobject_cast' to
+// recognize it.
 template <class T>
 T *getObjectFromPath(string const &path)
 {
@@ -124,11 +159,41 @@ T *getObjectFromPath(string const &path)
   xassert(o);
   T *t = qobject_cast<T*>(o);
   if (!t) {
-    xstringb("object at \"" << path <<
-             "\" has class " << o->metaObject()->className() <<
+    xstringb("object at " << quoted(path) <<
+             " has class " << o->metaObject()->className() <<
              ", not " << T::staticMetaObject.className());
   }
   return t;
+}
+
+
+// Get a named object with a particular type using 'dynamic_cast' to
+// recognize it.
+//
+// I'm not really sure it makes sense to have both versions.  I started
+// with qobject_cast, but for EventReplayQueryable I want to use
+// ordinary dynamic_cast since I don't want to make it a QObject due to
+// potential multiple inheritance issues.  Perhaps I should only use
+// dynamic_cast?  Although getting readable class names using C++ RTTI
+// is annoying.
+template <class T>
+T *getObjectFromPathDC(string const &path)
+{
+  QObject *o = getQObjectFromPath(path);
+  xassert(o);
+  T *t = dynamic_cast<T*>(o);
+  if (!t) {
+    xstringb("object at " << quoted(path) <<
+             " has class " << typeid(*o).name() <<
+             ", not " << typeid(T).name());
+  }
+  return t;
+}
+
+
+static EventReplayQueryable *getQueryableFromPath(string const &path)
+{
+  return getObjectFromPathDC<EventReplayQueryable>(path);
 }
 
 
@@ -196,11 +261,20 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
       getShortcutEventFromString(keys));
   }
 
-  else if (funcName == "Check") {
-    BIND_ARGS2(state, expect);
+  else if (funcName == "ResizeEvent") {
+    BIND_ARGS2(receiver, size);
 
-    string actual = m_query->eventReplayQuery(state);
-    EXPECT_EQ("Check " << quoted(state));
+    resizeChildWidget(
+      getObjectFromPath<QWidget>(receiver),
+      qSizeFromString(size));
+  }
+
+  else if (funcName == "CheckQuery") {
+    BIND_ARGS3(receiver, state, expect);
+
+    EventReplayQueryable *q = getQueryableFromPath(receiver);
+    string actual = q->eventReplayQuery(state);
+    EXPECT_EQ("CheckQuery " << quoted(receiver) << ' ' << quoted(state));
   }
 
   else if (funcName == "CheckLabel") {

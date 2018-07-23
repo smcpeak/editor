@@ -6,9 +6,8 @@
 
 // editor
 #include "editor-window.h"             // EditorWindow
-#include "event-replay.h"              // EventReplayQuery
-#include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentList
+#include "named-td.h"                  // NamedTextDocument
 #include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // Pixmaps
 
@@ -36,8 +35,7 @@ public:
 
 // global state of the editor: files, windows, etc.
 class GlobalState : public QApplication,
-                    public NamedTextDocumentListObserver,
-                    public EventReplayQuery {
+                    public NamedTextDocumentListObserver {
   Q_OBJECT
 
 public:       // data
@@ -143,9 +141,6 @@ public:       // funcs
   virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
-
-  // EventReplayQuery methods.
-  virtual string eventReplayQuery(string const &state) OVERRIDE;
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
