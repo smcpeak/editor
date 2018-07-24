@@ -10,6 +10,7 @@
 
 // smbase
 #include "refct-serf.h"                // RCSerf
+#include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
 
 
@@ -61,11 +62,11 @@ public:      // funcs
   virtual ~LexHighlighter();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept OVERRIDE;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept OVERRIDE;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept OVERRIDE;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept OVERRIDE;
-  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept OVERRIDE;
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) NOEXCEPT OVERRIDE;
+  virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT OVERRIDE;
 
   // Highlighter funcs
   virtual void highlight(TextDocumentCore const &buf, int line,

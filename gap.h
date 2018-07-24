@@ -5,6 +5,7 @@
 #define GAPARRAY_H
 
 #include "macros.h"                    // NO_OBJECT_COPIES
+#include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-swap.h"                   // swap
 #include "xassert.h"                   // xassert
 
@@ -92,7 +93,7 @@ public:      // funcs
   void clear();
 
   // Exchange contents with 'other'.
-  void swapWith(GapArray<T> &other) noexcept;
+  void swapWith(GapArray<T> &other) NOEXCEPT;
 
   // drop gap size to zero; done when future insertion is not likely
   void squeezeGap();
@@ -113,7 +114,7 @@ public:      // funcs
 
 
 template <class T>
-void swap(GapArray<T> &a, GapArray<T> &b) noexcept
+void swap(GapArray<T> &a, GapArray<T> &b) NOEXCEPT
 {
   a.swapWith(b);
 }
@@ -335,7 +336,7 @@ void GapArray<T>::clear()
 
 
 template <class T>
-void GapArray<T>::swapWith(GapArray<T> &other) noexcept
+void GapArray<T>::swapWith(GapArray<T> &other) NOEXCEPT
 {
   if (this != &other) {
     swap(this->array, other.array);

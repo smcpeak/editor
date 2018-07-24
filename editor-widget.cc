@@ -432,7 +432,7 @@ void EditorWidget::fileOpenAtCursor()
 
 
 void EditorWidget::namedTextDocumentRemoved(
-  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
+  NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(documentList == m_documentList);
@@ -461,7 +461,7 @@ void EditorWidget::namedTextDocumentRemoved(
 
 bool EditorWidget::getNamedTextDocumentInitialView(
   NamedTextDocumentList *documentList, NamedTextDocument *file,
-  NamedTextDocumentInitialView /*OUT*/ &view) noexcept
+  NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -2108,7 +2108,7 @@ void EditorWidget::startListening()
 // same line (sequence of chars).  See doc/test-plan.txt, test
 // "Multiple window simultaneous edit".
 
-void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noexcept
+void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
@@ -2154,7 +2154,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) noex
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) noexcept
+void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
@@ -2181,7 +2181,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) noex
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) noexcept
+void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
@@ -2191,7 +2191,7 @@ void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char c
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) noexcept
+void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
@@ -2201,7 +2201,7 @@ void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) n
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeTotalChange(TextDocumentCore const &buf) noexcept
+void EditorWidget::observeTotalChange(TextDocumentCore const &buf) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
@@ -2211,7 +2211,7 @@ void EditorWidget::observeTotalChange(TextDocumentCore const &buf) noexcept
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) noexcept
+void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {

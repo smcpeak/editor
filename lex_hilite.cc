@@ -110,7 +110,7 @@ LexerState LexHighlighter::getSavedState(int line)
 }
 
 
-void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line) noexcept
+void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -135,7 +135,7 @@ void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line) noexc
 }
 
 
-void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line) noexcept
+void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -159,14 +159,14 @@ void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line) noexc
 }
 
 
-void LexHighlighter::observeInsertText(TextDocumentCore const &, TextCoord tc, char const *, int) noexcept
+void LexHighlighter::observeInsertText(TextDocumentCore const &, TextCoord tc, char const *, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   addToChanged(tc.line);
   GENERIC_CATCH_END
 }
 
-void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextCoord tc, int) noexcept
+void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextCoord tc, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   addToChanged(tc.line);
@@ -174,7 +174,7 @@ void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextCoord tc, i
 }
 
 
-void LexHighlighter::observeTotalChange(TextDocumentCore const &doc) noexcept
+void LexHighlighter::observeTotalChange(TextDocumentCore const &doc) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 

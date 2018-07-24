@@ -6,6 +6,7 @@
 // smbase
 #include "nonport.h"                   // fileOrDirectoryExists, removeFile
 #include "sm-file-util.h"              // SMFileUtil
+#include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
 #include "test.h"                      // USUAL_MAIN
 
@@ -48,7 +49,7 @@ public:      // funcs
       m_totalChanges(0)
   {}
 
-  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept OVERRIDE
+  virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT OVERRIDE
   {
     m_totalChanges++;
   }

@@ -503,24 +503,24 @@ bool NamedTextDocumentList::notifyGetInitialView(
 
 // ----------------- NamedTextDocumentListObserver -------------------
 void NamedTextDocumentListObserver::namedTextDocumentAdded(
-  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
+  NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT
 {}
 
 void NamedTextDocumentListObserver::namedTextDocumentRemoved(
-  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
+  NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT
 {}
 
 void NamedTextDocumentListObserver::namedTextDocumentAttributeChanged(
-  NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept
+  NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT
 {}
 
 void NamedTextDocumentListObserver::namedTextDocumentListOrderChanged(
-  NamedTextDocumentList *documentList) noexcept
+  NamedTextDocumentList *documentList) NOEXCEPT
 {}
 
 bool NamedTextDocumentListObserver::getNamedTextDocumentInitialView(
   NamedTextDocumentList *documentList, NamedTextDocument *file,
-  NamedTextDocumentInitialView /*OUT*/ &view) noexcept
+  NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT
 {
   return false;
 }

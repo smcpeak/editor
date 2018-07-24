@@ -1,6 +1,5 @@
 
 TODOs:
-  - replace all 'override' and 'noexcept' with all-caps versions
   - warn when opening a read-only file
   - in tests, explicitly indicate which file to open
   - Ctrl+O dialog: always scroll to the top

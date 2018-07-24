@@ -35,7 +35,7 @@ void MyTableWidget::synthesizeKey(int key, Qt::KeyboardModifiers modifiers)
 }
 
 
-void MyTableWidget::keyPressEvent(QKeyEvent *event) noexcept
+void MyTableWidget::keyPressEvent(QKeyEvent *event) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 

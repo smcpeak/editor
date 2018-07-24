@@ -18,6 +18,7 @@
 // smbase
 #include "owner.h"                     // Owner
 #include "refct-serf.h"                // RCSerf
+#include "sm-noexcept.h"               // NOEXCEPT
 
 // Qt
 #include <qwidget.h>                   // QWidget

@@ -9,6 +9,7 @@
 
 #include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
+#include "sm-noexcept.h"               // NOEXCEPT
 
 class MyTableWidget;                   // my-table-widget.h
 
@@ -72,9 +73,9 @@ public:      // funcs
   NamedTextDocument *runDialog();
 
 public Q_SLOTS:
-  void on_doubleClicked(QModelIndex const &index) noexcept;
-  void on_closeSelected() noexcept;
-  void on_help() noexcept;
+  void on_doubleClicked(QModelIndex const &index) NOEXCEPT;
+  void on_closeSelected() NOEXCEPT;
+  void on_help() NOEXCEPT;
 };
 
 

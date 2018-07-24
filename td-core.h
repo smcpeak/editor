@@ -11,6 +11,7 @@
 // smbase
 #include "rcserflist.h"                // RCSerfList
 #include "refct-serf.h"                // SerfRefCount
+#include "sm-noexcept.h"               // NOEXCEPT
 #include "sobjlist.h"                  // SObjList
 #include "str.h"                       // string
 

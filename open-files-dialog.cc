@@ -242,7 +242,7 @@ NamedTextDocument *OpenFilesDialog::runDialog()
 }
 
 
-void OpenFilesDialog::on_doubleClicked(QModelIndex const &index) noexcept
+void OpenFilesDialog::on_doubleClicked(QModelIndex const &index) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -255,7 +255,7 @@ void OpenFilesDialog::on_doubleClicked(QModelIndex const &index) noexcept
 }
 
 
-void OpenFilesDialog::on_closeSelected() noexcept
+void OpenFilesDialog::on_closeSelected() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   TRACE("OpenFilesDialog", "closeSelected");
@@ -316,7 +316,7 @@ void OpenFilesDialog::on_closeSelected() noexcept
 }
 
 
-void OpenFilesDialog::on_help() noexcept
+void OpenFilesDialog::on_help() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 

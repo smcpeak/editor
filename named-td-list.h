@@ -11,6 +11,7 @@
 #include "array.h"                     // ObjArrayStack
 #include "macros.h"                    // NO_OBJECT_COPIES
 #include "refct-serf.h"                // SerfRefCount
+#include "sm-noexcept.h"               // NOEXCEPT
 #include "sobjlist.h"                  // SObjList
 
 
@@ -212,12 +213,12 @@ class NamedTextDocumentListObserver : virtual public SerfRefCount {
 public:      // funcs
   // A document was added to the list.
   virtual void namedTextDocumentAdded(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;
 
   // A document was removed.  When this is called, the document has already
   // been removed from the list, but the object is still valid.
   virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;
 
   // An attribute of a document may have changed.  The client has to
   // inspect the document to determine what has changed.
@@ -232,12 +233,12 @@ public:      // funcs
   // concept, since we are notifying about a single object, rather
   // that something intrinsically tied to the "list" aspect.
   virtual void namedTextDocumentAttributeChanged(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc) noexcept;
+    NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;
 
   // The order of documents in the list may have changed.  Observers must
   // query the list in order to obtain the new order.
   virtual void namedTextDocumentListOrderChanged(
-    NamedTextDocumentList *documentList) noexcept;
+    NamedTextDocumentList *documentList) NOEXCEPT;
 
   // This is a question, not a notification.  Some widget is about to
   // show 'doc' for the first time and wants to know a good view area
@@ -245,7 +246,7 @@ public:      // funcs
   // fill in 'view' and return true; else false.
   virtual bool getNamedTextDocumentInitialView(
     NamedTextDocumentList *documentList, NamedTextDocument *doc,
-    NamedTextDocumentInitialView /*OUT*/ &view) noexcept;
+    NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT;
 
   // Silence dumb warnings.
   virtual ~NamedTextDocumentListObserver();
