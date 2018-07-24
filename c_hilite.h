@@ -4,8 +4,12 @@
 #ifndef C_HILITE_H
 #define C_HILITE_H
 
-#include "inclexer.h"      // IncLexer
-#include "lex_hilite.h"    // LexHighlighter
+// editor
+#include "inclexer.h"                  // IncLexer
+#include "lex_hilite.h"                // LexHighlighter
+
+// smbase
+#include "sm-override.h"               // OVERRIDE
 
 // lexer context class defined in c_hilite.yy.cc
 class C_FlexLexer;
@@ -21,9 +25,9 @@ public:      // funcs
   ~C_Lexer();
 
   // IncLexer funcs
-  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state) override;
-  virtual int getNextToken(TextCategory &code) override;
-  virtual LexerState getState() const override;
+  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state) OVERRIDE;
+  virtual int getNextToken(TextCategory &code) OVERRIDE;
+  virtual LexerState getState() const OVERRIDE;
 };
 
 

@@ -5,6 +5,7 @@
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
+#include "sm-override.h"               // OVERRIDE
 #include "strutil.h"                   // dirname
 #include "test.h"                      // USUAL_TEST_MAIN
 
@@ -49,28 +50,28 @@ public:      // funcs
   {}
 
   void namedTextDocumentAdded(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ADDED, file));
   }
 
   void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_REMOVED, file));
   }
 
   void namedTextDocumentAttributeChanged(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept override
+    NamedTextDocumentList *documentList, NamedTextDocument *file) noexcept OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ATTRIBUTE, file));
   }
 
   void namedTextDocumentListOrderChanged(
-    NamedTextDocumentList *documentList) noexcept override
+    NamedTextDocumentList *documentList) noexcept OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ORDER));

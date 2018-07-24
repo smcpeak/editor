@@ -4,12 +4,15 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-#include "array.h"                     // ObjArrayStack
-#include "exc.h"                       // xBase
-#include "str.h"                       // stringBuilder
+// editor
 #include "td-core.h"                   // TextDocumentCore
 
-#include <stdint.h>                    // uintptr_t
+// smbase
+#include "array.h"                     // ObjArrayStack
+#include "exc.h"                       // xBase
+#include "sm-override.h"               // OVERRIDE
+#include "str.h"                       // stringBuilder
+#include "typ.h"                       // uintptr_t
 
 
 // fwd in this file
@@ -81,10 +84,10 @@ public:      // funcs
   ~HE_text();
 
   // HistoryElt funcs
-  virtual Tag getTag() const override { return HE_TEXT; }
-  virtual TextCoord apply(TextDocumentCore &buf, bool reverse) const override;
-  virtual void print(stringBuilder &sb, int indent) const override;
-  virtual void stats(HistoryStats &stats) const override;
+  virtual Tag getTag() const OVERRIDE { return HE_TEXT; }
+  virtual TextCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
+  virtual void print(stringBuilder &sb, int indent) const OVERRIDE;
+  virtual void stats(HistoryStats &stats) const OVERRIDE;
 
   // 'apply', but static
   static TextCoord static_apply(
@@ -159,10 +162,10 @@ public:      // funcs
 
 
   // HistoryElt funcs
-  virtual Tag getTag() const override { return HE_GROUP; }
-  virtual TextCoord apply(TextDocumentCore &buf, bool reverse) const override;
-  virtual void print(stringBuilder &sb, int indent) const override;
-  virtual void stats(HistoryStats &stats) const override;
+  virtual Tag getTag() const OVERRIDE { return HE_GROUP; }
+  virtual TextCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
+  virtual void print(stringBuilder &sb, int indent) const OVERRIDE;
+  virtual void stats(HistoryStats &stats) const OVERRIDE;
 };
 
 

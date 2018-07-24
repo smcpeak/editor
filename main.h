@@ -15,6 +15,7 @@
 #include "objlist.h"                   // ObjList
 #include "owner.h"                     // Owner
 #include "refct-serf.h"                // SerfRefCount
+#include "sm-override.h"               // OVERRIDE
 
 // Qt
 #include <QApplication>
@@ -29,7 +30,7 @@ public:
   int pixelMetric(
     PixelMetric metric,
     const QStyleOption *option = NULL,
-    const QWidget *widget = NULL) const override;
+    const QWidget *widget = NULL) const OVERRIDE;
 };
 
 

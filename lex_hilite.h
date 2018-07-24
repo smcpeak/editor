@@ -5,11 +5,12 @@
 #define LEX_HILITE_H
 
 // editor
-#include "hilite.h"        // Highlighter interface
-#include "inclexer.h"      // IncLexer, LexerState
+#include "hilite.h"                    // Highlighter interface
+#include "inclexer.h"                  // IncLexer, LexerState
 
 // smbase
-#include "refct-serf.h"    // RCSerf
+#include "refct-serf.h"                // RCSerf
+#include "sm-override.h"               // OVERRIDE
 
 
 // the highlighter
@@ -60,15 +61,15 @@ public:      // funcs
   virtual ~LexHighlighter();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept override;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept override;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept override;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept override;
-  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept override;
+  virtual void observeInsertLine(TextDocumentCore const &buf, int line) noexcept OVERRIDE;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) noexcept OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) noexcept OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) noexcept OVERRIDE;
+  virtual void observeTotalChange(TextDocumentCore const &doc) noexcept OVERRIDE;
 
   // Highlighter funcs
   virtual void highlight(TextDocumentCore const &buf, int line,
-                         LineCategories &categories) override;
+                         LineCategories &categories) OVERRIDE;
 };
 
 

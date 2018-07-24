@@ -4,6 +4,8 @@
 #ifndef MY_TABLE_WIDGET_H
 #define MY_TABLE_WIDGET_H
 
+#include "sm-override.h"               // OVERRIDE
+
 #include <QTableWidget>
 
 
@@ -36,7 +38,7 @@ public:      // funcs
   ~MyTableWidget();
 
   // Overridden QWidget methods.
-  virtual void keyPressEvent(QKeyEvent *event) noexcept override;
+  virtual void keyPressEvent(QKeyEvent *event) noexcept OVERRIDE;
 };
 
 
