@@ -15,10 +15,7 @@ KeyPress "LaunchCommandDialog.m_comboBox" "Key_E" "e"
 KeyPress "LaunchCommandDialog" "Key_Return" "\r"
 
 # Wait until it finishes.
-#
-# TODO: Replace this with a proper WaitUntil condition.
-Sleep "200"
-CheckQuery "window1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"
+WaitUntilCheckQuery "200" "window1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"
 
 # Check that it is marked as read-only in the File menu.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"

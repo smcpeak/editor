@@ -99,14 +99,21 @@ private:     // funcs
   // the test should stop.
   bool callReplayNextEvent();
 
+  // Execute the "WaitUntilCheckQuery" command.
+  void waitUntilCheckQuery(
+    long durationMS,
+    string const &receiver,
+    string const &state,
+    string const &expect);
+
+  // Post a QuiescenceEvent to the application event queue.
+  void postQuiescenceEvent();
+
   // Install a timer to trigger the next replay event.
   void installTimer();
 
   // Kill the timer if it is active.
   void killTimerIf();
-
-  // Post a QuiescenceEvent to the application event queue.
-  void postQuiescenceEvent();
 
 public:      // funcs
   explicit EventReplay(string const &fname);

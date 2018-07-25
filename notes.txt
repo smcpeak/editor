@@ -1,6 +1,5 @@
 
 TODOs:
-  - test/read-only2.ev: Add WaitUntil command.
   - BUG: Search for "^" as a regex.  Match indicator shows we are on
     some match, but pressing Ctrl+R advances.  Only then does it start
     replacing as expected.

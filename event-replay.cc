@@ -12,6 +12,7 @@
 #include "timer-event-loop.h"          // sleepWhilePumpingEvents
 
 // smbase
+#include "nonport.h"                   // getMilliseconds
 #include "strutil.h"                   // parseQuotedString, quoted
 #include "syserr.h"                    // xsyserror
 #include "trace.h"                     // TRACE
@@ -27,6 +28,7 @@
 #include <QLabel>
 #include <QRegularExpression>
 #include <QStringList>
+#include <QTimer>
 #include <QWidget>
 
 // libc++
@@ -250,6 +252,12 @@ static string getCapturedArg(QRegularExpressionMatch &match, int n)
   string arg2 = getCapturedArg(match, 3);             \
   string arg3 = getCapturedArg(match, 4) /* user ; */
 
+#define BIND_ARGS4(arg1, arg2, arg3, arg4)            \
+  CHECK_NUM_ARGS(4);                                  \
+  string arg1 = getCapturedArg(match, 2);             \
+  string arg2 = getCapturedArg(match, 3);             \
+  string arg3 = getCapturedArg(match, 4);             \
+  string arg4 = getCapturedArg(match, 5) /* user ; */
 
 
 #define EXPECT_EQ(context)                            \
@@ -324,6 +332,13 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   }
 
   // -------------------- checks --------------------
+  else if (funcName == "WaitUntilCheckQuery") {
+    BIND_ARGS4(duration, receiver, state, expect);
+
+    this->waitUntilCheckQuery(
+      atoi(duration.c_str()), receiver, state, expect);
+  }
+
   else if (funcName == "CheckQuery") {
     BIND_ARGS3(receiver, state, expect);
 
@@ -399,6 +414,7 @@ bool EventReplay::replayNextEvent()
     "(?:\\s+(\"[^\"]*\"))?"            // 2: Quoted optional arg 1
     "(?:\\s+(\"[^\"]*\"))?"            // etc.
     "(?:\\s+(\"[^\"]*\"))?"
+    "(?:\\s+(\"[^\"]*\"))?"
     "\\s*$");
 
   try {
@@ -445,6 +461,52 @@ bool EventReplay::replayNextEvent()
 
   // EOF, or test failed.
   return false;
+}
+
+
+void EventReplay::waitUntilCheckQuery(
+  long durationMS,
+  string const &receiver,
+  string const &state,
+  string const &expect)
+{
+  long startMS = getMilliseconds();
+  int checkCount = 0;
+
+  TRACE("EventReplay", "waiting for up to " << durationMS << " ms");
+
+  // Arrange to receive an event after 'durationMS'.  We do not directly
+  // handle the event; rather, we use it to cause 'processEvents' to
+  // return.
+  QTimer timer;
+  timer.start(durationMS);
+
+  while (true) {
+    checkCount++;
+    EventReplayQueryable *q = getQueryableFromPath(receiver);
+    string actual = q->eventReplayQuery(state);
+    if (actual == expect) {
+      break;
+    }
+    long elapsedMS = getMilliseconds() - startMS;
+    long remainingMS = durationMS - elapsedMS;
+    if (remainingMS <= 0) {
+      xstringb("WaitUntilCheckQuery: Slept for " << elapsedMS <<
+               " ms but value is " << quoted(actual) << ", not " <<
+               quoted(expect));
+    }
+
+    // Wait for something to happen.  This does not busy-wait.
+    RESTORER(bool, m_sleeping, true);
+    QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
+
+    // I tried using the 'processEvents' that accepts a timeout, but
+    // that one appears to ignore the 'WaitForMoreEvents' flag.
+  }
+
+  long elapsedMS = getMilliseconds() - startMS;
+  TRACE("EventReplay", "condition satisfied after " << elapsedMS <<
+                       " ms and " << checkCount << " checks");
 }
 
 
