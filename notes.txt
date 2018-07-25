@@ -1,7 +1,5 @@
 
 TODOs:
-  - warn when opening a read-only file
-    - implemented, but needs more testing
   - rename EditorWidget::getDocumentFile
   - test/read-only2.ev: Add WaitUntil command.
   - make the open documents dialog taller by default

@@ -2334,6 +2334,9 @@ string EditorWidget::eventReplayQuery(string const &state)
   else if (state == "hasUnsavedChanges") {
     return string(m_editor->unsavedChanges()? "true" : "false");
   }
+  else if (state == "documentName") {
+    return m_editor->m_namedDoc->name();
+  }
   else {
     return stringb("unknown state: " << quoted(state));
   }

@@ -8,7 +8,7 @@
 
 // smqtutil
 #include "qtguiutil.h"                 // keysString(QKeyEvent)
-#include "qtutil.h"                    // toQString
+#include "qtutil.h"                    // toQString, SET_QOBJECT_NAME
 
 // smbase
 #include "array.h"                     // ArrayStack
@@ -77,6 +77,7 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
   m_closeSelButton(NULL),
   m_helpButton(NULL)
 {
+  this->setObjectName("OpenFilesDialog");
   this->setWindowTitle("Documents");
 
   QVBoxLayout *vbox = new QVBoxLayout();
@@ -98,6 +99,7 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
   // of having an extra copy of the table in memory.
   m_tableWidget = new MyTableWidget();
   vbox->addWidget(m_tableWidget);
+  SET_QOBJECT_NAME(m_tableWidget);
 
   // Zebra table.
   m_tableWidget->setAlternatingRowColors(true);
@@ -151,11 +153,13 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
 
     m_closeSelButton = new QPushButton("&Close Selected");
     hbox->addWidget(m_closeSelButton);
+    SET_QOBJECT_NAME(m_closeSelButton);
     QObject::connect(m_closeSelButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_closeSelected);
 
     m_helpButton = new QPushButton("&Help");
     hbox->addWidget(m_helpButton);
+    SET_QOBJECT_NAME(m_helpButton);
     QObject::connect(m_helpButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_help);
 
