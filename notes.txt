@@ -4,7 +4,6 @@ TODOs:
   - smbase has some problems in test-overflow.cc with NDEBUG due to
     use of 'assert'
   - in tests, explicitly indicate which file to open
-  - Ctrl+O dialog: always scroll to the top
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
     - then, when it is not, we get ".." in the document path name
   - put "<running>" into the window title

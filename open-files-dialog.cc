@@ -228,6 +228,7 @@ NamedTextDocument *OpenFilesDialog::runDialog()
 {
   TRACE("OpenFilesDialog", "runDialog started");
   this->repopulateTable();
+  m_tableWidget->setCurrentCell(0, 0);
   m_tableWidget->setFocus();
 
   if (this->exec()) {
