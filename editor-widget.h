@@ -237,6 +237,10 @@ private:     // funcs
   // Compute both corner labels.
   void computeOffscreenMatchIndicators();
 
+  // The user is trying to make a change to a read-only document.
+  // Prompt to override the flag.
+  bool promptOverrideReadOnly();
+
 protected:   // funcs
   // QWidget funcs
   virtual bool event(QEvent *e) OVERRIDE;
@@ -259,6 +263,9 @@ public:      // funcs
 
   // Assert internal invariants.
   void selfCheck() const;
+
+  bool isReadOnly() const              { return m_editor->isReadOnly(); }
+  void setReadOnly(bool readOnly);
 
   // ---------------------------- cursor -----------------------------
   // set cursorLine/cursorCol to the x/y derived from 'm'

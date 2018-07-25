@@ -72,6 +72,7 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
     m_horizScroll(NULL),
     m_statusArea(NULL),
     m_windowMenu(NULL),
+    m_toggleReadOnlyAction(NULL),
     m_toggleVisibleWhitespaceAction(NULL),
     m_toggleVisibleSoftMarginAction(NULL),
     m_toggleHighlightTrailingWSAction(NULL),
@@ -229,6 +230,11 @@ QAction *addMenuAction(
 
 void EditorWindow::buildMenu()
 {
+  #define CHECKABLE_ACTION(field, title, function, initChecked)  \
+    this->field = MENU_ITEM(title, function);                    \
+    this->field->setCheckable(true);                             \
+    this->field->setChecked(initChecked) /* user ; */
+
   {
     QMenu *menu = this->m_menuBar->addMenu("&File");
     menu->setObjectName("fileMenu");
@@ -251,6 +257,8 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
+    CHECKABLE_ACTION(m_toggleReadOnlyAction,
+                  "Read only", fileToggleReadOnly, false /*initChecked*/);
     MENU_ITEM    ("&Reload", fileReload);
     MENU_ITEM    ("Reload a&ll", fileReloadAll);
 
@@ -321,11 +329,6 @@ void EditorWindow::buildMenu()
                   editInsertDateTime, Qt::ALT + Qt::Key_D);
   }
 
-  #define CHECKABLE_ACTION(field, title, function, initChecked)  \
-    this->field = MENU_ITEM(title, function);                    \
-    this->field->setCheckable(true);                             \
-    this->field->setChecked(initChecked) /* user ; */
-
   {
     QMenu *menu = this->m_menuBar->addMenu("&View");
     menu->setObjectName("viewMenu");
@@ -385,6 +388,14 @@ void EditorWindow::buildMenu()
     MENU_ITEM    ("&Keybindings...", helpKeybindings);
     MENU_ITEM    ("&About Scott's Editor...", helpAbout);
     MENU_ITEM    ("About &Qt ...", helpAboutQt);
+
+    menu->addSeparator();
+
+    {
+      QMenu *submenu = menu->addMenu("&Debug");
+      QMenu *menu = submenu;
+      MENU_ITEM    ("Dump object &tree", helpDebugDumpObjectTree);
+    }
   }
 }
 
@@ -739,7 +750,7 @@ void EditorWindow::fileClose()
   NamedTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
-    msg << "The document \"" << b->name() << "\" has unsaved changes.  "
+    msg << "The document " << quoted(b->name()) << " has unsaved changes.  "
         << "Discard these changes and close it anyway?";
     if (!this->okToDiscardChanges(msg)) {
       return;
@@ -750,6 +761,14 @@ void EditorWindow::fileClose()
   }
 
   m_globalState->deleteDocumentFile(b);
+}
+
+
+void EditorWindow::fileToggleReadOnly() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->setReadOnly(!m_editorWidget->isReadOnly());
+  GENERIC_CATCH_END
 }
 
 
@@ -1480,6 +1499,12 @@ void EditorWindow::helpAboutQt()
 }
 
 
+void EditorWindow::helpDebugDumpObjectTree() NOEXCEPT
+{
+  this->dumpObjectTree();
+}
+
+
 void EditorWindow::editorViewChanged()
 {
   RCSerf<TextDocumentEditor> tde = m_editorWidget->getDocumentEditor();
@@ -1532,6 +1557,9 @@ void EditorWindow::editorViewChanged()
   // Trailing whitespace menu checkbox.
   this->m_toggleHighlightTrailingWSAction->setChecked(
     this->m_editorWidget->highlightTrailingWhitespace());
+
+  // Read-only menu checkbox.
+  m_toggleReadOnlyAction->setChecked(m_editorWidget->isReadOnly());
 }
 
 

@@ -1,0 +1,43 @@
+# read-only1.ev
+# Test some basic read-only file behavior.
+
+# Expect that we have started with an untitled, empty file.
+CheckLabel "window1.m_statusArea.m_filename" "untitled.txt"
+CheckFocusWindowTitle "untitled.txt [Alt+1] - Editor"
+
+# Check that the read-only checkbox is off.
+CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
+
+# Verify we can make a change and undo it.
+KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
+CheckLabel "window1.m_statusArea.m_filename" "untitled.txt *"
+Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
+CheckLabel "window1.m_statusArea.m_filename" "untitled.txt"
+
+# Toggle the read-only flag.
+TriggerAction "window1.m_menuBar.fileMenu.fileToggleReadOnly"
+CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
+
+# Try to make a change.
+KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
+
+# Should get an error dialog.
+CheckFocusWindowTitle "Read-only Document"
+FocusKeyPress "Key_Tab" "\t"
+FocusKeyPress "Key_Space" " "
+FocusKeyRelease "Key_Space" " "
+CheckFocusWindowTitle "untitled.txt [Alt+1] - Editor"
+
+# Still read-only since we canceled that dialog.
+CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
+
+# Do it again and this time say Yes.
+KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
+CheckFocusWindowTitle "Read-only Document"
+FocusKeyPress "Key_Return" "\r"
+CheckFocusWindowTitle "untitled.txt * [Alt+1] - Editor"
+
+# Check that the status area reflects the modified status.
+CheckLabel "window1.m_statusArea.m_filename" "untitled.txt *"
+
+# EOF

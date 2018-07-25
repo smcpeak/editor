@@ -198,6 +198,16 @@ void EditorWidget::selfCheck() const
 }
 
 
+void EditorWidget::setReadOnly(bool readOnly)
+{
+  m_editor->setReadOnly(readOnly);
+
+  // Emit the viewChanged signal so the "read-only" indicator in the
+  // File menu will be refreshed.
+  redraw();
+}
+
+
 void EditorWidget::cursorTo(TextCoord tc)
 {
   INITIATING_DOCUMENT_CHANGE();
@@ -2240,6 +2250,11 @@ void EditorWidget::rescuedKeyPressEvent(QKeyEvent *k)
 // cancel it.
 bool EditorWidget::editSafetyCheck()
 {
+  if (m_editor->isReadOnly() && !this->promptOverrideReadOnly()) {
+    // Document is still read-only, user does not want to override.
+    return false;
+  }
+
   if (m_editor->unsavedChanges()) {
     // We already have unsaved changes, so assume that the safety
     // check has already passed or its warning dismissed.  (I do not
@@ -2275,6 +2290,29 @@ bool EditorWidget::editSafetyCheck()
   }
   else {
     // Cancel the edit.
+    return false;
+  }
+}
+
+
+bool EditorWidget::promptOverrideReadOnly()
+{
+  QMessageBox box(this);
+  box.setWindowTitle("Read-only Document");
+  box.setText(toQString(stringb(
+    "The document " << quoted(m_editor->m_namedDoc->name()) <<
+    " is marked read-only.  Do you want to clear the read-only "
+    "flag and edit it anyway?")));
+  box.addButton(QMessageBox::Yes);
+  box.addButton(QMessageBox::Cancel);
+  int ret = box.exec();
+  if (ret == QMessageBox::Yes) {
+    m_editor->setReadOnly(false);
+
+    // Go ahead with the edit.
+    return true;
+  }
+  else {
     return false;
   }
 }

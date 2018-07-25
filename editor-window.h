@@ -60,7 +60,8 @@ private:     // data
   // of open file files.
   QMenu *m_windowMenu;
 
-  // Actions for toggling view options.
+  // Actions for toggle options.
+  QAction *m_toggleReadOnlyAction;
   QAction *m_toggleVisibleWhitespaceAction;
   QAction *m_toggleVisibleSoftMarginAction;
   QAction *m_toggleHighlightTrailingWSAction;
@@ -161,6 +162,7 @@ public Q_SLOTS:
   void fileSave();
   void fileSaveAs();
   void fileClose();
+  void fileToggleReadOnly() NOEXCEPT;
   void fileReload();
   void fileReloadAll();
   void fileLaunchCommand();
@@ -206,6 +208,7 @@ public Q_SLOTS:
   void helpKeybindings();
   void helpAbout();
   void helpAboutQt();
+  void helpDebugDumpObjectTree() NOEXCEPT;
 
   void editorViewChanged();
   void on_closeSARPanel();
