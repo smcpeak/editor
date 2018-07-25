@@ -6,6 +6,9 @@
 // smqtutil
 #include "qtutil.h"                    // toString(QString)
 
+// smbase
+#include "exc.h"                       // GENERIC_CATCH_BEGIN
+
 
 ProcessWatcher::ProcessWatcher(NamedTextDocument *doc)
   : QObject(),
@@ -34,6 +37,8 @@ ProcessWatcher::~ProcessWatcher()
 
 void ProcessWatcher::slot_outputLineReady() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   while (m_commandRunner.hasOutputLine()) {
     QString line = m_commandRunner.getOutputLine();
     if (m_namedDoc) {
@@ -59,11 +64,15 @@ void ProcessWatcher::slot_outputLineReady() NOEXCEPT
       // slot_processTerminated and be able to reap it normally.
     }
   }
+
+  GENERIC_CATCH_END
 }
 
 
 void ProcessWatcher::slot_errorLineReady() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   while (m_commandRunner.hasErrorLine()) {
     QString line = m_commandRunner.getErrorLine();
     if (m_namedDoc) {
@@ -76,11 +85,15 @@ void ProcessWatcher::slot_errorLineReady() NOEXCEPT
       m_namedDoc->appendString(s);
     }
   }
+
+  GENERIC_CATCH_END
 }
 
 
 void ProcessWatcher::slot_processTerminated() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if (m_namedDoc) {
     m_namedDoc->appendCStr("\n");
 
@@ -110,6 +123,8 @@ void ProcessWatcher::slot_processTerminated() NOEXCEPT
   }
 
   Q_EMIT signal_processTerminated(this);
+
+  GENERIC_CATCH_END
 }
 
 
