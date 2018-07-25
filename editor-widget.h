@@ -412,12 +412,10 @@ public:      // funcs
     NamedTextDocumentList *documentList, NamedTextDocument *file,
     NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT OVERRIDE;
 
-  // Current file being edited.  This is 'const' because the file is
+  // Current document being edited.  This is 'const' because the file is
   // shared with other widgets in this process, so the constness of
   // this object does not propagate to it.
-  //
-  // TODO: Rename this method.
-  NamedTextDocument *getDocumentFile() const;
+  NamedTextDocument *getDocument() const;
 
   // Get what the user thinks of as the "current directory" for this
   // widget.  Normally that is the directory containing the current

@@ -385,7 +385,7 @@ void EditorWidget::checkForDiskChanges()
 }
 
 
-NamedTextDocument *EditorWidget::getDocumentFile() const
+NamedTextDocument *EditorWidget::getDocument() const
 {
   xassert(m_editor);
   xassert(m_editor->m_namedDoc);
@@ -403,7 +403,7 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 string EditorWidget::getDocumentDirectory() const
 {
   SMFileUtil sfu;
-  NamedTextDocument *doc = this->getDocumentFile();
+  NamedTextDocument *doc = this->getDocument();
   return doc->directory();
 }
 

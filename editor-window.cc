@@ -407,7 +407,7 @@ void EditorWindow::buildMenu()
 // not inline because main.h doesn't see editor.h
 NamedTextDocument *EditorWindow::currentDocument()
 {
-  return m_editorWidget->getDocumentFile();
+  return m_editorWidget->getDocument();
 }
 
 
