@@ -1,6 +1,5 @@
 
 TODOs:
-  - make the open documents dialog taller by default
   - during event recording, for a key press whose path has empty
     elements, check if can represent as FocusKeyEvent
   - way to replace all in file

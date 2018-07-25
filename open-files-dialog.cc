@@ -40,9 +40,10 @@ ostream& operator<< (ostream &os, QModelIndex const &index)
 // Height of each row in pixels.
 int const ROW_HEIGHT = 20;
 
-// Initial dialog dimensions in pixels.
+// Initial dialog dimensions in pixels.  I want it relatively tall by
+// default so I can see lots of files before having to scroll or resize.
 int const INIT_DIALOG_WIDTH = 500;
-int const INIT_DIALOG_HEIGHT = 500;
+int const INIT_DIALOG_HEIGHT = 800;
 
 
 // The widths are tuned so the columns almost exactly fill the available
