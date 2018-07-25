@@ -253,7 +253,7 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Save", fileSave, Qt::Key_F2);
     MENU_ITEM    ("Save &as ...", fileSaveAs);
-    MENU_ITEM_KEY("&Close", fileClose, Qt::Key_F4);
+    MENU_ITEM    ("&Close", fileClose);
 
     menu->addSeparator();
 
