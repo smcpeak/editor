@@ -1,0 +1,34 @@
+# prompt-unsaved-changes.ev
+# Prompt before quitting with unsaved changes.
+
+# Expect to start with focus on the editor.
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckQuery "window1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
+
+# Type something.
+FocusKeyPress "Key_H" "h"
+FocusKeyPress "Key_I" "i"
+CheckQuery "window1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
+
+# Try to quit.
+Shortcut "window1.m_menuBar" "Alt+F"
+KeyPress "window1.m_menuBar.fileMenu" "Key_X" "x"
+CheckFocusWindow "window1.okToDiscardChanges_box"
+
+# Cancel the quit.
+FocusKeyPress "Key_Escape" "\x1B"
+
+# Try to quit again.
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+Shortcut "window1.m_menuBar" "Alt+F"
+KeyPress "window1.m_menuBar.fileMenu" "Key_X" "x"
+
+# This time say Yes.
+CheckFocusWindow "window1.okToDiscardChanges_box"
+FocusKeyPR "Key_Space" " "
+
+# Should have exited now.
+#
+# TODO: I have no way to confirm that from a test script.
+
+# EOF

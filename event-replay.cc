@@ -298,6 +298,17 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
       getKeyReleaseEventFromString(keys, toQString(text)));
   }
 
+  else if (funcName == "FocusKeyPR") {
+    BIND_ARGS2(keys, text);
+
+    QCoreApplication::postEvent(
+      getFocusWidget(),
+      getKeyPressEventFromString(keys, toQString(text)));
+    QCoreApplication::postEvent(
+      getFocusWidget(),
+      getKeyReleaseEventFromString(keys, toQString(text)));
+  }
+
   else if (funcName == "Shortcut") {
     BIND_ARGS2(receiver, keys);
 

@@ -935,6 +935,7 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
 bool EditorWindow::okToDiscardChanges(string const &descriptionOfChanges)
 {
   QMessageBox box(this);
+  box.setObjectName("okToDiscardChanges_box");
   box.setWindowTitle("Unsaved Changes");
   box.setText(toQString(descriptionOfChanges));
   box.addButton(QMessageBox::Discard);

@@ -1,7 +1,5 @@
 
 TODOs:
-  - during event recording, for a key press whose path has empty
-    elements, check if can represent as FocusKeyEvent
   - way to replace all in file
   - smbase has some problems in test-overflow.cc with NDEBUG due to
     use of 'assert'

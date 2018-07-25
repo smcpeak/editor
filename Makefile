@@ -407,5 +407,6 @@ check:
 	./editor -ev=test/read-only1.ev
 	./editor -ev=test/read-only2.ev
 	./editor -ev=test/read-only3.ev
+	./editor -ev=test/prompt-unsaved-changes.ev
 
 # EOF

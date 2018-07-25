@@ -52,6 +52,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
   if (type == QEvent::KeyPress ||
       type == QEvent::Shortcut ||
       type == QEvent::MouseButtonPress ||
+      type == QEvent::FocusIn ||
       type == QEvent::Resize) {
     if (receiver &&
         0==strcmp(receiver->metaObject()->className(), "QWidgetWindow")) {
@@ -70,8 +71,17 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
           // add noise to the recording.
         }
         else {
-          m_out << "KeyPress " << quoted(qObjectPath(receiver))
-                << " " << quoted(keysString(*keyEvent))
+          if (receiver == QApplication::focusWidget()) {
+            // Normally keypresses go to the focused widget, in which
+            // case we can save a lot of noise.
+            m_out << "FocusKeyPress";
+          }
+          else {
+            // This happens, e.g., when interacting with the menus.
+            // Focus in menus is a bit weird.
+            m_out << "KeyPress " << quoted(qObjectPath(receiver));
+          }
+          m_out << " " << quoted(keysString(*keyEvent))
                 << " " << quoted(keyEvent->text())
                 << endl;
         }
@@ -106,6 +116,19 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
                 << " " << quoted(toString(resizeEvent->size()))
                 << endl;
         }
+      }
+    }
+    else if (type == QEvent::FocusIn) {
+      // Filter for QWidgets.  Without this filtering, I see focus
+      // events sent to the QProxyStyle, which is a little odd and
+      // anyway not relevant.
+      if (receiver && qobject_cast<QWidget*>(receiver)) {
+        // Focus is not a kind of input event, so we will not replay it.
+        // But it is useful for ensuring synchronization between the
+        // test and application, so I will automatically emit a check
+        // during recording.  (I can then choose whether to keep it when
+        // editing the test.)
+        m_out << "CheckFocusWidget " << quoted(qObjectPath(receiver)) << endl;
       }
     }
     else {
