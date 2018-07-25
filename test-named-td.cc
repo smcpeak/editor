@@ -72,10 +72,22 @@ static void testReadFile()
 }
 
 
+static void testSetDocumentProcessStatus()
+{
+  NamedTextDocument doc;
+
+  // Check that setting to DPS_RUNNING sets read-only.
+  EXPECT_EQ(doc.isReadOnly(), false);
+  doc.setDocumentProcessStatus(DPS_RUNNING);
+  EXPECT_EQ(doc.isReadOnly(), true);
+}
+
+
 static void entry()
 {
   testWhenUntitledExists();
   testReadFile();
+  testSetDocumentProcessStatus();
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);

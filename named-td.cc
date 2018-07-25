@@ -156,6 +156,11 @@ void NamedTextDocument::readFile()
   xassert(this->hasFilename());
   this->TextDocument::readFile(this->m_name);
   this->refreshModificationTime();
+
+  SMFileUtil sfu;
+  if (sfu.isReadOnly(this->m_name)) {
+    this->setReadOnly(true);
+  }
 }
 
 
@@ -213,6 +218,7 @@ void NamedTextDocument::refreshModificationTime()
 {
   TRACE("modtime", "refresh: old ts for " << this->m_name <<
                    " is " << this->m_lastFileTimestamp);
+  xassert(this->hasFilename());
 
   if (!this->getDiskModificationTime(this->m_lastFileTimestamp)) {
     // We ignore the error because we only

@@ -10,6 +10,7 @@
 #include "trace.h"                     // TRACE
 
 
+// ------------------------- TextDocument ---------------------------
 int TextDocument::s_objectCount = 0;
 
 CHECK_OBJECT_COUNT(TextDocument);
@@ -21,7 +22,8 @@ TextDocument::TextDocument()
     m_historyIndex(0),
     m_savedHistoryIndex(0),
     m_groupStack(),
-    m_documentProcessStatus(DPS_NONE)
+    m_documentProcessStatus(DPS_NONE),
+    m_readOnly(false)
 {
   s_objectCount++;
   TRACE("TextDocument",
@@ -128,6 +130,15 @@ void TextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
     this->clearHistory();
     this->noUnsavedChanges();
   }
+  if (m_documentProcessStatus == DPS_RUNNING) {
+    this->setReadOnly(true);
+  }
+}
+
+
+void TextDocument::setReadOnly(bool readOnly)
+{
+  m_readOnly = readOnly;
 }
 
 

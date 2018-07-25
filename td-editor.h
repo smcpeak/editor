@@ -101,6 +101,10 @@ public:      // funcs
   // Status of associated process, if any.
   bool documentProcessStatus() const   { return m_doc->documentProcessStatus(); }
 
+  // Get/set read-only flag.
+  bool isReadOnly() const              { return m_doc->isReadOnly(); }
+  void setReadOnly(bool readOnly)      { m_doc->setReadOnly(readOnly); }
+
   // -------------------- query file dimensions --------------------
   // Number of lines in the document.  Always positive.
   int numLines() const                 { return m_doc->numLines(); }

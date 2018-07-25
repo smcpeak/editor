@@ -1691,6 +1691,19 @@ static void testGetSelectedOrIdentifier()
 }
 
 
+static void testReadOnly()
+{
+  TextDocumentAndEditor tde;
+
+  // The only thing to verify at this level is it acts like a flag.
+  EXPECT_EQ(tde.isReadOnly(), false);
+  tde.setReadOnly(true);
+  EXPECT_EQ(tde.isReadOnly(), true);
+  tde.setReadOnly(false);
+  EXPECT_EQ(tde.isReadOnly(), false);
+}
+
+
 // --------------------------- main -----------------------------
 static void entry(int argc, char **argv)
 {
@@ -1722,6 +1735,7 @@ static void entry(int argc, char **argv)
   testReplaceText(true);
   testCountSpaceChars();
   testGetSelectedOrIdentifier();
+  testReadOnly();
 
   // This should be redundant now that I have general infrastructure to
   // check s_objectCounts, but I will leave these for a while at least.

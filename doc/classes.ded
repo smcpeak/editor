@@ -14,26 +14,26 @@
       }
     },
     {
-      "attributes": "m_core: TextDocumentCore\nm_history: HE_group\nm_historyIndex: int\nm_savedHistoryIndex: int\nm_groupStack: HE_group[]\nm_documentProcessStatus: enum {...}\n",
+      "attributes": "m_core: TextDocumentCore\nm_history: HE_group\nm_historyIndex: int\nm_savedHistoryIndex: int\nm_groupStack: HE_group[]\nm_documentProcessStatus: enum {...}\nm_readOnly: bool\n",
       "loc": {
         "x": 720,
         "y": 140
       },
       "name": "TextDocument",
       "size": {
-        "h": 120,
+        "h": 130,
         "w": 250
       }
     },
     {
-      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\nm_directory: string\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
+      "attributes": "m_hotkeyDigit: int?\nm_name: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\nm_directory: string\nm_lastFileTimestamp: int64_t\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
       "loc": {
         "x": 720,
-        "y": 295
+        "y": 305
       },
       "name": "NamedTextDocument",
       "size": {
-        "h": 165,
+        "h": 180,
         "w": 250
       }
     },
@@ -81,7 +81,7 @@
       },
       "name": "TextDocumentEditor",
       "size": {
-        "h": 120,
+        "h": 130,
         "w": 250
       }
     },
@@ -100,7 +100,7 @@
       "attributes": "m_namedDoc: NamedTextDocument\n",
       "loc": {
         "x": 380,
-        "y": 295
+        "y": 305
       },
       "name": "NamedTextDocumentEditor",
       "size": {
@@ -124,7 +124,7 @@
       "attributes": "m_documents: NamedTextDocument[]\nm_observers: NamedTextDocumentObserver[]\n",
       "loc": {
         "x": 720,
-        "y": 495
+        "y": 515
       },
       "name": "NamedTextDocumentList",
       "size": {
@@ -135,7 +135,7 @@
     {
       "loc": {
         "x": 380,
-        "y": 365
+        "y": 375
       },
       "name": "NamedTextDocumentListObserver",
       "size": {
@@ -185,7 +185,7 @@
       "parentRef": 1,
       "pt": {
         "x": 845,
-        "y": 285
+        "y": 295
       }
     },
     {
@@ -201,7 +201,7 @@
       "parentRef": 6,
       "pt": {
         "x": 510,
-        "y": 285
+        "y": 295
       }
     },
     {
@@ -209,7 +209,7 @@
       "parentRef": 11,
       "pt": {
         "x": 285,
-        "y": 375
+        "y": 385
       }
     }
   ],
@@ -217,7 +217,7 @@
     {
       "controlPts": [{
         "x": 345,
-        "y": 305
+        "y": 310
       }],
       "end": {"entityRef": 8},
       "label": "m_editor",
@@ -281,7 +281,7 @@
     {
       "controlPts": [{
         "x": 360,
-        "y": 325
+        "y": 330
       }],
       "end": {
         "arrowStyle": "AS_DOUBLE_ANGLE",
@@ -343,11 +343,11 @@
       "controlPts": [
         {
           "x": 730,
-          "y": 470
+          "y": 495
         },
         {
           "x": 650,
-          "y": 440
+          "y": 450
         }
       ],
       "end": {"entityRef": 11},
@@ -366,7 +366,7 @@
         },
         {
           "x": 585,
-          "y": 505
+          "y": 520
         }
       ],
       "end": {"entityRef": 10},

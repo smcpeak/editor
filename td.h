@@ -73,6 +73,22 @@ private:      // data
   // cursor to the end of the document).
   DocumentProcessStatus m_documentProcessStatus;
 
+  // If true, the user interface should prevent attempts to modify the
+  // document contents (the lines of text).  Initially false.
+  //
+  // The purpose of this flag is to prevent unintended changes that will
+  // probably not get saved, such as editing the output of a process or
+  // a file that is read-only on disk.  This is *not* a form of access
+  // control.  The user is assumed to have the ability to turn off the
+  // read-only flag on any document if they want to.
+  //
+  // The methods of this class do *not* enforce the read-only property.
+  // It is entirely up to the UI to do that.  Part of the reason for not
+  // enforcing read-only here is I want ProcessWatcher to be able to
+  // freely insert text, as the changes it is making are not valuable,
+  // original content, but TextDocument does not understand that.
+  bool m_readOnly;
+
 private:     // funcs
   // Change 'historyIndex' by 'inc' and possibly send a notification
   // event to observers.
@@ -110,6 +126,9 @@ public:      // funcs
   bool isProcessOutput() const
     { return m_documentProcessStatus != DPS_NONE; }
 
+  bool isReadOnly() const
+    { return m_readOnly; }
+
   // ------------------------ global changes ----------------------
   // clear history, leaving only the current buffer contents
   void clearHistory();
@@ -128,12 +147,16 @@ public:      // funcs
   void writeFile(string const &fname) const;
 
   // Change the 'm_documentProcessStatus' setting.  Setting it to a
-  // value DPS_RUNNING will immediately discard all undo/redo history.
-  // There must not be any open history groups.
+  // value DPS_RUNNING will set the document as read-only and
+  // immediately discard all undo/redo history.  There must not be any
+  // open history groups.
   //
   // This also has an effect on the highlighting state in
   // NamedTextDocument, which is why it is virtual.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status);
+
+  // Change the read-only flag.
+  void setReadOnly(bool readOnly);
 
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.
