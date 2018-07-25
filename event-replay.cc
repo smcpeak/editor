@@ -16,6 +16,8 @@
 #include "trace.h"                     // TRACE
 
 // Qt
+#include <QAbstractEventDispatcher>
+#include <QAction>
 #include <QApplication>
 #include <QClipboard>
 #include <QComboBox>
@@ -67,13 +69,21 @@ EventReplay::EventReplay(string const &fname)
   }
 
   if (char const *d = getenv("REPLAY_DELAY_MS")) {
+    // Use the timer instead of the 'aboutToBlock' signal.
     m_eventReplayDelayMS = atoi(d);
   }
 }
 
 
 EventReplay::~EventReplay()
-{}
+{
+  // See doc/signals-and-dtors.txt.
+  //
+  // It is possible we already disconnected, or never connected in the
+  // first place, but this is still safe.
+  QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
+                      this, NULL);
+}
 
 
 // Throw a string built using 'stringb'.
@@ -90,15 +100,12 @@ static void resizeChildWidget(QWidget *widget, QSize const &targetSize)
   QSize deltaSize = targetSize - currentSize;
 
   // Get the top-level window.
-  QWidget *parent = widget;
-  while (parent->parentWidget()) {
-    parent = parent->parentWidget();
-  }
+  QWidget *window = widget->window();
 
   // Change window size.
-  QSize windowSize = parent->size();
+  QSize windowSize = window->size();
   windowSize += deltaSize;
-  parent->resize(windowSize);
+  window->resize(windowSize);
 
   // Let the resize event be fully processed so the target widget can
   // reach its final size.
@@ -197,6 +204,17 @@ static EventReplayQueryable *getQueryableFromPath(string const &path)
 }
 
 
+// Get the focus widget, throwing if there is none.
+static QWidget *getFocusWidget()
+{
+  QWidget *widget = QApplication::focusWidget();
+  if (!widget) {
+    xstringb("No widget has focus.");
+  }
+  return widget;
+}
+
+
 // Get the string value of a quoted argument to a replay function.
 static string getCapturedArg(QRegularExpressionMatch &match, int n)
 {
@@ -253,6 +271,22 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
       getKeyPressEventFromString(keys, toQString(text)));
   }
 
+  else if (funcName == "FocusKeyPress") {
+    BIND_ARGS2(keys, text);
+
+    QCoreApplication::postEvent(
+      getFocusWidget(),
+      getKeyPressEventFromString(keys, toQString(text)));
+  }
+
+  else if (funcName == "FocusKeyRelease") {
+    BIND_ARGS2(keys, text);
+
+    QCoreApplication::postEvent(
+      getFocusWidget(),
+      getKeyReleaseEventFromString(keys, toQString(text)));
+  }
+
   else if (funcName == "Shortcut") {
     BIND_ARGS2(receiver, keys);
 
@@ -267,6 +301,13 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     resizeChildWidget(
       getObjectFromPath<QWidget>(receiver),
       qSizeFromString(size));
+  }
+
+  else if (funcName == "TriggerAction") {
+    BIND_ARGS1(path);
+
+    QAction *action = getObjectFromPath<QAction>(path);
+    action->trigger();
   }
 
   else if (funcName == "CheckQuery") {
@@ -300,6 +341,21 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     EXPECT_EQ("CheckClipboard");
   }
 
+  else if (funcName == "CheckActionChecked") {
+    BIND_ARGS2(path, expect);
+
+    QAction *action = getObjectFromPath<QAction>(path);
+    string actual = (action->isChecked()? "true" : "false");
+    EXPECT_EQ("CheckActionChecked " << quoted(path));
+  }
+
+  else if (funcName == "CheckFocusWindowTitle") {
+    BIND_ARGS1(expect);
+
+    string actual = toString(getFocusWidget()->window()->windowTitle());
+    EXPECT_EQ("CheckFocusWindowTitle");
+  }
+
   else {
     xstringb("unrecognized function: " << quoted(funcName));
   }
@@ -328,10 +384,8 @@ bool EventReplay::replayNextEvent()
         return false;
       }
       if (m_in.fail()) {
-        // Although C++ does not guarantee this, a failure of
-        // istream::read is almost certainly due to the 'read' system
-        // call, and the reason conveyed in 'errno'.
-        xsyserror("read");
+        // There is no portable way to get an error reason here.
+        xstringb("reading the next line failed");
       }
       QString qline(line.c_str());
 
@@ -368,31 +422,18 @@ bool EventReplay::replayNextEvent()
 
 void EventReplay::postQuiescenceEvent()
 {
-  TRACE("EventReplay", "posting new QuiescenceEvent");
-
-  // Post a very-low-priority event.  The idea is to let the app reach a
-  // nearly quiescent state before we replay the next event.
-  //
-  // But note: it might be tempting here to simply enqueue all of the
-  // events to be replayed at similarly low priority.  That does not
-  // work because the receiver object lookup requires the app to be in
-  // the same state it was when the event was recorded.
-  QCoreApplication::postEvent(this, new QuiescenceEvent(), -10000);
+  QCoreApplication::postEvent(this, new QuiescenceEvent());
 }
 
 
-void EventReplay::postFutureEvent()
+void EventReplay::installTimer()
 {
-  if (m_eventReplayDelayMS) {
-    TRACE("EventReplay", "starting timer");
+  xassert(m_eventReplayDelayMS);
+  TRACE("EventReplay", "starting timer");
 
-    this->killTimerIf();
-    m_timerId = this->startTimer(m_eventReplayDelayMS);
-    xassert(m_timerId != 0);
-  }
-  else {
-    this->postQuiescenceEvent();
-  }
+  this->killTimerIf();
+  m_timerId = this->startTimer(m_eventReplayDelayMS);
+  xassert(m_timerId != 0);
 }
 
 
@@ -408,8 +449,19 @@ void EventReplay::killTimerIf()
 
 string EventReplay::runTest()
 {
-  // Arrange to receive an event in the future.
-  this->postFutureEvent();
+  if (m_eventReplayDelayMS) {
+    // Use timer-based notification.
+    TRACE("EventReplay", "installing first timer");
+    this->installTimer();
+  }
+  else {
+    // Arrange to get notified just before the event dispatcher yields
+    // control to the OS.  See doc/event-replay.txt.
+    TRACE("EventReplay", "connecting slot_aboutToBlock");
+    QObject::connect(QAbstractEventDispatcher::instance(),
+                     &QAbstractEventDispatcher::aboutToBlock,
+                     this, &EventReplay::slot_aboutToBlock);
+  }
 
   // Process events until the test completes.
   //
@@ -425,42 +477,96 @@ string EventReplay::runTest()
 }
 
 
+bool EventReplay::callReplayNextEvent()
+{
+  bool ret = this->replayNextEvent();
+
+  if (!ret) {
+    // Test is complete (pass or fail).  Stop the event loop we started
+    // in 'runTest'.  But note that that might not be the innermost
+    // event loop at the moment, e.g., if we're running a modal dialog.
+    TRACE("EventReplay", "test complete, stopping "
+      "replay event loop; result: " << m_testResult);
+    m_eventLoop.exit(0);
+  }
+
+  TRACE("EventReplay", "callReplayNextEvent returning " << ret);
+  return ret;
+}
+
+
 bool EventReplay::event(QEvent *ev)
 {
-  if (ev->type() == s_quiescenceEventType ||
-      ev->type() == QEvent::Timer) {
-    this->killTimerIf();
-
-    // Completely drain the event queue.
-    //
-    // Even though this event has very low priority, something else
-    // could be even lower, and/or there could be another mechanism
-    // somewhere playing the same game of constantly posting a
-    // low-priority event, so we need to explicitly and completely drain
-    // it to be sure to reach quiescence.
-    TRACE("EventReplay", "draining queue");
-    QCoreApplication::processEvents();
-    TRACE("EventReplay", "queue is now empty");
-
-    // Post the next event.
-    if (!this->replayNextEvent()) {
-      // Test is complete (pass or fail).  Stop the event loop.
-      TRACE("EventReplay", "test complete, stopping replay event loop; "
-        "result: " << m_testResult);
-      m_eventLoop.exit(0);
+  if (ev->type() == s_quiescenceEventType) {
+    TRACE("EventReplay", "received QuiescenceEvent");
+    if (this->callReplayNextEvent()) {
+      // Test is continuing.  We don't have to do anything to keep
+      // receiving 'aboutToBlock' and hence enqueueing QuiescenceEvents.
     }
     else {
-      // Test is continuing.  Arrange to receive another event.
-      this->postFutureEvent();
+      // Disconnect from the event dispatcher to stop getting signals.
+      TRACE("EventReplay", "disconnecting slot_aboutToBlock");
+      QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
+                          this, NULL);
     }
 
     return true;
   }
 
-  // This object should only be receiving QuiescenceEvents, and I don't
+  if (ev->type() == QEvent::Timer) {
+    TRACE("EventReplay", "received TimerEvent");
+    this->killTimerIf();
+
+    // Post the next event.
+    if (this->callReplayNextEvent()) {
+      // Test is continuing.  Arrange to receive another event.
+      this->installTimer();
+    }
+    else {
+      // The timer has been killed so we will not get any more events.
+      TRACE("EventReplay", "refraining from installing another timer");
+    }
+
+    return true;
+  }
+
+  // This object should only be receiving TimerEvents, and I don't
   // think QObject::event does anything (besides return false), but I
   // will do this just for overall cleanliness.
   return QObject::event(ev);
+}
+
+
+void EventReplay::slot_aboutToBlock() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  TRACE("EventReplay", "in slot_aboutToBlock");
+
+  if (m_in.eof()) {
+    // This should not happen since, once EOF is hit, we disconnect this
+    // slot, but I will be defensive here.
+    TRACE("EventReplay", "we already hit EOF in the input file");
+    return;
+  }
+
+  // Getting here means the application really is quiescent; if we did
+  // not do this, the app would block waiting for some external event.
+  // So, post an event that will trigger the next event to replay.
+  this->postQuiescenceEvent();
+
+  // At this point, we're about to return to the site of a call to
+  // WaitForMultipleObjectsEx (or poll/select on unix) and we know the
+  // OS event queue is empty.  In this state, WaitFor will block, but we
+  // want to keep running in order to process the QuiescenceEvent we
+  // just posted to the Qt event queue.  So, tell the dispatcher to wake
+  // up.  That posts a message to the OS event queue which will ensure
+  // that WaitFor returns immediately.  Then, control will cycle through
+  // the usual event dispatch steps, including handling the
+  // QuiescenceEvent, before eventually returning to 'aboutToBlock' once
+  // the app is again quiescent.
+  QAbstractEventDispatcher::instance()->wakeUp();
+
+  GENERIC_CATCH_END
 }
 
 

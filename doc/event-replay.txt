@@ -1,0 +1,108 @@
+event-replay.txt
+----------------
+
+This document explains how the event replay system works.
+
+Event replay executes events, and checks application state, based on
+instructions in a text file.  The format is one action or check per line
+(other than blank or comments).  The "-record" switch can create a
+sequence of input events to start with.  Checks are then inserted
+manually.  Example (from test/read-only1.ev):
+
+  # Verify we can make a change and undo it.
+  KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
+  CheckLabel "window1.m_statusArea.m_filename" "untitled.txt *"
+  Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
+  CheckLabel "window1.m_statusArea.m_filename" "untitled.txt"
+
+Event actions are replayed by posting them to the Qt event queue,
+usually with the receiver object indicated by a QObject name path.
+
+Checks usually work by identifying an object (by path) and querying
+it somehow to yield a string that is then compared to what is in the
+test script.
+
+The main question is how to properly synchronize actions and checks with
+the application.  We can't just post all the events at the start, among
+other reasons because the receivers won't exist yet.  A simple approach
+is to post them using a fixed timer, but that leads to tension between
+reliability (long timer) and test speed (short timer).  The event replay
+system can be instructed to use a timer via the REPLAY_DELAY_MS
+environment variable, but that is mainly for debugging.
+
+Instead, the basic idea of the normal mechanism is to post an event or
+do a check, then wait for the application to reach quiescence, then post
+the next, etc.  But how to detect quiescence?  My first approach was to
+replace the top-level event loop ("exec()" call) with something like:
+
+  while (events) {
+    dequeue and post replay event;
+    QCoreApplication::processEvents();   // drain event queue
+  }
+
+This does not work because if event processing starts a modal dialog,
+control never returns to the loop since the modal dialog starts its own
+event loop.
+
+The next approach was to post a low-priority "quiescence" event.  Then
+the event handler was basically:
+
+  dequeue and post replay event;
+  post QuiescenceEvent;
+
+This fails for a more subtle reason.  Anywhere in the guts of Qt,
+something could drain the event queue on its own by calling
+processEvents(), which would trigger the QuiescenceEvent, even though
+the app wasn't actually quiescent because whatever was meant to happen
+after processEvents() was still pending.  This turns out to happen when
+QMessageBox closes.  The effect is I would replay the next event before
+the dialog has exited, which fails of course.
+
+Aside: The documentation QObject::startTimer says, "If interval is 0,
+then the timer event occurs once every time there are no more window
+system events to process."  The meaning of this statement is unclear
+(what exactly is a "window system event" in this context?), but
+empirically, getting a timer notification with a zero interval does
+*not* imply the application is quiescent, so that's out too.
+
+So, the current approach is to hook into the
+QAbstractEventDispatcher::aboutToBlock signal.  For illustration of its
+behavior, here is the Windows implementation of emitting that signal, in
+qeventdispatcher_win.cpp:
+
+  canWait = (!retVal
+             && !d->interrupt
+             && (flags & QEventLoop::WaitForMoreEvents));
+  if (canWait) {
+    ...
+    emit aboutToBlock();
+    waitRet = MsgWaitForMultipleObjectsEx(..., INFINITE, ...);
+    emit awake();
+
+We can see that 'aboutToBlock' is only called if the innermost event
+loop hasn't exited ('!d->interrupt') and we are processing events with
+the intent to block if there are none ('QEventLoop::WaitForMoreEvents').
+The latter eliminates the problem with a random processEvents() call
+somewhere in the Qt guts, since that won't block.
+
+This suggests doing replay and checking in 'aboutToBlock', but that has
+a subtle problem: if nothing adds anything to the OS event queue, then
+'emit aboutToBlock()' will return and drop straight into WaitFor, which
+will block, hanging the test until an OS event happens to arrive.
+Furthermore, it seems like a bad idea to do a lot of work, especially
+replaying events synchronously (like what "TriggerAction" does), inside
+the 'aboutToBlock' signal handler, since it is called from a weird spot
+in the guts in the Qt event handler.
+
+Therefore, 'slot_aboutToBlock' merely posts QuiescenceEvent and calls
+QAbstractEventDispatcher::instance()->wakeUp().  The latter posts an OS
+event so that WaitFor will return immediately.  Then the QuiescenceEvent
+will be dispatched in the normal way from whatever is the innermost
+event loop, and that is where we do event replay and checking.  When
+that is finished and the app returns to quiescence, 'aboutToBlock' will
+again be invoked, repeating the cycle.
+
+When the test is done, we simply disconnect 'aboutToBlock'.
+
+
+EOF

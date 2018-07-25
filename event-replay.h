@@ -36,11 +36,16 @@ public:
 
 // Read events and test assertions from a file.  Synthesize the events
 // to drive the app, and check the assertions.
+//
+// See doc/event-replay.txt for theory of operation.
 class EventReplay : public QObject {
   Q_OBJECT
 
 private:     // types
-  // The user event that indicates near-quiescence.
+  // The user event that indicates application quiescence (i.e., the
+  // state where nothing more would happen if no more external events
+  // arrived).  Receiving this event is what causes us to perform the
+  // next scripted event or check.
   class QuiescenceEvent : public QEvent {
   public:
     QuiescenceEvent();
@@ -68,10 +73,9 @@ private:     // instance data
   // Event loop object started by 'runTest'.
   QEventLoop m_eventLoop;
 
-  // If non-zero, wait this long between events.  Normally it should be
-  // fine to use 0 since the mechanism always waits for quiescence, but
-  // a delay can help during debugging.  Currently this can only be set
-  // with an envvar.
+  // If non-zero, use a delay timer *instead* of the quiescence
+  // mechanism.  A timer is less reliable but can help during debugging.
+  // Currently this can only be set with an envvar.
   int m_eventReplayDelayMS;
 
   // Active timer ID, or 0 if none.
@@ -86,9 +90,12 @@ private:     // funcs
   // the test should continue after doing that.
   bool replayNextEvent();
 
-  // Post either a timer or quiescence event to be delivered in the
-  // future.
-  void postFutureEvent();
+  // Wrapper around 'replayNextEvent' that shuts down the event loop if
+  // the test should stop.
+  bool callReplayNextEvent();
+
+  // Install a timer to trigger the next replay event.
+  void installTimer();
 
   // Kill the timer if it is active.
   void killTimerIf();
@@ -97,7 +104,7 @@ private:     // funcs
   void postQuiescenceEvent();
 
 public:      // funcs
-  EventReplay(string const &fname);
+  explicit EventReplay(string const &fname);
   ~EventReplay();
 
   // Inject all the events and check all the assertions.  If everything
@@ -107,6 +114,10 @@ public:      // funcs
 
   // QObject methods.
   virtual bool event(QEvent *ev) OVERRIDE;
+
+private Q_SLOTS:
+  // Called when the event dispatcher is about to block.
+  void slot_aboutToBlock() NOEXCEPT;
 };
 
 
