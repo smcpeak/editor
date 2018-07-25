@@ -217,12 +217,6 @@ private:     // funcs
   void drawOneOffscreenMatchIndicator(
     QPainter &paint, QtBDFFont *font, bool above, QString const &text);
 
-  // Get the current "effective" cursor coordinate range the purpose of
-  // search text calculations.  This is a range whose 'start' is the
-  // lesser of 'cursor' and 'mark, and whose 'end' is the greater.  If
-  // mark is not set, the range has 'cursor' at both ends.
-  TextCoordRange getEffectiveSearchCursorRange();
-
   // Scroll the display to the next/prev search it.  If found, return
   // true and, if also 'select', set the cursor/mark to select the
   // match.

@@ -510,13 +510,6 @@ void EditorWidget::redraw()
 }
 
 
-// TODO: Remove this function.  Instead, directly call 'getSelectRange'.
-TextCoordRange EditorWidget::getEffectiveSearchCursorRange()
-{
-  return m_editor->getSelectRange();
-}
-
-
 // Compute and broadcast match status indicator.
 void EditorWidget::emitSearchStatusIndicator()
 {
@@ -531,7 +524,7 @@ void EditorWidget::emitSearchStatusIndicator()
   }
 
   // Get effective selection range for this calculation.
-  TextCoordRange range = this->getEffectiveSearchCursorRange();
+  TextCoordRange range = m_editor->getSelectRange();
 
   // Matches above and below range start line.
   int matchesAbove = m_textSearch->countMatchesAbove(range.start.line);
@@ -1965,7 +1958,7 @@ void EditorWidget::setSearchStringParams(string const &searchString,
 
 bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
 {
-  TextCoordRange range = this->getEffectiveSearchCursorRange();
+  TextCoordRange range = m_editor->getSelectRange();
 
   if (m_textSearch->nextMatch(reverse, range)) {
     TRACE("sar", (reverse? "prev" : "next") << " found: " << range);
@@ -2015,8 +2008,8 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
 
 bool EditorWidget::searchHitSelected() const
 {
-  return m_editor->markActive() &&
-         m_textSearch->rangeIsMatch(m_editor->cursor(), m_editor->mark());
+  TextCoordRange range = m_editor->getSelectRange();
+  return m_textSearch->rangeIsMatch(range.start, range.end);
 }
 
 
@@ -2336,6 +2329,10 @@ string EditorWidget::eventReplayQuery(string const &state)
   }
   else if (state == "documentName") {
     return m_editor->m_namedDoc->name();
+  }
+  else if (state == "documentFileName") {
+    // Strip path info.
+    return SMFileUtil().splitPathBase(m_editor->m_namedDoc->name());
   }
   else {
     return stringb("unknown state: " << quoted(state));

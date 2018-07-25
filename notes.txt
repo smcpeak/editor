@@ -1,8 +1,5 @@
 
 TODOs:
-  - BUG: Search for "^" as a regex.  Match indicator shows we are on
-    some match, but pressing Ctrl+R advances.  Only then does it start
-    replacing as expected.
   - make the open documents dialog taller by default
   - during event recording, for a key press whose path has empty
     elements, check if can represent as FocusKeyEvent
