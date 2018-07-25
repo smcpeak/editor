@@ -2269,6 +2269,7 @@ bool EditorWidget::editSafetyCheck()
 
   // Prompt the user.
   QMessageBox box(this);
+  box.setObjectName("editSafetyCheck_box");
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
     "The document \"" << m_editor->m_namedDoc->name() << "\" has changed on disk.  "
@@ -2298,6 +2299,7 @@ bool EditorWidget::editSafetyCheck()
 bool EditorWidget::promptOverrideReadOnly()
 {
   QMessageBox box(this);
+  box.setObjectName("promptOverrideReadOnly_box");
   box.setWindowTitle("Read-only Document");
   box.setText(toQString(stringb(
     "The document " << quoted(m_editor->m_namedDoc->name()) <<
@@ -2325,6 +2327,12 @@ string EditorWidget::eventReplayQuery(string const &state)
   }
   else if (state == "lastVisible") {
     return stringb(m_editor->lastVisible());
+  }
+  else if (state == "documentProcessState") {
+    return toString(m_editor->documentProcessStatus());
+  }
+  else if (state == "hasUnsavedChanges") {
+    return string(m_editor->unsavedChanges()? "true" : "false");
   }
   else {
     return stringb("unknown state: " << quoted(state));

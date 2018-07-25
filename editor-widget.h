@@ -415,6 +415,8 @@ public:      // funcs
   // Current file being edited.  This is 'const' because the file is
   // shared with other widgets in this process, so the constness of
   // this object does not propagate to it.
+  //
+  // TODO: Rename this method.
   NamedTextDocument *getDocumentFile() const;
 
   // Get what the user thinks of as the "current directory" for this

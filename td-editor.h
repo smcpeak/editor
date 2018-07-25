@@ -99,7 +99,8 @@ public:      // funcs
     { return &(m_doc->getCore()); }
 
   // Status of associated process, if any.
-  bool documentProcessStatus() const   { return m_doc->documentProcessStatus(); }
+  DocumentProcessStatus documentProcessStatus() const
+    { return m_doc->documentProcessStatus(); }
 
   // Get/set read-only flag.
   bool isReadOnly() const              { return m_doc->isReadOnly(); }

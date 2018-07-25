@@ -28,6 +28,9 @@ enum DocumentProcessStatus {
   NUM_DOCUMENT_PROCESS_STATUSES
 };
 
+// Return "DPS_NONE", etc.
+char const *toString(DocumentProcessStatus dps);
+
 
 // This class represents a text document (which is a sequence of lines)
 // and its undo/redo history.

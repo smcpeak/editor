@@ -404,5 +404,6 @@ check:
 	./editor -ev=test/sar-match-limit.ev test/file1.h
 	./editor -ev=test/resize1.ev test/file1.h
 	./editor -ev=test/read-only1.ev
+	./editor -ev=test/read-only2.ev
 
 # EOF

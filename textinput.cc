@@ -27,6 +27,7 @@ TextInputDialog::TextInputDialog(QString const &title,
     m_maxHistorySize(20),
     m_text()
 {
+  this->setObjectName("TextInputDialog");
   this->setWindowTitle(title);
 
   m_vbox = new QVBoxLayout();
@@ -34,9 +35,11 @@ TextInputDialog::TextInputDialog(QString const &title,
 
   m_label = new QLabel("Input:");
   m_vbox->insertWidget(m_vboxNextIndex++, m_label);
+  SET_QOBJECT_NAME(m_label);
 
   m_comboBox = new QComboBox();
   m_vbox->insertWidget(m_vboxNextIndex++, m_comboBox);
+  SET_QOBJECT_NAME(m_comboBox);
   m_comboBox->setEditable(true);
 
   // Associate the label with the combo box.  That allows the client

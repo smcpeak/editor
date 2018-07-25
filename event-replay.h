@@ -81,6 +81,11 @@ private:     // instance data
   // Active timer ID, or 0 if none.
   int m_timerId;
 
+  // True while we are sleeping.  We will wake up and continue
+  // processing events, so should do nothing when quiescence is
+  // detected.
+  bool m_sleeping;
+
 private:     // funcs
   // Replay a single call line as matched by 'match'.  Throw a string
   // object if there is a problem.

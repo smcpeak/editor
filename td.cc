@@ -5,9 +5,21 @@
 
 // smbase
 #include "autofile.h"                  // AutoFILE
+#include "macros.h"                    // DEFINE_ENUMERATION_TO_STRING
 #include "mysig.h"                     // printSegfaultAddrs
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "trace.h"                     // TRACE
+
+
+DEFINE_ENUMERATION_TO_STRING(
+  DocumentProcessStatus,
+  NUM_DOCUMENT_PROCESS_STATUSES,
+  (
+    "DPS_NONE",
+    "DPS_RUNNING",
+    "DPS_FINISHED"
+  )
+)
 
 
 // ------------------------- TextDocument ---------------------------

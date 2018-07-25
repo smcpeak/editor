@@ -9,6 +9,7 @@
 // smqtutil
 #include "qtguiutil.h"                 // getKeyPressFromString
 #include "qtutil.h"                    // operator<<(QString)
+#include "timer-event-loop.h"          // sleepWhilePumpingEvents
 
 // smbase
 #include "strutil.h"                   // parseQuotedString, quoted
@@ -54,7 +55,8 @@ EventReplay::EventReplay(string const &fname)
     m_testResult(),
     m_eventLoop(),
     m_eventReplayDelayMS(0),
-    m_timerId(0)
+    m_timerId(0),
+    m_sleeping(false)
 {
   if (m_in.fail()) {
     // Unfortunately there is no portable way to get the error cause
@@ -263,6 +265,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   QString funcName(match.captured(1));
   int numArgs = match.lastCapturedIndex() - 1;
 
+  // --------------- events/actions ---------------
   if (funcName == "KeyPress") {
     BIND_ARGS3(receiver, keys, text);
 
@@ -310,6 +313,17 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     action->trigger();
   }
 
+  else if (funcName == "Sleep") {
+    BIND_ARGS1(duration);
+
+    int ms = atoi(duration.c_str());
+    TRACE("EventReplay", "sleeping for " << ms << " ms");
+    RESTORER(bool, m_sleeping, true);
+    sleepWhilePumpingEvents(ms);
+    TRACE("EventReplay", "done sleeping");
+  }
+
+  // -------------------- checks --------------------
   else if (funcName == "CheckQuery") {
     BIND_ARGS3(receiver, state, expect);
 
@@ -354,6 +368,20 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_EQ("CheckFocusWindowTitle");
+  }
+
+  else if (funcName == "CheckFocusWindow") {
+    BIND_ARGS1(expect);
+
+    string actual = qObjectPath(getFocusWidget()->window());
+    EXPECT_EQ("CheckFocusWindow");
+  }
+
+  else if (funcName == "CheckFocusWidget") {
+    BIND_ARGS1(expect);
+
+    string actual = qObjectPath(getFocusWidget());
+    EXPECT_EQ("CheckFocusWidget");
   }
 
   else {
@@ -540,6 +568,13 @@ bool EventReplay::event(QEvent *ev)
 void EventReplay::slot_aboutToBlock() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+
+  if (m_sleeping) {
+    // Ignore the quiescence, and don't print anything so we don't spam
+    // the log.
+    return;
+  }
+
   TRACE("EventReplay", "in slot_aboutToBlock");
 
   if (m_in.eof()) {
