@@ -6,7 +6,6 @@
 // this dir
 #include "debug-values.h"              // DEBUG_VALUES
 #include "nearby-file.h"               // getNearbyFilename
-#include "position.h"                  // Position
 #include "qtbdffont.h"                 // QtBDFFont
 #include "qtguiutil.h"                 // keysString(QKeyEvent)
 #include "qtutil.h"                    // toString(QString)

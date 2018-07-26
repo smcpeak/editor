@@ -1,14 +1,10 @@
 
 TODOs:
-  - way to replace all in file
-  - smbase has some problems in test-overflow.cc with NDEBUG due to
-    use of 'assert'
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
     - then, when it is not, we get ".." in the document path name
   - put "<running>" into the window title
   - if I select text, Ctrl+I should open that w/o filename heuristics
-  - working on automated GUI tests
   - draw an indicator when the cursor is offscreen
   - split panes, esp. a vertical split instead of multiple windows
   - allow Tab character; issue is rendering support
@@ -17,8 +13,6 @@ TODOs:
       - prompt on closure of document with running process
       - soft end of buffer jumping
       - when switch to output buffer, need to jump to end
-      - process output documents should not be editable!
-        - but Save As should transition them to normal editable files
       - open-files-dialog: button to close all with finished processes
       - annoying completion behavior of Qt combo boxes; want more like
         shell with readline (except less buggy!)
@@ -34,6 +28,7 @@ TODOs:
     - parallel compilation mode that keeps the various output streams
       separate somehow
   - rename all references to "open-files dialog" to "documents"?
+  - way to replace all in file
 
   - very annoyed by the scrollbar thumb being too light
     - spent a while digging through QStyle docs and (mostly) code,
