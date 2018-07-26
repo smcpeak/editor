@@ -141,10 +141,10 @@ static void expectNM_true(TextSearch const &ts,
     TextCoordRange range(cursor, mark);
     bool actualRes = ts.nextMatch(reverse, range);
     EXPECT_EQ(actualRes, true);
-    EXPECT_EQ(range.start.line, expectCursorLine);
-    EXPECT_EQ(range.start.column, expectCursorCol);
-    EXPECT_EQ(range.end.line, expectMarkLine);
-    EXPECT_EQ(range.end.column, expectMarkCol);
+    EXPECT_EQ(range.m_start.m_line, expectCursorLine);
+    EXPECT_EQ(range.m_start.m_column, expectCursorCol);
+    EXPECT_EQ(range.m_end.m_line, expectMarkLine);
+    EXPECT_EQ(range.m_end.m_column, expectMarkCol);
   }
 }
 

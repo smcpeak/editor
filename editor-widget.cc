@@ -409,7 +409,7 @@ string EditorWidget::getDocumentDirectory() const
 
 void EditorWidget::fileOpenAtCursor()
 {
-  string lineText = m_editor->getWholeLine(m_editor->cursor().line);
+  string lineText = m_editor->getWholeLine(m_editor->cursor().m_line);
 
   ArrayStack<string> prefixes;
   prefixes.push(this->getDocumentDirectory());
@@ -418,7 +418,7 @@ void EditorWidget::fileOpenAtCursor()
   prefixes.push("");
 
   FileAndLineOpt fileAndLine =
-    getNearbyFilename(prefixes, lineText, m_editor->cursor().column);
+    getNearbyFilename(prefixes, lineText, m_editor->cursor().m_column);
 
   if (!fileAndLine.hasFilename()) {
     // Prompt with the document directory.
@@ -526,27 +526,27 @@ void EditorWidget::emitSearchStatusIndicator()
   TextCoordRange range = m_editor->getSelectRange();
 
   // Matches above and below range start line.
-  int matchesAbove = m_textSearch->countMatchesAbove(range.start.line);
-  int matchesBelow = m_textSearch->countMatchesBelow(range.start.line);
+  int matchesAbove = m_textSearch->countMatchesAbove(range.m_start.m_line);
+  int matchesBelow = m_textSearch->countMatchesBelow(range.m_start.m_line);
 
   // Matches before, at, and after range start within its line.
   int matchesBefore=0, matchesOn=0, matchesSelected=0, matchesAfter=0;
-  if (m_textSearch->countLineMatches(range.start.line)) {
+  if (m_textSearch->countLineMatches(range.m_start.m_line)) {
     ArrayStack<TextSearch::MatchExtent> const &matches =
-      m_textSearch->getLineMatches(range.start.line);
+      m_textSearch->getLineMatches(range.m_start.m_line);
 
     for (int i=0; i < matches.length(); i++) {
       TextSearch::MatchExtent const &m = matches[i];
-      if (m.m_start < range.start.column) {
+      if (m.m_start < range.m_start.m_column) {
         matchesBefore++;
       }
-      else if (m.m_start > range.start.column) {
+      else if (m.m_start > range.m_start.m_column) {
         matchesAfter++;
       }
       else {
         matchesOn++;
         if (range.withinOneLine() &&
-            m.m_length == (range.end.column - range.start.column)) {
+            m.m_length == (range.m_end.m_column - range.m_start.m_column)) {
           matchesSelected++;
         }
       }
@@ -618,9 +618,9 @@ void EditorWidget::computeOffscreenMatchIndicator(QLabel *label,
 void EditorWidget::computeOffscreenMatchIndicators()
 {
   this->computeOffscreenMatchIndicator(m_matchesAboveLabel,
-    m_textSearch->countMatchesAbove(m_editor->firstVisible().line));
+    m_textSearch->countMatchesAbove(m_editor->firstVisible().m_line));
   this->computeOffscreenMatchIndicator(m_matchesBelowLabel,
-    m_textSearch->countMatchesBelow(m_editor->lastVisible().line));
+    m_textSearch->countMatchesBelow(m_editor->lastVisible().m_line));
 }
 
 
@@ -817,7 +817,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     // We say there is no trailing whitespace on the cursor line
     // because highlighting it there is annoying and unhelpful.
     int const startOfTrailingWhitespace =
-      (line == m_editor->cursor().line)?
+      (line == m_editor->cursor().m_line)?
         lineLengthLoose :
         lineLengthLoose - m_editor->countTrailingSpacesTabs(line);
 
@@ -869,27 +869,27 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
 
     // incorporate effect of selection
     if (this->selectEnabled() &&
-        selRange.start.line <= line && line <= selRange.end.line)
+        selRange.m_start.m_line <= line && line <= selRange.m_end.m_line)
     {
-      if (selRange.start.line < line && line < selRange.end.line) {
+      if (selRange.m_start.m_line < line && line < selRange.m_end.m_line) {
         // entire line is selected
         categories.overlay(0, 0 /*infinite*/, TC_SELECTION);
       }
-      else if (selRange.start.line < line && line == selRange.end.line) {
+      else if (selRange.m_start.m_line < line && line == selRange.m_end.m_line) {
         // Left half of line is selected.
-        if (selRange.end.column) {
-          categories.overlay(0, selRange.end.column, TC_SELECTION);
+        if (selRange.m_end.m_column) {
+          categories.overlay(0, selRange.m_end.m_column, TC_SELECTION);
         }
       }
-      else if (selRange.start.line == line && line < selRange.end.line) {
+      else if (selRange.m_start.m_line == line && line < selRange.m_end.m_line) {
         // Right half of line is selected.
-        categories.overlay(selRange.start.column, 0 /*infinite*/, TC_SELECTION);
+        categories.overlay(selRange.m_start.m_column, 0 /*infinite*/, TC_SELECTION);
       }
-      else if (selRange.start.line == line && line == selRange.end.line) {
+      else if (selRange.m_start.m_line == line && line == selRange.m_end.m_line) {
         // Middle part of line is selected.
-        if (selRange.end.column != selRange.start.column) {
-          categories.overlay(selRange.start.column,
-            selRange.end.column - selRange.start.column, TC_SELECTION);
+        if (selRange.m_end.m_column != selRange.m_start.m_column) {
+          categories.overlay(selRange.m_start.m_column,
+            selRange.m_end.m_column - selRange.m_start.m_column, TC_SELECTION);
         }
       }
       else {
@@ -982,7 +982,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     }
 
     // draw the cursor as a line
-    if (line == m_editor->cursor().line) {
+    if (line == m_editor->cursor().m_line) {
       // just testing the mechanism that catches exceptions
       // raised while drawing
       //if (line == 5) {
@@ -992,7 +992,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       paint.save();
 
       // 0-based cursor column relative to what is visible
-      int const cursorCol = m_editor->cursor().column;
+      int const cursorCol = m_editor->cursor().m_column;
       int const visibleCursorCol = cursorCol - firstCol;
 
       // 'x' coordinate of the leftmost column of the character cell
@@ -1921,7 +1921,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 {
   INITIATING_DOCUMENT_CHANGE();
   m_editor->turnSelection(shift);
-  int line = m_editor->cursor().line;
+  int line = m_editor->cursor().m_line;
   m_editor->setCursor(m_editor->lineEndCoord(line+1));
   scrollToCursor();
 }
@@ -1967,8 +1967,8 @@ bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
     }
 
     // Try to show the entire match, giving preference to the end.
-    m_editor->scrollToCoord(range.start, SAR_SCROLL_GAP);
-    m_editor->scrollToCoord(range.end, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(range.m_start, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(range.m_end, SAR_SCROLL_GAP);
     return true;
   }
   else {
@@ -2008,7 +2008,7 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
 bool EditorWidget::searchHitSelected() const
 {
   TextCoordRange range = m_editor->getSelectRange();
-  return m_textSearch->rangeIsMatch(range.start, range.end);
+  return m_textSearch->rangeIsMatch(range.m_start, range.m_end);
 }
 
 
@@ -2143,12 +2143,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
   // think of as the conceptually inserted line.
   line--;
 
-  if (line <= m_editor->cursor().line) {
+  if (line <= m_editor->cursor().m_line) {
     m_editor->moveCursorBy(+1, 0);
     m_editor->moveFirstVisibleBy(+1, 0);
   }
 
-  if (m_editor->markActive() && line <= m_editor->mark().line) {
+  if (m_editor->markActive() && line <= m_editor->mark().m_line) {
     m_editor->moveMarkBy(+1, 0);
   }
 
@@ -2166,12 +2166,12 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEX
   TRACE("observe", "observeDeleteLine line=" << line);
   INITIATING_DOCUMENT_CHANGE();
 
-  if (line < m_editor->cursor().line) {
+  if (line < m_editor->cursor().m_line) {
     m_editor->moveCursorBy(-1, 0);
     m_editor->moveFirstVisibleBy(-1, 0);
   }
 
-  if (m_editor->markActive() && line < m_editor->mark().line) {
+  if (m_editor->markActive() && line < m_editor->mark().m_line) {
     m_editor->moveMarkBy(-1, 0);
   }
 

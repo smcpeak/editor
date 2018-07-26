@@ -279,7 +279,7 @@ void TextSearch::observeInsertText(TextDocumentCore const &doc, TextCoord tc, ch
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
-  this->recomputeLine(tc.line);
+  this->recomputeLine(tc.m_line);
   GENERIC_CATCH_END
 }
 
@@ -288,7 +288,7 @@ void TextSearch::observeDeleteText(TextDocumentCore const &doc, TextCoord tc, in
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
-  this->recomputeLine(tc.line);
+  this->recomputeLine(tc.m_line);
   GENERIC_CATCH_END
 }
 
@@ -455,9 +455,9 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
   int inc = (reverse? -1 : +1);
 
   // Consider line with range start.
-  if (countLineMatches(range.start.line)) {
+  if (countLineMatches(range.m_start.m_line)) {
     ArrayStack<MatchExtent> const &matches =
-      this->getLineMatches(range.start.line);
+      this->getLineMatches(range.m_start.m_line);
 
     // Nominally walk forward.
     int begin = 0;
@@ -471,19 +471,19 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
     // Walk the matches in 'inc' direction.
     for (int i=begin; reversibleLTE(reverse, i, end); i += inc) {
       MatchExtent const &m = matches[i];
-      if (reversibleLT(reverse, m.m_start, range.start.column)) {
+      if (reversibleLT(reverse, m.m_start, range.m_start.m_column)) {
         // This match occurs before 'range.start'.
         continue;
       }
 
       // Where does this match end?
-      TextCoord matchEnd(range.start.line, m.m_start);
+      TextCoord matchEnd(range.m_start.m_line, m.m_start);
       m_document->walkCoord(matchEnd, +m.m_length);
 
       // Now, how does its start compare to 'range.start'?
-      if (m.m_start == range.start.column) {
+      if (m.m_start == range.m_start.m_column) {
         // How does the end compare to 'range.end'?
-        if (reversibleLTE(reverse, matchEnd, range.end)) {
+        if (reversibleLTE(reverse, matchEnd, range.m_end)) {
           // The match end is less than or equal to my current mark.  I
           // regard that as being the match we are on or already past,
           // so keep going.
@@ -493,39 +493,39 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
           // The match end is further than mark.  We will return this
           // one, effectively extending the selection to get it.  (If
           // 'reverse', we are actually shrinking the match.)
-          range.end = matchEnd;
+          range.m_end = matchEnd;
           return true;
         }
       }
       else {
         // This is the first match after the range start.
-        range.start.column = m.m_start;
-        range.end = matchEnd;
+        range.m_start.m_column = m.m_start;
+        range.m_end = matchEnd;
         return true;
       }
     }
   }
 
   // Consider other lines.
-  range.start.line += inc;
-  while (reverse? 0 <= range.start.line :
-                  range.start.line < this->documentLines()) {
-    if (countLineMatches(range.start.line)) {
+  range.m_start.m_line += inc;
+  while (reverse? 0 <= range.m_start.m_line :
+                  range.m_start.m_line < this->documentLines()) {
+    if (countLineMatches(range.m_start.m_line)) {
       // Grab the extreme match on this line.
       ArrayStack<MatchExtent> const &matches =
-        this->getLineMatches(range.start.line);
+        this->getLineMatches(range.m_start.m_line);
       int i = (reverse? matches.length()-1 : 0);
       MatchExtent const &m = matches[i];
 
       // Found first match after 'range.start' on another line.
-      range.start.column = m.m_start;
-      range.end = range.start;
-      m_document->walkCoord(range.end, +m.m_length);
+      range.m_start.m_column = m.m_start;
+      range.m_end = range.m_start;
+      m_document->walkCoord(range.m_end, +m.m_length);
       return true;
     }
 
     // Keep looking on subsequent lines.
-    range.start.line += inc;
+    range.m_start.m_line += inc;
   }
 
   return false;
@@ -540,19 +540,19 @@ bool TextSearch::rangeIsMatch(TextCoord const &a0, TextCoord const &b0) const
     swap(a,b);
   }
 
-  if (a.line != b.line) {
+  if (a.m_line != b.m_line) {
     // Currently we never match across line boundaries.
     return false;
   }
 
-  if (countLineMatches(a.line)) {
+  if (countLineMatches(a.m_line)) {
     ArrayStack<MatchExtent> const &matches =
-      this->getLineMatches(a.line);
+      this->getLineMatches(a.m_line);
 
     for (int i=0; i < matches.length(); i++) {
       MatchExtent const &m = matches[i];
-      if (m.m_start == a.column &&
-          m.m_length == (b.column - a.column)) {
+      if (m.m_start == a.m_column &&
+          m.m_length == (b.m_column - a.m_column)) {
         return true;
       }
     }

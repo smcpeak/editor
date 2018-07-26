@@ -275,8 +275,8 @@ public:      // funcs
   //
   // Hmmm, m_editor is private.  Maybe I just want to expose the same
   // interface then?
-  int cursorLine() const                  { return m_editor->cursor().line; }
-  int cursorCol() const                   { return m_editor->cursor().column; }
+  int cursorLine() const                  { return m_editor->cursor().m_line; }
+  int cursorCol() const                   { return m_editor->cursor().m_column; }
 
   // absolute cursor movement
   void cursorTo(TextCoord tc);
@@ -303,10 +303,10 @@ public:      // funcs
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
-  int firstVisibleLine() const            { return m_editor->firstVisible().line; }
-  int firstVisibleCol() const             { return m_editor->firstVisible().column; }
-  int lastVisibleLine() const             { return m_editor->lastVisible().line; }
-  int lastVisibleCol() const              { return m_editor->lastVisible().column; }
+  int firstVisibleLine() const            { return m_editor->firstVisible().m_line; }
+  int firstVisibleCol() const             { return m_editor->firstVisible().m_column; }
+  int lastVisibleLine() const             { return m_editor->lastVisible().m_line; }
+  int lastVisibleCol() const              { return m_editor->lastVisible().m_column; }
 
   // Move both the screen and cursor by the same amount.
   void moveFirstVisibleAndCursor(int deltaLine, int deltaCol);

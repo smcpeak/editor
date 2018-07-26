@@ -22,15 +22,15 @@ public:      // data
   // 0-based line number.  Should not be negative, although nothing in
   // this class prohibits that, and it could potentially be useful to
   // allow a negative value in the middle of a calculation.
-  int line;
+  int m_line;
 
   // 0-based column number.  Should not be negative.
-  int column;
+  int m_column;
 
 public:      // funcs
-  TextCoord() : line(0), column(0) {}
-  TextCoord(int line_, int column_) : line(line_), column(column_) {}
-  TextCoord(TextCoord const &obj) : DMEMB(line), DMEMB(column) {}
+  TextCoord() : m_line(0), m_column(0) {}
+  TextCoord(int line_, int column_) : m_line(line_), m_column(column_) {}
+  TextCoord(TextCoord const &obj) : DMEMB(m_line), DMEMB(m_column) {}
 
   TextCoord& operator= (TextCoord const &obj);
 
@@ -41,12 +41,12 @@ public:      // funcs
 
   RELATIONAL_OPERATORS(TextCoord);
 
-  bool isZero() const { return line==0 && column==0; }
+  bool isZero() const { return m_line==0 && m_column==0; }
 
   // Although not disallowed, we provide a convenient way to test that
   // coordinates are non-negative in case clients want to enforce that
   // in certain places.
-  bool nonNegative() const { return line>=0 && column>=0; }
+  bool nonNegative() const { return m_line>=0 && m_column>=0; }
 
   // Insert as "<line>:<col>".
   void insert(std::ostream &os) const;
@@ -75,7 +75,7 @@ inline stringBuilder& operator<< (stringBuilder &sb, TextCoord const &tc)
 class TextCoordRange {
 public:      // data
   // First cell in the range.
-  TextCoord start;
+  TextCoord m_start;
 
   // One past the last cell in the range.  For a 2D text document, this
   // can be on the same line, or at the start of the next line so the
@@ -85,26 +85,26 @@ public:      // data
   //
   // It is legal for start to be greater than end, but the range is
   // again empty.  However, see rectify() and rectified().
-  TextCoord end;
+  TextCoord m_end;
 
 public:      // funcs
-  TextCoordRange() : start(), end() {}
-  TextCoordRange(TextCoord s, TextCoord e) : start(s), end(e) {}
+  TextCoordRange() : m_start(), m_end() {}
+  TextCoordRange(TextCoord s, TextCoord e) : m_start(s), m_end(e) {}
 
-  TextCoordRange(TextCoordRange const &obj) : DMEMB(start), DMEMB(end) {}
+  TextCoordRange(TextCoordRange const &obj) : DMEMB(m_start), DMEMB(m_end) {}
 
   TextCoordRange& operator= (TextCoordRange const &obj);
 
   bool operator== (TextCoordRange const &obj) const;
   NOTEQUAL_OPERATOR(TextCoordRange);
 
-  bool isZero() const { return start.isZero() && end.isZero(); }
-  bool nonNegative() const { return start.nonNegative() && end.nonNegative(); }
+  bool isZero() const { return m_start.isZero() && m_end.isZero(); }
+  bool nonNegative() const { return m_start.nonNegative() && m_end.nonNegative(); }
 
   // True if both endpoints are on the same line.
-  bool withinOneLine() const { return start.line == end.line; }
+  bool withinOneLine() const { return m_start.m_line == m_end.m_line; }
 
-  bool isRectified() const { return start <= end; }
+  bool isRectified() const { return m_start <= m_end; }
 
   // Swap 'start' and 'end'.
   void swapEnds();
@@ -116,7 +116,7 @@ public:      // funcs
   }
 
   void rectify() {
-    if (start > end) {
+    if (m_start > m_end) {
       swapEnds();
     }
   }

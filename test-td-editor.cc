@@ -575,8 +575,8 @@ static void testScrollToCursor()
   // Insert a test for getSelectRange with mark inactive.
   {
     TextCoordRange range = tde.getSelectRange();
-    xassert(range.start == TextCoord(3, 0));
-    xassert(range.end == TextCoord(3, 0));
+    xassert(range.m_start == TextCoord(3, 0));
+    xassert(range.m_end == TextCoord(3, 0));
   }
 
   // Add enough text to start scrolling vertically.

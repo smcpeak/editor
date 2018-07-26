@@ -9,25 +9,25 @@
 // ------------------------ TextCoord -----------------------------
 TextCoord& TextCoord::operator= (TextCoord const &obj)
 {
-  CMEMB(line);
-  CMEMB(column);
+  CMEMB(m_line);
+  CMEMB(m_column);
   return *this;
 }
 
 
 bool TextCoord::operator== (TextCoord const &obj) const
 {
-  return EMEMB(line) && EMEMB(column);
+  return EMEMB(m_line) && EMEMB(m_column);
 }
 
 
 bool TextCoord::operator< (TextCoord const &obj) const
 {
-  if (this->line < obj.line) {
+  if (this->m_line < obj.m_line) {
     return true;
   }
-  else if (this->line == obj.line) {
-    return this->column < obj.column;
+  else if (this->m_line == obj.m_line) {
+    return this->m_column < obj.m_column;
   }
   else {
     return false;
@@ -37,44 +37,44 @@ bool TextCoord::operator< (TextCoord const &obj) const
 
 void TextCoord::insert(ostream &os) const
 {
-  os << this->line << ':' << this->column;
+  os << this->m_line << ':' << this->m_column;
 }
 
 void TextCoord::insert(stringBuilder &sb) const
 {
-  sb << this->line << ':' << this->column;
+  sb << this->m_line << ':' << this->m_column;
 }
 
 
 // ------------------------ TextCoordRange -----------------------------
 TextCoordRange& TextCoordRange::operator= (TextCoordRange const &obj)
 {
-  CMEMB(start);
-  CMEMB(end);
+  CMEMB(m_start);
+  CMEMB(m_end);
   return *this;
 }
 
 
 bool TextCoordRange::operator== (TextCoordRange const &obj) const
 {
-  return EMEMB(start) && EMEMB(end);
+  return EMEMB(m_start) && EMEMB(m_end);
 }
 
 
 void TextCoordRange::swapEnds()
 {
-  swap(start, end);
+  swap(m_start, m_end);
 }
 
 
 void TextCoordRange::insert(ostream &os) const
 {
-  os << this->start << '-' << this->end;
+  os << this->m_start << '-' << this->m_end;
 }
 
 void TextCoordRange::insert(stringBuilder &sb) const
 {
-  sb << this->start << '-' << this->end;
+  sb << this->m_start << '-' << this->m_end;
 }
 
 

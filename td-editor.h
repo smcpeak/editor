@@ -120,7 +120,7 @@ public:      // funcs
 
   // Length of line containing cursor.
   // Returns 0 when cursor is beyond EOF.
-  int cursorLineLength() const         { return lineLengthLoose(cursor().line); }
+  int cursorLineLength() const         { return lineLengthLoose(cursor().m_line); }
 
   // Length of the longest line.  Note: This may overestimate.
   int maxLineLength() const            { return m_doc->maxLineLength(); }
@@ -280,9 +280,9 @@ public:      // funcs
   TextCoord lastVisible() const        { return m_lastVisible; }
 
   int visLines() const
-    { return m_lastVisible.line - m_firstVisible.line + 1; }
+    { return m_lastVisible.m_line - m_firstVisible.m_line + 1; }
   int visColumns() const
-    { return m_lastVisible.column - m_firstVisible.column + 1; }
+    { return m_lastVisible.m_column - m_firstVisible.m_column + 1; }
 
   // Scroll so 'fv' is the first visible coordinate, retaining the
   // visible region size.
@@ -290,9 +290,9 @@ public:      // funcs
 
   // Scroll in one dimension.
   void setFirstVisibleLine(int L)
-    { this->setFirstVisible(TextCoord(L, m_firstVisible.column)); }
+    { this->setFirstVisible(TextCoord(L, m_firstVisible.m_column)); }
   void setFirstVisibleCol(int C)
-    { this->setFirstVisible(TextCoord(m_firstVisible.line, C)); }
+    { this->setFirstVisible(TextCoord(m_firstVisible.m_line, C)); }
 
   // Move the view by a relative amount.  Any attempt to go negative
   // is treated as a move to zero.

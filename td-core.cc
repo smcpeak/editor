@@ -80,24 +80,24 @@ void TextDocumentCore::detachRecent()
 
 void TextDocumentCore::attachRecent(TextCoord tc, int insLength)
 {
-  if (m_recent == tc.line) { return; }
+  if (m_recent == tc.m_line) { return; }
   detachRecent();
 
-  char const *p = m_lines.get(tc.line);
+  char const *p = m_lines.get(tc.m_line);
   int len = bufStrlen(p);
   if (len) {
     // copy contents into 'recentLine'
-    m_recentLine.fillFromArray(p, len, tc.column, insLength);
+    m_recentLine.fillFromArray(p, len, tc.m_column, insLength);
 
     // deallocate the source
     delete[] p;
-    m_lines.set(tc.line, NULL);
+    m_lines.set(tc.m_line, NULL);
   }
   else {
     xassert(m_recentLine.length() == 0);
   }
 
-  m_recent = tc.line;
+  m_recent = tc.m_line;
 }
 
 
@@ -131,26 +131,26 @@ STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 
 void TextDocumentCore::getLine(TextCoord tc, char *dest, int destLen) const
 {
-  bc(tc.line);
+  bc(tc.m_line);
   xassert(destLen >= 0);
 
-  if (tc.line == m_recent) {
-    m_recentLine.writeIntoArray(dest, destLen, tc.column);
+  if (tc.m_line == m_recent) {
+    m_recentLine.writeIntoArray(dest, destLen, tc.m_column);
   }
   else {
-    char const *p = m_lines.get(tc.line);
+    char const *p = m_lines.get(tc.m_line);
     int len = bufStrlen(p);
-    xassert(0 <= tc.column && tc.column + destLen <= len);
+    xassert(0 <= tc.m_column && tc.m_column + destLen <= len);
 
-    memcpy(dest, p + tc.column, destLen);
+    memcpy(dest, p + tc.m_column, destLen);
   }
 }
 
 
 bool TextDocumentCore::validCoord(TextCoord tc) const
 {
-  return 0 <= tc.line && tc.line < numLines() &&
-         0 <= tc.column  && tc.column <= lineLength(tc.line); // at EOL is ok
+  return 0 <= tc.m_line && tc.m_line < numLines() &&
+         0 <= tc.m_column  && tc.m_column <= lineLength(tc.m_line); // at EOL is ok
 }
 
 
@@ -184,30 +184,30 @@ bool TextDocumentCore::walkCoord(TextCoord &tc, int len) const
   xassert(this->validCoord(tc));
 
   for (; len > 0; len--) {
-    if (tc.column == this->lineLength(tc.line)) {
+    if (tc.m_column == this->lineLength(tc.m_line)) {
       // cycle to next line
-      tc.line++;
-      if (tc.line >= this->numLines()) {
+      tc.m_line++;
+      if (tc.m_line >= this->numLines()) {
         return false;      // beyond EOF
       }
-      tc.column=0;
+      tc.m_column=0;
     }
     else {
-      tc.column++;
+      tc.m_column++;
     }
   }
 
   for (; len < 0; len++) {
-    if (tc.column == 0) {
+    if (tc.m_column == 0) {
       // cycle up to end of preceding line
-      tc.line--;
-      if (tc.line < 0) {
+      tc.m_line--;
+      if (tc.m_line < 0) {
         return false;      // before BOF
       }
-      tc.column = this->lineLength(tc.line);
+      tc.m_column = this->lineLength(tc.m_line);
     }
     else {
-      tc.column--;
+      tc.m_column--;
     }
   }
 
@@ -274,19 +274,19 @@ void TextDocumentCore::insertText(TextCoord const tc,
     }
   #endif
 
-  if (tc.column==0 && lineLength(tc.line)==0 && tc.line!=m_recent) {
+  if (tc.m_column==0 && lineLength(tc.m_line)==0 && tc.m_line!=m_recent) {
     // setting a new line, can leave 'recent' alone
     char *p = new char[length+1];
     memcpy(p, text, length);
     p[length] = '\n';
-    m_lines.set(tc.line, p);
+    m_lines.set(tc.m_line, p);
 
     seenLineLength(length);
   }
   else {
     // use recent
     attachRecent(tc, length);
-    m_recentLine.insertMany(tc.column, text, length);
+    m_recentLine.insertMany(tc.m_column, text, length);
 
     seenLineLength(m_recentLine.length());
   }
@@ -301,18 +301,18 @@ void TextDocumentCore::deleteText(TextCoord const tc, int const length)
 {
   bctc(tc);
 
-  if (tc.column==0 && length==lineLength(tc.line) && tc.line!=m_recent) {
+  if (tc.m_column==0 && length==lineLength(tc.m_line) && tc.m_line!=m_recent) {
     // removing entire line, no need to move 'recent'
-    char *p = m_lines.get(tc.line);
+    char *p = m_lines.get(tc.m_line);
     if (p) {
       delete[] p;
     }
-    m_lines.set(tc.line, NULL);
+    m_lines.set(tc.m_line, NULL);
   }
   else {
     // use recent
     attachRecent(tc, 0);
-    m_recentLine.removeMany(tc.column, length);
+    m_recentLine.removeMany(tc.m_column, length);
   }
 
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
@@ -475,14 +475,14 @@ void TextDocumentCore::nonAtomicReadFile(char const *fname)
 
       // insert this line fragment
       this->insertText(tc, p, nl-p);
-      tc.column += nl-p;
+      tc.m_column += nl-p;
 
       if (nl < end) {
         // skip newline
         nl++;
-        tc.line++;
-        this->insertLine(tc.line);
-        tc.column=0;
+        tc.m_line++;
+        this->insertLine(tc.m_line);
+        tc.m_column=0;
       }
       p = nl;
     }
@@ -534,7 +534,7 @@ bool TextDocumentCore::getTextSpan(TextCoord tc, char *text, int textLen) const
   int offset = 0;
   while (offset < textLen) {
     // how many chars remain on this line?
-    int thisLine = this->lineLength(tc.line) - tc.column;
+    int thisLine = this->lineLength(tc.m_line) - tc.m_column;
 
     if (textLen-offset <= thisLine) {
       // finish off with text from this line
@@ -548,10 +548,10 @@ bool TextDocumentCore::getTextSpan(TextCoord tc, char *text, int textLen) const
     text[offset++] = '\n';
 
     // move cursor to beginning of next line
-    tc.line++;
-    tc.column = 0;
+    tc.m_line++;
+    tc.m_column = 0;
 
-    if (tc.line >= this->numLines()) {
+    if (tc.m_line >= this->numLines()) {
       return false;     // text span goes beyond end of file
     }
   }

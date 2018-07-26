@@ -112,29 +112,29 @@ STATICDEF void HE_text::insert(
 
       // insert this text at line/col
       buf.insertText(tc, p, len);
-      tc.column += len;
+      tc.m_column += len;
 
       // insert newline
       if (nl < end) {
         // if there is text beyond 'col' on 'line-1', then that text
         // gets floated down to the end of the insertion
-        if (tc.line==begin.line &&     // optimization: can only happen on first line
-            tc.column < buf.lineLength(tc.line)) {
+        if (tc.m_line==begin.m_line &&     // optimization: can only happen on first line
+            tc.m_column < buf.lineLength(tc.m_line)) {
           // this can only happen on the first line of the insertion
           // procedure, so check that we don't already have excess
           xassert(excess.size()==0);
 
           // get the excess
-          excess.setSize(buf.lineLength(tc.line) - tc.column);
+          excess.setSize(buf.lineLength(tc.m_line) - tc.m_column);
           buf.getLine(tc, excess.getArrayNC(), excess.size());
 
           // remove it from the buffer
           buf.deleteText(tc, excess.size());
         }
 
-        tc.line++;
-        buf.insertLine(tc.line);
-        tc.column = 0;
+        tc.m_line++;
+        buf.insertLine(tc.m_line);
+        tc.m_column = 0;
         len++;   // so we skip '\n' too
       }
 
@@ -190,19 +190,19 @@ STATICDEF void HE_text::insert(
       // bypass newline
       if (nl < end) {
         // we deleted all text on this line after 'col'
-        xassert(buf.lineLength(tc.line) == tc.column);
+        xassert(buf.lineLength(tc.m_line) == tc.m_column);
 
-        if (tc.column == 0) {
+        if (tc.m_column == 0) {
           // we're at the beginning of a line, and it is now empty,
           // so just delete this line
-          buf.deleteLine(tc.line);
+          buf.deleteLine(tc.m_line);
         }
         else {
           // move line/col to beginning of next line, so that from
           // now on we can work with whole deleted lines, but remember
           // that there's a pending line splice
-          tc.line++;
-          tc.column=0;
+          tc.m_line++;
+          tc.m_column=0;
           pendingSplice++;
         }
         len++;   // so we skip '\n' too
@@ -214,20 +214,20 @@ STATICDEF void HE_text::insert(
 
     if (pendingSplice) {
       xassert(pendingSplice == 1);       // should only have one splice
-      xassert(tc.column == 0);                 // it's this entire line that goes
+      xassert(tc.m_column == 0);                 // it's this entire line that goes
 
       // grab this line's contents
-      int spliceLen = buf.lineLength(tc.line);
+      int spliceLen = buf.lineLength(tc.m_line);
       Array<char> splice(spliceLen);
       buf.getLine(tc, splice, spliceLen);
 
       // blow it away
       buf.deleteText(tc, spliceLen);
-      buf.deleteLine(tc.line);
+      buf.deleteLine(tc.m_line);
 
       // move up to end of previous line
-      tc.line--;
-      tc.column = buf.lineLength(tc.line);
+      tc.m_line--;
+      tc.m_column = buf.lineLength(tc.m_line);
 
       // append splice text
       buf.insertText(tc, splice.ptrC(), spliceLen);
