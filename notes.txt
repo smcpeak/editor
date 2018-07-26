@@ -28,7 +28,6 @@ TODOs:
     - shell
       - put a panel on the bottom for input line that will be passed
         to the child process
-    - git diff
     - git show
     - grep
     - compilation mode
@@ -45,7 +44,6 @@ TODOs:
     - maybe after Ctrl+S?
   - prompt before killing an Alt+A that takes too long
   - highlighting for mismatch parens, braces, etc.
-  - highlighting for "git diff" output
   - command line arguments to set window position(s)?
   - undo history is never truncated... I should add something to check
     for excessive memory usage over time

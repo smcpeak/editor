@@ -39,6 +39,9 @@ private:     // data
 public:      // funcs
   C_Highlighter(TextDocumentCore const &buf)
     : LexHighlighter(buf, theLexer) {}
+
+  // Highlighter funcs
+  virtual string highlighterName() const OVERRIDE;
 };
 
 

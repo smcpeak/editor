@@ -21,6 +21,9 @@ public:
   // implementors of Highlighter.
   virtual ~Highlighter() {}
 
+  // Name of this highlighter.
+  virtual string highlighterName() const = 0;
+
   // Fill 'categories' with the styles for 'line' in 'doc'.
   //
   // Although 'doc' is a parameter here, a highlighter object is always
@@ -28,7 +31,7 @@ public:
   // depends on the particular implementor class), and 'highlight' must
   // only be passed a reference to that particular object.
   virtual void highlight(TextDocumentCore const &doc, int line,
-                         LineCategories &categories)=0;
+                         LineCategories &categories) = 0;
 
   // Convenience method.
   void highlightTDE(TextDocumentEditor const *tde, int line,

@@ -470,3 +470,13 @@ LexerState C_Lexer::getState() const
 {
   return lexer->getState();
 }
+
+
+// ---------------------- C_Highlighter --------------------
+string C_Highlighter::highlighterName() const
+{
+  return "C/C++";
+}
+
+
+// EOF

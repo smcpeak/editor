@@ -215,3 +215,13 @@ LexerState CommentLexer::getState() const
 {
   return lexer->getState();
 }
+
+
+// --------------------- CommentHighlighter ----------------------
+string CommentHighlighter::highlighterName() const
+{
+  return "Comment";
+}
+
+
+// EOF

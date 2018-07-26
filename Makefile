@@ -344,6 +344,7 @@ editor-window.o: keybindings.doc.gen.h
 
 TOCLEAN += keybindings.doc.gen.*
 
+EDITOR_OBJS += diff-hilite.o
 EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o

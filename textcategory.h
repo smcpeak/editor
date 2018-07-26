@@ -15,10 +15,16 @@ class LineCategoryIter;
 // but to have this set always available by default.
 enum TextCategory {
   TC_ZERO=0,               // not used; 0 is used to signal EOL during lexing
+
+  // General text editor categories.
   TC_NORMAL,               // normal text
   TC_SELECTION,            // selected text
   TC_HITS,                 // buffer text that matches a search string
+
+  // Categories for any language.
   TC_ERROR,                // text that can't be lexed
+
+  // Categories for C/C++ and similar languages.
   TC_COMMENT,              // comment
   TC_STRING,               // string literal
   TC_KEYWORD,              // keyword
@@ -27,6 +33,14 @@ enum TextCategory {
   TC_NUMBER2,              // numeric literal, alternate (I use this for octal)
   TC_OPERATOR,             // operator
   TC_PREPROCESSOR,         // preprocessor directive
+
+  // Categories for unified diff output.
+  TC_DIFF_CONTEXT,         // Context output.
+  TC_DIFF_OLD_FILE,        // "---" line showing the old file name.
+  TC_DIFF_NEW_FILE,        // "+++" line showing the new file name.
+  TC_DIFF_SECTION,         // "@@ ... @@" line showing a section within a file.
+  TC_DIFF_REMOVAL,         // "-" line showing removed text.
+  TC_DIFF_ADDITION,        // "+" line showing added text.
 
   NUM_STANDARD_TEXT_CATEGORIES
 };

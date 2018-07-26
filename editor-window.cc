@@ -6,6 +6,7 @@
 // this dir
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
+#include "diff-hilite.h"               // DiffHighlighter
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
@@ -438,12 +439,36 @@ void EditorWindow::updateForChangedFile()
 }
 
 
+static bool stringAmong(string const &str, char const * const *table,
+                        int tableSize)
+{
+  for (int i=0; i < tableSize; i++) {
+    if (str == table[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 {
   if (file->m_highlighter) {
     delete file->m_highlighter;
     file->m_highlighter = NULL;
   }
+
+  // This handles both "foo.diff" and "git diff".
+  if (suffixEquals(file->name(), "diff")) {
+    file->m_highlighter = new DiffHighlighter();
+
+    // Diff output has lots of lines that are not empty and have
+    // whitespace on them.  I do not want that highlighted.
+    file->m_highlightTrailingWhitespace = false;
+
+    return;
+  }
+
 
   if (!file->hasFilename()) {
     return;
@@ -454,11 +479,17 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   char const *dot = strrchr(filename.c_str(), '.');
   if (dot) {
     string ext = string(dot+1);
-    if (ext.equals("h") ||
-        ext.equals("cc") ||
-        ext.equals("cpp")) {
-      // make and attach a C++ highlighter for C/C++ files
+
+    static char const * const cppExts[] = {
+      "c",
+      "cc",
+      "cpp",
+      "h",
+      "lex",
+    };
+    if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
       file->m_highlighter = new C_Highlighter(file->getCore());
+      return;
     }
   }
 }
@@ -845,11 +876,14 @@ void EditorWindow::fileLaunchCommand()
     return;
   }
 
-  NamedTextDocument *fileDoc = m_globalState->launchCommand(
+  NamedTextDocument *doc = m_globalState->launchCommand(
     toQString(dir),
     dialog->prefixStderrLines(),
     dialog->m_text);
-  this->setDocumentFile(fileDoc);
+  this->setDocumentFile(doc);
+
+  // Choose a highlighter based on the command line.
+  this->useDefaultHighlighter(doc);
 }
 
 
@@ -1400,18 +1434,19 @@ void EditorWindow::viewSetHighlighting()
   QInputDialog dialog(this);
   dialog.setWindowTitle("Set Highlighting");
   dialog.setLabelText("Highlighting to use for this file:");
-  dialog.setComboBoxItems(QStringList() << "None" << "C/C++");
+  dialog.setComboBoxItems(QStringList() <<
+    "None" <<
+    "C/C++" <<
+    "Diff");
 
   // One annoying thing is you can't double-click an item to choose
   // it and simultaneously close the dialog.
   dialog.setOption(QInputDialog::UseListViewForComboBoxItems);
 
   if (doc->m_highlighter) {
-    dialog.setTextValue("C/C++");
+    dialog.setTextValue(toQString(doc->m_highlighter->highlighterName()));
   }
-  else {
-    dialog.setTextValue("None");
-  }
+
   if (!dialog.exec()) {
     return;
   }
@@ -1431,9 +1466,13 @@ void EditorWindow::viewSetHighlighting()
   delete doc->m_highlighter;
   doc->m_highlighter = NULL;
 
-  // TODO: Obviously this is not a good method of recognition.
+  // TODO: Obviously this is not a good method of recognizing the chosen
+  // element, nor a scalable registry of available highlighters.
   if (chosen == "C/C++") {
     doc->m_highlighter = new C_Highlighter(doc->getCore());
+  }
+  else if (chosen == "Diff") {
+    doc->m_highlighter = new DiffHighlighter();
   }
 
   // Notify everyone of the change.
