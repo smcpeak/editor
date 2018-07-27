@@ -156,7 +156,7 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
       int lineLength = m_document->lineLengthBytes(line);
       contents.ensureIndexDoubler(lineLength);
       char *buffer = contents.getArrayNC();
-      m_document->getLine(TextMCoord(line, 0), buffer, lineLength);
+      m_document->getPartialLine(TextMCoord(line, 0), buffer, lineLength);
 
       if (m_regex.get()) {
         // TODO: Converting every line from UTF-8 to UTF-16 is

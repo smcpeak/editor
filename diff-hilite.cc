@@ -22,7 +22,7 @@ void DiffHighlighter::highlight(TextDocumentCore const &doc, int line,
   // Get the line contents.
   int lineLength = doc.lineLengthBytes(line);
   Array<char> lineArray(lineLength);
-  doc.getLine(TextMCoord(line, 0), lineArray.ptr(), lineLength);
+  doc.getPartialLine(TextMCoord(line, 0), lineArray.ptr(), lineLength);
 
   // Default category.
   categories.clear(TC_DIFF_CONTEXT);

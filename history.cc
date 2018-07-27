@@ -126,7 +126,7 @@ STATICDEF void HE_text::insert(
 
           // get the excess
           excess.setSize(buf.lineLengthBytes(tc.m_line) - tc.m_byteIndex);
-          buf.getLine(tc, excess.getArrayNC(), excess.size());
+          buf.getPartialLine(tc, excess.getArrayNC(), excess.size());
 
           // remove it from the buffer
           buf.deleteText(tc, excess.size());
@@ -219,7 +219,7 @@ STATICDEF void HE_text::insert(
       // grab this line's contents
       int spliceLen = buf.lineLengthBytes(tc.m_line);
       Array<char> splice(spliceLen);
-      buf.getLine(tc, splice, spliceLen);
+      buf.getPartialLine(tc, splice, spliceLen);
 
       // blow it away
       buf.deleteText(tc, spliceLen);

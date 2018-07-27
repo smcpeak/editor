@@ -605,7 +605,7 @@ void TextDocumentEditor::getLineLayout(TextLCoord tc, char *dest, int destLen) c
     // TODO: Layout: Properly translate between bytes and grid cells.
     // For now I'm continuing to equate them.
     xassert(byteCount == def);
-    m_doc->getLine(mcBegin, dest, byteCount);
+    m_doc->getPartialLine(mcBegin, dest, byteCount);
   }
 
   // spaces past defined region

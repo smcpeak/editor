@@ -170,10 +170,7 @@ public:    // funcs
   // Get part of a line's contents, starting at 'tc' and getting
   // 'destLen' bytes.  All bytes must be in the line now.  The retrieved
   // text never includes the '\n' character, nor a terminating NUL.
-  //
-  // TODO: I think this should be changed to always get a complete line,
-  // and write that line into an ArrayStack.
-  void getLine(TextMCoord tc, char *dest, int destLen) const;
+  void getPartialLine(TextMCoord tc, char *dest, int destLen) const;
 
   // Retrieve text that may span line boundaries.  Line boundaries are
   // represented in the returned string as newlines.  The span begins at

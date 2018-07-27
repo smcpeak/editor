@@ -171,7 +171,7 @@ STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 }
 
 
-void TextDocumentCore::getLine(TextMCoord tc, char *dest, int destLen) const
+void TextDocumentCore::getPartialLine(TextMCoord tc, char *dest, int destLen) const
 {
   bc(tc.m_line);
   xassert(destLen >= 0);
@@ -410,7 +410,7 @@ void TextDocumentCore::dumpRepresentation() const
     char *p = NULL;
     if (len) {
       p = new char[len];
-      getLine(TextMCoord(i, 0), p, len);
+      getPartialLine(TextMCoord(i, 0), p, len);
     }
 
     printf("  line %d: \"%s\"\n", i,
@@ -584,7 +584,7 @@ void TextDocumentCore::writeFile(char const *fname) const
     int len = this->lineLengthBytes(line);
     buffer.ensureIndexDoubler(len);       // text + possible newline
 
-    this->getLine(TextMCoord(line, 0), buffer.getArrayNC(), len);
+    this->getPartialLine(TextMCoord(line, 0), buffer.getArrayNC(), len);
     if (line < this->numLines()-1) {        // last gets no newline
       buffer[len] = '\n';
       len++;
@@ -642,7 +642,7 @@ string TextDocumentCore::getTextRange(TextMCoordRange const &range) const
     Array<char> buf(lenBytes+1);
 
     buf[lenBytes] = 0;              // NUL terminator
-    this->getLine(range.m_start, buf, lenBytes);
+    this->getPartialLine(range.m_start, buf, lenBytes);
     string ret(buf.ptrC());    // Explicitly calling 'ptrC' is only needed for Eclipse...
 
     return ret;
