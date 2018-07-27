@@ -54,6 +54,8 @@ private:      // data
   // historyIndex==history.seqLength(), meaning we're at the end of the
   // recorded history; undo/redo modifies 'historyIndex' and 'buf' but
   // not 'history'
+  //
+  // invariant: 0 <= m_historyIndex <= m_history.seqLength()
   int m_historyIndex;
 
   // what index in 'history' corresponds to the file's on-disk
@@ -63,7 +65,7 @@ private:      // data
   // the contents are in correspondence and we're moving across
   // nondestructive actions
   //
-  // invariant: -1 <= savedHistoryIndex <= seq.Length()
+  // invariant: -1 <= m_savedHistoryIndex <= m_history.seqLength()
   int m_savedHistoryIndex;
 
   // stack of open history groups, which will soon be collapsed
@@ -109,6 +111,8 @@ private:     // funcs
 public:      // funcs
   TextDocument();      // empty buffer, empty history, cursor at 0,0
   virtual ~TextDocument();
+
+  void selfCheck() const;
 
   // Read-only access to the underlying representation.  Use of this
   // should be infrequent, as I prefer to use the delegation queries.

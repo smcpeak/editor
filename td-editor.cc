@@ -65,6 +65,8 @@ void TextDocumentEditor::selfCheck() const
   xassert(m_firstVisible.nonNegative());
   xassert(m_firstVisible.m_line <= m_lastVisible.m_line);
   xassert(m_firstVisible.m_column <= m_lastVisible.m_column);
+
+  m_doc->selfCheck();
 }
 
 

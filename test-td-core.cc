@@ -27,6 +27,7 @@ static void testAtomicRead()
   TextDocumentCore core;
   core.readFile("td-core.tmp");
   xassert(core.numLines() == 1001);
+  core.selfCheck();
 
   // Read it again with an injected error.
   try {
@@ -44,6 +45,7 @@ static void testAtomicRead()
 
   // Confirm that the original contents are still there.
   xassert(core.numLines() == 1001);
+  core.selfCheck();
 
   remove("td-core.tmp");
 }
@@ -80,6 +82,7 @@ static void testVarious()
   EXPECT_EQ(tdc.endCoord(), TextMCoord(0,0));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 0);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
+  tdc.selfCheck();
 
   insLine(tdc, 0,0, "one");
   EXPECT_EQ(tdc.numLines(), 2);
@@ -104,6 +107,7 @@ static void testVarious()
   EXPECT_EQ(tdc.validCoord(TextMCoord(7,0)), false);
   EXPECT_EQ(tdc.endCoord(), TextMCoord(6,6));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 12);
+  tdc.selfCheck();
 
   checkSpaces(tdc, 0, 0, 0);
   checkSpaces(tdc, 1, 2, 0);
@@ -112,6 +116,7 @@ static void testVarious()
   checkSpaces(tdc, 4, 5, 5);
   checkSpaces(tdc, 5, 0, 0);
   checkSpaces(tdc, 6, 6, 6);
+  tdc.selfCheck();
 
   for (int line=0; line <= 6; line++) {
     // Tweak 'line' so it is recent and then repeat the whitespace queries.
@@ -127,6 +132,7 @@ static void testVarious()
     checkSpaces(tdc, 4, 5, 5);
     checkSpaces(tdc, 5, 0, 0);
     checkSpaces(tdc, 6, 6, 6);
+    tdc.selfCheck();
   }
 
   // This is far from a comprehensive test of observers, but I want to
@@ -137,10 +143,12 @@ static void testVarious()
   xassert(tdc.hasObserver(&obs));
   tdc.removeObserver(&obs);
   xassert(!tdc.hasObserver(&obs));
+  tdc.selfCheck();
 }
 
 
-static void entry()
+// I don't remember what this was meant to test...
+static void testReadTwice()
 {
   for (int looper=0; looper<2; looper++) {
     printf("stats before:\n");
@@ -176,6 +184,7 @@ static void entry()
 
       printf("\nbuffer mem usage stats:\n");
       doc.printMemStats();
+      doc.selfCheck();
     }
 
     // make sure they're the same
@@ -191,14 +200,24 @@ static void entry()
     printf("stats after:\n");
     malloc_stats();
   }
+}
 
-  {
-    printf("reading td-core.cc ...\n");
-    TextDocumentCore doc;
-    doc.readFile("td-core.cc");
-    doc.printMemStats();
-  }
 
+// Read the td-core.cc source code, just as an example of a real file.
+static void testReadSourceCode()
+{
+  printf("reading td-core.cc ...\n");
+  TextDocumentCore doc;
+  doc.readFile("td-core.cc");
+  doc.printMemStats();
+  doc.selfCheck();
+}
+
+
+static void entry()
+{
+  testReadTwice();
+  testReadSourceCode();
   testAtomicRead();
   testVarious();
 

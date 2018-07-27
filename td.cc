@@ -53,6 +53,18 @@ TextDocument::~TextDocument()
 }
 
 
+void TextDocument::selfCheck() const
+{
+  m_core.selfCheck();
+
+  xassert(0 <= m_historyIndex &&
+               m_historyIndex <= m_history.seqLength());
+
+  xassert(-1 <= m_savedHistoryIndex &&
+                m_savedHistoryIndex <= m_history.seqLength());
+}
+
+
 void TextDocument::clearHistory()
 {
   m_historyIndex = 0;

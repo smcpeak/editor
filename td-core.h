@@ -69,8 +69,8 @@ private:     // data
   //   - recent >= -1
   //   - if recent>=0, lines[recent] == NULL
   //   - if recent<0, recentLine.length() == 0
-  //   - every lines[n] is NULL or valid
-  //   - longestLineSoFar >= 0
+  //   - every lines[n] is NULL or valid and not empty
+  //   - longestLengthSoFar >= 0
 
   // List of observers.  This is mutable because the highlighter wants
   // to declare, through its signature, that it does not modify the
@@ -108,6 +108,9 @@ private:     // funcs
 public:    // funcs
   TextDocumentCore();        // one empty line
   ~TextDocumentCore();
+
+  // Check internal invariants, throwing assertion if broken.
+  void selfCheck() const;
 
   // ---------------------- document shape ------------------------
   // # of lines stored; always at least 1

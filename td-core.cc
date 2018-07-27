@@ -52,6 +52,25 @@ TextDocumentCore::~TextDocumentCore()
 }
 
 
+void TextDocumentCore::selfCheck() const
+{
+  xassert(m_recent >= -1);
+  if (m_recent >= 0) {
+    xassert(m_lines.get(m_recent) == NULL);
+  }
+  else {
+    xassert(m_recentLine.length() == 0);
+  }
+
+  for (int i=0; i < m_lines.length(); i++) {
+    char *p = m_lines.get(i);
+    xassert(p == NULL || *p != '\n');
+  }
+
+  xassert(m_longestLengthSoFar >= 0);
+}
+
+
 void TextDocumentCore::detachRecent()
 {
   if (m_recent == -1) { return; }
