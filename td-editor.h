@@ -6,7 +6,7 @@
 
 // editor
 #include "td.h"                        // TextDocument
-#include "textcoord.h"                 // TextCoord
+#include "textlcoord.h"                // TextLCoord
 
 // smbase
 #include "datetime.h"                  // DateTimeProvider

@@ -159,7 +159,7 @@ EDITOR_OBJS += history.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += td.o
 EDITOR_OBJS += td-editor.o
-EDITOR_OBJS += textcoord.o
+EDITOR_OBJS += textlcoord.o
 
 TD_OBJS := $(EDITOR_OBJS)
 

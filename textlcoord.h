@@ -1,4 +1,4 @@
-// textcoord.h
+// textlcoord.h
 // TextCoord and TextCoordRange classes.
 
 // TODO: Rename this to "TextLCoord".

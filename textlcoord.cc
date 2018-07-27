@@ -1,12 +1,12 @@
-// textcoord.cc
-// code for textcoord.h
+// textlcoord.cc
+// code for textlcoord.h
 
-#include "textcoord.h"                 // this module
+#include "textlcoord.h"                // this module
 
 #include "sm-swap.h"                   // swap
 
 
-// ------------------------ TextCoord -----------------------------
+// ------------------------ TextLCoord -----------------------------
 TextLCoord& TextLCoord::operator= (TextLCoord const &obj)
 {
   CMEMB(m_line);
