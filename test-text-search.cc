@@ -115,8 +115,8 @@ static void testSimple()
 static void expectRIM(TextSearch &ts,
   int lineA, int colA, int lineB, int colB, bool expectRes)
 {
-  TextCoord a(lineA,colA);
-  TextCoord b(lineB,colB);
+  TextMCoord a(lineA,colA);
+  TextMCoord b(lineB,colB);
   bool actualRes = ts.rangeIsMatch(a, b);
   EXPECT_EQ(actualRes, expectRes);
 }
@@ -130,21 +130,21 @@ static void expectNM_true(TextSearch const &ts,
   int expectMarkLine, int expectMarkCol)
 {
   for (int i=0; i < 2; i++) {
-    TextCoord cursor(cursorLine, cursorCol);
-    TextCoord mark(markLine, markCol);
+    TextMCoord cursor(cursorLine, cursorCol);
+    TextMCoord mark(markLine, markCol);
     if (i==1) {
       // The result should be independent of the order of 'cursor' and
       // 'mark'.
       swap(cursor, mark);
     }
 
-    TextCoordRange range(cursor, mark);
+    TextMCoordRange range(cursor, mark);
     bool actualRes = ts.nextMatch(reverse, range);
     EXPECT_EQ(actualRes, true);
     EXPECT_EQ(range.m_start.m_line, expectCursorLine);
-    EXPECT_EQ(range.m_start.m_column, expectCursorCol);
+    EXPECT_EQ(range.m_start.m_byteIndex, expectCursorCol);
     EXPECT_EQ(range.m_end.m_line, expectMarkLine);
-    EXPECT_EQ(range.m_end.m_column, expectMarkCol);
+    EXPECT_EQ(range.m_end.m_byteIndex, expectMarkCol);
   }
 }
 
@@ -155,15 +155,15 @@ static void expectNM_false(TextSearch const &ts,
   bool reverse)
 {
   for (int i=0; i < 2; i++) {
-    TextCoord cursor(cursorLine, cursorCol);
-    TextCoord mark(markLine, markCol);
+    TextMCoord cursor(cursorLine, cursorCol);
+    TextMCoord mark(markLine, markCol);
     if (i==1) {
       // The result should be independent of the order of 'cursor' and
       // 'mark'.
       swap(cursor, mark);
     }
 
-    TextCoordRange range(cursor, mark);
+    TextMCoordRange range(cursor, mark);
     bool actualRes = ts.nextMatch(reverse, range);
     EXPECT_EQ(actualRes, false);
 
@@ -501,6 +501,9 @@ static void entry(int argc, char **argv)
     testRegexPerf2(true /*nolimit*/);
     return;
   }
+
+  // NOTE: Currently these tests do not exercise any deviation between
+  // TextCoord and TextMCoord.
 
   testEmpty();
   testSimple();

@@ -30,7 +30,7 @@ HistoryElt::~HistoryElt()
 
 
 // ------------------------ HE_text ----------------------
-HE_text::HE_text(TextCoord tc_, bool i,
+HE_text::HE_text(TextMCoord tc_, bool i,
                  char const *t, int len)
   : tc(tc_),
     insertion(i),
@@ -53,13 +53,13 @@ HE_text::~HE_text()
 }
 
 
-TextCoord HE_text::apply(TextDocumentCore &buf, bool reverse) const
+TextMCoord HE_text::apply(TextDocumentCore &buf, bool reverse) const
 {
   return static_apply(buf, tc, insertion, text, textLen, reverse);
 }
 
-STATICDEF TextCoord HE_text::static_apply(
-  TextDocumentCore &buf, TextCoord tc, bool insertion,
+STATICDEF TextMCoord HE_text::static_apply(
+  TextDocumentCore &buf, TextMCoord tc, bool insertion,
   char const *text, int textLen, bool reverse)
 {
   if (insertion) {
@@ -80,7 +80,7 @@ static void deletionMismatch()
 
 // Insert (=forward) or delete (=reverse) some text at 'tc'.
 STATICDEF void HE_text::insert(
-  TextDocumentCore &buf, TextCoord tc, char const *text, int textLen,
+  TextDocumentCore &buf, TextMCoord tc, char const *text, int textLen,
   bool reverse)
 {
   if (!buf.validCoord(tc)) {
@@ -92,7 +92,7 @@ STATICDEF void HE_text::insert(
     // ==> committed
 
     // Left edge of the inserted text.
-    TextCoord begin = tc;
+    TextMCoord begin = tc;
 
     // excess text on the original line that gets floated down
     // to after the cursor on the last line
@@ -112,20 +112,20 @@ STATICDEF void HE_text::insert(
 
       // insert this text at line/col
       buf.insertText(tc, p, len);
-      tc.m_column += len;
+      tc.m_byteIndex += len;
 
       // insert newline
       if (nl < end) {
         // if there is text beyond 'col' on 'line-1', then that text
         // gets floated down to the end of the insertion
         if (tc.m_line==begin.m_line &&     // optimization: can only happen on first line
-            tc.m_column < buf.lineLength(tc.m_line)) {
+            tc.m_byteIndex < buf.lineLengthBytes(tc.m_line)) {
           // this can only happen on the first line of the insertion
           // procedure, so check that we don't already have excess
           xassert(excess.size()==0);
 
           // get the excess
-          excess.setSize(buf.lineLength(tc.m_line) - tc.m_column);
+          excess.setSize(buf.lineLengthBytes(tc.m_line) - tc.m_byteIndex);
           buf.getLine(tc, excess.getArrayNC(), excess.size());
 
           // remove it from the buffer
@@ -134,7 +134,7 @@ STATICDEF void HE_text::insert(
 
         tc.m_line++;
         buf.insertLine(tc.m_line);
-        tc.m_column = 0;
+        tc.m_byteIndex = 0;
         len++;   // so we skip '\n' too
       }
 
@@ -153,7 +153,7 @@ STATICDEF void HE_text::insert(
     // deletion
 
     // location of the left edge of the text to delete
-    TextCoord begin = tc;
+    TextMCoord begin = tc;
 
     // splice to perform at end?
     int pendingSplice = 0;
@@ -190,9 +190,9 @@ STATICDEF void HE_text::insert(
       // bypass newline
       if (nl < end) {
         // we deleted all text on this line after 'col'
-        xassert(buf.lineLength(tc.m_line) == tc.m_column);
+        xassert(buf.lineLengthBytes(tc.m_line) == tc.m_byteIndex);
 
-        if (tc.m_column == 0) {
+        if (tc.m_byteIndex == 0) {
           // we're at the beginning of a line, and it is now empty,
           // so just delete this line
           buf.deleteLine(tc.m_line);
@@ -202,7 +202,7 @@ STATICDEF void HE_text::insert(
           // now on we can work with whole deleted lines, but remember
           // that there's a pending line splice
           tc.m_line++;
-          tc.m_column=0;
+          tc.m_byteIndex=0;
           pendingSplice++;
         }
         len++;   // so we skip '\n' too
@@ -213,11 +213,11 @@ STATICDEF void HE_text::insert(
     }
 
     if (pendingSplice) {
-      xassert(pendingSplice == 1);       // should only have one splice
-      xassert(tc.m_column == 0);                 // it's this entire line that goes
+      xassert(pendingSplice == 1);    // should only have one splice
+      xassert(tc.m_byteIndex == 0);   // it's this entire line that goes
 
       // grab this line's contents
-      int spliceLen = buf.lineLength(tc.m_line);
+      int spliceLen = buf.lineLengthBytes(tc.m_line);
       Array<char> splice(spliceLen);
       buf.getLine(tc, splice, spliceLen);
 
@@ -227,7 +227,7 @@ STATICDEF void HE_text::insert(
 
       // move up to end of previous line
       tc.m_line--;
-      tc.m_column = buf.lineLength(tc.m_line);
+      tc.m_byteIndex = buf.lineLengthBytes(tc.m_line);
 
       // append splice text
       buf.insertText(tc, splice.ptrC(), spliceLen);
@@ -311,8 +311,8 @@ void HE_group::truncate(int newLength)
 }
 
 
-TextCoord HE_group::applySeqElt(TextDocumentCore &buf, int start, int end, int offset,
-                                bool reverseIndex, bool reverseOperation) const
+TextMCoord HE_group::applySeqElt(TextDocumentCore &buf, int start, int end, int offset,
+                                 bool reverseIndex, bool reverseOperation) const
 {
   if (reverseIndex) {
     offset = (end-start) - offset - 1;
@@ -320,13 +320,13 @@ TextCoord HE_group::applySeqElt(TextDocumentCore &buf, int start, int end, int o
   return applyOne(buf, start+offset, reverseOperation);
 }
 
-TextCoord HE_group::applySeq(TextDocumentCore &buf, int start, int end, bool reverse) const
+TextMCoord HE_group::applySeq(TextDocumentCore &buf, int start, int end, bool reverse) const
 {
   int i;
   try {
-    TextCoord leftEdge = buf.endCoord();
+    TextMCoord leftEdge = buf.endCoord();
     for (i=0; i < (end-start); i++) {
-      TextCoord tc = applySeqElt(buf, start, end, i, reverse, reverse);
+      TextMCoord tc = applySeqElt(buf, start, end, i, reverse, reverse);
       if (tc < leftEdge) {
         leftEdge = tc;
       }
@@ -348,14 +348,14 @@ TextCoord HE_group::applySeq(TextDocumentCore &buf, int start, int end, bool rev
 }
 
 
-TextCoord HE_group::applyOne(TextDocumentCore &buf, int index, bool reverse) const
+TextMCoord HE_group::applyOne(TextDocumentCore &buf, int index, bool reverse) const
 {
   HistoryElt const *e = seq[index];
   return e->apply(buf, reverse);
 }
 
 
-TextCoord HE_group::apply(TextDocumentCore &buf, bool reverse) const
+TextMCoord HE_group::apply(TextDocumentCore &buf, bool reverse) const
 {
   return applySeq(buf, 0, seqLength(), reverse);
 }

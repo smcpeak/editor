@@ -1555,7 +1555,7 @@ void EditorWindow::editorViewChanged()
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (m_horizScroll) {
-    m_horizScroll->setRange(0, max(tde->maxLineLength(),
+    m_horizScroll->setRange(0, max(tde->maxLineLengthColumns(),
                                    m_editorWidget->firstVisibleCol()));
     m_horizScroll->setValue(m_editorWidget->firstVisibleCol());
     m_horizScroll->setSingleStep(1);

@@ -68,9 +68,90 @@ void TextDocumentEditor::selfCheck() const
 }
 
 
-bool TextDocumentEditor::validCursor() const
+TextMCoord TextDocumentEditor::innerToMCoord(TextCoord lc) const
 {
-  return m_doc->validCoord(cursor());
+  if (lc.m_line < 0) {
+    return this->beginMCoord();
+  }
+
+  if (lc.m_line >= this->numLines()) {
+    return this->endMCoord();
+  }
+
+  if (lc.m_column < 0) {
+    return TextMCoord(lc.m_line, 0);
+  }
+
+  // TODO: Layout.
+  int lengthBytes = this->lineLengthBytes(lc.m_line);
+  if (lc.m_column > lengthBytes) {
+    return TextMCoord(lc.m_line, lengthBytes);
+  }
+  else {
+    return TextMCoord(lc.m_line, lc.m_column);
+  }
+}
+
+TextMCoord TextDocumentEditor::toMCoord(TextCoord lc) const
+{
+  TextMCoord mc(this->innerToMCoord(lc));
+  xassert(this->validMCoord(mc));
+  return mc;
+}
+
+
+TextCoord TextDocumentEditor::toLCoord(TextMCoord mc) const
+{
+  // TODO: Layout.
+  return TextCoord(mc.m_line, mc.m_byteIndex);
+}
+
+
+TextMCoordRange TextDocumentEditor::toMCoordRange(
+  TextCoordRange const &range) const
+{
+  return TextMCoordRange(
+    this->toMCoord(range.m_start),
+    this->toMCoord(range.m_end));
+}
+
+
+TextCoordRange TextDocumentEditor::toLCoordRange(
+  TextMCoordRange const &range) const
+{
+  return TextCoordRange(
+    this->toLCoord(range.m_start),
+    this->toLCoord(range.m_end));
+}
+
+
+int TextDocumentEditor::lineLengthColumns(int line) const
+{
+  if (0 <= line && line < numLines()) {
+    return this->lineEndCoord(line).m_column;
+  }
+  else {
+    return 0;
+  }
+}
+
+
+TextCoord TextDocumentEditor::lineEndCoord(int line) const
+{
+  return this->toLCoord(m_doc->lineEndCoord(line));
+}
+
+
+int TextDocumentEditor::maxLineLengthColumns() const
+{
+  // TODO: Layout.
+  return m_doc->maxLineLengthBytes();
+}
+
+
+TextCoord TextDocumentEditor::endCoord() const
+{
+  return this->toLCoord(this->endMCoord());
 }
 
 
@@ -138,6 +219,12 @@ TextCoordRange TextDocumentEditor::getSelectRange() const
   else {
     return TextCoordRange(m_cursor, m_mark).rectified();
   }
+}
+
+
+TextMCoordRange TextDocumentEditor::getSelectModelRange() const
+{
+  return this->toMCoordRange(this->getSelectRange());
 }
 
 
@@ -334,7 +421,7 @@ void TextDocumentEditor::insertText(char const *text, int textLen)
   this->deleteSelectionIf();
   this->fillToCursor();
 
-  m_doc->insertAt(cursor(), text, textLen);
+  m_doc->insertAt(this->toMCoord(this->cursor()), text, textLen);
 
   // Put the cursor at the end of the inserted text.
   this->walkCursor(textLen);
@@ -353,16 +440,17 @@ void TextDocumentEditor::insertString(string text)
 }
 
 
-void TextDocumentEditor::deleteLR(bool left, int count)
+void TextDocumentEditor::deleteLR(bool left, int columnCount)
 {
-  xassert(validCursor());
+  TextCoord start(this->cursor());
 
-  if (left) {
-    // Move the cursor to the start of the text to delete.
-    this->walkCursor(-count);
-  }
+  TextCoord end(start);
+  this->walkCoordColumns(end, left? -columnCount : +columnCount);
 
-  m_doc->deleteAt(cursor(), count);
+  TextCoordRange range(start, end);
+  range.rectify();
+
+  this->deleteTextRange(range);
 }
 
 
@@ -370,7 +458,12 @@ void TextDocumentEditor::deleteSelection()
 {
   xassert(m_markActive);
 
-  this->deleteTextRange(this->getSelectRange());
+  TextCoordRange range(this->getSelectRange());
+  if (range.m_start < this->endCoord()) {
+    this->fillToCoord(range.m_start);
+  }
+
+  this->deleteTextRange(range);
   this->clearMark();
   this->scrollToCursor();
 }
@@ -397,7 +490,7 @@ void TextDocumentEditor::backspaceFunction()
       this->deleteChar();
     }
   }
-  else if (m_cursor.m_column > this->cursorLineLength()) {
+  else if (m_cursor.m_column > this->cursorLineLengthColumns()) {
     // Move cursor left non-destructively.
     this->moveCursorBy(0, -1);
   }
@@ -415,7 +508,7 @@ void TextDocumentEditor::deleteKeyFunction()
   if (m_markActive) {
     this->deleteSelection();
   }
-  else if (m_cursor >= m_doc->endCoord()) {
+  else if (m_cursor >= this->endCoord()) {
     // Beyond EOF, do nothing.
   }
   else {
@@ -432,7 +525,7 @@ void TextDocumentEditor::deleteKeyFunction()
 
 void TextDocumentEditor::undo()
 {
-  this->setCursor(m_doc->undo());
+  this->setCursor(this->toLCoord(m_doc->undo()));
   this->clearMark();
   this->scrollToCursor();
 }
@@ -440,27 +533,9 @@ void TextDocumentEditor::undo()
 
 void TextDocumentEditor::redo()
 {
-  this->setCursor(m_doc->redo());
+  this->setCursor(this->toLCoord(m_doc->redo()));
   this->clearMark();
   this->scrollToCursor();
-}
-
-
-int TextDocumentEditor::lineLengthLoose(int line) const
-{
-  xassert(line >= 0);
-  if (line < numLines()) {
-    return lineLength(line);
-  }
-  else {
-    return 0;
-  }
-}
-
-
-TextCoord TextDocumentEditor::lineEndCoord(int line) const
-{
-  return TextCoord(line, lineLengthLoose(line));
 }
 
 
@@ -475,69 +550,76 @@ void TextDocumentEditor::truncateCoord(TextCoord &tc) const
     tc = this->endCoord();
   }
   else {
-    tc.m_column = min(tc.m_column, this->lineLength(tc.m_line));
+    tc.m_column = min(tc.m_column, this->lineLengthColumns(tc.m_line));
   }
 }
 
 
-bool TextDocumentEditor::walkCoord(TextCoord &tc, int len) const
-{
-  return m_doc->getCore().walkCoord(tc, len);
-}
-
-
-int TextDocumentEditor::computeSpanLength(
-  TextCoord tc1, TextCoord tc2) const
-{
-  xassert(tc1 <= tc2);
-
-  if (tc1.m_line == tc2.m_line) {
-    return tc2.m_column-tc1.m_column;
-  }
-
-  // tail of first line
-  int length = this->lineLength(tc1.m_line) - tc1.m_column +1;
-
-  // line we're working on now
-  tc1.m_line++;
-
-  // intervening complete lines
-  for (; tc1.m_line < tc2.m_line; tc1.m_line++) {
-    // because we keep deleting lines, the next one is always
-    // called 'line'
-    length += this->lineLength(tc1.m_line)+1;
-  }
-
-  // beginning of last line
-  length += tc2.m_column;
-
-  return length;
-}
-
-
-void TextDocumentEditor::getLineLoose(TextCoord tc, char *dest, int destLen) const
+void TextDocumentEditor::walkCoordColumns(TextCoord &tc, int len) const
 {
   xassert(tc.nonNegative());
 
-  // how much of the source is in the defined region?
+  for (; len > 0; len--) {
+    if (tc.m_column >= this->lineLengthColumns(tc.m_line)) {
+      // cycle to next line
+      tc.m_line++;
+      tc.m_column = 0;
+    }
+    else {
+      tc.m_column++;
+    }
+  }
+
+  for (; len < 0; len++) {
+    if (tc.m_column == 0) {
+      // cycle up to end of preceding line
+      if (tc.m_line == 0) {
+        return;      // Stop at BOF.
+      }
+      tc.m_line--;
+      tc.m_column = this->lineLengthColumns(tc.m_line);
+    }
+    else {
+      tc.m_column--;
+    }
+  }
+}
+
+
+void TextDocumentEditor::getLineLayout(TextCoord tc, char *dest, int destLen) const
+{
+  xassert(tc.nonNegative());
+
+  // How many columns of the source are in the defined region?
   int undef = destLen;
   int def = 0;
 
   if (tc.m_line < numLines() &&
-      tc.m_column < lineLength(tc.m_line)) {
+      tc.m_column < lineLengthColumns(tc.m_line)) {
     //       <----- lineLength -------->
     // line: [-------------------------][..spaces...]
-    //       <------ col -----><----- destlen ------>
+    //       <------ col -----><----- destLen ------>
     //                         <- def -><-- undef -->
     // dest:                   [--------------------]
 
-    undef = max(0, (tc.m_column+destLen) - lineLength(tc.m_line));
+    undef = max(0, (tc.m_column+destLen) - lineLengthColumns(tc.m_line));
     def = max(0, destLen - undef);
   }
 
   // initial part in defined region
   if (def) {
-    m_doc->getLine(tc, dest, def);
+    TextCoord tcEnd(tc.m_line, tc.m_column + def);
+
+    // Express the desired range in model coordinates.
+    TextMCoord mcBegin(this->toMCoord(tc));
+    TextMCoord mcEnd(this->toMCoord(tcEnd));
+    xassert(mcBegin.m_line == mcEnd.m_line);
+    int byteCount = mcEnd.m_byteIndex - mcBegin.m_byteIndex;
+
+    // TODO: Layout: Properly translate between bytes and grid cells.
+    // For now I'm continuing to equate them.
+    xassert(byteCount == def);
+    m_doc->getLine(mcBegin, dest, byteCount);
   }
 
   // spaces past defined region
@@ -550,45 +632,7 @@ string TextDocumentEditor::getTextRange(TextCoordRange const &range) const
   xassert(range.nonNegative());
   xassert(range.isRectified());
 
-  // This function uses the 'withinOneLine' case as a base case of a two
-  // level recursion; it's not terribly efficient.
-
-  if (range.withinOneLine()) {
-    // extracting text from a single line
-    int len = range.m_end.m_column - range.m_start.m_column;
-
-    // It is not very efficient to allocate two buffers, one here and
-    // one inside the string object, but the std::string API doesn't
-    // offer a way to do it directly, so I need to refactor my APIs if
-    // I want to avoid the extra allocation.
-    Array<char> buf(len+1);
-
-    buf[len] = 0;              // NUL terminator
-    getLineLoose(range.m_start, buf, len);
-    string ret(buf.ptrC());    // Explicitly calling 'ptrC' is only needed for Eclipse...
-
-    return ret;
-  }
-
-  // build up returned string
-  stringBuilder sb;
-
-  // Right half of range start line.
-  sb = getTextRange(range.m_start,
-         TextCoord(range.m_start.m_line,
-                   max(range.m_start.m_column, lineLengthLoose(range.m_start.m_line))));
-
-  // Full lines between start and end.
-  for (int i = range.m_start.m_line + 1; i < range.m_end.m_line; i++) {
-    sb << "\n";
-    sb << getTextRange(TextCoord(i, 0), lineEndCoord(i));
-  }
-
-  // Left half of end line.
-  sb << "\n";
-  sb << getTextRange(TextCoord(range.m_end.m_line, 0), range.m_end);
-
-  return sb;
+  return m_doc->getTextRange(this->toMCoordRange(range));
 }
 
 
@@ -596,8 +640,7 @@ string TextDocumentEditor::getWholeLine(int line) const
 {
   xassert(line >= 0);
   if (line < m_doc->numLines()) {
-    return getTextRange(TextCoord(line, 0),
-                        TextCoord(line, m_doc->lineLength(line)));
+    return m_doc->getWholeLine(line);
   }
   else {
     return string("");
@@ -614,7 +657,7 @@ string TextDocumentEditor::getWordAfter(TextCoord tc) const
   }
 
   bool seenWordChar = false;
-  while (tc.m_column < lineLength(tc.m_line)) {
+  while (tc.m_column < lineLengthColumns(tc.m_line)) {
     char ch = getTextRange(tc, TextCoord(tc.m_line, tc.m_column+1))[0];
     if (isalnum(ch) || ch=='_') {
       seenWordChar = true;
@@ -666,7 +709,7 @@ int TextDocumentEditor::getIndentation(int line) const
     return -1;
   }
   else {
-    int lineLen = m_doc->lineLength(line);
+    int lineLen = m_doc->lineLengthBytes(line);
     int leading = m_doc->countLeadingSpacesTabs(line);
     if (lineLen == leading) {
       return -1;        // entirely whitespace
@@ -723,13 +766,13 @@ void TextDocumentEditor::moveToPrevLineEnd()
 {
   int prevLine = max(0, cursor().m_line - 1);
   moveCursor(false /*relLine*/, prevLine,
-             false /*relCol*/, lineLengthLoose(prevLine));
+             false /*relCol*/, lineLengthColumns(prevLine));
 }
 
 
 void TextDocumentEditor::moveCursorToTop()
 {
-  setCursor(TextCoord(0, 0));
+  setCursor(this->beginCoord());
   scrollToCursor();
 }
 
@@ -748,7 +791,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   if (!backwards) {
     if (0 <= line &&
         line < numLines() &&
-        col < cursorLineLength()) {
+        col < cursorLineLengthColumns()) {
       moveCursorBy(0, 1);
     }
     else {
@@ -787,8 +830,7 @@ void TextDocumentEditor::confineCursorToVisible()
 void TextDocumentEditor::walkCursor(int distance)
 {
   TextCoord tc = m_cursor;
-  bool ok = this->walkCoord(tc, distance);
-  xassert(ok);
+  this->walkCoordColumns(tc, distance);
   m_cursor = tc;
 }
 
@@ -802,7 +844,7 @@ static void computeSpaceFill(TextDocumentEditor const &tde, TextCoord tc,
 {
   if (tc.m_line < tde.numLines()) {
     // case 1: only need to add spaces to the end of some line
-    int diff = tc.m_column - tde.lineLength(tc.m_line);
+    int diff = tc.m_column - tde.lineLengthColumns(tc.m_line);
     if (diff < 0) {
       diff = 0;
     }
@@ -820,26 +862,24 @@ static void computeSpaceFill(TextDocumentEditor const &tde, TextCoord tc,
   xassert(colfill >= 0);
 }
 
-void TextDocumentEditor::fillToCursor()
+void TextDocumentEditor::fillToCoord(TextCoord const &tc)
 {
   int rowfill, colfill;
-  computeSpaceFill(*this, this->cursor(), rowfill, colfill);
+  computeSpaceFill(*this, tc, rowfill, colfill);
 
   if (rowfill==0 && colfill==0) {
     return;     // nothing to do
   }
 
-  // The cursor itself should automatically end up where it started,
-  // but during that process we might trigger a scroll action.  The
-  // restorer will ensure that too is undone.
+  // Restore cursor and scroll state afterwards.
   CursorRestorer restorer(*this);
 
-  TextCoord orig = cursor();
+  // Move cursor the end of the 'tc' line.
+  moveCursor(false /*relLine*/, tc.m_line - rowfill,
+             false /*relCol*/, lineLengthColumns(tc.m_line - rowfill));
 
-  // move back to defined area, and end of that line
-  moveCursor(true /*relLine*/, -rowfill,
-             false /*relCol*/, lineLength(orig.m_line-rowfill));
-  xassert(validCursor());
+  // Do not delete things implicitly here due to a selection!
+  clearMark();
 
   // add newlines
   while (rowfill--) {
@@ -851,8 +891,10 @@ void TextDocumentEditor::fillToCursor()
     insertSpace();
   }
 
-  // should have ended up in the same place we started
-  xassert(orig == cursor());
+  // Cursor should have ended up at 'tc'.
+  xassert(tc == cursor());
+
+  // Now it will be restored by 'restorer'.
 }
 
 
@@ -867,7 +909,7 @@ void TextDocumentEditor::insertSpaces(int howMany)
 
 void TextDocumentEditor::insertNewline()
 {
-  int overEdge = cursor().m_column - cursorLineLength();
+  int overEdge = cursor().m_column - cursorLineLengthColumns();
   if (overEdge > 0) {
     // move back to the end of this line
     moveCursorBy(0, -overEdge);
@@ -883,7 +925,7 @@ void TextDocumentEditor::insertNewlineAutoIndent()
   this->normalizeCursorGTEMark();
 
   // Will we be carrying text forward onto the new line?
-  bool hadCharsToRight = (m_cursor.m_column < this->cursorLineLength());
+  bool hadCharsToRight = (m_cursor.m_column < this->cursorLineLengthColumns());
 
   // typing replaces selection
   this->deleteSelectionIf();
@@ -915,40 +957,11 @@ void TextDocumentEditor::deleteTextRange(TextCoordRange const &range)
   xassert(range.isRectified());
   xassert(range.nonNegative());
 
-  TextCoord tc1(range.m_start);
-  TextCoord tc2(range.m_end);
+  m_doc->deleteTextRange(this->toMCoordRange(range));
 
-  // truncate the endpoints
-  this->truncateCoord(tc1);
-  this->truncateCoord(tc2);
-
-  // Go to one end.
-  this->setCursor(tc2);
+  // Set cursor per spec.
+  this->setCursor(range.m_start);
   this->clearMark();
-
-  // compute # of chars in span
-  int length = this->computeSpanLength(tc1, tc2);
-  if (length) {
-    // Delete them as a left deletion.
-    this->deleteLR(true /*left*/, length);
-
-    // We should now be at 'tc1', which should be on the same line as
-    // 'range.start', but possibly further to the left.
-    xassert(tc1 == m_cursor);
-    xassert(m_cursor.m_line == range.m_start.m_line);
-    xassert(m_cursor.m_column <= range.m_start.m_column);
-
-    if (m_cursor.m_column < range.m_start.m_column &&
-        m_cursor.m_column < this->cursorLineLength()) {
-      // We have some text to the right of the cursor, but we are not
-      // at the column we wanted to be on.  Insert spaces to move the
-      // cursor and push the carried text.
-      this->insertSpaces(range.m_start.m_column - m_cursor.m_column);
-    }
-  }
-
-  // Restore cursor per spec.
-  m_cursor = range.m_start;
 }
 
 
@@ -964,7 +977,7 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
     this->setCursor(TextCoord(line, 0));
 
     if (ind > 0) {
-      if (this->lineLength(line) == 0) {
+      if (this->isEmptyLine(line)) {
         // Do not add spaces to a blank line.
       }
       else {

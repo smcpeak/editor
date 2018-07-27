@@ -27,7 +27,7 @@ TextDocumentCore::TextDocumentCore()
     m_longestLengthSoFar(0),
     m_observers()
 {
-  // always at least one line; see comments at end of td-core.h
+  // There is always at least one line.
   m_lines.insert(0 /*line*/, NULL /*value*/);
 }
 
@@ -78,7 +78,7 @@ void TextDocumentCore::detachRecent()
 }
 
 
-void TextDocumentCore::attachRecent(TextCoord tc, int insLength)
+void TextDocumentCore::attachRecent(TextMCoord tc, int insLength)
 {
   if (m_recent == tc.m_line) { return; }
   detachRecent();
@@ -87,7 +87,7 @@ void TextDocumentCore::attachRecent(TextCoord tc, int insLength)
   int len = bufStrlen(p);
   if (len) {
     // copy contents into 'recentLine'
-    m_recentLine.fillFromArray(p, len, tc.m_column, insLength);
+    m_recentLine.fillFromArray(p, len, tc.m_byteIndex, insLength);
 
     // deallocate the source
     delete[] p;
@@ -101,7 +101,20 @@ void TextDocumentCore::attachRecent(TextCoord tc, int insLength)
 }
 
 
-int TextDocumentCore::lineLength(int line) const
+bool TextDocumentCore::isEmptyLine(int line) const
+{
+  bc(line);
+
+  if (line == m_recent) {
+    return m_recentLine.length() == 0;
+  }
+  else {
+    return m_lines.get(line) == NULL;
+  }
+}
+
+
+int TextDocumentCore::lineLengthBytes(int line) const
 {
   bc(line);
 
@@ -109,9 +122,19 @@ int TextDocumentCore::lineLength(int line) const
     return m_recentLine.length();
   }
   else {
-    return bufStrlen(m_lines.get(line));
+    char *p = m_lines.get(line);
+    if (p) {
+      // An empty line should be represented with a NULL pointer.
+      // Otherwise, 'isEmptyLine' will get the wrong answer.
+      xassert(*p != '\n');
+      return bufStrlen(p);
+    }
+    else {
+      return 0;
+    }
   }
 }
+
 
 STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 {
@@ -129,35 +152,61 @@ STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 }
 
 
-void TextDocumentCore::getLine(TextCoord tc, char *dest, int destLen) const
+void TextDocumentCore::getLine(TextMCoord tc, char *dest, int destLen) const
 {
   bc(tc.m_line);
   xassert(destLen >= 0);
 
   if (tc.m_line == m_recent) {
-    m_recentLine.writeIntoArray(dest, destLen, tc.m_column);
+    m_recentLine.writeIntoArray(dest, destLen, tc.m_byteIndex);
   }
   else {
     char const *p = m_lines.get(tc.m_line);
     int len = bufStrlen(p);
-    xassert(0 <= tc.m_column && tc.m_column + destLen <= len);
+    xassert(0 <= tc.m_byteIndex && tc.m_byteIndex + destLen <= len);
 
-    memcpy(dest, p + tc.m_column, destLen);
+    memcpy(dest, p + tc.m_byteIndex, destLen);
   }
 }
 
 
-bool TextDocumentCore::validCoord(TextCoord tc) const
+bool TextDocumentCore::validCoord(TextMCoord tc) const
 {
-  return 0 <= tc.m_line && tc.m_line < numLines() &&
-         0 <= tc.m_column  && tc.m_column <= lineLength(tc.m_line); // at EOL is ok
+  // TODO UTF-8: Check that the byteIndex is not in the middle of a
+  // multibyte sequence.
+
+  return 0 <= tc.m_line &&
+              tc.m_line < numLines() &&
+         0 <= tc.m_byteIndex &&
+              tc.m_byteIndex <= lineLengthBytes(tc.m_line); // EOL is ok
 }
 
 
-TextCoord TextDocumentCore::endCoord() const
+bool TextDocumentCore::validRange(TextMCoordRange const &range) const
+{
+  return this->validCoord(range.m_start) &&
+         this->validCoord(range.m_end) &&
+         range.isRectified();
+}
+
+
+TextMCoord TextDocumentCore::endCoord() const
 {
   int line = this->numLines()-1;
-  return TextCoord(line, this->lineLength(line));
+  return TextMCoord(line, this->lineLengthBytes(line));
+}
+
+
+TextMCoord TextDocumentCore::lineBeginCoord(int line) const
+{
+  bc(line);
+  return TextMCoord(line, 0);
+}
+
+
+TextMCoord TextDocumentCore::lineEndCoord(int line) const
+{
+  return TextMCoord(line, this->lineLengthBytes(line));
 }
 
 
@@ -167,7 +216,7 @@ TextCoord TextDocumentCore::endCoord() const
 int TextDocumentCore::numLinesExceptFinalEmpty() const
 {
   int lastLine = this->numLines()-1;
-  if (this->lineLength(lastLine) == 0) {
+  if (this->isEmptyLine(lastLine)) {
     return lastLine;
   }
   else {
@@ -176,38 +225,35 @@ int TextDocumentCore::numLinesExceptFinalEmpty() const
 }
 
 
-// This is tested in 'test-td-editor'.  I think of it primarily as a
-// service provided by TextDocumentEditor, but occasionally I need to
-// do this with a TextDocumentCore, so it is implemented here.
-bool TextDocumentCore::walkCoord(TextCoord &tc, int len) const
+bool TextDocumentCore::walkCoordBytes(TextMCoord &tc, int len) const
 {
   xassert(this->validCoord(tc));
 
   for (; len > 0; len--) {
-    if (tc.m_column == this->lineLength(tc.m_line)) {
+    if (tc.m_byteIndex == this->lineLengthBytes(tc.m_line)) {
       // cycle to next line
       tc.m_line++;
       if (tc.m_line >= this->numLines()) {
         return false;      // beyond EOF
       }
-      tc.m_column=0;
+      tc.m_byteIndex=0;
     }
     else {
-      tc.m_column++;
+      tc.m_byteIndex++;
     }
   }
 
   for (; len < 0; len++) {
-    if (tc.m_column == 0) {
+    if (tc.m_byteIndex == 0) {
       // cycle up to end of preceding line
       tc.m_line--;
       if (tc.m_line < 0) {
         return false;      // before BOF
       }
-      tc.m_column = this->lineLength(tc.m_line);
+      tc.m_byteIndex = this->lineLengthBytes(tc.m_line);
     }
     else {
-      tc.m_column--;
+      tc.m_byteIndex--;
     }
   }
 
@@ -216,9 +262,8 @@ bool TextDocumentCore::walkCoord(TextCoord &tc, int len) const
 
 
 // 'line' is marked 'const' to ensure its value is not changed before
-// being passed to the observers; the same thing is done in the other
-// three mutator functions; the C++ standard explicitly allows 'const'
-// to be added here despite not having it in the .h file
+// being passed to the observers.  The same thing is done in the other
+// three mutator functions.
 void TextDocumentCore::insertLine(int const line)
 {
   // insert a blank line
@@ -262,11 +307,17 @@ void TextDocumentCore::deleteLine(int const line)
 }
 
 
-void TextDocumentCore::insertText(TextCoord const tc,
+void TextDocumentCore::insertText(TextMCoord const tc,
                                   char const * const text,
                                   int const length)
 {
   bctc(tc);
+
+  xassert(length >= 0);
+  if (length == 0) {
+    // This prevents needlessly allocating an array for an empty line.
+    return;
+  }
 
   #ifndef NDEBUG
     for (int i=0; i<length; i++) {
@@ -274,7 +325,7 @@ void TextDocumentCore::insertText(TextCoord const tc,
     }
   #endif
 
-  if (tc.m_column==0 && lineLength(tc.m_line)==0 && tc.m_line!=m_recent) {
+  if (tc.m_byteIndex==0 && isEmptyLine(tc.m_line) && tc.m_line!=m_recent) {
     // setting a new line, can leave 'recent' alone
     char *p = new char[length+1];
     memcpy(p, text, length);
@@ -286,7 +337,7 @@ void TextDocumentCore::insertText(TextCoord const tc,
   else {
     // use recent
     attachRecent(tc, length);
-    m_recentLine.insertMany(tc.m_column, text, length);
+    m_recentLine.insertMany(tc.m_byteIndex, text, length);
 
     seenLineLength(m_recentLine.length());
   }
@@ -297,11 +348,11 @@ void TextDocumentCore::insertText(TextCoord const tc,
 }
 
 
-void TextDocumentCore::deleteText(TextCoord const tc, int const length)
+void TextDocumentCore::deleteText(TextMCoord const tc, int const length)
 {
   bctc(tc);
 
-  if (tc.m_column==0 && length==lineLength(tc.m_line) && tc.m_line!=m_recent) {
+  if (tc.m_byteIndex==0 && length==lineLengthBytes(tc.m_line) && tc.m_line!=m_recent) {
     // removing entire line, no need to move 'recent'
     char *p = m_lines.get(tc.m_line);
     if (p) {
@@ -312,7 +363,7 @@ void TextDocumentCore::deleteText(TextCoord const tc, int const length)
   else {
     // use recent
     attachRecent(tc, 0);
-    m_recentLine.removeMany(tc.m_column, length);
+    m_recentLine.removeMany(tc.m_byteIndex, length);
   }
 
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
@@ -336,11 +387,11 @@ void TextDocumentCore::dumpRepresentation() const
 
   // line contents
   for (int i=0; i<numLines(); i++) {
-    int len = lineLength(i);
+    int len = lineLengthBytes(i);
     char *p = NULL;
     if (len) {
       p = new char[len];
-      getLine(TextCoord(i, 0), p, len);
+      getLine(TextMCoord(i, 0), p, len);
     }
 
     printf("  line %d: \"%s\"\n", i,
@@ -408,12 +459,12 @@ void TextDocumentCore::seenLineLength(int len)
 void TextDocumentCore::clear()
 {
   while (this->numLines() > 1) {
-    this->deleteText(TextCoord(0, 0), this->lineLength(0));
+    this->deleteText(TextMCoord(0, 0), this->lineLengthBytes(0));
     this->deleteLine(0);
   }
 
   // delete contents of last remaining line
-  this->deleteText(TextCoord(0, 0), this->lineLength(0));
+  this->deleteText(TextMCoord(0, 0), this->lineLengthBytes(0));
 }
 
 
@@ -443,7 +494,7 @@ void TextDocumentCore::nonAtomicReadFile(char const *fname)
   char buffer[BUFSIZE];
 
   // Location of the end of the document as it is being built.
-  TextCoord tc(0,0);
+  TextMCoord tc(0,0);
 
   for (;;) {
     int len = fread(buffer, 1, BUFSIZE, fp);
@@ -475,14 +526,14 @@ void TextDocumentCore::nonAtomicReadFile(char const *fname)
 
       // insert this line fragment
       this->insertText(tc, p, nl-p);
-      tc.m_column += nl-p;
+      tc.m_byteIndex += nl-p;
 
       if (nl < end) {
         // skip newline
         nl++;
         tc.m_line++;
         this->insertLine(tc.m_line);
-        tc.m_column=0;
+        tc.m_byteIndex=0;
       }
       p = nl;
     }
@@ -511,52 +562,101 @@ void TextDocumentCore::writeFile(char const *fname) const
   GrowArray<char> buffer(256 /*initial size*/);
 
   for (int line=0; line < this->numLines(); line++) {
-    int len = this->lineLength(line);
+    int len = this->lineLengthBytes(line);
     buffer.ensureIndexDoubler(len);       // text + possible newline
 
-    this->getLine(TextCoord(line, 0), buffer.getArrayNC(), len);
+    this->getLine(TextMCoord(line, 0), buffer.getArrayNC(), len);
     if (line < this->numLines()-1) {        // last gets no newline
       buffer[len] = '\n';
       len++;
     }
 
     if ((int)fwrite(buffer.getArray(), 1, len, fp) != len) {
-      xsyserror("read", fname);
+      xsyserror("write", fname);
     }
   }
 }
 
 
-bool TextDocumentCore::getTextSpan(TextCoord tc, char *text, int textLen) const
+bool TextDocumentCore::getTextSpan(TextMCoord tc, char *text, int textLenBytes) const
 {
   xassert(this->validCoord(tc));
+  xassert(textLenBytes >= 0);
 
-  int offset = 0;
-  while (offset < textLen) {
-    // how many chars remain on this line?
-    int thisLine = this->lineLength(tc.m_line) - tc.m_column;
-
-    if (textLen-offset <= thisLine) {
-      // finish off with text from this line
-      this->getLine(tc, text+offset, textLen-offset);
-      return true;
-    }
-
-    // get all of this line, plus a newline
-    this->getLine(tc, text+offset, thisLine);
-    offset += thisLine;
-    text[offset++] = '\n';
-
-    // move cursor to beginning of next line
-    tc.m_line++;
-    tc.m_column = 0;
-
-    if (tc.m_line >= this->numLines()) {
-      return false;     // text span goes beyond end of file
-    }
+  TextMCoord end(tc);
+  if (!this->walkCoordBytes(end, textLenBytes)) {
+    return false;
   }
 
+  TextMCoordRange range(tc, end);
+  string str(this->getTextRange(range));
+
+  xassert(str.length() == textLenBytes);
+  memcpy(text, str.c_str(), textLenBytes);
   return true;
+}
+
+
+int TextDocumentCore::bytesInRange(TextMCoordRange const &range) const
+{
+  // Very inefficient!
+  string s(this->getTextRange(range));
+  return s.length();
+}
+
+
+string TextDocumentCore::getTextRange(TextMCoordRange const &range) const
+{
+  xassert(this->validRange(range));
+
+  // This function uses the 'withinOneLine' case as a base case of a two
+  // level recursion; it's not terribly efficient.
+
+  if (range.withinOneLine()) {
+    // extracting text from a single line
+    int lenBytes = range.m_end.m_byteIndex - range.m_start.m_byteIndex;
+
+    // It is not very efficient to allocate two buffers, one here and
+    // one inside the string object, but the std::string API doesn't
+    // offer a way to do it directly, so I need to refactor my APIs if
+    // I want to avoid the extra allocation.
+    Array<char> buf(lenBytes+1);
+
+    buf[lenBytes] = 0;              // NUL terminator
+    this->getLine(range.m_start, buf, lenBytes);
+    string ret(buf.ptrC());    // Explicitly calling 'ptrC' is only needed for Eclipse...
+
+    return ret;
+  }
+
+  // build up returned string
+  stringBuilder sb;
+
+  // Right half of range start line.
+  sb = this->getTextRange(TextMCoordRange(
+         range.m_start, this->lineEndCoord(range.m_start.m_line)));
+
+  // Full lines between start and end.
+  for (int i = range.m_start.m_line + 1; i < range.m_end.m_line; i++) {
+    sb << "\n";
+    sb << this->getWholeLine(i);
+  }
+
+  // Left half of end line.
+  sb << "\n";
+  sb << this->getTextRange(TextMCoordRange(
+          this->lineBeginCoord(range.m_end.m_line), range.m_end));
+
+  return sb;
+}
+
+
+string TextDocumentCore::getWholeLine(int line) const
+{
+  bc(line);
+  return getTextRange(TextMCoordRange(
+    this->lineBeginCoord(line), this->lineEndCoord(line)
+  ));
 }
 
 
@@ -670,10 +770,10 @@ void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int) NOEX
 void TextDocumentObserver::observeDeleteLine(TextDocumentCore const &, int) NOEXCEPT
 {}
 
-void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) NOEXCEPT
+void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, int) NOEXCEPT
 {}
 
-void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextCoord, int) NOEXCEPT
+void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextMCoord, int) NOEXCEPT
 {}
 
 void TextDocumentObserver::observeTotalChange(TextDocumentCore const &doc) NOEXCEPT

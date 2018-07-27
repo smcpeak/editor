@@ -4,7 +4,9 @@
 #ifndef TD_EDITOR_H
 #define TD_EDITOR_H
 
+// editor
 #include "td.h"                        // TextDocument
+#include "textcoord.h"                 // TextCoord
 
 // smbase
 #include "datetime.h"                  // DateTimeProvider
@@ -25,6 +27,10 @@
 // notion of a "cursor", and this class has the cursor.  It also has
 // the "mark", which is the other endpoint (besides the cursor) in a
 // "selection".
+//
+// Both the cursor and mark are *layout* coordinates.  This class
+// translates between layout and model coordinates; it is the class that
+// knows how to lay out a text document on a regular 2D grid of cells.
 class TextDocumentEditor : public SerfRefCount {
   // Copying would not necessarily be a problem, but for the moment I
   // want to ensure I do not do it accidentally.
@@ -66,14 +72,16 @@ private:     // data
   //
   // These coordinates are in units of fixed-size grid cells, meaning
   // we assume that the document as a whole is presented that way.
-  // There is an unresolved issue about how best to deal with non-
-  // fixed-width elements like Tab and Unicode composing sequences.
   //
   // Invariants:
   //   * m_firstVisible.line <= m_lastVisible.line
   //   * m_firstVisible.column <= m_lastVisible.column
   TextCoord m_firstVisible;
   TextCoord m_lastVisible;
+
+private:     // funcs
+  // Helper for 'toMCoord'.
+  TextMCoord innerToMCoord(TextCoord lc) const;
 
 public:      // funcs
   explicit TextDocumentEditor(TextDocument *doc);
@@ -106,30 +114,59 @@ public:      // funcs
   bool isReadOnly() const              { return m_doc->isReadOnly(); }
   void setReadOnly(bool readOnly)      { m_doc->setReadOnly(readOnly); }
 
-  // -------------------- query file dimensions --------------------
+  // ------------------- query model dimensions --------------------
   // Number of lines in the document.  Always positive.
   int numLines() const                 { return m_doc->numLines(); }
 
-  // Length of a given line, not including newline.  'line' must be
-  // in [0,numLines()-1].
-  int lineLength(int line) const       { return m_doc->lineLength(line); }
+  bool isEmptyLine(int line) const     { return m_doc->isEmptyLine(line); }
 
-  // Line length, or 0 if it's beyond the end of the file.  'line' must
-  // be non-negative.
-  int lineLengthLoose(int line) const;
+  // Length of the line in bytes, not including the newline.  'line'
+  // must be in [0,numLines()-1].
+  int lineLengthBytes(int line) const  { return m_doc->lineLengthBytes(line); }
+
+  int maxLineLengthBytes() const       { return m_doc->maxLineLengthBytes(); }
+
+  // Begin/end model coordinates.
+  TextMCoord beginMCoord() const       { return m_doc->beginCoord(); }
+  TextMCoord endMCoord() const         { return m_doc->endCoord(); }
+
+  bool validMCoord(TextMCoord mc) const{ return m_doc->validCoord(mc); }
+
+  // ------------------- coordinate transformation -----------------
+  // Convert the given layout coordinate to a valid model coordinate.
+  // This is the first coordinate that is at-or-after 'tc', or
+  // 'endMCoord()' if none is.
+  TextMCoord toMCoord(TextCoord lc) const;
+
+  // Convert the given model coordinate to the layout coordinate of the
+  // first grid cell the identified code point occupies, or would occupy
+  // (for an "ordinary" character) if 'mc' is at EOL or EOF.  'mc' must
+  // be a valid coordinate.
+  TextCoord toLCoord(TextMCoord mc) const;
+
+  // Convert coordinate ranges.
+  TextMCoordRange toMCoordRange(TextCoordRange const &range) const;
+  TextCoordRange toLCoordRange(TextMCoordRange const &range) const;
+
+  // ------------------- query layout dimensions -------------------
+  // Number of populated cells on the given line, in columns.  This does
+  // not count the newline.  If 'line' is outside [0,numLines()-1],
+  // returns 0.
+  int lineLengthColumns(int line) const;
 
   // Length of line containing cursor.
-  // Returns 0 when cursor is beyond EOF.
-  int cursorLineLength() const         { return lineLengthLoose(cursor().m_line); }
+  int cursorLineLengthColumns() const  { return lineLengthColumns(cursor().m_line); }
 
   // Length of the longest line.  Note: This may overestimate.
-  int maxLineLength() const            { return m_doc->maxLineLength(); }
+  int maxLineLengthColumns() const;
 
   // First position in the file.
+  //
+  // TODO: Rename to 'beginLCoord'.
   TextCoord beginCoord() const         { return TextCoord(0,0); }
 
   // Position right after last character in file.
-  TextCoord endCoord() const           { return m_doc->endCoord(); }
+  TextCoord endCoord() const;
 
   // Range for the entire document.
   TextCoordRange documentRange() const
@@ -138,8 +175,6 @@ public:      // funcs
   // Position at end of specified line, which may be beyond EOF.
   TextCoord lineEndCoord(int line) const;
 
-  bool validCoord(TextCoord tc) const  { return m_doc->validCoord(tc); }
-
   // Clamp the coordinate to the valid region of the document.  If it
   // is beyond EOF, it gets set to 'endCoord()', even if that has a
   // larger column number than 'tc' did originally.
@@ -147,29 +182,15 @@ public:      // funcs
 
   // Walk the given coordinate forwards (right, then down, when
   // distance>0) or backwards (left, then up, when distance<0) through
-  // the valid coordinates of the file.  It must initially be in the
-  // valid area, but if by walking we get out of bounds, then the
-  // function simply returns false (otherwise true).
-  bool walkCoord(TextCoord &tc, int distance) const;
-
-  // Given two locations that are within the valid area, and with
-  // tc1 <= tc2, compute the # of chars between them, counting line
-  // boundaries as one char.
-  int computeSpanLength(TextCoord tc1, TextCoord tc2) const;
+  // the layout coordinates of the file.  If distance is negative, we
+  // silently stop at the document start even if the magnitude would
+  // take us into negative line numbers.
+  void walkCoordColumns(TextCoord &tc, int distance) const;
 
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.
   TextCoord cursor() const             { return m_cursor; }
-
-  // Return true if the cursor is within the current text, i.e.,
-  // not beyond the end of a line or beyond the end of the file.
-  //
-  // The term "valid" is bit too strong here, since the design of
-  // this interface is to tolerate the cursor being anywhere in
-  // the file.  But a few functions still demand this for
-  // historical reasons.  TODO: Fix those.
-  bool validCursor() const;
 
   // True if the cursor is at the very last valid position.
   bool cursorAtEnd() const;
@@ -255,6 +276,9 @@ public:      // funcs
   // 'cursor'.
   TextCoordRange getSelectRange() const;
 
+  // Same, but as a model range.
+  TextMCoordRange getSelectModelRange() const;
+
   // Set 'cursor' to the start and 'mark' to the end of 'range'.
   void setSelectRange(TextCoordRange const &range);
 
@@ -336,16 +360,15 @@ public:      // funcs
   void centerVisibleOnCursorLine();
 
   // ---------------- general text queries -------------------
-  // Get part of a single line's contents, starting at 'line/col' and
-  // getting 'destLen' chars.  All the chars must be in the line now.
-  // The retrieved text never includes the '\n' character.
-  void getLine(TextCoord tc, char *dest, int destLen) const
-    { return m_doc->getLine(tc, dest, destLen); }
-
-  // get a range of text from a line, but if the position is outside
+  // Get a range of text from a line, but if the position is outside
   // the defined range, pretend the line exists (if necessary) and
-  // that there are space characters up to 'col+destLen' (if necessary)
-  void getLineLoose(TextCoord tc, char *dest, int destLen) const;
+  // that there are space characters up to 'col+destLen' (if necessary).
+  //
+  // This is effectively computing the layout for a fragment of the
+  // document and expressing it as a sequence of grid contents.  Each
+  // grid cell's content is, for now, expressed as one byte.  Tacitly,
+  // the bytes are interpreted as Latin-1 code points.
+  void getLineLayout(TextCoord tc, char *dest, int destLen) const;
 
   // Retrieve the text between two positions, as in a text editor where
   // the positions are the selection endpoints and the user wants a
@@ -413,23 +436,25 @@ public:      // funcs
   // ------------------- general text deletion ------------------
   // Delete at cursor.  'left' or 'right' refers to which side of
   // the cursor has the text to be deleted.  This can delete newline
-  // characters.  Requires validCursor().
-  void deleteLR(bool left, int count);
+  // characters.
+  void deleteLR(bool left, int columnCount);
 
   void deleteText(int len)             { deleteLR(false /*left*/, len); }
 
   void deleteChar()                    { deleteText(1); }
 
   // Delete the characters between the range start and end.  Both are
-  // truncated to ensure validity.  Requires 'range.isRectified()'.
-  // Final cursor is left at range start.  Clears the mark.
+  // truncated to ensure validity (this implies it does *not* fill to
+  // the start initially).  Requires 'range.isRectified()'.  Final
+  // cursor is left at range start.  Clears the mark.
   void deleteTextRange(TextCoordRange const &range);
   void deleteTextRange(TextCoord const &start, TextCoord const &end)
     { deleteTextRange(TextCoordRange(start, end)); }
 
-  // Delete the selected text.  Requires markActive().  Cursor is
-  // left at the low end of the selection, mark is cleared.  Scrolls
-  // to the cursor afterward.
+  // If the selection start is not beyond EOF, fill with whitespace to
+  // the start, then delete the selected text.  Requires markActive().
+  // Cursor is left at the low end of the selection, mark is cleared.
+  // Scrolls to the cursor afterward.
   void deleteSelection();
 
   // Same as 'deleteSelection', but a no-op if not markActive().
@@ -450,8 +475,11 @@ public:      // funcs
   void deleteKeyFunction();
 
   // ---------------------- adding whitespace ----------------------
-  // Add minimum whitespace near cursor to ensure 'validCursor()'.
-  void fillToCursor();
+  // Add minimum whitespace near 'tc' to ensure it is not beyond EOL
+  // or EOF.
+  void fillToCoord(TextCoord const &tc);
+
+  void fillToCursor() { fillToCoord(cursor()); }
 
   void insertSpace() { insertNulTermText(" "); }
   void insertSpaces(int howMany);

@@ -20,9 +20,9 @@ void DiffHighlighter::highlight(TextDocumentCore const &doc, int line,
                                 LineCategories &categories)
 {
   // Get the line contents.
-  int lineLength = doc.lineLength(line);
+  int lineLength = doc.lineLengthBytes(line);
   Array<char> lineArray(lineLength);
-  doc.getLine(TextCoord(line, 0), lineArray.ptr(), lineLength);
+  doc.getLine(TextMCoord(line, 0), lineArray.ptr(), lineLength);
 
   // Default category.
   categories.clear(TC_DIFF_CONTEXT);

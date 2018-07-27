@@ -34,6 +34,11 @@ char const *toString(DocumentProcessStatus dps);
 
 // This class represents a text document (which is a sequence of lines)
 // and its undo/redo history.
+//
+// It has basically the same interface as TextDocumentCore, plus the
+// some additional functionality (like undo/redo).  But it does not
+// inherit TextDocumentCore, it instead explicitly repeats that
+// interface and delegates to 'm_core'.
 class TextDocument : public SerfRefCount {
 public:       // static data
   static int s_objectCount;
@@ -106,24 +111,36 @@ public:      // funcs
   virtual ~TextDocument();
 
   // Read-only access to the underlying representation.  Use of this
-  // should be unusual.
+  // should be infrequent, as I prefer to use the delegation queries.
   TextDocumentCore const &getCore() const { return m_core; }
 
-  // ------------------------ query document -----------------------
-  int numLines() const                    { return m_core.numLines(); }
-  int lineLength(int line) const          { return m_core.lineLength(line); }
-  bool validCoord(TextCoord tc) const     { return m_core.validCoord(tc); }
-  TextCoord endCoord() const              { return m_core.endCoord(); }
-  int maxLineLength() const               { return m_core.maxLineLength(); }
-  int numLinesExceptFinalEmpty() const    { return m_core.numLinesExceptFinalEmpty(); }
+  // --------------------- query document core --------------------
+  // These are simple pass-through delegation queries.  They are
+  // declared in the same order as in TextDocumentCore.  The
+  // modification routines are *not* exposed because document changes
+  // must go through the undo/redo mechanism in this class.
 
-  void getLine(TextCoord tc, char *dest, int destLen) const
-    { return m_core.getLine(tc, dest, destLen); }
-  int countLeadingSpacesTabs(int line) const
-    { return m_core.countLeadingSpacesTabs(line); }
-  int countTrailingSpacesTabs(int line) const
-    { return m_core.countTrailingSpacesTabs(line); }
+  int numLines() const                                       { return m_core.numLines(); }
+  bool isEmptyLine(int line) const                           { return m_core.isEmptyLine(line); }
+  int lineLengthBytes(int line) const                        { return m_core.lineLengthBytes(line); }
+  bool validCoord(TextMCoord tc) const                       { return m_core.validCoord(tc); }
+  bool validRange(TextMCoordRange const &range) const        { return m_core.validRange(range); }
+  TextMCoord beginCoord() const                              { return m_core.beginCoord(); }
+  TextMCoord endCoord() const                                { return m_core.endCoord(); }
+  TextMCoord lineBeginCoord(int line) const                  { return m_core.lineBeginCoord(line); }
+  TextMCoord lineEndCoord(int line) const                    { return m_core.lineEndCoord(line); }
+  int maxLineLengthBytes() const                             { return m_core.maxLineLengthBytes(); }
+  int numLinesExceptFinalEmpty() const                       { return m_core.numLinesExceptFinalEmpty(); }
+  bool walkCoordBytes(TextMCoord &tc, int distance) const    { return m_core.walkCoordBytes(tc, distance); }
+  int bytesInRange(TextMCoordRange const &range) const       { return m_core.bytesInRange(range); }
+  void getLine(TextMCoord tc, char *dest, int destLen) const { return m_core.getLine(tc, dest, destLen); }
+  bool getTextSpan(TextMCoord tc, char *text, int len) const { return m_core.getTextSpan(tc, text, len); }
+  string getTextRange(TextMCoordRange const &range) const    { return m_core.getTextRange(range); }
+  string getWholeLine(int line) const                        { return m_core.getWholeLine(line); }
+  int countLeadingSpacesTabs(int line) const                 { return m_core.countLeadingSpacesTabs(line); }
+  int countTrailingSpacesTabs(int line) const                { return m_core.countTrailingSpacesTabs(line); }
 
+  // ---------------------- extra attributes ----------------------
   DocumentProcessStatus documentProcessStatus() const
     { return m_documentProcessStatus; }
   bool isProcessOutput() const
@@ -164,12 +181,15 @@ public:      // funcs
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.
   // 'tc' must be valid for the document.
-  void insertAt(TextCoord tc, char const *text, int textLen);
+  void insertAt(TextMCoord tc, char const *text, int textLen);
 
-  // Delete 'count' characters at (to the right of) 'tc'.  This
-  // may span lines.  Each end-of-line counts as one character.
+  // Delete 'byteCount' bytes at (to the right of) 'tc'.  This
+  // may span lines.  Each end-of-line counts as one byte.
   // 'tc' must be valid for the document.
-  void deleteAt(TextCoord tc, int count);
+  void deleteAt(TextMCoord tc, int byteCount);
+
+  // Delete text specified by a range.
+  void deleteTextRange(TextMCoordRange const &range);
 
   // Convenience functions to append to the end of the document.
   void appendText(char const *text, int textLen);
@@ -195,8 +215,8 @@ public:      // funcs
   bool canRedo() const        { return m_historyIndex < m_history.seqLength(); }
 
   // These return the location at the left edge of the modified text.
-  TextCoord undo();
-  TextCoord redo();
+  TextMCoord undo();
+  TextMCoord redo();
 
   // Do the current contents differ from those we remember saving?
   bool unsavedChanges() const;

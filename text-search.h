@@ -209,11 +209,11 @@ public:      // funcs
   //
   // If the return value is false, the output value of 'range' is
   // unspecified.
-  bool nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const;
+  bool nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const;
 
   // Return true if there is a match starting at 'a' and going up to
   // but not including 'b'; or one from 'b' to 'a' in the same manner.
-  bool rangeIsMatch(TextCoord const &a, TextCoord const &b) const;
+  bool rangeIsMatch(TextMCoord const &a, TextMCoord const &b) const;
 
   // Compute the replacement text for 'existing', given 'replaceSpec',
   // which is non-trivial when using regex search.
@@ -223,8 +223,8 @@ public:      // funcs
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
   virtual void observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextCoord tc, int length) NOEXCEPT OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT OVERRIDE;
 };
 

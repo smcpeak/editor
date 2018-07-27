@@ -1,5 +1,13 @@
 
 TODOs:
+  - major refactoring: layout versus model coordinates
+    - rename TextCoord to TextLCoord
+    - rename coordinate methods in td-editor to use 'L' in their name
+    - add selfCheck to TD and TDC, arrange to call it from tests
+    - add tests for TD directly, including 'walkCoordBytes'
+    - change the 'get' APIs for documents to populate ArrayStack<char>
+      instead of using char*
+
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
     - then, when it is not, we get ".." in the document path name

@@ -51,7 +51,7 @@ static void testAtomicRead()
 
 static void insText(TextDocumentCore &tdc, int line, int col, char const *text)
 {
-  tdc.insertText(TextCoord(line, col), text, strlen(text));
+  tdc.insertText(TextMCoord(line, col), text, strlen(text));
 }
 
 static void insLine(TextDocumentCore &tdc, int line, int col, char const *text)
@@ -74,11 +74,11 @@ static void testVarious()
   TextDocumentCore tdc;
 
   EXPECT_EQ(tdc.numLines(), 1);
-  EXPECT_EQ(tdc.lineLength(0), 0);
-  EXPECT_EQ(tdc.validCoord(TextCoord(0,0)), true);
-  EXPECT_EQ(tdc.validCoord(TextCoord(0,1)), false);
-  EXPECT_EQ(tdc.endCoord(), TextCoord(0,0));
-  EXPECT_EQ(tdc.maxLineLength(), 0);
+  EXPECT_EQ(tdc.lineLengthBytes(0), 0);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(0,0)), true);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(0,1)), false);
+  EXPECT_EQ(tdc.endCoord(), TextMCoord(0,0));
+  EXPECT_EQ(tdc.maxLineLengthBytes(), 0);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
 
   insLine(tdc, 0,0, "one");
@@ -95,15 +95,15 @@ static void testVarious()
 
   EXPECT_EQ(tdc.numLines(), 7);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 7);
-  EXPECT_EQ(tdc.lineLength(0), 3);
-  EXPECT_EQ(tdc.lineLength(6), 6);
-  EXPECT_EQ(tdc.validCoord(TextCoord(0,0)), true);
-  EXPECT_EQ(tdc.validCoord(TextCoord(0,1)), true);
-  EXPECT_EQ(tdc.validCoord(TextCoord(6,6)), true);
-  EXPECT_EQ(tdc.validCoord(TextCoord(6,7)), false);
-  EXPECT_EQ(tdc.validCoord(TextCoord(7,0)), false);
-  EXPECT_EQ(tdc.endCoord(), TextCoord(6,6));
-  EXPECT_EQ(tdc.maxLineLength(), 12);
+  EXPECT_EQ(tdc.lineLengthBytes(0), 3);
+  EXPECT_EQ(tdc.lineLengthBytes(6), 6);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(0,0)), true);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(0,1)), true);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(6,6)), true);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(6,7)), false);
+  EXPECT_EQ(tdc.validCoord(TextMCoord(7,0)), false);
+  EXPECT_EQ(tdc.endCoord(), TextMCoord(6,6));
+  EXPECT_EQ(tdc.maxLineLengthBytes(), 12);
 
   checkSpaces(tdc, 0, 0, 0);
   checkSpaces(tdc, 1, 2, 0);
@@ -115,7 +115,7 @@ static void testVarious()
 
   for (int line=0; line <= 6; line++) {
     // Tweak 'line' so it is recent and then repeat the whitespace queries.
-    TextCoord tc(line, 0);
+    TextMCoord tc(line, 0);
     char c = 'x';
     tdc.insertText(tc, &c, 1);
     tdc.deleteText(tc, 1);

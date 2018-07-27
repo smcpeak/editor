@@ -1,6 +1,8 @@
 // textcoord.h
 // TextCoord and TextCoordRange classes.
 
+// TODO: Rename this to "TextLCoord".
+
 #ifndef TEXTCOORD_H
 #define TEXTCOORD_H
 
@@ -10,18 +12,39 @@
 #include <iostream>                    // std::ostream
 
 
-// The coordinates of a location within a text document.  This is meant
-// for use with TextDocumentCore.
+// The coordinates of a location within a 2D text document *layout*.
+// This is meant for use with TextDocumentEditor, which provides an
+// interface for editing a text document as it appears when layed out.
 //
-// Both line and column are 0-based, even though user interfaces
-// usually use 1-based coordinates.  This is done because 0-based
-// arithmetic is much more natural in C++.  The UI layer will have to
-// do the translation to 1-based coordinates.
+// The coordinates identify a cell in an infinite, regular 2D grid.  The
+// cell need not correspond to any code point in the document.  It could
+// be beyond EOL, beyond EOF, in the middle of a code point that
+// occupies multiple columns (e.g., Tab), or at a location containing
+// multiple code points (e.g., composed characters or zero-width
+// characters).
+//
+// Semantically, we think of the coordinate as being *between* code
+// points.  Specifically, it is before any code point whose layout
+// rectangle starts at or beyond the cell in the usual left-to-right,
+// top-to-bottom writing order, and after any other.
+//
+// For comparison, see TextMCoord in textmcoord.h, which is the
+// coordinate system for the document *model*.  The interplay between
+// these two coordinate systems is essential to the design of the
+// editor.
+//
+// Both line and column are 0-based.  The UI translates them to 1-based
+// coordinates for interaction with the user.
 class TextCoord {
 public:      // data
   // 0-based line number.  Should not be negative, although nothing in
   // this class prohibits that, and it could potentially be useful to
   // allow a negative value in the middle of a calculation.
+  //
+  // Eventually I plan to replace "line" with "row" in order to decouple
+  // the vertical dimension of layout and model, just as "byte" and
+  // "column" decouple the horizontal dimension.  But, currently, the
+  // model and layout line numbers are always the same.
   int m_line;
 
   // 0-based column number.  Should not be negative.
@@ -68,18 +91,13 @@ inline stringBuilder& operator<< (stringBuilder &sb, TextCoord const &tc)
 
 
 // Range of text identified by coordinate endpoints.
-//
-// Note that it is not possible from a TextCoordRange alone to
-// determine how many characters are enclosed.  A TextDocument is
-// required as well for that.
 class TextCoordRange {
 public:      // data
   // First cell in the range.
   TextCoord m_start;
 
-  // One past the last cell in the range.  For a 2D text document, this
-  // can be on the same line, or at the start of the next line so the
-  // range includes a final newline.
+  // One past the last cell in the range.  The range identifies all of
+  // the code points that are at-or-after 'm_start' and before 'm_end'.
   //
   // If start==end, the range is empty.
   //

@@ -138,7 +138,13 @@ testgap: gap.h testgap.cc
 
 # -------------- test-td-core test program ----------------
 TOCLEAN += test-td-core td-core.tmp
-TD_CORE_OBJS := test-td-core.o td-core.o textcoord.o
+
+EDITOR_OBJS += td-core.o
+EDITOR_OBJS += textmcoord.o
+
+TD_CORE_OBJS := $(EDITOR_OBJS)
+TD_CORE_OBJS += test-td-core.o
+
 test-td-core: $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
 	./test-td-core $(TEST_REDIR)
@@ -152,7 +158,6 @@ TOCLEAN += test-td-editor td.tmp
 EDITOR_OBJS += history.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += td.o
-EDITOR_OBJS += td-core.o
 EDITOR_OBJS += td-editor.o
 EDITOR_OBJS += textcoord.o
 

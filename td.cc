@@ -154,7 +154,7 @@ void TextDocument::setReadOnly(bool readOnly)
 }
 
 
-void TextDocument::insertAt(TextCoord tc, char const *text, int textLen)
+void TextDocument::insertAt(TextMCoord tc, char const *text, int textLen)
 {
   // Ignore insertions of nothing.
   if (textLen > 0) {
@@ -167,16 +167,25 @@ void TextDocument::insertAt(TextCoord tc, char const *text, int textLen)
 }
 
 
-void TextDocument::deleteAt(TextCoord tc, int count)
+void TextDocument::deleteAt(TextMCoord tc, int byteCount)
 {
-  if (count > 0) {
+  if (byteCount > 0) {
     HE_text *e = new HE_text(tc,
                              false /*insertion*/,
                              NULL /*text*/, 0 /*textLen*/);
-    e->computeText(m_core, count);
+    e->computeText(m_core, byteCount);
     e->apply(m_core, false /*reverse*/);
     appendElement(e);
   }
+}
+
+
+void TextDocument::deleteTextRange(TextMCoordRange const &range)
+{
+  xassert(range.isRectified());
+
+  int byteCount = m_core.bytesInRange(range);
+  this->deleteAt(range.m_start, byteCount);
 }
 
 
@@ -265,7 +274,7 @@ void TextDocument::endUndoGroup()
 }
 
 
-TextCoord TextDocument::undo()
+TextMCoord TextDocument::undo()
 {
   xassert(canUndo() && !inUndoGroup());
 
@@ -274,11 +283,11 @@ TextCoord TextDocument::undo()
 }
 
 
-TextCoord TextDocument::redo()
+TextMCoord TextDocument::redo()
 {
   xassert(canRedo() && !inUndoGroup());
 
-  TextCoord tc = m_history.applyOne(m_core, m_historyIndex, false /*reverse*/);
+  TextMCoord tc = m_history.applyOne(m_core, m_historyIndex, false /*reverse*/);
   this->bumpHistoryIndex(+1);
   return tc;
 }

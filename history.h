@@ -50,7 +50,7 @@ public:
   // but in this case the buffer must not be modified.
   //
   // Return the coordinate of the left edge of the modified text.
-  virtual TextCoord apply(TextDocumentCore &doc, bool reverse) const=0;
+  virtual TextMCoord apply(TextDocumentCore &doc, bool reverse) const=0;
 
   // render this command as a text line, indented by 'indent' spaces
   virtual void print(stringBuilder &sb, int indent) const=0;
@@ -65,33 +65,35 @@ class HE_text : public HistoryElt {
 public:      // data
   // Where in the document to make the modification.  If this is
   // a deletion, this is the left edge of the span.
-  TextCoord tc;
+  TextMCoord tc;
 
   // If true, this is an insertion; otherwise a deletion.
   bool insertion;
 
   // Text to insert or delete; may contain embedded NULs.
   char *text;          // (owner) NULL iff textLen==0
+
+  // Length of the text in bytes.
   int textLen;
 
 private:     // funcs
-  static void insert(TextDocumentCore &buf, TextCoord tc,
+  static void insert(TextDocumentCore &buf, TextMCoord tc,
                      char const *text, int textLen, bool reverse);
 
 public:      // funcs
   // This makes a copy of 'text'.
-  HE_text(TextCoord tc, bool insertion, char const *text, int textLen);
+  HE_text(TextMCoord tc, bool insertion, char const *text, int textLen);
   ~HE_text();
 
   // HistoryElt funcs
   virtual Tag getTag() const OVERRIDE { return HE_TEXT; }
-  virtual TextCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
+  virtual TextMCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
   virtual void print(stringBuilder &sb, int indent) const OVERRIDE;
   virtual void stats(HistoryStats &stats) const OVERRIDE;
 
   // 'apply', but static
-  static TextCoord static_apply(
-    TextDocumentCore &buf, TextCoord tc, bool insertion,
+  static TextMCoord static_apply(
+    TextDocumentCore &buf, TextMCoord tc, bool insertion,
     char const *text, int textLen, bool reverse);
 
   // compute correct 'text' and 'textLen' for forward application of a
@@ -110,8 +112,8 @@ private:     // data
 
 private:     // funcs
   // apply elements in reverse order if 'reverse' is true
-  TextCoord applySeqElt(TextDocumentCore &buf, int start, int end, int offset,
-                        bool reverseIndex, bool reverseOperation) const;
+  TextMCoord applySeqElt(TextDocumentCore &buf, int start, int end, int offset,
+                         bool reverseIndex, bool reverseOperation) const;
 
 public:      // funcs
   HE_group();          // initially, seq is empty
@@ -150,10 +152,10 @@ public:      // funcs
   // start <= index < end; they are applied start to end-1, unless
   // 'reverse' is true, in which case they are applied end-1 to start,
   // each transformation itself applied with 'reverse' as passed in
-  TextCoord applySeq(TextDocumentCore &buf, int start, int end, bool reverse) const;
+  TextMCoord applySeq(TextDocumentCore &buf, int start, int end, bool reverse) const;
 
   // apply a single element of the sequence, possibly in reverse
-  TextCoord applyOne(TextDocumentCore &buf, int index, bool reverse) const;
+  TextMCoord applyOne(TextDocumentCore &buf, int index, bool reverse) const;
 
   // print, and mark the nth element of the history in the left
   // margin; if 'n' is outside the range of valid indices, no mark is
@@ -163,7 +165,7 @@ public:      // funcs
 
   // HistoryElt funcs
   virtual Tag getTag() const OVERRIDE { return HE_GROUP; }
-  virtual TextCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
+  virtual TextMCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
   virtual void print(stringBuilder &sb, int indent) const OVERRIDE;
   virtual void stats(HistoryStats &stats) const OVERRIDE;
 };

@@ -23,7 +23,7 @@ void BufferLineSource::beginScan(TextDocumentCore const *b, int line)
   // set up variables so we'll be able to do fillBuffer()
   buffer = b;
   bufferLine = line;
-  lineLength = buffer->lineLength(line);
+  lineLength = buffer->lineLengthBytes(line);
   nextSlurpCol = 0;
 }
 
@@ -37,7 +37,7 @@ int BufferLineSource::fillBuffer(char* buf, int max_size)
   }
 
   int len = min(max_size, lineLength-nextSlurpCol);
-  buffer->getLine(TextCoord(bufferLine, nextSlurpCol), buf, len);
+  buffer->getLine(TextMCoord(bufferLine, nextSlurpCol), buf, len);
   nextSlurpCol += len;
 
   return len;

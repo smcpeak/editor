@@ -6,7 +6,7 @@
 
 // editor
 #include "gap.h"                       // GapArray
-#include "textcoord.h"                 // TextCoord
+#include "textmcoord.h"                // TextMCoord
 
 // smbase
 #include "rcserflist.h"                // RCSerfList
@@ -29,15 +29,13 @@ class TextDocumentObserver;
 // with 0 bytes.
 //
 // A line is a possibly empty sequence of Latin-1 code points, each
-// in [0,255].  TODO: Change to Unicode code points.
-//
-// Column numbers as conveyed by TextCoord are in units of code points.
-// Among other things, that means it is possible to name the pieces of
-// a combining sequence individually.  (But Latin-1 has none.)
+// in [0,255].  TODO UTF-8: Change to Unicode code points.
 //
 // All uses of char* in this interface use Latin-1 encoding.  If 'char'
 // is signed, the values [-128,-1] are interpreted as naming the code
 // points in [128,255] instead.  TODO: Change to UTF-8 encoding.
+//
+// All line lengths in this class are counts of *bytes*.
 //
 // This class is the "core" of a text document because it does not have
 // any facilities for undo and redo.  Those are added by TextDocument
@@ -62,9 +60,9 @@ private:     // data
   // and lines[recent] is NULL
   GapArray<char> m_recentLine;
 
-  // length of the longest line this file has ever had; this is
-  // my poor-man's substitute for a proper interval map, etc., to
-  // be able to answer the 'maxLineLength()' query
+  // Length of the longest line this file has ever had, in bytes.  This
+  // is my poor-man's substitute for a proper interval map, etc., to be
+  // able to answer the 'maxLineLength()' query.
   int m_longestLengthSoFar;
 
   // invariants:
@@ -81,19 +79,19 @@ private:     // data
   mutable RCSerfList<TextDocumentObserver> m_observers;
 
 private:     // funcs
-  // strlen, but NULL yields 0 and '\n' is terminator
+  // strlen, but NULL yields 0 and '\n' is terminator, in bytes.
   static int bufStrlen(char const *p);
 
   // bounds check line
   void bc(int line) const { xassert(0 <= line && line < numLines()); }
 
   // Counds check a coordinate.
-  void bctc(TextCoord tc) const { xassert(validCoord(tc)); }
+  void bctc(TextMCoord tc) const { xassert(validCoord(tc)); }
 
   // copy the given line into 'recentLine', with given hints as to
   // where the gap should go and how big it should be
   // postcondition: recent==tc.line
-  void attachRecent(TextCoord tc, int insLength);
+  void attachRecent(TextMCoord tc, int insLength);
 
   // copy contents of 'recentLine', if any, back into lines[];
   // postcondition: recent==-1
@@ -115,49 +113,90 @@ public:    // funcs
   // # of lines stored; always at least 1
   int numLines() const { return m_lines.length(); }
 
-  // length of a given line, not including the '\n'
-  int lineLength(int line) const;
+  // True if the given line is empty.
+  bool isEmptyLine(int line) const;
 
-  // check if a given location is within or at the edge of the defined
-  // buffer contents (i.e. such that an 'insertText' would be allowed)
-  bool validCoord(TextCoord tc) const;
+  // Length of a given line, not including the '\n', in bytes.
+  int lineLengthBytes(int line) const;
+
+  // True if 'tc' has a line in [0,numLines()-1] and a byteIndex in
+  // [0,lineLengthBytes(line)] that is not in the middle of a multibyte
+  // code unit sequence.  That means, for example, one can insert a
+  // code point and it will be adjacent to an existing code point.
+  //
+  // It *is* valid for a coordinate to refer to a composing code point.
+  // As far as TextDocumentCore is concerned, character composition is
+  // beyond its scope of concern.  (I treat it as a layout issue.)
+  bool validCoord(TextMCoord tc) const;
+
+  // True if both endpoints are valid and start >= end.
+  bool validRange(TextMCoordRange const &range) const;
+
+  // Return the first valid coordinate.
+  TextMCoord beginCoord() const { return TextMCoord(); }
 
   // Return the last valid coordinate.
-  TextCoord endCoord() const;
+  TextMCoord endCoord() const;
+
+  // Coordinates for begin and end of a line, which must be valid.
+  TextMCoord lineBeginCoord(int line) const;
+  TextMCoord lineEndCoord(int line) const;
 
   // Maximum length of a line.  TODO: Implement this properly (right
   // now it just uses the length of the longest line ever seen, even
   // if that line is subsequently deleted).
-  int maxLineLength() const { return m_longestLengthSoFar; }
+  int maxLineLengthBytes() const { return m_longestLengthSoFar; }
 
   // Number of lines in the file as a user would typically view it: if
   // the file ends in a newline, then return the number of newlines.
   // Otherwise return newlines+1, the same as numLines().
   int numLinesExceptFinalEmpty() const;
 
-  // Same specification as TextDocumentEditor::walkCoord.
-  bool walkCoord(TextCoord &tc, int distance) const;
+  // Walk the given coordinate forwards (right, then down, when
+  // distance>0) or backwards (left, then up, when distance<0) by the
+  // given distance in *bytes* through the valid coordinates of the
+  // file.  It must initially be a valid coordinate, but if by walking
+  // we reach an invalid coordinate, then the function simply returns
+  // false (otherwise true).
+  bool walkCoordBytes(TextMCoord &tc, int distance) const;
+
+  // Compute the number of bytes in a range.
+  int bytesInRange(TextMCoordRange const &range) const;
 
   // --------------------- line contents ------------------------
   // Get part of a line's contents, starting at 'tc' and getting
-  // 'destLen' chars.  All chars must be in the line now.  The retrieved
+  // 'destLen' bytes.  All bytes must be in the line now.  The retrieved
   // text never includes the '\n' character, nor a terminating NUL.
-  void getLine(TextCoord tc, char *dest, int destLen) const;
+  //
+  // TODO: I think this should be changed to always get a complete line,
+  // and write that line into an ArrayStack.
+  void getLine(TextMCoord tc, char *dest, int destLen) const;
 
-  // retrieve text that may span line boundaries; line boundaries are
-  // represented in the returned string as newlines; the span begins at
+  // Retrieve text that may span line boundaries.  Line boundaries are
+  // represented in the returned string as newlines.  The span begins at
   // 'tc' (which must be in the defined area) and proceeds for
-  // 'textLen' chars, but if that goes beyond the end then this simply
-  // returns false (otherwise true); if it returns true then exactly
-  // 'textLen' chars have been written into 'text'
-  bool getTextSpan(TextCoord tc, char *text, int textLen) const;
+  // 'textLenBytes' bytes, but if that goes beyond the end then this
+  // simply returns false (otherwise true).  If it returns true then
+  // exactly 'textLenBytes' bytes have been written into 'text'.
+  //
+  // 'textLenBytes' must be non-negative.
+  //
+  // TODO: Remove this in favor of 'getTextRange'.
+  bool getTextSpan(TextMCoord tc, char *text, int textLenBytes) const;
+
+  // Get using a range.
+  string getTextRange(TextMCoordRange const &range) const;
+
+  // Get a complete line of text, not including the newline.  'line'
+  // must be within range.
+  string getWholeLine(int line) const;
 
   // Return the number of consecutive spaces and tabs at the start of
-  // the given line.
+  // the given line, as a byte count.
   int countLeadingSpacesTabs(int line) const;
 
   // Return the number of consecutive spaces and tabs at the end of
-  // the given line.
+  // the given line, as a byte count.
   int countTrailingSpacesTabs(int line) const;
 
   // ----------------- manipulation interface -------------------
@@ -174,13 +213,15 @@ public:    // funcs
   // you can't delete the last line
   void deleteLine(int line);
 
-  // insert text into a given line, starting at the given column;
-  // 'col' must be in [0,lineLength(line)]; the inserted text must
-  // *not* contain the '\n' character
-  void insertText(TextCoord tc, char const *text, int length);
+  // Insert text into a given line, starting at the given coord, which
+  // must be valid.  The inserted text must *not* contain the '\n'
+  // character.
+  void insertText(TextMCoord tc, char const *text, int lengthBytes);
+  void insertString(TextMCoord tc, string const &str)
+    { insertText(tc, str.c_str(), str.length()); }
 
-  // Delete 'length' characters at and the right of 'tc'.
-  void deleteText(TextCoord tc, int length);
+  // Delete 'length' bytes at and the right of 'tc'.
+  void deleteText(TextMCoord tc, int lengthBytes);
 
   // ---------------------- whole file -------------------------
   // clear buffer contents, returning to just one empty line
@@ -262,8 +303,8 @@ public:      // funcs
   // default implementations do nothing.
   virtual void observeInsertLine(TextDocumentCore const &doc, int line) NOEXCEPT;
   virtual void observeDeleteLine(TextDocumentCore const &doc, int line) NOEXCEPT;
-  virtual void observeInsertText(TextDocumentCore const &doc, TextCoord tc, char const *text, int length) NOEXCEPT;
-  virtual void observeDeleteText(TextDocumentCore const &doc, TextCoord tc, int length) NOEXCEPT;
+  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) NOEXCEPT;
+  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) NOEXCEPT;
 
   // The document has changed in some major way that does not easily
   // allow for incremental updates.  Observers must refresh completely.

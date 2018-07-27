@@ -153,10 +153,10 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
     }
     else {
       // Get the line of text.
-      int lineLength = m_document->lineLength(line);
+      int lineLength = m_document->lineLengthBytes(line);
       contents.ensureIndexDoubler(lineLength);
       char *buffer = contents.getArrayNC();
-      m_document->getLine(TextCoord(line, 0), buffer, lineLength);
+      m_document->getLine(TextMCoord(line, 0), buffer, lineLength);
 
       if (m_regex.get()) {
         // TODO: Converting every line from UTF-8 to UTF-16 is
@@ -275,7 +275,7 @@ void TextSearch::observeDeleteLine(TextDocumentCore const &doc, int line) NOEXCE
 }
 
 
-void TextSearch::observeInsertText(TextDocumentCore const &doc, TextCoord tc, char const *text, int length) NOEXCEPT
+void TextSearch::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int length) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
@@ -284,7 +284,7 @@ void TextSearch::observeInsertText(TextDocumentCore const &doc, TextCoord tc, ch
 }
 
 
-void TextSearch::observeDeleteText(TextDocumentCore const &doc, TextCoord tc, int length) NOEXCEPT
+void TextSearch::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int length) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
@@ -446,7 +446,7 @@ static bool reversibleLTE(bool reverse, T const &a, T const &b)
   return (reverse? b<=a : a<=b);
 }
 
-bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
+bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
 {
   // Normalize coordinates.
   range.rectify();
@@ -471,17 +471,17 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
     // Walk the matches in 'inc' direction.
     for (int i=begin; reversibleLTE(reverse, i, end); i += inc) {
       MatchExtent const &m = matches[i];
-      if (reversibleLT(reverse, m.m_start, range.m_start.m_column)) {
+      if (reversibleLT(reverse, m.m_start, range.m_start.m_byteIndex)) {
         // This match occurs before 'range.start'.
         continue;
       }
 
       // Where does this match end?
-      TextCoord matchEnd(range.m_start.m_line, m.m_start);
-      m_document->walkCoord(matchEnd, +m.m_length);
+      TextMCoord matchEnd(range.m_start.m_line, m.m_start);
+      m_document->walkCoordBytes(matchEnd, +m.m_length);
 
       // Now, how does its start compare to 'range.start'?
-      if (m.m_start == range.m_start.m_column) {
+      if (m.m_start == range.m_start.m_byteIndex) {
         // How does the end compare to 'range.end'?
         if (reversibleLTE(reverse, matchEnd, range.m_end)) {
           // The match end is less than or equal to my current mark.  I
@@ -499,7 +499,7 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
       }
       else {
         // This is the first match after the range start.
-        range.m_start.m_column = m.m_start;
+        range.m_start.m_byteIndex = m.m_start;
         range.m_end = matchEnd;
         return true;
       }
@@ -518,9 +518,9 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
       MatchExtent const &m = matches[i];
 
       // Found first match after 'range.start' on another line.
-      range.m_start.m_column = m.m_start;
+      range.m_start.m_byteIndex = m.m_start;
       range.m_end = range.m_start;
-      m_document->walkCoord(range.m_end, +m.m_length);
+      m_document->walkCoordBytes(range.m_end, +m.m_length);
       return true;
     }
 
@@ -532,10 +532,10 @@ bool TextSearch::nextMatch(bool reverse, TextCoordRange &range /*INOUT*/) const
 }
 
 
-bool TextSearch::rangeIsMatch(TextCoord const &a0, TextCoord const &b0) const
+bool TextSearch::rangeIsMatch(TextMCoord const &a0, TextMCoord const &b0) const
 {
-  TextCoord a(a0);
-  TextCoord b(b0);
+  TextMCoord a(a0);
+  TextMCoord b(b0);
   if (a > b) {
     swap(a,b);
   }
@@ -551,8 +551,8 @@ bool TextSearch::rangeIsMatch(TextCoord const &a0, TextCoord const &b0) const
 
     for (int i=0; i < matches.length(); i++) {
       MatchExtent const &m = matches[i];
-      if (m.m_start == a.m_column &&
-          m.m_length == (b.m_column - a.m_column)) {
+      if (m.m_start == a.m_byteIndex &&
+          m.m_length == (b.m_byteIndex - a.m_byteIndex)) {
         return true;
       }
     }

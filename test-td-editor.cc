@@ -219,17 +219,19 @@ static void testTextManipulation()
   xassert(tde.numLines() == 5);
   testGetRange(tde, 0,0, 4,0, "farf\ngak\noo\nbar\n");
 
-  // some ranges that go beyond the defined area
-  testGetRange(tde, 0,0, 5,0, "farf\ngak\noo\nbar\n\n");
-  testGetRange(tde, 0,0, 6,0, "farf\ngak\noo\nbar\n\n\n");
-  testGetRange(tde, 0,0, 6,2, "farf\ngak\noo\nbar\n\n\n  ");
+  // Some ranges that go beyond the defined area.  In the past,
+  // 'getTextRange' would add newlines and spaces, but I have changed
+  // the definition to only return bytes actually in the document.
+  testGetRange(tde, 0,0, 5,0, "farf\ngak\noo\nbar\n");
+  testGetRange(tde, 0,0, 6,0, "farf\ngak\noo\nbar\n");
+  testGetRange(tde, 0,0, 6,2, "farf\ngak\noo\nbar\n");
 
-  testGetRange(tde, 0,0, 2,5, "farf\ngak\noo   ");
-  testGetRange(tde, 0,5, 2,5, "\ngak\noo   ");
-  testGetRange(tde, 2,5, 2,10, "     ");
+  testGetRange(tde, 0,0, 2,5, "farf\ngak\noo");
+  testGetRange(tde, 0,5, 2,5, "\ngak\noo");
+  testGetRange(tde, 2,5, 2,10, "");
   testGetRange(tde, 2,10, 2,10, "");
-  testGetRange(tde, 12,5, 12,10, "     ");
-  testGetRange(tde, 12,5, 14,5, "\n\n     ");
+  testGetRange(tde, 12,5, 12,10, "");
+  testGetRange(tde, 12,5, 14,5, "");
 
   tde.deleteTextRange(TextCoord(1,1), TextCoord(1,2));
     // result: farf\n
@@ -275,7 +277,8 @@ static void testTextManipulation()
     // result: <empty>
   testGetRange(tde, 0,0, 0,0, "");
   xassert(tde.numLines() == 1);
-  xassert(tde.lineLength(0) == 0);
+  xassert(tde.isEmptyLine(0));
+  xassert(tde.lineLengthColumns(0) == 0);
 }
 
 

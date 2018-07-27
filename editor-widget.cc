@@ -810,8 +810,8 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       newlineAdjust = 1;
     }
 
-    // Number of characters on the line, excluding newline.
-    int const lineLengthLoose = m_editor->lineLengthLoose(line);
+    // Number of cells in the line, excluding newline.
+    int const lineLengthLoose = m_editor->lineLengthColumns(line);
 
     // Column number (0-based) of first trailing whitespace character.
     // We say there is no trailing whitespace on the cursor line
@@ -830,7 +830,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       if (firstCol < lineGlyphs) {
         // First get the text without any extra newline.
         int const amt = min(lineLengthLoose - firstCol, visibleCols);
-        m_editor->getLine(TextCoord(line, firstCol), text, amt);
+        m_editor->getLineLayout(TextCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.
@@ -1882,7 +1882,7 @@ void EditorWidget::cursorEnd(bool shift)
 {
   INITIATING_DOCUMENT_CHANGE();
   m_editor->turnSelection(shift);
-  m_editor->setCursorColumn(m_editor->cursorLineLength());
+  m_editor->setCursorColumn(m_editor->cursorLineLengthColumns());
   scrollToCursor();
 }
 
@@ -1957,18 +1957,20 @@ void EditorWidget::setSearchStringParams(string const &searchString,
 
 bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
 {
-  TextCoordRange range = m_editor->getSelectRange();
+  TextMCoordRange modelRange = m_editor->getSelectModelRange();
 
-  if (m_textSearch->nextMatch(reverse, range)) {
-    TRACE("sar", (reverse? "prev" : "next") << " found: " << range);
+  if (m_textSearch->nextMatch(reverse, modelRange)) {
+    TRACE("sar", (reverse? "prev" : "next") <<
+                 " found model range: " << modelRange);
 
+    TextCoordRange layoutRange(m_editor->toLCoordRange(modelRange));
     if (select) {
-      m_editor->setSelectRange(range);
+      m_editor->setSelectRange(layoutRange);
     }
 
     // Try to show the entire match, giving preference to the end.
-    m_editor->scrollToCoord(range.m_start, SAR_SCROLL_GAP);
-    m_editor->scrollToCoord(range.m_end, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(layoutRange.m_start, SAR_SCROLL_GAP);
+    m_editor->scrollToCoord(layoutRange.m_end, SAR_SCROLL_GAP);
     return true;
   }
   else {
@@ -2007,7 +2009,7 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
 
 bool EditorWidget::searchHitSelected() const
 {
-  TextCoordRange range = m_editor->getSelectRange();
+  TextMCoordRange range = m_editor->getSelectModelRange();
   return m_textSearch->rangeIsMatch(range.m_start, range.m_end);
 }
 
@@ -2183,7 +2185,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEX
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char const *, int) NOEXCEPT
+void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
@@ -2193,7 +2195,7 @@ void EditorWidget::observeInsertText(TextDocumentCore const &, TextCoord, char c
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteText(TextDocumentCore const &, TextCoord, int) NOEXCEPT
+void EditorWidget::observeDeleteText(TextDocumentCore const &, TextMCoord, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (m_ignoreTextDocumentNotifications) {
