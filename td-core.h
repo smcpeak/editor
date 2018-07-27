@@ -180,9 +180,7 @@ public:    // funcs
   // exactly 'textLenBytes' bytes have been written into 'text'.
   //
   // 'textLenBytes' must be non-negative.
-  //
-  // TODO: Remove this in favor of 'getTextRange'.
-  bool getTextSpan(TextMCoord tc, char *text, int textLenBytes) const;
+  bool getTextSpanningLines(TextMCoord tc, char *text, int textLenBytes) const;
 
   // Get using a range.
   string getTextRange(TextMCoordRange const &range) const;

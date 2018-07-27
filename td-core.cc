@@ -597,7 +597,8 @@ void TextDocumentCore::writeFile(char const *fname) const
 }
 
 
-bool TextDocumentCore::getTextSpan(TextMCoord tc, char *text, int textLenBytes) const
+bool TextDocumentCore::getTextSpanningLines(
+  TextMCoord tc, char *text, int textLenBytes) const
 {
   xassert(this->validCoord(tc));
   xassert(textLenBytes >= 0);

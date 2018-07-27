@@ -138,7 +138,7 @@ public:      // funcs
   bool walkCoordBytes(TextMCoord &tc, int distance) const    { return m_core.walkCoordBytes(tc, distance); }
   int bytesInRange(TextMCoordRange const &range) const       { return m_core.bytesInRange(range); }
   void getPartialLine(TextMCoord tc, char *dest, int destLen) const { return m_core.getPartialLine(tc, dest, destLen); }
-  bool getTextSpan(TextMCoord tc, char *text, int len) const { return m_core.getTextSpan(tc, text, len); }
+  bool getTextSpanningLines(TextMCoord tc, char *text, int len) const { return m_core.getTextSpanningLines(tc, text, len); }
   string getTextRange(TextMCoordRange const &range) const    { return m_core.getTextRange(range); }
   string getWholeLine(int line) const                        { return m_core.getWholeLine(line); }
   int countLeadingSpacesTabs(int line) const                 { return m_core.countLeadingSpacesTabs(line); }
