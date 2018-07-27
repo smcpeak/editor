@@ -214,12 +214,116 @@ static void testReadSourceCode()
 }
 
 
+static void expectWalkCoordBytes(
+  TextDocumentCore &tdc,
+  TextMCoord const &tc,
+  int distance,
+  TextMCoord const &expect)
+{
+  TextMCoord actual(tc);
+  bool res = tdc.walkCoordBytes(actual, distance);
+  EXPECT_EQ(res, true);
+  EXPECT_EQ(actual, expect);
+}
+
+static void expectWalkCoordBytes_false(
+  TextDocumentCore &tdc,
+  TextMCoord const &tc,
+  int distance)
+{
+  TextMCoord actual(tc);
+  bool res = tdc.walkCoordBytes(actual, distance);
+  EXPECT_EQ(res, false);
+}
+
+static void expectInvalidCoord(
+  TextDocumentCore &tdc,
+  TextMCoord const &tc)
+{
+  bool res = tdc.validCoord(tc);
+  EXPECT_EQ(res, false);
+}
+
+static void testWalkCoordBytes()
+{
+  TextDocumentCore tdc;
+  tdc.insertLine(0);
+  tdc.insertString(TextMCoord(0,0), "one");
+  tdc.insertLine(1);
+  tdc.insertLine(2);
+  tdc.insertString(TextMCoord(2,0), "three");
+
+  expectWalkCoordBytes_false(tdc, TextMCoord(0,0), -1);
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  0, TextMCoord(0,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  1, TextMCoord(0,1));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  2, TextMCoord(0,2));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  3, TextMCoord(0,3));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  4, TextMCoord(1,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  5, TextMCoord(2,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  6, TextMCoord(2,1));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  7, TextMCoord(2,2));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  8, TextMCoord(2,3));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0),  9, TextMCoord(2,4));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0), 10, TextMCoord(2,5));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,0), 11, TextMCoord(3,0));
+  expectWalkCoordBytes_false(tdc, TextMCoord(0,0), 12);
+
+  expectWalkCoordBytes_false(tdc, TextMCoord(0,1), -2);
+  expectWalkCoordBytes      (tdc, TextMCoord(0,1), -1, TextMCoord(0,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,1),  0, TextMCoord(0,1));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,1),  1, TextMCoord(0,2));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,1), 10, TextMCoord(3,0));
+  expectWalkCoordBytes_false(tdc, TextMCoord(0,1), 11);
+
+  expectWalkCoordBytes_false(tdc, TextMCoord(0,3), -4);
+  expectWalkCoordBytes      (tdc, TextMCoord(0,3), -1, TextMCoord(0,2));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,3),  0, TextMCoord(0,3));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,3),  1, TextMCoord(1,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(0,3),  8, TextMCoord(3,0));
+  expectWalkCoordBytes_false(tdc, TextMCoord(0,3),  9);
+
+  expectWalkCoordBytes_false(tdc, TextMCoord(2,4),-10);
+  expectWalkCoordBytes      (tdc, TextMCoord(2,4), -9, TextMCoord(0,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,4), -1, TextMCoord(2,3));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,4),  0, TextMCoord(2,4));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,4),  1, TextMCoord(2,5));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,4),  2, TextMCoord(3,0));
+  expectWalkCoordBytes_false(tdc, TextMCoord(2,4),  3);
+  expectWalkCoordBytes_false(tdc, TextMCoord(2,4), 99);
+
+  expectWalkCoordBytes_false(tdc, TextMCoord(2,5),-11);
+  expectWalkCoordBytes      (tdc, TextMCoord(2,5),-10, TextMCoord(0,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,5), -1, TextMCoord(2,4));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,5),  0, TextMCoord(2,5));
+  expectWalkCoordBytes      (tdc, TextMCoord(2,5),  1, TextMCoord(3,0));
+  expectWalkCoordBytes_false(tdc, TextMCoord(2,5),  2);
+
+  expectWalkCoordBytes_false(tdc, TextMCoord(3,0),-12);
+  expectWalkCoordBytes      (tdc, TextMCoord(3,0),-11, TextMCoord(0,0));
+  expectWalkCoordBytes      (tdc, TextMCoord(3,0), -1, TextMCoord(2,5));
+  expectWalkCoordBytes      (tdc, TextMCoord(3,0),  0, TextMCoord(3,0));
+  expectWalkCoordBytes_false(tdc, TextMCoord(3,0),  1);
+
+  expectInvalidCoord(tdc, TextMCoord(-1,0));
+  expectInvalidCoord(tdc, TextMCoord(0,-1));
+  expectInvalidCoord(tdc, TextMCoord(0,4));
+  expectInvalidCoord(tdc, TextMCoord(1,-1));
+  expectInvalidCoord(tdc, TextMCoord(1,1));
+  expectInvalidCoord(tdc, TextMCoord(2,-1));
+  expectInvalidCoord(tdc, TextMCoord(2,6));
+  expectInvalidCoord(tdc, TextMCoord(3,-1));
+  expectInvalidCoord(tdc, TextMCoord(3,1));
+  expectInvalidCoord(tdc, TextMCoord(4,0));
+}
+
+
 static void entry()
 {
   testReadTwice();
   testReadSourceCode();
   testAtomicRead();
   testVarious();
+  testWalkCoordBytes();
 
   printf("stats after:\n");
   malloc_stats();
