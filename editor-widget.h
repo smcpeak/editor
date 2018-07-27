@@ -279,7 +279,7 @@ public:      // funcs
   int cursorCol() const                   { return m_editor->cursor().m_column; }
 
   // absolute cursor movement
-  void cursorTo(TextCoord tc);
+  void cursorTo(TextLCoord tc);
 
   // things often bound to cursor, etc. keys; 'shift' indicates
   // whether the shift key is held (so the selection should be turned
@@ -295,7 +295,7 @@ public:      // funcs
   void cursorToEndOfNextLine(bool shift);
 
   // ----------------------------- mark ------------------------------
-  TextCoord mark() const                  { return m_editor->mark(); }
+  TextLCoord mark() const                  { return m_editor->mark(); }
   bool selectEnabled() const              { return m_editor->markActive(); }
   void clearMark()                        { m_editor->clearMark(); }
   string getSelectedText() const          { return m_editor->getSelectedText(); }

@@ -54,13 +54,13 @@ private:     // data
   // design of this class, the cursor can go anywhere--it is not
   // constrained to the current document bounds.  (But the coordinates
   // must be non-negative.)
-  TextCoord m_cursor;
+  TextLCoord m_cursor;
 
   // Mark, the "other" point.  When it is active, we have a
   // "selection", a region of text on which we can operate.  Like the
   // cursor, it can be anything non-negative.
   bool m_markActive;
-  TextCoord m_mark;
+  TextLCoord m_mark;
 
   // At any time, only a portion of the document is visible within a
   // scrollable editing region.  These are coordinates of the cells in
@@ -76,12 +76,12 @@ private:     // data
   // Invariants:
   //   * m_firstVisible.line <= m_lastVisible.line
   //   * m_firstVisible.column <= m_lastVisible.column
-  TextCoord m_firstVisible;
-  TextCoord m_lastVisible;
+  TextLCoord m_firstVisible;
+  TextLCoord m_lastVisible;
 
 private:     // funcs
   // Helper for 'toMCoord'.
-  TextMCoord innerToMCoord(TextCoord lc) const;
+  TextMCoord innerToMCoord(TextLCoord lc) const;
 
 public:      // funcs
   explicit TextDocumentEditor(TextDocument *doc);
@@ -136,17 +136,17 @@ public:      // funcs
   // Convert the given layout coordinate to a valid model coordinate.
   // This is the first coordinate that is at-or-after 'tc', or
   // 'endMCoord()' if none is.
-  TextMCoord toMCoord(TextCoord lc) const;
+  TextMCoord toMCoord(TextLCoord lc) const;
 
   // Convert the given model coordinate to the layout coordinate of the
   // first grid cell the identified code point occupies, or would occupy
   // (for an "ordinary" character) if 'mc' is at EOL or EOF.  'mc' must
   // be a valid coordinate.
-  TextCoord toLCoord(TextMCoord mc) const;
+  TextLCoord toLCoord(TextMCoord mc) const;
 
   // Convert coordinate ranges.
-  TextMCoordRange toMCoordRange(TextCoordRange const &range) const;
-  TextCoordRange toLCoordRange(TextMCoordRange const &range) const;
+  TextMCoordRange toMCoordRange(TextLCoordRange const &range) const;
+  TextLCoordRange toLCoordRange(TextMCoordRange const &range) const;
 
   // ------------------- query layout dimensions -------------------
   // Number of populated cells on the given line, in columns.  This does
@@ -163,34 +163,34 @@ public:      // funcs
   // First position in the file.
   //
   // TODO: Rename to 'beginLCoord'.
-  TextCoord beginCoord() const         { return TextCoord(0,0); }
+  TextLCoord beginCoord() const         { return TextLCoord(0,0); }
 
   // Position right after last character in file.
-  TextCoord endCoord() const;
+  TextLCoord endCoord() const;
 
   // Range for the entire document.
-  TextCoordRange documentRange() const
-    { return TextCoordRange(beginCoord(), endCoord()); }
+  TextLCoordRange documentRange() const
+    { return TextLCoordRange(beginCoord(), endCoord()); }
 
   // Position at end of specified line, which may be beyond EOF.
-  TextCoord lineEndCoord(int line) const;
+  TextLCoord lineEndCoord(int line) const;
 
   // Clamp the coordinate to the valid region of the document.  If it
   // is beyond EOF, it gets set to 'endCoord()', even if that has a
   // larger column number than 'tc' did originally.
-  void truncateCoord(TextCoord &tc) const;
+  void truncateCoord(TextLCoord &tc) const;
 
   // Walk the given coordinate forwards (right, then down, when
   // distance>0) or backwards (left, then up, when distance<0) through
   // the layout coordinates of the file.  If distance is negative, we
   // silently stop at the document start even if the magnitude would
   // take us into negative line numbers.
-  void walkCoordColumns(TextCoord &tc, int distance) const;
+  void walkCoordColumns(TextLCoord &tc, int distance) const;
 
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.
-  TextCoord cursor() const             { return m_cursor; }
+  TextLCoord cursor() const             { return m_cursor; }
 
   // True if the cursor is at the very last valid position.
   bool cursorAtEnd() const;
@@ -199,7 +199,7 @@ public:      // funcs
   //
   // This does *not* automatically scroll the visible region.  But
   // a client can call 'scrollToCursor()' afterward.
-  void setCursor(TextCoord newCursor);
+  void setCursor(TextLCoord newCursor);
 
   // Set the cursor column, keeping its line.
   void setCursorColumn(int newCol);
@@ -242,17 +242,17 @@ public:      // funcs
   // Current mark location.  The mark is the counterpart to the cursor
   // for defining a selection region.  This asserts that the mark is
   // active.
-  TextCoord mark() const;
+  TextLCoord mark() const;
 
   // True if the mark is "active", meaning the UI shows a visible
   // selection region.
   bool markActive() const              { return m_markActive; }
 
   // Set the mark and make it active.
-  void setMark(TextCoord m);
+  void setMark(TextLCoord m);
 
   // Make the mark inactive.
-  void clearMark() { m_mark = TextCoord(); m_markActive = false; }
+  void clearMark() { m_mark = TextLCoord(); m_markActive = false; }
 
   // Move the mark by the indicated amount, clamping at 0.  Requires
   // markActive().
@@ -274,13 +274,13 @@ public:      // funcs
   // Get a range whose start is the lower of 'cursor' and 'mark', and
   // whose end is the higher.  If the mark is not active, set both to
   // 'cursor'.
-  TextCoordRange getSelectRange() const;
+  TextLCoordRange getSelectRange() const;
 
   // Same, but as a model range.
   TextMCoordRange getSelectModelRange() const;
 
   // Set 'cursor' to the start and 'mark' to the end of 'range'.
-  void setSelectRange(TextCoordRange const &range);
+  void setSelectRange(TextLCoordRange const &range);
 
   // Get selected text, or "" if nothing selected.
   string getSelectedText() const;
@@ -298,10 +298,10 @@ public:      // funcs
 
   // ---------------- visible region and scrolling -----------------
   // Upper-left grid cell that is visible.
-  TextCoord firstVisible() const       { return m_firstVisible; }
+  TextLCoord firstVisible() const       { return m_firstVisible; }
 
   // Lower-right grid cell fully visible (not partial).
-  TextCoord lastVisible() const        { return m_lastVisible; }
+  TextLCoord lastVisible() const        { return m_lastVisible; }
 
   int visLines() const
     { return m_lastVisible.m_line - m_firstVisible.m_line + 1; }
@@ -310,13 +310,13 @@ public:      // funcs
 
   // Scroll so 'fv' is the first visible coordinate, retaining the
   // visible region size.
-  void setFirstVisible(TextCoord fv);
+  void setFirstVisible(TextLCoord fv);
 
   // Scroll in one dimension.
   void setFirstVisibleLine(int L)
-    { this->setFirstVisible(TextCoord(L, m_firstVisible.m_column)); }
+    { this->setFirstVisible(TextLCoord(L, m_firstVisible.m_column)); }
   void setFirstVisibleCol(int C)
-    { this->setFirstVisible(TextCoord(m_firstVisible.m_line, C)); }
+    { this->setFirstVisible(TextLCoord(m_firstVisible.m_line, C)); }
 
   // Move the view by a relative amount.  Any attempt to go negative
   // is treated as a move to zero.
@@ -346,7 +346,7 @@ public:      // funcs
   //
   // If 'edgeGap' is -1, then if 'tc' isn't already visible,
   // center the visible region on it.
-  void scrollToCoord(TextCoord tc, int edgeGap=0);
+  void scrollToCoord(TextLCoord tc, int edgeGap=0);
 
   // Same, but for the cursor.
   void scrollToCursor(int edgeGap=0)
@@ -368,16 +368,16 @@ public:      // funcs
   // document and expressing it as a sequence of grid contents.  Each
   // grid cell's content is, for now, expressed as one byte.  Tacitly,
   // the bytes are interpreted as Latin-1 code points.
-  void getLineLayout(TextCoord tc, char *dest, int destLen) const;
+  void getLineLayout(TextLCoord tc, char *dest, int destLen) const;
 
   // Retrieve the text between two positions, as in a text editor where
   // the positions are the selection endpoints and the user wants a
   // string to put in the clipboard.  The range must be rectified.  If
   // start==end, returns "".  Characters outside the document area are
   // taken to be whitespace.
-  string getTextRange(TextCoordRange const &range) const;
-  string getTextRange(TextCoord const &start, TextCoord const &end) const
-    { return getTextRange(TextCoordRange(start, end)); }
+  string getTextRange(TextLCoordRange const &range) const;
+  string getTextRange(TextLCoord const &start, TextLCoord const &end) const
+    { return getTextRange(TextLCoordRange(start, end)); }
 
   // Get a complete line.  Returns "" when beyond EOF.  'line' must
   // be non-negative.
@@ -385,7 +385,7 @@ public:      // funcs
 
   // get the word following the given coordinate, including any non-word
   // characters that precede that word; stop at end of line
-  string getWordAfter(TextCoord tc) const;
+  string getWordAfter(TextLCoord tc) const;
 
   // ---------------- whitespace text queries -------------------
   // For the given line, count the number of whitespace characters
@@ -447,9 +447,9 @@ public:      // funcs
   // truncated to ensure validity (this implies it does *not* fill to
   // the start initially).  Requires 'range.isRectified()'.  Final
   // cursor is left at range start.  Clears the mark.
-  void deleteTextRange(TextCoordRange const &range);
-  void deleteTextRange(TextCoord const &start, TextCoord const &end)
-    { deleteTextRange(TextCoordRange(start, end)); }
+  void deleteTextRange(TextLCoordRange const &range);
+  void deleteTextRange(TextLCoord const &start, TextLCoord const &end)
+    { deleteTextRange(TextLCoordRange(start, end)); }
 
   // If the selection start is not beyond EOF, fill with whitespace to
   // the start, then delete the selected text.  Requires markActive().
@@ -477,7 +477,7 @@ public:      // funcs
   // ---------------------- adding whitespace ----------------------
   // Add minimum whitespace near 'tc' to ensure it is not beyond EOL
   // or EOF.
-  void fillToCoord(TextCoord const &tc);
+  void fillToCoord(TextLCoord const &tc);
 
   void fillToCursor() { fillToCoord(cursor()); }
 
@@ -601,10 +601,10 @@ public:      // data
   RCSerf<TextDocumentEditor> tde;
 
   // Values to restore.
-  TextCoord const cursor;
+  TextLCoord const cursor;
   bool const markActive;
-  TextCoord const mark;
-  TextCoord const firstVisible;
+  TextLCoord const mark;
+  TextLCoord const firstVisible;
 
   // We don't save 'lastVisible' since we assume that the visible
   // region size will not be affected by the operations this class

@@ -207,7 +207,7 @@ void EditorWidget::setReadOnly(bool readOnly)
 }
 
 
-void EditorWidget::cursorTo(TextCoord tc)
+void EditorWidget::cursorTo(TextLCoord tc)
 {
   INITIATING_DOCUMENT_CHANGE();
   m_editor->setCursor(tc);
@@ -523,7 +523,7 @@ void EditorWidget::emitSearchStatusIndicator()
   }
 
   // Get effective selection range for this calculation.
-  TextCoordRange range = m_editor->getSelectRange();
+  TextLCoordRange range = m_editor->getSelectRange();
 
   // Matches above and below range start line.
   int matchesAbove = m_textSearch->countMatchesAbove(range.m_start.m_line);
@@ -783,7 +783,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
   Array<char> text(visibleCols);
 
   // Get region of selected text.
-  TextCoordRange selRange = m_editor->getSelectRange();
+  TextLCoordRange selRange = m_editor->getSelectRange();
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -830,7 +830,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       if (firstCol < lineGlyphs) {
         // First get the text without any extra newline.
         int const amt = min(lineLengthLoose - firstCol, visibleCols);
-        m_editor->getLineLayout(TextCoord(line, firstCol), text, amt);
+        m_editor->getLineLayout(TextLCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.
@@ -1658,7 +1658,7 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
   //printf("click: (%d,%d)     goto line %d, col %d\n",
   //       x, y, newLine, newCol);
 
-  cursorTo(TextCoord(newLine, newCol));
+  cursorTo(TextLCoord(newLine, newCol));
 
   // it's possible the cursor has been placed outside the "visible"
   // lines/cols (i.e. at the edge), but even if so, don't scroll,
@@ -1963,7 +1963,7 @@ bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
     TRACE("sar", (reverse? "prev" : "next") <<
                  " found model range: " << modelRange);
 
-    TextCoordRange layoutRange(m_editor->toLCoordRange(modelRange));
+    TextLCoordRange layoutRange(m_editor->toLCoordRange(modelRange));
     if (select) {
       m_editor->setSelectRange(layoutRange);
     }
@@ -2128,7 +2128,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
     // TODO: I want a "soft" tracking here, where I track until the user
     // moves the cursor away, and then resume tracking if the user moves
     // the cursor back to the end.
-    m_editor->setFirstVisible(TextCoord(0,0));  // Scroll from top.
+    m_editor->setFirstVisible(TextLCoord(0,0));  // Scroll from top.
     m_editor->setCursor(m_editor->endCoord());
     m_editor->clearMark();
     m_editor->scrollToCursor();

@@ -257,10 +257,10 @@ public:      // funcs
 // to be constructed based on it.
 struct NamedTextDocumentInitialView {
   // Upper-left grid spot.
-  TextCoord firstVisible;
+  TextLCoord firstVisible;
 
   // Location of cursor.
-  TextCoord cursor;
+  TextLCoord cursor;
 };
 
 

@@ -1178,7 +1178,7 @@ void EditorWindow::editGotoLine()
       if (n > 0) {
         dialog->rememberInput(qstringb(n));
 
-        m_editorWidget->cursorTo(TextCoord(n-1, 0));
+        m_editorWidget->cursorTo(TextLCoord(n-1, 0));
         m_editorWidget->scrollToCursor(-1 /*center*/);
       }
       else {
@@ -1626,7 +1626,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
       this->fileOpenFile(fn);
       if (line != 0) {
         // Also go to line number, if provided.
-        m_editorWidget->cursorTo(TextCoord(line-1, 0));
+        m_editorWidget->cursorTo(TextLCoord(line-1, 0));
         m_editorWidget->clearMark();
         m_editorWidget->scrollToCursor(-1 /*gap*/);
       }

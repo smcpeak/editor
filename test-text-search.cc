@@ -86,15 +86,15 @@ static void testSimple()
   expectMatches(ts, "");
 
   // Insert text so it finds things.
-  tde.setCursor(TextCoord(0, 2));
+  tde.setCursor(TextLCoord(0, 2));
   tde.insertNulTermText("xyz");
   expectMatches(ts, "0:[0,3]\n");
   tde.insertNulTermText("onxonx onx");
   expectMatches(ts, "0:[0,3][5,3][12,3]\n");
 
   // Delete some of those things.
-  tde.setCursor(TextCoord(0,0));
-  tde.setMark(TextCoord(0,11));
+  tde.setCursor(TextLCoord(0,0));
+  tde.setMark(TextLCoord(0,11));
   tde.deleteSelection();
   expectMatches(ts, "0:[1,3]\n");
 

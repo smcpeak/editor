@@ -35,7 +35,7 @@
 //
 // Both line and column are 0-based.  The UI translates them to 1-based
 // coordinates for interaction with the user.
-class TextCoord {
+class TextLCoord {
 public:      // data
   // 0-based line number.  Should not be negative, although nothing in
   // this class prohibits that, and it could potentially be useful to
@@ -51,18 +51,18 @@ public:      // data
   int m_column;
 
 public:      // funcs
-  TextCoord() : m_line(0), m_column(0) {}
-  TextCoord(int line_, int column_) : m_line(line_), m_column(column_) {}
-  TextCoord(TextCoord const &obj) : DMEMB(m_line), DMEMB(m_column) {}
+  TextLCoord() : m_line(0), m_column(0) {}
+  TextLCoord(int line_, int column_) : m_line(line_), m_column(column_) {}
+  TextLCoord(TextLCoord const &obj) : DMEMB(m_line), DMEMB(m_column) {}
 
-  TextCoord& operator= (TextCoord const &obj);
+  TextLCoord& operator= (TextLCoord const &obj);
 
-  bool operator== (TextCoord const &obj) const;
+  bool operator== (TextLCoord const &obj) const;
 
   // Lexicographic order by line then column.
-  bool operator< (TextCoord const &obj) const;
+  bool operator< (TextLCoord const &obj) const;
 
-  RELATIONAL_OPERATORS(TextCoord);
+  RELATIONAL_OPERATORS(TextLCoord);
 
   bool isZero() const { return m_line==0 && m_column==0; }
 
@@ -77,13 +77,13 @@ public:      // funcs
 };
 
 
-inline std::ostream& operator<< (std::ostream &os, TextCoord const &tc)
+inline std::ostream& operator<< (std::ostream &os, TextLCoord const &tc)
 {
   tc.insert(os);
   return os;
 }
 
-inline stringBuilder& operator<< (stringBuilder &sb, TextCoord const &tc)
+inline stringBuilder& operator<< (stringBuilder &sb, TextLCoord const &tc)
 {
   tc.insert(sb);
   return sb;
@@ -91,10 +91,10 @@ inline stringBuilder& operator<< (stringBuilder &sb, TextCoord const &tc)
 
 
 // Range of text identified by coordinate endpoints.
-class TextCoordRange {
+class TextLCoordRange {
 public:      // data
   // First cell in the range.
-  TextCoord m_start;
+  TextLCoord m_start;
 
   // One past the last cell in the range.  The range identifies all of
   // the code points that are at-or-after 'm_start' and before 'm_end'.
@@ -103,18 +103,18 @@ public:      // data
   //
   // It is legal for start to be greater than end, but the range is
   // again empty.  However, see rectify() and rectified().
-  TextCoord m_end;
+  TextLCoord m_end;
 
 public:      // funcs
-  TextCoordRange() : m_start(), m_end() {}
-  TextCoordRange(TextCoord s, TextCoord e) : m_start(s), m_end(e) {}
+  TextLCoordRange() : m_start(), m_end() {}
+  TextLCoordRange(TextLCoord s, TextLCoord e) : m_start(s), m_end(e) {}
 
-  TextCoordRange(TextCoordRange const &obj) : DMEMB(m_start), DMEMB(m_end) {}
+  TextLCoordRange(TextLCoordRange const &obj) : DMEMB(m_start), DMEMB(m_end) {}
 
-  TextCoordRange& operator= (TextCoordRange const &obj);
+  TextLCoordRange& operator= (TextLCoordRange const &obj);
 
-  bool operator== (TextCoordRange const &obj) const;
-  NOTEQUAL_OPERATOR(TextCoordRange);
+  bool operator== (TextLCoordRange const &obj) const;
+  NOTEQUAL_OPERATOR(TextLCoordRange);
 
   bool isZero() const { return m_start.isZero() && m_end.isZero(); }
   bool nonNegative() const { return m_start.nonNegative() && m_end.nonNegative(); }
@@ -127,8 +127,8 @@ public:      // funcs
   // Swap 'start' and 'end'.
   void swapEnds();
 
-  TextCoordRange rectified() const {
-    TextCoordRange ret(*this);
+  TextLCoordRange rectified() const {
+    TextLCoordRange ret(*this);
     ret.rectify();
     return ret;
   }
@@ -145,13 +145,13 @@ public:      // funcs
 };
 
 
-inline std::ostream& operator<< (std::ostream &os, TextCoordRange const &tcr)
+inline std::ostream& operator<< (std::ostream &os, TextLCoordRange const &tcr)
 {
   tcr.insert(os);
   return os;
 }
 
-inline stringBuilder& operator<< (stringBuilder &sb, TextCoordRange const &tcr)
+inline stringBuilder& operator<< (stringBuilder &sb, TextLCoordRange const &tcr)
 {
   tcr.insert(sb);
   return sb;

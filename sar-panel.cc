@@ -495,7 +495,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
 
           TextDocumentEditor *ed = m_editorWidget->m_editor;
           ed->normalizeCursorGTEMark();
-          TextCoord tc = ed->cursor();
+          TextLCoord tc = ed->cursor();
           string word = ed->getWordAfter(tc);
           TRACE("sar", "extend sel by: " << word);
           if (!word.isempty()) {

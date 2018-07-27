@@ -68,7 +68,7 @@ void TextDocumentEditor::selfCheck() const
 }
 
 
-TextMCoord TextDocumentEditor::innerToMCoord(TextCoord lc) const
+TextMCoord TextDocumentEditor::innerToMCoord(TextLCoord lc) const
 {
   if (lc.m_line < 0) {
     return this->beginMCoord();
@@ -92,7 +92,7 @@ TextMCoord TextDocumentEditor::innerToMCoord(TextCoord lc) const
   }
 }
 
-TextMCoord TextDocumentEditor::toMCoord(TextCoord lc) const
+TextMCoord TextDocumentEditor::toMCoord(TextLCoord lc) const
 {
   TextMCoord mc(this->innerToMCoord(lc));
   xassert(this->validMCoord(mc));
@@ -100,15 +100,15 @@ TextMCoord TextDocumentEditor::toMCoord(TextCoord lc) const
 }
 
 
-TextCoord TextDocumentEditor::toLCoord(TextMCoord mc) const
+TextLCoord TextDocumentEditor::toLCoord(TextMCoord mc) const
 {
   // TODO: Layout.
-  return TextCoord(mc.m_line, mc.m_byteIndex);
+  return TextLCoord(mc.m_line, mc.m_byteIndex);
 }
 
 
 TextMCoordRange TextDocumentEditor::toMCoordRange(
-  TextCoordRange const &range) const
+  TextLCoordRange const &range) const
 {
   return TextMCoordRange(
     this->toMCoord(range.m_start),
@@ -116,10 +116,10 @@ TextMCoordRange TextDocumentEditor::toMCoordRange(
 }
 
 
-TextCoordRange TextDocumentEditor::toLCoordRange(
+TextLCoordRange TextDocumentEditor::toLCoordRange(
   TextMCoordRange const &range) const
 {
-  return TextCoordRange(
+  return TextLCoordRange(
     this->toLCoord(range.m_start),
     this->toLCoord(range.m_end));
 }
@@ -136,7 +136,7 @@ int TextDocumentEditor::lineLengthColumns(int line) const
 }
 
 
-TextCoord TextDocumentEditor::lineEndCoord(int line) const
+TextLCoord TextDocumentEditor::lineEndCoord(int line) const
 {
   return this->toLCoord(m_doc->lineEndCoord(line));
 }
@@ -149,7 +149,7 @@ int TextDocumentEditor::maxLineLengthColumns() const
 }
 
 
-TextCoord TextDocumentEditor::endCoord() const
+TextLCoord TextDocumentEditor::endCoord() const
 {
   return this->toLCoord(this->endMCoord());
 }
@@ -161,14 +161,14 @@ bool TextDocumentEditor::cursorAtEnd() const
 }
 
 
-void TextDocumentEditor::setCursor(TextCoord c)
+void TextDocumentEditor::setCursor(TextLCoord c)
 {
   xassert(c.nonNegative());
   m_cursor = c;
 }
 
 
-void TextDocumentEditor::setMark(TextCoord m)
+void TextDocumentEditor::setMark(TextLCoord m)
 {
   xassert(m.nonNegative());
   m_mark = m;
@@ -207,17 +207,17 @@ void TextDocumentEditor::selectCursorLine()
   this->setCursorColumn(0);
 
   // Make the selection end at the start of the next line.
-  this->setMark(TextCoord(this->cursor().m_line + 1, 0));
+  this->setMark(TextLCoord(this->cursor().m_line + 1, 0));
 }
 
 
-TextCoordRange TextDocumentEditor::getSelectRange() const
+TextLCoordRange TextDocumentEditor::getSelectRange() const
 {
   if (!m_markActive) {
-    return TextCoordRange(m_cursor, m_cursor);
+    return TextLCoordRange(m_cursor, m_cursor);
   }
   else {
-    return TextCoordRange(m_cursor, m_mark).rectified();
+    return TextLCoordRange(m_cursor, m_mark).rectified();
   }
 }
 
@@ -228,7 +228,7 @@ TextMCoordRange TextDocumentEditor::getSelectModelRange() const
 }
 
 
-void TextDocumentEditor::setSelectRange(TextCoordRange const &range)
+void TextDocumentEditor::setSelectRange(TextLCoordRange const &range)
 {
   this->setCursor(range.m_start);
   this->setMark(range.m_end);
@@ -260,7 +260,7 @@ string TextDocumentEditor::getSelectedOrIdentifier() const
 void TextDocumentEditor::swapCursorAndMark()
 {
   if (m_markActive) {
-    TextCoord tmp(m_mark);
+    TextLCoord tmp(m_mark);
     m_mark = m_cursor;
     m_cursor = tmp;
   }
@@ -275,7 +275,7 @@ void TextDocumentEditor::normalizeCursorGTEMark()
 }
 
 
-void TextDocumentEditor::setFirstVisible(TextCoord fv)
+void TextDocumentEditor::setFirstVisible(TextLCoord fv)
 {
   xassert(fv.nonNegative());
   int h = m_lastVisible.m_line - m_firstVisible.m_line;
@@ -290,7 +290,7 @@ void TextDocumentEditor::moveFirstVisibleBy(int deltaLine, int deltaCol)
 {
   int line = max(0, m_firstVisible.m_line + deltaLine);
   int col = max(0, m_firstVisible.m_column + deltaCol);
-  this->setFirstVisible(TextCoord(line, col));
+  this->setFirstVisible(TextLCoord(line, col));
 }
 
 
@@ -299,7 +299,7 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
   TRACE("moveFirstVisibleAndCursor",
         "start: firstVis=" << m_firstVisible
      << ", cursor=" << m_cursor
-     << ", delta=" << TextCoord(deltaLine, deltaCol));
+     << ", delta=" << TextLCoord(deltaLine, deltaCol));
 
   // first make sure the view contains the cursor
   this->scrollToCursor();
@@ -365,7 +365,7 @@ static int stcHelper(int firstVis, int lastVis, int cur, int gap)
   return firstVis;
 }
 
-void TextDocumentEditor::scrollToCoord(TextCoord tc, int edgeGap)
+void TextDocumentEditor::scrollToCoord(TextLCoord tc, int edgeGap)
 {
   int fvline = stcHelper(this->firstVisible().m_line,
                          this->lastVisible().m_line,
@@ -377,14 +377,14 @@ void TextDocumentEditor::scrollToCoord(TextCoord tc, int edgeGap)
                         tc.m_column,
                         edgeGap);
 
-  setFirstVisible(TextCoord(fvline, fvcol));
+  setFirstVisible(TextLCoord(fvline, fvcol));
 }
 
 
 void TextDocumentEditor::centerVisibleOnCursorLine()
 {
   int newfv = max(0, m_cursor.m_line - this->visLines()/2);
-  this->setFirstVisible(TextCoord(newfv, 0));
+  this->setFirstVisible(TextLCoord(newfv, 0));
   this->scrollToCursor();
 }
 
@@ -409,7 +409,7 @@ void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col
 }
 
 
-TextCoord TextDocumentEditor::mark() const
+TextLCoord TextDocumentEditor::mark() const
 {
   xassert(markActive());
   return m_mark;
@@ -442,12 +442,12 @@ void TextDocumentEditor::insertString(string text)
 
 void TextDocumentEditor::deleteLR(bool left, int columnCount)
 {
-  TextCoord start(this->cursor());
+  TextLCoord start(this->cursor());
 
-  TextCoord end(start);
+  TextLCoord end(start);
   this->walkCoordColumns(end, left? -columnCount : +columnCount);
 
-  TextCoordRange range(start, end);
+  TextLCoordRange range(start, end);
   range.rectify();
 
   this->deleteTextRange(range);
@@ -458,7 +458,7 @@ void TextDocumentEditor::deleteSelection()
 {
   xassert(m_markActive);
 
-  TextCoordRange range(this->getSelectRange());
+  TextLCoordRange range(this->getSelectRange());
   if (range.m_start < this->endCoord()) {
     this->fillToCoord(range.m_start);
   }
@@ -539,7 +539,7 @@ void TextDocumentEditor::redo()
 }
 
 
-void TextDocumentEditor::truncateCoord(TextCoord &tc) const
+void TextDocumentEditor::truncateCoord(TextLCoord &tc) const
 {
   tc.m_line = max(0, tc.m_line);
   tc.m_column = max(0, tc.m_column);
@@ -555,7 +555,7 @@ void TextDocumentEditor::truncateCoord(TextCoord &tc) const
 }
 
 
-void TextDocumentEditor::walkCoordColumns(TextCoord &tc, int len) const
+void TextDocumentEditor::walkCoordColumns(TextLCoord &tc, int len) const
 {
   xassert(tc.nonNegative());
 
@@ -586,7 +586,7 @@ void TextDocumentEditor::walkCoordColumns(TextCoord &tc, int len) const
 }
 
 
-void TextDocumentEditor::getLineLayout(TextCoord tc, char *dest, int destLen) const
+void TextDocumentEditor::getLineLayout(TextLCoord tc, char *dest, int destLen) const
 {
   xassert(tc.nonNegative());
 
@@ -608,7 +608,7 @@ void TextDocumentEditor::getLineLayout(TextCoord tc, char *dest, int destLen) co
 
   // initial part in defined region
   if (def) {
-    TextCoord tcEnd(tc.m_line, tc.m_column + def);
+    TextLCoord tcEnd(tc.m_line, tc.m_column + def);
 
     // Express the desired range in model coordinates.
     TextMCoord mcBegin(this->toMCoord(tc));
@@ -627,7 +627,7 @@ void TextDocumentEditor::getLineLayout(TextCoord tc, char *dest, int destLen) co
 }
 
 
-string TextDocumentEditor::getTextRange(TextCoordRange const &range) const
+string TextDocumentEditor::getTextRange(TextLCoordRange const &range) const
 {
   xassert(range.nonNegative());
   xassert(range.isRectified());
@@ -648,7 +648,7 @@ string TextDocumentEditor::getWholeLine(int line) const
 }
 
 
-string TextDocumentEditor::getWordAfter(TextCoord tc) const
+string TextDocumentEditor::getWordAfter(TextLCoord tc) const
 {
   stringBuilder sb;
 
@@ -658,7 +658,7 @@ string TextDocumentEditor::getWordAfter(TextCoord tc) const
 
   bool seenWordChar = false;
   while (tc.m_column < lineLengthColumns(tc.m_line)) {
-    char ch = getTextRange(tc, TextCoord(tc.m_line, tc.m_column+1))[0];
+    char ch = getTextRange(tc, TextLCoord(tc.m_line, tc.m_column+1))[0];
     if (isalnum(ch) || ch=='_') {
       seenWordChar = true;
       sb << ch;
@@ -778,7 +778,7 @@ void TextDocumentEditor::moveCursorToTop()
 
 void TextDocumentEditor::moveCursorToBottom()
 {
-  setCursor(TextCoord(m_doc->numLines() - 1, 0));
+  setCursor(TextLCoord(m_doc->numLines() - 1, 0));
   scrollToCursor();
 }
 
@@ -829,7 +829,7 @@ void TextDocumentEditor::confineCursorToVisible()
 
 void TextDocumentEditor::walkCursor(int distance)
 {
-  TextCoord tc = m_cursor;
+  TextLCoord tc = m_cursor;
   this->walkCoordColumns(tc, distance);
   m_cursor = tc;
 }
@@ -839,7 +839,7 @@ void TextDocumentEditor::walkCursor(int distance)
 // both be nonnegative), compute how many rows and spaces need to
 // be added (to EOF, and 'tc.line', respectively) so that coordinate
 // will be in the defined area.
-static void computeSpaceFill(TextDocumentEditor const &tde, TextCoord tc,
+static void computeSpaceFill(TextDocumentEditor const &tde, TextLCoord tc,
                              int &rowfill, int &colfill)
 {
   if (tc.m_line < tde.numLines()) {
@@ -862,7 +862,7 @@ static void computeSpaceFill(TextDocumentEditor const &tde, TextCoord tc,
   xassert(colfill >= 0);
 }
 
-void TextDocumentEditor::fillToCoord(TextCoord const &tc)
+void TextDocumentEditor::fillToCoord(TextLCoord const &tc)
 {
   int rowfill, colfill;
   computeSpaceFill(*this, tc, rowfill, colfill);
@@ -952,7 +952,7 @@ void TextDocumentEditor::insertNewlineAutoIndent()
 }
 
 
-void TextDocumentEditor::deleteTextRange(TextCoordRange const &range)
+void TextDocumentEditor::deleteTextRange(TextLCoordRange const &range)
 {
   xassert(range.isRectified());
   xassert(range.nonNegative());
@@ -974,7 +974,7 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
 
   for (int line=start; line < start+lines &&
                        line < this->numLines(); line++) {
-    this->setCursor(TextCoord(line, 0));
+    this->setCursor(TextLCoord(line, 0));
 
     if (ind > 0) {
       if (this->isEmptyLine(line)) {
@@ -1003,7 +1003,7 @@ bool TextDocumentEditor::blockIndent(int amt)
     return false;
   }
 
-  TextCoordRange range = this->getSelectRange();
+  TextLCoordRange range = this->getSelectRange();
 
   int endLine = (range.m_end.m_column==0? range.m_end.m_line - 1 : range.m_end.m_line);
   this->indentLines(range.m_start.m_line, endLine - range.m_start.m_line + 1, amt);
@@ -1077,7 +1077,7 @@ CursorRestorer::CursorRestorer(TextDocumentEditor &e)
   : tde(&e),
     cursor(e.cursor()),
     markActive(e.markActive()),
-    mark(markActive? e.mark() : TextCoord()),
+    mark(markActive? e.mark() : TextLCoord()),
     firstVisible(e.firstVisible())
 {}
 
