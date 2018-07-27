@@ -503,7 +503,7 @@ static void entry(int argc, char **argv)
   }
 
   // NOTE: Currently these tests do not exercise any deviation between
-  // TextCoord and TextMCoord.
+  // TextLCoord and TextMCoord.
 
   testEmpty();
   testSimple();

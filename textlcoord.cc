@@ -46,7 +46,7 @@ void TextLCoord::insert(stringBuilder &sb) const
 }
 
 
-// ------------------------ TextCoordRange -----------------------------
+// ------------------------ TextLCoordRange -----------------------------
 TextLCoordRange& TextLCoordRange::operator= (TextLCoordRange const &obj)
 {
   CMEMB(m_start);

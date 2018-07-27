@@ -1,10 +1,8 @@
 // textlcoord.h
-// TextCoord and TextCoordRange classes.
+// TextLCoord and TextLCoordRange classes.
 
-// TODO: Rename this to "TextLCoord".
-
-#ifndef TEXTCOORD_H
-#define TEXTCOORD_H
+#ifndef TEXTLCOORD_H
+#define TEXTLCOORD_H
 
 #include "macros.h"                    // DMEMB
 #include "str.h"                       // stringBuilder
@@ -158,4 +156,4 @@ inline stringBuilder& operator<< (stringBuilder &sb, TextLCoordRange const &tcr)
 }
 
 
-#endif // TEXTCOORD_H
+#endif // TEXTLCOORD_H
