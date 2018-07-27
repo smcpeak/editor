@@ -41,7 +41,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   expectCursor(tde, line, col);
 
   string expect(text);
-  string actual = tde.getTextRange(tde.documentRange());
+  string actual = tde.getTextRange(tde.documentLRange());
 
   if (expect != actual) {
     cout << "expect: " << quoted(expect) << endl;
@@ -1202,7 +1202,7 @@ static void testInsertNewlineAutoIndent2()
 
   // Do the above again but with cursor and mark swapped;
   // result should be the same.
-  tde.deleteTextRange(TextLCoord(0,0), tde.endCoord());
+  tde.deleteTextRange(TextLCoord(0,0), tde.endLCoord());
   tde.setCursor(TextLCoord(0,0));
   tde.insertNulTermText(
     "  one\n"

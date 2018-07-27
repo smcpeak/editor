@@ -1922,7 +1922,7 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
   INITIATING_DOCUMENT_CHANGE();
   m_editor->turnSelection(shift);
   int line = m_editor->cursor().m_line;
-  m_editor->setCursor(m_editor->lineEndCoord(line+1));
+  m_editor->setCursor(m_editor->lineEndLCoord(line+1));
   scrollToCursor();
 }
 
@@ -2129,7 +2129,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
     // moves the cursor away, and then resume tracking if the user moves
     // the cursor back to the end.
     m_editor->setFirstVisible(TextLCoord(0,0));  // Scroll from top.
-    m_editor->setCursor(m_editor->endCoord());
+    m_editor->setCursor(m_editor->endLCoord());
     m_editor->clearMark();
     m_editor->scrollToCursor();
     this->redraw();

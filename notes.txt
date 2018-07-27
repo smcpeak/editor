@@ -1,7 +1,6 @@
 
 TODOs:
   - major refactoring: layout versus model coordinates
-    - rename coordinate methods in td-editor to use 'L' in their name
     - add selfCheck to TD and TDC, arrange to call it from tests
     - add tests for TD directly, including 'walkCoordBytes'
     - change the 'get' APIs for documents to populate ArrayStack<char>

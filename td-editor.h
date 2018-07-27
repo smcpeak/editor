@@ -161,24 +161,17 @@ public:      // funcs
   int maxLineLengthColumns() const;
 
   // First position in the file.
-  //
-  // TODO: Rename to 'beginLCoord'.
-  TextLCoord beginCoord() const         { return TextLCoord(0,0); }
+  TextLCoord beginLCoord() const         { return TextLCoord(0,0); }
 
   // Position right after last character in file.
-  TextLCoord endCoord() const;
+  TextLCoord endLCoord() const;
 
   // Range for the entire document.
-  TextLCoordRange documentRange() const
-    { return TextLCoordRange(beginCoord(), endCoord()); }
+  TextLCoordRange documentLRange() const
+    { return TextLCoordRange(beginLCoord(), endLCoord()); }
 
   // Position at end of specified line, which may be beyond EOF.
-  TextLCoord lineEndCoord(int line) const;
-
-  // Clamp the coordinate to the valid region of the document.  If it
-  // is beyond EOF, it gets set to 'endCoord()', even if that has a
-  // larger column number than 'tc' did originally.
-  void truncateCoord(TextLCoord &tc) const;
+  TextLCoord lineEndLCoord(int line) const;
 
   // Walk the given coordinate forwards (right, then down, when
   // distance>0) or backwards (left, then up, when distance<0) through

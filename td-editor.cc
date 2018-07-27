@@ -128,7 +128,7 @@ TextLCoordRange TextDocumentEditor::toLCoordRange(
 int TextDocumentEditor::lineLengthColumns(int line) const
 {
   if (0 <= line && line < numLines()) {
-    return this->lineEndCoord(line).m_column;
+    return this->lineEndLCoord(line).m_column;
   }
   else {
     return 0;
@@ -136,7 +136,7 @@ int TextDocumentEditor::lineLengthColumns(int line) const
 }
 
 
-TextLCoord TextDocumentEditor::lineEndCoord(int line) const
+TextLCoord TextDocumentEditor::lineEndLCoord(int line) const
 {
   return this->toLCoord(m_doc->lineEndCoord(line));
 }
@@ -149,7 +149,7 @@ int TextDocumentEditor::maxLineLengthColumns() const
 }
 
 
-TextLCoord TextDocumentEditor::endCoord() const
+TextLCoord TextDocumentEditor::endLCoord() const
 {
   return this->toLCoord(this->endMCoord());
 }
@@ -157,7 +157,7 @@ TextLCoord TextDocumentEditor::endCoord() const
 
 bool TextDocumentEditor::cursorAtEnd() const
 {
-  return m_cursor == this->endCoord();
+  return m_cursor == this->endLCoord();
 }
 
 
@@ -459,7 +459,7 @@ void TextDocumentEditor::deleteSelection()
   xassert(m_markActive);
 
   TextLCoordRange range(this->getSelectRange());
-  if (range.m_start < this->endCoord()) {
+  if (range.m_start < this->endLCoord()) {
     this->fillToCoord(range.m_start);
   }
 
@@ -508,7 +508,7 @@ void TextDocumentEditor::deleteKeyFunction()
   if (m_markActive) {
     this->deleteSelection();
   }
-  else if (m_cursor >= this->endCoord()) {
+  else if (m_cursor >= this->endLCoord()) {
     // Beyond EOF, do nothing.
   }
   else {
@@ -536,22 +536,6 @@ void TextDocumentEditor::redo()
   this->setCursor(this->toLCoord(m_doc->redo()));
   this->clearMark();
   this->scrollToCursor();
-}
-
-
-void TextDocumentEditor::truncateCoord(TextLCoord &tc) const
-{
-  tc.m_line = max(0, tc.m_line);
-  tc.m_column = max(0, tc.m_column);
-
-  if (tc.m_line >= this->numLines()) {
-    // Beyond EOF.  Go to end of document *without* preserving
-    // the column.
-    tc = this->endCoord();
-  }
-  else {
-    tc.m_column = min(tc.m_column, this->lineLengthColumns(tc.m_line));
-  }
 }
 
 
@@ -772,7 +756,7 @@ void TextDocumentEditor::moveToPrevLineEnd()
 
 void TextDocumentEditor::moveCursorToTop()
 {
-  setCursor(this->beginCoord());
+  setCursor(this->beginLCoord());
   scrollToCursor();
 }
 
