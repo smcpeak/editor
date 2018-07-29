@@ -41,7 +41,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   expectCursor(tde, line, col);
 
   string expect(text);
-  string actual = tde.getTextRange(tde.documentLRange());
+  string actual = tde.getTextRangeString(tde.documentLRange());
 
   if (expect != actual) {
     cout << "expect: " << quoted(expect) << endl;
@@ -171,7 +171,9 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 {
   tde.selfCheck();
 
-  string actual = tde.getTextRange(TextLCoord(line1, col1), TextLCoord(line2, col2));
+  string actual =
+    tde.getTextRangeString(TextLCoord(line1, col1), TextLCoord(line2, col2));
+
   if (!actual.equals(expect)) {
     tde.debugPrint();
     cout << "getTextRange(" << line1 << "," << col1 << ", "

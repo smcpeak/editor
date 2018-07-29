@@ -113,7 +113,7 @@ void justifyTextLines(
 
 bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredWidth)
 {
-  string startLine = tde.getWholeLine(originLineNumber);
+  string startLine = tde.getWholeLineString(originLineNumber);
 
   // Split the line into a prefix of whitespace and framing punctuation,
   // and a suffix with alphanumeric content.  In a programming language,
@@ -141,7 +141,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
   // some content after it.
   int upperEdge = originLineNumber;
   while (upperEdge-1 >= 0) {
-    if (properStartsWith(tde.getWholeLine(upperEdge-1), prefix)) {
+    if (properStartsWith(tde.getWholeLineString(upperEdge-1), prefix)) {
       upperEdge--;
     }
     else {
@@ -150,7 +150,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
   }
   int lowerEdge = originLineNumber;
   while (lowerEdge+1 < tde.numLines()) {
-    if (properStartsWith(tde.getWholeLine(lowerEdge+1), prefix)) {
+    if (properStartsWith(tde.getWholeLineString(lowerEdge+1), prefix)) {
       lowerEdge++;
     }
     else {
@@ -161,7 +161,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
   // Put all the content into a sequence of lines.
   ArrayStack<string> originalContent;
   for (int i=upperEdge; i <= lowerEdge; i++) {
-    string line = tde.getWholeLine(i);
+    string line = tde.getWholeLineString(i);
     originalContent.push(line.c_str() + prefix.length());
   }
 

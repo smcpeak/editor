@@ -71,14 +71,11 @@ public:      // data
   bool insertion;
 
   // Text to insert or delete; may contain embedded NULs.
-  char *text;          // (owner) NULL iff textLen==0
-
-  // Length of the text in bytes.
-  int textLen;
+  ArrayStack<char> text;
 
 private:     // funcs
   static void insert(TextDocumentCore &buf, TextMCoord tc,
-                     char const *text, int textLen, bool reverse);
+                     ArrayStack<char> const &text, bool reverse);
 
 public:      // funcs
   // This makes a copy of 'text'.
@@ -94,7 +91,7 @@ public:      // funcs
   // 'apply', but static
   static TextMCoord static_apply(
     TextDocumentCore &buf, TextMCoord tc, bool insertion,
-    char const *text, int textLen, bool reverse);
+    ArrayStack<char> const &text, bool reverse);
 
   // compute correct 'text' and 'textLen' for forward application of a
   // deletion of 'count' characters; entire span of deleted text must

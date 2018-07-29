@@ -196,7 +196,7 @@ void TextDocument::deleteTextRange(TextMCoordRange const &range)
 {
   xassert(range.isRectified());
 
-  int byteCount = m_core.bytesInRange(range);
+  int byteCount = m_core.countBytesInRange(range);
   this->deleteAt(range.m_start, byteCount);
 }
 

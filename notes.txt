@@ -1,8 +1,11 @@
 
 TODOs:
-  - major refactoring: layout versus model coordinates
-    - change the 'get' APIs for documents to populate ArrayStack<char>
-      instead of using char*
+  - remove trailing whitespace in smbase and smqtutil
+  - add a test that makes the window small, scrolls around, and takes
+    a screenshot
+  - change printUnhandled to use devWarning
+
+  - take advantage of coordinate refactoring to add Tab support
 
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start

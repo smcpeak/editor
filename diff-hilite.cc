@@ -7,7 +7,7 @@
 #include "textcategory.h"              // LineCategories
 
 // smbase
-#include "array.h"                     // Array
+#include "array.h"                     // ArrayStack
 
 
 string DiffHighlighter::highlighterName() const
@@ -21,8 +21,8 @@ void DiffHighlighter::highlight(TextDocumentCore const &doc, int line,
 {
   // Get the line contents.
   int lineLength = doc.lineLengthBytes(line);
-  Array<char> lineArray(lineLength);
-  doc.getPartialLine(TextMCoord(line, 0), lineArray.ptr(), lineLength);
+  ArrayStack<char> lineArray(lineLength);
+  doc.getPartialLine(TextMCoord(line, 0), lineArray, lineLength);
 
   // Default category.
   categories.clear(TC_DIFF_CONTEXT);

@@ -3,14 +3,19 @@
 
 #include "bufferlinesource.h"          // this module
 
+// smbase
 #include "td-core.h"                   // TextDocumentCore
+
+// libc
+#include <string.h>                    // memcpy
 
 
 BufferLineSource::BufferLineSource()
   : buffer(NULL),
     bufferLine(0),
     lineLength(0),
-    nextSlurpCol(0)
+    nextSlurpCol(0),
+    tmpArray()
 {}
 
 
@@ -37,7 +42,10 @@ int BufferLineSource::fillBuffer(char* buf, int max_size)
   }
 
   int len = min(max_size, lineLength-nextSlurpCol);
-  buffer->getPartialLine(TextMCoord(bufferLine, nextSlurpCol), buf, len);
+  tmpArray.clear();
+  buffer->getPartialLine(TextMCoord(bufferLine, nextSlurpCol), tmpArray, len);
+  xassert(tmpArray.length() == len);
+  memcpy(buf, tmpArray.getArray(), len);
   nextSlurpCol += len;
 
   return len;

@@ -137,7 +137,7 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
   }
 
   // Temporary array into which we copy line contents.
-  GrowArray<char> contents(10);
+  ArrayStack<char> contents;
 
   // Temporary array of extents for search hits.  This is rebuilt for
   // each line, but only rarely reallocated.
@@ -153,10 +153,10 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
     }
     else {
       // Get the line of text.
-      int lineLength = m_document->lineLengthBytes(line);
-      contents.ensureIndexDoubler(lineLength);
+      contents.clear();
+      m_document->getWholeLine(line, contents);
+      int lineLength = contents.length();
       char *buffer = contents.getArrayNC();
-      m_document->getPartialLine(TextMCoord(line, 0), buffer, lineLength);
 
       if (m_regex.get()) {
         // TODO: Converting every line from UTF-8 to UTF-16 is
@@ -198,7 +198,6 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
             offset += searchStringLength+1;
           }
           else {
-            // This is, of course, very inefficient.
             offset++;
           }
         }

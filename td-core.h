@@ -9,6 +9,7 @@
 #include "textmcoord.h"                // TextMCoord
 
 // smbase
+#include "array.h"                     // ArrayStack
 #include "rcserflist.h"                // RCSerfList
 #include "refct-serf.h"                // SerfRefCount
 #include "sm-noexcept.h"               // NOEXCEPT
@@ -164,30 +165,33 @@ public:    // funcs
   bool walkCoordBytes(TextMCoord &tc, int distance) const;
 
   // Compute the number of bytes in a range.
-  int bytesInRange(TextMCoordRange const &range) const;
+  int countBytesInRange(TextMCoordRange const &range) const;
 
   // --------------------- line contents ------------------------
   // Get part of a line's contents, starting at 'tc' and getting
-  // 'destLen' bytes.  All bytes must be in the line now.  The retrieved
+  // 'numBytes'.  All bytes must be in the line now.  The retrieved
   // text never includes the '\n' character, nor a terminating NUL.
-  void getPartialLine(TextMCoord tc, char *dest, int destLen) const;
+  //
+  // The retrieved bytes are appended to 'dest'.
+  void getPartialLine(TextMCoord tc,
+    ArrayStack<char> /*INOUT*/ &dest, int numBytes) const;
 
   // Retrieve text that may span line boundaries.  Line boundaries are
   // represented in the returned string as newlines.  The span begins at
-  // 'tc' (which must be in the defined area) and proceeds for
-  // 'textLenBytes' bytes, but if that goes beyond the end then this
-  // simply returns false (otherwise true).  If it returns true then
-  // exactly 'textLenBytes' bytes have been written into 'text'.
-  //
-  // 'textLenBytes' must be non-negative.
-  bool getTextSpanningLines(TextMCoord tc, char *text, int textLenBytes) const;
+  // 'tc' (which must be valid) and proceeds for 'numBytes' bytes, but
+  // if that goes beyond the end then this simply returns false without
+  // changing 'dest' (otherwise true).  If it returns true then exactly
+  // 'textLenBytes' bytes have been appended to 'dest'.
+  bool getTextSpanningLines(TextMCoord tc,
+    ArrayStack<char> /*INOUT*/ &dest, int numBytes) const;
 
   // Get using a range.
-  string getTextRange(TextMCoordRange const &range) const;
+  void getTextRange(TextMCoordRange const &range,
+    ArrayStack<char> /*INOUT*/ &dest) const;
 
   // Get a complete line of text, not including the newline.  'line'
-  // must be within range.
-  string getWholeLine(int line) const;
+  // must be within range.  Result is appended to 'dest'.
+  void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const;
 
   // Return the number of consecutive spaces and tabs at the start of
   // the given line, as a byte count.

@@ -409,7 +409,7 @@ string EditorWidget::getDocumentDirectory() const
 
 void EditorWidget::fileOpenAtCursor()
 {
-  string lineText = m_editor->getWholeLine(m_editor->cursor().m_line);
+  string lineText = m_editor->getWholeLineString(m_editor->cursor().m_line);
 
   ArrayStack<string> prefixes;
   prefixes.push(this->getDocumentDirectory());
@@ -776,11 +776,11 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
   xassert(firstLine >= 0);
   xassert(firstCol >= 0);
 
-  // another santiy check
+  // another sanity check
   xassert(lineHeight() > 0);
 
   // Buffer that will be used for each visible line of text.
-  Array<char> text(visibleCols);
+  ArrayStack<char> text(visibleCols);
 
   // Get region of selected text.
   TextLCoordRange selRange = m_editor->getSelectRange();
@@ -792,50 +792,48 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
        line++, y += fullLineHeight)
   {
     // ---- compute style segments ----
-    // fill the text with spaces, as the nominal text to display;
-    // these will only be used if there is style information out
-    // beyond the actual line character data
-    memset(text, ' ', visibleCols);
-
     // number of characters from this line that are visible
     int visibleLineChars = 0;
 
     // nominally the entire line is normal text
     categories.clear(TC_NORMAL);
 
-    // 1 if we will behave as though a newline character is
-    // at the end of this line.
+    // This is 1 if we will behave as though a newline character is
+    // at the end of this line, 0 otherwise.
     int newlineAdjust = 0;
     if (m_visibleWhitespace && line < m_editor->numLines()-1) {
       newlineAdjust = 1;
     }
 
     // Number of cells in the line, excluding newline.
-    int const lineLengthLoose = m_editor->lineLengthColumns(line);
+    int const lineLengthColumns = m_editor->lineLengthColumns(line);
 
     // Column number (0-based) of first trailing whitespace character.
     // We say there is no trailing whitespace on the cursor line
     // because highlighting it there is annoying and unhelpful.
     int const startOfTrailingWhitespace =
       (line == m_editor->cursor().m_line)?
-        lineLengthLoose :
-        lineLengthLoose - m_editor->countTrailingSpacesTabs(line);
+        lineLengthColumns :
+        lineLengthColumns - m_editor->countTrailingSpacesTabs(line);
 
-    // Number of visible glyphs on this line, including possible
-    // synthesized newline for 'visibleWhitespace'.
-    int const lineGlyphs = lineLengthLoose + newlineAdjust;
+    // Number of columns with glyphs on this line, including possible
+    // synthesized newline for 'visibleWhitespace'.  This value is
+    // independent of the window size or scroll position.
+    int const lineGlyphColumns = lineLengthColumns + newlineAdjust;
 
     // fill with text from the file
+    text.clear();
     if (line < m_editor->numLines()) {
-      if (firstCol < lineGlyphs) {
+      if (firstCol < lineGlyphColumns) {
         // First get the text without any extra newline.
-        int const amt = min(lineLengthLoose - firstCol, visibleCols);
+        int const amt = min(lineLengthColumns - firstCol, visibleCols);
         m_editor->getLineLayout(TextLCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
         // Now possibly add the newline.
         if (visibleLineChars < visibleCols && newlineAdjust != 0) {
-          text[visibleLineChars++] = '\n';
+          text.push('\n');
+          visibleLineChars++;
         }
       }
 
@@ -866,6 +864,16 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       }
     }
     xassert(visibleLineChars <= visibleCols);
+    xassert(text.length() == visibleLineChars);
+
+    // Fill the remainder of 'text' with spaces.  These characters will
+    // only be used if there is style information out beyond the actual
+    // line character data.
+    {
+      int remainderLen = visibleCols - visibleLineChars;
+      memset(text.ptrToPushedMultipleAlt(remainderLen), ' ', remainderLen);
+    }
+    xassert(text.length() == visibleCols);
 
     // incorporate effect of selection
     if (this->selectEnabled() &&
@@ -956,7 +964,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
 
       // draw text
-      int const charsToDraw = min(len, (lineGlyphs-firstCol)-printed);
+      int const charsToDraw = min(len, (lineGlyphColumns-firstCol)-printed);
       for (int i=0; i < charsToDraw; i++) {
         bool withinTrailingWhitespace =
           firstCol + printed + i >= startOfTrailingWhitespace;
@@ -1037,7 +1045,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
         paint.setBackground(cursorFont->getBgColor());
         paint.eraseRect(x,0, m_fontWidth, m_fontHeight);
 
-        if (cursorCol < lineGlyphs) {
+        if (cursorCol < lineGlyphColumns) {
           // Drawing the block cursor overwrote the glyph, so we
           // have to draw it again.
           this->drawOneChar(paint, cursorFont, QPoint(x, baseline),

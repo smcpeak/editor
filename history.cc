@@ -34,39 +34,32 @@ HE_text::HE_text(TextMCoord tc_, bool i,
                  char const *t, int len)
   : tc(tc_),
     insertion(i),
-    textLen(len)
+    text(len)
 {
-  if (textLen > 0) {
-    text = new char[textLen];
-    memcpy(text, t, textLen);
-  }
-  else {
-    text = NULL;
+  if (len > 0) {
+    memcpy(text.getArrayNC(), t, len);
+    text.setLength(len);
   }
 }
 
 HE_text::~HE_text()
-{
-  if (text) {
-    delete[] text;
-  }
-}
+{}
 
 
 TextMCoord HE_text::apply(TextDocumentCore &buf, bool reverse) const
 {
-  return static_apply(buf, tc, insertion, text, textLen, reverse);
+  return static_apply(buf, tc, insertion, text, reverse);
 }
 
 STATICDEF TextMCoord HE_text::static_apply(
   TextDocumentCore &buf, TextMCoord tc, bool insertion,
-  char const *text, int textLen, bool reverse)
+  ArrayStack<char> const &text, bool reverse)
 {
   if (insertion) {
-    HE_text::insert(buf, tc, text, textLen, reverse);
+    HE_text::insert(buf, tc, text, reverse);
   }
   else {
-    HE_text::insert(buf, tc, text, textLen, !reverse);
+    HE_text::insert(buf, tc, text, !reverse);
   }
 
   return tc;
@@ -80,7 +73,7 @@ static void deletionMismatch()
 
 // Insert (=forward) or delete (=reverse) some text at 'tc'.
 STATICDEF void HE_text::insert(
-  TextDocumentCore &buf, TextMCoord tc, char const *text, int textLen,
+  TextDocumentCore &buf, TextMCoord tc, ArrayStack<char> const &text,
   bool reverse)
 {
   if (!buf.validCoord(tc)) {
@@ -96,10 +89,10 @@ STATICDEF void HE_text::insert(
 
     // excess text on the original line that gets floated down
     // to after the cursor on the last line
-    GrowArray<char> excess(0);
+    ArrayStack<char> excess(0);
 
-    char const *p = text;
-    char const *end = text+textLen;
+    char const *p = text.getArray();
+    char const *end = p + text.length();
     while (p < end) {
       // find next newline, or 'end'
       char const *nl = p;
@@ -122,14 +115,15 @@ STATICDEF void HE_text::insert(
             tc.m_byteIndex < buf.lineLengthBytes(tc.m_line)) {
           // this can only happen on the first line of the insertion
           // procedure, so check that we don't already have excess
-          xassert(excess.size()==0);
+          xassert(excess.length() == 0);
 
           // get the excess
-          excess.setSize(buf.lineLengthBytes(tc.m_line) - tc.m_byteIndex);
-          buf.getPartialLine(tc, excess.getArrayNC(), excess.size());
+          int excessLength = buf.lineLengthBytes(tc.m_line) - tc.m_byteIndex;
+          buf.getPartialLine(tc, excess, excessLength);
+          xassert(excess.length() == excessLength);
 
           // remove it from the buffer
-          buf.deleteText(tc, excess.size());
+          buf.deleteText(tc, excessLength);
         }
 
         tc.m_line++;
@@ -145,7 +139,7 @@ STATICDEF void HE_text::insert(
 
     // insert the floated excess text, if any
     if (excess.size() > 0) {
-      buf.insertText(tc, excess.getArray(), excess.size());
+      buf.insertText(tc, excess.getArray(), excess.length());
     }
   }
 
@@ -160,11 +154,11 @@ STATICDEF void HE_text::insert(
 
     // check correspondence between the text in the event record and
     // what's in the buffer, without modifying the buffer yet
-    Array<char> actualText(textLen);
-    if (!buf.getTextSpanningLines(tc, actualText, textLen)) {
+    ArrayStack<char> actualText(text.length());
+    if (!buf.getTextSpanningLines(tc, actualText, text.length())) {
       deletionMismatch();      // span isn't valid
     }
-    if (0!=memcmp(text, (char const*)actualText, textLen)) {
+    if (0!=memcmp(text.getArray(), actualText.getArray(), text.length())) {
       deletionMismatch();      // text doesn't match
     }
 
@@ -172,8 +166,8 @@ STATICDEF void HE_text::insert(
 
     // contents are known to match, so delete the text
     tc = begin;
-    char const *p = text;
-    char const *end = text+textLen;
+    char const *p = text.getArray();
+    char const *end = p + text.length();
     while (p < end) {
       // find next newline, or 'end'
       char const *nl = p;
@@ -218,7 +212,7 @@ STATICDEF void HE_text::insert(
 
       // grab this line's contents
       int spliceLen = buf.lineLengthBytes(tc.m_line);
-      Array<char> splice(spliceLen);
+      ArrayStack<char> splice(spliceLen);
       buf.getPartialLine(tc, splice, spliceLen);
 
       // blow it away
@@ -230,7 +224,7 @@ STATICDEF void HE_text::insert(
       tc.m_byteIndex = buf.lineLengthBytes(tc.m_line);
 
       // append splice text
-      buf.insertText(tc, splice.ptrC(), spliceLen);
+      buf.insertText(tc, splice.getArray(), spliceLen);
     }
   }
 }
@@ -239,16 +233,13 @@ STATICDEF void HE_text::insert(
 void HE_text::computeText(TextDocumentCore const &buf, int count)
 {
   xassert(insertion == false);
-  xassert(text == NULL);
+  xassert(text.isEmpty());
   xassert(buf.validCoord(tc));
 
-  text = new char[count];
+  text.setAllocatedSize(count);
   if (!buf.getTextSpanningLines(tc, text, count)) {
-    delete[] text;
-    text = NULL;
     xfailure("deletion span is not entirely within defined text area");
   }
-  textLen = count;
 }
 
 
@@ -256,7 +247,9 @@ void HE_text::print(stringBuilder &sb, int indent) const
 {
   sb.indent(indent);
   sb << (insertion? "Ins" : "Del")
-     << "(" << tc << ", \"" << encodeWithEscapes(text, textLen) << "\");\n";
+     << "(" << tc << ", \""
+     << encodeWithEscapes(text.getArray(), text.length())
+     << "\");\n";
 }
 
 
@@ -265,8 +258,8 @@ void HE_text::stats(HistoryStats &stats) const
   stats.records++;
   stats.memUsage += sizeof(*this);
   stats.mallocObjects++;
-  if (text) {
-    stats.memUsage += textLen;
+  if (text.allocatedSize()) {
+    stats.memUsage += text.allocatedSize();
     stats.mallocObjects++;
   }
 }

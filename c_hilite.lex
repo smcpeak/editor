@@ -396,8 +396,7 @@ TICK          [\']
 
   /* continuation of preprocessor, empty line */
 <PREPROC><<EOF>> {
-  if (bufsrc.nextSlurpCol == 0) {
-    // buffer was empty
+  if (bufsrc.lineIsEmpty()) {
     BEGIN(INITIAL);
   }
   yyterminate();

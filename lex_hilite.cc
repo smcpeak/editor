@@ -298,7 +298,7 @@ static void printLine(LexHighlighter &hi, int line)
   hi.highlightTDE(tde, line, category);
 
   cout << "line " << line << ":\n"
-       << "  text : " << tde->getWholeLine(line) << "\n"
+       << "  text : " << tde->getWholeLineString(line) << "\n"
        << "  catgy: " << category.asUnaryString() << "\n"
        << "  rle  : " << category.asString() << "\n"
        ;
@@ -345,7 +345,7 @@ static void innerCheckLine(LexHighlighter &hi,
 
   if (rendered1 != rendered2) {
     cout << "check: mismatch at line " << i << ":\n"
-         << "  line: " << tde->getWholeLine(i) << "\n"
+         << "  line: " << tde->getWholeLineString(i) << "\n"
          << "  inc.: " << rendered1 << "\n"
          << "  bat.: " << rendered2 << "\n"
          ;

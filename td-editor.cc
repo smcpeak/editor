@@ -243,7 +243,7 @@ string TextDocumentEditor::getSelectedText() const
     return "";
   }
   else {
-    return this->getTextRange(this->getSelectRange());
+    return this->getTextRangeString(this->getSelectRange());
   }
 }
 
@@ -254,7 +254,7 @@ string TextDocumentEditor::getSelectedOrIdentifier() const
     return this->getSelectedText();
   }
 
-  string text = this->getWholeLine(m_cursor.m_line);
+  string text = this->getWholeLineString(m_cursor.m_line);
   return cIdentifierAt(text, m_cursor.m_column);
 }
 
@@ -572,7 +572,8 @@ void TextDocumentEditor::walkCoordColumns(TextLCoord &tc, int len) const
 }
 
 
-void TextDocumentEditor::getLineLayout(TextLCoord tc, char *dest, int destLen) const
+void TextDocumentEditor::getLineLayout(TextLCoord tc,
+  ArrayStack<char> &dest, int destLen) const
 {
   xassert(tc.nonNegative());
 
@@ -609,28 +610,60 @@ void TextDocumentEditor::getLineLayout(TextLCoord tc, char *dest, int destLen) c
   }
 
   // spaces past defined region
-  memset(dest+def, ' ', undef);
+  memset(dest.ptrToPushedMultipleAlt(undef), ' ', undef);
 }
 
 
-string TextDocumentEditor::getTextRange(TextLCoordRange const &range) const
+void TextDocumentEditor::getTextRange(TextLCoordRange const &range,
+  ArrayStack<char> /*INOUT*/ &dest) const
 {
   xassert(range.nonNegative());
   xassert(range.isRectified());
 
-  return m_doc->getTextRange(this->toMCoordRange(range));
+  m_doc->getTextRange(this->toMCoordRange(range), dest);
 }
 
 
-string TextDocumentEditor::getWholeLine(int line) const
+string TextDocumentEditor::getTextRangeString(TextLCoordRange const &range) const
+{
+  ArrayStack<char> array;
+  this->getTextRange(range, array);
+  return toString(array);
+}
+
+
+void TextDocumentEditor::getWholeLine(int line,
+  ArrayStack<char> /*INOUT*/ &dest) const
 {
   xassert(line >= 0);
   if (line < m_doc->numLines()) {
-    return m_doc->getWholeLine(line);
+    m_doc->getWholeLine(line, dest);
   }
   else {
-    return string("");
+    // Not appending anything is equivalent to appending "".
   }
+}
+
+
+string TextDocumentEditor::getWholeLineString(int line) const
+{
+  ArrayStack<char> text;
+  this->getWholeLine(line, text);
+  return toString(text);
+}
+
+
+// Are the bytes in 'text' a "word character" for the purposes of
+// Ctrl+S, Ctrl+W?
+static bool isWordCharText(ArrayStack<char> const &text)
+{
+  if (text.isEmpty()) {
+    return false;
+  }
+
+  // For classification, look only at the first byte.  At least for
+  // now, I only consider ASCII characters to be parts of "words".
+  return (isalnum(text[0]) || text[0]=='_');
 }
 
 
@@ -642,20 +675,28 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
     return "";
   }
 
+  ArrayStack<char> text;
+
   bool seenWordChar = false;
   while (tc.m_column < lineLengthColumns(tc.m_line)) {
-    char ch = getTextRange(tc, TextLCoord(tc.m_line, tc.m_column+1))[0];
-    if (isalnum(ch) || ch=='_') {
-      seenWordChar = true;
-      sb << ch;
-    }
-    else if (seenWordChar) {
-      // done, this is the end of the word
-      break;
+    // Get one column's worth of bytes.
+    text.clear();
+    getTextRange(tc, TextLCoord(tc.m_line, tc.m_column+1), text);
+
+    bool iwc = isWordCharText(text);
+    if (iwc || !seenWordChar) {
+      // For Ctrl+S, Ctrl+W, add all bytes before or in the next word.
+      for (int i=0; i < text.length(); i++) {
+        sb << text[i];
+      }
+
+      if (iwc) {
+        seenWordChar = true;
+      }
     }
     else {
-      // consume this character, it precedes any word characters
-      sb << ch;
+      // done, this is the end of the word
+      break;
     }
     tc.m_column++;
   }

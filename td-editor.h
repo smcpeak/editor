@@ -361,20 +361,29 @@ public:      // funcs
   // document and expressing it as a sequence of grid contents.  Each
   // grid cell's content is, for now, expressed as one byte.  Tacitly,
   // the bytes are interpreted as Latin-1 code points.
-  void getLineLayout(TextLCoord tc, char *dest, int destLen) const;
+  void getLineLayout(TextLCoord tc,
+                     ArrayStack<char> /*INOUT*/ &dest, int destLen) const;
 
   // Retrieve the text between two positions, as in a text editor where
   // the positions are the selection endpoints and the user wants a
   // string to put in the clipboard.  The range must be rectified.  If
   // start==end, returns "".  Characters outside the document area are
   // taken to be whitespace.
-  string getTextRange(TextLCoordRange const &range) const;
-  string getTextRange(TextLCoord const &start, TextLCoord const &end) const
-    { return getTextRange(TextLCoordRange(start, end)); }
+  void getTextRange(TextLCoordRange const &range,
+                    ArrayStack<char> /*INOUT*/ &dest) const;
+  void getTextRange(TextLCoord const &start, TextLCoord const &end,
+                    ArrayStack<char> /*INOUT*/ &dest) const
+    { return getTextRange(TextLCoordRange(start, end), dest); }
+
+  // Versions that yield strings.
+  string getTextRangeString(TextLCoordRange const &range) const;
+  string getTextRangeString(TextLCoord const &start, TextLCoord const &end) const
+    { return getTextRangeString(TextLCoordRange(start, end)); }
 
   // Get a complete line.  Returns "" when beyond EOF.  'line' must
   // be non-negative.
-  string getWholeLine(int line) const;
+  void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const;
+  string getWholeLineString(int line) const;
 
   // get the word following the given coordinate, including any non-word
   // characters that precede that word; stop at end of line

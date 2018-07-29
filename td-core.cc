@@ -171,20 +171,23 @@ STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 }
 
 
-void TextDocumentCore::getPartialLine(TextMCoord tc, char *dest, int destLen) const
+void TextDocumentCore::getPartialLine(TextMCoord tc,
+  ArrayStack<char> /*INOUT*/ &dest, int numBytes) const
 {
   bc(tc.m_line);
-  xassert(destLen >= 0);
+  xassert(numBytes >= 0);
+
+  char *destPtr = dest.ptrToPushedMultipleAlt(numBytes);
 
   if (tc.m_line == m_recent) {
-    m_recentLine.writeIntoArray(dest, destLen, tc.m_byteIndex);
+    m_recentLine.writeIntoArray(destPtr, numBytes, tc.m_byteIndex);
   }
   else {
     char const *p = m_lines.get(tc.m_line);
     int len = bufStrlen(p);
-    xassert(0 <= tc.m_byteIndex && tc.m_byteIndex + destLen <= len);
+    xassert(0 <= tc.m_byteIndex && tc.m_byteIndex + numBytes <= len);
 
-    memcpy(dest, p + tc.m_byteIndex, destLen);
+    memcpy(destPtr, p + tc.m_byteIndex, numBytes);
   }
 }
 
@@ -406,19 +409,11 @@ void TextDocumentCore::dumpRepresentation() const
 
   // line contents
   for (int i=0; i<numLines(); i++) {
-    int len = lineLengthBytes(i);
-    char *p = NULL;
-    if (len) {
-      p = new char[len];
-      getPartialLine(TextMCoord(i, 0), p, len);
-    }
+    ArrayStack<char> text;
+    this->getWholeLine(i, text);
 
     printf("  line %d: \"%s\"\n", i,
-           toCStr(encodeWithEscapes(p, len)));
-
-    if (len) {
-      delete[] p;
-    }
+           toCStr(encodeWithEscapes(text.getArray(), text.length())));
   }
 
   fflush(stdout);
@@ -578,19 +573,18 @@ void TextDocumentCore::writeFile(char const *fname) const
   AutoFILE fp(fname, "wb");
 
   // Buffer into which we will copy each line before writing it out.
-  GrowArray<char> buffer(256 /*initial size*/);
+  ArrayStack<char> buffer;
 
   for (int line=0; line < this->numLines(); line++) {
-    int len = this->lineLengthBytes(line);
-    buffer.ensureIndexDoubler(len);       // text + possible newline
+    buffer.clear();
 
-    this->getPartialLine(TextMCoord(line, 0), buffer.getArrayNC(), len);
+    this->getWholeLine(line, buffer);
     if (line < this->numLines()-1) {        // last gets no newline
-      buffer[len] = '\n';
-      len++;
+      buffer.push('\n');
     }
 
-    if ((int)fwrite(buffer.getArray(), 1, len, fp) != len) {
+    if ((int)fwrite(buffer.getArray(), 1, buffer.length(), fp) !=
+        buffer.length()) {
       xsyserror("write", fname);
     }
   }
@@ -598,85 +592,76 @@ void TextDocumentCore::writeFile(char const *fname) const
 
 
 bool TextDocumentCore::getTextSpanningLines(
-  TextMCoord tc, char *text, int textLenBytes) const
+  TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const
 {
   xassert(this->validCoord(tc));
-  xassert(textLenBytes >= 0);
+  xassert(numBytes >= 0);
 
   TextMCoord end(tc);
-  if (!this->walkCoordBytes(end, textLenBytes)) {
+  if (!this->walkCoordBytes(end, numBytes)) {
     return false;
   }
 
+  int origDestLength = dest.length();
   TextMCoordRange range(tc, end);
-  string str(this->getTextRange(range));
+  this->getTextRange(range, dest);
+  xassert(dest.length() - origDestLength == numBytes);
 
-  xassert(str.length() == textLenBytes);
-  memcpy(text, str.c_str(), textLenBytes);
   return true;
 }
 
 
-int TextDocumentCore::bytesInRange(TextMCoordRange const &range) const
+int TextDocumentCore::countBytesInRange(TextMCoordRange const &range) const
 {
-  // Very inefficient!
-  string s(this->getTextRange(range));
-  return s.length();
+  // Inefficient!
+  ArrayStack<char> arr;
+  this->getTextRange(range, arr);
+  return arr.length();
 }
 
 
-string TextDocumentCore::getTextRange(TextMCoordRange const &range) const
+void TextDocumentCore::getTextRange(TextMCoordRange const &range,
+  ArrayStack<char> /*INOUT*/ &dest) const
 {
   xassert(this->validRange(range));
 
   // This function uses the 'withinOneLine' case as a base case of a two
-  // level recursion; it's not terribly efficient.
+  // level recursion.
 
   if (range.withinOneLine()) {
     // extracting text from a single line
     int lenBytes = range.m_end.m_byteIndex - range.m_start.m_byteIndex;
 
-    // It is not very efficient to allocate two buffers, one here and
-    // one inside the string object, but the std::string API doesn't
-    // offer a way to do it directly, so I need to refactor my APIs if
-    // I want to avoid the extra allocation.
-    Array<char> buf(lenBytes+1);
-
-    buf[lenBytes] = 0;              // NUL terminator
-    this->getPartialLine(range.m_start, buf, lenBytes);
-    string ret(buf.ptrC());    // Explicitly calling 'ptrC' is only needed for Eclipse...
-
-    return ret;
+    this->getPartialLine(range.m_start, dest, lenBytes);
+    return;
   }
 
-  // build up returned string
-  stringBuilder sb;
-
   // Right half of range start line.
-  sb = this->getTextRange(TextMCoordRange(
-         range.m_start, this->lineEndCoord(range.m_start.m_line)));
+  this->getTextRange(
+    TextMCoordRange(range.m_start, this->lineEndCoord(range.m_start.m_line)),
+    dest);
 
   // Full lines between start and end.
   for (int i = range.m_start.m_line + 1; i < range.m_end.m_line; i++) {
-    sb << "\n";
-    sb << this->getWholeLine(i);
+    dest.push('\n');
+    this->getWholeLine(i, dest);
   }
 
   // Left half of end line.
-  sb << "\n";
-  sb << this->getTextRange(TextMCoordRange(
-          this->lineBeginCoord(range.m_end.m_line), range.m_end));
-
-  return sb;
+  dest.push('\n');
+  this->getTextRange(
+    TextMCoordRange(this->lineBeginCoord(range.m_end.m_line), range.m_end),
+    dest);
 }
 
 
-string TextDocumentCore::getWholeLine(int line) const
+void TextDocumentCore::getWholeLine(int line,
+  ArrayStack<char> /*INOUT*/ &dest) const
 {
   bc(line);
-  return getTextRange(TextMCoordRange(
-    this->lineBeginCoord(line), this->lineEndCoord(line)
-  ));
+  this->getTextRange(
+    TextMCoordRange(this->lineBeginCoord(line), this->lineEndCoord(line)),
+    dest);
 }
 
 
