@@ -44,6 +44,7 @@
 #include <qpainter.h>                  // QPainter
 #include <qpixmap.h>                   // QPixmap
 
+#include <QImage>
 #include <QKeyEvent>
 #include <QPaintEvent>
 
@@ -509,6 +510,25 @@ void EditorWidget::redraw()
 }
 
 
+void EditorWidget::saveScreenshot()
+{
+  QImage image(this->size(), QImage::Format_RGB32);
+  {
+    QPainter paint(&image);
+    this->paintFrame(paint);
+  }
+
+  QString fname(qstringb("screenshot-" << getCurrentUnixTime() << ".png"));
+  if (!image.save(fname, "PNG")) {
+    // This API does not provide a reason...
+    cout << "Failed to write " << fname << endl;
+  }
+  else {
+    cout << "Wrote screenshot to " << fname << endl;
+  }
+}
+
+
 // Compute and broadcast match status indicator.
 void EditorWidget::emitSearchStatusIndicator()
 {
@@ -711,6 +731,16 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
     TRACE("paint", "frame: rect=" << rect);
   }
 
+  // Painter that goes to the window directly.  A key property is that
+  // every pixel painted via 'winPaint' must be painted exactly once, to
+  // avoid flickering.
+  QPainter winPaint(this);
+
+  this->paintFrame(winPaint);
+}
+
+void EditorWidget::paintFrame(QPainter &winPaint)
+{
   // ---- setup painters ----
   // make a pixmap, so as to avoid flickering by double-buffering; the
   // pixmap is the entire width of the window, but only one line high,
@@ -730,11 +760,6 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
   // font setting must be copied over manually
   QPainter paint(&pixmap);
   paint.setFont(font());
-
-  // Another painter will go to the window directly.  A key property
-  // is that every pixel painted via 'winPaint' must be painted exactly
-  // once, to avoid flickering.
-  QPainter winPaint(this);
 
   // ---- setup style info ----
   // when drawing text, erase background automatically

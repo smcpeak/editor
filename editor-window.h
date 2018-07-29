@@ -209,6 +209,7 @@ public Q_SLOTS:
   void helpAbout();
   void helpAboutQt();
   void helpDebugDumpObjectTree() NOEXCEPT;
+  void helpDebugEditorScreenshot() NOEXCEPT;
 
   void editorViewChanged();
   void on_closeSARPanel();

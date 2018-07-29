@@ -396,6 +396,13 @@ void EditorWindow::buildMenu()
       QMenu *submenu = menu->addMenu("&Debug");
       QMenu *menu = submenu;
       MENU_ITEM    ("Dump object &tree", helpDebugDumpObjectTree);
+
+      // The appearance of the widget is affected by whether it has the
+      // focus.  However, even when choosing this from the menu, the
+      // focus returns to the editor before it draws, if it had it
+      // previously, so that turns out not to be a problem.
+      MENU_ITEM    ("Save &screenshot of editor widget to file",
+                    helpDebugEditorScreenshot);
     }
   }
 }
@@ -1541,7 +1548,17 @@ void EditorWindow::helpAboutQt()
 
 void EditorWindow::helpDebugDumpObjectTree() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
   this->dumpObjectTree();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::helpDebugEditorScreenshot() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  m_editorWidget->saveScreenshot();
+  GENERIC_CATCH_END
 }
 
 

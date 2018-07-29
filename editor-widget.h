@@ -450,8 +450,9 @@ public:      // funcs
   void rescuedKeyPressEvent(QKeyEvent *k);
 
   // -------------------------- output ----------------------------
-  // intermediate paint step
+  // intermediate paint steps
   void updateFrame(QPaintEvent *ev);
+  void paintFrame(QPainter &winPaint);
 
   // Paint a single character at the given location.
   void drawOneChar(QPainter &paint, QtBDFFont *font,
@@ -480,6 +481,9 @@ public:      // funcs
 
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
+
+  // Save a screenshot of the widget to a PNG file.
+  void saveScreenshot();
 
   void printUnhandled(xBase const &x)
     { unhandledExceptionMsgbox(this, x); }
