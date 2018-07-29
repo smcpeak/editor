@@ -24,6 +24,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QImage>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QRegularExpression>
@@ -39,6 +40,19 @@
 #include <stdlib.h>                    // getenv, atoi
 
 
+// -------------------- EventReplayQueryable --------------------
+string EventReplayQueryable::eventReplayQuery(string const &state)
+{
+  return stringb("unknown state: " << quoted(state));
+}
+
+QImage EventReplayQueryable::eventReplayImage(string const &)
+{
+  return QImage();
+}
+
+
+// ------------------------ EventReplay -------------------------
 int EventReplay::s_quiescenceEventType = 0;
 
 
@@ -408,6 +422,31 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     string actual = qObjectPath(getFocusWidget());
     EXPECT_EQ("CheckFocusWidget");
+  }
+
+  else if (funcName == "CheckImage") {
+    BIND_ARGS3(path, what, expectFname);
+
+    QImage expectImage;
+    if (!expectImage.load(toQString(expectFname), "PNG")) {
+      xstringb("Failed to load screenshot image: " << expectFname);
+    }
+
+    EventReplayQueryable *q = getQueryableFromPath(path);
+    QImage actualImage = q->eventReplayImage(what);
+
+    if (actualImage != expectImage) {
+      QString actualFname("failing-actual-image.png");
+      if (!actualImage.save(actualFname, "PNG")) {
+        xstringb("CheckScreenshot: Images differ.  Additionally, I "
+                 "failed to save the actual image to " <<
+                 actualFname);
+      }
+      else {
+        xstringb("CheckScreenshot: Images differ.  Actual image "
+                 "saved to " << actualFname);
+      }
+    }
   }
 
   else {

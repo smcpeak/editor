@@ -16,6 +16,7 @@
 // libc++
 #include <fstream>                     // std::ifstream
 
+class QImage;
 class QRegularExpressionMatch;
 
 
@@ -30,7 +31,14 @@ public:
   // It can throw any exception to indicate a syntax error with 'state';
   // that will cause the test to fail.  It can also just return an error
   // message, as that will not be what the test script is expecting.
-  virtual string eventReplayQuery(string const &state) = 0;
+  //
+  // The default returns the string "unknown state: $state",
+  virtual string eventReplayQuery(string const &state);
+
+  // Return an app-specific image, identified by 'what'.  Corresponds to
+  // the "CheckQuery" command.  The default implementation returns a
+  // null QImage.
+  virtual QImage eventReplayImage(string const &what);
 };
 
 

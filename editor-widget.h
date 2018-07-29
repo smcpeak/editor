@@ -28,6 +28,7 @@ class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
 class StyleDB;                         // styledb.h
 
+class QImage;
 class QLabel;                          // qlabel.h
 class QRangeControl;                   // qrangecontrol.h
 
@@ -482,8 +483,8 @@ public:      // funcs
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
 
-  // Save a screenshot of the widget to a PNG file.
-  void saveScreenshot();
+  // Get a screenshot of the widget.
+  QImage getScreenshot();
 
   void printUnhandled(xBase const &x)
     { unhandledExceptionMsgbox(this, x); }
@@ -491,6 +492,7 @@ public:      // funcs
   // -------------------------- testing ----------------------------
   // EventReplayQueryable methods.
   virtual string eventReplayQuery(string const &state) OVERRIDE;
+  virtual QImage eventReplayImage(string const &what) OVERRIDE;
 
 public Q_SLOTS:
   // slots to respond to scrollbars

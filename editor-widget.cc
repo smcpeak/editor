@@ -510,22 +510,14 @@ void EditorWidget::redraw()
 }
 
 
-void EditorWidget::saveScreenshot()
+QImage EditorWidget::getScreenshot()
 {
   QImage image(this->size(), QImage::Format_RGB32);
   {
     QPainter paint(&image);
     this->paintFrame(paint);
   }
-
-  QString fname(qstringb("screenshot-" << getCurrentUnixTime() << ".png"));
-  if (!image.save(fname, "PNG")) {
-    // This API does not provide a reason...
-    cout << "Failed to write " << fname << endl;
-  }
-  else {
-    cout << "Wrote screenshot to " << fname << endl;
-  }
+  return image;
 }
 
 
@@ -2369,7 +2361,18 @@ string EditorWidget::eventReplayQuery(string const &state)
     return SMFileUtil().splitPathBase(m_editor->m_namedDoc->name());
   }
   else {
-    return stringb("unknown state: " << quoted(state));
+    return EventReplayQueryable::eventReplayQuery(state);
+  }
+}
+
+
+QImage EditorWidget::eventReplayImage(string const &what)
+{
+  if (what == "screenshot") {
+    return this->getScreenshot();
+  }
+  else {
+    return EventReplayQueryable::eventReplayImage(what);
   }
 }
 

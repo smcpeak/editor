@@ -414,5 +414,6 @@ check:
 	./editor -ev=test/read-only2.ev
 	./editor -ev=test/read-only3.ev
 	./editor -ev=test/prompt-unsaved-changes.ev
+	./editor -ev=test/screenshot1.ev test/file1.h
 
 # EOF

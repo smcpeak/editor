@@ -394,7 +394,9 @@ void EditorWindow::buildMenu()
 
     {
       QMenu *submenu = menu->addMenu("&Debug");
+      submenu->setObjectName("debugMenu");
       QMenu *menu = submenu;
+
       MENU_ITEM    ("Dump object &tree", helpDebugDumpObjectTree);
 
       // The appearance of the widget is affected by whether it has the
@@ -1557,7 +1559,18 @@ void EditorWindow::helpDebugDumpObjectTree() NOEXCEPT
 void EditorWindow::helpDebugEditorScreenshot() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->saveScreenshot();
+
+  QImage image(m_editorWidget->getScreenshot());
+
+  QString fname(qstringb("screenshot-" << getCurrentUnixTime() << ".png"));
+  if (!image.save(fname, "PNG")) {
+    // This API does not provide a reason...
+    cout << "Failed to write " << fname << endl;
+  }
+  else {
+    cout << "Wrote screenshot to " << fname << endl;
+  }
+
   GENERIC_CATCH_END
 }
 

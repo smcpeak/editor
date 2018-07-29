@@ -1,8 +1,5 @@
 
 TODOs:
-  - add a test that makes the window small, scrolls around, and takes
-    a screenshot
-
   - take advantage of coordinate refactoring to add Tab support
 
   - ProcessWatcher should close stdin
