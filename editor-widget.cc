@@ -694,7 +694,7 @@ void EditorWidget::paintEvent(QPaintEvent *ev)
                    toQString(x.why()));
 
     // Also write to stderr so rare issues can be seen.
-    cerr << x.why() << endl;
+    ::printUnhandled(x);
   }
 }
 
