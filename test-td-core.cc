@@ -13,6 +13,31 @@
 #include <stdlib.h>                    // system
 
 
+// Self-check the 'tdc' and also verify that the iterator works for
+// every line.
+static void fullSelfCheck(TextDocumentCore const &tdc)
+{
+  tdc.selfCheck();
+
+  ArrayStack<char> text;
+  for (int i=0; i < tdc.numLines(); i++) {
+    text.clear();
+    tdc.getWholeLine(i, text /*INOUT*/);
+
+    int offset = 0;
+    TextDocumentCore::LineIterator iter(tdc, i);
+    for (; iter.has(); iter.advByte()) {
+      xassert(iter.byteOffset() == offset);
+      xassert(iter.byteAt() == (unsigned char)text[offset]);
+      offset++;
+    }
+
+    xassert(iter.byteOffset() == offset);
+    xassert(offset == tdc.lineLengthBytes(i));
+  }
+}
+
+
 static void testAtomicRead()
 {
   // Write a file that spans several blocks.
@@ -27,7 +52,7 @@ static void testAtomicRead()
   TextDocumentCore core;
   core.readFile("td-core.tmp");
   xassert(core.numLines() == 1001);
-  core.selfCheck();
+  fullSelfCheck(core);
 
   // Read it again with an injected error.
   try {
@@ -45,7 +70,7 @@ static void testAtomicRead()
 
   // Confirm that the original contents are still there.
   xassert(core.numLines() == 1001);
-  core.selfCheck();
+  fullSelfCheck(core);
 
   remove("td-core.tmp");
 }
@@ -82,7 +107,7 @@ static void testVarious()
   EXPECT_EQ(tdc.endCoord(), TextMCoord(0,0));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 0);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
-  tdc.selfCheck();
+  fullSelfCheck(tdc);
 
   insLine(tdc, 0,0, "one");
   EXPECT_EQ(tdc.numLines(), 2);
@@ -107,7 +132,7 @@ static void testVarious()
   EXPECT_EQ(tdc.validCoord(TextMCoord(7,0)), false);
   EXPECT_EQ(tdc.endCoord(), TextMCoord(6,6));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 12);
-  tdc.selfCheck();
+  fullSelfCheck(tdc);
 
   checkSpaces(tdc, 0, 0, 0);
   checkSpaces(tdc, 1, 2, 0);
@@ -116,7 +141,7 @@ static void testVarious()
   checkSpaces(tdc, 4, 5, 5);
   checkSpaces(tdc, 5, 0, 0);
   checkSpaces(tdc, 6, 6, 6);
-  tdc.selfCheck();
+  fullSelfCheck(tdc);
 
   for (int line=0; line <= 6; line++) {
     // Tweak 'line' so it is recent and then repeat the whitespace queries.
@@ -132,7 +157,7 @@ static void testVarious()
     checkSpaces(tdc, 4, 5, 5);
     checkSpaces(tdc, 5, 0, 0);
     checkSpaces(tdc, 6, 6, 6);
-    tdc.selfCheck();
+    fullSelfCheck(tdc);
   }
 
   // This is far from a comprehensive test of observers, but I want to
@@ -143,7 +168,7 @@ static void testVarious()
   xassert(tdc.hasObserver(&obs));
   tdc.removeObserver(&obs);
   xassert(!tdc.hasObserver(&obs));
-  tdc.selfCheck();
+  fullSelfCheck(tdc);
 }
 
 
@@ -184,7 +209,7 @@ static void testReadTwice()
 
       printf("\nbuffer mem usage stats:\n");
       doc.printMemStats();
-      doc.selfCheck();
+      fullSelfCheck(doc);
     }
 
     // make sure they're the same
@@ -210,7 +235,7 @@ static void testReadSourceCode()
   TextDocumentCore doc;
   doc.readFile("td-core.cc");
   doc.printMemStats();
-  doc.selfCheck();
+  fullSelfCheck(doc);
 }
 
 

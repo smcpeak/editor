@@ -42,12 +42,12 @@ class TextDocumentObserver;
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
 class TextDocumentCore : public SerfRefCount {
-public:      // static data
+public:      // class data
   // For testing purposes, this can be set to a non-zero value, and after
   // reading this many bytes, an error will be injected.
   static int s_injectedErrorCountdown;
 
-private:     // data
+private:     // instance data
   // This array is the spine of the document.  Every element is either
   // NULL, meaning a blank line, or is an owner pointer to a
   // '\n'-terminated array of chars that represent the line's contents.
@@ -78,6 +78,10 @@ private:     // data
   // document on which it operates, yet it needs to make itself an
   // observer of that document.
   mutable RCSerfList<TextDocumentObserver> m_observers;
+
+  // Number of outstanding iterators.  This is used to check that we do
+  // not do any document modification with an outstanding iterator.
+  mutable int m_iteratorCount;
 
 private:     // funcs
   // strlen, but NULL yields 0 and '\n' is terminator, in bytes.
@@ -269,6 +273,53 @@ public:    // funcs
 
   // how much memory am I using?
   void printMemStats() const;
+
+  // ---------------------- iterator ----------------------------
+public:      // types
+  // Iterate over the bytes in a line.
+  //
+  // TODO UTF-8: Allow iteration over code points.
+  class LineIterator {
+    NO_OBJECT_COPIES(LineIterator);
+
+  private:     // instance data
+    // Document whose line we are iterating over.  Never NULL.
+    RCSerf<TextDocumentCore const> m_tdc;
+
+    // If true, we are iterating over the "recent" line.
+    bool m_isRecentLine;
+
+    // NULL if the line being iterated is empty.  Otherwise, if
+    // '!m_isRecentLine', this is the pointer to the start of the line
+    // data.  Otherwise NULL (use 'm_tdc.m_recentLine').
+    char const *m_nonRecentLine;
+
+    // Byte offset of the iterator within the current line.
+    int m_byteOffset;
+
+  public:      // funcs
+    // Iterate over the given line number.  While this object exists, it
+    // is not possible to modify the document.
+    LineIterator(TextDocumentCore const &tdc, int line);
+
+    ~LineIterator();
+
+    // True if the iterator has more data, i.e., it has *not* reached
+    // the end of the line.
+    bool has() const;
+
+    // Current byte offset within the iterated line.  It *is* legal to
+    // call this when '!has()', in which case it returns the length of
+    // the line in bytes.
+    int byteOffset() const { return m_byteOffset; }
+
+    // Current byte value in [0,255].  Requires 'has()'.
+    int byteAt() const;
+
+    // Advance to the next byte.  Requires 'has()'.
+    void advByte();
+  };
+  friend LineIterator;
 };
 
 
@@ -319,5 +370,6 @@ public:      // funcs
   // This method is a slight abuse of the observer pattern.
   virtual void observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT;
 };
+
 
 #endif // TD_CORE_H

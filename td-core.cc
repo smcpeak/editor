@@ -25,7 +25,8 @@ TextDocumentCore::TextDocumentCore()
     m_recent(-1),
     m_recentLine(),
     m_longestLengthSoFar(0),
-    m_observers()
+    m_observers(),
+    m_iteratorCount(0)
 {
   // There is always at least one line.
   m_lines.insert(0 /*line*/, NULL /*value*/);
@@ -41,6 +42,8 @@ TextDocumentCore::~TextDocumentCore()
   // This uses ordinary 'assert' rather than 'xassert' to avoid
   // throwing an exception from within a destructor.
   assert(this->m_observers.isEmpty());
+
+  assert(m_iteratorCount == 0);
 
   // deallocate the non-NULL lines
   for (int i=0; i < m_lines.length(); i++) {
@@ -288,6 +291,8 @@ bool TextDocumentCore::walkCoordBytes(TextMCoord &tc, int len) const
 // three mutator functions.
 void TextDocumentCore::insertLine(int const line)
 {
+  xassert(m_iteratorCount == 0);
+
   // insert a blank line
   m_lines.insert(line, NULL /*value*/);
 
@@ -304,6 +309,8 @@ void TextDocumentCore::insertLine(int const line)
 
 void TextDocumentCore::deleteLine(int const line)
 {
+  xassert(m_iteratorCount == 0);
+
   if (line == m_recent) {
     xassert(m_recentLine.length() == 0);
     detachRecent();
@@ -334,6 +341,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
                                   int const length)
 {
   bctc(tc);
+  xassert(m_iteratorCount == 0);
 
   xassert(length >= 0);
   if (length == 0) {
@@ -373,6 +381,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
 void TextDocumentCore::deleteText(TextMCoord const tc, int const length)
 {
   bctc(tc);
+  xassert(m_iteratorCount == 0);
 
   if (tc.m_byteIndex==0 && length==lineLengthBytes(tc.m_line) && tc.m_line!=m_recent) {
     // removing entire line, no need to move 'recent'
@@ -484,6 +493,9 @@ void TextDocumentCore::clear()
 
 void TextDocumentCore::swapWith(TextDocumentCore &other) NOEXCEPT
 {
+  assert(m_iteratorCount == 0);
+  assert(other.m_iteratorCount == 0);
+
   if (this != &other) {
     swap(this->m_lines, other.m_lines);
     swap(this->m_recent, other.m_recent);
@@ -665,7 +677,7 @@ void TextDocumentCore::getWholeLine(int line,
 }
 
 
-inline bool isSpaceOrTab(char c)
+inline bool isSpaceOrTab(int c)
 {
   return c == ' ' || c == '\t';
 }
@@ -673,54 +685,31 @@ inline bool isSpaceOrTab(char c)
 
 int TextDocumentCore::countLeadingSpacesTabs(int line) const
 {
-  bc(line);
-
-  if (line == m_recent) {
-    int i=0;
-    while (i < m_recentLine.length() &&
-           isSpaceOrTab(m_recentLine.get(i))) {
-      i++;
+  int ret = 0;
+  for (LineIterator it(*this, line); it.has(); it.advByte()) {
+    if (isSpaceOrTab(it.byteAt())) {
+      ret++;
     }
-    return i;
+    else {
+      break;
+    }
   }
-  else {
-    char const *begin = m_lines.get(line);
-    if (!begin) {
-      return 0;
-    }
-    char const *p = begin;
-    while (*p != '\n' && isSpaceOrTab(*p)) {
-      p++;
-    }
-    return p - begin;
-  }
+  return ret;
 }
 
 
 int TextDocumentCore::countTrailingSpacesTabs(int line) const
 {
-  bc(line);
-
-  if (line == m_recent) {
-    int i = m_recentLine.length();
-    while (i > 0 &&
-           isSpaceOrTab(m_recentLine.get(i-1))) {
-      i--;
+  int ret = 0;
+  for (LineIterator it(*this, line); it.has(); it.advByte()) {
+    if (isSpaceOrTab(it.byteAt())) {
+      ret++;
     }
-    return m_recentLine.length() - i;
+    else {
+      ret = 0;
+    }
   }
-  else {
-    char const *begin = m_lines.get(line);
-    if (!begin) {
-      return 0;
-    }
-    char const *end = begin + bufStrlen(begin);
-    char const *p = end;
-    while (p > begin && isSpaceOrTab(p[-1])) {
-      p--;
-    }
-    return end - p;
-  }
+  return ret;
 }
 
 
@@ -748,7 +737,72 @@ void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
 }
 
 
-// -------------------- TextDocumentObserver ------------------
+
+// --------------- TextDocumentCore::LineIterator ----------------
+TextDocumentCore::LineIterator::LineIterator(
+  TextDocumentCore const &tdc, int line)
+:
+  m_tdc(&tdc),
+  m_isRecentLine(false),
+  m_nonRecentLine(NULL),
+  m_byteOffset(0)
+{
+  xassert(0 <= line && line < m_tdc->numLines());
+  if (line == m_tdc->m_recent) {
+    m_isRecentLine = true;
+  }
+  else {
+    m_nonRecentLine = m_tdc->m_lines.get(line);     // Might be NULL.
+  }
+  m_tdc->m_iteratorCount++;
+}
+
+
+TextDocumentCore::LineIterator::~LineIterator()
+{
+  m_tdc->m_iteratorCount--;
+}
+
+
+bool TextDocumentCore::LineIterator::has() const
+{
+  if (m_nonRecentLine) {
+    return m_nonRecentLine[m_byteOffset] != '\n';
+  }
+  else if (m_isRecentLine) {
+    return m_byteOffset < m_tdc->m_recentLine.length();
+  }
+  else {
+    return false;
+  }
+}
+
+
+int TextDocumentCore::LineIterator::byteAt() const
+{
+  int ret = 0;
+  if (m_nonRecentLine) {
+    ret = (unsigned char)(m_nonRecentLine[m_byteOffset]);
+  }
+  else if (m_isRecentLine) {
+    ret = (unsigned char)(m_tdc->m_recentLine.get(m_byteOffset));
+  }
+  else {
+    xfailure("byteAt: line is empty");
+  }
+  xassert(ret != '\n');
+  return ret;
+}
+
+
+void TextDocumentCore::LineIterator::advByte()
+{
+  xassert(this->has());
+  m_byteOffset++;
+}
+
+
+// -------------------- TextDocumentObserver ---------------------
 int TextDocumentObserver::s_objectCount = 0;
 
 CHECK_OBJECT_COUNT(TextDocumentObserver);
