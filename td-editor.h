@@ -242,6 +242,10 @@ public:      // funcs
   // be possible to do so and remain in the valid area.
   void walkCursorBytes(int distance);
 
+  // True if converting the cursor's location to a model coordinate and
+  // back is the identity function.
+  bool cursorOnModelCoord() const;
+
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor
   // for defining a selection region.  This asserts that the mark is
@@ -410,7 +414,7 @@ public:      // funcs
   int countLeadingSpacesTabs(int line) const;
 
   // Count them from the end instead.
-  int countTrailingSpacesTabs(int line) const;
+  int countTrailingSpacesTabsColumns(int line) const;
 
   // On a particular line, get # of whitespace chars before first
   // non-ws char, or -1 if there are no non-ws chars.  Lines beyond

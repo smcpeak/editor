@@ -747,12 +747,15 @@ TextDocumentCore::LineIterator::LineIterator(
   m_nonRecentLine(NULL),
   m_byteOffset(0)
 {
-  xassert(0 <= line && line < m_tdc->numLines());
   if (line == m_tdc->m_recent) {
     m_isRecentLine = true;
   }
-  else {
+  else if (0 <= line && line < m_tdc->numLines()) {
     m_nonRecentLine = m_tdc->m_lines.get(line);     // Might be NULL.
+  }
+  else {
+    // Treat an invalid line like an empty line.
+    m_nonRecentLine = NULL;
   }
   m_tdc->m_iteratorCount++;
 }

@@ -790,14 +790,31 @@ int TextDocumentEditor::countLeadingSpacesTabs(int line) const
 }
 
 
-int TextDocumentEditor::countTrailingSpacesTabs(int line) const
+int TextDocumentEditor::countTrailingSpacesTabsColumns(int line) const
 {
   xassert(line >= 0);
   if (line >= m_doc->numLines()) {
     return 0;
   }
   else {
-    return m_doc->countTrailingSpacesTabs(line);
+    int trailBytes = m_doc->countTrailingSpacesTabs(line);
+    if (trailBytes) {
+      // This is somewhat inefficient...
+      TextMCoord mcEnd(m_doc->lineEndCoord(line));
+      TextLCoord lcEnd(this->toLCoord(mcEnd));
+
+      TextMCoord mcBeforeWS(mcEnd);
+      mcBeforeWS.m_byteIndex -= trailBytes;
+      xassert(mcBeforeWS.m_byteIndex >= 0);
+      TextLCoord lcBeforeWS(this->toLCoord(mcBeforeWS));
+
+      int ret = lcEnd.m_column - lcBeforeWS.m_column;
+      xassert(ret > 0);
+      return ret;
+    }
+    else {
+      return 0;
+    }
   }
 }
 
@@ -933,6 +950,13 @@ void TextDocumentEditor::confineCursorToVisible()
 void TextDocumentEditor::walkCursorBytes(int distance)
 {
   this->walkLCoordBytes(m_cursor, distance);
+}
+
+
+bool TextDocumentEditor::cursorOnModelCoord() const
+{
+  TextLCoord lc(this->toLCoord(this->toMCoord(this->cursor())));
+  return lc == this->cursor();
 }
 
 

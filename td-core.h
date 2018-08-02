@@ -300,6 +300,10 @@ public:      // types
   public:      // funcs
     // Iterate over the given line number.  While this object exists, it
     // is not possible to modify the document.
+    //
+    // Unlike most TDC methods, here, 'line' can be out of bounds, with
+    // the result being the same as an empty line.  This choice is made
+    // since it is sometimes awkward to avoid creating an iterator.
     LineIterator(TextDocumentCore const &tdc, int line);
 
     ~LineIterator();

@@ -831,7 +831,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     int const startOfTrailingWhitespace =
       (line == m_editor->cursor().m_line)?
         lineLengthColumns :
-        lineLengthColumns - m_editor->countTrailingSpacesTabs(line);
+        lineLengthColumns - m_editor->countTrailingSpacesTabsColumns(line);
 
     // Number of columns with glyphs on this line, including possible
     // synthesized newline for 'visibleWhitespace'.  This value is
@@ -933,20 +933,28 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     LineCategoryIter category(categories);
     category.advanceChars(firstCol);
 
+    // Iterator over line contents.  This is partially redundant with
+    // what is in 'text', but needed to handle glyphs that span columns.
+    // Perhaps I should remove 'text' at some point.
+    TextDocumentEditor::LineIterator lineIter(*m_editor, line);
+    while (lineIter.has() && lineIter.columnOffset() < firstCol) {
+      lineIter.advByte();
+    }
+
     // ---- render text+style segments -----
     // right edge of what has not been painted, relative to
     // the pixels in the pixmap
     int x = m_leftMargin;
 
-    // number of characters printed
-    int printed = 0;
+    // Number of columns printed.
+    int printedCols = 0;
 
     // 'y' coordinate of the origin point of characters
     int baseline = m_fontAscent-1;
 
     // loop over segments with different styles
     while (x < lineWidth) {
-      xassert(printed < visibleCols);
+      xassert(printedCols < visibleCols);
 
       // set style
       if (category.category != currentCategory) {
@@ -958,7 +966,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       int len = category.length;
       if (category.length == 0) {
         // actually means infinite length
-        if (printed >= visibleLineChars) {
+        if (printedCols >= visibleLineChars) {
           // we've printed all the interesting characters on this line
           // because we're past the end of the line's chars, and we're
           // one the last style run; for efficiency of communication
@@ -970,9 +978,9 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
         // print only the remaining chars on the line, to improve
         // the chances we'll use the eraseRect() optimization above
-        len = visibleLineChars-printed;
+        len = visibleLineChars-printedCols;
       }
-      len = min(len, visibleCols-printed);
+      len = min(len, visibleCols-printedCols);
       xassert(len > 0);
 
       // The QtBDFFont package must be treated as if it draws
@@ -981,13 +989,28 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
 
       // draw text
-      int const charsToDraw = min(len, (lineGlyphColumns-firstCol)-printed);
+      int const charsToDraw = min(len, (lineGlyphColumns-firstCol)-printedCols);
       for (int i=0; i < charsToDraw; i++) {
+        if (lineIter.has()) {
+          if (lineIter.columnOffset() > firstCol+printedCols+i) {
+            // This column is part of a multicolumn glyph.  Do not
+            // draw any glyph here.
+            continue;
+          }
+          xassert(lineIter.columnOffset() == firstCol+printedCols+i);
+          lineIter.advByte();
+        }
+        else if (text[printedCols+i] != '\n') {
+          // The only thing we should need to print beyond what is in
+          // the line iterator is a newline, so skip drawing here.
+          continue;
+        }
+
         bool withinTrailingWhitespace =
-          firstCol + printed + i >= startOfTrailingWhitespace;
+          firstCol + printedCols + i >= startOfTrailingWhitespace;
         this->drawOneChar(paint, curFont,
                           QPoint(x + m_fontWidth*i, baseline),
-                          text[printed+i],
+                          text[printedCols+i],
                           withinTrailingWhitespace);
       }
 
@@ -1002,7 +1025,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
       // Advance to next category segment.
       x += m_fontWidth * len;
-      printed += len;
+      printedCols += len;
       category.advanceChars(len);
     }
 
@@ -1065,9 +1088,16 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         if (cursorCol < lineGlyphColumns) {
           // Drawing the block cursor overwrote the glyph, so we
           // have to draw it again.
-          this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                            text[visibleCursorCol],
-                            false /*withinTrailingWhitespace*/);
+          if (text[visibleCursorCol] == ' ' &&
+              !m_editor->cursorOnModelCoord()) {
+            // This is a layout placeholder space, not really present in
+            // the document, so don't draw it.
+          }
+          else {
+            this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
+                              text[visibleCursorCol],
+                              false /*withinTrailingWhitespace*/);
+          }
         }
 
         if (underlineCursor) {
@@ -1120,13 +1150,15 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
     QColor fg = font->getFgColor();
     fg.setAlpha(m_whitespaceOpacity);
 
-    if (codePoint == ' ') {
-      // Optionally highlight trailing whitespace.
-      if (withinTrailingWhitespace &&
-          m_editor->m_namedDoc->m_highlightTrailingWhitespace) {
-        paint.fillRect(bounds, m_trailingWhitespaceBgColor);
-      }
+    // Optionally highlight trailing whitespace (but not line
+    // terminator characters).
+    if (withinTrailingWhitespace &&
+        (codePoint == ' ' || codePoint=='\t') &&
+        m_editor->m_namedDoc->m_highlightTrailingWhitespace) {
+      paint.fillRect(bounds, m_trailingWhitespaceBgColor);
+    }
 
+    if (codePoint == ' ') {
       // Centered dot.
       paint.fillRect(QRect(bounds.center(), QSize(2,2)), fg);
       return;

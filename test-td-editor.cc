@@ -1625,7 +1625,7 @@ static void expectCountSpace(TextDocumentEditor &tde,
   int leading = tde.countLeadingSpacesTabs(line);
   EXPECT_EQ(leading, expectLeading);
 
-  int trailing = tde.countTrailingSpacesTabs(line);
+  int trailing = tde.countTrailingSpacesTabsColumns(line);
   EXPECT_EQ(trailing, expectTrailing);
 }
 
@@ -1649,6 +1649,24 @@ static void testCountSpaceChars()
   expectCountSpace(tde, 5, 6, 6);
   expectCountSpace(tde, 6, 0, 0);
   expectCountSpace(tde, 7, 0, 0);
+}
+
+static void testCountSpaceCharsWithTabs()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\t\n"
+    "three\t\t\n"
+    "four \t\n"
+    "five\t \n"
+    "");
+
+  expectCountSpace(tde, 0, 0, 0);
+  expectCountSpace(tde, 1, 0, 5);
+  expectCountSpace(tde, 2, 0, 11);
+  expectCountSpace(tde, 3, 0, 4);
+  expectCountSpace(tde, 4, 0, 5);
 }
 
 
@@ -2032,6 +2050,7 @@ static void entry(int argc, char **argv)
   testReplaceText(false);
   testReplaceText(true);
   testCountSpaceChars();
+  testCountSpaceCharsWithTabs();
   testGetSelectedOrIdentifier();
   testReadOnly();
   testLineLayout();

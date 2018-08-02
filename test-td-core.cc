@@ -35,6 +35,16 @@ static void fullSelfCheck(TextDocumentCore const &tdc)
     xassert(iter.byteOffset() == offset);
     xassert(offset == tdc.lineLengthBytes(i));
   }
+
+  // Confirm we can make an iterator for out of bounds lines.
+  {
+    TextDocumentCore::LineIterator it(tdc, -1);
+    xassert(!it.has());
+  }
+  {
+    TextDocumentCore::LineIterator it(tdc, tdc.numLines());
+    xassert(!it.has());
+  }
 }
 
 

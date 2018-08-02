@@ -2,4 +2,11 @@ abc
 	wow!		nice!def	
 		more text
 
-ghi
+ghi jkl mno
+tab	 then space
+tab as last	
+spaces           here
+spaces as last   
+trail tab nospc	
+trail 2 tabs		
+	
