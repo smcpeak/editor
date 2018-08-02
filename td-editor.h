@@ -79,6 +79,9 @@ private:     // data
   TextLCoord m_firstVisible;
   TextLCoord m_lastVisible;
 
+  // Width of a tab column.  Must be positive.  Initially 8.
+  int m_tabWidth;
+
 private:     // funcs
   // Helper for 'toMCoord'.
   TextMCoord innerToMCoord(TextLCoord lc) const;
@@ -113,6 +116,10 @@ public:      // funcs
   // Get/set read-only flag.
   bool isReadOnly() const              { return m_doc->isReadOnly(); }
   void setReadOnly(bool readOnly)      { m_doc->setReadOnly(readOnly); }
+
+  // Get/set tab width.  Always positive.
+  int tabWidth() const                 { return m_tabWidth; }
+  void setTabWidth(int tabWidth);
 
   // ------------------- query model dimensions --------------------
   // Number of lines in the document.  Always positive.
@@ -178,7 +185,11 @@ public:      // funcs
   // the layout coordinates of the file.  If distance is negative, we
   // silently stop at the document start even if the magnitude would
   // take us into negative line numbers.
-  void walkCoordColumns(TextLCoord &tc, int distance) const;
+  void walkLCoordColumns(TextLCoord &tc, int distance) const;
+
+  // Walk forward or backward the given number of bytes.
+  void walkLCoordBytes(TextLCoord &tc, int distance) const;
+  void walkMCoordBytes(TextMCoord &tc, int distance) const;
 
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
@@ -227,9 +238,9 @@ public:      // funcs
   // inside the visible region.
   void confineCursorToVisible();
 
-  // Walk the cursor forward or backward by 'distance'.  It must be
-  // possible to do so and remain in the valid area.
-  void walkCursor(int distance);
+  // Walk the cursor forward or backward by 'distance' bytes.  It must
+  // be possible to do so and remain in the valid area.
+  void walkCursorBytes(int distance);
 
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor
@@ -325,6 +336,10 @@ public:      // funcs
   // by the minimum amount so it is onscreen.
   void moveFirstVisibleConfineCursor(int deltaLine, int deltaCol)
     { moveFirstVisibleBy(deltaLine, deltaCol); confineCursorToVisible(); }
+
+  // Set the lower-right corner, preserving 'firstVisible'.  This will
+  // silently force it to be greater than or equal to 'firstVisible'.
+  void setLastVisible(TextLCoord lv);
 
   // Adjust the visible region size, preserving 'firstVisible'.  This
   // will silently ensure both sizes are positive.
@@ -439,19 +454,24 @@ public:      // funcs
   // Delete at cursor.  'left' or 'right' refers to which side of
   // the cursor has the text to be deleted.  This can delete newline
   // characters.
-  void deleteLR(bool left, int columnCount);
+  void deleteLRColumns(bool left, int columnCount);
+  void deleteLRBytes(bool left, int byteCount);
+  void deleteLRAbsCharacters(bool left, int characterCount);
 
-  void deleteText(int len)             { deleteLR(false /*left*/, len); }
+  void deleteTextBytes(int len)  { deleteLRBytes(false /*left*/, len); }
 
-  void deleteChar()                    { deleteText(1); }
+  void deleteChar()              { deleteLRAbsCharacters(false /*left*/, 1); }
 
   // Delete the characters between the range start and end.  Both are
   // truncated to ensure validity (this implies it does *not* fill to
   // the start initially).  Requires 'range.isRectified()'.  Final
   // cursor is left at range start.  Clears the mark.
-  void deleteTextRange(TextLCoordRange const &range);
-  void deleteTextRange(TextLCoord const &start, TextLCoord const &end)
-    { deleteTextRange(TextLCoordRange(start, end)); }
+  void deleteTextLRange(TextLCoordRange const &range);
+  void deleteTextLRange(TextLCoord const &start, TextLCoord const &end)
+    { deleteTextLRange(TextLCoordRange(start, end)); }
+
+  // Same, but for a range of model coordinates.
+  void deleteTextMRange(TextMCoordRange const &range);
 
   // If the selection start is not beyond EOF, fill with whitespace to
   // the start, then delete the selected text.  Requires markActive().
@@ -590,6 +610,39 @@ public:      // funcs
 
   // Print the document contents and things like cursor and mark.
   void debugPrint() const;
+
+  // ---------------------- iterator ----------------------------
+public:      // types
+  // Iterate over the bytes in a line, with layout information.
+  //
+  // TODO UTF-8: Allow iteration over code points.
+  class LineIterator {
+    NO_OBJECT_COPIES(LineIterator);
+
+  private:     // instance data
+    // Underlying iterator.
+    TextDocument::LineIterator m_iter;
+
+    // Column number where the current byte's glyph starts.  If
+    // '!has()', this is one more than the column number where the
+    // previous glyph ends.
+    int m_column;
+
+    // Tab width for this iterator.
+    int m_tabWidth;
+
+  public:      // funcs
+    // Same interface as TextDocument::LineIterator.
+    LineIterator(TextDocumentEditor const &tde, int line);
+    ~LineIterator()                    {}
+    bool has() const                   { return m_iter.has(); }
+    int byteOffset() const             { return m_iter.byteOffset(); }
+    int byteAt() const                 { return m_iter.byteAt(); }
+    void advByte();
+
+    // See 'm_column'.
+    int columnOffset() const           { return m_column; }
+  };
 };
 
 

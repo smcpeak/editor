@@ -171,7 +171,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
     desiredWidth - prefix.length());
 
   // Replace the content.
-  tde.deleteTextRange(TextLCoord(upperEdge, 0), TextLCoord(lowerEdge+1, 0));
+  tde.deleteTextLRange(TextLCoord(upperEdge, 0), TextLCoord(lowerEdge+1, 0));
   for (int i=0; i < justifiedContent.length(); i++) {
     stringBuilder sb;
     sb << prefix << justifiedContent[i] << '\n';

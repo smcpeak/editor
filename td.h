@@ -250,6 +250,29 @@ public:      // funcs
   void historyStats(HistoryStats &stats) const
     { m_history.stats(stats); }
   void printHistoryStats() const;
+
+  // ---------------------- iterator ----------------------------
+public:      // types
+  // Iterate over the bytes in a line.
+  //
+  // TODO UTF-8: Allow iteration over code points.
+  class LineIterator {
+    NO_OBJECT_COPIES(LineIterator);
+
+  private:     // instance data
+    // Underlying iterator.
+    TextDocumentCore::LineIterator m_iter;
+
+  public:      // funcs
+    // Same interface as TextDocumentCore::LineIterator.
+    LineIterator(TextDocument const &td, int line)
+      : m_iter(td.getCore(), line)     {}
+    ~LineIterator()                    {}
+    bool has() const                   { return m_iter.has(); }
+    int byteOffset() const             { return m_iter.byteOffset(); }
+    int byteAt() const                 { return m_iter.byteAt(); }
+    void advByte()                     { return m_iter.advByte(); }
+  };
 };
 
 

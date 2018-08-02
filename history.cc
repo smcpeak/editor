@@ -123,7 +123,7 @@ STATICDEF void HE_text::insert(
           xassert(excess.length() == excessLength);
 
           // remove it from the buffer
-          buf.deleteText(tc, excessLength);
+          buf.deleteTextBytes(tc, excessLength);
         }
 
         tc.m_line++;
@@ -179,7 +179,7 @@ STATICDEF void HE_text::insert(
       int len = nl-p;
 
       // delete the segment
-      buf.deleteText(tc, len);
+      buf.deleteTextBytes(tc, len);
 
       // bypass newline
       if (nl < end) {
@@ -216,7 +216,7 @@ STATICDEF void HE_text::insert(
       buf.getPartialLine(tc, splice, spliceLen);
 
       // blow it away
-      buf.deleteText(tc, spliceLen);
+      buf.deleteTextBytes(tc, spliceLen);
       buf.deleteLine(tc.m_line);
 
       // move up to end of previous line

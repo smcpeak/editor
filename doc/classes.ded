@@ -74,7 +74,7 @@
       }
     },
     {
-      "attributes": "m_doc: TextDocument\nm_cursor: TextCoord\nm_mark: TextCoord?\nm_firstVisible: TextCoord\nm_lastVisible: TextCoord\n",
+      "attributes": "m_doc: TextDocument\nm_cursor: TextCoord\nm_mark: TextCoord?\nm_firstVisible: TextLCoord\nm_lastVisible: TextLCoord\nm_tabWidth: int\n",
       "loc": {
         "x": 380,
         "y": 140
@@ -109,15 +109,15 @@
       }
     },
     {
-      "attributes": "line: int\ncolumn: int\n",
+      "attributes": "m_line: int\nm_column: int\n",
       "loc": {
-        "x": 545,
-        "y": 170
+        "x": 540,
+        "y": 215
       },
-      "name": "TextCoord",
+      "name": "TextLCoord",
       "size": {
         "h": 60,
-        "w": 75
+        "w": 95
       }
     },
     {

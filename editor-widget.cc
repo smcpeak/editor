@@ -1579,10 +1579,12 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
           // leave this here just in case.
           this->editRigidUnindent();
         }
-        else {
-          // TODO: This should insert a Tab character if nothing is
-          // selected.
+        else if (this->selectEnabled()) {
           this->editRigidIndent();
+        }
+        else {
+          m_editor->insertText("\t", 1);
+          this->redraw();
         }
         break;
       }

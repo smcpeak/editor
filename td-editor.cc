@@ -33,7 +33,9 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
     // where I want a small size in order to incidentally exercise the
     // scrolling code.  Tests that actually check scrolling should set
     // their own size though.
-    m_lastVisible(4, 9)
+    m_lastVisible(4, 9),
+
+    m_tabWidth(8)
 {
   xassert(doc);
   selfCheck();
@@ -70,6 +72,13 @@ void TextDocumentEditor::selfCheck() const
 }
 
 
+void TextDocumentEditor::setTabWidth(int tabWidth)
+{
+  xassert(tabWidth > 0);
+  m_tabWidth = tabWidth;
+}
+
+
 TextMCoord TextDocumentEditor::innerToMCoord(TextLCoord lc) const
 {
   if (lc.m_line < 0) {
@@ -84,14 +93,12 @@ TextMCoord TextDocumentEditor::innerToMCoord(TextLCoord lc) const
     return TextMCoord(lc.m_line, 0);
   }
 
-  // TODO: Layout.
-  int lengthBytes = this->lineLengthBytes(lc.m_line);
-  if (lc.m_column > lengthBytes) {
-    return TextMCoord(lc.m_line, lengthBytes);
+  LineIterator it(*this, lc.m_line);
+  for (; it.has() && it.columnOffset() < lc.m_column; it.advByte()) {
+    // Nothing.
   }
-  else {
-    return TextMCoord(lc.m_line, lc.m_column);
-  }
+
+  return TextMCoord(lc.m_line, it.byteOffset());
 }
 
 TextMCoord TextDocumentEditor::toMCoord(TextLCoord lc) const
@@ -104,8 +111,15 @@ TextMCoord TextDocumentEditor::toMCoord(TextLCoord lc) const
 
 TextLCoord TextDocumentEditor::toLCoord(TextMCoord mc) const
 {
-  // TODO: Layout.
-  return TextLCoord(mc.m_line, mc.m_byteIndex);
+  LineIterator it(*this, mc.m_line);
+  for (; it.has() && it.byteOffset() < mc.m_byteIndex; it.advByte()) {
+    // Nothing.
+  }
+
+  // The input byte index must have been valid.
+  xassert(it.byteOffset() == mc.m_byteIndex);
+
+  return TextLCoord(mc.m_line, it.columnOffset());
 }
 
 
@@ -322,15 +336,21 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
 }
 
 
-void TextDocumentEditor::setVisibleSize(int lines, int columns)
+void TextDocumentEditor::setLastVisible(TextLCoord lv)
 {
   // If the user resizes the window down to nothing, we might calculate
-  // a visible region with zero width.  Just force it to be
-  // non-negative.
-  lines = max(lines, 1);
-  columns = max(columns, 1);
-  m_lastVisible.m_line = m_firstVisible.m_line + lines - 1;
-  m_lastVisible.m_column = m_firstVisible.m_column + columns - 1;
+  // a visible region with zero width.  Require it to be positive.
+  m_lastVisible.m_line = max(lv.m_line, m_firstVisible.m_line);
+  m_lastVisible.m_column = max(lv.m_column, m_firstVisible.m_column);
+}
+
+
+void TextDocumentEditor::setVisibleSize(int lines, int columns)
+{
+  this->setLastVisible(TextLCoord(
+    m_firstVisible.m_line + lines - 1,
+    m_firstVisible.m_column + columns - 1
+  ));
 }
 
 
@@ -426,7 +446,7 @@ void TextDocumentEditor::insertText(char const *text, int textLen)
   m_doc->insertAt(this->toMCoord(this->cursor()), text, textLen);
 
   // Put the cursor at the end of the inserted text.
-  this->walkCursor(textLen);
+  this->walkCursorBytes(textLen);
 
   this->scrollToCursor();
 }
@@ -442,17 +462,38 @@ void TextDocumentEditor::insertString(string text)
 }
 
 
-void TextDocumentEditor::deleteLR(bool left, int columnCount)
+void TextDocumentEditor::deleteLRColumns(bool left, int columnCount)
 {
   TextLCoord start(this->cursor());
 
   TextLCoord end(start);
-  this->walkCoordColumns(end, left? -columnCount : +columnCount);
+  this->walkLCoordColumns(end, left? -columnCount : +columnCount);
 
   TextLCoordRange range(start, end);
   range.rectify();
 
-  this->deleteTextRange(range);
+  this->deleteTextLRange(range);
+}
+
+
+void TextDocumentEditor::deleteLRBytes(bool left, int byteCount)
+{
+  TextMCoord start(this->toMCoord(this->cursor()));
+
+  TextMCoord end(start);
+  this->walkMCoordBytes(end, left? -byteCount : +byteCount);
+
+  TextMCoordRange range(start, end);
+  range.rectify();
+
+  this->deleteTextMRange(range);
+}
+
+
+void TextDocumentEditor::deleteLRAbsCharacters(bool left, int characterCount)
+{
+  // TODO UTF-8: Do this right.
+  this->deleteLRBytes(left, characterCount);
 }
 
 
@@ -465,7 +506,7 @@ void TextDocumentEditor::deleteSelection()
     this->fillToCoord(range.m_start);
   }
 
-  this->deleteTextRange(range);
+  this->deleteTextLRange(range);
   this->clearMark();
   this->scrollToCursor();
 }
@@ -498,7 +539,7 @@ void TextDocumentEditor::backspaceFunction()
   }
   else {
     // Remove the character to the left of the cursor.
-    this->deleteLR(true /*left*/, 1);
+    this->deleteLRAbsCharacters(true /*left*/, 1);
   }
 
   this->scrollToCursor();
@@ -541,7 +582,7 @@ void TextDocumentEditor::redo()
 }
 
 
-void TextDocumentEditor::walkCoordColumns(TextLCoord &tc, int len) const
+void TextDocumentEditor::walkLCoordColumns(TextLCoord &tc, int len) const
 {
   xassert(tc.nonNegative());
 
@@ -572,45 +613,77 @@ void TextDocumentEditor::walkCoordColumns(TextLCoord &tc, int len) const
 }
 
 
-void TextDocumentEditor::getLineLayout(TextLCoord tc,
+void TextDocumentEditor::walkLCoordBytes(TextLCoord &lc, int len) const
+{
+  TextMCoord mc(this->toMCoord(lc));
+  this->walkMCoordBytes(mc, len);
+  lc = this->toLCoord(mc);
+}
+
+
+void TextDocumentEditor::walkMCoordBytes(TextMCoord &mc, int len) const
+{
+  for (; len > 0; len--) {
+    if (mc.m_byteIndex >= this->lineLengthBytes(mc.m_line)) {
+      // cycle to next line
+      mc.m_line++;
+      mc.m_byteIndex = 0;
+    }
+    else {
+      mc.m_byteIndex++;
+    }
+  }
+
+  for (; len < 0; len++) {
+    if (mc.m_byteIndex == 0) {
+      // cycle up to end of preceding line
+      if (mc.m_line == 0) {
+        return;      // Stop at BOF.
+      }
+      mc.m_line--;
+      mc.m_byteIndex = this->lineLengthBytes(mc.m_line);
+    }
+    else {
+      mc.m_byteIndex--;
+    }
+  }
+}
+
+
+void TextDocumentEditor::getLineLayout(TextLCoord lc,
   ArrayStack<char> &dest, int destLen) const
 {
-  xassert(tc.nonNegative());
+  xassert(lc.nonNegative());
 
-  // How many columns of the source are in the defined region?
-  int undef = destLen;
-  int def = 0;
-
-  if (tc.m_line < numLines() &&
-      tc.m_column < lineLengthColumns(tc.m_line)) {
-    //       <----- lineLength -------->
-    // line: [-------------------------][..spaces...]
-    //       <------ col -----><----- destLen ------>
-    //                         <- def -><-- undef -->
-    // dest:                   [--------------------]
-
-    undef = max(0, (tc.m_column+destLen) - lineLengthColumns(tc.m_line));
-    def = max(0, destLen - undef);
+  LineIterator it(*this, lc.m_line);
+  for (; it.has() && it.columnOffset() < lc.m_column; it.advByte()) {
+    // Nothing.
   }
 
-  // initial part in defined region
-  if (def) {
-    TextLCoord tcEnd(tc.m_line, tc.m_column + def);
+  int writtenLen = 0;
+  for (; it.has() && writtenLen < destLen; it.advByte()) {
+    // Fill with spaces to get to the current column.
+    while (lc.m_column + writtenLen < it.columnOffset()) {
+      dest.push(' ');
+      writtenLen++;
+      if (writtenLen >= destLen) {
+        xassert(writtenLen == destLen);
+        break;     // Will break out of both loops.
+      }
+    }
+    if (writtenLen >= destLen) {
+      break;
+    }
 
-    // Express the desired range in model coordinates.
-    TextMCoord mcBegin(this->toMCoord(tc));
-    TextMCoord mcEnd(this->toMCoord(tcEnd));
-    xassert(mcBegin.m_line == mcEnd.m_line);
-    int byteCount = mcEnd.m_byteIndex - mcBegin.m_byteIndex;
-
-    // TODO: Layout: Properly translate between bytes and grid cells.
-    // For now I'm continuing to equate them.
-    xassert(byteCount == def);
-    m_doc->getPartialLine(mcBegin, dest, byteCount);
+    // Add the current byte.
+    dest.push(it.byteAt());
+    writtenLen++;
   }
 
-  // spaces past defined region
-  memset(dest.ptrToPushedMultipleAlt(undef), ' ', undef);
+  // Fill the remainder with spaces.
+  xassert(writtenLen <= destLen);
+  int remainderLen = destLen - writtenLen;
+  memset(dest.ptrToPushedMultipleAlt(remainderLen), ' ', remainderLen);
 }
 
 
@@ -854,11 +927,9 @@ void TextDocumentEditor::confineCursorToVisible()
 }
 
 
-void TextDocumentEditor::walkCursor(int distance)
+void TextDocumentEditor::walkCursorBytes(int distance)
 {
-  TextLCoord tc = m_cursor;
-  this->walkCoordColumns(tc, distance);
-  m_cursor = tc;
+  this->walkLCoordBytes(m_cursor, distance);
 }
 
 
@@ -979,7 +1050,7 @@ void TextDocumentEditor::insertNewlineAutoIndent()
 }
 
 
-void TextDocumentEditor::deleteTextRange(TextLCoordRange const &range)
+void TextDocumentEditor::deleteTextLRange(TextLCoordRange const &range)
 {
   xassert(range.isRectified());
   xassert(range.nonNegative());
@@ -988,6 +1059,18 @@ void TextDocumentEditor::deleteTextRange(TextLCoordRange const &range)
 
   // Set cursor per spec.
   this->setCursor(range.m_start);
+  this->clearMark();
+}
+
+
+void TextDocumentEditor::deleteTextMRange(TextMCoordRange const &range)
+{
+  xassert(range.isRectified());
+
+  m_doc->deleteTextRange(range);
+
+  // Set cursor per spec.
+  this->setCursor(this->toLCoord(range.m_start));
   this->clearMark();
 }
 
@@ -1096,6 +1179,35 @@ void TextDocumentEditor::debugPrint() const
   cout << "  mark: " << m_mark << endl;
   cout << "  firstVisible: " << m_firstVisible << endl;
   cout << "  lastVisible: " << m_lastVisible << endl;
+  cout << "  tabWidth: " << m_tabWidth << endl;
+}
+
+
+// --------------- TextDocumentEditor::LineIterator ---------------
+TextDocumentEditor::LineIterator::LineIterator(
+  TextDocumentEditor const &tde, int line)
+:
+  m_iter(*(tde.getDocument()), line),
+  m_column(0),
+  m_tabWidth(tde.tabWidth())
+{}
+
+
+static int roundUp(int n, int unit)
+{
+  return ((n + unit - 1) / unit) * unit;
+}
+
+
+void TextDocumentEditor::LineIterator::advByte()
+{
+  m_column++;
+  if (m_iter.byteAt() == '\t') {
+    // Round 0-based column up to the next multiple of 'm_tabWidth'.
+    m_column = roundUp(m_column, m_tabWidth);
+  }
+
+  m_iter.advByte();
 }
 
 

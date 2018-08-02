@@ -378,7 +378,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
 }
 
 
-void TextDocumentCore::deleteText(TextMCoord const tc, int const length)
+void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
 {
   bctc(tc);
   xassert(m_iteratorCount == 0);
@@ -482,12 +482,12 @@ void TextDocumentCore::seenLineLength(int len)
 void TextDocumentCore::clear()
 {
   while (this->numLines() > 1) {
-    this->deleteText(TextMCoord(0, 0), this->lineLengthBytes(0));
+    this->deleteTextBytes(TextMCoord(0, 0), this->lineLengthBytes(0));
     this->deleteLine(0);
   }
 
   // delete contents of last remaining line
-  this->deleteText(TextMCoord(0, 0), this->lineLengthBytes(0));
+  this->deleteTextBytes(TextMCoord(0, 0), this->lineLengthBytes(0));
 }
 
 

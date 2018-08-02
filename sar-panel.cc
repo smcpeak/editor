@@ -503,7 +503,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
             if (!ed->markActive()) {
               ed->setMark(tc);
             }
-            ed->walkCursor(word.length());
+            ed->walkCursorBytes(word.length());
 
             // Hack: I want these swapped.  TODO: I should turn things
             // around so SAR creates selections with cursor >= mark,

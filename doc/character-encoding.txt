@@ -1,0 +1,46 @@
+doc/character-encoding.txt
+--------------------------
+
+
+My eventual goal is to do everything internally with UTF-8.  But I am
+not there yet.
+
+In the meantime, I am attempting to use a set of terminology in the API
+names that will extend to UTF-8 and generalized layout.  Specifically:
+
+* "byte" is an 8-bit octet, the atom of files and network packets.
+  It is also the minimum addressable unit of memory, which is the origin
+  of the term, but for a text editor the important part is how it
+  relates to data shared with other processes.  Although my APIs use
+  plain 'char', whose signedness is implementation-defined in C++, the
+  intended interpretation is as an integer in [0,255].  Consequently, I
+  (intend to) always convert to 'unsigned char' before widening.
+
+* "column" is one unit in a (normally invisible) regularly spaced layout
+  grid.  Currently I am using columns that are, in most cases, as wide
+  as a typical Latin glyph.  But eventually I may want columns that are
+  pixels, and anyway I have a glyph (Tab) that spans columns.  There are
+  also Unicode characters that have zero width, and hence span zero
+  columns (but that is not implemented).
+
+* "abstract character" is meant as it is defined in the Unicode
+  standard:
+
+    http://www.unicode.org/versions/latest/ch03.pdf#G2212
+
+  The text of that definition is not as clear as it could be.  The key
+  point is that it can be a *sequence* of code points in cases where
+  combining characters are used.  Quoting D11:
+
+    "A single abstract character may also be represented by a sequence
+    of code points--for example, latin capital letter g with acute may
+    be represented by the sequence <U+0047 latin capital letter g,
+    U+0301 combining acute accent>, rather than being mapped to a single
+    code point."
+
+  Thus, in my APIs that refer to "AbsCharacter", I mean "abstract
+  character" in this sense, and hence potentially multiple code points.
+
+
+
+EOF

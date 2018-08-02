@@ -227,7 +227,7 @@ public:    // funcs
     { insertText(tc, str.c_str(), str.length()); }
 
   // Delete 'length' bytes at and the right of 'tc'.
-  void deleteText(TextMCoord tc, int lengthBytes);
+  void deleteTextBytes(TextMCoord tc, int lengthBytes);
 
   // ---------------------- whole file -------------------------
   // clear buffer contents, returning to just one empty line

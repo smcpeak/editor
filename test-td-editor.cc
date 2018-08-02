@@ -115,7 +115,7 @@ static void testUndoRedo()
                     "This is the second line.\n"
                     "now on thir");
 
-  tde.deleteLR(true /*left*/, 6);
+  tde.deleteLRColumns(true /*left*/, 6);
   expect(tde, 2,5,  "abce\n"
                     "This is the second line.\n"
                     "now o");
@@ -235,7 +235,7 @@ static void testTextManipulation()
   testGetRange(tde, 12,5, 12,10, "");
   testGetRange(tde, 12,5, 14,5, "");
 
-  tde.deleteTextRange(TextLCoord(1,1), TextLCoord(1,2));
+  tde.deleteTextLRange(TextLCoord(1,1), TextLCoord(1,2));
     // result: farf\n
     //         gk\n
     //         oo\n
@@ -243,39 +243,39 @@ static void testTextManipulation()
   testGetRange(tde, 0,0, 4,0, "farf\ngk\noo\nbar\n");
   xassert(tde.numLines() == 5);
 
-  tde.deleteTextRange(TextLCoord(0,3), TextLCoord(1,1));
+  tde.deleteTextLRange(TextLCoord(0,3), TextLCoord(1,1));
     // result: fark\n
     //         oo\n
     //         bar\n
   testGetRange(tde, 0,0, 3,0, "fark\noo\nbar\n");
   xassert(tde.numLines() == 4);
 
-  tde.deleteTextRange(TextLCoord(1,3), TextLCoord(1,5));   // nop
+  tde.deleteTextLRange(TextLCoord(1,3), TextLCoord(1,5));   // nop
     // result: fark\n
     //         oo\n
     //         bar\n
   testGetRange(tde, 0,0, 3,0, "fark\noo\nbar\n");
   xassert(tde.numLines() == 4);
 
-  tde.deleteTextRange(TextLCoord(2,2), TextLCoord(6,4));
+  tde.deleteTextLRange(TextLCoord(2,2), TextLCoord(6,4));
     // result: fark\n
     //         oo\n
     //         ba
   testGetRange(tde, 0,0, 2,2, "fark\noo\nba");
   xassert(tde.numLines() == 3);
 
-  tde.deleteTextRange(TextLCoord(1,2), TextLCoord(2,2));
+  tde.deleteTextLRange(TextLCoord(1,2), TextLCoord(2,2));
     // result: fark\n
     //         oo
   testGetRange(tde, 0,0, 1,2, "fark\noo");
   xassert(tde.numLines() == 2);
 
-  tde.deleteTextRange(TextLCoord(1,0), TextLCoord(1,2));
+  tde.deleteTextLRange(TextLCoord(1,0), TextLCoord(1,2));
     // result: fark\n
   testGetRange(tde, 0,0, 1,0, "fark\n");
   xassert(tde.numLines() == 2);
 
-  tde.deleteTextRange(TextLCoord(0,0), TextLCoord(1,0));
+  tde.deleteTextLRange(TextLCoord(0,0), TextLCoord(1,0));
     // result: <empty>
   testGetRange(tde, 0,0, 0,0, "");
   xassert(tde.numLines() == 1);
@@ -1204,7 +1204,7 @@ static void testInsertNewlineAutoIndent2()
 
   // Do the above again but with cursor and mark swapped;
   // result should be the same.
-  tde.deleteTextRange(TextLCoord(0,0), tde.endLCoord());
+  tde.deleteTextLRange(TextLCoord(0,0), tde.endLCoord());
   tde.setCursor(TextLCoord(0,0));
   tde.insertNulTermText(
     "  one\n"
@@ -1709,6 +1709,287 @@ static void testReadOnly()
 }
 
 
+static void innerExpectLayoutWindow(TextDocumentEditor &tde,
+  int fvLine, int fvCol,
+  int lvLine, int lvCol,
+  string const &preExpect)
+{
+  // The 'preExpect' string uses '^' instead of '\t' so the visual
+  // alignment is not disrupted.
+  string expect(replace(preExpect, "^", "\t"));
+
+  ArrayStack<char> text;
+  int width = lvCol - fvCol + 1;
+  stringBuilder sb;
+  for (int line = fvLine; line <= lvLine; line++) {
+    text.clear();
+    tde.getLineLayout(TextLCoord(line, fvCol), text, width);
+    sb << string(text.getArray(), width);
+  }
+  string actual = sb.str();
+
+  EXPECT_EQ(actual, expect);
+}
+
+static void expectLayoutWindow(TextDocumentEditor &tde,
+  int fvLine, int fvCol,
+  int lvLine, int lvCol,
+  string const &preExpect)
+{
+  innerExpectLayoutWindow(tde, fvLine, fvCol, lvLine, lvCol, preExpect);
+
+  // Probe all of the layout coordinates in the window.
+  for (int line = fvLine; line <= lvLine; line++) {
+    for (int col = fvCol; col <= fvCol; col++) {
+      TextLCoord lc(line, col);
+      TextMCoord mc(tde.toMCoord(lc));
+      xassert(lc.m_line == mc.m_line);
+
+      // Check (approximate) inverse.
+      TextLCoord lc2(tde.toLCoord(mc));
+      xassert(lc2.m_line == mc.m_line);
+      xassert(lc2.m_column >= lc.m_column);
+
+      TextMCoord mc2(tde.toMCoord(lc2));
+      xassert(mc2 == mc);
+    }
+  }
+
+  // Try all values of 'fvCol' up to 'lvCol'.
+  int oldWidth = lvCol - fvCol + 1;
+  for (int newFvCol = fvCol; newFvCol <= lvCol; newFvCol++) {
+    // Construct new expected layout by trimming columns.
+    int newWidth = lvCol - newFvCol + 1;
+    stringBuilder newPreExpect;
+    for (int line = fvLine; line <= lvLine; line++) {
+      newPreExpect <<
+        preExpect.substring((line-fvLine)*oldWidth + (newFvCol-fvCol),
+                            newWidth);
+    }
+
+    innerExpectLayoutWindow(tde,
+      fvLine, newFvCol,
+      lvLine, lvCol,
+      newPreExpect.str());
+  }
+
+  // Try all values of 'lvCol' down to 'fvCol'.
+  for (int newLvCol = lvCol; newLvCol >= fvCol; newLvCol--) {
+    // Construct new expected layout by trimming columns.
+    int newWidth = newLvCol - fvCol + 1;
+    stringBuilder newPreExpect;
+    for (int line = fvLine; line <= lvLine; line++) {
+      newPreExpect <<
+        preExpect.substring((line-fvLine)*oldWidth,
+                            newWidth);
+    }
+
+    innerExpectLayoutWindow(tde,
+      fvLine, fvCol,
+      lvLine, newLvCol,
+      newPreExpect.str());
+  }
+}
+
+static void expectLCoord(TextDocumentEditor &tde,
+  int line, int byteIndex,
+  int row, int col)
+{
+  TextMCoord mc(line, byteIndex);
+  TextLCoord expect(row, col);
+  TextLCoord actual = tde.toLCoord(mc);
+  EXPECT_EQ(actual, expect);
+
+  // 'toMCoord' should be the inverse of 'toLCoord'.
+  TextMCoord mc2(tde.toMCoord(actual));
+  EXPECT_EQ(mc2, mc);
+}
+
+static void expectMCoord(TextDocumentEditor &tde,
+  int row, int col,
+  int line, int byteIndex)
+{
+  TextLCoord lc(row, col);
+  TextMCoord expect(line, byteIndex);
+  TextMCoord actual = tde.toMCoord(lc);
+  EXPECT_EQ(actual, expect);
+
+  // Conversion to model should be idempotent.
+  TextLCoord lc2(tde.toLCoord(actual));
+  TextMCoord actual2(tde.toMCoord(lc2));
+  EXPECT_EQ(actual2, expect);
+}
+
+static void testLineLayout()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\tthree\n"
+    "four\tfive\tsix\n"
+    "\tseven\n"
+    "\t\teight\n"
+    "1\t12\t123\t1234\t12345\t123456\tx\n"
+    "12345\t123456\tx\n"
+    "1234567\t12345678\t123456789\n"
+    "");
+  expectLayoutWindow(tde, 0,0, 8,39,
+  //           1         2         3
+  // 0123456789012345678901234567890123456789
+    "one                                     "    // 0
+    "two^    three                           "    // 1
+    "four^   five^   six                     "    // 2
+    "^       seven                           "    // 3
+    "^       ^       eight                   "    // 4
+    "1^      12^     123^    1234^   12345^  "    // 5
+    "12345^  123456^ x                       "    // 6
+    "1234567^12345678^       123456789       "    // 7
+    "                                        "    // 8
+  );
+
+  expectLCoord(tde, 0,0, 0,0);
+  expectLCoord(tde, 2,10, 2,16);     // 's' in "six"
+
+  expectMCoord(tde, 5,12, 5,5);      // gap between "12" and "123"
+  expectLCoord(tde, 5,5, 5,16);      // '1' in "123"
+
+  expectMCoord(tde, -1,60, 0,0);     // before start
+  expectMCoord(tde, 3,60, 3,6);      // beyond EOL
+  expectMCoord(tde, 8,12, 8,0);      // beyond EOF
+
+  expectLayoutWindow(tde, 1,3, 7,10,
+  //           1         2         3
+  // 0123456789012345678901234567890123456789
+       "^    thr"    // 1
+       "r^   fiv"    // 2
+       "     sev"    // 3
+       "     ^  "    // 4
+       "     12^"    // 5
+       "45^  123"    // 6
+       "4567^123"    // 7
+  );
+}
+
+
+static void expectVisibleWindow(TextDocumentEditor &tde,
+  int cursorLine, int cursorCol,
+  string const &preExpect)
+{
+  TextLCoord expectCursor(cursorLine, cursorCol);
+  EXPECT_EQ(tde.cursor(), expectCursor);
+
+  expectLayoutWindow(tde,
+    tde.firstVisible().m_line, tde.firstVisible().m_column,
+    tde.lastVisible().m_line, tde.lastVisible().m_column,
+    preExpect);
+}
+
+static void testEditingWithTabs()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\tthree\n"
+    "four\tfive\tsix\n"
+    "\tseven\n"
+    "\t\teight\n"
+    "1\t12\t123\t1234\t12345\t123456\tx\n"
+    "12345\t123456\tx\n"
+    "1234567\t12345678\t123456789\n"
+    "");
+
+  tde.setCursor(TextLCoord(1,0));
+  tde.setFirstVisible(TextLCoord(0, 0));
+  tde.setLastVisible(TextLCoord(3, 19));
+  expectVisibleWindow(tde, 1,0,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "two^    three       "    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  tde.insertNulTermText("x");
+  expectVisibleWindow(tde, 1,1,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "xtwo^   three       "    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  tde.insertNulTermText("\t");
+  expectVisibleWindow(tde, 1,8,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "x^      two^    thre"    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  tde.backspaceFunction();
+  expectVisibleWindow(tde, 1,1,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "xtwo^   three       "    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  // Backspace while in the Tab span deletes it.
+  tde.setCursor(TextLCoord(1,6));
+  tde.backspaceFunction();
+  expectVisibleWindow(tde, 1,4,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "xtwothree           "    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  tde.undo();
+  expectVisibleWindow(tde, 1,4,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "xtwo^   three       "    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  // Delete in the Tab span also deletes it.
+  tde.deleteKeyFunction();
+  expectVisibleWindow(tde, 1,4,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "xtwothree           "    // 1
+    "four^   five^   six "    // 2
+    "^       seven       "    // 3
+  );
+
+  // Select text starting and ending within Tab spans.  The Tab on the
+  // left is deleted, along with enclosed text, but not the Tab on the
+  // right.
+  tde.setCursor(TextLCoord(2,6));
+  tde.setMark(TextLCoord(2,14));
+  tde.deleteKeyFunction();
+  expectVisibleWindow(tde, 2,6,
+  //           1
+  // 01234567890123456789
+    "one                 "    // 0
+    "xtwothree           "    // 1
+    "four^   six         "    // 2
+    "^       seven       "    // 3
+  );
+}
+
+
 // --------------------------- main -----------------------------
 static void entry(int argc, char **argv)
 {
@@ -1741,11 +2022,8 @@ static void entry(int argc, char **argv)
   testCountSpaceChars();
   testGetSelectedOrIdentifier();
   testReadOnly();
-
-  // This should be redundant now that I have general infrastructure to
-  // check s_objectCounts, but I will leave these for a while at least.
-  xassert(TextDocumentEditor::s_objectCount == 0);
-  xassert(TextDocument::s_objectCount == 0);
+  testLineLayout();
+  testEditingWithTabs();
 
   malloc_stats();
   cout << "\ntest-td-editor is ok" << endl;

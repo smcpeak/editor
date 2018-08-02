@@ -148,7 +148,7 @@ static void testVarious()
     TextMCoord tc(line, 0);
     char c = 'x';
     tdc.insertText(tc, &c, 1);
-    tdc.deleteText(tc, 1);
+    tdc.deleteTextBytes(tc, 1);
 
     checkSpaces(tdc, 0, 0, 0);
     checkSpaces(tdc, 1, 2, 0);

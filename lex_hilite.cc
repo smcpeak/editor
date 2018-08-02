@@ -324,7 +324,7 @@ static void del(int line, int col, int len)
 {
   cout << "del(" << line << ", " << col << ", " << len << ")\n";
   tde->setCursor(TextLCoord(line, col));
-  tde->deleteText(len);
+  tde->deleteTextBytes(len);
 }
 
 static void innerCheckLine(LexHighlighter &hi,
