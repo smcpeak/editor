@@ -1110,8 +1110,12 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
   // to develop and implement a character encoding strategy.
   int codePoint = (unsigned char)c;
 
-  if (m_visibleWhitespace &&
-      (codePoint==' ' || codePoint=='\n' || codePoint=='\r')) {
+  if (codePoint==' ' || codePoint=='\n' ||
+      codePoint=='\r' || codePoint=='\t') {
+    if (!m_visibleWhitespace) {
+      return;           // Nothing to draw.
+    }
+
     QRect bounds = font->getNominalCharCell(pt);
     QColor fg = font->getFgColor();
     fg.setAlpha(m_whitespaceOpacity);
@@ -1128,11 +1132,12 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
       return;
     }
 
-    if (codePoint == '\n' || codePoint == '\r') {
+    if (codePoint == '\n' || codePoint == '\r' || codePoint == '\t') {
       // Filled triangle.
       int x1 = bounds.left() + bounds.width() * 1/8;
       int x7 = bounds.left() + bounds.width() * 7/8;
       int y1 = bounds.top() + bounds.height() * 1/8;
+      int y4 = bounds.top() + bounds.height() * 4/8;
       int y7 = bounds.top() + bounds.height() * 7/8;
 
       paint.setPen(Qt::NoPen);
@@ -1147,12 +1152,21 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
         };
         paint.drawConvexPolygon(pts, TABLESIZE(pts));
       }
-      else {
+      else if (codePoint == '\r') {
         // Upper-left.
         QPoint pts[] = {
           QPoint(x1,y7),
           QPoint(x1,y1),
           QPoint(x7,y1),
+        };
+        paint.drawConvexPolygon(pts, TABLESIZE(pts));
+      }
+      else /*Tab*/ {
+        // Right-arrow.
+        QPoint pts[] = {
+          QPoint(x1,y1),
+          QPoint(x7,y4),
+          QPoint(x1,y7),
         };
         paint.drawConvexPolygon(pts, TABLESIZE(pts));
       }
@@ -1163,7 +1177,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
   if (font->hasChar(codePoint)) {
     font->drawChar(paint, pt, codePoint);
   }
-  else if (codePoint != '\r') {
+  else {
     QRect bounds = font->getNominalCharCell(pt);
 
     // This is a somewhat expensive thing to do because it requires
