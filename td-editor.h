@@ -416,16 +416,17 @@ public:      // funcs
   // non-ws char, or -1 if there are no non-ws chars.  Lines beyond
   // EOF return -1 (as if they are entirely whitespace).
   //
-  // This is almost the same as 'countLeadingSpaceChars', except that
-  // it returns -1 instead of lineLength for blank lines.
-  int getIndentation(int line) const;
+  // This is almost the same as 'countLeadingSpacesTabs', except that
+  // it returns -1 instead of lineLength for blank lines, and it returns
+  // a count of columns instead of bytes.
+  int getIndentationColumns(int line) const;
 
-  // Starting at 'line', including that line, search up until we find
-  // a line that is not entirely blank (whitespace), and return the
-  // number of whitespace chars to the left of the first non-whitespace
-  // char.  Lines beyond EOF are treated as entirely whitespace.  If we
-  // hit BOF, return 0.
-  int getAboveIndentation(int line) const;
+  // Starting at 'line', including that line, search up until we find a
+  // line that is not entirely blank (whitespace), and return the number
+  // of whitespace columns to the left of the first non-whitespace
+  // character.  Lines beyond EOF are treated as entirely whitespace.
+  // If we hit BOF, return 0.
+  int getAboveIndentationColumns(int line) const;
 
   // ------------------- general text insertion ------------------
   // 1. If the mark is active, deleteSelection().

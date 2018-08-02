@@ -727,7 +727,7 @@ static void testGetWordAfter()
 // ------------------ testGetAboveIndentation -------------------
 static void testOneGAI(TextDocumentEditor &tde, int line, int expect)
 {
-  int actual = tde.getAboveIndentation(line);
+  int actual = tde.getAboveIndentationColumns(line);
   xassert(actual == expect);
 }
 
@@ -1986,6 +1986,18 @@ static void testEditingWithTabs()
     "xtwothree           "    // 1
     "four^   six         "    // 2
     "^       seven       "    // 3
+  );
+
+  // Automatic indentation.
+  tde.setCursor(TextLCoord(3, 13));
+  tde.insertNewlineAutoIndent();
+  expectVisibleWindow(tde, 4,8,
+  //           1
+  // 01234567890123456789
+    "xtwothree           "    // 1
+    "four^   six         "    // 2
+    "^       seven       "    // 3
+    "                    "    // 4
   );
 }
 

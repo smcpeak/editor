@@ -802,7 +802,7 @@ int TextDocumentEditor::countTrailingSpacesTabs(int line) const
 }
 
 
-int TextDocumentEditor::getIndentation(int line) const
+int TextDocumentEditor::getIndentationColumns(int line) const
 {
   xassert(line >= 0);
   if (line >= m_doc->numLines()) {
@@ -815,16 +815,19 @@ int TextDocumentEditor::getIndentation(int line) const
       return -1;        // entirely whitespace
     }
     else {
-      return leading;
+      // Convert bytes to columns.
+      TextMCoord mc(line, leading);
+      TextLCoord lc(this->toLCoord(mc));
+      return lc.m_column;
     }
   }
 }
 
 
-int TextDocumentEditor::getAboveIndentation(int line) const
+int TextDocumentEditor::getAboveIndentationColumns(int line) const
 {
   while (line >= 0) {
-    int ind = getIndentation(line);
+    int ind = this->getIndentationColumns(line);
     if (ind >= 0) {
       return ind;
     }
@@ -1032,8 +1035,12 @@ void TextDocumentEditor::insertNewlineAutoIndent()
   // to the left edge too.
   this->insertNewline();
 
-  // auto-indent
-  int ind = this->getAboveIndentation(m_cursor.m_line - 1);
+  // Auto-indent.
+  //
+  // TODO: This isn't quite right in the case of Tab used for
+  // indentation since I only insert spaces (either now, or later due to
+  // 'fillToCursor').
+  int ind = this->getAboveIndentationColumns(m_cursor.m_line - 1);
   if (hadCharsToRight) {
     // Insert spaces so the carried forward text starts
     // in the auto-indent column.
