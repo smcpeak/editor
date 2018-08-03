@@ -725,10 +725,14 @@ static void testGetWordAfter()
 
 
 // ------------------ testGetAboveIndentation -------------------
-static void testOneGAI(TextDocumentEditor &tde, int line, int expect)
+static void testOneGAI(TextDocumentEditor &tde, int line,
+  int expectIndCols, string const &expectIndText)
 {
-  int actual = tde.getAboveIndentationColumns(line);
-  xassert(actual == expect);
+  string actualIndText;
+  int actualIndCols =
+    tde.getAboveIndentationColumns(line, actualIndText /*OUT*/);
+  EXPECT_EQ(actualIndCols, expectIndCols);
+  EXPECT_EQ(actualIndText, expectIndText);
 }
 
 static void testGetAboveIndentation()
@@ -747,21 +751,21 @@ static void testGetAboveIndentation()
     "\n"
     "    text\n");                     // line 10
 
-  testOneGAI(tde, -1, 0);
-  testOneGAI(tde, 0, 0);
-  testOneGAI(tde, 1, 0);
-  testOneGAI(tde, 2, 2);
-  testOneGAI(tde, 3, 2);
-  testOneGAI(tde, 4, 4);
-  testOneGAI(tde, 5, 0);
-  testOneGAI(tde, 6, 0);
-  testOneGAI(tde, 7, 2);
-  testOneGAI(tde, 8, 2);
-  testOneGAI(tde, 9, 2);
-  testOneGAI(tde, 10, 4);
-  testOneGAI(tde, 11, 4);
-  testOneGAI(tde, 12, 4);
-  testOneGAI(tde, 13, 4);
+  testOneGAI(tde, -1, 0, "");
+  testOneGAI(tde, 0, 0, "");
+  testOneGAI(tde, 1, 0, "");
+  testOneGAI(tde, 2, 2, "  ");
+  testOneGAI(tde, 3, 2, "  ");
+  testOneGAI(tde, 4, 4, "    ");
+  testOneGAI(tde, 5, 0, "");
+  testOneGAI(tde, 6, 0, "");
+  testOneGAI(tde, 7, 2, "  ");
+  testOneGAI(tde, 8, 2, "  ");
+  testOneGAI(tde, 9, 2, "  ");
+  testOneGAI(tde, 10, 4, "    ");
+  testOneGAI(tde, 11, 4, "    ");
+  testOneGAI(tde, 12, 4, "    ");
+  testOneGAI(tde, 13, 4, "    ");
 }
 
 
@@ -1290,6 +1294,66 @@ static void testInsertNewlineAutoIndent4()
     "  a\n"
     "  b\n"
     "\n");
+}
+
+
+static void testInsertNewlineAutoIndentWithTab()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "a\n"
+    "\tb\n");
+
+  // Auto-indent should add a Tab.
+  tde.setCursor(TextLCoord(1, 9));
+  xassert(tde.cursorAtLineEnd());
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,8,
+    "a\n"
+    "\tb\n"
+    "\t\n");
+
+  // Again.
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,8,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\n");
+
+  // Adding another tab to this line will not affect indentation because
+  // it is entirely whitespace.
+  tde.insertNulTermText("\t");
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 4,8,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\t\n"
+    "\t\n");
+
+  // But adding a Tab and another character will.
+  tde.insertNulTermText("\tc");
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 5,16,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\t\n"
+    "\t\tc\n"
+    "\t\t\n");
+
+  // Mix of Tabs and spaces.
+  tde.insertNulTermText(" \t d");
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 6,25,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\t\n"
+    "\t\tc\n"
+    "\t\t \t d\n"
+    "\t\t \t \n");
 }
 
 
@@ -2015,7 +2079,7 @@ static void testEditingWithTabs()
     "xtwothree           "    // 1
     "four^   six         "    // 2
     "^       seven       "    // 3
-    "                    "    // 4
+    "^                   "    // 4
   );
 }
 
@@ -2041,6 +2105,7 @@ static void entry(int argc, char **argv)
   testInsertNewlineAutoIndent2();
   testInsertNewlineAutoIndent3();
   testInsertNewlineAutoIndent4();
+  testInsertNewlineAutoIndentWithTab();
   testSetVisibleSize();
   testCursorRestorer();
   testSetMark();

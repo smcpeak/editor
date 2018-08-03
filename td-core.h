@@ -333,6 +333,12 @@ inline void swap(TextDocumentCore &a, TextDocumentCore &b) NOEXCEPT
 }
 
 
+inline bool isSpaceOrTab(int c)
+{
+  return c == ' ' || c == '\t';
+}
+
+
 // Interface for observing changes to a TextDocumentCore.
 //
 // All methods have 'NOEXCEPT'.  From the perspective of the observee,

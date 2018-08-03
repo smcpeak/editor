@@ -677,12 +677,6 @@ void TextDocumentCore::getWholeLine(int line,
 }
 
 
-inline bool isSpaceOrTab(int c)
-{
-  return c == ' ' || c == '\t';
-}
-
-
 int TextDocumentCore::countLeadingSpacesTabs(int line) const
 {
   int ret = 0;

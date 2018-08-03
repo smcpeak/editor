@@ -1,7 +1,5 @@
 
 TODOs:
-  - take advantage of coordinate refactoring to add Tab support
-
   - ProcessWatcher should close stdin
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
@@ -10,7 +8,6 @@ TODOs:
   - if I select text, Ctrl+I should open that w/o filename heuristics
   - draw an indicator when the cursor is offscreen
   - split panes, esp. a vertical split instead of multiple windows
-  - allow Tab character; issue is rendering support
   - run command to generate entire file; git annotate!
     - enhancements
       - prompt on closure of document with running process

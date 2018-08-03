@@ -171,6 +171,13 @@ TextLCoord TextDocumentEditor::endLCoord() const
 }
 
 
+bool TextDocumentEditor::cursorAtLineEnd() const
+{
+  return this->cursorOnModelCoord() &&
+         this->toMCoord(m_cursor) == this->lineEndMCoord(m_cursor.m_line);
+}
+
+
 bool TextDocumentEditor::cursorAtEnd() const
 {
   return m_cursor == this->endLCoord();
@@ -819,37 +826,47 @@ int TextDocumentEditor::countTrailingSpacesTabsColumns(int line) const
 }
 
 
-int TextDocumentEditor::getIndentationColumns(int line) const
+int TextDocumentEditor::getIndentationColumns(int line,
+  string /*OUT*/ &indText) const
 {
   xassert(line >= 0);
   if (line >= m_doc->numLines()) {
     return -1;
   }
   else {
-    int lineLen = m_doc->lineLengthBytes(line);
-    int leading = m_doc->countLeadingSpacesTabs(line);
-    if (lineLen == leading) {
-      return -1;        // entirely whitespace
+    stringBuilder sb;
+    TextDocumentEditor::LineIterator it(*this, line);
+    for (; it.has(); it.advByte()) {
+      int c = it.byteAt();
+      if (isSpaceOrTab(c)) {
+        sb << (char)c;
+      }
+      else {
+        break;
+      }
     }
-    else {
-      // Convert bytes to columns.
-      TextMCoord mc(line, leading);
-      TextLCoord lc(this->toLCoord(mc));
-      return lc.m_column;
+    if (!it.has()) {
+      // Line is entirely whitespace, ignore it for indentation
+      // determination.
+      return -1;
     }
+    indText = sb.str();
+    return it.columnOffset();
   }
 }
 
 
-int TextDocumentEditor::getAboveIndentationColumns(int line) const
+int TextDocumentEditor::getAboveIndentationColumns(int line,
+  string /*OUT*/ &indText) const
 {
   while (line >= 0) {
-    int ind = this->getIndentationColumns(line);
+    int ind = this->getIndentationColumns(line, indText);
     if (ind >= 0) {
       return ind;
     }
     line--;
   }
+  indText = "";
   return 0;
 }
 
@@ -1044,6 +1061,12 @@ void TextDocumentEditor::insertNewline()
 }
 
 
+static bool containsTab(string const &str)
+{
+  return str.contains('\t');
+}
+
+
 void TextDocumentEditor::insertNewlineAutoIndent()
 {
   // The code below this assumes cursor > mark if mark is active.
@@ -1060,21 +1083,26 @@ void TextDocumentEditor::insertNewlineAutoIndent()
   this->insertNewline();
 
   // Auto-indent.
-  //
-  // TODO: This isn't quite right in the case of Tab used for
-  // indentation since I only insert spaces (either now, or later due to
-  // 'fillToCursor').
-  int ind = this->getAboveIndentationColumns(m_cursor.m_line - 1);
+  string indText;
+  int indCols = this->getAboveIndentationColumns(m_cursor.m_line - 1,
+                                                 indText /*OUT*/);
   if (hadCharsToRight) {
-    // Insert spaces so the carried forward text starts
+    // Insert indentation so the carried forward text starts
     // in the auto-indent column.
-    this->insertSpaces(ind);
+    this->insertString(indText);
+  }
+  else if (containsTab(indText)) {
+    // When the indentation has a Tab character, insert it eagerly
+    // because lazy indentation via 'fillToCursor' will use spaces only.
+    // (A future enhancement might be to change 'fillToCursor' to insert
+    // Tabs when appropriate.)
+    this->insertString(indText);
   }
   else {
     // Move the cursor to the auto-indent column but do not
     // fill with spaces.  This way I can press Enter more
     // than once without adding lots of spaces.
-    this->moveCursorBy(0, ind);
+    this->moveCursorBy(0, indCols);
   }
 
   this->scrollToCursor();

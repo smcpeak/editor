@@ -137,6 +137,9 @@ public:      // funcs
   TextMCoord beginMCoord() const       { return m_doc->beginCoord(); }
   TextMCoord endMCoord() const         { return m_doc->endCoord(); }
 
+  TextMCoord lineBeginMCoord(int line) const { return m_doc->lineBeginCoord(line); }
+  TextMCoord lineEndMCoord(int line) const   { return m_doc->lineEndCoord(line); }
+
   bool validMCoord(TextMCoord mc) const{ return m_doc->validCoord(mc); }
 
   // ------------------- coordinate transformation -----------------
@@ -195,6 +198,9 @@ public:      // funcs
   // Current cursor position.  Always non-negative, but may be beyond
   // the end of its line or the entire file.
   TextLCoord cursor() const             { return m_cursor; }
+
+  // True if the cursor is at the end of its line.
+  bool cursorAtLineEnd() const;
 
   // True if the cursor is at the very last valid position.
   bool cursorAtEnd() const;
@@ -423,14 +429,18 @@ public:      // funcs
   // This is almost the same as 'countLeadingSpacesTabs', except that
   // it returns -1 instead of lineLength for blank lines, and it returns
   // a count of columns instead of bytes.
-  int getIndentationColumns(int line) const;
+  //
+  // This also sets 'indText' to the actual indentation string.
+  int getIndentationColumns(int line, string /*OUT*/ &indText) const;
 
   // Starting at 'line', including that line, search up until we find a
   // line that is not entirely blank (whitespace), and return the number
   // of whitespace columns to the left of the first non-whitespace
   // character.  Lines beyond EOF are treated as entirely whitespace.
   // If we hit BOF, return 0.
-  int getAboveIndentationColumns(int line) const;
+  //
+  // If the return is non-negative, also set 'indText'.
+  int getAboveIndentationColumns(int line, string /*OUT*/ &indText) const;
 
   // ------------------- general text insertion ------------------
   // 1. If the mark is active, deleteSelection().
