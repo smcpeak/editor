@@ -80,6 +80,60 @@ GlobalState::GlobalState(int argc, char **argv)
   // "-style Windows" on the command line.
   this->setStyle(new EditorProxyStyle);
 
+  // Set the scrollbars to have a darker thumb.  Otherwise this is
+  // meant to imitate the Windows 10 scrollbars.  (That is just for
+  // consistency with other apps; I don't think the design is good.)
+  //
+  // Changing the color of the thumb requires basically re-implementing
+  // the entire scrollbar visuals, unfortunately.  This specification is
+  // based on the examples in the Qt docs at:
+  //
+  //   http://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qscrollbar
+  //
+  // but I then modified it quite a bit.
+  string borderColor("#C0C0C0");
+  this->setStyleSheet(qstringb(
+    "QScrollBar:vertical {"
+    "  background: white;"
+    "  width: 17px;"
+    "  margin: 17px 0 17px 0;"     // top left right bottom?
+    "}"
+    "QScrollBar::handle:vertical {"
+    "  border: 1px solid #404040;"
+    "  background: #808080;"
+    "  min-height: 20px;"
+    "}"
+    "QScrollBar::add-line:vertical {"
+    "  border: 1px solid " << borderColor << ";"
+    "  background: white;"
+    "  height: 17px;"
+    "  subcontrol-position: bottom;"
+    "  subcontrol-origin: margin;"
+    "}"
+    "QScrollBar::sub-line:vertical {"
+    "  border: 1px solid " << borderColor << ";"
+    "  background: white;"
+    "  height: 17px;"
+    "  subcontrol-position: top;"
+    "  subcontrol-origin: margin;"
+    "}"
+    "QScrollBar::up-arrow:vertical {"
+    "  image: url(:/pix/scroll-up-arrow.png);"
+    "  width: 15px;"
+    "  height: 15px;"
+    "}"
+    "QScrollBar::down-arrow:vertical {"
+    "  image: url(:/pix/scroll-down-arrow.png);"
+    "  width: 15px;"
+    "  height: 15px;"
+    "}"
+    "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+    "  border-left: 1px solid " << borderColor << ";"
+    "  border-right: 1px solid " << borderColor << ";"
+    "  background: none;"
+    "}"
+  ));
+
   // Open the first window, initially showing the default "untitled"
   // file that 'fileDocuments' made in its constructor.
   EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));

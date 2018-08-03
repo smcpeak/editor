@@ -1,5 +1,7 @@
 
 TODOs:
+  - search match highlighting is wrong on lines with Tab
+
   - ProcessWatcher should close stdin
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
@@ -30,9 +32,6 @@ TODOs:
   - rename all references to "open-files dialog" to "documents"?
   - way to replace all in file
 
-  - very annoyed by the scrollbar thumb being too light
-    - spent a while digging through QStyle docs and (mostly) code,
-      could not figure out how to do this; bailing for now
   - refactor: split SARPanel into pixel/key layer and stateful UI layer
   - document list: instead of N/P, let user type a substring of a doc
     name?
