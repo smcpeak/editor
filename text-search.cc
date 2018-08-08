@@ -29,47 +29,47 @@
 
 // ------------------------- MatchExtent ---------------------------
 TextSearch::MatchExtent::MatchExtent()
-  : m_start(0),
-    m_length(0)
+  : m_startByte(0),
+    m_lengthBytes(0)
 {}
 
 
 TextSearch::MatchExtent::MatchExtent(int start, int length)
-  : m_start(start),
-    m_length(length)
+  : m_startByte(start),
+    m_lengthBytes(length)
 {}
 
 
 TextSearch::MatchExtent::MatchExtent(MatchExtent const &obj)
-  : DMEMB(m_start),
-    DMEMB(m_length)
+  : DMEMB(m_startByte),
+    DMEMB(m_lengthBytes)
 {}
 
 
 TextSearch::MatchExtent& TextSearch::MatchExtent::operator= (MatchExtent const &obj)
 {
-  CMEMB(m_start);
-  CMEMB(m_length);
+  CMEMB(m_startByte);
+  CMEMB(m_lengthBytes);
   return *this;
 }
 
 
 bool TextSearch::MatchExtent::operator== (MatchExtent const &obj) const
 {
-  return EMEMB(m_start) &&
-         EMEMB(m_length);
+  return EMEMB(m_startByte) &&
+         EMEMB(m_lengthBytes);
 }
 
 
 void TextSearch::MatchExtent::insertSB(stringBuilder &sb) const
 {
-  sb << "(s=" << m_start << ",l=" << m_length << ')';
+  sb << "(s=" << m_startByte << ",l=" << m_lengthBytes << ')';
 }
 
 
 void TextSearch::MatchExtent::insertOstream(ostream &os) const
 {
-  os << "(s=" << m_start << ",l=" << m_length << ')';
+  os << "(s=" << m_startByte << ",l=" << m_lengthBytes << ')';
 }
 
 
@@ -470,17 +470,17 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
     // Walk the matches in 'inc' direction.
     for (int i=begin; reversibleLTE(reverse, i, end); i += inc) {
       MatchExtent const &m = matches[i];
-      if (reversibleLT(reverse, m.m_start, range.m_start.m_byteIndex)) {
+      if (reversibleLT(reverse, m.m_startByte, range.m_start.m_byteIndex)) {
         // This match occurs before 'range.start'.
         continue;
       }
 
       // Where does this match end?
-      TextMCoord matchEnd(range.m_start.m_line, m.m_start);
-      m_document->walkCoordBytes(matchEnd, +m.m_length);
+      TextMCoord matchEnd(range.m_start.m_line, m.m_startByte);
+      m_document->walkCoordBytes(matchEnd, +m.m_lengthBytes);
 
       // Now, how does its start compare to 'range.start'?
-      if (m.m_start == range.m_start.m_byteIndex) {
+      if (m.m_startByte == range.m_start.m_byteIndex) {
         // How does the end compare to 'range.end'?
         if (reversibleLTE(reverse, matchEnd, range.m_end)) {
           // The match end is less than or equal to my current mark.  I
@@ -498,7 +498,7 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
       }
       else {
         // This is the first match after the range start.
-        range.m_start.m_byteIndex = m.m_start;
+        range.m_start.m_byteIndex = m.m_startByte;
         range.m_end = matchEnd;
         return true;
       }
@@ -517,9 +517,9 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
       MatchExtent const &m = matches[i];
 
       // Found first match after 'range.start' on another line.
-      range.m_start.m_byteIndex = m.m_start;
+      range.m_start.m_byteIndex = m.m_startByte;
       range.m_end = range.m_start;
-      m_document->walkCoordBytes(range.m_end, +m.m_length);
+      m_document->walkCoordBytes(range.m_end, +m.m_lengthBytes);
       return true;
     }
 
@@ -550,8 +550,8 @@ bool TextSearch::rangeIsMatch(TextMCoord const &a0, TextMCoord const &b0) const
 
     for (int i=0; i < matches.length(); i++) {
       MatchExtent const &m = matches[i];
-      if (m.m_start == a.m_byteIndex &&
-          m.m_length == (b.m_byteIndex - a.m_byteIndex)) {
+      if (m.m_startByte == a.m_byteIndex &&
+          m.m_lengthBytes == (b.m_byteIndex - a.m_byteIndex)) {
         return true;
       }
     }

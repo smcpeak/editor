@@ -549,16 +549,16 @@ void EditorWidget::emitSearchStatusIndicator()
 
     for (int i=0; i < matches.length(); i++) {
       TextSearch::MatchExtent const &m = matches[i];
-      if (m.m_start < range.m_start.m_column) {
+      if (m.m_startByte < range.m_start.m_column) {
         matchesBefore++;
       }
-      else if (m.m_start > range.m_start.m_column) {
+      else if (m.m_startByte > range.m_start.m_column) {
         matchesAfter++;
       }
       else {
         matchesOn++;
         if (range.withinOneLine() &&
-            m.m_length == (range.m_end.m_column - range.m_start.m_column)) {
+            m.m_lengthBytes == (range.m_end.m_column - range.m_start.m_column)) {
           matchesSelected++;
         }
       }
@@ -866,8 +866,8 @@ void EditorWidget::paintFrame(QPainter &winPaint)
           m_textSearch->getLineMatches(line);
         for (int i=0; i < matches.length(); i++) {
           TextSearch::MatchExtent const &m = matches[i];
-          if (m.m_length) {
-            categories.overlay(m.m_start, m.m_length, TC_HITS);
+          if (m.m_lengthBytes) {
+            categories.overlay(m.m_startByte, m.m_lengthBytes, TC_HITS);
           }
           else {
             // LineCategories::overlay() interprets a zero length as

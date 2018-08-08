@@ -156,7 +156,7 @@
       }
     },
     {
-      "attributes": "m_start: int\nm_length: int\n",
+      "attributes": "m_startByte: int\nm_lengthBytes: int\n",
       "loc": {
         "x": 200,
         "y": 180
@@ -164,7 +164,7 @@
       "name": "Extent",
       "size": {
         "h": 65,
-        "w": 85
+        "w": 120
       }
     },
     {

@@ -43,10 +43,10 @@ public:      // types
   class MatchExtent {
   public:
     // Byte offset of the start of the match.
-    int m_start;
+    int m_startByte;
 
     // Length of the match, in bytes.
-    int m_length;
+    int m_lengthBytes;
 
   public:
     MatchExtent();

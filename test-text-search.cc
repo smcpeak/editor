@@ -29,8 +29,8 @@ static string dumpMatches(TextSearch const &ts)
       ArrayStack<TextSearch::MatchExtent> const &matches =
         ts.getLineMatches(line);
       for (int i=0; i < matches.length(); i++) {
-        sb << '[' << matches[i].m_start
-           << ',' << matches[i].m_length << ']';
+        sb << '[' << matches[i].m_startByte
+           << ',' << matches[i].m_lengthBytes << ']';
       }
       sb << '\n';
     }
