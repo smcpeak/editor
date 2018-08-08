@@ -218,6 +218,10 @@ private:     // funcs
   void drawOneOffscreenMatchIndicator(
     QPainter &paint, QtBDFFont *font, bool above, QString const &text);
 
+  // Add the search hits for 'line' to 'categories.
+  void addSearchMatchesToLineCategories(
+    LineCategories &categories, int line);
+
   // Scroll the display to the next/prev search it.  If found, return
   // true and, if also 'select', set the cursor/mark to select the
   // match.

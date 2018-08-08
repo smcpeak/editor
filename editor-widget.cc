@@ -861,40 +861,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       }
 
       // Show search hits.
-      //
-      // TODO: Move this into its own function.
-      if (m_textSearch->countLineMatches(line)) {
-        ArrayStack<TextSearch::MatchExtent> const &matches =
-          m_textSearch->getLineMatches(line);
-        for (int i=0; i < matches.length(); i++) {
-          TextSearch::MatchExtent const &m = matches[i];
-          if (m.m_lengthBytes) {
-            // Convert match extent to layout coordinates since
-            // 'categories' is indexed by column, not byte.
-            TextMCoordRange mrange(
-              TextMCoord(line, m.m_startByte),
-              TextMCoord(line, m.m_startByte + m.m_lengthBytes));
-            TextLCoordRange lrange(m_editor->toLCoordRange(mrange));
-            int columns = lrange.m_end.m_column - lrange.m_start.m_column;
-
-            // Double-check that the match is not zero columns.
-            // Currently this cannot happen (if 'm_lengthBytes' is not
-            // zero), but it will become possible if I lay out
-            // zero-width characters properly.
-            if (columns) {
-              categories.overlay(lrange.m_start.m_column, columns, TC_HITS);
-            }
-          }
-          else {
-            // LineCategories::overlay() interprets a zero length as
-            // meaning "infinite".  I don't currently have a good way to
-            // show 0-length matches, which are possible when using
-            // regexes, so I will just not show them.  It is still
-            // possible to step through them with next/prev match,
-            // though.
-          }
-        }
-      }
+      this->addSearchMatchesToLineCategories(categories, line);
     }
     xassert(visibleLineChars <= visibleCols);
     xassert(text.length() == visibleLineChars);
@@ -1296,6 +1263,44 @@ void EditorWidget::drawOneOffscreenMatchIndicator(
 
   int baseline = m_fontAscent-1;
   drawString(*font, paint, QPoint(left, top+baseline), s);
+}
+
+
+void EditorWidget::addSearchMatchesToLineCategories(
+  LineCategories &categories, int line)
+{
+  if (m_textSearch->countLineMatches(line)) {
+    ArrayStack<TextSearch::MatchExtent> const &matches =
+      m_textSearch->getLineMatches(line);
+    for (int i=0; i < matches.length(); i++) {
+      TextSearch::MatchExtent const &m = matches[i];
+      if (m.m_lengthBytes) {
+        // Convert match extent to layout coordinates since
+        // 'categories' is indexed by column, not byte.
+        TextMCoordRange mrange(
+          TextMCoord(line, m.m_startByte),
+          TextMCoord(line, m.m_startByte + m.m_lengthBytes));
+        TextLCoordRange lrange(m_editor->toLCoordRange(mrange));
+        int columns = lrange.m_end.m_column - lrange.m_start.m_column;
+
+        // Double-check that the match is not zero columns.
+        // Currently this cannot happen (if 'm_lengthBytes' is not
+        // zero), but it will become possible if I lay out
+        // zero-width characters properly.
+        if (columns) {
+          categories.overlay(lrange.m_start.m_column, columns, TC_HITS);
+        }
+      }
+      else {
+        // LineCategories::overlay() interprets a zero length as
+        // meaning "infinite".  I don't currently have a good way to
+        // show 0-length matches, which are possible when using
+        // regexes, so I will just not show them.  It is still
+        // possible to step through them with next/prev match,
+        // though.
+      }
+    }
+  }
 }
 
 
