@@ -247,7 +247,7 @@ static void testJustifyTextLines()
 
 static string docToString(TextDocumentEditor const &d)
 {
-  return d.getTextForRangeString(TextLCoord(0,0), d.endLCoord());
+  return d.getTextForLRangeString(TextLCoord(0,0), d.endLCoord());
 }
 
 

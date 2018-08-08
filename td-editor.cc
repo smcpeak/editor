@@ -264,7 +264,7 @@ string TextDocumentEditor::getSelectedText() const
     return "";
   }
   else {
-    return this->getTextForRangeString(this->getSelectLayoutRange());
+    return this->getTextForLRangeString(this->getSelectLayoutRange());
   }
 }
 
@@ -694,7 +694,7 @@ void TextDocumentEditor::getLineLayout(TextLCoord lc,
 }
 
 
-void TextDocumentEditor::getTextForRange(TextLCoordRange const &range,
+void TextDocumentEditor::getTextForLRange(TextLCoordRange const &range,
   ArrayStack<char> /*INOUT*/ &dest) const
 {
   xassert(range.nonNegative());
@@ -704,10 +704,10 @@ void TextDocumentEditor::getTextForRange(TextLCoordRange const &range,
 }
 
 
-string TextDocumentEditor::getTextForRangeString(TextLCoordRange const &range) const
+string TextDocumentEditor::getTextForLRangeString(TextLCoordRange const &range) const
 {
   ArrayStack<char> array;
-  this->getTextForRange(range, array);
+  this->getTextForLRange(range, array);
   return toString(array);
 }
 
@@ -761,7 +761,7 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
   while (tc.m_column < lineLengthColumns(tc.m_line)) {
     // Get one column's worth of bytes.
     text.clear();
-    getTextForRange(tc, TextLCoord(tc.m_line, tc.m_column+1), text);
+    getTextForLRange(tc, TextLCoord(tc.m_line, tc.m_column+1), text);
 
     bool iwc = isWordCharText(text);
     if (iwc || !seenWordChar) {
