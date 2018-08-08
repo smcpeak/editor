@@ -535,7 +535,7 @@ void EditorWidget::emitSearchStatusIndicator()
   }
 
   // Get effective selection range for this calculation.
-  TextLCoordRange range = m_editor->getSelectRange();
+  TextLCoordRange range = m_editor->getSelectLayoutRange();
 
   // Matches above and below range start line.
   int matchesAbove = m_textSearch->countMatchesAbove(range.m_start.m_line);
@@ -800,7 +800,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   ArrayStack<char> text(visibleCols);
 
   // Get region of selected text.
-  TextLCoordRange selRange = m_editor->getSelectRange();
+  TextLCoordRange selRange = m_editor->getSelectLayoutRange();
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
@@ -854,7 +854,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         }
       }
 
-      // apply highlighting
+      // Apply syntax highlighting.
       if (m_editor->m_namedDoc->m_highlighter) {
         m_editor->m_namedDoc->m_highlighter
           ->highlightTDE(m_editor, line, categories);

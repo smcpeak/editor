@@ -577,9 +577,9 @@ static void testScrollToCursor()
 
   xassert(tde.cursorAtEnd() == true);
 
-  // Insert a test for getSelectRange with mark inactive.
+  // Insert a test for getSelectLayoutRange with mark inactive.
   {
-    TextLCoordRange range = tde.getSelectRange();
+    TextLCoordRange range = tde.getSelectLayoutRange();
     xassert(range.m_start == TextLCoord(3, 0));
     xassert(range.m_end == TextLCoord(3, 0));
   }

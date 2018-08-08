@@ -234,7 +234,7 @@ void TextDocumentEditor::selectCursorLine()
 }
 
 
-TextLCoordRange TextDocumentEditor::getSelectRange() const
+TextLCoordRange TextDocumentEditor::getSelectLayoutRange() const
 {
   if (!m_markActive) {
     return TextLCoordRange(m_cursor, m_cursor);
@@ -247,7 +247,7 @@ TextLCoordRange TextDocumentEditor::getSelectRange() const
 
 TextMCoordRange TextDocumentEditor::getSelectModelRange() const
 {
-  return this->toMCoordRange(this->getSelectRange());
+  return this->toMCoordRange(this->getSelectLayoutRange());
 }
 
 
@@ -264,7 +264,7 @@ string TextDocumentEditor::getSelectedText() const
     return "";
   }
   else {
-    return this->getTextRangeString(this->getSelectRange());
+    return this->getTextRangeString(this->getSelectLayoutRange());
   }
 }
 
@@ -508,7 +508,7 @@ void TextDocumentEditor::deleteSelection()
 {
   xassert(m_markActive);
 
-  TextLCoordRange range(this->getSelectRange());
+  TextLCoordRange range(this->getSelectLayoutRange());
   if (range.m_start < this->endLCoord()) {
     this->fillToCoord(range.m_start);
   }
@@ -1172,7 +1172,7 @@ bool TextDocumentEditor::blockIndent(int amt)
     return false;
   }
 
-  TextLCoordRange range = this->getSelectRange();
+  TextLCoordRange range = this->getSelectLayoutRange();
 
   int endLine = (range.m_end.m_column==0? range.m_end.m_line - 1 : range.m_end.m_line);
   this->indentLines(range.m_start.m_line, endLine - range.m_start.m_line + 1, amt);

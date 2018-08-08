@@ -288,7 +288,7 @@ public:      // funcs
   // Get a range whose start is the lower of 'cursor' and 'mark', and
   // whose end is the higher.  If the mark is not active, set both to
   // 'cursor'.
-  TextLCoordRange getSelectRange() const;
+  TextLCoordRange getSelectLayoutRange() const;
 
   // Same, but as a model range.
   TextMCoordRange getSelectModelRange() const;
