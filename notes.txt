@@ -1,7 +1,5 @@
 
 TODOs:
-  - search match highlighting is wrong on lines with Tab
-
   - ProcessWatcher should close stdin
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start

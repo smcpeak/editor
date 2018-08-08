@@ -535,7 +535,7 @@ void EditorWidget::emitSearchStatusIndicator()
   }
 
   // Get effective selection range for this calculation.
-  TextLCoordRange range = m_editor->getSelectLayoutRange();
+  TextMCoordRange range = m_editor->getSelectModelRange();
 
   // Matches above and below range start line.
   int matchesAbove = m_textSearch->countMatchesAbove(range.m_start.m_line);
@@ -549,16 +549,16 @@ void EditorWidget::emitSearchStatusIndicator()
 
     for (int i=0; i < matches.length(); i++) {
       TextSearch::MatchExtent const &m = matches[i];
-      if (m.m_startByte < range.m_start.m_column) {
+      if (m.m_startByte < range.m_start.m_byteIndex) {
         matchesBefore++;
       }
-      else if (m.m_startByte > range.m_start.m_column) {
+      else if (m.m_startByte > range.m_start.m_byteIndex) {
         matchesAfter++;
       }
       else {
         matchesOn++;
         if (range.withinOneLine() &&
-            m.m_lengthBytes == (range.m_end.m_column - range.m_start.m_column)) {
+            m.m_lengthBytes == (range.m_end.m_byteIndex - range.m_start.m_byteIndex)) {
           matchesSelected++;
         }
       }
@@ -861,13 +861,29 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       }
 
       // Show search hits.
+      //
+      // TODO: Move this into its own function.
       if (m_textSearch->countLineMatches(line)) {
         ArrayStack<TextSearch::MatchExtent> const &matches =
           m_textSearch->getLineMatches(line);
         for (int i=0; i < matches.length(); i++) {
           TextSearch::MatchExtent const &m = matches[i];
           if (m.m_lengthBytes) {
-            categories.overlay(m.m_startByte, m.m_lengthBytes, TC_HITS);
+            // Convert match extent to layout coordinates since
+            // 'categories' is indexed by column, not byte.
+            TextMCoordRange mrange(
+              TextMCoord(line, m.m_startByte),
+              TextMCoord(line, m.m_startByte + m.m_lengthBytes));
+            TextLCoordRange lrange(m_editor->toLCoordRange(mrange));
+            int columns = lrange.m_end.m_column - lrange.m_start.m_column;
+
+            // Double-check that the match is not zero columns.
+            // Currently this cannot happen (if 'm_lengthBytes' is not
+            // zero), but it will become possible if I lay out
+            // zero-width characters properly.
+            if (columns) {
+              categories.overlay(lrange.m_start.m_column, columns, TC_HITS);
+            }
           }
           else {
             // LineCategories::overlay() interprets a zero length as

@@ -417,5 +417,6 @@ check:
 	./editor -ev=test/prompt-unsaved-changes.ev
 	./editor -ev=test/screenshot1.ev test/file1.h
 	./editor -ev=test/visible-tabs.ev test/tabs-test.txt
+	./editor -ev=test/search-hits-with-tab.ev test/tabs-test.txt
 
 # EOF
