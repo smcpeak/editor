@@ -190,7 +190,7 @@ public:    // funcs
     ArrayStack<char> /*INOUT*/ &dest, int numBytes) const;
 
   // Get using a range.
-  void getTextRange(TextMCoordRange const &range,
+  void getTextForRange(TextMCoordRange const &range,
     ArrayStack<char> /*INOUT*/ &dest) const;
 
   // Get a complete line of text, not including the newline.  'line'

@@ -139,7 +139,7 @@ public:      // funcs
   int countBytesInRange(TextMCoordRange const &range) const  { return m_core.countBytesInRange(range); }
   void getPartialLine(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getPartialLine(tc, dest, numBytes); }
   bool getTextSpanningLines(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getTextSpanningLines(tc, dest, numBytes); }
-  void getTextRange(TextMCoordRange const &range, ArrayStack<char> /*INOUT*/ &dest) const { m_core.getTextRange(range, dest); }
+  void getTextForRange(TextMCoordRange const &range, ArrayStack<char> /*INOUT*/ &dest) const { m_core.getTextForRange(range, dest); }
   void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const { return m_core.getWholeLine(line, dest); }
   int countLeadingSpacesTabs(int line) const                 { return m_core.countLeadingSpacesTabs(line); }
   int countTrailingSpacesTabs(int line) const                { return m_core.countTrailingSpacesTabs(line); }

@@ -616,7 +616,7 @@ bool TextDocumentCore::getTextSpanningLines(
 
   int origDestLength = dest.length();
   TextMCoordRange range(tc, end);
-  this->getTextRange(range, dest);
+  this->getTextForRange(range, dest);
   xassert(dest.length() - origDestLength == numBytes);
 
   return true;
@@ -627,12 +627,12 @@ int TextDocumentCore::countBytesInRange(TextMCoordRange const &range) const
 {
   // Inefficient!
   ArrayStack<char> arr;
-  this->getTextRange(range, arr);
+  this->getTextForRange(range, arr);
   return arr.length();
 }
 
 
-void TextDocumentCore::getTextRange(TextMCoordRange const &range,
+void TextDocumentCore::getTextForRange(TextMCoordRange const &range,
   ArrayStack<char> /*INOUT*/ &dest) const
 {
   xassert(this->validRange(range));
@@ -649,7 +649,7 @@ void TextDocumentCore::getTextRange(TextMCoordRange const &range,
   }
 
   // Right half of range start line.
-  this->getTextRange(
+  this->getTextForRange(
     TextMCoordRange(range.m_start, this->lineEndCoord(range.m_start.m_line)),
     dest);
 
@@ -661,7 +661,7 @@ void TextDocumentCore::getTextRange(TextMCoordRange const &range,
 
   // Left half of end line.
   dest.push('\n');
-  this->getTextRange(
+  this->getTextForRange(
     TextMCoordRange(this->lineBeginCoord(range.m_end.m_line), range.m_end),
     dest);
 }
@@ -671,7 +671,7 @@ void TextDocumentCore::getWholeLine(int line,
   ArrayStack<char> /*INOUT*/ &dest) const
 {
   bc(line);
-  this->getTextRange(
+  this->getTextForRange(
     TextMCoordRange(this->lineBeginCoord(line), this->lineEndCoord(line)),
     dest);
 }

@@ -394,16 +394,16 @@ public:      // funcs
   // string to put in the clipboard.  The range must be rectified.  If
   // start==end, returns "".  Characters outside the document area are
   // taken to be whitespace.
-  void getTextRange(TextLCoordRange const &range,
-                    ArrayStack<char> /*INOUT*/ &dest) const;
-  void getTextRange(TextLCoord const &start, TextLCoord const &end,
-                    ArrayStack<char> /*INOUT*/ &dest) const
-    { return getTextRange(TextLCoordRange(start, end), dest); }
+  void getTextForRange(TextLCoordRange const &range,
+                       ArrayStack<char> /*INOUT*/ &dest) const;
+  void getTextForRange(TextLCoord const &start, TextLCoord const &end,
+                       ArrayStack<char> /*INOUT*/ &dest) const
+    { return getTextForRange(TextLCoordRange(start, end), dest); }
 
   // Versions that yield strings.
-  string getTextRangeString(TextLCoordRange const &range) const;
-  string getTextRangeString(TextLCoord const &start, TextLCoord const &end) const
-    { return getTextRangeString(TextLCoordRange(start, end)); }
+  string getTextForRangeString(TextLCoordRange const &range) const;
+  string getTextForRangeString(TextLCoord const &start, TextLCoord const &end) const
+    { return getTextForRangeString(TextLCoordRange(start, end)); }
 
   // Get a complete line.  Returns "" when beyond EOF.  'line' must
   // be non-negative.

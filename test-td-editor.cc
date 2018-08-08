@@ -41,7 +41,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   expectCursor(tde, line, col);
 
   string expect(text);
-  string actual = tde.getTextRangeString(tde.documentLRange());
+  string actual = tde.getTextForRangeString(tde.documentLRange());
 
   if (expect != actual) {
     cout << "expect: " << quoted(expect) << endl;
@@ -165,19 +165,19 @@ static void testUndoRedo()
 
 
 // --------------------- testTextManipulation -----------------------
-// test TextDocumentEditor::getTextRange
+// test TextDocumentEditor::getTextForRange
 static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
                          int line2, int col2, char const *expect)
 {
   tde.selfCheck();
 
   string actual =
-    tde.getTextRangeString(TextLCoord(line1, col1), TextLCoord(line2, col2));
+    tde.getTextForRangeString(TextLCoord(line1, col1), TextLCoord(line2, col2));
 
   if (!actual.equals(expect)) {
     tde.debugPrint();
-    cout << "getTextRange(" << line1 << "," << col1 << ", "
-                            << line2 << "," << col2 << "):\n";
+    cout << "getTextForRange(" << line1 << "," << col1 << ", "
+                               << line2 << "," << col2 << "):\n";
     cout << "  actual: " << quoted(actual) << "\n";
     cout << "  expect: " << quoted(expect) << "\n";
     xfailure("testGetRange failed");
@@ -222,7 +222,7 @@ static void testTextManipulation()
   testGetRange(tde, 0,0, 4,0, "farf\ngak\noo\nbar\n");
 
   // Some ranges that go beyond the defined area.  In the past,
-  // 'getTextRange' would add newlines and spaces, but I have changed
+  // 'getTextForRange' would add newlines and spaces, but I have changed
   // the definition to only return bytes actually in the document.
   testGetRange(tde, 0,0, 5,0, "farf\ngak\noo\nbar\n");
   testGetRange(tde, 0,0, 6,0, "farf\ngak\noo\nbar\n");
