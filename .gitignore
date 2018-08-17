@@ -47,3 +47,4 @@ test-nearby-file
 test-td-core
 test.out
 events.out
+test-text-search
