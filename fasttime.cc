@@ -3,9 +3,12 @@
 
 #include "fasttime.h"                  // this module
 
-#ifndef __MINGW32__
-  #error "This module has not been ported to unix"
-#endif
+volatile unsigned fastTimeMilliseconds = 0;
+
+volatile unsigned fastTimeThread1000Loops = 0;
+
+
+#ifdef __MINGW32__
 
 #include <stdlib.h>                    // abort
 #include <process.h>                   // _beginthreadex
@@ -14,11 +17,6 @@
 #include <iostream>                    // std::cout
 
 using namespace std;
-
-
-volatile unsigned fastTimeMilliseconds = 0;
-
-volatile unsigned fastTimeThread1000Loops = 0;
 
 
 // Handle to a semaphore used to wait for the thread to start.
@@ -88,6 +86,15 @@ void fastTimeInitialize()
     abort();
   }
 }
+
+
+#else // !__MINGW32__
+
+// For now, on unix, the "time" will always be zero.
+void fastTimeInitialize()
+{}
+
+#endif
 
 
 // EOF
