@@ -1270,8 +1270,9 @@ void EditorWindow::editApplyCommand()
       new TextInputDialog("Apply Command");
 
     string dir = m_editorWidget->getDocumentDirectory();
-    if (!dialog->runPrompt_nonEmpty(qstringb(
-          "Command to run in " << dir << ":"))) {
+    if (!dialog->runPrompt_nonEmpty(
+          qstringb("Command to run in " << dir << ":"),
+          this)) {
       return;
     }
     commandString = toString(dialog->m_text);
