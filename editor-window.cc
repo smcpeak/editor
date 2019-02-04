@@ -880,8 +880,8 @@ void EditorWindow::fileLaunchCommand()
     new LaunchCommandDialog();
 
   string dir = m_editorWidget->getDocumentDirectory();
-  if (!dialog->runPrompt_nonEmpty(qstringb(
-        "&Command to launch in " << dir << ":"))) {
+  if (!dialog->runPrompt_nonEmpty(
+        qstringb("&Command to launch in " << dir << ":"), this)) {
     return;
   }
 

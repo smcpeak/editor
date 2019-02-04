@@ -34,6 +34,8 @@ public:      // funcs
   // Like 'exec', but dialog is centered on the target window.  (This
   // is useful when the dialog has been created with a NULL parent.
   // Note that simply changing the parent does not work.)
+  //
+  // If 'target' is NULL, then just call exec.
   int execCentered(QWidget *target);
 };
 

@@ -77,11 +77,13 @@ public:      // funcs
 
   // Like 'exec', except if the dialog is already visible, complain and
   // return 0.  Otherwise set the label text to 'prompt' and exec().
-  int runPrompt(QString prompt);
+  //
+  // If 'centerWindow' is not NULL, center the dialog on that window.
+  int runPrompt(QString prompt, QWidget *centerWindow = NULL);
 
   // Like 'runPrompt', except if the entered text is empty, then
   // return 0, and if not, then enter it into the history.
-  int runPrompt_nonEmpty(QString prompt);
+  int runPrompt_nonEmpty(QString prompt, QWidget *centerWindow = NULL);
 
   // Called by the dialog infrastructure when the user presses Ok.
   void accept() OVERRIDE;

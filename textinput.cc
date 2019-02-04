@@ -150,7 +150,7 @@ int TextInputDialog::exec()
 }
 
 
-int TextInputDialog::runPrompt(QString prompt)
+int TextInputDialog::runPrompt(QString prompt, QWidget *centerWindow)
 {
   // Safety check for an already-shown dialog.
   if (this->isVisible()) {
@@ -162,13 +162,13 @@ int TextInputDialog::runPrompt(QString prompt)
   }
 
   this->setLabelText(prompt);
-  return this->exec();
+  return this->execCentered(centerWindow);
 }
 
 
-int TextInputDialog::runPrompt_nonEmpty(QString prompt)
+int TextInputDialog::runPrompt_nonEmpty(QString prompt, QWidget *centerWindow)
 {
-  int ret = this->runPrompt(prompt);
+  int ret = this->runPrompt(prompt, centerWindow);
   if (ret) {
     if (m_text.isEmpty()) {
       return 0;

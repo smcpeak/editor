@@ -39,7 +39,9 @@ ModalDialog::~ModalDialog()
 
 int ModalDialog::execCentered(QWidget *target)
 {
-  centerWindowOnWindow(this, target);
+  if (target) {
+    centerWindowOnWindow(this, target);
+  }
   return this->exec();
 }
 
