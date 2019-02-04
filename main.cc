@@ -602,6 +602,13 @@ static void editorDevWarningHandler(char const *file, int line,
 {
   cerr << "DEV_WARNING: " << file << ':' << line << ": " << msg << endl;
 
+  if (getenv("ABORT_ON_DEV_WARNING")) {
+    // This is useful when I'm minimizing an input that causes a
+    // warning to fire, so I don't want recovery.
+    cerr << "Aborting due to ABORT_ON_DEV_WARNING." << endl;
+    abort();
+  }
+
   static bool prompted = false;
   if (!prompted) {
     prompted = true;

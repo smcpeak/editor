@@ -245,6 +245,13 @@ void TextDocument::appendElement(HistoryElt *e)
   if (m_groupStack.isEmpty()) {
     // for now, adding a new element means truncating the history
     m_history.truncate(m_historyIndex);
+
+    if (m_savedHistoryIndex > m_historyIndex) {
+      // The on-disk contents correspond to a point in the history
+      // that we just discarded.
+      m_savedHistoryIndex = -1;
+    }
+
     m_history.append(e);
     this->bumpHistoryIndex(+1);
   }

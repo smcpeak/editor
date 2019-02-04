@@ -83,11 +83,51 @@ static void testSetDocumentProcessStatus()
 }
 
 
+// Make sure we can handle using 'undo' to go backward past the point
+// in history corresponding to file contents, then make a change.
+static void testUndoPastSavePoint()
+{
+  NamedTextDocument doc;
+  doc.setFilename("tmp.h");
+
+  doc.appendString("x");
+  doc.appendString("x");
+  xassert(doc.unsavedChanges());
+  doc.writeFile();
+  xassert(!doc.unsavedChanges());
+  doc.selfCheck();
+
+  // Now, the saved history point is 2 (after those two edits).
+
+  doc.undo();
+  doc.undo();
+  xassert(doc.unsavedChanges());
+  doc.selfCheck();
+
+  // Current history point is 0.
+
+  doc.appendString("y");
+  xassert(doc.unsavedChanges());
+  doc.selfCheck();
+
+  // Current history point is 1, and saved history should be reset to -1.
+
+  doc.appendString("y");
+  xassert(doc.unsavedChanges());
+  doc.selfCheck();
+
+  // Current history point is 2.
+
+  (void)removeFile("tmp.h");
+}
+
+
 static void entry()
 {
   testWhenUntitledExists();
   testReadFile();
   testSetDocumentProcessStatus();
+  testUndoPastSavePoint();
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);

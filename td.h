@@ -65,6 +65,9 @@ private:      // data
   // the contents are in correspondence and we're moving across
   // nondestructive actions
   //
+  // This is -1 if the on-disk contents are not known to correspond
+  // to any point in the history.
+  //
   // invariant: -1 <= m_savedHistoryIndex <= m_history.seqLength()
   int m_savedHistoryIndex;
 
