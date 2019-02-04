@@ -120,7 +120,7 @@ public:       // funcs
   //
   // Note that the dialog also allows the user to close files, which
   // uses the NamedTextDocumentListObserver notification system.
-  NamedTextDocument *runOpenFilesDialog();
+  NamedTextDocument *runOpenFilesDialog(QWidget *callerWindow);
 
   // Start a new child process and return the document into which that
   // process' output is written.

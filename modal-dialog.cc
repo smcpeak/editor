@@ -3,6 +3,7 @@
 
 #include "modal-dialog.h"              // this module
 
+#include "qtguiutil.h"                 // centerWindowOnWindow
 #include "qtutil.h"                    // SET_OBJECT_NAME
 
 #include <qtcoreversion.h>             // QTCORE_VERSION
@@ -33,6 +34,13 @@ ModalDialog::~ModalDialog()
   if (m_cancelButton) {
     QObject::disconnect(m_cancelButton, NULL, this, NULL);
   }
+}
+
+
+int ModalDialog::execCentered(QWidget *target)
+{
+  centerWindowOnWindow(this, target);
+  return this->exec();
 }
 
 

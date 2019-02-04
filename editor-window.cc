@@ -1497,7 +1497,7 @@ void EditorWindow::windowOpenFilesList()
   // change.
   m_globalState->m_documentList.moveDocument(this->currentDocument(), 0);
 
-  NamedTextDocument *doc = m_globalState->runOpenFilesDialog();
+  NamedTextDocument *doc = m_globalState->runOpenFilesDialog(this);
   if (doc) {
     this->setDocumentFile(doc);
   }

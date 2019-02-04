@@ -224,14 +224,14 @@ void OpenFilesDialog::repopulateTable()
 }
 
 
-NamedTextDocument *OpenFilesDialog::runDialog()
+NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
 {
   TRACE("OpenFilesDialog", "runDialog started");
   this->repopulateTable();
   m_tableWidget->setCurrentCell(0, 0);
   m_tableWidget->setFocus();
 
-  if (this->exec()) {
+  if (this->execCentered(callerWindow)) {
     QModelIndex idx = m_tableWidget->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();

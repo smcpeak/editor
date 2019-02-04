@@ -305,12 +305,12 @@ void GlobalState::deleteDocumentFile(NamedTextDocument *file)
 }
 
 
-NamedTextDocument *GlobalState::runOpenFilesDialog()
+NamedTextDocument *GlobalState::runOpenFilesDialog(QWidget *callerWindow)
 {
   if (!m_openFilesDialog.get()) {
     m_openFilesDialog = new OpenFilesDialog(&m_documentList);
   }
-  return m_openFilesDialog->runDialog();
+  return m_openFilesDialog->runDialog(callerWindow);
 }
 
 

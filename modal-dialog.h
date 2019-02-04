@@ -30,6 +30,11 @@ protected:   // funcs
 public:      // funcs
   ModalDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~ModalDialog();
+
+  // Like 'exec', but dialog is centered on the target window.  (This
+  // is useful when the dialog has been created with a NULL parent.
+  // Note that simply changing the parent does not work.)
+  int execCentered(QWidget *target);
 };
 
 #endif // MODAL_DIALOG_H

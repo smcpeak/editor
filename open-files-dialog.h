@@ -70,7 +70,7 @@ public:      // funcs
   // Show the dialog.  When it closes, if the user has indicated they
   // want to switch to a particular file, return that file.  Otherwise
   // return NULL.
-  NamedTextDocument *runDialog();
+  NamedTextDocument *runDialog(QWidget *callerWindow);
 
 public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) NOEXCEPT;
