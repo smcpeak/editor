@@ -2,8 +2,6 @@
 TODOs:
   - bug: Ctrl+I with cursor on text "./foo" opens a file with "/./" in
     the file name
-  - bug: open-file dialog is centered across both screens when running
-    under X via SSH from Windows
   - bug: cannot record+replay if the "no more undo history" dialog appears
   - ProcessWatcher should close stdin
   - in tests, explicitly indicate which file to open
