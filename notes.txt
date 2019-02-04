@@ -3,6 +3,7 @@ TODOs:
   - bug: Ctrl+I with cursor on text "./foo" opens a file with "/./" in
     the file name
   - bug: cannot record+replay if the "no more undo history" dialog appears
+  - bug: 3 "make check" tests fail on Linux due to window resizing issues
   - ProcessWatcher should close stdin
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
