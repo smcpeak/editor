@@ -73,8 +73,14 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         else {
           if (receiver == QApplication::focusWidget()) {
             // Normally keypresses go to the focused widget, in which
-            // case we can save a lot of noise.
-            m_out << "FocusKeyPress";
+            // case we can save a lot of noise by using the focus.
+            //
+            // The "PR" means press and release.  I am not currently
+            // watching the release events, so here I just assume that
+            // press is followed immediately by release.  The release
+            // event is important because, as it happens, that is when
+            // I call selfCheck in the editor.
+            m_out << "FocusKeyPR";
           }
           else {
             // This happens, e.g., when interacting with the menus.

@@ -5,7 +5,6 @@ TODOs:
   - bug: open-file dialog is centered across both screens when running
     under X via SSH from Windows
   - bug: cannot record+replay if the "no more undo history" dialog appears
-  - event recorder should emit FocusKeyPR instead of FocusKeyPress
   - ProcessWatcher should close stdin
   - in tests, explicitly indicate which file to open
   - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
