@@ -120,9 +120,23 @@ static void resizeChildWidget(QWidget *widget, QSize const &targetSize)
   // Get the top-level window.
   QWidget *window = widget->window();
 
-  // Change window size.
+  // Compute desired window size.
   QSize windowSize = window->size();
   windowSize += deltaSize;
+
+  // Check against its minimum.  On Linux when displaying on Windows via
+  // X, the main window can end up with a fairly large minimum
+  // horizontal size, depending on the window title text.  At least for
+  // now, I will just override it during event replay.
+  QSize curMinSize = window->minimumSize();
+  QSize newMinSize = curMinSize.boundedTo(windowSize);
+  if (newMinSize != curMinSize) {
+    TRACE("EventReplay", "changing min size from " << toString(curMinSize) <<
+                         " to " << toString(newMinSize));
+    window->setMinimumSize(newMinSize);
+  }
+
+  // Now actually change the size.
   window->resize(windowSize);
 
   // Let the resize event be fully processed so the target widget can
