@@ -27,7 +27,6 @@ class EditorWidget;                    // editor-widget.h
 class GlobalState;                     // main.h
 class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
-class TextInputDialog;                 // textinput.h
 
 
 // Top-level window containing an editor pane.
@@ -56,11 +55,6 @@ private:     // data
   SearchAndReplacePanel *m_sarPanel;
   QScrollBar *m_vertScroll, *m_horizScroll;
   StatusDisplay *m_statusArea;
-
-  // Dialog associated with this window, but not always visible.
-  // NULL until it is first created.  Owned by this window through
-  // the Qt object hierarchy.
-  TextInputDialog *m_textInputDialog;
 
   // The Window menu, whose contents changes with the set
   // of open file files.

@@ -72,7 +72,6 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
     m_vertScroll(NULL),
     m_horizScroll(NULL),
     m_statusArea(NULL),
-    m_textInputDialog(NULL),
     m_windowMenu(NULL),
     m_toggleReadOnlyAction(NULL),
     m_toggleVisibleWhitespaceAction(NULL),
@@ -1163,30 +1162,27 @@ void EditorWindow::editPreviousSearchHit() NOEXCEPT
 
 void EditorWindow::editGotoLine()
 {
-  // Create the dialog if necessary.
-  //
-  // The dialog is bound to this window in order to ensure it appears
-  // centered on the window, but that has the adverse effect of not
-  // sharing history among the dialogs associated with different
-  // windows.
-  if (!m_textInputDialog) {
-    m_textInputDialog = new TextInputDialog("Goto Line", this);
-    m_textInputDialog->setLabelText("Line number:");
+  // Use a single dialog instance shared across all windows so they
+  // can share the input history.
+  static TextInputDialog *dialog;
+  if (!dialog) {
+    dialog = new TextInputDialog("Goto Line");
+    dialog->setLabelText("Line number:");
   }
 
   // Populate with the current line number.  Among the benefits of that
   // is the goto-line dialog can act as a crude form of bookmark, where
   // you hit Alt+G, Enter to quickly add the current line number to the
   // history so you can later grab it again.
-  m_textInputDialog->m_text = qstringb(m_editorWidget->cursorLine() + 1);
+  dialog->m_text = qstringb(m_editorWidget->cursorLine() + 1);
 
-  if (m_textInputDialog->exec()) {
-    string s(toString(m_textInputDialog->m_text));
+  if (dialog->execCentered(this)) {
+    string s(toString(dialog->m_text));
 
     if (!s.isempty()) {
       int n = atoi(s);
       if (n > 0) {
-        m_textInputDialog->rememberInput(qstringb(n));
+        dialog->rememberInput(qstringb(n));
 
         m_editorWidget->cursorTo(TextLCoord(n-1, 0));
         m_editorWidget->scrollToCursor(-1 /*center*/);

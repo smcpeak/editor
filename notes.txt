@@ -32,8 +32,6 @@ TODOs:
       separate somehow
   - rename all references to "open-files dialog" to "documents"?
   - way to replace all in file
-  - share history among goto-line dialogs associated with different
-    windows
   - in goto-line dialog, typing does not replace the existing entry
     if the new text starts with the same digit
 
