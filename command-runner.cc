@@ -472,16 +472,10 @@ void CommandRunner::startAsynchronous()
   // Begin running the child process.
   m_process.start();
 
-  if (m_failed) {
-    TRACE_CR("startAsync: process could not start");
-
-    // In this state, we are not going to get another signal from
-    // QProcess about termination.  But our client is expecting one, so
-    // emit it now.  This is tested by testAsyncFailedStart().
-    Q_EMIT signal_processTerminated();
-
-    return;
-  }
+  // NOTE: It is not safe to check, for example, 'm_failed' here.  Even
+  // for the case of attempting to invoke a program that does not exist,
+  // it may or may not be set here.  Instead, one must wait for QProcess
+  // to send a signal in order to determine the process' fate.
 
   // If some data has already been submitted by the client, send it to
   // the child process.
@@ -639,6 +633,15 @@ void CommandRunner::on_errorOccurred(QProcess::ProcessError error)
 
   this->setFailed(error, errorString);
 
+  if (error == QProcess::FailedToStart) {
+    // The client is expecting 'processTerminated' at some point, and
+    // that normally happens in 'on_finished'.  But if the process fails
+    // to start in the first place, 'on_finished' is never called, so
+    // emit the expected signal here.
+    TRACE_CR("on_errorOccurred: emitting signal_processTerminated");
+    Q_EMIT signal_processTerminated();
+  }
+
   TRACE_CR("on_errorOccurred: killing process");
   this->killProcess();
 }
@@ -669,7 +672,7 @@ void CommandRunner::on_finished(int exitCode, QProcess::ExitStatus exitStatus)
     this->stopEventLoop(0);
   }
 
-  TRACE_CR("emitting signal_processTerminated");
+  TRACE_CR("on_finished: emitting signal_processTerminated");
   Q_EMIT signal_processTerminated();
 }
 
