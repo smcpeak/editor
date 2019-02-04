@@ -1160,9 +1160,6 @@ void EditorWindow::editPreviousSearchHit() NOEXCEPT
 }
 
 
-void EditorWindow::editPreviousSearchHit() NOEXCEPT;
-
-
 void EditorWindow::editGotoLine()
 {
   // Use a single dialog instance shared across all windows so they
