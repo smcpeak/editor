@@ -117,7 +117,7 @@ void getCandidateSuffixes(
   }
 
   // File names do not usually end with punctuation, and the cursor
-  // should not be on consecutive puncutation is if is really on a
+  // should not be on consecutive punctuation if it really is on a
   // file name.
   if (isFilenamePunctuation(haystack[charOffset]) &&
       (charOffset == haystackLength-1 ||
@@ -183,6 +183,7 @@ FileAndLineOpt innerGetNearbyFilename(
     for (int suffix=0; suffix < candidateSuffixes.length(); suffix++) {
       string candidateName = sfu.joinFilename(
         candidatePrefixes[prefix], candidateSuffixes[suffix].m_filename);
+      candidateName = sfu.collapseDots(candidateName);
       if (sfu.absolutePathExists(candidateName)) {
         return FileAndLineOpt(candidateName,
                               candidateSuffixes[suffix].m_line);

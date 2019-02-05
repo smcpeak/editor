@@ -92,6 +92,10 @@ static void test1()
   // Ignore trailing punctuation.
   expectIGNF(sfu, prefixes, "foo.txt.", 0, "/home/foo.txt");
   expectIGNF(sfu, prefixes, "foo.txt.", 6, "/home/foo.txt");
+
+  // Test dropping dots.
+  expectIGNF(sfu, prefixes, "./foo.txt", 1, "/home/foo.txt");
+  expectIGNF(sfu, prefixes, "./a/../foo.txt", 1, "/home/foo.txt");
 }
 
 
