@@ -68,6 +68,7 @@ EventReplay::EventReplay(string const &fname)
   : m_fname(fname),
     m_in(m_fname.c_str()),
     m_lineNumber(0),
+    m_queuedFocusKeySequence(),
     m_testResult(),
     m_eventLoop(),
     m_eventReplayDelayMS(0),
@@ -329,12 +330,26 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "FocusKeyPR") {
     BIND_ARGS2(keys, text);
 
+    // It is not always safe to post multiple events since, in the real
+    // execution, events could intervene or state (e.g., focus!) could
+    // change.  But for a press-release sequence this should be safe.
     QCoreApplication::postEvent(
       getFocusWidget(),
       getKeyPressEventFromString(keys, toQString(text)));
     QCoreApplication::postEvent(
       getFocusWidget(),
       getKeyReleaseEventFromString(keys, toQString(text)));
+  }
+
+  else if (funcName == "FocusKeySequence") {
+    BIND_ARGS1(keys);
+
+    // Enqueue the keys in reverse order.
+    for (int i = keys.length()-1; i >= 0; i--) {
+      m_queuedFocusKeySequence.push(keys[i]);
+    }
+
+    // Return so 'replayNextEvent' will process them.
   }
 
   else if (funcName == "Shortcut") {
@@ -469,6 +484,35 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 }
 
 
+// Construct a key press or release event for typing 'c'.
+static QKeyEvent *charToKeyEvent(QEvent::Type eventType, char c)
+{
+  Qt::KeyboardModifiers modifiers = Qt::NoModifier;
+
+  // For the characters in use, they correspond to the Qt key codes,
+  // except that lowercase letters are denoted using codes that are in
+  // the uppercase ASCII range.
+  int k = c;
+  if ('a' <= k && k <= 'z') {
+    k -= ('a' - 'A');
+  }
+
+  return new QKeyEvent(eventType, (Qt::Key)k, modifiers, qstringb(c));
+}
+
+
+void EventReplay::replayFocusKey(char c)
+{
+  // As for 'FocusKeyPR', posting both events at once should be safe.
+  QCoreApplication::postEvent(
+    getFocusWidget(),
+    charToKeyEvent(QEvent::KeyPress, c));
+  QCoreApplication::postEvent(
+    getFocusWidget(),
+    charToKeyEvent(QEvent::KeyRelease, c));
+}
+
+
 bool EventReplay::replayNextEvent()
 {
   QRegularExpression reBlank("^\\s*(#.*)?$");
@@ -482,7 +526,18 @@ bool EventReplay::replayNextEvent()
     "\\s*$");
 
   try {
-    // Loop in order to skip comments and blank lines.
+    // Process any queued focus keys first.
+    if (!m_queuedFocusKeySequence.isEmpty()) {
+      // Note that the error reporting in the 'catch' blocks is
+      // appropriate since the file and line number are still correct
+      // when we get here.
+      this->replayFocusKey(m_queuedFocusKeySequence.pop());
+      return true;
+    }
+
+    // Loop in order to skip comments and blank lines.  We do *not*
+    // replay more than one event at a time, since after each event we
+    // need to then wait for application quiescence.
     while (!m_in.eof()) {
       // Read the next line.
       m_lineNumber++;
@@ -492,7 +547,8 @@ bool EventReplay::replayNextEvent()
         return false;
       }
       if (m_in.fail()) {
-        // There is no portable way to get an error reason here.
+        // The C++ iostreams library does not provide a portable way to
+        // get an error reason here.
         xstringb("reading the next line failed");
       }
       QString qline(line.c_str());

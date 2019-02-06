@@ -5,6 +5,7 @@
 #define EVENT_REPLAY_H
 
 // smbase
+#include "array.h"                     // ArrayStack
 #include "refct-serf.h"                // SerfRefCount
 #include "sm-override.h"               // OVERRIDE
 #include "str.h"                       // string
@@ -74,6 +75,10 @@ private:     // instance data
   // Current line number in 'm_in'.
   int m_lineNumber;
 
+  // Queue of ordinary typing characters to replay before continuing
+  // with the events in 'm_in'.
+  ArrayStack<char> m_queuedFocusKeySequence;
+
   // If the test has failed, this describes how.  Otherwise (test still
   // running, or it succeeded) it is "".
   string m_testResult;
@@ -98,6 +103,9 @@ private:     // funcs
   // Replay a single call line as matched by 'match'.  Throw a string
   // object if there is a problem.
   void replayCall(QRegularExpressionMatch &match);
+
+  // Replay an ordinary typing event.
+  void replayFocusKey(char c);
 
   // Read the next event from 'm_in' and replay it.  Return true if
   // the test should continue after doing that.

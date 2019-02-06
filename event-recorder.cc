@@ -30,9 +30,10 @@
 
 
 EventRecorder::EventRecorder(string const &filename)
-  : m_out(filename.c_str(), std::ios::binary /*use LF line endings*/)
+  : m_outStream(filename.c_str(), std::ios::binary /*use LF line endings*/),
+    m_ordinaryKeyChars()
 {
-  if (m_out.fail()) {
+  if (m_outStream.fail()) {
     xsyserror("open", filename);
   }
 
@@ -42,6 +43,7 @@ EventRecorder::EventRecorder(string const &filename)
 
 EventRecorder::~EventRecorder()
 {
+  this->flushOrdinaryKeyChars();
   QCoreApplication::instance()->removeEventFilter(this);
 }
 
@@ -66,48 +68,24 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
     else if (type == QEvent::KeyPress) {
       if (QKeyEvent const *keyEvent =
             dynamic_cast<QKeyEvent const *>(event)) {
-        if (isModifierKey(keyEvent->key())) {
-          // Filter out keypresses for isolated modifiers.  They just
-          // add noise to the recording.
-        }
-        else {
-          if (receiver == QApplication::focusWidget()) {
-            // Normally keypresses go to the focused widget, in which
-            // case we can save a lot of noise by using the focus.
-            //
-            // The "PR" means press and release.  I am not currently
-            // watching the release events, so here I just assume that
-            // press is followed immediately by release.  The release
-            // event is important because, as it happens, that is when
-            // I call selfCheck in the editor.
-            m_out << "FocusKeyPR";
-          }
-          else {
-            // This happens, e.g., when interacting with the menus.
-            // Focus in menus is a bit weird.
-            m_out << "KeyPress " << quoted(qObjectPath(receiver));
-          }
-          m_out << " " << quoted(keysString(*keyEvent))
-                << " " << quoted(keyEvent->text())
-                << endl;
-        }
+        this->recordKeyEvent(receiver, keyEvent);
       }
     }
     else if (type == QEvent::Shortcut) {
       if (QShortcutEvent const *shortcutEvent =
             dynamic_cast<QShortcutEvent const *>(event)) {
-        m_out << "Shortcut " << quoted(qObjectPath(receiver))
-              << " " << quoted(shortcutEvent->key().toString())
-              << endl;
+        this->recordEvent(stringb(
+          "Shortcut " << quoted(qObjectPath(receiver)) <<
+          " " << quoted(shortcutEvent->key().toString())));
       }
     }
     else if (type == QEvent::MouseButtonPress) {
       if (QMouseEvent const *mouseEvent =
             dynamic_cast<QMouseEvent const *>(event)) {
-        m_out << "MouseEvent " << quoted(qObjectPath(receiver))
-              << " " << quoted(toString(mouseEvent->buttons()))
-              << " " << quoted(toString(mouseEvent->pos()))
-              << endl;
+        this->recordEvent(stringb(
+          "MouseEvent " << quoted(qObjectPath(receiver)) <<
+          " " << quoted(toString(mouseEvent->buttons())) <<
+          " " << quoted(toString(mouseEvent->pos()))));
       }
     }
     else if (type == QEvent::Resize) {
@@ -118,9 +96,9 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         // some point I may add a different way of recognizing the
         // widgets I do care about.
         if (qobject_cast<EditorWidget*>(receiver)) {
-          m_out << "ResizeEvent " << quoted(qObjectPath(receiver))
-                << " " << quoted(toString(resizeEvent->size()))
-                << endl;
+          this->recordEvent(stringb(
+            "ResizeEvent " << quoted(qObjectPath(receiver)) <<
+            " " << quoted(toString(resizeEvent->size()))));
         }
       }
     }
@@ -134,15 +112,102 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         // test and application, so I will automatically emit a check
         // during recording.  (I can then choose whether to keep it when
         // editing the test.)
-        m_out << "CheckFocusWidget " << quoted(qObjectPath(receiver)) << endl;
+        this->recordEvent(stringb(
+          "CheckFocusWidget " << quoted(qObjectPath(receiver))));
       }
     }
     else {
+      // Should not get here due to 'if' filter at top.
       DEV_WARNING("whoops");
     }
   }
 
   return false;
+}
+
+
+// If 'keyEvent' is the press of a key that denotes itself in the
+// ordinary way, return the denoted character.  Otherwise return 0.
+static char isOrdinaryKeyPress(QKeyEvent const *keyEvent)
+{
+  if (keyEvent->modifiers() == Qt::NoModifier) {
+    int k = keyEvent->key();
+    if ((0x20 <= k && k <= 0x40) ||      // Key_Space to Key_At
+        (0x5b <= k && k <= 0x60) ||      // Key_BracketLeft to Key_QuoteLeft
+        (0x7b <= k && k <= 0x7e)) {      // Key_BraceLeft to Key_AsciiTilde
+      // Printable non-letter key codes correspond directly to ASCII.
+      return (char)k;
+    }
+    else if (0x41 <= k && k <= 0x5a) {   // Letters
+      // The Qt key codes correspond to the uppercase letters, but when
+      // typed without modifiers, denote lowercase letters.
+      return (char)(k + 0x20);
+    }
+  }
+
+  return 0;
+}
+
+
+void EventRecorder::recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent)
+{
+  if (isModifierKey(keyEvent->key())) {
+    // Filter out keypresses for isolated modifiers.  They just
+    // add noise to the recording.
+    return;
+  }
+
+  string eventPrefix;
+  if (receiver == QApplication::focusWidget()) {
+    // Normally keypresses go to the focused widget, in which
+    // case we can save a lot of noise by using the focus.
+
+    // Compress sequences of ordinary key presses.
+    if (char c = isOrdinaryKeyPress(keyEvent)) {
+      this->recordOrdinaryKeyPress(c);
+      return;
+    }
+
+    // The "PR" means press and release.  I am not currently
+    // watching the release events, so here I just assume that
+    // press is followed immediately by release.  The release
+    // event is important because, as it happens, that is when
+    // I call selfCheck in the editor.
+    eventPrefix = "FocusKeyPR";
+  }
+  else {
+    // This happens, e.g., when interacting with the menus.
+    // Focus in menus is a bit weird.
+    eventPrefix = stringb("KeyPress " << quoted(qObjectPath(receiver)));
+  }
+  this->recordEvent(stringb(
+    eventPrefix << " " << quoted(keysString(*keyEvent)) <<
+    " " << quoted(keyEvent->text())));
+}
+
+
+void EventRecorder::recordOrdinaryKeyPress(char c)
+{
+  m_ordinaryKeyChars << c;
+}
+
+
+void EventRecorder::flushOrdinaryKeyChars()
+{
+  if (!m_ordinaryKeyChars.isempty()) {
+    // Extract the string first, since 'recordEvent' also flushes.
+    string keys = m_ordinaryKeyChars.str();
+    m_ordinaryKeyChars.clear();
+
+    this->recordEvent(stringb("FocusKeySequence " << quoted(keys)));
+  }
+}
+
+
+void EventRecorder::recordEvent(string const &ev)
+{
+  this->flushOrdinaryKeyChars();
+  m_outStream << ev << endl;
 }
 
 

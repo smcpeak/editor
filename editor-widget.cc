@@ -2429,6 +2429,9 @@ string EditorWidget::eventReplayQuery(string const &state)
     // Strip path info.
     return SMFileUtil().splitPathBase(m_editor->m_namedDoc->name());
   }
+  else if (state == "documentText") {
+    return m_editor->getTextForLRangeString(m_editor->documentLRange());
+  }
   else if (state == "selfCheck") {
     // Just invoke self check, throwing if it fails.  The returned
     // string is not meaningful.
