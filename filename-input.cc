@@ -26,8 +26,19 @@
 #include <QVBoxLayout>
 
 
-FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
+FilenameInputDialog::History::History()
+  : m_dialogSize(400, 400)
+{}
+
+
+FilenameInputDialog::History::~History()
+{}
+
+
+FilenameInputDialog::FilenameInputDialog(History *history,
+                                         QWidget *parent, Qt::WindowFlags f)
   : ModalDialog(parent, f),
+    m_history(history),
     m_filenameLabel(NULL),
     m_filenameEdit(NULL),
     m_completionsEdit(NULL),
@@ -77,7 +88,7 @@ FilenameInputDialog::FilenameInputDialog(QWidget *parent, Qt::WindowFlags f)
     this->createOkAndCancelButtons(hbox);
   }
 
-  this->resize(400, 400);
+  this->resize(m_history->m_dialogSize);
 }
 
 
@@ -379,6 +390,8 @@ void FilenameInputDialog::accept()
       return;
     }
   }
+
+  m_history->m_dialogSize = this->size();
 
   this->QDialog::accept();
 }

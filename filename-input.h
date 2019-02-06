@@ -43,7 +43,22 @@ class QTextEdit;
 class FilenameInputDialog : public ModalDialog {
   Q_OBJECT
 
+public:      // types
+  // Data saved across invocations of the dialog.
+  class History : public SerfRefCount {
+  public:    // data
+    // Onscreen size of the dialog, in pixels.
+    QSize m_dialogSize;
+
+  public:    // funcs
+    History();
+    ~History();
+  };
+
 private:     // data
+  // Cross-invocation history.
+  RCSerf<History> m_history;
+
   // Label above the filename.
   QLabel *m_filenameLabel;
 
@@ -96,7 +111,8 @@ private:     // funcs
   void filenameCompletion();
 
 public:      // funcs
-  FilenameInputDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
+  FilenameInputDialog(History *history,
+                      QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~FilenameInputDialog();
 
   void setSaveAs(bool s) { m_saveAs = s; }

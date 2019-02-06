@@ -59,6 +59,7 @@ GlobalState::GlobalState(int argc, char **argv)
     m_windows(),
     m_recordInputEvents(false),
     m_eventFileTest(),
+    m_filenameInputDialogHistory(),
     m_processes(),
     m_openFilesDialog(NULL)
 {

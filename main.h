@@ -6,6 +6,7 @@
 
 // editor
 #include "editor-window.h"             // EditorWindow
+#include "filename-input.h"            // FilenameInputDialog
 #include "named-td-list.h"             // NamedTextDocumentList
 #include "named-td.h"                  // NamedTextDocument
 #include "open-files-dialog.h"         // OpenFilesDialog
@@ -55,6 +56,9 @@ public:       // data
 
   // Name of an event file test to run, or empty for none.
   string m_eventFileTest;
+
+  // Shared history for a dialog.
+  FilenameInputDialog::History m_filenameInputDialogHistory;
 
 private:     // data
   // Running child processes.
