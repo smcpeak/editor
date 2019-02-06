@@ -51,6 +51,11 @@ QImage EventReplayQueryable::eventReplayImage(string const &)
   return QImage();
 }
 
+bool EventReplayQueryable::wantResizeEventsRecorded()
+{
+  return false;
+}
+
 
 // ------------------------ EventReplay -------------------------
 int EventReplay::s_quiescenceEventType = 0;
@@ -478,6 +483,14 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     }
   }
 
+  else if (funcName == "CheckSize") {
+    BIND_ARGS2(path, expect);
+
+    QWidget *widget = getObjectFromPath<QWidget>(path);
+    string actual = toString(widget->size());
+    EXPECT_EQ("CheckSize " << quoted(path));
+  }
+
   else {
     xstringb("unrecognized function: " << quoted(funcName));
   }
@@ -693,10 +706,16 @@ bool EventReplay::callReplayNextEvent()
 
   if (!ret) {
     // Test is complete (pass or fail).  Stop the event loop we started
-    // in 'runTest'.  But note that that might not be the innermost
-    // event loop at the moment, e.g., if we're running a modal dialog.
-    TRACE("EventReplay", "test complete, stopping "
-      "replay event loop; result: " << m_testResult);
+    // in 'runTest'.
+    if (!m_testResult.empty()) {
+      // Our event loop might not be the innermost event loop at the
+      // moment, e.g., if we're running a modal dialog.  So, print the
+      // result to the console now so the user can see that the test has
+      // failed.  (Otherwise it looks like the test fails when the
+      // dialog is closed, which is misleading.)
+      cout << "test FAILED: " << m_testResult << endl;
+    }
+    TRACE("EventReplay", "test complete, stopping replay event loop");
     m_eventLoop.exit(0);
   }
 

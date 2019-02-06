@@ -497,6 +497,7 @@ public:      // funcs
   // EventReplayQueryable methods.
   virtual string eventReplayQuery(string const &state) OVERRIDE;
   virtual QImage eventReplayImage(string const &what) OVERRIDE;
+  virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:
   // slots to respond to scrollbars

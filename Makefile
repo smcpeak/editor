@@ -421,5 +421,6 @@ check:
 	cp test/file1.h tmp.h && ./editor -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
 	./editor -ev=test/keysequence.ev
 	./editor -ev=test/keysequence2.ev
+	cd test && ../editor -ev=fn-input-dialog-size.ev
 
 # EOF

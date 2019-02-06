@@ -4,7 +4,7 @@
 #include "event-recorder.h"            // this module
 
 // editor
-#include "editor-widget.h"             // EditorWidget
+#include "event-replay.h"              // EventReplayQueryable
 
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
@@ -91,14 +91,16 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
     else if (type == QEvent::Resize) {
       if (QResizeEvent const *resizeEvent =
             dynamic_cast<QResizeEvent const *>(event)) {
-        // I only care about resize for the editor widget.  I would
-        // prefer that this module not depend on EditorWidget, so at
-        // some point I may add a different way of recognizing the
-        // widgets I do care about.
-        if (qobject_cast<EditorWidget*>(receiver)) {
-          this->recordEvent(stringb(
-            "ResizeEvent " << quoted(qObjectPath(receiver)) <<
-            " " << quoted(toString(resizeEvent->size()))));
+        // Filter for widgets that want resize recorded.  (There are a
+        // lot of resize events that flow through the system, and I only
+        // care about a small fraction of them.)
+        if (EventReplayQueryable *queryable =
+              dynamic_cast<EventReplayQueryable*>(receiver)) {
+          if (queryable->wantResizeEventsRecorded()) {
+            this->recordEvent(stringb(
+              "ResizeEvent " << quoted(qObjectPath(receiver)) <<
+              " " << quoted(toString(resizeEvent->size()))));
+          }
         }
       }
     }

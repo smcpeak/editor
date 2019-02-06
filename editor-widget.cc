@@ -2455,4 +2455,10 @@ QImage EditorWidget::eventReplayImage(string const &what)
 }
 
 
+bool EditorWidget::wantResizeEventsRecorded()
+{
+  return true;
+}
+
+
 // EOF

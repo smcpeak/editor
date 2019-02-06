@@ -1,0 +1,45 @@
+# fn-input-dialog-size.ev
+# Test ability of the filename input dialog to remember its size.
+
+# Open dialog.
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+CheckFocusWidget "window1.filename_input.m_filenameEdit"
+
+# This is the initial size.
+CheckSize "window1.filename_input" "(400,400)"
+
+# Change size.
+ResizeEvent "window1.filename_input" "(500,600)"
+
+# Close dialog.
+FocusKeySequence "copy-paste.ev"
+FocusKeyPR "Key_Return" "\r"
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+
+# Re-open dialog.
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+CheckFocusWidget "window1.filename_input.m_filenameEdit"
+
+# Check that size was remembered.
+CheckSize "window1.filename_input" "(500,600)"
+
+# Change size again.
+ResizeEvent "window1.filename_input" "(500,500)"
+
+# Cancel dialog; this discards the new size too.
+FocusKeyPR "Key_Escape" "\x1B"
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+
+# Re-open dialog.
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+CheckFocusWidget "window1.filename_input.m_filenameEdit"
+
+# Check that first size was remembered, not the second.
+CheckSize "window1.filename_input" "(500,600)"
+
+# Cancel dialog.
+FocusKeyPR "Key_Escape" "\x1B"
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+
+# EOF

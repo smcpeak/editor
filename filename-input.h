@@ -5,6 +5,7 @@
 #define FILENAME_INPUT_H
 
 // editor
+#include "event-replay.h"              // EventReplayQueryable
 #include "named-td-list.h"             // NamedTextDocumentList
 #include "modal-dialog.h"              // ModalDialog
 
@@ -40,7 +41,8 @@ class QTextEdit;
 //
 //   * Let me double-click on completion list items with mouse.
 //
-class FilenameInputDialog : public ModalDialog {
+class FilenameInputDialog : public ModalDialog,
+                            public EventReplayQueryable {
   Q_OBJECT
 
 public:      // types
@@ -124,6 +126,9 @@ public:      // funcs
 
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
+
+  // EventReplayQueryable methods.
+  virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:
   void on_textEdited(QString const &);

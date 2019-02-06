@@ -354,6 +354,12 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 }
 
 
+bool FilenameInputDialog::wantResizeEventsRecorded()
+{
+  return true;
+}
+
+
 void FilenameInputDialog::on_textEdited(QString const &)
 {
   this->updateFeedback();

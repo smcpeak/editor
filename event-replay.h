@@ -23,6 +23,8 @@ class QRegularExpressionMatch;
 
 // Interface that the replay engine uses to query arbitrary state
 // elements of objects.
+//
+// This is also used during recording to do some filtering.
 class EventReplayQueryable {
 public:
   // Return some application-specific state.  This result must match the
@@ -40,6 +42,11 @@ public:
   // the "CheckQuery" command.  The default implementation returns a
   // null QImage.
   virtual QImage eventReplayImage(string const &what);
+
+  // Return true if resize events should be recorded for this object.
+  // Doing so facilitates writing tests for resizing.  The default is
+  // false.
+  virtual bool wantResizeEventsRecorded();
 };
 
 

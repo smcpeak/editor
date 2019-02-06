@@ -593,6 +593,18 @@ bool GlobalState::notify(QObject *receiver, QEvent *event)
     }
   }
 
+  // This is normally too noisy.
+  if (false && type == QEvent::Resize) {
+    if (QResizeEvent const *resizeEvent =
+          dynamic_cast<QResizeEvent const *>(event)) {
+      TRACE("notifyInput", eventNo << ": "
+        "ResizeEvent to " << objectDesc(receiver) <<
+        ": spontaneous=" << resizeEvent->spontaneous() <<
+        " oldSize=" << toString(resizeEvent->oldSize()) <<
+        " size=" << toString(resizeEvent->size()));
+    }
+  }
+
   return this->QApplication::notify(receiver, event);
 }
 
@@ -689,7 +701,7 @@ int main(int argc, char **argv)
           ret = 0;   // It could still fail, depending on object counts.
         }
         else {
-          cout << "test FAILED: " << error << endl;
+          // In the failure case, EventReplay prints the failure.
           ret = 2;
         }
 
