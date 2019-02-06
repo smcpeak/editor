@@ -901,9 +901,13 @@ void EditorWindow::fileRunMake()
 {
   string dir = m_editorWidget->getDocumentDirectory();
 
+  // This adds "LANG=C" to the 'make' invocation so that gcc will
+  // write its error messages in ASCII rather than UTF-8, since my
+  // editor cannot handle UTF-8 yet.
+  //
   // TODO: The exact command should be configurable.
   NamedTextDocument *fileDoc = m_globalState->launchCommand(
-    toQString(dir), false /*prefixStderrLines*/, "make");
+    toQString(dir), false /*prefixStderrLines*/, "LANG=C make");
   this->setDocumentFile(fileDoc);
 }
 
