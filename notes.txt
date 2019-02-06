@@ -2,6 +2,7 @@
 TODOs:
   - add test for remembering size of filename input dialog
   - cannot test menu commands with replayed events
+  - cannot paste from other applications under X
   - bug: cannot record+replay if the "no more undo history" dialog appears
   - ProcessWatcher should close stdin
   - more efficient navigation in lists of results from grep or compile

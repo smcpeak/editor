@@ -128,24 +128,39 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
 
 // If 'keyEvent' is the press of a key that denotes itself in the
 // ordinary way, return the denoted character.  Otherwise return 0.
+//
+// The purpose of this is to identify events we can safely and easily
+// compress into a single string in order to make the event log more
+// compact.  It is fine to be conservative about what is "ordinary".
 static char isOrdinaryKeyPress(QKeyEvent const *keyEvent)
 {
+  // No modifiers.
   if (keyEvent->modifiers() == Qt::NoModifier) {
-    int k = keyEvent->key();
-    if ((0x20 <= k && k <= 0x40) ||      // Key_Space to Key_At
-        (0x5b <= k && k <= 0x60) ||      // Key_BracketLeft to Key_QuoteLeft
-        (0x7b <= k && k <= 0x7e)) {      // Key_BraceLeft to Key_AsciiTilde
-      // Printable non-letter key codes correspond directly to ASCII.
-      return (char)k;
-    }
-    else if (0x41 <= k && k <= 0x5a) {   // Letters
-      // The Qt key codes correspond to the uppercase letters, but when
-      // typed without modifiers, denote lowercase letters.
-      return (char)(k + 0x20);
+    // Require that the denoted text be a single character that agrees
+    // with the key code in a simple way.  Among other things, this has
+    // the effect of treating text typed with caps lock as not being
+    // ordinary"
+    QString text = keyEvent->text();
+    if (text.length() == 1) {
+      // Only retain characters in the printable ASCII range.
+      int c = text[0].unicode();
+      if (!( 0x20 <= c && c <= 0x7e )) {
+        return 0;             // not ordinary
+      }
+
+      // Require that the character be the same as its key, except that
+      // letters have their case inverted.
+      int k = keyEvent->key();
+      if ('A' <= k && k <= 'Z') {
+        k += ('a' - 'A');
+      }
+      if (k == c) {
+        return (char)c;       // ordinary
+      }
     }
   }
 
-  return 0;
+  return 0;                   // not ordinary
 }
 
 

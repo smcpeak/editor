@@ -420,5 +420,6 @@ check:
 	./editor -ev=test/search-hits-with-tab.ev test/tabs-test.txt
 	cp test/file1.h tmp.h && ./editor -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
 	./editor -ev=test/keysequence.ev
+	./editor -ev=test/keysequence2.ev
 
 # EOF

@@ -1,0 +1,29 @@
+# keysequence2.ev
+# Test with some shifted characters and caps lock.
+
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+FocusKeySequence "1"
+FocusKeyPR "Shift+Key_Exclam" "!"
+FocusKeyPR "Key_Return" "\r"
+FocusKeyPR "Shift+Key_H" "H"
+FocusKeySequence "ello "
+FocusKeyPR "Shift+Key_T" "T"
+FocusKeySequence "here"
+FocusKeyPR "Key_Return" "\r"
+FocusKeyPR "Key_CapsLock" ""
+KeyPress "window1.editorFrame" "Key_CapsLock" ""
+KeyPress "window1" "Key_CapsLock" ""
+FocusKeyPR "Key_C" "C"
+FocusKeyPR "Key_A" "A"
+FocusKeyPR "Key_P" "P"
+FocusKeyPR "Key_S" "S"
+FocusKeyPR "Key_CapsLock" ""
+KeyPress "window1.editorFrame" "Key_CapsLock" ""
+KeyPress "window1" "Key_CapsLock" ""
+FocusKeyPR "Key_Return" "\r"
+FocusKeySequence "off"
+FocusKeyPR "Key_Return" "\r"
+
+CheckQuery "window1.editorFrame.m_editorWidget" "documentText" "1!\nHello There\nCAPS\noff\n"
+
+# EOF
