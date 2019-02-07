@@ -1579,7 +1579,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
     switch (k->key()) {
       case Qt::Key_Insert:
         if (shift) {
-          editPaste();
+          editPaste(QClipboard::Clipboard);
         }
         else {
           // TODO: toggle insert/overwrite mode
@@ -1850,12 +1850,14 @@ void EditorWidget::editCopy()
 }
 
 
-void EditorWidget::editPaste()
+void EditorWidget::editPaste(QClipboard::Mode mode)
 {
   INITIATING_DOCUMENT_CHANGE();
-  QString text = QApplication::clipboard()->text();
+  QString text = QApplication::clipboard()->text(mode);
   if (text.isEmpty()) {
-    QMessageBox::information(this, "Info", "The clipboard is empty.");
+    QMessageBox::information(this, "Info",
+      mode == QClipboard::Clipboard ? "The clipboard is empty." :
+                                      "The global selection is empty.");
   }
   else if (editSafetyCheck()) {
     QByteArray utf8(text.toUtf8());

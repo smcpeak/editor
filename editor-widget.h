@@ -21,7 +21,8 @@
 #include "sm-noexcept.h"               // NOEXCEPT
 
 // Qt
-#include <qwidget.h>                   // QWidget
+#include <QClipboard>
+#include <QWidget>
 
 class QtBDFFont;                       // qtbdffont.h
 class SearchAndReplacePanel;           // sar-panel.h
@@ -380,7 +381,7 @@ public:      // funcs
   void editRedo();
   void editCut();
   void editCopy();
-  void editPaste();
+  void editPaste(QClipboard::Mode mode);
   void editDelete();
   void editKillLine();
   void editGrepSource();

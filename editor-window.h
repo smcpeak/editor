@@ -170,12 +170,13 @@ public Q_SLOTS:
   void fileKillProcess();
   void fileExit();
 
-  void editUndo();
-  void editRedo();
-  void editCut();
-  void editCopy();
-  void editPaste();
-  void editDelete();
+  void editUndo() NOEXCEPT;
+  void editRedo() NOEXCEPT;
+  void editCut() NOEXCEPT;
+  void editCopy() NOEXCEPT;
+  void editPaste() NOEXCEPT;
+  void editPasteGlobalSelection() NOEXCEPT;
+  void editDelete() NOEXCEPT;
   void editKillLine() NOEXCEPT;
   void editSearch() NOEXCEPT;
   void editReplace() NOEXCEPT;
