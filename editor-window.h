@@ -208,7 +208,8 @@ public Q_SLOTS:
   void helpKeybindings();
   void helpAbout();
   void helpAboutQt();
-  void helpDebugDumpObjectTree() NOEXCEPT;
+  void helpDebugDumpWindowObjectTree() NOEXCEPT;
+  void helpDebugDumpApplicationObjectTree() NOEXCEPT;
   void helpDebugEditorScreenshot() NOEXCEPT;
 
   void editorViewChanged();

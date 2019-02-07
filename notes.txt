@@ -1,6 +1,5 @@
 
 TODOs:
-  - cannot test menu commands with replayed events
   - cannot paste from other applications under X
   - bug: cannot record+replay if the "no more undo history" dialog appears
   - ProcessWatcher should close stdin
@@ -85,6 +84,10 @@ TODOs:
   - if I press Delete while the cursor is at the left edge of a blank
     line, make it delete that line even if there is whitespace on it
   - remove unnecessary triple buffering from render code
+  - cannot test menu commands with replayed events
+    - difficult to fix since there seems to be no way to get the
+      shortcut ID programmatically
+    - have to use TriggerAction on a menu action path
 
 Projects:
   - idea: "edit" a git diff?

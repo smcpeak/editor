@@ -397,7 +397,8 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("debugMenu");
       QMenu *menu = submenu;
 
-      MENU_ITEM    ("Dump object &tree", helpDebugDumpObjectTree);
+      MENU_ITEM    ("Dump &window object tree", helpDebugDumpWindowObjectTree);
+      MENU_ITEM    ("Dump &application object tree", helpDebugDumpApplicationObjectTree);
 
       // The appearance of the widget is affected by whether it has the
       // focus.  However, even when choosing this from the menu, the
@@ -1551,10 +1552,18 @@ void EditorWindow::helpAboutQt()
 }
 
 
-void EditorWindow::helpDebugDumpObjectTree() NOEXCEPT
+void EditorWindow::helpDebugDumpWindowObjectTree() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   this->dumpObjectTree();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::helpDebugDumpApplicationObjectTree() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  qApp->dumpObjectTree();
   GENERIC_CATCH_END
 }
 
