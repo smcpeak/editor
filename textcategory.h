@@ -47,10 +47,17 @@ enum TextCategory {
 
 
 // Specify a category for a run of characters.
+//
+// This object plays a dual role of expressing spans of either
+// characters (model coordinates) or columns (layout coordinates),
+// depending on the context.  The basic design is we first populate a
+// 'LineCategories' with model coordinates, then convert those to
+// another 'LineCategories' with layout coordinates, which can then be
+// rendered to the screen.
 class TCSpan {
 public:
   TextCategory category;     // color/font to use
-  int length;                // # of characters covered
+  int length;                // # of characters or columns covered
 
 public:
   TCSpan() : category(TC_NORMAL), length(1) {}
@@ -60,10 +67,16 @@ public:
     : DMEMB(category), DMEMB(length) {}
   TCSpan& operator=(TCSpan const &obj)
     { CMEMB(category); CMEMB(length); return *this; }
+
+  bool operator== (TCSpan const &obj) const;
+  NOTEQUAL_OPERATOR(TCSpan);
 };
 
 
 // Text category info for an entire line.
+//
+// As with 'TCSpan', this class can be used with either model or layout
+// coordinates, depending on the context.
 class LineCategories : private ArrayStack<TCSpan> {
   friend class LineCategoryIter;
 
@@ -74,6 +87,9 @@ public:      // data
 public:
   LineCategories(TextCategory end) : endCategory(end) {}
 
+  bool operator== (LineCategories const &obj) const;
+  NOTEQUAL_OPERATOR(LineCategories);
+
   // clear existing runs
   void clear(TextCategory end)
     { empty(); endCategory=end; }
@@ -81,8 +97,8 @@ public:
   // Add a new category run to those already present.
   void append(TextCategory category, int length);
 
-  // Overwrite a subsequence of characters with a given category;
-  // 'length' can be 0 to mean infinite.
+  // Overwrite a subsequence of characters or columns with a given
+  // category; 'length' can be 0 to mean infinite.
   void overlay(int start, int length, TextCategory category);
 
   // Retrieve the category for the given 0-indexed character.
@@ -107,8 +123,10 @@ public:
 public:
   LineCategoryIter(LineCategories const &s);
 
-  // advance the iterator a certain number of characters
-  void advanceChars(int n);
+  // Advance the iterator a certain number of characters or columns,
+  // depending on whether the underlying 'categories' is in model space
+  // or layout space.
+  void advanceCharsOrCols(int n);
 
   // advance to the next run
   void nextRun();

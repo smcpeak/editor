@@ -4,7 +4,26 @@
 #include "textcategory.h"              // this module
 
 
+// --------------------------- TCSpan ------------------------
+bool TCSpan::operator== (TCSpan const &obj) const
+{
+  return EMEMB(category) &&
+         EMEMB(length);
+}
+
+
 // ----------------------- LineCategories --------------------
+bool LineCategories::operator== (LineCategories const &obj) const
+{
+  return this->endCategory == obj.endCategory &&
+
+         // Use the operator== that works on ArrayStacks to compare the
+         // subobjects.
+         static_cast<ArrayStack<TCSpan> const &>(*this) ==
+           static_cast<ArrayStack<TCSpan> const &>(obj);
+}
+
+
 void LineCategories::append(TextCategory category, int length)
 {
   // same as preceeding category?
@@ -36,7 +55,7 @@ void LineCategories::overlay(int start, int ovlLength, TextCategory ovlCategory)
     // only part of it
     xassert(iter.length > start);
     dest.append(iter.category, start);
-    iter.advanceChars(start);
+    iter.advanceCharsOrCols(start);
     start = 0;
   }
 
@@ -57,7 +76,7 @@ void LineCategories::overlay(int start, int ovlLength, TextCategory ovlCategory)
     dest.append(ovlCategory, ovlLength);
 
     // skip past the original category array's fragment under the overlay
-    iter.advanceChars(ovlLength);
+    iter.advanceCharsOrCols(ovlLength);
 
     // copy the remaining category elements
     while (!iter.atEnd()) {
@@ -159,7 +178,7 @@ void LineCategoryIter::nextRun()
 }
 
 
-void LineCategoryIter::advanceChars(int n)
+void LineCategoryIter::advanceCharsOrCols(int n)
 {
   while (length!=0 && n>0) {
     if (length <= n) {

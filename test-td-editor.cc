@@ -2084,6 +2084,147 @@ static void testEditingWithTabs()
 }
 
 
+static void expectMTLS(TextDocumentAndEditor &tde,
+  int line,
+  LineCategories const &expectLayoutCategories,
+  LineCategories const &modelCategories)
+{
+  LineCategories actualLayoutCategories(TC_NORMAL);
+  tde.modelToLayoutSpans(line, actualLayoutCategories, modelCategories);
+  if (expectLayoutCategories != actualLayoutCategories) {
+    cout << "expect: " << expectLayoutCategories.asString() << endl;
+    cout << "actual: " << actualLayoutCategories.asString() << endl;
+    xfailure("mismatch");
+  }
+}
+
+
+static void testModelToLayoutSpans()
+{
+  TextDocumentAndEditor tde;
+
+  // This is nearly the same text as in test/has-tabs.c.
+  tde.insertNulTermText(
+    /*0*/"\n"
+    /*1*/"int main()\n"
+    /*2*/"{\n"
+    /*3*/"\tint a = 4;\n"
+    /*4*/"\tprintf(\"a: %d\\n\", a);\n"
+    /*5*/"\tif (a)\n"
+    /*6*/"\t\ta++;\n"
+    /*7*/"\treturn\t0;\n"
+    /*8*/"}\n"
+    "");
+
+  // Spans in model-based coordinates.  (I could invoke the C/C++
+  // highlighter, but since the expected output will be written this
+  // way, I think it is clearer to directly express the inputs too.)
+  LineCategories l1mc(TC_NORMAL);
+  l1mc.append(TC_KEYWORD, 3);
+  l1mc.append(TC_NORMAL, 4);
+  l1mc.append(TC_OPERATOR, 2);
+
+  LineCategories l2mc(TC_NORMAL);
+  l2mc.append(TC_OPERATOR, 1);
+
+  LineCategories l3mc(TC_NORMAL);
+  l3mc.append(TC_NORMAL, 1);     // The single tab character.
+  l3mc.append(TC_KEYWORD, 3);
+  l3mc.append(TC_NORMAL, 3);
+  l3mc.append(TC_OPERATOR, 1);
+  l3mc.append(TC_NORMAL, 1);
+  l3mc.append(TC_NUMBER, 1);
+  l3mc.append(TC_OPERATOR, 1);
+
+  LineCategories l4mc(TC_NORMAL);
+  l4mc.append(TC_NORMAL, 7);     // "\tprintf"
+  l4mc.append(TC_OPERATOR, 1);
+  l4mc.append(TC_STRING, 9);
+  l4mc.append(TC_OPERATOR, 1);
+  l4mc.append(TC_NORMAL, 2);
+  l4mc.append(TC_OPERATOR, 2);
+
+  LineCategories l5mc(TC_NORMAL);
+  l5mc.append(TC_NORMAL, 1);
+  l5mc.append(TC_KEYWORD, 2);
+  l5mc.append(TC_NORMAL, 1);
+  l5mc.append(TC_OPERATOR, 1);
+  l5mc.append(TC_NORMAL, 1);
+  l5mc.append(TC_OPERATOR, 1);
+
+  LineCategories l6mc(TC_NORMAL);
+  l6mc.append(TC_NORMAL, 3);
+  l6mc.append(TC_OPERATOR, 3);
+
+  LineCategories l7mc(TC_NORMAL);
+  l7mc.append(TC_NORMAL, 1);     // Tab.
+  l7mc.append(TC_KEYWORD, 6);
+  l7mc.append(TC_NORMAL, 1);     // Tab after "return".
+  l7mc.append(TC_NUMBER, 1);
+  l7mc.append(TC_OPERATOR, 1);
+
+  LineCategories l8mc(TC_NORMAL);
+  l8mc.append(TC_OPERATOR, 1);
+
+  // Spans in layout coordinates.
+  LineCategories l1lc(TC_NORMAL);
+  l1lc.append(TC_KEYWORD, 3);
+  l1lc.append(TC_NORMAL, 4);
+  l1lc.append(TC_OPERATOR, 2);
+
+  LineCategories l2lc(TC_NORMAL);
+  l2lc.append(TC_OPERATOR, 1);
+
+  LineCategories l3lc(TC_NORMAL);
+  l3lc.append(TC_NORMAL, 8);     // The single tab character.
+  l3lc.append(TC_KEYWORD, 3);
+  l3lc.append(TC_NORMAL, 3);
+  l3lc.append(TC_OPERATOR, 1);
+  l3lc.append(TC_NORMAL, 1);
+  l3lc.append(TC_NUMBER, 1);
+  l3lc.append(TC_OPERATOR, 1);
+
+  LineCategories l4lc(TC_NORMAL);
+  l4lc.append(TC_NORMAL, 14);    // "\tprintf"
+  l4lc.append(TC_OPERATOR, 1);
+  l4lc.append(TC_STRING, 9);
+  l4lc.append(TC_OPERATOR, 1);
+  l4lc.append(TC_NORMAL, 2);
+  l4lc.append(TC_OPERATOR, 2);
+
+  LineCategories l5lc(TC_NORMAL);
+  l5lc.append(TC_NORMAL, 8);
+  l5lc.append(TC_KEYWORD, 2);
+  l5lc.append(TC_NORMAL, 1);
+  l5lc.append(TC_OPERATOR, 1);
+  l5lc.append(TC_NORMAL, 1);
+  l5lc.append(TC_OPERATOR, 1);
+
+  LineCategories l6lc(TC_NORMAL);
+  l6lc.append(TC_NORMAL, 17);
+  l6lc.append(TC_OPERATOR, 3);
+
+  LineCategories l7lc(TC_NORMAL);
+  l7lc.append(TC_NORMAL, 8);     // Tab.
+  l7lc.append(TC_KEYWORD, 6);
+  l7lc.append(TC_NORMAL, 2);     // Tab after "return".
+  l7lc.append(TC_NUMBER, 1);
+  l7lc.append(TC_OPERATOR, 1);
+
+  LineCategories l8lc(TC_NORMAL);
+  l8lc.append(TC_OPERATOR, 1);
+
+  expectMTLS(tde, 1, l1lc, l1mc);
+  expectMTLS(tde, 2, l2lc, l2mc);
+  expectMTLS(tde, 3, l3lc, l3mc);
+  expectMTLS(tde, 4, l4lc, l4mc);
+  expectMTLS(tde, 5, l5lc, l5mc);
+  expectMTLS(tde, 6, l6lc, l6mc);
+  expectMTLS(tde, 7, l7lc, l7mc);
+  expectMTLS(tde, 8, l8lc, l8mc);
+}
+
+
 // --------------------------- main -----------------------------
 static void entry(int argc, char **argv)
 {
@@ -2120,6 +2261,7 @@ static void entry(int argc, char **argv)
   testReadOnly();
   testLineLayout();
   testEditingWithTabs();
+  testModelToLayoutSpans();
 
   malloc_stats();
   cout << "\ntest-td-editor is ok" << endl;

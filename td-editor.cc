@@ -785,6 +785,39 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
 }
 
 
+void TextDocumentEditor::modelToLayoutSpans(int line,
+  LineCategories /*OUT*/ &layoutCategories,
+  LineCategories /*IN*/ const &modelCategories)
+{
+  // Blank out the destination spans, taking the opportunity to set
+  // the end category.
+  layoutCategories.clear(modelCategories.endCategory);
+
+  // We will work our way through the line in both model space and
+  // layout space.
+  LineIterator layoutIterator(*this, line);
+
+  // Walk the input model coordinate spans.
+  for (LineCategoryIter iter(modelCategories); !iter.atEnd(); iter.nextRun()) {
+    int spanStartColumn = layoutIterator.columnOffset();
+
+    // Iterate over 'iter.length' bytes.
+    for (int i=0; i < iter.length; i++) {
+      // If this assertion fails, then we were given 'modelCategories'
+      // that is too long for this line's contents.
+      xassert(layoutIterator.has());
+
+      layoutIterator.advByte();
+    }
+
+    int spanEndColumn = layoutIterator.columnOffset();
+
+    // Add the layout span.
+    layoutCategories.append(iter.category, spanEndColumn - spanStartColumn);
+  }
+}
+
+
 int TextDocumentEditor::countLeadingSpacesTabs(int line) const
 {
   xassert(line >= 0);

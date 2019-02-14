@@ -6,6 +6,7 @@
 
 // editor
 #include "td.h"                        // TextDocument
+#include "textcategory.h"              // LineCategories
 #include "textlcoord.h"                // TextLCoord
 
 // smbase
@@ -413,6 +414,12 @@ public:      // funcs
   // get the word following the given coordinate, including any non-word
   // characters that precede that word; stop at end of line
   string getWordAfter(TextLCoord tc) const;
+
+  // Given the character style info in 'modelCategories', compute
+  // column style info in 'layoutCategories'.
+  void modelToLayoutSpans(int line,
+    LineCategories /*OUT*/ &layoutCategories,
+    LineCategories /*IN*/ const &modelCategories);
 
   // ---------------- whitespace text queries -------------------
   // For the given line, count the number of whitespace characters

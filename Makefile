@@ -159,6 +159,7 @@ EDITOR_OBJS += history.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += td.o
 EDITOR_OBJS += td-editor.o
+EDITOR_OBJS += textcategory.o
 EDITOR_OBJS += textlcoord.o
 
 TD_OBJS := $(EDITOR_OBJS)
@@ -287,7 +288,6 @@ EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += lex_hilite.o
-EDITOR_OBJS += textcategory.o
 
 C_HILITE_OBJS := $(EDITOR_OBJS)
 
@@ -422,5 +422,6 @@ check:
 	./editor -ev=test/keysequence.ev
 	./editor -ev=test/keysequence2.ev
 	cd test && ../editor -ev=fn-input-dialog-size.ev
+	./editor -ev=test/screenshot-has-tabs.ev test/has-tabs.c
 
 # EOF

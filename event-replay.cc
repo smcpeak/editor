@@ -472,12 +472,12 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     if (actualImage != expectImage) {
       QString actualFname("failing-actual-image.png");
       if (!actualImage.save(actualFname, "PNG")) {
-        xstringb("CheckScreenshot: Images differ.  Additionally, I "
+        xstringb("CheckImage: Images differ.  Additionally, I "
                  "failed to save the actual image to " <<
                  actualFname);
       }
       else {
-        xstringb("CheckScreenshot: Images differ.  Actual image "
+        xstringb("CheckImage: Images differ.  Actual image "
                  "saved to " << actualFname);
       }
     }

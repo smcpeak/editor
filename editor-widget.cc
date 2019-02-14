@@ -758,7 +758,12 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   paint.setBackgroundMode(Qt::OpaqueMode);
 
   // Character style info.  This gets updated as we paint each line.
-  LineCategories categories(TC_NORMAL);
+  LineCategories modelCategories(TC_NORMAL);
+
+  // The style info, but expressed in layout coordinates.  For each
+  // line, we first compute 'modelCategories', then 'layoutCategories'
+  // is computed from the former.
+  LineCategories layoutCategories(TC_NORMAL);
 
   // Currently selected category and style (so we can avoid possibly
   // expensive calls to change styles).
@@ -813,7 +818,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     int visibleLineChars = 0;
 
     // nominally the entire line is normal text
-    categories.clear(TC_NORMAL);
+    modelCategories.clear(TC_NORMAL);
 
     // This is 1 if we will behave as though a newline character is
     // at the end of this line, 0 otherwise.
@@ -857,11 +862,17 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       // Apply syntax highlighting.
       if (m_editor->m_namedDoc->m_highlighter) {
         m_editor->m_namedDoc->m_highlighter
-          ->highlightTDE(m_editor, line, categories);
+          ->highlightTDE(m_editor, line, /*OUT*/ modelCategories);
+        m_editor->modelToLayoutSpans(line,
+          /*OUT*/ layoutCategories, /*IN*/ modelCategories);
+      }
+      else {
+        // If no highlighter, still need to clear the old search hits.
+        layoutCategories.clear(TC_NORMAL);
       }
 
       // Show search hits.
-      this->addSearchMatchesToLineCategories(categories, line);
+      this->addSearchMatchesToLineCategories(layoutCategories, line);
     }
     xassert(visibleLineChars <= visibleCols);
     xassert(text.length() == visibleLineChars);
@@ -881,22 +892,22 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     {
       if (selRange.m_start.m_line < line && line < selRange.m_end.m_line) {
         // entire line is selected
-        categories.overlay(0, 0 /*infinite*/, TC_SELECTION);
+        layoutCategories.overlay(0, 0 /*infinite*/, TC_SELECTION);
       }
       else if (selRange.m_start.m_line < line && line == selRange.m_end.m_line) {
         // Left half of line is selected.
         if (selRange.m_end.m_column) {
-          categories.overlay(0, selRange.m_end.m_column, TC_SELECTION);
+          layoutCategories.overlay(0, selRange.m_end.m_column, TC_SELECTION);
         }
       }
       else if (selRange.m_start.m_line == line && line < selRange.m_end.m_line) {
         // Right half of line is selected.
-        categories.overlay(selRange.m_start.m_column, 0 /*infinite*/, TC_SELECTION);
+        layoutCategories.overlay(selRange.m_start.m_column, 0 /*infinite*/, TC_SELECTION);
       }
       else if (selRange.m_start.m_line == line && line == selRange.m_end.m_line) {
         // Middle part of line is selected.
         if (selRange.m_end.m_column != selRange.m_start.m_column) {
-          categories.overlay(selRange.m_start.m_column,
+          layoutCategories.overlay(selRange.m_start.m_column,
             selRange.m_end.m_column - selRange.m_start.m_column, TC_SELECTION);
         }
       }
@@ -913,8 +924,8 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     paint.eraseRect(0,0, m_leftMargin, fullLineHeight);
 
     // Next category entry to use.
-    LineCategoryIter category(categories);
-    category.advanceChars(firstCol);
+    LineCategoryIter category(layoutCategories);
+    category.advanceCharsOrCols(firstCol);
 
     // Iterator over line contents.  This is partially redundant with
     // what is in 'text', but needed to handle glyphs that span columns.
@@ -1009,7 +1020,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       // Advance to next category segment.
       x += m_fontWidth * len;
       printedCols += len;
-      category.advanceChars(len);
+      category.advanceCharsOrCols(len);
     }
 
     // draw the cursor as a line
@@ -1056,7 +1067,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         //
         // Unfortunately, that leads to some code duplication with the
         // main painting code.
-        TextCategory cursorCategory = categories.getCategoryAt(cursorCol);
+        TextCategory cursorCategory = layoutCategories.getCategoryAt(cursorCol);
         FontVariant cursorFV = styleDB->getStyle(cursorCategory).variant;
         bool underlineCursor = false;
         if (cursorFV == FV_UNDERLINE) {

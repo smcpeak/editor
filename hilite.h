@@ -30,6 +30,9 @@ public:
   // associated with a specific document object (via a mechanism that
   // depends on the particular implementor class), and 'highlight' must
   // only be passed a reference to that particular object.
+  //
+  // The resulting 'categories' has spans expressed in *model*
+  // (not layout) coordinates.
   virtual void highlight(TextDocumentCore const &doc, int line,
                          LineCategories &categories) = 0;
 
