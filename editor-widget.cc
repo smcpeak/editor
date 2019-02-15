@@ -1590,7 +1590,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
     switch (k->key()) {
       case Qt::Key_Insert:
         if (shift) {
-          editPaste(QClipboard::Clipboard);
+          editPaste();
         }
         else {
           // TODO: toggle insert/overwrite mode
@@ -1856,7 +1856,7 @@ void EditorWidget::editCopy()
   if (this->selectEnabled()) {
     string sel = m_editor->clipboardCopy();
     QClipboard *cb = QApplication::clipboard();
-    cb->setText(toQString(sel));
+    cb->setText(toQString(sel), QClipboard::Clipboard);
     if (cb->supportsSelection()) {
       // Also set the X selection so I can paste it into an xterm.
       cb->setText(toQString(sel), QClipboard::Selection);
@@ -1866,14 +1866,26 @@ void EditorWidget::editCopy()
 }
 
 
-void EditorWidget::editPaste(QClipboard::Mode mode)
+void EditorWidget::editPaste()
 {
   INITIATING_DOCUMENT_CHANGE();
-  QString text = QApplication::clipboard()->text(mode);
+
+  QClipboard *cb = QApplication::clipboard();
+  QString text;
+
+  // Try reading the X selection first.  Generally this seems to reflect
+  // the "more recent" deliberate clipboard interaction.
+  if (cb->supportsSelection()) {
+    text = cb->text(QClipboard::Selection);
+  }
+
+  // Then the regular clipboard.
   if (text.isEmpty()) {
-    QMessageBox::information(this, "Info",
-      mode == QClipboard::Clipboard ? "The clipboard is empty." :
-                                      "The global selection is empty.");
+    text = cb->text(QClipboard::Clipboard);
+  }
+
+  if (text.isEmpty()) {
+    QMessageBox::information(this, "Info", "The clipboard is empty.");
   }
   else if (editSafetyCheck()) {
     QByteArray utf8(text.toUtf8());

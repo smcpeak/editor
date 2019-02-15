@@ -292,9 +292,6 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
     MENU_ITEM_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
     MENU_ITEM_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
-    if (QApplication::clipboard()->supportsSelection()) {
-      MENU_ITEM    ("Paste from global selection", editPasteGlobalSelection);
-    }
     MENU_ITEM    ("&Delete\tDelete", editDelete);
     MENU_ITEM_KEY("&Kill (cut) current line", editKillLine,
                   Qt::CTRL + Qt::Key_K);
@@ -1113,12 +1110,7 @@ void EditorWindow::editCopy() NOEXCEPT
 
 void EditorWindow::editPaste() NOEXCEPT
 {
-  m_editorWidget->editPaste(QClipboard::Clipboard);
-}
-
-void EditorWindow::editPasteGlobalSelection() NOEXCEPT
-{
-  m_editorWidget->editPaste(QClipboard::Selection);
+  m_editorWidget->editPaste();
 }
 
 void EditorWindow::editDelete() NOEXCEPT
