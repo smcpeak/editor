@@ -18,6 +18,7 @@
 #include "trace.h"                     // TRACE
 
 // Qt
+#include <QAbstractButton>
 #include <QAbstractEventDispatcher>
 #include <QAction>
 #include <QApplication>
@@ -388,6 +389,13 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     RESTORER(bool, m_sleeping, true);
     sleepWhilePumpingEvents(ms);
     TRACE("EventReplay", "done sleeping");
+  }
+
+  else if (funcName == "ClickButton") {
+    BIND_ARGS1(path);
+
+    QAbstractButton *button = getObjectFromPath<QAbstractButton>(path);
+    button->click();
   }
 
   // -------------------- checks --------------------

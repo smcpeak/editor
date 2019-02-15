@@ -423,5 +423,6 @@ check:
 	./editor -ev=test/keysequence2.ev
 	cd test && ../editor -ev=fn-input-dialog-size.ev
 	./editor -ev=test/screenshot-has-tabs.ev test/has-tabs.c
+	./editor -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
 
 # EOF

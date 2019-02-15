@@ -4,9 +4,12 @@
 #ifndef OPEN_FILES_DIALOG_H
 #define OPEN_FILES_DIALOG_H
 
-#include "named-td-list.h"             // NamedTextDocumentList
+// editor
+#include "event-replay.h"              // EventReplayQueryable
 #include "modal-dialog.h"              // ModalDialog
+#include "named-td-list.h"             // NamedTextDocumentList
 
+// smbase
 #include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
 #include "sm-noexcept.h"               // NOEXCEPT
@@ -25,7 +28,8 @@ ostream& operator<< (ostream &os, QModelIndex const &index);
 // Dialog to show and manipulate the open files in a document list.
 //
 // This is sort of like an "editor" for NamedTextDocumentList.
-class OpenFilesDialog : public ModalDialog {
+class OpenFilesDialog : public ModalDialog,
+                        public EventReplayQueryable {
   Q_OBJECT
 
 public:      // types
@@ -71,6 +75,9 @@ public:      // funcs
   // want to switch to a particular file, return that file.  Otherwise
   // return NULL.
   NamedTextDocument *runDialog(QWidget *callerWindow);
+
+  // EventReplayQueryable methods.
+  virtual string eventReplayQuery(string const &state) OVERRIDE;
 
 public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) NOEXCEPT;

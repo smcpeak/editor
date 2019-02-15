@@ -13,6 +13,7 @@
 // smbase
 #include "array.h"                     // ArrayStack
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
+#include "sm-file-util.h"              // SMFileUtil
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -248,6 +249,61 @@ NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
 }
 
 
+static string filenamePathBase(NamedTextDocument const *doc)
+{
+  if (doc->hasFilename()) {
+    SMFileUtil sfu;
+    return sfu.splitPathBase(doc->filename());
+  }
+  else {
+    // Does not have a file name, return complete name.
+    return doc->name();
+  }
+}
+
+
+string OpenFilesDialog::eventReplayQuery(string const &state)
+{
+  if (state == "cursorRow") {
+    QModelIndex idx = m_tableWidget->currentIndex();
+    if (idx.isValid() && !idx.parent().isValid()) {
+      int r = idx.row();
+      return stringb(r);
+    }
+    return "-1";
+  }
+
+  else if (state == "numRows") {
+    return stringb(m_tableWidget->rowCount());
+  }
+
+  else if (state == "cursorDocumentFilenamePathBase") {
+    QModelIndex idx = m_tableWidget->currentIndex();
+    if (idx.isValid() && !idx.parent().isValid()) {
+      int r = idx.row();
+      if (0 <= r && r < m_docList->numDocuments()) {
+        NamedTextDocument *doc = m_docList->getDocumentAt(r);
+        return filenamePathBase(doc);
+      }
+    }
+    return "(none)";
+  }
+
+  else if (state == "allDocumentsFilenamePathBase") {
+    stringBuilder sb;
+    for (int r=0; r < m_tableWidget->rowCount(); r++) {
+      NamedTextDocument *doc = m_docList->getDocumentAt(r);
+      sb << filenamePathBase(doc) << '\n';
+    }
+    return sb.str();
+  }
+
+  else {
+    return EventReplayQueryable::eventReplayQuery(state);
+  }
+}
+
+
 void OpenFilesDialog::on_doubleClicked(QModelIndex const &index) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -266,12 +322,23 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
   GENERIC_CATCH_BEGIN
   TRACE("OpenFilesDialog", "closeSelected");
 
+  // Cursor row, or -1 if no specific row has the cursor.
+  QItemSelectionModel *selectionModel = m_tableWidget->selectionModel();
+  int cursorRow = -1;
+  {
+    QModelIndex cursorIndex = selectionModel->currentIndex();
+    if (cursorIndex.isValid()) {
+      cursorRow = cursorIndex.row();
+      TRACE("OpenFilesDialog", "  cursorIndex: " << cursorIndex);
+    }
+  }
+  TRACE("OpenFilesDialog", "  original cursorRow: " << cursorRow);
+
   // Get the set of documents to close in a first pass so we have them
   // all before doing anything that might jeopardize the indexes.
   ArrayStack<NamedTextDocument*> docsToClose;
   bool someHaveUnsavedChanges = false;
   {
-    QItemSelectionModel *selectionModel = m_tableWidget->selectionModel();
     QModelIndexList selectedRows = selectionModel->selectedRows();
     for (QModelIndexList::iterator it(selectedRows.begin());
          it != selectedRows.end();
@@ -288,6 +355,19 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
             someHaveUnsavedChanges = true;
+          }
+
+          // Adjust the desired cursor row.  Removing something at or
+          // below does not change it, but removing something above
+          // moves it up one.
+          //
+          // I'm not sure about this logic though.  It seems to behave
+          // not quite right when dealing with many selected rows; it
+          // ends up in the middle somehow?  But I do that so rarely it
+          // doesn't matter much.
+          if (cursorRow > 0 &&
+              (r < cursorRow || cursorRow == m_docList->numDocuments()-1)) {
+            cursorRow--;
           }
         }
       }
@@ -317,6 +397,12 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
 
   // Refresh table contents.
   this->repopulateTable();
+
+  // Re-select the desired row.
+  TRACE("OpenFilesDialog",  "  final cursorRow: " << cursorRow);
+  if (cursorRow >= 0) {
+    m_tableWidget->setCurrentCell(cursorRow, 0);
+  }
 
   GENERIC_CATCH_END
 }

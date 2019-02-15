@@ -1,7 +1,5 @@
 
 TODOs:
-  - in list of open documents, when I close one, the cursor should
-    remain near that location in the list
   - ProcessWatcher should close stdin
   - more efficient navigation in lists of results from grep or compile
   - in tests, explicitly indicate which file to open
