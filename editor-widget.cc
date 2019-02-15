@@ -1839,12 +1839,22 @@ void EditorWidget::editRedo()
 }
 
 
+static void setClipboard(string newText)
+{
+  QClipboard *cb = QApplication::clipboard();
+  cb->setText(toQString(newText), QClipboard::Clipboard);
+  if (cb->supportsSelection()) {
+    // Also set the X selection so I can paste it into an xterm.
+    cb->setText(toQString(newText), QClipboard::Selection);
+  }
+}
+
+
 void EditorWidget::editCut()
 {
   INITIATING_DOCUMENT_CHANGE();
   if (this->selectEnabled() && editSafetyCheck()) {
-    string sel = m_editor->clipboardCut();
-    QApplication::clipboard()->setText(toQString(sel));
+    setClipboard(m_editor->clipboardCut());
     this->redraw();
   }
 }
@@ -1854,13 +1864,7 @@ void EditorWidget::editCopy()
 {
   INITIATING_DOCUMENT_CHANGE();
   if (this->selectEnabled()) {
-    string sel = m_editor->clipboardCopy();
-    QClipboard *cb = QApplication::clipboard();
-    cb->setText(toQString(sel), QClipboard::Clipboard);
-    if (cb->supportsSelection()) {
-      // Also set the X selection so I can paste it into an xterm.
-      cb->setText(toQString(sel), QClipboard::Selection);
-    }
+    setClipboard(m_editor->clipboardCopy());
     this->redraw();
   }
 }

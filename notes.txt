@@ -1,5 +1,6 @@
 
 TODOs:
+  - selecting text beyond EOF causes all beyond EOF to be highlighted
   - ProcessWatcher should close stdin
   - more efficient navigation in lists of results from grep or compile
   - in tests, explicitly indicate which file to open
