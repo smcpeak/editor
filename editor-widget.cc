@@ -1855,7 +1855,12 @@ void EditorWidget::editCopy()
   INITIATING_DOCUMENT_CHANGE();
   if (this->selectEnabled()) {
     string sel = m_editor->clipboardCopy();
-    QApplication::clipboard()->setText(toQString(sel));
+    QClipboard *cb = QApplication::clipboard();
+    cb->setText(toQString(sel));
+    if (cb->supportsSelection()) {
+      // Also set the X selection so I can paste it into an xterm.
+      cb->setText(toQString(sel), QClipboard::Selection);
+    }
     this->redraw();
   }
 }

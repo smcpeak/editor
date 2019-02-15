@@ -1,6 +1,5 @@
 
 TODOs:
-  - running under X, cannot copy in a way that xterm can paste
   - in list of open documents, when I close one, the cursor should
     remain near that location in the list
   - ProcessWatcher should close stdin
