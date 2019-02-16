@@ -314,8 +314,23 @@ int Makefile_Lexer::getNextToken(TextCategory &code)
   if (result == 0) {
     // end of line
     switch ((int)lexer->getState()) {
-      case COMMENT: code = TC_COMMENT;      break;
-      default:      code = TC_NORMAL;       break;
+      default:
+        xfailure("unrecognized lexer state");
+
+      case AFTER_IDENTIFIER:
+      case INITIAL:
+      case RULE:
+      case STRING:
+        code = TC_NORMAL;
+        break;
+
+      case COMMENT:
+        code = TC_COMMENT;
+        break;
+
+      case SHELL:
+        code = TC_STRING;
+        break;
     }
     return 0;
   }
