@@ -119,8 +119,6 @@ TAB           [\t]
   /* Keywords that begin a directive. */
   /* The handling of "export" is not ideal because what comes after
    * it should be highlighted like a variable assignment. */
-"define"           |
-"endef"            |
 "ifeq"             |
 "ifneq"            |
 "ifdef"            |
@@ -131,6 +129,13 @@ TAB           [\t]
 "include" {
   BEGIN(STRING);
   return TC_KEYWORD;
+}
+
+  /* Directive keywords I want to highlight even more prominently. */
+"define"           |
+"endef" {
+  BEGIN(STRING);
+  return TC_SPECIAL;
 }
 
   /* Operator within a string. */

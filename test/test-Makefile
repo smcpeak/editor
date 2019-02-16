@@ -118,4 +118,14 @@ push/%:
 # **** benchmarks
 
 
+# Set up rules and also hook into "make check".
+define MAKE_TEST
+
+$(eval $(call MAKE_TEST_RULES,${1}))
+
+check: run-full-${1}
+
+endef # MAKE_TEST
+
+
 # EOF
