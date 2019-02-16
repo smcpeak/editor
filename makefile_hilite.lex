@@ -145,24 +145,24 @@ TICK          [\']
 }
 
   /* Comment with continuation to next line. */
-"#".*{BACKSL} {
+"#".*{BACKSL}{NL} {
   BEGIN(COMMENT);
   return TC_COMMENT;
 }
 
   /* Comment without continuation. (The regex here also matches
    * a continued comment, but the one above takes precedence.) */
-"#".* {
+"#".*{NL}? {
   return TC_COMMENT;
 }
 
-  /* Continuation of comment with further extesion. */
-<COMMENT>.*{BACKSL} {
+  /* Continuation of comment with further extension. */
+<COMMENT>.*{BACKSL}{NL} {
   return TC_COMMENT;
 }
 
   /* Continuation of comment, ends here. */
-<COMMENT>.* {
+<COMMENT>.*{NL}? {
   BEGIN(INITIAL);
   return TC_COMMENT;
 }

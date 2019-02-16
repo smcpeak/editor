@@ -13,6 +13,8 @@ void entry()
     "# comment\n"
     "var := value  # comment\n"
     "-include somefile\n"
+    "# comment that \\\n"
+    "  spans two lines\n"
     "target: prereq\n"
     "\tshellcmd1\n"
     "# makefile comment\n"

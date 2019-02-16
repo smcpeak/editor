@@ -1,0 +1,13 @@
+# test-Makefile
+# Test for the Makefile highlighter; this Makefile does not
+# actually do anything useful.
+
+
+# comment \
+  that extends \
+  across multiple \
+  lines
+
+var := value
+
+# EOF

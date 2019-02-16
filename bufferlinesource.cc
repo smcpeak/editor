@@ -28,7 +28,7 @@ void BufferLineSource::beginScan(TextDocumentCore const *b, int line)
   // set up variables so we'll be able to do fillBuffer()
   buffer = b;
   bufferLine = line;
-  lineLength = buffer->lineLengthBytes(line);
+  lineLength = buffer->lineLengthBytes(line)+1;
   nextSlurpCol = 0;
 }
 
@@ -41,12 +41,20 @@ int BufferLineSource::fillBuffer(char* buf, int max_size)
     return 0;         // EOL
   }
 
-  int len = min(max_size, lineLength-nextSlurpCol);
+  int len = min(max_size, (lineLength-1)-nextSlurpCol);
   tmpArray.clear();
   buffer->getPartialLine(TextMCoord(bufferLine, nextSlurpCol), tmpArray, len);
   xassert(tmpArray.length() == len);
-  memcpy(buf, tmpArray.getArray(), len);
   nextSlurpCol += len;
+
+  // If we reached the synthetic newline, and there is space for it, add it.
+  if (nextSlurpCol == lineLength-1 && len < max_size) {
+    tmpArray.push('\n');
+    len++;
+    nextSlurpCol++;
+  }
+
+  memcpy(buf, tmpArray.getArray(), len);
 
   return len;
 }

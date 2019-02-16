@@ -37,6 +37,7 @@ mutant.cc
 *.mutreport
 .gdbinit*
 td-core
+test-bufferlinesource
 test-named-td-list
 test-justify
 test-td-editor

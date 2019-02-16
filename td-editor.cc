@@ -803,17 +803,23 @@ void TextDocumentEditor::modelToLayoutSpans(int line,
 
     // Iterate over 'iter.length' bytes.
     for (int i=0; i < iter.length; i++) {
-      // If this assertion fails, then we were given 'modelCategories'
-      // that is too long for this line's contents.
-      xassert(layoutIterator.has());
-
-      layoutIterator.advByte();
+      if (layoutIterator.has()) {
+        layoutIterator.advByte();
+      }
+      else {
+        // This happens because I show a synthetic newline character to
+        // the highlighter at the end of each line, so it returns a span
+        // for it.  We'll just ignore the span, since it will seem to
+        // cover zero columns.  (This is kind of ugly...)
+      }
     }
 
     int spanEndColumn = layoutIterator.columnOffset();
 
-    // Add the layout span.
-    layoutCategories.append(iter.category, spanEndColumn - spanStartColumn);
+    // Add the layout span (if it is not empty).
+    if (spanEndColumn > spanStartColumn) {
+      layoutCategories.append(iter.category, spanEndColumn - spanStartColumn);
+    }
   }
 }
 

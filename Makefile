@@ -1,6 +1,6 @@
 # Makefile for editor
 
-# main target
+# Default target.
 all: comment.yy.cc
 all: testgap
 all: test-td-core
@@ -12,6 +12,7 @@ all: test-named-td
 all: test-named-td-list
 all: test-nearby-file
 all: textcategory
+all: test-bufferlinesource
 all: c_hilite
 all: test-makefile-hilite
 all: editor
@@ -277,6 +278,21 @@ textcategory: textcategory.h textcategory.cc
 	./textcategory >/dev/null
 
 
+# ----------------------- test-bufferlinesource ------------------------
+TOCLEAN += test-bufferlinesource
+
+EDITOR_OBJS += bufferlinesource.o
+
+TEST_BUFFERLINESOURCE_OBJS := $(EDITOR_OBJS)
+
+TEST_BUFFERLINESOURCE_OBJS += test-bufferlinesource.o
+-include test-bufferlinesource.d
+
+test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_BUFFERLINESOURCE_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./test-bufferlinesource $(TEST_REDIR)
+
+
 # ------------- highlighting stuff --------------------
 # lexer (-b makes lex.backup)
 TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
@@ -285,7 +301,6 @@ TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
 	mv lex.backup $*.lex.backup
 	head $*.lex.backup
 
-EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += lex_hilite.o
@@ -295,7 +310,7 @@ C_HILITE_OBJS := $(EDITOR_OBJS)
 TOCLEAN += c_hilite
 c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(QT_CONSOLE_LDFLAGS)
-	./$@ >/dev/null
+	./$@ $(TEST_REDIR)
 
 -include c_hilite.d
 
@@ -303,14 +318,15 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 # ----------------- Makefile highlighting -----------------
 EDITOR_OBJS += makefile_hilite.yy.o
 
-MAKEFILE_HILITE_OBJS := $(EDITOR_OBJS)
+TEST_MAKEFILE_HILITE_OBJS := $(EDITOR_OBJS)
+
+TEST_MAKEFILE_HILITE_OBJS += test-makefile-hilite.o
+-include test-makefile-hilite.d
 
 TOCLEAN += test-makefile-hilite
-test-makefile-hilite: $(MAKEFILE_HILITE_OBJS) test-makefile-hilite.cc
-	$(CXX) -o $@ $(CCFLAGS) $(MAKEFILE_HILITE_OBJS) test-makefile-hilite.cc $(QT_CONSOLE_LDFLAGS)
-	./$@ >/dev/null
-
--include test-makefile-hilite.d
+test-makefile-hilite: $(TEST_MAKEFILE_HILITE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_MAKEFILE_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./$@ $(TEST_REDIR)
 
 
 # ----------------- git version ---------------------

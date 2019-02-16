@@ -21,7 +21,7 @@ private:     // data
   // which line we're working on
   int bufferLine;
 
-  // length of that line
+  // Length of that line, including a synthetic final newline.
   int lineLength;
 
   // column (0-based) for next slurp into yyFlexLexer's internal buffer
@@ -52,7 +52,7 @@ public:      // funcs
   int fillBuffer(char *buf, int max_size);
 
   // True if, after 'fillBuffer', we find that the line was empty.
-  bool lineIsEmpty() const { return nextSlurpCol == 0; }
+  bool lineIsEmpty() const { return lineLength == 1; }
 };
 
 
