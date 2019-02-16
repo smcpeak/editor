@@ -117,12 +117,17 @@ TAB           [\t]
 }
 
   /* Keywords that begin a directive. */
+  /* The handling of "export" is not ideal because what comes after
+   * it should be highlighted like a variable assignment. */
 "define"           |
 "endef"            |
 "ifeq"             |
 "ifneq"            |
+"ifdef"            |
+"ifndef"           |
 "else"             |
 "endif"            |
+"export"           |
 "include" {
   BEGIN(STRING);
   return TC_KEYWORD;
@@ -176,12 +181,14 @@ TAB           [\t]
   return TC_OPERATOR;
 }
 
-<AFTER_IDENTIFIER>{ANY} {
-  return TC_ERROR;
+  /* And anything else too. */
+<AFTER_IDENTIFIER>[^$(){}] {
+  BEGIN(STRING);
+  return TC_NORMAL;
 }
 
   /* Rule target name.  Cannot start with "-". */
-[a-zA-Z0-9_%.][a-zA-Z0-9_%.-]* {
+[a-zA-Z0-9_%./][a-zA-Z0-9_%./-]* {
   BEGIN(RULE);
   return TC_NORMAL;
 }
@@ -232,7 +239,6 @@ TAB           [\t]
 
   /* One-line shell line. */
 {TAB}.*{NL}? {
-  BEGIN(SHELL);
   return TC_STRING;
 }
 

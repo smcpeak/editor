@@ -2,6 +2,14 @@
 # Test for the Makefile highlighter; this Makefile does not
 # actually do anything useful.
 
+export SHELL := /bin/bash
+
+REPOS := dewdrop-hub dewdrop-observer
+
+ifndef DEWDROP_ROOT
+    ${error must define DEWDROP_ROOT}
+endif
+
 include some-other-Makefile
 -include optional-other-Makefile
 
@@ -40,6 +48,7 @@ TOCLEAN += *.o *.d
 	shell command \
 	  continued, again \
 	  onto a third line
+	final shell command
 var := value
 
 something
@@ -87,5 +96,26 @@ git-version.gen.txt: .git/HEAD .git/$(GIT_BRANCH_REF)
 endif
 
 endif
+
+
+.PHONY: pull
+pull:
+# NOTE: this is duplicated in target pull-all for efficiency, since we
+# want a parallel pull for everything, which making a dependency does
+# not do
+#	./dewdrop-hub-each 'git pull'
+	${MAKE} -j ${addprefix pull/,${REPOS}}
+pull/%:
+	cd ${DEWDROP_ROOT}/$*; git pull
+
+.PHONY: push
+push:
+#	./dewdrop-hub-each 'git push'
+	${MAKE} -j ${addprefix push/,${REPOS}}
+push/%:
+	cd ${DEWDROP_ROOT}/$*; git push
+
+# **** benchmarks
+
 
 # EOF
