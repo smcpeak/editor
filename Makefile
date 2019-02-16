@@ -13,6 +13,7 @@ all: test-named-td-list
 all: test-nearby-file
 all: textcategory
 all: c_hilite
+all: test-makefile-hilite
 all: editor
 
 
@@ -297,6 +298,19 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 	./$@ >/dev/null
 
 -include c_hilite.d
+
+
+# ----------------- Makefile highlighting -----------------
+EDITOR_OBJS += makefile_hilite.yy.o
+
+MAKEFILE_HILITE_OBJS := $(EDITOR_OBJS)
+
+TOCLEAN += test-makefile-hilite
+test-makefile-hilite: $(MAKEFILE_HILITE_OBJS) test-makefile-hilite.cc
+	$(CXX) -o $@ $(CCFLAGS) $(MAKEFILE_HILITE_OBJS) test-makefile-hilite.cc $(QT_CONSOLE_LDFLAGS)
+	./$@ >/dev/null
+
+-include test-makefile-hilite.d
 
 
 # ----------------- git version ---------------------

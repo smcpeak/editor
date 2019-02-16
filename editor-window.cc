@@ -14,6 +14,7 @@
 #include "keys-dialog.h"               // KeysDialog
 #include "launch-command-dialog.h"     // LaunchCommandDialog
 #include "main.h"                      // GlobalState
+#include "makefile_hilite.h"           // Makefile_Highlighter
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
 #include "sar-panel.h"                 // SearchAndReplacePanel
@@ -479,7 +480,6 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
     return;
   }
 
-
   if (!file->hasFilename()) {
     return;
   }
@@ -501,6 +501,11 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       file->m_highlighter = new C_Highlighter(file->getCore());
       return;
     }
+  }
+
+  if (suffixEquals(filename, "Makefile")) {
+    file->m_highlighter = new Makefile_Highlighter(file->getCore());
+    return;
   }
 }
 
@@ -1450,7 +1455,8 @@ void EditorWindow::viewSetHighlighting()
   dialog.setComboBoxItems(QStringList() <<
     "None" <<
     "C/C++" <<
-    "Diff");
+    "Diff" <<
+    "Makefile");
 
   // One annoying thing is you can't double-click an item to choose
   // it and simultaneously close the dialog.
@@ -1486,6 +1492,9 @@ void EditorWindow::viewSetHighlighting()
   }
   else if (chosen == "Diff") {
     doc->m_highlighter = new DiffHighlighter();
+  }
+  else if (chosen == "Makefile") {
+    doc->m_highlighter = new Makefile_Highlighter(doc->getCore());
   }
 
   // Notify everyone of the change.
