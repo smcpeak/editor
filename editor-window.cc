@@ -501,6 +501,11 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       file->m_highlighter = new C_Highlighter(file->getCore());
       return;
     }
+
+    if (streq(ext, "mk")) {
+      file->m_highlighter = new Makefile_Highlighter(file->getCore());
+      return;
+    }
   }
 
   if (suffixEquals(filename, "Makefile")) {
