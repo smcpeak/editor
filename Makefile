@@ -425,5 +425,6 @@ check:
 	./editor -ev=test/screenshot-has-tabs.ev test/has-tabs.c
 	./editor -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
 	./editor -ev=test/cut-then-paste.ev
+	./editor -ev=test/select-beyond-eof.ev
 
 # EOF

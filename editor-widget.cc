@@ -819,6 +819,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
     // nominally the entire line is normal text
     modelCategories.clear(TC_NORMAL);
+    layoutCategories.clear(TC_NORMAL);
 
     // This is 1 if we will behave as though a newline character is
     // at the end of this line, 0 otherwise.
@@ -865,10 +866,6 @@ void EditorWidget::paintFrame(QPainter &winPaint)
           ->highlightTDE(m_editor, line, /*OUT*/ modelCategories);
         m_editor->modelToLayoutSpans(line,
           /*OUT*/ layoutCategories, /*IN*/ modelCategories);
-      }
-      else {
-        // If no highlighter, still need to clear the old search hits.
-        layoutCategories.clear(TC_NORMAL);
       }
 
       // Show search hits.
