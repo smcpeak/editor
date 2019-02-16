@@ -80,5 +80,14 @@ typedef LexHighlighter * /*owner*/ (*MakeHighlighterFunc)(TextDocumentCore const
 // exercise a highlighter class, given a factory that makes them
 void exerciseHighlighter(MakeHighlighterFunc func);
 
+// For test/debug purpose, highlight 'line' in 'tdc' and print
+// information about that to stdout.
+void printHighlightedLine(TextDocumentCore const &tdc,
+                          LexHighlighter &hi, int line);
+
+// For test/debug, print highlight info about all lines in 'tdc'.
+void printHighlightedLines(TextDocumentCore const &tdc,
+                           LexHighlighter &hi);
+
 
 #endif // LEX_HILITE_H

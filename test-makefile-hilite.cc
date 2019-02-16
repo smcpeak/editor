@@ -6,27 +6,6 @@
 #include "test.h"                      // USUAL_MAIN
 
 
-static void printLine(TextDocumentAndEditor &tde,
-                      LexHighlighter &hi, int line)
-{
-  LineCategories categories(TC_NORMAL);
-  hi.highlightTDE(&tde, line, categories);
-
-  cout << "line " << line << ":\n"
-       << "  text : " << tde.getWholeLineString(line) << "\n"
-       << "  catgy: " << categories.asUnaryString() << "\n"
-       << "  rle  : " << categories.asString() << "\n"
-       ;
-}
-
-static void printLines(TextDocumentAndEditor &tde, LexHighlighter &hi)
-{
-  for (int i=0; i < tde.numLines(); i++) {
-    printLine(tde, hi, i);
-  }
-}
-
-
 void entry()
 {
   TextDocumentAndEditor tde;
@@ -42,7 +21,7 @@ void entry()
   );
 
   Makefile_Highlighter hi(tde.getDocument()->getCore());
-  printLines(tde, hi);
+  printHighlightedLines(tde.getDocument()->getCore(), hi);
 
   cout << "makefile_hilite works\n";
 }

@@ -288,28 +288,40 @@ void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCatego
 }
 
 
+void printHighlightedLine(TextDocumentCore const &tdc,
+                          LexHighlighter &hi, int line)
+{
+  LineCategories categories(TC_NORMAL);
+  hi.highlight(tdc, line, categories);
+
+  cout << "line " << line << ":\n"
+       << "  text : " << tdc.getWholeLineString(line) << "\n"
+       << "  catgy: " << categories.asUnaryString() << "\n"
+       << "  rle  : " << categories.asString() << "\n"
+       ;
+}
+
+void printHighlightedLines(TextDocumentCore const &tdc,
+                           LexHighlighter &hi)
+{
+  for (int i=0; i < tdc.numLines(); i++) {
+    printHighlightedLine(tdc, hi, i);
+  }
+}
+
+
 // ---------------------- test code -------------------------
 static MakeHighlighterFunc makeHigh;
 static TextDocumentEditor *tde;
 
 static void printLine(LexHighlighter &hi, int line)
 {
-  LineCategories category(TC_NORMAL);
-  hi.highlightTDE(tde, line, category);
-
-  cout << "line " << line << ":\n"
-       << "  text : " << tde->getWholeLineString(line) << "\n"
-       << "  catgy: " << category.asUnaryString() << "\n"
-       << "  rle  : " << category.asString() << "\n"
-       ;
+  printHighlightedLine(tde->getDocument()->getCore(), hi, line);
 }
 
 static void printCategories(LexHighlighter &hi)
 {
-  // stop short so I have a waterline
-  for (int i=0; i < tde->numLines()-1; i++) {
-    printLine(hi, i);
-  }
+  printHighlightedLines(tde->getDocument()->getCore(), hi);
 }
 
 static void insert(int line, int col, char const *text)

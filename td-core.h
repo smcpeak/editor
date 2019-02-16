@@ -197,6 +197,9 @@ public:    // funcs
   // must be within range.  Result is appended to 'dest'.
   void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const;
 
+  // Same, but returning the line as a string.
+  string getWholeLineString(int line) const;
+
   // Return the number of consecutive spaces and tabs at the start of
   // the given line, as a byte count.
   int countLeadingSpacesTabs(int line) const;

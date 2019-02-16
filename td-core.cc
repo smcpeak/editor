@@ -677,6 +677,14 @@ void TextDocumentCore::getWholeLine(int line,
 }
 
 
+string TextDocumentCore::getWholeLineString(int line) const
+{
+  ArrayStack<char> text;
+  this->getWholeLine(line, text);
+  return toString(text);
+}
+
+
 int TextDocumentCore::countLeadingSpacesTabs(int line) const
 {
   int ret = 0;
