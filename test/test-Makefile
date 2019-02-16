@@ -2,12 +2,90 @@
 # Test for the Makefile highlighter; this Makefile does not
 # actually do anything useful.
 
+include some-other-Makefile
+-include optional-other-Makefile
 
 # comment \
   that extends \
   across multiple \
   lines
 
+all: comment.yy.cc
+all: test-justify
+
 var := value
+var := value-with-hyphens
+SMBASE := ../smbase
+CXX := g++
+
+# Pull in build configuration.
+ifeq (,$(wildcard config.mk))
+$(error The file config.mk does not exist.  You have to copy config.mk.template to config.mk and then edit the latter by hand)
+endif
+include config.mk
+
+# Set QT_CCFLAGS, QT_LDFLAGS, QT_TOCLEAN, and the 'moc' rule.
+include $(SMQTUTIL)/qtvars.mk
+
+
+# Flags for the C and C++ compilers (and preprocessor).
+CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
+
+
+TOCLEAN += *.o *.d
+%.o : %.cc
+	$(CXX) -c -MMD -MP -o $@ $< $(CCFLAGS)
+	shell command \
+	  continued onto a second line
+	shell command \
+	  continued, again \
+	  onto a third line
+var := value
+
+something
+
+# Encode help files as C string literals.
+%.doc.gen.cc %.doc.gen.h: doc/%.txt
+	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
+
+
+# ------------ test-editor-strutil program -------------
+TOCLEAN += test-editor-strutil
+
+editor: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
+	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
+
+ifeq (,$(wildcard .git/HEAD))
+
+# Source code is not in a git repository.
+git-version.gen.txt:
+	echo "No git version info available." > $@
+
+else
+
+GIT_HEAD_CONTENTS := $(shell cat .git/HEAD)
+#$(info GIT_HEAD_CONTENTS: $(GIT_HEAD_CONTENTS))
+
+# Is HEAD a reference to a branch?
+ifneq (,$(findstring ref: ,$(GIT_HEAD_CONTENTS)))
+
+blah (,$(findstring ref: ,$(GIT_HEAD_CONTENTS)))
+
+# HEAD is detached.
+git-version.gen.txt: .git/HEAD
+	$(GIT_VERSION_QUERY) > $@
+
+else
+
+# HEAD is on branch.
+GIT_BRANCH_REF := $(filter refs/%,$(GIT_HEAD_CONTENTS))
+#$(info GIT_BRANCH_REF: $(GIT_BRANCH_REF))
+
+git-version.gen.txt: .git/HEAD .git/$(GIT_BRANCH_REF)
+	$(GIT_VERSION_QUERY) > $@
+
+endif
+
+endif
 
 # EOF

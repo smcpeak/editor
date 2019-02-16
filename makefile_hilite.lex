@@ -61,10 +61,25 @@ public:      // funcs
 %option outfile="makefile_hilite.yy.cc"
 
 
-/* start conditions */
-/* these conditions are used to encode lexer state between lines,
-   because the highlighter only sees one line at a time */
+/* Start conditions. */
+/* These conditions are (also) used to encode lexer state between lines,
+   because the highlighter only sees one line at a time. */
+
+/* After "identifier". */
+%x AFTER_IDENTIFIER
+
+/* After '#', or its continuation onto subsequent lines. */
 %x COMMENT
+
+/* After "identifier:". */
+%x RULE
+
+/* After a tab character. */
+%x SHELL
+
+/* Text that is treated by 'make' as a string.  These are *not*
+ * enclosed in double-quotes. */
+%x STRING
 
 
 /* ------------------- definitions -------------------- */
@@ -86,64 +101,105 @@ LETTER        [A-Za-z_]
 /* letter or underscore or digit */
 ALNUM         [A-Za-z_0-9]
 
-/* decimal digit */
-DIGIT         [0-9]
-
-/* sequence of decimal digits */
-DIGITS        ({DIGIT}+)
-
-/* sign of a number */
-SIGN          ("+"|"-")
-
-/* integer suffix */
-/* added 'LL' option for GNU long long compatibility.. */
-ELL_SUFFIX    [lL]([lL]?)
-INT_SUFFIX    ([uU]{ELL_SUFFIX}?|{ELL_SUFFIX}[uU]?)
-
-/* floating-point suffix letter */
-FLOAT_SUFFIX  [flFL]
-
-/* normal string character: any but quote, newline, or backslash */
-STRCHAR       [^\"\n\\]
-
-/* double quote */
-QUOTE         [\"]
-
-/* normal character literal character: any but single-quote, newline, or backslash */
-CCCHAR        [^\'\n\\]
-
-/* single quote */
-TICK          [\']
+/* Whitespace. */
+WHITESPACE    [ \t\n\f\v\r]
+TAB           [\t]
 
 
 /* ------------- token definition rules --------------- */
 %%
 
-  /* Keywords. */
+  /* The INITIAL state corresponds to the beginning of a line. */
+
+  /* Operator at start of line; stay in initial state. */
+"-" {
+  return TC_OPERATOR;
+}
+
+  /* Keywords that begin a directive. */
 "define"           |
-"else"             |
 "endef"            |
-"endif"            |
 "ifeq"             |
-"include"          return TC_KEYWORD;
+"ifneq"            |
+"else"             |
+"endif"            |
+"include" {
+  BEGIN(STRING);
+  return TC_KEYWORD;
+}
 
-  /* Punctuation. */
-"="                |
-"-"                |
-","                |
-":="               |
-":"                |
-"("                |
-")"                |
-"$"                |
-"%"                |
-"+="               return TC_OPERATOR;
+  /* Operator within a string. */
+<STRING>[(),${}]+ {
+  return TC_OPERATOR;
+}
 
-  /* Identifiers and numbers. */
-{ALNUM}+ {
+  /* Remainder of a string. */
+<STRING>[^(),${}\n]+ {
   return TC_NORMAL;
 }
 
+  /* End of string. */
+<STRING>{NL} {
+  BEGIN(INITIAL);
+  return TC_NORMAL;
+}
+
+  /* -------------- Line starting with an identifier ------------ */
+  /* Identifier: variable or rule target name. */
+{LETTER}{ALNUM}* {
+  BEGIN(AFTER_IDENTIFIER);
+  return TC_NORMAL;
+}
+
+<AFTER_IDENTIFIER>[ \t]+ {
+  return TC_NORMAL;
+}
+
+<AFTER_IDENTIFIER>("="|":="|"+=") {
+  BEGIN(STRING);
+  return TC_OPERATOR;
+}
+
+<AFTER_IDENTIFIER>(":") {
+  BEGIN(RULE);
+  return TC_OPERATOR;
+}
+
+<AFTER_IDENTIFIER>{NL} {
+  BEGIN(INITIAL);
+  return TC_NORMAL;
+}
+
+  /* Transition on any other operator to treating it as a string. */
+<AFTER_IDENTIFIER>[$(){}]+ {
+  BEGIN(STRING);
+  return TC_OPERATOR;
+}
+
+<AFTER_IDENTIFIER>{ANY} {
+  return TC_ERROR;
+}
+
+  /* Rule target name.  Cannot start with "-". */
+[a-zA-Z0-9_%.][a-zA-Z0-9_%.-]* {
+  BEGIN(RULE);
+  return TC_NORMAL;
+}
+
+<RULE>[:$(){},]+ {
+  return TC_OPERATOR;
+}
+
+<RULE>[^:$(){},\n]+ {
+  return TC_NORMAL;
+}
+
+<RULE>{NL} {
+  BEGIN(INITIAL);
+  return TC_NORMAL;
+}
+
+  /* ------------------------ Comments -------------------------- */
   /* Comment with continuation to next line. */
 "#".*{BACKSL}{NL} {
   BEGIN(COMMENT);
@@ -167,14 +223,47 @@ TICK          [\']
   return TC_COMMENT;
 }
 
-  /* Whitespace. */
-[ \t\n\f\v\r]+ {
+  /* --------------------- Shell lines --------------------- */
+  /* Start of multi-line shell line. */
+{TAB}.*{BACKSL}{NL} {
+  BEGIN(SHELL);
+  return TC_STRING;
+}
+
+  /* One-line shell line. */
+{TAB}.*{NL}? {
+  BEGIN(SHELL);
+  return TC_STRING;
+}
+
+  /* Continued shell line, still continuing. */
+<SHELL>.*{BACKSL}{NL} {
+  return TC_STRING;
+}
+
+  /* End of continued shell line. */
+<SHELL>.*{NL}? {
+  BEGIN(INITIAL);
+  return TC_STRING;
+}
+
+
+  /* --------------------- Miscellaneous --------------------- */
+  /* Spaces used as indentation. */
+  /* (I am not really sure where these can go in Makefiles.) */
+[ ]+ {
   return TC_NORMAL;
 }
 
-  /* Anything else. */
+  /* Assume a line starting with an operator is a string. */
+[(),${}]+ {
+  BEGIN(STRING);
+  return TC_OPERATOR;
+}
+
+  /* Uncategorized. */
 {ANY} {
-  return TC_NORMAL;
+  return TC_ERROR;
 }
 
 
