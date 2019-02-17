@@ -24,6 +24,14 @@ void entry()
   exerciseHighlighter(&makeC_Highlighter);
   exerciseHighlighter(&makeCommentHighlighter);
 
+  TextDocumentAndEditor tde;
+  C_Highlighter hi(tde.getDocument()->getCore());
+  testHighlighter(hi, tde, "test/highlight/c1.c");
+  testHighlighter(hi, tde, "test/highlight/c-strlit-eof1.c");
+  testHighlighter(hi, tde, "test/highlight/c-strlit-eof2.c");
+  testHighlighter(hi, tde, "test/highlight/c-strlit-backsl-eof1.c");
+  testHighlighter(hi, tde, "test/highlight/c-strlit-backsl-eof2.c");
+
   cout << "c_hilite works\n";
 }
 

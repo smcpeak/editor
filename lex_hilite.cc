@@ -6,12 +6,13 @@
 // editor
 #include "inclexer.h"                  // IncLexer
 #include "td-core.h"                   // TextDocumentCore
-#include "td-editor.h"                 // TextDocumentEditor
+#include "td-editor.h"                 // TextDocument[And]Editor
 #include "textcategory.h"              // LineCategories
 
 // smbase
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "strutil.h"                   // quoted
+#include "strutil.h"                   // quoted, readLinesFromFile
+#include "test.h"                      // EXPECT_EQ
 #include "trace.h"                     // TRACE
 
 // libc
@@ -306,6 +307,72 @@ void printHighlightedLines(TextDocumentCore const &tdc,
 {
   for (int i=0; i < tdc.numLines(); i++) {
     printHighlightedLine(tdc, hi, i);
+  }
+}
+
+
+// For convenience, e.g., so I can copy and paste into my expected
+// output after a major change, print the entire actual output.
+static void dumpActualOutput(ArrayStack<string> const &actualOutputLines)
+{
+  cout << "---- BEGIN: full actual output ----\n";
+  for (int line=0; line < actualOutputLines.length(); line++) {
+    cout << actualOutputLines[line] << '\n';
+  }
+  cout << "---- END: full actual output ----\n\n";
+}
+
+
+void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
+                     string inputFname)
+{
+  // Read the input file into the document.
+  tde.writableDoc().readFile(inputFname);
+
+  // Work through them, highlighting each line, storing the result
+  // in 'actualOutputLines'.
+  ArrayStack<string> actualOutputLines;
+  for (int line=0; line < tde.numLines(); line++) {
+    // Highlight the line in model coordinates.
+    LineCategories modelCategories(TC_NORMAL);
+    hi.highlight(tde.getDocument()->getCore(),
+                 line, modelCategories);
+
+    // Convert to layout coordinates.
+    LineCategories layoutCategories(TC_NORMAL);
+    tde.modelToLayoutSpans(line,
+      /*OUT*/ layoutCategories, /*IN*/ modelCategories);
+
+    // Render as a string and add to the output.
+    actualOutputLines.push(layoutCategories.asUnaryString());
+  }
+
+  try {
+    // Read the expected output.
+    ArrayStack<string> expectedOutputLines;
+    readLinesFromFile(expectedOutputLines, stringb(inputFname << ".hi"));
+
+    // The number of lines must agree.
+    EXPECT_EQ(actualOutputLines.length(), expectedOutputLines.length());
+
+    // Now compare them line by line so we can identify where the mismatch
+    // is if there is one.
+    for (int line=0; line < actualOutputLines.length(); line++) {
+      // Compare the highlighted results.
+      string actual = actualOutputLines[line];
+      string expect = expectedOutputLines[line];
+      if (actual != expect) {
+        xfailure(stringb("testHighlighter failure:\n" <<
+          "  index : " << line << "\n" <<
+          "  line  : " << tde.getWholeLineString(line) << "\n" <<
+          "  expect: " << expect << "\n" <<
+          "  actual: " << actual));
+      }
+    }
+  }
+  catch (...) {
+    dumpActualOutput(actualOutputLines);
+    throw;
   }
 }
 

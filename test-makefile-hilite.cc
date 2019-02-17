@@ -9,24 +9,8 @@
 void entry()
 {
   TextDocumentAndEditor tde;
-  tde.insertNulTermText(
-    "# comment\n"
-    "var := value  # comment\n"
-    "-include somefile\n"
-    "# comment that \\\n"
-    "  spans two lines\n"
-    "target: prereq\n"
-    "\tshellcmd1\n"
-    "\tshellcmd2\n"
-    "\tshellcmd that \\\n"
-    "\t  spans multiple lines\n"
-    "# makefile comment\n"
-    "\t# shell comment\n"
-    "\n"
-  );
-
   Makefile_Highlighter hi(tde.getDocument()->getCore());
-  printHighlightedLines(tde.getDocument()->getCore(), hi);
+  testHighlighter(hi, tde, "test/highlight/mk1.mk");
 
   cout << "makefile_hilite works\n";
 }

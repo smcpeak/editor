@@ -1,0 +1,1 @@
+"this string lit ends at eof

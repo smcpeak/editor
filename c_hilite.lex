@@ -284,43 +284,50 @@ TICK          [\']
 }
 
 
-  /* string literal, including one that does not end with
-     a quote; that way we'll just highlight the string but
-     subsequent lines are normal, on the assumption the user
-     will close the string soon */
-"L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
-  return TC_STRING;
-}
-
   /* string literal with escaped newline at end: we remember
      we're in a string literal so the next line will be
      highlighted accordingly */
-"L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{BACKSL} {
+"L"?{QUOTE}({STRCHAR}|({BACKSL}.))*{BACKSL}{NL} {
   BEGIN(STRING);
   return TC_STRING;
 }
 
-  /* string continuation that ends on this line */
-<STRING>({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
-  BEGIN(INITIAL);
+  /* string literal, including one that does not end with
+     a quote; that way we'll just highlight the string but
+     subsequent lines are normal, on the assumption the user
+     will close the string soon */
+"L"?{QUOTE}({STRCHAR}|({BACKSL}.))*({QUOTE}|{NL})? {
+  return TC_STRING;
+}
+
+  /* One-line string literal that ends at EOF. */
+"L"?{QUOTE}({STRCHAR}|({BACKSL}.))*{BACKSL} {
   return TC_STRING;
 }
 
   /* string continuation */
-<STRING>({STRCHAR}|{BACKSL}{ANY})*{BACKSL} {
+<STRING>({STRCHAR}|{BACKSL}.)*{BACKSL}{NL} {
   return TC_STRING;
 }
 
-  /* this won't actually happen in the context of the editor, because
-   * literal newlines won't be passed, but it makes flex happy since
-   * it now thinks all contigencies are handled */
-<STRING>{NL} {
+  /* string continuation that ends on this line */
+<STRING>({STRCHAR}|({BACKSL}.))*({QUOTE}|{NL})? {
+  BEGIN(INITIAL);
   return TC_STRING;
 }
 
+  /* Continued string literal runs into EOF. */
+<STRING>({STRCHAR}|{BACKSL}.)*{BACKSL}? {
+  return TC_STRING;
+}
+
+  /* Backslash at EOF in continued string literal. */
+<STRING>{BACKSL} {
+  return TC_STRING;
+}
 
   /* character literal, possibly unterminated */
-"L"?{TICK}({CCCHAR}|{BACKSL}{ANY})*{TICK}?{BACKSL}?   {
+"L"?{TICK}({CCCHAR}|{BACKSL}.)*{TICK}?{BACKSL}?   {
   return TC_STRING;
 }
 
@@ -373,23 +380,23 @@ TICK          [\']
 }
 
   /* preprocessor, continuing to next line */
-^[ \t]*"#"{ANY}*{BACKSL} {
+^[ \t]*"#"{ANY}*{BACKSL}{NL} {
   BEGIN(PREPROC);
   return TC_PREPROCESSOR;
 }
 
   /* preprocessor, one line */
-^[ \t]*"#"{ANY}* {
+^[ \t]*"#"{ANY}*{NL}? {
   return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, continuing to next line */
-<PREPROC>{ANY}*{BACKSL} {
+<PREPROC>{ANY}*{BACKSL}{NL} {
   return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, ending here */
-<PREPROC>{ANY}+ {
+<PREPROC>{ANY}+{NL}? {
   BEGIN(INITIAL);
   return TC_PREPROCESSOR;
 }
