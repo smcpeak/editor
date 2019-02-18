@@ -5,6 +5,7 @@ TODOs:
     works, but this:
       "|" +\|
     does not
+  - the resize/screenshot tests are still unreliable under Cygwin X
   - copy-paste from Windows apps does not work right under X since
     the editor retains the selection even when another program sets
     the clipboard
