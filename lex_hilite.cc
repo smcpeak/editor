@@ -11,6 +11,7 @@
 
 // smbase
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
+#include "sm-fstream.h"                // ofstream
 #include "strutil.h"                   // quoted, readLinesFromFile
 #include "test.h"                      // EXPECT_EQ
 #include "trace.h"                     // TRACE
@@ -311,15 +312,20 @@ void printHighlightedLines(TextDocumentCore const &tdc,
 }
 
 
-// For convenience, e.g., so I can copy and paste into my expected
-// output after a major change, print the entire actual output.
+// For convenience, e.g., so I can copy into my expected output after a
+// major change, save the entire actual output.
 static void dumpActualOutput(ArrayStack<string> const &actualOutputLines)
 {
-  cout << "---- BEGIN: full actual output ----\n";
-  for (int line=0; line < actualOutputLines.length(); line++) {
-    cout << actualOutputLines[line] << '\n';
+  {
+    ofstream out("actual.out");
+    xassert(out);
+
+    for (int line=0; line < actualOutputLines.length(); line++) {
+      out << actualOutputLines[line] << '\n';
+    }
   }
-  cout << "---- END: full actual output ----\n\n";
+
+  cout << "wrote full actual output to \"actual.out\"\n";
 }
 
 
@@ -372,6 +378,7 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
   }
   catch (...) {
     dumpActualOutput(actualOutputLines);
+    cout << "failing input file name: " << inputFname << endl;
     throw;
   }
 }

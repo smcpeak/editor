@@ -1,8 +1,15 @@
 
 TODOs:
+  - regex bug?  this regex:
+      " +\||"
+    works, but this:
+      "|" +\|
+    does not
   - copy-paste from Windows apps does not work right under X since
     the editor retains the selection even when another program sets
     the clipboard
+    - hmmm, now I cannot reproduce this problem?  if it happens again
+      I need to remember the exact applications involved
   - ProcessWatcher should close stdin
   - more efficient navigation in lists of results from grep or compile
   - in tests, explicitly indicate which file to open

@@ -66,6 +66,7 @@ public:      // funcs
 /* these conditions are used to encode lexer state between lines,
    because the highlighter only sees one line at a time */
 %x STRING
+%x CPP_COMMENT
 %x COMMENT
 %x PREPROC
 
@@ -73,12 +74,6 @@ public:      // funcs
 /* ------------------- definitions -------------------- */
 /* newline */
 NL            "\n"
-
-/* anything but newline */
-NOTNL         .
-
-/* any of 256 source characters */
-ANY           ({NOTNL}|{NL})
 
 /* backslash */
 BACKSL        "\\"
@@ -327,15 +322,37 @@ TICK          [\']
 }
 
   /* character literal, possibly unterminated */
-"L"?{TICK}({CCCHAR}|{BACKSL}.)*{TICK}?{BACKSL}?   {
+"L"?{TICK}({CCCHAR}|{BACKSL}.)*{TICK}?   {
   return TC_STRING;
 }
 
-  /* C++ comment */
-"//"{ANY}* {
+  /* character literal ending with backslash */
+"L"?{TICK}({CCCHAR}|{BACKSL}.)*{TICK}?{BACKSL}   {
+  yyless(yyleng-1);     // put the backslash back
+  return TC_STRING;
+}
+
+  /* C++ comment continued to next line*/
+"//".*{BACKSL}{NL} {
+  BEGIN(CPP_COMMENT);
   return TC_COMMENT;
 }
 
+  /* C++ comment all on one line */
+"//".*{NL}? {
+  return TC_COMMENT;
+}
+
+  /* Continued C++ comment, continuing again. */
+<CPP_COMMENT>.*{BACKSL}{NL} {
+  return TC_COMMENT;
+}
+
+  /* Continued C++ comment ends here. */
+<CPP_COMMENT>.*{NL}? {
+  BEGIN(INITIAL);
+  return TC_COMMENT;
+}
 
   /* C comment */
 "/""*"([^*]|"*"[^/])*"*"?"*/" {
@@ -363,7 +380,7 @@ TICK          [\']
   /* preprocessor, with C++ comment */
   /* (handling of comments w/in preprocessor directives is fairly
    * ad-hoc right now..) */
-^[ \t]*"#"{ANY}*"//"{ANY}* {
+^[ \t]*"#".*"//".*{NL}? {
   // find the start of the comment
   char const *p = strchr(yytext, '/');
   while (p && p[1]!='/') {
@@ -380,23 +397,23 @@ TICK          [\']
 }
 
   /* preprocessor, continuing to next line */
-^[ \t]*"#"{ANY}*{BACKSL}{NL} {
+^[ \t]*"#".*{BACKSL}{NL} {
   BEGIN(PREPROC);
   return TC_PREPROCESSOR;
 }
 
   /* preprocessor, one line */
-^[ \t]*"#"{ANY}*{NL}? {
+^[ \t]*"#".*{NL}? {
   return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, continuing to next line */
-<PREPROC>{ANY}*{BACKSL}{NL} {
+<PREPROC>.*{BACKSL}{NL} {
   return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, ending here */
-<PREPROC>{ANY}+{NL}? {
+<PREPROC>.+{NL}? {
   BEGIN(INITIAL);
   return TC_PREPROCESSOR;
 }
@@ -417,7 +434,7 @@ TICK          [\']
 
 
   /* anything else */
-{ANY} {
+. {
   return TC_ERROR;
 }
 
@@ -459,6 +476,7 @@ int C_Lexer::getNextToken(TextCategory &code)
     // end of line
     switch ((int)lexer->getState()) {
       case STRING:  code = TC_STRING;       break;
+      case CPP_COMMENT:
       case COMMENT: code = TC_COMMENT;      break;
       case PREPROC: code = TC_PREPROCESSOR; break;
       default:      code = TC_NORMAL;       break;

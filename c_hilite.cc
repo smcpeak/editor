@@ -31,6 +31,14 @@ void entry()
   testHighlighter(hi, tde, "test/highlight/c-strlit-eof2.c");
   testHighlighter(hi, tde, "test/highlight/c-strlit-backsl-eof1.c");
   testHighlighter(hi, tde, "test/highlight/c-strlit-backsl-eof2.c");
+  testHighlighter(hi, tde, "test/highlight/c-c-comment-eof1.c");
+  testHighlighter(hi, tde, "test/highlight/c-c-comment-eof2.c");
+  testHighlighter(hi, tde, "test/highlight/c-c-comment-eof3.c");
+  testHighlighter(hi, tde, "test/highlight/c-c-comment-eof4.c");
+  testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof1.c");
+  testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof2.c");
+  testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof3.c");
+  testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof4.c");
 
   cout << "c_hilite works\n";
 }
