@@ -1,10 +1,5 @@
 
 TODOs:
-  - ResizeEvent has a race condition on X; example:
-      $ runloop 5 ./editor -ev=test/search-hits-with-tab.ev test/tabs-test.txt
-    does not usually even get to 5
-  - with lots of documents, window menu gets so huge that I can't mouse
-    over the menu bar to the right
   - copy-paste from Windows apps does not work right under X since
     the editor retains the selection even when another program sets
     the clipboard

@@ -73,12 +73,10 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
     m_vertScroll(NULL),
     m_horizScroll(NULL),
     m_statusArea(NULL),
-    m_windowMenu(NULL),
     m_toggleReadOnlyAction(NULL),
     m_toggleVisibleWhitespaceAction(NULL),
     m_toggleVisibleSoftMarginAction(NULL),
-    m_toggleHighlightTrailingWSAction(NULL),
-    m_fileChoiceActions()
+    m_toggleHighlightTrailingWSAction(NULL)
 {
   xassert(theState);
   xassert(initFile);
@@ -152,7 +150,6 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   //QObject::connect(m_horizScroll, &QScrollBar::valueChanged, editor, &EditorWidget::scrollToCol);
 
   this->buildMenu();
-  this->rebuildWindowMenu();
 
   this->setWindowIcon(pixmaps->icon);
 
@@ -194,7 +191,6 @@ EditorWindow::~EditorWindow()
   QObject::disconnect(m_sarPanel,     NULL, m_globalState,  NULL);
   QObject::disconnect(m_editorWidget, NULL, this,           NULL);
   QObject::disconnect(m_vertScroll,   NULL, m_editorWidget, NULL);
-  QObject::disconnect(m_windowMenu,   NULL, this,           NULL);
 }
 
 
@@ -375,12 +371,6 @@ void EditorWindow::buildMenu()
       windowOccupyLeft, Qt::CTRL + Qt::ALT + Qt::Key_Left);
     MENU_ITEM_KEY("Move/size to Right Screen Half",
       windowOccupyRight, Qt::CTRL + Qt::ALT + Qt::Key_Right);
-
-    menu->addSeparator();
-
-    this->m_windowMenu = menu;
-    QObject::connect(this->m_windowMenu, &QMenu::triggered,
-                     this, &EditorWindow::windowFileChoiceActivated);
   }
 
   {
@@ -1039,19 +1029,11 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 
 void EditorWindow::namedTextDocumentAdded(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-  this->rebuildWindowMenu();
-  GENERIC_CATCH_END
-}
+{}
 
 void EditorWindow::namedTextDocumentRemoved(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
-  GENERIC_CATCH_BEGIN
-
-  this->rebuildWindowMenu();
-
   // It is possible that the file our widget is editing is being
   // removed, in which case the widget will switch to another file and
   // we will have to update the filename display.  But it would be
@@ -1061,16 +1043,12 @@ void EditorWindow::namedTextDocumentRemoved(
   //
   // Instead, those updates happen in response to the 'viewChanged'
   // signal, which the widget will emit when it learns of the change.
-
-  GENERIC_CATCH_END
 }
 
 void EditorWindow::namedTextDocumentAttributeChanged(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-
-  this->rebuildWindowMenu();
 
   // The title of the file we are looking at could have changed.
   this->editorViewChanged();
@@ -1083,11 +1061,7 @@ void EditorWindow::namedTextDocumentAttributeChanged(
 
 void EditorWindow::namedTextDocumentListOrderChanged(
   NamedTextDocumentList *) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-  this->rebuildWindowMenu();
-  GENERIC_CATCH_END
-}
+{}
 
 
 void EditorWindow::fileExit()
@@ -1699,72 +1673,6 @@ void EditorWindow::on_openFilenameInputDialogSignal(
   if (!confirmedFilename.isEmpty()) {
     this->fileOpenFile(toString(confirmedFilename));
   }
-}
-
-
-void EditorWindow::rebuildWindowMenu()
-{
-  // remove all of the old menu items
-  while (this->m_fileChoiceActions.isNotEmpty()) {
-    QAction *action = this->m_fileChoiceActions.pop();
-    this->m_windowMenu->removeAction(action);
-
-    // Removing an action effectively means we take ownership of it.
-    delete action;
-  }
-
-  // add new items for all of the open files;
-  // hotkeys have already been assigned by now
-  for (int i=0; i < this->m_globalState->m_documentList.numDocuments(); i++) {
-    NamedTextDocument *b = this->m_globalState->m_documentList.getDocumentAt(i);
-
-    QKeySequence keySequence;
-    if (b->hasHotkey()) {
-      keySequence = Qt::ALT + (Qt::Key_0 + b->getHotkeyDigit());
-    }
-
-    QAction *action = this->m_windowMenu->addAction(
-      toQString(b->m_title),              // menu item text
-      this,                               // receiver
-      &EditorWindow::windowFileChoice,    // slot
-      keySequence);                       // accelerator
-
-    // Associate the action with the NamedTextDocument object.
-    action->setData(QVariant(b->m_windowMenuId));
-
-    this->m_fileChoiceActions.push(action);
-  }
-}
-
-
-// Respond to the choice of an entry from the Window menu.
-void EditorWindow::windowFileChoiceActivated(QAction *action)
-{
-  TRACE("menu", "window file choice activated");
-
-  // Search through the list of files to find the one
-  // that this action refers to.
-  int windowMenuId = action->data().toInt();
-  NamedTextDocument *file =
-    this->m_globalState->m_documentList.findDocumentByWindowMenuId(windowMenuId);
-  if (file) {
-    TRACE("menu", "window file choice is: " << file->name());
-    this->setDocumentFile(file);
-  }
-  else {
-    // the id doesn't match any that I'm aware of; this happens
-    // for window menu items that do *not* switch to some file
-    TRACE("menu", "window file choice did not match any file");
-  }
-}
-
-// This is just a placeholder.  Every QMenu::addAction() that
-// accepts a shortcut also insists on having a receiver, so here
-// we are.  But 'windowFileChoiceActivated' does all the work.
-void EditorWindow::windowFileChoice()
-{
-  TRACE("menu", "window file choice");
-  return;
 }
 
 

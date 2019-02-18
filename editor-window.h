@@ -56,22 +56,11 @@ private:     // data
   QScrollBar *m_vertScroll, *m_horizScroll;
   StatusDisplay *m_statusArea;
 
-  // The Window menu, whose contents changes with the set
-  // of open file files.
-  QMenu *m_windowMenu;
-
   // Actions for toggle options.
   QAction *m_toggleReadOnlyAction;
   QAction *m_toggleVisibleWhitespaceAction;
   QAction *m_toggleVisibleSoftMarginAction;
   QAction *m_toggleHighlightTrailingWSAction;
-
-  // Set of Actions in the Window menu that choose a file.
-  // These need to be removed from the Window menu when we
-  // rebuild it.  These are not exactly owner pointers, since
-  // normally the Window menu owns the Actions, but when we
-  // pull them out of the Window menu, we have to delete them.
-  ArrayStack<QAction*> m_fileChoiceActions;
 
 private:     // funcs
   void buildMenu();
@@ -99,7 +88,6 @@ private:     // funcs
   string fileChooseDialog(string const &dir, bool saveAs,
     FileChooseDialogKind dialogKind);
 
-  void rebuildWindowMenu();
   void complain(char const *msg);
 
   void printUnhandled(xBase const &x)
@@ -202,8 +190,6 @@ public Q_SLOTS:
   void windowCloseWindow();
   void windowOccupyLeft();
   void windowOccupyRight();
-  void windowFileChoiceActivated(QAction *action);
-  void windowFileChoice();
 
   void helpKeybindings();
   void helpAbout();

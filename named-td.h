@@ -81,6 +81,11 @@ public:      // data
 
   // Numeric identifier for this buffer.  This is used to identify
   // it in the Window menu.
+  //
+  // Update 2019-02-17: I have removed the list of open documents from
+  // the Window menu, hence this ID is not needed.  But, at least for a
+  // while, I'll leave the mechanism in case I change my mind or decide
+  // to build a different sort of menu-like way to access documents.
   int const m_windowMenuId;
 
   // current highlighter; clients can come in and replace the
