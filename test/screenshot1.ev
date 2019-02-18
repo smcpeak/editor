@@ -7,8 +7,8 @@ CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "file1.h"
 CheckQuery "window1.editorFrame.m_editorWidget" "firstVisible" "0:0"
 
 # Set a certain size, chosen more or less at random.
-ResizeEvent "window1.editorFrame.m_editorWidget" "(339,207)"
-CheckQuery "window1.editorFrame.m_editorWidget" "lastVisible" "11:36"
+ResizeEvent "window1.editorFrame.m_editorWidget" "(420,207)"
+CheckQuery "window1.editorFrame.m_editorWidget" "lastVisible" "11:45"
 
 # Scroll down and right and then select some text.
 FocusKeyPress "Key_PageDown" ""
@@ -44,7 +44,7 @@ FocusKeyPress "Shift+Key_Right" ""
 
 # Check that we ended up where we expect.
 CheckQuery "window1.editorFrame.m_editorWidget" "firstVisible" "12:6"
-CheckQuery "window1.editorFrame.m_editorWidget" "lastVisible" "23:42"
+CheckQuery "window1.editorFrame.m_editorWidget" "lastVisible" "23:51"
 CheckLabel "window1.m_statusArea.m_cursor" "21:22"
 
 # Take a screenshot and compare to a previous one.

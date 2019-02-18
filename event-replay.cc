@@ -138,9 +138,18 @@ static void resizeChildWidget(QWidget *widget, QSize const &targetSize)
   QSize curMinSize = window->minimumSize();
   QSize newMinSize = curMinSize.boundedTo(windowSize);
   if (newMinSize != curMinSize) {
-    TRACE("EventReplay", "changing min size from " << toString(curMinSize) <<
-                         " to " << toString(newMinSize));
-    window->setMinimumSize(newMinSize);
+    // Update: It seems that, if I have to change the minimum size, the
+    // resize gets reverted quickly afterward, causing a race condition
+    // in tests where that happens.  It seems I have to instead make
+    // sure my tests never go below the minimum.
+    //TRACE("EventReplay", "changing min size from " << toString(curMinSize) <<
+    //                     " to " << toString(newMinSize));
+    //window->setMinimumSize(newMinSize);
+    xstringb("Cannot resize widget to " << toString(targetSize) <<
+             " because that would require resizing the window to " <<
+             toString(windowSize) <<
+             ", which violates the minimum size of " <<
+             toString(curMinSize) << ".");
   }
 
   // Now actually change the size.
@@ -480,12 +489,14 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     if (actualImage != expectImage) {
       QString actualFname("failing-actual-image.png");
       if (!actualImage.save(actualFname, "PNG")) {
-        xstringb("CheckImage: Images differ.  Additionally, I "
+        xstringb("CheckImage: Does not match expected image " <<
+                 expectFname << ".  Additionally, I "
                  "failed to save the actual image to " <<
                  actualFname);
       }
       else {
-        xstringb("CheckImage: Images differ.  Actual image "
+        xstringb("CheckImage: Does not match expected image " <<
+                 expectFname << ".  Actual image "
                  "saved to " << actualFname);
       }
     }
