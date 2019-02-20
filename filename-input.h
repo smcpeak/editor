@@ -131,11 +131,11 @@ public:      // funcs
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:
-  void on_textEdited(QString const &);
-  void on_help();
+  void on_textEdited(QString const &) NOEXCEPT;
+  void on_help() NOEXCEPT;
 
   // QDialog slots.
-  virtual void accept() OVERRIDE;
+  virtual void accept() NOEXCEPT OVERRIDE;
 };
 
 

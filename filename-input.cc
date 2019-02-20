@@ -360,14 +360,17 @@ bool FilenameInputDialog::wantResizeEventsRecorded()
 }
 
 
-void FilenameInputDialog::on_textEdited(QString const &)
+void FilenameInputDialog::on_textEdited(QString const &) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
   this->updateFeedback();
+  GENERIC_CATCH_END
 }
 
 
-void FilenameInputDialog::on_help()
+void FilenameInputDialog::on_help() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
   messageBox(this, "Help",
     qstringb(
       (m_saveAs?
@@ -376,11 +379,14 @@ void FilenameInputDialog::on_help()
       "\n"
       "Tab: Complete partial file or directory name.\n"
       "PageUp/Down: Scroll the completions window.\n"));
+  GENERIC_CATCH_END
 }
 
 
-void FilenameInputDialog::accept()
+void FilenameInputDialog::accept() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   string filename = toString(m_filenameEdit->text());
 
   SMFileUtil sfu;
@@ -400,6 +406,8 @@ void FilenameInputDialog::accept()
   m_history->m_dialogSize = this->size();
 
   this->QDialog::accept();
+
+  GENERIC_CATCH_END
 }
 
 
