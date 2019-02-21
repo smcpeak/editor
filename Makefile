@@ -15,6 +15,7 @@ all: textcategory
 all: test-bufferlinesource
 all: c_hilite
 all: test-makefile-hilite
+all: test-hashcomment-hilite
 all: editor
 
 
@@ -294,8 +295,13 @@ test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
 
 
 # ------------- highlighting stuff --------------------
+TOCLEAN += *.yy.cc *.lex.backup
+
 # lexer (-b makes lex.backup)
-TOCLEAN += comment.yy.cc c_hilite.yy.cc *.lex.backup
+#
+# NOTE: The base name of the lexer files can only use characters that
+# are allowed in C identifiers because Flex derives the name of some
+# internal identifiers from that file name.
 %.yy.cc: %.lex %.h
 	flex -o$@ -b -P$*_yy $*.lex
 	mv lex.backup $*.lex.backup
@@ -326,6 +332,20 @@ TEST_MAKEFILE_HILITE_OBJS += test-makefile-hilite.o
 TOCLEAN += test-makefile-hilite
 test-makefile-hilite: $(TEST_MAKEFILE_HILITE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_MAKEFILE_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+	./$@ $(TEST_REDIR)
+
+
+# ----------------- HashComment highlighting -----------------
+EDITOR_OBJS += hashcomment_hilite.yy.o
+
+TEST_HASHCOMMENT_HILITE_OBJS := $(EDITOR_OBJS)
+
+TEST_HASHCOMMENT_HILITE_OBJS += test-hashcomment-hilite.o
+-include test-hashcomment-hilite.d
+
+TOCLEAN += test-hashcomment-hilite
+test-hashcomment-hilite: $(TEST_HASHCOMMENT_HILITE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_HASHCOMMENT_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
 	./$@ $(TEST_REDIR)
 
 

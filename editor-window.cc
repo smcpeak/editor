@@ -10,6 +10,7 @@
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
+#include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
 #include "launch-command-dialog.h"     // LaunchCommandDialog
@@ -494,6 +495,16 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 
     if (streq(ext, "mk")) {
       file->m_highlighter = new Makefile_Highlighter(file->getCore());
+      return;
+    }
+
+    static char const * const hashCommentExts[] = {
+      "sh",
+      "py",
+      "pl"
+    };
+    if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
+      file->m_highlighter = new HashComment_Highlighter(file->getCore());
       return;
     }
   }
@@ -1435,6 +1446,7 @@ void EditorWindow::viewSetHighlighting()
     "None" <<
     "C/C++" <<
     "Diff" <<
+    "HashComment" <<
     "Makefile");
 
   // One annoying thing is you can't double-click an item to choose
@@ -1471,6 +1483,9 @@ void EditorWindow::viewSetHighlighting()
   }
   else if (chosen == "Diff") {
     doc->m_highlighter = new DiffHighlighter();
+  }
+  else if (chosen == "HashComment") {
+    doc->m_highlighter = new HashComment_Highlighter(doc->getCore());
   }
   else if (chosen == "Makefile") {
     doc->m_highlighter = new Makefile_Highlighter(doc->getCore());
