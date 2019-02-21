@@ -1,6 +1,5 @@
 
 TODOs:
-  - if I type beyond EOF, then undo, the extra whitespace is not undone
   - regex bug?  this regex:
       " +\||"
     works, but this:
