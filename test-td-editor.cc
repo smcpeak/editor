@@ -1753,7 +1753,8 @@ static void testGetSelectedOrIdentifier()
     " abc \n"
     " azAZ_09 \n"
     "$azAZ_09-\n"
-    "      ");
+    "      \n"
+    "\ta");
 
   expectGSOI_nm(tde, 0,0, "");
   expectGSOI_nm(tde, 0,1, "");
@@ -1769,6 +1770,9 @@ static void testGetSelectedOrIdentifier()
   expectGSOI_nm(tde, 4,4, "azAZ_09");
   expectGSOI_nm(tde, 5,4, "azAZ_09");
   expectGSOI_nm(tde, 6,4, "");
+
+  // The column is specified in layout coordinates.
+  expectGSOI_nm(tde, 7,7, "a");
 
   // Test with a selection.
   tde.setCursor(TextLCoord(4, 2));

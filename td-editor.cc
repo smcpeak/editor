@@ -275,8 +275,9 @@ string TextDocumentEditor::getSelectedOrIdentifier() const
     return this->getSelectedText();
   }
 
-  string text = this->getWholeLineString(m_cursor.m_line);
-  return cIdentifierAt(text, m_cursor.m_column);
+  TextMCoord modelCursor(this->toMCoord(m_cursor));
+  string text = this->getWholeLineString(modelCursor.m_line);
+  return cIdentifierAt(text, modelCursor.m_byteIndex);
 }
 
 
