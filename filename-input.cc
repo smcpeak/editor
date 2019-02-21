@@ -389,6 +389,10 @@ void FilenameInputDialog::accept() NOEXCEPT
 
   string filename = toString(m_filenameEdit->text());
 
+  // Normalize by passing through SMFileName, throwing away any
+  // trailing slashes, and converting back to string.
+  filename = SMFileName(filename).withTrailingSlash(false).toString();
+
   SMFileUtil sfu;
   if (m_saveAs && sfu.absoluteFileExists(filename)) {
     QMessageBox box(this);
@@ -404,6 +408,10 @@ void FilenameInputDialog::accept() NOEXCEPT
   }
 
   m_history->m_dialogSize = this->size();
+
+  // Put the string back into the control so the normalization will
+  // affect the result of 'runDialog'.
+  m_filenameEdit->setText(toQString(filename));
 
   this->QDialog::accept();
 

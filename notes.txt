@@ -1,6 +1,5 @@
 
 TODOs:
-  - filename-input accepts a file name that ends in "/"!
   - if I type beyond EOF, then undo, the extra whitespace is not undone
   - regex bug?  this regex:
       " +\||"
