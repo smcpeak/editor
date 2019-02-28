@@ -413,7 +413,7 @@ TICK          [\']
 }
 
   /* continuation of preprocessor, ending here */
-<PREPROC>.+{NL}? {
+<PREPROC>.*{NL}? {
   BEGIN(INITIAL);
   return TC_PREPROCESSOR;
 }
