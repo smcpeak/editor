@@ -1,6 +1,10 @@
 
 TODOs:
-  - have to fix "flex scanner jammed"!
+  - Ctrl+J on line indented with tabs treats the tabs as being one space
+    rather than 8, wrapping the lines in the wrong place (too long)
+  - remove the "." and ".." entries in the file picker dialog, among
+    other reasons so I can quickly tab-complete a narrow tree
+  - have to fix handling of "flex scanner jammed"!
   - Ctrl+J on line that begins with /home/scott/... will think the "/"
     is a line prefix to be repeated
   - assertion failure when text contains UTF-8 sequence for apostrophe
