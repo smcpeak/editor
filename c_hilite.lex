@@ -316,11 +316,6 @@ TICK          [\']
   return TC_STRING;
 }
 
-  /* Backslash at EOF in continued string literal. */
-<STRING>{BACKSL} {
-  return TC_STRING;
-}
-
   /* character literal, possibly unterminated */
 "L"?{TICK}({CCCHAR}|{BACKSL}.)*{TICK}?   {
   return TC_STRING;
@@ -355,12 +350,12 @@ TICK          [\']
 }
 
   /* C comment */
-"/""*"([^*]|"*"[^/])*"*"?"*/" {
+"/""*"([^*]|"*"+[^*/])*"*"+"/" {
   return TC_COMMENT;
 }
 
   /* C comment extending to next line */
-"/""*"([^*]|"*"[^/])*"*"? {
+"/""*"([^*]|"*"+[^*/])*"*"* {
   BEGIN(COMMENT);
   return TC_COMMENT;
 }

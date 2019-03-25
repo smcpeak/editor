@@ -40,6 +40,7 @@ void entry()
   testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof3.c");
   testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof4.c");
   testHighlighter(hi, tde, "test/highlight/c-fesvr-syscall.cc");
+  testHighlighter(hi, tde, "test/highlight/odd-stars.c");
 
   cout << "c_hilite works\n";
 }
