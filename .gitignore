@@ -43,6 +43,7 @@ test-justify
 test-td-editor
 textcategory
 test-command-runner
+test-hashcomment-hilite
 test-makefile-hilite
 test-named-td
 test-nearby-file
