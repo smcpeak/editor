@@ -1,5 +1,6 @@
 
 TODOs:
+  - handle better: test/highlight/c-c-comment-multiline-preproc.h
   - Ctrl+J on line indented with tabs treats the tabs as being one space
     rather than 8, wrapping the lines in the wrong place (too long)
   - remove the "." and ".." entries in the file picker dialog, among
