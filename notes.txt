@@ -1,10 +1,5 @@
 
 TODOs:
-  - DEV_WARNING bug: Open file with CRLF line endings.  Use search and
-    replace with regex "\r" to find and remove them with Shift+Ctrl+R:
-      DEV_WARNING: text-search.cc:572: TextSearch::getReplacementText failed
-      to match regex; m_searchString="\r" m_regex->pattern()="\r" existing="r"
-      replaceSpec=""
   - handle better: test/highlight/c-c-comment-multiline-preproc.h
   - Ctrl+J on line indented with tabs treats the tabs as being one space
     rather than 8, wrapping the lines in the wrong place (too long)

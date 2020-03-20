@@ -476,5 +476,9 @@ check:
 	./editor -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
 	./editor -ev=test/cut-then-paste.ev
 	./editor -ev=test/select-beyond-eof.ev
+	cp test/robotank.info.json.crlf.bin tmp.h && \
+	  ./editor -ev=test/sar-remove-ctlm.ev tmp.h && \
+	  cmp tmp.h test/robotank.info.json.lf.bin && \
+	  rm tmp.h
 
 # EOF
