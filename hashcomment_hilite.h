@@ -45,4 +45,4 @@ public:      // funcs
 };
 
 
-#endif // MAKEFILE_HILITE_H
+#endif // HASHCOMMENT_HILITE_H
