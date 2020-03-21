@@ -6,6 +6,7 @@
 
 // editor
 #include "gap.h"                       // GapArray
+#include "td-line.h"                   // TextDocumentLine
 #include "textmcoord.h"                // TextMCoord
 
 // smbase
@@ -49,9 +50,12 @@ public:      // class data
 
 private:     // instance data
   // This array is the spine of the document.  Every element is either
-  // NULL, meaning a blank line, or is an owner pointer to a
-  // '\n'-terminated array of chars that represent the line's contents.
-  GapArray<char*> m_lines;
+  // empty, meaning a blank line, or is a '\n'-terminated sequence of
+  // bytes that represent the line's contents.
+  //
+  // TODO: I should not store the newline.  That is inconsistent with
+  // the "blank line" case.
+  GapArray<TextDocumentLine> m_lines;
 
   // the most-recently edited line number, or -1 to mean that
   // no line's contents are stored

@@ -29,7 +29,7 @@ TextDocumentCore::TextDocumentCore()
     m_iteratorCount(0)
 {
   // There is always at least one line.
-  m_lines.insert(0 /*line*/, NULL /*value*/);
+  m_lines.insert(0 /*line*/, TextDocumentLine() /*value*/);
 }
 
 TextDocumentCore::~TextDocumentCore()
@@ -47,9 +47,9 @@ TextDocumentCore::~TextDocumentCore()
 
   // deallocate the non-NULL lines
   for (int i=0; i < m_lines.length(); i++) {
-    char *p = m_lines.get(i);
-    if (p) {
-      delete[] p;
+    TextDocumentLine const &tdl = m_lines.get(i);
+    if (tdl.m_bytes) {
+      delete[] tdl.m_bytes;
     }
   }
 }
@@ -59,15 +59,15 @@ void TextDocumentCore::selfCheck() const
 {
   xassert(m_recent >= -1);
   if (m_recent >= 0) {
-    xassert(m_lines.get(m_recent) == NULL);
+    xassert(m_lines.get(m_recent).isEmpty());
   }
   else {
     xassert(m_recentLine.length() == 0);
   }
 
   for (int i=0; i < m_lines.length(); i++) {
-    char *p = m_lines.get(i);
-    xassert(p == NULL || *p != '\n');
+    TextDocumentLine const &tdl = m_lines.get(i);
+    xassert(tdl.isEmpty() || tdl.at(0) != '\n');
   }
 
   xassert(m_longestLengthSoFar >= 0);
@@ -78,7 +78,9 @@ void TextDocumentCore::detachRecent()
 {
   if (m_recent == -1) { return; }
 
-  xassert(m_lines.get(m_recent) == NULL);
+  // The slot in 'm_lines' should currently be empty because the content
+  // is in 'm_recentLine'.
+  xassert(m_lines.get(m_recent).isEmpty());
 
   // copy 'recentLine' into lines[recent]
   int len = m_recentLine.length();
@@ -88,12 +90,12 @@ void TextDocumentCore::detachRecent()
     m_recentLine.writeIntoArray(p, len);
     xassert(p[len] == '\n');   // may as well check for overrun..
 
-    m_lines.set(m_recent, p);
+    m_lines.set(m_recent, TextDocumentLine(len+1, p));
 
     m_recentLine.clear();
   }
   else {
-    // it's already NULL, nothing needs to be done
+    // lines[recent] is already empty, nothing needs to be done.
   }
 
   m_recent = -1;
@@ -105,15 +107,15 @@ void TextDocumentCore::attachRecent(TextMCoord tc, int insLength)
   if (m_recent == tc.m_line) { return; }
   detachRecent();
 
-  char const *p = m_lines.get(tc.m_line);
-  int len = bufStrlen(p);
+  TextDocumentLine const &tdl = m_lines.get(tc.m_line);
+  int len = tdl.lengthWithoutNL();
   if (len) {
     // copy contents into 'recentLine'
-    m_recentLine.fillFromArray(p, len, tc.m_byteIndex, insLength);
+    m_recentLine.fillFromArray(tdl.m_bytes, len, tc.m_byteIndex, insLength);
 
     // deallocate the source
-    delete[] p;
-    m_lines.set(tc.m_line, NULL);
+    delete[] tdl.m_bytes;
+    m_lines.set(tc.m_line, TextDocumentLine());
   }
   else {
     xassert(m_recentLine.length() == 0);
@@ -131,7 +133,7 @@ bool TextDocumentCore::isEmptyLine(int line) const
     return m_recentLine.length() == 0;
   }
   else {
-    return m_lines.get(line) == NULL;
+    return m_lines.get(line).isEmpty();
   }
 }
 
@@ -144,12 +146,12 @@ int TextDocumentCore::lineLengthBytes(int line) const
     return m_recentLine.length();
   }
   else {
-    char *p = m_lines.get(line);
-    if (p) {
+    TextDocumentLine const &tdl = m_lines.get(line);
+    if (!tdl.isEmpty()) {
       // An empty line should be represented with a NULL pointer.
       // Otherwise, 'isEmptyLine' will get the wrong answer.
-      xassert(*p != '\n');
-      return bufStrlen(p);
+      xassert(tdl.m_bytes[0] != '\n');
+      return tdl.lengthWithoutNL();
     }
     else {
       return 0;
@@ -186,11 +188,11 @@ void TextDocumentCore::getPartialLine(TextMCoord tc,
     m_recentLine.writeIntoArray(destPtr, numBytes, tc.m_byteIndex);
   }
   else {
-    char const *p = m_lines.get(tc.m_line);
-    int len = bufStrlen(p);
+    TextDocumentLine const &tdl = m_lines.get(tc.m_line);
+    int len = tdl.lengthWithoutNL();
     xassert(0 <= tc.m_byteIndex && tc.m_byteIndex + numBytes <= len);
 
-    memcpy(destPtr, p + tc.m_byteIndex, numBytes);
+    memcpy(destPtr, tdl.m_bytes + tc.m_byteIndex, numBytes);
   }
 }
 
@@ -294,7 +296,7 @@ void TextDocumentCore::insertLine(int const line)
   xassert(m_iteratorCount == 0);
 
   // insert a blank line
-  m_lines.insert(line, NULL /*value*/);
+  m_lines.insert(line, TextDocumentLine() /*value*/);
 
   // adjust which line is 'recent'
   if (m_recent >= line) {
@@ -317,7 +319,7 @@ void TextDocumentCore::deleteLine(int const line)
   }
 
   // make sure line is empty
-  xassert(m_lines.get(line) == NULL);
+  xassert(m_lines.get(line).isEmpty());
 
   // make sure we're not deleting the last line
   xassert(numLines() > 1);
@@ -360,7 +362,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
     char *p = new char[length+1];
     memcpy(p, text, length);
     p[length] = '\n';
-    m_lines.set(tc.m_line, p);
+    m_lines.set(tc.m_line, TextDocumentLine(length+1, p));
 
     seenLineLength(length);
   }
@@ -385,11 +387,11 @@ void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
 
   if (tc.m_byteIndex==0 && length==lineLengthBytes(tc.m_line) && tc.m_line!=m_recent) {
     // removing entire line, no need to move 'recent'
-    char *p = m_lines.get(tc.m_line);
-    if (p) {
-      delete[] p;
+    TextDocumentLine const &tdl = m_lines.get(tc.m_line);
+    if (!tdl.isEmpty()) {
+      delete[] tdl.m_bytes;
     }
-    m_lines.set(tc.m_line, NULL);
+    m_lines.set(tc.m_line, TextDocumentLine());
   }
   else {
     // use recent
@@ -448,13 +450,13 @@ void TextDocumentCore::printMemStats() const
   int overheadBytes = 0;
 
   for (int i=0; i<numLines(); i++) {
-    char const *p = m_lines.get(i);
+    TextDocumentLine const &tdl = m_lines.get(i);
 
-    textBytes += bufStrlen(p);
+    textBytes += tdl.lengthWithoutNL();
 
     int alloc = 0;
-    if (p) {
-      alloc = textBytes+1;                // for '\n'
+    if (!tdl.isEmpty()) {
+      alloc = tdl.lengthWithoutNL()+1;    // for '\n'
       overheadBytes += sizeof(size_t);    // malloc's internal 'size' field
     }
     int sst = sizeof(size_t);
@@ -506,6 +508,8 @@ void TextDocumentCore::swapWith(TextDocumentCore &other) NOEXCEPT
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeTotalChange(*this);
   }
+
+  // TODO: Shouldn't we notify the observers of 'other' too?
 }
 
 
@@ -753,7 +757,7 @@ TextDocumentCore::LineIterator::LineIterator(
     m_isRecentLine = true;
   }
   else if (0 <= line && line < m_tdc->numLines()) {
-    m_nonRecentLine = m_tdc->m_lines.get(line);     // Might be NULL.
+    m_nonRecentLine = m_tdc->m_lines.get(line).m_bytes; // Might be NULL.
   }
   else {
     // Treat an invalid line like an empty line.

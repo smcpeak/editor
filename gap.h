@@ -63,8 +63,8 @@ public:      // funcs
 
   // get/set an element of the sequence; 'elt' must be
   // between 0 and length()-1
-  T get(int elt) const              { return eltRef(elt); }
-  void set(int elt, T value)        { eltRef(elt) = value; }
+  T const &get(int elt) const       { return eltRef(elt); }
+  void set(int elt, T const &value) { eltRef(elt) = value; }
 
   // set an element, yielding the old value as the return value
   T replace(int elt, T value);
