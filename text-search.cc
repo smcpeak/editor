@@ -16,6 +16,7 @@
 #include "nonport.h"                   // getMilliseconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT(className)
 #include "sm-swap.h"                   // swap
+#include "strutil.h"                   // stringTolower
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -23,8 +24,7 @@
 #include <QString>
 
 // libc
-#include <string.h>                    // strncmp
-#include <strings.h>                   // strncasecmp (POSIX)
+#include <string.h>                    // strstr
 
 
 // ------------------------- MatchExtent ---------------------------
@@ -79,23 +79,6 @@ int TextSearch::s_objectCount = 0;
 CHECK_OBJECT_COUNT(TextSearch);
 
 
-// This is used by the naive string matcher while doing a batch scan of
-// the document.
-static bool hasMatchAt(
-  TextSearch::SearchStringFlags flags,
-  char const *candidate,
-  char const *searchString,
-  int searchStringLength)
-{
-  if (flags & TextSearch::SS_CASE_INSENSITIVE) {
-    return 0==strncasecmp(candidate, searchString, searchStringLength);
-  }
-  else {
-    return 0==strncmp(candidate, searchString, searchStringLength);
-  }
-}
-
-
 void TextSearch::recomputeMatches()
 {
   // Since we are going to recompute everything, reset this flag.
@@ -127,9 +110,15 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
   // Count of matches during this recomputation.
   int matchesFound = 0;
 
+  // Make a copy of the search string so I can optionally lowercase it.
+  string searchStringCopy(m_searchString);
+  if (m_searchStringFlags & TextSearch::SS_CASE_INSENSITIVE) {
+    searchStringCopy = stringTolower(searchStringCopy);
+  }
+
   // Get search string info into locals.
-  char const *searchString = m_searchString.c_str();
-  int searchStringLength = m_searchString.length();
+  char const *searchString = searchStringCopy.c_str();
+  int searchStringLength = searchStringCopy.length();
 
   // Treat an invalid regex like an empty search string.
   if (m_regex.get() && !m_regex->isValid()) {
@@ -156,7 +145,21 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
       contents.clear();
       m_document->getWholeLine(line, contents);
       int lineLength = contents.length();
+
+      // Add a NUL byte so 'strstr' can work on it.  This byte is
+      // not included in 'lineLength'.
+      contents.push(0);
+
       char *buffer = contents.getArrayNC();
+
+      // Optionally lowercase the string to search in.
+      if (m_searchStringFlags & TextSearch::SS_CASE_INSENSITIVE) {
+        for (int i=0; i<lineLength; i++) {
+          if ('A' <= buffer[i] && buffer[i] <= 'Z') {
+            buffer[i] += ('a' - 'A');
+          }
+        }
+      }
 
       if (m_regex.get()) {
         // TODO: Converting every line from UTF-8 to UTF-16 is
@@ -181,11 +184,16 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
         }
       }
       else {
-        // Naive, slow algorithm of repeated strncmps.
+        // Byte offset within the line to begin the next search.
         int offset = 0;
+
         while (offset+searchStringLength <= lineLength) {
-          if (hasMatchAt(m_searchStringFlags, buffer+offset,
-                         searchString, searchStringLength)) {
+          char *nextMatch = strstr(buffer+offset, searchString);
+          if (nextMatch) {
+            // Offset where we found the match.
+            offset = nextMatch - buffer;
+
+            // Record the match.
             lineMatches.push(MatchExtent(offset, searchStringLength));
 
             // Move one past the match so that subsequent matches are not
@@ -198,7 +206,7 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
             offset += searchStringLength+1;
           }
           else {
-            offset++;
+            break;
           }
         }
       }
