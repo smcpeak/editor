@@ -509,9 +509,24 @@ static void testPerf3()
   int const NUM_LINES = 300000;
   PRINT_ELAPSED(populateDocument(tde, NUM_LINES));
 
-  PRINT_ELAPSED(ts.setSearchString("roam"));
+  ts.setMatchCountLimit(NUM_LINES * 2);
 
-  PRINT_ELAPSED(ts.setSearchString("roam_matches_nothing"));
+  // String that matches.
+  PRINT_ELAPSED(ts.setSearchString("need lots of room"));
+  PVAL(ts.countAllMatches());
+
+  // String that does not match.
+  PRINT_ELAPSED(ts.setSearchString("need lots of zoom"));
+  PVAL(ts.countAllMatches());
+
+  PRINT_ELAPSED(ts.setSearchString("need lots of xoom"));
+  PVAL(ts.countAllMatches());
+
+  PRINT_ELAPSED(ts.setSearchString("need lots of room"));
+  PVAL(ts.countAllMatches());
+
+  PRINT_ELAPSED(ts.setSearchString("eed lots of room "));
+  PVAL(ts.countAllMatches());
 }
 
 
