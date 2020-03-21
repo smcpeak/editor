@@ -488,6 +488,33 @@ static void testRegexPerf2(bool nolimit)
 }
 
 
+#define PRINT_ELAPSED(stmt)                     \
+  {                                             \
+    elapsed = 0;                                \
+    GetMillisecondsAccumulator acc(elapsed);    \
+    stmt;                                       \
+  }                                             \
+  cout << #stmt ": " << elapsed << endl /* user ; */
+
+
+static void testPerf3()
+{
+  cout << "testPerf3\n";
+
+  TextDocumentAndEditor tde;
+  TextSearch ts(tde.getDocumentCore());
+
+  long elapsed;
+
+  int const NUM_LINES = 300000;
+  PRINT_ELAPSED(populateDocument(tde, NUM_LINES));
+
+  PRINT_ELAPSED(ts.setSearchString("roam"));
+
+  PRINT_ELAPSED(ts.setSearchString("roam_matches_nothing"));
+}
+
+
 static void entry(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -499,6 +526,11 @@ static void entry(int argc, char **argv)
 
   if (argc >= 2 && 0==strcmp(argv[1], "perf2nl")) {
     testRegexPerf2(true /*nolimit*/);
+    return;
+  }
+
+  if (argc >= 2 && 0==strcmp(argv[1], "perf3")) {
+    testPerf3();
     return;
   }
 
