@@ -315,10 +315,10 @@ TextMCoord HE_group::applySeqElt(TextDocumentCore &buf, int start, int end, int 
 
 TextMCoord HE_group::applySeq(TextDocumentCore &buf, int start, int end, bool reverse) const
 {
-  int i;
+  int i = 0;
   try {
     TextMCoord leftEdge = buf.endCoord();
-    for (i=0; i < (end-start); i++) {
+    for ( ; i < (end-start); i++) {
       TextMCoord tc = applySeqElt(buf, start, end, i, reverse, reverse);
       if (tc < leftEdge) {
         leftEdge = tc;
