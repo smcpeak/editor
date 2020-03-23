@@ -311,14 +311,15 @@ void GapArray<T>::makeGapAt(int elt, int gapSize)
     //   <--- left ---><-- newGap --><----- right ----->
     //   [------------][------------][-----------------]
 
-    // fill the halves
-    memcpy(newArray /*dest*/, array /*src*/, left * sizeof(T));
-    memcpy(newArray+left+newGap /*dest*/, array+left+gap /*src*/, right * sizeof(T));
-
-    // throw away the old space, replace with new
     if (array) {
+      // fill the halves
+      memcpy(newArray /*dest*/, array /*src*/, left * sizeof(T));
+      memcpy(newArray+left+newGap /*dest*/, array+left+gap /*src*/, right * sizeof(T));
+
       delete[] array;
     }
+
+    // Substitute the new information for the old.
     array = newArray;
     gap = newGap;
   }
