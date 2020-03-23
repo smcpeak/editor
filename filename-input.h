@@ -37,8 +37,6 @@ class QTextEdit;
 //
 //   * Editing keybindings similar to the main editor window.
 //
-//   * Show names of directories differently in completion list.
-//
 //   * Let me double-click on completion list items with mouse.
 //
 class FilenameInputDialog : public ModalDialog,
