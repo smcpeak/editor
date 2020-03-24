@@ -1,6 +1,5 @@
 
 TODOs:
-  - handle better: test/highlight/c-c-comment-multiline-preproc.h
   - Ctrl+J on line indented with tabs treats the tabs as being one space
     rather than 8, wrapping the lines in the wrong place (too long)
   - have to fix handling of "flex scanner jammed"!
@@ -118,6 +117,14 @@ TODOs:
     - difficult to fix since there seems to be no way to get the
       shortcut ID programmatically
     - have to use TriggerAction on a menu action path
+
+Later if at all:
+  - handle better: test/highlight/c-c-comment-multiline-preproc.h
+    - This turns out to be fairly difficult.  I don't even know what
+      the language rules are, and reading the C standard did not help.
+      It would seem I need a new "comment in preprocessor" state,
+      which is a major pain, especially given how hard it is to
+      understand Flex's diagnostics.
 
 Projects:
   - idea: "edit" a git diff?
