@@ -305,7 +305,7 @@ TOCLEAN += *.yy.cc *.lex.backup
 %.yy.cc: %.lex %.h
 	flex -o$@ -b -P$*_yy $*.lex
 	mv lex.backup $*.lex.backup
-	head $*.lex.backup
+	cat $*.lex.backup
 
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
