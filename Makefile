@@ -480,5 +480,6 @@ check:
 	  ./editor -ev=test/sar-remove-ctlm.ev tmp.h && \
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
+	./editor -ev=test/fn-input-repeat-tab.ev
 
 # EOF

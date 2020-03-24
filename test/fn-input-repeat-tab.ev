@@ -1,0 +1,20 @@
+# fn-input-repeat-tab.ev
+# Test that I can press Tab repeatedly to drill into a
+# set of subdirectories with only one child each.
+
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+CheckFocusWidget "window1.filename_input.m_filenameEdit"
+FocusKeySequence "test/d/"
+FocusKeyPR "Key_Tab" "\t"
+FocusKeyPR "Key_Tab" "\t"
+FocusKeyPR "Key_Tab" "\t"
+FocusKeyPR "Key_Tab" "\t"
+FocusKeyPR "Key_Return" "\r"
+
+CheckFocusWidget "window1.editorFrame.m_editorWidget"
+
+# Make sure I opened the right file.
+CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "placeholder.txt"
+
+# EOF

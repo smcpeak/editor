@@ -168,6 +168,13 @@ void FilenameInputDialog::setFilenameLabel()
 }
 
 
+// Return true if 'dei' is neither the "." nor ".." directories.
+static bool isNotDotOrDotDot(SMFileUtil::DirEntryInfo const &dei)
+{
+  return !(dei.m_kind == SMFileUtil::FK_DIRECTORY &&
+           (dei.m_name == "." || dei.m_name == ".."));
+}
+
 void FilenameInputDialog::getEntries(string const &dir)
 {
   if (dir == m_cachedDirectory) {
@@ -184,6 +191,12 @@ void FilenameInputDialog::getEntries(string const &dir)
       TRACE("FilenameInputDialog", "querying dir: " << dir);
       ArrayStack<SMFileUtil::DirEntryInfo> entries;
       sfu.getSortedDirectoryEntries(entries, dir);
+
+      // Remove the "." and ".." entries.  I never want to open these,
+      // and their presence prevents me from simply hitting Tab
+      // repeatedly to drill down into structures that only have one
+      // subdirectory at each level.
+      applyFilter(entries, isNotDotOrDotDot);
 
       // Copy them into the cache.
       m_cachedDirectoryEntries.clear();
