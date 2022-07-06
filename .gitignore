@@ -32,12 +32,14 @@ historybuf
 mut
 mutant-compile.sh
 mutant.cc
+out
 qtbdffont
 smbase
 style
 td-core
 test-bufferlinesource
 test-command-runner
+test-editor-strutil
 test-hashcomment-hilite
 test-justify
 test-makefile-hilite

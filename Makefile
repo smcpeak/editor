@@ -2,21 +2,8 @@
 
 # Default target.
 all: comment.yy.cc
-all: testgap
-all: test-td-core
-all: test-td-editor
-all: test-text-search
-all: test-justify
-all: test-command-runner
-all: test-named-td
-all: test-named-td-list
-all: test-nearby-file
-all: textcategory
-all: test-bufferlinesource
-all: c_hilite
-all: test-makefile-hilite
-all: test-hashcomment-hilite
 all: editor
+all: test-prog-outs
 
 
 # directories of other software
@@ -85,18 +72,27 @@ QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core
 QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
 
-# Redirections for test programs.  I do not want to pollute the 'make'
-# output with their diagnostics, but I also do not want to lose the
-# output in case it fails.
-#
-# Also redirect input from /dev/null in case they try to read stdin.
-TEST_REDIR := </dev/null >test.out 2>&1
+# Run a program with a timeout in case it hangs.
+RUN_WITH_TIMEOUT := timeout 20
+
+
+# Create a target to run $1 and save the output to out/$1.out.
+define RUN_TEST_PROG
+TOCLEAN += $1
+test-prog-outs: out/$1.out
+out/$1.out: $1
+	$$(CREATE_OUTPUT_DIRECTORY)
+	$(RUN_WITH_TIMEOUT) ./$1 </dev/null >$$@ 2>&1
+endef
+
+
+# Target to run the test programs.
+.PHONY: test-prog-outs
 
 
 # patterns of files to delete in the 'clean' target; targets below
 # add things to this using "+="
 TOCLEAN = $(QT_TOCLEAN)
-TOCLEAN += *.out
 
 
 # Object files for the editor.  This is built up gradually as needed
@@ -119,8 +115,6 @@ TOCLEAN += *.o *.d
 
 
 # ------------ test-editor-strutil program -------------
-TOCLEAN += test-editor-strutil
-
 EDITOR_OBJS += editor-strutil.o
 
 TEST_EDITOR_STRUTIL_OBJS := $(EDITOR_OBJS)
@@ -129,34 +123,35 @@ TEST_EDITOR_STRUTIL_OBJS += test-editor-strutil.o
 
 test-editor-strutil: $(TEST_EDITOR_STRUTIL_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_EDITOR_STRUTIL_OBJS) $(CONSOLE_LDFLAGS)
-	./test-editor-strutil $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-editor-strutil))
 
 
 # ---------------- gap test program -----------------
-TOCLEAN += testgap
 testgap: gap.h testgap.cc
 	$(CXX) -o $@ $(CCFLAGS) testgap.cc $(CONSOLE_LDFLAGS)
-	./testgap $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,testgap))
 
 
 # -------------- test-td-core test program ----------------
-TOCLEAN += test-td-core td-core.tmp
+TOCLEAN += td-core.tmp
 
 EDITOR_OBJS += td-core.o
 EDITOR_OBJS += textmcoord.o
 
 TD_CORE_OBJS := $(EDITOR_OBJS)
 TD_CORE_OBJS += test-td-core.o
+-include test-td-core.d
 
 test-td-core: $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
-	./test-td-core $(TEST_REDIR)
 
--include test-td-core.d
+$(eval $(call RUN_TEST_PROG,test-td-core))
 
 
 # -------------- test-td-editor test program ----------------
-TOCLEAN += test-td-editor td.tmp
+TOCLEAN += td.tmp
 
 EDITOR_OBJS += history.o
 EDITOR_OBJS += justify.o
@@ -172,12 +167,11 @@ TD_OBJS += test-td-editor.o
 
 test-td-editor: $(TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-td-editor $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-td-editor))
 
 
 # -------------- test-text-search program ----------------
-TOCLEAN += test-text-search
-
 EDITOR_OBJS += fasttime.o
 EDITOR_OBJS += text-search.o
 
@@ -188,12 +182,11 @@ TEST_TEXT_SEARCH_OBJS += test-text-search.o
 
 test-text-search: $(TEST_TEXT_SEARCH_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_TEXT_SEARCH_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-text-search $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-text-search))
 
 
 # -------------- justify test program ----------------
-TOCLEAN += test-justify
-
 JUSTIFY_OBJS := $(EDITOR_OBJS)
 
 JUSTIFY_OBJS += test-justify.o
@@ -201,12 +194,11 @@ JUSTIFY_OBJS += test-justify.o
 
 test-justify: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-justify $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-justify))
 
 
 # -------------- command-runner test program ----------------
-TOCLEAN += test-command-runner
-
 EDITOR_OBJS += command-runner.o
 EDITOR_OBJS += command-runner.moc.o
 
@@ -219,17 +211,11 @@ COMMAND_RUNNER_OBJS += test-command-runner.moc.o
 
 test-command-runner: $(COMMAND_RUNNER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
-	timeout 10 ./test-command-runner $(TEST_REDIR)
 
-# In the above command, 'timeout' is used because the command runner
-# is particularly susceptible to bugs that cause hangs.  Plus, when I
-# hit Ctrl+C to kill it, 'make' deletes the executable (!), which is
-# annoying.
+$(eval $(call RUN_TEST_PROG,test-command-runner))
 
 
 # ---------------------- test-named-td ----------------------
-TOCLEAN += test-named-td
-
 EDITOR_OBJS += named-td.o
 
 TEST_NAMED_TD_OBJS := $(EDITOR_OBJS)
@@ -239,12 +225,11 @@ TEST_NAMED_TD_OBJS += test-named-td.o
 
 test-named-td: $(TEST_NAMED_TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-named-td $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-named-td))
 
 
 # -------------------- test-named-td-list --------------------
-TOCLEAN += test-named-td-list
-
 EDITOR_OBJS += named-td-list.o
 
 TEST_NAMED_TD_LIST_OBJS := $(EDITOR_OBJS)
@@ -254,12 +239,11 @@ TEST_NAMED_TD_LIST_OBJS += test-named-td-list.o
 
 test-named-td-list: $(TEST_NAMED_TD_LIST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_LIST_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-named-td-list $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-named-td-list))
 
 
 # -------------------- test-nearby-file --------------------
-TOCLEAN += test-nearby-file
-
 EDITOR_OBJS += nearby-file.o
 
 TEST_NEARBY_FILE_OBJS := $(EDITOR_OBJS)
@@ -269,19 +253,18 @@ TEST_NEARBY_FILE_OBJS += test-nearby-file.o
 
 test-nearby-file: $(TEST_NEARBY_FILE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_NEARBY_FILE_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-nearby-file $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-nearby-file))
 
 
 # --------------- textcategory test program ----------------
-TOCLEAN += textcategory
 textcategory: textcategory.h textcategory.cc
 	$(CXX) -o $@ $(CCFLAGS) -DTEST_TEXTCATEGORY textcategory.cc $(CONSOLE_LDFLAGS)
-	./textcategory >/dev/null
+
+$(eval $(call RUN_TEST_PROG,textcategory))
 
 
 # ----------------------- test-bufferlinesource ------------------------
-TOCLEAN += test-bufferlinesource
-
 EDITOR_OBJS += bufferlinesource.o
 
 TEST_BUFFERLINESOURCE_OBJS := $(EDITOR_OBJS)
@@ -291,7 +274,8 @@ TEST_BUFFERLINESOURCE_OBJS += test-bufferlinesource.o
 
 test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_BUFFERLINESOURCE_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./test-bufferlinesource $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-bufferlinesource))
 
 
 # ------------- highlighting stuff --------------------
@@ -312,13 +296,12 @@ EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += lex_hilite.o
 
 C_HILITE_OBJS := $(EDITOR_OBJS)
+-include c_hilite.d
 
-TOCLEAN += c_hilite
 c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(QT_CONSOLE_LDFLAGS)
-	./$@ $(TEST_REDIR)
 
--include c_hilite.d
+$(eval $(call RUN_TEST_PROG,c_hilite))
 
 
 # ----------------- Makefile highlighting -----------------
@@ -329,10 +312,10 @@ TEST_MAKEFILE_HILITE_OBJS := $(EDITOR_OBJS)
 TEST_MAKEFILE_HILITE_OBJS += test-makefile-hilite.o
 -include test-makefile-hilite.d
 
-TOCLEAN += test-makefile-hilite
 test-makefile-hilite: $(TEST_MAKEFILE_HILITE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_MAKEFILE_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./$@ $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-makefile-hilite))
 
 
 # ----------------- HashComment highlighting -----------------
@@ -343,10 +326,10 @@ TEST_HASHCOMMENT_HILITE_OBJS := $(EDITOR_OBJS)
 TEST_HASHCOMMENT_HILITE_OBJS += test-hashcomment-hilite.o
 -include test-hashcomment-hilite.d
 
-TOCLEAN += test-hashcomment-hilite
 test-hashcomment-hilite: $(TEST_HASHCOMMENT_HILITE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEST_HASHCOMMENT_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
-	./$@ $(TEST_REDIR)
+
+$(eval $(call RUN_TEST_PROG,test-hashcomment-hilite))
 
 
 # ----------------- git version ---------------------
@@ -449,6 +432,7 @@ dialogs: dialogs.cc
 # --------------------- misc ------------------------
 clean:
 	$(RM) $(TOCLEAN)
+	$(RM) -r out
 	$(RM) *.gcov *.gcda *.gcno
 
 check:
