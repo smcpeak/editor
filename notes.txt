@@ -1,5 +1,21 @@
 
 TODOs:
+  - high priority
+    - Fix how Enter works in Makefiles, adding tabs I don't want
+    - Ctrl+W during search works badly if the cursor isn't on a match
+    - when opening a file, prompt before creating a new one since I
+      mistype a lot then have to re-navigate
+    - Use C/C++ highlighting for extensions: lex, y, ast, gr, hpp
+    - Recognize C++11 keywords in highlighting, esp. noexcept
+    - Remove autocomplete for goto-line dialog box.
+    - Highlight "override" and "NULLABLE" in green.
+    - Highlight "nullptr" in red, like "NULL".
+    - Make it possible for F9 to run "make -j4".
+    - If the current directory lacks a Makefile, go up to find one that
+      has it.
+    - Remove "..." from File menu item for 'make' (or have that bring
+      up the config dialog?)
+
   - Ctrl+J on line indented with tabs treats the tabs as being one space
     rather than 8, wrapping the lines in the wrong place (too long)
   - have to fix handling of "flex scanner jammed"!
