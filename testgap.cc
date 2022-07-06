@@ -3,9 +3,10 @@
 
 #include "gap.h"                       // module to test
 
-#include "ckheap.h"                    // malloc_stats
-#include "test.h"                      // ARGS_TEST_MAIN
+// smbase
+#include "sm-test.h"                   // ARGS_TEST_MAIN
 
+// libc
 #include <stdio.h>                     // printf
 #include <stdlib.h>                    // rand, srand
 #include <time.h>                      // time
@@ -271,8 +272,6 @@ void entry(int argc, char *argv[])
 {
   //srand(time());
 
-  malloc_stats();
-
   {
     int iters = 100;
     if (argc >= 2) {
@@ -291,7 +290,6 @@ void entry(int argc, char *argv[])
 
     for (int i=0; i<iters; i++) {
       mutate(gap, seq);
-      checkHeap();
 
       if (PRINT) {
         printSeq("gap", gap);
@@ -309,8 +307,6 @@ void entry(int argc, char *argv[])
            ctSet + ctInsert + ctInsertMany + ctRemove +
            ctRemoveMany + ctClear + ctFillFromArray);
   }
-
-  malloc_stats();
 }
 
 

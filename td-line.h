@@ -6,7 +6,7 @@
 
 #include <stddef.h>                    // NULL
 
-#include "macros.h"                    // DMEMB, CMEMB
+#include "sm-macros.h"                 // DMEMB, CMEMB
 
 // Holds one line of text.  A line is a sequence of bytes (octets).
 //
@@ -43,10 +43,11 @@ public:
   {}
 
   // This does a *shallow* copy.
-  TextDocumentLine(TextDocumentLine const &obj) :
-    DMEMB(m_length),
-    DMEMB(m_bytes)
-  {}
+  //
+  // The '= default' definitions for the copy ctor, copy assignment, and
+  // dtor are required to allow use of 'memmove' to copy instances of
+  // this class in GapArray.
+  TextDocumentLine(TextDocumentLine const &obj) = default;
 
   // This takes ownership of 'bytes'.
   TextDocumentLine(unsigned length, char *bytes) :
@@ -56,16 +57,10 @@ public:
 
   // The dtor does nothing.  The containing class is responsible for
   // memory management.
-  ~TextDocumentLine()
-  {}
+  ~TextDocumentLine() = default;
 
   // Again, a shallow copy.
-  TextDocumentLine& operator= (TextDocumentLine const &obj)
-  {
-    CMEMB(m_length);
-    CMEMB(m_bytes);
-    return *this;
-  }
+  TextDocumentLine& operator= (TextDocumentLine const &obj) = default;
 
   bool isEmpty() const { return m_length == 0; }
 

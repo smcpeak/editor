@@ -13,7 +13,7 @@
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "sm-fstream.h"                // ofstream
 #include "strutil.h"                   // quoted, readLinesFromFile
-#include "test.h"                      // EXPECT_EQ
+#include "sm-test.h"                   // EXPECT_EQ
 #include "trace.h"                     // TRACE
 
 // libc

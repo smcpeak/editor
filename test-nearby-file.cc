@@ -5,7 +5,7 @@
 
 #include "sm-file-util.h"              // TestSMFileUtil
 #include "sm-iostream.h"               // cout, etc.
-#include "test.h"                      // USUAL_TEST_MAIN
+#include "sm-test.h"                   // USUAL_TEST_MAIN
 
 
 static void expectIGNF(

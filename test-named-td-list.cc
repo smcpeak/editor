@@ -8,7 +8,7 @@
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
 #include "strutil.h"                   // dirname
-#include "test.h"                      // USUAL_TEST_MAIN
+#include "sm-test.h"                   // USUAL_TEST_MAIN
 
 // libc
 #include <stdarg.h>                    // va_start, etc.

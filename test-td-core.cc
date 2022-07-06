@@ -5,8 +5,8 @@
 
 // smbase
 #include "autofile.h"                  // AutoFILE
-#include "ckheap.h"                    // malloc_stats
-#include "test.h"                      // USUAL_MAIN, EXPECT_EQ
+#include "sm-macros.h"                 // IGNORE_RESULT
+#include "sm-test.h"                   // USUAL_MAIN, EXPECT_EQ
 
 // libc
 #include <assert.h>                    // assert
@@ -186,9 +186,6 @@ static void testVarious()
 static void testReadTwice()
 {
   for (int looper=0; looper<2; looper++) {
-    printf("stats before:\n");
-    malloc_stats();
-
     // build a text file
     {
       AutoFILE fp("td-core.tmp", "w");
@@ -214,9 +211,6 @@ static void testReadTwice()
       // write it out again
       doc.writeFile("td-core.tmp2");
 
-      printf("stats before dealloc:\n");
-      malloc_stats();
-
       printf("\nbuffer mem usage stats:\n");
       doc.printMemStats();
       fullSelfCheck(doc);
@@ -228,12 +222,9 @@ static void testReadTwice()
     }
 
     // ok
-    system("ls -l td-core.tmp");
+    IGNORE_RESULT(system("ls -l td-core.tmp"));
     remove("td-core.tmp");
     remove("td-core.tmp2");
-
-    printf("stats after:\n");
-    malloc_stats();
   }
 }
 
@@ -359,9 +350,6 @@ static void entry()
   testAtomicRead();
   testVarious();
   testWalkCoordBytes();
-
-  printf("stats after:\n");
-  malloc_stats();
 
   printf("\ntd-core is ok\n");
 }

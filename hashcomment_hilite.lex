@@ -1,46 +1,39 @@
 /* hashcomment_hilite.lex
    lexer for highlighting hash-commented files */
 
+%smflex 101
+
 /* ----------------------- C definitions ---------------------- */
 %{
 
-#include "hashcomment_hilite.h"        // HashComment_FlexLexer class
+#include "hashcomment_hilite.h"        // HashComment_Lexer class
 #include "bufferlinesource.h"          // BufferLineSource
 #include "textcategory.h"              // TC_XXX constants
 
-// this works around a problem with cygwin & fileno
-#define YY_NEVER_INTERACTIVE 1
-
 // Lexer context class.
-class HashComment_FlexLexer : public yyFlexLexer {
+class HashComment_FlexLexer : public hashcomment_hilite_yyFlexLexer {
 public:      // data
   BufferLineSource bufsrc;
 
 protected:   // funcs
-  virtual int LexerInput(char *buf, int max_size);
+  virtual int yym_read_input(void *dest, int size) override;
 
 public:      // funcs
   HashComment_FlexLexer() {}
   ~HashComment_FlexLexer() {}
 
-  virtual int yylex();
+  int yym_lex();
 
-  void setState(LexerState state) { BEGIN((int)state); }
-  LexerState getState() const     { return (LexerState)(YY_START); }
+  void setState(LexerState state) { yym_set_start_condition((int)state); }
+  LexerState getState() const     { return (LexerState)(yym_get_start_condition()); }
 };
 
 %}
 
 
 /* -------------------- flex options ------------------ */
-/* no wrapping is needed; setting this means we don't have to link with libfl.a */
-%option noyywrap
-
 /* don't use the default-echo rules */
 %option nodefault
-
-/* I don't call unput */
-%option nounput
 
 /* generate a c++ lexer */
 %option c++
@@ -50,9 +43,6 @@ public:      // funcs
 
 /* utilize character equivalence classes */
 %option ecs
-
-/* the scanner is never interactive */
-%option never-interactive
 
 /* and I will define the class */
 %option yyclass="HashComment_FlexLexer"
@@ -83,7 +73,7 @@ BACKSL        "\\"
 
   /* Comment with continuation to next line. */
 "#".*{BACKSL}{NL} {
-  BEGIN(COMMENT);
+  YY_SET_START_CONDITION(COMMENT);
   return TC_COMMENT;
 }
 
@@ -100,7 +90,7 @@ BACKSL        "\\"
 
   /* Continuation of comment, ends here. */
 <COMMENT>.*{NL}? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_COMMENT;
 }
 
@@ -115,9 +105,9 @@ BACKSL        "\\"
 
 
 // ----------------------- HashComment_FlexLexer ---------------------
-int HashComment_FlexLexer::LexerInput(char *buf, int max_size)
+int HashComment_FlexLexer::yym_read_input(void *dest, int size)
 {
-  return bufsrc.fillBuffer(buf, max_size);
+  return bufsrc.fillBuffer(dest, size);
 }
 
 
@@ -141,7 +131,7 @@ void HashComment_Lexer::beginScan(TextDocumentCore const *buffer, int line, Lexe
 
 int HashComment_Lexer::getNextToken(TextCategory &code)
 {
-  int result = lexer->yylex();
+  int result = lexer->yym_lex();
 
   if (result == 0) {
     // end of line
@@ -161,7 +151,7 @@ int HashComment_Lexer::getNextToken(TextCategory &code)
   }
   else {
     code = (TextCategory)result;
-    return lexer->YYLeng();
+    return lexer->yym_leng();
   }
 }
 

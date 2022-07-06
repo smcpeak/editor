@@ -3,7 +3,7 @@
 
 #include "c_hilite.h"      // module to test
 #include "comment.h"       // another module to test
-#include "test.h"          // USUAL_MAIN
+#include "sm-test.h"       // USUAL_MAIN
 #include "trace.h"         // traceAddSys
 
 LexHighlighter * /*owner*/ makeC_Highlighter(TextDocumentCore const &buf)

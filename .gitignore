@@ -11,6 +11,7 @@ style
 c_hilite
 *.lex.backup
 *.yy.cc
+*.yy.h
 buffercore
 historybuf
 untitled.txt

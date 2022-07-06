@@ -47,9 +47,9 @@ public:      // funcs
   // set up the variables to begin reading from the given line
   void beginScan(TextDocumentCore const *buffer, int line);
 
-  // read the next chunk of the current line, up to 'max_size' bytes;
+  // read the next chunk of the current line, up to 'size' bytes;
   // returns # of bytes read, or 0 for end-of-input (end of line)
-  int fillBuffer(char *buf, int max_size);
+  int fillBuffer(void *dest, int size);
 
   // True if, after 'fillBuffer', we find that the line was empty.
   bool lineIsEmpty() const { return lineLength == 1; }

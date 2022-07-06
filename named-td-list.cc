@@ -4,7 +4,7 @@
 #include "named-td-list.h"             // this module
 
 // smbase
-#include "macros.h"                    // Restorer
+#include "sm-macros.h"                 // Restorer
 #include "sm-file-util.h"              // SMFileUtil
 #include "stringset.h"                 // StringSet
 #include "strtokp.h"                   // StrtokParse

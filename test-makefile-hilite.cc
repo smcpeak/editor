@@ -3,7 +3,7 @@
 
 #include "makefile_hilite.h"           // module to test
 #include "td-editor.h"                 // TextDocumentAndEditor
-#include "test.h"                      // USUAL_MAIN
+#include "sm-test.h"                   // USUAL_MAIN
 
 
 void entry()

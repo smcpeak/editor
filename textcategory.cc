@@ -198,7 +198,7 @@ void LineCategoryIter::advanceCharsOrCols(int n)
 // ----------------------- test code ---------------------
 #ifdef TEST_TEXTCATEGORY
 
-#include "test.h"        // USUAL_MAIN
+#include "sm-test.h"     // USUAL_MAIN
 #include "sm-iostream.h" // cout
 
 void expect(LineCategories const &category, char const *str)

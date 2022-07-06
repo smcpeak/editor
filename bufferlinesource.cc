@@ -35,7 +35,7 @@ void BufferLineSource::beginScan(TextDocumentCore const *b, int line)
 
 // this is called by the Flex lexer when it needs more data for
 // its internal buffer; interface is similar to read(2)
-int BufferLineSource::fillBuffer(char* buf, int max_size)
+int BufferLineSource::fillBuffer(void *dest, int max_size)
 {
   if (nextSlurpCol == lineLength) {
     return 0;         // EOL
@@ -54,7 +54,7 @@ int BufferLineSource::fillBuffer(char* buf, int max_size)
     nextSlurpCol++;
   }
 
-  memcpy(buf, tmpArray.getArray(), len);
+  memcpy(dest, tmpArray.getArray(), len);
 
   return len;
 }

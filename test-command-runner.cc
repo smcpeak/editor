@@ -15,7 +15,7 @@
 #include "datetime.h"                  // getCurrentUnixTime
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // replace
-#include "test.h"                      // ARGS_MAIN
+#include "sm-test.h"                   // ARGS_MAIN
 #include "trace.h"                     // TRACE_ARGS, EXPECT_EQ
 
 // Qt

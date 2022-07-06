@@ -24,10 +24,9 @@
 // smbase
 #include "array.h"                     // Array
 #include "bdffont.h"                   // BDFFont
-#include "ckheap.h"                    // malloc_stats
 #include "dev-warning.h"               // DEV_WARNING
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "macros.h"                    // Restorer
+#include "sm-macros.h"                 // Restorer
 #include "nonport.h"                   // getMilliseconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
@@ -1517,7 +1516,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 
       case Qt::Key_U:
         m_editor->debugPrint();
-        malloc_stats();
         break;
 
       case Qt::Key_H:

@@ -34,7 +34,7 @@
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname
-#include "test.h"                      // PVAL
+#include "sm-test.h"                   // PVAL
 #include "trace.h"                     // TRACE_ARGS
 
 // libc

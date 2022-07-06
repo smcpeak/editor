@@ -20,8 +20,12 @@ all: editor
 
 
 # directories of other software
-SMBASE := ../smbase
+SMBASE   := ../smbase
+SMFLEX   := ../smflex
 SMQTUTIL := ../smqtutil
+
+# Standard Makefile stuff.
+include $(SMBASE)/sm-lib.mk
 
 # C++ compiler, etc.
 CXX := g++
@@ -47,13 +51,6 @@ include $(SMQTUTIL)/qtvars.mk
 
 # Flags for the C and C++ compilers (and preprocessor).
 CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
-
-# The "-I." is so that "include <FlexLexer.h>" will pull in the
-# FlexLexer.h in the currect directory, which is a copy of the
-# one that Cygwin put in /usr/include.  I cannot directly use that
-# one because the mingw compiler does not look in /usr/include
-# since that has the native cygwin library headers.
-CCFLAGS += -I.
 
 CCFLAGS += -I$(SMBASE)
 CCFLAGS += -I$(SMQTUTIL)
@@ -91,12 +88,15 @@ QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 # Redirections for test programs.  I do not want to pollute the 'make'
 # output with their diagnostics, but I also do not want to lose the
 # output in case it fails.
-TEST_REDIR := >test.out 2>&1
+#
+# Also redirect input from /dev/null in case they try to read stdin.
+TEST_REDIR := </dev/null >test.out 2>&1
 
 
 # patterns of files to delete in the 'clean' target; targets below
 # add things to this using "+="
 TOCLEAN = $(QT_TOCLEAN)
+TOCLEAN += *.out
 
 
 # Object files for the editor.  This is built up gradually as needed
@@ -295,7 +295,7 @@ test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
 
 
 # ------------- highlighting stuff --------------------
-TOCLEAN += *.yy.cc *.lex.backup
+TOCLEAN += *.yy.cc *.yy.h *.lex.backup
 
 # lexer (-b makes lex.backup)
 #
@@ -303,7 +303,7 @@ TOCLEAN += *.yy.cc *.lex.backup
 # are allowed in C identifiers because Flex derives the name of some
 # internal identifiers from that file name.
 %.yy.cc: %.lex %.h
-	flex -o$@ -b -P$*_yy $*.lex
+	$(SMFLEX)/smflex -o$@ -b -P$*_yy $*.lex
 	mv lex.backup $*.lex.backup
 	cat $*.lex.backup
 

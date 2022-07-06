@@ -12,7 +12,7 @@
 
 // smbase
 #include "codepoint.h"                 // isUppercaseLetter
-#include "macros.h"                    // Restorer
+#include "sm-macros.h"                 // Restorer
 #include "trace.h"                     // TRACE
 
 // Qt

@@ -4,7 +4,7 @@
 #ifndef TEXTLCOORD_H
 #define TEXTLCOORD_H
 
-#include "macros.h"                    // DMEMB
+#include "sm-macros.h"                 // DMEMB
 #include "str.h"                       // stringBuilder
 
 #include <iostream>                    // std::ostream

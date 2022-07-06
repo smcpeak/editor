@@ -20,7 +20,7 @@
 #include "sm-file-util.h"              // SMFileUtil
 #include "strtokp.h"                   // StrtokParse
 #include "strutil.h"                   // prefixEquals
-#include "test.h"                      // PVAL
+#include "sm-test.h"                   // PVAL
 #include "trace.h"                     // TRACE
 
 // Qt

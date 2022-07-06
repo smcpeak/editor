@@ -4,7 +4,7 @@
 #ifndef TEXTCATEGORY_H
 #define TEXTCATEGORY_H
 
-#include "macros.h"        // DMEMB, CMEMB
+#include "sm-macros.h"     // DMEMB, CMEMB
 #include "array.h"         // ArrayStack
 #include "str.h"           // string
 

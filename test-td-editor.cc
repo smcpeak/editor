@@ -5,10 +5,9 @@
 
 // smbase
 #include "datablok.h"                  // DataBlock
-#include "ckheap.h"                    // malloc_stats
 #include "nonport.h"                   // removeFile
 #include "strutil.h"                   // quoted
-#include "test.h"                      // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
+#include "sm-test.h"                   // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
 #include "trace.h"                     // traceProcessArg
 
 // libc
@@ -2267,7 +2266,6 @@ static void entry(int argc, char **argv)
   testEditingWithTabs();
   testModelToLayoutSpans();
 
-  malloc_stats();
   cout << "\ntest-td-editor is ok" << endl;
 }
 

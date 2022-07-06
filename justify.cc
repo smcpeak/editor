@@ -45,7 +45,7 @@ void justifyTextLines(
   stringBuilder curLine;
 
   // Process all input lines.
-  for (int i=0; i < originalContent.size(); i++) {
+  for (int i=0; i < originalContent.length(); i++) {
     char const *p = originalContent[i].c_str();
 
     // Loop over words in 'p'.

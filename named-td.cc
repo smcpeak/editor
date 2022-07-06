@@ -5,7 +5,7 @@
 
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
-#include "macros.h"                    // CMEMB
+#include "sm-macros.h"                 // CMEMB
 #include "nonport.h"                   // getFileModificationTime
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil

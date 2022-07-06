@@ -138,7 +138,7 @@ STATICDEF void HE_text::insert(
     xassert(p == end);
 
     // insert the floated excess text, if any
-    if (excess.size() > 0) {
+    if (excess.allocatedSize() > 0) {
       buf.insertText(tc, excess.getArray(), excess.length());
     }
   }

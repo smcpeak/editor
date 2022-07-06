@@ -4,7 +4,7 @@
 #ifndef TEXTLINE_H
 #define TEXTLINE_H
 
-#include "macros.h"       // NOTEQUAL_OPERATOR
+#include "sm-macros.h"    // NOTEQUAL_OPERATOR
 
 // a single line of text
 // note: Buffer manipulates (zeroes and copies) arrays of TextLines by

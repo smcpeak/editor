@@ -9,7 +9,7 @@
 #include "objcount.h"                  // CheckObjectCount
 #include "strutil.h"                   // encodeWithEscapes
 #include "syserr.h"                    // xsyserror
-#include "test.h"                      // USUAL_MAIN, PVAL
+#include "sm-test.h"                   // USUAL_MAIN, PVAL
 
 // libc
 #include <assert.h>                    // assert

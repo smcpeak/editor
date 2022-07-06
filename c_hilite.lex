@@ -2,46 +2,39 @@
    lexer for highlighting C/C++
    based on comment.lex, and elsa's lexer.lex */
 
+%smflex 101
+
 /* ----------------------- C definitions ---------------------- */
 %{
 
-#include "c_hilite.h"                  // C_FlexLexer class
+#include "c_hilite.h"                  // C_Lexer class
 #include "bufferlinesource.h"          // BufferLineSource
 #include "textcategory.h"              // TC_XXX constants
 
-// this works around a problem with cygwin & fileno
-#define YY_NEVER_INTERACTIVE 1
-
 // lexer context class
-class C_FlexLexer : public yyFlexLexer {
+class C_FlexLexer : public c_hilite_yyFlexLexer {
 public:      // data
   BufferLineSource bufsrc;
 
 protected:   // funcs
-  virtual int LexerInput(char *buf, int max_size);
+  virtual int yym_read_input(void *dest, int size) override;
 
 public:      // funcs
   C_FlexLexer() {}
   ~C_FlexLexer() {}
 
-  virtual int yylex();
+  int yym_lex();
 
-  void setState(LexerState state) { BEGIN((int)state); }
-  LexerState getState() const     { return (LexerState)(YY_START); }
+  void setState(LexerState state) { yym_set_start_condition((int)state); }
+  LexerState getState() const     { return (LexerState)(yym_get_start_condition()); }
 };
 
 %}
 
 
 /* -------------------- flex options ------------------ */
-/* no wrapping is needed; setting this means we don't have to link with libfl.a */
-%option noyywrap
-
 /* don't use the default-echo rules */
 %option nodefault
-
-/* I don't call unput */
-%option nounput
 
 /* generate a c++ lexer */
 %option c++
@@ -51,9 +44,6 @@ public:      // funcs
 
 /* utilize character equivalence classes */
 %option ecs
-
-/* the scanner is never interactive */
-%option never-interactive
 
 /* and I will define the class */
 %option yyclass="C_FlexLexer"
@@ -283,7 +273,7 @@ TICK          [\']
      we're in a string literal so the next line will be
      highlighted accordingly */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}.))*{BACKSL}{NL} {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_STRING;
 }
 
@@ -307,7 +297,7 @@ TICK          [\']
 
   /* string continuation that ends on this line */
 <STRING>({STRCHAR}|({BACKSL}.))*({QUOTE}|{NL})? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_STRING;
 }
 
@@ -323,13 +313,13 @@ TICK          [\']
 
   /* character literal ending with backslash */
 "L"?{TICK}({CCCHAR}|{BACKSL}.)*{TICK}?{BACKSL}   {
-  yyless(yyleng-1);     // put the backslash back
+  YY_LESS_TEXT(YY_LENG-1);     // put the backslash back
   return TC_STRING;
 }
 
   /* C++ comment continued to next line*/
 "//".*{BACKSL}{NL} {
-  BEGIN(CPP_COMMENT);
+  YY_SET_START_CONDITION(CPP_COMMENT);
   return TC_COMMENT;
 }
 
@@ -345,7 +335,7 @@ TICK          [\']
 
   /* Continued C++ comment ends here. */
 <CPP_COMMENT>.*{NL}? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_COMMENT;
 }
 
@@ -356,13 +346,13 @@ TICK          [\']
 
   /* C comment extending to next line */
 "/""*"([^*]|"*"+[^*/])*"*"* {
-  BEGIN(COMMENT);
+  YY_SET_START_CONDITION(COMMENT);
   return TC_COMMENT;
 }
 
   /* continuation of C comment, ends here */
 <COMMENT>"*/" {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_COMMENT;
 }
 
@@ -377,13 +367,13 @@ TICK          [\']
    * ad-hoc right now..) */
 ^[ \t]*"#".*"//".*{NL}? {
   // find the start of the comment
-  char const *p = strchr(yytext, '/');
+  char const *p = strchr(YY_TEXT, '/');
   while (p && p[1]!='/') {
     p = strchr(p+1, '/');
   }
   if (p) {
     // put the comment back; it will be matched as TC_COMMENT
-    yyless(p-yytext);
+    YY_LESS_TEXT(p-YY_TEXT);
   }
   else {
     // shouldn't happen, but not catastrophic if it does..
@@ -393,7 +383,7 @@ TICK          [\']
 
   /* preprocessor, continuing to next line */
 ^[ \t]*"#".*{BACKSL}{NL} {
-  BEGIN(PREPROC);
+  YY_SET_START_CONDITION(PREPROC);
   return TC_PREPROCESSOR;
 }
 
@@ -409,16 +399,16 @@ TICK          [\']
 
   /* continuation of preprocessor, ending here */
 <PREPROC>.*{NL}? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_PREPROCESSOR;
 }
 
   /* continuation of preprocessor, empty line */
 <PREPROC><<EOF>> {
   if (bufsrc.lineIsEmpty()) {
-    BEGIN(INITIAL);
+    YY_SET_START_CONDITION(INITIAL);
   }
-  yyterminate();
+  YY_TERMINATE();
 }
 
 
@@ -439,9 +429,9 @@ TICK          [\']
 
 
 // ----------------------- C_FlexLexer ---------------------
-int C_FlexLexer::LexerInput(char *buf, int max_size)
+int C_FlexLexer::yym_read_input(void *dest, int size)
 {
-  return bufsrc.fillBuffer(buf, max_size);
+  return bufsrc.fillBuffer(dest, size);
 }
 
 
@@ -465,7 +455,7 @@ void C_Lexer::beginScan(TextDocumentCore const *buffer, int line, LexerState sta
 
 int C_Lexer::getNextToken(TextCategory &code)
 {
-  int result = lexer->yylex();
+  int result = lexer->yym_lex();
 
   if (result == 0) {
     // end of line
@@ -480,7 +470,7 @@ int C_Lexer::getNextToken(TextCategory &code)
   }
   else {
     code = (TextCategory)result;
-    return lexer->YYLeng();
+    return lexer->yym_leng();
   }
 }
 

@@ -9,7 +9,7 @@
 // smbase
 #include "nonport.h"                   // getMilliseconds
 #include "sm-iostream.h"               // cout
-#include "test.h"                      // USUAL_TEST_MAIN
+#include "sm-test.h"                   // USUAL_TEST_MAIN
 #include "trace.h"                     // TRACE_ARGS
 
 

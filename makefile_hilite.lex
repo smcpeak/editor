@@ -1,46 +1,39 @@
 /* makefile_hilite.lex
    lexer for highlighting Makefiles */
 
+%smflex 101
+
 /* ----------------------- C definitions ---------------------- */
 %{
 
-#include "makefile_hilite.h"           // Makefile_FlexLexer class
+#include "makefile_hilite.h"           // Makefile_Lexer class
 #include "bufferlinesource.h"          // BufferLineSource
 #include "textcategory.h"              // TC_XXX constants
 
-// this works around a problem with cygwin & fileno
-#define YY_NEVER_INTERACTIVE 1
-
 // Lexer context class.
-class Makefile_FlexLexer : public yyFlexLexer {
+class Makefile_FlexLexer : public makefile_hilite_yyFlexLexer {
 public:      // data
   BufferLineSource bufsrc;
 
 protected:   // funcs
-  virtual int LexerInput(char *buf, int max_size);
+  virtual int yym_read_input(void *dest, int size) override;
 
 public:      // funcs
   Makefile_FlexLexer() {}
   ~Makefile_FlexLexer() {}
 
-  virtual int yylex();
+  int yym_lex();
 
-  void setState(LexerState state) { BEGIN((int)state); }
-  LexerState getState() const     { return (LexerState)(YY_START); }
+  void setState(LexerState state) { yym_set_start_condition((int)state); }
+  LexerState getState() const     { return (LexerState)(yym_get_start_condition()); }
 };
 
 %}
 
 
 /* -------------------- flex options ------------------ */
-/* no wrapping is needed; setting this means we don't have to link with libfl.a */
-%option noyywrap
-
 /* don't use the default-echo rules */
 %option nodefault
-
-/* I don't call unput */
-%option nounput
 
 /* generate a c++ lexer */
 %option c++
@@ -50,9 +43,6 @@ public:      // funcs
 
 /* utilize character equivalence classes */
 %option ecs
-
-/* the scanner is never interactive */
-%option never-interactive
 
 /* and I will define the class */
 %option yyclass="Makefile_FlexLexer"
@@ -127,14 +117,14 @@ TAB           [\t]
 "endif"            |
 "export"           |
 "include" {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_KEYWORD;
 }
 
   /* Directive keywords I want to highlight even more prominently. */
 "define"           |
 "endef" {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_SPECIAL;
 }
 
@@ -150,14 +140,14 @@ TAB           [\t]
 
   /* End of string. */
 <STRING>{NL} {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_NORMAL;
 }
 
   /* -------------- Line starting with an identifier ------------ */
   /* Identifier: variable or rule target name. */
 {LETTER}{ALNUM}* {
-  BEGIN(AFTER_IDENTIFIER);
+  YY_SET_START_CONDITION(AFTER_IDENTIFIER);
   return TC_NORMAL;
 }
 
@@ -166,35 +156,35 @@ TAB           [\t]
 }
 
 <AFTER_IDENTIFIER>("="|":="|"+=") {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_OPERATOR;
 }
 
 <AFTER_IDENTIFIER>(":") {
-  BEGIN(RULE);
+  YY_SET_START_CONDITION(RULE);
   return TC_OPERATOR;
 }
 
 <AFTER_IDENTIFIER>{NL} {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_NORMAL;
 }
 
   /* Transition on any other operator to treating it as a string. */
 <AFTER_IDENTIFIER>[$(){}]+ {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_OPERATOR;
 }
 
   /* And anything else too. */
 <AFTER_IDENTIFIER>[^$(){}] {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_NORMAL;
 }
 
   /* Rule target name.  Cannot start with "-". */
 [a-zA-Z0-9_%./][a-zA-Z0-9_%./-]* {
-  BEGIN(RULE);
+  YY_SET_START_CONDITION(RULE);
   return TC_NORMAL;
 }
 
@@ -207,14 +197,14 @@ TAB           [\t]
 }
 
 <RULE>{NL} {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_NORMAL;
 }
 
   /* ------------------------ Comments -------------------------- */
   /* Comment with continuation to next line. */
 "#".*{BACKSL}{NL} {
-  BEGIN(COMMENT);
+  YY_SET_START_CONDITION(COMMENT);
   return TC_COMMENT;
 }
 
@@ -231,14 +221,14 @@ TAB           [\t]
 
   /* Continuation of comment, ends here. */
 <COMMENT>.*{NL}? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_COMMENT;
 }
 
   /* --------------------- Shell lines --------------------- */
   /* Start of multi-line shell line. */
 {TAB}.*{BACKSL}{NL} {
-  BEGIN(SHELL);
+  YY_SET_START_CONDITION(SHELL);
   return TC_STRING;
 }
 
@@ -254,7 +244,7 @@ TAB           [\t]
 
   /* End of continued shell line. */
 <SHELL>.*{NL}? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_STRING;
 }
 
@@ -268,7 +258,7 @@ TAB           [\t]
 
   /* Assume a line starting with an operator is a string. */
 [(),${}]+ {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_OPERATOR;
 }
 
@@ -283,9 +273,9 @@ TAB           [\t]
 
 
 // ----------------------- Makefile_FlexLexer ---------------------
-int Makefile_FlexLexer::LexerInput(char *buf, int max_size)
+int Makefile_FlexLexer::yym_read_input(void *dest, int size)
 {
-  return bufsrc.fillBuffer(buf, max_size);
+  return bufsrc.fillBuffer(dest, size);
 }
 
 
@@ -309,7 +299,7 @@ void Makefile_Lexer::beginScan(TextDocumentCore const *buffer, int line, LexerSt
 
 int Makefile_Lexer::getNextToken(TextCategory &code)
 {
-  int result = lexer->yylex();
+  int result = lexer->yym_lex();
 
   if (result == 0) {
     // end of line
@@ -336,7 +326,7 @@ int Makefile_Lexer::getNextToken(TextCategory &code)
   }
   else {
     code = (TextCategory)result;
-    return lexer->YYLeng();
+    return lexer->yym_leng();
   }
 }
 

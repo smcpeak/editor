@@ -9,7 +9,7 @@
 
 // smbase
 #include "array.h"                     // ObjArrayStack
-#include "macros.h"                    // NO_OBJECT_COPIES
+#include "sm-macros.h"                 // NO_OBJECT_COPIES
 #include "refct-serf.h"                // SerfRefCount
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sobjlist.h"                  // SObjList

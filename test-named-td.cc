@@ -8,7 +8,7 @@
 #include "sm-file-util.h"              // SMFileUtil
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
-#include "test.h"                      // USUAL_MAIN
+#include "sm-test.h"                   // USUAL_MAIN
 
 #include <fstream>                     // ofstream
 

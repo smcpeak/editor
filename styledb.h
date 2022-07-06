@@ -5,7 +5,7 @@
 #define STYLEDB_H
 
 #include "textcategory.h"              // TextCategory
-#include "macros.h"                    // DMEMB
+#include "sm-macros.h"                 // DMEMB
 #include "array.h"                     // GrowArray
 
 #include <qcolor.h>                    // QColor

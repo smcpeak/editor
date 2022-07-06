@@ -2,6 +2,8 @@
    simple lexer for strings and comments, to experiment
    with using Flex for syntax highlighting */
 
+%smflex 101
+
 /* ----------------------- C definitions ---------------------- */
 %{
 
@@ -9,39 +11,30 @@
 #include "bufferlinesource.h"          // BufferLineSource
 #include "textcategory.h"              // TC_XXX constants
 
-// this works around a problem with cygwin & fileno
-#define YY_NEVER_INTERACTIVE 1
-
 // lexer context class
-class CommentFlexLexer : public yyFlexLexer {
+class CommentFlexLexer : public comment_yyFlexLexer {
 public:      // data
   BufferLineSource bufsrc;
 
 protected:   // funcs
-  virtual int LexerInput(char *buf, int max_size);
+  virtual int yym_read_input(void *dest, int size) override;
 
 public:      // funcs
   CommentFlexLexer() {}
   ~CommentFlexLexer() {}
 
-  virtual int yylex();
+  int yym_lex();
 
-  void setState(LexerState state) { BEGIN((int)state); }
-  LexerState getState() const     { return (LexerState)(YY_START); }
+  void setState(LexerState state) { yym_set_start_condition((int)state); }
+  LexerState getState() const     { return (LexerState)(yym_get_start_condition()); }
 };
 
 %}
 
 
 /* -------------------- flex options ------------------ */
-/* no wrapping is needed; setting this means we don't have to link with libfl.a */
-%option noyywrap
-
 /* don't use the default-echo rules */
 %option nodefault
-
-/* I don't call unput */
-%option nounput
 
 /* generate a c++ lexer */
 %option c++
@@ -51,9 +44,6 @@ public:      // funcs
 
 /* utilize character equivalence classes */
 %option ecs
-
-/* the scanner is never interactive */
-%option never-interactive
 
 /* and I will define the class */
 %option yyclass="CommentFlexLexer"
@@ -104,13 +94,13 @@ QUOTE         [\"]
      we're in a string literal so the next line will be
      highlighted accordingly */
 "L"?{QUOTE}({STRCHAR}|({BACKSL}{ANY}))*{BACKSL} {
-  BEGIN(STRING);
+  YY_SET_START_CONDITION(STRING);
   return TC_STRING;
 }
 
   /* string continuation that ends on this line */
 <STRING>({STRCHAR}|({BACKSL}{ANY}))*{QUOTE}? {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_STRING;
 }
 
@@ -140,13 +130,13 @@ QUOTE         [\"]
 
   /* C comment extending to next line */
 "/""*"([^*]|"*"[^/])*"*"? {
-  BEGIN(COMMENT);
+  YY_SET_START_CONDITION(COMMENT);
   return TC_COMMENT;
 }
 
   /* continuation of C comment, ends here */
 <COMMENT>"*/" {
-  BEGIN(INITIAL);
+  YY_SET_START_CONDITION(INITIAL);
   return TC_COMMENT;
 }
 
@@ -167,9 +157,9 @@ QUOTE         [\"]
 
 
 // ----------------------- CommentFlexLexer ---------------------
-int CommentFlexLexer::LexerInput(char *buf, int max_size)
+int CommentFlexLexer::yym_read_input(void *dest, int size)
 {
-  return bufsrc.fillBuffer(buf, max_size);
+  return bufsrc.fillBuffer(dest, size);
 }
 
 
@@ -193,7 +183,7 @@ void CommentLexer::beginScan(TextDocumentCore const *buffer, int line, LexerStat
 
 int CommentLexer::getNextToken(TextCategory &code)
 {
-  int result = lexer->yylex();
+  int result = lexer->yym_lex();
 
   if (result == 0) {
     // end of line
@@ -206,7 +196,7 @@ int CommentLexer::getNextToken(TextCategory &code)
   }
   else {
     code = (TextCategory)result;
-    return lexer->YYLeng();
+    return lexer->yym_leng();
   }
 }
 

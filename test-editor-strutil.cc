@@ -5,7 +5,7 @@
 
 // smbase
 #include "sm-iostream.h"               // cout
-#include "test.h"                      // USUAL_TEST_MAIN
+#include "sm-test.h"                   // USUAL_TEST_MAIN
 
 
 static void expectCIA(string const &text, int byteOffset,

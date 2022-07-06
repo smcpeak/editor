@@ -6,7 +6,7 @@
 
 // smbase
 #include "array.h"                     // ArrayStack
-#include "macros.h"                    // DMEMB
+#include "sm-macros.h"                 // DMEMB
 #include "str.h"                       // string
 
 class SMFileUtil;                      // sm-file-util.h

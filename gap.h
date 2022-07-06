@@ -4,12 +4,15 @@
 #ifndef GAPARRAY_H
 #define GAPARRAY_H
 
-#include "macros.h"                    // NO_OBJECT_COPIES
+// smbase
 #include "sm-noexcept.h"               // NOEXCEPT
+#include "sm-macros.h"                 // NO_OBJECT_COPIES
 #include "sm-swap.h"                   // swap
 #include "xassert.h"                   // xassert
 
+// libc
 #include <string.h>                    // memcpy, etc.
+
 
 // abstractly models a sequence
 // assumption: objects of type T can be copied with memcpy, etc.,

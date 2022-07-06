@@ -10,7 +10,7 @@
 
 // smbase
 #include "array.h"                     // ArrayStack
-#include "macros.h"                    // NO_OBJECT_COPIES
+#include "sm-macros.h"                 // NO_OBJECT_COPIES
 #include "owner.h"                     // Owner
 #include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
