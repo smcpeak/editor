@@ -1,7 +1,6 @@
 
 TODOs:
   - high priority
-    - Fix how Enter works in Makefiles, adding tabs I don't want
     - Ctrl+W during search works badly if the cursor isn't on a match
     - when opening a file, prompt before creating a new one since I
       mistype a lot then have to re-navigate
@@ -30,8 +29,6 @@ TODOs:
     and then I can't resize it smaller!
   - the editor is pretty slow when deleting large amounts of text,
     such as when working with preprocessor output
-  - do not insert Tabs when hitting Enter after a Tab-indented line,
-    like is already done for spaces
   - regex bug?  this regex:
       " +\||"
     works, but this:

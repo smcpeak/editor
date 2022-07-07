@@ -379,6 +379,13 @@ public:      // funcs
   void centerVisibleOnCursorLine();
 
   // ---------------- general text queries -------------------
+  // If character 'c' is displayed at column 'col', what column do we
+  // end up in right after that?  Usually it is 'c+1' but if 'c' is the
+  // tab character then it can be different.
+  //
+  // 'c' must not be newline.
+  int layoutColumnAfter(int col, int c) const;
+
   // Get a range of text from a line, but if the position is outside
   // the defined range, pretend the line exists (if necessary) and
   // that there are space characters up to 'col+destLen' (if necessary).
@@ -521,6 +528,13 @@ public:      // funcs
   // ---------------------- adding whitespace ----------------------
   // Add minimum whitespace near 'tc' to ensure it is not beyond EOL
   // or EOF.
+  //
+  // The horizontal whitespace inserted by this function is most often
+  // just spaces, but if the 'tc' line is currently blank, and the
+  // nearest preceding non-blank line is indented with tabs or a mix of
+  // tabs and spaces, this function will insert as much of that same
+  // indentation as possible and needed to get to the desired column,
+  // filling any remainder with spaces.
   void fillToCoord(TextLCoord const &tc);
 
   void fillToCursor() { fillToCoord(cursor()); }
@@ -542,9 +556,12 @@ public:      // funcs
   //   - Scroll to left edge.
   //   - Auto-indent.
   //
-  // Automatic indentation means adding as many spaces as there are
-  // before the first non-whitespace character in the first non-blank
-  // line found by searching upward from the newly inserted line.
+  // Automatic indentation means moving the cursor into the same column
+  // as the first non-whitespace character in the first non-blank line
+  // found by searching upward from the newly inserted line.
+  //
+  // Actually inserting indentation is delayed until some text is added
+  // to the line, at which point 'fillToCursor' does it.
   void insertNewlineAutoIndent();
 
   // indent (or un-indent, if ind<0) the line range
@@ -642,6 +659,9 @@ public:      // types
     NO_OBJECT_COPIES(LineIterator);
 
   private:     // instance data
+    // Document editor we are iterating over.
+    TextDocumentEditor const &m_tde;
+
     // Underlying iterator.
     TextDocument::LineIterator m_iter;
 
@@ -649,9 +669,6 @@ public:      // types
     // '!has()', this is one more than the column number where the
     // previous glyph ends.
     int m_column;
-
-    // Tab width for this iterator.
-    int m_tabWidth;
 
   public:      // funcs
     // Same interface as TextDocument::LineIterator.

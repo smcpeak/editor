@@ -1303,10 +1303,25 @@ static void testInsertNewlineAutoIndentWithTab()
     "a\n"
     "\tb\n");
 
-  // Auto-indent should add a Tab.
+  // Auto-indent itself should *not* add a Tab.
   tde.setCursor(TextLCoord(1, 9));
   xassert(tde.cursorAtLineEnd());
   tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,8,
+    "a\n"
+    "\tb\n"
+    "\n");
+
+  // But a Tab should appear once we insert some text.
+  tde.insertNulTermText("c");
+  expectNM(tde, 2,9,
+    "a\n"
+    "\tb\n"
+    "\tc\n");
+
+  // Delete the character so the rest of the test operates as it did
+  // before I changed how auto-indent works with tabs.
+  tde.backspaceFunction();
   expectNM(tde, 2,8,
     "a\n"
     "\tb\n"
@@ -1318,12 +1333,21 @@ static void testInsertNewlineAutoIndentWithTab()
     "a\n"
     "\tb\n"
     "\t\n"
+    "\n");
+  tde.insertNulTermText("d");
+  tde.backspaceFunction();
+  expectNM(tde, 3,8,
+    "a\n"
+    "\tb\n"
+    "\t\n"
     "\t\n");
 
   // Adding another tab to this line will not affect indentation because
   // it is entirely whitespace.
   tde.insertNulTermText("\t");
   tde.insertNewlineAutoIndent();
+  tde.insertNulTermText("e");
+  tde.backspaceFunction();
   expectNM(tde, 4,8,
     "a\n"
     "\tb\n"
@@ -1334,6 +1358,15 @@ static void testInsertNewlineAutoIndentWithTab()
   // But adding a Tab and another character will.
   tde.insertNulTermText("\tc");
   tde.insertNewlineAutoIndent();
+  expectNM(tde, 5,16,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\t\n"
+    "\t\tc\n"
+    "\n");
+  tde.insertNulTermText("x");
+  tde.backspaceFunction();
   expectNM(tde, 5,16,
     "a\n"
     "\tb\n"
@@ -1352,7 +1385,31 @@ static void testInsertNewlineAutoIndentWithTab()
     "\t\t\n"
     "\t\tc\n"
     "\t\t \t d\n"
+    "\n");
+  tde.insertNulTermText("x");
+  tde.backspaceFunction();
+  expectNM(tde, 6,25,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\t\n"
+    "\t\tc\n"
+    "\t\t \t d\n"
     "\t\t \t \n");
+
+  // Go beyond the end of the document and type.
+  tde.setCursor(TextLCoord(8,25));
+  tde.insertNulTermText("y");
+  expectNM(tde, 8,26,
+    "a\n"
+    "\tb\n"
+    "\t\n"
+    "\t\t\n"
+    "\t\tc\n"
+    "\t\t \t d\n"
+    "\t\t \t \n"
+    "\n"
+    "\t\t \t y");
 }
 
 
@@ -2073,7 +2130,7 @@ static void testEditingWithTabs()
     "^       seven       "    // 3
   );
 
-  // Automatic indentation.
+  // Automatic indentation merely positions the cursor.
   tde.setCursor(TextLCoord(3, 13));
   tde.insertNewlineAutoIndent();
   expectVisibleWindow(tde, 4,8,
@@ -2082,7 +2139,31 @@ static void testEditingWithTabs()
     "xtwothree           "    // 1
     "four^   six         "    // 2
     "^       seven       "    // 3
-    "^                   "    // 4
+    "                    "    // 4
+  );
+
+  // Inserting a character also inserts a tab for indentation.
+  tde.insertNulTermText("e");
+  expectVisibleWindow(tde, 4,9,
+  //           1
+  // 01234567890123456789
+    "xtwothree           "    // 1
+    "four^   six         "    // 2
+    "^       seven       "    // 3
+    "^       e           "    // 4
+  );
+
+  // This works even when there is an intervening blank line.
+  tde.insertNewlineAutoIndent();
+  tde.insertNewlineAutoIndent();
+  tde.insertNulTermText("x");
+  expectVisibleWindow(tde, 6,9,
+  //           1
+  // 01234567890123456789
+    "^       seven       "    // 3
+    "^       e           "    // 4
+    "                    "    // 5
+    "^       x           "    // 6
   );
 }
 

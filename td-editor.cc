@@ -658,6 +658,26 @@ void TextDocumentEditor::walkMCoordBytes(TextMCoord &mc, int len) const
 }
 
 
+static int roundUp(int n, int unit)
+{
+  xassert(unit != 0);
+  return ((n + unit - 1) / unit) * unit;
+}
+
+
+int TextDocumentEditor::layoutColumnAfter(int col, int c) const
+{
+  xassert(c != '\n');
+
+  col++;
+  if (c == '\t') {
+    // Round 0-based column up to the next multiple of 'm_tabWidth'.
+    col = roundUp(col, m_tabWidth);
+  }
+  return col;
+}
+
+
 void TextDocumentEditor::getLineLayout(TextLCoord lc,
   ArrayStack<char> &dest, int destLen) const
 {
@@ -1017,61 +1037,77 @@ bool TextDocumentEditor::cursorOnModelCoord() const
 }
 
 
-// Given a coordinate that might be outside the buffer area (but must
-// both be nonnegative), compute how many rows and spaces need to
-// be added (to EOF, and 'tc.line', respectively) so that coordinate
-// will be in the defined area.
-static void computeSpaceFill(TextDocumentEditor const &tde, TextLCoord tc,
-                             int &rowfill, int &colfill)
-{
-  if (tc.m_line < tde.numLines()) {
-    // case 1: only need to add spaces to the end of some line
-    int diff = tc.m_column - tde.lineLengthColumns(tc.m_line);
-    if (diff < 0) {
-      diff = 0;
-    }
-    rowfill = 0;
-    colfill = diff;
-  }
-
-  else {
-    // case 2: need to add lines, then possibly add spaces
-    rowfill = (tc.m_line - tde.numLines() + 1);    // # of lines to add
-    colfill = tc.m_column;                         // # of cols to add
-  }
-
-  xassert(rowfill >= 0);
-  xassert(colfill >= 0);
-}
-
 void TextDocumentEditor::fillToCoord(TextLCoord const &tc)
 {
-  int rowfill, colfill;
-  computeSpaceFill(*this, tc, rowfill, colfill);
+  // Text to add in order to fill to the target coordinate.
+  stringBuilder textToAdd;
 
-  if (rowfill==0 && colfill==0) {
+  // Layout lines added by 'textToAdd'.
+  int textToAddLines = 0;
+
+  // Plan to add blank lines to the end of the model until the target
+  // coordinate is within an existing line.
+  while (!( tc.m_line < this->numLines() + textToAddLines )) {
+    textToAdd << '\n';
+    textToAddLines++;
+  }
+
+  // Layout columns used by 'textToAdd'.
+  int textToAddCols = 0;
+
+  // How long is it currently?
+  int curLen = this->lineLengthColumns(tc.m_line);
+  if (curLen == 0) {
+    // We are adding space to a blank line.  Look at the preceding
+    // non-blank line to get its indentation, and use as much of that as
+    // possible and as needed, with the effect that we continue the
+    // prevailing indentation style.
+    string indText;
+    this->getAboveIndentationColumns(tc.m_line - 1, indText /*OUT*/);
+
+    // Process each character in 'indText'.
+    size_t indTextLen = indText.length();
+    for (size_t i=0; i < indTextLen; i++) {
+      int c = (unsigned char)(indText[i]);
+
+      int colAfter = layoutColumnAfter(textToAddCols, c);
+      if (colAfter <= tc.m_column) {
+        // Adding 'c' brings us closer to the target column without
+        // going over.
+        textToAdd << (char)c;
+        textToAddCols = colAfter;
+      }
+      else {
+        break;
+      }
+    }
+  }
+
+  // Use spaces to make up the remaining distance to the target
+  // column.
+  while (curLen + textToAddCols < tc.m_column) {
+    textToAdd << ' ';
+    textToAddCols++;
+  }
+
+  if (textToAddLines==0 && textToAddCols==0) {
     return;     // nothing to do
   }
 
   // Restore cursor and scroll state afterwards.
   CursorRestorer restorer(*this);
 
-  // Move cursor the end of the 'tc' line.
-  moveCursor(false /*relLine*/, tc.m_line - rowfill,
-             false /*relCol*/, lineLengthColumns(tc.m_line - rowfill));
+  // Move cursor the end of the 'tc' line if it exists in the model, or
+  // the end of the last line otherwise.
+  int lineToEdit = std::min(tc.m_line, this->numLines()-1);
+  moveCursor(false /*relLine*/, lineToEdit,
+             false /*relCol*/, lineLengthColumns(lineToEdit));
 
   // Do not delete things implicitly here due to a selection!
   clearMark();
 
-  // add newlines
-  while (rowfill--) {
-    insertNulTermText("\n");
-  }
-
-  // add spaces
-  while (colfill--) {
-    insertSpace();
-  }
+  // Add the computed text.
+  insertString(textToAdd.str());
 
   // Cursor should have ended up at 'tc'.
   xassert(tc == cursor());
@@ -1101,12 +1137,6 @@ void TextDocumentEditor::insertNewline()
 }
 
 
-static bool containsTab(string const &str)
-{
-  return str.contains('\t');
-}
-
-
 void TextDocumentEditor::insertNewlineAutoIndent()
 {
   // The code below this assumes cursor > mark if mark is active.
@@ -1129,13 +1159,6 @@ void TextDocumentEditor::insertNewlineAutoIndent()
   if (hadCharsToRight) {
     // Insert indentation so the carried forward text starts
     // in the auto-indent column.
-    this->insertString(indText);
-  }
-  else if (containsTab(indText)) {
-    // When the indentation has a Tab character, insert it eagerly
-    // because lazy indentation via 'fillToCursor' will use spaces only.
-    // (A future enhancement might be to change 'fillToCursor' to insert
-    // Tabs when appropriate.)
     this->insertString(indText);
   }
   else {
@@ -1286,26 +1309,15 @@ void TextDocumentEditor::debugPrint() const
 TextDocumentEditor::LineIterator::LineIterator(
   TextDocumentEditor const &tde, int line)
 :
+  m_tde(tde),
   m_iter(*(tde.getDocument()), line),
-  m_column(0),
-  m_tabWidth(tde.tabWidth())
+  m_column(0)
 {}
-
-
-static int roundUp(int n, int unit)
-{
-  return ((n + unit - 1) / unit) * unit;
-}
 
 
 void TextDocumentEditor::LineIterator::advByte()
 {
-  m_column++;
-  if (m_iter.byteAt() == '\t') {
-    // Round 0-based column up to the next multiple of 'm_tabWidth'.
-    m_column = roundUp(m_column, m_tabWidth);
-  }
-
+  m_column = m_tde.layoutColumnAfter(m_column, m_iter.byteAt());
   m_iter.advByte();
 }
 
