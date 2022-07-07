@@ -6,6 +6,7 @@ TODOs:
     - when opening a file, prompt before creating a new one since I
       mistype a lot then have to re-navigate
     - Use C/C++ highlighting for extensions: lex, y, ast, gr, hpp
+    - Use Hashline highlighting for: ev
     - Recognize C++11 keywords in highlighting, esp. noexcept
     - Remove autocomplete for goto-line dialog box.
     - Highlight "override" and "NULLABLE" in green.
