@@ -482,11 +482,15 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
     string ext = string(dot+1);
 
     static char const * const cppExts[] = {
+      "ast",
       "c",
       "cc",
       "cpp",
+      "gr",
       "h",
+      "hpp",
       "lex",
+      "y",
     };
     if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
       file->m_highlighter = new C_Highlighter(file->getCore());
@@ -499,9 +503,10 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
     }
 
     static char const * const hashCommentExts[] = {
-      "sh",
+      "ev",
+      "pl",
       "py",
-      "pl"
+      "sh",
     };
     if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
       file->m_highlighter = new HashComment_Highlighter(file->getCore());
