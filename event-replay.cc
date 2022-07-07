@@ -115,10 +115,7 @@ EventReplay::~EventReplay()
 #define xstringb(msg) throw stringb(msg).str() /* user ; */
 
 
-// Change the size of the top-level window containing 'widget' so that
-// the widget itself reaches the target size.  This assumes that the
-// widget expands or contracts the same amount as its parent windows.
-static void resizeChildWidget(QWidget *widget, QSize const &targetSize)
+void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
 {
   // How much should the target widget's size change?
   QSize currentSize = widget->size();
@@ -252,8 +249,7 @@ static EventReplayQueryable *getQueryableFromPath(string const &path)
 }
 
 
-// Get the focus widget, throwing if there is none.
-static QWidget *getFocusWidget()
+QWidget *EventReplay::getFocusWidget()
 {
   QWidget *widget = QApplication::focusWidget();
   if (!widget) {
@@ -393,11 +389,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "Sleep") {
     BIND_ARGS1(duration);
 
-    int ms = atoi(duration.c_str());
-    TRACE("EventReplay", "sleeping for " << ms << " ms");
-    RESTORER(bool, m_sleeping, true);
-    sleepWhilePumpingEvents(ms);
-    TRACE("EventReplay", "done sleeping");
+    sleepForMS(atoi(duration.c_str()));
   }
 
   else if (funcName == "ClickButton") {
@@ -513,6 +505,15 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else {
     xstringb("unrecognized function: " << quoted(funcName));
   }
+}
+
+
+void EventReplay::sleepForMS(int ms)
+{
+  TRACE("EventReplay", "sleeping for " << ms << " ms");
+  RESTORER(bool, m_sleeping, true);
+  sleepWhilePumpingEvents(ms);
+  TRACE("EventReplay", "done sleeping");
 }
 
 

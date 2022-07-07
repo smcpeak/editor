@@ -19,6 +19,7 @@
 
 class QImage;
 class QRegularExpressionMatch;
+class QWidget;
 
 
 // Interface that the replay engine uses to query arbitrary state
@@ -107,9 +108,20 @@ private:     // instance data
   bool m_sleeping;
 
 private:     // funcs
+  // Change the size of the top-level window containing 'widget' so that
+  // the widget itself reaches the target size.  This assumes that the
+  // widget expands or contracts the same amount as its parent windows.
+  void resizeChildWidget(QWidget *widget, QSize const &targetSize);
+
+  // Get the focus widget, throwing if there is none.
+  QWidget *getFocusWidget();
+
   // Replay a single call line as matched by 'match'.  Throw a string
   // object if there is a problem.
   void replayCall(QRegularExpressionMatch &match);
+
+  // Sleep for 'ms' milliseconds while pumping the event queue.
+  void sleepForMS(int ms);
 
   // Replay an ordinary typing event.
   void replayFocusKey(char c);
