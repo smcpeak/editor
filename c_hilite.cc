@@ -19,7 +19,7 @@ LexHighlighter * /*owner*/ makeCommentHighlighter(TextDocumentCore const &buf)
 
 void entry()
 {
-  traceAddSys("highlight");
+  //traceAddSys("highlight");
 
   exerciseHighlighter(&makeC_Highlighter);
   exerciseHighlighter(&makeCommentHighlighter);

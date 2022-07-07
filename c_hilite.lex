@@ -107,19 +107,25 @@ TICK          [\']
 /* ------------- token definition rules --------------- */
 %%
 
-  /* keywords other than true and false */
+  /* C++14 keywords (2.11p1) other than true, false, and nullptr. */
+"alignas"          |
+"alignof"          |
 "asm"              |
 "auto"             |
-"break"            |
 "bool"             |
+"break"            |
 "case"             |
 "catch"            |
-"cdecl"            |
+"cdecl"            |  /* Where did I get this?  Maybe from an old Borland compiler? */
 "char"             |
+"char16_t"         |
+"char32_t"         |
 "class"            |
 "const"            |
+"constexpr"        |
 "const_cast"       |
 "continue"         |
+"decltype"         |
 "default"          |
 "delete"           |
 "do"               |
@@ -141,8 +147,9 @@ TICK          [\']
 "mutable"          |
 "namespace"        |
 "new"              |
+"noexcept"         |
 "operator"         |
-"pascal"           |
+"pascal"           |  /* More Borland stuff I think. */
 "private"          |
 "protected"        |
 "public"           |
@@ -153,11 +160,13 @@ TICK          [\']
 "signed"           |
 "sizeof"           |
 "static"           |
+"static_assert"    |
 "static_cast"      |
 "struct"           |
 "switch"           |
 "template"         |
 "this"             |
+"thread_local"     |
 "throw"            |
 "try"              |
 "typedef"          |
@@ -177,6 +186,26 @@ TICK          [\']
 "__extension__"    |
 "__typeof__"       |
 "typeof"           return TC_KEYWORD;
+
+  /* This is not a keyword but I want to highlight it like one.*/
+"override"         return TC_KEYWORD;
+
+  /* I have defined this as a macro in smbase/sm-macros.h, and want to
+   * see it like a keyword. */
+"NULLABLE"         return TC_KEYWORD;
+
+  /* C++14 2.11p2: alternative representations for operators. */
+"and"              |
+"and_eq"           |
+"bitand"           |
+"bitor"            |
+"compl"            |
+"not"              |
+"not_eq"           |
+"or"               |
+"or_eq"            |
+"xor"              |
+"xor_eq"           return TC_OPERATOR;
 
   /* operators, punctuators */
 "("                |
@@ -236,7 +265,7 @@ TICK          [\']
 ".."               return TC_OPERATOR;
 
   /* special values */
-"true"|"false"|"null"|"TRUE"|"FALSE"|"NULL" {
+"true"|"false"|"null"|"nullptr"|"TRUE"|"FALSE"|"NULL" {
   return TC_SPECIAL;
 }
 

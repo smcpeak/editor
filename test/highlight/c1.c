@@ -111,3 +111,6 @@ int blah;
             macro with /* C comment */ inside it
 #define foo continued \
             macro ending with // C++ comment (not handled)
+
+new keywords: noexcept override NULLABLE
+new value: nullptr
