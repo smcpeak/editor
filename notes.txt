@@ -1,8 +1,5 @@
 
 TODOs:
-  - high priority
-    - Ctrl+W during search works badly if the cursor isn't on a match
-
   - Ctrl+J on line indented with tabs treats the tabs as being one space
     rather than 8, wrapping the lines in the wrong place (too long)
   - have to fix handling of "flex scanner jammed"!
