@@ -43,7 +43,7 @@ int const ROW_HEIGHT = 20;
 
 // Initial dialog dimensions in pixels.  I want it relatively tall by
 // default so I can see lots of files before having to scroll or resize.
-int const INIT_DIALOG_WIDTH = 500;
+int const INIT_DIALOG_WIDTH = 800;
 int const INIT_DIALOG_HEIGHT = 800;
 
 
@@ -55,7 +55,7 @@ OpenFilesDialog::ColumnInfo const
 OpenFilesDialog::s_columnInfo[NUM_TABLE_COLUMNS] = {
   {
     "File name",
-    400,
+    700,
   },
   {
     "Lines",
