@@ -265,7 +265,7 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Launch (run) command ...", fileLaunchCommand,
                   Qt::ALT + Qt::Key_R);
-    MENU_ITEM_KEY("Run \"&make\" ...", fileRunMake, Qt::Key_F9);
+    MENU_ITEM_KEY("Run \"run-&make-from-editor\"", fileRunMake, Qt::Key_F9);
     MENU_ITEM    ("Kill running process ...", fileKillProcess);
 
     menu->addSeparator();
@@ -918,13 +918,10 @@ void EditorWindow::fileRunMake()
 {
   string dir = m_editorWidget->getDocumentDirectory();
 
-  // This adds "LANG=C" to the 'make' invocation so that gcc will
-  // write its error messages in ASCII rather than UTF-8, since my
-  // editor cannot handle UTF-8 yet.
-  //
-  // TODO: The exact command should be configurable.
+  // My intent is the user creates a script with this name on their
+  // $PATH.  Then the script can do whatever is desired here.
   NamedTextDocument *fileDoc = m_globalState->launchCommand(
-    toQString(dir), false /*prefixStderrLines*/, "LANG=C make");
+    toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
   this->setDocumentFile(fileDoc);
 }
 
