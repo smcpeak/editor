@@ -406,12 +406,32 @@ void FilenameInputDialog::accept() NOEXCEPT
   // trailing slashes, and converting back to string.
   filename = SMFileName(filename).withTrailingSlash(false).toString();
 
+  // Prompt before overwriting a file.
   SMFileUtil sfu;
   if (m_saveAs && sfu.absoluteFileExists(filename)) {
     QMessageBox box(this);
     box.setWindowTitle("Overwrite Existing File?");
     box.setText(qstringb(
       "Overwrite existing file \"" << filename << "\"?"));
+    box.addButton(QMessageBox::Yes);
+    box.addButton(QMessageBox::Cancel);
+    if (box.exec() != QMessageBox::Yes) {
+      // Bail out without closing.
+      return;
+    }
+  }
+
+  // If we are loading a file, and the file does not exist, prompt
+  // first.  Without this, I often hit Enter a bit too fast, intending
+  // to open a file but instead creating a new one, which is annoying
+  // because then I have to re-open the dialog and navigate to the
+  // intended location a second time.
+  if (!m_saveAs && !sfu.absoluteFileExists(filename)) {
+    QMessageBox box(this);
+    box.setObjectName("createFilePrompt");
+    box.setWindowTitle("Create New File?");
+    box.setText(qstringb(
+      "Create new file \"" << filename << "\"?"));
     box.addButton(QMessageBox::Yes);
     box.addButton(QMessageBox::Cancel);
     if (box.exec() != QMessageBox::Yes) {

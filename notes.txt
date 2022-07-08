@@ -2,8 +2,6 @@
 TODOs:
   - high priority
     - Ctrl+W during search works badly if the cursor isn't on a match
-    - when opening a file, prompt before creating a new one since I
-      mistype a lot then have to re-navigate
     - Remove autocomplete for goto-line dialog box.
     - Make it possible for F9 to run "make -j4".
     - If the current directory lacks a Makefile, go up to find one that

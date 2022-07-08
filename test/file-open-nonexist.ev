@@ -1,0 +1,41 @@
+# file-open-nonexist.ev
+# Test the prompt for opening a file that does not exist.
+
+# Try opening a non-existing file.
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+CheckFocusWindow "window1.filename_input"
+FocusKeySequence "nonexist"
+FocusKeyPR "Key_Return" "\r"
+
+# This should prompt.
+CheckFocusWindow "window1.filename_input.createFilePrompt"
+
+# Say yes to the prompt.
+FocusKeyPR "Key_Return" "\r"
+
+# Should now be open for editing.
+CheckFocusWindow "window1"
+CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
+
+
+# Open another one.
+Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
+CheckFocusWindow "window1.filename_input"
+FocusKeySequence "another-nonexist"
+FocusKeyPR "Key_Return" "\r"
+
+# Say no to the prompt.
+CheckFocusWindow "window1.filename_input.createFilePrompt"
+FocusKeyPR "Key_Escape" "\x1B"
+
+# We should still be in the file-open dialog.
+CheckFocusWindow "window1.filename_input"
+
+# Bail out of that.
+FocusKeyPR "Key_Escape" "\x1B"
+
+# Now we should have the first non-existent file still open.
+CheckFocusWindow "window1"
+CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
+
+# EOF
