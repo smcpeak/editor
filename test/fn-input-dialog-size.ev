@@ -7,7 +7,7 @@ Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
 CheckFocusWidget "window1.filename_input.m_filenameEdit"
 
 # This is the initial size.
-CheckSize "window1.filename_input" "(400,400)"
+CheckSize "window1.filename_input" "(500,800)"
 
 # Change size.
 ResizeEvent "window1.filename_input" "(500,600)"
