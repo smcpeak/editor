@@ -47,7 +47,7 @@ private:     // data
   //
   // Additionally, the entries have the following requirements:
   //
-  // * Every 'm_name' must be non-empty and unique.  A client must
+  // * Every 'm_docName' must be non-empty and unique.  A client must
   //   verify that 'findDocumentByName(n)==NULL' before changing the
   //   name to 'n'.
   //

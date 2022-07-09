@@ -28,7 +28,7 @@ NamedTextDocument::NamedTextDocument()
   : TextDocument(),
     m_hasHotkeyDigit(false),
     m_hotkeyDigit(0),
-    m_name(),
+    m_docName(),
     m_hasFilename(false),
     m_directory(),
     m_lastFileTimestamp(0),
@@ -62,7 +62,7 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 string NamedTextDocument::filename() const
 {
   xassert(this->hasFilename());
-  return m_name;
+  return m_docName;
 }
 
 
@@ -76,7 +76,7 @@ void NamedTextDocument::setDirectory(string const &dir)
 
 void NamedTextDocument::setFilename(string const &filename)
 {
-  m_name = filename;
+  m_docName = filename;
   m_hasFilename = true;
 
   string dir, base;
@@ -87,7 +87,7 @@ void NamedTextDocument::setFilename(string const &filename)
 
 void NamedTextDocument::setNonFileName(string const &name, string const &dir)
 {
-  m_name = name;
+  m_docName = name;
   m_hasFilename = false;
 
   this->setDirectory(dir);
@@ -154,11 +154,11 @@ void NamedTextDocument::setHotkeyDigit(int digit)
 void NamedTextDocument::readFile()
 {
   xassert(this->hasFilename());
-  this->TextDocument::readFile(this->m_name);
+  this->TextDocument::readFile(this->m_docName);
   this->refreshModificationTime();
 
   SMFileUtil sfu;
-  if (sfu.isReadOnly(this->m_name)) {
+  if (sfu.isReadOnly(this->m_docName)) {
     this->setReadOnly(true);
   }
 }
@@ -167,7 +167,7 @@ void NamedTextDocument::readFile()
 void NamedTextDocument::writeFile()
 {
   xassert(this->hasFilename());
-  this->TextDocument::writeFile(this->m_name);
+  this->TextDocument::writeFile(this->m_docName);
   this->noUnsavedChanges();
   this->refreshModificationTime();
 }
@@ -175,8 +175,8 @@ void NamedTextDocument::writeFile()
 
 bool NamedTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
-  bool ret = getFileModificationTime(this->m_name.c_str(), modTime);
-  TRACE("modtime", "on-disk ts for " << this->m_name <<
+  bool ret = getFileModificationTime(this->m_docName.c_str(), modTime);
+  TRACE("modtime", "on-disk ts for " << this->m_docName <<
                    " is " << modTime);
   return ret;
 }
@@ -216,7 +216,7 @@ bool NamedTextDocument::hasStaleModificationTime() const
 
 void NamedTextDocument::refreshModificationTime()
 {
-  TRACE("modtime", "refresh: old ts for " << this->m_name <<
+  TRACE("modtime", "refresh: old ts for " << this->m_docName <<
                    " is " << this->m_lastFileTimestamp);
   xassert(this->hasFilename());
 
@@ -230,7 +230,7 @@ void NamedTextDocument::refreshModificationTime()
     // repeatedly bothering the user with spurious errors.
   }
 
-  TRACE("modtime", "refresh: new ts for " << this->m_name <<
+  TRACE("modtime", "refresh: new ts for " << this->m_docName <<
                    " is " << this->m_lastFileTimestamp);
 }
 

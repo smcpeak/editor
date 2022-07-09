@@ -51,9 +51,9 @@ private:     // data
   // the content.  It must be unique within the list of
   // NamedTextDocuments in its containing NamedTextDocumentList.  It
   // must not be empty.
-  string m_name;
+  string m_docName;
 
-  // When true, 'm_name' is the name of a file on disk.
+  // When true, 'm_docName' is the name of a file on disk.
   bool m_hasFilename;
 
   // Directory associated with this document.  For a file, this is the
@@ -120,7 +120,7 @@ public:      // funcs
 
   // ----------------------------- names ----------------------------
   // Get the document's unique (within its NamedTextDocumentList) name.
-  string name() const                  { return m_name; }
+  string name() const                  { return m_docName; }
 
   // True if the document's name is a file name.
   bool hasFilename() const             { return m_hasFilename; }
@@ -128,13 +128,13 @@ public:      // funcs
   // Get the filename for this document.  Requires 'hasFilename()'.
   string filename() const;
 
-  // Set 'm_name' to be 'filename', and 'm_hasFilename' to true.  It is
-  // the caller's responsibility to ensure uniqueness within the
+  // Set 'm_docName' to be 'filename', and 'm_hasFilename' to true.  It
+  // is the caller's responsibility to ensure uniqueness within the
   // containing NamedTextDocumentList.  This also sets 'm_directory' to
   // the directory of the file.
   void setFilename(string const &filename);
 
-  // Set 'm_name' to 'name' and 'm_hasFilename' to false.  The name
+  // Set 'm_docName' to 'name' and 'm_hasFilename' to false.  The name
   // still has to be unique.  Sets 'm_directory' to 'dir'.
   void setNonFileName(string const &name, string const &dir);
 
