@@ -22,8 +22,8 @@ static void testWhenUntitledExists()
 
   // Create a file with that name.
   bool created = false;
-  if (!fileOrDirectoryExists(file.name().c_str())){
-    ofstream of(file.name().c_str());
+  if (!fileOrDirectoryExists(file.docName().c_str())){
+    ofstream of(file.docName().c_str());
     created = true;
   }
 
@@ -33,7 +33,7 @@ static void testWhenUntitledExists()
   xassert(!file.hasStaleModificationTime());
 
   if (created) {
-    (void)removeFile(file.name().c_str());
+    (void)removeFile(file.docName().c_str());
   }
 }
 

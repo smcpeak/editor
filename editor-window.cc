@@ -461,7 +461,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   }
 
   // This handles both "foo.diff" and "git diff".
-  if (suffixEquals(file->name(), "diff")) {
+  if (suffixEquals(file->docName(), "diff")) {
     file->m_highlighter = new DiffHighlighter();
 
     // Diff output has lots of lines that are not empty and have
@@ -705,7 +705,7 @@ void EditorWindow::fileSave()
     QMessageBox box(this);
     box.setWindowTitle("File Changed");
     box.setText(toQString(stringb(
-      "The file \"" << b->name() << "\" has changed on disk.  "
+      "The file \"" << b->docName() << "\" has changed on disk.  "
       "If you save, those changes will be overwritten by the text "
       "in the editor's memory.  Save anyway?")));
     box.addButton(QMessageBox::Save);
@@ -730,7 +730,7 @@ void EditorWindow::writeTheFile()
     // There is not a severity between "warning" and "critical",
     // and "critical" is a bit obnoxious.
     QMessageBox::warning(this, "Write Error",
-      qstringb("Failed to save file \"" << file->name() << "\": " << x.why()));
+      qstringb("Failed to save file \"" << file->docName() << "\": " << x.why()));
   }
 }
 
@@ -809,7 +809,7 @@ void EditorWindow::fileClose()
   NamedTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
-    msg << "The document " << quoted(b->name()) << " has unsaved changes.  "
+    msg << "The document " << quoted(b->docName()) << " has unsaved changes.  "
         << "Discard these changes and close it anyway?";
     if (!this->okToDiscardChanges(msg)) {
       return;
@@ -850,7 +850,7 @@ bool EditorWindow::reloadFile(NamedTextDocument *b_)
 
   if (b->unsavedChanges()) {
     if (!this->okToDiscardChanges(stringb(
-          "The file \"" << b->name() << "\" has unsaved changes.  "
+          "The file \"" << b->docName() << "\" has unsaved changes.  "
           "Discard those changes and reload this file anyway?"))) {
       return false;
     }
@@ -862,7 +862,7 @@ bool EditorWindow::reloadFile(NamedTextDocument *b_)
   }
   catch (xBase &x) {
     this->complain(stringb(
-      "Can't read file \"" << b->name() << "\": " << x.why() <<
+      "Can't read file \"" << b->docName() << "\": " << x.why() <<
       "\n\nThe file will remain open in the editor with its "
       "old contents."));
     return false;
@@ -939,13 +939,13 @@ void EditorWindow::fileKillProcess()
 
     case DPS_NONE:
       messageBox(this, "Not a Process Document", qstringb(
-        "The document \"" << doc->name() << "\" was not produced by "
+        "The document \"" << doc->docName() << "\" was not produced by "
         "running a process, so there is nothing to kill."));
       break;
 
     case DPS_RUNNING:
       if (questionBoxYesCancel(this, "Kill Process?", qstringb(
-            "Kill the process \"" << doc->name() << "\"?"))) {
+            "Kill the process \"" << doc->docName() << "\"?"))) {
         if (this->stillCurrentDocument(doc)) {
           string problem = m_globalState->killCommand(doc);
           if (!problem.empty()) {
@@ -958,7 +958,7 @@ void EditorWindow::fileKillProcess()
 
     case DPS_FINISHED:
       messageBox(this, "Process Finished", qstringb(
-        "The process \"" << doc->name() << "\" has already terminated."));
+        "The process \"" << doc->docName() << "\" has already terminated."));
       break;
   }
 }
@@ -987,7 +987,7 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
     NamedTextDocument *file = this->m_globalState->m_documentList.getDocumentAt(i);
     if (file->unsavedChanges()) {
       ct++;
-      msg << " * " << file->name() << '\n';
+      msg << " * " << file->docName() << '\n';
     }
   }
 
@@ -1667,7 +1667,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
     SMFileUtil sfu;
     string fn(toString(filename));
     if (sfu.absoluteFileExists(fn) &&
-        currentDocument()->name() != fn) {
+        currentDocument()->docName() != fn) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
       this->fileOpenFile(fn);

@@ -111,7 +111,7 @@ string NamedTextDocument::nameWithStatusIndicators() const
 {
   stringBuilder sb;
   sb << documentProcessStatusIndicator(this);
-  sb << this->name();
+  sb << this->docName();
   if (this->unsavedChanges()) {
     sb << " *";
   }

@@ -403,10 +403,10 @@ string GlobalState::killCommand(NamedTextDocument *doc)
       DEV_WARNING("running process with no watcher");
       return stringb(
         "BUG: I lost track of the process that is or was producing the "
-        "document \"" << doc->name() << "\"!  This should not happen.");
+        "document \"" << doc->docName() << "\"!  This should not happen.");
     }
     else {
-      return stringb("Process \"" << doc->name() <<
+      return stringb("Process \"" << doc->docName() <<
                      "\" died before I could kill it.");
     }
   }

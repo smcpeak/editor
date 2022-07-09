@@ -120,7 +120,7 @@ public:      // funcs
 
   // ----------------------------- names ----------------------------
   // Get the document's unique (within its NamedTextDocumentList) name.
-  string name() const                  { return m_docName; }
+  string docName() const               { return m_docName; }
 
   // True if the document's name is a file name.
   bool hasFilename() const             { return m_hasFilename; }

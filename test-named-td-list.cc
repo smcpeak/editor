@@ -276,11 +276,11 @@ static void testCreateUntitled()
 
   NamedTextDocument *file1 = createUntitled(dlist);
   observer.expectOnly(NF_ADDED, file1);
-  xassert(file1->name() == "untitled2.txt");
+  xassert(file1->docName() == "untitled2.txt");
 
   NamedTextDocument *file2 = createUntitled(dlist);
   observer.expectOnly(NF_ADDED, file2);
-  xassert(file2->name() == "untitled3.txt");
+  xassert(file2->docName() == "untitled3.txt");
 
   // Test 'findUntitledUnmodifiedFile'.
   NamedTextDocument *f = dlist.findUntitledUnmodifiedDocument();
@@ -290,7 +290,7 @@ static void testCreateUntitled()
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0 || f == file2);
 
-  file2->setFilename(file2->name());      // Make it no longer untitled.
+  file2->setFilename(file2->docName());      // Make it no longer untitled.
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0);
 
