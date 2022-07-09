@@ -13,6 +13,7 @@
 // smbase
 #include "datablok.h"                  // DataBlock
 #include "datetime.h"                  // getCurrentUnixTime
+#include "exc.h"                       // xfatal
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // replace
 #include "sm-test.h"                   // ARGS_MAIN
@@ -172,11 +173,37 @@ static void runCmdArgsExpectOutErr(char const *cmd,
 }
 
 
+// Run 'cygpath -m' on 'input' and return its result.
+static string runCygpath(string input)
+{
+  CommandRunner cr;
+  cr.setProgram("cygpath");
+  cr.setArguments(QStringList{"-m", toQString(input)});
+  cr.startAndWait();
+  if (cr.getFailed()) {
+    xfatal(stringb(
+      toString(cr.getCommandLine()) << ": " << toString(cr.getErrorMessage())));
+  }
+  if (cr.getExitCode() != 0) {
+    xfatal(stringb(
+      toString(cr.getCommandLine()) << ": failed with code " << cr.getExitCode()));
+  }
+  return trimWhitespace(toString(cr.getOutputLine()));
+}
+
+
 // Normalize a string that represents a directory path prior to
 // comparing it to an expected value.
 static string normalizeDir(string d)
 {
   if (SMFileUtil().windowsPathSemantics()) {
+    if (prefixEquals(d, "/")) {
+      // If we want a Windows path but 'd' starts with a slash, then we
+      // are probably running on Cygwin, and need to use 'cygpath' to
+      // get a Windows path with a drive letter.
+      d = runCygpath(d);
+    }
+
     d = replace(d, "\\", "/");
     d = translate(d, "A-Z", "a-z");
     if (d.length() >= 12 &&
