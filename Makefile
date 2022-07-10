@@ -278,6 +278,23 @@ test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-bufferlinesource))
 
 
+# -------------------------- fs-query-test -----------------------------
+EDITOR_OBJS += fs-query.o
+EDITOR_OBJS += fs-query.moc.o
+
+FS_QUERY_TEST_OBJS := $(EDITOR_OBJS)
+
+FS_QUERY_TEST_OBJS += fs-query-test.o
+FS_QUERY_TEST_OBJS += fs-query-test.moc.o
+-include fs-query-test.d
+-include fs-query-test.moc.d
+
+fs-query-test: $(FS_QUERY_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(FS_QUERY_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,fs-query-test))
+
+
 # ------------- highlighting stuff --------------------
 TOCLEAN += *.yy.cc *.yy.h *.lex.backup
 
