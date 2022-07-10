@@ -55,9 +55,6 @@ private:     // data
   //   'findDocumentByTitle' to check, or 'computeUniqueTitle' to generate
   //   a unique title.
   //
-  // * Every 'windowMenuId' must be unique.  Clients are expected to
-  //   ensure this on their own by using a process-wide counter.
-  //
   ObjArrayStack<NamedTextDocument> m_documents;
 
 public:      // funcs
@@ -118,11 +115,6 @@ public:      // funcs
   // Find and return the document with the given title, else NULL.
   NamedTextDocument       *findDocumentByTitle (string const &title);
   NamedTextDocument const *findDocumentByTitleC(string const &title) const;
-
-  // Find and return the document that has the given 'windowMenuId',
-  // else NULL.
-  NamedTextDocument       *findDocumentByWindowMenuId (int id);
-  NamedTextDocument const *findDocumentByWindowMenuIdC(int id) const;
 
   // Find a document that is untitled and has no modifications, else NULL.
   NamedTextDocument       *findUntitledUnmodifiedDocument ();

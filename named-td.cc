@@ -15,10 +15,6 @@
 #include <qnamespace.h>                // Qt class/namespace
 
 
-// Do not start with 0 because QVariant::toInt() returns 0 to
-// indicate failure.
-int NamedTextDocument::s_nextWindowMenuId = 1;
-
 int NamedTextDocument::s_objectCount = 0;
 
 CHECK_OBJECT_COUNT(NamedTextDocument);
@@ -31,7 +27,6 @@ NamedTextDocument::NamedTextDocument()
     m_directory(),
     m_lastFileTimestamp(0),
     m_title(),
-    m_windowMenuId(s_nextWindowMenuId++),
     m_highlighter(NULL),
     m_highlightTrailingWhitespace(true)
 {

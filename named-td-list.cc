@@ -68,7 +68,6 @@ void NamedTextDocumentList::selfCheck() const
   // Sets of attributes seen, to check for uniqueness.
   StringSet filenames;
   StringSet titles;
-  set<int> windowMenuIds;
 
   for (int i=0; i < m_documents.length(); i++) {
     NamedTextDocument const *d = m_documents[i];
@@ -76,7 +75,6 @@ void NamedTextDocumentList::selfCheck() const
     filenames.addUnique(d->docName());
     xassert(!d->m_title.isempty());
     filenames.addUnique(d->m_title);
-    insertUnique(windowMenuIds, d->m_windowMenuId);
   }
 }
 
@@ -211,22 +209,6 @@ NamedTextDocument const *NamedTextDocumentList::findDocumentByTitleC(
 {
   for (int i=0; i < m_documents.length(); i++) {
     if (m_documents[i]->m_title == title) {
-      return m_documents[i];
-    }
-  }
-  return NULL;
-}
-
-
-NamedTextDocument *NamedTextDocumentList::findDocumentByWindowMenuId (int id)
-{
-  return const_cast<NamedTextDocument*>(this->findDocumentByWindowMenuIdC(id));
-}
-
-NamedTextDocument const *NamedTextDocumentList::findDocumentByWindowMenuIdC(int id) const
-{
-  for (int i=0; i < m_documents.length(); i++) {
-    if (m_documents[i]->m_windowMenuId == id) {
       return m_documents[i];
     }
   }

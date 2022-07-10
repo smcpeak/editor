@@ -21,9 +21,8 @@
 // then the document is saved to, loaded from, and checked against the
 // resource at appropriate points.
 //
-// This class further associates that binding with ways of naming it
-// from within the editor application: the window menu id, and the
-// document title.
+// This class further associates that binding with the way of naming it
+// from within the editor application, which is the document title.
 //
 // Finally, it contains an interpretation of the document's meaning in
 // the form of a syntax highlighter.
@@ -31,10 +30,6 @@
 // All of the data in this class is shared by all editor windows that
 // operate on a given document.
 class NamedTextDocument : public TextDocument {
-private:     // static data
-  // Next value to use when assigning menu ids.
-  static int s_nextWindowMenuId;
-
 public:      // static data
   static int s_objectCount;
 
@@ -71,15 +66,6 @@ public:      // data
   // NamedTextDocumentList.  This will usually be similar to the name,
   // but perhaps shortened so long as it remains unique.
   string m_title;
-
-  // Numeric identifier for this buffer.  This is used to identify
-  // it in the Window menu.
-  //
-  // Update 2019-02-17: I have removed the list of open documents from
-  // the Window menu, hence this ID is not needed.  But, at least for a
-  // while, I'll leave the mechanism in case I change my mind or decide
-  // to build a different sort of menu-like way to access documents.
-  int const m_windowMenuId;
 
   // current highlighter; clients can come in and replace the
   // highlighter, but it must always be the case that the

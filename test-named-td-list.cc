@@ -189,8 +189,6 @@ static void testAddMoveRemove()
   xassert(file1->m_title == "file1");
   xassert(dlist.findDocumentByName("file1") == file1);
   xassert(dlist.findDocumentByTitle("file1") == file1);
-  xassert(dlist.findDocumentByWindowMenuId(file1->m_windowMenuId) == file1);
-  xassert(dlist.findDocumentByWindowMenuId(-1) == NULL);
 
   observer.expectOnly(NF_ADDED, file1);
 
@@ -198,7 +196,6 @@ static void testAddMoveRemove()
   xassert(file2->m_title == "file2");
   xassert(dlist.findDocumentByName("a/file2") == file2);
   xassert(dlist.findDocumentByTitle("file2") == file2);
-  xassert(dlist.findDocumentByWindowMenuId(file2->m_windowMenuId) == file2);
 
   observer.expectOnly(NF_ADDED, file2);
 
