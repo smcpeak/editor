@@ -673,13 +673,6 @@ void EditorWindow::fileOpenFile(string const &name)
   // is there an untitled, empty file hanging around?
   RCSerf<NamedTextDocument> untitled =
     this->m_globalState->m_documentList.findUntitledUnmodifiedDocument();
-  if (untitled) {
-    // I'm going to remove it, but can't yet b/c I
-    // need to wait until the new file is added;
-    // but right now I can remove its hotkey so that
-    // the new file can use it instead.
-    untitled->clearHotkey();
-  }
 
   // now that we've opened the file, set the editor widget to edit it
   m_globalState->trackNewDocumentFile(file);
@@ -1633,10 +1626,6 @@ void EditorWindow::editorViewChanged()
   sb << file->m_title;
   if (tde->unsavedChanges()) {
     sb << " *";
-  }
-  string hotkey = file->hotkeyDesc();
-  if (hotkey[0]) {
-    sb << " [" << hotkey << "]";
   }
   sb << " - " << appName;
   this->setWindowTitle(toQString(sb));

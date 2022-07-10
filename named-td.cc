@@ -26,8 +26,6 @@ CHECK_OBJECT_COUNT(NamedTextDocument);
 
 NamedTextDocument::NamedTextDocument()
   : TextDocument(),
-    m_hasHotkeyDigit(false),
-    m_hotkeyDigit(0),
     m_docName(),
     m_hasFilename(false),
     m_directory(),
@@ -116,38 +114,6 @@ string NamedTextDocument::nameWithStatusIndicators() const
     sb << " *";
   }
   return sb;
-}
-
-
-int NamedTextDocument::getHotkeyDigit() const
-{
-  xassert(this->hasHotkey());
-  return this->m_hotkeyDigit;
-}
-
-
-string NamedTextDocument::hotkeyDesc() const
-{
-  if (!this->hasHotkey()) {
-    return "";
-  }
-
-  return stringc << "Alt+" << this->getHotkeyDigit();
-}
-
-
-void NamedTextDocument::clearHotkey()
-{
-  this->m_hasHotkeyDigit = false;
-  this->m_hotkeyDigit = 0;
-}
-
-
-void NamedTextDocument::setHotkeyDigit(int digit)
-{
-  xassert(0 <= digit && digit <= 9);
-  this->m_hasHotkeyDigit = true;
-  this->m_hotkeyDigit = digit;
 }
 
 

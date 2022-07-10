@@ -68,7 +68,6 @@ void NamedTextDocumentList::selfCheck() const
   // Sets of attributes seen, to check for uniqueness.
   StringSet filenames;
   StringSet titles;
-  set<int> hotkeyDigits;
   set<int> windowMenuIds;
 
   for (int i=0; i < m_documents.length(); i++) {
@@ -77,9 +76,6 @@ void NamedTextDocumentList::selfCheck() const
     filenames.addUnique(d->docName());
     xassert(!d->m_title.isempty());
     filenames.addUnique(d->m_title);
-    if (d->hasHotkey()) {
-      insertUnique(hotkeyDigits, d->getHotkeyDigit());
-    }
     insertUnique(windowMenuIds, d->m_windowMenuId);
   }
 }
@@ -125,18 +121,6 @@ void NamedTextDocumentList::addDocument(NamedTextDocument *file)
     file->m_title = this->computeUniqueTitle(file->docName());
   }
 
-  // Assign hotkey if necessary.
-  if (!file->hasHotkey() ||
-      this->findDocumentByHotkey(file->getHotkeyDigit()) != NULL) {
-    int digit;
-    if (this->computeUniqueHotkey(digit)) {
-      file->setHotkeyDigit(digit);
-    }
-    else {
-      file->clearHotkey();
-    }
-  }
-
   m_documents.append(file);
 
   this->notifyAdded(file);
@@ -147,9 +131,6 @@ void NamedTextDocumentList::addDocument(NamedTextDocument *file)
 void NamedTextDocumentList::removeDocument(NamedTextDocument *file)
 {
   TRACE("named-td-list", "removeFile: " << file->docName());
-
-  // If we make an untitled file, allow it to take the same hotkey.
-  file->clearHotkey();
 
   if (this->numDocuments() == 1) {
     // Ensure we will not end up with an empty list.
@@ -230,24 +211,6 @@ NamedTextDocument const *NamedTextDocumentList::findDocumentByTitleC(
 {
   for (int i=0; i < m_documents.length(); i++) {
     if (m_documents[i]->m_title == title) {
-      return m_documents[i];
-    }
-  }
-  return NULL;
-}
-
-
-NamedTextDocument *NamedTextDocumentList::findDocumentByHotkey(int hotkeyDigit)
-{
-  return const_cast<NamedTextDocument*>(this->findDocumentByHotkeyC(hotkeyDigit));
-}
-
-NamedTextDocument const *NamedTextDocumentList::findDocumentByHotkeyC(
-  int hotkeyDigit) const
-{
-  for (int i=0; i < m_documents.length(); i++) {
-    if (m_documents[i]->hasHotkey() &&
-        m_documents[i]->getHotkeyDigit() == hotkeyDigit) {
       return m_documents[i];
     }
   }
@@ -349,40 +312,6 @@ void NamedTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
 
   // Compute a new one.
   file->m_title = this->computeUniqueTitle(file->docName());
-
-  this->notifyAttributeChanged(file);
-  SELF_CHECK();
-}
-
-
-bool NamedTextDocumentList::computeUniqueHotkey(int /*OUT*/ &digit) const
-{
-  for (int i=1; i<=10; i++) {
-    // Use 0 as the tenth digit in this sequence to match the order
-    // of the digit keys on the keyboard.
-    digit = (i==10? 0 : i);
-
-    if (!this->findDocumentByHotkeyC(digit)) {
-      TRACE("named-td-list", "computeUniqueHotkey: returning " << digit);
-      return true;
-    }
-  }
-
-  TRACE("named-td-list", "computeUniqueHotkey: not hotkey available");
-  return false;
-}
-
-
-void NamedTextDocumentList::assignUniqueHotkey(NamedTextDocument *file)
-{
-  TRACE("named-td-list", "assignUniqueHotkey: " << file->docName());
-
-  file->clearHotkey();
-
-  int newDigit;
-  if (this->computeUniqueHotkey(newDigit)) {
-    file->setHotkeyDigit(newDigit);
-  }
 
   this->notifyAttributeChanged(file);
   SELF_CHECK();

@@ -55,10 +55,6 @@ private:     // data
   //   'findDocumentByTitle' to check, or 'computeUniqueTitle' to generate
   //   a unique title.
   //
-  // * Every 'hotkeyDigit' must be unique among those documents for which
-  //   'hasHotkeyDigit' is true.  Use 'findDocumentByHotkey' to check, or
-  //   'computeUniqueHotkey' to generate a unique hotkey.
-  //
   // * Every 'windowMenuId' must be unique.  Clients are expected to
   //   ensure this on their own by using a process-wide counter.
   //
@@ -90,9 +86,9 @@ public:      // funcs
   int getDocumentIndex(NamedTextDocument const *doc) const;
 
   // Add the given document to our collection.  It must already have a
-  // unique name.  This routine will modify its title and hotkey,
-  // if necessary, to ensure they are unique too.  The document is added
-  // to the end of the list, and 'this' takes ownership of it.
+  // unique name.  This routine will modify its title, if necessary, to
+  // ensure it is unique too.  The document is added to the end of the
+  // list, and 'this' takes ownership of it.
   void addDocument(NamedTextDocument *doc);
 
   // Remove the given document from the collection and notify all
@@ -123,11 +119,6 @@ public:      // funcs
   NamedTextDocument       *findDocumentByTitle (string const &title);
   NamedTextDocument const *findDocumentByTitleC(string const &title) const;
 
-  // Find and return the document that has a hotkey equal to
-  // 'hotkeyDigit', else NULL.
-  NamedTextDocument       *findDocumentByHotkey (int hotkeyDigit);
-  NamedTextDocument const *findDocumentByHotkeyC(int hotkeyDigit) const;
-
   // Find and return the document that has the given 'windowMenuId',
   // else NULL.
   NamedTextDocument       *findDocumentByWindowMenuId (int id);
@@ -149,14 +140,6 @@ public:      // funcs
   // name, per usual) compute a new unique title based on the
   // name and update 'doc' to have that title.
   void assignUniqueTitle(NamedTextDocument *doc);
-
-  // Compute a hotkey digit that no document is currently using, or return
-  // false if all are in use.
-  bool computeUniqueHotkey(int /*OUT*/ &digit) const;
-
-  // Compute and assign a unique hotkey.  There may not be any
-  // unused hotkeys, in which case remove any hotkey from the document.
-  void assignUniqueHotkey(NamedTextDocument *doc);
 
   // Put into 'dirs' the unique set of directories containing files
   // currently open, in order from most to least recently used.  Any
@@ -224,7 +207,6 @@ public:      // funcs
   // inspect the document to determine what has changed.
   //
   // The attributes that trigger notification are:
-  //   - hotkeyDigit
   //   - name, hasFilename
   //   - title
   //   - highlighter

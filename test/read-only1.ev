@@ -3,7 +3,7 @@
 
 # Expect that we have started with an untitled, empty file.
 CheckLabel "window1.m_statusArea.m_filename" "untitled.txt"
-CheckFocusWindowTitle "untitled.txt [Alt+1] - Editor"
+CheckFocusWindowTitle "untitled.txt - Editor"
 
 # Check that the read-only checkbox is off.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
@@ -26,7 +26,7 @@ CheckFocusWindowTitle "Read-only Document"
 FocusKeyPress "Key_Tab" "\t"
 FocusKeyPress "Key_Space" " "
 FocusKeyRelease "Key_Space" " "
-CheckFocusWindowTitle "untitled.txt [Alt+1] - Editor"
+CheckFocusWindowTitle "untitled.txt - Editor"
 
 # Still read-only since we canceled that dialog.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
@@ -35,7 +35,7 @@ CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
 KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
 CheckFocusWindowTitle "Read-only Document"
 FocusKeyPress "Key_Return" "\r"
-CheckFocusWindowTitle "untitled.txt * [Alt+1] - Editor"
+CheckFocusWindowTitle "untitled.txt * - Editor"
 
 # Check that the status area reflects the modified status.
 CheckLabel "window1.m_statusArea.m_filename" "untitled.txt *"

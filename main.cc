@@ -293,12 +293,6 @@ void GlobalState::trackNewDocumentFile(NamedTextDocument *f)
 }
 
 
-bool GlobalState::hotkeyAvailable(int key) const
-{
-  return m_documentList.findDocumentByHotkeyC(key) == NULL;
-}
-
-
 void GlobalState::deleteDocumentFile(NamedTextDocument *file)
 {
   m_documentList.removeDocument(file);

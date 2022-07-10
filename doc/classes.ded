@@ -26,7 +26,7 @@
       }
     },
     {
-      "attributes": "m_hotkeyDigit: int?\nm_docName: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\nm_directory: string\nm_lastFileTimestamp: int64_t\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
+      "attributes": "m_docName: string\nm_hasFilename: bool\nm_lastFileTimestamp: int\nm_directory: string\nm_lastFileTimestamp: int64_t\nm_title: string\nm_windowMenuId: int\nm_highlighter: Highlighter\nm_highlightTrailingWhitespace: bool\n",
       "loc": {
         "x": 720,
         "y": 305

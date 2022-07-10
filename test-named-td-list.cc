@@ -187,10 +187,8 @@ static void testAddMoveRemove()
 
   NamedTextDocument *file1 = add(dlist, "file1");
   xassert(file1->m_title == "file1");
-  xassert(file1->hasHotkey());
   xassert(dlist.findDocumentByName("file1") == file1);
   xassert(dlist.findDocumentByTitle("file1") == file1);
-  xassert(dlist.findDocumentByHotkey(file1->getHotkeyDigit()) == file1);
   xassert(dlist.findDocumentByWindowMenuId(file1->m_windowMenuId) == file1);
   xassert(dlist.findDocumentByWindowMenuId(-1) == NULL);
 
@@ -200,7 +198,6 @@ static void testAddMoveRemove()
   xassert(file2->m_title == "file2");
   xassert(dlist.findDocumentByName("a/file2") == file2);
   xassert(dlist.findDocumentByTitle("file2") == file2);
-  xassert(dlist.findDocumentByHotkey(file2->getHotkeyDigit()) == file2);
   xassert(dlist.findDocumentByWindowMenuId(file2->m_windowMenuId) == file2);
 
   observer.expectOnly(NF_ADDED, file2);
@@ -319,70 +316,6 @@ static void testSaveAs()
 }
 
 
-// Exhaust hotkeys.
-static void testExhaustHotkeys()
-{
-  NamedTextDocumentList dlist;
-  TestObserver observer(&dlist);
-  dlist.addObserver(&observer);
-
-  for (int i=0; i<10; i++) {
-    NamedTextDocument *file = createUntitled(dlist);
-    observer.expectOnly(NF_ADDED, file);
-  }
-
-  xassert(dlist.numDocuments() == 11);
-  NamedTextDocument *file10 = dlist.getDocumentAt(10);
-  xassert(!file10->hasHotkey());
-
-  // Remove some files.
-  for (int i=2; i <= 7; i++) {
-    NamedTextDocument *file = dlist.getDocumentAt(2);
-    dlist.removeDocument(file);
-    observer.expectOnly(NF_REMOVED, file);
-    delete file;
-  }
-
-  // Now should be able to assign hotkey for file10.
-  dlist.assignUniqueHotkey(file10);
-  observer.expectOnly(NF_ATTRIBUTE, file10);
-  xassert(file10->hasHotkey());
-
-  // Check 'removeObserver' incidentally.
-  dlist.removeObserver(&observer);
-  createUntitled(dlist);
-  observer.expectEmpty();
-}
-
-
-// Add a file that already has an assigned hotkey that clashes with
-// an existing file.
-static void testDuplicateHotkeys()
-{
-  NamedTextDocumentList dlist;
-
-  NamedTextDocument *file0 = dlist.getDocumentAt(0);
-  NamedTextDocument *file1 = createUntitled(dlist);
-
-  xassert(file0->hasHotkey());
-  xassert(file1->hasHotkey());
-
-  dlist.removeDocument(file1);
-  file1->setHotkeyDigit(file0->getHotkeyDigit());
-  dlist.addDocument(file1);
-
-  // Should have had its hotkey reassigned.
-  xassert(file1->hasHotkey());
-  xassert(file1->getHotkeyDigit() != file0->getHotkeyDigit());
-
-  // Now remove and add, expecting it to retain its hotkey.
-  int hotkey = file1->getHotkeyDigit();
-  dlist.removeDocument(file1);
-  dlist.addDocument(file1);
-  xassert(file1->getHotkeyDigit() == hotkey);
-}
-
-
 // Provoke a name like "a:3".
 static void testColon3()
 {
@@ -476,8 +409,6 @@ void entry()
   testAddMoveRemove();
   testCreateUntitled();
   testSaveAs();
-  testExhaustHotkeys();
-  testDuplicateHotkeys();
   testColon3();
   testGetUniqueDirectories();
 

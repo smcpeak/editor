@@ -21,9 +21,9 @@
 // then the document is saved to, loaded from, and checked against the
 // resource at appropriate points.
 //
-// This class further associates that binding with several ways of
-// naming it from within the editor application: the hotkey, the window
-// menu id, and the document title.
+// This class further associates that binding with ways of naming it
+// from within the editor application: the window menu id, and the
+// document title.
 //
 // Finally, it contains an interpretation of the document's meaning in
 // the form of a syntax highlighter.
@@ -39,13 +39,6 @@ public:      // static data
   static int s_objectCount;
 
 private:     // data
-  // True if there is a hotkey the user can use to jump to this buffer.
-  bool m_hasHotkeyDigit;
-
-  // Digit the user can press Alt with to jump to this buffer, if
-  // 'hasHotkeyDigit'.  It is a number in [0,9].
-  int m_hotkeyDigit;
-
   // Name of document.  This is a filename if 'm_hasFilename' is true.
   // Otherwise, it is a human-readable string describing the origin of
   // the content.  It must be unique within the list of
@@ -143,22 +136,6 @@ public:      // funcs
 
   // Document name, process status, and unsaved changes.
   string nameWithStatusIndicators() const;
-
-  // ---------------------------- hotkeys ---------------------------
-  // Return true if this buffer has an assigned hotkey.
-  bool hasHotkey() const { return this->m_hasHotkeyDigit; }
-
-  // Get the hotkey digit in [0,9].  Asserts 'hasHotkey()'.
-  int getHotkeyDigit() const;
-
-  // Human-readable description of 'hotkey'; might return "".
-  string hotkeyDesc() const;
-
-  // Remove the hotkey, if any.
-  void clearHotkey();
-
-  // Set the hotkey to the indicated digit in [0,9].
-  void setHotkeyDigit(int digit);
 
   // -------------------- file system interaction -------------------
   // Read the from 'filename()'.  Requires 'hasFilename()'.  Updates

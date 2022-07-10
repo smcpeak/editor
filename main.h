@@ -71,8 +71,6 @@ private:     // data
   Owner<OpenFilesDialog> m_openFilesDialog;
 
 private:      // funcs
-  bool hotkeyAvailable(int key) const;
-
   NamedTextDocument *getNewCommandOutputDocument(
     QString dir, QString command);
 
