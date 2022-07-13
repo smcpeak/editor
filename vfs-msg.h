@@ -13,12 +13,17 @@
 #include "sm-file-util.h"              // SMFileUtil
 #include "str.h"                       // string
 
+// libc++
+#include <vector>                      // std::vector
+
 // libc
 #include <stdint.h>                    // int64_t
 
 
 // Possible kinds of VFS messages.
 enum VFS_MessageType {
+  VFS_MT_Echo,
+
   VFS_MT_PathRequest,
   VFS_MT_PathReply,
 };
@@ -44,6 +49,24 @@ public:      // methods
 };
 
 
+// For testing the message interface, simply respond with the given
+// string.  The request and reply are the same message type.
+class VFS_Echo : public VFS_Message {
+public:      // data
+  // Data to be echoed.
+  std::vector<unsigned char> m_data;
+
+public:      // methods
+  VFS_Echo();
+  virtual ~VFS_Echo() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_Echo; }
+  virtual void xfer(Flatten &flat) override;
+};
+
+
 // Query a path name.
 class VFS_PathRequest : public VFS_Message {
 public:      // data
@@ -55,16 +78,12 @@ public:      // data
   string m_path;
 
 public:      // methods
-  VFS_PathRequest(string path);
+  VFS_PathRequest();
   virtual ~VFS_PathRequest() override;
 
-  VFS_PathRequest(VFS_PathRequest const &obj) = default;
-  VFS_PathRequest& operator=(VFS_PathRequest const &obj) = default;
-
-  VFS_PathRequest(Flatten&);
-
   // VFS_Message methods.
-  virtual VFS_MessageType messageType() const override;
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_PathRequest; }
   virtual void xfer(Flatten &flat) override;
 };
 
@@ -92,13 +111,9 @@ public:      // methods
   VFS_PathReply();
   virtual ~VFS_PathReply() override;
 
-  VFS_PathReply(VFS_PathReply const &obj) = default;
-  VFS_PathReply& operator=(VFS_PathReply const &obj) = default;
-
-  VFS_PathReply(Flatten&);
-
   // VFS_Message methods.
-  virtual VFS_MessageType messageType() const override;
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_PathReply; }
   virtual void xfer(Flatten &flat) override;
 };
 

@@ -4,7 +4,7 @@
 #include "vfs-msg.h"                   // this module
 
 // smbase
-#include "flatutil.h"                  // xferEnum, Flatten
+#include "flatutil.h"                  // xferEnum, Flatten, xferVectorBytewise
 
 
 // --------------------------- VFS_Message -----------------------------
@@ -42,18 +42,25 @@ void VFS_Message::serialize(Flatten &flat) const
 
   VFS_Message *ret = nullptr;
 
+  // Create an object of the corresponding type.
   switch (mtype) {
     default:
       xformat(stringb("Invalid message type: " << mtype));
 
-    case VFS_MT_PathRequest:
-      ret = new VFS_PathRequest(flat);
-      break;
+    #define HANDLE_TYPE(type)   \
+      case VFS_MT_##type:       \
+        ret = new VFS_##type(); \
+        break;
 
-    case VFS_MT_PathReply:
-      ret = new VFS_PathReply(flat);
-      break;
+    HANDLE_TYPE(Echo)
+    HANDLE_TYPE(PathRequest)
+    HANDLE_TYPE(PathReply)
+
+    #undef HANDLE_TYPE
   }
+
+  // Ensure the created object agrees about the type.
+  xassert(ret->messageType() == mtype);
 
   // Read details.
   ret->xfer(flat);
@@ -62,25 +69,32 @@ void VFS_Message::serialize(Flatten &flat) const
 }
 
 
+// ---------------------------- VFS_Echo -------------------------------
+VFS_Echo::VFS_Echo()
+  : VFS_Message(),
+    m_data()
+{}
+
+
+VFS_Echo::~VFS_Echo()
+{}
+
+
+void VFS_Echo::xfer(Flatten &flat)
+{
+  xferVectorBytewise(flat, m_data);
+}
+
+
 // ------------------------- VFS_PathRequest ---------------------------
-VFS_PathRequest::VFS_PathRequest(string path)
-  : m_path(path)
+VFS_PathRequest::VFS_PathRequest()
+  : VFS_Message(),
+    m_path()
 {}
 
 
 VFS_PathRequest::~VFS_PathRequest()
 {}
-
-
-VFS_PathRequest::VFS_PathRequest(Flatten&)
-  : m_path()
-{}
-
-
-VFS_MessageType VFS_PathRequest::messageType() const
-{
-  return VFS_MT_PathRequest;
-}
 
 
 void VFS_PathRequest::xfer(Flatten &flat)
@@ -91,7 +105,8 @@ void VFS_PathRequest::xfer(Flatten &flat)
 
 // -------------------------- VFS_PathReply ----------------------------
 VFS_PathReply::VFS_PathReply()
-  : m_dirName(),
+  : VFS_Message(),
+    m_dirName(),
     m_fileName(),
     m_dirExists(false),
     m_fileKind(SMFileUtil::FK_NONE),
@@ -101,17 +116,6 @@ VFS_PathReply::VFS_PathReply()
 
 VFS_PathReply::~VFS_PathReply()
 {}
-
-
-VFS_PathReply::VFS_PathReply(Flatten&)
-  : VFS_PathReply()
-{}
-
-
-VFS_MessageType VFS_PathReply::messageType() const
-{
-  return VFS_MT_PathReply;
-}
 
 
 void VFS_PathReply::xfer(Flatten &flat)

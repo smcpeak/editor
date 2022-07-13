@@ -35,17 +35,32 @@ public:
   FSServerTest(int argc, char **argv);
   ~FSServerTest();
 
+  // TODO: Reorder these methods.
+
   // Run the sequence of tests.
   void runTests();
+
+  // Run tests using PathRequest.
+  void runPathTests();
+
+  // Send 'msg' to the child process.
+  void sendRequest(VFS_Message const &msg);
 
   // If 'replyBytes' contains a complete message, deserialize it into
   // 'replyMessage' and return true.  Otherwise return false.
   bool haveCompleteReply(
-    std::unique_ptr<VFS_PathReply> &replyMessage,
+    std::unique_ptr<VFS_Message> &replyMessage,
     QByteArray const &replyBytes);
 
   // Wait for a complete reply and return it.  Throw on error.
-  std::unique_ptr<VFS_PathReply> getNextReply();
+  std::unique_ptr<VFS_Message> getNextReply();
+
+  // Use Echo to send/receive 'data'.
+  void runEchoTest(std::vector<unsigned char> const &data);
+
+  // Use the Echo message to test the ability to send and receive
+  // various patterns of data.
+  void runEchoTests();
 
 public Q_SLOTS:
   // Handlers for CommandRunner signals.

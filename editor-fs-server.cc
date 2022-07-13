@@ -116,6 +116,21 @@ static void sendMessage(FILE *stream, std::string const &reply)
 }
 
 
+// Send 'msg' as a message on stdout.
+static void sendReply(VFS_Message const &msg)
+{
+  // Serialize the reply.
+  std::ostringstream oss;
+  StreamFlatten flatOutput(&oss);
+  msg.serialize(flatOutput);
+
+  // Send it.
+  std::string replyData = oss.str();
+  LOG("replyData: " << doubleQuote(replyData));
+  sendMessage(stdout, replyData);
+}
+
+
 static int innerMain()
 {
   VFS_LocalImpl localImpl;
@@ -134,21 +149,31 @@ static int innerMain()
     StreamFlatten flatInput(&iss);
     std::unique_ptr<VFS_Message> message(
       VFS_Message::deserialize(flatInput));
-    VFS_PathRequest const &pathRequest =
-      dynamic_cast<VFS_PathRequest const &>(*message);
 
     // Process it.
-    VFS_PathReply pathReply(localImpl.queryPath(pathRequest));
+    switch (message->messageType()) {
+      default:
+        xformat(stringb("Bad message type: " << message->messageType()));
 
-    // Serialize the reply.
-    std::ostringstream oss;
-    StreamFlatten flatOutput(&oss);
-    pathReply.serialize(flatOutput);
+      case VFS_MT_Echo: {
+        VFS_Echo const *echo =
+          dynamic_cast<VFS_Echo const *>(message.get());
+        xassert(echo);
 
-    // Send it.
-    std::string replyData = oss.str();
-    LOG("replyData: " << doubleQuote(replyData));
-    sendMessage(stdout, replyData);
+        sendReply(*echo);
+        break;
+      }
+
+      case VFS_MT_PathRequest: {
+        VFS_PathRequest const *pathRequest =
+          dynamic_cast<VFS_PathRequest const *>(message.get());
+        xassert(pathRequest);
+
+        VFS_PathReply pathReply(localImpl.queryPath(*pathRequest));
+        sendReply(pathReply);
+        break;
+      }
+    }
   }
 
   return 0;
