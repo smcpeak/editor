@@ -251,8 +251,14 @@ Q_SIGNALS:
   // Emitted when 'hasOutputLine()' becomes true.
   void signal_outputLineReady();
 
+  // Emitted when 'hasOutputData()' becomes true.
+  void signal_outputDataReady();
+
   // Emitted when 'hasErrorLine()' becomes true.
   void signal_errorLineReady();
+
+  // Emitted when 'hasErrorData()' becomes true.
+  void signal_errorDataReady();
 
   // Emitted when 'isRunning()' becomes false.
   void signal_processTerminated();

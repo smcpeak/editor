@@ -817,12 +817,14 @@ void CommandRunner::on_channelReadyRead(int channelNumber)
           TRACE_CR("emitting signal_outputLineReady");
           Q_EMIT signal_outputLineReady();
         }
+        Q_EMIT signal_outputDataReady();
       }
       else {
         if (appendData_gainedUtf8Newline(m_errorData, buf, len)) {
           TRACE_CR("emitting signal_errorLineReady");
           Q_EMIT signal_errorLineReady();
         }
+        Q_EMIT signal_errorDataReady();
       }
     }
   }
