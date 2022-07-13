@@ -1,5 +1,8 @@
 
 TODOs:
+  - In Makefile, treat "@#" at the start of a recipe line as a comment.
+  - In process output, do not move cursor unless it is already at the end.
+
   - Ctrl+J on line indented with tabs treats the tabs as being one space
     rather than 8, wrapping the lines in the wrong place (too long)
   - have to fix handling of "flex scanner jammed"!
