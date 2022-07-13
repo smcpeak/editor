@@ -295,6 +295,43 @@ fs-query-test: $(FS_QUERY_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,fs-query-test))
 
 
+# ------------------------- editor-fs-server ---------------------------
+EDITOR_FS_SERVER_OBJS :=
+EDITOR_FS_SERVER_OBJS += editor-fs-server.o
+EDITOR_FS_SERVER_OBJS += vfs-local.o
+EDITOR_FS_SERVER_OBJS += vfs-msg.o
+
+-include editor-fs-server.d
+-include vfs-local.d
+-include vfs-msg.d
+
+editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
+
+TOCLEAN += editor-fs-server.exe
+
+all: editor-fs-server.exe
+
+
+# ----------------------- editor-fs-server-test ------------------------
+EDITOR_OBJS += vfs-msg.o
+
+EDITOR_FS_SERVER_TEST_OBJS :=
+EDITOR_FS_SERVER_TEST_OBJS += $(EDITOR_OBJS)
+EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.o
+EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.moc.o
+
+-include editor-fs-server-test.d
+
+editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,editor-fs-server-test.exe))
+
+# The test uses the server executable.
+out/editor-fs-server-test.exe.out: editor-fs-server.exe
+
+
 # ------------- highlighting stuff --------------------
 TOCLEAN += *.yy.cc *.yy.h *.lex.backup
 
