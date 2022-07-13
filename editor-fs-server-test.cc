@@ -45,49 +45,6 @@ FSServerTest::~FSServerTest()
 }
 
 
-void FSServerTest::runTests()
-{
-  TRACE("FSServerTest", "runTests");
-
-  m_commandRunner.startAsynchronous();
-
-  runPathTests();
-  runEchoTests();
-
-  // Close the server's input and wait for it to stop.
-  //
-  // TODO: Put a timeout on this.
-  TRACE("FSServerTest", "closing input channel");
-  m_commandRunner.closeInputChannel();
-  while (m_commandRunner.isRunning()) {
-    TRACE("FSServerTest", "  waiting for server termination");
-    m_eventLoop.exec();
-  }
-  TRACE("FSServerTest", "  server terminated");
-}
-
-
-void FSServerTest::runPathTests()
-{
-  // Send.
-  {
-    VFS_PathRequest req;
-    req.m_path = "Makefile";
-    sendRequest(req);
-  }
-
-  // Receive.
-  std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_PathReply *reply = dynamic_cast<VFS_PathReply*>(replyMsg.get());
-  xassert(reply);
-  PVAL(reply->m_dirName);
-  PVAL(reply->m_fileName);
-  PVAL(reply->m_dirExists);
-  PVAL(reply->m_fileKind);
-  PVAL(reply->m_fileModificationTime);
-}
-
-
 void FSServerTest::sendRequest(VFS_Message const &msg)
 {
   // Serialize the message.
@@ -192,6 +149,49 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 
   TRACE("FSServerTest", "getNextReply returning");
   return replyMessage;
+}
+
+
+void FSServerTest::runTests()
+{
+  TRACE("FSServerTest", "runTests");
+
+  m_commandRunner.startAsynchronous();
+
+  runPathTests();
+  runEchoTests();
+
+  // Close the server's input and wait for it to stop.
+  //
+  // TODO: Put a timeout on this.
+  TRACE("FSServerTest", "closing input channel");
+  m_commandRunner.closeInputChannel();
+  while (m_commandRunner.isRunning()) {
+    TRACE("FSServerTest", "  waiting for server termination");
+    m_eventLoop.exec();
+  }
+  TRACE("FSServerTest", "  server terminated");
+}
+
+
+void FSServerTest::runPathTests()
+{
+  // Send.
+  {
+    VFS_PathRequest req;
+    req.m_path = "Makefile";
+    sendRequest(req);
+  }
+
+  // Receive.
+  std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+  VFS_PathReply *reply = dynamic_cast<VFS_PathReply*>(replyMsg.get());
+  xassert(reply);
+  PVAL(reply->m_dirName);
+  PVAL(reply->m_fileName);
+  PVAL(reply->m_dirExists);
+  PVAL(reply->m_fileKind);
+  PVAL(reply->m_fileModificationTime);
 }
 
 

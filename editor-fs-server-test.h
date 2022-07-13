@@ -35,14 +35,6 @@ public:
   FSServerTest(int argc, char **argv);
   ~FSServerTest();
 
-  // TODO: Reorder these methods.
-
-  // Run the sequence of tests.
-  void runTests();
-
-  // Run tests using PathRequest.
-  void runPathTests();
-
   // Send 'msg' to the child process.
   void sendRequest(VFS_Message const &msg);
 
@@ -54,6 +46,12 @@ public:
 
   // Wait for a complete reply and return it.  Throw on error.
   std::unique_ptr<VFS_Message> getNextReply();
+
+  // Run the sequence of tests.
+  void runTests();
+
+  // Run tests using PathRequest.
+  void runPathTests();
 
   // Use Echo to send/receive 'data'.
   void runEchoTest(std::vector<unsigned char> const &data);
