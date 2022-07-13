@@ -448,6 +448,21 @@ void CommandRunner::sendData()
 }
 
 
+QString CommandRunner::getTerminationDescription() const
+{
+  if (isRunning()) {
+    return "Not terminated.";
+  }
+
+  if (getFailed()) {
+    return getErrorMessage();
+  }
+  else {
+    return qstringb("Exited with code " << getExitCode() << ".");
+  }
+}
+
+
 // -------------------- asynchronous interface ---------------------
 void CommandRunner::startAsynchronous()
 {

@@ -171,6 +171,12 @@ public:      // funcs
   int getExitCode() const
     { xassert(!m_failed); return m_exitCode; }
 
+  // If the process exited normally, return "Exited with code N.", where
+  // N is the exit code.  If it exited abnormally, return
+  // 'getErrorMessage()'.  If it has not terminated, return "Not
+  // terminated."
+  QString getTerminationDescription() const;
+
   // ------------------- asynchronous interface --------------------
   // Start the process and return immediately while it runs in the
   // background.

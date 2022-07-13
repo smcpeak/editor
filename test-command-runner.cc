@@ -75,10 +75,12 @@ static int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
 
   if (cr.getFailed()) {
     cout << "  failed: " << toString(cr.getErrorMessage()) << endl;
+    cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
     return -1;
   }
   else {
     cout << "  exit code: " << cr.getExitCode() << endl;
+    cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
     return cr.getExitCode();
   }
 }
@@ -116,6 +118,7 @@ static void runCmdArgsExpectError(char const *cmd,
   EXPECT_EQ(cr.getFailed(), true);
   EXPECT_EQ(cr.getProcessError(), error);
   cout << "  as expected: " << toString(cr.getErrorMessage()) << endl;
+  cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
 }
 
 
@@ -136,6 +139,7 @@ static void runCmdArgsExpectExit(char const *cmd,
   EXPECT_EQ(cr.getFailed(), false);
   EXPECT_EQ(cr.getExitCode(), exitCode);
   cout << "  as expected: exit " << cr.getExitCode() << endl;
+  cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
 }
 
 
