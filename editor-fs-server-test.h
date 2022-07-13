@@ -15,6 +15,9 @@
 #include <QCoreApplication>
 #include <QEventLoop>
 
+// libc++
+#include <memory>                      // std::unique_ptr
+
 
 // App instance for running tests.
 class FSServerTest : public QCoreApplication {
@@ -37,11 +40,12 @@ public:
 
   // If 'replyBytes' contains a complete message, deserialize it into
   // 'replyMessage' and return true.  Otherwise return false.
-  bool haveCompleteReply(VFS_PathReply &replyMessage,
-                         QByteArray const &replyBytes);
+  bool haveCompleteReply(
+    std::unique_ptr<VFS_PathReply> &replyMessage,
+    QByteArray const &replyBytes);
 
   // Wait for a complete reply and return it.  Throw on error.
-  VFS_PathReply getNextReply();
+  std::unique_ptr<VFS_PathReply> getNextReply();
 
 public Q_SLOTS:
   // Handlers for CommandRunner signals.

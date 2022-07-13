@@ -59,7 +59,7 @@ void FSServerTest::runTests()
       VFS_PathRequest req("Makefile");
       std::ostringstream oss;
       StreamFlatten flat(&oss);
-      req.xfer(flat);
+      req.serialize(flat);
       serRequest = oss.str();
     }
 
@@ -83,12 +83,12 @@ void FSServerTest::runTests()
   }
 
   // Receive.
-  VFS_PathReply reply(getNextReply());
-  PVAL(reply.m_dirName);
-  PVAL(reply.m_fileName);
-  PVAL(reply.m_dirExists);
-  PVAL(reply.m_fileKind);
-  PVAL(reply.m_fileModificationTime);
+  std::unique_ptr<VFS_PathReply> reply(getNextReply());
+  PVAL(reply->m_dirName);
+  PVAL(reply->m_fileName);
+  PVAL(reply->m_dirExists);
+  PVAL(reply->m_fileKind);
+  PVAL(reply->m_fileModificationTime);
 
   // Close the server's input and wait for it to stop.
   //
@@ -103,8 +103,9 @@ void FSServerTest::runTests()
 }
 
 
-bool FSServerTest::haveCompleteReply(VFS_PathReply &replyMessage,
-                                     QByteArray const &replyBytes)
+bool FSServerTest::haveCompleteReply(
+  std::unique_ptr<VFS_PathReply> &replyMessage,
+  QByteArray const &replyBytes)
 {
   uint32_t replyBytesSize = replyBytes.size();
   if (replyBytesSize < 4) {
@@ -133,19 +134,21 @@ bool FSServerTest::haveCompleteReply(VFS_PathReply &replyMessage,
   std::string messageBytes(replyBytes.data()+4, replyLen);
   std::istringstream iss(messageBytes);
   StreamFlatten flat(&iss);
-  replyMessage.xfer(flat);
+  replyMessage.reset(
+    dynamic_cast<VFS_PathReply*>(VFS_Message::deserialize(flat)));
+  xassert(replyMessage);
   return true;
 }
 
 
-VFS_PathReply FSServerTest::getNextReply()
+std::unique_ptr<VFS_PathReply> FSServerTest::getNextReply()
 {
   TRACE("FSServerTest", "getNextReply");
 
   QByteArray replyBytes;
   QByteArray errorBytes;
 
-  VFS_PathReply replyMessage;
+  std::unique_ptr<VFS_PathReply> replyMessage;
   while (!haveCompleteReply(replyMessage, replyBytes) &&
          m_commandRunner.isRunning()) {
     // Wait for something to happen.

@@ -17,8 +17,35 @@
 #include <stdint.h>                    // int64_t
 
 
+// Possible kinds of VFS messages.
+enum VFS_MessageType {
+  VFS_MT_PathRequest,
+  VFS_MT_PathReply,
+};
+
+
+// Superclass for the message types.
+class VFS_Message {
+public:      // methods
+  VFS_Message();
+  virtual ~VFS_Message();
+
+  // Which kind of message this is.
+  virtual VFS_MessageType messageType() const = 0;
+
+  // Serialize this object's message type into 'flat'.
+  void serialize(Flatten &flat) const;
+
+  // Deserialize the message in 'flat'.
+  static VFS_Message *deserialize(Flatten &flat);
+
+  // De/serialize derived class details.
+  virtual void xfer(Flatten &flat) = 0;
+};
+
+
 // Query a path name.
-class VFS_PathRequest {
+class VFS_PathRequest : public VFS_Message {
 public:      // data
   // File path to query.
   //
@@ -29,18 +56,21 @@ public:      // data
 
 public:      // methods
   VFS_PathRequest(string path);
-  ~VFS_PathRequest();
+  virtual ~VFS_PathRequest() override;
 
   VFS_PathRequest(VFS_PathRequest const &obj) = default;
   VFS_PathRequest& operator=(VFS_PathRequest const &obj) = default;
 
   VFS_PathRequest(Flatten&);
-  void xfer(Flatten &flat);
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override;
+  virtual void xfer(Flatten &flat) override;
 };
 
 
 // Reply for VFS_PathRequest.
-class VFS_PathReply {
+class VFS_PathReply : public VFS_Message {
 public:      // data
   // Absolute directory containing 'm_path'.  This always ends with a
   // directory separator.
@@ -60,13 +90,16 @@ public:      // data
 
 public:      // methods
   VFS_PathReply();
-  ~VFS_PathReply();
+  virtual ~VFS_PathReply() override;
 
   VFS_PathReply(VFS_PathReply const &obj) = default;
   VFS_PathReply& operator=(VFS_PathReply const &obj) = default;
 
   VFS_PathReply(Flatten&);
-  void xfer(Flatten &flat);
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override;
+  virtual void xfer(Flatten &flat) override;
 };
 
 

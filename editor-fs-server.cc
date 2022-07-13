@@ -12,6 +12,7 @@
 #include "syserr.h"                    // xsyserror
 
 #include <fstream>                     // std::ofstream
+#include <memory>                      // std::unique_ptr
 #include <sstream>                     // std::i/ostringstream
 #include <string>                      // std::string
 #include <vector>                      // std::vector
@@ -131,8 +132,10 @@ static int innerMain()
     // Deserialize the request.
     std::istringstream iss(requestData);
     StreamFlatten flatInput(&iss);
-    VFS_PathRequest pathRequest(flatInput);
-    pathRequest.xfer(flatInput);
+    std::unique_ptr<VFS_Message> message(
+      VFS_Message::deserialize(flatInput));
+    VFS_PathRequest const &pathRequest =
+      dynamic_cast<VFS_PathRequest const &>(*message);
 
     // Process it.
     VFS_PathReply pathReply(localImpl.queryPath(pathRequest));
@@ -140,7 +143,7 @@ static int innerMain()
     // Serialize the reply.
     std::ostringstream oss;
     StreamFlatten flatOutput(&oss);
-    pathReply.xfer(flatOutput);
+    pathReply.serialize(flatOutput);
 
     // Send it.
     std::string replyData = oss.str();
