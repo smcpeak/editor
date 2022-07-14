@@ -3,112 +3,27 @@
 
 #include "editor-fs-server-test.h"     // this module
 
-// editor
-#include "command-runner.h"            // CommandRunner
-#include "vfs-msg.h"                   // VFS_XXX
-
-// smqtutil
-#include "qtutil.h"                    // toString(QString)
-
 // smbase
-#include "bflatten.h"                  // StreamFlatten
-#include "exc.h"                       // xBase, xFormat
-#include "flatten.h"                   // serializeIntNBO
-#include "overflow.h"                  // convertWithoutLoss
 #include "sm-test.h"                   // PVAL
 #include "trace.h"                     // traceAddFromEnvVar
-
-// libc++
-#include <sstream>                     // std::i/ostringstream
 
 
 FSServerTest::FSServerTest(int argc, char **argv)
   : QCoreApplication(argc, argv),
     m_eventLoop(),
-    m_commandRunner()
+    m_fsQuery()
 {
-  m_commandRunner.setProgram("editor-fs-server.exe");
-
-  QObject::connect(&m_commandRunner, &CommandRunner::signal_outputDataReady,
-                   this, &FSServerTest::on_outputDataReady);
-  QObject::connect(&m_commandRunner, &CommandRunner::signal_errorDataReady,
-                   this, &FSServerTest::on_errorDataReady);
-  QObject::connect(&m_commandRunner, &CommandRunner::signal_processTerminated,
-                   this, &FSServerTest::on_processTerminated);
+  QObject::connect(&m_fsQuery, &FileSystemQuery::signal_replyAvailable,
+                   this, &FSServerTest::on_replyAvailable);
+  QObject::connect(&m_fsQuery, &FileSystemQuery::signal_failureAvailable,
+                   this, &FSServerTest::on_failureAvailable);
 }
 
 
 FSServerTest::~FSServerTest()
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_commandRunner, nullptr, this, nullptr);
-}
-
-
-void FSServerTest::sendRequest(VFS_Message const &msg)
-{
-  // Serialize the message.
-  std::string serMessage;
-  {
-    std::ostringstream oss;
-    StreamFlatten flat(&oss);
-    msg.serialize(flat);
-    serMessage = oss.str();
-  }
-
-  // Get its length.
-  unsigned char lenBuf[4];
-  uint32_t serMsgLen;
-  convertWithoutLoss(serMsgLen, serMessage.size());
-  serializeIntNBO(lenBuf, serMsgLen);
-
-  // Combine the length and serialized message into an envelope.
-  QByteArray envelope(serMsgLen+4, 0);
-  memcpy(envelope.data(), lenBuf, 4);
-  memcpy(envelope.data()+4, serMessage.data(), serMsgLen);
-
-  // Send that to the child process.
-  TRACE("FSServerTest", "sending message, len=" << serMsgLen);
-  if (tracingSys("FSServerTest_detail")) {
-    printQByteArray(envelope, "envelope bytes");
-  }
-  m_commandRunner.putInputData(envelope);
-}
-
-
-bool FSServerTest::haveCompleteReply(
-  std::unique_ptr<VFS_Message> &replyMessage,
-  QByteArray const &replyBytes)
-{
-  uint32_t replyBytesSize = replyBytes.size();
-  if (replyBytesSize < 4) {
-    return false;
-  }
-
-  unsigned char lenBuf[4];
-  memcpy(lenBuf, replyBytes.data(), 4);
-  uint32_t replyLen;
-  deserializeIntNBO(lenBuf, replyLen);
-
-  if (replyBytesSize < 4+replyLen) {
-    return false;
-  }
-
-  if (replyBytesSize > 4+replyLen) {
-    xformat(stringb(
-      "Reply has extra bytes.  Its size is " << replyBytesSize <<
-      " but the expected size is " << (4+replyLen) << "."));
-  }
-
-  if (tracingSys("FSServerTest_detail")) {
-    printQByteArray(replyBytes, "reply bytes");
-  }
-
-  std::string messageBytes(replyBytes.data()+4, replyLen);
-  std::istringstream iss(messageBytes);
-  StreamFlatten flat(&iss);
-  replyMessage.reset(VFS_Message::deserialize(flat));
-  return true;
+  QObject::disconnect(&m_fsQuery, nullptr, this, nullptr);
 }
 
 
@@ -116,39 +31,16 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 {
   TRACE("FSServerTest", "getNextReply");
 
-  QByteArray replyBytes;
-  QByteArray errorBytes;
+  // Wait for something to happen.
+  TRACE("FSServerTest", "  waiting...");
+  m_eventLoop.exec();
 
-  std::unique_ptr<VFS_Message> replyMessage;
-  while (!haveCompleteReply(replyMessage, replyBytes) &&
-         m_commandRunner.isRunning()) {
-    // Wait for something to happen.
-    TRACE("FSServerTest", "  waiting...");
-    m_eventLoop.exec();
-
-    // Accumulate any resulting data.
-    if (m_commandRunner.hasOutputData()) {
-      TRACE("FSServerTest", "    ... got output data");
-      replyBytes.append(m_commandRunner.takeOutputData());
-    }
-    if (m_commandRunner.hasErrorData()) {
-      TRACE("FSServerTest", "    ... got error data");
-      errorBytes.append(m_commandRunner.takeErrorData());
-    }
+  if (m_fsQuery.hasFailed()) {
+    xfatal(m_fsQuery.getFailureReason());
   }
 
-  if (!m_commandRunner.isRunning()) {
-    stringBuilder sb;
-    sb << "editor-fs-server terminated unexpectedly: ";
-    sb << toString(m_commandRunner.getTerminationDescription());
-    if (!errorBytes.isEmpty()) {
-      sb << "  stderr: " << errorBytes.toStdString();
-    }
-    throw xFormat(sb.str());
-  }
-
-  TRACE("FSServerTest", "getNextReply returning");
-  return replyMessage;
+  xassert(m_fsQuery.hasReply());
+  return m_fsQuery.takeReply();
 }
 
 
@@ -156,21 +48,10 @@ void FSServerTest::runTests()
 {
   TRACE("FSServerTest", "runTests");
 
-  m_commandRunner.startAsynchronous();
-
   runPathTests();
   runEchoTests();
 
-  // Close the server's input and wait for it to stop.
-  //
-  // TODO: Put a timeout on this.
-  TRACE("FSServerTest", "closing input channel");
-  m_commandRunner.closeInputChannel();
-  while (m_commandRunner.isRunning()) {
-    TRACE("FSServerTest", "  waiting for server termination");
-    m_eventLoop.exec();
-  }
-  TRACE("FSServerTest", "  server terminated");
+  m_fsQuery.shutdown();
 }
 
 
@@ -180,7 +61,7 @@ void FSServerTest::runPathTests()
   {
     VFS_PathRequest req;
     req.m_path = "Makefile";
-    sendRequest(req);
+    m_fsQuery.sendRequest(req);
   }
 
   // Receive.
@@ -199,7 +80,7 @@ void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
 {
   VFS_Echo request;
   request.m_data = data;
-  sendRequest(request);
+  m_fsQuery.sendRequest(request);
 
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
   VFS_Echo const *reply = dynamic_cast<VFS_Echo const *>(replyMsg.get());
@@ -242,17 +123,12 @@ void FSServerTest::runEchoTests()
 }
 
 
-void FSServerTest::on_outputDataReady() NOEXCEPT
+void FSServerTest::on_replyAvailable() NOEXCEPT
 {
   m_eventLoop.exit();
 }
 
-void FSServerTest::on_errorDataReady() NOEXCEPT
-{
-  m_eventLoop.exit();
-}
-
-void FSServerTest::on_processTerminated() NOEXCEPT
+void FSServerTest::on_failureAvailable() NOEXCEPT
 {
   m_eventLoop.exit();
 }

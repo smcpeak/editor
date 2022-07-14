@@ -3,80 +3,232 @@
 
 #include "vfs-query.h"                 // this module
 
+// smqtutil
+#include "qtutil.h"                    // toString(QString), printQByteArray
+
 // smbase
+#include "bflatten.h"                  // StreamFlatten
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
+#include "flatten.h"                   // serializeIntNBO
 #include "nonport.h"                   // getFileModificationTime
+#include "overflow.h"                  // convertWithoutLoss
+#include "trace.h"                     // TRACE
+
+// libc++
+#include <sstream>                     // std::i/ostringstream
+#include <utility>                     // std::move
+
+// libc
+#include <string.h>                    // memcpy
 
 
 FileSystemQuery::FileSystemQuery()
-  : m_timer(this /*parent*/),
-    m_pathname(),
-    m_simulatedDelayMS(0),
-    m_dirExists(false),
-    m_baseKind(SMFileUtil::FK_NONE),
-    m_baseModificationTime(0)
+  : QObject(),
+    m_commandRunner(),
+    m_waitingForReply(false),
+    m_replyBytes(),
+    m_errorBytes(),
+    m_replyMessage(),
+    m_failed(false),
+    m_failureReason()
 {
-  m_timer.setSingleShot(true);
+  m_commandRunner.setProgram("./editor-fs-server.exe");
+  m_commandRunner.startAsynchronous();
 
-  QObject::connect(&m_timer, &QTimer::timeout,
-                   this, &FileSystemQuery::on_timeout);
+  QObject::connect(&m_commandRunner, &CommandRunner::signal_outputDataReady,
+                   this, &FileSystemQuery::on_outputDataReady);
+  QObject::connect(&m_commandRunner, &CommandRunner::signal_errorDataReady,
+                   this, &FileSystemQuery::on_errorDataReady);
+  QObject::connect(&m_commandRunner, &CommandRunner::signal_processTerminated,
+                   this, &FileSystemQuery::on_processTerminated);
 }
 
 
 FileSystemQuery::~FileSystemQuery()
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_timer, nullptr, this, nullptr);
+  disconnectSignals();
 }
 
 
-void FileSystemQuery::doLocalQuery()
+void FileSystemQuery::disconnectSignals()
 {
-  SMFileUtil sfu;
-  string pathname = sfu.getAbsolutePath(m_pathname);
+  QObject::disconnect(&m_commandRunner, nullptr, this, nullptr);
+}
 
-  string dir, base;
-  sfu.splitPath(dir, base, pathname);
 
-  if (!sfu.absolutePathExists(dir)) {
-    m_dirExists = false;
+void FileSystemQuery::recordFailure(string const &reason)
+{
+  if (!m_failed) {
+    m_failed = true;
+    m_failureReason = reason;
+    Q_EMIT signal_failureAvailable();
+  }
+  else {
+    TRACE("FileSystemQuery",
+      "recordFailure: discarding additional reason: " << reason);
+  }
+}
+
+
+void FileSystemQuery::checkForCompleteReply()
+{
+  uint32_t replyBytesSize = m_replyBytes.size();
+  if (replyBytesSize < 4) {
+    return;
+  }
+
+  unsigned char lenBuf[4];
+  memcpy(lenBuf, m_replyBytes.data(), 4);
+  uint32_t replyLen;
+  deserializeIntNBO(lenBuf, replyLen);
+
+  if (replyBytesSize < 4+replyLen) {
+    return;
+  }
+
+  // We now have a complete reply.
+  m_waitingForReply = false;
+
+  if (replyBytesSize > 4+replyLen) {
+    recordFailure(stringb(
+      "Reply has extra bytes.  Its size is " << replyBytesSize <<
+      " but the expected size is " << (4+replyLen) << "."));
+    return;
+  }
+
+  if (tracingSys("FileSystemQuery_detail")) {
+    printQByteArray(m_replyBytes, "reply bytes");
+  }
+
+  std::string messageBytes(m_replyBytes.data()+4, replyLen);
+  std::istringstream iss(messageBytes);
+  StreamFlatten flat(&iss);
+  m_replyMessage.reset(VFS_Message::deserialize(flat));
+
+  // Clear the reply bytes so we are ready for the next one.
+  m_replyBytes.clear();
+
+  // Having done all that, if we have error bytes, then regard that as
+  // a protocol violation and switch over to the failure case.
+  if (!m_errorBytes.isEmpty()) {
+    recordFailure("Error bytes were present (along with a valid "
+                  "reply, now discarded).");
   }
 
   else {
-    m_baseKind = sfu.getFileKind(pathname);
-    (void)getFileModificationTime(pathname.c_str(), m_baseModificationTime);
-  }
-
-  Q_EMIT signal_resultsReady();
-}
-
-
-void FileSystemQuery::queryPath(string pathname)
-{
-  m_pathname = pathname;
-
-  if (m_simulatedDelayMS) {
-    m_timer.start(m_simulatedDelayMS);
-  }
-  else {
-    doLocalQuery();
+    Q_EMIT signal_replyAvailable();
   }
 }
 
 
-void FileSystemQuery::cancelRequest()
+void FileSystemQuery::sendRequest(VFS_Message const &msg)
 {
-  m_timer.stop();
+  xassert(!hasPendingRequest());
+
+  // Serialize the message.
+  std::string serMessage;
+  {
+    std::ostringstream oss;
+    StreamFlatten flat(&oss);
+    msg.serialize(flat);
+    serMessage = oss.str();
+  }
+
+  // Get its length.
+  unsigned char lenBuf[4];
+  uint32_t serMsgLen;
+  convertWithoutLoss(serMsgLen, serMessage.size());
+  serializeIntNBO(lenBuf, serMsgLen);
+
+  // Combine the length and serialized message into an envelope.
+  QByteArray envelope(serMsgLen+4, 0);
+  memcpy(envelope.data(), lenBuf, 4);
+  memcpy(envelope.data()+4, serMessage.data(), serMsgLen);
+
+  // Send that to the child process.
+  TRACE("FileSystemQuery", "sending message, len=" << serMsgLen);
+  if (tracingSys("FileSystemQuery_detail")) {
+    printQByteArray(envelope, "envelope bytes");
+  }
+  m_commandRunner.putInputData(envelope);
+
+  m_waitingForReply = true;
 }
 
 
-void FileSystemQuery::on_timeout() NOEXCEPT
+bool FileSystemQuery::hasPendingRequest() const
 {
-  GENERIC_CATCH_BEGIN
+  return m_waitingForReply || m_replyMessage;
+}
 
-  doLocalQuery();
 
-  GENERIC_CATCH_END
+bool FileSystemQuery::hasReply() const
+{
+  return !!m_replyMessage;
+}
+
+
+std::unique_ptr<VFS_Message> FileSystemQuery::takeReply()
+{
+  xassert(hasReply());
+  xassert(!m_waitingForReply);
+  return std::move(m_replyMessage);
+}
+
+
+bool FileSystemQuery::hasFailed() const
+{
+  return m_failed;
+}
+
+
+string FileSystemQuery::getFailureReason()
+{
+  xassert(hasFailed());
+  return m_failureReason;
+}
+
+
+void FileSystemQuery::shutdown()
+{
+  disconnectSignals();
+  m_commandRunner.closeInputChannel();
+  m_commandRunner.killProcess();
+}
+
+
+void FileSystemQuery::on_outputDataReady() NOEXCEPT
+{
+  TRACE("FileSystemQuery", "on_outputDataReady");
+
+  m_replyBytes.append(m_commandRunner.takeOutputData());
+  checkForCompleteReply();
+}
+
+void FileSystemQuery::on_errorDataReady() NOEXCEPT
+{
+  TRACE("FileSystemQuery", "on_errorDataReady");
+
+  // Just accumulate the error bytes.  We'll deal with them when
+  // looking at output data or process termination.
+  m_errorBytes.append(m_commandRunner.takeErrorData());
+}
+
+void FileSystemQuery::on_processTerminated() NOEXCEPT
+{
+  TRACE("FileSystemQuery", "on_processTerminated");
+
+  // An uncommanded termination is an error.  (And a commanded
+  // termination is preceded by disconnecting signals, so we would not
+  // get here.)
+  stringBuilder sb;
+  sb << "editor-fs-server terminated unexpectedly: ";
+  sb << toString(m_commandRunner.getTerminationDescription());
+  if (!m_errorBytes.isEmpty()) {
+    sb << "  stderr: " << m_errorBytes.toStdString();
+  }
+  recordFailure(sb.str());
 }
 
 

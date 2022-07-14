@@ -5,7 +5,7 @@
 #define EDITOR_EDITOR_FS_SERVER_TEST_H
 
 // editor
-#include "command-runner.h"            // CommandRunner
+#include "vfs-query.h"                 // FileSystemQuery
 #include "vfs-msg.h"                   // VFS_PathReply
 
 // smbase
@@ -28,23 +28,14 @@ public:      // data
   // Event loop object used to wait for results to be available.
   QEventLoop m_eventLoop;
 
-  // Runner connected to the server.
-  CommandRunner m_commandRunner;
+  // Query manager object.
+  FileSystemQuery m_fsQuery;
 
 public:
   FSServerTest(int argc, char **argv);
   ~FSServerTest();
 
-  // Send 'msg' to the child process.
-  void sendRequest(VFS_Message const &msg);
-
-  // If 'replyBytes' contains a complete message, deserialize it into
-  // 'replyMessage' and return true.  Otherwise return false.
-  bool haveCompleteReply(
-    std::unique_ptr<VFS_Message> &replyMessage,
-    QByteArray const &replyBytes);
-
-  // Wait for a complete reply and return it.  Throw on error.
+  // Wait for and return the next reply, or throw on error.
   std::unique_ptr<VFS_Message> getNextReply();
 
   // Run the sequence of tests.
@@ -61,10 +52,9 @@ public:
   void runEchoTests();
 
 public Q_SLOTS:
-  // Handlers for CommandRunner signals.
-  void on_outputDataReady() NOEXCEPT;
-  void on_errorDataReady() NOEXCEPT;
-  void on_processTerminated() NOEXCEPT;
+  // Handlers for FileSystemQuery signals.
+  void on_replyAvailable() NOEXCEPT;
+  void on_failureAvailable() NOEXCEPT;
 };
 
 

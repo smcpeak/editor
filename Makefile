@@ -278,23 +278,6 @@ test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-bufferlinesource))
 
 
-# -------------------------- vfs-query-test ----------------------------
-EDITOR_OBJS += vfs-query.o
-EDITOR_OBJS += vfs-query.moc.o
-
-VFS_QUERY_TEST_OBJS := $(EDITOR_OBJS)
-
-VFS_QUERY_TEST_OBJS += vfs-query-test.o
-VFS_QUERY_TEST_OBJS += vfs-query-test.moc.o
--include vfs-query-test.d
--include vfs-query-test.moc.d
-
-vfs-query-test: $(VFS_QUERY_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(VFS_QUERY_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,vfs-query-test))
-
-
 # ------------------------- editor-fs-server ---------------------------
 EDITOR_FS_SERVER_OBJS :=
 EDITOR_FS_SERVER_OBJS += editor-fs-server.o
@@ -315,6 +298,8 @@ all: editor-fs-server.exe
 
 # ----------------------- editor-fs-server-test ------------------------
 EDITOR_OBJS += vfs-msg.o
+EDITOR_OBJS += vfs-query.o
+EDITOR_OBJS += vfs-query.moc.o
 
 EDITOR_FS_SERVER_TEST_OBJS :=
 EDITOR_FS_SERVER_TEST_OBJS += $(EDITOR_OBJS)
