@@ -30,14 +30,20 @@
 //
 // The basic usage cycle looks like this:
 //
-//   +-----------+
-//   |   Ready   |<--------------------+
-//   +-----------+                     |
-//         |                           |
-//         | sendRequest               |
-//         V                           |
-//   +-----------+                     |
-//   |  Pending  |                     |
+//   +-----------+          ctor            +-----------+
+//   |  Created  |<-------------------------|Nonexistent|
+//   +-----------+                          +-----------+
+//         |                                      ^
+//         | connect                              |dtor
+//         V              shutdown          +-----------+
+//   +-----------+------------------------->|   Dead    |
+//   |   Ready   |<--------------------+    +-----------+
+//   +-----------+                     |          ^
+//         |                           |          |
+//         | sendRequest               |          |
+//         V                           |          |
+//   +-----------+    signal_failureAvailable     |
+//   |  Pending  |--------------------------------+
 //   +-----------+                     |
 //         |                           |
 //         | signal_replyAvailable     |
@@ -54,6 +60,9 @@ class FileSystemQuery : public QObject {
   NO_OBJECT_COPIES(FileSystemQuery);
 
 private:     // data
+  // Host being accessed, or the empty string to mean it is local.
+  string m_hostname;
+
   // Runner connected to the server process.
   CommandRunner m_commandRunner;
 
@@ -89,10 +98,19 @@ private:     // methods
   void checkForCompleteReply();
 
 public:      // methods
-  // Make an object to query the local file system.
   FileSystemQuery();
 
   virtual ~FileSystemQuery();
+
+  // Establish a connection to the given host, which can be the empty
+  // string to indicate to access the local file system.
+  void connect(string hostname);
+
+  void connectLocal() { connect(""); }
+
+  // Get the host we are connecting to, or empty string to mean the
+  // connection is local.
+  string getHostname() const { return m_hostname; }
 
   // Send 'msg' to the server for processing.
   //

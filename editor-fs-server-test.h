@@ -39,7 +39,7 @@ public:
   std::unique_ptr<VFS_Message> getNextReply();
 
   // Run the sequence of tests.
-  void runTests();
+  void runTests(string hostname);
 
   // Run tests using PathRequest.
   void runPathTests();

@@ -24,6 +24,7 @@
 
 FileSystemQuery::FileSystemQuery()
   : QObject(),
+    m_hostname(),
     m_commandRunner(),
     m_waitingForReply(false),
     m_replyBytes(),
@@ -32,9 +33,6 @@ FileSystemQuery::FileSystemQuery()
     m_failed(false),
     m_failureReason()
 {
-  m_commandRunner.setProgram("./editor-fs-server.exe");
-  m_commandRunner.startAsynchronous();
-
   QObject::connect(&m_commandRunner, &CommandRunner::signal_outputDataReady,
                    this, &FileSystemQuery::on_outputDataReady);
   QObject::connect(&m_commandRunner, &CommandRunner::signal_errorDataReady,
@@ -119,6 +117,29 @@ void FileSystemQuery::checkForCompleteReply()
   else {
     Q_EMIT signal_replyAvailable();
   }
+}
+
+
+void FileSystemQuery::connect(string hostname)
+{
+  xassert(!m_commandRunner.isRunning());
+
+  m_hostname = hostname;
+
+  if (hostname.empty()) {
+    m_commandRunner.setProgram("./editor-fs-server.exe");
+  }
+  else {
+    m_commandRunner.setProgram("ssh");
+    m_commandRunner.setArguments(QStringList{
+      toQString(m_hostname),
+      "editor-fs-server.exe"
+    });
+  }
+
+  TRACE("FileSystemQuery",
+    "starting command: " << toString(m_commandRunner.getCommandLine()));
+  m_commandRunner.startAsynchronous();
 }
 
 

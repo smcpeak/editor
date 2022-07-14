@@ -3,6 +3,9 @@
 
 #include "editor-fs-server-test.h"     // this module
 
+// smqtutil
+#include "qtutil.h"                    // toString(QString)
+
 // smbase
 #include "sm-test.h"                   // PVAL
 #include "trace.h"                     // traceAddFromEnvVar
@@ -44,9 +47,11 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 }
 
 
-void FSServerTest::runTests()
+void FSServerTest::runTests(string hostname)
 {
   TRACE("FSServerTest", "runTests");
+
+  m_fsQuery.connect(hostname);
 
   runPathTests();
   runEchoTests();
@@ -140,7 +145,16 @@ int main(int argc, char **argv)
 
   try {
     FSServerTest fsServerTest(argc, argv);
-    fsServerTest.runTests();
+
+    string hostname;
+
+    QStringList args = fsServerTest.arguments();
+    if (args.size() >= 2) {
+      hostname = toString(args.at(1));
+      cout << "Running test with hostname: " << hostname << endl;
+    }
+
+    fsServerTest.runTests(hostname);
   }
   catch (xBase &x) {
     cerr << x.why() << endl;
