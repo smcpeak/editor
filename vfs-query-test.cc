@@ -1,7 +1,7 @@
-// fs-query-test.cc
-// Code for fs-query-test.h.
+// vfs-query-test.cc
+// Code for vfs-query-test.h.
 
-#include "fs-query-test.h"             // this module
+#include "vfs-query-test.h"            // this module
 
 // smbase
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END

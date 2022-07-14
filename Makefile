@@ -278,21 +278,21 @@ test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-bufferlinesource))
 
 
-# -------------------------- fs-query-test -----------------------------
-EDITOR_OBJS += fs-query.o
-EDITOR_OBJS += fs-query.moc.o
+# -------------------------- vfs-query-test ----------------------------
+EDITOR_OBJS += vfs-query.o
+EDITOR_OBJS += vfs-query.moc.o
 
-FS_QUERY_TEST_OBJS := $(EDITOR_OBJS)
+VFS_QUERY_TEST_OBJS := $(EDITOR_OBJS)
 
-FS_QUERY_TEST_OBJS += fs-query-test.o
-FS_QUERY_TEST_OBJS += fs-query-test.moc.o
--include fs-query-test.d
--include fs-query-test.moc.d
+VFS_QUERY_TEST_OBJS += vfs-query-test.o
+VFS_QUERY_TEST_OBJS += vfs-query-test.moc.o
+-include vfs-query-test.d
+-include vfs-query-test.moc.d
 
-fs-query-test: $(FS_QUERY_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(FS_QUERY_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+vfs-query-test: $(VFS_QUERY_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(VFS_QUERY_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,fs-query-test))
+$(eval $(call RUN_TEST_PROG,vfs-query-test))
 
 
 # ------------------------- editor-fs-server ---------------------------

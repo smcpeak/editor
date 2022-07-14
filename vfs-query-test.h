@@ -1,11 +1,11 @@
-// fs-query-test.h
-// Tests for fs-query module.
+// vfs-query-test.h
+// Tests for vfs-query module.
 
-#ifndef EDITOR_FS_QUERY_TEST_H
-#define EDITOR_FS_QUERY_TEST_H
+#ifndef EDITOR_VFS_QUERY_TEST_H
+#define EDITOR_VFS_QUERY_TEST_H
 
 // editor
-#include "fs-query.h"                  // FileSystemQuery
+#include "vfs-query.h"                 // FileSystemQuery
 
 // smbase
 #include "sm-macros.h"                 // NO_OBJECT_COPIES
@@ -49,4 +49,4 @@ public Q_SLOTS:
 };
 
 
-#endif // EDITOR_FS_QUERY_TEST_H
+#endif // EDITOR_VFS_QUERY_TEST_H

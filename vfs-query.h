@@ -1,8 +1,8 @@
-// fs-query.h
+// vfs-query.h
 // FileSystemQuery class.
 
-#ifndef EDITOR_FS_QUERY_H
-#define EDITOR_FS_QUERY_H
+#ifndef EDITOR_VFS_QUERY_H
+#define EDITOR_VFS_QUERY_H
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
@@ -72,4 +72,4 @@ protected Q_SLOTS:
   void on_timeout() NOEXCEPT;
 };
 
-#endif // EDITOR_FS_QUERY_H
+#endif // EDITOR_VFS_QUERY_H
