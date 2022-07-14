@@ -8,6 +8,7 @@
 #include "binary-stdin.h"              // setStdinToBinary, setStdoutToBinary
 #include "exc.h"                       // xfatal
 #include "flatten.h"                   // de/serializeIntNBO
+#include "nonport.h"                   // sleepForMilliseconds
 #include "overflow.h"                  // convertWithoutLoss
 #include "sm-file-util.h"              // SMFileUtil
 #include "string-utils.h"              // doubleQuote
@@ -146,6 +147,13 @@ static int innerMain()
 {
   VFS_LocalImpl localImpl;
 
+  // Allow an artificial delay to be inserted into message processing
+  // for testing purposes.
+  unsigned artificialDelay = 0;
+  if (char const *d = getenv("EDITOR_FS_SERVER_DELAY")) {
+    artificialDelay = (unsigned)atoi(d);
+  }
+
   while (true) {
     // Get the next serialized request.
     std::string requestData = receiveMessage(stdin);
@@ -160,6 +168,11 @@ static int innerMain()
     StreamFlatten flatInput(&iss);
     std::unique_ptr<VFS_Message> message(
       VFS_Message::deserialize(flatInput));
+
+    if (artificialDelay) {
+      LOG("sleeping for " << artificialDelay << " ms");
+      sleepForMilliseconds(artificialDelay);
+    }
 
     // Process it.
     switch (message->messageType()) {
