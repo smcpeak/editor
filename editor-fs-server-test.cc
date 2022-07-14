@@ -105,6 +105,10 @@ void FSServerTest::runEchoTests()
   // file system layer in text mode, so it's an important case to check.
   runEchoTest(std::vector<unsigned char>{26});
 
+  // Send the SSH escape sequence that disconnects.  This should be
+  // simply passed through as-is without interpretation.
+  runEchoTest(std::vector<unsigned char>{'\n', '~', '.'});
+
   {
     // Build a vector that has every individual byte.
     std::vector<unsigned char> data;

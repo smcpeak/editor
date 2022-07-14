@@ -132,6 +132,15 @@ void FileSystemQuery::connect(string hostname)
   }
   else {
     m_commandRunner.setProgram("ssh");
+
+    // This requires that 'editor-fs-server.exe' be found on the user's
+    // PATH on the remote machine.
+    //
+    // It is not necessary to disable the SSH escape character because,
+    // by passing the name of a program, the SSH session is not
+    // considered "interactive", and hence by default does not create a
+    // PTY, which is itself a prerequisite to escape character
+    // recognition.
     m_commandRunner.setArguments(QStringList{
       toQString(m_hostname),
       "editor-fs-server.exe"
