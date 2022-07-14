@@ -215,9 +215,20 @@ void FSServerTest::runEchoTests()
   runEchoTest(std::vector<unsigned char>{});
   runEchoTest(std::vector<unsigned char>{0,1,2,3});
 
-  // This doesn't work yet, I think because stdin and stdout are open in
-  // text mode.
-  if (false) {
+  // Character 26 (0x1A) is treated as signalling EOF by the Windows
+  // file system layer in text mode, so it's an important case to check.
+  runEchoTest(std::vector<unsigned char>{26});
+
+  {
+    // Build a vector that has every individual byte.
+    std::vector<unsigned char> data;
+    for (int value=0; value < 256; value++) {
+        data.push_back((unsigned char)value);
+    }
+    runEchoTest(data);
+  }
+
+  {
     // Build a vector that has every possible pair of adjacent bytes.
     std::vector<unsigned char> data;
     for (int first=0; first < 256; first++) {

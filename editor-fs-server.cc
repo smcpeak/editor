@@ -3,7 +3,9 @@
 
 #include "vfs-local.h"                 // VFS_LocalImpl
 
+// smbase
 #include "bflatten.h"                  // StreamFlatten
+#include "binary-stdin.h"              // setStdinToBinary, setStdoutToBinary
 #include "exc.h"                       // xfatal
 #include "flatten.h"                   // de/serializeIntNBO
 #include "overflow.h"                  // convertWithoutLoss
@@ -11,6 +13,7 @@
 #include "string-utils.h"              // doubleQuote
 #include "syserr.h"                    // xsyserror
 
+// libc++
 #include <fstream>                     // std::ofstream
 #include <memory>                      // std::unique_ptr
 #include <sstream>                     // std::i/ostringstream
@@ -21,10 +24,18 @@
 // If not null, stream to log to.
 static std::ofstream *logStream = nullptr;
 
+// Normal logging.
 #define LOG(stuff)                    \
   if (logStream) {                    \
     *logStream << stuff << std::endl; \
   }
+
+// Verbose logging, normally disabled.
+#if 1
+  #define LOG_VERBOSE(stuff) ((void)0)
+#else
+  #define LOG_VERBOSE(stuff) LOG(stuff)
+#endif
 
 
 // Read 'size' bytes from 'stream'.  Return false on EOF.  If we do not
@@ -126,7 +137,7 @@ static void sendReply(VFS_Message const &msg)
 
   // Send it.
   std::string replyData = oss.str();
-  LOG("replyData: " << doubleQuote(replyData));
+  LOG_VERBOSE("replyData: " << doubleQuote(replyData));
   sendMessage(stdout, replyData);
 }
 
@@ -142,7 +153,7 @@ static int innerMain()
       // No more requests.
       break;
     }
-    LOG("requestData: " << doubleQuote(requestData));
+    LOG_VERBOSE("requestData: " << doubleQuote(requestData));
 
     // Deserialize the request.
     std::istringstream iss(requestData);
@@ -187,6 +198,12 @@ int main()
     sfu.createDirectoryAndParents("out");
     logStream = new std::ofstream("out/fs-server.log");
     LOG("editor-fs-server started");
+
+    // Since we are using stdin and stdout as the message channel, it
+    // needs to be able to transport arbitrary data.  Windows text mode
+    // translation and interpretation interferes with that.
+    setStdinToBinary();
+    setStdoutToBinary();
 
     int ret = innerMain();
 
