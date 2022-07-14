@@ -60,6 +60,10 @@ class FileSystemQuery : public QObject {
   NO_OBJECT_COPIES(FileSystemQuery);
 
 private:     // data
+  // True if 'connect' has been called.  This remains true even if the
+  // connection is subsequently lost.
+  bool m_wasConnected;
+
   // Host being accessed, or the empty string to mean it is local.
   string m_hostname;
 
@@ -104,17 +108,26 @@ public:      // methods
 
   // Establish a connection to the given host, which can be the empty
   // string to indicate to access the local file system.
+  //
+  // Requires: !wasConnected()
+  //
+  // Ensures: wasConnected()
   void connect(string hostname);
 
   void connectLocal() { connect(""); }
 
+  // True if 'connect' has been called.
+  bool wasConnected() const { return m_wasConnected; }
+
   // Get the host we are connecting to, or empty string to mean the
   // connection is local.
-  string getHostname() const { return m_hostname; }
+  //
+  // Requires: wasConnected()
+  string getHostname() const;
 
   // Send 'msg' to the server for processing.
   //
-  // Requires '!hasPendingRequest()'.
+  // Requires: wasConnected() && !hasPendingRequest()
   void sendRequest(VFS_Message const &msg);
 
   // True when a request has been sent but its reply has not been
@@ -123,14 +136,14 @@ public:      // methods
 
   // True when a reply is available and ready to be taken.
   //
-  // Implies 'hasPendingRequest()'.
+  // Invariant: !hasReply() || hasPendingRequest()
   bool hasReply() const;
 
   // Take the reply object.
   //
-  // Requires 'hasReply()'.
+  // Requires: hasReply()
   //
-  // Ensures '!hasPendingRequest()'.
+  // Ensures: !hasPendingRequest()
   std::unique_ptr<VFS_Message> takeReply();
 
   // True when the server failed to produce a valid reply.
@@ -140,7 +153,7 @@ public:      // methods
   // message bytes produced by the server.  The connection is dead after
   // any failure.
   //
-  // Requires 'hasFailed()'.
+  // Requires: hasFailed()
   string getFailureReason();
 
   // Attempt an orderly shutdown of the server.  After doing this, the

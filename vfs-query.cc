@@ -122,8 +122,9 @@ void FileSystemQuery::checkForCompleteReply()
 
 void FileSystemQuery::connect(string hostname)
 {
-  xassert(!m_commandRunner.isRunning());
+  xassert(!wasConnected());
 
+  m_wasConnected = true;
   m_hostname = hostname;
 
   if (hostname.empty()) {
@@ -143,9 +144,16 @@ void FileSystemQuery::connect(string hostname)
 }
 
 
+string FileSystemQuery::getHostname() const
+{
+  xassert(wasConnected());
+  return m_hostname;
+}
+
+
 void FileSystemQuery::sendRequest(VFS_Message const &msg)
 {
-  xassert(!hasPendingRequest());
+  xassert(wasConnected() && !hasPendingRequest());
 
   // Serialize the message.
   std::string serMessage;
