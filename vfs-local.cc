@@ -20,11 +20,8 @@ VFS_PathReply VFS_LocalImpl::queryPath(VFS_PathRequest const &req)
   VFS_PathReply reply;
   sfu.splitPath(reply.m_dirName, reply.m_fileName, pathname);
 
-  if (!sfu.absolutePathExists(reply.m_dirName)) {
-    reply.m_dirExists = false;
-  }
-
-  else {
+  reply.m_dirExists = sfu.absolutePathExists(reply.m_dirName);
+  if (reply.m_dirExists) {
     reply.m_fileKind = sfu.getFileKind(pathname);
     (void)getFileModificationTime(pathname.c_str(),
                                   reply.m_fileModificationTime);
