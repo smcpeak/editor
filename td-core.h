@@ -237,24 +237,15 @@ public:    // funcs
   // clear buffer contents, returning to just one empty line
   void clear();
 
-  // write a file
-  void writeFile(char const *fname) const;
-
-  // Note: Currently, the file I/O operations assume that LF is
-  // the sole line terminator.  Any CR characters in the file become
-  // part of the in-memory line contents, and will then be written
-  // out as such as well, like any other character.  This is not
-  // ideal of course.
-  //
-  // Clear 'this', then read a file into it.  If there is an error,
-  // throw an exception.  This function is guaranteed to only modify
-  // the object if it succeeds; failure is atomic.
-  void readFile(char const *fname);
-
   // Return the entire contents of the file as a byte sequence.
   std::vector<unsigned char> getWholeFile() const;
 
   // Replace the file contents with those from 'bytes'.
+  //
+  // Note: Currently, the file parser assumes that LF is the sole line
+  // terminator.  Any CR characters in the file become part of the
+  // in-memory line contents, and will then be written out as such as
+  // well, like any other character.  This is not ideal of course.
   void replaceWholeFile(std::vector<unsigned char> const &bytes);
 
   // ---------------------- observers ---------------------------

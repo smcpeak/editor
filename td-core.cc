@@ -5,11 +5,9 @@
 
 // smbase
 #include "array.h"                     // Array
-#include "autofile.h"                  // AutoFILE
 #include "objcount.h"                  // CheckObjectCount
 #include "strutil.h"                   // encodeWithEscapes
 #include "syserr.h"                    // xsyserror
-#include "sm-file-util.h"              // SMFileUtil
 #include "sm-test.h"                   // USUAL_MAIN, PVAL
 
 // libc
@@ -500,17 +498,6 @@ void TextDocumentCore::notifyTotalChange()
 }
 
 
-void TextDocumentCore::readFile(char const *fname)
-{
-  SMFileUtil sfu;
-
-  // This might throw.
-  std::vector<unsigned char> bytes(sfu.readFile(fname));
-
-  this->replaceWholeFile(bytes);
-}
-
-
 void TextDocumentCore::replaceWholeFile(
   std::vector<unsigned char> const &bytes)
 {
@@ -544,15 +531,6 @@ void TextDocumentCore::replaceWholeFile(
   xassert(p == end);
 
   this->notifyTotalChange();
-}
-
-
-void TextDocumentCore::writeFile(char const *fname) const
-{
-  std::vector<unsigned char> bytes(getWholeFile());
-
-  SMFileUtil sfu;
-  sfu.writeFile(fname, bytes);
 }
 
 

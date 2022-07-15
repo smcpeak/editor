@@ -5,6 +5,7 @@
 
 // smbase
 #include "autofile.h"                  // AutoFILE
+#include "sm-file-util.h"              // SMFileUtil
 #include "sm-macros.h"                 // IGNORE_RESULT
 #include "sm-test.h"                   // USUAL_MAIN, EXPECT_EQ
 
@@ -60,7 +61,7 @@ static void testAtomicRead()
 
   // Read it.
   TextDocumentCore core;
-  core.readFile("td-core.tmp");
+  core.replaceWholeFile(SMFileUtil().readFile("td-core.tmp"));
   xassert(core.numLines() == 1001);
   fullSelfCheck(core);
 
@@ -185,13 +186,13 @@ static void testReadTwice()
     {
       // Read it as a text document.
       TextDocumentCore doc;
-      doc.readFile("td-core.tmp");
+      doc.replaceWholeFile(SMFileUtil().readFile("td-core.tmp"));
 
       // dump its repr
       //doc.dumpRepresentation();
 
       // write it out again
-      doc.writeFile("td-core.tmp2");
+      SMFileUtil().writeFile("td-core.tmp2", doc.getWholeFile());
 
       printf("\nbuffer mem usage stats:\n");
       doc.printMemStats();
@@ -216,7 +217,7 @@ static void testReadSourceCode()
 {
   printf("reading td-core.cc ...\n");
   TextDocumentCore doc;
-  doc.readFile("td-core.cc");
+  doc.replaceWholeFile(SMFileUtil().readFile("td-core.cc"));
   doc.printMemStats();
   fullSelfCheck(doc);
 }
