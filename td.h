@@ -166,20 +166,11 @@ public:      // funcs
   // clear buffer contents *and* history
   void clearContentsAndHistory();
 
-  // Replace current contents with a new file, and reset cursor
-  // to 0,0.  Clears the undo history and undo group stack.
-  //
-  // If there is a read error, throws an exception, but the document
-  // is left unmodified.
-  void readFile(string const &fname);
-
-  // Write the contents to 'fname'.  May throw.
-  void writeFile(string const &fname) const;
-
   // Return the entire contents of the file as a byte sequence.
   std::vector<unsigned char> getWholeFile() const;
 
-  // Replace the file contents with those from 'bytes'.
+  // Replace the file contents with those from 'bytes'.  Resets cursor
+  // to 0,0 and clears the undo history and undo group stack.
   void replaceWholeFile(std::vector<unsigned char> const &bytes);
 
   // Change the 'm_documentProcessStatus' setting.  Setting it to a

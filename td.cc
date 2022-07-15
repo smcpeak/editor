@@ -126,24 +126,6 @@ void TextDocument::noUnsavedChanges()
 }
 
 
-void TextDocument::readFile(string const &fname)
-{
-  // This might throw an exception, but if so, 'core' will be
-  // left unmodified.
-  this->m_core.readFile(fname.c_str());
-
-  // Clear history after file has been successfully read.
-  this->clearHistory();
-  this->noUnsavedChanges();
-}
-
-
-void TextDocument::writeFile(string const &fname) const
-{
-  this->m_core.writeFile(fname.c_str());
-}
-
-
 std::vector<unsigned char> TextDocument::getWholeFile() const
 {
   return this->m_core.getWholeFile();

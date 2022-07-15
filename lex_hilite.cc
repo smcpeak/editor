@@ -13,6 +13,7 @@
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "sm-fstream.h"                // ofstream
 #include "strutil.h"                   // quoted, readLinesFromFile
+#include "sm-file-util.h"              // SMFileUtil
 #include "sm-test.h"                   // EXPECT_EQ
 #include "trace.h"                     // TRACE
 
@@ -333,7 +334,7 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
                      string inputFname)
 {
   // Read the input file into the document.
-  tde.writableDoc().readFile(inputFname);
+  tde.writableDoc().replaceWholeFile(SMFileUtil().readFile(inputFname));
 
   // Work through them, highlighting each line, storing the result
   // in 'actualOutputLines'.
