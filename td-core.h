@@ -17,6 +17,9 @@
 #include "sobjlist.h"                  // SObjList
 #include "str.h"                       // string
 
+// libc++
+#include <vector>                      // std::vector
+
 class TextDocument;                    // td.h
 
 // Forward in this file.
@@ -43,11 +46,6 @@ class TextDocumentObserver;
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
 class TextDocumentCore : public SerfRefCount {
-public:      // class data
-  // For testing purposes, this can be set to a non-zero value, and after
-  // reading this many bytes, an error will be injected.
-  static int s_injectedErrorCountdown;
-
 private:     // instance data
   // This array is the spine of the document.  Every element is either
   // empty, meaning a blank line, or is a '\n'-terminated sequence of
@@ -109,6 +107,9 @@ private:     // funcs
   // update 'longestLineSoFar', given the existence of a line
   // that is 'len' long
   void seenLineLength(int len);
+
+  // Notify all observers of a total change to the document.
+  void notifyTotalChange();
 
   // Non-atomic core of 'readFile'.  Failure will leave the file in
   // an unpredictable state.
@@ -244,6 +245,8 @@ public:    // funcs
   // contains the sequence of lines originally in the other.  It is
   // not guaranteed that internal caches, etc., are swapped, since
   // those are not visible to clients.
+  //
+  // TODO: Do I still need this?
   void swapWith(TextDocumentCore &other) NOEXCEPT;
 
   // write a file
@@ -259,6 +262,12 @@ public:    // funcs
   // throw an exception.  This function is guaranteed to only modify
   // the object if it succeeds; failure is atomic.
   void readFile(char const *fname);
+
+  // Return the entire contents of the file as a byte sequence.
+  std::vector<unsigned char> getWholeFile() const;
+
+  // Replace the file contents with those from 'bytes'.
+  void replaceWholeFile(std::vector<unsigned char> const &bytes);
 
   // ---------------------- observers ---------------------------
   // Add an observer.  It must not already be there.  This is 'const'

@@ -9,6 +9,7 @@
 #include "objcount.h"                  // CheckObjectCount
 #include "strutil.h"                   // encodeWithEscapes
 #include "syserr.h"                    // xsyserror
+#include "sm-file-util.h"              // SMFileUtil
 #include "sm-test.h"                   // USUAL_MAIN, PVAL
 
 // libc
@@ -18,8 +19,6 @@
 
 
 // ---------------------- TextDocumentCore --------------------------
-int TextDocumentCore::s_injectedErrorCountdown = 0;
-
 TextDocumentCore::TextDocumentCore()
   : m_lines(),               // empty sequence of lines
     m_recent(-1),
@@ -505,70 +504,64 @@ void TextDocumentCore::swapWith(TextDocumentCore &other) NOEXCEPT
     swap(this->m_longestLengthSoFar, other.m_longestLengthSoFar);
   }
 
-  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
-    iter.data()->observeTotalChange(*this);
-  }
+  this->notifyTotalChange();
 
   // TODO: Shouldn't we notify the observers of 'other' too?
 }
 
 
+void TextDocumentCore::notifyTotalChange()
+{
+  FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
+    iter.data()->observeTotalChange(*this);
+  }
+}
+
+
 void TextDocumentCore::nonAtomicReadFile(char const *fname)
 {
-  AutoFILE fp(fname, "rb");
+  SMFileUtil sfu;
 
-  // clear only once the file has been successfully opened
+  // This might throw.
+  std::vector<unsigned char> bytes(sfu.readFile(fname));
+
+  this->replaceWholeFile(bytes);
+}
+
+
+void TextDocumentCore::replaceWholeFile(
+  std::vector<unsigned char> const &bytes)
+{
   this->clear();
-
-  enum { BUFSIZE=0x2000 };     // 8k
-  char buffer[BUFSIZE];
 
   // Location of the end of the document as it is being built.
   TextMCoord tc(0,0);
 
-  for (;;) {
-    int len = fread(buffer, 1, BUFSIZE, fp);
-    if (len == 0) {
-      break;
-    }
-    if (len < 0) {
-      xsyserror("read", fname);
-    }
-
-    if (s_injectedErrorCountdown > 0) {
-      if (len < s_injectedErrorCountdown) {
-        s_injectedErrorCountdown -= len;
-      }
-      else {
-        s_injectedErrorCountdown = 0;
-        xfailure("throwing injected error");
-      }
+  char const *p = (char const *)bytes.data();
+  char const *end = p + bytes.size();
+  while (p < end) {
+    // Find next newline, or end of the input.
+    char const *nl = p;
+    while (nl < end && *nl!='\n') {
+      nl++;
     }
 
-    char const *p = buffer;
-    char const *end = buffer+len;
-    while (p < end) {
-      // find next newline, or end of this buffer segment
-      char const *nl = p;
-      while (nl < end && *nl!='\n') {
-        nl++;
-      }
+    // insert this line fragment
+    this->insertText(tc, p, nl-p);
+    tc.m_byteIndex += nl-p;
 
-      // insert this line fragment
-      this->insertText(tc, p, nl-p);
-      tc.m_byteIndex += nl-p;
-
-      if (nl < end) {
-        // skip newline
-        nl++;
-        tc.m_line++;
-        this->insertLine(tc.m_line);
-        tc.m_byteIndex=0;
-      }
-      p = nl;
+    if (nl < end) {
+      // skip newline
+      nl++;
+      tc.m_line++;
+      this->insertLine(tc.m_line);
+      tc.m_byteIndex=0;
     }
-    xassert(p == end);
+    p = nl;
   }
+  xassert(p == end);
+
+  this->notifyTotalChange();
 }
 
 
@@ -586,9 +579,21 @@ void TextDocumentCore::readFile(char const *fname)
 
 void TextDocumentCore::writeFile(char const *fname) const
 {
-  AutoFILE fp(fname, "wb");
+  std::vector<unsigned char> bytes(getWholeFile());
 
-  // Buffer into which we will copy each line before writing it out.
+  SMFileUtil sfu;
+  sfu.writeFile(fname, bytes);
+}
+
+
+std::vector<unsigned char> TextDocumentCore::getWholeFile() const
+{
+  // Destination sequence.
+  std::vector<unsigned char> fileBytes;
+
+  // Buffer into which we will copy each line before copying it to
+  // 'fileBytes'.  (This is necessitated by my use of ArrayStack instead
+  // of vector in the document interface.)
   ArrayStack<char> buffer;
 
   for (int line=0; line < this->numLines(); line++) {
@@ -599,11 +604,11 @@ void TextDocumentCore::writeFile(char const *fname) const
       buffer.push('\n');
     }
 
-    if ((int)fwrite(buffer.getArray(), 1, buffer.length(), fp) !=
-        buffer.length()) {
-      xsyserror("write", fname);
-    }
+    unsigned char const *d = (unsigned char const *)buffer.getArray();
+    fileBytes.insert(fileBytes.end(), d, d + buffer.length());
   }
+
+  return fileBytes;
 }
 
 

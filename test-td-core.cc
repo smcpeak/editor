@@ -64,24 +64,6 @@ static void testAtomicRead()
   xassert(core.numLines() == 1001);
   fullSelfCheck(core);
 
-  // Read it again with an injected error.
-  try {
-    TextDocumentCore::s_injectedErrorCountdown = 10000;
-    cout << "This should throw:" << endl;
-    core.readFile("td-core.tmp");
-    assert(!"should not get here");
-  }
-  catch (xBase &x) {
-    // As expected.
-  }
-
-  // Should have consumed this.
-  xassert(TextDocumentCore::s_injectedErrorCountdown == 0);
-
-  // Confirm that the original contents are still there.
-  xassert(core.numLines() == 1001);
-  fullSelfCheck(core);
-
   remove("td-core.tmp");
 }
 
