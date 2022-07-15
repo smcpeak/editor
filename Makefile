@@ -24,6 +24,9 @@ COVERAGE := 0
 EXTRA_CCFLAGS :=
 EXTRA_LDFLAGS :=
 
+# Run a program with a timeout in case it hangs.
+RUN_WITH_TIMEOUT := timeout 20
+
 # Pull in build configuration.  This must provide definitions of
 # QT5INCLUDE, QT5LIB and QT5BIN.  It can optionally override the
 # variables defined above.
@@ -70,10 +73,6 @@ QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
 QT_CONSOLE_LDFLAGS += $(LIBSMBASE)
 QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core -Wl,-rpath=$(QT5LIB)
 QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
-
-
-# Run a program with a timeout in case it hangs.
-RUN_WITH_TIMEOUT := timeout 20
 
 
 # Create a target to run $1 and save the output to out/$1.out.
