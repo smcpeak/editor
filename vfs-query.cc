@@ -12,6 +12,7 @@
 #include "flatten.h"                   // serializeIntNBO
 #include "nonport.h"                   // getFileModificationTime
 #include "overflow.h"                  // convertWithoutLoss
+#include "sm-macros.h"                 // DEFINE_ENUMERATION_TO_STRING
 #include "trace.h"                     // TRACE
 
 // libc++
@@ -24,13 +25,12 @@
 
 FileSystemQuery::FileSystemQuery()
   : QObject(),
+    m_state(S_CREATED),
     m_hostname(),
     m_commandRunner(),
-    m_waitingForReply(false),
     m_replyBytes(),
     m_errorBytes(),
     m_replyMessage(),
-    m_failed(false),
     m_failureReason()
 {
   QObject::connect(&m_commandRunner, &CommandRunner::signal_outputDataReady,
@@ -49,6 +49,14 @@ FileSystemQuery::~FileSystemQuery()
 }
 
 
+void FileSystemQuery::setState(State s)
+{
+  TRACE("FileSystemQuery",
+    "setState: " << toString(m_state) << " -> " << toString(s));
+  m_state = s;
+}
+
+
 void FileSystemQuery::disconnectSignals()
 {
   QObject::disconnect(&m_commandRunner, nullptr, this, nullptr);
@@ -57,8 +65,8 @@ void FileSystemQuery::disconnectSignals()
 
 void FileSystemQuery::recordFailure(string const &reason)
 {
-  if (!m_failed) {
-    m_failed = true;
+  if (state() != S_FAILED) {
+    setState(S_FAILED);
     m_failureReason = reason;
     Q_EMIT signal_failureAvailable();
   }
@@ -85,9 +93,6 @@ void FileSystemQuery::checkForCompleteReply()
     return;
   }
 
-  // We now have a complete reply.
-  m_waitingForReply = false;
-
   if (replyBytesSize > 4+replyLen) {
     recordFailure(stringb(
       "Reply has extra bytes.  Its size is " << replyBytesSize <<
@@ -112,9 +117,39 @@ void FileSystemQuery::checkForCompleteReply()
   if (!m_errorBytes.isEmpty()) {
     recordFailure("Error bytes were present (along with a valid "
                   "reply, now discarded).");
+    return;
+  }
+
+  if (state() == S_CONNECTING) {
+    // Check that the reply is the version message.
+    if (VFS_GetVersion const *getVer = m_replyMessage->ifGetVersionC()) {
+      // Confirm compatibility.
+      if (getVer->m_version == VFS_currentVersion) {
+        // Good to go.
+        TRACE("FileSystemQuery", "confirmed protocol compatibility");
+        setState(S_READY);
+        m_replyMessage.reset(nullptr);
+        Q_EMIT signal_connected();
+      }
+      else {
+        recordFailure(stringb(
+          "fs-server reports version " << getVer->m_version <<
+          " but this client uses version " << VFS_currentVersion <<
+          "."));
+        return;
+      }
+    }
+    else {
+      recordFailure(stringb(
+        "Server replied with invalid message type: " <<
+        m_replyMessage->messageType()));
+      return;
+    }
   }
 
   else {
+    TRACE("FileSystemQuery", "new state: S_HAS_REPLY");
+    setState(S_HAS_REPLY);
     Q_EMIT signal_replyAvailable();
   }
 }
@@ -122,12 +157,14 @@ void FileSystemQuery::checkForCompleteReply()
 
 void FileSystemQuery::connect(string hostname)
 {
-  xassert(!wasConnected());
+  xassert(state() == S_CREATED);
 
-  m_wasConnected = true;
+  setState(S_CONNECTING);
   m_hostname = hostname;
 
   if (hostname.empty()) {
+    // TODO: I need to look for this relative to the editor binary, not
+    // the working directory.
     m_commandRunner.setProgram("./editor-fs-server.exe");
   }
   else {
@@ -150,20 +187,21 @@ void FileSystemQuery::connect(string hostname)
   TRACE("FileSystemQuery",
     "starting command: " << toString(m_commandRunner.getCommandLine()));
   m_commandRunner.startAsynchronous();
+
+  // Attempt to establish version compatibility.
+  VFS_GetVersion getVer;
+  innerSendRequest(getVer);
 }
 
 
 string FileSystemQuery::getHostname() const
 {
-  xassert(wasConnected());
   return m_hostname;
 }
 
 
-void FileSystemQuery::sendRequest(VFS_Message const &msg)
+void FileSystemQuery::innerSendRequest(VFS_Message const &msg)
 {
-  xassert(wasConnected() && !hasPendingRequest());
-
   // Serialize the message.
   std::string serMessage;
   {
@@ -190,40 +228,30 @@ void FileSystemQuery::sendRequest(VFS_Message const &msg)
     printQByteArray(envelope, "envelope bytes");
   }
   m_commandRunner.putInputData(envelope);
-
-  m_waitingForReply = true;
 }
 
 
-bool FileSystemQuery::hasPendingRequest() const
+void FileSystemQuery::sendRequest(VFS_Message const &msg)
 {
-  return m_waitingForReply || m_replyMessage;
-}
+  xassert(state() == S_READY);
 
+  innerSendRequest(msg);
 
-bool FileSystemQuery::hasReply() const
-{
-  return !!m_replyMessage;
+  setState(S_PENDING);
 }
 
 
 std::unique_ptr<VFS_Message> FileSystemQuery::takeReply()
 {
-  xassert(hasReply());
-  xassert(!m_waitingForReply);
+  xassert(state() == S_HAS_REPLY);
+  setState(S_READY);
   return std::move(m_replyMessage);
-}
-
-
-bool FileSystemQuery::hasFailed() const
-{
-  return m_failed;
 }
 
 
 string FileSystemQuery::getFailureReason()
 {
-  xassert(hasFailed());
+  xassert(state() == S_FAILED);
   return m_failureReason;
 }
 
@@ -231,6 +259,7 @@ string FileSystemQuery::getFailureReason()
 void FileSystemQuery::shutdown()
 {
   disconnectSignals();
+  setState(S_DEAD);
   m_commandRunner.closeInputChannel();
   m_commandRunner.killProcess();
 }
@@ -268,6 +297,21 @@ void FileSystemQuery::on_processTerminated() NOEXCEPT
   }
   recordFailure(sb.str());
 }
+
+
+DEFINE_ENUMERATION_TO_STRING(
+  FileSystemQuery::State,
+  FileSystemQuery::NUM_STATES,
+  (
+    "S_CREATED",
+    "S_CONNECTING",
+    "S_READY",
+    "S_PENDING",
+    "S_HAS_REPLY",
+    "S_FAILED",
+    "S_DEAD",
+  )
+)
 
 
 // EOF

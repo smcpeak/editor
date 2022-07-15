@@ -16,6 +16,8 @@ FSServerTest::FSServerTest(int argc, char **argv)
     m_eventLoop(),
     m_fsQuery()
 {
+  QObject::connect(&m_fsQuery, &FileSystemQuery::signal_connected,
+                   this, &FSServerTest::on_connected);
   QObject::connect(&m_fsQuery, &FileSystemQuery::signal_replyAvailable,
                    this, &FSServerTest::on_replyAvailable);
   QObject::connect(&m_fsQuery, &FileSystemQuery::signal_failureAvailable,
@@ -35,7 +37,7 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
   TRACE("FSServerTest", "getNextReply");
 
   // Wait for something to happen.
-  TRACE("FSServerTest", "  waiting...");
+  TRACE("FSServerTest", "  waiting ...");
   m_eventLoop.exec();
 
   if (m_fsQuery.hasFailed()) {
@@ -52,6 +54,13 @@ void FSServerTest::runTests(string hostname)
   TRACE("FSServerTest", "runTests");
 
   m_fsQuery.connect(hostname);
+  while (m_fsQuery.isConnecting()) {
+    TRACE("FSServerTest", "  connecting ...");
+    m_eventLoop.exec();
+  }
+  if (m_fsQuery.hasFailed()) {
+    xfatal(m_fsQuery.getFailureReason());
+  }
 
   runPathTests();
   runEchoTests();
@@ -71,8 +80,7 @@ void FSServerTest::runPathTests()
 
   // Receive.
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_PathReply *reply = dynamic_cast<VFS_PathReply*>(replyMsg.get());
-  xassert(reply);
+  VFS_PathReply *reply = replyMsg->asPathReply();
   PVAL(reply->m_dirName);
   PVAL(reply->m_fileName);
   PVAL(reply->m_dirExists);
@@ -88,8 +96,7 @@ void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
   m_fsQuery.sendRequest(request);
 
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_Echo const *reply = dynamic_cast<VFS_Echo const *>(replyMsg.get());
-  xassert(reply);
+  VFS_Echo const *reply = replyMsg->asEchoC();
 
   // Verify that the reply is what was sent.
   xassert(reply->m_data == data);
@@ -131,6 +138,11 @@ void FSServerTest::runEchoTests()
   }
 }
 
+
+void FSServerTest::on_connected() NOEXCEPT
+{
+  m_eventLoop.exit();
+}
 
 void FSServerTest::on_replyAvailable() NOEXCEPT
 {

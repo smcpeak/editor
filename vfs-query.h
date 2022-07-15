@@ -27,52 +27,35 @@
 // implements the VFS protocol.  The process could be locally serving
 // the requests or an SSH process communicating to the real server on
 // another machine.
-//
-// The basic usage cycle looks like this:
-//
-//   +-----------+          ctor            +-----------+
-//   |  Created  |<-------------------------|Nonexistent|
-//   +-----------+                          +-----------+
-//         |                                      ^
-//         | connect                              |dtor
-//         V              shutdown          +-----------+
-//   +-----------+------------------------->|   Dead    |
-//   |   Ready   |<--------------------+    +-----------+
-//   +-----------+                     |          ^
-//         |                           |          |
-//         | sendRequest               |          |
-//         V                           |          |
-//   +-----------+    signal_failureAvailable     |
-//   |  Pending  |--------------------------------+
-//   +-----------+                     |
-//         |                           |
-//         | signal_replyAvailable     |
-//         V                           |
-//   +-----------+    takeReply        |
-//   |  hasReply |---------------------+
-//   +-----------+
-//
-// An error or shutdown interrupts the cycle and leaves the object in an
-// unusable state.
-//
 class FileSystemQuery : public QObject {
   Q_OBJECT
   NO_OBJECT_COPIES(FileSystemQuery);
 
+public:      // types
+  // States that the query object can be in.
+  //
+  // See doc/vfs-query-lifecycle.ded.png for the life cycle.
+  enum State {
+    S_CREATED,     // Just created.
+    S_CONNECTING,  // Establishing connection.
+    S_READY,       // Ready for requests.
+    S_PENDING,     // Request sent, reply not received.
+    S_HAS_REPLY,   // Reply waiting.
+    S_FAILED,      // A failure happened.
+    S_DEAD,        // Connection was shut down.
+
+    NUM_STATES     // Number of valid states.
+  };
+
 private:     // data
-  // True if 'connect' has been called.  This remains true even if the
-  // connection is subsequently lost.
-  bool m_wasConnected;
+  // Current state.
+  State m_state;
 
   // Host being accessed, or the empty string to mean it is local.
   string m_hostname;
 
   // Runner connected to the server process.
   CommandRunner m_commandRunner;
-
-  // True when a request has been sent, but a complete reply has not
-  // been received.
-  bool m_waitingForReply;
 
   // Bytes of the reply received so far.
   QByteArray m_replyBytes;
@@ -83,13 +66,14 @@ private:     // data
   // If not empty, the complete reply message that is available.
   std::unique_ptr<VFS_Message> m_replyMessage;
 
-  // If true, the server failed to produce a valid reply.
-  bool m_failed;
-
   // Human-readable string explaining the failure.
   string m_failureReason;
 
 private:     // methods
+  // Set 'm_state'.  This method uses TRACE to record the state
+  // transition for debugging purposes.
+  void setState(State s);
+
   // Disconnect signals going to this object's slots.
   void disconnectSignals();
 
@@ -101,70 +85,67 @@ private:     // methods
   // enough to constitute a reply.  If so, emit signals, etc.
   void checkForCompleteReply();
 
+  // Send 'msg', but without the state() manipulation that the public
+  // 'sendRequest' does.
+  void innerSendRequest(VFS_Message const &msg);
+
 public:      // methods
   FileSystemQuery();
 
   virtual ~FileSystemQuery();
 
+  // Get current state.
+  State state() const { return m_state; }
+
+  // Some convenient interpretations of 'state()'.
+  bool isConnecting() const { return state() == S_CONNECTING; }
+  bool hasFailed() const { return state() == S_FAILED; }
+  bool hasReply() const { return state() == S_HAS_REPLY; }
+
   // Establish a connection to the given host, which can be the empty
   // string to indicate to access the local file system.
   //
-  // Requires: !wasConnected()
+  // Requires: state() == S_CREATED
   //
-  // Ensures: wasConnected()
+  // Ensures: state() == S_CONNECTING
   void connect(string hostname);
 
   void connectLocal() { connect(""); }
 
-  // True if 'connect' has been called.
-  bool wasConnected() const { return m_wasConnected; }
-
   // Get the host we are connecting to, or empty string to mean the
   // connection is local.
-  //
-  // Requires: wasConnected()
   string getHostname() const;
 
   // Send 'msg' to the server for processing.
   //
-  // Requires: wasConnected() && !hasPendingRequest()
+  // Requires: state() == S_READY
   void sendRequest(VFS_Message const &msg);
-
-  // True when a request has been sent but its reply has not been
-  // received and taken.
-  bool hasPendingRequest() const;
-
-  // True when a reply is available and ready to be taken.
-  //
-  // Invariant: !hasReply() || hasPendingRequest()
-  bool hasReply() const;
 
   // Take the reply object.
   //
-  // Requires: hasReply()
-  //
-  // Ensures: !hasPendingRequest()
+  // Requires: state() == S_HAS_REPLY
   std::unique_ptr<VFS_Message> takeReply();
-
-  // True when the server failed to produce a valid reply.
-  bool hasFailed() const;
 
   // Get a string explaining the failure.  This will include any error
   // message bytes produced by the server.  The connection is dead after
   // any failure.
   //
-  // Requires: hasFailed()
+  // Requires: state() == S_FAILED.
   string getFailureReason();
 
-  // Attempt an orderly shutdown of the server.  After doing this, the
-  // only permissible action is to destroy this object.
+  // Attempt an orderly shutdown of the server.
+  //
+  // Ensures: state() == S_DEAD.
   void shutdown();
 
 Q_SIGNALS:
-  // Emitted when 'hasReply()' becomes true.
+  // Emitted when state() transitions from S_CONNECTING to S_READY.
+  void signal_connected();
+
+  // Emitted when state() becomes S_HAS_REPLY.
   void signal_replyAvailable();
 
-  // Emitted when 'hasFailed()' becomes true.
+  // Emitted when state() becomes S_FAILED.
   void signal_failureAvailable();
 
 protected Q_SLOTS:
@@ -173,5 +154,10 @@ protected Q_SLOTS:
   void on_errorDataReady() NOEXCEPT;
   void on_processTerminated() NOEXCEPT;
 };
+
+
+// Returns a string like "S_READY".
+char const *toString(FileSystemQuery::State s);
+
 
 #endif // EDITOR_VFS_QUERY_H

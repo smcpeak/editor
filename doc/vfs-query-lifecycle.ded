@@ -1,0 +1,227 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "loc": {
+        "x": 95,
+        "y": 25
+      },
+      "name": "Nonexistent",
+      "size": {
+        "h": 20,
+        "w": 460
+      }
+    },
+    {
+      "loc": {
+        "x": 95,
+        "y": 75
+      },
+      "name": "Created",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 95,
+        "y": 125
+      },
+      "name": "Connecting",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 385,
+        "y": 125
+      },
+      "name": "Failed",
+      "size": {
+        "h": 120,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 95,
+        "y": 175
+      },
+      "name": "Ready",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 95,
+        "y": 225
+      },
+      "name": "Pending",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 95,
+        "y": 275
+      },
+      "name": "HasReply",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 230,
+        "y": 275
+      },
+      "name": "(Any State)",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 75
+      }
+    },
+    {
+      "loc": {
+        "x": 455,
+        "y": 75
+      },
+      "name": "Dead",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    }
+  ],
+  "inheritances": [],
+  "namedColors": [
+    {
+      "color": "RGB(0,0,0)",
+      "name": "Black"
+    },
+    {
+      "color": "RGB(192,192,192)",
+      "name": "Gray"
+    },
+    {
+      "color": "RGB(255,255,255)",
+      "name": "White"
+    },
+    {
+      "color": "RGB(224,224,224)",
+      "name": "Light Gray"
+    },
+    {
+      "color": "RGB(236,125,70)",
+      "name": "Orange"
+    },
+    {
+      "color": "RGB(234,236,52)",
+      "name": "Yellow"
+    },
+    {
+      "color": "RGB(76,222,76)",
+      "name": "Green"
+    },
+    {
+      "color": "RGB(135,193,255)",
+      "name": "Sky Blue"
+    },
+    {
+      "color": "RGB(161,140,237)",
+      "name": "Purple"
+    },
+    {
+      "color": "RGB(227,120,236)",
+      "name": "Pink"
+    },
+    {
+      "color": "RGB(248,50,50)",
+      "name": "Red"
+    },
+    {
+      "color": "RGB(0,0,255)",
+      "name": "Blue"
+    }
+  ],
+  "relations": [
+    {
+      "end": {"entityRef": 1},
+      "label": "constructor",
+      "start": {"entityRef": 0}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "connect",
+      "start": {"entityRef": 1}
+    },
+    {
+      "end": {"entityRef": 3},
+      "label": "signal_failureAvailable",
+      "lineColor": "Red",
+      "start": {"entityRef": 2}
+    },
+    {
+      "end": {"entityRef": 0},
+      "label": "destructor",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 4},
+      "label": "signal_connected",
+      "lineColor": "Blue",
+      "start": {"entityRef": 2}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "sendRequest",
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 6},
+      "label": "signal_replyAvailable",
+      "lineColor": "Blue",
+      "start": {"entityRef": 5}
+    },
+    {
+      "controlPts": [{
+        "x": 25,
+        "y": 225
+      }],
+      "end": {"entityRef": 4},
+      "label": "takeReply",
+      "start": {"entityRef": 6}
+    },
+    {
+      "end": {"entityRef": 3},
+      "label": "signal_failureAvailable",
+      "lineColor": "Red",
+      "start": {"entityRef": 5}
+    },
+    {
+      "end": {"entityRef": 8},
+      "label": "shutdown",
+      "start": {"entityRef": 7}
+    },
+    {
+      "end": {"entityRef": 0},
+      "label": "destructor",
+      "start": {"entityRef": 8}
+    }
+  ],
+  "type": "Diagram Editor Diagram",
+  "version": 24,
+  "windowSize": {
+    "h": 319,
+    "w": 580
+  }
+}

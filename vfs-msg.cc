@@ -52,6 +52,7 @@ void VFS_Message::serialize(Flatten &flat) const
         ret = new VFS_##type(); \
         break;
 
+    HANDLE_TYPE(GetVersion)
     HANDLE_TYPE(Echo)
     HANDLE_TYPE(PathRequest)
     HANDLE_TYPE(PathReply)
@@ -66,6 +67,45 @@ void VFS_Message::serialize(Flatten &flat) const
   ret->xfer(flat);
 
   return ret;
+}
+
+
+#define VFS_DEFINE_DOWNCASTS(destType)                       \
+  VFS_##destType const *VFS_Message::as##destType##C() const \
+  {                                                          \
+    xassert(is##destType());                                 \
+    return static_cast<VFS_##destType const*>(this);         \
+  }                                                          \
+  VFS_##destType const *VFS_Message::if##destType##C() const \
+  {                                                          \
+    if (!is##destType()) {                                   \
+      return nullptr;                                        \
+    }                                                        \
+    return static_cast<VFS_##destType const*>(this);         \
+  }
+
+VFS_DEFINE_DOWNCASTS(GetVersion)
+VFS_DEFINE_DOWNCASTS(Echo)
+VFS_DEFINE_DOWNCASTS(PathRequest)
+VFS_DEFINE_DOWNCASTS(PathReply)
+
+#undef VFS_DEFINE_DOWNCASTS
+
+
+// ------------------------- VFS_GetVersion ----------------------------
+VFS_GetVersion::VFS_GetVersion()
+  : VFS_Message(),
+    m_version(VFS_currentVersion)
+{}
+
+
+VFS_GetVersion::~VFS_GetVersion()
+{}
+
+
+void VFS_GetVersion::xfer(Flatten &flat)
+{
+  flat.xfer_int32_t(m_version);
 }
 
 

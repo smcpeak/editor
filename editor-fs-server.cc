@@ -179,20 +179,20 @@ static int innerMain()
       default:
         xformat(stringb("Bad message type: " << message->messageType()));
 
-      case VFS_MT_Echo: {
-        VFS_Echo const *echo =
-          dynamic_cast<VFS_Echo const *>(message.get());
-        xassert(echo);
+      case VFS_MT_GetVersion:
+        // For now, have the server just ignore the incoming version
+        // number, and let the client diagnose mismatches.
+        sendReply(VFS_GetVersion());
+        break;
 
+      case VFS_MT_Echo: {
+        VFS_Echo const *echo = message->asEchoC();
         sendReply(*echo);
         break;
       }
 
       case VFS_MT_PathRequest: {
-        VFS_PathRequest const *pathRequest =
-          dynamic_cast<VFS_PathRequest const *>(message.get());
-        xassert(pathRequest);
-
+        VFS_PathRequest const *pathRequest = message->asPathRequestC();
         VFS_PathReply pathReply(localImpl.queryPath(*pathRequest));
         sendReply(pathReply);
         break;

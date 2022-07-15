@@ -53,6 +53,7 @@ public:
 
 public Q_SLOTS:
   // Handlers for FileSystemQuery signals.
+  void on_connected() NOEXCEPT;
   void on_replyAvailable() NOEXCEPT;
   void on_failureAvailable() NOEXCEPT;
 };

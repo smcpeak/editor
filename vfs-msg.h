@@ -8,6 +8,8 @@
 #ifndef EDITOR_VFS_MSG_H
 #define EDITOR_VFS_MSG_H
 
+#include "vfs-msg-fwd.h"               // fwds for this module
+
 // smbase
 #include "flatten-fwd.h"               // Flatten
 #include "sm-file-util.h"              // SMFileUtil
@@ -17,11 +19,26 @@
 #include <vector>                      // std::vector
 
 // libc
-#include <stdint.h>                    // int64_t
+#include <stdint.h>                    // int64_t, int32_t
+
+
+// Protocol version described in this file.
+//
+// The "protocol" refers to the set of message types, what fields they
+// have and what those fields mean, and how they are serialized into
+// octet sequences.  Its primary purpose is to cleanly detect
+// incompatibilities between client and server.
+//
+// Version history:
+//
+//    1: First numbered version.
+//
+int32_t const VFS_currentVersion = 1;
 
 
 // Possible kinds of VFS messages.
 enum VFS_MessageType {
+  VFS_MT_GetVersion,
   VFS_MT_Echo,
 
   VFS_MT_PathRequest,
@@ -46,6 +63,41 @@ public:      // methods
 
   // De/serialize derived class details.
   virtual void xfer(Flatten &flat) = 0;
+
+  // Test for dynamic object type.
+  #define VFS_DECLARE_DOWNCASTS(destType)                                                     \
+    bool is##destType() const { return messageType() == VFS_MT_##destType; }                  \
+    VFS_##destType const *as##destType##C() const;                                            \
+    VFS_##destType *as##destType() { return const_cast<VFS_##destType*>(as##destType##C()); } \
+    VFS_##destType const *if##destType##C() const;                                            \
+    VFS_##destType *if##destType() { return const_cast<VFS_##destType*>(if##destType##C()); }
+
+  VFS_DECLARE_DOWNCASTS(GetVersion)
+  VFS_DECLARE_DOWNCASTS(Echo)
+  VFS_DECLARE_DOWNCASTS(PathRequest)
+  VFS_DECLARE_DOWNCASTS(PathReply)
+
+  #undef VFS_DECLARE_DOWNCASTS
+};
+
+
+// Get the protocol version that the server understands.
+//
+// The request and reply are the same message type.
+class VFS_GetVersion : public VFS_Message {
+public:
+  // In the request, this is the version the client understands.  In
+  // the reply, it is what the server understands.
+  int32_t m_version;
+
+public:
+  VFS_GetVersion();
+  virtual ~VFS_GetVersion() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_GetVersion; }
+  virtual void xfer(Flatten &flat) override;
 };
 
 
