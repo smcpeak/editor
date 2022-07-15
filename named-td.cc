@@ -115,10 +115,14 @@ string NamedTextDocument::nameWithStatusIndicators() const
 void NamedTextDocument::readFile()
 {
   xassert(this->hasFilename());
-  this->TextDocument::readFile(this->m_docName);
-  this->refreshModificationTime();
 
   SMFileUtil sfu;
+
+  std::vector<unsigned char> bytes(sfu.readFile(this->m_docName));
+  this->replaceWholeFile(bytes);
+
+  this->refreshModificationTime();
+
   if (sfu.isReadOnly(this->m_docName)) {
     this->setReadOnly(true);
   }
@@ -128,7 +132,12 @@ void NamedTextDocument::readFile()
 void NamedTextDocument::writeFile()
 {
   xassert(this->hasFilename());
-  this->TextDocument::writeFile(this->m_docName);
+
+  SMFileUtil sfu;
+  std::vector<unsigned char> bytes(this->getWholeFile());
+
+  sfu.writeFile(this->m_docName, bytes);
+
   this->noUnsavedChanges();
   this->refreshModificationTime();
 }

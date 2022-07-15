@@ -13,6 +13,9 @@
 #include "objstack.h"                  // ObjStack
 #include "refct-serf.h"                // RCSerf
 
+// libc++
+#include <vector>                      // std::vector
+
 
 // The state of the process feeding output to a document.
 enum DocumentProcessStatus {
@@ -172,6 +175,12 @@ public:      // funcs
 
   // Write the contents to 'fname'.  May throw.
   void writeFile(string const &fname) const;
+
+  // Return the entire contents of the file as a byte sequence.
+  std::vector<unsigned char> getWholeFile() const;
+
+  // Replace the file contents with those from 'bytes'.
+  void replaceWholeFile(std::vector<unsigned char> const &bytes);
 
   // Change the 'm_documentProcessStatus' setting.  Setting it to a
   // value DPS_RUNNING will set the document as read-only and

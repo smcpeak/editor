@@ -144,6 +144,22 @@ void TextDocument::writeFile(string const &fname) const
 }
 
 
+std::vector<unsigned char> TextDocument::getWholeFile() const
+{
+  return this->m_core.getWholeFile();
+}
+
+
+void TextDocument::replaceWholeFile(std::vector<unsigned char> const &bytes)
+{
+  this->m_core.replaceWholeFile(bytes);
+
+  // Clear history after contents have been replaced.
+  this->clearHistory();
+  this->noUnsavedChanges();
+}
+
+
 void TextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 {
   xassert(m_groupStack.isEmpty());
