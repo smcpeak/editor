@@ -7,6 +7,14 @@
 #include "flatutil.h"                  // xferEnum, Flatten, xferVectorBytewise
 
 
+#define STRINGIZE_VFS_MT(type) #type,
+
+DEFINE_ENUMERATION_TO_STRING(VFS_MessageType, NUM_VFS_MESSAGE_TYPES,
+  ( FOR_EACH_VFS_MESSAGE_TYPE(STRINGIZE_VFS_MT) ))
+
+#undef STRINGIZE_VFS_MT
+
+
 // --------------------------- VFS_Message -----------------------------
 VFS_Message::VFS_Message()
 {}
@@ -52,10 +60,7 @@ void VFS_Message::serialize(Flatten &flat) const
         ret = new VFS_##type(); \
         break;
 
-    HANDLE_TYPE(GetVersion)
-    HANDLE_TYPE(Echo)
-    HANDLE_TYPE(PathRequest)
-    HANDLE_TYPE(PathReply)
+    FOR_EACH_VFS_MESSAGE_TYPE(HANDLE_TYPE)
 
     #undef HANDLE_TYPE
   }
@@ -84,10 +89,7 @@ void VFS_Message::serialize(Flatten &flat) const
     return static_cast<VFS_##destType const*>(this);         \
   }
 
-VFS_DEFINE_DOWNCASTS(GetVersion)
-VFS_DEFINE_DOWNCASTS(Echo)
-VFS_DEFINE_DOWNCASTS(PathRequest)
-VFS_DEFINE_DOWNCASTS(PathReply)
+FOR_EACH_VFS_MESSAGE_TYPE(VFS_DEFINE_DOWNCASTS)
 
 #undef VFS_DEFINE_DOWNCASTS
 
@@ -166,6 +168,140 @@ void VFS_PathReply::xfer(Flatten &flat)
   xferEnum(flat, m_fileKind);
   flat.xfer_int64_t(m_fileModificationTime);
 }
+
+
+// ------------------------- VFS_FileRequest ---------------------------
+VFS_FileRequest::VFS_FileRequest()
+  : VFS_Message(),
+    m_path()
+{}
+
+
+VFS_FileRequest::~VFS_FileRequest()
+{}
+
+
+void VFS_FileRequest::xfer(Flatten &flat)
+{
+  m_path.xfer(flat);
+}
+
+
+// ------------------------ VFS_FileReply --------------------------
+VFS_FileReply::VFS_FileReply()
+  : VFS_Message(),
+    m_success(true),
+    m_failureReason()
+{}
+
+
+VFS_FileReply::~VFS_FileReply()
+{}
+
+
+void VFS_FileReply::setFailureReason(string const &reason)
+{
+  m_success = false;
+  m_failureReason = reason;
+}
+
+
+void VFS_FileReply::xfer(Flatten &flat)
+{
+  flat.xferBool(m_success);
+  m_failureReason.xfer(flat);
+}
+
+
+// ----------------------- VFS_ReadFileRequest -------------------------
+VFS_ReadFileRequest::VFS_ReadFileRequest()
+  : VFS_FileRequest()
+{}
+
+
+VFS_ReadFileRequest::~VFS_ReadFileRequest()
+{}
+
+
+// ------------------------ VFS_ReadFileReply --------------------------
+VFS_ReadFileReply::VFS_ReadFileReply()
+  : VFS_FileReply(),
+    m_contents(),
+    m_fileModificationTime(0),
+    m_readOnly(false)
+{}
+
+
+VFS_ReadFileReply::~VFS_ReadFileReply()
+{}
+
+
+void VFS_ReadFileReply::xfer(Flatten &flat)
+{
+  VFS_FileReply::xfer(flat);
+
+  xferVectorBytewise(flat, m_contents);
+  flat.xfer_int64_t(m_fileModificationTime);
+  flat.xferBool(m_readOnly);
+}
+
+
+// ----------------------- VFS_WriteFileRequest -------------------------
+VFS_WriteFileRequest::VFS_WriteFileRequest()
+  : VFS_FileRequest(),
+    m_contents()
+{}
+
+
+VFS_WriteFileRequest::~VFS_WriteFileRequest()
+{}
+
+
+void VFS_WriteFileRequest::xfer(Flatten &flat)
+{
+  VFS_FileRequest::xfer(flat);
+
+  xferVectorBytewise(flat, m_contents);
+}
+
+
+// ------------------------ VFS_WriteFileReply --------------------------
+VFS_WriteFileReply::VFS_WriteFileReply()
+  : VFS_FileReply(),
+    m_fileModificationTime(0)
+{}
+
+
+VFS_WriteFileReply::~VFS_WriteFileReply()
+{}
+
+
+void VFS_WriteFileReply::xfer(Flatten &flat)
+{
+  VFS_FileReply::xfer(flat);
+
+  flat.xfer_int64_t(m_fileModificationTime);
+}
+
+
+// ----------------------- VFS_DeleteFileRequest -------------------------
+VFS_DeleteFileRequest::VFS_DeleteFileRequest()
+  : VFS_FileRequest()
+{}
+
+
+VFS_DeleteFileRequest::~VFS_DeleteFileRequest()
+{}
+
+
+// ------------------------ VFS_DeleteFileReply --------------------------
+VFS_DeleteFileReply::VFS_DeleteFileReply()
+  : VFS_FileReply()
+{}
+
+
+VFS_DeleteFileReply::~VFS_DeleteFileReply()
+{}
 
 
 // EOF

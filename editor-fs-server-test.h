@@ -51,6 +51,9 @@ public:
   // various patterns of data.
   void runEchoTests();
 
+  // Run tests related to reading and writing file contents.
+  void runFileReadWriteTests();
+
 public Q_SLOTS:
   // Handlers for FileSystemQuery signals.
   void on_connected() NOEXCEPT;

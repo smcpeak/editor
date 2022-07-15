@@ -197,6 +197,18 @@ static int innerMain()
         sendReply(pathReply);
         break;
       }
+
+      case VFS_MT_ReadFileRequest:
+        sendReply(localImpl.readFile(*(message->asReadFileRequestC())));
+        break;
+
+      case VFS_MT_WriteFileRequest:
+        sendReply(localImpl.writeFile(*(message->asWriteFileRequestC())));
+        break;
+
+      case VFS_MT_DeleteFileRequest:
+        sendReply(localImpl.deleteFile(*(message->asDeleteFileRequestC())));
+        break;
     }
   }
 

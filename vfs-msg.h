@@ -8,7 +8,7 @@
 #ifndef EDITOR_VFS_MSG_H
 #define EDITOR_VFS_MSG_H
 
-#include "vfs-msg-fwd.h"               // fwds for this module
+#include "vfs-msg-fwd.h"               // FOR_EACH_VFS_MESSAGE_TYPE, plus fwds for this module
 
 // smbase
 #include "flatten-fwd.h"               // Flatten
@@ -32,18 +32,24 @@
 // Version history:
 //
 //    1: First numbered version.
+//    2: Add {Read,Write,Delete}File{Request,Reply}.
 //
-int32_t const VFS_currentVersion = 1;
+int32_t const VFS_currentVersion = 2;
 
 
 // Possible kinds of VFS messages.
 enum VFS_MessageType {
-  VFS_MT_GetVersion,
-  VFS_MT_Echo,
+  #define MAKE_MT_ENUMERATOR(type) VFS_MT_##type,
 
-  VFS_MT_PathRequest,
-  VFS_MT_PathReply,
+  FOR_EACH_VFS_MESSAGE_TYPE(MAKE_MT_ENUMERATOR)
+
+  #undef MAKE_MT_ENUMERATOR
+
+  NUM_VFS_MESSAGE_TYPES
 };
+
+// Return a string like "GetVersion".
+char const *toString(VFS_MessageType mt);
 
 
 // Superclass for the message types.
@@ -72,10 +78,7 @@ public:      // methods
     VFS_##destType const *if##destType##C() const;                                            \
     VFS_##destType *if##destType() { return const_cast<VFS_##destType*>(if##destType##C()); }
 
-  VFS_DECLARE_DOWNCASTS(GetVersion)
-  VFS_DECLARE_DOWNCASTS(Echo)
-  VFS_DECLARE_DOWNCASTS(PathRequest)
-  VFS_DECLARE_DOWNCASTS(PathReply)
+  FOR_EACH_VFS_MESSAGE_TYPE(VFS_DECLARE_DOWNCASTS)
 
   #undef VFS_DECLARE_DOWNCASTS
 };
@@ -167,6 +170,137 @@ public:      // methods
   virtual VFS_MessageType messageType() const override
     { return VFS_MT_PathReply; }
   virtual void xfer(Flatten &flat) override;
+};
+
+
+// Abstract base class for requests applicable to a file.
+class VFS_FileRequest : public VFS_Message {
+public:      // data
+  // Path to the file of interest.
+  string m_path;
+
+public:      // methods
+  VFS_FileRequest();
+  virtual ~VFS_FileRequest() override;
+
+  // VFS_Message methods.
+  virtual void xfer(Flatten &flat) override;
+};
+
+
+// Abstract base class for replies to a FileRequest.
+class VFS_FileReply : public VFS_Message {
+public:      // data
+  // True if the operation completed successfully.  Initially true.
+  bool m_success;
+
+  // If '!m_success', the reason for the failure as a human-readable
+  // string.  Initially empty.
+  string m_failureReason;
+
+public:      // methods
+  VFS_FileReply();
+  virtual ~VFS_FileReply() override;
+
+  // Set the failure reason, and set 'm_success' to false.
+  void setFailureReason(string const &reason);
+
+  // VFS_Message methods.
+  virtual void xfer(Flatten &flat) override;
+};
+
+
+// Request to read the contents of a file.
+class VFS_ReadFileRequest : public VFS_FileRequest {
+public:      // methods
+  VFS_ReadFileRequest();
+  virtual ~VFS_ReadFileRequest() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_ReadFileRequest; }
+};
+
+
+// Reply with contents of a file.
+class VFS_ReadFileReply : public VFS_FileReply {
+public:      // data
+  // File contents.
+  std::vector<unsigned char> m_contents;
+
+  // Modification time as reported by the file system.
+  int64_t m_fileModificationTime;
+
+  // True if the file is marked read-only.
+  bool m_readOnly;
+
+public:      // methods
+  VFS_ReadFileReply();
+  virtual ~VFS_ReadFileReply() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_ReadFileReply; }
+  virtual void xfer(Flatten &flat) override;
+};
+
+
+// Request to write the contents of a file.
+class VFS_WriteFileRequest : public VFS_FileRequest {
+public:      // data
+  // File contents to write.
+  std::vector<unsigned char> m_contents;
+
+public:      // methods
+  VFS_WriteFileRequest();
+  virtual ~VFS_WriteFileRequest() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_WriteFileRequest; }
+  virtual void xfer(Flatten &flat) override;
+};
+
+
+// Reply to VFS_WriteFileRequest.
+class VFS_WriteFileReply : public VFS_FileReply {
+public:      // data
+  // Modification time as reported by the file system *after* writing
+  // the file's contents.
+  int64_t m_fileModificationTime;
+
+public:      // methods
+  VFS_WriteFileReply();
+  virtual ~VFS_WriteFileReply() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_WriteFileReply; }
+  virtual void xfer(Flatten &flat) override;
+};
+
+
+// Request to delete a file.
+class VFS_DeleteFileRequest : public VFS_FileRequest {
+public:      // methods
+  VFS_DeleteFileRequest();
+  virtual ~VFS_DeleteFileRequest() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_DeleteFileRequest; }
+};
+
+
+// Reply to VFS_DeleteFileRequest.
+class VFS_DeleteFileReply : public VFS_FileReply {
+public:      // methods
+  VFS_DeleteFileReply();
+  virtual ~VFS_DeleteFileReply() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_DeleteFileReply; }
 };
 
 

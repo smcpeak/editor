@@ -64,6 +64,7 @@ void FSServerTest::runTests(string hostname)
 
   runPathTests();
   runEchoTests();
+  runFileReadWriteTests();
 
   m_fsQuery.shutdown();
 }
@@ -71,6 +72,8 @@ void FSServerTest::runTests(string hostname)
 
 void FSServerTest::runPathTests()
 {
+  cout << "runPathTests\n";
+
   // Send.
   {
     VFS_PathRequest req;
@@ -103,8 +106,21 @@ void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
 }
 
 
+// Build a vector that has every individual byte.
+static std::vector<unsigned char> allBytes()
+{
+  std::vector<unsigned char> data;
+  for (int value=0; value < 256; value++) {
+    data.push_back((unsigned char)value);
+  }
+  return data;
+}
+
+
 void FSServerTest::runEchoTests()
 {
+  cout << "runEchoTests\n";
+
   runEchoTest(std::vector<unsigned char>{});
   runEchoTest(std::vector<unsigned char>{0,1,2,3});
 
@@ -116,14 +132,7 @@ void FSServerTest::runEchoTests()
   // simply passed through as-is without interpretation.
   runEchoTest(std::vector<unsigned char>{'\n', '~', '.'});
 
-  {
-    // Build a vector that has every individual byte.
-    std::vector<unsigned char> data;
-    for (int value=0; value < 256; value++) {
-        data.push_back((unsigned char)value);
-    }
-    runEchoTest(data);
-  }
+  runEchoTest(allBytes());
 
   {
     // Build a vector that has every possible pair of adjacent bytes.
@@ -135,6 +144,76 @@ void FSServerTest::runEchoTests()
       }
     }
     runEchoTest(data);
+  }
+}
+
+
+void FSServerTest::runFileReadWriteTests()
+{
+  cout << "runFileReadWriteTests\n";
+
+  std::vector<unsigned char> data(allBytes());
+  string fname = "efst.tmp";
+  int64_t modTime;
+
+  // Write.
+  {
+    VFS_WriteFileRequest req;
+    req.m_path = fname;
+    req.m_contents = data;
+    m_fsQuery.sendRequest(req);
+
+    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+    VFS_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
+    if (reply->m_success) {
+      modTime = reply->m_fileModificationTime;
+      PVAL(modTime);
+    }
+    else {
+      xfatal(reply->m_failureReason);
+    }
+  }
+
+  // Read.
+  {
+    VFS_ReadFileRequest req;
+    req.m_path = fname;
+    m_fsQuery.sendRequest(req);
+
+    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+    VFS_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
+    if (reply->m_success) {
+      xassert(reply->m_contents == data);
+      xassert(reply->m_fileModificationTime == modTime);
+      xassert(reply->m_readOnly == false);
+    }
+    else {
+      xfatal(reply->m_failureReason);
+    }
+  }
+
+  // Delete.
+  {
+    VFS_DeleteFileRequest req;
+    req.m_path = fname;
+    m_fsQuery.sendRequest(req);
+
+    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+    VFS_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
+    if (!reply->m_success) {
+      xfatal(reply->m_failureReason);
+    }
+  }
+
+  // Check deletion.
+  {
+    VFS_PathRequest req;
+    req.m_path = fname;
+    m_fsQuery.sendRequest(req);
+
+    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+    VFS_PathReply const *reply = replyMsg->asPathReplyC();
+    xassert(reply->m_fileKind == SMFileUtil::FK_NONE);
   }
 }
 
