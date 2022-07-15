@@ -112,6 +112,10 @@ void FileSystemQuery::checkForCompleteReply()
   StreamFlatten flat(&iss);
   m_replyMessage.reset(VFS_Message::deserialize(flat));
 
+  TRACE("FileSystemQuery",
+    "received reply: type=" << toString(m_replyMessage->messageType()) <<
+    " len=" << replyLen);
+
   // Clear the reply bytes so we are ready for the next one.
   m_replyBytes.clear();
 
@@ -151,7 +155,6 @@ void FileSystemQuery::checkForCompleteReply()
   }
 
   else {
-    TRACE("FileSystemQuery", "new state: S_HAS_REPLY");
     setState(S_HAS_REPLY);
     Q_EMIT signal_replyAvailable();
   }
@@ -231,7 +234,9 @@ void FileSystemQuery::innerSendRequest(VFS_Message const &msg)
   memcpy(envelope.data()+4, serMessage.data(), serMsgLen);
 
   // Send that to the child process.
-  TRACE("FileSystemQuery", "sending message, len=" << serMsgLen);
+  TRACE("FileSystemQuery",
+    "sending message: type=" << toString(msg.messageType()) <<
+    " len=" << serMsgLen);
   if (tracingSys("FileSystemQuery_detail")) {
     printQByteArray(envelope, "envelope bytes");
   }
