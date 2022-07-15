@@ -15,6 +15,9 @@
 #include "sm-macros.h"                 // DEFINE_ENUMERATION_TO_STRING
 #include "trace.h"                     // TRACE
 
+// qt
+#include <QCoreApplication>
+
 // libc++
 #include <sstream>                     // std::i/ostringstream
 #include <utility>                     // std::move
@@ -163,9 +166,8 @@ void FileSystemQuery::connect(string hostname)
   m_hostname = hostname;
 
   if (hostname.empty()) {
-    // TODO: I need to look for this relative to the editor binary, not
-    // the working directory.
-    m_commandRunner.setProgram("./editor-fs-server.exe");
+    m_commandRunner.setProgram(
+      QCoreApplication::applicationDirPath() + "/editor-fs-server.exe");
   }
   else {
     m_commandRunner.setProgram("ssh");
