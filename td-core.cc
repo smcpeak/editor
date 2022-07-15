@@ -492,24 +492,6 @@ void TextDocumentCore::clear()
 }
 
 
-void TextDocumentCore::swapWith(TextDocumentCore &other) NOEXCEPT
-{
-  assert(m_iteratorCount == 0);
-  assert(other.m_iteratorCount == 0);
-
-  if (this != &other) {
-    swap(this->m_lines, other.m_lines);
-    swap(this->m_recent, other.m_recent);
-    swap(this->m_recentLine, other.m_recentLine);
-    swap(this->m_longestLengthSoFar, other.m_longestLengthSoFar);
-  }
-
-  this->notifyTotalChange();
-
-  // TODO: Shouldn't we notify the observers of 'other' too?
-}
-
-
 void TextDocumentCore::notifyTotalChange()
 {
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
@@ -518,7 +500,7 @@ void TextDocumentCore::notifyTotalChange()
 }
 
 
-void TextDocumentCore::nonAtomicReadFile(char const *fname)
+void TextDocumentCore::readFile(char const *fname)
 {
   SMFileUtil sfu;
 
@@ -562,18 +544,6 @@ void TextDocumentCore::replaceWholeFile(
   xassert(p == end);
 
   this->notifyTotalChange();
-}
-
-
-void TextDocumentCore::readFile(char const *fname)
-{
-  TextDocumentCore tmp;
-
-  // This will throw on error.
-  tmp.nonAtomicReadFile(fname);
-
-  // At this point success is guaranteed.
-  this->swapWith(tmp);
 }
 
 

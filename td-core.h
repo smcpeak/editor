@@ -111,10 +111,6 @@ private:     // funcs
   // Notify all observers of a total change to the document.
   void notifyTotalChange();
 
-  // Non-atomic core of 'readFile'.  Failure will leave the file in
-  // an unpredictable state.
-  void nonAtomicReadFile(char const *fname);
-
 public:    // funcs
   TextDocumentCore();        // one empty line
   ~TextDocumentCore();
@@ -241,14 +237,6 @@ public:    // funcs
   // clear buffer contents, returning to just one empty line
   void clear();
 
-  // Swap the contents of two documents.  Afterward, logically, each
-  // contains the sequence of lines originally in the other.  It is
-  // not guaranteed that internal caches, etc., are swapped, since
-  // those are not visible to clients.
-  //
-  // TODO: Do I still need this?
-  void swapWith(TextDocumentCore &other) NOEXCEPT;
-
   // write a file
   void writeFile(char const *fname) const;
 
@@ -341,12 +329,6 @@ public:      // types
   };
   friend LineIterator;
 };
-
-
-inline void swap(TextDocumentCore &a, TextDocumentCore &b) NOEXCEPT
-{
-  a.swapWith(b);
-}
 
 
 inline bool isSpaceOrTab(int c)
