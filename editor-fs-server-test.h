@@ -31,7 +31,7 @@ public:      // data
   // Query manager object.
   FileSystemQuery m_fsQuery;
 
-public:
+public:      // methods
   FSServerTest(int argc, char **argv);
   ~FSServerTest();
 
