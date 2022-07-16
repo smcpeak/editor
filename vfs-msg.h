@@ -123,7 +123,7 @@ public:      // methods
 
 
 // Query a path name.
-class VFS_PathRequest : public VFS_Message {
+class VFS_FileStatusRequest : public VFS_Message {
 public:      // data
   // File path to query.
   //
@@ -133,18 +133,18 @@ public:      // data
   string m_path;
 
 public:      // methods
-  VFS_PathRequest();
-  virtual ~VFS_PathRequest() override;
+  VFS_FileStatusRequest();
+  virtual ~VFS_FileStatusRequest() override;
 
   // VFS_Message methods.
   virtual VFS_MessageType messageType() const override
-    { return VFS_MT_PathRequest; }
+    { return VFS_MT_FileStatusRequest; }
   virtual void xfer(Flatten &flat) override;
 };
 
 
-// Reply for VFS_PathRequest.
-class VFS_PathReply : public VFS_Message {
+// Reply for VFS_FileStatusRequest.
+class VFS_FileStatusReply : public VFS_Message {
 public:      // data
   // Absolute directory containing 'm_path'.  This always ends with a
   // directory separator.
@@ -163,12 +163,12 @@ public:      // data
   int64_t m_fileModificationTime;
 
 public:      // methods
-  VFS_PathReply();
-  virtual ~VFS_PathReply() override;
+  VFS_FileStatusReply();
+  virtual ~VFS_FileStatusReply() override;
 
   // VFS_Message methods.
   virtual VFS_MessageType messageType() const override
-    { return VFS_MT_PathReply; }
+    { return VFS_MT_FileStatusReply; }
   virtual void xfer(Flatten &flat) override;
 };
 

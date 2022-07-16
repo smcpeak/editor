@@ -10,8 +10,8 @@
 #define FOR_EACH_VFS_MESSAGE_TYPE(macro) \
   macro(GetVersion)                      \
   macro(Echo)                            \
-  macro(PathRequest)                     \
-  macro(PathReply)                       \
+  macro(FileStatusRequest)               \
+  macro(FileStatusReply)                 \
   macro(ReadFileRequest)                 \
   macro(ReadFileReply)                   \
   macro(WriteFileRequest)                \

@@ -191,9 +191,9 @@ static int innerMain()
         break;
       }
 
-      case VFS_MT_PathRequest: {
-        VFS_PathRequest const *pathRequest = message->asPathRequestC();
-        VFS_PathReply pathReply(localImpl.queryPath(*pathRequest));
+      case VFS_MT_FileStatusRequest: {
+        VFS_FileStatusRequest const *pathRequest = message->asFileStatusRequestC();
+        VFS_FileStatusReply pathReply(localImpl.queryPath(*pathRequest));
         sendReply(pathReply);
         break;
       }

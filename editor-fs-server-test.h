@@ -6,7 +6,7 @@
 
 // editor
 #include "vfs-query.h"                 // FileSystemQuery
-#include "vfs-msg.h"                   // VFS_PathReply
+#include "vfs-msg.h"                   // VFS_FileStatusReply
 
 // smbase
 #include "sm-macros.h"                 // NO_OBJECT_COPIES
@@ -41,7 +41,7 @@ public:
   // Run the sequence of tests.
   void runTests(string hostname);
 
-  // Run tests using PathRequest.
+  // Run tests using FileStatusRequest.
   void runPathTests();
 
   // Use Echo to send/receive 'data'.

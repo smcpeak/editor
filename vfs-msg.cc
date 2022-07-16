@@ -128,25 +128,25 @@ void VFS_Echo::xfer(Flatten &flat)
 }
 
 
-// ------------------------- VFS_PathRequest ---------------------------
-VFS_PathRequest::VFS_PathRequest()
+// ------------------------- VFS_FileStatusRequest ---------------------------
+VFS_FileStatusRequest::VFS_FileStatusRequest()
   : VFS_Message(),
     m_path()
 {}
 
 
-VFS_PathRequest::~VFS_PathRequest()
+VFS_FileStatusRequest::~VFS_FileStatusRequest()
 {}
 
 
-void VFS_PathRequest::xfer(Flatten &flat)
+void VFS_FileStatusRequest::xfer(Flatten &flat)
 {
   m_path.xfer(flat);
 }
 
 
-// -------------------------- VFS_PathReply ----------------------------
-VFS_PathReply::VFS_PathReply()
+// -------------------------- VFS_FileStatusReply ----------------------------
+VFS_FileStatusReply::VFS_FileStatusReply()
   : VFS_Message(),
     m_dirName(),
     m_fileName(),
@@ -156,11 +156,11 @@ VFS_PathReply::VFS_PathReply()
 {}
 
 
-VFS_PathReply::~VFS_PathReply()
+VFS_FileStatusReply::~VFS_FileStatusReply()
 {}
 
 
-void VFS_PathReply::xfer(Flatten &flat)
+void VFS_FileStatusReply::xfer(Flatten &flat)
 {
   m_dirName.xfer(flat);
   m_fileName.xfer(flat);

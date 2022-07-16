@@ -76,14 +76,14 @@ void FSServerTest::runPathTests()
 
   // Send.
   {
-    VFS_PathRequest req;
+    VFS_FileStatusRequest req;
     req.m_path = "Makefile";
     m_fsQuery.sendRequest(req);
   }
 
   // Receive.
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_PathReply *reply = replyMsg->asPathReply();
+  VFS_FileStatusReply *reply = replyMsg->asFileStatusReply();
   PVAL(reply->m_dirName);
   PVAL(reply->m_fileName);
   PVAL(reply->m_dirExists);
@@ -207,12 +207,12 @@ void FSServerTest::runFileReadWriteTests()
 
   // Check deletion.
   {
-    VFS_PathRequest req;
+    VFS_FileStatusRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
     std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-    VFS_PathReply const *reply = replyMsg->asPathReplyC();
+    VFS_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
     xassert(reply->m_fileKind == SMFileUtil::FK_NONE);
   }
 }

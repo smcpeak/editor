@@ -9,7 +9,7 @@
 #include "sm-file-util.h"              // SMFileUtil
 
 
-VFS_PathReply VFS_LocalImpl::queryPath(VFS_PathRequest const &req)
+VFS_FileStatusReply VFS_LocalImpl::queryPath(VFS_FileStatusRequest const &req)
 {
   SMFileUtil sfu;
 
@@ -18,7 +18,7 @@ VFS_PathReply VFS_LocalImpl::queryPath(VFS_PathRequest const &req)
   string pathname = sfu.getAbsolutePath(req.m_path);
 
   // Split into directory and name components.
-  VFS_PathReply reply;
+  VFS_FileStatusReply reply;
   sfu.splitPath(reply.m_dirName, reply.m_fileName, pathname);
 
   reply.m_dirExists = sfu.absolutePathExists(reply.m_dirName);
