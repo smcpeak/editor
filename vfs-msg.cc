@@ -128,7 +128,7 @@ void VFS_Echo::xfer(Flatten &flat)
 }
 
 
-// ------------------------- VFS_FileStatusRequest ---------------------------
+// ---------------------- VFS_FileStatusRequest ------------------------
 VFS_FileStatusRequest::VFS_FileStatusRequest()
   : VFS_Message(),
     m_path()
@@ -145,7 +145,7 @@ void VFS_FileStatusRequest::xfer(Flatten &flat)
 }
 
 
-// -------------------------- VFS_FileStatusReply ----------------------------
+// ----------------------- VFS_FileStatusReply -------------------------
 VFS_FileStatusReply::VFS_FileStatusReply()
   : VFS_Message(),
     m_dirName(),
@@ -170,43 +170,43 @@ void VFS_FileStatusReply::xfer(Flatten &flat)
 }
 
 
-// ------------------------- VFS_FileRequest ---------------------------
-VFS_FileRequest::VFS_FileRequest()
+// ------------------------- VFS_PathRequest ---------------------------
+VFS_PathRequest::VFS_PathRequest()
   : VFS_Message(),
     m_path()
 {}
 
 
-VFS_FileRequest::~VFS_FileRequest()
+VFS_PathRequest::~VFS_PathRequest()
 {}
 
 
-void VFS_FileRequest::xfer(Flatten &flat)
+void VFS_PathRequest::xfer(Flatten &flat)
 {
   m_path.xfer(flat);
 }
 
 
-// ------------------------ VFS_FileReply --------------------------
-VFS_FileReply::VFS_FileReply()
+// -------------------------- VFS_PathReply ----------------------------
+VFS_PathReply::VFS_PathReply()
   : VFS_Message(),
     m_success(true),
     m_failureReason()
 {}
 
 
-VFS_FileReply::~VFS_FileReply()
+VFS_PathReply::~VFS_PathReply()
 {}
 
 
-void VFS_FileReply::setFailureReason(string const &reason)
+void VFS_PathReply::setFailureReason(string const &reason)
 {
   m_success = false;
   m_failureReason = reason;
 }
 
 
-void VFS_FileReply::xfer(Flatten &flat)
+void VFS_PathReply::xfer(Flatten &flat)
 {
   flat.xferBool(m_success);
   m_failureReason.xfer(flat);
@@ -215,7 +215,7 @@ void VFS_FileReply::xfer(Flatten &flat)
 
 // ----------------------- VFS_ReadFileRequest -------------------------
 VFS_ReadFileRequest::VFS_ReadFileRequest()
-  : VFS_FileRequest()
+  : VFS_PathRequest()
 {}
 
 
@@ -225,7 +225,7 @@ VFS_ReadFileRequest::~VFS_ReadFileRequest()
 
 // ------------------------ VFS_ReadFileReply --------------------------
 VFS_ReadFileReply::VFS_ReadFileReply()
-  : VFS_FileReply(),
+  : VFS_PathReply(),
     m_contents(),
     m_fileModificationTime(0),
     m_readOnly(false)
@@ -238,7 +238,7 @@ VFS_ReadFileReply::~VFS_ReadFileReply()
 
 void VFS_ReadFileReply::xfer(Flatten &flat)
 {
-  VFS_FileReply::xfer(flat);
+  VFS_PathReply::xfer(flat);
 
   xferVectorBytewise(flat, m_contents);
   flat.xfer_int64_t(m_fileModificationTime);
@@ -246,9 +246,9 @@ void VFS_ReadFileReply::xfer(Flatten &flat)
 }
 
 
-// ----------------------- VFS_WriteFileRequest -------------------------
+// ----------------------- VFS_WriteFileRequest ------------------------
 VFS_WriteFileRequest::VFS_WriteFileRequest()
-  : VFS_FileRequest(),
+  : VFS_PathRequest(),
     m_contents()
 {}
 
@@ -259,15 +259,15 @@ VFS_WriteFileRequest::~VFS_WriteFileRequest()
 
 void VFS_WriteFileRequest::xfer(Flatten &flat)
 {
-  VFS_FileRequest::xfer(flat);
+  VFS_PathRequest::xfer(flat);
 
   xferVectorBytewise(flat, m_contents);
 }
 
 
-// ------------------------ VFS_WriteFileReply --------------------------
+// ------------------------ VFS_WriteFileReply -------------------------
 VFS_WriteFileReply::VFS_WriteFileReply()
-  : VFS_FileReply(),
+  : VFS_PathReply(),
     m_fileModificationTime(0)
 {}
 
@@ -278,15 +278,15 @@ VFS_WriteFileReply::~VFS_WriteFileReply()
 
 void VFS_WriteFileReply::xfer(Flatten &flat)
 {
-  VFS_FileReply::xfer(flat);
+  VFS_PathReply::xfer(flat);
 
   flat.xfer_int64_t(m_fileModificationTime);
 }
 
 
-// ----------------------- VFS_DeleteFileRequest -------------------------
+// ---------------------- VFS_DeleteFileRequest ------------------------
 VFS_DeleteFileRequest::VFS_DeleteFileRequest()
-  : VFS_FileRequest()
+  : VFS_PathRequest()
 {}
 
 
@@ -294,9 +294,9 @@ VFS_DeleteFileRequest::~VFS_DeleteFileRequest()
 {}
 
 
-// ------------------------ VFS_DeleteFileReply --------------------------
+// ----------------------- VFS_DeleteFileReply -------------------------
 VFS_DeleteFileReply::VFS_DeleteFileReply()
-  : VFS_FileReply()
+  : VFS_PathReply()
 {}
 
 

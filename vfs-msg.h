@@ -173,23 +173,23 @@ public:      // methods
 };
 
 
-// Abstract base class for requests applicable to a file.
-class VFS_FileRequest : public VFS_Message {
+// Abstract base class for requests applicable to a file system path.
+class VFS_PathRequest : public VFS_Message {
 public:      // data
   // Path to the file of interest.
   string m_path;
 
 public:      // methods
-  VFS_FileRequest();
-  virtual ~VFS_FileRequest() override;
+  VFS_PathRequest();
+  virtual ~VFS_PathRequest() override;
 
   // VFS_Message methods.
   virtual void xfer(Flatten &flat) override;
 };
 
 
-// Abstract base class for replies to a FileRequest.
-class VFS_FileReply : public VFS_Message {
+// Abstract base class for replies to a PathRequest.
+class VFS_PathReply : public VFS_Message {
 public:      // data
   // True if the operation completed successfully.  Initially true.
   bool m_success;
@@ -199,8 +199,8 @@ public:      // data
   string m_failureReason;
 
 public:      // methods
-  VFS_FileReply();
-  virtual ~VFS_FileReply() override;
+  VFS_PathReply();
+  virtual ~VFS_PathReply() override;
 
   // Set the failure reason, and set 'm_success' to false.
   void setFailureReason(string const &reason);
@@ -211,7 +211,7 @@ public:      // methods
 
 
 // Request to read the contents of a file.
-class VFS_ReadFileRequest : public VFS_FileRequest {
+class VFS_ReadFileRequest : public VFS_PathRequest {
 public:      // methods
   VFS_ReadFileRequest();
   virtual ~VFS_ReadFileRequest() override;
@@ -223,7 +223,7 @@ public:      // methods
 
 
 // Reply with contents of a file.
-class VFS_ReadFileReply : public VFS_FileReply {
+class VFS_ReadFileReply : public VFS_PathReply {
 public:      // data
   // File contents.
   std::vector<unsigned char> m_contents;
@@ -246,7 +246,7 @@ public:      // methods
 
 
 // Request to write the contents of a file.
-class VFS_WriteFileRequest : public VFS_FileRequest {
+class VFS_WriteFileRequest : public VFS_PathRequest {
 public:      // data
   // File contents to write.
   std::vector<unsigned char> m_contents;
@@ -263,7 +263,7 @@ public:      // methods
 
 
 // Reply to VFS_WriteFileRequest.
-class VFS_WriteFileReply : public VFS_FileReply {
+class VFS_WriteFileReply : public VFS_PathReply {
 public:      // data
   // Modification time as reported by the file system *after* writing
   // the file's contents.
@@ -281,7 +281,7 @@ public:      // methods
 
 
 // Request to delete a file.
-class VFS_DeleteFileRequest : public VFS_FileRequest {
+class VFS_DeleteFileRequest : public VFS_PathRequest {
 public:      // methods
   VFS_DeleteFileRequest();
   virtual ~VFS_DeleteFileRequest() override;
@@ -293,7 +293,7 @@ public:      // methods
 
 
 // Reply to VFS_DeleteFileRequest.
-class VFS_DeleteFileReply : public VFS_FileReply {
+class VFS_DeleteFileReply : public VFS_PathReply {
 public:      // methods
   VFS_DeleteFileReply();
   virtual ~VFS_DeleteFileReply() override;
