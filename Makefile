@@ -321,13 +321,16 @@ TOCLEAN += *.yy.cc *.yy.h *.lex.backup
 
 # lexer (-b makes lex.backup)
 #
+# TODO: The -b option is incompatible with parallel build, so I have
+# removed it.  I should fix smflex and then re-enable this.
+#
 # NOTE: The base name of the lexer files can only use characters that
 # are allowed in C identifiers because Flex derives the name of some
 # internal identifiers from that file name.
 %.yy.cc: %.lex %.h
-	$(SMFLEX)/smflex -o$@ -b -P$*_yy $*.lex
-	mv lex.backup $*.lex.backup
-	cat $*.lex.backup
+	$(SMFLEX)/smflex -o$@ -P$*_yy $*.lex
+	@#mv lex.backup $*.lex.backup
+	@#cat $*.lex.backup
 
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
