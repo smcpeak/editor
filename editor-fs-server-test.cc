@@ -84,6 +84,7 @@ void FSServerTest::runPathTests()
   // Receive.
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
   VFS_FileStatusReply *reply = replyMsg->asFileStatusReply();
+  xassert(reply->m_success);
   PVAL(reply->m_dirName);
   PVAL(reply->m_fileName);
   PVAL(reply->m_dirExists);

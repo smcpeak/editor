@@ -33,8 +33,9 @@
 //
 //    1: First numbered version.
 //    2: Add {Read,Write,Delete}File{Request,Reply}.
+//    3: Make FileStatus{Request,Reply} inherit Path{Request,Reply}.
 //
-int32_t const VFS_currentVersion = 2;
+int32_t const VFS_currentVersion = 3;
 
 
 // Possible kinds of VFS messages.
@@ -122,61 +123,14 @@ public:      // methods
 };
 
 
-// Query a path name.
-class VFS_FileStatusRequest : public VFS_Message {
-public:      // data
-  // File path to query.
-  //
-  // I'm expecting this to usually be an absolute path, but I might
-  // handle relative paths too, in which case they are relative to
-  // wherever the server process is started from.
-  string m_path;
-
-public:      // methods
-  VFS_FileStatusRequest();
-  virtual ~VFS_FileStatusRequest() override;
-
-  // VFS_Message methods.
-  virtual VFS_MessageType messageType() const override
-    { return VFS_MT_FileStatusRequest; }
-  virtual void xfer(Flatten &flat) override;
-};
-
-
-// Reply for VFS_FileStatusRequest.
-class VFS_FileStatusReply : public VFS_Message {
-public:      // data
-  // Absolute directory containing 'm_path'.  This always ends with a
-  // directory separator.
-  string m_dirName;
-
-  // Final file name component of 'm_path'.
-  string m_fileName;
-
-  // True if the 'm_dirName' exists and is a directory.
-  bool m_dirExists;
-
-  // Existence and kind of 'm_fileName'.
-  SMFileUtil::FileKind m_fileKind;
-
-  // If 'm_fileName' exists, its unix modification time.
-  int64_t m_fileModificationTime;
-
-public:      // methods
-  VFS_FileStatusReply();
-  virtual ~VFS_FileStatusReply() override;
-
-  // VFS_Message methods.
-  virtual VFS_MessageType messageType() const override
-    { return VFS_MT_FileStatusReply; }
-  virtual void xfer(Flatten &flat) override;
-};
-
-
 // Abstract base class for requests applicable to a file system path.
 class VFS_PathRequest : public VFS_Message {
 public:      // data
   // Path to the file of interest.
+  //
+  // I'm still unsure if I want to insist that this be absolute.  Right
+  // now, relative paths are accepted, and interpreted as relative to
+  // wherever the server process happens to be started.
   string m_path;
 
 public:      // methods
@@ -206,6 +160,52 @@ public:      // methods
   void setFailureReason(string const &reason);
 
   // VFS_Message methods.
+  virtual void xfer(Flatten &flat) override;
+};
+
+
+// Query a file status: kind and timestamp.
+class VFS_FileStatusRequest : public VFS_PathRequest {
+public:      // methods
+  VFS_FileStatusRequest();
+  virtual ~VFS_FileStatusRequest() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_FileStatusRequest; }
+};
+
+
+// Reply for VFS_FileStatusRequest.
+//
+// If the path does not exist, then 'm_fileKind' is set to 'FK_NONE',
+// and 'm_success' is true.  There is not currently a case where this
+// reply carries a failure.
+class VFS_FileStatusReply : public VFS_PathReply {
+public:      // data
+  // Absolute directory containing 'm_path'.  This always ends with a
+  // directory separator.
+  string m_dirName;
+
+  // Final file name component of 'm_path'.
+  string m_fileName;
+
+  // True if the 'm_dirName' exists and is a directory.
+  bool m_dirExists;
+
+  // Existence and kind of 'm_fileName'.
+  SMFileUtil::FileKind m_fileKind;
+
+  // If 'm_fileName' exists, its unix modification time.
+  int64_t m_fileModificationTime;
+
+public:      // methods
+  VFS_FileStatusReply();
+  virtual ~VFS_FileStatusReply() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_FileStatusReply; }
   virtual void xfer(Flatten &flat) override;
 };
 

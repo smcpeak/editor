@@ -130,8 +130,7 @@ void VFS_Echo::xfer(Flatten &flat)
 
 // ---------------------- VFS_FileStatusRequest ------------------------
 VFS_FileStatusRequest::VFS_FileStatusRequest()
-  : VFS_Message(),
-    m_path()
+  : VFS_PathRequest()
 {}
 
 
@@ -139,15 +138,9 @@ VFS_FileStatusRequest::~VFS_FileStatusRequest()
 {}
 
 
-void VFS_FileStatusRequest::xfer(Flatten &flat)
-{
-  m_path.xfer(flat);
-}
-
-
 // ----------------------- VFS_FileStatusReply -------------------------
 VFS_FileStatusReply::VFS_FileStatusReply()
-  : VFS_Message(),
+  : VFS_PathReply(),
     m_dirName(),
     m_fileName(),
     m_dirExists(false),
@@ -162,6 +155,8 @@ VFS_FileStatusReply::~VFS_FileStatusReply()
 
 void VFS_FileStatusReply::xfer(Flatten &flat)
 {
+  VFS_PathReply::xfer(flat);
+
   m_dirName.xfer(flat);
   m_fileName.xfer(flat);
   flat.xferBool(m_dirExists);

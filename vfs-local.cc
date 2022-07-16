@@ -13,19 +13,27 @@ VFS_FileStatusReply VFS_LocalImpl::queryPath(VFS_FileStatusRequest const &req)
 {
   SMFileUtil sfu;
 
-  // Get an absolute path, using whatever is the current directory for
-  // the server.
-  string pathname = sfu.getAbsolutePath(req.m_path);
-
-  // Split into directory and name components.
   VFS_FileStatusReply reply;
-  sfu.splitPath(reply.m_dirName, reply.m_fileName, pathname);
 
-  reply.m_dirExists = sfu.absolutePathExists(reply.m_dirName);
-  if (reply.m_dirExists) {
-    reply.m_fileKind = sfu.getFileKind(pathname);
-    (void)getFileModificationTime(pathname.c_str(),
-                                  reply.m_fileModificationTime);
+  try {
+    // Get an absolute path, using whatever is the current directory for
+    // the server.
+    string pathname = sfu.getAbsolutePath(req.m_path);
+
+    // Split into directory and name components.
+    sfu.splitPath(reply.m_dirName, reply.m_fileName, pathname);
+
+    reply.m_dirExists = sfu.absolutePathExists(reply.m_dirName);
+    if (reply.m_dirExists) {
+      reply.m_fileKind = sfu.getFileKind(pathname);
+      (void)getFileModificationTime(pathname.c_str(),
+                                    reply.m_fileModificationTime);
+    }
+  }
+  catch (xBase &x) {
+    // I think none of the above calls can actually throw, but catching
+    // here makes this request consistent with the others.
+    reply.setFailureReason(x.why());
   }
 
   return reply;
