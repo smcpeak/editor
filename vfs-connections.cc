@@ -63,8 +63,10 @@ void VFS_Connections::issueRequest(RequestID /*OUT*/ &requestID,
                                    std::unique_ptr<VFS_Message> req)
 {
   requestID = m_nextRequestID++;
+  TRACE("VFS_Connections", "enqueued: requestID=" << requestID <<
+                           " type=" << toString(req->messageType()));
+
   m_queuedRequests.push_front(QueuedRequest(requestID, std::move(req)));
-  TRACE("VFS_Connections", "enqueued request " << requestID);
 
   issuePendingRequest();
 }
@@ -100,10 +102,11 @@ void VFS_Connections::issuePendingRequest()
 
       QueuedRequest const &qr = m_queuedRequests.back();
       m_currentRequestID = qr.m_requestID;
+      TRACE("VFS_Connections",
+        "sending: requestID=" << m_currentRequestID <<
+        " type=" << toString(qr.m_requestObject->messageType()));
       m_fsQuery->sendRequest(*(qr.m_requestObject));
       m_queuedRequests.pop_back();
-
-      TRACE("VFS_Connections", "sent request " << m_currentRequestID);
     }
     else {
       TRACE("VFS_Connections", "issuePendingRequest: connection not ready");
@@ -118,12 +121,14 @@ void VFS_Connections::issuePendingRequest()
 std::unique_ptr<VFS_Message> VFS_Connections::takeReply(
   RequestID requestID)
 {
-  TRACE("VFS_Connections", "takeReply(" << requestID << ")");
-
   auto it = m_pendingReplies.find(requestID);
   xassert(it != m_pendingReplies.end());
 
   std::unique_ptr<VFS_Message> ret(std::move((*it).second));
+
+  TRACE("VFS_Connections",
+    "takeReply: requestID=" << requestID <<
+    " type=" << toString(ret->messageType()));
 
   m_pendingReplies.erase(it);
 
