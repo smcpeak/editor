@@ -311,6 +311,7 @@ EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.o
 EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.moc.o
 
 -include editor-fs-server-test.d
+-include editor-fs-server-test.moc.d
 
 editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -319,6 +320,27 @@ $(eval $(call RUN_TEST_PROG,editor-fs-server-test.exe))
 
 # The test uses the server executable.
 out/editor-fs-server-test.exe.ok: editor-fs-server.exe
+
+
+# ------------------------ vfs-connections-test ------------------------
+EDITOR_OBJS += vfs-connections.o
+EDITOR_OBJS += vfs-connections.moc.o
+
+VFS_CONNECTIONS_TEST_OBJS :=
+VFS_CONNECTIONS_TEST_OBJS += $(EDITOR_OBJS)
+VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.o
+VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.moc.o
+
+-include vfs-connections-test.d
+-include vfs-connections-test.mod.d
+
+vfs-connections-test.exe: $(VFS_CONNECTIONS_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(VFS_CONNECTIONS_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,vfs-connections-test.exe))
+
+# The test uses the server executable.
+out/vfs-connections-test.exe.ok: editor-fs-server.exe
 
 
 # ------------- highlighting stuff --------------------

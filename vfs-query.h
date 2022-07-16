@@ -4,6 +4,8 @@
 #ifndef EDITOR_VFS_QUERY_H
 #define EDITOR_VFS_QUERY_H
 
+#include "vfs-query-fwd.h"             // fwds for this module
+
 // editor
 #include "command-runner.h"            // CommandRunner
 #include "vfs-msg.h"                   // VFS_Message
@@ -99,6 +101,7 @@ public:      // methods
 
   // Some convenient interpretations of 'state()'.
   bool isConnecting() const { return state() == S_CONNECTING; }
+  bool isReady() const { return state() == S_READY; }
   bool hasFailed() const { return state() == S_FAILED; }
   bool hasReply() const { return state() == S_HAS_REPLY; }
 
