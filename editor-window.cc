@@ -538,7 +538,9 @@ string EditorWindow::fileChooseDialog(string const &origDir,
 
   if (dialogKind == FCDK_FILENAME_INPUT) {
     FilenameInputDialog dialog(
-      &(m_globalState->m_filenameInputDialogHistory), this);
+      &(m_globalState->m_filenameInputDialogHistory),
+      &(m_globalState->m_vfsConnections),
+      this);
     dialog.setSaveAs(saveAs);
     QString choice =
       dialog.runDialog(&(m_globalState->m_documentList), toQString(dir));
@@ -1672,7 +1674,9 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 
   // Prompt to confirm.
   FilenameInputDialog dialog(
-    &(m_globalState->m_filenameInputDialogHistory), this);
+    &(m_globalState->m_filenameInputDialogHistory),
+    &(m_globalState->m_vfsConnections),
+    this);
   QString confirmedFilename =
     dialog.runDialog(&(m_globalState->m_documentList), filename);
 

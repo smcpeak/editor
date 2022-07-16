@@ -35,18 +35,25 @@ FilenameInputDialog::History::~History()
 {}
 
 
-FilenameInputDialog::FilenameInputDialog(History *history,
-                                         QWidget *parent, Qt::WindowFlags f)
-  : ModalDialog(parent, f),
-    m_history(history),
-    m_filenameLabel(NULL),
-    m_filenameEdit(NULL),
-    m_completionsEdit(NULL),
-    m_helpButton(NULL),
-    m_cachedDirectory(""),
-    m_cachedDirectoryEntries(),
-    m_docList(NULL),
-    m_saveAs(false)
+FilenameInputDialog::FilenameInputDialog(
+  History *history,
+  VFS_Connections *vfsConnections,
+  QWidget *parent,
+  Qt::WindowFlags f)
+:
+  ModalDialog(parent, f),
+  m_history(history),
+  m_filenameLabel(NULL),
+  m_filenameEdit(NULL),
+  m_completionsEdit(NULL),
+  m_helpButton(NULL),
+  m_vfsConnections(vfsConnections),
+  m_currentRequestID(0),
+  m_currentRequestDir(""),
+  m_cachedDirectory(""),
+  m_cachedDirectoryEntries(),
+  m_docList(NULL),
+  m_saveAs(false)
 {
   this->setObjectName("filename_input");
   this->setWindowTitle("Filename Input");
@@ -89,6 +96,9 @@ FilenameInputDialog::FilenameInputDialog(History *history,
   }
 
   this->resize(m_history->m_dialogSize);
+
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_replyAvailable,
+                   this, &FilenameInputDialog::on_replyAvailable);
 }
 
 
@@ -97,6 +107,7 @@ FilenameInputDialog::~FilenameInputDialog()
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_filenameEdit, NULL, this, NULL);
   QObject::disconnect(m_helpButton, NULL, this, NULL);
+  QObject::disconnect(m_vfsConnections, nullptr, this, nullptr);
 }
 
 
@@ -113,6 +124,10 @@ QString FilenameInputDialog::runDialog(
 
   m_filenameEdit->setText(initialChoice);
   this->m_cachedDirectory = "";
+  this->queryDirectoryIfNeeded();
+
+  // Since the directory query is still running, this first call will
+  // just update the display to show that fact.
   this->updateFeedback();
 
   if (this->exec()) {
@@ -121,6 +136,72 @@ QString FilenameInputDialog::runDialog(
   else {
     return "";
   }
+}
+
+
+void FilenameInputDialog::queryDirectoryIfNeeded()
+{
+  string filename = toString(m_filenameEdit->text());
+
+  SMFileUtil sfu;
+  string dir, base;
+  sfu.splitPath(dir, base, filename);
+
+  if (m_cachedDirectory == dir) {
+    // We already have the needed info.
+    return;
+  }
+
+  if (m_currentRequestID != 0) {
+    if (m_currentRequestDir == dir) {
+      // There is already a pending request for 'dir'.
+      return;
+    }
+    else {
+      m_vfsConnections->cancelRequest(m_currentRequestID);
+      m_currentRequestID = 0;
+    }
+  }
+
+  std::unique_ptr<VFS_GetDirEntriesRequest> req(
+    new VFS_GetDirEntriesRequest);
+  req->m_path = dir;
+
+  m_currentRequestDir = dir;
+  m_vfsConnections->issueRequest(m_currentRequestID /*OUT*/,
+                                 std::move(req));
+}
+
+
+void FilenameInputDialog::on_replyAvailable(
+  VFS_Connections::RequestID requestID) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (requestID == m_currentRequestID) {
+    std::unique_ptr<VFS_Message> reply(
+      m_vfsConnections->takeReply(requestID));
+    VFS_GetDirEntriesReply const *gde = reply->asGetDirEntriesReplyC();
+
+    m_cachedDirectory = m_currentRequestDir;
+    if (gde->m_success) {
+      m_cachedDirectoryEntries = gde->m_entries;
+    }
+    else {
+      // Assume the directory simply does not exist, and so show an
+      // empty list.
+      //
+      // TODO: Distinguish between non-existence and other errors.
+      m_cachedDirectoryEntries.clear();
+    }
+
+    m_currentRequestID = 0;
+    m_currentRequestDir = "";
+
+    updateFeedback();
+  }
+
+  GENERIC_CATCH_END
 }
 
 
@@ -143,87 +224,74 @@ void FilenameInputDialog::setFilenameLabel()
   string dir, base;
   sfu.splitPath(dir, base, filename);
 
-  if (!sfu.absolutePathExists(dir)) {
-    m_filenameLabel->setText(qstringb(
-      "Directory does not exist: " << dir));
-    return;
-  }
-
-  if (sfu.absolutePathExists(filename)) {
-    if (sfu.absoluteFileExists(filename)) {
-      if (m_saveAs) {
-        m_filenameLabel->setText("File exists, will overwrite:");
-      }
-      else {
-        m_filenameLabel->setText("File exists:");
-      }
+  if (dir == m_cachedDirectory) {
+    if (m_cachedDirectoryEntries.empty()) {
+      m_filenameLabel->setText(qstringb(
+        "Directory does not exist: " << dir));
+    }
+    else if (base == "") {
+      m_filenameLabel->setText("File name is empty.");
     }
     else {
-      m_filenameLabel->setText("Is a directory:");
+      SMFileUtil::FileKind fileKind =
+        lookupInCachedDirectoryEntries(base);
+      switch (fileKind) {
+        case SMFileUtil::FK_REGULAR:
+          if (sfu.absoluteFileExists(filename)) {
+            if (m_saveAs) {
+              m_filenameLabel->setText("File exists, will overwrite:");
+            }
+            else {
+              m_filenameLabel->setText("File exists:");
+            }
+          }
+          break;
+
+        case SMFileUtil::FK_DIRECTORY:
+          m_filenameLabel->setText("Is a directory:");
+          break;
+
+        case SMFileUtil::FK_NONE:
+          m_filenameLabel->setText("File does not exist, will be created:");
+          break;
+
+        default:
+          m_filenameLabel->setText(qstringb(
+            "File kind is " << toString(fileKind) << ":"));
+          break;
+      }
     }
   }
-  else {
-    m_filenameLabel->setText("File does not exist, will be created:");
+
+  else if (dir == m_currentRequestDir) {
+    m_filenameLabel->setText(qstringb("Loading directory: " << dir));
   }
+
+  else {
+    m_filenameLabel->setText("Directory information desynchronized?");
+  }
+}
+
+
+SMFileUtil::FileKind
+FilenameInputDialog::lookupInCachedDirectoryEntries(string const &name)
+{
+  for (SMFileUtil::DirEntryInfo const &entry : m_cachedDirectoryEntries) {
+    if (entry.m_name == name) {
+      return entry.m_kind;
+    }
+  }
+  return SMFileUtil::FK_NONE;
 }
 
 
 // Return true if 'dei' is neither the "." nor ".." directories.
+//
+// TODO: Invert the sense of this test.
 static bool isNotDotOrDotDot(SMFileUtil::DirEntryInfo const &dei)
 {
   return !(dei.m_kind == SMFileUtil::FK_DIRECTORY &&
            (dei.m_name == "." || dei.m_name == ".."));
-}
-
-void FilenameInputDialog::getEntries(string const &dir)
-{
-  if (dir == m_cachedDirectory) {
-    // Already cached.
-    return;
-  }
-
-  // Just for safety, clear cache key while we repopulate.
-  m_cachedDirectory = "";
-
-  SMFileUtil sfu;
-  if (sfu.absolutePathExists(dir)) {
-    try {
-      TRACE("FilenameInputDialog", "querying dir: " << dir);
-      ArrayStack<SMFileUtil::DirEntryInfo> entries;
-      sfu.getSortedDirectoryEntries(entries, dir);
-
-      // Remove the "." and ".." entries.  I never want to open these,
-      // and their presence prevents me from simply hitting Tab
-      // repeatedly to drill down into structures that only have one
-      // subdirectory at each level.
-      applyFilter(entries, isNotDotOrDotDot);
-
-      // Copy them into the cache.
-      m_cachedDirectoryEntries.clear();
-      for (int i=0; i < entries.length(); i++) {
-        if (entries[i].m_kind == SMFileUtil::FK_DIRECTORY) {
-          // Add a slash to the name.  This both indicates to the user
-          // the type of entity it is and also causes Tab completion to
-          // add the slash when it is unambiguous, thus automatically
-          // transitioning into the directory.
-          m_cachedDirectoryEntries.push(stringb(entries[i].m_name << '/'));
-        }
-        else {
-          m_cachedDirectoryEntries.push(entries[i].m_name);
-        }
-      }
-    }
-    catch (...) {
-      // In case of failure, clear completions and bail.
-      m_cachedDirectoryEntries.clear();
-    }
-  }
-  else {
-    m_cachedDirectoryEntries.clear();
-  }
-
-  // Ok, cache is ready.
-  m_cachedDirectory = dir;
 }
 
 
@@ -236,16 +304,24 @@ void FilenameInputDialog::getCompletions(
   string dir, base;
   sfu.splitPath(dir, base, filename);
 
-  // Query the dir, if needed.
-  this->getEntries(dir);
-
   // Get all entries for which 'base' is a prefix.
   completions.clear();
-  for (int i=0; i < m_cachedDirectoryEntries.length(); i++) {
-    string const &entry = m_cachedDirectoryEntries[i];
-    if (prefixEquals(entry, base)) {
-      completions.push(entry);
+  if (dir == m_cachedDirectory) {
+    for (SMFileUtil::DirEntryInfo const &entry : m_cachedDirectoryEntries) {
+      if (isNotDotOrDotDot(entry)) {
+        // Add a slash to every directory entry.
+        string entryName = (entry.m_kind == SMFileUtil::FK_DIRECTORY)?
+          stringb(entry.m_name << "/") :
+          entry.m_name;
+
+        if (prefixEquals(entryName, base)) {
+          completions.push(entryName);
+        }
+      }
     }
+  }
+  else {
+    // If it is the wrong directory, show nothing.
   }
 }
 
@@ -334,6 +410,7 @@ void FilenameInputDialog::filenameCompletion()
   if (commonPrefix.length() > base.length()) {
     TRACE("FilenameInputDialog", "completed prefix: " << commonPrefix);
     m_filenameEdit->setText(qstringb(dir << commonPrefix));
+    this->queryDirectoryIfNeeded();
     this->updateFeedback();
   }
 }
@@ -376,7 +453,12 @@ bool FilenameInputDialog::wantResizeEventsRecorded()
 void FilenameInputDialog::on_textEdited(QString const &) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+
+  // Editing the text could change the directory.
+  this->queryDirectoryIfNeeded();
+
   this->updateFeedback();
+
   GENERIC_CATCH_END
 }
 

@@ -11,6 +11,7 @@
 #include "named-td.h"                  // NamedTextDocument
 #include "open-files-dialog.h"         // OpenFilesDialog
 #include "pixmaps.h"                   // Pixmaps
+#include "vfs-connections.h"           // VFS_Connections
 
 // smbase
 #include "objlist.h"                   // ObjList
@@ -60,6 +61,9 @@ public:       // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
+  // Connections to local and remote file systems.
+  VFS_Connections m_vfsConnections;
+
 private:     // data
   // Running child processes.
   ObjList<ProcessWatcher> m_processes;
@@ -83,6 +87,9 @@ private Q_SLOTS:
 
   // Called when a watched process terminates.
   void on_processTerminated(ProcessWatcher *watcher);
+
+  // Called when a VFS connection is lost.
+  void on_vfsConnectionLost(string reason) NOEXCEPT;
 
 public:       // funcs
   // intent is to make one of these in main()

@@ -60,6 +60,7 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
     m_recordInputEvents(false),
     m_eventFileTest(),
     m_filenameInputDialogHistory(),
+    m_vfsConnections(),
     m_processes(),
     m_openFilesDialog(NULL)
 {
@@ -176,6 +177,10 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
   QObject::connect(this, &EditorGlobalState::focusChanged,
                    this, &EditorGlobalState::focusChangedHandler);
 
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
+                   this, &EditorGlobalState::on_vfsConnectionLost);
+  m_vfsConnections.connectLocal();
+
   ed->show();
 
   // This is a partial mitigation to a weird bug where, on Windows,
@@ -244,9 +249,12 @@ EditorGlobalState::~EditorGlobalState()
 
   m_documentList.removeObserver(this);
 
+  m_vfsConnections.shutdown();
+
   // Disconnect all of the connections made in the constructor.
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(this, 0, this, 0);
+  QObject::disconnect(&m_vfsConnections, 0, this, 0);
 }
 
 
@@ -468,6 +476,19 @@ void EditorGlobalState::on_processTerminated(ProcessWatcher *watcher)
     // doc/qprocess-hangs.txt.
     delete watcher;
   }
+}
+
+
+void EditorGlobalState::on_vfsConnectionLost(string reason) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  QMessageBox::warning(nullptr, "Connection Lost", qstringb(
+    "The file system connection has been lost.  File system reads "
+    "and writes will not work until the program is restarted.  "
+    "Error message: " << reason));
+
+  GENERIC_CATCH_END
 }
 
 
