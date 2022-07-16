@@ -7,6 +7,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
+#include "editor-global.h"             // EditorGlobalState
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
@@ -14,7 +15,6 @@
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
 #include "launch-command-dialog.h"     // LaunchCommandDialog
-#include "main.h"                      // GlobalState
 #include "makefile_hilite.h"           // Makefile_Highlighter
 #include "pixmaps.h"                   // pixmaps
 #include "qhboxframe.h"                // QHBoxFrame
@@ -64,7 +64,7 @@ int EditorWindow::s_objectCount = 0;
 CHECK_OBJECT_COUNT(EditorWindow);
 
 
-EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
+EditorWindow::EditorWindow(EditorGlobalState *theState, NamedTextDocument *initFile,
                            QWidget *parent)
   : QWidget(parent),
     m_globalState(theState),
@@ -102,7 +102,7 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
   m_sarPanel->hide();      // Initially hidden.
   QObject::connect(
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
-    m_globalState, &GlobalState::slot_broadcastSearchPanelChanged);
+    m_globalState, &EditorGlobalState::slot_broadcastSearchPanelChanged);
 
   this->m_statusArea = new StatusDisplay();
   this->m_statusArea->setObjectName("m_statusArea");
@@ -131,7 +131,7 @@ EditorWindow::EditorWindow(GlobalState *theState, NamedTextDocument *initFile,
     this, &EditorWindow::on_openFilenameInputDialogSignal,
     Qt::QueuedConnection);
 
-  // See explanation in GlobalState::focusChangedHandler().
+  // See explanation in EditorGlobalState::focusChangedHandler().
   this->setFocusProxy(this->m_editorWidget);
 
   // Needed to ensure Tab gets passed down to the editor widget.
@@ -178,7 +178,7 @@ EditorWindow::~EditorWindow()
   m_globalState->m_documentList.removeObserver(this);
 
   // This object might have already been removed, for example because
-  // the GlobalState destructor is running, and is in the process of
+  // the EditorGlobalState destructor is running, and is in the process of
   // removing elements from the list and destroying them.  Hence the
   // "IfPresent" part of this call.
   m_globalState->m_windows.removeIfPresent(this);
@@ -1074,7 +1074,7 @@ void EditorWindow::namedTextDocumentListOrderChanged(
 void EditorWindow::fileExit()
 {
   if (this->canQuitApplication()) {
-    GlobalState::quit();
+    EditorGlobalState::quit();
   }
 }
 

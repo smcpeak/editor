@@ -50,7 +50,7 @@
       }
     },
     {
-      "attributes": "m_globalState: GlobalState\nm_editorWidget: EditorWidget\n(pointers to other subwidgets)\n",
+      "attributes": "m_globalState: EditorGlobalState\nm_editorWidget: EditorWidget\n(pointers to other subwidgets)\n",
       "loc": {
         "x": 30,
         "y": 385
@@ -67,7 +67,7 @@
         "x": 30,
         "y": 505
       },
-      "name": "GlobalState : QApplication",
+      "name": "EditorGlobalState : QApplication",
       "size": {
         "h": 95,
         "w": 260

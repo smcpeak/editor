@@ -51,8 +51,8 @@ int EditorProxyStyle::pixelMetric(
 }
 
 
-// ---------------- GlobalState ----------------
-GlobalState::GlobalState(int argc, char **argv)
+// ------------------------ EditorGlobalState --------------------------
+EditorGlobalState::EditorGlobalState(int argc, char **argv)
   : QApplication(argc, argv),
     m_pixmaps(),
     m_documentList(),
@@ -170,11 +170,11 @@ GlobalState::GlobalState(int argc, char **argv)
 
   // instead, to quit the application, close all of the
   // toplevel windows
-  QObject::connect(this, &GlobalState::lastWindowClosed,
-                   this, &GlobalState::quit);
+  QObject::connect(this, &EditorGlobalState::lastWindowClosed,
+                   this, &EditorGlobalState::quit);
 
-  QObject::connect(this, &GlobalState::focusChanged,
-                   this, &GlobalState::focusChangedHandler);
+  QObject::connect(this, &EditorGlobalState::focusChanged,
+                   this, &EditorGlobalState::focusChangedHandler);
 
   ed->show();
 
@@ -189,7 +189,7 @@ GlobalState::GlobalState(int argc, char **argv)
 }
 
 
-GlobalState::~GlobalState()
+EditorGlobalState::~EditorGlobalState()
 {
   // First get rid of the windows so I don't have other entities
   // watching documents and potentially getting confused and/or sending
@@ -203,7 +203,7 @@ GlobalState::~GlobalState()
     // an ongoing iteration.
     FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
       ProcessWatcher *watcher = iter.data();
-      TRACE("process", "in ~GlobalState, killing: " << watcher);
+      TRACE("process", "in ~EditorGlobalState, killing: " << watcher);
       watcher->m_namedDoc = NULL;
       watcher->m_commandRunner.killProcessNoWait();
     }
@@ -213,7 +213,7 @@ GlobalState::~GlobalState()
     // on_processTerminated signals and can reap them and remove them
     // from 'm_processes'.
     for (int waits=0; waits < 10 && m_processes.isNotEmpty(); waits++) {
-      TRACE("process", "in ~GlobalState, waiting 100ms #" << (waits+1));
+      TRACE("process", "in ~EditorGlobalState, waiting 100ms #" << (waits+1));
       sleepWhilePumpingEvents(100 /*ms*/);
     }
 
@@ -250,7 +250,7 @@ GlobalState::~GlobalState()
 }
 
 
-EditorWindow *GlobalState::createNewWindow(NamedTextDocument *initFile)
+EditorWindow *EditorGlobalState::createNewWindow(NamedTextDocument *initFile)
 {
   static int windowCounter = 1;
 
@@ -263,44 +263,44 @@ EditorWindow *GlobalState::createNewWindow(NamedTextDocument *initFile)
 }
 
 
-NamedTextDocument *GlobalState::createNewFile(string const &dir)
+NamedTextDocument *EditorGlobalState::createNewFile(string const &dir)
 {
   return m_documentList.createUntitledDocument(dir);
 }
 
 
-bool GlobalState::hasFileWithName(string const &name) const
+bool EditorGlobalState::hasFileWithName(string const &name) const
 {
   return m_documentList.findDocumentByNameC(name) != NULL;
 }
 
 
-bool GlobalState::hasFileWithTitle(string const &title) const
+bool EditorGlobalState::hasFileWithTitle(string const &title) const
 {
   return m_documentList.findDocumentByTitleC(title) != NULL;
 }
 
 
-string GlobalState::uniqueTitleFor(string const &filename)
+string EditorGlobalState::uniqueTitleFor(string const &filename)
 {
   return m_documentList.computeUniqueTitle(filename);
 }
 
 
-void GlobalState::trackNewDocumentFile(NamedTextDocument *f)
+void EditorGlobalState::trackNewDocumentFile(NamedTextDocument *f)
 {
   m_documentList.addDocument(f);
 }
 
 
-void GlobalState::deleteDocumentFile(NamedTextDocument *file)
+void EditorGlobalState::deleteDocumentFile(NamedTextDocument *file)
 {
   m_documentList.removeDocument(file);
   delete file;
 }
 
 
-NamedTextDocument *GlobalState::runOpenFilesDialog(QWidget *callerWindow)
+NamedTextDocument *EditorGlobalState::runOpenFilesDialog(QWidget *callerWindow)
 {
   if (!m_openFilesDialog.get()) {
     m_openFilesDialog = new OpenFilesDialog(&m_documentList);
@@ -312,7 +312,7 @@ NamedTextDocument *GlobalState::runOpenFilesDialog(QWidget *callerWindow)
 // Return a document to be populated by running 'command' in 'dir'.
 // The name must be unique, but we will reuse an existing document if
 // its process has terminated.
-NamedTextDocument *GlobalState::getNewCommandOutputDocument(
+NamedTextDocument *EditorGlobalState::getNewCommandOutputDocument(
   QString origDir, QString command)
 {
   // Come up with a unique named based on the command and directory.
@@ -352,7 +352,7 @@ NamedTextDocument *GlobalState::getNewCommandOutputDocument(
 }
 
 
-NamedTextDocument *GlobalState::launchCommand(QString dir,
+NamedTextDocument *EditorGlobalState::launchCommand(QString dir,
   bool prefixStderrLines, QString command)
 {
   // Find or create a document to hold the result.
@@ -371,7 +371,7 @@ NamedTextDocument *GlobalState::launchCommand(QString dir,
   m_processes.prepend(watcher);
   watcher->m_prefixStderrLines = prefixStderrLines;
   QObject::connect(watcher, &ProcessWatcher::signal_processTerminated,
-                   this,           &GlobalState::on_processTerminated);
+                   this,    &EditorGlobalState::on_processTerminated);
 
   // Interpret the command string as a program and some arguments.
   watcher->m_commandRunner.setShellCommandLine(command);
@@ -389,7 +389,7 @@ NamedTextDocument *GlobalState::launchCommand(QString dir,
 }
 
 
-string GlobalState::killCommand(NamedTextDocument *doc)
+string EditorGlobalState::killCommand(NamedTextDocument *doc)
 {
   ProcessWatcher *watcher = this->findWatcherForDoc(doc);
   if (!watcher) {
@@ -410,7 +410,7 @@ string GlobalState::killCommand(NamedTextDocument *doc)
 }
 
 
-ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
+ProcessWatcher *EditorGlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 {
   FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
     ProcessWatcher *watcher = iter.data();
@@ -422,7 +422,7 @@ ProcessWatcher *GlobalState::findWatcherForDoc(NamedTextDocument *fileDoc)
 }
 
 
-void GlobalState::namedTextDocumentRemoved(
+void EditorGlobalState::namedTextDocumentRemoved(
   NamedTextDocumentList *documentList,
   NamedTextDocument *fileDoc) NOEXCEPT
 {
@@ -447,7 +447,7 @@ void GlobalState::namedTextDocumentRemoved(
 }
 
 
-void GlobalState::on_processTerminated(ProcessWatcher *watcher)
+void EditorGlobalState::on_processTerminated(ProcessWatcher *watcher)
 {
   TRACE("process", "terminated: " << watcher);
 
@@ -471,7 +471,7 @@ void GlobalState::on_processTerminated(ProcessWatcher *watcher)
 }
 
 
-void GlobalState::focusChangedHandler(QWidget *from, QWidget *to)
+void EditorGlobalState::focusChangedHandler(QWidget *from, QWidget *to)
 {
   TRACE("focus", "focus changed from " << qObjectDesc(from) <<
                  " to " << qObjectDesc(to));
@@ -509,12 +509,12 @@ void GlobalState::focusChangedHandler(QWidget *from, QWidget *to)
 }
 
 
-void GlobalState::slot_broadcastSearchPanelChanged(
+void EditorGlobalState::slot_broadcastSearchPanelChanged(
   SearchAndReplacePanel *panel) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("sar", "GlobalState::slot_broadcastSearchPanelChanged");
+  TRACE("sar", "EditorGlobalState::slot_broadcastSearchPanelChanged");
   FOREACH_OBJLIST_NC(EditorWindow, m_windows, iter) {
     iter.data()->searchPanelChanged(panel);
   }
@@ -541,7 +541,7 @@ static string objectDesc(QObject const *obj)
 
 // For debugging, this function allows me to inspect certain events as
 // they are dispatched.
-bool GlobalState::notify(QObject *receiver, QEvent *event)
+bool EditorGlobalState::notify(QObject *receiver, QEvent *event)
 {
   static int s_eventCounter=0;
   int const eventNo = s_eventCounter++;
@@ -677,7 +677,7 @@ int main(int argc, char **argv)
   int ret;
   {
     try {
-      GlobalState app(argc, argv);
+      EditorGlobalState app(argc, argv);
 
       Owner<EventRecorder> recorder;
       if (app.m_recordInputEvents) {
@@ -723,13 +723,13 @@ int main(int argc, char **argv)
       return 4;
     }
 
-    maybePrintObjectCounts("before GlobalState destruction");
+    maybePrintObjectCounts("before EditorGlobalState destruction");
   }
 
-  int remaining = maybePrintObjectCounts("after GlobalState destruction");
+  int remaining = maybePrintObjectCounts("after EditorGlobalState destruction");
   if (remaining != 0) {
     // Force the counts to be printed so we know more about the problem.
-    printObjectCountsIf("after GlobalState destruction", true);
+    printObjectCountsIf("after EditorGlobalState destruction", true);
 
     cout << "WARNING: Allocated objects at end is " << remaining
          << ", not zero!\n"
