@@ -1,8 +1,8 @@
-// main.h
-// Editor module with main() function.
+// editor-global.h
+// GlobalState class.
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef EDITOR_EDITOR_GLOBAL_H
+#define EDITOR_EDITOR_GLOBAL_H
 
 // editor
 #include "editor-window.h"             // EditorWindow
@@ -155,4 +155,4 @@ public Q_SLOTS:
 };
 
 
-#endif // MAIN_H
+#endif // EDITOR_EDITOR_GLOBAL_H

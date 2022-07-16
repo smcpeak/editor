@@ -1,7 +1,7 @@
-// main.cc
-// code for main.cc, and application main() function
+// editor-global.cc
+// code for editor-global.cc, and application main() function
 
-#include "main.h"                      // EditorWindow
+#include "editor-global.h"             // this module
 
 // this dir
 #include "editor-widget.h"             // EditorWidget

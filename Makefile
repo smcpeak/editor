@@ -421,6 +421,8 @@ editor-window.o: keybindings.doc.gen.h
 TOCLEAN += keybindings.doc.gen.*
 
 EDITOR_OBJS += diff-hilite.o
+EDITOR_OBJS += editor-global.o
+EDITOR_OBJS += editor-global.moc.o
 EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-window.o
@@ -434,8 +436,6 @@ EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += keybindings.doc.gen.o
 EDITOR_OBJS += keys-dialog.o
 EDITOR_OBJS += launch-command-dialog.o
-EDITOR_OBJS += main.o
-EDITOR_OBJS += main.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += my-table-widget.o
