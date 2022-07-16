@@ -44,6 +44,9 @@ void VFS_Message::serialize(Flatten &flat) const
 {
   xassert(flat.reading());
 
+  static_assert(NUM_VFS_MESSAGE_TYPES == 12,
+    "Bump protocol version when number of message types changes.");
+
   // Read message type.
   VFS_MessageType mtype;
   xferEnum(flat, mtype);
@@ -297,6 +300,45 @@ VFS_DeleteFileReply::VFS_DeleteFileReply()
 
 VFS_DeleteFileReply::~VFS_DeleteFileReply()
 {}
+
+
+// ---------------------- VFS_DeleteFileRequest ------------------------
+VFS_GetDirEntriesRequest::VFS_GetDirEntriesRequest()
+  : VFS_PathRequest()
+{}
+
+
+VFS_GetDirEntriesRequest::~VFS_GetDirEntriesRequest()
+{}
+
+
+// ----------------------- VFS_GetDirEntriesReply -------------------------
+VFS_GetDirEntriesReply::VFS_GetDirEntriesReply()
+  : VFS_PathReply()
+{}
+
+
+VFS_GetDirEntriesReply::~VFS_GetDirEntriesReply()
+{}
+
+
+static void xfer(Flatten &flat, SMFileUtil::DirEntryInfo &info)
+{
+  info.m_name.xfer(flat);
+  xferEnum(flat, info.m_kind);
+
+  static_assert(SMFileUtil::NUM_FILE_KINDS == 4,
+    "The FileKind enumeration has changed, requiring a bump to the "
+    "protocol version.");
+}
+
+
+void VFS_GetDirEntriesReply::xfer(Flatten &flat)
+{
+  VFS_PathReply::xfer(flat);
+
+  ::xfer(flat, m_entries);
+}
 
 
 // EOF

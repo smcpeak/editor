@@ -65,6 +65,7 @@ void FSServerTest::runTests(string hostname)
   runPathTests();
   runEchoTests();
   runFileReadWriteTests();
+  runGetDirEntriesTest();
 
   m_fsQuery.shutdown();
 }
@@ -215,6 +216,27 @@ void FSServerTest::runFileReadWriteTests()
     std::unique_ptr<VFS_Message> replyMsg(getNextReply());
     VFS_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
     xassert(reply->m_fileKind == SMFileUtil::FK_NONE);
+  }
+}
+
+
+void FSServerTest::runGetDirEntriesTest()
+{
+  VFS_GetDirEntriesRequest req;
+  req.m_path = ".";
+  m_fsQuery.sendRequest(req);
+
+  std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+  VFS_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
+  xassert(reply->m_success);
+  cout << "number of entries: " << reply->m_entries.size() << "\n";
+
+  // Print the first 10 entries.
+  for (size_t i=0; i < 10 && i < reply->m_entries.size(); i++) {
+    SMFileUtil::DirEntryInfo const &info = reply->m_entries.at(i);
+    cout << "name=" << info.m_name
+         << " kind=" << toString(info.m_kind)
+         << "\n";
   }
 }
 

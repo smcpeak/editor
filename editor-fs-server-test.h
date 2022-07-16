@@ -54,6 +54,9 @@ public:
   // Run tests related to reading and writing file contents.
   void runFileReadWriteTests();
 
+  // Test the GetDirEntries request and reply.
+  void runGetDirEntriesTest();
+
 public Q_SLOTS:
   // Handlers for FileSystemQuery signals.
   void on_connected() NOEXCEPT;

@@ -209,6 +209,10 @@ static int innerMain()
       case VFS_MT_DeleteFileRequest:
         sendReply(localImpl.deleteFile(*(message->asDeleteFileRequestC())));
         break;
+
+      case VFS_MT_GetDirEntriesRequest:
+        sendReply(localImpl.getDirEntries(*(message->asGetDirEntriesRequestC())));
+        break;
     }
   }
 

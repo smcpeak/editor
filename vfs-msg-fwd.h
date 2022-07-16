@@ -17,8 +17,10 @@
   macro(WriteFileRequest)                \
   macro(WriteFileReply)                  \
   macro(DeleteFileRequest)               \
-  macro(DeleteFileReply)
-
+  macro(DeleteFileReply)                 \
+  macro(GetDirEntriesRequest)            \
+  macro(GetDirEntriesReply)              \
+  /*nothing*/
 
 #define FORWARD_DECLARE_VFS_CLASS(type) class VFS_##type;
 

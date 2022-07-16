@@ -34,8 +34,9 @@
 //    1: First numbered version.
 //    2: Add {Read,Write,Delete}File{Request,Reply}.
 //    3: Make FileStatus{Request,Reply} inherit Path{Request,Reply}.
+//    4: Add GetDirEntries{Request,Reply}.
 //
-int32_t const VFS_currentVersion = 3;
+int32_t const VFS_currentVersion = 4;
 
 
 // Possible kinds of VFS messages.
@@ -301,6 +302,35 @@ public:      // methods
   // VFS_Message methods.
   virtual VFS_MessageType messageType() const override
     { return VFS_MT_DeleteFileReply; }
+};
+
+
+// Get the contents of 'm_path' as a directory.
+class VFS_GetDirEntriesRequest : public VFS_PathRequest {
+public:      // methods
+  VFS_GetDirEntriesRequest();
+  virtual ~VFS_GetDirEntriesRequest() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_GetDirEntriesRequest; }
+};
+
+
+// Reply to VFS_GetDirEntriesRequest.
+class VFS_GetDirEntriesReply : public VFS_PathReply {
+public:      // data
+  // Entries of 'm_path', sorted by name.
+  std::vector<SMFileUtil::DirEntryInfo> m_entries;
+
+public:      // methods
+  VFS_GetDirEntriesReply();
+  virtual ~VFS_GetDirEntriesReply() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_GetDirEntriesReply; }
+  virtual void xfer(Flatten &flat) override;
 };
 
 

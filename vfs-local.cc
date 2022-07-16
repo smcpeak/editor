@@ -103,4 +103,28 @@ VFS_DeleteFileReply VFS_LocalImpl::deleteFile(
 }
 
 
+VFS_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
+  VFS_GetDirEntriesRequest const &req)
+{
+  SMFileUtil sfu;
+
+  VFS_GetDirEntriesReply reply;
+
+  try {
+    ArrayStack<SMFileUtil::DirEntryInfo> entries;
+    sfu.getSortedDirectoryEntries(entries, req.m_path);
+
+    // Copy into std::vector.
+    for (int i=0; i < entries.length(); i++) {
+      reply.m_entries.push_back(entries[i]);
+    }
+  }
+  catch (xBase &x) {
+    reply.setFailureReason(x.why());
+  }
+
+  return reply;
+}
+
+
 // EOF
