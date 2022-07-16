@@ -76,12 +76,17 @@ QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
 
 # Create a target to run $1 and save the output to out/$1.out.
+#
+# The target is a .ok file instead of the .out itself because I do not
+# want 'make' to delete the .out file if the command fails, since I want
+# to be able to inspect it after the failure.
 define RUN_TEST_PROG
 TOCLEAN += $1
-test-prog-outs: out/$1.out
-out/$1.out: $1
+test-prog-outs: out/$1.ok
+out/$1.ok: $1
 	$$(CREATE_OUTPUT_DIRECTORY)
-	$(RUN_WITH_TIMEOUT) ./$1 </dev/null >$$@ 2>&1
+	$(RUN_WITH_TIMEOUT) ./$1 </dev/null >out/$1.out 2>&1
+	touch $$@
 endef
 
 
@@ -313,7 +318,7 @@ editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,editor-fs-server-test.exe))
 
 # The test uses the server executable.
-out/editor-fs-server-test.exe.out: editor-fs-server.exe
+out/editor-fs-server-test.exe.ok: editor-fs-server.exe
 
 
 # ------------- highlighting stuff --------------------
