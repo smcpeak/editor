@@ -108,6 +108,9 @@ private:     // funcs
   // pending query for that directory.
   void queryDirectoryIfNeeded();
 
+  // If there is a current request, cancel it.
+  void cancelCurrentRequestIfAny();
+
   // Set 'm_filenameLabel'.
   void setFilenameLabel();
 

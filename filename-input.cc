@@ -149,19 +149,29 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
 
   if (m_cachedDirectory == dir) {
     // We already have the needed info.
+    TRACE("FilenameInputDialog",
+      "queryDirectoryIfNeeded: already cached dir is: " << dir);
+
+    // If there is a request, cancel it, since its arrival will cause
+    // the cached info for 'dir' to be discarded.
+    cancelCurrentRequestIfAny();
     return;
   }
 
   if (m_currentRequestID != 0) {
     if (m_currentRequestDir == dir) {
       // There is already a pending request for 'dir'.
+      TRACE("FilenameInputDialog",
+        "queryDirectoryIfNeeded: request is pending for: " << dir);
       return;
     }
     else {
-      m_vfsConnections->cancelRequest(m_currentRequestID);
-      m_currentRequestID = 0;
+      cancelCurrentRequestIfAny();
     }
   }
+
+  TRACE("FilenameInputDialog",
+    "queryDirectoryIfNeeded: will issue request for: " << dir);
 
   std::unique_ptr<VFS_GetDirEntriesRequest> req(
     new VFS_GetDirEntriesRequest);
@@ -173,12 +183,28 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
 }
 
 
+void FilenameInputDialog::cancelCurrentRequestIfAny()
+{
+  if (m_currentRequestID != 0) {
+    TRACE("FilenameInputDialog",
+      "canceling outstanding request for: " << m_currentRequestDir);
+
+    m_vfsConnections->cancelRequest(m_currentRequestID);
+    m_currentRequestID = 0;
+    m_currentRequestDir = "";
+  }
+}
+
+
 void FilenameInputDialog::on_replyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   if (requestID == m_currentRequestID) {
+    TRACE("FilenameInputDialog",
+      "on_replyAvailable: reply arrived for: " << m_currentRequestDir);
+
     std::unique_ptr<VFS_Message> reply(
       m_vfsConnections->takeReply(requestID));
     VFS_GetDirEntriesReply const *gde = reply->asGetDirEntriesReplyC();
