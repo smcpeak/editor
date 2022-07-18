@@ -121,7 +121,9 @@ private:     // funcs
 
   // Get the set of possible completions of the filename in
   // 'm_filenameEdit' that would make the name of an existing file.
-  void getCompletions(ArrayStack<string> /*OUT*/ &completions);
+  //
+  // Return false if we have not loaded the information required.
+  bool getCompletions(ArrayStack<string> /*OUT*/ &completions);
 
   // Set 'm_completionsEdit'.
   void setCompletions();

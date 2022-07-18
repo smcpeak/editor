@@ -295,7 +295,7 @@ static bool isNotDotOrDotDot(SMFileUtil::DirEntryInfo const &dei)
 }
 
 
-void FilenameInputDialog::getCompletions(
+bool FilenameInputDialog::getCompletions(
   ArrayStack<string> /*OUT*/ &completions)
 {
   string filename = toString(m_filenameEdit->text());
@@ -319,9 +319,12 @@ void FilenameInputDialog::getCompletions(
         }
       }
     }
+
+    return true;
   }
   else {
-    // If it is the wrong directory, show nothing.
+    // Wrong directory.
+    return false;
   }
 }
 
@@ -330,7 +333,10 @@ void FilenameInputDialog::setCompletions()
 {
   // Get the individual entries.
   ArrayStack<string> completions;
-  this->getCompletions(completions);
+  if (!this->getCompletions(completions)) {
+    m_completionsEdit->setPlainText("Loading ...");
+    return;
+  }
 
   // Assemble them into one string.
   stringBuilder sb;
@@ -396,7 +402,9 @@ void FilenameInputDialog::filenameCompletion()
 {
   // Get the individual entries.
   ArrayStack<string> completions;
-  this->getCompletions(completions);
+  if (!this->getCompletions(completions)) {
+    return;
+  }
 
   // Longest common prefix.
   string commonPrefix = longestCommonPrefix(completions);
