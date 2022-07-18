@@ -190,11 +190,17 @@ TICK          [\']
   /* This is not a keyword but I want to highlight it like one.*/
 "override"         return TC_KEYWORD;
 
-  /* I have defined this as a macro in smbase/sm-macros.h, and want to
-   * see it like a keyword. */
-"NULLABLE"         return TC_KEYWORD;
+  /* I have defined these as a macros in smbase/sm-macros.h and
+   * smbase/sm-override.h, and want to see them like a keyword. */
+"NOEXCEPT"         |
+"NULLABLE"         |
+"OVERRIDE"         return TC_KEYWORD;
 
-  /* C++14 2.11p2: alternative representations for operators. */
+  /* C++14 2.11p2: alternative representations for operators.
+   *
+   * Originally I had these as TC_OPERATOR, but my color scheme uses an
+   * intense purple color that works well for symbols but is too much
+   * for these words. */
 "and"              |
 "and_eq"           |
 "bitand"           |
@@ -205,7 +211,7 @@ TICK          [\']
 "or"               |
 "or_eq"            |
 "xor"              |
-"xor_eq"           return TC_OPERATOR;
+"xor_eq"           return TC_KEYWORD;
 
   /* operators, punctuators */
 "("                |
