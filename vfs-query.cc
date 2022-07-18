@@ -55,14 +55,21 @@ FileSystemQuery::~FileSystemQuery()
 }
 
 
+static bool isWaitingState(FileSystemQuery::State s)
+{
+  return s == FileSystemQuery::S_CONNECTING ||
+         s == FileSystemQuery::S_PENDING;
+}
+
+
 void FileSystemQuery::setState(State s)
 {
   TRACE("FileSystemQuery",
     "setState: " << toString(m_state) << " -> " << toString(s));
 
   // Inform 'EventReplay' if our waitingness has changed.
-  int wasWaiting = (m_state == S_PENDING);
-  int nowWaiting = (s       == S_PENDING);
+  int wasWaiting = isWaitingState(m_state);
+  int nowWaiting = isWaitingState(s);
   adjWaitingCounter(nowWaiting - wasWaiting);
 
   m_state = s;
