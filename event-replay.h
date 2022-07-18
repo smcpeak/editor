@@ -102,11 +102,6 @@ private:     // instance data
   // Active timer ID, or 0 if none.
   int m_timerId;
 
-  // True while we are sleeping.  We will wake up and continue
-  // processing events, so should do nothing when quiescence is
-  // detected.
-  bool m_sleeping;
-
 private:     // funcs
   // Change the size of the top-level window containing 'widget' so that
   // the widget itself reaches the target size.  This assumes that the

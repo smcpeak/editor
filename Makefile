@@ -304,6 +304,7 @@ all: editor-fs-server.exe
 EDITOR_OBJS += vfs-msg.o
 EDITOR_OBJS += vfs-query.o
 EDITOR_OBJS += vfs-query.moc.o
+EDITOR_OBJS += waiting-counter.o
 
 EDITOR_FS_SERVER_TEST_OBJS :=
 EDITOR_FS_SERVER_TEST_OBJS += $(EDITOR_OBJS)

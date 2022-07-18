@@ -3,6 +3,9 @@
 
 #include "vfs-query.h"                 // this module
 
+// editor
+#include "waiting-counter.h"           // adjWaitingCounter
+
 // smqtutil
 #include "qtutil.h"                    // toString(QString), printQByteArray
 
@@ -56,6 +59,12 @@ void FileSystemQuery::setState(State s)
 {
   TRACE("FileSystemQuery",
     "setState: " << toString(m_state) << " -> " << toString(s));
+
+  // Inform 'EventReplay' if our waitingness has changed.
+  int wasWaiting = (m_state == S_PENDING);
+  int nowWaiting = (s       == S_PENDING);
+  adjWaitingCounter(nowWaiting - wasWaiting);
+
   m_state = s;
 }
 

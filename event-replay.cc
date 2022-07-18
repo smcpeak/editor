@@ -5,6 +5,7 @@
 
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
+#include "waiting-counter.h"           // g_waitingCounter
 
 // smqtutil
 #include "qtguiutil.h"                 // getKeyPressFromString
@@ -78,8 +79,7 @@ EventReplay::EventReplay(string const &fname)
     m_testResult(),
     m_eventLoop(),
     m_eventReplayDelayMS(0),
-    m_timerId(0),
-    m_sleeping(false)
+    m_timerId(0)
 {
   if (m_in.fail()) {
     // Unfortunately there is no portable way to get the error cause
@@ -511,7 +511,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 void EventReplay::sleepForMS(int ms)
 {
   TRACE("EventReplay", "sleeping for " << ms << " ms");
-  RESTORER(bool, m_sleeping, true);
+  IncDecWaitingCounter idwc;
   sleepWhilePumpingEvents(ms);
   TRACE("EventReplay", "done sleeping");
 }
@@ -650,7 +650,7 @@ void EventReplay::waitUntilCheckQuery(
     }
 
     // Wait for something to happen.  This does not busy-wait.
-    RESTORER(bool, m_sleeping, true);
+    IncDecWaitingCounter idwc;
     QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
 
     // I tried using the 'processEvents' that accepts a timeout, but
@@ -790,7 +790,7 @@ void EventReplay::slot_aboutToBlock() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (m_sleeping) {
+  if (g_waitingCounter > 0) {
     // Ignore the quiescence, and don't print anything so we don't spam
     // the log.
     return;
