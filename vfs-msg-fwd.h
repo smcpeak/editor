@@ -4,6 +4,11 @@
 #ifndef EDITOR_VFS_MSG_FWD_H
 #define EDITOR_VFS_MSG_FWD_H
 
+// Abstract message classes.
+class VFS_Message;
+class VFS_PathRequest;
+class VFS_PathReply;
+
 // Do 'macro' for every kind of VFS message.
 //
 // This defines the list of message types.
