@@ -8,6 +8,7 @@
 
 // smbase
 #include "container-utils.h"           // contains
+#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "map-utils.h"                 // insertMapUnique
 #include "trace.h"                     // TRACE
 
@@ -179,19 +180,25 @@ bool VFS_Connections::connectionWasLost() const
 }
 
 
-void VFS_Connections::on_connected()
+void VFS_Connections::on_connected() NOEXCEPT
 {
   TRACE("VFS_Connections", "on_connected");
+
+  GENERIC_CATCH_BEGIN
 
   issuePendingRequest();
 
   Q_EMIT signal_connected();
+
+  GENERIC_CATCH_END
 }
 
 
-void VFS_Connections::on_replyAvailable()
+void VFS_Connections::on_replyAvailable() NOEXCEPT
 {
   TRACE("VFS_Connections", "on_replyAvailable");
+
+  GENERIC_CATCH_BEGIN
 
   if (m_currentRequestID == 0) {
     // The request was cancelled while in flight.
@@ -213,17 +220,23 @@ void VFS_Connections::on_replyAvailable()
   }
 
   issuePendingRequest();
+
+  GENERIC_CATCH_END
 }
 
 
-void VFS_Connections::on_failureAvailable()
+void VFS_Connections::on_failureAvailable() NOEXCEPT
 {
   TRACE("VFS_Connections", "on_failureAvailable");
+
+  GENERIC_CATCH_BEGIN
 
   string reason = m_fsQuery->getFailureReason();
   m_currentRequestID = 0;
 
   Q_EMIT signal_vfsConnectionLost(reason);
+
+  GENERIC_CATCH_END
 }
 
 

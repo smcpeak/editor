@@ -131,9 +131,9 @@ Q_SIGNALS:
 
 protected Q_SLOTS:
   // Handlers for FileSystemQuery.
-  void on_connected();
-  void on_replyAvailable();
-  void on_failureAvailable();
+  void on_connected() NOEXCEPT;
+  void on_replyAvailable() NOEXCEPT;
+  void on_failureAvailable() NOEXCEPT;
 };
 
 
