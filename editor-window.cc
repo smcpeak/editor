@@ -700,43 +700,51 @@ void EditorWindow::fileOpenFile(string const &name)
 }
 
 
-std::unique_ptr<VFS_ReadFileReply> EditorWindow::readFileSynchronously(
-  string const &fname)
+template <class REPLY_TYPE>
+std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
+  std::unique_ptr<VFS_Message> request)
 {
   // Initially empty pointer, used for error returns.
-  std::unique_ptr<VFS_ReadFileReply> rfrReply;
+  std::unique_ptr<REPLY_TYPE> typedReply;
 
-  // Issue the read request synchronously.
+  // Issue the request.
   VFS_QuerySync querySync(&(m_globalState->m_vfsConnections), this);
-  std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
-  req->m_path = fname;
-  std::unique_ptr<VFS_Message> reply;
+  std::unique_ptr<VFS_Message> genericReply;
   string connLostMessage;
-  if (!querySync.issueRequestSynchronously(std::move(req), reply,
-                                           connLostMessage)) {
+  if (!querySync.issueRequestSynchronously(
+         std::move(request), genericReply, connLostMessage)) {
     // Attempt to load the file was canceled.
-    return rfrReply;
+    return typedReply;
   }
 
   if (!connLostMessage.empty()) {
     this->complain(stringb(
       "VFS connection lost: " << connLostMessage));
-    return rfrReply;
+    return typedReply;
   }
 
-  if (VFS_ReadFileReply *rfr = reply->ifReadFileReply()) {
-    // Move the pointer from 'reply' to 'rfrReply'.
-    reply.release();
-    rfrReply.reset(rfr);
-    return rfrReply;
+  if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(genericReply.get())) {
+    // Move the pointer from 'genericReply' to 'typedReply'.
+    genericReply.release();
+    typedReply.reset(r);
+    return typedReply;
   }
 
   else {
     this->complain(stringb(
       "Server responded with incorrect message type: " <<
-      toString(reply->messageType())));
-    return rfrReply;
+      toString(genericReply->messageType())));
+    return typedReply;
   }
+}
+
+
+std::unique_ptr<VFS_ReadFileReply> EditorWindow::readFileSynchronously(
+  string const &fname)
+{
+  std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
+  req->m_path = fname;
+  return vfsQuerySynchronously<VFS_ReadFileReply>(std::move(req));
 }
 
 

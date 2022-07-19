@@ -93,6 +93,14 @@ private:     // funcs
   string fileChooseDialog(string const &dir, bool saveAs,
     FileChooseDialogKind dialogKind);
 
+  // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
+  //
+  // If there is an error, pop up an error box and return an empty
+  // pointer.
+  template <class REPLY_TYPE>
+  std::unique_ptr<REPLY_TYPE> vfsQuerySynchronously(
+    std::unique_ptr<VFS_Message> request);
+
   // Read the contents of 'fname', waiting for the reply and blocking
   // user input during the wait.
   //
