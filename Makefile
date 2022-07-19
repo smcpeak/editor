@@ -292,7 +292,7 @@ EDITOR_FS_SERVER_OBJS += vfs-msg.o
 -include vfs-local.d
 -include vfs-msg.d
 
-editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS)
+editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
 
 TOCLEAN += editor-fs-server.exe
@@ -314,7 +314,7 @@ EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.moc.o
 -include editor-fs-server-test.d
 -include editor-fs-server-test.moc.d
 
-editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS)
+editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,editor-fs-server-test.exe))
