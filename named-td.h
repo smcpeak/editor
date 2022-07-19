@@ -150,6 +150,15 @@ public:      // funcs
 
   // Set 'lastFileTimestamp' to equal the on-disk timestamp.
   void refreshModificationTime();
+
+  // ----------------- file system server interaction ------------------
+  // Unlike the preceding section, the methods here are meant to be
+  // compatible with accessing the file system through a server process.
+
+  // Discard existing contents and set them based on the given info.
+  void replaceFileAndStats(std::vector<unsigned char> const &contents,
+                           int64_t fileModificationTime,
+                           bool readOnly);
 };
 
 #endif // NAMED_TD_H

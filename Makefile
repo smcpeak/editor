@@ -482,6 +482,8 @@ EDITOR_OBJS += status.o
 EDITOR_OBJS += styledb.o
 EDITOR_OBJS += textinput.o
 EDITOR_OBJS += textinput.moc.o
+EDITOR_OBJS += vfs-query-sync.o
+EDITOR_OBJS += vfs-query-sync.moc.o
 
 -include $(EDITOR_OBJS:.o=.d)
 

@@ -205,4 +205,15 @@ void NamedTextDocument::refreshModificationTime()
 }
 
 
+void NamedTextDocument::replaceFileAndStats(
+  std::vector<unsigned char> const &contents,
+  int64_t fileModificationTime,
+  bool readOnly)
+{
+  this->replaceWholeFile(contents);
+  this->m_lastFileTimestamp = fileModificationTime;
+  this->setReadOnly(readOnly);
+}
+
+
 // EOF

@@ -4,8 +4,10 @@
 #ifndef EDITOR_WINDOW_H
 #define EDITOR_WINDOW_H
 
+// editor
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
+#include "vfs-msg-fwd.h"               // VFS_Message
 
 // smqtutil
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
@@ -17,6 +19,9 @@
 
 // Qt
 #include <QWidget>
+
+// libc++
+#include <memory>                      // std::unique_ptr
 
 class QLabel;
 class QMenu;
@@ -87,6 +92,16 @@ private:     // funcs
   // otherwise the chosen file name.
   string fileChooseDialog(string const &dir, bool saveAs,
     FileChooseDialogKind dialogKind);
+
+  // Read the contents of 'fname', waiting for the reply and blocking
+  // user input during the wait.
+  //
+  // If this returns an empty pointer, then either the user canceled the
+  // request, or an error was already reported; nothing further needs to
+  // be done.  But if present, the reply object might itself have
+  // 'm_success==false', which needs to be handled by the caller.
+  std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
+    string const &fname);
 
   void complain(char const *msg);
 

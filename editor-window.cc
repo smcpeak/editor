@@ -3,7 +3,7 @@
 
 #include "editor-window.h"             // this module
 
-// this dir
+// editor
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
@@ -22,6 +22,8 @@
 #include "status.h"                    // StatusDisplay
 #include "td-editor.h"                 // TextDocumentEditor
 #include "textinput.h"                 // TextInputDialog
+#include "vfs-query-sync.h"            // VFS_QuerySync
+#include "vfs-msg.h"                   // VFS_ReadFileRequest
 
 // smqtutil
 #include "qtguiutil.h"                 // CursorSetRestore
@@ -651,23 +653,34 @@ void EditorWindow::fileOpenFile(string const &name)
     return;
   }
 
+  // Load the file contents.
+  std::unique_ptr<VFS_ReadFileReply> rfr(readFileSynchronously(name));
+  if (!rfr) {
+    // Either the request was canceled or an error has already been
+    // reported.
+    return;
+  }
+
   file = new NamedTextDocument();
   file->setFilename(name);
   file->m_title = this->m_globalState->uniqueTitleFor(file->filename());
 
-  if (fileOrDirectoryExists(file->filename().c_str())) {
-    try {
-      file->readFile();
+  if (rfr->m_success) {
+    file->replaceFileAndStats(rfr->m_contents,
+                              rfr->m_fileModificationTime,
+                              rfr->m_readOnly);
+  }
+  else {
+    if (rfr->m_failureReasonCode == xSysError::R_FILE_NOT_FOUND) {
+      // Just have the file open with its name set but no content.
     }
-    catch (xBase &x) {
+    else {
       this->complain(stringb(
-        "Can't read file \"" << name << "\": " << x.why()));
+        rfr->m_failureReasonString <<
+        " (code " << rfr->m_failureReasonCode << ")"));
       delete file;
       return;
     }
-  }
-  else {
-    // Just have the file open with its name set but no content.
   }
 
   this->useDefaultHighlighter(file);
@@ -683,6 +696,46 @@ void EditorWindow::fileOpenFile(string const &name)
   // remove the untitled file now, if it exists
   if (untitled) {
     m_globalState->deleteDocumentFile(untitled.release());
+  }
+}
+
+
+std::unique_ptr<VFS_ReadFileReply> EditorWindow::readFileSynchronously(
+  string const &fname)
+{
+  // Initially empty pointer, used for error returns.
+  std::unique_ptr<VFS_ReadFileReply> rfrReply;
+
+  // Issue the read request synchronously.
+  VFS_QuerySync querySync(&(m_globalState->m_vfsConnections), this);
+  std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
+  req->m_path = fname;
+  std::unique_ptr<VFS_Message> reply;
+  string connLostMessage;
+  if (!querySync.issueRequestSynchronously(std::move(req), reply,
+                                           connLostMessage)) {
+    // Attempt to load the file was canceled.
+    return rfrReply;
+  }
+
+  if (!connLostMessage.empty()) {
+    this->complain(stringb(
+      "VFS connection lost: " << connLostMessage));
+    return rfrReply;
+  }
+
+  if (VFS_ReadFileReply *rfr = reply->ifReadFileReply()) {
+    // Move the pointer from 'reply' to 'rfrReply'.
+    reply.release();
+    rfrReply.reset(rfr);
+    return rfrReply;
+  }
+
+  else {
+    this->complain(stringb(
+      "Server responded with incorrect message type: " <<
+      toString(reply->messageType())));
+    return rfrReply;
   }
 }
 
