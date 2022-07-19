@@ -136,6 +136,12 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
     "}"
   ));
 
+  // Establish the initial VFS connection before creating the first
+  // EditorWindow, since the EW can issue VFS requests.
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
+                   this, &EditorGlobalState::on_vfsConnectionLost);
+  m_vfsConnections.connectLocal();
+
   // Open the first window, initially showing the default "untitled"
   // file that 'fileDocuments' made in its constructor.
   EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
@@ -176,10 +182,6 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
 
   QObject::connect(this, &EditorGlobalState::focusChanged,
                    this, &EditorGlobalState::focusChangedHandler);
-
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
-                   this, &EditorGlobalState::on_vfsConnectionLost);
-  m_vfsConnections.connectLocal();
 
   ed->show();
 
