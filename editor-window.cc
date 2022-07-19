@@ -775,18 +775,32 @@ void EditorWindow::fileSave()
   writeTheFile();
 }
 
+
 void EditorWindow::writeTheFile()
 {
   RCSerf<NamedTextDocument> file = this->currentDocument();
-  try {
-    file->writeFile();
-    editorViewChanged();
-  }
-  catch (xBase &x) {
-    // There is not a severity between "warning" and "critical",
-    // and "critical" is a bit obnoxious.
-    QMessageBox::warning(this, "Write Error",
-      qstringb("Failed to save file \"" << file->docName() << "\": " << x.why()));
+
+  std::unique_ptr<VFS_WriteFileRequest> req(new VFS_WriteFileRequest);
+  req->m_path = file->filename();
+  req->m_contents = file->getWholeFile();
+  std::unique_ptr<VFS_WriteFileReply> reply(
+    vfsQuerySynchronously<VFS_WriteFileReply>(std::move(req)));
+
+  if (reply) {
+    if (reply->m_success) {
+      file->m_lastFileTimestamp = reply->m_fileModificationTime;
+      file->noUnsavedChanges();
+
+      // Remove the asterisk indicating unsaved changes.
+      editorViewChanged();
+    }
+    else {
+      // There is not a severity between "warning" and "critical",
+      // and "critical" is a bit obnoxious.
+      QMessageBox::warning(this, "Write Error", qstringb(
+        "Failed to save file \"" << file->docName() <<
+        "\": " << reply->m_failureReasonString));
+    }
   }
 }
 
