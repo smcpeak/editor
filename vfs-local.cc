@@ -9,6 +9,17 @@
 #include "sm-file-util.h"              // SMFileUtil
 
 
+// Catch block for VFS_LocalImpl methods that service a PathRequest.
+// It sets the failure code and reason of 'reply'.
+#define PATH_REQUEST_CATCH_BLOCK                           \
+  catch (xSysError &x) {                                   \
+    reply.setFailureReason(x.reason, x.why());             \
+  }                                                        \
+  catch (xBase &x) {                                       \
+    reply.setFailureReason(xSysError::R_UNKNOWN, x.why()); \
+  }
+
+
 VFS_FileStatusReply VFS_LocalImpl::queryPath(VFS_FileStatusRequest const &req)
 {
   SMFileUtil sfu;
@@ -30,11 +41,7 @@ VFS_FileStatusReply VFS_LocalImpl::queryPath(VFS_FileStatusRequest const &req)
                                     reply.m_fileModificationTime);
     }
   }
-  catch (xBase &x) {
-    // I think none of the above calls can actually throw, but catching
-    // here makes this request consistent with the others.
-    reply.setFailureReason(x.why());
-  }
+  PATH_REQUEST_CATCH_BLOCK
 
   return reply;
 }
@@ -56,9 +63,7 @@ VFS_ReadFileReply VFS_LocalImpl::readFile(
     reply.m_readOnly = sfu.isReadOnly(req.m_path);
 
   }
-  catch (xBase &x) {
-    reply.setFailureReason(x.why());
-  }
+  PATH_REQUEST_CATCH_BLOCK
 
   return reply;
 }
@@ -77,9 +82,7 @@ VFS_WriteFileReply VFS_LocalImpl::writeFile(
     (void)getFileModificationTime(req.m_path.c_str(),
                                   reply.m_fileModificationTime);
   }
-  catch (xBase &x) {
-    reply.setFailureReason(x.why());
-  }
+  PATH_REQUEST_CATCH_BLOCK
 
   return reply;
 }
@@ -95,9 +98,7 @@ VFS_DeleteFileReply VFS_LocalImpl::deleteFile(
   try {
     sfu.removeFile(req.m_path);
   }
-  catch (xBase &x) {
-    reply.setFailureReason(x.why());
-  }
+  PATH_REQUEST_CATCH_BLOCK
 
   return reply;
 }
@@ -119,9 +120,7 @@ VFS_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
       reply.m_entries.push_back(entries[i]);
     }
   }
-  catch (xBase &x) {
-    reply.setFailureReason(x.why());
-  }
+  PATH_REQUEST_CATCH_BLOCK
 
   return reply;
 }

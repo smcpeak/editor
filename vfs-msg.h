@@ -14,6 +14,7 @@
 #include "flatten-fwd.h"               // Flatten
 #include "sm-file-util.h"              // SMFileUtil
 #include "str.h"                       // string
+#include "syserr.h"                    // xSysError
 
 // libc++
 #include <vector>                      // std::vector
@@ -35,8 +36,9 @@
 //    2: Add {Read,Write,Delete}File{Request,Reply}.
 //    3: Make FileStatus{Request,Reply} inherit Path{Request,Reply}.
 //    4: Add GetDirEntries{Request,Reply}.
+//    5: Add VFS_PathReply::m_failureReasonCode.
 //
-int32_t const VFS_currentVersion = 4;
+int32_t const VFS_currentVersion = 5;
 
 
 // Possible kinds of VFS messages.
@@ -149,16 +151,21 @@ public:      // data
   // True if the operation completed successfully.  Initially true.
   bool m_success;
 
+  // If '!m_success', the reason for the failure as a machine-readable
+  // error code.  Initially R_NO_ERROR.
+  xSysError::Reason m_failureReasonCode;
+
   // If '!m_success', the reason for the failure as a human-readable
   // string.  Initially empty.
-  string m_failureReason;
+  string m_failureReasonString;
 
 public:      // methods
   VFS_PathReply();
   virtual ~VFS_PathReply() override;
 
   // Set the failure reason, and set 'm_success' to false.
-  void setFailureReason(string const &reason);
+  void setFailureReason(xSysError::Reason reasonCode,
+                        string const &reasonString);
 
   // VFS_Message methods.
   virtual void xfer(Flatten &flat) override;

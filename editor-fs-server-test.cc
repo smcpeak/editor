@@ -172,7 +172,7 @@ void FSServerTest::runFileReadWriteTests()
       PVAL(modTime);
     }
     else {
-      xfatal(reply->m_failureReason);
+      xfatal(reply->m_failureReasonString);
     }
   }
 
@@ -190,7 +190,7 @@ void FSServerTest::runFileReadWriteTests()
       xassert(reply->m_readOnly == false);
     }
     else {
-      xfatal(reply->m_failureReason);
+      xfatal(reply->m_failureReasonString);
     }
   }
 
@@ -203,7 +203,7 @@ void FSServerTest::runFileReadWriteTests()
     std::unique_ptr<VFS_Message> replyMsg(getNextReply());
     VFS_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
     if (!reply->m_success) {
-      xfatal(reply->m_failureReason);
+      xfatal(reply->m_failureReasonString);
     }
   }
 
@@ -216,6 +216,18 @@ void FSServerTest::runFileReadWriteTests()
     std::unique_ptr<VFS_Message> replyMsg(getNextReply());
     VFS_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
     xassert(reply->m_fileKind == SMFileUtil::FK_NONE);
+  }
+
+  // Read non-existent.
+  {
+    VFS_ReadFileRequest req;
+    req.m_path = fname;
+    m_fsQuery.sendRequest(req);
+
+    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
+    VFS_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
+    xassert(!reply->m_success);
+    xassert(reply->m_failureReasonCode == xSysError::R_FILE_NOT_FOUND);
   }
 }
 

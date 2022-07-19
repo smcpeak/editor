@@ -189,7 +189,8 @@ void VFS_PathRequest::xfer(Flatten &flat)
 VFS_PathReply::VFS_PathReply()
   : VFS_Message(),
     m_success(true),
-    m_failureReason()
+    m_failureReasonCode(xSysError::R_NO_ERROR),
+    m_failureReasonString()
 {}
 
 
@@ -197,17 +198,23 @@ VFS_PathReply::~VFS_PathReply()
 {}
 
 
-void VFS_PathReply::setFailureReason(string const &reason)
+void VFS_PathReply::setFailureReason(xSysError::Reason reasonCode,
+                                     string const &reasonString)
 {
   m_success = false;
-  m_failureReason = reason;
+  m_failureReasonCode = reasonCode;
+  m_failureReasonString = reasonString;
+
+  static_assert(xSysError::NUM_REASONS == 14,
+    "Must bump VFS version number if set of reason codes change.");
 }
 
 
 void VFS_PathReply::xfer(Flatten &flat)
 {
   flat.xferBool(m_success);
-  m_failureReason.xfer(flat);
+  xferEnum(flat, m_failureReasonCode);
+  m_failureReasonString.xfer(flat);
 }
 
 
