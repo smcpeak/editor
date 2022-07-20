@@ -124,13 +124,6 @@ public:      // funcs
   string nameWithStatusIndicators() const;
 
   // -------------------- file system interaction -------------------
-  // Read the from 'filename()'.  Requires 'hasFilename()'.  Updates
-  // the disk modification time.
-  //
-  // Throws an exception on error, but in that case this object will be
-  // left unmodified.
-  void readFile();
-
   // Write to 'filename()'.  Requires 'hasFilename()'.  Updates the disk
   // modification time.  May throw.
   void writeFile();

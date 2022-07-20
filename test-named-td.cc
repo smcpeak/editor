@@ -56,16 +56,37 @@ public:      // funcs
 };
 
 
+// Replace the contents of 'doc' with what is on disk.
+//
+// This approximates what the editor does to read a file.
+static void readFile(NamedTextDocument &doc)
+{
+  xassert(doc.hasFilename());
+  string fname = doc.filename();
+
+  SMFileUtil sfu;
+
+  std::vector<unsigned char> bytes(sfu.readFile(fname));
+
+  int64_t modTime;
+  (void)getFileModificationTime(fname.c_str(), modTime);
+
+  bool readOnly = sfu.isReadOnly(fname);
+
+  doc.replaceFileAndStats(bytes, modTime, readOnly);
+}
+
+
 // Make sure that reading a file broadcasts 'observeTotalChange'.
 static void testReadFile()
 {
   NamedTextDocument file;
   file.setFilename("td.h");
-  file.readFile();
+  readFile(file);
 
   TestTDO ttdo;
   file.addObserver(&ttdo);
-  file.readFile();
+  readFile(file);
   file.removeObserver(&ttdo);
 
   xassert(ttdo.m_totalChanges == 1);

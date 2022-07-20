@@ -112,23 +112,6 @@ string NamedTextDocument::nameWithStatusIndicators() const
 }
 
 
-void NamedTextDocument::readFile()
-{
-  xassert(this->hasFilename());
-
-  SMFileUtil sfu;
-
-  std::vector<unsigned char> bytes(sfu.readFile(this->m_docName));
-  this->replaceWholeFile(bytes);
-
-  this->refreshModificationTime();
-
-  if (sfu.isReadOnly(this->m_docName)) {
-    this->setReadOnly(true);
-  }
-}
-
-
 void NamedTextDocument::writeFile()
 {
   xassert(this->hasFilename());
