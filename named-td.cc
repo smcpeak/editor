@@ -210,6 +210,12 @@ void NamedTextDocument::replaceFileAndStats(
   int64_t fileModificationTime,
   bool readOnly)
 {
+  TRACE("NamedTextDocument",
+    "replaceFileAndStats: docName=" << m_docName <<
+    " contents.size()=" << contents.size() <<
+    " modTime=" << fileModificationTime <<
+    " readOnly=" << readOnly);
+
   this->replaceWholeFile(contents);
   this->m_lastFileTimestamp = fileModificationTime;
   this->setReadOnly(readOnly);
