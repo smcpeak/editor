@@ -4,6 +4,8 @@
 #ifndef EDITOR_WINDOW_H
 #define EDITOR_WINDOW_H
 
+#include "editor-window-fwd.h"         // fwds for this module
+
 // editor
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
@@ -111,6 +113,10 @@ private:     // funcs
   std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
     string const &fname);
 
+  // Get timestamp, etc., for 'fname'.
+  std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
+    string const &fname);
+
   void complain(char const *msg);
 
   void printUnhandled(xBase const &x)
@@ -129,6 +135,16 @@ public:      // funcs
 
   // File user is editing: returns editor->docFile.
   NamedTextDocument *currentDocument();
+
+  // Read the current document's on-disk contents and replace the
+  // in-memory contents with what was loaded.  On error, show an error
+  // message box.  Return true if we reloaded.
+  bool reloadCurrentDocument();
+
+  // Reload if the document has no unsaved changes and the on-disk
+  // timestamp is different from what it was before.  Return true if we
+  // reloaded.
+  bool reloadCurrentDocumentIfChanged();
 
   // Reload the file for 'b' from disk.  If there is an error, show
   // an error message box and return false.
@@ -174,7 +190,7 @@ public Q_SLOTS:
   void fileSaveAs();
   void fileClose();
   void fileToggleReadOnly() NOEXCEPT;
-  void fileReload();
+  void fileReload() NOEXCEPT;
   void fileReloadAll();
   void fileLaunchCommand();
   void fileRunMake();

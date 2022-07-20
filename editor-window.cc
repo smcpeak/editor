@@ -117,7 +117,7 @@ EditorWindow::EditorWindow(EditorGlobalState *theState, NamedTextDocument *initF
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
   this->m_editorWidget = new EditorWidget(initFile,
-    &(theState->m_documentList), this->m_statusArea);
+    &(theState->m_documentList), this->m_statusArea, this);
   this->m_editorWidget->setObjectName("m_editorWidget");
   editorFrame->addWidget(this->m_editorWidget);
   this->m_editorWidget->setFocus();
@@ -748,6 +748,15 @@ std::unique_ptr<VFS_ReadFileReply> EditorWindow::readFileSynchronously(
 }
 
 
+std::unique_ptr<VFS_FileStatusReply> EditorWindow::getFileStatusSynchronously(
+  string const &fname)
+{
+  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  req->m_path = fname;
+  return vfsQuerySynchronously<VFS_FileStatusReply>(std::move(req));
+}
+
+
 void EditorWindow::fileSave()
 {
   NamedTextDocument *b = this->currentDocument();
@@ -901,11 +910,87 @@ void EditorWindow::fileToggleReadOnly() NOEXCEPT
 }
 
 
-void EditorWindow::fileReload()
+bool EditorWindow::reloadCurrentDocumentIfChanged()
 {
-  if (reloadFile(this->currentDocument())) {
-    this->editorViewChanged();
+  NamedTextDocument *doc = this->currentDocument();
+
+  if (doc->hasFilename() && !doc->unsavedChanges()) {
+    // Query the file modification time.
+    std::unique_ptr<VFS_FileStatusReply> reply(
+      getFileStatusSynchronously(doc->filename()));
+
+    if (!stillCurrentDocument(doc)) {
+      return false;
+    }
+
+    if (reply->m_success) {
+      if (reply->m_fileModificationTime != doc->m_lastFileTimestamp) {
+        TRACE("modification",
+          "File \"" << doc->docName() << "\" has changed on disk "
+          "and has no unsaved changes; reloading it.");
+
+        return reloadCurrentDocument();
+      }
+    }
+    else {
+      // Ignore the failure to read during automatic reload.  At some
+      // point the user will make an explicit request to read or write,
+      // and the problem will be reported then.
+      TRACE("modification",
+        "Reload failed: " << reply->m_failureReasonString);
+    }
   }
+
+  return false;
+}
+
+
+bool EditorWindow::reloadCurrentDocument()
+{
+  TRACE("EditorWindow", "reloadCurrentDocument");
+
+  NamedTextDocument *doc = this->currentDocument();
+
+  if (doc->hasFilename()) {
+    std::unique_ptr<VFS_ReadFileReply> rfr(
+      this->readFileSynchronously(doc->filename()));
+    if (!rfr) {
+      return false;
+    }
+
+    if (rfr->m_success) {
+      if (!stillCurrentDocument(doc)) {
+        return false;
+      }
+
+      // Do not move the widget view area and cursor in response to it
+      // seeing the new text being added.
+      RESTORER(bool, m_editorWidget->m_ignoreTextDocumentNotifications, true);
+
+      doc->replaceFileAndStats(rfr->m_contents,
+                               rfr->m_fileModificationTime,
+                               rfr->m_readOnly);
+      this->editorViewChanged();
+    }
+    else {
+      this->complain(stringb(
+        rfr->m_failureReasonString <<
+        " (code " << rfr->m_failureReasonCode << ")"));
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+void EditorWindow::fileReload() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  reloadCurrentDocument();
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1664,6 +1749,8 @@ void EditorWindow::helpDebugEditorScreenshot() NOEXCEPT
 
 void EditorWindow::editorViewChanged()
 {
+  TRACE("EditorWindow", "editorViewChanged");
+
   RCSerf<TextDocumentEditor> tde = m_editorWidget->getDocumentEditor();
 
   // Set the scrollbars.  In both dimensions, the range includes the

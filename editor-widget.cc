@@ -3,8 +3,9 @@
 
 #include "editor-widget.h"             // this module
 
-// this dir
+// editor
 #include "debug-values.h"              // DEBUG_VALUES
+#include "editor-window.h"             // EditorWindow
 #include "nearby-file.h"               // getNearbyFilename
 #include "qtbdffont.h"                 // QtBDFFont
 #include "qtguiutil.h"                 // keysString(QKeyEvent)
@@ -83,8 +84,9 @@ CHECK_OBJECT_COUNT(EditorWidget);
 EditorWidget::EditorWidget(NamedTextDocument *tdf,
                            NamedTextDocumentList *documentList,
                            StatusDisplay *status_,
-                           QWidget *parent)
-  : QWidget(parent),
+                           EditorWindow *editorWindow)
+  : QWidget(editorWindow),
+    m_editorWindow(editorWindow),
     m_infoBox(NULL),
     m_status(status_),
     m_matchesAboveLabel(NULL),
@@ -357,29 +359,8 @@ EditorWidget::NamedTextDocumentEditor *
 
 void EditorWidget::checkForDiskChanges()
 {
-  RCSerf<NamedTextDocument> file = m_editor->m_namedDoc;
-  if (!file->unsavedChanges() && file->hasStaleModificationTime()) {
-    TRACE("modification",
-      "File \"" << file->docName() << "\" has changed on disk "
-      "and has no unsaved changes; reloading it.");
-    try {
-      INITIATING_DOCUMENT_CHANGE();
-      file->readFile();
-      TRACE("modification", "Successfully reloaded.");
-    }
-    catch (xBase &x) {
-      // Since TextDocumentCore::readFile() fails atomically, I know
-      // that the in-memory contents are undisturbed.  The user did not
-      // explicitly ask for a file refresh, so let's just ignore the
-      // error.  At some point they will explicitly ask to load or
-      // save, and at that point (if the problem persists) they will
-      // be properly notified.
-      //
-      // Note: I do not actually know if it is possible to trigger this
-      // code.  Most things that seem like plausible candidates cause
-      // 'hasStaleModificationTime' to return false.
-      TRACE("modification", "Reload failed: " << x.why());
-    }
+  if (m_editorWindow->reloadCurrentDocumentIfChanged()) {
+    this->redraw();
   }
 }
 

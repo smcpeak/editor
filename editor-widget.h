@@ -5,6 +5,7 @@
 #define EDITOR_WIDGET_H
 
 // editor
+#include "editor-window-fwd.h"         // EditorWindow
 #include "event-replay.h"              // EventReplayQueryable
 #include "named-td-list.h"             // NamedTextDocumentListObserver
 #include "named-td.h"                  // NamedTextDocument
@@ -78,6 +79,10 @@ private:     // types
 
 private:     // data
   // ------ widgets -----
+  // Containing editor window, through which file system access is
+  // performed.
+  EditorWindow *m_editorWindow;
+
   // floating info box
   QLabel *m_infoBox;               // (nullable owner)
 
@@ -257,7 +262,7 @@ public:      // funcs
   EditorWidget(NamedTextDocument *docFile,
                NamedTextDocumentList *documentList,
                StatusDisplay *status,
-               QWidget *parent=NULL);
+               EditorWindow *editorWindow);
   ~EditorWidget();
 
   // Assert internal invariants.
