@@ -130,7 +130,15 @@ QString FilenameInputDialog::runDialog(
   // just update the display to show that fact.
   this->updateFeedback();
 
-  if (this->exec()) {
+  // Show the dialog, returning once it is closed.
+  bool ret = this->exec();
+
+  // One way a request could still be pending is if the user types a
+  // file name and hits Enter before we can populate the list of file
+  // names.
+  this->cancelCurrentRequestIfAny();
+
+  if (ret) {
     return m_filenameEdit->text();
   }
   else {
