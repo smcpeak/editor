@@ -27,11 +27,6 @@ static void testWhenUntitledExists()
     created = true;
   }
 
-  // The document should still regard itself as not having a stale
-  // modification time because it is untitled, hence not really
-  // associated with any on-disk file.
-  xassert(!file.hasStaleModificationTime());
-
   if (created) {
     (void)removeFile(file.docName().c_str());
   }

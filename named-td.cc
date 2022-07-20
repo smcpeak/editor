@@ -6,13 +6,9 @@
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
 #include "sm-macros.h"                 // CMEMB
-#include "nonport.h"                   // getFileModificationTime
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
 #include "trace.h"                     // TRACE
-
-// Qt
-#include <qnamespace.h>                // Qt class/namespace
 
 
 int NamedTextDocument::s_objectCount = 0;
@@ -121,68 +117,6 @@ string NamedTextDocument::fileStatusString() const
     sb << " [DISKMOD]";
   }
   return sb.str();
-}
-
-
-bool NamedTextDocument::getDiskModificationTime(int64_t &modTime) const
-{
-  bool ret = getFileModificationTime(this->m_docName.c_str(), modTime);
-  TRACE("modtime", "on-disk ts for " << this->m_docName <<
-                   " is " << modTime);
-  return ret;
-}
-
-
-bool NamedTextDocument::hasStaleModificationTime() const
-{
-  if (!this->hasFilename()) {
-    // The document is not actually associated with any file, the name
-    // is just a placeholder.
-    TRACE("modtime", "hasStale: returning false because isUntitled");
-    return false;
-  }
-
-  int64_t diskTime;
-  if (this->getDiskModificationTime(diskTime)) {
-    bool ret = (diskTime != this->m_lastFileTimestamp);
-    TRACE("modtime", "hasStale: returning " << ret);
-    return ret;
-  }
-  else {
-    // Failed to get time for on-disk file.  This is probably due
-    // to the file having been removed, which we are about to resolve
-    // by writing it again.  If the problem is a permission error,
-    // the attempt to save will fail for and report that reason.
-    //
-    // Another way to get here is to start the editor with a command
-    // line argument for a file that does not exist.
-    //
-    // In all cases, it should be safe to ignore the failure to get the
-    // timestamp here and assume it is not stale.
-    TRACE("modtime", "hasStale: returning false because getDiskModificationTime failed");
-    return false;
-  }
-}
-
-
-void NamedTextDocument::refreshModificationTime()
-{
-  TRACE("modtime", "refresh: old ts for " << this->m_docName <<
-                   " is " << this->m_lastFileTimestamp);
-  xassert(this->hasFilename());
-
-  if (!this->getDiskModificationTime(this->m_lastFileTimestamp)) {
-    // We ignore the error because we only
-    // call this after we have already successfully read the file's
-    // contents, so an error here is quite unlikely.  Furthermore, this
-    // API does not provide a reason.  If it does fail, the timestamp
-    // will be set to 0, which likely will agree with a subsequent call
-    // since that would probably fail too, so at least we won't be
-    // repeatedly bothering the user with spurious errors.
-  }
-
-  TRACE("modtime", "refresh: new ts for " << this->m_docName <<
-                   " is " << this->m_lastFileTimestamp);
 }
 
 

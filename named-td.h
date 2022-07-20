@@ -131,27 +131,7 @@ public:      // funcs
   // plus " [DISKMOD]" if the contents on disk have been modified.
   string fileStatusString() const;
 
-  // -------------------- file system interaction -------------------
-  // Get the modification time of filename() without consulting
-  // or modifying 'lastFileTimestamp'.  Return false if it cannot
-  // be obtained.
-  bool getDiskModificationTime(int64_t &modTime) const;
-
-  // Compare 'lastFileTimestamp' to what is on disk.  Return true
-  // if they are different, meaning some on-disk change has happened
-  // since we last interacted with it.
-  //
-  // If '!hasFilename()', then this always returns false, since in that
-  // case we are not really associated with any on-disk file.
-  bool hasStaleModificationTime() const;
-
-  // Set 'lastFileTimestamp' to equal the on-disk timestamp.
-  void refreshModificationTime();
-
-  // ----------------- file system server interaction ------------------
-  // Unlike the preceding section, the methods here are meant to be
-  // compatible with accessing the file system through a server process.
-
+  // ------------------------- file contents ---------------------------
   // Discard existing contents and set them based on the given info.
   void replaceFileAndStats(std::vector<unsigned char> const &contents,
                            int64_t fileModificationTime,
