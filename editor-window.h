@@ -146,10 +146,6 @@ public:      // funcs
   // reloaded.
   bool reloadCurrentDocumentIfChanged();
 
-  // Reload the file for 'b' from disk.  If there is an error, show
-  // an error message box and return false.
-  bool reloadFile(NamedTextDocument *b);
-
   // Return true if either there are no unsaved changes or the user
   // responds to a GUI dialog and says it is ok to quit.
   bool canQuitApplication();
@@ -191,7 +187,6 @@ public Q_SLOTS:
   void fileClose();
   void fileToggleReadOnly() NOEXCEPT;
   void fileReload() NOEXCEPT;
-  void fileReloadAll();
   void fileLaunchCommand();
   void fileRunMake();
   void fileKillProcess();

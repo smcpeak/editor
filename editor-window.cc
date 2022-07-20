@@ -261,7 +261,6 @@ void EditorWindow::buildMenu()
     CHECKABLE_ACTION(m_toggleReadOnlyAction,
                   "Read only", fileToggleReadOnly, false /*initChecked*/);
     MENU_ITEM    ("&Reload", fileReload);
-    MENU_ITEM    ("Reload a&ll", fileReloadAll);
 
     menu->addSeparator();
 
@@ -991,60 +990,6 @@ void EditorWindow::fileReload() NOEXCEPT
   reloadCurrentDocument();
 
   GENERIC_CATCH_END
-}
-
-
-bool EditorWindow::reloadFile(NamedTextDocument *b_)
-{
-  // TODO: This function's signature is inherently dangerous because I
-  // have no way of re-confirming 'b' after the dialog box closes since
-  // I don't know where it came from.  For now I will just arrange to
-  // abort before memory corruption can happen, but I should change the
-  // callers to use a more reliable pattern.
-  RCSerf<NamedTextDocument> b(b_);
-
-  if (b->unsavedChanges()) {
-    if (!this->okToDiscardChanges(stringb(
-          "The file \"" << b->docName() << "\" has unsaved changes.  "
-          "Discard those changes and reload this file anyway?"))) {
-      return false;
-    }
-  }
-
-  try {
-    b->readFile();
-    return true;
-  }
-  catch (xBase &x) {
-    this->complain(stringb(
-      "Can't read file \"" << b->docName() << "\": " << x.why() <<
-      "\n\nThe file will remain open in the editor with its "
-      "old contents."));
-    return false;
-  }
-}
-
-
-void EditorWindow::fileReloadAll()
-{
-  stringBuilder msg;
-  int ct = getUnsavedChanges(msg);
-
-  if (ct > 0) {
-    msg << "\nYou must deal with those individually.";
-    this->complain(msg);
-    return;
-  }
-
-  for (int i=0; i < this->m_globalState->m_documentList.numDocuments(); i++) {
-    NamedTextDocument *file = this->m_globalState->m_documentList.getDocumentAt(i);
-    if (!this->reloadFile(file)) {
-      // Stop after first error.
-      break;
-    }
-  }
-
-  this->editorViewChanged();
 }
 
 
