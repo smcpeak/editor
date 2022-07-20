@@ -94,6 +94,8 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_editorList(),
     m_editor(NULL),
     m_documentList(documentList),
+    m_fileStatusRequestID(0),
+    m_fileStatusRequestEditor(),
     m_hitText(""),
     m_hitTextFlags(TextSearch::SS_CASE_INSENSITIVE),
     m_textSearch(NULL),
@@ -146,8 +148,14 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   // required to accept focus
   setFocusPolicy(Qt::StrongFocus);
 
+  QObject::connect(vfsConnections(), &VFS_Connections::signal_replyAvailable,
+                   this, &EditorWidget::on_replyAvailable);
+  QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsConnectionLost,
+                   this, &EditorWidget::on_vfsConnectionLost);
+
   EditorWidget::s_objectCount++;
 }
+
 
 EditorWidget::~EditorWidget()
 {
@@ -159,6 +167,9 @@ EditorWidget::~EditorWidget()
   m_documentList = NULL;
 
   m_textSearch.del();
+
+  QObject::disconnect(vfsConnections(), nullptr, this, nullptr);
+  cancelFileStatusRequestIfAny();
 
   // Do this explicitly just for clarity, but the automatic destruction
   // should also work.
@@ -186,6 +197,11 @@ void EditorWidget::selfCheck() const
 
   // There should never be more m_editors than fileDocuments.
   xassert(m_documentList->numDocuments() >= m_editorList.count());
+
+  xassert((m_fileStatusRequestID == 0) ==
+          (m_fileStatusRequestEditor == nullptr));
+  xassert(m_fileStatusRequestEditor == nullptr ||
+          m_fileStatusRequestEditor == m_editor);
 
   // Check that 'm_listening' agrees with the document's observer list.
   xassert(m_listening == m_editor->hasObserver(this));
@@ -300,6 +316,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 void EditorWidget::setDocumentFile(NamedTextDocument *file)
 {
   this->stopListening();
+  this->cancelFileStatusRequestIfAny();
 
   m_editor = this->getOrMakeEditor(file);
 
@@ -317,7 +334,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
   this->redraw();
 
   // Then, issue a request to refresh those contents.
-  this->checkForDiskChanges();
+  this->requestFileStatus();
 }
 
 
@@ -361,11 +378,79 @@ EditorWidget::NamedTextDocumentEditor *
 }
 
 
-void EditorWidget::checkForDiskChanges()
+void EditorWidget::requestFileStatus()
 {
-  if (m_editorWindow->reloadCurrentDocumentIfChanged()) {
-    this->redraw();
+  if (!getDocument()->hasFilename()) {
+    return;
   }
+  if (getDocument()->m_modifiedOnDisk) {
+    // We already know it has been modified.
+    return;
+  }
+
+  cancelFileStatusRequestIfAny();
+
+  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  req->m_path = getDocument()->filename();
+  vfsConnections()->issueRequest(m_fileStatusRequestID, std::move(req));
+  m_fileStatusRequestEditor = m_editor;
+
+  TRACE("EditorWidget",
+    "requestFileStatus: request id=" << m_fileStatusRequestID);
+}
+
+
+void EditorWidget::cancelFileStatusRequestIfAny()
+{
+  if (m_fileStatusRequestID) {
+    TRACE("EditorWidget", "cancelRequest: id=" << m_fileStatusRequestID);
+    vfsConnections()->cancelRequest(m_fileStatusRequestID);
+    m_fileStatusRequestID = 0;
+    m_fileStatusRequestEditor = nullptr;
+  }
+}
+
+
+void EditorWidget::on_replyAvailable(
+  VFS_Connections::RequestID requestID) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (requestID == m_fileStatusRequestID) {
+    TRACE("EditorWidget", "on_replyAvailable: id=" << requestID);
+
+    xassert(m_editor == m_fileStatusRequestEditor);
+
+    m_fileStatusRequestID = 0;
+    m_fileStatusRequestEditor = nullptr;
+
+    std::unique_ptr<VFS_Message> genericReply(
+      vfsConnections()->takeReply(requestID));
+    VFS_FileStatusReply const *reply =
+      genericReply->asFileStatusReplyC();
+    if (reply->m_success &&
+        reply->m_fileKind == SMFileUtil::FK_REGULAR) {
+      if (getDocument()->m_lastFileTimestamp !=
+            reply->m_fileModificationTime) {
+        // Redraw the indicator of on-disk changes.
+        getDocument()->m_modifiedOnDisk = true;
+        this->redraw();
+      }
+    }
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWidget::on_vfsConnectionLost(string reason) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE("EditorWidget", "on_vfsConnectionLost: reason=" << reason);
+  cancelFileStatusRequestIfAny();
+
+  GENERIC_CATCH_END
 }
 
 
@@ -2192,7 +2277,7 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   // Refreshing when we gain focus interacts badly with the window that
   // pops up when a VFS operation is delayed.  Let's turn this off for
   // now.
-  //this->checkForDiskChanges();
+  //this->requestFileStatus();
 }
 
 
@@ -2200,6 +2285,12 @@ void EditorWidget::focusOutEvent(QFocusEvent *e)
 {
   TRACE("focus", "editor(" << (void*)this << "): focus out");
   QWidget::focusOutEvent(e);
+}
+
+
+VFS_Connections *EditorWidget::vfsConnections() const
+{
+  return m_editorWindow->vfsConnections();
 }
 
 
@@ -2371,7 +2462,7 @@ bool EditorWidget::editSafetyCheck()
     return true;
   }
 
-  if (!m_editor->m_namedDoc->hasStaleModificationTime()) {
+  if (!m_editor->m_namedDoc->m_modifiedOnDisk) {
     // No concurrent changes, safe to go ahead.
     return true;
   }
@@ -2388,14 +2479,9 @@ bool EditorWidget::editSafetyCheck()
   box.addButton(QMessageBox::Cancel);
   int ret = box.exec();
   if (ret == QMessageBox::Yes) {
-    // Suppress warning later when we save.  Also, if the edit we
-    // are about to do gets canceled for a different reason,
-    // leaving us in the "clean" state after all, this refresh will
-    // ensure we do not prompt the user a second time.
-    INITIATING_DOCUMENT_CHANGE();
-    m_editor->m_namedDoc->refreshModificationTime();
-
-    // Go ahead with the edit.
+    // Go ahead with the edit.  This will cause us to have unsaved
+    // changes, thus bypassing further warnings during editing, but
+    // there will still be a warning before saving.
     return true;
   }
   else {

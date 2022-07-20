@@ -62,6 +62,10 @@ public:      // data
   // always try to stat() the file before comparing its timestamp.
   int64_t m_lastFileTimestamp;
 
+  // If true, the on-disk contents have changed since the last time we
+  // saved or loaded the file.
+  bool m_modifiedOnDisk;
+
   // Title of the document.  Must be unique within the containing
   // NamedTextDocumentList.  This will usually be similar to the name,
   // but perhaps shortened so long as it remains unique.
@@ -122,6 +126,10 @@ public:      // funcs
 
   // Document name, process status, and unsaved changes.
   string nameWithStatusIndicators() const;
+
+  // Empty string, plus " *" if the file has been modified in memory,
+  // plus " [DISKMOD]" if the contents on disk have been modified.
+  string fileStatusString() const;
 
   // -------------------- file system interaction -------------------
   // Write to 'filename()'.  Requires 'hasFilename()'.  Updates the disk

@@ -781,7 +781,7 @@ void EditorWindow::fileSave()
     return;
   }
 
-  if (b->hasStaleModificationTime()) {
+  if (b->m_modifiedOnDisk) {
     QMessageBox box(this);
     box.setWindowTitle("File Changed");
     box.setText(toQString(stringb(
@@ -813,6 +813,7 @@ void EditorWindow::writeTheFile()
   if (reply) {
     if (reply->m_success) {
       file->m_lastFileTimestamp = reply->m_fileModificationTime;
+      file->m_modifiedOnDisk = false;
       file->noUnsavedChanges();
 
       // Remove the asterisk indicating unsaved changes.
@@ -1751,11 +1752,9 @@ void EditorWindow::editorViewChanged()
 
   // Window title.
   stringBuilder sb;
-  sb << file->m_title;
-  if (tde->unsavedChanges()) {
-    sb << " *";
-  }
-  sb << " - " << appName;
+  sb << file->m_title
+     << file->fileStatusString()
+     << " - " << appName;
   this->setWindowTitle(toQString(sb));
 
   // Trailing whitespace menu checkbox.

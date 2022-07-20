@@ -12,6 +12,7 @@
 #include "td-editor.h"                 // TextDocumentEditor
 #include "text-search.h"               // TextSearch
 #include "textcategory.h"              // TextCategory
+#include "vfs-connections.h"           // VFS_Connections
 
 // smqtutil
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
@@ -115,7 +116,24 @@ private:     // data
   // closed by another widget operating on the same document list.
   RCSerf<NamedTextDocumentList> m_documentList;
 
-  // ----- match highlight state -----
+  // ------ file modification query ------
+  // If not zero, the ID of the outstanding request for the file status
+  // of the document being edited.
+  VFS_Connections::RequestID m_fileStatusRequestID;
+
+  // The editor whose status was requested, if any.
+  //
+  // I am choosing to maintain this as an extra layer of safety in case
+  // somewhere I change 'm_editor' without canceling the request.
+  //
+  // Invariant: (m_fileStatusRequestID == 0) ==
+  //            (m_fileStatusRequestEditor == nullptr)
+  //
+  // Invariant: m_fileStatusRequestEditor == nullptr ||
+  //            m_fileStatusRequestEditor == m_editor
+  RCSerf<NamedTextDocumentEditor> m_fileStatusRequestEditor;
+
+  // ------ match highlight state ------
   // when nonempty, any buffer text matching this string will
   // be highlighted in the 'hit' style; match is carried out
   // under influence of 'hitTextFlags'
@@ -391,6 +409,9 @@ public:      // funcs
   void editGrepSource();
 
   // -------------------- interaction with files ------------------
+  // Get the connections interface object.
+  VFS_Connections *vfsConnections() const;
+
   // nonfocus listening
   void startListening();
   void stopListening();
@@ -402,9 +423,12 @@ public:      // funcs
   // Change which file this editor widget is editing.
   void setDocumentFile(NamedTextDocument *file);
 
-  // The editor has just acquired focus or switched to a new file.
-  // Check if the file has been edited while we were away.
-  void checkForDiskChanges();
+  // Asynchronously issue a request for the file status if the file
+  // being edited in order to get an updated file modification time.
+  void requestFileStatus();
+
+  // Cancel any outstanding file status request.
+  void cancelFileStatusRequestIfAny();
 
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
@@ -508,6 +532,10 @@ public Q_SLOTS:
   // slots to respond to scrollbars
   void scrollToLine(int line);
   void scrollToCol(int col);
+
+  // Handlers for VFS_Connections.
+  void on_replyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
+  void on_vfsConnectionLost(string reason) NOEXCEPT;
 
 Q_SIGNALS:
   // Emitted when some aspect of the document that is shown outside the

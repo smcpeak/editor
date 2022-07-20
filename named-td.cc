@@ -26,6 +26,7 @@ NamedTextDocument::NamedTextDocument()
     m_hasFilename(false),
     m_directory(),
     m_lastFileTimestamp(0),
+    m_modifiedOnDisk(false),
     m_title(),
     m_highlighter(NULL),
     m_highlightTrailingWhitespace(true)
@@ -105,10 +106,21 @@ string NamedTextDocument::nameWithStatusIndicators() const
   stringBuilder sb;
   sb << documentProcessStatusIndicator(this);
   sb << this->docName();
+  sb << fileStatusString();
+  return sb;
+}
+
+
+string NamedTextDocument::fileStatusString() const
+{
+  stringBuilder sb;
   if (this->unsavedChanges()) {
     sb << " *";
   }
-  return sb;
+  if (m_modifiedOnDisk) {
+    sb << " [DISKMOD]";
+  }
+  return sb.str();
 }
 
 
@@ -201,6 +213,7 @@ void NamedTextDocument::replaceFileAndStats(
 
   this->replaceWholeFile(contents);
   this->m_lastFileTimestamp = fileModificationTime;
+  this->m_modifiedOnDisk = false;
   this->setReadOnly(readOnly);
 }
 
