@@ -312,8 +312,12 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
   m_documentList->moveDocument(file, 0);
 
   this->startListening();
-  this->checkForDiskChanges();
+
+  // Draw the current contents.
   this->redraw();
+
+  // Then, issue a request to refresh those contents.
+  this->checkForDiskChanges();
 }
 
 
