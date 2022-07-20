@@ -1774,8 +1774,10 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 {
   // Check for fast-open conditions.
   {
+    SMFileUtil sfu;
     string fn(toString(filename));
-    if (currentDocument()->docName() != fn &&
+    if (!sfu.endsWithDirectorySeparator(fn) &&
+        currentDocument()->docName() != fn &&
         checkFileExistenceSynchronously(fn)) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
