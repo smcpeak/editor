@@ -925,7 +925,13 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
     // loop over segments with different styles
     while (x < lineWidth) {
-      xassert(printedCols < visibleCols);
+      if (!( printedCols < visibleCols )) {
+        // This happens if we are asked to paint before the visible
+        // region calculation runs.  That is not supposed to happen
+        // normally, but failing an assertion in the paint routine
+        // causes trouble, and I can easily cope with it here.
+        break;
+      }
 
       // set style
       if (category.category != currentCategory) {
@@ -940,7 +946,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         if (printedCols >= visibleLineChars) {
           // we've printed all the interesting characters on this line
           // because we're past the end of the line's chars, and we're
-          // one the last style run; for efficiency of communication
+          // on the last style run; for efficiency of communication
           // with the X server, render the remainder of this line with
           // a single rectangle
           paint.eraseRect(x,0, lineWidth-x, fullLineHeight);
