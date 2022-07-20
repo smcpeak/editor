@@ -186,6 +186,8 @@ bool TextDocumentEditor::cursorAtEnd() const
 
 void TextDocumentEditor::setCursor(TextLCoord c)
 {
+  TRACE("TextDocumentEditor", "setCursor(" << c << ")");
+
   xassert(c.nonNegative());
   m_cursor = c;
 }
@@ -307,6 +309,10 @@ void TextDocumentEditor::setFirstVisible(TextLCoord fv)
   m_firstVisible = fv;
   m_lastVisible.m_line = fv.m_line + h;
   m_lastVisible.m_column = fv.m_column + w;
+
+  TRACE("TextDocumentEditor",
+    "setFirstVisible: fv=" << m_firstVisible <<
+    " lv=" << m_lastVisible);
 }
 
 
@@ -436,6 +442,10 @@ void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col
     m_cursor.m_column = col;
   }
   xassert(m_cursor.m_column >= 0);
+
+  TRACE("TextDocumentEditor",
+    "moveCursor(" << relLine << ", " << line << ", " <<
+    relCol << ", " << col << "): m_cursor = " << m_cursor);
 }
 
 
