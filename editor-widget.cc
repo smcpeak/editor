@@ -47,9 +47,6 @@
 #include <QPainter>
 #include <QPixmap>
 
-// libc
-#include <stdio.h>                     // printf, for debugging
-
 
 // The basic rule for using this is it should be present in any function
 // that calls a non-const method of TextDocumentEditor.  This includes
@@ -746,17 +743,6 @@ void EditorWidget::resizeEvent(QResizeEvent *r)
 // buffering by a bug in XFree86 (see redraw()).
 void EditorWidget::paintEvent(QPaintEvent *ev)
 {
-  // testing... it turns out this flag is not accurate, because
-  // when the PaintEvent is dispatched a new PaintEvent object
-  // is created, and that one doesn't have the 'erase' flag set
-  // properly, even though in fact no erasing was done
-  #if 0
-  if (ev->erased()) {
-    printf("erased! noerase:%d\n",
-           (int)testWFlags(WRepaintNoErase));
-  }
-  #endif // 0/1
-
   try {
     // draw on the pixmap
     updateFrame(ev);
@@ -1827,9 +1813,6 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
 
   int newLine = y/lineHeight() + this->firstVisibleLine();
   int newCol = x/m_fontWidth + this->firstVisibleCol();
-
-  //printf("click: (%d,%d)     goto line %d, col %d\n",
-  //       x, y, newLine, newCol);
 
   cursorTo(TextLCoord(newLine, newCol));
 
