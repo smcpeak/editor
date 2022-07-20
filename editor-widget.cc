@@ -386,9 +386,7 @@ TextDocumentEditor *EditorWidget::getDocumentEditor()
 
 string EditorWidget::getDocumentDirectory() const
 {
-  SMFileUtil sfu;
-  NamedTextDocument *doc = this->getDocument();
-  return doc->directory();
+  return this->getDocument()->directory();
 }
 
 
