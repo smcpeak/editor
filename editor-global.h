@@ -61,10 +61,10 @@ public:       // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
+private:     // data
   // Connections to local and remote file systems.
   VFS_Connections m_vfsConnections;
 
-private:     // data
   // Running child processes.
   ObjList<ProcessWatcher> m_processes;
 
@@ -98,6 +98,8 @@ public:       // funcs
 
   // To run the app, use the 'exec()' method, inherited
   // from QApplication.
+
+  VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.

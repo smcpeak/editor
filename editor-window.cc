@@ -197,6 +197,12 @@ EditorWindow::~EditorWindow()
 }
 
 
+VFS_Connections *EditorWindow::vfsConnections() const
+{
+  return m_globalState->vfsConnections();
+}
+
+
 // Create a menu action.
 //
 // This function exists partly to work around an Eclipse CDT bug, as it
@@ -540,7 +546,7 @@ string EditorWindow::fileChooseDialog(string const &origDir,
   if (dialogKind == FCDK_FILENAME_INPUT) {
     FilenameInputDialog dialog(
       &(m_globalState->m_filenameInputDialogHistory),
-      &(m_globalState->m_vfsConnections),
+      vfsConnections(),
       this);
     dialog.setSaveAs(saveAs);
     QString choice =
@@ -707,7 +713,7 @@ std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
   std::unique_ptr<REPLY_TYPE> typedReply;
 
   // Issue the request.
-  VFS_QuerySync querySync(&(m_globalState->m_vfsConnections), this);
+  VFS_QuerySync querySync(vfsConnections(), this);
   std::unique_ptr<VFS_Message> genericReply;
   string connLostMessage;
   if (!querySync.issueRequestSynchronously(
@@ -1795,7 +1801,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
   // Prompt to confirm.
   FilenameInputDialog dialog(
     &(m_globalState->m_filenameInputDialogHistory),
-    &(m_globalState->m_vfsConnections),
+    vfsConnections(),
     this);
   QString confirmedFilename =
     dialog.runDialog(&(m_globalState->m_documentList), filename);

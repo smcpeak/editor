@@ -9,6 +9,7 @@
 // editor
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
+#include "vfs-connections-fwd.h"       // VFS_Connections
 #include "vfs-msg-fwd.h"               // VFS_Message
 
 // smqtutil
@@ -132,6 +133,9 @@ public:      // funcs
   EditorWindow(EditorGlobalState *state, NamedTextDocument *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
+
+  // Get VFS query object.
+  VFS_Connections *vfsConnections() const;
 
   // open and begin editing a particular file
   void fileOpenFile(string const &fname);
