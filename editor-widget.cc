@@ -2187,7 +2187,10 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   TRACE("focus", "editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
 
-  this->checkForDiskChanges();
+  // Refreshing when we gain focus interacts badly with the window that
+  // pops up when a VFS operation is delayed.  Let's turn this off for
+  // now.
+  //this->checkForDiskChanges();
 }
 
 
