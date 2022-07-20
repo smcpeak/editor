@@ -132,10 +132,6 @@ public:      // funcs
   string fileStatusString() const;
 
   // -------------------- file system interaction -------------------
-  // Write to 'filename()'.  Requires 'hasFilename()'.  Updates the disk
-  // modification time.  May throw.
-  void writeFile();
-
   // Get the modification time of filename() without consulting
   // or modifying 'lastFileTimestamp'.  Return false if it cannot
   // be obtained.

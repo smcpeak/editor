@@ -124,20 +124,6 @@ string NamedTextDocument::fileStatusString() const
 }
 
 
-void NamedTextDocument::writeFile()
-{
-  xassert(this->hasFilename());
-
-  SMFileUtil sfu;
-  std::vector<unsigned char> bytes(this->getWholeFile());
-
-  sfu.writeFile(this->m_docName, bytes);
-
-  this->noUnsavedChanges();
-  this->refreshModificationTime();
-}
-
-
 bool NamedTextDocument::getDiskModificationTime(int64_t &modTime) const
 {
   bool ret = getFileModificationTime(this->m_docName.c_str(), modTime);

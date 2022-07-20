@@ -104,6 +104,24 @@ static void testSetDocumentProcessStatus()
 }
 
 
+// Write 'doc' to its file name.  This approximates what the editor app
+// does when writing a file.
+static void writeFile(NamedTextDocument &doc)
+{
+  xassert(doc.hasFilename());
+  string fname = doc.filename();
+
+  SMFileUtil sfu;
+  std::vector<unsigned char> bytes(doc.getWholeFile());
+
+  sfu.writeFile(fname, bytes);
+
+  doc.noUnsavedChanges();
+
+  (void)getFileModificationTime(fname.c_str(), doc.m_lastFileTimestamp);
+}
+
+
 // Make sure we can handle using 'undo' to go backward past the point
 // in history corresponding to file contents, then make a change.
 static void testUndoPastSavePoint()
@@ -114,7 +132,7 @@ static void testUndoPastSavePoint()
   doc.appendString("x");
   doc.appendString("x");
   xassert(doc.unsavedChanges());
-  doc.writeFile();
+  writeFile(doc);
   xassert(!doc.unsavedChanges());
   doc.selfCheck();
 
