@@ -4,11 +4,15 @@
 #ifndef NAMED_TD_H
 #define NAMED_TD_H
 
+// editor
+#include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
 #include "td.h"                        // TextDocument
 
+// smbase
 #include "str.h"                       // string
 
+// libc
 #include <stdint.h>                    // int64_t
 
 
@@ -34,23 +38,9 @@ public:      // static data
   static int s_objectCount;
 
 private:     // data
-  // Name of document.  This is a filename if 'm_hasFilename' is true.
-  // Otherwise, it is a human-readable string describing the origin of
-  // the content.  It must be unique within the list of
-  // NamedTextDocuments in its containing NamedTextDocumentList.  It
-  // must not be empty.
-  string m_docName;
-
-  // When true, 'm_docName' is the name of a file on disk.
-  bool m_hasFilename;
-
-  // Directory associated with this document.  For a file, this is the
-  // directory containing the file.  For process output, it is the
-  // working directory of the process.  For others, it's somewhat
-  // arbitrary, with the working directory of the editor itself acting
-  // as the final fallback.  It must always end with a path separator
-  // character, and it only uses '/' as the separator, even on Windows.
-  string m_directory;
+  // File name, etc.  Unique within the containing
+  // NamedTextDocumentList.
+  DocumentName m_documentName;
 
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
@@ -87,9 +77,6 @@ public:      // data
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
 
-private:     // funcs
-  void setDirectory(string const &dir);
-
 public:      // funcs
   // Create an anonymous document.  The caller must call either
   // 'setFilename' or 'setNonFileName' before adding it to a document
@@ -102,28 +89,18 @@ public:      // funcs
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
   // ----------------------------- names ----------------------------
-  // Get the document's unique (within its NamedTextDocumentList) name.
-  string docName() const               { return m_docName; }
+  // See comments on the corresponding methods of DocumentName.
+  string docName() const               { return m_documentName.docName(); }
+  bool hasFilename() const             { return m_documentName.hasFilename(); }
+  string filename() const              { return m_documentName.filename(); }
+  string directory() const             { return m_documentName.directory(); }
 
-  // True if the document's name is a file name.
-  bool hasFilename() const             { return m_hasFilename; }
+  void setFilename(string const &filename)
+    { m_documentName.setFilename(filename); }
+  void setNonFileName(string const &name, string const &dir)
+    { m_documentName.setNonFileName(name, dir); }
 
-  // Get the filename for this document.  Requires 'hasFilename()'.
-  string filename() const;
-
-  // Set 'm_docName' to be 'filename', and 'm_hasFilename' to true.  It
-  // is the caller's responsibility to ensure uniqueness within the
-  // containing NamedTextDocumentList.  This also sets 'm_directory' to
-  // the directory of the file.
-  void setFilename(string const &filename);
-
-  // Set 'm_docName' to 'name' and 'm_hasFilename' to false.  The name
-  // still has to be unique.  Sets 'm_directory' to 'dir'.
-  void setNonFileName(string const &name, string const &dir);
-
-  // Get the directory associated with the document.
-  string directory() const             { return m_directory; }
-
+  // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.
   string nameWithStatusIndicators() const;
 

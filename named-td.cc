@@ -18,9 +18,7 @@ CHECK_OBJECT_COUNT(NamedTextDocument);
 
 NamedTextDocument::NamedTextDocument()
   : TextDocument(),
-    m_docName(),
-    m_hasFilename(false),
-    m_directory(),
+    m_documentName(),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
@@ -49,41 +47,6 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 }
 
 
-string NamedTextDocument::filename() const
-{
-  xassert(this->hasFilename());
-  return m_docName;
-}
-
-
-void NamedTextDocument::setDirectory(string const &dir)
-{
-  SMFileUtil sfu;
-  m_directory = sfu.ensureEndsWithDirectorySeparator(
-    sfu.normalizePathSeparators(dir));
-}
-
-
-void NamedTextDocument::setFilename(string const &filename)
-{
-  m_docName = filename;
-  m_hasFilename = true;
-
-  string dir, base;
-  SMFileUtil().splitPath(dir, base, filename);
-  this->setDirectory(dir);
-}
-
-
-void NamedTextDocument::setNonFileName(string const &name, string const &dir)
-{
-  m_docName = name;
-  m_hasFilename = false;
-
-  this->setDirectory(dir);
-}
-
-
 static char const *documentProcessStatusIndicator(
   NamedTextDocument const *doc)
 {
@@ -101,7 +64,7 @@ string NamedTextDocument::nameWithStatusIndicators() const
 {
   stringBuilder sb;
   sb << documentProcessStatusIndicator(this);
-  sb << this->docName();
+  sb << docName();
   sb << fileStatusString();
   return sb;
 }
@@ -126,7 +89,7 @@ void NamedTextDocument::replaceFileAndStats(
   bool readOnly)
 {
   TRACE("NamedTextDocument",
-    "replaceFileAndStats: docName=" << m_docName <<
+    "replaceFileAndStats: docName=" << docName() <<
     " contents.size()=" << contents.size() <<
     " modTime=" << fileModificationTime <<
     " readOnly=" << readOnly);

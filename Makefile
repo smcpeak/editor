@@ -220,6 +220,7 @@ $(eval $(call RUN_TEST_PROG,test-command-runner))
 
 
 # ---------------------- test-named-td ----------------------
+EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += named-td.o
 
 TEST_NAMED_TD_OBJS := $(EDITOR_OBJS)
@@ -451,6 +452,10 @@ editor-window.o: keybindings.doc.gen.h
 
 TOCLEAN += keybindings.doc.gen.*
 
+# The following list of object files is added to what has been set
+# above.  Above, modules are pulled in as needed in order to build
+# various test programs.  What's left over is the modules that are not
+# part of any test program.
 EDITOR_OBJS += diff-hilite.o
 EDITOR_OBJS += editor-global.o
 EDITOR_OBJS += editor-global.moc.o
