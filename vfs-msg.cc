@@ -24,6 +24,12 @@ VFS_Message::~VFS_Message()
 {}
 
 
+string VFS_Message::description() const
+{
+  return toString(messageType());
+}
+
+
 void VFS_Message::serialize(Flatten &flat) const
 {
   xassert(flat.writing());
@@ -156,6 +162,20 @@ VFS_FileStatusReply::~VFS_FileStatusReply()
 {}
 
 
+string VFS_FileStatusReply::description() const
+{
+  stringBuilder sb;
+  sb << VFS_PathReply::description();
+  sb << " dirName=\"" << m_dirName
+     << "\" fileName=\"" << m_fileName
+     << "\" dirExists=" << m_dirExists
+     << " fileKind=" << toString(m_fileKind)
+     << " modTime=" << m_fileModificationTime
+     ;
+  return sb.str();
+}
+
+
 void VFS_FileStatusReply::xfer(Flatten &flat)
 {
   VFS_PathReply::xfer(flat);
@@ -177,6 +197,12 @@ VFS_PathRequest::VFS_PathRequest()
 
 VFS_PathRequest::~VFS_PathRequest()
 {}
+
+
+string VFS_PathRequest::description() const
+{
+  return stringb(toString(messageType()) << " for \"" << m_path << "\"");
+}
 
 
 void VFS_PathRequest::xfer(Flatten &flat)
@@ -207,6 +233,20 @@ void VFS_PathReply::setFailureReason(xSysError::Reason reasonCode,
 
   static_assert(xSysError::NUM_REASONS == 14,
     "Must bump VFS version number if set of reason codes change.");
+}
+
+
+string VFS_PathReply::description() const
+{
+  stringBuilder sb;
+  sb << toString(messageType()) << ": ";
+  if (m_success) {
+    sb << "success";
+  }
+  else {
+    sb << "failure=\"" << m_failureReasonString << "\"";
+  }
+  return sb.str();
 }
 
 

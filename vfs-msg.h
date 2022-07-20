@@ -65,6 +65,11 @@ public:      // methods
   // Which kind of message this is.
   virtual VFS_MessageType messageType() const = 0;
 
+  // Description of the message, partly for debugging, but also used to
+  // indicate what the application is waiting for in some cases.  The
+  // default implementation is 'toString(messageType())'.
+  virtual string description() const;
+
   // Serialize this object's message type into 'flat'.
   void serialize(Flatten &flat) const;
 
@@ -141,6 +146,7 @@ public:      // methods
   virtual ~VFS_PathRequest() override;
 
   // VFS_Message methods.
+  virtual string description() const override;
   virtual void xfer(Flatten &flat) override;
 };
 
@@ -168,6 +174,7 @@ public:      // methods
                         string const &reasonString);
 
   // VFS_Message methods.
+  virtual string description() const override;
   virtual void xfer(Flatten &flat) override;
 };
 
@@ -214,6 +221,7 @@ public:      // methods
   // VFS_Message methods.
   virtual VFS_MessageType messageType() const override
     { return VFS_MT_FileStatusReply; }
+  virtual string description() const override;
   virtual void xfer(Flatten &flat) override;
 };
 
