@@ -756,6 +756,16 @@ std::unique_ptr<VFS_FileStatusReply> EditorWindow::getFileStatusSynchronously(
 }
 
 
+bool EditorWindow::checkFileExistenceSynchronously(string const &fname)
+{
+  std::unique_ptr<VFS_FileStatusReply> reply(
+    getFileStatusSynchronously(fname));
+  return reply &&
+         reply->m_success &&
+         reply->m_fileKind == SMFileUtil::FK_REGULAR;
+}
+
+
 void EditorWindow::fileSave()
 {
   NamedTextDocument *b = this->currentDocument();
@@ -1762,10 +1772,9 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 {
   // Check for fast-open conditions.
   {
-    SMFileUtil sfu;
     string fn(toString(filename));
-    if (sfu.absoluteFileExists(fn) &&
-        currentDocument()->docName() != fn) {
+    if (currentDocument()->docName() != fn &&
+        checkFileExistenceSynchronously(fn)) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
       this->fileOpenFile(fn);

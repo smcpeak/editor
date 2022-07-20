@@ -117,6 +117,9 @@ private:     // funcs
   std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
     string const &fname);
 
+  // Return true if 'fname' exists, blocking during the check.
+  bool checkFileExistenceSynchronously(string const &fname);
+
   void complain(char const *msg);
 
   void printUnhandled(xBase const &x)
