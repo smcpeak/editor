@@ -206,8 +206,8 @@ public:      // funcs
   // -------------------------- undo/redo --------------------------
   // Group actions with HE_group.
   //
-  // NOTE: 'readFile' clears the undo group stack, even if there are
-  // open groups.  When that happens 'endUndoGroup' silently does
+  // NOTE: 'replaceWholeFile' clears the undo group stack, even if there
+  // are open groups.  When that happens, 'endUndoGroup' silently does
   // nothing.
   void beginUndoGroup();
   void endUndoGroup();
