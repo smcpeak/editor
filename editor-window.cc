@@ -1006,6 +1006,7 @@ void EditorWindow::fileReload() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   reloadCurrentDocument();
+  update();
 
   GENERIC_CATCH_END
 }
