@@ -36,17 +36,16 @@
 #include "xassert.h"                   // xassert
 
 // Qt
-#include <qapplication.h>              // QApplication
-#include <qclipboard.h>                // QClipboard
-#include <qfontmetrics.h>              // QFontMetrics
-#include <qlabel.h>                    // QLabel
-#include <qmessagebox.h>               // QMessageBox
-#include <qpainter.h>                  // QPainter
-#include <qpixmap.h>                   // QPixmap
-
+#include <QApplication>
+#include <QClipboard>
+#include <QFontMetrics>
 #include <QImage>
 #include <QKeyEvent>
+#include <QLabel>
+#include <QMessageBox>
 #include <QPaintEvent>
+#include <QPainter>
+#include <QPixmap>
 
 // libc
 #include <stdio.h>                     // printf, for debugging
