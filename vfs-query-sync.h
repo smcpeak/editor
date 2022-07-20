@@ -8,6 +8,7 @@
 
 #include <QObject>
 #include <QEventLoop>
+#include <QTimer>
 
 class QWidget;
 
@@ -40,6 +41,9 @@ private:     // data
   // Event loop to allow waiting.
   QEventLoop m_eventLoop;
 
+  // Timer object to wake up after a certain delay.
+  QTimer m_timer;
+
 public:      // methods
   // Create an object to issue queries to 'vfsConnections', and if
   // needed, pop up a modal window on top of 'parentWidget'.
@@ -59,6 +63,12 @@ protected Q_SLOTS:
   // Handlers for VFS_Connections.
   void on_replyAvailable(RequestID requestID) NOEXCEPT;
   void on_vfsConnectionLost(string reason) NOEXCEPT;
+
+  // Handlers for QTimer.
+  void on_timeout() NOEXCEPT;
+
+  // Handlers for QProgressDialog.
+  void on_canceled() NOEXCEPT;
 };
 
 
