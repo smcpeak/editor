@@ -927,7 +927,9 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
     // Query the file modification time.
     std::unique_ptr<VFS_FileStatusReply> reply(
       getFileStatusSynchronously(doc->filename()));
-
+    if (!reply) {
+      return false;    // Canceled.
+    }
     if (!stillCurrentDocument(doc)) {
       return false;
     }
