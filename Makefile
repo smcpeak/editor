@@ -302,6 +302,7 @@ all: editor-fs-server.exe
 
 
 # ----------------------- editor-fs-server-test ------------------------
+EDITOR_OBJS += host-name.o
 EDITOR_OBJS += vfs-msg.o
 EDITOR_OBJS += vfs-query.o
 EDITOR_OBJS += vfs-query.moc.o

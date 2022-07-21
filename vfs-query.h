@@ -8,6 +8,7 @@
 
 // editor
 #include "command-runner.h"            // CommandRunner
+#include "host-name.h"                 // HostName
 #include "vfs-msg.h"                   // VFS_Message
 
 // smbase
@@ -53,8 +54,10 @@ private:     // data
   // Current state.
   State m_state;
 
-  // Host being accessed, or the empty string to mean it is local.
-  string m_hostname;
+  // Host being accessed (which could be local).
+  //
+  // TODO: Rename to 'm_hostName'.
+  HostName m_hostname;
 
   // Runner connected to the server process.
   CommandRunner m_commandRunner;
@@ -111,13 +114,14 @@ public:      // methods
   // Requires: state() == S_CREATED
   //
   // Ensures: state() == S_CONNECTING
-  void connect(string hostname);
+  void connect(HostName const &hostname);
 
-  void connectLocal() { connect(""); }
+  void connectLocal() { connect(HostName::asLocal()); }
 
-  // Get the host we are connecting to, or empty string to mean the
-  // connection is local.
-  string getHostname() const;
+  // Get the host we are connecting to.
+  //
+  // TODO: Rename this to 'getHostName'.
+  HostName getHostname() const;
 
   // Send 'msg' to the server for processing.
   //

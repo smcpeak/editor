@@ -49,7 +49,7 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 }
 
 
-void FSServerTest::runTests(string hostname)
+void FSServerTest::runTests(HostName const &hostname)
 {
   TRACE("FSServerTest", "runTests");
 
@@ -276,11 +276,11 @@ int main(int argc, char **argv)
   try {
     FSServerTest fsServerTest(argc, argv);
 
-    string hostname;
+    HostName hostname(HostName::asLocal());
 
     QStringList args = fsServerTest.arguments();
     if (args.size() >= 2) {
-      hostname = toString(args.at(1));
+      hostname = HostName::asSSH(toString(args.at(1)));
       cout << "Running test with hostname: " << hostname << endl;
     }
 

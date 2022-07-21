@@ -5,6 +5,7 @@
 #define EDITOR_EDITOR_FS_SERVER_TEST_H
 
 // editor
+#include "host-name.h"                 // HostName
 #include "vfs-query.h"                 // FileSystemQuery
 #include "vfs-msg.h"                   // VFS_FileStatusReply
 
@@ -39,7 +40,7 @@ public:      // methods
   std::unique_ptr<VFS_Message> getNextReply();
 
   // Run the sequence of tests.
-  void runTests(string hostname);
+  void runTests(HostName const &hostname);
 
   // Run tests using FileStatusRequest.
   void runPathTests();
