@@ -279,9 +279,9 @@ NamedTextDocument *EditorGlobalState::createNewFile(string const &dir)
 }
 
 
-bool EditorGlobalState::hasFileWithName(string const &name) const
+bool EditorGlobalState::hasFileWithName(DocumentName const &docName) const
 {
-  return m_documentList.findDocumentByNameC(name) != NULL;
+  return m_documentList.findDocumentByNameC(docName) != NULL;
 }
 
 
@@ -291,9 +291,9 @@ bool EditorGlobalState::hasFileWithTitle(string const &title) const
 }
 
 
-string EditorGlobalState::uniqueTitleFor(string const &filename)
+string EditorGlobalState::uniqueTitleFor(DocumentName const &docName) const
 {
-  return m_documentList.computeUniqueTitle(filename);
+  return m_documentList.computeUniqueTitle(docName);
 }
 
 
@@ -329,15 +329,17 @@ NamedTextDocument *EditorGlobalState::getNewCommandOutputDocument(
   string dir = SMFileUtil().stripTrailingDirectorySeparator(toString(origDir));
   string base = stringb(dir << "$ " << toString(command));
   for (int n = 1; n < 100; n++) {
-    string name = (n==1? base : stringb(base << " (" << n << ')'));
+    DocumentName docName;
+    docName.setNonFileName(
+      (n==1? base : stringb(base << " (" << n << ')')), dir);
 
-    NamedTextDocument *fileDoc = m_documentList.findDocumentByName(name);
+    NamedTextDocument *fileDoc = m_documentList.findDocumentByName(docName);
     if (!fileDoc) {
       // Nothing with this name, let's use it to make a new one.
-      TRACE("process", "making new document: " << name);
+      TRACE("process", "making new document: " << docName);
       NamedTextDocument *newDoc = new NamedTextDocument();
-      newDoc->setNonFileName(name, dir);
-      newDoc->m_title = name;
+      newDoc->setDocumentName(docName);
+      newDoc->m_title = uniqueTitleFor(docName);
       trackNewDocumentFile(newDoc);
       return newDoc;
     }
@@ -352,7 +354,7 @@ NamedTextDocument *EditorGlobalState::getNewCommandOutputDocument(
     xassert(!watcher);
 
     // This is a left-over document from a previous run.  Re-use it.
-    TRACE("process", "reusing existing document: " << name);
+    TRACE("process", "reusing existing document: " << docName);
     fileDoc->clearContentsAndHistory();
     return fileDoc;
   }
@@ -407,11 +409,11 @@ string EditorGlobalState::killCommand(NamedTextDocument *doc)
       DEV_WARNING("running process with no watcher");
       return stringb(
         "BUG: I lost track of the process that is or was producing the "
-        "document \"" << doc->docName() << "\"!  This should not happen.");
+        "document " << doc->documentName() << "!  This should not happen.");
     }
     else {
-      return stringb("Process \"" << doc->docName() <<
-                     "\" died before I could kill it.");
+      return stringb("Process " << doc->documentName() <<
+                     " died before I could kill it.");
     }
   }
   else {

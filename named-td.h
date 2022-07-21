@@ -89,12 +89,18 @@ public:      // funcs
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
   // ----------------------------- names ----------------------------
+  DocumentName const &documentName() const
+    { return m_documentName; }
+  void setDocumentName(DocumentName const &docName)
+    { m_documentName = docName; }
+
   // See comments on the corresponding methods of DocumentName.
-  string docName() const               { return m_documentName.docName(); }
+  string resourceName() const          { return m_documentName.resourceName(); }
   bool hasFilename() const             { return m_documentName.hasFilename(); }
   string filename() const              { return m_documentName.filename(); }
   string directory() const             { return m_documentName.directory(); }
 
+  // TODO: These should be removed.
   void setFilename(string const &filename)
     { m_documentName.setFilename(filename); }
   void setNonFileName(string const &name, string const &dir)

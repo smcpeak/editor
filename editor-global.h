@@ -105,15 +105,15 @@ public:       // funcs
   // and return it.
   NamedTextDocument *createNewFile(string const &dir);
 
-  // Return true if any file document has the given file name.
-  bool hasFileWithName(string const &fname) const;
+  // Return true if any file document has the given name.
+  bool hasFileWithName(DocumentName const &docName) const;
 
   // Return true if any file document has the given title.
   bool hasFileWithTitle(string const &title) const;
 
   // Calculate a minimal suffix of path components in 'filename' that
   // forms a title not shared by any open file.
-  string uniqueTitleFor(string const &filename);
+  string uniqueTitleFor(DocumentName const &docName) const;
 
   // Open a new editor window.
   EditorWindow *createNewWindow(NamedTextDocument *initFile);

@@ -2454,7 +2454,7 @@ bool EditorWidget::editSafetyCheck()
   box.setObjectName("editSafetyCheck_box");
   box.setWindowTitle("File Changed");
   box.setText(toQString(stringb(
-    "The document \"" << m_editor->m_namedDoc->docName() << "\" has changed on disk.  "
+    "The document " << m_editor->m_namedDoc->documentName() << " has changed on disk.  "
     "Do you want to proceed with editing the in-memory contents anyway, "
     "overwriting the on-disk changes when you later save?")));
   box.addButton(QMessageBox::Yes);
@@ -2479,7 +2479,7 @@ bool EditorWidget::promptOverrideReadOnly()
   box.setObjectName("promptOverrideReadOnly_box");
   box.setWindowTitle("Read-only Document");
   box.setText(toQString(stringb(
-    "The document " << quoted(m_editor->m_namedDoc->docName()) <<
+    "The document " << m_editor->m_namedDoc->documentName() <<
     " is marked read-only.  Do you want to clear the read-only "
     "flag and edit it anyway?")));
   box.addButton(QMessageBox::Yes);
@@ -2511,12 +2511,12 @@ string EditorWidget::eventReplayQuery(string const &state)
   else if (state == "hasUnsavedChanges") {
     return string(m_editor->unsavedChanges()? "true" : "false");
   }
-  else if (state == "documentName") {
-    return m_editor->m_namedDoc->docName();
+  else if (state == "documentName") { // TODO: Rename
+    return m_editor->m_namedDoc->resourceName();
   }
   else if (state == "documentFileName") {
     // Strip path info.
-    return SMFileUtil().splitPathBase(m_editor->m_namedDoc->docName());
+    return SMFileUtil().splitPathBase(m_editor->m_namedDoc->filename());
   }
   else if (state == "documentText") {
     return m_editor->getTextForLRangeString(m_editor->documentLRange());

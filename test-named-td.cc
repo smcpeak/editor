@@ -22,13 +22,13 @@ static void testWhenUntitledExists()
 
   // Create a file with that name.
   bool created = false;
-  if (!fileOrDirectoryExists(file.docName().c_str())){
-    ofstream of(file.docName().c_str());
+  if (!fileOrDirectoryExists(file.resourceName().c_str())) {
+    ofstream of(file.resourceName().c_str());
     created = true;
   }
 
   if (created) {
-    (void)removeFile(file.docName().c_str());
+    (void)removeFile(file.resourceName().c_str());
   }
 }
 

@@ -238,7 +238,7 @@ NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
       int r = idx.row();
       if (0 <= r && r < m_docList->numDocuments()) {
         NamedTextDocument *doc = m_docList->getDocumentAt(r);
-        TRACE("OpenFilesDialog", "runDialog: returning: " << doc->docName());
+        TRACE("OpenFilesDialog", "runDialog: returning: " << doc->documentName());
         return doc;
       }
     }
@@ -257,7 +257,7 @@ static string filenamePathBase(NamedTextDocument const *doc)
   }
   else {
     // Does not have a file name, return complete name.
-    return doc->docName();
+    return doc->resourceName();
   }
 }
 
@@ -351,7 +351,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
         int r = index.row();
         if (0 <= r && r < m_docList->numDocuments()) {
           NamedTextDocument *doc = m_docList->getDocumentAt(r);
-          TRACE("OpenFilesDialog", "  toClose: " << doc->docName());
+          TRACE("OpenFilesDialog", "  toClose: " << doc->documentName());
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
             someHaveUnsavedChanges = true;
@@ -390,7 +390,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
   // Close the files.
   for (int i=0; i < docsToClose.length(); i++) {
     NamedTextDocument *doc = docsToClose[i];
-    TRACE("OpenFilesDialog", "  removeFile: " << doc->docName());
+    TRACE("OpenFilesDialog", "  removeFile: " << doc->documentName());
     m_docList->removeDocument(doc);
     delete doc;
   }

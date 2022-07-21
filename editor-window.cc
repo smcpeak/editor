@@ -468,7 +468,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   }
 
   // This handles both "foo.diff" and "git diff".
-  if (suffixEquals(file->docName(), "diff")) {
+  if (suffixEquals(file->resourceName(), "diff")) {
     file->m_highlighter = new DiffHighlighter();
 
     // Diff output has lots of lines that are not empty and have
@@ -642,24 +642,28 @@ void EditorWindow::fileOpenQtDialog()
                            false /*saveAs*/, FCDK_QT));
 }
 
-void EditorWindow::fileOpenFile(string const &name)
+void EditorWindow::fileOpenFile(string const &filename)
 {
-  if (name.empty()) {
+  if (filename.empty()) {
     // Dialog was canceled.
     return;
   }
 
-  TRACE("fileOpen", "fileOpenFile: " << name);
+  TRACE("fileOpen", "fileOpenFile: " << filename);
+
+  DocumentName docName;
+  docName.setFilename(filename);
 
   // If this file is already open, switch to it.
-  NamedTextDocument *file = m_globalState->m_documentList.findDocumentByName(name);
+  NamedTextDocument *file =
+    m_globalState->m_documentList.findDocumentByName(docName);
   if (file) {
     this->setDocumentFile(file);
     return;
   }
 
   // Load the file contents.
-  std::unique_ptr<VFS_ReadFileReply> rfr(readFileSynchronously(name));
+  std::unique_ptr<VFS_ReadFileReply> rfr(readFileSynchronously(filename));
   if (!rfr) {
     // Either the request was canceled or an error has already been
     // reported.
@@ -667,8 +671,8 @@ void EditorWindow::fileOpenFile(string const &name)
   }
 
   file = new NamedTextDocument();
-  file->setFilename(name);
-  file->m_title = this->m_globalState->uniqueTitleFor(file->filename());
+  file->setDocumentName(docName);
+  file->m_title = m_globalState->uniqueTitleFor(docName);
 
   if (rfr->m_success) {
     file->replaceFileAndStats(rfr->m_contents,
@@ -785,7 +789,7 @@ void EditorWindow::fileSave()
     QMessageBox box(this);
     box.setWindowTitle("File Changed");
     box.setText(toQString(stringb(
-      "The file \"" << b->docName() << "\" has changed on disk.  "
+      "The file " << b->documentName() << " has changed on disk.  "
       "If you save, those changes will be overwritten by the text "
       "in the editor's memory.  Save anyway?")));
     box.addButton(QMessageBox::Save);
@@ -823,8 +827,8 @@ void EditorWindow::writeTheFile()
       // There is not a severity between "warning" and "critical",
       // and "critical" is a bit obnoxious.
       QMessageBox::warning(this, "Write Error", qstringb(
-        "Failed to save file \"" << file->docName() <<
-        "\": " << reply->m_failureReasonString));
+        "Failed to save file " << file->documentName() <<
+        ": " << reply->m_failureReasonString));
     }
   }
 }
@@ -870,11 +874,13 @@ void EditorWindow::fileSaveAs()
       return;
     }
 
-    if (this->m_globalState->hasFileWithName(chosenFilename)) {
+    DocumentName docName;
+    docName.setFilename(chosenFilename);
+
+    if (this->m_globalState->hasFileWithName(docName)) {
       this->complain(stringb(
-        "There is already an open file with name \"" <<
-        chosenFilename <<
-        "\".  Choose a different name to save as."));
+        "There is already an open file with name " <<
+        docName << ".  Choose a different name to save as."));
 
       // Discard name portion, but keep directory.
       dir = SMFileUtil().splitPathDir(chosenFilename);
@@ -882,14 +888,14 @@ void EditorWindow::fileSaveAs()
       // Now prompt again.
     }
     else {
-      fileDoc->setFilename(chosenFilename);
-      fileDoc->m_title = this->m_globalState->uniqueTitleFor(chosenFilename);
+      fileDoc->setDocumentName(docName);
+      fileDoc->m_title = m_globalState->uniqueTitleFor(docName);
       writeTheFile();
       this->useDefaultHighlighter(fileDoc);
 
       // Notify observers of the file name and highlighter change.  This
       // includes myself.
-      this->m_globalState->m_documentList.notifyAttributeChanged(fileDoc);
+      m_globalState->m_documentList.notifyAttributeChanged(fileDoc);
 
       return;
     }
@@ -904,7 +910,7 @@ void EditorWindow::fileClose()
   NamedTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
-    msg << "The document " << quoted(b->docName()) << " has unsaved changes.  "
+    msg << "The document " << b->documentName() << " has unsaved changes.  "
         << "Discard these changes and close it anyway?";
     if (!this->okToDiscardChanges(msg)) {
       return;
@@ -944,7 +950,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
     if (reply->m_success) {
       if (reply->m_fileModificationTime != doc->m_lastFileTimestamp) {
         TRACE("modification",
-          "File \"" << doc->docName() << "\" has changed on disk "
+          "File " << doc->documentName() << " has changed on disk "
           "and has no unsaved changes; reloading it.");
 
         return reloadCurrentDocument();
@@ -1059,13 +1065,13 @@ void EditorWindow::fileKillProcess()
 
     case DPS_NONE:
       messageBox(this, "Not a Process Document", qstringb(
-        "The document \"" << doc->docName() << "\" was not produced by "
+        "The document " << doc->documentName() << " was not produced by "
         "running a process, so there is nothing to kill."));
       break;
 
     case DPS_RUNNING:
       if (questionBoxYesCancel(this, "Kill Process?", qstringb(
-            "Kill the process \"" << doc->docName() << "\"?"))) {
+            "Kill the process " << doc->documentName() << "?"))) {
         if (this->stillCurrentDocument(doc)) {
           string problem = m_globalState->killCommand(doc);
           if (!problem.empty()) {
@@ -1078,7 +1084,7 @@ void EditorWindow::fileKillProcess()
 
     case DPS_FINISHED:
       messageBox(this, "Process Finished", qstringb(
-        "The process \"" << doc->docName() << "\" has already terminated."));
+        "The process " << doc->documentName() << " has already terminated."));
       break;
   }
 }
@@ -1107,7 +1113,7 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
     NamedTextDocument *file = this->m_globalState->m_documentList.getDocumentAt(i);
     if (file->unsavedChanges()) {
       ct++;
-      msg << " * " << file->docName() << '\n';
+      msg << " * " << file->resourceName() << '\n';
     }
   }
 
@@ -1783,7 +1789,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
     SMFileUtil sfu;
     string fn(toString(filename));
     if (!sfu.endsWithDirectorySeparator(fn) &&
-        currentDocument()->docName() != fn &&
+        currentDocument()->resourceName() != fn &&
         checkFileExistenceSynchronously(fn)) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.

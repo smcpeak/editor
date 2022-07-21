@@ -99,10 +99,11 @@ void TestObserver::expect(NotifyFunction nfunc, NamedTextDocument *file)
 
 
 // Add a file with a specific name.
-static NamedTextDocument *add(NamedTextDocumentList &dlist, string name)
+static NamedTextDocument *add(NamedTextDocumentList &dlist,
+                              DocumentName const &docName)
 {
   NamedTextDocument *file = new NamedTextDocument;
-  file->setFilename(name);
+  file->setDocumentName(docName);
   dlist.addDocument(file);
   return file;
 }
@@ -185,28 +186,38 @@ static void testAddMoveRemove()
 
   observer.expectEmpty();
 
-  NamedTextDocument *file1 = add(dlist, "file1");
+  DocumentName docName1;
+  docName1.setFilename("file1");
+
+  NamedTextDocument *file1 = add(dlist, docName1);
   xassert(file1->m_title == "file1");
-  xassert(dlist.findDocumentByName("file1") == file1);
+  xassert(dlist.findDocumentByName(docName1) == file1);
   xassert(dlist.findDocumentByTitle("file1") == file1);
 
   observer.expectOnly(NF_ADDED, file1);
 
-  NamedTextDocument *file2 = add(dlist, "a/file2");
+  DocumentName docName2;
+  docName2.setFilename("a/file2");
+
+  NamedTextDocument *file2 = add(dlist, docName2);
   xassert(file2->m_title == "file2");
-  xassert(dlist.findDocumentByName("a/file2") == file2);
+  xassert(dlist.findDocumentByName(docName2) == file2);
   xassert(dlist.findDocumentByTitle("file2") == file2);
 
   observer.expectOnly(NF_ADDED, file2);
 
   // Title uniqueness has to include a directory component.
-  NamedTextDocument *file3 = add(dlist, "b/file2");
+  DocumentName docName3;
+  docName3.setFilename("b/file2");
+  NamedTextDocument *file3 = add(dlist, docName3);
   xassert(file3->m_title == "b/file2");
 
   observer.expectOnly(NF_ADDED, file3);
 
   // Title uniqueness has to append a digit.
-  NamedTextDocument *file4 = add(dlist, "file2");
+  DocumentName docName2b;
+  docName2b.setFilename("file2");
+  NamedTextDocument *file4 = add(dlist, docName2b);
   xassert(file4->m_title == "file2:2");
 
   observer.expectOnly(NF_ADDED, file4);
@@ -270,11 +281,11 @@ static void testCreateUntitled()
 
   NamedTextDocument *file1 = createUntitled(dlist);
   observer.expectOnly(NF_ADDED, file1);
-  xassert(file1->docName() == "untitled2.txt");
+  xassert(file1->resourceName() == "untitled2.txt");
 
   NamedTextDocument *file2 = createUntitled(dlist);
   observer.expectOnly(NF_ADDED, file2);
-  xassert(file2->docName() == "untitled3.txt");
+  xassert(file2->resourceName() == "untitled3.txt");
 
   // Test 'findUntitledUnmodifiedFile'.
   NamedTextDocument *f = dlist.findUntitledUnmodifiedDocument();
@@ -284,7 +295,7 @@ static void testCreateUntitled()
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0 || f == file2);
 
-  file2->setFilename(file2->docName());      // Make it no longer untitled.
+  file2->setFilename(file2->resourceName());      // Make it no longer untitled.
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0);
 
@@ -322,13 +333,13 @@ static void testColon3()
   NamedTextDocumentListObserver observer;
   dlist.addObserver(&observer);
 
-  NamedTextDocument *file1 = add(dlist, "a/b");
+  NamedTextDocument *file1 = add(dlist, DocumentName::fromFilename("a/b"));
   xassert(file1->m_title == "b");
 
-  NamedTextDocument *file2 = add(dlist, "b:2");
+  NamedTextDocument *file2 = add(dlist, DocumentName::fromFilename("b:2"));
   xassert(file2->m_title == "b:2");
 
-  NamedTextDocument *file3 = add(dlist, "b");
+  NamedTextDocument *file3 = add(dlist, DocumentName::fromFilename("b"));
   xassert(file3->m_title == "b:3");
 
   dlist.removeDocument(file3);
@@ -376,7 +387,7 @@ static void testGetUniqueDirectories()
   NamedTextDocumentList dlist;
   expectDirs(dlist, NULL);
 
-  add(dlist, "/a/b");
+  add(dlist, DocumentName::fromFilename("/a/b"));
   expectDirs(dlist, "/a", NULL);
 
   // Check that existing entries are preserved.
@@ -389,13 +400,13 @@ static void testGetUniqueDirectories()
     xassert(actual[1] == "/a");
   }
 
-  add(dlist, "/a/c");
+  add(dlist, DocumentName::fromFilename("/a/c"));
   expectDirs(dlist, "/a", NULL);
 
-  add(dlist, "/b/c");
+  add(dlist, DocumentName::fromFilename("/b/c"));
   expectDirs(dlist, "/a", "/b", NULL);
 
-  add(dlist, "/b/d/e/f/g");
+  add(dlist, DocumentName::fromFilename("/b/d/e/f/g"));
   expectDirs(dlist, "/a", "/b", "/b/d/e/f", NULL);
 }
 

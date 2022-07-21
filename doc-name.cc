@@ -5,10 +5,14 @@
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
+#include "strutil.h"                   // quoted
+
+// libc++
+#include <iostream>                    // std::ostream
 
 
 DocumentName::DocumentName()
-  : m_docName(),
+  : m_resourceName(),
     m_hasFilename(false),
     m_directory()
 {}
@@ -20,14 +24,14 @@ DocumentName::~DocumentName()
 
 StrongOrdering DocumentName::compareTo(DocumentName const &obj) const
 {
-  return strongOrderFromInt(m_docName.compareTo(obj.m_docName));
+  return strongOrderFromInt(m_resourceName.compareTo(obj.m_resourceName));
 }
 
 
 string DocumentName::filename() const
 {
   xassert(hasFilename());
-  return m_docName;
+  return m_resourceName;
 }
 
 
@@ -41,7 +45,7 @@ void DocumentName::setDirectory(string const &dir)
 
 void DocumentName::setFilename(string const &filename)
 {
-  m_docName = filename;
+  m_resourceName = filename;
   m_hasFilename = true;
 
   string dir, base;
@@ -52,10 +56,22 @@ void DocumentName::setFilename(string const &filename)
 
 void DocumentName::setNonFileName(string const &name, string const &dir)
 {
-  m_docName = name;
+  m_resourceName = name;
   m_hasFilename = false;
 
   this->setDirectory(dir);
+}
+
+
+string DocumentName::toString() const
+{
+  return quoted(resourceName());
+}
+
+
+std::ostream& DocumentName::print(std::ostream &os) const
+{
+  return os << toString();
 }
 
 

@@ -64,7 +64,7 @@ string NamedTextDocument::nameWithStatusIndicators() const
 {
   stringBuilder sb;
   sb << documentProcessStatusIndicator(this);
-  sb << docName();
+  sb << resourceName();
   sb << fileStatusString();
   return sb;
 }
@@ -89,7 +89,7 @@ void NamedTextDocument::replaceFileAndStats(
   bool readOnly)
 {
   TRACE("NamedTextDocument",
-    "replaceFileAndStats: docName=" << docName() <<
+    "replaceFileAndStats: docName=" << documentName() <<
     " contents.size()=" << contents.size() <<
     " modTime=" << fileModificationTime <<
     " readOnly=" << readOnly);

@@ -47,9 +47,9 @@ private:     // data
   //
   // Additionally, the entries have the following requirements:
   //
-  // * Every 'm_docName' must be non-empty and unique.  A client must
-  //   verify that 'findDocumentByName(n)==NULL' before changing the
-  //   name to 'n'.
+  // * Every 'm_documentName' must be non-empty and unique.  A client
+  //   must verify that 'findDocumentByName(n)==NULL' before changing
+  //   the name to 'n'.
   //
   // * Every 'title' must be non-empty and unique.  Use
   //   'findDocumentByTitle' to check, or 'computeUniqueTitle' to generate
@@ -109,8 +109,8 @@ public:      // funcs
   NamedTextDocument *createUntitledDocument(string const &dir);
 
   // Find and return the document with the given name, else NULL.
-  NamedTextDocument       *findDocumentByName (string const &name);
-  NamedTextDocument const *findDocumentByNameC(string const &name) const;
+  NamedTextDocument       *findDocumentByName (DocumentName const &name);
+  NamedTextDocument const *findDocumentByNameC(DocumentName const &name) const;
 
   // Find and return the document with the given title, else NULL.
   NamedTextDocument       *findDocumentByTitle (string const &title);
@@ -126,7 +126,7 @@ public:      // funcs
   // As a special exception to the usual invariant, this method is
   // allowed to be called while one document's title is temporarily empty
   // so that it does not play a role in the uniqueness check.
-  string computeUniqueTitle(string name) const;
+  string computeUniqueTitle(DocumentName const &docName) const;
 
   // Given a document that is already in the collection (with a unique
   // name, per usual) compute a new unique title based on the

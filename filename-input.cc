@@ -244,7 +244,7 @@ void FilenameInputDialog::setFilenameLabel()
   string filename = toString(m_filenameEdit->text());
 
   xassert(m_docList);
-  if (m_docList->findDocumentByNameC(filename)) {
+  if (m_docList->findDocumentByNameC(DocumentName::fromFilename(filename))) {
     if (m_saveAs) {
       m_filenameLabel->setText("File already open, CANNOT save as this name:");
     }
