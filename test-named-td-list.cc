@@ -295,7 +295,9 @@ static void testCreateUntitled()
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0 || f == file2);
 
-  file2->setFilename(file2->resourceName());      // Make it no longer untitled.
+  // Make it no longer untitled.
+  file2->setDocumentName(
+    DocumentName::fromFilename(file2->resourceName()));
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0);
 
@@ -315,7 +317,7 @@ static void testSaveAs()
   dlist.addObserver(&observer);
 
   NamedTextDocument *file0 = dlist.getDocumentAt(0);
-  file0->setFilename("a/some-name.txt");
+  file0->setDocumentName(DocumentName::fromFilename("a/some-name.txt"));
   dlist.assignUniqueTitle(file0);
   observer.expectOnly(NF_ATTRIBUTE, file0);
   xassert(file0->m_title == "some-name.txt");
@@ -347,7 +349,7 @@ static void testColon3()
 
   dlist.moveDocument(file2, 0);
 
-  file2->setFilename("zoo");
+  file2->setDocumentName(DocumentName::fromFilename("zoo"));
   dlist.assignUniqueTitle(file2);
 
   dlist.removeObserver(&observer);

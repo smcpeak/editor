@@ -46,6 +46,8 @@ public:      // methods
 
   static DocumentName fromFilename(string const &filename)
     { DocumentName ret; ret.setFilename(filename); return ret; }
+  static DocumentName fromNonFileResourceName(string const &name, string const &dir)
+    { DocumentName ret; ret.setNonFileResourceName(name, dir); return ret; }
 
   // Compare by 'm_resourceName'.
   StrongOrdering compareTo(DocumentName const &obj) const;
