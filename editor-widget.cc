@@ -2511,7 +2511,7 @@ string EditorWidget::eventReplayQuery(string const &state)
   else if (state == "hasUnsavedChanges") {
     return string(m_editor->unsavedChanges()? "true" : "false");
   }
-  else if (state == "documentName") { // TODO: Rename
+  else if (state == "resourceName") {
     return m_editor->m_namedDoc->resourceName();
   }
   else if (state == "documentFileName") {

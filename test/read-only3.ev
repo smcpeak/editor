@@ -3,7 +3,7 @@
 
 # Expecting to start with a single untitled document.
 CheckFocusWidget "window1.editorFrame.m_editorWidget"
-CheckQuery "window1.editorFrame.m_editorWidget" "documentName" "untitled.txt"
+CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
 
 # Not initially read-only.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
@@ -28,7 +28,7 @@ KeyPress "window1.editorFrame.m_editorWidget" "Key_Return" "\r"
 Shortcut "window1.m_menuBar" "Alt+F"
 KeyPress "window1.m_menuBar.fileMenu" "Key_N" "n"
 
-CheckQuery "window1.editorFrame.m_editorWidget" "documentName" "untitled2.txt"
+CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
 
 # Enter some text there too.
@@ -56,7 +56,7 @@ KeyPress "window1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Es
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 KeyPress "OpenFilesDialog.m_tableWidget" "Key_N" "n"
 KeyPress "OpenFilesDialog" "Key_Return" "\r"
-CheckQuery "window1.editorFrame.m_editorWidget" "documentName" "untitled.txt"
+CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
 
 # Verify the menu item shows it is not read-only.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
@@ -69,7 +69,7 @@ Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 KeyPress "OpenFilesDialog.m_tableWidget" "Key_N" "n"
 KeyPress "OpenFilesDialog" "Key_Return" "\r"
-CheckQuery "window1.editorFrame.m_editorWidget" "documentName" "untitled2.txt"
+CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
 
 # It is read-only.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
