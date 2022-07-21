@@ -55,9 +55,7 @@ private:     // data
   State m_state;
 
   // Host being accessed (which could be local).
-  //
-  // TODO: Rename to 'm_hostName'.
-  HostName m_hostname;
+  HostName m_hostName;
 
   // Runner connected to the server process.
   CommandRunner m_commandRunner;
@@ -119,9 +117,7 @@ public:      // methods
   void connectLocal() { connect(HostName::asLocal()); }
 
   // Get the host we are connecting to.
-  //
-  // TODO: Rename this to 'getHostName'.
-  HostName getHostname() const;
+  HostName getHostName() const;
 
   // Send 'msg' to the server for processing.
   //

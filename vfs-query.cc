@@ -32,7 +32,7 @@
 FileSystemQuery::FileSystemQuery()
   : QObject(),
     m_state(S_CREATED),
-    m_hostname(HostName::asLocal()),
+    m_hostName(HostName::asLocal()),
     m_commandRunner(),
     m_replyBytes(),
     m_errorBytes(),
@@ -182,9 +182,9 @@ void FileSystemQuery::connect(HostName const &hostname)
   xassert(state() == S_CREATED);
 
   setState(S_CONNECTING);
-  m_hostname = hostname;
+  m_hostName = hostname;
 
-  if (m_hostname.isLocal()) {
+  if (m_hostName.isLocal()) {
     m_commandRunner.setProgram(
       QCoreApplication::applicationDirPath() + "/editor-fs-server.exe");
   }
@@ -197,7 +197,7 @@ void FileSystemQuery::connect(HostName const &hostname)
       // if it cannot log in without prompting.
       "-oBatchMode=yes",
 
-      toQString(m_hostname.getSSHHostName()),
+      toQString(m_hostName.getSSHHostName()),
 
       // This requires that 'editor-fs-server.exe' be found on the
       // user's PATH on the remote machine.
@@ -221,9 +221,9 @@ void FileSystemQuery::connect(HostName const &hostname)
 }
 
 
-HostName FileSystemQuery::getHostname() const
+HostName FileSystemQuery::getHostName() const
 {
-  return m_hostname;
+  return m_hostName;
 }
 
 
