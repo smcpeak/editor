@@ -71,9 +71,7 @@ public:      // methods
 
   // Set 'm_resourceName' to 'name' and 'm_hasFilename' to false.  The name
   // still has to be unique.  Sets 'm_directory' to 'dir'.
-  //
-  // TODO: Rename to 'setNonFileResourceName'.
-  void setNonFileName(string const &name, string const &dir);
+  void setNonFileResourceName(string const &name, string const &dir);
 
   // Get the directory associated with the document.
   string directory() const             { return m_directory; }

@@ -79,8 +79,8 @@ public:      // data
 
 public:      // funcs
   // Create an anonymous document.  The caller must call either
-  // 'setFilename' or 'setNonFileName' before adding it to a document
-  // list.
+  // 'setFilename' or 'setNonFileResourceName' or 'setDocumentName'
+  // before adding it to a document list.
   NamedTextDocument();
 
   ~NamedTextDocument();
@@ -103,8 +103,8 @@ public:      // funcs
   // TODO: These should be removed.
   void setFilename(string const &filename)
     { m_documentName.setFilename(filename); }
-  void setNonFileName(string const &name, string const &dir)
-    { m_documentName.setNonFileName(name, dir); }
+  void setNonFileResourceName(string const &name, string const &dir)
+    { m_documentName.setNonFileResourceName(name, dir); }
 
   // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.

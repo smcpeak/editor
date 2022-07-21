@@ -54,7 +54,7 @@ void DocumentName::setFilename(string const &filename)
 }
 
 
-void DocumentName::setNonFileName(string const &name, string const &dir)
+void DocumentName::setNonFileResourceName(string const &name, string const &dir)
 {
   m_resourceName = name;
   m_hasFilename = false;

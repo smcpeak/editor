@@ -330,7 +330,7 @@ NamedTextDocument *EditorGlobalState::getNewCommandOutputDocument(
   string base = stringb(dir << "$ " << toString(command));
   for (int n = 1; n < 100; n++) {
     DocumentName docName;
-    docName.setNonFileName(
+    docName.setNonFileResourceName(
       (n==1? base : stringb(base << " (" << n << ')')), dir);
 
     NamedTextDocument *fileDoc = m_documentList.findDocumentByName(docName);
