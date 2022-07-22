@@ -38,6 +38,15 @@ public:      // funcs
   MyTableWidget(QWidget *parent = NULL);
   ~MyTableWidget();
 
+  // Configure the table as a list view (items in rows) rather than a
+  // control where each cell is separately editable.  Specifically:
+  //   - Use Zebra row colors.
+  //   - Select rows and groups of rows.
+  //   - Remove the corner button.
+  //   - Do not use Tab to move among list elements.
+  //   - Remove the grid lines.
+  void configureAsListView();
+
   // Overridden QWidget methods.
   virtual void keyPressEvent(QKeyEvent *event) NOEXCEPT OVERRIDE;
 };

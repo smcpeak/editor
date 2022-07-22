@@ -61,4 +61,31 @@ void MyTableWidget::keyPressEvent(QKeyEvent *event) NOEXCEPT
 }
 
 
+void MyTableWidget::configureAsListView()
+{
+  // Zebra table.
+  setAlternatingRowColors(true);
+
+  // Select entire rows at a time.
+  setSelectionBehavior(QAbstractItemView::SelectRows);
+
+  // Click to select.  Shift+Click to extend contiguously, Ctrl+Click
+  // to toggle one element.
+  setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+  // Do not respond to clicks in the tiny top-left corner sliver.
+  //
+  // I do not appear to be able to get rid of the thin left column
+  // altogether.
+  setCornerButtonEnabled(false);
+
+  // Do not use Tab to move among cells.  Rather, it should move the
+  // focus among controls in the dialog.
+  setTabKeyNavigation(false);
+
+  // Do not draw grid lines.  They only add visual clutter.
+  setShowGrid(false);
+}
+
+
 // EOF

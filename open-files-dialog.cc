@@ -85,46 +85,11 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
 
-  // This uses the "convenience" class combining a model and a view,
-  // rather than using a separate model and view.  Originally I used
-  // separate objects since I thought I would be able to take advantage
-  // of my existing change notification infrastructure for
-  // NamedTextDocumentList and simply relay to the Qt model change
-  // notifications, thereby saving the cost of building a copy of the
-  // table.
-  //
-  // However, the problem is the Qt model change design requires every
-  // change to be accompanied by a pre-change broadcast and a
-  // post-change broadcast.  In contrast, my own system only uses
-  // post-change broadcasts.  Rather than complicate by design by adding
-  // pre-change notifications, I have chosen to just pay the minor cost
-  // of having an extra copy of the table in memory.
   m_tableWidget = new MyTableWidget();
   vbox->addWidget(m_tableWidget);
   SET_QOBJECT_NAME(m_tableWidget);
 
-  // Zebra table.
-  m_tableWidget->setAlternatingRowColors(true);
-
-  // Select entire rows at a time.
-  m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-
-  // Click to select.  Shift+Click to extend contiguously, Ctrl+Click
-  // to toggle one element.
-  m_tableWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
-
-  // Do not respond to clicks in the tiny top-left corner sliver.
-  //
-  // I do not appear to be able to get rid of the thin left column
-  // altogether.
-  m_tableWidget->setCornerButtonEnabled(false);
-
-  // Do not use Tab to move among cells.  Rather, it should move the
-  // focus among controls in the dialog.
-  m_tableWidget->setTabKeyNavigation(false);
-
-  // Do not draw grid lines.  They only add visual clutter.
-  m_tableWidget->setShowGrid(false);
+  m_tableWidget->configureAsListView();
 
   // Initialize columns.
   {
