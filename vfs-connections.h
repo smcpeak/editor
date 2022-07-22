@@ -87,6 +87,9 @@ private:     // types
     // Cancel issuing and/or delivering reply for 'requestID'.  Return
     // true if the ID was found and canceled.
     bool cancelRequest(RequestID requestID);
+
+    // Number of pending requests associated with this connection.
+    int numPendingRequests() const;
   };
 
 private:     // data
@@ -189,6 +192,12 @@ public:      // methods
   // has not already been delivered.  Remove it from
   // 'm_availableReplies' if it is present there.
   void cancelRequest(RequestID requestID);
+
+  // Total number of requests whose reply has not arrived.
+  int numPendingRequests() const;
+
+  // Total number of replies that are available but have not been taken.
+  int numAvailableReplies() const;
 
   // Shut down connection to 'hostName' and remove it from the set of
   // valid hosts.

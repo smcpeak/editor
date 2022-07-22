@@ -264,6 +264,37 @@ void VFS_Connections::cancelRequest(RequestID requestID)
 }
 
 
+int VFS_Connections::numPendingRequests() const
+{
+  int ret = 0;
+  for (auto const &kv : m_connections) {
+    Connection const *c = kv.second.get();
+    ret += c->numPendingRequests();
+  }
+  return ret;
+}
+
+
+int VFS_Connections::Connection::numPendingRequests() const
+{
+  int ret = 0;
+
+  if (m_currentRequestID != 0) {
+    ret++;
+  }
+
+  ret += (int)(m_queuedRequests.size());
+
+  return ret;
+}
+
+
+int VFS_Connections::numAvailableReplies() const
+{
+  return (int)(m_availableReplies.size());
+}
+
+
 void VFS_Connections::shutdown(HostName const &hostName)
 {
   TRACE("VFS_Connections", "shutdown(" << hostName << ")");

@@ -90,11 +90,14 @@ void VFS_ConnectionsTest::waitForReply(
 {
   while (m_vfsConnections.requestIsPending(requestID)) {
     cout << "waiting for reply " << requestID << "\n";
+    xassert(m_vfsConnections.numPendingRequests() > 0);
     m_eventLoop.exec();
   }
   if (!m_vfsConnections.replyIsAvailable(requestID)) {
     xfatal(stringb("reply " << requestID < " not available"));
   }
+
+  xassert(m_vfsConnections.numAvailableReplies() > 0);
 }
 
 
@@ -111,6 +114,11 @@ void VFS_ConnectionsTest::receiveEchoReply(
 void VFS_ConnectionsTest::testOneEcho()
 {
   cout << "testOneEcho\n";
+
+  m_vfsConnections.selfCheck();
+
+  xassert(m_vfsConnections.numPendingRequests() == 0);
+  xassert(m_vfsConnections.numAvailableReplies() == 0);
 
   // Send requests.
   VFS_Connections::RequestID primaryRequestID =
@@ -131,6 +139,9 @@ void VFS_ConnectionsTest::testOneEcho()
     waitForReply(secondaryRequestID);
     receiveEchoReply(secondaryRequestID);
   }
+
+  xassert(m_vfsConnections.numPendingRequests() == 0);
+  xassert(m_vfsConnections.numAvailableReplies() == 0);
 }
 
 
@@ -184,17 +195,19 @@ void VFS_ConnectionsTest::testCancel(bool wait)
   }
 
   m_vfsConnections.cancelRequest(primaryRequestID);
-  cout << "cancelled request " << primaryRequestID << "\n";
+  cout << "canceled request " << primaryRequestID << "\n";
 
   if (usingSecondary()) {
     m_vfsConnections.cancelRequest(secondaryRequestID);
-    cout << "cancelled request " << secondaryRequestID << "\n";
+    cout << "canceled request " << secondaryRequestID << "\n";
   }
 }
 
 
 void VFS_ConnectionsTest::runTests()
 {
+  m_vfsConnections.selfCheck();
+
   cout << "runTests: primary=" << m_primaryHostName;
   if (usingSecondary()) {
     cout << " secondary=" << m_secondaryHostName;
@@ -222,7 +235,9 @@ void VFS_ConnectionsTest::runTests()
   testCancel(true /*wait*/);
   testOneEcho();
 
+  m_vfsConnections.selfCheck();
   m_vfsConnections.shutdownAll();
+  m_vfsConnections.selfCheck();
 
   cout << "vfs-connections-test passed\n";
 }
