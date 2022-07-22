@@ -12,6 +12,7 @@
 #include "map-utils.h"                 // insertMapUnique, keySet
 #include "trace.h"                     // TRACE
 #include "vector-utils.h"              // vec_erase
+#include "xassert.h"                   // xfailure
 
 // libc++
 #include <set>                         // std::set
@@ -102,6 +103,10 @@ void VFS_Connections::connect(HostName const &hostName)
 VFS_Connections::Connection const *
   VFS_Connections::connC(HostName const &hostName) const
 {
+  if (!contains(m_connections, hostName)) {
+    xfailure(stringb("Invalid host: " << hostName));
+  }
+
   return m_connections.at(hostName).get();
 }
 
