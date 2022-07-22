@@ -346,6 +346,19 @@ $(eval $(call RUN_TEST_PROG,vfs-connections-test.exe))
 out/vfs-connections-test.exe.ok: editor-fs-server.exe
 
 
+# Optionally run a test that uses SSH to connect to localhost.
+ifeq ($(TEST_SSH_LOCALHOST),1)
+
+test-prog-outs: out/vfs-connections-test.exe.localhost.ok
+out/vfs-connections-test.exe.localhost.ok: vfs-connections-test.exe editor-fs-server.exe
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(RUN_WITH_TIMEOUT) ./vfs-connections-test.exe localhost \
+	  </dev/null >out/vfs-connections-test.exe.localhost.out 2>&1
+	touch $@
+
+endif # TEST_SSH_LOCALHOST
+
+
 # ------------- highlighting stuff --------------------
 TOCLEAN += *.yy.cc *.yy.h *.lex.backup
 

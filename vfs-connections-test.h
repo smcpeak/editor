@@ -26,6 +26,9 @@ public:      // data
   // Object to test.
   VFS_Connections m_vfsConnections;
 
+  // Host to connect to.
+  HostName m_hostName;
+
 public:      // methods
   VFS_ConnectionsTest(int argc, char **argv);
   ~VFS_ConnectionsTest();

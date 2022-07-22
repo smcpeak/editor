@@ -6,6 +6,9 @@
 // editor
 #include "vfs-msg.h"                   // VFS_Echo
 
+// smqtutil
+#include "qtutil.h"                    // toString(QString)
+
 // smbase
 #include "exc.h"                       // xBase
 #include "trace.h"                     // traceAddFromEnvVar
@@ -17,8 +20,15 @@
 VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
   : QCoreApplication(argc, argv),
     m_eventLoop(),
-    m_vfsConnections()
+    m_vfsConnections(),
+    m_hostName(HostName::asLocal())
 {
+  // If a command line argument is supplied, treat it as an SSH host
+  // name.
+  if (arguments().size() >= 2) {
+    m_hostName = HostName::asSSH(toString(arguments().at(1)));
+  }
+
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_connected,
                    this, &VFS_ConnectionsTest::on_connected);
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_replyAvailable,
@@ -53,7 +63,7 @@ VFS_Connections::RequestID VFS_ConnectionsTest::sendEchoRequest()
   std::unique_ptr<VFS_Echo> req(new VFS_Echo);
   req->m_data = allBytes();
   m_vfsConnections.issueRequest(requestID /*OUT*/,
-    HostName::asLocal(), std::move(req));
+    m_hostName, std::move(req));
   cout << "sent echo request: " << requestID << endl;
 
   return requestID;
@@ -134,13 +144,15 @@ void VFS_ConnectionsTest::testCancel(bool wait)
 
 void VFS_ConnectionsTest::runTests()
 {
-  m_vfsConnections.connectLocal();
-  while (m_vfsConnections.localIsConnecting()) {
-    cout << "waiting for local connection\n";
+  cout << "runTests: host: " << m_hostName << endl;
+
+  m_vfsConnections.connect(m_hostName);
+  while (m_vfsConnections.isConnecting(m_hostName)) {
+    cout << "waiting for connection to " << m_hostName << endl;
     m_eventLoop.exec();
   }
-  if (!m_vfsConnections.localIsReady()) {
-    xfatal("local connection not ready");
+  if (!m_vfsConnections.isReady(m_hostName)) {
+    xfatal("connection not ready");
   }
 
   testOneEcho();
@@ -154,8 +166,9 @@ void VFS_ConnectionsTest::runTests()
   testCancel(true /*wait*/);
   testOneEcho();
 
-  cout << "vfs-connections-test passed\n";
   m_vfsConnections.shutdownAll();
+
+  cout << "vfs-connections-test passed\n";
 }
 
 
