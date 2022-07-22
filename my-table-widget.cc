@@ -88,4 +88,23 @@ void MyTableWidget::configureAsListView()
 }
 
 
+void MyTableWidget::initializeColumns(ColumnInitInfo const *columnInfo,
+                                      int numColumns)
+{
+  setColumnCount(numColumns);
+
+  // Header labels.
+  QStringList columnLabels;
+  for (int i=0; i < numColumns; i++) {
+    columnLabels << columnInfo[i].name;
+  }
+  setHorizontalHeaderLabels(columnLabels);
+
+  // Column widths.
+  for (int i=0; i < numColumns; i++) {
+    setColumnWidth(i, columnInfo[i].initialWidth);
+  }
+}
+
+
 // EOF

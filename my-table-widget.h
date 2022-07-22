@@ -30,6 +30,13 @@
 // notifications, I have chosen to just pay the minor cost of having an
 // extra copy of the table in memory.
 class MyTableWidget : public QTableWidget {
+public:      // types
+  // Data for initializing a column.
+  struct ColumnInitInfo {
+    QString name;            // User-visible column name.
+    int initialWidth;        // Initial column width in pixels.
+  };
+
 private:     // funcs
   // Synthesize a keypress for the underlying QTableView.
   void synthesizeKey(int key, Qt::KeyboardModifiers modifiers);
@@ -46,6 +53,11 @@ public:      // funcs
   //   - Do not use Tab to move among list elements.
   //   - Remove the grid lines.
   void configureAsListView();
+
+  // Set the column names and initial widths from 'columnInfo', an array
+  // of size 'numColumns'.
+  void initializeColumns(ColumnInitInfo const *columnInfo,
+                         int numColumns);
 
   // Overridden QWidget methods.
   virtual void keyPressEvent(QKeyEvent *event) NOEXCEPT OVERRIDE;

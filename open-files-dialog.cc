@@ -3,9 +3,6 @@
 
 #include "open-files-dialog.h"         // this module
 
-// editor
-#include "my-table-widget.h"           // MyTableWidget
-
 // smqtutil
 #include "qtguiutil.h"                 // keysString(QKeyEvent)
 #include "qtutil.h"                    // toQString, SET_QOBJECT_NAME
@@ -51,8 +48,9 @@ int const INIT_DIALOG_HEIGHT = 800;
 // area when a vertical scrollbar is present.  I really want the table
 // to automatically ensure its columns fill the width, but I don't know
 // if that is possible.
-OpenFilesDialog::ColumnInfo const
-OpenFilesDialog::s_columnInfo[NUM_TABLE_COLUMNS] = {
+MyTableWidget::ColumnInitInfo const
+  OpenFilesDialog::s_columnInitInfo[NUM_TABLE_COLUMNS] =
+{
   {
     "File name",
     700,
@@ -90,23 +88,7 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
   SET_QOBJECT_NAME(m_tableWidget);
 
   m_tableWidget->configureAsListView();
-
-  // Initialize columns.
-  {
-    m_tableWidget->setColumnCount(NUM_TABLE_COLUMNS);
-
-    // Header labels.
-    QStringList columnLabels;
-    FOREACH_TABLE_COLUMN(tc) {
-      columnLabels << s_columnInfo[tc].name;
-    }
-    m_tableWidget->setHorizontalHeaderLabels(columnLabels);
-
-    // Column widths.
-    FOREACH_TABLE_COLUMN(tc) {
-      m_tableWidget->setColumnWidth(tc, s_columnInfo[tc].initialWidth);
-    }
-  }
+  m_tableWidget->initializeColumns(s_columnInitInfo, NUM_TABLE_COLUMNS);
 
   // The table rows are set by 'repopulateTable', which is called by
   // 'runDialog'.

@@ -7,14 +7,13 @@
 // editor
 #include "event-replay.h"              // EventReplayQueryable
 #include "modal-dialog.h"              // ModalDialog
+#include "my-table-widget.h"           // MyTableWidget
 #include "named-td-list.h"             // NamedTextDocumentList
 
 // smbase
 #include "refct-serf.h"                // RCSerf
 #include "sm-iostream.h"               // ostream
 #include "sm-noexcept.h"               // NOEXCEPT
-
-class MyTableWidget;                   // my-table-widget.h
 
 class QModelIndex;
 class QPushButton;
@@ -41,14 +40,10 @@ public:      // types
     NUM_TABLE_COLUMNS
   };
 
-  struct ColumnInfo {
-    QString name;            // User-visible column name.
-    int initialWidth;        // Initial column width in pixels.
-  };
-
 private:     // class data
   // Information about each column.
-  static ColumnInfo const s_columnInfo[NUM_TABLE_COLUMNS];
+  static MyTableWidget::ColumnInitInfo const
+    s_columnInitInfo[NUM_TABLE_COLUMNS];
 
 private:     // instance data
   // The list we are showing/editing.
