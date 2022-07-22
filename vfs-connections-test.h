@@ -26,15 +26,25 @@ public:      // data
   // Object to test.
   VFS_Connections m_vfsConnections;
 
-  // Host to connect to.
-  HostName m_hostName;
+  // Primary host to connect to.
+  HostName m_primaryHostName;
+
+  // Optional secondary host to also connect to, interleaving
+  // communication with it and the primary.  Only active if not local.
+  HostName m_secondaryHostName;
 
 public:      // methods
   VFS_ConnectionsTest(int argc, char **argv);
   ~VFS_ConnectionsTest();
 
+  // True if we are using 'm_secondaryHostName'.
+  bool usingSecondary() const { return !m_secondaryHostName.isLocal(); }
+
+  // Wait until the connection to 'hostName' is ready.
+  void waitForConnection(HostName const &hostName);
+
   // Send a single VFS_Echo request, returning the request ID.
-  VFS_Connections::RequestID sendEchoRequest();
+  VFS_Connections::RequestID sendEchoRequest(HostName const &hostName);
 
   // Wait until a given reply is available.
   void waitForReply(VFS_Connections::RequestID requestID);

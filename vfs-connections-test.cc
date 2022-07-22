@@ -21,12 +21,13 @@ VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
   : QCoreApplication(argc, argv),
     m_eventLoop(),
     m_vfsConnections(),
-    m_hostName(HostName::asLocal())
+    m_primaryHostName(HostName::asLocal()),
+    m_secondaryHostName(HostName::asLocal())
 {
   // If a command line argument is supplied, treat it as an SSH host
   // name.
   if (arguments().size() >= 2) {
-    m_hostName = HostName::asSSH(toString(arguments().at(1)));
+    m_secondaryHostName = HostName::asSSH(toString(arguments().at(1)));
   }
 
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_connected,
@@ -56,15 +57,29 @@ static std::vector<unsigned char> allBytes()
 }
 
 
-VFS_Connections::RequestID VFS_ConnectionsTest::sendEchoRequest()
+void VFS_ConnectionsTest::waitForConnection(HostName const &hostName)
+{
+  while (m_vfsConnections.isConnecting(hostName)) {
+    cout << "waiting for connection to " << hostName << endl;
+    m_eventLoop.exec();
+  }
+  if (!m_vfsConnections.isReady(hostName)) {
+    xfatal("connection to " << hostName << " not ready");
+  }
+}
+
+
+VFS_Connections::RequestID
+  VFS_ConnectionsTest::sendEchoRequest(HostName const &hostName)
 {
   VFS_Connections::RequestID requestID = 0;
 
   std::unique_ptr<VFS_Echo> req(new VFS_Echo);
   req->m_data = allBytes();
   m_vfsConnections.issueRequest(requestID /*OUT*/,
-    m_hostName, std::move(req));
-  cout << "sent echo request: " << requestID << endl;
+    hostName, std::move(req));
+  cout << "sent echo request: host=" << hostName
+       << " id=" << requestID << endl;
 
   return requestID;
 }
@@ -97,14 +112,25 @@ void VFS_ConnectionsTest::testOneEcho()
 {
   cout << "testOneEcho\n";
 
-  // Send request.
-  VFS_Connections::RequestID requestID = sendEchoRequest();
+  // Send requests.
+  VFS_Connections::RequestID primaryRequestID =
+    sendEchoRequest(m_primaryHostName);
+  VFS_Connections::RequestID secondaryRequestID = 0;
+  if (usingSecondary()) {
+    secondaryRequestID = sendEchoRequest(m_secondaryHostName);
+  }
 
-  // Wait for reply.
-  waitForReply(requestID);
+  // Wait for first reply.
+  waitForReply(primaryRequestID);
 
-  // Process reply.
-  receiveEchoReply(requestID);
+  // Process first reply.
+  receiveEchoReply(primaryRequestID);
+
+  if (usingSecondary()) {
+    // Wait for and process second reply.
+    waitForReply(secondaryRequestID);
+    receiveEchoReply(secondaryRequestID);
+  }
 }
 
 
@@ -112,15 +138,30 @@ void VFS_ConnectionsTest::testMultipleEchos(int howMany)
 {
   cout << "testMultipleEchos " << howMany << "\n";
 
+  // Send 'howMany' requests to each host.
+  int totalRequests = howMany * (usingSecondary()? 2 : 1);
+
   std::vector<VFS_Connections::RequestID> requestIDs;
 
   // Enqueue a bunch at once.
-  for (int i=0; i < howMany; i++) {
-    requestIDs.push_back(sendEchoRequest());
+  for (int i=0; i < totalRequests; i++) {
+    // When 'i' is odd, enqueue the request to the secondary first so
+    // we alternate which one goes first.
+    bool odd = (i % 2 == 1);
+
+    if (odd && usingSecondary()) {
+      requestIDs.push_back(sendEchoRequest(m_secondaryHostName));
+    }
+
+    requestIDs.push_back(sendEchoRequest(m_primaryHostName));
+
+    if (!odd && usingSecondary()) {
+      requestIDs.push_back(sendEchoRequest(m_secondaryHostName));
+    }
   }
 
   // Receive them.
-  for (int i=0; i < howMany; i++) {
+  for (int i=0; i < totalRequests; i++) {
     waitForReply(requestIDs.at(i));
     receiveEchoReply(requestIDs.at(i));
   }
@@ -131,28 +172,46 @@ void VFS_ConnectionsTest::testCancel(bool wait)
 {
   cout << "testCancel wait=" << wait << "\n";
 
-  VFS_Connections::RequestID requestID = sendEchoRequest();
-
-  if (wait) {
-    waitForReply(requestID);
+  VFS_Connections::RequestID primaryRequestID =
+    sendEchoRequest(m_primaryHostName);
+  VFS_Connections::RequestID secondaryRequestID = 0;
+  if (usingSecondary()) {
+    secondaryRequestID = sendEchoRequest(m_secondaryHostName);
   }
 
-  m_vfsConnections.cancelRequest(requestID);
-  cout << "cancelled request " << requestID << "\n";
+  if (wait) {
+    waitForReply(primaryRequestID);
+    if (usingSecondary()) {
+      waitForReply(secondaryRequestID);
+    }
+  }
+
+  m_vfsConnections.cancelRequest(primaryRequestID);
+  cout << "cancelled request " << primaryRequestID << "\n";
+
+  if (usingSecondary()) {
+    m_vfsConnections.cancelRequest(secondaryRequestID);
+    cout << "cancelled request " << secondaryRequestID << "\n";
+  }
 }
 
 
 void VFS_ConnectionsTest::runTests()
 {
-  cout << "runTests: host: " << m_hostName << endl;
-
-  m_vfsConnections.connect(m_hostName);
-  while (m_vfsConnections.isConnecting(m_hostName)) {
-    cout << "waiting for connection to " << m_hostName << endl;
-    m_eventLoop.exec();
+  cout << "runTests: primary=" << m_primaryHostName;
+  if (usingSecondary()) {
+    cout << " secondary=" << m_secondaryHostName;
   }
-  if (!m_vfsConnections.isReady(m_hostName)) {
-    xfatal("connection not ready");
+  cout << endl;
+
+  m_vfsConnections.connect(m_primaryHostName);
+  if (usingSecondary()) {
+    m_vfsConnections.connect(m_secondaryHostName);
+  }
+
+  waitForConnection(m_primaryHostName);
+  if (usingSecondary()) {
+    waitForConnection(m_secondaryHostName);
   }
 
   testOneEcho();
