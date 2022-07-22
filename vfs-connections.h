@@ -108,7 +108,7 @@ private:     // data
 
   // Map from request ID to the corresponding reply object, for those
   // requests whose reply is available.
-  std::map<RequestID, std::unique_ptr<VFS_Message> > m_pendingReplies;
+  std::map<RequestID, std::unique_ptr<VFS_Message> > m_availableReplies;
 
 private:      // methods
   // Get the connection for the given hostName.
@@ -186,8 +186,8 @@ public:      // methods
   std::unique_ptr<VFS_Message> takeReply(RequestID requestID);
 
   // Stop delivery of 'signal_replyArrived' for the named request if it
-  // has not already been delivered.  Remove it from 'm_pendingReplies'
-  // if it is present there.
+  // has not already been delivered.  Remove it from
+  // 'm_availableReplies' if it is present there.
   void cancelRequest(RequestID requestID);
 
   // Shut down connection to 'hostName' and remove it from the set of

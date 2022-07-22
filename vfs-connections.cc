@@ -62,7 +62,7 @@ VFS_Connections::VFS_Connections()
     m_nextRequestID(1),
     m_validHostNames(),
     m_connections(),
-    m_pendingReplies()
+    m_availableReplies()
 {}
 
 
@@ -172,7 +172,7 @@ bool VFS_Connections::requestIsPending(RequestID requestID) const
 
 bool VFS_Connections::replyIsAvailable(RequestID requestID) const
 {
-  return contains(m_pendingReplies, requestID);
+  return contains(m_availableReplies, requestID);
 }
 
 
@@ -206,8 +206,8 @@ void VFS_Connections::Connection::issuePendingRequest()
 std::unique_ptr<VFS_Message> VFS_Connections::takeReply(
   RequestID requestID)
 {
-  auto it = m_pendingReplies.find(requestID);
-  xassert(it != m_pendingReplies.end());
+  auto it = m_availableReplies.find(requestID);
+  xassert(it != m_availableReplies.end());
 
   std::unique_ptr<VFS_Message> ret(std::move((*it).second));
 
@@ -215,7 +215,7 @@ std::unique_ptr<VFS_Message> VFS_Connections::takeReply(
     "takeReply: requestID=" << requestID <<
     " type=" << toString(ret->messageType()));
 
-  m_pendingReplies.erase(it);
+  m_availableReplies.erase(it);
 
   return ret;
 }
@@ -248,9 +248,9 @@ void VFS_Connections::cancelRequest(RequestID requestID)
   TRACE("VFS_Connections", "cancelRequest(" << requestID << ")");
 
   // Remove a pending reply.
-  auto it = m_pendingReplies.find(requestID);
-  if (it != m_pendingReplies.end()) {
-    m_pendingReplies.erase(it);
+  auto it = m_availableReplies.find(requestID);
+  if (it != m_availableReplies.end()) {
+    m_availableReplies.erase(it);
     return;
   }
 
@@ -349,7 +349,7 @@ void VFS_Connections::on_replyAvailable() NOEXCEPT
     }
     else {
       // Save the reply for the client who presents the right ID.
-      insertMapUniqueMove(m_pendingReplies,
+      insertMapUniqueMove(m_availableReplies,
         requestID, c->m_fsQuery->takeReply());
 
       // Clear the ID member so we know no request is outstanding.
