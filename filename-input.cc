@@ -187,6 +187,7 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
 
   m_currentRequestDir = dir;
   m_vfsConnections->issueRequest(m_currentRequestID /*OUT*/,
+                                 HostName::asLocal(),
                                  std::move(req));
 }
 

@@ -62,7 +62,7 @@ public:      // methods
 protected Q_SLOTS:
   // Handlers for VFS_Connections.
   void on_replyAvailable(RequestID requestID) NOEXCEPT;
-  void on_vfsConnectionLost(string reason) NOEXCEPT;
+  void on_vfsConnectionLost(HostName hostName, string reason) NOEXCEPT;
 
   // Handlers for QTimer.
   void on_timeout() NOEXCEPT;

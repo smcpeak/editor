@@ -52,7 +52,8 @@ VFS_Connections::RequestID VFS_ConnectionsTest::sendEchoRequest()
 
   std::unique_ptr<VFS_Echo> req(new VFS_Echo);
   req->m_data = allBytes();
-  m_vfsConnections.issueRequest(requestID /*OUT*/, std::move(req));
+  m_vfsConnections.issueRequest(requestID /*OUT*/,
+    HostName::asLocal(), std::move(req));
   cout << "sent echo request: " << requestID << endl;
 
   return requestID;
@@ -154,13 +155,13 @@ void VFS_ConnectionsTest::runTests()
   testOneEcho();
 
   cout << "vfs-connections-test passed\n";
-  m_vfsConnections.shutdown();
+  m_vfsConnections.shutdownAll();
 }
 
 
-void VFS_ConnectionsTest::on_connected() NOEXCEPT
+void VFS_ConnectionsTest::on_connected(HostName hostName) NOEXCEPT
 {
-  cout << "connected" << endl;
+  cout << "connected to " << hostName << endl;
   m_eventLoop.exit();
 }
 
@@ -173,9 +174,11 @@ void VFS_ConnectionsTest::on_replyAvailable(
 }
 
 
-void VFS_ConnectionsTest::on_vfsConnectionLost(string reason) NOEXCEPT
+void VFS_ConnectionsTest::on_vfsConnectionLost(
+  HostName hostName, string reason) NOEXCEPT
 {
-  cout << "connection lost: " << reason << endl;
+  cout << "connection lost: host=" << hostName
+       << " reason: " << reason << endl;
   m_eventLoop.exit();
 }
 

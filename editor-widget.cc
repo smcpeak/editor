@@ -388,7 +388,8 @@ void EditorWidget::requestFileStatus()
 
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
   req->m_path = getDocument()->filename();
-  vfsConnections()->issueRequest(m_fileStatusRequestID, std::move(req));
+  vfsConnections()->issueRequest(m_fileStatusRequestID,
+    HostName::asLocal(), std::move(req));
   m_fileStatusRequestEditor = m_editor;
 
   TRACE("EditorWidget",
@@ -439,11 +440,16 @@ void EditorWidget::on_replyAvailable(
 }
 
 
-void EditorWidget::on_vfsConnectionLost(string reason) NOEXCEPT
+void EditorWidget::on_vfsConnectionLost(
+  HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("EditorWidget", "on_vfsConnectionLost: reason=" << reason);
+  TRACE("EditorWidget", "on_vfsConnectionLost: host=" << hostName <<
+                        " reason=" << reason);
+
+  // TODO: I should only cancel a request if it is being made to the
+  // host that disconnected.
   cancelFileStatusRequestIfAny();
 
   GENERIC_CATCH_END

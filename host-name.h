@@ -60,6 +60,9 @@ public:      // methods
 };
 
 
+DEFINE_RELOPS_FROM_COMPARE_TO(HostName)
+
+
 inline stringBuilder& operator<< (stringBuilder &sb, HostName const &doc)
 {
   return sb << doc.toString();

@@ -58,7 +58,8 @@ bool VFS_QuerySync::issueRequestSynchronously(
   xassert(!m_requestID);
 
   string requestDescription = request->description();
-  m_vfsConnections->issueRequest(m_requestID, std::move(request));
+  m_vfsConnections->issueRequest(m_requestID,
+    HostName::asLocal(), std::move(request));
   RequestID origRequestID = m_requestID;
 
   TRACE("VFS_QuerySync",
@@ -151,8 +152,10 @@ void VFS_QuerySync::on_replyAvailable(RequestID requestID) NOEXCEPT
 }
 
 
-void VFS_QuerySync::on_vfsConnectionLost(string reason) NOEXCEPT
+void VFS_QuerySync::on_vfsConnectionLost(
+  HostName hostName, string reason) NOEXCEPT
 {
+  // TODO: Also check the host name.
   if (m_requestID != 0) {
     m_connLostMessage = reason;
     m_requestID = 0;

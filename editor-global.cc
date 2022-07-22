@@ -251,7 +251,7 @@ EditorGlobalState::~EditorGlobalState()
 
   m_documentList.removeObserver(this);
 
-  m_vfsConnections.shutdown();
+  m_vfsConnections.shutdownAll();
 
   // Disconnect all of the connections made in the constructor.
   // See doc/signals-and-dtors.txt.
@@ -483,13 +483,14 @@ void EditorGlobalState::on_processTerminated(ProcessWatcher *watcher)
 }
 
 
-void EditorGlobalState::on_vfsConnectionLost(string reason) NOEXCEPT
+void EditorGlobalState::on_vfsConnectionLost(
+  HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   QMessageBox::warning(nullptr, "Connection Lost", qstringb(
-    "The file system connection has been lost.  File system reads "
-    "and writes will not work until the program is restarted.  "
+    "The connection to " << hostName << " has been lost.  Reads "
+    "and writes will not work until this connection is restarted.  "
     "Error message: " << reason));
 
   GENERIC_CATCH_END

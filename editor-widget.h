@@ -535,7 +535,7 @@ public Q_SLOTS:
 
   // Handlers for VFS_Connections.
   void on_replyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
-  void on_vfsConnectionLost(string reason) NOEXCEPT;
+  void on_vfsConnectionLost(HostName hostName, string reason) NOEXCEPT;
 
 Q_SIGNALS:
   // Emitted when some aspect of the document that is shown outside the
