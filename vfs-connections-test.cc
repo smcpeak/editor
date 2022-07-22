@@ -138,13 +138,10 @@ void VFS_ConnectionsTest::testMultipleEchos(int howMany)
 {
   cout << "testMultipleEchos " << howMany << "\n";
 
-  // Send 'howMany' requests to each host.
-  int totalRequests = howMany * (usingSecondary()? 2 : 1);
-
   std::vector<VFS_Connections::RequestID> requestIDs;
 
   // Enqueue a bunch at once.
-  for (int i=0; i < totalRequests; i++) {
+  for (int i=0; i < howMany; i++) {
     // When 'i' is odd, enqueue the request to the secondary first so
     // we alternate which one goes first.
     bool odd = (i % 2 == 1);
@@ -161,9 +158,9 @@ void VFS_ConnectionsTest::testMultipleEchos(int howMany)
   }
 
   // Receive them.
-  for (int i=0; i < totalRequests; i++) {
-    waitForReply(requestIDs.at(i));
-    receiveEchoReply(requestIDs.at(i));
+  for (VFS_Connections::RequestID id : requestIDs) {
+    waitForReply(id);
+    receiveEchoReply(id);
   }
 }
 
