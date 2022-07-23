@@ -16,7 +16,7 @@
 #include "keys-dialog.h"               // KeysDialog
 #include "launch-command-dialog.h"     // LaunchCommandDialog
 #include "makefile_hilite.h"           // Makefile_Highlighter
-#include "pixmaps.h"                   // pixmaps
+#include "pixmaps.h"                   // g_editorPixmaps
 #include "qhboxframe.h"                // QHBoxFrame
 #include "sar-panel.h"                 // SearchAndReplacePanel
 #include "status.h"                    // StatusDisplay
@@ -154,7 +154,7 @@ EditorWindow::EditorWindow(EditorGlobalState *theState, NamedTextDocument *initF
 
   this->buildMenu();
 
-  this->setWindowIcon(pixmaps->icon);
+  this->setWindowIcon(g_editorPixmaps->icon);
 
   this->setLayout(mainArea);
   this->setGeometry(400,100,      // initial location

@@ -4,7 +4,7 @@
 #include "connections-dialog.h"        // this module
 
 // editor
-#include "pixmaps.h"                   // pixmaps
+#include "pixmaps.h"                   // g_editorPixmaps
 #include "vfs-connections.h"           // VFS_Connections
 
 // smqtutil
@@ -66,7 +66,7 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
 {
   setObjectName("ConnectionsDialog");
   setWindowTitle("Editor Connections");
-  setWindowIcon(pixmaps->connectionsIcon);
+  setWindowIcon(g_editorPixmaps->connectionsIcon);
 
   QVBoxLayout *outerVBox = new QVBoxLayout();
   this->setLayout(outerVBox);

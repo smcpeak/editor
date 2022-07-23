@@ -26,7 +26,7 @@
 //
 // FWIW, I also checked with GIMP, and it can still read the files.
 
-Pixmaps *pixmaps = NULL;
+Pixmaps *g_editorPixmaps = NULL;
 
 
 #define INIT(name) \
@@ -39,8 +39,8 @@ Pixmaps::Pixmaps()
     INIT(replace),
     INIT(connectionsIcon)
 {
-  if (!pixmaps) {
-    pixmaps = this;
+  if (!g_editorPixmaps) {
+    g_editorPixmaps = this;
   }
 }
 
@@ -49,8 +49,8 @@ Pixmaps::Pixmaps()
 
 Pixmaps::~Pixmaps()
 {
-  if (pixmaps == this) {
-    pixmaps = NULL;
+  if (g_editorPixmaps == this) {
+    g_editorPixmaps = NULL;
   }
 }
 

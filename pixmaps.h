@@ -20,8 +20,6 @@ public:
 };
 
 // singleton
-//
-// TODO: Rename this to 'g_editorPixmaps'.
-extern Pixmaps *pixmaps;
+extern Pixmaps *g_editorPixmaps;
 
 #endif // PIXMAPS_H
