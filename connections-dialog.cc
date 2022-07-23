@@ -12,10 +12,12 @@
 #include "qtutil.h"                    // SET_QOBJECT_NAME, toQString
 
 // smbase
+#include "container-utils.h"           // contains
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "trace.h"                     // TRACE
 
 // qt
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QPushButton>
@@ -62,7 +64,8 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
     m_connectButton(nullptr),
     m_restartButton(nullptr),
     m_disconnectButton(nullptr),
-    m_closeButton(nullptr)
+    m_closeButton(nullptr),
+    m_hostNameList()
 {
   setObjectName("ConnectionsDialog");
   setWindowTitle("Editor Connections");
@@ -101,6 +104,15 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
     #undef ADD_BUTTON
   }
 
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_connected,
+                   this, &ConnectionsDialog::on_connected);
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
+                   this, &ConnectionsDialog::on_vfsConnectionLost);
+
+  repopulateTable();
+  m_tableWidget->setCurrentCell(0, 0);
+  m_tableWidget->setFocus();
+
   this->resize(INIT_DIALOG_WIDTH, INIT_DIALOG_HEIGHT);
 }
 
@@ -108,8 +120,23 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
 ConnectionsDialog::~ConnectionsDialog() noexcept
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_tableWidget, nullptr, this, nullptr);
+  QObject::disconnect(m_refreshButton,    nullptr, this, nullptr);
+  QObject::disconnect(m_connectButton,    nullptr, this, nullptr);
+  QObject::disconnect(m_restartButton,    nullptr, this, nullptr);
   QObject::disconnect(m_disconnectButton, nullptr, this, nullptr);
+  QObject::disconnect(m_closeButton,      nullptr, this, nullptr);
+  QObject::disconnect(m_vfsConnections,   nullptr, this, nullptr);
+}
+
+
+void ConnectionsDialog::complain(string msg)
+{
+  // Use 'about' to not make noise.
+  //
+  // This uses the icon for the connections dialog as the icon within
+  // the error message box, which is a little weird, but not a major
+  // problem.
+  QMessageBox::about(this, "Error", toQString(msg));
 }
 
 
@@ -119,10 +146,12 @@ void ConnectionsDialog::repopulateTable()
 
   m_tableWidget->clearContents();
   m_tableWidget->setRowCount(hostNames.size());
+  m_hostNameList.clear();
 
   // Populate the rows.
   for (int r=0; r < (int)hostNames.size(); r++) {
     HostName const &hostName = hostNames.at(r);
+    m_hostNameList.push_back(hostName);
 
     bool connecting = m_vfsConnections->isConnecting(hostName);
     bool ready      = m_vfsConnections->isReady(hostName);
@@ -164,17 +193,36 @@ void ConnectionsDialog::repopulateTable()
 }
 
 
+std::set<HostName> ConnectionsDialog::selectedHostNames() const
+{
+  std::set<HostName> ret;
+
+  QItemSelectionModel *selectionModel = m_tableWidget->selectionModel();
+  QModelIndexList selectedRows = selectionModel->selectedRows();
+  for (QModelIndexList::iterator it(selectedRows.begin());
+       it != selectedRows.end();
+       ++it)
+  {
+    QModelIndex index = *it;
+    TRACE("ConnectionsDialog", "  selRow: " << index);
+
+    if (index.isValid() && !index.parent().isValid()) {
+      int r = index.row();
+      ret.insert(m_hostNameList.at(r));
+    }
+  }
+
+  return ret;
+}
+
+
 void ConnectionsDialog::showEvent(QShowEvent *event) noexcept
 {
   TRACE("ConnectionsDialog", "showEvent");
 
   GENERIC_CATCH_BEGIN
 
-  // When the dialog is shown, refresh its contents and select the first
-  // cell.
-  repopulateTable();
-  m_tableWidget->setCurrentCell(0, 0);
-  m_tableWidget->setFocus();
+  // This is a placeholder.  I might remove it.
 
   // I don't think this does anything.
   QDialog::showEvent(event);
@@ -250,9 +298,25 @@ void ConnectionsDialog::on_connectPressed() noexcept
 
   GENERIC_CATCH_BEGIN
 
-  QMessageBox box;
-  box.setText("TODO: connect");
-  box.exec();
+  bool ok;
+  QString text = QInputDialog::getText(this,
+    "Connect",
+    "SSH Host Name:",
+    QLineEdit::Normal,
+    "",
+    &ok);
+
+  if (ok) {
+    HostName hostName(HostName::asSSH(toString(text)));
+    if (m_vfsConnections->isValid(hostName)) {
+      complain(stringb(
+        "There is already a connection for " << hostName << "."));
+    }
+    else {
+      m_vfsConnections->connect(hostName);
+      repopulateTable();
+    }
+  }
 
   GENERIC_CATCH_END
 }
@@ -264,9 +328,14 @@ void ConnectionsDialog::on_restartPressed() noexcept
 
   GENERIC_CATCH_BEGIN
 
-  QMessageBox box;
-  box.setText("TODO: restart");
-  box.exec();
+  std::set<HostName> hostNames = selectedHostNames();
+  for (HostName const &hostName : hostNames) {
+    TRACE("ConnectionsDialog", "  restart: " << hostName);
+    m_vfsConnections->shutdown(hostName);
+    m_vfsConnections->connect(hostName);
+  }
+
+  repopulateTable();
 
   GENERIC_CATCH_END
 }
@@ -278,9 +347,24 @@ void ConnectionsDialog::on_disconnectPressed() noexcept
 
   GENERIC_CATCH_BEGIN
 
-  QMessageBox box;
-  box.setText("TODO: disconnect");
-  box.exec();
+  // Get the set of hosts to disconnect.
+  std::set<HostName> hostNamesToDisconnect = selectedHostNames();
+  if (contains(hostNamesToDisconnect, HostName::asLocal())) {
+    // The main reason for disallowing this is I do not have a way
+    // to re-establish it afterward.
+    complain("Cannot disconnect the local connection.");
+
+    // Bail out entirely rather than disconnecting a subset.
+    return;
+  }
+
+  // Disconnect them.
+  for (HostName const &hostName : hostNamesToDisconnect) {
+    TRACE("ConnectionsDialog", "  disconnect: " << hostName);
+    m_vfsConnections->shutdown(hostName);
+  }
+
+  repopulateTable();
 
   GENERIC_CATCH_END
 }

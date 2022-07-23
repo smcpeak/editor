@@ -12,6 +12,10 @@
 // qt
 #include <QDialog>
 
+// libc++
+#include <set>                         // std::set
+#include <vector>                      // std::vector
+
 class QPushButton;
 
 
@@ -47,6 +51,9 @@ private:     // instance data
   QPushButton *m_disconnectButton;
   QPushButton *m_closeButton;
 
+  // Sequence of host names shown in the table.
+  std::vector<HostName> m_hostNameList;
+
 private:     // methods
   // Clear and then populate 'm_tableWidget'.
   void repopulateTable();
@@ -58,6 +65,13 @@ protected:   // methods
 public:      // methods
   ConnectionsDialog(VFS_Connections *vfsConnections);
   ~ConnectionsDialog() noexcept;
+
+  // Show an error dialog box.
+  void complain(string msg);
+
+  // Get the set of host names corresponding to the set of selected
+  // rows.
+  std::set<HostName> selectedHostNames() const;
 
 private Q_SLOTS:
   // Handlers for connection state changes.
