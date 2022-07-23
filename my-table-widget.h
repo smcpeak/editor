@@ -4,10 +4,16 @@
 #ifndef MY_TABLE_WIDGET_H
 #define MY_TABLE_WIDGET_H
 
+// smbase
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
 
+// qt
+#include <QModelIndex>
 #include <QTableWidget>
+
+// libc++
+#include <iosfwd>                      // std::ostream
 
 
 // Variant of QTableWidget with some customizations.
@@ -62,6 +68,10 @@ public:      // funcs
   // Overridden QWidget methods.
   virtual void keyPressEvent(QKeyEvent *event) NOEXCEPT OVERRIDE;
 };
+
+
+// Print 'index' for debug/log purposes.
+std::ostream& operator<< (std::ostream &os, QModelIndex const &index);
 
 
 #endif // MY_TABLE_WIDGET_H

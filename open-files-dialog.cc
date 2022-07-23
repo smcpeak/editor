@@ -21,20 +21,6 @@
 #include <QVBoxLayout>
 
 
-// For use with TRACE.
-ostream& operator<< (ostream &os, QModelIndex const &index)
-{
-  if (!index.isValid()) {
-    return os << "root";
-  }
-  else {
-    return os << index.parent()
-              << ".(r=" << index.row()
-              << ", c=" << index.column() << ')';
-  }
-}
-
-
 // Height of each row in pixels.
 int const ROW_HEIGHT = 20;
 

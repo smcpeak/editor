@@ -13,6 +13,9 @@
 // Qt
 #include <QKeyEvent>
 
+// libc++
+#include <iostream>                    // std::ostream
+
 
 MyTableWidget::MyTableWidget(QWidget *parent)
   : QTableWidget(parent)
@@ -103,6 +106,19 @@ void MyTableWidget::initializeColumns(ColumnInitInfo const *columnInfo,
   // Column widths.
   for (int i=0; i < numColumns; i++) {
     setColumnWidth(i, columnInfo[i].initialWidth);
+  }
+}
+
+
+std::ostream& operator<< (std::ostream &os, QModelIndex const &index)
+{
+  if (!index.isValid()) {
+    return os << "root";
+  }
+  else {
+    return os << index.parent()
+              << ".(r=" << index.row()
+              << ", c=" << index.column() << ')';
   }
 }
 
