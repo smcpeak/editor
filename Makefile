@@ -470,6 +470,8 @@ TOCLEAN += keybindings.doc.gen.*
 # above.  Above, modules are pulled in as needed in order to build
 # various test programs.  What's left over is the modules that are not
 # part of any test program.
+EDITOR_OBJS += connections-dialog.o
+EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diff-hilite.o
 EDITOR_OBJS += editor-global.o
 EDITOR_OBJS += editor-global.moc.o

@@ -197,6 +197,7 @@ public Q_SLOTS:
   void fileLaunchCommand();
   void fileRunMake();
   void fileKillProcess();
+  void fileManageConnections() NOEXCEPT;
   void fileExit();
 
   void editUndo() NOEXCEPT;

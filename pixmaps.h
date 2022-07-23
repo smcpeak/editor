@@ -4,14 +4,15 @@
 #ifndef PIXMAPS_H
 #define PIXMAPS_H
 
-#include <qpixmap.h>      // QPixmap
+#include <qpixmap.h>         // QPixmap
 
 class Pixmaps {
 public:
-  QPixmap icon;           // icon for editor windows
-  QPixmap search;         // "search" status indicator
-  QPixmap getReplace;     // get replacement text
-  QPixmap replace;        // y/n "replace?" mode
+  QPixmap icon;              // icon for editor windows
+  QPixmap search;            // "search" status indicator
+  QPixmap getReplace;        // get replacement text
+  QPixmap replace;           // y/n "replace?" mode
+  QPixmap connectionsIcon;   // Icon for ConnectionsDialog.
 
 public:
   Pixmaps();
@@ -19,6 +20,8 @@ public:
 };
 
 // singleton
+//
+// TODO: Rename this to 'g_editorPixmaps'.
 extern Pixmaps *pixmaps;
 
 #endif // PIXMAPS_H

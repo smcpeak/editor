@@ -1,12 +1,13 @@
 // pixmaps.cc
 // code for pixmaps.h
 
-#include "pixmaps.h"             // this module
+#include "pixmaps.h"                   // this module
 
-#include "pix/icon.xpm"          // icon_xpm[]
-#include "pix/search.xpm"        // search_xpm[]
-#include "pix/getreplace.xpm"    // getreplace_xpm[]
-#include "pix/replace.xpm"       // replace_xpm[]
+#include "pix/connections-icon.xpm"    // connectionsIcon_xpm
+#include "pix/icon.xpm"                // icon_xpm[]
+#include "pix/search.xpm"              // search_xpm[]
+#include "pix/getreplace.xpm"          // getreplace_xpm[]
+#include "pix/replace.xpm"             // replace_xpm[]
 
 // Random note on XPM: XPM is C syntax, but to make it legal C++,
 // I had to add 'const' to the second lines of the files.  Concerned
@@ -35,7 +36,8 @@ Pixmaps::Pixmaps()
   : INIT(icon),
     INIT(search),
     INIT(getReplace),
-    INIT(replace)
+    INIT(replace),
+    INIT(connectionsIcon)
 {
   if (!pixmaps) {
     pixmaps = this;

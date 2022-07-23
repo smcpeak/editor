@@ -272,8 +272,12 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Launch (run) command ...", fileLaunchCommand,
                   Qt::ALT + Qt::Key_R);
-    MENU_ITEM_KEY("Run \"run-&make-from-editor\"", fileRunMake, Qt::Key_F9);
+    MENU_ITEM_KEY("Run \"run-make-from-editor\"", fileRunMake, Qt::Key_F9);
     MENU_ITEM    ("Kill running process ...", fileKillProcess);
+
+    menu->addSeparator();
+
+    MENU_ITEM    ("&Manage connections ...", fileManageConnections);
 
     menu->addSeparator();
 
@@ -1090,6 +1094,16 @@ void EditorWindow::fileKillProcess()
 }
 
 
+void EditorWindow::fileManageConnections() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  m_globalState->showConnectionsDialog();
+
+  GENERIC_CATCH_END
+}
+
+
 bool EditorWindow::canQuitApplication()
 {
   stringBuilder msg;
@@ -1846,6 +1860,10 @@ void EditorWindow::closeEvent(QCloseEvent *event)
       event->ignore();    // Prevent app from closing.
       return;
     }
+
+    // Close the connections dialog if it is open, since otherwise that
+    // will prevent the program from terminating.
+    m_globalState->hideModelessDialogs();
   }
 
   event->accept();

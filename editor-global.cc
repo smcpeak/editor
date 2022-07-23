@@ -3,7 +3,8 @@
 
 #include "editor-global.h"             // this module
 
-// this dir
+// editor
+#include "connections-dialog.h"        // ConnectionsDialog
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
@@ -62,7 +63,8 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
     m_filenameInputDialogHistory(),
     m_vfsConnections(),
     m_processes(),
-    m_openFilesDialog(NULL)
+    m_openFilesDialog(NULL),
+    m_connectionsDialog()
 {
   m_documentList.addObserver(this);
 
@@ -546,6 +548,34 @@ void EditorGlobalState::slot_broadcastSearchPanelChanged(
   }
 
   GENERIC_CATCH_END
+}
+
+
+void EditorGlobalState::showConnectionsDialog()
+{
+  if (!m_connectionsDialog) {
+    m_connectionsDialog.reset(new ConnectionsDialog(&m_vfsConnections));
+  }
+
+  // Sequence from:
+  // https://stackoverflow.com/questions/7817334/qt-correct-way-to-show-display-raise-window
+
+  // Bring it to the front.
+  m_connectionsDialog->raise();
+
+  // Give it focus.
+  m_connectionsDialog->activateWindow();
+
+  // Make it visible, un-minimize.
+  m_connectionsDialog->showNormal();
+}
+
+
+void EditorGlobalState::hideModelessDialogs()
+{
+  if (m_connectionsDialog) {
+    m_connectionsDialog->hide();
+  }
 }
 
 

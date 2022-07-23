@@ -23,6 +23,7 @@
 #include <QApplication>
 #include <QProxyStyle>
 
+class ConnectionsDialog;               // connections-dialog.h
 class ProcessWatcher;                  // process-watcher.h
 
 
@@ -73,6 +74,9 @@ private:     // data
   // across invocations.  It contains a pointer to m_documentList, so
   // must be destroyed before the list.
   Owner<OpenFilesDialog> m_openFilesDialog;
+
+  // Connections dialog, even when not shown.
+  std::unique_ptr<ConnectionsDialog> m_connectionsDialog;
 
 private:      // funcs
   NamedTextDocument *getNewCommandOutputDocument(
@@ -153,6 +157,12 @@ public:       // funcs
   virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
+
+  // Show the connections dialog.
+  void showConnectionsDialog();
+
+  // Hide any open modeless dialogs since we are about to quit.
+  void hideModelessDialogs();
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
