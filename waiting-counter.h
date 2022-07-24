@@ -4,6 +4,9 @@
 #ifndef EDITOR_WAITING_COUNTER_H
 #define EDITOR_WAITING_COUNTER_H
 
+// smbase
+#include "sm-macros.h"                 // NO_OBJECT_COPIES
+
 
 // This is for use by EventReplay (event-replay.h).  It is not a member
 // of that class because that header has some dependencies that I do not
@@ -43,7 +46,6 @@ public:      // methods
     adjWaitingCounter(-1);
   }
 };
-
 
 
 #endif // EDITOR_WAITING_COUNTER_H
