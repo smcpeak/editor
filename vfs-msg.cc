@@ -281,6 +281,17 @@ VFS_ReadFileReply::~VFS_ReadFileReply()
 {}
 
 
+string VFS_ReadFileReply::description() const
+{
+  stringBuilder sb;
+  sb << VFS_PathReply::description()
+     << " size=" << m_contents.size()
+     << " modTime=" << m_fileModificationTime
+     << " readOnly=" << m_readOnly;
+  return sb.str();
+}
+
+
 void VFS_ReadFileReply::xfer(Flatten &flat)
 {
   VFS_PathReply::xfer(flat);

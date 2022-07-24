@@ -257,6 +257,7 @@ public:      // methods
   // VFS_Message methods.
   virtual VFS_MessageType messageType() const override
     { return VFS_MT_ReadFileReply; }
+  virtual string description() const override;
   virtual void xfer(Flatten &flat) override;
 };
 
