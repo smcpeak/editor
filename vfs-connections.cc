@@ -187,7 +187,7 @@ void VFS_Connections::Connection::issuePendingRequest()
       TRACE("VFS_Connections",
         "sending: requestID=" << m_currentRequestID <<
         " host=" << m_hostName <<
-        " type=" << toString(qr.m_requestObject->messageType()));
+        " " << qr.m_requestObject->description());
       m_fsQuery->sendRequest(*(qr.m_requestObject));
       m_queuedRequests.pop_back();
     }
@@ -213,7 +213,7 @@ std::unique_ptr<VFS_Message> VFS_Connections::takeReply(
 
   TRACE("VFS_Connections",
     "takeReply: requestID=" << requestID <<
-    " type=" << toString(ret->messageType()));
+    " " << ret->description());
 
   m_availableReplies.erase(it);
 
