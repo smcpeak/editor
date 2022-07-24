@@ -389,7 +389,7 @@ void EditorWidget::requestFileStatus()
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
   req->m_path = getDocument()->filename();
   vfsConnections()->issueRequest(m_fileStatusRequestID,
-    HostName::asLocal(), std::move(req));
+    getDocument()->hostName(), std::move(req));
   m_fileStatusRequestEditor = m_editor;
 
   TRACE("EditorWidget",
@@ -430,6 +430,10 @@ void EditorWidget::on_replyAvailable(
       if (getDocument()->m_lastFileTimestamp !=
             reply->m_fileModificationTime) {
         // Redraw the indicator of on-disk changes.
+        TRACE("EditorWidget",
+          "Document modTime " << getDocument()->m_lastFileTimestamp <<
+          " differs from reply modTime " << reply->m_fileModificationTime <<
+          ", marking as modified on disk.");
         getDocument()->m_modifiedOnDisk = true;
         this->redraw();
       }
