@@ -94,6 +94,9 @@ private:     // data
   // List of host names shown in the drop down.
   std::vector<HostName> m_hostNameList;
 
+  // Host name used for queries.
+  HostName m_currentHostName;
+
   // If not zero, the ID of the current pending request.
   VFS_Connections::RequestID m_currentRequestID;
 
@@ -118,6 +121,9 @@ private:     // data
   bool m_saveAs;
 
 private:     // funcs
+  // Clear the directory cache and issue a new query to populate it.
+  void clearCacheAndReQuery();
+
   // Issue a query for information about the directory containing the
   // file name in 'm_filenameEdit'.  If we already have its information,
   // do nothing.  Otherwise issue a query, unless there is already a
@@ -154,6 +160,10 @@ private:     // funcs
   // If possible, extend 'm_filenameEdit' to include the longest common
   // prefix of the candidates in the directory cache.
   void filenameCompletion();
+
+  // If we know whether 'filename' exists, set 'exists' and return true.
+  // Otherwise return false.
+  bool knowFileExistence(bool /*OUT*/ &exists, string const &filename);
 
 public:      // funcs
   FilenameInputDialog(History *history,

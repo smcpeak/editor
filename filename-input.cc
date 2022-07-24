@@ -52,6 +52,7 @@ FilenameInputDialog::FilenameInputDialog(
   m_helpButton(NULL),
   m_vfsConnections(vfsConnections),
   m_hostNameList(),
+  m_currentHostName(HostName::asLocal()),
   m_currentRequestID(0),
   m_currentRequestDir(""),
   m_cachedDirectory(""),
@@ -69,7 +70,7 @@ FilenameInputDialog::FilenameInputDialog(
     QHBoxLayout *connectionHBox = new QHBoxLayout();
     vbox->addLayout(connectionHBox);
 
-    QLabel *connectionsLabel = new QLabel("Connection:");
+    QLabel *connectionsLabel = new QLabel("&Connection:");
     connectionHBox->addWidget(connectionsLabel);
 
     m_connectionDropDown = new QComboBox(this);
@@ -81,6 +82,7 @@ FilenameInputDialog::FilenameInputDialog(
     }
     m_connectionDropDown->setCurrentIndex(0);
     connectionHBox->addWidget(m_connectionDropDown);
+    connectionsLabel->setBuddy(m_connectionDropDown);
 
     // Here, 'QOverload' is used to select the overload that accepts an
     // 'int'.  (The QComboBox docs explain this, but I cannot find
@@ -163,18 +165,14 @@ bool FilenameInputDialog::runDialog(
   else {
     // This should not happen, but I'll just be silent.
   }
+  m_currentHostName = hostName;
 
   m_filenameEdit->setText(fileName);
-
-  this->m_cachedDirectory = "";
-  this->queryDirectoryIfNeeded();
 
   // Set the focus on the text edit so I can start typing immediately.
   m_filenameEdit->setFocus(Qt::OtherFocusReason);
 
-  // Since the directory query is still running, this first call will
-  // just update the display to show that fact.
-  this->updateFeedback();
+  clearCacheAndReQuery();
 
   // Show the dialog, returning once it is closed.
   bool ret = this->exec();
@@ -185,11 +183,22 @@ bool FilenameInputDialog::runDialog(
   this->cancelCurrentRequestIfAny();
 
   if (ret) {
-    hostName = m_hostNameList.at(m_connectionDropDown->currentIndex());
+    hostName = m_currentHostName;
     fileName = m_filenameEdit->text();
   }
 
   return ret;
+}
+
+
+void FilenameInputDialog::clearCacheAndReQuery()
+{
+  m_cachedDirectory = "";
+  queryDirectoryIfNeeded();
+
+  // Since the directory query is still running, this first call will
+  // just update the display to show that fact.
+  updateFeedback();
 }
 
 
@@ -233,7 +242,7 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
 
   m_currentRequestDir = dir;
   m_vfsConnections->issueRequest(m_currentRequestID /*OUT*/,
-                                 HostName::asLocal(),
+                                 m_currentHostName,
                                  std::move(req));
 }
 
@@ -318,13 +327,11 @@ void FilenameInputDialog::setFilenameLabel()
         lookupInCachedDirectoryEntries(base);
       switch (fileKind) {
         case SMFileUtil::FK_REGULAR:
-          if (sfu.absoluteFileExists(filename)) {
-            if (m_saveAs) {
-              m_filenameLabel->setText("File exists, will overwrite:");
-            }
-            else {
-              m_filenameLabel->setText("File exists:");
-            }
+          if (m_saveAs) {
+            m_filenameLabel->setText("File exists, will overwrite:");
+          }
+          else {
+            m_filenameLabel->setText("File exists:");
           }
           break;
 
@@ -549,7 +556,15 @@ void FilenameInputDialog::on_connectionIndexChanged(int index) NOEXCEPT
   HostName hostName = m_hostNameList[index];
   TRACE("FilenameInputDialog", "  hostName: " << hostName);
 
-  // TODO: More.
+  // Change current host name.
+  int index = m_connectionDropDown->currentIndex();
+  xassert(0 <= index && index < (int)m_hostNameList.size());
+  m_currentHostName = m_hostNameList.at(index);
+
+  // Assuming this constitutes a change (and QComboBox seems to only
+  // send the 'indexChanged' signal when there really is a change),
+  // invalidate the cache and re-query.
+  clearCacheAndReQuery();
 
   GENERIC_CATCH_END
 }
@@ -583,6 +598,26 @@ void FilenameInputDialog::on_help() NOEXCEPT
 }
 
 
+bool FilenameInputDialog::knowFileExistence(
+  bool /*OUT*/ &exists, string const &filename)
+{
+  SMFileUtil sfu;
+  string dir, base;
+  sfu.splitPath(dir, base, filename);
+
+  if (dir == m_cachedDirectory) {
+    SMFileUtil::FileKind fileKind =
+      lookupInCachedDirectoryEntries(base);
+    exists = (fileKind == SMFileUtil::FK_REGULAR);
+    return true;
+  }
+  else {
+    // The directory is not cached.
+    return false;
+  }
+}
+
+
 void FilenameInputDialog::accept() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -593,38 +628,44 @@ void FilenameInputDialog::accept() NOEXCEPT
   // trailing slashes, and converting back to string.
   filename = SMFileName(filename).withTrailingSlash(false).toString();
 
-  // Prompt before overwriting a file.
-  SMFileUtil sfu;
-  if (m_saveAs && sfu.absoluteFileExists(filename)) {
-    QMessageBox box(this);
-    box.setWindowTitle("Overwrite Existing File?");
-    box.setText(qstringb(
-      "Overwrite existing file \"" << filename << "\"?"));
-    box.addButton(QMessageBox::Yes);
-    box.addButton(QMessageBox::Cancel);
-    if (box.exec() != QMessageBox::Yes) {
-      // Bail out without closing.
-      return;
+  // See if the file exists in order to provide extra prompting.
+  bool exists;
+  if (knowFileExistence(exists /*OUT*/, filename)) {
+    // Prompt before overwriting a file.
+    if (m_saveAs && exists) {
+      QMessageBox box(this);
+      box.setWindowTitle("Overwrite Existing File?");
+      box.setText(qstringb(
+        "Overwrite existing file \"" << filename << "\"?"));
+      box.addButton(QMessageBox::Yes);
+      box.addButton(QMessageBox::Cancel);
+      if (box.exec() != QMessageBox::Yes) {
+        // Bail out without closing.
+        return;
+      }
+    }
+
+    // If we are loading a file, and the file does not exist, prompt
+    // first.  Without this, I often hit Enter a bit too fast, intending
+    // to open a file but instead creating a new one, which is annoying
+    // because then I have to re-open the dialog and navigate to the
+    // intended location a second time.
+    if (!m_saveAs && !exists) {
+      QMessageBox box(this);
+      box.setObjectName("createFilePrompt");
+      box.setWindowTitle("Create New File?");
+      box.setText(qstringb(
+        "Create new file \"" << filename << "\"?"));
+      box.addButton(QMessageBox::Yes);
+      box.addButton(QMessageBox::Cancel);
+      if (box.exec() != QMessageBox::Yes) {
+        // Bail out without closing.
+        return;
+      }
     }
   }
-
-  // If we are loading a file, and the file does not exist, prompt
-  // first.  Without this, I often hit Enter a bit too fast, intending
-  // to open a file but instead creating a new one, which is annoying
-  // because then I have to re-open the dialog and navigate to the
-  // intended location a second time.
-  if (!m_saveAs && !sfu.absoluteFileExists(filename)) {
-    QMessageBox box(this);
-    box.setObjectName("createFilePrompt");
-    box.setWindowTitle("Create New File?");
-    box.setText(qstringb(
-      "Create new file \"" << filename << "\"?"));
-    box.addButton(QMessageBox::Yes);
-    box.addButton(QMessageBox::Cancel);
-    if (box.exec() != QMessageBox::Yes) {
-      // Bail out without closing.
-      return;
-    }
+  else {
+    // If we don't know, then just bypass the extra prompting.
   }
 
   m_history->m_dialogSize = this->size();
