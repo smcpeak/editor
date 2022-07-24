@@ -35,7 +35,7 @@
 #include "nonport.h"                   // fileOrDirectoryExists
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // dirname
+#include "strutil.h"                   // dirname, quoted
 #include "sm-test.h"                   // PVAL
 #include "trace.h"                     // TRACE_ARGS
 
@@ -533,8 +533,8 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 }
 
 
-string EditorWindow::fileChooseDialog(string const &origDir,
-  bool saveAs, FileChooseDialogKind dialogKind)
+string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
+  string const &origDir, bool saveAs, FileChooseDialogKind dialogKind)
 {
   string dir(origDir);
   TRACE("fileChooseDialog",
@@ -554,16 +554,23 @@ string EditorWindow::fileChooseDialog(string const &origDir,
       this);
     dialog.setSaveAs(saveAs);
 
-    HostName dummyHostName(HostName::asLocal()); // TODO
     QString choice = toQString(dir);
 
     if (dialog.runDialog(&(m_globalState->m_documentList),
-                         dummyHostName, choice)) {
+                         hostName, choice)) {
       return toString(choice);
     }
     else {
       return "";
     }
+  }
+
+  if (!hostName.isLocal()) {
+    // TODO: I think I should just remove the option to run the other
+    // dialogs.
+    complain("Cannot run the native or Qt file choosers to select "
+             "a remote file.");
+    return "";
   }
 
   QFileDialog dialog(this);
@@ -642,29 +649,33 @@ void EditorWindow::fileOpenAtCursor()
 
 void EditorWindow::fileOpenNativeDialog()
 {
-  this->fileOpenFile(
-    this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
+  HostName hostName(currentDocument()->hostName());
+  this->fileOpenFile(hostName,
+    this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
                            false /*saveAs*/, FCDK_NATIVE));
 }
 
 void EditorWindow::fileOpenQtDialog()
 {
-  this->fileOpenFile(
-    this->fileChooseDialog(m_editorWidget->getDocumentDirectory(),
+  HostName hostName(currentDocument()->hostName());
+  this->fileOpenFile(hostName,
+    this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
                            false /*saveAs*/, FCDK_QT));
 }
 
-void EditorWindow::fileOpenFile(string const &filename)
+void EditorWindow::fileOpenFile(HostName const &hostName,
+                                string const &filename)
 {
   if (filename.empty()) {
     // Dialog was canceled.
     return;
   }
 
-  TRACE("fileOpen", "fileOpenFile: " << filename);
+  TRACE("fileOpen", "fileOpenFile: host=" << hostName <<
+                    " file=" << quoted(filename));
 
   DocumentName docName;
-  docName.setFilename(filename);
+  docName.setFilename(hostName, filename);
 
   // If this file is already open, switch to it.
   NamedTextDocument *file =
@@ -675,7 +686,8 @@ void EditorWindow::fileOpenFile(string const &filename)
   }
 
   // Load the file contents.
-  std::unique_ptr<VFS_ReadFileReply> rfr(readFileSynchronously(filename));
+  std::unique_ptr<VFS_ReadFileReply> rfr(
+    readFileSynchronously(hostName, filename));
   if (!rfr) {
     // Either the request was canceled or an error has already been
     // reported.
@@ -723,13 +735,13 @@ void EditorWindow::fileOpenFile(string const &filename)
 
 template <class REPLY_TYPE>
 std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
-  std::unique_ptr<VFS_Message> request)
+  HostName const &hostName, std::unique_ptr<VFS_Message> request)
 {
   // Initially empty pointer, used for error returns.
   std::unique_ptr<REPLY_TYPE> typedReply;
 
   // Issue the request.
-  VFS_QuerySync querySync(vfsConnections(), this);
+  VFS_QuerySync querySync(vfsConnections(), hostName, this);
   std::unique_ptr<VFS_Message> genericReply;
   string connLostMessage;
   if (!querySync.issueRequestSynchronously(
@@ -761,27 +773,28 @@ std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
 
 
 std::unique_ptr<VFS_ReadFileReply> EditorWindow::readFileSynchronously(
-  string const &fname)
+  HostName const &hostName, string const &fname)
 {
   std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
   req->m_path = fname;
-  return vfsQuerySynchronously<VFS_ReadFileReply>(std::move(req));
+  return vfsQuerySynchronously<VFS_ReadFileReply>(hostName, std::move(req));
 }
 
 
 std::unique_ptr<VFS_FileStatusReply> EditorWindow::getFileStatusSynchronously(
-  string const &fname)
+  HostName const &hostName, string const &fname)
 {
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
   req->m_path = fname;
-  return vfsQuerySynchronously<VFS_FileStatusReply>(std::move(req));
+  return vfsQuerySynchronously<VFS_FileStatusReply>(hostName, std::move(req));
 }
 
 
-bool EditorWindow::checkFileExistenceSynchronously(string const &fname)
+bool EditorWindow::checkFileExistenceSynchronously(
+  HostName const &hostName, string const &fname)
 {
   std::unique_ptr<VFS_FileStatusReply> reply(
-    getFileStatusSynchronously(fname));
+    getFileStatusSynchronously(hostName, fname));
   return reply &&
          reply->m_success &&
          reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -824,7 +837,8 @@ void EditorWindow::writeTheFile()
   req->m_path = file->filename();
   req->m_contents = file->getWholeFile();
   std::unique_ptr<VFS_WriteFileReply> reply(
-    vfsQuerySynchronously<VFS_WriteFileReply>(std::move(req)));
+    vfsQuerySynchronously<VFS_WriteFileReply>(file->hostName(),
+                                              std::move(req)));
 
   if (reply) {
     if (reply->m_success) {
@@ -865,13 +879,17 @@ void EditorWindow::fileSaveAs()
 {
   NamedTextDocument *fileDoc = currentDocument();
 
+  // Host to start in.
+  HostName hostName = fileDoc->hostName();
+
   // Directory to start in.  This may change if we prompt the user
   // more than once.
   string dir = fileDoc->directory();
 
   while (true) {
     string chosenFilename =
-      this->fileChooseDialog(dir, true /*saveAs*/, FCDK_FILENAME_INPUT);
+      this->fileChooseDialog(hostName, dir, true /*saveAs*/,
+                             FCDK_FILENAME_INPUT);
     if (chosenFilename.isempty()) {
       return;
     }
@@ -880,6 +898,7 @@ void EditorWindow::fileSaveAs()
     }
 
     if (fileDoc->hasFilename() &&
+        fileDoc->hostName() == hostName &&
         fileDoc->filename() == chosenFilename) {
       // User chose to save using the same file name.
       this->fileSave();
@@ -887,7 +906,7 @@ void EditorWindow::fileSaveAs()
     }
 
     DocumentName docName;
-    docName.setFilename(chosenFilename);
+    docName.setFilename(hostName, chosenFilename);
 
     if (this->m_globalState->hasFileWithName(docName)) {
       this->complain(stringb(
@@ -951,7 +970,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
     std::unique_ptr<VFS_FileStatusReply> reply(
-      getFileStatusSynchronously(doc->filename()));
+      getFileStatusSynchronously(doc->hostName(), doc->filename()));
     if (!reply) {
       return false;    // Canceled.
     }
@@ -989,7 +1008,7 @@ bool EditorWindow::reloadCurrentDocument()
 
   if (doc->hasFilename()) {
     std::unique_ptr<VFS_ReadFileReply> rfr(
-      this->readFileSynchronously(doc->filename()));
+      this->readFileSynchronously(doc->hostName(), doc->filename()));
     if (!rfr) {
       return false;
     }
@@ -1043,6 +1062,7 @@ void EditorWindow::fileLaunchCommand()
   }
 
   NamedTextDocument *doc = m_globalState->launchCommand(
+    currentDocument()->hostName(),
     toQString(dir),
     dialog->prefixStderrLines(),
     dialog->m_text);
@@ -1060,6 +1080,7 @@ void EditorWindow::fileRunMake()
   // My intent is the user creates a script with this name on their
   // $PATH.  Then the script can do whatever is desired here.
   NamedTextDocument *fileDoc = m_globalState->launchCommand(
+    currentDocument()->hostName(),
     toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
   this->setDocumentFile(fileDoc);
 }
@@ -1361,7 +1382,9 @@ void EditorWindow::editGrepSource() NOEXCEPT
   else {
     string dir = m_editorWidget->getDocumentDirectory();
     NamedTextDocument *fileDoc =
-      m_globalState->launchCommand(toQString(dir),
+      m_globalState->launchCommand(
+        currentDocument()->hostName(),
+        toQString(dir),
         true /*prefixStderrLines*/,
         qstringb("grepsrc " << shellDoubleQuote(searchText)));
     this->setDocumentFile(fileDoc);
@@ -1806,16 +1829,18 @@ void EditorWindow::on_closeSARPanel()
 void EditorWindow::on_openFilenameInputDialogSignal(
   QString const &filename, int line)
 {
+  HostName hostName = currentDocument()->hostName();
+
   // Check for fast-open conditions.
   {
     SMFileUtil sfu;
     string fn(toString(filename));
     if (!sfu.endsWithDirectorySeparator(fn) &&
         currentDocument()->resourceName() != fn &&
-        checkFileExistenceSynchronously(fn)) {
+        checkFileExistenceSynchronously(hostName, fn)) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
-      this->fileOpenFile(fn);
+      this->fileOpenFile(hostName, fn);
       if (line != 0) {
         // Also go to line number, if provided.
         m_editorWidget->cursorTo(TextLCoord(line-1, 0));
@@ -1832,12 +1857,11 @@ void EditorWindow::on_openFilenameInputDialogSignal(
     vfsConnections(),
     this);
 
-  HostName dummyHostName(HostName::asLocal()); // TODO
   QString confirmedFileName = filename;
 
   if (dialog.runDialog(&(m_globalState->m_documentList),
-                       dummyHostName, confirmedFileName)) {
-    this->fileOpenFile(toString(confirmedFileName));
+                       hostName, confirmedFileName)) {
+    this->fileOpenFile(hostName, toString(confirmedFileName));
   }
 }
 

@@ -93,8 +93,8 @@ private:     // funcs
 
   // Start the file chooser.  Return an empty string if it is canceled,
   // otherwise the chosen file name.
-  string fileChooseDialog(string const &dir, bool saveAs,
-    FileChooseDialogKind dialogKind);
+  string fileChooseDialog(HostName /*INOUT*/ &hostName,
+    string const &dir, bool saveAs, FileChooseDialogKind dialogKind);
 
   // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
   //
@@ -102,7 +102,7 @@ private:     // funcs
   // pointer.
   template <class REPLY_TYPE>
   std::unique_ptr<REPLY_TYPE> vfsQuerySynchronously(
-    std::unique_ptr<VFS_Message> request);
+    HostName const &hostName, std::unique_ptr<VFS_Message> request);
 
   // Read the contents of 'fname', waiting for the reply and blocking
   // user input during the wait.
@@ -112,14 +112,15 @@ private:     // funcs
   // be done.  But if present, the reply object might itself have
   // 'm_success==false', which needs to be handled by the caller.
   std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
-    string const &fname);
+    HostName const &hostName, string const &fname);
 
   // Get timestamp, etc., for 'fname'.
   std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
-    string const &fname);
+    HostName const &hostName, string const &fname);
 
   // Return true if 'fname' exists, blocking during the check.
-  bool checkFileExistenceSynchronously(string const &fname);
+  bool checkFileExistenceSynchronously(
+    HostName const &hostName, string const &fname);
 
   void complain(char const *msg);
 
@@ -138,7 +139,7 @@ public:      // funcs
   VFS_Connections *vfsConnections() const;
 
   // open and begin editing a particular file
-  void fileOpenFile(string const &fname);
+  void fileOpenFile(HostName const &hostName, string const &fname);
 
   // File user is editing: returns editor->docFile.
   NamedTextDocument *currentDocument();

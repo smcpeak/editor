@@ -4,6 +4,9 @@
 #ifndef EDITOR_DOC_NAME_H
 #define EDITOR_DOC_NAME_H
 
+// editor
+#include "host-name.h"                 // HostName
+
 // smbase
 #include "sm-compare.h"                // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
 #include "str.h"                       // string
@@ -17,6 +20,9 @@
 // containing NamedTextDocumentList.
 class DocumentName {
 private:     // data
+  // Host that has the resource.
+  HostName m_hostName;
+
   // Name of the resource that supplies the data.  This is a filename if
   // 'm_hasFilename' is true.  Otherwise, it is a human-readable string
   // describing the origin of the content.
@@ -44,13 +50,27 @@ public:      // methods
   DocumentName(DocumentName const &obj) = default;
   DocumentName& operator=(DocumentName const &obj) = default;
 
-  static DocumentName fromFilename(string const &filename)
-    { DocumentName ret; ret.setFilename(filename); return ret; }
-  static DocumentName fromNonFileResourceName(string const &name, string const &dir)
-    { DocumentName ret; ret.setNonFileResourceName(name, dir); return ret; }
+  static DocumentName fromFilename(HostName const &hostName,
+                                   string const &filename)
+  {
+    DocumentName ret;
+    ret.setFilename(hostName, filename);
+    return ret;
+  }
+
+  static DocumentName fromNonFileResourceName(HostName const &hostName,
+    string const &name, string const &dir)
+  {
+    DocumentName ret;
+    ret.setNonFileResourceName(hostName, name, dir);
+    return ret;
+  }
 
   // Compare by 'm_resourceName'.
   StrongOrdering compareTo(DocumentName const &obj) const;
+
+  // Get the host that contains the resource.
+  HostName hostName() const            { return m_hostName; }
 
   // A name may be empty, but not when associated with a document that
   // is part of a NamedTextDocumentList.
@@ -65,15 +85,17 @@ public:      // methods
   // Get the filename for this document.  Requires 'hasFilename()'.
   string filename() const;
 
-  // Set 'm_resourceName' to be 'filename', and 'm_hasFilename' to true.
-  // It is the caller's responsibility to ensure uniqueness within the
-  // containing NamedTextDocumentList.  This also sets 'm_directory' to
-  // the directory of the file.
-  void setFilename(string const &filename);
+  // Set 'm_hostName' to 'hostName, 'm_resourceName' to be 'filename',
+  // and 'm_hasFilename' to true.  It is the caller's responsibility to
+  // ensure uniqueness within the containing NamedTextDocumentList.
+  // This also sets 'm_directory' to the directory of the file.
+  void setFilename(HostName const &hostName, string const &filename);
 
-  // Set 'm_resourceName' to 'name' and 'm_hasFilename' to false.  The name
-  // still has to be unique.  Sets 'm_directory' to 'dir'.
-  void setNonFileResourceName(string const &name, string const &dir);
+  // Set 'm_hostName' to 'hostName, 'm_resourceName' to 'name', and
+  // 'm_hasFilename' to false.  The name still has to be unique.  Sets
+  // 'm_directory' to 'dir'.
+  void setNonFileResourceName(HostName const &hostName,
+    string const &name, string const &dir);
 
   // Get the directory associated with the document.
   string directory() const             { return m_directory; }

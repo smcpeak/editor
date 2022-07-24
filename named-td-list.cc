@@ -150,11 +150,13 @@ NamedTextDocument *NamedTextDocumentList::createUntitledDocument(
 {
   // Come up with a unique "untitled" name.
   DocumentName docName;
-  docName.setNonFileResourceName("untitled.txt", dir);
+  HostName hostName(HostName::asLocal());
+  docName.setNonFileResourceName(hostName, "untitled.txt", dir);
   int n = 1;
   while (this->findDocumentByName(docName)) {
     n++;
-    docName.setNonFileResourceName(stringb("untitled" << n << ".txt"), dir);
+    docName.setNonFileResourceName(hostName,
+      stringb("untitled" << n << ".txt"), dir);
     xassert(n < 1000);       // Prevent infinite loop.
   }
 

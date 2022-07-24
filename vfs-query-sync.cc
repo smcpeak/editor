@@ -21,9 +21,11 @@
 
 VFS_QuerySync::VFS_QuerySync(
   VFS_Connections *vfsConnections,
+  HostName const &hostName,
   QWidget *parentWidget)
 :
   m_vfsConnections(vfsConnections),
+  m_hostName(hostName),
   m_parentWidget(parentWidget),
   m_requestID(0),
   m_reply(),
@@ -59,7 +61,7 @@ bool VFS_QuerySync::issueRequestSynchronously(
 
   string requestDescription = request->description();
   m_vfsConnections->issueRequest(m_requestID,
-    HostName::asLocal(), std::move(request));
+    m_hostName, std::move(request));
   RequestID origRequestID = m_requestID;
 
   TRACE("VFS_QuerySync",
@@ -155,8 +157,7 @@ void VFS_QuerySync::on_replyAvailable(RequestID requestID) NOEXCEPT
 void VFS_QuerySync::on_vfsConnectionLost(
   HostName hostName, string reason) NOEXCEPT
 {
-  // TODO: Also check the host name.
-  if (m_requestID != 0) {
+  if (hostName == m_hostName && m_requestID != 0) {
     m_connLostMessage = reason;
     m_requestID = 0;
     m_eventLoop.exit();

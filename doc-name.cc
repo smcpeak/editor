@@ -5,6 +5,7 @@
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
+#include "sm-macros.h"                 // COMPARE_MEMB
 #include "strutil.h"                   // quoted
 
 // libc++
@@ -12,7 +13,8 @@
 
 
 DocumentName::DocumentName()
-  : m_resourceName(),
+  : m_hostName(HostName::asLocal()),
+    m_resourceName(),
     m_hasFilename(false),
     m_directory()
 {}
@@ -24,7 +26,10 @@ DocumentName::~DocumentName()
 
 StrongOrdering DocumentName::compareTo(DocumentName const &obj) const
 {
-  return strongOrderFromInt(m_resourceName.compareTo(obj.m_resourceName));
+  COMPARE_MEMB(m_hostName);
+  COMPARE_MEMB(m_resourceName);
+
+  return StrongOrdering::equal;
 }
 
 
@@ -43,8 +48,10 @@ void DocumentName::setDirectory(string const &dir)
 }
 
 
-void DocumentName::setFilename(string const &filename)
+void DocumentName::setFilename(HostName const &hostName,
+                               string const &filename)
 {
+  m_hostName = hostName;
   m_resourceName = filename;
   m_hasFilename = true;
 
@@ -54,8 +61,10 @@ void DocumentName::setFilename(string const &filename)
 }
 
 
-void DocumentName::setNonFileResourceName(string const &name, string const &dir)
+void DocumentName::setNonFileResourceName(HostName const &hostName,
+  string const &name, string const &dir)
 {
+  m_hostName = hostName;
   m_resourceName = name;
   m_hasFilename = false;
 

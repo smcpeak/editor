@@ -293,7 +293,7 @@ void EditorGlobalState::processCommandLineOptions(
       // Open all non-option files specified on the command line.
       string path = sfu.getAbsolutePath(arg);
       path = sfu.normalizePathSeparators(path);
-      ed->fileOpenFile(path);
+      ed->fileOpenFile(HostName::asLocal(), path);
     }
   }
 }
@@ -362,14 +362,14 @@ NamedTextDocument *EditorGlobalState::runOpenFilesDialog(QWidget *callerWindow)
 // The name must be unique, but we will reuse an existing document if
 // its process has terminated.
 NamedTextDocument *EditorGlobalState::getNewCommandOutputDocument(
-  QString origDir, QString command)
+  HostName const &hostName, QString origDir, QString command)
 {
   // Come up with a unique named based on the command and directory.
   string dir = SMFileUtil().stripTrailingDirectorySeparator(toString(origDir));
   string base = stringb(dir << "$ " << toString(command));
   for (int n = 1; n < 100; n++) {
     DocumentName docName;
-    docName.setNonFileResourceName(
+    docName.setNonFileResourceName(hostName,
       (n==1? base : stringb(base << " (" << n << ')')), dir);
 
     NamedTextDocument *fileDoc = m_documentList.findDocumentByName(docName);
@@ -403,12 +403,13 @@ NamedTextDocument *EditorGlobalState::getNewCommandOutputDocument(
 }
 
 
-NamedTextDocument *EditorGlobalState::launchCommand(QString dir,
+NamedTextDocument *EditorGlobalState::launchCommand(
+  HostName const &hostName, QString dir,
   bool prefixStderrLines, QString command)
 {
   // Find or create a document to hold the result.
   NamedTextDocument *fileDoc =
-    this->getNewCommandOutputDocument(dir, command);
+    this->getNewCommandOutputDocument(hostName, dir, command);
 
   // Show the directory and command at the top of the document.  Among
   // other things, this is a helpful acknowledgment that something is

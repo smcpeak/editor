@@ -94,6 +94,7 @@ public:      // funcs
     { m_documentName = docName; }
 
   // See comments on the corresponding methods of DocumentName.
+  HostName hostName() const            { return m_documentName.hostName(); }
   string resourceName() const          { return m_documentName.resourceName(); }
   bool hasFilename() const             { return m_documentName.hasFilename(); }
   string filename() const              { return m_documentName.filename(); }

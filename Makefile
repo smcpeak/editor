@@ -221,6 +221,7 @@ $(eval $(call RUN_TEST_PROG,test-command-runner))
 
 # ---------------------- test-named-td ----------------------
 EDITOR_OBJS += doc-name.o
+EDITOR_OBJS += host-name.o
 EDITOR_OBJS += named-td.o
 
 TEST_NAMED_TD_OBJS := $(EDITOR_OBJS)
@@ -302,7 +303,6 @@ all: editor-fs-server.exe
 
 
 # ----------------------- editor-fs-server-test ------------------------
-EDITOR_OBJS += host-name.o
 EDITOR_OBJS += vfs-msg.o
 EDITOR_OBJS += vfs-query.o
 EDITOR_OBJS += vfs-query.moc.o

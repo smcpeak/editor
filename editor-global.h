@@ -83,7 +83,7 @@ private:      // funcs
     EditorWindow *ed, int argc, char **argv);
 
   NamedTextDocument *getNewCommandOutputDocument(
-    QString dir, QString command);
+    HostName const &hostName, QString dir, QString command);
 
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
@@ -142,8 +142,8 @@ public:       // funcs
 
   // Start a new child process and return the document into which that
   // process' output is written.
-  NamedTextDocument *launchCommand(QString dir,
-    bool prefixStderrLines, QString command);
+  NamedTextDocument *launchCommand(HostName const &hostName,
+    QString dir, bool prefixStderrLines, QString command);
 
   // Kill the process driving 'doc'.  If there is a problem doing that,
   // return a string explaining it; otherwise "".

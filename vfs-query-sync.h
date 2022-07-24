@@ -4,8 +4,11 @@
 #ifndef EDITOR_VFS_QUERY_SYNC_H
 #define EDITOR_VFS_QUERY_SYNC_H
 
+// editor
+#include "host-name.h"                 // HostName
 #include "vfs-connections.h"           // VFS_Connections
 
+// qt
 #include <QObject>
 #include <QEventLoop>
 #include <QTimer>
@@ -26,6 +29,9 @@ private:     // data
   // Query interface to use.
   VFS_Connections *m_vfsConnections;
 
+  // Host to access.
+  HostName m_hostName;
+
   // Parent widget to modally interrupt if needed.
   QWidget *m_parentWidget;
 
@@ -45,9 +51,11 @@ private:     // data
   QTimer m_timer;
 
 public:      // methods
-  // Create an object to issue queries to 'vfsConnections', and if
-  // needed, pop up a modal window on top of 'parentWidget'.
-  VFS_QuerySync(VFS_Connections *vfsConnections, QWidget *parentWiget);
+  // Create an object to issue queries to 'hostName' via
+  // 'vfsConnections', and if needed, pop up a modal window on top of
+  // 'parentWidget'.
+  VFS_QuerySync(VFS_Connections *vfsConnections,
+    HostName const &hostName, QWidget *parentWiget);
   virtual ~VFS_QuerySync() override;
 
   // Issue 'request' and wait for the reply.  If a reply arrives, set

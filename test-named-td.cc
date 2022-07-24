@@ -18,9 +18,9 @@ using std::ofstream;
 static void testWhenUntitledExists()
 {
   NamedTextDocument file;
-  file.setDocumentName(
-    DocumentName::fromNonFileResourceName("untitled.txt",
-                                          SMFileUtil().currentDirectory()));
+  file.setDocumentName(DocumentName::fromNonFileResourceName(
+    HostName::asLocal(), "untitled.txt",
+    SMFileUtil().currentDirectory()));
 
   // Create a file with that name.
   bool created = false;
@@ -78,7 +78,8 @@ static void readFile(NamedTextDocument &doc)
 static void testReadFile()
 {
   NamedTextDocument file;
-  file.setDocumentName(DocumentName::fromFilename("td.h"));
+  file.setDocumentName(DocumentName::fromFilename(
+    HostName::asLocal(), "td.h"));
   readFile(file);
 
   TestTDO ttdo;
@@ -124,7 +125,8 @@ static void writeFile(NamedTextDocument &doc)
 static void testUndoPastSavePoint()
 {
   NamedTextDocument doc;
-  doc.setDocumentName(DocumentName::fromFilename("tmp.h"));
+  doc.setDocumentName(DocumentName::fromFilename(
+    HostName::asLocal(), "tmp.h"));
 
   doc.appendString("x");
   doc.appendString("x");

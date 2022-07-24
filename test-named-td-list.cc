@@ -186,8 +186,9 @@ static void testAddMoveRemove()
 
   observer.expectEmpty();
 
+  HostName hostName(HostName::asLocal());
   DocumentName docName1;
-  docName1.setFilename("file1");
+  docName1.setFilename(hostName, "file1");
 
   NamedTextDocument *file1 = add(dlist, docName1);
   xassert(file1->m_title == "file1");
@@ -197,7 +198,7 @@ static void testAddMoveRemove()
   observer.expectOnly(NF_ADDED, file1);
 
   DocumentName docName2;
-  docName2.setFilename("a/file2");
+  docName2.setFilename(hostName, "a/file2");
 
   NamedTextDocument *file2 = add(dlist, docName2);
   xassert(file2->m_title == "file2");
@@ -208,7 +209,7 @@ static void testAddMoveRemove()
 
   // Title uniqueness has to include a directory component.
   DocumentName docName3;
-  docName3.setFilename("b/file2");
+  docName3.setFilename(hostName, "b/file2");
   NamedTextDocument *file3 = add(dlist, docName3);
   xassert(file3->m_title == "b/file2");
 
@@ -216,7 +217,7 @@ static void testAddMoveRemove()
 
   // Title uniqueness has to append a digit.
   DocumentName docName2b;
-  docName2b.setFilename("file2");
+  docName2b.setFilename(hostName, "file2");
   NamedTextDocument *file4 = add(dlist, docName2b);
   xassert(file4->m_title == "file2:2");
 
@@ -296,8 +297,8 @@ static void testCreateUntitled()
   xassert(f == file0 || f == file2);
 
   // Make it no longer untitled.
-  file2->setDocumentName(
-    DocumentName::fromFilename(file2->resourceName()));
+  file2->setDocumentName(DocumentName::fromFilename(
+    HostName::asLocal(), file2->resourceName()));
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0);
 
@@ -317,7 +318,8 @@ static void testSaveAs()
   dlist.addObserver(&observer);
 
   NamedTextDocument *file0 = dlist.getDocumentAt(0);
-  file0->setDocumentName(DocumentName::fromFilename("a/some-name.txt"));
+  file0->setDocumentName(DocumentName::fromFilename(
+    HostName::asLocal(), "a/some-name.txt"));
   dlist.assignUniqueTitle(file0);
   observer.expectOnly(NF_ATTRIBUTE, file0);
   xassert(file0->m_title == "some-name.txt");
@@ -335,13 +337,16 @@ static void testColon3()
   NamedTextDocumentListObserver observer;
   dlist.addObserver(&observer);
 
-  NamedTextDocument *file1 = add(dlist, DocumentName::fromFilename("a/b"));
+  NamedTextDocument *file1 = add(dlist,
+    DocumentName::fromFilename(HostName::asLocal(), "a/b"));
   xassert(file1->m_title == "b");
 
-  NamedTextDocument *file2 = add(dlist, DocumentName::fromFilename("b:2"));
+  NamedTextDocument *file2 = add(dlist,
+    DocumentName::fromFilename(HostName::asLocal(), "b:2"));
   xassert(file2->m_title == "b:2");
 
-  NamedTextDocument *file3 = add(dlist, DocumentName::fromFilename("b"));
+  NamedTextDocument *file3 = add(dlist,
+    DocumentName::fromFilename(HostName::asLocal(), "b"));
   xassert(file3->m_title == "b:3");
 
   dlist.removeDocument(file3);
@@ -349,7 +354,8 @@ static void testColon3()
 
   dlist.moveDocument(file2, 0);
 
-  file2->setDocumentName(DocumentName::fromFilename("zoo"));
+  file2->setDocumentName(DocumentName::fromFilename(
+    HostName::asLocal(), "zoo"));
   dlist.assignUniqueTitle(file2);
 
   dlist.removeObserver(&observer);
@@ -389,7 +395,7 @@ static void testGetUniqueDirectories()
   NamedTextDocumentList dlist;
   expectDirs(dlist, NULL);
 
-  add(dlist, DocumentName::fromFilename("/a/b"));
+  add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/a/b"));
   expectDirs(dlist, "/a", NULL);
 
   // Check that existing entries are preserved.
@@ -402,13 +408,13 @@ static void testGetUniqueDirectories()
     xassert(actual[1] == "/a");
   }
 
-  add(dlist, DocumentName::fromFilename("/a/c"));
+  add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/a/c"));
   expectDirs(dlist, "/a", NULL);
 
-  add(dlist, DocumentName::fromFilename("/b/c"));
+  add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/b/c"));
   expectDirs(dlist, "/a", "/b", NULL);
 
-  add(dlist, DocumentName::fromFilename("/b/d/e/f/g"));
+  add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/b/d/e/f/g"));
   expectDirs(dlist, "/a", "/b", "/b/d/e/f", NULL);
 }
 
