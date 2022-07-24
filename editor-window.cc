@@ -553,9 +553,17 @@ string EditorWindow::fileChooseDialog(string const &origDir,
       vfsConnections(),
       this);
     dialog.setSaveAs(saveAs);
-    QString choice =
-      dialog.runDialog(&(m_globalState->m_documentList), toQString(dir));
-    return toString(choice);
+
+    HostName dummyHostName(HostName::asLocal()); // TODO
+    QString choice = toQString(dir);
+
+    if (dialog.runDialog(&(m_globalState->m_documentList),
+                         dummyHostName, choice)) {
+      return toString(choice);
+    }
+    else {
+      return "";
+    }
   }
 
   QFileDialog dialog(this);
@@ -1823,11 +1831,13 @@ void EditorWindow::on_openFilenameInputDialogSignal(
     &(m_globalState->m_filenameInputDialogHistory),
     vfsConnections(),
     this);
-  QString confirmedFilename =
-    dialog.runDialog(&(m_globalState->m_documentList), filename);
 
-  if (!confirmedFilename.isEmpty()) {
-    this->fileOpenFile(toString(confirmedFilename));
+  HostName dummyHostName(HostName::asLocal()); // TODO
+  QString confirmedFileName = filename;
+
+  if (dialog.runDialog(&(m_globalState->m_documentList),
+                       dummyHostName, confirmedFileName)) {
+    this->fileOpenFile(toString(confirmedFileName));
   }
 }
 

@@ -1,25 +1,35 @@
 // filename-input.h
 // FilenameInputDialog
 
-#ifndef FILENAME_INPUT_H
-#define FILENAME_INPUT_H
+#ifndef EDITOR_FILENAME_INPUT_H
+#define EDITOR_FILENAME_INPUT_H
 
 // editor
 #include "event-replay.h"              // EventReplayQueryable
+#include "host-name.h"                 // HostName
 #include "modal-dialog.h"              // ModalDialog
 #include "named-td-list.h"             // NamedTextDocumentList
 #include "vfs-connections.h"           // VFS_Connections
 
+// smqtutil
+#include "sm-line-edit-fwd.h"          // SMLineEdit
+
 // smbase
 #include "refct-serf.h"                // RCSerf
 
+// libc++
+#include <vector>                      // std::vector
+
+class QComboBox;
 class QLabel;
-class QLineEdit;
 class QPushButton;
 class QTextEdit;
 
 
-// Prompt for a file name.
+// Prompt for a host and file name.
+//
+// The host name choice determines the host that the file name is
+// treated as referring to.
 //
 // I'm trying to develop this into a fairly powerful keyboard-driven
 // interface for selecting a file.  Currently it has:
@@ -61,12 +71,15 @@ private:     // data
   RCSerf<History> m_history;
 
   // ---- controls ----
+  // Choice of connection to use.
+  QComboBox *m_connectionDropDown;
+
   // Label above the filename.
   QLabel *m_filenameLabel;
 
   // Control with the current file name (full path) in it.  Owned by
   // 'this', but deallocated automatically by QObject infrastructure.
-  QLineEdit *m_filenameEdit;
+  SMLineEdit *m_filenameEdit;
 
   // Text display of possible completions.
   QTextEdit *m_completionsEdit;
@@ -77,6 +90,9 @@ private:     // data
   // ---- vfs access state ----
   // Interface to issue VFS queries.
   VFS_Connections *m_vfsConnections;
+
+  // List of host names shown in the drop down.
+  std::vector<HostName> m_hostNameList;
 
   // If not zero, the ID of the current pending request.
   VFS_Connections::RequestID m_currentRequestID;
@@ -147,10 +163,14 @@ public:      // funcs
 
   void setSaveAs(bool s) { m_saveAs = s; }
 
-  // Show the dialog and return the name of the file the user has
-  // chosen, or "" if canceled.
-  QString runDialog(NamedTextDocumentList const *docList,
-                    QString initialChoice);
+  // Show the dialog.  'docList' provides the set of currently open
+  // files, which is used to provide feedback on the effect of choosing
+  // an already open file.  'hostName' and 'fileName' provide both the
+  // initial value and, on a successful invocation, the result.  Returns
+  // false if the dialog is canceled.
+  bool runDialog(NamedTextDocumentList const *docList,
+                 HostName /*INOUT*/ &hostName,
+                 QString /*INOUT*/ &fileName);
 
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
@@ -159,6 +179,8 @@ public:      // funcs
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:
+  // Widget handlers.
+  void on_connectionIndexChanged(int index) NOEXCEPT;
   void on_textEdited(QString const &) NOEXCEPT;
   void on_help() NOEXCEPT;
 
@@ -170,4 +192,4 @@ public Q_SLOTS:
 };
 
 
-#endif // FILENAME_INPUT_H
+#endif // EDITOR_FILENAME_INPUT_H

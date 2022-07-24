@@ -6,19 +6,21 @@
 // smqtutil
 #include "qtguiutil.h"                 // messageBox
 #include "qtutil.h"                    // toString(QString)
+#include "sm-line-edit.h"              // SMLineEdit
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // dirname, compareStringPtrs
 #include "trace.h"                     // TRACE
+#include "vector-utils.h"              // vec_find_index
 
 // libc++
 #include <algorithm>                   // std::min
 
 // Qt
+#include <QComboBox>
 #include <QKeyEvent>
 #include <QLabel>
-#include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollBar>
@@ -43,11 +45,13 @@ FilenameInputDialog::FilenameInputDialog(
 :
   ModalDialog(parent, f),
   m_history(history),
+  m_connectionDropDown(nullptr),
   m_filenameLabel(NULL),
   m_filenameEdit(NULL),
   m_completionsEdit(NULL),
   m_helpButton(NULL),
   m_vfsConnections(vfsConnections),
+  m_hostNameList(),
   m_currentRequestID(0),
   m_currentRequestDir(""),
   m_cachedDirectory(""),
@@ -61,18 +65,45 @@ FilenameInputDialog::FilenameInputDialog(
   QVBoxLayout *vbox = new QVBoxLayout();
   this->setLayout(vbox);
 
+  {
+    QHBoxLayout *connectionHBox = new QHBoxLayout();
+    vbox->addLayout(connectionHBox);
+
+    QLabel *connectionsLabel = new QLabel("Connection:");
+    connectionHBox->addWidget(connectionsLabel);
+
+    m_connectionDropDown = new QComboBox(this);
+    m_connectionDropDown->setSizePolicy(QSizePolicy::Expanding, // horiz
+                                        QSizePolicy::Fixed);    // vert
+    m_hostNameList = m_vfsConnections->getHostNames();
+    for (HostName const &hostName : m_hostNameList) {
+      m_connectionDropDown->addItem(toQString(hostName.toString()));
+    }
+    m_connectionDropDown->setCurrentIndex(0);
+    connectionHBox->addWidget(m_connectionDropDown);
+
+    // Here, 'QOverload' is used to select the overload that accepts an
+    // 'int'.  (The QComboBox docs explain this, but I cannot find
+    // documentation for QOverload itself.)
+    QObject::connect(m_connectionDropDown,
+                     QOverload<int>::of(&QComboBox::currentIndexChanged),
+                     this,
+                     &FilenameInputDialog::on_connectionIndexChanged);
+  }
+
   m_filenameLabel = new QLabel();      // will be set later
   vbox->addWidget(m_filenameLabel);
   SET_QOBJECT_NAME(m_filenameLabel);
 
-  m_filenameEdit = new QLineEdit();    // populated later
+  m_filenameEdit = new SMLineEdit();   // Text is populated later.
+  m_filenameEdit->m_selectAllUponFocus = false;
   vbox->addWidget(m_filenameEdit);
   SET_QOBJECT_NAME(m_filenameEdit);
 
   // Intercept Tab key.
   m_filenameEdit->installEventFilter(this);
 
-  QObject::connect(m_filenameEdit, &QLineEdit::textEdited,
+  QObject::connect(m_filenameEdit, &SMLineEdit::textEdited,
                    this, &FilenameInputDialog::on_textEdited);
 
   m_completionsEdit = new QTextEdit();
@@ -105,15 +136,17 @@ FilenameInputDialog::FilenameInputDialog(
 FilenameInputDialog::~FilenameInputDialog()
 {
   // See doc/signals-and-dtors.txt.
+  QObject::disconnect(m_connectionDropDown, nullptr, this, nullptr);
   QObject::disconnect(m_filenameEdit, NULL, this, NULL);
   QObject::disconnect(m_helpButton, NULL, this, NULL);
   QObject::disconnect(m_vfsConnections, nullptr, this, nullptr);
 }
 
 
-QString FilenameInputDialog::runDialog(
+bool FilenameInputDialog::runDialog(
   NamedTextDocumentList const *docList,
-  QString initialChoice)
+  HostName /*INOUT*/ &hostName,
+  QString /*INOUT*/ &fileName)
 {
   // This is not re-entrant (for a particular dialog object).
   xassert(!m_docList);
@@ -122,9 +155,22 @@ QString FilenameInputDialog::runDialog(
   Restorer<RCSerf<NamedTextDocumentList const> >
     restorer(m_docList, docList);
 
-  m_filenameEdit->setText(initialChoice);
+  // Select the dropdown entry corresponding to the starting host name.
+  long hostIndex = vec_find_index(m_hostNameList, hostName);
+  if (hostIndex >= 0) {
+    m_connectionDropDown->setCurrentIndex(convertNumber<int>(hostIndex));
+  }
+  else {
+    // This should not happen, but I'll just be silent.
+  }
+
+  m_filenameEdit->setText(fileName);
+
   this->m_cachedDirectory = "";
   this->queryDirectoryIfNeeded();
+
+  // Set the focus on the text edit so I can start typing immediately.
+  m_filenameEdit->setFocus(Qt::OtherFocusReason);
 
   // Since the directory query is still running, this first call will
   // just update the display to show that fact.
@@ -139,11 +185,11 @@ QString FilenameInputDialog::runDialog(
   this->cancelCurrentRequestIfAny();
 
   if (ret) {
-    return m_filenameEdit->text();
+    hostName = m_hostNameList.at(m_connectionDropDown->currentIndex());
+    fileName = m_filenameEdit->text();
   }
-  else {
-    return "";
-  }
+
+  return ret;
 }
 
 
@@ -490,6 +536,22 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 bool FilenameInputDialog::wantResizeEventsRecorded()
 {
   return true;
+}
+
+
+void FilenameInputDialog::on_connectionIndexChanged(int index) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE("FilenameInputDialog", "on_connectionIndexChanged(" << index << ")");
+
+  xassert(0 <= index && index < (int)m_hostNameList.size());
+  HostName hostName = m_hostNameList[index];
+  TRACE("FilenameInputDialog", "  hostName: " << hostName);
+
+  // TODO: More.
+
+  GENERIC_CATCH_END
 }
 
 
