@@ -40,10 +40,13 @@ public:      // methods
   std::unique_ptr<VFS_Message> getNextReply();
 
   // Run the sequence of tests.
-  void runTests(HostName const &hostname);
+  void runTests(HostName const &hostName);
 
-  // Run tests using FileStatusRequest.
-  void runPathTests();
+  // Establish a connection to 'hostName'.
+  void connect(HostName const &hostName);
+
+  // Issue a path query using FileStatusRequest.
+  void runPathQuery(string const &path);
 
   // Use Echo to send/receive 'data'.
   void runEchoTest(std::vector<unsigned char> const &data);

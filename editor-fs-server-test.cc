@@ -8,6 +8,7 @@
 
 // smbase
 #include "sm-test.h"                   // PVAL
+#include "strutil.h"                   // quoted
 #include "trace.h"                     // traceAddFromEnvVar
 
 
@@ -49,20 +50,13 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 }
 
 
-void FSServerTest::runTests(HostName const &hostname)
+void FSServerTest::runTests(HostName const &hostName)
 {
   TRACE("FSServerTest", "runTests");
 
-  m_fsQuery.connect(hostname);
-  while (m_fsQuery.isConnecting()) {
-    TRACE("FSServerTest", "  connecting ...");
-    m_eventLoop.exec();
-  }
-  if (m_fsQuery.hasFailed()) {
-    xfatal(m_fsQuery.getFailureReason());
-  }
+  connect(hostName);
 
-  runPathTests();
+  runPathQuery("Makefile");
   runEchoTests();
   runFileReadWriteTests();
   runGetDirEntriesTest();
@@ -71,14 +65,27 @@ void FSServerTest::runTests(HostName const &hostname)
 }
 
 
-void FSServerTest::runPathTests()
+void FSServerTest::connect(HostName const &hostName)
 {
-  cout << "runPathTests\n";
+  m_fsQuery.connect(hostName);
+  while (m_fsQuery.isConnecting()) {
+    TRACE("FSServerTest", "  connecting ...");
+    m_eventLoop.exec();
+  }
+  if (m_fsQuery.hasFailed()) {
+    xfatal(m_fsQuery.getFailureReason());
+  }
+}
+
+
+void FSServerTest::runPathQuery(string const &path)
+{
+  cout << "runPathQuery(" << quoted(path) << ")\n";
 
   // Send.
   {
     VFS_FileStatusRequest req;
-    req.m_path = "Makefile";
+    req.m_path = path;
     m_fsQuery.sendRequest(req);
   }
 
@@ -282,6 +289,14 @@ int main(int argc, char **argv)
     if (args.size() >= 2) {
       hostname = HostName::asSSH(toString(args.at(1)));
       cout << "Running test with hostname: " << hostname << endl;
+
+      if (args.size() >= 3) {
+        string path = toString(args.at(2));
+        fsServerTest.connect(hostname);
+        fsServerTest.runPathQuery(path);
+        fsServerTest.m_fsQuery.shutdown();
+        return 0;
+      }
     }
 
     fsServerTest.runTests(hostname);
