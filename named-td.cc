@@ -64,6 +64,9 @@ string NamedTextDocument::nameWithStatusIndicators() const
 {
   stringBuilder sb;
   sb << documentProcessStatusIndicator(this);
+  if (!hostName().isLocal()) {
+    sb << hostName() << ": ";
+  }
   sb << resourceName();
   sb << fileStatusString();
   return sb;
