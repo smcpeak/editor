@@ -152,21 +152,16 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
   // moment, since I call fileNewFile() right away
   //ed.setCaption("An Editor");
 
-  // open all files specified on the command line
-  SMFileUtil sfu;
-  for (int i=1; i < argc; i++) {
-    string arg(argv[i]);
-    if (prefixEquals(arg, "-ev=")) {
-      m_eventFileTest = arg.substring(4, arg.length()-4);
-    }
-    else if (arg == "-record") {
-      m_recordInputEvents = true;
-    }
-    else {
-      string path = sfu.getAbsolutePath(arg);
-      path = sfu.normalizePathSeparators(path);
-      ed->fileOpenFile(path);
-    }
+  try {
+    processCommandLineOptions(ed, argc, argv);
+  }
+  catch (...) {
+    // Errors in command line processing are communicated with
+    // exceptions, which we allow to propagate, after first shutting
+    // down the connections in order to avoid spurious additional
+    // complaints.
+    m_vfsConnections.shutdownAll();
+    throw;
   }
 
   // TODO: replacement?  Need to test on Linux.
@@ -259,6 +254,48 @@ EditorGlobalState::~EditorGlobalState()
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(this, 0, this, 0);
   QObject::disconnect(&m_vfsConnections, 0, this, 0);
+}
+
+
+void EditorGlobalState::processCommandLineOptions(
+  EditorWindow *ed, int argc, char **argv)
+{
+  SMFileUtil sfu;
+  for (int i=1; i < argc; i++) {
+    string arg(argv[i]);
+    if (arg.empty()) {
+      xformat("An empty command line argument is not allowed.");
+    }
+
+    else if (arg[0]=='-') {
+      if (prefixEquals(arg, "-ev=")) {
+        // Replay a sequence of events as part of a test.
+        m_eventFileTest = arg.substring(4, arg.length()-4);
+      }
+
+      else if (arg == "-record") {
+        // Record events to seed a new test.
+        m_recordInputEvents = true;
+      }
+
+      else if (prefixEquals(arg, "-conn=")) {
+        // Open a connection to a specified host.
+        string hostName = arg.substring(6, arg.length()-6);
+        m_vfsConnections.connect(HostName::asSSH(hostName));
+      }
+
+      else {
+        xformat(stringb("Unknown option: " << arg));
+      }
+    }
+
+    else {
+      // Open all non-option files specified on the command line.
+      string path = sfu.getAbsolutePath(arg);
+      path = sfu.normalizePathSeparators(path);
+      ed->fileOpenFile(path);
+    }
+  }
 }
 
 

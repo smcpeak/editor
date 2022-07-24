@@ -79,6 +79,9 @@ private:     // data
   std::unique_ptr<ConnectionsDialog> m_connectionsDialog;
 
 private:      // funcs
+  void processCommandLineOptions(
+    EditorWindow *ed, int argc, char **argv);
+
   NamedTextDocument *getNewCommandOutputDocument(
     QString dir, QString command);
 
