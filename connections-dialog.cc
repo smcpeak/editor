@@ -155,11 +155,11 @@ void ConnectionsDialog::repopulateTable()
 
     bool connecting = m_vfsConnections->isConnecting(hostName);
     bool ready      = m_vfsConnections->isReady(hostName);
-    bool wasLost    = m_vfsConnections->connectionWasLost(hostName);
+    bool failed     = m_vfsConnections->connectionFailed(hostName);
 
     string status = connecting? "Connecting" :
                     ready?      "Ready" :
-                    wasLost?    "Connection Lost" :
+                    failed?     "Failed" :
                                 "Unknown";
 
     // Remove the row label.  (The default, a NULL item, renders as a

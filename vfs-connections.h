@@ -233,7 +233,7 @@ public:      // methods
   // *before* anything is done that might lead to delivery of the
   // reply.
   //
-  // Note that it *is* legal to call this while 'connectionWasLost' (the
+  // Note that it *is* legal to call this while 'connectionFailed' (the
   // connection can be lost at any time, so the client would have no way
   // of reliably avoiding calling this in that state).  In that case,
   // the request will be effectively discarded, since it cannot be sent.
@@ -298,9 +298,7 @@ public:      // methods
 
   // True if a connection was attempted, and possibly succeeded, but has
   // now failed, and 'shutdown' has not been called.
-  //
-  // TODO: Rename to 'connectionFailed'.
-  bool connectionWasLost(HostName const &hostName) const;
+  bool connectionFailed(HostName const &hostName) const;
 
 Q_SIGNALS:
   // Emitted when 'isConnecting()' transitions to 'isReady()'.
@@ -309,7 +307,7 @@ Q_SIGNALS:
   // Emitted when 'replyIsAvailable(requestID)' becomes true.
   void signal_replyAvailable(RequestID requestID);
 
-  // Emitted when 'connectionWasLost' becomes true.
+  // Emitted when 'connectionFailed' becomes true.
   void signal_failed(HostName hostName, string reason);
 
 protected Q_SLOTS:

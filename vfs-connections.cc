@@ -400,7 +400,7 @@ void VFS_Connections::shutdownAll()
 }
 
 
-bool VFS_Connections::connectionWasLost(HostName const &hostName) const
+bool VFS_Connections::connectionFailed(HostName const &hostName) const
 {
   ConnectionState cs = connectionState(hostName);
   return cs == CS_FAILED_BEFORE_CONNECTING ||
@@ -534,7 +534,7 @@ void VFS_Connections::on_failureAvailable() NOEXCEPT
   if (Connection *c = signalRecipientConnection()) {
     string reason = c->m_fsQuery->getFailureReason();
     c->m_currentRequestID = 0;
-    xassert(connectionWasLost(c->m_hostName));
+    xassert(connectionFailed(c->m_hostName));
 
     Q_EMIT signal_failed(c->m_hostName, reason);
   }
