@@ -562,9 +562,18 @@ void FilenameInputDialog::on_connectionIndexChanged(int index) NOEXCEPT
   xassert(0 <= index && index < (int)m_hostNameList.size());
   m_currentHostName = m_hostNameList.at(index);
 
-  // Assuming this constitutes a change (and QComboBox seems to only
-  // send the 'indexChanged' signal when there really is a change),
-  // invalidate the cache and re-query.
+  // Change directory to host's starting directory.
+  if (m_vfsConnections->isOrWasConnected(m_currentHostName)) {
+    string dir = m_vfsConnections->getStartingDirectory(m_currentHostName);
+    m_filenameEdit->setText(toQString(dir));
+  }
+  else {
+    // It's possible we have an entry for a host that never connected.
+    // Just leave the file name box as is.
+  }
+
+  // To account for the changed host and directory, invalidate the cache
+  // and re-query.
   clearCacheAndReQuery();
 
   GENERIC_CATCH_END
