@@ -224,6 +224,20 @@ void VFS_ConnectionsTest::runTests()
     waitForConnection(m_secondaryHostName);
   }
 
+  xassert(m_vfsConnections.isOrWasConnected(m_primaryHostName));
+  if (usingSecondary()) {
+    xassert(m_vfsConnections.isOrWasConnected(m_secondaryHostName));
+  }
+
+  cout << "primary start dir: "
+       << m_vfsConnections.getStartingDirectory(m_primaryHostName)
+       << "\n";
+  if (usingSecondary()) {
+    cout << "secondary start dir: "
+         << m_vfsConnections.getStartingDirectory(m_secondaryHostName)
+         << "\n";
+  }
+
   testOneEcho();
   testMultipleEchos(2);
   testMultipleEchos(3);

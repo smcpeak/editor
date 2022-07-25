@@ -1,0 +1,211 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 30,
+        "y": 115
+      },
+      "size": {
+        "h": 170,
+        "w": 410
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 40,
+        "y": 180
+      },
+      "size": {
+        "h": 70,
+        "w": 390
+      }
+    },
+    {
+      "attributes": "\n",
+      "loc": {
+        "x": 10,
+        "y": 25
+      },
+      "name": "State lifecycle for each 'hostName'",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 205
+      }
+    },
+    {
+      "loc": {
+        "x": 30,
+        "y": 60
+      },
+      "name": "Invalid",
+      "size": {
+        "h": 20,
+        "w": 410
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 130
+      },
+      "name": "Connecting",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 190
+      },
+      "name": "Ready",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 40,
+        "y": 260
+      },
+      "name": "Valid",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 390
+      }
+    },
+    {
+      "loc": {
+        "x": 270,
+        "y": 190
+      },
+      "name": "FailedAfterConnecting",
+      "size": {
+        "h": 20,
+        "w": 150
+      }
+    },
+    {
+      "loc": {
+        "x": 270,
+        "y": 130
+      },
+      "name": "FailedBeforeConnecting",
+      "size": {
+        "h": 20,
+        "w": 150
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 225
+      },
+      "name": "IsOrWasConnected",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 370
+      }
+    }
+  ],
+  "inheritances": [],
+  "namedColors": [
+    {
+      "color": "RGB(0,0,0)",
+      "name": "Black"
+    },
+    {
+      "color": "RGB(192,192,192)",
+      "name": "Gray"
+    },
+    {
+      "color": "RGB(255,255,255)",
+      "name": "White"
+    },
+    {
+      "color": "RGB(224,224,224)",
+      "name": "Light Gray"
+    },
+    {
+      "color": "RGB(236,125,70)",
+      "name": "Orange"
+    },
+    {
+      "color": "RGB(234,236,52)",
+      "name": "Yellow"
+    },
+    {
+      "color": "RGB(76,222,76)",
+      "name": "Green"
+    },
+    {
+      "color": "RGB(135,193,255)",
+      "name": "Sky Blue"
+    },
+    {
+      "color": "RGB(161,140,237)",
+      "name": "Purple"
+    },
+    {
+      "color": "RGB(227,120,236)",
+      "name": "Pink"
+    },
+    {
+      "color": "RGB(248,50,50)",
+      "name": "Red"
+    },
+    {
+      "color": "RGB(0,0,255)",
+      "name": "Blue"
+    }
+  ],
+  "relations": [
+    {
+      "end": {"entityRef": 4},
+      "label": "connect",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "signal_connected",
+      "lineColor": "Blue",
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 7},
+      "label": "signal_failed",
+      "lineColor": "Red",
+      "start": {"entityRef": 5}
+    },
+    {
+      "end": {"entityRef": 8},
+      "label": "signal_failed",
+      "lineColor": "Red",
+      "start": {"entityRef": 4}
+    },
+    {
+      "controlPts": [{
+        "x": 285,
+        "y": 85
+      }],
+      "end": {"entityRef": 3},
+      "label": "shutdown",
+      "start": {"entityRef": 0}
+    }
+  ],
+  "type": "Diagram Editor Diagram",
+  "version": 24,
+  "windowSize": {
+    "h": 322,
+    "w": 472
+  }
+}

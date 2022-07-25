@@ -26,6 +26,8 @@ VFS_Connections::Connection::Connection(VFS_Connections *connections,
   : m_connections(connections),
     m_hostName(hostName),
     m_fsQuery(new FileSystemQuery),
+    m_haveStartingDirectory(false),
+    m_startingDirectory(),
     m_currentRequestID(0),
     m_queuedRequests()
 {
@@ -76,9 +78,77 @@ void VFS_Connections::selfCheck() const
 }
 
 
-bool VFS_Connections::isValid(HostName const &hostName) const
+VFS_Connections::Connection const * NULLABLE VFS_Connections::ifConnC(
+  HostName const &hostName) const
 {
-  return contains(m_connections, hostName);
+  if (contains(m_connections, hostName)) {
+    return m_connections.at(hostName).get();
+  }
+  else {
+    return nullptr;
+  }
+}
+
+
+VFS_Connections::Connection const *
+  VFS_Connections::connC(HostName const &hostName) const
+{
+  if (Connection const *c = ifConnC(hostName)) {
+    return c;
+  }
+  else {
+    xfailure(stringb("Invalid host: " << hostName));
+    return nullptr;  // Not reached.
+  }
+}
+
+
+VFS_Connections::ConnectionState VFS_Connections::connectionState(
+  HostName const &hostName) const
+{
+  if (Connection const *c = ifConnC(hostName)) {
+    return c->connectionState();
+  }
+  else {
+    return CS_INVALID;
+  }
+}
+
+
+VFS_Connections::ConnectionState
+VFS_Connections::Connection::connectionState() const
+{
+  static_assert(FileSystemQuery::NUM_STATES == 7);
+
+  switch (m_fsQuery->state()) {
+    default:
+      xfailure("invalid state");
+
+    case FileSystemQuery::S_CREATED:
+    case FileSystemQuery::S_CONNECTING:
+      return CS_CONNECTING;
+
+    case FileSystemQuery::S_READY:
+    case FileSystemQuery::S_PENDING:
+    case FileSystemQuery::S_HAS_REPLY:
+      if (m_haveStartingDirectory) {
+        return CS_READY;
+      }
+      else {
+        return CS_CONNECTING;
+      }
+
+    case FileSystemQuery::S_FAILED:
+    case FileSystemQuery::S_DEAD:
+      if (m_haveStartingDirectory) {
+        return CS_FAILED_AFTER_CONNECTING;
+      }
+      else {
+        return CS_FAILED_BEFORE_CONNECTING;
+      }
+  }
+
+  // Not reached.
 }
 
 
@@ -94,32 +164,36 @@ void VFS_Connections::connect(HostName const &hostName)
 
   xassert(!isValid(hostName));
 
+  // Add 'hostName' to our data structures, and create the Connection
+  // object to hold its details.  The Connection constructor starts the
+  // process of establishing a connection.
   m_validHostNames.push_back(hostName);
   insertMapUniqueMove(m_connections, hostName,
     std::unique_ptr<Connection>(new Connection(this, hostName)));
+
+  // Enqueue an initial request to get the starting directory.  Only
+  // when that reply is received will we inform clients that the
+  // connection is ready for use.
+  Connection *c = conn(hostName);
+  xassert(!c->m_haveStartingDirectory);
+  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  req->m_path = ".";
+  c->issueRequest(m_nextRequestID++, std::move(req));
 }
 
 
-VFS_Connections::Connection const *
-  VFS_Connections::connC(HostName const &hostName) const
+bool VFS_Connections::isOrWasConnected(HostName const &hostName) const
 {
-  if (!contains(m_connections, hostName)) {
-    xfailure(stringb("Invalid host: " << hostName));
-  }
-
-  return m_connections.at(hostName).get();
+  ConnectionState cs = connectionState(hostName);
+  return cs == CS_READY ||
+         cs == CS_FAILED_AFTER_CONNECTING;
 }
 
 
-bool VFS_Connections::isConnecting(HostName const &hostName) const
+string VFS_Connections::getStartingDirectory(HostName const &hostName) const
 {
-  return connC(hostName)->m_fsQuery->isConnecting();
-}
-
-
-bool VFS_Connections::isReady(HostName const &hostName) const
-{
-  return connC(hostName)->m_fsQuery->isReady();
+  xassert(isOrWasConnected(hostName));
+  return connC(hostName)->m_startingDirectory;
 }
 
 
@@ -128,16 +202,22 @@ void VFS_Connections::issueRequest(RequestID /*OUT*/ &requestID,
                                    std::unique_ptr<VFS_Message> req)
 {
   requestID = m_nextRequestID++;
+  Connection *c = conn(hostName);
 
+  c->issueRequest(requestID, std::move(req));
+}
+
+
+void VFS_Connections::Connection::issueRequest(
+  RequestID requestID, std::unique_ptr<VFS_Message> req)
+{
   TRACE("VFS_Connections",
     "enqueued: requestID=" << requestID <<
-    " host=" << hostName <<
+    " host=" << m_hostName <<
     " type=" << toString(req->messageType()));
 
-  Connection *c = conn(hostName);
-  c->m_queuedRequests.push_front(QueuedRequest(requestID, std::move(req)));
-
-  c->issuePendingRequest();
+  m_queuedRequests.push_front(QueuedRequest(requestID, std::move(req)));
+  issuePendingRequest();
 }
 
 
@@ -322,7 +402,9 @@ void VFS_Connections::shutdownAll()
 
 bool VFS_Connections::connectionWasLost(HostName const &hostName) const
 {
-  return connC(hostName)->m_fsQuery->hasFailed();
+  ConnectionState cs = connectionState(hostName);
+  return cs == CS_FAILED_BEFORE_CONNECTING ||
+         cs == CS_FAILED_AFTER_CONNECTING;
 }
 
 
@@ -354,8 +436,9 @@ void VFS_Connections::on_connected() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   if (Connection *c = signalRecipientConnection()) {
+    // Trigger sending the first request, which should be the query for
+    // the starting directory.
     c->issuePendingRequest();
-    Q_EMIT signal_connected(c->m_hostName);
     return;
   }
 
@@ -375,9 +458,49 @@ void VFS_Connections::on_replyAvailable() NOEXCEPT
     RequestID requestID = c->m_currentRequestID;
 
     if (requestID == 0) {
-      // The request was cancelled while in flight.
+      // The request was canceled while in flight.
       c->m_fsQuery->takeReply();
     }
+
+    else if (!c->m_haveStartingDirectory) {
+      // This is supposed to be the reply for the initial directory
+      // request.
+      xassert(c->connectionState() == CS_CONNECTING);
+      std::unique_ptr<VFS_Message> genericReply(c->m_fsQuery->takeReply());
+      TRACE("VFS_Connections",
+        "  for host " << c->m_hostName <<
+        ", got starting directory reply: " << genericReply->description());
+
+      if (VFS_FileStatusReply const *reply =
+            genericReply->asFileStatusReplyC()) {
+        if (reply->m_success) {
+          if (reply->m_dirExists) {
+            c->m_haveStartingDirectory = true;
+            c->m_startingDirectory = reply->m_dirName;
+            c->m_currentRequestID = 0;
+            xassert(c->connectionState() == CS_READY);
+
+            // Only now do we regard this as "connected" from the client
+            // perspective.
+            Q_EMIT signal_connected(c->m_hostName);
+          }
+          else {
+            c->m_fsQuery->markAsFailed(
+              "The initial directory query reply had m_dirExists=false.");
+          }
+        }
+        else {
+          c->m_fsQuery->markAsFailed(
+            "The initial directory query reply had m_success=false.");
+        }
+      }
+      else {
+        c->m_fsQuery->markAsFailed(stringb(
+          "The initial directory query reply had the wrong type: " <<
+          genericReply->messageType()));
+      }
+    }
+
     else {
       // Save the reply for the client who presents the right ID.
       insertMapUniqueMove(m_availableReplies,
@@ -385,10 +508,10 @@ void VFS_Connections::on_replyAvailable() NOEXCEPT
 
       // Clear the ID member so we know no request is outstanding.
       c->m_currentRequestID = 0;
-    }
 
-    // Notify clients.
-    Q_EMIT signal_replyAvailable(requestID);
+      // Notify clients.
+      Q_EMIT signal_replyAvailable(requestID);
+    }
 
     // Send the next request, if there is one.
     c->issuePendingRequest();
@@ -411,6 +534,7 @@ void VFS_Connections::on_failureAvailable() NOEXCEPT
   if (Connection *c = signalRecipientConnection()) {
     string reason = c->m_fsQuery->getFailureReason();
     c->m_currentRequestID = 0;
+    xassert(connectionWasLost(c->m_hostName));
 
     Q_EMIT signal_vfsConnectionLost(c->m_hostName, reason);
   }
@@ -420,6 +544,19 @@ void VFS_Connections::on_failureAvailable() NOEXCEPT
 
   GENERIC_CATCH_END
 }
+
+
+DEFINE_ENUMERATION_TO_STRING(
+  VFS_Connections::ConnectionState,
+  VFS_Connections::NUM_CONNECTION_STATES,
+  (
+    "CS_INVALID",
+    "CS_CONNECTING",
+    "CS_READY",
+    "CS_FAILED_BEFORE_CONNECTING",
+    "CS_FAILED_AFTER_CONNECTING",
+  )
+)
 
 
 // EOF
