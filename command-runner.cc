@@ -613,7 +613,11 @@ char const *toString(QProcess::ProcessError error)
 {
   switch (error) {
     case QProcess::FailedToStart:
-      return "Failed to start process";
+      // An unfortunate aspect of QProcess is its lumping together
+      // several reasons under this code.
+      return "Failed to start process; possible reasons include (but "
+             "are not limited to) a missing executable, permission "
+             "error, and an invalid starting directory.";
 
     case QProcess::Crashed:
       // In my experiments on Windows, calling m_process.kill() causes
