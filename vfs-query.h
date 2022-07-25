@@ -95,6 +95,8 @@ private:     // methods
 public:      // methods
   FileSystemQuery();
 
+  // Preferably, 'shutdown' should be explicitly called before the
+  // destructor is.
   virtual ~FileSystemQuery();
 
   // Get current state.
@@ -128,6 +130,18 @@ public:      // methods
   //
   // Requires: state() == S_HAS_REPLY
   std::unique_ptr<VFS_Message> takeReply();
+
+  // Transition to the S_FAILED state with the given reason.
+  //
+  // This can be useful when a client sees an invalid response from the
+  // server and wants to mark the connection as invalid.
+  //
+  // Calling this causes the 'signal_failureAvailable' signal to be
+  // emitted (unless there was a prior failure; the signal is only sent
+  // once).
+  //
+  // Requires: state() != S_DEAD
+  void markAsFailed(string const &reason);
 
   // Get a string explaining the failure.  This will include any error
   // message bytes produced by the server.  The connection is dead after

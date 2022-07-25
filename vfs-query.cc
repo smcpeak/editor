@@ -278,6 +278,13 @@ std::unique_ptr<VFS_Message> FileSystemQuery::takeReply()
 }
 
 
+void FileSystemQuery::markAsFailed(string const &reason)
+{
+  xassert(state() != S_DEAD);
+  recordFailure(reason);
+}
+
+
 string FileSystemQuery::getFailureReason()
 {
   xassert(state() == S_FAILED);

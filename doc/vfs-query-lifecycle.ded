@@ -2,20 +2,42 @@
   "drawFileName": true,
   "entities": [
     {
+      "fillColor": "White",
       "loc": {
-        "x": 95,
-        "y": 25
+        "x": 20,
+        "y": 135
       },
-      "name": "Nonexistent",
       "size": {
-        "h": 20,
-        "w": 460
+        "h": 345,
+        "w": 535
+      }
+    },
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 35,
+        "y": 150
+      },
+      "size": {
+        "h": 270,
+        "w": 280
       }
     },
     {
       "loc": {
-        "x": 95,
-        "y": 75
+        "x": 20,
+        "y": 30
+      },
+      "name": "Nonexistent",
+      "size": {
+        "h": 20,
+        "w": 585
+      }
+    },
+    {
+      "loc": {
+        "x": 145,
+        "y": 175
       },
       "name": "Created",
       "size": {
@@ -25,8 +47,8 @@
     },
     {
       "loc": {
-        "x": 95,
-        "y": 125
+        "x": 145,
+        "y": 225
       },
       "name": "Connecting",
       "size": {
@@ -36,8 +58,8 @@
     },
     {
       "loc": {
-        "x": 385,
-        "y": 125
+        "x": 435,
+        "y": 225
       },
       "name": "Failed",
       "size": {
@@ -47,8 +69,8 @@
     },
     {
       "loc": {
-        "x": 95,
-        "y": 175
+        "x": 145,
+        "y": 275
       },
       "name": "Ready",
       "size": {
@@ -58,8 +80,8 @@
     },
     {
       "loc": {
-        "x": 95,
-        "y": 225
+        "x": 145,
+        "y": 325
       },
       "name": "Pending",
       "size": {
@@ -69,8 +91,8 @@
     },
     {
       "loc": {
-        "x": 95,
-        "y": 275
+        "x": 145,
+        "y": 375
       },
       "name": "HasReply",
       "size": {
@@ -80,20 +102,8 @@
     },
     {
       "loc": {
-        "x": 230,
-        "y": 275
-      },
-      "name": "(Any State)",
-      "shape": "ES_NO_SHAPE",
-      "size": {
-        "h": 20,
-        "w": 75
-      }
-    },
-    {
-      "loc": {
-        "x": 455,
-        "y": 75
+        "x": 505,
+        "y": 80
       },
       "name": "Dead",
       "size": {
@@ -155,73 +165,87 @@
   ],
   "relations": [
     {
-      "end": {"entityRef": 1},
+      "end": {"entityRef": 3},
       "label": "constructor",
+      "start": {"entityRef": 2}
+    },
+    {
+      "end": {"entityRef": 4},
+      "label": "connect",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "signal_failureAvailable",
+      "lineColor": "Red",
+      "start": {"entityRef": 4}
+    },
+    {
+      "controlPts": [{
+        "x": 455,
+        "y": 100
+      }],
+      "end": {"entityRef": 2},
+      "label": "destructor",
+      "start": {"entityRef": 5}
+    },
+    {
+      "end": {"entityRef": 6},
+      "label": "signal_connected",
+      "lineColor": "Blue",
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 7},
+      "label": "sendRequest",
+      "start": {"entityRef": 6}
+    },
+    {
+      "end": {"entityRef": 8},
+      "label": "signal_replyAvailable",
+      "lineColor": "Blue",
+      "start": {"entityRef": 7}
+    },
+    {
+      "controlPts": [{
+        "x": 75,
+        "y": 325
+      }],
+      "end": {"entityRef": 6},
+      "label": "takeReply",
+      "start": {"entityRef": 8}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "signal_failureAvailable",
+      "lineColor": "Red",
+      "start": {"entityRef": 7}
+    },
+    {
+      "end": {"entityRef": 9},
+      "label": "shutdown",
       "start": {"entityRef": 0}
     },
     {
       "end": {"entityRef": 2},
-      "label": "connect",
-      "start": {"entityRef": 1}
-    },
-    {
-      "end": {"entityRef": 3},
-      "label": "signal_failureAvailable",
-      "lineColor": "Red",
-      "start": {"entityRef": 2}
-    },
-    {
-      "end": {"entityRef": 0},
       "label": "destructor",
-      "start": {"entityRef": 3}
-    },
-    {
-      "end": {"entityRef": 4},
-      "label": "signal_connected",
-      "lineColor": "Blue",
-      "start": {"entityRef": 2}
-    },
-    {
-      "end": {"entityRef": 5},
-      "label": "sendRequest",
-      "start": {"entityRef": 4}
-    },
-    {
-      "end": {"entityRef": 6},
-      "label": "signal_replyAvailable",
-      "lineColor": "Blue",
-      "start": {"entityRef": 5}
+      "start": {"entityRef": 9}
     },
     {
       "controlPts": [{
-        "x": 25,
-        "y": 225
+        "x": 485,
+        "y": 455
       }],
-      "end": {"entityRef": 4},
-      "label": "takeReply",
-      "start": {"entityRef": 6}
-    },
-    {
-      "end": {"entityRef": 3},
-      "label": "signal_failureAvailable",
-      "lineColor": "Red",
-      "start": {"entityRef": 5}
-    },
-    {
-      "end": {"entityRef": 8},
-      "label": "shutdown",
-      "start": {"entityRef": 7}
-    },
-    {
-      "end": {"entityRef": 0},
-      "label": "destructor",
-      "start": {"entityRef": 8}
+      "end": {"entityRef": 5},
+      "label": "markAsFailed",
+      "routingAlg": "RA_MANHATTAN_VERT",
+      "start": {"entityRef": 1}
     }
   ],
   "type": "Diagram Editor Diagram",
   "version": 24,
   "windowSize": {
-    "h": 319,
-    "w": 580
+    "h": 502,
+    "w": 627
   }
 }
