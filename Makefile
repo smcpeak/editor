@@ -528,6 +528,12 @@ clean:
 	$(RM) *.gcov *.gcda *.gcno
 
 check:
+	@# The specific problem I am seeing most often is, on Windows,
+	@# a dialog will open but no widget has focus.  I suspect there
+	@# may be a dependence on explorer.exe or something like that.
+	@echo 'BEWARE: These tests are not perfectly reliable, due to'
+	@echo 'race conditions I have not been able to fully eliminate.'
+	@echo 'Re-running may occasionally be needed.'
 	./editor -ev=test/down.ev test/file1.h
 	./editor -ev=test/copy-paste.ev test/file1.h
 	./editor -ev=test/file-open-dialog1.ev test/file1.h
