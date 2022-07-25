@@ -298,6 +298,8 @@ public:      // methods
 
   // True if a connection was attempted, and possibly succeeded, but has
   // now failed, and 'shutdown' has not been called.
+  //
+  // TODO: Rename to 'connectionFailed'.
   bool connectionWasLost(HostName const &hostName) const;
 
 Q_SIGNALS:
@@ -308,9 +310,7 @@ Q_SIGNALS:
   void signal_replyAvailable(RequestID requestID);
 
   // Emitted when 'connectionWasLost' becomes true.
-  //
-  // TODO: Rename to 'signal_failed'.
-  void signal_vfsConnectionLost(HostName hostName, string reason);
+  void signal_failed(HostName hostName, string reason);
 
 protected Q_SLOTS:
   // Handlers for FileSystemQuery.

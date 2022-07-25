@@ -68,7 +68,7 @@ public Q_SLOTS:
   // Handlers for VFS_Connections signals.
   void on_connected(HostName hostName) NOEXCEPT;
   void on_replyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
-  void on_vfsConnectionLost(HostName hostName, string reason) NOEXCEPT;
+  void on_failed(HostName hostName, string reason) NOEXCEPT;
 };
 
 

@@ -140,8 +140,8 @@ EditorGlobalState::EditorGlobalState(int argc, char **argv)
 
   // Establish the initial VFS connection before creating the first
   // EditorWindow, since the EW can issue VFS requests.
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
-                   this, &EditorGlobalState::on_vfsConnectionLost);
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_failed,
+                   this, &EditorGlobalState::on_connectionFailed);
   m_vfsConnections.connectLocal();
 
   // Open the first window, initially showing the default "untitled"
@@ -523,13 +523,13 @@ void EditorGlobalState::on_processTerminated(ProcessWatcher *watcher)
 }
 
 
-void EditorGlobalState::on_vfsConnectionLost(
+void EditorGlobalState::on_connectionFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  QMessageBox::warning(nullptr, "Connection Lost", qstringb(
-    "The connection to " << hostName << " has been lost.  Reads "
+  QMessageBox::warning(nullptr, "Connection Failed", qstringb(
+    "The connection to " << hostName << " has failed.  Reads "
     "and writes will not work until this connection is restarted.  "
     "Error message: " << reason));
 

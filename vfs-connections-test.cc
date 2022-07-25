@@ -34,8 +34,8 @@ VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
                    this, &VFS_ConnectionsTest::on_connected);
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_replyAvailable,
                    this, &VFS_ConnectionsTest::on_replyAvailable);
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
-                   this, &VFS_ConnectionsTest::on_vfsConnectionLost);
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_failed,
+                   this, &VFS_ConnectionsTest::on_failed);
 }
 
 
@@ -272,7 +272,7 @@ void VFS_ConnectionsTest::on_replyAvailable(
 }
 
 
-void VFS_ConnectionsTest::on_vfsConnectionLost(
+void VFS_ConnectionsTest::on_failed(
   HostName hostName, string reason) NOEXCEPT
 {
   cout << "connection lost: host=" << hostName

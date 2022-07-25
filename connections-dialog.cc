@@ -106,8 +106,8 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
 
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_connected,
                    this, &ConnectionsDialog::on_connected);
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsConnectionLost,
-                   this, &ConnectionsDialog::on_vfsConnectionLost);
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_failed,
+                   this, &ConnectionsDialog::on_failed);
 
   repopulateTable();
   m_tableWidget->setCurrentCell(0, 0);
@@ -267,9 +267,9 @@ void ConnectionsDialog::on_connected(HostName hostName) noexcept
 }
 
 
-void ConnectionsDialog::on_vfsConnectionLost(HostName hostName, string reason) noexcept
+void ConnectionsDialog::on_failed(HostName hostName, string reason) noexcept
 {
-  TRACE("ConnectionsDialog", "on_vfsConnectionLost: host=" << hostName);
+  TRACE("ConnectionsDialog", "on_failed: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 

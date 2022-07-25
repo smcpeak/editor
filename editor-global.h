@@ -95,8 +95,8 @@ private Q_SLOTS:
   // Called when a watched process terminates.
   void on_processTerminated(ProcessWatcher *watcher);
 
-  // Called when a VFS connection is lost.
-  void on_vfsConnectionLost(HostName hostName, string reason) NOEXCEPT;
+  // Called when a VFS connection fails.
+  void on_connectionFailed(HostName hostName, string reason) NOEXCEPT;
 
 public:       // funcs
   // intent is to make one of these in main()

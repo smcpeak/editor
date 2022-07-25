@@ -536,7 +536,7 @@ void VFS_Connections::on_failureAvailable() NOEXCEPT
     c->m_currentRequestID = 0;
     xassert(connectionWasLost(c->m_hostName));
 
-    Q_EMIT signal_vfsConnectionLost(c->m_hostName, reason);
+    Q_EMIT signal_failed(c->m_hostName, reason);
   }
   else {
     TRACE("VFS_Connections", "on_failureAvailable: did not find recipient");

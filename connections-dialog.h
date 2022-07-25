@@ -76,7 +76,7 @@ public:      // methods
 private Q_SLOTS:
   // Handlers for connection state changes.
   void on_connected(HostName hostName) noexcept;
-  void on_vfsConnectionLost(HostName hostName, string reason) noexcept;
+  void on_failed(HostName hostName, string reason) noexcept;
 
   // Handlers for button presses.
   void on_refreshPressed() noexcept;

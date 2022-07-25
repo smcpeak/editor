@@ -146,8 +146,8 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
 
   QObject::connect(vfsConnections(), &VFS_Connections::signal_replyAvailable,
                    this, &EditorWidget::on_replyAvailable);
-  QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsConnectionLost,
-                   this, &EditorWidget::on_vfsConnectionLost);
+  QObject::connect(vfsConnections(), &VFS_Connections::signal_failed,
+                   this, &EditorWidget::on_connectionFailed);
 
   EditorWidget::s_objectCount++;
 }
@@ -444,12 +444,12 @@ void EditorWidget::on_replyAvailable(
 }
 
 
-void EditorWidget::on_vfsConnectionLost(
+void EditorWidget::on_connectionFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("EditorWidget", "on_vfsConnectionLost: host=" << hostName <<
+  TRACE("EditorWidget", "on_connectionFailed: host=" << hostName <<
                         " reason=" << reason);
 
   // TODO: I should only cancel a request if it is being made to the
