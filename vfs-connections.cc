@@ -10,6 +10,7 @@
 #include "container-utils.h"           // contains
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "map-utils.h"                 // insertMapUnique, keySet
+#include "sm-file-util.h"              // SMFileUtil
 #include "trace.h"                     // TRACE
 #include "vector-utils.h"              // vec_erase
 #include "xassert.h"                   // xfailure
@@ -475,8 +476,11 @@ void VFS_Connections::on_replyAvailable() NOEXCEPT
             genericReply->asFileStatusReplyC()) {
         if (reply->m_success) {
           if (reply->m_dirExists) {
+            SMFileUtil sfu;
+
             c->m_haveStartingDirectory = true;
-            c->m_startingDirectory = reply->m_dirName;
+            c->m_startingDirectory =
+              sfu.normalizePathSeparators(reply->m_dirName);
             c->m_currentRequestID = 0;
             xassert(c->connectionState() == CS_READY);
 

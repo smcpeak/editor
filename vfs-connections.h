@@ -94,6 +94,9 @@ private:     // types
     // Directory to start in when switching to this connection in the
     // file browser.  This is populated by issuing a preliminary request
     // for the directory of "." as interpreted by the server.
+    //
+    // In this path, only forward slashes are used as directory
+    // separators.
     string m_startingDirectory;
 
     // ID of the request currently being serviced by 'm_fsQuery', or 0
