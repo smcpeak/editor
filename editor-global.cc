@@ -411,10 +411,11 @@ NamedTextDocument *EditorGlobalState::launchCommand(
   NamedTextDocument *fileDoc =
     this->getNewCommandOutputDocument(hostName, dir, command);
 
-  // Show the directory and command at the top of the document.  Among
-  // other things, this is a helpful acknowledgment that something is
-  // happening in case the process does not print anything right away
+  // Show the host, directory, and command at the top of the document.
+  // Among other things, this is a helpful acknowledgment that something
+  // is happening in case the process does not print anything right away
   // (or at all!).
+  fileDoc->appendString(stringb("Hst: " << hostName << '\n'));
   fileDoc->appendString(stringb("Dir: " << toString(dir) << '\n'));
   fileDoc->appendString(stringb("Cmd: " << toString(command) << "\n\n"));
 
@@ -426,16 +427,48 @@ NamedTextDocument *EditorGlobalState::launchCommand(
                    this,    &EditorGlobalState::on_processTerminated);
 
   // Interpret the command string as a program and some arguments.
-  watcher->m_commandRunner.setShellCommandLine(command);
+  CommandRunner &cr = watcher->m_commandRunner;
+  if (hostName.isLocal()) {
+    cr.setWorkingDirectory(dir);
+    cr.setShellCommandLine(command);
+  }
+  else {
+    cr.setProgram("ssh");
+
+    cr.setArguments(QStringList{
+      // Never prompt for an SSH password.
+      "-oBatchMode=yes",
+
+      toQString(hostName.getSSHHostName()),
+
+      // Interpret the command string with 'sh' on the far end.  This is
+      // consistent with what CommandRunner::setShellCommandLine does.
+      //
+      // TODO: I would like to allow the user to configure which shell
+      // is invoked in both situations.
+      //
+      // No!  The arguments to 'ssh' get concatenated as a string and
+      // then implicitly passed to the login shell.  WTF?
+      //"sh",
+      //"-c",
+
+      // Ah!  The ssh command line does not include a way to specify
+      // the starting directory, which seems like a severe weakness.  I
+      // will need to expand my server process.  In the meantime, use an
+      // ugly an unreliable hack.
+      qstringb("cd '" << toString(dir) << "' && ( " << command << " )")
+    });
+  }
+  QString fullCommand = cr.getCommandLine();
 
   // Launch the child process.
-  watcher->m_commandRunner.setWorkingDirectory(dir);
   watcher->m_commandRunner.startAsynchronous();
 
   TRACE("process", "dir: " << toString(dir));
   TRACE("process", "cmd: " << toString(command));
-  TRACE("process", "started: " << watcher);
-  TRACE("process", "fileDoc: " << fileDoc);
+  TRACE("process", "fullCommand: " << fullCommand);
+  TRACE("process", "fileDoc: " << fileDoc->documentName());
+  TRACE("process", "started watcher: " << watcher);
 
   return fileDoc;
 }
@@ -483,7 +516,7 @@ void EditorGlobalState::namedTextDocumentRemoved(
     // Closing an output document.  Break the connection to the
     // document so it can go away safely, and start killing the
     // process.
-    TRACE("process", "killing: " << watcher);
+    TRACE("process", "killing watcher: " << watcher);
     watcher->m_namedDoc = NULL;
     watcher->m_commandRunner.killProcessNoWait();
 
@@ -501,7 +534,9 @@ void EditorGlobalState::namedTextDocumentRemoved(
 
 void EditorGlobalState::on_processTerminated(ProcessWatcher *watcher)
 {
-  TRACE("process", "terminated: " << watcher);
+  TRACE("process", "terminated watcher: " << watcher);
+  TRACE("process", "termination desc: " <<
+    watcher->m_commandRunner.getTerminationDescription());
 
   // Get rid of this watcher.
   if (!m_processes.removeIfPresent(watcher)) {

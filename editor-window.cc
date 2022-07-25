@@ -1055,9 +1055,14 @@ void EditorWindow::fileLaunchCommand()
   static LaunchCommandDialog *dialog =
     new LaunchCommandDialog();
 
+  HostName hostName = currentDocument()->hostName();
+  string hostText = hostName.isLocal()? string("") :
+                                        stringb(" on " << hostName);
+
   string dir = m_editorWidget->getDocumentDirectory();
   if (!dialog->runPrompt_nonEmpty(
-        qstringb("&Command to launch in " << dir << ":"), this)) {
+        qstringb("&Command to launch" << hostText <<
+                 " in " << dir << ":"), this)) {
     return;
   }
 
