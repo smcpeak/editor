@@ -266,7 +266,7 @@ void EditorWindow::buildMenu()
 
     CHECKABLE_ACTION(m_toggleReadOnlyAction,
                   "Read only", fileToggleReadOnly, false /*initChecked*/);
-    MENU_ITEM    ("&Reload", fileReload);
+    MENU_ITEM_KEY("&Reload", fileReload, Qt::Key_F5);
 
     menu->addSeparator();
 
