@@ -1089,6 +1089,7 @@ void EditorWindow::fileRunMake()
     currentDocument()->hostName(),
     toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
   this->setDocumentFile(fileDoc);
+  m_editorWidget->initCursorForProcessOutput();
 }
 
 
