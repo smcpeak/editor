@@ -1,0 +1,131 @@
+TODOs:
+  - In Makefile, treat "@#" at the start of a recipe line as a comment.
+  - Add key bindings to easily step to next/prev error or grep hit.
+
+  - Ctrl+J on line indented with tabs treats the tabs as being one space
+    rather than 8, wrapping the lines in the wrong place (too long)
+  - have to fix handling of "flex scanner jammed"!
+  - Ctrl+J on line that begins with /home/scott/... will think the "/"
+    is a line prefix to be repeated
+  - assertion failure when text contains UTF-8 sequence for apostrophe
+    and I try to search and replace it by selecting the text in the
+    editor then pasting it into the search box
+  - after Alt+A, select the output text for easy chaining
+  - cannot search+replace "$" because after replacement it finds EOL again
+  - failed to Ctrl+I on this line when in OpenSSL:
+      test/poly1305_internal_test.c:1510:4: error: incompatible types when initializing type 'const TESTDATA * {aka const struct <anonymous> *}' using type 'TESTDATA {aka struct <anonymous>}'
+  - when the buffer contents refresh, the search window status
+    indicators are not updated
+  - if I run a long command line with Alt+R, the window title is large,
+    and then I can't resize it smaller!
+  - the editor is pretty slow when deleting large amounts of text,
+    such as when working with preprocessor output
+  - regex bug?  this regex:
+      " +\||"
+    works, but this:
+      "|" +\|
+    does not
+  - the resize/screenshot tests are still unreliable under Cygwin X
+  - copy-paste from Windows apps does not work right under X since
+    the editor retains the selection even when another program sets
+    the clipboard
+    - hmmm, now I cannot reproduce this problem?  if it happens again
+      I need to remember the exact applications involved
+  - ProcessWatcher should close stdin
+  - more efficient navigation in lists of results from grep or compile
+  - in tests, explicitly indicate which file to open
+  - Ctrl+I cannot open "../smbase/test.h:58:13" if cursor is at start
+    - then, when it is not, we get ".." in the document path name
+  - put "<running>" into the window title
+  - if I select text, Ctrl+I should open that w/o filename heuristics
+  - draw an indicator when the cursor is offscreen
+  - split panes, esp. a vertical split instead of multiple windows
+  - run command to generate entire file; git annotate!
+    - enhancements
+      - prompt on closure of document with running process
+      - soft end of buffer jumping
+      - when switch to output buffer, need to jump to end
+      - open-files-dialog: button to close all with finished processes
+      - annoying completion behavior of Qt combo boxes; want more like
+        shell with readline (except less buggy!)
+      - after reusing a document to run the same command, would like
+        the cursor to stay where it was, unless it was at the end
+          - interact with the "soft" end tracking
+    - shell
+      - put a panel on the bottom for input line that will be passed
+        to the child process
+    - git show
+    - grep
+    - compilation mode
+    - parallel compilation mode that keeps the various output streams
+      separate somehow
+  - rename all references to "open-files dialog" to "documents"?
+  - way to replace all in file
+  - in goto-line dialog, typing does not replace the existing entry
+    if the new text starts with the same digit
+
+  - refactor: split SARPanel into pixel/key layer and stateful UI layer
+  - document list: instead of N/P, let user type a substring of a doc
+    name?
+    - maybe after Ctrl+S?
+  - prompt before killing an Alt+A that takes too long
+  - highlighting for mismatch parens, braces, etc.
+  - command line arguments to set window position(s)?
+  - undo history is never truncated... I should add something to check
+    for excessive memory usage over time
+  - for grep and compile, something to (1) recognize lines that have
+    file/line info, and (2) ability to see each in a different pane
+    or window or something
+
+  - handling of files with CRLF line endings
+    - highlighting of backslash followed by CR is busted
+      - not recognized as continuation; see a .moc.cc file
+    - ability to make line endings uniform
+    - ability to insert lines with CRLF
+  - parenthesis balancing, and Alt-[/] to find matching delimiter
+  - mode to show line numbers in left margin
+  - multiple copy+paste strings
+
+  - better vertical scrollbar
+    - graphically depict entire file's contents?
+
+  - ctrl+i: open file at cursor
+    - try with fewer directory components so I can open a file from
+      a name like "a/Makefile" in "git diff" output
+  - search and replace
+    - allow Ctrl+R from the main editor window too
+    - unclear when Ctrl+R will replace versus jump
+    - issues when cursor is sitting on a match but it isn't highlighted
+    - allow F2? Ctrl+O? Ctrl+I?
+    - explicit case sensitivity option
+    - whole word?
+    - regex...
+      - needs redesign of how the matching algorithm works
+    - history!
+    - better feedback on search: number of hits, at first/last/only/none
+
+  - handle cygwin paths on the command line (requires Alt+A infra)
+
+  - test plan
+  - support for encodings other than Latin-1
+  - save/restore set of open buffers
+  - periodic autosave; do that when receiving SIGTERM/QUIT/INT also
+  - if I press Delete while the cursor is at the left edge of a blank
+    line, make it delete that line even if there is whitespace on it
+  - remove unnecessary triple buffering from render code
+  - cannot test menu commands with replayed events
+    - difficult to fix since there seems to be no way to get the
+      shortcut ID programmatically
+    - have to use TriggerAction on a menu action path
+
+Later if at all:
+  - handle better: test/highlight/c-c-comment-multiline-preproc.h
+    - This turns out to be fairly difficult.  I don't even know what
+      the language rules are, and reading the C standard did not help.
+      It would seem I need a new "comment in preprocessor" state,
+      which is a major pain, especially given how hard it is to
+      understand Flex's diagnostics.
+
+Projects:
+  - idea: "edit" a git diff?
+
