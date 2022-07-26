@@ -232,6 +232,11 @@ TAB           [\t]
   return TC_STRING;
 }
 
+  /* Comment shell line. */
+{TAB}@?#.*{NL}? {
+  return TC_COMMENT;
+}
+
   /* One-line shell line. */
 {TAB}.*{NL}? {
   return TC_STRING;

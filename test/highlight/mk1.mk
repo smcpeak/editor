@@ -11,4 +11,6 @@ target: prereq
 	  spans multiple lines
 # makefile comment
 	# shell comment
+	@# shell comment with echo disabled
+	another shell command
 
