@@ -1395,6 +1395,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
         true /*prefixStderrLines*/,
         qstringb("grepsrc " << shellDoubleQuote(searchText)));
     this->setDocumentFile(fileDoc);
+    m_editorWidget->initCursorForProcessOutput();
   }
 
   GENERIC_CATCH_END
