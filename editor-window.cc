@@ -1072,6 +1072,7 @@ void EditorWindow::fileLaunchCommand()
     dialog->prefixStderrLines(),
     dialog->m_text);
   this->setDocumentFile(doc);
+  m_editorWidget->initCursorForProcessOutput();
 
   // Choose a highlighter based on the command line.
   this->useDefaultHighlighter(doc);

@@ -322,6 +322,10 @@ public:      // funcs
   void cursorPageDown(bool shift);
   void cursorToEndOfNextLine(bool shift);
 
+  // Set up the scroll state and cursor position for a newly created
+  // process output document.
+  void initCursorForProcessOutput();
+
   // ----------------------------- mark ------------------------------
   TextLCoord mark() const                  { return m_editor->mark(); }
   bool selectEnabled() const              { return m_editor->markActive(); }

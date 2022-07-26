@@ -360,6 +360,8 @@ EditorWidget::NamedTextDocumentEditor *
   // Make the new editor.
   NamedTextDocumentEditor *ret = new NamedTextDocumentEditor(file);
   m_editorList.prepend(ret);
+
+  // Possibly set the initial location.
   if (hasView) {
     INITIATING_DOCUMENT_CHANGE();
     ret->setFirstVisible(view.firstVisible);
@@ -370,6 +372,7 @@ EditorWidget::NamedTextDocumentEditor *
     // during window creation, this function is called before the
     // true window size is known.
   }
+
   return ret;
 }
 
@@ -2116,6 +2119,21 @@ void EditorWidget::cursorToEndOfNextLine(bool shift)
 }
 
 
+void EditorWidget::initCursorForProcessOutput()
+{
+  // Start by making the start of the document visible.
+  m_editor->setFirstVisible(TextLCoord(0,0));
+
+  // Jump to the end of the document.  Even for a new process document,
+  // there are a few lines of status information at the top.
+  m_editor->moveCursorToBottom();
+  m_editor->clearMark();
+
+  // Bring the cursor line into view.
+  m_editor->scrollToCursor();
+}
+
+
 void EditorWidget::setTextSearchParameters()
 {
   m_textSearch->setSearchStringAndFlags(m_hitText, m_hitTextFlags);
@@ -2320,19 +2338,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
   TRACE("observe", "observeInsertLine line=" << line);
   INITIATING_DOCUMENT_CHANGE();
 
-  if (m_editor->documentProcessStatus() == DPS_RUNNING) {
-    // Just track the end of the document.
-    //
-    // TODO: I want a "soft" tracking here, where I track until the user
-    // moves the cursor away, and then resume tracking if the user moves
-    // the cursor back to the end.
-    m_editor->setFirstVisible(TextLCoord(0,0));  // Scroll from top.
-    m_editor->setCursor(m_editor->endLCoord());
-    m_editor->clearMark();
-    m_editor->scrollToCursor();
-    this->redraw();
-    return;
-  }
+  // Normally, we try to keep the cursor stationary in the window (as
+  // explained above).  But for a process document, I instead want it to
+  // work more like the user is typing text, so we will just scroll to
+  // keep the cursor in view.
+  bool keepCursorStationary =
+    (m_editor->documentProcessStatus() != DPS_RUNNING);
 
   // Internally inside HE_text::insert(), the routine that actually
   // inserts text, inserting "line N" works by removing the text on
@@ -2345,7 +2356,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
 
   if (line <= m_editor->cursor().m_line) {
     m_editor->moveCursorBy(+1, 0);
-    m_editor->moveFirstVisibleBy(+1, 0);
+    if (keepCursorStationary) {
+      m_editor->moveFirstVisibleBy(+1, 0);
+    }
+    else {
+      m_editor->scrollToCursor();
+    }
   }
 
   if (m_editor->markActive() && line <= m_editor->mark().m_line) {

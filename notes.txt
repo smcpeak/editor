@@ -1,7 +1,6 @@
 
 TODOs:
   - In Makefile, treat "@#" at the start of a recipe line as a comment.
-  - In process output, do not move cursor unless it is already at the end.
   - Add key bindings to easily step to next/prev error or grep hit.
 
   - Ctrl+J on line indented with tabs treats the tabs as being one space
