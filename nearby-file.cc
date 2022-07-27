@@ -200,7 +200,8 @@ FileAndLineOpt innerGetNearbyFilename(
     // Return the first prefix+suffix.
     return FileAndLineOpt(
       sfu.joinFilename(candidatePrefixes[0],
-                       candidateSuffixes[0].m_filename), 0);
+                       candidateSuffixes[0].m_filename),
+      candidateSuffixes[0].m_line);
   }
 }
 

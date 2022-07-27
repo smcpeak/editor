@@ -143,6 +143,9 @@ static void testLineNumbers()
   // Line number can't run straight into letters.
   expectIGNFL(sfu, prefixes, "foo.txt:3a", 0, "/home/foo.txt", 0);
   expectIGNFL(sfu, prefixes, "foo.txt:3 a", 0, "/home/foo.txt", 3);
+
+  // Report best match even for non-existent, including line number.
+  expectIGNFL(sfu, prefixes, "baz.txt:3: something", 0, "/home/baz.txt", 3);
 }
 
 
