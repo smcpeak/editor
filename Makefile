@@ -416,6 +416,20 @@ test-hashcomment-hilite: $(TEST_HASHCOMMENT_HILITE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-hashcomment-hilite))
 
 
+# ------------------------- OCaml highlighting -------------------------
+EDITOR_OBJS += ocaml_hilite.yy.o
+
+TEST_OCAML_HILITE_OBJS := $(EDITOR_OBJS)
+
+TEST_OCAML_HILITE_OBJS += test-ocaml-hilite.o
+-include test-ocaml-hilite.d
+
+test-ocaml-hilite: $(TEST_OCAML_HILITE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_OCAML_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,test-ocaml-hilite))
+
+
 # ----------------- git version ---------------------
 # Command to query git for the version.  Output is like:
 # "d36671f 2018-07-09 04:10:32 -0700".

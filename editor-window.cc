@@ -16,6 +16,7 @@
 #include "keys-dialog.h"               // KeysDialog
 #include "launch-command-dialog.h"     // LaunchCommandDialog
 #include "makefile_hilite.h"           // Makefile_Highlighter
+#include "ocaml_hilite.h"              // OCaml_Highlighter
 #include "pixmaps.h"                   // g_editorPixmaps
 #include "qhboxframe.h"                // QHBoxFrame
 #include "sar-panel.h"                 // SearchAndReplacePanel
@@ -519,10 +520,20 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       "ev",
       "pl",
       "py",
+      "pyi",
       "sh",
     };
     if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
       file->m_highlighter = new HashComment_Highlighter(file->getCore());
+      return;
+    }
+
+    static char const * const ocamlExts[] = {
+      "ml",
+      "mli",
+    };
+    if (stringAmong(ext, ocamlExts, TABLESIZE(ocamlExts))) {
+      file->m_highlighter = new OCaml_Highlighter(file->getCore());
       return;
     }
   }
@@ -1634,7 +1645,8 @@ void EditorWindow::viewSetHighlighting()
     "C/C++" <<
     "Diff" <<
     "HashComment" <<
-    "Makefile");
+    "Makefile" <<
+    "OCaml");
 
   // One annoying thing is you can't double-click an item to choose
   // it and simultaneously close the dialog.
@@ -1676,6 +1688,12 @@ void EditorWindow::viewSetHighlighting()
   }
   else if (chosen == "Makefile") {
     doc->m_highlighter = new Makefile_Highlighter(doc->getCore());
+  }
+  else if (chosen == "OCaml") {
+    doc->m_highlighter = new OCaml_Highlighter(doc->getCore());
+  }
+  else {
+    // We use no highlighter.
   }
 
   // Notify everyone of the change.
