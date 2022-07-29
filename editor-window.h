@@ -54,10 +54,8 @@ public:      // types
   };
 
 private:     // data
-  // associated global state
-  //
-  // TODO: Rename this to 'm_editorGlobal'.
-  RCSerf<EditorGlobal> m_globalState;
+  // Global editor state.
+  RCSerf<EditorGlobal> m_editorGlobal;
 
   // GUI elements
   QMenuBar *m_menuBar;
@@ -133,7 +131,7 @@ protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 
 public:      // funcs
-  EditorWindow(EditorGlobal *state, NamedTextDocument *initFile,
+  EditorWindow(EditorGlobal *editorGlobal, NamedTextDocument *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
 

@@ -66,10 +66,11 @@ int EditorWindow::s_objectCount = 0;
 CHECK_OBJECT_COUNT(EditorWindow);
 
 
-EditorWindow::EditorWindow(EditorGlobal *theState, NamedTextDocument *initFile,
+EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
+                           NamedTextDocument *initFile,
                            QWidget *parent)
   : QWidget(parent),
-    m_globalState(theState),
+    m_editorGlobal(editorGlobal),
     m_menuBar(NULL),
     m_editorWidget(NULL),
     m_sarPanel(NULL),
@@ -81,7 +82,7 @@ EditorWindow::EditorWindow(EditorGlobal *theState, NamedTextDocument *initFile,
     m_toggleVisibleSoftMarginAction(NULL),
     m_toggleHighlightTrailingWSAction(NULL)
 {
-  xassert(theState);
+  xassert(m_editorGlobal);
   xassert(initFile);
 
   // will build a layout tree to manage sizes of child widgets
@@ -104,7 +105,7 @@ EditorWindow::EditorWindow(EditorGlobal *theState, NamedTextDocument *initFile,
   m_sarPanel->hide();      // Initially hidden.
   QObject::connect(
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
-    m_globalState, &EditorGlobal::slot_broadcastSearchPanelChanged);
+    m_editorGlobal, &EditorGlobal::slot_broadcastSearchPanelChanged);
 
   this->m_statusArea = new StatusDisplay();
   this->m_statusArea->setObjectName("m_statusArea");
@@ -117,7 +118,7 @@ EditorWindow::EditorWindow(EditorGlobal *theState, NamedTextDocument *initFile,
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
   this->m_editorWidget = new EditorWidget(initFile,
-    &(theState->m_documentList), this->m_statusArea, this);
+    &(m_editorGlobal->m_documentList), this->m_statusArea, this);
   this->m_editorWidget->setObjectName("m_editorWidget");
   editorFrame->addWidget(this->m_editorWidget);
   this->m_editorWidget->setFocus();
@@ -166,8 +167,8 @@ EditorWindow::EditorWindow(EditorGlobal *theState, NamedTextDocument *initFile,
   // I want this object destroyed when it is closed.
   this->setAttribute(Qt::WA_DeleteOnClose);
 
-  this->m_globalState->m_windows.append(this);
-  this->m_globalState->m_documentList.addObserver(this);
+  this->m_editorGlobal->m_windows.append(this);
+  this->m_editorGlobal->m_documentList.addObserver(this);
 
   EditorWindow::s_objectCount++;
 }
@@ -177,13 +178,13 @@ EditorWindow::~EditorWindow()
 {
   EditorWindow::s_objectCount--;
 
-  m_globalState->m_documentList.removeObserver(this);
+  m_editorGlobal->m_documentList.removeObserver(this);
 
   // This object might have already been removed, for example because
   // the EditorGlobal destructor is running, and is in the process of
   // removing elements from the list and destroying them.  Hence the
   // "IfPresent" part of this call.
-  m_globalState->m_windows.removeIfPresent(this);
+  m_editorGlobal->m_windows.removeIfPresent(this);
 
   // The QObject destructor will destroy both 'm_sarPanel' and
   // 'm_editorWidget', but the documentation of ~QObject does not
@@ -191,7 +192,7 @@ EditorWindow::~EditorWindow()
   m_sarPanel->setEditorWidget(NULL);
 
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_sarPanel,     NULL, m_globalState,  NULL);
+  QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
   QObject::disconnect(m_editorWidget, NULL, this,           NULL);
   QObject::disconnect(m_vertScroll,   NULL, m_editorWidget, NULL);
 }
@@ -199,7 +200,7 @@ EditorWindow::~EditorWindow()
 
 VFS_Connections *EditorWindow::vfsConnections() const
 {
-  return m_globalState->vfsConnections();
+  return m_editorGlobal->vfsConnections();
 }
 
 
@@ -427,7 +428,7 @@ NamedTextDocument *EditorWindow::currentDocument()
 
 void EditorWindow::fileNewFile()
 {
-  NamedTextDocument *b = m_globalState->createNewFile(
+  NamedTextDocument *b = m_editorGlobal->createNewFile(
     m_editorWidget->getDocumentDirectory());
   setDocumentFile(b);
 }
@@ -439,7 +440,7 @@ void EditorWindow::setDocumentFile(NamedTextDocument *file)
   // is that this document is the most recently used since it was just
   // shown to the user, even if it hasn't been explicitly switched to
   // recently.
-  m_globalState->m_documentList.moveDocument(this->currentDocument(), 0);
+  m_editorGlobal->m_documentList.moveDocument(this->currentDocument(), 0);
 
   m_editorWidget->setDocumentFile(file);
   this->updateForChangedFile();
@@ -549,14 +550,14 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
 
   if (dialogKind == FCDK_FILENAME_INPUT) {
     FilenameInputDialog dialog(
-      &(m_globalState->m_filenameInputDialogHistory),
+      &(m_editorGlobal->m_filenameInputDialogHistory),
       vfsConnections(),
       this);
     dialog.setSaveAs(saveAs);
 
     QString choice = toQString(dir);
 
-    if (dialog.runDialog(&(m_globalState->m_documentList),
+    if (dialog.runDialog(&(m_editorGlobal->m_documentList),
                          hostName, choice)) {
       return toString(choice);
     }
@@ -679,7 +680,7 @@ void EditorWindow::fileOpenFile(HostName const &hostName,
 
   // If this file is already open, switch to it.
   NamedTextDocument *file =
-    m_globalState->m_documentList.findDocumentByName(docName);
+    m_editorGlobal->m_documentList.findDocumentByName(docName);
   if (file) {
     this->setDocumentFile(file);
     return;
@@ -696,7 +697,7 @@ void EditorWindow::fileOpenFile(HostName const &hostName,
 
   file = new NamedTextDocument();
   file->setDocumentName(docName);
-  file->m_title = m_globalState->uniqueTitleFor(docName);
+  file->m_title = m_editorGlobal->uniqueTitleFor(docName);
 
   if (rfr->m_success) {
     file->replaceFileAndStats(rfr->m_contents,
@@ -720,15 +721,15 @@ void EditorWindow::fileOpenFile(HostName const &hostName,
 
   // is there an untitled, empty file hanging around?
   RCSerf<NamedTextDocument> untitled =
-    this->m_globalState->m_documentList.findUntitledUnmodifiedDocument();
+    this->m_editorGlobal->m_documentList.findUntitledUnmodifiedDocument();
 
   // now that we've opened the file, set the editor widget to edit it
-  m_globalState->trackNewDocumentFile(file);
+  m_editorGlobal->trackNewDocumentFile(file);
   setDocumentFile(file);
 
   // remove the untitled file now, if it exists
   if (untitled) {
-    m_globalState->deleteDocumentFile(untitled.release());
+    m_editorGlobal->deleteDocumentFile(untitled.release());
   }
 }
 
@@ -908,7 +909,7 @@ void EditorWindow::fileSaveAs()
     DocumentName docName;
     docName.setFilename(hostName, chosenFilename);
 
-    if (this->m_globalState->hasFileWithName(docName)) {
+    if (this->m_editorGlobal->hasFileWithName(docName)) {
       this->complain(stringb(
         "There is already an open file with name " <<
         docName << ".  Choose a different name to save as."));
@@ -920,13 +921,13 @@ void EditorWindow::fileSaveAs()
     }
     else {
       fileDoc->setDocumentName(docName);
-      fileDoc->m_title = m_globalState->uniqueTitleFor(docName);
+      fileDoc->m_title = m_editorGlobal->uniqueTitleFor(docName);
       writeTheFile();
       this->useDefaultHighlighter(fileDoc);
 
       // Notify observers of the file name and highlighter change.  This
       // includes myself.
-      m_globalState->m_documentList.notifyAttributeChanged(fileDoc);
+      m_editorGlobal->m_documentList.notifyAttributeChanged(fileDoc);
 
       return;
     }
@@ -951,7 +952,7 @@ void EditorWindow::fileClose()
     }
   }
 
-  m_globalState->deleteDocumentFile(b);
+  m_editorGlobal->deleteDocumentFile(b);
 }
 
 
@@ -1066,7 +1067,7 @@ void EditorWindow::fileLaunchCommand()
     return;
   }
 
-  NamedTextDocument *doc = m_globalState->launchCommand(
+  NamedTextDocument *doc = m_editorGlobal->launchCommand(
     currentDocument()->hostName(),
     toQString(dir),
     dialog->prefixStderrLines(),
@@ -1085,7 +1086,7 @@ void EditorWindow::fileRunMake()
 
   // My intent is the user creates a script with this name on their
   // $PATH.  Then the script can do whatever is desired here.
-  NamedTextDocument *fileDoc = m_globalState->launchCommand(
+  NamedTextDocument *fileDoc = m_editorGlobal->launchCommand(
     currentDocument()->hostName(),
     toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
   this->setDocumentFile(fileDoc);
@@ -1113,7 +1114,7 @@ void EditorWindow::fileKillProcess()
       if (questionBoxYesCancel(this, "Kill Process?", qstringb(
             "Kill the process " << doc->documentName() << "?"))) {
         if (this->stillCurrentDocument(doc)) {
-          string problem = m_globalState->killCommand(doc);
+          string problem = m_editorGlobal->killCommand(doc);
           if (!problem.empty()) {
             messageBox(this, "Problem Killing Process",
               toQString(problem));
@@ -1134,7 +1135,7 @@ void EditorWindow::fileManageConnections() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_globalState->showConnectionsDialog();
+  m_editorGlobal->showConnectionsDialog();
 
   GENERIC_CATCH_END
 }
@@ -1159,8 +1160,8 @@ int EditorWindow::getUnsavedChanges(stringBuilder &msg)
   int ct = 0;
 
   msg << "The following documents have unsaved changes:\n\n";
-  for (int i=0; i < this->m_globalState->m_documentList.numDocuments(); i++) {
-    NamedTextDocument *file = this->m_globalState->m_documentList.getDocumentAt(i);
+  for (int i=0; i < this->m_editorGlobal->m_documentList.numDocuments(); i++) {
+    NamedTextDocument *file = this->m_editorGlobal->m_documentList.getDocumentAt(i);
     if (file->unsavedChanges()) {
       ct++;
       msg << " * " << file->resourceName() << '\n';
@@ -1389,7 +1390,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
   else {
     string dir = m_editorWidget->getDocumentDirectory();
     NamedTextDocument *fileDoc =
-      m_globalState->launchCommand(
+      m_editorGlobal->launchCommand(
         currentDocument()->hostName(),
         toQString(dir),
         true /*prefixStderrLines*/,
@@ -1470,7 +1471,7 @@ void EditorWindow::editApplyCommand()
     string input = tde->getSelectedText();
 
     // Set the working directory and command of 'runner'.
-    m_globalState->configureCommandRunner(runner,
+    m_editorGlobal->configureCommandRunner(runner,
       hostName, toQString(dir), toQString(commandString));
 
     // TODO: This mishandles NUL bytes.
@@ -1678,7 +1679,7 @@ void EditorWindow::viewSetHighlighting()
   }
 
   // Notify everyone of the change.
-  this->m_globalState->m_documentList.notifyAttributeChanged(doc);
+  this->m_editorGlobal->m_documentList.notifyAttributeChanged(doc);
 }
 
 
@@ -1687,9 +1688,9 @@ void EditorWindow::windowOpenFilesList()
   // Put the current document on top before opening the dialog so one
   // can always hit Ctrl+O, Enter and the displayed document won't
   // change.
-  m_globalState->m_documentList.moveDocument(this->currentDocument(), 0);
+  m_editorGlobal->m_documentList.moveDocument(this->currentDocument(), 0);
 
-  NamedTextDocument *doc = m_globalState->runOpenFilesDialog(this);
+  NamedTextDocument *doc = m_editorGlobal->runOpenFilesDialog(this);
   if (doc) {
     this->setDocumentFile(doc);
   }
@@ -1866,13 +1867,13 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 
   // Prompt to confirm.
   FilenameInputDialog dialog(
-    &(m_globalState->m_filenameInputDialogHistory),
+    &(m_editorGlobal->m_filenameInputDialogHistory),
     vfsConnections(),
     this);
 
   QString confirmedFileName = filename;
 
-  if (dialog.runDialog(&(m_globalState->m_documentList),
+  if (dialog.runDialog(&(m_editorGlobal->m_documentList),
                        hostName, confirmedFileName)) {
     this->fileOpenFile(hostName, toString(confirmedFileName));
   }
@@ -1887,7 +1888,7 @@ void EditorWindow::complain(char const *msg)
 
 void EditorWindow::windowNewWindow()
 {
-  EditorWindow *ed = this->m_globalState->createNewWindow(this->currentDocument());
+  EditorWindow *ed = this->m_editorGlobal->createNewWindow(this->currentDocument());
   ed->show();
 }
 
@@ -1902,7 +1903,7 @@ void EditorWindow::windowCloseWindow()
 
 void EditorWindow::closeEvent(QCloseEvent *event)
 {
-  if (this->m_globalState->m_windows.count() == 1) {
+  if (this->m_editorGlobal->m_windows.count() == 1) {
     if (!this->canQuitApplication()) {
       event->ignore();    // Prevent app from closing.
       return;
@@ -1910,7 +1911,7 @@ void EditorWindow::closeEvent(QCloseEvent *event)
 
     // Close the connections dialog if it is open, since otherwise that
     // will prevent the program from terminating.
-    m_globalState->hideModelessDialogs();
+    m_editorGlobal->hideModelessDialogs();
   }
 
   event->accept();
