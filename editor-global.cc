@@ -428,6 +428,28 @@ NamedTextDocument *EditorGlobalState::launchCommand(
 
   // Interpret the command string as a program and some arguments.
   CommandRunner &cr = watcher->m_commandRunner;
+  configureCommandRunner(cr, hostName, dir, command);
+  QString fullCommand = cr.getCommandLine();
+
+  // Launch the child process.
+  watcher->m_commandRunner.startAsynchronous();
+
+  TRACE("process", "dir: " << toString(dir));
+  TRACE("process", "cmd: " << toString(command));
+  TRACE("process", "fullCommand: " << fullCommand);
+  TRACE("process", "fileDoc: " << fileDoc->documentName());
+  TRACE("process", "started watcher: " << watcher);
+
+  return fileDoc;
+}
+
+
+void EditorGlobalState::configureCommandRunner(
+  CommandRunner &cr,
+  HostName const &hostName,
+  QString dir,
+  QString command)
+{
   if (hostName.isLocal()) {
     cr.setWorkingDirectory(dir);
     cr.setShellCommandLine(command);
@@ -459,18 +481,6 @@ NamedTextDocument *EditorGlobalState::launchCommand(
       qstringb("cd '" << toString(dir) << "' && ( " << command << " )")
     });
   }
-  QString fullCommand = cr.getCommandLine();
-
-  // Launch the child process.
-  watcher->m_commandRunner.startAsynchronous();
-
-  TRACE("process", "dir: " << toString(dir));
-  TRACE("process", "cmd: " << toString(command));
-  TRACE("process", "fullCommand: " << fullCommand);
-  TRACE("process", "fileDoc: " << fileDoc->documentName());
-  TRACE("process", "started watcher: " << watcher);
-
-  return fileDoc;
 }
 
 

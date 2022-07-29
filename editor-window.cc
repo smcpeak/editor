@@ -1452,21 +1452,26 @@ void EditorWindow::editApplyCommand()
       new TextInputDialog("Apply Command");
 
     string dir = m_editorWidget->getDocumentDirectory();
-    if (!dialog->runPrompt_nonEmpty(
-          qstringb("Command to run in " << dir << ":"),
-          this)) {
-      return;
+    HostName hostName = m_editorWidget->getDocument()->hostName();
+
+    stringBuilder prompt;
+    prompt << "Command to run in " << dir;
+    if (!hostName.isLocal()) {
+      prompt << " on " << hostName;
+    }
+    prompt << ":";
+
+    if (!dialog->runPrompt_nonEmpty(toQString(prompt.str()), this)) {
+      return;      // Canceled.
     }
     commandString = toString(dialog->m_text);
 
     tde = m_editorWidget->getDocumentEditor();
     string input = tde->getSelectedText();
 
-    // For now, I will assume I have a POSIX shell.
-    runner.setProgram("sh");
-    runner.setArguments(QStringList() << "-c" << dialog->m_text);
-
-    runner.setWorkingDirectory(toQString(dir));
+    // Set the working directory and command of 'runner'.
+    m_globalState->configureCommandRunner(runner,
+      hostName, toQString(dir), toQString(commandString));
 
     // TODO: This mishandles NUL bytes.
     runner.setInputData(QByteArray(input.c_str()));

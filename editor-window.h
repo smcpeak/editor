@@ -55,6 +55,8 @@ public:      // types
 
 private:     // data
   // associated global state
+  //
+  // TODO: Rename this to 'm_editorGlobal'.
   RCSerf<EditorGlobalState> m_globalState;
 
   // GUI elements

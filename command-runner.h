@@ -1,8 +1,10 @@
 // command-runner.h
 // Declare the CommandRunner class.
 
-#ifndef COMMAND_RUNNER_H
-#define COMMAND_RUNNER_H
+#ifndef EDITOR_COMMAND_RUNNER_H
+#define EDITOR_COMMAND_RUNNER_H
+
+#include "command-runner-fwd.h"        // fwds for this module
 
 #include "refct-serf.h"                // SerfRefCount
 #include "sm-override.h"               // OVERRIDE
@@ -285,4 +287,4 @@ protected Q_SLOTS:
 char const *toString(QProcess::ProcessError error);
 
 
-#endif // COMMAND_RUNNER_H
+#endif // EDITOR_COMMAND_RUNNER_H

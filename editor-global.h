@@ -5,6 +5,7 @@
 #define EDITOR_EDITOR_GLOBAL_H
 
 // editor
+#include "command-runner-fwd.h"        // CommandRunner
 #include "editor-window.h"             // EditorWindow
 #include "filename-input.h"            // FilenameInputDialog
 #include "named-td-list.h"             // NamedTextDocumentList
@@ -38,6 +39,8 @@ public:
 
 
 // global state of the editor: files, windows, etc.
+//
+// TODO: Rename this to 'EditorGlobal'.
 class EditorGlobalState : public QApplication,
                           public NamedTextDocumentListObserver {
   Q_OBJECT
@@ -144,6 +147,14 @@ public:       // funcs
   // process' output is written.
   NamedTextDocument *launchCommand(HostName const &hostName,
     QString dir, bool prefixStderrLines, QString command);
+
+  // Set the working directory and command line of 'cr' so that it will
+  // run 'command' in 'dir' on 'hostName'.
+  void configureCommandRunner(
+    CommandRunner &cr,
+    HostName const &hostName,
+    QString dir,
+    QString command);
 
   // Kill the process driving 'doc'.  If there is a problem doing that,
   // return a string explaining it; otherwise "".
