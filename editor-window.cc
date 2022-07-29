@@ -7,7 +7,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
-#include "editor-global.h"             // EditorGlobalState
+#include "editor-global.h"             // EditorGlobal
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
@@ -66,7 +66,7 @@ int EditorWindow::s_objectCount = 0;
 CHECK_OBJECT_COUNT(EditorWindow);
 
 
-EditorWindow::EditorWindow(EditorGlobalState *theState, NamedTextDocument *initFile,
+EditorWindow::EditorWindow(EditorGlobal *theState, NamedTextDocument *initFile,
                            QWidget *parent)
   : QWidget(parent),
     m_globalState(theState),
@@ -104,7 +104,7 @@ EditorWindow::EditorWindow(EditorGlobalState *theState, NamedTextDocument *initF
   m_sarPanel->hide();      // Initially hidden.
   QObject::connect(
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
-    m_globalState, &EditorGlobalState::slot_broadcastSearchPanelChanged);
+    m_globalState, &EditorGlobal::slot_broadcastSearchPanelChanged);
 
   this->m_statusArea = new StatusDisplay();
   this->m_statusArea->setObjectName("m_statusArea");
@@ -133,7 +133,7 @@ EditorWindow::EditorWindow(EditorGlobalState *theState, NamedTextDocument *initF
     this, &EditorWindow::on_openFilenameInputDialogSignal,
     Qt::QueuedConnection);
 
-  // See explanation in EditorGlobalState::focusChangedHandler().
+  // See explanation in EditorGlobal::focusChangedHandler().
   this->setFocusProxy(this->m_editorWidget);
 
   // Needed to ensure Tab gets passed down to the editor widget.
@@ -180,7 +180,7 @@ EditorWindow::~EditorWindow()
   m_globalState->m_documentList.removeObserver(this);
 
   // This object might have already been removed, for example because
-  // the EditorGlobalState destructor is running, and is in the process of
+  // the EditorGlobal destructor is running, and is in the process of
   // removing elements from the list and destroying them.  Hence the
   // "IfPresent" part of this call.
   m_globalState->m_windows.removeIfPresent(this);
@@ -1257,7 +1257,7 @@ void EditorWindow::namedTextDocumentListOrderChanged(
 void EditorWindow::fileExit()
 {
   if (this->canQuitApplication()) {
-    EditorGlobalState::quit();
+    EditorGlobal::quit();
   }
 }
 

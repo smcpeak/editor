@@ -1,5 +1,5 @@
 // editor-global.h
-// EditorGlobalState class.
+// EditorGlobal class.
 
 #ifndef EDITOR_EDITOR_GLOBAL_H
 #define EDITOR_EDITOR_GLOBAL_H
@@ -39,10 +39,8 @@ public:
 
 
 // global state of the editor: files, windows, etc.
-//
-// TODO: Rename this to 'EditorGlobal'.
-class EditorGlobalState : public QApplication,
-                          public NamedTextDocumentListObserver {
+class EditorGlobal : public QApplication,
+                     public NamedTextDocumentListObserver {
   Q_OBJECT
 
 public:       // data
@@ -103,8 +101,8 @@ private Q_SLOTS:
 
 public:       // funcs
   // intent is to make one of these in main()
-  EditorGlobalState(int argc, char **argv);
-  ~EditorGlobalState();
+  EditorGlobal(int argc, char **argv);
+  ~EditorGlobal();
 
   // To run the app, use the 'exec()' method, inherited
   // from QApplication.
@@ -166,7 +164,7 @@ public:       // funcs
   // closed.
   string killCommand(NamedTextDocument *doc);
 
-  // EditorGlobalState has to monitor for closing a document that a process
+  // EditorGlobal has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.
   virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList,

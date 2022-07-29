@@ -101,7 +101,7 @@ private:     // data
   // All of the editors associated with this widget.  An editor is
   // created on demand when this widget is told to edit its underlying
   // file, so the set of files here is in general a subset of
-  // EditorGlobalState::documentFiles.
+  // EditorGlobal::documentFiles.
   ObjList<NamedTextDocumentEditor> m_editorList;
 
   // Editor object for the file we are editing.  Never NULL.

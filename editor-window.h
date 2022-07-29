@@ -32,7 +32,7 @@ class QMenuBar;
 class QScrollBar;
 
 class EditorWidget;                    // editor-widget.h
-class EditorGlobalState;               // main.h
+class EditorGlobal;                    // main.h
 class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
 
@@ -57,7 +57,7 @@ private:     // data
   // associated global state
   //
   // TODO: Rename this to 'm_editorGlobal'.
-  RCSerf<EditorGlobalState> m_globalState;
+  RCSerf<EditorGlobal> m_globalState;
 
   // GUI elements
   QMenuBar *m_menuBar;
@@ -133,7 +133,7 @@ protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 
 public:      // funcs
-  EditorWindow(EditorGlobalState *state, NamedTextDocument *initFile,
+  EditorWindow(EditorGlobal *state, NamedTextDocument *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
 
