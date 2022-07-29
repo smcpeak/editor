@@ -67,281 +67,233 @@ public:      // funcs
 
 
 /* ------------------- definitions -------------------- */
-/* newline */
-NL            "\n"
+/* Particular characters. */
+NL                           "\n"
+SPACE                        [ ]
+TAB                          "\t"
+BACKSL                       "\\"
+QUOTE                        [\"]
+TICK                         [\']
 
-/* backslash */
-BACKSL        "\\"
+/* Uppercase or lowercase English letter. */
+LETTER                       [A-Za-z]
 
-/* letter or underscore */
-LETTER        [A-Za-z_]
+/* Character other than tick or backslash. */
+REGULAR_CHAR                 [^\'\\]
 
-/* letter or underscore or digit */
-ALNUM         [A-Za-z_0-9]
+/* Escape sequence that can appear in a character or string literal. */
+MNEMONIC_ESCAPE_SEQUENCE     {BACKSL}[\\\"\'ntbr ]
+DEC_ESCAPE_SEQUENCE          {BACKSL}[0-9][0-9][0-9]
+HEX_ESCAPE_SEQUENCE          {BACKSL}"x"[0-9A-Fa-f][0-9A-Fa-f]
+OCT_ESCAPE_SEQUENCE          {BACKSL}"o"[0-3][0-7][0-7]
+ESCAPE_SEQUENCE              ({MNEMONIC_ESCAPE_SEQUENCE}|{DEC_ESCAPE_SEQUENCE}|{HEX_ESCAPE_SEQUENCE}|{OCT_ESCAPE_SEQUENCE})
 
-/* decimal digit */
-DIGIT         [0-9]
+/* Character other than double-quote or backslash. */
+REGULAR_STRING_CHAR          [^\"\\]
 
-/* sequence of decimal digits */
-DIGITS        ({DIGIT}+)
+/* Character inside a string literal. */
+UNICODE_ESCAPE_SEQUENCE      {BACKSL}"u{"([0-9A-Fa-f]+)"}"
+NEWLINE_ESCAPE_SEQUENCE      {BACKSL}{NL}({SPACE}|{TAB})*
+STRING_CHARACTER             ({REGULAR_STRING_CHAR}|{ESCAPE_SEQUENCE}|{UNICODE_ESCAPE_SEQUENCE}|{NEWLINE_ESCAPE_SEQUENCE})
 
-/* sign of a number */
-SIGN          ("+"|"-")
+/* One of the listed characters, where both '-' and '^' are treated
+ * literally. */
+CORE_OPERATOR_CHAR           [-$&*+/=>@|^]
 
-/* floating-point suffix letter */
-FLOAT_SUFFIX  [flFL]
+OPERATOR_CHAR                ([~!?%<:.]|{CORE_OPERATOR_CHAR})
 
-/* normal string character: any but quote, newline, or backslash */
-STRCHAR       [^\"\n\\]
+/* Infix symbols begin with an operator character other than those used
+ * for prefix. */
+INFIX_SYMBOL1                ({CORE_OPERATOR_CHAR}|[%<]){OPERATOR_CHAR}*
+INFIX_SYMBOL2                "#"{OPERATOR_CHAR}+
+INFIX_SYMBOL                 ({INFIX_SYMBOL1}|{INFIX_SYMBOL2})
 
-/* double quote */
-QUOTE         [\"]
-
-/* normal character literal character: any but single-quote, newline, or backslash */
-CCCHAR        [^\'\n\\]
-
-/* single quote */
-TICK          [\']
+/* Prefix symbols begin with "!", "?", or "~". */
+PREFIX_SYMBOL1               "!"{OPERATOR_CHAR}*
+PREFIX_SYMBOL2               [?~]{OPERATOR_CHAR}+
+PREFIX_SYMBOL                ({PREFIX_SYMBOL1}|{PREFIX_SYMBOL2})
 
 
 /* ------------- token definition rules --------------- */
 %%
 
-  /* C++14 keywords (2.11p1) other than true, false, and nullptr. */
-"alignas"          |
-"alignof"          |
-"asm"              |
-"auto"             |
-"bool"             |
-"break"            |
-"case"             |
-"catch"            |
-"cdecl"            |  /* Where did I get this?  Maybe from an old Borland compiler? */
-"char"             |
-"char16_t"         |
-"char32_t"         |
-"class"            |
-"const"            |
-"constexpr"        |
-"const_cast"       |
-"continue"         |
-"decltype"         |
-"default"          |
-"delete"           |
-"do"               |
-"double"           |
-"dynamic_cast"     |
-"else"             |
-"enum"             |
-"explicit"         |
-"export"           |
-"extern"           |
-"float"            |
-"for"              |
-"friend"           |
-"goto"             |
-"if"               |
-"inline"           |
-"int"              |
-"long"             |
-"mutable"          |
-"namespace"        |
-"new"              |
-"noexcept"         |
-"operator"         |
-"pascal"           |  /* More Borland stuff I think. */
-"private"          |
-"protected"        |
-"public"           |
-"register"         |
-"reinterpret_cast" |
-"return"           |
-"short"            |
-"signed"           |
-"sizeof"           |
-"static"           |
-"static_assert"    |
-"static_cast"      |
-"struct"           |
-"switch"           |
-"template"         |
-"this"             |
-"thread_local"     |
-"throw"            |
-"try"              |
-"typedef"          |
-"typeid"           |
-"typename"         |
-"union"            |
-"unsigned"         |
-"using"            |
-"virtual"          |
-"void"             |
-"volatile"         |
-"wchar_t"          |
-"while"            return TC_KEYWORD;
-
-  /* GNU keywords */
-"__attribute__"    |
-"__extension__"    |
-"__typeof__"       |
-"typeof"           return TC_KEYWORD;
-
-  /* This is not a keyword but I want to highlight it like one.*/
-"override"         return TC_KEYWORD;
-
-  /* I have defined these as a macros in smbase/sm-macros.h and
-   * smbase/sm-override.h, and want to see them like a keyword. */
-"NOEXCEPT"         |
-"NULLABLE"         |
-"OVERRIDE"         return TC_KEYWORD;
-
-  /* C++14 2.11p2: alternative representations for operators.
-   *
-   * Originally I had these as TC_OPERATOR, but my color scheme uses an
-   * intense purple color that works well for symbols but is too much
-   * for these words. */
+  /* Identifier-like keywords except for "true" and "false". */
 "and"              |
-"and_eq"           |
-"bitand"           |
-"bitor"            |
-"compl"            |
-"not"              |
-"not_eq"           |
+"as"               |
+"assert"           |
+"asr"              |
+"begin"            |
+"class"            |
+"constraint"       |
+"do"               |
+"done"             |
+"downto"           |
+"else"             |
+"end"              |
+"exception"        |
+"external"         |
+"for"              |
+"fun"              |
+"function"         |
+"functor"          |
+"if"               |
+"in"               |
+"include"          |
+"inherit"          |
+"initializer"      |
+"land"             |
+"lazy"             |
+"let"              |
+"lor"              |
+"lsl"              |
+"lsr"              |
+"lxor"             |
+"match"            |
+"method"           |
+"mod"              |
+"module"           |
+"mutable"          |
+"new"              |
+"nonrec"           |
+"object"           |
+"of"               |
+"open"             |
 "or"               |
-"or_eq"            |
-"xor"              |
-"xor_eq"           return TC_KEYWORD;
-
-  /* operators, punctuators */
-"("                |
-")"                |
-"["                |
-"]"                |
-"->"               |
-"::"               |
-"."                |
-"!"                |
-"~"                |
-"+"                |
-"-"                |
-"++"               |
-"--"               |
-"&"                |
-"*"                |
-".*"               |
-"->*"              |
-"/"                |
-"%"                |
-"<<"               |
-">>"               |
-"<"                |
-"<="               |
-">"                |
-">="               |
-"=="               |
-"!="               |
-"^"                |
-"|"                |
-"&&"               |
-"||"               |
-"?"                |
-":"                |
-"="                |
-"*="               |
-"/="               |
-"%="               |
-"+="               |
-"-="               |
-"&="               |
-"^="               |
-"|="               |
-"<<="              |
-">>="              |
-","                |
-"..."              |
-";"                |
-"{"                |
-"}"                return TC_OPERATOR;
-
-  /* my extension */
-"==>"              return TC_OPERATOR;
-
-  /* to avoid backing up; treat as two consecutive "." */
-".."               return TC_OPERATOR;
-
-  /* special values */
-"true"|"false"|"null"|"nullptr"|"TRUE"|"FALSE"|"NULL" {
-  return TC_SPECIAL;
-}
-
-  /* additional words to highlight as keywords */
-"string" {
+"private"          |
+"rec"              |
+"sig"              |
+"struct"           |
+"then"             |
+"to"               |
+"try"              |
+"type"             |
+"val"              |
+"virtual"          |
+"when"             |
+"while"            |
+"with"             {
   return TC_KEYWORD;
 }
 
-  /* identifiers */
-{LETTER}{ALNUM}*   return TC_NORMAL;
+  /* Special values. */
+"true"|"false" {
+  return TC_SPECIAL;
+}
 
+  /* Operator-like keywords. */
+"!="   |
+"#"    |
+"&"    |
+"&&"   |
+"'"    |
+"("    |
+")"    |
+"*"    |
+"+"    |
+","    |
+"-"    |
+"-."   |
+"->"   |
+"."    |
+".."   |
+".~"   |
+":"    |
+"::"   |
+":="   |
+":>"   |
+";"    |
+";;"   |
+"<"    |
+"<-"   |
+"="    |
+">"    |
+">]"   |
+">}"   |
+"?"    |
+"["    |
+"[<"   |
+"[>"   |
+"[|"   |
+"]"    |
+"_"    |
+"`"    |
+"{"    |
+"{<"   |
+"|"    |
+"|]"   |
+"||"   |
+"}"    |
+"~"    {
+  return TC_OPERATOR;
+}
 
-  /* integer literal; dec or hex */
-"0"                   |
-[1-9][0-9]*           |
-[0][xX][0-9A-Fa-f]*   {
+  /* Symbols to be avoided. */
+"parser"      |
+"value"       |
+"$"           |
+"$$"          |
+"$:"          |
+"<:"          |
+"<<"          |
+">>"          |
+"??"          {
+  return TC_ERROR;
+}
+
+  /* Line number directive. */
+^#[0-9]+.*    {
+  return TC_PREPROCESSOR;
+}
+
+  /* Identifier. */
+({LETTER}|"_")({LETTER}|[0-9_]|{TICK})* {
+  return TC_NORMAL;
+}
+
+  /* Integer literal. */
+"-"?[0-9][0-9_]*[lLn]?                           |
+"-"?("0x"|"0X")[0-9A-Fa-f][0-9A-Fa-f_]*[lLn]?    |
+"-"?("0o"|"0O")[0-7][0-7_]*[lLn]?                |
+"-"?("0b"|"0B")[0-1][0-1_]*[lLn]?                {
   return TC_NUMBER;
 }
 
-  /* integer literal; oct */
-[0][0-7]+             {
-  return TC_NUMBER2;
-}
-
-  /* floating literal */
-{DIGITS}"."{DIGITS}?([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?   |
-{DIGITS}"."?([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?	    |
-"."{DIGITS}([eE]{SIGN}?{DIGITS}?)?{FLOAT_SUFFIX}?	    {
+  /* Floating literal. */
+"-"?[0-9][0-9_]*("."[0-9_]*)?([eE][+-][0-9][0-9_]*)?                               |
+"-"?("0x"|"0X")[0-9A-Fa-f][0-9A-Fa-f_]*("."[0-9A-Fa-f_]*)?([pP][+-][0-9][0-9_]*)?  {
   return TC_NUMBER;
 }
 
+  /* Character literal. */
+{TICK}{REGULAR_CHAR}{TICK}    |
+{TICK}{ESCAPE_SEQUENCE}{TICK} {
+  return TC_STRING;
+}
 
-  /* string literal with escaped newline at end: we remember
-     we're in a string literal so the next line will be
-     highlighted accordingly */
-{QUOTE}({STRCHAR}|({BACKSL}.))*{BACKSL}{NL} {
+  /* String literal. */
+  /* TODO: Handle quoted-string-id strings. */
+{QUOTE} {
   YY_SET_START_CONDITION(STRING);
   return TC_STRING;
 }
 
-  /* string literal, including one that does not end with
-     a quote; that way we'll just highlight the string but
-     subsequent lines are normal, on the assumption the user
-     will close the string soon */
-{QUOTE}({STRCHAR}|({BACKSL}.))*({QUOTE}|{NL})? {
-  return TC_STRING;
+<STRING>{
+  {STRING_CHARACTER} {
+    return TC_STRING;
+  }
+
+  {QUOTE} {
+    YY_SET_START_CONDITION(INITIAL);
+    return TC_STRING;
+  }
+
+  /* A special character at EOF. */
+  . {
+    return TC_STRING;
+  }
 }
 
-  /* One-line string literal that ends at EOF. */
-{QUOTE}({STRCHAR}|({BACKSL}.))*{BACKSL} {
-  return TC_STRING;
-}
-
-  /* string continuation */
-<STRING>({STRCHAR}|{BACKSL}.)*{BACKSL}{NL} {
-  return TC_STRING;
-}
-
-  /* string continuation that ends on this line */
-<STRING>({STRCHAR}|({BACKSL}.))*({QUOTE}|{NL})? {
-  YY_SET_START_CONDITION(INITIAL);
-  return TC_STRING;
-}
-
-  /* Continued string literal runs into EOF. */
-<STRING>({STRCHAR}|{BACKSL}.)*{BACKSL}? {
-  return TC_STRING;
-}
-
-  /* Start of comment. */
+  /* Comment. */
 "(*" {
   xassert(m_commentNesting == 0);
   m_commentNesting++;
@@ -388,6 +340,13 @@ TICK          [\']
   . {
     return TC_COMMENT;
   }
+}
+
+  /* TODO: Naming labels. */
+
+  /* Prefix and infix symbols. */
+{INFIX_SYMBOL}|{PREFIX_SYMBOL} {
+  return TC_OPERATOR;
 }
 
   /* whitespace */
