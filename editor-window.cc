@@ -18,6 +18,7 @@
 #include "makefile_hilite.h"           // Makefile_Highlighter
 #include "ocaml_hilite.h"              // OCaml_Highlighter
 #include "pixmaps.h"                   // g_editorPixmaps
+#include "python_hilite.h"             // Python_Highlighter
 #include "qhboxframe.h"                // QHBoxFrame
 #include "sar-panel.h"                 // SearchAndReplacePanel
 #include "status.h"                    // StatusDisplay
@@ -519,8 +520,6 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
     static char const * const hashCommentExts[] = {
       "ev",
       "pl",
-      "py",
-      "pyi",
       "sh",
     };
     if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
@@ -534,6 +533,15 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
     };
     if (stringAmong(ext, ocamlExts, TABLESIZE(ocamlExts))) {
       file->m_highlighter = new OCaml_Highlighter(file->getCore());
+      return;
+    }
+
+    static char const * const pythonExts[] = {
+      "py",
+      "pyi",
+    };
+    if (stringAmong(ext, pythonExts, TABLESIZE(pythonExts))) {
+      file->m_highlighter = new Python_Highlighter(file->getCore());
       return;
     }
   }
@@ -1646,7 +1654,8 @@ void EditorWindow::viewSetHighlighting()
     "Diff" <<
     "HashComment" <<
     "Makefile" <<
-    "OCaml");
+    "OCaml" <<
+    "Python");
 
   // One annoying thing is you can't double-click an item to choose
   // it and simultaneously close the dialog.
@@ -1691,6 +1700,9 @@ void EditorWindow::viewSetHighlighting()
   }
   else if (chosen == "OCaml") {
     doc->m_highlighter = new OCaml_Highlighter(doc->getCore());
+  }
+  else if (chosen == "Python") {
+    doc->m_highlighter = new Python_Highlighter(doc->getCore());
   }
   else {
     // We use no highlighter.

@@ -430,6 +430,20 @@ test-ocaml-hilite: $(TEST_OCAML_HILITE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-ocaml-hilite))
 
 
+# ------------------------- Python highlighting -------------------------
+EDITOR_OBJS += python_hilite.yy.o
+
+TEST_PYTHON_HILITE_OBJS := $(EDITOR_OBJS)
+
+TEST_PYTHON_HILITE_OBJS += test-python-hilite.o
+-include test-python-hilite.d
+
+test-python-hilite: $(TEST_PYTHON_HILITE_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEST_PYTHON_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,test-python-hilite))
+
+
 # ----------------- git version ---------------------
 # Command to query git for the version.  Output is like:
 # "d36671f 2018-07-09 04:10:32 -0700".
