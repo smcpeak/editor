@@ -707,7 +707,7 @@ void EditorWindow::fileOpenFile(HostName const &hostName,
 
   // Load the file contents.
   std::unique_ptr<VFS_ReadFileReply> rfr(
-    readFileSynchronously(hostName, filename));
+    readFileSynchronously(vfsConnections(), this, hostName, filename));
   if (!rfr) {
     // Either the request was canceled or an error has already been
     // reported.
@@ -757,56 +757,9 @@ template <class REPLY_TYPE>
 std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
   HostName const &hostName, std::unique_ptr<VFS_Message> request)
 {
-  // Initially empty pointer, used for error returns.
-  std::unique_ptr<REPLY_TYPE> typedReply;
-
-  // Issue the request.
   VFS_QuerySync querySync(vfsConnections(), hostName, this);
-  std::unique_ptr<VFS_Message> genericReply;
-  string connLostMessage;
-  if (!querySync.issueRequestSynchronously(
-         std::move(request), genericReply, connLostMessage)) {
-    // Attempt to load the file was canceled.
-    return typedReply;
-  }
-
-  if (!connLostMessage.empty()) {
-    this->complain(stringb(
-      "VFS connection lost: " << connLostMessage));
-    return typedReply;
-  }
-
-  if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(genericReply.get())) {
-    // Move the pointer from 'genericReply' to 'typedReply'.
-    genericReply.release();
-    typedReply.reset(r);
-    return typedReply;
-  }
-
-  else {
-    this->complain(stringb(
-      "Server responded with incorrect message type: " <<
-      toString(genericReply->messageType())));
-    return typedReply;
-  }
-}
-
-
-std::unique_ptr<VFS_ReadFileReply> EditorWindow::readFileSynchronously(
-  HostName const &hostName, string const &fname)
-{
-  std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
-  req->m_path = fname;
-  return vfsQuerySynchronously<VFS_ReadFileReply>(hostName, std::move(req));
-}
-
-
-std::unique_ptr<VFS_FileStatusReply> EditorWindow::getFileStatusSynchronously(
-  HostName const &hostName, string const &fname)
-{
-  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
-  req->m_path = fname;
-  return vfsQuerySynchronously<VFS_FileStatusReply>(hostName, std::move(req));
+  return querySync.issueTypedRequestSynchronously<REPLY_TYPE>(
+    std::move(request));
 }
 
 
@@ -814,7 +767,7 @@ bool EditorWindow::checkFileExistenceSynchronously(
   HostName const &hostName, string const &fname)
 {
   std::unique_ptr<VFS_FileStatusReply> reply(
-    getFileStatusSynchronously(hostName, fname));
+    getFileStatusSynchronously(vfsConnections(), this, hostName, fname));
   return reply &&
          reply->m_success &&
          reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -990,7 +943,8 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
     std::unique_ptr<VFS_FileStatusReply> reply(
-      getFileStatusSynchronously(doc->hostName(), doc->filename()));
+      getFileStatusSynchronously(vfsConnections(), this,
+                                 doc->hostName(), doc->filename()));
     if (!reply) {
       return false;    // Canceled.
     }
@@ -1028,7 +982,8 @@ bool EditorWindow::reloadCurrentDocument()
 
   if (doc->hasFilename()) {
     std::unique_ptr<VFS_ReadFileReply> rfr(
-      this->readFileSynchronously(doc->hostName(), doc->filename()));
+      readFileSynchronously(vfsConnections(), this,
+                            doc->hostName(), doc->filename()));
     if (!rfr) {
       return false;
     }

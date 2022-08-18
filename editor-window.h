@@ -104,20 +104,6 @@ private:     // funcs
   std::unique_ptr<REPLY_TYPE> vfsQuerySynchronously(
     HostName const &hostName, std::unique_ptr<VFS_Message> request);
 
-  // Read the contents of 'fname', waiting for the reply and blocking
-  // user input during the wait.
-  //
-  // If this returns an empty pointer, then either the user canceled the
-  // request, or an error was already reported; nothing further needs to
-  // be done.  But if present, the reply object might itself have
-  // 'm_success==false', which needs to be handled by the caller.
-  std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
-    HostName const &hostName, string const &fname);
-
-  // Get timestamp, etc., for 'fname'.
-  std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
-    HostName const &hostName, string const &fname);
-
   // Return true if 'fname' exists, blocking during the check.
   bool checkFileExistenceSynchronously(
     HostName const &hostName, string const &fname);

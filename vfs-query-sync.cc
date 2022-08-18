@@ -13,6 +13,7 @@
 // qt
 #include <QCursor>
 #include <QGuiApplication>
+#include <QMessageBox>
 #include <QProgressDialog>
 
 // libc++
@@ -144,6 +145,12 @@ bool VFS_QuerySync::issueRequestSynchronously(
 }
 
 
+void VFS_QuerySync::complain(string message)
+{
+  QMessageBox::information(m_parentWidget, "Error", message.c_str());
+}
+
+
 void VFS_QuerySync::on_replyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {
@@ -174,6 +181,36 @@ void VFS_QuerySync::on_timeout() NOEXCEPT
 void VFS_QuerySync::on_canceled() NOEXCEPT
 {
   m_eventLoop.exit();
+}
+
+
+std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
+  VFS_Connections *vfsConnections,
+  QWidget *parentWidget,
+  HostName const &hostName,
+  string const &fname)
+{
+  std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
+  req->m_path = fname;
+
+  VFS_QuerySync querySync(vfsConnections, hostName, parentWidget);
+  return querySync.issueTypedRequestSynchronously<VFS_ReadFileReply>(
+    std::move(req));
+}
+
+
+std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
+  VFS_Connections *vfsConnections,
+  QWidget *parentWidget,
+  HostName const &hostName,
+  string const &fname)
+{
+  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  req->m_path = fname;
+
+  VFS_QuerySync querySync(vfsConnections, hostName, parentWidget);
+  return querySync.issueTypedRequestSynchronously<VFS_FileStatusReply>(
+    std::move(req));
 }
 
 

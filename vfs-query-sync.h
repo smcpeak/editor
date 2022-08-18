@@ -50,7 +50,7 @@ private:     // data
   // Timer object to wake up after a certain delay.
   QTimer m_timer;
 
-public:      // methods
+public:      // instance methods
   // Create an object to issue queries to 'hostName' via
   // 'vfsConnections', and if needed, pop up a modal window on top of
   // 'parentWidget'.
@@ -67,6 +67,17 @@ public:      // methods
     std::unique_ptr<VFS_Message> /*OUT*/ &reply,
     string /*OUT*/ &connLostMessage);
 
+  // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
+  //
+  // If there is an error, pop up an error box and return an empty
+  // pointer.
+  template <class REPLY_TYPE>
+  std::unique_ptr<REPLY_TYPE> issueTypedRequestSynchronously(
+    std::unique_ptr<VFS_Message> request);
+
+  // Pop up a modal error dialog, returning when it is dismissed.
+  void complain(string message);
+
 protected Q_SLOTS:
   // Handlers for VFS_Connections.
   void on_replyAvailable(RequestID requestID) NOEXCEPT;
@@ -78,6 +89,66 @@ protected Q_SLOTS:
   // Handlers for QProgressDialog.
   void on_canceled() NOEXCEPT;
 };
+
+
+template <class REPLY_TYPE>
+std::unique_ptr<REPLY_TYPE> VFS_QuerySync::issueTypedRequestSynchronously(
+  std::unique_ptr<VFS_Message> request)
+{
+  // Initially empty pointer, used for error returns.
+  std::unique_ptr<REPLY_TYPE> typedReply;
+
+  // Issue the request.
+  std::unique_ptr<VFS_Message> genericReply;
+  string connLostMessage;
+  if (!issueRequestSynchronously(
+         std::move(request), genericReply, connLostMessage)) {
+    // Request was canceled.
+    return typedReply;
+  }
+
+  if (!connLostMessage.empty()) {
+    this->complain(stringb(
+      "VFS connection lost: " << connLostMessage));
+    return typedReply;
+  }
+
+  if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(genericReply.get())) {
+    // Move the pointer from 'genericReply' to 'typedReply'.
+    genericReply.release();
+    typedReply.reset(r);
+    return typedReply;
+  }
+
+  else {
+    this->complain(stringb(
+      "Server responded with incorrect message type: " <<
+      toString(genericReply->messageType())));
+    return typedReply;
+  }
+}
+
+
+// Read the contents of 'fname', waiting for the reply and blocking user
+// input during the wait.
+//
+// If this returns an empty pointer, then either the user canceled the
+// request, or an error was already reported; nothing further needs to
+// be done.  But if present, the reply object might itself have
+// 'm_success==false', which needs to be handled by the caller.
+std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
+  VFS_Connections *vfsConnections,
+  QWidget *parentWidget,
+  HostName const &hostName,
+  string const &fname);
+
+
+// Get timestamp, etc., for 'fname'.
+std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
+  VFS_Connections *vfsConnections,
+  QWidget *parentWidget,
+  HostName const &hostName,
+  string const &fname);
 
 
 #endif // EDITOR_VFS_QUERY_SYNC_H
