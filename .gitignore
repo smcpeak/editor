@@ -33,6 +33,7 @@ mut
 mutant-compile.sh
 mutant.cc
 out
+personal-make-cmd.sh
 qtbdffont
 smbase
 style
