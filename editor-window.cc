@@ -1045,7 +1045,10 @@ bool EditorWindow::reloadCurrentDocument()
       doc->replaceFileAndStats(rfr->m_contents,
                                rfr->m_fileModificationTime,
                                rfr->m_readOnly);
-      this->editorViewChanged();
+
+      // Redraw the widget.  This includes firing 'editorViewChanged',
+      // and also causes the search+replace status to update.
+      this->m_editorWidget->redraw();
     }
     else {
       this->complain(stringb(
