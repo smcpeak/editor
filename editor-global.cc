@@ -258,6 +258,19 @@ EditorGlobal::~EditorGlobal()
 }
 
 
+static char const *optionsDescription =
+  "options:\n"
+  "  -help           Print this message and exit.\n"
+  "  -ev=file.ev     Replay events in file.ev for testing.\n"
+  "  -record         Record events to events.out.\n"
+  "  -conn=hostname  Start with an active remote connection to hostname.\n"
+  ;
+
+
+// This exception is thrown to cause the app to exit early.
+DEFINE_XBASE_SUBCLASS(QuitAfterPrintingHelp);
+
+
 void EditorGlobal::processCommandLineOptions(
   EditorWindow *ed, int argc, char **argv)
 {
@@ -269,7 +282,13 @@ void EditorGlobal::processCommandLineOptions(
     }
 
     else if (arg[0]=='-') {
-      if (prefixEquals(arg, "-ev=")) {
+      if (arg == "-help") {
+        cout << "usage: " << argv[0] << " [options] [files...]\n\n"
+             << optionsDescription;
+        THROW(QuitAfterPrintingHelp(""));
+      }
+
+      else if (prefixEquals(arg, "-ev=")) {
         // Replay a sequence of events as part of a test.
         m_eventFileTest = arg.substring(4, arg.length()-4);
       }
@@ -286,7 +305,8 @@ void EditorGlobal::processCommandLineOptions(
       }
 
       else {
-        xformat(stringb("Unknown option: " << arg));
+        xformat(stringb("Unknown option: " << quoted(arg) <<
+                        ".  Try -help."));
       }
     }
 
@@ -899,9 +919,12 @@ int main(int argc, char **argv)
         ret = app.exec();
       }
     }
+    catch (QuitAfterPrintingHelp &) {
+      return 0;
+    }
     catch (xBase &x) {
       cerr << x.why() << endl;
-      return 4;
+      return 2;
     }
 
     maybePrintObjectCounts("before EditorGlobal destruction");
