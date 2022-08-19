@@ -1,0 +1,38 @@
+# reload-after-modification.ev
+# Test reloading a file after it is modified on disk.
+
+# Check which file is open.
+CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "gets-modified.txt"
+
+# The cursor should be at 1:1.
+CheckLabel "window1.m_statusArea.m_cursor" "1:1"
+
+# The "[DISKMOD]" label should be absent.
+CheckFocusWindowTitleMatches "gets-modified.txt - "
+CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt$"
+
+# Touch the file.
+TouchFile "test/gets-modified.txt"
+
+# Check for on-disk modification.
+TriggerAction "window1.m_menuBar.fileMenu.fileCheckForChanges"
+CheckLabel "window1.m_statusArea.m_cursor" "1:1"
+
+# Verify that "[DISKMOD]" is now present.
+CheckFocusWindowTitleMatches "gets-modified.txt \\[DISKMOD\\] - "
+CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt \\[DISKMOD\\]$"
+
+# Reload the file.
+Shortcut "window1.m_menuBar.fileMenu.fileReload" "F5"
+
+# "[DISKMOD]" should now be gone again.
+CheckFocusWindowTitleMatches "gets-modified.txt - "
+CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt$"
+
+# The fact that the cursor remains at 1:1 after reloading is an
+# important indicator that the normal change notifications were
+# suppressed, since they would cause the cursor to be moved to the end
+# of the file.
+CheckLabel "window1.m_statusArea.m_cursor" "1:1"
+
+# EOF

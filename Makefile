@@ -592,5 +592,6 @@ check:
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
 	./editor -ev=test/fn-input-repeat-tab.ev
+	./editor -ev=test/reload-after-modification.ev test/gets-modified.txt
 
 # EOF

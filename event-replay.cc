@@ -14,6 +14,7 @@
 
 // smbase
 #include "nonport.h"                   // getMilliseconds
+#include "sm-file-util.h"              // SMFileUtil
 #include "strutil.h"                   // parseQuotedString, quoted
 #include "syserr.h"                    // xsyserror
 #include "trace.h"                     // TRACE
@@ -35,6 +36,8 @@
 #include <QWidget>
 
 // libc++
+#include <fstream>                     // std::ofstream
+#include <regex>                       // std::regex_search
 #include <string>                      // std::string, getline
 #include <typeinfo>                    // typeid
 
@@ -259,6 +262,14 @@ QWidget *EventReplay::getFocusWidget()
 }
 
 
+// Return true if a substring of 'str' matches 're'.
+static bool regexSearch(string const &str, string const &re)
+{
+  std::regex regex(re.c_str(), std::regex::ECMAScript);
+  return std::regex_search(str.c_str(), regex);
+}
+
+
 // Get the string value of a quoted argument to a replay function.
 static string getCapturedArg(QRegularExpressionMatch &match, int n)
 {
@@ -305,6 +316,13 @@ static string getCapturedArg(QRegularExpressionMatch &match, int n)
     xstringb(context << ": should have been " <<      \
       quoted(expect) << " but was " <<                \
       quoted(actual) << ".");                         \
+  }
+
+#define EXPECT_RE_MATCH(context)                       \
+  if (!regexSearch(actual, expectRE)) {                \
+    xstringb(context << ": the actual string " <<      \
+      quoted(actual) << " did not match the regex " << \
+      quoted(expectRE) << ".");                        \
   }
 
 
@@ -423,6 +441,14 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     EXPECT_EQ("CheckLabel " << quoted(path));
   }
 
+  else if (funcName == "CheckLabelMatches") {
+    BIND_ARGS2(path, expectRE);
+
+    QLabel *label = getObjectFromPath<QLabel>(path);
+    string actual = toString(label->text());
+    EXPECT_RE_MATCH("CheckLabel " << quoted(path));
+  }
+
   else if (funcName == "CheckComboBoxText") {
     BIND_ARGS2(path, expect);
 
@@ -451,6 +477,13 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_EQ("CheckFocusWindowTitle");
+  }
+
+  else if (funcName == "CheckFocusWindowTitleMatches") {
+    BIND_ARGS1(expectRE);
+
+    string actual = toString(getFocusWidget()->window()->windowTitle());
+    EXPECT_RE_MATCH("CheckFocusWindowTitle");
   }
 
   else if (funcName == "CheckFocusWindow") {
@@ -500,6 +533,13 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     QWidget *widget = getObjectFromPath<QWidget>(path);
     string actual = toString(widget->size());
     EXPECT_EQ("CheckSize " << quoted(path));
+  }
+
+  else if (funcName == "TouchFile") {
+    BIND_ARGS1(fname);
+
+    SMFileUtil sfu;
+    sfu.touchFile(fname);
   }
 
   else {
