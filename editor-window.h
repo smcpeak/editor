@@ -181,6 +181,7 @@ public Q_SLOTS:
   void fileClose();
   void fileToggleReadOnly() NOEXCEPT;
   void fileReload() NOEXCEPT;
+  void fileCheckForChanges() NOEXCEPT;
   void fileLaunchCommand();
   void fileRunMake();
   void fileKillProcess();

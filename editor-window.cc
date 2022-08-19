@@ -270,6 +270,7 @@ void EditorWindow::buildMenu()
     CHECKABLE_ACTION(m_toggleReadOnlyAction,
                   "Read only", fileToggleReadOnly, false /*initChecked*/);
     MENU_ITEM_KEY("&Reload", fileReload, Qt::Key_F5);
+    MENU_ITEM    ("Check for on-disk changes", fileCheckForChanges);
 
     menu->addSeparator();
 
@@ -994,6 +995,19 @@ void EditorWindow::fileReload() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   reloadCurrentDocument();
+
+  GENERIC_CATCH_END
+}
+
+
+// Issue a request to get the latest on-disk timestamp in order to see
+// if it has been modified there.  This command primarily exists in
+// order to facilitate testing of the file reload mechanism.
+void EditorWindow::fileCheckForChanges() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  m_editorWidget->requestFileStatus();
 
   GENERIC_CATCH_END
 }
