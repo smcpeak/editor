@@ -593,5 +593,6 @@ check:
 	  rm tmp.h
 	./editor -ev=test/fn-input-repeat-tab.ev
 	./editor -ev=test/reload-after-modification.ev test/gets-modified.txt
+	./editor -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
 
 # EOF

@@ -32,6 +32,8 @@
 #include <QLabel>
 #include <QRegularExpression>
 #include <QStringList>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QTimer>
 #include <QWidget>
 
@@ -277,6 +279,12 @@ static string getCapturedArg(QRegularExpressionMatch &match, int n)
 }
 
 
+static int intFromString(string const &s)
+{
+  return atoi(s.c_str());
+}
+
+
 // Complain unless 'numArgs==required'.
 #define CHECK_NUM_ARGS(required)                           \
   if (numArgs != required) {                               \
@@ -407,14 +415,24 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "Sleep") {
     BIND_ARGS1(duration);
 
-    sleepForMS(atoi(duration.c_str()));
+    sleepForMS(intFromString(duration));
   }
 
   else if (funcName == "ClickButton") {
     BIND_ARGS1(path);
 
     QAbstractButton *button = getObjectFromPath<QAbstractButton>(path);
-    button->click();
+
+    // This is like 'button->click()', except we enqueue the action and
+    // continue immediately.  If the effect of clicking the button is to
+    // pop up a modal dialog, then 'click()' would wait for it to be
+    // dismissed.
+    QObject::connect(this, &EventReplay::signal_clickButton,
+                     button, &QAbstractButton::click,
+                     Qt::QueuedConnection);
+    Q_EMIT signal_clickButton();
+    QObject::disconnect(this, &EventReplay::signal_clickButton,
+                        button, &QAbstractButton::click);
   }
 
   // -------------------- checks --------------------
@@ -422,7 +440,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS4(duration, receiver, state, expect);
 
     this->waitUntilCheckQuery(
-      atoi(duration.c_str()), receiver, state, expect);
+      intFromString(duration), receiver, state, expect);
   }
 
   else if (funcName == "CheckQuery") {
@@ -446,7 +464,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
-    EXPECT_RE_MATCH("CheckLabel " << quoted(path));
+    EXPECT_RE_MATCH("CheckLabelMatches " << quoted(path));
   }
 
   else if (funcName == "CheckComboBoxText") {
@@ -455,6 +473,19 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     QComboBox *cbox = getObjectFromPath<QComboBox>(path);
     string actual = toString(cbox->currentText());
     EXPECT_EQ("CheckComboBoxText " << quoted(path));
+  }
+
+  else if (funcName == "CheckTableWidgetCellMatches") {
+    BIND_ARGS4(objPath, row, col, expectRE);
+
+    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
+    int r = intFromString(row);
+    int c = intFromString(col);
+    QTableWidgetItem *item = table->item(r, c);
+    xassert(item);
+    string actual = toString(item->text());
+    EXPECT_RE_MATCH("CheckTableWidgetCellMatches " << quoted(objPath) <<
+                    " " << row << " " << col);
   }
 
   else if (funcName == "CheckClipboard") {
@@ -483,7 +514,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS1(expectRE);
 
     string actual = toString(getFocusWidget()->window()->windowTitle());
-    EXPECT_RE_MATCH("CheckFocusWindowTitle");
+    EXPECT_RE_MATCH("CheckFocusWindowTitleMatches");
   }
 
   else if (funcName == "CheckFocusWindow") {

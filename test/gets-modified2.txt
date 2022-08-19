@@ -1,0 +1,5 @@
+Another file that gets
+modified on disk
+during a test in
+order to check the
+handling of that.

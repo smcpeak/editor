@@ -157,6 +157,11 @@ public:      // funcs
   // QObject methods.
   virtual bool event(QEvent *ev) OVERRIDE;
 
+Q_SIGNALS:
+  // A signal temporarily connected to a button slot in order to enqueue
+  // a button press.
+  void signal_clickButton();
+
 private Q_SLOTS:
   // Called when the event dispatcher is about to block.
   void slot_aboutToBlock() NOEXCEPT;
