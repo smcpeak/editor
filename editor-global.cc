@@ -10,6 +10,7 @@
 #include "event-replay.h"              // EventReplay
 #include "process-watcher.h"           // ProcessWatcher
 #include "textinput.h"                 // TextInputDialog
+#include "vfs-query-sync.h"            // readFileSynchronously
 
 // smqtutil
 #include "qtutil.h"                    // toQString
@@ -346,6 +347,34 @@ void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 {
   m_documentList.removeDocument(file);
   delete file;
+}
+
+
+bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
+                                      NamedTextDocument *doc)
+{
+  if (doc->hasFilename()) {
+    std::unique_ptr<VFS_ReadFileReply> rfr(
+      readFileSynchronously(&m_vfsConnections, parentWidget,
+                            doc->hostName(), doc->filename()));
+    if (!rfr) {
+      return false;
+    }
+
+    if (rfr->m_success) {
+      doc->replaceFileAndStats(rfr->m_contents,
+                               rfr->m_fileModificationTime,
+                               rfr->m_readOnly);
+    }
+    else {
+      messageBox(parentWidget, "Error", qstringb(
+        rfr->m_failureReasonString <<
+        " (code " << rfr->m_failureReasonCode << ")"));
+      return false;
+    }
+  }
+
+  return true;
 }
 
 

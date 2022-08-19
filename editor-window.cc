@@ -978,42 +978,11 @@ bool EditorWindow::reloadCurrentDocument()
 {
   TRACE("EditorWindow", "reloadCurrentDocument");
 
-  NamedTextDocument *doc = this->currentDocument();
+  // Do not move the widget view area and cursor in response to it
+  // seeing the new text being added.
+  RESTORER(bool, m_editorWidget->m_ignoreTextDocumentNotifications, true);
 
-  if (doc->hasFilename()) {
-    std::unique_ptr<VFS_ReadFileReply> rfr(
-      readFileSynchronously(vfsConnections(), this,
-                            doc->hostName(), doc->filename()));
-    if (!rfr) {
-      return false;
-    }
-
-    if (rfr->m_success) {
-      if (!stillCurrentDocument(doc)) {
-        return false;
-      }
-
-      // Do not move the widget view area and cursor in response to it
-      // seeing the new text being added.
-      RESTORER(bool, m_editorWidget->m_ignoreTextDocumentNotifications, true);
-
-      doc->replaceFileAndStats(rfr->m_contents,
-                               rfr->m_fileModificationTime,
-                               rfr->m_readOnly);
-
-      // Redraw the widget.  This includes firing 'editorViewChanged',
-      // and also causes the search+replace status to update.
-      this->m_editorWidget->redraw();
-    }
-    else {
-      this->complain(stringb(
-        rfr->m_failureReasonString <<
-        " (code " << rfr->m_failureReasonCode << ")"));
-      return false;
-    }
-  }
-
-  return true;
+  return m_editorGlobal->reloadDocumentFile(this, currentDocument());
 }
 
 
