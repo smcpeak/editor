@@ -4,6 +4,7 @@
 #include "vfs-query-sync.h"            // this module
 
 // smqtutil
+#include "qtguiutil.h"                 // messageBox
 #include "qtutil.h"                    // qstringb
 
 // smbase
@@ -13,7 +14,6 @@
 // qt
 #include <QCursor>
 #include <QGuiApplication>
-#include <QMessageBox>
 #include <QProgressDialog>
 
 // libc++
@@ -147,7 +147,7 @@ bool VFS_QuerySync::issueRequestSynchronously(
 
 void VFS_QuerySync::complain(string message)
 {
-  QMessageBox::information(m_parentWidget, "Error", message.c_str());
+  messageBox(m_parentWidget, "Error", message.c_str());
 }
 
 
