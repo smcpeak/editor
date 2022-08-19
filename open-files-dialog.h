@@ -5,6 +5,7 @@
 #define OPEN_FILES_DIALOG_H
 
 // editor
+#include "editor-global-fwd.h"         // EditorGlobal
 #include "event-replay.h"              // EventReplayQueryable
 #include "modal-dialog.h"              // ModalDialog
 #include "my-table-widget.h"           // MyTableWidget
@@ -46,8 +47,9 @@ private:     // class data
     s_columnInitInfo[NUM_TABLE_COLUMNS];
 
 private:     // instance data
-  // The list we are showing/editing.
-  RCSerf<NamedTextDocumentList> m_docList;
+  // Global editor state, which grants access to the list we are
+  // showing/editing.
+  EditorGlobal *m_editorGlobal;
 
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
@@ -55,14 +57,18 @@ private:     // instance data
 
   // Buttons.
   QPushButton *m_closeSelButton;
+  QPushButton *m_reloadDiskmodButton;
   QPushButton *m_helpButton;
 
 private:     // funcs
   // Rebuild the table by copying from 'm_docList'.
   void repopulateTable();
 
+  // Get the document list to edit.
+  NamedTextDocumentList *docList() const;
+
 public:      // funcs
-  OpenFilesDialog(NamedTextDocumentList *docList,
+  OpenFilesDialog(EditorGlobal *editorGlobal,
                   QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~OpenFilesDialog();
 
@@ -77,6 +83,7 @@ public:      // funcs
 public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) NOEXCEPT;
   void on_closeSelected() NOEXCEPT;
+  void on_reloadDiskmod() NOEXCEPT;
   void on_help() NOEXCEPT;
 };
 

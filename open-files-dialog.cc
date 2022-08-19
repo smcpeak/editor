@@ -3,8 +3,11 @@
 
 #include "open-files-dialog.h"         // this module
 
+// editor
+#include "editor-global.h"             // EditorGlobal
+
 // smqtutil
-#include "qtguiutil.h"                 // keysString(QKeyEvent)
+#include "qtguiutil.h"                 // keysString(QKeyEvent), messageBox
 #include "qtutil.h"                    // toQString, SET_QOBJECT_NAME
 
 // smbase
@@ -55,10 +58,10 @@ MyTableWidget::ColumnInitInfo const
        tc = (TableColumn)(tc+1))
 
 
-OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
+OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
                                  QWidget *parent, Qt::WindowFlags f) :
   ModalDialog(parent, f),
-  m_docList(docList),
+  m_editorGlobal(editorGlobal),
   m_tableWidget(NULL),
   m_closeSelButton(NULL),
   m_helpButton(NULL)
@@ -92,6 +95,12 @@ OpenFilesDialog::OpenFilesDialog(NamedTextDocumentList *docList,
     QObject::connect(m_closeSelButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_closeSelected);
 
+    m_reloadDiskmodButton = new QPushButton("Reload all [&DISKMOD]");
+    hbox->addWidget(m_reloadDiskmodButton);
+    SET_QOBJECT_NAME(m_reloadDiskmodButton);
+    QObject::connect(m_reloadDiskmodButton, &QPushButton::clicked,
+                     this, &OpenFilesDialog::on_reloadDiskmod);
+
     m_helpButton = new QPushButton("&Help");
     hbox->addWidget(m_helpButton);
     SET_QOBJECT_NAME(m_helpButton);
@@ -120,11 +129,11 @@ OpenFilesDialog::~OpenFilesDialog()
 void OpenFilesDialog::repopulateTable()
 {
   m_tableWidget->clearContents();
-  m_tableWidget->setRowCount(m_docList->numDocuments());
+  m_tableWidget->setRowCount(docList()->numDocuments());
 
   // Populate the rows.
-  for (int r=0; r < m_docList->numDocuments(); r++) {
-    NamedTextDocument const *doc = m_docList->getDocumentAtC(r);
+  for (int r=0; r < docList()->numDocuments(); r++) {
+    NamedTextDocument const *doc = docList()->getDocumentAtC(r);
 
     // Remove the row label.  (The default, a NULL item, renders as a
     // row number, which isn't useful here.)
@@ -158,6 +167,12 @@ void OpenFilesDialog::repopulateTable()
 }
 
 
+NamedTextDocumentList *OpenFilesDialog::docList() const
+{
+  return &(m_editorGlobal->m_documentList);
+}
+
+
 NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
 {
   TRACE("OpenFilesDialog", "runDialog started");
@@ -169,8 +184,8 @@ NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
     QModelIndex idx = m_tableWidget->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();
-      if (0 <= r && r < m_docList->numDocuments()) {
-        NamedTextDocument *doc = m_docList->getDocumentAt(r);
+      if (0 <= r && r < docList()->numDocuments()) {
+        NamedTextDocument *doc = docList()->getDocumentAt(r);
         TRACE("OpenFilesDialog", "runDialog: returning: " << doc->documentName());
         return doc;
       }
@@ -214,8 +229,8 @@ string OpenFilesDialog::eventReplayQuery(string const &state)
     QModelIndex idx = m_tableWidget->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();
-      if (0 <= r && r < m_docList->numDocuments()) {
-        NamedTextDocument *doc = m_docList->getDocumentAt(r);
+      if (0 <= r && r < docList()->numDocuments()) {
+        NamedTextDocument *doc = docList()->getDocumentAt(r);
         return filenamePathBase(doc);
       }
     }
@@ -225,7 +240,7 @@ string OpenFilesDialog::eventReplayQuery(string const &state)
   else if (state == "allDocumentsFilenamePathBase") {
     stringBuilder sb;
     for (int r=0; r < m_tableWidget->rowCount(); r++) {
-      NamedTextDocument *doc = m_docList->getDocumentAt(r);
+      NamedTextDocument *doc = docList()->getDocumentAt(r);
       sb << filenamePathBase(doc) << '\n';
     }
     return sb.str();
@@ -282,8 +297,8 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
 
       if (index.isValid() && !index.parent().isValid()) {
         int r = index.row();
-        if (0 <= r && r < m_docList->numDocuments()) {
-          NamedTextDocument *doc = m_docList->getDocumentAt(r);
+        if (0 <= r && r < docList()->numDocuments()) {
+          NamedTextDocument *doc = docList()->getDocumentAt(r);
           TRACE("OpenFilesDialog", "  toClose: " << doc->documentName());
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
@@ -299,7 +314,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
           // ends up in the middle somehow?  But I do that so rarely it
           // doesn't matter much.
           if (cursorRow > 0 &&
-              (r < cursorRow || cursorRow == m_docList->numDocuments()-1)) {
+              (r < cursorRow || cursorRow == docList()->numDocuments()-1)) {
             cursorRow--;
           }
         }
@@ -324,7 +339,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
   for (int i=0; i < docsToClose.length(); i++) {
     NamedTextDocument *doc = docsToClose[i];
     TRACE("OpenFilesDialog", "  removeFile: " << doc->documentName());
-    m_docList->removeDocument(doc);
+    docList()->removeDocument(doc);
     delete doc;
   }
 
@@ -336,6 +351,39 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
   if (cursorRow >= 0) {
     m_tableWidget->setCurrentCell(cursorRow, 0);
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void OpenFilesDialog::on_reloadDiskmod() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  int successCount = 0;
+  int failureCount = 0;
+
+  for (int i = 0; i < docList()->numDocuments(); i++) {
+    NamedTextDocument *doc = docList()->getDocumentAt(i);
+    if (doc->m_modifiedOnDisk) {
+      if (m_editorGlobal->reloadDocumentFile(this, doc)) {
+        successCount++;
+      }
+      else {
+        failureCount++;
+      }
+    }
+  }
+
+  // Update window titles and status bars to remove "[DISKMOD]".
+  m_editorGlobal->broadcastEditorViewChanged();
+
+  // Update table entries.
+  repopulateTable();
+
+  messageBox(this, "Done", qstringb(
+    "Successfully refreshed " << successCount <<
+    " files.  Failed to refresh " << failureCount << "."));
 
   GENERIC_CATCH_END
 }

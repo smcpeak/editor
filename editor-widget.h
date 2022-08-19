@@ -60,6 +60,11 @@ public:     // static data
   // Instances created minus instances destroyed.
   static int s_objectCount;
 
+  // Have all editor widgets ignore change notifications.  This is used
+  // when refreshing file contents to avoid disturbing the cursor
+  // position.
+  static bool s_ignoreTextDocumentNotificationsGlobally;
+
 private:     // types
   // For this EditorWidget, and for a given NamedTextDocument, this is
   // the editing state for that document.  This state is *not* shared with
@@ -262,6 +267,9 @@ private:     // funcs
   // The user is trying to make a change to a read-only document.
   // Prompt to override the flag.
   bool promptOverrideReadOnly();
+
+  // True if we are currently ignoring document change notifications.
+  bool ignoringChangeNotifications() const;
 
 protected:   // funcs
   // QWidget funcs

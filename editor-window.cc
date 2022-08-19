@@ -978,11 +978,14 @@ bool EditorWindow::reloadCurrentDocument()
 {
   TRACE("EditorWindow", "reloadCurrentDocument");
 
-  // Do not move the widget view area and cursor in response to it
-  // seeing the new text being added.
-  RESTORER(bool, m_editorWidget->m_ignoreTextDocumentNotifications, true);
+  bool ret = m_editorGlobal->reloadDocumentFile(this, currentDocument());
 
-  return m_editorGlobal->reloadDocumentFile(this, currentDocument());
+  if (ret) {
+    // Update the status bar and title to remove "[DISKMOD]".
+    editorViewChanged();
+  }
+
+  return ret;
 }
 
 
@@ -991,7 +994,6 @@ void EditorWindow::fileReload() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   reloadCurrentDocument();
-  update();
 
   GENERIC_CATCH_END
 }

@@ -353,6 +353,11 @@ void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
+  // Have widges ignore the notifications arising from the refresh so
+  // their cursor position is not affected.
+  RESTORER(bool, EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+    true);
+
   if (doc->hasFilename()) {
     std::unique_ptr<VFS_ReadFileReply> rfr(
       readFileSynchronously(&m_vfsConnections, parentWidget,
@@ -381,7 +386,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
 NamedTextDocument *EditorGlobal::runOpenFilesDialog(QWidget *callerWindow)
 {
   if (!m_openFilesDialog.get()) {
-    m_openFilesDialog = new OpenFilesDialog(&m_documentList);
+    m_openFilesDialog = new OpenFilesDialog(this);
   }
   return m_openFilesDialog->runDialog(callerWindow);
 }
@@ -567,6 +572,14 @@ void EditorGlobal::namedTextDocumentRemoved(
     // ProcessWatcher is servicing the output and error channels,
     // discarding any data that arrives, so we don't expend memory
     // without bound.
+  }
+}
+
+
+void EditorGlobal::broadcastEditorViewChanged()
+{
+  FOREACH_OBJLIST_NC(EditorWindow, m_windows, w) {
+    w.data()->editorViewChanged();
   }
 }
 

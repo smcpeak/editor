@@ -4,6 +4,8 @@
 #ifndef EDITOR_EDITOR_GLOBAL_H
 #define EDITOR_EDITOR_GLOBAL_H
 
+#include "editor-global-fwd.h"         // fwds for this module
+
 // editor
 #include "command-runner-fwd.h"        // CommandRunner
 #include "editor-window.h"             // EditorWindow
@@ -175,6 +177,9 @@ public:       // funcs
   virtual void namedTextDocumentRemoved(
     NamedTextDocumentList *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
+
+  // Tell all windows that their view has changed.
+  void broadcastEditorViewChanged();
 
   // Show the connections dialog.
   void showConnectionsDialog();

@@ -74,6 +74,8 @@ int const SAR_SCROLL_GAP = 10;
 // ---------------------- EditorWidget --------------------------------
 int EditorWidget::s_objectCount = 0;
 
+bool EditorWidget::s_ignoreTextDocumentNotificationsGlobally = false;
+
 CHECK_OBJECT_COUNT(EditorWidget);
 
 
@@ -2331,7 +2333,7 @@ void EditorWidget::startListening()
 void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  if (m_ignoreTextDocumentNotifications) {
+  if (ignoringChangeNotifications()) {
     TRACE("observe", "IGNORING: observeInsertLine line=" << line);
     return;
   }
@@ -2375,7 +2377,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
 void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  if (m_ignoreTextDocumentNotifications) {
+  if (ignoringChangeNotifications()) {
     TRACE("observe", "IGNORING: observeDeleteLine line=" << line);
     return;
   }
@@ -2402,7 +2404,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEX
 void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  if (m_ignoreTextDocumentNotifications) {
+  if (ignoringChangeNotifications()) {
     return;
   }
   redraw();
@@ -2412,7 +2414,7 @@ void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char 
 void EditorWidget::observeDeleteText(TextDocumentCore const &, TextMCoord, int) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  if (m_ignoreTextDocumentNotifications) {
+  if (ignoringChangeNotifications()) {
     return;
   }
   redraw();
@@ -2422,7 +2424,7 @@ void EditorWidget::observeDeleteText(TextDocumentCore const &, TextMCoord, int) 
 void EditorWidget::observeTotalChange(TextDocumentCore const &buf) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  if (m_ignoreTextDocumentNotifications) {
+  if (ignoringChangeNotifications()) {
     return;
   }
   redraw();
@@ -2432,7 +2434,7 @@ void EditorWidget::observeTotalChange(TextDocumentCore const &buf) NOEXCEPT
 void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  if (m_ignoreTextDocumentNotifications) {
+  if (ignoringChangeNotifications()) {
     return;
   }
   redraw();
@@ -2520,6 +2522,13 @@ bool EditorWidget::promptOverrideReadOnly()
   else {
     return false;
   }
+}
+
+
+bool EditorWidget::ignoringChangeNotifications() const
+{
+  return s_ignoreTextDocumentNotificationsGlobally ||
+         m_ignoreTextDocumentNotifications;
 }
 
 
