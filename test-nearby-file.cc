@@ -70,11 +70,15 @@ static void test1()
                          "/home/cd");
 
   // Test inclusion.
+  //
+  // 2022-08-19: I do not recall what this was testing!  I think it has
+  // to do with ignoring instances where the cursor is on consecutive
+  // punctuation characters.
   expectIGNF(sfu, prefixes, "ab cAZaz90_d ef", 7,
                          "/home/cAZaz90_d");
-  expectIGNF(sfu, prefixes, "ab z/\\-_.cAZaz90_d ef", 7, "");
-  expectIGNF(sfu, prefixes, "ab z/\\-_.cAZaz90_d ef", 10,
-                         "/home/z/\\-_.cAZaz90_d");
+  expectIGNF(sfu, prefixes, "ab z/y\\-_.cAZaz90_d ef", 8, "");
+  expectIGNF(sfu, prefixes, "ab z/y\\-_.cAZaz90_d ef", 11,
+                         "/home/z/y/-_.cAZaz90_d");
 
   // Test exclusion.
   expectIGNF(sfu, prefixes, "ab \"cd\" ef", 5,
@@ -96,6 +100,9 @@ static void test1()
   // Test dropping dots.
   expectIGNF(sfu, prefixes, "./foo.txt", 1, "/home/foo.txt");
   expectIGNF(sfu, prefixes, "./a/../foo.txt", 1, "/home/foo.txt");
+
+  // Test that we drop dots even when we cannot confirm the file exists.
+  expectIGNF(sfu, prefixes, "./a/../goo.txt", 1, "/home/goo.txt");
 }
 
 

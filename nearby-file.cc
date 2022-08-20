@@ -8,6 +8,10 @@
 
 // smbase
 #include "sm-file-util.h"              // SMFileUtil
+#include "string-utils.h"              // prefixAll, suffixAll, join
+#include "strutil.h"                   // quoted
+#include "trace.h"                     // TRACE
+#include "vector-utils.h"              // convertElements
 
 
 // Return true if 'c' is a digit for the purpose of the file name
@@ -156,8 +160,27 @@ FileAndLineOpt getNearbyFilename(
   int charOffset)
 {
   SMFileUtil sfu;
-  return innerGetNearbyFilename(sfu, candidatePrefixes,
+  FileAndLineOpt ret = innerGetNearbyFilename(sfu, candidatePrefixes,
     haystack, charOffset);
+
+  TRACE("nearby-file", "getNearbyFilename:\n"
+    "  candidatePrefixes:\n" <<
+    join(
+      suffixAll(
+        prefixAll(
+          convertElements<std::string>(
+            mapElements<string>(
+              candidatePrefixes.asVector(),
+              quoted)),      // map function
+          "    "),           // prefix
+        "\n"),               // suffix
+      "") <<                 // separator
+    "  haystack: " << quoted(haystack) << "\n"
+    "  charOffset: " << charOffset << "\n"
+    "  ret.file: " << ret.m_filename << "\n"
+    "  ret.line: " << ret.m_line);
+
+  return ret;
 }
 
 
@@ -199,8 +222,9 @@ FileAndLineOpt innerGetNearbyFilename(
   else {
     // Return the first prefix+suffix.
     return FileAndLineOpt(
-      sfu.joinFilename(candidatePrefixes[0],
-                       candidateSuffixes[0].m_filename),
+      sfu.collapseDots(
+        sfu.joinFilename(candidatePrefixes[0],
+                         candidateSuffixes[0].m_filename)),
       candidateSuffixes[0].m_line);
   }
 }
