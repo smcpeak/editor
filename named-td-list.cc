@@ -299,12 +299,25 @@ void NamedTextDocumentList::getUniqueDirectories(
   // Set of directories put into 'dirs' so far.
   StringSet dirSet;
 
+  // Add the existing entries so we do not duplicate them.
+  for (int i=0; i < dirs.length(); i++) {
+    string dir = dirs[i];
+    dirSet.add(dir);
+    TRACE("named-td-list", "getUniqueDirectories: "
+      "dirs already contains: " << quoted(dir));
+  }
+
   for (int i=0; i < m_documents.length(); i++) {
     if (m_documents[i]->hasFilename()) {
-      string dir = dirname(m_documents[i]->filename());
+      string fname = m_documents[i]->filename();
+      string dir = dirname(fname);
       if (!dirSet.contains(dir)) {
         dirs.push(dir);
         dirSet.add(dir);
+
+        TRACE("named-td-list", "getUniqueDirectories: "
+          "adding " << quoted(dir) <<
+          " due to " << quoted(fname));
       }
     }
   }

@@ -408,6 +408,15 @@ static void testGetUniqueDirectories()
     xassert(actual[1] == "/a");
   }
 
+  // Check that existing entries are not duplicated.
+  {
+    ArrayStack<string> actual;
+    actual.push("/a");
+    dlist.getUniqueDirectories(actual);
+    xassert(actual.length() == 1);
+    xassert(actual[0] == "/a");
+  }
+
   add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/a/c"));
   expectDirs(dlist, "/a", NULL);
 

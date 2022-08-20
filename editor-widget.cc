@@ -490,11 +490,14 @@ void EditorWidget::fileOpenAtCursor()
 {
   string lineText = m_editor->getWholeLineString(m_editor->cursor().m_line);
 
+  // Strip the directory separator to match 'getUniqueDirectories'.
+  SMFileUtil sfu;
+  string docDir = sfu.stripTrailingDirectorySeparator(
+    getDocumentDirectory());
+
   ArrayStack<string> prefixes;
-  prefixes.push(this->getDocumentDirectory());
+  prefixes.push(docDir);
   m_documentList->getUniqueDirectories(prefixes);
-  // TODO: User-configurable additional directories.
-  prefixes.push("");
 
   FileAndLineOpt fileAndLine =
     getNearbyFilename(prefixes, lineText, m_editor->cursor().m_column);
