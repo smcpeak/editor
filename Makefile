@@ -221,6 +221,7 @@ $(eval $(call RUN_TEST_PROG,test-command-runner))
 
 # ---------------------- test-named-td ----------------------
 EDITOR_OBJS += doc-name.o
+EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += named-td.o
 

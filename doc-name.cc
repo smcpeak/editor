@@ -13,24 +13,16 @@
 
 
 DocumentName::DocumentName()
-  : m_hostName(HostName::asLocal()),
-    m_resourceName(),
+  : HostAndResourceName(),
     m_hasFilename(false),
     m_directory()
-{}
+{
+  selfCheck();
+}
 
 
 DocumentName::~DocumentName()
 {}
-
-
-StrongOrdering DocumentName::compareTo(DocumentName const &obj) const
-{
-  COMPARE_MEMB(m_hostName);
-  COMPARE_MEMB(m_resourceName);
-
-  return StrongOrdering::equal;
-}
 
 
 string DocumentName::filename() const
@@ -48,6 +40,18 @@ void DocumentName::setDirectory(string const &dir)
 }
 
 
+void DocumentName::selfCheck() const
+{
+  HostAndResourceName::selfCheck();
+}
+
+
+StrongOrdering DocumentName::compareTo(DocumentName const &obj) const
+{
+  return HostAndResourceName::compareTo(obj);
+}
+
+
 void DocumentName::setFilename(HostName const &hostName,
                                string const &filename)
 {
@@ -58,6 +62,8 @@ void DocumentName::setFilename(HostName const &hostName,
   string dir, base;
   SMFileUtil().splitPath(dir, base, filename);
   this->setDirectory(dir);
+
+  selfCheck();
 }
 
 
@@ -69,18 +75,8 @@ void DocumentName::setNonFileResourceName(HostName const &hostName,
   m_hasFilename = false;
 
   this->setDirectory(dir);
-}
 
-
-string DocumentName::toString() const
-{
-  return quoted(resourceName());
-}
-
-
-std::ostream& DocumentName::print(std::ostream &os) const
-{
-  return os << toString();
+  selfCheck();
 }
 
 

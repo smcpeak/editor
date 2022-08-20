@@ -5,7 +5,7 @@
 #define EDITOR_DOC_NAME_H
 
 // editor
-#include "host-name.h"                 // HostName
+#include "host-and-resource-name.h"    // HostAndResourceName, HostName
 
 // smbase
 #include "sm-compare.h"                // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
@@ -18,16 +18,12 @@
 // Encapsulate the "name" of a document within the editor.  It must be
 // unique (per 'compareTo') within the list of NamedTextDocuments in its
 // containing NamedTextDocumentList.
-class DocumentName {
+//
+// HostAndResourceName::m_resourceName is a filename if 'm_hasFilename'
+// is true.  Otherwise, it is a human-readable string describing the
+// origin of the content.
+class DocumentName : public HostAndResourceName {
 private:     // data
-  // Host that has the resource.
-  HostName m_hostName;
-
-  // Name of the resource that supplies the data.  This is a filename if
-  // 'm_hasFilename' is true.  Otherwise, it is a human-readable string
-  // describing the origin of the content.
-  string m_resourceName;
-
   // When true, 'm_resourceName' is the name of a file on disk.
   bool m_hasFilename;
 
@@ -66,18 +62,11 @@ public:      // methods
     return ret;
   }
 
-  // Compare by 'm_resourceName'.
+  // Assert invariants.
+  void selfCheck() const;
+
+  // Compare by host and resource name.
   StrongOrdering compareTo(DocumentName const &obj) const;
-
-  // Get the host that contains the resource.
-  HostName hostName() const            { return m_hostName; }
-
-  // A name may be empty, but not when associated with a document that
-  // is part of a NamedTextDocumentList.
-  bool empty() const                   { return m_resourceName.empty(); }
-
-  // Get the resource that provides the document content.
-  string resourceName() const          { return m_resourceName; }
 
   // True if the document's name is a file name.
   bool hasFilename() const             { return m_hasFilename; }
@@ -99,29 +88,10 @@ public:      // methods
 
   // Get the directory associated with the document.
   string directory() const             { return m_directory; }
-
-  // Return a string suitable for naming this document within an error
-  // message.  Currently it returns resourceName() in double quotes.
-  string toString() const;
-
-  // Print 'toString()' to 'os'.
-  std::ostream& print(std::ostream &os) const;
 };
 
 
 DEFINE_RELOPS_FROM_COMPARE_TO(DocumentName)
-
-
-inline stringBuilder& operator<< (stringBuilder &sb, DocumentName const &doc)
-{
-  return sb << doc.toString();
-}
-
-
-inline std::ostream& operator<< (std::ostream &os, DocumentName const &doc)
-{
-  return doc.print(os);
-}
 
 
 #endif // EDITOR_DOC_NAME_H
