@@ -68,6 +68,12 @@ public:      // methods
   // Compare by host and resource name.
   StrongOrdering compareTo(DocumentName const &obj) const;
 
+  // Get this as a HARN.
+  //
+  // TODO: I think I should not inherit from HARN, and just use this
+  // method instead.
+  HostAndResourceName const &harn() const { return *this; }
+
   // True if the document's name is a file name.
   bool hasFilename() const             { return m_hasFilename; }
 
@@ -79,6 +85,9 @@ public:      // methods
   // ensure uniqueness within the containing NamedTextDocumentList.
   // This also sets 'm_directory' to the directory of the file.
   void setFilename(HostName const &hostName, string const &filename);
+
+  // Same, but packaged as a single object.
+  void setFilenameHarn(HostAndResourceName const &harn);
 
   // Set 'm_hostName' to 'hostName, 'm_resourceName' to 'name', and
   // 'm_hasFilename' to false.  The name still has to be unique.  Sets

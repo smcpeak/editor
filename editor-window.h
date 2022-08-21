@@ -7,6 +7,7 @@
 #include "editor-window-fwd.h"         // fwds for this module
 
 // editor
+#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
 #include "vfs-connections-fwd.h"       // VFS_Connections
@@ -104,9 +105,8 @@ private:     // funcs
   std::unique_ptr<REPLY_TYPE> vfsQuerySynchronously(
     HostName const &hostName, std::unique_ptr<VFS_Message> request);
 
-  // Return true if 'fname' exists, blocking during the check.
-  bool checkFileExistenceSynchronously(
-    HostName const &hostName, string const &fname);
+  // Return true if 'harn' exists, blocking during the check.
+  bool checkFileExistenceSynchronously(HostAndResourceName const &harn);
 
   void complain(char const *msg);
 
@@ -125,7 +125,7 @@ public:      // funcs
   VFS_Connections *vfsConnections() const;
 
   // open and begin editing a particular file
-  void fileOpenFile(HostName const &hostName, string const &fname);
+  void fileOpenFile(HostAndResourceName const &harn);
 
   // File user is editing: returns editor->docFile.
   NamedTextDocument *currentDocument();
@@ -230,7 +230,7 @@ public Q_SLOTS:
 
   void editorViewChanged();
   void on_closeSARPanel();
-  void on_openFilenameInputDialogSignal(QString const &filename, int line);
+  void on_openFilenameInputDialogSignal(HostFileAndLineOpt hfl);
 };
 
 

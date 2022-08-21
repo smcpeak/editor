@@ -67,6 +67,12 @@ void DocumentName::setFilename(HostName const &hostName,
 }
 
 
+void DocumentName::setFilenameHarn(HostAndResourceName const &harn)
+{
+  setFilename(harn.hostName(), harn.resourceName());
+}
+
+
 void DocumentName::setNonFileResourceName(HostName const &hostName,
   string const &name, string const &dir)
 {

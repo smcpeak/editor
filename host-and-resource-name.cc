@@ -35,6 +35,13 @@ void HostAndResourceName::selfCheck() const
 }
 
 
+/*static*/ HostAndResourceName
+  HostAndResourceName::localFile(string const &filename)
+{
+  return HostAndResourceName(HostName::asLocal(), filename);
+}
+
+
 StrongOrdering
   HostAndResourceName::compareTo(HostAndResourceName const &obj) const
 {

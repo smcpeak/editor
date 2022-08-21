@@ -314,7 +314,7 @@ void EditorGlobal::processCommandLineOptions(
       // Open all non-option files specified on the command line.
       string path = sfu.getAbsolutePath(arg);
       path = sfu.normalizePathSeparators(path);
-      ed->fileOpenFile(HostName::asLocal(), path);
+      ed->fileOpenFile(HostAndResourceName::localFile(path));
     }
   }
 }
@@ -381,7 +381,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
   if (doc->hasFilename()) {
     std::unique_ptr<VFS_ReadFileReply> rfr(
       readFileSynchronously(&m_vfsConnections, parentWidget,
-                            doc->hostName(), doc->filename()));
+                            doc->harn()));
     if (!rfr) {
       return false;
     }

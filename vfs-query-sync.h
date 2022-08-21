@@ -5,7 +5,9 @@
 #define EDITOR_VFS_QUERY_SYNC_H
 
 // editor
+#include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
+#include "nearby-file.h"               // IHFExists
 #include "vfs-connections.h"           // VFS_Connections
 
 // qt
@@ -18,7 +20,8 @@ class QWidget;
 
 // Like FileSystemQuery, but with a synchronous interface and an
 // implementation that has a GUI to allow the user to cancel requests.
-class VFS_QuerySync : public QObject {
+class VFS_QuerySync : public QObject,
+                      public IHFExists {
   Q_OBJECT
   NO_OBJECT_COPIES(VFS_QuerySync);
 
@@ -29,14 +32,15 @@ private:     // data
   // Query interface to use.
   VFS_Connections *m_vfsConnections;
 
-  // Host to access.
-  HostName m_hostName;
-
   // Parent widget to modally interrupt if needed.
   QWidget *m_parentWidget;
 
   // ID of outstanding request, or 0 if none.
   RequestID m_requestID;
+
+  // If 'm_requestID' is not zero, this is the host being queried.
+  // Otherwise, it is meaningless.
+  HostName m_hostName;
 
   // Reply, if one has arrived.
   std::unique_ptr<VFS_Message> m_reply;
@@ -51,11 +55,9 @@ private:     // data
   QTimer m_timer;
 
 public:      // instance methods
-  // Create an object to issue queries to 'hostName' via
-  // 'vfsConnections', and if needed, pop up a modal window on top of
-  // 'parentWidget'.
-  VFS_QuerySync(VFS_Connections *vfsConnections,
-    HostName const &hostName, QWidget *parentWiget);
+  // Create an object to issue queries via 'vfsConnections', and if
+  // needed, pop up a modal window on top of 'parentWidget'.
+  VFS_QuerySync(VFS_Connections *vfsConnections, QWidget *parentWiget);
   virtual ~VFS_QuerySync() override;
 
   // Issue 'request' and wait for the reply.  If a reply arrives, set
@@ -63,6 +65,7 @@ public:      // instance methods
   // 'connLostMessage' to the error message and return true.  If the
   // user cancels the request, return false.
   bool issueRequestSynchronously(
+    HostName const &hostName,
     std::unique_ptr<VFS_Message> request,
     std::unique_ptr<VFS_Message> /*OUT*/ &reply,
     string /*OUT*/ &connLostMessage);
@@ -73,10 +76,14 @@ public:      // instance methods
   // pointer.
   template <class REPLY_TYPE>
   std::unique_ptr<REPLY_TYPE> issueTypedRequestSynchronously(
+    HostName const &hostName,
     std::unique_ptr<VFS_Message> request);
 
   // Pop up a modal error dialog, returning when it is dismissed.
   void complain(string message);
+
+  // IHFExists methods.
+  virtual bool hfExists(HostAndResourceName const &harn) override;
 
 protected Q_SLOTS:
   // Handlers for VFS_Connections.
@@ -93,6 +100,7 @@ protected Q_SLOTS:
 
 template <class REPLY_TYPE>
 std::unique_ptr<REPLY_TYPE> VFS_QuerySync::issueTypedRequestSynchronously(
+  HostName const &hostName,
   std::unique_ptr<VFS_Message> request)
 {
   // Initially empty pointer, used for error returns.
@@ -102,7 +110,7 @@ std::unique_ptr<REPLY_TYPE> VFS_QuerySync::issueTypedRequestSynchronously(
   std::unique_ptr<VFS_Message> genericReply;
   string connLostMessage;
   if (!issueRequestSynchronously(
-         std::move(request), genericReply, connLostMessage)) {
+         hostName, std::move(request), genericReply, connLostMessage)) {
     // Request was canceled.
     return typedReply;
   }
@@ -139,16 +147,14 @@ std::unique_ptr<REPLY_TYPE> VFS_QuerySync::issueTypedRequestSynchronously(
 std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
   VFS_Connections *vfsConnections,
   QWidget *parentWidget,
-  HostName const &hostName,
-  string const &fname);
+  HostAndResourceName const &harn);
 
 
 // Get timestamp, etc., for 'fname'.
 std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
   VFS_Connections *vfsConnections,
   QWidget *parentWidget,
-  HostName const &hostName,
-  string const &fname);
+  HostAndResourceName const &harn);
 
 
 #endif // EDITOR_VFS_QUERY_SYNC_H

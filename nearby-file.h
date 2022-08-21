@@ -1,8 +1,11 @@
 // nearby-file.h
 // Routine to identify a file name within a piece of text.
 
-#ifndef NEARBY_FILE_H
-#define NEARBY_FILE_H
+#ifndef EDITOR_NEARBY_FILE_H
+#define EDITOR_NEARBY_FILE_H
+
+// editor
+#include "host-and-resource-name.h"    // HostAndResourceName
 
 // smbase
 #include "array.h"                     // ArrayStack
@@ -12,34 +15,57 @@
 class SMFileUtil;                      // sm-file-util.h
 
 
-// An optional file name, and if the name is present, an optional line
-// number.
-class FileAndLineOpt {
+// An optional host and file name, and if the name is present, an
+// optional line number.
+//
+// TODO: Move this to its own module.
+class HostFileAndLineOpt {
 public:      // data
-  // The file name, or "" to mean none.
-  string m_filename;
+  // Host and file name.  Can be empty() to mean none.
+  HostAndResourceName m_harn;
 
   // The line number, or 0 to mean "none".
   int m_line;
 
 public:      // funcs
-  FileAndLineOpt()
-    : m_filename(""),
+  HostFileAndLineOpt()
+    : m_harn(),
       m_line(0)
   {}
 
-  FileAndLineOpt(FileAndLineOpt const &obj)
-    : DMEMB(m_filename),
+  ~HostFileAndLineOpt()
+  {
+    // I'm a little worried about using this type as part of a Qt queued
+    // connection signal, so I want to ensure that a destroyed object is
+    // easily recognizable in the debugger.
+    m_line = -1000;
+  }
+
+  HostFileAndLineOpt(HostFileAndLineOpt const &obj)
+    : DMEMB(m_harn),
       DMEMB(m_line)
   {}
 
-  FileAndLineOpt(string const &filename, int line)
-    : m_filename(filename),
+  HostFileAndLineOpt(HostAndResourceName const &harn, int line)
+    : m_harn(harn),
       m_line(line)
   {}
 
-  bool hasFilename() const { return !m_filename.empty(); }
+  bool hasFilename() const { return !m_harn.empty(); }
   bool hasLine() const { return m_line != 0; }
+};
+
+
+// Interface with which to test the existence of a host+file.
+class IHFExists {
+public:      // methods
+  // From the client's perspective, invoking this method does not change
+  // the state of the receiver object.  However, this method is not
+  // 'const' because the main implementor of it, VFS_QuerySync, needs to
+  // invoke non-const helper methods due to maintaining state related to
+  // the communication used to answer the question.  I'm not sure if
+  // there is or should be a better way to handle this situation.
+  virtual bool hfExists(HostAndResourceName const &harn) = 0;
 };
 
 
@@ -66,19 +92,11 @@ public:      // funcs
 // If no candidate file name string can be found, or no candidate
 // prefixes are provided, this returns an object whose 'hasFilename()'
 // is false.
-FileAndLineOpt getNearbyFilename(
-  ArrayStack<string> const &candidatePrefixes,
+HostFileAndLineOpt getNearbyFilename(
+  IHFExists &ihfExists,
+  ArrayStack<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
   int charOffset);
 
 
-// Algorithmic core, parameterized by the file name probe mechanism
-// in order to facilitate testing.
-FileAndLineOpt innerGetNearbyFilename(
-  SMFileUtil &sfu,
-  ArrayStack<string> const &candidatePrefixes,
-  string const &haystack,
-  int charOffset);
-
-
-#endif // NEARBY_FILE_H
+#endif // EDITOR_NEARBY_FILE_H

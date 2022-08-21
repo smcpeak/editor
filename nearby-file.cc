@@ -76,12 +76,16 @@ static int getLineNumberAt(string const &haystack, int i)
 
 // Search at 'charOffset' in 'haystack' for candidate file names.
 //
+// This interface is slightly busted.  The returned candidates always
+// have a local host because I'm only intending to return a file name
+// and line number here.
+//
 // Right now this returns at most one candidate, but I am designing the
 // interface to anticipate the ability to return multiple candidates.
 // For example, a first candidate might never consider filenames to
 // have spaces, but the next candidate might allow spaces, etc.
 void getCandidateSuffixes(
-  ArrayStack<FileAndLineOpt> /*OUT*/ &candidates,
+  ArrayStack<HostFileAndLineOpt> /*OUT*/ &candidates,
   string const &haystack,
   int charOffset)
 {
@@ -149,19 +153,86 @@ void getCandidateSuffixes(
   int line = getLineNumberAt(haystack, high+1);
 
   // Return what we found.
-  candidates.push(FileAndLineOpt(
-    haystack.substring(low, high-low+1), line));
+  candidates.push(HostFileAndLineOpt(
+    HostAndResourceName::localFile(haystack.substring(low, high-low+1)),
+    line));
 }
 
 
-FileAndLineOpt getNearbyFilename(
-  ArrayStack<string> const &candidatePrefixes,
+// Return an object with the prefix hostname, a file name created by
+// joining prefix+suffix, and line from the suffix.
+static HostFileAndLineOpt joinHFL(
+  SMFileUtil &sfu,
+  HostAndResourceName const &prefix,
+  HostFileAndLineOpt const &suffix)
+{
+  string joinedFileName = sfu.joinIfRelativeFilename(
+    prefix.resourceName(),
+    suffix.m_harn.resourceName());
+  joinedFileName = sfu.collapseDots(joinedFileName);
+
+  // Take the host from the prefix and the line number from the
+  // suffix.
+  return HostFileAndLineOpt(
+    HostAndResourceName(prefix.hostName(), joinedFileName),
+    suffix.m_line);
+}
+
+
+static HostFileAndLineOpt innerGetNearbyFilename(
+  IHFExists &ihfExists,
+  ArrayStack<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
   int charOffset)
 {
   SMFileUtil sfu;
-  FileAndLineOpt ret = innerGetNearbyFilename(sfu, candidatePrefixes,
-    haystack, charOffset);
+
+  if (candidatePrefixes.isEmpty()) {
+    return HostFileAndLineOpt();
+  }
+
+  // Extract candidate suffixes.
+  ArrayStack<HostFileAndLineOpt> candidateSuffixes;
+  getCandidateSuffixes(candidateSuffixes, haystack, charOffset);
+  if (candidateSuffixes.isEmpty()) {
+    return HostFileAndLineOpt();
+  }
+
+  // Look for a combination that exists on disk.
+  for (int prefix=0; prefix < candidatePrefixes.length(); prefix++) {
+    for (int suffix=0; suffix < candidateSuffixes.length(); suffix++) {
+      HostFileAndLineOpt candidate(joinHFL(sfu,
+        candidatePrefixes[prefix],
+        candidateSuffixes[suffix]));
+
+      if (ihfExists.hfExists(candidate.m_harn)) {
+        return candidate;
+      }
+    }
+  }
+
+  // No combination exists.  Return the first prefix+suffix.
+  return joinHFL(sfu, candidatePrefixes[0], candidateSuffixes[0]);
+}
+
+
+static string harnToString(HostAndResourceName const &harn)
+{
+  return harn.toString();
+}
+
+
+HostFileAndLineOpt getNearbyFilename(
+  IHFExists &ihfExists,
+  ArrayStack<HostAndResourceName> const &candidatePrefixes,
+  string const &haystack,
+  int charOffset)
+{
+  HostFileAndLineOpt ret = innerGetNearbyFilename(
+    ihfExists,
+    candidatePrefixes,
+    haystack,
+    charOffset);
 
   TRACE("nearby-file", "getNearbyFilename:\n"
     "  candidatePrefixes:\n" <<
@@ -171,62 +242,16 @@ FileAndLineOpt getNearbyFilename(
           convertElements<std::string>(
             mapElements<string>(
               candidatePrefixes.asVector(),
-              quoted)),      // map function
-          "    "),           // prefix
-        "\n"),               // suffix
-      "") <<                 // separator
+              harnToString)),          // map function
+          "    "),                     // prefix
+        "\n"),                         // suffix
+      "") <<                           // separator
     "  haystack: " << quoted(haystack) << "\n"
     "  charOffset: " << charOffset << "\n"
-    "  ret.file: " << ret.m_filename << "\n"
+    "  ret.harn: " << ret.m_harn << "\n"
     "  ret.line: " << ret.m_line);
 
   return ret;
-}
-
-
-FileAndLineOpt innerGetNearbyFilename(
-  SMFileUtil &sfu,
-  ArrayStack<string> const &candidatePrefixes,
-  string const &haystack,
-  int charOffset)
-{
-  if (candidatePrefixes.isEmpty()) {
-    return FileAndLineOpt();
-  }
-
-  // Extract candidate suffixes.
-  ArrayStack<FileAndLineOpt> candidateSuffixes;
-  getCandidateSuffixes(candidateSuffixes, haystack, charOffset);
-  if (candidateSuffixes.isEmpty()) {
-    return FileAndLineOpt();
-  }
-
-  // Look for a combination that exists on disk.
-  for (int prefix=0; prefix < candidatePrefixes.length(); prefix++) {
-    for (int suffix=0; suffix < candidateSuffixes.length(); suffix++) {
-      string candidateName = sfu.joinFilename(
-        candidatePrefixes[prefix], candidateSuffixes[suffix].m_filename);
-      candidateName = sfu.collapseDots(candidateName);
-      if (sfu.absolutePathExists(candidateName)) {
-        return FileAndLineOpt(candidateName,
-                              candidateSuffixes[suffix].m_line);
-      }
-    }
-  }
-
-  // No combination exists.  Is the first candidate suffix absolute?
-  if (sfu.isAbsolutePath(candidateSuffixes[0].m_filename)) {
-    // Yes, return it by itself.
-    return candidateSuffixes[0];
-  }
-  else {
-    // Return the first prefix+suffix.
-    return FileAndLineOpt(
-      sfu.collapseDots(
-        sfu.joinFilename(candidatePrefixes[0],
-                         candidateSuffixes[0].m_filename)),
-      candidateSuffixes[0].m_line);
-  }
 }
 
 

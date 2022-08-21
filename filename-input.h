@@ -175,12 +175,11 @@ public:      // funcs
 
   // Show the dialog.  'docList' provides the set of currently open
   // files, which is used to provide feedback on the effect of choosing
-  // an already open file.  'hostName' and 'fileName' provide both the
-  // initial value and, on a successful invocation, the result.  Returns
-  // false if the dialog is canceled.
+  // an already open file.  'harn' provide both the initial value and,
+  // on a successful invocation, the result.  Returns false if the
+  // dialog is canceled.
   bool runDialog(NamedTextDocumentList const *docList,
-                 HostName /*INOUT*/ &hostName,
-                 QString /*INOUT*/ &fileName);
+                 HostAndResourceName /*INOUT*/ &harn);
 
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;

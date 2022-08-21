@@ -147,8 +147,7 @@ FilenameInputDialog::~FilenameInputDialog()
 
 bool FilenameInputDialog::runDialog(
   NamedTextDocumentList const *docList,
-  HostName /*INOUT*/ &hostName,
-  QString /*INOUT*/ &fileName)
+  HostAndResourceName /*INOUT*/ &harn)
 {
   // This is not re-entrant (for a particular dialog object).
   xassert(!m_docList);
@@ -158,16 +157,16 @@ bool FilenameInputDialog::runDialog(
     restorer(m_docList, docList);
 
   // Select the dropdown entry corresponding to the starting host name.
-  long hostIndex = vec_find_index(m_hostNameList, hostName);
+  long hostIndex = vec_find_index(m_hostNameList, harn.hostName());
   if (hostIndex >= 0) {
     m_connectionDropDown->setCurrentIndex(convertNumber<int>(hostIndex));
   }
   else {
     // This should not happen, but I'll just be silent.
   }
-  m_currentHostName = hostName;
+  m_currentHostName = harn.hostName();
 
-  m_filenameEdit->setText(fileName);
+  m_filenameEdit->setText(toQString(harn.resourceName()));
 
   // Set the focus on the text edit so I can start typing immediately.
   m_filenameEdit->setFocus(Qt::OtherFocusReason);
@@ -183,8 +182,10 @@ bool FilenameInputDialog::runDialog(
   this->cancelCurrentRequestIfAny();
 
   if (ret) {
-    hostName = m_currentHostName;
-    fileName = m_filenameEdit->text();
+    harn = HostAndResourceName(
+      m_currentHostName,
+      toString(m_filenameEdit->text())
+    );
   }
 
   return ret;

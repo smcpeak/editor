@@ -47,6 +47,12 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 }
 
 
+HostAndResourceName NamedTextDocument::directoryHarn() const
+{
+  return HostAndResourceName(hostName(), directory());
+}
+
+
 static char const *documentProcessStatusIndicator(
   NamedTextDocument const *doc)
 {

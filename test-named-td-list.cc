@@ -7,8 +7,8 @@
 #include "sm-file-util.h"              // SMFileUtil
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "sm-override.h"               // OVERRIDE
+#include "sm-test.h"                   // USUAL_TEST_MAIN, EXPECT_EQ
 #include "strutil.h"                   // dirname
-#include "sm-test.h"                   // USUAL_TEST_MAIN
 
 // libc
 #include <stdarg.h>                    // va_start, etc.
@@ -366,7 +366,7 @@ static void testColon3()
 // sequence of arguments.
 static void expectDirs(NamedTextDocumentList &dlist, char const *dir0, ...)
 {
-  ArrayStack<string> actual;
+  ArrayStack<HostAndResourceName> actual;
   dlist.getUniqueDirectories(actual);
 
   if (!dir0) {
@@ -375,13 +375,13 @@ static void expectDirs(NamedTextDocumentList &dlist, char const *dir0, ...)
   }
   xassert(!actual.isEmpty());
 
-  xassert(actual[0] == dir0);
+  EXPECT_EQ(actual[0].resourceName(), dir0);
   int i = 1;
 
   va_list args;
   va_start(args, dir0);
   while (char const *dir = va_arg(args, char const *)) {
-    xassert(actual[i] == dir);
+    EXPECT_EQ(actual[i].resourceName(), dir);
     i++;
   }
   va_end(args);
@@ -396,35 +396,35 @@ static void testGetUniqueDirectories()
   expectDirs(dlist, NULL);
 
   add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/a/b"));
-  expectDirs(dlist, "/a", NULL);
+  expectDirs(dlist, "/a/", NULL);
 
   // Check that existing entries are preserved.
   {
-    ArrayStack<string> actual;
-    actual.push("existing");
+    ArrayStack<HostAndResourceName> actual;
+    actual.push(HostAndResourceName::localFile("existing/"));
     dlist.getUniqueDirectories(actual);
     xassert(actual.length() == 2);
-    xassert(actual[0] == "existing");
-    xassert(actual[1] == "/a");
+    xassert(actual[0].resourceName() == "existing/");
+    xassert(actual[1].resourceName() == "/a/");
   }
 
   // Check that existing entries are not duplicated.
   {
-    ArrayStack<string> actual;
-    actual.push("/a");
+    ArrayStack<HostAndResourceName> actual;
+    actual.push(HostAndResourceName::localFile("/a/"));
     dlist.getUniqueDirectories(actual);
     xassert(actual.length() == 1);
-    xassert(actual[0] == "/a");
+    xassert(actual[0].resourceName() == "/a/");
   }
 
   add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/a/c"));
-  expectDirs(dlist, "/a", NULL);
+  expectDirs(dlist, "/a/", NULL);
 
   add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/b/c"));
-  expectDirs(dlist, "/a", "/b", NULL);
+  expectDirs(dlist, "/a/", "/b/", NULL);
 
   add(dlist, DocumentName::fromFilename(HostName::asLocal(), "/b/d/e/f/g"));
-  expectDirs(dlist, "/a", "/b", "/b/d/e/f", NULL);
+  expectDirs(dlist, "/a/", "/b/", "/b/d/e/f/", NULL);
 }
 
 

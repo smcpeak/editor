@@ -22,13 +22,12 @@
 
 VFS_QuerySync::VFS_QuerySync(
   VFS_Connections *vfsConnections,
-  HostName const &hostName,
   QWidget *parentWidget)
 :
   m_vfsConnections(vfsConnections),
-  m_hostName(hostName),
   m_parentWidget(parentWidget),
   m_requestID(0),
+  m_hostName(HostName::asLocal()),
   m_reply(),
   m_connLostMessage(),
   m_eventLoop(),
@@ -54,11 +53,13 @@ VFS_QuerySync::~VFS_QuerySync()
 
 
 bool VFS_QuerySync::issueRequestSynchronously(
+  HostName const &hostName,
   std::unique_ptr<VFS_Message> request,
   std::unique_ptr<VFS_Message> /*OUT*/ &reply,
   string /*OUT*/ &connLostMessage)
 {
   xassert(!m_requestID);
+  m_hostName = hostName;
 
   string requestDescription = request->description();
   m_vfsConnections->issueRequest(m_requestID,
@@ -151,6 +152,27 @@ void VFS_QuerySync::complain(string message)
 }
 
 
+bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
+{
+  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  req->m_path = harn.resourceName();
+
+  std::unique_ptr<VFS_FileStatusReply> reply(
+    issueTypedRequestSynchronously<VFS_FileStatusReply>(
+      harn.hostName(), std::move(req)));
+
+  if (reply) {
+    return reply->m_success &&
+           reply->m_fileKind == SMFileUtil::FK_REGULAR;
+  }
+  else {
+    // If there is an error or the user cancels, we will say the file
+    // does not exist.
+    return false;
+  }
+}
+
+
 void VFS_QuerySync::on_replyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {
@@ -164,7 +186,7 @@ void VFS_QuerySync::on_replyAvailable(RequestID requestID) NOEXCEPT
 void VFS_QuerySync::on_failed(
   HostName hostName, string reason) NOEXCEPT
 {
-  if (hostName == m_hostName && m_requestID != 0) {
+  if (m_requestID != 0 && hostName == m_hostName) {
     m_connLostMessage = reason;
     m_requestID = 0;
     m_eventLoop.exit();
@@ -187,30 +209,28 @@ void VFS_QuerySync::on_canceled() NOEXCEPT
 std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
   VFS_Connections *vfsConnections,
   QWidget *parentWidget,
-  HostName const &hostName,
-  string const &fname)
+  HostAndResourceName const &harn)
 {
   std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
-  req->m_path = fname;
+  req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, hostName, parentWidget);
+  VFS_QuerySync querySync(vfsConnections, parentWidget);
   return querySync.issueTypedRequestSynchronously<VFS_ReadFileReply>(
-    std::move(req));
+    harn.hostName(), std::move(req));
 }
 
 
 std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
   VFS_Connections *vfsConnections,
   QWidget *parentWidget,
-  HostName const &hostName,
-  string const &fname)
+  HostAndResourceName const &harn)
 {
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
-  req->m_path = fname;
+  req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, hostName, parentWidget);
+  VFS_QuerySync querySync(vfsConnections, parentWidget);
   return querySync.issueTypedRequestSynchronously<VFS_FileStatusReply>(
-    std::move(req));
+    harn.hostName(), std::move(req));
 }
 
 

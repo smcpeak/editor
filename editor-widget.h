@@ -7,6 +7,7 @@
 // editor
 #include "editor-window-fwd.h"         // EditorWindow
 #include "event-replay.h"              // EventReplayQueryable
+#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
 #include "named-td-list.h"             // NamedTextDocumentListObserver
 #include "named-td.h"                  // NamedTextDocument
 #include "td-editor.h"                 // TextDocumentEditor
@@ -463,6 +464,9 @@ public:      // funcs
   // directory may be used.  This contains a final path separator.
   string getDocumentDirectory() const;
 
+  // Like 'getDocumentDirectory()', but including the host name.
+  HostAndResourceName getDocumentDirectoryHarn() const;
+
   // Editor associated with current file and this particular widget.
   // This is not 'const' because the editor is owned by this object.
   TextDocumentEditor *getDocumentEditor();
@@ -562,7 +566,9 @@ Q_SIGNALS:
   // to allow the user to further edit the name.  If 'line' is non-zero,
   // it indicates where in 'filename' we want to go, as a 1-based line
   // number.
-  void openFilenameInputDialogSignal(QString const &filename, int line);
+  //
+  // If '!hfl.hasFilename()', this is ignored.
+  void openFilenameInputDialogSignal(HostFileAndLineOpt hfl);
 
   // The user wants to close the search and replace panel if it is open.
   void closeSARPanel();

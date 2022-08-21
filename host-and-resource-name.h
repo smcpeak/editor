@@ -43,6 +43,9 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
+  // Make an object carrying 'filename' and a local host designator.
+  static HostAndResourceName localFile(string const &filename);
+
   // Compare lexicographically.
   StrongOrdering compareTo(HostAndResourceName const &obj) const;
 

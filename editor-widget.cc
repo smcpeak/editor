@@ -14,6 +14,7 @@
 #include "styledb.h"                   // StyleDB
 #include "textcategory.h"              // LineCategories, etc.
 #include "textline.h"                  // TextLine
+#include "vfs-query-sync.h"            // VFS_QuerySync
 
 // smqtutil
 #include "editor14r.bdf.gen.h"
@@ -486,25 +487,29 @@ string EditorWidget::getDocumentDirectory() const
 }
 
 
+HostAndResourceName EditorWidget::getDocumentDirectoryHarn() const
+{
+  return getDocument()->directoryHarn();
+}
+
+
 void EditorWidget::fileOpenAtCursor()
 {
   string lineText = m_editor->getWholeLineString(m_editor->cursor().m_line);
 
-  // Strip the directory separator to match 'getUniqueDirectories'.
-  SMFileUtil sfu;
-  string docDir = sfu.stripTrailingDirectorySeparator(
-    getDocumentDirectory());
-
-  ArrayStack<string> prefixes;
-  prefixes.push(docDir);
+  ArrayStack<HostAndResourceName> prefixes;
+  prefixes.push(getDocumentDirectoryHarn());
   m_documentList->getUniqueDirectories(prefixes);
 
-  FileAndLineOpt fileAndLine =
-    getNearbyFilename(prefixes, lineText, m_editor->cursor().m_column);
+  VFS_QuerySync querySync(vfsConnections(), this);
 
-  if (!fileAndLine.hasFilename()) {
+  HostFileAndLineOpt hostFileAndLine =
+    getNearbyFilename(querySync, prefixes,
+                      lineText, m_editor->cursor().m_column);
+
+  if (!hostFileAndLine.hasFilename()) {
     // Prompt with the document directory.
-    fileAndLine.m_filename = this->getDocumentDirectory();
+    hostFileAndLine.m_harn = getDocumentDirectoryHarn();
   }
 
   // Prompt the user with the filename to allow confirmation and
@@ -517,8 +522,7 @@ void EditorWidget::fileOpenAtCursor()
   // are currently looking at if it is untitled, which will cause the
   // RCSerf infrastructure to abort just before memory corruption would
   // have resulted.
-  Q_EMIT openFilenameInputDialogSignal(
-    toQString(fileAndLine.m_filename), fileAndLine.m_line);
+  Q_EMIT openFilenameInputDialogSignal(hostFileAndLine);
 }
 
 

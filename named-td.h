@@ -93,6 +93,16 @@ public:      // funcs
   void setDocumentName(DocumentName const &docName)
     { m_documentName = docName; }
 
+  HostAndResourceName const &harn() const { return m_documentName.harn(); }
+
+  // Host name and directory.
+  //
+  // Like 'directory()', the directory here includes the trailing slash.
+  // That is important because this flows into nearby-file, which then
+  // feeds into filename-input, which wants the trailing slash in order
+  // to show the contents of a directory.
+  HostAndResourceName directoryHarn() const;
+
   // See comments on the corresponding methods of DocumentName.
   HostName hostName() const            { return m_documentName.hostName(); }
   string resourceName() const          { return m_documentName.resourceName(); }

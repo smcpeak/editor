@@ -294,30 +294,29 @@ void NamedTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
 
 
 void NamedTextDocumentList::getUniqueDirectories(
-  ArrayStack<string> /*INOUT*/ &dirs) const
+  ArrayStack<HostAndResourceName> /*INOUT*/ &dirs) const
 {
   // Set of directories put into 'dirs' so far.
-  StringSet dirSet;
+  std::set<HostAndResourceName> dirSet;
 
   // Add the existing entries so we do not duplicate them.
   for (int i=0; i < dirs.length(); i++) {
-    string dir = dirs[i];
-    dirSet.add(dir);
+    HostAndResourceName const &dir = dirs[i];
+    dirSet.insert(dir);
     TRACE("named-td-list", "getUniqueDirectories: "
-      "dirs already contains: " << quoted(dir));
+      "dirs already contains: " << dir);
   }
 
   for (int i=0; i < m_documents.length(); i++) {
     if (m_documents[i]->hasFilename()) {
-      string fname = m_documents[i]->filename();
-      string dir = dirname(fname);
-      if (!dirSet.contains(dir)) {
+      HostAndResourceName dir = m_documents[i]->directoryHarn();
+      if (!contains(dirSet, dir)) {
         dirs.push(dir);
-        dirSet.add(dir);
+        dirSet.insert(dir);
 
         TRACE("named-td-list", "getUniqueDirectories: "
-          "adding " << quoted(dir) <<
-          " due to " << quoted(fname));
+          "adding " << dir <<
+          " due to " << m_documents[i]->harn());
       }
     }
   }

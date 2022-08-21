@@ -577,9 +577,10 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
 
     QString choice = toQString(dir);
 
-    if (dialog.runDialog(&(m_editorGlobal->m_documentList),
-                         hostName, choice)) {
-      return toString(choice);
+    HostAndResourceName harn(hostName, dir);
+    if (dialog.runDialog(&(m_editorGlobal->m_documentList), harn)) {
+      hostName = harn.hostName();
+      return harn.resourceName();
     }
     else {
       return "";
@@ -657,8 +658,8 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
 
 void EditorWindow::fileOpen()
 {
-  string dir = m_editorWidget->getDocumentDirectory();
-  this->on_openFilenameInputDialogSignal(toQString(dir), 0);
+  HostAndResourceName dirHarn = m_editorWidget->getDocumentDirectoryHarn();
+  this->on_openFilenameInputDialogSignal(HostFileAndLineOpt(dirHarn, 0));
 }
 
 
@@ -671,32 +672,30 @@ void EditorWindow::fileOpenAtCursor()
 void EditorWindow::fileOpenNativeDialog()
 {
   HostName hostName(currentDocument()->hostName());
-  this->fileOpenFile(hostName,
+  this->fileOpenFile(HostAndResourceName(hostName,
     this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
-                           false /*saveAs*/, FCDK_NATIVE));
+                           false /*saveAs*/, FCDK_NATIVE)));
 }
 
 void EditorWindow::fileOpenQtDialog()
 {
   HostName hostName(currentDocument()->hostName());
-  this->fileOpenFile(hostName,
+  this->fileOpenFile(HostAndResourceName(hostName,
     this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
-                           false /*saveAs*/, FCDK_QT));
+                           false /*saveAs*/, FCDK_QT)));
 }
 
-void EditorWindow::fileOpenFile(HostName const &hostName,
-                                string const &filename)
+void EditorWindow::fileOpenFile(HostAndResourceName const &harn)
 {
-  if (filename.empty()) {
+  TRACE("fileOpen", "fileOpenFile: " << harn);
+
+  if (harn.empty()) {
     // Dialog was canceled.
     return;
   }
 
-  TRACE("fileOpen", "fileOpenFile: host=" << hostName <<
-                    " file=" << quoted(filename));
-
   DocumentName docName;
-  docName.setFilename(hostName, filename);
+  docName.setFilenameHarn(harn);
 
   // If this file is already open, switch to it.
   NamedTextDocument *file =
@@ -708,7 +707,7 @@ void EditorWindow::fileOpenFile(HostName const &hostName,
 
   // Load the file contents.
   std::unique_ptr<VFS_ReadFileReply> rfr(
-    readFileSynchronously(vfsConnections(), this, hostName, filename));
+    readFileSynchronously(vfsConnections(), this, harn));
   if (!rfr) {
     // Either the request was canceled or an error has already been
     // reported.
@@ -758,17 +757,17 @@ template <class REPLY_TYPE>
 std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
   HostName const &hostName, std::unique_ptr<VFS_Message> request)
 {
-  VFS_QuerySync querySync(vfsConnections(), hostName, this);
+  VFS_QuerySync querySync(vfsConnections(), this);
   return querySync.issueTypedRequestSynchronously<REPLY_TYPE>(
-    std::move(request));
+    hostName, std::move(request));
 }
 
 
 bool EditorWindow::checkFileExistenceSynchronously(
-  HostName const &hostName, string const &fname)
+  HostAndResourceName const &harn)
 {
   std::unique_ptr<VFS_FileStatusReply> reply(
-    getFileStatusSynchronously(vfsConnections(), this, hostName, fname));
+    getFileStatusSynchronously(vfsConnections(), this, harn));
   return reply &&
          reply->m_success &&
          reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -944,8 +943,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
     std::unique_ptr<VFS_FileStatusReply> reply(
-      getFileStatusSynchronously(vfsConnections(), this,
-                                 doc->hostName(), doc->filename()));
+      getFileStatusSynchronously(vfsConnections(), this, doc->harn()));
     if (!reply) {
       return false;    // Canceled.
     }
@@ -1814,23 +1812,29 @@ void EditorWindow::on_closeSARPanel()
 
 
 void EditorWindow::on_openFilenameInputDialogSignal(
-  QString const &filename, int line)
+  HostFileAndLineOpt hfl)
 {
-  HostName hostName = currentDocument()->hostName();
+  TRACE("EditorWindow",
+    "on_openFilenameInputDialogSignal: harn=" << hfl.m_harn <<
+    " line=" << hfl.m_line);
+
+  if (!hfl.hasFilename()) {
+    // Ignore empty object.
+    return;
+  }
 
   // Check for fast-open conditions.
   {
     SMFileUtil sfu;
-    string fn(toString(filename));
-    if (!sfu.endsWithDirectorySeparator(fn) &&
-        currentDocument()->resourceName() != fn &&
-        checkFileExistenceSynchronously(hostName, fn)) {
+    if (!sfu.endsWithDirectorySeparator(hfl.m_harn.resourceName()) &&
+        hfl.m_harn != currentDocument()->documentName() &&
+        checkFileExistenceSynchronously(hfl.m_harn)) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
-      this->fileOpenFile(hostName, fn);
-      if (line != 0) {
+      this->fileOpenFile(hfl.m_harn);
+      if (hfl.m_line != 0) {
         // Also go to line number, if provided.
-        m_editorWidget->cursorTo(TextLCoord(line-1, 0));
+        m_editorWidget->cursorTo(TextLCoord(hfl.m_line-1, 0));
         m_editorWidget->clearMark();
         m_editorWidget->scrollToCursor(-1 /*gap*/);
       }
@@ -1844,11 +1848,11 @@ void EditorWindow::on_openFilenameInputDialogSignal(
     vfsConnections(),
     this);
 
-  QString confirmedFileName = filename;
+  HostAndResourceName confirmedHarn = hfl.m_harn;
 
   if (dialog.runDialog(&(m_editorGlobal->m_documentList),
-                       hostName, confirmedFileName)) {
-    this->fileOpenFile(hostName, toString(confirmedFileName));
+                       confirmedHarn)) {
+    this->fileOpenFile(confirmedHarn);
   }
 }
 
