@@ -578,4 +578,9 @@ Q_SIGNALS:
   void signal_searchStatusIndicator(QString const &status);
 };
 
+
+// Allow 'HostFileAndLineOpt' to be used as a queued signal parameter.
+Q_DECLARE_METATYPE(HostFileAndLineOpt)
+
+
 #endif // EDITOR_WIDGET_H
