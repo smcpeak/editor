@@ -59,7 +59,7 @@ public:      // methods
 // Insert some entries for testing.
 static void populate(TestIHFExists &hfe)
 {
-  // For the moment, just populate with local paths.
+  // Some local paths.
   static char const * const localPaths[] = {
     "/home/foo.txt",
     "/home/user/foo.txt",
@@ -67,6 +67,16 @@ static void populate(TestIHFExists &hfe)
   };
   for (auto s : localPaths) {
     hfe.m_existingHARNs.insert(HostAndResourceName::localFile(s));
+  }
+
+  // Also some remote paths.
+  static char const * const remotePaths[] = {
+    "/mnt/file1.txt",
+    "/mnt/file2.txt",
+  };
+  HostName remoteHost(HostName::asSSH("host"));
+  for (auto s : remotePaths) {
+    hfe.m_existingHARNs.insert(HostAndResourceName(remoteHost, s));
   }
 }
 
@@ -184,6 +194,22 @@ static void expectLocalIGNFL(
 }
 
 
+static void expectRemoteIGNFL(
+  IHFExists &hfe,
+  ArrayStack<HostAndResourceName> const &candidatePrefixes,
+  string const &haystack,
+  int charOffset,
+  HostName const &expectHostName,
+  string const &expectName,
+  int expectLine)
+{
+  HostAndResourceName expectHARN(expectHostName, expectName);
+  expectIGNFL(hfe, candidatePrefixes,
+              haystack, charOffset,
+              expectHARN, expectLine);
+}
+
+
 static void testLineNumbers()
 {
   TestIHFExists hfe;
@@ -217,10 +243,32 @@ static void testLineNumbers()
 }
 
 
+static void testRemoteFiles()
+{
+  TestIHFExists hfe;
+  populate(hfe);
+
+  ArrayStack<HostAndResourceName> prefixes;
+  prefixes.push(HostAndResourceName::localFile("/home"));
+
+  // Look for a file that exists remotely but isn't in 'prefixes' yet.
+  // The returned name in this case is due to the fallback behavior.
+  expectLocalIGNFL(hfe, prefixes, "file1.txt:3", 0, "/home/file1.txt", 3);
+
+  // Now add the remote prefix.
+  HostName host(HostName::asSSH("host"));
+  prefixes.push(HostAndResourceName(host, "/mnt"));
+
+  // Should find the file.
+  expectRemoteIGNFL(hfe, prefixes, "file1.txt:3", 0, host, "/mnt/file1.txt", 3);
+}
+
+
 static void entry()
 {
   test1();
   testLineNumbers();
+  testRemoteFiles();
 
   cout << "test-nearby-file ok" << endl;
 }
