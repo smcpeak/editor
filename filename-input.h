@@ -89,12 +89,18 @@ private:     // data
 
   // ---- vfs access state ----
   // Interface to issue VFS queries.
+  //
+  // Assumption: The set of valid hosts does not change while this
+  // dialog is active due to it being application modal.  (If a host
+  // disconnects, that does not make it invalid.)
   VFS_Connections *m_vfsConnections;
 
   // List of host names shown in the drop down.
   std::vector<HostName> m_hostNameList;
 
   // Host name used for queries.
+  //
+  // Invariant: m_vfsConnections->isValid(m_currentHostName)
   HostName m_currentHostName;
 
   // If not zero, the ID of the current pending request.

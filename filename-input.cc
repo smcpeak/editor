@@ -160,13 +160,19 @@ bool FilenameInputDialog::runDialog(
   long hostIndex = vec_find_index(m_hostNameList, harn.hostName());
   if (hostIndex >= 0) {
     m_connectionDropDown->setCurrentIndex(convertNumber<int>(hostIndex));
+    m_currentHostName = harn.hostName();
+
+    m_filenameEdit->setText(toQString(harn.resourceName()));
   }
   else {
-    // This should not happen, but I'll just be silent.
+    // This happens if 'harn' comes from a host that has been
+    // disconnected.  Switch to a valid host.
+    on_connectionIndexChanged(0);
   }
-  m_currentHostName = harn.hostName();
 
-  m_filenameEdit->setText(toQString(harn.resourceName()));
+  // We should have now established the invariant that the current host
+  // name is valid.
+  xassert(m_vfsConnections->isValid(m_currentHostName));
 
   // Set the focus on the text edit so I can start typing immediately.
   m_filenameEdit->setFocus(Qt::OtherFocusReason);
