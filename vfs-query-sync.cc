@@ -211,10 +211,16 @@ std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
   QWidget *parentWidget,
   HostAndResourceName const &harn)
 {
+  VFS_QuerySync querySync(vfsConnections, parentWidget);
+  if (!vfsConnections->isValid(harn.hostName())) {
+    querySync.complain(stringb("Cannot read " << harn <<
+                               "because the host is invalid."));
+    return std::unique_ptr<VFS_ReadFileReply>();
+  }
+
   std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, parentWidget);
   return querySync.issueTypedRequestSynchronously<VFS_ReadFileReply>(
     harn.hostName(), std::move(req));
 }
@@ -225,10 +231,16 @@ std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
   QWidget *parentWidget,
   HostAndResourceName const &harn)
 {
+  VFS_QuerySync querySync(vfsConnections, parentWidget);
+  if (!vfsConnections->isValid(harn.hostName())) {
+    querySync.complain(stringb("Cannot check status of " << harn <<
+                               "because the host is invalid."));
+    return std::unique_ptr<VFS_FileStatusReply>();
+  }
+
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, parentWidget);
   return querySync.issueTypedRequestSynchronously<VFS_FileStatusReply>(
     harn.hostName(), std::move(req));
 }
