@@ -382,7 +382,7 @@ EditorWidget::NamedTextDocumentEditor *
 
 void EditorWidget::requestFileStatus()
 {
-  if (!getDocument()->hasFilename()) {
+  if (!hasValidFileAndHostName()) {
     return;
   }
   if (getDocument()->m_modifiedOnDisk) {
@@ -471,6 +471,14 @@ NamedTextDocument *EditorWidget::getDocument() const
   xassert(m_editor);
   xassert(m_editor->m_namedDoc);
   return m_editor->m_namedDoc;
+}
+
+
+bool EditorWidget::hasValidFileAndHostName() const
+{
+  NamedTextDocument const *doc = getDocument();
+  return doc->hasFilename() &&
+         vfsConnections()->isValid(doc->hostName());
 }
 
 

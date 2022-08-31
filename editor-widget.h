@@ -458,6 +458,10 @@ public:      // funcs
   // this object does not propagate to it.
   NamedTextDocument *getDocument() const;
 
+  // True if the document has a file name, and the host name is still
+  // valid in 'vfsConnections()'.
+  bool hasValidFileAndHostName() const;
+
   // Get what the user thinks of as the "current directory" for this
   // widget.  Normally that is the directory containing the current
   // document, although under some circumstances the process working
