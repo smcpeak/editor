@@ -169,24 +169,22 @@ public:      // funcs
     NamedTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
 public Q_SLOTS:
-  // TODO: All of these should be NOEXCEPT.
-
-  void fileNewFile();
-  void fileOpen();
-  void fileOpenAtCursor();
-  void fileOpenNativeDialog();
-  void fileOpenQtDialog();
-  void fileSave();
-  void fileSaveAs();
-  void fileClose();
+  void fileNewFile() NOEXCEPT;
+  void fileOpen() NOEXCEPT;
+  void fileOpenAtCursor() NOEXCEPT;
+  void fileOpenNativeDialog() NOEXCEPT;
+  void fileOpenQtDialog() NOEXCEPT;
+  void fileSave() NOEXCEPT;
+  void fileSaveAs() NOEXCEPT;
+  void fileClose() NOEXCEPT;
   void fileToggleReadOnly() NOEXCEPT;
   void fileReload() NOEXCEPT;
   void fileCheckForChanges() NOEXCEPT;
-  void fileLaunchCommand();
-  void fileRunMake();
-  void fileKillProcess();
+  void fileLaunchCommand() NOEXCEPT;
+  void fileRunMake() NOEXCEPT;
+  void fileKillProcess() NOEXCEPT;
   void fileManageConnections() NOEXCEPT;
-  void fileExit();
+  void fileExit() NOEXCEPT;
 
   void editUndo() NOEXCEPT;
   void editRedo() NOEXCEPT;
@@ -200,37 +198,37 @@ public Q_SLOTS:
   void editReplaceAndNext() NOEXCEPT;
   void editNextSearchHit() NOEXCEPT;
   void editPreviousSearchHit() NOEXCEPT;
-  void editGotoLine();
+  void editGotoLine() NOEXCEPT;
   void editGrepSource() NOEXCEPT;
   void editRigidIndent() NOEXCEPT;
   void editRigidUnindent() NOEXCEPT;
   void editJustifyParagraph() NOEXCEPT;
-  void editApplyCommand();
+  void editApplyCommand() NOEXCEPT;
   void editInsertDateTime() NOEXCEPT;
 
-  void viewToggleVisibleWhitespace();
-  void viewSetWhitespaceOpacity();
-  void viewToggleVisibleSoftMargin();
-  void viewSetSoftMarginColumn();
-  void viewToggleHighlightTrailingWS();
-  void viewSetHighlighting();
+  void viewToggleVisibleWhitespace() NOEXCEPT;
+  void viewSetWhitespaceOpacity() NOEXCEPT;
+  void viewToggleVisibleSoftMargin() NOEXCEPT;
+  void viewSetSoftMarginColumn() NOEXCEPT;
+  void viewToggleHighlightTrailingWS() NOEXCEPT;
+  void viewSetHighlighting() NOEXCEPT;
 
-  void windowOpenFilesList();
-  void windowNewWindow();
-  void windowCloseWindow();
-  void windowOccupyLeft();
-  void windowOccupyRight();
+  void windowOpenFilesList() NOEXCEPT;
+  void windowNewWindow() NOEXCEPT;
+  void windowCloseWindow() NOEXCEPT;
+  void windowOccupyLeft() NOEXCEPT;
+  void windowOccupyRight() NOEXCEPT;
 
-  void helpKeybindings();
-  void helpAbout();
-  void helpAboutQt();
+  void helpKeybindings() NOEXCEPT;
+  void helpAbout() NOEXCEPT;
+  void helpAboutQt() NOEXCEPT;
   void helpDebugDumpWindowObjectTree() NOEXCEPT;
   void helpDebugDumpApplicationObjectTree() NOEXCEPT;
   void helpDebugEditorScreenshot() NOEXCEPT;
 
-  void editorViewChanged();
-  void on_closeSARPanel();
-  void on_openFilenameInputDialogSignal(HostFileAndLineOpt hfl);
+  void editorViewChanged() NOEXCEPT;
+  void on_closeSARPanel() NOEXCEPT;
+  void on_openFilenameInputDialogSignal(HostFileAndLineOpt hfl) NOEXCEPT;
 };
 
 

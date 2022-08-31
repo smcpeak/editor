@@ -429,11 +429,15 @@ NamedTextDocument *EditorWindow::currentDocument()
 }
 
 
-void EditorWindow::fileNewFile()
+void EditorWindow::fileNewFile() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   NamedTextDocument *b = m_editorGlobal->createNewFile(
     m_editorWidget->getDocumentDirectory());
   setDocumentFile(b);
+
+  GENERIC_CATCH_END
 }
 
 
@@ -656,33 +660,49 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
 }
 
 
-void EditorWindow::fileOpen()
+void EditorWindow::fileOpen() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   HostAndResourceName dirHarn = m_editorWidget->getDocumentDirectoryHarn();
   this->on_openFilenameInputDialogSignal(HostFileAndLineOpt(dirHarn, 0));
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::fileOpenAtCursor()
+void EditorWindow::fileOpenAtCursor() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->fileOpenAtCursor();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::fileOpenNativeDialog()
+void EditorWindow::fileOpenNativeDialog() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   HostName hostName(currentDocument()->hostName());
   this->fileOpenFile(HostAndResourceName(hostName,
     this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
                            false /*saveAs*/, FCDK_NATIVE)));
+
+  GENERIC_CATCH_END
 }
 
-void EditorWindow::fileOpenQtDialog()
+void EditorWindow::fileOpenQtDialog() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   HostName hostName(currentDocument()->hostName());
   this->fileOpenFile(HostAndResourceName(hostName,
     this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
                            false /*saveAs*/, FCDK_QT)));
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::fileOpenFile(HostAndResourceName const &harn)
@@ -774,8 +794,10 @@ bool EditorWindow::checkFileExistenceSynchronously(
 }
 
 
-void EditorWindow::fileSave()
+void EditorWindow::fileSave() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   NamedTextDocument *b = this->currentDocument();
   if (!b->hasFilename()) {
     TRACE("untitled", "file has no title; invoking Save As ...");
@@ -799,6 +821,8 @@ void EditorWindow::fileSave()
   }
 
   writeTheFile();
+
+  GENERIC_CATCH_END
 }
 
 
@@ -848,8 +872,10 @@ bool EditorWindow::stillCurrentDocument(NamedTextDocument *doc)
 }
 
 
-void EditorWindow::fileSaveAs()
+void EditorWindow::fileSaveAs() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   NamedTextDocument *fileDoc = currentDocument();
 
   // Host to start in.
@@ -906,11 +932,15 @@ void EditorWindow::fileSaveAs()
   }
 
   // Never reached.
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::fileClose()
+void EditorWindow::fileClose() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   NamedTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
     stringBuilder msg;
@@ -925,6 +955,8 @@ void EditorWindow::fileClose()
   }
 
   m_editorGlobal->deleteDocumentFile(b);
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1011,8 +1043,10 @@ void EditorWindow::fileCheckForChanges() NOEXCEPT
 }
 
 
-void EditorWindow::fileLaunchCommand()
+void EditorWindow::fileLaunchCommand() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   static LaunchCommandDialog *dialog =
     new LaunchCommandDialog();
 
@@ -1037,11 +1071,15 @@ void EditorWindow::fileLaunchCommand()
 
   // Choose a highlighter based on the command line.
   this->useDefaultHighlighter(doc);
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::fileRunMake()
+void EditorWindow::fileRunMake() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   string dir = m_editorWidget->getDocumentDirectory();
 
   // My intent is the user creates a script with this name on their
@@ -1051,11 +1089,15 @@ void EditorWindow::fileRunMake()
     toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
   this->setDocumentFile(fileDoc);
   m_editorWidget->initCursorForProcessOutput();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::fileKillProcess()
+void EditorWindow::fileKillProcess() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   NamedTextDocument *doc = this->currentDocument();
   DocumentProcessStatus dps = doc->documentProcessStatus();
 
@@ -1088,6 +1130,8 @@ void EditorWindow::fileKillProcess()
         "The process " << doc->documentName() << " has already terminated."));
       break;
   }
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1215,42 +1259,70 @@ void EditorWindow::namedTextDocumentListOrderChanged(
 {}
 
 
-void EditorWindow::fileExit()
+void EditorWindow::fileExit() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if (this->canQuitApplication()) {
     EditorGlobal::quit();
   }
+
+  GENERIC_CATCH_END
 }
 
 
 void EditorWindow::editUndo() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->editUndo();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::editRedo() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->editRedo();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::editCut() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->editCut();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::editCopy() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->editCopy();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::editPaste() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->editPaste();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::editDelete() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   m_editorWidget->editDelete();
+
+  GENERIC_CATCH_END
 }
 
 void EditorWindow::editKillLine() NOEXCEPT
@@ -1301,8 +1373,10 @@ void EditorWindow::editPreviousSearchHit() NOEXCEPT
 }
 
 
-void EditorWindow::editGotoLine()
+void EditorWindow::editGotoLine() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   // 2022-07-08: Previously, I used TextInputDialog to get history
   // services, but I then found that history for goto-line is a nuisance
   // in the UI (especially auto-completion), and almost never of any
@@ -1332,6 +1406,8 @@ void EditorWindow::editGotoLine()
       }
     }
   }
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1387,7 +1463,7 @@ void EditorWindow::editJustifyParagraph() NOEXCEPT
 }
 
 
-void EditorWindow::editApplyCommand()
+void EditorWindow::editApplyCommand() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -1526,15 +1602,21 @@ void EditorWindow::editInsertDateTime() NOEXCEPT
   this->m_editorWidget->update() /* user ; */
 
 
-void EditorWindow::viewToggleVisibleWhitespace()
+void EditorWindow::viewToggleVisibleWhitespace() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   CHECKABLE_MENU_TOGGLE(m_toggleVisibleWhitespaceAction,
     this->m_editorWidget->m_visibleWhitespace);
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::viewSetWhitespaceOpacity()
+void EditorWindow::viewSetWhitespaceOpacity() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   bool ok;
   int n = QInputDialog::getInt(this,
     "Visible Whitespace",
@@ -1545,18 +1627,26 @@ void EditorWindow::viewSetWhitespaceOpacity()
     this->m_editorWidget->m_whitespaceOpacity = n;
     this->m_editorWidget->update();
   }
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::viewToggleVisibleSoftMargin()
+void EditorWindow::viewToggleVisibleSoftMargin() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   CHECKABLE_MENU_TOGGLE(m_toggleVisibleSoftMarginAction,
     this->m_editorWidget->m_visibleSoftMargin);
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::viewSetSoftMarginColumn()
+void EditorWindow::viewSetSoftMarginColumn() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   bool ok;
   int n = QInputDialog::getInt(this,
     "Soft Margin Column",
@@ -1567,23 +1657,31 @@ void EditorWindow::viewSetSoftMarginColumn()
     this->m_editorWidget->m_softMarginColumn = n-1;
     this->m_editorWidget->update();
   }
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::viewToggleHighlightTrailingWS()
+void EditorWindow::viewToggleHighlightTrailingWS() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   this->m_editorWidget->toggleHighlightTrailingWhitespace();
 
   // Includes firing 'editorViewChanged'.
   this->m_editorWidget->redraw();
+
+  GENERIC_CATCH_END
 }
 
 
 #undef CHECKABLE_MENU_TOGGLE
 
 
-void EditorWindow::viewSetHighlighting()
+void EditorWindow::viewSetHighlighting() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   NamedTextDocument *doc = this->currentDocument();
 
   QInputDialog dialog(this);
@@ -1651,11 +1749,15 @@ void EditorWindow::viewSetHighlighting()
 
   // Notify everyone of the change.
   this->m_editorGlobal->m_documentList.notifyAttributeChanged(doc);
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::windowOpenFilesList()
+void EditorWindow::windowOpenFilesList() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   // Put the current document on top before opening the dialog so one
   // can always hit Ctrl+O, Enter and the displayed document won't
   // change.
@@ -1665,51 +1767,73 @@ void EditorWindow::windowOpenFilesList()
   if (doc) {
     this->setDocumentFile(doc);
   }
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::windowOccupyLeft()
+void EditorWindow::windowOccupyLeft() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if (QApplication::desktop()->width() == 1024) {  // 1024x768
     setGeometry(83, 49, 465, 660);
   }
   else {    // 1280x1024
     setGeometry(83, 59, 565, 867);
   }
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::windowOccupyRight()
+void EditorWindow::windowOccupyRight() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if (QApplication::desktop()->width() == 1024) {  // 1024x768
     setGeometry(390, 49, 630, 660);
   }
   else {    // 1280x1024
     setGeometry(493, 59, 783, 867);
   }
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::helpKeybindings()
+void EditorWindow::helpKeybindings() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   KeysDialog d(doc_keybindings, this);
   d.exec();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::helpAbout()
+void EditorWindow::helpAbout() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   QMessageBox::about(this, "About Scott's Editor",
     qstringb(
       "This is a text editor that has a user interface I like.\n"
       "\n"
       "Version: " << editor_git_version));
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::helpAboutQt()
+void EditorWindow::helpAboutQt() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   QMessageBox::aboutQt(this, "An editor");
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1748,8 +1872,10 @@ void EditorWindow::helpDebugEditorScreenshot() NOEXCEPT
 }
 
 
-void EditorWindow::editorViewChanged()
+void EditorWindow::editorViewChanged() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   TRACE("EditorWindow", "editorViewChanged");
 
   RCSerf<TextDocumentEditor> tde = m_editorWidget->getDocumentEditor();
@@ -1799,21 +1925,29 @@ void EditorWindow::editorViewChanged()
 
   // Read-only menu checkbox.
   m_toggleReadOnlyAction->setChecked(m_editorWidget->isReadOnly());
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::on_closeSARPanel()
+void EditorWindow::on_closeSARPanel() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   if (m_sarPanel->isVisible()) {
     m_sarPanel->hide();
     this->m_editorWidget->setFocus();
   }
+
+  GENERIC_CATCH_END
 }
 
 
 void EditorWindow::on_openFilenameInputDialogSignal(
-  HostFileAndLineOpt hfl)
+  HostFileAndLineOpt hfl) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   TRACE("EditorWindow",
     "on_openFilenameInputDialogSignal: harn=" << hfl.m_harn <<
     " line=" << hfl.m_line);
@@ -1854,6 +1988,8 @@ void EditorWindow::on_openFilenameInputDialogSignal(
                        confirmedHarn)) {
     this->fileOpenFile(confirmedHarn);
   }
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1863,18 +1999,26 @@ void EditorWindow::complain(char const *msg)
 }
 
 
-void EditorWindow::windowNewWindow()
+void EditorWindow::windowNewWindow() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   EditorWindow *ed = this->m_editorGlobal->createNewWindow(this->currentDocument());
   ed->show();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWindow::windowCloseWindow()
+void EditorWindow::windowCloseWindow() NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   // This sends 'closeEvent' and actually closes the window only if
   // the event is accepted.
   this->close();
+
+  GENERIC_CATCH_END
 }
 
 
