@@ -49,10 +49,10 @@ test-hashcomment-hilite
 test-makefile-hilite
 test-td-core
 test-td-editor
-test-text-search
 test.out
 testgap
 testing.txt
+text-search-test
 textcategory
 tmp.cc
 untitled.txt

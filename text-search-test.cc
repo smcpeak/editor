@@ -1,4 +1,4 @@
-// test-text-search.cc
+// text-search-test.cc
 // Tests for 'text-search' module.
 
 #include "text-search.h"               // this module
@@ -560,7 +560,7 @@ static void entry(int argc, char **argv)
   testPerformance();
   testRegexPerf2(false /*nolimit*/);
 
-  cout << "test-text-search ok" << endl;
+  cout << "text-search-test ok" << endl;
 }
 
 ARGS_TEST_MAIN

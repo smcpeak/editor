@@ -175,19 +175,19 @@ test-td-editor: $(TD_OBJS)
 $(eval $(call RUN_TEST_PROG,test-td-editor))
 
 
-# -------------- test-text-search program ----------------
+# -------------- text-search-test program ----------------
 EDITOR_OBJS += fasttime.o
 EDITOR_OBJS += text-search.o
 
-TEST_TEXT_SEARCH_OBJS := $(EDITOR_OBJS)
+TEXT_SEARCH_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_TEXT_SEARCH_OBJS += test-text-search.o
--include test-text-search.d
+TEXT_SEARCH_TEST_OBJS += text-search-test.o
+-include text-search-test.d
 
-test-text-search: $(TEST_TEXT_SEARCH_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_TEXT_SEARCH_OBJS) $(QT_CONSOLE_LDFLAGS)
+text-search-test: $(TEXT_SEARCH_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEXT_SEARCH_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-text-search))
+$(eval $(call RUN_TEST_PROG,text-search-test))
 
 
 # -------------- justify test program ----------------
