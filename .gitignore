@@ -34,6 +34,7 @@ events.out
 hashcomment-hilite-test
 historybuf
 justify-test
+makefile-hilite-test
 mut
 mutant-compile.sh
 mutant.cc
@@ -48,7 +49,6 @@ style
 td-core
 td-core-test
 td-editor-test
-test-makefile-hilite
 test.out
 testgap
 testing.txt

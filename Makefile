@@ -389,18 +389,18 @@ c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 $(eval $(call RUN_TEST_PROG,c_hilite))
 
 
-# ----------------- Makefile highlighting -----------------
+# ----------------------- makefile-hilite-test -------------------------
 EDITOR_OBJS += makefile_hilite.yy.o
 
-TEST_MAKEFILE_HILITE_OBJS := $(EDITOR_OBJS)
+MAKEFILE_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_MAKEFILE_HILITE_OBJS += test-makefile-hilite.o
--include test-makefile-hilite.d
+MAKEFILE_HILITE_TEST_OBJS += makefile-hilite-test.o
+-include makefile-hilite-test.d
 
-test-makefile-hilite: $(TEST_MAKEFILE_HILITE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_MAKEFILE_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+makefile-hilite-test: $(MAKEFILE_HILITE_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(MAKEFILE_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-makefile-hilite))
+$(eval $(call RUN_TEST_PROG,makefile-hilite-test))
 
 
 # ---------------------- hashcomment-hilite-test -----------------------

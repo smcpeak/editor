@@ -1,4 +1,4 @@
-// test-makefile-hilite.cc
+// makefile-hilite-test.cc
 // Test code for makefile_hilite.{h,lex}.
 
 #include "makefile_hilite.h"           // module to test
