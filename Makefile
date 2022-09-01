@@ -264,11 +264,11 @@ nearby-file-test: $(NEARBY_FILE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,nearby-file-test))
 
 
-# --------------- textcategory test program ----------------
-textcategory: textcategory.h textcategory.cc
-	$(CXX) -o $@ $(CCFLAGS) -DTEST_TEXTCATEGORY textcategory.cc $(CONSOLE_LDFLAGS)
+# ------------------------ textcategory-test ---------------------------
+textcategory-test: textcategory.o textcategory-test.o
+	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,textcategory))
+$(eval $(call RUN_TEST_PROG,textcategory-test))
 
 
 # ----------------------- bufferlinesource-test ------------------------
