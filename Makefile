@@ -417,18 +417,18 @@ hashcomment-hilite-test: $(HASHCOMMENT_HILITE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,hashcomment-hilite-test))
 
 
-# ------------------------- OCaml highlighting -------------------------
+# -------------------------- ocaml-hilite-test -------------------------
 EDITOR_OBJS += ocaml_hilite.yy.o
 
-TEST_OCAML_HILITE_OBJS := $(EDITOR_OBJS)
+OCAML_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_OCAML_HILITE_OBJS += test-ocaml-hilite.o
--include test-ocaml-hilite.d
+OCAML_HILITE_TEST_OBJS += ocaml-hilite-test.o
+-include ocaml-hilite-test.d
 
-test-ocaml-hilite: $(TEST_OCAML_HILITE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_OCAML_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+ocaml-hilite-test: $(OCAML_HILITE_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(OCAML_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-ocaml-hilite))
+$(eval $(call RUN_TEST_PROG,ocaml-hilite-test))
 
 
 # ------------------------- Python highlighting -------------------------

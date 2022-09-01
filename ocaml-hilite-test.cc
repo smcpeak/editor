@@ -1,4 +1,4 @@
-// test-ocaml-hilite.cc
+// ocaml-hilite-test.cc
 // Test code for ocaml_hilite.{h,lex}.
 
 #include "ocaml_hilite.h"              // module to test
