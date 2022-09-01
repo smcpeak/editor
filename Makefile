@@ -431,18 +431,18 @@ ocaml-hilite-test: $(OCAML_HILITE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,ocaml-hilite-test))
 
 
-# ------------------------- Python highlighting -------------------------
+# ------------------------- python-hilite-test -------------------------
 EDITOR_OBJS += python_hilite.yy.o
 
-TEST_PYTHON_HILITE_OBJS := $(EDITOR_OBJS)
+PYTHON_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_PYTHON_HILITE_OBJS += test-python-hilite.o
--include test-python-hilite.d
+PYTHON_HILITE_TEST_OBJS += python-hilite-test.o
+-include python-hilite-test.d
 
-test-python-hilite: $(TEST_PYTHON_HILITE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_PYTHON_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+python-hilite-test: $(PYTHON_HILITE_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(PYTHON_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-python-hilite))
+$(eval $(call RUN_TEST_PROG,python-hilite-test))
 
 
 # ----------------- git version ---------------------

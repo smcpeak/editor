@@ -1,4 +1,4 @@
-// test-python-hilite.cc
+// python-hilite-test.cc
 // Test code for python_hilite.{h,lex}.
 
 #include "python_hilite.h"             // module to test
