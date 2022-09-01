@@ -72,8 +72,8 @@ public:      // instance methods
 
   // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
   //
-  // If there is an error, pop up an error box and return an empty
-  // pointer.
+  // If there is an error, including if 'hostName' is invalid, pop up an
+  // error box and return an empty pointer.
   template <class REPLY_TYPE>
   std::unique_ptr<REPLY_TYPE> issueTypedRequestSynchronously(
     HostName const &hostName,
@@ -105,6 +105,11 @@ std::unique_ptr<REPLY_TYPE> VFS_QuerySync::issueTypedRequestSynchronously(
 {
   // Initially empty pointer, used for error returns.
   std::unique_ptr<REPLY_TYPE> typedReply;
+
+  if (!m_vfsConnections->isValid(hostName)) {
+    complain(stringb("Host " << hostName << " is invalid."));
+    return typedReply;
+  }
 
   // Issue the request.
   std::unique_ptr<VFS_Message> genericReply;
