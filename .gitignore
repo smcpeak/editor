@@ -22,6 +22,7 @@ X11
 Xm
 buffer
 buffercore
+bufferlinesource-test
 c_hilite
 command-runner-test
 config.mk
@@ -46,7 +47,6 @@ style
 td-core
 td-core-test
 td-editor-test
-test-bufferlinesource
 test-hashcomment-hilite
 test-makefile-hilite
 test.out

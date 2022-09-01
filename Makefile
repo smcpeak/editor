@@ -271,18 +271,18 @@ textcategory: textcategory.h textcategory.cc
 $(eval $(call RUN_TEST_PROG,textcategory))
 
 
-# ----------------------- test-bufferlinesource ------------------------
+# ----------------------- bufferlinesource-test ------------------------
 EDITOR_OBJS += bufferlinesource.o
 
-TEST_BUFFERLINESOURCE_OBJS := $(EDITOR_OBJS)
+BUFFERLINESOURCE_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_BUFFERLINESOURCE_OBJS += test-bufferlinesource.o
--include test-bufferlinesource.d
+BUFFERLINESOURCE_TEST_OBJS += bufferlinesource-test.o
+-include bufferlinesource-test.d
 
-test-bufferlinesource: $(TEST_BUFFERLINESOURCE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_BUFFERLINESOURCE_OBJS) $(QT_CONSOLE_LDFLAGS)
+bufferlinesource-test: $(BUFFERLINESOURCE_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(BUFFERLINESOURCE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-bufferlinesource))
+$(eval $(call RUN_TEST_PROG,bufferlinesource-test))
 
 
 # ------------------------- editor-fs-server ---------------------------

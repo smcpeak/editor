@@ -1,4 +1,4 @@
-// test-bufferlinesource.cc
+// bufferlinesource-test.cc
 // Test code for bufferlinesource.
 
 #include "bufferlinesource.h"          // module to test
@@ -50,7 +50,7 @@ void entry()
     EXPECT_EQ(sb.str(), textWithNewline);
   }
 
-  cout << "test-bufferlinesource passed" << endl;
+  cout << "bufferlinesource-test passed" << endl;
 }
 
 USUAL_MAIN
