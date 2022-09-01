@@ -1,10 +1,10 @@
-// test-command-runner.cc
+// command-runner-test.cc
 // Tests for 'command-runner' module.
 
 #include "command-runner.h"            // module to test
 
 // editor
-#include "test-command-runner.h"       // helper classes for this module
+#include "command-runner-test.h"       // helper classes for this module
 
 // smqtutil
 #include "qtutil.h"                    // toString
@@ -831,7 +831,7 @@ static void entry(int argc, char **argv)
   RUN(testMiscDiagnostics());
   RUN(testSetShellCommandLine());
 
-  cout << "test-command-runner tests passed" << endl;
+  cout << "command-runner-test tests passed" << endl;
 }
 
 ARGS_TEST_MAIN

@@ -1,8 +1,8 @@
-// test-command-runner.h
-// header for test-command-runner.cc
+// command-runner-test.h
+// header for command-runner-test.cc
 
-#ifndef TEST_COMMAND_RUNNER_H
-#define TEST_COMMAND_RUNNER_H
+#ifndef COMMAND_RUNNER_TEST_H
+#define COMMAND_RUNNER_TEST_H
 
 #include "command-runner.h"            // CommandRunner
 
@@ -56,4 +56,4 @@ public Q_SLOTS:
 };
 
 
-#endif // TEST_COMMAND_RUNNER_H
+#endif // COMMAND_RUNNER_TEST_H

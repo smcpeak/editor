@@ -208,15 +208,15 @@ EDITOR_OBJS += command-runner.moc.o
 
 COMMAND_RUNNER_OBJS := $(EDITOR_OBJS)
 
-COMMAND_RUNNER_OBJS += test-command-runner.o
-COMMAND_RUNNER_OBJS += test-command-runner.moc.o
--include test-command-runner.d
--include test-command-runner.moc.d
+COMMAND_RUNNER_OBJS += command-runner-test.o
+COMMAND_RUNNER_OBJS += command-runner-test.moc.o
+-include command-runner-test.d
+-include command-runner-test.moc.d
 
-test-command-runner: $(COMMAND_RUNNER_OBJS)
+command-runner-test: $(COMMAND_RUNNER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-command-runner))
+$(eval $(call RUN_TEST_PROG,command-runner-test))
 
 
 # ---------------------- named-td-test ----------------------
