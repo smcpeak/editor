@@ -1,4 +1,4 @@
-// test-nearby-file.cc
+// nearby-file-test.cc
 // Test code for 'nearby-file' module.
 
 #include "nearby-file.h"               // module to test
@@ -277,7 +277,7 @@ static void entry()
   testLineNumbers();
   testRemoteFiles();
 
-  cout << "test-nearby-file ok" << endl;
+  cout << "nearby-file-test ok" << endl;
 }
 
 USUAL_TEST_MAIN

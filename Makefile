@@ -250,18 +250,18 @@ test-named-td-list: $(TEST_NAMED_TD_LIST_OBJS)
 $(eval $(call RUN_TEST_PROG,test-named-td-list))
 
 
-# -------------------- test-nearby-file --------------------
+# -------------------- nearby-file-test --------------------
 EDITOR_OBJS += nearby-file.o
 
-TEST_NEARBY_FILE_OBJS := $(EDITOR_OBJS)
+NEARBY_FILE_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_NEARBY_FILE_OBJS += test-nearby-file.o
--include test-nearby-file.d
+NEARBY_FILE_TEST_OBJS += nearby-file-test.o
+-include nearby-file-test.d
 
-test-nearby-file: $(TEST_NEARBY_FILE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_NEARBY_FILE_OBJS) $(QT_CONSOLE_LDFLAGS)
+nearby-file-test: $(NEARBY_FILE_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(NEARBY_FILE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-nearby-file))
+$(eval $(call RUN_TEST_PROG,nearby-file-test))
 
 
 # --------------- textcategory test program ----------------

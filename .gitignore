@@ -32,6 +32,7 @@ historybuf
 mut
 mutant-compile.sh
 mutant.cc
+nearby-file-test
 out
 personal-make-cmd.sh
 qtbdffont
@@ -46,7 +47,6 @@ test-justify
 test-makefile-hilite
 test-named-td
 test-named-td-list
-test-nearby-file
 test-td-core
 test-td-editor
 test-text-search
