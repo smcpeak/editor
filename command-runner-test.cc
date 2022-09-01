@@ -316,7 +316,7 @@ static void testLargeData2(bool swapOrder)
   QByteArray output((char const *)outputDB.getData(), outputDB.getDataLen());
 
   DataBlock errorDB;
-  errorDB.readFromFile("test-td-editor.cc");
+  errorDB.readFromFile("td-editor-test.cc");
   QByteArray error((char const *)errorDB.getData(), errorDB.getDataLen());
 
   CommandRunner cr;
@@ -327,8 +327,8 @@ static void testLargeData2(bool swapOrder)
   // by my program, so it is good to test both ways.
   cr.setArguments(QStringList() << "-c" <<
     (swapOrder?
-      "(cat test-td-editor.cc 1>&2) & cat editor-widget.cc ; wait $!" :
-      "cat editor-widget.cc & (cat test-td-editor.cc 1>&2) ; wait $!"));
+      "(cat td-editor-test.cc 1>&2) & cat editor-widget.cc ; wait $!" :
+      "cat editor-widget.cc & (cat td-editor-test.cc 1>&2) ; wait $!"));
 
   cr.startAndWait();
   EXPECT_EQ(cr.getFailed(), false);

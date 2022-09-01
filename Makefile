@@ -154,7 +154,7 @@ test-td-core: $(TD_CORE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-td-core))
 
 
-# -------------- test-td-editor test program ----------------
+# -------------- td-editor-test test program ----------------
 TOCLEAN += td.tmp
 
 EDITOR_OBJS += history.o
@@ -166,13 +166,13 @@ EDITOR_OBJS += textlcoord.o
 
 TD_OBJS := $(EDITOR_OBJS)
 
-TD_OBJS += test-td-editor.o
--include test-td-editor.d
+TD_OBJS += td-editor-test.o
+-include td-editor-test.d
 
-test-td-editor: $(TD_OBJS)
+td-editor-test: $(TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-td-editor))
+$(eval $(call RUN_TEST_PROG,td-editor-test))
 
 
 # -------------- text-search-test program ----------------

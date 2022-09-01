@@ -1,4 +1,4 @@
-// test-td-editor.cc
+// td-editor-test.cc
 // Tests for td-editor module.
 
 #include "td-editor.h"                 // module to test
@@ -2347,7 +2347,7 @@ static void entry(int argc, char **argv)
   testEditingWithTabs();
   testModelToLayoutSpans();
 
-  cout << "\ntest-td-editor is ok" << endl;
+  cout << "\ntd-editor-test is ok" << endl;
 }
 
 ARGS_TEST_MAIN
