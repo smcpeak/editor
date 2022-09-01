@@ -26,18 +26,25 @@ static bool isFilenameDigit(char c)
 // characters.
 static bool isFilenameCore(char c)
 {
-  return isLetter(c) || isFilenameDigit(c);
+  return isLetter(c) || isFilenameDigit(c) || c == '.';
 }
 
 // True if 'c' is punctuation that commonly appears in text file names,
-// including as a directory separator.
+// including as a directory separator.  A key aspect of these characters
+// is they are not expected to be consecutive in a valid file name.
 static bool isFilenamePunctuation(char c)
 {
   return c == '_' ||
          c == '-' ||
          c == '/' ||
-         c == '\\' ||       // for Windows
-         c == '.';
+         c == '\\';          // for Windows
+}
+
+// True if 'c' is punctuation or '.'.  We discard trailing letters that
+// pass this test.
+static bool isFilenamePunctuationOrDot(char c)
+{
+  return isFilenamePunctuation(c) || c == '.';
 }
 
 // Return true if 'c' is a character that commonly appears in the name
@@ -124,9 +131,14 @@ void getCandidateSuffixes(
     return;
   }
 
-  // File names do not usually end with punctuation, and the cursor
-  // should not be on consecutive punctuation if it really is on a
-  // file name.
+  // File names do not usually end with punctuation or dots.
+  if (isFilenamePunctuationOrDot(haystack[charOffset]) &&
+      charOffset == haystackLength-1) {
+    return;
+  }
+
+  // The cursor should not be on consecutive punctuation if it really is
+  // on a file name.
   if (isFilenamePunctuation(haystack[charOffset]) &&
       (charOffset == haystackLength-1 ||
        !isFilenameCore(haystack[charOffset+1]))) {
@@ -145,7 +157,7 @@ void getCandidateSuffixes(
 
   // Remove trailing punctuation beyond the original offset.
   while (high > charOffset &&
-         isFilenamePunctuation(haystack[high])) {
+         isFilenamePunctuationOrDot(haystack[high])) {
     high--;
   }
 

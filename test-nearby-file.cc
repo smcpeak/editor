@@ -64,6 +64,7 @@ static void populate(TestIHFExists &hfe)
     "/home/foo.txt",
     "/home/user/foo.txt",
     "/home/user/bar.txt",
+    "/smbase/sm-test.h",
   };
   for (auto s : localPaths) {
     hfe.m_existingHARNs.insert(HostAndResourceName::localFile(s));
@@ -133,9 +134,9 @@ static void test1()
   // punctuation characters.
   expectLocalIGNF(hfe, prefixes, "ab cAZaz90_d ef", 7,
                   "/home/cAZaz90_d");
-  expectLocalIGNF(hfe, prefixes, "ab z/y\\-_.cAZaz90_d ef", 8, "");
-  expectLocalIGNF(hfe, prefixes, "ab z/y\\-_.cAZaz90_d ef", 11,
-                  "/home/z/y/-_.cAZaz90_d");
+  expectLocalIGNF(hfe, prefixes, "ab z/y\\-__cAZaz90_d ef", 8, "");
+  expectLocalIGNF(hfe, prefixes, "ab z/y\\-__cAZaz90_d ef", 11,
+                  "/home/z/y/-__cAZaz90_d");
 
   // Test exclusion.
   expectLocalIGNF(hfe, prefixes, "ab \"cd\" ef", 5,
@@ -240,6 +241,12 @@ static void testLineNumbers()
 
   // Report best match even for non-existent, including line number.
   expectLocalIGNFL(hfe, prefixes, "baz.txt:3: something", 0, "/home/baz.txt", 3);
+
+  // Find a file starting with "./".
+  expectLocalIGNFL(hfe, prefixes, "./foo.txt:3", 0, "/home/foo.txt", 3);
+
+  // And "../".
+  expectLocalIGNFL(hfe, prefixes, "../smbase/sm-test.h:3", 0, "/smbase/sm-test.h", 3);
 }
 
 
