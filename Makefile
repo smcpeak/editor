@@ -403,18 +403,18 @@ test-makefile-hilite: $(TEST_MAKEFILE_HILITE_OBJS)
 $(eval $(call RUN_TEST_PROG,test-makefile-hilite))
 
 
-# ----------------- HashComment highlighting -----------------
+# ---------------------- hashcomment-hilite-test -----------------------
 EDITOR_OBJS += hashcomment_hilite.yy.o
 
-TEST_HASHCOMMENT_HILITE_OBJS := $(EDITOR_OBJS)
+HASHCOMMENT_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_HASHCOMMENT_HILITE_OBJS += test-hashcomment-hilite.o
--include test-hashcomment-hilite.d
+HASHCOMMENT_HILITE_TEST_OBJS += hashcomment-hilite-test.o
+-include hashcomment-hilite-test.d
 
-test-hashcomment-hilite: $(TEST_HASHCOMMENT_HILITE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_HASHCOMMENT_HILITE_OBJS) $(QT_CONSOLE_LDFLAGS)
+hashcomment-hilite-test: $(HASHCOMMENT_HILITE_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(HASHCOMMENT_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-hashcomment-hilite))
+$(eval $(call RUN_TEST_PROG,hashcomment-hilite-test))
 
 
 # ------------------------- OCaml highlighting -------------------------

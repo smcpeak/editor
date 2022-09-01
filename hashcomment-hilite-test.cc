@@ -1,4 +1,4 @@
-// test-hashcomment-hilite.cc
+// hashcomment-hilite-test.cc
 // Test code for hashcomment_hilite.{h,lex}.
 
 #include "hashcomment_hilite.h"        // module to test

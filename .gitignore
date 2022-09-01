@@ -31,6 +31,7 @@ editor
 editor-stable
 editor-strutil-test
 events.out
+hashcomment-hilite-test
 historybuf
 justify-test
 mut
@@ -47,7 +48,6 @@ style
 td-core
 td-core-test
 td-editor-test
-test-hashcomment-hilite
 test-makefile-hilite
 test.out
 testgap
