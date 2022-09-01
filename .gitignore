@@ -26,7 +26,6 @@ bufferlinesource-test
 c_hilite
 command-runner-test
 config.mk
-dialogs
 editor
 editor-stable
 editor-strutil-test

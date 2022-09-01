@@ -542,14 +542,6 @@ editor: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
 
 
-# -------------- another test program ---------------
-# This is an old test program written on top of bare X.
-# TODO: I should remove it.
-TOCLEAN += dialogs
-dialogs: dialogs.cc
-	$(CXX) -o $@ $(CCFLAGS) dialogs.cc -lXm -lXt $(GUI_LDFLAGS)
-
-
 # --------------------- misc ------------------------
 clean:
 	$(RM) $(TOCLEAN)
