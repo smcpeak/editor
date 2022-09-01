@@ -1,4 +1,4 @@
-// test-named-td-list.cc
+// named-td-list-test.cc
 // Tests for 'named-td-list' module.
 
 #include "named-td-list.h"             // module to test
@@ -440,7 +440,7 @@ void entry()
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
 
-  cout << "test-named-td-list passed\n";
+  cout << "named-td-list-test passed\n";
 }
 
 USUAL_TEST_MAIN

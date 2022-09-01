@@ -236,18 +236,18 @@ test-named-td: $(TEST_NAMED_TD_OBJS)
 $(eval $(call RUN_TEST_PROG,test-named-td))
 
 
-# -------------------- test-named-td-list --------------------
+# -------------------- named-td-list-test --------------------
 EDITOR_OBJS += named-td-list.o
 
-TEST_NAMED_TD_LIST_OBJS := $(EDITOR_OBJS)
+NAMED_TD_LIST_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_NAMED_TD_LIST_OBJS += test-named-td-list.o
--include test-named-td-list.d
+NAMED_TD_LIST_TEST_OBJS += named-td-list-test.o
+-include named-td-list-test.d
 
-test-named-td-list: $(TEST_NAMED_TD_LIST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_LIST_OBJS) $(QT_CONSOLE_LDFLAGS)
+named-td-list-test: $(NAMED_TD_LIST_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_LIST_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-named-td-list))
+$(eval $(call RUN_TEST_PROG,named-td-list-test))
 
 
 # -------------------- nearby-file-test --------------------
