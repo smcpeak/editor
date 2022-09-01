@@ -23,12 +23,14 @@ Xm
 buffer
 buffercore
 c_hilite
+command-runner-test
 config.mk
 dialogs
 editor
 editor-stable
 events.out
 historybuf
+justify-test
 mut
 mutant-compile.sh
 mutant.cc
@@ -42,10 +44,8 @@ smbase
 style
 td-core
 test-bufferlinesource
-test-command-runner
 test-editor-strutil
 test-hashcomment-hilite
-test-justify
 test-makefile-hilite
 test-td-core
 test-td-editor

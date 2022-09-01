@@ -1,4 +1,4 @@
-// test-justify.cc
+// justify-test.cc
 // Tests for 'justify' module.
 
 #include "justify.h"                   // module to test
@@ -486,7 +486,7 @@ static void entry()
   testJustifyTextLines();
   testJustifyNearLine();
 
-  cout << "test-justify PASSED\n";
+  cout << "justify-test PASSED\n";
 }
 
 USUAL_TEST_MAIN

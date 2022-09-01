@@ -1565,7 +1565,7 @@ static void testConfineCursorToVisible()
 
 // ------------------- testJustifyNearCursor --------------------
 // There are already extensive tests of the justification algorithm in
-// test-justify.cc, so here I just do a quick check.
+// justify-test.cc, so here I just do a quick check.
 static void testJustifyNearCursor()
 {
   TextDocumentAndEditor tde;

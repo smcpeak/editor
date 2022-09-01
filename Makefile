@@ -193,13 +193,13 @@ $(eval $(call RUN_TEST_PROG,test-text-search))
 # -------------- justify test program ----------------
 JUSTIFY_OBJS := $(EDITOR_OBJS)
 
-JUSTIFY_OBJS += test-justify.o
--include test-justify.d
+JUSTIFY_OBJS += justify-test.o
+-include justify-test.d
 
-test-justify: $(JUSTIFY_OBJS)
+justify-test: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-justify))
+$(eval $(call RUN_TEST_PROG,justify-test))
 
 
 # -------------- command-runner test program ----------------
