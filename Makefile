@@ -131,11 +131,11 @@ editor-strutil-test: $(EDITOR_STRUTIL_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,editor-strutil-test))
 
 
-# ---------------- gap test program -----------------
-testgap: gap.h testgap.cc
-	$(CXX) -o $@ $(CCFLAGS) testgap.cc $(CONSOLE_LDFLAGS)
+# ----------------------------- gap-test -------------------------------
+gap-test: gap.h gap-test.cc
+	$(CXX) -o $@ $(CCFLAGS) gap-test.cc $(CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,testgap))
+$(eval $(call RUN_TEST_PROG,gap-test))
 
 
 # -------------- td-core-test test program ----------------

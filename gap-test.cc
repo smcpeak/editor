@@ -1,4 +1,4 @@
-// testgap.cc
+// gap-test.cc
 // test the gap.h module
 
 #include "gap.h"                       // module to test

@@ -30,6 +30,7 @@ editor
 editor-stable
 editor-strutil-test
 events.out
+gap-test
 hashcomment-hilite-test
 historybuf
 justify-test
@@ -49,7 +50,6 @@ td-core
 td-core-test
 td-editor-test
 test.out
-testgap
 testing.txt
 text-search-test
 textcategory
