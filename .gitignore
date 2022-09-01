@@ -33,6 +33,7 @@ mut
 mutant-compile.sh
 mutant.cc
 named-td-list-test
+named-td-test
 nearby-file-test
 out
 personal-make-cmd.sh
@@ -46,7 +47,6 @@ test-editor-strutil
 test-hashcomment-hilite
 test-justify
 test-makefile-hilite
-test-named-td
 test-td-core
 test-td-editor
 test-text-search

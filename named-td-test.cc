@@ -1,4 +1,4 @@
-// test-named-td.cc
+// named-td-test.cc
 // Tests for 'named-td' module.
 
 #include "named-td.h"                  // module to test
@@ -170,7 +170,7 @@ static void entry()
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
 
-  cout << "test-file-fd passed\n";
+  cout << "named-td-test passed\n";
 
 }
 

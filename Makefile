@@ -219,21 +219,21 @@ test-command-runner: $(COMMAND_RUNNER_OBJS)
 $(eval $(call RUN_TEST_PROG,test-command-runner))
 
 
-# ---------------------- test-named-td ----------------------
+# ---------------------- named-td-test ----------------------
 EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += named-td.o
 
-TEST_NAMED_TD_OBJS := $(EDITOR_OBJS)
+NAMED_TD_TEST_OBJS := $(EDITOR_OBJS)
 
-TEST_NAMED_TD_OBJS += test-named-td.o
--include test-named-td.d
+NAMED_TD_TEST_OBJS += named-td-test.o
+-include named-td-test.d
 
-test-named-td: $(TEST_NAMED_TD_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_NAMED_TD_OBJS) $(QT_CONSOLE_LDFLAGS)
+named-td-test: $(NAMED_TD_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-named-td))
+$(eval $(call RUN_TEST_PROG,named-td-test))
 
 
 # -------------------- named-td-list-test --------------------
