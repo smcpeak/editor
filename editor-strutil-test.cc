@@ -1,4 +1,4 @@
-// test-editor-strutil.cc
+// editor-strutil-test.cc
 // Test code for 'editor-strutil' module.
 
 #include "editor-strutil.h"            // this module
@@ -54,7 +54,7 @@ static void entry()
 {
   test1();
 
-  cout << "test-editor-strutil ok" << endl;
+  cout << "editor-strutil-test ok" << endl;
 }
 
 USUAL_TEST_MAIN

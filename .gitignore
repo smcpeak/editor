@@ -28,6 +28,7 @@ config.mk
 dialogs
 editor
 editor-stable
+editor-strutil-test
 events.out
 historybuf
 justify-test
@@ -46,7 +47,6 @@ td-core
 td-core-test
 td-editor-test
 test-bufferlinesource
-test-editor-strutil
 test-hashcomment-hilite
 test-makefile-hilite
 test.out

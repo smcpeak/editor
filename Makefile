@@ -118,17 +118,17 @@ TOCLEAN += *.o *.d
 	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
 
 
-# ------------ test-editor-strutil program -------------
+# ------------ editor-strutil-test program -------------
 EDITOR_OBJS += editor-strutil.o
 
-TEST_EDITOR_STRUTIL_OBJS := $(EDITOR_OBJS)
-TEST_EDITOR_STRUTIL_OBJS += test-editor-strutil.o
--include test-editor-strutil.d
+EDITOR_STRUTIL_TEST_OBJS := $(EDITOR_OBJS)
+EDITOR_STRUTIL_TEST_OBJS += editor-strutil-test.o
+-include editor-strutil-test.d
 
-test-editor-strutil: $(TEST_EDITOR_STRUTIL_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEST_EDITOR_STRUTIL_OBJS) $(CONSOLE_LDFLAGS)
+editor-strutil-test: $(EDITOR_STRUTIL_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_STRUTIL_TEST_OBJS) $(CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-editor-strutil))
+$(eval $(call RUN_TEST_PROG,editor-strutil-test))
 
 
 # ---------------- gap test program -----------------
