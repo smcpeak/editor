@@ -138,20 +138,20 @@ testgap: gap.h testgap.cc
 $(eval $(call RUN_TEST_PROG,testgap))
 
 
-# -------------- test-td-core test program ----------------
+# -------------- td-core-test test program ----------------
 TOCLEAN += td-core.tmp
 
 EDITOR_OBJS += td-core.o
 EDITOR_OBJS += textmcoord.o
 
 TD_CORE_OBJS := $(EDITOR_OBJS)
-TD_CORE_OBJS += test-td-core.o
--include test-td-core.d
+TD_CORE_OBJS += td-core-test.o
+-include td-core-test.d
 
-test-td-core: $(TD_CORE_OBJS)
+td-core-test: $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,test-td-core))
+$(eval $(call RUN_TEST_PROG,td-core-test))
 
 
 # -------------- td-editor-test test program ----------------

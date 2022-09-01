@@ -1,4 +1,4 @@
-// test-td-core.cc
+// td-core-test.cc
 // Tests for 'td-core' module.
 
 #include "td-core.h"                   // module to test
@@ -334,7 +334,7 @@ static void entry()
   testVarious();
   testWalkCoordBytes();
 
-  printf("\ntd-core is ok\n");
+  printf("\ntd-core-test is ok\n");
 }
 
 USUAL_TEST_MAIN

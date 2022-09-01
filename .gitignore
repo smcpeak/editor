@@ -43,12 +43,12 @@ qtbdffont
 smbase
 style
 td-core
+td-core-test
 td-editor-test
 test-bufferlinesource
 test-editor-strutil
 test-hashcomment-hilite
 test-makefile-hilite
-test-td-core
 test.out
 testgap
 testing.txt
