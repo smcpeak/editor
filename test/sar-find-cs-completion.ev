@@ -11,7 +11,7 @@ KeyPress "window1.m_sarPanel.m_findBox" "Shift+Key_S" "S"
 KeyPress "window1.m_sarPanel.m_findBox" "Key_Return" "\r"
 
 # Deselect "DPS" and move away from it.
-KeyPress "window1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\x01"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\x01"
 
 # Now search for "dps".
 Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"

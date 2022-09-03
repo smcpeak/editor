@@ -6,7 +6,7 @@
 
 # Expected file: tmp.h created by copying test/robotank.info.json.crlf.bin.
 
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
 CheckFocusWidget "window1.m_sarPanel.m_findBox"
 FocusKeyPR "Ctrl+Key_E" "\x05"
@@ -26,7 +26,7 @@ Shortcut "window1.m_menuBar.editMenu.editReplaceAndNext" "Ctrl+Shift+R"
 Shortcut "window1.m_menuBar.editMenu.editReplaceAndNext" "Ctrl+Shift+R"
 
 FocusKeyPR "Key_Escape" "\x1B"
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 Shortcut "window1.m_menuBar.fileMenu.fileSave" "F2"
 
 # EOF

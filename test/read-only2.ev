@@ -3,7 +3,7 @@
 
 # No particular document needs to be open initially but the edit widget
 # should have focus.
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 
 # Run 'date' command.
 Shortcut "window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R"
@@ -15,23 +15,23 @@ KeyPress "LaunchCommandDialog.m_comboBox" "Key_E" "e"
 KeyPress "LaunchCommandDialog" "Key_Return" "\r"
 
 # Wait until it finishes.
-WaitUntilCheckQuery "200" "window1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"
+WaitUntilCheckQuery "200" "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"
 
 # Check that it is marked as read-only in the File menu.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
 
 # Try to make an edit.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_K" "k"
-KeyPress "window1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
-CheckQuery "window1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_K" "k"
+KeyPress "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
 
 # Toggle the read-only state.
 TriggerAction "window1.m_menuBar.fileMenu.fileToggleReadOnly"
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
 
 # Now make an edit.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_K" "k"
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
-CheckQuery "window1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_K" "k"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
 
 # EOF

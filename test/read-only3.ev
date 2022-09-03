@@ -2,81 +2,81 @@
 # Switching between a read-only and not read-only document.
 
 # Expecting to start with a single untitled document.
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
-CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
 
 # Not initially read-only.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
 
 # Enter some text.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_N" "n"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_O" "o"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_T" "t"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Space" " "
-KeyPress "window1.editorFrame.m_editorWidget" "Key_R" "r"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_E" "e"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_A" "a"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_D" "d"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Space" " "
-KeyPress "window1.editorFrame.m_editorWidget" "Key_O" "o"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_N" "n"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_L" "l"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Y" "y"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Return" "\r"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_N" "n"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_O" "o"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_T" "t"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Space" " "
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_R" "r"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_E" "e"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_A" "a"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_D" "d"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Space" " "
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_O" "o"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_N" "n"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_L" "l"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Y" "y"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r"
 
 # Make a new document.
 Shortcut "window1.m_menuBar" "Alt+F"
 KeyPress "window1.m_menuBar.fileMenu" "Key_N" "n"
 
-CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
 
 # Enter some text there too.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_R" "r"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_E" "e"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_A" "a"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_D" "d"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Space" " "
-KeyPress "window1.editorFrame.m_editorWidget" "Key_O" "o"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_N" "n"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_L" "l"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Y" "y"
-KeyPress "window1.editorFrame.m_editorWidget" "Key_Return" "\r"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_R" "r"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_E" "e"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_A" "a"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_D" "d"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Space" " "
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_O" "o"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_N" "n"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_L" "l"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Y" "y"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r"
 
 # Mark it read-only.
 TriggerAction "window1.m_menuBar.fileMenu.fileToggleReadOnly"
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
 
 # Verify it is read-only.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
-CheckFocusWindow "window1.editorFrame.m_editorWidget.promptOverrideReadOnly_box"
-KeyPress "window1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_X" "x"
+CheckFocusWindow "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box"
+KeyPress "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
 
 # Switch back to the first document.
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 KeyPress "OpenFilesDialog.m_tableWidget" "Key_N" "n"
 KeyPress "OpenFilesDialog" "Key_Return" "\r"
-CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
 
 # Verify the menu item shows it is not read-only.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
 
 # Confirm we can edit it.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_X" "x"
 Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
 
 # Switch back to the second document.
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 KeyPress "OpenFilesDialog.m_tableWidget" "Key_N" "n"
 KeyPress "OpenFilesDialog" "Key_Return" "\r"
-CheckQuery "window1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
 
 # It is read-only.
 CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
 
 # Confirm it cannot be edited.
-KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
-CheckFocusWindow "window1.editorFrame.m_editorWidget.promptOverrideReadOnly_box"
-KeyPress "window1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_X" "x"
+CheckFocusWindow "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box"
+KeyPress "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
 
 # EOF

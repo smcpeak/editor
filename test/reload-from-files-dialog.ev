@@ -4,7 +4,7 @@
 # Check which file is open.  This test is intended to be run with two
 # files specified on the command line, and the second will be initially
 # open.
-CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "gets-modified2.txt"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "gets-modified2.txt"
 
 # The "[DISKMOD]" label should be absent.
 CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified2.txt$"
@@ -24,7 +24,7 @@ FocusKeyPR "Key_Return" "\r"
 
 # The "[DISKMOD]" label should be present for this one because it gets
 # refreshed when we switch to it.
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt \\[DISKMOD\\]$"
 
 # Go back into the open-files dialog.
@@ -47,7 +47,7 @@ CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "1" "0" "gets-modifi
 
 # Close the dialog.
 ClickButton "OpenFilesDialog.m_cancelButton"
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 
 # Check that "[DISKMOD]" is gone in the editor.
 CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt$"

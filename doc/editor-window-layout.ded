@@ -17,11 +17,24 @@
         "SF_HAS_WINDOW_OPS"
       ],
       "shapeParams": [
-        40,
-        435
+        580,
+        520
       ],
       "size": {
-        "h": 480,
+        "h": 535,
+        "w": 590
+      }
+    },
+    {
+      "attributes": " ",
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 30,
+        "y": 100
+      },
+      "name": "m_editorWidgetFrame: EditorWidgetFrame stretch=1",
+      "size": {
+        "h": 370,
         "w": 560
       }
     },
@@ -34,17 +47,17 @@
       "name": "m_menuBar: QMenuBar",
       "size": {
         "h": 20,
-        "w": 530
+        "w": 560
       }
     },
     {
       "attributes": " ",
       "fillColor": "Light Gray",
       "loc": {
-        "x": 30,
-        "y": 100
+        "x": 45,
+        "y": 135
       },
-      "name": "editArea: QGridLayout, stretch=1",
+      "name": "editArea: QGridLayout",
       "size": {
         "h": 320,
         "w": 530
@@ -54,31 +67,31 @@
       "fillColor": "Light Gray",
       "loc": {
         "x": 30,
-        "y": 435
+        "y": 485
       },
       "name": "m_sarPanel: SearchAndReplacePanel",
       "size": {
         "h": 20,
-        "w": 530
+        "w": 560
       }
     },
     {
       "fillColor": "Light Gray",
       "loc": {
         "x": 30,
-        "y": 470
+        "y": 520
       },
       "name": "m_statusArea: StatusDisplay",
       "size": {
         "h": 20,
-        "w": 530
+        "w": 560
       }
     },
     {
       "attributes": " ",
       "loc": {
-        "x": 45,
-        "y": 135
+        "x": 60,
+        "y": 170
       },
       "name": "editorFrame: QHBoxFrame row=0 col=0",
       "size": {
@@ -88,8 +101,8 @@
     },
     {
       "loc": {
-        "x": 60,
-        "y": 170
+        "x": 75,
+        "y": 205
       },
       "name": "m_editorWidget: EditorWidget",
       "size": {
@@ -100,8 +113,8 @@
     {
       "attributes": ": QScrollBar\nrow=0 col=1\n",
       "loc": {
-        "x": 445,
-        "y": 135
+        "x": 460,
+        "y": 170
       },
       "name": "m_vertScroll",
       "size": {
@@ -115,7 +128,7 @@
   "type": "Diagram Editor Diagram",
   "version": 24,
   "windowSize": {
-    "h": 529,
-    "w": 597
+    "h": 583,
+    "w": 626
   }
 }

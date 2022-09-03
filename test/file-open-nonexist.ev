@@ -15,7 +15,7 @@ FocusKeyPR "Key_Return" "\r"
 
 # Should now be open for editing.
 CheckFocusWindow "window1"
-CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
 
 
 # Open another one.
@@ -36,6 +36,6 @@ FocusKeyPR "Key_Escape" "\x1B"
 
 # Now we should have the first non-existent file still open.
 CheckFocusWindow "window1"
-CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
 
 # EOF

@@ -2,7 +2,7 @@
 # In the open-files dialog, close some documents.
 
 # Open the open-files dialog.
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 CheckFocusWidget "OpenFilesDialog.m_tableWidget"
 
@@ -40,10 +40,10 @@ CheckQuery "OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.ev\n"
 
 # Close the dialog.
 FocusKeyPR "Key_Escape" "\x1B"
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 
 # Remaining file should be all that is open.
-CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "read-only3.ev"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "read-only3.ev"
 
 
 # EOF

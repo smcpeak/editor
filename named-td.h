@@ -4,6 +4,8 @@
 #ifndef NAMED_TD_H
 #define NAMED_TD_H
 
+#include "named-td-fwd.h"              // fwds for this module
+
 // editor
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter

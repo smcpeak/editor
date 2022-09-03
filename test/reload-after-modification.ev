@@ -2,7 +2,7 @@
 # Test reloading a file after it is modified on disk.
 
 # Check which file is open.
-CheckQuery "window1.editorFrame.m_editorWidget" "documentFileName" "gets-modified.txt"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "gets-modified.txt"
 
 # The cursor should be at 1:1.
 CheckLabel "window1.m_statusArea.m_cursor" "1:1"

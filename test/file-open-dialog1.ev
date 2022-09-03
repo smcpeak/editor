@@ -10,7 +10,7 @@ KeyPress "filename_input.m_filenameEdit" "Key_F" "f"
 KeyPress "filename_input.m_filenameEdit" "Key_O" "o"
 KeyPress "filename_input.m_filenameEdit" "Key_Tab" ""
 KeyPress "filename_input.m_filenameEdit" "Key_Return" ""
-KeyPress "window1.editorFrame.m_editorWidget" "Shift+Key_Down" ""
+KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" ""
 Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
 
 CheckClipboard "foo\n"

@@ -2,13 +2,13 @@
 # Prompt before quitting with unsaved changes.
 
 # Expect to start with focus on the editor.
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
-CheckQuery "window1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
 
 # Type something.
 FocusKeyPress "Key_H" "h"
 FocusKeyPress "Key_I" "i"
-CheckQuery "window1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
 
 # Try to quit.
 Shortcut "window1.m_menuBar" "Alt+F"
@@ -19,7 +19,7 @@ CheckFocusWindow "window1.okToDiscardChanges_box"
 FocusKeyPress "Key_Escape" "\x1B"
 
 # Try to quit again.
-CheckFocusWidget "window1.editorFrame.m_editorWidget"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 Shortcut "window1.m_menuBar" "Alt+F"
 KeyPress "window1.m_menuBar.fileMenu" "Key_X" "x"
 

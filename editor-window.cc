@@ -8,6 +8,7 @@
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
 #include "editor-global.h"             // EditorGlobal
+#include "editor-widget-frame.h"       // EditorWidgetFrame
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
 #include "git-version.h"               // editor_git_version
@@ -61,6 +62,7 @@
 #include <QInputDialog>
 
 
+// TODO: This should be moved to EditorGlobal.
 static char const appName[] = "Editor";
 
 int EditorWindow::s_objectCount = 0;
@@ -74,10 +76,8 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   : QWidget(parent),
     m_editorGlobal(editorGlobal),
     m_menuBar(NULL),
-    m_editorWidget(NULL),
+    m_editorWidgetFrame(NULL),
     m_sarPanel(NULL),
-    m_vertScroll(NULL),
-    m_horizScroll(NULL),
     m_statusArea(NULL),
     m_toggleReadOnlyAction(NULL),
     m_toggleVisibleWhitespaceAction(NULL),
@@ -99,9 +99,16 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   this->m_menuBar->setObjectName("m_menuBar");
   mainArea->addWidget(this->m_menuBar);
 
-  QGridLayout *editArea = new QGridLayout();
-  editArea->setObjectName("editArea");
-  mainArea->addLayout(editArea, 1 /*stretch*/);
+  // The status area has to be created before the editor widget since
+  // the latter wants a pointer to the former.
+  //
+  // TODO: It should instead consult its window pointer.
+  this->m_statusArea = new StatusDisplay();
+  this->m_statusArea->setObjectName("m_statusArea");
+
+  m_editorWidgetFrame = new EditorWidgetFrame(this, initFile);
+  m_editorWidgetFrame->setObjectName("frame1");
+  mainArea->addWidget(m_editorWidgetFrame, 1 /*stretch*/);
 
   m_sarPanel = new SearchAndReplacePanel();
   mainArea->addWidget(m_sarPanel);
@@ -111,51 +118,26 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
     m_editorGlobal, &EditorGlobal::slot_broadcastSearchPanelChanged);
 
-  this->m_statusArea = new StatusDisplay();
-  this->m_statusArea->setObjectName("m_statusArea");
+  // Now add the status area to the layout last so it goes at the
+  // bottom.
   mainArea->addWidget(this->m_statusArea);
 
-  // Put a black one-pixel frame around the editor widget.
-  QHBoxFrame *editorFrame = new QHBoxFrame();
-  editorFrame->setObjectName("editorFrame");
-  editorFrame->setFrameStyle(QFrame::Box);
-  editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
-
-  this->m_editorWidget = new EditorWidget(initFile,
-    &(m_editorGlobal->m_documentList), this->m_statusArea, this);
-  this->m_editorWidget->setObjectName("m_editorWidget");
-  editorFrame->addWidget(this->m_editorWidget);
-  this->m_editorWidget->setFocus();
-  QObject::connect(this->m_editorWidget, &EditorWidget::viewChanged,
-                   this, &EditorWindow::editorViewChanged);
-  QObject::connect(this->m_editorWidget, &EditorWidget::closeSARPanel,
-                   this, &EditorWindow::on_closeSARPanel);
-
-  // See EditorWidget::fileOpenAtCursor for why this is a
-  // QueuedConnection.
-  QObject::connect(
-    this->m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
-    this, &EditorWindow::on_openFilenameInputDialogSignal,
-    Qt::QueuedConnection);
-
   // See explanation in EditorGlobal::focusChangedHandler().
-  this->setFocusProxy(this->m_editorWidget);
+  setFocusProxy(m_editorWidgetFrame);
 
-  // Needed to ensure Tab gets passed down to the editor widget.
-  this->m_editorWidget->installEventFilter(this);
+  // Start with focus on the editor frame.
+  m_editorWidgetFrame->setFocus();
+
+  // This causes 'this->eventFilter()' to be invoked when
+  // 'editorWidget()' receives events.  It is needed to ensure Tab gets
+  // seen by the editor widget.
+  //
+  // TODO: I think the editor widget itself should do this without any
+  // involvement of the window.
+  editorWidget()->installEventFilter(this);
 
   // Connect these, which had to wait until both were constructed.
-  m_sarPanel->setEditorWidget(this->m_editorWidget);
-
-  this->m_vertScroll = new QScrollBar(Qt::Vertical);
-  this->m_vertScroll->setObjectName("m_vertScroll");
-  editArea->addWidget(this->m_vertScroll, 0 /*row*/, 1 /*col*/);
-  QObject::connect(this->m_vertScroll, &QScrollBar::valueChanged,
-                   this->m_editorWidget, &EditorWidget::scrollToLine);
-
-  // disabling horiz scroll for now..
-  //m_horizScroll = new QScrollBar(QScrollBar::Horizontal, editArea, "horizontal scrollbar");
-  //QObject::connect(m_horizScroll, &QScrollBar::valueChanged, editor, &EditorWidget::scrollToCol);
+  m_sarPanel->setEditorWidget(editorWidget());
 
   this->buildMenu();
 
@@ -191,14 +173,18 @@ EditorWindow::~EditorWindow()
   m_editorGlobal->m_windows.removeIfPresent(this);
 
   // The QObject destructor will destroy both 'm_sarPanel' and
-  // 'm_editorWidget', but the documentation of ~QObject does not
+  // 'editorWidget()', but the documentation of ~QObject does not
   // specify an order.  Disconnect them here so that either order works.
   m_sarPanel->setEditorWidget(NULL);
 
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
-  QObject::disconnect(m_editorWidget, NULL, this,           NULL);
-  QObject::disconnect(m_vertScroll,   NULL, m_editorWidget, NULL);
+}
+
+
+EditorWidget *EditorWindow::editorWidget() const
+{
+  return m_editorWidgetFrame->editorWidget();
 }
 
 
@@ -352,21 +338,21 @@ void EditorWindow::buildMenu()
     CHECKABLE_ACTION(m_toggleVisibleWhitespaceAction,
       "Visible &whitespace",
       viewToggleVisibleWhitespace,
-      this->m_editorWidget->m_visibleWhitespace);
+      editorWidget()->m_visibleWhitespace);
 
     MENU_ITEM    ("Set whitespace opacity...", viewSetWhitespaceOpacity);
 
     CHECKABLE_ACTION(m_toggleVisibleSoftMarginAction,
       "Visible soft &margin",
       viewToggleVisibleSoftMargin,
-      this->m_editorWidget->m_visibleSoftMargin);
+      editorWidget()->m_visibleSoftMargin);
 
     MENU_ITEM    ("Set soft margin column...", viewSetSoftMarginColumn);
 
     CHECKABLE_ACTION(m_toggleHighlightTrailingWSAction,
       "Highlight &trailing whitespace",
       viewToggleHighlightTrailingWS,
-      this->m_editorWidget->highlightTrailingWhitespace());
+      editorWidget()->highlightTrailingWhitespace());
 
     MENU_ITEM    ("Set &Highlighting...", viewSetHighlighting);
   }
@@ -427,7 +413,7 @@ void EditorWindow::buildMenu()
 // not inline because main.h doesn't see editor.h
 NamedTextDocument *EditorWindow::currentDocument()
 {
-  return m_editorWidget->getDocument();
+  return editorWidget()->getDocument();
 }
 
 
@@ -436,7 +422,7 @@ void EditorWindow::fileNewFile() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   NamedTextDocument *b = m_editorGlobal->createNewFile(
-    m_editorWidget->getDocumentDirectory());
+    editorWidget()->getDocumentDirectory());
   setDocumentFile(b);
 
   GENERIC_CATCH_END
@@ -451,13 +437,13 @@ void EditorWindow::setDocumentFile(NamedTextDocument *file)
   // recently.
   m_editorGlobal->m_documentList.moveDocument(this->currentDocument(), 0);
 
-  m_editorWidget->setDocumentFile(file);
+  editorWidget()->setDocumentFile(file);
   this->updateForChangedFile();
 }
 
 void EditorWindow::updateForChangedFile()
 {
-  m_editorWidget->recomputeLastVisible();
+  editorWidget()->recomputeLastVisible();
   editorViewChanged();
 }
 
@@ -666,7 +652,7 @@ void EditorWindow::fileOpen() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  HostAndResourceName dirHarn = m_editorWidget->getDocumentDirectoryHarn();
+  HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
   this->on_openFilenameInputDialogSignal(HostFileAndLineOpt(dirHarn, 0));
 
   GENERIC_CATCH_END
@@ -677,7 +663,7 @@ void EditorWindow::fileOpenAtCursor() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->fileOpenAtCursor();
+  editorWidget()->fileOpenAtCursor();
 
   GENERIC_CATCH_END
 }
@@ -689,7 +675,7 @@ void EditorWindow::fileOpenNativeDialog() NOEXCEPT
 
   HostName hostName(currentDocument()->hostName());
   this->fileOpenFile(HostAndResourceName(hostName,
-    this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
+    this->fileChooseDialog(hostName, editorWidget()->getDocumentDirectory(),
                            false /*saveAs*/, FCDK_NATIVE)));
 
   GENERIC_CATCH_END
@@ -701,7 +687,7 @@ void EditorWindow::fileOpenQtDialog() NOEXCEPT
 
   HostName hostName(currentDocument()->hostName());
   this->fileOpenFile(HostAndResourceName(hostName,
-    this->fileChooseDialog(hostName, m_editorWidget->getDocumentDirectory(),
+    this->fileChooseDialog(hostName, editorWidget()->getDocumentDirectory(),
                            false /*saveAs*/, FCDK_QT)));
 
   GENERIC_CATCH_END
@@ -965,7 +951,7 @@ void EditorWindow::fileClose() NOEXCEPT
 void EditorWindow::fileToggleReadOnly() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->setReadOnly(!m_editorWidget->isReadOnly());
+  editorWidget()->setReadOnly(!editorWidget()->isReadOnly());
   GENERIC_CATCH_END
 }
 
@@ -1039,7 +1025,7 @@ void EditorWindow::fileCheckForChanges() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->requestFileStatus();
+  editorWidget()->requestFileStatus();
 
   GENERIC_CATCH_END
 }
@@ -1056,7 +1042,7 @@ void EditorWindow::fileLaunchCommand() NOEXCEPT
   string hostText = hostName.isLocal()? string("") :
                                         stringb(" on " << hostName);
 
-  string dir = m_editorWidget->getDocumentDirectory();
+  string dir = editorWidget()->getDocumentDirectory();
   if (!dialog->runPrompt_nonEmpty(
         qstringb("&Command to launch" << hostText <<
                  " in " << dir << ":"), this)) {
@@ -1069,7 +1055,7 @@ void EditorWindow::fileLaunchCommand() NOEXCEPT
     dialog->prefixStderrLines(),
     dialog->m_text);
   this->setDocumentFile(doc);
-  m_editorWidget->initCursorForProcessOutput();
+  editorWidget()->initCursorForProcessOutput();
 
   // Choose a highlighter based on the command line.
   this->useDefaultHighlighter(doc);
@@ -1082,7 +1068,7 @@ void EditorWindow::fileRunMake() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  string dir = m_editorWidget->getDocumentDirectory();
+  string dir = editorWidget()->getDocumentDirectory();
 
   // My intent is the user creates a script with this name on their
   // $PATH.  Then the script can do whatever is desired here.
@@ -1090,7 +1076,7 @@ void EditorWindow::fileRunMake() NOEXCEPT
     currentDocument()->hostName(),
     toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
   this->setDocumentFile(fileDoc);
-  m_editorWidget->initCursorForProcessOutput();
+  editorWidget()->initCursorForProcessOutput();
 
   GENERIC_CATCH_END
 }
@@ -1208,12 +1194,12 @@ bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
   // but the existence of other focusable controls (when the Search and
   // Replace panel is open) causes Tab to be treated as such unless I
   // use an event filter.
-  if (watched == this->m_editorWidget && event->type() == QEvent::KeyPress) {
+  if (watched == editorWidget() && event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
     if (keyEvent->key() == Qt::Key_Tab ||
         keyEvent->key() == Qt::Key_Backtab) {
       TRACE("input", "EditorWindow passing Tab press on to EditorWidget");
-      this->m_editorWidget->rescuedKeyPressEvent(keyEvent);
+      editorWidget()->rescuedKeyPressEvent(keyEvent);
       return true;       // no further processing
     }
   }
@@ -1251,7 +1237,7 @@ void EditorWindow::namedTextDocumentAttributeChanged(
   this->editorViewChanged();
 
   // The highlighter might have changed too.
-  this->m_editorWidget->update();
+  editorWidget()->update();
 
   GENERIC_CATCH_END
 }
@@ -1277,7 +1263,7 @@ void EditorWindow::editUndo() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->editUndo();
+  editorWidget()->editUndo();
 
   GENERIC_CATCH_END
 }
@@ -1286,7 +1272,7 @@ void EditorWindow::editRedo() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->editRedo();
+  editorWidget()->editRedo();
 
   GENERIC_CATCH_END
 }
@@ -1295,7 +1281,7 @@ void EditorWindow::editCut() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->editCut();
+  editorWidget()->editCut();
 
   GENERIC_CATCH_END
 }
@@ -1304,7 +1290,7 @@ void EditorWindow::editCopy() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->editCopy();
+  editorWidget()->editCopy();
 
   GENERIC_CATCH_END
 }
@@ -1313,7 +1299,7 @@ void EditorWindow::editPaste() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->editPaste();
+  editorWidget()->editPaste();
 
   GENERIC_CATCH_END
 }
@@ -1322,7 +1308,7 @@ void EditorWindow::editDelete() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  m_editorWidget->editDelete();
+  editorWidget()->editDelete();
 
   GENERIC_CATCH_END
 }
@@ -1330,7 +1316,7 @@ void EditorWindow::editDelete() NOEXCEPT
 void EditorWindow::editKillLine() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->editKillLine();
+  editorWidget()->editKillLine();
   GENERIC_CATCH_END
 }
 
@@ -1362,7 +1348,7 @@ void EditorWindow::editReplaceAndNext() NOEXCEPT
 void EditorWindow::editNextSearchHit() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->nextSearchHit(false /*reverse*/);
+  editorWidget()->nextSearchHit(false /*reverse*/);
   GENERIC_CATCH_END
 }
 
@@ -1370,7 +1356,7 @@ void EditorWindow::editNextSearchHit() NOEXCEPT
 void EditorWindow::editPreviousSearchHit() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->nextSearchHit(true /*reverse*/);
+  editorWidget()->nextSearchHit(true /*reverse*/);
   GENERIC_CATCH_END
 }
 
@@ -1400,8 +1386,8 @@ void EditorWindow::editGotoLine() NOEXCEPT
     if (!s.isempty()) {
       int n = atoi(s);
       if (n > 0) {
-        m_editorWidget->cursorTo(TextLCoord(n-1, 0));
-        m_editorWidget->scrollToCursor(-1 /*center*/);
+        editorWidget()->cursorTo(TextLCoord(n-1, 0));
+        editorWidget()->scrollToCursor(-1 /*center*/);
       }
       else {
         this->complain(stringb("Invalid line number: " << s));
@@ -1417,7 +1403,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  string searchText = m_editorWidget->getSelectedOrIdentifier();
+  string searchText = editorWidget()->getSelectedOrIdentifier();
   if (searchText.empty()) {
     messageBox(this, "No Search Text Provided",
       "To use this feature, either select some text to search for, or "
@@ -1426,7 +1412,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
       "the PATH, as that is what the search string is passed to.");
   }
   else {
-    string dir = m_editorWidget->getDocumentDirectory();
+    string dir = editorWidget()->getDocumentDirectory();
     NamedTextDocument *fileDoc =
       m_editorGlobal->launchCommand(
         currentDocument()->hostName(),
@@ -1434,7 +1420,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
         true /*prefixStderrLines*/,
         qstringb("grepsrc " << shellDoubleQuote(searchText)));
     this->setDocumentFile(fileDoc);
-    m_editorWidget->initCursorForProcessOutput();
+    editorWidget()->initCursorForProcessOutput();
   }
 
   GENERIC_CATCH_END
@@ -1444,7 +1430,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
 void EditorWindow::editRigidIndent() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->editRigidIndent();
+  editorWidget()->editRigidIndent();
   GENERIC_CATCH_END
 }
 
@@ -1452,7 +1438,7 @@ void EditorWindow::editRigidIndent() NOEXCEPT
 void EditorWindow::editRigidUnindent() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->editRigidUnindent();
+  editorWidget()->editRigidUnindent();
   GENERIC_CATCH_END
 }
 
@@ -1460,7 +1446,7 @@ void EditorWindow::editRigidUnindent() NOEXCEPT
 void EditorWindow::editJustifyParagraph() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->editJustifyParagraph();
+  editorWidget()->editJustifyParagraph();
   GENERIC_CATCH_END
 }
 
@@ -1490,8 +1476,8 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     static TextInputDialog *dialog =
       new TextInputDialog("Apply Command");
 
-    string dir = m_editorWidget->getDocumentDirectory();
-    HostName hostName = m_editorWidget->getDocument()->hostName();
+    string dir = editorWidget()->getDocumentDirectory();
+    HostName hostName = editorWidget()->getDocument()->hostName();
 
     stringBuilder prompt;
     prompt << "Command to run in " << dir;
@@ -1505,7 +1491,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     }
     commandString = toString(dialog->m_text);
 
-    tde = m_editorWidget->getDocumentEditor();
+    tde = editorWidget()->getDocumentEditor();
     string input = tde->getSelectedText();
 
     // Set the working directory and command of 'runner'.
@@ -1523,7 +1509,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     // changed, the latter (I think) because it already has a
     // non-standard cursor set.
     CursorSetRestore csr(this, Qt::WaitCursor);
-    CursorSetRestore csr2(m_editorWidget, Qt::WaitCursor);
+    CursorSetRestore csr2(editorWidget(), Qt::WaitCursor);
 
     // This blocks until the program terminates or times out.  However,
     // it will pump the GUI event queue while waiting.
@@ -1550,7 +1536,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
 
   // We just pumped the event queue.  The editor we had before
   // could have gone away.
-  if (tde != m_editorWidget->getDocumentEditor()) {
+  if (tde != editorWidget()->getDocumentEditor()) {
     QMessageBox::warning(this, "Editor Changed", qstringb(
       "While running command \"" << commandString <<
       "\", the active editor changed.  I will discard "
@@ -1559,7 +1545,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   }
 
   // Replace the selected text with the command's output.
-  m_editorWidget->insertText(runner.getOutputData().constData(),
+  editorWidget()->insertText(runner.getOutputData().constData(),
                              runner.getOutputData().size());
 
   // For error output or non-zero exit code, we show a warning, but
@@ -1593,7 +1579,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
 void EditorWindow::editInsertDateTime() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  m_editorWidget->editInsertDateTime();
+  editorWidget()->editInsertDateTime();
   GENERIC_CATCH_END
 }
 
@@ -1601,7 +1587,7 @@ void EditorWindow::editInsertDateTime() NOEXCEPT
 #define CHECKABLE_MENU_TOGGLE(actionField, sourceBool)  \
   (sourceBool) = !(sourceBool);                         \
   this->actionField->setChecked(sourceBool);            \
-  this->m_editorWidget->update() /* user ; */
+  editorWidget()->update() /* user ; */
 
 
 void EditorWindow::viewToggleVisibleWhitespace() NOEXCEPT
@@ -1609,7 +1595,7 @@ void EditorWindow::viewToggleVisibleWhitespace() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   CHECKABLE_MENU_TOGGLE(m_toggleVisibleWhitespaceAction,
-    this->m_editorWidget->m_visibleWhitespace);
+    editorWidget()->m_visibleWhitespace);
 
   GENERIC_CATCH_END
 }
@@ -1623,11 +1609,11 @@ void EditorWindow::viewSetWhitespaceOpacity() NOEXCEPT
   int n = QInputDialog::getInt(this,
     "Visible Whitespace",
     "Opacity in [1,255]:",
-    this->m_editorWidget->m_whitespaceOpacity,
+    editorWidget()->m_whitespaceOpacity,
     1 /*min*/, 255 /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->m_editorWidget->m_whitespaceOpacity = n;
-    this->m_editorWidget->update();
+    editorWidget()->m_whitespaceOpacity = n;
+    editorWidget()->update();
   }
 
   GENERIC_CATCH_END
@@ -1639,7 +1625,7 @@ void EditorWindow::viewToggleVisibleSoftMargin() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   CHECKABLE_MENU_TOGGLE(m_toggleVisibleSoftMarginAction,
-    this->m_editorWidget->m_visibleSoftMargin);
+    editorWidget()->m_visibleSoftMargin);
 
   GENERIC_CATCH_END
 }
@@ -1653,11 +1639,11 @@ void EditorWindow::viewSetSoftMarginColumn() NOEXCEPT
   int n = QInputDialog::getInt(this,
     "Soft Margin Column",
     "Column number (positive):",
-    this->m_editorWidget->m_softMarginColumn+1,
+    editorWidget()->m_softMarginColumn+1,
     1 /*min*/, INT_MAX /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    this->m_editorWidget->m_softMarginColumn = n-1;
-    this->m_editorWidget->update();
+    editorWidget()->m_softMarginColumn = n-1;
+    editorWidget()->update();
   }
 
   GENERIC_CATCH_END
@@ -1668,10 +1654,10 @@ void EditorWindow::viewToggleHighlightTrailingWS() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  this->m_editorWidget->toggleHighlightTrailingWhitespace();
+  editorWidget()->toggleHighlightTrailingWhitespace();
 
   // Includes firing 'editorViewChanged'.
-  this->m_editorWidget->redraw();
+  editorWidget()->redraw();
 
   GENERIC_CATCH_END
 }
@@ -1859,7 +1845,7 @@ void EditorWindow::helpDebugEditorScreenshot() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  QImage image(m_editorWidget->getScreenshot());
+  QImage image(editorWidget()->getScreenshot());
 
   QString fname(qstringb("screenshot-" << getCurrentUnixTime() << ".png"));
   if (!image.save(fname, "PNG")) {
@@ -1880,34 +1866,13 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 
   TRACE("EditorWindow", "editorViewChanged");
 
-  RCSerf<TextDocumentEditor> tde = m_editorWidget->getDocumentEditor();
-
-  // Set the scrollbars.  In both dimensions, the range includes the
-  // current value so we can scroll arbitrarily far beyond the nominal
-  // size of the file contents.  Also, it is essential to set the range
-  // *before* setting the value, since otherwise the scrollbar's value
-  // will be clamped to the old range.
-  if (m_horizScroll) {
-    m_horizScroll->setRange(0, max(tde->maxLineLengthColumns(),
-                                   m_editorWidget->firstVisibleCol()));
-    m_horizScroll->setValue(m_editorWidget->firstVisibleCol());
-    m_horizScroll->setSingleStep(1);
-    m_horizScroll->setPageStep(m_editorWidget->visCols());
-  }
-
-  if (m_vertScroll) {
-    m_vertScroll->setRange(0, max(tde->numLines(),
-                                  m_editorWidget->firstVisibleLine()));
-    m_vertScroll->setValue(m_editorWidget->firstVisibleLine());
-    m_vertScroll->setSingleStep(1);
-    m_vertScroll->setPageStep(m_editorWidget->visLines());
-  }
+  m_editorWidgetFrame->setScrollbarRangesAndValues();
 
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
   m_statusArea->m_cursor->setText(qstringb(
-    (m_editorWidget->cursorLine()+1) << ':' <<
-    (m_editorWidget->cursorCol()+1)));
+    (editorWidget()->cursorLine()+1) << ':' <<
+    (editorWidget()->cursorCol()+1)));
 
   // Status text: full document name plus status indicators.
   NamedTextDocument *file = currentDocument();
@@ -1923,10 +1888,10 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 
   // Trailing whitespace menu checkbox.
   this->m_toggleHighlightTrailingWSAction->setChecked(
-    this->m_editorWidget->highlightTrailingWhitespace());
+    editorWidget()->highlightTrailingWhitespace());
 
   // Read-only menu checkbox.
-  m_toggleReadOnlyAction->setChecked(m_editorWidget->isReadOnly());
+  m_toggleReadOnlyAction->setChecked(editorWidget()->isReadOnly());
 
   GENERIC_CATCH_END
 }
@@ -1938,7 +1903,7 @@ void EditorWindow::on_closeSARPanel() NOEXCEPT
 
   if (m_sarPanel->isVisible()) {
     m_sarPanel->hide();
-    this->m_editorWidget->setFocus();
+    editorWidget()->setFocus();
   }
 
   GENERIC_CATCH_END
@@ -1970,9 +1935,9 @@ void EditorWindow::on_openFilenameInputDialogSignal(
       this->fileOpenFile(hfl.m_harn);
       if (hfl.m_line != 0) {
         // Also go to line number, if provided.
-        m_editorWidget->cursorTo(TextLCoord(hfl.m_line-1, 0));
-        m_editorWidget->clearMark();
-        m_editorWidget->scrollToCursor(-1 /*gap*/);
+        editorWidget()->cursorTo(TextLCoord(hfl.m_line-1, 0));
+        editorWidget()->clearMark();
+        editorWidget()->scrollToCursor(-1 /*gap*/);
       }
       return;
     }

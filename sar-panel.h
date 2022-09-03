@@ -4,14 +4,15 @@
 #ifndef SAR_PANEL_H
 #define SAR_PANEL_H
 
+// editor
+#include "editor-widget-fwd.h"         // EditorWidget
+
 // smbase
 #include "refct-serf.h"                // RCSerf
 #include "sm-override.h"               // OVERRIDE
 
 // Qt
 #include <QWidget>
-
-class EditorWidget;                    // editor-widget.h
 
 class QComboBox;
 class QCheckBox;

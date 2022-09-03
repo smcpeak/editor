@@ -7,6 +7,9 @@
 #include "editor-window-fwd.h"         // fwds for this module
 
 // editor
+#include "editor-global-fwd.h"         // EditorGlobal
+#include "editor-widget-frame-fwd.h"   // EditorWidgetFrame
+#include "editor-widget-fwd.h"         // EditorWidget
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
@@ -32,13 +35,14 @@ class QMenu;
 class QMenuBar;
 class QScrollBar;
 
-class EditorWidget;                    // editor-widget.h
-class EditorGlobal;                    // main.h
 class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
 
 
 // Top-level window containing an editor pane.
+//
+// Logically, its parent is an EditorGlobal, and its primary children
+// are one or more EditorWidgetFrames.  (TODO: Currently only one.)
 class EditorWindow : public QWidget,
                      public NamedTextDocumentListObserver {
   Q_OBJECT
@@ -58,11 +62,10 @@ private:     // data
   // Global editor state.
   RCSerf<EditorGlobal> m_editorGlobal;
 
-  // GUI elements
+  // Contained GUI elements, in layout order from top to bottom.
   QMenuBar *m_menuBar;
-  EditorWidget *m_editorWidget;
+  EditorWidgetFrame *m_editorWidgetFrame;
   SearchAndReplacePanel *m_sarPanel;
-  QScrollBar *m_vertScroll, *m_horizScroll;
   StatusDisplay *m_statusArea;
 
   // Actions for toggle options.
@@ -120,6 +123,15 @@ public:      // funcs
   EditorWindow(EditorGlobal *editorGlobal, NamedTextDocument *initFile,
                QWidget *parent = NULL);
   ~EditorWindow();
+
+  // Get the global state we are a part of.
+  EditorGlobal *editorGlobal() const { return m_editorGlobal; }
+
+  // For now, the one editor widget in the one frame.
+  EditorWidget *editorWidget() const;
+
+  // The status area widget.
+  StatusDisplay *statusArea() const { return m_statusArea; }
 
   // Get VFS query object.
   VFS_Connections *vfsConnections() const;
