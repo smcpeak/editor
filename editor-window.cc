@@ -87,7 +87,9 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   xassert(m_editorGlobal);
   xassert(initFile);
 
-  // will build a layout tree to manage sizes of child widgets
+  // Use a layout tree to manage sizes of child widgets.
+  //
+  // See doc/editor-window-layout.ded.png.
   QVBoxLayout *mainArea = new QVBoxLayout();
   mainArea->setObjectName("mainArea");
   mainArea->setSpacing(0);

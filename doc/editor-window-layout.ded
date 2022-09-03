@@ -1,0 +1,121 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "attributes": "mainArea: QVBoxLayout",
+      "fillColor": "White",
+      "loc": {
+        "x": 15,
+        "y": 25
+      },
+      "name": "EditorWindow",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_MAXIMIZE",
+        "SF_HAS_MINIMIZE",
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        40,
+        435
+      ],
+      "size": {
+        "h": 480,
+        "w": 560
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 30,
+        "y": 65
+      },
+      "name": "m_menuBar: QMenuBar",
+      "size": {
+        "h": 20,
+        "w": 530
+      }
+    },
+    {
+      "attributes": " ",
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 30,
+        "y": 100
+      },
+      "name": "editArea: QGridLayout, stretch=1",
+      "size": {
+        "h": 320,
+        "w": 530
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 30,
+        "y": 435
+      },
+      "name": "m_sarPanel: SearchAndReplacePanel",
+      "size": {
+        "h": 20,
+        "w": 530
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 30,
+        "y": 470
+      },
+      "name": "m_statusArea: StatusDisplay",
+      "size": {
+        "h": 20,
+        "w": 530
+      }
+    },
+    {
+      "attributes": " ",
+      "loc": {
+        "x": 45,
+        "y": 135
+      },
+      "name": "editorFrame: QHBoxFrame row=0 col=0",
+      "size": {
+        "h": 270,
+        "w": 385
+      }
+    },
+    {
+      "loc": {
+        "x": 60,
+        "y": 170
+      },
+      "name": "m_editorWidget: EditorWidget",
+      "size": {
+        "h": 215,
+        "w": 355
+      }
+    },
+    {
+      "attributes": ": QScrollBar\nrow=0 col=1\n",
+      "loc": {
+        "x": 445,
+        "y": 135
+      },
+      "name": "m_vertScroll",
+      "size": {
+        "h": 270,
+        "w": 100
+      }
+    }
+  ],
+  "inheritances": [],
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 24,
+  "windowSize": {
+    "h": 529,
+    "w": 597
+  }
+}
