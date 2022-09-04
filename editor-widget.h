@@ -270,16 +270,15 @@ private:     // funcs
 
 protected:   // funcs
   // QWidget funcs
-  virtual bool event(QEvent *e) OVERRIDE;
-  virtual void paintEvent(QPaintEvent *) OVERRIDE;
-  virtual void keyPressEvent(QKeyEvent *k) OVERRIDE;
-  virtual void keyReleaseEvent(QKeyEvent *k) OVERRIDE;
-  virtual void resizeEvent(QResizeEvent *r) OVERRIDE;
-  virtual void mousePressEvent(QMouseEvent *m) OVERRIDE;
-  virtual void mouseMoveEvent(QMouseEvent *m) OVERRIDE;
-  virtual void mouseReleaseEvent(QMouseEvent *m) OVERRIDE;
-  virtual void focusInEvent(QFocusEvent *e) OVERRIDE;
-  virtual void focusOutEvent(QFocusEvent *e) OVERRIDE;
+  virtual void paintEvent(QPaintEvent *) NOEXCEPT OVERRIDE;
+  virtual void keyPressEvent(QKeyEvent *k) NOEXCEPT OVERRIDE;
+  virtual void keyReleaseEvent(QKeyEvent *k) NOEXCEPT OVERRIDE;
+  virtual void resizeEvent(QResizeEvent *r) NOEXCEPT OVERRIDE;
+  virtual void mousePressEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
+  virtual void mouseMoveEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
+  virtual void mouseReleaseEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
+  virtual void focusInEvent(QFocusEvent *e) NOEXCEPT OVERRIDE;
+  virtual void focusOutEvent(QFocusEvent *e) NOEXCEPT OVERRIDE;
 
 public:      // funcs
   EditorWidget(NamedTextDocument *docFile,

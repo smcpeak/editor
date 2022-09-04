@@ -757,12 +757,16 @@ void EditorWidget::recomputeLastVisible()
 }
 
 
-void EditorWidget::resizeEvent(QResizeEvent *r)
+void EditorWidget::resizeEvent(QResizeEvent *r) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   QWidget::resizeEvent(r);
   this->recomputeLastVisible();
   this->computeOffscreenMatchIndicators();
   Q_EMIT viewChanged();
+
+  GENERIC_CATCH_END
 }
 
 
@@ -772,7 +776,7 @@ void EditorWidget::resizeEvent(QResizeEvent *r)
 // of which are drawn twice when it is visible.
 // UPDATE: It's irrelevant now that I've been forced into double-
 // buffering by a bug in XFree86 (see redraw()).
-void EditorWidget::paintEvent(QPaintEvent *ev)
+void EditorWidget::paintEvent(QPaintEvent *ev) NOEXCEPT
 {
   try {
     // draw on the pixmap
@@ -1411,27 +1415,7 @@ static void inc(int &val, int amt)
 }
 
 
-// unfortunately, this doesn't work if Qt is compiled without
-// exception support, as is apparently the case on many (most?)
-// linux systems; see e.g.
-//   http://lists.trolltech.com/qt-interest/2002-11/msg00048.html
-// you therefore have to ensure that exceptions do not propagate into
-// Qt stack frames
-//
-// TODO: I should remove this.
-bool EditorWidget::event(QEvent *e)
-{
-  try {
-    return QWidget::event(e);
-  }
-  catch (xBase &x) {
-    printUnhandled(x);
-    return true;   // clearly it was handled by someone
-  }
-}
-
-
-void EditorWidget::keyPressEvent(QKeyEvent *k)
+void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -1792,8 +1776,10 @@ void EditorWidget::keyPressEvent(QKeyEvent *k)
 }
 
 
-void EditorWidget::keyReleaseEvent(QKeyEvent *k)
+void EditorWidget::keyReleaseEvent(QKeyEvent *k) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   TRACE("input", "keyRelease: " << keysString(*k));
 
   // Not sure if this is the best place for this, but it seems
@@ -1801,6 +1787,8 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k)
   this->selfCheck();
 
   k->ignore();
+
+  GENERIC_CATCH_END
 }
 
 
@@ -1853,8 +1841,10 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
 }
 
 
-void EditorWidget::mousePressEvent(QMouseEvent *m)
+void EditorWidget::mousePressEvent(QMouseEvent *m) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   // get rid of popups?
   QWidget::mousePressEvent(m);
   INITIATING_DOCUMENT_CHANGE();
@@ -1863,11 +1853,15 @@ void EditorWidget::mousePressEvent(QMouseEvent *m)
   setCursorToClickLoc(m);
 
   redraw();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWidget::mouseMoveEvent(QMouseEvent *m)
+void EditorWidget::mouseMoveEvent(QMouseEvent *m) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   QWidget::mouseMoveEvent(m);
   INITIATING_DOCUMENT_CHANGE();
 
@@ -1876,11 +1870,15 @@ void EditorWidget::mouseMoveEvent(QMouseEvent *m)
   m_editor->turnOffSelectionIfEmpty();
 
   redraw();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
+void EditorWidget::mouseReleaseEvent(QMouseEvent *m) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   QWidget::mouseReleaseEvent(m);
   INITIATING_DOCUMENT_CHANGE();
 
@@ -1889,6 +1887,8 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m)
   m_editor->turnOffSelectionIfEmpty();
 
   redraw();
+
+  GENERIC_CATCH_END
 }
 
 
@@ -2297,8 +2297,10 @@ void EditorWidget::insertText(char const *text, int length)
 
 
 // ----------------- nonfocus situation ------------------
-void EditorWidget::focusInEvent(QFocusEvent *e)
+void EditorWidget::focusInEvent(QFocusEvent *e) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   TRACE("focus", "editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
 
@@ -2306,13 +2308,19 @@ void EditorWidget::focusInEvent(QFocusEvent *e)
   // pops up when a VFS operation is delayed.  Let's turn this off for
   // now.
   //this->requestFileStatus();
+
+  GENERIC_CATCH_END
 }
 
 
-void EditorWidget::focusOutEvent(QFocusEvent *e)
+void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 {
+  GENERIC_CATCH_BEGIN
+
   TRACE("focus", "editor(" << (void*)this << "): focus out");
   QWidget::focusOutEvent(e);
+
+  GENERIC_CATCH_END
 }
 
 
