@@ -62,9 +62,6 @@
 #include <QInputDialog>
 
 
-// TODO: This should be moved to EditorGlobal.
-static char const appName[] = "Editor";
-
 int EditorWindow::s_objectCount = 0;
 
 CHECK_OBJECT_COUNT(EditorWindow);
@@ -1883,7 +1880,7 @@ void EditorWindow::editorViewChanged() NOEXCEPT
   stringBuilder sb;
   sb << file->m_title
      << file->fileStatusString()
-     << " - " << appName;
+     << " - " << EditorGlobal::appName;
   this->setWindowTitle(toQString(sb));
 
   // Trailing whitespace menu checkbox.
@@ -1962,7 +1959,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 
 void EditorWindow::complain(char const *msg)
 {
-  QMessageBox::information(this, appName, msg);
+  QMessageBox::information(this, EditorGlobal::appName, msg);
 }
 
 

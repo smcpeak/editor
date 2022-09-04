@@ -54,6 +54,9 @@ int EditorProxyStyle::pixelMetric(
 
 
 // --------------------------- EditorGlobal ----------------------------
+char const EditorGlobal::appName[] = "Editor";
+
+
 EditorGlobal::EditorGlobal(int argc, char **argv)
   : QApplication(argc, argv),
     m_pixmaps(),

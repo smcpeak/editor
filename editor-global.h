@@ -45,6 +45,11 @@ class EditorGlobal : public QApplication,
                      public NamedTextDocumentListObserver {
   Q_OBJECT
 
+public:       // class data
+  // Name of this application, used in the main window title as well as
+  // some message boxes.
+  static char const appName[];
+
 public:       // data
   // pixmap set
   Pixmaps m_pixmaps;
