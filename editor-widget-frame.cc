@@ -10,6 +10,7 @@
 
 // smqtutil
 #include "qhboxframe.h"                // QHBoxFrame
+#include "qtutil.h"                    // disconnectSignalSender
 
 // smbase
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
@@ -98,11 +99,8 @@ EditorWidgetFrame::~EditorWidgetFrame()
 {
   EditorWidgetFrame::s_objectCount--;
 
-  // See doc/signals-and-dtors.txt.
-  //
-  // TODO: Make a function in smqtutil to do this.
-  QObject::disconnect(m_editorWidget, nullptr, nullptr, nullptr);
-  QObject::disconnect(m_vertScroll,   nullptr, nullptr, nullptr);
+  disconnectSignalSender(m_editorWidget);
+  disconnectSignalSender(m_vertScroll);
 }
 
 

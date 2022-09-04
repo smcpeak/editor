@@ -120,12 +120,12 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
 ConnectionsDialog::~ConnectionsDialog() noexcept
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_refreshButton,    nullptr, this, nullptr);
-  QObject::disconnect(m_connectButton,    nullptr, this, nullptr);
-  QObject::disconnect(m_restartButton,    nullptr, this, nullptr);
-  QObject::disconnect(m_disconnectButton, nullptr, this, nullptr);
-  QObject::disconnect(m_closeButton,      nullptr, this, nullptr);
-  QObject::disconnect(m_vfsConnections,   nullptr, this, nullptr);
+  disconnectSignalSender(m_refreshButton);
+  disconnectSignalSender(m_connectButton);
+  disconnectSignalSender(m_restartButton);
+  disconnectSignalSender(m_disconnectButton);
+  disconnectSignalSender(m_closeButton);
+  disconnectSignalSender(m_vfsConnections);
 }
 
 
