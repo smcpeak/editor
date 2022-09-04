@@ -28,7 +28,6 @@
 
 class QtBDFFont;                       // qtbdffont.h
 class SearchAndReplacePanel;           // sar-panel.h
-class StatusDisplay;                   // status.h
 class StyleDB;                         // styledb.h
 
 class QImage;
@@ -92,9 +91,6 @@ private:     // data
 
   // floating info box
   QLabel *m_infoBox;               // (nullable owner)
-
-  // access to the status display
-  StatusDisplay *m_status;         // (serf)
 
   // This is a pair of hidden labels that hold the offscreen match
   // counts text shown in the corners.  Storing the text here allows
@@ -288,7 +284,6 @@ protected:   // funcs
 public:      // funcs
   EditorWidget(NamedTextDocument *docFile,
                NamedTextDocumentList *documentList,
-               StatusDisplay *status,
                EditorWindow *editorWindow);
   ~EditorWidget();
 

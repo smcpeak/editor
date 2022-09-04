@@ -10,7 +10,6 @@
 #include "qtbdffont.h"                 // QtBDFFont
 #include "qtguiutil.h"                 // keysString(QKeyEvent)
 #include "qtutil.h"                    // toString(QString)
-#include "status.h"                    // StatusDisplay
 #include "styledb.h"                   // StyleDB
 #include "textcategory.h"              // LineCategories, etc.
 #include "textline.h"                  // TextLine
@@ -82,12 +81,10 @@ CHECK_OBJECT_COUNT(EditorWidget);
 
 EditorWidget::EditorWidget(NamedTextDocument *tdf,
                            NamedTextDocumentList *documentList,
-                           StatusDisplay *status_,
                            EditorWindow *editorWindow)
   : QWidget(editorWindow),
     m_editorWindow(editorWindow),
     m_infoBox(NULL),
-    m_status(status_),
     m_matchesAboveLabel(NULL),
     m_matchesBelowLabel(NULL),
     m_editorList(),
@@ -117,7 +114,6 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_ignoreScrollSignals(false)
 {
   xassert(tdf);
-  xassert(status_);
 
   m_matchesAboveLabel = new QLabel(this);
   SET_QOBJECT_NAME(m_matchesAboveLabel);

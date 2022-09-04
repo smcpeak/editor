@@ -58,7 +58,6 @@ EditorWidgetFrame::EditorWidgetFrame(EditorWindow *editorWindow,
 
   m_editorWidget = new EditorWidget(initFile,
     &(m_editorWindow->editorGlobal()->m_documentList),
-    m_editorWindow->statusArea(),
     m_editorWindow);
   m_editorWidget->setObjectName("m_editorWidget");
   editorFrame->addWidget(m_editorWidget);

@@ -96,13 +96,6 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   this->m_menuBar->setObjectName("m_menuBar");
   mainArea->addWidget(this->m_menuBar);
 
-  // The status area has to be created before the editor widget since
-  // the latter wants a pointer to the former.
-  //
-  // TODO: It should instead consult its window pointer.
-  this->m_statusArea = new StatusDisplay();
-  this->m_statusArea->setObjectName("m_statusArea");
-
   m_editorWidgetFrame = new EditorWidgetFrame(this, initFile);
   m_editorWidgetFrame->setObjectName("frame1");
   mainArea->addWidget(m_editorWidgetFrame, 1 /*stretch*/);
@@ -115,8 +108,8 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
     m_editorGlobal, &EditorGlobal::slot_broadcastSearchPanelChanged);
 
-  // Now add the status area to the layout last so it goes at the
-  // bottom.
+  this->m_statusArea = new StatusDisplay();
+  this->m_statusArea->setObjectName("m_statusArea");
   mainArea->addWidget(this->m_statusArea);
 
   // See explanation in EditorGlobal::focusChangedHandler().
