@@ -498,6 +498,9 @@ public:      // funcs
   // methods with higher-level purpose should be defined and used.
   void rescuedKeyPressEvent(QKeyEvent *k);
 
+  // QObject methods.
+  virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
+
   // -------------------------- output ----------------------------
   // intermediate paint steps
   void updateFrame(QPaintEvent *ev);

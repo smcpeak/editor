@@ -143,6 +143,11 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   // required to accept focus
   setFocusPolicy(Qt::StrongFocus);
 
+  // This causes 'this->eventFilter()' to be invoked when 'this'
+  // receives events.  It is needed to ensure Tab gets seen by the
+  // editor widget.
+  installEventFilter(this);
+
   QObject::connect(vfsConnections(), &VFS_Connections::signal_replyAvailable,
                    this, &EditorWidget::on_replyAvailable);
   QObject::connect(vfsConnections(), &VFS_Connections::signal_failed,
@@ -2456,6 +2461,30 @@ void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT
 void EditorWidget::rescuedKeyPressEvent(QKeyEvent *k)
 {
   this->keyPressEvent(k);
+}
+
+
+bool EditorWidget::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  // Within the editor window, I do not use Tab for input focus changes,
+  // but the existence of other focusable controls (when the Search and
+  // Replace panel is open) causes Tab to be treated as such unless I
+  // use an event filter.
+  if (watched == this && event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+    if (keyEvent->key() == Qt::Key_Tab ||
+        keyEvent->key() == Qt::Key_Backtab) {
+      TRACE("EditorWidget", "Rescuing Tab press");
+      rescuedKeyPressEvent(keyEvent);
+      return true;       // no further processing
+    }
+  }
+
+  return false;
+
+  GENERIC_CATCH_END_RET(false)
 }
 
 

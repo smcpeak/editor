@@ -167,9 +167,6 @@ public:      // funcs
   // The search panel in one window has changed.
   void searchPanelChanged(SearchAndReplacePanel *panel);
 
-  // QObject methods.
-  virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
-
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAdded(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;

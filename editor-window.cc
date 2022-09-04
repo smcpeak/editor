@@ -118,14 +118,6 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   // Start with focus on the editor frame.
   m_editorWidgetFrame->setFocus();
 
-  // This causes 'this->eventFilter()' to be invoked when
-  // 'editorWidget()' receives events.  It is needed to ensure Tab gets
-  // seen by the editor widget.
-  //
-  // TODO: I think the editor widget itself should do this without any
-  // involvement of the window.
-  editorWidget()->installEventFilter(this);
-
   // Connect these, which had to wait until both were constructed.
   m_sarPanel->setEditorWidget(editorWidget());
 
@@ -1173,30 +1165,6 @@ void EditorWindow::searchPanelChanged(SearchAndReplacePanel *panel)
   // before otherwise reacting (just to keep all the logic in one
   // place).
   m_sarPanel->searchPanelChanged(panel);
-}
-
-
-bool EditorWindow::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  // Within the editor window, I do not use Tab for input focus changes,
-  // but the existence of other focusable controls (when the Search and
-  // Replace panel is open) causes Tab to be treated as such unless I
-  // use an event filter.
-  if (watched == editorWidget() && event->type() == QEvent::KeyPress) {
-    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if (keyEvent->key() == Qt::Key_Tab ||
-        keyEvent->key() == Qt::Key_Backtab) {
-      TRACE("input", "EditorWindow passing Tab press on to EditorWidget");
-      editorWidget()->rescuedKeyPressEvent(keyEvent);
-      return true;       // no further processing
-    }
-  }
-
-  return false;
-
-  GENERIC_CATCH_END_RET(false)
 }
 
 
