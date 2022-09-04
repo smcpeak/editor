@@ -224,13 +224,6 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("Open f&ile at cursor", fileOpenAtCursor,
                   Qt::CTRL + Qt::Key_I);
 
-    {
-      QMenu *submenu = menu->addMenu("Open with traditional dialog");
-      QMenu *menu = submenu;
-      MENU_ITEM    ("Native ...", fileOpenNativeDialog);
-      MENU_ITEM    ("Qt ...", fileOpenQtDialog);
-    }
-
     MENU_ITEM_KEY("&Save", fileSave, Qt::Key_F2);
     MENU_ITEM    ("Save &as ...", fileSaveAs);
     MENU_ITEM    ("&Close", fileClose);
@@ -529,11 +522,11 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 
 
 string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
-  string const &origDir, bool saveAs, FileChooseDialogKind dialogKind)
+  string const &origDir, bool saveAs)
 {
   string dir(origDir);
   TRACE("fileChooseDialog",
-    "saveAs=" << saveAs << " kind=" << dialogKind << " dir: " << dir);
+    "saveAs=" << saveAs << " dir: " << dir);
   if (dir == ".") {
     // If I pass "." to one of the static members of QFileDialog, it
     // automatically goes to the current directory.  But when using
@@ -542,91 +535,22 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
     TRACE("fileOpen", "current dir: " << dir);
   }
 
-  if (dialogKind == FCDK_FILENAME_INPUT) {
-    FilenameInputDialog dialog(
-      &(m_editorGlobal->m_filenameInputDialogHistory),
-      vfsConnections(),
-      this);
-    dialog.setSaveAs(saveAs);
+  FilenameInputDialog dialog(
+    &(m_editorGlobal->m_filenameInputDialogHistory),
+    vfsConnections(),
+    this);
+  dialog.setSaveAs(saveAs);
 
-    QString choice = toQString(dir);
+  QString choice = toQString(dir);
 
-    HostAndResourceName harn(hostName, dir);
-    if (dialog.runDialog(&(m_editorGlobal->m_documentList), harn)) {
-      hostName = harn.hostName();
-      return harn.resourceName();
-    }
-    else {
-      return "";
-    }
+  HostAndResourceName harn(hostName, dir);
+  if (dialog.runDialog(&(m_editorGlobal->m_documentList), harn)) {
+    hostName = harn.hostName();
+    return harn.resourceName();
   }
-
-  if (!hostName.isLocal()) {
-    // TODO: I think I should just remove the option to run the other
-    // dialogs.
-    complain("Cannot run the native or Qt file choosers to select "
-             "a remote file.");
+  else {
     return "";
   }
-
-  QFileDialog dialog(this);
-
-  // As far as I can tell, the only effect of this is to set the
-  // dialog window title.
-  dialog.setAcceptMode(saveAs?
-    QFileDialog::AcceptSave : QFileDialog::AcceptOpen);
-
-  dialog.setDirectory(toQString(dir));
-
-  // I want to be able to "open" a non-existent file, just like I can
-  // in emacs.  It turns out AnyFile is the default but I make it
-  // explicit.
-  dialog.setFileMode(QFileDialog::AnyFile);
-
-  // The native dialog is causing some problems with desktop icons
-  // refreshing and the dialog hanging.  The Qt version also causes
-  // problems, but less severe?  I need to continue experimenting.
-  //
-  // The problems with hanging, etc., are indeed a little less severe,
-  // but the non-native dialog has a problem: its "file name" text edit
-  // line does not get selected after I press Enter after typing the
-  // name of a directory, so I have to manually delete that before I can
-  // continue navigating.  So, back to the native dialog for a while.
-  //
-  // 2018-07-14: I have built my own file chooser that is, IMO, much
-  // better than either Windows or Qt's dialogs.  I'm just leaving this
-  // here in case I want to continue experimenting.
-  if (dialogKind == FCDK_QT) {
-    dialog.setOptions(QFileDialog::DontUseNativeDialog);
-  }
-
-  if (!dialog.exec()) {
-    TRACE("fileOpen", "canceled");
-    return "";
-  }
-
-  QStringList filenames = dialog.selectedFiles();
-  if (filenames.isEmpty()) {
-    // I have been unable to trigger this behavior.
-    TRACE("fileOpen", "dialog returned empty list of files");
-    return "";
-  }
-
-  QString name = filenames.at(0);
-  TRACE("fileOpen", "name: " << toString(name));
-  if (name.isEmpty()) {
-    // I have been unable to trigger this behavior.
-    TRACE("fileOpen", "name is empty");
-    return "";
-  }
-
-  if (filenames.size() > 1) {
-    // I have been unable to trigger this behavior.
-    TRACE("fileOpen", "dialog returned list of " << filenames.size() <<
-                      " files, ignoring all but first");
-  }
-
-  return toString(name);
 }
 
 
@@ -650,30 +574,6 @@ void EditorWindow::fileOpenAtCursor() NOEXCEPT
   GENERIC_CATCH_END
 }
 
-
-void EditorWindow::fileOpenNativeDialog() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  HostName hostName(currentDocument()->hostName());
-  this->fileOpenFile(HostAndResourceName(hostName,
-    this->fileChooseDialog(hostName, editorWidget()->getDocumentDirectory(),
-                           false /*saveAs*/, FCDK_NATIVE)));
-
-  GENERIC_CATCH_END
-}
-
-void EditorWindow::fileOpenQtDialog() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  HostName hostName(currentDocument()->hostName());
-  this->fileOpenFile(HostAndResourceName(hostName,
-    this->fileChooseDialog(hostName, editorWidget()->getDocumentDirectory(),
-                           false /*saveAs*/, FCDK_QT)));
-
-  GENERIC_CATCH_END
-}
 
 void EditorWindow::fileOpenFile(HostAndResourceName const &harn)
 {
@@ -857,8 +757,7 @@ void EditorWindow::fileSaveAs() NOEXCEPT
 
   while (true) {
     string chosenFilename =
-      this->fileChooseDialog(hostName, dir, true /*saveAs*/,
-                             FCDK_FILENAME_INPUT);
+      this->fileChooseDialog(hostName, dir, true /*saveAs*/);
     if (chosenFilename.isempty()) {
       return;
     }
