@@ -883,6 +883,9 @@ bool EditorWindow::reloadCurrentDocument()
   if (ret) {
     // Update the status bar and title to remove "[DISKMOD]".
     editorViewChanged();
+
+    // And the main widget area for the new contents!
+    editorWidget()->update();
   }
 
   return ret;
