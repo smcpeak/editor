@@ -27,6 +27,7 @@
 
 // Qt
 #include <QKeyEvent>
+#include <QLibraryInfo>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QShortcutEvent>
@@ -871,6 +872,54 @@ static int maybePrintObjectCounts(char const *when)
 }
 
 
+// Map a QtMsgType to a string for use when printing out a message that
+// was sent with that type.
+static char const *toString(QtMsgType mtype)
+{
+  switch (mtype) {
+    case QtDebugMsg:         return "debug";
+    case QtInfoMsg:          return "info";
+    case QtWarningMsg:       return "warning";
+    case QtCriticalMsg:      return "critical";
+    case QtFatalMsg:         return "fatal";
+    default:                 return "error";
+  }
+}
+
+
+static void customMessageHandler(
+  QtMsgType mtype,
+  QMessageLogContext const &,
+  QString const &message)
+{
+  cerr << toString(mtype) << ": " << message << endl;
+
+  if (message.indexOf("platform plugin") >= 0) {
+    QString pluginsPath = QLibraryInfo::location(QLibraryInfo::PluginsPath);
+    QString execPath = QCoreApplication::applicationDirPath();
+
+    cerr <<
+"\n"
+"hint: When Qt complains about the \"platform plugin\", it means it is\n"
+"looking for a file called \"platforms/q<platform>.{dll,so}\", where\n"
+"<platform> is the name of that platform.\n"
+"\n"
+"By default, it looks in: " << pluginsPath << "\n"
+"as well as relative to the program executable: " << execPath << "\n"
+"\n"
+"One way to fix this is to set QT_PLUGIN_PATH to point at a directory\n"
+"containing the needed file.  On Windows, this might look like:\n"
+"\n"
+"  $ QT_PLUGIN_PATH=$(cygpath -m $HOME/opt/qt-5.9.9/plugins) " << execPath << "\n"
+"\n"
+"Another way might be to change PATH (on Windows) or LD_LIBRARY_PATH\n"
+"(on Linux) to point at a different set of Qt DLLs, since the plugin\n"
+"path is embedded in those DLLs.\n"
+         << endl;
+  }
+}
+
+
 int main(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -881,6 +930,8 @@ int main(int argc, char **argv)
   int ret;
   {
     try {
+      qInstallMessageHandler(customMessageHandler);
+
       EditorGlobal app(argc, argv);
 
       Owner<EventRecorder> recorder;
