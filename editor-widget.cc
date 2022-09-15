@@ -1335,15 +1335,16 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
   this->setDrawStyle(paint, font /*OUT*/, underlining /*OUT*/,
                      styleDB, TC_HITS);
 
-  this->drawOneOffscreenMatchIndicator(
-    paint, font, true /*above*/, m_matchesAboveLabel->text());
-  this->drawOneOffscreenMatchIndicator(
-    paint, font, false /*above*/, m_matchesBelowLabel->text());
+  this->drawOneCornerLabel(paint, font,
+    false /*isLeft*/, true /*isTop*/, m_matchesAboveLabel->text());
+  this->drawOneCornerLabel(paint, font,
+    false /*isLeft*/, false /*isTop*/, m_matchesBelowLabel->text());
 }
 
 
-void EditorWidget::drawOneOffscreenMatchIndicator(
-  QPainter &paint, QtBDFFont *font, bool above, QString const &text)
+void EditorWidget::drawOneCornerLabel(
+  QPainter &paint, QtBDFFont *font, bool isLeft, bool isTop,
+  QString const &text)
 {
   if (text.isEmpty()) {
     return;
@@ -1353,17 +1354,19 @@ void EditorWidget::drawOneOffscreenMatchIndicator(
   int labelWidth = m_fontWidth * s.length();
 
   // This uses the left/top margins for bottom/right in order to achieve
-  // a symmetric apperance.
-  int left = this->width() - labelWidth - m_leftMargin;
-  int top = above?
-              m_topMargin :
-              this->height() - m_fontHeight - m_topMargin;
+  // a symmetric appearance.
+  int leftEdge = isLeft?
+    m_leftMargin :
+    this->width() - labelWidth - m_leftMargin;
+  int topEdge = isTop?
+    m_topMargin :
+    this->height() - m_fontHeight - m_topMargin;
 
-  QRect rect(left, top, labelWidth, m_fontHeight);
+  QRect rect(leftEdge, topEdge, labelWidth, m_fontHeight);
   paint.eraseRect(rect);
 
   int baseline = m_fontAscent-1;
-  drawString(*font, paint, QPoint(left, top+baseline), s);
+  drawString(*font, paint, QPoint(leftEdge, topEdge+baseline), s);
 }
 
 

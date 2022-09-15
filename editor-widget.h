@@ -239,9 +239,9 @@ private:     // funcs
   // matches that are off the screen.
   void drawOffscreenMatchIndicators(QPainter &paint);
 
-  // Draw one of the indicators.
-  void drawOneOffscreenMatchIndicator(
-    QPainter &paint, QtBDFFont *font, bool above, QString const &text);
+  // Draw one of the labels that goes into one of the corners.
+  void drawOneCornerLabel(QPainter &paint, QtBDFFont *font,
+                          bool isLeft, bool isTop, QString const &text);
 
   // Add the search hits for 'line' to 'categories.
   void addSearchMatchesToLineCategories(
