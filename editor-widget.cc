@@ -115,13 +115,15 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
 {
   xassert(tdf);
 
-  m_matchesAboveLabel = new QLabel(this);
-  SET_QOBJECT_NAME(m_matchesAboveLabel);
-  m_matchesAboveLabel->setVisible(false);
+  #define MAKE_HIDDEN_LABEL(name) \
+    name = new QLabel(this);      \
+    SET_QOBJECT_NAME(name);       \
+    name->setVisible(false)
 
-  m_matchesBelowLabel = new QLabel(this);
-  SET_QOBJECT_NAME(m_matchesBelowLabel);
-  m_matchesBelowLabel->setVisible(false);
+  MAKE_HIDDEN_LABEL(m_matchesAboveLabel);
+  MAKE_HIDDEN_LABEL(m_matchesBelowLabel);
+
+  #undef MAKE_HIDDEN_LABEL
 
   // This will always make a new editor object since m_editorList is
   // empty, but it also adds it to m_editorList and may initialize the

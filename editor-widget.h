@@ -92,11 +92,15 @@ private:     // data
   // floating info box
   QLabel *m_infoBox;               // (nullable owner)
 
-  // This is a pair of hidden labels that hold the offscreen match
-  // counts text shown in the corners.  Storing the text here allows
-  // the automated test infrastructure easy access to it.  The objects
-  // are owned by 'this' via the QObject parent system.
+  // These are hidden labels that hold the search match text shown in
+  // the corners.  Storing the text here allows the automated test
+  // infrastructure easy access to it.  The objects are owned by 'this'
+  // via the QObject parent system.
+
+  // Contains text showing the number of matches offscreen above.
   QLabel *m_matchesAboveLabel;
+
+  // Number offscreen below.
   QLabel *m_matchesBelowLabel;
 
   // ------ editing state -----
