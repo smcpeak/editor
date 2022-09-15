@@ -136,6 +136,9 @@ public:      // funcs
   // which 'countRangeMatches' can yield useful data.
   int documentLines() const { return m_lineToMatches.length(); }
 
+  // True if we have an active search string.
+  bool hasSearchString() const { return !m_searchString.empty(); }
+
   // Get current search string.
   string const &searchString() const { return m_searchString; }
 
