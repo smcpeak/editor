@@ -1,4 +1,11 @@
 TODOs:
+  - bug: If I open the file-open dialog while interacting with a remote
+    file and delete everything from the file name box, I get an error:
+
+      DEV_WARNING: exc.cpp:19: Unhandled exception: Assertion failed: m_hostName.isLoc
+      al(), file host-and-resource-name.cc line 33
+
+
   - Add key bindings to easily step to next/prev error or grep hit.
   - Cannot Ctrl+I on a line like:
       Makefile:141:BRIDGE_CAML_OBJS += Main_embedded.$(CMO)
