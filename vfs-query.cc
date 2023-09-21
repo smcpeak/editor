@@ -189,26 +189,46 @@ void FileSystemQuery::connect(HostName const &hostname)
       QCoreApplication::applicationDirPath() + "/editor-fs-server.exe");
   }
   else {
-    // Assume 'ssh' is on the local PATH.
-    m_commandRunner.setProgram("ssh");
+    bool didSetProgram = false;
 
-    m_commandRunner.setArguments(QStringList{
+    // Sequence of arguments to pass to the first 'ssh'.
+    QStringList args;
+
+    // As an experiment, allow the host name to have multiple hosts
+    // conneded with "->", which means to do a sequence of nested ssh
+    // calls to hop from machine to machine.  At each step we assume
+    // 'ssh' i on the PATH.
+    QStringList hostPath =
+      toQString(m_hostName.getSSHHostName()).split("->");
+
+    for (QString name : hostPath) {
+      // Assume 'ssh' is on the local PATH.
+      if (!didSetProgram) {
+        m_commandRunner.setProgram("ssh");
+        didSetProgram = true;
+      }
+      else {
+        args.append("ssh");
+      }
+
       // Force SSH to never prompt for a password.  Instead, just fail
       // if it cannot log in without prompting.
-      "-oBatchMode=yes",
+      args.append("-oBatchMode=yes");
 
-      toQString(m_hostName.getSSHHostName()),
+      args.append(name);
+    }
 
-      // This requires that 'editor-fs-server.exe' be found on the
-      // user's PATH on the remote machine.
-      //
-      // It is not necessary to disable the SSH escape character
-      // because, by passing the name of a program, the SSH session is
-      // not considered "interactive", and hence by default does not
-      // create a PTY, which is itself a prerequisite to escape
-      // character recognition.
-      "editor-fs-server.exe"
-    });
+    // This requires that 'editor-fs-server.exe' be found on the
+    // user's PATH on the remote machine.
+    //
+    // It is not necessary to disable the SSH escape character
+    // because, by passing the name of a program, the SSH session is
+    // not considered "interactive", and hence by default does not
+    // create a PTY, which is itself a prerequisite to escape
+    // character recognition.
+    args.append("editor-fs-server.exe");
+
+    m_commandRunner.setArguments(args);
   }
 
   TRACE("FileSystemQuery",
