@@ -16,9 +16,12 @@
 #include "vfs-query-sync.h"            // VFS_QuerySync
 
 // smqtutil
-#include "editor14r.bdf.gen.h"
-#include "editor14i.bdf.gen.h"
-#include "editor14b.bdf.gen.h"
+#include "courB24_ISO8859_1.bdf.gen.h" // bdfFontData_courB24_ISO8859_1
+#include "courO24_ISO8859_1.bdf.gen.h" // bdfFontData_courO24_ISO8859_1
+#include "courR24_ISO8859_1.bdf.gen.h" // bdfFontData_courR24_ISO8859_1
+#include "editor14r.bdf.gen.h"         // bdfFontData_editor14r
+#include "editor14i.bdf.gen.h"         // bdfFontData_editor14i
+#include "editor14b.bdf.gen.h"         // bdfFontData_editor14b
 #include "minihex6.bdf.gen.h"          // bdfFontData_minihex6
 #include "qtutil.h"                    // SET_QOBJECT_NAME
 
@@ -136,9 +139,16 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
 
   m_documentList->addObserver(this);
 
-  setFonts(bdfFontData_editor14r,
-           bdfFontData_editor14i,
-           bdfFontData_editor14b);
+  if (getenv("EDITOR_USE_LARGE_FONT")) {
+    setFonts(bdfFontData_courR24_ISO8859_1,
+             bdfFontData_courO24_ISO8859_1,
+             bdfFontData_courB24_ISO8859_1);
+  }
+  else {
+    setFonts(bdfFontData_editor14r,
+             bdfFontData_editor14i,
+             bdfFontData_editor14b);
+  }
 
   setCursor(Qt::IBeamCursor);
 
