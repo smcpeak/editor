@@ -296,7 +296,10 @@ EDITOR_FS_SERVER_OBJS += vfs-msg.o
 -include vfs-msg.d
 
 editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
-	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
+	@# Link this with -static because it gets invoked over an SSH
+	@# connection, which makes it difficult to arrange for the proper
+	@# library search path to be set.
+	$(CXX) -o $@ -static $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
 
 TOCLEAN += editor-fs-server.exe
 
