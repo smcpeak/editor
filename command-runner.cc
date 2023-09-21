@@ -13,6 +13,7 @@
 
 // Qt
 #include <qtcoreversion.h>             // QTCORE_VERSION
+#include <Qt>                          // Qt::SkipEmptyParts
 #include <QTimerEvent>
 
 // libc
@@ -24,6 +25,13 @@
 
 // Additional level of detail.
 #define TRACE_CR_DETAIL(msg) TRACE("cmdrun_detail", msg) /* user ; */
+
+
+#if QTCORE_VERSION < 0x50E00
+  // Qt::SkipEmptyParts was introduced in Qt 5.14 as a replacement for
+  // QString::SkipEmptyParts.
+  #error "This program requires Qt 5.14 or later."
+#endif
 
 
 // Maximum time for the synchronous runner invocation.
@@ -76,12 +84,6 @@ CommandRunner::CommandRunner()
     QObject::connect(&m_process, ptm,                       \
                      this, &CommandRunner::on_##sig);       \
   }
-
-#if QTCORE_VERSION < 0x50700
-  // For example, I am using 'channelReadyRead', which was introduced
-  // in Qt 5.7.
-  #error "This program requires Qt 5.7 or later."
-#endif
 
   CONN(errorOccurred);
   CONN_OV(finished, (int, QProcess::ExitStatus));
@@ -305,7 +307,7 @@ void CommandRunner::setShellCommandLine(QString const &command,
   }
   else {
     // Split directly.
-    QStringList words(command.split(' ', QString::SkipEmptyParts));
+    QStringList words(command.split(' ', Qt::SkipEmptyParts));
     if (!words.isEmpty()) {
       this->setProgram(words.first());
       words.removeFirst();
