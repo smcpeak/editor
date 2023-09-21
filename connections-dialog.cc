@@ -93,7 +93,7 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
                        this, &ConnectionsDialog::on_##name##Pressed);
 
     ADD_BUTTON(refresh, "Refresh (F5)");
-    ADD_BUTTON(connect, "&Connect");
+    ADD_BUTTON(connect, "&Connect to...");
     ADD_BUTTON(restart, "&Restart");
     ADD_BUTTON(disconnect, "&Disconnect");
 
