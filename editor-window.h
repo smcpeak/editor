@@ -33,7 +33,6 @@
 class QLabel;
 class QMenu;
 class QMenuBar;
-class QScrollBar;
 
 class SearchAndReplacePanel;           // sar-panel.h
 class StatusDisplay;                   // status.h
@@ -211,6 +210,8 @@ public Q_SLOTS:
   void viewSetSoftMarginColumn() NOEXCEPT;
   void viewToggleHighlightTrailingWS() NOEXCEPT;
   void viewSetHighlighting() NOEXCEPT;
+  void viewSetApplicationFont() NOEXCEPT;
+  void viewFontHelp() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowNewWindow() NOEXCEPT;

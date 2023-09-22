@@ -89,6 +89,22 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // "-style Windows" on the command line.
   this->setStyle(new EditorProxyStyle);
 
+  // Allow the user to specify an initial app font size.
+  if (char const *sizeStr = getenv("EDITOR_APP_FONT_POINT_SIZE")) {
+    int newSize = atoi(sizeStr);
+    QFont fontSpec = QApplication::font();
+    TRACE("EditorGlobal",
+      "changing app font point size from " << fontSpec.pointSize() <<
+      " to " << newSize);
+    fontSpec.setPointSize(newSize);
+    QApplication::setFont(fontSpec);
+  }
+
+  // Get the actual font, possibly influenced by the setting above.
+  QFontInfo fi(QApplication::font());
+  int sz = fi.pixelSize();
+  TRACE("EditorGlobal", "font into pixel size: " << sz);
+
   // Set the scrollbars to have a darker thumb.  Otherwise this is
   // meant to imitate the Windows 10 scrollbars.  (That is just for
   // consistency with other apps; I don't think the design is good.)
@@ -100,12 +116,18 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   //   http://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qscrollbar
   //
   // but I then modified it quite a bit.
+  //
+  // The sz+1 and sz-1 stuff is because the default font on Windows
+  // seems to have a pixel size of 16, and I originally had used sizes
+  // of 15 and 17 in this style sheet, so I've now adjusted it so the
+  // sizes should scale with the initial font, but be the same as they
+  // were when using the default font.
   string borderColor("#C0C0C0");
   this->setStyleSheet(qstringb(
     "QScrollBar:vertical {"
     "  background: white;"
-    "  width: 17px;"
-    "  margin: 17px 0 17px 0;"     // top left right bottom?
+    "  width: "<<(sz+1)<<"px;"
+    "  margin: "<<(sz+1)<<"px 0 "<<(sz+1)<<"px 0;" // top left right bottom?
     "}"
     "QScrollBar::handle:vertical {"
     "  border: 1px solid #404040;"
@@ -115,26 +137,29 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     "QScrollBar::add-line:vertical {"
     "  border: 1px solid " << borderColor << ";"
     "  background: white;"
-    "  height: 17px;"
+    "  height: "<<(sz+1)<<"px;"
     "  subcontrol-position: bottom;"
     "  subcontrol-origin: margin;"
     "}"
     "QScrollBar::sub-line:vertical {"
     "  border: 1px solid " << borderColor << ";"
     "  background: white;"
-    "  height: 17px;"
+    "  height: "<<(sz+1)<<"px;"
     "  subcontrol-position: top;"
     "  subcontrol-origin: margin;"
     "}"
     "QScrollBar::up-arrow:vertical {"
-    "  image: url(:/pix/scroll-up-arrow.png);"
-    "  width: 15px;"
-    "  height: 15px;"
+    // This border-image trick causes the image to be stretched to fill
+    // the available space, whereas with just 'image' it would always
+    // be the original 15x15 size.
+    "  border-image: url(:/pix/scroll-up-arrow.png) 0 0 0 0 stretch stretch;"
+    "  width: "<<(sz-1)<<"px;"
+    "  height: "<<(sz-1)<<"px;"
     "}"
     "QScrollBar::down-arrow:vertical {"
-    "  image: url(:/pix/scroll-down-arrow.png);"
-    "  width: 15px;"
-    "  height: 15px;"
+    "  border-image: url(:/pix/scroll-down-arrow.png) 0 0 0 0 stretch stretch;"
+    "  width: "<<(sz-1)<<"px;"
+    "  height: "<<(sz-1)<<"px;"
     "}"
     "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
     "  border-left: 1px solid " << borderColor << ";"
@@ -195,6 +220,12 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // taskbar flash when it happens, reducing the likelihood that I
   // will start typing into the wrong window.
   ed->activateWindow();
+
+  // This works around a weird problem with the menu bar, where it will
+  // ignore the initially chosen font, but then change itself in
+  // response to the *first* font change after startup, after which it
+  // resumes ignoring font updates.
+  qApp->setFont(qApp->font());
 }
 
 

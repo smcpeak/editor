@@ -1,7 +1,9 @@
 // status.cc
 // code for status.h
 
-#include "status.h"       // this module
+#include "status.h"          // this module
+
+#include "trace.h"           // TRACE
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -11,7 +13,9 @@
 StatusDisplay::StatusDisplay(QWidget *parent)
   : QWidget(parent)
 {
-  this->setFixedHeight(20);
+  int height = fontMetrics().height();
+  TRACE("StatusDisplay", "height: " << height);
+  this->setFixedHeight(height);
 
   QHBoxLayout *hb = new QHBoxLayout();
   hb->setContentsMargins(5, 0, 0, 0);
@@ -40,7 +44,7 @@ StatusDisplay::StatusDisplay(QWidget *parent)
   // corner resize widget
   m_corner = new QSizeGrip(this);
   m_corner->setObjectName("m_corner");
-  m_corner->setFixedSize(20,20);
+  m_corner->setFixedSize(height, height);
   hb->addWidget(m_corner);
 
   this->setLayout(hb);

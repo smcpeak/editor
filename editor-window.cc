@@ -59,6 +59,7 @@
 
 #include <QCloseEvent>
 #include <QDesktopWidget>
+#include <QFontDialog>
 #include <QInputDialog>
 
 
@@ -307,6 +308,8 @@ void EditorWindow::buildMenu()
   }
 
   {
+    // Used mnemonics: fhmtvw
+
     QMenu *menu = this->m_menuBar->addMenu("&View");
     menu->setObjectName("viewMenu");
 
@@ -330,6 +333,17 @@ void EditorWindow::buildMenu()
       editorWidget()->highlightTrailingWhitespace());
 
     MENU_ITEM    ("Set &Highlighting...", viewSetHighlighting);
+
+    {
+      QMenu *submenu = menu->addMenu("&Fonts");
+      submenu->setObjectName("fontMenu");
+      QMenu *menu = submenu;
+
+      // Used mnemonics: a
+
+      MENU_ITEM("Set &application font...", viewSetApplicationFont);
+      MENU_ITEM("Font &help...", viewFontHelp);
+    }
   }
 
   #undef CHECKABLE_ACTION
@@ -1600,6 +1614,60 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
 
   GENERIC_CATCH_END
 }
+
+
+void EditorWindow::viewSetApplicationFont() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  QFont oldFont = qApp->font();
+
+  bool ok = false;
+  QFontDialog::FontDialogOptions options;
+  QFont newFont = QFontDialog::getFont(
+    &ok /*OUT*/,
+    oldFont,
+    this,
+    "Editor Application Font",
+    options);
+
+  if (ok) {
+    qApp->setFont(newFont);
+
+    // This was an attempt to get the scroll bar thumb to increase its
+    // height to match the new width, but it did not work.
+    #if 0
+    int newHeight = QFontMetrics(newFont).height();
+    TRACE("EditorWindow", "new global strut height: " << newHeight);
+    qApp->setGlobalStrut(QSize(newHeight, newHeight));;
+    #endif
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::viewFontHelp() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  QMessageBox mb;
+  mb.setWindowTitle("Editor Fonts");
+  mb.setText(
+"The application font affects the menus, status bar, and dialogs, \
+although the main menu bar and status bar are only affected when a new \
+window is opened.\n\
+\n\
+It is possible to set an initial application font size by setting the \
+envvar EDITOR_APP_FONT_POINT_SIZE before starting the editor.  Setting \
+that envvar also affects the width of the scroll bar, whereas changing \
+the font via the menu does not affect the scroll bar."
+  );
+  mb.exec();
+
+  GENERIC_CATCH_END
+}
+
 
 
 void EditorWindow::windowOpenFilesList() NOEXCEPT
