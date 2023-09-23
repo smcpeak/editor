@@ -35,6 +35,11 @@ StatusDisplay::StatusDisplay(QWidget *parent)
 
   m_filename = new QLabel();
   m_filename->setObjectName("m_filename");
+
+  // Disable the "autodetection" nonsense since the file name can be
+  // almost any string, including things that look like HTML.
+  m_filename->setTextFormat(Qt::PlainText);
+
   //m_filename->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   //m_filename->setLineWidth(1);
   hb->addWidget(m_filename);
