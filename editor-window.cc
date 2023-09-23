@@ -1804,7 +1804,7 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 
   // Status text: full document name plus status indicators.
   NamedTextDocument *file = currentDocument();
-  m_statusArea->m_filename->setText(toQString(
+  m_statusArea->setFilenameText(toQString(
     file->nameWithStatusIndicators()));
 
   // Window title.

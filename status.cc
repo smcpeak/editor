@@ -63,4 +63,20 @@ StatusDisplay::~StatusDisplay()
 }
 
 
+void StatusDisplay::setFilenameText(QString newFilename)
+{
+  m_filename->setText(newFilename);
+
+  /* Sometimes the file name can be very long, and the normal behavior
+     of QLabel is to set its minimum width according to the displayed
+     text.  That would, in turn, force the window to potentially be very
+     wide, which I don't want to require.
+
+     Also, this interacts with the sceenshot1.ev test, since that needs
+     a fairly narrow width, but the file name might be arbitrarily long
+     depending on which directory the editor has been compiled in. */
+  m_filename->setMinimumWidth(20);
+}
+
+
 // EOF

@@ -11,15 +11,19 @@ class QSizeGrip;
 
 
 class StatusDisplay : public QWidget {
-public:
+public:      // data
   QLabel *m_cursor;          // cursor position
   QLabel *m_mode;            // mode pixmap
   QLabel *m_filename;        // current file name
   QSizeGrip *m_corner;       // corner resize grippy
 
-public:
+public:      // methods
   StatusDisplay(QWidget *parent = NULL);
   ~StatusDisplay();
+
+  // Set the text in 'm_filename'.  This should be used instead of
+  // directly modifying it so the minimum width can be adjusted.
+  void setFilenameText(QString newFilename);
 };
 
 
