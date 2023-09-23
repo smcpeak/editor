@@ -213,6 +213,11 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
 {
   string filename = toString(m_filenameEdit->text());
 
+  if (filename.empty()) {
+    // Ignore empty file name.
+    return;
+  }
+
   SMFileUtil sfu;
   string dir, base;
   sfu.splitPath(dir, base, filename);
@@ -306,6 +311,11 @@ void FilenameInputDialog::setFilenameLabel()
 {
   string filename = toString(m_filenameEdit->text());
 
+  if (filename.empty()) {
+    m_filenameLabel->setText("File path is empty.");
+    return;
+  }
+
   xassert(m_docList);
   if (m_docList->findDocumentByNameC(
         DocumentName::fromFilename(m_currentHostName, filename))) {
@@ -395,6 +405,11 @@ bool FilenameInputDialog::getCompletions(
   ArrayStack<string> /*OUT*/ &completions)
 {
   string filename = toString(m_filenameEdit->text());
+
+  if (filename.empty()) {
+    // No completions for an empty path.
+    return true;
+  }
 
   SMFileUtil sfu;
   string dir, base;
@@ -496,6 +511,13 @@ static string longestCommonPrefix(ArrayStack<string> const &strings)
 
 void FilenameInputDialog::filenameCompletion()
 {
+  string filename = toString(m_filenameEdit->text());
+
+  if (filename.empty()) {
+    // Don't try to complete an empty file name.
+    return;
+  }
+
   // Get the individual entries.
   ArrayStack<string> completions;
   if (!this->getCompletions(completions)) {
@@ -506,7 +528,6 @@ void FilenameInputDialog::filenameCompletion()
   string commonPrefix = longestCommonPrefix(completions);
 
   // Compare to what we have already.
-  string filename = toString(m_filenameEdit->text());
   SMFileUtil sfu;
   string dir, base;
   sfu.splitPath(dir, base, filename);
@@ -640,6 +661,11 @@ void FilenameInputDialog::accept() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   string filename = toString(m_filenameEdit->text());
+
+  if (filename.empty()) {
+    // Silently ignore Ok press while name is empty.
+    return;
+  }
 
   // Normalize by passing through SMFileName, throwing away any
   // trailing slashes, and converting back to string.
