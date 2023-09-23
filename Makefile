@@ -7,9 +7,9 @@ all: test-prog-outs
 
 
 # directories of other software
-SMBASE   := ../smbase
-SMFLEX   := ../smflex
-SMQTUTIL := ../smqtutil
+SMBASE   := smbase
+SMFLEX   := smflex
+SMQTUTIL := smqtutil
 
 # Standard Makefile stuff.
 include $(SMBASE)/sm-lib.mk

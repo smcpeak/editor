@@ -4,6 +4,6 @@
 # way to do that is to pull in the smqtutil configuration.  (That
 # is not done automatically because config.mk might need to set
 # the location of smqtutil.)
-include ../smqtutil/config.mk
+include smqtutil/config.mk
 
 # EOF
