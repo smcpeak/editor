@@ -66,6 +66,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_recordInputEvents(false),
     m_eventFileTest(),
     m_filenameInputDialogHistory(),
+    m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
     m_openFilesDialog(NULL),
@@ -104,6 +105,10 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   QFontInfo fi(QApplication::font());
   int sz = fi.pixelSize();
   TRACE("EditorGlobal", "font into pixel size: " << sz);
+
+  if (getenv("EDITOR_USE_LARGE_FONT")) {
+    m_editorBuiltinFont = BF_COURIER24;
+  }
 
   // Set the scrollbars to have a darker thumb.  Otherwise this is
   // meant to imitate the Windows 10 scrollbars.  (That is just for
@@ -299,6 +304,9 @@ static char const *optionsDescription =
   "  -ev=file.ev     Replay events in file.ev for testing.\n"
   "  -record         Record events to events.out.\n"
   "  -conn=hostname  Start with an active remote connection to hostname.\n"
+  "\n"
+  "With -ev, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to\n"
+  "stop after replay regardless of failure.\n"
   ;
 
 
@@ -756,6 +764,14 @@ void EditorGlobal::hideModelessDialogs()
   if (m_connectionsDialog) {
     m_connectionsDialog->hide();
   }
+}
+
+
+void EditorGlobal::setEditorBuiltinFont(BuiltinFont newFont)
+{
+  m_editorBuiltinFont = newFont;
+
+  Q_EMIT signal_editorFontChanged();
 }
 
 

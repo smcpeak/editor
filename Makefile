@@ -502,6 +502,7 @@ TOCLEAN += keybindings.doc.gen.*
 # above.  Above, modules are pulled in as needed in order to build
 # various test programs.  What's left over is the modules that are not
 # part of any test program.
+EDITOR_OBJS += builtin-font.o
 EDITOR_OBJS += connections-dialog.o
 EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diff-hilite.o
@@ -518,6 +519,8 @@ EDITOR_OBJS += event-replay.o
 EDITOR_OBJS += event-replay.moc.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
+EDITOR_OBJS += fonts-dialog.o
+EDITOR_OBJS += fonts-dialog.moc.o
 EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += keybindings.doc.gen.o
 EDITOR_OBJS += keys-dialog.o

@@ -11,6 +11,7 @@
 #include "editor-widget-frame.h"       // EditorWidgetFrame
 #include "editor-widget.h"             // EditorWidget
 #include "filename-input.h"            // FilenameInputDialog
+#include "fonts-dialog.h"              // FontsDialog
 #include "git-version.h"               // editor_git_version
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "keybindings.doc.gen.h"       // doc_keybindings
@@ -139,6 +140,10 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   this->m_editorGlobal->m_windows.append(this);
   this->m_editorGlobal->m_documentList.addObserver(this);
 
+  QObject::connect(
+    m_editorGlobal, &EditorGlobal::signal_editorFontChanged,
+    this, &EditorWindow::slot_editorFontChanged);
+
   EditorWindow::s_objectCount++;
 }
 
@@ -162,6 +167,7 @@ EditorWindow::~EditorWindow()
 
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
+  QObject::disconnect(m_editorGlobal, NULL, this, NULL);
 }
 
 
@@ -342,6 +348,7 @@ void EditorWindow::buildMenu()
       // Used mnemonics: a
 
       MENU_ITEM("Set &application font...", viewSetApplicationFont);
+      MENU_ITEM("Set &editor font...", viewSetEditorFont);
       MENU_ITEM("Font &help...", viewFontHelp);
     }
   }
@@ -1647,6 +1654,17 @@ void EditorWindow::viewSetApplicationFont() NOEXCEPT
 }
 
 
+void EditorWindow::viewSetEditorFont() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  FontsDialog dialog(this, editorGlobal());
+  dialog.exec();
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::viewFontHelp() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -1661,7 +1679,11 @@ window is opened.\n\
 It is possible to set an initial application font size by setting the \
 envvar EDITOR_APP_FONT_POINT_SIZE before starting the editor.  Setting \
 that envvar also affects the width of the scroll bar, whereas changing \
-the font via the menu does not affect the scroll bar."
+the font via the menu does not affect the scroll bar.\n\
+\n\
+The editor font only affects the text inside the main editing area. \
+The larger font can be chosen initially by setting envvar \
+EDITOR_USE_LARGE_FONT."
   );
   mb.exec();
 
@@ -1820,6 +1842,19 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 
   // Read-only menu checkbox.
   m_toggleReadOnlyAction->setChecked(editorWidget()->isReadOnly());
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::slot_editorFontChanged() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE("EditorWindow", "slot_editorFontChanged");
+
+  editorWidget()->setFontsFromEditorGlobal();
+  editorWidget()->redraw();
 
   GENERIC_CATCH_END
 }

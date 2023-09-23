@@ -5,6 +5,7 @@
 #define EDITOR_WIDGET_H
 
 // editor
+#include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-window-fwd.h"         // EditorWindow
 #include "event-replay.h"              // EventReplayQueryable
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
@@ -295,6 +296,16 @@ public:      // funcs
 
   bool isReadOnly() const              { return m_editor->isReadOnly(); }
   void setReadOnly(bool readOnly);
+
+  // Get the parent editor window.
+  EditorWindow *editorWindow() const;
+
+  // Get the global editor state.
+  EditorGlobal *editorGlobal() const;
+
+  // Read the font choice stored in 'editorGlobal()' and set this
+  // widget's editor fonts accordingly.
+  void setFontsFromEditorGlobal();
 
   // ---------------------------- cursor -----------------------------
   // set cursorLine/cursorCol to the x/y derived from 'm'

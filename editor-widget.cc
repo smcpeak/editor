@@ -5,6 +5,7 @@
 
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
+#include "editor-global.h"             // EditorGlobal
 #include "editor-window.h"             // EditorWindow
 #include "nearby-file.h"               // getNearbyFilename
 #include "qtbdffont.h"                 // QtBDFFont
@@ -139,16 +140,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
 
   m_documentList->addObserver(this);
 
-  if (getenv("EDITOR_USE_LARGE_FONT")) {
-    setFonts(bdfFontData_courR24_ISO8859_1,
-             bdfFontData_courO24_ISO8859_1,
-             bdfFontData_courB24_ISO8859_1);
-  }
-  else {
-    setFonts(bdfFontData_editor14r,
-             bdfFontData_editor14i,
-             bdfFontData_editor14b);
-  }
+  setFontsFromEditorGlobal();
 
   setCursor(Qt::IBeamCursor);
 
@@ -237,6 +229,18 @@ void EditorWidget::setReadOnly(bool readOnly)
 }
 
 
+EditorWindow *EditorWidget::editorWindow() const
+{
+  return m_editorWindow;
+}
+
+
+EditorGlobal *EditorWidget::editorGlobal() const
+{
+  return editorWindow()->editorGlobal();
+}
+
+
 void EditorWidget::cursorTo(TextLCoord tc)
 {
   INITIATING_DOCUMENT_CHANGE();
@@ -254,6 +258,21 @@ static BDFFont *makeBDFFont(char const *bdfData, char const *context)
   catch (xBase &x) {
     x.prependContext(context);
     throw;
+  }
+}
+
+
+void EditorWidget::setFontsFromEditorGlobal()
+{
+  if (editorGlobal()->getEditorBuiltinFont() == BF_COURIER24) {
+    setFonts(bdfFontData_courR24_ISO8859_1,
+             bdfFontData_courO24_ISO8859_1,
+             bdfFontData_courB24_ISO8859_1);
+  }
+  else {
+    setFonts(bdfFontData_editor14r,
+             bdfFontData_editor14i,
+             bdfFontData_editor14b);
   }
 }
 

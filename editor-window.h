@@ -211,6 +211,7 @@ public Q_SLOTS:
   void viewToggleHighlightTrailingWS() NOEXCEPT;
   void viewSetHighlighting() NOEXCEPT;
   void viewSetApplicationFont() NOEXCEPT;
+  void viewSetEditorFont() NOEXCEPT;
   void viewFontHelp() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
@@ -227,6 +228,7 @@ public Q_SLOTS:
   void helpDebugEditorScreenshot() NOEXCEPT;
 
   void editorViewChanged() NOEXCEPT;
+  void slot_editorFontChanged() NOEXCEPT;
   void on_closeSARPanel() NOEXCEPT;
   void on_openFilenameInputDialogSignal(HostFileAndLineOpt hfl) NOEXCEPT;
 };

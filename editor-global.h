@@ -7,6 +7,7 @@
 #include "editor-global-fwd.h"         // fwds for this module
 
 // editor
+#include "builtin-font.h"              // BuiltinFont
 #include "command-runner-fwd.h"        // CommandRunner
 #include "editor-window.h"             // EditorWindow
 #include "filename-input.h"            // FilenameInputDialog
@@ -71,6 +72,9 @@ public:       // data
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
 private:     // data
+  // Built-in font to use in the editor widgets.
+  BuiltinFont m_editorBuiltinFont;
+
   // Connections to local and remote file systems.
   VFS_Connections m_vfsConnections;
 
@@ -192,8 +196,19 @@ public:       // funcs
   // Hide any open modeless dialogs since we are about to quit.
   void hideModelessDialogs();
 
+  BuiltinFont getEditorBuiltinFont() const
+    { return m_editorBuiltinFont; }
+
+  // Change the editor font and refresh all of the editor windows
+  // accordingly.
+  void setEditorBuiltinFont(BuiltinFont newFont);
+
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
+
+Q_SIGNALS:
+  // Emitted when 'm_editorBuiltinFont' changes.
+  void signal_editorFontChanged();
 
 public Q_SLOTS:
   // Called when the search panel in some window has changed.  Broadcast
