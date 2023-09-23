@@ -1166,6 +1166,9 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       if (visibleCursorCol < 0) {
         // The cursor is off the left edge, so nothing to show.
       }
+      else if (visibleCursorCol >= text.length()) {
+        // Cursor off right edge, also skip.
+      }
       else if (false) {     // thin vertical bar
         paint.setPen(m_cursorColor);
         paint.drawLine(x,0, x, m_fontHeight-1);

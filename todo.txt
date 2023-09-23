@@ -5,9 +5,6 @@ TODOs:
       DEV_WARNING: exc.cpp:19: Unhandled exception: Assertion failed: m_hostName.isLoc
       al(), file host-and-resource-name.cc line 33
 
-  - bug: if there is selected text and I resize the window to be small
-    enough to obscure the cursor, I get an assertion failure
-
   - Add key bindings to easily step to next/prev error or grep hit.
   - Cannot Ctrl+I on a line like:
       Makefile:141:BRIDGE_CAML_OBJS += Main_embedded.$(CMO)
