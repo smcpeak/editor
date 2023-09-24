@@ -528,6 +528,7 @@ EDITOR_OBJS += launch-command-dialog.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += my-table-widget.o
+EDITOR_OBJS += my-table-widget.moc.o
 EDITOR_OBJS += open-files-dialog.o
 EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += pixmaps.o

@@ -171,6 +171,18 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     "  border-right: 1px solid " << borderColor << ";"
     "  background: none;"
     "}"
+
+    /* Adjust the color of items in list views that are selected but the
+       list does not have focus.  The default is a light gray that is
+       almost indistinguishable from the zebra color, such that it is
+       very hard to see what is selected.  This color is much more
+       distinct.
+
+       The default color for an item that is selected, while the list
+       view has focus, is #0078D7. */
+    "MyTableWidget:item:selected:!active {"
+    "  background: #88CCEE;"
+    "}"
   ));
 
   // Establish the initial VFS connection before creating the first

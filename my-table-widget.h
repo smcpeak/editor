@@ -32,10 +32,12 @@
 // However, the problem is the Qt model change design requires every
 // change to be accompanied by a pre-change broadcast and a post-change
 // broadcast.  In contrast, my own system only uses post-change
-// broadcasts.  Rather than complicate by design by adding pre-change
+// broadcasts.  Rather than complicate my design by adding pre-change
 // notifications, I have chosen to just pay the minor cost of having an
 // extra copy of the table in memory.
 class MyTableWidget : public QTableWidget {
+  Q_OBJECT
+
 public:      // types
   // Data for initializing a column.
   struct ColumnInitInfo {
