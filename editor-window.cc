@@ -902,11 +902,9 @@ bool EditorWindow::reloadCurrentDocument()
   bool ret = m_editorGlobal->reloadDocumentFile(this, currentDocument());
 
   if (ret) {
-    // Update the status bar and title to remove "[DISKMOD]".
-    editorViewChanged();
-
-    // And the main widget area for the new contents!
-    editorWidget()->update();
+    // Redraw file contents, update status bar including search hit
+    // counts, etc., and remove "[DISKMOD]" from title bar.
+    editorWidget()->redraw();
   }
 
   return ret;
