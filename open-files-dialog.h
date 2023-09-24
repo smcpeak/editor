@@ -16,6 +16,10 @@
 #include "sm-iostream.h"               // ostream
 #include "sm-noexcept.h"               // NOEXCEPT
 
+// libc++
+#include <vector>                      // std::vector
+
+class QLineEdit;
 class QModelIndex;
 class QPushButton;
 
@@ -51,21 +55,37 @@ private:     // instance data
   // showing/editing.
   EditorGlobal *m_editorGlobal;
 
+  // Sequence of open documents that satisfy 'm_filterLineEdit'.
+  //
+  // The elements are pointers to the documents owned by EditorGlobal,
+  // and the order is the same as in the EditorGlobal, modulo filtering.
+  std::vector<NamedTextDocument *> m_filteredDocuments;
+
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
   MyTableWidget *m_tableWidget;
 
-  // Buttons.
+  // Controls.
+  QLineEdit *m_filterLineEdit;
   QPushButton *m_closeSelButton;
   QPushButton *m_reloadDiskmodButton;
   QPushButton *m_helpButton;
 
 private:     // funcs
-  // Rebuild the table by copying from 'm_docList'.
+  // Recompute 'm_filteredDocuments' from 'm_editorGlobal' and
+  // 'm_filterLineEdit'.
+  void computeFilteredDocuments();
+
+  // Rebuild the table by recomputing the filtered list and then copying
+  // it into the table widget.
   void repopulateTable();
 
-  // Get the document list to edit.
-  NamedTextDocumentList *docList() const;
+  // Get the unfiltered document list to edit.
+  NamedTextDocumentList *unfilteredDocList() const;
+
+  // If 'r' is a valid index into 'm_filteredDocuments', return the
+  // element at that index.  Otherwise return nullptr.
+  NamedTextDocument *getDocAtIf(int r);
 
 public:      // funcs
   OpenFilesDialog(EditorGlobal *editorGlobal,
@@ -77,6 +97,9 @@ public:      // funcs
   // return NULL.
   NamedTextDocument *runDialog(QWidget *callerWindow);
 
+  // QObject methods.
+  virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
+
   // EventReplayQueryable methods.
   virtual string eventReplayQuery(string const &state) OVERRIDE;
 
@@ -85,6 +108,7 @@ public Q_SLOTS:
   void on_closeSelected() NOEXCEPT;
   void on_reloadDiskmod() NOEXCEPT;
   void on_help() NOEXCEPT;
+  void slot_filterTextChanged(QString const &newText) NOEXCEPT;
 };
 
 

@@ -13,6 +13,7 @@ public:
   QPixmap getReplace;        // get replacement text
   QPixmap replace;           // y/n "replace?" mode
   QPixmap connectionsIcon;   // Icon for ConnectionsDialog.
+  QPixmap downArrow;         // 16x16 Down-arrow.
 
 public:
   Pixmaps();

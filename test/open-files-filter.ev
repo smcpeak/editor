@@ -1,0 +1,50 @@
+# open-files-filter.ev
+# In the open-files dialog, apply a filter.
+
+# Open the open-files dialog.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
+CheckFocusWidget "OpenFilesDialog.m_tableWidget"
+
+# I expect this to start with four specific files open.
+CheckQuery "OpenFilesDialog" "allDocumentsFilenamePathBase" "resize1.ev\nread-only3.ev\nread-only2.ev\nread-only1.ev\n"
+CheckQuery "OpenFilesDialog" "numRows" "4"
+
+# Move the focus to the filter text box.
+FocusKeyPR "Alt+Key_F" ""
+
+# Type in a filter string.
+FocusKeySequence "read-only"
+
+# Now there should be three files in the list.
+CheckQuery "OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.ev\nread-only2.ev\nread-only1.ev\n"
+CheckQuery "OpenFilesDialog" "numRows" "3"
+
+# Move down to the table.
+FocusKeyPR "Key_Down" ""
+
+# The first item should be selected.
+CheckQuery "OpenFilesDialog" "cursorRow" "0"
+CheckQuery "OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only3.ev"
+
+# Move to the second item.
+FocusKeyPR "Key_Down" ""
+CheckQuery "OpenFilesDialog" "cursorRow" "1"
+CheckQuery "OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only2.ev"
+
+# Close it.
+ClickButton "OpenFilesDialog.m_closeSelButton"
+
+# Should now be two files.
+CheckQuery "OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.ev\nread-only1.ev\n"
+CheckQuery "OpenFilesDialog" "cursorRow" "1"
+CheckQuery "OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only1.ev"
+
+# Close the dialog.
+FocusKeyPR "Key_Enter" "\n"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# Check that we switched to the last one.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "read-only1.ev"
+
+# EOF

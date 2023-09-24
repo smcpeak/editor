@@ -4,6 +4,7 @@
 #include "pixmaps.h"                   // this module
 
 #include "pix/connections-icon.xpm"    // connectionsIcon_xpm
+#include "pix/down-arrow.xpm"          // downArrow_xpm
 #include "pix/icon.xpm"                // icon_xpm[]
 #include "pix/search.xpm"              // search_xpm[]
 #include "pix/getreplace.xpm"          // getreplace_xpm[]
@@ -37,7 +38,8 @@ Pixmaps::Pixmaps()
     INIT(search),
     INIT(getReplace),
     INIT(replace),
-    INIT(connectionsIcon)
+    INIT(connectionsIcon),
+    INIT(downArrow)
 {
   if (!g_editorPixmaps) {
     g_editorPixmaps = this;
