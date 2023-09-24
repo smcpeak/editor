@@ -17,8 +17,6 @@ TODOs:
   - cannot search+replace "$" because after replacement it finds EOL again
   - failed to Ctrl+I on this line when in OpenSSL:
       test/poly1305_internal_test.c:1510:4: error: incompatible types when initializing type 'const TESTDATA * {aka const struct <anonymous> *}' using type 'TESTDATA {aka struct <anonymous>}'
-  - if I run a long command line with Alt+R, the window title is large,
-    and then I can't resize it smaller!
   - the editor is pretty slow when deleting large amounts of text,
     such as when working with preprocessor output
   - regex bug?  this regex:

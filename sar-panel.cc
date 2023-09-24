@@ -490,7 +490,19 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
             // The Find box does not agree with what is currently
             // selected.  First go to a hit, and we will extend from
             // there.
-            m_editorWidget->nextSearchHit(false /*reverse*/);
+
+            // First try searching forward.
+            if (!m_editorWidget->nextSearchHit(false /*reverse*/)) {
+              // Next try searching backward.
+              if (!m_editorWidget->nextSearchHit(true /*reverse*/)) {
+                // There are no hits, so Ctrl+W should do nothing.  If
+                // we do not bail out here, then the code below would
+                // end up replacing the search text with whatever random
+                // text happened to be after the cursor.
+                TRACE("sar", "no search hits, ignoring Ctrl+W");
+                return true;
+              }
+            }
           }
 
           TextDocumentEditor *ed = m_editorWidget->m_editor;
