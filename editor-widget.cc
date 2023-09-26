@@ -2324,11 +2324,12 @@ void EditorWidget::editInsertDateTime()
 }
 
 
-void EditorWidget::insertText(char const *text, int length)
+void EditorWidget::insertText(char const *text, int length,
+                              TextDocumentEditor::InsertTextFlags flags)
 {
   INITIATING_DOCUMENT_CHANGE();
   UndoHistoryGrouper ugh(*m_editor);
-  m_editor->insertText(text, length);
+  m_editor->insertText(text, length, flags);
   this->redraw();
 }
 

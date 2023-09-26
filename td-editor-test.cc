@@ -1654,14 +1654,16 @@ static void testInsertDateTime()
 static void replaceText(
   TextDocumentEditor &tde,
   int line1, int col1, int line2, int col2, bool swapCM,
-  char const *text)
+  char const *text,
+  TextDocumentEditor::InsertTextFlags flags =
+    TextDocumentEditor::ITF_NONE)
 {
   tde.setCursor(TextLCoord(line1, col1));
   tde.setMark(TextLCoord(line2, col2));
   if (swapCM) {
     tde.swapCursorAndMark();
   }
-  tde.insertNulTermText(text);
+  tde.insertNulTermText(text, flags);
 }
 
 // This tests 'insertText', but specifically exercising the aspect
@@ -1736,6 +1738,31 @@ static void testReplaceText(bool swapCM)
     "          x\n"
     "\n"
     "  x");
+}
+
+
+// Test 'insertText' with ITF_SELECT_AFTERWARD.
+static void testReplaceAndSelect(bool swapCM)
+{
+  TextDocumentAndEditor tde;
+  TextDocumentEditor::InsertTextFlags itf =
+    TextDocumentEditor::ITF_SELECT_AFTERWARD;
+
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n",
+    itf);
+  expectM(tde, 3, 0, 0, 0,
+    "one\n"
+    "two\n"
+    "three\n");
+
+  replaceText(tde, 1,0, 2,0, swapCM, "x\n", itf);
+  expectM(tde, 2, 0, 1, 0,
+    "one\n"
+    "x\n"
+    "three\n");
 }
 
 
@@ -2339,6 +2366,8 @@ static void entry(int argc, char **argv)
   testInsertDateTime();
   testReplaceText(false);
   testReplaceText(true);
+  testReplaceAndSelect(false);
+  testReplaceAndSelect(true);
   testCountSpaceChars();
   testCountSpaceCharsWithTabs();
   testGetSelectedOrIdentifier();

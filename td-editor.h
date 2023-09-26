@@ -37,6 +37,17 @@ class TextDocumentEditor : public SerfRefCount {
   // want to ensure I do not do it accidentally.
   NO_OBJECT_COPIES(TextDocumentEditor);
 
+public:      // types
+  // Flags to control the behavior of 'insertText'.
+  enum InsertTextFlags {
+    // Default behavior.
+    ITF_NONE                 = 0x0,
+
+    // When set, select the just-inserted text, specifically placing the
+    // mark at the start and the cursor at the end.
+    ITF_SELECT_AFTERWARD     = 0x1,
+  };
+
 public:      // static data
   // Constructions minus destructions, for bug detection.
   static int s_objectCount;
@@ -466,18 +477,21 @@ public:      // funcs
   // ensure the cursor is in visible region afterward.
   //
   // 'textLen' is measured in bytes, not characters.
-  void insertText(char const *text, int textLen);
+  void insertText(char const *text, int textLen,
+                  InsertTextFlags flags = ITF_NONE);
 
   // Same, but using a 'string' object.
   //
   // This is not called 'insertText' because 'string' has an implicit
   // conversion from char*, which would make it easy to call the wrong
   // one if they were overloaded.
-  void insertString(string text);
+  void insertString(string const &text,
+                    InsertTextFlags flags = ITF_NONE);
 
   // Same, but assuming NUL termination.  Potentially dangerous!
-  void insertNulTermText(char const *text)
-    { insertText(text, strlen(text)); }
+  void insertNulTermText(char const *text,
+                         InsertTextFlags flags = ITF_NONE)
+    { insertText(text, strlen(text), flags); }
 
   // ------------------- general text deletion ------------------
   // Delete at cursor.  'left' or 'right' refers to which side of

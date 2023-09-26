@@ -456,27 +456,36 @@ TextLCoord TextDocumentEditor::mark() const
 }
 
 
-void TextDocumentEditor::insertText(char const *text, int textLen)
+void TextDocumentEditor::insertText(char const *text, int textLen,
+                                    InsertTextFlags flags)
 {
   this->deleteSelectionIf();
   this->fillToCursor();
 
-  m_doc->insertAt(this->toMCoord(this->cursor()), text, textLen);
+  TextLCoord origCursor = this->cursor();
+
+  m_doc->insertAt(this->toMCoord(origCursor), text, textLen);
 
   // Put the cursor at the end of the inserted text.
   this->walkCursorBytes(textLen);
+
+  // Optionally put the mark at the start.
+  if (flags & ITF_SELECT_AFTERWARD) {
+    this->setMark(origCursor);
+  }
 
   this->scrollToCursor();
 }
 
 
-void TextDocumentEditor::insertString(string text)
+void TextDocumentEditor::insertString(string const &text,
+                                      InsertTextFlags flags)
 {
   // This does not actually prevent problems with embedded NULs
   // because I am still using my own string class which does not
   // handle them.  But at some point I will switch to std::string,
   // and then this will work as intended.
-  this->insertText(text.c_str(), text.length());
+  this->insertText(text.c_str(), text.length(), flags);
 }
 
 

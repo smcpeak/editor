@@ -1423,9 +1423,11 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     return;
   }
 
-  // Replace the selected text with the command's output.
+  // Replace the selected text with the command's output, leaving the
+  // new text selected so it can easily be further manipulated.
   editorWidget()->insertText(runner.getOutputData().constData(),
-                             runner.getOutputData().size());
+                             runner.getOutputData().size(),
+                             TextDocumentEditor::ITF_SELECT_AFTERWARD);
 
   // For error output or non-zero exit code, we show a warning, but
   // still insert the text.  Note that we do this *after* inserting
