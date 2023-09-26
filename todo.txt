@@ -16,7 +16,6 @@ TODOs:
     and I try to search and replace it by selecting the text in the
     editor then pasting it into the search box
     - 2023-09-24: cannot reproduce
-  - cannot search+replace "$" because after replacement it finds EOL again
   - failed to Ctrl+I on this line when in OpenSSL:
       test/poly1305_internal_test.c:1510:4: error: incompatible types when initializing type 'const TESTDATA * {aka const struct <anonymous> *}' using type 'TESTDATA {aka struct <anonymous>}'
   - the editor is pretty slow when deleting large amounts of text,

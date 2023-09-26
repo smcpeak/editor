@@ -168,6 +168,9 @@ public:      // funcs
   // offending error in the string.  Otherwise -1.
   int searchStringErrorOffset() const;
 
+  // True if we are searching by regex, and the regex ends with "$".
+  bool searchStringEndsWithEOL() const;
+
   // Set/get limit on matches.
   int matchCountLimit() const { return m_matchCountLimit; }
   void setMatchCountLimit(int limit) { m_matchCountLimit = limit; }

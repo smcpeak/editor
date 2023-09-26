@@ -2265,6 +2265,13 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
   INITIATING_DOCUMENT_CHANGE();
   UndoHistoryGrouper ugh(*m_editor);
   m_editor->insertString(replacement);
+
+  // If we are replacing at EOL, then advance to the next line so we do
+  // not repeatedly replace the same EOL.
+  if (m_textSearch->searchStringEndsWithEOL()) {
+    m_editor->moveToNextLineStart();
+  }
+
   redraw();
 }
 
