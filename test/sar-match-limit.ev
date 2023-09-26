@@ -17,11 +17,13 @@ KeyPress "window1.m_sarPanel.m_findBox" "Key_Period" "."
 CheckLabel "window1.m_sarPanel.m_matchStatusLabel" " 1  / 1027+"
 
 # Check corner labels.
-#
-# TODO: This is fragile as it depends on the window starting size
-# and the system font size.
 CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "0+"
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+"
+
+# The number of matches below the visible area is problematic to check
+# because it depends on the window size and system font size (as the
+# latter affects how big the menu, SAR panel, and status bar are).  We
+# check its value later, so I'll just refrain from checking here.
+#CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+"
 
 # Return to the editor and go down a couple of pages.
 Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"

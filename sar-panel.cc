@@ -34,6 +34,30 @@ int const SAR_PANEL_SPACING = 5;
 // Horizontal and vertical space separating controls from the edges.
 int const SAR_PANEL_MARGIN = 5;
 
+// Additional height to add to combo boxes.
+int const SAR_PANEL_COMBO_BOX_ADJUST = 7;
+
+
+// Adjust the vertical height of editable combobox 'cb' so its text is
+// not partially cut off.
+static void adjustComboBox(QComboBox *cb)
+{
+  // Based on experimentation with Qt 5.15 on Windows, using the Windows
+  // Look and Feel, the initial height is calculated as the QFontMetrics
+  // height() plus 6.  The 6 is for, I think, an invisible one-pixel
+  // border, plus two pixels of bevel.  However, an editable QComboBox
+  // has an additional 3 pixels of padding above, and 4 pixels of
+  // padding below, the editable area.  (With default colors, the
+  // padding is gray, while the editable area is white.)  But the height
+  // of the whole combo box does not account for these 7 pixels, so the
+  // text gets cut off, especially descenders.
+  int h = cb->height();
+
+  // Adding 7 more pixels of height fixes the issue.
+  h += SAR_PANEL_COMBO_BOX_ADJUST;
+  cb->setMinimumHeight(h);
+}
+
 
 SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
                                              Qt::WindowFlags f)
@@ -77,6 +101,7 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_findBox->completer()->setCaseSensitivity(Qt::CaseSensitive);
     m_findBox->setInsertPolicy(QComboBox::NoInsert);
     m_findBox->installEventFilter(this);
+    adjustComboBox(m_findBox);
     QObject::connect(m_findBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::slot_findEditTextChanged);
 
@@ -91,6 +116,7 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_replBox->completer()->setCaseSensitivity(Qt::CaseSensitive);
     m_replBox->setInsertPolicy(QComboBox::NoInsert);
     m_replBox->installEventFilter(this);
+    adjustComboBox(m_replBox);
     QObject::connect(m_replBox, &QComboBox::editTextChanged,
                      this, &SearchAndReplacePanel::slot_replEditTextChanged);
 
