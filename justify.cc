@@ -111,6 +111,26 @@ void justifyTextLines(
 }
 
 
+// Calculate the number of columns that 'prefix' will occupy.
+// Currently, aside from just counting characters, this routine treates
+// all tabs as being 8 columns wide.  It could in the future also
+// account for UTF-8 characters, although that requires the editor
+// itself to handle those.
+static int prefixColumnWidth(string const &prefix)
+{
+  int width = 0;
+  for (char const *p = prefix.c_str(); *p; ++p) {
+    if (*p == '\t') {
+      width += 8;
+    }
+    else {
+      ++width;
+    }
+  }
+  return width;
+}
+
+
 bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredWidth)
 {
   string startLine = tde.getWholeLineString(originLineNumber);
@@ -168,7 +188,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
   // Reformat it.
   ArrayStack<string> justifiedContent;
   justifyTextLines(justifiedContent, originalContent,
-    desiredWidth - prefix.length());
+    desiredWidth - prefixColumnWidth(prefix));
 
   // Replace the content.
   tde.deleteTextLRange(TextLCoord(upperEdge, 0), TextLCoord(lowerEdge+1, 0));

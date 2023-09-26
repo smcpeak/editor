@@ -29,12 +29,16 @@ void justifyTextLines(
   int desiredWidth);
 
 
-// Heuristically identify the textual framing used for the text at
-// and surrounding 'originLine', separate it from the content, wrap the
-// content to the result will fit into 'desiredWidth' columns if
-// possible, and replace the identified region with its wrapped
-// version.  Return false if we could not identify a wrappable
-// region.
+// Heuristically identify the textual framing used for the text at and
+// surrounding 'originLine', separate it from the content, wrap the
+// content to the result will fit (framing plus wrapped text) into
+// 'desiredWidth' columns if possible, and replace the identified region
+// with its wrapped version.  Return false if we could not identify a
+// wrappable region.
+//
+// Within the framing, tab characters are treated as representing 8
+// columns of width.  Elsewhere they are treated as just 1 (which is
+// arguably a bug).
 bool justifyNearLine(TextDocumentEditor &tde, int originLine,
                      int desiredWidth);
 

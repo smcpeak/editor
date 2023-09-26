@@ -477,6 +477,48 @@ static void testJustifyNearLine()
     }
   }
 
+  // Test that tabs are treated as 8 characters.
+  {
+    char const *in[] = {
+      "\tone two three.  four five six seven eight nine",
+      "",
+      "\t\t\tone two three.  four five six seven eight nine",
+    };
+
+    {
+      char const *out[] = {
+        //       V      V
+              "\tone two",
+              "\tthree.",
+              "\tfour",
+              "\tfive",
+              "\tsix",
+              "\tseven",
+              "\teight",
+              "\tnine",
+        "",
+        "\t\t\tone two three.  four five six seven eight nine",
+      };
+
+      TEST_ONE(in, out, 0, 15);
+    }
+
+    {
+      char const *out[] = {
+        //                       V           V
+        "\tone two three.  four five six seven eight nine",
+        "",
+                          "\t\t\tone two",
+                          "\t\t\tthree.  four",
+                          "\t\t\tfive six",
+                          "\t\t\tseven eight",
+                          "\t\t\tnine",
+      };
+
+      TEST_ONE(in, out, 2, 36);
+    }
+  }
+
   #undef TEST_ONE
 }
 

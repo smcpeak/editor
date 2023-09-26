@@ -6,11 +6,12 @@ TODOs:
       Makefile:141:BRIDGE_CAML_OBJS += Main_embedded.$(CMO)
     at least when the source is remote.
 
-  - Ctrl+J on line indented with tabs treats the tabs as being one space
-    rather than 8, wrapping the lines in the wrong place (too long)
   - have to fix handling of "flex scanner jammed"!
+    - Haven't seen this in a while.  Don't recall how to reproduce.
   - Ctrl+J on line that begins with /home/scott/... will think the "/"
     is a line prefix to be repeated
+    - This isn't trivial to fix though because '/' has to be treated as
+      punctuation in order to handle C++ comments properly.
   - assertion failure when text contains UTF-8 sequence for apostrophe
     and I try to search and replace it by selecting the text in the
     editor then pasting it into the search box
