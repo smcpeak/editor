@@ -35,7 +35,12 @@ int const SAR_PANEL_SPACING = 5;
 int const SAR_PANEL_MARGIN = 5;
 
 // Additional height to add to combo boxes.
-int const SAR_PANEL_COMBO_BOX_ADJUST = 7;
+//
+// I've now disabled this by setting it to 0 (was 7) because the bug
+// only happens when using the "windows" style instead of
+// "windowsvista".  The latter requires
+// plugins/styles/qwindowsvista.dll, which I'd neglected to copy.
+int const SAR_PANEL_COMBO_BOX_ADJUST = 0;
 
 
 // Adjust the vertical height of editable combobox 'cb' so its text is
