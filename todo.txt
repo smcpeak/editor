@@ -1,4 +1,12 @@
 TODOs:
+  - Crash when opening the manage-connections dialog!  But I cannot
+    reproduce it.
+  - Make the file-open dialog wider by default.
+  - Alt+A leaving the selection active is a problem because there is not
+    a clear indication of when the program is finished, in the case that
+    the text is unchanged or only slightly changed
+  - In the open-files dialog, have Ctrl+F and Ctrl+S jump to the filter box.
+
   - cannot run programs on remote machine when using name1->name2
 
   - Add key bindings to easily step to next/prev error or grep hit.
