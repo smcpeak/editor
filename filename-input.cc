@@ -29,7 +29,7 @@
 
 
 FilenameInputDialog::History::History()
-  : m_dialogSize(500, 800)
+  : m_dialogSize(800, 800)
 {}
 
 

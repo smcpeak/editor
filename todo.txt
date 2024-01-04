@@ -6,7 +6,6 @@ TODOs:
   - Command to create header file boilerplate.
   - Crash when opening the manage-connections dialog!  But I cannot
     reproduce it.
-  - Make the file-open dialog wider by default.
   - Alt+A leaving the selection active is a problem because there is not
     a clear indication of when the program is finished, in the case that
     the text is unchanged or only slightly changed
