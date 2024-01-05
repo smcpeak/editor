@@ -10,6 +10,8 @@ TODOs:
     a clear indication of when the program is finished, in the case that
     the text is unchanged or only slightly changed
   - In the open-files dialog, have Ctrl+F and Ctrl+S jump to the filter box.
+  - Provide a way to edit the environment used to launch programs,
+    especially the PATH.
 
   - cannot run programs on remote machine when using name1->name2
 

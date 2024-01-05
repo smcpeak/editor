@@ -104,6 +104,10 @@ TOCLEAN = $(QT_TOCLEAN)
 EDITOR_OBJS :=
 
 
+# Command prefix to retry a test up to 3 times.
+RETRY := sh ./retry.sh 3
+
+
 # ---------------- pattern rules --------------------
 # compile .cc to .o
 # -MMD causes GCC to write .d file.
@@ -557,45 +561,59 @@ clean:
 	$(RM) -r out
 	$(RM) *.gcov *.gcda *.gcno
 
+
+# These tests are run with the $(RETRY) prefix to automatically retry
+# when they fail.  That is due to some race conditions that I have not
+# been able to fully eliminate, mainly (perhaps exclusively) on Windows.
+#
+# One specific problem I am seeing is, a dialog will open but no widget
+# has focus.  I suspect there may be a dependence on explorer.exe or
+# something like that.
+#
+# Another problem is I set a window's title, but a subsequent query
+# returns the old title for a short time afterward.
+#
+# NOTE: These tests cannot run in parallel because they pop up GUI
+# windows on the display, so having more than one running at a time
+# would cause interference due to the focus only being on one at a time.
+#
 check:
-	@# The specific problem I am seeing most often is, on Windows,
-	@# a dialog will open but no widget has focus.  I suspect there
-	@# may be a dependence on explorer.exe or something like that.
-	@echo 'BEWARE: These tests are not perfectly reliable, due to'
-	@echo 'race conditions I have not been able to fully eliminate.'
-	@echo 'Re-running may occasionally be needed.'
-	./editor -ev=test/down.ev test/file1.h
-	./editor -ev=test/copy-paste.ev test/file1.h
-	./editor -ev=test/file-open-dialog1.ev test/file1.h
-	./editor -ev=test/file-open-nonexist.ev
-	./editor -ev=test/simple-text-ins.ev
-	./editor -ev=test/sar-find-cs-completion.ev test/file1.h
-	./editor -ev=test/sar-repl-cs-completion.ev test/file1.h
-	./editor -ev=test/sar-match-limit.ev test/file1.h
-	./editor -ev=test/sar-replace-bol.ev test/file1.h
-	./editor -ev=test/resize1.ev test/file1.h
-	./editor -ev=test/read-only1.ev
-	./editor -ev=test/read-only2.ev
-	./editor -ev=test/read-only3.ev
-	./editor -ev=test/prompt-unsaved-changes.ev
-	./editor -ev=test/screenshot1.ev test/file1.h
-	./editor -ev=test/visible-tabs.ev test/tabs-test.txt
-	./editor -ev=test/search-hits-with-tab.ev test/tabs-test.txt
-	cp test/file1.h tmp.h && ./editor -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
-	./editor -ev=test/keysequence.ev
-	./editor -ev=test/keysequence2.ev
-	cd test && ../editor -ev=fn-input-dialog-size.ev
-	./editor -ev=test/screenshot-has-tabs.ev test/has-tabs.c
-	./editor -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
-	./editor -ev=test/open-files-filter.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
-	./editor -ev=test/cut-then-paste.ev
-	./editor -ev=test/select-beyond-eof.ev
+	@# The first test runs without any retry.
+	./editor -ev=test/empty.ev
+	@#
+	@# Remaining tests have retry active.
+	$(RETRY) ./editor -ev=test/down.ev test/file1.h
+	$(RETRY) ./editor -ev=test/copy-paste.ev test/file1.h
+	$(RETRY) ./editor -ev=test/file-open-dialog1.ev test/file1.h
+	$(RETRY) ./editor -ev=test/file-open-nonexist.ev
+	$(RETRY) ./editor -ev=test/simple-text-ins.ev
+	$(RETRY) ./editor -ev=test/sar-find-cs-completion.ev test/file1.h
+	$(RETRY) ./editor -ev=test/sar-repl-cs-completion.ev test/file1.h
+	$(RETRY) ./editor -ev=test/sar-match-limit.ev test/file1.h
+	$(RETRY) ./editor -ev=test/sar-replace-bol.ev test/file1.h
+	$(RETRY) ./editor -ev=test/resize1.ev test/file1.h
+	$(RETRY) ./editor -ev=test/read-only1.ev
+	$(RETRY) ./editor -ev=test/read-only2.ev
+	$(RETRY) ./editor -ev=test/read-only3.ev
+	$(RETRY) ./editor -ev=test/prompt-unsaved-changes.ev
+	$(RETRY) ./editor -ev=test/screenshot1.ev test/file1.h
+	$(RETRY) ./editor -ev=test/visible-tabs.ev test/tabs-test.txt
+	$(RETRY) ./editor -ev=test/search-hits-with-tab.ev test/tabs-test.txt
+	cp test/file1.h tmp.h && $(RETRY) ./editor -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
+	$(RETRY) ./editor -ev=test/keysequence.ev
+	$(RETRY) ./editor -ev=test/keysequence2.ev
+	cd test && sh ../retry.sh 3 ../editor -ev=fn-input-dialog-size.ev
+	$(RETRY) ./editor -ev=test/screenshot-has-tabs.ev test/has-tabs.c
+	$(RETRY) ./editor -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
+	$(RETRY) ./editor -ev=test/open-files-filter.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
+	$(RETRY) ./editor -ev=test/cut-then-paste.ev
+	$(RETRY) ./editor -ev=test/select-beyond-eof.ev
 	cp test/robotank.info.json.crlf.bin tmp.h && \
-	  ./editor -ev=test/sar-remove-ctlm.ev tmp.h && \
+	  $(RETRY) ./editor -ev=test/sar-remove-ctlm.ev tmp.h && \
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
-	./editor -ev=test/fn-input-repeat-tab.ev
-	./editor -ev=test/reload-after-modification.ev test/gets-modified.txt
-	./editor -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
+	$(RETRY) ./editor -ev=test/fn-input-repeat-tab.ev
+	$(RETRY) ./editor -ev=test/reload-after-modification.ev test/gets-modified.txt
+	$(RETRY) ./editor -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
 
 # EOF
