@@ -951,6 +951,18 @@ static void customMessageHandler(
   QMessageLogContext const &,
   QString const &message)
 {
+  if (message.indexOf("setGeometry: Unable to set geometry") >= 0) {
+    // This message is generated anytime I use (e.g.) Alt+G to go to a
+    // line, which uses 'QInputDialog::getText'.  It is caused by a bug
+    // in Qt:
+    //
+    //   https://bugreports.qt.io/browse/QTBUG-73258
+    //   https://stackoverflow.com/questions/54307407/why-am-i-getting-qwindowswindowsetgeometry-unable-to-set-geometry-warning-wit
+    //
+    // Apparently the only solution is to suppress the message.
+    return;
+  }
+
   cerr << toString(mtype) << ": " << message << endl;
 
   if (message.indexOf("platform plugin") >= 0) {

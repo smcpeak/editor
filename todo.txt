@@ -1,6 +1,4 @@
 TODOs:
-  - The Alt+G dialog causes a warning about geometry to be printed to
-    the console.
   - During search, Ctrl+W misbehaves of there are more than 1000 matches
     for the text matched so far.
   - Search of the file-open dialog should be case-insensitive.
