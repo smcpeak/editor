@@ -6,9 +6,6 @@ TODOs:
   - Command to create header file boilerplate.
   - Crash when opening the manage-connections dialog!  But I cannot
     reproduce it.
-  - Alt+A leaving the selection active is a problem because there is not
-    a clear indication of when the program is finished, in the case that
-    the text is unchanged or only slightly changed
   - In the open-files dialog, have Ctrl+F and Ctrl+S jump to the filter box.
   - Provide a way to edit the environment used to launch programs,
     especially the PATH.
@@ -22,6 +19,8 @@ TODOs:
   - Cannot Ctrl+I on a line like:
       Makefile:141:BRIDGE_CAML_OBJS += Main_embedded.$(CMO)
     at least when the source is remote.
+  - Alt+A: Design a way to indicate when it is finished and also leave
+    the new text selected.
 
   - have to fix handling of "flex scanner jammed"!
     - Haven't seen this in a while.  Don't recall how to reproduce.

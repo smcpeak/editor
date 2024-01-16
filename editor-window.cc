@@ -1423,11 +1423,16 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     return;
   }
 
-  // Replace the selected text with the command's output, leaving the
-  // new text selected so it can easily be further manipulated.
+  // Replace the selected text with the command's output.
+  //
+  // 2024-01-16: I previously passed ITF_SELECT_AFTERWARD in order to
+  // leave the new text selected so it could easily be further
+  // manipulated.  However, there is then no clear indication of when
+  // the command has finished, since the UI only changes to the extent
+  // that the new text is different.  Therefore, I've reverted that
+  // change until I can design a way to better indicate completion.
   editorWidget()->insertText(runner.getOutputData().constData(),
-                             runner.getOutputData().size(),
-                             TextDocumentEditor::ITF_SELECT_AFTERWARD);
+                             runner.getOutputData().size());
 
   // For error output or non-zero exit code, we show a warning, but
   // still insert the text.  Note that we do this *after* inserting
