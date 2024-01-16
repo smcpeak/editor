@@ -1,4 +1,6 @@
 TODOs:
+  - The Alt+G dialog causes a warning about geometry to be printed to
+    the console.
   - During search, Ctrl+W misbehaves of there are more than 1000 matches
     for the text matched so far.
   - Search of the file-open dialog should be case-insensitive.
@@ -12,6 +14,9 @@ TODOs:
   - In the open-files dialog, have Ctrl+F and Ctrl+S jump to the filter box.
   - Provide a way to edit the environment used to launch programs,
     especially the PATH.
+  - If I create a new untitled file, then use Alt+A on it, the invocation
+    fails (or can fail) when a remote path gets associated with the
+    local machine.
 
   - cannot run programs on remote machine when using name1->name2
 
