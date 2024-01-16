@@ -15,6 +15,7 @@
 #include "array.h"                     // ArrayStack
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "sm-file-util.h"              // SMFileUtil
+#include "strutil.h"                   // hasSubstring_insens_ascii
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -174,7 +175,8 @@ void OpenFilesDialog::computeFilteredDocuments()
   for (int r=0; r < unfilteredDocList()->numDocuments(); r++) {
     NamedTextDocument *doc = unfilteredDocList()->getDocumentAt(r);
 
-    if (hasSubstring(doc->nameWithStatusIndicators(), filter)) {
+    if (hasSubstring_insens_ascii(
+          doc->nameWithStatusIndicators(), filter)) {
       m_filteredDocuments.push_back(doc);
     }
   }
