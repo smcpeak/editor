@@ -1,12 +1,12 @@
 [submodule "smbase"]
 	path = smbase
-	url = git@github.com:smcpeak/smbase.git
+	url = ../smbase.git
 	branch = for-editor
 [submodule "smflex"]
 	path = smflex
-	url = git@github.com:smcpeak/smflex.git
+	url = ../smflex.git
 	branch = smflex
 [submodule "smqtutil"]
 	path = smqtutil
-	url = git@github.com:smcpeak/smqtutil.git
+	url = ../smqtutil.git
 	branch = for-editor
