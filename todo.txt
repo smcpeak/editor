@@ -1,4 +1,33 @@
 TODOs:
+  - F6 to do Ctrl+O, N, Enter
+  - Bug: When a file is edited in one window and visible in another,
+    the position in the other is maintained.  But if it is *not* visible
+    in the other, then it is not maintained.
+  - When an editor window is "[DISKMOD]", change its bg color.
+  - In Ctrl+O window, if I have typed something into the filter window
+    and press Enter, do not just close it without doing anything.  Either
+    ignore the keypress or, perhaps, open the first file in the list.
+  - In Ctrl+O window, let F act like Alt-F
+  - Do not start a new build task while the old one is running.
+  - Bug: If the build command prints a final character without a newline,
+    that never gets shown in the editor window.
+  - Bug: The process runner should redirect stdin from /dev/null,
+    otherwise it hangs if it tries to read.
+  - Allow refreshing all selected editors in "Documents" (Ctrl+O) dialog.
+
+  - Easy repetition macros:
+    - Have the editor remember the last, say, 20 editing commands
+    - Whenever commands [1,N] equals commands [N+1,2N], show something
+      in the UI reflecting that, and enable a keypress (Ctrl+M?) to
+      repeat those commands.
+    - A menu command could be used to assign a name to those commands.
+    - Then if you choose such a name from the menu, it becomes the command
+      to repeat with Ctrl+M
+
+  - It would be nice to at least have the option of having the output of
+    the build be sent to a single file descriptor in order to maintain
+    the ordering of stdout versus stderr.
+
   - During search, Ctrl+W misbehaves of there are more than 1000 matches
     for the text matched so far.
   - Would like to be able to jump to a byte offset in the file.
