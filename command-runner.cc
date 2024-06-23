@@ -16,6 +16,9 @@
 #include <Qt>                          // Qt::SkipEmptyParts
 #include <QTimerEvent>
 
+// libc++
+#include <algorithm>                   // std::min
+
 // libc
 #include <assert.h>                    // assert
 
@@ -417,7 +420,7 @@ void CommandRunner::sendData()
   // QProcess::write will accept arbitrarily large amounts of data
   // at a time, but I want to limit it in order to better exercise
   // the mechanism that reads in chunks.
-  int maxLen = min(m_inputData.size(), 0x2000);
+  int maxLen = std::min(m_inputData.size(), 0x2000);
 
   int len = m_process.write(m_inputData.constData(), maxLen);
   TRACE_CR("sendData: write(written=" << m_bytesWritten <<

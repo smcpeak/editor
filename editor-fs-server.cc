@@ -6,13 +6,13 @@
 // smbase
 #include "bflatten.h"                  // StreamFlatten
 #include "binary-stdin.h"              // setStdinToBinary, setStdoutToBinary
-#include "exc.h"                       // xfatal
+#include "exc.h"                       // xfatal, smbase::XBase
 #include "flatten.h"                   // de/serializeIntNBO
 #include "nonport.h"                   // sleepForMilliseconds
 #include "overflow.h"                  // convertWithoutLoss
 #include "sm-file-util.h"              // SMFileUtil
-#include "string-utils.h"              // doubleQuote
-#include "syserr.h"                    // xsyserror
+#include "string-util.h"               // doubleQuote
+#include "syserr.h"                    // smbase::xsyserror
 
 // libc++
 #include <fstream>                     // std::ofstream
@@ -20,6 +20,8 @@
 #include <sstream>                     // std::i/ostringstream
 #include <string>                      // std::string
 #include <vector>                      // std::vector
+
+using namespace smbase;
 
 
 // If not null, stream to log to.
@@ -241,7 +243,7 @@ int main()
     }
     return ret;
   }
-  catch (xBase &x) {
+  catch (XBase &x) {
     if (logStream) {
       LOG("editor-fs-server terminating with exception: " << x.why());
     }

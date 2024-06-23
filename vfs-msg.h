@@ -14,7 +14,7 @@
 #include "flatten-fwd.h"               // Flatten
 #include "sm-file-util.h"              // SMFileUtil
 #include "str.h"                       // string
-#include "syserr.h"                    // xSysError
+#include "syserr.h"                    // smbase::XSysError
 
 // libc++
 #include <vector>                      // std::vector
@@ -159,7 +159,7 @@ public:      // data
 
   // If '!m_success', the reason for the failure as a machine-readable
   // error code.  Initially R_NO_ERROR.
-  xSysError::Reason m_failureReasonCode;
+  smbase::XSysError::Reason m_failureReasonCode;
 
   // If '!m_success', the reason for the failure as a human-readable
   // string.  Initially empty.
@@ -170,7 +170,7 @@ public:      // methods
   virtual ~VFS_PathReply() override;
 
   // Set the failure reason, and set 'm_success' to false.
-  void setFailureReason(xSysError::Reason reasonCode,
+  void setFailureReason(smbase::XSysError::Reason reasonCode,
                         string const &reasonString);
 
   // VFS_Message methods.

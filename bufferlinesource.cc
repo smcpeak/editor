@@ -6,6 +6,9 @@
 // smbase
 #include "td-core.h"                   // TextDocumentCore
 
+// libc++
+#include <algorithm>                   // std::min
+
 // libc
 #include <string.h>                    // memcpy
 
@@ -41,7 +44,7 @@ int BufferLineSource::fillBuffer(void *dest, int max_size)
     return 0;         // EOL
   }
 
-  int len = min(max_size, (lineLength-1)-nextSlurpCol);
+  int len = std::min(max_size, (lineLength-1)-nextSlurpCol);
   tmpArray.clear();
   buffer->getPartialLine(TextMCoord(bufferLine, nextSlurpCol), tmpArray, len);
   xassert(tmpArray.length() == len);

@@ -139,7 +139,7 @@ void checkEqual(GapArray<int> const &seq1, Sequence const &seq2)
 
   // write selected subsequences
   for (int elt=0; elt < len; elt += 10) {
-    int amt = min(10, len-elt);
+    int amt = std::min(10, len-elt);
 
     // write from seq1, and verify it
     seq1.writeIntoArray(temp1+elt, amt, elt);
@@ -224,7 +224,7 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   else if (choice < 97) {
     ctRemoveMany++;
     int len = seq1.length();
-    int sz = rand() % (min(20, len+1));     // # to remove
+    int sz = rand() % (std::min(20, len+1));     // # to remove
     int elt = rand() % (len+1 - sz);
     seq1.removeMany(elt, sz);
     seq2.removeMany(elt, sz);

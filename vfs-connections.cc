@@ -7,18 +7,19 @@
 #include "vfs-query.h"                 // FileSystemQuery
 
 // smbase
-#include "container-utils.h"           // contains
+#include "container-util.h"            // smbase::contains
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "map-utils.h"                 // insertMapUnique, keySet
+#include "map-util.h"                  // mapInsertUniqueMove, keySet
 #include "sm-file-util.h"              // SMFileUtil
 #include "trace.h"                     // TRACE
-#include "vector-utils.h"              // vec_erase
-#include "xassert.h"                   // xfailure
+#include "vector-util.h"               // vec_erase
+#include "xassert.h"                   // xfailure, xfailure_stringbc
 
 // libc++
 #include <set>                         // std::set
 #include <utility>                     // std::move
 
+using namespace smbase;
 
 
 // ---------------------------- Connection -----------------------------
@@ -98,7 +99,7 @@ VFS_Connections::Connection const *
     return c;
   }
   else {
-    xfailure(stringb("Invalid host: " << hostName));
+    xfailure_stringbc("Invalid host: " << hostName);
     return nullptr;  // Not reached.
   }
 }
@@ -169,7 +170,7 @@ void VFS_Connections::connect(HostName const &hostName)
   // object to hold its details.  The Connection constructor starts the
   // process of establishing a connection.
   m_validHostNames.push_back(hostName);
-  insertMapUniqueMove(m_connections, hostName,
+  mapInsertUniqueMove(m_connections, hostName,
     std::unique_ptr<Connection>(new Connection(this, hostName)));
 
   // Enqueue an initial request to get the starting directory.  Only
@@ -507,7 +508,7 @@ void VFS_Connections::on_replyAvailable() NOEXCEPT
 
     else {
       // Save the reply for the client who presents the right ID.
-      insertMapUniqueMove(m_availableReplies,
+      mapInsertUniqueMove(m_availableReplies,
         requestID, c->m_fsQuery->takeReply());
 
       // Clear the ID member so we know no request is outstanding.

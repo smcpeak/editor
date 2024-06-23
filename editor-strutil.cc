@@ -6,6 +6,9 @@
 // editor
 #include "codepoint.h"                 // isCIdentifierCharacter
 
+// libc++
+#include <string>                      // std::string
+
 
 string cIdentifierAt(string const &text, int byteOffset)
 {
@@ -26,7 +29,7 @@ string cIdentifierAt(string const &text, int byteOffset)
       end++;
     }
 
-    return text.substring(start, end-start);
+    return text.substr(start, end-start);
   }
   else {
     return "";

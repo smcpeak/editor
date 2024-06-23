@@ -4,8 +4,8 @@
 #include "named-td-list.h"             // this module
 
 // smbase
-#include "container-utils.h"           // insertUnique
-#include "sm-macros.h"                 // Restorer
+#include "container-util.h"            // smbase::insertUnique
+#include "save-restore.h"              // SetRestore
 #include "sm-file-util.h"              // SMFileUtil
 #include "stringset.h"                 // StringSet
 #include "strtokp.h"                   // StrtokParse
@@ -14,6 +14,8 @@
 
 // libc++
 #include <set>                         // std::set
+
+using namespace smbase;
 
 
 // Run self-check in debug mode.
@@ -57,7 +59,7 @@ void NamedTextDocumentList::selfCheck() const
     xassert(!d->documentName().empty());
     insertUnique(docNames, d->documentName());
 
-    xassert(!d->m_title.isempty());
+    xassert(!d->m_title.empty());
     titles.addUnique(d->m_title);
   }
 }
@@ -99,7 +101,7 @@ void NamedTextDocumentList::addDocument(NamedTextDocument *file)
   xassert(!this->hasDocument(file));
 
   // Assign title if necessary.
-  if (file->m_title.isempty() || this->findDocumentByTitle(file->m_title)) {
+  if (file->m_title.empty() || this->findDocumentByTitle(file->m_title)) {
     file->m_title = this->computeUniqueTitle(file->documentName());
   }
 
@@ -353,7 +355,7 @@ void NamedTextDocumentList::notifyAdded(NamedTextDocument *file_)
 
   TRACE("named-td-list", "notifyAdded: " << file->documentName());
 
-  Restorer<bool> restorer(m_iteratingOverObservers, true);
+  SetRestore<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->namedTextDocumentAdded(this, file);
   }
@@ -365,7 +367,7 @@ void NamedTextDocumentList::notifyRemoved(NamedTextDocument *file_)
   RCSerf<NamedTextDocument> file(file_);
   TRACE("named-td-list", "notifyRemoved: " << file->documentName());
 
-  Restorer<bool> restorer(m_iteratingOverObservers, true);
+  SetRestore<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->namedTextDocumentRemoved(this, file);
   }
@@ -377,7 +379,7 @@ void NamedTextDocumentList::notifyAttributeChanged(NamedTextDocument *file_)
   RCSerf<NamedTextDocument> file(file_);
   TRACE("named-td-list", "notifyAttributeChanged: " << file->documentName());
 
-  Restorer<bool> restorer(m_iteratingOverObservers, true);
+  SetRestore<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->namedTextDocumentAttributeChanged(this, file);
   }
@@ -388,7 +390,7 @@ void NamedTextDocumentList::notifyListOrderChanged()
 {
   TRACE("named-td-list", "notifyListOrderChanged");
 
-  Restorer<bool> restorer(m_iteratingOverObservers, true);
+  SetRestore<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     iter.data()->namedTextDocumentListOrderChanged(this);
   }
@@ -403,7 +405,7 @@ bool NamedTextDocumentList::notifyGetInitialView(
   TRACE("named-td-list",
     stringb("notifyGetInitialView: file=" << file->documentName()));
 
-  Restorer<bool> restorer(m_iteratingOverObservers, true);
+  SetRestore<bool> restorer(m_iteratingOverObservers, true);
   FOREACH_RCSERFLIST_NC(NamedTextDocumentListObserver, m_observers, iter) {
     if (iter.data()->getNamedTextDocumentInitialView(this, file, view)) {
       TRACE("named-td-list",

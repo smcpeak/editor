@@ -19,6 +19,9 @@
 #include <QGridLayout>
 #include <QScrollBar>
 
+// libc++
+#include <algorithm>                   // std::max
+
 
 int EditorWidgetFrame::s_objectCount = 0;
 
@@ -113,16 +116,16 @@ void EditorWidgetFrame::setScrollbarRangesAndValues()
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (m_horizScroll) {
-    m_horizScroll->setRange(0, max(tde->maxLineLengthColumns(),
-                                   editorWidget()->firstVisibleCol()));
+    m_horizScroll->setRange(0, std::max(tde->maxLineLengthColumns(),
+                                        editorWidget()->firstVisibleCol()));
     m_horizScroll->setValue(editorWidget()->firstVisibleCol());
     m_horizScroll->setSingleStep(1);
     m_horizScroll->setPageStep(editorWidget()->visCols());
   }
 
   if (m_vertScroll) {
-    m_vertScroll->setRange(0, max(tde->numLines(),
-                                  editorWidget()->firstVisibleLine()));
+    m_vertScroll->setRange(0, std::max(tde->numLines(),
+                                       editorWidget()->firstVisibleLine()));
     m_vertScroll->setValue(editorWidget()->firstVisibleLine());
     m_vertScroll->setSingleStep(1);
     m_vertScroll->setPageStep(editorWidget()->visLines());

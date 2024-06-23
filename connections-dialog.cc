@@ -12,7 +12,7 @@
 #include "qtutil.h"                    // SET_QOBJECT_NAME, toQString
 
 // smbase
-#include "container-utils.h"           // contains
+#include "container-util.h"            // smbase::contains
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
 #include "trace.h"                     // TRACE
 
@@ -22,6 +22,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
+
+using namespace smbase;
 
 
 // Height of each row in pixels.

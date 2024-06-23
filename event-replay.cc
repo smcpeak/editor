@@ -13,9 +13,12 @@
 #include "timer-event-loop.h"          // sleepWhilePumpingEvents
 
 // smbase
+#include "c-string-reader.h"           // parseQuotedCString
+#include "exc.h"                       // smbase::{XBase, XMessage}
 #include "nonport.h"                   // getMilliseconds
 #include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // parseQuotedString, quoted
+#include "string-util.h"               // doubleQuote
+#include "stringb.h"                   // stringb
 #include "syserr.h"                    // xsyserror
 #include "trace.h"                     // TRACE
 
@@ -46,11 +49,13 @@
 // libc
 #include <stdlib.h>                    // getenv, atoi
 
+using namespace smbase;
+
 
 // -------------------- EventReplayQueryable --------------------
 string EventReplayQueryable::eventReplayQuery(string const &state)
 {
-  return stringb("unknown state: " << quoted(state));
+  return stringb("unknown state: " << doubleQuote(state));
 }
 
 QImage EventReplayQueryable::eventReplayImage(string const &)
@@ -89,7 +94,7 @@ EventReplay::EventReplay(string const &fname)
   if (m_in.fail()) {
     // Unfortunately there is no portable way to get the error cause
     // when using std::ifstream.
-    throw xBase(stringb("failed to open " << quoted(m_fname)));
+    throw XMessage(stringb("failed to open " << doubleQuote(m_fname)));
   }
 
   if (s_quiescenceEventType == 0) {
@@ -117,7 +122,7 @@ EventReplay::~EventReplay()
 
 
 // Throw a string built using 'stringb'.
-#define xstringb(msg) throw stringb(msg).str() /* user ; */
+#define xstringb(msg) throw stringb(msg) /* user ; */
 
 
 void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
@@ -191,7 +196,7 @@ static QObject *getQObjectFromPath(string const &path)
           object = object->findChild<QObject*>(elt,
                                                Qt::FindDirectChildrenOnly);
           if (!object) {
-            xstringb("could not find child " << quoted(elt) <<
+            xstringb("could not find child " << doubleQuote(elt) <<
                      " at path element " << (i+1));
           }
         }
@@ -199,10 +204,10 @@ static QObject *getQObjectFromPath(string const &path)
       }
     }
 
-    xstringb("could not find root element " << quoted(elts.at(0)));
+    xstringb("could not find root element " << doubleQuote(elts.at(0)));
   }
   catch (string const &msg) {
-    xstringb("in path " << quoted(path) << ": " << msg);
+    xstringb("in path " << doubleQuote(path) << ": " << msg);
   }
 }
 
@@ -216,7 +221,7 @@ T *getObjectFromPath(string const &path)
   xassert(o);
   T *t = qobject_cast<T*>(o);
   if (!t) {
-    xstringb("object at " << quoted(path) <<
+    xstringb("object at " << doubleQuote(path) <<
              " has class " << o->metaObject()->className() <<
              ", not " << T::staticMetaObject.className());
   }
@@ -240,7 +245,7 @@ T *getObjectFromPathDC(string const &path)
   xassert(o);
   T *t = dynamic_cast<T*>(o);
   if (!t) {
-    xstringb("object at " << quoted(path) <<
+    xstringb("object at " << doubleQuote(path) <<
              " has class " << typeid(*o).name() <<
              ", not " << typeid(T).name());
   }
@@ -275,7 +280,7 @@ static bool regexSearch(string const &str, string const &re)
 // Get the string value of a quoted argument to a replay function.
 static string getCapturedArg(QRegularExpressionMatch &match, int n)
 {
-  return parseQuotedString(toString(match.captured(n)));
+  return parseQuotedCString(toString(match.captured(n)));
 }
 
 
@@ -322,15 +327,15 @@ static int intFromString(string const &s)
 #define EXPECT_EQ(context)                            \
   if (actual != expect) {                             \
     xstringb(context << ": should have been " <<      \
-      quoted(expect) << " but was " <<                \
-      quoted(actual) << ".");                         \
+      doubleQuote(expect) << " but was " <<           \
+      doubleQuote(actual) << ".");                    \
   }
 
-#define EXPECT_RE_MATCH(context)                       \
-  if (!regexSearch(actual, expectRE)) {                \
-    xstringb(context << ": the actual string " <<      \
-      quoted(actual) << " did not match the regex " << \
-      quoted(expectRE) << ".");                        \
+#define EXPECT_RE_MATCH(context)                            \
+  if (!regexSearch(actual, expectRE)) {                     \
+    xstringb(context << ": the actual string " <<           \
+      doubleQuote(actual) << " did not match the regex " << \
+      doubleQuote(expectRE) << ".");                        \
   }
 
 
@@ -448,7 +453,8 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
     string actual = q->eventReplayQuery(state);
-    EXPECT_EQ("CheckQuery " << quoted(receiver) << ' ' << quoted(state));
+    EXPECT_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
+              doubleQuote(state));
   }
 
   else if (funcName == "CheckLabel") {
@@ -456,7 +462,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
-    EXPECT_EQ("CheckLabel " << quoted(path));
+    EXPECT_EQ("CheckLabel " << doubleQuote(path));
   }
 
   else if (funcName == "CheckLabelMatches") {
@@ -464,7 +470,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
-    EXPECT_RE_MATCH("CheckLabelMatches " << quoted(path));
+    EXPECT_RE_MATCH("CheckLabelMatches " << doubleQuote(path));
   }
 
   else if (funcName == "CheckComboBoxText") {
@@ -472,7 +478,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QComboBox *cbox = getObjectFromPath<QComboBox>(path);
     string actual = toString(cbox->currentText());
-    EXPECT_EQ("CheckComboBoxText " << quoted(path));
+    EXPECT_EQ("CheckComboBoxText " << doubleQuote(path));
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
@@ -484,7 +490,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     QTableWidgetItem *item = table->item(r, c);
     xassert(item);
     string actual = toString(item->text());
-    EXPECT_RE_MATCH("CheckTableWidgetCellMatches " << quoted(objPath) <<
+    EXPECT_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
                     " " << row << " " << col);
   }
 
@@ -500,7 +506,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QAction *action = getObjectFromPath<QAction>(path);
     string actual = (action->isChecked()? "true" : "false");
-    EXPECT_EQ("CheckActionChecked " << quoted(path));
+    EXPECT_EQ("CheckActionChecked " << doubleQuote(path));
   }
 
   else if (funcName == "CheckFocusWindowTitle") {
@@ -563,7 +569,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QWidget *widget = getObjectFromPath<QWidget>(path);
     string actual = toString(widget->size());
-    EXPECT_EQ("CheckSize " << quoted(path));
+    EXPECT_EQ("CheckSize " << doubleQuote(path));
   }
 
   else if (funcName == "TouchFile") {
@@ -574,7 +580,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   }
 
   else {
-    xstringb("unrecognized function: " << quoted(funcName));
+    xstringb("unrecognized function: " << doubleQuote(funcName));
   }
 }
 
@@ -676,7 +682,7 @@ bool EventReplay::replayNextEvent()
   catch (string const &msg) {
     m_testResult = stringb(m_fname << ':' << m_lineNumber << ": " << msg);
   }
-  catch (xBase &x) {
+  catch (XBase &x) {
     m_testResult = stringb(m_fname << ':' << m_lineNumber << ": " << x.why());
   }
   catch (...) {
@@ -716,8 +722,8 @@ void EventReplay::waitUntilCheckQuery(
     long remainingMS = durationMS - elapsedMS;
     if (remainingMS <= 0) {
       xstringb("WaitUntilCheckQuery: Slept for " << elapsedMS <<
-               " ms but value is " << quoted(actual) << ", not " <<
-               quoted(expect));
+               " ms but value is " << doubleQuote(actual) << ", not " <<
+               doubleQuote(expect));
     }
 
     // Wait for something to happen.  This does not busy-wait.

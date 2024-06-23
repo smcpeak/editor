@@ -6,7 +6,7 @@
 // smbase
 #include "datablok.h"                  // DataBlock
 #include "nonport.h"                   // removeFile
-#include "strutil.h"                   // quoted
+#include "string-util.h"               // doubleQuote
 #include "sm-test.h"                   // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
 #include "trace.h"                     // traceProcessArg
 
@@ -43,8 +43,8 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
   string actual = tde.getTextForLRangeString(tde.documentLRange());
 
   if (expect != actual) {
-    cout << "expect: " << quoted(expect) << endl;
-    cout << "actual: " << quoted(actual) << endl;
+    cout << "expect: " << doubleQuote(expect) << endl;
+    cout << "actual: " << doubleQuote(actual) << endl;
     xfailure("text mismatch");
   }
 }
@@ -173,12 +173,12 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
   string actual =
     tde.getTextForLRangeString(TextLCoord(line1, col1), TextLCoord(line2, col2));
 
-  if (!actual.equals(expect)) {
+  if (actual != expect) {
     tde.debugPrint();
     cout << "getTextForLRange(" << line1 << "," << col1 << ", "
                                 << line2 << "," << col2 << "):\n";
-    cout << "  actual: " << quoted(actual) << "\n";
-    cout << "  expect: " << quoted(expect) << "\n";
+    cout << "  actual: " << doubleQuote(actual) << "\n";
+    cout << "  expect: " << doubleQuote(expect) << "\n";
     xfailure("testGetRange failed");
   }
 }
@@ -1009,8 +1009,8 @@ static void testClipboard()
     "three\n");
 
   // Try with empty strings.
-  xassert(tde.clipboardCopy().isempty());
-  xassert(tde.clipboardCut().isempty());
+  xassert(tde.clipboardCopy().empty());
+  xassert(tde.clipboardCut().empty());
   tde.clipboardPaste("", 0);
   expectNM(tde, 3,0,
     "one\n"
@@ -1885,7 +1885,7 @@ static void innerExpectLayoutWindow(TextDocumentEditor &tde,
 {
   // The 'preExpect' string uses '^' instead of '\t' so the visual
   // alignment is not disrupted.
-  string expect(replace(preExpect, "^", "\t"));
+  string expect(replaceAll(preExpect, "^", "\t"));
 
   ArrayStack<char> text;
   int width = lvCol - fvCol + 1;
@@ -1932,8 +1932,8 @@ static void expectLayoutWindow(TextDocumentEditor &tde,
     stringBuilder newPreExpect;
     for (int line = fvLine; line <= lvLine; line++) {
       newPreExpect <<
-        preExpect.substring((line-fvLine)*oldWidth + (newFvCol-fvCol),
-                            newWidth);
+        preExpect.substr((line-fvLine)*oldWidth + (newFvCol-fvCol),
+                         newWidth);
     }
 
     innerExpectLayoutWindow(tde,
@@ -1949,8 +1949,8 @@ static void expectLayoutWindow(TextDocumentEditor &tde,
     stringBuilder newPreExpect;
     for (int line = fvLine; line <= lvLine; line++) {
       newPreExpect <<
-        preExpect.substring((line-fvLine)*oldWidth,
-                            newWidth);
+        preExpect.substr((line-fvLine)*oldWidth,
+                         newWidth);
     }
 
     innerExpectLayoutWindow(tde,

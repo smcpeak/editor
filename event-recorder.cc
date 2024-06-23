@@ -8,14 +8,14 @@
 
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
-#include "syserr.h"                    // xsyserror
+#include "syserr.h"                    // smbase::xsyserror
 
 // smqtutil
 #include "qtguiutil.h"                 // keysString(QKeyEvent)
 #include "qtutil.h"                    // operator<<(QString), qObjectPath, isModifierKey
 
 // smbase
-#include "strutil.h"                   // quoted
+#include "string-util.h"               // doubleQuote
 
 // Qt
 #include <QApplication>
@@ -27,6 +27,8 @@
 
 // libc
 #include <string.h>                    // strcmp
+
+using namespace smbase;
 
 
 EventRecorder::EventRecorder(string const &filename)
@@ -75,17 +77,17 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
       if (QShortcutEvent const *shortcutEvent =
             dynamic_cast<QShortcutEvent const *>(event)) {
         this->recordEvent(stringb(
-          "Shortcut " << quoted(qObjectPath(receiver)) <<
-          " " << quoted(shortcutEvent->key().toString())));
+          "Shortcut " << doubleQuote(qObjectPath(receiver)) <<
+          " " << doubleQuote(shortcutEvent->key().toString())));
       }
     }
     else if (type == QEvent::MouseButtonPress) {
       if (QMouseEvent const *mouseEvent =
             dynamic_cast<QMouseEvent const *>(event)) {
         this->recordEvent(stringb(
-          "MouseEvent " << quoted(qObjectPath(receiver)) <<
-          " " << quoted(toString(mouseEvent->buttons())) <<
-          " " << quoted(toString(mouseEvent->pos()))));
+          "MouseEvent " << doubleQuote(qObjectPath(receiver)) <<
+          " " << doubleQuote(toString(mouseEvent->buttons())) <<
+          " " << doubleQuote(toString(mouseEvent->pos()))));
       }
     }
     else if (type == QEvent::Resize) {
@@ -98,8 +100,8 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
               dynamic_cast<EventReplayQueryable*>(receiver)) {
           if (queryable->wantResizeEventsRecorded()) {
             this->recordEvent(stringb(
-              "ResizeEvent " << quoted(qObjectPath(receiver)) <<
-              " " << quoted(toString(resizeEvent->size()))));
+              "ResizeEvent " << doubleQuote(qObjectPath(receiver)) <<
+              " " << doubleQuote(toString(resizeEvent->size()))));
           }
         }
       }
@@ -115,7 +117,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         // during recording.  (I can then choose whether to keep it when
         // editing the test.)
         this->recordEvent(stringb(
-          "CheckFocusWidget " << quoted(qObjectPath(receiver))));
+          "CheckFocusWidget " << doubleQuote(qObjectPath(receiver))));
       }
     }
     else {
@@ -195,11 +197,11 @@ void EventRecorder::recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent)
   else {
     // This happens, e.g., when interacting with the menus.
     // Focus in menus is a bit weird.
-    eventPrefix = stringb("KeyPress " << quoted(qObjectPath(receiver)));
+    eventPrefix = stringb("KeyPress " << doubleQuote(qObjectPath(receiver)));
   }
   this->recordEvent(stringb(
-    eventPrefix << " " << quoted(keysString(*keyEvent)) <<
-    " " << quoted(keyEvent->text())));
+    eventPrefix << " " << doubleQuote(keysString(*keyEvent)) <<
+    " " << doubleQuote(keyEvent->text())));
 }
 
 
@@ -216,7 +218,7 @@ void EventRecorder::flushOrdinaryKeyChars()
     string keys = m_ordinaryKeyChars.str();
     m_ordinaryKeyChars.clear();
 
-    this->recordEvent(stringb("FocusKeySequence " << quoted(keys)));
+    this->recordEvent(stringb("FocusKeySequence " << doubleQuote(keys)));
   }
 }
 

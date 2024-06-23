@@ -15,9 +15,10 @@
 #include "datetime.h"                  // getCurrentUnixTime
 #include "exc.h"                       // xfatal
 #include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // replace
+#include "string-util.h"               // beginsWith, replaceAll
 #include "sm-test.h"                   // ARGS_MAIN
 #include "trace.h"                     // TRACE_ARGS, EXPECT_EQ
+#include "xassert.h"                   // xfailure_stringbc
 
 // Qt
 #include <QCoreApplication>
@@ -98,7 +99,7 @@ static void expectEq(char const *label, QByteArray const &actual, char const *ex
     cout << "mismatched " << label << ':' << endl;
     cout << "  actual: " << actual.constData() << endl;
     cout << "  expect: " << expect << endl;
-    xfailure(stringb("mismatched " << label));
+    xfailure_stringbc("mismatched " << label);
   }
   else {
     cout << "  as expected, " << label << ": \""
@@ -201,21 +202,21 @@ static string runCygpath(string input)
 static string normalizeDir(string d)
 {
   if (SMFileUtil().windowsPathSemantics()) {
-    if (prefixEquals(d, "/")) {
+    if (beginsWith(d, "/")) {
       // If we want a Windows path but 'd' starts with a slash, then we
       // are probably running on Cygwin, and need to use 'cygpath' to
       // get a Windows path with a drive letter.
       d = runCygpath(d);
     }
 
-    d = replace(d, "\\", "/");
+    d = replaceAll(d, "\\", "/");
     d = translate(d, "A-Z", "a-z");
     if (d.length() >= 12 &&
-        d.substring(0, 10) == "/cygdrive/" &&
+        d.substr(0, 10) == "/cygdrive/" &&
         d[11] == '/')
     {
       char letter = d[10];
-      d = stringb(letter << ":/" << d.substring(12, d.length()-12));
+      d = stringb(letter << ":/" << d.substr(12, d.length()-12));
     }
   }
 
@@ -233,7 +234,7 @@ static void runCmdDirExpectOutDir(string const &cmd,
   cout << "run: cmd=" << cmd << " wd=" << wd << endl;
   CommandRunner cr;
   cr.setProgram(toQString(cmd));
-  if (!wd.isempty()) {
+  if (!wd.empty()) {
     cr.setWorkingDirectory(toQString(wd));
   }
   cr.startAndWait();

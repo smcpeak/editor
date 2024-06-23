@@ -10,6 +10,9 @@
 #include "sm-swap.h"                   // swap
 #include "xassert.h"                   // xassert
 
+// libc++
+#include <algorithm>                   // std::min
+
 // libc
 #include <string.h>                    // memcpy, etc.
 
@@ -449,7 +452,7 @@ void GapArray<T>::writeIntoArray(T *dest, int destLen, int elt) const
     //   ****][***********
     //   <amt><-- amt2 -->
 
-    int amt = min(left-elt, destLen);
+    int amt = std::min(left-elt, destLen);
     memcpy(dest,                     // dest
            array+elt,                // src
            amt * sizeof(T));         // size

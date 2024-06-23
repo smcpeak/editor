@@ -20,6 +20,7 @@
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
 
 // smbase
+#include "exc.h"                       // smbase::XBase
 #include "owner.h"                     // Owner
 #include "refct-serf.h"                // RCSerf
 #include "sm-noexcept.h"               // NOEXCEPT
@@ -553,7 +554,7 @@ public:      // funcs
   // Get a screenshot of the widget.
   QImage getScreenshot();
 
-  void printUnhandled(xBase const &x)
+  void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
   // -------------------------- testing ----------------------------

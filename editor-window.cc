@@ -39,8 +39,11 @@
 #include "nonport.h"                   // fileOrDirectoryExists
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // dirname, quoted
 #include "sm-test.h"                   // PVAL
+#include "string-util.h"               // endsWith
+#include "stringb.h"                   // stringbc
+#include "strutil.h"                   // dirname
+#include "syserr.h"                    // smbase::XSysError
 #include "trace.h"                     // TRACE_ARGS
 
 // libc
@@ -62,6 +65,8 @@
 #include <QDesktopWidget>
 #include <QFontDialog>
 #include <QInputDialog>
+
+using namespace smbase;
 
 
 int EditorWindow::s_objectCount = 0;
@@ -464,7 +469,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   }
 
   // This handles both "foo.diff" and "git diff".
-  if (suffixEquals(file->resourceName(), "diff")) {
+  if (endsWith(file->resourceName(), "diff")) {
     file->m_highlighter = new DiffHighlighter();
 
     // Diff output has lots of lines that are not empty and have
@@ -535,7 +540,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
     }
   }
 
-  if (suffixEquals(filename, "Makefile")) {
+  if (endsWith(filename, "Makefile")) {
     file->m_highlighter = new Makefile_Highlighter(file->getCore());
     return;
   }
@@ -635,11 +640,11 @@ void EditorWindow::fileOpenFile(HostAndResourceName const &harn)
                               rfr->m_readOnly);
   }
   else {
-    if (rfr->m_failureReasonCode == xSysError::R_FILE_NOT_FOUND) {
+    if (rfr->m_failureReasonCode == XSysError::R_FILE_NOT_FOUND) {
       // Just have the file open with its name set but no content.
     }
     else {
-      this->complain(stringb(
+      this->complain(stringbc(
         rfr->m_failureReasonString <<
         " (code " << rfr->m_failureReasonCode << ")"));
       delete file;
@@ -779,7 +784,7 @@ void EditorWindow::fileSaveAs() NOEXCEPT
   while (true) {
     string chosenFilename =
       this->fileChooseDialog(hostName, dir, true /*saveAs*/);
-    if (chosenFilename.isempty()) {
+    if (chosenFilename.empty()) {
       return;
     }
     if (!stillCurrentDocument(fileDoc)) {
@@ -798,7 +803,7 @@ void EditorWindow::fileSaveAs() NOEXCEPT
     docName.setFilename(hostName, chosenFilename);
 
     if (this->m_editorGlobal->hasFileWithName(docName)) {
-      this->complain(stringb(
+      this->complain(stringbc(
         "There is already an open file with name " <<
         docName << ".  Choose a different name to save as."));
 
@@ -1262,14 +1267,14 @@ void EditorWindow::editGotoLine() NOEXCEPT
 
   if (ok) {
     string s = toString(text);
-    if (!s.isempty()) {
+    if (!s.empty()) {
       int n = atoi(s);
       if (n > 0) {
         editorWidget()->cursorTo(TextLCoord(n-1, 0));
         editorWidget()->scrollToCursor(-1 /*center*/);
       }
       else {
-        this->complain(stringb("Invalid line number: " << s));
+        this->complain(stringbc("Invalid line number: " << s));
       }
     }
   }

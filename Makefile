@@ -40,7 +40,9 @@ include $(SMQTUTIL)/qtvars.mk
 
 
 # Flags for the C and C++ compilers (and preprocessor).
-CCFLAGS := -g -Wall -Wno-deprecated -std=c++11
+#
+# C++17 is needed for `std::string_view`, used by smbase.
+CCFLAGS := -g -Wall -std=c++17
 
 CCFLAGS += -I$(SMBASE)
 CCFLAGS += -I$(SMQTUTIL)

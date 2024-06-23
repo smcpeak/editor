@@ -7,9 +7,13 @@
 #include "qtutil.h"                    // toString(QString)
 
 // smbase
+#include "exc.h"                       // smbase::XBase
 #include "sm-test.h"                   // PVAL
-#include "strutil.h"                   // quoted
+#include "string-util.h"               // doubleQuote
+#include "syserr.h"                    // smbase::XSysError
 #include "trace.h"                     // traceAddFromEnvVar
+
+using namespace smbase;
 
 
 FSServerTest::FSServerTest(int argc, char **argv)
@@ -80,7 +84,7 @@ void FSServerTest::connect(HostName const &hostName)
 
 void FSServerTest::runPathQuery(string const &path)
 {
-  cout << "runPathQuery(" << quoted(path) << ")\n";
+  cout << "runPathQuery(" << doubleQuote(path) << ")\n";
 
   // Send.
   {
@@ -234,7 +238,7 @@ void FSServerTest::runFileReadWriteTests()
     std::unique_ptr<VFS_Message> replyMsg(getNextReply());
     VFS_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
     xassert(!reply->m_success);
-    xassert(reply->m_failureReasonCode == xSysError::R_FILE_NOT_FOUND);
+    xassert(reply->m_failureReasonCode == XSysError::R_FILE_NOT_FOUND);
   }
 }
 
@@ -301,7 +305,7 @@ int main(int argc, char **argv)
 
     fsServerTest.runTests(hostname);
   }
-  catch (xBase &x) {
+  catch (XBase &x) {
     cerr << x.why() << endl;
     return 2;
   }

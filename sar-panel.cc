@@ -8,11 +8,11 @@
 #include "editor-widget.h"             // EditorWidget
 
 // smqtutil
-#include "qtutil.h"                    // toString, quoted(QString)
+#include "qtutil.h"                    // toString, doubleQuote(QString)
 
 // smbase
 #include "codepoint.h"                 // isUppercaseLetter
-#include "sm-macros.h"                 // Restorer
+#include "save-restore.h"              // SetRestore
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -250,12 +250,12 @@ static void rememberString(QComboBox *cbox, char const *which)
 
   int index = cbox->findText(currentString);
   if (index == 0) {
-    TRACE("sar", "remembering " << which << ": " << quoted(currentString) <<
+    TRACE("sar", "remembering " << which << ": " << doubleQuote(currentString) <<
                  " already at the top, nothing to do");
     return;
   }
 
-  TRACE("sar", "remembering " << which << ": " << quoted(currentString));
+  TRACE("sar", "remembering " << which << ": " << doubleQuote(currentString));
   cbox->insertItem(0, currentString);
 
   // Make the inserted item "current" so I can remove the other copy.
@@ -315,7 +315,7 @@ void SearchAndReplacePanel::setFindText(QString const &text)
 {
   // Calling 'setCurrentText' fires 'findEditTextChanged', which will
   // in turn cause scrolling.  Suppress that.
-  Restorer<bool> restorer(m_ignore_findEditTextChanged, true);
+  SetRestore<bool> restorer(m_ignore_findEditTextChanged, true);
 
   m_findBox->setCurrentText(text);
 }
@@ -363,7 +363,7 @@ void SearchAndReplacePanel::searchPanelChanged(SearchAndReplacePanel *panel)
   }
 
   // Do not broadcast the changes resulting from receiving this.
-  Restorer<bool> restorer(m_handlingBroadcastChange, true);
+  SetRestore<bool> restorer(m_handlingBroadcastChange, true);
 
   // Is anything different?
   bool changed = false;
@@ -541,7 +541,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
           TextLCoord tc = ed->cursor();
           string word = ed->getWordAfter(tc);
           TRACE("sar", "extend sel by: " << word);
-          if (!word.isempty()) {
+          if (!word.empty()) {
             // Extend or start a selection to include this word.
             if (!ed->markActive()) {
               ed->setMark(tc);

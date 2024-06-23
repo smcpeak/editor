@@ -4,7 +4,7 @@
 #include "host-and-resource-name.h"    // this module
 
 // smbase
-#include "strutil.h"                   // quoted
+#include "string-util.h"               // doubleQuote
 #include "xassert.h"                   // xassert
 
 
@@ -55,10 +55,10 @@ StrongOrdering
 string HostAndResourceName::toString() const
 {
   if (isLocal()) {
-    return quoted(resourceName());
+    return doubleQuote(resourceName());
   }
   else {
-    return stringb(m_hostName << ": " << quoted(resourceName()));
+    return stringb(m_hostName << ": " << doubleQuote(resourceName()));
   }
 }
 

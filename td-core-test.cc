@@ -5,6 +5,7 @@
 
 // smbase
 #include "autofile.h"                  // AutoFILE
+#include "exc.h"                       // smbase::xmessage
 #include "sm-file-util.h"              // SMFileUtil
 #include "sm-macros.h"                 // IGNORE_RESULT
 #include "sm-test.h"                   // USUAL_MAIN, EXPECT_EQ
@@ -12,6 +13,8 @@
 // libc
 #include <assert.h>                    // assert
 #include <stdlib.h>                    // system
+
+using namespace smbase;
 
 
 // Self-check the 'tdc' and also verify that the iterator works for
@@ -201,7 +204,7 @@ static void testReadTwice()
 
     // make sure they're the same
     if (system("diff td-core.tmp td-core.tmp2") != 0) {
-      xbase("the files were different!\n");
+      xmessage("the files were different!\n");
     }
 
     // ok

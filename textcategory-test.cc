@@ -12,7 +12,7 @@ static void expect(LineCategories const &category, char const *str)
   string s = category.asString();
   cout << s << endl;
 
-  if (!s.equals(str)) {
+  if (s != str) {
     cout << "expected: " << str << endl;
     exit(2);
   }

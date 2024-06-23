@@ -4,13 +4,15 @@
 #include "nearby-file.h"               // module to test
 
 // smbase
-#include "container-utils.h"           // contains
+#include "container-util.h"            // smbase::contains
 #include "sm-file-util.h"              // TestSMFileUtil
 #include "sm-iostream.h"               // cout, etc.
 #include "sm-test.h"                   // USUAL_TEST_MAIN
 
 // libc++
 #include <set>                         // std::set
+
+using namespace smbase;
 
 
 static void expectIGNF(

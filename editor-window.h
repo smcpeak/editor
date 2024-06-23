@@ -20,6 +20,7 @@
 #include "qtguiutil.h"                 // unhandledExceptionMsgbox
 
 // smbase
+#include "exc.h"                       // smbase::XBase
 #include "sm-override.h"               // OVERRIDE
 #include "sm-noexcept.h"               // NOEXCEPT
 #include "str.h"                       // string
@@ -104,7 +105,7 @@ private:     // funcs
 
   void complain(char const *msg);
 
-  void printUnhandled(xBase const &x)
+  void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
 protected:   // funcs

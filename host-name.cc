@@ -35,7 +35,7 @@ HostName::~HostName()
 
 StrongOrdering HostName::compareTo(HostName const &obj) const
 {
-  return strongOrderFromInt(m_sshHostName.compareTo(obj.m_sshHostName));
+  return strongOrderFromInt(m_sshHostName.compare(obj.m_sshHostName));
 }
 
 

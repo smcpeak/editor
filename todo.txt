@@ -1,4 +1,5 @@
 TODOs:
+  - Search+replace bypasses the DISKMOD warning
   - F6 to do Ctrl+O, N, Enter
   - Bug: When a file is edited in one window and visible in another,
     the position in the other is maintained.  But if it is *not* visible

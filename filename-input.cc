@@ -9,10 +9,12 @@
 #include "sm-line-edit.h"              // SMLineEdit
 
 // smbase
+#include "save-restore.h"              // SetRestore
 #include "sm-file-util.h"              // SMFileUtil
+#include "string-util.h"               // beginsWith
 #include "strutil.h"                   // dirname, compareStringPtrs
 #include "trace.h"                     // TRACE
-#include "vector-utils.h"              // vec_find_index
+#include "vector-util.h"               // vec_find_index
 
 // libc++
 #include <algorithm>                   // std::min
@@ -153,7 +155,7 @@ bool FilenameInputDialog::runDialog(
   xassert(!m_docList);
 
   // Set 'm_docList' for the lifetime of this routine.
-  Restorer<RCSerf<NamedTextDocumentList const> >
+  SetRestore<RCSerf<NamedTextDocumentList const> >
     restorer(m_docList, docList);
 
   // Select the dropdown entry corresponding to the starting host name.
@@ -425,7 +427,7 @@ bool FilenameInputDialog::getCompletions(
           stringb(entry.m_name << "/") :
           entry.m_name;
 
-        if (prefixEquals(entryName, base)) {
+        if (beginsWith(entryName, base)) {
           completions.push(entryName);
         }
       }
@@ -505,7 +507,7 @@ static string longestCommonPrefix(ArrayStack<string> const &strings)
     }
   }
 
-  return prefix.substring(0, prefixLength);
+  return prefix.substr(0, prefixLength);
 }
 
 

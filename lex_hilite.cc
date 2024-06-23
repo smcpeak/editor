@@ -11,11 +11,13 @@
 
 // smbase
 #include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "sm-fstream.h"                // ofstream
-#include "strutil.h"                   // quoted, readLinesFromFile
 #include "sm-file-util.h"              // SMFileUtil
+#include "sm-fstream.h"                // ofstream
 #include "sm-test.h"                   // EXPECT_EQ
+#include "string-util.h"               // doubleQuote
+#include "strutil.h"                   // readLinesFromFile
 #include "trace.h"                     // TRACE
+#include "xassert.h"                   // xfailure_stringbc
 
 // libc
 #include <stdlib.h>                    // exit
@@ -369,11 +371,11 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
       string actual = actualOutputLines[line];
       string expect = expectedOutputLines[line];
       if (actual != expect) {
-        xfailure(stringb("testHighlighter failure:\n" <<
+        xfailure_stringbc("testHighlighter failure:\n" <<
           "  index : " << line << "\n" <<
           "  line  : " << tde.getWholeLineString(line) << "\n" <<
           "  expect: " << expect << "\n" <<
-          "  actual: " << actual));
+          "  actual: " << actual);
       }
     }
   }
@@ -402,7 +404,7 @@ static void printCategories(LexHighlighter &hi)
 static void insert(int line, int col, char const *text)
 {
   cout << "insert(" << line << ", " << col << ", "
-       << quoted(text) << ")\n";
+       << doubleQuote(text) << ")\n";
   tde->setCursor(TextLCoord(line, col));
   tde->insertNulTermText(text);
 }

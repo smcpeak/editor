@@ -10,11 +10,13 @@
 #include "qtutil.h"                    // toString(QString)
 
 // smbase
-#include "exc.h"                       // xBase
+#include "exc.h"                       // smbase::XBase, xfatal
 #include "trace.h"                     // traceAddFromEnvVar
 
 // libc++
 #include <utility>                     // std::move
+
+using namespace smbase;
 
 
 VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
@@ -94,7 +96,7 @@ void VFS_ConnectionsTest::waitForReply(
     m_eventLoop.exec();
   }
   if (!m_vfsConnections.replyIsAvailable(requestID)) {
-    xfatal(stringb("reply " << requestID < " not available"));
+    xfatal("reply " << requestID << " not available");
   }
 
   xassert(m_vfsConnections.numAvailableReplies() > 0);
@@ -289,7 +291,7 @@ int main(int argc, char **argv)
     VFS_ConnectionsTest connsTest(argc, argv);
     connsTest.runTests();
   }
-  catch (xBase &x) {
+  catch (XBase &x) {
     cerr << x.why() << endl;
     return 2;
   }

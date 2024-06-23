@@ -4,19 +4,22 @@
 #include "vfs-local.h"                 // this module
 
 // smbase
-#include "exc.h"                       // xBase
+#include "exc.h"                       // smbase::XBase
 #include "nonport.h"                   // getFileModificationTime
 #include "sm-file-util.h"              // SMFileUtil
+#include "syserr.h"                    // smbase::XSysError
+
+using namespace smbase;
 
 
 // Catch block for VFS_LocalImpl methods that service a PathRequest.
 // It sets the failure code and reason of 'reply'.
 #define PATH_REQUEST_CATCH_BLOCK                           \
-  catch (xSysError &x) {                                   \
+  catch (XSysError &x) {                                   \
     reply.setFailureReason(x.reason, x.why());             \
   }                                                        \
-  catch (xBase &x) {                                       \
-    reply.setFailureReason(xSysError::R_UNKNOWN, x.why()); \
+  catch (XBase &x) {                                       \
+    reply.setFailureReason(XSysError::R_UNKNOWN, x.why()); \
   }
 
 

@@ -13,7 +13,9 @@
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-swap.h"                   // swap
 #include "trace.h"                     // TRACE
-#include "typ.h"                       // min, max
+
+// libc++
+#include <algorithm>                   // std::{min, max}
 
 
 int TextDocumentEditor::s_objectCount = 0;
@@ -204,8 +206,8 @@ void TextDocumentEditor::setMark(TextLCoord m)
 void TextDocumentEditor::moveMarkBy(int deltaLine, int deltaCol)
 {
   xassert(m_markActive);
-  m_mark.m_line = max(0, m_mark.m_line + deltaLine);
-  m_mark.m_column = max(0, m_mark.m_column + deltaCol);
+  m_mark.m_line = std::max(0, m_mark.m_line + deltaLine);
+  m_mark.m_column = std::max(0, m_mark.m_column + deltaCol);
 }
 
 
@@ -318,8 +320,8 @@ void TextDocumentEditor::setFirstVisible(TextLCoord fv)
 
 void TextDocumentEditor::moveFirstVisibleBy(int deltaLine, int deltaCol)
 {
-  int line = max(0, m_firstVisible.m_line + deltaLine);
-  int col = max(0, m_firstVisible.m_column + deltaCol);
+  int line = std::max(0, m_firstVisible.m_line + deltaLine);
+  int col = std::max(0, m_firstVisible.m_column + deltaCol);
   this->setFirstVisible(TextLCoord(line, col));
 }
 
@@ -354,8 +356,8 @@ void TextDocumentEditor::setLastVisible(TextLCoord lv)
 {
   // If the user resizes the window down to nothing, we might calculate
   // a visible region with zero width.  Require it to be positive.
-  m_lastVisible.m_line = max(lv.m_line, m_firstVisible.m_line);
-  m_lastVisible.m_column = max(lv.m_column, m_firstVisible.m_column);
+  m_lastVisible.m_line = std::max(lv.m_line, m_firstVisible.m_line);
+  m_lastVisible.m_column = std::max(lv.m_column, m_firstVisible.m_column);
 }
 
 
@@ -380,12 +382,12 @@ static int stcHelper(int firstVis, int lastVis, int cur, int gap)
     gap = 0;
   }
   else if (width+1 < gap*2) {
-    return max(0, cur - width/2);
+    return std::max(0, cur - width/2);
   }
 
   bool changed = false;
   if (cur-gap < firstVis) {
-    firstVis = max(0, cur-gap);
+    firstVis = std::max(0, cur-gap);
     changed = true;
   }
   else if (cur+gap > lastVis) {
@@ -395,7 +397,7 @@ static int stcHelper(int firstVis, int lastVis, int cur, int gap)
 
   if (changed && center) {
     // we had to adjust the viewport; make it actually centered
-    firstVis = max(0, cur - width/2);
+    firstVis = std::max(0, cur - width/2);
   }
 
   return firstVis;
@@ -419,7 +421,7 @@ void TextDocumentEditor::scrollToCoord(TextLCoord tc, int edgeGap)
 
 void TextDocumentEditor::centerVisibleOnCursorLine()
 {
-  int newfv = max(0, m_cursor.m_line - this->visLines()/2);
+  int newfv = std::max(0, m_cursor.m_line - this->visLines()/2);
   this->setFirstVisible(TextLCoord(newfv, 0));
   this->scrollToCursor();
 }
@@ -955,8 +957,8 @@ int TextDocumentEditor::getAboveIndentationColumns(int line,
 void TextDocumentEditor::moveCursorBy(int deltaLine, int deltaCol)
 {
   // prevent moving into negative territory
-  deltaLine = max(deltaLine, - cursor().m_line);
-  deltaCol = max(deltaCol, - cursor().m_column);
+  deltaLine = std::max(deltaLine, - cursor().m_line);
+  deltaCol = std::max(deltaCol, - cursor().m_column);
 
   if (deltaLine || deltaCol) {
     moveCursor(true /*relLine*/, deltaLine,
@@ -980,7 +982,7 @@ void TextDocumentEditor::moveToNextLineStart()
 
 void TextDocumentEditor::moveToPrevLineEnd()
 {
-  int prevLine = max(0, cursor().m_line - 1);
+  int prevLine = std::max(0, cursor().m_line - 1);
   moveCursor(false /*relLine*/, prevLine,
              false /*relCol*/, lineLengthColumns(prevLine));
 }
@@ -1034,12 +1036,12 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
 void TextDocumentEditor::confineCursorToVisible()
 {
   m_cursor.m_line =
-    max(m_firstVisible.m_line,
-      min(m_lastVisible.m_line,   m_cursor.m_line));
+    std::max(m_firstVisible.m_line,
+      std::min(m_lastVisible.m_line,   m_cursor.m_line));
 
   m_cursor.m_column =
-    max(m_firstVisible.m_column,
-      min(m_lastVisible.m_column, m_cursor.m_column));
+    std::max(m_firstVisible.m_column,
+      std::min(m_lastVisible.m_column, m_cursor.m_column));
 }
 
 

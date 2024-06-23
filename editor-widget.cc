@@ -30,8 +30,8 @@
 #include "array.h"                     // Array
 #include "bdffont.h"                   // BDFFont
 #include "dev-warning.h"               // DEV_WARNING
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "sm-macros.h"                 // Restorer
+#include "exc.h"                       // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
+#include "save-restore.h"              // SetRestore
 #include "nonport.h"                   // getMilliseconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
@@ -51,6 +51,11 @@
 #include <QPainter>
 #include <QPixmap>
 
+// libc++
+#include <algorithm>                   // std::min
+
+using namespace smbase;
+
 
 // The basic rule for using this is it should be present in any function
 // that calls a non-const method of TextDocumentEditor.  This includes
@@ -61,7 +66,7 @@
 // for the destructor, or when I know I am not listening, since there is
 // essentially no cost to doing it.
 #define INITIATING_DOCUMENT_CHANGE()                       \
-  Restorer<bool> ignoreNotificationsRestorer(              \
+  SetRestore<bool> ignoreNotificationsRestorer(              \
     m_ignoreTextDocumentNotifications, true) /* user ; */
 
 
@@ -255,7 +260,7 @@ static BDFFont *makeBDFFont(char const *bdfData, char const *context)
     parseBDFString(*ret, bdfData);
     return ret;
   }
-  catch (xBase &x) {
+  catch (XBase &x) {
     x.prependContext(context);
     throw;
   }
@@ -623,7 +628,7 @@ void EditorWidget::redraw()
 
   // tell our parent.. but ignore certain messages temporarily
   {
-    Restorer<bool> restore(m_ignoreScrollSignals, true);
+    SetRestore<bool> restore(m_ignoreScrollSignals, true);
     Q_EMIT viewChanged();
   }
 
@@ -813,7 +818,7 @@ void EditorWidget::paintEvent(QPaintEvent *ev) NOEXCEPT
     // draw on the pixmap
     updateFrame(ev);
   }
-  catch (xBase &x) {
+  catch (XBase &x) {
     // I can't pop up a message box because then when that
     // is dismissed it might trigger another exception, etc.
     QPainter paint(this);
@@ -967,7 +972,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     if (line < m_editor->numLines()) {
       if (firstCol < lineGlyphColumns) {
         // First get the text without any extra newline.
-        int const amt = min(lineLengthColumns - firstCol, visibleCols);
+        int const amt = std::min(lineLengthColumns - firstCol, visibleCols);
         m_editor->getLineLayout(TextLCoord(line, firstCol), text, amt);
         visibleLineChars = amt;
 
@@ -1095,7 +1100,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         // the chances we'll use the eraseRect() optimization above
         len = visibleLineChars-printedCols;
       }
-      len = min(len, visibleCols-printedCols);
+      len = std::min(len, visibleCols-printedCols);
       xassert(len > 0);
 
       // The QtBDFFont package must be treated as if it draws
@@ -1104,7 +1109,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
 
       // draw text
-      int const charsToDraw = min(len, (lineGlyphColumns-firstCol)-printedCols);
+      int const charsToDraw = std::min(len, (lineGlyphColumns-firstCol)-printedCols);
       for (int i=0; i < charsToDraw; i++) {
         if (lineIter.has()) {
           if (lineIter.columnOffset() > firstCol+printedCols+i) {
@@ -1134,7 +1139,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         // might not be consistent across fonts, so I might want to have
         // a user-specifiable underlining offset.. also, I don't want this
         // going into the next line, so truncate according to descent
-        int ulBaseline = baseline + min(UNDERLINE_OFFSET, m_fontDescent);
+        int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
         paint.drawLine(x, ulBaseline, x + m_fontWidth*len, ulBaseline);
       }
 
@@ -1149,7 +1154,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       // just testing the mechanism that catches exceptions
       // raised while drawing
       //if (line == 5) {
-      //  THROW(xBase("aiyee! sample exception!"));
+      //  THROW(XBase("aiyee! sample exception!"));
       //}
 
       paint.save();
@@ -1220,7 +1225,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
         if (underlineCursor) {
           paint.setPen(cursorFont->getFgColor());
-          int ulBaseline = baseline + min(UNDERLINE_OFFSET, m_fontDescent);
+          int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
           paint.drawLine(x, ulBaseline, x + m_fontWidth, ulBaseline);
         }
       }
@@ -1592,7 +1597,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 
       case Qt::Key_X: {
         // test exception mechanism...
-        THROW(xBase("gratuitous exception"));
+        THROW(XMessage("gratuitous exception"));
         break;
       }
 
@@ -1602,9 +1607,9 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 
       case Qt::Key_Y: {
         try {
-          xbase("another exc");
+          xmessage("another exc");
         }
-        catch (xBase &x) {
+        catch (XBase &x) {
           QMessageBox::information(this, "got it",
             "got it");
         }

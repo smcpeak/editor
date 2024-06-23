@@ -4,7 +4,10 @@
 #include "vfs-msg.h"                   // this module
 
 // smbase
+#include "exc.h"                       // xformatdb, smbase::XSysError
 #include "flatutil.h"                  // xferEnum, Flatten, xferVectorBytewise
+
+using namespace smbase;
 
 
 #define STRINGIZE_VFS_MT(type) #type,
@@ -62,7 +65,7 @@ void VFS_Message::serialize(Flatten &flat) const
   // Create an object of the corresponding type.
   switch (mtype) {
     default:
-      xformat(stringb("Invalid message type: " << mtype));
+      xformatsb("Invalid message type: " << mtype);
 
     #define HANDLE_TYPE(type)   \
       case VFS_MT_##type:       \
@@ -180,8 +183,8 @@ void VFS_FileStatusReply::xfer(Flatten &flat)
 {
   VFS_PathReply::xfer(flat);
 
-  m_dirName.xfer(flat);
-  m_fileName.xfer(flat);
+  stringXfer(m_dirName, flat);
+  stringXfer(m_fileName, flat);
   flat.xferBool(m_dirExists);
   xferEnum(flat, m_fileKind);
   flat.xfer_int64_t(m_fileModificationTime);
@@ -207,7 +210,7 @@ string VFS_PathRequest::description() const
 
 void VFS_PathRequest::xfer(Flatten &flat)
 {
-  m_path.xfer(flat);
+  stringXfer(m_path, flat);
 }
 
 
@@ -215,7 +218,7 @@ void VFS_PathRequest::xfer(Flatten &flat)
 VFS_PathReply::VFS_PathReply()
   : VFS_Message(),
     m_success(true),
-    m_failureReasonCode(xSysError::R_NO_ERROR),
+    m_failureReasonCode(XSysError::R_NO_ERROR),
     m_failureReasonString()
 {}
 
@@ -224,14 +227,14 @@ VFS_PathReply::~VFS_PathReply()
 {}
 
 
-void VFS_PathReply::setFailureReason(xSysError::Reason reasonCode,
+void VFS_PathReply::setFailureReason(XSysError::Reason reasonCode,
                                      string const &reasonString)
 {
   m_success = false;
   m_failureReasonCode = reasonCode;
   m_failureReasonString = reasonString;
 
-  static_assert(xSysError::NUM_REASONS == 14,
+  static_assert(XSysError::NUM_REASONS == 14,
     "Must bump VFS version number if set of reason codes change.");
 }
 
@@ -254,7 +257,7 @@ void VFS_PathReply::xfer(Flatten &flat)
 {
   flat.xferBool(m_success);
   xferEnum(flat, m_failureReasonCode);
-  m_failureReasonString.xfer(flat);
+  stringXfer(m_failureReasonString, flat);
 }
 
 
@@ -382,7 +385,7 @@ VFS_GetDirEntriesReply::~VFS_GetDirEntriesReply()
 
 static void xfer(Flatten &flat, SMFileUtil::DirEntryInfo &info)
 {
-  info.m_name.xfer(flat);
+  stringXfer(info.m_name, flat);
   xferEnum(flat, info.m_kind);
 
   static_assert(SMFileUtil::NUM_FILE_KINDS == 4,

@@ -18,11 +18,13 @@
 
 // smbase
 #include "dev-warning.h"               // g_devWarningHandler
+#include "exc.h"                       // smbase::{XBase, xformat}
 #include "objcount.h"                  // CheckObjectCount
+#include "save-restore.h"              // SET_RESTORE, SetRestore
 #include "sm-file-util.h"              // SMFileUtil
-#include "strtokp.h"                   // StrtokParse
-#include "strutil.h"                   // prefixEquals
 #include "sm-test.h"                   // PVAL
+#include "string-util.h"               // beginsWith
+#include "strtokp.h"                   // StrtokParse
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -35,6 +37,8 @@
 
 // libc
 #include <stdlib.h>                    // atoi
+
+using namespace smbase;
 
 
 // ---------------- EditorProxyStyle ----------------
@@ -343,9 +347,9 @@ void EditorGlobal::processCommandLineOptions(
         THROW(QuitAfterPrintingHelp(""));
       }
 
-      else if (prefixEquals(arg, "-ev=")) {
+      else if (beginsWith(arg, "-ev=")) {
         // Replay a sequence of events as part of a test.
-        m_eventFileTest = arg.substring(4, arg.length()-4);
+        m_eventFileTest = arg.substr(4, arg.length()-4);
       }
 
       else if (arg == "-record") {
@@ -353,9 +357,9 @@ void EditorGlobal::processCommandLineOptions(
         m_recordInputEvents = true;
       }
 
-      else if (prefixEquals(arg, "-conn=")) {
+      else if (beginsWith(arg, "-conn=")) {
         // Open a connection to a specified host.
-        string hostName = arg.substring(6, arg.length()-6);
+        string hostName = arg.substr(6, arg.length()-6);
         m_vfsConnections.connect(HostName::asSSH(hostName));
       }
 
@@ -430,7 +434,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
 {
   // Have widges ignore the notifications arising from the refresh so
   // their cursor position is not affected.
-  RESTORER(bool, EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+  SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
     true);
 
   if (doc->hasFilename()) {
@@ -1039,7 +1043,7 @@ int main(int argc, char **argv)
 
       else {
         // Run the app normally.
-        Restorer< void (*)(char const*, int, char const *) >
+        SetRestore< void (*)(char const*, int, char const *) >
           restorer(g_devWarningHandler, &editorDevWarningHandler);
         ret = app.exec();
       }
@@ -1047,7 +1051,7 @@ int main(int argc, char **argv)
     catch (QuitAfterPrintingHelp &) {
       return 0;
     }
-    catch (xBase &x) {
+    catch (XBase &x) {
       cerr << x.why() << endl;
       return 2;
     }

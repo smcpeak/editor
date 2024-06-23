@@ -16,7 +16,8 @@
 #include "nonport.h"                   // getMilliseconds
 #include "objcount.h"                  // CHECK_OBJECT_COUNT(className)
 #include "sm-swap.h"                   // swap
-#include "strutil.h"                   // stringTolower, suffixEquals
+#include "string-util.h"               // endsWith
+#include "strutil.h"                   // stringTolower
 #include "trace.h"                     // TRACE
 
 // Qt
@@ -418,7 +419,7 @@ int TextSearch::searchStringErrorOffset() const
 bool TextSearch::searchStringEndsWithEOL() const
 {
   return (m_searchStringFlags & SS_REGEX) &&
-         suffixEquals(m_searchString, "$");
+         endsWith(m_searchString, "$");
 }
 
 

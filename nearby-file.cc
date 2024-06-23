@@ -3,15 +3,12 @@
 
 #include "nearby-file.h"               // this module
 
-// editor
-#include "codepoint.h"                 // isDecimalDigit, isLetter, etc.
-
 // smbase
+#include "codepoint.h"                 // isDecimalDigit, isLetter, etc.
 #include "sm-file-util.h"              // SMFileUtil
-#include "string-utils.h"              // prefixAll, suffixAll, join
-#include "strutil.h"                   // quoted
+#include "string-util.h"               // prefixAll, suffixAll, join, doubleQuote
 #include "trace.h"                     // TRACE
-#include "vector-utils.h"              // convertElements
+#include "vector-util.h"               // convertElements
 
 
 // Return true if 'c' is a digit for the purpose of the file name
@@ -100,7 +97,7 @@ void getCandidateSuffixes(
 
   // I want this to be usable without too much pre-checking, so just
   // silently discard an invalid offset or empty string.
-  if (haystack.isempty()) {
+  if (haystack.empty()) {
     return;
   }
   int haystackLength = haystack.length();
@@ -166,7 +163,7 @@ void getCandidateSuffixes(
 
   // Return what we found.
   candidates.push(HostFileAndLineOpt(
-    HostAndResourceName::localFile(haystack.substring(low, high-low+1)),
+    HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
     line));
 }
 
@@ -258,7 +255,7 @@ HostFileAndLineOpt getNearbyFilename(
           "    "),                     // prefix
         "\n"),                         // suffix
       "") <<                           // separator
-    "  haystack: " << quoted(haystack) << "\n"
+    "  haystack: " << doubleQuote(haystack) << "\n"
     "  charOffset: " << charOffset << "\n"
     "  ret.harn: " << ret.m_harn << "\n"
     "  ret.line: " << ret.m_line);

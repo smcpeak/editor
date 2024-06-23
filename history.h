@@ -9,10 +9,9 @@
 
 // smbase
 #include "array.h"                     // ObjArrayStack
-#include "exc.h"                       // xBase
+#include "exc.h"                       // smbase::XMessage
 #include "sm-override.h"               // OVERRIDE
-#include "str.h"                       // stringBuilder
-#include "typ.h"                       // uintptr_t
+#include "stringb.h"                   // stringb
 
 
 // fwd in this file
@@ -27,10 +26,10 @@ class HistoryStats;
 // untested.  To test them I need to implement a parser for the
 // history concrete syntax, and make some histories that are
 // inconsistent with some buffer contents.
-class XHistory : public xBase {
+class XHistory : public smbase::XMessage {
 public:
-  XHistory(char const *msg) : xBase(stringc << "XHistory: " << msg) {}
-  XHistory(XHistory const &obj) : xBase(obj) {}
+  XHistory(char const *msg) : smbase::XMessage(stringb("XHistory: " << msg)) {}
+  XHistory(XHistory const &obj) : smbase::XMessage(obj) {}
 };
 
 
