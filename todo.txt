@@ -2,7 +2,6 @@ TODOs:
   - Bug: When a file is edited in one window and visible in another,
     the position in the other is maintained.  But if it is *not* visible
     in the other, then it is not maintained.
-  - When an editor window is "[DISKMOD]", change its bg color.
   - In Ctrl+O window, if I have typed something into the filter window
     and press Enter, do not just close it without doing anything.  Either
     ignore the keypress or, perhaps, open the first file in the list.

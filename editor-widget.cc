@@ -1346,8 +1346,8 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
 
 
 void EditorWidget::setDrawStyle(QPainter &paint,
-                          QtBDFFont *&curFont, bool &underlining,
-                          StyleDB *db, TextCategory cat)
+                                QtBDFFont *&curFont, bool &underlining,
+                                StyleDB *db, TextCategory cat)
 {
   TextStyle const &ts = db->getStyle(cat);
 
@@ -1355,7 +1355,15 @@ void EditorWidget::setDrawStyle(QPainter &paint,
   // whereas otherwise the foreground color comes from the font glyphs.
   paint.setPen(ts.foreground);
 
-  paint.setBackground(ts.background);
+  QColor bg = ts.background;
+
+  // If the file has been modified on disk, darken the background so it
+  // is more obvious.
+  if (getDocument()->m_modifiedOnDisk) {
+    bg = bg.darker();
+  }
+
+  paint.setBackground(bg);
 
   underlining = (ts.variant == FV_UNDERLINE);
 
