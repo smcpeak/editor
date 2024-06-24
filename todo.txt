@@ -10,8 +10,6 @@ TODOs:
   - Do not start a new build task while the old one is running.
   - Bug: If the build command prints a final character without a newline,
     that never gets shown in the editor window.
-  - Bug: The process runner should redirect stdin from /dev/null,
-    otherwise it hangs if it tries to read.
   - Allow refreshing all selected editors in "Documents" (Ctrl+O) dialog.
 
   - Easy repetition macros:

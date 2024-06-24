@@ -4,6 +4,7 @@
 #include "editor-global.h"             // this module
 
 // editor
+#include "command-runner.h"            // CommandRunner
 #include "connections-dialog.h"        // ConnectionsDialog
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
@@ -545,7 +546,12 @@ NamedTextDocument *EditorGlobal::launchCommand(
   QString fullCommand = cr.getCommandLine();
 
   // Launch the child process.
-  watcher->m_commandRunner.startAsynchronous();
+  cr.startAsynchronous();
+
+  // Ensure that if the program tries to read from stdin, it will
+  // immediately hit EOF rather than hanging.  This must be done *after*
+  // starting the process.
+  cr.closeInputChannel();
 
   TRACE("process", "dir: " << toString(dir));
   TRACE("process", "cmd: " << toString(command));
