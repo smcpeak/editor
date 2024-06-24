@@ -36,8 +36,17 @@ public:      // data
   // stderr channel.  Initially true.
   bool m_prefixStderrLines;
 
+private:     // funcs
+  // Copy the next line of output from `m_commandRunner` to `m_namedDoc`
+  // (discarding it if the latter is `nullptr`), even if it does not
+  // have a trailing newline.
+  void transferNextOutputLine();
+
+  // Same as `transferNextOutputLine`, but for the error channel.
+  void transferNextErrorLine();
+
 public:      // funcs
-  ProcessWatcher(NamedTextDocument *doc);
+  explicit ProcessWatcher(NamedTextDocument *doc);
   ~ProcessWatcher();
 
 Q_SIGNALS:

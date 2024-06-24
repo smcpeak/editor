@@ -40,32 +40,38 @@ void ProcessWatcher::slot_outputLineReady() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   while (m_commandRunner.hasOutputLine()) {
-    QString line = m_commandRunner.getOutputLine();
-    if (m_namedDoc) {
-      string s(toString(line));
-      m_namedDoc->appendString(s);
-    }
-    else {
-      // This is an interesting situation: we are getting output, but
-      // do not have an associated document.  We make sure to retrieve
-      // and discard the output so the output buffer does not grow
-      // indefinitely (QProcess does not appear to have a bound on what
-      // it will accumulate in memory; I've gotten it to 100 MB).
-      //
-      // One way this could happen is if the child process is unkillable
-      // but keeps delivering output data.  In an ideal world, we could
-      // close all handles related to such a process, forcing an end to
-      // the IPC even if the process continues.  But QProcess does not
-      // offer a way to do that (without incurring a 30s process-wide
-      // hang), so we're stuck spending cycles servicing that output.
-      // See doc/qprocess-hangs.txt.
-      //
-      // If the child does eventually die, we will get a call on
-      // slot_processTerminated and be able to reap it normally.
-    }
+    transferNextOutputLine();
   }
 
   GENERIC_CATCH_END
+}
+
+
+void ProcessWatcher::transferNextOutputLine()
+{
+  QString line = m_commandRunner.getOutputLine();
+  if (m_namedDoc && !line.isEmpty()) {
+    string s(toString(line));
+    m_namedDoc->appendString(s);
+  }
+  else {
+    // This is an interesting situation: we are getting output, but
+    // do not have an associated document.  We make sure to retrieve
+    // and discard the output so the output buffer does not grow
+    // indefinitely (QProcess does not appear to have a bound on what
+    // it will accumulate in memory; I've gotten it to 100 MB).
+    //
+    // One way this could happen is if the child process is unkillable
+    // but keeps delivering output data.  In an ideal world, we could
+    // close all handles related to such a process, forcing an end to
+    // the IPC even if the process continues.  But QProcess does not
+    // offer a way to do that (without incurring a 30s process-wide
+    // hang), so we're stuck spending cycles servicing that output.
+    // See doc/qprocess-hangs.txt.
+    //
+    // If the child does eventually die, we will get a call on
+    // slot_processTerminated and be able to reap it normally.
+  }
 }
 
 
@@ -74,25 +80,38 @@ void ProcessWatcher::slot_errorLineReady() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   while (m_commandRunner.hasErrorLine()) {
-    QString line = m_commandRunner.getErrorLine();
-    if (m_namedDoc) {
-      string s(toString(line));
-      if (m_prefixStderrLines) {
-        // This is a crude indicator of stdout versus stderr.  I would
-        // like to communicate this differently somehow.
-        m_namedDoc->appendCStr("STDERR: ");
-      }
-      m_namedDoc->appendString(s);
-    }
+    transferNextErrorLine();
   }
 
   GENERIC_CATCH_END
 }
 
 
+void ProcessWatcher::transferNextErrorLine()
+{
+  QString line = m_commandRunner.getErrorLine();
+  if (m_namedDoc && !line.isEmpty()) {
+    string s(toString(line));
+    if (m_prefixStderrLines) {
+      // This is a crude indicator of stdout versus stderr.  I would
+      // like to communicate this differently somehow.
+      m_namedDoc->appendCStr("STDERR: ");
+    }
+    m_namedDoc->appendString(s);
+  }
+}
+
+
 void ProcessWatcher::slot_processTerminated() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+
+  // Drain any remaining output, including any final data that is not
+  // terminated by a newline.
+  slot_outputLineReady();
+  transferNextOutputLine();
+  slot_errorLineReady();
+  transferNextErrorLine();
 
   if (m_namedDoc) {
     m_namedDoc->appendCStr("\n");
