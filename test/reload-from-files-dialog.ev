@@ -36,7 +36,7 @@ CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "0" "0" "gets-modifi
 CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt \\[DISKMOD\\]$"
 
 # Press the reload button.
-ClickButton "OpenFilesDialog.m_reloadDiskmodButton"
+ClickButton "OpenFilesDialog.m_reloadAllButton"
 
 # Dismiss the confirmation dialog.
 FocusKeyPR "Key_Return" "\r"

@@ -73,7 +73,7 @@ private:     // instance data
   // Controls.
   QLineEdit *m_filterLineEdit;
   QPushButton *m_closeSelButton;
-  QPushButton *m_reloadDiskmodButton;
+  QPushButton *m_reloadAllButton;
   QPushButton *m_helpButton;
 
 private:     // funcs
@@ -111,7 +111,7 @@ public:      // funcs
 public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) NOEXCEPT;
   void on_closeSelected() NOEXCEPT;
-  void on_reloadDiskmod() NOEXCEPT;
+  void on_reloadAll() NOEXCEPT;
   void on_help() NOEXCEPT;
   void slot_filterTextChanged(QString const &newText) NOEXCEPT;
   virtual void accept() NOEXCEPT OVERRIDE;

@@ -137,11 +137,11 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
     QObject::connect(m_closeSelButton, &QPushButton::clicked,
                      this, &OpenFilesDialog::on_closeSelected);
 
-    m_reloadDiskmodButton = new QPushButton("&Reload all [DISKMOD]");
-    hbox->addWidget(m_reloadDiskmodButton);
-    SET_QOBJECT_NAME(m_reloadDiskmodButton);
-    QObject::connect(m_reloadDiskmodButton, &QPushButton::clicked,
-                     this, &OpenFilesDialog::on_reloadDiskmod);
+    m_reloadAllButton = new QPushButton("&Reload all");
+    hbox->addWidget(m_reloadAllButton);
+    SET_QOBJECT_NAME(m_reloadAllButton);
+    QObject::connect(m_reloadAllButton, &QPushButton::clicked,
+                     this, &OpenFilesDialog::on_reloadAll);
 
     m_helpButton = new QPushButton("&Help");
     hbox->addWidget(m_helpButton);
@@ -423,7 +423,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
 }
 
 
-void OpenFilesDialog::on_reloadDiskmod() NOEXCEPT
+void OpenFilesDialog::on_reloadAll() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -431,13 +431,11 @@ void OpenFilesDialog::on_reloadDiskmod() NOEXCEPT
   int failureCount = 0;
 
   for (NamedTextDocument *doc : m_filteredDocuments) {
-    if (doc->m_modifiedOnDisk) {
-      if (m_editorGlobal->reloadDocumentFile(this, doc)) {
-        successCount++;
-      }
-      else {
-        failureCount++;
-      }
+    if (m_editorGlobal->reloadDocumentFile(this, doc)) {
+      successCount++;
+    }
+    else {
+      failureCount++;
     }
   }
 
