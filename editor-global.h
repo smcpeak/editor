@@ -106,7 +106,7 @@ private:      // funcs
   void processCommandLineOptions(
     EditorWindow *ed, int argc, char **argv);
 
-  NamedTextDocument *getNewCommandOutputDocument(
+  NamedTextDocument *getCommandOutputDocument(
     HostName const &hostName, QString dir, QString command);
 
 private Q_SLOTS:
@@ -170,10 +170,14 @@ public:       // funcs
   // uses the NamedTextDocumentListObserver notification system.
   NamedTextDocument *runOpenFilesDialog(QWidget *callerWindow);
 
-  // Start a new child process and return the document into which that
-  // process' output is written.
-  NamedTextDocument *launchCommand(HostName const &hostName,
-    QString dir, bool prefixStderrLines, QString command);
+  // Find or start a child process and return the document into which
+  // that process' output is written.
+  NamedTextDocument *launchCommand(
+    HostName const &hostName,
+    QString dir,
+    bool prefixStderrLines,
+    QString command,
+    bool &stillRunning /*OUT*/);
 
   // Set the working directory and command line of 'cr' so that it will
   // run 'command' in 'dir' on 'hostName'.

@@ -487,58 +487,57 @@ NamedTextDocument *EditorGlobal::runOpenFilesDialog(QWidget *callerWindow)
 }
 
 
-// Return a document to be populated by running 'command' in 'dir'.
-// The name must be unique, but we will reuse an existing document if
-// its process has terminated.
-NamedTextDocument *EditorGlobal::getNewCommandOutputDocument(
+// Return a document that was or will be populated by running 'command'
+// in 'dir'.
+NamedTextDocument *EditorGlobal::getCommandOutputDocument(
   HostName const &hostName, QString origDir, QString command)
 {
-  // Come up with a unique named based on the command and directory.
+  // Create a name based on the command and directory.
   string dir = SMFileUtil().stripTrailingDirectorySeparator(toString(origDir));
   string base = stringb(dir << "$ " << toString(command));
-  for (int n = 1; n < 100; n++) {
-    DocumentName docName;
-    docName.setNonFileResourceName(hostName,
-      (n==1? base : stringb(base << " (" << n << ')')), dir);
+  DocumentName docName;
+  docName.setNonFileResourceName(hostName, base, dir);
 
-    NamedTextDocument *fileDoc = m_documentList.findDocumentByName(docName);
-    if (!fileDoc) {
-      // Nothing with this name, let's use it to make a new one.
-      TRACE("process", "making new document: " << docName);
-      NamedTextDocument *newDoc = new NamedTextDocument();
-      newDoc->setDocumentName(docName);
-      newDoc->m_title = uniqueTitleFor(docName);
-      trackNewDocumentFile(newDoc);
-      return newDoc;
-    }
-
-    if (fileDoc->documentProcessStatus() != DPS_FINISHED) {
-      // Not a finished process output document, keep looking.
-      continue;
-    }
-
-    // Safety check.  I could remove this later.
-    ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
-    xassert(!watcher);
-
-    // This is a left-over document from a previous run.  Re-use it.
+  NamedTextDocument *fileDoc = m_documentList.findDocumentByName(docName);
+  if (!fileDoc) {
+    // Nothing with this name, let's use it to make a new one.
+    TRACE("process", "making new document: " << docName);
+    NamedTextDocument *newDoc = new NamedTextDocument();
+    newDoc->setDocumentName(docName);
+    newDoc->m_title = uniqueTitleFor(docName);
+    trackNewDocumentFile(newDoc);
+    return newDoc;
+  }
+  else {
     TRACE("process", "reusing existing document: " << docName);
-    fileDoc->clearContentsAndHistory();
     return fileDoc;
   }
-
-  // Maybe something went haywire creating commands?
-  xfailure("Hit limit of 100 same-named command output documents!");
 }
 
 
 NamedTextDocument *EditorGlobal::launchCommand(
-  HostName const &hostName, QString dir,
-  bool prefixStderrLines, QString command)
+  HostName const &hostName,
+  QString dir,
+  bool prefixStderrLines,
+  QString command,
+  bool &stillRunning /*OUT*/)
 {
   // Find or create a document to hold the result.
   NamedTextDocument *fileDoc =
-    this->getNewCommandOutputDocument(hostName, dir, command);
+    this->getCommandOutputDocument(hostName, dir, command);
+
+  if (fileDoc->documentProcessStatus() == DPS_RUNNING) {
+    // Just switch to the document with the running program.
+    stillRunning = true;
+    return fileDoc;
+  }
+  else {
+    stillRunning = false;
+  }
+
+  // Remove the existing contents in case we are reusing an existing
+  // document.
+  fileDoc->clearContentsAndHistory();
 
   // Show the host, directory, and command at the top of the document.
   // Among other things, this is a helpful acknowledgment that something

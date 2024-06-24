@@ -2,7 +2,6 @@ TODOs:
   - Bug: When a file is edited in one window and visible in another,
     the position in the other is maintained.  But if it is *not* visible
     in the other, then it is not maintained.
-  - Do not start a new build task while the old one is running.
   - Bug: If the build command prints a final character without a newline,
     that never gets shown in the editor window.
 

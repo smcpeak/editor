@@ -967,18 +967,38 @@ void EditorWindow::fileLaunchCommand() NOEXCEPT
     return;
   }
 
-  NamedTextDocument *doc = m_editorGlobal->launchCommand(
+  innerLaunchCommand(
     currentDocument()->hostName(),
     toQString(dir),
     dialog->prefixStderrLines(),
     dialog->m_text);
-  this->setDocumentFile(doc);
-  editorWidget()->initCursorForProcessOutput();
-
-  // Choose a highlighter based on the command line.
-  this->useDefaultHighlighter(doc);
 
   GENERIC_CATCH_END
+}
+
+
+void EditorWindow::innerLaunchCommand(
+  HostName const &hostName,
+  QString dir,
+  bool prefixStderrLines,
+  QString command)
+{
+  bool stillRunning = false;
+  NamedTextDocument *doc = m_editorGlobal->launchCommand(
+    hostName,
+    dir,
+    prefixStderrLines,
+    command,
+    stillRunning /*OUT*/);
+
+  this->setDocumentFile(doc);
+
+  if (!stillRunning) {
+    editorWidget()->initCursorForProcessOutput();
+
+    // Choose a highlighter based on the command line.
+    this->useDefaultHighlighter(doc);
+  }
 }
 
 
@@ -990,11 +1010,11 @@ void EditorWindow::fileRunMake() NOEXCEPT
 
   // My intent is the user creates a script with this name on their
   // $PATH.  Then the script can do whatever is desired here.
-  NamedTextDocument *fileDoc = m_editorGlobal->launchCommand(
+  innerLaunchCommand(
     currentDocument()->hostName(),
-    toQString(dir), false /*prefixStderrLines*/, "run-make-from-editor");
-  this->setDocumentFile(fileDoc);
-  editorWidget()->initCursorForProcessOutput();
+    toQString(dir),
+    false /*prefixStderrLines*/,
+    "run-make-from-editor");
 
   GENERIC_CATCH_END
 }
@@ -1307,14 +1327,11 @@ void EditorWindow::editGrepSource() NOEXCEPT
   }
   else {
     string dir = editorWidget()->getDocumentDirectory();
-    NamedTextDocument *fileDoc =
-      m_editorGlobal->launchCommand(
-        currentDocument()->hostName(),
-        toQString(dir),
-        true /*prefixStderrLines*/,
-        qstringb("grepsrc " << shellDoubleQuote(searchText)));
-    this->setDocumentFile(fileDoc);
-    editorWidget()->initCursorForProcessOutput();
+    innerLaunchCommand(
+      currentDocument()->hostName(),
+      toQString(dir),
+      true /*prefixStderrLines*/,
+      qstringb("grepsrc " << shellDoubleQuote(searchText)));
   }
 
   GENERIC_CATCH_END

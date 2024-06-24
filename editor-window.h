@@ -112,6 +112,14 @@ private:     // funcs
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
+  // Find or start a document running `command` in `dir` on `hostName`,
+  // and switch to it.
+  void innerLaunchCommand(
+    HostName const &hostName,
+    QString dir,
+    bool prefixStderrLines,
+    QString command);
+
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 
