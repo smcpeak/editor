@@ -34,10 +34,16 @@ class ProcessWatcher;                  // process-watcher.h
 // Define my look and feel overrides.
 class EditorProxyStyle : public QProxyStyle {
 public:
-  int pixelMetric(
+  virtual int pixelMetric(
     PixelMetric metric,
     const QStyleOption *option = NULL,
-    const QWidget *widget = NULL) const OVERRIDE;
+    const QWidget *widget = NULL) const override;
+
+  virtual int styleHint(
+    StyleHint hint,
+    QStyleOption const *option,
+    QWidget const *widget,
+    QStyleHintReturn *returnData) const override;
 };
 
 

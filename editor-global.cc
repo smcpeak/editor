@@ -59,6 +59,21 @@ int EditorProxyStyle::pixelMetric(
 }
 
 
+int EditorProxyStyle::styleHint(
+  StyleHint hint,
+  QStyleOption const *option,
+  QWidget const *widget,
+  QStyleHintReturn *returnData) const
+{
+  if (hint == QStyle::SH_UnderlineShortcut) {
+    // Always show the underlines on shortcuts.
+    return 1;
+  }
+
+  return QProxyStyle::styleHint(hint, option, widget, returnData);
+}
+
+
 // --------------------------- EditorGlobal ----------------------------
 char const EditorGlobal::appName[] = "Editor";
 
