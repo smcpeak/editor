@@ -10,8 +10,9 @@ CheckFocusWidget "OpenFilesDialog.m_tableWidget"
 CheckQuery "OpenFilesDialog" "allDocumentsFilenamePathBase" "resize1.ev\nread-only3.ev\nread-only2.ev\nread-only1.ev\n"
 CheckQuery "OpenFilesDialog" "numRows" "4"
 
-# Move the focus to the filter text box.
-FocusKeyPR "Alt+Key_F" ""
+# Move the focus to the filter text box.  This uses the new shortcut of
+# just pressing "F" instead of "Alt+F".
+FocusKeyPR "Key_F" "f"
 
 # Type in a filter string.
 FocusKeySequence "read-only"

@@ -119,6 +119,7 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
 
   m_tableWidget->configureAsListView();
   m_tableWidget->initializeColumns(s_columnInitInfo, NUM_TABLE_COLUMNS);
+  m_tableWidget->installEventFilter(this);
 
   // The table rows are set by 'repopulateTable', which is called by
   // 'runDialog'.
@@ -489,16 +490,28 @@ void OpenFilesDialog::slot_filterTextChanged(QString const &newText) NOEXCEPT
 
 bool OpenFilesDialog::eventFilter(QObject *watched, QEvent *event)
 {
-  if (watched == m_filterLineEdit && event->type() == QEvent::KeyPress) {
+  if (event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
     if (keyEvent->modifiers() == Qt::NoModifier) {
       switch (keyEvent->key()) {
         case Qt::Key_Down:
-          // Navigate to the table.
-          TRACE("OpenFilesDialog", "down arrow from filter text");
-          m_tableWidget->setCurrentCell(0, 0);
-          m_tableWidget->setFocus();
-          return true;           // Prevent further processing.
+          if (watched == m_filterLineEdit) {
+            // Navigate to the table.
+            TRACE("OpenFilesDialog", "down arrow from filter text");
+            m_tableWidget->setCurrentCell(0, 0);
+            m_tableWidget->setFocus();
+            return true;           // Prevent further processing.
+          }
+          break;
+
+        case Qt::Key_F:
+          if (watched == m_tableWidget) {
+            // Switch to the filter line.
+            TRACE("OpenFilesDialog", "F key from table");
+            m_filterLineEdit->setFocus();
+            return true;
+          }
+          break;
       }
     }
   }

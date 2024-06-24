@@ -2,7 +2,6 @@ TODOs:
   - Bug: When a file is edited in one window and visible in another,
     the position in the other is maintained.  But if it is *not* visible
     in the other, then it is not maintained.
-  - In Ctrl+O window, let F act like Alt-F
   - Do not start a new build task while the old one is running.
   - Bug: If the build command prints a final character without a newline,
     that never gets shown in the editor window.
@@ -27,7 +26,6 @@ TODOs:
   - Command to create header file boilerplate.
   - Crash when opening the manage-connections dialog!  But I cannot
     reproduce it.
-  - In the open-files dialog, have Ctrl+F and Ctrl+S jump to the filter box.
   - Provide a way to edit the environment used to launch programs,
     especially the PATH.
   - If I create a new untitled file, then use Alt+A on it, the invocation
