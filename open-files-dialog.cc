@@ -68,6 +68,7 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
   ModalDialog(parent, f),
   m_editorGlobal(editorGlobal),
   m_filteredDocuments(),
+  m_chosenDocument(nullptr),
   m_tableWidget(NULL),
   m_closeSelButton(NULL),
   m_helpButton(NULL)
@@ -247,31 +248,19 @@ NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
 {
   TRACE("OpenFilesDialog", "runDialog started");
 
+  m_chosenDocument = nullptr;
   m_filterLineEdit->setText("");
   this->repopulateTable();
   m_tableWidget->setCurrentCell(0, 0);
   m_tableWidget->setFocus();
 
-  if (this->execCentered(callerWindow)) {
-    QModelIndex idx = m_tableWidget->currentIndex();
-    if (idx.isValid() && !idx.parent().isValid()) {
-      int r = idx.row();
-      if (NamedTextDocument *doc = getDocAtIf(r)) {
-        TRACE("OpenFilesDialog", "runDialog: returning: " << doc->documentName());
-        m_filteredDocuments.clear();
-        return doc;
-      }
-    }
-  }
+  this->execCentered(callerWindow);
 
-  // In both paths out of this function, I clear the filtered documents
-  // list just because I don't like leaving dangling pointers in data
-  // structures, even though they would not be accessed since the next
-  // 'runDialog' would begin by clearing the vector.
+  // Clear the filtered documents in order to not leave dangling
+  // pointers in data structures.
   m_filteredDocuments.clear();
 
-  TRACE("OpenFilesDialog", "runDialog: returning NULL");
-  return NULL;
+  return m_chosenDocument;
 }
 
 
@@ -514,6 +503,35 @@ bool OpenFilesDialog::eventFilter(QObject *watched, QEvent *event)
     }
   }
   return false;
+}
+
+
+void OpenFilesDialog::accept() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  QModelIndex idx = m_tableWidget->currentIndex();
+  if (idx.isValid() && !idx.parent().isValid()) {
+    int r = idx.row();
+    if (NamedTextDocument *doc = getDocAtIf(r)) {
+      TRACE("OpenFilesDialog", "accept: chosen: " << doc->documentName());
+      m_chosenDocument = doc;
+
+      // This causes the dialog to close.
+      ModalDialog::accept();
+    }
+    else {
+      // I don't think this is possible.
+      TRACE("OpenFilesDialog", "accept: nothing chosen because "
+                               "index " << r << " is out of range");
+    }
+  }
+  else {
+    TRACE("OpenFilesDialog", "accept: nothing chosen because "
+                             "nothing is selected");
+  }
+
+  GENERIC_CATCH_END
 }
 
 

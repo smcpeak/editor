@@ -61,6 +61,11 @@ private:     // instance data
   // and the order is the same as in the EditorGlobal, modulo filtering.
   std::vector<NamedTextDocument *> m_filteredDocuments;
 
+  // Set to `nullptr` when the dialog starts, it is set to a non-null
+  // value indicating which document has been chosen when one is.  If
+  // the user cancels, it will remain `nullptr`.
+  NamedTextDocument * NULLABLE m_chosenDocument;
+
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
   MyTableWidget *m_tableWidget;
@@ -109,6 +114,7 @@ public Q_SLOTS:
   void on_reloadDiskmod() NOEXCEPT;
   void on_help() NOEXCEPT;
   void slot_filterTextChanged(QString const &newText) NOEXCEPT;
+  virtual void accept() NOEXCEPT OVERRIDE;
 };
 
 
