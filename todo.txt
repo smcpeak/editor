@@ -1,7 +1,4 @@
 TODOs:
-  - Bug: When a file is edited in one window and visible in another,
-    the position in the other is maintained.  But if it is *not* visible
-    in the other, then it is not maintained.
 
   - Easy repetition macros:
     - Have the editor remember the last, say, 20 editing commands
@@ -25,6 +22,9 @@ TODOs:
     local machine.
 
   - cannot run programs on remote machine when using name1->name2
+  - Bug: When a file is edited in one window and visible in another,
+    the position in the other is maintained.  But if it is *not* visible
+    in the other, then it is not maintained.
 
   - Add key bindings to easily step to next/prev error or grep hit.
   - Cannot Ctrl+I on a line like:
