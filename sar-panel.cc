@@ -227,6 +227,10 @@ void SearchAndReplacePanel::replaceOrNext(bool advanceOnReplace)
 {
   string s = toString(m_replBox->currentText());
   if (m_editorWidget->searchHitSelected()) {
+    if (!m_editorWidget->editSafetyCheck()) {
+      return;
+    }
+
     m_editorWidget->replaceSearchHit(s);
     if (advanceOnReplace) {
       TRACE("sar", "replace: advancing to next");
