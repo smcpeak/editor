@@ -78,6 +78,10 @@ private:     // funcs
   // return false.  The caller is then expected to cancel the operation.
   bool stillCurrentDocument(NamedTextDocument *doc);
 
+  // Move the current document to the top of `m_documentList`.  This is
+  // done just before switching to a new document.
+  void makeCurrentDocumentTopmost();
+
   void setDocumentFile(NamedTextDocument *b);
 
   // Update the status displays to reflect a different file being edited.
@@ -216,6 +220,7 @@ public Q_SLOTS:
   void viewFontHelp() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
+  void windowPreviousFile() NOEXCEPT;
   void windowNewWindow() NOEXCEPT;
   void windowCloseWindow() NOEXCEPT;
   void windowOccupyLeft() NOEXCEPT;

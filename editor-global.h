@@ -56,6 +56,12 @@ public:       // data
   Pixmaps m_pixmaps;
 
   // List of open files.  Never empty (see NamedTextDocumentList).
+  //
+  // This list is ordered by how recently each document was switched
+  // *away from* by some window, or was active when the OpenFilesDialog
+  // was shown (regardless of whether the user switched away), with the
+  // most recent at the top.  The documents currently *shown* in a
+  // window are not necessarily near the top.
   NamedTextDocumentList m_documentList;
 
   // currently open editor windows; nominally, once the

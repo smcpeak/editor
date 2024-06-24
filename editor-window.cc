@@ -364,8 +364,12 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Window");
     menu->setObjectName("windowMenu");
 
+    // Used mnemonics: cnop
+
     MENU_ITEM_KEY("Choose an &Open Document ...",
                   windowOpenFilesList, Qt::CTRL + Qt::Key_O);
+    MENU_ITEM_KEY("Switch to &Previous Document",
+                  windowPreviousFile, Qt::Key_F6);
 
     menu->addSeparator();
 
@@ -430,13 +434,19 @@ void EditorWindow::fileNewFile() NOEXCEPT
 }
 
 
+void EditorWindow::makeCurrentDocumentTopmost()
+{
+  m_editorGlobal->m_documentList.moveDocument(this->currentDocument(), 0);
+}
+
+
 void EditorWindow::setDocumentFile(NamedTextDocument *file)
 {
   // Before switching documents, put the old one at the top.  The idea
   // is that this document is the most recently used since it was just
   // shown to the user, even if it hasn't been explicitly switched to
   // recently.
-  m_editorGlobal->m_documentList.moveDocument(this->currentDocument(), 0);
+  makeCurrentDocumentTopmost();
 
   editorWidget()->setDocumentFile(file);
   this->updateForChangedFile();
@@ -1709,11 +1719,35 @@ void EditorWindow::windowOpenFilesList() NOEXCEPT
   // Put the current document on top before opening the dialog so one
   // can always hit Ctrl+O, Enter and the displayed document won't
   // change.
-  m_editorGlobal->m_documentList.moveDocument(this->currentDocument(), 0);
+  makeCurrentDocumentTopmost();
 
   NamedTextDocument *doc = m_editorGlobal->runOpenFilesDialog(this);
   if (doc) {
     this->setDocumentFile(doc);
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::windowPreviousFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  NamedTextDocumentList &docList = m_editorGlobal->m_documentList;
+  if (docList.numDocuments() > 1) {
+    NamedTextDocument *current = this->currentDocument();
+    NamedTextDocument *previous = docList.getDocumentAt(0);
+    if (current == previous) {
+      // The current document is already at the top, so use the one
+      // underneath it.
+      previous = docList.getDocumentAt(1);
+    }
+
+    this->setDocumentFile(previous);
+  }
+  else {
+    // There is only one document, so just ignore the command.
   }
 
   GENERIC_CATCH_END
