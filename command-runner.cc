@@ -10,6 +10,7 @@
 #include "codepoint.h"                 // isShellMetacharacter
 #include "sm-iostream.h"               // cerr, etc.
 #include "trace.h"                     // TRACE
+#include "xassert.h"                   // xassertPrecondition, xassert
 
 // Qt
 #include <qtcoreversion.h>             // QTCORE_VERSION
@@ -239,7 +240,7 @@ QString CommandRunner::killProcess()
 // ---------------------- starting the process -----------------------
 void CommandRunner::setProgram(QString const &program)
 {
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
 
   m_process.setProgram(program);
   m_hasProgramName = true;
@@ -248,7 +249,7 @@ void CommandRunner::setProgram(QString const &program)
 
 void CommandRunner::setArguments(QStringList const &arguments)
 {
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
 
   m_process.setArguments(arguments);
 }
@@ -328,13 +329,13 @@ void CommandRunner::setShellCommandLine(QString const &command,
 
 void CommandRunner::setEnvironment(QProcessEnvironment const &env)
 {
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
 
   // The issue here is QProcess will silently ignore any specified
   // environment that is completely empty (since, internally, that
   // is how it represents "no specified environment"), so I want to
   // prohibit it in my interface.
-  xassert(!env.isEmpty());
+  xassertPrecondition(!env.isEmpty());
 
   m_process.setProcessEnvironment(env);
 }
@@ -342,7 +343,7 @@ void CommandRunner::setEnvironment(QProcessEnvironment const &env)
 
 void CommandRunner::setWorkingDirectory(QString const &dir)
 {
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
 
   m_process.setWorkingDirectory(dir);
 }
@@ -358,7 +359,7 @@ void CommandRunner::forwardChannels()
 // -------------------- synchronous interface ----------------------
 void CommandRunner::setInputData(QByteArray const &data)
 {
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
 
   // QByteArray internally shares data, so this is constant-time.
   m_inputData = data;
@@ -368,10 +369,10 @@ void CommandRunner::setInputData(QByteArray const &data)
 void CommandRunner::startAndWait()
 {
   // The program name must have been set.
-  xassert(m_hasProgramName);
+  xassertPrecondition(m_hasProgramName);
 
   // Client should not have caused a problem yet.
-  xassert(!m_failed);
+  xassertPrecondition(!m_failed);
 
   TRACE_CR("startAndWait: cmd: " << toString(m_process.program()));
   if (!m_process.arguments().isEmpty()) {
@@ -379,7 +380,7 @@ void CommandRunner::startAndWait()
   }
 
   // This function can only be used once per object.
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
   m_startInvoked = true;
   m_synchronous = true;
 
@@ -472,12 +473,12 @@ QString CommandRunner::getTerminationDescription() const
 void CommandRunner::startAsynchronous()
 {
   // The program name must have been set.
-  xassert(m_hasProgramName);
+  xassertPrecondition(m_hasProgramName);
 
   // The client should not already have done anything that triggers
   // the failure flag to be set, otherwise we'll get confused about
   // detecting process termination.
-  xassert(!m_failed);
+  xassertPrecondition(!m_failed);
 
   TRACE_CR("startAsync: cmd: " << toString(m_process.program()));
   if (!m_process.arguments().isEmpty()) {
@@ -485,7 +486,7 @@ void CommandRunner::startAsynchronous()
   }
 
   // This function can only be used once per object.
-  xassert(!m_startInvoked);
+  xassertPrecondition(!m_startInvoked);
   m_startInvoked = true;
   xassert(m_synchronous == false); // Should still have its initial value.
 
@@ -508,7 +509,7 @@ void CommandRunner::startAsynchronous()
 void CommandRunner::putInputData(QByteArray const &input)
 {
   // You can't start putting data until the process is started.
-  xassert(m_startInvoked);
+  xassertPrecondition(m_startInvoked);
 
   m_inputData.append(input);
   this->sendData();
@@ -517,6 +518,9 @@ void CommandRunner::putInputData(QByteArray const &input)
 
 void CommandRunner::closeInputChannel()
 {
+  // You can't close the input channel until the process is started.
+  xassertPrecondition(m_startInvoked);
+
   if (m_closedWriteChannel) {
     // I do not know that it would be a problem to close it more
     // than once, but that seems inelegant.

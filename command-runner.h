@@ -8,7 +8,7 @@
 
 #include "refct-serf.h"                // SerfRefCount
 #include "sm-override.h"               // OVERRIDE
-#include "xassert.h"                   // xassert
+#include "xassert.h"                   // xassertPrecondition
 
 #include <QByteArray>
 #include <QEventLoop>
@@ -167,11 +167,11 @@ public:      // funcs
   bool getFailed() const
     { return m_failed; }
   QString const &getErrorMessage() const
-    { xassert(m_failed); return m_errorMessage; }
+    { xassertPrecondition(m_failed); return m_errorMessage; }
   QProcess::ProcessError getProcessError() const
-    { xassert(m_failed); return m_processError; }
+    { xassertPrecondition(m_failed); return m_processError; }
   int getExitCode() const
-    { xassert(!m_failed); return m_exitCode; }
+    { xassertPrecondition(!m_failed); return m_exitCode; }
 
   // If the process exited normally, return "Exited with code N.", where
   // N is the exit code.  If it exited abnormally, return
@@ -181,7 +181,8 @@ public:      // funcs
 
   // ------------------- asynchronous interface --------------------
   // Start the process and return immediately while it runs in the
-  // background.
+  // background.  If the process attempts to read from stdin, it will
+  // block until either `putInputData` or `closeInputChannel` is called.
   void startAsynchronous();
 
   // Write some data to the child's standard input.  This cannot be
@@ -194,6 +195,8 @@ public:      // funcs
   // Close the standard input channel.  Once this is called, no more
   // data should be passed to 'putInputData'.  Any data already
   // queued will be sent to the process before the channel is closed.
+  //
+  // This must be called *after* starting the process.
   void closeInputChannel();
 
   // True if the child has written some data to its standard output.
