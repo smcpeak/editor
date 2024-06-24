@@ -351,8 +351,18 @@ void CommandRunner::setWorkingDirectory(QString const &dir)
 
 void CommandRunner::forwardChannels()
 {
+  xassertPrecondition(!m_startInvoked);
+
   m_process.setInputChannelMode(QProcess::ForwardedInputChannel);
   m_process.setProcessChannelMode(QProcess::ForwardedChannels);
+}
+
+
+void CommandRunner::mergeStderrIntoStdout()
+{
+  xassertPrecondition(!m_startInvoked);
+
+  m_process.setProcessChannelMode(QProcess::MergedChannels);
 }
 
 

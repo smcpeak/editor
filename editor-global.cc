@@ -559,6 +559,12 @@ NamedTextDocument *EditorGlobal::launchCommand(
   configureCommandRunner(cr, hostName, dir, command);
   QString fullCommand = cr.getCommandLine();
 
+  // If we are not going to prefix the lines, merge the output channels
+  // so the interleaving is temporally accurate.
+  if (!prefixStderrLines) {
+    cr.mergeStderrIntoStdout();
+  }
+
   // Launch the child process.
   cr.startAsynchronous();
 

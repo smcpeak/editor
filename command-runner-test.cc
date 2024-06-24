@@ -178,6 +178,22 @@ static void runCmdArgsExpectOutErr(char const *cmd,
 }
 
 
+// Run the command with stderr redirected to stdout.
+static void runMergedCmdArgsExpectOut(char const *cmd,
+  QStringList const &args, char const *output)
+{
+  printCmdArgs(cmd, args);
+  CommandRunner cr;
+  cr.setProgram(toQString(cmd));
+  cr.setArguments(args);
+  cr.mergeStderrIntoStdout();
+  cr.startAndWait();
+  EXPECT_EQ(cr.getFailed(), false);
+  EXPECT_EQ(cr.getOutputData(), output);
+  EXPECT_EQ(cr.getErrorData(), "");
+}
+
+
 // Run 'cygpath -m' on 'input' and return its result.
 static string runCygpath(string input)
 {
@@ -284,6 +300,14 @@ static void testOutputData()
   runCmdArgsExpectOutErr("sh",
     QStringList() << "-c" << "echo -n to stdout ; echo -n to stderr 1>&2",
     "to stdout", "to stderr");
+
+  runMergedCmdArgsExpectOut("sh",
+    QStringList() << "-c" << "echo to stdout ; echo to stderr 1>&2",
+    "to stdout\nto stderr\n");
+
+  runMergedCmdArgsExpectOut("sh",
+    QStringList() << "-c" << "echo out1 ; echo err1 1>&2; echo out2 ; echo err2 1>&2",
+    "out1\nerr1\nout2\nerr2\n");
 }
 
 

@@ -147,6 +147,12 @@ public:      // funcs
   // 'setInputData', etc., do not do anything.
   void forwardChannels();
 
+  // Connect the child's stderr to the same descriptor as its stdout.
+  // Output will then only appear on the output, not error, channel.
+  // Additionally, this will ensure that output is properly interleaved
+  // based on when it was written.
+  void mergeStderrIntoStdout();
+
   // ------------------- synchronous interface ---------------------
   // Specify what to pass on standard input.  Default is nothing.
   void setInputData(QByteArray const &data);

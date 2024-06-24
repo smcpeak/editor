@@ -12,10 +12,6 @@ TODOs:
     - Then if you choose such a name from the menu, it becomes the command
       to repeat with Ctrl+M
 
-  - It would be nice to at least have the option of having the output of
-    the build be sent to a single file descriptor in order to maintain
-    the ordering of stdout versus stderr.
-
   - During search, Ctrl+W misbehaves of there are more than 1000 matches
     for the text matched so far.
   - Would like to be able to jump to a byte offset in the file.
