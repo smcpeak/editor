@@ -8,7 +8,7 @@
 #include "sm-file-util.h"              // SMFileUtil
 #include "string-util.h"               // prefixAll, suffixAll, join, doubleQuote
 #include "trace.h"                     // TRACE
-#include "vector-util.h"               // convertElements
+#include "vector-util.h"               // vecConvertElements, vecMapElements
 
 
 // Return true if 'c' is a digit for the purpose of the file name
@@ -248,8 +248,8 @@ HostFileAndLineOpt getNearbyFilename(
     join(
       suffixAll(
         prefixAll(
-          convertElements<std::string>(
-            mapElements<string>(
+          vecConvertElements<std::string>(
+            vecMapElements<string>(
               candidatePrefixes.asVector(),
               harnToString)),          // map function
           "    "),                     // prefix

@@ -12,7 +12,7 @@
 #include "map-util.h"                  // mapInsertUniqueMove, keySet
 #include "sm-file-util.h"              // SMFileUtil
 #include "trace.h"                     // TRACE
-#include "vector-util.h"               // vec_erase
+#include "vector-util.h"               // vecEraseAll, vecToElementSet
 #include "xassert.h"                   // xfailure, xfailure_stringbc
 
 // libc++
@@ -76,7 +76,7 @@ VFS_Connections::~VFS_Connections()
 
 void VFS_Connections::selfCheck() const
 {
-  xassert(vec_element_set(m_validHostNames) == keySet(m_connections));
+  xassert(vecToElementSet(m_validHostNames) == keySet(m_connections));
 }
 
 
@@ -384,7 +384,7 @@ void VFS_Connections::shutdown(HostName const &hostName)
   conn(hostName)->m_fsQuery->shutdown();
 
   m_connections.erase(hostName);
-  vec_erase(m_validHostNames, hostName);
+  vecEraseAll(m_validHostNames, hostName);
 }
 
 

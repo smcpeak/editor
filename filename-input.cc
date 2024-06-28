@@ -14,10 +14,11 @@
 #include "string-util.h"               // beginsWith
 #include "strutil.h"                   // dirname, compareStringPtrs
 #include "trace.h"                     // TRACE
-#include "vector-util.h"               // vec_find_index
+#include "vector-util.h"               // vecFindIndex
 
 // libc++
 #include <algorithm>                   // std::min
+#include <optional>                    // std::optional
 
 // Qt
 #include <QComboBox>
@@ -159,9 +160,9 @@ bool FilenameInputDialog::runDialog(
     restorer(m_docList, docList);
 
   // Select the dropdown entry corresponding to the starting host name.
-  long hostIndex = vec_find_index(m_hostNameList, harn.hostName());
-  if (hostIndex >= 0) {
-    m_connectionDropDown->setCurrentIndex(convertNumber<int>(hostIndex));
+  if (std::optional<std::size_t> hostIndex =
+        vecFindIndex(m_hostNameList, harn.hostName())) {
+    m_connectionDropDown->setCurrentIndex(convertNumber<int>(*hostIndex));
     m_currentHostName = harn.hostName();
 
     m_filenameEdit->setText(toQString(harn.resourceName()));
