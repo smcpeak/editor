@@ -1,5 +1,7 @@
 TODOs:
 
+  - Hitting F5 instantly loses all unsaved changes!
+
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
   - Bug: Pressing Ctrl+Enter while on the last line of a file that does
