@@ -249,13 +249,13 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
 
   ed->show();
 
-  // This is a partial mitigation to a weird bug where, on Windows,
-  // the editor window sometimes does not get focus when I start it.
-  // See details in notes.txt.
-  //
-  // This call does not fix the bug, rather it makes the icon in the
-  // taskbar flash when it happens, reducing the likelihood that I
-  // will start typing into the wrong window.
+  // On Windows 11, when launching the editor from a console, this seems
+  // to be necessary to avoid it appearing underneath other windows,
+  // which is both annoying interactively, and causes tests that check
+  // for window focus to fail.
+  ed->raise();
+
+  // I think this is needed too.
   ed->activateWindow();
 
   // This works around a weird problem with the menu bar, where it will
