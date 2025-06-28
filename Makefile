@@ -44,7 +44,14 @@ include $(SMQTUTIL)/qtvars.mk
 # C++17 is needed for `std::string_view`, used by smbase.
 CCFLAGS := -g -Wall -std=c++17
 
+# Explicitly add the current directory to the include search path so
+# when files in smqtutil include "smbase/...", that will work.
+CCFLAGS += -I.
+
+# For now, continue to search in smbase as well.  My goal is to
+# eventually remove this.
 CCFLAGS += -I$(SMBASE)
+
 CCFLAGS += -I$(SMQTUTIL)
 CCFLAGS += $(QT_CCFLAGS)
 CCFLAGS += $(EXTRA_CCFLAGS)
@@ -53,7 +60,7 @@ ifeq ($(COVERAGE),1)
   CCFLAGS += -fprofile-arcs -ftest-coverage
 endif
 
-LIBSMBASE := $(SMBASE)/libsmbase.a
+LIBSMBASE := $(SMBASE)/obj/libsmbase.a
 LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
 
 # Flags for the linker for console programs.
