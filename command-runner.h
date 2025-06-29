@@ -22,7 +22,11 @@
 class CommandRunner : public QObject, public SerfRefCount {
   Q_OBJECT
 
-private:     // data
+public:      // class data
+  // Default timeout for synchronous calls, in ms.
+  static int const DEFAULT_SYNCHRONOUS_TIME_LIMIT_MS;
+
+private:     // instance data
   // Event loop object used to implement the blocking interface.
   QEventLoop m_eventLoop;
 
@@ -83,6 +87,13 @@ private:     // data
 
   // If not 'm_failed', this has the exit code.
   int m_exitCode;
+
+public:      // data
+  // When using `startAndWait`, the time limit after which the call will
+  // return with a timeout indication.  By default, this is
+  // DEFAULT_SYNCHRONOUS_TIME_LIMIT_MS.  This can be changed anytime
+  // before `startAndWait` is called, but not afterward.
+  int m_synchronousTimeLimitMS;
 
 protected:   // funcs
   // Set m_failed to true with the given reasons and stop the event

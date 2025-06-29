@@ -1393,6 +1393,15 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // Object to manage the child process.
   CommandRunner runner;
 
+  // The default timeout of 2s is too small.  On my Windows desktop, it
+  // is common for a command I have not run in a while to take several
+  // seconds to complete due to (e.g.) the Python interpreter having to
+  // be loaded.  For now, just increase the timeout.
+  //
+  // TODO: Use the asynchronous interface instead, and show a proper
+  // progress dialog.
+  runner.m_synchronousTimeLimitMS = 10000;
+
   // The command the user wants to run.
   string commandString;
 

@@ -39,7 +39,7 @@
 
 
 // Maximum time for the synchronous runner invocation.
-static int const TIME_LIMIT_MS = 2000;
+int const CommandRunner::DEFAULT_SYNCHRONOUS_TIME_LIMIT_MS = 2000;
 
 // How long to wait after trying to kill a process.
 static int const KILL_WAIT_TIMEOUT_MS = 500;
@@ -73,7 +73,8 @@ CommandRunner::CommandRunner()
     m_thisObjectDestroyed(false),
     m_errorMessage(),
     m_processError(QProcess::UnknownError),
-    m_exitCode(-1)
+    m_exitCode(-1),
+    m_synchronousTimeLimitMS(DEFAULT_SYNCHRONOUS_TIME_LIMIT_MS)
 {
   // Some macros to make the connection process a bit more clear.
   // I might move these to smqtutil at some point (after appropriately
@@ -182,7 +183,7 @@ void CommandRunner::timerEvent(QTimerEvent *event)
   m_timerId = -1;
 
   this->setFailed(QProcess::Timedout,
-    qstringb("Timed out after " << TIME_LIMIT_MS << " ms."));
+    qstringb("Timed out after " << m_synchronousTimeLimitMS << " ms."));
 
   TRACE_CR("timerEvent: killing process");
   this->killProcess();
@@ -395,7 +396,7 @@ void CommandRunner::startAndWait()
   m_synchronous = true;
 
   // Start the timer.
-  m_timerId = this->startTimer(TIME_LIMIT_MS);
+  m_timerId = this->startTimer(m_synchronousTimeLimitMS);
 
   // Begin running the child process.
   m_process.start();
@@ -647,7 +648,7 @@ char const *toString(QProcess::ProcessError error)
     case QProcess::Timedout:
       // Hopefully this message never propagates to the user because
       // it does not specify the timeout value.  (I do not want to
-      // just assume it is TIME_LIMIT_MS here.)
+      // just assume it is DEFAULT_SYNCHRONOUS_TIME_LIMIT_MS here.)
       return "Process ran for longer than its timeout period";
 
     case QProcess::WriteError:
