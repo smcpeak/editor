@@ -2336,6 +2336,36 @@ static void testModelToLayoutSpans()
 }
 
 
+// ------------------------- testLineEndLCoord -------------------------
+static void expectLELC(
+  TextDocumentAndEditor &tde,
+  int line,
+  int expectCol)
+{
+  TextLCoord actual = tde.lineEndLCoord(line);
+  EXPECT_EQ(actual.m_line, line);
+  EXPECT_EQ(actual.m_column, expectCol);
+}
+
+
+static void testLineEndLCoord()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\t\n"
+    "\tthree");
+
+  expectLELC(tde, 0, 3);
+  expectLELC(tde, 1, 8);
+  expectLELC(tde, 2, 13);
+
+  // Probing beyond EOF is explicitly allowed.
+  expectLELC(tde, 3, 0);
+  expectLELC(tde, 4, 0);
+}
+
+
 // --------------------------- main -----------------------------
 static void entry(int argc, char **argv)
 {
@@ -2375,6 +2405,7 @@ static void entry(int argc, char **argv)
   testLineLayout();
   testEditingWithTabs();
   testModelToLayoutSpans();
+  testLineEndLCoord();
 
   cout << "\ntd-editor-test is ok" << endl;
 }

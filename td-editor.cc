@@ -156,7 +156,12 @@ int TextDocumentEditor::lineLengthColumns(int line) const
 
 TextLCoord TextDocumentEditor::lineEndLCoord(int line) const
 {
-  return this->toLCoord(m_doc->lineEndCoord(line));
+  if (line < numLines()) {
+    return this->toLCoord(m_doc->lineEndCoord(line));
+  }
+  else {
+    return TextLCoord(line, 0);
+  }
 }
 
 

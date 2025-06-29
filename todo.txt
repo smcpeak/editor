@@ -2,9 +2,6 @@ TODOs:
 
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
-  - Bug: Pressing Ctrl+Enter while on the last line of a file that does
-    not end with a newline throws:
-    "td-core.h:93: assertion failed: 0 < line && line < numLines()"
 
   - Treat .hh and .ii as C++ for highlighting purposes
   - in the Run and Apply dialogs, accept $FN to mean the current file name
