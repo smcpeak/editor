@@ -5,9 +5,10 @@
 
 // smbase
 #include "dev-warning.h"               // DEV_WARNING
-#include "sm-macros.h"                 // CMEMB
 #include "objcount.h"                  // CHECK_OBJECT_COUNT
 #include "sm-file-util.h"              // SMFileUtil
+#include "sm-macros.h"                 // CMEMB
+#include "string-util.h"               // replaceAll
 #include "trace.h"                     // TRACE
 
 
@@ -50,6 +51,23 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 HostAndResourceName NamedTextDocument::directoryHarn() const
 {
   return HostAndResourceName(hostName(), directory());
+}
+
+
+string NamedTextDocument::applyCommandSubstitutions(string const &orig) const
+{
+  // If the document does not have a file name, we will return a pair of
+  // quotes, signifying an empty string in the context of a shell
+  // command.
+  string fname = "''";
+
+  if (m_documentName.hasFilename()) {
+    SMFileUtil sfu;
+    fname = sfu.splitPathBase(m_documentName.filename());
+  }
+
+  // Very simple, naive implementation.
+  return replaceAll(orig, "$f", fname);
 }
 
 

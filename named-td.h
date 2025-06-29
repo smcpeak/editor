@@ -112,6 +112,12 @@ public:      // funcs
   string filename() const              { return m_documentName.filename(); }
   string directory() const             { return m_documentName.directory(); }
 
+  // Replace occurrences of variables like "$f" with their meanings,
+  // which derive from things like the file name.  See the
+  // implementation for the exact substitutions implemented at the
+  // moment.
+  string applyCommandSubstitutions(string const &orig) const;
+
   // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.
   string nameWithStatusIndicators() const;

@@ -4,9 +4,13 @@
 #ifndef MODAL_DIALOG_H
 #define MODAL_DIALOG_H
 
+#include "sm-macros.h"                 // NULLABLE
+#include "sm-noexcept.h"               // NOEXCEPT
+
 #include <QDialog>
 
 class QBoxLayout;
+class QHBoxLayout;
 class QPushButton;
 
 // This is a base class containing some common functionality for my
@@ -15,9 +19,18 @@ class ModalDialog : public QDialog {
   Q_OBJECT
 
 protected:   // data
-  // The "Ok" and "Cancel" buttons.
-  QPushButton *m_okButton;
-  QPushButton *m_cancelButton;
+  // The buttons, which might be nullptr if they have not been added.
+  QPushButton * NULLABLE m_helpButton;
+  QPushButton * NULLABLE m_okButton;
+  QPushButton * NULLABLE m_cancelButton;
+
+  // The layout containing those buttons, if we created it.
+  QHBoxLayout * NULLABLE m_buttonHBox;
+
+public:      // data
+  // The default `on_helpPressed` will display this.  It is initially
+  // empty.
+  QString m_helpText;
 
 protected:   // funcs
   // Create the standard Ok and Cancel buttons in an hbox and add them
@@ -26,6 +39,10 @@ protected:   // funcs
 
   // Create just the Ok and Cancel buttons.
   void createOkAndCancelButtons(QBoxLayout *hbox);
+
+  // Assuming we have already createad the Ok and Cancel buttons and
+  // their hbox, create a Help button to their left.
+  void createHelpButton();
 
 public:      // funcs
   ModalDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
@@ -37,6 +54,11 @@ public:      // funcs
   //
   // If 'target' is NULL, then just call exec.
   int execCentered(QWidget *target);
+
+public Q_SLOTS:
+  // React to the Help button being pressed.  By default, this pops up
+  // a dialog showing `m_helpText`.
+  virtual void on_helpPressed() NOEXCEPT;
 };
 
 #endif // MODAL_DIALOG_H

@@ -991,11 +991,17 @@ void EditorWindow::fileLaunchCommand() NOEXCEPT
     return;
   }
 
+  QString command = dialog->m_text;
+  if (dialog->enableSubstitution()) {
+    command = toQString(
+      currentDocument()->applyCommandSubstitutions(toString(command)));
+  }
+
   innerLaunchCommand(
     currentDocument()->hostName(),
     toQString(dir),
     dialog->prefixStderrLines(),
-    dialog->m_text);
+    command);
 
   GENERIC_CATCH_END
 }

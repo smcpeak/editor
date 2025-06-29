@@ -3,8 +3,10 @@
 
 #include "modal-dialog.h"              // this module
 
-#include "qtguiutil.h"                 // centerWindowOnWindow
+#include "qtguiutil.h"                 // centerWindowOnWindow, messageBox
 #include "qtutil.h"                    // SET_OBJECT_NAME
+
+#include "xassert.h"                   // xassert
 
 #include <qtcoreversion.h>             // QTCORE_VERSION
 
@@ -12,10 +14,17 @@
 #include <QPushButton>
 
 
+
+// TODO: Replace "NULL" with "nullptr".
+
+
 ModalDialog::ModalDialog(QWidget *parent, Qt::WindowFlags f)
   : QDialog(parent, f),
+    m_helpButton(NULL),
     m_okButton(NULL),
-    m_cancelButton(NULL)
+    m_cancelButton(NULL),
+    m_buttonHBox(NULL),
+    m_helpText()
 {
 #if QTCORE_VERSION >= 0x050900
   // Remove the "?" button in the title bar.  I use help buttons
@@ -28,6 +37,9 @@ ModalDialog::ModalDialog(QWidget *parent, Qt::WindowFlags f)
 ModalDialog::~ModalDialog()
 {
   // See doc/signals-and-dtors.txt.
+  if (m_helpButton) {
+    QObject::disconnect(m_helpButton, NULL, this, NULL);
+  }
   if (m_okButton) {
     QObject::disconnect(m_okButton, NULL, this, NULL);
   }
@@ -48,12 +60,16 @@ int ModalDialog::execCentered(QWidget *target)
 
 void ModalDialog::createOkAndCancelHBox(QBoxLayout *vbox)
 {
-  QHBoxLayout *hbox = new QHBoxLayout();
-  vbox->addLayout(hbox);
+  // We should not have already created them.
+  xassert(m_buttonHBox == NULL);
 
-  hbox->addStretch(1);
+  m_buttonHBox = new QHBoxLayout();
+  vbox->addLayout(m_buttonHBox);
 
-  this->createOkAndCancelButtons(hbox);
+  // Push the buttons to the right side.
+  m_buttonHBox->addStretch(1);
+
+  this->createOkAndCancelButtons(m_buttonHBox);
 }
 
 
@@ -73,5 +89,27 @@ void ModalDialog::createOkAndCancelButtons(QBoxLayout *hbox)
                    this, &ModalDialog::reject);
 }
 
+
+void ModalDialog::createHelpButton()
+{
+  xassert(m_buttonHBox != NULL);
+  xassert(m_helpButton == NULL);
+
+  m_helpButton = new QPushButton("&Help");
+  m_buttonHBox->insertWidget(0, m_helpButton);
+  SET_QOBJECT_NAME(m_helpButton);
+  QObject::connect(m_helpButton, &QPushButton::clicked,
+                   this, &ModalDialog::on_helpPressed);
+}
+
+
+void ModalDialog::on_helpPressed() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  messageBox(this, "Help", m_helpText);
+
+  GENERIC_CATCH_END
+}
 
 // EOF

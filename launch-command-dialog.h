@@ -14,14 +14,18 @@ class QCheckBox;
 // whose output will appear in an editor document.
 class LaunchCommandDialog : public TextInputDialog {
 private:      // data
-  // Checkbox: 'Prefix stderr output with "STDERR: ".'
+  // Checkbox to enable command line substitutions.
+  QCheckBox *m_enableSubstitutionCheckbox;
+
+  // Checkbox: 'Prefix stderr output with "STDERR: "'
   QCheckBox *m_prefixStderrLines;
 
 public:       // funcs
   LaunchCommandDialog(QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
   ~LaunchCommandDialog();
 
-  // After the dialog runs, get the value of 'm_prefixStderrLines'.
+  // After the dialog runs, get the checkbox values.
+  bool enableSubstitution() const;
   bool prefixStderrLines() const;
 };
 
