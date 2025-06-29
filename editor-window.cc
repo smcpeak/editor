@@ -505,7 +505,10 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       "cc",
       "cpp",
       "gr",
+      "i",
+      "ii",
       "h",
+      "hh",
       "hpp",
       "java",      // C/C++ highlighting is better than none.
       "lex",

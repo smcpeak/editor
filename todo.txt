@@ -3,7 +3,6 @@ TODOs:
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
-  - Treat .hh and .ii as C++ for highlighting purposes
   - in the Run and Apply dialogs, accept $FN to mean the current file name
   - Apply has a timeout that is too short (2s)
   - Change search hits display to "N [] M" where N is the number of hits
