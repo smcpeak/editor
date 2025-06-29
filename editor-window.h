@@ -11,6 +11,7 @@
 #include "editor-widget-frame-fwd.h"   // EditorWidgetFrame
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
+#include "launch-command-dialog-fwd.h" // LaunchCommandDialog
 #include "named-td.h"                  // NamedTextDocument
 #include "named-td-list.h"             // NamedTextDocumentListObserver
 #include "vfs-connections-fwd.h"       // VFS_Connections
@@ -170,6 +171,13 @@ public:      // funcs
 
   // The search panel in one window has changed.
   void searchPanelChanged(SearchAndReplacePanel *panel);
+
+  // Prompt for a command to run for Alt+R or Alt+A.  Return false if
+  // the user cancels.  Otherwise, set `command` to the specified
+  // command line.
+  bool promptForRunCommand(
+    QString /*OUT*/ &command,
+    LaunchCommandDialog *dialog);
 
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAdded(

@@ -14,8 +14,12 @@
 #include <QVBoxLayout>
 
 
-LaunchCommandDialog::LaunchCommandDialog(QWidget *parent, Qt::WindowFlags f)
-  : TextInputDialog("Launch Command", parent, f),
+LaunchCommandDialog::LaunchCommandDialog(
+  QString title,
+  bool withPrefixCheckbox,
+  QWidget *parent,
+  Qt::WindowFlags f)
+  : TextInputDialog(title, parent, f),
     m_enableSubstitutionCheckbox(NULL),
     m_prefixStderrLines(NULL)
 {
@@ -27,31 +31,50 @@ LaunchCommandDialog::LaunchCommandDialog(QWidget *parent, Qt::WindowFlags f)
   SET_QOBJECT_NAME(m_enableSubstitutionCheckbox);
   m_enableSubstitutionCheckbox->setChecked(true);
 
-  m_prefixStderrLines =
-    new QCheckBox("&Prefix stderr lines with \"STDERR: \"");
-  m_vbox->insertWidget(m_vboxNextIndex++, m_prefixStderrLines);
-  SET_QOBJECT_NAME(m_prefixStderrLines);
-  m_prefixStderrLines->setChecked(false);
+  if (withPrefixCheckbox) {
+    m_prefixStderrLines =
+      new QCheckBox("&Prefix stderr lines with \"STDERR: \"");
+    m_vbox->insertWidget(m_vboxNextIndex++, m_prefixStderrLines);
+    SET_QOBJECT_NAME(m_prefixStderrLines);
+    m_prefixStderrLines->setChecked(false);
+  }
 
   createHelpButton();
-  m_helpText =
-    "This spawns a process with the given command line in the "
-    "directory containing the current file, and creates a new "
-    "editor document containing its output (or replaces one, if "
-    "one already exists with the exact same command line and "
-    "directory)."
+
+  if (withPrefixCheckbox) {
+    m_helpText =
+      "This spawns a process with the given command line in the "
+      "directory containing the current file, and creates a new "
+      "editor document containing its output (or replaces one, if "
+      "one already exists with the exact same command line and "
+      "directory).";
+  }
+  else {
+    m_helpText =
+      "This passes the selected text (if any) as the stdin of a new "
+      "process started with the given command line in the directory "
+      "containing the current file.  The resulting stdout is then "
+      "inserted into the current document, replacing whatever was "
+      "selected.";
+  }
+
+  m_helpText +=
     "\n\n"
     "If \"Enable substitution\" is checked, then the following "
     "substitutions will be performed on the command line before "
     "executing:\n"
     "\n\n"
-    "  - $f: Current document file name, without directory\n"
-    "\n\n"
-    "If \"Prefix stderr\" is checked, then the command will be run "
-    "with stdout and stderr going to separate streams, and stderr "
-    "lines will have \"STDERR: \" prefixed for identification.  "
-    "However, this means the precise temporal interleaving between "
-    "output and error is lost.";
+    "  - $f: Current document file name, without directory\n";
+
+  if (withPrefixCheckbox) {
+    m_helpText +=
+      "\n\n"
+      "If \"Prefix stderr\" is checked, then the command will be run "
+      "with stdout and stderr going to separate streams, and stderr "
+      "lines will have \"STDERR: \" prefixed for identification.  "
+      "However, this means the precise temporal interleaving between "
+      "output and error is lost.";
+  }
 }
 
 
@@ -67,7 +90,12 @@ bool LaunchCommandDialog::enableSubstitution() const
 
 bool LaunchCommandDialog::prefixStderrLines() const
 {
-  return m_prefixStderrLines->isChecked();
+  if (m_prefixStderrLines) {
+    return m_prefixStderrLines->isChecked();
+  }
+  else {
+    return false;
+  }
 }
 
 

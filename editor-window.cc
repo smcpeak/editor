@@ -978,28 +978,16 @@ void EditorWindow::fileLaunchCommand() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   static LaunchCommandDialog *dialog =
-    new LaunchCommandDialog();
+    new LaunchCommandDialog("Launch Command", true /*prefixCheckbox*/);
 
-  HostName hostName = currentDocument()->hostName();
-  string hostText = hostName.isLocal()? string("") :
-                                        stringb(" on " << hostName);
-
-  string dir = editorWidget()->getDocumentDirectory();
-  if (!dialog->runPrompt_nonEmpty(
-        qstringb("&Command to launch" << hostText <<
-                 " in " << dir << ":"), this)) {
+  QString command;
+  if (!promptForRunCommand(command, dialog)) {
     return;
-  }
-
-  QString command = dialog->m_text;
-  if (dialog->enableSubstitution()) {
-    command = toQString(
-      currentDocument()->applyCommandSubstitutions(toString(command)));
   }
 
   innerLaunchCommand(
     currentDocument()->hostName(),
-    toQString(dir),
+    toQString(editorWidget()->getDocumentDirectory()),
     dialog->prefixStderrLines(),
     command);
 
@@ -1151,6 +1139,31 @@ void EditorWindow::searchPanelChanged(SearchAndReplacePanel *panel)
   // before otherwise reacting (just to keep all the logic in one
   // place).
   m_sarPanel->searchPanelChanged(panel);
+}
+
+
+bool EditorWindow::promptForRunCommand(
+  QString /*OUT*/ &command,
+  LaunchCommandDialog *dialog)
+{
+  HostName hostName = currentDocument()->hostName();
+  string hostText = hostName.isLocal()? string("") :
+                                        stringb(" on " << hostName);
+
+  string dir = editorWidget()->getDocumentDirectory();
+  if (!dialog->runPrompt_nonEmpty(
+        qstringb("&Command to run" << hostText <<
+                 " in " << dir << ":"), this)) {
+    return false;
+  }
+
+  command = dialog->m_text;
+  if (dialog->enableSubstitution()) {
+    command = toQString(
+      currentDocument()->applyCommandSubstitutions(toString(command)));
+  }
+
+  return true;
 }
 
 
@@ -1423,30 +1436,22 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // Only the variables declared above can be used after the
   // child exits, and even then only with care.
   {
-    static TextInputDialog *dialog =
-      new TextInputDialog("Apply Command");
+    static LaunchCommandDialog *dialog =
+      new LaunchCommandDialog("Apply Command", false /*prefixCheckbox*/);
 
-    string dir = editorWidget()->getDocumentDirectory();
-    HostName hostName = editorWidget()->getDocument()->hostName();
-
-    stringBuilder prompt;
-    prompt << "Command to run in " << dir;
-    if (!hostName.isLocal()) {
-      prompt << " on " << hostName;
-    }
-    prompt << ":";
-
-    if (!dialog->runPrompt_nonEmpty(toQString(prompt.str()), this)) {
+    QString commandString;
+    if (!promptForRunCommand(commandString, dialog)) {
       return;      // Canceled.
     }
-    commandString = toString(dialog->m_text);
 
     tde = editorWidget()->getDocumentEditor();
     string input = tde->getSelectedText();
 
     // Set the working directory and command of 'runner'.
+    string dir = editorWidget()->getDocumentDirectory();
+    HostName hostName = editorWidget()->getDocument()->hostName();
     m_editorGlobal->configureCommandRunner(runner,
-      hostName, toQString(dir), toQString(commandString));
+      hostName, toQString(dir), commandString);
 
     // TODO: This mishandles NUL bytes.
     runner.setInputData(QByteArray(input.c_str()));
