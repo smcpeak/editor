@@ -930,6 +930,27 @@ void EditorWindow::fileReload() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  NamedTextDocument const *doc = currentDocument();
+  if (doc->unsavedChanges()) {
+    // Prompt the user.
+    QMessageBox box(this);
+    box.setObjectName("refreshSafetyCheck_box");
+    box.setWindowTitle("File Changed");
+    box.setText(toQString(stringb(
+      "The document " << doc->documentName() << " has unsaved changes.  "
+      "Discard those changes and refresh from disk anyway?")));
+    box.addButton(QMessageBox::Yes);
+    box.addButton(QMessageBox::Cancel);
+    int ret = box.exec();
+    if (ret == QMessageBox::Yes) {
+      // Go ahead with the refresh.
+    }
+    else {
+      // Cancel the refresh.
+      return;
+    }
+  }
+
   reloadCurrentDocument();
 
   GENERIC_CATCH_END
