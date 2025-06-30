@@ -10,6 +10,8 @@ all: test-prog-outs
 SMBASE   := smbase
 SMFLEX   := smflex
 SMQTUTIL := smqtutil
+ASTGEN   := ast
+
 
 # Standard Makefile stuff.
 include $(SMBASE)/sm-lib.mk
@@ -26,6 +28,9 @@ EXTRA_LDFLAGS :=
 
 # Run a program with a timeout in case it hangs.
 RUN_WITH_TIMEOUT := timeout 20
+
+# Python interpreter.
+PYTHON3 = python3
 
 # Pull in build configuration.  This must provide definitions of
 # QT5INCLUDE, QT5LIB and QT5BIN.  It can optionally override the
@@ -60,8 +65,9 @@ ifeq ($(COVERAGE),1)
   CCFLAGS += -fprofile-arcs -ftest-coverage
 endif
 
-LIBSMBASE := $(SMBASE)/obj/libsmbase.a
+LIBSMBASE   := $(SMBASE)/obj/libsmbase.a
 LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
+LIBASTGEN   := $(ASTGEN)/libast.a
 
 # Flags for the linker for console programs.
 CONSOLE_LDFLAGS := -g
@@ -71,6 +77,7 @@ CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 # Link flags for GUI programs.
 GUI_LDFLAGS := -g
 GUI_LDFLAGS += $(LIBSMQTUTIL)
+GUI_LDFLAGS += $(LIBASTGEN)
 GUI_LDFLAGS += $(LIBSMBASE)
 GUI_LDFLAGS += $(QT_LDFLAGS)
 GUI_LDFLAGS += $(EXTRA_LDFLAGS)
@@ -79,6 +86,7 @@ GUI_LDFLAGS += $(EXTRA_LDFLAGS)
 # I am using QRegularExpression in the 'justify' module.
 QT_CONSOLE_LDFLAGS := -g
 QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
+QT_CONSOLE_LDFLAGS += $(LIBASTGEN)
 QT_CONSOLE_LDFLAGS += $(LIBSMBASE)
 QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core -Wl,-rpath=$(QT5LIB)
 QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
@@ -129,6 +137,15 @@ TOCLEAN += *.o *.d
 # Encode help files as C string literals.
 %.doc.gen.cc %.doc.gen.h: doc/%.txt
 	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
+
+%.ast.gen.h %.ast.gen.cc: %.ast $(ASTGEN)/astgen.exe
+	$(ASTGEN)/astgen.exe -o$*.ast.gen $<
+
+
+# ------------------------------- astgen -------------------------------
+$(ASTGEN)/astgen.exe:
+	@echo "Need $(ASTGEN)/astgen.exe.  Run `make` in $(ASTGEN)."
+	@exit 2
 
 
 # ------------ editor-strutil-test program -------------
@@ -503,10 +520,37 @@ git-version.gen.cc: git-version.gen.txt
 
 TOCLEAN += git-version.gen.*
 
-# ------------------ the editor ---------------------
-# editor-window.cc includes keybindings.doc.gen.h.
-editor-window.o: keybindings.doc.gen.h
 
+# ------------------------- extra dependencies -------------------------
+# These dependencies ensure that automatically-generated code is
+# created in time to be used by other build processes which need it.
+
+# Arguments to find-extra-deps.py.
+EXTRADEPS_ARGS :=
+
+# Raw dependencies to scan.
+EXTRADEPS_ARGS += *.d
+
+.PHONY: remake-extradep
+remake-extradep:
+	$(PYTHON3) $(SMBASE)/find-extra-deps.py $(EXTRADEPS_ARGS) >extradep.mk
+
+include extradep.mk
+
+check: validate-extradep
+
+.PHONY: validate-extradep
+validate-extradep: all
+	$(PYTHON3) $(SMBASE)/find-extra-deps.py $(EXTRADEPS_ARGS) >extradep.tmp
+	@echo diff extradep.mk extradep.tmp
+	@if diff extradep.mk extradep.tmp; then true; else \
+	  echo "extradep.mk needs updating; run 'make remake-extradep'"; \
+	  exit 2; \
+	fi
+	rm extradep.tmp
+
+
+# ------------------ the editor ---------------------
 TOCLEAN += keybindings.doc.gen.*
 
 # The following list of object files is added to what has been set
@@ -517,6 +561,7 @@ EDITOR_OBJS += builtin-font.o
 EDITOR_OBJS += connections-dialog.o
 EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diff-hilite.o
+EDITOR_OBJS += editor-command.ast.gen.o
 EDITOR_OBJS += editor-global.moc.o
 EDITOR_OBJS += editor-global.o
 EDITOR_OBJS += editor-widget-frame.moc.o

@@ -1384,7 +1384,7 @@ void EditorWindow::editGrepSource() NOEXCEPT
 void EditorWindow::editRigidIndent() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editorWidget()->editRigidIndent();
+  editorWidget()->commandEditRigidIndent();
   GENERIC_CATCH_END
 }
 
@@ -1392,7 +1392,7 @@ void EditorWindow::editRigidIndent() NOEXCEPT
 void EditorWindow::editRigidUnindent() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editorWidget()->editRigidUnindent();
+  editorWidget()->commandEditRigidUnindent();
   GENERIC_CATCH_END
 }
 

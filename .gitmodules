@@ -10,3 +10,7 @@
 	path = smqtutil
 	url = ../smqtutil.git
 	branch = for-editor
+[submodule "ast"]
+	path = ast
+	url = ../ast.git
+	branch = for-editor

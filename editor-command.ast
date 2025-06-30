@@ -1,0 +1,78 @@
+// editor-command.ast
+// Define the EditorCommand hierarchy.
+
+// Ideally, all user interactions that change the state of a document
+// editor (including cursor movement) will be encapsulated as a command
+// object.  The first intended application is to build a simple macro
+// system.  Another possibility is to use to assist with automated
+// testing.  Yet another is helping to build a configurble key binding
+// system.
+
+
+// An editor manipulation command and any associated arguments.
+class EditorCommand {
+  // Copy selected text to the clipboard.
+  -> EC_Copy();
+
+  // Move the cursor to the end of the next line.  If `m_select`, then
+  // do so while creating or extending a selection.  Otherwise,
+  // deactivate any selection.
+  -> EC_CursorToEndOfNextLine(bool m_select);
+
+  // Move the view by a relative amount.  Any attempt to go negative
+  // is treated as a move to zero.
+  -> EC_MoveFirstVisibleBy(int m_deltaLine, int m_deltaColumn);
+
+  // First, scroll the view, if necessary, so the cursor is in the
+  // visible region.  Then, behave like `EC_MoveFirstVisibleBy`, but
+  // also move the cursor as necessary so its position on the screen
+  // stays the same.
+  -> EC_MoveFirstVisibleAndCursor(int m_deltaLine, int m_deltaColumn);
+
+  // Like 'moveFirstVisibleBy', but after scrolling, adjust the cursor
+  // by the minimum amount so it is onscreen.
+  -> EC_MoveFirstVisibleConfineCursor(int m_deltaLine, int m_deltaColumn);
+
+  // Move the cursor by some number of layout grid cells, possibly
+  // extending/enabling the selection.
+  -> EC_MoveCursorByCell(int m_deltaLine, int m_deltaColumn, bool m_select);
+
+  // Move the cursor either up (sign==-1) or down (sign==+1) by one
+  // page, extending/enabling the selection if `m_select`.
+  -> EC_MoveCursorByPage(int m_sign, bool m_select);
+
+  // Move the cursor to either the line start or end, possibly selecting.
+  -> EC_MoveCursorToLineExtremum(bool m_start, bool m_select);
+
+  // Move the cursor to either the file start or end, possibly selecting.
+  -> EC_MoveCursorToFileExtremum(bool m_start, bool m_select);
+
+  // Do what Backspace should do: If text is selected, delete it.
+  // Otherwise, delete one character to the left of the cursor,
+  // except if the cursor is beyond EOL or EOF, just move one space
+  // left if possible, otherwise up, without adding whitespace to
+  // the file.
+  -> EC_BackspaceFunction();
+
+  // Do what Delete should do: If text is selected, delete it.
+  // Otherwise, delete one character to the right of the cursor.
+  // If we are beyond EOL but not EOF, fill with spaces and then
+  // delete the newline to splice the next line.  If beyond EOF,
+  // do nothing.
+  -> EC_DeleteKeyFunction();
+
+  // Scroll vertically so the cursor line is in the center of the
+  // visible region if possible (it might not be possible due to the
+  // cursor being too near the top of the file).  Also scroll so the
+  // visible region is as far to the left as possible while keeping
+  // the cursor in view.
+  -> EC_CenterVisibleOnCursorLine();
+
+  // Rigidly indent or un-indent the span of lines corresponding to the
+  // current selection.  Every line that has at least one selected
+  // character is indented.  If nothing is selected, do nothing.
+  -> EC_BlockIndent(int m_amt);
+}
+
+
+// EOF

@@ -70,6 +70,12 @@ using namespace smbase;
     m_ignoreTextDocumentNotifications, true) /* user ; */
 
 
+// Invoke `command`, passing a `unique_ptr` to a newly created command
+// object of type `CommandType`, and forwarding arguments as needed.
+#define COMMAND_MU(CommandType, ...) \
+  command(std::make_unique<CommandType>(__VA_ARGS__));
+
+
 // Distance below the baseline to draw an underline.
 int const UNDERLINE_OFFSET = 2;
 
@@ -759,11 +765,10 @@ void EditorWidget::computeOffscreenMatchIndicators()
 }
 
 
-void EditorWidget::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
+void EditorWidget::commandMoveFirstVisibleAndCursor(
+  int deltaLine, int deltaCol)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->moveFirstVisibleAndCursor(deltaLine, deltaCol);
-  this->redraw();
+  COMMAND_MU(EC_MoveFirstVisibleAndCursor, deltaLine, deltaCol);
 }
 
 
@@ -1482,6 +1487,9 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 
   // This is the single most important place to ensure I do not act upon
   // document change notifications.
+  //
+  // TODO: Once I transition to doing all modifications using the
+  // "command" infrastructure, I can remove this.
   INITIATING_DOCUMENT_CHANGE();
 
   UndoHistoryGrouper hbgrouper(*m_editor);
@@ -1492,76 +1500,69 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   if (modifiers == Qt::ControlModifier) {
     switch (k->key()) {
       case Qt::Key_Insert:
-        editCopy();
+        COMMAND_MU(EC_Copy);
         break;
 
       case Qt::Key_PageUp:
-        m_editor->clearMark();
-        m_editor->moveCursorToTop();
-        redraw();
+        COMMAND_MU(EC_MoveCursorToFileExtremum,
+          true /*start*/, false /*select*/);
         break;
 
       case Qt::Key_PageDown:
-        m_editor->clearMark();
-        m_editor->moveCursorToBottom();
-        redraw();
+        COMMAND_MU(EC_MoveCursorToFileExtremum,
+          false /*start*/, false /*select*/);
         break;
 
       case Qt::Key_Enter:
       case Qt::Key_Return: {
-        cursorToEndOfNextLine(false);
+        COMMAND_MU(EC_CursorToEndOfNextLine, false);
         break;
       }
 
       case Qt::Key_W:
-        m_editor->moveFirstVisibleConfineCursor(-1, 0);
-        redraw();
+        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, -1, 0);
         break;
 
       case Qt::Key_Z:
-        m_editor->moveFirstVisibleConfineCursor(+1, 0);
-        redraw();
+        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, +1, 0);
         break;
 
       case Qt::Key_Up:
-        moveFirstVisibleAndCursor(-1, 0);
+        commandMoveFirstVisibleAndCursor(-1, 0);
         break;
 
       case Qt::Key_Down:
-        moveFirstVisibleAndCursor(+1, 0);
+        commandMoveFirstVisibleAndCursor(+1, 0);
         break;
 
       case Qt::Key_Left:
-        moveFirstVisibleAndCursor(0, -1);
+        commandMoveFirstVisibleAndCursor(0, -1);
         break;
 
       case Qt::Key_Right:
-        moveFirstVisibleAndCursor(0, +1);
+        commandMoveFirstVisibleAndCursor(0, +1);
         break;
 
-      case Qt::Key_B:      cursorLeft(false); break;
-      case Qt::Key_F:      cursorRight(false); break;
-      case Qt::Key_A:      cursorHome(false); break;
-      case Qt::Key_E:      cursorEnd(false); break;
-      case Qt::Key_P:      cursorUp(false); break;
-      case Qt::Key_N:      cursorDown(false); break;
+      case Qt::Key_B:      commandCursorLeft(false); break;
+      case Qt::Key_F:      commandCursorRight(false); break;
+      case Qt::Key_A:      commandCursorHome(false); break;
+      case Qt::Key_E:      commandCursorEnd(false); break;
+      case Qt::Key_P:      commandCursorUp(false); break;
+      case Qt::Key_N:      commandCursorDown(false); break;
       // emacs' pageup/pagedown are ctrl-v and alt-v, but the
       // latter should be reserved for accessing the menu, so I'm
       // not going to bind either by default
 
       case Qt::Key_D:
-        m_editor->deleteKeyFunction();
-        this->redraw();
+        COMMAND_MU(EC_DeleteKeyFunction);
         break;
 
       case Qt::Key_H:
-        m_editor->backspaceFunction();
-        this->redraw();
+        COMMAND_MU(EC_BackspaceFunction);
         break;
 
       case Qt::Key_L:
-        m_editor->centerVisibleOnCursorLine();
-        this->redraw();
+        COMMAND_MU(EC_CenterVisibleOnCursorLine);
         break;
 
       default:
@@ -1574,11 +1575,11 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   else if (modifiers == Qt::AltModifier) {
     switch (k->key()) {
       case Qt::Key_Left:
-        this->editRigidUnindent();
+        this->commandEditRigidUnindent();
         break;
 
       case Qt::Key_Right:
-        this->editRigidIndent();
+        this->commandEditRigidIndent();
         break;
     }
   }
@@ -1650,45 +1651,43 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
     switch (k->key()) {
       case Qt::Key_Up:
-        moveFirstVisibleAndCursor(-CTRL_SHIFT_DISTANCE, 0);
+        commandMoveFirstVisibleAndCursor(-CTRL_SHIFT_DISTANCE, 0);
         break;
 
       case Qt::Key_Down:
-        moveFirstVisibleAndCursor(+CTRL_SHIFT_DISTANCE, 0);
+        commandMoveFirstVisibleAndCursor(+CTRL_SHIFT_DISTANCE, 0);
         break;
 
       case Qt::Key_Left:
-        moveFirstVisibleAndCursor(0, -CTRL_SHIFT_DISTANCE);
+        commandMoveFirstVisibleAndCursor(0, -CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_Right:
-        moveFirstVisibleAndCursor(0, +CTRL_SHIFT_DISTANCE);
+        commandMoveFirstVisibleAndCursor(0, +CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_PageUp:
-        m_editor->turnOnSelection();
-        m_editor->moveCursorToTop();
-        redraw();
+        COMMAND_MU(EC_MoveCursorToFileExtremum,
+          true /*start*/, true /*select*/);
         break;
 
       case Qt::Key_PageDown:
-        m_editor->turnOnSelection();
-        m_editor->moveCursorToBottom();
-        redraw();
+        COMMAND_MU(EC_MoveCursorToFileExtremum,
+          false /*start*/, true /*select*/);
         break;
 
       case Qt::Key_Enter:
       case Qt::Key_Return: {
-        cursorToEndOfNextLine(true);
+        commandCursorToEndOfNextLine(true);
         break;
       }
 
-      case Qt::Key_B:      cursorLeft(true); break;
-      case Qt::Key_F:      cursorRight(true); break;
-      case Qt::Key_A:      cursorHome(true); break;
-      case Qt::Key_E:      cursorEnd(true); break;
-      case Qt::Key_P:      cursorUp(true); break;
-      case Qt::Key_N:      cursorDown(true); break;
+      case Qt::Key_B:      commandCursorLeft(true); break;
+      case Qt::Key_F:      commandCursorRight(true); break;
+      case Qt::Key_A:      commandCursorHome(true); break;
+      case Qt::Key_E:      commandCursorEnd(true); break;
+      case Qt::Key_P:      commandCursorUp(true); break;
+      case Qt::Key_N:      commandCursorDown(true); break;
 
       default:
         k->ignore();
@@ -1709,14 +1708,14 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
         }
         break;
 
-      case Qt::Key_Left:     cursorLeft(shift); break;
-      case Qt::Key_Right:    cursorRight(shift); break;
-      case Qt::Key_Home:     cursorHome(shift); break;
-      case Qt::Key_End:      cursorEnd(shift); break;
-      case Qt::Key_Up:       cursorUp(shift); break;
-      case Qt::Key_Down:     cursorDown(shift); break;
-      case Qt::Key_PageUp:   cursorPageUp(shift); break;
-      case Qt::Key_PageDown: cursorPageDown(shift); break;
+      case Qt::Key_Left:     commandCursorLeft(shift); break;
+      case Qt::Key_Right:    commandCursorRight(shift); break;
+      case Qt::Key_Home:     commandCursorHome(shift); break;
+      case Qt::Key_End:      commandCursorEnd(shift); break;
+      case Qt::Key_Up:       commandCursorUp(shift); break;
+      case Qt::Key_Down:     commandCursorDown(shift); break;
+      case Qt::Key_PageUp:   commandCursorPageUp(shift); break;
+      case Qt::Key_PageDown: commandCursorPageDown(shift); break;
 
       case Qt::Key_Backspace: {
         if (!editSafetyCheck()) {
@@ -1727,8 +1726,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
           // case I want to use it for something else later.
         }
         else {
-          m_editor->backspaceFunction();
-          this->redraw();
+          COMMAND_MU(EC_BackspaceFunction);
         }
         break;
       }
@@ -1741,8 +1739,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
           this->editCut();
         }
         else {
-          m_editor->deleteKeyFunction();
-          this->redraw();
+          COMMAND_MU(EC_DeleteKeyFunction);
         }
         break;
       }
@@ -1767,10 +1764,10 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
           // rather Shift+Tab is delivered as Key_Backtab.  I do not
           // know if the same is true on Linux and Mac, so I will
           // leave this here just in case.
-          this->editRigidUnindent();
+          this->commandEditRigidUnindent();
         }
         else if (this->selectEnabled()) {
-          this->editRigidIndent();
+          this->commandEditRigidIndent();
         }
         else {
           m_editor->insertText("\t", 1);
@@ -1780,7 +1777,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
       }
 
       case Qt::Key_Backtab: {
-        this->editRigidUnindent();
+        this->commandEditRigidUnindent();
         break;
       }
 
@@ -2107,76 +2104,52 @@ void EditorWidget::toggleHighlightTrailingWhitespace()
 }
 
 
-void EditorWidget::cursorLeft(bool shift)
+void EditorWidget::commandCursorLeft(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  m_editor->moveCursorBy(0, -1);
-  scrollToCursor();
+  COMMAND_MU(EC_MoveCursorByCell, 0, -1, shift);
 }
 
-void EditorWidget::cursorRight(bool shift)
+void EditorWidget::commandCursorRight(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  m_editor->moveCursorBy(0, +1);
-  scrollToCursor();
+  COMMAND_MU(EC_MoveCursorByCell, 0, +1, shift);
 }
 
-void EditorWidget::cursorHome(bool shift)
+void EditorWidget::commandCursorHome(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  m_editor->setCursorColumn(0);
-  scrollToCursor();
+  COMMAND_MU(EC_MoveCursorToLineExtremum,
+    true /*start*/, shift);
 }
 
-void EditorWidget::cursorEnd(bool shift)
+void EditorWidget::commandCursorEnd(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  m_editor->setCursorColumn(m_editor->cursorLineLengthColumns());
-  scrollToCursor();
+  COMMAND_MU(EC_MoveCursorToLineExtremum,
+    false /*start*/, shift);
 }
 
-void EditorWidget::cursorUp(bool shift)
+void EditorWidget::commandCursorUp(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  m_editor->moveCursorBy(-1, 0);
-  scrollToCursor();
+  COMMAND_MU(EC_MoveCursorByCell, -1, 0, shift);
 }
 
-void EditorWidget::cursorDown(bool shift)
+void EditorWidget::commandCursorDown(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  m_editor->moveCursorBy(+1, 0);
-  scrollToCursor();
+  COMMAND_MU(EC_MoveCursorByCell, +1, 0, shift);
 }
 
-void EditorWidget::cursorPageUp(bool shift)
+void EditorWidget::commandCursorPageUp(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  moveFirstVisibleAndCursor(- this->visLines(), 0);
+  COMMAND_MU(EC_MoveCursorByPage, -1, shift);
 }
 
-void EditorWidget::cursorPageDown(bool shift)
+void EditorWidget::commandCursorPageDown(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  moveFirstVisibleAndCursor(+ this->visLines(), 0);
+  COMMAND_MU(EC_MoveCursorByPage, +1, shift);
 }
 
 
-void EditorWidget::cursorToEndOfNextLine(bool shift)
+void EditorWidget::commandCursorToEndOfNextLine(bool shift)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  m_editor->turnSelection(shift);
-  int line = m_editor->cursor().m_line;
-  m_editor->setCursor(m_editor->lineEndLCoord(line+1));
-  scrollToCursor();
+  COMMAND_MU(EC_CursorToEndOfNextLine, shift);
 }
 
 
@@ -2299,13 +2272,9 @@ void EditorWidget::doCloseSARPanel()
 }
 
 
-void EditorWidget::blockIndent(int amt)
+void EditorWidget::commandBlockIndent(int amt)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  UndoHistoryGrouper ugh(*m_editor);
-  if (m_editor->blockIndent(amt)) {
-    redraw();
-  }
+  COMMAND_MU(EC_BlockIndent, amt);
 }
 
 
@@ -2596,6 +2565,104 @@ bool EditorWidget::editSafetyCheck()
   else {
     // Cancel the edit.
     return false;
+  }
+}
+
+
+void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
+{
+  // As this is where we act on the command to make a change, suppress
+  // notifications here that might be caused by the change.
+  INITIATING_DOCUMENT_CHANGE();
+
+  ASTSWITCHC(EditorCommand, cmd.get()) {
+    ASTCASEC1(EC_Copy) {
+      editCopy();
+    }
+
+    ASTNEXTC(EC_CursorToEndOfNextLine, ec) {
+      m_editor->turnSelection(ec->m_select);
+      int line = m_editor->cursor().m_line;
+      m_editor->setCursor(m_editor->lineEndLCoord(line+1));
+      scrollToCursor();
+    }
+
+    // This case is currently not called by anything.  I created it for
+    // consistency with the other "EC_MoveFirstVisible..." commands.
+    ASTNEXTC(EC_MoveFirstVisibleBy, ec) {
+      m_editor->moveFirstVisibleBy(
+        ec->m_deltaLine, ec->m_deltaColumn);
+      redraw();
+    }
+
+    ASTNEXTC(EC_MoveFirstVisibleAndCursor, ec) {
+      m_editor->moveFirstVisibleAndCursor(
+        ec->m_deltaLine, ec->m_deltaColumn);
+      redraw();
+    }
+
+    ASTNEXTC(EC_MoveFirstVisibleConfineCursor, ec) {
+      m_editor->moveFirstVisibleConfineCursor(
+        ec->m_deltaLine, ec->m_deltaColumn);
+      redraw();
+    }
+
+    ASTNEXTC(EC_MoveCursorByCell, ec) {
+      m_editor->turnSelection(ec->m_select);
+      m_editor->moveCursorBy(ec->m_deltaLine, ec->m_deltaColumn);
+      scrollToCursor();
+    }
+
+    ASTNEXTC(EC_MoveCursorByPage, ec) {
+      m_editor->turnSelection(ec->m_select);
+      m_editor->moveFirstVisibleAndCursor(ec->m_sign * this->visLines(), 0);
+      redraw();
+    }
+
+    ASTNEXTC(EC_MoveCursorToLineExtremum, ec) {
+      m_editor->turnSelection(ec->m_select);
+      if (ec->m_start) {
+        m_editor->setCursorColumn(0);
+      }
+      else {
+        m_editor->setCursorColumn(m_editor->cursorLineLengthColumns());
+      }
+      scrollToCursor();
+    }
+
+    ASTNEXTC(EC_MoveCursorToFileExtremum, ec) {
+      m_editor->turnSelection(ec->m_select);
+      if (ec->m_start) {
+        m_editor->moveCursorToTop();
+      }
+      else {
+        m_editor->moveCursorToBottom();
+      }
+      redraw();
+    }
+
+    ASTNEXTC1(EC_DeleteKeyFunction) {
+      m_editor->deleteKeyFunction();
+      redraw();
+    }
+
+    ASTNEXTC1(EC_BackspaceFunction) {
+      m_editor->backspaceFunction();
+      redraw();
+    }
+
+    ASTNEXTC1(EC_CenterVisibleOnCursorLine) {
+      m_editor->centerVisibleOnCursorLine();
+      redraw();
+    }
+
+    ASTNEXTC(EC_BlockIndent, ec) {
+      if (m_editor->blockIndent(ec->m_amt)) {
+        redraw();
+      }
+    }
+
+    ASTENDCASECD
   }
 }
 

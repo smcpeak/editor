@@ -5,6 +5,7 @@
 #define EDITOR_WIDGET_H
 
 // editor
+#include "editor-command.ast.gen.h"    // EditorCommand
 #include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-window-fwd.h"         // EditorWindow
 #include "event-replay.h"              // EventReplayQueryable
@@ -24,9 +25,11 @@
 #include "owner.h"                     // Owner
 #include "refct-serf.h"                // RCSerf
 #include "sm-noexcept.h"               // NOEXCEPT
+#include "smbase/std-memory-fwd.h"     // std::unique_ptr
 
 // Qt
 #include <QWidget>
+
 
 class QtBDFFont;                       // qtbdffont.h
 class SearchAndReplacePanel;           // sar-panel.h
@@ -328,18 +331,23 @@ public:      // funcs
   // absolute cursor movement
   void cursorTo(TextLCoord tc);
 
-  // things often bound to cursor, etc. keys; 'shift' indicates
-  // whether the shift key is held (so the selection should be turned
-  // on, or remain on)
-  void cursorLeft(bool shift);
-  void cursorRight(bool shift);
-  void cursorHome(bool shift);
-  void cursorEnd(bool shift);
-  void cursorUp(bool shift);
-  void cursorDown(bool shift);
-  void cursorPageUp(bool shift);
-  void cursorPageDown(bool shift);
-  void cursorToEndOfNextLine(bool shift);
+  // Things often bound to cursor, etc. keys; 'shift' indicates whether
+  // the shift key is held (so the selection should be turned on, or
+  // remain on).
+  //
+  // These, and some other, methods begin with "command" to indicate
+  // that they create an `EditorCommand` object and dispatch that rather
+  // than performing the operation directly.
+  //
+  void commandCursorLeft(bool shift);
+  void commandCursorRight(bool shift);
+  void commandCursorHome(bool shift);
+  void commandCursorEnd(bool shift);
+  void commandCursorUp(bool shift);
+  void commandCursorDown(bool shift);
+  void commandCursorPageUp(bool shift);
+  void commandCursorPageDown(bool shift);
+  void commandCursorToEndOfNextLine(bool shift);
 
   // Set up the scroll state and cursor position for a newly created
   // process output document.
@@ -360,7 +368,7 @@ public:      // funcs
   int lastVisibleCol() const              { return m_editor->lastVisible().m_column; }
 
   // Move both the screen and cursor by the same amount.
-  void moveFirstVisibleAndCursor(int deltaLine, int deltaCol);
+  void commandMoveFirstVisibleAndCursor(int deltaLine, int deltaCol);
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col
@@ -406,11 +414,11 @@ public:      // funcs
 
   // ---------------------- document changes ----------------------
   // Indent or unindent selected lines.
-  void blockIndent(int amt);
+  void commandBlockIndent(int amt);
 
   // My standard indentation amounts.  TODO: Make configurable.
-  void editRigidIndent()   { this->blockIndent(+2); }
-  void editRigidUnindent() { this->blockIndent(-2); }
+  void commandEditRigidIndent()   { this->commandBlockIndent(+2); }
+  void commandEditRigidUnindent() { this->commandBlockIndent(-2); }
 
   // Justify paragraph the cursor is on or paragraphs that are selected.
   void editJustifyParagraph();
@@ -517,6 +525,9 @@ public:      // funcs
 
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) NOEXCEPT OVERRIDE;
+
+  // Perform `cmd`.
+  void command(std::unique_ptr<EditorCommand> cmd);
 
   // -------------------------- output ----------------------------
   // intermediate paint steps
