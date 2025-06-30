@@ -1228,6 +1228,7 @@ void TextDocumentEditor::deleteTextMRange(TextMCoordRange const &range)
 
 void TextDocumentEditor::indentLines(int start, int lines, int ind)
 {
+  UndoHistoryGrouper ugh(*this);
   CursorRestorer cr(*this);
 
   // Don't let the selection interfere with the text insertions below.

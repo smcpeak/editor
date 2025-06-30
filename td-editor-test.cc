@@ -206,6 +206,34 @@ static void testUndoOfPaste()
 }
 
 
+static void testUndoOfBlockIndent()
+{
+  TextDocumentAndEditor tde;
+
+  chars(tde, "one\n"
+             "two\n"
+             "three\n"
+             "four\n");
+  tde.moveCursor(false /*relLine*/, 1, false /*relCol*/, 0);
+  tde.turnOnSelection();
+  tde.moveMarkBy(+2 /*deltaLine*/, 0 /*deltaCol*/);
+  tde.blockIndent(+2);
+  expect(tde, 1,0,
+    "one\n"
+    "  two\n"
+    "  three\n"
+    "four\n");
+
+  // Undo should undo indentation of both lines.
+  tde.undo();
+  expect(tde, 1,0,
+    "one\n"
+    "two\n"
+    "three\n"
+    "four\n");
+}
+
+
 // --------------------- testTextManipulation -----------------------
 // test TextDocumentEditor::getTextForLRange
 static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
@@ -2416,6 +2444,7 @@ static void entry(int argc, char **argv)
 
   testUndoRedo();
   testUndoOfPaste();
+  testUndoOfBlockIndent();
   testTextManipulation();
   testBlockIndent();
   testBlockIndent2();
