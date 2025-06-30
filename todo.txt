@@ -3,9 +3,6 @@ TODOs:
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
-  - Change search hits display to "N [] M" where N is the number of hits
-    preceding the cursor and M the number after it.
-
   - Bug: If I paste some text beyond EOL, then undo, the padding spaces
     do not get removed.
   - Bug: Pasting as a replacement creates two undo records.

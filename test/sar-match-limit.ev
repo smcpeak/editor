@@ -14,7 +14,7 @@ KeyPress "window1.m_sarPanel.m_findBox" "Key_Period" "."
 
 # Check for the trailing "+" in the status.  It so happens we reach 1027
 # when the limit is hit.
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" " 1  / 1027+"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 1027+"
 
 # Check corner labels.
 CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "0+"
@@ -31,7 +31,7 @@ KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_PageDown" ""
 KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_PageDown" ""
 
 # Check the status there.
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" ">1027  / 1027+"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1027 [] 0+"
 CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "1027+"
 CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+"
 

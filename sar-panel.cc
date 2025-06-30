@@ -24,6 +24,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPainter>
+#include <QSpacerItem>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -632,17 +633,36 @@ void SearchAndReplacePanel::slot_help() NOEXCEPT
     "If there is an uppercase letter in the Find box, search is "
       "case-sensitive, otherwise not.<br>\n"
     "<br>\n"
-    "The numbers in the lower left show the total number of matches "
-    "and the relation of the cursor and selection to them.  For "
-    "example, \"&lt;5 / 9\" means the cursor is to the left of the 5th "
-    "of 9 matches.  Square brackets, like \"[5] / 9\", mean the 5th "
-    "match is selected, and hence can be replaced (with Ctrl+R).<br>\n"
-    "<br>\n"
-    "If the total ends with '+', it means the match limit of 1000 was hit.<br>\n"
+    "The numbers in the lower left show the number of matches to the left of "
+    "the cursor, then \"[]\" to represent the cursor, then the number of "
+    "matches to the right of the cursor.  If there is an active selection, "
+    "then the left edge of that selection acts as the \"cursor\", and if the "
+    "selection exactly corresponds to some match, then the brackets will have "
+    "\"m\" inside them: \"[m]\".  If the second number ends with '+', it means "
+    "the match limit of 1000 was hit.<br>\n"
     "<br>\n"
     "A regEx syntax error results in status \"Err @ N\" where N is the "
       "character number in the Find box where the error is.<br>\n"
   );
+
+  // Try to make the dialog wider.
+  //
+  // Evidently QMessageBox uses a QGridLayout.  This code is based on
+  // the answer at:
+  //
+  // https://forum.qt.io/topic/56624/setting-the-size-of-a-qmessagebox/3
+  //
+  if (QGridLayout *layout = dynamic_cast<QGridLayout*>(mb.layout())) {
+    QSpacerItem *spacer = new QSpacerItem(800, 0,
+      QSizePolicy::Minimum, QSizePolicy::Expanding);
+    layout->addItem(spacer,
+      layout->rowCount(), 0,           // row, col
+      1, layout->columnCount());       // rowspan, colspan
+  }
+  else {
+    TRACE("sar", "help box layout is not QGridLayout");
+  }
+
   mb.exec();
 
   GENERIC_CATCH_END

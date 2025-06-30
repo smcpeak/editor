@@ -672,7 +672,11 @@ void EditorWidget::emitSearchStatusIndicator()
   int matchesBelow = m_textSearch->countMatchesBelow(range.m_start.m_line);
 
   // Matches before, at, and after range start within its line.
-  int matchesBefore=0, matchesOn=0, matchesSelected=0, matchesAfter=0;
+  int matchesBefore=0, matchesOn=0, matchesAfter=0;
+
+  // Number of matches exactly selected; in [0,1].
+  int matchesSelected=0;
+
   if (m_textSearch->countLineMatches(range.m_start.m_line)) {
     ArrayStack<TextSearch::MatchExtent> const &matches =
       m_textSearch->getLineMatches(range.m_start.m_line);
@@ -696,47 +700,36 @@ void EditorWidget::emitSearchStatusIndicator()
   }
 
   /* Sample scenarios and intended presentation:
-                                                  LT  on  GTE
-    *   hit   hit   hit             <1  / 3        0   0    3
-       *hit   hit   hit              1  / 3        0   1    3
-       [hit]  hit   hit             [1] / 3        0   1    3
-       [h]it  hit   hit              1  / 3        0   1    3
-       [hit ] hit   hit              1  / 3        0   1    3
-        h*it  hit   hit             <2  / 3        1   0    2
-        hit * hit   hit             <2  / 3        1   0    2
-        hit  *hit   hit              2  / 3        1   1    2
-        hit   hit * hit             <3  / 3        2   0    1
-        hit   hit  *hit              3  / 3        2   1    1
-        hit   hit  [hit]            [3] / 3        2   1    1
-        hit   hit   h*it             3> / 3        3   0    0
-            *                             0        0   0    0
+                                                  LT  on  GTE  sel
+    *   hit   hit   hit             0 [] 3         0   0    3    0
+       *hit   hit   hit             0 [] 3         0   1    3    0
+       [hit]  hit   hit             0 [m] 3        0   1    3    1
+       [h]it  hit   hit             0 [] 3         0   1    3    0
+       [hit ] hit   hit             0 [] 3         0   1    3    0
+        h*it  hit   hit             1 [] 2         1   0    2    0
+        hit * hit   hit             1 [] 2         1   0    2    0
+        hit  *hit   hit             1 [] 2         1   1    2    0
+        hit   hit * hit             2 [] 1         2   0    1    0
+        hit   hit  *hit             2 [] 1         2   1    1    0
+        hit   hit  [hit]            2 [m] 1        2   1    1    1
+        hit   hit   h*it            3 [] 0         3   0    0    0
+            *                       0 [] 0         0   0    0    0
   */
 
+  // Matches before the selection start.
   int matchesLT = matchesAbove + matchesBefore;
+
+  // Matches at or after the selection start.
   int matchesGTE = matchesOn + matchesAfter + matchesBelow;
-  int totalMatches = matchesLT + matchesGTE;
 
   stringBuilder sb;
-  if (totalMatches) {
-    if (matchesSelected) {
-      sb << '[' << (matchesLT+1) << "] / " << totalMatches;
-    }
-    else if (matchesOn) {
-      sb << ' ' << (matchesLT+1) << "  / " << totalMatches;
-    }
-    else if (matchesGTE) {
-      sb << '<' << (matchesLT+1) << "  / " << totalMatches;
-    }
-    else {
-      sb << '>' << matchesLT << "  / " << totalMatches;
-    }
-
-    if (m_textSearch->hasIncompleteMatches()) {
-      sb << '+';
-    }
+  sb << matchesLT << " [";
+  if (matchesSelected) {
+    sb << 'x';
   }
-  else {
-    sb << '0';
+  sb << "] " << matchesGTE;
+  if (m_textSearch->hasIncompleteMatches()) {
+    sb << '+';
   }
 
   TRACE("sar", "searchStatusIndicator: " << sb);

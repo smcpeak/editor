@@ -19,13 +19,13 @@ CheckImage "window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search
 
 # Check cursor and search status indicator.
 CheckLabel "window1.m_statusArea.m_cursor" "1:1"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "<1  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 20"
 
 # Go to end of second line.
 FocusKeyPress "Key_Down" ""
 FocusKeyPress "Ctrl+Key_E" "\x05"
 CheckLabel "window1.m_statusArea.m_cursor" "2:41"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "<3  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "2 [] 18"
 
 # Move left past the tab to just beyond last hit on the line.
 FocusKeyPress "Key_Left" ""
@@ -38,28 +38,28 @@ FocusKeyPress "Key_Left" ""
 FocusKeyPress "Key_Left" ""
 FocusKeyPress "Key_Left" ""
 CheckLabel "window1.m_statusArea.m_cursor" "2:32"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "<3  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "2 [] 18"
 
 # Move left one column at a time, past both hits, checking status as we go.
 FocusKeyPress "Key_Left" ""
 CheckLabel "window1.m_statusArea.m_cursor" "2:31"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" " 2  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1 [] 19"
 
 FocusKeyPress "Key_Left" ""
 CheckLabel "window1.m_statusArea.m_cursor" "2:30"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "<2  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1 [] 19"
 
 FocusKeyPress "Key_Left" ""
 CheckLabel "window1.m_statusArea.m_cursor" "2:29"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "<2  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1 [] 19"
 
 FocusKeyPress "Key_Left" ""
 CheckLabel "window1.m_statusArea.m_cursor" "2:28"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" " 1  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 20"
 
 FocusKeyPress "Key_Left" ""
 CheckLabel "window1.m_statusArea.m_cursor" "2:27"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "<1  / 20"
+CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 20"
 
 # Now resize so only part of the text is visible.
 ResizeEvent "window1.frame1.editorFrame.m_editorWidget" "(500,200)"
