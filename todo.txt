@@ -3,10 +3,6 @@ TODOs:
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
-  - Bug: If I paste some text beyond EOL, then undo, the padding spaces
-    do not get removed.
-  - Bug: Pasting as a replacement creates two undo records.
-
   - Easy repetition macros:
     - Have the editor remember the last, say, 20 editing commands
     - Whenever commands [1,N] equals commands [N+1,2N], show something

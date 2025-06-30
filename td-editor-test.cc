@@ -161,6 +161,51 @@ static void testUndoRedo()
 }
 
 
+// Specifically test the way undo interacts with clipboard paste.
+static void testUndoOfPaste()
+{
+  TextDocumentAndEditor tde;
+
+  chars(tde, "one\n"
+             "two\n"
+             "three\n");
+  expect(tde, 3,0, "one\ntwo\nthree\n");
+
+  tde.moveCursor(true /*relLine*/, -2, true /*relCol*/, +0);
+  expect(tde, 1,0, "one\ntwo\nthree\n");
+
+  // Select line with "two".
+  tde.turnOnSelection();
+  tde.moveMarkBy(+1 /*detaLine*/, 0 /*deltaCol*/);
+
+  // Replace it the way `clipboardPaste` would.
+  tde.insertString("TWO\n");
+  expect(tde, 2,0, "one\nTWO\nthree\n");
+
+  // The entire replacement should be undone in one step.
+  tde.undo();
+  expect(tde, 1,0, "one\ntwo\nthree\n");
+
+  // Move beyond EOF.
+  tde.moveCursor(false /*relLine*/, 5, false /*relCol*/, 0);
+  expect(tde, 5,0, "one\ntwo\nthree\n");
+
+  // Paste text there, which adds fill newlines.
+  tde.insertString("six\n");
+  expect(tde, 6,0, "one\ntwo\nthree\n\n\nsix\n");
+
+  // That too should all undo at once, including the fill.
+  //
+  // This leaves the cursor at a different place (3,0) than where we
+  // started (5,0) because deleting the fill moves it, and cursor
+  // movements aren't explicitly recorded in the undo history.  That's
+  // perhaps not ideal, but not a big problem either.
+  //
+  tde.undo();
+  expect(tde, 3,0, "one\ntwo\nthree\n");
+}
+
+
 // --------------------- testTextManipulation -----------------------
 // test TextDocumentEditor::getTextForLRange
 static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
@@ -2370,6 +2415,7 @@ static void entry(int argc, char **argv)
   traceProcessArg(argc, argv);
 
   testUndoRedo();
+  testUndoOfPaste();
   testTextManipulation();
   testBlockIndent();
   testBlockIndent2();

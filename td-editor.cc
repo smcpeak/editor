@@ -466,6 +466,9 @@ TextLCoord TextDocumentEditor::mark() const
 void TextDocumentEditor::insertText(char const *text, int textLen,
                                     InsertTextFlags flags)
 {
+  // The entire process of insertion should create one undo record.
+  UndoHistoryGrouper ugh(*this);
+
   this->deleteSelectionIf();
   this->fillToCursor();
 
