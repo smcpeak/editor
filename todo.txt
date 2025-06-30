@@ -3,6 +3,14 @@ TODOs:
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
+  - Now that I have $f substitution, put some common commands into a menu:
+    - empty-header $f
+    - center-header.py
+    - format-code.py
+    - format-macro.py
+    - format-header-comments.py
+    - c-escape
+
   - Easy repetition macros:
     - Have the editor remember the last, say, 20 editing commands
     - Whenever commands [1,N] equals commands [N+1,2N], show something
