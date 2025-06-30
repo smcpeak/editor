@@ -138,7 +138,7 @@ TOCLEAN += *.o *.d
 %.doc.gen.cc %.doc.gen.h: doc/%.txt
 	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
 
-%.ast.gen.h %.ast.gen.cc: %.ast $(ASTGEN)/astgen.exe
+%.ast.gen.fwd.h %.ast.gen.h %.ast.gen.cc: %.ast $(ASTGEN)/astgen.exe
 	$(ASTGEN)/astgen.exe -o$*.ast.gen $<
 
 

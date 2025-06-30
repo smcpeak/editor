@@ -9,12 +9,6 @@
 // system.
 
 
-verbatim {
-  // TODO: I'd like astgen to make this automatically.
-  #include "editor-command-fwd.h"      // fwds for this module
-}
-
-
 // An editor manipulation command and any associated arguments.
 class EditorCommand {
   // Cut text; delete it while copying it to the clipboard.

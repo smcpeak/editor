@@ -5,27 +5,27 @@
 #define EDITOR_WIDGET_H
 
 // editor
-#include "editor-command-fwd.h"        // EditorCommand
-#include "editor-global-fwd.h"         // EditorGlobal
-#include "editor-window-fwd.h"         // EditorWindow
-#include "event-replay.h"              // EventReplayQueryable
-#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
-#include "named-td-list.h"             // NamedTextDocumentListObserver
-#include "named-td.h"                  // NamedTextDocument
-#include "td-editor.h"                 // TextDocumentEditor
-#include "text-search.h"               // TextSearch
-#include "textcategory.h"              // TextCategory
-#include "vfs-connections.h"           // VFS_Connections
+#include "editor-command.ast.gen.fwd.h"          // EditorCommand
+#include "editor-global-fwd.h"                   // EditorGlobal
+#include "editor-window-fwd.h"                   // EditorWindow
+#include "event-replay.h"                        // EventReplayQueryable
+#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "named-td-list.h"                       // NamedTextDocumentListObserver
+#include "named-td.h"                            // NamedTextDocument
+#include "td-editor.h"                           // TextDocumentEditor
+#include "text-search.h"                         // TextSearch
+#include "textcategory.h"                        // TextCategory
+#include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
-#include "qtguiutil.h"                 // unhandledExceptionMsgbox
+#include "qtguiutil.h"                           // unhandledExceptionMsgbox
 
 // smbase
-#include "exc.h"                       // smbase::XBase
-#include "owner.h"                     // Owner
-#include "refct-serf.h"                // RCSerf
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "smbase/std-memory-fwd.h"     // std::unique_ptr
+#include "exc.h"                                 // smbase::XBase
+#include "owner.h"                               // Owner
+#include "refct-serf.h"                          // RCSerf
+#include "sm-noexcept.h"                         // NOEXCEPT
+#include "smbase/std-memory-fwd.h"               // std::unique_ptr
 
 // Qt
 #include <QWidget>
