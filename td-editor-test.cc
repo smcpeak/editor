@@ -158,8 +158,6 @@ static void testUndoRedo()
 
   //tde.printHistory();
   //tde.printHistoryStats();
-
-  removeFile("td.tmp");
 }
 
 

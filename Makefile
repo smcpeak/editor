@@ -168,8 +168,6 @@ $(eval $(call RUN_TEST_PROG,td-core-test))
 
 
 # -------------- td-editor-test test program ----------------
-TOCLEAN += td.tmp
-
 EDITOR_OBJS += history.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += td.o
