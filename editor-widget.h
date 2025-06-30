@@ -5,7 +5,7 @@
 #define EDITOR_WIDGET_H
 
 // editor
-#include "editor-command.ast.gen.h"    // EditorCommand
+#include "editor-command-fwd.h"        // EditorCommand
 #include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-window-fwd.h"         // EditorWindow
 #include "event-replay.h"              // EventReplayQueryable
@@ -434,11 +434,11 @@ public:      // funcs
   // Edit menu functions.
   void editUndo();
   void editRedo();
-  void editCut();
-  void editCopy();
-  void editPaste();
-  void editDelete();
-  void editKillLine();
+  void commandEditCut();
+  void commandEditCopy();
+  void commandEditPaste();
+  void commandEditDelete();
+  void commandEditKillLine();
   void editGrepSource();
 
   // -------------------- interaction with files ------------------

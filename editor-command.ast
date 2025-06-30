@@ -9,10 +9,25 @@
 // system.
 
 
+verbatim {
+  // TODO: I'd like astgen to make this automatically.
+  #include "editor-command-fwd.h"      // fwds for this module
+}
+
+
 // An editor manipulation command and any associated arguments.
 class EditorCommand {
+  // Cut text; delete it while copying it to the clipboard.
+  -> EC_Cut();
+
   // Copy selected text to the clipboard.
   -> EC_Copy();
+
+  // Insert the clipboard into the document.
+  -> EC_Paste();
+
+  // If nothing is selected, select the entire current line.  Then, cut.
+  -> EC_KillLine();
 
   // Move the cursor to the end of the next line.  If `m_select`, then
   // do so while creating or extending a selection.  Otherwise,
@@ -61,6 +76,9 @@ class EditorCommand {
   // do nothing.
   -> EC_DeleteKeyFunction();
 
+  // Delete selected text, but do nothing if nothing is selected.
+  -> EC_DeleteMenuFunction();
+
   // Scroll vertically so the cursor line is in the center of the
   // visible region if possible (it might not be possible due to the
   // cursor being too near the top of the file).  Also scroll so the
@@ -72,6 +90,13 @@ class EditorCommand {
   // current selection.  Every line that has at least one selected
   // character is indented.  If nothing is selected, do nothing.
   -> EC_BlockIndent(int m_amt);
+
+  // Insert a newline while indenting.  See comments on
+  // `TextDocumentEditor::insertNewlineAutoIndent`.
+  -> EC_InsertNewlineAutoIndent();
+
+  // Insert text at cursor, replacing any selected text.
+  -> EC_InsertString(std::string m_text);
 }
 
 

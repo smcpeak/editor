@@ -280,7 +280,12 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
     MENU_ITEM_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
     MENU_ITEM_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
+
+    // Here, I'm faking something that looks like a shortcut since the
+    // menu Delete function is slightly different from the keyboard one,
+    // as only the latter will do something if nothing is selected.
     MENU_ITEM    ("&Delete\tDelete", editDelete);
+
     MENU_ITEM_KEY("&Kill (cut) current line", editKillLine,
                   Qt::CTRL + Qt::Key_K);
 
@@ -1238,7 +1243,7 @@ void EditorWindow::editCut() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->editCut();
+  editorWidget()->commandEditCut();
 
   GENERIC_CATCH_END
 }
@@ -1247,7 +1252,7 @@ void EditorWindow::editCopy() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->editCopy();
+  editorWidget()->commandEditCopy();
 
   GENERIC_CATCH_END
 }
@@ -1256,7 +1261,7 @@ void EditorWindow::editPaste() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->editPaste();
+  editorWidget()->commandEditPaste();
 
   GENERIC_CATCH_END
 }
@@ -1265,7 +1270,7 @@ void EditorWindow::editDelete() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->editDelete();
+  editorWidget()->commandEditDelete();
 
   GENERIC_CATCH_END
 }
@@ -1273,7 +1278,7 @@ void EditorWindow::editDelete() NOEXCEPT
 void EditorWindow::editKillLine() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editorWidget()->editKillLine();
+  editorWidget()->commandEditKillLine();
   GENERIC_CATCH_END
 }
 

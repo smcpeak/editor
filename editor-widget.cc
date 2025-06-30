@@ -5,6 +5,7 @@
 
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
+#include "editor-command.ast.gen.h"    // EditorCommand
 #include "editor-global.h"             // EditorGlobal
 #include "editor-window.h"             // EditorWindow
 #include "nearby-file.h"               // getNearbyFilename
@@ -1492,6 +1493,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   // "command" infrastructure, I can remove this.
   INITIATING_DOCUMENT_CHANGE();
 
+  // TODO: I think this grouper should be removed in favor of whatever
+  // is needed inside the command object handler.
   UndoHistoryGrouper hbgrouper(*m_editor);
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
@@ -1500,7 +1503,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   if (modifiers == Qt::ControlModifier) {
     switch (k->key()) {
       case Qt::Key_Insert:
-        COMMAND_MU(EC_Copy);
+        commandEditCopy();
         break;
 
       case Qt::Key_PageUp:
@@ -1701,7 +1704,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
     switch (k->key()) {
       case Qt::Key_Insert:
         if (shift) {
-          editPaste();
+          commandEditPaste();
         }
         else {
           // TODO: toggle insert/overwrite mode
@@ -1736,7 +1739,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
           return;
         }
         if (shift) {
-          this->editCut();
+          this->commandEditCut();
         }
         else {
           COMMAND_MU(EC_DeleteKeyFunction);
@@ -1751,27 +1754,27 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
         }
         else {
           if (this->editSafetyCheck()) {
-            m_editor->insertNewlineAutoIndent();
-            this->redraw();
+            COMMAND_MU(EC_InsertNewlineAutoIndent);
           }
         }
         break;
       }
 
       case Qt::Key_Tab: {
-        if (shift) {
-          // In my testing on Windows, this does not get executed,
-          // rather Shift+Tab is delivered as Key_Backtab.  I do not
-          // know if the same is true on Linux and Mac, so I will
-          // leave this here just in case.
-          this->commandEditRigidUnindent();
-        }
-        else if (this->selectEnabled()) {
-          this->commandEditRigidIndent();
-        }
-        else {
-          m_editor->insertText("\t", 1);
-          this->redraw();
+        if (this->editSafetyCheck()) {
+          if (shift) {
+            // In my testing on Windows, this does not get executed,
+            // rather Shift+Tab is delivered as Key_Backtab.  I do not
+            // know if the same is true on Linux and Mac, so I will
+            // leave this here just in case.
+            this->commandEditRigidUnindent();
+          }
+          else if (this->selectEnabled()) {
+            this->commandEditRigidIndent();
+          }
+          else {
+            COMMAND_MU(EC_InsertString, std::string("\t"));
+          }
         }
         break;
       }
@@ -1794,10 +1797,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
             return;
           }
 
-          // insert this character at the cursor
-          QByteArray utf8(text.toUtf8());
-          m_editor->insertText(utf8.constData(), utf8.length());
-          this->redraw();
+          // Insert this character at the cursor.
+          COMMAND_MU(EC_InsertString, toString(text));
         }
         else {
           k->ignore();
@@ -1972,75 +1973,42 @@ static void setClipboard(string newText)
 }
 
 
-void EditorWidget::editCut()
+void EditorWidget::commandEditCut()
 {
-  INITIATING_DOCUMENT_CHANGE();
-  if (this->selectEnabled() && editSafetyCheck()) {
-    setClipboard(m_editor->clipboardCut());
-    this->redraw();
+  if (editSafetyCheck()) {
+    COMMAND_MU(EC_Cut);
   }
 }
 
 
-void EditorWidget::editCopy()
+void EditorWidget::commandEditCopy()
 {
-  INITIATING_DOCUMENT_CHANGE();
-  if (this->selectEnabled()) {
-    setClipboard(m_editor->clipboardCopy());
-    this->redraw();
+  COMMAND_MU(EC_Copy);
+}
+
+
+void EditorWidget::commandEditPaste()
+{
+  if (editSafetyCheck()) {
+    COMMAND_MU(EC_Paste);
   }
 }
 
 
-void EditorWidget::editPaste()
+void EditorWidget::commandEditDelete()
 {
-  INITIATING_DOCUMENT_CHANGE();
-
-  QClipboard *cb = QApplication::clipboard();
-  QString text;
-
-  // Try reading the X selection first.  Generally this seems to reflect
-  // the "more recent" deliberate clipboard interaction.
-  if (cb->supportsSelection()) {
-    text = cb->text(QClipboard::Selection);
-  }
-
-  // Then the regular clipboard.
-  if (text.isEmpty()) {
-    text = cb->text(QClipboard::Clipboard);
-  }
-
-  if (text.isEmpty()) {
-    QMessageBox::information(this, "Info", "The clipboard is empty.");
-  }
-  else if (editSafetyCheck()) {
-    QByteArray utf8(text.toUtf8());
-    m_editor->clipboardPaste(utf8.constData(), utf8.length());
-    this->redraw();
+  if (editSafetyCheck()) {
+    COMMAND_MU(EC_DeleteMenuFunction);
   }
 }
 
 
-void EditorWidget::editDelete()
+void EditorWidget::commandEditKillLine()
 {
-  INITIATING_DOCUMENT_CHANGE();
-  if (this->selectEnabled() && editSafetyCheck()) {
-    m_editor->deleteSelection();
-    this->redraw();
-  }
-}
-
-
-void EditorWidget::editKillLine()
-{
-  INITIATING_DOCUMENT_CHANGE();
   if (!editSafetyCheck()) {
     return;
   }
-  if (!selectEnabled()) {
-    m_editor->selectCursorLine();
-  }
-  editCut();
+  COMMAND_MU(EC_KillLine);
 }
 
 
@@ -2576,8 +2544,51 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
   INITIATING_DOCUMENT_CHANGE();
 
   ASTSWITCHC(EditorCommand, cmd.get()) {
-    ASTCASEC1(EC_Copy) {
-      editCopy();
+    ASTCASEC1(EC_Cut) {
+      if (this->selectEnabled()) {
+        setClipboard(m_editor->clipboardCut());
+        this->redraw();
+      }
+    }
+
+    ASTNEXTC1(EC_Copy) {
+      if (this->selectEnabled()) {
+        setClipboard(m_editor->clipboardCopy());
+        this->redraw();
+      }
+    }
+
+    ASTNEXTC1(EC_Paste) {
+      QClipboard *cb = QApplication::clipboard();
+      QString text;
+
+      // Try reading the X selection first.  Generally this seems to reflect
+      // the "more recent" deliberate clipboard interaction.
+      if (cb->supportsSelection()) {
+        text = cb->text(QClipboard::Selection);
+      }
+
+      // Then the regular clipboard.
+      if (text.isEmpty()) {
+        text = cb->text(QClipboard::Clipboard);
+      }
+
+      // Previously, I had a check here for empty `text`, and a warning
+      // dialog.  But I want the processing of command objects to not
+      // rely on being interactive, and the warning served little real
+      // purpose, so I removed it.
+
+      QByteArray utf8(text.toUtf8());
+      m_editor->clipboardPaste(utf8.constData(), utf8.length());
+      this->redraw();
+    }
+
+    ASTNEXTC1(EC_KillLine) {
+      if (!selectEnabled()) {
+        m_editor->selectCursorLine();
+      }
+      setClipboard(m_editor->clipboardCut());
+      this->redraw();
     }
 
     ASTNEXTC(EC_CursorToEndOfNextLine, ec) {
@@ -2646,6 +2657,13 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
       redraw();
     }
 
+    ASTNEXTC1(EC_DeleteMenuFunction) {
+      if (selectEnabled()) {
+        m_editor->deleteSelection();
+        redraw();
+      }
+    }
+
     ASTNEXTC1(EC_BackspaceFunction) {
       m_editor->backspaceFunction();
       redraw();
@@ -2660,6 +2678,16 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
       if (m_editor->blockIndent(ec->m_amt)) {
         redraw();
       }
+    }
+
+    ASTNEXTC1(EC_InsertNewlineAutoIndent) {
+      m_editor->insertNewlineAutoIndent();
+      redraw();
+    }
+
+    ASTNEXTC(EC_InsertString, ec) {
+      m_editor->insertString(ec->m_text);
+      this->redraw();
     }
 
     ASTENDCASECD
