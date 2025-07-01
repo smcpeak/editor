@@ -9,6 +9,10 @@
 // system.
 
 
+// Generate code to convert command objects to GDV.
+option toGDValue;
+
+
 // An editor manipulation command and any associated arguments.
 class EditorCommand {
   // Cut text; delete it while copying it to the clipboard.

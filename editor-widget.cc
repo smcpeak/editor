@@ -31,6 +31,7 @@
 #include "smbase/bdffont.h"                      // BDFFont
 #include "smbase/dev-warning.h"                  // DEV_WARNING
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
+#include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/save-restore.h"                 // SetRestore
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
@@ -54,6 +55,7 @@
 // libc++
 #include <algorithm>                             // std::min
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -2538,6 +2540,8 @@ bool EditorWidget::editSafetyCheck()
 
 void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
 {
+  TRACE("editor-command", "command: " << toGDValue(*cmd).asString());
+
   // As this is where we act on the command to make a change, suppress
   // notifications here that might be caused by the change.
   INITIATING_DOCUMENT_CHANGE();
