@@ -4,9 +4,9 @@
 #include "doc-name.h"                  // this module
 
 // smbase
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-macros.h"                 // COMPARE_MEMB
-#include "strutil.h"                   // quoted
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-macros.h"          // COMPARE_MEMB
+#include "smbase/strutil.h"            // quoted
 
 // libc++
 #include <iostream>                    // std::ostream

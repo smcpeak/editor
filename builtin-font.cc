@@ -4,7 +4,7 @@
 #include "builtin-font.h"              // this module
 
 // smbase
-#include "sm-macros.h"                 // DEFINE_ENUMERATION_TO_STRING
+#include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING
 
 
 char const *builtinFontName(BuiltinFont bfont)

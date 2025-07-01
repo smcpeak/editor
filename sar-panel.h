@@ -8,8 +8,8 @@
 #include "editor-widget-fwd.h"         // EditorWidget
 
 // smbase
-#include "refct-serf.h"                // RCSerf
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-override.h"        // OVERRIDE
 
 // Qt
 #include <QWidget>

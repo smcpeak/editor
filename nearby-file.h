@@ -9,8 +9,8 @@
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "str.h"                       // string
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/str.h"                // string
 
 class SMFileUtil;                      // sm-file-util.h
 

@@ -4,11 +4,11 @@
 #include "named-td-list.h"             // module to test
 
 // smbase
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sm-override.h"               // OVERRIDE
-#include "sm-test.h"                   // USUAL_TEST_MAIN, EXPECT_EQ
-#include "strutil.h"                   // dirname
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/sm-test.h"            // USUAL_TEST_MAIN, EXPECT_EQ
+#include "smbase/strutil.h"            // dirname
 
 // libc
 #include <stdarg.h>                    // va_start, etc.

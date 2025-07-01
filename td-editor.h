@@ -10,8 +10,8 @@
 #include "textlcoord.h"                // TextLCoord
 
 // smbase
-#include "datetime.h"                  // DateTimeProvider
-#include "refct-serf.h"                // RCSerf, SerfRefCount
+#include "smbase/datetime.h"           // DateTimeProvider
+#include "smbase/refct-serf.h"         // RCSerf, SerfRefCount
 
 
 // This class is a "stateful metaphor UI API".  That is, it

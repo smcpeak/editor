@@ -4,11 +4,11 @@
 #include "td-core.h"                   // this module
 
 // smbase
-#include "array.h"                     // Array
-#include "objcount.h"                  // CheckObjectCount
-#include "strutil.h"                   // encodeWithEscapes
-#include "syserr.h"                    // xsyserror
-#include "sm-test.h"                   // USUAL_MAIN, PVAL
+#include "smbase/array.h"              // Array
+#include "smbase/objcount.h"           // CheckObjectCount
+#include "smbase/sm-test.h"            // USUAL_MAIN, PVAL
+#include "smbase/strutil.h"            // encodeWithEscapes
+#include "smbase/syserr.h"             // xsyserror
 
 // libc
 #include <assert.h>                    // assert

@@ -8,11 +8,11 @@
 #include "justify.h"                   // justifyNearLine
 
 // smbase
-#include "array.h"                     // Array
-#include "datetime.h"                  // DateTimeSeconds
-#include "objcount.h"                  // CHECK_OBJECT_COUNT
-#include "sm-swap.h"                   // swap
-#include "trace.h"                     // TRACE
+#include "smbase/array.h"              // Array
+#include "smbase/datetime.h"           // DateTimeSeconds
+#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/sm-swap.h"            // swap
+#include "smbase/trace.h"              // TRACE
 
 // libc++
 #include <algorithm>                   // std::{min, max}

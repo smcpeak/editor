@@ -1,11 +1,12 @@
 // history.cc
 // code for history.h
 
-#include "history.h"       // this module
-#include "array.h"         // Array
-#include "strutil.h"       // encodeWithEscapes
+#include "history.h"                   // this module
 
-#include <stdio.h>         // printf
+#include "smbase/array.h"              // Array
+#include "smbase/strutil.h"            // encodeWithEscapes
+
+#include <stdio.h>                     // printf
 
 
 static void rollbackMismatch()

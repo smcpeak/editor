@@ -8,7 +8,7 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 
 // smbase
-#include "sm-macros.h"                 // DMEMB
+#include "smbase/sm-macros.h"          // DMEMB
 
 
 // An optional host and file name, and if the name is present, an

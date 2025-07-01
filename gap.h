@@ -5,10 +5,10 @@
 #define GAPARRAY_H
 
 // smbase
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
-#include "sm-swap.h"                   // swap
-#include "xassert.h"                   // xassert
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
+#include "smbase/sm-swap.h"            // swap
+#include "smbase/xassert.h"            // xassert
 
 // libc++
 #include <algorithm>                   // std::min

@@ -1,44 +1,43 @@
 // editor-widget.cc
 // code for editor-widget.h
 
-#include "editor-widget.h"             // this module
+#include "editor-widget.h"                       // this module
 
 // editor
-#include "debug-values.h"              // DEBUG_VALUES
-#include "editor-command.ast.gen.h"    // EditorCommand
-#include "editor-global.h"             // EditorGlobal
-#include "editor-window.h"             // EditorWindow
-#include "nearby-file.h"               // getNearbyFilename
-#include "qtbdffont.h"                 // QtBDFFont
-#include "qtguiutil.h"                 // keysString(QKeyEvent)
-#include "qtutil.h"                    // toString(QString)
-#include "styledb.h"                   // StyleDB
-#include "textcategory.h"              // LineCategories, etc.
-#include "textline.h"                  // TextLine
-#include "vfs-query-sync.h"            // VFS_QuerySync
+#include "debug-values.h"                        // DEBUG_VALUES
+#include "editor-command.ast.gen.h"              // EditorCommand
+#include "editor-global.h"                       // EditorGlobal
+#include "editor-window.h"                       // EditorWindow
+#include "nearby-file.h"                         // getNearbyFilename
+#include "styledb.h"                             // StyleDB
+#include "textcategory.h"                        // LineCategories, etc.
+#include "vfs-query-sync.h"                      // VFS_QuerySync
 
 // smqtutil
-#include "courB24_ISO8859_1.bdf.gen.h" // bdfFontData_courB24_ISO8859_1
-#include "courO24_ISO8859_1.bdf.gen.h" // bdfFontData_courO24_ISO8859_1
-#include "courR24_ISO8859_1.bdf.gen.h" // bdfFontData_courR24_ISO8859_1
-#include "editor14r.bdf.gen.h"         // bdfFontData_editor14r
-#include "editor14i.bdf.gen.h"         // bdfFontData_editor14i
-#include "editor14b.bdf.gen.h"         // bdfFontData_editor14b
-#include "minihex6.bdf.gen.h"          // bdfFontData_minihex6
-#include "qtutil.h"                    // SET_QOBJECT_NAME
+#include "smqtutil/courB24_ISO8859_1.bdf.gen.h"  // bdfFontData_courB24_ISO8859_1
+#include "smqtutil/courO24_ISO8859_1.bdf.gen.h"  // bdfFontData_courO24_ISO8859_1
+#include "smqtutil/courR24_ISO8859_1.bdf.gen.h"  // bdfFontData_courR24_ISO8859_1
+#include "smqtutil/editor14b.bdf.gen.h"          // bdfFontData_editor14b
+#include "smqtutil/editor14i.bdf.gen.h"          // bdfFontData_editor14i
+#include "smqtutil/editor14r.bdf.gen.h"          // bdfFontData_editor14r
+#include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
+#include "smqtutil/qtbdffont.h"                  // QtBDFFont
+#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent)
+#include "smqtutil/qtutil.h"                     // toString(QString)
+#include "smqtutil/qtutil.h"                     // SET_QOBJECT_NAME
 
 // smbase
-#include "array.h"                     // Array
-#include "bdffont.h"                   // BDFFont
-#include "dev-warning.h"               // DEV_WARNING
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
-#include "save-restore.h"              // SetRestore
-#include "nonport.h"                   // getMilliseconds
-#include "objcount.h"                  // CHECK_OBJECT_COUNT
-#include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // dirname
-#include "trace.h"                     // TRACE
-#include "xassert.h"                   // xassert
+#include "smbase/array.h"                        // Array
+#include "smbase/bdffont.h"                      // BDFFont
+#include "smbase/dev-warning.h"                  // DEV_WARNING
+#include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
+#include "smbase/save-restore.h"                 // SetRestore
+#include "smbase/nonport.h"                      // getMilliseconds
+#include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/strutil.h"                      // dirname
+#include "smbase/trace.h"                        // TRACE
+#include "smbase/xassert.h"                      // xassert
 
 // Qt
 #include <QApplication>
@@ -53,7 +52,7 @@
 #include <QPixmap>
 
 // libc++
-#include <algorithm>                   // std::min
+#include <algorithm>                             // std::min
 
 using namespace smbase;
 

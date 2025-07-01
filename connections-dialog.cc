@@ -8,13 +8,13 @@
 #include "vfs-connections.h"           // VFS_Connections
 
 // smqtutil
-#include "qtguiutil.h"                 // keysString
-#include "qtutil.h"                    // SET_QOBJECT_NAME, toQString
+#include "smqtutil/qtguiutil.h"        // keysString
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, toQString
 
 // smbase
-#include "container-util.h"            // smbase::contains
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "trace.h"                     // TRACE
+#include "smbase/container-util.h"     // smbase::contains
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/trace.h"              // TRACE
 
 // qt
 #include <QInputDialog>

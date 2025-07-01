@@ -6,9 +6,9 @@
 
 #include "command-runner-fwd.h"        // fwds for this module
 
-#include "refct-serf.h"                // SerfRefCount
-#include "sm-override.h"               // OVERRIDE
-#include "xassert.h"                   // xassertPrecondition
+#include "smbase/refct-serf.h"         // SerfRefCount
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/xassert.h"            // xassertPrecondition
 
 #include <QByteArray>
 #include <QEventLoop>

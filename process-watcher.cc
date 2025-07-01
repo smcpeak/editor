@@ -4,10 +4,10 @@
 #include "process-watcher.h"           // this module
 
 // smqtutil
-#include "qtutil.h"                    // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString)
 
 // smbase
-#include "exc.h"                       // GENERIC_CATCH_BEGIN
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN
 
 
 ProcessWatcher::ProcessWatcher(NamedTextDocument *doc)

@@ -2,11 +2,11 @@
 // external interface to highlighter provided by comment.lex
 // implementation in comment.lex's third section
 
-#ifndef COMMENT_H
-#define COMMENT_H
+#ifndef EDITOR_COMMENT_H
+#define EDITOR_COMMENT_H
 
-#include "inclexer.h"      // IncLexer
-#include "lex_hilite.h"    // LexHighlighter
+#include "inclexer.h"                  // IncLexer
+#include "lex_hilite.h"                // LexHighlighter
 
 // lexer context class defined in comment.yy.cc
 class CommentFlexLexer;
@@ -42,4 +42,4 @@ public:      // funcs
 };
 
 
-#endif // COMMENT_H
+#endif // EDITOR_COMMENT_H

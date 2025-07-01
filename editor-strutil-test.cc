@@ -4,8 +4,8 @@
 #include "editor-strutil.h"            // this module
 
 // smbase
-#include "sm-iostream.h"               // cout
-#include "sm-test.h"                   // USUAL_TEST_MAIN
+#include "smbase/sm-iostream.h"        // cout
+#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
 
 
 static void expectCIA(string const &text, int byteOffset,

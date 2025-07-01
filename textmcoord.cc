@@ -3,7 +3,7 @@
 
 #include "textmcoord.h"                // this module
 
-#include "sm-swap.h"                   // swap
+#include "smbase/sm-swap.h"            // swap
 
 
 // ------------------------ TextMCoord -----------------------------

@@ -12,8 +12,8 @@
 #include "vfs-msg.h"                   // VFS_Message
 
 // smbase
-#include "sm-file-util.h"              // SMFileUtil
-#include "str.h"                       // string
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/str.h"                // string
 
 // qt
 #include <QByteArray>

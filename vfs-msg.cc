@@ -4,8 +4,8 @@
 #include "vfs-msg.h"                   // this module
 
 // smbase
-#include "exc.h"                       // xformatdb, smbase::XSysError
-#include "flatutil.h"                  // xferEnum, Flatten, xferVectorBytewise
+#include "smbase/exc.h"                // xformatdb, smbase::XSysError
+#include "smbase/flatutil.h"           // xferEnum, Flatten, xferVectorBytewise
 
 using namespace smbase;
 

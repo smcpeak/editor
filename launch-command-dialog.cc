@@ -4,10 +4,10 @@
 #include "launch-command-dialog.h"     // this module
 
 // smqtutil
-#include "qtutil.h"                    // SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 
 // smbase
-#include "xassert.h"                   // xassert
+#include "smbase/xassert.h"            // xassert
 
 // Qt
 #include <QCheckBox>

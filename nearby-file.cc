@@ -4,11 +4,11 @@
 #include "nearby-file.h"               // this module
 
 // smbase
-#include "codepoint.h"                 // isDecimalDigit, isLetter, etc.
-#include "sm-file-util.h"              // SMFileUtil
-#include "string-util.h"               // prefixAll, suffixAll, join, doubleQuote
-#include "trace.h"                     // TRACE
-#include "vector-util.h"               // vecConvertElements, vecMapElements
+#include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/string-util.h"        // prefixAll, suffixAll, join, doubleQuote
+#include "smbase/trace.h"              // TRACE
+#include "smbase/vector-util.h"        // vecConvertElements, vecMapElements
 
 
 // Return true if 'c' is a digit for the purpose of the file name

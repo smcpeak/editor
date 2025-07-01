@@ -8,15 +8,15 @@
 #include "pixmaps.h"                   // g_editorPixmaps
 
 // smqtutil
-#include "qtguiutil.h"                 // keysString(QKeyEvent), messageBox
-#include "qtutil.h"                    // toQString, SET_QOBJECT_NAME
+#include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent), messageBox
+#include "smqtutil/qtutil.h"           // toQString, SET_QOBJECT_NAME
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "sm-file-util.h"              // SMFileUtil
-#include "strutil.h"                   // hasSubstring_insens_ascii
-#include "trace.h"                     // TRACE
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/strutil.h"            // hasSubstring_insens_ascii
+#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QKeyEvent>

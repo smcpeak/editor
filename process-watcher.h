@@ -9,7 +9,7 @@
 #include "named-td.h"                  // NamedTextDocument
 
 // smbase
-#include "datetime.h"                  // UnixTime
+#include "smbase/datetime.h"           // UnixTime
 
 
 // Monitor a child process and feed the output to a TextDocumentEditor.

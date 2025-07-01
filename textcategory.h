@@ -4,9 +4,9 @@
 #ifndef TEXTCATEGORY_H
 #define TEXTCATEGORY_H
 
-#include "sm-macros.h"     // DMEMB, CMEMB
-#include "array.h"         // ArrayStack
-#include "str.h"           // string
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/sm-macros.h"          // DMEMB, CMEMB
+#include "smbase/str.h"                // string
 
 class LineCategoryIter;
 

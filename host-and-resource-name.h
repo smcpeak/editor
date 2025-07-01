@@ -8,8 +8,8 @@
 #include "host-name.h"                 // HostName
 
 // smbase
-#include "sm-compare.h"                // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
-#include "str.h"                       // string
+#include "smbase/sm-compare.h"         // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
+#include "smbase/str.h"                // string
 
 // libc++
 #include <iosfwd>                      // std::ostream

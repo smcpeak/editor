@@ -4,11 +4,11 @@
 #include "td-core.h"                   // module to test
 
 // smbase
-#include "autofile.h"                  // AutoFILE
-#include "exc.h"                       // smbase::xmessage
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-macros.h"                 // IGNORE_RESULT
-#include "sm-test.h"                   // USUAL_MAIN, EXPECT_EQ
+#include "smbase/autofile.h"           // AutoFILE
+#include "smbase/exc.h"                // smbase::xmessage
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-macros.h"          // IGNORE_RESULT
+#include "smbase/sm-test.h"            // USUAL_MAIN, EXPECT_EQ
 
 // libc
 #include <assert.h>                    // assert

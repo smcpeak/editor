@@ -3,10 +3,10 @@
 
 #include "modal-dialog.h"              // this module
 
-#include "qtguiutil.h"                 // centerWindowOnWindow, messageBox
-#include "qtutil.h"                    // SET_OBJECT_NAME
+#include "smqtutil/qtguiutil.h"        // centerWindowOnWindow, messageBox
+#include "smqtutil/qtutil.h"           // SET_OBJECT_NAME
 
-#include "xassert.h"                   // xassert
+#include "smbase/xassert.h"            // xassert
 
 #include <qtcoreversion.h>             // QTCORE_VERSION
 

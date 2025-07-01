@@ -7,10 +7,10 @@
 #include "td-editor.h"                 // TextDocumentAndEditor
 
 // smbase
-#include "nonport.h"                   // getMilliseconds
-#include "sm-iostream.h"               // cout
-#include "sm-test.h"                   // USUAL_TEST_MAIN
-#include "trace.h"                     // TRACE_ARGS
+#include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/sm-iostream.h"        // cout
+#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
+#include "smbase/trace.h"              // TRACE_ARGS
 
 
 static void expectTotalMatches(TextSearch const &ts, int expect)

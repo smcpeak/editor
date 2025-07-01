@@ -11,10 +11,10 @@
 #include "vfs-msg-fwd.h"               // FOR_EACH_VFS_MESSAGE_TYPE, plus fwds for this module
 
 // smbase
-#include "flatten-fwd.h"               // Flatten
-#include "sm-file-util.h"              // SMFileUtil
-#include "str.h"                       // string
-#include "syserr.h"                    // smbase::XSysError
+#include "smbase/flatten-fwd.h"        // Flatten
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/str.h"                // string
+#include "smbase/syserr.h"             // smbase::XSysError
 
 // libc++
 #include <vector>                      // std::vector

@@ -10,7 +10,7 @@
 #include "vfs-msg.h"                   // VFS_FileStatusReply
 
 // smbase
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 // qt
 #include <QCoreApplication>

@@ -8,17 +8,17 @@
 #include "fasttime.h"                  // fastTimeMilliseconds
 
 // smqtutil
-#include "qtutil.h"                    // toQString(QString), operator<<(QString)
+#include "smqtutil/qtutil.h"           // toQString(QString), operator<<(QString)
 
 // smbase
-#include "dev-warning.h"               // DEV_WARNING
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "nonport.h"                   // getMilliseconds
-#include "objcount.h"                  // CHECK_OBJECT_COUNT(className)
-#include "sm-swap.h"                   // swap
-#include "string-util.h"               // endsWith
-#include "strutil.h"                   // stringTolower
-#include "trace.h"                     // TRACE
+#include "smbase/dev-warning.h"        // DEV_WARNING
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT(className)
+#include "smbase/sm-swap.h"            // swap
+#include "smbase/string-util.h"        // endsWith
+#include "smbase/strutil.h"            // stringTolower
+#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QRegularExpression>

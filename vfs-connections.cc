@@ -7,13 +7,13 @@
 #include "vfs-query.h"                 // FileSystemQuery
 
 // smbase
-#include "container-util.h"            // smbase::contains
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "map-util.h"                  // mapInsertUniqueMove, keySet
-#include "sm-file-util.h"              // SMFileUtil
-#include "trace.h"                     // TRACE
-#include "vector-util.h"               // vecEraseAll, vecToElementSet
-#include "xassert.h"                   // xfailure, xfailure_stringbc
+#include "smbase/container-util.h"     // smbase::contains
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/map-util.h"           // mapInsertUniqueMove, keySet
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/trace.h"              // TRACE
+#include "smbase/vector-util.h"        // vecEraseAll, vecToElementSet
+#include "smbase/xassert.h"            // xfailure, xfailure_stringbc
 
 // libc++
 #include <set>                         // std::set

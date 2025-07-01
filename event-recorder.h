@@ -5,8 +5,8 @@
 #define EVENT_RECORDER_H
 
 // smbase
-#include "sm-override.h"               // OVERRIDE
-#include "str.h"                       // string, stringBuilder
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/str.h"                // string, stringBuilder
 
 // Qt
 #include <QKeyEvent>

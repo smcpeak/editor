@@ -8,10 +8,10 @@
 #include "td-core.h"                   // TextDocumentCore
 
 // smbase
-#include "array.h"                     // ObjArrayStack
-#include "exc.h"                       // smbase::XMessage
-#include "sm-override.h"               // OVERRIDE
-#include "stringb.h"                   // stringb
+#include "smbase/array.h"              // ObjArrayStack
+#include "smbase/exc.h"                // smbase::XMessage
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/stringb.h"            // stringb
 
 
 // fwd in this file

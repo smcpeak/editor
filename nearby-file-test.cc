@@ -4,10 +4,10 @@
 #include "nearby-file.h"               // module to test
 
 // smbase
-#include "container-util.h"            // smbase::contains
-#include "sm-file-util.h"              // TestSMFileUtil
-#include "sm-iostream.h"               // cout, etc.
-#include "sm-test.h"                   // USUAL_TEST_MAIN
+#include "smbase/container-util.h"     // smbase::contains
+#include "smbase/sm-file-util.h"       // TestSMFileUtil
+#include "smbase/sm-iostream.h"        // cout, etc.
+#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
 
 // libc++
 #include <set>                         // std::set

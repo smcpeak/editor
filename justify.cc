@@ -3,7 +3,7 @@
 
 #include "justify.h"                   // this module
 
-#include "qtutil.h"                    // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString)
 
 #include <QRegularExpression>
 

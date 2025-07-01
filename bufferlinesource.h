@@ -8,8 +8,8 @@
 #include "td-core.h"                   // TextDocumentCore
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "refct-serf.h"                // RCSerf
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/refct-serf.h"         // RCSerf
 
 
 // state for supplying flex with input from a line of a buffer

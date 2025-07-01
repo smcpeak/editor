@@ -10,12 +10,12 @@
 #include "textmcoord.h"                // TextMCoord
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "rcserflist.h"                // RCSerfList
-#include "refct-serf.h"                // SerfRefCount
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sobjlist.h"                  // SObjList
-#include "str.h"                       // string
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/rcserflist.h"         // RCSerfList
+#include "smbase/refct-serf.h"         // SerfRefCount
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sobjlist.h"           // SObjList
+#include "smbase/str.h"                // string
 
 // libc++
 #include <vector>                      // std::vector

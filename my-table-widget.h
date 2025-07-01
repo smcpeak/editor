@@ -5,8 +5,8 @@
 #define MY_TABLE_WIDGET_H
 
 // smbase
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-override.h"        // OVERRIDE
 
 // qt
 #include <QModelIndex>

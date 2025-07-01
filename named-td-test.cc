@@ -4,11 +4,11 @@
 #include "named-td.h"                  // module to test
 
 // smbase
-#include "nonport.h"                   // fileOrDirectoryExists, removeFile
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sm-override.h"               // OVERRIDE
-#include "sm-test.h"                   // USUAL_MAIN
+#include "smbase/nonport.h"            // fileOrDirectoryExists, removeFile
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/sm-test.h"            // USUAL_MAIN
 
 #include <fstream>                     // ofstream
 

@@ -8,7 +8,7 @@
 #include "gap.h"                       // GapArray
 
 // smbase
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 
 // Gap array of nullable owner pointers.

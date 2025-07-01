@@ -6,8 +6,8 @@
 
 #include "command-runner.h"            // CommandRunner
 
-#include "refct-serf.h"                // RCSerf
-#include "sm-noexcept.h"               // NOEXCEPT
+#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
 
 #include <QEventLoop>
 

@@ -5,10 +5,10 @@
 #define EVENT_REPLAY_H
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "refct-serf.h"                // SerfRefCount
-#include "sm-override.h"               // OVERRIDE
-#include "str.h"                       // string
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/refct-serf.h"         // SerfRefCount
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/str.h"                // string
 
 // Qt
 #include <QEvent>

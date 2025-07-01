@@ -7,7 +7,7 @@
 #include "vfs-connections.h"           // module under test
 
 // smbase
-#include "str.h"                       // string
+#include "smbase/str.h"                // string
 
 // qt
 #include <QCoreApplication>

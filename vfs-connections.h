@@ -12,7 +12,7 @@
 #include "vfs-query-fwd.h"             // FileSystemQuery
 
 // smbase
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 // qt
 #include <QObject>

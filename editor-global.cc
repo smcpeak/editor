@@ -14,19 +14,19 @@
 #include "vfs-query-sync.h"            // readFileSynchronously
 
 // smqtutil
-#include "qtutil.h"                    // toQString
-#include "timer-event-loop.h"          // sleepWhilePumpingEvents
+#include "smqtutil/qtutil.h"           // toQString
+#include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
 // smbase
-#include "dev-warning.h"               // g_devWarningHandler
-#include "exc.h"                       // smbase::{XBase, xformat}
-#include "objcount.h"                  // CheckObjectCount
-#include "save-restore.h"              // SET_RESTORE, SetRestore
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-test.h"                   // PVAL
-#include "string-util.h"               // beginsWith
-#include "strtokp.h"                   // StrtokParse
-#include "trace.h"                     // TRACE
+#include "smbase/dev-warning.h"        // g_devWarningHandler
+#include "smbase/exc.h"                // smbase::{XBase, xformat}
+#include "smbase/objcount.h"           // CheckObjectCount
+#include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-test.h"            // PVAL
+#include "smbase/string-util.h"        // beginsWith
+#include "smbase/strtokp.h"            // StrtokParse
+#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QKeyEvent>

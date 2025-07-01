@@ -9,9 +9,9 @@
 #include "inclexer.h"                  // IncLexer, LexerState
 
 // smbase
-#include "refct-serf.h"                // RCSerf
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-override.h"        // OVERRIDE
 
 
 // the highlighter

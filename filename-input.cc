@@ -4,17 +4,17 @@
 #include "filename-input.h"            // this module
 
 // smqtutil
-#include "qtguiutil.h"                 // messageBox
-#include "qtutil.h"                    // toString(QString)
-#include "sm-line-edit.h"              // SMLineEdit
+#include "smqtutil/qtguiutil.h"        // messageBox
+#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/sm-line-edit.h"     // SMLineEdit
 
 // smbase
-#include "save-restore.h"              // SetRestore
-#include "sm-file-util.h"              // SMFileUtil
-#include "string-util.h"               // beginsWith
-#include "strutil.h"                   // dirname, compareStringPtrs
-#include "trace.h"                     // TRACE
-#include "vector-util.h"               // vecFindIndex
+#include "smbase/save-restore.h"       // SetRestore
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/string-util.h"        // beginsWith
+#include "smbase/strutil.h"            // dirname, compareStringPtrs
+#include "smbase/trace.h"              // TRACE
+#include "smbase/vector-util.h"        // vecFindIndex
 
 // libc++
 #include <algorithm>                   // std::min

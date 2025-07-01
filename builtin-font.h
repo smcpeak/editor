@@ -1,11 +1,11 @@
 // builtin-font.h
 // BuiltinFont enumeration.
 
-#ifndef BUILTIN_FONT_H
-#define BUILTIN_FONT_H
+#ifndef EDITOR_BUILTIN_FONT_H
+#define EDITOR_BUILTIN_FONT_H
 
 // smbase
-#include "sm-macros.h"                 // FOR_EACH_ENUM_ELEMENT
+#include "smbase/sm-macros.h"          // FOR_EACH_ENUM_ELEMENT
 
 
 // Enumeration of the bitmap fonts that are built in to the executable.
@@ -23,4 +23,5 @@ enum BuiltinFont {
 // choose among the fonts.
 char const *builtinFontName(BuiltinFont bfont);
 
-#endif // BUILTIN_FONT_H
+
+#endif // EDITOR_BUILTIN_FONT_H

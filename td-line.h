@@ -4,9 +4,9 @@
 #ifndef TD_LINE_H
 #define TD_LINE_H
 
-#include <stddef.h>                    // NULL
+#include "smbase/sm-macros.h"          // DMEMB, CMEMB
 
-#include "sm-macros.h"                 // DMEMB, CMEMB
+#include <stddef.h>                    // NULL
 
 // Holds one line of text.  A line is a sequence of bytes (octets).
 //

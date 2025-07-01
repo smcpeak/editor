@@ -12,10 +12,10 @@
 #include "vfs-connections.h"           // VFS_Connections
 
 // smqtutil
-#include "sm-line-edit-fwd.h"          // SMLineEdit
+#include "smqtutil/sm-line-edit-fwd.h" // SMLineEdit
 
 // smbase
-#include "refct-serf.h"                // RCSerf
+#include "smbase/refct-serf.h"         // RCSerf
 
 // libc++
 #include <vector>                      // std::vector

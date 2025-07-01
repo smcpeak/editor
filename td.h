@@ -9,9 +9,9 @@
 #include "td-core.h"                   // TextDocumentCore
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "objstack.h"                  // ObjStack
-#include "refct-serf.h"                // RCSerf
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/objstack.h"           // ObjStack
+#include "smbase/refct-serf.h"         // RCSerf
 
 // libc++
 #include <vector>                      // std::vector

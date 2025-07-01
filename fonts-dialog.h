@@ -10,8 +10,8 @@
 #include "modal-dialog.h"              // ModalDialog
 
 // smbase
-#include "refct-serf.h"                // RCSerf
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-override.h"        // OVERRIDE
 
 
 class QComboBox;

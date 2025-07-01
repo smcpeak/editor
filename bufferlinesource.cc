@@ -3,7 +3,7 @@
 
 #include "bufferlinesource.h"          // this module
 
-// smbase
+// editor
 #include "td-core.h"                   // TextDocumentCore
 
 // libc++

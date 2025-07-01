@@ -5,8 +5,8 @@
 #define EDITOR_HOST_NAME_H
 
 // smbase
-#include "sm-compare.h"                // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
-#include "str.h"                       // string
+#include "smbase/sm-compare.h"         // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
+#include "smbase/str.h"                // string
 
 // libc++
 #include <iosfwd>                      // std::ostream

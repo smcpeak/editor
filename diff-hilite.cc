@@ -7,7 +7,7 @@
 #include "textcategory.h"              // LineCategories
 
 // smbase
-#include "array.h"                     // ArrayStack
+#include "smbase/array.h"              // ArrayStack
 
 
 string DiffHighlighter::highlighterName() const

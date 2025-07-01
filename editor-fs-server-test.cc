@@ -4,14 +4,14 @@
 #include "editor-fs-server-test.h"     // this module
 
 // smqtutil
-#include "qtutil.h"                    // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString)
 
 // smbase
-#include "exc.h"                       // smbase::XBase
-#include "sm-test.h"                   // PVAL
-#include "string-util.h"               // doubleQuote
-#include "syserr.h"                    // smbase::XSysError
-#include "trace.h"                     // traceAddFromEnvVar
+#include "smbase/exc.h"                // smbase::XBase
+#include "smbase/sm-test.h"            // PVAL
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/syserr.h"             // smbase::XSysError
+#include "smbase/trace.h"              // traceAddFromEnvVar
 
 using namespace smbase;
 

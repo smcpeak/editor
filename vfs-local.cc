@@ -4,10 +4,10 @@
 #include "vfs-local.h"                 // this module
 
 // smbase
-#include "exc.h"                       // smbase::XBase
-#include "nonport.h"                   // getFileModificationTime
-#include "sm-file-util.h"              // SMFileUtil
-#include "syserr.h"                    // smbase::XSysError
+#include "smbase/exc.h"                // smbase::XBase
+#include "smbase/nonport.h"            // getFileModificationTime
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/syserr.h"             // smbase::XSysError
 
 using namespace smbase;
 

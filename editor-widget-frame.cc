@@ -9,11 +9,11 @@
 #include "editor-window.h"             // EditorWindow
 
 // smqtutil
-#include "qhboxframe.h"                // QHBoxFrame
-#include "qtutil.h"                    // disconnectSignalSender
+#include "smqtutil/qhboxframe.h"       // QHBoxFrame
+#include "smqtutil/qtutil.h"           // disconnectSignalSender
 
 // smbase
-#include "objcount.h"                  // CHECK_OBJECT_COUNT
+#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 
 // qt
 #include <QGridLayout>

@@ -4,13 +4,13 @@
 #include "named-td-list.h"             // this module
 
 // smbase
-#include "container-util.h"            // smbase::insertUnique
-#include "save-restore.h"              // SetRestore
-#include "sm-file-util.h"              // SMFileUtil
-#include "stringset.h"                 // StringSet
-#include "strtokp.h"                   // StrtokParse
-#include "strutil.h"                   // dirname
-#include "trace.h"                     // TRACE
+#include "smbase/container-util.h"     // smbase::insertUnique
+#include "smbase/save-restore.h"       // SetRestore
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/stringset.h"          // StringSet
+#include "smbase/strtokp.h"            // StrtokParse
+#include "smbase/strutil.h"            // dirname
+#include "smbase/trace.h"              // TRACE
 
 // libc++
 #include <set>                         // std::set

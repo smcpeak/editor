@@ -21,7 +21,6 @@
 #include "ocaml_hilite.h"              // OCaml_Highlighter
 #include "pixmaps.h"                   // g_editorPixmaps
 #include "python_hilite.h"             // Python_Highlighter
-#include "qhboxframe.h"                // QHBoxFrame
 #include "sar-panel.h"                 // SearchAndReplacePanel
 #include "status.h"                    // StatusDisplay
 #include "td-editor.h"                 // TextDocumentEditor
@@ -30,21 +29,22 @@
 #include "vfs-msg.h"                   // VFS_ReadFileRequest
 
 // smqtutil
-#include "qtguiutil.h"                 // CursorSetRestore
-#include "qtutil.h"                    // toQString
+#include "smqtutil/qhboxframe.h"       // QHBoxFrame
+#include "smqtutil/qtguiutil.h"        // CursorSetRestore
+#include "smqtutil/qtutil.h"           // toQString
 
 // smbase
-#include "exc.h"                       // XOpen, GENERIC_CATCH_BEGIN/END
-#include "mysig.h"                     // printSegfaultAddrs
-#include "nonport.h"                   // fileOrDirectoryExists
-#include "objcount.h"                  // CHECK_OBJECT_COUNT
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-test.h"                   // PVAL
-#include "string-util.h"               // endsWith
-#include "stringb.h"                   // stringbc
-#include "strutil.h"                   // dirname
-#include "syserr.h"                    // smbase::XSysError
-#include "trace.h"                     // TRACE_ARGS
+#include "smbase/exc.h"                // XOpen, GENERIC_CATCH_BEGIN/END
+#include "smbase/mysig.h"              // printSegfaultAddrs
+#include "smbase/nonport.h"            // fileOrDirectoryExists
+#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-test.h"            // PVAL
+#include "smbase/string-util.h"        // endsWith
+#include "smbase/stringb.h"            // stringbc
+#include "smbase/strutil.h"            // dirname
+#include "smbase/syserr.h"             // smbase::XSysError
+#include "smbase/trace.h"              // TRACE_ARGS
 
 // libc
 #include <string.h>                    // strrchr

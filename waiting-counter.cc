@@ -3,7 +3,7 @@
 
 #include "waiting-counter.h"           // this module
 
-#include "xassert.h"                   // xassert
+#include "smbase/xassert.h"            // xassert
 
 
 int g_waitingCounter = 0;

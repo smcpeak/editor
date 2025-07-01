@@ -1,10 +1,12 @@
 // c_hilite.cc
 // test code for c_hilite.h
 
-#include "c_hilite.h"      // module to test
-#include "comment.h"       // another module to test
-#include "sm-test.h"       // USUAL_MAIN
-#include "trace.h"         // traceAddSys
+#include "c_hilite.h"                  // module to test
+#include "comment.h"                   // another module to test
+
+#include "smbase/sm-test.h"            // USUAL_MAIN
+#include "smbase/trace.h"              // traceAddSys
+
 
 LexHighlighter * /*owner*/ makeC_Highlighter(TextDocumentCore const &buf)
 {

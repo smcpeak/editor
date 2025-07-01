@@ -8,19 +8,19 @@
 #include "waiting-counter.h"           // g_waitingCounter
 
 // smqtutil
-#include "qtguiutil.h"                 // getKeyPressFromString
-#include "qtutil.h"                    // operator<<(QString)
-#include "timer-event-loop.h"          // sleepWhilePumpingEvents
+#include "smqtutil/qtguiutil.h"        // getKeyPressFromString
+#include "smqtutil/qtutil.h"           // operator<<(QString)
+#include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
 // smbase
-#include "c-string-reader.h"           // parseQuotedCString
-#include "exc.h"                       // smbase::{XBase, XMessage}
-#include "nonport.h"                   // getMilliseconds
-#include "sm-file-util.h"              // SMFileUtil
-#include "string-util.h"               // doubleQuote
-#include "stringb.h"                   // stringb
-#include "syserr.h"                    // xsyserror
-#include "trace.h"                     // TRACE
+#include "smbase/c-string-reader.h"    // parseQuotedCString
+#include "smbase/exc.h"                // smbase::{XBase, XMessage}
+#include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/stringb.h"            // stringb
+#include "smbase/syserr.h"             // xsyserror
+#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QAbstractButton>

@@ -4,12 +4,12 @@
 #include "vfs-query-sync.h"            // this module
 
 // smqtutil
-#include "qtguiutil.h"                 // messageBox
-#include "qtutil.h"                    // qstringb
+#include "smqtutil/qtguiutil.h"        // messageBox
+#include "smqtutil/qtutil.h"           // qstringb
 
 // smbase
-#include "trace.h"                     // TRACE
-#include "xassert.h"                   // xassert
+#include "smbase/trace.h"              // TRACE
+#include "smbase/xassert.h"            // xassert
 
 // qt
 #include <QCursor>

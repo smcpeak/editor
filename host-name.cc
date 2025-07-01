@@ -4,7 +4,7 @@
 #include "host-name.h"                 // this module
 
 // smbase
-#include "xassert.h"                   // xassert
+#include "smbase/xassert.h"            // xassert
 
 // libc++
 #include <iostream>

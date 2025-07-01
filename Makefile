@@ -53,11 +53,10 @@ CCFLAGS := -g -Wall -std=c++17
 # when files in smqtutil include "smbase/...", that will work.
 CCFLAGS += -I.
 
-# For now, continue to search in smbase as well.  My goal is to
-# eventually remove this.
-CCFLAGS += -I$(SMBASE)
+# #includes in the `editor` repository should all use explicit directory
+# prefixes to access files in subdirectories, so they are not passed as
+# -I arguments.
 
-CCFLAGS += -I$(SMQTUTIL)
 CCFLAGS += $(QT_CCFLAGS)
 CCFLAGS += $(EXTRA_CCFLAGS)
 

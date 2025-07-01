@@ -6,8 +6,8 @@
 
 #include "td-editor.h"                 // TextDocumentEditor
 
-#include "array.h"                     // ArrayStack
-#include "str.h"                       // string
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/str.h"                // string
 
 
 // Given 'originalContent', rearrange its whitespace to obtain a

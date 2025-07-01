@@ -1,12 +1,13 @@
 // styledb.h
 // database of text styles, indexed by 'enum TextCategory' from style.h
 
-#ifndef STYLEDB_H
-#define STYLEDB_H
+#ifndef EDITOR_STYLEDB_H
+#define EDITOR_STYLEDB_H
 
 #include "textcategory.h"              // TextCategory
-#include "sm-macros.h"                 // DMEMB
-#include "array.h"                     // GrowArray
+
+#include "smbase/sm-macros.h"          // DMEMB
+#include "smbase/array.h"              // GrowArray
 
 #include <qcolor.h>                    // QColor
 
@@ -55,4 +56,4 @@ public:
 };
 
 
-#endif // STYLEDB_H
+#endif // EDITOR_STYLEDB_H

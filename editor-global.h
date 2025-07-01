@@ -18,10 +18,10 @@
 #include "vfs-connections.h"           // VFS_Connections
 
 // smbase
-#include "objlist.h"                   // ObjList
-#include "owner.h"                     // Owner
-#include "refct-serf.h"                // SerfRefCount
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/objlist.h"            // ObjList
+#include "smbase/owner.h"              // Owner
+#include "smbase/refct-serf.h"         // SerfRefCount
+#include "smbase/sm-override.h"        // OVERRIDE
 
 // Qt
 #include <QApplication>

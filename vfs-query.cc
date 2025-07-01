@@ -7,16 +7,16 @@
 #include "waiting-counter.h"           // adjWaitingCounter
 
 // smqtutil
-#include "qtutil.h"                    // toString(QString), printQByteArray
+#include "smqtutil/qtutil.h"           // toString(QString), printQByteArray
 
 // smbase
-#include "bflatten.h"                  // StreamFlatten
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "flatten.h"                   // serializeIntNBO
-#include "nonport.h"                   // getFileModificationTime
-#include "overflow.h"                  // convertWithoutLoss
-#include "sm-macros.h"                 // DEFINE_ENUMERATION_TO_STRING
-#include "trace.h"                     // TRACE
+#include "smbase/bflatten.h"           // StreamFlatten
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/flatten.h"            // serializeIntNBO
+#include "smbase/nonport.h"            // getFileModificationTime
+#include "smbase/overflow.h"           // convertWithoutLoss
+#include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING
+#include "smbase/trace.h"              // TRACE
 
 // qt
 #include <QCoreApplication>

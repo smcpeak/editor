@@ -9,14 +9,14 @@
 #include "td-core.h"                   // TextDocumentCore
 
 // smbase
-#include "array.h"                     // ArrayStack
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
-#include "owner.h"                     // Owner
-#include "refct-serf.h"                // RCSerf
-#include "sm-iostream.h"               // ostream
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sm-override.h"               // OVERRIDE
-#include "str.h"                       // string
+#include "smbase/array.h"              // ArrayStack
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
+#include "smbase/owner.h"              // Owner
+#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-iostream.h"        // ostream
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/str.h"                // string
 
 class QRegularExpression;
 

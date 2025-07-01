@@ -2,8 +2,10 @@
 // Test code for makefile_hilite.{h,lex}.
 
 #include "makefile_hilite.h"           // module to test
+
 #include "td-editor.h"                 // TextDocumentAndEditor
-#include "sm-test.h"                   // USUAL_MAIN
+
+#include "smbase/sm-test.h"            // USUAL_MAIN
 
 
 void entry()

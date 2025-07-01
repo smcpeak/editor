@@ -12,9 +12,9 @@
 #include "named-td-list.h"             // NamedTextDocumentList
 
 // smbase
-#include "refct-serf.h"                // RCSerf
-#include "sm-iostream.h"               // ostream
-#include "sm-noexcept.h"               // NOEXCEPT
+#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-iostream.h"        // ostream
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
 
 // libc++
 #include <vector>                      // std::vector

@@ -4,8 +4,8 @@
 #include "host-and-resource-name.h"    // this module
 
 // smbase
-#include "string-util.h"               // doubleQuote
-#include "xassert.h"                   // xassert
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/xassert.h"            // xassert
 
 
 HostAndResourceName::HostAndResourceName()

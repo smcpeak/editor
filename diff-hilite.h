@@ -8,7 +8,7 @@
 #include "hilite.h"                    // Highlighter
 
 // smbase
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/sm-override.h"        // OVERRIDE
 
 
 // A highlighter for diff output.

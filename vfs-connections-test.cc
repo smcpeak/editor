@@ -7,11 +7,11 @@
 #include "vfs-msg.h"                   // VFS_Echo
 
 // smqtutil
-#include "qtutil.h"                    // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString)
 
 // smbase
-#include "exc.h"                       // smbase::XBase, xfatal
-#include "trace.h"                     // traceAddFromEnvVar
+#include "smbase/exc.h"                // smbase::XBase, xfatal
+#include "smbase/trace.h"              // traceAddFromEnvVar
 
 // libc++
 #include <utility>                     // std::move

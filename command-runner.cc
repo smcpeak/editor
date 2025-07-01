@@ -4,13 +4,13 @@
 #include "command-runner.h"            // this module
 
 // smqtutil
-#include "qtutil.h"                    // qstringb
+#include "smqtutil/qtutil.h"           // qstringb
 
 // smbase
-#include "codepoint.h"                 // isShellMetacharacter
-#include "sm-iostream.h"               // cerr, etc.
-#include "trace.h"                     // TRACE
-#include "xassert.h"                   // xassertPrecondition, xassert
+#include "smbase/codepoint.h"          // isShellMetacharacter
+#include "smbase/sm-iostream.h"        // cerr, etc.
+#include "smbase/trace.h"              // TRACE
+#include "smbase/xassert.h"            // xassertPrecondition, xassert
 
 // Qt
 #include <qtcoreversion.h>             // QTCORE_VERSION

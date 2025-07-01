@@ -4,10 +4,10 @@
 #include "td.h"                        // this module
 
 // smbase
-#include "mysig.h"                     // printSegfaultAddrs
-#include "objcount.h"                  // CHECK_OBJECT_COUNT
-#include "sm-macros.h"                 // DEFINE_ENUMERATION_TO_STRING
-#include "trace.h"                     // TRACE
+#include "smbase/mysig.h"              // printSegfaultAddrs
+#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING
+#include "smbase/trace.h"              // TRACE
 
 
 DEFINE_ENUMERATION_TO_STRING(

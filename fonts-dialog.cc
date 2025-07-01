@@ -3,14 +3,14 @@
 
 #include "fonts-dialog.h"              // this module
 
+// editor
+#include "editor-global.h"             // EditorGlobal
+
 // smqtutil
-#include "qtutil.h"                    // SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 
 // smbase
-#include "xassert.h"                   // xassert
-
-//  editor
-#include "editor-global.h"             // EditorGlobal
+#include "smbase/xassert.h"            // xassert
 
 // Qt
 #include <QComboBox>

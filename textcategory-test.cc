@@ -3,8 +3,8 @@
 
 #include "textcategory.h"              // module under test
 
-#include "sm-test.h"                   // USUAL_MAIN
-#include "sm-iostream.h"               // cout
+#include "smbase/sm-iostream.h"        // cout
+#include "smbase/sm-test.h"            // USUAL_MAIN
 
 
 static void expect(LineCategories const &category, char const *str)

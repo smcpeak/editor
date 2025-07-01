@@ -1,8 +1,8 @@
 // hilite.h
 // syntax highlighting interface
 
-#ifndef HILITE_H
-#define HILITE_H
+#ifndef EDITOR_HILITE_H
+#define EDITOR_HILITE_H
 
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "td-editor.h"                 // TextDocumentEditor
@@ -43,4 +43,4 @@ public:
 };
 
 
-#endif // HILITE_H
+#endif // EDITOR_HILITE_H

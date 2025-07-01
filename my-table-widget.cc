@@ -4,11 +4,11 @@
 #include "my-table-widget.h"           // this module
 
 // smqtutil
-#include "qtguiutil.h"                 // keysString(QKeyEvent)
+#include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent)
 
 // smbase
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "trace.h"                     // TRACE
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QKeyEvent>

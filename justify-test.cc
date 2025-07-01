@@ -4,7 +4,7 @@
 #include "justify.h"                   // module to test
 
 // smbase
-#include "sm-test.h"                   // USUAL_TEST_MAIN
+#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
 
 // libc
 #include <assert.h>                    // assert

@@ -5,7 +5,7 @@
 #define EDITOR_WAITING_COUNTER_H
 
 // smbase
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 
 // This is for use by EventReplay (event-replay.h).  It is not a member

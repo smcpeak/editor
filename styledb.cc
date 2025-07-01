@@ -1,7 +1,7 @@
 // styledb.cc
 // code for styledb.h
 
-#include "styledb.h"     // this module
+#include "styledb.h"                   // this module
 
 StyleDB::StyleDB()
   : arr(NUM_STANDARD_TEXT_CATEGORIES)           // initial size

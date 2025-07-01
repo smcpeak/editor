@@ -4,8 +4,8 @@
 #ifndef TEXTMCOORD_H
 #define TEXTMCOORD_H
 
-#include "sm-macros.h"                 // DMEMB
-#include "str.h"                       // stringBuilder
+#include "smbase/sm-macros.h"          // DMEMB
+#include "smbase/str.h"                // stringBuilder
 
 #include <iostream>                    // std::ostream
 

@@ -8,12 +8,12 @@
 #include "editor-widget.h"             // EditorWidget
 
 // smqtutil
-#include "qtutil.h"                    // toString, doubleQuote(QString)
+#include "smqtutil/qtutil.h"           // toString, doubleQuote(QString)
 
 // smbase
-#include "codepoint.h"                 // isUppercaseLetter
-#include "save-restore.h"              // SetRestore
-#include "trace.h"                     // TRACE
+#include "smbase/codepoint.h"          // isUppercaseLetter
+#include "smbase/save-restore.h"       // SetRestore
+#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QComboBox>

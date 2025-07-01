@@ -9,7 +9,7 @@
 #include "lex_hilite.h"                // LexHighlighter
 
 // smbase
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/sm-override.h"        // OVERRIDE
 
 // lexer context class defined in c_hilite.yy.cc
 class C_FlexLexer;

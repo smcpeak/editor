@@ -1,14 +1,14 @@
 // textinput.h
 // TextInputDialog class.
 
-#ifndef TEXTINPUT_H
-#define TEXTINPUT_H
+#ifndef EDITOR_TEXTINPUT_H
+#define EDITOR_TEXTINPUT_H
 
 // editor
 #include "modal-dialog.h"              // ModalDialog
 
 // smbase
-#include "sm-override.h"               // OVERRIDE
+#include "smbase/sm-override.h"        // OVERRIDE
 
 // Qt
 #include <QString>
@@ -89,4 +89,4 @@ public:      // funcs
   void accept() OVERRIDE;
 };
 
-#endif // TEXTINPUT_H
+#endif // EDITOR_TEXTINPUT_H

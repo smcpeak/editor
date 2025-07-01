@@ -4,12 +4,12 @@
 #include "named-td.h"                  // this module
 
 // smbase
-#include "dev-warning.h"               // DEV_WARNING
-#include "objcount.h"                  // CHECK_OBJECT_COUNT
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-macros.h"                 // CMEMB
-#include "string-util.h"               // replaceAll
-#include "trace.h"                     // TRACE
+#include "smbase/dev-warning.h"        // DEV_WARNING
+#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-macros.h"          // CMEMB
+#include "smbase/string-util.h"        // replaceAll
+#include "smbase/trace.h"              // TRACE
 
 
 int NamedTextDocument::s_objectCount = 0;

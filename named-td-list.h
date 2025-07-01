@@ -8,11 +8,11 @@
 #include "named-td.h"                  // NamedTextDocument
 
 // smbase
-#include "array.h"                     // ObjArrayStack
-#include "sm-macros.h"                 // NO_OBJECT_COPIES
-#include "refct-serf.h"                // SerfRefCount
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "sobjlist.h"                  // SObjList
+#include "smbase/array.h"              // ObjArrayStack
+#include "smbase/refct-serf.h"         // SerfRefCount
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sobjlist.h"           // SObjList
 
 
 // Forward in this file.

@@ -4,11 +4,11 @@
 #include "td-editor.h"                 // module to test
 
 // smbase
-#include "datablok.h"                  // DataBlock
-#include "nonport.h"                   // removeFile
-#include "string-util.h"               // doubleQuote
-#include "sm-test.h"                   // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
-#include "trace.h"                     // traceProcessArg
+#include "smbase/datablok.h"           // DataBlock
+#include "smbase/nonport.h"            // removeFile
+#include "smbase/sm-test.h"            // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/trace.h"              // traceProcessArg
 
 // libc
 #include <stdio.h>                     // printf

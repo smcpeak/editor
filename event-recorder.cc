@@ -6,16 +6,14 @@
 // editor
 #include "event-replay.h"              // EventReplayQueryable
 
-// smbase
-#include "dev-warning.h"               // DEV_WARNING
-#include "syserr.h"                    // smbase::xsyserror
-
 // smqtutil
-#include "qtguiutil.h"                 // keysString(QKeyEvent)
-#include "qtutil.h"                    // operator<<(QString), qObjectPath, isModifierKey
+#include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent)
+#include "smqtutil/qtutil.h"           // operator<<(QString), qObjectPath, isModifierKey
 
 // smbase
-#include "string-util.h"               // doubleQuote
+#include "smbase/dev-warning.h"        // DEV_WARNING
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/syserr.h"             // smbase::xsyserror
 
 // Qt
 #include <QApplication>

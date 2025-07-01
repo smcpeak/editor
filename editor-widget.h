@@ -18,26 +18,26 @@
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
-#include "qtguiutil.h"                           // unhandledExceptionMsgbox
+#include "smqtutil/qtguiutil.h"                  // unhandledExceptionMsgbox
 
 // smbase
-#include "exc.h"                                 // smbase::XBase
-#include "owner.h"                               // Owner
-#include "refct-serf.h"                          // RCSerf
-#include "sm-noexcept.h"                         // NOEXCEPT
+#include "smbase/exc.h"                          // smbase::XBase
+#include "smbase/owner.h"                        // Owner
+#include "smbase/refct-serf.h"                   // RCSerf
+#include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
 
 // Qt
 #include <QWidget>
 
 
-class QtBDFFont;                       // qtbdffont.h
-class SearchAndReplacePanel;           // sar-panel.h
-class StyleDB;                         // styledb.h
+class QtBDFFont;                                 // qtbdffont.h
+class SearchAndReplacePanel;                     // sar-panel.h
+class StyleDB;                                   // styledb.h
 
 class QImage;
-class QLabel;                          // qlabel.h
-class QRangeControl;                   // qrangecontrol.h
+class QLabel;
+class QRangeControl;
 
 
 // Widget to edit the contents of text files.  The widget shows and

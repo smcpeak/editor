@@ -4,7 +4,7 @@
 #include "gap.h"                       // module to test
 
 // smbase
-#include "sm-test.h"                   // ARGS_TEST_MAIN
+#include "smbase/sm-test.h"            // ARGS_TEST_MAIN
 
 // libc
 #include <stdio.h>                     // printf

@@ -1,9 +1,9 @@
 // status.cc
 // code for status.h
 
-#include "status.h"          // this module
+#include "status.h"                    // this module
 
-#include "trace.h"           // TRACE
+#include "smbase/trace.h"              // TRACE
 
 #include <QHBoxLayout>
 #include <QLabel>

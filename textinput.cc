@@ -3,9 +3,10 @@
 
 #include "textinput.h"                 // this module
 
-#include "qtutil.h"                    // toString(QString)
-#include "trace.h"                     // TRACE
-#include "xassert.h"                   // xassert
+#include "smqtutil/qtutil.h"           // toString(QString)
+
+#include "smbase/trace.h"              // TRACE
+#include "smbase/xassert.h"            // xassert
 
 #include <QComboBox>
 #include <QHBoxLayout>

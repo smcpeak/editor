@@ -9,7 +9,7 @@
 #define EDITOR_STRUTIL_H
 
 // smbase
-#include "str.h"                       // string
+#include "smbase/str.h"                // string
 
 
 // If the code point at text[byteOffset] is a C identifier character,

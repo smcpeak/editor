@@ -1,11 +1,11 @@
 // modal-dialog.h
 // Declare ModalDialog class.
 
-#ifndef MODAL_DIALOG_H
-#define MODAL_DIALOG_H
+#ifndef EDITOR_MODAL_DIALOG_H
+#define EDITOR_MODAL_DIALOG_H
 
-#include "sm-macros.h"                 // NULLABLE
-#include "sm-noexcept.h"               // NOEXCEPT
+#include "smbase/sm-macros.h"          // NULLABLE
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
 
 #include <QDialog>
 
@@ -61,4 +61,4 @@ public Q_SLOTS:
   virtual void on_helpPressed() NOEXCEPT;
 };
 
-#endif // MODAL_DIALOG_H
+#endif // EDITOR_MODAL_DIALOG_H

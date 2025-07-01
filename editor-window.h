@@ -18,13 +18,13 @@
 #include "vfs-msg-fwd.h"               // VFS_Message
 
 // smqtutil
-#include "qtguiutil.h"                 // unhandledExceptionMsgbox
+#include "smqtutil/qtguiutil.h"        // unhandledExceptionMsgbox
 
 // smbase
-#include "exc.h"                       // smbase::XBase
-#include "sm-override.h"               // OVERRIDE
-#include "sm-noexcept.h"               // NOEXCEPT
-#include "str.h"                       // string
+#include "smbase/exc.h"                // smbase::XBase
+#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/str.h"                // string
 
 // Qt
 #include <QWidget>

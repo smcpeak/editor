@@ -12,7 +12,7 @@
 #include "td.h"                        // TextDocument
 
 // smbase
-#include "str.h"                       // string
+#include "smbase/str.h"                // string
 
 // libc
 #include <stdint.h>                    // int64_t

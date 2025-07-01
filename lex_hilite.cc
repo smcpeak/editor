@@ -10,14 +10,14 @@
 #include "textcategory.h"              // LineCategories
 
 // smbase
-#include "exc.h"                       // GENERIC_CATCH_BEGIN/END
-#include "sm-file-util.h"              // SMFileUtil
-#include "sm-fstream.h"                // ofstream
-#include "sm-test.h"                   // EXPECT_EQ
-#include "string-util.h"               // doubleQuote
-#include "strutil.h"                   // readLinesFromFile
-#include "trace.h"                     // TRACE
-#include "xassert.h"                   // xfailure_stringbc
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-fstream.h"         // ofstream
+#include "smbase/sm-test.h"            // EXPECT_EQ
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/strutil.h"            // readLinesFromFile
+#include "smbase/trace.h"              // TRACE
+#include "smbase/xassert.h"            // xfailure_stringbc
 
 // libc
 #include <stdlib.h>                    // exit

@@ -4,15 +4,15 @@
 #include "vfs-local.h"                 // VFS_LocalImpl
 
 // smbase
-#include "bflatten.h"                  // StreamFlatten
-#include "binary-stdin.h"              // setStdinToBinary, setStdoutToBinary
-#include "exc.h"                       // xfatal, smbase::XBase
-#include "flatten.h"                   // de/serializeIntNBO
-#include "nonport.h"                   // sleepForMilliseconds
-#include "overflow.h"                  // convertWithoutLoss
-#include "sm-file-util.h"              // SMFileUtil
-#include "string-util.h"               // doubleQuote
-#include "syserr.h"                    // smbase::xsyserror
+#include "smbase/bflatten.h"           // StreamFlatten
+#include "smbase/binary-stdin.h"       // setStdinToBinary, setStdoutToBinary
+#include "smbase/exc.h"                // xfatal, smbase::XBase
+#include "smbase/flatten.h"            // de/serializeIntNBO
+#include "smbase/nonport.h"            // sleepForMilliseconds
+#include "smbase/overflow.h"           // convertWithoutLoss
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/syserr.h"             // smbase::xsyserror
 
 // libc++
 #include <fstream>                     // std::ofstream

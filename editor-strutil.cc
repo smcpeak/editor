@@ -3,8 +3,8 @@
 
 #include "editor-strutil.h"            // this module
 
-// editor
-#include "codepoint.h"                 // isCIdentifierCharacter
+// smbase
+#include "smbase/codepoint.h"          // isCIdentifierCharacter
 
 // libc++
 #include <string>                      // std::string

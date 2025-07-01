@@ -7,7 +7,7 @@
 #include "td-editor.h"                 // TextDocumentAndEditor
 
 // smbase
-#include "sm-test.h"                   // USUAL_MAIN
+#include "smbase/sm-test.h"            // USUAL_MAIN
 
 
 void entry()

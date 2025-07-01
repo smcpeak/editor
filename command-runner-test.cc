@@ -7,18 +7,18 @@
 #include "command-runner-test.h"       // helper classes for this module
 
 // smqtutil
-#include "qtutil.h"                    // toString
-#include "timer-event-loop.h"          // sleepWhilePumpingEvents
+#include "smqtutil/qtutil.h"           // toString
+#include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
 // smbase
-#include "datablok.h"                  // DataBlock
-#include "datetime.h"                  // getCurrentUnixTime
-#include "exc.h"                       // xfatal
-#include "sm-file-util.h"              // SMFileUtil
-#include "string-util.h"               // beginsWith, replaceAll
-#include "sm-test.h"                   // ARGS_MAIN
-#include "trace.h"                     // TRACE_ARGS, EXPECT_EQ
-#include "xassert.h"                   // xfailure_stringbc
+#include "smbase/datablok.h"           // DataBlock
+#include "smbase/datetime.h"           // getCurrentUnixTime
+#include "smbase/exc.h"                // xfatal
+#include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-test.h"            // ARGS_MAIN
+#include "smbase/string-util.h"        // beginsWith, replaceAll
+#include "smbase/trace.h"              // TRACE_ARGS, EXPECT_EQ
+#include "smbase/xassert.h"            // xfailure_stringbc
 
 // Qt
 #include <QCoreApplication>
