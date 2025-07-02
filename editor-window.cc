@@ -17,6 +17,8 @@
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
 #include "launch-command-dialog.h"     // LaunchCommandDialog
+#include "macro-creator-dialog.h"      // MacroCreatorDialog
+#include "macro-run-dialog.h"          // MacroRunDialog
 #include "makefile_hilite.h"           // Makefile_Highlighter
 #include "ocaml_hilite.h"              // OCaml_Highlighter
 #include "pixmaps.h"                   // g_editorPixmaps
@@ -364,6 +366,18 @@ void EditorWindow::buildMenu()
   }
 
   #undef CHECKABLE_ACTION
+
+  {
+    QMenu *menu = this->m_menuBar->addMenu("&Macro");
+    menu->setObjectName("macroMenu");
+
+    // Used mnemonics: cr
+
+    MENU_ITEM    ("&Create macro",
+                  macroCreateMacro);
+    MENU_ITEM_KEY("&Run...",
+                  macroRun, Qt::Key_F1);
+  }
 
   {
     QMenu *menu = this->m_menuBar->addMenu("&Window");
@@ -1746,6 +1760,37 @@ void EditorWindow::viewSetEditorFont() NOEXCEPT
 
   FontsDialog dialog(this, editorGlobal());
   dialog.exec();
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::macroCreateMacro() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  MacroCreatorDialog dlg(editorGlobal());
+  if (dlg.exec()) {
+    TRACE("macro", "macro name: " << doubleQuote(dlg.getMacroName()));
+    TRACE("macro", "commands:\n" << serializeECV(dlg.getChosenCommands()));
+
+    editorGlobal()->addMacro(dlg.getMacroName(), dlg.getChosenCommands());
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::macroRun() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  MacroRunDialog dlg(editorGlobal());
+  if (dlg.exec()) {
+    TRACE("macro", "chosen macro to run: " << doubleQuote(dlg.getMacroName()));
+
+    editorWidget()->runMacro(dlg.getMacroName());
+  }
 
   GENERIC_CATCH_END
 }

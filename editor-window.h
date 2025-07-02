@@ -235,6 +235,9 @@ public Q_SLOTS:
   void viewSetEditorFont() NOEXCEPT;
   void viewFontHelp() NOEXCEPT;
 
+  void macroCreateMacro() NOEXCEPT;
+  void macroRun() NOEXCEPT;
+
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;
   void windowNewWindow() NOEXCEPT;

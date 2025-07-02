@@ -6,6 +6,7 @@
 // editor
 #include "command-runner.h"            // CommandRunner
 #include "connections-dialog.h"        // ConnectionsDialog
+#include "editor-command.ast.gen.h"    // EditorCommand
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
@@ -20,6 +21,8 @@
 // smbase
 #include "smbase/dev-warning.h"        // g_devWarningHandler
 #include "smbase/exc.h"                // smbase::{XBase, xformat}
+#include "smbase/gdvalue.h"            // gdv::toGDValue
+#include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
 #include "smbase/sm-file-util.h"       // SMFileUtil
@@ -36,9 +39,14 @@
 #include <QShortcutEvent>
 #include <QStyleFactory>
 
+// libc++
+#include <algorithm>                   // std::max
+#include <deque>                       // std::deque
+
 // libc
 #include <stdlib.h>                    // atoi
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -77,6 +85,8 @@ int EditorProxyStyle::styleHint(
 // --------------------------- EditorGlobal ----------------------------
 char const EditorGlobal::appName[] = "Editor";
 
+int const EditorGlobal::MAX_NUM_RECENT_COMMANDS = 100;
+
 
 EditorGlobal::EditorGlobal(int argc, char **argv)
   : QApplication(argc, argv),
@@ -90,7 +100,9 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_vfsConnections(),
     m_processes(),
     m_openFilesDialog(NULL),
-    m_connectionsDialog()
+    m_connectionsDialog(),
+    m_recentCommands(),
+    m_macros()
 {
   m_documentList.addObserver(this);
 
@@ -817,6 +829,65 @@ void EditorGlobal::setEditorBuiltinFont(BuiltinFont newFont)
 }
 
 
+void EditorGlobal::recordCommand(std::unique_ptr<EditorCommand> cmd)
+{
+  m_recentCommands.push_back(std::move(cmd));
+
+  // Limit the number of recorded commands by discarding the oldest
+  // ones.
+  while (m_recentCommands.size() > MAX_NUM_RECENT_COMMANDS) {
+    m_recentCommands.pop_front();
+  }
+}
+
+
+EditorCommandVector EditorGlobal::getRecentCommands(int n) const
+{
+  EditorCommandVector ret;
+
+  int numCommands = static_cast<int>(m_recentCommands.size());
+
+  for (int i = std::max(0, numCommands - n); i < numCommands; ++i) {
+    ret.push_back(std::unique_ptr<EditorCommand>(
+      m_recentCommands[i]->clone()));
+  }
+
+  return ret;
+}
+
+
+void EditorGlobal::addMacro(
+  std::string const &name,
+  EditorCommandVector const &commands)
+{
+  EditorCommandVector &dest = m_macros[name];
+
+  // Make sure we're not trying to clone the vector we are also
+  // overwriting.
+  xassert(&dest != &commands);
+
+  dest = cloneECV(commands);
+}
+
+
+std::set<std::string> EditorGlobal::getMacroNames() const
+{
+  return keySet(m_macros);
+}
+
+
+EditorCommandVector EditorGlobal::getMacro(std::string const &name) const
+{
+  auto it = m_macros.find(name);
+  if (it != m_macros.end()) {
+    return cloneECV((*it).second);
+  }
+  else {
+    return EditorCommandVector();
+  }
+}
+
+
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {
@@ -894,6 +965,31 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
   }
 
   return this->QApplication::notify(receiver, event);
+}
+
+
+std::string serializeECV(EditorCommandVector const &commands)
+{
+  std::ostringstream oss;
+
+  for (auto const &cmdptr : commands) {
+    oss << toGDValue(*cmdptr).asString() << "\n";
+  }
+
+  return oss.str();
+}
+
+
+EditorCommandVector cloneECV(EditorCommandVector const &commands)
+{
+  EditorCommandVector dest;
+
+  for (auto const &cmdptr : commands) {
+    dest.push_back(std::unique_ptr<EditorCommand>(
+      cmdptr->clone()));
+  }
+
+  return dest;
 }
 
 

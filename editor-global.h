@@ -4,31 +4,40 @@
 #ifndef EDITOR_EDITOR_GLOBAL_H
 #define EDITOR_EDITOR_GLOBAL_H
 
-#include "editor-global-fwd.h"         // fwds for this module
+#include "editor-global-fwd.h"                   // fwds for this module
 
 // editor
-#include "builtin-font.h"              // BuiltinFont
-#include "command-runner-fwd.h"        // CommandRunner
-#include "editor-window.h"             // EditorWindow
-#include "filename-input.h"            // FilenameInputDialog
-#include "named-td-list.h"             // NamedTextDocumentList
-#include "named-td.h"                  // NamedTextDocument
-#include "open-files-dialog.h"         // OpenFilesDialog
-#include "pixmaps.h"                   // Pixmaps
-#include "vfs-connections.h"           // VFS_Connections
+#include "builtin-font.h"                        // BuiltinFont
+#include "command-runner-fwd.h"                  // CommandRunner
+#include "editor-command.ast.gen.fwd.h"          // EditorCommand
+#include "editor-window.h"                       // EditorWindow
+#include "filename-input.h"                      // FilenameInputDialog
+#include "named-td-list.h"                       // NamedTextDocumentList
+#include "named-td.h"                            // NamedTextDocument
+#include "open-files-dialog.h"                   // OpenFilesDialog
+#include "pixmaps.h"                             // Pixmaps
+#include "vfs-connections.h"                     // VFS_Connections
 
 // smbase
-#include "smbase/objlist.h"            // ObjList
-#include "smbase/owner.h"              // Owner
-#include "smbase/refct-serf.h"         // SerfRefCount
-#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/objlist.h"                      // ObjList
+#include "smbase/owner.h"                        // Owner
+#include "smbase/refct-serf.h"                   // SerfRefCount
+#include "smbase/sm-override.h"                  // OVERRIDE
 
 // Qt
 #include <QApplication>
 #include <QProxyStyle>
 
-class ConnectionsDialog;               // connections-dialog.h
-class ProcessWatcher;                  // process-watcher.h
+// libc++
+#include <deque>                                 // std::deque
+#include <set>                                   // std::set
+
+class ConnectionsDialog;                         // connections-dialog.h
+class ProcessWatcher;                            // process-watcher.h
+
+
+// A vector of commands.
+typedef std::vector<std::unique_ptr<EditorCommand>> EditorCommandVector;
 
 
 // Define my look and feel overrides.
@@ -56,6 +65,9 @@ public:       // class data
   // Name of this application, used in the main window title as well as
   // some message boxes.
   static char const appName[];
+
+  // Maximum size of `m_recentCommand`.
+  static int const MAX_NUM_RECENT_COMMANDS;
 
 public:       // data
   // pixmap set
@@ -101,6 +113,17 @@ private:     // data
 
   // Connections dialog, even when not shown.
   std::unique_ptr<ConnectionsDialog> m_connectionsDialog;
+
+  // Partial history of recently executed commands.  The element at the
+  // back is the most recent, such that the sequence is in chronological
+  // order.
+  std::deque<std::unique_ptr<EditorCommand>> m_recentCommands;
+
+  // Map from macro name to a sequence of commands to execute.
+  //
+  // TODO: This is currently only saved in memory.  There should be a
+  // way to save them persistently.
+  std::map<std::string, EditorCommandVector> m_macros;
 
 private:      // funcs
   void processCommandLineOptions(
@@ -219,6 +242,24 @@ public:       // funcs
   // accordingly.
   void setEditorBuiltinFont(BuiltinFont newFont);
 
+  // Add `cmd` to the partial command history.
+  void recordCommand(std::unique_ptr<EditorCommand> cmd);
+
+  // Get up to `n` recent commands.
+  EditorCommandVector getRecentCommands(int n) const;
+
+  // Add a macro to `m_macros`, replacing any existing one with the same
+  // name.
+  void addMacro(std::string const &name,
+                EditorCommandVector const &commands);
+
+  // Return the set of defined macro names.
+  std::set<std::string> getMacroNames() const;
+
+  // Return the sequence of commands for `name`, or an empty sequence if
+  // it is not defined.
+  EditorCommandVector getMacro(std::string const &name) const;
+
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
 
@@ -231,6 +272,14 @@ public Q_SLOTS:
   // that fact to the others.
   void slot_broadcastSearchPanelChanged(SearchAndReplacePanel *panel) NOEXCEPT;
 };
+
+
+// Serialize all of the commands in `commands` as a sequence of GDVN
+// lines.
+std::string serializeECV(EditorCommandVector const &commands);
+
+// Make a deep copy of `commands`.
+EditorCommandVector cloneECV(EditorCommandVector const &commands);
 
 
 #endif // EDITOR_EDITOR_GLOBAL_H

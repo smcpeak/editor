@@ -529,6 +529,12 @@ public:      // funcs
   // Perform `cmd`.
   void command(std::unique_ptr<EditorCommand> cmd);
 
+  // Same, but do not steal or record `cmd`.
+  void innerCommand(EditorCommand const *cmd);
+
+  // Execute a named macro that is stored in `EditorGlobal`.
+  void runMacro(std::string const &name);
+
   // -------------------------- output ----------------------------
   // intermediate paint steps
   void updateFrame(QPaintEvent *ev);

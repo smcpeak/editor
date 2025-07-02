@@ -1,5 +1,7 @@
 editor-command.ast.gen.o: editor-command.ast.gen.fwd.h
+editor-global.moc.o: editor-command.ast.gen.fwd.h
 editor-global.o: editor-command.ast.gen.fwd.h
+editor-global.o: editor-command.ast.gen.h
 editor-widget-frame.o: editor-command.ast.gen.fwd.h
 editor-widget.moc.o: editor-command.ast.gen.fwd.h
 editor-widget.o: editor-command.ast.gen.fwd.h
@@ -13,4 +15,10 @@ editor-widget.o: smqtutil/editor14r.bdf.gen.h
 editor-widget.o: smqtutil/minihex6.bdf.gen.h
 editor-window.o: editor-command.ast.gen.fwd.h
 editor-window.o: keybindings.doc.gen.h
+fonts-dialog.o: editor-command.ast.gen.fwd.h
+macro-creator-dialog.moc.o: editor-command.ast.gen.fwd.h
+macro-creator-dialog.o: editor-command.ast.gen.fwd.h
+macro-creator-dialog.o: editor-command.ast.gen.h
+macro-run-dialog.o: editor-command.ast.gen.fwd.h
+open-files-dialog.o: editor-command.ast.gen.fwd.h
 sar-panel.o: editor-command.ast.gen.fwd.h

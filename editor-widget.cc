@@ -2542,11 +2542,19 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
 {
   TRACE("editor-command", "command: " << toGDValue(*cmd).asString());
 
+  innerCommand(cmd.get());
+
+  editorGlobal()->recordCommand(std::move(cmd));
+}
+
+
+void EditorWidget::innerCommand(EditorCommand const *cmd)
+{
   // As this is where we act on the command to make a change, suppress
   // notifications here that might be caused by the change.
   INITIATING_DOCUMENT_CHANGE();
 
-  ASTSWITCHC(EditorCommand, cmd.get()) {
+  ASTSWITCHC(EditorCommand, cmd) {
     ASTCASEC1(EC_Cut) {
       if (this->selectEnabled()) {
         setClipboard(m_editor->clipboardCut());
@@ -2694,6 +2702,17 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
     }
 
     ASTENDCASECD
+  }
+}
+
+
+void EditorWidget::runMacro(std::string const &name)
+{
+  EditorCommandVector commands = editorGlobal()->getMacro(name);
+  if (!commands.empty()) {
+    for (auto const &cmdptr : commands) {
+      innerCommand(cmdptr.get());
+    }
   }
 }
 
