@@ -242,6 +242,18 @@ public:       // funcs
   // Get up to `n` recent commands.
   EditorCommandVector getRecentCommands(int n) const;
 
+  // Get the path to the user settings file.
+  std::string getSettingsFileName() const;
+
+  // Write settings to the user settings file.  This can throw I/O
+  // related exceptions.  Returns the file name used.
+  void saveSettingsFile();
+
+  // If the settings file exists, load it.  Throws `XFormat` if the file
+  // exists and there is an issue with the file contents.  Also throws
+  // I/O related exceptions.
+  void loadSettingsFile();
+
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
 

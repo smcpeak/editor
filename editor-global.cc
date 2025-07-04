@@ -227,10 +227,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // file that 'fileDocuments' made in its constructor.
   EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
 
-  // this caption is immediately replaced with another one, at the
-  // moment, since I call fileNewFile() right away
-  //ed.setCaption("An Editor");
-
+  // TODO: Why do I create a window before processing the command line?
   try {
     processCommandLineOptions(ed, argc, argv);
   }
@@ -403,6 +400,14 @@ void EditorGlobal::processCommandLineOptions(
       path = sfu.normalizePathSeparators(path);
       ed->fileOpenFile(HostAndResourceName::localFile(path));
     }
+  }
+
+  if (m_eventFileTest.empty()) {
+    // This could throw if there is an issue with the settings file.
+    loadSettingsFile();
+  }
+  else {
+    // We are going to run an automated test, so ignore user settings.
   }
 }
 
@@ -853,6 +858,40 @@ EditorCommandVector EditorGlobal::getRecentCommands(int n) const
   }
 
   return ret;
+}
+
+
+std::string EditorGlobal::getSettingsFileName() const
+{
+  // TODO: Put this in the proper directory.
+  return "editor-settings.gdvn";
+}
+
+
+void EditorGlobal::saveSettingsFile()
+{
+  std::string fname = getSettingsFileName();
+  EXN_CONTEXT("Saving " << doubleQuote(fname));
+
+  GDValue gdvSettings(m_settings);
+
+  GDValueWriteOptions opts;
+  opts.m_enableIndentation = true;
+  gdvSettings.writeToFile(fname, opts);
+}
+
+
+void EditorGlobal::loadSettingsFile()
+{
+  std::string fname = getSettingsFileName();
+  EXN_CONTEXT("Loading " << doubleQuote(fname));
+
+  SMFileUtil sfu;
+  if (sfu.pathExists(fname)) {
+    GDValue gdvSettings = GDValue::readFromFile(fname);
+    EditorSettings settings(gdvSettings);
+    m_settings.swap(settings);
+  }
 }
 
 

@@ -37,7 +37,7 @@ EditorSettings::EditorSettings()
 EditorSettings::EditorSettings(GDValue const &m)
   : m_macros(gdvTo<MacroDefinitionMap>(mapGetSym_parse(m, "macros")))
 {
-  checkTaggedMapTag(m, "EditorSettings");
+  checkTaggedOrderedMapTag(m, "EditorSettings");
 
   int version = gdvTo<int>(mapGetSym_parse(m, "version"));
   if (version > CUR_VERSION) {
@@ -57,6 +57,15 @@ EditorSettings::operator GDValue() const
 
   return m;
 }
+
+
+void EditorSettings::swap(EditorSettings &obj)
+{
+  if (this != &obj) {
+    m_macros.swap(obj.m_macros);
+  }
+}
+
 
 
 // ------------------------------ macros -------------------------------

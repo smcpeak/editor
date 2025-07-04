@@ -270,6 +270,13 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
+    MENU_ITEM    ("Reload settings",
+                  fileLoadSettings);
+    MENU_ITEM    ("Save settings",
+                  fileSaveSettings);
+
+    menu->addSeparator();
+
     MENU_ITEM    ("E&xit", fileExit);
   }
 
@@ -379,14 +386,12 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Macro");
     menu->setObjectName("macroMenu");
 
-    // Used mnemonics: crs
+    // Used mnemonics: cr
 
     MENU_ITEM    ("&Create macro",
                   macroCreateMacro);
     MENU_ITEM_KEY("&Run...",
                   macroRun, Qt::Key_F1);
-    MENU_ITEM    ("&Save settings",
-                  macroSaveSettings);
   }
 
   {
@@ -1233,6 +1238,40 @@ void EditorWindow::namedTextDocumentListOrderChanged(
 {}
 
 
+void EditorWindow::fileLoadSettings() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  try {
+    editorGlobal()->loadSettingsFile();
+    std::string fname = editorGlobal()->getSettingsFileName();
+    inform(stringbc("Loaded settings from " << doubleQuote(fname) << "."));
+  }
+  catch (std::exception &x) {
+    complain(stringbc("While loading settings: " << x.what()));
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::fileSaveSettings() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  try {
+    editorGlobal()->saveSettingsFile();
+    std::string fname = editorGlobal()->getSettingsFileName();
+    inform(stringbc("Saved settings to " << doubleQuote(fname) << "."));
+  }
+  catch (std::exception &x) {
+    complain(stringbc("While saving settings: " << x.what()));
+  }
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::fileExit() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -1806,21 +1845,6 @@ void EditorWindow::macroRun() NOEXCEPT
 }
 
 
-void EditorWindow::macroSaveSettings() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  GDValue v(editorSettings());
-
-  GDValueWriteOptions opts;
-  opts.m_enableIndentation = true;
-
-  v.writeToFile("editor-settings.gdvn", opts);
-
-  GENERIC_CATCH_END
-}
-
-
 void EditorWindow::viewFontHelp() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2106,6 +2130,18 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 void EditorWindow::complain(char const *msg)
 {
   QMessageBox::information(this, EditorGlobal::appName, msg);
+}
+
+
+void EditorWindow::inform(char const *msg)
+{
+  // On my system, QMessageBox::information rings the bell, and I do
+  // not want that here.  Removing the icon seems to disable that.
+
+  QMessageBox box;
+  box.setIcon(QMessageBox::NoIcon);
+  box.setText(msg);
+  box.exec();
 }
 
 

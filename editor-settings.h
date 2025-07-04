@@ -42,6 +42,8 @@ public:      // funcs
   // Parse `gdv`.  Throws `XFormat` on error.
   explicit EditorSettings(gdv::GDValue const &gdv);
 
+  void swap(EditorSettings &obj);
+
   // ----------------------------- macros ------------------------------
   // Add a macro to `m_settings.m_macros`, replacing any existing one
   // with the same name.

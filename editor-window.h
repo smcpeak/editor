@@ -109,7 +109,11 @@ private:     // funcs
   // Return true if 'harn' exists, blocking during the check.
   bool checkFileExistenceSynchronously(HostAndResourceName const &harn);
 
+  // Pop up a message related to a problem.
   void complain(char const *msg);
+
+  // Pop up a message for general information.
+  void inform(char const *msg);
 
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
@@ -207,6 +211,8 @@ public Q_SLOTS:
   void fileRunMake() NOEXCEPT;
   void fileKillProcess() NOEXCEPT;
   void fileManageConnections() NOEXCEPT;
+  void fileLoadSettings() NOEXCEPT;
+  void fileSaveSettings() NOEXCEPT;
   void fileExit() NOEXCEPT;
 
   void editUndo() NOEXCEPT;
@@ -241,7 +247,6 @@ public Q_SLOTS:
 
   void macroCreateMacro() NOEXCEPT;
   void macroRun() NOEXCEPT;
-  void macroSaveSettings() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;
