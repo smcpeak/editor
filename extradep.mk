@@ -2,6 +2,8 @@ editor-command.ast.gen.o: editor-command.ast.gen.fwd.h
 editor-global.moc.o: editor-command.ast.gen.fwd.h
 editor-global.o: editor-command.ast.gen.fwd.h
 editor-global.o: editor-command.ast.gen.h
+editor-settings.o: editor-command.ast.gen.fwd.h
+editor-settings.o: editor-command.ast.gen.h
 editor-widget-frame.o: editor-command.ast.gen.fwd.h
 editor-widget.moc.o: editor-command.ast.gen.fwd.h
 editor-widget.o: editor-command.ast.gen.fwd.h

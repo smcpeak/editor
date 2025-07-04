@@ -40,7 +40,8 @@ MacroRunDialog::MacroRunDialog(
     SET_QOBJECT_NAME(m_macroList);
 
     // Populate the list.
-    std::set<std::string> macroNames = m_editorGlobal->getMacroNames();
+    std::set<std::string> macroNames =
+      m_editorGlobal->m_settings.getMacroNames();
     for (auto const &name : macroNames) {
       m_macroList->addItem(toQString(name));
     }

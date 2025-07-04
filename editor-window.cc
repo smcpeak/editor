@@ -37,6 +37,7 @@
 
 // smbase
 #include "smbase/exc.h"                // XOpen, GENERIC_CATCH_BEGIN/END
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/mysig.h"              // printSegfaultAddrs
 #include "smbase/nonport.h"            // fileOrDirectoryExists
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
@@ -68,6 +69,7 @@
 #include <QFontDialog>
 #include <QInputDialog>
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -175,6 +177,12 @@ EditorWindow::~EditorWindow()
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
   QObject::disconnect(m_editorGlobal, NULL, this, NULL);
+}
+
+
+EditorSettings &EditorWindow::editorSettings()
+{
+  return editorGlobal()->m_settings;
 }
 
 
@@ -371,12 +379,14 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Macro");
     menu->setObjectName("macroMenu");
 
-    // Used mnemonics: cr
+    // Used mnemonics: crs
 
     MENU_ITEM    ("&Create macro",
                   macroCreateMacro);
     MENU_ITEM_KEY("&Run...",
                   macroRun, Qt::Key_F1);
+    MENU_ITEM    ("&Save settings",
+                  macroSaveSettings);
   }
 
   {
@@ -1774,7 +1784,7 @@ void EditorWindow::macroCreateMacro() NOEXCEPT
     TRACE("macro", "macro name: " << doubleQuote(dlg.getMacroName()));
     TRACE("macro", "commands:\n" << serializeECV(dlg.getChosenCommands()));
 
-    editorGlobal()->addMacro(dlg.getMacroName(), dlg.getChosenCommands());
+    editorSettings().addMacro(dlg.getMacroName(), dlg.getChosenCommands());
   }
 
   GENERIC_CATCH_END
@@ -1791,6 +1801,21 @@ void EditorWindow::macroRun() NOEXCEPT
 
     editorWidget()->runMacro(dlg.getMacroName());
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::macroSaveSettings() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  GDValue v(editorSettings());
+
+  GDValueWriteOptions opts;
+  opts.m_enableIndentation = true;
+
+  v.writeToFile("editor-settings.gdvn", opts);
 
   GENERIC_CATCH_END
 }

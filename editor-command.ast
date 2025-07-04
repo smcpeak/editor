@@ -9,8 +9,9 @@
 // system.
 
 
-// Generate code to convert command objects to GDV.
+// Generate code to convert command objects to and from GDV.
 option toGDValue;
+option fromGDValue;
 
 
 // An editor manipulation command and any associated arguments.

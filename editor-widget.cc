@@ -254,6 +254,12 @@ EditorGlobal *EditorWidget::editorGlobal() const
 }
 
 
+EditorSettings &EditorWidget::editorSettings()
+{
+  return editorGlobal()->m_settings;
+}
+
+
 void EditorWidget::cursorTo(TextLCoord tc)
 {
   INITIATING_DOCUMENT_CHANGE();
@@ -2708,7 +2714,7 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
 
 void EditorWidget::runMacro(std::string const &name)
 {
-  EditorCommandVector commands = editorGlobal()->getMacro(name);
+  EditorCommandVector commands = editorSettings().getMacro(name);
   if (!commands.empty()) {
     for (auto const &cmdptr : commands) {
       innerCommand(cmdptr.get());

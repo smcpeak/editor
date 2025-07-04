@@ -96,13 +96,13 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_recordInputEvents(false),
     m_eventFileTest(),
     m_filenameInputDialogHistory(),
+    m_settings(),
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
     m_openFilesDialog(NULL),
     m_connectionsDialog(),
-    m_recentCommands(),
-    m_macros()
+    m_recentCommands()
 {
   m_documentList.addObserver(this);
 
@@ -853,38 +853,6 @@ EditorCommandVector EditorGlobal::getRecentCommands(int n) const
   }
 
   return ret;
-}
-
-
-void EditorGlobal::addMacro(
-  std::string const &name,
-  EditorCommandVector const &commands)
-{
-  EditorCommandVector &dest = m_macros[name];
-
-  // Make sure we're not trying to clone the vector we are also
-  // overwriting.
-  xassert(&dest != &commands);
-
-  dest = cloneECV(commands);
-}
-
-
-std::set<std::string> EditorGlobal::getMacroNames() const
-{
-  return keySet(m_macros);
-}
-
-
-EditorCommandVector EditorGlobal::getMacro(std::string const &name) const
-{
-  auto it = m_macros.find(name);
-  if (it != m_macros.end()) {
-    return cloneECV((*it).second);
-  }
-  else {
-    return EditorCommandVector();
-  }
 }
 
 

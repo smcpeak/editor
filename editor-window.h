@@ -8,6 +8,7 @@
 
 // editor
 #include "editor-global-fwd.h"         // EditorGlobal
+#include "editor-settings-fwd.h"       // EditorSettings
 #include "editor-widget-frame-fwd.h"   // EditorWidgetFrame
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
@@ -132,6 +133,9 @@ public:      // funcs
   // Get the global state we are a part of.
   EditorGlobal *editorGlobal() const { return m_editorGlobal; }
 
+  // Current user settings object.
+  EditorSettings &editorSettings();
+
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;
 
@@ -237,6 +241,7 @@ public Q_SLOTS:
 
   void macroCreateMacro() NOEXCEPT;
   void macroRun() NOEXCEPT;
+  void macroSaveSettings() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

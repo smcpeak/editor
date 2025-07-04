@@ -10,6 +10,7 @@
 #include "builtin-font.h"                        // BuiltinFont
 #include "command-runner-fwd.h"                  // CommandRunner
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
+#include "editor-settings.h"                     // EditorSettings
 #include "editor-window.h"                       // EditorWindow
 #include "filename-input.h"                      // FilenameInputDialog
 #include "named-td-list.h"                       // NamedTextDocumentList
@@ -34,10 +35,6 @@
 
 class ConnectionsDialog;                         // connections-dialog.h
 class ProcessWatcher;                            // process-watcher.h
-
-
-// A vector of commands.
-typedef std::vector<std::unique_ptr<EditorCommand>> EditorCommandVector;
 
 
 // Define my look and feel overrides.
@@ -95,6 +92,9 @@ public:       // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
+  // User settings.
+  EditorSettings m_settings;
+
 private:     // data
   // Built-in font to use in the editor widgets.
   BuiltinFont m_editorBuiltinFont;
@@ -118,12 +118,6 @@ private:     // data
   // back is the most recent, such that the sequence is in chronological
   // order.
   std::deque<std::unique_ptr<EditorCommand>> m_recentCommands;
-
-  // Map from macro name to a sequence of commands to execute.
-  //
-  // TODO: This is currently only saved in memory.  There should be a
-  // way to save them persistently.
-  std::map<std::string, EditorCommandVector> m_macros;
 
 private:      // funcs
   void processCommandLineOptions(
@@ -247,18 +241,6 @@ public:       // funcs
 
   // Get up to `n` recent commands.
   EditorCommandVector getRecentCommands(int n) const;
-
-  // Add a macro to `m_macros`, replacing any existing one with the same
-  // name.
-  void addMacro(std::string const &name,
-                EditorCommandVector const &commands);
-
-  // Return the set of defined macro names.
-  std::set<std::string> getMacroNames() const;
-
-  // Return the sequence of commands for `name`, or an empty sequence if
-  // it is not defined.
-  EditorCommandVector getMacro(std::string const &name) const;
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

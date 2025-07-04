@@ -7,6 +7,7 @@
 // editor
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 #include "editor-global-fwd.h"                   // EditorGlobal
+#include "editor-settings-fwd.h"                 // EditorSettings
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
@@ -306,6 +307,9 @@ public:      // funcs
 
   // Get the global editor state.
   EditorGlobal *editorGlobal() const;
+
+  // User settings.
+  EditorSettings &editorSettings();
 
   // Read the font choice stored in 'editorGlobal()' and set this
   // widget's editor fonts accordingly.
