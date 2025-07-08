@@ -36,6 +36,8 @@
 class ConnectionsDialog;                         // connections-dialog.h
 class ProcessWatcher;                            // process-watcher.h
 
+class QWidget;
+
 
 // Define my look and feel overrides.
 class EditorProxyStyle : public QProxyStyle {
@@ -92,9 +94,6 @@ public:       // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
-  // User settings.
-  EditorSettings m_settings;
-
 private:     // data
   // Built-in font to use in the editor widgets.
   BuiltinFont m_editorBuiltinFont;
@@ -118,6 +117,9 @@ private:     // data
   // back is the most recent, such that the sequence is in chronological
   // order.
   std::deque<std::unique_ptr<EditorCommand>> m_recentCommands;
+
+  // User settings.
+  EditorSettings m_settings;
 
 private:      // funcs
   void processCommandLineOptions(
@@ -242,17 +244,38 @@ public:       // funcs
   // Get up to `n` recent commands.
   EditorCommandVector getRecentCommands(int n) const;
 
+  // Pop up a warning dialog box on top of `parent`.
+  void warningBox(
+    QWidget * NULLABLE parent,
+    std::string const &str) const;
+
   // Get the path to the user settings file.
   std::string getSettingsFileName() const;
 
-  // Write settings to the user settings file.  This can throw I/O
-  // related exceptions.  Returns the file name used.
-  void saveSettingsFile();
+  // Write settings to the user settings file and return true.  If there
+  // is a problem, this pops up a dialog box above the given `parent`,
+  // then return false.
+  bool saveSettingsFile(QWidget * NULLABLE parent) NOEXCEPT;
 
-  // If the settings file exists, load it.  Throws `XFormat` if the file
-  // exists and there is an issue with the file contents.  Also throws
-  // I/O related exceptions.
-  void loadSettingsFile();
+  // If the settings file exists, load it and return true.  If there is
+  // a problem, this pops up a dialog box above the given `parent`, then
+  // returns false.
+  bool loadSettingsFile(QWidget * NULLABLE parent) NOEXCEPT;
+
+  // Load the settings, reporting problems by throwing.
+  void loadSettingsFile_throwIfError();
+
+  // Read-only settings access.  (Writing is done through methods that
+  // also save the settings to a file.)
+  EditorSettings const &getSettings() { return m_settings; }
+
+  // Methods to change `m_settings` via methods that have names and
+  // signatures that reflect those of `EditorSettings`.  Each call saves
+  // the settings file afterward.
+  void settings_addMacro(
+    QWidget * NULLABLE parent,
+    std::string const &name,
+    EditorCommandVector const &commands);
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

@@ -98,13 +98,13 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_recordInputEvents(false),
     m_eventFileTest(),
     m_filenameInputDialogHistory(),
-    m_settings(),
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
     m_openFilesDialog(NULL),
     m_connectionsDialog(),
-    m_recentCommands()
+    m_recentCommands(),
+    m_settings()
 {
   m_documentList.addObserver(this);
 
@@ -405,8 +405,7 @@ void EditorGlobal::processCommandLineOptions(
   }
 
   if (m_eventFileTest.empty()) {
-    // This could throw if there is an issue with the settings file.
-    loadSettingsFile();
+    loadSettingsFile_throwIfError();
   }
   else {
     // We are going to run an automated test, so ignore user settings.
@@ -863,29 +862,62 @@ EditorCommandVector EditorGlobal::getRecentCommands(int n) const
 }
 
 
+void EditorGlobal::warningBox(
+  QWidget * NULLABLE parent,
+  std::string const &str) const
+{
+  QMessageBox::warning(parent, toQString(appName), toQString(str));
+}
+
+
 std::string EditorGlobal::getSettingsFileName() const
 {
   return stringb(getXDGConfigHome() << "/sm-editor/editor-settings.gdvn");
 }
 
 
-void EditorGlobal::saveSettingsFile()
+bool EditorGlobal::saveSettingsFile(QWidget * NULLABLE parent) NOEXCEPT
 {
-  std::string fname = getSettingsFileName();
-  EXN_CONTEXT("Saving " << doubleQuote(fname));
+  try {
+    std::string fname = getSettingsFileName();
+    EXN_CONTEXT("Saving " << doubleQuote(fname));
 
-  SMFileUtil sfu;
-  sfu.createDirectoryAndParents(sfu.splitPathDir(fname));
+    SMFileUtil sfu;
+    sfu.createDirectoryAndParents(sfu.splitPathDir(fname));
 
-  GDValue gdvSettings(m_settings);
+    GDValue gdvSettings(m_settings);
 
-  GDValueWriteOptions opts;
-  opts.m_enableIndentation = true;
-  gdvSettings.writeToFile(fname, opts);
+    GDValueWriteOptions opts;
+    opts.m_enableIndentation = true;
+
+    // TODO: Write this atomically.
+    gdvSettings.writeToFile(fname, opts);
+
+    TRACE("EditorGlobal", "Wrote settings file: " << doubleQuote(fname));
+
+    return true;
+  }
+  catch (std::exception &e) {
+    warningBox(parent, e.what());
+    return false;
+  }
 }
 
 
-void EditorGlobal::loadSettingsFile()
+bool EditorGlobal::loadSettingsFile(QWidget * NULLABLE parent) NOEXCEPT
+{
+  try {
+    loadSettingsFile_throwIfError();
+    return true;
+  }
+  catch (std::exception &e) {
+    warningBox(parent, e.what());
+    return false;
+  }
+}
+
+
+void EditorGlobal::loadSettingsFile_throwIfError()
 {
   std::string fname = getSettingsFileName();
   EXN_CONTEXT("Loading " << doubleQuote(fname));
@@ -895,7 +927,22 @@ void EditorGlobal::loadSettingsFile()
     GDValue gdvSettings = GDValue::readFromFile(fname);
     EditorSettings settings(gdvSettings);
     m_settings.swap(settings);
+
+    TRACE("EditorGlobal", "Loaded settings file: " << doubleQuote(fname));
   }
+  else {
+    TRACE("EditorGlobal", "Settings file does not exist: " << doubleQuote(fname));
+  }
+}
+
+
+void EditorGlobal::settings_addMacro(
+  QWidget * NULLABLE parent,
+  std::string const &name,
+  EditorCommandVector const &commands)
+{
+  m_settings.addMacro(name, commands);
+  saveSettingsFile(parent);
 }
 
 

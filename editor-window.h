@@ -138,7 +138,7 @@ public:      // funcs
   EditorGlobal *editorGlobal() const { return m_editorGlobal; }
 
   // Current user settings object.
-  EditorSettings &editorSettings();
+  EditorSettings const &editorSettings() const;
 
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;

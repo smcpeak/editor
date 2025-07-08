@@ -180,9 +180,9 @@ EditorWindow::~EditorWindow()
 }
 
 
-EditorSettings &EditorWindow::editorSettings()
+EditorSettings const &EditorWindow::editorSettings() const
 {
-  return editorGlobal()->m_settings;
+  return editorGlobal()->getSettings();
 }
 
 
@@ -1242,13 +1242,9 @@ void EditorWindow::fileLoadSettings() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  try {
-    editorGlobal()->loadSettingsFile();
+  if (editorGlobal()->loadSettingsFile(this)) {
     std::string fname = editorGlobal()->getSettingsFileName();
     inform(stringbc("Loaded settings from " << doubleQuote(fname) << "."));
-  }
-  catch (std::exception &x) {
-    complain(stringbc("While loading settings: " << x.what()));
   }
 
   GENERIC_CATCH_END
@@ -1259,13 +1255,9 @@ void EditorWindow::fileSaveSettings() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  try {
-    editorGlobal()->saveSettingsFile();
+  if (editorGlobal()->saveSettingsFile(this)) {
     std::string fname = editorGlobal()->getSettingsFileName();
     inform(stringbc("Saved settings to " << doubleQuote(fname) << "."));
-  }
-  catch (std::exception &x) {
-    complain(stringbc("While saving settings: " << x.what()));
   }
 
   GENERIC_CATCH_END
@@ -1823,7 +1815,8 @@ void EditorWindow::macroCreateMacro() NOEXCEPT
     TRACE("macro", "macro name: " << doubleQuote(dlg.getMacroName()));
     TRACE("macro", "commands:\n" << serializeECV(dlg.getChosenCommands()));
 
-    editorSettings().addMacro(dlg.getMacroName(), dlg.getChosenCommands());
+    editorGlobal()->settings_addMacro(editorWidget(),
+      dlg.getMacroName(), dlg.getChosenCommands());
   }
 
   GENERIC_CATCH_END

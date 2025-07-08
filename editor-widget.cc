@@ -254,9 +254,9 @@ EditorGlobal *EditorWidget::editorGlobal() const
 }
 
 
-EditorSettings &EditorWidget::editorSettings()
+EditorSettings const &EditorWidget::editorSettings() const
 {
-  return editorGlobal()->m_settings;
+  return editorGlobal()->getSettings();
 }
 
 

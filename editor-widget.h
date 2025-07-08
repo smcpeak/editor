@@ -309,7 +309,7 @@ public:      // funcs
   EditorGlobal *editorGlobal() const;
 
   // User settings.
-  EditorSettings &editorSettings();
+  EditorSettings const &editorSettings() const;
 
   // Read the font choice stored in 'editorGlobal()' and set this
   // widget's editor fonts accordingly.
