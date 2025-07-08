@@ -50,6 +50,10 @@ public:      // funcs
   void addMacro(std::string const &name,
                 EditorCommandVector const &commands);
 
+  // Delete the macro called `name` if one exists.  Return true if one
+  // was, deleted false otherwise.
+  bool deleteMacro(std::string const &name);
+
   // Return the set of defined macro names.
   std::set<std::string> getMacroNames() const;
 

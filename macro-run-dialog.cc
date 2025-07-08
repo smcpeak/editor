@@ -7,10 +7,12 @@
 
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, toQString
 
+#include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/trace.h"              // TRACE
 
 #include <QLabel>
 #include <QListWidget>
+#include <QPushButton>
 #include <QVBoxLayout>
 
 
@@ -55,6 +57,13 @@ MacroRunDialog::MacroRunDialog(
 
   createOkAndCancelHBox(vbox);
 
+  QPushButton *deleteButton = new QPushButton("&Delete");
+  m_buttonHBox->insertWidget(0, deleteButton);
+  SET_QOBJECT_NAME(deleteButton);
+  QObject::connect(deleteButton, &QPushButton::clicked,
+                   this, &MacroRunDialog::on_deletePressed);
+
+
   resize(600, 600);
 }
 
@@ -70,6 +79,29 @@ void MacroRunDialog::accept() NOEXCEPT
   if (QListWidgetItem *item = m_macroList->currentItem()) {
     m_chosenMacroName = toString(item->text());
     this->QDialog::accept();
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void MacroRunDialog::on_deletePressed() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (QListWidgetItem *item = m_macroList->currentItem()) {
+    std::string name = toString(item->text());
+    if (m_editorGlobal->settings_deleteMacro(this, name)) {
+      // Evidently, removing `item` is somewhat complicated.
+      int row = m_macroList->row(item);
+      xassert(row >= 0);
+      QListWidgetItem *removed = m_macroList->takeItem(row);
+      xassert(removed == item);
+      delete item;
+    }
+    else {
+      DEV_WARNING("No macro called " << doubleQuote(name) << "?");
+    }
   }
 
   GENERIC_CATCH_END

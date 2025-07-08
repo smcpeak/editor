@@ -944,6 +944,20 @@ void EditorGlobal::settings_addMacro(
 }
 
 
+bool EditorGlobal::settings_deleteMacro(
+  QWidget * NULLABLE parent,
+  std::string const &name)
+{
+  if (m_settings.deleteMacro(name)) {
+    saveSettingsFile(parent);
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {

@@ -52,6 +52,9 @@ public:      // funcs
 public Q_SLOTS:
   // Called when "Ok" is pressed.
   virtual void accept() NOEXCEPT OVERRIDE;
+
+  // Called with "Delete" is pressed.
+  void on_deletePressed() NOEXCEPT;
 };
 
 

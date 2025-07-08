@@ -271,11 +271,15 @@ public:       // funcs
 
   // Methods to change `m_settings` via methods that have names and
   // signatures that reflect those of `EditorSettings`.  Each call saves
-  // the settings file afterward.
+  // the settings file afterward.  Any error is reported with a message
+  // box that appears on top of `parent`.
   void settings_addMacro(
     QWidget * NULLABLE parent,
     std::string const &name,
     EditorCommandVector const &commands);
+  bool settings_deleteMacro(
+    QWidget * NULLABLE parent,
+    std::string const &name);
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

@@ -95,6 +95,12 @@ void EditorSettings::addMacro(
 }
 
 
+bool EditorSettings::deleteMacro(std::string const &name)
+{
+  return m_macros.erase(name) > 0;
+}
+
+
 std::set<std::string> EditorSettings::getMacroNames() const
 {
   return keySet(m_macros);
