@@ -958,6 +958,27 @@ bool EditorGlobal::settings_deleteMacro(
 }
 
 
+void EditorGlobal::settings_setMostRecentlyRunMacro(
+  QWidget * NULLABLE parent,
+  std::string const &name)
+{
+  m_settings.setMostRecentlyRunMacro(name);
+  saveSettingsFile(parent);
+}
+
+
+std::string EditorGlobal::settings_getMostRecentlyRunMacro(
+  QWidget * NULLABLE parent)
+{
+  std::string ret = m_settings.getMostRecentlyRunMacro();
+  if (ret.empty()) {
+    // The act of checking could have cleared it.
+    saveSettingsFile(parent);
+  }
+  return ret;
+}
+
+
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {

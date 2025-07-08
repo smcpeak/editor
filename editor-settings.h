@@ -27,8 +27,15 @@ typedef std::map<std::string, EditorCommandVector> MacroDefinitionMap;
 // Editor-wide persistent user settings.
 class EditorSettings {
 private:     // data
-  // Map from macro name to a sequence of commands to execute.
+  // Map from macro name to a sequence of commands to execute.  Every
+  // macro has a non-empty name and a non-empty command vector.
   MacroDefinitionMap m_macros;
+
+  // Name of the most recently run macro.  The expectation is this is
+  // the name of something in `m_macros`, but desync might be possible.
+  // This could be the empty string, meaning no recent macro is
+  // recorded.
+  std::string m_mostRecentlyRunMacro;
 
 public:      // funcs
   ~EditorSettings();
@@ -46,7 +53,8 @@ public:      // funcs
 
   // ----------------------------- macros ------------------------------
   // Add a macro to `m_settings.m_macros`, replacing any existing one
-  // with the same name.
+  // with the same name.  Requires that `name` not be empty and
+  // `command` not be empty.
   void addMacro(std::string const &name,
                 EditorCommandVector const &commands);
 
@@ -60,6 +68,18 @@ public:      // funcs
   // Return the sequence of commands for `name`, or an empty sequence if
   // it is not defined.
   EditorCommandVector getMacro(std::string const &name) const;
+
+  // Set `m_mostRecentlyRunMacro`.
+  void setMostRecentlyRunMacro(std::string const &name);
+
+  // Get `m_mostRecentlyRunMacro`, except if that is not a valid key
+  // in `m_macros`, clear it first.  Returns "" if there is no recently
+  // run macro.
+  std::string getMostRecentlyRunMacro();
+
+  // Just get the current value without validation.
+  std::string getMostRecentlyRunMacroC() const
+    { return m_mostRecentlyRunMacro; }
 };
 
 

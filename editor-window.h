@@ -246,7 +246,8 @@ public Q_SLOTS:
   void viewFontHelp() NOEXCEPT;
 
   void macroCreateMacro() NOEXCEPT;
-  void macroRun() NOEXCEPT;
+  void macroRunDialog() NOEXCEPT;
+  void macroRunMostRecent() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

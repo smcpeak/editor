@@ -145,7 +145,8 @@ void MacroCreatorDialog::accept() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (!m_chosenCommands.empty()) {
+  if (!getMacroName().empty() &&
+      !getChosenCommands().empty()) {
     this->QDialog::accept();
   }
 

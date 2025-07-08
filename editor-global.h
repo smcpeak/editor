@@ -280,6 +280,11 @@ public:       // funcs
   bool settings_deleteMacro(
     QWidget * NULLABLE parent,
     std::string const &name);
+  void settings_setMostRecentlyRunMacro(
+    QWidget * NULLABLE parent,
+    std::string const &name);
+  std::string settings_getMostRecentlyRunMacro(
+    QWidget * NULLABLE parent);
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

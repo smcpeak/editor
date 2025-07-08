@@ -10,15 +10,23 @@
 #include "smbase/gdvalue-unique-ptr-fwd.h"
 #include "smbase/gdvalue-vector-fwd.h"
 
+#include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-map.h"        // GDValue <-> std::map
-#include "smbase/gdvalue-parse.h"      // mapGetSym_parse
+#include "smbase/gdvalue-parse-ops.h"  // mapGetSym_parse{,Opt}
 #include "smbase/gdvalue-unique-ptr.h" // GDValue <-> std::unique_ptr
 #include "smbase/gdvalue-vector.h"     // GDValue <-> std::vector
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // keySet
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
+
+#include <utility>                     // std::swap
 
 
 using namespace gdv;
+using namespace smbase;
+
+
+INIT_TRACE("editor-settings");
 
 
 // Version number for the settings file format.
@@ -35,7 +43,12 @@ EditorSettings::EditorSettings()
 
 
 EditorSettings::EditorSettings(GDValue const &m)
-  : m_macros(gdvTo<MacroDefinitionMap>(mapGetSym_parse(m, "macros")))
+  : m_macros(gdvTo<MacroDefinitionMap>(mapGetSym_parse(m, "macros"))),
+
+    // This was added after creating the initial version.  I'm going to
+    // try having the parser just accept a missing field.
+    m_mostRecentlyRunMacro(gdvOptTo<std::string>(
+      mapGetSym_parseOpt(m, "mostRecentlyRunMacro")))
 {
   checkTaggedOrderedMapTag(m, "EditorSettings");
 
@@ -45,6 +58,8 @@ EditorSettings::EditorSettings(GDValue const &m)
               " but the largest this program can read is " <<
               CUR_VERSION << ".");
   }
+
+  TRACE1("Loaded settings: " << toGDValue(*this));
 }
 
 
@@ -54,6 +69,7 @@ EditorSettings::operator GDValue() const
 
   m.mapSetSym("version", CUR_VERSION);
   m.mapSetSym("macros", toGDValue(m_macros));
+  m.mapSetSym("mostRecentlyRunMacro", toGDValue(m_mostRecentlyRunMacro));
 
   return m;
 }
@@ -62,7 +78,10 @@ EditorSettings::operator GDValue() const
 void EditorSettings::swap(EditorSettings &obj)
 {
   if (this != &obj) {
-    m_macros.swap(obj.m_macros);
+    using std::swap;
+
+    swap(m_macros, obj.m_macros);
+    swap(m_mostRecentlyRunMacro, obj.m_mostRecentlyRunMacro);
   }
 }
 
@@ -85,6 +104,9 @@ void EditorSettings::addMacro(
   std::string const &name,
   EditorCommandVector const &commands)
 {
+  xassert(!name.empty());
+  xassert(!commands.empty());
+
   EditorCommandVector &dest = m_macros[name];
 
   // Make sure we're not trying to clone the vector we are also
@@ -115,6 +137,32 @@ EditorCommandVector EditorSettings::getMacro(std::string const &name) const
   }
   else {
     return EditorCommandVector();
+  }
+}
+
+
+void EditorSettings::setMostRecentlyRunMacro(std::string const &name)
+{
+  if (contains(m_macros, name)) {
+    m_mostRecentlyRunMacro = name;
+  }
+  else {
+    m_mostRecentlyRunMacro.clear();
+  }
+}
+
+
+std::string EditorSettings::getMostRecentlyRunMacro()
+{
+  if (contains(m_macros, m_mostRecentlyRunMacro)) {
+    return m_mostRecentlyRunMacro;
+  }
+  else {
+    TRACE2("Macro name " << toGDValue(m_mostRecentlyRunMacro) <<
+           " not among macro keys: " << toGDValue(keySet(m_macros)));
+
+    m_mostRecentlyRunMacro.clear();
+    return {};
   }
 }
 

@@ -49,10 +49,12 @@ public:      // funcs
   void updateCommandList();
 
   // After getting a true return from `exec()`, call this to get the
-  // chosen macro name.
+  // chosen macro name.  This is not empty (provided `exec` in fact
+  // returned true).
   std::string getMacroName() const;
 
-  // Likewise, get the commands that should comprise the macro.
+  // Likewise, get the commands that should comprise the macro.  Also
+  // not empty.
   EditorCommandVector const &getChosenCommands() const
     { return m_chosenCommands; }
 

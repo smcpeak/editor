@@ -2715,10 +2715,8 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
 void EditorWidget::runMacro(std::string const &name)
 {
   EditorCommandVector commands = editorSettings().getMacro(name);
-  if (!commands.empty()) {
-    for (auto const &cmdptr : commands) {
-      innerCommand(cmdptr.get());
-    }
+  for (auto const &cmdptr : commands) {
+    innerCommand(cmdptr.get());
   }
 }
 

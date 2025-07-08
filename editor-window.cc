@@ -386,12 +386,14 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Macro");
     menu->setObjectName("macroMenu");
 
-    // Used mnemonics: cr
+    // Used mnemonics: cmr
 
     MENU_ITEM    ("&Create macro",
                   macroCreateMacro);
     MENU_ITEM_KEY("&Run...",
-                  macroRun, Qt::Key_F1);
+                  macroRunDialog, Qt::Key_F1);
+    MENU_ITEM_KEY("Run &most recently run macro",
+                  macroRunMostRecent, Qt::CTRL + Qt::Key_F1);
   }
 
   {
@@ -1823,15 +1825,34 @@ void EditorWindow::macroCreateMacro() NOEXCEPT
 }
 
 
-void EditorWindow::macroRun() NOEXCEPT
+void EditorWindow::macroRunDialog() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   MacroRunDialog dlg(editorGlobal());
   if (dlg.exec()) {
-    TRACE("macro", "chosen macro to run: " << doubleQuote(dlg.getMacroName()));
+    std::string name = dlg.getMacroName();
+    TRACE("macro", "chosen macro to run: " << doubleQuote(name));
 
-    editorWidget()->runMacro(dlg.getMacroName());
+    editorWidget()->runMacro(name);
+    editorGlobal()->settings_setMostRecentlyRunMacro(editorWidget(), name);
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::macroRunMostRecent() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  std::string name =
+    editorGlobal()->settings_getMostRecentlyRunMacro(editorWidget());
+  if (!name.empty()) {
+    editorWidget()->runMacro(name);
+  }
+  else {
+    inform("There is no recently run macro.");
   }
 
   GENERIC_CATCH_END

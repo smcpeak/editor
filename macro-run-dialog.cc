@@ -44,18 +44,32 @@ MacroRunDialog::MacroRunDialog(
     // Populate the list.
     std::set<std::string> macroNames =
       m_editorGlobal->getSettings().getMacroNames();
+    int curItem = 0;
+    int selItem = 0;         // Used if there is no recent macro.
     for (auto const &name : macroNames) {
       m_macroList->addItem(toQString(name));
+
+      if (name == m_editorGlobal->getSettings().getMostRecentlyRunMacroC()) {
+        selItem = curItem;
+      }
+
+      ++curItem;
     }
 
-    // Select the first item so I can immediately use arrow keys within
-    // the list to choose that or another item.
+    // Select the most recently run macro (or 0 if there isn't one) so I
+    // can immediately use arrow keys within the list to choose that or
+    // another item.
     if (!macroNames.empty()) {
-      m_macroList->setCurrentRow(0, QItemSelectionModel::Select);
+      m_macroList->setCurrentRow(selItem, QItemSelectionModel::Select);
     }
   }
 
   createOkAndCancelHBox(vbox);
+
+  // Change the name from "Cancel" to "Close".  The name "Cancel"
+  // implies that any changes made will be discarded, but Delete takes
+  // effect immediately and is not undone by closing the dialog.
+  m_cancelButton->setText("Close");
 
   QPushButton *deleteButton = new QPushButton("&Delete");
   m_buttonHBox->insertWidget(0, deleteButton);
