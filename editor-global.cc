@@ -885,13 +885,11 @@ bool EditorGlobal::saveSettingsFile(QWidget * NULLABLE parent) NOEXCEPT
     SMFileUtil sfu;
     sfu.createDirectoryAndParents(sfu.splitPathDir(fname));
 
+    // Convert settings to GDV.
     GDValue gdvSettings(m_settings);
 
-    GDValueWriteOptions opts;
-    opts.m_enableIndentation = true;
-
-    // TODO: Write this atomically.
-    gdvSettings.writeToFile(fname, opts);
+    // Write as GDVN, atomically.
+    sfu.atomicallyWriteFileAsString(fname, gdvSettings.asLinesString());
 
     TRACE("EditorGlobal", "Wrote settings file: " << doubleQuote(fname));
 
