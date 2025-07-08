@@ -25,9 +25,11 @@
 #include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
+#include "smbase/sm-env.h"             // smbase::getXDGConfigHome
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-test.h"            // PVAL
 #include "smbase/string-util.h"        // beginsWith
+#include "smbase/stringb.h"            // stringb
 #include "smbase/strtokp.h"            // StrtokParse
 #include "smbase/trace.h"              // TRACE
 
@@ -863,8 +865,7 @@ EditorCommandVector EditorGlobal::getRecentCommands(int n) const
 
 std::string EditorGlobal::getSettingsFileName() const
 {
-  // TODO: Put this in the proper directory.
-  return "editor-settings.gdvn";
+  return stringb(getXDGConfigHome() << "/sm-editor/editor-settings.gdvn");
 }
 
 
@@ -872,6 +873,9 @@ void EditorGlobal::saveSettingsFile()
 {
   std::string fname = getSettingsFileName();
   EXN_CONTEXT("Saving " << doubleQuote(fname));
+
+  SMFileUtil sfu;
+  sfu.createDirectoryAndParents(sfu.splitPathDir(fname));
 
   GDValue gdvSettings(m_settings);
 
