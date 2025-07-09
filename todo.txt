@@ -1,7 +1,5 @@
 TODOs:
 
-  - Add a license.
-
   - The Line:Col status display is cut off when using large fonts and
     the line is 4 digits and column is 2 digits.
 
