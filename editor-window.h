@@ -222,6 +222,7 @@ public Q_SLOTS:
   void editPaste() NOEXCEPT;
   void editDelete() NOEXCEPT;
   void editKillLine() NOEXCEPT;
+  void editSelectEntireFile() NOEXCEPT;
   void editSearch() NOEXCEPT;
   void editReplace() NOEXCEPT;
   void editReplaceAndNext() NOEXCEPT;

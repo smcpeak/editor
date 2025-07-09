@@ -28,6 +28,9 @@ class EditorCommand {
   // If nothing is selected, select the entire current line.  Then, cut.
   -> EC_KillLine();
 
+  // Select the entire file.
+  -> EC_SelectEntireFile();
+
   // Move the cursor to the end of the next line.  If `m_select`, then
   // do so while creating or extending a selection.  Otherwise,
   // deactivate any selection.

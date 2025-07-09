@@ -5,6 +5,7 @@
 
 // smbase
 #include "smbase/datablok.h"           // DataBlock
+#include "smbase/exc.h"                // EXN_CONTEXT
 #include "smbase/nonport.h"            // removeFile
 #include "smbase/sm-test.h"            // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
 #include "smbase/string-util.h"        // doubleQuote
@@ -13,6 +14,9 @@
 // libc
 #include <stdio.h>                     // printf
 #include <stdlib.h>                    // system
+
+
+// TODO: Wrap in anonymous namespace, remove `static`.
 
 
 // This file is structured as a sequence of mostly-independent
@@ -24,6 +28,8 @@ static void checkCoord(TextLCoord expect, TextLCoord actual, char const *label)
 {
   // I swapped the order of actual and expect when defining
   // these functions...
+  //
+  // TODO: Swap the order so actual is first.
   expectEq(label, actual, expect);
 }
 
@@ -2437,6 +2443,43 @@ static void testLineEndLCoord()
 }
 
 
+// ----------------------- testSelectEntireFile ------------------------
+static void testSelectEntireFile()
+{
+  EXN_CONTEXT("testSelectEntireFile");
+
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(2,3);
+
+  tde.selectEntireFile();
+  expectCursor(tde, 0,0); expectMark(tde, 0,0);
+  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
+
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+
+  // Due to the small window dimensions, inserting the above text should
+  // leave the first visible line as "three".
+  checkCoord(TextLCoord(2,0), tde.firstVisible(), "firstVisible");
+
+  tde.selectEntireFile();
+  expectCursor(tde, 0,0); expectMark(tde, 3,0);
+
+  // `selectEntireFile` should scroll to make the cursor visible.
+  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
+
+  tde.insertNulTermText(
+    "one\n"
+    "two");
+  checkCoord(TextLCoord(0,1), tde.firstVisible(), "firstVisible");
+  tde.selectEntireFile();
+  expectCursor(tde, 0,0); expectMark(tde, 1,3);
+  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
+}
+
+
 // --------------------------- main -----------------------------
 static void entry(int argc, char **argv)
 {
@@ -2479,6 +2522,7 @@ static void entry(int argc, char **argv)
   testEditingWithTabs();
   testModelToLayoutSpans();
   testLineEndLCoord();
+  testSelectEntireFile();
 
   cout << "\ntd-editor-test is ok" << endl;
 }

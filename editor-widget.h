@@ -443,6 +443,7 @@ public:      // funcs
   void commandEditPaste();
   void commandEditDelete();
   void commandEditKillLine();
+  void commandEditSelectEntireFile();
   void editGrepSource();
 
   // -------------------- interaction with files ------------------

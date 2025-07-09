@@ -297,6 +297,9 @@ public:      // funcs
   // Select the entire line containing the cursor.
   void selectCursorLine();
 
+  // Select the entire file.
+  void selectEntireFile();
+
   // Get a range whose start is the lower of 'cursor' and 'mark', and
   // whose end is the higher.  If the mark is not active, set both to
   // 'cursor'.

@@ -2019,6 +2019,12 @@ void EditorWidget::commandEditKillLine()
 }
 
 
+void EditorWidget::commandEditSelectEntireFile()
+{
+  COMMAND_MU(EC_SelectEntireFile);
+}
+
+
 void EditorWidget::showInfo(char const *infoString)
 {
   QWidget *main = this->window();
@@ -2605,6 +2611,11 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
         m_editor->selectCursorLine();
       }
       setClipboard(m_editor->clipboardCut());
+      this->redraw();
+    }
+
+    ASTNEXTC1(EC_SelectEntireFile) {
+      m_editor->selectEntireFile();
       this->redraw();
     }
 

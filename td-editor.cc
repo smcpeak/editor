@@ -243,6 +243,14 @@ void TextDocumentEditor::selectCursorLine()
 }
 
 
+void TextDocumentEditor::selectEntireFile()
+{
+  this->setCursor(this->beginLCoord());
+  this->setMark(this->endLCoord());
+  this->scrollToCursor();
+}
+
+
 TextLCoordRange TextDocumentEditor::getSelectLayoutRange() const
 {
   if (!m_markActive) {

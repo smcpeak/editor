@@ -284,7 +284,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
     menu->setObjectName("editMenu");
 
-    // Used shortcut letters: ACDJGKLNPRSTU
+    // Used shortcut letters: ACDJFGKLNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
@@ -305,6 +305,9 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Kill (cut) current line", editKillLine,
                   Qt::CTRL + Qt::Key_K);
+
+    MENU_ITEM_KEY("Select entire &file", editSelectEntireFile,
+                  Qt::CTRL + Qt::ALT + Qt::Key_F);
 
     menu->addSeparator();
 
@@ -1336,6 +1339,14 @@ void EditorWindow::editKillLine() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   editorWidget()->commandEditKillLine();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editSelectEntireFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  editorWidget()->commandEditSelectEntireFile();
   GENERIC_CATCH_END
 }
 
