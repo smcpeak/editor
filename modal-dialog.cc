@@ -15,15 +15,12 @@
 
 
 
-// TODO: Replace "NULL" with "nullptr".
-
-
 ModalDialog::ModalDialog(QWidget *parent, Qt::WindowFlags f)
   : QDialog(parent, f),
-    m_helpButton(NULL),
-    m_okButton(NULL),
-    m_cancelButton(NULL),
-    m_buttonHBox(NULL),
+    m_helpButton(nullptr),
+    m_okButton(nullptr),
+    m_cancelButton(nullptr),
+    m_buttonHBox(nullptr),
     m_helpText()
 {
 #if QTCORE_VERSION >= 0x050900
@@ -38,13 +35,13 @@ ModalDialog::~ModalDialog()
 {
   // See doc/signals-and-dtors.txt.
   if (m_helpButton) {
-    QObject::disconnect(m_helpButton, NULL, this, NULL);
+    QObject::disconnect(m_helpButton, nullptr, this, nullptr);
   }
   if (m_okButton) {
-    QObject::disconnect(m_okButton, NULL, this, NULL);
+    QObject::disconnect(m_okButton, nullptr, this, nullptr);
   }
   if (m_cancelButton) {
-    QObject::disconnect(m_cancelButton, NULL, this, NULL);
+    QObject::disconnect(m_cancelButton, nullptr, this, nullptr);
   }
 }
 
@@ -61,7 +58,7 @@ int ModalDialog::execCentered(QWidget *target)
 void ModalDialog::createOkAndCancelHBox(QBoxLayout *vbox)
 {
   // We should not have already created them.
-  xassert(m_buttonHBox == NULL);
+  xassert(m_buttonHBox == nullptr);
 
   m_buttonHBox = new QHBoxLayout();
   vbox->addLayout(m_buttonHBox);
@@ -92,8 +89,8 @@ void ModalDialog::createOkAndCancelButtons(QBoxLayout *hbox)
 
 void ModalDialog::createHelpButton()
 {
-  xassert(m_buttonHBox != NULL);
-  xassert(m_helpButton == NULL);
+  xassert(m_buttonHBox != nullptr);
+  xassert(m_helpButton == nullptr);
 
   m_helpButton = new QPushButton("&Help");
   m_buttonHBox->insertWidget(0, m_helpButton);
