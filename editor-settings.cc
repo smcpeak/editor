@@ -90,22 +90,20 @@ CommandLineHistory::operator gdv::GDValue() const
 }
 
 
-// Initialize `<memb>` of type `type` from an optional field `<memb>` of
-// GDValue `m` that has the same name except without the "m_" prefix.
-//
-// TODO: Can I use `decltype` to omit `type`?
+// Initialize `<memb>` from an optional field `<memb>` of GDValue `m`
+// that has the same name except without the "m_" prefix.
 //
 // This is a candidate to move someplace more general, but it is for now
 // experimental.
-#define GDV_READ_MEMBER(type, memb) \
-  memb(gdvOptTo<type>(mapGetSym_parseOpt(m, stripMemberPrefix(#memb))))
+#define GDV_READ_MEMBER(memb) \
+  memb(gdvOptTo<decltype(memb)>(mapGetSym_parseOpt(m, stripMemberPrefix(#memb))))
 
 
 CommandLineHistory::CommandLineHistory(gdv::GDValue const &m)
-  : GDV_READ_MEMBER(CommandLineSet, m_commands),
-    GDV_READ_MEMBER(std::string, m_recent),
-    GDV_READ_MEMBER(bool, m_useSubstitution),
-    GDV_READ_MEMBER(bool, m_prefixStderrLines)
+  : GDV_READ_MEMBER(m_commands),
+    GDV_READ_MEMBER(m_recent),
+    GDV_READ_MEMBER(m_useSubstitution),
+    GDV_READ_MEMBER(m_prefixStderrLines)
 {}
 
 
@@ -195,10 +193,10 @@ EditorSettings::EditorSettings()
 
 
 EditorSettings::EditorSettings(GDValue const &m)
-  : GDV_READ_MEMBER(MacroDefinitionMap, m_macros),
-    GDV_READ_MEMBER(std::string, m_mostRecentlyRunMacro),
-    GDV_READ_MEMBER(CommandLineHistory, m_applyHistory),
-    GDV_READ_MEMBER(CommandLineHistory, m_runHistory)
+  : GDV_READ_MEMBER(m_macros),
+    GDV_READ_MEMBER(m_mostRecentlyRunMacro),
+    GDV_READ_MEMBER(m_applyHistory),
+    GDV_READ_MEMBER(m_runHistory)
 {
   checkTaggedOrderedMapTag(m, "EditorSettings");
 
