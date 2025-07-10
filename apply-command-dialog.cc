@@ -200,9 +200,6 @@ ApplyCommandDialog::ApplyCommandDialog(EditorWidget *editorWidget)
   vbox->addWidget(m_enableSubstitutionCheckBox);
 
   createOkAndCancelHBox(vbox);
-
-  // TODO: The buttons are animated when focused!  Disable!
-
   createHelpButton();
 
   m_helpText =
