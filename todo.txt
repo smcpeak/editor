@@ -3,14 +3,6 @@ TODOs:
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
-  - Now that I have $f substitution, put some common commands into a menu:
-    - empty-header $f
-    - center-header.py
-    - format-code.py
-    - format-macro.py
-    - format-header-comments.py
-    - c-escape
-
   - During search, Ctrl+W misbehaves of there are more than 1000 matches
     for the text matched so far.
 
