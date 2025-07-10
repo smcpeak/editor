@@ -17,7 +17,6 @@
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
-#include "launch-command-dialog.h"     // LaunchCommandDialog
 #include "macro-creator-dialog.h"      // MacroCreatorDialog
 #include "macro-run-dialog.h"          // MacroRunDialog
 #include "makefile_hilite.h"           // Makefile_Highlighter
@@ -1017,18 +1016,16 @@ void EditorWindow::fileLaunchCommand() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  static LaunchCommandDialog *dialog =
-    new LaunchCommandDialog("Launch Command", true /*prefixCheckbox*/);
-
   QString command;
-  if (!promptForRunCommand(command, dialog)) {
+  bool prefixStderrLines;
+  if (!promptForCommandLine(command, prefixStderrLines, ECLF_RUN)) {
     return;
   }
 
   innerLaunchCommand(
     currentDocument()->hostName(),
     toQString(editorWidget()->getDocumentDirectory()),
-    dialog->prefixStderrLines(),
+    prefixStderrLines,
     command);
 
   GENERIC_CATCH_END
@@ -1182,35 +1179,12 @@ void EditorWindow::searchPanelChanged(SearchAndReplacePanel *panel)
 }
 
 
-bool EditorWindow::promptForRunCommand(
+bool EditorWindow::promptForCommandLine(
   QString /*OUT*/ &command,
-  LaunchCommandDialog *dialog)
+  bool /*OUT*/ &prefixStderrLines,
+  EditorCommandLineFunction whichFunction)
 {
-  HostName hostName = currentDocument()->hostName();
-  string hostText = hostName.isLocal()? string("") :
-                                        stringb(" on " << hostName);
-
-  string dir = editorWidget()->getDocumentDirectory();
-  if (!dialog->runPrompt_nonEmpty(
-        qstringb("&Command to run" << hostText <<
-                 " in " << dir << ":"), this)) {
-    return false;
-  }
-
-  command = dialog->m_text;
-  if (dialog->enableSubstitution()) {
-    command = toQString(
-      currentDocument()->applyCommandSubstitutions(toString(command)));
-  }
-
-  return true;
-}
-
-
-bool EditorWindow::promptForApplyCommand(
-  std::string /*OUT*/ &command)
-{
-  ApplyCommandDialog dlg(editorWidget());
+  ApplyCommandDialog dlg(editorWidget(), whichFunction);
   if (!dlg.exec()) {
     return false;
   }
@@ -1218,13 +1192,16 @@ bool EditorWindow::promptForApplyCommand(
   // Get dialog results.
   command = dlg.getSpecifiedCommand();
   bool useSubst = dlg.isSubstitutionEnabled();
+  prefixStderrLines = dlg.isPrefixStderrEnabled();
 
   // Add the command to the history before substituting.
-  editorGlobal()->settings_addApplyCommand(
-    editorWidget(), command, useSubst);
+  editorGlobal()->settings_addHistoryCommand(
+    editorWidget(), whichFunction,
+    toString(command), useSubst, prefixStderrLines);
 
   if (useSubst) {
-    command = currentDocument()->applyCommandSubstitutions(command);
+    command = toQString(
+      currentDocument()->applyCommandSubstitutions(toString(command)));
   }
 
   return true;
@@ -1534,8 +1511,9 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // Only the variables declared above can be used after the
   // child exits, and even then only with care.
   {
-    std::string commandString;
-    if (!promptForApplyCommand(commandString)) {
+    QString commandString;
+    bool dummy;
+    if (!promptForCommandLine(commandString, dummy, ECLF_APPLY)) {
       return;      // Canceled.
     }
 
@@ -1546,7 +1524,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     string dir = editorWidget()->getDocumentDirectory();
     HostName hostName = editorWidget()->getDocument()->hostName();
     m_editorGlobal->configureCommandRunner(runner,
-      hostName, toQString(dir), toQString(commandString));
+      hostName, toQString(dir), commandString);
 
     // TODO: This mishandles NUL bytes.
     runner.setInputData(QByteArray(input.c_str()));

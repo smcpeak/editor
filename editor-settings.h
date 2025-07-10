@@ -6,6 +6,7 @@
 
 #include "editor-settings-fwd.h"                 // fwds for this module
 
+#include "eclf.h"                                // EditorCommandLineFunction
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
@@ -47,10 +48,21 @@ public:      // data
   // is updated to reflect the choice for that run.
   bool m_useSubstitution;
 
+  // When a command is executed, if this is true, we separate stdout and
+  // stderr, and prefix the latter with a string to indicate its origin.
+  //
+  // Currently, this is only done for "Run Command", and hence this
+  // setting is non-functional for "Apply Command".  But it's easier to
+  // just have the flag here for both than to have it only for one, and
+  // I'm thinking I might want to do that for "Apply" in the future, so
+  // it's here for both.
+  //
+  bool m_prefixStderrLines;
+
 public:      // funcs
   ~CommandLineHistory();
 
-  // Empty history, no recent command, substitution=true.
+  // Empty history, no recent command, substitution=true, prefix=false.
   CommandLineHistory();
 
   // De/serialization.
@@ -60,8 +72,9 @@ public:      // funcs
   void swap(CommandLineHistory &obj);
 
   // Add `cmd` to `m_commands`, set `m_recent` to it, and set
-  // `m_useSubstitution`.  Return true if anything changed.
-  bool add(std::string const &cmd, bool useSubstitution);
+  // `m_useSubstitution` and `m_prefixStderrLines`.  Return true if
+  // anything changed.
+  bool add(std::string const &cmd, bool useSubstitution, bool prefix);
 
   // Delete `cmd` from `m_applyCommands`.  Clear `m_recent` if it equals
   // `cmd`.  Return true if a change was made.
@@ -84,6 +97,14 @@ private:     // data
 
   // History of commands associated with Alt+A "Apply Command".
   CommandLineHistory m_applyHistory;
+
+  // History of commands associated with Alt+R "Run Command".
+  CommandLineHistory m_runHistory;
+
+private:     // funcs
+  // Get a wriable reference to a command history.
+  CommandLineHistory &getCommandHistory(
+    EditorCommandLineFunction whichFunction);
 
 public:      // funcs
   ~EditorSettings();
@@ -130,16 +151,24 @@ public:      // funcs
     { return m_mostRecentlyRunMacro; }
 
   // ---------------------------- commands -----------------------------
-  CommandLineHistory const &getApplyHistory() const
-    { return m_applyHistory; }
+  // Get one of the command line histories.
+  CommandLineHistory const &getCommandHistoryC(
+    EditorCommandLineFunction whichFunction) const;
 
-  // Add `cmd` to the set and make it the most recent, and set the
-  // substitution flag.  Return true if something changed.
-  bool addApplyCommand(std::string const &cmd, bool useSubstitution);
+  // For `whichFunction`, add `cmd` to the set and make it the most
+  // recent, and set the substitution and prefix flags.  Return true if
+  // something changed.
+  bool addHistoryCommand(
+    EditorCommandLineFunction whichFunction,
+    std::string const &cmd,
+    bool useSubstitution,
+    bool prefixStderrLines);
 
-  // Remove `cmd` from `m_applyCommands`.  Return false iff it was not
-  // there to begin with.
-  bool removeApplyCommand(std::string const &cmd);
+  // For `whichFunction`, remove `cmd` from `m_applyCommands`.  Return
+  // false iff it was not there to begin with.
+  bool removeHistoryCommand(
+    EditorCommandLineFunction whichFunction,
+    std::string const &cmd);
 };
 
 

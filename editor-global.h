@@ -285,12 +285,15 @@ public:       // funcs
     std::string const &name);
   std::string settings_getMostRecentlyRunMacro(
     QWidget * NULLABLE parent);
-  bool settings_addApplyCommand(
+  bool settings_addHistoryCommand(
     QWidget * NULLABLE parent,
+    EditorCommandLineFunction whichFunction,
     std::string const &cmd,
-    bool useSubstitution);
-  bool settings_removeApplyCommand(
+    bool useSubstitution,
+    bool prefixStderrLines);
+  bool settings_removeHistoryCommand(
     QWidget * NULLABLE parent,
+    EditorCommandLineFunction whichFunction,
     std::string const &cmd);
 
   // QCoreApplication methods.

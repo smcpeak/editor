@@ -64,6 +64,12 @@ The dialog has these controls, laid out from top to bottom:
     help)" that alters the interpretation of the command line.  Its
     hotkey is Alt+S.
 
+<li><code>prefixStderrLines</code>: An optionally present checkbox with
+    label 'Prefix stderr lines with "STDERR: "'.  It is present if the
+    dialog is created with a boolean parameter set to indicate this is
+    for the "Run Command" feature instead of "Apply Command".  Its
+    hotkey is Alt+W.
+
 <li>Three horizontally adjacent buttons:
 
     <ul>
@@ -99,6 +105,7 @@ Summary of hotkeys:
 <li>Alt+N: Set focus to <code>newCommand</code>.
 <li>Alt+P: Set focus to <code>prevCommands</code>.
 <li>Alt+S: Toggle, and set focus to, <code>enableSubstitution</code>.
+<li>Alt+W: Toggle, and set focus to, <code>prefixStderrLines</code>.
 <li>Alt+X: Activate <code>clearNewCommand</code>.
 <li>Enter: Activate <code>run</code>.
 <li>Esc: Activate <code>close</code>.

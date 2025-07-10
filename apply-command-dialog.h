@@ -4,6 +4,7 @@
 #ifndef EDITOR_APPLY_COMMAND_DIALOG_H
 #define EDITOR_APPLY_COMMAND_DIALOG_H
 
+#include "eclf.h"                      // EditorCommandLineFunction
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "modal-dialog.h"              // ModalDialog
 
@@ -35,6 +36,9 @@ private:     // data
   // as well as `EditorGlobal`.
   EditorWidget *m_editorWidget;
 
+  // Which function this dialog is for.
+  EditorCommandLineFunction m_whichFunction;
+
   // ---------------------------- controls -----------------------------
   // "Command to run in $PWD."
   QLabel *m_pwdLabel = nullptr;
@@ -63,6 +67,10 @@ private:     // data
   // "Enable substitution (see help)"
   QCheckBox *m_enableSubstitutionCheckBox = nullptr;
 
+  // 'Prefix stderr output with "STDERR: "'.  This is null if
+  // `m_whichFunction` is not `ECLF_RUN`.
+  QCheckBox * NULLABLE m_prefixStderrLinesCheckBox = nullptr;
+
 private Q_SLOTS:
   // Copy the selected item in `m_prevCommandsListWidget` into
   // `m_newCommandLineEdit`.
@@ -76,15 +84,21 @@ private Q_SLOTS:
   void clearNewCommand() NOEXCEPT;
 
 public:      // funcs
-  ApplyCommandDialog(EditorWidget *editorWidget);
+  ApplyCommandDialog(
+    EditorWidget *editorWidget,
+    EditorCommandLineFunction whichFunction);
+
   ~ApplyCommandDialog();
 
   // After `exec()` returns true, get the command the user chose.
-  std::string getSpecifiedCommand() const;
+  QString getSpecifiedCommand() const;
 
   // After `exec()` returns true, true if the substitution checkbox is
   // enabled.
   bool isSubstitutionEnabled() const;
+
+  // Similarly, true if prefixing is enabled.
+  bool isPrefixStderrEnabled() const;
 
 public Q_SLOTS:
   // Close the dialog and run the specified command, if there is one.

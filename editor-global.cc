@@ -979,12 +979,15 @@ std::string EditorGlobal::settings_getMostRecentlyRunMacro(
 }
 
 
-bool EditorGlobal::settings_addApplyCommand(
+bool EditorGlobal::settings_addHistoryCommand(
   QWidget * NULLABLE parent,
+  EditorCommandLineFunction whichFunction,
   std::string const &cmd,
-  bool useSubstitution)
+  bool useSubstitution,
+  bool prefixStderrLines)
 {
-  if (m_settings.addApplyCommand(cmd, useSubstitution)) {
+  if (m_settings.addHistoryCommand(whichFunction, cmd,
+                                   useSubstitution, prefixStderrLines)) {
     saveSettingsFile(parent);
     return true;
   }
@@ -994,11 +997,12 @@ bool EditorGlobal::settings_addApplyCommand(
 }
 
 
-bool EditorGlobal::settings_removeApplyCommand(
+bool EditorGlobal::settings_removeHistoryCommand(
   QWidget * NULLABLE parent,
+  EditorCommandLineFunction whichFunction,
   std::string const &cmd)
 {
-  if (m_settings.removeApplyCommand(cmd)) {
+  if (m_settings.removeHistoryCommand(whichFunction, cmd)) {
     saveSettingsFile(parent);
     return true;
   }

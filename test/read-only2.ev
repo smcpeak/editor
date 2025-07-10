@@ -7,12 +7,12 @@ CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 
 # Run 'date' command.
 Shortcut "window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R"
-CheckFocusWindow "LaunchCommandDialog"
-KeyPress "LaunchCommandDialog.m_comboBox" "Key_D" "d"
-KeyPress "LaunchCommandDialog.m_comboBox" "Key_A" "a"
-KeyPress "LaunchCommandDialog.m_comboBox" "Key_T" "t"
-KeyPress "LaunchCommandDialog.m_comboBox" "Key_E" "e"
-KeyPress "LaunchCommandDialog" "Key_Return" "\r"
+CheckFocusWindow "window1.frame1.editorFrame.m_editorWidget.RunCommandDialog"
+KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_D" "d"
+KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_A" "a"
+KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_T" "t"
+KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_E" "e"
+KeyPress "RunCommandDialog" "Key_Return" "\r"
 
 # Wait until it finishes.
 WaitUntilCheckQuery "200" "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"

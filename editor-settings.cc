@@ -49,7 +49,8 @@ CommandLineHistory::~CommandLineHistory()
 CommandLineHistory::CommandLineHistory()
   : m_commands(),
     m_recent(),
-    m_useSubstitution(true)
+    m_useSubstitution(true),
+    m_prefixStderrLines(false)
 {}
 
 
@@ -83,6 +84,7 @@ CommandLineHistory::operator gdv::GDValue() const
   GDV_WRITE_MEMBER(m_commands);
   GDV_WRITE_MEMBER(m_recent);
   GDV_WRITE_MEMBER(m_useSubstitution);
+  GDV_WRITE_MEMBER(m_prefixStderrLines);
 
   return m;
 }
@@ -102,7 +104,8 @@ CommandLineHistory::operator gdv::GDValue() const
 CommandLineHistory::CommandLineHistory(gdv::GDValue const &m)
   : GDV_READ_MEMBER(CommandLineSet, m_commands),
     GDV_READ_MEMBER(std::string, m_recent),
-    GDV_READ_MEMBER(bool, m_useSubstitution)
+    GDV_READ_MEMBER(bool, m_useSubstitution),
+    GDV_READ_MEMBER(bool, m_prefixStderrLines)
 {}
 
 
@@ -123,6 +126,7 @@ void CommandLineHistory::swap(CommandLineHistory &obj)
     SWAP_MEMB(m_commands);
     SWAP_MEMB(m_recent);
     SWAP_MEMB(m_useSubstitution);
+    SWAP_MEMB(m_prefixStderrLines);
   }
 }
 
@@ -143,7 +147,10 @@ bool setIfDifferent(T &dest, T const &src)
 }
 
 
-bool CommandLineHistory::add(std::string const &cmd, bool useSubstitution)
+bool CommandLineHistory::add(
+  std::string const &cmd,
+  bool useSubstitution,
+  bool prefix)
 {
   bool ret = false;
 
@@ -152,6 +159,8 @@ bool CommandLineHistory::add(std::string const &cmd, bool useSubstitution)
   ret |= setIfDifferent(m_recent, cmd);
 
   ret |= setIfDifferent(m_useSubstitution, useSubstitution);
+
+  ret |= setIfDifferent(m_prefixStderrLines, prefix);
 
   return ret;
 }
@@ -180,14 +189,16 @@ EditorSettings::~EditorSettings()
 EditorSettings::EditorSettings()
   : m_macros(),
     m_mostRecentlyRunMacro(),
-    m_applyHistory()
+    m_applyHistory(),
+    m_runHistory()
 {}
 
 
 EditorSettings::EditorSettings(GDValue const &m)
   : GDV_READ_MEMBER(MacroDefinitionMap, m_macros),
     GDV_READ_MEMBER(std::string, m_mostRecentlyRunMacro),
-    GDV_READ_MEMBER(CommandLineHistory, m_applyHistory)
+    GDV_READ_MEMBER(CommandLineHistory, m_applyHistory),
+    GDV_READ_MEMBER(CommandLineHistory, m_runHistory)
 {
   checkTaggedOrderedMapTag(m, "EditorSettings");
 
@@ -211,6 +222,7 @@ EditorSettings::operator GDValue() const
   GDV_WRITE_MEMBER(m_macros);
   GDV_WRITE_MEMBER(m_mostRecentlyRunMacro);
   GDV_WRITE_MEMBER(m_applyHistory);
+  GDV_WRITE_MEMBER(m_runHistory);
 
   return m;
 }
@@ -224,6 +236,7 @@ void EditorSettings::swap(EditorSettings &obj)
     SWAP_MEMB(m_macros);
     SWAP_MEMB(m_mostRecentlyRunMacro);
     SWAP_MEMB(m_applyHistory);
+    SWAP_MEMB(m_runHistory);
   }
 }
 
@@ -309,17 +322,39 @@ std::string EditorSettings::getMostRecentlyRunMacro()
 
 
 // ----------------------------- commands ------------------------------
-bool EditorSettings::addApplyCommand(
-  std::string const &cmd,
-  bool useSubstitution)
+CommandLineHistory &EditorSettings::getCommandHistory(
+  EditorCommandLineFunction whichFunction)
 {
-  return m_applyHistory.add(cmd, useSubstitution);
+  return const_cast<CommandLineHistory&>(
+    getCommandHistoryC(whichFunction));
 }
 
 
-bool EditorSettings::removeApplyCommand(std::string const &cmd)
+CommandLineHistory const &EditorSettings::getCommandHistoryC(
+  EditorCommandLineFunction whichFunction) const
 {
-  return m_applyHistory.remove(cmd);
+  return whichFunction==ECLF_APPLY?
+           m_applyHistory :
+           m_runHistory;
+}
+
+
+bool EditorSettings::addHistoryCommand(
+  EditorCommandLineFunction whichFunction,
+  std::string const &cmd,
+  bool useSubstitution,
+  bool prefixStderrLines)
+{
+  return getCommandHistory(whichFunction).
+    add(cmd, useSubstitution, prefixStderrLines);
+}
+
+
+bool EditorSettings::removeHistoryCommand(
+  EditorCommandLineFunction whichFunction,
+  std::string const &cmd)
+{
+  return getCommandHistory(whichFunction).remove(cmd);
 }
 
 

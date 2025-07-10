@@ -17,10 +17,10 @@
       ],
       "shapeParams": [
         310,
-        265
+        375
       ],
       "size": {
-        "h": 400,
+        "h": 430,
         "w": 635
       }
     },
@@ -118,7 +118,7 @@
     {
       "loc": {
         "x": 50,
-        "y": 395
+        "y": 425
       },
       "name": "Help",
       "shape": "ES_PUSHBUTTON",
@@ -130,7 +130,7 @@
     {
       "loc": {
         "x": 440,
-        "y": 395
+        "y": 425
       },
       "name": "Run",
       "shape": "ES_PUSHBUTTON",
@@ -142,7 +142,7 @@
     {
       "loc": {
         "x": 555,
-        "y": 395
+        "y": 425
       },
       "name": "Close",
       "shape": "ES_PUSHBUTTON",
@@ -186,6 +186,19 @@
         "h": 20,
         "w": 25
       }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 390
+      },
+      "name": "Prefix stderr lines with \"STDERR: \"",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_CHECK_BOX",
+      "size": {
+        "h": 20,
+        "w": 605
+      }
     }
   ],
   "inheritances": [],
@@ -199,7 +212,7 @@
   "type": "Diagram Editor Diagram",
   "version": 32,
   "windowSize": {
-    "h": 471,
+    "h": 501,
     "w": 700
   }
 }
