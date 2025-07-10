@@ -136,6 +136,7 @@ TICK          [\']
 "explicit"         |
 "export"           |
 "extern"           |
+"final"            |  /* Not technically a keyword, but I want to highlight it like one anyway. */
 "float"            |
 "for"              |
 "friend"           |

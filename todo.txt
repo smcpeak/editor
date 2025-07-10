@@ -1,7 +1,5 @@
 TODOs:
 
-  - Add "final" to the set of C++ keywords.
-
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
