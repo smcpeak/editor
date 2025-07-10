@@ -979,6 +979,35 @@ std::string EditorGlobal::settings_getMostRecentlyRunMacro(
 }
 
 
+bool EditorGlobal::settings_addApplyCommand(
+  QWidget * NULLABLE parent,
+  std::string const &cmd,
+  bool useSubstitution)
+{
+  if (m_settings.addApplyCommand(cmd, useSubstitution)) {
+    saveSettingsFile(parent);
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+
+bool EditorGlobal::settings_removeApplyCommand(
+  QWidget * NULLABLE parent,
+  std::string const &cmd)
+{
+  if (m_settings.removeApplyCommand(cmd)) {
+    saveSettingsFile(parent);
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {

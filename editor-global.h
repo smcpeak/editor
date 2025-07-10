@@ -285,6 +285,13 @@ public:       // funcs
     std::string const &name);
   std::string settings_getMostRecentlyRunMacro(
     QWidget * NULLABLE parent);
+  bool settings_addApplyCommand(
+    QWidget * NULLABLE parent,
+    std::string const &cmd,
+    bool useSubstitution);
+  bool settings_removeApplyCommand(
+    QWidget * NULLABLE parent,
+    std::string const &cmd);
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

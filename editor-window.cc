@@ -4,6 +4,7 @@
 #include "editor-window.h"             // this module
 
 // editor
+#include "apply-command-dialog.h"      // ApplyCommandDialog
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
@@ -1206,6 +1207,30 @@ bool EditorWindow::promptForRunCommand(
 }
 
 
+bool EditorWindow::promptForApplyCommand(
+  std::string /*OUT*/ &command)
+{
+  ApplyCommandDialog dlg(editorWidget());
+  if (!dlg.exec()) {
+    return false;
+  }
+
+  // Get dialog results.
+  command = dlg.getSpecifiedCommand();
+  bool useSubst = dlg.isSubstitutionEnabled();
+
+  // Add the command to the history before substituting.
+  editorGlobal()->settings_addApplyCommand(
+    editorWidget(), command, useSubst);
+
+  if (useSubst) {
+    command = currentDocument()->applyCommandSubstitutions(command);
+  }
+
+  return true;
+}
+
+
 void EditorWindow::namedTextDocumentAdded(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {}
@@ -1509,11 +1534,8 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // Only the variables declared above can be used after the
   // child exits, and even then only with care.
   {
-    static LaunchCommandDialog *dialog =
-      new LaunchCommandDialog("Apply Command", false /*prefixCheckbox*/);
-
-    QString commandString;
-    if (!promptForRunCommand(commandString, dialog)) {
+    std::string commandString;
+    if (!promptForApplyCommand(commandString)) {
       return;      // Canceled.
     }
 
@@ -1524,7 +1546,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     string dir = editorWidget()->getDocumentDirectory();
     HostName hostName = editorWidget()->getDocument()->hostName();
     m_editorGlobal->configureCommandRunner(runner,
-      hostName, toQString(dir), commandString);
+      hostName, toQString(dir), toQString(commandString));
 
     // TODO: This mishandles NUL bytes.
     runner.setInputData(QByteArray(input.c_str()));

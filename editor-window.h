@@ -187,6 +187,15 @@ public:      // funcs
     QString /*OUT*/ &command,
     LaunchCommandDialog *dialog);
 
+  // Prompt for the command to run for Alt+A.  Return false if the user
+  // cancles.  Otherwise, set `command` to the specified command line.
+  //
+  // This is a revised version of `promptForRunCommand`, and I hope to
+  // replace the latter with the former.
+  //
+  bool promptForApplyCommand(
+    std::string /*OUT*/ &command);
+
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAdded(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;

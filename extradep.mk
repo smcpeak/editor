@@ -1,3 +1,4 @@
+apply-command-dialog.o: editor-command.ast.gen.fwd.h
 editor-command.ast.gen.o: editor-command.ast.gen.fwd.h
 editor-global.moc.o: editor-command.ast.gen.fwd.h
 editor-global.o: editor-command.ast.gen.fwd.h

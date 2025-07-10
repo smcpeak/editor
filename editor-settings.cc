@@ -7,16 +7,19 @@
 
 // Ensure the required templates are all declared before use.
 #include "smbase/gdvalue-map-fwd.h"
+#include "smbase/gdvalue-set-fwd.h"
 #include "smbase/gdvalue-unique-ptr-fwd.h"
 #include "smbase/gdvalue-vector-fwd.h"
 
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-map.h"        // GDValue <-> std::map
 #include "smbase/gdvalue-parse-ops.h"  // mapGetSym_parse{,Opt}
+#include "smbase/gdvalue-set.h"        // GDValue <-> std::set
 #include "smbase/gdvalue-unique-ptr.h" // GDValue <-> std::unique_ptr
 #include "smbase/gdvalue-vector.h"     // GDValue <-> std::vector
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // keySet
+#include "smbase/set-util.h"           // smbase::setInsert
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
 #include <utility>                     // std::swap
@@ -30,25 +33,161 @@ INIT_TRACE("editor-settings");
 
 
 // Version number for the settings file format.
+//
+// My current thinking is I will only bump this when necessary to
+// prevent misinterpretation, which ideally would be never.  I should
+// mostly be able to just add fields.
+//
 static int const CUR_VERSION = 1;
 
 
+// ------------------------ CommandLineHistory -------------------------
+CommandLineHistory::~CommandLineHistory()
+{}
+
+
+CommandLineHistory::CommandLineHistory()
+  : m_commands(),
+    m_recent(),
+    m_useSubstitution(true)
+{}
+
+
+// If `name` begins with "m_", return `name+2`, thus stripping the
+// prefix.  Otherwise return it unchanged.
+static char const *stripMemberPrefix(char const *name)
+{
+  if (name[0] == 'm' &&
+      name[1] == '_') {
+    return name+2;
+  }
+  else {
+    return name;
+  }
+}
+
+
+// Write `<memb>` to a field of GDValue `m` that has the same name
+// except without the "m_" prefix (if any).
+//
+// This is a candidate to move someplace more general, but it is for now
+// experimental.
+#define GDV_WRITE_MEMBER(memb) \
+  m.mapSetSym(stripMemberPrefix(#memb), toGDValue(memb)) /* user ; */
+
+
+CommandLineHistory::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "CommandLineHistory"_sym);
+
+  GDV_WRITE_MEMBER(m_commands);
+  GDV_WRITE_MEMBER(m_recent);
+  GDV_WRITE_MEMBER(m_useSubstitution);
+
+  return m;
+}
+
+
+// Initialize `<memb>` of type `type` from an optional field `<memb>` of
+// GDValue `m` that has the same name except without the "m_" prefix.
+//
+// TODO: Can I use `decltype` to omit `type`?
+//
+// This is a candidate to move someplace more general, but it is for now
+// experimental.
+#define GDV_READ_MEMBER(type, memb) \
+  memb(gdvOptTo<type>(mapGetSym_parseOpt(m, stripMemberPrefix(#memb))))
+
+
+CommandLineHistory::CommandLineHistory(gdv::GDValue const &m)
+  : GDV_READ_MEMBER(CommandLineSet, m_commands),
+    GDV_READ_MEMBER(std::string, m_recent),
+    GDV_READ_MEMBER(bool, m_useSubstitution)
+{}
+
+
+// Swap `this->memb` with `obj.memb`.  This should be done after
+// `using std::swap;`.
+//
+// This is a candidate to move someplace more general, but it is for now
+// experimental.
+#define SWAP_MEMB(memb) \
+  swap(memb, obj.memb)
+
+
+void CommandLineHistory::swap(CommandLineHistory &obj)
+{
+  if (this != &obj) {
+    using std::swap;
+
+    SWAP_MEMB(m_commands);
+    SWAP_MEMB(m_recent);
+    SWAP_MEMB(m_useSubstitution);
+  }
+}
+
+
+// Set `dest` to `src`, returning true if a change was made.
+//
+// This is a candidate to move to someplace more general.
+template <typename T>
+bool setIfDifferent(T &dest, T const &src)
+{
+  if (dest == src) {
+    return false;
+  }
+  else {
+    dest = src;
+    return true;
+  }
+}
+
+
+bool CommandLineHistory::add(std::string const &cmd, bool useSubstitution)
+{
+  bool ret = false;
+
+  ret |= setInsert(m_commands, cmd);
+
+  ret |= setIfDifferent(m_recent, cmd);
+
+  ret |= setIfDifferent(m_useSubstitution, useSubstitution);
+
+  return ret;
+}
+
+
+bool CommandLineHistory::remove(std::string const &cmd)
+{
+  bool ret = false;
+
+  ret |= setErase(m_commands, cmd);
+
+  if (cmd == m_recent) {
+    ret |= true;
+    m_recent.clear();
+  }
+
+  return ret;
+}
+
+
+// -------------------------- EditorSettings ---------------------------
 EditorSettings::~EditorSettings()
 {}
 
 
 EditorSettings::EditorSettings()
-  : m_macros()
+  : m_macros(),
+    m_mostRecentlyRunMacro(),
+    m_applyHistory()
 {}
 
 
 EditorSettings::EditorSettings(GDValue const &m)
-  : m_macros(gdvTo<MacroDefinitionMap>(mapGetSym_parse(m, "macros"))),
-
-    // This was added after creating the initial version.  I'm going to
-    // try having the parser just accept a missing field.
-    m_mostRecentlyRunMacro(gdvOptTo<std::string>(
-      mapGetSym_parseOpt(m, "mostRecentlyRunMacro")))
+  : GDV_READ_MEMBER(MacroDefinitionMap, m_macros),
+    GDV_READ_MEMBER(std::string, m_mostRecentlyRunMacro),
+    GDV_READ_MEMBER(CommandLineHistory, m_applyHistory)
 {
   checkTaggedOrderedMapTag(m, "EditorSettings");
 
@@ -68,8 +207,10 @@ EditorSettings::operator GDValue() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "EditorSettings"_sym);
 
   m.mapSetSym("version", CUR_VERSION);
-  m.mapSetSym("macros", toGDValue(m_macros));
-  m.mapSetSym("mostRecentlyRunMacro", toGDValue(m_mostRecentlyRunMacro));
+
+  GDV_WRITE_MEMBER(m_macros);
+  GDV_WRITE_MEMBER(m_mostRecentlyRunMacro);
+  GDV_WRITE_MEMBER(m_applyHistory);
 
   return m;
 }
@@ -80,11 +221,11 @@ void EditorSettings::swap(EditorSettings &obj)
   if (this != &obj) {
     using std::swap;
 
-    swap(m_macros, obj.m_macros);
-    swap(m_mostRecentlyRunMacro, obj.m_mostRecentlyRunMacro);
+    SWAP_MEMB(m_macros);
+    SWAP_MEMB(m_mostRecentlyRunMacro);
+    SWAP_MEMB(m_applyHistory);
   }
 }
-
 
 
 // ------------------------------ macros -------------------------------
@@ -164,6 +305,21 @@ std::string EditorSettings::getMostRecentlyRunMacro()
     m_mostRecentlyRunMacro.clear();
     return {};
   }
+}
+
+
+// ----------------------------- commands ------------------------------
+bool EditorSettings::addApplyCommand(
+  std::string const &cmd,
+  bool useSubstitution)
+{
+  return m_applyHistory.add(cmd, useSubstitution);
+}
+
+
+bool EditorSettings::removeApplyCommand(std::string const &cmd)
+{
+  return m_applyHistory.remove(cmd);
 }
 
 

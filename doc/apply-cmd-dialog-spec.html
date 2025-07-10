@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Apply Command Dialog Specification</title>
+</head>
+<body>
+
+<p>
+The "Apply Command" dialog allows the user to specify a command line to
+run.
+
+<img src="apply-cmd-dialog.ded.png" alt="Dialog wireframe" style="display: block">
+
+<p>
+The dialog has these controls, laid out from top to bottom:
+
+<ul>
+
+<li>Label with text: "Command to run in $PWD."  $PWD is replaced by the
+    name of the directory containing the current document.
+
+<li>Label with text: 'Run a previous command (if "New" is empty):'.  This label is immediately
+    above the following list box, and acts as the hotkey "buddy",
+    specifying the letter "P" as its hotkey, such that when the user
+    types Alt+P, focus moves to the list box.
+
+<li><code>prevCommands</code>: List box containing the previously run command lines,
+    less any subsequent deletions.  Initially, the most recently run
+    command is selected, such that the user can open the dialog and
+    immediately hit Enter to run that command.
+
+<li>Two buttons horizontally adjacent, aligned to the right side of the
+    dialog:
+
+    <ul>
+
+    <li><code>copyToNew</code>: Push button with label "Copy to New" and hotkey Alt+C.
+        This copies the text of the selected item in <code>prevCommands</code> into the
+        <code>newCommand</code> box, overwriting the latter's contents.
+
+    <li><code>deleteSelected</code>: Push button with label "Delete" and hotkey Alt+D.
+        This deletes the selected item in <code>prevCommands</code> from the list.
+
+    </ul>
+
+<li>Label with text: "Run a new command (if not empty):".  This is the
+    buddy of the next control and responds to hotkey Alt+N.
+
+<li>Two horizontally adjacent controls:
+
+    <ul>
+
+    <li><code>newCommand</code>: Single-line edit box containing a command to run.
+        This box expands to fill the horizontal space.
+
+    <li><code>clearNewCommand</code>: Push button with label "X" and hotkey Alt+X
+        that clears the <code>newCommand</code> box.  Its width is the minimum
+        needed to show its label.
+
+    </ul>
+
+<li><code>enableSubstitution</code>: A checkbox with label "Enable substitution (see
+    help)" that alters the interpretation of the command line.  Its
+    hotkey is Alt+S.
+
+<li>Three horizontally adjacent buttons:
+
+    <ul>
+
+    <li><code>help</code>: Push button "Help" that opens a message box with help
+        info.  It is aligned to the left side of the dialog.  Its hotkey
+        is Alt+H.
+
+    <li><code>run</code>: Push button "Run" that closes the dialog and runs the chosen
+        command, which is the text of <code>newCommand</code> if that is not empty,
+        and the selected item in <code>prevCommands</code> if one is selected.  If
+        <code>newCommand</code> is empty and nothing is selected in <code>prevCommands</code>
+        then the Run button does nothing (not even close the dialog).
+        The Run and Close buttons are aligned to the right side of the
+        dialog, horizontally adjacent to each other.  Its hotkey is
+        Enter; pressing Enter anywhere in the dialog activates it.
+
+    <li><code>close</code>: Push button "Close" that closes the dialog without further
+        action.  However, deletions from <code>prevCommands</code> persist.  Its
+        hotkey is Esc.
+
+    </ul>
+
+</ul>
+
+<p>
+Summary of hotkeys:
+
+<ul>
+<li>Alt+C: Activate <code>copyToNew</code>.
+<li>Alt+D: Activate <code>deleteSelected</code>.
+<li>Alt+H: Activate <code>help</code>.
+<li>Alt+N: Set focus to <code>newCommand</code>.
+<li>Alt+P: Set focus to <code>prevCommands</code>.
+<li>Alt+S: Toggle, and set focus to, <code>enableSubstitution</code>.
+<li>Alt+X: Activate <code>clearNewCommand</code>.
+<li>Enter: Activate <code>run</code>.
+<li>Esc: Activate <code>close</code>.
+</ul>
+
+
+</body>
+</html>

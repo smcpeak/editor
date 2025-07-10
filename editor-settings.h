@@ -23,6 +23,51 @@ typedef std::vector<std::unique_ptr<EditorCommand>> EditorCommandVector;
 // A map from macro name to definition.
 typedef std::map<std::string, EditorCommandVector> MacroDefinitionMap;
 
+// Set of command lines.  None of the strings is empty.
+typedef std::set<std::string> CommandLineSet;
+
+
+// History of command lines for use in some particular context, such as
+// the Alt+X "Apply Command" function.
+class CommandLineHistory final {
+public:      // data
+  // Set of all command in the history.  Nominally this is all commands
+  // ever executed, but the user can delete any ones they do not want to
+  // keep.
+  CommandLineSet m_commands;
+
+  // Most recently used command.  Normally this should be a string in
+  // `m_commands`, but it could be empty to indicate there is no recent
+  // command, or it might be one that has since been deleted.
+  std::string m_recent;
+
+  // When a command line is executed, it can optionally have elements
+  // like "$f" replaced with the document's file name.  This records the
+  // current state of that option.  Whenever the user runs a command, it
+  // is updated to reflect the choice for that run.
+  bool m_useSubstitution;
+
+public:      // funcs
+  ~CommandLineHistory();
+
+  // Empty history, no recent command, substitution=true.
+  CommandLineHistory();
+
+  // De/serialization.
+  operator gdv::GDValue() const;
+  explicit CommandLineHistory(gdv::GDValue const &v);
+
+  void swap(CommandLineHistory &obj);
+
+  // Add `cmd` to `m_commands`, set `m_recent` to it, and set
+  // `m_useSubstitution`.  Return true if anything changed.
+  bool add(std::string const &cmd, bool useSubstitution);
+
+  // Delete `cmd` from `m_applyCommands`.  Clear `m_recent` if it equals
+  // `cmd`.  Return true if a change was made.
+  bool remove(std::string const &cmd);
+};
+
 
 // Editor-wide persistent user settings.
 class EditorSettings {
@@ -36,6 +81,9 @@ private:     // data
   // This could be the empty string, meaning no recent macro is
   // recorded.
   std::string m_mostRecentlyRunMacro;
+
+  // History of commands associated with Alt+A "Apply Command".
+  CommandLineHistory m_applyHistory;
 
 public:      // funcs
   ~EditorSettings();
@@ -80,6 +128,18 @@ public:      // funcs
   // Just get the current value without validation.
   std::string getMostRecentlyRunMacroC() const
     { return m_mostRecentlyRunMacro; }
+
+  // ---------------------------- commands -----------------------------
+  CommandLineHistory const &getApplyHistory() const
+    { return m_applyHistory; }
+
+  // Add `cmd` to the set and make it the most recent, and set the
+  // substitution flag.  Return true if something changed.
+  bool addApplyCommand(std::string const &cmd, bool useSubstitution);
+
+  // Remove `cmd` from `m_applyCommands`.  Return false iff it was not
+  // there to begin with.
+  bool removeApplyCommand(std::string const &cmd);
 };
 
 

@@ -1,0 +1,205 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 35,
+        "y": 40
+      },
+      "name": "Apply Command",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_MAXIMIZE",
+        "SF_HAS_MINIMIZE",
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        310,
+        265
+      ],
+      "size": {
+        "h": 400,
+        "w": 635
+      }
+    },
+    {
+      "loc": {
+        "x": 45,
+        "y": 70
+      },
+      "name": "Command to run in $PWD.",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 505
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 115
+      },
+      "name": "Single-select list of previous commands",
+      "size": {
+        "h": 140,
+        "w": 585
+      }
+    },
+    {
+      "loc": {
+        "x": 635,
+        "y": 115
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 140,
+        "w": 20
+      }
+    },
+    {
+      "loc": {
+        "x": 45,
+        "y": 95
+      },
+      "name": "Run a previous command (if \"New\" is empty):",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 505
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 305
+      },
+      "name": "Run a new command (if not empty):",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 505
+      }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 50,
+        "y": 325
+      },
+      "shape": "ES_TEXT_EDIT",
+      "size": {
+        "h": 20,
+        "w": 575
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 360
+      },
+      "name": "Enable substitution (see help)",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_CHECK_BOX",
+      "size": {
+        "h": 20,
+        "w": 605
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 395
+      },
+      "name": "Help",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 440,
+        "y": 395
+      },
+      "name": "Run",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 555,
+        "y": 395
+      },
+      "name": "Close",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 555,
+        "y": 270
+      },
+      "name": "Delete",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 440,
+        "y": 270
+      },
+      "name": "Copy to New",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 625,
+        "y": 325
+      },
+      "name": "X",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    }
+  ],
+  "inheritances": [],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 471,
+    "w": 700
+  }
+}
