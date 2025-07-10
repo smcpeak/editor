@@ -97,6 +97,11 @@ void ModalDialog::createHelpButton()
   SET_QOBJECT_NAME(m_helpButton);
   QObject::connect(m_helpButton, &QPushButton::clicked,
                    this, &ModalDialog::on_helpPressed);
+
+  // Make the Tab order be Help -> Ok -> Cancel.  (Otherwise, it goes
+  // Ok -> Cancel -> Help since Help was added last.)
+  QWidget::setTabOrder(m_helpButton, m_okButton);
+  QWidget::setTabOrder(m_okButton, m_cancelButton);
 }
 
 

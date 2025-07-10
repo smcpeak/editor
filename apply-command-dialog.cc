@@ -203,7 +203,6 @@ ApplyCommandDialog::ApplyCommandDialog(EditorWidget *editorWidget)
 
   // TODO: The buttons are animated when focused!  Disable!
 
-  // TODO: This puts the Help button in the wrong tab order.
   createHelpButton();
 
   m_helpText =
