@@ -104,7 +104,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_openFilesDialog(NULL),
     m_connectionsDialog(),
     m_recentCommands(),
-    m_settings()
+    m_settings(),
+    m_doNotSaveSettings(false)
 {
   m_documentList.addObserver(this);
 
@@ -409,6 +410,7 @@ void EditorGlobal::processCommandLineOptions(
   }
   else {
     // We are going to run an automated test, so ignore user settings.
+    m_doNotSaveSettings = true;
   }
 }
 
@@ -888,10 +890,15 @@ bool EditorGlobal::saveSettingsFile(QWidget * NULLABLE parent) NOEXCEPT
     // Convert settings to GDV.
     GDValue gdvSettings(m_settings);
 
-    // Write as GDVN, atomically.
-    sfu.atomicallyWriteFileAsString(fname, gdvSettings.asLinesString());
+    if (m_doNotSaveSettings) {
+      TRACE("EditorGlobal", "Not saving settings due to `m_doNotSaveSettings`.");
+    }
+    else {
+      // Write as GDVN, atomically.
+      sfu.atomicallyWriteFileAsString(fname, gdvSettings.asLinesString());
 
-    TRACE("EditorGlobal", "Wrote settings file: " << doubleQuote(fname));
+      TRACE("EditorGlobal", "Wrote settings file: " << doubleQuote(fname));
+    }
 
     return true;
   }

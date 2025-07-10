@@ -121,6 +121,10 @@ private:     // data
   // User settings.
   EditorSettings m_settings;
 
+  // When true, we ignore requests to save settings.  This is meant for
+  // use during automated testing.
+  bool m_doNotSaveSettings;
+
 private:      // funcs
   void processCommandLineOptions(
     EditorWindow *ed, int argc, char **argv);
