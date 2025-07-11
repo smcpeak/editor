@@ -13,8 +13,6 @@ TODOs:
     I switch away, more text is added, then switch back, the cursor is
     no longer tracking the end of the file.
 
-  - If I hit F9 to build, but there is an unsaved file, warn.
-
   - Would like to be able to jump to a byte offset in the file.
   - Command to create header file boilerplate.
   - Crash when opening the manage-connections dialog!  But I cannot

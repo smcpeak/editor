@@ -277,6 +277,7 @@ static void testCreateUntitled()
   NamedTextDocumentList dlist;
   TestObserver observer(&dlist);
   dlist.addObserver(&observer);
+  xassert(!dlist.hasUnsavedFiles());
 
   NamedTextDocument *file0 = dlist.getDocumentAt(0);
 
@@ -291,10 +292,12 @@ static void testCreateUntitled()
   // Test 'findUntitledUnmodifiedFile'.
   NamedTextDocument *f = dlist.findUntitledUnmodifiedDocument();
   xassert(f != NULL);
+  xassert(!dlist.hasUnsavedFiles());
 
   file1->insertAt(TextMCoord(0,0), "hi", 2);
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0 || f == file2);
+  xassert(dlist.hasUnsavedFiles());
 
   // Make it no longer untitled.
   file2->setDocumentName(DocumentName::fromFilename(

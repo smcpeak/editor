@@ -1061,6 +1061,18 @@ void EditorWindow::fileRunMake() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  // Warn if there are unsaved files.  Sometimes I forget to save files
+  // before building, resulting in errors that due to trying to compile
+  // files that have old content.
+  if (editorGlobal()->m_documentList.hasUnsavedFiles()) {
+    auto response = QMessageBox::question(editorWidget(),
+      "Unsaved Files",
+      "There are unsaved files.  Build anyway?");
+    if (response != QMessageBox::Yes) {
+      return;
+    }
+  }
+
   string dir = editorWidget()->getDocumentDirectory();
 
   // My intent is the user creates a script with this name on their

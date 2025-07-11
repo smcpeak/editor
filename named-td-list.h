@@ -138,6 +138,10 @@ public:      // funcs
   // existing entries in 'dirs' are *retained* ahead of added entries.
   void getUniqueDirectories(ArrayStack<HostAndResourceName> /*INOUT*/ &dirs) const;
 
+  // True if at least one document is associated with an on-disk file
+  // and has unsaved changes.
+  bool hasUnsavedFiles() const;
+
   // ------------------------- observers ----------------------------
   // Add an observer.  It must not already be one.
   void addObserver(NamedTextDocumentListObserver *observer);

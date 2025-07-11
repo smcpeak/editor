@@ -325,6 +325,19 @@ void NamedTextDocumentList::getUniqueDirectories(
 }
 
 
+bool NamedTextDocumentList::hasUnsavedFiles() const
+{
+  for (int i=0; i < m_documents.length(); i++) {
+    NamedTextDocument const *file = m_documents[i];
+    if (file->unsavedChanges()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 void NamedTextDocumentList::addObserver(NamedTextDocumentListObserver *observer)
 {
   TRACE("named-td-list", "addObserver: " << (void*)observer);
