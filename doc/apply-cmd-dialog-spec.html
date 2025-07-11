@@ -28,12 +28,24 @@ The dialog has these controls, laid out from top to bottom:
 <li><code>prevCommands</code>: List box containing the previously run command lines,
     less any subsequent deletions.  Initially, the most recently run
     command is selected, such that the user can open the dialog and
-    immediately hit Enter to run that command.
+    immediately hit Enter to run that command.  The list also allows
+    the user to type a few letters (when it has focus), and it will move
+    the selection to the entry that starts with those letters.  (The
+    exact behavior is currently known to me; this is something the Qt
+    list widget evidently does by default.)
 
-<li>Two buttons horizontally adjacent, aligned to the right side of the
-    dialog:
+<li>These horizontally adjacent controls, from left to right:
 
     <ul>
+
+    <li>Label with text: "Filter:".
+
+    <li><code>filter</code>: Single-line edit box.  When the user
+        enters a string into this box, the list restricts itself to
+        those entries that contain that string as a substring.  This
+        box has the hotkey Alt+F.  Additionally, when this box has focus
+        and the user presses the up-arrow key, focus moves to the list
+        and selects the first item if nothing is selected.
 
     <li><code>copyToNew</code>: Push button with label "Copy to New" and hotkey Alt+C.
         This copies the text of the selected item in <code>prevCommands</code> into the
@@ -101,6 +113,7 @@ Summary of hotkeys:
 <ul>
 <li>Alt+C: Activate <code>copyToNew</code>.
 <li>Alt+D: Activate <code>deleteSelected</code>.
+<li>Alt+F: Activate <code>filter</code>.
 <li>Alt+H: Activate <code>help</code>.
 <li>Alt+N: Set focus to <code>newCommand</code>.
 <li>Alt+P: Set focus to <code>prevCommands</code>.

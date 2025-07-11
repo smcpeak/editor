@@ -5,6 +5,7 @@
 #define EDITOR_APPLY_COMMAND_DIALOG_H
 
 #include "eclf.h"                      // EditorCommandLineFunction
+#include "editor-settings-fwd.h"       // CommandLineHistory
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "modal-dialog.h"              // ModalDialog
 
@@ -49,6 +50,12 @@ private:     // data
   // List of previously executed commands.
   QListWidget *m_prevCommandsListWidget = nullptr;
 
+  // "Filter:"
+  QLabel *m_filterLabel = nullptr;
+
+  // Substring filter for the list box.
+  QLineEdit *m_filterLineEdit = nullptr;
+
   // "Copy to New".
   QPushButton *m_copyButton = nullptr;
 
@@ -72,6 +79,23 @@ private:     // data
   QCheckBox * NULLABLE m_prefixStderrLinesCheckBox = nullptr;
 
 private Q_SLOTS:
+  // Update the list based on the filter string changing.
+  void filterChanged(QString const &) NOEXCEPT;
+
+  // Populate `m_prevCommandsListWidget`.  If `initial`, then this is
+  // the first time, otherwise it is after a changed filter.
+  void populateListWidget(bool initial);
+
+  // Get the global command history relevant to this dialog.
+  CommandLineHistory const &getHistory();
+
+  // Used when the user presses up-arrow from the filter edit, move
+  // focus to the list, and try to select a row.
+  void moveFocusToCommandsList();
+
+  // If the list has exactly one element, select it.
+  void selectListElementIfOne();
+
   // Copy the selected item in `m_prevCommandsListWidget` into
   // `m_newCommandLineEdit`.
   void copyToNew() NOEXCEPT;
@@ -99,6 +123,9 @@ public:      // funcs
 
   // Similarly, true if prefixing is enabled.
   bool isPrefixStderrEnabled() const;
+
+  // QObject methods.
+  virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
 public Q_SLOTS:
   // Close the dialog and run the specified command, if there is one.

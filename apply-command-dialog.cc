@@ -32,6 +32,114 @@ using namespace gdv;
 INIT_TRACE("apply-command-dialog");
 
 
+void ApplyCommandDialog::filterChanged(QString const &) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  populateListWidget(false /*initial*/);
+
+  // If this causes the list to have exactly one element, select it so
+  // the user can then press Enter to run it without having to move to
+  // the list box.
+  selectListElementIfOne();
+
+  GENERIC_CATCH_END
+}
+
+
+void ApplyCommandDialog::populateListWidget(bool initial)
+{
+  CommandLineHistory const &history = getHistory();
+
+  // If we are just starting the dialog, select the most-recently
+  // executed command.  Otherwise (we are repopulating due to the filter
+  // being edited), try to keep the same item selected.
+  std::string itemToSelect;
+  if (initial) {
+    itemToSelect = history.m_recent;
+  }
+  else if (QListWidgetItem *item = m_prevCommandsListWidget->currentItem()) {
+    itemToSelect = toString(item->text());
+  }
+  TRACE2("itemToSelect: " << doubleQuote(itemToSelect));
+
+  // Discard the current list contents.
+  m_prevCommandsListWidget->clear();
+
+  // Is a filter active?
+  std::string filterString = toString(m_filterLineEdit->text());
+  if (!filterString.empty()) {
+    TRACE2("filter: " << doubleQuote(filterString));
+  }
+
+  // Populate the list.
+  int curRowIndex = 0;
+  int rowToSelect = -1;
+  for (std::string const &cmd : history.m_commands) {
+    if (filterString.empty() || hasSubstring(cmd, filterString)) {
+      m_prevCommandsListWidget->addItem(toQString(cmd));
+      if (cmd == itemToSelect) {
+        rowToSelect = curRowIndex;
+      }
+      ++curRowIndex;
+    }
+  }
+
+  // Select a row if we found a good one.
+  if (rowToSelect >= 0) {
+    m_prevCommandsListWidget->setCurrentRow(rowToSelect);
+    TRACE2("selected row " << rowToSelect);
+  }
+  else {
+    TRACE2("no selected row");
+  }
+}
+
+
+CommandLineHistory const &ApplyCommandDialog::getHistory()
+{
+  return m_editorWidget->editorGlobal()->getSettings().
+           getCommandHistoryC(m_whichFunction);
+}
+
+
+void ApplyCommandDialog::moveFocusToCommandsList()
+{
+  TRACE2("moving focus to commands list");
+
+  m_prevCommandsListWidget->setFocus();
+
+  // Select an item if we can.
+  if (m_prevCommandsListWidget->count() > 0) {
+    if (QListWidgetItem *item = m_prevCommandsListWidget->currentItem()) {
+      if (!item->isSelected()) {
+        TRACE2("selecting current item");
+        item->setSelected(true);
+      }
+      else {
+        TRACE2("current item is already selected");
+      }
+    }
+    else {
+      TRACE2("selecting first item");
+      m_prevCommandsListWidget->setCurrentRow(0);
+    }
+  }
+  else {
+    TRACE2("no items in list");
+  }
+}
+
+
+void ApplyCommandDialog::selectListElementIfOne()
+{
+  if (m_prevCommandsListWidget->count() == 1) {
+    // Does this select it?
+    m_prevCommandsListWidget->setCurrentRow(0);
+  }
+}
+
+
 void ApplyCommandDialog::copyToNew() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -108,9 +216,7 @@ ApplyCommandDialog::ApplyCommandDialog(
   }
 
   // History to use to populate the dialog.
-  CommandLineHistory const &history =
-    m_editorWidget->editorGlobal()->getSettings().
-      getCommandHistoryC(m_whichFunction);
+  CommandLineHistory const &history = getHistory();
 
   QVBoxLayout *vbox = new QVBoxLayout(this);
 
@@ -148,31 +254,23 @@ ApplyCommandDialog::ApplyCommandDialog(
   SET_QOBJECT_NAME(m_prevCommandsListWidget);
   vbox->addWidget(m_prevCommandsListWidget);
 
-  // Populate the list.
-  {
-    int index = 0;
-    int rowToSelect = -1;
-    for (std::string const &cmd : history.m_commands) {
-      m_prevCommandsListWidget->addItem(toQString(cmd));
-      if (cmd == history.m_recent) {
-        rowToSelect = index;
-      }
-      ++index;
-    }
-
-    if (rowToSelect >= 0) {
-      m_prevCommandsListWidget->setCurrentRow(rowToSelect);
-      TRACE1("initially selected row " << rowToSelect);
-    }
-    else {
-      TRACE1("no initially selected row");
-    }
-  }
-
-  // "Copy" and "Delete" buttons.
+  // Filter, "Copy" button, and "Delete" button.
   {
     QHBoxLayout *hbox = new QHBoxLayout();
-    hbox->addStretch();
+
+    m_filterLabel = new QLabel(tr("&Filter"));
+    SET_QOBJECT_NAME(m_filterLabel);
+    hbox->addWidget(m_filterLabel);
+
+    m_filterLineEdit = new QLineEdit();
+    SET_QOBJECT_NAME(m_filterLineEdit);
+    m_filterLabel->setBuddy(m_filterLineEdit);
+    QObject::connect(m_filterLineEdit, &QLineEdit::textEdited,
+                     this, &ApplyCommandDialog::filterChanged);
+    hbox->addWidget(m_filterLineEdit);
+
+    // Intercept certain keystrokes.
+    m_filterLineEdit->installEventFilter(this);
 
     m_copyButton = new QPushButton(tr("&Copy to New"));
     SET_QOBJECT_NAME(m_copyButton);
@@ -188,6 +286,9 @@ ApplyCommandDialog::ApplyCommandDialog(
 
     vbox->addLayout(hbox);
   }
+
+  // Do this now that `m_filterLineEdit` exists.
+  populateListWidget(true /*initial*/);
 
   m_newCommandLabel = new QLabel(tr("Run a &new command (if not empty)"));
   SET_QOBJECT_NAME(m_newCommandLabel);
@@ -282,6 +383,7 @@ ApplyCommandDialog::~ApplyCommandDialog()
   TRACE1("running destructor");
 
   // See doc/signals-and-dtors.txt.
+  QObject::disconnect(m_filterLineEdit, nullptr, this, nullptr);
   QObject::disconnect(m_copyButton, nullptr, this, nullptr);
   QObject::disconnect(m_deleteButton, nullptr, this, nullptr);
   QObject::disconnect(m_clearNewCommandButton, nullptr, this, nullptr);
@@ -317,6 +419,26 @@ bool ApplyCommandDialog::isPrefixStderrEnabled() const
   else {
     return false;
   }
+}
+
+
+bool ApplyCommandDialog::eventFilter(QObject *watched, QEvent *event)
+{
+  if (event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+    if (keyEvent->modifiers() == Qt::NoModifier) {
+      switch (keyEvent->key()) {
+        case Qt::Key_Up:
+          if (watched == m_filterLineEdit) {
+            // Navigate up to the table.
+            moveFocusToCommandsList();
+            return true;           // Prevent further processing.
+          }
+          break;
+      }
+    }
+  }
+  return false;
 }
 
 

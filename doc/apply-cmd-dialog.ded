@@ -199,6 +199,32 @@
         "h": 20,
         "w": 605
       }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 95,
+        "y": 275
+      },
+      "shape": "ES_TEXT_EDIT",
+      "size": {
+        "h": 20,
+        "w": 325
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 275
+      },
+      "name": "Filter:",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 45
+      }
     }
   ],
   "inheritances": [],
