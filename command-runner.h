@@ -231,6 +231,10 @@ public:      // funcs
   // block until either `putInputData` or `closeInputChannel` is called.
   void startAsynchronous();
 
+  // Wait up to `msecs` milliseconds for the process to start.  Return
+  // true if it does, false otherwise (timeout or error).
+  bool waitForStarted(int msecs = 30000);
+
   // Write some data to the child's standard input.  This cannot be
   // called until after calling 'startAsynchronous'.
   //

@@ -454,6 +454,7 @@ static void testAsyncWaitFor()
   CommandRunner cr;
   cr.setProgram("cat");
   cr.startAsynchronous();
+  EXPECT_EQ(cr.waitForStarted(5000 /*ms*/), true);
 
   xassert(cr.isRunning());
   xassert(!cr.hasOutputData());

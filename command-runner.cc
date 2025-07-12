@@ -549,6 +549,12 @@ void CommandRunner::startAsynchronous()
 }
 
 
+bool CommandRunner::waitForStarted(int msecs)
+{
+  return m_process.waitForStarted(msecs);
+}
+
+
 void CommandRunner::putInputData(QByteArray const &input)
 {
   // You can't start putting data until the process is started.
