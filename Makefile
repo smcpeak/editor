@@ -96,6 +96,9 @@ QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 # The target is a .ok file instead of the .out itself because I do not
 # want 'make' to delete the .out file if the command fails, since I want
 # to be able to inspect it after the failure.
+#
+# TODO: Add explicit ".exe" extensions to the executables.
+#
 define RUN_TEST_PROG
 TOCLEAN += $1
 test-prog-outs: out/$1.ok
@@ -473,6 +476,26 @@ python-hilite-test: $(PYTHON_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(PYTHON_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,python-hilite-test))
+
+
+# -------------------------- lsp-client-test ---------------------------
+EDITOR_OBJS += lsp-client.o
+
+LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
+
+LSP_CLIENT_TEST_OBJS += lsp-client-test.o
+-include lsp-client-test.d
+
+lsp-client-test: $(LSP_CLIENT_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(LSP_CLIENT_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+TOCLEAN += lsp-client-test
+all: lsp-client-test
+
+# Don't actually run this yet.  It needs some command line arguments,
+# plus a compile_commands.json and a `clangd` program.  For the moment
+# I just run it manually, from a different directory.
+#$(eval $(call RUN_TEST_PROG,lsp-client-test))
 
 
 # ----------------- git version ---------------------
