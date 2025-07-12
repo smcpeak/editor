@@ -14,8 +14,9 @@
 #include "smbase/datablok.h"           // DataBlock
 #include "smbase/datetime.h"           // getCurrentUnixTime
 #include "smbase/exc.h"                // xfatal
+#include "smbase/nonport.h"            // getMilliseconds
 #include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-test.h"            // ARGS_MAIN
+#include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL
 #include "smbase/string-util.h"        // beginsWith, replaceAll
 #include "smbase/trace.h"              // TRACE_ARGS, EXPECT_EQ
 #include "smbase/xassert.h"            // xfailure_stringbc
@@ -447,6 +448,100 @@ static void testAsyncNoSignals()
 }
 
 
+// Like above, but using the "waitFor" methods.
+static void testAsyncWaitFor()
+{
+  CommandRunner cr;
+  cr.setProgram("cat");
+  cr.startAsynchronous();
+
+  xassert(cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+
+  cr.putInputData(QByteArray("hello\n"));
+  EXPECT_EQ(cr.waitForOutputLine(), "hello\n");
+
+  cr.putInputData(QByteArray("another\n"));
+  EXPECT_EQ(cr.waitForOutputData(8).toStdString(), "another\n");
+
+  cr.closeInputChannel();
+  cr.waitForOutputChannelClosed();
+  xassert(!cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  xassert(!cr.getFailed());
+  xassert(cr.getExitCode() == 0);
+}
+
+
+// Similar, but with a program that writes its output in two steps.
+static void testAsyncWaitFor_delayedWrite()
+{
+  CommandRunner cr;
+  cr.setProgram("sh");
+  cr.setArguments(QStringList() << "-c" <<
+    "echo first; sleep 1; echo second");
+  cr.startAsynchronous();
+
+  // The point here is the first read should only get 6 bytes, with the
+  // remainder coming after one second, but the "waitFor" call should
+  // take care of that.
+  EXPECT_EQ(cr.waitForOutputData(13).toStdString(),
+    "first\nsecond\n");
+
+  cr.waitForNotRunning();
+  xassert(cr.getExitCode() == 0);
+}
+
+
+// Now with a program that closes its output but then delays exiting a
+// short while.
+//
+// Note: This test is disabled below, in `main`.  Unfortunately,
+// `QProcess` does not properly distinguish between an output stream
+// closing and the child process terminating, so my API cannot do so
+// either.
+//
+static void testAsyncWaitFor_delayedExit()
+{
+  CommandRunner cr;
+  cr.setProgram("sh");
+  cr.setArguments(QStringList() << "-c" <<
+    "echo hello; sleep 1; echo there; exec 1>&-; sleep 1");
+  cr.startAsynchronous();
+
+  // Channel should be open.
+  xassert(cr.outputChannelOpen());
+
+  // The point here is the first read should only get 6 bytes, with the
+  // remainder coming after one second, but the "waitFor" call should
+  // take care of that.
+  EXPECT_EQ(cr.waitForOutputLine(), "hello\n");
+
+  // At this point, the output channel should *not* be closed, even
+  // though we have read all of the immediately available data.
+  xassert(cr.outputChannelOpen());
+
+  // Wait for and get the next line.
+  EXPECT_EQ(cr.waitForOutputLine(), "there\n");
+
+  // My hope is I can see this finish significantly before the next
+  // call finishes.
+  cr.waitForOutputChannelClosed();
+  long channelClosedTime = getMilliseconds();
+
+  // Should see this a little later.
+  cr.waitForNotRunning();
+  long processClosedTime = getMilliseconds();
+
+  xassert(cr.getExitCode() == 0);
+
+  // This should be around 1000 (1s).
+  VPVAL(processClosedTime - channelClosedTime);
+}
+
+
 CRTester::CRTester(CommandRunner *runner, Protocol protocol)
   : QEventLoop(),
     m_commandRunner(runner),
@@ -848,6 +943,13 @@ static void entry(int argc, char **argv)
   RUN(testLargeData2(true));
   RUN(testWorkingDirectory());
   RUN(testAsyncNoSignals());
+  RUN(testAsyncWaitFor());
+  RUN(testAsyncWaitFor_delayedWrite());
+  if (false) {
+    // Disable the test because it doesn't work the way I would like
+    // and costs 2 seconds.
+    RUN(testAsyncWaitFor_delayedExit());
+  }
   RUN(testAsyncWithSignals());
   RUN(testAsyncBothOutputs());
   RUN(testAsyncKill(true));

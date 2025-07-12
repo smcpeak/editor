@@ -19,6 +19,28 @@
 
 
 // Run a command on some input, gather the output.
+//
+// This allows bidirectional, interactive communication with the child
+// process.  It properly integrates with the Qt event loop to allow
+// asynchronous operation.
+//
+// There are three "synchronicity" usage models:
+//
+// * Fully synchronous "batch" mode: Provide all input at once, start
+//   the process and wait for it to finish, then get all of the output.
+//   This mode is activated by calling `startAndWait`.
+//
+// * Fully asynchronous: Start process, then feed it input and get the
+//   output as available, without blocking.  Qt signals are sent to
+//   indicate when data is ready, etc.  This mode is activated by
+//   calling `startAsynchronous`.
+//
+// * Semi-synchronous: Like async, but using the "waitFor" methods to
+//   block until data is available for certain calls.  This is mainly
+//   useful for experimentation in test programs outside the main editor
+//   app.  This mode is started the same way as fully asynchronous, and
+//   its calls can be freely mixed with other async-mode calls.
+//
 class CommandRunner : public QObject, public SerfRefCount {
   Q_OBJECT
 
@@ -108,6 +130,13 @@ protected:   // funcs
 
   // Send some data to the process on its input channel.
   void sendData();
+
+  // If events are available, dispatch them.  Otherwise, wait for at
+  // least one event, then process it and return.  This only blocks
+  // while the process is quiescent, i.e., it would not do anything
+  // without futher interprocess communication of some sort (an
+  // expiring timer counts as IPC).
+  void pumpEventQueue();
 
 public:      // funcs
   CommandRunner();
@@ -216,6 +245,15 @@ public:      // funcs
   // This must be called *after* starting the process.
   void closeInputChannel();
 
+  // True if the child's output channel is still open.  (This is not
+  // `const` because of a quirk in how `QProcess` works internally.)
+  // This doesn't really work as it should; it mainly just tests that
+  // the child is still running, due to limitations in `QProcess`.
+  bool outputChannelOpen();
+
+  // Wait until `!outputChannelOpen()`.
+  void waitForOutputChannelClosed();
+
   // True if the child has written some data to its standard output.
   bool hasOutputData() const;
 
@@ -248,6 +286,9 @@ public:      // funcs
   // meaningful.
   bool isRunning() const;
 
+  // Wait until `!isRunning()`.
+  void waitForNotRunning();
+
   // ------------------ line-oriented output -----------------------
   // The methods in this section provide a line-oriented interface to
   // the output and error data.  They assume that the child process is
@@ -261,6 +302,16 @@ public:      // funcs
   // then return what there is, *without* a newline terminator.  That
   // may be the empty string.
   QString getOutputLine();
+
+  // Wait until `hasOutputLine()`, then return `getOutputLine()`.  If
+  // the output stream is closed without sending a newline, return
+  // whatever was available, without that newline.
+  QString waitForOutputLine();
+
+  // Wait until `size` bytes have been received, then return them.  If
+  // the output stream is closed first, return a shorter array with
+  // whatever was available.
+  QByteArray waitForOutputData(int size);
 
   // True when there is at least one newline in m_errorData.
   bool hasErrorLine() const;

@@ -15,6 +15,7 @@
 // Qt
 #include <qtcoreversion.h>             // QTCORE_VERSION
 #include <Qt>                          // Qt::SkipEmptyParts
+#include <QCoreApplication>
 #include <QTimerEvent>
 
 // libc++
@@ -465,6 +466,37 @@ void CommandRunner::sendData()
 }
 
 
+// This function might be a candidate for moving into `smqtutil`, but
+// I'm not sure about the dependence on `QCoreApplication` versus using
+// `QEventLoop`, as I've done elsewhere, so I'll wait on promoting it
+// until it's been in use for a while at least.
+void CommandRunner::pumpEventQueue()
+{
+  // I have a `QEventLoop` object, and could call its `processEvents`
+  // instead of this static method, but I think this is equivalent (the
+  // implementations are nearly identical), and avoids using the loop
+  // object for two different purposes.
+  TRACE_CR_DETAIL("pumpEventQueue: start: calling processEvents");
+  QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
+
+  // At least on Windows, `processEvents` begins by calling
+  // `sendPostedEvents` (which does not report on whether it did
+  // anything), and then it waits for an incoming IPC event.  But that
+  // means the state change caused by dispatching intraprocess events
+  // might not be seen, since we block for IPC regardless.  Therefore,
+  // whenever we think we've gotten some IPC done, also drain the
+  // intraprocess queue so the caller can see all of the effects of that
+  // IPC before deciding whether to block again.
+  //
+  // This seems like a bug in Qt...
+  //
+  TRACE_CR_DETAIL("pumpEventQueue: middle: calling sendPostedEvents");
+  QCoreApplication::sendPostedEvents();
+
+  TRACE_CR_DETAIL("pumpEventQueue: end");
+}
+
+
 QString CommandRunner::getTerminationDescription() const
 {
   if (isRunning()) {
@@ -545,6 +577,47 @@ void CommandRunner::closeInputChannel()
 }
 
 
+bool CommandRunner::outputChannelOpen()
+{
+  // For some reason, when the process terminates, the output channel is
+  // still reported as open, so I have to explicitly check for
+  // termination.
+  //
+  // I spent a while digging through the sources, and I think the basic
+  // problem is that `QProcess` itself does not properly distinguish
+  // between an output channel closing and the child process
+  // terminating.
+  //
+  if (!isRunning()) {
+    return false;
+  }
+
+  // `QProcess` exposes two output channels, but you have to switch
+  // between them statefully, meaning this method cannot be `const`.
+  // It's weird.
+  m_process.setReadChannel(QProcess::StandardOutput);
+
+  // Ask whether the output ("read") channel we just activated is open.
+  if (!m_process.isOpen()) {
+    return false;
+  }
+
+  // Maybe this works?  No.
+  //return !m_process.atEnd();
+  return true;
+}
+
+
+void CommandRunner::waitForOutputChannelClosed()
+{
+  TRACE_CR("waitForOutputChannelClosed: start");
+  while (outputChannelOpen()) {
+    pumpEventQueue();
+  }
+  TRACE_CR("waitForOutputChannelClosed: end");
+}
+
+
 bool CommandRunner::hasOutputData() const
 {
   return !m_outputData.isEmpty();
@@ -582,6 +655,16 @@ bool CommandRunner::isRunning() const
 }
 
 
+void CommandRunner::waitForNotRunning()
+{
+  TRACE_CR("waitForNotRunning: start");
+  while (isRunning()) {
+    pumpEventQueue();
+  }
+  TRACE_CR("waitForNotRunning: end");
+}
+
+
 // -------------------- line-oriented output -----------------------
 static int findUtf8Newline(QByteArray const &arr)
 {
@@ -613,6 +696,39 @@ bool CommandRunner::hasOutputLine() const
 QString CommandRunner::getOutputLine()
 {
   return extractUtf8Line(m_outputData);
+}
+
+
+QString CommandRunner::waitForOutputLine()
+{
+  TRACE_CR("waitForOutputLine: start");
+  while (!hasOutputLine() && outputChannelOpen()) {
+    TRACE_CR_DETAIL("waitForOutputLine:"
+      " hasOutputLine=" << hasOutputLine() <<
+      " outputChannelOpen=" << outputChannelOpen());
+    pumpEventQueue();
+  }
+  TRACE_CR("waitForOutputLine: end");
+
+  return getOutputLine();
+}
+
+
+QByteArray CommandRunner::waitForOutputData(int size)
+{
+  TRACE_CR("waitForOutputData: start");
+  while (m_outputData.size() < size && outputChannelOpen()) {
+    pumpEventQueue();
+  }
+  TRACE_CR("waitForOutputData: end");
+
+  // Grab the first `size` bytes.
+  QByteArray ret(m_outputData.constData(), size);
+
+  // Remove those from `m_outputData`.
+  m_outputData.remove(0, size);
+
+  return ret;
 }
 
 
