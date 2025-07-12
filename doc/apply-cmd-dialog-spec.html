@@ -28,11 +28,15 @@ The dialog has these controls, laid out from top to bottom:
 <li><code>prevCommands</code>: List box containing the previously run command lines,
     less any subsequent deletions.  Initially, the most recently run
     command is selected, such that the user can open the dialog and
-    immediately hit Enter to run that command.  The list also allows
-    the user to type a few letters (when it has focus), and it will move
-    the selection to the entry that starts with those letters.  (The
-    exact behavior is currently known to me; this is something the Qt
-    list widget evidently does by default.)
+    immediately hit Enter to run that command.  The list also allows the
+    user to type a few letters (when it has focus) in quick succession
+    (no more than about 0.5 s between keystrokes; the exact value is
+    <code>QApplication::keyboardInputInterval()</code>, which evidently
+    is queried from the OS), and it will move the selection to the entry
+    that starts with those letters.  If a key is typed after the ~0.5s
+    delay, it is treated as the start of a new search sequence.  (This
+    behavior is implemented in
+    <code>QAbstractItemView::keyboardSearch()</code>.)
 
 <li>These horizontally adjacent controls, from left to right:
 
