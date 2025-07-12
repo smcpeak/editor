@@ -9,9 +9,11 @@
 *.moc.cc
 *.mutreport
 *.o
+*.o.json
 *.tmp*
 *.yy.cc
 *.yy.h
+.cache
 .cproject
 .emacs.desktop
 .gdbinit*
@@ -25,6 +27,7 @@ buffercore
 bufferlinesource-test
 c_hilite
 command-runner-test
+compile_commands.json
 config.mk
 editor
 editor-stable

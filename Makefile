@@ -127,13 +127,19 @@ EDITOR_OBJS :=
 RETRY := sh ./retry.sh 3
 
 
+# Command to generate *.o.json files, which then are combined to make
+# compile_commands.json.
+MAKE_CC_JSON = $(PYTHON3) $(SMBASE)/make-cc-json.py
+
+
 # ---------------- pattern rules --------------------
 # compile .cc to .o
 # -MMD causes GCC to write .d file.
 # The -MP modifier adds phony targets to deal with removed headers.
 TOCLEAN += *.o *.d
 %.o : %.cc
-	$(CXX) -c -MMD -MP -o $@ $< $(CCFLAGS)
+	$(CXX) -c -MMD -MP -o $@ $(CCFLAGS) $<
+	$(MAKE_CC_JSON) $(CXX) -c -MMD -MP -o $@ $(CCFLAGS) $< >$@.json
 
 
 # Encode help files as C string literals.
@@ -633,6 +639,14 @@ EDITOR_OBJS += vfs-query-sync.moc.o
 TOCLEAN += editor
 editor: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
+
+
+# ----------------------- compile_commands.json ------------------------
+# The rules in this section are copied from smbase/Makefile (and then
+# slightly modified).
+.PHONY: compile_commands.json
+compile_commands.json:
+	(echo "["; cat *.o.json | sed '$$ s/,$$//'; echo "]") > $@
 
 
 # --------------------- misc ------------------------
