@@ -476,6 +476,41 @@ static void testAsyncWaitFor()
 }
 
 
+// Like above, but use `waitForQtEvent` instead of the `waitFor`
+// methods of `CommandRunner`.
+static void testAsyncExternalWait()
+{
+  CommandRunner cr;
+  cr.setProgram("cat");
+  cr.startAsynchronous();
+  EXPECT_EQ(cr.waitForStarted(5000 /*ms*/), true);
+  xassert(cr.isRunning());
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+
+  cr.putInputData(QByteArray("hello\n"));
+  while (!cr.hasSizedOutputData(6)) {
+    waitForQtEvent();
+  }
+  EXPECT_EQ(cr.takeSizedOutputData(6).toStdString(), "hello\n");
+
+  cr.putInputData(QByteArray("more\n"));
+  while (!cr.hasSizedOutputData(5)) {
+    waitForQtEvent();
+  }
+  EXPECT_EQ(cr.takeSizedOutputData(5).toStdString(), "more\n");
+
+  cr.closeInputChannel();
+  while (cr.isRunning()) {
+    waitForQtEvent();
+  }
+  xassert(!cr.hasOutputData());
+  xassert(!cr.hasErrorData());
+  xassert(!cr.getFailed());
+  xassert(cr.getExitCode() == 0);
+}
+
+
 // Similar, but with a program that writes its output in two steps.
 static void testAsyncWaitFor_delayedWrite()
 {
@@ -945,6 +980,7 @@ static void entry(int argc, char **argv)
   RUN(testWorkingDirectory());
   RUN(testAsyncNoSignals());
   RUN(testAsyncWaitFor());
+  RUN(testAsyncExternalWait());
   RUN(testAsyncWaitFor_delayedWrite());
   if (false) {
     // Disable the test because it doesn't work the way I would like

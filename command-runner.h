@@ -131,13 +131,6 @@ protected:   // funcs
   // Send some data to the process on its input channel.
   void sendData();
 
-  // If events are available, dispatch them.  Otherwise, wait for at
-  // least one event, then process it and return.  This only blocks
-  // while the process is quiescent, i.e., it would not do anything
-  // without futher interprocess communication of some sort (an
-  // expiring timer counts as IPC).
-  void pumpEventQueue();
-
 public:      // funcs
   CommandRunner();
   virtual ~CommandRunner();
@@ -261,10 +254,23 @@ public:      // funcs
   // True if the child has written some data to its standard output.
   bool hasOutputData() const;
 
+  // True if the accumulated output is at least `size` bytes.
+  bool hasSizedOutputData(int size) const;
+
   // Get that data, destructively removing it from the output queue.  If
   // this is called while 'hasOutputData()' is false, it will simply
   // return an empty array.
   QByteArray takeOutputData();
+
+  // Return the current pending output data without changing it.
+  QByteArray const &peekOutputData() const;
+
+  // Remove the first `size` bytes of pending output.  If that is more
+  // than is available, remove everything.  Requires `size>=0`.
+  void removeOutputData(int size);
+
+  // Remove and return up to `size` bytes of data.
+  QByteArray takeSizedOutputData(int size);
 
   // True if there is stderr data.
   bool hasErrorData() const;

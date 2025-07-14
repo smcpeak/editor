@@ -7,15 +7,26 @@
 
 #include "smqtutil/qtutil.h"           // toString(QString)
 
+#include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // smbase::xformat
-#include "smbase/gdvalue-json.h"       // gdv::gdvToJSON, jsonToGDV
+#include "smbase/gdvalue-json.h"       // gdv::{gdvToJSON, jsonToGDV}
+#include "smbase/gdvalue-parse.h"      // gdv::{checkIsMap, checkIsSmallInteger}
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/list-util.h"          // smbase::listMoveFront
+#include "smbase/map-util.h"           // mapMoveValueAt
+#include "smbase/overflow.h"           // safeToInt
+#include "smbase/parsestring.h"        // ParseString
+#include "smbase/set-util.h"           // smbase::setRemoveExisting
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote, trimWhitespace, split
 #include "smbase/stringb.h"            // stringb
 
+#include <exception>                   // std::exception
+#include <limits>                      // std::numeric_limits
+#include <optional>                    // std::make_optional
 #include <string_view>                 // std::string_view
+#include <utility>                     // std::move
 #include <vector>                      // std::vector
 
 
@@ -26,7 +37,41 @@ using namespace smbase;
 INIT_TRACE("lsp-client");
 
 
-void LSPClient::send(std::string const &data)
+int LSPClient::innerGetNextRequestID()
+{
+  // If we hit the maximum, wrap back to 1.
+  if (m_nextRequestID == std::numeric_limits<int>::max()) {
+    m_nextRequestID = 1;
+  }
+
+  return m_nextRequestID++;
+}
+
+
+int LSPClient::getNextRequestID()
+{
+  // If the ID we want to use is already outstanding, skip it.  (This
+  // should be very rare.)
+  int iters = 0;
+  while (contains(m_outstandingRequests, m_nextRequestID)) {
+    innerGetNextRequestID();
+
+    // Safety check.
+    xassert(++iters < 1000);
+  }
+
+  return innerGetNextRequestID();
+}
+
+
+bool LSPClient::idInUse(int id) const
+{
+  return contains(m_outstandingRequests, id) ||
+         contains(m_pendingReplies, id);
+}
+
+
+void LSPClient::send(std::string &&data)
 {
   m_child.putInputData(QByteArray::fromStdString(data));
 }
@@ -34,8 +79,6 @@ void LSPClient::send(std::string const &data)
 
 /*static*/ std::string LSPClient::serializeMessage(GDValue const &msg)
 {
-  TRACE1("Preparing to send: " << msg);
-
   std::string msgJSON = gdvToJSON(msg);
 
   return stringb(
@@ -58,7 +101,7 @@ void LSPClient::send(std::string const &data)
 }
 
 
-/*static*/ std::string LSPClient::makeNotification(
+/*static*/ std::string LSPClient::makeNotificationBody(
   std::string_view method,
   GDValue const &params)
 {
@@ -70,75 +113,107 @@ void LSPClient::send(std::string const &data)
 }
 
 
-GDValue LSPClient::readResponse()
+void LSPClient::innerProcessOutputData()
 {
-  TRACE1("Waiting for response ...");
-
-  // Accumulate headers.
-  std::string headers = "";
-  while (true) {
-    TRACE2("Waiting for next header line ...");
-    std::string chunk = toString(m_child.waitForOutputLine());
-    TRACE2("Got header line: " << doubleQuote(chunk));
-    if (chunk == "\r\n" || chunk == "\n") {
-      break;
-    }
-    if (chunk.empty()) {
-      xformat("Unexpected EOF in readResponse.");
-    }
-    headers += chunk;
+  // We can't do anything once a protocol error occurs.
+  if (m_protocolError.has_value()) {
+    return;
   }
 
-  // Look for the Content-Length header.
-  int contentLength = 0;
-  std::vector<std::string> lines = split(headers, '\n');
-  for (std::string const &line : lines) {
+  // Prepare to parse the current output data.
+  ParseString parser(m_child.peekOutputData().toStdString());
+
+  // Scan the headers to get the length of the body.
+  std::size_t contentLength = 0;
+  while (true) {
+    std::string line = parser.getUpToByte('\n');
+    if (!endsWith(line, "\n")) {
+      // Incomplete message; wait for more data to arrive.
+      return;
+    }
+
+    if (line == "\r\n" || line == "\n") {
+      // End of headers.
+      break;
+    }
+
     if (beginsWith(stringTolower(line), "content-length:")) {
       contentLength = parseDecimalInt_noSign(
         trimWhitespace(split(line, ':').at(1)));
     }
+    else {
+      // Some other header, ignore.
+    }
   }
+
   if (contentLength == 0) {
-    xformat("No Content-Length header in response.");
+    xformat("No Content-Length header in message.");
   }
 
-  TRACE2("Waiting for " << contentLength << " bytes of body data ...");
-  std::string json = m_child.waitForOutputData(contentLength).toStdString();
+  // Extract the body.
+  std::string bodyJSON = parser.getUpToSize(contentLength);
+  if (bodyJSON.size() < contentLength) {
+    // Incomplete.
+    return;
+  }
 
-  GDValue ret(jsonToGDV(json));
-  TRACE1("Received response: " << ret);
+  GDValue msg(jsonToGDV(bodyJSON));
+  checkIsMap(msg);
 
-  return ret;
+  // If it has an "id" field then it is a reply.
+  if (msg.mapContains("id")) {
+    GDValue gdvId = msg.mapGetValueAt("id");
+
+    // Make sure the value is an integer in the proper range.
+    checkIsSmallInteger(gdvId);
+    int id = safeToInt(gdvId.smallIntegerGet());
+    formatAssert(id >= 0);
+
+    setRemoveExisting(m_outstandingRequests, id);
+    mapInsertUnique(m_pendingReplies, id, std::move(msg));
+  }
+
+  else {
+    m_pendingNotifications.push_back(std::move(msg));
+  }
+
+  // Remove the decoded message from the output data bytes queue.
+  m_child.removeOutputData(parser.curOffset());
 }
 
 
-GDValue LSPClient::readResponsesUntil(int id)
+void LSPClient::processOutputData() NOEXCEPT
 {
-  GDValue resp(readResponse());
+  GENERIC_CATCH_BEGIN
 
-  while (!( resp.mapContains("id") &&
-            resp.mapGetValueAt("id") == GDValue(id) )) {
-    std::cout << "Some other response:\n"
-              << resp.asLinesString();
-
-    resp = readResponse();
+  try {
+    innerProcessOutputData();
+  }
+  catch (std::exception &x) {
+    m_protocolError = std::make_optional<std::string>(x.what());
   }
 
-  std::cout << "Got response with id=" << id << ":\n"
-            << resp.asLinesString();
-
-  return resp;
+  GENERIC_CATCH_END
 }
 
 
 LSPClient::~LSPClient()
-{}
+{
+  QObject::disconnect(&m_child, nullptr, this, nullptr);
+}
 
 
 LSPClient::LSPClient(CommandRunner &child)
   : m_child(child),
-    m_nextRequestID(1)
-{}
+    m_nextRequestID(1),
+    m_outstandingRequests(),
+    m_pendingReplies(),
+    m_pendingNotifications(),
+    m_protocolError()
+{
+  QObject::connect(&child, &CommandRunner::signal_outputDataReady,
+                   this, &LSPClient::processOutputData);
+}
 
 
 /*static*/ std::string LSPClient::makeFileURI(std::string_view fname)
@@ -159,28 +234,78 @@ LSPClient::LSPClient(CommandRunner &child)
 }
 
 
-GDValue LSPClient::sendRequestPrintReply(
-  std::string_view method,
-  GDValue const &params)
-{
-  int id = m_nextRequestID++;
-
-  send(makeRequest(id, method, params));
-
-  GDValue resp(readResponsesUntil(id));
-
-  return resp;
-}
-
-
 void LSPClient::sendNotification(
   std::string_view method,
   GDValue const &params)
 {
-  send(makeNotification(method, params));
+  xassert(!hasProtocolError());
+
+  std::string body = makeNotificationBody(method, params);
+
+  TRACE1("Sending notification: " << body);
+
+  send(std::move(body));
 }
 
 
+bool LSPClient::hasPendingNotifications() const
+{
+  return !m_pendingNotifications.empty();
+}
+
+
+GDValue LSPClient::takeNextNotification()
+{
+  xassert(hasPendingNotifications());
+
+  return listMoveFront(m_pendingNotifications);
+}
+
+
+int LSPClient::sendRequest(
+  std::string_view method,
+  gdv::GDValue const &params)
+{
+  xassert(!hasProtocolError());
+
+  int id = getNextRequestID();
+
+  std::string body = makeRequest(id, method, params);
+
+  TRACE1("Sending request: " << body);
+
+  setInsertUnique(m_outstandingRequests, id);
+  send(std::move(body));
+
+  return id;
+}
+
+
+bool LSPClient::hasReplyForID(int id) const
+{
+  return contains(m_pendingReplies, id);
+}
+
+
+GDValue LSPClient::takeReplyForID(int id)
+{
+  xassert(hasReplyForID(id));
+
+  return mapMoveValueAt(m_pendingReplies, id);
+}
+
+
+bool LSPClient::hasProtocolError() const
+{
+  return m_protocolError.has_value();
+}
+
+
+std::string LSPClient::getProtocolError() const
+{
+  xassert(hasProtocolError());
+  return m_protocolError.value();
+}
 
 
 // EOF

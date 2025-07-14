@@ -4,7 +4,7 @@
 #include "command-runner.h"            // this module
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // qstringb
+#include "smqtutil/qtutil.h"           // qstringb, waitForQtEvent
 
 // smbase
 #include "smbase/codepoint.h"          // isShellMetacharacter
@@ -15,11 +15,11 @@
 // Qt
 #include <qtcoreversion.h>             // QTCORE_VERSION
 #include <Qt>                          // Qt::SkipEmptyParts
-#include <QCoreApplication>
 #include <QTimerEvent>
 
 // libc++
 #include <algorithm>                   // std::min
+#include <utility>                     // std::move
 
 // libc
 #include <assert.h>                    // assert
@@ -466,37 +466,6 @@ void CommandRunner::sendData()
 }
 
 
-// This function might be a candidate for moving into `smqtutil`, but
-// I'm not sure about the dependence on `QCoreApplication` versus using
-// `QEventLoop`, as I've done elsewhere, so I'll wait on promoting it
-// until it's been in use for a while at least.
-void CommandRunner::pumpEventQueue()
-{
-  // I have a `QEventLoop` object, and could call its `processEvents`
-  // instead of this static method, but I think this is equivalent (the
-  // implementations are nearly identical), and avoids using the loop
-  // object for two different purposes.
-  TRACE_CR_DETAIL("pumpEventQueue: start: calling processEvents");
-  QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
-
-  // At least on Windows, `processEvents` begins by calling
-  // `sendPostedEvents` (which does not report on whether it did
-  // anything), and then it waits for an incoming IPC event.  But that
-  // means the state change caused by dispatching intraprocess events
-  // might not be seen, since we block for IPC regardless.  Therefore,
-  // whenever we think we've gotten some IPC done, also drain the
-  // intraprocess queue so the caller can see all of the effects of that
-  // IPC before deciding whether to block again.
-  //
-  // This seems like a bug in Qt...
-  //
-  TRACE_CR_DETAIL("pumpEventQueue: middle: calling sendPostedEvents");
-  QCoreApplication::sendPostedEvents();
-
-  TRACE_CR_DETAIL("pumpEventQueue: end");
-}
-
-
 QString CommandRunner::getTerminationDescription() const
 {
   if (isRunning()) {
@@ -618,7 +587,7 @@ void CommandRunner::waitForOutputChannelClosed()
 {
   TRACE_CR("waitForOutputChannelClosed: start");
   while (outputChannelOpen()) {
-    pumpEventQueue();
+    waitForQtEvent();
   }
   TRACE_CR("waitForOutputChannelClosed: end");
 }
@@ -630,11 +599,38 @@ bool CommandRunner::hasOutputData() const
 }
 
 
+bool CommandRunner::hasSizedOutputData(int size) const
+{
+  return peekOutputData().size() >= size;
+}
+
+
 QByteArray CommandRunner::takeOutputData()
 {
-  QByteArray ret(m_outputData);
+  QByteArray ret(std::move(m_outputData));
   m_outputData.clear();
   return ret;
+}
+
+
+QByteArray const &CommandRunner::peekOutputData() const
+{
+  return m_outputData;
+}
+
+
+void CommandRunner::removeOutputData(int size)
+{
+  xassert(size >= 0);
+  m_outputData.remove(0, size);
+}
+
+
+QByteArray CommandRunner::takeSizedOutputData(int size)
+{
+  QByteArray res(m_outputData.left(size));
+  removeOutputData(size);
+  return res;
 }
 
 
@@ -665,7 +661,7 @@ void CommandRunner::waitForNotRunning()
 {
   TRACE_CR("waitForNotRunning: start");
   while (isRunning()) {
-    pumpEventQueue();
+    waitForQtEvent();
   }
   TRACE_CR("waitForNotRunning: end");
 }
@@ -712,7 +708,7 @@ QString CommandRunner::waitForOutputLine()
     TRACE_CR_DETAIL("waitForOutputLine:"
       " hasOutputLine=" << hasOutputLine() <<
       " outputChannelOpen=" << outputChannelOpen());
-    pumpEventQueue();
+    waitForQtEvent();
   }
   TRACE_CR("waitForOutputLine: end");
 
@@ -724,7 +720,7 @@ QByteArray CommandRunner::waitForOutputData(int size)
 {
   TRACE_CR("waitForOutputData: start");
   while (m_outputData.size() < size && outputChannelOpen()) {
-    pumpEventQueue();
+    waitForQtEvent();
   }
   TRACE_CR("waitForOutputData: end");
 

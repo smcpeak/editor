@@ -485,6 +485,7 @@ $(eval $(call RUN_TEST_PROG,python-hilite-test))
 
 
 # -------------------------- lsp-client-test ---------------------------
+EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
 
 LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
@@ -498,10 +499,22 @@ lsp-client-test: $(LSP_CLIENT_TEST_OBJS)
 TOCLEAN += lsp-client-test
 all: lsp-client-test
 
-# Don't actually run this yet.  It needs some command line arguments,
-# plus a compile_commands.json and a `clangd` program.  For the moment
-# I just run it manually, from a different directory.
-#$(eval $(call RUN_TEST_PROG,lsp-client-test))
+# This has to be enabled in config.mk.  It requires the `clangd` program
+# to be on the $PATH, and the `compile_commands.json` file to exist
+# (which can be made with `make`).
+#
+# The specific file/line/col is intended to identify the first usage of
+# `s_objectCount` in td.cc.  It may need adjusting over time, although
+# the test should still work even if the line/col does not point at that
+# (or anything); it just might not exercise as much in that case.
+#
+ifeq ($(RUN_LSP_CLIENT_TEST),1)
+test-prog-outs: out/lsp-client-test.ok
+out/lsp-client-test.ok: lsp-client-test
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(RUN_WITH_TIMEOUT) ./lsp-client-test td.cc 38 2 </dev/null >out/lsp-client-test.out 2>&1
+	touch $@
+endif
 
 
 # ----------------- git version ---------------------

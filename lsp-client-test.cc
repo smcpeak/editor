@@ -5,6 +5,8 @@
 
 #include "command-runner.h"            // CommandRunner
 
+#include "smqtutil/qtutil.h"           // waitForQtEvent
+
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL
@@ -23,6 +25,49 @@ using namespace gdv;
 OPEN_ANONYMOUS_NAMESPACE
 
 
+// Print any pending notifications in `lsp.
+void printNotifications(LSPClient &lsp)
+{
+  while (lsp.hasPendingNotifications()) {
+    GDValue notification = lsp.takeNextNotification();
+    std::cout << "Notification: " << notification.asLinesString();
+  }
+}
+
+
+// Wait for a reply to request `id`, printing any received notifications
+// while waiting.
+GDValue printNotificationsUntil(LSPClient &lsp, int id)
+{
+  while (true) {
+    printNotifications(lsp);
+
+    if (lsp.hasReplyForID(id)) {
+      return lsp.takeReplyForID(id);
+    }
+
+    waitForQtEvent();
+  }
+}
+
+
+// Send a request for `method` with `params`.  Synchronously print all
+// responses up to and including the reply to that request.
+void sendRequestPrintReply(
+  LSPClient &lsp,
+  std::string_view method,
+  gdv::GDValue const &params)
+{
+  int id = lsp.sendRequest(method, params);
+
+  std::cout << "Sent request " << method << ", id=" << id << " ...\n";
+
+  GDValue resp(printNotificationsUntil(lsp, id));
+
+  std::cout << "Response: " << resp.asLinesString();
+}
+
+
 void performLSPInteraction(
   LSPClient &lsp,
   std::string const &fname,
@@ -33,13 +78,14 @@ void performLSPInteraction(
   SMFileUtil sfu;
 
   // Initialize the protocol.
-  lsp.sendRequestPrintReply("initialize", GDVMap{
+  sendRequestPrintReply(lsp, "initialize", GDVMap{
     { "rootUri", LSPClient::makeFileURI(sfu.currentDirectory()) },
     { "capabilities", GDVMap{} },
   });
   lsp.sendNotification("initialized", GDVMap{});
 
   // Prepare to ask questions about the source file.
+  std::cout << "Sending notification textDocument/didOpen ...\n";
   std::string fnameURI = LSPClient::makeFileURI(fname);
   lsp.sendNotification("textDocument/didOpen", GDVMap{
     {
@@ -72,12 +118,13 @@ void performLSPInteraction(
   });
 
   // Get some info from the LSP server.
-  lsp.sendRequestPrintReply("textDocument/hover", params);
-  lsp.sendRequestPrintReply("textDocument/declaration", params);
-  lsp.sendRequestPrintReply("textDocument/definition", params);
+  sendRequestPrintReply(lsp, "textDocument/hover", params);
+  sendRequestPrintReply(lsp, "textDocument/declaration", params);
+  sendRequestPrintReply(lsp, "textDocument/definition", params);
 
   // Shut down the protocol.
-  lsp.sendRequestPrintReply("shutdown", GDVMap{});
+  sendRequestPrintReply(lsp, "shutdown", GDVMap{});
+  std::cout << "Sending notification exit ...\n";
   lsp.sendNotification("exit", GDVMap{});
 }
 
