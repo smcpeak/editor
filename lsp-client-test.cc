@@ -9,6 +9,7 @@
 
 #include "smqtutil/qtutil.h"           // waitForQtEvent
 
+#include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL
@@ -22,6 +23,7 @@
 
 
 using namespace gdv;
+using namespace smbase;
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -30,6 +32,35 @@ OPEN_ANONYMOUS_NAMESPACE
 // ------------------------- semi-synchronous --------------------------
 // First, we demonstrate using the API by using `waitForQtEvent()` to
 // wait for IPC.
+
+
+// If there are no errors in `lsp`, return "".  Otherwise, return them
+// prefixed with a prefix so the whole string is appropriate to append
+// to another error message.
+std::string getServerErrors(LSPClient &lsp)
+{
+  std::string errMsg = "";
+  if (lsp.hasErrorData()) {
+    errMsg = stringb("; server error message: " <<
+                      lsp.takeErrorData().toStdString());
+  }
+  return errMsg;
+}
+
+
+// If something has gone wrong with `lsp`, throw `XFormat`.
+void checkConnectionStatus(LSPClient &lsp)
+{
+  if (lsp.hasProtocolError()) {
+    xformatsb("LSP protocol error: " << lsp.getProtocolError());
+  }
+
+  if (!lsp.isChildRunning()) {
+    xformatsb("LSP error: server process terminated unexpectedly" <<
+              getServerErrors(lsp));
+  }
+}
+
 
 // Print any pending notifications in `lsp.
 void printNotifications(LSPClient &lsp)
@@ -46,6 +77,7 @@ void printNotifications(LSPClient &lsp)
 GDValue printNotificationsUntil(LSPClient &lsp, int id)
 {
   while (true) {
+    checkConnectionStatus(lsp);
     printNotifications(lsp);
 
     if (lsp.hasReplyForID(id)) {
@@ -170,6 +202,7 @@ LSPClientTester::LSPClientTester(
     m_line(line),
     m_col(col),
     m_fileContents(fileContents),
+    m_initiatedShutdown(false),
     m_done(false),
     m_failed(false)
 {
@@ -234,6 +267,9 @@ void LSPClientTester::sendNextRequest(int prevID)
       break;
 
     case 2:
+      // Acknowledge initialization (no reply expected).
+      m_lsp.sendNotification("initialized", GDVMap{});
+
       // Send file contents.
       m_lsp.sendNotification("textDocument/didOpen", GDVMap{
         {
@@ -267,6 +303,7 @@ void LSPClientTester::sendNextRequest(int prevID)
       // This should cause the child process to exit, which will trigger
       // a signal.
       m_lsp.sendNotification("exit", GDVMap{});
+      m_initiatedShutdown = true;
       break;
 
     default:
@@ -323,8 +360,16 @@ void LSPClientTester::on_childProcessTerminated() NOEXCEPT
 
   DIAG("LSPClientTester::on_childProcessTerminated");
 
-  std::cout << "Child process terminated\n";
-  m_done = true;
+  if (m_initiatedShutdown) {
+    std::cout << "Child process terminated as requested\n";
+    m_done = true;
+  }
+  else {
+    std::cout << "Child process terminated unexpectedly"
+              << getServerErrors(m_lsp) << "\n";
+    m_done = true;
+    m_failed = true;
+  }
 
   GENERIC_CATCH_END
 }
@@ -334,7 +379,7 @@ void LSPClientTester::on_childProcessTerminated() NOEXCEPT
 OPEN_ANONYMOUS_NAMESPACE
 
 
-void performLSPInteractionSynchronously(
+void performLSPInteractionAsynchronously(
   LSPClient &lsp,
   std::string const &fname,
   int line,
@@ -360,20 +405,80 @@ void performLSPInteractionSynchronously(
 
 
 // ------------------------------ driver -------------------------------
+// Set of possible protocol failures to exercise through deliberate
+// injection.
+enum FailureKind {
+  // No failure; invoke the real `clangd` and expect normal operation.
+  FK_NONE,
+
+  // Server just exits immediately.
+  FK_EMPTY_RESPONSE,
+
+  // Server sends back some data, but not forming a complete set of
+  // headers.
+  FK_INCOMPLETE_HEADERS,
+
+  NUM_FAILURE_KINDS
+};
+
+// Iterate over all of the FailureKinds.
+#define FOREACH_FAILURE_KIND(fkvar)                     \
+  for (FailureKind fkvar = static_cast<FailureKind>(0); \
+       fkvar != NUM_FAILURE_KINDS;                      \
+       fkvar = static_cast<FailureKind>(fkvar+1))
+
+
 void runTests(
+  bool useRealClangd,
   bool semiSynchronous,
+  FailureKind failureKind,
   std::string const &fname,
   int line,
   int col,
   std::string const &fileContents)
 {
-  // Start `clangd`.
+  // Start the server process.
   CommandRunner cr;
-  cr.setProgram("clangd");
-  cr.startAsynchronous();
-  EXPECT_EQ(cr.waitForStarted(5000 /*ms*/), true);
+  switch (failureKind) {
+    default:
+      xfailure("bad FailureKind");
 
-  {
+    case FK_NONE:
+      // Use a proper server to test proper protocol interaction.
+      if (useRealClangd) {
+        // Use the real `clangd`.
+        cr.setProgram("clangd");
+      }
+      else {
+        // Use a mock server that just does basic protocol stuff.  This
+        // is much faster and has fewer dependencies, so is good for
+        // routine automated testing.
+        //
+        // We have to use `env` here rather than invoking `python3`
+        // directly because the latter is a cygwin symlink and
+        // consequently Windows `CreateProcess` cannot start it.
+        cr.setProgram("env");
+        cr.setArguments(QStringList() << "python3" << "./lsp-test-server.py");
+      }
+      break;
+
+    case FK_EMPTY_RESPONSE:
+      cr.setProgram("true");
+      break;
+
+    case FK_INCOMPLETE_HEADERS:
+      cr.setProgram("printf");
+      cr.setArguments(QStringList() << "some-junk");
+      break;
+  }
+  cr.startAsynchronous();
+  if (!cr.waitForStarted(5000 /*ms*/)) {
+    std::cout << "Failed to start server process: "
+              << cr.getErrorMessage() << "\n";
+    xfailure("server failed");
+  }
+
+  try {
     // Wrap it in the LSP client object.
     LSPClient lsp(cr);
 
@@ -383,11 +488,26 @@ void runTests(
         lsp, fname, line, col, fileContents);
     }
     else {
-      performLSPInteractionSynchronously(
+      performLSPInteractionAsynchronously(
         lsp, fname, line, col, fileContents);
     }
   }
+  catch (XBase &x) {
+    if (failureKind != FK_NONE) {
+      std::cout << "Expected failure, msg: " << x.what() << "\n";
+      cr.killProcess();
+      return;
+    }
+    else {
+      throw;
+    }
+  }
 
+  // The failure cases should not get here.
+  xassert(failureKind == FK_NONE);
+
+  // For the non-failure case, we expect everything to look ok at the
+  // end.
   EXPECT_EQ(cr.getFailed(), false);
   EXPECT_EQ(cr.getExitCode(), 0);
 }
@@ -397,14 +517,23 @@ void entry(int argc, char **argv)
 {
   TRACE_ARGS();
 
+  // Default query parameters, used when run without arguments.
+  std::string fname = "eclf.h";
+  int line = 9;
+  int col = 5;
+  bool useRealClangd = false;
+
   // Interpret command line.
-  if (argc != 4) {
-    std::cerr << "Usage: " << argv[0] << " <file> <line> <col>\n";
-    std::exit(2);
+  if (argc != 1) {
+    if (argc != 4) {
+      std::cerr << "Usage: " << argv[0] << " <file> <line> <col>\n";
+      std::exit(2);
+    }
+    fname = argv[1];
+    line = std::atoi(argv[2]);
+    col = std::atoi(argv[3]);
+    useRealClangd = true;
   }
-  std::string fname(argv[1]);
-  int line = std::atoi(argv[2]);
-  int col = std::atoi(argv[3]);
 
   // Read the source file of interest.
   SMFileUtil sfu;
@@ -413,11 +542,15 @@ void entry(int argc, char **argv)
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);
 
-  std::cout << "------------ semi-synchonous -----------\n";
-  runTests(true /*semiSync*/, fname, line, col, fileContents);
-
-  std::cout << "------------ asynchonous -----------\n";
-  runTests(false /*semiSync*/, fname, line, col, fileContents);
+  std::set<bool> booleans = {false, true};
+  for (bool async : booleans) {
+    char const *syncLabel = (async? "asynchronous" : "semi-synchronous");
+    FOREACH_FAILURE_KIND(fkind) {
+      std::cout << "------------ " << syncLabel << ", fkind=" << fkind << " -----------\n";
+      runTests(useRealClangd, !async, fkind,
+               fname, line, col, fileContents);
+    }
+  }
 }
 
 

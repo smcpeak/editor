@@ -474,24 +474,9 @@ LSP_CLIENT_TEST_OBJS += lsp-client-test.o
 lsp-client-test.exe: $(LSP_CLIENT_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(LSP_CLIENT_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-all: lsp-client-test.exe
-
-# This has to be enabled in config.mk.  It requires the `clangd` program
-# to be on the $PATH, and the `compile_commands.json` file to exist
-# (which can be made with `make`).
-#
-# The specific file/line/col is intended to identify the first usage of
-# `s_objectCount` in td.cc.  It may need adjusting over time, although
-# the test should still work even if the line/col does not point at that
-# (or anything); it just might not exercise as much in that case.
-#
-ifeq ($(RUN_LSP_CLIENT_TEST),1)
-test-prog-outs: out/lsp-client-test.ok
-out/lsp-client-test.ok: lsp-client-test.exe
-	$(CREATE_OUTPUT_DIRECTORY)
-	$(RUN_WITH_TIMEOUT) ./lsp-client-test.exe td.cc 38 2 </dev/null >out/lsp-client-test.out 2>&1
-	touch $@
-endif
+# This program can be used to query a real LSP server, but when run
+# without arguments, it uses a mock server script.
+$(eval $(call RUN_TEST_PROG,lsp-client-test))
 
 
 # ----------------- git version ---------------------

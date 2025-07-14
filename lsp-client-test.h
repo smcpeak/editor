@@ -33,6 +33,10 @@ public:      // data
   int m_col;
   std::string const &m_fileContents;
 
+  // True once we have initiated client shutdown.  If the client
+  // terminates before this is set, that is an error.
+  bool m_initiatedShutdown;
+
   // Set once we've completed the test with this object.
   bool m_done;
 

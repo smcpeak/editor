@@ -113,11 +113,27 @@ void LSPClient::send(std::string &&data)
 }
 
 
-void LSPClient::innerProcessOutputData()
+void LSPClient::setProtocolError(std::string &&msg)
+{
+  if (!hasProtocolError()) {
+    TRACE1("protocol error: " << msg);
+
+    m_protocolError = std::make_optional<std::string>(std::move(msg));
+
+    Q_EMIT signal_hasProtocolError();
+  }
+
+  else {
+    TRACE1("second or later protocol error: " << msg);
+  }
+}
+
+
+bool LSPClient::innerProcessOutputData()
 {
   // We can't do anything once a protocol error occurs.
-  if (m_protocolError.has_value()) {
-    return;
+  if (hasProtocolError()) {
+    return false;
   }
 
   // Prepare to parse the current output data.
@@ -129,7 +145,7 @@ void LSPClient::innerProcessOutputData()
     std::string line = parser.getUpToByte('\n');
     if (!endsWith(line, "\n")) {
       // Incomplete message; wait for more data to arrive.
-      return;
+      return false;
     }
 
     if (line == "\r\n" || line == "\n") {
@@ -154,7 +170,7 @@ void LSPClient::innerProcessOutputData()
   std::string bodyJSON = parser.getUpToSize(contentLength);
   if (bodyJSON.size() < contentLength) {
     // Incomplete.
-    return;
+    return false;
   }
 
   GDValue msg(jsonToGDV(bodyJSON));
@@ -183,6 +199,8 @@ void LSPClient::innerProcessOutputData()
 
   // Remove the decoded message from the output data bytes queue.
   m_child.removeOutputData(parser.curOffset());
+
+  return true;
 }
 
 
@@ -190,14 +208,30 @@ void LSPClient::processOutputData() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE2("processOutputData");
+
   try {
-    innerProcessOutputData();
+    // There could be multiple messages waiting, so loop until we have
+    // processed them all.
+    while (m_child.hasOutputData() &&
+           innerProcessOutputData())
+      {}
   }
   catch (std::exception &x) {
-    m_protocolError = std::make_optional<std::string>(x.what());
-
-    Q_EMIT signal_hasProtocolError();
+    setProtocolError(x.what());
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void LSPClient::on_errorDataReady() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE1("on_errorDataReady");
+
+  Q_EMIT signal_hasErrorData();
 
   GENERIC_CATCH_END
 }
@@ -207,7 +241,13 @@ void LSPClient::on_processTerminated() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE1("on_processTerminated");
+
   xassert(!isChildRunning());
+
+  if (m_child.hasOutputData()) {
+    setProtocolError("Server process terminated with an incomplete message.");
+  }
 
   // Relay the signal to our client.
   Q_EMIT signal_childProcessTerminated();
@@ -332,6 +372,18 @@ std::string LSPClient::getProtocolError() const
 bool LSPClient::isChildRunning() const
 {
   return m_child.isRunning();
+}
+
+
+bool LSPClient::hasErrorData() const
+{
+  return m_child.hasErrorData();
+}
+
+
+QByteArray LSPClient::takeErrorData()
+{
+  return m_child.takeErrorData();
 }
 
 

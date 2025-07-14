@@ -77,19 +77,25 @@ private:     // methods
     std::string_view method,
     gdv::GDValue const &params);
 
+  // If `m_protocolError` is currently nullopt, set it to `msg` and emit
+  // the appropriate signal.  Otherwise do nothing.
+  void setProtocolError(std::string &&msg);
+
   // Attempt to parse the current output data as a message.  If
   // successful, add an entry to `m_pendingReplies` or
-  // `m_pendingNotifications` as appropriate for the message.  If there
-  // is not enough data, just return without changing anything.
+  // `m_pendingNotifications` as appropriate for the message, then
+  // return true.  If there is not enough data, just return false
+  // without changing anything.
   //
   // If there is an error with the data format, throw an exception.
-  void innerProcessOutputData();
+  bool innerProcessOutputData();
 
 private Q_SLOTS:
   // Process queued data in `m_child`.
   void processOutputData() NOEXCEPT;
 
-  // Respond to the similarly-named `CommandRunner` signal.
+  // Respond to the similarly-named `CommandRunner` signals.
+  void on_errorDataReady() NOEXCEPT;
   void on_processTerminated() NOEXCEPT;
 
 public:      // methods
@@ -141,6 +147,12 @@ public:      // methods
   // True if the child process is still running.
   bool isChildRunning() const;
 
+  // True if there is some data on stderr.
+  bool hasErrorData() const;
+
+  // Take the stderr data.  Returns an empty array if there is none.
+  QByteArray takeErrorData();
+
   // ----------------------------- signals -----------------------------
 Q_SIGNALS:
   // Emitted when `hasPendingNotifications()` becomes true.
@@ -152,8 +164,16 @@ Q_SIGNALS:
   // Emitted when `hasProtocolError()` becomes true.
   void signal_hasProtocolError();
 
-  // Emitted when `isChildRunning()` becomes false;
+  // Emitted when `isChildRunning()` becomes false.
+  //
+  // If the child terminates without sending a complete message,
+  // `signal_hasProtocolError()` fires first, followed by this signal.
+  //
   void signal_childProcessTerminated();
+
+  // Emitted when error data is received, thus `hasErrorData()` is true
+  // and may have just become true (but might have already been).
+  void signal_hasErrorData();
 };
 
 
