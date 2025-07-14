@@ -142,8 +142,8 @@ TOCLEAN += *.o *.d
 	$(MAKE_CC_JSON) $(CXX) -c -MMD -MP -o $@ $(CCFLAGS) $< >$@.json
 
 
-# TODO: Include *.d rather than trying to track them individually, since
-# the latter is error-prone and timeconsuming to debug.
+# Pull in the automatic dependencies.
+-include $(wildcard *.d)
 
 
 # Encode help files as C string literals.
@@ -165,7 +165,6 @@ EDITOR_OBJS += editor-strutil.o
 
 EDITOR_STRUTIL_TEST_OBJS := $(EDITOR_OBJS)
 EDITOR_STRUTIL_TEST_OBJS += editor-strutil-test.o
--include editor-strutil-test.d
 
 editor-strutil-test: $(EDITOR_STRUTIL_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_STRUTIL_TEST_OBJS) $(CONSOLE_LDFLAGS)
@@ -188,7 +187,6 @@ EDITOR_OBJS += textmcoord.o
 
 TD_CORE_OBJS := $(EDITOR_OBJS)
 TD_CORE_OBJS += td-core-test.o
--include td-core-test.d
 
 td-core-test: $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
@@ -207,7 +205,6 @@ EDITOR_OBJS += textlcoord.o
 TD_OBJS := $(EDITOR_OBJS)
 
 TD_OBJS += td-editor-test.o
--include td-editor-test.d
 
 td-editor-test: $(TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -222,7 +219,6 @@ EDITOR_OBJS += text-search.o
 TEXT_SEARCH_TEST_OBJS := $(EDITOR_OBJS)
 
 TEXT_SEARCH_TEST_OBJS += text-search-test.o
--include text-search-test.d
 
 text-search-test: $(TEXT_SEARCH_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEXT_SEARCH_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -234,7 +230,6 @@ $(eval $(call RUN_TEST_PROG,text-search-test))
 JUSTIFY_OBJS := $(EDITOR_OBJS)
 
 JUSTIFY_OBJS += justify-test.o
--include justify-test.d
 
 justify-test: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -250,8 +245,6 @@ COMMAND_RUNNER_OBJS := $(EDITOR_OBJS)
 
 COMMAND_RUNNER_OBJS += command-runner-test.o
 COMMAND_RUNNER_OBJS += command-runner-test.moc.o
--include command-runner-test.d
--include command-runner-test.moc.d
 
 command-runner-test: $(COMMAND_RUNNER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -268,7 +261,6 @@ EDITOR_OBJS += named-td.o
 NAMED_TD_TEST_OBJS := $(EDITOR_OBJS)
 
 NAMED_TD_TEST_OBJS += named-td-test.o
--include named-td-test.d
 
 named-td-test: $(NAMED_TD_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -282,7 +274,6 @@ EDITOR_OBJS += named-td-list.o
 NAMED_TD_LIST_TEST_OBJS := $(EDITOR_OBJS)
 
 NAMED_TD_LIST_TEST_OBJS += named-td-list-test.o
--include named-td-list-test.d
 
 named-td-list-test: $(NAMED_TD_LIST_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_LIST_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -296,7 +287,6 @@ EDITOR_OBJS += nearby-file.o
 NEARBY_FILE_TEST_OBJS := $(EDITOR_OBJS)
 
 NEARBY_FILE_TEST_OBJS += nearby-file-test.o
--include nearby-file-test.d
 
 nearby-file-test: $(NEARBY_FILE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(NEARBY_FILE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -317,7 +307,6 @@ EDITOR_OBJS += bufferlinesource.o
 BUFFERLINESOURCE_TEST_OBJS := $(EDITOR_OBJS)
 
 BUFFERLINESOURCE_TEST_OBJS += bufferlinesource-test.o
--include bufferlinesource-test.d
 
 bufferlinesource-test: $(BUFFERLINESOURCE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(BUFFERLINESOURCE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -330,10 +319,6 @@ EDITOR_FS_SERVER_OBJS :=
 EDITOR_FS_SERVER_OBJS += editor-fs-server.o
 EDITOR_FS_SERVER_OBJS += vfs-local.o
 EDITOR_FS_SERVER_OBJS += vfs-msg.o
-
--include editor-fs-server.d
--include vfs-local.d
--include vfs-msg.d
 
 editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
 	@# Link this with -static because it gets invoked over an SSH
@@ -357,9 +342,6 @@ EDITOR_FS_SERVER_TEST_OBJS += $(EDITOR_OBJS)
 EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.o
 EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.moc.o
 
--include editor-fs-server-test.d
--include editor-fs-server-test.moc.d
-
 editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
@@ -377,9 +359,6 @@ VFS_CONNECTIONS_TEST_OBJS :=
 VFS_CONNECTIONS_TEST_OBJS += $(EDITOR_OBJS)
 VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.o
 VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.moc.o
-
--include vfs-connections-test.d
--include vfs-connections-test.mod.d
 
 vfs-connections-test.exe: $(VFS_CONNECTIONS_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(VFS_CONNECTIONS_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -424,7 +403,6 @@ EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += lex_hilite.o
 
 C_HILITE_OBJS := $(EDITOR_OBJS)
--include c_hilite.d
 
 c_hilite: $(C_HILITE_OBJS) c_hilite.cc
 	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(QT_CONSOLE_LDFLAGS)
@@ -438,7 +416,6 @@ EDITOR_OBJS += makefile_hilite.yy.o
 MAKEFILE_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 MAKEFILE_HILITE_TEST_OBJS += makefile-hilite-test.o
--include makefile-hilite-test.d
 
 makefile-hilite-test: $(MAKEFILE_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(MAKEFILE_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -452,7 +429,6 @@ EDITOR_OBJS += hashcomment_hilite.yy.o
 HASHCOMMENT_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 HASHCOMMENT_HILITE_TEST_OBJS += hashcomment-hilite-test.o
--include hashcomment-hilite-test.d
 
 hashcomment-hilite-test: $(HASHCOMMENT_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(HASHCOMMENT_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -466,7 +442,6 @@ EDITOR_OBJS += ocaml_hilite.yy.o
 OCAML_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 OCAML_HILITE_TEST_OBJS += ocaml-hilite-test.o
--include ocaml-hilite-test.d
 
 ocaml-hilite-test: $(OCAML_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(OCAML_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -480,7 +455,6 @@ EDITOR_OBJS += python_hilite.yy.o
 PYTHON_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 PYTHON_HILITE_TEST_OBJS += python-hilite-test.o
--include python-hilite-test.d
 
 python-hilite-test: $(PYTHON_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(PYTHON_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -496,7 +470,6 @@ LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
 
 LSP_CLIENT_TEST_OBJS += lsp-client-test.moc.o
 LSP_CLIENT_TEST_OBJS += lsp-client-test.o
--include lsp-client-test.d
 
 lsp-client-test: $(LSP_CLIENT_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(LSP_CLIENT_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
@@ -651,8 +624,6 @@ EDITOR_OBJS += textinput.o
 EDITOR_OBJS += textinput.moc.o
 EDITOR_OBJS += vfs-query-sync.o
 EDITOR_OBJS += vfs-query-sync.moc.o
-
--include $(EDITOR_OBJS:.o=.d)
 
 TOCLEAN += editor
 editor: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
