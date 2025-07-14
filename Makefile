@@ -142,6 +142,10 @@ TOCLEAN += *.o *.d
 	$(MAKE_CC_JSON) $(CXX) -c -MMD -MP -o $@ $(CCFLAGS) $< >$@.json
 
 
+# TODO: Include *.d rather than trying to track them individually, since
+# the latter is error-prone and timeconsuming to debug.
+
+
 # Encode help files as C string literals.
 %.doc.gen.cc %.doc.gen.h: doc/%.txt
 	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
@@ -490,6 +494,7 @@ EDITOR_OBJS += lsp-client.o
 
 LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
 
+LSP_CLIENT_TEST_OBJS += lsp-client-test.moc.o
 LSP_CLIENT_TEST_OBJS += lsp-client-test.o
 -include lsp-client-test.d
 

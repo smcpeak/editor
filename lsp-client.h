@@ -4,6 +4,8 @@
 #ifndef EDITOR_LSP_CLIENT_H
 #define EDITOR_LSP_CLIENT_H
 
+#include "lsp-client-fwd.h"            // fwds for this module
+
 #include "command-runner-fwd.h"        // CommandRunner
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
@@ -87,6 +89,9 @@ private Q_SLOTS:
   // Process queued data in `m_child`.
   void processOutputData() NOEXCEPT;
 
+  // Respond to the similarly-named `CommandRunner` signal.
+  void on_processTerminated() NOEXCEPT;
+
 public:      // methods
   ~LSPClient();
 
@@ -132,6 +137,23 @@ public:      // methods
 
   // Requires `hasProtocolError()`.  Get the messages.
   std::string getProtocolError() const;
+
+  // True if the child process is still running.
+  bool isChildRunning() const;
+
+  // ----------------------------- signals -----------------------------
+Q_SIGNALS:
+  // Emitted when `hasPendingNotifications()` becomes true.
+  void signal_hasPendingNotifications();
+
+  // Emitted when `hasReplyForID(id)` becomes true.
+  void signal_hasReplyForID(int id);
+
+  // Emitted when `hasProtocolError()` becomes true.
+  void signal_hasProtocolError();
+
+  // Emitted when `isChildRunning()` becomes false;
+  void signal_childProcessTerminated();
 };
 
 

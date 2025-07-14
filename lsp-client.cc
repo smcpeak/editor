@@ -171,10 +171,14 @@ void LSPClient::innerProcessOutputData()
 
     setRemoveExisting(m_outstandingRequests, id);
     mapInsertUnique(m_pendingReplies, id, std::move(msg));
+
+    Q_EMIT signal_hasReplyForID(id);
   }
 
   else {
     m_pendingNotifications.push_back(std::move(msg));
+
+    Q_EMIT signal_hasPendingNotifications();
   }
 
   // Remove the decoded message from the output data bytes queue.
@@ -191,7 +195,22 @@ void LSPClient::processOutputData() NOEXCEPT
   }
   catch (std::exception &x) {
     m_protocolError = std::make_optional<std::string>(x.what());
+
+    Q_EMIT signal_hasProtocolError();
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void LSPClient::on_processTerminated() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  xassert(!isChildRunning());
+
+  // Relay the signal to our client.
+  Q_EMIT signal_childProcessTerminated();
 
   GENERIC_CATCH_END
 }
@@ -213,6 +232,8 @@ LSPClient::LSPClient(CommandRunner &child)
 {
   QObject::connect(&child, &CommandRunner::signal_outputDataReady,
                    this, &LSPClient::processOutputData);
+  QObject::connect(&child, &CommandRunner::signal_processTerminated,
+                   this, &LSPClient::on_processTerminated);
 }
 
 
@@ -305,6 +326,12 @@ std::string LSPClient::getProtocolError() const
 {
   xassert(hasProtocolError());
   return m_protocolError.value();
+}
+
+
+bool LSPClient::isChildRunning() const
+{
+  return m_child.isRunning();
 }
 
 
