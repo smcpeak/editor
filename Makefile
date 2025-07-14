@@ -2,7 +2,7 @@
 
 # Default target.
 all: comment.yy.cc
-all: editor
+all: editor.exe
 all: test-prog-outs
 
 
@@ -97,14 +97,11 @@ QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 # want 'make' to delete the .out file if the command fails, since I want
 # to be able to inspect it after the failure.
 #
-# TODO: Add explicit ".exe" extensions to the executables.
-#
 define RUN_TEST_PROG
-TOCLEAN += $1
 test-prog-outs: out/$1.ok
-out/$1.ok: $1
+out/$1.ok: $1.exe
 	$$(CREATE_OUTPUT_DIRECTORY)
-	$(RUN_WITH_TIMEOUT) ./$1 </dev/null >out/$1.out 2>&1
+	$(RUN_WITH_TIMEOUT) ./$1.exe </dev/null >out/$1.out 2>&1
 	touch $$@
 endef
 
@@ -116,6 +113,7 @@ endef
 # patterns of files to delete in the 'clean' target; targets below
 # add things to this using "+="
 TOCLEAN = $(QT_TOCLEAN)
+TOCLEAN += *.exe
 
 
 # Object files for the editor.  This is built up gradually as needed
@@ -136,7 +134,7 @@ MAKE_CC_JSON = $(PYTHON3) $(SMBASE)/make-cc-json.py
 # compile .cc to .o
 # -MMD causes GCC to write .d file.
 # The -MP modifier adds phony targets to deal with removed headers.
-TOCLEAN += *.o *.d
+TOCLEAN += *.o *.d *.o.json
 %.o : %.cc
 	$(CXX) -c -MMD -MP -o $@ $(CCFLAGS) $<
 	$(MAKE_CC_JSON) $(CXX) -c -MMD -MP -o $@ $(CCFLAGS) $< >$@.json
@@ -146,10 +144,14 @@ TOCLEAN += *.o *.d
 -include $(wildcard *.d)
 
 
+# Clean generated sources.
+TOCLEAN += *.gen.*
+
 # Encode help files as C string literals.
 %.doc.gen.cc %.doc.gen.h: doc/%.txt
 	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
 
+# Run astgen to generate C++ data classes.
 %.ast.gen.fwd.h %.ast.gen.h %.ast.gen.cc: %.ast $(ASTGEN)/astgen.exe
 	$(ASTGEN)/astgen.exe -o$*.ast.gen $<
 
@@ -166,14 +168,14 @@ EDITOR_OBJS += editor-strutil.o
 EDITOR_STRUTIL_TEST_OBJS := $(EDITOR_OBJS)
 EDITOR_STRUTIL_TEST_OBJS += editor-strutil-test.o
 
-editor-strutil-test: $(EDITOR_STRUTIL_TEST_OBJS)
+editor-strutil-test.exe: $(EDITOR_STRUTIL_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_STRUTIL_TEST_OBJS) $(CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,editor-strutil-test))
 
 
 # ----------------------------- gap-test -------------------------------
-gap-test: gap.h gap-test.cc
+gap-test.exe: gap.h gap-test.cc
 	$(CXX) -o $@ $(CCFLAGS) gap-test.cc $(CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,gap-test))
@@ -188,7 +190,7 @@ EDITOR_OBJS += textmcoord.o
 TD_CORE_OBJS := $(EDITOR_OBJS)
 TD_CORE_OBJS += td-core-test.o
 
-td-core-test: $(TD_CORE_OBJS)
+td-core-test.exe: $(TD_CORE_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,td-core-test))
@@ -206,7 +208,7 @@ TD_OBJS := $(EDITOR_OBJS)
 
 TD_OBJS += td-editor-test.o
 
-td-editor-test: $(TD_OBJS)
+td-editor-test.exe: $(TD_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TD_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,td-editor-test))
@@ -220,7 +222,7 @@ TEXT_SEARCH_TEST_OBJS := $(EDITOR_OBJS)
 
 TEXT_SEARCH_TEST_OBJS += text-search-test.o
 
-text-search-test: $(TEXT_SEARCH_TEST_OBJS)
+text-search-test.exe: $(TEXT_SEARCH_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(TEXT_SEARCH_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,text-search-test))
@@ -231,7 +233,7 @@ JUSTIFY_OBJS := $(EDITOR_OBJS)
 
 JUSTIFY_OBJS += justify-test.o
 
-justify-test: $(JUSTIFY_OBJS)
+justify-test.exe: $(JUSTIFY_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,justify-test))
@@ -246,7 +248,7 @@ COMMAND_RUNNER_OBJS := $(EDITOR_OBJS)
 COMMAND_RUNNER_OBJS += command-runner-test.o
 COMMAND_RUNNER_OBJS += command-runner-test.moc.o
 
-command-runner-test: $(COMMAND_RUNNER_OBJS)
+command-runner-test.exe: $(COMMAND_RUNNER_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,command-runner-test))
@@ -262,7 +264,7 @@ NAMED_TD_TEST_OBJS := $(EDITOR_OBJS)
 
 NAMED_TD_TEST_OBJS += named-td-test.o
 
-named-td-test: $(NAMED_TD_TEST_OBJS)
+named-td-test.exe: $(NAMED_TD_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,named-td-test))
@@ -275,7 +277,7 @@ NAMED_TD_LIST_TEST_OBJS := $(EDITOR_OBJS)
 
 NAMED_TD_LIST_TEST_OBJS += named-td-list-test.o
 
-named-td-list-test: $(NAMED_TD_LIST_TEST_OBJS)
+named-td-list-test.exe: $(NAMED_TD_LIST_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_LIST_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,named-td-list-test))
@@ -288,14 +290,14 @@ NEARBY_FILE_TEST_OBJS := $(EDITOR_OBJS)
 
 NEARBY_FILE_TEST_OBJS += nearby-file-test.o
 
-nearby-file-test: $(NEARBY_FILE_TEST_OBJS)
+nearby-file-test.exe: $(NEARBY_FILE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(NEARBY_FILE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,nearby-file-test))
 
 
 # ------------------------ textcategory-test ---------------------------
-textcategory-test: textcategory.o textcategory-test.o
+textcategory-test.exe: textcategory.o textcategory-test.o
 	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,textcategory-test))
@@ -308,7 +310,7 @@ BUFFERLINESOURCE_TEST_OBJS := $(EDITOR_OBJS)
 
 BUFFERLINESOURCE_TEST_OBJS += bufferlinesource-test.o
 
-bufferlinesource-test: $(BUFFERLINESOURCE_TEST_OBJS)
+bufferlinesource-test.exe: $(BUFFERLINESOURCE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(BUFFERLINESOURCE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,bufferlinesource-test))
@@ -325,8 +327,6 @@ editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
 	@# connection, which makes it difficult to arrange for the proper
 	@# library search path to be set.
 	$(CXX) -o $@ -static $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
-
-TOCLEAN += editor-fs-server.exe
 
 all: editor-fs-server.exe
 
@@ -345,7 +345,7 @@ EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.moc.o
 editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,editor-fs-server-test.exe))
+$(eval $(call RUN_TEST_PROG,editor-fs-server-test))
 
 # The test uses the server executable.
 out/editor-fs-server-test.exe.ok: editor-fs-server.exe
@@ -363,7 +363,7 @@ VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.moc.o
 vfs-connections-test.exe: $(VFS_CONNECTIONS_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(VFS_CONNECTIONS_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,vfs-connections-test.exe))
+$(eval $(call RUN_TEST_PROG,vfs-connections-test))
 
 # The test uses the server executable.
 out/vfs-connections-test.exe.ok: editor-fs-server.exe
@@ -404,7 +404,7 @@ EDITOR_OBJS += lex_hilite.o
 
 C_HILITE_OBJS := $(EDITOR_OBJS)
 
-c_hilite: $(C_HILITE_OBJS) c_hilite.cc
+c_hilite.exe: $(C_HILITE_OBJS) c_hilite.cc
 	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,c_hilite))
@@ -417,7 +417,7 @@ MAKEFILE_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 MAKEFILE_HILITE_TEST_OBJS += makefile-hilite-test.o
 
-makefile-hilite-test: $(MAKEFILE_HILITE_TEST_OBJS)
+makefile-hilite-test.exe: $(MAKEFILE_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(MAKEFILE_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,makefile-hilite-test))
@@ -430,7 +430,7 @@ HASHCOMMENT_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 HASHCOMMENT_HILITE_TEST_OBJS += hashcomment-hilite-test.o
 
-hashcomment-hilite-test: $(HASHCOMMENT_HILITE_TEST_OBJS)
+hashcomment-hilite-test.exe: $(HASHCOMMENT_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(HASHCOMMENT_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,hashcomment-hilite-test))
@@ -443,7 +443,7 @@ OCAML_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 OCAML_HILITE_TEST_OBJS += ocaml-hilite-test.o
 
-ocaml-hilite-test: $(OCAML_HILITE_TEST_OBJS)
+ocaml-hilite-test.exe: $(OCAML_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(OCAML_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,ocaml-hilite-test))
@@ -456,7 +456,7 @@ PYTHON_HILITE_TEST_OBJS := $(EDITOR_OBJS)
 
 PYTHON_HILITE_TEST_OBJS += python-hilite-test.o
 
-python-hilite-test: $(PYTHON_HILITE_TEST_OBJS)
+python-hilite-test.exe: $(PYTHON_HILITE_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(PYTHON_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,python-hilite-test))
@@ -471,11 +471,10 @@ LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
 LSP_CLIENT_TEST_OBJS += lsp-client-test.moc.o
 LSP_CLIENT_TEST_OBJS += lsp-client-test.o
 
-lsp-client-test: $(LSP_CLIENT_TEST_OBJS)
+lsp-client-test.exe: $(LSP_CLIENT_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(LSP_CLIENT_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
-TOCLEAN += lsp-client-test
-all: lsp-client-test
+all: lsp-client-test.exe
 
 # This has to be enabled in config.mk.  It requires the `clangd` program
 # to be on the $PATH, and the `compile_commands.json` file to exist
@@ -488,9 +487,9 @@ all: lsp-client-test
 #
 ifeq ($(RUN_LSP_CLIENT_TEST),1)
 test-prog-outs: out/lsp-client-test.ok
-out/lsp-client-test.ok: lsp-client-test
+out/lsp-client-test.ok: lsp-client-test.exe
 	$(CREATE_OUTPUT_DIRECTORY)
-	$(RUN_WITH_TIMEOUT) ./lsp-client-test td.cc 38 2 </dev/null >out/lsp-client-test.out 2>&1
+	$(RUN_WITH_TIMEOUT) ./lsp-client-test.exe td.cc 38 2 </dev/null >out/lsp-client-test.out 2>&1
 	touch $@
 endif
 
@@ -625,8 +624,7 @@ EDITOR_OBJS += textinput.moc.o
 EDITOR_OBJS += vfs-query-sync.o
 EDITOR_OBJS += vfs-query-sync.moc.o
 
-TOCLEAN += editor
-editor: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
+editor.exe: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
 
 
@@ -662,41 +660,41 @@ clean:
 #
 check:
 	@# The first test runs without any retry.
-	./editor -ev=test/empty.ev
+	./editor.exe -ev=test/empty.ev
 	@#
 	@# Remaining tests have retry active.
-	$(RETRY) ./editor -ev=test/down.ev test/file1.h
-	$(RETRY) ./editor -ev=test/copy-paste.ev test/file1.h
-	$(RETRY) ./editor -ev=test/file-open-dialog1.ev test/file1.h
-	$(RETRY) ./editor -ev=test/file-open-nonexist.ev
-	$(RETRY) ./editor -ev=test/simple-text-ins.ev
-	$(RETRY) ./editor -ev=test/sar-find-cs-completion.ev test/file1.h
-	$(RETRY) ./editor -ev=test/sar-repl-cs-completion.ev test/file1.h
-	$(RETRY) ./editor -ev=test/sar-match-limit.ev test/file1.h
-	$(RETRY) ./editor -ev=test/sar-replace-bol.ev test/file1.h
-	$(RETRY) ./editor -ev=test/resize1.ev test/file1.h
-	$(RETRY) ./editor -ev=test/read-only1.ev
-	$(RETRY) ./editor -ev=test/read-only2.ev
-	$(RETRY) ./editor -ev=test/read-only3.ev
-	$(RETRY) ./editor -ev=test/prompt-unsaved-changes.ev
-	$(RETRY) ./editor -ev=test/screenshot1.ev test/file1.h
-	$(RETRY) ./editor -ev=test/visible-tabs.ev test/tabs-test.txt
-	$(RETRY) ./editor -ev=test/search-hits-with-tab.ev test/tabs-test.txt
-	cp test/file1.h tmp.h && $(RETRY) ./editor -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
-	$(RETRY) ./editor -ev=test/keysequence.ev
-	$(RETRY) ./editor -ev=test/keysequence2.ev
-	cd test && sh ../retry.sh 3 ../editor -ev=fn-input-dialog-size.ev
-	$(RETRY) ./editor -ev=test/screenshot-has-tabs.ev test/has-tabs.c
-	$(RETRY) ./editor -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
-	$(RETRY) ./editor -ev=test/open-files-filter.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
-	$(RETRY) ./editor -ev=test/cut-then-paste.ev
-	$(RETRY) ./editor -ev=test/select-beyond-eof.ev
+	$(RETRY) ./editor.exe -ev=test/down.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/copy-paste.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/file-open-dialog1.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/file-open-nonexist.ev
+	$(RETRY) ./editor.exe -ev=test/simple-text-ins.ev
+	$(RETRY) ./editor.exe -ev=test/sar-find-cs-completion.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/sar-repl-cs-completion.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/sar-match-limit.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/sar-replace-bol.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/resize1.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/read-only1.ev
+	$(RETRY) ./editor.exe -ev=test/read-only2.ev
+	$(RETRY) ./editor.exe -ev=test/read-only3.ev
+	$(RETRY) ./editor.exe -ev=test/prompt-unsaved-changes.ev
+	$(RETRY) ./editor.exe -ev=test/screenshot1.ev test/file1.h
+	$(RETRY) ./editor.exe -ev=test/visible-tabs.ev test/tabs-test.txt
+	$(RETRY) ./editor.exe -ev=test/search-hits-with-tab.ev test/tabs-test.txt
+	cp test/file1.h tmp.h && $(RETRY) ./editor.exe -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
+	$(RETRY) ./editor.exe -ev=test/keysequence.ev
+	$(RETRY) ./editor.exe -ev=test/keysequence2.ev
+	cd test && sh ../retry.sh 3 ../editor.exe -ev=fn-input-dialog-size.ev
+	$(RETRY) ./editor.exe -ev=test/screenshot-has-tabs.ev test/has-tabs.c
+	$(RETRY) ./editor.exe -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
+	$(RETRY) ./editor.exe -ev=test/open-files-filter.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
+	$(RETRY) ./editor.exe -ev=test/cut-then-paste.ev
+	$(RETRY) ./editor.exe -ev=test/select-beyond-eof.ev
 	cp test/robotank.info.json.crlf.bin tmp.h && \
-	  $(RETRY) ./editor -ev=test/sar-remove-ctlm.ev tmp.h && \
+	  $(RETRY) ./editor.exe -ev=test/sar-remove-ctlm.ev tmp.h && \
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
-	$(RETRY) ./editor -ev=test/fn-input-repeat-tab.ev
-	$(RETRY) ./editor -ev=test/reload-after-modification.ev test/gets-modified.txt
-	$(RETRY) ./editor -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
+	$(RETRY) ./editor.exe -ev=test/fn-input-repeat-tab.ev
+	$(RETRY) ./editor.exe -ev=test/reload-after-modification.ev test/gets-modified.txt
+	$(RETRY) ./editor.exe -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
 
 # EOF
