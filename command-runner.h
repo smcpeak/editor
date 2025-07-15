@@ -186,6 +186,10 @@ public:      // funcs
   // based on when it was written.
   void mergeStderrIntoStdout();
 
+  // Arrange to redirect stderr to `path`.  An existing file is
+  // truncated when the process starts.
+  void setStandardErrorFile(QString const &path);
+
   // ------------------- synchronous interface ---------------------
   // Specify what to pass on standard input.  Default is nothing.
   void setInputData(QByteArray const &data);

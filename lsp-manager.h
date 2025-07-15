@@ -79,6 +79,10 @@ private:     // data
   // True to run the test server instead of `clangd`.
   bool m_useTestServer;
 
+  // Name of the file to which the stderr of the LSP process will be
+  // written.
+  std::string m_lspStderrLogFname;
+
   // Object to manage the child process.  This is null until the server
   // has been started, and returns to null if it is stopped.
   std::unique_ptr<CommandRunner> m_commandRunner;
@@ -107,10 +111,6 @@ private:     // methods
   // Kill the server and return this object to its initial state.
   void forciblyShutDown();
 
-  // If the server has reported any errors on its stdout, append them as
-  // a single string to `msgs`.
-  void addServerErrors(std::vector<std::string> &msgs);
-
 private Q_SLOTS:
   // Slots to respond to similarly-named `LSPClient` signals.
   void on_hasReplyForID(int id) NOEXCEPT;
@@ -122,7 +122,9 @@ public:      // methods
 
   // Create an inactive manager.  If `useTestServer`, then run
   // `./lsp-test-server.py` instead of `clangd`.
-  explicit LSPManager(bool useTestServer);
+  explicit LSPManager(
+    bool useTestServer,
+    std::string lspStderrLogFname);
 
   // Start the server process and initialize the protocol.  Return a
   // string suitable for display to the user regarding the success of

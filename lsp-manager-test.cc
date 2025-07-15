@@ -5,6 +5,8 @@
 
 #include "smqtutil/qtutil.h"           // waitForQtEvent
 
+#include "smbase/sm-env.h"             // smbase::envAsBool
+#include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // ARGS_MAIN
 #include "smbase/trace.h"              // TRACE_ARGS
@@ -13,12 +15,20 @@
 #include <QCoreApplication>
 
 
+using namespace smbase;
+
+
 OPEN_ANONYMOUS_NAMESPACE
 
 
 void test1()
 {
-  LSPManager lspManager(true /*useTestServer*/);
+  SMFileUtil().createDirectoryAndParents("out");
+
+  LSPManager lspManager(
+    !envAsBool("LMT_USE_CLANGD") /*useTestServer*/,
+    "out/lsp-manager-test-server-stderr.txt");
+
   xassert(lspManager.getProtocolState() == LSP_PS_MANAGER_INACTIVE);
 
   bool success;

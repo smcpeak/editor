@@ -11,6 +11,7 @@
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // join
 #include "smbase/stringb.h"            // stringb
@@ -84,16 +85,6 @@ void LSPManager::forciblyShutDown()
 }
 
 
-void LSPManager::addServerErrors(std::vector<std::string> &msgs)
-{
-  if (m_lsp->hasErrorData()) {
-    msgs.push_back(stringb(
-      "The server reported errors: " <<
-      m_lsp->takeErrorData().toStdString()));
-  }
-}
-
-
 void LSPManager::on_hasReplyForID(int id) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -164,8 +155,12 @@ LSPManager::~LSPManager()
 }
 
 
-LSPManager::LSPManager(bool useTestServer)
+LSPManager::LSPManager(
+  bool useTestServer,
+  std::string lspStderrLogFname)
   : m_useTestServer(useTestServer),
+    m_lspStderrLogFname(
+      SMFileUtil().normalizePathSeparators(lspStderrLogFname)),
     m_commandRunner(),
     m_lsp(),
     m_initializeRequestID(0),
@@ -197,6 +192,10 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
   else {
     m_commandRunner->setProgram("clangd");
   }
+
+  SMFileUtil().createParentDirectories(m_lspStderrLogFname);
+  m_commandRunner->setStandardErrorFile(toQString(m_lspStderrLogFname));
+
   m_commandRunner->startAsynchronous();
 
   // Synchronously wait for the process to start.  Starting the server
@@ -269,7 +268,6 @@ std::string LSPManager::stopServer()
   }
 
   std::vector<std::string> msgs;
-  addServerErrors(msgs);
 
   if (m_initializeRequestID) {
     forciblyShutDown();
@@ -310,9 +308,6 @@ std::string LSPManager::checkStatus()
   msgs.push_back(aps.m_description);
 
   if (m_lsp) {
-    // Then take and include any server error messages.
-    addServerErrors(msgs);
-
     // Then summarize the pending/outstanding messages.
     if (int n = m_lsp->numPendingNotifications()) {
       msgs.push_back(stringb("Number of pending notifications: " << n));
@@ -326,6 +321,9 @@ std::string LSPManager::checkStatus()
       msgs.push_back(stringb("Pending requests: " << toGDValue(ids)));
     }
   }
+
+  msgs.push_back(stringb(
+    "Server stderr is in " << doubleQuote(m_lspStderrLogFname) << "."));
 
   return join(msgs, "\n");
 }

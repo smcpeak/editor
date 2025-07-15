@@ -258,7 +258,11 @@ public:       // funcs
     std::string const &str) const;
 
   // Get the path to the user settings file.
-  std::string getSettingsFileName() const;
+  static std::string getSettingsFileName();
+
+  // Get the path to the file that holds the stderr from the LSP server
+  // process (clangd).
+  static std::string getLSPStderrLogFileName();
 
   // Write settings to the user settings file and return true.  If there
   // is a problem, this pops up a dialog box above the given `parent`,

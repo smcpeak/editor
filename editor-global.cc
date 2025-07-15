@@ -98,7 +98,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_recordInputEvents(false),
     m_eventFileTest(),
     m_filenameInputDialogHistory(),
-    m_lspManager(false /*useTestServer*/),
+    m_lspManager(false /*useTestServer*/,
+                 getLSPStderrLogFileName()),
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
@@ -873,9 +874,15 @@ void EditorGlobal::warningBox(
 }
 
 
-std::string EditorGlobal::getSettingsFileName() const
+/*static*/ std::string EditorGlobal::getSettingsFileName()
 {
   return stringb(getXDGConfigHome() << "/sm-editor/editor-settings.gdvn");
+}
+
+
+/*static*/ std::string EditorGlobal::getLSPStderrLogFileName()
+{
+  return stringb(getXDGStateHome() << "/sm-editor/lsp-server.log");
 }
 
 

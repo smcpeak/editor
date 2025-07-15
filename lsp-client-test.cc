@@ -177,6 +177,11 @@ void performLSPInteractionSemiSynchronously(
   while (lsp.isChildRunning()) {
     waitForQtEvent();
   }
+
+  if (lsp.hasErrorData()) {
+    std::cout << "Server stderr: "
+              << lsp.takeErrorData().toStdString() << "\n";
+  }
 }
 
 

@@ -312,6 +312,26 @@ static void testOutputData()
 }
 
 
+static void testStderrFile()
+{
+  SMFileUtil sfu;
+
+  sfu.createDirectoryAndParents("out");
+  std::string errfname = "out/command-runner-test-stderr.txt";
+
+  CommandRunner cr;
+  cr.setProgram("sh");
+  cr.setArguments(QStringList() <<
+    "-c" << "echo -n to stdout ; echo -n to stderr 1>&2");
+  cr.setStandardErrorFile(toQString(errfname));
+  cr.startAndWait();
+  EXPECT_EQ(cr.getFailed(), false);
+  EXPECT_EQ(cr.getOutputData(), "to stdout");
+  EXPECT_EQ(cr.getErrorData(), "");
+  EXPECT_EQ(sfu.readFileAsString(errfname), "to stderr");
+}
+
+
 static void testLargeData1()
 {
   cout << "testing cat on 100kB..." << endl;
@@ -974,6 +994,7 @@ static void entry(int argc, char **argv)
   RUN(testProcessError());
   RUN(testExitCode());
   RUN(testOutputData());
+  RUN(testStderrFile());
   RUN(testLargeData1());
   RUN(testLargeData2(false));
   RUN(testLargeData2(true));

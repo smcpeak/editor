@@ -368,6 +368,14 @@ void CommandRunner::mergeStderrIntoStdout()
 }
 
 
+void CommandRunner::setStandardErrorFile(QString const &path)
+{
+  xassertPrecondition(!m_startInvoked);
+
+  m_process.setStandardErrorFile(path);
+}
+
+
 // -------------------- synchronous interface ----------------------
 void CommandRunner::setInputData(QByteArray const &data)
 {
