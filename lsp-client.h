@@ -26,6 +26,39 @@
 class LSPClient : public QObject {
   Q_OBJECT
 
+private:     // types
+  // Possible outcomes when attempting to parse the accumulated output
+  // data as a message.  These only the cover the cases of explicit
+  // returns from `innerProcessOutputData`, which mostly happen when the
+  // parser reaches the end of the available data without finding a
+  // complete message, which is only an error if the client terminated
+  // too.  The parsing attempt will throw `XFormat` if the data that
+  // *has* been received is problematic.
+  enum MessageParseResult {
+    // We successfully extracted one message.
+    MPR_ONE_MESSAGE,
+
+    // The remaining cases all correspond to an inability to extract a
+    // message.
+
+    // We made no attempt to parse due to a prior protocol error.
+    MPR_PRIOR_ERROR,
+
+    // There was no data, so no message.
+    MPR_EMPTY,
+
+    // The headers did not have a blank line terminator.
+    MPR_UNTERMINATED_HEADERS,
+
+    // A header line lacks a newline.
+    MPR_UNTERMINATED_HEADER_LINE,
+
+    // The available data is less than the Content-Length indicated.
+    MPR_INCOMPLETE_BODY,
+
+    NUM_MESSAGE_PARSE_RESULTS
+  };
+
 private:     // data
   // Object managing byte-level communication with the child.
   CommandRunner &m_child;
@@ -50,6 +83,9 @@ private:     // data
   std::optional<std::string> m_protocolError;
 
 private:     // methods
+  // Return a string describing `res`.
+  static char const *toString(MessageParseResult res);
+
   // Return the request ID to use for the next request, and also
   // increment `m_nextRequestID`, wrapping when necessary.
   int innerGetNextRequestID();
@@ -82,13 +118,21 @@ private:     // methods
   void setProtocolError(std::string &&msg);
 
   // Attempt to parse the current output data as a message.  If
-  // successful, add an entry to `m_pendingReplies` or
-  // `m_pendingNotifications` as appropriate for the message, then
-  // return true.  If there is not enough data, just return false
-  // without changing anything.
+  // successful, remove the message data from the queue, add an entry to
+  // `m_pendingReplies` or `m_pendingNotifications` as appropriate for
+  // the message, then return `MPR_ONE_MESSAGE`.  In this case, there
+  // might still be more messages in the data queue, so this function
+  // should be called in a loop.
   //
-  // If there is an error with the data format, throw an exception.
-  bool innerProcessOutputData();
+  // If there is not enough data, return an appropriate result code
+  // (which will only become relevant if the child process terminates
+  // while the data is still incomplete), and don't change anything,
+  // since the expectation is this function will be called again once
+  // more data arrives.
+  //
+  // If there is an error with data that *has* been received, throw
+  // `XFormat`.
+  MessageParseResult innerProcessOutputData();
 
 private Q_SLOTS:
   // Process queued data in `m_child`.

@@ -56,7 +56,7 @@ void checkConnectionStatus(LSPClient &lsp)
   }
 
   if (!lsp.isChildRunning()) {
-    xformatsb("LSP error: server process terminated unexpectedly" <<
+    xformatsb("LSP error: server process terminated unexpectedly, no partial message" <<
               getServerErrors(lsp));
   }
 }
@@ -376,8 +376,12 @@ void LSPClientTester::on_childProcessTerminated() NOEXCEPT
     m_done = true;
   }
   else {
-    setFailureMsg(stringb("Child process terminated unexpectedly" <<
-                          getServerErrors(m_lsp)));
+    // If there had been a partial message, we would already have a
+    // failure message due to what LSPClient does internally (and hence
+    // the one we make here will be discarded by `setFailureMsg`).
+    setFailureMsg(stringb(
+      "Child process terminated unexpectedly, no partial message" <<
+      getServerErrors(m_lsp)));
   }
 
   GENERIC_CATCH_END
@@ -418,7 +422,9 @@ void performLSPInteractionAsynchronously(
 
 // ------------------------------ driver -------------------------------
 // Set of possible protocol failures to exercise through deliberate
-// injection.
+// injection.  This is meant to reasonably thoroughly exercise the set
+// of things that `LSPClient::innerProcessOutputData()` checks for, but
+// not all conceivable problems.
 enum FailureKind {
   // No failure; invoke the real `clangd` and expect normal operation.
   FK_NONE,
@@ -426,12 +432,35 @@ enum FailureKind {
   // Server just exits immediately.
   FK_EMPTY_RESPONSE,
 
-  // Server sends back some data, but not forming a complete set of
-  // headers.
-  FK_INCOMPLETE_HEADERS,
+  // Server sends back some data, but a header lacks its newline.
+  FK_HEADER_LACKS_NEWLINE,
+
+  // There is at least one header line, but no blank line after.
+  FK_UNTERMINATED_HEADERS,
 
   // Headers lack a content length.
   FK_NO_CONTENT_LENGTH,
+
+  // The body data ended before the specified content length.
+  FK_INCOMPLETE_BODY,
+
+  // Content-Length is zero.
+  FK_ZERO_CONTENT_LENGTH,
+
+  // Content-Length does not parse as an integer.
+  FK_INVALID_CONTENT_LENGTH,
+
+  // Body JSON is malformed.
+  FK_MALFORMED_JSON,
+
+  // The body JSON is not a JSON map (object).
+  FK_NOT_A_MAP,
+
+  // The response has an invalid `id` member.
+  FK_INVALID_ID,
+
+  // The response has a negative `id` member.
+  FK_NEGATIVE_ID,
 
   NUM_FAILURE_KINDS
 };
@@ -452,9 +481,44 @@ char const *substringForFK(FailureKind fk)
     NUM_FAILURE_KINDS,
     (
       "(no failure)",
-      "terminated unexpectedly",
-      "incomplete message",
+      "terminated unexpectedly, no partial",
+      "lacked a terminating newline",
+      "did not end with a blank line",
       "No Content-Length",
+      "body ended before the specified Content-Length",
+      "Content-Length value was zero",
+      "Invalid character",
+      "while looking for a value after '['",
+      "expected map",
+      "expected small integer",
+      "id >= 0",
+    ),
+    fk,
+    "(invalid FailureKind)"
+  )
+}
+
+
+// Return the response that we want the server process to produce in
+// order to exercise `fk`.
+char const *responseForFK(FailureKind fk)
+{
+  RETURN_ENUMERATION_STRING_OR(
+    FailureKind,
+    NUM_FAILURE_KINDS,
+    (
+      "(no failure; not used)",
+      "",
+      "some-junk",
+      R"(misc-header: foo\n)",
+      R"(other-header: foo\n\nblah\n)",
+      R"(Content-Length: 999\n\n[]\n)",
+      R"(Content-Length: 0\n\n)",
+      R"(Content-Length: nonsense\n)",
+      R"(Content-Length: 2\n\n[\n)",
+      R"(Content-Length: 3\n\n[]\n)",
+      R"(Content-Length: 13\n\n{"id":"junk"}\n)",
+      R"(Content-Length: 9\n\n{"id":-1}\n)",
     ),
     fk,
     "(invalid FailureKind)"
@@ -471,45 +535,37 @@ void runTests(
   int col,
   std::string const &fileContents)
 {
-  // Start the server process.
+  // Prepare to start the server process.
   CommandRunner cr;
-  switch (failureKind) {
-    default:
-      xfailure("bad FailureKind");
-
-    case FK_NONE:
-      // Use a proper server to test proper protocol interaction.
-      if (useRealClangd) {
-        // Use the real `clangd`.
-        cr.setProgram("clangd");
-      }
-      else {
-        // Use a mock server that just does basic protocol stuff.  This
-        // is much faster and has fewer dependencies, so is good for
-        // routine automated testing.
-        //
-        // We have to use `env` here rather than invoking `python3`
-        // directly because the latter is a cygwin symlink and
-        // consequently Windows `CreateProcess` cannot start it.
-        cr.setProgram("env");
-        cr.setArguments(QStringList() << "python3" << "./lsp-test-server.py");
-      }
-      break;
-
-    case FK_EMPTY_RESPONSE:
-      cr.setProgram("true");
-      break;
-
-    case FK_INCOMPLETE_HEADERS:
-      cr.setProgram("printf");
-      cr.setArguments(QStringList() << "some-junk");
-      break;
-
-    case FK_NO_CONTENT_LENGTH:
-      cr.setProgram("printf");
-      cr.setArguments(QStringList() << R"(other-header: foo\n\nblah\n)");
-      break;
+  if (failureKind == FK_NONE) {
+    // Use a server that behaves properly (protocol-wise).
+    if (useRealClangd) {
+      // Use the real `clangd`.  This is only for interactive use, not
+      // automated tests.
+      cr.setProgram("clangd");
+    }
+    else {
+      // Use a mock server that just does basic protocol stuff.  This is
+      // much faster and has fewer dependencies, so is good for
+      // automated testing.
+      //
+      // We have to use `env` here rather than invoking `python3`
+      // directly because, under Cygwin, the latter is a symlink and
+      // consequently Windows `CreateProcess` cannot start it.
+      //
+      cr.setProgram("env");
+      cr.setArguments(QStringList() << "python3" << "./lsp-test-server.py");
+    }
   }
+  else /*failureKind != FK_NONE*/ {
+    char const *badResponse = responseForFK(failureKind);
+
+    // Use `printf` rather than `echo` for better portability.
+    cr.setProgram("printf");
+    cr.setArguments(QStringList() << toQString(badResponse));
+  }
+
+  // Actually start the server.
   cr.startAsynchronous();
   if (!cr.waitForStarted(5000 /*ms*/)) {
     std::cout << "Failed to start server process: "
@@ -518,7 +574,7 @@ void runTests(
   }
 
   try {
-    // Wrap it in the LSP client object.
+    // Wrap it in the LSP client protocol object.
     LSPClient lsp(cr);
 
     // Do all the protocol stuff.
@@ -579,9 +635,16 @@ void entry(int argc, char **argv)
       std::cerr << "Usage: " << argv[0] << " <file> <line> <col>\n";
       std::exit(2);
     }
+
     fname = argv[1];
-    line = std::atoi(argv[2]);
-    col = std::atoi(argv[3]);
+
+    // The LSP protocol uses 0-based lines and columns, but I normally
+    // work with 1-based coordinates, so convert those here.  (I do not
+    // convert back in the output, however; the responses are just shown
+    // as they were sent.)
+    line = std::atoi(argv[2])-1;
+    col = std::atoi(argv[3])-1;
+
     useRealClangd = true;
   }
 

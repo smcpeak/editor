@@ -37,6 +37,28 @@ using namespace smbase;
 INIT_TRACE("lsp-client");
 
 
+/*static*/ char const *LSPClient::toString(MessageParseResult res)
+{
+  RETURN_ENUMERATION_STRING_OR(
+    MessageParseResult,
+    NUM_MESSAGE_PARSE_RESULTS,
+    (
+      // These three should not be seen by the user.
+      "extracted one message",
+      "prior protocol error",
+      "empty data",
+
+      // These may be seen.
+      "The headers did not end with a blank line.",
+      "A header line lacked a terminating newline.",
+      "The body ended before the specified Content-Length.",
+    ),
+    res,
+    "(invalid MessageParseResult)"
+  )
+}
+
+
 int LSPClient::innerGetNextRequestID()
 {
   // If we hit the maximum, wrap back to 1.
@@ -129,23 +151,37 @@ void LSPClient::setProtocolError(std::string &&msg)
 }
 
 
-bool LSPClient::innerProcessOutputData()
+// Diagnosing specific problems with partial messages upon termination
+// is not terribly important (since early termination is a problem
+// regardless of the data that was sent before), but it provides a
+// convenient way for me to test, in `lsp-client-test`, that each of the
+// cases below is being exercised.
+auto LSPClient::innerProcessOutputData() -> MessageParseResult
 {
   // We can't do anything once a protocol error occurs.
   if (hasProtocolError()) {
-    return false;
+    return MPR_PRIOR_ERROR;
+  }
+
+  if (!m_child.hasOutputData()) {
+    return MPR_EMPTY;
   }
 
   // Prepare to parse the current output data.
   ParseString parser(m_child.peekOutputData().toStdString());
 
-  // Scan the headers to get the length of the body.
+  // Scan the headers to get the length of the body.  Normally, there is
+  // exactly one header line, specifying the length; any other headers
+  // are parsed but otherwise ignored.
   std::size_t contentLength = 0;
   while (true) {
+    if (parser.eos()) {
+      return MPR_UNTERMINATED_HEADERS;
+    }
+
     std::string line = parser.getUpToByte('\n');
     if (!endsWith(line, "\n")) {
-      // Incomplete message; wait for more data to arrive.
-      return false;
+      return MPR_UNTERMINATED_HEADER_LINE;
     }
 
     if (line == "\r\n" || line == "\n") {
@@ -156,6 +192,9 @@ bool LSPClient::innerProcessOutputData()
     if (beginsWith(stringTolower(line), "content-length:")) {
       contentLength = parseDecimalInt_noSign(
         trimWhitespace(split(line, ':').at(1)));
+      if (contentLength == 0) {
+        xformat("Content-Length value was zero.");
+      }
     }
     else {
       // Some other header, ignore.
@@ -170,7 +209,7 @@ bool LSPClient::innerProcessOutputData()
   std::string bodyJSON = parser.getUpToSize(contentLength);
   if (bodyJSON.size() < contentLength) {
     // Incomplete.
-    return false;
+    return MPR_INCOMPLETE_BODY;
   }
 
   GDValue msg(jsonToGDV(bodyJSON));
@@ -200,7 +239,7 @@ bool LSPClient::innerProcessOutputData()
   // Remove the decoded message from the output data bytes queue.
   m_child.removeOutputData(parser.curOffset());
 
-  return true;
+  return MPR_ONE_MESSAGE;
 }
 
 
@@ -213,8 +252,7 @@ void LSPClient::processOutputData() NOEXCEPT
   try {
     // There could be multiple messages waiting, so loop until we have
     // processed them all.
-    while (m_child.hasOutputData() &&
-           innerProcessOutputData())
+    while (innerProcessOutputData() == MPR_ONE_MESSAGE)
       {}
   }
   catch (std::exception &x) {
@@ -245,11 +283,33 @@ void LSPClient::on_processTerminated() NOEXCEPT
 
   xassert(!isChildRunning());
 
-  if (m_child.hasOutputData()) {
-    setProtocolError("Server process terminated with an incomplete message.");
+  // It's possible we could learn about the child terminating before
+  // having completely drained the output queue.  And, we want to check
+  // for it having exited after writing a partial message.
+  while (m_child.hasOutputData()) {
+    MessageParseResult res = innerProcessOutputData();
+    if (res == MPR_ONE_MESSAGE) {
+      // Extracted another message; keep draining the queue.
+      continue;
+    }
+
+    // This is excluded by the `hasOutputData()` check.
+    xassert(res != MPR_EMPTY);
+
+    if (res == MPR_PRIOR_ERROR) {
+      // A protocol error has already been recorded, we don't need to do
+      // any more diagnosis here.
+      break;
+    }
+
+    // Any other condition corresponds to the child exiting after having
+    // written an incomplete message, so diagnose that.
+    setProtocolError(stringb(
+      "Server process terminated with an incomplete message: " << toString(res)));
+    break;
   }
 
-  // Relay the signal to our client.
+  // Relay the termination signal to our client.
   Q_EMIT signal_childProcessTerminated();
 
   GENERIC_CATCH_END
