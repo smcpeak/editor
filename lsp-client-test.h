@@ -9,6 +9,7 @@
 #define EDITOR_LSP_CLIENT_TEST_H
 
 #include "lsp-client-fwd.h"                      // LSPClient
+#include "lsp-test-request-params.h"             // LSPTestRequestParams
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
@@ -29,10 +30,7 @@ public:      // data
   LSPClient &m_lsp;
 
   // Request details derived from the command line.
-  std::string const &m_fname;
-  int m_line;
-  int m_col;
-  std::string const &m_fileContents;
+  LSPTestRequestParams m_params;
 
   // True once we have initiated client shutdown.  If the client
   // terminates before this is set, that is an error.
@@ -49,10 +47,7 @@ public:      // methods
 
   LSPClientTester(
     LSPClient &lsp,
-    std::string const &fname,
-    int line,
-    int col,
-    std::string const &fileContents);
+    LSPTestRequestParams const &params);
 
   // Send a request and check that its assigned ID is as expected.
   void sendRequestCheckID(

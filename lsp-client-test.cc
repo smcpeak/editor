@@ -108,10 +108,7 @@ void sendRequestPrintReply(
 
 void performLSPInteractionSemiSynchronously(
   LSPClient &lsp,
-  std::string const &fname,
-  int line,
-  int col,
-  std::string const &fileContents)
+  LSPTestRequestParams const &params)
 {
   // Initialize the protocol.
   sendRequestPrintReply(lsp, "initialize", GDVMap{
@@ -132,7 +129,7 @@ void performLSPInteractionSemiSynchronously(
 
   // Prepare to ask questions about the source file.
   std::cout << "Sending notification textDocument/didOpen ...\n";
-  std::string fnameURI = LSPClient::makeFileURI(fname);
+  std::string fnameURI = LSPClient::makeFileURI(params.m_fname);
   lsp.sendNotification("textDocument/didOpen", GDVMap{
     {
       "textDocument",
@@ -140,14 +137,14 @@ void performLSPInteractionSemiSynchronously(
         { "uri", fnameURI },
         { "languageId", "cpp" },
         { "version", 1 },
-        { "text", fileContents },
+        { "text", params.m_fileContents },
       }
     }
   });
 
   // Parameters from the command line that will be passed to each of the
-  // next few commands.
-  GDValue params(GDVMap{
+  // next few commands, expressed as GDV.
+  GDValue paramsGDV(GDVMap{
     {
       "textDocument",
       GDVMap{
@@ -157,16 +154,16 @@ void performLSPInteractionSemiSynchronously(
     {
       "position",
       GDVMap{
-        { "line", line },
-        { "character", col },
+        { "line", params.m_line },
+        { "character", params.m_col },
       }
     },
   });
 
   // Get some info from the LSP server.
-  sendRequestPrintReply(lsp, "textDocument/hover", params);
-  sendRequestPrintReply(lsp, "textDocument/declaration", params);
-  sendRequestPrintReply(lsp, "textDocument/definition", params);
+  sendRequestPrintReply(lsp, "textDocument/hover", paramsGDV);
+  sendRequestPrintReply(lsp, "textDocument/declaration", paramsGDV);
+  sendRequestPrintReply(lsp, "textDocument/definition", paramsGDV);
 
   // Shut down the protocol.
   sendRequestPrintReply(lsp, "shutdown", GDVMap{});
@@ -205,16 +202,10 @@ LSPClientTester::~LSPClientTester()
 
 LSPClientTester::LSPClientTester(
   LSPClient &lsp,
-  std::string const &fname,
-  int line,
-  int col,
-  std::string const &fileContents)
+  LSPTestRequestParams const &params)
   : QObject(),
     m_lsp(lsp),
-    m_fname(fname),
-    m_line(line),
-    m_col(col),
-    m_fileContents(fileContents),
+    m_params(params),
     m_initiatedShutdown(false),
     m_done(false),
     m_failureMsg()
@@ -248,7 +239,7 @@ void LSPClientTester::sendNextRequest(int prevID)
 {
   DIAG("LSPClient::sendNextRequest(prevID=" << prevID << ")");
 
-  std::string fnameURI = LSPClient::makeFileURI(m_fname);
+  std::string fnameURI = LSPClient::makeFileURI(m_params.m_fname);
 
   GDValue params(GDVMap{
     {
@@ -260,8 +251,8 @@ void LSPClientTester::sendNextRequest(int prevID)
     {
       "position",
       GDVMap{
-        { "line", m_line },
-        { "character", m_col },
+        { "line", m_params.m_line },
+        { "character", m_params.m_col },
       }
     },
   });
@@ -290,7 +281,7 @@ void LSPClientTester::sendNextRequest(int prevID)
             { "uri", fnameURI },
             { "languageId", "cpp" },
             { "version", 1 },
-            { "text", m_fileContents },
+            { "text", m_params.m_fileContents },
           }
         }
       });
@@ -406,12 +397,9 @@ OPEN_ANONYMOUS_NAMESPACE
 
 void performLSPInteractionAsynchronously(
   LSPClient &lsp,
-  std::string const &fname,
-  int line,
-  int col,
-  std::string const &fileContents)
+  LSPTestRequestParams const &params)
 {
-  LSPClientTester tester(lsp, fname, line, col, fileContents);
+  LSPClientTester tester(lsp, params);
 
   // This kicks off the state machine.  All further steps will be taken
   // in response to specific signals.
@@ -542,10 +530,7 @@ void runTests(
   bool useRealClangd,
   bool semiSynchronous,
   FailureKind failureKind,
-  std::string const &fname,
-  int line,
-  int col,
-  std::string const &fileContents)
+  LSPTestRequestParams const &params)
 {
   // Prepare to start the server process.
   CommandRunner cr;
@@ -591,12 +576,10 @@ void runTests(
 
     // Do all the protocol stuff.
     if (semiSynchronous) {
-      performLSPInteractionSemiSynchronously(
-        lsp, fname, line, col, fileContents);
+      performLSPInteractionSemiSynchronously(lsp, params);
     }
     else {
-      performLSPInteractionAsynchronously(
-        lsp, fname, line, col, fileContents);
+      performLSPInteractionAsynchronously(lsp, params);
     }
   }
   catch (XBase &x) {
@@ -636,9 +619,8 @@ void entry(int argc, char **argv)
   TRACE_ARGS();
 
   // Default query parameters, used when run without arguments.
-  std::string fname = "eclf.h";
-  int line = 9;
-  int col = 5;
+  LSPTestRequestParams params("eclf.h", 9, 5);
+
   bool useRealClangd = false;
 
   // Interpret command line.
@@ -648,20 +630,19 @@ void entry(int argc, char **argv)
       std::exit(2);
     }
 
-    fname = argv[1];
+    std::string fname = argv[1];
 
     // The LSP protocol uses 0-based lines and columns, but I normally
     // work with 1-based coordinates, so convert those here.  (I do not
     // convert back in the output, however; the responses are just shown
     // as they were sent.)
-    line = std::atoi(argv[2])-1;
-    col = std::atoi(argv[3])-1;
+    int line = std::atoi(argv[2])-1;
+    int col = std::atoi(argv[3])-1;
+
+    params = LSPTestRequestParams(fname, line, col);
 
     useRealClangd = true;
   }
-
-  // Read the source file of interest.
-  std::string fileContents = SMFileUtil().readFileAsString(fname);
 
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);
@@ -671,8 +652,7 @@ void entry(int argc, char **argv)
     char const *syncLabel = (async? "asynchronous" : "semi-synchronous");
     FOREACH_FAILURE_KIND(fkind) {
       std::cout << "------------ " << syncLabel << ", fkind=" << fkind << " -----------\n";
-      runTests(useRealClangd, !async, fkind,
-               fname, line, col, fileContents);
+      runTests(useRealClangd, !async, fkind, params);
     }
   }
 }

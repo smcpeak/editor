@@ -470,6 +470,7 @@ LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
 
 LSP_CLIENT_TEST_OBJS += lsp-client-test.moc.o
 LSP_CLIENT_TEST_OBJS += lsp-client-test.o
+LSP_CLIENT_TEST_OBJS += lsp-test-request-params.o
 
 lsp-client-test.exe: $(LSP_CLIENT_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(LSP_CLIENT_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
