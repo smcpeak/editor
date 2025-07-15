@@ -299,6 +299,9 @@ public:      // funcs
   // Wait until `!isRunning()`.
   void waitForNotRunning();
 
+  // Child process ID, or 0 if not running.
+  qint64 getChildPID() const;
+
   // ------------------ line-oriented output -----------------------
   // The methods in this section provide a line-oriented interface to
   // the output and error data.  They assume that the child process is

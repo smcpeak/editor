@@ -13,7 +13,7 @@
 #include "smbase/gdvalue-parse.h"      // gdv::{checkIsMap, checkIsSmallInteger}
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/list-util.h"          // smbase::listMoveFront
-#include "smbase/map-util.h"           // mapMoveValueAt
+#include "smbase/map-util.h"           // mapMoveValueAt, keySet
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/parsestring.h"        // ParseString
 #include "smbase/set-util.h"           // smbase::setRemoveExisting
@@ -160,10 +160,12 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
 {
   // We can't do anything once a protocol error occurs.
   if (hasProtocolError()) {
+    TRACE2("ipod: have protocol error");
     return MPR_PRIOR_ERROR;
   }
 
   if (!m_child.hasOutputData()) {
+    TRACE2("ipod: no data");
     return MPR_EMPTY;
   }
 
@@ -176,11 +178,13 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
   std::size_t contentLength = 0;
   while (true) {
     if (parser.eos()) {
+      TRACE2("ipod: unterminated headers");
       return MPR_UNTERMINATED_HEADERS;
     }
 
     std::string line = parser.getUpToByte('\n');
     if (!endsWith(line, "\n")) {
+      TRACE2("ipod: unterminated header line");
       return MPR_UNTERMINATED_HEADER_LINE;
     }
 
@@ -209,6 +213,7 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
   std::string bodyJSON = parser.getUpToSize(contentLength);
   if (bodyJSON.size() < contentLength) {
     // Incomplete.
+    TRACE2("ipod: incomplete body");
     return MPR_INCOMPLETE_BODY;
   }
 
@@ -224,6 +229,8 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
     int id = safeToInt(gdvId.smallIntegerGet());
     formatAssert(id >= 0);
 
+    TRACE2("ipod: received reply with ID " << id);
+
     setRemoveExisting(m_outstandingRequests, id);
     mapInsertUnique(m_pendingReplies, id, std::move(msg));
 
@@ -231,12 +238,15 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
   }
 
   else {
+    TRACE2("ipod: received notification");
+
     m_pendingNotifications.push_back(std::move(msg));
 
     Q_EMIT signal_hasPendingNotifications();
   }
 
   // Remove the decoded message from the output data bytes queue.
+  TRACE2("ipod: removing " << parser.curOffset() << " bytes of data");
   m_child.removeOutputData(parser.curOffset());
 
   return MPR_ONE_MESSAGE;
@@ -375,6 +385,12 @@ bool LSPClient::hasPendingNotifications() const
 }
 
 
+int LSPClient::numPendingNotifications() const
+{
+  return safeToInt(m_pendingNotifications.size());
+}
+
+
 GDValue LSPClient::takeNextNotification()
 {
   xassert(hasPendingNotifications());
@@ -389,7 +405,8 @@ int LSPClient::sendRequest(
 {
   xassert(!hasProtocolError());
 
-  int id = getNextRequestID();
+  int const id = getNextRequestID();
+  xassert(id > 0);
 
   std::string body = makeRequest(id, method, params);
 
@@ -405,6 +422,18 @@ int LSPClient::sendRequest(
 bool LSPClient::hasReplyForID(int id) const
 {
   return contains(m_pendingReplies, id);
+}
+
+
+std::set<int> LSPClient::getOutstandingRequestIDs() const
+{
+  return m_outstandingRequests;
+}
+
+
+std::set<int> LSPClient::getPendingRequestIDs() const
+{
+  return keySet(m_pendingReplies);
 }
 
 

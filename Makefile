@@ -479,6 +479,20 @@ lsp-client-test.exe: $(LSP_CLIENT_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,lsp-client-test))
 
 
+# -------------------------- lsp-manager-test --------------------------
+EDITOR_OBJS += lsp-manager.moc.o
+EDITOR_OBJS += lsp-manager.o
+
+LSP_MANAGER_TEST_OBJS := $(EDITOR_OBJS)
+
+LSP_MANAGER_TEST_OBJS += lsp-manager-test.o
+
+lsp-manager-test.exe: $(LSP_MANAGER_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(LSP_MANAGER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,lsp-manager-test))
+
+
 # ----------------- git version ---------------------
 # Command to query git for the version.  Output is like:
 # "d36671f 2018-07-09 04:10:32 -0700".

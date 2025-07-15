@@ -12,9 +12,9 @@
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, RETURN_ENUMERATION_STRING_OR
-#include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL
+#include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, EXPECT_EQ
 #include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/trace.h"              // TRACE_ARGS, EXPECT_EQ
+#include "smbase/trace.h"              // TRACE_ARGS
 
 #include <QCoreApplication>
 
@@ -118,7 +118,7 @@ void performLSPInteractionSemiSynchronously(
     // It seems `clangd` ignores this.
     { "processId", GDValue() },
 
-    // This isn't entire ignored, but it is only used for the
+    // This isn't entirely ignored, but it is only used for the
     // "workspace/symbol" request, and even then, only plays a
     // disambiguation role.  Since my intention is to run a single
     // `clangd` server process per machine, it doesn't make sense to

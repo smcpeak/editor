@@ -13,6 +13,7 @@
 #include "editor-settings.h"                     // EditorSettings
 #include "editor-window.h"                       // EditorWindow
 #include "filename-input.h"                      // FilenameInputDialog
+#include "lsp-manager.h"                         // LSPManager
 #include "named-td-list.h"                       // NamedTextDocumentList
 #include "named-td.h"                            // NamedTextDocument
 #include "open-files-dialog.h"                   // OpenFilesDialog
@@ -93,6 +94,9 @@ public:       // data
 
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
+
+  // Object to manage communication with the LSP server.
+  LSPManager m_lspManager;
 
 private:     // data
   // Built-in font to use in the editor widgets.

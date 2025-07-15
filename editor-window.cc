@@ -17,6 +17,7 @@
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
+#include "lsp-manager.h"               // LSPManager
 #include "macro-creator-dialog.h"      // MacroCreatorDialog
 #include "macro-run-dialog.h"          // MacroRunDialog
 #include "makefile_hilite.h"           // Makefile_Highlighter
@@ -48,6 +49,9 @@
 #include "smbase/strutil.h"            // dirname
 #include "smbase/syserr.h"             // smbase::XSysError
 #include "smbase/trace.h"              // TRACE_ARGS
+
+// libc++
+#include <string_view>                 // std::string_view
 
 // libc
 #include <string.h>                    // strrchr
@@ -183,6 +187,12 @@ EditorWindow::~EditorWindow()
 EditorSettings const &EditorWindow::editorSettings() const
 {
   return editorGlobal()->getSettings();
+}
+
+
+LSPManager &EditorWindow::lspManager()
+{
+  return editorGlobal()->m_lspManager;
 }
 
 
@@ -397,6 +407,20 @@ void EditorWindow::buildMenu()
                   macroRunDialog, Qt::Key_F1);
     MENU_ITEM_KEY("Run &most recently run macro",
                   macroRunMostRecent, Qt::CTRL + Qt::Key_F1);
+  }
+
+  {
+    QMenu *menu = this->m_menuBar->addMenu("&LSP");
+    menu->setObjectName("lspMenu");
+
+    // Used mnemonics: aco
+
+    MENU_ITEM    ("St&art LSP server",
+                  lspStartServer);
+    MENU_ITEM    ("St&op LSP server",
+                  lspStopServer);
+    MENU_ITEM    ("&Check LSP server status",
+                  lspCheckStatus);
   }
 
   {
@@ -1882,6 +1906,37 @@ void EditorWindow::macroRunMostRecent() NOEXCEPT
 }
 
 
+void EditorWindow::lspStartServer() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  bool dummy;
+  inform(lspManager().startServer(dummy));
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspStopServer() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  inform(lspManager().stopServer());
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspCheckStatus() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  inform(lspManager().checkStatus());
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::viewFontHelp() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2164,20 +2219,20 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 }
 
 
-void EditorWindow::complain(char const *msg)
+void EditorWindow::complain(std::string_view msg)
 {
-  QMessageBox::information(this, EditorGlobal::appName, msg);
+  QMessageBox::information(this, EditorGlobal::appName, toQString(msg));
 }
 
 
-void EditorWindow::inform(char const *msg)
+void EditorWindow::inform(std::string_view msg)
 {
   // On my system, QMessageBox::information rings the bell, and I do
   // not want that here.  Removing the icon seems to disable that.
 
   QMessageBox box;
   box.setIcon(QMessageBox::NoIcon);
-  box.setText(msg);
+  box.setText(toQString(msg));
   box.exec();
 }
 

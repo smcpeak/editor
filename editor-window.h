@@ -4,41 +4,43 @@
 #ifndef EDITOR_WINDOW_H
 #define EDITOR_WINDOW_H
 
-#include "editor-window-fwd.h"         // fwds for this module
+#include "editor-window-fwd.h"                   // fwds for this module
 
 // editor
-#include "eclf.h"                      // EditorCommandLineFunction
-#include "editor-global-fwd.h"         // EditorGlobal
-#include "editor-settings-fwd.h"       // EditorSettings
-#include "editor-widget-frame-fwd.h"   // EditorWidgetFrame
-#include "editor-widget-fwd.h"         // EditorWidget
-#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
-#include "named-td.h"                  // NamedTextDocument
-#include "named-td-list.h"             // NamedTextDocumentListObserver
-#include "vfs-connections-fwd.h"       // VFS_Connections
-#include "vfs-msg-fwd.h"               // VFS_Message
+#include "eclf.h"                                // EditorCommandLineFunction
+#include "editor-global-fwd.h"                   // EditorGlobal
+#include "editor-settings-fwd.h"                 // EditorSettings
+#include "editor-widget-frame-fwd.h"             // EditorWidgetFrame
+#include "editor-widget-fwd.h"                   // EditorWidget
+#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-manager-fwd.h"                     // LSPManager
+#include "named-td.h"                            // NamedTextDocument
+#include "named-td-list.h"                       // NamedTextDocumentListObserver
+#include "vfs-connections-fwd.h"                 // VFS_Connections
+#include "vfs-msg-fwd.h"                         // VFS_Message
 
 // smqtutil
-#include "smqtutil/qtguiutil.h"        // unhandledExceptionMsgbox
+#include "smqtutil/qtguiutil.h"                  // unhandledExceptionMsgbox
 
 // smbase
-#include "smbase/exc.h"                // smbase::XBase
-#include "smbase/sm-override.h"        // OVERRIDE
-#include "smbase/sm-noexcept.h"        // NOEXCEPT
-#include "smbase/str.h"                // string
+#include "smbase/exc.h"                          // smbase::XBase
+#include "smbase/sm-noexcept.h"                  // NOEXCEPT
+#include "smbase/sm-override.h"                  // OVERRIDE
+#include "smbase/std-string-view-fwd.h"          // std::string_view
+#include "smbase/str.h"                          // string
 
 // Qt
 #include <QWidget>
 
 // libc++
-#include <memory>                      // std::unique_ptr
+#include <memory>                                // std::unique_ptr
 
 class QLabel;
 class QMenu;
 class QMenuBar;
 
-class SearchAndReplacePanel;           // sar-panel.h
-class StatusDisplay;                   // status.h
+class SearchAndReplacePanel;                     // sar-panel.h
+class StatusDisplay;                             // status.h
 
 
 // Top-level window containing an editor pane.
@@ -110,10 +112,10 @@ private:     // funcs
   bool checkFileExistenceSynchronously(HostAndResourceName const &harn);
 
   // Pop up a message related to a problem.
-  void complain(char const *msg);
+  void complain(std::string_view msg);
 
   // Pop up a message for general information.
-  void inform(char const *msg);
+  void inform(std::string_view msg);
 
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
@@ -139,6 +141,9 @@ public:      // funcs
 
   // Current user settings object.
   EditorSettings const &editorSettings() const;
+
+  // Global LSP manager.
+  LSPManager &lspManager();
 
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;
@@ -250,6 +255,10 @@ public Q_SLOTS:
   void macroCreateMacro() NOEXCEPT;
   void macroRunDialog() NOEXCEPT;
   void macroRunMostRecent() NOEXCEPT;
+
+  void lspStartServer() NOEXCEPT;
+  void lspStopServer() NOEXCEPT;
+  void lspCheckStatus() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

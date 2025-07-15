@@ -667,6 +667,12 @@ void CommandRunner::waitForNotRunning()
 }
 
 
+qint64 CommandRunner::getChildPID() const
+{
+  return m_process.processId();
+}
+
+
 // -------------------- line-oriented output -----------------------
 static int findUtf8Newline(QByteArray const &arr)
 {

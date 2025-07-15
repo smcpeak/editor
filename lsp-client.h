@@ -63,7 +63,7 @@ private:     // data
   // Object managing byte-level communication with the child.
   CommandRunner &m_child;
 
-  // The ID to use for the next request we send.
+  // The ID to use for the next request we send.  Always positive.
   int m_nextRequestID;
 
   // IDs of requests that have been sent but for which no reply has
@@ -162,6 +162,9 @@ public:      // methods
   // True if there are pending notifications to dequeue.
   bool hasPendingNotifications() const;
 
+  // Number of pending notifications.
+  int numPendingNotifications() const;
+
   // Return the oldest notification that has not been dequeued, removing
   // it from those that are pending.  Requires
   // `hasPendingNotifications()`.
@@ -171,12 +174,24 @@ public:      // methods
   // the eventual reply.
   //
   // Requires `!hasProtocolError()`.
+  //
+  // Ensures `return > 0`.  Consequently, a client can safely use a 0 ID
+  // to mean "absent".
+  //
   int sendRequest(
     std::string_view method,
     gdv::GDValue const &params);
 
   // True if we have received a reply for request `id`.
   bool hasReplyForID(int id) const;
+
+  // Return the set of IDs of requests that have been sent to the server
+  // but for which no reply has been received.
+  std::set<int> getOutstandingRequestIDs() const;
+
+  // Return the set of IDs of replies that have been received but not
+  // yet taken from this object.
+  std::set<int> getPendingRequestIDs() const;
 
   // Return the reply for `id`.  Requires `hasReplyForID(id)`.
   gdv::GDValue takeReplyForID(int id);
