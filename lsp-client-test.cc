@@ -113,11 +113,19 @@ void performLSPInteractionSemiSynchronously(
   int col,
   std::string const &fileContents)
 {
-  SMFileUtil sfu;
-
   // Initialize the protocol.
   sendRequestPrintReply(lsp, "initialize", GDVMap{
-    { "rootUri", LSPClient::makeFileURI(sfu.currentDirectory()) },
+    // It seems `clangd` ignores this.
+    { "processId", GDValue() },
+
+    // This isn't entire ignored, but it is only used for the
+    // "workspace/symbol" request, and even then, only plays a
+    // disambiguation role.  Since my intention is to run a single
+    // `clangd` server process per machine, it doesn't make sense to
+    // initialize it with any particular global "workspace" directory,
+    // so I leave this null.
+    { "rootUri", GDValue() },
+
     { "capabilities", GDVMap{} },
   });
   lsp.sendNotification("initialized", GDVMap{});
@@ -235,8 +243,6 @@ void LSPClientTester::sendNextRequest(int prevID)
 {
   DIAG("LSPClient::sendNextRequest(prevID=" << prevID << ")");
 
-  SMFileUtil sfu;
-
   std::string fnameURI = LSPClient::makeFileURI(m_fname);
 
   GDValue params(GDVMap{
@@ -261,7 +267,8 @@ void LSPClientTester::sendNextRequest(int prevID)
     case 1:
       // Initialize the protocol.
       sendRequestCheckID(nextID, "initialize", GDVMap{
-        { "rootUri", LSPClient::makeFileURI(sfu.currentDirectory()) },
+        { "processId", GDValue() },
+        { "rootUri", GDValue() },
         { "capabilities", GDVMap{} },
       });
       break;
@@ -649,8 +656,7 @@ void entry(int argc, char **argv)
   }
 
   // Read the source file of interest.
-  SMFileUtil sfu;
-  std::string fileContents = sfu.readFileAsString(fname);
+  std::string fileContents = SMFileUtil().readFileAsString(fname);
 
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);
