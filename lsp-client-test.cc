@@ -18,7 +18,6 @@
 
 #include <QCoreApplication>
 
-#include <cstdlib>                     // std::exit
 #include <iostream>                    // std::cerr
 
 
@@ -527,7 +526,6 @@ char const *responseForFK(FailureKind fk)
 
 
 void runTests(
-  bool useRealClangd,
   bool semiSynchronous,
   FailureKind failureKind,
   LSPTestRequestParams const &params)
@@ -536,7 +534,7 @@ void runTests(
   CommandRunner cr;
   if (failureKind == FK_NONE) {
     // Use a server that behaves properly (protocol-wise).
-    if (useRealClangd) {
+    if (params.m_useRealClangd) {
       // Use the real `clangd`.  This is only for interactive use, not
       // automated tests.
       cr.setProgram("clangd");
@@ -618,31 +616,8 @@ void entry(int argc, char **argv)
 {
   TRACE_ARGS();
 
-  // Default query parameters, used when run without arguments.
-  LSPTestRequestParams params("eclf.h", 9, 5);
-
-  bool useRealClangd = false;
-
-  // Interpret command line.
-  if (argc != 1) {
-    if (argc != 4) {
-      std::cerr << "Usage: " << argv[0] << " <file> <line> <col>\n";
-      std::exit(2);
-    }
-
-    std::string fname = argv[1];
-
-    // The LSP protocol uses 0-based lines and columns, but I normally
-    // work with 1-based coordinates, so convert those here.  (I do not
-    // convert back in the output, however; the responses are just shown
-    // as they were sent.)
-    int line = std::atoi(argv[2])-1;
-    int col = std::atoi(argv[3])-1;
-
-    params = LSPTestRequestParams(fname, line, col);
-
-    useRealClangd = true;
-  }
+  LSPTestRequestParams params =
+    LSPTestRequestParams::getFromCmdLine(argc, argv);
 
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);
@@ -652,7 +627,7 @@ void entry(int argc, char **argv)
     char const *syncLabel = (async? "asynchronous" : "semi-synchronous");
     FOREACH_FAILURE_KIND(fkind) {
       std::cout << "------------ " << syncLabel << ", fkind=" << fkind << " -----------\n";
-      runTests(useRealClangd, !async, fkind, params);
+      runTests(!async, fkind, params);
     }
   }
 }

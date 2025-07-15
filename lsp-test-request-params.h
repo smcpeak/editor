@@ -20,6 +20,9 @@ public:      // data
   int m_line;
   int m_col;
 
+  // True to use the real `clangd`, false to use a stand-in script.
+  bool m_useRealClangd;
+
   // Contents to send to the server for this file.
   std::string m_fileContents;
 
@@ -31,7 +34,11 @@ public:      // methods
   LSPTestRequestParams(
     std::string const &fname,
     int line,
-    int col);
+    int col,
+    bool useRealClangd);
+
+  // Return parameters as specified in `argc/argv`.
+  static LSPTestRequestParams getFromCmdLine(int argc, char **argv);
 };
 
 

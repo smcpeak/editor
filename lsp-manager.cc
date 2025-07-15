@@ -156,9 +156,9 @@ LSPManager::~LSPManager()
 
 
 LSPManager::LSPManager(
-  bool useTestServer,
+  bool useRealClangd,
   std::string lspStderrLogFname)
-  : m_useTestServer(useTestServer),
+  : m_useRealClangd(useRealClangd),
     m_lspStderrLogFname(
       SMFileUtil().normalizePathSeparators(lspStderrLogFname)),
     m_commandRunner(),
@@ -183,14 +183,14 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
   xassert(!m_lsp);
 
   m_commandRunner.reset(new CommandRunner());
-  if (m_useTestServer) {
+  if (m_useRealClangd) {
+    m_commandRunner->setProgram("clangd");
+  }
+  else {
     // Need to use `env` due to cygwin symlink issues.
     m_commandRunner->setProgram("env");
     m_commandRunner->setArguments(QStringList() <<
       "python3" << "./lsp-test-server.py");
-  }
-  else {
-    m_commandRunner->setProgram("clangd");
   }
 
   SMFileUtil().createParentDirectories(m_lspStderrLogFname);

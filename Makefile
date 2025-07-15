@@ -486,7 +486,9 @@ EDITOR_OBJS += lsp-manager.o
 
 LSP_MANAGER_TEST_OBJS := $(EDITOR_OBJS)
 
+LSP_MANAGER_TEST_OBJS += lsp-manager-test.moc.o
 LSP_MANAGER_TEST_OBJS += lsp-manager-test.o
+LSP_MANAGER_TEST_OBJS += lsp-test-request-params.o
 
 lsp-manager-test.exe: $(LSP_MANAGER_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(LSP_MANAGER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)

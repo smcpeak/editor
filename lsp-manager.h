@@ -76,8 +76,8 @@ class LSPManager : public QObject {
   Q_OBJECT;
 
 private:     // data
-  // True to run the test server instead of `clangd`.
-  bool m_useTestServer;
+  // True to run `clangd` instead of the test server instead.
+  bool m_useRealClangd;
 
   // Name of the file to which the stderr of the LSP process will be
   // written.
@@ -120,10 +120,10 @@ private Q_SLOTS:
 public:      // methods
   ~LSPManager();
 
-  // Create an inactive manager.  If `useTestServer`, then run
-  // `./lsp-test-server.py` instead of `clangd`.
+  // Create an inactive manager.  If `useRealClangd`, then run
+  // `clangd` instead of `./lsp-test-server.py`.
   explicit LSPManager(
-    bool useTestServer,
+    bool useRealClangd,
     std::string lspStderrLogFname);
 
   // Start the server process and initialize the protocol.  Return a

@@ -1,6 +1,8 @@
 // lsp-manager-test.cc
 // Tests for `lsp-manager`.
 
+#include "lsp-manager-test.h"          // this module
+
 #include "lsp-manager.h"               // module under test
 
 #include "smqtutil/qtutil.h"           // waitForQtEvent
@@ -18,35 +20,38 @@
 using namespace smbase;
 
 
-OPEN_ANONYMOUS_NAMESPACE
+LSPManagerTester::~LSPManagerTester()
+{}
 
 
-void test1()
+LSPManagerTester::LSPManagerTester(LSPTestRequestParams const &params)
+  : m_lspManager(
+      params.m_useRealClangd,
+      "out/lsp-manager-test-server-stderr.txt"),
+    m_params(params)
+{}
+
+
+void LSPManagerTester::testSynchronously()
 {
-  SMFileUtil().createDirectoryAndParents("out");
-
-  LSPManager lspManager(
-    !envAsBool("LMT_USE_CLANGD") /*useTestServer*/,
-    "out/lsp-manager-test-server-stderr.txt");
-
-  xassert(lspManager.getProtocolState() == LSP_PS_MANAGER_INACTIVE);
+  xassert(m_lspManager.getProtocolState() == LSP_PS_MANAGER_INACTIVE);
 
   bool success;
-  std::cout << "Start: " << lspManager.startServer(success) << "\n";
+  std::cout << "Start: " << m_lspManager.startServer(success) << "\n";
   xassert(success);
 
-  std::cout << "Status: " << lspManager.checkStatus() << "\n";
+  std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
 
   std::cout << "Initializing...\n";
-  while (lspManager.getProtocolState() != LSP_PS_NORMAL) {
+  while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
     waitForQtEvent();
-    std::cout << "Status: " << lspManager.checkStatus() << "\n";
+    std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
   }
 
-  std::cout << "Stop: " << lspManager.stopServer() << "\n";
-  while (lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
+  std::cout << "Stop: " << m_lspManager.stopServer() << "\n";
+  while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
     waitForQtEvent();
-    std::cout << "Status: " << lspManager.checkStatus() << "\n";
+    std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
   }
 
   std::cout << "Stopped.\n";
@@ -60,11 +65,14 @@ void entry(int argc, char **argv)
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);
 
-  test1();
+  SMFileUtil().createDirectoryAndParents("out");
+
+  LSPTestRequestParams params =
+    LSPTestRequestParams::getFromCmdLine(argc, argv);
+
+  LSPManagerTester tester(params);
+  tester.testSynchronously();
 }
-
-
-CLOSE_ANONYMOUS_NAMESPACE
 
 
 ARGS_TEST_MAIN
