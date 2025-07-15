@@ -16,6 +16,7 @@
 
 #include <QObject>
 
+#include <optional>                              // std::optional
 #include <string>                                // std::string
 
 
@@ -41,7 +42,7 @@ public:      // data
   bool m_done;
 
   // Set if we finished due to an error.
-  bool m_failed;
+  std::optional<std::string> m_failureMsg;
 
 public:      // methods
   ~LSPClientTester();
@@ -63,6 +64,10 @@ public:      // methods
   // means we're just starting), send the next request, or else set
   // `m_done` if we are done.
   void sendNextRequest(int prevID);
+
+  // Set `m_failureMsg` and `m_done`, and print the mssage to stdout.
+  // However, if `m_failureMsg` is already set, then ignore this.
+  void setFailureMsg(std::string &&msg);
 
 public Q_SLOTS:
   void on_hasPendingNotifications() NOEXCEPT;

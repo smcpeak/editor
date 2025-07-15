@@ -11,7 +11,7 @@
 
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, RETURN_ENUMERATION_STRING_OR
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/trace.h"              // TRACE_ARGS, EXPECT_EQ
@@ -204,7 +204,7 @@ LSPClientTester::LSPClientTester(
     m_fileContents(fileContents),
     m_initiatedShutdown(false),
     m_done(false),
-    m_failed(false)
+    m_failureMsg()
 {
   DIAG("LSPClientTester ctor");
 
@@ -313,6 +313,19 @@ void LSPClientTester::sendNextRequest(int prevID)
 }
 
 
+void LSPClientTester::setFailureMsg(std::string &&msg)
+{
+  if (m_failureMsg) {
+    // We already have a message, so ignore this one.
+  }
+  else {
+    m_failureMsg = std::move(msg);
+    m_done = true;
+    std::cout << *m_failureMsg << "\n";
+  }
+}
+
+
 void LSPClientTester::on_hasPendingNotifications() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -346,9 +359,7 @@ void LSPClientTester::on_hasProtocolError() NOEXCEPT
 
   DIAG("LSPClientTester::on_hasProtocolError");
 
-  std::cout << "Protocol error: " << m_lsp.getProtocolError() << "\n";
-  m_done = true;
-  m_failed = true;
+  setFailureMsg(stringb("Protocol error: " << m_lsp.getProtocolError()));
 
   GENERIC_CATCH_END
 }
@@ -365,10 +376,8 @@ void LSPClientTester::on_childProcessTerminated() NOEXCEPT
     m_done = true;
   }
   else {
-    std::cout << "Child process terminated unexpectedly"
-              << getServerErrors(m_lsp) << "\n";
-    m_done = true;
-    m_failed = true;
+    setFailureMsg(stringb("Child process terminated unexpectedly" <<
+                          getServerErrors(m_lsp)));
   }
 
   GENERIC_CATCH_END
@@ -392,15 +401,18 @@ void performLSPInteractionAsynchronously(
   // in response to specific signals.
   tester.sendNextRequest(0 /*id*/);
 
-  // Now we just pump the event queue until the machine says we are
-  // done, at which point the child process will have terminated.  This
-  // loop simulates the application-level event loop used in the real
-  // program.
+  // Now we just pump the event queue until the state machine says we
+  // are done, at which point the child process will have terminated.
+  // This loop simulates the application-level event loop used in the
+  // real program.
   while (!tester.m_done) {
     waitForQtEvent();
   }
 
-  xassert(!tester.m_failed);
+  if (tester.m_failureMsg) {
+    // Throw the message as an exception, like in the semi-async case.
+    xformat(*(tester.m_failureMsg));
+  }
 }
 
 
@@ -418,6 +430,9 @@ enum FailureKind {
   // headers.
   FK_INCOMPLETE_HEADERS,
 
+  // Headers lack a content length.
+  FK_NO_CONTENT_LENGTH,
+
   NUM_FAILURE_KINDS
 };
 
@@ -426,6 +441,25 @@ enum FailureKind {
   for (FailureKind fkvar = static_cast<FailureKind>(0); \
        fkvar != NUM_FAILURE_KINDS;                      \
        fkvar = static_cast<FailureKind>(fkvar+1))
+
+
+// Return a string that should appear as a substring of the protocol
+// error message triggered by an LSP server behaving according to `fk`.
+char const *substringForFK(FailureKind fk)
+{
+  RETURN_ENUMERATION_STRING_OR(
+    FailureKind,
+    NUM_FAILURE_KINDS,
+    (
+      "(no failure)",
+      "terminated unexpectedly",
+      "incomplete message",
+      "No Content-Length",
+    ),
+    fk,
+    "(invalid FailureKind)"
+  )
+}
 
 
 void runTests(
@@ -470,6 +504,11 @@ void runTests(
       cr.setProgram("printf");
       cr.setArguments(QStringList() << "some-junk");
       break;
+
+    case FK_NO_CONTENT_LENGTH:
+      cr.setProgram("printf");
+      cr.setArguments(QStringList() << R"(other-header: foo\n\nblah\n)");
+      break;
   }
   cr.startAsynchronous();
   if (!cr.waitForStarted(5000 /*ms*/)) {
@@ -493,12 +532,23 @@ void runTests(
     }
   }
   catch (XBase &x) {
+    cr.killProcess();
     if (failureKind != FK_NONE) {
-      std::cout << "Expected failure, msg: " << x.what() << "\n";
-      cr.killProcess();
+      std::string msg = x.what();
+      std::string expectSubstring = substringForFK(failureKind);
+      if (hasSubstring(msg, expectSubstring)) {
+        std::cout << "As expected: " << msg << "\n";
+      }
+      else {
+        std::cout << "Got failure msg: " << doubleQuote(msg) << "\n"
+                  << "but expected substring " << doubleQuote(expectSubstring) << "\n"
+                  << "was missing.\n";
+        xfailure("wrong exception message");
+      }
       return;
     }
     else {
+      // Exception in the non-failure case, re-throw it.
       throw;
     }
   }
