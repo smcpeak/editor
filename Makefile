@@ -348,7 +348,7 @@ editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS) $(LIBSMBASE)
 $(eval $(call RUN_TEST_PROG,editor-fs-server-test))
 
 # The test uses the server executable.
-out/editor-fs-server-test.exe.ok: editor-fs-server.exe
+out/editor-fs-server-test.ok: editor-fs-server.exe
 
 
 # ------------------------ vfs-connections-test ------------------------
@@ -366,7 +366,7 @@ vfs-connections-test.exe: $(VFS_CONNECTIONS_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,vfs-connections-test))
 
 # The test uses the server executable.
-out/vfs-connections-test.exe.ok: editor-fs-server.exe
+out/vfs-connections-test.ok: editor-fs-server.exe
 
 
 # Optionally run a test that uses SSH to connect to localhost.
