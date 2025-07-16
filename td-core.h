@@ -18,9 +18,11 @@
 #include "smbase/str.h"                // string
 
 // libc++
+#include <cstdint>                     // std::uint64_t
 #include <vector>                      // std::vector
 
 class TextDocument;                    // td.h
+
 
 // Forward in this file.
 class TextDocumentObserver;
@@ -46,6 +48,10 @@ class TextDocumentObserver;
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
 class TextDocumentCore : public SerfRefCount {
+public:      // types
+  // Type use to record document version numbers.
+  typedef std::uint64_t VersionNumber;
+
 private:     // instance data
   // This array is the spine of the document.  Every element is either
   // empty, meaning a blank line, or is a '\n'-terminated sequence of
@@ -59,14 +65,20 @@ private:     // instance data
   // no line's contents are stored
   int m_recent;
 
-  // if recent != -1, then this holds the contents of that line,
-  // and lines[recent] is NULL
-  GapArray<char> m_recentLine;
-
   // Length of the longest line this file has ever had, in bytes.  This
   // is my poor-man's substitute for a proper interval map, etc., to be
   // able to answer the 'maxLineLength()' query.
   int m_longestLengthSoFar;
+
+  // if recent != -1, then this holds the contents of that line,
+  // and lines[recent] is NULL
+  GapArray<char> m_recentLine;
+
+  // Version number for the contents.  This starts at 1 and increases by
+  // one each time the logical contents, i.e., the sequence of lines, is
+  // modified.  An assertion failure exception is thrown if this would
+  // overflow on an increment.
+  VersionNumber m_versionNumber;
 
   // invariants:
   //   - recent >= -1
@@ -110,6 +122,10 @@ private:     // funcs
 
   // Notify all observers of a total change to the document.
   void notifyTotalChange();
+
+  // Increment `m_versionNumber`.  Also check that there are no
+  // outstanding iterators.
+  void bumpVersionNumber();
 
 public:    // funcs
   TextDocumentCore();        // one empty line
@@ -247,6 +263,12 @@ public:    // funcs
   // in-memory line contents, and will then be written out as such as
   // well, like any other character.  This is not ideal of course.
   void replaceWholeFile(std::vector<unsigned char> const &bytes);
+
+  // Get the current version number.
+  //
+  // When a change happens, the version number is incremented *before*
+  // observers are notified, so they see the new number.
+  VersionNumber getVersionNumber() { return m_versionNumber; }
 
   // ---------------------- observers ---------------------------
   // Add an observer.  It must not already be there.  This is 'const'

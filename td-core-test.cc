@@ -9,6 +9,7 @@
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // IGNORE_RESULT
 #include "smbase/sm-test.h"            // USUAL_MAIN, EXPECT_EQ
+#include "smbase/string-util.h"        // vectorOfUCharToString
 
 // libc
 #include <assert.h>                    // assert
@@ -92,9 +93,23 @@ static void checkSpaces(TextDocumentCore const &tdc,
 }
 
 
+// Check that the version number of `tdc` is `vnum`.
+#define CHECK_VER_SAME(tdc, vnum) \
+  EXPECT_EQ(tdc.getVersionNumber(), (vnum))
+
+// Check that the version number of `tdc` has been incremented since it
+// was `vnum`.  Then update `vnum` to be the current version number.
+#define CHECK_VER_DIFF(tdc, vnum)             \
+  {                                           \
+    xassert(tdc.getVersionNumber() > (vnum)); \
+    (vnum) = tdc.getVersionNumber();          \
+  }
+
+
 static void testVarious()
 {
   TextDocumentCore tdc;
+  TextDocumentCore::VersionNumber vnum = tdc.getVersionNumber();
 
   EXPECT_EQ(tdc.numLines(), 1);
   EXPECT_EQ(tdc.lineLengthBytes(0), 0);
@@ -105,17 +120,26 @@ static void testVarious()
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
   fullSelfCheck(tdc);
 
+  CHECK_VER_SAME(tdc, vnum);
   insLine(tdc, 0,0, "one");
+  CHECK_VER_DIFF(tdc, vnum);
   EXPECT_EQ(tdc.numLines(), 2);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 1);
+  CHECK_VER_SAME(tdc, vnum);
   insLine(tdc, 1,0, "  two");
+  CHECK_VER_DIFF(tdc, vnum);
   EXPECT_EQ(tdc.numLines(), 3);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 2);
   insLine(tdc, 2,0, "three   ");
+  CHECK_VER_DIFF(tdc, vnum);
   insLine(tdc, 3,0, "    four    ");
+  CHECK_VER_DIFF(tdc, vnum);
   insLine(tdc, 4,0, "     ");
+  CHECK_VER_DIFF(tdc, vnum);
   tdc.insertLine(5);     // Uses NULL representation internally.
+  CHECK_VER_DIFF(tdc, vnum);
   insText(tdc, 6,0, "      ");
+  CHECK_VER_DIFF(tdc, vnum);
 
   EXPECT_EQ(tdc.numLines(), 7);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 7);
@@ -143,8 +167,11 @@ static void testVarious()
     // Tweak 'line' so it is recent and then repeat the whitespace queries.
     TextMCoord tc(line, 0);
     char c = 'x';
+    CHECK_VER_SAME(tdc, vnum);
     tdc.insertText(tc, &c, 1);
+    CHECK_VER_DIFF(tdc, vnum);
     tdc.deleteTextBytes(tc, 1);
+    CHECK_VER_DIFF(tdc, vnum);
 
     checkSpaces(tdc, 0, 0, 0);
     checkSpaces(tdc, 1, 2, 0);
@@ -165,6 +192,19 @@ static void testVarious()
   tdc.removeObserver(&obs);
   xassert(!tdc.hasObserver(&obs));
   fullSelfCheck(tdc);
+
+  // Test `deleteLine`.
+  CHECK_VER_SAME(tdc, vnum);
+  tdc.deleteLine(5);
+  CHECK_VER_DIFF(tdc, vnum);
+  EXPECT_EQ(tdc.numLines(), 6);
+  EXPECT_EQ(doubleQuote(vectorOfUCharToString(tdc.getWholeFile())),
+            doubleQuote("one\n"
+                        "  two\n"
+                        "three   \n"
+                        "    four    \n"
+                        "     \n"
+                        "      "));
 }
 
 

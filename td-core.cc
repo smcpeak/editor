@@ -6,6 +6,7 @@
 // smbase
 #include "smbase/array.h"              // Array
 #include "smbase/objcount.h"           // CheckObjectCount
+#include "smbase/overflow.h"           // preIncrementWithOverflowCheck
 #include "smbase/sm-test.h"            // USUAL_MAIN, PVAL
 #include "smbase/strutil.h"            // encodeWithEscapes
 #include "smbase/syserr.h"             // xsyserror
@@ -20,8 +21,9 @@
 TextDocumentCore::TextDocumentCore()
   : m_lines(),               // empty sequence of lines
     m_recent(-1),
-    m_recentLine(),
     m_longestLengthSoFar(0),
+    m_recentLine(),
+    m_versionNumber(0),
     m_observers(),
     m_iteratorCount(0)
 {
@@ -290,7 +292,7 @@ bool TextDocumentCore::walkCoordBytes(TextMCoord &tc, int len) const
 // three mutator functions.
 void TextDocumentCore::insertLine(int const line)
 {
-  xassert(m_iteratorCount == 0);
+  bumpVersionNumber();
 
   // insert a blank line
   m_lines.insert(line, TextDocumentLine() /*value*/);
@@ -308,7 +310,7 @@ void TextDocumentCore::insertLine(int const line)
 
 void TextDocumentCore::deleteLine(int const line)
 {
-  xassert(m_iteratorCount == 0);
+  bumpVersionNumber();
 
   if (line == m_recent) {
     xassert(m_recentLine.length() == 0);
@@ -340,7 +342,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
                                   int const length)
 {
   bctc(tc);
-  xassert(m_iteratorCount == 0);
+  bumpVersionNumber();
 
   xassert(length >= 0);
   if (length == 0) {
@@ -380,7 +382,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
 void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
 {
   bctc(tc);
-  xassert(m_iteratorCount == 0);
+  bumpVersionNumber();
 
   if (tc.m_byteIndex==0 && length==lineLengthBytes(tc.m_line) && tc.m_line!=m_recent) {
     // removing entire line, no need to move 'recent'
@@ -495,6 +497,16 @@ void TextDocumentCore::notifyTotalChange()
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
     iter.data()->observeTotalChange(*this);
   }
+}
+
+
+void TextDocumentCore::bumpVersionNumber()
+{
+  // Since we are about to make a change, ensure there are no
+  // outstanding iterators.
+  xassert(m_iteratorCount == 0);
+
+  preIncrementWithOverflowCheck(m_versionNumber);
 }
 
 
