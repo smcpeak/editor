@@ -8,6 +8,7 @@
 
 #include "smqtutil/qtutil.h"           // toString(QString)
 
+#include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -22,6 +23,7 @@
 
 
 using namespace gdv;
+using namespace smbase;
 
 
 INIT_TRACE("lsp-manager");
@@ -55,6 +57,19 @@ LSPAnnotatedProtocolState::LSPAnnotatedProtocolState(
   std::string &&desc)
   : m_protocolState(ps),
     m_description(std::move(desc))
+{}
+
+
+// -------------------------- LSPDocumentInfo --------------------------
+LSPDocumentInfo::~LSPDocumentInfo()
+{}
+
+
+LSPDocumentInfo::LSPDocumentInfo(
+  std::string const &fname,
+  int latestVersion)
+  : m_fname(fname),
+    m_latestVersion(latestVersion)
 {}
 
 
@@ -163,10 +178,25 @@ LSPManager::LSPManager(
       SMFileUtil().normalizePathSeparators(lspStderrLogFname)),
     m_commandRunner(),
     m_lsp(),
+    m_sfu(),
     m_initializeRequestID(0),
     m_shutdownRequestID(0),
-    m_waitingForTermination(false)
+    m_waitingForTermination(false),
+    m_documentInfo()
 {}
+
+
+void LSPManager::selfCheck() const
+{
+  // Either both are present or neither is.
+  xassert(m_commandRunner.operator bool() ==
+          m_lsp.operator bool());
+
+  // The map keys agree with the associated values.
+  for (auto const &kv : m_documentInfo) {
+    xassert(kv.first == kv.second.m_fname);
+  }
+}
 
 
 std::string LSPManager::startServer(bool /*OUT*/ &success)
@@ -317,8 +347,8 @@ std::string LSPManager::checkStatus()
       msgs.push_back(stringb("Outstanding requests: " << toGDValue(ids)));
     }
 
-    if (std::set<int> ids = m_lsp->getPendingRequestIDs(); !ids.empty()) {
-      msgs.push_back(stringb("Pending requests: " << toGDValue(ids)));
+    if (std::set<int> ids = m_lsp->getPendingReplyIDs(); !ids.empty()) {
+      msgs.push_back(stringb("Pending replies: " << toGDValue(ids)));
     }
   }
 
@@ -395,6 +425,38 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
       LSP_PS_NORMAL,
       "The LSP server is running normally.");
   }
+}
+
+
+bool LSPManager::isFileOpen(std::string const &fname) const
+{
+  xassert(m_sfu.isAbsolutePath(fname));
+  return contains(m_documentInfo, fname);
+}
+
+
+void LSPManager::notify_textDocument_didOpen(
+  std::string const &fname,
+  std::string const &languageId,
+  int version,
+  std::string &&contents)
+{
+  xassert(!isFileOpen(fname));
+
+  m_lsp->sendNotification("textDocument/didOpen", GDVMap{
+    {
+      "textDocument",
+      GDVMap{
+        { "uri", LSPClient::makeFileURI(fname) },
+        { "languageId", languageId },
+        { "version", version },
+        { "text", GDValue(std::move(contents)) },
+      }
+    }
+  });
+
+  m_documentInfo.insert({fname,
+    LSPDocumentInfo(fname, version)});
 }
 
 

@@ -12,6 +12,7 @@
 #include <QObject>
 
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/std-string-fwd.h"     // std::string
 
 #include <memory>                      // std::unique_ptr
@@ -71,7 +72,35 @@ public:
 };
 
 
+// Information about a document that is currently "open" w.r.t. the LSP
+// protocl.
+class LSPDocumentInfo {
+public:      // data
+  // Absolute file name.
+  std::string const m_fname;
+
+  // The version number of the most recent document contents that were
+  // sent to the server.
+  int m_latestVersion;
+
+public:      // methods
+   ~LSPDocumentInfo();
+
+   LSPDocumentInfo(std::string const &fname, int latestVersion);
+};
+
+
 // Act as the central interface between the editor and the LSP server.
+//
+// This is a higher-level wrapper than `LSPClient`.  `LSPClient`
+// concerns itself with sending messages and receiving replies and
+// notifications, really just at the JSON-RPC level.  This class
+// packages those operations into bigger pieces, and tracks protocol
+// state related to document analysis and LSP itself.
+//
+// But it is also different in that it owns the `CommandRunner` that
+// manages the child process, whereas `LSPClient` does not.
+//
 class LSPManager : public QObject {
   Q_OBJECT;
 
@@ -90,6 +119,9 @@ private:     // data
   // Protocol communicator.  null iff `m_commandRunner` is.
   std::unique_ptr<LSPClient> m_lsp;
 
+  // File system queries, etc.
+  SMFileUtil m_sfu;
+
   // If nonzero, then we have sent the "initialize" request with this
   // ID, but not yet received the corresponding reply.  In that state,
   // the LSP is not available to service other requests.
@@ -102,6 +134,11 @@ private:     // data
   // If true, we have sent the "exit" notification but the child has not
   // terminated.
   bool m_waitingForTermination;
+
+  // Map from document name to its protocol state.
+  //
+  // Invariant: For all `k`, `m_documentInfo[k].m_fname == k`.
+  std::map<std::string, LSPDocumentInfo> m_documentInfo;
 
 private:     // methods
   // Reset the state associated with the protocol.  This is done when we
@@ -126,6 +163,9 @@ public:      // methods
     bool useRealClangd,
     std::string lspStderrLogFname);
 
+  // Check invariants, throwing an exception on failure.
+  void selfCheck() const;
+
   // Start the server process and initialize the protocol.  Return a
   // string suitable for display to the user regarding the success of
   // that activity.  The string may consist of multiple lines separated
@@ -149,6 +189,18 @@ public:      // methods
 
   // Get state plus an English description.
   LSPAnnotatedProtocolState getAnnotatedProtocolState() const;
+
+  // True if `fname` is open w.r.t. the LSP protocol.  Requires that
+  // `fname` be an absolute path.
+  bool isFileOpen(std::string const &fname) const;
+
+  // Send the "textDocument/didOpen" notification.  Requires that
+  // `fname` be absolute, and that the file not already be open.
+  void notify_textDocument_didOpen(
+    std::string const &fname,
+    std::string const &languageId,
+    int version,
+    std::string &&contents);
 };
 
 

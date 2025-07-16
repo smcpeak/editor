@@ -259,6 +259,10 @@ public Q_SLOTS:
   void lspStartServer() NOEXCEPT;
   void lspStopServer() NOEXCEPT;
   void lspCheckStatus() NOEXCEPT;
+  void lspOpenFile() NOEXCEPT;
+  void lspUpdateFile() NOEXCEPT;
+  void lspCloseFile() NOEXCEPT;
+  void lspReviewDiagnostics() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

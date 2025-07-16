@@ -42,16 +42,19 @@
 #include "smbase/mysig.h"              // printSegfaultAddrs
 #include "smbase/nonport.h"            // fileOrDirectoryExists
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-test.h"            // PVAL
-#include "smbase/string-util.h"        // endsWith
+#include "smbase/string-util.h"        // endsWith, vectorOfUCharToString
 #include "smbase/stringb.h"            // stringbc
 #include "smbase/strutil.h"            // dirname
 #include "smbase/syserr.h"             // smbase::XSysError
 #include "smbase/trace.h"              // TRACE_ARGS
+#include "smbase/xoverflow.h"          // smbase::XNumericConversion
 
 // libc++
 #include <string_view>                 // std::string_view
+#include <utility>                     // std::move
 
 // libc
 #include <string.h>                    // strrchr
@@ -413,14 +416,25 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: aco
+    // Used mnemonics: c
 
-    MENU_ITEM    ("St&art LSP server",
+    MENU_ITEM    ("Start LSP server",
                   lspStartServer);
-    MENU_ITEM    ("St&op LSP server",
+    MENU_ITEM    ("Stop LSP server",
                   lspStopServer);
     MENU_ITEM    ("&Check LSP server status",
                   lspCheckStatus);
+
+    menu->addSeparator();
+
+    MENU_ITEM    ("Open this file",
+                  lspOpenFile);
+    MENU_ITEM    ("Update this file",
+                  lspUpdateFile);
+    MENU_ITEM    ("Close this file",
+                  lspCloseFile);
+    MENU_ITEM    ("Review diagnostics for this file",
+                  lspReviewDiagnostics);
   }
 
   {
@@ -1932,6 +1946,77 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   inform(lspManager().checkStatus());
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspOpenFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  NamedTextDocument const *ntd = currentDocument();
+  DocumentName const &docName = ntd->documentName();
+
+  if (!docName.isLocalFilename()) {
+    inform("LSP only works with local files.");
+    return;
+  }
+
+  std::string fname = docName.filename();
+  std::string languageId = "cpp";        // TODO: Compute this properly.
+
+  int version;
+  try {
+    version = safeToInt(ntd->getVersionNumber());
+  }
+  catch (XNumericConversion &x) {
+    complain(stringb(
+      "The version number cannot be represented as an LSP int: " <<
+      x.what()));
+    return;
+  }
+
+  std::string contents = vectorOfUCharToString(ntd->getWholeFile());
+
+  if (lspManager().isFileOpen(fname)) {
+    inform(stringb("Document " << doubleQuote(fname) <<
+                   " is already open."));
+  }
+  else {
+    lspManager().notify_textDocument_didOpen(
+      fname, languageId, version, std::move(contents));
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspUpdateFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  inform("TODO");
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspCloseFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  inform("TODO");
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspReviewDiagnostics() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  inform("TODO");
 
   GENERIC_CATCH_END
 }

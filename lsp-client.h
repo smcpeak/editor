@@ -23,6 +23,11 @@
 
 
 // Manage communication with a child process that is an LSP server.
+//
+// TODO: Arguably, this class should be instead called "JSONRPCClient",
+// since really it manages the JSON-RPC level (requests, replies, and
+// notifications) without knowing anything about LSP specifically.
+//
 class LSPClient : public QObject {
   Q_OBJECT
 
@@ -191,7 +196,7 @@ public:      // methods
 
   // Return the set of IDs of replies that have been received but not
   // yet taken from this object.
-  std::set<int> getPendingRequestIDs() const;
+  std::set<int> getPendingReplyIDs() const;
 
   // Return the reply for `id`.  Requires `hasReplyForID(id)`.
   gdv::GDValue takeReplyForID(int id);

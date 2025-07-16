@@ -43,6 +43,9 @@ char const *toString(DocumentProcessStatus dps);
 // inherit TextDocumentCore, it instead explicitly repeats that
 // interface and delegates to 'm_core'.
 class TextDocument : public SerfRefCount {
+public:       // types
+  typedef TextDocumentCore::VersionNumber VersionNumber;
+
 public:       // static data
   static int s_objectCount;
 
@@ -149,6 +152,7 @@ public:      // funcs
   void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const { return m_core.getWholeLine(line, dest); }
   int countLeadingSpacesTabs(int line) const                 { return m_core.countLeadingSpacesTabs(line); }
   int countTrailingSpacesTabs(int line) const                { return m_core.countTrailingSpacesTabs(line); }
+  VersionNumber getVersionNumber() const                     { return m_core.getVersionNumber(); }
 
   // ---------------------- extra attributes ----------------------
   DocumentProcessStatus documentProcessStatus() const

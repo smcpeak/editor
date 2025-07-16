@@ -268,7 +268,7 @@ public:    // funcs
   //
   // When a change happens, the version number is incremented *before*
   // observers are notified, so they see the new number.
-  VersionNumber getVersionNumber() { return m_versionNumber; }
+  VersionNumber getVersionNumber() const { return m_versionNumber; }
 
   // ---------------------- observers ---------------------------
   // Add an observer.  It must not already be there.  This is 'const'

@@ -32,6 +32,12 @@ string DocumentName::filename() const
 }
 
 
+bool DocumentName::isLocalFilename() const
+{
+  return !empty() && isLocal() && hasFilename();
+}
+
+
 void DocumentName::setDirectory(string const &dir)
 {
   SMFileUtil sfu;

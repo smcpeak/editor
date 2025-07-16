@@ -80,6 +80,9 @@ public:      // methods
   // Get the filename for this document.  Requires 'hasFilename()'.
   string filename() const;
 
+  // True if this name refers to a file on the local file system.
+  bool isLocalFilename() const;
+
   // Set 'm_hostName' to 'hostName, 'm_resourceName' to be 'filename',
   // and 'm_hasFilename' to true.  It is the caller's responsibility to
   // ensure uniqueness within the containing NamedTextDocumentList.

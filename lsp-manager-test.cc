@@ -34,6 +34,7 @@ LSPManagerTester::LSPManagerTester(LSPTestRequestParams const &params)
 
 void LSPManagerTester::testSynchronously()
 {
+  m_lspManager.selfCheck();
   xassert(m_lspManager.getProtocolState() == LSP_PS_MANAGER_INACTIVE);
 
   bool success;
@@ -41,20 +42,27 @@ void LSPManagerTester::testSynchronously()
   xassert(success);
 
   std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
+  m_lspManager.selfCheck();
 
   std::cout << "Initializing...\n";
   while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
     waitForQtEvent();
     std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    m_lspManager.selfCheck();
   }
 
   std::cout << "Stop: " << m_lspManager.stopServer() << "\n";
+  std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
+  m_lspManager.selfCheck();
+
   while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
     waitForQtEvent();
     std::cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    m_lspManager.selfCheck();
   }
 
   std::cout << "Stopped.\n";
+  m_lspManager.selfCheck();
 }
 
 
