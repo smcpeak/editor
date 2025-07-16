@@ -4,6 +4,7 @@
 #include "lsp-manager.h"               // this module
 
 #include "command-runner.h"            // CommandRunner
+#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                // LSPClient
 
 #include "smqtutil/qtutil.h"           // toString(QString)
@@ -12,11 +13,13 @@
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/list-util.h"          // smbase::listMoveFront
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // join
 #include "smbase/stringb.h"            // stringb
 
+#include <memory>                      // std::make_unique
 #include <string>                      // std::string
 #include <utility>                     // std::move
 #include <vector>                      // std::vector
@@ -141,9 +144,28 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   while (m_lsp->hasPendingNotifications()) {
-    // TODO: Deliver these to the client.
-    m_lsp->takeNextNotification();
-    TRACE1("received notification");
+    GDValue msg = m_lsp->takeNextNotification();
+    TRACE1("received notification: " << msg.asString());
+
+    try {
+      checkIsMap(msg);
+      std::string method = stringGet_parse(mapGetValueAtStr_parse(msg, "method"));
+      GDValue params = mapGetValueAtStr_parse(msg, "params");
+      checkIsMap(params);
+
+      if (method == "textDocument/publishDiagnostics") {
+        m_pendingDiagnostics.push_back(
+          std::make_unique<LSP_PublishDiagnosticsParams>(params));
+        Q_EMIT signal_hasPendingDiagnostics();
+      }
+
+      else {
+        TRACE1("unhandled notification method: " << doubleQuote(method));
+      }
+    }
+    catch (XFormat &x) {
+      TRACE1("malformed notification: " << x.what());
+    }
   }
 
   GENERIC_CATCH_END
@@ -182,7 +204,8 @@ LSPManager::LSPManager(
     m_initializeRequestID(0),
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
-    m_documentInfo()
+    m_documentInfo(),
+    m_pendingDiagnostics()
 {}
 
 
@@ -457,6 +480,20 @@ void LSPManager::notify_textDocument_didOpen(
 
   m_documentInfo.insert({fname,
     LSPDocumentInfo(fname, version)});
+}
+
+
+bool LSPManager::hasPendingDiagnostics() const
+{
+  return !m_pendingDiagnostics.empty();
+}
+
+
+std::unique_ptr<LSP_PublishDiagnosticsParams>
+LSPManager::takePendingDiagnostics()
+{
+  xassert(hasPendingDiagnostics());
+  return listMoveFront(m_pendingDiagnostics);
 }
 
 

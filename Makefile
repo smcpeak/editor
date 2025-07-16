@@ -481,6 +481,7 @@ $(eval $(call RUN_TEST_PROG,lsp-client-test))
 
 
 # -------------------------- lsp-manager-test --------------------------
+EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
 

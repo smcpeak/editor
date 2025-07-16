@@ -54,29 +54,6 @@ CommandLineHistory::CommandLineHistory()
 {}
 
 
-// If `name` begins with "m_", return `name+2`, thus stripping the
-// prefix.  Otherwise return it unchanged.
-static char const *stripMemberPrefix(char const *name)
-{
-  if (name[0] == 'm' &&
-      name[1] == '_') {
-    return name+2;
-  }
-  else {
-    return name;
-  }
-}
-
-
-// Write `<memb>` to a field of GDValue `m` that has the same name
-// except without the "m_" prefix (if any).
-//
-// This is a candidate to move someplace more general, but it is for now
-// experimental.
-#define GDV_WRITE_MEMBER(memb) \
-  m.mapSetSym(stripMemberPrefix(#memb), toGDValue(memb)) /* user ; */
-
-
 CommandLineHistory::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "CommandLineHistory"_sym);
@@ -88,15 +65,6 @@ CommandLineHistory::operator gdv::GDValue() const
 
   return m;
 }
-
-
-// Initialize `<memb>` from an optional field `<memb>` of GDValue `m`
-// that has the same name except without the "m_" prefix.
-//
-// This is a candidate to move someplace more general, but it is for now
-// experimental.
-#define GDV_READ_MEMBER(memb) \
-  memb(gdvOptTo<decltype(memb)>(mapGetSym_parseOpt(m, stripMemberPrefix(#memb))))
 
 
 CommandLineHistory::CommandLineHistory(gdv::GDValue const &m)

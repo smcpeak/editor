@@ -1,3 +1,4 @@
+*.cc.bak
 *.d
 *.dll
 *.exe
@@ -5,6 +6,7 @@
 *.gcno
 *.gcov
 *.gen.*
+*.h.bak
 *.lex.backup
 *.moc.cc
 *.mutreport

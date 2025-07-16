@@ -8,6 +8,7 @@
 
 #include "command-runner-fwd.h"        // CommandRunner
 #include "lsp-client-fwd.h"            // LSPClient
+#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 
 #include <QObject>
 
@@ -15,6 +16,7 @@
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/std-string-fwd.h"     // std::string
 
+#include <list>                        // std::list
 #include <memory>                      // std::unique_ptr
 #include <string>                      // std::string
 
@@ -135,10 +137,16 @@ private:     // data
   // terminated.
   bool m_waitingForTermination;
 
-  // Map from document name to its protocol state.
+  // Map from document name to its protocol state.  This has the set of
+  // documents that are considered "open" w.r.t. the LSP protocol.
   //
   // Invariant: For all `k`, `m_documentInfo[k].m_fname == k`.
   std::map<std::string, LSPDocumentInfo> m_documentInfo;
+
+  // Diagnostics messages we have decoded but have not been taken by the
+  // client of this class.
+  std::list<std::unique_ptr<LSP_PublishDiagnosticsParams>>
+    m_pendingDiagnostics;
 
 private:     // methods
   // Reset the state associated with the protocol.  This is done when we
@@ -201,6 +209,18 @@ public:      // methods
     std::string const &languageId,
     int version,
     std::string &&contents);
+
+  // True if we have diagnostics ready for the client.
+  bool hasPendingDiagnostics() const;
+
+  // Take the next available diagnostics.  Requires
+  // `hasPendingDiagnostics()`.
+  std::unique_ptr<LSP_PublishDiagnosticsParams> takePendingDiagnostics();
+
+Q_SIGNALS:
+  // Emitted when diagnostics arrive, so `hasPendingDiagnostics()` is
+  // true.
+  void signal_hasPendingDiagnostics();
 };
 
 
