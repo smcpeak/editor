@@ -1547,7 +1547,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   runner.m_synchronousTimeLimitMS = 10000;
 
   // The command the user wants to run.
-  string commandString;
+  QString commandString;
 
   // The active editor when the command was started.
   TextDocumentEditor *tde = NULL;
@@ -1561,7 +1561,6 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // Only the variables declared above can be used after the
   // child exits, and even then only with care.
   {
-    QString commandString;
     bool dummy;
     if (!promptForCommandLine(commandString, dummy, ECLF_APPLY)) {
       return;      // Canceled.
@@ -1602,7 +1601,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     QMessageBox mb;
     mb.setWindowTitle("Command Failed");
     mb.setText(qstringb(
-      "The command \"" << commandString <<
+      "The command \"" << toString(commandString) <<
       "\" failed: " << toString(runner.getErrorMessage()) <<
       (runner.getErrorData().isEmpty()?
         "\n\nThere was no error output." :
