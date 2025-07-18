@@ -115,42 +115,6 @@ void LSPManager::addErrorMessage(std::string &&msg)
 }
 
 
-void LSPManager::on_hasReplyForID(int id) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  if (id == m_initializeRequestID) {
-    TRACE1("received initialize reply");
-    m_lsp->takeReplyForID(id);
-    m_initializeRequestID = 0;
-
-    // Send "initialized" to complete the startup procedure.  There is
-    // no reply to this so we simply assume we're ready now.
-    m_lsp->sendNotification("initialized", GDVMap{});
-  }
-
-  else if (id == m_shutdownRequestID) {
-    TRACE1("received shutdown reply");
-    m_lsp->takeReplyForID(id);
-    m_shutdownRequestID = 0;
-
-    // Now, we send the "exit" notification, which should cause the
-    // server process to terminate.
-    m_lsp->sendNotification("exit", GDVMap{});
-    m_waitingForTermination = true;
-  }
-
-  else {
-    TRACE1("received reply with ID " << id);
-    m_lsp->takeReplyForID(id);
-    // TODO: Arrange for the client to be able to submit their own
-    // requests and receive the replies.
-  }
-
-  GENERIC_CATCH_END
-}
-
-
 void LSPManager::on_hasPendingNotifications() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -183,6 +147,42 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
       addErrorMessage(stringb(
         "malformed notification " << msg.asString() << ": " << x.what()));
     }
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void LSPManager::on_hasReplyForID(int id) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (id == m_initializeRequestID) {
+    TRACE1("received initialize reply");
+    m_lsp->takeReplyForID(id);
+    m_initializeRequestID = 0;
+
+    // Send "initialized" to complete the startup procedure.  There is
+    // no reply to this so we simply assume we're ready now.
+    m_lsp->sendNotification("initialized", GDVMap{});
+  }
+
+  else if (id == m_shutdownRequestID) {
+    TRACE1("received shutdown reply");
+    m_lsp->takeReplyForID(id);
+    m_shutdownRequestID = 0;
+
+    // Now, we send the "exit" notification, which should cause the
+    // server process to terminate.
+    m_lsp->sendNotification("exit", GDVMap{});
+    m_waitingForTermination = true;
+  }
+
+  else {
+    TRACE1("received reply with ID " << id);
+    m_lsp->takeReplyForID(id);
+    // TODO: Arrange for the client to be able to submit their own
+    // requests and receive the replies.
   }
 
   GENERIC_CATCH_END

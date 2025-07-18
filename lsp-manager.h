@@ -165,8 +165,8 @@ private:     // methods
 
 private Q_SLOTS:
   // Slots to respond to similarly-named `LSPClient` signals.
-  void on_hasReplyForID(int id) NOEXCEPT;
   void on_hasPendingNotifications() NOEXCEPT;
+  void on_hasReplyForID(int id) NOEXCEPT;
   void on_childProcessTerminated() NOEXCEPT;
 
 public:      // methods
