@@ -639,6 +639,24 @@ compile_commands.json:
 	(echo "["; cat *.o.json | sed '$$ s/,$$//'; echo "]") > $@
 
 
+# -------------- check create-tuple-class.py outputs -------------------
+# Set of header files that use create-tuple-class.py.
+CTC_HEADERS :=
+CTC_HEADERS += lsp-data.h
+
+# Corresponding implementation files.
+CTC_IMPL_FILES := $(CTC_HEADERS:.h=.cc)
+
+# Check that all of the CTC-generated code is up to date.
+out/ctc-up-to-date.ok: $(CTC_HEADERS) $(CTC_IMPL_FILES) $(SMBASE)/create-tuple-class.py
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(PYTHON3) $(SMBASE)/create-tuple-class.py \
+	  --check $(CTC_HEADERS)
+	touch $@
+
+all: out/ctc-up-to-date.ok
+
+
 # --------------------- misc ------------------------
 clean:
 	$(RM) $(TOCLEAN)
