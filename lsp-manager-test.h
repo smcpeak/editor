@@ -26,6 +26,12 @@ public:      // data
   // Request details from the command line.
   LSPTestRequestParams m_params;
 
+  // In async mode, this means we got to succesful shutdown.
+  bool m_done;
+
+  // In async mode, this means we stopped early due to a failure.
+  bool m_failed;
+
 public:      // methods
   ~LSPManagerTester();
 
@@ -48,6 +54,19 @@ public:      // methods
 
   // Run the tests using explicit (but not busy) wait loops.
   void testSynchronously();
+
+  // Dis/connect signals to `m_lspManager`.
+  void connectSignals();
+  void disconnectSignals();
+
+  // Run the tests, reacting to signals only, not waiting.
+  void testAsynchronously();
+
+private Q_SLOTS:
+  // Handle corresponding `LSPManager` signals.
+  void on_changedProtocolState() NOEXCEPT;
+  void on_hasPendingDiagnostics() NOEXCEPT;
+  void on_hasPendingErrorMessages() NOEXCEPT;
 };
 
 

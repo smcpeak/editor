@@ -40,13 +40,15 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   NUM_LSP_PROTOCOL_STATES,
   (
     "LSP_PS_MANAGER_INACTIVE",
-    "LSP_PS_PROTOCOL_OBJECT_MISSING",
-    "LSP_PS_PROTOCOL_ERROR",
-    "LSP_PS_SERVER_NOT_RUNNING",
     "LSP_PS_INITIALIZING",
+    "LSP_PS_NORMAL",
     "LSP_PS_SHUTDOWN1",
     "LSP_PS_SHUTDOWN2",
-    "LSP_PS_NORMAL",
+
+    "LSP_PS_PROTOCOL_ERROR",
+
+    "LSP_PS_PROTOCOL_OBJECT_MISSING",
+    "LSP_PS_SERVER_NOT_RUNNING",
   ),
   "Unknown LSP"
 )
@@ -105,6 +107,9 @@ void LSPManager::forciblyShutDown()
   }
 
   resetProtocolState();
+
+  // Now in `LSP_PS_MANAGER_INACTIVE`.
+  Q_EMIT signal_changedProtocolState();
 }
 
 
@@ -165,6 +170,9 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
     // Send "initialized" to complete the startup procedure.  There is
     // no reply to this so we simply assume we're ready now.
     m_lsp->sendNotification("initialized", GDVMap{});
+
+    // Now in `LSP_PS_NORMAL`.
+    Q_EMIT signal_changedProtocolState();
   }
 
   else if (id == m_shutdownRequestID) {
@@ -176,6 +184,9 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
     // server process to terminate.
     m_lsp->sendNotification("exit", GDVMap{});
     m_waitingForTermination = true;
+
+    // Now in `LSP_PS_SHUTDOWN2`.
+    Q_EMIT signal_changedProtocolState();
   }
 
   else {
@@ -184,6 +195,19 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
     // TODO: Arrange for the client to be able to submit their own
     // requests and receive the replies.
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void LSPManager::on_hasProtocolError() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE1("on_hasProtocolError");
+
+  // We are now in `LSP_PS_PROTOCOL_ERROR`.
+  Q_EMIT signal_changedProtocolState();
 
   GENERIC_CATCH_END
 }
@@ -205,6 +229,9 @@ void LSPManager::on_childProcessTerminated() NOEXCEPT
 
 LSPManager::~LSPManager()
 {
+  // Don't send a signal due to the forcible shutdown.
+  QObject::disconnect(this, nullptr, nullptr, nullptr);
+
   forciblyShutDown();
 }
 
@@ -291,6 +318,8 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
                    this,           &LSPManager::on_hasPendingNotifications);
   QObject::connect(m_lsp.get(), &LSPClient::signal_hasReplyForID,
                    this,           &LSPManager::on_hasReplyForID);
+  QObject::connect(m_lsp.get(), &LSPClient::signal_hasProtocolError,
+                   this,           &LSPManager::on_hasProtocolError);
   QObject::connect(m_lsp.get(), &LSPClient::signal_childProcessTerminated,
                    this,           &LSPManager::on_childProcessTerminated);
 
@@ -311,8 +340,14 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
   });
 
   success = true;
-  return stringb("Server started.  Server PID is " <<
-                 m_commandRunner->getChildPID() << ".");
+  std::string result =
+    stringb("Server started.  Server PID is " <<
+            m_commandRunner->getChildPID() << ".");
+
+  // Now in `LSP_PS_INITIALIZING`.
+  Q_EMIT signal_changedProtocolState();
+
+  return result;
 }
 
 
@@ -363,6 +398,9 @@ std::string LSPManager::stopServer()
     // trigger the next shutdown phase.
     m_shutdownRequestID = m_lsp->sendRequest("shutdown", GDVMap{});
     msgs.push_back("Initiated server shutdown.");
+
+    // Now in `LSP_PS_SHUTDOWN1`.
+    Q_EMIT signal_changedProtocolState();
   }
 
   return join(msgs, "\n");

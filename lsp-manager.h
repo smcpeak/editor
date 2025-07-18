@@ -23,23 +23,22 @@
 
 // Status of the LSPManager protocol.
 enum LSPProtocolState {
-  // `LSPManager` is inactive; both of its pointers are null.
+  // ---- Normal lifecycle states ----
+
+  // Normally, we transition through these in order, cycling back to
+  // "inactive" at the end.
+
+  // `LSPManager` is inactive; both of its pointers are null.  If we
+  // were active previously, the old server process has terminated.
   LSP_PS_MANAGER_INACTIVE,
 
-  // The `LSPClient` is missing.  This is a broken state.
-  LSP_PS_PROTOCOL_OBJECT_MISSING,
-
-  // `LSPClient` detected a protocol error.  We can't do anything more
-  // with the server process.
-  LSP_PS_PROTOCOL_ERROR,
-
-  // Despite the `CommandRunner` existing, it reports the server process
-  // is not running.  This is a broken state.
-  LSP_PS_SERVER_NOT_RUNNING,
-
-  // We have begun the initialization procedure but it is not finished,
-  // so no requests can be sent yet.
+  // We have sent the "initialize" request, but not received its reply.
   LSP_PS_INITIALIZING,
+
+  // We have received the "initialize" reply, and sent the "initialized"
+  // notification.  The server is operating normally and can service
+  // requests.
+  LSP_PS_NORMAL,
 
   // We have sent the "shutdown" request, but not received a reply.
   LSP_PS_SHUTDOWN1,
@@ -48,8 +47,28 @@ enum LSPProtocolState {
   // not terminated.
   LSP_PS_SHUTDOWN2,
 
-  // The server is operating normally and can service requests.
-  LSP_PS_NORMAL,
+  // ---- Error states ----
+
+  // Any of the above states except `LSP_PS_MANAGER_INACTIVE` can
+  // transition to the error state.
+
+  // `LSPClient` detected a protocol error.  We can't do anything more
+  // with the server process.
+  LSP_PS_PROTOCOL_ERROR,
+
+  // ---- Broken states ----
+
+  // These states should not occur, but I defined enumerators for them
+  // since `checkStatus` reports them.  There is no place in the code
+  // that emits `signal_changedProtocolState` for them since a
+  // transition into these states is never expected.
+
+  // The `LSPClient` is missing.  This is a broken state.
+  LSP_PS_PROTOCOL_OBJECT_MISSING,
+
+  // Despite the `CommandRunner` existing, it reports the server process
+  // is not running.  This is a broken state.
+  LSP_PS_SERVER_NOT_RUNNING,
 
   NUM_LSP_PROTOCOL_STATES
 };
@@ -167,7 +186,11 @@ private Q_SLOTS:
   // Slots to respond to similarly-named `LSPClient` signals.
   void on_hasPendingNotifications() NOEXCEPT;
   void on_hasReplyForID(int id) NOEXCEPT;
+  void on_hasProtocolError() NOEXCEPT;
   void on_childProcessTerminated() NOEXCEPT;
+
+  // We do not have `on_hasErrorData` because the server process is
+  // started with its stderr redirected to a file.
 
 public:      // methods
   ~LSPManager();
@@ -235,6 +258,12 @@ public:      // methods
   std::string takePendingErrorMessage();
 
 Q_SIGNALS:
+  // Emitted when the protocol state has (potentially) changed.  The
+  // client must call `getProtocolState` to get the new state, which in
+  // some cases will be the same as the previous state (which this class
+  // does not keep track of).
+  void signal_changedProtocolState();
+
   // Emitted when diagnostics arrive, so `hasPendingDiagnostics()` is
   // true.
   void signal_hasPendingDiagnostics();

@@ -116,6 +116,8 @@ public:      // data
   std::string m_uri;
 
   // Document version number the diagnostics apply to.
+  //
+  // At the moment, a 0 here means absent.  TODO: Use std::optional.
   int m_version;
 
   // The individual diagnostic messages.
