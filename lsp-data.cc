@@ -4,8 +4,13 @@
 #include "lsp-data.h"                  // this module
 
 #include "smbase/gdvalue-list.h"       // gdv::gdvTo<std::list>
-#include "smbase/gdvalue-parse.h"      // gdv::checkIsMap, etc.
+#include "smbase/gdvalue-parser-ops.h" // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
+
+#include <optional>                    // std::optional
+
+
+using namespace gdv;
 
 
 // --------------------------- LSP_Position ----------------------------
@@ -33,9 +38,20 @@
 /*AUTO_CTC*/
 
 
-LSP_Position::LSP_Position(gdv::GDValue const &m)
-  : GDV_READ_MEMBER_SK(m_line),
-    GDV_READ_MEMBER_SK(m_character)
+LSP_Position::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_SK(m_line);
+  GDV_WRITE_MEMBER_SK(m_character);
+
+  return m;
+}
+
+
+LSP_Position::LSP_Position(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_line),
+    GDVP_READ_MEMBER_STR(m_character)
 {}
 
 
@@ -64,9 +80,20 @@ LSP_Position::LSP_Position(gdv::GDValue const &m)
 /*AUTO_CTC*/
 
 
-LSP_Range::LSP_Range(gdv::GDValue const &m)
-  : GDV_READ_MEMBER_SK(m_start),
-    GDV_READ_MEMBER_SK(m_end)
+LSP_Range::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_SK(m_start);
+  GDV_WRITE_MEMBER_SK(m_end);
+
+  return m;
+}
+
+
+LSP_Range::LSP_Range(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_start),
+    GDVP_READ_MEMBER_STR(m_end)
 {}
 
 
@@ -103,12 +130,30 @@ LSP_Range::LSP_Range(gdv::GDValue const &m)
 /*AUTO_CTC*/
 
 
-LSP_Diagnostic::LSP_Diagnostic(gdv::GDValue const &m)
-  : GDV_READ_MEMBER_SK(m_range),
-    GDV_READ_MEMBER_SK(m_severity),
-    GDV_READ_MEMBER_SK(m_source),
-    GDV_READ_MEMBER_SK(m_message)
-{}
+LSP_Diagnostic::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_SK(m_range);
+  GDV_WRITE_MEMBER_SK(m_severity);
+  GDV_WRITE_MEMBER_SK(m_source);
+  GDV_WRITE_MEMBER_SK(m_message);
+
+  return m;
+}
+
+
+LSP_Diagnostic::LSP_Diagnostic(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_range),
+    GDVP_READ_OPT_MEMBER_STR(m_severity),
+    GDVP_READ_OPT_MEMBER_STR(m_source),
+    GDVP_READ_MEMBER_STR(m_message)
+{
+  // The LSP spec says an omitted `severity` should be treated as Error.
+  if (!p.mapContains("severity")) {
+    m_severity = 1;
+  }
+}
 
 
 // ------------------- LSP_PublishDiagnosticsParams --------------------
@@ -140,10 +185,22 @@ LSP_Diagnostic::LSP_Diagnostic(gdv::GDValue const &m)
 /*AUTO_CTC*/
 
 
-LSP_PublishDiagnosticsParams::LSP_PublishDiagnosticsParams(gdv::GDValue const &m)
-  : GDV_READ_MEMBER_SK(m_uri),
-    GDV_READ_MEMBER_SK(m_version),
-    GDV_READ_MEMBER_SK(m_diagnostics)
+LSP_PublishDiagnosticsParams::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_SK(m_uri);
+  GDV_WRITE_MEMBER_SK(m_version);
+  GDV_WRITE_MEMBER_SK(m_diagnostics);
+
+  return m;
+}
+
+
+LSP_PublishDiagnosticsParams::LSP_PublishDiagnosticsParams(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_uri),
+    GDVP_READ_OPT_MEMBER_STR(m_version),
+    GDVP_READ_MEMBER_STR(m_diagnostics)
 {}
 
 

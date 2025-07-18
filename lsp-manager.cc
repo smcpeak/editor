@@ -11,9 +11,11 @@
 
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/list-util.h"          // smbase::listMoveFront
+#include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // join
@@ -82,6 +84,9 @@ void LSPManager::resetProtocolState()
   m_initializeRequestID = 0;
   m_shutdownRequestID = 0;
   m_waitingForTermination = false;
+  m_documentInfo.clear();
+  m_pendingDiagnostics.clear();
+  m_pendingErrorMessages.clear();
 }
 
 
@@ -100,6 +105,13 @@ void LSPManager::forciblyShutDown()
   }
 
   resetProtocolState();
+}
+
+
+void LSPManager::addErrorMessage(std::string &&msg)
+{
+  m_pendingErrorMessages.push_back(std::move(msg));
+  Q_EMIT signal_hasPendingErrorMessages();
 }
 
 
@@ -147,24 +159,29 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
     GDValue msg = m_lsp->takeNextNotification();
     TRACE1("received notification: " << msg.asString());
 
+    GDValueParser msgParser(msg);
+
     try {
-      checkIsMap(msg);
-      std::string method = stringGet_parse(mapGetValueAtStr_parse(msg, "method"));
-      GDValue params = mapGetValueAtStr_parse(msg, "params");
-      checkIsMap(params);
+      msgParser.checkIsMap();
+      std::string method = msgParser.mapGetValueAtStr("method").stringGet();
+      GDValueParser params = msgParser.mapGetValueAtStr("params");
+      params.checkIsMap();
 
       if (method == "textDocument/publishDiagnostics") {
         m_pendingDiagnostics.push_back(
-          std::make_unique<LSP_PublishDiagnosticsParams>(params));
+          std::make_unique<LSP_PublishDiagnosticsParams>(
+            params));
         Q_EMIT signal_hasPendingDiagnostics();
       }
 
       else {
-        TRACE1("unhandled notification method: " << doubleQuote(method));
+        addErrorMessage(stringb(
+          "unhandled notification method: " << doubleQuote(method)));
       }
     }
-    catch (XFormat &x) {
-      TRACE1("malformed notification: " << x.what());
+    catch (XGDValueError &x) {
+      addErrorMessage(stringb(
+        "malformed notification " << msg.asString() << ": " << x.what()));
     }
   }
 
@@ -205,7 +222,8 @@ LSPManager::LSPManager(
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
     m_documentInfo(),
-    m_pendingDiagnostics()
+    m_pendingDiagnostics(),
+    m_pendingErrorMessages()
 {}
 
 
@@ -375,6 +393,18 @@ std::string LSPManager::checkStatus()
     }
   }
 
+  // Dequeue any error messages.
+  if (int n = numPendingErrorMessages()) {
+    msgs.push_back(stringb(
+      "There are " << n << " pending error messages:"));
+
+    int i = 0;
+    while (hasPendingErrorMessages()) {
+      msgs.push_back(stringb(
+        "  " << ++i << ": " << takePendingErrorMessage()));
+    }
+  }
+
   msgs.push_back(stringb(
     "Server stderr is in " << doubleQuote(m_lspStderrLogFname) << "."));
 
@@ -494,6 +524,25 @@ LSPManager::takePendingDiagnostics()
 {
   xassert(hasPendingDiagnostics());
   return listMoveFront(m_pendingDiagnostics);
+}
+
+
+bool LSPManager::hasPendingErrorMessages() const
+{
+  return !m_pendingErrorMessages.empty();
+}
+
+
+int LSPManager::numPendingErrorMessages() const
+{
+  return safeToInt(m_pendingErrorMessages.size());
+}
+
+
+std::string LSPManager::takePendingErrorMessage()
+{
+  xassert(hasPendingErrorMessages());
+  return listMoveFront(m_pendingErrorMessages);
 }
 
 

@@ -24,6 +24,7 @@
 #include "lsp-data-fwd.h"              // fwds for this module
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser
 
 #include <list>                        // std::list
 #include <string>                      // std::string
@@ -47,8 +48,10 @@ public:      // methods
   /*AUTO_CTC*/ LSP_Position(LSP_Position const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Position &operator=(LSP_Position const &obj) noexcept;
 
-  // Parse, throwing `XFormat` on error.
-  explicit LSP_Position(gdv::GDValue const &m);
+  operator gdv::GDValue() const;
+
+  // Parse, throwing `XGDValueError` on error.
+  explicit LSP_Position(gdv::GDValueParser const &p);
 };
 
 
@@ -66,7 +69,9 @@ public:      // methods
   /*AUTO_CTC*/ LSP_Range(LSP_Range const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Range &operator=(LSP_Range const &obj) noexcept;
 
-  explicit LSP_Range(gdv::GDValue const &m);
+  operator gdv::GDValue() const;
+
+  explicit LSP_Range(gdv::GDValueParser const &p);
 };
 
 
@@ -98,7 +103,9 @@ public:      // methods
   /*AUTO_CTC*/ LSP_Diagnostic(LSP_Diagnostic const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Diagnostic &operator=(LSP_Diagnostic const &obj) noexcept;
 
-  explicit LSP_Diagnostic(gdv::GDValue const &m);
+  operator gdv::GDValue() const;
+
+  explicit LSP_Diagnostic(gdv::GDValueParser const &p);
 };
 
 
@@ -120,7 +127,9 @@ public:      // methods
   /*AUTO_CTC*/ LSP_PublishDiagnosticsParams(LSP_PublishDiagnosticsParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_PublishDiagnosticsParams &operator=(LSP_PublishDiagnosticsParams const &obj) noexcept;
 
-  explicit LSP_PublishDiagnosticsParams(gdv::GDValue const &m);
+  operator gdv::GDValue() const;
+
+  explicit LSP_PublishDiagnosticsParams(gdv::GDValueParser const &p);
 };
 
 

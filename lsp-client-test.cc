@@ -490,7 +490,7 @@ char const *substringForFK(FailureKind fk)
       "while looking for a value after '['",
       "expected map",
       "expected small integer",
-      "id >= 0",
+      "ID is negative: -1",
     ),
     fk,
     "(invalid FailureKind)"

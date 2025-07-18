@@ -148,6 +148,10 @@ private:     // data
   std::list<std::unique_ptr<LSP_PublishDiagnosticsParams>>
     m_pendingDiagnostics;
 
+  // Error messages derived from unexpected protocol interactions that
+  // don't break the protocol stream.
+  std::list<std::string> m_pendingErrorMessages;
+
 private:     // methods
   // Reset the state associated with the protocol.  This is done when we
   // shut down the server, and prepares for starting it again.
@@ -155,6 +159,9 @@ private:     // methods
 
   // Kill the server and return this object to its initial state.
   void forciblyShutDown();
+
+  // Append `msg` to the pending messages and signal the client.
+  void addErrorMessage(std::string &&msg);
 
 private Q_SLOTS:
   // Slots to respond to similarly-named `LSPClient` signals.
@@ -217,10 +224,23 @@ public:      // methods
   // `hasPendingDiagnostics()`.
   std::unique_ptr<LSP_PublishDiagnosticsParams> takePendingDiagnostics();
 
+  // True if we have errors to deliver.
+  bool hasPendingErrorMessages() const;
+
+  // How many error messages are pending.
+  int numPendingErrorMessages() const;
+
+  // Take the next available error.  Requires
+  // `hasPendingErrorMessges()`.
+  std::string takePendingErrorMessage();
+
 Q_SIGNALS:
   // Emitted when diagnostics arrive, so `hasPendingDiagnostics()` is
   // true.
   void signal_hasPendingDiagnostics();
+
+  // Emitted when an error message is enqueued.
+  void signal_hasPendingErrorMessages();
 };
 
 

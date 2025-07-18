@@ -10,7 +10,7 @@
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // smbase::xformat
 #include "smbase/gdvalue-json.h"       // gdv::{gdvToJSON, jsonToGDV}
-#include "smbase/gdvalue-parse.h"      // gdv::{checkIsMap, checkIsSmallInteger}
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/list-util.h"          // smbase::listMoveFront
 #include "smbase/map-util.h"           // mapMoveValueAt, keySet
@@ -170,19 +170,19 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
   }
 
   // Prepare to parse the current output data.
-  ParseString parser(m_child.peekOutputData().toStdString());
+  ParseString stringParser(m_child.peekOutputData().toStdString());
 
   // Scan the headers to get the length of the body.  Normally, there is
   // exactly one header line, specifying the length; any other headers
   // are parsed but otherwise ignored.
   std::size_t contentLength = 0;
   while (true) {
-    if (parser.eos()) {
+    if (stringParser.eos()) {
       TRACE2("ipod: unterminated headers");
       return MPR_UNTERMINATED_HEADERS;
     }
 
-    std::string line = parser.getUpToByte('\n');
+    std::string line = stringParser.getUpToByte('\n');
     if (!endsWith(line, "\n")) {
       TRACE2("ipod: unterminated header line");
       return MPR_UNTERMINATED_HEADER_LINE;
@@ -210,44 +210,53 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
   }
 
   // Extract the body.
-  std::string bodyJSON = parser.getUpToSize(contentLength);
+  std::string bodyJSON = stringParser.getUpToSize(contentLength);
   if (bodyJSON.size() < contentLength) {
     // Incomplete.
     TRACE2("ipod: incomplete body");
     return MPR_INCOMPLETE_BODY;
   }
 
-  GDValue msg(jsonToGDV(bodyJSON));
-  checkIsMap(msg);
+  GDValue msgValue(jsonToGDV(bodyJSON));
+  GDValueParser msg(msgValue);
+  msg.checkIsMap();
 
   // If it has an "id" field then it is a reply.
   if (msg.mapContains("id")) {
-    GDValue gdvId = msg.mapGetValueAt("id");
+    GDValueParser gdvId = msg.mapGetValueAt("id");
 
     // Make sure the value is an integer in the proper range.
-    checkIsSmallInteger(gdvId);
+    gdvId.checkIsSmallInteger();
     int id = safeToInt(gdvId.smallIntegerGet());
-    formatAssert(id >= 0);
+    if (id < 0) {
+      gdvId.throwError(stringb("ID is negative: " << id));
+    }
 
-    TRACE2("ipod: received reply with ID " << id);
+    // We are done with the parsers, and about to move `msgValue`.
+    gdvId.clearParserPointers();
+    msg.clearParserPointers();
+
+    TRACE1("received reply with ID " << id << ": " << msgValue);
 
     setRemoveExisting(m_outstandingRequests, id);
-    mapInsertUnique(m_pendingReplies, id, std::move(msg));
+    mapInsertUnique(m_pendingReplies, id, std::move(msgValue));
 
     Q_EMIT signal_hasReplyForID(id);
   }
 
   else {
-    TRACE2("ipod: received notification");
+    TRACE1("received notification: " << msgValue);
 
-    m_pendingNotifications.push_back(std::move(msg));
+    msg.clearParserPointers();
+
+    m_pendingNotifications.push_back(std::move(msgValue));
 
     Q_EMIT signal_hasPendingNotifications();
   }
 
   // Remove the decoded message from the output data bytes queue.
-  TRACE2("ipod: removing " << parser.curOffset() << " bytes of data");
-  m_child.removeOutputData(parser.curOffset());
+  TRACE2("ipod: removing " << stringParser.curOffset() << " bytes of data");
+  m_child.removeOutputData(stringParser.curOffset());
 
   return MPR_ONE_MESSAGE;
 }
