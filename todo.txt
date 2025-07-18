@@ -1,5 +1,7 @@
 TODOs:
 
+  - Defining a macro should automatically make it the most recent.
+
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
