@@ -2,6 +2,9 @@ TODOs:
 
   - Defining a macro should automatically make it the most recent.
 
+  - highlighting for mismatch parens, braces, etc.
+  - parenthesis balancing, and Alt-[/] to find matching delimiter
+
   - The incremental search function is very slow on Windows with a
     large file like Factorio data.raw open.
 
@@ -100,7 +103,6 @@ TODOs:
     name?
     - maybe after Ctrl+S?
   - prompt before killing an Alt+A that takes too long
-  - highlighting for mismatch parens, braces, etc.
   - command line arguments to set window position(s)?
   - undo history is never truncated... I should add something to check
     for excessive memory usage over time
@@ -113,7 +115,6 @@ TODOs:
       - not recognized as continuation; see a .moc.cc file
     - ability to make line endings uniform
     - ability to insert lines with CRLF
-  - parenthesis balancing, and Alt-[/] to find matching delimiter
   - mode to show line numbers in left margin
   - multiple copy+paste strings
 
