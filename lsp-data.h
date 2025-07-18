@@ -27,6 +27,7 @@
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser
 
 #include <list>                        // std::list
+#include <optional>                    // std::optional
 #include <string>                      // std::string
 
 
@@ -116,16 +117,14 @@ public:      // data
   std::string m_uri;
 
   // Document version number the diagnostics apply to.
-  //
-  // At the moment, a 0 here means absent.  TODO: Use std::optional.
-  int m_version;
+  std::optional<int> m_version;
 
   // The individual diagnostic messages.
   std::list<LSP_Diagnostic> m_diagnostics;
 
 public:      // methods
   // create-tuple-class: declarations for LSP_PublishDiagnosticsParams
-  /*AUTO_CTC*/ explicit LSP_PublishDiagnosticsParams(std::string const &uri, int version, std::list<LSP_Diagnostic> const &diagnostics);
+  /*AUTO_CTC*/ explicit LSP_PublishDiagnosticsParams(std::string const &uri, std::optional<int> const &version, std::list<LSP_Diagnostic> const &diagnostics);
   /*AUTO_CTC*/ LSP_PublishDiagnosticsParams(LSP_PublishDiagnosticsParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_PublishDiagnosticsParams &operator=(LSP_PublishDiagnosticsParams const &obj) noexcept;
 

@@ -4,6 +4,7 @@
 #include "lsp-data.h"                  // this module
 
 #include "smbase/gdvalue-list.h"       // gdv::gdvTo<std::list>
+#include "smbase/gdvalue-optional.h"   // gdv::gdvTo<std::optional>
 #include "smbase/gdvalue-parser-ops.h" // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 
@@ -160,7 +161,7 @@ LSP_Diagnostic::LSP_Diagnostic(gdv::GDValueParser const &p)
 // create-tuple-class: definitions for LSP_PublishDiagnosticsParams
 /*AUTO_CTC*/ LSP_PublishDiagnosticsParams::LSP_PublishDiagnosticsParams(
 /*AUTO_CTC*/   std::string const &uri,
-/*AUTO_CTC*/   int version,
+/*AUTO_CTC*/   std::optional<int> const &version,
 /*AUTO_CTC*/   std::list<LSP_Diagnostic> const &diagnostics)
 /*AUTO_CTC*/   : m_uri(uri),
 /*AUTO_CTC*/     m_version(version),
