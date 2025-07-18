@@ -877,13 +877,17 @@ void EditorGlobal::warningBox(
 
 /*static*/ std::string EditorGlobal::getSettingsFileName()
 {
-  return stringb(getXDGConfigHome() << "/sm-editor/editor-settings.gdvn");
+  std::string dir =
+    SMFileUtil().normalizePathSeparators(getXDGConfigHome());
+  return dir + "/sm-editor/editor-settings.gdvn";
 }
 
 
 /*static*/ std::string EditorGlobal::getLSPStderrLogFileName()
 {
-  return stringb(getXDGStateHome() << "/sm-editor/lsp-server.log");
+  std::string dir =
+    SMFileUtil().normalizePathSeparators(getXDGStateHome());
+  return dir + "/sm-editor/lsp-server.log";
 }
 
 
