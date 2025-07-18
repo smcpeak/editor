@@ -13,7 +13,7 @@
 
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-map.h"        // GDValue <-> std::map
-#include "smbase/gdvalue-parse-ops.h"  // mapGetSym_parse{,Opt}
+#include "smbase/gdvalue-parser-ops.h" // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // GDValue <-> std::set
 #include "smbase/gdvalue-unique-ptr.h" // GDValue <-> std::unique_ptr
 #include "smbase/gdvalue-vector.h"     // GDValue <-> std::vector
@@ -67,11 +67,11 @@ CommandLineHistory::operator gdv::GDValue() const
 }
 
 
-CommandLineHistory::CommandLineHistory(gdv::GDValue const &m)
-  : GDV_READ_MEMBER(m_commands),
-    GDV_READ_MEMBER(m_recent),
-    GDV_READ_MEMBER(m_useSubstitution),
-    GDV_READ_MEMBER(m_prefixStderrLines)
+CommandLineHistory::CommandLineHistory(gdv::GDValueParser const &p)
+  : GDVP_READ_OPT_MEMBER_SYM(m_commands),
+    GDVP_READ_OPT_MEMBER_SYM(m_recent),
+    GDVP_READ_OPT_MEMBER_SYM(m_useSubstitution),
+    GDVP_READ_OPT_MEMBER_SYM(m_prefixStderrLines)
 {}
 
 
@@ -160,15 +160,15 @@ EditorSettings::EditorSettings()
 {}
 
 
-EditorSettings::EditorSettings(GDValue const &m)
-  : GDV_READ_MEMBER(m_macros),
-    GDV_READ_MEMBER(m_mostRecentlyRunMacro),
-    GDV_READ_MEMBER(m_applyHistory),
-    GDV_READ_MEMBER(m_runHistory)
+EditorSettings::EditorSettings(GDValueParser const &p)
+  : GDVP_READ_OPT_MEMBER_SYM(m_macros),
+    GDVP_READ_OPT_MEMBER_SYM(m_mostRecentlyRunMacro),
+    GDVP_READ_OPT_MEMBER_SYM(m_applyHistory),
+    GDVP_READ_OPT_MEMBER_SYM(m_runHistory)
 {
-  checkTaggedOrderedMapTag(m, "EditorSettings");
+  p.checkTaggedOrderedMapTag("EditorSettings");
 
-  int version = gdvTo<int>(mapGetSym_parse(m, "version"));
+  int version = gdvpTo<int>(p.mapGetValueAtSym("version"));
   if (version > CUR_VERSION) {
     xformatsb("Settings file has version " << version <<
               " but the largest this program can read is " <<

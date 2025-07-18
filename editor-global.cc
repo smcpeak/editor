@@ -21,6 +21,7 @@
 // smbase
 #include "smbase/dev-warning.h"        // g_devWarningHandler
 #include "smbase/exc.h"                // smbase::{XBase, xformat}
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
@@ -938,7 +939,7 @@ void EditorGlobal::loadSettingsFile_throwIfError()
   SMFileUtil sfu;
   if (sfu.pathExists(fname)) {
     GDValue gdvSettings = GDValue::readFromFile(fname);
-    EditorSettings settings(gdvSettings);
+    EditorSettings settings{GDValueParser(gdvSettings)};
     m_settings.swap(settings);
 
     TRACE("EditorGlobal", "Loaded settings file: " << doubleQuote(fname));

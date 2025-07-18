@@ -10,6 +10,7 @@
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
+#include "smbase/gdvalue-parser-fwd.h"           // gdv::GDValueParser
 
 #include <map>                                   // std::map
 #include <memory>                                // std::unique_ptr
@@ -67,7 +68,7 @@ public:      // funcs
 
   // De/serialization.
   operator gdv::GDValue() const;
-  explicit CommandLineHistory(gdv::GDValue const &v);
+  explicit CommandLineHistory(gdv::GDValueParser const &p);
 
   void swap(CommandLineHistory &obj);
 
@@ -115,8 +116,8 @@ public:      // funcs
   // Serialize as GDV.
   operator gdv::GDValue() const;
 
-  // Parse `gdv`.  Throws `XFormat` on error.
-  explicit EditorSettings(gdv::GDValue const &gdv);
+  // Parse `gdv`.  Throws `XGDValueError` on error.
+  explicit EditorSettings(gdv::GDValueParser const &p);
 
   void swap(EditorSettings &obj);
 
