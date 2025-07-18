@@ -31,6 +31,22 @@ public:      // methods
 
   LSPManagerTester(LSPTestRequestParams const &params);
 
+  // Start the server process.
+  void startServer();
+
+  // Send "textDocument/didOpen" notification.
+  void sendDidOpen();
+
+  // Dequeue pending diagnostics.
+  void takeDiagnostics();
+
+  // Tell the server to shut down.
+  void stopServer();
+
+  // Print a message indicating the shut down finished.
+  void acknowledgeShutdown();
+
+  // Run the tests using explicit (but not busy) wait loops.
   void testSynchronously();
 };
 

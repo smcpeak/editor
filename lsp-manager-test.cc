@@ -23,6 +23,8 @@
 using namespace gdv;
 using namespace smbase;
 
+using std::cout;
+
 
 LSPManagerTester::~LSPManagerTester()
 {}
@@ -36,10 +38,8 @@ LSPManagerTester::LSPManagerTester(LSPTestRequestParams const &params)
 {}
 
 
-void LSPManagerTester::testSynchronously()
+void LSPManagerTester::startServer()
 {
-  using std::cout;
-
   m_lspManager.selfCheck();
   xassert(m_lspManager.getProtocolState() == LSP_PS_MANAGER_INACTIVE);
 
@@ -51,12 +51,11 @@ void LSPManagerTester::testSynchronously()
   m_lspManager.selfCheck();
 
   cout << "Initializing...\n";
-  while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
-    waitForQtEvent();
-    cout << "Status: " << m_lspManager.checkStatus() << "\n";
-    m_lspManager.selfCheck();
-  }
+}
 
+
+void LSPManagerTester::sendDidOpen()
+{
   cout << "Sending didOpen...\n";
   SMFileUtil sfu;
   m_lspManager.notify_textDocument_didOpen(
@@ -68,19 +67,54 @@ void LSPManagerTester::testSynchronously()
   m_lspManager.selfCheck();
 
   cout << "Waiting for diagnostics notification...\n";
+}
+
+
+void LSPManagerTester::takeDiagnostics()
+{
+  std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
+    m_lspManager.takePendingDiagnostics();
+  cout << "Diagnostics: " << toGDValue(*diags).asLinesString();
+}
+
+
+void LSPManagerTester::stopServer()
+{
+  cout << "Stop: " << m_lspManager.stopServer() << "\n";
+  cout << "Status: " << m_lspManager.checkStatus() << "\n";
+  m_lspManager.selfCheck();
+
+  cout << "Waiting for shutdown...\n";
+}
+
+
+void LSPManagerTester::acknowledgeShutdown()
+{
+  cout << "Stopped.\n";
+  m_lspManager.selfCheck();
+}
+
+
+void LSPManagerTester::testSynchronously()
+{
+  startServer();
+
+  while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
+    waitForQtEvent();
+    cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    m_lspManager.selfCheck();
+  }
+
+  sendDidOpen();
+
   while (!m_lspManager.hasPendingDiagnostics()) {
     waitForQtEvent();
     cout << "Status: " << m_lspManager.checkStatus() << "\n";
     m_lspManager.selfCheck();
   }
 
-  std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
-    m_lspManager.takePendingDiagnostics();
-  cout << "Diagnostics: " << toGDValue(*diags).asLinesString();
-
-  cout << "Stop: " << m_lspManager.stopServer() << "\n";
-  cout << "Status: " << m_lspManager.checkStatus() << "\n";
-  m_lspManager.selfCheck();
+  takeDiagnostics();
+  stopServer();
 
   while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
     waitForQtEvent();
@@ -88,8 +122,7 @@ void LSPManagerTester::testSynchronously()
     m_lspManager.selfCheck();
   }
 
-  cout << "Stopped.\n";
-  m_lspManager.selfCheck();
+  acknowledgeShutdown();
 }
 
 
