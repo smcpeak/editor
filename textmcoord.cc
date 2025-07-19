@@ -3,7 +3,11 @@
 
 #include "textmcoord.h"                // this module
 
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-swap.h"            // swap
+
+
+using namespace gdv;
 
 
 // ------------------------ TextMCoord -----------------------------
@@ -46,6 +50,15 @@ void TextMCoord::insert(stringBuilder &sb) const
 }
 
 
+TextMCoord::operator GDValue() const
+{
+  return GDVTaggedTuple("MC"_sym, {
+    toGDValue(m_line),
+    toGDValue(m_byteIndex)
+  });
+}
+
+
 // ------------------------ TextMCoordRange -----------------------------
 TextMCoordRange& TextMCoordRange::operator= (TextMCoordRange const &obj)
 {
@@ -75,6 +88,15 @@ void TextMCoordRange::insert(ostream &os) const
 void TextMCoordRange::insert(stringBuilder &sb) const
 {
   sb << this->m_start << '-' << this->m_end;
+}
+
+
+TextMCoordRange::operator GDValue() const
+{
+  return GDVTaggedTuple("MCR"_sym, {
+    toGDValue(m_start),
+    toGDValue(m_end)
+  });
 }
 
 

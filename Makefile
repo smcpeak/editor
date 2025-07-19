@@ -497,6 +497,19 @@ lsp-manager-test.exe: $(LSP_MANAGER_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,lsp-manager-test))
 
 
+# -------------------------- textmcoord-map-test --------------------------
+EDITOR_OBJS += textmcoord-map.o
+
+TEXTMCOORD_MAP_TEST_OBJS := $(EDITOR_OBJS)
+
+TEXTMCOORD_MAP_TEST_OBJS += textmcoord-map-test.o
+
+textmcoord-map-test.exe: $(TEXTMCOORD_MAP_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEXTMCOORD_MAP_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,textmcoord-map-test))
+
+
 # ----------------- git version ---------------------
 # Command to query git for the version.  Output is like:
 # "d36671f 2018-07-09 04:10:32 -0700".

@@ -4,6 +4,7 @@
 #ifndef TEXTMCOORD_H
 #define TEXTMCOORD_H
 
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB
 #include "smbase/str.h"                // stringBuilder
 
@@ -54,6 +55,8 @@ public:      // funcs
   // Insert as "<line>:<byteIndex>".
   void insert(std::ostream &os) const;
   void insert(stringBuilder &sb) const;
+
+  operator gdv::GDValue() const;
 };
 
 
@@ -123,9 +126,23 @@ public:      // funcs
     }
   }
 
+  // If the end is before the start, return a range where both endpoints
+  // are where the start was, thus signifying an empty range at that
+  // location.
+  TextMCoordRange normalized() const {
+    if (m_start > m_end) {
+      return TextMCoordRange(m_start, m_start);
+    }
+    else {
+      return *this;
+    }
+  }
+
   // Insert as "<start>-<end>".
   void insert(std::ostream &os) const;
   void insert(stringBuilder &sb) const;
+
+  operator gdv::GDValue() const;
 };
 
 
