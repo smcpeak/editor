@@ -113,6 +113,10 @@ public:      // funcs
   // element is always dest[0], *not* dest[elt])
   void writeIntoArray(T *dest, int destLen, int elt=0) const;
 
+  // If `index` is not currently valid, append zero elements until it
+  // is.
+  void ensureValidIndex(int index);
+
   // debugging
   void getInternals(int &L, int &G, int &R) const
     { L=left; G=gap; R=right; }
@@ -477,5 +481,20 @@ void GapArray<T>::writeIntoArray(T *dest, int destLen, int elt) const
            destLen * sizeof(T));     // size
   }
 }
+
+
+template <class T>
+void GapArray<T>::ensureValidIndex(int index)
+{
+  int currentLen = length();
+  int requiredLen = index+1;
+  if (currentLen < requiredLen) {
+    insertManyZeroes(currentLen, requiredLen - currentLen);
+  }
+
+  // Verify that `index` is now valid.
+  bc(index);
+}
+
 
 #endif // GAPARRAY_H

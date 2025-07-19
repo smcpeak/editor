@@ -59,6 +59,12 @@ public:
     xassert(0 <= elt && elt+destLen <= len);
     memcpy(dest, arr+elt, destLen * sizeof(int));
   }
+
+  void ensureValidIndex(int index) {
+    while (index+1 > length()) {
+      insert(length(), 0);
+    }
+  }
 };
 
 
@@ -100,8 +106,8 @@ void Sequence::remove(int elt)
 template <class Seq>
 void printSeq(char const *prefix, Seq &seq)
 {
-  printf("%s:", prefix);
   int len = seq.length();
+  printf("%s (length %d):", prefix, len);
   for (int i=0; i<len; i++) {
     int v = seq.get(i);
     printf(" %d", v);
@@ -163,7 +169,7 @@ void checkEqual(GapArray<int> const &seq1, Sequence const &seq2)
 // Counts of each operation we test so we can tell, at the end, if we
 // have adequately exercised each method.
 int ctSet=0, ctInsert=0, ctInsertMany=0, ctRemove=0, ctRemoveMany=0,
-    ctClear=0, ctFillFromArray=0, ctSwap=0;
+    ctClear=0, ctFillFromArray=0, ctSwap=0, ctEnsure=0;
 
 
 int randValue()
@@ -218,6 +224,16 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
       seq1.remove(elt);
       seq2.remove(elt);
     }
+  }
+
+  // Use ensureValidIndex().
+  else if (choice < 96) {
+    ctEnsure++;
+
+    // Half the time no change, half the time expand.
+    int index = rand() % (seq1.length() * 2);
+    seq1.ensureValidIndex(index);
+    seq2.ensureValidIndex(index);
   }
 
   // use removeMany()
@@ -300,12 +316,15 @@ void entry(int argc, char *argv[])
 
     printf("ok!\n");
     printf("ctSet=%d ctInsert=%d ctInsertMany=%d ctRemove=%d\n"
-           "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d ctSwap=%d\n",
+           "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d ctSwap=%d\n"
+           "ctEnsure=%d\n",
            ctSet, ctInsert, ctInsertMany, ctRemove,
-           ctRemoveMany, ctClear, ctFillFromArray, ctSwap);
+           ctRemoveMany, ctClear, ctFillFromArray, ctSwap,
+           ctEnsure);
     printf("total: %d\n",
            ctSet + ctInsert + ctInsertMany + ctRemove +
-           ctRemoveMany + ctClear + ctFillFromArray);
+           ctRemoveMany + ctClear + ctFillFromArray +
+           ctEnsure);
   }
 }
 
