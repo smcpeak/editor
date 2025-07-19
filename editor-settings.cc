@@ -58,10 +58,10 @@ CommandLineHistory::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "CommandLineHistory"_sym);
 
-  GDV_WRITE_MEMBER(m_commands);
-  GDV_WRITE_MEMBER(m_recent);
-  GDV_WRITE_MEMBER(m_useSubstitution);
-  GDV_WRITE_MEMBER(m_prefixStderrLines);
+  GDV_WRITE_MEMBER_SYM(m_commands);
+  GDV_WRITE_MEMBER_SYM(m_recent);
+  GDV_WRITE_MEMBER_SYM(m_useSubstitution);
+  GDV_WRITE_MEMBER_SYM(m_prefixStderrLines);
 
   return m;
 }
@@ -183,12 +183,12 @@ EditorSettings::operator GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "EditorSettings"_sym);
 
-  m.mapSetSym("version", CUR_VERSION);
+  m.mapSetValueAtSym("version", CUR_VERSION);
 
-  GDV_WRITE_MEMBER(m_macros);
-  GDV_WRITE_MEMBER(m_mostRecentlyRunMacro);
-  GDV_WRITE_MEMBER(m_applyHistory);
-  GDV_WRITE_MEMBER(m_runHistory);
+  GDV_WRITE_MEMBER_SYM(m_macros);
+  GDV_WRITE_MEMBER_SYM(m_mostRecentlyRunMacro);
+  GDV_WRITE_MEMBER_SYM(m_applyHistory);
+  GDV_WRITE_MEMBER_SYM(m_runHistory);
 
   return m;
 }

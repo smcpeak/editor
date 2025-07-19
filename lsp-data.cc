@@ -43,8 +43,8 @@ LSP_Position::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
 
-  GDV_WRITE_MEMBER_SK(m_line);
-  GDV_WRITE_MEMBER_SK(m_character);
+  GDV_WRITE_MEMBER_STR(m_line);
+  GDV_WRITE_MEMBER_STR(m_character);
 
   return m;
 }
@@ -85,8 +85,8 @@ LSP_Range::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
 
-  GDV_WRITE_MEMBER_SK(m_start);
-  GDV_WRITE_MEMBER_SK(m_end);
+  GDV_WRITE_MEMBER_STR(m_start);
+  GDV_WRITE_MEMBER_STR(m_end);
 
   return m;
 }
@@ -135,10 +135,10 @@ LSP_Diagnostic::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
 
-  GDV_WRITE_MEMBER_SK(m_range);
-  GDV_WRITE_MEMBER_SK(m_severity);
-  GDV_WRITE_MEMBER_SK(m_source);
-  GDV_WRITE_MEMBER_SK(m_message);
+  GDV_WRITE_MEMBER_STR(m_range);
+  GDV_WRITE_MEMBER_STR(m_severity);
+  GDV_WRITE_MEMBER_STR(m_source);
+  GDV_WRITE_MEMBER_STR(m_message);
 
   return m;
 }
@@ -190,9 +190,9 @@ LSP_PublishDiagnosticsParams::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
 
-  GDV_WRITE_MEMBER_SK(m_uri);
-  GDV_WRITE_MEMBER_SK(m_version);
-  GDV_WRITE_MEMBER_SK(m_diagnostics);
+  GDV_WRITE_MEMBER_STR(m_uri);
+  GDV_WRITE_MEMBER_STR(m_version);
+  GDV_WRITE_MEMBER_STR(m_diagnostics);
 
   return m;
 }
