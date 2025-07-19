@@ -233,6 +233,9 @@ void LSPManagerTester::on_hasPendingErrorMessages() NOEXCEPT
 }
 
 
+OPEN_ANONYMOUS_NAMESPACE
+
+
 void entry(int argc, char **argv)
 {
   TRACE_ARGS();
@@ -257,6 +260,9 @@ void entry(int argc, char **argv)
     tester.testAsynchronously();
   }
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 ARGS_TEST_MAIN
