@@ -5,13 +5,14 @@
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 
-// smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // CMEMB
 #include "smbase/string-util.h"        // replaceAll
 #include "smbase/trace.h"              // TRACE
+
+#include <cstdint>                     // std::int64_t
 
 
 int NamedTextDocument::s_objectCount = 0;
@@ -115,7 +116,7 @@ string NamedTextDocument::fileStatusString() const
 
 void NamedTextDocument::replaceFileAndStats(
   std::vector<unsigned char> const &contents,
-  int64_t fileModificationTime,
+  std::int64_t fileModificationTime,
   bool readOnly)
 {
   TRACE("NamedTextDocument",

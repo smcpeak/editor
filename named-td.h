@@ -13,10 +13,8 @@
 
 #include "smbase/str.h"                // string
 
+#include <cstdint>                     // std::int64_t
 #include <memory>                      // std::unique_ptr
-
-// TODO: Change this to `cstdint`.
-#include <stdint.h>                    // int64_t
 
 
 // This class binds a TextDocument, which is an abstract mathematical
@@ -53,7 +51,7 @@ public:      // data
   // although there is never a reason to explicitly check for that
   // since we have 'hasFilename' for the former, and for the latter, we
   // always try to stat() the file before comparing its timestamp.
-  int64_t m_lastFileTimestamp;
+  std::int64_t m_lastFileTimestamp;
 
   // If true, the on-disk contents have changed since the last time we
   // saved or loaded the file.
@@ -137,7 +135,7 @@ public:      // funcs
   // ------------------------- file contents ---------------------------
   // Discard existing contents and set them based on the given info.
   void replaceFileAndStats(std::vector<unsigned char> const &contents,
-                           int64_t fileModificationTime,
+                           std::int64_t fileModificationTime,
                            bool readOnly);
 };
 
