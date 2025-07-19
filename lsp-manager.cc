@@ -407,7 +407,7 @@ std::string LSPManager::stopServer()
 }
 
 
-std::string LSPManager::checkStatus()
+std::string LSPManager::checkStatus() const
 {
   LSPAnnotatedProtocolState aps = getAnnotatedProtocolState();
 
@@ -431,15 +431,15 @@ std::string LSPManager::checkStatus()
     }
   }
 
-  // Dequeue any error messages.
+  // Pending error messages.
   if (int n = numPendingErrorMessages()) {
     msgs.push_back(stringb(
       "There are " << n << " pending error messages:"));
 
     int i = 0;
-    while (hasPendingErrorMessages()) {
+    for (std::string const &msg : m_pendingErrorMessages) {
       msgs.push_back(stringb(
-        "  " << ++i << ": " << takePendingErrorMessage()));
+        "  " << ++i << ": " << msg));
     }
   }
 

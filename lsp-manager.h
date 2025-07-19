@@ -216,11 +216,8 @@ public:      // methods
   // Stop the server process.  Return a success report for the user.
   std::string stopServer();
 
-  // Report on the current status of the LSP server.  This destructively
-  // takes and reports any accumulated stderr messages that were
-  // reported by the server.  (LSP servers do not normally report things
-  // that way though.)
-  std::string checkStatus();
+  // Report on the current status of the LSP server.
+  std::string checkStatus() const;
 
   // Get basic protocol state.
   LSPProtocolState getProtocolState() const;

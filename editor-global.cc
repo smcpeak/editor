@@ -10,6 +10,8 @@
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
+#include "lsp-client.h"                // LSPClient
+#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "process-watcher.h"           // ProcessWatcher
 #include "textinput.h"                 // TextInputDialog
 #include "vfs-query-sync.h"            // readFileSynchronously
@@ -45,6 +47,8 @@
 // libc++
 #include <algorithm>                   // std::max
 #include <deque>                       // std::deque
+#include <string>                      // std::string
+#include <utility>                     // std::move
 
 // libc
 #include <stdlib.h>                    // atoi
@@ -101,6 +105,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_filenameInputDialogHistory(),
     m_lspManager(true /*useRealClangd*/,
                  getLSPStderrLogFileName()),
+    m_lspErrorMessages(),
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
@@ -262,6 +267,12 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   QObject::connect(this, &EditorGlobal::focusChanged,
                    this, &EditorGlobal::focusChangedHandler);
 
+  // Connect LSP signals.
+  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingDiagnostics,
+                   this,         &EditorGlobal::on_lspHasPendingDiagnostics);
+  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
+                   this,         &EditorGlobal::on_lspHasPendingErrorMessages);
+
   ed->show();
 
   // On Windows 11, when launching the editor from a console, this seems
@@ -287,6 +298,13 @@ EditorGlobal::~EditorGlobal()
   // watching documents and potentially getting confused and/or sending
   // signals I am not prepared for.
   m_windows.deleteAll();
+
+  // Shut down the LSP server.
+  QObject::disconnect(&m_lspManager, nullptr, this, nullptr);
+  {
+    std::string shutdownMsg = m_lspManager.stopServer();
+    TRACE("lsp", "LSP Manager stopServer() returned: " << shutdownMsg);
+  }
 
   if (m_processes.isNotEmpty()) {
     // Now try to kill any running processes.  Do not wait for any of
@@ -437,9 +455,23 @@ NamedTextDocument *EditorGlobal::createNewFile(string const &dir)
 }
 
 
+NamedTextDocument const * NULLABLE
+EditorGlobal::getFileWithNameC(DocumentName const &docName) const
+{
+  return m_documentList.findDocumentByNameC(docName);
+}
+
+
+NamedTextDocument * NULLABLE
+EditorGlobal::getFileWithName(DocumentName &docName)
+{
+  return const_cast<NamedTextDocument *>(getFileWithNameC(docName));
+}
+
+
 bool EditorGlobal::hasFileWithName(DocumentName const &docName) const
 {
-  return m_documentList.findDocumentByNameC(docName) != NULL;
+  return getFileWithNameC(docName) != nullptr;
 }
 
 
@@ -752,6 +784,55 @@ void EditorGlobal::on_connectionFailed(
 }
 
 
+void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  while (m_lspManager.hasPendingDiagnostics()) {
+    std::unique_ptr<LSP_PublishDiagnosticsParams> diags(
+      m_lspManager.takePendingDiagnostics());
+
+    try {
+      // Extract the file path.
+      std::string path = LSPClient::getFileURIPath(diags->m_uri);
+
+      // Turn that into a document name.
+      DocumentName docName =
+        DocumentName::fromFilename(HostName::asLocal(), path);
+
+      if (NamedTextDocument *doc = getFileWithName(docName)) {
+        TRACE("lsp", "updated diagnostics for " << docName);
+        doc->m_lspDiagnostics = std::move(diags);
+      }
+      else {
+        xmessage(stringb(
+          "Received LSP diagnostics for " << docName <<
+          " but that file is not open."));
+      }
+    }
+
+    catch (XBase &x) {
+      addLSPErrorMessage(x.getMessage());
+    }
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  while (m_lspManager.hasPendingErrorMessages()) {
+    addLSPErrorMessage(m_lspManager.takePendingErrorMessage());
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+
 void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
 {
   TRACE("focus", "focus changed from " << qObjectDesc(from) <<
@@ -1029,6 +1110,34 @@ bool EditorGlobal::settings_removeHistoryCommand(
   else {
     return false;
   }
+}
+
+
+void EditorGlobal::addLSPErrorMessage(std::string &&msg)
+{
+  // I'm thinking this should also emit a signal, although right now I
+  // don't have any component prepared to receive it.
+  m_lspErrorMessages.push_back(std::move(msg));
+}
+
+
+std::string EditorGlobal::getLSPStatus() const
+{
+  std::ostringstream oss;
+
+  oss << "Status: " << m_lspManager.checkStatus() << "\n";
+
+  oss << "Has pending diagnostics: "
+      << GDValue(m_lspManager.hasPendingDiagnostics()) << "\n";
+
+  if (std::size_t n = m_lspErrorMessages.size()) {
+    oss << n << " errors:\n";
+    for (std::string const &m : m_lspErrorMessages) {
+      oss << "  " << m << "\n";
+    }
+  }
+
+  return oss.str();
 }
 
 

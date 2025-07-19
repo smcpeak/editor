@@ -24,7 +24,9 @@
 #include "smbase/objlist.h"                      // ObjList
 #include "smbase/owner.h"                        // Owner
 #include "smbase/refct-serf.h"                   // SerfRefCount
+#include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
+#include "smbase/std-string-fwd.h"               // std::string
 
 // Qt
 #include <QApplication>
@@ -32,6 +34,7 @@
 
 // libc++
 #include <deque>                                 // std::deque
+#include <list>                                  // std::list
 #include <set>                                   // std::set
 
 class ConnectionsDialog;                         // connections-dialog.h
@@ -98,6 +101,9 @@ public:       // data
   // Object to manage communication with the LSP server.
   LSPManager m_lspManager;
 
+  // List of LSP protocol errors.  For now, these just accumulate.
+  std::list<std::string> m_lspErrorMessages;
+
 private:     // data
   // Built-in font to use in the editor widgets.
   BuiltinFont m_editorBuiltinFont;
@@ -149,6 +155,12 @@ private Q_SLOTS:
   // Called when a VFS connection fails.
   void on_connectionFailed(HostName hostName, string reason) NOEXCEPT;
 
+  // Called when `m_lspManager` has pending diagnostics.
+  void on_lspHasPendingDiagnostics() NOEXCEPT;
+
+  // Called when `m_lspManager` has an error message to deliver.
+  void on_lspHasPendingErrorMessages() NOEXCEPT;
+
 public:       // funcs
   // intent is to make one of these in main()
   EditorGlobal(int argc, char **argv);
@@ -162,6 +174,14 @@ public:       // funcs
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
   NamedTextDocument *createNewFile(string const &dir);
+
+  // Get the document with `docName` if there is one.
+  NamedTextDocument const * NULLABLE
+  getFileWithNameC(DocumentName const &docName) const;
+
+  // Non-const version.
+  NamedTextDocument * NULLABLE
+  getFileWithName(DocumentName &docName);
 
   // Return true if any file document has the given name.
   bool hasFileWithName(DocumentName const &docName) const;
@@ -307,6 +327,13 @@ public:       // funcs
     QWidget * NULLABLE parent,
     EditorCommandLineFunction whichFunction,
     std::string const &cmd);
+
+  // Append an LSP error message.
+  void addLSPErrorMessage(std::string &&msg);
+
+  // Return a string summarizing the overall LSP state.  (This is a
+  // temporary substitute for better error reporting.)
+  std::string getLSPStatus() const;
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

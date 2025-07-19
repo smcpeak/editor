@@ -3,6 +3,8 @@
 
 #include "named-td.h"                  // this module
 
+#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
+
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
@@ -24,7 +26,8 @@ NamedTextDocument::NamedTextDocument()
     m_modifiedOnDisk(false),
     m_title(),
     m_highlighter(NULL),
-    m_highlightTrailingWhitespace(true)
+    m_highlightTrailingWhitespace(true),
+    m_lspDiagnostics()
 {
   NamedTextDocument::s_objectCount++;
 }

@@ -17,6 +17,7 @@
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "keys-dialog.h"               // KeysDialog
+#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-manager.h"               // LSPManager
 #include "macro-creator-dialog.h"      // MacroCreatorDialog
 #include "macro-run-dialog.h"          // MacroRunDialog
@@ -1944,7 +1945,7 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform(lspManager().checkStatus());
+  inform(editorGlobal()->getLSPStatus());
 
   GENERIC_CATCH_END
 }
@@ -2015,7 +2016,33 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform("TODO");
+  NamedTextDocument *doc = currentDocument();
+  xassert(doc);
+
+  std::ostringstream oss;
+
+  if (LSP_PublishDiagnosticsParams *diags = doc->m_lspDiagnostics.get()) {
+    oss << "Current version: " << doc->getVersionNumber() << "\n";
+
+    if (diags->m_version.has_value()) {
+      oss << "Diagnostics apply to version: " << diags->m_version.value() << "\n";
+    }
+    else {
+      oss << "Diagnostics do not specify a version!\n";
+    }
+
+    oss << diags->m_diagnostics.size() << " diagnostics:\n";
+
+    for (LSP_Diagnostic const &diag : diags->m_diagnostics) {
+      // Very crude, for now.
+      oss << toGDValue(diag) << "\n";
+    }
+  }
+  else {
+    oss << "There are no diagnostics for this file.";
+  }
+
+  inform(oss.str());
 
   GENERIC_CATCH_END
 }

@@ -6,15 +6,16 @@
 
 #include "named-td-fwd.h"              // fwds for this module
 
-// editor
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
+#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "td.h"                        // TextDocument
 
-// smbase
 #include "smbase/str.h"                // string
 
-// libc
+#include <memory>                      // std::unique_ptr
+
+// TODO: Change this to `cstdint`.
 #include <stdint.h>                    // int64_t
 
 
@@ -68,6 +69,8 @@ public:      // data
   // highlighter is attached to 'this' buffer (because it's allowed
   // to maintain internal incremental state about the buffer
   // contents)
+  //
+  // TODO: Change this to use `std::unique_ptr`.
   Highlighter *m_highlighter;      // (nullable owner)
 
   // When true, the widget will highlight instances of whitespace at
@@ -78,6 +81,11 @@ public:      // data
   // after the main highlighter.  I could perhaps generalize the idea
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
+
+  // If set, this is the latest set of diagnostics we have received from
+  // the LSP server.  Note that it has a version number that might not
+  // match the current contents.
+  std::unique_ptr<LSP_PublishDiagnosticsParams> m_lspDiagnostics;
 
 public:      // funcs
   // Create an anonymous document.  The caller must call
