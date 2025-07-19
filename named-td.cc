@@ -26,7 +26,7 @@ NamedTextDocument::NamedTextDocument()
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
-    m_highlighter(NULL),
+    m_highlighter(),
     m_highlightTrailingWhitespace(true),
     m_lspDiagnostics()
 {
@@ -36,9 +36,6 @@ NamedTextDocument::NamedTextDocument()
 NamedTextDocument::~NamedTextDocument()
 {
   NamedTextDocument::s_objectCount--;
-  if (m_highlighter) {
-    delete m_highlighter;
-  }
 }
 
 

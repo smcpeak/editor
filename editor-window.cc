@@ -551,14 +551,11 @@ static bool stringAmong(string const &str, char const * const *table,
 
 void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 {
-  if (file->m_highlighter) {
-    delete file->m_highlighter;
-    file->m_highlighter = NULL;
-  }
+  file->m_highlighter.reset();
 
   // This handles both "foo.diff" and "git diff".
   if (endsWith(file->resourceName(), "diff")) {
-    file->m_highlighter = new DiffHighlighter();
+    file->m_highlighter.reset(new DiffHighlighter());
 
     // Diff output has lots of lines that are not empty and have
     // whitespace on them.  I do not want that highlighted.
@@ -593,12 +590,12 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       "y",
     };
     if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
-      file->m_highlighter = new C_Highlighter(file->getCore());
+      file->m_highlighter.reset(new C_Highlighter(file->getCore()));
       return;
     }
 
     if (streq(ext, "mk")) {
-      file->m_highlighter = new Makefile_Highlighter(file->getCore());
+      file->m_highlighter.reset(new Makefile_Highlighter(file->getCore()));
       return;
     }
 
@@ -608,7 +605,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       "sh",
     };
     if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
-      file->m_highlighter = new HashComment_Highlighter(file->getCore());
+      file->m_highlighter.reset(new HashComment_Highlighter(file->getCore()));
       return;
     }
 
@@ -617,7 +614,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       "mli",
     };
     if (stringAmong(ext, ocamlExts, TABLESIZE(ocamlExts))) {
-      file->m_highlighter = new OCaml_Highlighter(file->getCore());
+      file->m_highlighter.reset(new OCaml_Highlighter(file->getCore()));
       return;
     }
 
@@ -626,13 +623,13 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
       "pyi",
     };
     if (stringAmong(ext, pythonExts, TABLESIZE(pythonExts))) {
-      file->m_highlighter = new Python_Highlighter(file->getCore());
+      file->m_highlighter.reset(new Python_Highlighter(file->getCore()));
       return;
     }
   }
 
   if (endsWith(filename, "Makefile")) {
-    file->m_highlighter = new Makefile_Highlighter(file->getCore());
+    file->m_highlighter.reset(new Makefile_Highlighter(file->getCore()));
     return;
   }
 }
@@ -1793,28 +1790,27 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
 
   // We are going to replace the highlighter (even if we replace it with
   // the same style), so remove the old one.
-  delete doc->m_highlighter;
-  doc->m_highlighter = NULL;
+  doc->m_highlighter.reset();
 
   // TODO: Obviously this is not a good method of recognizing the chosen
   // element, nor a scalable registry of available highlighters.
   if (chosen == "C/C++") {
-    doc->m_highlighter = new C_Highlighter(doc->getCore());
+    doc->m_highlighter.reset(new C_Highlighter(doc->getCore()));
   }
   else if (chosen == "Diff") {
-    doc->m_highlighter = new DiffHighlighter();
+    doc->m_highlighter.reset(new DiffHighlighter());
   }
   else if (chosen == "HashComment") {
-    doc->m_highlighter = new HashComment_Highlighter(doc->getCore());
+    doc->m_highlighter.reset(new HashComment_Highlighter(doc->getCore()));
   }
   else if (chosen == "Makefile") {
-    doc->m_highlighter = new Makefile_Highlighter(doc->getCore());
+    doc->m_highlighter.reset(new Makefile_Highlighter(doc->getCore()));
   }
   else if (chosen == "OCaml") {
-    doc->m_highlighter = new OCaml_Highlighter(doc->getCore());
+    doc->m_highlighter.reset(new OCaml_Highlighter(doc->getCore()));
   }
   else if (chosen == "Python") {
-    doc->m_highlighter = new Python_Highlighter(doc->getCore());
+    doc->m_highlighter.reset(new Python_Highlighter(doc->getCore()));
   }
   else {
     // We use no highlighter.

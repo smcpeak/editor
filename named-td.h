@@ -62,14 +62,11 @@ public:      // data
   // but perhaps shortened so long as it remains unique.
   string m_title;
 
-  // current highlighter; clients can come in and replace the
-  // highlighter, but it must always be the case that the
-  // highlighter is attached to 'this' buffer (because it's allowed
-  // to maintain internal incremental state about the buffer
-  // contents)
-  //
-  // TODO: Change this to use `std::unique_ptr`.
-  Highlighter *m_highlighter;      // (nullable owner)
+  // Current highlighter, if any.  Clients can come in and replace the
+  // highlighter, but it must always be the case that the highlighter is
+  // attached to 'this' buffer (because it's allowed to maintain
+  // internal incremental state about the buffer contents).
+  std::unique_ptr<Highlighter> m_highlighter;
 
   // When true, the widget will highlight instances of whitespace at
   // the end of a line.  Initially true, but is set to false by
