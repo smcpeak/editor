@@ -240,27 +240,30 @@ public:
 };
 
 
-// Check that `r` and `m` agree in all respects.
-void checkSame(ReferenceMap const &r, TextMCoordMap const &m)
+// Check that `m`, regarded as the "actual" value, and `r`, regarded as
+// the "expected" value, agree in all respects.
+void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
 {
-  EXPECT_EQ(r.empty(), m.empty());
-  EXPECT_EQ(r.numEntries(), m.numEntries());
-  EXPECT_EQ(r.numLines(), m.numLines());
+  EXN_CONTEXT("checkSame");
+
+  EXPECT_EQ(m.empty(), r.empty());
+  EXPECT_EQ(m.numEntries(), r.numEntries());
+  EXPECT_EQ(m.numLines(), r.numLines());
 
   // Compare as GDValue first so we get a printout on mismatch.
-  EXPECT_EQ(toGDValue(r), toGDValue(m));
+  EXPECT_EQ(toGDValue(m), toGDValue(r));
 
   // But then also compare without the conversion.  I don't know why
   // this would ever fail if the above succeeded, but it won't hurt.
-  xassert(r.getAllEntries() == m.getAllEntries());
+  xassert(m.getAllEntries() == r.getAllEntries());
 
   for (int i=0; i < r.numLines(); ++i) {
     EXN_CONTEXT_EXPR(i);
 
-    EXPECT_EQ(toGDValue(r.getEntriesForLine(i, 99)),
-              toGDValue(m.getEntriesForLine(i, 99)));
-    xassert(r.getEntriesForLine(i, 99) ==
-            m.getEntriesForLine(i, 99));
+    EXPECT_EQ(toGDValue(m.getEntriesForLine(i, 99)),
+              toGDValue(r.getEntriesForLine(i, 99)));
+    xassert(m.getEntriesForLine(i, 99) ==
+            r.getEntriesForLine(i, 99));
   }
 }
 
@@ -284,7 +287,7 @@ public:      // methods
   void selfCheck()
   {
     m_sut.selfCheck();
-    checkSame(m_ref, m_sut);
+    checkSame(m_sut, m_ref);
   }
 
   // Mutations: Perform on each in parallel.
@@ -596,6 +599,95 @@ void test_commentsExample()
 }
 
 
+// Insertions within a single line.
+void test_lineInsertions()
+{
+  EXN_CONTEXT("lineInsertions");
+
+  MapPair m;
+  m.selfCheck();
+
+  DIAG("Make a span.");
+  m.insert({{{0,5}, {0,10}}, 1});
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 5) MC(0 10)) value:1]}");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //        [    )
+  //          ^
+  //         ins
+
+  DIAG("Insert within.");
+  m.insertLineBytes({0, 7}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 5) MC(0 11)) value:1]}");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //        [     )
+  //        ^
+  //       ins
+
+  DIAG("Insert just inside left edge.");
+  m.insertLineBytes({0, 5}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 6) MC(0 12)) value:1]}");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //         [     )
+  //        ^
+  //       ins
+
+  DIAG("Insert just outside left edge.");
+  m.insertLineBytes({0, 5}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(0 13)) value:1]}");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //          [     )
+  //               ^
+  //              ins
+
+  DIAG("Insert just inside right edge.");
+  m.insertLineBytes({0, 12}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(0 14)) value:1]}");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //          [      )
+  //                 ^
+  //                ins
+
+  DIAG("Insert just outside right edge.");
+  m.insertLineBytes({0, 14}, 1);
+  m.selfCheck();
+
+  // It is questionable behavior to expand the range here, but that is
+  // what my implementation does currently.
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(0 15)) value:1]}");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //          [       )
+}
+
+
 // Do some deletions within a single line.
 void test_lineDeletions()
 {
@@ -740,6 +832,7 @@ void test_lineDeletions()
 void entry(int argc, char **argv)
 {
   test_commentsExample();
+  test_lineInsertions();
   test_lineDeletions();
 }
 

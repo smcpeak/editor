@@ -222,9 +222,107 @@ public:
 };
 
 
-void TextMCoordMap::LineData::insertBytes(int delStart, int lengthBytes)
+void TextMCoordMap::LineData::insertBytes(int insStart, int lengthBytes)
 {
-  xfailure("TODO");
+  insertBytes_spans(insStart, lengthBytes);
+
+  insertBytes_boundaries(m_startsHere, insStart, lengthBytes);
+  insertBytes_boundaries(m_endsHere, insStart, lengthBytes);
+}
+
+
+void TextMCoordMap::LineData::insertBytes_spans(
+  int insStart, int lengthBytes)
+{
+  DelayedSetChanges<SingleLineSpan> changes;
+
+  for (SingleLineSpan const &span : m_singleLineSpans) {
+    // We will modify `newSpan` to compute the replacement for `span`.
+    SingleLineSpan newSpan(span);
+
+    if (insStart <= span.m_startByteIndex) {
+      //     [SPAN]
+      //  ^
+      // ins
+
+      // Shift the span right.
+      newSpan.m_startByteIndex += lengthBytes;
+      newSpan.m_endByteIndex += lengthBytes;
+    }
+    else {
+      xassert(insStart > span.m_startByteIndex);
+
+      if (insStart > span.m_endByteIndex) {
+        // [SPAN]
+        //         ^
+        //        ins
+
+        // Insertion is beyond `span`, nothing to do.
+      }
+      else {
+        // [SPAN]
+        //   ^
+        //  ins
+
+        // Shift the right end to the right.
+        newSpan.m_endByteIndex += lengthBytes;
+      }
+    }
+
+    if (newSpan != span) {
+      changes.replaceWith(span, std::move(newSpan));
+    }
+  }
+
+  changes.execute(m_singleLineSpans);
+}
+
+
+/*static*/ void TextMCoordMap::LineData::insertBytes_boundaries(
+  std::set<Boundary> &boundaries,
+  int insStart,
+  int lengthBytes)
+{
+  DelayedSetChanges<Boundary> changes;
+
+  for (Boundary const &b : boundaries) {
+    Boundary newBoundary(b);
+
+    if (insStart <= b.m_byteIndex) {
+      //     B
+      //  ^
+      // ins
+
+      // Shift right.
+      newBoundary.m_byteIndex += lengthBytes;
+
+      // For the case where `insStart == b.m_byteIndex`, if this is a
+      // start boundary, I think shifting right, and thereby not
+      // expanding the span, makes sense.  But for an end boundary, I
+      // think it would be more intuitive to *not* shift right, again
+      // with the effect of not expanding the range, but this logic
+      // will shift and therefore expand.
+      //
+      // For now I'll keep this behavior since it means both endpoints
+      // can be treated the same way, and it probably makes little
+      // practical difference, but this might need to be revisited.
+    }
+    else {
+      xassert(insStart > b.m_byteIndex);
+
+      //  B
+      //     ^
+      //    ins
+
+      // No change needed.
+    }
+
+    if (newBoundary != b) {
+      changes.replaceWith(b, std::move(newBoundary));
+    }
+  }
+
+  changes.execute(boundaries);
 }
 
 
@@ -336,7 +434,7 @@ void TextMCoordMap::LineData::deleteBytes_spans(
         //         ^
         //      boundary
 
-        // Move the endpoint to the deletion start.
+        // Move the boundary to the deletion start.
         newBoundary.m_byteIndex = delStart;
       }
     }

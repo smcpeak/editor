@@ -163,6 +163,15 @@ private:     // types
     std::set<Boundary> m_endsHere;
 
   private:     // methods
+    // Insertion as it affects `m_singleLineSpans`.
+    void insertBytes_spans(int insStart, int lengthBytes);
+
+    // Insertion as it affects one of the boundary sets.
+    static void insertBytes_boundaries(
+      std::set<Boundary> &boundaries,
+      int insStart,
+      int lengthBytes);
+
     // Deletion as it affects `m_singleLineSpans`.
     void deleteBytes_spans(int delStart, int lengthBytes);
 
