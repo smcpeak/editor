@@ -596,31 +596,151 @@ void test_commentsExample()
 }
 
 
-// Do some edits within a single line.
-void test_intralineEdits()
+// Do some deletions within a single line.
+void test_lineDeletions()
 {
+  EXN_CONTEXT("lineDeletions");
+
   MapPair m;
   m.selfCheck();
 
+  DIAG("Make a span.");
   m.insert({{{0,10}, {0,20}}, 1});
+  m.selfCheck();
+
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 10) MC(0 20)) value:1]}");
-
   // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
-  //             [ span1  ]
+  //             [         )
+  //                 ^
+  //                del
 
-  //m.deleteLineBytes({0,14}, 1);
+  DIAG("Delete one byte in the middle.");
+  m.deleteLineBytes({0,14}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 10) MC(0 19)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //             [        )
+  //             ^
+  //            del
+
+  DIAG("Delete one byte just inside the left edge.");
+  m.deleteLineBytes({0,10}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 10) MC(0 18)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //             [       )
+  //            ^
+  //           del
+
+  DIAG("Delete one byte just outside the left edge.");
+  m.deleteLineBytes({0,9}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 9) MC(0 17)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //            [       )
+  //                   ^
+  //                  del
+
+  DIAG("Delete one byte just inside the right edge.");
+  m.deleteLineBytes({0,16}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 9) MC(0 16)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //            [      )
+  //                   ^
+  //                  del
+
+  DIAG("Delete one byte just outside the right edge (no effect).");
+  m.deleteLineBytes({0,16}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 9) MC(0 16)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //            [      )
+  //           ^^
+  //          del
+
+  DIAG("Delete two bytes straddling the left edge.");
+  m.deleteLineBytes({0,8}, 2);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 8) MC(0 14)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //           [     )
+  //                ^^
+  //               del
+
+  DIAG("Delete two bytes straddling the right edge.");
+  m.deleteLineBytes({0,13}, 2);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 8) MC(0 13)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //           [    )
+  //           ^^^^^
+  //            del
+
+  DIAG("Delete the exact range.");
+  m.deleteLineBytes({0,8}, 5);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 8) MC(0 8)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //           H
+  //          ^^
+  //          del
+
+  DIAG("Delete two bytes straddling the empty range.");
+  m.deleteLineBytes({0,7}, 2);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(0 7)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //          H
+  //   ^^^^^^^
+  //     del
+
+  DIAG("Delete all preceding bytes.");
+  m.deleteLineBytes({0,0}, 7);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 0) MC(0 0)) value:1]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //   H
 }
-
-
 
 
 void entry(int argc, char **argv)
 {
   test_commentsExample();
-  test_intralineEdits();
+  test_lineDeletions();
 }
 
 
