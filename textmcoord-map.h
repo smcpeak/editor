@@ -12,20 +12,60 @@
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
-#include "smbase/std-vector-fwd.h"     // stdfwd::vector
 
 #include <set>                         // std::set
 
 
-// Candidate to move someplace more general.
-#define DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Class) \
-  int compareTo(Class const &b) const;                  \
-  friend int compare(Class const &a, Class const &b)    \
-    { return a.compareTo(b); }                          \
-  DEFINE_FRIEND_RELATIONAL_OPERATORS(Class)
+/*
+  This class implements an associative map from a range of some text
+  document to some value, where the range endpoints are adjusted in
+  response to edits performed on the document.
 
+  As a simple example, we might start by creating associated spans that
+  look like:
 
-// Associative map from a range of some text document to some value.
+    0  text text
+    1  text [span1] text
+    2  text text
+    3  text [span2
+    4        span2
+    5        span2] more text
+    6  text text
+
+  The first column is the 0-based line index.  There are two entries
+  here, one for `span1` and one for `span2`.
+
+  After inserting a line at index 3, the map+document looks like:
+
+    0  text text
+    1  text [span1] text
+    2  text text
+    3  inserted text
+    4  text [span2
+    5        span2
+    6        span2] more text
+    7  text text
+
+  Then, after deleting line 5, we have:
+
+    0  text text
+    1  text [span1] text
+    2  text text
+    3  inserted text
+    4  text [span2
+    5        span2] more text
+    6  text text
+
+  An so on.  Inserting text moves all later endpoints right and down.
+  Deleting text moves later endpoints left and up, and endpoints within
+  the deleted region move to its start.  Entries are never removed,
+  although deletions can cause their endpoints to coincide.
+
+  The design is intended to perform well when most spans only intersect
+  a single line, multi-line spans are fairly short, and the total number
+  of spans is reasonably small.  In particular, the primary intended use
+  of spans is to record the text described by compiler error messages.
+*/
 class TextMCoordMap {
   // Not impossible, just not implemented, and automatic would be wrong.
   NO_OBJECT_COPIES(TextMCoordMap);
@@ -54,6 +94,8 @@ public:      // types
     void selfCheck() const;
 
     operator gdv::GDValue() const;
+
+    DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Entry)
   };
 
 private:     // types
@@ -104,7 +146,8 @@ private:     // types
   };
 
   // Data about values that are associated with ranges that start, end,
-  // or span a particular line.
+  // or span a particular line.  An object of this type is only created
+  // for a line that has at least one intersecting span.
   class LineData {
   public:      // data
     // Values associated with spans entirely on one line.
@@ -144,16 +187,39 @@ private:     // types
     // Modify the associated spans to reflect deleting `lengthBytes`
     // bytes starting at `delStart`.
     void deleteBytes(int delStart, int lengthBytes);
+
+    // Return a set of the Entry objects described by
+    // `m_singleLineSpans`, assuming that this line is `line`.
+    std::set<Entry> getSingleLineSpanEntries(int line) const;
+
+    // Get Entries for the multi-line spans that include this line.
+    // Each Entry describes just the portion of the associated span that
+    // covers this line; it is *not* the full Entry that was originally
+    // inserted.  Spans that go to the end of the line (because the
+    // extend to the next) will use `lineEndByteIndex`.
+    std::set<Entry> getMultiLinePartialEntries(
+      int line, int lineEndByteIndex) const;
   };
 
 private:     // data
   // Set of values that are part of some range.
   //
-  // Invariant: This set is the same as that mentioned across all of
-  // `m_lineData`.
+  // Invariant: This is the set of values mentioned across all of
+  // `m_lineData`, which is also the set of values mentioned in all of
+  // the `insert` calls.
   std::set<Value> m_values;
 
-  // Map from 0-based line number to associated data.
+  /* Map from 0-based line number to associated data.
+
+     Invariant: For every value `v` in `m_values`, either:
+
+     * it occurs as the value of exactly one SingleLineSpan and not in
+       any Boundary or continuation, or
+
+     * it occurs as the value of exactly one start Boundary, exactly one
+       stop Boundary (which is after the start), all intervening
+       continuations, and no SingleLineSpans.
+  */
   GapArray<LineData * NULLABLE /*owner*/> m_lineData;
 
 private:     // methods
@@ -210,14 +276,44 @@ public:      // methods
 
 
   // ---- Query the mapping ----
-  // Get all the entries that intersect `line`.
-  stdfwd::vector<Entry> getEntriesForLine(int line) const;
+  // True if `numEntries()` is zero.
+  bool empty() const;
 
-  // Get all current entries.
-  stdfwd::vector<Entry> getAllEntries() const;
+  // Total number of entries, i.e., the number of insertions that have
+  // been performed.
+  int numEntries() const;
 
-  // Dump the data.
+  // Total number of lines currently known.  Line numbers outside [0,
+  // numLines()-1] have no entries.  This is 0 if there are no entries,
+  // and otherwise it is one larger than the largest endpoint line.
+  int numLines() const;
+
+  // Get all the entries that intersect `line`.  This will include
+  // partial entries for multi-line spans, which describe only the
+  // portion of the original entry that is on the specified line.  When
+  // such an entry goes to the end of the line (because the full entry
+  // continues on to the next line), it uses `lineEndByteIndex` as its
+  // end.
+  //
+  // The intended use is within an editor, which should know how long
+  // the line is, and wants to render the line onscreen, so wants to get
+  // information about the spans that include it.
+  //
+  std::set<Entry> getEntriesForLine(int line, int lineEndByteIndex) const;
+
+  // Get all current entries, each as a complete (possibly multi-line)
+  // Entry.  This is the set of Entries that were originally inserted,
+  // except with the coordinates possibly changed due to subsequent text
+  // modification.  (So if there have been no text changes, this will
+  // return exactly the set of Entries that have been passed to
+  // `insert`.)
+  std::set<Entry> getAllEntries() const;
+
+  // Equivalent to `toGDValue(getAllEntries())`.
   operator gdv::GDValue() const;
+
+  // Internal data as GDValue, for debug/test purposes.
+  gdv::GDValue dumpInternals() const;
 };
 
 

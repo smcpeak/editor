@@ -3,11 +3,13 @@
 
 #include "textmcoord.h"                // this module
 
+#include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-swap.h"            // swap
 
 
 using namespace gdv;
+using namespace smbase;
 
 
 // ------------------------ TextMCoord -----------------------------
@@ -19,23 +21,12 @@ TextMCoord& TextMCoord::operator= (TextMCoord const &obj)
 }
 
 
-bool TextMCoord::operator== (TextMCoord const &obj) const
+int TextMCoord::compareTo(TextMCoord const &b) const
 {
-  return EMEMB(m_line) && EMEMB(m_byteIndex);
-}
-
-
-bool TextMCoord::operator< (TextMCoord const &obj) const
-{
-  if (this->m_line < obj.m_line) {
-    return true;
-  }
-  else if (this->m_line == obj.m_line) {
-    return this->m_byteIndex < obj.m_byteIndex;
-  }
-  else {
-    return false;
-  }
+  auto const &a = *this;
+  RET_IF_COMPARE_MEMBERS(m_line);
+  RET_IF_COMPARE_MEMBERS(m_byteIndex);
+  return 0;
 }
 
 
@@ -68,9 +59,12 @@ TextMCoordRange& TextMCoordRange::operator= (TextMCoordRange const &obj)
 }
 
 
-bool TextMCoordRange::operator== (TextMCoordRange const &obj) const
+int TextMCoordRange::compareTo(TextMCoordRange const &b) const
 {
-  return EMEMB(m_start) && EMEMB(m_end);
+  auto const &a = *this;
+  RET_IF_COMPARE_MEMBERS(m_start);
+  RET_IF_COMPARE_MEMBERS(m_end);
+  return 0;
 }
 
 

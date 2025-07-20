@@ -11,6 +11,8 @@
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/map-util.h"           // mapMoveValueAt
+#include "smbase/overflow.h"           // safeToInt
 #include "smbase/set-util.h"           // smbase::setInsertUnique
 
 
@@ -42,6 +44,15 @@ TextMCoordMap::Entry::operator gdv::GDValue() const
   GDV_WRITE_MEMBER_SYM(m_value);
 
   return m;
+}
+
+
+int TextMCoordMap::Entry::compareTo(Entry const &b) const
+{
+  auto const &a = *this;
+  RET_IF_COMPARE_MEMBERS(m_range);
+  RET_IF_COMPARE_MEMBERS(m_value);
+  return 0;
 }
 
 
@@ -348,6 +359,68 @@ void TextMCoordMap::LineData::deleteBytes_spans(
 }
 
 
+auto TextMCoordMap::LineData::getSingleLineSpanEntries(
+  int line) const -> std::set<Entry>
+{
+  std::set<Entry> ret;
+
+  for (SingleLineSpan const &span : m_singleLineSpans) {
+    ret.insert(
+      Entry(
+        TextMCoordRange(
+          TextMCoord(line, span.m_startByteIndex),
+          TextMCoord(line, span.m_endByteIndex)
+        ),
+        span.m_value
+      ));
+  }
+
+  return ret;
+}
+
+
+auto TextMCoordMap::LineData::getMultiLinePartialEntries(
+  int line, int lineEndByteIndex) const -> std::set<Entry>
+{
+  std::set<Entry> ret;
+
+  for (Boundary const &b : m_startsHere) {
+    ret.insert(
+      Entry(
+        TextMCoordRange(
+          TextMCoord(line, b.m_byteIndex),
+          TextMCoord(line, lineEndByteIndex)
+        ),
+        b.m_value
+      ));
+  }
+
+  for (Value const &v : m_continuesHere) {
+    ret.insert(
+      Entry(
+        TextMCoordRange(
+          TextMCoord(line, 0),
+          TextMCoord(line, lineEndByteIndex)
+        ),
+        v
+      ));
+  }
+
+  for (Boundary const &b : m_endsHere) {
+    ret.insert(
+      Entry(
+        TextMCoordRange(
+          TextMCoord(line, 0),
+          TextMCoord(line, b.m_byteIndex)
+        ),
+        b.m_value
+      ));
+  }
+
+  return ret;
+}
+
+
 // --------------------------- TextMCoordMap ---------------------------
 auto TextMCoordMap::getOrCreateLineData(int line) -> LineData *
 {
@@ -640,27 +713,78 @@ void TextMCoordMap::deleteLineBytes(TextMCoord tc, int lengthBytes)
 }
 
 
-auto TextMCoordMap::getEntriesForLine(int line) const -> std::vector<Entry>
+bool TextMCoordMap::empty() const
 {
-  std::vector<Entry> ret;
+  return m_values.empty();
+}
+
+
+int TextMCoordMap::numEntries() const
+{
+  return safeToInt(m_values.size());
+}
+
+
+int TextMCoordMap::numLines() const
+{
+  return m_lineData.length();
+}
+
+
+auto TextMCoordMap::getEntriesForLine(int line, int lineEndByteIndex) const
+  -> std::set<Entry>
+{
+  std::set<Entry> ret;
 
   if (LineData const *lineData = getLineDataC(line)) {
-    for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
-      ret.push_back(
-        Entry(
-          TextMCoordRange(
-            TextMCoord(line, span.m_startByteIndex),
-            TextMCoord(line, span.m_endByteIndex)
-          ),
-          span.m_value
-        ));
-    }
+    setInsertMany(ret,
+      lineData->getSingleLineSpanEntries(line));
 
-    // TODO: The other fields of `lineData`.  To satisfy the current
-    // signature I need to look above and below.  But it's not clear
-    // that is the right signature to provide what the rest of the
-    // editor needs.
+    setInsertMany(ret,
+      lineData->getMultiLinePartialEntries(line, lineEndByteIndex));
   }
+
+  return ret;
+}
+
+
+auto TextMCoordMap::getAllEntries() const -> std::set<Entry>
+{
+  std::set<Entry> ret;
+
+  // Map from associated value to the start coordinate of all of the
+  // spans for which we have seen the start but not the end.
+  std::map<Value, TextMCoord> openSpans;
+
+  for (int line=0; line < numLines(); ++line) {
+    if (LineData const *lineData = getLineDataC(line)) {
+      setInsertMany(ret,
+        lineData->getSingleLineSpanEntries(line));
+
+      for (Boundary const &b : lineData->m_startsHere) {
+        openSpans.insert({b.m_value,
+          TextMCoord(line, b.m_byteIndex)});
+      }
+
+      // The continuations aren't important here.
+
+      for (Boundary const &b : lineData->m_endsHere) {
+        // Extract the start coordinate.
+        TextMCoord startPt = mapMoveValueAt(openSpans, b.m_value);
+
+        ret.insert(
+          Entry(
+            TextMCoordRange(
+              startPt,
+              TextMCoord(line, b.m_byteIndex)
+            ),
+            b.m_value
+          ));
+      }
+    }
+  }
+
+  xassert(openSpans.empty());
 
   return ret;
 }
@@ -668,8 +792,14 @@ auto TextMCoordMap::getEntriesForLine(int line) const -> std::vector<Entry>
 
 TextMCoordMap::operator gdv::GDValue() const
 {
+  return toGDValue(getAllEntries());
+}
+
+
+gdv::GDValue TextMCoordMap::dumpInternals() const
+{
   GDValue m(GDVK_TAGGED_ORDERED_MAP);
-  m.taggedContainerSetTag("TextMCoordMap"_sym);
+  m.taggedContainerSetTag("TextMCoordMapInternals"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_values);
 

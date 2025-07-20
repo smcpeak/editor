@@ -1,9 +1,10 @@
 // textmcoord.h
 // TextMCoord and TextMCoordRange classes.
 
-#ifndef TEXTMCOORD_H
-#define TEXTMCOORD_H
+#ifndef EDITOR_TEXTMCOORD_H
+#define EDITOR_TEXTMCOORD_H
 
+#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB
 #include "smbase/str.h"                // stringBuilder
@@ -43,12 +44,8 @@ public:      // funcs
 
   TextMCoord& operator= (TextMCoord const &obj);
 
-  bool operator== (TextMCoord const &obj) const;
-
   // Lexicographic order by line then byteIndex.
-  bool operator< (TextMCoord const &obj) const;
-
-  RELATIONAL_OPERATORS(TextMCoord);
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextMCoord)
 
   bool isZero() const { return m_line==0 && m_byteIndex==0; }
 
@@ -101,8 +98,7 @@ public:      // funcs
 
   TextMCoordRange& operator= (TextMCoordRange const &obj);
 
-  bool operator== (TextMCoordRange const &obj) const;
-  NOTEQUAL_OPERATOR(TextMCoordRange);
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextMCoordRange)
 
   bool isZero() const { return m_start.isZero() && m_end.isZero(); }
 
@@ -159,4 +155,4 @@ inline stringBuilder& operator<< (stringBuilder &sb, TextMCoordRange const &tcr)
 }
 
 
-#endif // TEXTMCOORD_H
+#endif // EDITOR_TEXTMCOORD_H
