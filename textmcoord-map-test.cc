@@ -9,6 +9,7 @@
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES
 #include "smbase/sm-test.h"            // ARGS_MAIN
+#include "smbase/string-util.h"        // join, suffixAll
 
 #include <algorithm>                   // std::max
 #include <iostream>                    // std::cout
@@ -388,6 +389,19 @@ std::string lineEntries(MapPair const &m, int line)
 }
 
 
+// Get all line entries, each terminated by a newline.
+std::string allLineEntries(MapPair const &m)
+{
+  std::vector<std::string> results;
+
+  for (int i=0; i < m.numLines(); ++i) {
+    results.push_back(lineEntries(m, i));
+  }
+
+  return join(suffixAll(results, "\n"), "");
+}
+
+
 // This test follows the example in the comments above the declaration
 // of the `TextMCoordMap` class in the header file.  Note: That example
 // only does edits at the line granularity.
@@ -626,7 +640,6 @@ void test_lineInsertions()
 
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 5) MC(0 11)) value:1]}");
-  // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
   //        [     )
@@ -639,7 +652,6 @@ void test_lineInsertions()
 
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 6) MC(0 12)) value:1]}");
-  // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
   //         [     )
@@ -652,7 +664,6 @@ void test_lineInsertions()
 
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 7) MC(0 13)) value:1]}");
-  // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
   //          [     )
@@ -665,7 +676,6 @@ void test_lineInsertions()
 
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 7) MC(0 14)) value:1]}");
-  // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
   //          [      )
@@ -681,10 +691,127 @@ void test_lineInsertions()
 
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 7) MC(0 15)) value:1]}");
-  // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
   //          [       )
+}
+
+
+// Insertions affecting a multi-line span.
+void test_multilineInsertions()
+{
+  EXN_CONTEXT("multilineInsertions");
+
+  MapPair m;
+  m.selfCheck();
+
+  DIAG("Make a span.");
+  m.insert({{{0,5}, {1,10}}, 1});
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 5) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 10)) value:1]}\n");
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0      [
+  //          ^ ins
+  // 1           )
+
+  DIAG("Insert within first line (no effect).");
+  m.insertLineBytes({0, 7}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 5) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 10)) value:1]}\n");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0      [
+  // 1           )
+  //          ^ ins
+
+  DIAG("Insert within second line.");
+  m.insertLineBytes({1, 7}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 5) MC(1 11)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 5) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 11)) value:1]}\n");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0      [
+  //        ^ ins
+  // 1            )
+
+  DIAG("Insert just inside left edge.");
+  m.insertLineBytes({0, 5}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 6) MC(1 11)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 6) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 11)) value:1]}\n");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0       [
+  //        ^ ins
+  // 1            )
+
+  DIAG("Insert just outside left edge.");
+  m.insertLineBytes({0, 5}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(1 11)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 7) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 11)) value:1]}\n");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0        [
+  // 1            )
+  //             ^ ins
+
+  DIAG("Insert just inside right edge.");
+  m.insertLineBytes({1, 10}, 1);
+  m.selfCheck();
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(1 12)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 7) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 12)) value:1]}\n");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0        [
+  // 1             )
+  //               ^ ins
+
+  DIAG("Insert just outside right edge.");
+  m.insertLineBytes({1, 12}, 1);
+  m.selfCheck();
+
+  // It is questionable behavior to expand the range here, but that is
+  // what my implementation does currently.
+
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 7) MC(1 13)) value:1]}");
+  EXPECT_EQ(allLineEntries(m),
+    "{Entry[range:MCR(MC(0 7) MC(0 99)) value:1]}\n"
+    "{Entry[range:MCR(MC(1 0) MC(1 13)) value:1]}\n");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0        [
+  // 1              )
 }
 
 
@@ -833,6 +960,7 @@ void entry(int argc, char **argv)
 {
   test_commentsExample();
   test_lineInsertions();
+  test_multilineInsertions();
   test_lineDeletions();
 }
 
