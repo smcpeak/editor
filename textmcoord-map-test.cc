@@ -240,27 +240,6 @@ public:
 };
 
 
-// Dump the internals as an intended GDVN string for comparison with
-// expected values below.
-std::string internals(TextMCoordMap const &m)
-{
-  GDValueWriteOptions opts;
-
-  // This level of indentation meshes properly with the code context
-  // where the expected output appears.
-  opts.m_indentLevel = 2;
-
-  return m.dumpInternals().asIndentedString(opts);
-}
-
-
-// Get the entries for `line`, using 99 as "end of line".
-std::string lineEntries(TextMCoordMap const &m, int line)
-{
-  return toGDValue(m.getEntriesForLine(line, 99)).asString();
-}
-
-
 // Check that `r` and `m` agree in all respects.
 void checkSame(ReferenceMap const &r, TextMCoordMap const &m)
 {
@@ -286,14 +265,135 @@ void checkSame(ReferenceMap const &r, TextMCoordMap const &m)
 }
 
 
+// Combination of `TextMCoordMap` and `ReferenceMap`.
+class MapPair {
+public:      // types
+  typedef TextMCoordMap::Entry Entry;
+
+public:      // data
+  // System under test.
+  TextMCoordMap m_sut;
+
+  // Reference implementation.
+  ReferenceMap m_ref;
+
+public:      // methods
+  ~MapPair() = default;
+  MapPair() = default;
+
+  void selfCheck()
+  {
+    m_sut.selfCheck();
+    checkSame(m_ref, m_sut);
+  }
+
+  // Mutations: Perform on each in parallel.
+
+  void insert(Entry entry)
+  {
+    m_sut.insert(entry);
+    m_ref.insert(entry);
+  }
+
+  void clear()
+  {
+    m_sut.clear();
+    m_ref.clear();
+  }
+
+  void insertLines(int line, int count)
+  {
+    m_sut.insertLines(line, count);
+    m_ref.insertLines(line, count);
+  }
+
+  void deleteLines(int line, int count)
+  {
+    m_sut.deleteLines(line, count);
+    m_ref.deleteLines(line, count);
+  }
+
+  void insertLineBytes(TextMCoord tc, int lengthBytes)
+  {
+    m_sut.insertLineBytes(tc, lengthBytes);
+    m_ref.insertLineBytes(tc, lengthBytes);
+  }
+
+  void deleteLineBytes(TextMCoord tc, int lengthBytes)
+  {
+    m_sut.deleteLineBytes(tc, lengthBytes);
+    m_ref.deleteLineBytes(tc, lengthBytes);
+  }
+
+  // Queries: Pass through to system under test.
+
+  bool empty() const
+  {
+    return m_sut.empty();
+  }
+
+  int numEntries() const
+  {
+    return m_sut.numEntries();
+  }
+
+  int numLines() const
+  {
+    return m_sut.numLines();
+  }
+
+  std::set<Entry> getEntriesForLine(int line, int lineEndByteIndex) const
+  {
+    return m_sut.getEntriesForLine(line, lineEndByteIndex);
+  }
+
+  std::set<Entry> getAllEntries() const
+  {
+    return m_sut.getAllEntries();
+  }
+
+  operator gdv::GDValue() const
+  {
+    return m_sut.operator GDValue();
+  }
+
+  gdv::GDValue dumpInternals() const
+  {
+    return m_sut.dumpInternals();
+  }
+};
+
+
+// Dump the internals as an intended GDVN string for comparison with
+// expected values below.
+std::string internals(MapPair const &m)
+{
+  GDValueWriteOptions opts;
+
+  // This level of indentation meshes properly with the code context
+  // where the expected output appears.
+  opts.m_indentLevel = 2;
+
+  return m.dumpInternals().asIndentedString(opts);
+}
+
+
+// Get the entries for `line`, using 99 as "end of line".
+std::string lineEntries(MapPair const &m, int line)
+{
+  return toGDValue(m.getEntriesForLine(line, 99)).asString();
+}
+
+
 // This test follows the example in the comments above the declaration
-// of the `TextMCoordMap` class in the header file.
+// of the `TextMCoordMap` class in the header file.  Note: That example
+// only does edits at the line granularity.
 void test_commentsExample()
 {
   EXN_CONTEXT("commentsExample");
 
   DIAG("Start with empty map.");
-  TextMCoordMap m;
+  MapPair m;
   m.selfCheck();
   EXPECT_EQ(m.empty(), true);
   EXPECT_EQ(m.numEntries(), 0);
@@ -307,13 +407,8 @@ void test_commentsExample()
   EXPECT_EQ(lineEntries(m, -1), "{}");
   EXPECT_EQ(lineEntries(m, 0), "{}");
 
-  // Perform all operations in parallel on the reference map.
-  ReferenceMap r;
-  checkSame(r, m);
-
   DIAG("Insert value 1 at 1:5 to 1:12.");
   m.insert({{{1,5}, {1,12}}, 1});
-  r.insert({{{1,5}, {1,12}}, 1});
   m.selfCheck();
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 1);
@@ -340,11 +435,9 @@ void test_commentsExample()
         ]
       }
     ])");
-  checkSame(r, m);
 
   DIAG("Insert value 2 at 3:5 to 5:12.");
   m.insert({{{3,5}, {5,12}}, 2});
-  r.insert({{{3,5}, {5,12}}, 2});
   m.selfCheck();
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
@@ -396,11 +489,9 @@ void test_commentsExample()
         ]
       }
     ])");
-  checkSame(r, m);
 
   DIAG("Insert line at 3.");
   m.insertLines(3, 1);
-  r.insertLines(3, 1);
   m.selfCheck();
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
@@ -454,11 +545,9 @@ void test_commentsExample()
         ]
       }
     ])");
-  checkSame(r, m);
 
   DIAG("Delete line 5.");
   m.deleteLines(5, 1);
-  r.deleteLines(5, 1);
   m.selfCheck();
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
@@ -504,13 +593,34 @@ void test_commentsExample()
         ]
       }
     ])");
-  checkSame(r, m);
 }
+
+
+// Do some edits within a single line.
+void test_intralineEdits()
+{
+  MapPair m;
+  m.selfCheck();
+
+  m.insert({{{0,10}, {0,20}}, 1});
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 10) MC(0 20)) value:1]}");
+
+  // Initial state:
+  //             1         2         3
+  //   0123456789012345678901234567890
+  //             [ span1  ]
+
+  //m.deleteLineBytes({0,14}, 1);
+}
+
+
 
 
 void entry(int argc, char **argv)
 {
   test_commentsExample();
+  test_intralineEdits();
 }
 
 
