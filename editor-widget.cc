@@ -942,8 +942,8 @@ void EditorWidget::paintFrame(QPainter &winPaint)
        line++, y += fullLineHeight)
   {
     // ---- compute style segments ----
-    // number of characters from this line that are visible
-    int visibleLineChars = 0;
+    // Number of columns from this line that are visible.
+    int visibleLineCols = 0;
 
     // nominally the entire line is normal text
     modelCategories.clear(TC_NORMAL);
@@ -983,12 +983,12 @@ void EditorWidget::paintFrame(QPainter &winPaint)
         // First get the text without any extra newline.
         int const amt = std::min(lineLengthColumns - firstCol, visibleCols);
         m_editor->getLineLayout(TextLCoord(line, firstCol), text, amt);
-        visibleLineChars = amt;
+        visibleLineCols = amt;
 
         // Now possibly add the newline.
-        if (visibleLineChars < visibleCols && newlineAdjust != 0) {
+        if (visibleLineCols < visibleCols && newlineAdjust != 0) {
           text.push('\n');
-          visibleLineChars++;
+          visibleLineCols++;
         }
       }
 
@@ -1003,14 +1003,14 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       // Show search hits.
       this->addSearchMatchesToLineCategories(layoutCategories, line);
     }
-    xassert(visibleLineChars <= visibleCols);
-    xassert(text.length() == visibleLineChars);
+    xassert(visibleLineCols <= visibleCols);
+    xassert(text.length() == visibleLineCols);
 
     // Fill the remainder of 'text' with spaces.  These characters will
     // only be used if there is style information out beyond the actual
     // line character data.
     {
-      int remainderLen = visibleCols - visibleLineChars;
+      int remainderLen = visibleCols - visibleLineCols;
       memset(text.ptrToPushedMultipleAlt(remainderLen), ' ', remainderLen);
     }
     xassert(text.length() == visibleCols);
@@ -1059,7 +1059,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     paintOneLine(
       paint,
       lineGlyphColumns,
-      visibleLineChars,
+      visibleLineCols,
       startOfTrailingWhitespace,
       layoutCategories,
       text,
@@ -1088,8 +1088,16 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
 void EditorWidget::paintOneLine(
   QPainter &paint,
+
+  // Number of columns with glyphs on this line, including possible
+  // synthesized newline for 'visibleWhitespace'.  This value is
+  // independent of the window size or scroll position.
   int lineGlyphColumns,
-  int visibleLineChars,
+
+  // Number of columns from this line that are visible, including the
+  // possible synthetic newline.
+  int visibleLineCols,
+
   int startOfTrailingWhitespace,
   LineCategories const &layoutCategories,
   ArrayStack<char> const &text,
@@ -1138,7 +1146,7 @@ void EditorWidget::paintOneLine(
     int len = category.length;
     if (category.length == 0) {
       // actually means infinite length
-      if (printedCols >= visibleLineChars) {
+      if (printedCols >= visibleLineCols) {
         // we've printed all the interesting characters on this line
         // because we're past the end of the line's chars, and we're
         // on the last style run; for efficiency of communication
@@ -1150,7 +1158,7 @@ void EditorWidget::paintOneLine(
 
       // print only the remaining chars on the line, to improve
       // the chances we'll use the eraseRect() optimization above
-      len = visibleLineChars-printedCols;
+      len = visibleLineCols-printedCols;
     }
     len = std::min(len, visibleCols-printedCols);
     xassert(len > 0);

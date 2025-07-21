@@ -566,7 +566,7 @@ public:      // funcs
   void paintOneLine(
     QPainter &paint,
     int lineGlyphColumns,
-    int visibleLineChars,
+    int visibleLineCols,
     int startOfTrailingWhitespace,
     LineCategories const &layoutCategories,
     ArrayStack<char> const &text,
