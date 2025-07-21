@@ -565,7 +565,6 @@ public:      // funcs
   // site and its surrounding code, so see comments there for details.
   void paintOneLine(
     QPainter &paint,
-    int lineGlyphColumns,
     int visibleLineCols,
     int startOfTrailingWhitespace,
     LineCategories const &layoutCategories,

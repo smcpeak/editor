@@ -1058,7 +1058,6 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     // `layoutCategories` (how to draw them), draw the line to `paint`.
     paintOneLine(
       paint,
-      lineGlyphColumns,
       visibleLineCols,
       startOfTrailingWhitespace,
       layoutCategories,
@@ -1089,13 +1088,11 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 void EditorWidget::paintOneLine(
   QPainter &paint,
 
-  // Number of columns with glyphs on this line, including possible
-  // synthesized newline for 'visibleWhitespace'.  This value is
-  // independent of the window size or scroll position.
-  int lineGlyphColumns,
-
   // Number of columns from this line that are visible, including the
-  // possible synthetic newline.
+  // possible synthetic newline.  If this is less than `text.length()`
+  // (which is common), it means the line has blank space before the
+  // right edge of the widget, and we will try to paint that space with
+  // one large rectangle rather than however many character cells.
   int visibleLineCols,
 
   int startOfTrailingWhitespace,
@@ -1104,6 +1101,8 @@ void EditorWidget::paintOneLine(
   TextDocumentEditor::LineIterator &&lineIter,
   TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle)
 {
+  xassert(visibleLineCols <= text.length());
+
   int const lineWidth = width();
   int const fullLineHeight = getFullLineHeight();
   int const visibleCols = visColsPlusPartial();
@@ -1168,9 +1167,12 @@ void EditorWidget::paintOneLine(
     // is only partial...
     paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
 
+    // The number of columns to draw for this segment is the smaller of
+    // (a) segment length and (b) the number of columns left to print.
+    int const colsToDraw = std::min(len, visibleLineCols-printedCols);
+
     // draw text
-    int const charsToDraw = std::min(len, (lineGlyphColumns-firstCol)-printedCols);
-    for (int i=0; i < charsToDraw; i++) {
+    for (int i=0; i < colsToDraw; i++) {
       if (lineIter.has()) {
         if (lineIter.columnOffset() > firstCol+printedCols+i) {
           // This column is part of a multicolumn glyph.  Do not
