@@ -282,6 +282,10 @@ private:     // funcs
   // within a rectangle for one line of text.
   int getBaselineYCoordWithinLine() const;
 
+  // Get the height of a "full" line in pixels, meaning the font height
+  // plus the blank space inserted between lines.
+  int getFullLineHeight() const;
+
 protected:   // funcs
   // QWidget funcs
   virtual void paintEvent(QPaintEvent *) NOEXCEPT OVERRIDE;
@@ -554,6 +558,21 @@ public:      // funcs
   void updateFrame(QPaintEvent *ev);
   void paintFrame(QPainter &winPaint);
 
+  // Paint a single line of text.  The main inputs are `text` and
+  // `layoutCategories`.  The rest are somewhat closely tied to the call
+  // site and its surrounding code, so see comments there for details.
+  void paintOneLine(
+    QPainter &paint,
+    int lineGlyphColumns,
+    int visibleLineChars,
+    int startOfTrailingWhitespace,
+    LineCategories const &layoutCategories,
+    ArrayStack<char> const &text,
+    TextDocumentEditor::LineIterator &&lineIter,
+    TextCategory /*INOUT*/ &currentCategory,
+    QtBDFFont /*INOUT*/ *&curFont,
+    bool /*INOUT*/ &underlining);
+
   // Draw an underline on `paint`, the canvas for one line, starting at
   // pixel `x` and continuing for `numCols` columns.
   void drawUnderline(QPainter &paint, int x, int numCols);
@@ -585,10 +604,10 @@ public:      // funcs
     QPoint const &pt, char c, bool withinTrailingWhitespace);
 
   // Set 'curFont' and 'underline', plus the foreground
-  // and background colors of 'paint', based on 'db' and 'cat'.
+  // and background colors of 'paint', based on 'styleDB' and 'cat'.
   void setDrawStyle(QPainter &paint,
                     QtBDFFont *&curFont, bool &underlining,
-                    StyleDB *db, TextCategory cat);
+                    StyleDB const *styleDB, TextCategory cat);
 
   // show the info box near the cursor
   void showInfo(char const *info);

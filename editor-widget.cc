@@ -54,6 +54,7 @@
 
 // libc++
 #include <algorithm>                             // std::min
+#include <utility>                               // std::move
 
 using namespace gdv;
 using namespace smbase;
@@ -868,7 +869,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   // so as to improve drawing locality and avoid excessive allocation
   // in the server
   int const lineWidth = width();
-  int const fullLineHeight = m_fontHeight + m_interLineSpace;
+  int const fullLineHeight = getFullLineHeight();
   QPixmap pixmap(lineWidth, fullLineHeight);
 
   // NOTE: This does not preclude drawing objects that span multiple
@@ -896,10 +897,13 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Currently selected category and style (so we can avoid possibly
   // expensive calls to change styles).
+  //
+  // TODO: Factor this "current category" and its associated font, etc.,
+  // as a separate object.
   TextCategory currentCategory = TC_NORMAL;
   QtBDFFont *curFont = NULL;
   bool underlining = false;     // whether drawing underlines
-  StyleDB *styleDB = StyleDB::instance();
+  StyleDB const *styleDB = StyleDB::instance();
   setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
 
   // do same for 'winPaint', just to set the background color
@@ -1042,17 +1046,6 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       }
     }
 
-    // Clear the left margin to the normal background color.
-    if (currentCategory != TC_NORMAL) {
-      currentCategory = TC_NORMAL;
-      setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
-    }
-    paint.eraseRect(0,0, m_leftMargin, fullLineHeight);
-
-    // Next category entry to use.
-    LineCategoryIter category(layoutCategories);
-    category.advanceCharsOrCols(firstCol);
-
     // Iterator over line contents.  This is partially redundant with
     // what is in 'text', but needed to handle glyphs that span columns.
     // Perhaps I should remove 'text' at some point.
@@ -1061,94 +1054,20 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       lineIter.advByte();
     }
 
-    // ---- render text+style segments -----
-    // right edge of what has not been painted, relative to
-    // the pixels in the pixmap
-    int x = m_leftMargin;
-
-    // Number of columns printed.
-    int printedCols = 0;
-
-    // 'y' coordinate of the origin point of characters
-    int baseline = getBaselineYCoordWithinLine();
-
-    // loop over segments with different styles
-    while (x < lineWidth) {
-      if (!( printedCols < visibleCols )) {
-        // This happens if we are asked to paint before the visible
-        // region calculation runs.  That is not supposed to happen
-        // normally, but failing an assertion in the paint routine
-        // causes trouble, and I can easily cope with it here.
-        break;
-      }
-
-      // set style
-      if (category.category != currentCategory) {
-        currentCategory = category.category;
-        setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
-      }
-
-      // compute how many characters to print in this segment
-      int len = category.length;
-      if (category.length == 0) {
-        // actually means infinite length
-        if (printedCols >= visibleLineChars) {
-          // we've printed all the interesting characters on this line
-          // because we're past the end of the line's chars, and we're
-          // on the last style run; for efficiency of communication
-          // with the X server, render the remainder of this line with
-          // a single rectangle
-          paint.eraseRect(x,0, lineWidth-x, fullLineHeight);
-          break;   // out of loop over line segments
-        }
-
-        // print only the remaining chars on the line, to improve
-        // the chances we'll use the eraseRect() optimization above
-        len = visibleLineChars-printedCols;
-      }
-      len = std::min(len, visibleCols-printedCols);
-      xassert(len > 0);
-
-      // The QtBDFFont package must be treated as if it draws
-      // characters with transparency, even though the transparency
-      // is only partial...
-      paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
-
-      // draw text
-      int const charsToDraw = std::min(len, (lineGlyphColumns-firstCol)-printedCols);
-      for (int i=0; i < charsToDraw; i++) {
-        if (lineIter.has()) {
-          if (lineIter.columnOffset() > firstCol+printedCols+i) {
-            // This column is part of a multicolumn glyph.  Do not
-            // draw any glyph here.
-            continue;
-          }
-          xassert(lineIter.columnOffset() == firstCol+printedCols+i);
-          lineIter.advByte();
-        }
-        else if (text[printedCols+i] != '\n') {
-          // The only thing we should need to print beyond what is in
-          // the line iterator is a newline, so skip drawing here.
-          continue;
-        }
-
-        bool withinTrailingWhitespace =
-          firstCol + printedCols + i >= startOfTrailingWhitespace;
-        this->drawOneChar(paint, curFont,
-                          QPoint(x + m_fontWidth*i, baseline),
-                          text[printedCols+i],
-                          withinTrailingWhitespace);
-      }
-
-      if (underlining) {
-        drawUnderline(paint, x, len);
-      }
-
-      // Advance to next category segment.
-      x += m_fontWidth * len;
-      printedCols += len;
-      category.advanceCharsOrCols(len);
-    }
+    // Given that we have chosen how to render the line, storing that
+    // information primarily into `text` (chars to draw) and
+    // `layoutCategories` (how to draw them), draw the line to `paint`.
+    paintOneLine(
+      paint,
+      lineGlyphColumns,
+      visibleLineChars,
+      startOfTrailingWhitespace,
+      layoutCategories,
+      text,
+      std::move(lineIter),
+      /*INOUT*/ currentCategory,
+      /*INOUT*/ curFont,
+      /*INOUT*/ underlining);
 
     // Draw the cursor on the line it is on.
     if (line == m_editor->cursor().m_line) {
@@ -1167,6 +1086,128 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Also draw indicators of number of matches offscreen.
   this->drawOffscreenMatchIndicators(winPaint);
+}
+
+
+void EditorWidget::paintOneLine(
+  QPainter &paint,
+  int lineGlyphColumns,
+  int visibleLineChars,
+  int startOfTrailingWhitespace,
+  LineCategories const &layoutCategories,
+  ArrayStack<char> const &text,
+  TextDocumentEditor::LineIterator &&lineIter,
+  TextCategory /*INOUT*/ &currentCategory,
+  QtBDFFont /*INOUT*/ *&curFont,
+  bool /*INOUT*/ &underlining)
+{
+  int const lineWidth = width();
+  int const fullLineHeight = getFullLineHeight();
+  int const visibleCols = visColsPlusPartial();
+  int const firstCol = firstVisibleCol();
+  StyleDB const *styleDB = StyleDB::instance();
+
+  // Clear the left margin to the normal background color.
+  if (currentCategory != TC_NORMAL) {
+    currentCategory = TC_NORMAL;
+    setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
+  }
+  paint.eraseRect(0,0, m_leftMargin, fullLineHeight);
+
+  // Next category entry to use.
+  LineCategoryIter category(layoutCategories);
+  category.advanceCharsOrCols(firstCol);
+
+  // ---- render text+style segments -----
+  // right edge of what has not been painted, relative to
+  // the pixels in the pixmap
+  int x = m_leftMargin;
+
+  // Number of columns printed.
+  int printedCols = 0;
+
+  // 'y' coordinate of the origin point of characters
+  int baseline = getBaselineYCoordWithinLine();
+
+  // loop over segments with different styles
+  while (x < lineWidth) {
+    if (!( printedCols < visibleCols )) {
+      // This happens if we are asked to paint before the visible
+      // region calculation runs.  That is not supposed to happen
+      // normally, but failing an assertion in the paint routine
+      // causes trouble, and I can easily cope with it here.
+      break;
+    }
+
+    // set style
+    if (category.category != currentCategory) {
+      currentCategory = category.category;
+      setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
+    }
+
+    // compute how many characters to print in this segment
+    int len = category.length;
+    if (category.length == 0) {
+      // actually means infinite length
+      if (printedCols >= visibleLineChars) {
+        // we've printed all the interesting characters on this line
+        // because we're past the end of the line's chars, and we're
+        // on the last style run; for efficiency of communication
+        // with the X server, render the remainder of this line with
+        // a single rectangle
+        paint.eraseRect(x,0, lineWidth-x, fullLineHeight);
+        break;   // out of loop over line segments
+      }
+
+      // print only the remaining chars on the line, to improve
+      // the chances we'll use the eraseRect() optimization above
+      len = visibleLineChars-printedCols;
+    }
+    len = std::min(len, visibleCols-printedCols);
+    xassert(len > 0);
+
+    // The QtBDFFont package must be treated as if it draws
+    // characters with transparency, even though the transparency
+    // is only partial...
+    paint.eraseRect(x,0, m_fontWidth*len, fullLineHeight);
+
+    // draw text
+    int const charsToDraw = std::min(len, (lineGlyphColumns-firstCol)-printedCols);
+    for (int i=0; i < charsToDraw; i++) {
+      if (lineIter.has()) {
+        if (lineIter.columnOffset() > firstCol+printedCols+i) {
+          // This column is part of a multicolumn glyph.  Do not
+          // draw any glyph here.
+          continue;
+        }
+        xassert(lineIter.columnOffset() == firstCol+printedCols+i);
+        lineIter.advByte();
+      }
+      else if (text[printedCols+i] != '\n') {
+        // The only thing we should need to print beyond what is in
+        // the line iterator is a newline, so skip drawing here.
+        continue;
+      }
+
+      bool withinTrailingWhitespace =
+        firstCol + printedCols + i >= startOfTrailingWhitespace;
+      this->drawOneChar(paint, curFont,
+                        QPoint(x + m_fontWidth*i, baseline),
+                        text[printedCols+i],
+                        withinTrailingWhitespace);
+
+    } // character loop (within segment)
+
+    if (underlining) {
+      drawUnderline(paint, x, len);
+    }
+
+    // Advance to next category segment.
+    x += m_fontWidth * len;
+    printedCols += len;
+    category.advanceCharsOrCols(len);
+
+  } // segment loop
 }
 
 
@@ -1386,9 +1427,9 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
 
 void EditorWidget::setDrawStyle(QPainter &paint,
                                 QtBDFFont *&curFont, bool &underlining,
-                                StyleDB *db, TextCategory cat)
+                                StyleDB const *styleDB, TextCategory cat)
 {
-  TextStyle const &ts = db->getStyle(cat);
+  TextStyle const &ts = styleDB->getStyle(cat);
 
   // This is needed for underlining since we draw that as a line,
   // whereas otherwise the foreground color comes from the font glyphs.
@@ -2800,6 +2841,12 @@ int EditorWidget::getBaselineYCoordWithinLine() const
 {
   // The baseline is the lowest pixel in the ascender region.
   return m_fontAscent - 1;
+}
+
+
+int EditorWidget::getFullLineHeight() const
+{
+  return m_fontHeight + m_interLineSpace;
 }
 
 
