@@ -457,6 +457,23 @@ void TextMCoordMap::LineData::deleteBytes_spans(
 }
 
 
+int TextMCoordMap::LineData::removeEnd_getByteIndex(Value v)
+{
+  // Since the set is indexed by byte index first, we have to resort to
+  // linear search.
+  for (auto it = m_endsHere.begin(); it != m_endsHere.end(); ++it) {
+    if ((*it).m_value == v) {
+      int byteIndex = (*it).m_byteIndex;
+      m_endsHere.erase(it);
+      return byteIndex;
+    }
+  }
+
+  xfailure("no endpoint with specified value");
+  return 0;        // not reached
+}
+
+
 auto TextMCoordMap::LineData::getSingleLineSpanEntries(
   int line) const -> std::set<Entry>
 {
@@ -568,6 +585,8 @@ TextMCoordMap::TextMCoordMap()
 
 void TextMCoordMap::selfCheck() const
 {
+  EXN_CONTEXT("selfCheck");
+
   // All values we have seen in `m_lineData`.
   std::set<Value> seenValues;
 
@@ -687,6 +706,10 @@ void TextMCoordMap::clear()
       m_lineData.replace(i, nullptr);
     }
   }
+
+  // Having removed all of the `LineData` objects, clear the array as
+  // well in order to ensure `numLines()==0`.
+  m_lineData.clear();
 }
 
 
@@ -696,7 +719,14 @@ void TextMCoordMap::insertLines(int line, int count)
   LineData const * NULLABLE lineAbove = getLineDataC(line-1);
 
   // Insert blank entries in the array.
-  m_lineData.insertManyZeroes(line, count);
+  if (line < m_lineData.length()) {
+    m_lineData.insertManyZeroes(line, count);
+  }
+  else {
+    // We should have no need for empty entries since `line` is after
+    // any entries.
+    return;
+  }
 
   if (!lineAbove) {
     // No data to spread.
@@ -751,7 +781,13 @@ void TextMCoordMap::deleteLines(int line, int count)
 
     // And remove its pointer from the table, shifting the indices so
     // the next line will be at index `line`.
-    m_lineData.remove(line);
+    if (line < m_lineData.length()) {
+      m_lineData.remove(line);
+    }
+    else {
+      // We're beyond any recorded spans.
+      break;
+    }
   }
 
   if (singleLineSpans.empty() &&
@@ -772,14 +808,26 @@ void TextMCoordMap::deleteLines(int line, int count)
 
   for (Value const &v : starts) {
     if (contains(ends, v)) {
-      // This value's range started and ended in the deleted section,
-      // so put it all on one line.
+      // This value's range started and ended in the deleted section
+      // (above), so put it all on this (the next) line.
       lineBelow->m_singleLineSpans.insert(
         SingleLineSpan(0, 0, v));
     }
-    else {
+
+    else if (contains(lineBelow->m_continuesHere, v)) {
+      // Replace the continuation with a start.
+      setRemoveExisting(lineBelow->m_continuesHere, v);
       lineBelow->m_startsHere.insert(
         Boundary(0, v));
+    }
+
+    else {
+      // The span must have previously ended here.
+      int endByteIndex = lineBelow->removeEnd_getByteIndex(v);
+
+      // Replace the end with a single-line span.
+      lineBelow->m_singleLineSpans.insert(
+        SingleLineSpan(0, endByteIndex, v));
     }
   }
 

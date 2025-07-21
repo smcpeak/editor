@@ -197,6 +197,10 @@ private:     // types
     // bytes starting at `delStart`.
     void deleteBytes(int delStart, int lengthBytes);
 
+    // Remove from `m_endsHere` the boundary that applies to `v`, which
+    // must exist.  Return the byte index it carried.
+    int removeEnd_getByteIndex(Value v);
+
     // Return a set of the Entry objects described by
     // `m_singleLineSpans`, assuming that this line is `line`.
     std::set<Entry> getSingleLineSpanEntries(int line) const;
@@ -289,7 +293,7 @@ public:      // methods
   bool empty() const;
 
   // Total number of entries, i.e., the number of insertions that have
-  // been performed.
+  // been performed since the last `clear()`.
   int numEntries() const;
 
   // Total number of lines currently known.  Line numbers outside [0,

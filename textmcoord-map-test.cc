@@ -7,16 +7,19 @@
 
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::toGDValue
+#include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES
 #include "smbase/sm-test.h"            // ARGS_MAIN
 #include "smbase/string-util.h"        // join, suffixAll
 
 #include <algorithm>                   // std::max
+#include <cstdlib>                     // std::rand
 #include <iostream>                    // std::cout
 #include <set>                         // std::set
 
 
 using namespace gdv;
+using namespace smbase;
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -77,6 +80,13 @@ public:
 
   static TextMCoord adjustMC_deleteLines(TextMCoord mc, int line, int count)
   {
+    if (line <= mc.m_line &&
+                mc.m_line < (line+count)) {
+      // The endpoint is in the deleted region, so its column gets
+      // zeroed.
+      mc.m_byteIndex = 0;
+    }
+
     // Pull later lines up, but not above `line`.
     if (mc.m_line > line) {
       mc.m_line = std::max(line, mc.m_line - count);
@@ -261,11 +271,30 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
   for (int i=0; i < r.numLines(); ++i) {
     EXN_CONTEXT_EXPR(i);
 
-    EXPECT_EQ(toGDValue(m.getEntriesForLine(i, 99)),
-              toGDValue(r.getEntriesForLine(i, 99)));
-    xassert(m.getEntriesForLine(i, 99) ==
-            r.getEntriesForLine(i, 99));
+    // TODO: This hardcoded value is problematic.
+    EXPECT_EQ(toGDValue(m.getEntriesForLine(i, 999)),
+              toGDValue(r.getEntriesForLine(i, 999)));
+    xassert(m.getEntriesForLine(i, 999) ==
+            r.getEntriesForLine(i, 999));
   }
+}
+
+
+// Return a string that will evaluate to `tc` in a C++ context where a
+// `TextMCoord` is expected.
+std::string toCode(TextMCoord tc)
+{
+  return stringb("{" << tc.m_line << "," << tc.m_byteIndex << "}");
+}
+
+std::string toCode(TextMCoordRange tcr)
+{
+  return stringb("{" << toCode(tcr.m_start) << ", " << toCode(tcr.m_end) << "}");
+}
+
+std::string toCode(TextMCoordMap::Entry const &e)
+{
+  return stringb("{" << toCode(e.m_range) << ", " << e.m_value << "}");
 }
 
 
@@ -295,36 +324,45 @@ public:      // methods
 
   void insert(Entry entry)
   {
+    // Print these operations as C++ code that I can copy into my
+    // tests to recreate a scenario that was generated randomly.
+    DIAG("m.insert(" << toCode(entry) << ");");
+
     m_sut.insert(entry);
     m_ref.insert(entry);
   }
 
   void clear()
   {
+    DIAG("m.clear();");
     m_sut.clear();
     m_ref.clear();
   }
 
   void insertLines(int line, int count)
   {
+    DIAG("m.insertLines(" << line << ", " << count << ");");
     m_sut.insertLines(line, count);
     m_ref.insertLines(line, count);
   }
 
   void deleteLines(int line, int count)
   {
+    DIAG("m.deleteLines(" << line << ", " << count << ");");
     m_sut.deleteLines(line, count);
     m_ref.deleteLines(line, count);
   }
 
   void insertLineBytes(TextMCoord tc, int lengthBytes)
   {
+    DIAG("m.insertLineBytes(" << toCode(tc) << ", " << lengthBytes << ");");
     m_sut.insertLineBytes(tc, lengthBytes);
     m_ref.insertLineBytes(tc, lengthBytes);
   }
 
   void deleteLineBytes(TextMCoord tc, int lengthBytes)
   {
+    DIAG("m.deleteLineBytes(" << toCode(tc) << ", " << lengthBytes << ");");
     m_sut.deleteLineBytes(tc, lengthBytes);
     m_ref.deleteLineBytes(tc, lengthBytes);
   }
@@ -407,8 +445,6 @@ std::string allLineEntries(MapPair const &m)
 // only does edits at the line granularity.
 void test_commentsExample()
 {
-  EXN_CONTEXT("commentsExample");
-
   DIAG("Start with empty map.");
   MapPair m;
   m.selfCheck();
@@ -616,8 +652,6 @@ void test_commentsExample()
 // Insertions within a single line.
 void test_lineInsertions()
 {
-  EXN_CONTEXT("lineInsertions");
-
   MapPair m;
   m.selfCheck();
 
@@ -700,8 +734,6 @@ void test_lineInsertions()
 // Insertions affecting a multi-line span.
 void test_multilineInsertions()
 {
-  EXN_CONTEXT("multilineInsertions");
-
   MapPair m;
   m.selfCheck();
 
@@ -818,8 +850,6 @@ void test_multilineInsertions()
 // Do some deletions within a single line.
 void test_lineDeletions()
 {
-  EXN_CONTEXT("lineDeletions");
-
   MapPair m;
   m.selfCheck();
 
@@ -956,12 +986,353 @@ void test_lineDeletions()
 }
 
 
+// This test is smaller than the others because I didn't really do it
+// properly.  It just has a specific example I found during randomized
+// testing.
+void test_multilineDeletions()
+{
+  MapPair m;
+
+  m.insert({{{2,24}, {4,1}}, 3});
+  m.selfCheck();
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(2 24) MC(4 1)) value:3]}");
+
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0
+  // 1
+  // 2                         [
+  // 3
+  // 4  )         <-- del two lines starting here
+
+  m.deleteLines(4, 2);
+  m.selfCheck();
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(2 24) MC(4 0)) value:3]}");
+
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0
+  // 1
+  // 2                         [
+  // 3
+  // 4 )
+}
+
+
+// A specific scenario found through random testing.
+void test_multilineDeletion2()
+{
+  MapPair m;
+
+  m.insert({{{0,21}, {3,0}}, 3});
+  m.selfCheck();
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 21) MC(3 0)) value:3]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0                      [
+  // 1
+  // 2
+  // 3 )
+
+  m.deleteLines(0, 2);
+  m.selfCheck();
+  EXPECT_EQ(stringb(toGDValue(m)),
+    "{Entry[range:MCR(MC(0 0) MC(1 0)) value:3]}");
+  //             1         2         3
+  //   0123456789012345678901234567890
+  // 0 [
+  // 1 )
+}
+
+
+// Return a number in [0,n-1], approximately uniformly at random.
+int random(int n)
+{
+  return std::rand() % n;
+}
+
+
+int randomLine()
+{
+  return random(20);
+}
+
+int randomColumn()
+{
+  return random(40);
+}
+
+
+// Facilitate making a weighted random choice.
+//
+// Candidate to move to someplace more general.
+class RandomChoice {
+public:      // data
+  // Size of the uniform range.
+  int m_rangeSize;
+
+  // We've checked for all numbers below this value.
+  int m_checkLimit;
+
+  // Selected element in [0, m_rangeSize-1].
+  int m_choice;
+
+public:
+  RandomChoice(int rangeSize)
+    : m_rangeSize(rangeSize),
+      m_checkLimit(0),
+      m_choice(random(rangeSize))
+  {}
+
+  // Check whether the choice lands within the next `n` numbers.  That
+  // is, the probability of `check(n)` is proportional to `n`.  The sum
+  // of all `n` passed to `check` must not exceed `m_rangeSize`.
+  bool check(int n)
+  {
+    int oldLimit = m_checkLimit;
+    m_checkLimit += n;
+    xassert(m_checkLimit <= m_rangeSize);
+
+    return oldLimit <= m_choice &&
+                       m_choice < m_checkLimit;
+  }
+
+  // True if the choice has not been in any checked range.
+  bool remains() const
+  {
+    return m_choice >= m_checkLimit;
+  }
+};
+
+
+void randomInsert(MapPair &m)
+{
+  int spanID = m.numEntries() + 1;
+
+  int startLine = randomLine();
+  int startCol = randomColumn();
+
+  int endLine;
+  int endCol;
+
+  if (random(7) == 0) {
+    // Multi-line (rare).
+    endLine = startLine + 1 + random(2);
+    endCol = randomColumn();
+  }
+  else {
+    // Single-line (common).
+    endLine = startLine;
+    endCol = randomColumn() + startCol;
+  }
+
+  m.insert(MapPair::Entry(
+    TextMCoordRange(
+      TextMCoord(startLine, startCol),
+      TextMCoord(endLine, endCol)
+    ),
+    spanID));
+
+  m.selfCheck();
+}
+
+
+void randomInsertions(MapPair &m, int n)
+{
+  while (n--) {
+    randomInsert(m);
+  }
+}
+
+
+void randomEdit(MapPair &m)
+{
+  RandomChoice c(803);
+
+  if (c.check(2)) {
+    // Insert a new span after (most likely) having done some edits.
+    randomInsert(m);
+  }
+
+  else if (c.check(1)) {
+    m.clear();
+    m.selfCheck();
+    randomInsertions(m, 10);
+  }
+
+  else if (c.check(200)) {
+    m.insertLines(randomLine(), random(3));
+  }
+
+  else if (c.check(200)) {
+    m.deleteLines(randomLine(), random(3));
+  }
+
+  else if (c.check(200)) {
+    m.insertLineBytes(TextMCoord(randomLine(), randomColumn()), randomColumn());
+  }
+
+  else if (c.check(200)) {
+    m.deleteLineBytes(TextMCoord(randomLine(), randomColumn()), randomColumn());
+  }
+
+  else {
+    xfailure("impossible");
+  }
+}
+
+
+void test_randomOps()
+{
+  // On my machine, with the defaults, the test takes ~1s.
+  int const outerLimit = envAsIntOr(10, "TMT_OUTER_LIMIT");
+  int const innerLimit = envAsIntOr(100, "TMT_INNER_LIMIT");
+
+  for (int outer=0; outer < outerLimit; ++outer) {
+    EXN_CONTEXT_EXPR(outer);
+
+    MapPair m;
+    m.selfCheck();
+
+    randomInsertions(m, 10);
+
+    for (int inner=0; inner < innerLimit; ++inner) {
+      EXN_CONTEXT_EXPR(inner);
+
+      randomEdit(m);
+      m.selfCheck();
+    }
+  }
+}
+
+
+// Test issuing edit commands on top of an empty map.
+void test_editEmpty()
+{
+  MapPair m;
+  m.selfCheck();
+
+  m.insertLineBytes({13,13}, 2);
+  m.deleteLineBytes({13,31}, 21);
+  m.insertLines(18, 1);
+  m.deleteLines(10, 2);
+}
+
+
+// Issue with inserting right after the last range.
+void test_insertAfterLast()
+{
+  MapPair m;
+
+  m.insert({{{1,4}, {1,42}}, 2});
+  m.selfCheck();
+  EXPECT_EQ(m.numLines(), 2);
+
+  m.insertLines(2, 1);
+  m.selfCheck();
+  EXPECT_EQ(m.numLines(), 2);
+}
+
+
+// Clearing should ensure `numLines()==0`.
+void test_clear()
+{
+  MapPair m;
+  m.insert({{{1,4}, {1,42}}, 2});
+  m.selfCheck();
+  EXPECT_EQ(m.numLines(), 2);
+
+  m.clear();
+  m.selfCheck();
+  EXPECT_EQ(m.numLines(), 0);
+}
+
+
+// Another one found by random testing.
+void test_multilineDeletion3()
+{
+  MapPair m;
+
+  m.insert({{{3,0}, {4,8}}, 2});
+
+  VPVAL(toGDValue(m));
+
+  // The issue here is we have a multiline deletion that ends just
+  // before the line containing the endpoint.  Consequently, what was
+  // a multiline range has to be converted to a single-line range.
+  m.deleteLines(3, 1);
+
+  m.selfCheck();
+}
+
+
+// Found by random testing.
+void test_multilineDeletion4()
+{
+  MapPair m;
+
+  m.insert({{{19,11}, {20,27}}, 3});
+
+  VPVAL(toGDValue(m));
+
+  // Multiline deletion that covers the entire span.
+  m.deleteLines(19, 2);
+
+  VPVAL(toGDValue(m));
+  m.selfCheck();
+}
+
+
+// The issue here is that an insertion creates a line with a span start
+// greater than 99, which for a while was my crude sentinel in the test
+// code.
+void test_insertMakesLongLine()
+{
+  MapPair m;
+
+  m.insert({{{0,94}, {1,0}}, 3});
+  m.selfCheck();
+
+  m.insertLineBytes({0,11}, 33);
+  m.selfCheck();
+}
+
+
+// Ad-hoc reproduction of problematic sequences.
+void test_repro()
+{
+  MapPair m;
+
+  return;
+}
+
+
 void entry(int argc, char **argv)
 {
-  test_commentsExample();
-  test_lineInsertions();
-  test_multilineInsertions();
-  test_lineDeletions();
+  #define RUN_TEST(funcname) { \
+    EXN_CONTEXT(#funcname);    \
+    funcname();                \
+  }
+
+  RUN_TEST(test_repro);
+  RUN_TEST(test_editEmpty);
+  RUN_TEST(test_commentsExample);
+  RUN_TEST(test_lineInsertions);
+  RUN_TEST(test_multilineInsertions);
+  RUN_TEST(test_multilineDeletions);
+  RUN_TEST(test_multilineDeletion2);
+  RUN_TEST(test_multilineDeletion3);
+  RUN_TEST(test_multilineDeletion4);
+  RUN_TEST(test_lineDeletions);
+  RUN_TEST(test_insertAfterLast);
+  RUN_TEST(test_clear);
+  RUN_TEST(test_insertMakesLongLine);
+  RUN_TEST(test_randomOps);
+
+  #undef RUN_TEST
 }
 
 
