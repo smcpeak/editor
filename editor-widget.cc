@@ -917,7 +917,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   // ---- remaining setup ----
   // Visible area info.  The +1 here is to include the column after
   // the last fully visible column, which might be partially visible.
-  int const visibleCols = this->visCols() + 1;
+  int const visibleCols = this->visColsPlusPartial();
   int const firstCol = this->firstVisibleCol();
   int const firstLine = this->firstVisibleLine();
 
@@ -1070,7 +1070,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     int printedCols = 0;
 
     // 'y' coordinate of the origin point of characters
-    int baseline = m_fontAscent-1;
+    int baseline = getBaselineYCoordWithinLine();
 
     // loop over segments with different styles
     while (x < lineWidth) {
@@ -1157,86 +1157,11 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
     // Draw the cursor on the line it is on.
     if (line == m_editor->cursor().m_line) {
-      // just testing the mechanism that catches exceptions
-      // raised while drawing
-      //if (line == 5) {
-      //  THROW(XBase("aiyee! sample exception!"));
-      //}
-
-      paint.save();
-
-      // 0-based cursor column relative to what is visible
-      int const cursorCol = m_editor->cursor().m_column;
-      int const visibleCursorCol = cursorCol - firstCol;
-
-      // 'x' coordinate of the leftmost column of the character cell
-      // where the cursor is, i.e., the character that would be deleted
-      // if the Delete key were pressed.
-      x = m_leftMargin + m_fontWidth * visibleCursorCol;
-
-      if (visibleCursorCol < 0) {
-        // The cursor is off the left edge, so nothing to show.
-      }
-      else if (visibleCursorCol >= text.length()) {
-        // Cursor off right edge, also skip.
-      }
-      else if (false) {     // thin vertical bar
-        paint.setPen(m_cursorColor);
-        paint.drawLine(x,0, x, m_fontHeight-1);
-        paint.drawLine(x-1,0, x-1, m_fontHeight-1);
-      }
-      else if (!this->hasFocus()) {
-        // emacs-like non-focused unfilled box.
-        paint.setPen(m_cursorColor);
-        paint.setBrush(QBrush());
-
-        // Setting the pen width to 2 does not produce a good result,
-        // so just draw two 1-pixel rectangles.
-        paint.drawRect(x,   0, m_fontWidth,   m_fontHeight-1);
-        paint.drawRect(x+1, 1, m_fontWidth-2, m_fontHeight-3);
-      }
-      else {           // emacs-like box
-        // The character shown inside the box should use the same
-        // font as if it were not inside the cursor box, to minimize
-        // the visual disruption caused by the cursor's presence.
-        //
-        // Unfortunately, that leads to some code duplication with the
-        // main painting code.
-        TextCategory cursorCategory = layoutCategories.getCategoryAt(cursorCol);
-        FontVariant cursorFV = styleDB->getStyle(cursorCategory).variant;
-        bool underlineCursor = false;
-        if (cursorFV == FV_UNDERLINE) {
-          cursorFV = FV_NORMAL;   // 'cursorFontForFV' does not map FV_UNDERLINE
-          underlineCursor = true;
-        }
-        QtBDFFont *cursorFont = m_cursorFontForFV[cursorFV];
-
-        paint.setBackground(cursorFont->getBgColor());
-        paint.eraseRect(x,0, m_fontWidth, m_fontHeight);
-
-        if (cursorCol < lineGlyphColumns) {
-          // Drawing the block cursor overwrote the glyph, so we
-          // have to draw it again.
-          if (text[visibleCursorCol] == ' ' &&
-              !m_editor->cursorOnModelCoord()) {
-            // This is a layout placeholder space, not really present in
-            // the document, so don't draw it.
-          }
-          else {
-            this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                              text[visibleCursorCol],
-                              false /*withinTrailingWhitespace*/);
-          }
-        }
-
-        if (underlineCursor) {
-          paint.setPen(cursorFont->getFgColor());
-          int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
-          paint.drawLine(x, ulBaseline, x + m_fontWidth, ulBaseline);
-        }
-      }
-
-      paint.restore();
+      drawCursorOnLine(
+        paint,
+        layoutCategories,
+        text,
+        lineGlyphColumns);
     }
 
     drawSoftMarginIndicator(paint);
@@ -1247,6 +1172,101 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Also draw indicators of number of matches offscreen.
   this->drawOffscreenMatchIndicators(winPaint);
+}
+
+
+void EditorWidget::drawCursorOnLine(
+  QPainter &paint,
+  LineCategories const &layoutCategories,
+  ArrayStack<char> const &text,
+  int lineGlyphColumns)
+{
+  // just testing the mechanism that catches exceptions
+  // raised while drawing
+  //if (line == 5) {
+  //  THROW(XBase("aiyee! sample exception!"));
+  //}
+
+  paint.save();
+
+  int const visibleCols = visColsPlusPartial();
+
+  // 0-based cursor column relative to what is visible
+  int const firstCol = firstVisibleCol();
+  int const cursorCol = m_editor->cursor().m_column;
+  int const visibleCursorCol = cursorCol - firstCol;
+
+  // 'x' coordinate of the leftmost column of the character cell
+  // where the cursor is, i.e., the character that would be deleted
+  // if the Delete key were pressed.
+  int x = m_leftMargin + m_fontWidth * visibleCursorCol;
+
+  if (visibleCursorCol < 0) {
+    // The cursor is off the left edge, so nothing to show.
+  }
+  else if (visibleCursorCol >= visibleCols) {
+    // Cursor off right edge, also skip.
+  }
+  else if (false) {     // thin vertical bar
+    paint.setPen(m_cursorColor);
+    paint.drawLine(x,0, x, m_fontHeight-1);
+    paint.drawLine(x-1,0, x-1, m_fontHeight-1);
+  }
+  else if (!this->hasFocus()) {
+    // emacs-like non-focused unfilled box.
+    paint.setPen(m_cursorColor);
+    paint.setBrush(QBrush());
+
+    // Setting the pen width to 2 does not produce a good result,
+    // so just draw two 1-pixel rectangles.
+    paint.drawRect(x,   0, m_fontWidth,   m_fontHeight-1);
+    paint.drawRect(x+1, 1, m_fontWidth-2, m_fontHeight-3);
+  }
+  else {           // emacs-like box
+    StyleDB const *styleDB = StyleDB::instance();
+    int const baseline = getBaselineYCoordWithinLine();
+
+    // The character shown inside the box should use the same
+    // font as if it were not inside the cursor box, to minimize
+    // the visual disruption caused by the cursor's presence.
+    //
+    // Unfortunately, that leads to some code duplication with the
+    // main painting code.
+    TextCategory cursorCategory = layoutCategories.getCategoryAt(cursorCol);
+    FontVariant cursorFV = styleDB->getStyle(cursorCategory).variant;
+    bool underlineCursor = false;
+    if (cursorFV == FV_UNDERLINE) {
+      cursorFV = FV_NORMAL;   // 'cursorFontForFV' does not map FV_UNDERLINE
+      underlineCursor = true;
+    }
+    QtBDFFont *cursorFont = m_cursorFontForFV[cursorFV];
+
+    paint.setBackground(cursorFont->getBgColor());
+    paint.eraseRect(x,0, m_fontWidth, m_fontHeight);
+
+    if (cursorCol < lineGlyphColumns) {
+      // Drawing the block cursor overwrote the glyph, so we
+      // have to draw it again.
+      if (text[visibleCursorCol] == ' ' &&
+          !m_editor->cursorOnModelCoord()) {
+        // This is a layout placeholder space, not really present in
+        // the document, so don't draw it.
+      }
+      else {
+        this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
+                          text[visibleCursorCol],
+                          false /*withinTrailingWhitespace*/);
+      }
+    }
+
+    if (underlineCursor) {
+      paint.setPen(cursorFont->getFgColor());
+      int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
+      paint.drawLine(x, ulBaseline, x + m_fontWidth, ulBaseline);
+    }
+  }
+
+  paint.restore();
 }
 
 
@@ -1424,7 +1444,7 @@ void EditorWidget::drawOneCornerLabel(
   QRect rect(leftEdge, topEdge, labelWidth, m_fontHeight);
   paint.eraseRect(rect);
 
-  int baseline = m_fontAscent-1;
+  int baseline = getBaselineYCoordWithinLine();
   drawString(*font, paint, QPoint(leftEdge, topEdge+baseline), s);
 }
 
@@ -2766,6 +2786,13 @@ bool EditorWidget::ignoringChangeNotifications() const
 {
   return s_ignoreTextDocumentNotificationsGlobally ||
          m_ignoreTextDocumentNotifications;
+}
+
+
+int EditorWidget::getBaselineYCoordWithinLine() const
+{
+  // The baseline is the lowest pixel in the ascender region.
+  return m_fontAscent - 1;
 }
 
 

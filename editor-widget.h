@@ -278,6 +278,10 @@ private:     // funcs
   // True if we are currently ignoring document change notifications.
   bool ignoringChangeNotifications() const;
 
+  // Get the `y` coordinate of the origin point for drawing characters
+  // within a rectangle for one line of text.
+  int getBaselineYCoordWithinLine() const;
+
 protected:   // funcs
   // QWidget funcs
   virtual void paintEvent(QPaintEvent *) NOEXCEPT OVERRIDE;
@@ -392,6 +396,11 @@ public:      // funcs
   // line/col may also be visible.
   int visLines() const { return m_editor->visLines(); }
   int visCols() const { return m_editor->visColumns(); }
+
+  // Number of columns that are either fully or partially visible.  (We
+  // just assume there is always one partially-visible column, since
+  // being wrong just means a little wasted drawing time.)
+  int visColsPlusPartial() const { return visCols() + 1; }
 
   // --------------------------- matches ----------------------------
   // Change the match string and flags.  If 'scrollToHit', also scroll
@@ -544,6 +553,24 @@ public:      // funcs
   // intermediate paint steps
   void updateFrame(QPaintEvent *ev);
   void paintFrame(QPainter &winPaint);
+
+  // Assuming the cursor is on the current line, draw it onto `paint`,
+  // the canvas for one line.
+  //
+  // `layoutCategories` contains the text rendering categories for each
+  // character on the line.  This is used to redraw the character under
+  // the cursor with the appropriate color.
+  //
+  // `lineGlyphColumns` is the total number of columns with glyphs on
+  // this line, independent of window size or scroll position.
+  //
+  // `text` is the array of visible characters on the line.
+  //
+  void drawCursorOnLine(
+    QPainter &paint,
+    LineCategories const &layoutCategories,
+    ArrayStack<char> const &text,
+    int lineGlyphColumns);
 
   // If enabled, draw the soft margin on `paint`, which is the painting
   // area for a single line of text.
