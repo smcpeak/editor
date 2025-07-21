@@ -1155,7 +1155,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       category.advanceCharsOrCols(len);
     }
 
-    // draw the cursor as a line
+    // Draw the cursor on the line it is on.
     if (line == m_editor->cursor().m_line) {
       // just testing the mechanism that catches exceptions
       // raised while drawing
@@ -1239,16 +1239,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       paint.restore();
     }
 
-    // Draw a soft margin indicator.
-    if (m_visibleSoftMargin) {
-      paint.save();
-      paint.setPen(m_softMarginColor);
-
-      int x = m_leftMargin + m_fontWidth * (m_softMarginColumn - firstCol);
-      paint.drawLine(x, 0, x, m_fontHeight-1);
-
-      paint.restore();
-    }
+    drawSoftMarginIndicator(paint);
 
     // draw the line buffer to the window
     winPaint.drawPixmap(0,y, pixmap);    // draw it
@@ -1256,6 +1247,21 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Also draw indicators of number of matches offscreen.
   this->drawOffscreenMatchIndicators(winPaint);
+}
+
+
+void EditorWidget::drawSoftMarginIndicator(QPainter &paint)
+{
+  if (m_visibleSoftMargin) {
+    paint.save();
+    paint.setPen(m_softMarginColor);
+
+    int firstCol = firstVisibleCol();
+    int x = m_leftMargin + m_fontWidth * (m_softMarginColumn - firstCol);
+    paint.drawLine(x, 0, x, m_fontHeight-1);
+
+    paint.restore();
+  }
 }
 
 

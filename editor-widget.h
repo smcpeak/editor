@@ -545,6 +545,10 @@ public:      // funcs
   void updateFrame(QPaintEvent *ev);
   void paintFrame(QPainter &winPaint);
 
+  // If enabled, draw the soft margin on `paint`, which is the painting
+  // area for a single line of text.
+  void drawSoftMarginIndicator(QPainter &paint);
+
   // Paint a single character at the given location.
   void drawOneChar(QPainter &paint, QtBDFFont *font,
     QPoint const &pt, char c, bool withinTrailingWhitespace);
