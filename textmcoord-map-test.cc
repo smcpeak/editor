@@ -5,6 +5,7 @@
 
 #include "textmcoord-map.h"            // module under test
 
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-env.h"             // smbase::envAsIntOr
@@ -36,6 +37,7 @@ class ReferenceMap {
 
 public:      // types
   typedef TextMCoordMap::Entry Entry;
+  typedef TextMCoordMap::LineEntry LineEntry;
 
 public:      // data
   // All entries.
@@ -191,48 +193,49 @@ public:
     return ret;
   }
 
-  std::set<Entry> getEntriesForLine(int line, int lineEndByteIndex) const
+  std::set<LineEntry> getLineEntries(int line) const
   {
-    std::set<Entry> ret;
+    std::set<LineEntry> ret;
 
     for (Entry const &e : m_entries) {
       if (e.m_range.m_start.m_line == e.m_range.m_end.m_line) {
         // Entirely on one line.
         if (e.m_range.m_start.m_line == line) {
           // Entirely on *this* line.
-          ret.insert(e);
+          ret.insert(LineEntry(
+            e.m_range.m_start.m_byteIndex,
+            e.m_range.m_end.m_byteIndex,
+            e.m_value
+          ));
         }
       }
 
       else if (e.m_range.m_start.m_line == line) {
         // Begins here, goes to EOL.
-        ret.insert(Entry(
-          TextMCoordRange(
-            e.m_range.m_start,
-            TextMCoord(line, lineEndByteIndex)
-          ),
-          e.m_value));
+        ret.insert(LineEntry(
+          e.m_range.m_start.m_byteIndex,
+          std::nullopt,
+          e.m_value
+        ));
       }
 
       else if (e.m_range.m_end.m_line == line) {
         // Ends here, starts at line start.
-        ret.insert(Entry(
-          TextMCoordRange(
-            TextMCoord(line, 0),
-            e.m_range.m_end
-          ),
-          e.m_value));
+        ret.insert(LineEntry(
+          std::nullopt,
+          e.m_range.m_end.m_byteIndex,
+          e.m_value
+        ));
       }
 
       else if (e.m_range.m_start.m_line < line &&
                                           line < e.m_range.m_end.m_line) {
         // Continues here.
-        ret.insert(Entry(
-          TextMCoordRange(
-            TextMCoord(line, 0),
-            TextMCoord(line, lineEndByteIndex)
-          ),
-          e.m_value));
+        ret.insert(LineEntry(
+          std::nullopt,
+          std::nullopt,
+          e.m_value
+        ));
       }
     }
 
@@ -271,11 +274,10 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
   for (int i=0; i < r.numLines(); ++i) {
     EXN_CONTEXT_EXPR(i);
 
-    // TODO: This hardcoded value is problematic.
-    EXPECT_EQ(toGDValue(m.getEntriesForLine(i, 999)),
-              toGDValue(r.getEntriesForLine(i, 999)));
-    xassert(m.getEntriesForLine(i, 999) ==
-            r.getEntriesForLine(i, 999));
+    EXPECT_EQ(toGDValue(m.getLineEntries(i)),
+              toGDValue(r.getLineEntries(i)));
+    xassert(m.getLineEntries(i) ==
+            r.getLineEntries(i));
   }
 }
 
@@ -302,6 +304,7 @@ std::string toCode(TextMCoordMap::Entry const &e)
 class MapPair {
 public:      // types
   typedef TextMCoordMap::Entry Entry;
+  typedef TextMCoordMap::LineEntry LineEntry;
 
 public:      // data
   // System under test.
@@ -384,9 +387,9 @@ public:      // methods
     return m_sut.numLines();
   }
 
-  std::set<Entry> getEntriesForLine(int line, int lineEndByteIndex) const
+  std::set<LineEntry> getLineEntries(int line) const
   {
-    return m_sut.getEntriesForLine(line, lineEndByteIndex);
+    return m_sut.getLineEntries(line);
   }
 
   std::set<Entry> getAllEntries() const
@@ -420,10 +423,10 @@ std::string internals(MapPair const &m)
 }
 
 
-// Get the entries for `line`, using 99 as "end of line".
-std::string lineEntries(MapPair const &m, int line)
+// Get the entries for `line` as a string.
+std::string lineEntriesString(MapPair const &m, int line)
 {
-  return toGDValue(m.getEntriesForLine(line, 99)).asString();
+  return toGDValue(m.getLineEntries(line)).asString();
 }
 
 
@@ -433,10 +436,27 @@ std::string allLineEntries(MapPair const &m)
   std::vector<std::string> results;
 
   for (int i=0; i < m.numLines(); ++i) {
-    results.push_back(lineEntries(m, i));
+    results.push_back(lineEntriesString(m, i));
   }
 
   return join(suffixAll(results, "\n"), "");
+}
+
+
+// Check that every `LineEntry` in `m` can de/serialize to itself.
+void checkLineEntriesRoundtrip(MapPair const &m)
+{
+  typedef MapPair::LineEntry LineEntry;
+
+  for (int i=0; i < m.numLines(); ++i) {
+    std::set<LineEntry> lineEntries = m.getLineEntries(i);
+    GDValue v(toGDValue(lineEntries));
+    std::set<LineEntry> after =
+      gdvpTo<std::set<LineEntry>>(GDValueParser(v));
+
+    EXPECT_EQ(toGDValue(after), v);
+    xassert(after == lineEntries);
+  }
 }
 
 
@@ -448,6 +468,7 @@ void test_commentsExample()
   DIAG("Start with empty map.");
   MapPair m;
   m.selfCheck();
+  checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), true);
   EXPECT_EQ(m.numEntries(), 0);
   EXPECT_EQ(m.numLines(), 0);
@@ -457,23 +478,24 @@ void test_commentsExample()
     "TextMCoordMapInternals[values:{} lineData:{length:0}]");
 
   // Asking about out-of-range lines is allowed, and yields an empty set.
-  EXPECT_EQ(lineEntries(m, -1), "{}");
-  EXPECT_EQ(lineEntries(m, 0), "{}");
+  EXPECT_EQ(lineEntriesString(m, -1), "{}");
+  EXPECT_EQ(lineEntriesString(m, 0), "{}");
 
   DIAG("Insert value 1 at 1:5 to 1:12.");
   m.insert({{{1,5}, {1,12}}, 1});
   m.selfCheck();
+  checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 1);
   EXPECT_EQ(m.numLines(), 2);
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
-  EXPECT_EQ(lineEntries(m, -1), "{}");
-  EXPECT_EQ(lineEntries(m, 0),
+  EXPECT_EQ(lineEntriesString(m, -1), "{}");
+  EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
-  EXPECT_EQ(lineEntries(m, 1),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
-  EXPECT_EQ(lineEntries(m, 2), "{}");
+  EXPECT_EQ(lineEntriesString(m, 1),
+    "{LineEntry[startByteIndex:5 endByteIndex:12 value:1]}");
+  EXPECT_EQ(lineEntriesString(m, 2), "{}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1}
@@ -492,24 +514,25 @@ void test_commentsExample()
   DIAG("Insert value 2 at 3:5 to 5:12.");
   m.insert({{{3,5}, {5,12}}, 2});
   m.selfCheck();
+  checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
   EXPECT_EQ(m.numLines(), 6);
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1] "
      "Entry[range:MCR(MC(3 5) MC(5 12)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 0),
+  EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
-  EXPECT_EQ(lineEntries(m, 1),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
-  EXPECT_EQ(lineEntries(m, 2),
+  EXPECT_EQ(lineEntriesString(m, 1),
+    "{LineEntry[startByteIndex:5 endByteIndex:12 value:1]}");
+  EXPECT_EQ(lineEntriesString(m, 2),
     "{}");
-  EXPECT_EQ(lineEntries(m, 3),
-    "{Entry[range:MCR(MC(3 5) MC(3 99)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 4),
-    "{Entry[range:MCR(MC(4 0) MC(4 99)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 5),
-    "{Entry[range:MCR(MC(5 0) MC(5 12)) value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 3),
+    "{LineEntry[startByteIndex:5 endByteIndex:null value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 4),
+    "{LineEntry[startByteIndex:null endByteIndex:null value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 5),
+    "{LineEntry[startByteIndex:null endByteIndex:12 value:2]}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1 2}
@@ -546,26 +569,27 @@ void test_commentsExample()
   DIAG("Insert line at 3.");
   m.insertLines(3, 1);
   m.selfCheck();
+  checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
   EXPECT_EQ(m.numLines(), 7);
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1] "
      "Entry[range:MCR(MC(4 5) MC(6 12)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 0),
+  EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
-  EXPECT_EQ(lineEntries(m, 1),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
-  EXPECT_EQ(lineEntries(m, 2),
+  EXPECT_EQ(lineEntriesString(m, 1),
+    "{LineEntry[startByteIndex:5 endByteIndex:12 value:1]}");
+  EXPECT_EQ(lineEntriesString(m, 2),
     "{}");
-  EXPECT_EQ(lineEntries(m, 3),
+  EXPECT_EQ(lineEntriesString(m, 3),
     "{}");
-  EXPECT_EQ(lineEntries(m, 4),
-    "{Entry[range:MCR(MC(4 5) MC(4 99)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 5),
-    "{Entry[range:MCR(MC(5 0) MC(5 99)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 6),
-    "{Entry[range:MCR(MC(6 0) MC(6 12)) value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 4),
+    "{LineEntry[startByteIndex:5 endByteIndex:null value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 5),
+    "{LineEntry[startByteIndex:null endByteIndex:null value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 6),
+    "{LineEntry[startByteIndex:null endByteIndex:12 value:2]}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1 2}
@@ -602,24 +626,25 @@ void test_commentsExample()
   DIAG("Delete line 5.");
   m.deleteLines(5, 1);
   m.selfCheck();
+  checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
   EXPECT_EQ(m.numLines(), 6);
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1] "
      "Entry[range:MCR(MC(4 5) MC(5 12)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 0),
+  EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
-  EXPECT_EQ(lineEntries(m, 1),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
-  EXPECT_EQ(lineEntries(m, 2),
+  EXPECT_EQ(lineEntriesString(m, 1),
+    "{LineEntry[startByteIndex:5 endByteIndex:12 value:1]}");
+  EXPECT_EQ(lineEntriesString(m, 2),
     "{}");
-  EXPECT_EQ(lineEntries(m, 3),
+  EXPECT_EQ(lineEntriesString(m, 3),
     "{}");
-  EXPECT_EQ(lineEntries(m, 4),
-    "{Entry[range:MCR(MC(4 5) MC(4 99)) value:2]}");
-  EXPECT_EQ(lineEntries(m, 5),
-    "{Entry[range:MCR(MC(5 0) MC(5 12)) value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 4),
+    "{LineEntry[startByteIndex:5 endByteIndex:null value:2]}");
+  EXPECT_EQ(lineEntriesString(m, 5),
+    "{LineEntry[startByteIndex:null endByteIndex:12 value:2]}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1 2}
@@ -744,8 +769,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 5) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 10)) value:1]}\n");
+    "{LineEntry[startByteIndex:5 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:10 value:1]}\n");
   // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
@@ -760,8 +785,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 5) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 10)) value:1]}\n");
+    "{LineEntry[startByteIndex:5 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:10 value:1]}\n");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0      [
@@ -775,8 +800,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 5) MC(1 11)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 5) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 11)) value:1]}\n");
+    "{LineEntry[startByteIndex:5 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:11 value:1]}\n");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0      [
@@ -790,8 +815,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 6) MC(1 11)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 6) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 11)) value:1]}\n");
+    "{LineEntry[startByteIndex:6 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:11 value:1]}\n");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0       [
@@ -805,8 +830,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 7) MC(1 11)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 7) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 11)) value:1]}\n");
+    "{LineEntry[startByteIndex:7 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:11 value:1]}\n");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0        [
@@ -820,8 +845,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 7) MC(1 12)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 7) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 12)) value:1]}\n");
+    "{LineEntry[startByteIndex:7 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:12 value:1]}\n");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0        [
@@ -838,8 +863,8 @@ void test_multilineInsertions()
   EXPECT_EQ(stringb(toGDValue(m)),
     "{Entry[range:MCR(MC(0 7) MC(1 13)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
-    "{Entry[range:MCR(MC(0 7) MC(0 99)) value:1]}\n"
-    "{Entry[range:MCR(MC(1 0) MC(1 13)) value:1]}\n");
+    "{LineEntry[startByteIndex:7 endByteIndex:null value:1]}\n"
+    "{LineEntry[startByteIndex:null endByteIndex:13 value:1]}\n");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0        [
@@ -1205,6 +1230,8 @@ void test_randomOps()
       randomEdit(m);
       m.selfCheck();
     }
+
+    checkLineEntriesRoundtrip(m);
   }
 }
 
@@ -1301,6 +1328,35 @@ void test_insertMakesLongLine()
 }
 
 
+// Turn `gdvn` into a `LineEntry` and back, checking for equality.
+void checkLineEntryRoundtrip(char const *gdvn)
+{
+  GDValue v(GDValue::readFromStringView(gdvn));
+  TextMCoordMap::LineEntry le{GDValueParser(v)};
+  EXPECT_EQ(toGDValue(le).asString(), gdvn);
+}
+
+
+// Test parsing `LineEntry`.
+void test_parseLineEntry()
+{
+  checkLineEntryRoundtrip(
+    "LineEntry[startByteIndex:1 endByteIndex:2 value:3]");
+  checkLineEntryRoundtrip(
+    "LineEntry[startByteIndex:null endByteIndex:2 value:3]");
+  checkLineEntryRoundtrip(
+    "LineEntry[startByteIndex:1 endByteIndex:null value:3]");
+  checkLineEntryRoundtrip(
+    "LineEntry[startByteIndex:null endByteIndex:null value:3]");
+
+  EXPECT_EXN_SUBSTR(
+    checkLineEntryRoundtrip(
+      "LineEntry[startByteIndex:2 endByteIndex:1 value:3]"),
+    XGDValueError,
+    "m_startByteIndex.value() <= m_endByteIndex.value()");
+}
+
+
 // Ad-hoc reproduction of problematic sequences.
 void test_repro()
 {
@@ -1331,6 +1387,7 @@ void entry(int argc, char **argv)
   RUN_TEST(test_clear);
   RUN_TEST(test_insertMakesLongLine);
   RUN_TEST(test_randomOps);
+  RUN_TEST(test_parseLineEntry);
 
   #undef RUN_TEST
 }

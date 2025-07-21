@@ -3,17 +3,19 @@
 
 // See license.txt for copyright and terms of use.
 
-#include "smbase/gdvalue-set-fwd.h"    // gdv::toGDValue(std::set)
+#include "smbase/gdvalue-optional-fwd.h"         // gdv::toGDValue(std::optional)
+#include "smbase/gdvalue-set-fwd.h"              // gdv::toGDValue(std::set)
 
-#include "textmcoord-map.h"            // this module
+#include "textmcoord-map.h"                      // this module
 
-#include "smbase/compare-util-iface.h" // RET_IF_COMPARE_MEMBERS
-#include "smbase/container-util.h"     // smbase::contains
-#include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/map-util.h"           // mapMoveValueAt
-#include "smbase/overflow.h"           // safeToInt
-#include "smbase/set-util.h"           // smbase::setInsertUnique
+#include "smbase/compare-util-iface.h"           // RET_IF_COMPARE_MEMBERS
+#include "smbase/container-util.h"               // smbase::contains
+#include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
+#include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/map-util.h"                     // mapMoveValueAt
+#include "smbase/overflow.h"                     // safeToInt
+#include "smbase/set-util.h"                     // smbase::setInsertUnique
 
 
 using namespace gdv;
@@ -51,6 +53,74 @@ int TextMCoordMap::Entry::compareTo(Entry const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_range);
+  RET_IF_COMPARE_MEMBERS(m_value);
+  return 0;
+}
+
+
+// ----------------------------- LineEntry -----------------------------
+TextMCoordMap::LineEntry::LineEntry(
+  std::optional<int> startByteIndex,
+  std::optional<int> endByteIndex,
+  Value value)
+  : m_startByteIndex(startByteIndex),
+    m_endByteIndex(endByteIndex),
+    m_value(value)
+{
+  selfCheck();
+}
+
+
+void TextMCoordMap::LineEntry::selfCheck()
+{
+  if (m_startByteIndex.has_value() && m_endByteIndex.has_value()) {
+    xassert(m_startByteIndex.value() <= m_endByteIndex.value());
+  }
+}
+
+
+TextMCoordMap::LineEntry::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP);
+  m.taggedContainerSetTag("LineEntry"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_startByteIndex);
+  GDV_WRITE_MEMBER_SYM(m_endByteIndex);
+  GDV_WRITE_MEMBER_SYM(m_value);
+
+  return m;
+}
+
+
+TextMCoordMap::LineEntry::LineEntry(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_SYM(m_startByteIndex),
+    GDVP_READ_MEMBER_SYM(m_endByteIndex),
+    GDVP_READ_MEMBER_SYM(m_value)
+{
+  // This is a novel pattern for me: read the incoming data, then run
+  // `selfCheck` in a handler that maps any problems to a
+  // parsing-related exception type.  This way the client only has to
+  // deal with the latter, and the exception carries context related to
+  // where we are in the parsing stream.
+  //
+  // This approach seems promising, although I should probably change
+  // the assertion type used for the underlying check from `XAssert` to
+  // something that indicates it is related to a violated invariant.
+  //
+  try {
+    selfCheck();
+  }
+  catch (XBase &x) {
+    p.throwError(x.getMessage());
+  }
+}
+
+
+int TextMCoordMap::LineEntry::compareTo(LineEntry const &b) const
+{
+  auto const &a = *this;
+  RET_IF_COMPARE_MEMBERS(m_startByteIndex);
+  RET_IF_COMPARE_MEMBERS(m_endByteIndex);
   RET_IF_COMPARE_MEMBERS(m_value);
   return 0;
 }
@@ -474,62 +544,41 @@ int TextMCoordMap::LineData::removeEnd_getByteIndex(Value v)
 }
 
 
-auto TextMCoordMap::LineData::getSingleLineSpanEntries(
-  int line) const -> std::set<Entry>
+auto TextMCoordMap::LineData::getLineEntries() const
+  -> std::set<LineEntry>
 {
-  std::set<Entry> ret;
+  std::set<LineEntry> ret;
 
   for (SingleLineSpan const &span : m_singleLineSpans) {
-    ret.insert(
-      Entry(
-        TextMCoordRange(
-          TextMCoord(line, span.m_startByteIndex),
-          TextMCoord(line, span.m_endByteIndex)
-        ),
-        span.m_value
-      ));
+    ret.insert(LineEntry(
+      span.m_startByteIndex,
+      span.m_endByteIndex,
+      span.m_value
+    ));
   }
 
-  return ret;
-}
-
-
-auto TextMCoordMap::LineData::getMultiLinePartialEntries(
-  int line, int lineEndByteIndex) const -> std::set<Entry>
-{
-  std::set<Entry> ret;
-
   for (Boundary const &b : m_startsHere) {
-    ret.insert(
-      Entry(
-        TextMCoordRange(
-          TextMCoord(line, b.m_byteIndex),
-          TextMCoord(line, lineEndByteIndex)
-        ),
-        b.m_value
-      ));
+    ret.insert(LineEntry(
+      b.m_byteIndex,
+      std::nullopt,
+      b.m_value
+    ));
   }
 
   for (Value const &v : m_continuesHere) {
-    ret.insert(
-      Entry(
-        TextMCoordRange(
-          TextMCoord(line, 0),
-          TextMCoord(line, lineEndByteIndex)
-        ),
-        v
-      ));
+    ret.insert(LineEntry(
+      std::nullopt,
+      std::nullopt,
+      v
+    ));
   }
 
   for (Boundary const &b : m_endsHere) {
-    ret.insert(
-      Entry(
-        TextMCoordRange(
-          TextMCoord(line, 0),
-          TextMCoord(line, b.m_byteIndex)
-        ),
-        b.m_value
-      ));
+    ret.insert(LineEntry(
+      std::nullopt,
+      b.m_byteIndex,
+      b.m_value
+    ));
   }
 
   return ret;
@@ -877,20 +926,14 @@ int TextMCoordMap::numLines() const
 }
 
 
-auto TextMCoordMap::getEntriesForLine(int line, int lineEndByteIndex) const
-  -> std::set<Entry>
+auto TextMCoordMap::getLineEntries(int line) const -> std::set<LineEntry>
 {
-  std::set<Entry> ret;
-
   if (LineData const *lineData = getLineDataC(line)) {
-    setInsertMany(ret,
-      lineData->getSingleLineSpanEntries(line));
-
-    setInsertMany(ret,
-      lineData->getMultiLinePartialEntries(line, lineEndByteIndex));
+    return lineData->getLineEntries();
   }
-
-  return ret;
+  else {
+    return {};
+  }
 }
 
 
@@ -904,8 +947,17 @@ auto TextMCoordMap::getAllEntries() const -> std::set<Entry>
 
   for (int line=0; line < numLines(); ++line) {
     if (LineData const *lineData = getLineDataC(line)) {
-      setInsertMany(ret,
-        lineData->getSingleLineSpanEntries(line));
+
+      for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
+        ret.insert(
+          Entry(
+            TextMCoordRange(
+              TextMCoord(line, span.m_startByteIndex),
+              TextMCoord(line, span.m_endByteIndex)
+            ),
+            span.m_value
+          ));
+      }
 
       for (Boundary const &b : lineData->m_startsHere) {
         openSpans.insert({b.m_value,

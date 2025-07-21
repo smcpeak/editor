@@ -11,8 +11,10 @@
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
+#include <optional>                    // std::optional
 #include <set>                         // std::set
 
 
@@ -96,6 +98,41 @@ public:      // types
     operator gdv::GDValue() const;
 
     DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Entry)
+  };
+
+  // Data returned by `getEntriesForLine`, describing the entries that
+  // intersect that line.
+  class LineEntry final {
+  public:      // data
+    // If set, the index where the range starts on this line.  If not
+    // set, the range begins on a previous line.
+    std::optional<int> m_startByteIndex;
+
+    // If set, the index where the range ends on this line.  If not set,
+    // the range ends on a subsequent line.
+    //
+    // Invariant: If both indices are set, then start <= end.
+    std::optional<int> m_endByteIndex;
+
+    // The associated value.
+    Value m_value;
+
+  public:
+    LineEntry(
+      std::optional<int> startByteIndex,
+      std::optional<int> endByteIndex,
+      Value value);
+
+    void selfCheck();
+
+    operator gdv::GDValue() const;
+
+    // There's no particular need to be able to parse GDV->LineEntry,
+    // but I've wanted it for other nearby types, so this is a
+    // preliminary experiment.
+    explicit LineEntry(gdv::GDValueParser const &p);
+
+    DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineEntry)
   };
 
 private:     // types
@@ -201,17 +238,8 @@ private:     // types
     // must exist.  Return the byte index it carried.
     int removeEnd_getByteIndex(Value v);
 
-    // Return a set of the Entry objects described by
-    // `m_singleLineSpans`, assuming that this line is `line`.
-    std::set<Entry> getSingleLineSpanEntries(int line) const;
-
-    // Get Entries for the multi-line spans that include this line.
-    // Each Entry describes just the portion of the associated span that
-    // covers this line; it is *not* the full Entry that was originally
-    // inserted.  Spans that go to the end of the line (because the
-    // extend to the next) will use `lineEndByteIndex`.
-    std::set<Entry> getMultiLinePartialEntries(
-      int line, int lineEndByteIndex) const;
+    // Return the `LineEntry`s for this line.
+    std::set<LineEntry> getLineEntries() const;
   };
 
 private:     // data
@@ -303,16 +331,8 @@ public:      // methods
 
   // Get all the entries that intersect `line`.  This will include
   // partial entries for multi-line spans, which describe only the
-  // portion of the original entry that is on the specified line.  When
-  // such an entry goes to the end of the line (because the full entry
-  // continues on to the next line), it uses `lineEndByteIndex` as its
-  // end.
-  //
-  // The intended use is within an editor, which should know how long
-  // the line is, and wants to render the line onscreen, so wants to get
-  // information about the spans that include it.
-  //
-  std::set<Entry> getEntriesForLine(int line, int lineEndByteIndex) const;
+  // portion of the original `Entry` that intersects the specified line.
+  std::set<LineEntry> getLineEntries(int line) const;
 
   // Get all current entries, each as a complete (possibly multi-line)
   // Entry.  This is the set of Entries that were originally inserted,
