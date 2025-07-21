@@ -956,6 +956,10 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       newlineAdjust = 1;
     }
 
+    // True if the cursor is on `line`.
+    bool const cursorOnCurrentLine =
+      (line == m_editor->cursor().m_line);
+
     // Number of cells in the line, excluding newline.
     int const lineLengthColumns = m_editor->lineLengthColumns(line);
 
@@ -963,7 +967,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     // We say there is no trailing whitespace on the cursor line
     // because highlighting it there is annoying and unhelpful.
     int const startOfTrailingWhitespace =
-      (line == m_editor->cursor().m_line)?
+      cursorOnCurrentLine?
         lineLengthColumns :
         lineLengthColumns - m_editor->countTrailingSpacesTabsColumns(line);
 
@@ -1063,7 +1067,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       /*INOUT*/ textCategoryAndStyle);
 
     // Draw the cursor on the line it is on.
-    if (line == m_editor->cursor().m_line) {
+    if (cursorOnCurrentLine) {
       drawCursorOnLine(
         paint,
         layoutCategories,
