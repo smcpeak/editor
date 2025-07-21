@@ -963,13 +963,17 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     // Number of cells in the line, excluding newline.
     int const lineLengthColumns = m_editor->lineLengthColumns(line);
 
-    // Column number (0-based) of first trailing whitespace character.
-    // We say there is no trailing whitespace on the cursor line
-    // because highlighting it there is annoying and unhelpful.
-    int const startOfTrailingWhitespace =
+    // How many columns of trailing whitespace does this line have?
+    int const lineTrailingWhitespaceCols =
       cursorOnCurrentLine?
-        lineLengthColumns :
-        lineLengthColumns - m_editor->countTrailingSpacesTabsColumns(line);
+        0 :     // Don't highlight trailing WS on the cursor line.
+        m_editor->countTrailingSpacesTabsColumns(line);
+
+    // Column number within the visible window of the first trailing
+    // whitespace character.  All characters in the line at or beyond
+    // this value will be printed with a different background color.
+    int const startOfTrailingWhitespaceVisibleCol =
+      lineLengthColumns - lineTrailingWhitespaceCols - firstCol;
 
     // Number of columns with glyphs on this line, including possible
     // synthesized newline for 'visibleWhitespace'.  This value is
@@ -1059,7 +1063,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     paintOneLine(
       paint,
       visibleLineCols,
-      startOfTrailingWhitespace,
+      startOfTrailingWhitespaceVisibleCol,
       layoutCategories,
       text,
       std::move(lineIter),
@@ -1086,19 +1090,28 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
 
 void EditorWidget::paintOneLine(
+  // Painting target.
   QPainter &paint,
 
   // Number of columns from this line that are visible, including the
   // possible synthetic newline.  If this is less than `text.length()`
   // (which is common), it means the line has blank space before the
-  // right edge of the widget, and we will try to paint that space with
-  // one large rectangle rather than however many character cells.
+  // right edge of the widget, and we will paint that space with one
+  // large rectangle rather than however many character cells.
   int visibleLineCols,
 
-  int startOfTrailingWhitespace,
+  // Column number within the visible window of the first trailing
+  // whitespace character.  All characters at or beyond this value will
+  // be printed with a different background color.
+  int startOfTrailingWhitespaceVisibleCol,
+
+  // TODO: Document.
   LineCategories const &layoutCategories,
   ArrayStack<char> const &text,
   TextDocumentEditor::LineIterator &&lineIter,
+
+  // Current text styling details, carried forward from line to line as
+  // we work our way down the widget area.
   TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle)
 {
   xassert(visibleLineCols <= text.length());
@@ -1189,7 +1202,7 @@ void EditorWidget::paintOneLine(
       }
 
       bool withinTrailingWhitespace =
-        firstCol + printedCols + i >= startOfTrailingWhitespace;
+        printedCols + i >= startOfTrailingWhitespaceVisibleCol;
       this->drawOneChar(paint,
                         textCategoryAndStyle.getFont(),
                         QPoint(x + m_fontWidth*i, baseline),

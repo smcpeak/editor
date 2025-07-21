@@ -561,12 +561,12 @@ public:      // funcs
   void paintFrame(QPainter &winPaint);
 
   // Paint a single line of text.  The main inputs are `text` and
-  // `layoutCategories`.  The rest are somewhat closely tied to the call
-  // site and its surrounding code, so see comments there for details.
+  // `layoutCategories`.  The parameters are documented in detail at the
+  // implementation site.
   void paintOneLine(
     QPainter &paint,
     int visibleLineCols,
-    int startOfTrailingWhitespace,
+    int startOfTrailingWhitespaceVisibleCol,
     LineCategories const &layoutCategories,
     ArrayStack<char> const &text,
     TextDocumentEditor::LineIterator &&lineIter,
