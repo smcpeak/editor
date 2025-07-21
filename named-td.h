@@ -9,6 +9,7 @@
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
+#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td.h"                        // TextDocument
 
 #include "smbase/str.h"                // string
@@ -81,6 +82,10 @@ public:      // data
   // the LSP server.  Note that it has a version number that might not
   // match the current contents.
   std::unique_ptr<LSP_PublishDiagnosticsParams> m_lspDiagnostics;
+
+  // If set, the diagnostics associated with this document.  (This will
+  // replace `m_lspDiagnostics`.)
+  std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
 
 public:      // funcs
   // Create an anonymous document.  The caller must call

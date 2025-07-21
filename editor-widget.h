@@ -29,6 +29,7 @@
 #include "smbase/refct-serf.h"                   // RCSerf
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
+#include "smbase/std-optional-fwd.h"             // std::optional
 
 // Qt
 #include <QWidget>
@@ -574,6 +575,25 @@ public:      // funcs
   // Draw an underline on `paint`, the canvas for one line, starting at
   // pixel `x` and continuing for `numCols` columns.
   void drawUnderline(QPainter &paint, int x, int numCols);
+
+  // Map a byte index to a column index; and nullopt to nullopt.
+  std::optional<int> byteIndexToLayoutColOpt(
+    int line,
+    std::optional<int> byteIndex) const;
+
+  // Draw on `paint`, a one-line canvas, boxes around spans associated
+  // with diagnostics for `line`.
+  void drawDiagnosticBoxes(
+    QPainter &paint,
+    int line);
+
+  // Draw to `paint`, the canvas for one line, a diagnostic box
+  // surrounding the text starting at `startVisCol` and going up to but
+  // *not* including `endVisCol`.
+  void drawDiagnosticBox(
+    QPainter &paint,
+    int startVisCol,
+    int endVisCol);
 
   // Assuming the cursor is on the current line, draw it onto `paint`,
   // the canvas for one line.

@@ -254,11 +254,28 @@ command-runner-test.exe: $(COMMAND_RUNNER_OBJS)
 $(eval $(call RUN_TEST_PROG,command-runner-test))
 
 
+# -------------------------- textmcoord-map-test --------------------------
+# This has to come before `named-td-test` since `named-td` needs
+# `textmcoord-map`.
+
+EDITOR_OBJS += textmcoord-map.o
+
+TEXTMCOORD_MAP_TEST_OBJS := $(EDITOR_OBJS)
+
+TEXTMCOORD_MAP_TEST_OBJS += textmcoord-map-test.o
+
+textmcoord-map-test.exe: $(TEXTMCOORD_MAP_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(TEXTMCOORD_MAP_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,textmcoord-map-test))
+
+
 # ---------------------- named-td-test ----------------------
 EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += named-td.o
+EDITOR_OBJS += td-diagnostics.o
 
 NAMED_TD_TEST_OBJS := $(EDITOR_OBJS)
 
@@ -495,19 +512,6 @@ lsp-manager-test.exe: $(LSP_MANAGER_TEST_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(LSP_MANAGER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,lsp-manager-test))
-
-
-# -------------------------- textmcoord-map-test --------------------------
-EDITOR_OBJS += textmcoord-map.o
-
-TEXTMCOORD_MAP_TEST_OBJS := $(EDITOR_OBJS)
-
-TEXTMCOORD_MAP_TEST_OBJS += textmcoord-map-test.o
-
-textmcoord-map-test.exe: $(TEXTMCOORD_MAP_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEXTMCOORD_MAP_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,textmcoord-map-test))
 
 
 # ----------------- git version ---------------------

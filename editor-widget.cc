@@ -10,6 +10,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
+#include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "textcategory.h"                        // LineCategories, etc.
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 
@@ -54,6 +55,7 @@
 
 // libc++
 #include <algorithm>                             // std::min
+#include <optional>                              // std::optional
 #include <utility>                               // std::move
 
 using namespace gdv;
@@ -1070,6 +1072,8 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       std::move(lineIter),
       /*INOUT*/ textCategoryAndStyle);
 
+    drawDiagnosticBoxes(paint, line);
+
     // Draw the cursor on the line it is on.
     if (cursorOnCurrentLine) {
       drawCursorOnLine(
@@ -1253,6 +1257,90 @@ void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
   // going into the next line, so truncate according to descent
   int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
   paint.drawLine(x, ulBaseline, x + m_fontWidth*numCols, ulBaseline);
+}
+
+
+std::optional<int> EditorWidget::byteIndexToLayoutColOpt(
+  int line,
+  std::optional<int> byteIndex) const
+{
+  if (byteIndex) {
+    return m_editor->toLCoord(TextMCoord(line, *byteIndex)).m_column;
+  }
+  else {
+    return std::nullopt;
+  }
+}
+
+
+void EditorWidget::drawDiagnosticBoxes(
+  QPainter &paint,
+  int line)
+{
+  // Does the document have any associated diagnostics?
+  TextDocumentDiagnostics const *diagnostics =
+    m_editor->m_namedDoc->m_diagnostics.get();
+  if (!diagnostics) {
+    return;
+  }
+
+  // Are there any diagnostics on this line?
+  std::set<TextDocumentDiagnostics::LineEntry> entries =
+    diagnostics->getLineEntries(line);
+  if (entries.empty()) {
+    return;
+  }
+
+  int const firstCol = firstVisibleCol();
+
+  paint.save();
+
+  // For now, just draw using a fixed red color.
+  paint.setPen(QColor(255, 0, 0));
+  paint.setBrush(Qt::NoBrush);
+
+  for (auto const &entry : entries) {
+    std::optional<int> startCol =
+      byteIndexToLayoutColOpt(line, entry.m_startByteIndex);
+    std::optional<int> endCol =
+      byteIndexToLayoutColOpt(line, entry.m_endByteIndex);
+
+    int bottomY = m_fontHeight - 1;
+
+    int leftX = 0;
+    if (startCol) {
+      if (endCol && (*startCol == *endCol)) {
+        // For a collapsed span, draw a thin box at the left side of the
+        // start column cell.
+        int x = m_fontWidth * (*startCol - firstCol);
+        paint.drawRect(x, 0, x+2, bottomY);
+        continue;
+      }
+
+      // Left edge.
+      leftX = m_fontWidth * (*startCol - firstCol);
+      paint.drawLine(leftX, 0, leftX, bottomY);
+    }
+
+    int rightX;
+    if (endCol) {
+      // Right edge.
+      rightX = m_fontWidth * (*endCol - firstCol) - 1;
+      paint.drawLine(rightX, 0, rightX, bottomY);
+    }
+    else {
+      rightX =
+        m_fontWidth * (m_editor->lineLengthColumns(line) - firstCol);
+    }
+
+    // Top edge.
+    paint.drawLine(leftX, 0, rightX, 0);
+
+    // Bottom edge.
+    paint.drawLine(leftX, bottomY, rightX, bottomY);
+  }
+
+  paint.restore();
 }
 
 
