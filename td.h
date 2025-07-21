@@ -1,8 +1,10 @@
 // td.h
 // Text document with undo/redo history attached to it.
 
-#ifndef TD_H
-#define TD_H
+#ifndef EDITOR_TD_H
+#define EDITOR_TD_H
+
+#include "td-fwd.h"                    // fwds for this module
 
 // editor
 #include "history.h"                   // HE_group
@@ -283,4 +285,4 @@ public:      // types
 };
 
 
-#endif // TD_H
+#endif // EDITOR_TD_H

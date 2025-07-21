@@ -4,8 +4,11 @@
 #ifndef TD_CORE_H
 #define TD_CORE_H
 
+#include "td-core-fwd.h"               // fwds for this module
+
 // editor
 #include "gap.h"                       // GapArray
+#include "td-fwd.h"                    // TextDocument
 #include "td-line.h"                   // TextDocumentLine
 #include "textmcoord.h"                // TextMCoord
 
@@ -20,12 +23,6 @@
 // libc++
 #include <cstdint>                     // std::uint64_t
 #include <vector>                      // std::vector
-
-class TextDocument;                    // td.h
-
-
-// Forward in this file.
-class TextDocumentObserver;
 
 
 // A text document is a non-empty sequence of lines.
