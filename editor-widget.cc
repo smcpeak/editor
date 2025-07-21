@@ -9,7 +9,7 @@
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
 #include "nearby-file.h"                         // getNearbyFilename
-#include "styledb.h"                             // StyleDB
+#include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "textcategory.h"                        // LineCategories, etc.
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 
@@ -897,17 +897,12 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Currently selected category and style (so we can avoid possibly
   // expensive calls to change styles).
-  //
-  // TODO: Factor this "current category" and its associated font, etc.,
-  // as a separate object.
-  TextCategory currentCategory = TC_NORMAL;
-  QtBDFFont *curFont = NULL;
-  bool underlining = false;     // whether drawing underlines
-  StyleDB const *styleDB = StyleDB::instance();
-  setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
+  TextCategoryAndStyle textCategoryAndStyle(
+    getTextCategoryAndStyle(TC_NORMAL));
+  textCategoryAndStyle.setDrawStyle(paint);
 
   // do same for 'winPaint', just to set the background color
-  setDrawStyle(winPaint, curFont, underlining, styleDB, currentCategory);
+  textCategoryAndStyle.setDrawStyle(winPaint);
 
   // ---- margins ----
   // top edge of what has not been painted, in window coordinates
@@ -1065,9 +1060,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       layoutCategories,
       text,
       std::move(lineIter),
-      /*INOUT*/ currentCategory,
-      /*INOUT*/ curFont,
-      /*INOUT*/ underlining);
+      /*INOUT*/ textCategoryAndStyle);
 
     // Draw the cursor on the line it is on.
     if (line == m_editor->cursor().m_line) {
@@ -1097,21 +1090,15 @@ void EditorWidget::paintOneLine(
   LineCategories const &layoutCategories,
   ArrayStack<char> const &text,
   TextDocumentEditor::LineIterator &&lineIter,
-  TextCategory /*INOUT*/ &currentCategory,
-  QtBDFFont /*INOUT*/ *&curFont,
-  bool /*INOUT*/ &underlining)
+  TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle)
 {
   int const lineWidth = width();
   int const fullLineHeight = getFullLineHeight();
   int const visibleCols = visColsPlusPartial();
   int const firstCol = firstVisibleCol();
-  StyleDB const *styleDB = StyleDB::instance();
 
   // Clear the left margin to the normal background color.
-  if (currentCategory != TC_NORMAL) {
-    currentCategory = TC_NORMAL;
-    setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
-  }
+  textCategoryAndStyle.setDrawStyleIfNewCategory(paint, TC_NORMAL);
   paint.eraseRect(0,0, m_leftMargin, fullLineHeight);
 
   // Next category entry to use.
@@ -1140,10 +1127,8 @@ void EditorWidget::paintOneLine(
     }
 
     // set style
-    if (category.category != currentCategory) {
-      currentCategory = category.category;
-      setDrawStyle(paint, curFont, underlining, styleDB, currentCategory);
-    }
+    textCategoryAndStyle.setDrawStyleIfNewCategory(paint,
+      category.category);
 
     // compute how many characters to print in this segment
     int len = category.length;
@@ -1191,14 +1176,15 @@ void EditorWidget::paintOneLine(
 
       bool withinTrailingWhitespace =
         firstCol + printedCols + i >= startOfTrailingWhitespace;
-      this->drawOneChar(paint, curFont,
+      this->drawOneChar(paint,
+                        textCategoryAndStyle.getFont(),
                         QPoint(x + m_fontWidth*i, baseline),
                         text[printedCols+i],
                         withinTrailingWhitespace);
 
     } // character loop (within segment)
 
-    if (underlining) {
+    if (textCategoryAndStyle.underlining()) {
       drawUnderline(paint, x, len);
     }
 
@@ -1425,30 +1411,13 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
 }
 
 
-void EditorWidget::setDrawStyle(QPainter &paint,
-                                QtBDFFont *&curFont, bool &underlining,
-                                StyleDB const *styleDB, TextCategory cat)
+TextCategoryAndStyle EditorWidget::getTextCategoryAndStyle(
+  TextCategory cat) const
 {
-  TextStyle const &ts = styleDB->getStyle(cat);
-
-  // This is needed for underlining since we draw that as a line,
-  // whereas otherwise the foreground color comes from the font glyphs.
-  paint.setPen(ts.foreground);
-
-  QColor bg = ts.background;
-
-  // If the file has been modified on disk, darken the background so it
-  // is more obvious.
-  if (getDocument()->m_modifiedOnDisk) {
-    bg = bg.darker();
-  }
-
-  paint.setBackground(bg);
-
-  underlining = (ts.variant == FV_UNDERLINE);
-
-  curFont = m_fontForCategory[cat];
-  xassert(curFont);
+  return TextCategoryAndStyle(
+    m_fontForCategory,
+    cat,
+    getDocument()->m_modifiedOnDisk /*useDarker*/);
 }
 
 
@@ -1456,15 +1425,12 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
 {
   // Use the same appearance as search hits, as that will help convey
   // what the numbers mean.
-  StyleDB *styleDB = StyleDB::instance();
-  QtBDFFont *font;
-  bool underlining;
-  this->setDrawStyle(paint, font /*OUT*/, underlining /*OUT*/,
-                     styleDB, TC_HITS);
+  TextCategoryAndStyle tcas(getTextCategoryAndStyle(TC_HITS));
+  tcas.setDrawStyle(paint);
 
-  this->drawOneCornerLabel(paint, font,
+  this->drawOneCornerLabel(paint, tcas.m_font,
     false /*isLeft*/, true /*isTop*/, m_matchesAboveLabel->text());
-  this->drawOneCornerLabel(paint, font,
+  this->drawOneCornerLabel(paint, tcas.m_font,
     false /*isLeft*/, false /*isTop*/, m_matchesBelowLabel->text());
 }
 

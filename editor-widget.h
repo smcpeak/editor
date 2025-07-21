@@ -13,12 +13,14 @@
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td.h"                            // NamedTextDocument
+#include "styledb-fwd.h"                         // TextCategoryAndStyle
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
+#include "smqtutil/qtbdffont-fwd.h"              // QtBDFFont
 #include "smqtutil/qtguiutil.h"                  // unhandledExceptionMsgbox
 
 // smbase
@@ -569,9 +571,7 @@ public:      // funcs
     LineCategories const &layoutCategories,
     ArrayStack<char> const &text,
     TextDocumentEditor::LineIterator &&lineIter,
-    TextCategory /*INOUT*/ &currentCategory,
-    QtBDFFont /*INOUT*/ *&curFont,
-    bool /*INOUT*/ &underlining);
+    TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle);
 
   // Draw an underline on `paint`, the canvas for one line, starting at
   // pixel `x` and continuing for `numCols` columns.
@@ -603,11 +603,8 @@ public:      // funcs
   void drawOneChar(QPainter &paint, QtBDFFont *font,
     QPoint const &pt, char c, bool withinTrailingWhitespace);
 
-  // Set 'curFont' and 'underline', plus the foreground
-  // and background colors of 'paint', based on 'styleDB' and 'cat'.
-  void setDrawStyle(QPainter &paint,
-                    QtBDFFont *&curFont, bool &underlining,
-                    StyleDB const *styleDB, TextCategory cat);
+  // Return the style info for `cat`.
+  TextCategoryAndStyle getTextCategoryAndStyle(TextCategory cat) const;
 
   // show the info box near the cursor
   void showInfo(char const *info);

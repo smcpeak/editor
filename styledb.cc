@@ -3,6 +3,9 @@
 
 #include "styledb.h"                   // this module
 
+#include <QPainter>
+
+
 StyleDB::StyleDB()
   : arr(NUM_STANDARD_TEXT_CATEGORIES)           // initial size
 {
@@ -69,3 +72,65 @@ STATICDEF StyleDB *StyleDB::instance()
   }
   return inst;
 }
+
+
+// ----------------------- TextCategoryAndStyle ------------------------
+void TextCategoryAndStyle::setStyleDetails()
+{
+  m_textStyle = &( m_styleDB->getStyle(m_textCategory) );
+
+  // `QtBDFFont` has somewhat screwy constness, requiring a non-const
+  // pointer to perform drawing operations.  I've added a TODO in
+  // `qtbdffont.h` to fix it, but for now, just bypass it with a cast.
+  m_font = const_cast<QtBDFFont*>(m_fontForCategory[m_textCategory]);
+
+  xassert(m_textStyle != nullptr);
+  xassert(m_font != nullptr);
+}
+
+
+TextCategoryAndStyle::TextCategoryAndStyle(
+  ObjArrayStack<QtBDFFont> const &fontForCategory,
+  TextCategory textCategory,
+  bool useDarkerBackground)
+  : m_styleDB(StyleDB::instance()),
+    m_fontForCategory(fontForCategory),
+    m_useDarkerBackground(useDarkerBackground),
+    m_textCategory(textCategory),
+    m_textStyle(nullptr),
+    m_font(nullptr)
+{
+  setStyleDetails();
+}
+
+
+void TextCategoryAndStyle::setDrawStyle(QPainter &paint) const
+{
+  // This is needed for underlining since we draw that as a line,
+  // whereas otherwise the foreground color comes from the font glyphs.
+  paint.setPen(m_textStyle->foreground);
+
+  QColor bg = m_textStyle->background;
+  if (m_useDarkerBackground) {
+    bg = bg.darker();
+  }
+  paint.setBackground(bg);
+}
+
+
+void TextCategoryAndStyle::setDrawStyleIfNewCategory(
+  QPainter &paint, TextCategory tc)
+{
+  // I don't know if this is really a useful optimization, as I've never
+  // measured it.  This is just what the code did in the past, so I'm
+  // preserving it.
+
+  if (tc != m_textCategory) {
+    m_textCategory = tc;
+    setStyleDetails();
+    setDrawStyle(paint);
+  }
+}
+
+
+// EOF
