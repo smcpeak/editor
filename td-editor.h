@@ -671,6 +671,10 @@ public:      // funcs
 public:      // types
   // Iterate over the bytes in a line, with layout information.
   //
+  // That is, each time `advByte()` is called, we step forward one byte
+  // in the model, but might step forward more than one layout column.
+  // (Currently, the only reason to do that is for tab characters.)
+  //
   // TODO UTF-8: Allow iteration over code points.
   class LineIterator {
     NO_OBJECT_COPIES(LineIterator);
@@ -684,7 +688,7 @@ public:      // types
 
     // Column number where the current byte's glyph starts.  If
     // '!has()', this is one more than the column number where the
-    // previous glyph ends.
+    // previous glyph (the last one in the line) ends.
     int m_column;
 
   public:      // funcs

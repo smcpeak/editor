@@ -1117,6 +1117,16 @@ void EditorWidget::paintOneLine(
   // (but that does not matter because of `visibleLineCols`).
   ArrayStack<char> const &visibleText,
 
+  // Iterator over the bytes in the line, starting with the first that
+  // is visible in the window.  This is used to adjust drawing for
+  // characters that occupy multiple columns.
+  //
+  // TODO: This is a weird system.  It's mostly redundant with the
+  // layout done to create `visibleText`, and the only effect is (I
+  // think) on how trailing tab characters are drawn (which doesn't
+  // really look right anyway).  I think I had in mind that this would
+  // allow me to draw single glyphs that spanned columns, but if so,
+  // that is unfinished.
   TextDocumentEditor::LineIterator &&lineIter,
 
   // Current text styling details, carried forward from line to line as
