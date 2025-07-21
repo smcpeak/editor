@@ -554,6 +554,10 @@ public:      // funcs
   void updateFrame(QPaintEvent *ev);
   void paintFrame(QPainter &winPaint);
 
+  // Draw an underline on `paint`, the canvas for one line, starting at
+  // pixel `x` and continuing for `numCols` columns.
+  void drawUnderline(QPainter &paint, int x, int numCols);
+
   // Assuming the cursor is on the current line, draw it onto `paint`,
   // the canvas for one line.
   //

@@ -1141,12 +1141,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       }
 
       if (underlining) {
-        // want to draw a line on top of where underscores would be; this
-        // might not be consistent across fonts, so I might want to have
-        // a user-specifiable underlining offset.. also, I don't want this
-        // going into the next line, so truncate according to descent
-        int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
-        paint.drawLine(x, ulBaseline, x + m_fontWidth*len, ulBaseline);
+        drawUnderline(paint, x, len);
       }
 
       // Advance to next category segment.
@@ -1172,6 +1167,19 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Also draw indicators of number of matches offscreen.
   this->drawOffscreenMatchIndicators(winPaint);
+}
+
+
+void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
+{
+  int const baseline = getBaselineYCoordWithinLine();
+
+  // want to draw a line on top of where underscores would be; this
+  // might not be consistent across fonts, so I might want to have
+  // a user-specifiable underlining offset.. also, I don't want this
+  // going into the next line, so truncate according to descent
+  int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
+  paint.drawLine(x, ulBaseline, x + m_fontWidth*numCols, ulBaseline);
 }
 
 
@@ -1261,8 +1269,7 @@ void EditorWidget::drawCursorOnLine(
 
     if (underlineCursor) {
       paint.setPen(cursorFont->getFgColor());
-      int ulBaseline = baseline + std::min(UNDERLINE_OFFSET, m_fontDescent);
-      paint.drawLine(x, ulBaseline, x + m_fontWidth, ulBaseline);
+      drawUnderline(paint, x, 1 /*numCols*/);
     }
   }
 
