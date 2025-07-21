@@ -23,9 +23,8 @@
 #include "smqtutil/editor14r.bdf.gen.h"          // bdfFontData_editor14r
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont
-#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent)
-#include "smqtutil/qtutil.h"                     // toString(QString)
-#include "smqtutil/qtutil.h"                     // SET_QOBJECT_NAME
+#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore
+#include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME
 
 // smbase
 #include "smbase/array.h"                        // Array
@@ -1293,7 +1292,7 @@ void EditorWidget::drawDiagnosticBoxes(
 
   int const firstCol = firstVisibleCol();
 
-  paint.save();
+  QPainterSaveRestore qpsr(paint);
 
   // For now, just draw using a fixed red color.
   paint.setPen(QColor(255, 0, 0));
@@ -1339,8 +1338,6 @@ void EditorWidget::drawDiagnosticBoxes(
     // Bottom edge.
     paint.drawLine(leftX, bottomY, rightX, bottomY);
   }
-
-  paint.restore();
 }
 
 
@@ -1356,7 +1353,7 @@ void EditorWidget::drawCursorOnLine(
   //  THROW(XBase("aiyee! sample exception!"));
   //}
 
-  paint.save();
+  QPainterSaveRestore qpsr(paint);
 
   int const visibleCols = visColsPlusPartial();
 
@@ -1433,22 +1430,19 @@ void EditorWidget::drawCursorOnLine(
       drawUnderline(paint, x, 1 /*numCols*/);
     }
   }
-
-  paint.restore();
 }
 
 
 void EditorWidget::drawSoftMarginIndicator(QPainter &paint)
 {
   if (m_visibleSoftMargin) {
-    paint.save();
+    QPainterSaveRestore qpsr(paint);
+
     paint.setPen(m_softMarginColor);
 
     int firstCol = firstVisibleCol();
     int x = m_leftMargin + m_fontWidth * (m_softMarginColumn - firstCol);
     paint.drawLine(x, 0, x, m_fontHeight-1);
-
-    paint.restore();
   }
 }
 
