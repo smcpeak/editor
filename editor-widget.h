@@ -16,7 +16,7 @@
 #include "styledb-fwd.h"                         // TextCategoryAndStyle
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
-#include "textcategory.h"                        // TextCategory
+#include "textcategory.h"                        // TextCategory, LineCategories
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
@@ -560,15 +560,14 @@ public:      // funcs
   void updateFrame(QPaintEvent *ev);
   void paintFrame(QPainter &winPaint);
 
-  // Paint a single line of text.  The main inputs are `text` and
-  // `layoutCategories`.  The parameters are documented in detail at the
-  // implementation site.
+  // Paint a single line of text.  The parameters are documented in
+  // detail at the implementation site.
   void paintOneLine(
     QPainter &paint,
     int visibleLineCols,
     int startOfTrailingWhitespaceVisibleCol,
     LineCategories const &layoutCategories,
-    ArrayStack<char> const &text,
+    ArrayStack<char> const &visibleText,
     TextDocumentEditor::LineIterator &&lineIter,
     TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle);
 

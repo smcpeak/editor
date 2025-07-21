@@ -930,7 +930,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   xassert(lineHeight() > 0);
 
   // Buffer that will be used for each visible line of text.
-  ArrayStack<char> text(visibleCols);
+  ArrayStack<char> visibleText(visibleCols);
 
   // Get region of selected text.
   TextLCoordRange selRange = m_editor->getSelectLayoutRange();
@@ -981,17 +981,17 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     int const lineGlyphColumns = lineLengthColumns + newlineAdjust;
 
     // fill with text from the file
-    text.clear();
+    visibleText.clear();
     if (line < m_editor->numLines()) {
       if (firstCol < lineGlyphColumns) {
         // First get the text without any extra newline.
         int const amt = std::min(lineLengthColumns - firstCol, visibleCols);
-        m_editor->getLineLayout(TextLCoord(line, firstCol), text, amt);
+        m_editor->getLineLayout(TextLCoord(line, firstCol), visibleText, amt);
         visibleLineCols = amt;
 
         // Now possibly add the newline.
         if (visibleLineCols < visibleCols && newlineAdjust != 0) {
-          text.push('\n');
+          visibleText.push('\n');
           visibleLineCols++;
         }
       }
@@ -1008,16 +1008,17 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       this->addSearchMatchesToLineCategories(layoutCategories, line);
     }
     xassert(visibleLineCols <= visibleCols);
-    xassert(text.length() == visibleLineCols);
+    xassert(visibleText.length() == visibleLineCols);
 
-    // Fill the remainder of 'text' with spaces.  These characters will
-    // only be used if there is style information out beyond the actual
-    // line character data.
+    // Fill the remainder of 'visibleText' with spaces.  These
+    // characters will only be used if there is style information out
+    // beyond the actual line character data.
     {
       int remainderLen = visibleCols - visibleLineCols;
-      memset(text.ptrToPushedMultipleAlt(remainderLen), ' ', remainderLen);
+      memset(visibleText.ptrToPushedMultipleAlt(remainderLen),
+             ' ', remainderLen);
     }
-    xassert(text.length() == visibleCols);
+    xassert(visibleText.length() == visibleCols);
 
     // incorporate effect of selection
     if (this->selectEnabled() &&
@@ -1050,22 +1051,22 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     }
 
     // Iterator over line contents.  This is partially redundant with
-    // what is in 'text', but needed to handle glyphs that span columns.
-    // Perhaps I should remove 'text' at some point.
+    // what is in 'visibleText', but needed to handle glyphs that span
+    // columns.  Perhaps I should remove 'visibleText' at some point.
     TextDocumentEditor::LineIterator lineIter(*m_editor, line);
     while (lineIter.has() && lineIter.columnOffset() < firstCol) {
       lineIter.advByte();
     }
 
     // Given that we have chosen how to render the line, storing that
-    // information primarily into `text` (chars to draw) and
+    // information primarily into `visibleText` (chars to draw) and
     // `layoutCategories` (how to draw them), draw the line to `paint`.
     paintOneLine(
       paint,
       visibleLineCols,
       startOfTrailingWhitespaceVisibleCol,
       layoutCategories,
-      text,
+      visibleText,
       std::move(lineIter),
       /*INOUT*/ textCategoryAndStyle);
 
@@ -1074,7 +1075,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       drawCursorOnLine(
         paint,
         layoutCategories,
-        text,
+        visibleText,
         lineGlyphColumns);
     }
 
@@ -1094,10 +1095,11 @@ void EditorWidget::paintOneLine(
   QPainter &paint,
 
   // Number of columns from this line that are visible, including the
-  // possible synthetic newline.  If this is less than `text.length()`
-  // (which is common), it means the line has blank space before the
-  // right edge of the widget, and we will paint that space with one
-  // large rectangle rather than however many character cells.
+  // possible synthetic newline.  If this is less than
+  // `visibleText.length()` (which is common), it means the line has
+  // blank space before the right edge of the widget, and we will paint
+  // that space with one large rectangle rather than however many
+  // character cells.
   int visibleLineCols,
 
   // Column number within the visible window of the first trailing
@@ -1105,16 +1107,23 @@ void EditorWidget::paintOneLine(
   // be printed with a different background color.
   int startOfTrailingWhitespaceVisibleCol,
 
-  // TODO: Document.
+  // The styles to apply to the entire line of text (independent of the
+  // window).  This function has to ignore whatever is outside the
+  // current window area.
   LineCategories const &layoutCategories,
-  ArrayStack<char> const &text,
+
+  // Characters to draw, one per visible column within the window.
+  // Blank space between EOL and the window edge is filled with spaces
+  // (but that does not matter because of `visibleLineCols`).
+  ArrayStack<char> const &visibleText,
+
   TextDocumentEditor::LineIterator &&lineIter,
 
   // Current text styling details, carried forward from line to line as
   // we work our way down the widget area.
   TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle)
 {
-  xassert(visibleLineCols <= text.length());
+  xassert(visibleLineCols <= visibleText.length());
 
   int const lineWidth = width();
   int const fullLineHeight = getFullLineHeight();
@@ -1195,7 +1204,7 @@ void EditorWidget::paintOneLine(
         xassert(lineIter.columnOffset() == firstCol+printedCols+i);
         lineIter.advByte();
       }
-      else if (text[printedCols+i] != '\n') {
+      else if (visibleText[printedCols+i] != '\n') {
         // The only thing we should need to print beyond what is in
         // the line iterator is a newline, so skip drawing here.
         continue;
@@ -1206,7 +1215,7 @@ void EditorWidget::paintOneLine(
       this->drawOneChar(paint,
                         textCategoryAndStyle.getFont(),
                         QPoint(x + m_fontWidth*i, baseline),
-                        text[printedCols+i],
+                        visibleText[printedCols+i],
                         withinTrailingWhitespace);
 
     } // character loop (within segment)
@@ -1240,7 +1249,7 @@ void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
 void EditorWidget::drawCursorOnLine(
   QPainter &paint,
   LineCategories const &layoutCategories,
-  ArrayStack<char> const &text,
+  ArrayStack<char> const &visibleText,
   int lineGlyphColumns)
 {
   // just testing the mechanism that catches exceptions
@@ -1309,14 +1318,14 @@ void EditorWidget::drawCursorOnLine(
     if (cursorCol < lineGlyphColumns) {
       // Drawing the block cursor overwrote the glyph, so we
       // have to draw it again.
-      if (text[visibleCursorCol] == ' ' &&
+      if (visibleText[visibleCursorCol] == ' ' &&
           !m_editor->cursorOnModelCoord()) {
         // This is a layout placeholder space, not really present in
         // the document, so don't draw it.
       }
       else {
         this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                          text[visibleCursorCol],
+                          visibleText[visibleCursorCol],
                           false /*withinTrailingWhitespace*/);
       }
     }
