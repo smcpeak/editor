@@ -291,8 +291,8 @@ public:    // funcs
   // Return true if 'observer' is among the current observers.
   bool hasObserver(TextDocumentObserver const *observer) const;
 
-  // Send the 'observeUnsavedChangesChange' message to all observers.
-  void notifyUnsavedChangesChange(TextDocument const *doc) const;
+  // Send the 'observeMetadataChange' message to all observers.
+  void notifyMetadataChange() const;
 
   // ---------------------- debugging ---------------------------
   // print internal rep
@@ -394,12 +394,28 @@ public:      // funcs
   // allow for incremental updates.  Observers must refresh completely.
   virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT;
 
-  // This notification is sent to observers if the observee is actually
-  // a TextDocument (i.e., with undo/redo history) and the "has unsaved
-  // changes" property may have changed.
+  // This notification is sent to observers if some data in one of the
+  // higher-level document classes changed (or might have changed), and
+  // that change should trigger a redraw of a widget showing this
+  // document.  Currently, there are two such cases:
   //
-  // This method is a slight abuse of the observer pattern.
-  virtual void observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT;
+  // 1. The "has unsaved changes" property changes
+  //    (`TextDocument::unsavedChanges()`).
+  //
+  // 2. Updated language diagnostics were received from an LSP server
+  //    (`NamedTextDocument::m_diagnostics`).
+  //
+  // Since the only expected reaction is a redraw, there's not a high
+  // penalty for firing this off when unnecessary, but it's not entirely
+  // negligible either (we don't want to redraw the entire UI every time
+  // there is incidental network activty, for example).
+  //
+  // Design-wise, having a notification here that pertains to data that
+  // `TextDocumentCore` lacks is not ideal, but the only obvious
+  // alternative is to have parallel observers at each level, which
+  // seems like overkill.
+  //
+  virtual void observeMetadataChange(TextDocumentCore const &doc) NOEXCEPT;
 };
 
 

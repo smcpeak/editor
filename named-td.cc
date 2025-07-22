@@ -13,6 +13,7 @@
 #include "smbase/trace.h"              // TRACE
 
 #include <cstdint>                     // std::int64_t
+#include <utility>                     // std::move
 
 
 int NamedTextDocument::s_objectCount = 0;
@@ -51,6 +52,14 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
   if (this->isProcessOutput()) {
     this->m_highlightTrailingWhitespace = false;
   }
+}
+
+
+void NamedTextDocument::updateDiagnostics(
+  std::unique_ptr<TextDocumentDiagnostics> diagnostics)
+{
+  m_diagnostics = std::move(diagnostics);
+  notifyMetadataChange();
 }
 
 

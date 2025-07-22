@@ -818,7 +818,7 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
 
       if (NamedTextDocument *doc = getFileWithName(docName)) {
         if (doc->getVersionNumber() == diagsVersion) {
-          doc->m_diagnostics = convertLSPDiagsToTDD(doc, diags.get());
+          doc->updateDiagnostics(convertLSPDiagsToTDD(doc, diags.get()));
           TRACE("lsp", "updated diagnostics for " << docName);
         }
         else {

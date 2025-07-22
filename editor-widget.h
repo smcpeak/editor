@@ -535,7 +535,7 @@ public:      // funcs
   virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
   virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &buf) NOEXCEPT OVERRIDE;
-  virtual void observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT OVERRIDE;
+  virtual void observeMetadataChange(TextDocumentCore const &buf) NOEXCEPT OVERRIDE;
 
   // This is the same as 'keyPressEvent', but is meant to be callable by
   // other classes in order to pass on a key event that would otherwise

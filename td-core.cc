@@ -746,10 +746,10 @@ bool TextDocumentCore::hasObserver(TextDocumentObserver const *observer) const
 }
 
 
-void TextDocumentCore::notifyUnsavedChangesChange(TextDocument const *doc) const
+void TextDocumentCore::notifyMetadataChange() const
 {
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
-    iter.data()->observeUnsavedChangesChange(doc);
+    iter.data()->observeMetadataChange(*this);
   }
 }
 
@@ -858,7 +858,7 @@ void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextMCoor
 void TextDocumentObserver::observeTotalChange(TextDocumentCore const &doc) NOEXCEPT
 {}
 
-void TextDocumentObserver::observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT
+void TextDocumentObserver::observeMetadataChange(TextDocumentCore const &) NOEXCEPT
 {}
 
 

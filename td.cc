@@ -71,7 +71,7 @@ void TextDocument::clearHistory()
   m_history.truncate(m_historyIndex);
   m_groupStack.clear();
 
-  this->m_core.notifyUnsavedChangesChange(this);
+  this->m_core.notifyMetadataChange();
 }
 
 
@@ -121,7 +121,7 @@ void TextDocument::noUnsavedChanges()
 
   // This method is called rarely, there is no problem with sending the
   // notification unconditionally.
-  this->m_core.notifyUnsavedChangesChange(this);
+  this->m_core.notifyMetadataChange();
 }
 
 
@@ -225,7 +225,7 @@ void TextDocument::bumpHistoryIndex(int inc)
   // This is called fairly frequently, so we try to only send the
   // notification when it might matter.
   if (equalBefore != equalAfter) {
-    this->m_core.notifyUnsavedChangesChange(this);
+    this->m_core.notifyMetadataChange();
   }
 }
 
@@ -322,6 +322,11 @@ void TextDocument::removeObserver(TextDocumentObserver *observer)
 bool TextDocument::hasObserver(TextDocumentObserver const *observer) const
 {
   return this->m_core.hasObserver(observer);
+}
+
+void TextDocument::notifyMetadataChange() const
+{
+  this->m_core.notifyMetadataChange();
 }
 
 

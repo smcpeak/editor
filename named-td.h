@@ -77,7 +77,8 @@ public:      // data
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
 
-  // If set, the diagnostics associated with this document.
+  // If set, the diagnostics associated with this document.  This should
+  // be updated using `updateDiagnostics`.
   std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
 
 public:      // funcs
@@ -89,6 +90,10 @@ public:      // funcs
 
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
+
+  // Set `m_diagnostics` and notify observers.
+  void updateDiagnostics(
+    std::unique_ptr<TextDocumentDiagnostics> diagnostics);
 
   // ----------------------------- names ----------------------------
   DocumentName const &documentName() const

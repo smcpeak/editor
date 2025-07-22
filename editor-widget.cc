@@ -2624,7 +2624,7 @@ void EditorWidget::observeTotalChange(TextDocumentCore const &buf) NOEXCEPT
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeUnsavedChangesChange(TextDocument const *doc) NOEXCEPT
+void EditorWidget::observeMetadataChange(TextDocumentCore const &buf) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {

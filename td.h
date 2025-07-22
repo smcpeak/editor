@@ -8,7 +8,7 @@
 
 // editor
 #include "history.h"                   // HE_group
-#include "td-core.h"                   // TextDocumentCore
+#include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
@@ -250,6 +250,9 @@ public:      // funcs
 
   // Return true if 'observer' is among our current observers.
   bool hasObserver(TextDocumentObserver const *observer) const;
+
+  // Send `observeMetadataChange` to observers.
+  void notifyMetadataChange() const;
 
   // ------------------------- diagnostics --------------------------
   // print the history in a textual format, with the current history
