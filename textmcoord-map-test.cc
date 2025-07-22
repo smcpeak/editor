@@ -37,18 +37,18 @@ class ReferenceMap {
 
 public:      // types
   typedef TextMCoordMap::Value Value;
-  typedef TextMCoordMap::Entry Entry;
+  typedef TextMCoordMap::DocEntry DocEntry;
   typedef TextMCoordMap::LineEntry LineEntry;
 
 public:      // data
   // All entries.
-  std::set<Entry> m_entries;
+  std::set<DocEntry> m_entries;
 
 public:
   ~ReferenceMap() = default;
   ReferenceMap() = default;
 
-  void insert(Entry entry)
+  void insert(DocEntry entry)
   {
     m_entries.insert(entry);
   }
@@ -111,10 +111,10 @@ public:
 
   void insertLines(int line, int count)
   {
-    std::set<Entry> newEntries;
+    std::set<DocEntry> newEntries;
 
-    for (Entry const &e : m_entries) {
-      newEntries.insert(Entry(
+    for (DocEntry const &e : m_entries) {
+      newEntries.insert(DocEntry(
         TextMCoordRange(
           adjustMC_insertLines(e.m_range.m_start, line, count),
           adjustMC_insertLines(e.m_range.m_end, line, count)
@@ -127,10 +127,10 @@ public:
 
   void deleteLines(int line, int count)
   {
-    std::set<Entry> newEntries;
+    std::set<DocEntry> newEntries;
 
-    for (Entry const &e : m_entries) {
-      newEntries.insert(Entry(
+    for (DocEntry const &e : m_entries) {
+      newEntries.insert(DocEntry(
         TextMCoordRange(
           adjustMC_deleteLines(e.m_range.m_start, line, count),
           adjustMC_deleteLines(e.m_range.m_end, line, count)
@@ -143,10 +143,10 @@ public:
 
   void insertLineBytes(TextMCoord tc, int lengthBytes)
   {
-    std::set<Entry> newEntries;
+    std::set<DocEntry> newEntries;
 
-    for (Entry const &e : m_entries) {
-      newEntries.insert(Entry(
+    for (DocEntry const &e : m_entries) {
+      newEntries.insert(DocEntry(
         TextMCoordRange(
           adjustMC_insertLineBytes(e.m_range.m_start, tc, lengthBytes),
           adjustMC_insertLineBytes(e.m_range.m_end, tc, lengthBytes)
@@ -159,10 +159,10 @@ public:
 
   void deleteLineBytes(TextMCoord tc, int lengthBytes)
   {
-    std::set<Entry> newEntries;
+    std::set<DocEntry> newEntries;
 
-    for (Entry const &e : m_entries) {
-      newEntries.insert(Entry(
+    for (DocEntry const &e : m_entries) {
+      newEntries.insert(DocEntry(
         TextMCoordRange(
           adjustMC_deleteLineBytes(e.m_range.m_start, tc, lengthBytes),
           adjustMC_deleteLineBytes(e.m_range.m_end, tc, lengthBytes)
@@ -187,7 +187,7 @@ public:
   {
     int ret = 0;
 
-    for (Entry const &e : m_entries) {
+    for (DocEntry const &e : m_entries) {
       ret = std::max(ret, e.m_range.m_end.m_line+1);
     }
 
@@ -198,7 +198,7 @@ public:
   {
     std::set<LineEntry> ret;
 
-    for (Entry const &e : m_entries) {
+    for (DocEntry const &e : m_entries) {
       if (e.m_range.m_start.m_line == e.m_range.m_end.m_line) {
         // Entirely on one line.
         if (e.m_range.m_start.m_line == line) {
@@ -243,7 +243,7 @@ public:
     return ret;
   }
 
-  std::set<Entry> getAllEntries() const
+  std::set<DocEntry> getAllEntries() const
   {
     return m_entries;
   }
@@ -252,7 +252,7 @@ public:
   {
     std::set<Value> ret;
 
-    for (Entry const &e : m_entries) {
+    for (DocEntry const &e : m_entries) {
       ret.insert(e.m_value);
     }
 
@@ -308,7 +308,7 @@ std::string toCode(TextMCoordRange tcr)
   return stringb("{" << toCode(tcr.m_start) << ", " << toCode(tcr.m_end) << "}");
 }
 
-std::string toCode(TextMCoordMap::Entry const &e)
+std::string toCode(TextMCoordMap::DocEntry const &e)
 {
   return stringb("{" << toCode(e.m_range) << ", " << e.m_value << "}");
 }
@@ -318,7 +318,7 @@ std::string toCode(TextMCoordMap::Entry const &e)
 class MapPair {
 public:      // types
   typedef TextMCoordMap::Value Value;
-  typedef TextMCoordMap::Entry Entry;
+  typedef TextMCoordMap::DocEntry DocEntry;
   typedef TextMCoordMap::LineEntry LineEntry;
 
 public:      // data
@@ -340,7 +340,7 @@ public:      // methods
 
   // Mutations: Perform on each in parallel.
 
-  void insert(Entry entry)
+  void insert(DocEntry entry)
   {
     // Print these operations as C++ code that I can copy into my
     // tests to recreate a scenario that was generated randomly.
@@ -407,7 +407,7 @@ public:      // methods
     return m_sut.getLineEntries(line);
   }
 
-  std::set<Entry> getAllEntries() const
+  std::set<DocEntry> getAllEntries() const
   {
     return m_sut.getAllEntries();
   }
@@ -511,7 +511,7 @@ void test_commentsExample()
   EXPECT_EQ(m.numEntries(), 1);
   EXPECT_EQ(m.numLines(), 2);
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
+    "{DocEntry[range:MCR(MC(1 5) MC(1 12)) value:1]}");
   EXPECT_EQ(lineEntriesString(m, -1), "{}");
   EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
@@ -543,8 +543,8 @@ void test_commentsExample()
   EXPECT_EQ(m.numEntries(), 2);
   EXPECT_EQ(m.numLines(), 6);
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1] "
-     "Entry[range:MCR(MC(3 5) MC(5 12)) value:2]}");
+    "{DocEntry[range:MCR(MC(1 5) MC(1 12)) value:1] "
+     "DocEntry[range:MCR(MC(3 5) MC(5 12)) value:2]}");
   EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
   EXPECT_EQ(lineEntriesString(m, 1),
@@ -600,8 +600,8 @@ void test_commentsExample()
   EXPECT_EQ(m.numEntries(), 2);
   EXPECT_EQ(m.numLines(), 7);
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1] "
-     "Entry[range:MCR(MC(4 5) MC(6 12)) value:2]}");
+    "{DocEntry[range:MCR(MC(1 5) MC(1 12)) value:1] "
+     "DocEntry[range:MCR(MC(4 5) MC(6 12)) value:2]}");
   EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
   EXPECT_EQ(lineEntriesString(m, 1),
@@ -659,8 +659,8 @@ void test_commentsExample()
   EXPECT_EQ(m.numEntries(), 2);
   EXPECT_EQ(m.numLines(), 6);
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(1 5) MC(1 12)) value:1] "
-     "Entry[range:MCR(MC(4 5) MC(5 12)) value:2]}");
+    "{DocEntry[range:MCR(MC(1 5) MC(1 12)) value:1] "
+     "DocEntry[range:MCR(MC(4 5) MC(5 12)) value:2]}");
   EXPECT_EQ(lineEntriesString(m, 0),
     "{}");
   EXPECT_EQ(lineEntriesString(m, 1),
@@ -715,7 +715,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 5) MC(0 10)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 5) MC(0 10)) value:1]}");
   // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
@@ -728,7 +728,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 5) MC(0 11)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 5) MC(0 11)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //        [     )
@@ -740,7 +740,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 6) MC(0 12)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 6) MC(0 12)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //         [     )
@@ -752,7 +752,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(0 13)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(0 13)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //          [     )
@@ -764,7 +764,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(0 14)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(0 14)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //          [      )
@@ -779,7 +779,7 @@ void test_lineInsertions()
   // what my implementation does currently.
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(0 15)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(0 15)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //          [       )
@@ -797,7 +797,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:5 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:10 value:1]}\n");
@@ -813,7 +813,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 5) MC(1 10)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:5 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:10 value:1]}\n");
@@ -828,7 +828,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 5) MC(1 11)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 5) MC(1 11)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:5 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:11 value:1]}\n");
@@ -843,7 +843,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 6) MC(1 11)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 6) MC(1 11)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:6 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:11 value:1]}\n");
@@ -858,7 +858,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(1 11)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(1 11)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:7 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:11 value:1]}\n");
@@ -873,7 +873,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(1 12)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(1 12)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:7 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:12 value:1]}\n");
@@ -891,7 +891,7 @@ void test_multilineInsertions()
   // what my implementation does currently.
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(1 13)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(1 13)) value:1]}");
   EXPECT_EQ(allLineEntries(m),
     "{LineEntry[startByteIndex:7 endByteIndex:null value:1]}\n"
     "{LineEntry[startByteIndex:null endByteIndex:13 value:1]}\n");
@@ -913,7 +913,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 10) MC(0 20)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 10) MC(0 20)) value:1]}");
   // Initial state:
   //             1         2         3
   //   0123456789012345678901234567890
@@ -926,7 +926,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 10) MC(0 19)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 10) MC(0 19)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //             [        )
@@ -938,7 +938,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 10) MC(0 18)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 10) MC(0 18)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //             [       )
@@ -950,7 +950,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 9) MC(0 17)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 9) MC(0 17)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //            [       )
@@ -962,7 +962,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 9) MC(0 16)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 9) MC(0 16)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //            [      )
@@ -974,7 +974,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 9) MC(0 16)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 9) MC(0 16)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //            [      )
@@ -986,7 +986,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 8) MC(0 14)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 8) MC(0 14)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //           [     )
@@ -998,7 +998,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 8) MC(0 13)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 8) MC(0 13)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //           [    )
@@ -1010,7 +1010,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 8) MC(0 8)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 8) MC(0 8)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //           H
@@ -1022,7 +1022,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 7) MC(0 7)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 7) MC(0 7)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //          H
@@ -1034,7 +1034,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 0) MC(0 0)) value:1]}");
+    "{DocEntry[range:MCR(MC(0 0) MC(0 0)) value:1]}");
   //             1         2         3
   //   0123456789012345678901234567890
   //   H
@@ -1051,7 +1051,7 @@ void test_multilineDeletions()
   m.insert({{{2,24}, {4,1}}, 3});
   m.selfCheck();
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(2 24) MC(4 1)) value:3]}");
+    "{DocEntry[range:MCR(MC(2 24) MC(4 1)) value:3]}");
 
   //             1         2         3
   //   0123456789012345678901234567890
@@ -1064,7 +1064,7 @@ void test_multilineDeletions()
   m.deleteLines(4, 2);
   m.selfCheck();
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(2 24) MC(4 0)) value:3]}");
+    "{DocEntry[range:MCR(MC(2 24) MC(4 0)) value:3]}");
 
   //             1         2         3
   //   0123456789012345678901234567890
@@ -1084,7 +1084,7 @@ void test_multilineDeletion2()
   m.insert({{{0,21}, {3,0}}, 3});
   m.selfCheck();
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 21) MC(3 0)) value:3]}");
+    "{DocEntry[range:MCR(MC(0 21) MC(3 0)) value:3]}");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0                      [
@@ -1095,7 +1095,7 @@ void test_multilineDeletion2()
   m.deleteLines(0, 2);
   m.selfCheck();
   EXPECT_EQ(stringb(toGDValue(m)),
-    "{Entry[range:MCR(MC(0 0) MC(1 0)) value:3]}");
+    "{DocEntry[range:MCR(MC(0 0) MC(1 0)) value:3]}");
   //             1         2         3
   //   0123456789012345678901234567890
   // 0 [
@@ -1184,7 +1184,7 @@ void randomInsert(MapPair &m)
     endCol = randomColumn() + startCol;
   }
 
-  m.insert(MapPair::Entry(
+  m.insert(MapPair::DocEntry(
     TextMCoordRange(
       TextMCoord(startLine, startCol),
       TextMCoord(endLine, endCol)

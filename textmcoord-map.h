@@ -76,11 +76,15 @@ public:      // types
   // For the moment, just say values are integers.
   typedef int Value;
 
-  // Element stored in the map.
+  // "Document entry", an element stored in the map.
+  //
+  // The "document" part of the name indicates the scope of its
+  // boundaries is the entire document, as opposed to `LineEntry`, which
+  // has boundaries that only apply to one line.
   //
   // This class is used as part of the interface to the map, but the
   // data is not stored internally this way for efficiency reasons.
-  class Entry {
+  class DocEntry {
   public:      // data
     // Range of text associated with the value.  This range is
     // normalized in the sense that its start is less than or equal to
@@ -91,13 +95,13 @@ public:      // types
     Value m_value;
 
   public:      // methods
-    Entry(TextMCoordRange range, Value value);
+    DocEntry(TextMCoordRange range, Value value);
 
     void selfCheck() const;
 
     operator gdv::GDValue() const;
 
-    DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Entry)
+    DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(DocEntry)
   };
 
   // Data returned by `getEntriesForLine`, describing the entries that
@@ -286,7 +290,7 @@ public:      // methods
 
   // ---- Manipulate the mapping directly ----
   // Add an entry.  Requires that its value not already be in the map.
-  void insert(Entry entry);
+  void insert(DocEntry entry);
 
   // There is not currently a way to remove individual entries because I
   // don't anticipate needing to do so.
@@ -331,18 +335,19 @@ public:      // methods
 
   // Get all the entries that intersect `line`.  This will include
   // partial entries for multi-line spans, which describe only the
-  // portion of the original `Entry` that intersects the specified line.
+  // portion of the original `DocEntry` that intersects the specified
+  // line.
   std::set<LineEntry> getLineEntries(int line) const;
 
-  // Get all current entries, each as a complete (possibly multi-line)
-  // Entry.  This is the set of Entries that were originally inserted,
-  // except with the coordinates possibly changed due to subsequent text
-  // modification.  (So if there have been no text changes, this will
-  // return exactly the set of Entries that have been passed to
-  // `insert`.)
-  std::set<Entry> getAllEntries() const;
+  // Get all current entries for this document, each as a complete
+  // (possibly multi-line) `DocEntry`.  This is the set of entries that
+  // were originally inserted, except with the coordinates possibly
+  // changed due to subsequent text modification.  (So if there have
+  // been no text changes, this will return exactly the set of entries
+  // that have been passed to `insert`.)
+  std::set<DocEntry> getAllEntries() const;
 
-  // Get the set of values that are mapped from some range.
+  // Get the set of values that are mapped.
   std::set<Value> getMappedValues() const;
 
   // Equivalent to `toGDValue(getAllEntries())`.

@@ -111,7 +111,7 @@ void TextDocumentDiagnostics::selfCheck() const
 
   xassert(vectorIndices == mapIndices);
 
-  std::set<TextMCoordMap::Entry> underEntries =
+  std::set<TextMCoordMap::DocEntry> underEntries =
     m_rangeToDiagIndex.getAllEntries();
   for (auto const &underEntry : underEntries) {
     xassert(m_doc->validRange(underEntry.m_range));

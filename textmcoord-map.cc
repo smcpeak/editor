@@ -22,8 +22,8 @@ using namespace gdv;
 using namespace smbase;
 
 
-// ------------------------------- Entry -------------------------------
-TextMCoordMap::Entry::Entry(TextMCoordRange range, Value value)
+// ----------------------------- DocEntry ------------------------------
+TextMCoordMap::DocEntry::DocEntry(TextMCoordRange range, Value value)
   : m_range(range),
     m_value(value)
 {
@@ -31,16 +31,16 @@ TextMCoordMap::Entry::Entry(TextMCoordRange range, Value value)
 }
 
 
-void TextMCoordMap::Entry::selfCheck() const
+void TextMCoordMap::DocEntry::selfCheck() const
 {
   xassert(m_range.m_start <= m_range.m_end);
 }
 
 
-TextMCoordMap::Entry::operator gdv::GDValue() const
+TextMCoordMap::DocEntry::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP);
-  m.taggedContainerSetTag("Entry"_sym);
+  m.taggedContainerSetTag("DocEntry"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_range);
   GDV_WRITE_MEMBER_SYM(m_value);
@@ -49,7 +49,7 @@ TextMCoordMap::Entry::operator gdv::GDValue() const
 }
 
 
-int TextMCoordMap::Entry::compareTo(Entry const &b) const
+int TextMCoordMap::DocEntry::compareTo(DocEntry const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_range);
@@ -710,7 +710,7 @@ void TextMCoordMap::selfCheck() const
 }
 
 
-void TextMCoordMap::insert(Entry entry)
+void TextMCoordMap::insert(DocEntry entry)
 {
   setInsertUnique(m_values, entry.m_value);
 
@@ -937,9 +937,9 @@ auto TextMCoordMap::getLineEntries(int line) const -> std::set<LineEntry>
 }
 
 
-auto TextMCoordMap::getAllEntries() const -> std::set<Entry>
+auto TextMCoordMap::getAllEntries() const -> std::set<DocEntry>
 {
-  std::set<Entry> ret;
+  std::set<DocEntry> ret;
 
   // Map from associated value to the start coordinate of all of the
   // spans for which we have seen the start but not the end.
@@ -950,7 +950,7 @@ auto TextMCoordMap::getAllEntries() const -> std::set<Entry>
 
       for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
         ret.insert(
-          Entry(
+          DocEntry(
             TextMCoordRange(
               TextMCoord(line, span.m_startByteIndex),
               TextMCoord(line, span.m_endByteIndex)
@@ -971,7 +971,7 @@ auto TextMCoordMap::getAllEntries() const -> std::set<Entry>
         TextMCoord startPt = mapMoveValueAt(openSpans, b.m_value);
 
         ret.insert(
-          Entry(
+          DocEntry(
             TextMCoordRange(
               startPt,
               TextMCoord(line, b.m_byteIndex)
