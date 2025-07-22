@@ -442,6 +442,8 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM    ("Insert fake diagnostics",
                   lspInsertFakeDiagnostics);
+    MENU_ITEM    ("Remove diagnostics",
+                  lspRemoveDiagnostics);
   }
 
   {
@@ -2079,6 +2081,17 @@ void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
   // Temporary: fake some diagnostics.
   doc->m_diagnostics = makeFakeDiagnostics(doc);
 
+  editorWidget()->redraw();
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspRemoveDiagnostics() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  currentDocument()->m_diagnostics.reset();
   editorWidget()->redraw();
 
   GENERIC_CATCH_END
