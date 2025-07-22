@@ -35,8 +35,13 @@ NamedTextDocument::NamedTextDocument()
   NamedTextDocument::s_objectCount++;
 }
 
+
 NamedTextDocument::~NamedTextDocument()
 {
+  // Explicitly do this so the diagnostics detach while we are still in
+  // the explicit part of the dtor, mostly for ease of debugging.
+  m_diagnostics.reset(nullptr);
+
   NamedTextDocument::s_objectCount--;
 }
 

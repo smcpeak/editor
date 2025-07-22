@@ -9,12 +9,14 @@
 #include "textmcoord-map.h"            // TextMCoordMap
 
 #include "smbase/compare-util.h"       // smbase::compare
-#include "smbase/overflow.h"           // safeToInt
+#include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/overflow.h"           // convertNumber
 
 #include <optional>                    // std::optional
 #include <string>                      // std::string
 #include <utility>                     // std::move
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -81,19 +83,40 @@ int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
 
 // ---------------------- TextDocumentDiagnostics ----------------------
 TextDocumentDiagnostics::~TextDocumentDiagnostics()
-{}
+{
+  m_doc->removeObserver(this);
+}
 
 
 TextDocumentDiagnostics::TextDocumentDiagnostics(NamedTextDocument *doc)
   : m_doc(doc),
     m_diagnostics(),
     m_rangeToDiagIndex()
-{}
+{
+  selfCheck();
+
+  m_doc->addObserver(this);
+}
 
 
 void TextDocumentDiagnostics::selfCheck() const
 {
-  // TODO
+  std::set<DiagnosticIndex> vectorIndices;
+  for (DiagnosticIndex i=0; (std::size_t)i < m_diagnostics.size(); ++i) {
+    vectorIndices.insert(i);
+  }
+
+  std::set<DiagnosticIndex> mapIndices =
+    m_rangeToDiagIndex.getMappedValues();
+
+  xassert(vectorIndices == mapIndices);
+
+  std::set<TextMCoordMap::Entry> underEntries =
+    m_rangeToDiagIndex.getAllEntries();
+  for (auto const &underEntry : underEntries) {
+    xassert(m_doc->validRange(underEntry.m_range));
+    xassert(underEntry.m_range.isRectified());
+  }
 }
 
 
@@ -111,7 +134,8 @@ std::size_t TextDocumentDiagnostics::size() const
 
 void TextDocumentDiagnostics::insert(TextMCoordRange range, Diagnostic &&diag)
 {
-  int index = safeToInt(m_diagnostics.size());
+  DiagnosticIndex index =
+    convertNumber<DiagnosticIndex>(m_diagnostics.size());
   m_diagnostics.push_back(std::move(diag));
   m_rangeToDiagIndex.insert({range, index});
 }
@@ -137,29 +161,36 @@ auto TextDocumentDiagnostics::getLineEntries(int line) const
 }
 
 
+TextDocumentDiagnostics::operator gdv::GDValue() const
+{
+  // TODO: This should include the diagnostic messages.
+  return toGDValue(m_rangeToDiagIndex);
+}
+
+
 void TextDocumentDiagnostics::observeInsertLine(TextDocumentCore const &doc, int line) noexcept
 {
-  // TODO
+  m_rangeToDiagIndex.insertLines(line, 1);
 }
 
 void TextDocumentDiagnostics::observeDeleteLine(TextDocumentCore const &doc, int line) noexcept
 {
-  // TODO
+  m_rangeToDiagIndex.deleteLines(line, 1);
 }
 
 void TextDocumentDiagnostics::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept
 {
-  // TODO
+  m_rangeToDiagIndex.insertLineBytes(tc, lengthBytes);
 }
 
 void TextDocumentDiagnostics::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept
 {
-  // TODO
+  m_rangeToDiagIndex.deleteLineBytes(tc, lengthBytes);
 }
 
 void TextDocumentDiagnostics::observeTotalChange(TextDocumentCore const &doc) noexcept
 {
-  // TODO
+  m_rangeToDiagIndex.clear();
 }
 
 

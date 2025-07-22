@@ -36,6 +36,7 @@ class ReferenceMap {
   NO_OBJECT_COPIES(ReferenceMap);
 
 public:      // types
+  typedef TextMCoordMap::Value Value;
   typedef TextMCoordMap::Entry Entry;
   typedef TextMCoordMap::LineEntry LineEntry;
 
@@ -247,6 +248,17 @@ public:
     return m_entries;
   }
 
+  std::set<Value> getMappedValues() const
+  {
+    std::set<Value> ret;
+
+    for (Entry const &e : m_entries) {
+      ret.insert(e.m_value);
+    }
+
+    return ret;
+  }
+
   operator gdv::GDValue() const
   {
     return toGDValue(m_entries);
@@ -279,6 +291,8 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
     xassert(m.getLineEntries(i) ==
             r.getLineEntries(i));
   }
+
+  xassert(m.getMappedValues() == r.getMappedValues());
 }
 
 
@@ -303,6 +317,7 @@ std::string toCode(TextMCoordMap::Entry const &e)
 // Combination of `TextMCoordMap` and `ReferenceMap`.
 class MapPair {
 public:      // types
+  typedef TextMCoordMap::Value Value;
   typedef TextMCoordMap::Entry Entry;
   typedef TextMCoordMap::LineEntry LineEntry;
 
@@ -397,6 +412,11 @@ public:      // methods
     return m_sut.getAllEntries();
   }
 
+  std::set<Value> getMappedValues() const
+  {
+    return m_sut.getMappedValues();
+  }
+
   operator gdv::GDValue() const
   {
     return m_sut.operator GDValue();
@@ -474,7 +494,9 @@ void test_commentsExample()
   EXPECT_EQ(m.numLines(), 0);
   EXPECT_EQ(stringb(toGDValue(m)),
     "{}");
-  EXPECT_EQ(stringb(m.dumpInternals()),
+  EXPECT_EQ(toGDValue(m.getMappedValues()).asString(),
+    "{}");
+  EXPECT_EQ(internals(m),
     "TextMCoordMapInternals[values:{} lineData:{length:0}]");
 
   // Asking about out-of-range lines is allowed, and yields an empty set.
@@ -496,6 +518,8 @@ void test_commentsExample()
   EXPECT_EQ(lineEntriesString(m, 1),
     "{LineEntry[startByteIndex:5 endByteIndex:12 value:1]}");
   EXPECT_EQ(lineEntriesString(m, 2), "{}");
+  EXPECT_EQ(toGDValue(m.getMappedValues()).asString(),
+    "{1}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1}
@@ -533,6 +557,8 @@ void test_commentsExample()
     "{LineEntry[startByteIndex:null endByteIndex:null value:2]}");
   EXPECT_EQ(lineEntriesString(m, 5),
     "{LineEntry[startByteIndex:null endByteIndex:12 value:2]}");
+  EXPECT_EQ(toGDValue(m.getMappedValues()).asString(),
+    "{1 2}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1 2}
@@ -590,6 +616,8 @@ void test_commentsExample()
     "{LineEntry[startByteIndex:null endByteIndex:null value:2]}");
   EXPECT_EQ(lineEntriesString(m, 6),
     "{LineEntry[startByteIndex:null endByteIndex:12 value:2]}");
+  EXPECT_EQ(toGDValue(m.getMappedValues()).asString(),
+    "{1 2}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1 2}
@@ -645,6 +673,8 @@ void test_commentsExample()
     "{LineEntry[startByteIndex:5 endByteIndex:null value:2]}");
   EXPECT_EQ(lineEntriesString(m, 5),
     "{LineEntry[startByteIndex:null endByteIndex:12 value:2]}");
+  EXPECT_EQ(toGDValue(m.getMappedValues()).asString(),
+    "{1 2}");
   EXPECT_EQ(internals(m),
     R"(TextMCoordMapInternals[
       values: {1 2}

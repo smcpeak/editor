@@ -27,6 +27,7 @@
 #include "python_hilite.h"             // Python_Highlighter
 #include "sar-panel.h"                 // SearchAndReplacePanel
 #include "status.h"                    // StatusDisplay
+#include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-editor.h"                 // TextDocumentEditor
 #include "textinput.h"                 // TextInputDialog
 #include "vfs-query-sync.h"            // VFS_QuerySync
@@ -436,6 +437,11 @@ void EditorWindow::buildMenu()
                   lspCloseFile);
     MENU_ITEM    ("Review diagnostics for this file",
                   lspReviewDiagnostics);
+
+    menu->addSeparator();
+
+    MENU_ITEM    ("Insert fake diagnostics",
+                  lspInsertFakeDiagnostics);
   }
 
   {
@@ -2017,9 +2023,10 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
 
   std::ostringstream oss;
 
-  if (LSP_PublishDiagnosticsParams *diags = doc->m_lspDiagnostics.get()) {
+  if (TextDocumentDiagnostics const *diags = doc->m_diagnostics.get()) {
     oss << "Current version: " << doc->getVersionNumber() << "\n";
 
+    #if 0
     if (diags->m_version.has_value()) {
       oss << "Diagnostics apply to version: " << diags->m_version.value() << "\n";
     }
@@ -2033,12 +2040,43 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
       // Very crude, for now.
       oss << toGDValue(diag) << "\n";
     }
+    #endif
+
+    oss << toGDValue(*diags).asLinesString();
   }
   else {
     oss << "There are no diagnostics for this file.";
   }
 
   inform(oss.str());
+
+  GENERIC_CATCH_END
+}
+
+
+static std::unique_ptr<TextDocumentDiagnostics>
+makeFakeDiagnostics(NamedTextDocument *doc)
+{
+  std::unique_ptr<TextDocumentDiagnostics> diags(
+    new TextDocumentDiagnostics(doc));
+  diags->insert({{10,10}, {10,30}}, {"something"});
+  diags->selfCheck();
+  return diags;
+}
+
+
+void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  NamedTextDocument *doc = currentDocument();
+  xassert(doc);
+
+  // Temporary: fake some diagnostics.  Note: This can fail if the
+  // fake diagnostics don't match the text.
+  doc->m_diagnostics = makeFakeDiagnostics(doc);
+
+  editorWidget()->redraw();
 
   GENERIC_CATCH_END
 }

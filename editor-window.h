@@ -263,6 +263,7 @@ public Q_SLOTS:
   void lspUpdateFile() NOEXCEPT;
   void lspCloseFile() NOEXCEPT;
   void lspReviewDiagnostics() NOEXCEPT;
+  void lspInsertFakeDiagnostics() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

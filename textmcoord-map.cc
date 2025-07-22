@@ -988,6 +988,12 @@ auto TextMCoordMap::getAllEntries() const -> std::set<Entry>
 }
 
 
+auto TextMCoordMap::getMappedValues() const -> std::set<Value>
+{
+  return m_values;
+}
+
+
 TextMCoordMap::operator gdv::GDValue() const
 {
   return toGDValue(getAllEntries());

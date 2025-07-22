@@ -13,6 +13,7 @@
 #include "textmcoord-map.h"            // TextMCoordMap
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/refct-serf.h"         // RCSerf, SerfRefCount
 
 #include <string>                      // std::string
@@ -21,6 +22,10 @@
 // A set of diagnostics associated with one text document.
 class TextDocumentDiagnostics : public TextDocumentObserver {
 public:      // types
+  // Type that acts as the value for the range map, and the index into
+  // `m_diagnostics`.
+  typedef TextMCoordMap::Value DiagnosticIndex;
+
   // A single diagnostic message.
   class Diagnostic : public SerfRefCount {
   public:      // data
@@ -81,6 +86,9 @@ private:     // data
   //
   // Invariant: The set of values in `m_rangeToDiagIndex` is
   // [0, m_diagnostics.size()-1].
+  //
+  // Invariant: Every range consists of valid model coordinates for
+  // `m_doc` with start <= end.
   TextMCoordMap m_rangeToDiagIndex;
 
 public:      // methods
@@ -103,6 +111,8 @@ public:      // methods
 
   // Return all diagnostic entries that intersect `line`.
   std::set<LineEntry> getLineEntries(int line) const;
+
+  operator gdv::GDValue() const;
 
 public:      // TextDocumentObserver methods
   // Each of these adjusts the entries so that the "same" text is mapped

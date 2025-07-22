@@ -342,6 +342,9 @@ public:      // methods
   // `insert`.)
   std::set<Entry> getAllEntries() const;
 
+  // Get the set of values that are mapped from some range.
+  std::set<Value> getMappedValues() const;
+
   // Equivalent to `toGDValue(getAllEntries())`.
   operator gdv::GDValue() const;
 
