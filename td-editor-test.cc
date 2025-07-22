@@ -7,6 +7,7 @@
 #include "smbase/datablok.h"           // DataBlock
 #include "smbase/exc.h"                // EXN_CONTEXT
 #include "smbase/nonport.h"            // removeFile
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/trace.h"              // traceProcessArg
@@ -16,7 +17,7 @@
 #include <stdlib.h>                    // system
 
 
-// TODO: Wrap in anonymous namespace, remove `static`.
+OPEN_ANONYMOUS_NAMESPACE
 
 
 // This file is structured as a sequence of mostly-independent
@@ -24,7 +25,7 @@
 // TextDocumentEditor.
 
 
-static void checkCoord(TextLCoord expect, TextLCoord actual, char const *label)
+void checkCoord(TextLCoord expect, TextLCoord actual, char const *label)
 {
   // I swapped the order of actual and expect when defining
   // these functions...
@@ -34,12 +35,12 @@ static void checkCoord(TextLCoord expect, TextLCoord actual, char const *label)
 }
 
 
-static void expectCursor(TextDocumentEditor const &tde, int line, int col)
+void expectCursor(TextDocumentEditor const &tde, int line, int col)
 {
   checkCoord(TextLCoord(line, col), tde.cursor(), "cursor");
 }
 
-static void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
+void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
   tde.selfCheck();
 
@@ -58,7 +59,7 @@ static void expect(TextDocumentEditor const &tde, int line, int col, char const 
 
 // --------------------- testUndoRedo -----------------------
 // Insert each character in 'str' as its own edit action.
-static void chars(TextDocumentEditor &tde, char const *str)
+void chars(TextDocumentEditor &tde, char const *str)
 {
   while (*str) {
     tde.insertText(str, 1);
@@ -67,7 +68,7 @@ static void chars(TextDocumentEditor &tde, char const *str)
 }
 
 
-static void testUndoRedo()
+void testUndoRedo()
 {
   TextDocumentAndEditor tde;
 
@@ -168,7 +169,7 @@ static void testUndoRedo()
 
 
 // Specifically test the way undo interacts with clipboard paste.
-static void testUndoOfPaste()
+void testUndoOfPaste()
 {
   TextDocumentAndEditor tde;
 
@@ -212,7 +213,7 @@ static void testUndoOfPaste()
 }
 
 
-static void testUndoOfBlockIndent()
+void testUndoOfBlockIndent()
 {
   TextDocumentAndEditor tde;
 
@@ -242,7 +243,7 @@ static void testUndoOfBlockIndent()
 
 // --------------------- testTextManipulation -----------------------
 // test TextDocumentEditor::getTextForLRange
-static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
+void testGetRange(TextDocumentEditor &tde, int line1, int col1,
                          int line2, int col2, char const *expect)
 {
   tde.selfCheck();
@@ -261,7 +262,7 @@ static void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 }
 
 
-static void testTextManipulation()
+void testTextManipulation()
 {
   TextDocumentAndEditor tde;
 
@@ -362,21 +363,21 @@ static void testTextManipulation()
 
 // --------------------- testBlockIndent -----------------------
 // Expect, including that the mark is inactive.
-static void expectNM(TextDocumentEditor const &tde, int line, int col, char const *text)
+void expectNM(TextDocumentEditor const &tde, int line, int col, char const *text)
 {
   expect(tde, line, col, text);
   xassert(!tde.markActive());
 }
 
 
-static void expectMark(TextDocumentEditor const &tde, int line, int col)
+void expectMark(TextDocumentEditor const &tde, int line, int col)
 {
   xassert(tde.markActive());
   checkCoord(TextLCoord(line, col), tde.mark(), "mark");
 }
 
 // Expect, and mark is active.
-static void expectM(TextDocumentEditor const &tde,
+void expectM(TextDocumentEditor const &tde,
   int cursorLine, int cursorCol,
   int markLine, int markCol,
   char const *text)
@@ -386,7 +387,7 @@ static void expectM(TextDocumentEditor const &tde,
 }
 
 
-static void expectBlockIndent(
+void expectBlockIndent(
   TextDocumentEditor &tde,
   int amt,
   int cursorLine, int cursorCol,
@@ -400,7 +401,7 @@ static void expectBlockIndent(
 }
 
 
-static void testBlockIndent()
+void testBlockIndent()
 {
   TextDocumentAndEditor tde;
 
@@ -531,7 +532,7 @@ static void testBlockIndent()
 }
 
 
-static void testBlockIndent2()
+void testBlockIndent2()
 {
   // Test block indent with blank lines.  Should not add spaces to them.
   TextDocumentAndEditor tde;
@@ -557,7 +558,7 @@ static void testBlockIndent2()
 
 
 // --------------------- testFillToCursor -----------------------
-static void expectFillToCursor(
+void expectFillToCursor(
   TextDocumentEditor &tde,
   int cursorLine, int cursorCol,
   char const *expectText)
@@ -568,7 +569,7 @@ static void expectFillToCursor(
 }
 
 
-static void testFillToCursor()
+void testFillToCursor()
 {
   TextDocumentAndEditor tde;
 
@@ -624,7 +625,7 @@ static void testFillToCursor()
 // --------------------- testScrollToCursor -----------------------
 // Check firstVisible and cursor.  The text itself is ignored since
 // we assume that tests above have exercised that adequately.
-static void expectFV(TextDocumentEditor const &tde,
+void expectFV(TextDocumentEditor const &tde,
   int cursorLine, int cursorCol,
   int fvLine, int fvCol,
   int visLines, int visColumns)
@@ -637,7 +638,7 @@ static void expectFV(TextDocumentEditor const &tde,
   xassert(visColumns == tde.visColumns());
 }
 
-static void testScrollToCursor()
+void testScrollToCursor()
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(5, 10);
@@ -760,7 +761,7 @@ static void testScrollToCursor()
 
 
 // ---------------------- testGetWordAfter ----------------------
-static void testOneWordAfter(TextDocumentEditor &tde,
+void testOneWordAfter(TextDocumentEditor &tde,
   int line, int col, char const *expect)
 {
   string actual = tde.getWordAfter(TextLCoord(line, col));
@@ -768,7 +769,7 @@ static void testOneWordAfter(TextDocumentEditor &tde,
 }
 
 
-static void testGetWordAfter()
+void testGetWordAfter()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -801,7 +802,7 @@ static void testGetWordAfter()
 
 
 // ------------------ testGetAboveIndentation -------------------
-static void testOneGAI(TextDocumentEditor &tde, int line,
+void testOneGAI(TextDocumentEditor &tde, int line,
   int expectIndCols, string const &expectIndText)
 {
   string actualIndText;
@@ -811,7 +812,7 @@ static void testOneGAI(TextDocumentEditor &tde, int line,
   EXPECT_EQ(actualIndText, expectIndText);
 }
 
-static void testGetAboveIndentation()
+void testGetAboveIndentation()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -846,7 +847,7 @@ static void testGetAboveIndentation()
 
 
 // ---------------------- testMoveCursor ------------------------
-static void testMoveCursor()
+void testMoveCursor()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -939,7 +940,7 @@ static void testMoveCursor()
 
 
 // ------------------- testBackspaceFunction --------------------
-static void testBackspaceFunction()
+void testBackspaceFunction()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1020,7 +1021,7 @@ static void testBackspaceFunction()
 
 
 // ------------------- testDeleteKeyFunction --------------------
-static void testDeleteKeyFunction()
+void testDeleteKeyFunction()
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(5, 10);
@@ -1077,7 +1078,7 @@ static void testDeleteKeyFunction()
 
 
 // ---------------------- testClipboard -------------------------
-static void testClipboard()
+void testClipboard()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1137,7 +1138,7 @@ static void testClipboard()
 
 
 // ---------------- testInsertNewlineAutoIndent ------------------
-static void testInsertNewlineAutoIndent()
+void testInsertNewlineAutoIndent()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1189,7 +1190,7 @@ static void testInsertNewlineAutoIndent()
 
 
 // Like above, but with some indented lines.
-static void testInsertNewlineAutoIndent2()
+void testInsertNewlineAutoIndent2()
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(3, 3);
@@ -1311,7 +1312,7 @@ static void testInsertNewlineAutoIndent2()
 }
 
 
-static void testInsertNewlineAutoIndent3()
+void testInsertNewlineAutoIndent3()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1352,7 +1353,7 @@ static void testInsertNewlineAutoIndent3()
 }
 
 
-static void testInsertNewlineAutoIndent4()
+void testInsertNewlineAutoIndent4()
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(5, 10);
@@ -1373,7 +1374,7 @@ static void testInsertNewlineAutoIndent4()
 }
 
 
-static void testInsertNewlineAutoIndentWithTab()
+void testInsertNewlineAutoIndentWithTab()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1491,7 +1492,7 @@ static void testInsertNewlineAutoIndentWithTab()
 
 
 // -------------------- testSetVisibleSize ----------------------
-static void testSetVisibleSize()
+void testSetVisibleSize()
 {
   TextDocumentAndEditor tde;
 
@@ -1517,7 +1518,7 @@ static void testSetVisibleSize()
 
 
 // -------------------- testCursorRestorer ----------------------
-static void testCursorRestorer()
+void testCursorRestorer()
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(5, 10);
@@ -1553,7 +1554,7 @@ static void testCursorRestorer()
 
 
 // ----------------------- testSetMark --------------------------
-static void testSetMark()
+void testSetMark()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1604,7 +1605,7 @@ static void testSetMark()
 
 
 // ----------------- testConfineCursorToVisible -----------------
-static void testConfineCursorToVisible()
+void testConfineCursorToVisible()
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(3,3);
@@ -1643,7 +1644,7 @@ static void testConfineCursorToVisible()
 // ------------------- testJustifyNearCursor --------------------
 // There are already extensive tests of the justification algorithm in
 // justify-test.cc, so here I just do a quick check.
-static void testJustifyNearCursor()
+void testJustifyNearCursor()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1688,7 +1689,7 @@ static void testJustifyNearCursor()
 
 
 // --------------------- testInsertDateTime ---------------------
-static void testInsertDateTime()
+void testInsertDateTime()
 {
   TextDocumentAndEditor tde;
 
@@ -1728,7 +1729,7 @@ static void testInsertDateTime()
 
 // --------------------- testReplaceText ---------------------
 // Select from line/col1 to line/col2, replace with 'text'.
-static void replaceText(
+void replaceText(
   TextDocumentEditor &tde,
   int line1, int col1, int line2, int col2, bool swapCM,
   char const *text,
@@ -1747,7 +1748,7 @@ static void replaceText(
 // that does 'deleteSelection' first if the mark is active.
 //
 // If 'swapCM', we swap cursor and mark before each insertion.
-static void testReplaceText(bool swapCM)
+void testReplaceText(bool swapCM)
 {
   TextDocumentAndEditor tde;
 
@@ -1819,7 +1820,7 @@ static void testReplaceText(bool swapCM)
 
 
 // Test 'insertText' with ITF_SELECT_AFTERWARD.
-static void testReplaceAndSelect(bool swapCM)
+void testReplaceAndSelect(bool swapCM)
 {
   TextDocumentAndEditor tde;
   TextDocumentEditor::InsertTextFlags itf =
@@ -1843,7 +1844,7 @@ static void testReplaceAndSelect(bool swapCM)
 }
 
 
-static void expectCountSpace(TextDocumentEditor &tde,
+void expectCountSpace(TextDocumentEditor &tde,
   int line, int expectLeading, int expectTrailing)
 {
   int leading = tde.countLeadingSpacesTabs(line);
@@ -1854,7 +1855,7 @@ static void expectCountSpace(TextDocumentEditor &tde,
 }
 
 
-static void testCountSpaceChars()
+void testCountSpaceChars()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1875,7 +1876,7 @@ static void testCountSpaceChars()
   expectCountSpace(tde, 7, 0, 0);
 }
 
-static void testCountSpaceCharsWithTabs()
+void testCountSpaceCharsWithTabs()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1894,7 +1895,7 @@ static void testCountSpaceCharsWithTabs()
 }
 
 
-static void expectGSOI_nm(TextDocumentEditor &tde, int line, int col,
+void expectGSOI_nm(TextDocumentEditor &tde, int line, int col,
                           string const &expect)
 {
   tde.setCursor(TextLCoord(line, col));
@@ -1903,7 +1904,7 @@ static void expectGSOI_nm(TextDocumentEditor &tde, int line, int col,
   EXPECT_EQ(actual, expect);
 }
 
-static void testGetSelectedOrIdentifier()
+void testGetSelectedOrIdentifier()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -1942,7 +1943,7 @@ static void testGetSelectedOrIdentifier()
 }
 
 
-static void testReadOnly()
+void testReadOnly()
 {
   TextDocumentAndEditor tde;
 
@@ -1955,7 +1956,7 @@ static void testReadOnly()
 }
 
 
-static void innerExpectLayoutWindow(TextDocumentEditor &tde,
+void innerExpectLayoutWindow(TextDocumentEditor &tde,
   int fvLine, int fvCol,
   int lvLine, int lvCol,
   string const &preExpect)
@@ -1977,7 +1978,7 @@ static void innerExpectLayoutWindow(TextDocumentEditor &tde,
   EXPECT_EQ(actual, expect);
 }
 
-static void expectLayoutWindow(TextDocumentEditor &tde,
+void expectLayoutWindow(TextDocumentEditor &tde,
   int fvLine, int fvCol,
   int lvLine, int lvCol,
   string const &preExpect)
@@ -2037,7 +2038,7 @@ static void expectLayoutWindow(TextDocumentEditor &tde,
   }
 }
 
-static void expectLCoord(TextDocumentEditor &tde,
+void expectLCoord(TextDocumentEditor &tde,
   int line, int byteIndex,
   int row, int col)
 {
@@ -2051,7 +2052,7 @@ static void expectLCoord(TextDocumentEditor &tde,
   EXPECT_EQ(mc2, mc);
 }
 
-static void expectMCoord(TextDocumentEditor &tde,
+void expectMCoord(TextDocumentEditor &tde,
   int row, int col,
   int line, int byteIndex)
 {
@@ -2066,7 +2067,7 @@ static void expectMCoord(TextDocumentEditor &tde,
   EXPECT_EQ(actual2, expect);
 }
 
-static void testLineLayout()
+void testLineLayout()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -2117,7 +2118,7 @@ static void testLineLayout()
 }
 
 
-static void expectVisibleWindow(TextDocumentEditor &tde,
+void expectVisibleWindow(TextDocumentEditor &tde,
   int cursorLine, int cursorCol,
   string const &preExpect)
 {
@@ -2130,7 +2131,7 @@ static void expectVisibleWindow(TextDocumentEditor &tde,
     preExpect);
 }
 
-static void testEditingWithTabs()
+void testEditingWithTabs()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -2272,7 +2273,7 @@ static void testEditingWithTabs()
 }
 
 
-static void expectMTLS(TextDocumentAndEditor &tde,
+void expectMTLS(TextDocumentAndEditor &tde,
   int line,
   LineCategories const &expectLayoutCategories,
   LineCategories const &modelCategories)
@@ -2287,7 +2288,7 @@ static void expectMTLS(TextDocumentAndEditor &tde,
 }
 
 
-static void testModelToLayoutSpans()
+void testModelToLayoutSpans()
 {
   TextDocumentAndEditor tde;
 
@@ -2414,7 +2415,7 @@ static void testModelToLayoutSpans()
 
 
 // ------------------------- testLineEndLCoord -------------------------
-static void expectLELC(
+void expectLELC(
   TextDocumentAndEditor &tde,
   int line,
   int expectCol)
@@ -2425,7 +2426,7 @@ static void expectLELC(
 }
 
 
-static void testLineEndLCoord()
+void testLineEndLCoord()
 {
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
@@ -2444,7 +2445,7 @@ static void testLineEndLCoord()
 
 
 // ----------------------- testSelectEntireFile ------------------------
-static void testSelectEntireFile()
+void testSelectEntireFile()
 {
   EXN_CONTEXT("testSelectEntireFile");
 
@@ -2481,7 +2482,7 @@ static void testSelectEntireFile()
 
 
 // --------------------------- main -----------------------------
-static void entry(int argc, char **argv)
+void entry(int argc, char **argv)
 {
   traceProcessArg(argc, argv);
 
@@ -2526,6 +2527,10 @@ static void entry(int argc, char **argv)
 
   cout << "\ntd-editor-test is ok" << endl;
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
+
 
 ARGS_TEST_MAIN
 
