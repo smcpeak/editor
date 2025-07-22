@@ -25,19 +25,15 @@ OPEN_ANONYMOUS_NAMESPACE
 // TextDocumentEditor.
 
 
-void checkCoord(TextLCoord expect, TextLCoord actual, char const *label)
+void checkCoord(TextLCoord actual, TextLCoord expect, char const *label)
 {
-  // I swapped the order of actual and expect when defining
-  // these functions...
-  //
-  // TODO: Swap the order so actual is first.
   expectEq(label, actual, expect);
 }
 
 
 void expectCursor(TextDocumentEditor const &tde, int line, int col)
 {
-  checkCoord(TextLCoord(line, col), tde.cursor(), "cursor");
+  checkCoord(tde.cursor(), TextLCoord(line, col), "cursor");
 }
 
 void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
@@ -373,7 +369,7 @@ void expectNM(TextDocumentEditor const &tde, int line, int col, char const *text
 void expectMark(TextDocumentEditor const &tde, int line, int col)
 {
   xassert(tde.markActive());
-  checkCoord(TextLCoord(line, col), tde.mark(), "mark");
+  checkCoord(tde.mark(), TextLCoord(line, col), "mark");
 }
 
 // Expect, and mark is active.
@@ -632,8 +628,8 @@ void expectFV(TextDocumentEditor const &tde,
 {
   tde.selfCheck();
 
-  checkCoord(TextLCoord(cursorLine, cursorCol), tde.cursor(), "cursor");
-  checkCoord(TextLCoord(fvLine, fvCol), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.cursor(), TextLCoord(cursorLine, cursorCol), "cursor");
+  checkCoord(tde.firstVisible(), TextLCoord(fvLine, fvCol), "firstVisible");
   xassert(visLines == tde.visLines());
   xassert(visColumns == tde.visColumns());
 }
@@ -1016,7 +1012,7 @@ void testBackspaceFunction()
   tde.backspaceFunction();
   expect(tde, 0,5,
     "etwo three");
-  checkCoord(TextLCoord(0,0), tde.firstVisible(), "first visible");
+  checkCoord(tde.firstVisible(), TextLCoord(0,0), "first visible");
 }
 
 
@@ -1073,7 +1069,7 @@ void testDeleteKeyFunction()
   expectNM(tde, 1,0,
     "oe\n"
     "three\n");
-  checkCoord(TextLCoord(1,0), tde.firstVisible(), "first visible");
+  checkCoord(tde.firstVisible(), TextLCoord(1,0), "first visible");
 }
 
 
@@ -1498,22 +1494,22 @@ void testSetVisibleSize()
 
   // Try with negative sizes.
   tde.setVisibleSize(-1, -1);
-  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
-  checkCoord(TextLCoord(0,0), tde.lastVisible(), "lastVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
+  checkCoord(tde.lastVisible(), TextLCoord(0,0), "lastVisible");
 
   // See if things work at this size.
   tde.insertNulTermText(
     "  one\n"
     "   two  \n"
     " three");
-  checkCoord(TextLCoord(2,6), tde.firstVisible(), "firstVisible");
-  checkCoord(TextLCoord(2,6), tde.lastVisible(), "lastVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(2,6), "firstVisible");
+  checkCoord(tde.lastVisible(), TextLCoord(2,6), "lastVisible");
 
   // Cursor movement does not automatically scroll.
   tde.moveCursorBy(-1,0);
-  checkCoord(TextLCoord(2,6), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(2,6), "firstVisible");
   tde.scrollToCursor();
-  checkCoord(TextLCoord(1,6), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(1,6), "firstVisible");
 }
 
 
@@ -2454,7 +2450,7 @@ void testSelectEntireFile()
 
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 0,0);
-  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
 
   tde.insertNulTermText(
     "one\n"
@@ -2463,21 +2459,21 @@ void testSelectEntireFile()
 
   // Due to the small window dimensions, inserting the above text should
   // leave the first visible line as "three".
-  checkCoord(TextLCoord(2,0), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(2,0), "firstVisible");
 
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 3,0);
 
   // `selectEntireFile` should scroll to make the cursor visible.
-  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
 
   tde.insertNulTermText(
     "one\n"
     "two");
-  checkCoord(TextLCoord(0,1), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(0,1), "firstVisible");
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 1,3);
-  checkCoord(TextLCoord(0,0), tde.firstVisible(), "firstVisible");
+  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
 }
 
 
