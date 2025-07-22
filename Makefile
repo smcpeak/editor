@@ -621,6 +621,7 @@ EDITOR_OBJS += fonts-dialog.moc.o
 EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += keybindings.doc.gen.o
 EDITOR_OBJS += keys-dialog.o
+EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += macro-creator-dialog.o
 EDITOR_OBJS += macro-creator-dialog.moc.o
 EDITOR_OBJS += macro-run-dialog.o

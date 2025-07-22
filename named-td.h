@@ -8,7 +8,6 @@
 
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
-#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td.h"                        // TextDocument
 
@@ -78,13 +77,7 @@ public:      // data
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
 
-  // If set, this is the latest set of diagnostics we have received from
-  // the LSP server.  Note that it has a version number that might not
-  // match the current contents.
-  std::unique_ptr<LSP_PublishDiagnosticsParams> m_lspDiagnostics;
-
-  // If set, the diagnostics associated with this document.  (This will
-  // replace `m_lspDiagnostics`.)
+  // If set, the diagnostics associated with this document.
   std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
 
 public:      // funcs

@@ -3,7 +3,6 @@
 
 #include "named-td.h"                  // this module
 
-#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 #include "smbase/dev-warning.h"        // DEV_WARNING
@@ -29,7 +28,6 @@ NamedTextDocument::NamedTextDocument()
     m_title(),
     m_highlighter(),
     m_highlightTrailingWhitespace(true),
-    m_lspDiagnostics(),
     m_diagnostics()
 {
   NamedTextDocument::s_objectCount++;

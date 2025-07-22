@@ -11,8 +11,10 @@
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
 #include "lsp-client.h"                // LSPClient
+#include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "process-watcher.h"           // ProcessWatcher
+#include "td-diagnostics.h"            // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                 // TextInputDialog
 #include "vfs-query-sync.h"            // readFileSynchronously
 
@@ -792,6 +794,20 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
     std::unique_ptr<LSP_PublishDiagnosticsParams> diags(
       m_lspManager.takePendingDiagnostics());
 
+    if (!diags->m_version.has_value()) {
+      TRACE("lsp", "received diagnostics without a version number");
+      continue;
+    }
+
+    if (*diags->m_version < 0) {
+      TRACE("lsp", "received diagnostics with a negative version number");
+      continue;
+    }
+
+    // Convert the version number data type.
+    TextDocument::VersionNumber diagsVersion =
+      static_cast<TextDocument::VersionNumber>(*diags->m_version);
+
     try {
       // Extract the file path.
       std::string path = LSPClient::getFileURIPath(diags->m_uri);
@@ -801,13 +817,21 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
         DocumentName::fromFilename(HostName::asLocal(), path);
 
       if (NamedTextDocument *doc = getFileWithName(docName)) {
-        TRACE("lsp", "updated diagnostics for " << docName);
-        doc->m_lspDiagnostics = std::move(diags);
+        if (doc->getVersionNumber() == diagsVersion) {
+          doc->m_diagnostics = convertLSPDiagsToTDD(doc, diags.get());
+          TRACE("lsp", "updated diagnostics for " << docName);
+        }
+        else {
+          // TODO: Adapt them rather than discard them.
+          TRACE("lsp",
+            "received diagnostics for " << docName <<
+            ", but doc is version " << doc->getVersionNumber() <<
+            " while diags have version " << diagsVersion);
+        }
       }
       else {
-        xmessage(stringb(
-          "Received LSP diagnostics for " << docName <<
-          " but that file is not open."));
+        TRACE("lsp", "Received LSP diagnostics for " << docName <<
+                     " but that file is not open.");
       }
     }
 
