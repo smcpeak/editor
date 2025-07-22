@@ -7,7 +7,7 @@
 #include "smbase/autofile.h"           // AutoFILE
 #include "smbase/exc.h"                // smbase::xmessage
 #include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-macros.h"          // IGNORE_RESULT
+#include "smbase/sm-macros.h"          // IGNORE_RESULT, OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // USUAL_MAIN, EXPECT_EQ
 #include "smbase/string-util.h"        // vectorOfUCharToString
 
@@ -18,12 +18,12 @@
 using namespace smbase;
 
 
-// TODO: Use anonymous namespace.
+OPEN_ANONYMOUS_NAMESPACE
 
 
 // Self-check the 'tdc' and also verify that the iterator works for
 // every line.
-static void fullSelfCheck(TextDocumentCore const &tdc)
+void fullSelfCheck(TextDocumentCore const &tdc)
 {
   tdc.selfCheck();
 
@@ -56,7 +56,7 @@ static void fullSelfCheck(TextDocumentCore const &tdc)
 }
 
 
-static void testAtomicRead()
+void testAtomicRead()
 {
   // Write a file that spans several blocks.
   {
@@ -76,18 +76,18 @@ static void testAtomicRead()
 }
 
 
-static void insText(TextDocumentCore &tdc, int line, int col, char const *text)
+void insText(TextDocumentCore &tdc, int line, int col, char const *text)
 {
   tdc.insertText(TextMCoord(line, col), text, strlen(text));
 }
 
-static void insLine(TextDocumentCore &tdc, int line, int col, char const *text)
+void insLine(TextDocumentCore &tdc, int line, int col, char const *text)
 {
   tdc.insertLine(line);
   insText(tdc, line, col, text);
 }
 
-static void appendLine(TextDocumentCore &tdc, char const *text)
+void appendLine(TextDocumentCore &tdc, char const *text)
 {
   // There is always a line at the end without a newline terminator.  We
   // insert above it.
@@ -97,7 +97,7 @@ static void appendLine(TextDocumentCore &tdc, char const *text)
 }
 
 
-static void checkSpaces(TextDocumentCore const &tdc,
+void checkSpaces(TextDocumentCore const &tdc,
   int line, int leading, int trailing)
 {
   EXPECT_EQ(tdc.countLeadingSpacesTabs(line), leading);
@@ -118,7 +118,7 @@ static void checkSpaces(TextDocumentCore const &tdc,
   }
 
 
-static void testVarious()
+void testVarious()
 {
   TextDocumentCore tdc;
   TextDocumentCore::VersionNumber vnum = tdc.getVersionNumber();
@@ -221,7 +221,7 @@ static void testVarious()
 
 
 // I don't remember what this was meant to test...
-static void testReadTwice()
+void testReadTwice()
 {
   for (int looper=0; looper<2; looper++) {
     // build a text file
@@ -268,7 +268,7 @@ static void testReadTwice()
 
 
 // Read the td-core.cc source code, just as an example of a real file.
-static void testReadSourceCode()
+void testReadSourceCode()
 {
   printf("reading td-core.cc ...\n");
   TextDocumentCore doc;
@@ -278,7 +278,7 @@ static void testReadSourceCode()
 }
 
 
-static void expectWalkCoordBytes(
+void expectWalkCoordBytes(
   TextDocumentCore &tdc,
   TextMCoord const &tc,
   int distance,
@@ -290,7 +290,7 @@ static void expectWalkCoordBytes(
   EXPECT_EQ(actual, expect);
 }
 
-static void expectWalkCoordBytes_false(
+void expectWalkCoordBytes_false(
   TextDocumentCore &tdc,
   TextMCoord const &tc,
   int distance)
@@ -300,7 +300,7 @@ static void expectWalkCoordBytes_false(
   EXPECT_EQ(res, false);
 }
 
-static void expectInvalidCoord(
+void expectInvalidCoord(
   TextDocumentCore &tdc,
   TextMCoord const &tc)
 {
@@ -308,7 +308,7 @@ static void expectInvalidCoord(
   EXPECT_EQ(res, false);
 }
 
-static void testWalkCoordBytes()
+void testWalkCoordBytes()
 {
   TextDocumentCore tdc;
   tdc.insertLine(0);
@@ -381,7 +381,7 @@ static void testWalkCoordBytes()
 }
 
 
-static void testOneAdjustMCoord_adj(
+void testOneAdjustMCoord_adj(
   TextDocumentCore &tdc, int il, int ib, int ol, int ob)
 {
   TextMCoord tc(il, ib);
@@ -392,7 +392,7 @@ static void testOneAdjustMCoord_adj(
 }
 
 
-static void testOneAdjustMCoord_noAdj(
+void testOneAdjustMCoord_noAdj(
   TextDocumentCore &tdc, int il, int ib)
 {
   TextMCoord tc(il, ib);
@@ -403,7 +403,7 @@ static void testOneAdjustMCoord_noAdj(
 }
 
 
-static void testOneAdjustMCoordRange_adj(
+void testOneAdjustMCoordRange_adj(
   TextDocumentCore &tdc,
   int isl, int isb, int iel, int ieb,
   int osl, int osb, int oel, int oeb)
@@ -418,7 +418,7 @@ static void testOneAdjustMCoordRange_adj(
 }
 
 
-static void testOneAdjustMCoordRange_noAdj(
+void testOneAdjustMCoordRange_noAdj(
   TextDocumentCore &tdc,
   int isl, int isb, int iel, int ieb)
 {
@@ -432,7 +432,7 @@ static void testOneAdjustMCoordRange_noAdj(
 }
 
 
-static void test_adjustMCoord()
+void test_adjustMCoord()
 {
   TextDocumentCore tdc;
   appendLine(tdc, "zero");
@@ -504,7 +504,7 @@ static void test_adjustMCoord()
 }
 
 
-static void entry()
+void entry()
 {
   testReadTwice();
   testReadSourceCode();
@@ -515,6 +515,10 @@ static void entry()
 
   printf("\ntd-core-test is ok\n");
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
+
 
 USUAL_TEST_MAIN
 
