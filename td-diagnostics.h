@@ -36,7 +36,28 @@ public:      // types
     ~Diagnostic();
     Diagnostic(std::string &&message);
 
+    operator gdv::GDValue() const;
+
     DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Diagnostic)
+  };
+
+  // One mapping, with document-wide boundary scope.  That is, this is
+  // logically what this data structure contains a set of.
+  class DocEntry {
+  public:      // data
+    // Range of text the diagnostic pertains to.
+    TextMCoordRange m_range;
+
+    // The diagnostic for that range.
+    RCSerf<Diagnostic const> m_diagnostic;
+
+  public:      // data
+    ~DocEntry();
+    DocEntry(TextMCoordRange range, Diagnostic const *diagnostic);
+
+    operator gdv::GDValue() const;
+
+    DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(DocEntry)
   };
 
   // A description of the portion of a line that intersects a
@@ -68,6 +89,8 @@ public:      // types
 
     // Assert invariants.
     void selfCheck() const;
+
+    operator gdv::GDValue() const;
 
     DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineEntry)
   };
@@ -117,6 +140,9 @@ public:      // methods
 
   // Return all diagnostic entries that intersect `line`.
   std::set<LineEntry> getLineEntries(int line) const;
+
+  // Return all entries for the entire document.
+  std::set<DocEntry> getAllEntries() const;
 
   operator gdv::GDValue() const;
 

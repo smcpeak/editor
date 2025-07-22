@@ -3,18 +3,23 @@
 
 // See license.txt for copyright and terms of use.
 
-#include "td-diagnostics.h"            // this module
+#include "smbase/gdvalue-optional-fwd.h"         // gdv::GDValue(std::optional)
+#include "smbase/gdvalue-set-fwd.h"              // gdv::GDValue(std::set)
 
-#include "named-td.h"                  // NamedTextDocument
-#include "textmcoord-map.h"            // TextMCoordMap
+#include "td-diagnostics.h"                      // this module
 
-#include "smbase/compare-util.h"       // smbase::compare
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/overflow.h"           // convertNumber
+#include "named-td.h"                            // NamedTextDocument
+#include "textmcoord-map.h"                      // TextMCoordMap
 
-#include <optional>                    // std::optional
-#include <string>                      // std::string
-#include <utility>                     // std::move
+#include "smbase/compare-util.h"                 // smbase::compare
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
+#include "smbase/gdvalue-set.h"                  // gdv::GDValue(std::set)
+#include "smbase/overflow.h"                     // convertNumber
+
+#include <optional>                              // std::optional
+#include <string>                                // std::string
+#include <utility>                               // std::move
 
 using namespace gdv;
 using namespace smbase;
@@ -35,6 +40,52 @@ int TextDocumentDiagnostics::Diagnostic::compareTo(Diagnostic const &b) const
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_message);
   return 0;
+}
+
+
+TextDocumentDiagnostics::Diagnostic::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP);
+  m.taggedContainerSetTag("TDD_Diagnostic"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_message);
+
+  return m;
+}
+
+
+
+// ----------------------------- DocEntry ------------------------------
+TextDocumentDiagnostics::DocEntry::~DocEntry()
+{}
+
+
+TextDocumentDiagnostics::DocEntry::DocEntry(
+  TextMCoordRange range,
+  Diagnostic const *diagnostic)
+  : m_range(range),
+    m_diagnostic(diagnostic)
+{}
+
+
+int TextDocumentDiagnostics::DocEntry::compareTo(DocEntry const &b) const
+{
+  auto const &a = *this;
+  RET_IF_COMPARE_MEMBERS(m_range);
+  RET_IF_NONZERO(deepCompare(a.m_diagnostic, b.m_diagnostic));
+  return 0;
+}
+
+
+TextDocumentDiagnostics::DocEntry::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP);
+  m.taggedContainerSetTag("TDD_DocEntry"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_range);
+  m.mapSetValueAtSym("diagnostic", toGDValue(*m_diagnostic));
+
+  return m;
 }
 
 
@@ -68,16 +119,21 @@ int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_startByteIndex);
   RET_IF_COMPARE_MEMBERS(m_endByteIndex);
-
-  // Distiguish by presence of a diagnostic.
-  RET_IF_NONZERO(!!a.m_diagnostic - !!b.m_diagnostic);
-
-  if (a.m_diagnostic) {
-    // If both are present, use deep comparison.
-    RET_IF_NONZERO(compare(*a.m_diagnostic, *b.m_diagnostic));
-  }
-
+  RET_IF_NONZERO(deepCompare(a.m_diagnostic, b.m_diagnostic));
   return 0;
+}
+
+
+TextDocumentDiagnostics::LineEntry::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP);
+  m.taggedContainerSetTag("TDD_LineEntry"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_startByteIndex);
+  GDV_WRITE_MEMBER_SYM(m_endByteIndex);
+  m.mapSetValueAtSym("diagnostic", toGDValue(*m_diagnostic));
+
+  return m;
 }
 
 
@@ -170,10 +226,28 @@ auto TextDocumentDiagnostics::getLineEntries(int line) const
 }
 
 
+auto TextDocumentDiagnostics::getAllEntries() const
+  -> std::set<DocEntry>
+{
+  std::set<DocEntry> ret;
+
+  std::set<TextMCoordMap::DocEntry> underEntries =
+    m_rangeToDiagIndex.getAllEntries();
+
+  for (auto const &underEntry : underEntries) {
+    ret.insert(DocEntry(
+      underEntry.m_range,
+      &( m_diagnostics.at(underEntry.m_value) )
+    ));
+  }
+
+  return ret;
+}
+
+
 TextDocumentDiagnostics::operator gdv::GDValue() const
 {
-  // TODO: This should include the diagnostic messages.
-  return toGDValue(m_rangeToDiagIndex);
+  return toGDValue(getAllEntries());
 }
 
 
