@@ -141,6 +141,15 @@ void TextDocumentDiagnostics::insert(TextMCoordRange range, Diagnostic &&diag)
 }
 
 
+bool TextDocumentDiagnostics::insertWithAdjust(
+  TextMCoordRange /*INOUT*/ &range, Diagnostic &&diag)
+{
+  bool adjusted = m_doc->adjustMCoordRange(range);
+  insert(range, std::move(diag));
+  return adjusted;
+}
+
+
 auto TextDocumentDiagnostics::getLineEntries(int line) const
   -> std::set<LineEntry>
 {

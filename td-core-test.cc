@@ -18,6 +18,9 @@
 using namespace smbase;
 
 
+// TODO: Use anonymous namespace.
+
+
 // Self-check the 'tdc' and also verify that the iterator works for
 // every line.
 static void fullSelfCheck(TextDocumentCore const &tdc)
@@ -82,6 +85,15 @@ static void insLine(TextDocumentCore &tdc, int line, int col, char const *text)
 {
   tdc.insertLine(line);
   insText(tdc, line, col, text);
+}
+
+static void appendLine(TextDocumentCore &tdc, char const *text)
+{
+  // There is always a line at the end without a newline terminator.  We
+  // insert above it.
+  int line = tdc.numLines()-1;
+
+  insLine(tdc, line, 0, text);
 }
 
 
@@ -369,6 +381,129 @@ static void testWalkCoordBytes()
 }
 
 
+static void testOneAdjustMCoord_adj(
+  TextDocumentCore &tdc, int il, int ib, int ol, int ob)
+{
+  TextMCoord tc(il, ib);
+  xassert(tdc.adjustMCoord(tc));
+
+  EXPECT_EQ(tc.m_line, ol);
+  EXPECT_EQ(tc.m_byteIndex, ob);
+}
+
+
+static void testOneAdjustMCoord_noAdj(
+  TextDocumentCore &tdc, int il, int ib)
+{
+  TextMCoord tc(il, ib);
+  xassert(!tdc.adjustMCoord(tc));
+
+  EXPECT_EQ(tc.m_line, il);
+  EXPECT_EQ(tc.m_byteIndex, ib);
+}
+
+
+static void testOneAdjustMCoordRange_adj(
+  TextDocumentCore &tdc,
+  int isl, int isb, int iel, int ieb,
+  int osl, int osb, int oel, int oeb)
+{
+  TextMCoordRange range{{isl, isb}, {iel, ieb}};
+  xassert(tdc.adjustMCoordRange(range));
+
+  EXPECT_EQ(range.m_start.m_line, osl);
+  EXPECT_EQ(range.m_start.m_byteIndex, osb);
+  EXPECT_EQ(range.m_end.m_line, oel);
+  EXPECT_EQ(range.m_end.m_byteIndex, oeb);
+}
+
+
+static void testOneAdjustMCoordRange_noAdj(
+  TextDocumentCore &tdc,
+  int isl, int isb, int iel, int ieb)
+{
+  TextMCoordRange range{{isl, isb}, {iel, ieb}};
+  xassert(!tdc.adjustMCoordRange(range));
+
+  EXPECT_EQ(range.m_start.m_line, isl);
+  EXPECT_EQ(range.m_start.m_byteIndex, isb);
+  EXPECT_EQ(range.m_end.m_line, iel);
+  EXPECT_EQ(range.m_end.m_byteIndex, ieb);
+}
+
+
+static void test_adjustMCoord()
+{
+  TextDocumentCore tdc;
+  appendLine(tdc, "zero");
+  appendLine(tdc, "one");
+  appendLine(tdc, "two");
+  appendLine(tdc, "three");
+
+  // Single coordinate.
+
+  testOneAdjustMCoord_adj(tdc, -2,0, 0,0);
+
+  testOneAdjustMCoord_adj(tdc, -1,0, 0,0);
+  testOneAdjustMCoord_adj(tdc, -1,-1, 0,0);
+
+  testOneAdjustMCoord_adj(tdc, 0,-2, 0,0);
+  testOneAdjustMCoord_adj(tdc, 0,-1, 0,0);
+  testOneAdjustMCoord_noAdj(tdc, 0,0);
+  testOneAdjustMCoord_noAdj(tdc, 0,4);
+  testOneAdjustMCoord_adj(tdc, 0,5, 0,4);
+  testOneAdjustMCoord_adj(tdc, 0,6, 0,4);
+
+  testOneAdjustMCoord_adj(tdc, 1,-1, 1,0);
+  testOneAdjustMCoord_noAdj(tdc, 1,0);
+  testOneAdjustMCoord_noAdj(tdc, 1,3);
+  testOneAdjustMCoord_adj(tdc, 1,4, 1,3);
+
+  testOneAdjustMCoord_adj(tdc, 2,-1, 2,0);
+  testOneAdjustMCoord_noAdj(tdc, 2,0);
+  testOneAdjustMCoord_noAdj(tdc, 2,3);
+  testOneAdjustMCoord_adj(tdc, 2,4, 2,3);
+
+  testOneAdjustMCoord_adj(tdc, 3,-1, 3,0);
+  testOneAdjustMCoord_noAdj(tdc, 3,0);
+  testOneAdjustMCoord_noAdj(tdc, 3,5);
+  testOneAdjustMCoord_adj(tdc, 3,6, 3,5);
+
+  testOneAdjustMCoord_adj(tdc, 4,-1, 4,0);
+  testOneAdjustMCoord_noAdj(tdc, 4,0);
+  testOneAdjustMCoord_adj(tdc, 4,1, 4,0);
+
+  testOneAdjustMCoord_adj(tdc, 5,-1, 4,0);
+  testOneAdjustMCoord_adj(tdc, 5,0, 4,0);
+  testOneAdjustMCoord_adj(tdc, 5,1, 4,0);
+
+  testOneAdjustMCoord_adj(tdc, 6,0, 4,0);
+
+  // Range.
+
+  testOneAdjustMCoordRange_adj(tdc, -1,0, 1,0, 0,0, 1,0);
+  testOneAdjustMCoordRange_adj(tdc, -1,0, -1,0, 0,0, 0,0);
+
+  testOneAdjustMCoordRange_noAdj(tdc, 0,0, 0,0);
+  testOneAdjustMCoordRange_noAdj(tdc, 0,0, 1,0);
+  testOneAdjustMCoordRange_noAdj(tdc, 0,0, 4,0);
+
+  testOneAdjustMCoordRange_adj(tdc, -1,0, 4,1, 0,0, 4,0);
+
+  testOneAdjustMCoordRange_adj(tdc, 0,0, 0,9, 0,0, 0,4);
+  testOneAdjustMCoordRange_adj(tdc, 0,0, 4,1, 0,0, 4,0);
+  testOneAdjustMCoordRange_adj(tdc, 0,0, 5,0, 0,0, 4,0);
+
+  testOneAdjustMCoordRange_adj(tdc, 1,1, 1,9, 1,1, 1,3);
+
+  // end < start
+  testOneAdjustMCoordRange_adj(tdc, 2,2, 1,1, 2,2, 2,2);
+  testOneAdjustMCoordRange_adj(tdc, 2,9, 1,1, 2,3, 2,3);
+  testOneAdjustMCoordRange_adj(tdc, -5,0, 5,0, 0,0, 4,0);
+  testOneAdjustMCoordRange_adj(tdc, -5,0, -1,0, 0,0, 0,0);
+}
+
+
 static void entry()
 {
   testReadTwice();
@@ -376,6 +511,7 @@ static void entry()
   testAtomicRead();
   testVarious();
   testWalkCoordBytes();
+  test_adjustMCoord();
 
   printf("\ntd-core-test is ok\n");
 }

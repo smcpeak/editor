@@ -148,6 +148,8 @@ public:      // funcs
   int numLinesExceptFinalEmpty() const                       { return m_core.numLinesExceptFinalEmpty(); }
   bool walkCoordBytes(TextMCoord &tc, int distance) const    { return m_core.walkCoordBytes(tc, distance); }
   int countBytesInRange(TextMCoordRange const &range) const  { return m_core.countBytesInRange(range); }
+  bool adjustMCoord(TextMCoord /*INOUT*/ &tc) const          { return m_core.adjustMCoord(tc); }
+  bool adjustMCoordRange(TextMCoordRange /*INOUT*/ &range) const { return m_core.adjustMCoordRange(range); }
   void getPartialLine(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getPartialLine(tc, dest, numBytes); }
   bool getTextSpanningLines(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getTextSpanningLines(tc, dest, numBytes); }
   void getTextForRange(TextMCoordRange const &range, ArrayStack<char> /*INOUT*/ &dest) const { m_core.getTextForRange(range, dest); }

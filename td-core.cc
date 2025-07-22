@@ -601,6 +601,52 @@ int TextDocumentCore::countBytesInRange(TextMCoordRange const &range) const
 }
 
 
+bool TextDocumentCore::adjustMCoord(TextMCoord /*INOUT*/ &tc) const
+{
+  if (tc.m_line < 0) {
+    tc = beginCoord();
+    return true;
+  }
+
+  if (tc.m_line >= numLines()) {
+    tc = endCoord();
+    return true;
+  }
+
+  if (tc.m_byteIndex < 0) {
+    tc.m_byteIndex = 0;
+    return true;
+  }
+
+  auto len = lineLengthBytes(tc.m_line);
+  if (tc.m_byteIndex > len) {
+    tc.m_byteIndex = len;
+    return true;
+  }
+
+  // TODO UTF-8: Check for being inside a multibyte sequence.
+
+  xassert(validCoord(tc));
+
+  return false;
+}
+
+
+bool TextDocumentCore::adjustMCoordRange(
+  TextMCoordRange /*INOUT*/ &range) const
+{
+  bool adjusted = adjustMCoord(range.m_start);
+  adjusted |= adjustMCoord(range.m_end);
+
+  if (range.m_end < range.m_start) {
+    range.m_end = range.m_start;
+    adjusted = true;
+  }
+
+  return adjusted;
+}
+
+
 void TextDocumentCore::getTextForRange(TextMCoordRange const &range,
   ArrayStack<char> /*INOUT*/ &dest) const
 {

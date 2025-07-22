@@ -185,6 +185,19 @@ public:    // funcs
   // Compute the number of bytes in a range.
   int countBytesInRange(TextMCoordRange const &range) const;
 
+  // If `tc` is not valid, adjust it to the nearest coordinate that is.
+  // Specifically, if the line is too large, set `tc` to `endCoord()`,
+  // and if it is negative, then set `tc` to `beginCoord()`.  If the
+  // line is ok but the byte index is out of bounds, similarly confine
+  // it to its line.  If the byte index points into the middle of a
+  // multibyte character, move it to the start of that character.
+  // Return true iff a change was made.
+  bool adjustMCoord(TextMCoord /*INOUT*/ &tc) const;
+
+  // Adjust both endpoints of range, then if end < start, set the end to
+  // the start.  Return true iff a change was made.
+  bool adjustMCoordRange(TextMCoordRange /*INOUT*/ &range) const;
+
   // --------------------- line contents ------------------------
   // Get part of a line's contents, starting at 'tc' and getting
   // 'numBytes'.  All bytes must be in the line now.  The retrieved

@@ -2059,7 +2059,11 @@ makeFakeDiagnostics(NamedTextDocument *doc)
 {
   std::unique_ptr<TextDocumentDiagnostics> diags(
     new TextDocumentDiagnostics(doc));
-  diags->insert({{10,10}, {10,30}}, {"something"});
+  TextMCoordRange range{{10,10}, {10,30}};
+
+  // Here, I don't care about the modified `range` or the return value.
+  diags->insertWithAdjust(range, {"something"});
+
   diags->selfCheck();
   return diags;
 }
@@ -2072,8 +2076,7 @@ void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
   NamedTextDocument *doc = currentDocument();
   xassert(doc);
 
-  // Temporary: fake some diagnostics.  Note: This can fail if the
-  // fake diagnostics don't match the text.
+  // Temporary: fake some diagnostics.
   doc->m_diagnostics = makeFakeDiagnostics(doc);
 
   editorWidget()->redraw();

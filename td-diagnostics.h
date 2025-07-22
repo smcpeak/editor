@@ -109,6 +109,12 @@ public:      // methods
   // Insert the mapping `range` -> `diag`.
   void insert(TextMCoordRange range, Diagnostic &&diag);
 
+  // Insert `range` -> `diag`, except first adjust `range` to be valid
+  // for the document using `TextDocument::adjustMCoordRange`, returning
+  // true and updating `range` if a change is made to it.
+  bool insertWithAdjust(
+    TextMCoordRange /*INOUT*/ &range, Diagnostic &&diag);
+
   // Return all diagnostic entries that intersect `line`.
   std::set<LineEntry> getLineEntries(int line) const;
 
