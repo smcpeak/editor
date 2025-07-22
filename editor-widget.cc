@@ -1312,7 +1312,7 @@ void EditorWidget::drawDiagnosticBoxes(
         // For a collapsed span, draw a thin box at the left side of the
         // start column cell.
         int x = m_fontWidth * (*startCol - firstCol);
-        paint.drawRect(x, 0, x+2, bottomY);
+        paint.drawRect(x, 0, 2 /*w*/, bottomY /*h*/);
         continue;
       }
 
