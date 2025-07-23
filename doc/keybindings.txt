@@ -97,12 +97,12 @@ Enter (sar)                  Jump to nearby match, focus on editor
 
 # -------------------------- keys with glyphs --------------------------
 
+<printable>                  Insert corresponding character
+<printable>+Shift            Insert corresponding character
+
 '.'+Ctrl                     Edit | Next search hit
 
 ','+Ctrl                     Edit | Previous search hit
-
-<printable>                  Insert corresponding character
-<printable>+Shift            Insert corresponding character
 
 A+Alt                        Edit | Apply command to selection...
 A+Ctrl                       Move cursor to start of line
