@@ -5,6 +5,7 @@
 
 // editor
 #include "editor-global.h"             // EditorGlobal
+#include "my-table-widget.h"           // MyTableWidget
 #include "pixmaps.h"                   // g_editorPixmaps
 
 // smqtutil
