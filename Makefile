@@ -589,8 +589,6 @@ validate-extradep: all
 
 
 # ------------------ the editor ---------------------
-TOCLEAN += keybindings.doc.gen.*
-
 # The following list of object files is added to what has been set
 # above.  Above, modules are pulled in as needed in order to build
 # various test programs.  What's left over is the modules that are not

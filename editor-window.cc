@@ -338,7 +338,7 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     MENU_ITEM_KEY("&Goto line ...", editGotoLine, Qt::ALT + Qt::Key_G);
-    MENU_ITEM_KEY("Grep source for symbol at cursor ...", editGrepSource,
+    MENU_ITEM_KEY("Grep source for symbol at cursor", editGrepSource,
                   Qt::CTRL + Qt::ALT + Qt::Key_G);
 
     menu->addSeparator();
