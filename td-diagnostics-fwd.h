@@ -6,6 +6,7 @@
 #ifndef EDITOR_TD_DIAGNOSTICS_FWD_H
 #define EDITOR_TD_DIAGNOSTICS_FWD_H
 
+class Diagnostic;
 class TextDocumentDiagnostics;
 
 #endif // EDITOR_TD_DIAGNOSTICS_FWD_H

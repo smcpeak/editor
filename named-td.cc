@@ -24,12 +24,12 @@ CHECK_OBJECT_COUNT(NamedTextDocument);
 NamedTextDocument::NamedTextDocument()
   : TextDocument(),
     m_documentName(),
+    m_diagnostics(),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
     m_highlighter(),
-    m_highlightTrailingWhitespace(true),
-    m_diagnostics()
+    m_highlightTrailingWhitespace(true)
 {
   NamedTextDocument::s_objectCount++;
 }
@@ -52,14 +52,6 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
   if (this->isProcessOutput()) {
     this->m_highlightTrailingWhitespace = false;
   }
-}
-
-
-void NamedTextDocument::updateDiagnostics(
-  std::unique_ptr<TextDocumentDiagnostics> diagnostics)
-{
-  m_diagnostics = std::move(diagnostics);
-  notifyMetadataChange();
 }
 
 
@@ -140,6 +132,33 @@ void NamedTextDocument::replaceFileAndStats(
   this->m_lastFileTimestamp = fileModificationTime;
   this->m_modifiedOnDisk = false;
   this->setReadOnly(readOnly);
+}
+
+
+TextDocumentDiagnostics const * NULLABLE
+NamedTextDocument::getDiagnostics() const
+{
+  return m_diagnostics.get();
+}
+
+
+void NamedTextDocument::updateDiagnostics(
+  std::unique_ptr<TextDocumentDiagnostics> diagnostics)
+{
+  m_diagnostics = std::move(diagnostics);
+  notifyMetadataChange();
+}
+
+
+RCSerf<Diagnostic const> NamedTextDocument::getDiagnosticAt(
+  TextMCoord tc) const
+{
+  if (m_diagnostics.get()) {
+    return m_diagnostics->getDiagnosticAt(tc);
+  }
+  else {
+    return {};
+  }
 }
 
 

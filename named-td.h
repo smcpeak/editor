@@ -43,6 +43,9 @@ private:     // data
   // NamedTextDocumentList.
   DocumentName m_documentName;
 
+  // If set, the diagnostics associated with this document.
+  std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
+
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
@@ -77,10 +80,6 @@ public:      // data
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
 
-  // If set, the diagnostics associated with this document.  This should
-  // be updated using `updateDiagnostics`.
-  std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
-
 public:      // funcs
   // Create an anonymous document.  The caller must call
   // 'setDocumentName' before adding it to a document list.
@@ -90,10 +89,6 @@ public:      // funcs
 
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
-
-  // Set `m_diagnostics` and notify observers.
-  void updateDiagnostics(
-    std::unique_ptr<TextDocumentDiagnostics> diagnostics);
 
   // ----------------------------- names ----------------------------
   DocumentName const &documentName() const
@@ -137,6 +132,19 @@ public:      // funcs
   void replaceFileAndStats(std::vector<unsigned char> const &contents,
                            std::int64_t fileModificationTime,
                            bool readOnly);
+
+  // --------------------------- diagnostics ---------------------------
+  // Get the current diagnostics, if any.
+  TextDocumentDiagnostics const * NULLABLE getDiagnostics() const;
+
+  // Set `m_diagnostics` and notify observers.
+  void updateDiagnostics(
+    std::unique_ptr<TextDocumentDiagnostics> diagnostics);
+
+  // Get diagnostic at `tc`.  See
+  // `TextDocumentDiagnostics::getDiagnosticAt` for details.
+  RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 };
+
 
 #endif // NAMED_TD_H

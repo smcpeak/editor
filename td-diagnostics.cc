@@ -26,16 +26,16 @@ using namespace smbase;
 
 
 // ---------------------------- Diagnostic -----------------------------
-TextDocumentDiagnostics::Diagnostic::~Diagnostic()
+Diagnostic::~Diagnostic()
 {}
 
 
-TextDocumentDiagnostics::Diagnostic::Diagnostic(std::string &&message)
+Diagnostic::Diagnostic(std::string &&message)
   : m_message(std::move(message))
 {}
 
 
-int TextDocumentDiagnostics::Diagnostic::compareTo(Diagnostic const &b) const
+int Diagnostic::compareTo(Diagnostic const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_message);
@@ -43,7 +43,7 @@ int TextDocumentDiagnostics::Diagnostic::compareTo(Diagnostic const &b) const
 }
 
 
-TextDocumentDiagnostics::Diagnostic::operator gdv::GDValue() const
+Diagnostic::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP);
   m.taggedContainerSetTag("TDD_Diagnostic"_sym);
@@ -114,13 +114,27 @@ void TextDocumentDiagnostics::LineEntry::selfCheck() const
 }
 
 
-int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
+bool TextDocumentDiagnostics::LineEntry::containsByteIndex(int byteIndex) const
 {
-  auto const &a = *this;
-  RET_IF_COMPARE_MEMBERS(m_startByteIndex);
-  RET_IF_COMPARE_MEMBERS(m_endByteIndex);
-  RET_IF_NONZERO(deepCompare(a.m_diagnostic, b.m_diagnostic));
-  return 0;
+  if (m_startByteIndex && *m_startByteIndex > byteIndex) {
+    return false;
+  }
+
+  if (m_endByteIndex && *m_endByteIndex <= byteIndex) {
+    if (*m_endByteIndex == byteIndex &&
+        m_startByteIndex &&
+        *m_startByteIndex == byteIndex) {
+      // As a special case, for a collapsed range, say it contains the
+      // index at the shared endpoint, since otherwise there would be no
+      // location that it contains, and hence no way to see the message
+      // in the UI (the way I'm thinking of showing them).
+      return true;
+    }
+
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -134,6 +148,35 @@ TextDocumentDiagnostics::LineEntry::operator gdv::GDValue() const
   m.mapSetValueAtSym("diagnostic", toGDValue(*m_diagnostic));
 
   return m;
+}
+
+
+int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
+{
+  auto const &a = *this;
+
+  // Smaller start is less.
+  RET_IF_COMPARE_MEMBERS(m_startByteIndex);
+
+  // *Larger* end is less, since I want smaller ranges to be considered
+  // to come after larger ranges, since then I can say that a range that
+  // compares as greater is "better" in the context of
+  // `getDiagnosticAt`.
+  //
+  // But, semantically, for the end point, an absent value should be
+  // treated as numerically larger (and hence order-wise smaller) than a
+  // present endpoint.
+  RET_IF_NONZERO(compare(a.m_endByteIndex.has_value(),
+                         b.m_endByteIndex.has_value()));
+
+  if (a.m_endByteIndex.has_value()) {
+    // Both are present, so flip the order here.
+    RET_IF_NONZERO(compare(b.m_endByteIndex.value(),
+                           a.m_endByteIndex.value()));
+  }
+
+  RET_IF_NONZERO(deepCompare(a.m_diagnostic, b.m_diagnostic));
+  return 0;
 }
 
 
@@ -242,6 +285,31 @@ auto TextDocumentDiagnostics::getAllEntries() const
   }
 
   return ret;
+}
+
+
+auto TextDocumentDiagnostics::getDiagnosticAt(TextMCoord tc) const
+  -> RCSerf<Diagnostic const>
+{
+  std::set<LineEntry> lineEntries = getLineEntries(tc.m_line);
+
+  std::optional<LineEntry> best;
+
+  // Get the last that contains `tc`; the comparison order of
+  // `LineEntry` has been designed specifically to work as desired in
+  // this context.
+  for (LineEntry const &entry : lineEntries) {
+    if (entry.containsByteIndex(tc.m_byteIndex)) {
+      best = entry;
+    }
+  }
+
+  if (best) {
+    return best->m_diagnostic;
+  }
+
+  // Not found.
+  return {};
 }
 
 

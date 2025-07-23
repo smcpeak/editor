@@ -462,6 +462,11 @@ public:      // funcs
   void commandEditSelectEntireFile();
   void editGrepSource();
 
+  // --------------------------- diagnostics ---------------------------
+  // If there are diagnostics associated with the current document, and
+  // the cursor is in one of the marked ranges, show its message.
+  void lspShowDiagnosticsAtCursor() const;
+
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
   VFS_Connections *vfsConnections() const;

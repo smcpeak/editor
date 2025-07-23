@@ -437,6 +437,8 @@ void EditorWindow::buildMenu()
                   lspCloseFile);
     MENU_ITEM    ("Review diagnostics for this file",
                   lspReviewDiagnostics);
+    MENU_ITEM    ("Show diagnostic at cursor",
+                  lspShowDiagnosticAtCursor);
 
     menu->addSeparator();
 
@@ -2025,7 +2027,7 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
 
   std::ostringstream oss;
 
-  if (TextDocumentDiagnostics const *diags = doc->m_diagnostics.get()) {
+  if (TextDocumentDiagnostics const *diags = doc->getDiagnostics()) {
     oss << "Current version: " << doc->getVersionNumber() << "\n";
 
     #if 0
@@ -2056,6 +2058,16 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
 }
 
 
+void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspShowDiagnosticsAtCursor();
+
+  GENERIC_CATCH_END
+}
+
+
 static std::unique_ptr<TextDocumentDiagnostics>
 makeFakeDiagnostics(NamedTextDocument *doc)
 {
@@ -2079,7 +2091,7 @@ void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
   xassert(doc);
 
   // Temporary: fake some diagnostics.
-  doc->m_diagnostics = makeFakeDiagnostics(doc);
+  doc->updateDiagnostics(makeFakeDiagnostics(doc));
 
   editorWidget()->redraw();
 
@@ -2091,7 +2103,7 @@ void EditorWindow::lspRemoveDiagnostics() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  currentDocument()->m_diagnostics.reset();
+  currentDocument()->updateDiagnostics({});
   editorWidget()->redraw();
 
   GENERIC_CATCH_END

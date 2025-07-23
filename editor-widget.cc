@@ -1278,7 +1278,7 @@ void EditorWidget::drawDiagnosticBoxes(
 {
   // Does the document have any associated diagnostics?
   TextDocumentDiagnostics const *diagnostics =
-    m_editor->m_namedDoc->m_diagnostics.get();
+    m_editor->m_namedDoc->getDiagnostics();
   if (!diagnostics) {
     return;
   }
@@ -2490,6 +2490,24 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
   QWidget::focusOutEvent(e);
 
   GENERIC_CATCH_END
+}
+
+
+void EditorWidget::lspShowDiagnosticsAtCursor() const
+{
+  if (TextDocumentDiagnostics const *tdd =
+        getDocument()->getDiagnostics()) {
+    if (RCSerf<Diagnostic const> diag = tdd->getDiagnosticAt(
+          m_editor->toMCoord(m_editor->cursor()))) {
+      editorWindow()->inform(diag->m_message);
+    }
+    else {
+      editorWindow()->inform("No diagnostics at cursor.");
+    }
+  }
+  else {
+    editorWindow()->inform("There are no diagnostics for this file.");
+  }
 }
 
 

@@ -19,27 +19,28 @@
 #include <string>                      // std::string
 
 
+// A single diagnostic message.
+class Diagnostic : public SerfRefCount {
+public:      // data
+  // What the diagnostic says.
+  std::string m_message;
+
+public:      // methods
+  ~Diagnostic();
+  Diagnostic(std::string &&message);
+
+  operator gdv::GDValue() const;
+
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Diagnostic)
+};
+
+
 // A set of diagnostics associated with one text document.
 class TextDocumentDiagnostics : public TextDocumentObserver {
 public:      // types
   // Type that acts as the value for the range map, and the index into
   // `m_diagnostics`.
   typedef TextMCoordMap::Value DiagnosticIndex;
-
-  // A single diagnostic message.
-  class Diagnostic : public SerfRefCount {
-  public:      // data
-    // What the diagnostic says.
-    std::string m_message;
-
-  public:      // methods
-    ~Diagnostic();
-    Diagnostic(std::string &&message);
-
-    operator gdv::GDValue() const;
-
-    DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Diagnostic)
-  };
 
   // One mapping, with document-wide boundary scope.  That is, this is
   // logically what this data structure contains a set of.
@@ -89,6 +90,9 @@ public:      // types
 
     // Assert invariants.
     void selfCheck() const;
+
+    // True if `byteIndex` is between start and end.
+    bool containsByteIndex(int byteIndex) const;
 
     operator gdv::GDValue() const;
 
@@ -143,6 +147,13 @@ public:      // methods
 
   // Return all entries for the entire document.
   std::set<DocEntry> getAllEntries() const;
+
+  // If there is a diagnostic containing `coord`, return a pointer to
+  // it.  This pointer becomes invalid if the diagnostics change, so
+  // must be immediately used and then discarded.  If there is none,
+  // return a null pointer.  If there is more than one, first prefer one
+  // with a closer start, then a closer end, then resolve arbitrarily.
+  RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 
   operator gdv::GDValue() const;
 

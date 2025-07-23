@@ -111,12 +111,6 @@ private:     // funcs
   // Return true if 'harn' exists, blocking during the check.
   bool checkFileExistenceSynchronously(HostAndResourceName const &harn);
 
-  // Pop up a message related to a problem.
-  void complain(std::string_view msg);
-
-  // Pop up a message for general information.
-  void inform(std::string_view msg);
-
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
@@ -193,6 +187,12 @@ public:      // funcs
     bool /*OUT*/ &prefixStderrLines,
     EditorCommandLineFunction whichFunction);
 
+  // Pop up a message related to a problem.
+  void complain(std::string_view msg);
+
+  // Pop up a message for general information.
+  void inform(std::string_view msg);
+
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAdded(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
@@ -263,6 +263,7 @@ public Q_SLOTS:
   void lspUpdateFile() NOEXCEPT;
   void lspCloseFile() NOEXCEPT;
   void lspReviewDiagnostics() NOEXCEPT;
+  void lspShowDiagnosticAtCursor() NOEXCEPT;
   void lspInsertFakeDiagnostics() NOEXCEPT;
   void lspRemoveDiagnostics() NOEXCEPT;
 
