@@ -556,6 +556,13 @@ HostAndResourceName EditorWidget::getDocumentDirectoryHarn() const
 
 void EditorWidget::fileOpenAtCursor()
 {
+  if (std::optional<std::string> msg = lspShowDiagnosticAtCursor();
+      !msg.has_value()) {
+    // We successfully showed the diagnostic messge, so do not proceed
+    // with trying to open a file.
+    return;
+  }
+
   string lineText = m_editor->getWholeLineString(m_editor->cursor().m_line);
 
   ArrayStack<HostAndResourceName> prefixes;
@@ -2493,20 +2500,21 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 }
 
 
-void EditorWidget::lspShowDiagnosticsAtCursor() const
+std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 {
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
     if (RCSerf<Diagnostic const> diag = tdd->getDiagnosticAt(
           m_editor->toMCoord(m_editor->cursor()))) {
       editorWindow()->inform(diag->m_message);
+      return {};
     }
     else {
-      editorWindow()->inform("No diagnostics at cursor.");
+      return "No diagnostics at cursor.";
     }
   }
   else {
-    editorWindow()->inform("There are no diagnostics for this file.");
+    return "There are no diagnostics for this file.";
   }
 }
 

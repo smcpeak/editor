@@ -256,7 +256,7 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM    ("&New", fileNewFile);
     MENU_ITEM_KEY("&Open ...", fileOpen, Qt::Key_F3);
-    MENU_ITEM_KEY("Open f&ile at cursor", fileOpenAtCursor,
+    MENU_ITEM_KEY("Open f&ile or show diagnostic at cursor", fileOpenAtCursor,
                   Qt::CTRL + Qt::Key_I);
 
     MENU_ITEM_KEY("&Save", fileSave, Qt::Key_F2);
@@ -2060,7 +2060,10 @@ void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->lspShowDiagnosticsAtCursor();
+  if (std::optional<std::string> msg =
+        editorWidget()->lspShowDiagnosticAtCursor()) {
+    inform(*msg);
+  }
 
   GENERIC_CATCH_END
 }

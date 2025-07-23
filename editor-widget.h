@@ -30,6 +30,7 @@
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
 #include "smbase/std-optional-fwd.h"             // std::optional
+#include "smbase/std-string-fwd.h"               // std::string
 
 // Qt
 #include <QWidget>
@@ -464,8 +465,9 @@ public:      // funcs
 
   // --------------------------- diagnostics ---------------------------
   // If there are diagnostics associated with the current document, and
-  // the cursor is in one of the marked ranges, show its message.
-  void lspShowDiagnosticsAtCursor() const;
+  // the cursor is in one of the marked ranges, show its message and
+  // return nullopt.  Otherwise, return a string explaining the issue.
+  std::optional<std::string> lspShowDiagnosticAtCursor() const;
 
   // -------------------- interaction with files ------------------
   // Get the connections interface object.

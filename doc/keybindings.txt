@@ -134,7 +134,7 @@ H+Alt                        Help menu
 H+Ctrl                       Delete character to left of cursor
 H+Ctrl+Alt                   Dump editor history to console
 
-I+Ctrl                       File | Open file at cursor
+I+Ctrl                       File | Open file or show diagnostic at cursor
 
 J+Ctrl                       Edit | Justify paragraph to soft margin
 
