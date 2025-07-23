@@ -2928,7 +2928,15 @@ bool EditorWidget::promptOverrideReadOnly()
     " is marked read-only.  Do you want to clear the read-only "
     "flag and edit it anyway?")));
   box.addButton(QMessageBox::Yes);
-  box.addButton(QMessageBox::Cancel);
+  box.addButton(QMessageBox::No);
+
+  // If I don't realize something is read-only, I often type quickly
+  // into a document, including pressing Enter.  The default default is
+  // "Yes", which means I'm suddenly editing the file when I didn't mean
+  // to because I didn't notice the popup.  By setting it to "No", an
+  // errant Enter press will not change the document.
+  box.setDefaultButton(QMessageBox::No);
+
   int ret = box.exec();
   if (ret == QMessageBox::Yes) {
     m_editor->setReadOnly(false);

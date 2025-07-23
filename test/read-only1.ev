@@ -21,11 +21,9 @@ CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
 # Try to make a change.
 KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_X" "x"
 
-# Should get an error dialog.
+# Should get an error dialog with "No" as the default choice.
 CheckFocusWindowTitle "Read-only Document"
-FocusKeyPress "Key_Tab" "\t"
-FocusKeyPress "Key_Space" " "
-FocusKeyRelease "Key_Space" " "
+FocusKeyPress "Key_Return" "\r"
 CheckFocusWindowTitle "untitled.txt - Editor"
 
 # Still read-only since we canceled that dialog.
@@ -34,7 +32,9 @@ CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
 # Do it again and this time say Yes.
 KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_X" "x"
 CheckFocusWindowTitle "Read-only Document"
-FocusKeyPress "Key_Return" "\r"
+FocusKeyPress "Key_Tab" "\t"
+FocusKeyPress "Key_Space" " "
+FocusKeyRelease "Key_Space" " "
 CheckFocusWindowTitle "untitled.txt * - Editor"
 
 # Check that the status area reflects the modified status.
