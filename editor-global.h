@@ -256,6 +256,10 @@ public:       // funcs
   // Show the connections dialog.
   void showConnectionsDialog();
 
+  // Get or create a read-only document containing the content in
+  // doc/keybindings.txt.
+  NamedTextDocument *getOrCreateKeybindingsDocument();
+
   // Hide any open modeless dialogs since we are about to quit.
   void hideModelessDialogs();
 

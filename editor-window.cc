@@ -15,8 +15,6 @@
 #include "fonts-dialog.h"              // FontsDialog
 #include "git-version.h"               // editor_git_version
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
-#include "keybindings.doc.gen.h"       // doc_keybindings
-#include "keys-dialog.h"               // KeysDialog
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-manager.h"               // LSPManager
 #include "macro-creator-dialog.h"      // MacroCreatorDialog
@@ -474,7 +472,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Help");
     menu->setObjectName("helpMenu");
 
-    MENU_ITEM    ("&Keybindings...", helpKeybindings);
+    MENU_ITEM    ("Show &keybindings", helpKeybindings);
     MENU_ITEM    ("&About Scott's Editor...", helpAbout);
     MENU_ITEM    ("About &Qt ...", helpAboutQt);
 
@@ -2213,8 +2211,7 @@ void EditorWindow::helpKeybindings() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  KeysDialog d(doc_keybindings, this);
-  d.exec();
+  setDocumentFile(m_editorGlobal->getOrCreateKeybindingsDocument());
 
   GENERIC_CATCH_END
 }

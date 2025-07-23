@@ -10,6 +10,7 @@
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
+#include "keybindings.doc.gen.h"       // doc_keybindings
 #include "lsp-client.h"                // LSPClient
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
@@ -926,6 +927,27 @@ void EditorGlobal::showConnectionsDialog()
 
   // Make it visible, un-minimize.
   m_connectionsDialog->showNormal();
+}
+
+
+NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
+{
+  DocumentName docName;
+  docName.setNonFileResourceName(HostName::asLocal(),
+    "Editor Keybindings", SMFileUtil().currentDirectory());
+
+  NamedTextDocument *doc = m_documentList.findDocumentByName(docName);
+  if (!doc) {
+    doc = new NamedTextDocument();
+    doc->setDocumentName(docName);
+    doc->m_title = uniqueTitleFor(docName);
+    doc->appendText(doc_keybindings, sizeof(doc_keybindings)-1);
+    doc->noUnsavedChanges();
+    doc->setReadOnly(true);
+    trackNewDocumentFile(doc);
+  }
+
+  return doc;
 }
 
 
