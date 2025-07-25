@@ -76,7 +76,7 @@ VFS_Connections::~VFS_Connections()
 
 void VFS_Connections::selfCheck() const
 {
-  xassert(vecToElementSet(m_validHostNames) == keySet(m_connections));
+  xassert(vecToElementSet(m_validHostNames) == mapKeySet(m_connections));
 }
 
 

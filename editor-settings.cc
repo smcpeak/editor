@@ -245,7 +245,7 @@ bool EditorSettings::deleteMacro(std::string const &name)
 
 std::set<std::string> EditorSettings::getMacroNames() const
 {
-  return keySet(m_macros);
+  return mapKeySet(m_macros);
 }
 
 
@@ -279,7 +279,7 @@ std::string EditorSettings::getMostRecentlyRunMacro()
   }
   else {
     TRACE2("Macro name " << toGDValue(m_mostRecentlyRunMacro) <<
-           " not among macro keys: " << toGDValue(keySet(m_macros)));
+           " not among macro keys: " << toGDValue(mapKeySet(m_macros)));
 
     m_mostRecentlyRunMacro.clear();
     return {};

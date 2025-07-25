@@ -487,7 +487,7 @@ std::set<int> LSPClient::getOutstandingRequestIDs() const
 
 std::set<int> LSPClient::getPendingReplyIDs() const
 {
-  return keySet(m_pendingReplies);
+  return mapKeySet(m_pendingReplies);
 }
 
 
