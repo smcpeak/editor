@@ -5,12 +5,12 @@
 
 // editor
 #include "editor-global.h"             // EditorGlobal
-#include "my-table-widget.h"           // MyTableWidget
 #include "pixmaps.h"                   // g_editorPixmaps
 
 // smqtutil
 #include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent), messageBox
 #include "smqtutil/qtutil.h"           // toQString, SET_QOBJECT_NAME
+#include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
@@ -30,31 +30,10 @@
 #include <QVBoxLayout>
 
 
-// Height of each row in pixels.
-int const ROW_HEIGHT = 20;
-
 // Initial dialog dimensions in pixels.  I want it relatively tall by
 // default so I can see lots of files before having to scroll or resize.
 int const INIT_DIALOG_WIDTH = 900;
 int const INIT_DIALOG_HEIGHT = 800;
-
-
-// The widths are tuned so the columns almost exactly fill the available
-// area when a vertical scrollbar is present.  I really want the table
-// to automatically ensure its columns fill the width, but I don't know
-// if that is possible.
-MyTableWidget::ColumnInitInfo const
-  OpenFilesDialog::s_columnInitInfo[NUM_TABLE_COLUMNS] =
-{
-  {
-    "File name",
-    700,
-  },
-  {
-    "Lines",
-    50,
-  },
-};
 
 
 // Iterate over TableColumn.
@@ -113,13 +92,20 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
     m_filterLineEdit->installEventFilter(this);
   }
 
-  m_tableWidget = new MyTableWidget();
+  m_tableWidget = new SMTableWidget();
   vbox->addWidget(m_tableWidget);
   SET_QOBJECT_NAME(m_tableWidget);
   tableLabel->setBuddy(m_tableWidget);
 
   m_tableWidget->configureAsListView();
-  m_tableWidget->initializeColumns(s_columnInitInfo, NUM_TABLE_COLUMNS);
+  m_tableWidget->setColumnsFillWidth(true);
+
+  m_tableWidget->setColumnInfo(std::vector<SMTableWidget::ColumnInfo>{
+    // name       init  min  max  prio
+    { "File name", 700, 100,  {},    1 },
+    { "Lines",      50,  50, 100,    0 },
+  });
+
   m_tableWidget->installEventFilter(this);
 
   // The table rows are set by 'repopulateTable', which is called by
@@ -222,9 +208,8 @@ void OpenFilesDialog::repopulateTable()
       m_tableWidget->setItem(r, TC_LINES, item);
     }
 
-    // Apparently I have to set every row's height manually.  QTreeView
-    // has a 'uniformRowHeights' property, but QListView does not.
-    m_tableWidget->setRowHeight(r, ROW_HEIGHT);
+    // Apparently I have to set every row's height explicitly.
+    m_tableWidget->setNaturalTextRowHeight(r);
   }
 }
 

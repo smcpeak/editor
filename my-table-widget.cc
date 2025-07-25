@@ -110,6 +110,7 @@ void MyTableWidget::initializeColumns(ColumnInitInfo const *columnInfo,
 }
 
 
+#if 0
 std::ostream& operator<< (std::ostream &os, QModelIndex const &index)
 {
   if (!index.isValid()) {
@@ -121,6 +122,7 @@ std::ostream& operator<< (std::ostream &os, QModelIndex const &index)
               << ", c=" << index.column() << ')';
   }
 }
+#endif
 
 
 // EOF

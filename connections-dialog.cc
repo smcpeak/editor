@@ -10,6 +10,7 @@
 // smqtutil
 #include "smqtutil/qtguiutil.h"        // keysString
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, toQString
+#include "smqtutil/sm-table-widget.h"  // operator<<(QModelIndex)
 
 // smbase
 #include "smbase/container-util.h"     // smbase::contains

@@ -4,20 +4,18 @@
 #ifndef OPEN_FILES_DIALOG_H
 #define OPEN_FILES_DIALOG_H
 
-// editor
-#include "editor-global-fwd.h"         // EditorGlobal
-#include "event-replay.h"              // EventReplayQueryable
-#include "modal-dialog.h"              // ModalDialog
-#include "my-table-widget.h"           // MyTableWidget
-#include "named-td-list.h"             // NamedTextDocumentList
+#include "editor-global-fwd.h"                   // EditorGlobal
+#include "event-replay.h"                        // EventReplayQueryable
+#include "modal-dialog.h"                        // ModalDialog
+#include "named-td-list.h"                       // NamedTextDocumentList
 
-// smbase
-#include "smbase/refct-serf.h"         // RCSerf
-#include "smbase/sm-iostream.h"        // ostream
-#include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
-// libc++
-#include <vector>                      // std::vector
+#include "smbase/refct-serf.h"                   // RCSerf
+#include "smbase/sm-iostream.h"                  // ostream
+#include "smbase/sm-noexcept.h"                  // NOEXCEPT
+
+#include <vector>                                // std::vector
 
 class QLineEdit;
 class QModelIndex;
@@ -45,11 +43,6 @@ public:      // types
     NUM_TABLE_COLUMNS
   };
 
-private:     // class data
-  // Information about each column.
-  static MyTableWidget::ColumnInitInfo const
-    s_columnInitInfo[NUM_TABLE_COLUMNS];
-
 private:     // instance data
   // Global editor state, which grants access to the list we are
   // showing/editing.
@@ -68,7 +61,7 @@ private:     // instance data
 
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
-  MyTableWidget *m_tableWidget;
+  SMTableWidget *m_tableWidget;
 
   // Controls.
   QLineEdit *m_filterLineEdit;

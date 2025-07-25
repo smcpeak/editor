@@ -72,8 +72,12 @@ public:      // funcs
 };
 
 
+// Duplicates something in sm-table-widget.  This entire module will be
+// deleted soon.
+#if 0
 // Print 'index' for debug/log purposes.
 std::ostream& operator<< (std::ostream &os, QModelIndex const &index);
+#endif
 
 
 #endif // MY_TABLE_WIDGET_H
