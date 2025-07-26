@@ -8,6 +8,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
+#include "doc-type-detect.h"           // isDiffName
 #include "editor-global.h"             // EditorGlobal
 #include "editor-widget-frame.h"       // EditorWidgetFrame
 #include "editor-widget.h"             // EditorWidget
@@ -564,8 +565,8 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 
   file->m_highlighter.reset();
 
-  // This handles both "foo.diff" and "git diff".
-  if (endsWith(file->resourceName(), "diff")) {
+  // This handles both "foo.diff" and "git diff [<fname>]".
+  if (isDiffName(file->documentName())) {
     file->m_highlighter.reset(new DiffHighlighter());
 
     // Diff output has lots of lines that are not empty and have
@@ -578,6 +579,8 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   if (!file->hasFilename()) {
     return;
   }
+
+  // TODO: Move the following logic into the `doc-type-detect` module.
 
   // get file extension
   string filename = file->filename();

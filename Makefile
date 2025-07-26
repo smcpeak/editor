@@ -272,6 +272,7 @@ $(eval $(call RUN_TEST_PROG,textmcoord-map-test))
 
 # ---------------------- named-td-test ----------------------
 EDITOR_OBJS += doc-name.o
+EDITOR_OBJS += doc-type-detect.o
 EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += named-td.o
@@ -279,6 +280,7 @@ EDITOR_OBJS += td-diagnostics.o
 
 NAMED_TD_TEST_OBJS := $(EDITOR_OBJS)
 
+NAMED_TD_TEST_OBJS += doc-type-detect-test.o
 NAMED_TD_TEST_OBJS += named-td-test.o
 
 named-td-test.exe: $(NAMED_TD_TEST_OBJS)
