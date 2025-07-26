@@ -734,5 +734,13 @@ check:
 	$(RETRY) ./editor.exe -ev=test/fn-input-repeat-tab.ev
 	$(RETRY) ./editor.exe -ev=test/reload-after-modification.ev test/gets-modified.txt
 	$(RETRY) ./editor.exe -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
+	@#
+	@# There isn't an easy way to do this automatically elsewhere,
+	@# mainly due to how my test programs are built, so remake
+	@# `compile_commands.json` here, since this way it will at least
+	@# happen somewhat periodically, and at this point we know that
+	@# none of the *.o.json files is missing or in the middle of
+	@# being written.
+	$(MAKE) compile_commands.json
 
 # EOF
