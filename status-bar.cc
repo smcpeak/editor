@@ -1,7 +1,7 @@
-// status.cc
-// code for status.h
+// status-bar.cc
+// code for status-bar.h
 
-#include "status.h"                    // this module
+#include "status-bar.h"                // this module
 
 #include "smbase/trace.h"              // TRACE
 
@@ -10,11 +10,11 @@
 #include <QSizeGrip>
 
 
-StatusDisplay::StatusDisplay(QWidget *parent)
+StatusBarDisplay::StatusBarDisplay(QWidget *parent)
   : QWidget(parent)
 {
   int height = fontMetrics().height();
-  TRACE("StatusDisplay", "height: " << height);
+  TRACE("StatusBarDisplay", "height: " << height);
   this->setFixedHeight(height);
 
   QHBoxLayout *hb = new QHBoxLayout();
@@ -56,14 +56,14 @@ StatusDisplay::StatusDisplay(QWidget *parent)
 }
 
 
-StatusDisplay::~StatusDisplay()
+StatusBarDisplay::~StatusBarDisplay()
 {
   // all the widgets are automatically deallocated
   // in ~QWidget
 }
 
 
-void StatusDisplay::setFilenameText(QString newFilename)
+void StatusBarDisplay::setFilenameText(QString newFilename)
 {
   m_filename->setText(newFilename);
 

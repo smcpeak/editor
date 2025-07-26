@@ -25,7 +25,7 @@
 #include "pixmaps.h"                   // g_editorPixmaps
 #include "python_hilite.h"             // Python_Highlighter
 #include "sar-panel.h"                 // SearchAndReplacePanel
-#include "status.h"                    // StatusDisplay
+#include "status-bar.h"                // StatusBarDisplay
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-editor.h"                 // TextDocumentEditor
 #include "textinput.h"                 // TextInputDialog
@@ -127,7 +127,7 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
     m_editorGlobal, &EditorGlobal::slot_broadcastSearchPanelChanged);
 
-  this->m_statusArea = new StatusDisplay();
+  this->m_statusArea = new StatusBarDisplay();
   this->m_statusArea->setObjectName("m_statusArea");
   mainArea->addWidget(this->m_statusArea);
 

@@ -1,8 +1,10 @@
-// status.h
-// status display at the bottom of the editor window
+// status-bar.h
+// Status bar display at the bottom of the editor window.
 
-#ifndef STATUS_H
-#define STATUS_H
+#ifndef EDITOR_STATUS_BAR_H
+#define EDITOR_STATUS_BAR_H
+
+#include "status-bar-fwd.h"            // fwds for this module
 
 #include <QWidget>
 
@@ -10,7 +12,7 @@ class QLabel;
 class QSizeGrip;
 
 
-class StatusDisplay : public QWidget {
+class StatusBarDisplay : public QWidget {
 public:      // data
   QLabel *m_cursor;          // cursor position
   QLabel *m_mode;            // mode pixmap
@@ -18,8 +20,8 @@ public:      // data
   QSizeGrip *m_corner;       // corner resize grippy
 
 public:      // methods
-  StatusDisplay(QWidget *parent = NULL);
-  ~StatusDisplay();
+  StatusBarDisplay(QWidget *parent = NULL);
+  ~StatusBarDisplay();
 
   // Set the text in 'm_filename'.  This should be used instead of
   // directly modifying it so the minimum width can be adjusted.
@@ -27,4 +29,4 @@ public:      // methods
 };
 
 
-#endif // STATUS_H
+#endif // EDITOR_STATUS_BAR_H

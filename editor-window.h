@@ -16,6 +16,7 @@
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "named-td.h"                            // NamedTextDocument
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
+#include "status-bar-fwd.h"                      // StatusBarDisplay
 #include "vfs-connections-fwd.h"                 // VFS_Connections
 #include "vfs-msg-fwd.h"                         // VFS_Message
 
@@ -40,7 +41,6 @@ class QMenu;
 class QMenuBar;
 
 class SearchAndReplacePanel;                     // sar-panel.h
-class StatusDisplay;                             // status.h
 
 
 // Top-level window containing an editor pane.
@@ -71,7 +71,7 @@ private:     // data
   QMenuBar *m_menuBar;
   EditorWidgetFrame *m_editorWidgetFrame;
   SearchAndReplacePanel *m_sarPanel;
-  StatusDisplay *m_statusArea;
+  StatusBarDisplay *m_statusArea;
 
   // Actions for toggle options.
   QAction *m_toggleReadOnlyAction;
@@ -155,7 +155,7 @@ public:      // funcs
   EditorWidget *editorWidget() const;
 
   // The status area widget.
-  StatusDisplay *statusArea() const { return m_statusArea; }
+  StatusBarDisplay *statusArea() const { return m_statusArea; }
 
   // Get VFS query object.
   VFS_Connections *vfsConnections() const;
