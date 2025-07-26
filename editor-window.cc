@@ -843,6 +843,8 @@ void EditorWindow::writeTheFile()
 
       // Remove the asterisk indicating unsaved changes.
       editorViewChanged();
+
+      lspUpdateIfOpen();
     }
     else {
       // There is not a severity between "warning" and "critical",
@@ -1958,6 +1960,21 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
   inform(editorGlobal()->getLSPStatus());
 
   GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspUpdateIfOpen()
+{
+  NamedTextDocument const *ntd = currentDocument();
+  DocumentName const &docName = ntd->documentName();
+  if (!docName.isLocalFilename()) {
+    return;
+  }
+
+  std::string fname = docName.filename();
+  if (lspManager().isFileOpen(fname)) {
+    lspOpenOrUpdateFile(false /*open*/);
+  }
 }
 
 

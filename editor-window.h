@@ -125,6 +125,9 @@ private:     // funcs
   // Open or update the current file with the LSP server.
   void lspOpenOrUpdateFile(bool open);
 
+  // If the current file is open, update it with current contents.
+  void lspUpdateIfOpen();
+
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 
