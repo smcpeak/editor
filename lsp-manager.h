@@ -12,6 +12,7 @@
 
 #include <QObject>
 
+#include "smbase/refct-serf.h"         // SerfRefCount, RCSerf
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/std-string-fwd.h"     // std::string
@@ -94,8 +95,8 @@ public:
 
 
 // Information about a document that is currently "open" w.r.t. the LSP
-// protocl.
-class LSPDocumentInfo {
+// protocol.
+class LSPDocumentInfo : public SerfRefCount {
 public:      // data
   // Absolute file name.
   std::string const m_fname;
@@ -229,11 +230,24 @@ public:      // methods
   // `fname` be an absolute path.
   bool isFileOpen(std::string const &fname) const;
 
+  // Get the document details for `fname`, or nullptr if it is not open.
+  // This pointer is invalidated if `this` object changes.
+  RCSerf<LSPDocumentInfo const> getDocInfo(
+    std::string const &fname) const;
+
   // Send the "textDocument/didOpen" notification.  Requires that
   // `fname` be absolute, and that the file not already be open.
   void notify_textDocument_didOpen(
     std::string const &fname,
     std::string const &languageId,
+    int version,
+    std::string &&contents);
+
+  // Send the "textDocument/didChange" notification.  Requires that
+  // `fname` be already open.  Currently this only supports replacing
+  // the entire file's content, rather than incremental changes.
+  void notify_textDocument_didChange(
+    std::string const &fname,
     int version,
     std::string &&contents);
 

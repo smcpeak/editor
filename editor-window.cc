@@ -1961,10 +1961,8 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
 }
 
 
-void EditorWindow::lspOpenFile() NOEXCEPT
+void EditorWindow::lspOpenOrUpdateFile(bool open)
 {
-  GENERIC_CATCH_BEGIN
-
   NamedTextDocument const *ntd = currentDocument();
   DocumentName const &docName = ntd->documentName();
 
@@ -1974,7 +1972,22 @@ void EditorWindow::lspOpenFile() NOEXCEPT
   }
 
   std::string fname = docName.filename();
-  std::string languageId = "cpp";        // TODO: Compute this properly.
+  bool alreadyOpen = lspManager().isFileOpen(fname);
+
+  if (open) {
+    if (alreadyOpen) {
+      inform(stringb("Document " << doubleQuote(fname) <<
+                     " is already open."));
+      return;
+    }
+  }
+  else /*update*/ {
+    if (!alreadyOpen) {
+      inform(stringb("Document " << doubleQuote(fname) <<
+                     " is not open."));
+      return;
+    }
+  }
 
   int version;
   try {
@@ -1989,14 +2002,38 @@ void EditorWindow::lspOpenFile() NOEXCEPT
 
   std::string contents = vectorOfUCharToString(ntd->getWholeFile());
 
-  if (lspManager().isFileOpen(fname)) {
-    inform(stringb("Document " << doubleQuote(fname) <<
-                   " is already open."));
-  }
-  else {
+  if (open) {
+    // TODO: Compute this properly.
+    std::string languageId = "cpp";
+
     lspManager().notify_textDocument_didOpen(
       fname, languageId, version, std::move(contents));
   }
+  else /*update*/ {
+    RCSerf<LSPDocumentInfo const> docInfo =
+      lspManager().getDocInfo(fname);
+    xassert(docInfo);
+
+    if (!( version > docInfo->m_latestVersion )) {
+      // Sending this would be a protocol violation.
+      complain(stringb(
+        "The current document version (" << version <<
+        ") is not greater than the previously sent document version (" <<
+        docInfo->m_latestVersion << ")."));
+      return;
+    }
+
+    lspManager().notify_textDocument_didChange(
+      fname, version, std::move(contents));
+  }
+}
+
+
+void EditorWindow::lspOpenFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  lspOpenOrUpdateFile(true /*open*/);
 
   GENERIC_CATCH_END
 }
@@ -2006,7 +2043,7 @@ void EditorWindow::lspUpdateFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform("TODO");
+  lspOpenOrUpdateFile(false /*open*/);
 
   GENERIC_CATCH_END
 }

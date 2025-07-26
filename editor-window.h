@@ -122,6 +122,9 @@ private:     // funcs
     bool prefixStderrLines,
     QString command);
 
+  // Open or update the current file with the LSP server.
+  void lspOpenOrUpdateFile(bool open);
+
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 

@@ -15,6 +15,7 @@
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/list-util.h"          // smbase::listMoveFront
+#include "smbase/map-util.h"           // smbase::mapGetValueAt
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -526,6 +527,19 @@ bool LSPManager::isFileOpen(std::string const &fname) const
 }
 
 
+RCSerf<LSPDocumentInfo const> LSPManager::getDocInfo(
+  std::string const &fname) const
+{
+  auto it = m_documentInfo.find(fname);
+  if (it == m_documentInfo.end()) {
+    return nullptr;
+  }
+  else {
+    return &( (*it).second );
+  }
+}
+
+
 void LSPManager::notify_textDocument_didOpen(
   std::string const &fname,
   std::string const &languageId,
@@ -548,6 +562,35 @@ void LSPManager::notify_textDocument_didOpen(
 
   m_documentInfo.insert({fname,
     LSPDocumentInfo(fname, version)});
+}
+
+
+void LSPManager::notify_textDocument_didChange(
+  std::string const &fname,
+  int version,
+  std::string &&contents)
+{
+  xassert(isFileOpen(fname));
+
+  m_lsp->sendNotification("textDocument/didChange", GDVMap{
+    {
+      "textDocument",
+      GDVMap{
+        { "uri", LSPClient::makeFileURI(fname) },
+        { "version", version },
+      }
+    },
+    {
+      "contentChanges",
+      GDVSequence{
+        GDVMap{
+          { "text", GDValue(std::move(contents)) },
+        },
+      },
+    },
+  });
+
+  mapGetValueAt(m_documentInfo, fname).m_latestVersion = version;
 }
 
 
