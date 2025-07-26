@@ -410,12 +410,9 @@ std::string LSPManager::stopServer()
 
 std::string LSPManager::checkStatus() const
 {
-  LSPAnnotatedProtocolState aps = getAnnotatedProtocolState();
-
   // Start with the protocol state.
   std::vector<std::string> msgs;
-  msgs.push_back(stringb("Protocol state: " << toString(aps.m_protocolState)));
-  msgs.push_back(aps.m_description);
+  msgs.push_back(describeProtocolState());
 
   if (m_lsp) {
     // Then summarize the pending/outstanding messages.
@@ -454,6 +451,15 @@ std::string LSPManager::checkStatus() const
 LSPProtocolState LSPManager::getProtocolState() const
 {
   return getAnnotatedProtocolState().m_protocolState;
+}
+
+
+std::string LSPManager::describeProtocolState() const
+{
+  LSPAnnotatedProtocolState aps = getAnnotatedProtocolState();
+  return stringb(
+    toString(aps.m_protocolState) << ": " <<
+    aps.m_description);
 }
 
 
@@ -520,6 +526,20 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
 }
 
 
+bool LSPManager::isRunningNormally() const
+{
+  return
+    m_commandRunner &&
+    m_lsp &&
+    !m_lsp->hasProtocolError() &&
+    m_lsp->isChildRunning() &&
+    !m_initializeRequestID &&
+    !m_shutdownRequestID &&
+    !m_waitingForTermination &&
+    true;
+}
+
+
 bool LSPManager::isFileOpen(std::string const &fname) const
 {
   xassert(m_sfu.isAbsolutePath(fname));
@@ -546,6 +566,7 @@ void LSPManager::notify_textDocument_didOpen(
   int version,
   std::string &&contents)
 {
+  xassert(isRunningNormally());
   xassert(!isFileOpen(fname));
 
   m_lsp->sendNotification("textDocument/didOpen", GDVMap{
@@ -570,6 +591,7 @@ void LSPManager::notify_textDocument_didChange(
   int version,
   std::string &&contents)
 {
+  xassert(isRunningNormally());
   xassert(isFileOpen(fname));
 
   m_lsp->sendNotification("textDocument/didChange", GDVMap{
@@ -591,6 +613,25 @@ void LSPManager::notify_textDocument_didChange(
   });
 
   mapGetValueAt(m_documentInfo, fname).m_latestVersion = version;
+}
+
+
+void LSPManager::notify_textDocument_didClose(
+  std::string const &fname)
+{
+  xassert(isRunningNormally());
+  xassert(isFileOpen(fname));
+
+  m_lsp->sendNotification("textDocument/didClose", GDVMap{
+    {
+      "textDocument",
+      GDVMap{
+        { "uri", LSPClient::makeFileURI(fname) },
+      }
+    },
+  });
+
+  mapRemoveExisting(m_documentInfo, fname);
 }
 
 

@@ -417,22 +417,22 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: c
+    // Used mnemonics: cos
 
     MENU_ITEM    ("Start LSP server",
                   lspStartServer);
     MENU_ITEM    ("Stop LSP server",
                   lspStopServer);
-    MENU_ITEM    ("&Check LSP server status",
+    MENU_ITEM    ("Check LSP server &status",
                   lspCheckStatus);
 
     menu->addSeparator();
 
-    MENU_ITEM    ("Open this file",
+    MENU_ITEM    ("&Open this file",
                   lspOpenFile);
-    MENU_ITEM    ("Update this file",
+    MENU_ITEM    ("&Update this file",
                   lspUpdateFile);
-    MENU_ITEM    ("Close this file",
+    MENU_ITEM    ("&Close this file",
                   lspCloseFile);
     MENU_ITEM    ("Review diagnostics for this file",
                   lspReviewDiagnostics);
@@ -844,7 +844,7 @@ void EditorWindow::writeTheFile()
       // Remove the asterisk indicating unsaved changes.
       editorViewChanged();
 
-      lspUpdateIfOpen();
+      doLSPFileOperation(LSPFO_UPDATE_IF_OPEN);
     }
     else {
       // There is not a severity between "warning" and "critical",
@@ -1963,47 +1963,58 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
 }
 
 
-void EditorWindow::lspUpdateIfOpen()
+void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
 {
-  NamedTextDocument const *ntd = currentDocument();
-  DocumentName const &docName = ntd->documentName();
-  if (!docName.isLocalFilename()) {
+  // True if we want a popup for errors.
+  bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
+
+  if (!lspManager().isRunningNormally()) {
+    if (wantErrors) {
+      complain(stringb("Server not ready: " <<
+        lspManager().describeProtocolState()));
+    }
     return;
   }
 
-  std::string fname = docName.filename();
-  if (lspManager().isFileOpen(fname)) {
-    lspOpenOrUpdateFile(false /*open*/);
-  }
-}
-
-
-void EditorWindow::lspOpenOrUpdateFile(bool open)
-{
-  NamedTextDocument const *ntd = currentDocument();
+  NamedTextDocument *ntd = currentDocument();
   DocumentName const &docName = ntd->documentName();
 
   if (!docName.isLocalFilename()) {
-    inform("LSP only works with local files.");
+    if (wantErrors) {
+      inform("LSP only works with local files.");
+    }
     return;
   }
 
   std::string fname = docName.filename();
   bool alreadyOpen = lspManager().isFileOpen(fname);
 
-  if (open) {
-    if (alreadyOpen) {
-      inform(stringb("Document " << doubleQuote(fname) <<
-                     " is already open."));
-      return;
-    }
+  switch (operation) {
+    case LSPFO_OPEN:
+      if (alreadyOpen) {
+        inform(stringb("Document " << doubleQuote(fname) <<
+                       " is already open."));
+        return;
+      }
+      break;
+
+    case LSPFO_UPDATE:
+    case LSPFO_CLOSE:
+      if (!alreadyOpen) {
+        inform(stringb("Document " << doubleQuote(fname) <<
+                       " is not open."));
+        return;
+      }
+      break;
+
+    case LSPFO_UPDATE_IF_OPEN:
+      break;
   }
-  else /*update*/ {
-    if (!alreadyOpen) {
-      inform(stringb("Document " << doubleQuote(fname) <<
-                     " is not open."));
-      return;
-    }
+
+  if (operation == LSPFO_CLOSE) {
+    lspManager().notify_textDocument_didClose(fname);
+    ntd->updateDiagnostics(nullptr);
+    return;
   }
 
   int version;
@@ -2011,21 +2022,24 @@ void EditorWindow::lspOpenOrUpdateFile(bool open)
     version = safeToInt(ntd->getVersionNumber());
   }
   catch (XNumericConversion &x) {
-    complain(stringb(
-      "The version number cannot be represented as an LSP int: " <<
-      x.what()));
+    if (wantErrors) {
+      complain(stringb(
+        "The version number cannot be represented as an LSP int: " <<
+        x.what()));
+    }
     return;
   }
 
   std::string contents = vectorOfUCharToString(ntd->getWholeFile());
 
-  if (open) {
+  if (operation == LSPFO_OPEN) {
     // TODO: Compute this properly.
     std::string languageId = "cpp";
 
     lspManager().notify_textDocument_didOpen(
       fname, languageId, version, std::move(contents));
   }
+
   else /*update*/ {
     RCSerf<LSPDocumentInfo const> docInfo =
       lspManager().getDocInfo(fname);
@@ -2033,10 +2047,12 @@ void EditorWindow::lspOpenOrUpdateFile(bool open)
 
     if (!( version > docInfo->m_latestVersion )) {
       // Sending this would be a protocol violation.
-      complain(stringb(
-        "The current document version (" << version <<
-        ") is not greater than the previously sent document version (" <<
-        docInfo->m_latestVersion << ")."));
+      if (wantErrors) {
+        complain(stringb(
+          "The current document version (" << version <<
+          ") is not greater than the previously sent document version (" <<
+          docInfo->m_latestVersion << ")."));
+      }
       return;
     }
 
@@ -2050,7 +2066,7 @@ void EditorWindow::lspOpenFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  lspOpenOrUpdateFile(true /*open*/);
+  doLSPFileOperation(LSPFO_OPEN);
 
   GENERIC_CATCH_END
 }
@@ -2060,7 +2076,7 @@ void EditorWindow::lspUpdateFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  lspOpenOrUpdateFile(false /*open*/);
+  doLSPFileOperation(LSPFO_UPDATE);
 
   GENERIC_CATCH_END
 }
@@ -2070,7 +2086,7 @@ void EditorWindow::lspCloseFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform("TODO");
+  doLSPFileOperation(LSPFO_CLOSE);
 
   GENERIC_CATCH_END
 }

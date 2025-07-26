@@ -51,6 +51,15 @@ class EditorWindow : public QWidget,
                      public NamedTextDocumentListObserver {
   Q_OBJECT
 
+private:     // types
+  // Things we can do with one file and LSP.
+  enum LSPFileOperation {
+    LSPFO_OPEN,              // Open the file.
+    LSPFO_UPDATE,            // Update the file.
+    LSPFO_UPDATE_IF_OPEN,    // Update if it is open.
+    LSPFO_CLOSE,             // Close the file.
+  };
+
 public:      // static data
   static int s_objectCount;
 
@@ -122,11 +131,8 @@ private:     // funcs
     bool prefixStderrLines,
     QString command);
 
-  // Open or update the current file with the LSP server.
-  void lspOpenOrUpdateFile(bool open);
-
-  // If the current file is open, update it with current contents.
-  void lspUpdateIfOpen();
+  // Do `operation` with the current file.
+  void doLSPFileOperation(LSPFileOperation operation);
 
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;

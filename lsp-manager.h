@@ -217,14 +217,23 @@ public:      // methods
   // Stop the server process.  Return a success report for the user.
   std::string stopServer();
 
-  // Report on the current status of the LSP server.
+  // Report on the current status of the LSP server.  This string
+  // describes the protocol state plus the status of various internal
+  // queues.
   std::string checkStatus() const;
 
   // Get basic protocol state.
   LSPProtocolState getProtocolState() const;
 
+  // Return a human-readable string describing the protocol state.
+  std::string describeProtocolState() const;
+
   // Get state plus an English description.
   LSPAnnotatedProtocolState getAnnotatedProtocolState() const;
+
+  // True if the server is running normally.  This is a requirement to
+  // send requests and notifications.
+  bool isRunningNormally() const;
 
   // True if `fname` is open w.r.t. the LSP protocol.  Requires that
   // `fname` be an absolute path.
@@ -250,6 +259,11 @@ public:      // methods
     std::string const &fname,
     int version,
     std::string &&contents);
+
+  // Send the "textDocument/didClose" notification.  Requires that
+  // `fname` be already open.
+  void notify_textDocument_didClose(
+    std::string const &fname);
 
   // True if we have diagnostics ready for the client.
   bool hasPendingDiagnostics() const;

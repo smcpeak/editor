@@ -796,6 +796,12 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
       m_lspManager.takePendingDiagnostics());
 
     if (!diags->m_version.has_value()) {
+      // Although not explained in the spec, it appears this happens
+      // when a file is closed; the server sends a final notification
+      // with no version and no diagnostics, presumably in order to
+      // cause the editor to remove the diagnostics from its display.  I
+      // do that when sending the "didClose" notification, so this
+      // notification should be safe to ignore.
       TRACE("lsp", "received diagnostics without a version number");
       continue;
     }
