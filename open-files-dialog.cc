@@ -6,6 +6,7 @@
 // editor
 #include "editor-global.h"             // EditorGlobal
 #include "pixmaps.h"                   // g_editorPixmaps
+#include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 // smqtutil
 #include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent), messageBox
@@ -34,13 +35,6 @@
 // default so I can see lots of files before having to scroll or resize.
 int const INIT_DIALOG_WIDTH = 900;
 int const INIT_DIALOG_HEIGHT = 800;
-
-
-// Iterate over TableColumn.
-#define FOREACH_TABLE_COLUMN(tc)            \
-  for (TableColumn tc = (TableColumn)0;     \
-       tc < NUM_TABLE_COLUMNS;              \
-       tc = (TableColumn)(tc+1))
 
 
 OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
@@ -104,6 +98,7 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
     // name       init  min  max  prio
     { "File name", 700, 100,  {},    1 },
     { "Lines",      50,  50, 100,    0 },
+    { "Diags",      50,  59, 100,    0 },
   });
 
   m_tableWidget->installEventFilter(this);
@@ -181,22 +176,26 @@ void OpenFilesDialog::repopulateTable()
 
   // Populate the rows.
   for (int r=0; r < (int)m_filteredDocuments.size(); ++r) {
-    NamedTextDocument const *doc = m_filteredDocuments.at(r);
+    NamedTextDocument const * const doc = m_filteredDocuments.at(r);
 
     // Remove the row label.  (The default, a NULL item, renders as a
-    // row number, which isn't useful here.)
+    // row number, which isn't useful here.)  I think this transfers
+    // ownership, but the documentation isn't explicit about that.
     m_tableWidget->setVerticalHeaderItem(r, new QTableWidgetItem(""));
 
     // Flags for the items.  The point is to omit Qt::ItemIsEditable.
-    Qt::ItemFlags itemFlags =
+    Qt::ItemFlags const itemFlags =
       Qt::ItemIsSelectable | Qt::ItemIsEnabled;
+
+    // Column number to populate next.
+    int c = 0;
 
     // Filename.
     {
       QTableWidgetItem *item = new QTableWidgetItem(
         toQString(doc->nameWithStatusIndicators()));
       item->setFlags(itemFlags);
-      m_tableWidget->setItem(r, TC_FILENAME, item);
+      m_tableWidget->setItem(r, c++, item /*transfer ownership*/);
     }
 
     // Lines.
@@ -205,7 +204,23 @@ void OpenFilesDialog::repopulateTable()
         qstringb(doc->numLinesExceptFinalEmpty()));
       item->setFlags(itemFlags);
       item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-      m_tableWidget->setItem(r, TC_LINES, item);
+      m_tableWidget->setItem(r, c++, item /*transfer ownership*/);
+    }
+
+    // Diagnostics.
+    {
+      QTableWidgetItem *item = new QTableWidgetItem();
+      if (TextDocumentDiagnostics const *diags = doc->getDiagnostics()) {
+        item->setText(qstringb(diags->size()));
+      }
+      else {
+        // A blank entry means we the server hasn't provided even an
+        // empty set of diagnostics, which probably means we have not
+        // "opened" the file from its perspective.
+      }
+      item->setFlags(itemFlags);
+      item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+      m_tableWidget->setItem(r, c++, item /*transfer ownership*/);
     }
 
     // Apparently I have to set every row's height explicitly.

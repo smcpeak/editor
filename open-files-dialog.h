@@ -34,15 +34,6 @@ class OpenFilesDialog : public ModalDialog,
                         public EventReplayQueryable {
   Q_OBJECT
 
-public:      // types
-  // The columns of this table.
-  enum TableColumn {
-    TC_FILENAME,
-    TC_LINES,
-
-    NUM_TABLE_COLUMNS
-  };
-
 private:     // instance data
   // Global editor state, which grants access to the list we are
   // showing/editing.
