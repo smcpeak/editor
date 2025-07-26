@@ -559,6 +559,9 @@ static bool stringAmong(string const &str, char const * const *table,
 
 void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 {
+  TRACE("useDefaultHighlighter",
+    "file: " << toGDValue(file->documentName()));
+
   file->m_highlighter.reset();
 
   // This handles both "foo.diff" and "git diff".

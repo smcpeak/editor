@@ -4,8 +4,11 @@
 #include "host-and-resource-name.h"    // this module
 
 // smbase
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/xassert.h"            // xassert
+
+using namespace gdv;
 
 
 HostAndResourceName::HostAndResourceName()
@@ -32,6 +35,15 @@ void HostAndResourceName::selfCheck() const
   if (m_resourceName.empty()) {
     xassert(m_hostName.isLocal());
   }
+}
+
+
+HostAndResourceName::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "HostAndResourceName"_sym);
+  GDV_WRITE_MEMBER_SYM(m_hostName);
+  GDV_WRITE_MEMBER_SYM(m_resourceName);
+  return m;
 }
 
 

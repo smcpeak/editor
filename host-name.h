@@ -5,6 +5,7 @@
 #define EDITOR_HOST_NAME_H
 
 // smbase
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-compare.h"         // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
 #include "smbase/str.h"                // string
 
@@ -32,6 +33,8 @@ public:      // methods
 
   HostName(HostName const &obj) = default;
   HostName& operator=(HostName const &obj) = default;
+
+  operator gdv::GDValue() const;
 
   // Name the local host.
   static HostName asLocal();

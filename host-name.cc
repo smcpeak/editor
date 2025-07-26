@@ -4,10 +4,13 @@
 #include "host-name.h"                 // this module
 
 // smbase
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/xassert.h"            // xassert
 
 // libc++
 #include <iostream>
+
+using namespace gdv;
 
 
 HostName::HostName()
@@ -17,6 +20,14 @@ HostName::HostName()
 
 HostName::~HostName()
 {}
+
+
+HostName::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "HostName"_sym);
+  GDV_WRITE_MEMBER_SYM(m_sshHostName);
+  return m;
+}
 
 
 /*static*/ HostName HostName::asLocal()

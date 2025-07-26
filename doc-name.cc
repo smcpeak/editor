@@ -4,12 +4,15 @@
 #include "doc-name.h"                  // this module
 
 // smbase
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // COMPARE_MEMB
 #include "smbase/strutil.h"            // quoted
 
 // libc++
 #include <iostream>                    // std::ostream
+
+using namespace gdv;
 
 
 DocumentName::DocumentName()
@@ -49,6 +52,17 @@ void DocumentName::setDirectory(string const &dir)
 void DocumentName::selfCheck() const
 {
   HostAndResourceName::selfCheck();
+}
+
+
+DocumentName::operator gdv::GDValue() const
+{
+  GDValue m(HostAndResourceName::operator GDValue());
+  m.taggedContainerSetTag("DocumentName"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_hasFilename);
+  GDV_WRITE_MEMBER_SYM(m_directory);
+  return m;
 }
 
 

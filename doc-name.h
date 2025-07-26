@@ -4,10 +4,13 @@
 #ifndef EDITOR_DOC_NAME_H
 #define EDITOR_DOC_NAME_H
 
+#include "doc-name-fwd.h"              // fwds for this module
+
 // editor
 #include "host-and-resource-name.h"    // HostAndResourceName, HostName
 
 // smbase
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-compare.h"         // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
 #include "smbase/str.h"                // string
 
@@ -64,6 +67,8 @@ public:      // methods
 
   // Assert invariants.
   void selfCheck() const;
+
+  operator gdv::GDValue() const;
 
   // Compare by host and resource name.
   StrongOrdering compareTo(DocumentName const &obj) const;
