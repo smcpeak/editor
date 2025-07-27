@@ -2018,6 +2018,10 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
     return;
   }
 
+  if (operation == LSPFO_UPDATE_IF_OPEN && !alreadyOpen) {
+    return;
+  }
+
   int version;
   try {
     version = safeToInt(ntd->getVersionNumber());
