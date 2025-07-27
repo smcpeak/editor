@@ -9,7 +9,7 @@
 // editor
 #include "eclf.h"                                // EditorCommandLineFunction
 #include "editor-global-fwd.h"                   // EditorGlobal
-#include "editor-settings-fwd.h"                 // EditorSettings
+#include "editor-settings-fwd.h"                 // EditorSettings, WindowPosition
 #include "editor-widget-frame-fwd.h"             // EditorWidgetFrame
 #include "editor-widget-fwd.h"                   // EditorWidget
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
@@ -136,6 +136,12 @@ private:     // funcs
 
   // Go to the next/previous diagnostic.
   void lspGoToAdjacentDiagnostic(bool next);
+
+  // Move the window and resize it to match `pos`.
+  void setWindowPosition(WindowPosition const &pos);
+
+  // Get curent window position.
+  WindowPosition getWindowPosition() const;
 
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
@@ -291,8 +297,10 @@ public Q_SLOTS:
   void windowPreviousFile() NOEXCEPT;
   void windowNewWindow() NOEXCEPT;
   void windowCloseWindow() NOEXCEPT;
-  void windowOccupyLeft() NOEXCEPT;
-  void windowOccupyRight() NOEXCEPT;
+  void windowMoveToLeftSavedPos() NOEXCEPT;
+  void windowMoveToRightSavedPos() NOEXCEPT;
+  void windowSaveLeftPos() NOEXCEPT;
+  void windowSaveRightPos() NOEXCEPT;
 
   void helpKeybindings() NOEXCEPT;
   void helpAbout() NOEXCEPT;

@@ -478,10 +478,14 @@ void EditorWindow::buildMenu()
     MENU_ITEM    ("&New Window", windowNewWindow);
     MENU_ITEM_KEY("&Close Window",
       windowCloseWindow, Qt::CTRL + Qt::Key_F4);
-    MENU_ITEM_KEY("Move/size to Left Screen Half",
-      windowOccupyLeft, Qt::CTRL + Qt::ALT + Qt::Key_Left);
-    MENU_ITEM_KEY("Move/size to Right Screen Half",
-      windowOccupyRight, Qt::CTRL + Qt::ALT + Qt::Key_Right);
+    MENU_ITEM_KEY("Move/size to left saved position",
+      windowMoveToLeftSavedPos, Qt::CTRL + Qt::ALT + Qt::Key_Left);
+    MENU_ITEM_KEY("Move/size to right saved position",
+      windowMoveToRightSavedPos, Qt::CTRL + Qt::ALT + Qt::Key_Right);
+    MENU_ITEM    ("Save current as left saved position",
+      windowSaveLeftPos);
+    MENU_ITEM    ("Save current as right saved position",
+      windowSaveRightPos);
   }
 
   {
@@ -2320,31 +2324,71 @@ void EditorWindow::windowPreviousFile() NOEXCEPT
 }
 
 
-void EditorWindow::windowOccupyLeft() NOEXCEPT
+void EditorWindow::setWindowPosition(WindowPosition const &pos)
+{
+  if (pos.validArea()) {
+    setGeometry(
+      pos.m_left,
+      pos.m_top,
+      pos.m_width,
+      pos.m_height);
+  }
+  else {
+    inform("No saved window position.");
+  }
+}
+
+
+WindowPosition EditorWindow::getWindowPosition() const
+{
+  QRect r = geometry();
+  return WindowPosition(
+    r.left(),
+    r.top(),
+    r.width(),
+    r.height());
+}
+
+
+void EditorWindow::windowMoveToLeftSavedPos() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (QApplication::desktop()->width() == 1024) {  // 1024x768
-    setGeometry(83, 49, 465, 660);
-  }
-  else {    // 1280x1024
-    setGeometry(83, 59, 565, 867);
-  }
+  setWindowPosition(editorSettings().getLeftWindowPos());
 
   GENERIC_CATCH_END
 }
 
 
-void EditorWindow::windowOccupyRight() NOEXCEPT
+void EditorWindow::windowMoveToRightSavedPos() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (QApplication::desktop()->width() == 1024) {  // 1024x768
-    setGeometry(390, 49, 630, 660);
-  }
-  else {    // 1280x1024
-    setGeometry(493, 59, 783, 867);
-  }
+  setWindowPosition(editorSettings().getRightWindowPos());
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::windowSaveLeftPos() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  WindowPosition pos = getWindowPosition();
+  editorGlobal()->settings_setLeftWindowPos(this, pos);
+  inform(stringb("Saved left position: " << toGDValue(pos)));
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::windowSaveRightPos() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  WindowPosition pos = getWindowPosition();
+  editorGlobal()->settings_setRightWindowPos(this, pos);
+  inform(stringb("Saved right position: " << toGDValue(pos)));
 
   GENERIC_CATCH_END
 }

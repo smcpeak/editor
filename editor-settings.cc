@@ -20,6 +20,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // keySet
 #include "smbase/set-util.h"           // smbase::setInsert
+#include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
 #include <utility>                     // std::swap
@@ -72,7 +73,9 @@ CommandLineHistory::CommandLineHistory(gdv::GDValueParser const &p)
     GDVP_READ_OPT_MEMBER_SYM(m_recent),
     GDVP_READ_OPT_MEMBER_SYM(m_useSubstitution),
     GDVP_READ_OPT_MEMBER_SYM(m_prefixStderrLines)
-{}
+{
+  p.checkTaggedOrderedMapTag("CommandLineHistory");
+}
 
 
 // Swap `this->memb` with `obj.memb`.  This should be done after
@@ -147,6 +150,57 @@ bool CommandLineHistory::remove(std::string const &cmd)
 }
 
 
+// -------------------------- WindowPosition ---------------------------
+WindowPosition::WindowPosition()
+  : m_left(0),
+    m_top(0),
+    m_width(0),
+    m_height(0)
+{}
+
+
+WindowPosition::WindowPosition(int left, int top, int width, int height)
+  : IMEMBFP(left),
+    IMEMBFP(top),
+    IMEMBFP(width),
+    IMEMBFP(height)
+{}
+
+
+WindowPosition::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "WindowPosition"_sym);
+  GDV_WRITE_MEMBER_SYM(m_left);
+  GDV_WRITE_MEMBER_SYM(m_top);
+  GDV_WRITE_MEMBER_SYM(m_width);
+  GDV_WRITE_MEMBER_SYM(m_height);
+  return m;
+}
+
+
+WindowPosition::WindowPosition(gdv::GDValueParser const &p)
+  : GDVP_READ_OPT_MEMBER_SYM(m_left),
+    GDVP_READ_OPT_MEMBER_SYM(m_top),
+    GDVP_READ_OPT_MEMBER_SYM(m_width),
+    GDVP_READ_OPT_MEMBER_SYM(m_height)
+{
+  p.checkTaggedOrderedMapTag("WindowPosition");
+}
+
+
+void WindowPosition::swap(WindowPosition &obj)
+{
+  if (this != &obj) {
+    using std::swap;
+
+    SWAP_MEMB(m_left);
+    SWAP_MEMB(m_top);
+    SWAP_MEMB(m_width);
+    SWAP_MEMB(m_height);
+  }
+}
+
+
 // -------------------------- EditorSettings ---------------------------
 EditorSettings::~EditorSettings()
 {}
@@ -156,7 +210,9 @@ EditorSettings::EditorSettings()
   : m_macros(),
     m_mostRecentlyRunMacro(),
     m_applyHistory(),
-    m_runHistory()
+    m_runHistory(),
+    m_leftWindowPos(),
+    m_rightWindowPos()
 {}
 
 
@@ -164,7 +220,9 @@ EditorSettings::EditorSettings(GDValueParser const &p)
   : GDVP_READ_OPT_MEMBER_SYM(m_macros),
     GDVP_READ_OPT_MEMBER_SYM(m_mostRecentlyRunMacro),
     GDVP_READ_OPT_MEMBER_SYM(m_applyHistory),
-    GDVP_READ_OPT_MEMBER_SYM(m_runHistory)
+    GDVP_READ_OPT_MEMBER_SYM(m_runHistory),
+    GDVP_READ_OPT_MEMBER_SYM(m_leftWindowPos),
+    GDVP_READ_OPT_MEMBER_SYM(m_rightWindowPos)
 {
   p.checkTaggedOrderedMapTag("EditorSettings");
 
@@ -189,6 +247,8 @@ EditorSettings::operator GDValue() const
   GDV_WRITE_MEMBER_SYM(m_mostRecentlyRunMacro);
   GDV_WRITE_MEMBER_SYM(m_applyHistory);
   GDV_WRITE_MEMBER_SYM(m_runHistory);
+  GDV_WRITE_MEMBER_SYM(m_leftWindowPos);
+  GDV_WRITE_MEMBER_SYM(m_rightWindowPos);
 
   return m;
 }
@@ -203,6 +263,8 @@ void EditorSettings::swap(EditorSettings &obj)
     SWAP_MEMB(m_mostRecentlyRunMacro);
     SWAP_MEMB(m_applyHistory);
     SWAP_MEMB(m_runHistory);
+    SWAP_MEMB(m_leftWindowPos);
+    SWAP_MEMB(m_rightWindowPos);
   }
 }
 
@@ -321,6 +383,19 @@ bool EditorSettings::removeHistoryCommand(
   std::string const &cmd)
 {
   return getCommandHistory(whichFunction).remove(cmd);
+}
+
+
+// ------------------------- window positions --------------------------
+void EditorSettings::setLeftWindowPos(WindowPosition const &pos)
+{
+  m_leftWindowPos = pos;
+}
+
+
+void EditorSettings::setRightWindowPos(WindowPosition const &pos)
+{
+  m_rightWindowPos = pos;
 }
 
 

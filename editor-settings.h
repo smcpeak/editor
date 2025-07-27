@@ -83,6 +83,40 @@ public:      // funcs
 };
 
 
+// A window position on the screen.
+//
+// As used by the commands to save and restore the editor window
+// positions, these values record the location of the interior of the
+// window; it excludes the window manager frame and window title bar,
+// but *includes* the menu bar, scrollbar, and status bar.
+class WindowPosition final {
+public:      // data
+  // Position of upper-left pixel.
+  int m_left;
+  int m_top;
+
+  // Width and height.
+  int m_width;
+  int m_height;
+
+public:      // data
+  // Init to all zeroes.
+  WindowPosition();
+
+  WindowPosition(int left, int top, int width, int height);
+
+  // De/serialization.
+  operator gdv::GDValue() const;
+  explicit WindowPosition(gdv::GDValueParser const &p);
+
+  void swap(WindowPosition &obj);
+
+  // True if the width and height are at least plausible.  This can be
+  // used to distinguish valid values from the default of all zeroes.
+  bool validArea() const { return m_width > 0 && m_height > 0; }
+};
+
+
 // Editor-wide persistent user settings.
 class EditorSettings {
 private:     // data
@@ -101,6 +135,10 @@ private:     // data
 
   // History of commands associated with Alt+R "Run Command".
   CommandLineHistory m_runHistory;
+
+  // Saved window positions for relatively easy restoration.
+  WindowPosition m_leftWindowPos;
+  WindowPosition m_rightWindowPos;
 
 private:     // funcs
   // Get a wriable reference to a command history.
@@ -170,6 +208,15 @@ public:      // funcs
   bool removeHistoryCommand(
     EditorCommandLineFunction whichFunction,
     std::string const &cmd);
+
+  // ------------------------ window positions -------------------------
+  WindowPosition getLeftWindowPos() const
+    { return m_leftWindowPos; }
+  WindowPosition getRightWindowPos() const
+    { return m_rightWindowPos; }
+
+  void setLeftWindowPos(WindowPosition const &pos);
+  void setRightWindowPos(WindowPosition const &pos);
 };
 
 

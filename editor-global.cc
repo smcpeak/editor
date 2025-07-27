@@ -1153,6 +1153,24 @@ bool EditorGlobal::settings_removeHistoryCommand(
 }
 
 
+void EditorGlobal::settings_setLeftWindowPos(
+  QWidget * NULLABLE parent,
+  WindowPosition const &pos)
+{
+  m_settings.setLeftWindowPos(pos);
+  saveSettingsFile(parent);
+}
+
+
+void EditorGlobal::settings_setRightWindowPos(
+  QWidget * NULLABLE parent,
+  WindowPosition const &pos)
+{
+  m_settings.setRightWindowPos(pos);
+  saveSettingsFile(parent);
+}
+
+
 void EditorGlobal::addLSPErrorMessage(std::string &&msg)
 {
   // I'm thinking this should also emit a signal, although right now I

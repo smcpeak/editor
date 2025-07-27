@@ -331,6 +331,12 @@ public:       // funcs
     QWidget * NULLABLE parent,
     EditorCommandLineFunction whichFunction,
     std::string const &cmd);
+  void settings_setLeftWindowPos(
+    QWidget * NULLABLE parent,
+    WindowPosition const &pos);
+  void settings_setRightWindowPos(
+    QWidget * NULLABLE parent,
+    WindowPosition const &pos);
 
   // Append an LSP error message.
   void addLSPErrorMessage(std::string &&msg);
