@@ -18,6 +18,7 @@
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-manager.h"               // LSPManager
+#include "lsp-status-widget.h"         // LSPStatusWidget
 #include "macro-creator-dialog.h"      // MacroCreatorDialog
 #include "macro-run-dialog.h"          // MacroRunDialog
 #include "makefile_hilite.h"           // Makefile_Highlighter
@@ -54,6 +55,7 @@
 #include "smbase/xoverflow.h"          // smbase::XNumericConversion
 
 // libc++
+#include <optional>                    // std::optional
 #include <string_view>                 // std::string_view
 #include <utility>                     // std::move
 
@@ -127,7 +129,7 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
     m_sarPanel, &SearchAndReplacePanel::signal_searchPanelChanged,
     m_editorGlobal, &EditorGlobal::slot_broadcastSearchPanelChanged);
 
-  this->m_statusArea = new StatusBarDisplay();
+  this->m_statusArea = new StatusBarDisplay(editorWidget());
   this->m_statusArea->setObjectName("m_statusArea");
   mainArea->addWidget(this->m_statusArea);
 
@@ -445,6 +447,8 @@ void EditorWindow::buildMenu()
                   lspInsertFakeDiagnostics);
     MENU_ITEM    ("Remove diagnostics",
                   lspRemoveDiagnostics);
+    MENU_ITEM    ("Set fake LSP status",
+                  lspSetFakeStatus);
   }
 
   {
@@ -1937,7 +1941,7 @@ void EditorWindow::lspStartServer() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   bool dummy;
-  inform(lspManager().startServer(dummy));
+  lspManager().startServer(dummy);
 
   GENERIC_CATCH_END
 }
@@ -1947,7 +1951,7 @@ void EditorWindow::lspStopServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform(lspManager().stopServer());
+  lspManager().stopServer();
 
   GENERIC_CATCH_END
 }
@@ -2182,6 +2186,43 @@ void EditorWindow::lspRemoveDiagnostics() NOEXCEPT
 
   currentDocument()->updateDiagnostics({});
   editorWidget()->redraw();
+
+  GENERIC_CATCH_END
+}
+
+
+// Candidate for `smqtutil`.
+static bool numberInputBox(
+  QWidget *parent,
+  QString title,
+  QString prompt,
+  int &value /*INOUT*/)
+{
+  QInputDialog dlg(parent);
+  dlg.setWindowTitle(title);
+  dlg.setLabelText(prompt);
+  dlg.setInputMode(QInputDialog::IntInput);
+  dlg.setIntValue(value);
+  if (dlg.exec()) {
+    value = dlg.intValue();
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+
+void EditorWindow::lspSetFakeStatus() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (numberInputBox(this,
+        "Fake status",
+        "New fake status (0 to reset)",
+        m_statusArea->m_lspStatus->m_fakeStatus)) {
+    m_statusArea->m_lspStatus->on_changedProtocolState();
+  }
 
   GENERIC_CATCH_END
 }

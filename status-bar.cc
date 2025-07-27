@@ -3,16 +3,25 @@
 
 #include "status-bar.h"                // this module
 
+#include "lsp-status-widget.h"         // LSPStatusWidget
+
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
+
 #include "smbase/trace.h"              // TRACE
+#include "smbase/xassert.h"            // xassert
 
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QSizeGrip>
 
 
-StatusBarDisplay::StatusBarDisplay(QWidget *parent)
-  : QWidget(parent)
+StatusBarDisplay::StatusBarDisplay(
+  EditorWidget *editorWidget, QWidget *parent)
+  : QWidget(parent),
+    m_editorWidget(editorWidget)
 {
+  xassert(editorWidget != nullptr);
+
   int height = fontMetrics().height();
   TRACE("StatusBarDisplay", "height: " << height);
   this->setFixedHeight(height);
@@ -22,7 +31,7 @@ StatusBarDisplay::StatusBarDisplay(QWidget *parent)
 
   m_cursor = new QLabel();
   m_cursor->setObjectName("m_cursor");
-  m_cursor->setFixedWidth(80);
+  m_cursor->setFixedWidth(80);      // TODO: This is too small.
   //m_cursor->setBackgroundColor(QColor(0x60, 0x00, 0x80));   // purple
   //m_cursor->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   //m_cursor->setLineWidth(1);
@@ -45,6 +54,12 @@ StatusBarDisplay::StatusBarDisplay(QWidget *parent)
   hb->addWidget(m_filename);
 
   hb->addStretch(1);
+
+  // LSP status.
+  m_lspStatus = new LSPStatusWidget(m_editorWidget, this);
+  SET_QOBJECT_NAME(m_lspStatus);
+  m_lspStatus->setFixedWidth(height);  // Square shape.
+  hb->addWidget(m_lspStatus);
 
   // corner resize widget
   m_corner = new QSizeGrip(this);

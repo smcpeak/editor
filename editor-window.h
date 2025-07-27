@@ -278,6 +278,7 @@ public Q_SLOTS:
   void lspShowDiagnosticAtCursor() NOEXCEPT;
   void lspInsertFakeDiagnostics() NOEXCEPT;
   void lspRemoveDiagnostics() NOEXCEPT;
+  void lspSetFakeStatus() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;
