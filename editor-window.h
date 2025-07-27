@@ -134,6 +134,9 @@ private:     // funcs
   // Do `operation` with the current file.
   void doLSPFileOperation(LSPFileOperation operation);
 
+  // Go to the next/previous diagnostic.
+  void lspGoToAdjacentDiagnostic(bool next);
+
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 
@@ -277,6 +280,8 @@ public Q_SLOTS:
   void lspOpenOrUpdateFile() NOEXCEPT;
   void lspCloseFile() NOEXCEPT;
   void lspReviewDiagnostics() NOEXCEPT;
+  void lspGoToNextDiagnostic() NOEXCEPT;
+  void lspGoToPreviousDiagnostic() NOEXCEPT;
   void lspShowDiagnosticAtCursor() NOEXCEPT;
   void lspInsertFakeDiagnostics() NOEXCEPT;
   void lspRemoveDiagnostics() NOEXCEPT;

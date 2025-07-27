@@ -26,6 +26,9 @@ F6                           Window | Switch to Previous Document
 F7                           LSP | Open or update this file
 F7+Ctrl                      LSP | Close this file
 
+F8                           LSP | Go to next diagnostic
+F8+Shift                     LSP | Go to previous diagnostic
+
 F9                           File | Run "run-make-from-editor"
 
 

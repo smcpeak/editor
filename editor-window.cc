@@ -445,6 +445,10 @@ void EditorWindow::buildMenu()
                   lspCloseFile, Qt::CTRL + Qt::Key_F7);
     MENU_ITEM    ("Review diagnostics for this file",
                   lspReviewDiagnostics);
+    MENU_ITEM_KEY("Go to next diagnostic",
+                  lspGoToNextDiagnostic, Qt::Key_F8);
+    MENU_ITEM_KEY("Go to previous diagnostic",
+                  lspGoToPreviousDiagnostic, Qt::SHIFT + Qt::Key_F8);
     MENU_ITEM    ("Show diagnostic at cursor",
                   lspShowDiagnosticAtCursor);
 
@@ -2116,6 +2120,34 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
   }
 
   inform(oss.str());
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspGoToAdjacentDiagnostic(bool next)
+{
+  if (std::optional<std::string> msg =
+        editorWidget()->lspGoToAdjacentDiagnostic(next)) {
+    inform(*msg);
+  }
+}
+
+void EditorWindow::lspGoToNextDiagnostic() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  lspGoToAdjacentDiagnostic(true /*next*/);
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspGoToPreviousDiagnostic() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  lspGoToAdjacentDiagnostic(false /*next*/);
 
   GENERIC_CATCH_END
 }

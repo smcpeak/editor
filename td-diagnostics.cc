@@ -12,6 +12,7 @@
 #include "textmcoord-map.h"                      // TextMCoordMap
 
 #include "smbase/compare-util.h"                 // smbase::compare
+#include "smbase/container-util.h"               // smbase::reverseIterRange
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/gdvalue-set.h"                  // gdv::GDValue(std::set)
@@ -235,6 +236,12 @@ std::size_t TextDocumentDiagnostics::size() const
 }
 
 
+int TextDocumentDiagnostics::maxDiagnosticLine() const
+{
+  return m_rangeToDiagIndex.numLines() - 1;
+}
+
+
 void TextDocumentDiagnostics::insert(TextMCoordRange range, Diagnostic &&diag)
 {
   DiagnosticIndex index =
@@ -314,6 +321,59 @@ auto TextDocumentDiagnostics::getDiagnosticAt(TextMCoord tc) const
 
   // Not found.
   return {};
+}
+
+
+std::optional<TextMCoord>
+TextDocumentDiagnostics::getNextDiagnosticLocation(TextMCoord tc) const
+{
+  // This somewhat naively searches all lines starting with `tc.m_line`.
+  // It could be more efficient by taking advantage of the line array
+  // inside `m_rangeToDiagIndex`.
+
+  int maxLine = maxDiagnosticLine();
+  for (int line = tc.m_line; line <= maxLine; ++line) {
+    std::set<LineEntry> lineEntries = getLineEntries(line);
+    for (LineEntry const &entry : lineEntries) {
+      if (entry.m_startByteIndex.has_value() &&
+          (line > tc.m_line ||
+           *entry.m_startByteIndex > tc.m_byteIndex)) {
+        // The line entries are in order of `m_startByteIndex`, so this
+        // must be the first that is greater than `tc`.
+        return TextMCoord(line, *entry.m_startByteIndex);
+      }
+    }
+  }
+
+  return {};
+}
+
+
+std::optional<TextMCoord>
+TextDocumentDiagnostics::getPreviousDiagnosticLocation(TextMCoord tc) const
+{
+  for (int line = tc.m_line; line >= 0; --line) {
+    std::set<LineEntry> lineEntries = getLineEntries(line);
+    for (LineEntry const &entry : reverseIterRange(lineEntries)) {
+      if (entry.m_startByteIndex.has_value() &&
+          (line < tc.m_line ||
+           *entry.m_startByteIndex < tc.m_byteIndex)) {
+        return TextMCoord(line, *entry.m_startByteIndex);
+      }
+    }
+  }
+
+  return {};
+}
+
+
+std::optional<TextMCoord>
+TextDocumentDiagnostics::getAdjacentDiagnosticLocation(
+  bool next, TextMCoord tc) const
+{
+  return next?
+    getNextDiagnosticLocation(tc) :
+    getPreviousDiagnosticLocation(tc);
 }
 
 

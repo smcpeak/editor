@@ -2526,6 +2526,30 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 }
 
 
+std::optional<std::string>
+EditorWidget::lspGoToAdjacentDiagnostic(bool next)
+{
+  if (TextDocumentDiagnostics const *tdd =
+        getDocument()->getDiagnostics()) {
+    if (std::optional<TextMCoord> nextLoc =
+          tdd->getAdjacentDiagnosticLocation(next,
+            m_editor->toMCoord(m_editor->cursor()))) {
+      cursorTo(m_editor->toLCoord(*nextLoc));
+      redraw();
+      return {};
+    }
+    else {
+      return next?
+        "No diagnostics after cursor." :
+        "No diagnostics before cursor.";
+    }
+  }
+  else {
+    return "There are no diagnostics received for this file.";
+  }
+}
+
+
 VFS_Connections *EditorWidget::vfsConnections() const
 {
   return m_editorWindow->vfsConnections();

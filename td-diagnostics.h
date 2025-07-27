@@ -17,6 +17,7 @@
 #include "smbase/refct-serf.h"         // RCSerf, SerfRefCount
 
 #include <string>                      // std::string
+#include <optional>                    // std::optional
 
 
 // A single diagnostic message.
@@ -143,6 +144,10 @@ public:      // methods
   // Number of mappings.
   std::size_t size() const;
 
+  // If there are no diagnostics, this returns -1.  Otherwise, it is the
+  // largest line number for which there is any intersecting diagnostic.
+  int maxDiagnosticLine() const;
+
   // Insert the mapping `range` -> `diag`.
   void insert(TextMCoordRange range, Diagnostic &&diag);
 
@@ -164,6 +169,19 @@ public:      // methods
   // return a null pointer.  If there is more than one, first prefer one
   // with a closer start, then a closer end, then resolve arbitrarily.
   RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
+
+  // If there is a diagnostic that starts after `tc`, return the start
+  // location of the one closest to `tc`; otherwise nullopt.
+  std::optional<TextMCoord> getNextDiagnosticLocation(
+    TextMCoord tc) const;
+
+  // Same for starting before `tc`.
+  std::optional<TextMCoord> getPreviousDiagnosticLocation(
+    TextMCoord tc) const;
+
+  // Do "next" or "previous" depending on `next`.
+  std::optional<TextMCoord> getAdjacentDiagnosticLocation(
+    bool next, TextMCoord tc) const;
 
   operator gdv::GDValue() const;
 

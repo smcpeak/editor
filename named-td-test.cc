@@ -11,10 +11,11 @@
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/nonport.h"                      // fileOrDirectoryExists, removeFile
+#include "smbase/ordered-map-ops.h"              // smbase::OrderedMap (for TEST_CASE_EXPRS)
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-override.h"                  // OVERRIDE
-#include "smbase/sm-test.h"                      // USUAL_MAIN
+#include "smbase/sm-test.h"                      // USUAL_MAIN, TEST_CASE_EXPRS
 
 #include <fstream>                               // ofstream
 
@@ -270,8 +271,63 @@ static void testOneGetDiagnosticsAt(
 }
 
 
+static void testOneAdjacentDiagnostic(
+  TextDocumentDiagnostics const &tdd,
+  bool next,
+  int startLine,
+  int startByteIndex,
+  int expectLine,
+  int expectByteIndex)
+{
+  TEST_CASE_EXPRS("testOneAdjacentDiagnostic",
+    next, startLine, startByteIndex);
+
+  std::optional<TextMCoord> actual = tdd.getAdjacentDiagnosticLocation(
+    next, TextMCoord(startLine, startByteIndex));
+
+  if (expectLine == -1) {
+    xassert(!actual.has_value());
+  }
+  else {
+    xassert(actual.has_value());
+
+    EXPECT_EQ(actual->m_line, expectLine);
+    EXPECT_EQ(actual->m_byteIndex, expectByteIndex);
+  }
+}
+
+
+static void testOneNextDiagnostic(
+  TextDocumentDiagnostics const &tdd,
+  int startLine,
+  int startByteIndex,
+  int expectLine,
+  int expectByteIndex)
+{
+  testOneAdjacentDiagnostic(tdd, true /*next*/,
+    startLine, startByteIndex,
+    expectLine, expectByteIndex);
+}
+
+
+static void testOnePreviousDiagnostic(
+  TextDocumentDiagnostics const &tdd,
+  int startLine,
+  int startByteIndex,
+  int expectLine,
+  int expectByteIndex)
+{
+  testOneAdjacentDiagnostic(tdd, false /*next*/,
+    startLine, startByteIndex,
+    expectLine, expectByteIndex);
+}
+
+
+// This also tests next/previous diagnostic navigation.
 static void test_TDD_getDiagnosticAt()
 {
+  TEST_CASE("test_TDD_getDiagnosticAt");
+
   NamedTextDocument doc;
 
   //                          1
@@ -288,6 +344,7 @@ static void test_TDD_getDiagnosticAt()
   doc.appendString("   [15  [16  16]    ");  // 8
 
   TextDocumentDiagnostics tdd(1 /*version*/, &doc);
+  EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
   tdd.insert({{0,3}, {0,6}}, Diagnostic("1"));
   tdd.insert({{0,11}, {0,16}}, Diagnostic("2"));
   tdd.insert({{2,2}, {2,17}}, Diagnostic("3"));
@@ -295,15 +352,18 @@ static void test_TDD_getDiagnosticAt()
   tdd.insert({{2,8}, {2,11}}, Diagnostic("5"));
   tdd.insert({{3,2}, {3,14}}, Diagnostic("6"));
   tdd.insert({{3,7}, {3,18}}, Diagnostic("7"));
+  EXPECT_EQ(tdd.maxDiagnosticLine(), 3);
   // I skipped "8" I guess.
   tdd.insert({{4,10}, {4,10}}, Diagnostic("9"));
   tdd.insert({{5,6}, {6,18}}, Diagnostic("10"));
+  EXPECT_EQ(tdd.maxDiagnosticLine(), 6);
   tdd.insert({{5,11}, {5,15}}, Diagnostic("11"));
   tdd.insert({{6,3}, {6,7}}, Diagnostic("12"));
   tdd.insert({{7,3}, {7,11}}, Diagnostic("13"));
   tdd.insert({{7,3}, {7,16}}, Diagnostic("14"));
   tdd.insert({{8,3}, {8,16}}, Diagnostic("15"));
   tdd.insert({{8,8}, {8,16}}, Diagnostic("16"));
+  EXPECT_EQ(tdd.maxDiagnosticLine(), 8);
 
   testOneGetDiagnosticsAt(tdd, 0,0, nullptr);
   testOneGetDiagnosticsAt(tdd, 0,2, nullptr);
@@ -370,6 +430,51 @@ static void test_TDD_getDiagnosticAt()
   testOneGetDiagnosticsAt(tdd, 8,8, "16");
   testOneGetDiagnosticsAt(tdd, 8,15, "16");
   testOneGetDiagnosticsAt(tdd, 8,16, nullptr);
+
+
+  testOneNextDiagnostic(tdd, 0,0, 0,3);
+  testOneNextDiagnostic(tdd, 0,1, 0,3);
+  testOneNextDiagnostic(tdd, 0,2, 0,3);
+
+  testOneNextDiagnostic(tdd, 0,3, 0,11);
+  testOneNextDiagnostic(tdd, 0,4, 0,11);
+  testOneNextDiagnostic(tdd, 0,10, 0,11);
+
+  testOneNextDiagnostic(tdd, 0,11, 2,2);
+  testOneNextDiagnostic(tdd, 1,0, 2,2);
+  testOneNextDiagnostic(tdd, 2,0, 2,2);
+  testOneNextDiagnostic(tdd, 2,1, 2,2);
+
+  testOneNextDiagnostic(tdd, 2,2, 2,5);
+
+  testOneNextDiagnostic(tdd, 2,5, 2,8);
+
+  testOneNextDiagnostic(tdd, 2,8, 3,2);
+
+  testOneNextDiagnostic(tdd, 3,2, 3,7);
+
+  testOneNextDiagnostic(tdd, 3,7, 4,10);
+
+  testOneNextDiagnostic(tdd, 4,10, 5,6);
+
+  testOneNextDiagnostic(tdd, 5,6, 5,11);
+
+  testOneNextDiagnostic(tdd, 5,11, 6,3);
+
+  testOneNextDiagnostic(tdd, 6,3, 7,3);
+
+  testOneNextDiagnostic(tdd, 7,3, 8,3);
+
+  testOneNextDiagnostic(tdd, 8,3, 8,8);
+
+  testOneNextDiagnostic(tdd, 8,8, -1,0);
+
+
+  testOnePreviousDiagnostic(tdd, 0,0, -1,0);
+
+  testOnePreviousDiagnostic(tdd, 8,20, 8,8);
+
+  testOnePreviousDiagnostic(tdd, 5,2, 4,10);
 }
 
 
