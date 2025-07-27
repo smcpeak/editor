@@ -24,6 +24,10 @@ enum LSPDocumentState {
   // not yet provided the resulting diagnostics.
   LSPDS_WAITING,
 
+  // We received stale diagnostics and discarded them, meaning we need
+  // to try again.  (TODO: This should be fixed and removed.)
+  LSPDS_RECEIVED_STALE,
+
   NUM_LSP_DOCUMENT_STATES
 };
 

@@ -154,6 +154,10 @@ LSPDocumentState NamedTextDocument::getLSPDocumentState() const
     return LSPDS_WAITING;
   }
 
+  if (m_lspReceivedStaleDiagnostics) {
+    return LSPDS_RECEIVED_STALE;
+  }
+
   if (m_diagnostics) {
     if (getVersionNumber() == m_diagnostics->getOriginVersion()) {
       return LSPDS_UP_TO_DATE;
