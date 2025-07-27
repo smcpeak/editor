@@ -1,4 +1,4 @@
-List of all keybindings, including what is in the menu:
+List of all keybindings, including what is listed in the menu:
 
 
 Context indicators:
@@ -22,6 +22,9 @@ F4+Ctrl                      Window | Close Window
 F5                           File | Reload
 
 F6                           Window | Switch to Previous Document
+
+F7                           LSP | Open or update this file
+F7+Ctrl                      LSP | Close this file
 
 F9                           File | Run "run-make-from-editor"
 

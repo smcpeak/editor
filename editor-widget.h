@@ -26,7 +26,7 @@
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
 #include "smbase/owner.h"                        // Owner
-#include "smbase/refct-serf.h"                   // RCSerf
+#include "smbase/refct-serf.h"                   // RCSerf, SerfRefCount
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
 #include "smbase/std-optional-fwd.h"             // std::optional
@@ -58,6 +58,8 @@ class QRangeControl;
 class EditorWidget
   : public QWidget,               // I am a Qt widget.
     public TextDocumentObserver,  // Watch my file while I don't have focus.
+      // Note: `TextDocumentObserver` inherits `SerfRefCount`, so that
+      // allows `RCSerf`s to point to `EditorWidget`.
     public NamedTextDocumentListObserver,        // Watch the list of files.
     public EventReplayQueryable { // Respond to test queries.
   Q_OBJECT
@@ -649,6 +651,9 @@ public:      // funcs
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
 
+  // Do `redraw` after emitting `signal_contentChange`.
+  void redrawAfterContentChange();
+
   // Get a screenshot of the widget.
   QImage getScreenshot();
 
@@ -693,6 +698,16 @@ Q_SIGNALS:
   // Emitted to indicate the number of search hits and the relative
   // position of the cursor and mark to them.
   void signal_searchStatusIndicator(QString const &status);
+
+  // Emitted when the file metadata for the edited document changes.
+  // Currently, this is relevant because it signals when new LSP
+  // diagnostics are received, and the LSP status widget listens to
+  // this.
+  void signal_metadataChange();
+
+  // Emitted when the content of the document changes.  This is *not*
+  // emitted in response to scrolling or mere cursor movement.
+  void signal_contentChange();
 };
 
 

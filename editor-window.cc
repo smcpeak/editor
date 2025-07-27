@@ -184,6 +184,9 @@ EditorWindow::~EditorWindow()
   // specify an order.  Disconnect them here so that either order works.
   m_sarPanel->setEditorWidget(NULL);
 
+  // Similarly disconnect the status bar.
+  m_statusArea->resetEditorWidget();
+
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
   QObject::disconnect(m_editorGlobal, NULL, this, NULL);
@@ -205,6 +208,12 @@ LSPManager &EditorWindow::lspManager()
 EditorWidget *EditorWindow::editorWidget() const
 {
   return m_editorWidgetFrame->editorWidget();
+}
+
+
+LSPStatusWidget *EditorWindow::lspStatusWidget() const
+{
+  return statusArea()->m_lspStatusWidget;
 }
 
 
@@ -430,12 +439,10 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
-    MENU_ITEM    ("&Open this file",
-                  lspOpenFile);
-    MENU_ITEM    ("&Update this file",
-                  lspUpdateFile);
-    MENU_ITEM    ("&Close this file",
-                  lspCloseFile);
+    MENU_ITEM_KEY("&Open or update this file",
+                  lspOpenOrUpdateFile, Qt::Key_F7);
+    MENU_ITEM_KEY("&Close this file",
+                  lspCloseFile, Qt::CTRL + Qt::Key_F7);
     MENU_ITEM    ("Review diagnostics for this file",
                   lspReviewDiagnostics);
     MENU_ITEM    ("Show diagnostic at cursor",
@@ -1993,31 +2000,17 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
   std::string fname = docName.filename();
   bool alreadyOpen = lspManager().isFileOpen(fname);
 
-  switch (operation) {
-    case LSPFO_OPEN:
-      if (alreadyOpen) {
-        inform(stringb("Document " << doubleQuote(fname) <<
-                       " is already open."));
-        return;
-      }
-      break;
-
-    case LSPFO_UPDATE:
-    case LSPFO_CLOSE:
-      if (!alreadyOpen) {
+  if (operation == LSPFO_CLOSE) {
+    if (!alreadyOpen) {
+      if (wantErrors) {
         inform(stringb("Document " << doubleQuote(fname) <<
                        " is not open."));
-        return;
       }
-      break;
-
-    case LSPFO_UPDATE_IF_OPEN:
-      break;
-  }
-
-  if (operation == LSPFO_CLOSE) {
-    lspManager().notify_textDocument_didClose(fname);
-    ntd->updateDiagnostics(nullptr);
+    }
+    else {
+      lspManager().notify_textDocument_didClose(fname);
+      ntd->updateDiagnostics(nullptr);
+    }
     return;
   }
 
@@ -2036,12 +2029,13 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
 
   std::string contents = vectorOfUCharToString(ntd->getWholeFile());
 
-  if (operation == LSPFO_OPEN) {
+  if (!alreadyOpen) {
     // TODO: Compute this properly.
     std::string languageId = "cpp";
 
     lspManager().notify_textDocument_didOpen(
       fname, languageId, version, std::move(contents));
+    ntd->sentLSPFileContents();
   }
 
   else /*update*/ {
@@ -2062,25 +2056,16 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
 
     lspManager().notify_textDocument_didChange(
       fname, version, std::move(contents));
+    ntd->sentLSPFileContents();
   }
 }
 
 
-void EditorWindow::lspOpenFile() NOEXCEPT
+void EditorWindow::lspOpenOrUpdateFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  doLSPFileOperation(LSPFO_OPEN);
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorWindow::lspUpdateFile() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  doLSPFileOperation(LSPFO_UPDATE);
+  doLSPFileOperation(LSPFO_OPEN_OR_UPDATE);
 
   GENERIC_CATCH_END
 }
@@ -2153,7 +2138,7 @@ static std::unique_ptr<TextDocumentDiagnostics>
 makeFakeDiagnostics(NamedTextDocument *doc)
 {
   std::unique_ptr<TextDocumentDiagnostics> diags(
-    new TextDocumentDiagnostics(doc));
+    new TextDocumentDiagnostics(1 /*version*/, doc));
   TextMCoordRange range{{10,10}, {10,30}};
 
   // Here, I don't care about the modified `range` or the return value.
@@ -2174,6 +2159,7 @@ void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
   // Temporary: fake some diagnostics.
   doc->updateDiagnostics(makeFakeDiagnostics(doc));
 
+  lspStatusWidget()->on_changedLSPStatus();
   editorWidget()->redraw();
 
   GENERIC_CATCH_END
@@ -2185,6 +2171,7 @@ void EditorWindow::lspRemoveDiagnostics() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   currentDocument()->updateDiagnostics({});
+  lspStatusWidget()->on_changedLSPStatus();
   editorWidget()->redraw();
 
   GENERIC_CATCH_END
@@ -2220,8 +2207,8 @@ void EditorWindow::lspSetFakeStatus() NOEXCEPT
   if (numberInputBox(this,
         "Fake status",
         "New fake status (0 to reset)",
-        m_statusArea->m_lspStatus->m_fakeStatus)) {
-    m_statusArea->m_lspStatus->on_changedProtocolState();
+        lspStatusWidget()->m_fakeStatus)) {
+    lspStatusWidget()->on_changedLSPStatus();
   }
 
   GENERIC_CATCH_END

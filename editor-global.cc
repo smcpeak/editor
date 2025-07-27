@@ -811,10 +811,6 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
       continue;
     }
 
-    // Convert the version number data type.
-    TextDocument::VersionNumber diagsVersion =
-      static_cast<TextDocument::VersionNumber>(*diags->m_version);
-
     try {
       // Extract the file path.
       std::string path = LSPClient::getFileURIPath(diags->m_uri);
@@ -824,21 +820,13 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
         DocumentName::fromFilename(HostName::asLocal(), path);
 
       if (NamedTextDocument *doc = getFileWithName(docName)) {
-        if (doc->getVersionNumber() == diagsVersion) {
-          doc->updateDiagnostics(convertLSPDiagsToTDD(doc, diags.get()));
-          TRACE("lsp", "updated diagnostics for " << docName);
-        }
-        else {
-          // TODO: Adapt them rather than discard them.
-          TRACE("lsp",
-            "received diagnostics for " << docName <<
-            ", but doc is version " << doc->getVersionNumber() <<
-            " while diags have version " << diagsVersion);
-        }
+        doc->receivedLSPDiagnostics(diags.get());
       }
       else {
+        // This could happen if we notify the server of new contents and
+        // then immediately close the document.
         TRACE("lsp", "Received LSP diagnostics for " << docName <<
-                     " but that file is not open.");
+                     " but that file is not open in the editor.");
       }
     }
 

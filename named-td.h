@@ -8,6 +8,8 @@
 
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
+#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
+#include "lsp-doc-state.h"             // LSPDocumentState
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td.h"                        // TextDocument
 
@@ -15,6 +17,7 @@
 
 #include <cstdint>                     // std::int64_t
 #include <memory>                      // std::unique_ptr
+#include <optional>                    // std::optional
 
 
 // This class binds a TextDocument, which is an abstract mathematical
@@ -45,6 +48,20 @@ private:     // data
 
   // If set, the diagnostics associated with this document.
   std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
+
+  // TODO: Split the following two fields off into their own class that
+  // is dedicated to tracking the per-document LSP protocol state.  That
+  // class can also deal with remembering intervening changes.
+
+  // If set, we have sent a notification to the LSP server with the file
+  // contents for the specified version, but have not received the
+  // diagnostics back.
+  std::optional<VersionNumber> m_lspWaitingForDiagnosticsForVersion;
+
+  // True when we tried to get updated diagnostics but the file changed
+  // in the meantime.  For now I just report the condition; I plan to
+  // handle it better in the future.
+  bool m_lspReceivedStaleDiagnostics;
 
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
@@ -134,6 +151,13 @@ public:      // funcs
                            bool readOnly);
 
   // --------------------------- diagnostics ---------------------------
+  // How do the diagnostics relate to the document contents?
+  LSPDocumentState getLSPDocumentState() const;
+
+  // Get the number of diagnostics in the most recent report, or nullopt
+  // if we have not received a diagnostic report.
+  std::optional<int> getNumDiagnostics() const;
+
   // Get the current diagnostics, if any.
   TextDocumentDiagnostics const * NULLABLE getDiagnostics() const;
 
@@ -144,6 +168,15 @@ public:      // funcs
   // Get diagnostic at `tc`.  See
   // `TextDocumentDiagnostics::getDiagnosticAt` for details.
   RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
+
+  // Record that we sent the current contents and version.
+  void sentLSPFileContents();
+
+  // Process incoming `diags` for this document.
+  //
+  // Requires: diags->m_version.has_value()
+  void receivedLSPDiagnostics(
+    LSP_PublishDiagnosticsParams const *diags);
 };
 
 

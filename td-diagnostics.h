@@ -9,7 +9,7 @@
 #include "td-diagnostics-fwd.h"        // fwds for this module
 
 #include "named-td-fwd.h"              // NamedTextDocument
-#include "td-core.h"                   // TextDocumentObserver
+#include "td-core.h"                   // TextDocumentObserver, TextDocumentCore
 #include "textmcoord-map.h"            // TextMCoordMap
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
@@ -38,6 +38,9 @@ public:      // methods
 // A set of diagnostics associated with one text document.
 class TextDocumentDiagnostics : public TextDocumentObserver {
 public:      // types
+  // Type use to record document version numbers.
+  typedef TextDocumentCore::VersionNumber VersionNumber;
+
   // Type that acts as the value for the range map, and the index into
   // `m_diagnostics`.
   typedef TextMCoordMap::Value DiagnosticIndex;
@@ -100,6 +103,10 @@ public:      // types
   };
 
 private:     // data
+  // When the diagnostics were originally received, they described this
+  // version of the document.
+  VersionNumber m_originVersion;
+
   // Pointer to the document the diagnostics apply to.  We act as an
   // observer of `m_doc` in order to update the diagnostic locations
   // when the document changes.
@@ -122,10 +129,13 @@ public:      // methods
   ~TextDocumentDiagnostics();
 
   // Initially empty set.
-  explicit TextDocumentDiagnostics(NamedTextDocument *doc);
+  explicit TextDocumentDiagnostics(
+    VersionNumber originVersion, NamedTextDocument *doc);
 
   // Assert all invariants.
   void selfCheck() const;
+
+  VersionNumber getOriginVersion() const { return m_originVersion; }
 
   // True if there are no mappings.
   bool empty() const;

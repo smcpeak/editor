@@ -10,6 +10,7 @@
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
+#include "smbase/xassert.h"            // xassertPrecondition
 
 #include <memory>                      // std::unique_ptr
 
@@ -39,8 +40,13 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
   NamedTextDocument *doc,
   LSP_PublishDiagnosticsParams const *lspDiags)
 {
+  xassertPrecondition(lspDiags->m_version.has_value());
+
+  TextDocument::VersionNumber diagsVersion =
+    static_cast<TextDocument::VersionNumber>(*lspDiags->m_version);
+
   std::unique_ptr<TextDocumentDiagnostics> ret(
-    new TextDocumentDiagnostics(doc));
+    new TextDocumentDiagnostics(diagsVersion, doc));
 
   for (LSP_Diagnostic const &diag : lspDiags->m_diagnostics) {
     TextMCoordRange range = convertLSPRange(diag.m_range);

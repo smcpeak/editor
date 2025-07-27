@@ -287,7 +287,7 @@ static void test_TDD_getDiagnosticAt()
   doc.appendString("   [13  13]  14]    ");  // 7
   doc.appendString("   [15  [16  16]    ");  // 8
 
-  TextDocumentDiagnostics tdd(&doc);
+  TextDocumentDiagnostics tdd(1 /*version*/, &doc);
   tdd.insert({{0,3}, {0,6}}, Diagnostic("1"));
   tdd.insert({{0,11}, {0,16}}, Diagnostic("2"));
   tdd.insert({{2,2}, {2,17}}, Diagnostic("3"));

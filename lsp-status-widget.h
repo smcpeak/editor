@@ -11,6 +11,9 @@
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "lsp-manager-fwd.h"           // LSPManager
 
+#include "smbase/refct-serf.h"         // RCSerf
+
+#include <QColor>
 #include <QLabel>
 
 
@@ -24,7 +27,9 @@ private:     // data
   // The file-specific status aspects (like number of diagnostics) come
   // from the file this widget is editing.  It also provides indirect
   // access to the `EditorGlobal` object.
-  EditorWidget *m_editorWidget;
+  //
+  // This is non-null except while destroying the containing window.
+  RCSerf<EditorWidget> m_editorWidget;
 
 public:      // data
   // If not 0, then this value minus 1 is used as the protocol state
@@ -33,8 +38,8 @@ public:      // data
   int m_fakeStatus;
 
 private:     // methods
-  // Set the background color.  r/g/b are in [0,255].
-  void setBackgroundColor(int r, int g, int b);
+  // Set the background color.
+  void setBackgroundColor(QColor color);
 
 public:      // methods
   ~LSPStatusWidget();
@@ -45,9 +50,13 @@ public:      // methods
   // Navigate to the global LSP manager.
   LSPManager *lspManager() const;
 
+  // Nullify `m_editorWidget` and disconnect any signals.
+  void resetEditorWidget();
+
 public Q_SLOTS:
-  // Called when the `LSPManager` protocol state changes.
-  void on_changedProtocolState() noexcept;
+  // Called when something changes that potentially affects the LSP
+  // status display.
+  void on_changedLSPStatus() noexcept;
 };
 
 

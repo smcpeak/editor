@@ -14,6 +14,8 @@
 
 
 // Convert `lspDiags`.
+//
+// Requires: lspDiags->m_version.has_value()
 stdfwd::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
   NamedTextDocument *doc,
   LSP_PublishDiagnosticsParams const *lspDiags);

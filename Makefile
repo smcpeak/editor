@@ -275,6 +275,7 @@ EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += doc-type-detect.o
 EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
+EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += named-td.o
 EDITOR_OBJS += td-diagnostics.o
 
@@ -620,7 +621,6 @@ EDITOR_OBJS += fonts-dialog.o
 EDITOR_OBJS += fonts-dialog.moc.o
 EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += keybindings.doc.gen.o
-EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += lsp-status-widget.moc.o
 EDITOR_OBJS += lsp-status-widget.o
 EDITOR_OBJS += macro-creator-dialog.o

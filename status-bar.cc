@@ -3,10 +3,12 @@
 
 #include "status-bar.h"                // this module
 
+#include "editor-widget.h"             // EditorWidget
 #include "lsp-status-widget.h"         // LSPStatusWidget
 
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 
+#include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassert
 
@@ -18,7 +20,7 @@
 StatusBarDisplay::StatusBarDisplay(
   EditorWidget *editorWidget, QWidget *parent)
   : QWidget(parent),
-    m_editorWidget(editorWidget)
+    IMEMBFP(editorWidget)
 {
   xassert(editorWidget != nullptr);
 
@@ -56,10 +58,10 @@ StatusBarDisplay::StatusBarDisplay(
   hb->addStretch(1);
 
   // LSP status.
-  m_lspStatus = new LSPStatusWidget(m_editorWidget, this);
-  SET_QOBJECT_NAME(m_lspStatus);
-  m_lspStatus->setFixedWidth(height);  // Square shape.
-  hb->addWidget(m_lspStatus);
+  m_lspStatusWidget = new LSPStatusWidget(m_editorWidget, this);
+  SET_QOBJECT_NAME(m_lspStatusWidget);
+  m_lspStatusWidget->setFixedWidth(height*3/2);  // 1.5:1 Rectangular shape.
+  hb->addWidget(m_lspStatusWidget);
 
   // corner resize widget
   m_corner = new QSizeGrip(this);
@@ -91,6 +93,15 @@ void StatusBarDisplay::setFilenameText(QString newFilename)
      a fairly narrow width, but the file name might be arbitrarily long
      depending on which directory the editor has been compiled in. */
   m_filename->setMinimumWidth(20);
+}
+
+
+void StatusBarDisplay::resetEditorWidget()
+{
+  if (m_editorWidget) {
+    m_lspStatusWidget->resetEditorWidget();
+    m_editorWidget = nullptr;
+  }
 }
 
 

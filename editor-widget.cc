@@ -383,7 +383,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
   this->startListening();
 
   // Draw the current contents.
-  this->redraw();
+  this->redrawAfterContentChange();
 
   // Then, issue a request to refresh those contents.
   this->requestFileStatus();
@@ -660,6 +660,13 @@ void EditorWidget::redraw()
 
   // redraw
   update();
+}
+
+
+void EditorWidget::redrawAfterContentChange()
+{
+  Q_EMIT signal_contentChange();
+  redraw();
 }
 
 
@@ -2121,7 +2128,7 @@ void EditorWidget::editUndo()
   INITIATING_DOCUMENT_CHANGE();
   if (m_editor->canUndo()) {
     m_editor->undo();
-    this->redraw();
+    this->redrawAfterContentChange();
   }
   else {
     QMessageBox::information(this, "Can't undo",
@@ -2135,7 +2142,7 @@ void EditorWidget::editRedo()
   INITIATING_DOCUMENT_CHANGE();
   if (m_editor->canRedo()) {
     m_editor->redo();
-    this->redraw();
+    this->redrawAfterContentChange();
   }
   else {
     QMessageBox::information(this, "Can't redo",
@@ -2448,7 +2455,7 @@ void EditorWidget::editJustifyParagraph()
     INITIATING_DOCUMENT_CHANGE();
     UndoHistoryGrouper ugh(*m_editor);
     m_editor->justifyNearCursor(m_softMarginColumn);
-    this->redraw();
+    this->redrawAfterContentChange();
   }
 }
 
@@ -2458,7 +2465,7 @@ void EditorWidget::editInsertDateTime()
   INITIATING_DOCUMENT_CHANGE();
   UndoHistoryGrouper ugh(*m_editor);
   m_editor->insertDateTime();
-  this->redraw();
+  this->redrawAfterContentChange();
 }
 
 
@@ -2468,7 +2475,7 @@ void EditorWidget::insertText(char const *text, int length,
   INITIATING_DOCUMENT_CHANGE();
   UndoHistoryGrouper ugh(*m_editor);
   m_editor->insertText(text, length, flags);
-  this->redraw();
+  this->redrawAfterContentChange();
 }
 
 
@@ -2589,7 +2596,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
     m_editor->moveMarkBy(+1, 0);
   }
 
-  redraw();
+  redrawAfterContentChange();
   GENERIC_CATCH_END
 }
 
@@ -2612,7 +2619,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEX
     m_editor->moveMarkBy(-1, 0);
   }
 
-  redraw();
+  redrawAfterContentChange();
   GENERIC_CATCH_END
 }
 
@@ -2626,7 +2633,7 @@ void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char 
   if (ignoringChangeNotifications()) {
     return;
   }
-  redraw();
+  redrawAfterContentChange();
   GENERIC_CATCH_END
 }
 
@@ -2636,7 +2643,7 @@ void EditorWidget::observeDeleteText(TextDocumentCore const &, TextMCoord, int) 
   if (ignoringChangeNotifications()) {
     return;
   }
-  redraw();
+  redrawAfterContentChange();
   GENERIC_CATCH_END
 }
 
@@ -2646,17 +2653,26 @@ void EditorWidget::observeTotalChange(TextDocumentCore const &buf) NOEXCEPT
   if (ignoringChangeNotifications()) {
     return;
   }
-  redraw();
+  redrawAfterContentChange();
   GENERIC_CATCH_END
 }
 
 void EditorWidget::observeMetadataChange(TextDocumentCore const &buf) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+
   if (ignoringChangeNotifications()) {
     return;
   }
+
+  // This is a sort of bridge from the virtual method based observer
+  // pattern to the Qt signals-and-slots pattern.  It allows the LSP
+  // status widget to monitor for LSP diagnostics receipt without having
+  // to directly watch the underlying document object.
+  Q_EMIT signal_metadataChange();
+
   redraw();
+
   GENERIC_CATCH_END
 }
 
@@ -2764,7 +2780,7 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
     ASTCASEC1(EC_Cut) {
       if (this->selectEnabled()) {
         setClipboard(m_editor->clipboardCut());
-        this->redraw();
+        this->redrawAfterContentChange();
       }
     }
 
@@ -2797,7 +2813,7 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
 
       QByteArray utf8(text.toUtf8());
       m_editor->clipboardPaste(utf8.constData(), utf8.length());
-      this->redraw();
+      this->redrawAfterContentChange();
     }
 
     ASTNEXTC1(EC_KillLine) {
@@ -2805,7 +2821,7 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
         m_editor->selectCursorLine();
       }
       setClipboard(m_editor->clipboardCut());
-      this->redraw();
+      this->redrawAfterContentChange();
     }
 
     ASTNEXTC1(EC_SelectEntireFile) {
@@ -2876,19 +2892,19 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
 
     ASTNEXTC1(EC_DeleteKeyFunction) {
       m_editor->deleteKeyFunction();
-      redraw();
+      redrawAfterContentChange();
     }
 
     ASTNEXTC1(EC_DeleteMenuFunction) {
       if (selectEnabled()) {
         m_editor->deleteSelection();
-        redraw();
+        redrawAfterContentChange();
       }
     }
 
     ASTNEXTC1(EC_BackspaceFunction) {
       m_editor->backspaceFunction();
-      redraw();
+      redrawAfterContentChange();
     }
 
     ASTNEXTC1(EC_CenterVisibleOnCursorLine) {
@@ -2898,18 +2914,18 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
 
     ASTNEXTC(EC_BlockIndent, ec) {
       if (m_editor->blockIndent(ec->m_amt)) {
-        redraw();
+        redrawAfterContentChange();
       }
     }
 
     ASTNEXTC1(EC_InsertNewlineAutoIndent) {
       m_editor->insertNewlineAutoIndent();
-      redraw();
+      redrawAfterContentChange();
     }
 
     ASTNEXTC(EC_InsertString, ec) {
       m_editor->insertString(ec->m_text);
-      this->redraw();
+      this->redrawAfterContentChange();
     }
 
     ASTENDCASECD

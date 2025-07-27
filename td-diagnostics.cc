@@ -16,6 +16,7 @@
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/gdvalue-set.h"                  // gdv::GDValue(std::set)
 #include "smbase/overflow.h"                     // convertNumber
+#include "smbase/sm-macros.h"                    // IMEMBFP
 
 #include <optional>                              // std::optional
 #include <string>                                // std::string
@@ -187,8 +188,11 @@ TextDocumentDiagnostics::~TextDocumentDiagnostics()
 }
 
 
-TextDocumentDiagnostics::TextDocumentDiagnostics(NamedTextDocument *doc)
-  : m_doc(doc),
+TextDocumentDiagnostics::TextDocumentDiagnostics(
+  VersionNumber originVersion,
+  NamedTextDocument *doc)
+  : IMEMBFP(originVersion),
+    IMEMBFP(doc),
     m_diagnostics(),
     m_rangeToDiagIndex()
 {

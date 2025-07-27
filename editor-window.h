@@ -14,6 +14,7 @@
 #include "editor-widget-fwd.h"                   // EditorWidget
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "lsp-manager-fwd.h"                     // LSPManager
+#include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td.h"                            // NamedTextDocument
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "status-bar-fwd.h"                      // StatusBarDisplay
@@ -54,8 +55,7 @@ class EditorWindow : public QWidget,
 private:     // types
   // Things we can do with one file and LSP.
   enum LSPFileOperation {
-    LSPFO_OPEN,              // Open the file.
-    LSPFO_UPDATE,            // Update the file.
+    LSPFO_OPEN_OR_UPDATE,    // Open or update the file.
     LSPFO_UPDATE_IF_OPEN,    // Update if it is open.
     LSPFO_CLOSE,             // Close the file.
   };
@@ -156,6 +156,9 @@ public:      // funcs
 
   // The status area widget.
   StatusBarDisplay *statusArea() const { return m_statusArea; }
+
+  // The LSP widget inside the status area.
+  LSPStatusWidget *lspStatusWidget() const;
 
   // Get VFS query object.
   VFS_Connections *vfsConnections() const;
@@ -271,8 +274,7 @@ public Q_SLOTS:
   void lspStartServer() NOEXCEPT;
   void lspStopServer() NOEXCEPT;
   void lspCheckStatus() NOEXCEPT;
-  void lspOpenFile() NOEXCEPT;
-  void lspUpdateFile() NOEXCEPT;
+  void lspOpenOrUpdateFile() NOEXCEPT;
   void lspCloseFile() NOEXCEPT;
   void lspReviewDiagnostics() NOEXCEPT;
   void lspShowDiagnosticAtCursor() NOEXCEPT;

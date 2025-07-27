@@ -19,9 +19,11 @@ editor-widget.o: smqtutil/editor14r.bdf.gen.h
 editor-widget.o: smqtutil/minihex6.bdf.gen.h
 editor-window.o: editor-command.ast.gen.fwd.h
 fonts-dialog.o: editor-command.ast.gen.fwd.h
+lsp-status-widget.o: editor-command.ast.gen.fwd.h
 macro-creator-dialog.moc.o: editor-command.ast.gen.fwd.h
 macro-creator-dialog.o: editor-command.ast.gen.fwd.h
 macro-creator-dialog.o: editor-command.ast.gen.h
 macro-run-dialog.o: editor-command.ast.gen.fwd.h
 open-files-dialog.o: editor-command.ast.gen.fwd.h
 sar-panel.o: editor-command.ast.gen.fwd.h
+status-bar.o: editor-command.ast.gen.fwd.h
