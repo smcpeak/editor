@@ -269,6 +269,17 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     };
     m_table->setColumnInfo(columnInfo);
 
+    // Set the Message column title to be left aligned.  We make its
+    // width very large, so a centered title is often outside the
+    // viewport.
+    {
+      auto item = new QTableWidgetItem("Message");
+      item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+
+      // Takes ownership of `item` deallocates what was there.
+      m_table->setHorizontalHeaderItem(2, item);
+    }
+
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
