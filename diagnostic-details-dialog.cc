@@ -210,10 +210,13 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   outerVBox->setContentsMargins(0, 0, 0, 0);
 
   m_splitter = new QSplitter(Qt::Vertical, this);
+  SET_QOBJECT_NAME(m_splitter);
 
   // Top panel: location and message.
   {
     QWidget *topPanel = new QWidget(this);
+    SET_QOBJECT_NAME(topPanel);
+
     QVBoxLayout *vbox = new QVBoxLayout(topPanel);
 
     // Eliminate margins between the text boxes and the dialog edge.
@@ -238,6 +241,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   // Bottom panel (the table).
   {
     m_table = new QTableWidget(this);
+    SET_QOBJECT_NAME(m_table);
     m_table->setColumnCount(3);
     m_table->setHorizontalHeaderLabels({
       "Dir", "File:Line", "Message" });
