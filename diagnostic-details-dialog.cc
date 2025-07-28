@@ -11,6 +11,7 @@
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QSplitter>
 #include <QTableWidget>
@@ -28,7 +29,7 @@ void DiagnosticDetailsDialog::updateTopPanel()
       .arg(elt.m_dir)
       .arg(elt.m_file)
       .arg(elt.m_line));
-    m_messageLabel->setText(elt.m_message);
+    m_messageText->setPlainText(elt.m_message);
   }
 }
 
@@ -190,7 +191,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   : QDialog(parent),
     m_diagnostics(),
     m_locationLabel(nullptr),
-    m_messageLabel(nullptr),
+    m_messageText(nullptr),
     m_splitter(nullptr),
     m_table(nullptr)
 {
@@ -211,15 +212,14 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     SET_QOBJECT_NAME(m_locationLabel);
     vbox->addWidget(m_locationLabel);
 
-    m_messageLabel = new QLabel(this);
-    SET_QOBJECT_NAME(m_messageLabel);
-    m_messageLabel->setWordWrap(true);
-    m_messageLabel->setAlignment(Qt::AlignTop);
+    m_messageText = new QPlainTextEdit(this);
+    SET_QOBJECT_NAME(m_messageText);
+    m_messageText->setReadOnly(true);
 
     // Ensure the message takes all extra vertical space.
-    m_messageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_messageText->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    vbox->addWidget(m_messageLabel);
+    vbox->addWidget(m_messageText);
 
     m_splitter->addWidget(topPanel);
   }

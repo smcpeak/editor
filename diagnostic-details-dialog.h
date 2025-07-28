@@ -11,6 +11,7 @@
 #include <QVector>
 
 class QLabel;
+class QPlainTextEdit;
 class QSplitter;
 class QTableWidget;
 
@@ -49,7 +50,7 @@ private:     // data
 
   // Controls.
   QLabel *m_locationLabel;             // Selected element file/line.
-  QLabel *m_messageLabel;              // Selected element message.
+  QPlainTextEdit *m_messageText;       // Selected element message.
   QSplitter *m_splitter;               // Resize the panels.
   QTableWidget *m_table;               // Table of elements.
 
