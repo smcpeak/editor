@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
   QApplication app(argc, argv);
 
   // Use a larger (12-point) font.
-  {
+  if (true) {
     QFont fontSpec = QApplication::font();
     fontSpec.setPointSize(12);
     QApplication::setFont(fontSpec);

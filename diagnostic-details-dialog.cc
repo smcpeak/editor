@@ -7,6 +7,7 @@
 
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
+#include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 
@@ -20,6 +21,7 @@
 #include <QVBoxLayout>
 
 #include <utility>                     // std::move
+#include <vector>                      // std::vector
 
 
 void DiagnosticDetailsDialog::updateTopPanel()
@@ -72,11 +74,13 @@ void DiagnosticDetailsDialog::repopulateTable()
 
     int w = m_table->fontMetrics().horizontalAdvance(elt.m_message);
     maxMessageWidth = qMax(maxMessageWidth, w);
+
+    m_table->setNaturalTextRowHeight(row);
   }
 
-  m_table->setColumnWidth(0, 100);
-  m_table->setColumnWidth(1, 150);
-  m_table->setColumnWidth(2, maxMessageWidth + 20 /*padding guess*/);
+  // The first two column widths are initialized in the ctor, but the
+  // final column size is computed from the actual data.
+  m_table->setColumnWidth(2, maxMessageWidth + 8 /*padding*/);
 
   if (!m_diagnostics.isEmpty()) {
     m_table->selectRow(0);
@@ -240,15 +244,19 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
 
   // Bottom panel (the table).
   {
-    m_table = new QTableWidget(this);
+    m_table = new SMTableWidget(this);
     SET_QOBJECT_NAME(m_table);
-    m_table->setColumnCount(3);
-    m_table->setHorizontalHeaderLabels({
-      "Dir", "File:Line", "Message" });
-    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    m_table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+
+    m_table->configureAsListView();
+
+    std::vector<SMTableWidget::ColumnInfo> columnInfo = {
+      // name       init min max prio
+      { "Dir",       100, 50, {}, 0 },
+      { "File:Line", 150, 50, {}, 0 },
+      { "Message",   400, 50, {}, 1 },
+    };
+    m_table->setColumnInfo(columnInfo);
+
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);

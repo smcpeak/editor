@@ -6,18 +6,19 @@
 #ifndef EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 #define EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 
-#include "no-elide-delegate-fwd.h"     // NoElideDelegate
+#include "no-elide-delegate-fwd.h"               // NoElideDelegate
+
+#include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
 #include <QDialog>
 #include <QString>
 #include <QVector>
 
-#include <memory>                      // std::unique_ptr
+#include <memory>                                // std::unique_ptr
 
 class QLabel;
 class QPlainTextEdit;
 class QSplitter;
-class QTableWidget;
 
 
 // This dialog allows the user to review the details of one compiler
@@ -59,7 +60,7 @@ private:     // data
   QLabel *m_locationLabel;             // Selected element file/line.
   QPlainTextEdit *m_messageText;       // Selected element message.
   QSplitter *m_splitter;               // Resize the panels.
-  QTableWidget *m_table;               // Table of elements.
+  SMTableWidget *m_table;              // Table of elements.
 
 private:     // methods
   // Update the top panel to show the details of the selected table row.
