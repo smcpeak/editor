@@ -520,7 +520,7 @@ $(eval $(call RUN_TEST_PROG,lsp-manager-test))
 # ------------------- diagnostic-details-dialog-test -------------------
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
-EDITOR_OBJS += left-elide-delegate.o
+EDITOR_OBJS += no-elide-delegate.o
 
 DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS := $(EDITOR_OBJS)
 DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o

@@ -6,7 +6,7 @@
 #ifndef EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 #define EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 
-#include "left-elide-delegate-fwd.h"   // LeftElideDelegate
+#include "no-elide-delegate-fwd.h"     // NoElideDelegate
 
 #include <QDialog>
 #include <QString>
@@ -53,7 +53,7 @@ private:     // data
   QVector<Element> m_diagnostics;
 
   // Delegate to customize how the `dir` column is rendered.
-  std::unique_ptr<LeftElideDelegate> m_dirDelegate;
+  std::unique_ptr<NoElideDelegate> m_dirDelegate;
 
   // Controls.
   QLabel *m_locationLabel;             // Selected element file/line.
