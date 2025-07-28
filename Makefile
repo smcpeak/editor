@@ -517,6 +517,19 @@ lsp-manager-test.exe: $(LSP_MANAGER_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,lsp-manager-test))
 
 
+# ------------------- diagnostic-details-dialog-test -------------------
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS :=
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog.moc.o
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog.o
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o
+
+diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LDFLAGS)
+
+# This has to be run manually.
+all: diagnostic-details-dialog-test.exe
+
+
 # ----------------- git version ---------------------
 # Command to query git for the version.  Output is like:
 # "d36671f 2018-07-09 04:10:32 -0700".
