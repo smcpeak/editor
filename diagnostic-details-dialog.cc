@@ -40,9 +40,6 @@ void DiagnosticDetailsDialog::repopulateTable()
 {
   m_table->setRowCount(m_diagnostics.size());
 
-  // Accumulates the max width; used for sizing the last column.
-  int maxMessageWidth = 300;
-
   for (int row=0; row < m_diagnostics.size(); ++row) {
     Element const &elt = m_diagnostics[row];
 
@@ -70,15 +67,12 @@ void DiagnosticDetailsDialog::repopulateTable()
       m_table->setItem(row, c++, item);
     }
 
-    int w = m_table->fontMetrics().horizontalAdvance(elt.m_message);
-    maxMessageWidth = qMax(maxMessageWidth, w);
-
     m_table->setNaturalTextRowHeight(row);
   }
 
   // The first two column widths are initialized in the ctor, but the
   // final column size is computed from the actual data.
-  m_table->setColumnWidth(2, maxMessageWidth + 8 /*padding*/);
+  m_table->resizeColumnToContents(2);
 
   if (!m_diagnostics.isEmpty()) {
     m_table->selectRow(0);
