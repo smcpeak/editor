@@ -63,12 +63,18 @@ void LeftElideDelegate::paint(
   QRect textRect =
     style->subElementRect(QStyle::SE_ItemViewItemText, &opt, opt.widget);
 
-  // Add some padding on the sides.
-  textRect.adjust(+5, 0, -5, 0);
+  // Add some padding on the sides.  I'm not sure of a more principled
+  // way to get this number; I'm just eyeballing it to make it about
+  // match the other cells.
+  textRect.adjust(+4, 0, -4, 0);
 
   // We can get the desired effect of left truncation by setting the
   // alignment to right and turning off wrapping.
   QTextOption textOption(Qt::AlignRight | Qt::AlignVCenter);
+
+  // In effect, the entire purpose of this delegate is this one line.
+  // If there were a `QTableWidgetItem` method to set the wrapping mode
+  // then I wouldn't need the delegate at all!
   textOption.setWrapMode(QTextOption::NoWrap);
 
   // Draw that text in the rectangle.
