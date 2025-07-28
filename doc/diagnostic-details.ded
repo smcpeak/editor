@@ -1,0 +1,690 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 15,
+        "y": 25
+      },
+      "name": "Diagnostic Details",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_MAXIMIZE",
+        "SF_HAS_MINIMIZE",
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        805,
+        380
+      ],
+      "size": {
+        "h": 385,
+        "w": 815
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 75
+      },
+      "name": "Invalid operands to binary expression ('ostream' (aka 'basic_ostream<char>') and 'C')",
+      "nameAlign": "TA_LEFT",
+      "nameVAlign": "VTA_TOP",
+      "size": {
+        "h": 65,
+        "w": 775
+      }
+    },
+    {
+      "loc": {
+        "x": 800,
+        "y": 75
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 65,
+        "w": 20
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 55
+      },
+      "name": "/home/Scott/wrk/editor/tmp.cc:13",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 795
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 200
+      },
+      "name": "cstddef:123",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 200
+      },
+      "name": "1",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 200
+      },
+      "name": "Candidate function template not viable: no known conversion from 'ostream' (aka 'basic_ostream<char>') to 'byte' for 1st argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 220
+      },
+      "name": "system_error:338",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 220
+      },
+      "name": "2",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 220
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'const error_code' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 240
+      },
+      "name": "ostream:563",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 240
+      },
+      "name": "3",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 240
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'char' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 260
+      },
+      "name": "ostream:569",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 260
+      },
+      "name": "4",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 260
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'char' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 280
+      },
+      "name": "ostream:580",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 280
+      },
+      "name": "5",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 280
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'signed char' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "loc": {
+        "x": 800,
+        "y": 160
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 220,
+        "w": 20
+      }
+    },
+    {
+      "loc": {
+        "x": 140,
+        "y": 160
+      },
+      "name": "File:Line",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 160
+      },
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "loc": {
+        "x": 260,
+        "y": 160
+      },
+      "name": "Message",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 300
+      },
+      "name": "ostream:585",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 300
+      },
+      "name": "6",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 300
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'unsigned char' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 320
+      },
+      "name": "ostream:661",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 320
+      },
+      "name": "7",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 320
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'const char *' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 340
+      },
+      "name": "ostream:679",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 340
+      },
+      "name": "8",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 340
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'const unsigned char *' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 140,
+        "y": 360
+      },
+      "name": "ostream.tcc:306",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 360
+      },
+      "name": "9",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 260,
+        "y": 360
+      },
+      "name": "Candidate function template not viable: no known conversion from 'C' to 'const char *' for 2nd argument",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 380
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 20,
+        "w": 775
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 140,
+        "y": 180
+      },
+      "name": "tmp.cc:13",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 120
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 25,
+        "y": 180
+      },
+      "name": "0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 260,
+        "y": 180
+      },
+      "name": "Invalid operands to binary expression ('ostream' (aka 'basic_ostream<char>') and 'C')",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 540
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 160
+      },
+      "name": "Dir",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 50,
+        "y": 180
+      },
+      "name": "/home/Scott/wrk/editor",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 200
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 220
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 240
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 260
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 280
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 300
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 320
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 340
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 360
+      },
+      "name": "D:/opt/winlibs-mingw64-13.2/include/c++/13.2.0/bits",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "loc": {
+        "x": 380,
+        "y": 140
+      },
+      "name": "Grippy divider",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    }
+  ],
+  "inheritances": [],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 422,
+    "w": 844
+  }
+}

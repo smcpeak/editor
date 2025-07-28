@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Diagnostic Details Dialog Specification</title>
+</head>
+<body>
+
+<p>
+The "Diagnostic Details" dialog allows the user to review the details of
+one compiler diagnostic.
+
+<p>
+This dialog is modeless, meaning other windows can be raised and
+interacted with while it is still open.
+
+<p>
+For the purpose of this dialog, a diagnostic is a non-empty sequence of
+(<code>dir</code>, <code>file</code>, <code>line</code>,
+<code>message</code>) tuples, where <code>dir</code> is an absolute
+path, <code>file</code> is the file name within that directory,
+<code>line</code> is a non-negative integer, and <code>message</code> is
+a string that can be fairly long (hundreds of characters and
+occasionally more than 1000).
+
+<img src="diagnostic-details.ded.png" alt="Dialog wireframe" style="display: block">
+
+<p>
+The dialog is divided vertically into two panels, separated by a "grippy"
+control that can move the panel divider up and down.  Initially, the
+upper panel is 200 pixels high and the lower is 400 pixels high.  The
+initial dialog width is 800 pixels.
+
+<p>
+The top panel shows the currently selected diagnostic element.  It
+contains, top to bottom:
+
+<ul>
+
+<li>A single-line text label that contains the full path
+    (<code>dir</code>+<code>file</code>), a colon, then the
+    <code>line</code> number.
+
+<li>A multi-line text label that contains the <code>message</code>.  The
+    text is wrapped at word boundaries, and has a vertical scrollbar
+    (but no horizontal scrollbar).
+
+</ul>
+
+<p>
+Both of the above controls fill the width of the dialog.
+
+<p>
+The bottom panel shows the entire list of elements in a table that
+fills with width of the dialog.  The columns of the table are:
+
+<ul>
+
+<li>Row number: An unnamed column that numbers each row uniquely.
+    (Implementation note: Qt <code>QTableWidget</code> provides this column
+    implicitly, including numbering, as its "vertical header".)
+
+<li>"Dir": <code>dir</code>, right-aligned such that the
+    <em>rightmost</em> portion of the path is visible when the column is
+    not wide enough to see all of it (which is normally the case).  It
+    is initially 100 pixels wide.
+
+<li>"File:Line": <code>file</code> and <code>line</code>, separated by a colon.  The text is
+    left-aligned.  The column is initially 150 pixels wide.
+
+<li>"Message": <code>message</code>, left-aligned.  This column's size is set to
+    be large enough to show the widest message in the table.  This may
+    mean the column is much wider than the table viewport.
+
+</ul>
+
+<p>
+This table can be scrolled both horizontally and vertically.  Both
+scrollbars are always shown, and both scroll with pixel granularity
+rather than row/column granularity.
+
+<p>
+The table column widths can be changed by the user by clicking and
+dragging the divider between the header row cells.
+
+<p>
+One entire table row is selected at a time; it does not allow multiple
+rows to be selected, and does not select individual cells within a row.
+Whenever the selected row changes, the upper panel display changes to
+show the details of the selected element.
+
+<p>
+The table is the only element that can receive keyboard focus.  The
+table reacts to keypresses as follows:
+
+<ul>
+
+<li>Pressing the Up arrow key or "P" moves the selected row up one,
+    scrolling the table vertically as needed to keep the selected row in
+    view.
+
+<li>Pressing the Down arrow key or "N" moves the selected row down one.
+
+<li>Pressing Right or "F", or Left or "B", scrolls the table
+    horizontally in the indicated direction by 100 pixels.
+
+<li>Pressing "A" resets the horizontal scroll to 0.
+
+<li>Pressing "E" scrolls to the right by the maximum amount.
+
+<li>Pressing Enter causes the editor window from which the dialog was
+    launched to jump to the file and line of the selected element.  If
+    that window has been closed, pressing Enter does nothing.
+    (Implementation note: pressing Enter emits a Qt signal with the full
+    file path and line number as arguments.  The relevant editor window
+    is responsible for connecting this signal and reacting accordingly.)
+
+<li>Pressing the Escape key closes the dialog.
+
+</ul>
+
+<p>
+Summary of hotkeys:
+
+<ul>
+
+<li>A: Scroll all the way left.
+<li>B: Scroll left 100 pixels.
+<li>E: Scroll all the way right.
+<li>F: Scroll right 100 pixels.
+<li>N: Move down one row.
+<li>P: Move up one row.
+
+<li>Up: Move up one row.
+<li>Down: Move down one row.
+<li>Left: Scroll left 100 pixels.
+<li>Right: Scroll right 100 pixels.
+<li>Enter: Jump to file/line in editor.
+<li>Esc: Close.
+
+</ul>
+
+
+</body>
+</html>
