@@ -6,9 +6,13 @@
 #ifndef EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 #define EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 
+#include "left-elide-delegate-fwd.h"   // LeftElideDelegate
+
 #include <QDialog>
 #include <QString>
 #include <QVector>
+
+#include <memory>                      // std::unique_ptr
 
 class QLabel;
 class QPlainTextEdit;
@@ -47,6 +51,9 @@ private:     // data
   // Sequence of elements being shown.  The first is the "main" one,
   // identifying some problem, while others are supporing evidence.
   QVector<Element> m_diagnostics;
+
+  // Delegate to customize how the `dir` column is rendered.
+  std::unique_ptr<LeftElideDelegate> m_dirDelegate;
 
   // Controls.
   QLabel *m_locationLabel;             // Selected element file/line.

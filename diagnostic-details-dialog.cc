@@ -3,6 +3,8 @@
 
 #include "diagnostic-details-dialog.h" // this module
 
+#include "left-elide-delegate.h"       // LeftElideDelegate
+
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 
@@ -190,6 +192,7 @@ DiagnosticDetailsDialog::~DiagnosticDetailsDialog()
 DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   : QDialog(parent),
     m_diagnostics(),
+    m_dirDelegate(),
     m_locationLabel(nullptr),
     m_messageText(nullptr),
     m_splitter(nullptr),
@@ -247,7 +250,12 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // This is the only widget that can receive focus.
+    //
+    // TODO: This isn't working.
     m_table->setFocusPolicy(Qt::StrongFocus);
+
+    m_dirDelegate.reset(new LeftElideDelegate(m_table));
+    m_table->setItemDelegateForColumn(0, m_dirDelegate.get());
 
     m_splitter->addWidget(m_table);
   }

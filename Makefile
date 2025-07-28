@@ -518,9 +518,11 @@ $(eval $(call RUN_TEST_PROG,lsp-manager-test))
 
 
 # ------------------- diagnostic-details-dialog-test -------------------
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS :=
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog.moc.o
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog.o
+EDITOR_OBJS += diagnostic-details-dialog.moc.o
+EDITOR_OBJS += diagnostic-details-dialog.o
+EDITOR_OBJS += left-elide-delegate.o
+
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS := $(EDITOR_OBJS)
 DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o
 
 diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS)
@@ -614,8 +616,6 @@ EDITOR_OBJS += apply-command-dialog.o
 EDITOR_OBJS += builtin-font.o
 EDITOR_OBJS += connections-dialog.o
 EDITOR_OBJS += connections-dialog.moc.o
-EDITOR_OBJS += diagnostic-details-dialog.moc.o
-EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += diff-hilite.o
 EDITOR_OBJS += editor-command.ast.gen.o
 EDITOR_OBJS += editor-global.moc.o
