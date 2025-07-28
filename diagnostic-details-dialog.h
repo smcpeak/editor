@@ -78,6 +78,7 @@ private Q_SLOTS:
 
 protected:   // methods
   virtual void keyPressEvent(QKeyEvent *event) override;
+  virtual void showEvent(QShowEvent *event) override;
 
 public:      // methods
   ~DiagnosticDetailsDialog();

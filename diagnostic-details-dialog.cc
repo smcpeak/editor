@@ -185,6 +185,17 @@ void DiagnosticDetailsDialog::keyPressEvent(QKeyEvent *event)
 }
 
 
+void DiagnosticDetailsDialog::showEvent(QShowEvent *event)
+{
+  QDialog::showEvent(event);
+
+  // Start with focus on the table.  The message label can receive focus
+  // in order to scroll it with Up and Down, but we should start with
+  // the table.
+  m_table->setFocus();
+}
+
+
 DiagnosticDetailsDialog::~DiagnosticDetailsDialog()
 {
   QObject::disconnect(m_table->selectionModel(), nullptr, this, nullptr);
@@ -258,11 +269,6 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-    // This is the only widget that can receive focus.
-    //
-    // TODO: This isn't working.
-    m_table->setFocusPolicy(Qt::StrongFocus);
 
     m_splitter->addWidget(m_table);
   }
