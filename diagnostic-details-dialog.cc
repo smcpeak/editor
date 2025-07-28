@@ -257,6 +257,10 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
 
     m_table->configureAsListView();
 
+    // Globally disable elision, which allows right-alignment to work
+    // the way I want.
+    m_table->setTextElideMode(Qt::ElideNone);
+
     std::vector<SMTableWidget::ColumnInfo> columnInfo = {
       // name       init min max prio
       { "Dir",       100, 50, {}, 0 },
@@ -264,7 +268,6 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
       { "Message",   400, 50, {}, 1 },
     };
     m_table->setColumnInfo(columnInfo);
-    m_table->disableTextElisionForAllColumns();
 
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
