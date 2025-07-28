@@ -3,8 +3,6 @@
 
 #include "diagnostic-details-dialog.h" // this module
 
-#include "no-elide-delegate.h"         // LeftElideDelegate
-
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
@@ -196,7 +194,6 @@ DiagnosticDetailsDialog::~DiagnosticDetailsDialog()
 DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   : QDialog(parent),
     m_diagnostics(),
-    m_dirDelegate(),
     m_locationLabel(nullptr),
     m_messageText(nullptr),
     m_splitter(nullptr),
@@ -256,6 +253,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
       { "Message",   400, 50, {}, 1 },
     };
     m_table->setColumnInfo(columnInfo);
+    m_table->disableTextElisionForAllColumns();
 
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -265,14 +263,6 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     //
     // TODO: This isn't working.
     m_table->setFocusPolicy(Qt::StrongFocus);
-
-    m_dirDelegate.reset(new NoElideDelegate(m_table));
-    m_table->setItemDelegateForColumn(0, m_dirDelegate.get());
-
-    // Disabling word wrap is needed to ensure that the `dir` column
-    // properly respects its right alignment and (delegate-provided)
-    // lack of elision.
-    m_table->setWordWrap(false);
 
     m_splitter->addWidget(m_table);
   }
