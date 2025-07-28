@@ -64,14 +64,6 @@ private:     // methods
   // Populate the table from `m_diagnostics`.
   void repopulateTable();
 
-  // Scroll the table.
-  void scrollTableHorizontally(int delta);
-  void scrollTableToLeftSide();
-  void scrollTableToRightSide();
-
-  // Change which row is selected.
-  void moveTableSelection(int delta);
-
 private Q_SLOTS:
   // React to the table's selected row changing.
   void on_tableSelectionChanged() noexcept;

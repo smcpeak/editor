@@ -81,38 +81,6 @@ void DiagnosticDetailsDialog::repopulateTable()
 }
 
 
-void DiagnosticDetailsDialog::scrollTableHorizontally(int delta)
-{
-  QScrollBar *sb = m_table->horizontalScrollBar();
-  sb->setValue(sb->value() + delta);
-}
-
-
-void DiagnosticDetailsDialog::scrollTableToLeftSide()
-{
-  QScrollBar *sb = m_table->horizontalScrollBar();
-  sb->setValue(0);
-}
-
-
-void DiagnosticDetailsDialog::scrollTableToRightSide()
-{
-  QScrollBar *sb = m_table->horizontalScrollBar();
-  sb->setValue(sb->maximum());
-}
-
-
-void DiagnosticDetailsDialog::moveTableSelection(int delta)
-{
-  int row = m_table->currentRow();
-  int newRow = qBound(0, row + delta, m_table->rowCount() - 1);
-  if (newRow != row) {
-    m_table->selectRow(newRow);
-    m_table->scrollToItem(m_table->item(newRow, 0));
-  }
-}
-
-
 void DiagnosticDetailsDialog::on_tableSelectionChanged() noexcept
 {
   GENERIC_CATCH_BEGIN
@@ -128,34 +96,6 @@ void DiagnosticDetailsDialog::keyPressEvent(QKeyEvent *event)
   GENERIC_CATCH_BEGIN
 
   switch (event->key()) {
-    case Qt::Key_P:
-    case Qt::Key_Up:
-      moveTableSelection(-1);
-      break;
-
-    case Qt::Key_N:
-    case Qt::Key_Down:
-      moveTableSelection(+1);
-      break;
-
-    case Qt::Key_B:
-    case Qt::Key_Left:
-      scrollTableHorizontally(-100);
-      break;
-
-    case Qt::Key_F:
-    case Qt::Key_Right:
-      scrollTableHorizontally(+100);
-      break;
-
-    case Qt::Key_A:
-      scrollTableToLeftSide();
-      break;
-
-    case Qt::Key_E:
-      scrollTableToRightSide();
-      break;
-
     case Qt::Key_Enter:
     case Qt::Key_Return: {
       int row = m_table->currentRow();
