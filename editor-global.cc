@@ -924,24 +924,46 @@ void EditorGlobal::showConnectionsDialog()
 }
 
 
-NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
+NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
+  std::string const &title,
+  std::string const &contents)
 {
   DocumentName docName;
   docName.setNonFileResourceName(HostName::asLocal(),
-    "Editor Keybindings", SMFileUtil().currentDirectory());
+    title, SMFileUtil().currentDirectory());
 
   NamedTextDocument *doc = m_documentList.findDocumentByName(docName);
   if (!doc) {
     doc = new NamedTextDocument();
     doc->setDocumentName(docName);
     doc->m_title = uniqueTitleFor(docName);
-    doc->appendText(doc_keybindings, sizeof(doc_keybindings)-1);
+    doc->appendString(contents);
     doc->noUnsavedChanges();
     doc->setReadOnly(true);
     trackNewDocumentFile(doc);
   }
+  else {
+    // TODO: I think I should reset the document contents here.
+  }
 
   return doc;
+}
+
+
+NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
+{
+  return getOrCreateGeneratedDocument(
+    "Editor Keybindings",
+    std::string(doc_keybindings, sizeof(doc_keybindings)-1));
+}
+
+
+NamedTextDocument *
+EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
+{
+  return getOrCreateGeneratedDocument(
+    "LSP Server Capabilities",
+    lspManager().getServerCapabilities().asLinesString());
 }
 
 

@@ -12,6 +12,7 @@
 
 #include <QObject>
 
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/refct-serf.h"         // SerfRefCount, RCSerf
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-file-util.h"       // SMFileUtil
@@ -106,9 +107,9 @@ public:      // data
   int m_latestVersion;
 
 public:      // methods
-   ~LSPDocumentInfo();
+  ~LSPDocumentInfo();
 
-   LSPDocumentInfo(std::string const &fname, int latestVersion);
+  LSPDocumentInfo(std::string const &fname, int latestVersion);
 };
 
 
@@ -156,6 +157,13 @@ private:     // data
   // If true, we have sent the "exit" notification but the child has not
   // terminated.
   bool m_waitingForTermination;
+
+  // Server's announced capabilities, as an LSP InitializeResult object.
+  // This is null if we haven't received the capabilities.
+  //
+  // TODO: This is not a good way to store this.  I should parse it like
+  // other LSP data.
+  gdv::GDValue m_serverCapabilities;
 
   // Map from document name to its protocol state.  This has the set of
   // documents that are considered "open" w.r.t. the LSP protocol.
@@ -234,6 +242,9 @@ public:      // methods
   // True if the server is running normally.  This is a requirement to
   // send requests and notifications.
   bool isRunningNormally() const;
+
+  gdv::GDValue getServerCapabilities() const
+    { return m_serverCapabilities; }
 
   // True if `fname` is open w.r.t. the LSP protocol.  Requires that
   // `fname` be an absolute path.

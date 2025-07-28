@@ -171,6 +171,8 @@ public:       // funcs
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
+  LSPManager &lspManager() { return m_lspManager; }
+
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
   NamedTextDocument *createNewFile(string const &dir);
@@ -256,9 +258,16 @@ public:       // funcs
   // Show the connections dialog.
   void showConnectionsDialog();
 
-  // Get or create a read-only document containing the content in
-  // doc/keybindings.txt.
+  // Get or create a read-only document called `title` with `contents`.
+  NamedTextDocument *getOrCreateGeneratedDocument(
+    std::string const &title,
+    std::string const &contents);
+
+  // Generate a document with `doc/keybindings.txt`.
   NamedTextDocument *getOrCreateKeybindingsDocument();
+
+  // Generate a document with the LSP server's capabilities.
+  NamedTextDocument *getOrCreateLSPServerCapabilitiesDocument();
 
   // Hide any open modeless dialogs since we are about to quit.
   void hideModelessDialogs();

@@ -436,6 +436,8 @@ void EditorWindow::buildMenu()
                   lspStopServer);
     MENU_ITEM    ("Check LSP server &status",
                   lspCheckStatus);
+    MENU_ITEM    ("Show LSP server capabilities",
+                  lspShowServerCapabilities);
 
     menu->addSeparator();
 
@@ -1977,6 +1979,17 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   inform(editorGlobal()->getLSPStatus());
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspShowServerCapabilities() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  setDocumentFile(
+    m_editorGlobal->getOrCreateLSPServerCapabilitiesDocument());
 
   GENERIC_CATCH_END
 }

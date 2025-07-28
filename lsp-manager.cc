@@ -87,6 +87,7 @@ void LSPManager::resetProtocolState()
   m_initializeRequestID = 0;
   m_shutdownRequestID = 0;
   m_waitingForTermination = false;
+  m_serverCapabilities.reset();
   m_documentInfo.clear();
   m_pendingDiagnostics.clear();
   m_pendingErrorMessages.clear();
@@ -165,8 +166,17 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
 
   if (id == m_initializeRequestID) {
     TRACE1("received initialize reply");
-    m_lsp->takeReplyForID(id);
+    GDValue reply = m_lsp->takeReplyForID(id);
     m_initializeRequestID = 0;
+
+    if (reply.isMap() && reply.mapContains("result")) {
+      m_serverCapabilities = reply.mapGetValueAt("result");
+    }
+    else {
+      addErrorMessage("Reply to \"initialize\" was missing \"result\".");
+
+      // This isn't necessarily fatal, so keep going.
+    }
 
     // Send "initialized" to complete the startup procedure.  There is
     // no reply to this so we simply assume we're ready now.
