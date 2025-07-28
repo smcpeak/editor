@@ -16,15 +16,6 @@
 // than the right.  For example, "a long text string" might be drawn as
 // "xt string" if that is all that fits.
 class LeftElideDelegate : public QStyledItemDelegate {
-private:     // methods
-  // Compute a possibly-shortened form of `text` that is able to fit
-  // in `width` pixels when drawn per `fm`.  Shortening is done by
-  // removing text in the left.
-  QString leftElidedText(
-    QString const &text,
-    QFontMetrics const &fm,
-    int width) const;
-
 public:      // methods
   // Use the superclass ctors.
   using QStyledItemDelegate::QStyledItemDelegate;

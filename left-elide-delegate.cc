@@ -66,13 +66,13 @@ void LeftElideDelegate::paint(
   // Add some padding on the sides.
   textRect.adjust(+5, 0, -5, 0);
 
-  // Compute a shortened form of the text to draw.
-  QFontMetrics fm(opt.font);
-  QString elided = leftElidedText(fullText, fm, textRect.width());
+  // We can get the desired effect of left truncation by setting the
+  // alignment to right and turning off wrapping.
+  QTextOption textOption(Qt::AlignRight | Qt::AlignVCenter);
+  textOption.setWrapMode(QTextOption::NoWrap);
 
   // Draw that text in the rectangle.
-  QTextOption textOption(Qt::AlignRight | Qt::AlignVCenter);
-  painter->drawText(textRect, elided, textOption);
+  painter->drawText(textRect, fullText, textOption);
 
   TRACE1("paint: " << GDValue(GDVOrderedMap{
     {
@@ -81,28 +81,7 @@ void LeftElideDelegate::paint(
     },
     GDV_SKV_EXPR(textRect),
     GDV_SKV_EXPR(fullText),
-    GDV_SKV_EXPR(elided),
   }).asIndentedString());
-}
-
-
-// TODO: This is not how I want this to work.
-QString LeftElideDelegate::leftElidedText(
-  QString const &text,
-  QFontMetrics const &fm,
-  int width) const
-{
-  if (fm.horizontalAdvance(text) <= width)
-    return text;
-
-  const QString ellipsis = "...";
-  int ellipsisWidth = fm.horizontalAdvance(ellipsis);
-  int start = text.length() - 1;
-
-  while (start > 0 && fm.horizontalAdvance(text.mid(start)) + ellipsisWidth < width)
-    --start;
-
-  return ellipsis + text.mid(start + 1);
 }
 
 
