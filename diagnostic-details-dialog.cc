@@ -8,6 +8,7 @@
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/xassert.h"            // xassert
 
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -251,6 +252,13 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
 
     m_table->configureAsListView();
 
+    // Only select one row at a time.
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    // This turns off the annoying behavior that changes the scroll
+    // position when I change the row or click.
+    m_table->setAutoScroll(false);
+
     // Globally disable elision, which allows right-alignment to work
     // the way I want.
     m_table->setTextElideMode(Qt::ElideNone);
@@ -266,13 +274,8 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     // Set the Message column title to be left aligned.  We make its
     // width very large, so a centered title is often outside the
     // viewport.
-    {
-      auto item = new QTableWidgetItem("Message");
-      item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-
-      // Takes ownership of `item` deallocates what was there.
-      m_table->setHorizontalHeaderItem(2, item);
-    }
+    m_table->horizontalHeaderItem(2)->
+      setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
     m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     m_table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
