@@ -3,12 +3,10 @@
 
 #include "modal-dialog.h"              // this module
 
-#include "smqtutil/qtguiutil.h"        // centerWindowOnWindow, messageBox
+#include "smqtutil/qtguiutil.h"        // centerWindowOnWindow, messageBox, removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_OBJECT_NAME
 
 #include "smbase/xassert.h"            // xassert
-
-#include <qtcoreversion.h>             // QTCORE_VERSION
 
 #include <QBoxLayout>
 #include <QPushButton>
@@ -23,11 +21,7 @@ ModalDialog::ModalDialog(QWidget *parent, Qt::WindowFlags f)
     m_buttonHBox(nullptr),
     m_helpText()
 {
-#if QTCORE_VERSION >= 0x050900
-  // Remove the "?" button in the title bar.  I use help buttons
-  // instead.
-  this->setWindowFlag(Qt::WindowContextHelpButtonHint, false /*on*/);
-#endif
+  removeWindowContextHelpButton(this);
 }
 
 

@@ -3,6 +3,7 @@
 
 #include "diagnostic-details-dialog.h" // this module
 
+#include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
@@ -196,6 +197,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   setWindowTitle("Diagnostic Details");
   resize(800, 600);
   setModal(false);
+  removeWindowContextHelpButton(this);
 
   QVBoxLayout *outerVBox = new QVBoxLayout(this);
   m_splitter = new QSplitter(Qt::Vertical, this);
