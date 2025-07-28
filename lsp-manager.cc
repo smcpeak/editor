@@ -127,7 +127,7 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
 
   while (m_lsp->hasPendingNotifications()) {
     GDValue msg = m_lsp->takeNextNotification();
-    TRACE1("received notification: " << msg.asString());
+    TRACE1("received notification: " << msg.asIndentedString());
 
     GDValueParser msgParser(msg);
 

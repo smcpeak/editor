@@ -236,7 +236,8 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
     gdvId.clearParserPointers();
     msg.clearParserPointers();
 
-    TRACE1("received reply with ID " << id << ": " << msgValue);
+    TRACE1("received reply with ID " << id << ": " <<
+           msgValue.asIndentedString());
 
     setRemoveExisting(m_outstandingRequests, id);
     mapInsertUnique(m_pendingReplies, id, std::move(msgValue));
@@ -245,7 +246,7 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
   }
 
   else {
-    TRACE1("received notification: " << msgValue);
+    TRACE1("received notification: " << msgValue.asIndentedString());
 
     msg.clearParserPointers();
 
@@ -425,9 +426,10 @@ void LSPClient::sendNotification(
 {
   xassert(!hasProtocolError());
 
-  std::string body = makeNotificationBody(method, params);
+  TRACE1("Sending " << doubleQuote(method) <<
+         " notification: " << params.asIndentedString());
 
-  TRACE1("Sending notification: " << body);
+  std::string body = makeNotificationBody(method, params);
 
   send(std::move(body));
 }
@@ -462,9 +464,11 @@ int LSPClient::sendRequest(
   int const id = getNextRequestID();
   xassert(id > 0);
 
-  std::string body = makeRequest(id, method, params);
+  TRACE1("Sending " << doubleQuote(method) <<
+         " request with ID " << id <<
+         ": " << params.asIndentedString());
 
-  TRACE1("Sending request: " << body);
+  std::string body = makeRequest(id, method, params);
 
   setInsertUnique(m_outstandingRequests, id);
   send(std::move(body));
