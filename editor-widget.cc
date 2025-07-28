@@ -5,6 +5,7 @@
 
 // editor
 #include "debug-values.h"                        // DEBUG_VALUES
+#include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
@@ -24,7 +25,7 @@
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore
-#include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
 
 // smbase
 #include "smbase/array.h"                        // Array
@@ -2509,11 +2510,31 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 
 std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 {
+  static DiagnosticDetailsDialog *dlg = new DiagnosticDetailsDialog();
+  static SMFileUtil sfu;
+
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
-    if (RCSerf<Diagnostic const> diag = tdd->getDiagnosticAt(
-          m_editor->toMCoord(m_editor->cursor()))) {
-      editorWindow()->inform(diag->m_message);
+    TextMCoord cursorMC = m_editor->toMCoord(m_editor->cursor());
+    if (RCSerf<Diagnostic const> diag = tdd->getDiagnosticAt(cursorMC)) {
+
+      // Copy `diag` into a vector of elements for the dialog.
+      typedef DiagnosticDetailsDialog::Element Element;
+      QVector<Element> elts;
+
+      // For the moment, we only have one element.
+      DocumentName docName = getDocument()->documentName();
+      elts.push_back(Element{
+        toQString(docName.directory()),
+        toQString(sfu.splitPathBase(docName.filename())),
+        cursorMC.m_line,
+        toQString(diag->m_message)});
+
+      dlg->setDiagnostics(std::move(elts));
+
+      // TODO: Connect the signal to jump to location.
+
+      dlg->show();
       return {};
     }
     else {

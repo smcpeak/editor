@@ -2195,7 +2195,36 @@ makeFakeDiagnostics(NamedTextDocument *doc)
   TextMCoordRange range{{10,10}, {10,30}};
 
   // Here, I don't care about the modified `range` or the return value.
-  diags->insertWithAdjust(range, {"something"});
+  diags->insertWithAdjust(range, {
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+    "A very long message. "
+  });
 
   diags->selfCheck();
   return diags;
