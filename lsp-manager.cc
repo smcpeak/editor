@@ -347,7 +347,22 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
     // so I leave this null.
     { "rootUri", GDValue() },
 
-    { "capabilities", GDVMap{} },
+    {
+      "capabilities", GDVMap{
+        {
+          "textDocument", GDVMap{
+            {
+              "publishDiagnostics", GDVMap{
+                // With this, diagnostics will have "relatedInformation"
+                // rather than piling all of the info into the
+                // "message".
+                { "relatedInformation", true },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   success = true;
