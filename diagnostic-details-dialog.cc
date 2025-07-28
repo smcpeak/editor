@@ -201,12 +201,20 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
   removeWindowContextHelpButton(this);
 
   QVBoxLayout *outerVBox = new QVBoxLayout(this);
+
+  // Eliminate margins on outer box so the table goes right to the
+  // dialog edge.
+  outerVBox->setContentsMargins(0, 0, 0, 0);
+
   m_splitter = new QSplitter(Qt::Vertical, this);
 
   // Top panel: location and message.
   {
     QWidget *topPanel = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout(topPanel);
+
+    // Eliminate margins between the text boxes and the dialog edge.
+    vbox->setContentsMargins(0, 0, 0, 0);
 
     m_locationLabel = new QLabel(this);
     SET_QOBJECT_NAME(m_locationLabel);
