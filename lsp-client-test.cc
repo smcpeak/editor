@@ -613,53 +613,9 @@ void runTests(
 }
 
 
-void roundTripFileToURL(char const *file, char const *expectURI)
-{
-  std::string actualURI = makeFileURI(file);
-  EXPECT_EQ(actualURI, expectURI);
-
-  std::string decodedFile = getFileURIPath(actualURI);
-  EXPECT_EQ(decodedFile, file);
-}
-
-
-// TODO: Move this into a new `uri-util-test` module.
-void test_makeFileURI()
-{
-  roundTripFileToURL("/a/b/c",
-              "file:///a/b/c");
-
-  roundTripFileToURL("c:/users/user/foo.h",
-             "file:///c:/users/user/foo.h");
-}
-
-
-// TODO: Move this into a new `uri-util-test` module.
-void test_getFileURIPath()
-{
-  // The valid cases are tested as part of round-trip above, so here I
-  // just focus on error cases.
-
-  EXPECT_EXN_SUBSTR(getFileURIPath("http://example.com"),
-    XFormat, "URI does not begin with \"file://\".");
-
-  EXPECT_EXN_SUBSTR(getFileURIPath("file:///a/b/c%41"),
-    XFormat, "URI uses percent encoding but I can't handle that.");
-
-  EXPECT_EXN_SUBSTR(getFileURIPath("file:///a/b/c?q=4"),
-    XFormat, "URI has a query part but I can't handle that.");
-
-  EXPECT_EXN_SUBSTR(getFileURIPath("user@file:///a/b/c"),
-    XFormat, "URI has a user name part but I can't handle that.");
-}
-
-
 void entry(int argc, char **argv)
 {
   TRACE_ARGS();
-
-  test_makeFileURI();
-  test_getFileURIPath();
 
   LSPTestRequestParams params =
     LSPTestRequestParams::getFromCmdLine(argc, argv);

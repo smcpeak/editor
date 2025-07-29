@@ -47,6 +47,7 @@ static void entry(int argc, char **argv)
     }
 
   RUN_TEST(lsp_data);
+  RUN_TEST(uri_util);
 
   #undef RUN_TEST
 

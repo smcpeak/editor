@@ -538,6 +538,7 @@ UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
 UNIT_TESTS_OBJS += lsp-data-test.o
 UNIT_TESTS_OBJS += unit-tests.o
+UNIT_TESTS_OBJS += uri-util-test.o
 
 unit-tests.exe: $(UNIT_TESTS_OBJS)
 	@# I link with `GUI_LDFLAGS` because lots of modules that need
