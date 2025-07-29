@@ -38,7 +38,7 @@
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/strutil.h"                      // dirname
-#include "smbase/trace.h"                        // TRACE
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/xassert.h"                      // xassert
 
 // Qt
@@ -60,6 +60,17 @@
 
 using namespace gdv;
 using namespace smbase;
+
+
+// Trace levels here:
+//
+//   1. Operations on files.
+//
+//   2. Keystrokes.
+//
+//   3. Repaint.
+//
+INIT_TRACE("editor-widget");
 
 
 // The basic rule for using this is it should be present in any function
@@ -452,15 +463,14 @@ void EditorWidget::requestFileStatus()
     getDocument()->hostName(), std::move(req));
   m_fileStatusRequestEditor = m_editor;
 
-  TRACE("EditorWidget",
-    "requestFileStatus: request id=" << m_fileStatusRequestID);
+  TRACE1("requestFileStatus: request id=" << m_fileStatusRequestID);
 }
 
 
 void EditorWidget::cancelFileStatusRequestIfAny()
 {
   if (m_fileStatusRequestID) {
-    TRACE("EditorWidget", "cancelRequest: id=" << m_fileStatusRequestID);
+    TRACE1("cancelFileStatusRequestIfAny: id=" << m_fileStatusRequestID);
     vfsConnections()->cancelRequest(m_fileStatusRequestID);
     m_fileStatusRequestID = 0;
     m_fileStatusRequestEditor = nullptr;
@@ -474,7 +484,7 @@ void EditorWidget::on_replyAvailable(
   GENERIC_CATCH_BEGIN
 
   if (requestID == m_fileStatusRequestID) {
-    TRACE("EditorWidget", "on_replyAvailable: id=" << requestID);
+    TRACE1("on_replyAvailable: id=" << requestID);
 
     xassert(m_editor == m_fileStatusRequestEditor);
 
@@ -490,7 +500,7 @@ void EditorWidget::on_replyAvailable(
       if (getDocument()->m_lastFileTimestamp !=
             reply->m_fileModificationTime) {
         // Redraw the indicator of on-disk changes.
-        TRACE("EditorWidget",
+        TRACE1(
           "Document modTime " << getDocument()->m_lastFileTimestamp <<
           " differs from reply modTime " << reply->m_fileModificationTime <<
           ", marking as modified on disk.");
@@ -509,8 +519,8 @@ void EditorWidget::on_connectionFailed(
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("EditorWidget", "on_connectionFailed: host=" << hostName <<
-                        " reason=" << reason);
+  TRACE1("on_connectionFailed: host=" << hostName <<
+         " reason=" << reason);
 
   // TODO: I should only cancel a request if it is being made to the
   // host that disconnected.
@@ -696,7 +706,7 @@ void EditorWidget::emitSearchStatusIndicator()
     // adequate for an initial implementation.
     stringBuilder sb;
     sb << "Err @ " << m_textSearch->searchStringErrorOffset();
-    TRACE("sar", "searchStatusIndicator: " << sb);
+    TRACE2("emitSearchStatusIndicator: " << sb);
     Q_EMIT signal_searchStatusIndicator(toQString(sb));
     return;
   }
@@ -769,7 +779,7 @@ void EditorWidget::emitSearchStatusIndicator()
     sb << '+';
   }
 
-  TRACE("sar", "searchStatusIndicator: " << sb);
+  TRACE2("emitSearchStatusIndicator: " << sb);
   Q_EMIT signal_searchStatusIndicator(toQString(sb));
 }
 
@@ -872,7 +882,7 @@ void EditorWidget::updateFrame(QPaintEvent *ev)
       rect = stringf("(%d,%d,%d,%d)", r.left(), r.top(),
                                       r.right(), r.bottom());
     }
-    TRACE("paint", "frame: rect=" << rect);
+    TRACE3("updateFrame: rect=" << rect);
   }
 
   // Painter that goes to the window directly.  A key property is that
@@ -1664,13 +1674,13 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("input", "keyPress: " << keysString(*k));
+  TRACE2("keyPressEvent: " << keysString(*k));
 
   if (!this->hasFocus()) {
     // See doc/qt-focus-issues.txt.  This is a weird state, but I go
     // ahead anyway since my design is intended to be robust against
     // Qt screwing up its focus data and notifications.
-    TRACE("focus", "got a keystroke but I do not have focus!");
+    TRACE2("got a keystroke but I do not have focus!");
 
     // Nevertheless, I do not want to leave things this way because the
     // menu looks weird and there might be other issues.  This seems to
@@ -2017,7 +2027,7 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("input", "keyRelease: " << keysString(*k));
+  TRACE3("keyRelease: " << keysString(*k));
 
   // Not sure if this is the best place for this, but it seems
   // worth a try.
@@ -2347,8 +2357,8 @@ void EditorWidget::setTextSearchParameters()
 void EditorWidget::setSearchStringParams(string const &searchString,
   TextSearch::SearchStringFlags flags, bool scrollToHit)
 {
-  TRACE("sar", "EW::setSearchStringParams: str=\"" << searchString <<
-               "\" flags=" << flags << " scroll=" << scrollToHit);
+  TRACE2("setSearchStringParams: str=\"" << searchString <<
+         "\" flags=" << flags << " scroll=" << scrollToHit);
 
   m_hitText = searchString;
   m_hitTextFlags = flags;
@@ -2371,8 +2381,8 @@ bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
   TextMCoordRange modelRange = m_editor->getSelectModelRange();
 
   if (m_textSearch->nextMatch(reverse, modelRange)) {
-    TRACE("sar", (reverse? "prev" : "next") <<
-                 " found model range: " << modelRange);
+    TRACE2("scrollToNextSearchHit: " << (reverse? "prev" : "next") <<
+           " found model range: " << modelRange);
 
     TextLCoordRange layoutRange(m_editor->toLCoordRange(modelRange));
     if (select) {
@@ -2385,7 +2395,8 @@ bool EditorWidget::scrollToNextSearchHit(bool reverse, bool select)
     return true;
   }
   else {
-    TRACE("sar", (reverse? "prev" : "next") << " did not find anything");
+    TRACE2("scrollToNextSearchHit: " << (reverse? "prev" : "next") <<
+           " did not find anything");
     return false;
   }
 }
@@ -2409,7 +2420,7 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
   string replacement =
     m_textSearch->getReplacementText(existing, replaceSpec);
 
-  TRACE("sar", "replace: " << DEBUG_VALUES3(existing, replaceSpec, replacement));
+  TRACE2("replaceSearchHit: " << DEBUG_VALUES3(existing, replaceSpec, replacement));
 
   INITIATING_DOCUMENT_CHANGE();
   UndoHistoryGrouper ugh(*m_editor);
@@ -2491,7 +2502,7 @@ void EditorWidget::focusInEvent(QFocusEvent *e) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("focus", "editor(" << (void*)this << "): focus in");
+  TRACE2("focusInEvent: editor(" << (void*)this << "): focus in");
   QWidget::focusInEvent(e);
 
   // Refreshing when we gain focus interacts badly with the window that
@@ -2507,7 +2518,7 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("focus", "editor(" << (void*)this << "): focus out");
+  TRACE2("focusOutEvent: editor(" << (void*)this << "): focus out");
   QWidget::focusOutEvent(e);
 
   GENERIC_CATCH_END
@@ -2654,10 +2665,10 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {
-    TRACE("observe", "IGNORING: observeInsertLine line=" << line);
+    TRACE2("IGNORING: observeInsertLine line=" << line);
     return;
   }
-  TRACE("observe", "observeInsertLine line=" << line);
+  TRACE2("observeInsertLine line=" << line);
   INITIATING_DOCUMENT_CHANGE();
 
   // Normally, we try to keep the cursor stationary in the window (as
@@ -2698,10 +2709,10 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEX
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {
-    TRACE("observe", "IGNORING: observeDeleteLine line=" << line);
+    TRACE2("IGNORING: observeDeleteLine line=" << line);
     return;
   }
-  TRACE("observe", "observeDeleteLine line=" << line);
+  TRACE2("observeDeleteLine line=" << line);
   INITIATING_DOCUMENT_CHANGE();
 
   if (line < m_editor->cursor().m_line) {
@@ -2789,7 +2800,7 @@ bool EditorWidget::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
     if (keyEvent->key() == Qt::Key_Tab ||
         keyEvent->key() == Qt::Key_Backtab) {
-      TRACE("EditorWidget", "Rescuing Tab press");
+      TRACE2("eventFilter: Rescuing Tab press");
       rescuedKeyPressEvent(keyEvent);
       return true;       // no further processing
     }
@@ -2856,7 +2867,7 @@ bool EditorWidget::editSafetyCheck()
 
 void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
 {
-  TRACE("editor-command", "command: " << toGDValue(*cmd).asString());
+  TRACE2("command: " << toGDValue(*cmd).asString());
 
   innerCommand(cmd.get());
 
