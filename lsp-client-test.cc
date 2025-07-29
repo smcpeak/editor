@@ -6,6 +6,7 @@
 #include "lsp-client.h"                // module under test
 
 #include "command-runner.h"            // CommandRunner
+#include "uri-util.h"                  // makeFileURI
 
 #include "smqtutil/qtutil.h"           // waitForQtEvent
 
@@ -128,7 +129,7 @@ void performLSPInteractionSemiSynchronously(
 
   // Prepare to ask questions about the source file.
   std::cout << "Sending notification textDocument/didOpen ...\n";
-  std::string fnameURI = LSPClient::makeFileURI(params.m_fname);
+  std::string fnameURI = makeFileURI(params.m_fname);
   lsp.sendNotification("textDocument/didOpen", GDVMap{
     {
       "textDocument",
@@ -238,7 +239,7 @@ void LSPClientTester::sendNextRequest(int prevID)
 {
   DIAG("LSPClient::sendNextRequest(prevID=" << prevID << ")");
 
-  std::string fnameURI = LSPClient::makeFileURI(m_params.m_fname);
+  std::string fnameURI = makeFileURI(m_params.m_fname);
 
   GDValue params(GDVMap{
     {
@@ -614,14 +615,15 @@ void runTests(
 
 void roundTripFileToURL(char const *file, char const *expectURI)
 {
-  std::string actualURI = LSPClient::makeFileURI(file);
+  std::string actualURI = makeFileURI(file);
   EXPECT_EQ(actualURI, expectURI);
 
-  std::string decodedFile = LSPClient::getFileURIPath(actualURI);
+  std::string decodedFile = getFileURIPath(actualURI);
   EXPECT_EQ(decodedFile, file);
 }
 
 
+// TODO: Move this into a new `uri-util-test` module.
 void test_makeFileURI()
 {
   roundTripFileToURL("/a/b/c",
@@ -632,21 +634,22 @@ void test_makeFileURI()
 }
 
 
+// TODO: Move this into a new `uri-util-test` module.
 void test_getFileURIPath()
 {
   // The valid cases are tested as part of round-trip above, so here I
   // just focus on error cases.
 
-  EXPECT_EXN_SUBSTR(LSPClient::getFileURIPath("http://example.com"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("http://example.com"),
     XFormat, "URI does not begin with \"file://\".");
 
-  EXPECT_EXN_SUBSTR(LSPClient::getFileURIPath("file:///a/b/c%41"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("file:///a/b/c%41"),
     XFormat, "URI uses percent encoding but I can't handle that.");
 
-  EXPECT_EXN_SUBSTR(LSPClient::getFileURIPath("file:///a/b/c?q=4"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("file:///a/b/c?q=4"),
     XFormat, "URI has a query part but I can't handle that.");
 
-  EXPECT_EXN_SUBSTR(LSPClient::getFileURIPath("user@file:///a/b/c"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("user@file:///a/b/c"),
     XFormat, "URI has a user name part but I can't handle that.");
 }
 

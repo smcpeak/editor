@@ -17,7 +17,6 @@
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/parsestring.h"        // ParseString
 #include "smbase/set-util.h"           // smbase::setRemoveExisting
-#include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote, trimWhitespace, split
 #include "smbase/stringb.h"            // stringb
@@ -354,69 +353,6 @@ LSPClient::LSPClient(CommandRunner &child)
                    this, &LSPClient::processOutputData);
   QObject::connect(&child, &CommandRunner::signal_processTerminated,
                    this, &LSPClient::on_processTerminated);
-}
-
-
-/*static*/ std::string LSPClient::makeFileURI(std::string_view fname)
-{
-  SMFileUtil sfu;
-
-  std::string absFname = sfu.getAbsolutePath(std::string(fname));
-
-  absFname = sfu.normalizePathSeparators(absFname);
-
-  // In the URI format, a path like "C:/Windows" gets written
-  // "/C:/Windows".
-  if (!beginsWith(absFname, "/")) {
-    absFname = std::string("/") + absFname;
-  }
-
-  return stringb("file://" << absFname);
-}
-
-
-// For now this is very crude, doing just enough to invert the encodings
-// I see from `clangd`.
-/*static*/ std::string LSPClient::getFileURIPath(std::string const &uri)
-{
-  EXN_CONTEXT(doubleQuote(uri));
-
-  if (hasSubstring(uri, "@")) {
-    xformat("URI has a user name part but I can't handle that.");
-  }
-
-  if (!beginsWith(uri, "file://")) {
-    xformat("URI does not begin with \"file://\".");
-  }
-
-  // Skip the scheme part.
-  std::string path = uri.substr(7);
-
-  // Check for some things that can be in URIs but I don't handle.
-  if (hasSubstring(path, "%")) {
-    xformat("URI uses percent encoding but I can't handle that.");
-  }
-  if (hasSubstring(path, "?")) {
-    xformat("URI has a query part but I can't handle that.");
-  }
-
-  // The path should always be absolute.
-  if (!beginsWith(path, "/")) {
-    xformat("Path does not begin with '/'.");
-  }
-
-  // Check for Windows path stuff.
-  if (path.size() >= 4 &&
-      path[2] == ':' &&
-      path[3] == '/')
-  {
-    // Path is something like "/C:/blah".  We want to discard the first
-    // slash since Windows won't like it.
-    return path.substr(1);
-  }
-  else {
-    return path;
-  }
 }
 
 

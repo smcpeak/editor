@@ -17,6 +17,7 @@
 #include "process-watcher.h"           // ProcessWatcher
 #include "td-diagnostics.h"            // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                 // TextInputDialog
+#include "uri-util.h"                  // getFileURIPath
 #include "vfs-query-sync.h"            // readFileSynchronously
 
 // smqtutil
@@ -813,7 +814,7 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
 
     try {
       // Extract the file path.
-      std::string path = LSPClient::getFileURIPath(diags->m_uri);
+      std::string path = getFileURIPath(diags->m_uri);
 
       // Turn that into a document name.
       DocumentName docName =

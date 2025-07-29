@@ -6,6 +6,7 @@
 #include "command-runner.h"            // CommandRunner
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                // LSPClient
+#include "uri-util.h"                  // makeFileURI
 
 #include "smqtutil/qtutil.h"           // toString(QString)
 
@@ -598,7 +599,7 @@ void LSPManager::notify_textDocument_didOpen(
     {
       "textDocument",
       GDVMap{
-        { "uri", LSPClient::makeFileURI(fname) },
+        { "uri", makeFileURI(fname) },
         { "languageId", languageId },
         { "version", version },
         { "text", GDValue(std::move(contents)) },
@@ -623,7 +624,7 @@ void LSPManager::notify_textDocument_didChange(
     {
       "textDocument",
       GDVMap{
-        { "uri", LSPClient::makeFileURI(fname) },
+        { "uri", makeFileURI(fname) },
         { "version", version },
       }
     },
@@ -651,7 +652,7 @@ void LSPManager::notify_textDocument_didClose(
     {
       "textDocument",
       GDVMap{
-        { "uri", LSPClient::makeFileURI(fname) },
+        { "uri", makeFileURI(fname) },
       }
     },
   });

@@ -154,13 +154,6 @@ public:      // methods
   // already been started.
   explicit LSPClient(CommandRunner &child);
 
-  // Given a file name, convert that into a "file:" URI.
-  static std::string makeFileURI(std::string_view fname);
-
-  // Given a file URI, convert that back into a file name.  Throws
-  // `XParseString` if there is a problem.
-  static std::string getFileURIPath(std::string const &uri);
-
   // Send a notification.  Do not wait for any responses.
   //
   // Requires `!hasProtocolError()`.
