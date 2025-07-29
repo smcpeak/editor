@@ -101,6 +101,11 @@ table reacts to keypresses as follows:
 
 <li>Pressing the Down arrow key or "N" moves the selected row down one.
 
+<li>Pressing PageUp or PageDown moves the selected row up or down by
+    the number of rows that are completely visible, or 1 if no rows are
+    completely visible.  (Implementation note: <code>QTableWidget</code>
+    does this on its own.)
+
 <li>Pressing Right or "F", or Left or "B", scrolls the table
     horizontally in the indicated direction by 100 pixels.
 
@@ -133,6 +138,8 @@ Summary of hotkeys:
 
 <li>Up: Move up one row.
 <li>Down: Move down one row.
+<li>PageUp: Move up one page.
+<li>PageDown: Move down one page.
 <li>Left: Scroll left 100 pixels.
 <li>Right: Scroll right 100 pixels.
 <li>Enter: Jump to file/line in editor.
