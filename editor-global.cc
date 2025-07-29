@@ -32,7 +32,7 @@
 #include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
-#include "smbase/sm-env.h"             // smbase::getXDGConfigHome
+#include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, envAsIntOr}
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-test.h"            // PVAL
 #include "smbase/string-util.h"        // beginsWith
@@ -137,21 +137,20 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // "-style Windows" on the command line.
   this->setStyle(new EditorProxyStyle);
 
-  // Allow the user to specify an initial app font size.
-  if (char const *sizeStr = getenv("EDITOR_APP_FONT_POINT_SIZE")) {
-    int newSize = atoi(sizeStr);
+  // Choose the app font size.  For now the UI is very crude.
+  {
+    int fontSize = envAsIntOr(12, "EDITOR_APP_FONT_POINT_SIZE");
     QFont fontSpec = QApplication::font();
     TRACE("EditorGlobal",
-      "changing app font point size from " << fontSpec.pointSize() <<
-      " to " << newSize);
-    fontSpec.setPointSize(newSize);
+      "setting app font point size to " << fontSize);
+    fontSpec.setPointSize(fontSize);
     QApplication::setFont(fontSpec);
   }
 
-  // Get the actual font, possibly influenced by the setting above.
+  // Get the actual font, influenced by the setting above.
   QFontInfo fi(QApplication::font());
   int sz = fi.pixelSize();
-  TRACE("EditorGlobal", "font into pixel size: " << sz);
+  TRACE("EditorGlobal", "font info pixel size: " << sz);
 
   if (getenv("EDITOR_USE_LARGE_FONT")) {
     m_editorBuiltinFont = BF_COURIER24;
