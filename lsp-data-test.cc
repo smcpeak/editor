@@ -1,7 +1,11 @@
 // lsp-data-test.cc
-// Tests for `lsp-data` module.
+// Tests for `lsp-data` and `lsp-conv` modules.
 
+#include "lsp-conv.h"                  // module under test
 #include "lsp-data.h"                  // module under test
+
+#include "named-td.h"                  // NamedTextDocument
+#include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 #include "smbase/gdvalue-json.h"       // gdv::gdvToJSON
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
@@ -13,6 +17,44 @@ using namespace gdv;
 
 
 OPEN_ANONYMOUS_NAMESPACE
+
+
+// Populate `doc` with `numLines`, each with `numCols`.
+//
+// This is just to have a place for the locations in the primary
+// diagnostic message to be associated with, since they require valid
+// model coordinates.
+void populateNTD(NamedTextDocument &doc, int numLines, int numCols)
+{
+  for (int line=0; line < numLines; ++line) {
+    std::string text(numCols, 'x');
+    doc.appendString(text + "\n");
+  }
+}
+
+
+// Convert `lspPDP` to `TextDocumentDiagnostics`, then convert that to
+// GDVN and compare to `expectGDVN`.
+void convertToTDDExpect(
+  LSP_PublishDiagnosticsParams const &lspPDP,
+  char const *expectGDVN)
+{
+  // Make a document for the diagnostics to follow.
+  NamedTextDocument doc;
+  populateNTD(doc, 10, 10);
+
+  // Convert to TDD.
+  std::unique_ptr<TextDocumentDiagnostics> tdd =
+    convertLSPDiagsToTDD(&doc, &lspPDP);
+
+  // Render that as GDValue.
+  GDValue tddGDV = toGDValue(*tdd);
+
+  // Compare to expectation.
+  GDValueWriteOptions opts;
+  opts.m_indentLevel = 1;
+  EXPECT_EQ(tddGDV.asIndentedString(opts), expectGDVN);
+}
 
 
 // Do a round-trip serialization test with a simple example.
@@ -43,8 +85,8 @@ void test_PublishDiagnosticsParams_simple()
   });
   DIAG(gdvToJSON(v, GDValueWriteOptions().setEnableIndentation(true)));
 
-  LSP_PublishDiagnosticsParams pdp{GDValueParser(v)};
-  GDValue v2 = pdp;
+  LSP_PublishDiagnosticsParams lspPDP{GDValueParser(v)};
+  GDValue v2 = lspPDP;
 
   GDValue &firstDiag =
     v2.mapGetValueAt("diagnostics").sequenceGetValueAt(0);
@@ -63,6 +105,14 @@ void test_PublishDiagnosticsParams_simple()
 
   // Then the two should be equal.
   EXPECT_EQ(v2, v);
+
+
+  convertToTDDExpect(lspPDP, R"({
+    TDD_DocEntry[
+      range: MCR(MC(4 5) MC(6 7))
+      diagnostic: TDD_Diagnostic[message:"primary message" related:[]]
+    ]
+  })");
 }
 
 
@@ -132,6 +182,27 @@ void test_PublishDiagnosticsParams_withRelated()
   GDValue v2 = pdp;
 
   EXPECT_EQ(v2, v);
+
+  convertToTDDExpect(pdp, R"({
+    TDD_DocEntry[
+      range: MCR(MC(4 5) MC(6 7))
+      diagnostic: TDD_Diagnostic[
+        message: "primary message"
+        related: [
+          TDD_Related[
+            file: "D:/home/User/other.h"
+            line: 15
+            message: "aux message 1"
+          ]
+          TDD_Related[
+            file: "D:/home/User/other.h"
+            line: 115
+            message: "aux message 2"
+          ]
+        ]
+      ]
+    ]
+  })");
 }
 
 

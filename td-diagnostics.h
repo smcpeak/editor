@@ -3,6 +3,13 @@
 
 // See license.txt for copyright and terms of use.
 
+// This module represents diagnostics in a way that is independent of
+// any particular source or communication mechanism, and is as natural
+// as possible for the editor program to work with.  In contrast, the
+// `lsp-data` module represents diagnostics (logically) as they come
+// over the wire from the LSP server, and the `lsp-conv` module
+// translates one into the other.
+
 #ifndef EDITOR_TD_DIAGNOSTICS_H
 #define EDITOR_TD_DIAGNOSTICS_H
 
@@ -18,17 +25,55 @@
 
 #include <string>                      // std::string
 #include <optional>                    // std::optional
+#include <vector>                      // std::related
+
+
+// Some information associated with a location, related to a primary
+// diagnostic.
+class TDD_Related {
+public:      // data
+  // Absolute file name.
+  std::string m_file;
+
+  // 1-based line number.
+  //
+  // Unlike the primary, the related message locations do not get
+  // updated automatically when the file is edited.
+  //
+  // TODO: Maybe design a way that they can be?
+  int m_line;
+
+  // Relevance of this line to the primary diagnostic.
+  std::string m_message;
+
+public:      // methods
+  ~TDD_Related();
+  TDD_Related(std::string &&file, int line, std::string &&message);
+
+  operator gdv::GDValue() const;
+
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TDD_Related)
+};
 
 
 // A single diagnostic message.
+//
+// TODO: Rename this to `TDD_Diagnostic`?
 class Diagnostic : public SerfRefCount {
 public:      // data
   // What the diagnostic says.
   std::string m_message;
 
+  // Sequence of related locations.
+  std::vector<TDD_Related> m_related;
+
 public:      // methods
   ~Diagnostic();
+
+  // Empty `m_related`.
   Diagnostic(std::string &&message);
+
+  Diagnostic(std::string &&message, std::vector<TDD_Related> &&related);
 
   operator gdv::GDValue() const;
 

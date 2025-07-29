@@ -5,6 +5,7 @@
 
 #include "smbase/gdvalue-optional-fwd.h"         // gdv::GDValue(std::optional)
 #include "smbase/gdvalue-set-fwd.h"              // gdv::GDValue(std::set)
+#include "smbase/gdvalue-vector-fwd.h"           // gdv::GDValue(std::vector)
 
 #include "td-diagnostics.h"                      // this module
 
@@ -16,8 +17,9 @@
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/gdvalue-set.h"                  // gdv::GDValue(std::set)
+#include "smbase/gdvalue-vector.h"               // gdv::GDValue(std::vector)
 #include "smbase/overflow.h"                     // convertNumber
-#include "smbase/sm-macros.h"                    // IMEMBFP
+#include "smbase/sm-macros.h"                    // IMEMBFP, IMEMBMFP
 
 #include <optional>                              // std::optional
 #include <string>                                // std::string
@@ -27,13 +29,55 @@ using namespace gdv;
 using namespace smbase;
 
 
+// ---------------------------- TDD_Related ----------------------------
+TDD_Related::~TDD_Related()
+{}
+
+
+TDD_Related::TDD_Related(std::string &&file, int line, std::string &&message)
+  : IMEMBMFP(file),
+    IMEMBMFP(line),
+    IMEMBMFP(message)
+{}
+
+
+TDD_Related::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TDD_Related"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_file);
+  GDV_WRITE_MEMBER_SYM(m_line);
+  GDV_WRITE_MEMBER_SYM(m_message);
+
+  return m;
+}
+
+
+int TDD_Related::compareTo(TDD_Related const &b) const
+{
+  auto const &a = *this;
+  RET_IF_COMPARE_MEMBERS(m_file);
+  RET_IF_COMPARE_MEMBERS(m_line);
+  RET_IF_COMPARE_MEMBERS(m_message);
+  return 0;
+}
+
+
 // ---------------------------- Diagnostic -----------------------------
 Diagnostic::~Diagnostic()
 {}
 
 
 Diagnostic::Diagnostic(std::string &&message)
-  : m_message(std::move(message))
+  : IMEMBMFP(message),
+    m_related()
+{}
+
+
+Diagnostic::Diagnostic(std::string &&message,
+                       std::vector<TDD_Related> &&related)
+  : IMEMBMFP(message),
+    IMEMBMFP(related)
 {}
 
 
@@ -41,16 +85,17 @@ int Diagnostic::compareTo(Diagnostic const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_message);
+  RET_IF_COMPARE_MEMBERS(m_related);
   return 0;
 }
 
 
 Diagnostic::operator gdv::GDValue() const
 {
-  GDValue m(GDVK_TAGGED_ORDERED_MAP);
-  m.taggedContainerSetTag("TDD_Diagnostic"_sym);
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TDD_Diagnostic"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_message);
+  GDV_WRITE_MEMBER_SYM(m_related);
 
   return m;
 }
@@ -81,8 +126,7 @@ int TextDocumentDiagnostics::DocEntry::compareTo(DocEntry const &b) const
 
 TextDocumentDiagnostics::DocEntry::operator gdv::GDValue() const
 {
-  GDValue m(GDVK_TAGGED_ORDERED_MAP);
-  m.taggedContainerSetTag("TDD_DocEntry"_sym);
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TDD_DocEntry"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_range);
   m.mapSetValueAtSym("diagnostic", toGDValue(*m_diagnostic));
@@ -142,8 +186,7 @@ bool TextDocumentDiagnostics::LineEntry::containsByteIndex(int byteIndex) const
 
 TextDocumentDiagnostics::LineEntry::operator gdv::GDValue() const
 {
-  GDValue m(GDVK_TAGGED_ORDERED_MAP);
-  m.taggedContainerSetTag("TDD_LineEntry"_sym);
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TDD_LineEntry"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_startByteIndex);
   GDV_WRITE_MEMBER_SYM(m_endByteIndex);

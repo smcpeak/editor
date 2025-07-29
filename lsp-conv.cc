@@ -7,12 +7,14 @@
 #include "named-td.h"                  // NamedTextDocument
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "textmcoord.h"                // TextMCoord[Range]
+#include "uri-util.h"                  // getFileURIPath
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
 
 #include <memory>                      // std::unique_ptr
+#include <utility>                     // std::move
 
 using namespace gdv;
 
@@ -36,6 +38,30 @@ TextMCoordRange convertLSPRange(LSP_Range const &range)
 }
 
 
+TDD_Related convertLSPRelated(
+  LSP_DiagnosticRelatedInformation const &lspRelated)
+{
+  return TDD_Related(
+    getFileURIPath(lspRelated.m_location.m_uri),
+    lspRelated.m_location.m_range.m_start.m_line+1,
+    std::string(lspRelated.m_message));
+}
+
+
+std::vector<TDD_Related> convertLSPRelatedList(
+  std::list<LSP_DiagnosticRelatedInformation> const &relatedList)
+{
+  std::vector<TDD_Related> ret;
+
+  for (auto const &r : relatedList) {
+    ret.push_back(convertLSPRelated(r));
+  }
+
+  return ret;
+}
+
+
+
 std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
   NamedTextDocument *doc,
   LSP_PublishDiagnosticsParams const *lspDiags)
@@ -48,9 +74,16 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
   std::unique_ptr<TextDocumentDiagnostics> ret(
     new TextDocumentDiagnostics(diagsVersion, doc));
 
-  for (LSP_Diagnostic const &diag : lspDiags->m_diagnostics) {
-    TextMCoordRange range = convertLSPRange(diag.m_range);
-    if (ret->insertWithAdjust(range, std::string(diag.m_message))) {
+  for (LSP_Diagnostic const &lspDiag : lspDiags->m_diagnostics) {
+    TextMCoordRange range = convertLSPRange(lspDiag.m_range);
+
+    std::string message = lspDiag.m_message;
+    std::vector<TDD_Related> related =
+      convertLSPRelatedList(lspDiag.m_relatedInformation);
+
+    Diagnostic tddDiag(std::move(message), std::move(related));
+
+    if (ret->insertWithAdjust(range, std::move(tddDiag))) {
       TRACE1("adjusted LSP range " << toGDValue(range) <<
              " to " << toGDValue(range));
     }
