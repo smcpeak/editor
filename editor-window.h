@@ -306,7 +306,26 @@ public Q_SLOTS:
   void helpDebugDumpApplicationObjectTree() NOEXCEPT;
   void helpDebugEditorScreenshot() NOEXCEPT;
 
+  /*
+    This is called to update the window when:
+
+     * We change which file is being edited.
+
+     * The file is saved, so is no longer "unsaved".
+
+     * The file is saved under a new name, so the window title changes.
+
+     * Every time the editor widget redraws (!), triggered via
+       `EditorWidget::viewChanged`.
+
+     * The set of all open files is reloaded in `OpenFilesDialog`.
+
+    This seems like too much.  For now I'm just documenting what it
+    does.  I'll need to straighten this out to allow multiple widgets
+    per window.
+  */
   void editorViewChanged() NOEXCEPT;
+
   void slot_editorFontChanged() NOEXCEPT;
   void on_closeSARPanel() NOEXCEPT;
   void on_openFilenameInputDialogSignal(HostFileAndLineOpt hfl) NOEXCEPT;
