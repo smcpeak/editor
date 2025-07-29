@@ -2115,9 +2115,11 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
 
   std::ostringstream oss;
 
-  if (TextDocumentDiagnostics const *diags = doc->getDiagnostics()) {
-    oss << "Current version: " << doc->getVersionNumber() << "\n";
+  oss << "Current version: " << doc->getVersionNumber() << "\n";
+  oss << "LSP document details: "
+      << doc->getLSPDocumentDetails().asIndentedString() << "\n";
 
+  if (TextDocumentDiagnostics const *diags = doc->getDiagnostics()) {
     #if 0
     if (diags->m_version.has_value()) {
       oss << "Diagnostics apply to version: " << diags->m_version.value() << "\n";

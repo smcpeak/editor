@@ -276,6 +276,7 @@ EDITOR_OBJS += doc-type-detect.o
 EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += lsp-conv.o
+EDITOR_OBJS += lsp-doc-state.o
 EDITOR_OBJS += named-td.o
 EDITOR_OBJS += td-diagnostics.o
 

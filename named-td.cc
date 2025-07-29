@@ -173,6 +173,19 @@ LSPDocumentState NamedTextDocument::getLSPDocumentState() const
 }
 
 
+GDValue NamedTextDocument::getLSPDocumentDetails() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "NTD_LSP_Details"_sym);
+
+  m.mapSetValueAtSym("state", GDVSymbol(toString(getLSPDocumentState())));
+  m.mapSetValueAtSym("numDiagnostics", toGDValue(getNumDiagnostics()));
+  GDV_WRITE_MEMBER_SYM(m_lspWaitingForDiagnosticsForVersion);
+  GDV_WRITE_MEMBER_SYM(m_lspReceivedStaleDiagnostics);
+
+  return m;
+}
+
+
 std::optional<int> NamedTextDocument::getNumDiagnostics() const
 {
   if (m_diagnostics) {

@@ -32,4 +32,8 @@ enum LSPDocumentState {
 };
 
 
+// Return a string like "LSPDS_NOT_OPEN".
+char const *toString(LSPDocumentState state);
+
+
 #endif // EDITOR_LSP_DOC_STATE_H

@@ -13,6 +13,7 @@
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td.h"                        // TextDocument
 
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/str.h"                // string
 
 #include <cstdint>                     // std::int64_t
@@ -153,6 +154,9 @@ public:      // funcs
   // --------------------------- diagnostics ---------------------------
   // How do the diagnostics relate to the document contents?
   LSPDocumentState getLSPDocumentState() const;
+
+  // Get a summary of this document's LSP interaction status.
+  gdv::GDValue getLSPDocumentDetails() const;
 
   // Get the number of diagnostics in the most recent report, or nullopt
   // if we have not received a diagnostic report.
