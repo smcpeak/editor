@@ -3,15 +3,92 @@
 
 #include "uri-util.h"                  // this module
 
+#include "smbase/codepoint.h"          // CodePoint
 #include "smbase/exc.h"                // EXN_CONTEXT, smbase::xformat
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // beginsWith, doubleQuote, hasSubstring
 #include "smbase/stringb.h"            // stringb
 
+#include <iomanip>                     // std::{setfill, setw}
+#include <sstream>                     // std::ostringstream
 #include <string>                      // std::string
 #include <string_view>                 // std::string_view
 
 using namespace smbase;
+
+
+// Return true if `pt` can be used as-is in a URI.
+//
+// Whether a character is safe is context-dependent.  I'm just following
+// what clangd does for file names; this is probably not right.
+static bool isSafeInURI(CodePoint pt)
+{
+  return isCIdentifierCharacter(pt) ||
+         pt.value() == ':' ||
+         pt.value() == '/' ||
+         pt.value() == '.';
+}
+
+
+std::string percentEncode(std::string_view src)
+{
+  std::ostringstream oss;
+
+  // Configure for hex.
+  oss << std::uppercase << std::hex << std::setfill('0');
+
+  for (char c : src) {
+    CodePoint pt(c);
+
+    if (isSafeInURI(pt)) {
+      oss << c;
+    }
+    else {
+      oss << '%' << std::setw(2) << pt.value();
+    }
+  }
+
+  return oss.str();
+}
+
+
+std::string percentDecode(std::string_view src)
+{
+  std::ostringstream oss;
+
+  for (auto it = src.begin(); it != src.end(); ++it) {
+    if (*it == '%') {
+      // Decode first digit.
+      ++it;
+      if (it == src.end()) {
+        xformat("percent not followed by anything");
+      }
+      CodePoint pt(*it);
+      if (!isASCIIHexDigit(pt)) {
+        xformat("percent followed by non-hex");
+      }
+      int n = decodeASCIIHexDigit(pt) * 16;
+
+      // Decode second digit.
+      ++it;
+      if (it == src.end()) {
+        xformat("percent only followed by one hex digit");
+      }
+      pt = *it;
+      if (!isASCIIHexDigit(pt)) {
+        xformat("percent followed by hex then non-hex");
+      }
+      n += decodeASCIIHexDigit(pt);
+
+      oss << (char)(unsigned char)n;
+    }
+    else {
+      oss << *it;
+    }
+  }
+
+  return oss.str();
+}
 
 
 std::string makeFileURI(std::string_view fname)
@@ -28,7 +105,7 @@ std::string makeFileURI(std::string_view fname)
     absFname = std::string("/") + absFname;
   }
 
-  return stringb("file://" << absFname);
+  return stringb("file://" << percentEncode(absFname));
 }
 
 
@@ -50,9 +127,6 @@ std::string getFileURIPath(std::string const &uri)
   std::string path = uri.substr(7);
 
   // Check for some things that can be in URIs but I don't handle.
-  if (hasSubstring(path, "%")) {
-    xformat("URI uses percent encoding but I can't handle that.");
-  }
   if (hasSubstring(path, "?")) {
     xformat("URI has a query part but I can't handle that.");
   }
@@ -69,10 +143,10 @@ std::string getFileURIPath(std::string const &uri)
   {
     // Path is something like "/C:/blah".  We want to discard the first
     // slash since Windows won't like it.
-    return path.substr(1);
+    return percentDecode(std::string_view(path).substr(1));
   }
   else {
-    return path;
+    return percentDecode(path);
   }
 }
 

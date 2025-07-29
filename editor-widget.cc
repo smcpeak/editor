@@ -2522,13 +2522,26 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
       typedef DiagnosticDetailsDialog::Element Element;
       QVector<Element> elts;
 
-      // For the moment, we only have one element.
+      // Primary location and message.
       DocumentName docName = getDocument()->documentName();
       elts.push_back(Element{
         toQString(docName.directory()),
         toQString(sfu.splitPathBase(docName.filename())),
         cursorMC.m_line,
-        toQString(diag->m_message)});
+        toQString(diag->m_message)
+      });
+
+      // Related messages.
+      for (TDD_Related const &rel : diag->m_related) {
+        std::string d, b;
+        sfu.splitPath(d, b, rel.m_file);
+        elts.push_back(Element{
+          toQString(d),
+          toQString(b),
+          rel.m_line,
+          toQString(rel.m_message)
+        });
+      }
 
       dlg->setDiagnostics(std::move(elts));
 
