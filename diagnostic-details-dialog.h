@@ -30,7 +30,7 @@ class DiagnosticDetailsDialog : public QDialog {
 public:      // types
   // One element of a diagnostic message.
   struct Element {
-    // Absolute directory path containing `file`.
+    // Absolute directory path containing `file`.  It ends with a slash.
     QString m_dir;
 
     // Name of a file within `dir`

@@ -37,6 +37,19 @@ void DiagnosticDetailsDialog::updateTopPanel()
 }
 
 
+// Return `s` without its final slash if it has one; otherwise just
+// return `s` as-is.
+static QString removeFinalSlash(QString const &s)
+{
+  if (s.endsWith('/')) {
+    return s.chopped(1);
+  }
+  else {
+    return s;
+  }
+}
+
+
 void DiagnosticDetailsDialog::repopulateTable()
 {
   m_table->setRowCount(m_diagnostics.size());
@@ -48,7 +61,16 @@ void DiagnosticDetailsDialog::repopulateTable()
     int c = 0;
 
     {
-      QTableWidgetItem *item = new QTableWidgetItem(elt.m_dir);
+      // Although `m_dir` has (should have) a final slash, in this
+      // column I want to not have it.
+      //
+      // Also add a trailing space to get a bit more visual separation.
+      // (I would prefer to somehow adjust the column's built-in
+      // padding, but I think I need a delegate for that, which is
+      // overkill for the moment.)
+      //
+      QTableWidgetItem *item = new QTableWidgetItem(
+        removeFinalSlash(elt.m_dir) + " ");
 
       // Use right alignment so the final part of the path name is
       // visible, as this is mainly for disambiguation among files.
