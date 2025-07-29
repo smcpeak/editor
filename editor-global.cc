@@ -21,24 +21,26 @@
 #include "vfs-query-sync.h"            // readFileSynchronously
 
 // smqtutil
+#include "smqtutil/gdvalue-qstring.h"  // toGDValue(QString)
 #include "smqtutil/qtutil.h"           // toQString
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
 // smbase
 #include "smbase/dev-warning.h"        // g_devWarningHandler
 #include "smbase/exc.h"                // smbase::{XBase, xformat}
+#include "smbase/gdv-ordered-map.h"    // gdv::GDVOrderedMap
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
-#include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, envAsIntOr}
+#include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-test.h"            // PVAL
 #include "smbase/string-util.h"        // beginsWith
 #include "smbase/stringb.h"            // stringb
 #include "smbase/strtokp.h"            // StrtokParse
-#include "smbase/trace.h"              // TRACE
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
 // Qt
 #include <QKeyEvent>
@@ -59,6 +61,12 @@
 
 using namespace gdv;
 using namespace smbase;
+
+
+// Tracing leves:
+//   1. File or app
+//   2. Keystroke
+INIT_TRACE("editor-global");
 
 
 // ---------------- EditorProxyStyle ----------------
@@ -122,7 +130,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   m_documentList.addObserver(this);
 
   // Optionally print the list of styles Qt supports.
-  if (tracingSys("style")) {
+  if (envAsBool("PRINT_QT_STYLES")) {
     QStringList keys = QStyleFactory::keys();
     cout << "style keys:\n";
     for (int i=0; i < keys.size(); i++) {
@@ -141,8 +149,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   {
     int fontSize = envAsIntOr(12, "EDITOR_APP_FONT_POINT_SIZE");
     QFont fontSpec = QApplication::font();
-    TRACE("EditorGlobal",
-      "setting app font point size to " << fontSize);
+    TRACE1("setting app font point size to " << fontSize);
     fontSpec.setPointSize(fontSize);
     QApplication::setFont(fontSpec);
   }
@@ -150,7 +157,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // Get the actual font, influenced by the setting above.
   QFontInfo fi(QApplication::font());
   int sz = fi.pixelSize();
-  TRACE("EditorGlobal", "font info pixel size: " << sz);
+  TRACE1("font info pixel size: " << sz);
 
   if (getenv("EDITOR_USE_LARGE_FONT")) {
     m_editorBuiltinFont = BF_COURIER24;
@@ -306,7 +313,7 @@ EditorGlobal::~EditorGlobal()
   QObject::disconnect(&m_lspManager, nullptr, this, nullptr);
   {
     std::string shutdownMsg = m_lspManager.stopServer();
-    TRACE("lsp", "LSP Manager stopServer() returned: " << shutdownMsg);
+    TRACE1("dtor: LSP Manager stopServer() returned: " << shutdownMsg);
   }
 
   if (m_processes.isNotEmpty()) {
@@ -316,7 +323,7 @@ EditorGlobal::~EditorGlobal()
     // an ongoing iteration.
     FOREACH_OBJLIST_NC(ProcessWatcher, m_processes, iter) {
       ProcessWatcher *watcher = iter.data();
-      TRACE("process", "in ~EditorGlobal, killing: " << watcher);
+      TRACE1("dtor: killing: " << watcher);
       watcher->m_namedDoc = NULL;
       watcher->m_commandRunner.killProcessNoWait();
     }
@@ -326,7 +333,7 @@ EditorGlobal::~EditorGlobal()
     // on_processTerminated signals and can reap them and remove them
     // from 'm_processes'.
     for (int waits=0; waits < 10 && m_processes.isNotEmpty(); waits++) {
-      TRACE("process", "in ~EditorGlobal, waiting 100ms #" << (waits+1));
+      TRACE1("dtor: waiting 100ms #" << (waits+1));
       sleepWhilePumpingEvents(100 /*ms*/);
     }
 
@@ -565,7 +572,7 @@ NamedTextDocument *EditorGlobal::getCommandOutputDocument(
   NamedTextDocument *fileDoc = m_documentList.findDocumentByName(docName);
   if (!fileDoc) {
     // Nothing with this name, let's use it to make a new one.
-    TRACE("process", "making new document: " << docName);
+    TRACE1("getCommandOutputDocument: making new document: " << docName);
     NamedTextDocument *newDoc = new NamedTextDocument();
     newDoc->setDocumentName(docName);
     newDoc->m_title = uniqueTitleFor(docName);
@@ -573,7 +580,7 @@ NamedTextDocument *EditorGlobal::getCommandOutputDocument(
     return newDoc;
   }
   else {
-    TRACE("process", "reusing existing document: " << docName);
+    TRACE1("getCommandOutputDocument: reusing existing document: " << docName);
     return fileDoc;
   }
 }
@@ -637,11 +644,12 @@ NamedTextDocument *EditorGlobal::launchCommand(
   // starting the process.
   cr.closeInputChannel();
 
-  TRACE("process", "dir: " << toString(dir));
-  TRACE("process", "cmd: " << toString(command));
-  TRACE("process", "fullCommand: " << fullCommand);
-  TRACE("process", "fileDoc: " << fileDoc->documentName());
-  TRACE("process", "started watcher: " << watcher);
+  TRACE1("launchCommand: " << GDValue(GDVOrderedMap{
+    GDV_SKV_EXPR(dir),
+    GDV_SKV_EXPR(command),
+    GDV_SKV_EXPR(fullCommand),
+    GDV_SKV_EXPR(fileDoc->documentName())
+  }).asIndentedString());
 
   return fileDoc;
 }
@@ -729,7 +737,7 @@ void EditorGlobal::namedTextDocumentRemoved(
     // Closing an output document.  Break the connection to the
     // document so it can go away safely, and start killing the
     // process.
-    TRACE("process", "killing watcher: " << watcher);
+    TRACE1("namedTextDocumentRemoved: killing watcher: " << watcher);
     watcher->m_namedDoc = NULL;
     watcher->m_commandRunner.killProcessNoWait();
 
@@ -755,8 +763,8 @@ void EditorGlobal::broadcastEditorViewChanged()
 
 void EditorGlobal::on_processTerminated(ProcessWatcher *watcher)
 {
-  TRACE("process", "terminated watcher: " << watcher);
-  TRACE("process", "termination desc: " <<
+  TRACE1("on_processTerminated: terminated watcher: " << watcher);
+  TRACE1("on_processTerminated: termination desc: " <<
     watcher->m_commandRunner.getTerminationDescription());
 
   // Get rid of this watcher.
@@ -808,12 +816,12 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
       // cause the editor to remove the diagnostics from its display.  I
       // do that when sending the "didClose" notification, so this
       // notification should be safe to ignore.
-      TRACE("lsp", "received diagnostics without a version number");
+      TRACE1("lsp: received diagnostics without a version number");
       continue;
     }
 
     if (*diags->m_version < 0) {
-      TRACE("lsp", "received diagnostics with a negative version number");
+      TRACE1("lsp: received diagnostics with a negative version number");
       continue;
     }
 
@@ -831,8 +839,8 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
       else {
         // This could happen if we notify the server of new contents and
         // then immediately close the document.
-        TRACE("lsp", "Received LSP diagnostics for " << docName <<
-                     " but that file is not open in the editor.");
+        TRACE1("lsp: Received LSP diagnostics for " << docName <<
+               " but that file is not open in the editor.");
       }
     }
 
@@ -860,11 +868,11 @@ void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
 
 void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
 {
-  TRACE("focus", "focus changed from " << qObjectDesc(from) <<
-                 " to " << qObjectDesc(to));
+  TRACE2("focus changed from " << qObjectDesc(from) <<
+         " to " << qObjectDesc(to));
 
   if (!from && to && qobject_cast<QMenuBar*>(to)) {
-    TRACE("focus", "focus arrived at menu bar from alt-tab");
+    TRACE2("focus arrived at menu bar from alt-tab");
     QWidget *p = to->parentWidget();
     if (p) {
       // This is part of a workaround for an apparent Qt bug: if I
@@ -886,11 +894,11 @@ void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
       //
       // Found the bug in Qt tracker:
       // https://bugreports.qt.io/browse/QTBUG-44405
-      TRACE("focus", "setting focus to " << qObjectDesc(p));
+      TRACE2("setting focus to " << qObjectDesc(p));
       p->setFocus(Qt::ActiveWindowFocusReason);
     }
     else {
-      TRACE("focus", "menu has no parent?");
+      TRACE2("menu has no parent?");
     }
   }
 }
@@ -901,7 +909,7 @@ void EditorGlobal::slot_broadcastSearchPanelChanged(
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("sar", "EditorGlobal::slot_broadcastSearchPanelChanged");
+  TRACE2("slot_broadcastSearchPanelChanged");
   FOREACH_OBJLIST_NC(EditorWindow, m_windows, iter) {
     iter.data()->searchPanelChanged(panel);
   }
@@ -1053,13 +1061,13 @@ bool EditorGlobal::saveSettingsFile(QWidget * NULLABLE parent) NOEXCEPT
     GDValue gdvSettings(m_settings);
 
     if (m_doNotSaveSettings) {
-      TRACE("EditorGlobal", "Not saving settings due to `m_doNotSaveSettings`.");
+      TRACE1("saveSettingsFile: Not saving settings due to `m_doNotSaveSettings`.");
     }
     else {
       // Write as GDVN, atomically.
       sfu.atomicallyWriteFileAsString(fname, gdvSettings.asLinesString());
 
-      TRACE("EditorGlobal", "Wrote settings file: " << doubleQuote(fname));
+      TRACE1("saveSettingsFile: Wrote settings file: " << doubleQuote(fname));
     }
 
     return true;
@@ -1095,10 +1103,10 @@ void EditorGlobal::loadSettingsFile_throwIfError()
     EditorSettings settings{GDValueParser(gdvSettings)};
     m_settings.swap(settings);
 
-    TRACE("EditorGlobal", "Loaded settings file: " << doubleQuote(fname));
+    TRACE1("loadSettingsFile: Loaded settings file: " << doubleQuote(fname));
   }
   else {
-    TRACE("EditorGlobal", "Settings file does not exist: " << doubleQuote(fname));
+    TRACE1("loadSettingsFile: Settings file does not exist: " << doubleQuote(fname));
   }
 }
 
@@ -1255,7 +1263,7 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
   if (type == QEvent::KeyPress) {
     if (QKeyEvent const *keyEvent =
           dynamic_cast<QKeyEvent const *>(event)) {
-      TRACE("notifyInput", eventNo << ": "
+      TRACE2("notifyInput: " << eventNo << ": "
         "KeyPress to " << objectDesc(receiver) <<
         ": ts=" << keyEvent->timestamp() <<
         " key=" << keysString(*keyEvent) <<
@@ -1264,7 +1272,7 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
 
       bool ret = this->QApplication::notify(receiver, event);
 
-      TRACE("notifyInput", eventNo << ": returns " << ret <<
+      TRACE2("notifyInput: " << eventNo << ": returns " << ret <<
         ", acc=" << keyEvent->isAccepted());
 
       return ret;
@@ -1274,7 +1282,7 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
   if (type == QEvent::Shortcut) {
     if (QShortcutEvent const *shortcutEvent =
           dynamic_cast<QShortcutEvent const *>(event)) {
-      TRACE("notifyInput", eventNo << ": "
+      TRACE2("notifyInput: " << eventNo << ": "
         "Shortcut to " << objectDesc(receiver) <<
         ": ambig=" << shortcutEvent->isAmbiguous() <<
         " id=" << shortcutEvent->shortcutId() <<
@@ -1284,7 +1292,7 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
 
       bool ret = this->QApplication::notify(receiver, event);
 
-      TRACE("notifyInput", eventNo << ": returns " << ret <<
+      TRACE2("notifyInput: " << eventNo << ": returns " << ret <<
         ", acc=" << shortcutEvent->isAccepted());
 
       return ret;
@@ -1295,7 +1303,7 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
   if (false && type == QEvent::Resize) {
     if (QResizeEvent const *resizeEvent =
           dynamic_cast<QResizeEvent const *>(event)) {
-      TRACE("notifyInput", eventNo << ": "
+      TRACE2("notifyInput: " << eventNo << ": "
         "ResizeEvent to " << objectDesc(receiver) <<
         ": spontaneous=" << resizeEvent->spontaneous() <<
         " oldSize=" << toString(resizeEvent->oldSize()) <<
@@ -1392,7 +1400,8 @@ static int printObjectCountsIf(char const *when, bool print)
 
 static int maybePrintObjectCounts(char const *when)
 {
-  return printObjectCountsIf(when, tracingSys("objectCount"));
+  static bool b = envAsBool("PRINT_OBJECT_COUNTS");
+  return printObjectCountsIf(when, b);
 }
 
 
@@ -1458,8 +1467,6 @@ static void customMessageHandler(
 
 int main(int argc, char **argv)
 {
-  TRACE_ARGS();
-
   // Not implemented in smbase for mingw.
   //printSegfaultAddrs();
 
