@@ -197,10 +197,6 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     // Only select one row at a time.
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    // This turns off the annoying behavior that changes the scroll
-    // position when I change the row or click.
-    m_table->setAutoScroll(false);
-
     // Globally disable elision, which allows right-alignment to work
     // the way I want.
     m_table->setTextElideMode(Qt::ElideNone);
