@@ -531,6 +531,21 @@ diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS)
 all: diagnostic-details-dialog-test.exe
 
 
+# ----------------------------- unit-tests -----------------------------
+UNIT_TESTS_OBJS := $(EDITOR_OBJS)
+
+UNIT_TESTS_OBJS += lsp-data-test.o
+UNIT_TESTS_OBJS += unit-tests.o
+
+unit-tests.exe: $(UNIT_TESTS_OBJS)
+	@# I link with `GUI_LDFLAGS` because lots of modules that need
+	@# to link with GUI elements of Qt are included among the
+	@# dependencies even though they won't get run by these tests.
+	$(CXX) -o $@ $(CCFLAGS) $(UNIT_TESTS_OBJS) $(GUI_LDFLAGS)
+
+$(eval $(call RUN_TEST_PROG,unit-tests))
+
+
 # ----------------- git version ---------------------
 # Command to query git for the version.  Output is like:
 # "d36671f 2018-07-09 04:10:32 -0700".

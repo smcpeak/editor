@@ -98,24 +98,111 @@ LSP_Range::LSP_Range(gdv::GDValueParser const &p)
 {}
 
 
+// --------------------------- LSP_Location ----------------------------
+// create-tuple-class: definitions for LSP_Location
+/*AUTO_CTC*/ LSP_Location::LSP_Location(
+/*AUTO_CTC*/   std::string const &uri,
+/*AUTO_CTC*/   LSP_Range const &range)
+/*AUTO_CTC*/   : m_uri(uri),
+/*AUTO_CTC*/     m_range(range)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_Location::LSP_Location(LSP_Location const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_uri),
+/*AUTO_CTC*/     DMEMB(m_range)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_Location &LSP_Location::operator=(LSP_Location const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_uri);
+/*AUTO_CTC*/     CMEMB(m_range);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_Location::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_uri);
+  GDV_WRITE_MEMBER_STR(m_range);
+
+  return m;
+}
+
+
+LSP_Location::LSP_Location(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_uri),
+    GDVP_READ_MEMBER_STR(m_range)
+{}
+
+
+// ----------------- LSP_DiagnosticRelatedInformation ------------------
+// create-tuple-class: definitions for LSP_DiagnosticRelatedInformation
+/*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(
+/*AUTO_CTC*/   LSP_Location const &location,
+/*AUTO_CTC*/   std::string const &message)
+/*AUTO_CTC*/   : m_location(location),
+/*AUTO_CTC*/     m_message(message)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(LSP_DiagnosticRelatedInformation const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_location),
+/*AUTO_CTC*/     DMEMB(m_message)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DiagnosticRelatedInformation &LSP_DiagnosticRelatedInformation::operator=(LSP_DiagnosticRelatedInformation const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_location);
+/*AUTO_CTC*/     CMEMB(m_message);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_DiagnosticRelatedInformation::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_location);
+  GDV_WRITE_MEMBER_STR(m_message);
+
+  return m;
+}
+
+
+LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_location),
+    GDVP_READ_MEMBER_STR(m_message)
+{}
+
+
 // -------------------------- LSP_Diagnostic ---------------------------
 // create-tuple-class: definitions for LSP_Diagnostic
 /*AUTO_CTC*/ LSP_Diagnostic::LSP_Diagnostic(
 /*AUTO_CTC*/   LSP_Range const &range,
 /*AUTO_CTC*/   int severity,
-/*AUTO_CTC*/   std::string const &source,
-/*AUTO_CTC*/   std::string const &message)
+/*AUTO_CTC*/   std::optional<std::string> const &source,
+/*AUTO_CTC*/   std::string const &message,
+/*AUTO_CTC*/   std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation)
 /*AUTO_CTC*/   : m_range(range),
 /*AUTO_CTC*/     m_severity(severity),
 /*AUTO_CTC*/     m_source(source),
-/*AUTO_CTC*/     m_message(message)
+/*AUTO_CTC*/     m_message(message),
+/*AUTO_CTC*/     m_relatedInformation(relatedInformation)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Diagnostic::LSP_Diagnostic(LSP_Diagnostic const &obj) noexcept
 /*AUTO_CTC*/   : DMEMB(m_range),
 /*AUTO_CTC*/     DMEMB(m_severity),
 /*AUTO_CTC*/     DMEMB(m_source),
-/*AUTO_CTC*/     DMEMB(m_message)
+/*AUTO_CTC*/     DMEMB(m_message),
+/*AUTO_CTC*/     DMEMB(m_relatedInformation)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Diagnostic &LSP_Diagnostic::operator=(LSP_Diagnostic const &obj) noexcept
@@ -125,6 +212,7 @@ LSP_Range::LSP_Range(gdv::GDValueParser const &p)
 /*AUTO_CTC*/     CMEMB(m_severity);
 /*AUTO_CTC*/     CMEMB(m_source);
 /*AUTO_CTC*/     CMEMB(m_message);
+/*AUTO_CTC*/     CMEMB(m_relatedInformation);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
 /*AUTO_CTC*/ }
@@ -139,16 +227,18 @@ LSP_Diagnostic::operator gdv::GDValue() const
   GDV_WRITE_MEMBER_STR(m_severity);
   GDV_WRITE_MEMBER_STR(m_source);
   GDV_WRITE_MEMBER_STR(m_message);
+  GDV_WRITE_MEMBER_STR(m_relatedInformation);
 
   return m;
 }
 
 
 LSP_Diagnostic::LSP_Diagnostic(gdv::GDValueParser const &p)
-  : GDVP_READ_MEMBER_STR(m_range),
+  : GDVP_READ_MEMBER_STR    (m_range),
     GDVP_READ_OPT_MEMBER_STR(m_severity),
     GDVP_READ_OPT_MEMBER_STR(m_source),
-    GDVP_READ_MEMBER_STR(m_message)
+    GDVP_READ_MEMBER_STR    (m_message),
+    GDVP_READ_OPT_MEMBER_STR(m_relatedInformation)
 {
   // The LSP spec says an omitted `severity` should be treated as Error.
   if (!p.mapContains("severity")) {

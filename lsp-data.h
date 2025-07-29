@@ -76,6 +76,49 @@ public:      // methods
 };
 
 
+// Location potentially in another file.
+class LSP_Location final {
+public:
+  // File name.
+  std::string m_uri;
+
+  // Location within that file.
+  LSP_Range m_range;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_Location
+  /*AUTO_CTC*/ explicit LSP_Location(std::string const &uri, LSP_Range const &range);
+  /*AUTO_CTC*/ LSP_Location(LSP_Location const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_Location &operator=(LSP_Location const &obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_Location(gdv::GDValueParser const &p);
+};
+
+
+// An auxiliary message for some primary diagnostic.
+class LSP_DiagnosticRelatedInformation final {
+public:      // data
+  // Code the message applies to, generally in a different file from the
+  // main message.
+  LSP_Location m_location;
+
+  // Explanation of its relevance.
+  std::string m_message;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_DiagnosticRelatedInformation
+  /*AUTO_CTC*/ explicit LSP_DiagnosticRelatedInformation(LSP_Location const &location, std::string const &message);
+  /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation(LSP_DiagnosticRelatedInformation const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation &operator=(LSP_DiagnosticRelatedInformation const &obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_DiagnosticRelatedInformation(gdv::GDValueParser const &p);
+};
+
+
 // One diagnostic, such as a compiler error.
 class LSP_Diagnostic final {
 public:      // data
@@ -89,18 +132,23 @@ public:      // data
   // TODO: codeDescription
 
   // Name of the tool or component that generated the diagnostic.
-  std::string m_source;
+  std::optional<std::string> m_source;
 
   // The primary message.
   std::string m_message;
 
   // TODO: tags
-  // TODO: relatedInformation
+
+  // Other relevant locations.  For example, when the error is a failure
+  // to find a suitable overload, this will often contain the
+  // candidates.
+  std::list<LSP_DiagnosticRelatedInformation> m_relatedInformation;
+
   // TODO: data
 
 public:      // methods
   // create-tuple-class: declarations for LSP_Diagnostic
-  /*AUTO_CTC*/ explicit LSP_Diagnostic(LSP_Range const &range, int severity, std::string const &source, std::string const &message);
+  /*AUTO_CTC*/ explicit LSP_Diagnostic(LSP_Range const &range, int severity, std::optional<std::string> const &source, std::string const &message, std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation);
   /*AUTO_CTC*/ LSP_Diagnostic(LSP_Diagnostic const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Diagnostic &operator=(LSP_Diagnostic const &obj) noexcept;
 
