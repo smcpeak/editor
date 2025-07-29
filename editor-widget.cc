@@ -595,6 +595,12 @@ void EditorWidget::fileOpenAtCursor()
 }
 
 
+void EditorWidget::makeCurrentDocumentTopmost()
+{
+  editorGlobal()->makeDocumentTopmost(getDocument());
+}
+
+
 void EditorWidget::namedTextDocumentRemoved(
   NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT
 {

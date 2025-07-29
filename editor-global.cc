@@ -504,6 +504,12 @@ void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 }
 
 
+void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
+{
+  m_documentList.moveDocument(f, 0);
+}
+
+
 bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {

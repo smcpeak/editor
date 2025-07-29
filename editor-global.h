@@ -206,6 +206,9 @@ public:       // funcs
   // first so they switch to some other file.
   void deleteDocumentFile(NamedTextDocument *f);
 
+  // Move `f` to the top of the list.
+  void makeDocumentTopmost(NamedTextDocument *f);
+
   // Reload the contents of 'f'.  Return false if there was an error or
   // the reload was canceled.  If interaction is required, a modal
   // dialog may appear on top of 'parentWindow'.

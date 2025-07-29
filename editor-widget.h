@@ -533,6 +533,10 @@ public:      // funcs
   // and open it in the editor.
   void fileOpenAtCursor();
 
+  // Make the document shown in the widget be topmost in the global list
+  // of open documents.
+  void makeCurrentDocumentTopmost();
+
   // ---------------------------- input -----------------------------
   // We are about to edit the text in the file.  If we are going from
   // a "clean" to "dirty" state with respect to unsaved changes, do a
