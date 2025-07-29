@@ -679,6 +679,9 @@ public Q_SLOTS:
   void on_replyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
   void on_connectionFailed(HostName hostName, string reason) NOEXCEPT;
 
+  // Handler for `DiagnosticDetailsDialog`.
+  void on_jumpToDiagnosticLocation(QString const &fname, int line) NOEXCEPT;
+
 Q_SIGNALS:
   // Emitted when some aspect of the document that is shown outside the
   // widget's own rectangle changes: scroll viewport, cursor location,

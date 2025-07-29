@@ -2545,7 +2545,20 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 
       dlg->setDiagnostics(std::move(elts));
 
-      // TODO: Connect the signal to jump to location.
+      // Disconnect any previous connections for the "jump" signal.
+      // This way the dialog object can be reused by any editor widget.
+      QObject::disconnect(
+        dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
+        nullptr, nullptr);
+
+      // Connect the signal to jump to location.
+      //
+      // Note: Qt connections are automatically removed if either object
+      // is destroyed, so it is not a problem if this widget starts the
+      // dialog and is then destroyed while the dialog is still open.
+      QObject::connect(
+        dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
+        this, &EditorWidget::on_jumpToDiagnosticLocation);
 
       dlg->show();
       return {};
@@ -2557,6 +2570,23 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
   else {
     return "There are no diagnostics for this file.";
   }
+}
+
+
+void EditorWidget::on_jumpToDiagnosticLocation(
+  QString const &fname, int line) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  DocumentName docName =
+    DocumentName::fromFilename(HostName::asLocal(), toString(fname));
+
+  // TODO: Finish this.
+
+  QMessageBox::information(this, "TODO",
+    qstringb("TODO: Jump to " << fname << ":" << line));
+
+  GENERIC_CATCH_END
 }
 
 
