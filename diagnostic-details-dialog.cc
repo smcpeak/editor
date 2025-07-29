@@ -78,6 +78,8 @@ void DiagnosticDetailsDialog::repopulateTable()
   if (!m_diagnostics.isEmpty()) {
     m_table->selectRow(0);
   }
+
+  updateTopPanel();
 }
 
 
