@@ -51,7 +51,7 @@
 #include "smbase/stringb.h"            // stringbc
 #include "smbase/strutil.h"            // dirname
 #include "smbase/syserr.h"             // smbase::XSysError
-#include "smbase/trace.h"              // TRACE_ARGS
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xoverflow.h"          // smbase::XNumericConversion
 
 // libc++
@@ -81,6 +81,9 @@
 
 using namespace gdv;
 using namespace smbase;
+
+
+INIT_TRACE("editor-window");
 
 
 int EditorWindow::s_objectCount = 0;
@@ -575,8 +578,8 @@ static bool stringAmong(string const &str, char const * const *table,
 
 void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 {
-  TRACE("useDefaultHighlighter",
-    "file: " << toGDValue(file->documentName()));
+  TRACE1("useDefaultHighlighter: file: " <<
+         toGDValue(file->documentName()));
 
   file->m_highlighter.reset();
 
@@ -668,14 +671,13 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
   string const &origDir, bool saveAs)
 {
   string dir(origDir);
-  TRACE("fileChooseDialog",
-    "saveAs=" << saveAs << " dir: " << dir);
+  TRACE1("fileChooseDialog: saveAs=" << saveAs << " dir: " << dir);
   if (dir == ".") {
     // If I pass "." to one of the static members of QFileDialog, it
     // automatically goes to the current directory.  But when using
     // QFileDialog directly, I have to pass the real directory name.
     dir = SMFileUtil().currentDirectory();
-    TRACE("fileOpen", "current dir: " << dir);
+    TRACE1("fileChooseDialog: current dir: " << dir);
   }
 
   FilenameInputDialog dialog(
@@ -720,7 +722,7 @@ void EditorWindow::fileOpenAtCursor() NOEXCEPT
 
 void EditorWindow::fileOpenFile(HostAndResourceName const &harn)
 {
-  TRACE("fileOpen", "fileOpenFile: " << harn);
+  TRACE1("fileOpenFile: " << harn);
 
   if (harn.empty()) {
     // Dialog was canceled.
@@ -813,7 +815,7 @@ void EditorWindow::fileSave() NOEXCEPT
 
   NamedTextDocument *b = this->currentDocument();
   if (!b->hasFilename()) {
-    TRACE("untitled", "file has no title; invoking Save As ...");
+    TRACE1("fileSave: file has no title; invoking Save As ...");
     fileSaveAs();
     return;
   }
@@ -999,7 +1001,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
 
     if (reply->m_success) {
       if (reply->m_fileModificationTime != doc->m_lastFileTimestamp) {
-        TRACE("modification",
+        TRACE1(
           "File " << doc->documentName() << " has changed on disk "
           "and has no unsaved changes; reloading it.");
 
@@ -1010,8 +1012,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
       // Ignore the failure to read during automatic reload.  At some
       // point the user will make an explicit request to read or write,
       // and the problem will be reported then.
-      TRACE("modification",
-        "Reload failed: " << reply->m_failureReasonString);
+      TRACE1("Reload failed: " << reply->m_failureReasonString);
     }
   }
 
@@ -1021,7 +1022,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
 
 bool EditorWindow::reloadCurrentDocument()
 {
-  TRACE("EditorWindow", "reloadCurrentDocument");
+  TRACE1("reloadCurrentDocument");
 
   bool ret = m_editorGlobal->reloadDocumentFile(this, currentDocument());
 
@@ -1876,7 +1877,7 @@ void EditorWindow::viewSetApplicationFont() NOEXCEPT
     // height to match the new width, but it did not work.
     #if 0
     int newHeight = QFontMetrics(newFont).height();
-    TRACE("EditorWindow", "new global strut height: " << newHeight);
+    TRACE1("new global strut height: " << newHeight);
     qApp->setGlobalStrut(QSize(newHeight, newHeight));;
     #endif
   }
@@ -1902,8 +1903,8 @@ void EditorWindow::macroCreateMacro() NOEXCEPT
 
   MacroCreatorDialog dlg(editorGlobal());
   if (dlg.exec()) {
-    TRACE("macro", "macro name: " << doubleQuote(dlg.getMacroName()));
-    TRACE("macro", "commands:\n" << serializeECV(dlg.getChosenCommands()));
+    TRACE1("macroCreateMacro: macro name: " << doubleQuote(dlg.getMacroName()));
+    TRACE1("macroCreateMacro: commands:\n" << serializeECV(dlg.getChosenCommands()));
 
     editorGlobal()->settings_addMacro(editorWidget(),
       dlg.getMacroName(), dlg.getChosenCommands());
@@ -1920,7 +1921,7 @@ void EditorWindow::macroRunDialog() NOEXCEPT
   MacroRunDialog dlg(editorGlobal());
   if (dlg.exec()) {
     std::string name = dlg.getMacroName();
-    TRACE("macro", "chosen macro to run: " << doubleQuote(name));
+    TRACE1("macroRunDialog: chosen macro to run: " << doubleQuote(name));
 
     editorWidget()->runMacro(name);
     editorGlobal()->settings_setMostRecentlyRunMacro(editorWidget(), name);
@@ -2505,7 +2506,7 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("EditorWindow", "editorViewChanged");
+  TRACE1("editorViewChanged");
 
   m_editorWidgetFrame->setScrollbarRangesAndValues();
 
@@ -2542,7 +2543,7 @@ void EditorWindow::slot_editorFontChanged() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("EditorWindow", "slot_editorFontChanged");
+  TRACE1("slot_editorFontChanged");
 
   editorWidget()->setFontsFromEditorGlobal();
   editorWidget()->redraw();
@@ -2569,7 +2570,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("EditorWindow",
+  TRACE1(
     "on_openFilenameInputDialogSignal: harn=" << hfl.m_harn <<
     " line=" << hfl.m_line);
 
