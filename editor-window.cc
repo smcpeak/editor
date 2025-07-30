@@ -8,7 +8,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "command-runner.h"            // CommandRunner
 #include "diff-hilite.h"               // DiffHighlighter
-#include "doc-type-detect.h"           // isDiffName
+#include "doc-type-detect.h"           // detectDocumentType
 #include "editor-global.h"             // EditorGlobal
 #include "editor-widget-frame.h"       // EditorWidgetFrame
 #include "editor-widget.h"             // EditorWidget
@@ -564,18 +564,6 @@ void EditorWindow::updateForChangedFile()
 }
 
 
-static bool stringAmong(string const &str, char const * const *table,
-                        int tableSize)
-{
-  for (int i=0; i < tableSize; i++) {
-    if (str == table[i]) {
-      return true;
-    }
-  }
-  return false;
-}
-
-
 void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 {
   TRACE1("useDefaultHighlighter: file: " <<
@@ -583,86 +571,40 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
 
   file->m_highlighter.reset();
 
-  // This handles both "foo.diff" and "git diff [<fname>]".
-  if (isDiffName(file->documentName())) {
-    file->m_highlighter.reset(new DiffHighlighter());
+  KnownDocumentType kdt = detectDocumentType(file->documentName());
+  switch (kdt) {
+    case KDT_DIFF:
+      file->m_highlighter.reset(new DiffHighlighter());
 
-    // Diff output has lots of lines that are not empty and have
-    // whitespace on them.  I do not want that highlighted.
-    file->m_highlightTrailingWhitespace = false;
+      // Diff output has lots of lines that are not empty and have
+      // whitespace on them.  I do not want that highlighted.
+      file->m_highlightTrailingWhitespace = false;
 
-    return;
-  }
+      return;
 
-  if (!file->hasFilename()) {
-    return;
-  }
-
-  // TODO: Move the following logic into the `doc-type-detect` module.
-
-  // get file extension
-  string filename = file->filename();
-  char const *dot = strrchr(filename.c_str(), '.');
-  if (dot) {
-    string ext = string(dot+1);
-
-    static char const * const cppExts[] = {
-      "ast",
-      "c",
-      "cc",
-      "cpp",
-      "gr",
-      "i",
-      "ii",
-      "h",
-      "hh",
-      "hpp",
-      "java",      // C/C++ highlighting is better than none.
-      "lex",
-      "y",
-    };
-    if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
+    case KDT_C:
       file->m_highlighter.reset(new C_Highlighter(file->getCore()));
       return;
-    }
 
-    if (streq(ext, "mk")) {
+    case KDT_MAKEFILE:
       file->m_highlighter.reset(new Makefile_Highlighter(file->getCore()));
       return;
-    }
 
-    static char const * const hashCommentExts[] = {
-      "ev",
-      "pl",
-      "sh",
-    };
-    if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
+    case KDT_HASH_COMMENT:
       file->m_highlighter.reset(new HashComment_Highlighter(file->getCore()));
       return;
-    }
 
-    static char const * const ocamlExts[] = {
-      "ml",
-      "mli",
-    };
-    if (stringAmong(ext, ocamlExts, TABLESIZE(ocamlExts))) {
+    case KDT_OCAML:
       file->m_highlighter.reset(new OCaml_Highlighter(file->getCore()));
       return;
-    }
 
-    static char const * const pythonExts[] = {
-      "py",
-      "pyi",
-    };
-    if (stringAmong(ext, pythonExts, TABLESIZE(pythonExts))) {
+    case KDT_PYTHON:
       file->m_highlighter.reset(new Python_Highlighter(file->getCore()));
       return;
-    }
-  }
 
-  if (endsWith(filename, "Makefile")) {
-    file->m_highlighter.reset(new Makefile_Highlighter(file->getCore()));
-    return;
+    default:
+      // Leave it without any highlighter.
+      break;
   }
 }
 

@@ -24,18 +24,26 @@ DocumentName cmdDocName(char const *cmd)
 }
 
 
-void test_isDiffName()
+void testOne_detectDocumentType(
+  DocumentName const &docName,
+  KnownDocumentType expect)
 {
-  EXPECT_EQ(isDiffName(fileDocName("f")), false);
-  EXPECT_EQ(isDiffName(fileDocName("foo.cc")), false);
-  EXPECT_EQ(isDiffName(fileDocName("foo.diff")), true);
-  EXPECT_EQ(isDiffName(fileDocName("foo.patch")), true);
-  EXPECT_EQ(isDiffName(fileDocName("foo.patch.cc")), false);
+  EXPECT_EQ(detectDocumentType(docName), expect);
+}
 
-  EXPECT_EQ(isDiffName(cmdDocName("differences")), false);
-  EXPECT_EQ(isDiffName(cmdDocName("diff ere nces")), true);
-  EXPECT_EQ(isDiffName(cmdDocName("git diff ere nces")), true);
-  EXPECT_EQ(isDiffName(cmdDocName("gitdiff ere nces")), false);
+
+void test_detectDocumentType()
+{
+  testOne_detectDocumentType(fileDocName("f"), KDT_UNKNOWN);
+  testOne_detectDocumentType(fileDocName("foo.cc"), KDT_C);
+  testOne_detectDocumentType(fileDocName("foo.diff"), KDT_DIFF);
+  testOne_detectDocumentType(fileDocName("foo.patch"), KDT_DIFF);
+  testOne_detectDocumentType(fileDocName("foo.patch.cc"), KDT_C);
+
+  testOne_detectDocumentType(cmdDocName("differences"), KDT_UNKNOWN);
+  testOne_detectDocumentType(cmdDocName("diff ere nces"), KDT_DIFF);
+  testOne_detectDocumentType(cmdDocName("git diff ere nces"), KDT_DIFF);
+  testOne_detectDocumentType(cmdDocName("gitdiff ere nces"), KDT_UNKNOWN);
 }
 
 
@@ -45,7 +53,7 @@ CLOSE_ANONYMOUS_NAMESPACE
 // Called from named-td-test.cc.
 void test_doc_type_detect()
 {
-  test_isDiffName();
+  test_detectDocumentType();
 }
 
 
