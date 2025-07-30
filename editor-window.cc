@@ -431,7 +431,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: cos
+    // Used mnemonics: cfos
 
     MENU_ITEM    ("Start LSP server",
                   lspStartServer);
@@ -459,7 +459,7 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
-    MENU_ITEM    ("Insert fake diagnostics",
+    MENU_ITEM    ("Insert &fake diagnostics",
                   lspInsertFakeDiagnostics);
     MENU_ITEM    ("Remove diagnostics",
                   lspRemoveDiagnostics);
