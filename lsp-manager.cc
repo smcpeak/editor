@@ -18,6 +18,7 @@
 #include "smbase/list-util.h"          // smbase::listMoveFront
 #include "smbase/map-util.h"           // smbase::mapGetValueAt
 #include "smbase/overflow.h"           // safeToInt
+#include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // join
@@ -295,6 +296,11 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
   m_commandRunner.reset(new CommandRunner());
   if (m_useRealClangd) {
     m_commandRunner->setProgram("clangd");
+    if (envAsBool("CLANGD_VERBOSE_LOG")) {
+      // Causes more details to be written to its stderr log file.
+      m_commandRunner->setArguments(QStringList() <<
+        "--log=verbose");
+    }
   }
   else {
     // Need to use `env` due to cygwin symlink issues.
