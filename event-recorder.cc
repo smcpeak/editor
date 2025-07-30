@@ -211,10 +211,10 @@ void EventRecorder::recordOrdinaryKeyPress(char c)
 
 void EventRecorder::flushOrdinaryKeyChars()
 {
-  if (!m_ordinaryKeyChars.isempty()) {
-    // Extract the string first, since 'recordEvent' also flushes.
-    string keys = m_ordinaryKeyChars.str();
-    m_ordinaryKeyChars.clear();
+  // Extract the string first, since 'recordEvent' also flushes.
+  string keys = m_ordinaryKeyChars.str();
+  if (!keys.empty()) {
+    m_ordinaryKeyChars.str("");
 
     this->recordEvent(stringb("FocusKeySequence " << doubleQuote(keys)));
   }

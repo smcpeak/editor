@@ -35,6 +35,7 @@
 
 // smqtutil
 #include "smqtutil/qhboxframe.h"       // QHBoxFrame
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // CursorSetRestore
 #include "smqtutil/qtutil.h"           // toQString
 
@@ -920,10 +921,10 @@ void EditorWindow::fileClose() NOEXCEPT
 
   NamedTextDocument *b = currentDocument();
   if (b->unsavedChanges()) {
-    stringBuilder msg;
+    std::ostringstream msg;
     msg << "The document " << b->documentName() << " has unsaved changes.  "
         << "Discard these changes and close it anyway?";
-    if (!this->okToDiscardChanges(msg)) {
+    if (!this->okToDiscardChanges(msg.str())) {
       return;
     }
     if (!stillCurrentDocument(b)) {
@@ -1169,19 +1170,19 @@ void EditorWindow::fileManageConnections() NOEXCEPT
 
 bool EditorWindow::canQuitApplication()
 {
-  stringBuilder msg;
+  std::ostringstream msg;
   int ct = getUnsavedChanges(msg);
 
   if (ct > 0) {
     msg << "\nDiscard these changes and quit anyway?";
-    return this->okToDiscardChanges(msg);
+    return this->okToDiscardChanges(msg.str());
   }
 
   return true;
 }
 
 
-int EditorWindow::getUnsavedChanges(stringBuilder &msg)
+int EditorWindow::getUnsavedChanges(std::ostream &msg)
 {
   int ct = 0;
 
@@ -2534,11 +2535,11 @@ void EditorWindow::editorViewChanged() NOEXCEPT
     file->nameWithStatusIndicators()));
 
   // Window title.
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << file->m_title
      << file->fileStatusString()
      << " - " << EditorGlobal::appName;
-  this->setWindowTitle(toQString(sb));
+  this->setWindowTitle(toQString(sb.str()));
 
   // Trailing whitespace menu checkbox.
   this->m_toggleHighlightTrailingWSAction->setChecked(

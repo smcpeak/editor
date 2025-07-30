@@ -58,7 +58,6 @@ public:      // types
     NOTEQUAL_OPERATOR(MatchExtent);
 
     // Write as "(s=<start>,l=<length>)".
-    void insertSB(stringBuilder &sb) const;
     void insertOstream(ostream &os) const;
   };
 
@@ -236,14 +235,6 @@ public:      // funcs
 
 
 ENUM_BITWISE_OPS(TextSearch::SearchStringFlags, TextSearch::SS_ALL)
-
-
-inline stringBuilder& operator<< (stringBuilder &sb,
-                                  TextSearch::MatchExtent const &match)
-{
-  match.insertSB(sb);
-  return sb;
-}
 
 
 inline ostream& operator<< (ostream &os,

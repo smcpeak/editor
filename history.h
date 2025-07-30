@@ -52,7 +52,7 @@ public:
   virtual TextMCoord apply(TextDocumentCore &doc, bool reverse) const=0;
 
   // render this command as a text line, indented by 'indent' spaces
-  virtual void print(stringBuilder &sb, int indent) const=0;
+  virtual void print(std::ostream &sb, int indent) const=0;
 
   // account for this history record
   virtual void stats(HistoryStats &stats) const=0;
@@ -84,7 +84,7 @@ public:      // funcs
   // HistoryElt funcs
   virtual Tag getTag() const OVERRIDE { return HE_TEXT; }
   virtual TextMCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
-  virtual void print(stringBuilder &sb, int indent) const OVERRIDE;
+  virtual void print(std::ostream &sb, int indent) const OVERRIDE;
   virtual void stats(HistoryStats &stats) const OVERRIDE;
 
   // 'apply', but static
@@ -156,13 +156,13 @@ public:      // funcs
   // print, and mark the nth element of the history in the left
   // margin; if 'n' is outside the range of valid indices, no mark is
   // printed
-  void printWithMark(stringBuilder &sb, int indent, int n) const;
+  void printWithMark(std::ostream &sb, int indent, int n) const;
 
 
   // HistoryElt funcs
   virtual Tag getTag() const OVERRIDE { return HE_GROUP; }
   virtual TextMCoord apply(TextDocumentCore &buf, bool reverse) const OVERRIDE;
-  virtual void print(stringBuilder &sb, int indent) const OVERRIDE;
+  virtual void print(std::ostream &sb, int indent) const OVERRIDE;
   virtual void stats(HistoryStats &stats) const OVERRIDE;
 };
 

@@ -7,7 +7,6 @@
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB
-#include "smbase/str.h"                // stringBuilder
 
 #include <iostream>                    // std::ostream
 
@@ -51,7 +50,6 @@ public:      // funcs
 
   // Insert as "<line>:<byteIndex>".
   void insert(std::ostream &os) const;
-  void insert(stringBuilder &sb) const;
 
   operator gdv::GDValue() const;
 };
@@ -61,12 +59,6 @@ inline std::ostream& operator<< (std::ostream &os, TextMCoord const &tc)
 {
   tc.insert(os);
   return os;
-}
-
-inline stringBuilder& operator<< (stringBuilder &sb, TextMCoord const &tc)
-{
-  tc.insert(sb);
-  return sb;
 }
 
 
@@ -136,7 +128,6 @@ public:      // funcs
 
   // Insert as "<start>-<end>".
   void insert(std::ostream &os) const;
-  void insert(stringBuilder &sb) const;
 
   operator gdv::GDValue() const;
 };
@@ -146,12 +137,6 @@ inline std::ostream& operator<< (std::ostream &os, TextMCoordRange const &tcr)
 {
   tcr.insert(os);
   return os;
-}
-
-inline stringBuilder& operator<< (stringBuilder &sb, TextMCoordRange const &tcr)
-{
-  tcr.insert(sb);
-  return sb;
 }
 
 

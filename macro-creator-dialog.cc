@@ -6,6 +6,7 @@
 #include "editor-command.ast.gen.h"    // EditorCommand
 #include "editor-global.h"             // EditorGlobal
 
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, toQString
 #include "smqtutil/sm-line-edit.h"     // SMLineEdit
 

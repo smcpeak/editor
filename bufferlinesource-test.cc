@@ -31,7 +31,7 @@ void entry()
   for (int bufSize=1; bufSize < 70; bufSize++) {
     Array<char> buffer(bufSize);
     BufferLineSource bls;
-    stringBuilder sb;
+    std::ostringstream sb;
     for (int line=0; line < tde.numLines(); line++) {
       bls.beginScan(tde.getDocumentCore(), line);
 

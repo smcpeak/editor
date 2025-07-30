@@ -7,7 +7,7 @@
 #define DEBUG_VALUES_H
 
 
-// When used in a stringBuilder or ostream context, inserts the
+// When used in a std::ostringstream or ostream context, inserts the
 // expression as text and then a value.  For simplicity, the value is
 // surrounded by quotes, even non-strings, but not escaped.
 //

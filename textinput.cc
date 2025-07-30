@@ -3,6 +3,7 @@
 
 #include "textinput.h"                 // this module
 
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtutil.h"           // toString(QString)
 
 #include "smbase/trace.h"              // TRACE

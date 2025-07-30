@@ -244,10 +244,10 @@ void HE_text::computeText(TextDocumentCore const &buf, int count)
 }
 
 
-void HE_text::print(stringBuilder &sb, int indent) const
+void HE_text::print(std::ostream &sb, int indent) const
 {
-  sb.indent(indent);
-  sb << (insertion? "Ins" : "Del")
+  sb << std::string(indent, ' ')
+     << (insertion? "Ins" : "Del")
      << "(" << tc << ", \""
      << encodeWithEscapes(text.getArray(), text.length())
      << "\");\n";
@@ -355,9 +355,9 @@ TextMCoord HE_group::apply(TextDocumentCore &buf, bool reverse) const
 }
 
 
-void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
+void HE_group::printWithMark(std::ostream &sb, int indent, int n) const
 {
-  sb.indent(indent) << "group {\n";
+  sb << std::string(indent, ' ') << "group {\n";
   int i;
   for (i=0; i < seqLength(); i++) {
     HistoryElt const *e = seq[i];
@@ -374,7 +374,7 @@ void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
     sb << "--->\n";
   }
 
-  sb.indent(indent) << "}";
+  sb << std::string(indent, ' ') << "}";
 
   //if (n >= 0) {
   //  sb << " /""*time=" << n << "*/";
@@ -384,7 +384,7 @@ void HE_group::printWithMark(stringBuilder &sb, int indent, int n) const
 }
 
 
-void HE_group::print(stringBuilder &sb, int indent) const
+void HE_group::print(std::ostream &sb, int indent) const
 {
   printWithMark(sb, indent, -1 /*mark*/);
 }

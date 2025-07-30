@@ -260,7 +260,7 @@ public:      // funcs
   // ------------------------- diagnostics --------------------------
   // print the history in a textual format, with the current history
   // index marked (or no mark if history index is at the end)
-  void printHistory(stringBuilder &sb) const;
+  void printHistory(std::ostream &sb) const;
   void printHistory(/*to stdout*/) const;
 
   // get statistics about history memory usage

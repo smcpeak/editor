@@ -8,7 +8,7 @@
 #include "lsp-doc-state.h"             // LSPDocumentState
 #include "lsp-manager.h"               // LSPManager
 
-#include "smqtutil/qtutil.h"           // qstringb
+#include "smqtutil/qstringb.h"         // qstringb
 
 #include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/xassert.h"            // xassertPrecondition

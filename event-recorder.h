@@ -6,7 +6,7 @@
 
 // smbase
 #include "smbase/sm-override.h"        // OVERRIDE
-#include "smbase/str.h"                // string, stringBuilder
+#include "smbase/std-string-fwd.h"     // std::string
 
 // Qt
 #include <QKeyEvent>
@@ -14,6 +14,7 @@
 
 // libc++
 #include <fstream>                     // std::ofstream
+#include <sstream>                     // std::ostringstream
 
 
 // Acts as an event filter to record input events for later replay as
@@ -26,18 +27,18 @@ private:     // data
 
   // Queued sequence of ordinary key presses that should be written to
   // the stream before any other kind of event.
-  stringBuilder m_ordinaryKeyChars;
+  std::ostringstream m_ordinaryKeyChars;
 
 private:     // funcs
   void recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent);
   void recordOrdinaryKeyPress(char c);
   void flushOrdinaryKeyChars();
-  void recordEvent(string const &ev);
+  void recordEvent(std::string const &ev);
 
 public:      // funcs
   // Automatically installs itself as an event filter for
   // QCoreApplication::instance().
-  EventRecorder(string const &filename);
+  EventRecorder(std::string const &filename);
   ~EventRecorder();
 
   // QObject methods.

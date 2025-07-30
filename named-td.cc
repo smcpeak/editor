@@ -120,20 +120,20 @@ static char const *documentProcessStatusIndicator(
 
 string NamedTextDocument::nameWithStatusIndicators() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << documentProcessStatusIndicator(this);
   if (!hostName().isLocal()) {
     sb << hostName() << ": ";
   }
   sb << resourceName();
   sb << fileStatusString();
-  return sb;
+  return sb.str();
 }
 
 
 string NamedTextDocument::fileStatusString() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
   if (this->unsavedChanges()) {
     sb << " *";
   }

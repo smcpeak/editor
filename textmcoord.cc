@@ -30,14 +30,9 @@ int TextMCoord::compareTo(TextMCoord const &b) const
 }
 
 
-void TextMCoord::insert(ostream &os) const
+void TextMCoord::insert(std::ostream &os) const
 {
   os << this->m_line << ':' << this->m_byteIndex;
-}
-
-void TextMCoord::insert(stringBuilder &sb) const
-{
-  sb << this->m_line << ':' << this->m_byteIndex;
 }
 
 
@@ -74,14 +69,9 @@ void TextMCoordRange::swapEnds()
 }
 
 
-void TextMCoordRange::insert(ostream &os) const
+void TextMCoordRange::insert(std::ostream &os) const
 {
   os << this->m_start << '-' << this->m_end;
-}
-
-void TextMCoordRange::insert(stringBuilder &sb) const
-{
-  sb << this->m_start << '-' << this->m_end;
 }
 
 

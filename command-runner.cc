@@ -4,7 +4,8 @@
 #include "command-runner.h"            // this module
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // qstringb, waitForQtEvent
+#include "smqtutil/qstringb.h"         // qstringb
+#include "smqtutil/qtutil.h"           // waitForQtEvent
 
 // smbase
 #include "smbase/codepoint.h"          // isShellMetacharacter

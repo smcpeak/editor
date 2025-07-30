@@ -23,6 +23,7 @@
 #include "smqtutil/editor14i.bdf.gen.h"          // bdfFontData_editor14i
 #include "smqtutil/editor14r.bdf.gen.h"          // bdfFontData_editor14r
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
+#include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
@@ -705,10 +706,10 @@ void EditorWidget::emitSearchStatusIndicator()
   if (!m_textSearch->searchStringIsValid()) {
     // This is a bit crude as an error explanation, but it seems
     // adequate for an initial implementation.
-    stringBuilder sb;
+    std::ostringstream sb;
     sb << "Err @ " << m_textSearch->searchStringErrorOffset();
-    TRACE2("emitSearchStatusIndicator: " << sb);
-    Q_EMIT signal_searchStatusIndicator(toQString(sb));
+    TRACE2("emitSearchStatusIndicator: " << sb.str());
+    Q_EMIT signal_searchStatusIndicator(toQString(sb.str()));
     return;
   }
 
@@ -770,7 +771,7 @@ void EditorWidget::emitSearchStatusIndicator()
   // Matches at or after the selection start.
   int matchesGTE = matchesOn + matchesAfter + matchesBelow;
 
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << matchesLT << " [";
   if (matchesSelected) {
     sb << 'x';
@@ -780,8 +781,8 @@ void EditorWidget::emitSearchStatusIndicator()
     sb << '+';
   }
 
-  TRACE2("emitSearchStatusIndicator: " << sb);
-  Q_EMIT signal_searchStatusIndicator(toQString(sb));
+  TRACE2("emitSearchStatusIndicator: " << sb.str());
+  Q_EMIT signal_searchStatusIndicator(toQString(sb.str()));
 }
 
 

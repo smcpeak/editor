@@ -4,8 +4,8 @@
 #include "vfs-query-sync.h"            // this module
 
 // smqtutil
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // messageBox
-#include "smqtutil/qtutil.h"           // qstringb
 
 // smbase
 #include "smbase/trace.h"              // TRACE

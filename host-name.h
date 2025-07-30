@@ -66,12 +66,6 @@ public:      // methods
 DEFINE_RELOPS_FROM_COMPARE_TO(HostName)
 
 
-inline stringBuilder& operator<< (stringBuilder &sb, HostName const &doc)
-{
-  return sb << doc.toString();
-}
-
-
 inline std::ostream& operator<< (std::ostream &os, HostName const &doc)
 {
   return doc.print(os);

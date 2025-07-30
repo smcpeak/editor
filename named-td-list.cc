@@ -242,7 +242,7 @@ string NamedTextDocumentList::computeUniqueTitle(
   // include to make the title unique.
   for (int n = 1; n <= tok.tokc(); n++) {
     // Construct a title with 'n' trailing components.
-    stringBuilder sb;
+    std::ostringstream sb;
     for (int i = tok.tokc() - n; i < tok.tokc(); i++) {
       sb << tok[i];
       if (i < tok.tokc() - 1) {
@@ -252,10 +252,10 @@ string NamedTextDocumentList::computeUniqueTitle(
     }
 
     // Check for another file with this title.
-    if (!this->findDocumentByTitleC(sb)) {
+    if (!this->findDocumentByTitleC(sb.str())) {
       TRACE("named-td-list", "computed title with " << n <<
-                            " components: " << sb);
-      return sb;
+                            " components: " << sb.str());
+      return sb.str();
     }
   }
 

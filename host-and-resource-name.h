@@ -75,12 +75,6 @@ public:      // methods
 DEFINE_RELOPS_FROM_COMPARE_TO(HostAndResourceName)
 
 
-inline stringBuilder& operator<< (stringBuilder &sb, HostAndResourceName const &doc)
-{
-  return sb << doc.toString();
-}
-
-
 inline std::ostream& operator<< (std::ostream &os, HostAndResourceName const &doc)
 {
   return doc.print(os);

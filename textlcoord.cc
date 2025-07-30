@@ -35,14 +35,9 @@ bool TextLCoord::operator< (TextLCoord const &obj) const
 }
 
 
-void TextLCoord::insert(ostream &os) const
+void TextLCoord::insert(std::ostream &os) const
 {
   os << this->m_line << ':' << this->m_column;
-}
-
-void TextLCoord::insert(stringBuilder &sb) const
-{
-  sb << this->m_line << ':' << this->m_column;
 }
 
 
@@ -67,14 +62,9 @@ void TextLCoordRange::swapEnds()
 }
 
 
-void TextLCoordRange::insert(ostream &os) const
+void TextLCoordRange::insert(std::ostream &os) const
 {
   os << this->m_start << '-' << this->m_end;
-}
-
-void TextLCoordRange::insert(stringBuilder &sb) const
-{
-  sb << this->m_start << '-' << this->m_end;
 }
 
 

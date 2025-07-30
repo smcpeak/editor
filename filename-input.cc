@@ -4,6 +4,7 @@
 #include "filename-input.h"            // this module
 
 // smqtutil
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // messageBox
 #include "smqtutil/qtutil.h"           // toString(QString)
 #include "smqtutil/sm-line-edit.h"     // SMLineEdit
@@ -454,14 +455,14 @@ void FilenameInputDialog::setCompletions()
   }
 
   // Assemble them into one string.
-  stringBuilder sb;
+  std::ostringstream sb;
   for (int i=0; i < completions.length(); i++) {
     string const &entry = completions[i];
     sb << entry << '\n';
   }
 
   // Put that into the control.
-  m_completionsEdit->setPlainText(toQString(sb));
+  m_completionsEdit->setPlainText(toQString(sb.str()));
 }
 
 

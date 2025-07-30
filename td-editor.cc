@@ -807,7 +807,7 @@ static bool isWordCharText(ArrayStack<char> const &text)
 
 string TextDocumentEditor::getWordAfter(TextLCoord tc) const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
 
   if (!( 0 <= tc.m_line && tc.m_line < numLines() )) {
     return "";
@@ -839,7 +839,7 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
     tc.m_column++;
   }
 
-  return sb;
+  return sb.str();
 }
 
 
@@ -931,7 +931,7 @@ int TextDocumentEditor::getIndentationColumns(int line,
     return -1;
   }
   else {
-    stringBuilder sb;
+    std::ostringstream sb;
     TextDocumentEditor::LineIterator it(*this, line);
     for (; it.has(); it.advByte()) {
       int c = it.byteAt();
@@ -1077,7 +1077,7 @@ bool TextDocumentEditor::cursorOnModelCoord() const
 void TextDocumentEditor::fillToCoord(TextLCoord const &tc)
 {
   // Text to add in order to fill to the target coordinate.
-  stringBuilder textToAdd;
+  std::ostringstream textToAdd;
 
   // Layout lines added by 'textToAdd'.
   int textToAddLines = 0;

@@ -5,7 +5,6 @@
 #define TEXTLCOORD_H
 
 #include "smbase/sm-macros.h"          // DMEMB
-#include "smbase/str.h"                // stringBuilder
 
 #include <iostream>                    // std::ostream
 
@@ -71,7 +70,6 @@ public:      // funcs
 
   // Insert as "<line>:<col>".
   void insert(std::ostream &os) const;
-  void insert(stringBuilder &sb) const;
 };
 
 
@@ -79,12 +77,6 @@ inline std::ostream& operator<< (std::ostream &os, TextLCoord const &tc)
 {
   tc.insert(os);
   return os;
-}
-
-inline stringBuilder& operator<< (stringBuilder &sb, TextLCoord const &tc)
-{
-  tc.insert(sb);
-  return sb;
 }
 
 
@@ -139,7 +131,6 @@ public:      // funcs
 
   // Insert as "<start>-<end>".
   void insert(std::ostream &os) const;
-  void insert(stringBuilder &sb) const;
 };
 
 
@@ -147,12 +138,6 @@ inline std::ostream& operator<< (std::ostream &os, TextLCoordRange const &tcr)
 {
   tcr.insert(os);
   return os;
-}
-
-inline stringBuilder& operator<< (stringBuilder &sb, TextLCoordRange const &tcr)
-{
-  tcr.insert(sb);
-  return sb;
 }
 
 

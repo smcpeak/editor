@@ -202,7 +202,7 @@ public:      // funcs
 
   // Return the number of files that have unsaved changes, and
   // populate 'msg' with a list of precisely which ones.
-  int getUnsavedChanges(stringBuilder &msg);
+  int getUnsavedChanges(std::ostream &msg);
 
   // Interactively ask the user if it is ok to discard changes,
   // returning true if they say it is.

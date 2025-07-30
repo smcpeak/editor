@@ -9,6 +9,7 @@
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 // smqtutil
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent), messageBox
 #include "smqtutil/qtutil.h"           // toQString, SET_QOBJECT_NAME
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
@@ -306,7 +307,7 @@ string OpenFilesDialog::eventReplayQuery(string const &state)
   }
 
   else if (state == "allDocumentsFilenamePathBase") {
-    stringBuilder sb;
+    std::ostringstream sb;
     for (int r=0; r < m_tableWidget->rowCount(); r++) {
       NamedTextDocument *doc = m_filteredDocuments.at(r);
       sb << filenamePathBase(doc) << '\n';

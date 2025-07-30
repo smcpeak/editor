@@ -1963,7 +1963,7 @@ void innerExpectLayoutWindow(TextDocumentEditor &tde,
 
   ArrayStack<char> text;
   int width = lvCol - fvCol + 1;
-  stringBuilder sb;
+  std::ostringstream sb;
   for (int line = fvLine; line <= lvLine; line++) {
     text.clear();
     tde.getLineLayout(TextLCoord(line, fvCol), text, width);
@@ -2003,7 +2003,7 @@ void expectLayoutWindow(TextDocumentEditor &tde,
   for (int newFvCol = fvCol; newFvCol <= lvCol; newFvCol++) {
     // Construct new expected layout by trimming columns.
     int newWidth = lvCol - newFvCol + 1;
-    stringBuilder newPreExpect;
+    std::ostringstream newPreExpect;
     for (int line = fvLine; line <= lvLine; line++) {
       newPreExpect <<
         preExpect.substr((line-fvLine)*oldWidth + (newFvCol-fvCol),
@@ -2020,7 +2020,7 @@ void expectLayoutWindow(TextDocumentEditor &tde,
   for (int newLvCol = lvCol; newLvCol >= fvCol; newLvCol--) {
     // Construct new expected layout by trimming columns.
     int newWidth = newLvCol - fvCol + 1;
-    stringBuilder newPreExpect;
+    std::ostringstream newPreExpect;
     for (int line = fvLine; line <= lvLine; line++) {
       newPreExpect <<
         preExpect.substr((line-fvLine)*oldWidth,

@@ -5,6 +5,8 @@
 
 #include "smqtutil/qtutil.h"           // toString(QString)
 
+#include "smbase/str.h"                // stringBuilder
+
 #include <QRegularExpression>
 
 

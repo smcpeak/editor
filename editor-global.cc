@@ -22,6 +22,7 @@
 
 // smqtutil
 #include "smqtutil/gdvalue-qstring.h"  // toGDValue(QString)
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"           // toQString
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
@@ -1244,13 +1245,13 @@ static string objectDesc(QObject const *obj)
     return "NULL";
   }
 
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << "{name=\"" << obj->objectName()
      << "\" path=\"" << qObjectPath(obj)
      << "\" addr=" << (void*)obj
      << " class=" << obj->metaObject()->className()
      << "}";
-  return sb;
+  return sb.str();
 }
 
 

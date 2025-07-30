@@ -62,13 +62,7 @@ bool TextSearch::MatchExtent::operator== (MatchExtent const &obj) const
 }
 
 
-void TextSearch::MatchExtent::insertSB(stringBuilder &sb) const
-{
-  sb << "(s=" << m_startByte << ",l=" << m_lengthBytes << ')';
-}
-
-
-void TextSearch::MatchExtent::insertOstream(ostream &os) const
+void TextSearch::MatchExtent::insertOstream(std::ostream &os) const
 {
   os << "(s=" << m_startByte << ",l=" << m_lengthBytes << ')';
 }
@@ -591,7 +585,7 @@ string TextSearch::getReplacementText(string const &existing,
 
     // Build up the replacement string by interpreting the backslash
     // escape sequences in 'replaceSpec'.
-    stringBuilder sb;
+    std::ostringstream sb;
 
     for (char const *p = replaceSpec.c_str(); *p; p++) {
       if (*p == '\\') {
@@ -628,7 +622,7 @@ string TextSearch::getReplacementText(string const &existing,
       }
     }
 
-    return sb;
+    return sb.str();
   }
 
   else {

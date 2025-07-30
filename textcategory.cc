@@ -106,7 +106,7 @@ TextCategory LineCategories::getCategoryAt(int index) const
 
 string LineCategories::asString() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
 
   LineCategoryIter iter(*this);
   while (!iter.atEnd()) {
@@ -115,7 +115,7 @@ string LineCategories::asString() const
   }
   sb << "[" << (int)endCategory;     // leave last '[' unbalanced
 
-  return sb;
+  return sb.str();
 }
 
 
@@ -141,7 +141,7 @@ static char categoryCodeChar(int category)
 
 string LineCategories::asUnaryString() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
 
   LineCategoryIter iter(*this);
   while (!iter.atEnd()) {
@@ -152,7 +152,7 @@ string LineCategories::asUnaryString() const
   }
   sb << categoryCodeChar(endCategory) << "...";
 
-  return sb;
+  return sb.str();
 }
 
 

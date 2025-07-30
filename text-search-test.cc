@@ -21,7 +21,7 @@ static void expectTotalMatches(TextSearch const &ts, int expect)
 
 static string dumpMatches(TextSearch const &ts)
 {
-  stringBuilder sb;
+  std::ostringstream sb;
 
   for (int line=0; line < ts.documentLines(); line++) {
     if (ts.countLineMatches(line)) {
@@ -36,7 +36,7 @@ static string dumpMatches(TextSearch const &ts)
     }
   }
 
-  return sb;
+  return sb.str();
 }
 
 static void expectMatches(TextSearch const &ts, string const &expect)

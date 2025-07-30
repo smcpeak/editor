@@ -330,16 +330,16 @@ void TextDocument::notifyMetadataChange() const
 }
 
 
-void TextDocument::printHistory(stringBuilder &sb) const
+void TextDocument::printHistory(std::ostream &sb) const
 {
   m_history.printWithMark(sb, 0 /*indent*/, m_historyIndex);
 }
 
 void TextDocument::printHistory() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
   printHistory(sb);
-  cout << sb;
+  cout << sb.str();
   cout.flush();
 }
 

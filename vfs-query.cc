@@ -345,7 +345,7 @@ void VFS_FileSystemQuery::on_processTerminated() NOEXCEPT
   // An uncommanded termination is an error.  (And a commanded
   // termination is preceded by disconnecting signals, so we would not
   // get here.)
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << "editor-fs-server terminated unexpectedly: ";
   sb << toString(m_commandRunner.getTerminationDescription());
   if (!m_errorBytes.isEmpty()) {

@@ -167,7 +167,7 @@ VFS_FileStatusReply::~VFS_FileStatusReply()
 
 string VFS_FileStatusReply::description() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << VFS_PathReply::description();
   sb << " dirName=\"" << m_dirName
      << "\" fileName=\"" << m_fileName
@@ -241,7 +241,7 @@ void VFS_PathReply::setFailureReason(XSysError::Reason reasonCode,
 
 string VFS_PathReply::description() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << toString(messageType()) << ": ";
   if (m_success) {
     sb << "success";
@@ -286,7 +286,7 @@ VFS_ReadFileReply::~VFS_ReadFileReply()
 
 string VFS_ReadFileReply::description() const
 {
-  stringBuilder sb;
+  std::ostringstream sb;
   sb << VFS_PathReply::description()
      << " size=" << m_contents.size()
      << " modTime=" << m_fileModificationTime

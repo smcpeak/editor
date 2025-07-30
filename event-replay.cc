@@ -8,6 +8,7 @@
 #include "waiting-counter.h"           // g_waitingCounter
 
 // smqtutil
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // getKeyPressFromString
 #include "smqtutil/qtutil.h"           // operator<<(QString)
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
