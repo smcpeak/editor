@@ -166,6 +166,9 @@ public:       // funcs
   EditorGlobal(int argc, char **argv);
   ~EditorGlobal();
 
+  // Assert invariants on all documents, etc.  Throw on failure.
+  void selfCheck() const;
+
   // To run the app, use the 'exec()' method, inherited
   // from QApplication.
 

@@ -31,6 +31,8 @@ F8+Shift                     LSP | Go to previous diagnostic
 
 F9                           File | Run "run-make-from-editor"
 
+F10                          Debug | Run &global invariant self-check ...
+
 
 # -------------------------- keys with names ---------------------------
 

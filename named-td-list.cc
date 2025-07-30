@@ -61,6 +61,8 @@ void NamedTextDocumentList::selfCheck() const
 
     xassert(!d->m_title.empty());
     titles.addUnique(d->m_title);
+
+    d->selfCheck();
   }
 }
 

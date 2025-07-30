@@ -46,6 +46,8 @@ public:      // methods
                     NamedTextDocument *initFile);
   virtual ~EditorWidgetFrame() override;
 
+  void selfCheck() const;
+
   EditorWindow *editorWindow() const { return m_editorWindow; }
   EditorWidget *editorWidget() const { return m_editorWidget; }
 

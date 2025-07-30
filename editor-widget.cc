@@ -184,6 +184,8 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsFailed,
                    this, &EditorWidget::on_vfsConnectionFailed);
 
+  selfCheck();
+
   EditorWidget::s_objectCount++;
 }
 

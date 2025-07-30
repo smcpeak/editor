@@ -291,6 +291,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // response to the *first* font change after startup, after which it
   // resumes ignoring font updates.
   qApp->setFont(qApp->font());
+
+  selfCheck();
 }
 
 
@@ -362,6 +364,20 @@ EditorGlobal::~EditorGlobal()
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(this, 0, this, 0);
   QObject::disconnect(&m_vfsConnections, 0, this, 0);
+}
+
+
+void EditorGlobal::selfCheck() const
+{
+  m_documentList.selfCheck();
+
+  FOREACH_OBJLIST(EditorWindow, m_windows, iter) {
+    iter.data()->selfCheck();
+  }
+
+  m_lspManager.selfCheck();
+
+  m_vfsConnections.selfCheck();
 }
 
 
@@ -1477,6 +1493,10 @@ int main(int argc, char **argv)
         string error = replay.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;
+
+          // Check all invariants before declaring victory.
+          app.selfCheck();
+
           ret = 0;   // It could still fail, depending on object counts.
         }
         else {

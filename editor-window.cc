@@ -54,15 +54,6 @@
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xoverflow.h"          // smbase::XNumericConversion
 
-// libc++
-#include <optional>                    // std::optional
-#include <string_view>                 // std::string_view
-#include <utility>                     // std::move
-
-// libc
-#include <string.h>                    // strrchr
-#include <stdlib.h>                    // atoi
-
 // Qt
 #include <qmenubar.h>                  // QMenuBar
 #include <qscrollbar.h>                // QScrollBar
@@ -78,6 +69,16 @@
 #include <QDesktopWidget>
 #include <QFontDialog>
 #include <QInputDialog>
+
+// libc++
+#include <exception>                   // std::exception
+#include <optional>                    // std::optional
+#include <string_view>                 // std::string_view
+#include <utility>                     // std::move
+
+// libc
+#include <string.h>                    // strrchr
+#include <stdlib.h>                    // atoi
 
 using namespace gdv;
 using namespace smbase;
@@ -166,6 +167,8 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
     m_editorGlobal, &EditorGlobal::signal_editorFontChanged,
     this, &EditorWindow::slot_editorFontChanged);
 
+  selfCheck();
+
   EditorWindow::s_objectCount++;
 }
 
@@ -193,6 +196,14 @@ EditorWindow::~EditorWindow()
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
   QObject::disconnect(m_editorGlobal, NULL, this, NULL);
+}
+
+
+void EditorWindow::selfCheck() const
+{
+  xassert(m_editorGlobal != nullptr);
+
+  m_editorWidgetFrame->selfCheck();
 }
 
 
@@ -508,8 +519,12 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("debugMenu");
       QMenu *menu = submenu;
 
+      // Used letters: agsw
+
       MENU_ITEM    ("Dump &window object tree", helpDebugDumpWindowObjectTree);
       MENU_ITEM    ("Dump &application object tree", helpDebugDumpApplicationObjectTree);
+      MENU_ITEM_KEY("Run &global invariant self-check ...",
+        helpDebugGlobalSelfCheck, Qt::Key_F10);
 
       // The appearance of the widget is affected by whether it has the
       // focus.  However, even when choosing this from the menu, the
@@ -2459,6 +2474,23 @@ void EditorWindow::helpDebugDumpApplicationObjectTree() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   qApp->dumpObjectTree();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::helpDebugGlobalSelfCheck() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  try {
+    editorGlobal()->selfCheck();
+
+    inform("No problems detected.");
+  }
+  catch (std::exception &x) {
+    inform(stringb("Invariant violation: " << x.what()));
+  }
+
   GENERIC_CATCH_END
 }
 

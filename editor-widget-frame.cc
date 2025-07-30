@@ -106,6 +106,15 @@ EditorWidgetFrame::~EditorWidgetFrame()
 }
 
 
+void EditorWidgetFrame::selfCheck() const
+{
+  xassert(m_editorWindow);
+  xassert(m_editorWidget);
+
+  m_editorWidget->selfCheck();
+}
+
+
 void EditorWidgetFrame::setScrollbarRangesAndValues()
 {
   RCSerf<TextDocumentEditor> tde = editorWidget()->getDocumentEditor();

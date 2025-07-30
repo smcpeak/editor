@@ -155,6 +155,9 @@ public:      // funcs
                QWidget *parent = NULL);
   ~EditorWindow();
 
+  // Assert invariants.
+  void selfCheck() const;
+
   // Get the global state we are a part of.
   EditorGlobal *editorGlobal() const { return m_editorGlobal; }
 
@@ -313,6 +316,7 @@ public Q_SLOTS:
   void helpAboutQt() NOEXCEPT;
   void helpDebugDumpWindowObjectTree() NOEXCEPT;
   void helpDebugDumpApplicationObjectTree() NOEXCEPT;
+  void helpDebugGlobalSelfCheck() NOEXCEPT;
   void helpDebugEditorScreenshot() NOEXCEPT;
 
   /*
