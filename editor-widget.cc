@@ -2594,13 +2594,15 @@ void EditorWidget::on_jumpToDiagnosticLocation(
 {
   GENERIC_CATCH_BEGIN
 
-  DocumentName docName =
-    DocumentName::fromFilename(HostName::asLocal(), toString(fname));
+  TRACE1("on_jumpToDiagnosticLocation:"
+    " fname=" << doubleQuote(fname) <<
+    " line=" << line);
 
-  // TODO: Finish this.
+  HostFileAndLineOpt hostFileAndLine(
+    HostAndResourceName::localFile(toString(fname)),
+    line);
 
-  QMessageBox::information(this, "TODO",
-    qstringb("TODO: Jump to " << fname << ":" << line));
+  Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
 
   GENERIC_CATCH_END
 }

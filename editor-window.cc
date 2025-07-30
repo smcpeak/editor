@@ -2510,7 +2510,7 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE1("editorViewChanged");
+  TRACE2("editorViewChanged");
 
   m_editorWidgetFrame->setScrollbarRangesAndValues();
 
@@ -2574,8 +2574,8 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE1(
-    "slot_openOrSwitchToFileAtLineOpt: harn=" << hfl.m_harn <<
+  TRACE1("slot_openOrSwitchToFileAtLineOpt:"
+    " harn=" << hfl.m_harn <<
     " line=" << hfl.m_line);
 
   if (!hfl.hasFilename()) {
@@ -2587,10 +2587,10 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   {
     SMFileUtil sfu;
     if (!sfu.endsWithDirectorySeparator(hfl.m_harn.resourceName()) &&
-        hfl.m_harn != currentDocument()->documentName() &&
         checkFileExistenceSynchronously(hfl.m_harn)) {
-      // The file exists, and it is not the current document.  Just
-      // go straight to opening it without prompting.
+      // The file exists.  Just go straight to opening it without
+      // prompting.
+      TRACE1("slot_openOrSwitchToFileAtLineOpt: fast path open");
       this->openOrSwitchToFile(hfl.m_harn);
       if (hfl.m_line != 0) {
         // Also go to line number, if provided.
@@ -2610,6 +2610,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
   HostAndResourceName confirmedHarn = hfl.m_harn;
 
+  TRACE1("slot_openOrSwitchToFileAtLineOpt: prompting");
   if (dialog.runDialog(&(m_editorGlobal->m_documentList),
                        confirmedHarn)) {
     this->openOrSwitchToFile(confirmedHarn);
