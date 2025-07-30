@@ -401,13 +401,16 @@ public:      // funcs
   // This notification is sent to observers if some data in one of the
   // higher-level document classes changed (or might have changed), and
   // that change should trigger a redraw of a widget showing this
-  // document.  Currently, there are two such cases:
+  // document.  Currently, there are three such cases:
   //
   // 1. The "has unsaved changes" property changes
   //    (`TextDocument::unsavedChanges()`).
   //
   // 2. Updated language diagnostics were received from an LSP server
   //    (`NamedTextDocument::m_diagnostics`).
+  //
+  // 3. The file contents were reloaded from disk, which means they are
+  //    out of date w.r.t. any previously received diagnostics.
   //
   // Since the only expected reaction is a redraw, there's not a high
   // penalty for firing this off when unnecessary, but it's not entirely

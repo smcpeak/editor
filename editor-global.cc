@@ -511,11 +511,6 @@ void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
 bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
-  // Have widges ignore the notifications arising from the refresh so
-  // their cursor position is not affected.
-  SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
-    true);
-
   if (doc->hasFilename()) {
     std::unique_ptr<VFS_ReadFileReply> rfr(
       readFileSynchronously(&m_vfsConnections, parentWidget,
@@ -525,6 +520,11 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
     }
 
     if (rfr->m_success) {
+      // Have widgets ignore the notifications arising from the refresh
+      // so their cursor position is not affected.
+      SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+        true);
+
       doc->replaceFileAndStats(rfr->m_contents,
                                rfr->m_fileModificationTime,
                                rfr->m_readOnly);
@@ -535,6 +535,11 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
         " (code " << rfr->m_failureReasonCode << ")"));
       return false;
     }
+
+    // Among other things, we want to let the LSP status indicator
+    // update itself to show that the file contents have changed since
+    // the last LSP diagnostics were received.
+    doc->notifyMetadataChange();
   }
 
   return true;
