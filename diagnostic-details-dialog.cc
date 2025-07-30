@@ -152,6 +152,12 @@ void DiagnosticDetailsDialog::showEvent(QShowEvent *event)
   // in order to scroll it with Up and Down, but we should start with
   // the table.
   m_table->setFocus();
+
+  // Normally, `QDialog::showEvent` moves the dialog to be centered
+  // with respect to its parent every time it is shown.  However, if
+  // this attribute is set, then it will keep its prior position each
+  // time it is re-opened.
+  setAttribute(Qt::WA_Moved);
 }
 
 
