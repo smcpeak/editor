@@ -13,7 +13,7 @@
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, RETURN_ENUMERATION_STRING_OR
-#include "smbase/sm-span-ops.h"        // smbase::Span
+#include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, EXPECT_EQ
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/trace.h"              // TRACE_ARGS

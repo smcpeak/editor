@@ -6,7 +6,7 @@
 #include "lsp-test-request-params.h"   // this module
 
 #include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-span-ops.h"        // smbase::Span
+#include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/string-util.h"        // parseDecimalInt_noSign
 
 #include <cstdlib>                     // std::exit
