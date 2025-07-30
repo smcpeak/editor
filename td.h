@@ -158,6 +158,9 @@ public:      // funcs
   int countTrailingSpacesTabs(int line) const                { return m_core.countTrailingSpacesTabs(line); }
   VersionNumber getVersionNumber() const                     { return m_core.getVersionNumber(); }
 
+  // This is a modification of sorts, but does not need undo/redo.
+  void bumpVersionNumber()                                   { m_core.bumpVersionNumber(); }
+
   // ---------------------- extra attributes ----------------------
   DocumentProcessStatus documentProcessStatus() const
     { return m_documentProcessStatus; }

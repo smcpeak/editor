@@ -35,7 +35,9 @@
 #include <QWidget>
 
 // libc++
+#include <cstdint>                               // std::int32_t
 #include <memory>                                // std::unique_ptr
+#include <optional>                              // std::optional
 
 class QLabel;
 class QMenu;
@@ -126,6 +128,12 @@ private:     // funcs
     QString dir,
     bool prefixStderrLines,
     QString command);
+
+  // Get the version number of the current document as an `int32_t`,
+  // which is what we need for LSP.  If the version number cannot be
+  // converted to `int32_t` (because it is too big), pop up an error box
+  // if `wantErrors`, then return nullopt.
+  std::optional<std::int32_t> getDocLSPVersionNumber(bool wantErrors);
 
   // Do `operation` with the current file.
   void doLSPFileOperation(LSPFileOperation operation);

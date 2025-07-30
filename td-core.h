@@ -120,10 +120,6 @@ private:     // funcs
   // Notify all observers of a total change to the document.
   void notifyTotalChange();
 
-  // Increment `m_versionNumber`.  Also check that there are no
-  // outstanding iterators.
-  void bumpVersionNumber();
-
 public:    // funcs
   TextDocumentCore();        // one empty line
   ~TextDocumentCore();
@@ -279,6 +275,14 @@ public:    // funcs
   // When a change happens, the version number is incremented *before*
   // observers are notified, so they see the new number.
   VersionNumber getVersionNumber() const { return m_versionNumber; }
+
+  // Increment `m_versionNumber`.  Also check that there are no
+  // outstanding iterators.
+  //
+  // Normally this is done when the content changes.  However, there are
+  // times when we want to re-send the same content to the LSP server,
+  // but it needs a different version number to do that.
+  void bumpVersionNumber();
 
   // ---------------------- observers ---------------------------
   // Add an observer.  It must not already be there.  This is 'const'

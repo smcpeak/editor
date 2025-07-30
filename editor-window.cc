@@ -1936,6 +1936,23 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
 }
 
 
+std::optional<std::int32_t> EditorWindow::getDocLSPVersionNumber(bool wantErrors)
+{
+  try {
+    return convertNumber<std::int32_t>(
+      currentDocument()->getVersionNumber());
+  }
+  catch (XNumericConversion &x) {
+    if (wantErrors) {
+      complain(stringb(
+        "The version number cannot be represented as an LSP int: " <<
+        x.what()));
+    }
+    return {};
+  }
+}
+
+
 void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
 {
   // True if we want a popup for errors.
@@ -1980,17 +1997,10 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
     return;
   }
 
-  int version;
-  try {
-    version = safeToInt(ntd->getVersionNumber());
-  }
-  catch (XNumericConversion &x) {
-    if (wantErrors) {
-      complain(stringb(
-        "The version number cannot be represented as an LSP int: " <<
-        x.what()));
-    }
-    return;
+  std::optional<std::int32_t> version =
+    getDocLSPVersionNumber(wantErrors);
+  if (!version) {
+    return;    // Error reported if desired.
   }
 
   std::string contents = vectorOfUCharToString(ntd->getWholeFile());
@@ -2000,7 +2010,7 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
     std::string languageId = "cpp";
 
     lspManager().notify_textDocument_didOpen(
-      fname, languageId, version, std::move(contents));
+      fname, languageId, *version, std::move(contents));
     ntd->sentLSPFileContents();
   }
 
@@ -2009,11 +2019,38 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
       lspManager().getDocInfo(fname);
     xassert(docInfo);
 
-    if (!( version > docInfo->m_latestVersion )) {
+    if (*version == docInfo->m_latestVersion) {
+      // We want to re-send despite no content changes, for example
+      // because a header file changed that should fix issues in the
+      // current file.  Bump the version and try again.
+      ntd->bumpVersionNumber();
+
+      version = getDocLSPVersionNumber(wantErrors);
+      if (!version) {
+        return;    // Error reported if desired.
+      }
+
+      // In this situation, `clangd` would normally ignore the
+      // notification because it realizes the file hasn't changed
+      // (despite the new version number) and thinks that means the
+      // diagnostics would be the same too.
+      //
+      // `clangd` accepts a `forceRebuild` parameter that would force
+      // new diagnostics, but it also rebuilds other things, making it
+      // quite slow.
+      //
+      // So, instead, we will just append some junk that should not
+      // cause the diagnostics to be different, but will make `clangd`
+      // re-analyze the contents.  This is much faster than
+      // `forceRebuild`.
+      contents += stringb("//" << *version);
+    }
+
+    if (!( *version > docInfo->m_latestVersion )) {
       // Sending this would be a protocol violation.
       if (wantErrors) {
         complain(stringb(
-          "The current document version (" << version <<
+          "The current document version (" << *version <<
           ") is not greater than the previously sent document version (" <<
           docInfo->m_latestVersion << ")."));
       }
@@ -2021,7 +2058,7 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
     }
 
     lspManager().notify_textDocument_didChange(
-      fname, version, std::move(contents));
+      fname, *version, std::move(contents));
     ntd->sentLSPFileContents();
   }
 }
