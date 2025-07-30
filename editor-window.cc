@@ -2149,10 +2149,7 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
 
 void EditorWindow::lspGoToAdjacentDiagnostic(bool next)
 {
-  if (std::optional<std::string> msg =
-        editorWidget()->lspGoToAdjacentDiagnostic(next)) {
-    inform(*msg);
-  }
+  editorWidget()->lspGoToAdjacentDiagnostic(next);
 }
 
 void EditorWindow::lspGoToNextDiagnostic() NOEXCEPT

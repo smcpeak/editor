@@ -2608,8 +2608,7 @@ void EditorWidget::on_jumpToDiagnosticLocation(
 }
 
 
-std::optional<std::string>
-EditorWidget::lspGoToAdjacentDiagnostic(bool next)
+void EditorWidget::lspGoToAdjacentDiagnostic(bool next)
 {
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
@@ -2619,16 +2618,7 @@ EditorWidget::lspGoToAdjacentDiagnostic(bool next)
       cursorTo(m_editor->toLCoord(*nextLoc));
       scrollToCursor(3 /*edgeGap*/);
       redraw();
-      return {};
     }
-    else {
-      return next?
-        "No diagnostics after cursor." :
-        "No diagnostics before cursor.";
-    }
-  }
-  else {
-    return "There are no diagnostics received for this file.";
   }
 }
 

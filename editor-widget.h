@@ -471,9 +471,10 @@ public:      // funcs
   // return nullopt.  Otherwise, return a string explaining the issue.
   std::optional<std::string> lspShowDiagnosticAtCursor() const;
 
-  // Move the cursor to the next or previous diagnostic message.  Return
-  // a string with an error message if there is a problem.
-  std::optional<std::string> lspGoToAdjacentDiagnostic(bool next);
+  // Move the cursor to the next or previous diagnostic message.  Do
+  // nothing if we have no diagnostics or there are no more in the
+  // indicated direction.
+  void lspGoToAdjacentDiagnostic(bool next);
 
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
