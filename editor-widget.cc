@@ -2617,6 +2617,7 @@ EditorWidget::lspGoToAdjacentDiagnostic(bool next)
           tdd->getAdjacentDiagnosticLocation(next,
             m_editor->toMCoord(m_editor->cursor()))) {
       cursorTo(m_editor->toLCoord(*nextLoc));
+      scrollToCursor(3 /*edgeGap*/);
       redraw();
       return {};
     }
