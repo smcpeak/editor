@@ -168,8 +168,9 @@ public:      // funcs
   // Get VFS query object.
   VFS_Connections *vfsConnections() const;
 
-  // open and begin editing a particular file
-  void fileOpenFile(HostAndResourceName const &harn);
+  // Open and begin editing a particular file, or just switch to it if
+  // it is already open.
+  void openOrSwitchToFile(HostAndResourceName const &harn);
 
   // File user is editing: returns editor->docFile.
   NamedTextDocument *currentDocument();

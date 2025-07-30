@@ -137,7 +137,7 @@ private:     // data
 
 private:      // funcs
   void processCommandLineOptions(
-    EditorWindow *ed, int argc, char **argv);
+    EditorWindow *editorWindow, int argc, char **argv);
 
   NamedTextDocument *getCommandOutputDocument(
     HostName const &hostName, QString dir, QString command);

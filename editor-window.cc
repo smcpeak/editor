@@ -703,6 +703,8 @@ void EditorWindow::fileOpen() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE1("fileOpen");
+
   HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
   this->on_openFilenameInputDialogSignal(HostFileAndLineOpt(dirHarn, 0));
 
@@ -720,12 +722,14 @@ void EditorWindow::fileOpenAtCursor() NOEXCEPT
 }
 
 
-void EditorWindow::fileOpenFile(HostAndResourceName const &harn)
+void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 {
-  TRACE1("fileOpenFile: " << harn);
+  TRACE1("openOrSwitchToFile: " << harn);
 
   if (harn.empty()) {
     // Dialog was canceled.
+    //
+    // TODO: Can this happen?  From the call sites it looks like not.
     return;
   }
 
@@ -2587,7 +2591,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
         checkFileExistenceSynchronously(hfl.m_harn)) {
       // The file exists, and it is not the current document.  Just
       // go straight to opening it without prompting.
-      this->fileOpenFile(hfl.m_harn);
+      this->openOrSwitchToFile(hfl.m_harn);
       if (hfl.m_line != 0) {
         // Also go to line number, if provided.
         editorWidget()->cursorTo(TextLCoord(hfl.m_line-1, 0));
@@ -2608,7 +2612,7 @@ void EditorWindow::on_openFilenameInputDialogSignal(
 
   if (dialog.runDialog(&(m_editorGlobal->m_documentList),
                        confirmedHarn)) {
-    this->fileOpenFile(confirmedHarn);
+    this->openOrSwitchToFile(confirmedHarn);
   }
 
   GENERIC_CATCH_END

@@ -390,7 +390,7 @@ DEFINE_XBASE_SUBCLASS(QuitAfterPrintingHelp);
 
 
 void EditorGlobal::processCommandLineOptions(
-  EditorWindow *ed, int argc, char **argv)
+  EditorWindow *editorWindow, int argc, char **argv)
 {
   SMFileUtil sfu;
   for (int i=1; i < argc; i++) {
@@ -432,7 +432,7 @@ void EditorGlobal::processCommandLineOptions(
       // Open all non-option files specified on the command line.
       string path = sfu.getAbsolutePath(arg);
       path = sfu.normalizePathSeparators(path);
-      ed->fileOpenFile(HostAndResourceName::localFile(path));
+      editorWindow->openOrSwitchToFile(HostAndResourceName::localFile(path));
     }
   }
 
