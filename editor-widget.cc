@@ -2543,7 +2543,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
       elts.push_back(Element{
         toQString(docName.directory()),
         toQString(sfu.splitPathBase(docName.filename())),
-        cursorMC.m_line,
+        cursorMC.m_line + 1,           // TextMCoord uses 0-based lines.
         toQString(diag->m_message)
       });
 
