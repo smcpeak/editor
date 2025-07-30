@@ -329,7 +329,14 @@ public Q_SLOTS:
 
   void slot_editorFontChanged() NOEXCEPT;
   void on_closeSARPanel() NOEXCEPT;
-  void on_openFilenameInputDialogSignal(HostFileAndLineOpt hfl) NOEXCEPT;
+
+  // If `hfl` is empty, do nothing.  Otherwise, open or switch to the
+  // specified file.  If `hfl` includes a line number, then also jump to
+  // that line number.
+  //
+  // If the file is not open and cannot be opened, open it in the
+  // file-open dialog.
+  void slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt hfl) NOEXCEPT;
 };
 
 

@@ -75,7 +75,7 @@ EditorWidgetFrame::EditorWidgetFrame(EditorWindow *editorWindow,
   // QueuedConnection.
   QObject::connect(
     m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
-    m_editorWindow, &EditorWindow::on_openFilenameInputDialogSignal,
+    m_editorWindow, &EditorWindow::slot_openOrSwitchToFileAtLineOpt,
     Qt::QueuedConnection);
 
   // Delegate focus to the actual editor.

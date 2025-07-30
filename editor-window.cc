@@ -706,7 +706,7 @@ void EditorWindow::fileOpen() NOEXCEPT
   TRACE1("fileOpen");
 
   HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
-  this->on_openFilenameInputDialogSignal(HostFileAndLineOpt(dirHarn, 0));
+  this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(dirHarn, 0));
 
   GENERIC_CATCH_END
 }
@@ -2569,13 +2569,13 @@ void EditorWindow::on_closeSARPanel() NOEXCEPT
 }
 
 
-void EditorWindow::on_openFilenameInputDialogSignal(
+void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   HostFileAndLineOpt hfl) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   TRACE1(
-    "on_openFilenameInputDialogSignal: harn=" << hfl.m_harn <<
+    "slot_openOrSwitchToFileAtLineOpt: harn=" << hfl.m_harn <<
     " line=" << hfl.m_line);
 
   if (!hfl.hasFilename()) {
