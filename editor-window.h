@@ -336,6 +336,10 @@ public Q_SLOTS:
   //
   // If the file is not open and cannot be opened, open it in the
   // file-open dialog.
+  //
+  // TODO: Really the widget should be in control of this, not the
+  // window, in order to allow for eventually having multiple widgets
+  // per window.
   void slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt hfl) NOEXCEPT;
 };
 

@@ -74,7 +74,7 @@ EditorWidgetFrame::EditorWidgetFrame(EditorWindow *editorWindow,
   // See EditorWidget::openDiagnosticOrFileAtCursor for why this is a
   // QueuedConnection.
   QObject::connect(
-    m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
+    m_editorWidget, &EditorWidget::signal_openOrSwitchToFileAtLineOpt,
     m_editorWindow, &EditorWindow::slot_openOrSwitchToFileAtLineOpt,
     Qt::QueuedConnection);
 

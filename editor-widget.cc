@@ -591,8 +591,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor()
     hostFileAndLine.m_harn = getDocumentDirectoryHarn();
   }
 
-  // Prompt the user with the filename to allow confirmation and
-  // changes.
+  // Go to the indicated file and line.
   //
   // This should be sent on a Qt::QueuedConnection, meaning the slot
   // will be invoked later, once the current event is done processing.
@@ -601,7 +600,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor()
   // are currently looking at if it is untitled, which will cause the
   // RCSerf infrastructure to abort just before memory corruption would
   // have resulted.
-  Q_EMIT openFilenameInputDialogSignal(hostFileAndLine);
+  Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
 }
 
 

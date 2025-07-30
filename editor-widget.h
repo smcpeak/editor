@@ -696,13 +696,9 @@ Q_SIGNALS:
   void viewChanged();
 
   // Emitted when the user indicates, via some widget functionality,
-  // that they want to open a particular file.  It should open a dialog
-  // to allow the user to further edit the name.  If 'line' is non-zero,
-  // it indicates where in 'filename' we want to go, as a 1-based line
-  // number.
-  //
-  // If '!hfl.hasFilename()', this is ignored.
-  void openFilenameInputDialogSignal(HostFileAndLineOpt hfl);
+  // that they want to go to a particular file, and possibly a specific
+  // line.
+  void signal_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt hfl);
 
   // The user wants to close the search and replace panel if it is open.
   void closeSARPanel();
