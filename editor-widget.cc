@@ -565,7 +565,7 @@ HostAndResourceName EditorWidget::getDocumentDirectoryHarn() const
 }
 
 
-void EditorWidget::fileOpenAtCursor()
+void EditorWidget::openDiagnosticOrFileAtCursor()
 {
   if (std::optional<std::string> msg = lspShowDiagnosticAtCursor();
       !msg.has_value()) {

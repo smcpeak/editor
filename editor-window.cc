@@ -714,7 +714,7 @@ void EditorWindow::fileOpenAtCursor() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->fileOpenAtCursor();
+  editorWidget()->openDiagnosticOrFileAtCursor();
 
   GENERIC_CATCH_END
 }

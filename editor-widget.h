@@ -529,9 +529,10 @@ public:      // funcs
   // This is not 'const' because the editor is owned by this object.
   TextDocumentEditor *getDocumentEditor();
 
-  // Scan the text near the cursor to try to find the name of a file,
+  // If the cursor is on a diagnostic, open its details.  Otherwise,
+  // scan the text near the cursor to try to find the name of a file,
   // and open it in the editor.
-  void fileOpenAtCursor();
+  void openDiagnosticOrFileAtCursor();
 
   // Make the document shown in the widget be topmost in the global list
   // of open documents.

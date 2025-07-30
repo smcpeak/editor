@@ -71,7 +71,7 @@ EditorWidgetFrame::EditorWidgetFrame(EditorWindow *editorWindow,
   QObject::connect(m_editorWidget, &EditorWidget::closeSARPanel,
                    m_editorWindow, &EditorWindow::on_closeSARPanel);
 
-  // See EditorWidget::fileOpenAtCursor for why this is a
+  // See EditorWidget::openDiagnosticOrFileAtCursor for why this is a
   // QueuedConnection.
   QObject::connect(
     m_editorWidget, &EditorWidget::openFilenameInputDialogSignal,
