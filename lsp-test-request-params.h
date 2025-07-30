@@ -6,6 +6,8 @@
 #ifndef EDITOR_LSP_TEST_REQUEST_PARAMS_H
 #define EDITOR_LSP_TEST_REQUEST_PARAMS_H
 
+#include "smbase/sm-span-fwd.h"        // smbase::Span
+
 #include <string>                      // std::string
 
 
@@ -37,8 +39,9 @@ public:      // methods
     int col,
     bool useRealClangd);
 
-  // Return parameters as specified in `argc/argv`.
-  static LSPTestRequestParams getFromCmdLine(int argc, char **argv);
+  // Return parameters as specified in `argv`.
+  static LSPTestRequestParams getFromCmdLine(
+    smbase::Span<std::string const> argv);
 };
 
 

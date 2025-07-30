@@ -13,6 +13,7 @@
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, RETURN_ENUMERATION_STRING_OR
+#include "smbase/sm-span-ops.h"        // smbase::Span
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, EXPECT_EQ
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/trace.h"              // TRACE_ARGS
@@ -20,6 +21,8 @@
 #include <QCoreApplication>
 
 #include <iostream>                    // std::cerr
+#include <string>                      // std::string
+#include <vector>                      // std::vector
 
 
 using namespace gdv;
@@ -617,8 +620,10 @@ void entry(int argc, char **argv)
 {
   TRACE_ARGS();
 
+  std::vector<std::string> argvStrings =
+    stringVectorFromPointerArray(argc, argv);
   LSPTestRequestParams params =
-    LSPTestRequestParams::getFromCmdLine(argc, argv);
+    LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
 
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);

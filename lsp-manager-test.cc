@@ -13,11 +13,16 @@
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-span-ops.h"        // smbase::Span
 #include "smbase/sm-test.h"            // ARGS_MAIN
+#include "smbase/string-util.h"        // stringVectorFromPointerArray
 #include "smbase/trace.h"              // TRACE_ARGS
 #include "smbase/xassert.h"            // xassert
 
 #include <QCoreApplication>
+
+#include <string>                      // std::string
+#include <vector>                      // std::vector
 
 
 using namespace gdv;
@@ -245,8 +250,10 @@ void entry(int argc, char **argv)
 
   SMFileUtil().createDirectoryAndParents("out");
 
+  std::vector<std::string> argvStrings =
+    stringVectorFromPointerArray(argc, argv);
   LSPTestRequestParams params =
-    LSPTestRequestParams::getFromCmdLine(argc, argv);
+    LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
 
   cout << "-------- synchronous --------\n";
   {
