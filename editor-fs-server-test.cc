@@ -21,11 +21,11 @@ FSServerTest::FSServerTest(int argc, char **argv)
     m_eventLoop(),
     m_fsQuery()
 {
-  QObject::connect(&m_fsQuery, &FileSystemQuery::signal_connected,
+  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_connected,
                    this, &FSServerTest::on_connected);
-  QObject::connect(&m_fsQuery, &FileSystemQuery::signal_replyAvailable,
+  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_replyAvailable,
                    this, &FSServerTest::on_vfsReplyAvailable);
-  QObject::connect(&m_fsQuery, &FileSystemQuery::signal_failureAvailable,
+  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_failureAvailable,
                    this, &FSServerTest::on_failureAvailable);
 }
 

@@ -18,7 +18,7 @@
 class QWidget;
 
 
-// Like FileSystemQuery, but with a synchronous interface and an
+// Like VFS_FileSystemQuery, but with a synchronous interface and an
 // implementation that has a GUI to allow the user to cancel requests.
 class VFS_QuerySync : public QObject,
                       public IHFExists {

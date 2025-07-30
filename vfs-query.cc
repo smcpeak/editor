@@ -29,7 +29,7 @@
 #include <string.h>                    // memcpy
 
 
-FileSystemQuery::FileSystemQuery()
+VFS_FileSystemQuery::VFS_FileSystemQuery()
   : QObject(),
     m_state(S_CREATED),
     m_hostName(HostName::asLocal()),
@@ -40,31 +40,31 @@ FileSystemQuery::FileSystemQuery()
     m_failureReason()
 {
   QObject::connect(&m_commandRunner, &CommandRunner::signal_outputDataReady,
-                   this, &FileSystemQuery::on_outputDataReady);
+                   this, &VFS_FileSystemQuery::on_outputDataReady);
   QObject::connect(&m_commandRunner, &CommandRunner::signal_errorDataReady,
-                   this, &FileSystemQuery::on_errorDataReady);
+                   this, &VFS_FileSystemQuery::on_errorDataReady);
   QObject::connect(&m_commandRunner, &CommandRunner::signal_processTerminated,
-                   this, &FileSystemQuery::on_processTerminated);
+                   this, &VFS_FileSystemQuery::on_processTerminated);
 }
 
 
-FileSystemQuery::~FileSystemQuery()
+VFS_FileSystemQuery::~VFS_FileSystemQuery()
 {
   // See doc/signals-and-dtors.txt.
   disconnectSignals();
 }
 
 
-static bool isWaitingState(FileSystemQuery::State s)
+static bool isWaitingState(VFS_FileSystemQuery::State s)
 {
-  return s == FileSystemQuery::S_CONNECTING ||
-         s == FileSystemQuery::S_PENDING;
+  return s == VFS_FileSystemQuery::S_CONNECTING ||
+         s == VFS_FileSystemQuery::S_PENDING;
 }
 
 
-void FileSystemQuery::setState(State s)
+void VFS_FileSystemQuery::setState(State s)
 {
-  TRACE("FileSystemQuery",
+  TRACE("VFS_FileSystemQuery",
     "setState: " << toString(m_state) << " -> " << toString(s));
 
   // Inform 'EventReplay' if our waitingness has changed.
@@ -76,13 +76,13 @@ void FileSystemQuery::setState(State s)
 }
 
 
-void FileSystemQuery::disconnectSignals()
+void VFS_FileSystemQuery::disconnectSignals()
 {
   QObject::disconnect(&m_commandRunner, nullptr, this, nullptr);
 }
 
 
-void FileSystemQuery::recordFailure(string const &reason)
+void VFS_FileSystemQuery::recordFailure(string const &reason)
 {
   if (state() != S_FAILED) {
     setState(S_FAILED);
@@ -90,13 +90,13 @@ void FileSystemQuery::recordFailure(string const &reason)
     Q_EMIT signal_failureAvailable();
   }
   else {
-    TRACE("FileSystemQuery",
+    TRACE("VFS_FileSystemQuery",
       "recordFailure: discarding additional reason: " << reason);
   }
 }
 
 
-void FileSystemQuery::checkForCompleteReply()
+void VFS_FileSystemQuery::checkForCompleteReply()
 {
   uint32_t replyBytesSize = m_replyBytes.size();
   if (replyBytesSize < 4) {
@@ -119,7 +119,7 @@ void FileSystemQuery::checkForCompleteReply()
     return;
   }
 
-  if (tracingSys("FileSystemQuery_detail")) {
+  if (tracingSys("VFS_FileSystemQuery_detail")) {
     printQByteArray(m_replyBytes, "reply bytes");
   }
 
@@ -128,7 +128,7 @@ void FileSystemQuery::checkForCompleteReply()
   StreamFlatten flat(&iss);
   m_replyMessage.reset(VFS_Message::deserialize(flat));
 
-  TRACE("FileSystemQuery",
+  TRACE("VFS_FileSystemQuery",
     "received reply: type=" << toString(m_replyMessage->messageType()) <<
     " len=" << replyLen);
 
@@ -149,7 +149,7 @@ void FileSystemQuery::checkForCompleteReply()
       // Confirm compatibility.
       if (getVer->m_version == VFS_currentVersion) {
         // Good to go.
-        TRACE("FileSystemQuery", "confirmed protocol compatibility");
+        TRACE("VFS_FileSystemQuery", "confirmed protocol compatibility");
         setState(S_READY);
         m_replyMessage.reset(nullptr);
         Q_EMIT signal_connected();
@@ -177,7 +177,7 @@ void FileSystemQuery::checkForCompleteReply()
 }
 
 
-void FileSystemQuery::connect(HostName const &hostname)
+void VFS_FileSystemQuery::connect(HostName const &hostname)
 {
   xassert(state() == S_CREATED);
 
@@ -231,7 +231,7 @@ void FileSystemQuery::connect(HostName const &hostname)
     m_commandRunner.setArguments(args);
   }
 
-  TRACE("FileSystemQuery",
+  TRACE("VFS_FileSystemQuery",
     "starting command: " << toString(m_commandRunner.getCommandLine()));
   m_commandRunner.startAsynchronous();
 
@@ -241,13 +241,13 @@ void FileSystemQuery::connect(HostName const &hostname)
 }
 
 
-HostName FileSystemQuery::getHostName() const
+HostName VFS_FileSystemQuery::getHostName() const
 {
   return m_hostName;
 }
 
 
-void FileSystemQuery::innerSendRequest(VFS_Message const &msg)
+void VFS_FileSystemQuery::innerSendRequest(VFS_Message const &msg)
 {
   // Serialize the message.
   std::string serMessage;
@@ -270,17 +270,17 @@ void FileSystemQuery::innerSendRequest(VFS_Message const &msg)
   memcpy(envelope.data()+4, serMessage.data(), serMsgLen);
 
   // Send that to the child process.
-  TRACE("FileSystemQuery",
+  TRACE("VFS_FileSystemQuery",
     "sending message: type=" << toString(msg.messageType()) <<
     " len=" << serMsgLen);
-  if (tracingSys("FileSystemQuery_detail")) {
+  if (tracingSys("VFS_FileSystemQuery_detail")) {
     printQByteArray(envelope, "envelope bytes");
   }
   m_commandRunner.putInputData(envelope);
 }
 
 
-void FileSystemQuery::sendRequest(VFS_Message const &msg)
+void VFS_FileSystemQuery::sendRequest(VFS_Message const &msg)
 {
   xassert(state() == S_READY);
 
@@ -290,7 +290,7 @@ void FileSystemQuery::sendRequest(VFS_Message const &msg)
 }
 
 
-std::unique_ptr<VFS_Message> FileSystemQuery::takeReply()
+std::unique_ptr<VFS_Message> VFS_FileSystemQuery::takeReply()
 {
   xassert(state() == S_HAS_REPLY);
   setState(S_READY);
@@ -298,21 +298,21 @@ std::unique_ptr<VFS_Message> FileSystemQuery::takeReply()
 }
 
 
-void FileSystemQuery::markAsFailed(string const &reason)
+void VFS_FileSystemQuery::markAsFailed(string const &reason)
 {
   xassert(state() != S_DEAD);
   recordFailure(reason);
 }
 
 
-string FileSystemQuery::getFailureReason()
+string VFS_FileSystemQuery::getFailureReason()
 {
   xassert(state() == S_FAILED);
   return m_failureReason;
 }
 
 
-void FileSystemQuery::shutdown()
+void VFS_FileSystemQuery::shutdown()
 {
   disconnectSignals();
   setState(S_DEAD);
@@ -321,26 +321,26 @@ void FileSystemQuery::shutdown()
 }
 
 
-void FileSystemQuery::on_outputDataReady() NOEXCEPT
+void VFS_FileSystemQuery::on_outputDataReady() NOEXCEPT
 {
-  TRACE("FileSystemQuery", "on_outputDataReady");
+  TRACE("VFS_FileSystemQuery", "on_outputDataReady");
 
   m_replyBytes.append(m_commandRunner.takeOutputData());
   checkForCompleteReply();
 }
 
-void FileSystemQuery::on_errorDataReady() NOEXCEPT
+void VFS_FileSystemQuery::on_errorDataReady() NOEXCEPT
 {
-  TRACE("FileSystemQuery", "on_errorDataReady");
+  TRACE("VFS_FileSystemQuery", "on_errorDataReady");
 
   // Just accumulate the error bytes.  We'll deal with them when
   // looking at output data or process termination.
   m_errorBytes.append(m_commandRunner.takeErrorData());
 }
 
-void FileSystemQuery::on_processTerminated() NOEXCEPT
+void VFS_FileSystemQuery::on_processTerminated() NOEXCEPT
 {
-  TRACE("FileSystemQuery", "on_processTerminated");
+  TRACE("VFS_FileSystemQuery", "on_processTerminated");
 
   // An uncommanded termination is an error.  (And a commanded
   // termination is preceded by disconnecting signals, so we would not
@@ -356,8 +356,8 @@ void FileSystemQuery::on_processTerminated() NOEXCEPT
 
 
 DEFINE_ENUMERATION_TO_STRING(
-  FileSystemQuery::State,
-  FileSystemQuery::NUM_STATES,
+  VFS_FileSystemQuery::State,
+  VFS_FileSystemQuery::NUM_STATES,
   (
     "S_CREATED",
     "S_CONNECTING",

@@ -9,7 +9,7 @@
 // editor
 #include "host-name.h"                 // HostName
 #include "vfs-msg.h"                   // VFS_Message
-#include "vfs-query-fwd.h"             // FileSystemQuery
+#include "vfs-query-fwd.h"             // VFS_FileSystemQuery
 
 // smbase
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
@@ -28,7 +28,7 @@
 #include <stdint.h>                    // uint64_t
 
 
-// Collection of active FileSystemQuery objects, and an asynchronous
+// Collection of active VFS_FileSystemQuery objects, and an asynchronous
 // query interface on top of them.
 class VFS_Connections : public QObject {
   Q_OBJECT
@@ -44,8 +44,8 @@ public:      // types
   // diagram.
   //
   // Note: These states have some similarities with
-  // FileSystemQuery::State, but also important differences.  FSQ is the
-  // lower-level module.
+  // VFS_FileSystemQuery::State, but also important differences.  FSQ is
+  // the lower-level module.
   enum ConnectionState {
     CS_INVALID,                        // Unknown host.
     CS_CONNECTING,                     // Trying to connect.
@@ -85,7 +85,7 @@ private:     // types
     HostName m_hostName;
 
     // The underlying query object.
-    std::unique_ptr<FileSystemQuery> m_fsQuery;
+    std::unique_ptr<VFS_FileSystemQuery> m_fsQuery;
 
     // If true, we have 'm_startingDirectory'.  Otherwise, we are still
     // connecting, or processing the query to get that directory.
@@ -103,8 +103,8 @@ private:     // types
     // if none is.
     RequestID m_currentRequestID;
 
-    // Sequence of queued requests to send.  FileSystemQuery only allows
-    // one request at a time, so while a request is in flight,
+    // Sequence of queued requests to send.  VFS_FileSystemQuery only
+    // allows one request at a time, so while a request is in flight,
     // additional requests are queued here.
     std::list<QueuedRequest> m_queuedRequests;
 
@@ -171,7 +171,7 @@ private:      // methods
   Connection       *conn (HostName const &hostName)
     { return const_cast<Connection*>(connC(hostName)); }
 
-  // Assuming we received a signal from a FileSystemQuery, find and
+  // Assuming we received a signal from a VFS_FileSystemQuery, find and
   // return the Connection associated with the sender.  Return nullptr
   // if one cannot be found.
   Connection * NULLABLE signalRecipientConnection();
@@ -314,7 +314,7 @@ Q_SIGNALS:
   void signal_failed(HostName hostName, string reason);
 
 protected Q_SLOTS:
-  // Handlers for FileSystemQuery.
+  // Handlers for VFS_FileSystemQuery.
   void on_connected() NOEXCEPT;
   void on_vfsReplyAvailable() NOEXCEPT;
   void on_failureAvailable() NOEXCEPT;

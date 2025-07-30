@@ -4,7 +4,7 @@
 #include "vfs-connections.h"           // this module
 
 // editor
-#include "vfs-query.h"                 // FileSystemQuery
+#include "vfs-query.h"                 // VFS_FileSystemQuery
 
 // smbase
 #include "smbase/container-util.h"     // smbase::contains
@@ -27,7 +27,7 @@ VFS_Connections::Connection::Connection(VFS_Connections *connections,
                                         HostName const &hostName)
   : m_connections(connections),
     m_hostName(hostName),
-    m_fsQuery(new FileSystemQuery),
+    m_fsQuery(new VFS_FileSystemQuery),
     m_haveStartingDirectory(false),
     m_startingDirectory(),
     m_currentRequestID(0),
@@ -38,11 +38,11 @@ VFS_Connections::Connection::Connection(VFS_Connections *connections,
   //
   // It might be a good idea to change this to have the Connection
   // object handle the signals directly.
-  QObject::connect(m_fsQuery.get(), &FileSystemQuery::signal_connected,
+  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_connected,
                    m_connections, &VFS_Connections::on_connected);
-  QObject::connect(m_fsQuery.get(), &FileSystemQuery::signal_replyAvailable,
+  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_replyAvailable,
                    m_connections, &VFS_Connections::on_vfsReplyAvailable);
-  QObject::connect(m_fsQuery.get(), &FileSystemQuery::signal_failureAvailable,
+  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_failureAvailable,
                    m_connections, &VFS_Connections::on_failureAvailable);
 
   m_fsQuery->connect(m_hostName);
@@ -120,19 +120,19 @@ VFS_Connections::ConnectionState VFS_Connections::connectionState(
 VFS_Connections::ConnectionState
 VFS_Connections::Connection::connectionState() const
 {
-  static_assert(FileSystemQuery::NUM_STATES == 7);
+  static_assert(VFS_FileSystemQuery::NUM_STATES == 7);
 
   switch (m_fsQuery->state()) {
     default:
       xfailure("invalid state");
 
-    case FileSystemQuery::S_CREATED:
-    case FileSystemQuery::S_CONNECTING:
+    case VFS_FileSystemQuery::S_CREATED:
+    case VFS_FileSystemQuery::S_CONNECTING:
       return CS_CONNECTING;
 
-    case FileSystemQuery::S_READY:
-    case FileSystemQuery::S_PENDING:
-    case FileSystemQuery::S_HAS_REPLY:
+    case VFS_FileSystemQuery::S_READY:
+    case VFS_FileSystemQuery::S_PENDING:
+    case VFS_FileSystemQuery::S_HAS_REPLY:
       if (m_haveStartingDirectory) {
         return CS_READY;
       }
@@ -140,8 +140,8 @@ VFS_Connections::Connection::connectionState() const
         return CS_CONNECTING;
       }
 
-    case FileSystemQuery::S_FAILED:
-    case FileSystemQuery::S_DEAD:
+    case VFS_FileSystemQuery::S_FAILED:
+    case VFS_FileSystemQuery::S_DEAD:
       if (m_haveStartingDirectory) {
         return CS_FAILED_AFTER_CONNECTING;
       }

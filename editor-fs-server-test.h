@@ -6,7 +6,7 @@
 
 // editor
 #include "host-name.h"                 // HostName
-#include "vfs-query.h"                 // FileSystemQuery
+#include "vfs-query.h"                 // VFS_FileSystemQuery
 #include "vfs-msg.h"                   // VFS_FileStatusReply
 
 // smbase
@@ -30,7 +30,7 @@ public:      // data
   QEventLoop m_eventLoop;
 
   // Query manager object.
-  FileSystemQuery m_fsQuery;
+  VFS_FileSystemQuery m_fsQuery;
 
 public:      // methods
   FSServerTest(int argc, char **argv);
@@ -62,7 +62,7 @@ public:      // methods
   void runGetDirEntriesTest();
 
 public Q_SLOTS:
-  // Handlers for FileSystemQuery signals.
+  // Handlers for VFS_FileSystemQuery signals.
   void on_connected() NOEXCEPT;
   void on_vfsReplyAvailable() NOEXCEPT;
   void on_failureAvailable() NOEXCEPT;

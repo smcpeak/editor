@@ -4,6 +4,6 @@
 #ifndef EDITOR_VFS_QUERY_FWD_H
 #define EDITOR_VFS_QUERY_FWD_H
 
-class FileSystemQuery;
+class VFS_FileSystemQuery;
 
 #endif // EDITOR_VFS_QUERY_FWD_H

@@ -1,5 +1,5 @@
 // vfs-query.h
-// FileSystemQuery class.
+// VFS_FileSystemQuery class.
 
 #ifndef EDITOR_VFS_QUERY_H
 #define EDITOR_VFS_QUERY_H
@@ -30,9 +30,9 @@
 // implements the VFS protocol.  The process could be locally serving
 // the requests or an SSH process communicating to the real server on
 // another machine.
-class FileSystemQuery : public QObject {
+class VFS_FileSystemQuery : public QObject {
   Q_OBJECT
-  NO_OBJECT_COPIES(FileSystemQuery);
+  NO_OBJECT_COPIES(VFS_FileSystemQuery);
 
 public:      // types
   // States that the query object can be in.
@@ -93,11 +93,11 @@ private:     // methods
   void innerSendRequest(VFS_Message const &msg);
 
 public:      // methods
-  FileSystemQuery();
+  VFS_FileSystemQuery();
 
   // Preferably, 'shutdown' should be explicitly called before the
   // destructor is.
-  virtual ~FileSystemQuery();
+  virtual ~VFS_FileSystemQuery();
 
   // Get current state.
   State state() const { return m_state; }
@@ -174,7 +174,7 @@ protected Q_SLOTS:
 
 
 // Returns a string like "S_READY".
-char const *toString(FileSystemQuery::State s);
+char const *toString(VFS_FileSystemQuery::State s);
 
 
 #endif // EDITOR_VFS_QUERY_H
