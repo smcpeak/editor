@@ -107,10 +107,10 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
     #undef ADD_BUTTON
   }
 
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_connected,
-                   this, &ConnectionsDialog::on_connected);
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_failed,
-                   this, &ConnectionsDialog::on_failed);
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsConnected,
+                   this, &ConnectionsDialog::on_vfsConnected);
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsFailed,
+                   this, &ConnectionsDialog::on_vfsFailed);
 
   repopulateTable();
   m_tableWidget->setCurrentCell(0, 0);
@@ -257,9 +257,9 @@ void ConnectionsDialog::keyPressEvent(QKeyEvent *k) noexcept
 }
 
 
-void ConnectionsDialog::on_connected(HostName hostName) noexcept
+void ConnectionsDialog::on_vfsConnected(HostName hostName) noexcept
 {
-  TRACE("ConnectionsDialog", "on_connected: host=" << hostName);
+  TRACE("ConnectionsDialog", "on_vfsConnected: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 
@@ -270,9 +270,9 @@ void ConnectionsDialog::on_connected(HostName hostName) noexcept
 }
 
 
-void ConnectionsDialog::on_failed(HostName hostName, string reason) noexcept
+void ConnectionsDialog::on_vfsFailed(HostName hostName, string reason) noexcept
 {
-  TRACE("ConnectionsDialog", "on_failed: host=" << hostName);
+  TRACE("ConnectionsDialog", "on_vfsFailed: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 

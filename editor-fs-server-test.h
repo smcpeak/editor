@@ -63,9 +63,9 @@ public:      // methods
 
 public Q_SLOTS:
   // Handlers for VFS_FileSystemQuery signals.
-  void on_connected() NOEXCEPT;
+  void on_vfsConnected() NOEXCEPT;
   void on_vfsReplyAvailable() NOEXCEPT;
-  void on_failureAvailable() NOEXCEPT;
+  void on_vfsFailureAvailable() NOEXCEPT;
 };
 
 

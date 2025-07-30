@@ -133,8 +133,9 @@ FilenameInputDialog::FilenameInputDialog(
 
   this->resize(m_history->m_dialogSize);
 
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_replyAvailable,
-                   this, &FilenameInputDialog::on_vfsReplyAvailable);
+  QObject::connect(
+    m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
+    this, &FilenameInputDialog::on_vfsReplyAvailable);
 }
 
 

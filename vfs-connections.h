@@ -222,8 +222,8 @@ public:      // methods
   bool localIsReady() const { return isReady(HostName::asLocal()); }
 
   // True if we finished connecting to 'hostName' (and therefore became
-  // 'isReady' and emitted 'signal_connected'), even if we then lost the
-  // connection.
+  // 'isReady' and emitted 'signal_vfsConnected'), even if we then lost
+  // the connection.
   bool isOrWasConnected(HostName const &hostName) const;
 
   // Return the absolute path that clients should normally start in when
@@ -305,19 +305,19 @@ public:      // methods
 
 Q_SIGNALS:
   // Emitted when 'isConnecting()' transitions to 'isReady()'.
-  void signal_connected(HostName hostName);
+  void signal_vfsConnected(HostName hostName);
 
   // Emitted when 'replyIsAvailable(requestID)' becomes true.
-  void signal_replyAvailable(RequestID requestID);
+  void signal_vfsReplyAvailable(RequestID requestID);
 
   // Emitted when 'connectionFailed' becomes true.
-  void signal_failed(HostName hostName, string reason);
+  void signal_vfsFailed(HostName hostName, string reason);
 
 protected Q_SLOTS:
   // Handlers for VFS_FileSystemQuery.
-  void on_connected() NOEXCEPT;
+  void on_vfsConnected() NOEXCEPT;
   void on_vfsReplyAvailable() NOEXCEPT;
-  void on_failureAvailable() NOEXCEPT;
+  void on_vfsFailureAvailable() NOEXCEPT;
 };
 
 

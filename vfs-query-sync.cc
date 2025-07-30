@@ -33,10 +33,10 @@ VFS_QuerySync::VFS_QuerySync(
   m_eventLoop(),
   m_timer()
 {
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_replyAvailable,
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
                    this, &VFS_QuerySync::on_vfsReplyAvailable);
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_failed,
-                   this, &VFS_QuerySync::on_failed);
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsFailed,
+                   this, &VFS_QuerySync::on_vfsFailed);
   QObject::connect(&m_timer, &QTimer::timeout,
                    this, &VFS_QuerySync::on_timeout);
 
@@ -183,7 +183,7 @@ void VFS_QuerySync::on_vfsReplyAvailable(RequestID requestID) NOEXCEPT
 }
 
 
-void VFS_QuerySync::on_failed(
+void VFS_QuerySync::on_vfsFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   if (m_requestID != 0 && hostName == m_hostName) {

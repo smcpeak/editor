@@ -136,7 +136,7 @@ public:      // methods
   // This can be useful when a client sees an invalid response from the
   // server and wants to mark the connection as invalid.
   //
-  // Calling this causes the 'signal_failureAvailable' signal to be
+  // Calling this causes the 'signal_vfsFailureAvailable' signal to be
   // emitted (unless there was a prior failure; the signal is only sent
   // once).
   //
@@ -157,13 +157,13 @@ public:      // methods
 
 Q_SIGNALS:
   // Emitted when state() transitions from S_CONNECTING to S_READY.
-  void signal_connected();
+  void signal_vfsConnected();
 
   // Emitted when state() becomes S_HAS_REPLY.
-  void signal_replyAvailable();
+  void signal_vfsReplyAvailable();
 
   // Emitted when state() becomes S_FAILED.
-  void signal_failureAvailable();
+  void signal_vfsFailureAvailable();
 
 protected Q_SLOTS:
   // Handlers for CommandRunner signals.

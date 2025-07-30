@@ -38,12 +38,12 @@ VFS_Connections::Connection::Connection(VFS_Connections *connections,
   //
   // It might be a good idea to change this to have the Connection
   // object handle the signals directly.
-  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_connected,
-                   m_connections, &VFS_Connections::on_connected);
-  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_replyAvailable,
+  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_vfsConnected,
+                   m_connections, &VFS_Connections::on_vfsConnected);
+  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_vfsReplyAvailable,
                    m_connections, &VFS_Connections::on_vfsReplyAvailable);
-  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_failureAvailable,
-                   m_connections, &VFS_Connections::on_failureAvailable);
+  QObject::connect(m_fsQuery.get(), &VFS_FileSystemQuery::signal_vfsFailureAvailable,
+                   m_connections, &VFS_Connections::on_vfsFailureAvailable);
 
   m_fsQuery->connect(m_hostName);
 }
@@ -431,9 +431,9 @@ VFS_Connections::Connection * NULLABLE
 }
 
 
-void VFS_Connections::on_connected() NOEXCEPT
+void VFS_Connections::on_vfsConnected() NOEXCEPT
 {
-  TRACE("VFS_Connections", "on_connected");
+  TRACE("VFS_Connections", "on_vfsConnected");
 
   GENERIC_CATCH_BEGIN
 
@@ -444,7 +444,7 @@ void VFS_Connections::on_connected() NOEXCEPT
     return;
   }
 
-  TRACE("VFS_Connections", "on_connected: did not find recipient");
+  TRACE("VFS_Connections", "on_vfsConnected: did not find recipient");
 
   GENERIC_CATCH_END
 }
@@ -487,7 +487,7 @@ void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
 
             // Only now do we regard this as "connected" from the client
             // perspective.
-            Q_EMIT signal_connected(c->m_hostName);
+            Q_EMIT signal_vfsConnected(c->m_hostName);
           }
           else {
             c->m_fsQuery->markAsFailed(
@@ -515,7 +515,7 @@ void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
       c->m_currentRequestID = 0;
 
       // Notify clients.
-      Q_EMIT signal_replyAvailable(requestID);
+      Q_EMIT signal_vfsReplyAvailable(requestID);
     }
 
     // Send the next request, if there is one.
@@ -530,9 +530,9 @@ void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
 }
 
 
-void VFS_Connections::on_failureAvailable() NOEXCEPT
+void VFS_Connections::on_vfsFailureAvailable() NOEXCEPT
 {
-  TRACE("VFS_Connections", "on_failureAvailable");
+  TRACE("VFS_Connections", "on_vfsFailureAvailable");
 
   GENERIC_CATCH_BEGIN
 
@@ -541,10 +541,10 @@ void VFS_Connections::on_failureAvailable() NOEXCEPT
     c->m_currentRequestID = 0;
     xassert(connectionFailed(c->m_hostName));
 
-    Q_EMIT signal_failed(c->m_hostName, reason);
+    Q_EMIT signal_vfsFailed(c->m_hostName, reason);
   }
   else {
-    TRACE("VFS_Connections", "on_failureAvailable: did not find recipient");
+    TRACE("VFS_Connections", "on_vfsFailureAvailable: did not find recipient");
   }
 
   GENERIC_CATCH_END

@@ -179,9 +179,9 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   // editor widget.
   installEventFilter(this);
 
-  QObject::connect(vfsConnections(), &VFS_Connections::signal_replyAvailable,
+  QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsReplyAvailable,
                    this, &EditorWidget::on_vfsReplyAvailable);
-  QObject::connect(vfsConnections(), &VFS_Connections::signal_failed,
+  QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsFailed,
                    this, &EditorWidget::on_vfsConnectionFailed);
 
   EditorWidget::s_objectCount++;

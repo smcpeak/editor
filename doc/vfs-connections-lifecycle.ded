@@ -168,6 +168,12 @@
       "name": "Blue"
     }
   ],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
   "relations": [
     {
       "end": {"entityRef": 4},
@@ -176,19 +182,19 @@
     },
     {
       "end": {"entityRef": 5},
-      "label": "signal_connected",
+      "label": "signal_vfsConnected",
       "lineColor": "Blue",
       "start": {"entityRef": 4}
     },
     {
       "end": {"entityRef": 7},
-      "label": "signal_failed",
+      "label": "signal_vfsFailed",
       "lineColor": "Red",
       "start": {"entityRef": 5}
     },
     {
       "end": {"entityRef": 8},
-      "label": "signal_failed",
+      "label": "signal_vfsFailed",
       "lineColor": "Red",
       "start": {"entityRef": 4}
     },
@@ -203,7 +209,7 @@
     }
   ],
   "type": "Diagram Editor Diagram",
-  "version": 24,
+  "version": 32,
   "windowSize": {
     "h": 322,
     "w": 472

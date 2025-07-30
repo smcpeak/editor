@@ -32,12 +32,12 @@ VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
     m_secondaryHostName = HostName::asSSH(toString(arguments().at(1)));
   }
 
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_connected,
-                   this, &VFS_ConnectionsTest::on_connected);
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_replyAvailable,
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnected,
+                   this, &VFS_ConnectionsTest::on_vfsConnected);
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
                    this, &VFS_ConnectionsTest::on_vfsReplyAvailable);
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_failed,
-                   this, &VFS_ConnectionsTest::on_failed);
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsFailed,
+                   this, &VFS_ConnectionsTest::on_vfsFailed);
 }
 
 
@@ -259,7 +259,7 @@ void VFS_ConnectionsTest::runTests()
 }
 
 
-void VFS_ConnectionsTest::on_connected(HostName hostName) NOEXCEPT
+void VFS_ConnectionsTest::on_vfsConnected(HostName hostName) NOEXCEPT
 {
   cout << "connected to " << hostName << endl;
   m_eventLoop.exit();
@@ -274,7 +274,7 @@ void VFS_ConnectionsTest::on_vfsReplyAvailable(
 }
 
 
-void VFS_ConnectionsTest::on_failed(
+void VFS_ConnectionsTest::on_vfsFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   cout << "connection lost: host=" << hostName

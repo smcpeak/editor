@@ -21,12 +21,12 @@ FSServerTest::FSServerTest(int argc, char **argv)
     m_eventLoop(),
     m_fsQuery()
 {
-  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_connected,
-                   this, &FSServerTest::on_connected);
-  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_replyAvailable,
+  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_vfsConnected,
+                   this, &FSServerTest::on_vfsConnected);
+  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_vfsReplyAvailable,
                    this, &FSServerTest::on_vfsReplyAvailable);
-  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_failureAvailable,
-                   this, &FSServerTest::on_failureAvailable);
+  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_vfsFailureAvailable,
+                   this, &FSServerTest::on_vfsFailureAvailable);
 }
 
 
@@ -264,7 +264,7 @@ void FSServerTest::runGetDirEntriesTest()
 }
 
 
-void FSServerTest::on_connected() NOEXCEPT
+void FSServerTest::on_vfsConnected() NOEXCEPT
 {
   m_eventLoop.exit();
 }
@@ -274,7 +274,7 @@ void FSServerTest::on_vfsReplyAvailable() NOEXCEPT
   m_eventLoop.exit();
 }
 
-void FSServerTest::on_failureAvailable() NOEXCEPT
+void FSServerTest::on_vfsFailureAvailable() NOEXCEPT
 {
   m_eventLoop.exit();
 }

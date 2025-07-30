@@ -87,7 +87,7 @@ void VFS_FileSystemQuery::recordFailure(string const &reason)
   if (state() != S_FAILED) {
     setState(S_FAILED);
     m_failureReason = reason;
-    Q_EMIT signal_failureAvailable();
+    Q_EMIT signal_vfsFailureAvailable();
   }
   else {
     TRACE("VFS_FileSystemQuery",
@@ -152,7 +152,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
         TRACE("VFS_FileSystemQuery", "confirmed protocol compatibility");
         setState(S_READY);
         m_replyMessage.reset(nullptr);
-        Q_EMIT signal_connected();
+        Q_EMIT signal_vfsConnected();
       }
       else {
         recordFailure(stringb(
@@ -172,7 +172,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
 
   else {
     setState(S_HAS_REPLY);
-    Q_EMIT signal_replyAvailable();
+    Q_EMIT signal_vfsReplyAvailable();
   }
 }
 
