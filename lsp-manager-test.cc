@@ -7,7 +7,7 @@
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent
+#include "smqtutil/qtutil.h"           // waitForQtEvent, qStringListToStringVector
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-env.h"             // smbase::envAsBool
@@ -251,7 +251,7 @@ void entry(int argc, char **argv)
   SMFileUtil().createDirectoryAndParents("out");
 
   std::vector<std::string> argvStrings =
-    stringVectorFromPointerArray(argc, argv);
+    qStringListToStringVector(app.arguments());
   LSPTestRequestParams params =
     LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
 

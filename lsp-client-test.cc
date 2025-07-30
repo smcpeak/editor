@@ -8,7 +8,7 @@
 #include "command-runner.h"            // CommandRunner
 #include "uri-util.h"                  // makeFileURI
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent
+#include "smqtutil/qtutil.h"           // waitForQtEvent, qStringListToStringVector
 
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -620,13 +620,13 @@ void entry(int argc, char **argv)
 {
   TRACE_ARGS();
 
-  std::vector<std::string> argvStrings =
-    stringVectorFromPointerArray(argc, argv);
-  LSPTestRequestParams params =
-    LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
-
   // Enable Qt event loop, etc.
   QCoreApplication app(argc, argv);
+
+  std::vector<std::string> argvStrings =
+    qStringListToStringVector(app.arguments());
+  LSPTestRequestParams params =
+    LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
 
   std::set<bool> booleans = {false, true};
   for (bool async : booleans) {
