@@ -24,7 +24,7 @@
 #include "smqtutil/editor14r.bdf.gen.h"          // bdfFontData_editor14r
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont
-#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore
+#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
 
 // smbase
@@ -2576,7 +2576,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
         dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
         this, &EditorWidget::on_jumpToDiagnosticLocation);
 
-      dlg->show();
+      showRaiseAndActivateWindow(dlg);
       return {};
     }
     else {

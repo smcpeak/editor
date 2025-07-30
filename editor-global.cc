@@ -22,6 +22,7 @@
 
 // smqtutil
 #include "smqtutil/gdvalue-qstring.h"  // toGDValue(QString)
+#include "smqtutil/qtguiutil.h"        // showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"           // toQString
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
@@ -283,16 +284,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
                    this,         &EditorGlobal::on_lspHasPendingErrorMessages);
 
-  ed->show();
-
-  // On Windows 11, when launching the editor from a console, this seems
-  // to be necessary to avoid it appearing underneath other windows,
-  // which is both annoying interactively, and causes tests that check
-  // for window focus to fail.
-  ed->raise();
-
-  // I think this is needed too.
-  ed->activateWindow();
+  showRaiseAndActivateWindow(ed);
 
   // This works around a weird problem with the menu bar, where it will
   // ignore the initially chosen font, but then change itself in
@@ -924,17 +916,7 @@ void EditorGlobal::showConnectionsDialog()
     m_connectionsDialog.reset(new ConnectionsDialog(&m_vfsConnections));
   }
 
-  // Sequence from:
-  // https://stackoverflow.com/questions/7817334/qt-correct-way-to-show-display-raise-window
-
-  // Bring it to the front.
-  m_connectionsDialog->raise();
-
-  // Give it focus.
-  m_connectionsDialog->activateWindow();
-
-  // Make it visible, un-minimize.
-  m_connectionsDialog->showNormal();
+  showRaiseAndActivateWindow(m_connectionsDialog.get());
 }
 
 
