@@ -242,7 +242,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // Establish the initial VFS connection before creating the first
   // EditorWindow, since the EW can issue VFS requests.
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_failed,
-                   this, &EditorGlobal::on_connectionFailed);
+                   this, &EditorGlobal::on_vfsConnectionFailed);
   m_vfsConnections.connectLocal();
 
   // Open the first window, initially showing the default "untitled"
@@ -779,7 +779,7 @@ void EditorGlobal::on_processTerminated(ProcessWatcher *watcher)
 }
 
 
-void EditorGlobal::on_connectionFailed(
+void EditorGlobal::on_vfsConnectionFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN

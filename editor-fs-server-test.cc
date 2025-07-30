@@ -24,7 +24,7 @@ FSServerTest::FSServerTest(int argc, char **argv)
   QObject::connect(&m_fsQuery, &FileSystemQuery::signal_connected,
                    this, &FSServerTest::on_connected);
   QObject::connect(&m_fsQuery, &FileSystemQuery::signal_replyAvailable,
-                   this, &FSServerTest::on_replyAvailable);
+                   this, &FSServerTest::on_vfsReplyAvailable);
   QObject::connect(&m_fsQuery, &FileSystemQuery::signal_failureAvailable,
                    this, &FSServerTest::on_failureAvailable);
 }
@@ -269,7 +269,7 @@ void FSServerTest::on_connected() NOEXCEPT
   m_eventLoop.exit();
 }
 
-void FSServerTest::on_replyAvailable() NOEXCEPT
+void FSServerTest::on_vfsReplyAvailable() NOEXCEPT
 {
   m_eventLoop.exit();
 }

@@ -153,7 +153,7 @@ private Q_SLOTS:
   void on_processTerminated(ProcessWatcher *watcher);
 
   // Called when a VFS connection fails.
-  void on_connectionFailed(HostName hostName, string reason) NOEXCEPT;
+  void on_vfsConnectionFailed(HostName hostName, string reason) NOEXCEPT;
 
   // Called when `m_lspManager` has pending diagnostics.
   void on_lspHasPendingDiagnostics() NOEXCEPT;

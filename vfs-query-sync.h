@@ -87,7 +87,7 @@ public:      // instance methods
 
 protected Q_SLOTS:
   // Handlers for VFS_Connections.
-  void on_replyAvailable(RequestID requestID) NOEXCEPT;
+  void on_vfsReplyAvailable(RequestID requestID) NOEXCEPT;
   void on_failed(HostName hostName, string reason) NOEXCEPT;
 
   // Handlers for QTimer.

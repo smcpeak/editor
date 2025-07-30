@@ -41,7 +41,7 @@ VFS_Connections::Connection::Connection(VFS_Connections *connections,
   QObject::connect(m_fsQuery.get(), &FileSystemQuery::signal_connected,
                    m_connections, &VFS_Connections::on_connected);
   QObject::connect(m_fsQuery.get(), &FileSystemQuery::signal_replyAvailable,
-                   m_connections, &VFS_Connections::on_replyAvailable);
+                   m_connections, &VFS_Connections::on_vfsReplyAvailable);
   QObject::connect(m_fsQuery.get(), &FileSystemQuery::signal_failureAvailable,
                    m_connections, &VFS_Connections::on_failureAvailable);
 
@@ -306,7 +306,7 @@ std::unique_ptr<VFS_Message> VFS_Connections::takeReply(
 bool VFS_Connections::Connection::cancelRequest(RequestID requestID)
 {
   if (m_currentRequestID == requestID) {
-    // This will signal for 'on_replyAvailable' to discard it.
+    // This will signal for 'on_vfsReplyAvailable' to discard it.
     m_currentRequestID = 0;
     return true;
   }
@@ -450,9 +450,9 @@ void VFS_Connections::on_connected() NOEXCEPT
 }
 
 
-void VFS_Connections::on_replyAvailable() NOEXCEPT
+void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
 {
-  TRACE("VFS_Connections", "on_replyAvailable");
+  TRACE("VFS_Connections", "on_vfsReplyAvailable");
 
   GENERIC_CATCH_BEGIN
 
@@ -524,7 +524,7 @@ void VFS_Connections::on_replyAvailable() NOEXCEPT
     return;
   }
 
-  TRACE("VFS_Connections", "on_replyAvailable: did not find recipient");
+  TRACE("VFS_Connections", "on_vfsReplyAvailable: did not find recipient");
 
   GENERIC_CATCH_END
 }

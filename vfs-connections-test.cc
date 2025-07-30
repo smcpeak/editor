@@ -35,7 +35,7 @@ VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_connected,
                    this, &VFS_ConnectionsTest::on_connected);
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_replyAvailable,
-                   this, &VFS_ConnectionsTest::on_replyAvailable);
+                   this, &VFS_ConnectionsTest::on_vfsReplyAvailable);
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_failed,
                    this, &VFS_ConnectionsTest::on_failed);
 }
@@ -266,7 +266,7 @@ void VFS_ConnectionsTest::on_connected(HostName hostName) NOEXCEPT
 }
 
 
-void VFS_ConnectionsTest::on_replyAvailable(
+void VFS_ConnectionsTest::on_vfsReplyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
   cout << "got reply: " << requestID << endl;

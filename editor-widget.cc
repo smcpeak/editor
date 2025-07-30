@@ -180,9 +180,9 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   installEventFilter(this);
 
   QObject::connect(vfsConnections(), &VFS_Connections::signal_replyAvailable,
-                   this, &EditorWidget::on_replyAvailable);
+                   this, &EditorWidget::on_vfsReplyAvailable);
   QObject::connect(vfsConnections(), &VFS_Connections::signal_failed,
-                   this, &EditorWidget::on_connectionFailed);
+                   this, &EditorWidget::on_vfsConnectionFailed);
 
   EditorWidget::s_objectCount++;
 }
@@ -463,14 +463,14 @@ void EditorWidget::requestFileStatus()
     getDocument()->hostName(), std::move(req));
   m_fileStatusRequestEditor = m_editor;
 
-  TRACE1("requestFileStatus: request id=" << m_fileStatusRequestID);
+  TRACE1("requestFileStatus: VFS request id=" << m_fileStatusRequestID);
 }
 
 
 void EditorWidget::cancelFileStatusRequestIfAny()
 {
   if (m_fileStatusRequestID) {
-    TRACE1("cancelFileStatusRequestIfAny: id=" << m_fileStatusRequestID);
+    TRACE1("cancelFileStatusRequestIfAny: VFS id=" << m_fileStatusRequestID);
     vfsConnections()->cancelRequest(m_fileStatusRequestID);
     m_fileStatusRequestID = 0;
     m_fileStatusRequestEditor = nullptr;
@@ -478,13 +478,13 @@ void EditorWidget::cancelFileStatusRequestIfAny()
 }
 
 
-void EditorWidget::on_replyAvailable(
+void EditorWidget::on_vfsReplyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   if (requestID == m_fileStatusRequestID) {
-    TRACE1("on_replyAvailable: id=" << requestID);
+    TRACE1("on_vfsReplyAvailable: id=" << requestID);
 
     xassert(m_editor == m_fileStatusRequestEditor);
 
@@ -514,12 +514,12 @@ void EditorWidget::on_replyAvailable(
 }
 
 
-void EditorWidget::on_connectionFailed(
+void EditorWidget::on_vfsConnectionFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE1("on_connectionFailed: host=" << hostName <<
+  TRACE1("on_vfsConnectionFailed: host=" << hostName <<
          " reason=" << reason);
 
   // TODO: I should only cancel a request if it is being made to the

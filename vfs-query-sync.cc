@@ -34,7 +34,7 @@ VFS_QuerySync::VFS_QuerySync(
   m_timer()
 {
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_replyAvailable,
-                   this, &VFS_QuerySync::on_replyAvailable);
+                   this, &VFS_QuerySync::on_vfsReplyAvailable);
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_failed,
                    this, &VFS_QuerySync::on_failed);
   QObject::connect(&m_timer, &QTimer::timeout,
@@ -173,7 +173,7 @@ bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
 }
 
 
-void VFS_QuerySync::on_replyAvailable(RequestID requestID) NOEXCEPT
+void VFS_QuerySync::on_vfsReplyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {
     m_reply = m_vfsConnections->takeReply(requestID);
