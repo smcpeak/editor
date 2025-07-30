@@ -123,7 +123,7 @@ public:      // funcs
   TextDocument();      // empty buffer, empty history, cursor at 0,0
   virtual ~TextDocument();
 
-  void selfCheck() const;
+  virtual void selfCheck() const;
 
   // Read-only access to the underlying representation.  Use of this
   // should be infrequent, as I prefer to use the delegation queries.

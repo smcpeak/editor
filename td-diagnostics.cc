@@ -285,6 +285,13 @@ int TextDocumentDiagnostics::maxDiagnosticLine() const
 }
 
 
+void TextDocumentDiagnostics::clear()
+{
+  m_diagnostics.clear();
+  m_rangeToDiagIndex.clear();
+}
+
+
 void TextDocumentDiagnostics::insert(TextMCoordRange range, Diagnostic &&diag)
 {
   DiagnosticIndex index =
@@ -448,7 +455,7 @@ void TextDocumentDiagnostics::observeDeleteText(TextDocumentCore const &doc, Tex
 
 void TextDocumentDiagnostics::observeTotalChange(TextDocumentCore const &doc) noexcept
 {
-  m_rangeToDiagIndex.clear();
+  clear();
 }
 
 

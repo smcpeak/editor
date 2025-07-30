@@ -44,6 +44,8 @@ NamedTextDocument::NamedTextDocument()
     m_highlighter(),
     m_highlightTrailingWhitespace(true)
 {
+  selfCheck();
+
   NamedTextDocument::s_objectCount++;
 }
 
@@ -55,6 +57,18 @@ NamedTextDocument::~NamedTextDocument()
   m_diagnostics.reset(nullptr);
 
   NamedTextDocument::s_objectCount--;
+}
+
+
+void NamedTextDocument::selfCheck() const
+{
+  TextDocument::selfCheck();
+
+  m_documentName.selfCheck();
+
+  if (m_diagnostics) {
+    m_diagnostics->selfCheck();
+  }
 }
 
 

@@ -105,6 +105,8 @@ public:      // funcs
 
   ~NamedTextDocument();
 
+  virtual void selfCheck() const override;
+
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 

@@ -151,12 +151,12 @@ public:      // types
 private:     // data
   // When the diagnostics were originally received, they described this
   // version of the document.
-  VersionNumber m_originVersion;
+  VersionNumber const m_originVersion;
 
   // Pointer to the document the diagnostics apply to.  We act as an
   // observer of `m_doc` in order to update the diagnostic locations
   // when the document changes.
-  RCSerf<NamedTextDocument> m_doc;
+  RCSerf<NamedTextDocument> const m_doc;
 
   // Set of diagnostics, organized into a sequence so each has a unique
   // index that can be used with `m_rangeToDiagIndex`.
@@ -192,6 +192,9 @@ public:      // methods
   // If there are no diagnostics, this returns -1.  Otherwise, it is the
   // largest line number for which there is any intersecting diagnostic.
   int maxDiagnosticLine() const;
+
+  // Remove all diagnostics.
+  void clear();
 
   // Insert the mapping `range` -> `diag`.
   void insert(TextMCoordRange range, Diagnostic &&diag);

@@ -332,23 +332,30 @@ static void test_TDD_getDiagnosticAt()
 
   //                          1
   //                01234567890123456789
-  doc.appendString("   [1]     [2 2]    ");  // 0
-  doc.appendString("                    ");  // 1
-  doc.appendString("  [3 [4 [5] 4] 3]   ");  // 2
-  doc.appendString("  [6   [7   6]  7]  ");  // 3
-  doc.appendString("                    ");  // 4
+  doc.appendString("   [1]     [2 2]    \n");  // 0
+  doc.appendString("                    \n");  // 1
+  doc.appendString("  [3 [4 [5] 4] 3]   \n");  // 2
+  doc.appendString("  [6   [7   6]  7]  \n");  // 3
+  doc.appendString("                    \n");  // 4
                            // ^ 9
-  doc.appendString("      [10  [11]     ");  // 5
-  doc.appendString("   [12]        10]  ");  // 6
-  doc.appendString("   [13  13]  14]    ");  // 7
-  doc.appendString("   [15  [16  16]    ");  // 8
+  doc.appendString("      [10  [11]     \n");  // 5
+  doc.appendString("   [12]        10]  \n");  // 6
+  doc.appendString("   [13  13]  14]    \n");  // 7
+  doc.appendString("   [15  [16  16]    \n");  // 8
+  EXPECT_EQ(doc.numLines(), 10);  // The final line-without-NL counts.
+  doc.selfCheck();
 
   TextDocumentDiagnostics tdd(1 /*version*/, &doc);
+  tdd.selfCheck();
   EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
   tdd.insert({{0,3}, {0,6}}, Diagnostic("1"));
+  tdd.selfCheck();
   tdd.insert({{0,11}, {0,16}}, Diagnostic("2"));
+  tdd.selfCheck();
   tdd.insert({{2,2}, {2,17}}, Diagnostic("3"));
+  tdd.selfCheck();
   tdd.insert({{2,5}, {2,14}}, Diagnostic("4"));
+  tdd.selfCheck();
   tdd.insert({{2,8}, {2,11}}, Diagnostic("5"));
   tdd.insert({{3,2}, {3,14}}, Diagnostic("6"));
   tdd.insert({{3,7}, {3,18}}, Diagnostic("7"));
@@ -364,6 +371,7 @@ static void test_TDD_getDiagnosticAt()
   tdd.insert({{8,3}, {8,16}}, Diagnostic("15"));
   tdd.insert({{8,8}, {8,16}}, Diagnostic("16"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 8);
+  tdd.selfCheck();
 
   testOneGetDiagnosticsAt(tdd, 0,0, nullptr);
   testOneGetDiagnosticsAt(tdd, 0,2, nullptr);
@@ -475,6 +483,14 @@ static void test_TDD_getDiagnosticAt()
   testOnePreviousDiagnostic(tdd, 8,20, 8,8);
 
   testOnePreviousDiagnostic(tdd, 5,2, 4,10);
+
+  // This notification should clear the diagnostics.
+  tdd.observeTotalChange(doc.getCore());
+  EXPECT_EQ(tdd.empty(), true);
+  EXPECT_EQ(tdd.size(), 0);
+  EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
+  tdd.selfCheck();
+  doc.selfCheck();
 }
 
 
