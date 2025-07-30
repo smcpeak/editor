@@ -5,6 +5,7 @@
 
 #include "doc-name.h"                  // DocumentName
 
+#include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
 #include "smbase/sm-regex.h"           // smbase::Regex
 #include "smbase/string-util.h"        // endsWith
@@ -63,6 +64,121 @@ static bool stringAmong(string const &str, char const * const *table,
 }
 
 
+static bool isCppHeaderName(string const &basename)
+{
+  static char const * const cppHeaderNames[] = {
+    "algorithm",
+    "any",
+    "array",
+    "atomic",
+    "barrier",
+    "bit",
+    "bitset",
+    "cassert",
+    "ccomplex",
+    "cctype",
+    "cerrno",
+    "cfenv",
+    "cfloat",
+    "charconv",
+    "chrono",
+    "cinttypes",
+    "ciso646",
+    "climits",
+    "clocale",
+    "cmath",
+    "codecvt",
+    "compare",
+    "complex",
+    "concepts",
+    "condition_variable",
+    "coroutine",
+    "csetjmp",
+    "csignal",
+    "cstdalign",
+    "cstdarg",
+    "cstdbool",
+    "cstddef",
+    "cstdint",
+    "cstdio",
+    "cstdlib",
+    "cstring",
+    "ctgmath",
+    "ctime",
+    "cuchar",
+    "cwchar",
+    "cwctype",
+    "deque",
+    "exception",
+    "execution",
+    "expected",
+    "filesystem",
+    "format",
+    "forward_list",
+    "fstream",
+    "functional",
+    "future",
+    "initializer_list",
+    "iomanip",
+    "ios",
+    "iosfwd",
+    "iostream",
+    "istream",
+    "iterator",
+    "latch",
+    "limits",
+    "list",
+    "locale",
+    "map",
+    "memory",
+    "memory_resource",
+    "mutex",
+    "new",
+    "numbers",
+    "numeric",
+    "optional",
+    "ostream",
+    "queue",
+    "random",
+    "ranges",
+    "ratio",
+    "regex",
+    "scoped_allocator",
+    "semaphore",
+    "set",
+    "shared_mutex",
+    "source_location",
+    "span",
+    "spanstream",
+    "sstream",
+    "stack",
+    "stacktrace",
+    "stdexcept",
+    "stdfloat",
+    "stop_token",
+    "streambuf",
+    "string",
+    "string_view",
+    "syncstream",
+    "system_error",
+    "thread",
+    "tuple",
+    "typeindex",
+    "typeinfo",
+    "type_traits",
+    "unordered_map",
+    "unordered_set",
+    "utility",
+    "valarray",
+    "variant",
+    "vector",
+    "version",
+  };
+
+  return stringAmong(basename, cppHeaderNames, TABLESIZE(cppHeaderNames));
+}
+
+
 KnownDocumentType detectDocumentType(DocumentName const &docName)
 {
   // This handles both "foo.diff" and "git diff [<fname>]".
@@ -93,6 +209,7 @@ KnownDocumentType detectDocumentType(DocumentName const &docName)
       "hpp",
       "java",      // C/C++ highlighting is better than none.
       "lex",
+      "tcc",
       "y",
     };
     if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
@@ -133,6 +250,10 @@ KnownDocumentType detectDocumentType(DocumentName const &docName)
     return KDT_MAKEFILE;
   }
 
+  string basename = SMFileUtil().splitPathBase(filename);
+  if (isCppHeaderName(basename)) {
+    return KDT_C;
+  }
 
   return KDT_UNKNOWN;
 }
