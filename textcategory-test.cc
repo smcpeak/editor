@@ -1,27 +1,26 @@
 // textcategory-test.cc
 // Tests for 'textcategory' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "textcategory.h"              // module under test
 
-#include "smbase/sm-iostream.h"        // cout
-#include "smbase/sm-test.h"            // USUAL_MAIN
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ
 
 
 static void expect(LineCategories const &category, char const *str)
 {
   string s = category.asString();
-  cout << s << endl;
-
-  if (s != str) {
-    cout << "expected: " << str << endl;
-    exit(2);
-  }
+  DIAG(s);
+  EXPECT_EQ(s, str);
 }
 
 // less awkward literal casts..
 static inline TextCategory s(int sty) { return (TextCategory)sty; }
 
-static void entry()
+
+// Called from unit-tests.cc.
+void test_textcategory(CmdlineArgsSpan args)
 {
   LineCategories category(s(3));
   expect(category, "[3");
@@ -87,8 +86,6 @@ static void entry()
   expect(category, "[2");
   // 2...
 }
-
-USUAL_MAIN
 
 
 // EOF

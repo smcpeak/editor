@@ -335,13 +335,6 @@ nearby-file-test.exe: $(NEARBY_FILE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,nearby-file-test))
 
 
-# ------------------------ textcategory-test ---------------------------
-textcategory-test.exe: textcategory.o textcategory-test.o
-	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,textcategory-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -379,6 +372,7 @@ UNIT_TESTS_OBJS += lsp-test-request-params.o
 UNIT_TESTS_OBJS += makefile-hilite-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
+UNIT_TESTS_OBJS += textcategory-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
 UNIT_TESTS_OBJS += vfs-connections-test.moc.o

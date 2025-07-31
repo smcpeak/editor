@@ -25,6 +25,7 @@ void test_lsp_manager(CmdlineArgsSpan args);
 void test_makefile_hilite(CmdlineArgsSpan args);
 void test_ocaml_hilite(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
+void test_textcategory(CmdlineArgsSpan args);
 void test_uri_util(CmdlineArgsSpan args);
 void test_vfs_connections(CmdlineArgsSpan args);
 

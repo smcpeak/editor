@@ -61,6 +61,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(makefile_hilite);
   RUN_TEST(ocaml_hilite);
   RUN_TEST(python_hilite);
+  RUN_TEST(textcategory);
   RUN_TEST(uri_util);
   RUN_TEST(vfs_connections);
 
