@@ -67,6 +67,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(python_hilite);
   RUN_TEST(td_diagnostics);
   RUN_TEST(textcategory);
+  RUN_TEST(textmcoord_map);
   RUN_TEST(uri_util);
   RUN_TEST(vfs_connections);
 

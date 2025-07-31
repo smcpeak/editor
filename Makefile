@@ -271,22 +271,6 @@ command-runner-test.exe: $(COMMAND_RUNNER_OBJS)
 $(eval $(call RUN_TEST_PROG,command-runner-test))
 
 
-# -------------------------- textmcoord-map-test --------------------------
-# This has to come before `named-td-test` since `named-td` needs
-# `textmcoord-map`.
-
-EDITOR_OBJS += textmcoord-map.o
-
-TEXTMCOORD_MAP_TEST_OBJS := $(EDITOR_OBJS)
-
-TEXTMCOORD_MAP_TEST_OBJS += textmcoord-map-test.o
-
-textmcoord-map-test.exe: $(TEXTMCOORD_MAP_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEXTMCOORD_MAP_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,textmcoord-map-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -311,6 +295,7 @@ EDITOR_OBJS += nearby-file.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
 EDITOR_OBJS += td-diagnostics.o
+EDITOR_OBJS += textmcoord-map.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += vfs-connections.moc.o
 EDITOR_OBJS += vfs-connections.o
@@ -341,6 +326,7 @@ UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += td-diagnostics-test.o
 UNIT_TESTS_OBJS += textcategory-test.o
+UNIT_TESTS_OBJS += textmcoord-map-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
 UNIT_TESTS_OBJS += vfs-connections-test.moc.o

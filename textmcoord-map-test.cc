@@ -3,6 +3,8 @@
 
 #include "smbase/gdvalue-set-fwd.h"    // gdv::toGDValue(std::set)
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "textmcoord-map.h"            // module under test
 
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
@@ -1396,7 +1398,11 @@ void test_repro()
 }
 
 
-void entry(int argc, char **argv)
+CLOSE_ANONYMOUS_NAMESPACE
+
+
+// Called from unit-tests.cc.
+void test_textmcoord_map(CmdlineArgsSpan args)
 {
   #define RUN_TEST(funcname) { \
     EXN_CONTEXT(#funcname);    \
@@ -1421,12 +1427,6 @@ void entry(int argc, char **argv)
 
   #undef RUN_TEST
 }
-
-
-CLOSE_ANONYMOUS_NAMESPACE
-
-
-ARGS_TEST_MAIN
 
 
 // EOF
