@@ -18,6 +18,7 @@ typedef smbase::Span<char const * const> CmdlineArgsSpan;
 void test_lsp_client(CmdlineArgsSpan args);
 void test_lsp_data(CmdlineArgsSpan args);
 void test_lsp_manager(CmdlineArgsSpan args);
+void test_hashcomment_hilite(CmdlineArgsSpan args);
 void test_ocaml_hilite(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
 void test_uri_util(CmdlineArgsSpan args);

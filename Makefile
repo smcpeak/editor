@@ -445,20 +445,8 @@ makefile-hilite-test.exe: $(MAKEFILE_HILITE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,makefile-hilite-test))
 
 
-# ---------------------- hashcomment-hilite-test -----------------------
-EDITOR_OBJS += hashcomment_hilite.yy.o
-
-HASHCOMMENT_HILITE_TEST_OBJS := $(EDITOR_OBJS)
-
-HASHCOMMENT_HILITE_TEST_OBJS += hashcomment-hilite-test.o
-
-hashcomment-hilite-test.exe: $(HASHCOMMENT_HILITE_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(HASHCOMMENT_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,hashcomment-hilite-test))
-
-
 # ----------------------------- unit-tests -----------------------------
+EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-data.o
@@ -469,6 +457,7 @@ EDITOR_OBJS += python_hilite.yy.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
+UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
 UNIT_TESTS_OBJS += lsp-client-test.o
 UNIT_TESTS_OBJS += lsp-data-test.o
