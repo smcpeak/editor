@@ -14,7 +14,7 @@
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // ARGS_MAIN
+#include "smbase/sm-test.h"            // DIAG
 #include "smbase/string-util.h"        // stringVectorFromPointerArray
 #include "smbase/trace.h"              // TRACE_ARGS
 #include "smbase/xassert.h"            // xassert
@@ -25,8 +25,6 @@
 
 using namespace gdv;
 using namespace smbase;
-
-using std::cout;
 
 
 LSPManagerTester::~LSPManagerTester()
@@ -55,29 +53,29 @@ void LSPManagerTester::startServer()
 
   bool success;
   std::string startResult = m_lspManager.startServer(success);
-  cout << "Start: " << startResult << "\n";
+  DIAG("Start: " << startResult)
   xassert(success);
 
-  cout << "Status: " << m_lspManager.checkStatus() << "\n";
+  DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
 
-  cout << "Initializing...\n";
+  DIAG("Initializing...");
 }
 
 
 void LSPManagerTester::sendDidOpen()
 {
-  cout << "Sending didOpen...\n";
+  DIAG("Sending didOpen...");
   SMFileUtil sfu;
   m_lspManager.notify_textDocument_didOpen(
     sfu.getAbsolutePath("eclf.h"),
     "cpp",
     1,
     sfu.readFileAsString("eclf.h"));
-  cout << "Status: " << m_lspManager.checkStatus() << "\n";
+  DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
 
-  cout << "Waiting for diagnostics notification...\n";
+  DIAG("Waiting for diagnostics notification...");
 }
 
 
@@ -85,23 +83,25 @@ void LSPManagerTester::takeDiagnostics()
 {
   std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
     m_lspManager.takePendingDiagnostics();
-  cout << "Diagnostics: " << toGDValue(*diags).asLinesString();
+  DIAG("Diagnostics: " << toGDValue(*diags).asIndentedString());
 }
 
 
 void LSPManagerTester::stopServer()
 {
-  cout << "Stop: " << m_lspManager.stopServer() << "\n";
-  cout << "Status: " << m_lspManager.checkStatus() << "\n";
+  std::string stopResult = m_lspManager.stopServer();
+  DIAG("Stop: " << stopResult);
+
+  DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
 
-  cout << "Waiting for shutdown...\n";
+  DIAG("Waiting for shutdown...");
 }
 
 
 void LSPManagerTester::acknowledgeShutdown()
 {
-  cout << "Stopped.\n";
+  DIAG("Stopped.");
   m_lspManager.selfCheck();
 }
 
@@ -112,7 +112,7 @@ void LSPManagerTester::testSynchronously()
 
   while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
     waitForQtEvent();
-    cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    DIAG("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
@@ -120,7 +120,7 @@ void LSPManagerTester::testSynchronously()
 
   while (!m_lspManager.hasPendingDiagnostics()) {
     waitForQtEvent();
-    cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    DIAG("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
@@ -129,7 +129,7 @@ void LSPManagerTester::testSynchronously()
 
   while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
     waitForQtEvent();
-    cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    DIAG("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
@@ -170,7 +170,7 @@ void LSPManagerTester::testAsynchronously()
   // Meanwhile, pump the event queue until we are completely done.
   while (!m_done && !m_failed) {
     waitForQtEvent();
-    //cout << "Status: " << m_lspManager.checkStatus() << "\n";
+    //DIAG("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
@@ -189,7 +189,7 @@ void LSPManagerTester::on_changedProtocolState() NOEXCEPT
 
   LSPProtocolState state = m_lspManager.getProtocolState();
 
-  cout << "changedProtocolState to: " << toString(state) << "\n";
+  DIAG("changedProtocolState to: " << toString(state));
 
   switch (state) {
     default:
@@ -227,8 +227,8 @@ void LSPManagerTester::on_hasPendingErrorMessages() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  cout << "LSPManager reports errors.  Status:\n";
-  cout << m_lspManager.checkStatus() << "\n";
+  DIAG("LSPManager reports errors.  Status:");
+  DIAG(m_lspManager.checkStatus());
 
   m_failed = true;
 
@@ -244,13 +244,13 @@ void test_lsp_manager(CmdlineArgsSpan args)
   LSPTestRequestParams params =
     LSPTestRequestParams::getFromCmdLine(args);
 
-  cout << "-------- synchronous --------\n";
+  DIAG("-------- synchronous --------");
   {
     LSPManagerTester tester(params);
     tester.testSynchronously();
   }
 
-  cout << "-------- asynchronous --------\n";
+  DIAG("-------- asynchronous --------");
   {
     LSPManagerTester tester(params);
     tester.testAsynchronously();
