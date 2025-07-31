@@ -593,7 +593,9 @@ validate-extradep: all
 	$(PYTHON3) $(SMBASE)/find-extra-deps.py $(EXTRADEPS_ARGS) >extradep.tmp
 	@echo diff extradep.mk extradep.tmp
 	@if diff extradep.mk extradep.tmp; then true; else \
-	  echo "extradep.mk needs updating; run 'make remake-extradep'"; \
+	  echo "If the extra files are meant to be generated during"; \
+	  echo "the build, run 'make remake-extradep'.  If they are"; \
+	  echo "meant to be checked in, 'git add' them now."; \
 	  exit 2; \
 	fi
 	rm extradep.tmp
