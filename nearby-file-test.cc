@@ -1,12 +1,13 @@
 // nearby-file-test.cc
 // Test code for 'nearby-file' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "nearby-file.h"               // module to test
 
 // smbase
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/sm-file-util.h"       // TestSMFileUtil
-#include "smbase/sm-iostream.h"        // cout, etc.
 #include "smbase/sm-test.h"            // USUAL_TEST_MAIN
 
 // libc++
@@ -273,15 +274,13 @@ static void testRemoteFiles()
 }
 
 
-static void entry()
+// Called from unit-tests.cc.
+void test_nearby_file(CmdlineArgsSpan args)
 {
   test1();
   testLineNumbers();
   testRemoteFiles();
-
-  cout << "nearby-file-test ok" << endl;
 }
 
-USUAL_TEST_MAIN
 
 // EOF
