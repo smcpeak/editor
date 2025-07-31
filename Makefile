@@ -484,20 +484,6 @@ python-hilite-test.exe: $(PYTHON_HILITE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,python-hilite-test))
 
 
-# ------------------- diagnostic-details-dialog-test -------------------
-EDITOR_OBJS += diagnostic-details-dialog.moc.o
-EDITOR_OBJS += diagnostic-details-dialog.o
-
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS := $(EDITOR_OBJS)
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o
-
-diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LDFLAGS)
-
-# This has to be run manually.
-all: diagnostic-details-dialog-test.exe
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
@@ -523,6 +509,20 @@ unit-tests.exe: $(UNIT_TESTS_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(UNIT_TESTS_OBJS) $(GUI_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,unit-tests))
+
+
+# ------------------- diagnostic-details-dialog-test -------------------
+EDITOR_OBJS += diagnostic-details-dialog.moc.o
+EDITOR_OBJS += diagnostic-details-dialog.o
+
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS := $(EDITOR_OBJS)
+DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o
+
+diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS)
+	$(CXX) -o $@ $(CCFLAGS) $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LDFLAGS)
+
+# This has to be run manually.
+all: diagnostic-details-dialog-test.exe
 
 
 # ----------------- git version ---------------------
