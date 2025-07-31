@@ -1,13 +1,14 @@
 // justify-test.cc
 // Tests for 'justify' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "justify.h"                   // module to test
 
-// smbase
-#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
-
-// libc
 #include <assert.h>                    // assert
+
+
+// TODO: Use anonymous namespace.
 
 
 static void print(char const *label, ArrayStack<string> const &arr)
@@ -523,15 +524,12 @@ static void testJustifyNearLine()
 }
 
 
-static void entry()
+// Called from unit-tests.cc.
+void test_justify(CmdlineArgsSpan args)
 {
   testJustifyTextLines();
   testJustifyNearLine();
-
-  cout << "justify-test PASSED\n";
 }
-
-USUAL_TEST_MAIN
 
 
 // EOF

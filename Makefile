@@ -245,17 +245,6 @@ text-search-test.exe: $(TEXT_SEARCH_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,text-search-test))
 
 
-# -------------- justify test program ----------------
-JUSTIFY_OBJS := $(EDITOR_OBJS)
-
-JUSTIFY_OBJS += justify-test.o
-
-justify-test.exe: $(JUSTIFY_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(JUSTIFY_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,justify-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -301,6 +290,7 @@ UNIT_TESTS_OBJS += doc-type-detect-test.o
 UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
 UNIT_TESTS_OBJS += editor-fs-server-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
+UNIT_TESTS_OBJS += justify-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
 UNIT_TESTS_OBJS += lsp-client-test.o
 UNIT_TESTS_OBJS += lsp-data-test.o

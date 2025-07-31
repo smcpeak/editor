@@ -21,6 +21,7 @@ void test_command_runner(CmdlineArgsSpan args);
 void test_doc_type_detect(CmdlineArgsSpan args);
 void test_editor_fs_server(CmdlineArgsSpan args);
 void test_hashcomment_hilite(CmdlineArgsSpan args);
+void test_justify(CmdlineArgsSpan args);
 void test_lsp_client(CmdlineArgsSpan args);
 void test_lsp_data(CmdlineArgsSpan args);
 void test_lsp_manager(CmdlineArgsSpan args);
