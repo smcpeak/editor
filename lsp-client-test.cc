@@ -15,7 +15,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, RETURN_ENUMERATION_STRING_OR
 #include "smbase/sm-span.h"            // smbase::Span
-#include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, EXPECT_EQ
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/trace.h"              // TRACE_ARGS
 
@@ -71,7 +71,7 @@ void printNotifications(LSPClient &lsp)
 {
   while (lsp.hasPendingNotifications()) {
     GDValue notification = lsp.takeNextNotification();
-    std::cout << "Notification: " << notification.asLinesString();
+    DIAG("Notification: " << notification.asIndentedString());
   }
 }
 
@@ -102,11 +102,11 @@ void sendRequestPrintReply(
 {
   int id = lsp.sendRequest(method, params);
 
-  std::cout << "Sent request " << method << ", id=" << id << " ...\n";
+  DIAG("Sent request " << method << ", id=" << id << " ...");
 
   GDValue resp(printNotificationsUntil(lsp, id));
 
-  std::cout << "Response: " << resp.asLinesString();
+  DIAG("Response: " << resp.asIndentedString());
 }
 
 
@@ -132,7 +132,7 @@ void performLSPInteractionSemiSynchronously(
   lsp.sendNotification("initialized", GDVMap{});
 
   // Prepare to ask questions about the source file.
-  std::cout << "Sending notification textDocument/didOpen ...\n";
+  DIAG("Sending notification textDocument/didOpen ...");
   std::string fnameURI = makeFileURI(params.m_fname);
   lsp.sendNotification("textDocument/didOpen", GDVMap{
     {
@@ -171,17 +171,16 @@ void performLSPInteractionSemiSynchronously(
 
   // Shut down the protocol.
   sendRequestPrintReply(lsp, "shutdown", GDVMap{});
-  std::cout << "Sending notification exit ...\n";
+  DIAG("Sending notification exit ...");
   lsp.sendNotification("exit", GDVMap{});
 
-  std::cout << "Waiting for child to terminate ...\n";
+  DIAG("Waiting for child to terminate ...");
   while (lsp.isChildRunning()) {
     waitForQtEvent();
   }
 
   if (lsp.hasErrorData()) {
-    std::cout << "Server stderr: "
-              << lsp.takeErrorData().toStdString() << "\n";
+    DIAG("Server stderr: " << lsp.takeErrorData().toStdString());
   }
 }
 
@@ -235,7 +234,7 @@ void LSPClientTester::sendRequestCheckID(
   int actualID = m_lsp.sendRequest(method, params);
   EXPECT_EQ(actualID, expectID);
 
-  std::cout << "Sent request " << method << ", id=" << actualID << " ...\n";
+  DIAG("Sent request " << method << ", id=" << actualID << " ...");
 }
 
 
@@ -328,7 +327,7 @@ void LSPClientTester::setFailureMsg(std::string &&msg)
   else {
     m_failureMsg = std::move(msg);
     m_done = true;
-    std::cout << *m_failureMsg << "\n";
+    DIAG(*m_failureMsg);
   }
 }
 
@@ -352,7 +351,7 @@ void LSPClientTester::on_hasReplyForID(int id) NOEXCEPT
   DIAG("LSPClientTester::on_hasReplyForID(" << id << ")");
 
   GDValue resp(m_lsp.takeReplyForID(id));
-  std::cout << "Response: " << resp.asLinesString();
+  DIAG("Response: " << resp.asIndentedString());
 
   sendNextRequest(id);
 
@@ -379,7 +378,7 @@ void LSPClientTester::on_childProcessTerminated() NOEXCEPT
   DIAG("LSPClientTester::on_childProcessTerminated");
 
   if (m_initiatedShutdown) {
-    std::cout << "Child process terminated as requested\n";
+    DIAG("Child process terminated as requested");
     m_done = true;
   }
   else {
@@ -591,7 +590,7 @@ void runTests(
       std::string msg = x.what();
       std::string expectSubstring = substringForFK(failureKind);
       if (hasSubstring(msg, expectSubstring)) {
-        std::cout << "As expected: " << msg << "\n";
+        DIAG("As expected: " << msg);
       }
       else {
         std::cout << "Got failure msg: " << doubleQuote(msg) << "\n"
@@ -629,7 +628,7 @@ void test_lsp_client(CmdlineArgsSpan args)
   for (bool async : booleans) {
     char const *syncLabel = (async? "asynchronous" : "semi-synchronous");
     FOREACH_FAILURE_KIND(fkind) {
-      std::cout << "------------ " << syncLabel << ", fkind=" << fkind << " -----------\n";
+      DIAG("------------ " << syncLabel << ", fkind=" << fkind << " -----------");
       runTests(!async, fkind, params);
     }
   }
