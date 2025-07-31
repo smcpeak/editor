@@ -2035,7 +2035,15 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
       lspManager().getDocInfo(fname);
     xassert(docInfo);
 
-    if (*version == docInfo->m_latestVersion) {
+    if (*version == docInfo->m_latestVersion ||
+        contents == docInfo->m_latestContents) {
+      TRACE1("LSP: While updating " << doubleQuote(fname) <<
+             ": previous version is " << docInfo->m_latestVersion <<
+             ", new version is " << *version <<
+             ", and contents are " <<
+             (contents == docInfo->m_latestContents? "" : "NOT ") <<
+             "the same; bumping to force re-analysis.");
+
       // We want to re-send despite no content changes, for example
       // because a header file changed that should fix issues in the
       // current file.  Bump the version and try again.

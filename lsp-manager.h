@@ -106,10 +106,17 @@ public:      // data
   // sent to the server.
   int m_latestVersion;
 
+  // The contents most recently sent.  They were labeled with
+  // `m_latestVersion`.
+  std::string m_latestContents;
+
 public:      // methods
   ~LSPDocumentInfo();
 
-  LSPDocumentInfo(std::string const &fname, int latestVersion);
+  LSPDocumentInfo(
+    std::string const &fname,
+    int latestVersion,
+    std::string &&latestContents);
 };
 
 

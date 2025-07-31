@@ -20,6 +20,7 @@
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-macros.h"          // IMEMBFP, IMEMBMFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // join
 #include "smbase/stringb.h"            // stringb
@@ -77,9 +78,11 @@ LSPDocumentInfo::~LSPDocumentInfo()
 
 LSPDocumentInfo::LSPDocumentInfo(
   std::string const &fname,
-  int latestVersion)
-  : m_fname(fname),
-    m_latestVersion(latestVersion)
+  int latestVersion,
+  std::string &&latestContents)
+  : IMEMBFP(fname),
+    IMEMBFP(latestVersion),
+    IMEMBMFP(latestContents)
 {}
 
 
@@ -608,13 +611,13 @@ void LSPManager::notify_textDocument_didOpen(
         { "uri", makeFileURI(fname) },
         { "languageId", languageId },
         { "version", version },
-        { "text", GDValue(std::move(contents)) },
+        { "text", GDValue(contents /*no move*/) },
       }
     }
   });
 
   m_documentInfo.insert({fname,
-    LSPDocumentInfo(fname, version)});
+    LSPDocumentInfo(fname, version, std::move(contents))});
 }
 
 
@@ -638,13 +641,15 @@ void LSPManager::notify_textDocument_didChange(
       "contentChanges",
       GDVSequence{
         GDVMap{
-          { "text", GDValue(std::move(contents)) },
+          { "text", GDValue(contents /*no move*/) },
         },
       },
     },
   });
 
-  mapGetValueAt(m_documentInfo, fname).m_latestVersion = version;
+  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
+  docInfo.m_latestVersion = version;
+  docInfo.m_latestContents = std::move(contents);
 }
 
 
