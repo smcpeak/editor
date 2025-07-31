@@ -18,6 +18,7 @@
 #include "smbase/exc.h"                // xfatal
 #include "smbase/nonport.h"            // getMilliseconds
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, DIAG, EXPECT_EQ, verbose
 #include "smbase/string-util.h"        // beginsWith, replaceAll
 #include "smbase/xassert.h"            // xfailure_stringbc
@@ -32,15 +33,20 @@
 using std::cout;
 
 
-// TODO: Use anonymous namespace.
+OPEN_ANONYMOUS_NAMESPACE
+
+// I define an `expectEq` for byte arrays below.  We need to explicitly
+// import the global scope declarations to have them in the overload
+// set.
+using ::expectEq;
 
 
 // ----------------------- test infrastructure ----------------------------
 // When true, print the byte arrays like a hexdump.
-static bool const printByteArrays = false;
+bool const printByteArrays = false;
 
 
-static void printCmdArgs(char const *cmd, QStringList const &args)
+void printCmdArgs(char const *cmd, QStringList const &args)
 {
   if (!verbose) {
     return;
@@ -54,7 +60,7 @@ static void printCmdArgs(char const *cmd, QStringList const &args)
 }
 
 
-static int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
+int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
 {
   printCmdArgs(cmd, args);
   DIAG("  input: \"" << input << "\"");
@@ -97,13 +103,13 @@ static int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
   }
 }
 
-static int runCmdIn(char const *cmd, char const *input)
+int runCmdIn(char const *cmd, char const *input)
 {
   return runCmdArgsIn(cmd, QStringList(), input);
 }
 
 
-static void expectEq(char const *label, QByteArray const &actual, char const *expect)
+void expectEq(char const *label, QByteArray const &actual, char const *expect)
 {
   QByteArray expectBA(expect);
   if (actual != expectBA) {
@@ -119,7 +125,7 @@ static void expectEq(char const *label, QByteArray const &actual, char const *ex
 }
 
 
-static void runCmdArgsExpectError(char const *cmd,
+void runCmdArgsExpectError(char const *cmd,
   QStringList const &args, QProcess::ProcessError error)
 {
   printCmdArgs(cmd, args);
@@ -134,13 +140,13 @@ static void runCmdArgsExpectError(char const *cmd,
 }
 
 
-static void runCmdExpectError(char const *cmd, QProcess::ProcessError error)
+void runCmdExpectError(char const *cmd, QProcess::ProcessError error)
 {
   runCmdArgsExpectError(cmd, QStringList(), error);
 }
 
 
-static void runCmdArgsExpectExit(char const *cmd,
+void runCmdArgsExpectExit(char const *cmd,
   QStringList const &args, int exitCode)
 {
   printCmdArgs(cmd, args);
@@ -155,13 +161,13 @@ static void runCmdArgsExpectExit(char const *cmd,
 }
 
 
-static void runCmdExpectExit(char const *cmd, int exitCode)
+void runCmdExpectExit(char const *cmd, int exitCode)
 {
   runCmdArgsExpectExit(cmd, QStringList(), exitCode);
 }
 
 
-static void runCmdArgsInExpectOut(char const *cmd,
+void runCmdArgsInExpectOut(char const *cmd,
   QStringList const &args, char const *input, char const *output)
 {
   printCmdArgs(cmd, args);
@@ -175,7 +181,7 @@ static void runCmdArgsInExpectOut(char const *cmd,
 }
 
 
-static void runCmdArgsExpectOutErr(char const *cmd,
+void runCmdArgsExpectOutErr(char const *cmd,
   QStringList const &args, char const *output, char const *error)
 {
   printCmdArgs(cmd, args);
@@ -190,7 +196,7 @@ static void runCmdArgsExpectOutErr(char const *cmd,
 
 
 // Run the command with stderr redirected to stdout.
-static void runMergedCmdArgsExpectOut(char const *cmd,
+void runMergedCmdArgsExpectOut(char const *cmd,
   QStringList const &args, char const *output)
 {
   printCmdArgs(cmd, args);
@@ -206,7 +212,7 @@ static void runMergedCmdArgsExpectOut(char const *cmd,
 
 
 // Run 'cygpath -m' on 'input' and return its result.
-static string runCygpath(string input)
+string runCygpath(string input)
 {
   CommandRunner cr;
   cr.setProgram("cygpath");
@@ -226,7 +232,7 @@ static string runCygpath(string input)
 
 // Normalize a string that represents a directory path prior to
 // comparing it to an expected value.
-static string normalizeDir(string d)
+string normalizeDir(string d)
 {
   if (SMFileUtil().windowsPathSemantics()) {
     if (beginsWith(d, "/")) {
@@ -255,7 +261,7 @@ static string normalizeDir(string d)
 }
 
 
-static void runCmdDirExpectOutDir(string const &cmd,
+void runCmdDirExpectOutDir(string const &cmd,
   string const &wd, string const &expectDir)
 {
   DIAG("run: cmd=" << cmd << " wd=" << wd);
@@ -276,14 +282,14 @@ static void runCmdDirExpectOutDir(string const &cmd,
 }
 
 
-static void runCmdExpectOutDir(string const &cmd, string const &output)
+void runCmdExpectOutDir(string const &cmd, string const &output)
 {
   runCmdDirExpectOutDir(cmd, "", output);
 }
 
 
 // ----------------------------- tests ---------------------------------
-static void testProcessError()
+void testProcessError()
 {
   runCmdExpectError("nonexistent-command", QProcess::FailedToStart);
   runCmdArgsExpectError("sleep", QStringList() << "3", QProcess::Timedout);
@@ -293,7 +299,7 @@ static void testProcessError()
 }
 
 
-static void testExitCode()
+void testExitCode()
 {
   runCmdExpectExit("true", 0);
   runCmdExpectExit("false", 1);
@@ -301,7 +307,7 @@ static void testExitCode()
 }
 
 
-static void testOutputData()
+void testOutputData()
 {
   runCmdArgsInExpectOut("tr", QStringList() << "a-z" << "A-Z",
     "hello", "HELLO");
@@ -322,7 +328,7 @@ static void testOutputData()
 }
 
 
-static void testStderrFile()
+void testStderrFile()
 {
   SMFileUtil sfu;
 
@@ -342,7 +348,7 @@ static void testStderrFile()
 }
 
 
-static void testLargeData1()
+void testLargeData1()
 {
   DIAG("testing cat on 100kB...");
 
@@ -363,7 +369,7 @@ static void testLargeData1()
 }
 
 
-static void testLargeData2(bool swapOrder)
+void testLargeData2(bool swapOrder)
 {
   DIAG("testing cat on source code...");
 
@@ -397,7 +403,7 @@ static void testLargeData2(bool swapOrder)
 }
 
 
-static void testWorkingDirectory()
+void testWorkingDirectory()
 {
   string cwd = SMFileUtil().currentDirectory();
 
@@ -420,7 +426,7 @@ static void testWorkingDirectory()
 
 
 // These aren't tests per se, just things that can be helpful to inspect.
-static void testMiscDiagnostics()
+void testMiscDiagnostics()
 {
   runCmdArgsIn("cmd", QStringList() << "/c" << "echo %PATH%", "");
   runCmdArgsIn("cmd", QStringList() << "/c" << "set", "");
@@ -433,7 +439,7 @@ static void testMiscDiagnostics()
 }
 
 
-static void sleepBriefly()
+void sleepBriefly()
 {
   sleepWhilePumpingEvents(200 /*ms*/);
 }
@@ -441,7 +447,7 @@ static void sleepBriefly()
 
 // Running a program asynchronously and not using any signals, just
 // waiting and polling.
-static void testAsyncNoSignals()
+void testAsyncNoSignals()
 {
   CommandRunner cr;
   cr.setProgram("cat");
@@ -479,7 +485,7 @@ static void testAsyncNoSignals()
 
 
 // Like above, but using the "waitFor" methods.
-static void testAsyncWaitFor()
+void testAsyncWaitFor()
 {
   CommandRunner cr;
   cr.setProgram("cat");
@@ -508,7 +514,7 @@ static void testAsyncWaitFor()
 
 // Like above, but use `waitForQtEvent` instead of the `waitFor`
 // methods of `CommandRunner`.
-static void testAsyncExternalWait()
+void testAsyncExternalWait()
 {
   CommandRunner cr;
   cr.setProgram("cat");
@@ -542,7 +548,7 @@ static void testAsyncExternalWait()
 
 
 // Similar, but with a program that writes its output in two steps.
-static void testAsyncWaitFor_delayedWrite()
+void testAsyncWaitFor_delayedWrite()
 {
   CommandRunner cr;
   cr.setProgram("sh");
@@ -569,7 +575,7 @@ static void testAsyncWaitFor_delayedWrite()
 // closing and the child process terminating, so my API cannot do so
 // either.
 //
-static void testAsyncWaitFor_delayedExit()
+void testAsyncWaitFor_delayedExit()
 {
   CommandRunner cr;
   cr.setProgram("sh");
@@ -606,6 +612,9 @@ static void testAsyncWaitFor_delayedExit()
   // This should be around 1000 (1s).
   VPVAL(processClosedTime - channelClosedTime);
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 CRTester::CRTester(CommandRunner *runner, Protocol protocol)
@@ -781,7 +790,10 @@ void CRTester::slot_processTerminated() NOEXCEPT
 }
 
 
-static void testAsyncWithSignals()
+OPEN_ANONYMOUS_NAMESPACE
+
+
+void testAsyncWithSignals()
 {
   CommandRunner cr;
   CRTester tester(&cr, CRTester::P_CAT);
@@ -804,7 +816,7 @@ static void testAsyncWithSignals()
 }
 
 
-static void testAsyncBothOutputs()
+void testAsyncBothOutputs()
 {
   CommandRunner cr;
   CRTester tester(&cr, CRTester::P_ECHO);
@@ -825,7 +837,7 @@ static void testAsyncBothOutputs()
 }
 
 
-static void testAsyncKill(bool wait)
+void testAsyncKill(bool wait)
 {
   TEST_CASE("testAsyncKill: wait=" << wait);
 
@@ -868,7 +880,7 @@ static void testAsyncKill(bool wait)
 }
 
 
-static void testAsyncFailedStart()
+void testAsyncFailedStart()
 {
   CommandRunner cr;
   CRTester tester(&cr, CRTester::P_FAILED_START);
@@ -888,7 +900,7 @@ static void testAsyncFailedStart()
 }
 
 
-static void expectSSCL(char const *input, char const *expect)
+void expectSSCL(char const *input, char const *expect)
 {
   CommandRunner r;
   r.setShellCommandLine(input, false /*alwaysUseSH*/);
@@ -901,7 +913,7 @@ static void expectSSCL(char const *input, char const *expect)
 //
 // But, as of 2018-07-16, I'm not using that capability in the editor,
 // instead always using 'sh'.
-static void testSetShellCommandLine()
+void testSetShellCommandLine()
 {
   expectSSCL("date", "date");
   expectSSCL("echo hi", "echo hi");
@@ -910,7 +922,7 @@ static void testSetShellCommandLine()
 }
 
 
-static void printStatus(CommandRunner &runner)
+void printStatus(CommandRunner &runner)
 {
   DIAG("CommandRunner running: " << runner.isRunning());
   if (!runner.isRunning()) {
@@ -932,7 +944,7 @@ static void printStatus(CommandRunner &runner)
 // testing.
 //
 // Adapted from wrk/learn/qt5/qproc.cc.
-static void runAndKill(CmdlineArgsSpan commandAndArgs)
+void runAndKill(CmdlineArgsSpan commandAndArgs)
 {
   UnixTime startTime = 0;
 
@@ -974,6 +986,9 @@ static void runAndKill(CmdlineArgsSpan commandAndArgs)
   DIAG("CommandRunner destructor took about " <<
        (getCurrentUnixTime() - startTime) << " seconds");
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 #define RUN(statement)                              \
