@@ -7,7 +7,7 @@
 
 // smbase
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-//#include "smbase/sm-test.h"            // ARGS_TEST_MAIN
+#include "smbase/sm-test.h"            // VPVAL
 
 // libc
 #include <stdio.h>                     // printf
@@ -178,9 +178,11 @@ int ctSet=0, ctInsert=0, ctInsertMany=0, ctRemove=0, ctRemoveMany=0,
     ctClear=0, ctFillFromArray=0, ctSwap=0, ctEnsure=0;
 
 
-int randValue()
+int randValue(int numValues = 100)
 {
-  return rand() % 100;
+  // I sometimes use the sequence length as `maxValues`, which can be 0,
+  // so ensure the modulus is always at least 1.
+  return rand() % std::max(1, numValues);
 }
 
 
@@ -192,7 +194,7 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   // use set()
   if (choice < 20 && seq1.length()) {
     ctSet++;
-    int elt = rand() % seq1.length();
+    int elt = randValue(seq1.length());
     int val = randValue();
     seq1.set(elt, val);
     seq2.set(elt, val);
@@ -201,7 +203,7 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   // use insert()
   else if (choice < 40) {
     ctInsert++;
-    int elt = rand() % (seq1.length() + 1);
+    int elt = randValue(seq1.length() + 1);
     int val = randValue();
     seq1.insert(elt, val);
     seq2.insert(elt, val);
@@ -210,8 +212,8 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   // use insertMany()
   else if (choice < 60) {
     ctInsertMany++;
-    int elt = rand() % (seq1.length() + 1);
-    int sz = rand() % 20;
+    int elt = randValue(seq1.length() + 1);
+    int sz = randValue(20);
     int *temp = new int[sz];
     for (int i=0; i<sz; i++) {
       temp[i] = randValue();
@@ -226,7 +228,7 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
     ctRemove++;
     int len = seq1.length();
     if (len) {
-      int elt = rand() % len;
+      int elt = randValue(len);
       seq1.remove(elt);
       seq2.remove(elt);
     }
@@ -237,7 +239,7 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
     ctEnsure++;
 
     // Half the time no change, half the time expand.
-    int index = rand() % (seq1.length() * 2);
+    int index = randValue(seq1.length() * 2);
     seq1.ensureValidIndex(index);
     seq2.ensureValidIndex(index);
   }
@@ -246,8 +248,8 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   else if (choice < 97) {
     ctRemoveMany++;
     int len = seq1.length();
-    int sz = rand() % (std::min(20, len+1));     // # to remove
-    int elt = rand() % (len+1 - sz);
+    int sz = randValue(std::min(20, len+1));     // # to remove
+    int elt = randValue(len+1 - sz);
     seq1.removeMany(elt, sz);
     seq2.removeMany(elt, sz);
   }
@@ -267,9 +269,9 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   // use fillFromArray()
   else if (choice < 99) {
     ctFillFromArray++;
-    int sz = rand() % 50;
-    int gapElt = rand() % (sz+1);
-    int gapSize = rand() % 20;
+    int sz = randValue(50);
+    int gapElt = randValue(sz+1);
+    int gapSize = randValue(20);
     int *temp = new int[sz];
     for (int i=0; i<sz; i++) {
       temp[i] = randValue();
