@@ -4,18 +4,19 @@
 #ifndef EDITOR_VFS_CONNECTIONS_TEST_H
 #define EDITOR_VFS_CONNECTIONS_TEST_H
 
+#include "unit-tests.h"                // CmdlineArgsSpan
 #include "vfs-connections.h"           // module under test
 
 // smbase
 #include "smbase/str.h"                // string
 
 // qt
-#include <QCoreApplication>
 #include <QEventLoop>
+#include <QObject>
 
 
 // Test VFS_Connections.
-class VFS_ConnectionsTest : public QCoreApplication {
+class VFS_ConnectionsTest : public QObject {
   Q_OBJECT
   NO_OBJECT_COPIES(VFS_ConnectionsTest);
 
@@ -34,7 +35,7 @@ public:      // data
   HostName m_secondaryHostName;
 
 public:      // methods
-  VFS_ConnectionsTest(int argc, char **argv);
+  VFS_ConnectionsTest(CmdlineArgsSpan args);
   ~VFS_ConnectionsTest();
 
   // True if we are using 'm_secondaryHostName'.

@@ -1,6 +1,7 @@
 // vfs-connections-test.cc
 // Code for vfs-connections-test.h.
 
+#include "unit-tests.h"                // decl for my entry point
 #include "vfs-connections-test.h"      // this module
 
 // editor
@@ -11,6 +12,7 @@
 
 // smbase
 #include "smbase/exc.h"                // smbase::XBase, xfatal
+#include "smbase/sm-test.h"            // DIAG
 #include "smbase/trace.h"              // traceAddFromEnvVar
 
 // libc++
@@ -19,17 +21,16 @@
 using namespace smbase;
 
 
-VFS_ConnectionsTest::VFS_ConnectionsTest(int argc, char **argv)
-  : QCoreApplication(argc, argv),
-    m_eventLoop(),
+VFS_ConnectionsTest::VFS_ConnectionsTest(CmdlineArgsSpan args)
+  : m_eventLoop(),
     m_vfsConnections(),
     m_primaryHostName(HostName::asLocal()),
     m_secondaryHostName(HostName::asLocal())
 {
   // If a command line argument is supplied, treat it as an SSH host
   // name.
-  if (arguments().size() >= 2) {
-    m_secondaryHostName = HostName::asSSH(toString(arguments().at(1)));
+  if (!args.empty()) {
+    m_secondaryHostName = HostName::asSSH(args[0]);
   }
 
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnected,
@@ -62,7 +63,7 @@ static std::vector<unsigned char> allBytes()
 void VFS_ConnectionsTest::waitForConnection(HostName const &hostName)
 {
   while (m_vfsConnections.isConnecting(hostName)) {
-    cout << "waiting for connection to " << hostName << endl;
+    DIAG("waiting for connection to " << hostName);
     m_eventLoop.exec();
   }
   if (!m_vfsConnections.isReady(hostName)) {
@@ -80,8 +81,8 @@ VFS_Connections::RequestID
   req->m_data = allBytes();
   m_vfsConnections.issueRequest(requestID /*OUT*/,
     hostName, std::move(req));
-  cout << "sent echo request: host=" << hostName
-       << " id=" << requestID << endl;
+  DIAG("sent echo request: host=" << hostName <<
+       " id=" << requestID);
 
   return requestID;
 }
@@ -91,7 +92,7 @@ void VFS_ConnectionsTest::waitForReply(
   VFS_Connections::RequestID requestID)
 {
   while (m_vfsConnections.requestIsPending(requestID)) {
-    cout << "waiting for reply " << requestID << "\n";
+    DIAG("waiting for reply " << requestID);
     xassert(m_vfsConnections.numPendingRequests() > 0);
     m_eventLoop.exec();
   }
@@ -115,7 +116,7 @@ void VFS_ConnectionsTest::receiveEchoReply(
 
 void VFS_ConnectionsTest::testOneEcho()
 {
-  cout << "testOneEcho\n";
+  DIAG("testOneEcho");
 
   m_vfsConnections.selfCheck();
 
@@ -149,7 +150,7 @@ void VFS_ConnectionsTest::testOneEcho()
 
 void VFS_ConnectionsTest::testMultipleEchos(int howMany)
 {
-  cout << "testMultipleEchos " << howMany << "\n";
+  DIAG("testMultipleEchos " << howMany);
 
   std::vector<VFS_Connections::RequestID> requestIDs;
 
@@ -180,7 +181,7 @@ void VFS_ConnectionsTest::testMultipleEchos(int howMany)
 
 void VFS_ConnectionsTest::testCancel(bool wait)
 {
-  cout << "testCancel wait=" << wait << "\n";
+  DIAG("testCancel wait=" << wait);
 
   VFS_Connections::RequestID primaryRequestID =
     sendEchoRequest(m_primaryHostName);
@@ -197,11 +198,11 @@ void VFS_ConnectionsTest::testCancel(bool wait)
   }
 
   m_vfsConnections.cancelRequest(primaryRequestID);
-  cout << "canceled request " << primaryRequestID << "\n";
+  DIAG("canceled request " << primaryRequestID);
 
   if (usingSecondary()) {
     m_vfsConnections.cancelRequest(secondaryRequestID);
-    cout << "canceled request " << secondaryRequestID << "\n";
+    DIAG("canceled request " << secondaryRequestID);
   }
 }
 
@@ -210,11 +211,10 @@ void VFS_ConnectionsTest::runTests()
 {
   m_vfsConnections.selfCheck();
 
-  cout << "runTests: primary=" << m_primaryHostName;
+  DIAG("runTests: primary=" << m_primaryHostName);
   if (usingSecondary()) {
-    cout << " secondary=" << m_secondaryHostName;
+    DIAG("  secondary=" << m_secondaryHostName);
   }
-  cout << endl;
 
   m_vfsConnections.connect(m_primaryHostName);
   if (usingSecondary()) {
@@ -231,13 +231,11 @@ void VFS_ConnectionsTest::runTests()
     xassert(m_vfsConnections.isOrWasConnected(m_secondaryHostName));
   }
 
-  cout << "primary start dir: "
-       << m_vfsConnections.getStartingDirectory(m_primaryHostName)
-       << "\n";
+  DIAG("primary start dir: " <<
+       m_vfsConnections.getStartingDirectory(m_primaryHostName));
   if (usingSecondary()) {
-    cout << "secondary start dir: "
-         << m_vfsConnections.getStartingDirectory(m_secondaryHostName)
-         << "\n";
+    DIAG("secondary start dir: " <<
+         m_vfsConnections.getStartingDirectory(m_secondaryHostName));
   }
 
   testOneEcho();
@@ -254,14 +252,12 @@ void VFS_ConnectionsTest::runTests()
   m_vfsConnections.selfCheck();
   m_vfsConnections.shutdownAll();
   m_vfsConnections.selfCheck();
-
-  cout << "vfs-connections-test passed\n";
 }
 
 
 void VFS_ConnectionsTest::on_vfsConnected(HostName hostName) NOEXCEPT
 {
-  cout << "connected to " << hostName << endl;
+  DIAG("connected to " << hostName);
   m_eventLoop.exit();
 }
 
@@ -269,7 +265,7 @@ void VFS_ConnectionsTest::on_vfsConnected(HostName hostName) NOEXCEPT
 void VFS_ConnectionsTest::on_vfsReplyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
-  cout << "got reply: " << requestID << endl;
+  DIAG("got reply: " << requestID);
   m_eventLoop.exit();
 }
 
@@ -277,26 +273,17 @@ void VFS_ConnectionsTest::on_vfsReplyAvailable(
 void VFS_ConnectionsTest::on_vfsFailed(
   HostName hostName, string reason) NOEXCEPT
 {
-  cout << "connection lost: host=" << hostName
-       << " reason: " << reason << endl;
+  DIAG("connection lost: host=" << hostName <<
+       " reason: " << reason);
   m_eventLoop.exit();
 }
 
 
-int main(int argc, char **argv)
+// Called from unit-tests.cc.
+void test_vfs_connections(CmdlineArgsSpan args)
 {
-  traceAddFromEnvVar();
-
-  try {
-    VFS_ConnectionsTest connsTest(argc, argv);
-    connsTest.runTests();
-  }
-  catch (XBase &x) {
-    cerr << x.why() << endl;
-    return 2;
-  }
-
-  return 0;
+  VFS_ConnectionsTest connsTest(args);
+  connsTest.runTests();
 }
 
 

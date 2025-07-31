@@ -390,37 +390,6 @@ $(eval $(call RUN_TEST_PROG,editor-fs-server-test))
 out/editor-fs-server-test.ok: editor-fs-server.exe
 
 
-# ------------------------ vfs-connections-test ------------------------
-EDITOR_OBJS += vfs-connections.o
-EDITOR_OBJS += vfs-connections.moc.o
-
-VFS_CONNECTIONS_TEST_OBJS :=
-VFS_CONNECTIONS_TEST_OBJS += $(EDITOR_OBJS)
-VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.o
-VFS_CONNECTIONS_TEST_OBJS += vfs-connections-test.moc.o
-
-vfs-connections-test.exe: $(VFS_CONNECTIONS_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(VFS_CONNECTIONS_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,vfs-connections-test))
-
-# The test uses the server executable.
-out/vfs-connections-test.ok: editor-fs-server.exe
-
-
-# Optionally run a test that uses SSH to connect to localhost.
-ifeq ($(TEST_SSH_LOCALHOST),1)
-
-test-prog-outs: out/vfs-connections-test.exe.localhost.ok
-out/vfs-connections-test.exe.localhost.ok: vfs-connections-test.exe editor-fs-server.exe
-	$(CREATE_OUTPUT_DIRECTORY)
-	$(RUN_WITH_TIMEOUT) ./vfs-connections-test.exe localhost \
-	  </dev/null >out/vfs-connections-test.exe.localhost.out 2>&1
-	touch $@
-
-endif # TEST_SSH_LOCALHOST
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
@@ -434,6 +403,8 @@ EDITOR_OBJS += lsp-manager.o
 EDITOR_OBJS += makefile_hilite.yy.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
+EDITOR_OBJS += vfs-connections.o
+EDITOR_OBJS += vfs-connections.moc.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
@@ -450,6 +421,8 @@ UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
+UNIT_TESTS_OBJS += vfs-connections-test.o
+UNIT_TESTS_OBJS += vfs-connections-test.moc.o
 
 unit-tests.exe: $(UNIT_TESTS_OBJS)
 	@# I link with `GUI_LDFLAGS` because lots of modules that need
@@ -458,6 +431,24 @@ unit-tests.exe: $(UNIT_TESTS_OBJS)
 	$(CXX) -o $@ $(CCFLAGS) $(UNIT_TESTS_OBJS) $(GUI_LDFLAGS)
 
 $(eval $(call RUN_TEST_PROG,unit-tests))
+
+# Some of the unit tests (e.g., vfs-connections-test) require the server
+# executable.
+out/unit-tests.ok: editor-fs-server.exe
+
+
+# ------------------------ vfs-connections-test ------------------------
+# Optionally run a test that uses SSH to connect to localhost.
+ifeq ($(TEST_SSH_LOCALHOST),1)
+
+test-prog-outs: out/vfs-connections-test-localhost.ok
+out/vfs-connections-test-localhost.ok: unit-tests.exe editor-fs-server.exe
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(RUN_WITH_TIMEOUT) ./unit-tests.exe vfs_connections localhost \
+	  </dev/null >out/vfs-connections-test-localhost.ok 2>&1
+	touch $@
+
+endif # TEST_SSH_LOCALHOST
 
 
 # ------------------- diagnostic-details-dialog-test -------------------
