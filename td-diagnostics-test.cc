@@ -12,12 +12,16 @@
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap (for TEST_CASE_EXPRS)
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"                      // EXPECT_EQ, TEST_CASE_EXPRS
 
 using namespace gdv;
 
 
-static void testOneContainsByteIndex(
+OPEN_ANONYMOUS_NAMESPACE
+
+
+void testOneContainsByteIndex(
   std::optional<int> startByteIndex,
   std::optional<int> endByteIndex,
   int testByteIndex,
@@ -35,7 +39,7 @@ static void testOneContainsByteIndex(
 }
 
 
-static void test_TDD_LineEntry_containsByteIndex()
+void test_TDD_LineEntry_containsByteIndex()
 {
   testOneContainsByteIndex({}, {}, 0, true);
   testOneContainsByteIndex({}, {}, 1, true);
@@ -63,7 +67,7 @@ static void test_TDD_LineEntry_containsByteIndex()
 }
 
 
-static void testOneGetDiagnosticsAt(
+void testOneGetDiagnosticsAt(
   TextDocumentDiagnostics const &tdd,
   int line,
   int byteIndex,
@@ -83,7 +87,7 @@ static void testOneGetDiagnosticsAt(
 }
 
 
-static void testOneAdjacentDiagnostic(
+void testOneAdjacentDiagnostic(
   TextDocumentDiagnostics const &tdd,
   bool next,
   int startLine,
@@ -109,7 +113,7 @@ static void testOneAdjacentDiagnostic(
 }
 
 
-static void testOneNextDiagnostic(
+void testOneNextDiagnostic(
   TextDocumentDiagnostics const &tdd,
   int startLine,
   int startByteIndex,
@@ -122,7 +126,7 @@ static void testOneNextDiagnostic(
 }
 
 
-static void testOnePreviousDiagnostic(
+void testOnePreviousDiagnostic(
   TextDocumentDiagnostics const &tdd,
   int startLine,
   int startByteIndex,
@@ -136,7 +140,7 @@ static void testOnePreviousDiagnostic(
 
 
 // This also tests next/previous diagnostic navigation.
-static void test_TDD_getDiagnosticAt()
+void test_TDD_getDiagnosticAt()
 {
   TEST_CASE("test_TDD_getDiagnosticAt");
 
@@ -304,6 +308,9 @@ static void test_TDD_getDiagnosticAt()
   tdd.selfCheck();
   doc.selfCheck();
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 // Called from unit-tests.cc.
