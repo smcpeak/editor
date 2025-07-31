@@ -13,7 +13,7 @@
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-fstream.h"         // ofstream
-#include "smbase/sm-test.h"            // EXPECT_EQ
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/strutil.h"            // readLinesFromFile
 #include "smbase/trace.h"              // TRACE
@@ -299,11 +299,13 @@ void printHighlightedLine(TextDocumentCore const &tdc,
   LineCategories categories(TC_NORMAL);
   hi.highlight(tdc, line, categories);
 
-  cout << "line " << line << ":\n"
-       << "  text : " << tdc.getWholeLineString(line) << "\n"
-       << "  catgy: " << categories.asUnaryString() << "\n"
-       << "  rle  : " << categories.asString() << "\n"
-       ;
+  if (verbose) {
+    cout << "line " << line << ":\n"
+         << "  text : " << tdc.getWholeLineString(line) << "\n"
+         << "  catgy: " << categories.asUnaryString() << "\n"
+         << "  rle  : " << categories.asString() << "\n"
+         ;
+  }
 }
 
 void printHighlightedLines(TextDocumentCore const &tdc,
@@ -403,15 +405,15 @@ static void printCategories(LexHighlighter &hi)
 
 static void insert(int line, int col, char const *text)
 {
-  cout << "insert(" << line << ", " << col << ", "
-       << doubleQuote(text) << ")\n";
+  DIAG("insert(" << line << ", " << col << ", " <<
+       doubleQuote(text) << ")");
   tde->setCursor(TextLCoord(line, col));
   tde->insertNulTermText(text);
 }
 
 static void del(int line, int col, int len)
 {
-  cout << "del(" << line << ", " << col << ", " << len << ")\n";
+  DIAG("del(" << line << ", " << col << ", " << len << ")");
   tde->setCursor(TextLCoord(line, col));
   tde->deleteTextBytes(len);
 }

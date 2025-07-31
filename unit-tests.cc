@@ -51,10 +51,11 @@ static void entry(int argc, char **argv)
       ranOne = true;                                    \
     }
 
+  RUN_TEST(c_hilite);
+  RUN_TEST(hashcomment_hilite);
   RUN_TEST(lsp_client);
   RUN_TEST(lsp_data);
   RUN_TEST(lsp_manager);
-  RUN_TEST(hashcomment_hilite);
   RUN_TEST(makefile_hilite);
   RUN_TEST(ocaml_hilite);
   RUN_TEST(python_hilite);

@@ -420,20 +420,12 @@ TOCLEAN += *.yy.cc *.yy.h *.lex.backup
 	@#mv lex.backup $*.lex.backup
 	@#cat $*.lex.backup
 
-EDITOR_OBJS += c_hilite.yy.o
-EDITOR_OBJS += comment.yy.o
-EDITOR_OBJS += lex_hilite.o
-
-C_HILITE_OBJS := $(EDITOR_OBJS)
-
-c-hilite-test.exe: $(C_HILITE_OBJS) c-hilite-test.cc
-	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c-hilite-test.cc $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,c-hilite-test))
-
 
 # ----------------------------- unit-tests -----------------------------
+EDITOR_OBJS += c_hilite.yy.o
+EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
+EDITOR_OBJS += lex_hilite.o
 EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-data.o
@@ -445,6 +437,7 @@ EDITOR_OBJS += python_hilite.yy.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
+UNIT_TESTS_OBJS += c-hilite-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
 UNIT_TESTS_OBJS += lsp-client-test.o
