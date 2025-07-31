@@ -67,6 +67,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(nearby_file);
   RUN_TEST(ocaml_hilite);
   RUN_TEST(python_hilite);
+  RUN_TEST(td_core);
   RUN_TEST(td_diagnostics);
   RUN_TEST(td_editor);
   RUN_TEST(text_search);

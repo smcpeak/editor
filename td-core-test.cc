@@ -1,6 +1,8 @@
 // td-core-test.cc
 // Tests for 'td-core' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "td-core.h"                   // module to test
 
 // smbase
@@ -8,7 +10,7 @@
 #include "smbase/exc.h"                // smbase::xmessage
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // IGNORE_RESULT, OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // USUAL_MAIN, EXPECT_EQ
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ
 #include "smbase/string-util.h"        // vectorOfUCharToString
 
 // libc
@@ -249,8 +251,10 @@ void testReadTwice()
       // write it out again
       SMFileUtil().writeFile("td-core.tmp2", doc.getWholeFile());
 
-      printf("\nbuffer mem usage stats:\n");
-      doc.printMemStats();
+      if (verbose) {
+        DIAG("\nbuffer mem usage stats:");
+        doc.printMemStats();
+      }
       fullSelfCheck(doc);
     }
 
@@ -260,7 +264,9 @@ void testReadTwice()
     }
 
     // ok
-    IGNORE_RESULT(system("ls -l td-core.tmp"));
+    if (verbose) {
+      IGNORE_RESULT(system("ls -l td-core.tmp"));
+    }
     remove("td-core.tmp");
     remove("td-core.tmp2");
   }
@@ -270,10 +276,12 @@ void testReadTwice()
 // Read the td-core.cc source code, just as an example of a real file.
 void testReadSourceCode()
 {
-  printf("reading td-core.cc ...\n");
+  DIAG("reading td-core.cc ...");
   TextDocumentCore doc;
   doc.replaceWholeFile(SMFileUtil().readFile("td-core.cc"));
-  doc.printMemStats();
+  if (verbose) {
+    doc.printMemStats();
+  }
   fullSelfCheck(doc);
 }
 
@@ -504,7 +512,11 @@ void test_adjustMCoord()
 }
 
 
-void entry()
+CLOSE_ANONYMOUS_NAMESPACE
+
+
+// Called from unit-tests.cc.
+void test_td_core(CmdlineArgsSpan args)
 {
   testReadTwice();
   testReadSourceCode();
@@ -512,15 +524,7 @@ void entry()
   testVarious();
   testWalkCoordBytes();
   test_adjustMCoord();
-
-  printf("\ntd-core-test is ok\n");
 }
-
-
-CLOSE_ANONYMOUS_NAMESPACE
-
-
-USUAL_TEST_MAIN
 
 
 // EOF

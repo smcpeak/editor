@@ -198,21 +198,6 @@ gap-test.exe: gap.h gap-test.cc
 $(eval $(call RUN_TEST_PROG,gap-test))
 
 
-# -------------- td-core-test test program ----------------
-TOCLEAN += td-core.tmp
-
-EDITOR_OBJS += td-core.o
-EDITOR_OBJS += textmcoord.o
-
-TD_CORE_OBJS := $(EDITOR_OBJS)
-TD_CORE_OBJS += td-core-test.o
-
-td-core-test.exe: $(TD_CORE_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TD_CORE_OBJS) $(CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,td-core-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -241,6 +226,7 @@ EDITOR_OBJS += named-td.o
 EDITOR_OBJS += nearby-file.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
+EDITOR_OBJS += td-core.o
 EDITOR_OBJS += td-diagnostics.o
 EDITOR_OBJS += td-editor.o
 EDITOR_OBJS += td.o
@@ -248,6 +234,7 @@ EDITOR_OBJS += text-search.o
 EDITOR_OBJS += textcategory.o
 EDITOR_OBJS += textlcoord.o
 EDITOR_OBJS += textmcoord-map.o
+EDITOR_OBJS += textmcoord.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += vfs-connections.moc.o
 EDITOR_OBJS += vfs-connections.o
@@ -279,6 +266,7 @@ UNIT_TESTS_OBJS += named-td-test.o
 UNIT_TESTS_OBJS += nearby-file-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
+UNIT_TESTS_OBJS += td-core-test.o
 UNIT_TESTS_OBJS += td-diagnostics-test.o
 UNIT_TESTS_OBJS += td-editor-test.o
 UNIT_TESTS_OBJS += text-search-test.o
@@ -300,6 +288,9 @@ $(eval $(call RUN_TEST_PROG,unit-tests))
 # Some of the unit tests (e.g., vfs-connections-test) require the server
 # executable.
 out/unit-tests.ok: editor-fs-server.exe
+
+# `td-core-test` might leave this file (but only if the test fails).
+TOCLEAN += td-core.tmp
 
 
 # ------------------------- editor-fs-server ---------------------------
