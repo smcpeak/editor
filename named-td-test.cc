@@ -497,9 +497,6 @@ static void test_TDD_getDiagnosticAt()
 
 
 // ------------------------------- entry -------------------------------
-// Defined in doc-type-detect.cc.
-void test_doc_type_detect();
-
 // Called from unit-tests.cc.
 void test_named_td(CmdlineArgsSpan args)
 {
@@ -510,12 +507,6 @@ void test_named_td(CmdlineArgsSpan args)
   testApplyCommandSubstitutions();
   test_TDD_LineEntry_containsByteIndex();
   test_TDD_getDiagnosticAt();
-
-  // Put this here for the moment.
-  //
-  // TODO: Fix the test infrastructure so each test is not in its own
-  // executable.
-  test_doc_type_detect();
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);

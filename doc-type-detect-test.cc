@@ -1,12 +1,14 @@
 // doc-type-detect-test.cc
 // Tests for `doc-type-detect` module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "doc-type-detect.h"           // module under test
 
 #include "doc-name.h"                  // DocumentName
 
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // EXPECT_EQ
+#include "smbase/sm-test.h"            // EXPECT_EQ, TEST_CASE
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -64,9 +66,11 @@ void test_detectDocumentType()
 CLOSE_ANONYMOUS_NAMESPACE
 
 
-// Called from named-td-test.cc.
-void test_doc_type_detect()
+// Called from unit-tests.cc.
+void test_doc_type_detect(CmdlineArgsSpan args)
 {
+  TEST_CASE("test_doc_type_detect");
+
   test_detectDocumentType();
 }
 
