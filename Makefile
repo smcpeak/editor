@@ -156,6 +156,23 @@ TOCLEAN += *.gen.*
 	$(ASTGEN)/astgen.exe -o$*.ast.gen $<
 
 
+# Generate a highlighting lexer from a (sm)flex specification.
+#
+# -b makes lex.backup.
+#
+# TODO: The -b option is incompatible with parallel build, so I have
+# removed it.  I should fix smflex and then re-enable this.
+#
+# NOTE: The base name of the lexer files can only use characters that
+# are allowed in C identifiers because Flex derives the name of some
+# internal identifiers from that file name.
+TOCLEAN += *.yy.cc *.yy.h *.lex.backup
+%.yy.cc: %.lex %.h
+	$(SMFLEX)/smflex -o$@ -P$*_yy $*.lex
+	@#mv lex.backup $*.lex.backup
+	@#cat $*.lex.backup
+
+
 # ------------------------------- astgen -------------------------------
 $(ASTGEN)/astgen.exe:
 	@echo "Need $(ASTGEN)/astgen.exe.  Run `make` in $(ASTGEN)."
@@ -402,23 +419,6 @@ out/vfs-connections-test.exe.localhost.ok: vfs-connections-test.exe editor-fs-se
 	touch $@
 
 endif # TEST_SSH_LOCALHOST
-
-
-# ------------- highlighting stuff --------------------
-TOCLEAN += *.yy.cc *.yy.h *.lex.backup
-
-# lexer (-b makes lex.backup)
-#
-# TODO: The -b option is incompatible with parallel build, so I have
-# removed it.  I should fix smflex and then re-enable this.
-#
-# NOTE: The base name of the lexer files can only use characters that
-# are allowed in C identifiers because Flex derives the name of some
-# internal identifiers from that file name.
-%.yy.cc: %.lex %.h
-	$(SMFLEX)/smflex -o$@ -P$*_yy $*.lex
-	@#mv lex.backup $*.lex.backup
-	@#cat $*.lex.backup
 
 
 # ----------------------------- unit-tests -----------------------------
