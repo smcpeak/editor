@@ -13,15 +13,15 @@
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 // qt
-#include <QCoreApplication>
 #include <QEventLoop>
+#include <QObject>
 
 // libc++
 #include <memory>                      // std::unique_ptr
 
 
 // App instance for running tests.
-class FSServerTest : public QCoreApplication {
+class FSServerTest : public QObject {
   Q_OBJECT
   NO_OBJECT_COPIES(FSServerTest);
 
@@ -33,7 +33,7 @@ public:      // data
   VFS_FileSystemQuery m_fsQuery;
 
 public:      // methods
-  FSServerTest(int argc, char **argv);
+  FSServerTest();
   ~FSServerTest();
 
   // Wait for and return the next reply, or throw on error.

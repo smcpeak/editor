@@ -22,7 +22,8 @@ using namespace smbase;
 
 
 VFS_ConnectionsTest::VFS_ConnectionsTest(CmdlineArgsSpan args)
-  : m_eventLoop(),
+  : QObject(),
+    m_eventLoop(),
     m_vfsConnections(),
     m_primaryHostName(HostName::asLocal()),
     m_secondaryHostName(HostName::asLocal())

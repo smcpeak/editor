@@ -370,26 +370,6 @@ editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
 all: editor-fs-server.exe
 
 
-# ----------------------- editor-fs-server-test ------------------------
-EDITOR_OBJS += vfs-msg.o
-EDITOR_OBJS += vfs-query.o
-EDITOR_OBJS += vfs-query.moc.o
-EDITOR_OBJS += waiting-counter.o
-
-EDITOR_FS_SERVER_TEST_OBJS :=
-EDITOR_FS_SERVER_TEST_OBJS += $(EDITOR_OBJS)
-EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.o
-EDITOR_FS_SERVER_TEST_OBJS += editor-fs-server-test.moc.o
-
-editor-fs-server-test.exe: $(EDITOR_FS_SERVER_TEST_OBJS) $(LIBSMBASE)
-	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_FS_SERVER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,editor-fs-server-test))
-
-# The test uses the server executable.
-out/editor-fs-server-test.ok: editor-fs-server.exe
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
@@ -403,12 +383,18 @@ EDITOR_OBJS += lsp-manager.o
 EDITOR_OBJS += makefile_hilite.yy.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
-EDITOR_OBJS += vfs-connections.o
 EDITOR_OBJS += vfs-connections.moc.o
+EDITOR_OBJS += vfs-connections.o
+EDITOR_OBJS += vfs-msg.o
+EDITOR_OBJS += vfs-query.moc.o
+EDITOR_OBJS += vfs-query.o
+EDITOR_OBJS += waiting-counter.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
 UNIT_TESTS_OBJS += c-hilite-test.o
+UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
+UNIT_TESTS_OBJS += editor-fs-server-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
 UNIT_TESTS_OBJS += lsp-client-test.o
@@ -421,8 +407,8 @@ UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
-UNIT_TESTS_OBJS += vfs-connections-test.o
 UNIT_TESTS_OBJS += vfs-connections-test.moc.o
+UNIT_TESTS_OBJS += vfs-connections-test.o
 
 unit-tests.exe: $(UNIT_TESTS_OBJS)
 	@# I link with `GUI_LDFLAGS` because lots of modules that need
@@ -435,6 +421,11 @@ $(eval $(call RUN_TEST_PROG,unit-tests))
 # Some of the unit tests (e.g., vfs-connections-test) require the server
 # executable.
 out/unit-tests.ok: editor-fs-server.exe
+
+
+# ----------------------- editor-fs-server-test ------------------------
+# TODO: `editor-fs-server-test` has an option to test using SSH, but
+# the test is currently broken.
 
 
 # ------------------------ vfs-connections-test ------------------------

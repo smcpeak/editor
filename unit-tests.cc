@@ -52,6 +52,7 @@ static void entry(int argc, char **argv)
     }
 
   RUN_TEST(c_hilite);
+  RUN_TEST(editor_fs_server);
   RUN_TEST(hashcomment_hilite);
   RUN_TEST(lsp_client);
   RUN_TEST(lsp_data);

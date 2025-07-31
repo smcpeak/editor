@@ -2,22 +2,22 @@
 // Code for editor-fs-server-test.h.
 
 #include "editor-fs-server-test.h"     // this module
+#include "unit-tests.h"                // decl for my entry point
 
 // smqtutil
 #include "smqtutil/qtutil.h"           // toString(QString)
 
 // smbase
 #include "smbase/exc.h"                // smbase::XBase
-#include "smbase/sm-test.h"            // PVAL
+#include "smbase/sm-test.h"            // DIAG, VPVAL
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/syserr.h"             // smbase::XSysError
-#include "smbase/trace.h"              // traceAddFromEnvVar
 
 using namespace smbase;
 
 
-FSServerTest::FSServerTest(int argc, char **argv)
-  : QCoreApplication(argc, argv),
+FSServerTest::FSServerTest()
+  : QObject(),
     m_eventLoop(),
     m_fsQuery()
 {
@@ -39,10 +39,10 @@ FSServerTest::~FSServerTest()
 
 std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 {
-  TRACE("FSServerTest", "getNextReply");
+  DIAG("getNextReply");
 
   // Wait for something to happen.
-  TRACE("FSServerTest", "  waiting ...");
+  DIAG("  waiting ...");
   m_eventLoop.exec();
 
   if (m_fsQuery.hasFailed()) {
@@ -56,7 +56,7 @@ std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
 
 void FSServerTest::runTests(HostName const &hostName)
 {
-  TRACE("FSServerTest", "runTests");
+  DIAG("runTests");
 
   connect(hostName);
 
@@ -73,7 +73,7 @@ void FSServerTest::connect(HostName const &hostName)
 {
   m_fsQuery.connect(hostName);
   while (m_fsQuery.isConnecting()) {
-    TRACE("FSServerTest", "  connecting ...");
+    DIAG("connecting ...");
     m_eventLoop.exec();
   }
   if (m_fsQuery.hasFailed()) {
@@ -84,7 +84,7 @@ void FSServerTest::connect(HostName const &hostName)
 
 void FSServerTest::runPathQuery(string const &path)
 {
-  cout << "runPathQuery(" << doubleQuote(path) << ")\n";
+  DIAG("runPathQuery(" << doubleQuote(path) << ")");
 
   // Send.
   {
@@ -97,11 +97,11 @@ void FSServerTest::runPathQuery(string const &path)
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
   VFS_FileStatusReply *reply = replyMsg->asFileStatusReply();
   xassert(reply->m_success);
-  PVAL(reply->m_dirName);
-  PVAL(reply->m_fileName);
-  PVAL(reply->m_dirExists);
-  PVAL(reply->m_fileKind);
-  PVAL(reply->m_fileModificationTime);
+  VPVAL(reply->m_dirName);
+  VPVAL(reply->m_fileName);
+  VPVAL(reply->m_dirExists);
+  VPVAL(reply->m_fileKind);
+  VPVAL(reply->m_fileModificationTime);
 }
 
 
@@ -132,7 +132,7 @@ static std::vector<unsigned char> allBytes()
 
 void FSServerTest::runEchoTests()
 {
-  cout << "runEchoTests\n";
+  DIAG("runEchoTests");
 
   runEchoTest(std::vector<unsigned char>{});
   runEchoTest(std::vector<unsigned char>{0,1,2,3});
@@ -163,7 +163,7 @@ void FSServerTest::runEchoTests()
 
 void FSServerTest::runFileReadWriteTests()
 {
-  cout << "runFileReadWriteTests\n";
+  DIAG("runFileReadWriteTests");
 
   std::vector<unsigned char> data(allBytes());
   string fname = "efst.tmp";
@@ -180,7 +180,7 @@ void FSServerTest::runFileReadWriteTests()
     VFS_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
     if (reply->m_success) {
       modTime = reply->m_fileModificationTime;
-      PVAL(modTime);
+      VPVAL(modTime);
     }
     else {
       xfatal(reply->m_failureReasonString);
@@ -252,14 +252,13 @@ void FSServerTest::runGetDirEntriesTest()
   std::unique_ptr<VFS_Message> replyMsg(getNextReply());
   VFS_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
   xassert(reply->m_success);
-  cout << "number of entries: " << reply->m_entries.size() << "\n";
+  DIAG("number of entries: " << reply->m_entries.size());
 
   // Print the first 10 entries.
   for (size_t i=0; i < 10 && i < reply->m_entries.size(); i++) {
     SMFileUtil::DirEntryInfo const &info = reply->m_entries.at(i);
-    cout << "name=" << info.m_name
-         << " kind=" << toString(info.m_kind)
-         << "\n";
+    DIAG("name=" << info.m_name <<
+         " kind=" << toString(info.m_kind));
   }
 }
 
@@ -280,37 +279,28 @@ void FSServerTest::on_vfsFailureAvailable() NOEXCEPT
 }
 
 
-int main(int argc, char **argv)
+// Called from unit-tests.cc.
+void test_editor_fs_server(CmdlineArgsSpan args)
 {
-  traceAddFromEnvVar();
+  FSServerTest fsServerTest;
 
-  try {
-    FSServerTest fsServerTest(argc, argv);
+  HostName hostname(HostName::asLocal());
 
-    HostName hostname(HostName::asLocal());
+  if (!args.empty()) {
+    // TODO: This test is broken.  It's evidently been that way a while.
+    hostname = HostName::asSSH(args[0]);
+    DIAG("Running test with hostname: " << hostname);
 
-    QStringList args = fsServerTest.arguments();
     if (args.size() >= 2) {
-      hostname = HostName::asSSH(toString(args.at(1)));
-      cout << "Running test with hostname: " << hostname << endl;
-
-      if (args.size() >= 3) {
-        string path = toString(args.at(2));
-        fsServerTest.connect(hostname);
-        fsServerTest.runPathQuery(path);
-        fsServerTest.m_fsQuery.shutdown();
-        return 0;
-      }
+      string path = toString(args[1]);
+      fsServerTest.connect(hostname);
+      fsServerTest.runPathQuery(path);
+      fsServerTest.m_fsQuery.shutdown();
+      return;
     }
-
-    fsServerTest.runTests(hostname);
-  }
-  catch (XBase &x) {
-    cerr << x.why() << endl;
-    return 2;
   }
 
-  return 0;
+  fsServerTest.runTests(hostname);
 }
 
 
