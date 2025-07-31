@@ -231,20 +231,6 @@ td-editor-test.exe: $(TD_OBJS)
 $(eval $(call RUN_TEST_PROG,td-editor-test))
 
 
-# -------------- text-search-test program ----------------
-EDITOR_OBJS += fasttime.o
-EDITOR_OBJS += text-search.o
-
-TEXT_SEARCH_TEST_OBJS := $(EDITOR_OBJS)
-
-TEXT_SEARCH_TEST_OBJS += text-search-test.o
-
-text-search-test.exe: $(TEXT_SEARCH_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(TEXT_SEARCH_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,text-search-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -253,6 +239,7 @@ EDITOR_OBJS += command-runner.o
 EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += doc-type-detect.o
+EDITOR_OBJS += fasttime.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-name.o
@@ -271,6 +258,7 @@ EDITOR_OBJS += nearby-file.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
 EDITOR_OBJS += td-diagnostics.o
+EDITOR_OBJS += text-search.o
 EDITOR_OBJS += textmcoord-map.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += vfs-connections.moc.o
@@ -304,6 +292,7 @@ UNIT_TESTS_OBJS += nearby-file-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += td-diagnostics-test.o
+UNIT_TESTS_OBJS += text-search-test.o
 UNIT_TESTS_OBJS += textcategory-test.o
 UNIT_TESTS_OBJS += textmcoord-map-test.o
 UNIT_TESTS_OBJS += unit-tests.o

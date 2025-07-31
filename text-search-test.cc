@@ -1,6 +1,8 @@
 // text-search-test.cc
 // Tests for 'text-search' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "text-search.h"               // this module
 
 // editor
@@ -8,9 +10,10 @@
 
 // smbase
 #include "smbase/nonport.h"            // getMilliseconds
-#include "smbase/sm-iostream.h"        // cout
-#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
-#include "smbase/trace.h"              // TRACE_ARGS
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ, VPVAL
+
+
+// TODO: Use anonymous namespace.
 
 
 static void expectTotalMatches(TextSearch const &ts, int expect)
@@ -360,8 +363,8 @@ static void testRegex()
   xassert(!ts.searchStringIsValid());
   EXPECT_EQ(ts.searchStringErrorOffset(), 2);  // Error because string ends early.
   expectMatches(ts, "");
-  cout << "Expected error message:" << endl;
-  PVAL(ts.searchStringSyntaxError());
+  DIAG("Expected error message:");
+  VPVAL(ts.searchStringSyntaxError());
 }
 
 
@@ -432,10 +435,10 @@ static void testPerformance()
     }
     long end = getMilliseconds();
 
-    cout << "perf: opts=" << opts
-         << " lines=" << NUM_LINES
-         << " iters=" << ITERS
-         << " ms=" << (end-start) << endl;
+    DIAG("perf: opts=" << opts <<
+         " lines=" << NUM_LINES <<
+         " iters=" << ITERS <<
+         " ms=" << (end-start))
   }
 
   // Exercise hitting the match limit.
@@ -471,19 +474,19 @@ static void testRegexPerf2(bool nolimit)
   ts.setSearchString(".");
   long elapsed = getMilliseconds() - start;
 
-  cout << "perf2 init: " << elapsed << endl;
+  DIAG("perf2 init: " << elapsed);
 
   int const ITERS = 10;
   for (int i=0; i < ITERS; i++) {
     start = getMilliseconds();
     ts.setSearchString("");
     elapsed = getMilliseconds() - start;
-    cout << "perf2 reset " << i << ": " << elapsed << endl;
+    DIAG("perf2 reset " << i << ": " << elapsed);
 
     start = getMilliseconds();
     ts.setSearchString(".");
     elapsed = getMilliseconds() - start;
-    cout << "perf2 iter " << i << ": " << elapsed << endl;
+    DIAG("perf2 iter " << i << ": " << elapsed);
   }
 }
 
@@ -494,12 +497,12 @@ static void testRegexPerf2(bool nolimit)
     GetMillisecondsAccumulator acc(elapsed);    \
     stmt;                                       \
   }                                             \
-  cout << #stmt ": " << elapsed << endl /* user ; */
+  DIAG(#stmt ": " << elapsed) /* user ; */
 
 
 static void testPerf3()
 {
-  cout << "testPerf3\n";
+  DIAG("testPerf3");
 
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -513,38 +516,37 @@ static void testPerf3()
 
   // String that matches.
   PRINT_ELAPSED(ts.setSearchString("need lots of room"));
-  PVAL(ts.countAllMatches());
+  VPVAL(ts.countAllMatches());
 
   // String that does not match.
   PRINT_ELAPSED(ts.setSearchString("need lots of zoom"));
-  PVAL(ts.countAllMatches());
+  VPVAL(ts.countAllMatches());
 
   PRINT_ELAPSED(ts.setSearchString("need lots of xoom"));
-  PVAL(ts.countAllMatches());
+  VPVAL(ts.countAllMatches());
 
   PRINT_ELAPSED(ts.setSearchString("need lots of room"));
-  PVAL(ts.countAllMatches());
+  VPVAL(ts.countAllMatches());
 
   PRINT_ELAPSED(ts.setSearchString("eed lots of room "));
-  PVAL(ts.countAllMatches());
+  VPVAL(ts.countAllMatches());
 }
 
 
-static void entry(int argc, char **argv)
+// Called from unit-tests.cc.
+void test_text_search(CmdlineArgsSpan args)
 {
-  TRACE_ARGS();
-
-  if (argc >= 2 && 0==strcmp(argv[1], "perf2")) {
+  if (!args.empty() && 0==strcmp(args[0], "perf2")) {
     testRegexPerf2(false /*nolimit*/);
     return;
   }
 
-  if (argc >= 2 && 0==strcmp(argv[1], "perf2nl")) {
+  if (!args.empty() && 0==strcmp(args[0], "perf2nl")) {
     testRegexPerf2(true /*nolimit*/);
     return;
   }
 
-  if (argc >= 2 && 0==strcmp(argv[1], "perf3")) {
+  if (!args.empty() && 0==strcmp(args[0], "perf3")) {
     testPerf3();
     return;
   }
@@ -559,10 +561,7 @@ static void entry(int argc, char **argv)
   testGetReplacementText();
   testPerformance();
   testRegexPerf2(false /*nolimit*/);
-
-  cout << "text-search-test ok" << endl;
 }
 
-ARGS_TEST_MAIN
 
 // EOF

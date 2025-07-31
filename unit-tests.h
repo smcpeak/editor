@@ -32,6 +32,7 @@ void test_nearby_file(CmdlineArgsSpan args);
 void test_ocaml_hilite(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
 void test_td_diagnostics(CmdlineArgsSpan args);
+void test_text_search(CmdlineArgsSpan args);
 void test_textcategory(CmdlineArgsSpan args);
 void test_textmcoord_map(CmdlineArgsSpan args);
 void test_uri_util(CmdlineArgsSpan args);

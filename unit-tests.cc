@@ -68,6 +68,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(ocaml_hilite);
   RUN_TEST(python_hilite);
   RUN_TEST(td_diagnostics);
+  RUN_TEST(text_search);
   RUN_TEST(textcategory);
   RUN_TEST(textmcoord_map);
   RUN_TEST(uri_util);
