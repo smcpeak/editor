@@ -179,18 +179,6 @@ $(ASTGEN)/astgen.exe:
 	@exit 2
 
 
-# ------------ editor-strutil-test program -------------
-EDITOR_OBJS += editor-strutil.o
-
-EDITOR_STRUTIL_TEST_OBJS := $(EDITOR_OBJS)
-EDITOR_STRUTIL_TEST_OBJS += editor-strutil-test.o
-
-editor-strutil-test.exe: $(EDITOR_STRUTIL_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_STRUTIL_TEST_OBJS) $(CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,editor-strutil-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -199,6 +187,7 @@ EDITOR_OBJS += command-runner.o
 EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += doc-type-detect.o
+EDITOR_OBJS += editor-strutil.o
 EDITOR_OBJS += fasttime.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += history.o
@@ -245,6 +234,7 @@ UNIT_TESTS_OBJS += command-runner-test.o
 UNIT_TESTS_OBJS += doc-type-detect-test.o
 UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
 UNIT_TESTS_OBJS += editor-fs-server-test.o
+UNIT_TESTS_OBJS += editor-strutil-test.o
 UNIT_TESTS_OBJS += gap-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += justify-test.o

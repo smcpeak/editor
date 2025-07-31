@@ -1,22 +1,26 @@
 // editor-strutil-test.cc
-// Test code for 'editor-strutil' module.
+// Tests for 'editor-strutil' module.
 
-#include "editor-strutil.h"            // this module
+#include "unit-tests.h"                // decl for my entry point
 
-// smbase
-#include "smbase/sm-iostream.h"        // cout
-#include "smbase/sm-test.h"            // USUAL_TEST_MAIN
+#include "editor-strutil.h"            // module under test
+
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-test.h"            // EXPECT_EQ
 
 
-static void expectCIA(string const &text, int byteOffset,
-                      string const &expect)
+OPEN_ANONYMOUS_NAMESPACE
+
+
+void expectCIA(string const &text, int byteOffset,
+               string const &expect)
 {
   string actual = cIdentifierAt(text, byteOffset);
   EXPECT_EQ(actual, expect);
 }
 
 
-static void test1()
+void test1()
 {
   expectCIA("", -1, "");
   expectCIA("", 0, "");
@@ -50,14 +54,14 @@ static void test1()
 }
 
 
-static void entry()
+CLOSE_ANONYMOUS_NAMESPACE
+
+
+// Called from unit-tests.cc.
+void test_editor_strutil(CmdlineArgsSpan args)
 {
   test1();
-
-  cout << "editor-strutil-test ok" << endl;
 }
-
-USUAL_TEST_MAIN
 
 
 // EOF

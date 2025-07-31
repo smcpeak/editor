@@ -56,6 +56,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(command_runner);
   RUN_TEST(doc_type_detect);
   RUN_TEST(editor_fs_server);
+  RUN_TEST(editor_strutil);
   RUN_TEST(gap);
   RUN_TEST(hashcomment_hilite);
   RUN_TEST(justify);

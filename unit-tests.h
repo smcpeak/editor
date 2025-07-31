@@ -20,6 +20,7 @@ void test_c_hilite(CmdlineArgsSpan args);
 void test_command_runner(CmdlineArgsSpan args);
 void test_doc_type_detect(CmdlineArgsSpan args);
 void test_editor_fs_server(CmdlineArgsSpan args);
+void test_editor_strutil(CmdlineArgsSpan args);
 void test_gap(CmdlineArgsSpan args);
 void test_hashcomment_hilite(CmdlineArgsSpan args);
 void test_justify(CmdlineArgsSpan args);
