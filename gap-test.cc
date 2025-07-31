@@ -1,15 +1,21 @@
 // gap-test.cc
 // test the gap.h module
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "gap.h"                       // module to test
 
 // smbase
-#include "smbase/sm-test.h"            // ARGS_TEST_MAIN
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+//#include "smbase/sm-test.h"            // ARGS_TEST_MAIN
 
 // libc
 #include <stdio.h>                     // printf
 #include <stdlib.h>                    // rand, srand
 #include <time.h>                      // time
+
+
+OPEN_ANONYMOUS_NAMESPACE
 
 
 // reference implementation of a sequence of ints
@@ -284,14 +290,21 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
 
 int const PRINT = 0;
 
-void entry(int argc, char *argv[])
+
+CLOSE_ANONYMOUS_NAMESPACE
+
+
+// Called from unit-tests.cc.
+void test_gap(CmdlineArgsSpan args)
 {
   //srand(time());
 
   {
+    // TODO: This test fails if `iters` is set to 1000.
+
     int iters = 100;
-    if (argc >= 2) {
-      iters = atoi(argv[1]);
+    if (!args.empty()) {
+      iters = atoi(args[0]);
     }
     printf("iters: %d\n", iters);
 
@@ -329,4 +342,4 @@ void entry(int argc, char *argv[])
 }
 
 
-ARGS_TEST_MAIN
+// EOF

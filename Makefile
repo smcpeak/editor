@@ -191,13 +191,6 @@ editor-strutil-test.exe: $(EDITOR_STRUTIL_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,editor-strutil-test))
 
 
-# ----------------------------- gap-test -------------------------------
-gap-test.exe: gap.h gap-test.cc
-	$(CXX) -o $@ $(CCFLAGS) gap-test.cc $(CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,gap-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -252,6 +245,7 @@ UNIT_TESTS_OBJS += command-runner-test.o
 UNIT_TESTS_OBJS += doc-type-detect-test.o
 UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
 UNIT_TESTS_OBJS += editor-fs-server-test.o
+UNIT_TESTS_OBJS += gap-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += justify-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
