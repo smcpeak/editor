@@ -1,11 +1,11 @@
 // unit-test.cc
 // Driver for editor module unit tests.
 
-// I copied this from smqtutil/unit-tests.cc because there isn't an
-// obvious way to have them share the mechanism.
+#include "unit-tests.h"                // decls of test entry points
 
 #include "smbase/dev-warning.h"        // g_abortUponDevWarning
 #include "smbase/exc.h"                // xfatal, smbase::XBase
+#include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/sm-test.h"            // EXPECT_EQ
 #include "smbase/str.h"                // streq
 #include "smbase/stringb.h"            // stringb
@@ -26,9 +26,15 @@ static void entry(int argc, char **argv)
   // unix, where X11 may or may not be available.
   QCoreApplication app(argc, argv);
 
+  // Initially empty.
+  CmdlineArgsSpan extraArgs;
+
   char const *testName = NULL;
   if (argc >= 2) {
     testName = argv[1];
+
+    // We only pass arguments if we are only running one test.
+    extraArgs = CmdlineArgsSpan(argv+2, argc-2);
   }
 
   bool ranOne = false;
@@ -37,8 +43,7 @@ static void entry(int argc, char **argv)
   #define RUN_TEST(name)                                \
     if (testName == NULL || streq(testName, #name)) {   \
       std::cout << "---- " #name " ----" << std::endl;  \
-      extern void test_##name();                        \
-      test_##name();                                    \
+      test_##name(extraArgs);                           \
       /* Flush all output streams so that the output */ \
       /* from different tests cannot get mixed up. */   \
       std::cout.flush();                                \
@@ -46,7 +51,9 @@ static void entry(int argc, char **argv)
       ranOne = true;                                    \
     }
 
+  RUN_TEST(lsp_client);
   RUN_TEST(lsp_data);
+  RUN_TEST(lsp_manager);
   RUN_TEST(uri_util);
 
   #undef RUN_TEST

@@ -1,6 +1,8 @@
 // lsp-data-test.cc
 // Tests for `lsp-data` and `lsp-conv` modules.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "lsp-conv.h"                  // module under test
 #include "lsp-data.h"                  // module under test
 
@@ -14,6 +16,7 @@
 #include "smbase/sm-test.h"            // TEST_CASE
 
 using namespace gdv;
+using namespace smbase;
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -209,7 +212,7 @@ void test_PublishDiagnosticsParams_withRelated()
 CLOSE_ANONYMOUS_NAMESPACE
 
 
-void test_lsp_data()
+void test_lsp_data(CmdlineArgsSpan args)
 {
   test_PublishDiagnosticsParams_simple();
   test_PublishDiagnosticsParams_withRelated();

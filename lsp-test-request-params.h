@@ -39,9 +39,9 @@ public:      // methods
     int col,
     bool useRealClangd);
 
-  // Return parameters as specified in `argv`.
+  // Return parameters as specified in `args`.
   static LSPTestRequestParams getFromCmdLine(
-    smbase::Span<std::string const> argv);
+    smbase::Span<char const * const> args);
 };
 
 

@@ -484,41 +484,6 @@ python-hilite-test.exe: $(PYTHON_HILITE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,python-hilite-test))
 
 
-# -------------------------- lsp-client-test ---------------------------
-EDITOR_OBJS += lsp-client.moc.o
-EDITOR_OBJS += lsp-client.o
-
-LSP_CLIENT_TEST_OBJS := $(EDITOR_OBJS)
-
-LSP_CLIENT_TEST_OBJS += lsp-client-test.moc.o
-LSP_CLIENT_TEST_OBJS += lsp-client-test.o
-LSP_CLIENT_TEST_OBJS += lsp-test-request-params.o
-
-lsp-client-test.exe: $(LSP_CLIENT_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(LSP_CLIENT_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-# This program can be used to query a real LSP server, but when run
-# without arguments, it uses a mock server script.
-$(eval $(call RUN_TEST_PROG,lsp-client-test))
-
-
-# -------------------------- lsp-manager-test --------------------------
-EDITOR_OBJS += lsp-data.o
-EDITOR_OBJS += lsp-manager.moc.o
-EDITOR_OBJS += lsp-manager.o
-
-LSP_MANAGER_TEST_OBJS := $(EDITOR_OBJS)
-
-LSP_MANAGER_TEST_OBJS += lsp-manager-test.moc.o
-LSP_MANAGER_TEST_OBJS += lsp-manager-test.o
-LSP_MANAGER_TEST_OBJS += lsp-test-request-params.o
-
-lsp-manager-test.exe: $(LSP_MANAGER_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(LSP_MANAGER_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,lsp-manager-test))
-
-
 # ------------------- diagnostic-details-dialog-test -------------------
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
@@ -534,9 +499,20 @@ all: diagnostic-details-dialog-test.exe
 
 
 # ----------------------------- unit-tests -----------------------------
+EDITOR_OBJS += lsp-client.moc.o
+EDITOR_OBJS += lsp-client.o
+EDITOR_OBJS += lsp-data.o
+EDITOR_OBJS += lsp-manager.moc.o
+EDITOR_OBJS += lsp-manager.o
+
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
+UNIT_TESTS_OBJS += lsp-client-test.moc.o
+UNIT_TESTS_OBJS += lsp-client-test.o
 UNIT_TESTS_OBJS += lsp-data-test.o
+UNIT_TESTS_OBJS += lsp-manager-test.moc.o
+UNIT_TESTS_OBJS += lsp-manager-test.o
+UNIT_TESTS_OBJS += lsp-test-request-params.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
 

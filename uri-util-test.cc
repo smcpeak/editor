@@ -1,6 +1,8 @@
 // uri-util-test.cc
 // Tests for `uri-util` module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "uri-util.h"                  // module under test
 
 #include "smbase/exc.h"                // smbase::XFormat
@@ -61,7 +63,7 @@ CLOSE_ANONYMOUS_NAMESPACE
 
 
 // Called from unit-tests.cc.
-void test_uri_util()
+void test_uri_util(CmdlineArgsSpan args)
 {
   test_makeFileURI();
   test_getFileURIPath();

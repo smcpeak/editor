@@ -33,27 +33,27 @@ LSPTestRequestParams::LSPTestRequestParams(
 
 
 /*static*/ LSPTestRequestParams LSPTestRequestParams::getFromCmdLine(
-  Span<std::string const> argv)
+  Span<char const * const> args)
 {
-  if (argv.size() <= 1) {
+  if (args.empty()) {
     // Default query parameters, used when run without arguments.
     return LSPTestRequestParams("eclf.h", 9, 5, false /*useReal*/);
   }
 
   else {
-    if (argv.size() != 4) {
-      std::cerr << "Usage: " << argv[0] << " <file> <line> <col>\n";
+    if (args.size() != 3) {
+      std::cerr << "Usage: ./unit-tests.exe test_<module> <file> <line> <col>\n";
       std::exit(2);
     }
 
-    std::string fname = argv[1];
+    std::string fname = args[0];
 
     // The LSP protocol uses 0-based lines and columns, but I normally
     // work with 1-based coordinates, so convert those here.  (I do not
     // convert back in the output, however; the responses are just shown
     // as they were sent.)
-    int line = parseDecimalInt_noSign(argv[2])-1;
-    int col = parseDecimalInt_noSign(argv[3])-1;
+    int line = parseDecimalInt_noSign(args[1])-1;
+    int col = parseDecimalInt_noSign(args[2])-1;
 
     return LSPTestRequestParams(fname, line, col, true /*useReal*/);
   }

@@ -2,13 +2,14 @@
 // Tests for `lsp-client`.
 
 #include "lsp-client-test.h"           // decls for this test module
+#include "unit-tests.h"                // decl for my entry point
 
 #include "lsp-client.h"                // module under test
 
 #include "command-runner.h"            // CommandRunner
 #include "uri-util.h"                  // makeFileURI
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent, qStringListToStringVector
+#include "smqtutil/qtutil.h"           // waitForQtEvent
 
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -616,17 +617,13 @@ void runTests(
 }
 
 
-void entry(int argc, char **argv)
+CLOSE_ANONYMOUS_NAMESPACE
+
+
+void test_lsp_client(CmdlineArgsSpan args)
 {
-  TRACE_ARGS();
-
-  // Enable Qt event loop, etc.
-  QCoreApplication app(argc, argv);
-
-  std::vector<std::string> argvStrings =
-    qStringListToStringVector(app.arguments());
   LSPTestRequestParams params =
-    LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
+    LSPTestRequestParams::getFromCmdLine(args);
 
   std::set<bool> booleans = {false, true};
   for (bool async : booleans) {
@@ -637,12 +634,6 @@ void entry(int argc, char **argv)
     }
   }
 }
-
-
-CLOSE_ANONYMOUS_NAMESPACE
-
-
-ARGS_TEST_MAIN
 
 
 // EOF

@@ -2,24 +2,22 @@
 // Tests for `lsp-manager`.
 
 #include "lsp-manager-test.h"          // this module
+#include "unit-tests.h"                // decl for my entry point
 
 #include "lsp-manager.h"               // module under test
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent, qStringListToStringVector
+#include "smqtutil/qtutil.h"           // waitForQtEvent
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/sm-test.h"            // ARGS_MAIN
 #include "smbase/string-util.h"        // stringVectorFromPointerArray
 #include "smbase/trace.h"              // TRACE_ARGS
 #include "smbase/xassert.h"            // xassert
-
-#include <QCoreApplication>
 
 #include <string>                      // std::string
 #include <vector>                      // std::vector
@@ -238,22 +236,13 @@ void LSPManagerTester::on_hasPendingErrorMessages() NOEXCEPT
 }
 
 
-OPEN_ANONYMOUS_NAMESPACE
-
-
-void entry(int argc, char **argv)
+// Called from unit-tests.cc.
+void test_lsp_manager(CmdlineArgsSpan args)
 {
-  TRACE_ARGS();
-
-  // Enable Qt event loop, etc.
-  QCoreApplication app(argc, argv);
-
   SMFileUtil().createDirectoryAndParents("out");
 
-  std::vector<std::string> argvStrings =
-    qStringListToStringVector(app.arguments());
   LSPTestRequestParams params =
-    LSPTestRequestParams::getFromCmdLine(Span(argvStrings));
+    LSPTestRequestParams::getFromCmdLine(args);
 
   cout << "-------- synchronous --------\n";
   {
@@ -267,12 +256,6 @@ void entry(int argc, char **argv)
     tester.testAsynchronously();
   }
 }
-
-
-CLOSE_ANONYMOUS_NAMESPACE
-
-
-ARGS_TEST_MAIN
 
 
 // EOF
