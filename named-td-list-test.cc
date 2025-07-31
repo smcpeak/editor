@@ -1,13 +1,15 @@
 // named-td-list-test.cc
 // Tests for 'named-td-list' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "named-td-list.h"             // module to test
 
 // smbase
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
-#include "smbase/sm-test.h"            // USUAL_TEST_MAIN, EXPECT_EQ
+#include "smbase/sm-test.h"            // EXPECT_EQ
 #include "smbase/strutil.h"            // dirname
 
 // libc
@@ -431,7 +433,8 @@ static void testGetUniqueDirectories()
 }
 
 
-void entry()
+// Called from unit-tests.cc.
+void test_named_td_list(CmdlineArgsSpan args)
 {
   testSimple();
   testAddMoveRemove();
@@ -442,11 +445,7 @@ void entry()
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
-
-  cout << "named-td-list-test passed\n";
 }
-
-USUAL_TEST_MAIN
 
 
 // EOF

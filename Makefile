@@ -309,19 +309,6 @@ named-td-test.exe: $(NAMED_TD_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,named-td-test))
 
 
-# -------------------- named-td-list-test --------------------
-EDITOR_OBJS += named-td-list.o
-
-NAMED_TD_LIST_TEST_OBJS := $(EDITOR_OBJS)
-
-NAMED_TD_LIST_TEST_OBJS += named-td-list-test.o
-
-named-td-list-test.exe: $(NAMED_TD_LIST_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_LIST_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,named-td-list-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
@@ -334,6 +321,7 @@ EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
 EDITOR_OBJS += makefile_hilite.yy.o
+EDITOR_OBJS += named-td-list.o
 EDITOR_OBJS += nearby-file.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
@@ -358,6 +346,7 @@ UNIT_TESTS_OBJS += lsp-manager-test.moc.o
 UNIT_TESTS_OBJS += lsp-manager-test.o
 UNIT_TESTS_OBJS += lsp-test-request-params.o
 UNIT_TESTS_OBJS += makefile-hilite-test.o
+UNIT_TESTS_OBJS += named-td-list-test.o
 UNIT_TESTS_OBJS += nearby-file-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
