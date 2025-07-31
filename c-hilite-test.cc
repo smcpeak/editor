@@ -1,5 +1,5 @@
-// c_hilite.cc
-// test code for c_hilite.h
+// c-hilite-test.cc
+// Tests for `c_hilite` and `comment` modules.
 
 #include "c_hilite.h"                  // module to test
 #include "comment.h"                   // another module to test

@@ -426,10 +426,10 @@ EDITOR_OBJS += lex_hilite.o
 
 C_HILITE_OBJS := $(EDITOR_OBJS)
 
-c_hilite.exe: $(C_HILITE_OBJS) c_hilite.cc
-	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c_hilite.cc $(QT_CONSOLE_LDFLAGS)
+c-hilite-test.exe: $(C_HILITE_OBJS) c-hilite-test.cc
+	$(CXX) -o $@ $(CCFLAGS) $(C_HILITE_OBJS) -DTEST_C_HILITE c-hilite-test.cc $(QT_CONSOLE_LDFLAGS)
 
-$(eval $(call RUN_TEST_PROG,c_hilite))
+$(eval $(call RUN_TEST_PROG,c-hilite-test))
 
 
 # ----------------------------- unit-tests -----------------------------
