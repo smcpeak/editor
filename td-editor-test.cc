@@ -1,6 +1,8 @@
 // td-editor-test.cc
 // Tests for td-editor module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "td-editor.h"                 // module to test
 
 // smbase
@@ -8,9 +10,8 @@
 #include "smbase/exc.h"                // EXN_CONTEXT
 #include "smbase/nonport.h"            // removeFile
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // EXPECT_EQ, expectEq, ARGS_TEST_MAIN
+#include "smbase/sm-test.h"            // EXPECT_EQ, expectEq
 #include "smbase/string-util.h"        // doubleQuote
-#include "smbase/trace.h"              // traceProcessArg
 
 // libc
 #include <stdio.h>                     // printf
@@ -2477,11 +2478,12 @@ void testSelectEntireFile()
 }
 
 
-// --------------------------- main -----------------------------
-void entry(int argc, char **argv)
-{
-  traceProcessArg(argc, argv);
+CLOSE_ANONYMOUS_NAMESPACE
 
+
+// Called from unit-tests.cc.
+void test_td_editor(CmdlineArgsSpan args)
+{
   testUndoRedo();
   testUndoOfPaste();
   testUndoOfBlockIndent();
@@ -2520,15 +2522,7 @@ void entry(int argc, char **argv)
   testModelToLayoutSpans();
   testLineEndLCoord();
   testSelectEntireFile();
-
-  cout << "\ntd-editor-test is ok" << endl;
 }
-
-
-CLOSE_ANONYMOUS_NAMESPACE
-
-
-ARGS_TEST_MAIN
 
 
 // EOF
