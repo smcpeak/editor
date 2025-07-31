@@ -2035,13 +2035,13 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
       lspManager().getDocInfo(fname);
     xassert(docInfo);
 
-    if (*version == docInfo->m_latestVersion ||
-        contents == docInfo->m_latestContents) {
+    if (*version == docInfo->m_lastSentVersion ||
+        contents == docInfo->m_lastSentContents) {
       TRACE1("LSP: While updating " << doubleQuote(fname) <<
-             ": previous version is " << docInfo->m_latestVersion <<
+             ": previous version is " << docInfo->m_lastSentVersion <<
              ", new version is " << *version <<
              ", and contents are " <<
-             (contents == docInfo->m_latestContents? "" : "NOT ") <<
+             (contents == docInfo->m_lastSentContents? "" : "NOT ") <<
              "the same; bumping to force re-analysis.");
 
       // We want to re-send despite no content changes, for example
@@ -2070,13 +2070,13 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
       contents += stringb("//" << *version);
     }
 
-    if (!( *version > docInfo->m_latestVersion )) {
+    if (!( *version > docInfo->m_lastSentVersion )) {
       // Sending this would be a protocol violation.
       if (wantErrors) {
         complain(stringb(
           "The current document version (" << *version <<
           ") is not greater than the previously sent document version (" <<
-          docInfo->m_latestVersion << ")."));
+          docInfo->m_lastSentVersion << ")."));
       }
       return;
     }

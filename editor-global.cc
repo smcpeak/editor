@@ -820,46 +820,21 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   while (m_lspManager.hasPendingDiagnostics()) {
+    std::string fname = m_lspManager.getFileWithPendingDiagnostics();
     std::unique_ptr<LSP_PublishDiagnosticsParams> diags(
-      m_lspManager.takePendingDiagnostics());
+      m_lspManager.takePendingDiagnosticsFor(fname));
 
-    if (!diags->m_version.has_value()) {
-      // Although not explained in the spec, it appears this happens
-      // when a file is closed; the server sends a final notification
-      // with no version and no diagnostics, presumably in order to
-      // cause the editor to remove the diagnostics from its display.  I
-      // do that when sending the "didClose" notification, so this
-      // notification should be safe to ignore.
-      TRACE1("lsp: received diagnostics without a version number");
-      continue;
+    DocumentName docName =
+      DocumentName::fromFilename(HostName::asLocal(), fname);
+
+    if (NamedTextDocument *doc = getFileWithName(docName)) {
+      doc->receivedLSPDiagnostics(diags.get());
     }
-
-    if (*diags->m_version < 0) {
-      TRACE1("lsp: received diagnostics with a negative version number");
-      continue;
-    }
-
-    try {
-      // Extract the file path.
-      std::string path = getFileURIPath(diags->m_uri);
-
-      // Turn that into a document name.
-      DocumentName docName =
-        DocumentName::fromFilename(HostName::asLocal(), path);
-
-      if (NamedTextDocument *doc = getFileWithName(docName)) {
-        doc->receivedLSPDiagnostics(diags.get());
-      }
-      else {
-        // This could happen if we notify the server of new contents and
-        // then immediately close the document.
-        TRACE1("lsp: Received LSP diagnostics for " << docName <<
-               " but that file is not open in the editor.");
-      }
-    }
-
-    catch (XBase &x) {
-      addLSPErrorMessage(x.getMessage());
+    else {
+      // This could happen if we notify the server of new contents and
+      // then immediately close the document.
+      TRACE1("lsp: Received LSP diagnostics for " << docName <<
+             " but that file is not open in the editor.");
     }
   }
 

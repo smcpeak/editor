@@ -95,28 +95,50 @@ public:
 };
 
 
+// True if `fname` is *absolute* and exclusively uses *forward* slashes
+// as path separators.
+bool isValidLSPPath(std::string const &fname);
+
+// Return a path that is absolute and normalized.
+std::string normalizeLSPPath(std::string const &fname);
+
+
 // Information about a document that is currently "open" w.r.t. the LSP
 // protocol.
 class LSPDocumentInfo : public SerfRefCount {
 public:      // data
   // Absolute file name.
+  //
+  // Invariant: isValidLSPPath(m_fname)
   std::string const m_fname;
 
   // The version number of the most recent document contents that were
   // sent to the server.
-  int m_latestVersion;
+  int m_lastSentVersion;
 
   // The contents most recently sent.  They were labeled with
-  // `m_latestVersion`.
-  std::string m_latestContents;
+  // `m_lastSentVersion`.
+  std::string m_lastSentContents;
+
+  // Diagnostics that were received for this file but have not yet been
+  // taken by the client.
+  std::unique_ptr<LSP_PublishDiagnosticsParams> m_pendingDiagnostics;
 
 public:      // methods
   ~LSPDocumentInfo();
 
   LSPDocumentInfo(
     std::string const &fname,
-    int latestVersion,
-    std::string &&latestContents);
+    int lastSentVersion,
+    std::string &&lastSentContents);
+
+  LSPDocumentInfo(LSPDocumentInfo &&obj);
+
+  // Assert invariants.
+  void selfCheck() const;
+
+  // True if `m_pendingDiagnostics` is not null.
+  bool hasPendingDiagnostics() const;
 };
 
 
@@ -178,10 +200,9 @@ private:     // data
   // Invariant: For all `k`, `m_documentInfo[k].m_fname == k`.
   std::map<std::string, LSPDocumentInfo> m_documentInfo;
 
-  // Diagnostics messages we have decoded but have not been taken by the
-  // client of this class.
-  std::list<std::unique_ptr<LSP_PublishDiagnosticsParams>>
-    m_pendingDiagnostics;
+  // Set of files `f` for which `m_documentInfo[f].m_pendingDiagnostics`
+  // is not null.
+  std::set<std::string> m_filesWithPendingDiagnostics;
 
   // Error messages derived from unexpected protocol interactions that
   // don't break the protocol stream.
@@ -197,6 +218,10 @@ private:     // methods
 
   // Append `msg` to the pending messages and signal the client.
   void addErrorMessage(std::string &&msg);
+
+  // Handle newly-arrived `diags`.
+  void handleIncomingDiagnostics(
+    std::unique_ptr<LSP_PublishDiagnosticsParams> diags);
 
 private Q_SLOTS:
   // Slots to respond to similarly-named `LSPClient` signals.
@@ -253,42 +278,63 @@ public:      // methods
   gdv::GDValue getServerCapabilities() const
     { return m_serverCapabilities; }
 
-  // True if `fname` is open w.r.t. the LSP protocol.  Requires that
-  // `fname` be an absolute path.
+  // True if `fname` is open w.r.t. the LSP protocol.
+  //
+  // Requires: isValidLSPPath(fname)
   bool isFileOpen(std::string const &fname) const;
 
   // Get the document details for `fname`, or nullptr if it is not open.
   // This pointer is invalidated if `this` object changes.
+  //
+  // Requires: isValidLSPPath(fname)
   RCSerf<LSPDocumentInfo const> getDocInfo(
     std::string const &fname) const;
 
   // Send the "textDocument/didOpen" notification.  Requires that
   // `fname` be absolute, and that the file not already be open.
+  //
+  // Requires: isRunningNormally()
+  // Requires: !isFileOpen(fname)
   void notify_textDocument_didOpen(
     std::string const &fname,
     std::string const &languageId,
     int version,
     std::string &&contents);
 
-  // Send the "textDocument/didChange" notification.  Requires that
-  // `fname` be already open.  Currently this only supports replacing
-  // the entire file's content, rather than incremental changes.
+  // Send the "textDocument/didChange" notification.  Currently this
+  // only supports replacing the entire file's content, rather than
+  // incremental changes.
+  //
+  // Requires: isRunningNormally()
+  // Requires: isFileOpen(fname)
   void notify_textDocument_didChange(
     std::string const &fname,
     int version,
     std::string &&contents);
 
-  // Send the "textDocument/didClose" notification.  Requires that
-  // `fname` be already open.
+  // Send the "textDocument/didClose" notification.
+  //
+  // Requires: isRunningNormally()
+  // Requires: isFileOpen(fname)
   void notify_textDocument_didClose(
     std::string const &fname);
 
-  // True if we have diagnostics ready for the client.
+  // True if we have any diagnostics ready for the client.
   bool hasPendingDiagnostics() const;
 
-  // Take the next available diagnostics.  Requires
-  // `hasPendingDiagnostics()`.
-  std::unique_ptr<LSP_PublishDiagnosticsParams> takePendingDiagnostics();
+  // True if `fname` in particular has pending diagnostics.
+  //
+  // Requires: isValidLSPPath(fname)
+  bool hasPendingDiagnosticsFor(std::string const &fname) const;
+
+  // Get the first file that has pending diagnostics.
+  std::string getFileWithPendingDiagnostics() const;
+
+  // Take the pending diagnostics for `fname`.
+  //
+  // Requires: hasPendingDiagnosticsFor(fname)
+  std::unique_ptr<LSP_PublishDiagnosticsParams>
+  takePendingDiagnosticsFor(std::string const &fname);
 
   // True if we have errors to deliver.
   bool hasPendingErrorMessages() const;
@@ -296,8 +342,9 @@ public:      // methods
   // How many error messages are pending.
   int numPendingErrorMessages() const;
 
-  // Take the next available error.  Requires
-  // `hasPendingErrorMessges()`.
+  // Take the next available error.
+  //
+  // Requires: hasPendingErrorMessges()
   std::string takePendingErrorMessage();
 
 Q_SIGNALS:

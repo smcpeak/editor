@@ -6,24 +6,26 @@
 #include "command-runner.h"            // CommandRunner
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                // LSPClient
-#include "uri-util.h"                  // makeFileURI
+#include "uri-util.h"                  // makeFileURI, getFileURIPath
 
 #include "smqtutil/qtutil.h"           // toString(QString)
 
 #include "smbase/container-util.h"     // smbase::contains
-#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END, smbase::XFormat
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/list-util.h"          // smbase::listMoveFront
 #include "smbase/map-util.h"           // smbase::mapGetValueAt
 #include "smbase/overflow.h"           // safeToInt
+#include "smbase/set-util.h"           // smbase::{setInsert, setContains}
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // IMEMBFP, IMEMBMFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // join
 #include "smbase/stringb.h"            // stringb
+#include "smbase/xassert.h"            // xassert, xassertPrecondition
 
 #include <memory>                      // std::make_unique
 #include <string>                      // std::string
@@ -71,6 +73,25 @@ LSPAnnotatedProtocolState::LSPAnnotatedProtocolState(
 {}
 
 
+// ----------------------------- LSP path ------------------------------
+bool isValidLSPPath(std::string const &fname)
+{
+  SMFileUtil sfu;
+  return sfu.isAbsolutePath(fname) &&
+         sfu.hasNormalizedPathSeparators(fname);
+}
+
+
+std::string normalizeLSPPath(std::string const &fname)
+{
+  SMFileUtil sfu;
+  std::string ret =
+    sfu.normalizePathSeparators(sfu.getAbsolutePath(fname));
+  xassert(isValidLSPPath(ret));
+  return ret;
+}
+
+
 // -------------------------- LSPDocumentInfo --------------------------
 LSPDocumentInfo::~LSPDocumentInfo()
 {}
@@ -78,12 +99,37 @@ LSPDocumentInfo::~LSPDocumentInfo()
 
 LSPDocumentInfo::LSPDocumentInfo(
   std::string const &fname,
-  int latestVersion,
-  std::string &&latestContents)
+  int lastSentVersion,
+  std::string &&lastSentContents)
   : IMEMBFP(fname),
-    IMEMBFP(latestVersion),
-    IMEMBMFP(latestContents)
-{}
+    IMEMBFP(lastSentVersion),
+    IMEMBMFP(lastSentContents),
+    m_pendingDiagnostics()
+{
+  selfCheck();
+}
+
+
+LSPDocumentInfo::LSPDocumentInfo(LSPDocumentInfo &&obj)
+  : MDMEMB(m_fname),
+    MDMEMB(m_lastSentVersion),
+    MDMEMB(m_lastSentContents),
+    MDMEMB(m_pendingDiagnostics)
+{
+  selfCheck();
+}
+
+
+void LSPDocumentInfo::selfCheck() const
+{
+  xassert(isValidLSPPath(m_fname));
+}
+
+
+bool LSPDocumentInfo::hasPendingDiagnostics() const
+{
+  return !!m_pendingDiagnostics;
+}
 
 
 // ---------------------------- LSPManager -----------------------------
@@ -94,7 +140,7 @@ void LSPManager::resetProtocolState()
   m_waitingForTermination = false;
   m_serverCapabilities.reset();
   m_documentInfo.clear();
-  m_pendingDiagnostics.clear();
+  m_filesWithPendingDiagnostics.clear();
   m_pendingErrorMessages.clear();
 }
 
@@ -127,6 +173,53 @@ void LSPManager::addErrorMessage(std::string &&msg)
 }
 
 
+void LSPManager::handleIncomingDiagnostics(
+  std::unique_ptr<LSP_PublishDiagnosticsParams> diags)
+{
+  std::string fname;
+  try {
+    fname = getFileURIPath(diags->m_uri);
+  }
+  catch (XFormat &x) {
+    TRACE1("discarding received diagnostics with malformed URI " <<
+           doubleQuote(diags->m_uri) << ": " << x.getMessage());
+    return;
+  }
+
+  if (!diags->m_version.has_value()) {
+    // Although not explained in the spec, it appears this happens
+    // when a file is closed; the server sends a final notification
+    // with no version and no diagnostics, presumably in order to
+    // cause the editor to remove the diagnostics from its display.  I
+    // do that when sending the "didClose" notification, so this
+    // notification should be safe to ignore.
+    TRACE1("discarding received diagnostics for " <<
+           doubleQuote(fname) << " without a version number");
+    return;
+  }
+
+  if (*diags->m_version < 0) {
+    TRACE1("discarding received diagnostics for " <<
+           doubleQuote(fname) << " with a negative version number");
+    return;
+  }
+
+  if (!contains(m_documentInfo, fname)) {
+    TRACE1("discarding received diagnostics for " <<
+           doubleQuote(fname) << " that is not open (w.r.t. LSP)");
+    return;
+  }
+
+  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
+
+  docInfo.m_pendingDiagnostics = std::move(diags);
+
+  setInsert(m_filesWithPendingDiagnostics, fname);
+
+  Q_EMIT signal_hasPendingDiagnostics();
+}
+
+
 void LSPManager::on_hasPendingNotifications() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -140,16 +233,14 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
     try {
       msgParser.checkIsMap();
       std::string method = msgParser.mapGetValueAtStr("method").stringGet();
-      GDValueParser params = msgParser.mapGetValueAtStr("params");
-      params.checkIsMap();
+      GDValueParser paramsParser = msgParser.mapGetValueAtStr("params");
+      paramsParser.checkIsMap();
 
       if (method == "textDocument/publishDiagnostics") {
-        m_pendingDiagnostics.push_back(
+        handleIncomingDiagnostics(
           std::make_unique<LSP_PublishDiagnosticsParams>(
-            params));
-        Q_EMIT signal_hasPendingDiagnostics();
+            paramsParser));
       }
-
       else {
         addErrorMessage(stringb(
           "unhandled notification method: " << doubleQuote(method)));
@@ -265,9 +356,10 @@ LSPManager::LSPManager(
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
     m_documentInfo(),
-    m_pendingDiagnostics(),
     m_pendingErrorMessages()
-{}
+{
+  selfCheck();
+}
 
 
 void LSPManager::selfCheck() const
@@ -276,10 +368,23 @@ void LSPManager::selfCheck() const
   xassert(m_commandRunner.operator bool() ==
           m_lsp.operator bool());
 
+  // Set of files for which we observe pending diagnostics.
+  std::set<std::string> filesWithPending;
+
   // The map keys agree with the associated values.
   for (auto const &kv : m_documentInfo) {
-    xassert(kv.first == kv.second.m_fname);
+    std::string const &fname = kv.first;
+    LSPDocumentInfo const &docInfo = kv.second;
+
+    xassert(fname == docInfo.m_fname);
+    if (docInfo.m_pendingDiagnostics) {
+      setInsert(filesWithPending, fname);
+    }
+
+    docInfo.selfCheck();
   }
+
+  xassert(filesWithPending == m_filesWithPendingDiagnostics);
 }
 
 
@@ -577,7 +682,7 @@ bool LSPManager::isRunningNormally() const
 
 bool LSPManager::isFileOpen(std::string const &fname) const
 {
-  xassert(m_sfu.isAbsolutePath(fname));
+  xassertPrecondition(isValidLSPPath(fname));
   return contains(m_documentInfo, fname);
 }
 
@@ -585,6 +690,8 @@ bool LSPManager::isFileOpen(std::string const &fname) const
 RCSerf<LSPDocumentInfo const> LSPManager::getDocInfo(
   std::string const &fname) const
 {
+  xassertPrecondition(isValidLSPPath(fname));
+
   auto it = m_documentInfo.find(fname);
   if (it == m_documentInfo.end()) {
     return nullptr;
@@ -601,8 +708,11 @@ void LSPManager::notify_textDocument_didOpen(
   int version,
   std::string &&contents)
 {
-  xassert(isRunningNormally());
-  xassert(!isFileOpen(fname));
+  xassertPrecondition(isRunningNormally());
+  xassertPrecondition(!isFileOpen(fname));
+
+  TRACE1("Sending didOpen for " << doubleQuote(fname) <<
+         " with initial version " << version << ".");
 
   m_lsp->sendNotification("textDocument/didOpen", GDVMap{
     {
@@ -611,13 +721,17 @@ void LSPManager::notify_textDocument_didOpen(
         { "uri", makeFileURI(fname) },
         { "languageId", languageId },
         { "version", version },
-        { "text", GDValue(contents /*no move*/) },
+        { "text", GDValue(contents /*copy*/) },
       }
     }
   });
 
-  m_documentInfo.insert({fname,
-    LSPDocumentInfo(fname, version, std::move(contents))});
+  // `emplace` would be better here, but GCC rejects (Clang accepts).
+  m_documentInfo.insert(std::make_pair(fname,
+    LSPDocumentInfo(fname, version, std::move(contents))));
+
+  //m_documentInfo.emplace(fname,
+  //  fname, version, std::move(contents));
 }
 
 
@@ -626,8 +740,11 @@ void LSPManager::notify_textDocument_didChange(
   int version,
   std::string &&contents)
 {
-  xassert(isRunningNormally());
-  xassert(isFileOpen(fname));
+  xassertPrecondition(isRunningNormally());
+  xassertPrecondition(isFileOpen(fname));
+
+  TRACE1("Sending didChange for " << doubleQuote(fname) <<
+         " with updated version " << version << ".");
 
   m_lsp->sendNotification("textDocument/didChange", GDVMap{
     {
@@ -641,23 +758,23 @@ void LSPManager::notify_textDocument_didChange(
       "contentChanges",
       GDVSequence{
         GDVMap{
-          { "text", GDValue(contents /*no move*/) },
+          { "text", GDValue(contents /*copy*/) },
         },
       },
     },
   });
 
   LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
-  docInfo.m_latestVersion = version;
-  docInfo.m_latestContents = std::move(contents);
+  docInfo.m_lastSentVersion = version;
+  docInfo.m_lastSentContents = std::move(contents);
 }
 
 
 void LSPManager::notify_textDocument_didClose(
   std::string const &fname)
 {
-  xassert(isRunningNormally());
-  xassert(isFileOpen(fname));
+  xassertPrecondition(isRunningNormally());
+  xassertPrecondition(isFileOpen(fname));
 
   m_lsp->sendNotification("textDocument/didClose", GDVMap{
     {
@@ -674,15 +791,36 @@ void LSPManager::notify_textDocument_didClose(
 
 bool LSPManager::hasPendingDiagnostics() const
 {
-  return !m_pendingDiagnostics.empty();
+  return !m_filesWithPendingDiagnostics.empty();
+}
+
+
+bool LSPManager::hasPendingDiagnosticsFor(std::string const &fname) const
+{
+  xassertPrecondition(isValidLSPPath(fname));
+  return setContains(m_filesWithPendingDiagnostics, fname);
+}
+
+
+std::string LSPManager::getFileWithPendingDiagnostics() const
+{
+  xassertPrecondition(hasPendingDiagnostics());
+  auto it = m_filesWithPendingDiagnostics.cbegin();
+  return *it;
 }
 
 
 std::unique_ptr<LSP_PublishDiagnosticsParams>
-LSPManager::takePendingDiagnostics()
+LSPManager::takePendingDiagnosticsFor(std::string const &fname)
 {
-  xassert(hasPendingDiagnostics());
-  return listMoveFront(m_pendingDiagnostics);
+  xassertPrecondition(hasPendingDiagnosticsFor(fname));
+
+  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
+  xassert(docInfo.hasPendingDiagnostics());
+
+  setRemoveExisting(m_filesWithPendingDiagnostics, fname);
+
+  return std::move(docInfo.m_pendingDiagnostics);
 }
 
 

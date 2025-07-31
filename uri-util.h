@@ -14,7 +14,7 @@
 std::string makeFileURI(std::string_view fname);
 
 // Given a file URI, convert that back into a file name.  Throws
-// `XParseString` if there is a problem.
+// `smbase::XFormat` (smbase/exc.h) if there is a problem.
 std::string getFileURIPath(std::string const &uri);
 
 

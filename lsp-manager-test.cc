@@ -68,7 +68,7 @@ void LSPManagerTester::sendDidOpen()
   DIAG("Sending didOpen...");
   SMFileUtil sfu;
   m_lspManager.notify_textDocument_didOpen(
-    sfu.getAbsolutePath("eclf.h"),
+    normalizeLSPPath("eclf.h"),
     "cpp",
     1,
     sfu.readFileAsString("eclf.h"));
@@ -82,7 +82,8 @@ void LSPManagerTester::sendDidOpen()
 void LSPManagerTester::takeDiagnostics()
 {
   std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
-    m_lspManager.takePendingDiagnostics();
+    m_lspManager.takePendingDiagnosticsFor(
+      m_lspManager.getFileWithPendingDiagnostics());
   DIAG("Diagnostics: " << toGDValue(*diags).asIndentedString());
 }
 
