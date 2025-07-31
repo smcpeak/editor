@@ -355,21 +355,6 @@ bufferlinesource-test.exe: $(BUFFERLINESOURCE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,bufferlinesource-test))
 
 
-# ------------------------- editor-fs-server ---------------------------
-EDITOR_FS_SERVER_OBJS :=
-EDITOR_FS_SERVER_OBJS += editor-fs-server.o
-EDITOR_FS_SERVER_OBJS += vfs-local.o
-EDITOR_FS_SERVER_OBJS += vfs-msg.o
-
-editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
-	@# Link this with -static because it gets invoked over an SSH
-	@# connection, which makes it difficult to arrange for the proper
-	@# library search path to be set.
-	$(CXX) -o $@ -static $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
-
-all: editor-fs-server.exe
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
@@ -421,6 +406,21 @@ $(eval $(call RUN_TEST_PROG,unit-tests))
 # Some of the unit tests (e.g., vfs-connections-test) require the server
 # executable.
 out/unit-tests.ok: editor-fs-server.exe
+
+
+# ------------------------- editor-fs-server ---------------------------
+EDITOR_FS_SERVER_OBJS :=
+EDITOR_FS_SERVER_OBJS += editor-fs-server.o
+EDITOR_FS_SERVER_OBJS += vfs-local.o
+EDITOR_FS_SERVER_OBJS += vfs-msg.o
+
+editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
+	@# Link this with -static because it gets invoked over an SSH
+	@# connection, which makes it difficult to arrange for the proper
+	@# library search path to be set.
+	$(CXX) -o $@ -static $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
+
+all: editor-fs-server.exe
 
 
 # ----------------------- editor-fs-server-test ------------------------
