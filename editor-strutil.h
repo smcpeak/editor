@@ -8,8 +8,7 @@
 #ifndef EDITOR_STRUTIL_H
 #define EDITOR_STRUTIL_H
 
-// smbase
-#include "smbase/str.h"                // string
+#include "smbase/std-string-fwd.h"     // std::string
 
 
 // If the code point at text[byteOffset] is a C identifier character,
@@ -20,7 +19,7 @@
 //
 // TODO UTF-8: Returns "" if the offset is not the start of a UTF-8
 // octet sequence.
-string cIdentifierAt(string const &text, int byteOffset);
+std::string cIdentifierAt(std::string const &text, int byteOffset);
 
 
 #endif // EDITOR_STRUTIL_H

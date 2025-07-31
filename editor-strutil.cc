@@ -10,7 +10,7 @@
 #include <string>                      // std::string
 
 
-string cIdentifierAt(string const &text, int byteOffset)
+std::string cIdentifierAt(std::string const &text, int byteOffset)
 {
   int len = text.length();
   if (0 <= byteOffset && byteOffset < len) {

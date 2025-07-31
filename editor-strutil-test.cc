@@ -8,14 +8,16 @@
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // EXPECT_EQ
 
+#include <string>                      // std::string
+
 
 OPEN_ANONYMOUS_NAMESPACE
 
 
-void expectCIA(string const &text, int byteOffset,
-               string const &expect)
+void expectCIA(std::string const &text, int byteOffset,
+               std::string const &expect)
 {
-  string actual = cIdentifierAt(text, byteOffset);
+  std::string actual = cIdentifierAt(text, byteOffset);
   EXPECT_EQ(actual, expect);
 }
 
