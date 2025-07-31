@@ -1,6 +1,8 @@
 // command-runner-test.cc
 // Tests for 'command-runner' module.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "command-runner.h"            // module to test
 
 // editor
@@ -16,9 +18,8 @@
 #include "smbase/exc.h"                // xfatal
 #include "smbase/nonport.h"            // getMilliseconds
 #include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL
+#include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, DIAG, EXPECT_EQ, verbose
 #include "smbase/string-util.h"        // beginsWith, replaceAll
-#include "smbase/trace.h"              // TRACE_ARGS, EXPECT_EQ
 #include "smbase/xassert.h"            // xfailure_stringbc
 
 // Qt
@@ -28,6 +29,11 @@
 // libc
 #include <assert.h>                    // assert
 
+using std::cout;
+
+
+// TODO: Use anonymous namespace.
+
 
 // ----------------------- test infrastructure ----------------------------
 // When true, print the byte arrays like a hexdump.
@@ -36,6 +42,10 @@ static bool const printByteArrays = false;
 
 static void printCmdArgs(char const *cmd, QStringList const &args)
 {
+  if (!verbose) {
+    return;
+  }
+
   cout << "run: " << cmd;
   if (!args.isEmpty()) {
     cout << ' ' << toString(args.join(' '));
@@ -47,7 +57,7 @@ static void printCmdArgs(char const *cmd, QStringList const &args)
 static int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
 {
   printCmdArgs(cmd, args);
-  cout << "  input: \"" << input << "\"" << endl;
+  DIAG("  input: \"" << input << "\"");
 
   CommandRunner cr;
   cr.setProgram(cmd);
@@ -62,27 +72,27 @@ static int runCmdArgsIn(char const *cmd, QStringList args, char const *input)
   cr.startAndWait();
 
   QByteArray out(cr.getOutputData());
-  cout << "  stdout: \"" << out.constData() << "\"" << endl;
+  DIAG("  stdout: \"" << out.constData() << "\"");
 
   if (printByteArrays && !out.isEmpty()) {
     printQByteArray(out, "stdout");
   }
 
   QByteArray err(cr.getErrorData());
-  cout << "  stderr: \"" << err.constData() << "\"" << endl;
+  DIAG("  stderr: \"" << err.constData() << "\"");
 
   if (printByteArrays && !err.isEmpty()) {
     printQByteArray(err, "stderr");
   }
 
   if (cr.getFailed()) {
-    cout << "  failed: " << toString(cr.getErrorMessage()) << endl;
-    cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
+    DIAG("  failed: " << toString(cr.getErrorMessage()));
+    DIAG("  term desc: " << toString(cr.getTerminationDescription()));
     return -1;
   }
   else {
-    cout << "  exit code: " << cr.getExitCode() << endl;
-    cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
+    DIAG("  exit code: " << cr.getExitCode());
+    DIAG("  term desc: " << toString(cr.getTerminationDescription()));
     return cr.getExitCode();
   }
 }
@@ -97,14 +107,14 @@ static void expectEq(char const *label, QByteArray const &actual, char const *ex
 {
   QByteArray expectBA(expect);
   if (actual != expectBA) {
-    cout << "mismatched " << label << ':' << endl;
-    cout << "  actual: " << actual.constData() << endl;
-    cout << "  expect: " << expect << endl;
+    DIAG("mismatched " << label << ':');
+    DIAG("  actual: " << actual.constData());
+    DIAG("  expect: " << expect);
     xfailure_stringbc("mismatched " << label);
   }
   else {
-    cout << "  as expected, " << label << ": \""
-         << actual.constData() << "\"" << endl;
+    DIAG("  as expected, " << label << ": \"" <<
+         actual.constData() << "\"");
   }
 }
 
@@ -119,8 +129,8 @@ static void runCmdArgsExpectError(char const *cmd,
   cr.startAndWait();
   EXPECT_EQ(cr.getFailed(), true);
   EXPECT_EQ(cr.getProcessError(), error);
-  cout << "  as expected: " << toString(cr.getErrorMessage()) << endl;
-  cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
+  DIAG("  as expected: " << toString(cr.getErrorMessage()));
+  DIAG("  term desc: " << toString(cr.getTerminationDescription()));
 }
 
 
@@ -140,8 +150,8 @@ static void runCmdArgsExpectExit(char const *cmd,
   cr.startAndWait();
   EXPECT_EQ(cr.getFailed(), false);
   EXPECT_EQ(cr.getExitCode(), exitCode);
-  cout << "  as expected: exit " << cr.getExitCode() << endl;
-  cout << "  term desc: " << toString(cr.getTerminationDescription()) << endl;
+  DIAG("  as expected: exit " << cr.getExitCode());
+  DIAG("  term desc: " << toString(cr.getTerminationDescription()));
 }
 
 
@@ -248,7 +258,7 @@ static string normalizeDir(string d)
 static void runCmdDirExpectOutDir(string const &cmd,
   string const &wd, string const &expectDir)
 {
-  cout << "run: cmd=" << cmd << " wd=" << wd << endl;
+  DIAG("run: cmd=" << cmd << " wd=" << wd);
   CommandRunner cr;
   cr.setProgram(toQString(cmd));
   if (!wd.empty()) {
@@ -262,7 +272,7 @@ static void runCmdDirExpectOutDir(string const &cmd,
   string expectNormDir = normalizeDir(expectDir);
   string actualNormDir = normalizeDir(actualDir);
   EXPECT_EQ(actualNormDir, expectNormDir);
-  cout << "  as expected, got dir: " << trimWhitespace(actualDir) << endl;
+  DIAG("  as expected, got dir: " << trimWhitespace(actualDir));
 }
 
 
@@ -334,7 +344,7 @@ static void testStderrFile()
 
 static void testLargeData1()
 {
-  cout << "testing cat on 100kB..." << endl;
+  DIAG("testing cat on 100kB...");
 
   QByteArray input;
   for (int i=0; i < 100000; i++) {
@@ -349,13 +359,13 @@ static void testLargeData1()
   EXPECT_EQ(cr.getOutputData().size(), input.size());
   xassert(cr.getOutputData() == input);
 
-  cout << "  cat 100kB worked" << endl;
+  DIAG("  cat 100kB worked");
 }
 
 
 static void testLargeData2(bool swapOrder)
 {
-  cout << "testing cat on source code..." << endl;
+  DIAG("testing cat on source code...");
 
   DataBlock outputDB;
   outputDB.readFromFile("editor-widget.cc");
@@ -383,7 +393,7 @@ static void testLargeData2(bool swapOrder)
   EXPECT_EQ(cr.getErrorData().size(), error.size());
   xassert(cr.getErrorData() == error);
 
-  cout << "  cat of source code worked" << endl;
+  DIAG("  cat of source code worked");
 }
 
 
@@ -626,7 +636,7 @@ int CRTester::exec()
     return this->QEventLoop::exec();
   }
   else {
-    cout << "CRTester::exec: returning immediately" << endl;
+    DIAG("CRTester::exec: returning immediately");
     return 0;
   }
 }
@@ -755,7 +765,7 @@ void CRTester::slot_errorLineReady() NOEXCEPT
 
 void CRTester::slot_processTerminated() NOEXCEPT
 {
-  cout << "CRTester::slot_processTerminated" << endl;
+  DIAG("CRTester::slot_processTerminated");
 
   if (m_protocol == P_CAT || m_protocol == P_ECHO) {
     // Just for extra checking for these two, double-check the status in
@@ -817,6 +827,8 @@ static void testAsyncBothOutputs()
 
 static void testAsyncKill(bool wait)
 {
+  TEST_CASE("testAsyncKill: wait=" << wait);
+
   try {
     CommandRunner cr;
     CRTester tester(&cr, wait? CRTester::P_KILL : CRTester::P_KILL_NO_WAIT);
@@ -827,7 +839,7 @@ static void testAsyncKill(bool wait)
     cr.putInputData(QByteArray("hello\n"));
 
     int res = tester.exec();
-    cout << "testAsyncKill: exec() finished with code " << res << endl;
+    DIAG("testAsyncKill: exec() finished with code " << res);
 
     if (wait) {
       xassert(!cr.isRunning());
@@ -835,21 +847,24 @@ static void testAsyncKill(bool wait)
       xassert(!cr.hasErrorData());
 
       xassert(cr.getFailed());
-      PVAL(toString(cr.getErrorMessage()));
+      VPVAL(toString(cr.getErrorMessage()));
       xassert(cr.getProcessError() == QProcess::Crashed);
     }
     else {
       // Since we didn't give the event loop an opportunity to run,
       // QProcess should still think the process is alive.
       xassert(cr.isRunning());
+
+      // TODO: The destructors that run now will print some messages
+      // that I would like to normally suppress.
     }
   }
   catch (...) {
-    cout << "testAsyncKill: exception propagating out" << endl;
+    DIAG("testAsyncKill: exception propagating out");
     throw;
   }
 
-  cout << "testAsyncKill(" << wait << ") finished" << endl;
+  DIAG("testAsyncKill(" << wait << ") finished");
 }
 
 
@@ -868,7 +883,7 @@ static void testAsyncFailedStart()
   xassert(!cr.hasErrorData());
 
   xassert(cr.getFailed());
-  PVAL(toString(cr.getErrorMessage()));
+  VPVAL(toString(cr.getErrorMessage()));
   xassert(cr.getProcessError() == QProcess::FailedToStart);
 }
 
@@ -897,18 +912,18 @@ static void testSetShellCommandLine()
 
 static void printStatus(CommandRunner &runner)
 {
-  cout << "CommandRunner running: " << runner.isRunning() << endl;
+  DIAG("CommandRunner running: " << runner.isRunning());
   if (!runner.isRunning()) {
-    cout << "CommandRunner failed: " << runner.getFailed() << endl;
+    DIAG("CommandRunner failed: " << runner.getFailed());
     if (runner.getFailed()) {
-      cout << "CommandRunner error: "
-           << toString(runner.getProcessError()) << endl;
-      cout << "CommandRunner error message: "
-           << toString(runner.getErrorMessage()) << endl;
+      DIAG("CommandRunner error: " <<
+           toString(runner.getProcessError()));
+      DIAG("CommandRunner error message: " <<
+           toString(runner.getErrorMessage()));
     }
     else {
-      cout << "CommandRunner exit code: "
-           << runner.getExitCode() << endl;
+      DIAG("CommandRunner exit code: " <<
+           runner.getExitCode());
     }
   }
 }
@@ -917,66 +932,63 @@ static void printStatus(CommandRunner &runner)
 // testing.
 //
 // Adapted from wrk/learn/qt5/qproc.cc.
-static void runAndKill(int argc, char **argv)
+static void runAndKill(CmdlineArgsSpan commandAndArgs)
 {
   UnixTime startTime = 0;
 
   {
     CommandRunner runner;
-    runner.setProgram(argv[1]);
+    runner.setProgram(commandAndArgs[0]);
     QStringList args;
-    for (int i=2; i < argc; i++) {
-      args << argv[i];
+    for (char const *arg : commandAndArgs.subspan(1)) {
+      args << arg;
     }
     runner.setArguments(args);
 
     // Child will inherit stdin/out/err.
     runner.forwardChannels();
 
-    cout << "starting: " << argv[1] << (args.isEmpty()? "" : " ")
-         << args.join(' ').toUtf8().constData() << endl;
+    DIAG("starting: " << commandAndArgs[0] << (args.isEmpty()? "" : " ") <<
+         args.join(' ').toUtf8().constData());
     runner.startAsynchronous();
 
     // Wait a moment to reach quiescence.
-    cout << "waiting for 200 ms ..." << endl;
+    DIAG("waiting for 200 ms ...");
     sleepWhilePumpingEvents(200);
     printStatus(runner);
 
     // Attempt to kill the process.
-    cout << "calling killProcessNoWait ..." << endl;
+    DIAG("calling killProcessNoWait ...");
     runner.killProcessNoWait();
 
     // Wait again.
-    cout << "waiting for 200 ms ..." << endl;
+    DIAG("waiting for 200 ms ...");
     sleepWhilePumpingEvents(200);
     printStatus(runner);
 
     // Now let the destructor run.
     startTime = getCurrentUnixTime();
-    cout << "destroying CommandRunner ..." << endl;
+    DIAG("destroying CommandRunner ...");
   }
 
-  cout << "CommandRunner destructor took about "
-       << (getCurrentUnixTime() - startTime) << " seconds" << endl;
+  DIAG("CommandRunner destructor took about " <<
+       (getCurrentUnixTime() - startTime) << " seconds");
 }
 
 
-#define RUN(statement)                                         \
-  if (!oneTest || 0==strcmp(oneTest, #statement)) {            \
-    cout << "------ " << #statement << " ------" << endl;      \
-    statement;                                                 \
+#define RUN(statement)                              \
+  if (!oneTest || 0==strcmp(oneTest, #statement)) { \
+    DIAG("------ " << #statement << " ------");     \
+    statement;                                      \
   }
 
 
-static void entry(int argc, char **argv)
+// Called from unit-tests.cc.
+void test_command_runner(CmdlineArgsSpan args)
 {
-  TRACE_ARGS();
-
-  QCoreApplication app(argc, argv);
-
-  if (argc >= 2) {
+  if (!args.empty()) {
     // Special mode for interactive testing of CommandRunner.
-    runAndKill(argc, argv);
+    runAndKill(args);
     return;
   }
 
@@ -985,7 +997,9 @@ static void entry(int argc, char **argv)
   // work work without cygwin, but plain Windows is a very spartan
   // environment.
   if (SMFileUtil().windowsPathSemantics()) {
-    cout << "NOTE: These tests require cygwin on Windows.\n";
+    // TODO: This message is sort of useless.  I should actually check
+    // if the cygwin tools are available.
+    DIAG("NOTE: These tests require cygwin on Windows.");
   }
 
   // Optionally run just one test.
@@ -1015,11 +1029,7 @@ static void entry(int argc, char **argv)
   RUN(testAsyncFailedStart());
   RUN(testMiscDiagnostics());
   RUN(testSetShellCommandLine());
-
-  cout << "command-runner-test tests passed" << endl;
 }
-
-ARGS_TEST_MAIN
 
 
 // EOF

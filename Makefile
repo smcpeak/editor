@@ -256,24 +256,11 @@ justify-test.exe: $(JUSTIFY_OBJS)
 $(eval $(call RUN_TEST_PROG,justify-test))
 
 
-# -------------- command-runner test program ----------------
-EDITOR_OBJS += command-runner.o
-EDITOR_OBJS += command-runner.moc.o
-
-COMMAND_RUNNER_OBJS := $(EDITOR_OBJS)
-
-COMMAND_RUNNER_OBJS += command-runner-test.o
-COMMAND_RUNNER_OBJS += command-runner-test.moc.o
-
-command-runner-test.exe: $(COMMAND_RUNNER_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(COMMAND_RUNNER_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,command-runner-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
+EDITOR_OBJS += command-runner.moc.o
+EDITOR_OBJS += command-runner.o
 EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += doc-name.o
 EDITOR_OBJS += doc-type-detect.o
@@ -308,6 +295,8 @@ UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
 UNIT_TESTS_OBJS += bufferlinesource-test.o
 UNIT_TESTS_OBJS += c-hilite-test.o
+UNIT_TESTS_OBJS += command-runner-test.moc.o
+UNIT_TESTS_OBJS += command-runner-test.o
 UNIT_TESTS_OBJS += doc-type-detect-test.o
 UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
 UNIT_TESTS_OBJS += editor-fs-server-test.o

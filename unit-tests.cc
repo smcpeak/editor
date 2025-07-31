@@ -53,6 +53,7 @@ static void entry(int argc, char **argv)
 
   RUN_TEST(bufferlinesource);
   RUN_TEST(c_hilite);
+  RUN_TEST(command_runner);
   RUN_TEST(doc_type_detect);
   RUN_TEST(editor_fs_server);
   RUN_TEST(hashcomment_hilite);
