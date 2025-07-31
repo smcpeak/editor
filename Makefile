@@ -342,20 +342,8 @@ textcategory-test.exe: textcategory.o textcategory-test.o
 $(eval $(call RUN_TEST_PROG,textcategory-test))
 
 
-# ----------------------- bufferlinesource-test ------------------------
-EDITOR_OBJS += bufferlinesource.o
-
-BUFFERLINESOURCE_TEST_OBJS := $(EDITOR_OBJS)
-
-BUFFERLINESOURCE_TEST_OBJS += bufferlinesource-test.o
-
-bufferlinesource-test.exe: $(BUFFERLINESOURCE_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(BUFFERLINESOURCE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,bufferlinesource-test))
-
-
 # ----------------------------- unit-tests -----------------------------
+EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
@@ -377,6 +365,7 @@ EDITOR_OBJS += waiting-counter.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
+UNIT_TESTS_OBJS += bufferlinesource-test.o
 UNIT_TESTS_OBJS += c-hilite-test.o
 UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
 UNIT_TESTS_OBJS += editor-fs-server-test.o

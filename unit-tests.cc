@@ -51,6 +51,7 @@ static void entry(int argc, char **argv)
       ranOne = true;                                    \
     }
 
+  RUN_TEST(bufferlinesource);
   RUN_TEST(c_hilite);
   RUN_TEST(editor_fs_server);
   RUN_TEST(hashcomment_hilite);

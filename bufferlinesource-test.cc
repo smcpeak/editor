@@ -1,16 +1,19 @@
 // bufferlinesource-test.cc
 // Test code for bufferlinesource.
 
+#include "unit-tests.h"                // decl for my entry point
+
 #include "bufferlinesource.h"          // module to test
 
 // editor
 #include "td-editor.h"                 // TextDocumentAndEditor
 
 // smbase
-#include "smbase/sm-test.h"            // USUAL_MAIN
+#include "smbase/sm-test.h"            // EXPECT_EQ
 
 
-void entry()
+// Called from unit-tests.cc.
+void test_bufferlinesource(CmdlineArgsSpan args)
 {
   char const *text =
     "one\n"
@@ -49,11 +52,7 @@ void entry()
     // for the last line in the file.
     EXPECT_EQ(sb.str(), textWithNewline);
   }
-
-  cout << "bufferlinesource-test passed" << endl;
 }
-
-USUAL_MAIN
 
 
 // EOF
