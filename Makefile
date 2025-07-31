@@ -287,44 +287,31 @@ textmcoord-map-test.exe: $(TEXTMCOORD_MAP_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,textmcoord-map-test))
 
 
-# ---------------------- named-td-test ----------------------
-EDITOR_OBJS += doc-name.o
-EDITOR_OBJS += doc-type-detect.o
-EDITOR_OBJS += host-and-resource-name.o
-EDITOR_OBJS += host-name.o
-EDITOR_OBJS += lsp-conv.o
-EDITOR_OBJS += lsp-doc-state.o
-EDITOR_OBJS += named-td.o
-EDITOR_OBJS += td-diagnostics.o
-EDITOR_OBJS += uri-util.o
-
-NAMED_TD_TEST_OBJS := $(EDITOR_OBJS)
-
-NAMED_TD_TEST_OBJS += doc-type-detect-test.o
-NAMED_TD_TEST_OBJS += named-td-test.o
-
-named-td-test.exe: $(NAMED_TD_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(NAMED_TD_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,named-td-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += comment.yy.o
+EDITOR_OBJS += doc-name.o
+EDITOR_OBJS += doc-type-detect.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
+EDITOR_OBJS += host-and-resource-name.o
+EDITOR_OBJS += host-name.o
 EDITOR_OBJS += lex_hilite.o
 EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
+EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += lsp-data.o
+EDITOR_OBJS += lsp-doc-state.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
 EDITOR_OBJS += makefile_hilite.yy.o
 EDITOR_OBJS += named-td-list.o
+EDITOR_OBJS += named-td.o
 EDITOR_OBJS += nearby-file.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
+EDITOR_OBJS += td-diagnostics.o
+EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += vfs-connections.moc.o
 EDITOR_OBJS += vfs-connections.o
 EDITOR_OBJS += vfs-msg.o
@@ -336,6 +323,7 @@ UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
 UNIT_TESTS_OBJS += bufferlinesource-test.o
 UNIT_TESTS_OBJS += c-hilite-test.o
+UNIT_TESTS_OBJS += doc-type-detect-test.o
 UNIT_TESTS_OBJS += editor-fs-server-test.moc.o
 UNIT_TESTS_OBJS += editor-fs-server-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
@@ -347,6 +335,7 @@ UNIT_TESTS_OBJS += lsp-manager-test.o
 UNIT_TESTS_OBJS += lsp-test-request-params.o
 UNIT_TESTS_OBJS += makefile-hilite-test.o
 UNIT_TESTS_OBJS += named-td-list-test.o
+UNIT_TESTS_OBJS += named-td-test.o
 UNIT_TESTS_OBJS += nearby-file-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o

@@ -3,6 +3,8 @@
 
 #include "smbase/gdvalue-optional-fwd.h"         // gdv::GDValue(std::optional)
 
+#include "unit-tests.h"                          // decl for my entry point
+
 #include "named-td.h"                            // module to test
 
 #include "td-diagnostics.h"                      // Diagnostic, TextDocumentDiagnostics
@@ -15,7 +17,7 @@
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-override.h"                  // OVERRIDE
-#include "smbase/sm-test.h"                      // USUAL_MAIN, TEST_CASE_EXPRS
+#include "smbase/sm-test.h"                      // TEST_CASE_EXPRS
 
 #include <fstream>                               // ofstream
 
@@ -498,7 +500,8 @@ static void test_TDD_getDiagnosticAt()
 // Defined in doc-type-detect.cc.
 void test_doc_type_detect();
 
-static void entry()
+// Called from unit-tests.cc.
+void test_named_td(CmdlineArgsSpan args)
 {
   testWhenUntitledExists();
   testReadFile();
@@ -516,12 +519,7 @@ static void entry()
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);
-
-  cout << "named-td-test passed\n";
 }
-
-
-USUAL_TEST_MAIN
 
 
 // EOF

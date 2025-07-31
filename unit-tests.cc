@@ -59,6 +59,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(lsp_data);
   RUN_TEST(lsp_manager);
   RUN_TEST(makefile_hilite);
+  RUN_TEST(named_td);
   RUN_TEST(named_td_list);
   RUN_TEST(nearby_file);
   RUN_TEST(ocaml_hilite);
