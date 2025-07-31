@@ -210,6 +210,10 @@ void LSPManager::handleIncomingDiagnostics(
     return;
   }
 
+  TRACE1("Received diagnostics for " << doubleQuote(fname) <<
+         " with version " << *diags->m_version <<
+         " and numDiags=" << diags->m_diagnostics.size() << ".");
+
   LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
 
   docInfo.m_pendingDiagnostics = std::move(diags);
@@ -226,7 +230,7 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
 
   while (m_lsp->hasPendingNotifications()) {
     GDValue msg = m_lsp->takeNextNotification();
-    TRACE1("received notification: " << msg.asIndentedString());
+    TRACE2("received notification: " << msg.asIndentedString());
 
     GDValueParser msgParser(msg);
 
@@ -420,6 +424,8 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
   SMFileUtil().createParentDirectories(m_lspStderrLogFname);
   m_commandRunner->setStandardErrorFile(toQString(m_lspStderrLogFname));
 
+  TRACE1("Starting server process: " <<
+         toString(m_commandRunner->getCommandLine()));
   m_commandRunner->startAsynchronous();
 
   // Synchronously wait for the process to start.  Starting the server
@@ -434,6 +440,8 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
 
     return ret;
   }
+  TRACE1("Server process started, pid=" <<
+         m_commandRunner->getChildPID());
 
 
   // ---- Start the LSP protocol communicator ----
@@ -450,6 +458,7 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
                    this,           &LSPManager::on_childProcessTerminated);
 
   // Kick off the initialization process.
+  TRACE1("Sending initialize request.");
   m_initializeRequestID = m_lsp->sendRequest("initialize", GDVMap{
     // It seems `clangd` ignores this.
     { "processId", GDValue() },
@@ -537,6 +546,7 @@ std::string LSPManager::stopServer()
   else {
     // This should lead to receiving a shutdown reply, which will
     // trigger the next shutdown phase.
+    TRACE1("Sending shutdown request.");
     m_shutdownRequestID = m_lsp->sendRequest("shutdown", GDVMap{});
     msgs.push_back("Initiated server shutdown.");
 
@@ -776,6 +786,7 @@ void LSPManager::notify_textDocument_didClose(
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(isFileOpen(fname));
 
+  TRACE1("Sending didClose for " << doubleQuote(fname) << ".");
   m_lsp->sendNotification("textDocument/didClose", GDVMap{
     {
       "textDocument",
