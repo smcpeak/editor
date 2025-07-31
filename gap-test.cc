@@ -7,7 +7,7 @@
 
 // smbase
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // VPVAL
+#include "smbase/sm-test.h"            // tprintf
 
 // libc
 #include <stdio.h>                     // printf
@@ -113,12 +113,12 @@ template <class Seq>
 void printSeq(char const *prefix, Seq &seq)
 {
   int len = seq.length();
-  printf("%s (length %d):", prefix, len);
+  tprintf("%s (length %d):", prefix, len);
   for (int i=0; i<len; i++) {
     int v = seq.get(i);
-    printf(" %d", v);
+    tprintf(" %d", v);
   }
-  printf("\n");
+  tprintf("\n");
 }
 
 
@@ -308,7 +308,7 @@ void test_gap(CmdlineArgsSpan args)
     if (!args.empty()) {
       iters = atoi(args[0]);
     }
-    printf("iters: %d\n", iters);
+    tprintf("iters: %d\n", iters);
 
     GapArray<int> gap;
     Sequence seq;
@@ -329,17 +329,17 @@ void test_gap(CmdlineArgsSpan args)
       checkEqual(gap, seq);
     }
 
-    printf("ok!\n");
-    printf("ctSet=%d ctInsert=%d ctInsertMany=%d ctRemove=%d\n"
-           "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d ctSwap=%d\n"
-           "ctEnsure=%d\n",
-           ctSet, ctInsert, ctInsertMany, ctRemove,
-           ctRemoveMany, ctClear, ctFillFromArray, ctSwap,
-           ctEnsure);
-    printf("total: %d\n",
-           ctSet + ctInsert + ctInsertMany + ctRemove +
-           ctRemoveMany + ctClear + ctFillFromArray +
-           ctEnsure);
+    tprintf("ok!\n");
+    tprintf("ctSet=%d ctInsert=%d ctInsertMany=%d ctRemove=%d\n"
+            "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d ctSwap=%d\n"
+            "ctEnsure=%d\n",
+            ctSet, ctInsert, ctInsertMany, ctRemove,
+            ctRemoveMany, ctClear, ctFillFromArray, ctSwap,
+            ctEnsure);
+    tprintf("total: %d\n",
+            ctSet + ctInsert + ctInsertMany + ctRemove +
+            ctRemoveMany + ctClear + ctFillFromArray +
+            ctEnsure);
   }
 }
 
