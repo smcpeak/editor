@@ -10,6 +10,7 @@
 // smbase
 #include "smbase/nonport.h"                      // fileOrDirectoryExists, removeFile
 #include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-override.h"                  // OVERRIDE
 #include "smbase/sm-test.h"                      // EXPECT_EQ
@@ -21,10 +22,10 @@ using namespace gdv;
 using std::ofstream;
 
 
-// TODO: Use anonymous namespace.
+OPEN_ANONYMOUS_NAMESPACE
 
 
-static void testWhenUntitledExists()
+void testWhenUntitledExists()
 {
   NamedTextDocument file;
   file.setDocumentName(DocumentName::fromNonFileResourceName(
@@ -65,7 +66,7 @@ public:      // funcs
 // Replace the contents of 'doc' with what is on disk.
 //
 // This approximates what the editor does to read a file.
-static void readFile(NamedTextDocument &doc)
+void readFile(NamedTextDocument &doc)
 {
   xassert(doc.hasFilename());
   string fname = doc.filename();
@@ -84,7 +85,7 @@ static void readFile(NamedTextDocument &doc)
 
 
 // Make sure that reading a file broadcasts 'observeTotalChange'.
-static void testReadFile()
+void testReadFile()
 {
   NamedTextDocument file;
   file.setDocumentName(DocumentName::fromFilename(
@@ -100,7 +101,7 @@ static void testReadFile()
 }
 
 
-static void testSetDocumentProcessStatus()
+void testSetDocumentProcessStatus()
 {
   NamedTextDocument doc;
 
@@ -113,7 +114,7 @@ static void testSetDocumentProcessStatus()
 
 // Write 'doc' to its file name.  This approximates what the editor app
 // does when writing a file.
-static void writeFile(NamedTextDocument &doc)
+void writeFile(NamedTextDocument &doc)
 {
   xassert(doc.hasFilename());
   string fname = doc.filename();
@@ -131,7 +132,7 @@ static void writeFile(NamedTextDocument &doc)
 
 // Make sure we can handle using 'undo' to go backward past the point
 // in history corresponding to file contents, then make a change.
-static void testUndoPastSavePoint()
+void testUndoPastSavePoint()
 {
   NamedTextDocument doc;
   doc.setDocumentName(DocumentName::fromFilename(
@@ -169,7 +170,7 @@ static void testUndoPastSavePoint()
 }
 
 
-static void testApplyCommandSubstitutions()
+void testApplyCommandSubstitutions()
 {
   NamedTextDocument doc;
 
@@ -193,6 +194,9 @@ static void testApplyCommandSubstitutions()
   EXPECT_EQ(doc.applyCommandSubstitutions("$f"),
     "foo.txt");
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 // Called from unit-tests.cc.
