@@ -54,6 +54,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(lsp_client);
   RUN_TEST(lsp_data);
   RUN_TEST(lsp_manager);
+  RUN_TEST(ocaml_hilite);
   RUN_TEST(python_hilite);
   RUN_TEST(uri_util);
 

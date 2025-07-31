@@ -458,25 +458,13 @@ hashcomment-hilite-test.exe: $(HASHCOMMENT_HILITE_TEST_OBJS)
 $(eval $(call RUN_TEST_PROG,hashcomment-hilite-test))
 
 
-# -------------------------- ocaml-hilite-test -------------------------
-EDITOR_OBJS += ocaml_hilite.yy.o
-
-OCAML_HILITE_TEST_OBJS := $(EDITOR_OBJS)
-
-OCAML_HILITE_TEST_OBJS += ocaml-hilite-test.o
-
-ocaml-hilite-test.exe: $(OCAML_HILITE_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(OCAML_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,ocaml-hilite-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
+EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
@@ -487,6 +475,7 @@ UNIT_TESTS_OBJS += lsp-data-test.o
 UNIT_TESTS_OBJS += lsp-manager-test.moc.o
 UNIT_TESTS_OBJS += lsp-manager-test.o
 UNIT_TESTS_OBJS += lsp-test-request-params.o
+UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
