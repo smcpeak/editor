@@ -5,13 +5,15 @@
 
 #include "justify.h"                   // module to test
 
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+
 #include <assert.h>                    // assert
 
 
-// TODO: Use anonymous namespace.
+OPEN_ANONYMOUS_NAMESPACE
 
 
-static void print(char const *label, ArrayStack<string> const &arr)
+void print(char const *label, ArrayStack<string> const &arr)
 {
   cout << label << " (" << arr.length() << "):" << endl;
   for (int i=0; i < arr.length(); i++) {
@@ -20,7 +22,7 @@ static void print(char const *label, ArrayStack<string> const &arr)
 }
 
 
-static void testOneJustifyTextLines(
+void testOneJustifyTextLines(
   char const **in, int inSize,
   char const **out, int outSize,
   int desiredWidth)
@@ -59,7 +61,7 @@ static void testOneJustifyTextLines(
 }
 
 
-static void testJustifyTextLines()
+void testJustifyTextLines()
 {
   #define TEST_ONE(in, out, width) \
     testOneJustifyTextLines(in, TABLESIZE(in), out, TABLESIZE(out), width) /* user ; */
@@ -246,13 +248,13 @@ static void testJustifyTextLines()
 }
 
 
-static string docToString(TextDocumentEditor const &d)
+string docToString(TextDocumentEditor const &d)
 {
   return d.getTextForLRangeString(TextLCoord(0,0), d.endLCoord());
 }
 
 
-static bool equalDocuments(TextDocumentEditor const &d1,
+bool equalDocuments(TextDocumentEditor const &d1,
                            TextDocumentEditor const &d2)
 {
   string b1s = docToString(d1);
@@ -261,14 +263,14 @@ static bool equalDocuments(TextDocumentEditor const &d1,
 }
 
 
-static void print(char const *label, TextDocumentEditor const &tde)
+void print(char const *label, TextDocumentEditor const &tde)
 {
   cout << label << ":\n";
   tde.debugPrint();
 }
 
 
-static void testOneJustifyNearLine(
+void testOneJustifyNearLine(
   char const **in, int inSize,
   char const **out, int outSize,
   int originLine, int desiredWidth)
@@ -304,7 +306,7 @@ static void testOneJustifyNearLine(
 }
 
 
-static void testJustifyNearLine()
+void testJustifyNearLine()
 {
   #define TEST_ONE(in, out, origin, width) \
     testOneJustifyNearLine(in, TABLESIZE(in), out, TABLESIZE(out), \
@@ -522,6 +524,9 @@ static void testJustifyNearLine()
 
   #undef TEST_ONE
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 // Called from unit-tests.cc.
