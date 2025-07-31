@@ -432,19 +432,6 @@ c_hilite.exe: $(C_HILITE_OBJS) c_hilite.cc
 $(eval $(call RUN_TEST_PROG,c_hilite))
 
 
-# ----------------------- makefile-hilite-test -------------------------
-EDITOR_OBJS += makefile_hilite.yy.o
-
-MAKEFILE_HILITE_TEST_OBJS := $(EDITOR_OBJS)
-
-MAKEFILE_HILITE_TEST_OBJS += makefile-hilite-test.o
-
-makefile-hilite-test.exe: $(MAKEFILE_HILITE_TEST_OBJS)
-	$(CXX) -o $@ $(CCFLAGS) $(MAKEFILE_HILITE_TEST_OBJS) $(QT_CONSOLE_LDFLAGS)
-
-$(eval $(call RUN_TEST_PROG,makefile-hilite-test))
-
-
 # ----------------------------- unit-tests -----------------------------
 EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += lsp-client.moc.o
@@ -452,6 +439,7 @@ EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
+EDITOR_OBJS += makefile_hilite.yy.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
 
@@ -464,6 +452,7 @@ UNIT_TESTS_OBJS += lsp-data-test.o
 UNIT_TESTS_OBJS += lsp-manager-test.moc.o
 UNIT_TESTS_OBJS += lsp-manager-test.o
 UNIT_TESTS_OBJS += lsp-test-request-params.o
+UNIT_TESTS_OBJS += makefile-hilite-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += unit-tests.o
