@@ -339,6 +339,7 @@ UNIT_TESTS_OBJS += named-td-test.o
 UNIT_TESTS_OBJS += nearby-file-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
+UNIT_TESTS_OBJS += td-diagnostics-test.o
 UNIT_TESTS_OBJS += textcategory-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
