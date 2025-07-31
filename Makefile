@@ -32,6 +32,12 @@ RUN_WITH_TIMEOUT := timeout 20
 # Python interpreter.
 PYTHON3 = python3
 
+# https://mypy-lang.org/
+MYPY = mypy
+
+# If 1, hook the `mypy` checks into the `all` target.
+ENABLE_MYPY = 0
+
 # Pull in build configuration.  This must provide definitions of
 # QT5INCLUDE, QT5LIB and QT5BIN.  It can optionally override the
 # variables defined above.
@@ -484,6 +490,21 @@ out/ctc-up-to-date.ok: $(CTC_HEADERS) $(CTC_IMPL_FILES) $(SMBASE)/create-tuple-c
 	touch $@
 
 all: out/ctc-up-to-date.ok
+
+
+# ------------------------------- mypy ---------------------------------
+# Run `mypy` on a script.
+out/%.mypy.ok: %
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(MYPY) --strict $*
+	touch $@
+
+.PHONY: check-mypy
+check-mypy: out/lsp-test-server.py.mypy.ok
+
+ifeq ($(ENABLE_MYPY),1)
+all: check-mypy
+endif
 
 
 # --------------------- misc ------------------------

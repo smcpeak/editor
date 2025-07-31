@@ -47,7 +47,11 @@ def read_message() -> Dict[str, Any]:
     raise RuntimeError("Missing Content-Length")
 
   body = stdin.read(content_length).decode("utf-8")
-  return json.loads(body)
+  result = json.loads(body)
+  if not isinstance(result, dict):
+    raise RuntimeError("JSON payload is not a dictionary")
+
+  return result
 
 
 def send_message(message: Dict[str, Any]) -> None:
@@ -68,7 +72,7 @@ def complain(msg: str) -> None:
   sys.exit(2);
 
 
-def main():
+def main() -> None:
   global initialized, shutdown_received
 
   try:
@@ -106,13 +110,18 @@ def main():
         elif method == "textDocument/didOpen":
           # Respond with a publishDiagnostics notification
           uri = msg["params"]["textDocument"]["uri"]
-          diagnostics = []
+          version = msg["params"]["textDocument"]["version"]
+          diagnostics: list[Any] = []
           publish = {
             "jsonrpc": "2.0",
             "method": "textDocument/publishDiagnostics",
             "params": {
               "uri": uri,
-              "diagnostics": diagnostics
+              "diagnostics": diagnostics,
+
+              # My `lsp-manager` module will discard diagnostics that do
+              # not have a version number.
+              "version": version
             }
           }
           send_message(publish)
