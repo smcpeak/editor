@@ -5,7 +5,6 @@
 
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
-#include "lsp-doc-state.h"             // LSPDocumentState
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 #include "smbase/dev-warning.h"        // DEV_WARNING
@@ -36,8 +35,7 @@ NamedTextDocument::NamedTextDocument()
   : TextDocument(),
     m_documentName(),
     m_diagnostics(),
-    m_lspWaitingForDiagnosticsForVersion(),
-    m_lspReceivedStaleDiagnostics(false),
+    m_receivedStaleDiagnostics(false),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
@@ -162,39 +160,12 @@ void NamedTextDocument::replaceFileAndStats(
 }
 
 
-LSPDocumentState NamedTextDocument::getLSPDocumentState() const
+GDValue NamedTextDocument::getDiagnosticsSummary() const
 {
-  if (m_lspWaitingForDiagnosticsForVersion) {
-    return LSPDS_WAITING;
-  }
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "NTD_DiagSummary"_sym);
 
-  if (m_lspReceivedStaleDiagnostics) {
-    return LSPDS_RECEIVED_STALE;
-  }
-
-  if (m_diagnostics) {
-    if (getVersionNumber() == m_diagnostics->getOriginVersion()) {
-      return LSPDS_UP_TO_DATE;
-    }
-    else {
-      return LSPDS_LOCAL_CHANGES;
-    }
-  }
-
-  // If we aren't waiting, and don't have anything, then it must not be
-  // open.
-  return LSPDS_NOT_OPEN;
-}
-
-
-GDValue NamedTextDocument::getLSPDocumentDetails() const
-{
-  GDValue m(GDVK_TAGGED_ORDERED_MAP, "NTD_LSP_Details"_sym);
-
-  m.mapSetValueAtSym("state", GDVSymbol(toString(getLSPDocumentState())));
   m.mapSetValueAtSym("numDiagnostics", toGDValue(getNumDiagnostics()));
-  GDV_WRITE_MEMBER_SYM(m_lspWaitingForDiagnosticsForVersion);
-  GDV_WRITE_MEMBER_SYM(m_lspReceivedStaleDiagnostics);
+  GDV_WRITE_MEMBER_SYM(m_receivedStaleDiagnostics);
 
   return m;
 }
@@ -218,13 +189,25 @@ NamedTextDocument::getDiagnostics() const
 }
 
 
+bool NamedTextDocument::hasOutOfDateDiagnostics() const
+{
+  return m_diagnostics != nullptr &&
+         getVersionNumber() != m_diagnostics->getOriginVersion();
+}
+
+
+bool NamedTextDocument::hasReceivedStaleDiagnostics() const
+{
+  return m_receivedStaleDiagnostics;
+}
+
+
 void NamedTextDocument::updateDiagnostics(
   std::unique_ptr<TextDocumentDiagnostics> diagnostics)
 {
   m_diagnostics = std::move(diagnostics);
   if (!m_diagnostics) {
-    m_lspWaitingForDiagnosticsForVersion = std::nullopt;
-    m_lspReceivedStaleDiagnostics = false;
+    m_receivedStaleDiagnostics = false;
   }
   notifyMetadataChange();
 }
@@ -244,7 +227,6 @@ RCSerf<Diagnostic const> NamedTextDocument::getDiagnosticAt(
 
 void NamedTextDocument::sentLSPFileContents()
 {
-  m_lspWaitingForDiagnosticsForVersion = getVersionNumber();
   notifyMetadataChange();
 }
 
@@ -261,33 +243,21 @@ void NamedTextDocument::receivedLSPDiagnostics(
   if (receivedDiagsVersion == getVersionNumber()) {
     TRACE1("received updated diagnostics for " << documentName());
 
-    m_lspWaitingForDiagnosticsForVersion = std::nullopt;
-    m_lspReceivedStaleDiagnostics = false;
+    m_receivedStaleDiagnostics = false;
 
     updateDiagnostics(convertLSPDiagsToTDD(this, diags));
   }
 
-  else if (receivedDiagsVersion == m_lspWaitingForDiagnosticsForVersion) {
+  else {
     // TODO: Adapt them rather than discard them.
     TRACE1(
       "received diagnostics for " << documentName() <<
       ", but doc is now version " << getVersionNumber() <<
       " while diags have version " << receivedDiagsVersion);
 
-    m_lspWaitingForDiagnosticsForVersion = std::nullopt;
-    m_lspReceivedStaleDiagnostics = true;
+    m_receivedStaleDiagnostics = true;
 
     notifyMetadataChange();
-  }
-
-  else {
-    // These aren't what we are waiting for.
-    TRACE1(
-      "received diagnostics for " << documentName() <<
-      ", but they are for version " << receivedDiagsVersion <<
-      " and we are waiting for " <<
-      toGDValue(m_lspWaitingForDiagnosticsForVersion) <<
-      "; ignoring them");
   }
 }
 

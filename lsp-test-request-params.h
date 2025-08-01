@@ -16,6 +16,8 @@
 class LSPTestRequestParams {
 public:      // data
   // Name of the source file to get info about.
+  //
+  // Invariant: isValidLSPPath(m_fname).
   std::string m_fname;
 
   // 0-based line and column of location of interest.
@@ -33,11 +35,15 @@ public:      // methods
 
   // Set all fields.  The contents are read from disk, throwing an
   // exception on failure.
+  //
+  // This normalizes `fname` on the way in.
   LSPTestRequestParams(
     std::string const &fname,
     int line,
     int col,
     bool useRealClangd);
+
+  void selfCheck() const;
 
   // Return parameters as specified in `args`.
   static LSPTestRequestParams getFromCmdLine(

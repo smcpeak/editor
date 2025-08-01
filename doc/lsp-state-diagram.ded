@@ -1,0 +1,484 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 10,
+        "y": 130
+      },
+      "name": "Manager Normal",
+      "shape": "ES_WINDOW",
+      "shapeParams": [
+        875,
+        345
+      ],
+      "size": {
+        "h": 350,
+        "w": 880
+      }
+    },
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 25,
+        "y": 220
+      },
+      "name": "File \"Open\" (w.r.t. LSP)",
+      "shape": "ES_WINDOW",
+      "shapeParams": [
+        850,
+        245
+      ],
+      "size": {
+        "h": 250,
+        "w": 855
+      }
+    },
+    {
+      "fillColor": "Inactive",
+      "loc": {
+        "x": 85,
+        "y": 25
+      },
+      "name": "Manager Inactive",
+      "size": {
+        "h": 20,
+        "w": 435
+      }
+    },
+    {
+      "fillColor": "Transitioning",
+      "loc": {
+        "x": 85,
+        "y": 80
+      },
+      "name": "Manager Initializing",
+      "size": {
+        "h": 20,
+        "w": 140
+      }
+    },
+    {
+      "fillColor": "Transitioning",
+      "loc": {
+        "x": 375,
+        "y": 95
+      },
+      "name": "Manager Shutdown 1",
+      "size": {
+        "h": 20,
+        "w": 145
+      }
+    },
+    {
+      "fillColor": "ProtoError",
+      "loc": {
+        "x": 735,
+        "y": 25
+      },
+      "name": "Manager Protocol Error",
+      "size": {
+        "h": 85,
+        "w": 155
+      }
+    },
+    {
+      "fillColor": "Inactive",
+      "loc": {
+        "x": 125,
+        "y": 175
+      },
+      "name": "File \"Closed\"",
+      "size": {
+        "h": 20,
+        "w": 195
+      }
+    },
+    {
+      "fillColor": "Waiting",
+      "loc": {
+        "x": 125,
+        "y": 275
+      },
+      "name": "Waiting for diagnostics for current version",
+      "size": {
+        "h": 20,
+        "w": 275
+      }
+    },
+    {
+      "fillColor": "ZeroDiags",
+      "loc": {
+        "x": 125,
+        "y": 330
+      },
+      "name": "Has current diagnostics",
+      "size": {
+        "h": 20,
+        "w": 275
+      }
+    },
+    {
+      "fillColor": "ZeroDiags",
+      "loc": {
+        "x": 125,
+        "y": 375
+      },
+      "name": "Has out of date diagnostics",
+      "size": {
+        "h": 20,
+        "w": 275
+      }
+    },
+    {
+      "fillColor": "HasDiags",
+      "loc": {
+        "x": 370,
+        "y": 375
+      },
+      "name": "(>0)",
+      "size": {
+        "h": 20,
+        "w": 30
+      }
+    },
+    {
+      "fillColor": "HasDiags",
+      "loc": {
+        "x": 370,
+        "y": 330
+      },
+      "name": "(>0)",
+      "size": {
+        "h": 20,
+        "w": 30
+      }
+    },
+    {
+      "fillColor": "Waiting",
+      "loc": {
+        "x": 515,
+        "y": 275
+      },
+      "name": "Waiting for diagnostics for previous version",
+      "size": {
+        "h": 20,
+        "w": 275
+      }
+    },
+    {
+      "fillColor": "Stale",
+      "loc": {
+        "x": 515,
+        "y": 415
+      },
+      "name": "Wedged due to stale diagnostics",
+      "size": {
+        "h": 20,
+        "w": 275
+      }
+    },
+    {
+      "fillColor": "Transitioning",
+      "loc": {
+        "x": 375,
+        "y": 60
+      },
+      "name": "Manager Shutdown 2",
+      "size": {
+        "h": 20,
+        "w": 145
+      }
+    }
+  ],
+  "inheritances": [],
+  "namedColors": [
+    {
+      "color": "RGB(0,0,0)",
+      "name": "Black"
+    },
+    {
+      "color": "RGB(192,192,192)",
+      "name": "Gray"
+    },
+    {
+      "color": "RGB(255,255,255)",
+      "name": "White"
+    },
+    {
+      "color": "RGB(224,224,224)",
+      "name": "Light Gray"
+    },
+    {
+      "color": "RGB(236,125,70)",
+      "name": "Orange"
+    },
+    {
+      "color": "RGB(234,236,52)",
+      "name": "Yellow"
+    },
+    {
+      "color": "RGB(76,222,76)",
+      "name": "Green"
+    },
+    {
+      "color": "RGB(135,193,255)",
+      "name": "Sky Blue"
+    },
+    {
+      "color": "RGB(161,140,237)",
+      "name": "Purple"
+    },
+    {
+      "color": "RGB(227,120,236)",
+      "name": "Pink"
+    },
+    {
+      "color": "RGB(248,50,50)",
+      "name": "Red"
+    },
+    {
+      "color": "RGB(192,192,192)",
+      "name": "Inactive"
+    },
+    {
+      "color": "RGB(255,128,255)",
+      "name": "Waiting"
+    },
+    {
+      "color": "RGB(102,255,102)",
+      "name": "ZeroDiags"
+    },
+    {
+      "color": "RGB(128,128,255)",
+      "name": "Transitioning"
+    },
+    {
+      "color": "RGB(255,128,64)",
+      "name": "Stale"
+    },
+    {
+      "color": "RGB(255,100,100)",
+      "name": "ProtoError"
+    },
+    {
+      "color": "RGB(255,0,0)",
+      "name": "InternalError"
+    },
+    {
+      "color": "RGB(255,223,128)",
+      "name": "HasDiags"
+    }
+  ],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [
+    {
+      "end": {"entityRef": 3},
+      "label": "start process, send initialize",
+      "start": {"entityRef": 2}
+    },
+    {
+      "end": {"entityRef": 0},
+      "label": "receive initialize reply",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 4},
+      "label": "send shutdown",
+      "start": {"entityRef": 0}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "server terminates",
+      "start": {"entityRef": 14}
+    },
+    {
+      "end": {"entityRef": 5},
+      "label": "error while in any but inactive",
+      "start": {"pt": {
+        "x": 555,
+        "y": 90
+      }}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "reset",
+      "start": {"entityRef": 5}
+    },
+    {
+      "end": {"entityRef": 1},
+      "label": "send didOpen",
+      "start": {"entityRef": 6}
+    },
+    {
+      "end": {"entityRef": 8},
+      "label": "receive diags for current version",
+      "start": {"entityRef": 7}
+    },
+    {
+      "end": {"entityRef": 9},
+      "label": "make change",
+      "start": {"entityRef": 8}
+    },
+    {
+      "controlPts": [
+        {
+          "x": 135,
+          "y": 420
+        },
+        {
+          "x": 130,
+          "y": 410
+        }
+      ],
+      "end": {"entityRef": 9},
+      "label": "make change",
+      "start": {"entityRef": 9}
+    },
+    {
+      "controlPts": [{
+        "x": 50,
+        "y": 340
+      }],
+      "end": {"entityRef": 7},
+      "label": "didChange",
+      "start": {"entityRef": 9}
+    },
+    {
+      "end": {"entityRef": 6},
+      "label": "start",
+      "start": {"pt": {
+        "x": 85,
+        "y": 185
+      }}
+    },
+    {
+      "end": {"entityRef": 2},
+      "label": "start",
+      "start": {"pt": {
+        "x": 50,
+        "y": 35
+      }}
+    },
+    {
+      "end": {"entityRef": 7},
+      "label": "start",
+      "start": {"pt": {
+        "x": 220,
+        "y": 250
+      }}
+    },
+    {
+      "controlPts": [{
+        "x": 510,
+        "y": 280
+      }],
+      "end": {"entityRef": 12},
+      "label": "make change",
+      "start": {"entityRef": 7}
+    },
+    {
+      "end": {"entityRef": 13},
+      "label": "receive diags for previous version",
+      "start": {"entityRef": 12}
+    },
+    {
+      "controlPts": [
+        {
+          "x": 785,
+          "y": 450
+        },
+        {
+          "x": 865,
+          "y": 430
+        }
+      ],
+      "end": {"entityRef": 13},
+      "label": "make change",
+      "start": {"entityRef": 13}
+    },
+    {
+      "controlPts": [{
+        "x": 50,
+        "y": 425
+      }],
+      "end": {"entityRef": 7},
+      "label": "send didChange",
+      "start": {"entityRef": 13}
+    },
+    {
+      "controlPts": [{
+        "x": 425,
+        "y": 185
+      }],
+      "end": {"entityRef": 6},
+      "label": "send didClose",
+      "start": {"entityRef": 1}
+    },
+    {
+      "end": {"entityRef": 14},
+      "label": "sent exit",
+      "start": {"entityRef": 4}
+    },
+    {
+      "controlPts": [{
+        "x": 50,
+        "y": 340
+      }],
+      "end": {"entityRef": 7},
+      "label": "didChange",
+      "start": {"entityRef": 8}
+    },
+    {
+      "controlPts": [{
+        "x": 410,
+        "y": 290
+      }],
+      "end": {"entityRef": 7},
+      "label": "didChange",
+      "start": {"entityRef": 12}
+    },
+    {
+      "controlPts": [
+        {
+          "x": 785,
+          "y": 310
+        },
+        {
+          "x": 865,
+          "y": 290
+        }
+      ],
+      "end": {"entityRef": 12},
+      "label": "make change",
+      "start": {"entityRef": 12}
+    },
+    {
+      "controlPts": [
+        {
+          "x": 385,
+          "y": 255
+        },
+        {
+          "x": 305,
+          "y": 265
+        }
+      ],
+      "end": {"entityRef": 7},
+      "label": "didChange",
+      "start": {"entityRef": 7}
+    }
+  ],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 491,
+    "w": 901
+  }
+}

@@ -9,7 +9,6 @@
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
-#include "lsp-doc-state.h"             // LSPDocumentState
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td.h"                        // TextDocument
 
@@ -50,19 +49,10 @@ private:     // data
   // If set, the diagnostics associated with this document.
   std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
 
-  // TODO: Split the following two fields off into their own class that
-  // is dedicated to tracking the per-document LSP protocol state.  That
-  // class can also deal with remembering intervening changes.
-
-  // If set, we have sent a notification to the LSP server with the file
-  // contents for the specified version, but have not received the
-  // diagnostics back.
-  std::optional<VersionNumber> m_lspWaitingForDiagnosticsForVersion;
-
   // True when we tried to get updated diagnostics but the file changed
   // in the meantime.  For now I just report the condition; I plan to
   // handle it better in the future.
-  bool m_lspReceivedStaleDiagnostics;
+  bool m_receivedStaleDiagnostics;
 
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
@@ -154,11 +144,8 @@ public:      // funcs
                            bool readOnly);
 
   // --------------------------- diagnostics ---------------------------
-  // How do the diagnostics relate to the document contents?
-  LSPDocumentState getLSPDocumentState() const;
-
-  // Get a summary of this document's LSP interaction status.
-  gdv::GDValue getLSPDocumentDetails() const;
+  // Get a summary of this document's diagnostic status.
+  gdv::GDValue getDiagnosticsSummary() const;
 
   // Get the number of diagnostics in the most recent report, or nullopt
   // if we have not received a diagnostic report.
@@ -166,6 +153,14 @@ public:      // funcs
 
   // Get the current diagnostics, if any.
   TextDocumentDiagnostics const * NULLABLE getDiagnostics() const;
+
+  // True if we have diagnostics, but they apply to a different version
+  // of the document from the one we now have in memory.
+  bool hasOutOfDateDiagnostics() const;
+
+  // True if the latest diagnostics we received were for a version that
+  // was already out of date.
+  bool hasReceivedStaleDiagnostics() const;
 
   // Set `m_diagnostics` and notify observers.
   void updateDiagnostics(
@@ -175,7 +170,7 @@ public:      // funcs
   // `TextDocumentDiagnostics::getDiagnosticAt` for details.
   RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 
-  // Record that we sent the current contents and version.
+  // Notify observers that we sent the current contents and version.
   void sentLSPFileContents();
 
   // Process incoming `diags` for this document.

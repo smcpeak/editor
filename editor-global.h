@@ -13,7 +13,7 @@
 #include "editor-settings.h"                     // EditorSettings
 #include "editor-window.h"                       // EditorWindow
 #include "filename-input.h"                      // FilenameInputDialog
-#include "lsp-manager.h"                         // LSPManager
+#include "lsp-manager.h"                         // LSPManager, LSPDocumentInfo
 #include "named-td-list.h"                       // NamedTextDocumentList
 #include "named-td.h"                            // NamedTextDocument
 #include "open-files-dialog.h"                   // OpenFilesDialog
@@ -359,6 +359,11 @@ public:       // funcs
   // Return a string summarizing the overall LSP state.  (This is a
   // temporary substitute for better error reporting.)
   std::string getLSPStatus() const;
+
+  // If `doc` is "open" w.r.t. the LSP manager, return a pointer to its
+  // details.  Otherwise return nullptr.
+  RCSerf<LSPDocumentInfo const> getLSPDocInfo(
+    NamedTextDocument const *doc) const;
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

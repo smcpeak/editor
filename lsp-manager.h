@@ -120,8 +120,12 @@ public:      // data
   // `m_lastSentVersion`.
   std::string m_lastSentContents;
 
+  // True when we have sent updated contents but not received the
+  // associated diagnostics.  Initially false.
+  bool m_waitingForDiagnostics;
+
   // Diagnostics that were received for this file but have not yet been
-  // taken by the client.
+  // taken by the client.  Initially empty.
   std::unique_ptr<LSP_PublishDiagnosticsParams> m_pendingDiagnostics;
 
 public:      // methods
@@ -136,6 +140,9 @@ public:      // methods
 
   // Assert invariants.
   void selfCheck() const;
+
+  // Debug info, primarily.
+  operator gdv::GDValue() const;
 
   // True if `m_pendingDiagnostics` is not null.
   bool hasPendingDiagnostics() const;
@@ -152,6 +159,10 @@ public:      // methods
 //
 // But it is also different in that it owns the `CommandRunner` that
 // manages the child process, whereas `LSPClient` does not.
+//
+// The state transitions for the LSPManager as a whole, and for each of
+// the files individually, are summarized in the diagram
+// doc/lsp-state-diagram.ded.png .
 //
 class LSPManager : public QObject {
   Q_OBJECT;

@@ -66,14 +66,17 @@ void LSPManagerTester::startServer()
 void LSPManagerTester::sendDidOpen()
 {
   DIAG("Sending didOpen...");
-  SMFileUtil sfu;
   m_lspManager.notify_textDocument_didOpen(
-    normalizeLSPPath("eclf.h"),
+    m_params.m_fname,
     "cpp",
     1,
-    sfu.readFileAsString("eclf.h"));
+    std::string(m_params.m_fileContents));
   DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
+
+  EXPECT_EQ(
+    m_lspManager.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
+    true);
 
   DIAG("Waiting for diagnostics notification...");
 }
@@ -85,6 +88,10 @@ void LSPManagerTester::takeDiagnostics()
     m_lspManager.takePendingDiagnosticsFor(
       m_lspManager.getFileWithPendingDiagnostics());
   DIAG("Diagnostics: " << toGDValue(*diags).asIndentedString());
+
+  EXPECT_EQ(
+    m_lspManager.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
+    false);
 }
 
 

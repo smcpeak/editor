@@ -5,6 +5,8 @@
 
 #include "lsp-test-request-params.h"   // this module
 
+#include "lsp-manager.h"               // isValidLSPPath
+
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/string-util.h"        // parseDecimalInt_noSign
@@ -24,12 +26,20 @@ LSPTestRequestParams::LSPTestRequestParams(
   int line,
   int col,
   bool useRealClangd)
-  : m_fname(fname),
+  : m_fname(normalizeLSPPath(fname)),
     m_line(line),
     m_col(col),
     m_useRealClangd(useRealClangd),
     m_fileContents(SMFileUtil().readFileAsString(fname))
-{}
+{
+  selfCheck();
+}
+
+
+void LSPTestRequestParams::selfCheck() const
+{
+  xassert(isValidLSPPath(m_fname));
+}
 
 
 /*static*/ LSPTestRequestParams LSPTestRequestParams::getFromCmdLine(

@@ -104,6 +104,7 @@ LSPDocumentInfo::LSPDocumentInfo(
   : IMEMBFP(fname),
     IMEMBFP(lastSentVersion),
     IMEMBMFP(lastSentContents),
+    m_waitingForDiagnostics(false),
     m_pendingDiagnostics()
 {
   selfCheck();
@@ -114,6 +115,7 @@ LSPDocumentInfo::LSPDocumentInfo(LSPDocumentInfo &&obj)
   : MDMEMB(m_fname),
     MDMEMB(m_lastSentVersion),
     MDMEMB(m_lastSentContents),
+    MDMEMB(m_waitingForDiagnostics),
     MDMEMB(m_pendingDiagnostics)
 {
   selfCheck();
@@ -123,6 +125,18 @@ LSPDocumentInfo::LSPDocumentInfo(LSPDocumentInfo &&obj)
 void LSPDocumentInfo::selfCheck() const
 {
   xassert(isValidLSPPath(m_fname));
+}
+
+
+LSPDocumentInfo::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "LSPDocumentInfo"_sym);
+  GDV_WRITE_MEMBER_SYM(m_fname);
+  GDV_WRITE_MEMBER_SYM(m_lastSentVersion);
+  m.mapSetValueAtSym("lastSentContents_len", m_lastSentContents.size());
+  GDV_WRITE_MEMBER_SYM(m_waitingForDiagnostics);
+  m.mapSetValueAtSym("hasPendingDiagnostics", !!m_pendingDiagnostics);
+  return m;
 }
 
 
@@ -210,13 +224,22 @@ void LSPManager::handleIncomingDiagnostics(
     return;
   }
 
+  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
+
+  if (*diags->m_version != docInfo.m_lastSentVersion) {
+    TRACE1("Discarding received diagnostics for " <<
+           doubleQuote(fname) << " version " <<
+           *diags->m_version << " because the last sent version is " <<
+           docInfo.m_lastSentVersion);
+    return;
+  }
+
   TRACE1("Received diagnostics for " << doubleQuote(fname) <<
          " with version " << *diags->m_version <<
          " and numDiags=" << diags->m_diagnostics.size() << ".");
 
-  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
-
   docInfo.m_pendingDiagnostics = std::move(diags);
+  docInfo.m_waitingForDiagnostics = false;
 
   setInsert(m_filesWithPendingDiagnostics, fname);
 
@@ -742,6 +765,9 @@ void LSPManager::notify_textDocument_didOpen(
 
   //m_documentInfo.emplace(fname,
   //  fname, version, std::move(contents));
+
+  // We expect to get diagnostics back for the initial version.
+  mapGetValueAt(m_documentInfo, fname).m_waitingForDiagnostics = true;
 }
 
 
@@ -777,6 +803,7 @@ void LSPManager::notify_textDocument_didChange(
   LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
   docInfo.m_lastSentVersion = version;
   docInfo.m_lastSentContents = std::move(contents);
+  docInfo.m_waitingForDiagnostics = true;
 }
 
 

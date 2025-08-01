@@ -205,7 +205,6 @@ EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += lsp-data.o
-EDITOR_OBJS += lsp-doc-state.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
 EDITOR_OBJS += makefile_hilite.yy.o

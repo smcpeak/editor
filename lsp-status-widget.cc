@@ -5,13 +5,16 @@
 
 #include "editor-global.h"             // EditorGlobal
 #include "editor-widget.h"             // EditorWidget
-#include "lsp-doc-state.h"             // LSPDocumentState
 #include "lsp-manager.h"               // LSPManager
 
 #include "smqtutil/qstringb.h"         // qstringb
 
 #include "smbase/sm-macros.h"          // IMEMBFP
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
+
+
+INIT_TRACE("lsp-status-widget");
 
 
 LSPStatusWidget::~LSPStatusWidget()
@@ -60,9 +63,15 @@ void LSPStatusWidget::setBackgroundColor(QColor color)
 }
 
 
+EditorGlobal *LSPStatusWidget::editorGlobal() const
+{
+  return m_editorWidget->editorGlobal();
+}
+
+
 LSPManager *LSPStatusWidget::lspManager() const
 {
-  return &( m_editorWidget->editorGlobal()->m_lspManager );
+  return &( editorGlobal()->m_lspManager );
 }
 
 
@@ -81,10 +90,10 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
 
   // Palette of colors that indicate various states.
   static QColor const inactiveColor     (192, 192, 192); // light gray
-  static QColor const transitioningColor(255, 128, 255); // light purple
+  static QColor const waitingColor      (255, 128, 255); // pink
   static QColor const zeroDiagsColor    (102, 255, 102); // light green
   static QColor const hasDiagsColor     (255, 223, 128); // light yellow with hint of orange
-  static QColor const waitingColor      (128, 255, 255); // cyan
+  static QColor const transitioningColor(128, 128, 255); // light blue/purple
   static QColor const staleColor        (255, 128,  64); // light orange
   static QColor const protoErrorColor   (255, 100, 100); // soft red
   static QColor const internalErrorColor(255,   0,   0); // hard red
@@ -103,6 +112,7 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
   if (m_fakeStatus) {
     state = static_cast<LSPProtocolState>(m_fakeStatus-1);
   }
+  TRACE2("on_changedLSPStatus: " << toString(state));
 
   switch (state) {
     case LSP_PS_MANAGER_INACTIVE:
@@ -117,8 +127,8 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
 
     case LSP_PS_NORMAL: {
       // Text shows the count of diagnostics, if we have any.
-      std::optional<int> numDiagnostics =
-        m_editorWidget->getDocument()->getNumDiagnostics();
+      NamedTextDocument const *doc = m_editorWidget->getDocument();
+      std::optional<int> numDiagnostics = doc->getNumDiagnostics();
       if (numDiagnostics.has_value()) {
         text = stringb(*numDiagnostics);
       }
@@ -126,39 +136,41 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
         text = "-";
       }
 
-      // Color and asterisk indicates the state.
-      LSPDocumentState state =
-        m_editorWidget->getDocument()->getLSPDocumentState();
-      switch (state) {
-        case LSPDS_NOT_OPEN:
-          bgColor = inactiveColor;
-          break;
+      // The asterisk means the count is for an older version.
+      if (doc->hasOutOfDateDiagnostics()) {
+        addAsterisk = true;
+      }
 
-        case LSPDS_LOCAL_CHANGES:
-          addAsterisk = true;
-          // fallthrough
-
-        case LSPDS_UP_TO_DATE:
-          xassert(numDiagnostics.has_value());
-          bgColor =
-            (numDiagnostics == 0)? zeroDiagsColor : hasDiagsColor;
-          break;
-
-        case LSPDS_WAITING:
-          // Waiting for updated diagnostics.
-          if (numDiagnostics.has_value()) {
-            addAsterisk = true;
-          }
-          bgColor = waitingColor;
-          break;
-
-        case LSPDS_RECEIVED_STALE:
-          bgColor = staleColor;
-          break;
-
-        default:
-          bgColor = internalErrorColor;
-          break;
+      // Color indicates protocol state and (under otherwise normal
+      // circumstances) number of diagnostics.
+      RCSerf<LSPDocumentInfo const> lspDocInfo =
+        editorGlobal()->getLSPDocInfo(doc);
+      if (!lspDocInfo) {
+        TRACE2("  on_changedLSPStatus: inactive color");
+        bgColor = inactiveColor;
+      }
+      else if (lspDocInfo->m_waitingForDiagnostics) {
+        TRACE2("  on_changedLSPStatus: waiting color");
+        bgColor = waitingColor;
+      }
+      else if (doc->hasReceivedStaleDiagnostics()) {
+        TRACE2("  on_changedLSPStatus: stale color");
+        bgColor = staleColor;
+      }
+      else if (numDiagnostics.has_value()) {
+        if (*numDiagnostics == 0) {
+        TRACE2("  on_changedLSPStatus: zeroDiags color");
+          bgColor = zeroDiagsColor;
+        }
+        else {
+        TRACE2("  on_changedLSPStatus: hasDiags color");
+          bgColor = hasDiagsColor;
+        }
+      }
+      else {
+        // No diagnostics, but also not inactive or waiting?
+        TRACE2("  on_changedLSPStatus: internal error color");
+        bgColor = internalErrorColor;
       }
 
       break;
@@ -195,7 +207,10 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
       break;
   }
 
-  setText(qstringb(text << (addAsterisk? "*" : "")));
+  std::string finalText = stringb(text << (addAsterisk? "*" : ""));
+  TRACE2("  on_changedLSPStatus: text: " << finalText);
+
+  setText(toQString(finalText));
   setBackgroundColor(bgColor);
 
   GENERIC_CATCH_END

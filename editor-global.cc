@@ -1214,6 +1214,20 @@ std::string EditorGlobal::getLSPStatus() const
 }
 
 
+RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
+  NamedTextDocument const *doc) const
+{
+  DocumentName const &docName = doc->documentName();
+
+  // Currently, LSP only works for local files.
+  if (docName.isLocal() && docName.hasFilename()) {
+    return m_lspManager.getDocInfo(docName.filename());
+  }
+
+  return nullptr;
+}
+
+
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {

@@ -8,6 +8,7 @@
 
 #include "lsp-status-widget-fwd.h"     // fwds for this module
 
+#include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "lsp-manager-fwd.h"           // LSPManager
 
@@ -46,6 +47,9 @@ public:      // methods
 
   explicit LSPStatusWidget(
     EditorWidget *editorWidget, QWidget *parent = nullptr);
+
+  // Get the global editor object.
+  EditorGlobal *editorGlobal() const;
 
   // Navigate to the global LSP manager.
   LSPManager *lspManager() const;

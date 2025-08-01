@@ -2118,26 +2118,20 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
   std::ostringstream oss;
 
   oss << "Current version: " << doc->getVersionNumber() << "\n";
-  oss << "LSP document details: "
-      << doc->getLSPDocumentDetails().asIndentedString() << "\n";
+  oss << "Named document diagnostics summary: "
+      << doc->getDiagnosticsSummary().asLinesString();
+
+  RCSerf<LSPDocumentInfo const> lspDocInfo =
+    editorGlobal()->getLSPDocInfo(doc);
+  if (lspDocInfo) {
+    oss << "LSP Manager doc info: "
+        << toGDValue(*lspDocInfo).asLinesString();
+  }
+  else {
+    oss << "LSP Manager doc info: null\n";
+  }
 
   if (TextDocumentDiagnostics const *diags = doc->getDiagnostics()) {
-    #if 0
-    if (diags->m_version.has_value()) {
-      oss << "Diagnostics apply to version: " << diags->m_version.value() << "\n";
-    }
-    else {
-      oss << "Diagnostics do not specify a version!\n";
-    }
-
-    oss << diags->m_diagnostics.size() << " diagnostics:\n";
-
-    for (LSP_Diagnostic const &diag : diags->m_diagnostics) {
-      // Very crude, for now.
-      oss << toGDValue(diag) << "\n";
-    }
-    #endif
-
     oss << toGDValue(*diags).asLinesString();
   }
   else {
