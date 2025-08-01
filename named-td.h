@@ -168,7 +168,7 @@ public:      // funcs
 
   // Get diagnostic at `tc`.  See
   // `TextDocumentDiagnostics::getDiagnosticAt` for details.
-  RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
+  RCSerf<TDD_Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 
   // Notify observers that we sent the current contents and version.
   void sentLSPFileContents();

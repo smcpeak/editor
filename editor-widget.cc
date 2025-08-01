@@ -2535,7 +2535,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
     TextMCoord cursorMC = m_editor->toMCoord(m_editor->cursor());
-    if (RCSerf<Diagnostic const> diag = tdd->getDiagnosticAt(cursorMC)) {
+    if (RCSerf<TDD_Diagnostic const> diag = tdd->getDiagnosticAt(cursorMC)) {
 
       // Copy `diag` into a vector of elements for the dialog.
       typedef DiagnosticDetailsDialog::Element Element;

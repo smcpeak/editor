@@ -57,9 +57,7 @@ public:      // methods
 
 
 // A single diagnostic message.
-//
-// TODO: Rename this to `TDD_Diagnostic`?
-class Diagnostic : public SerfRefCount {
+class TDD_Diagnostic : public SerfRefCount {
 public:      // data
   // What the diagnostic says.
   std::string m_message;
@@ -68,16 +66,16 @@ public:      // data
   std::vector<TDD_Related> m_related;
 
 public:      // methods
-  ~Diagnostic();
+  ~TDD_Diagnostic();
 
   // Empty `m_related`.
-  Diagnostic(std::string &&message);
+  TDD_Diagnostic(std::string &&message);
 
-  Diagnostic(std::string &&message, std::vector<TDD_Related> &&related);
+  TDD_Diagnostic(std::string &&message, std::vector<TDD_Related> &&related);
 
   operator gdv::GDValue() const;
 
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Diagnostic)
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TDD_Diagnostic)
 };
 
 
@@ -99,11 +97,11 @@ public:      // types
     TextMCoordRange m_range;
 
     // The diagnostic for that range.
-    RCSerf<Diagnostic const> m_diagnostic;
+    RCSerf<TDD_Diagnostic const> m_diagnostic;
 
   public:      // data
     ~DocEntry();
-    DocEntry(TextMCoordRange range, Diagnostic const *diagnostic);
+    DocEntry(TextMCoordRange range, TDD_Diagnostic const *diagnostic);
 
     operator gdv::GDValue() const;
 
@@ -127,7 +125,7 @@ public:      // types
     // The associated diagnostic.  This is a pointer into
     // `m_diagnostics`, so is invalidated by anything that changes that
     // set.
-    RCSerf<Diagnostic const> m_diagnostic;
+    RCSerf<TDD_Diagnostic const> m_diagnostic;
 
   public:      // methods
     ~LineEntry();
@@ -135,7 +133,7 @@ public:      // types
     explicit LineEntry(
       std::optional<int> startByteIndex,
       std::optional<int> endByteIndex,
-      Diagnostic const *m_diagnostic);
+      TDD_Diagnostic const *m_diagnostic);
 
     // Assert invariants.
     void selfCheck() const;
@@ -160,7 +158,7 @@ private:     // data
 
   // Set of diagnostics, organized into a sequence so each has a unique
   // index that can be used with `m_rangeToDiagIndex`.
-  std::vector<Diagnostic> m_diagnostics;
+  std::vector<TDD_Diagnostic> m_diagnostics;
 
   // Map a coordinate range to an index into `m_diagnostics`.
   //
@@ -197,13 +195,13 @@ public:      // methods
   void clear();
 
   // Insert the mapping `range` -> `diag`.
-  void insert(TextMCoordRange range, Diagnostic &&diag);
+  void insert(TextMCoordRange range, TDD_Diagnostic &&diag);
 
   // Insert `range` -> `diag`, except first adjust `range` to be valid
   // for the document using `TextDocument::adjustMCoordRange`, returning
   // true and updating `range` if a change is made to it.
   bool insertWithAdjust(
-    TextMCoordRange /*INOUT*/ &range, Diagnostic &&diag);
+    TextMCoordRange /*INOUT*/ &range, TDD_Diagnostic &&diag);
 
   // Return all diagnostic entries that intersect `line`.
   std::set<LineEntry> getLineEntries(int line) const;
@@ -216,7 +214,7 @@ public:      // methods
   // must be immediately used and then discarded.  If there is none,
   // return a null pointer.  If there is more than one, first prefer one
   // with a closer start, then a closer end, then resolve arbitrarily.
-  RCSerf<Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
+  RCSerf<TDD_Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 
   // If there is a diagnostic that starts after `tc`, return the start
   // location of the one closest to `tc`; otherwise nullopt.

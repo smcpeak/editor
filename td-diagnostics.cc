@@ -63,25 +63,25 @@ int TDD_Related::compareTo(TDD_Related const &b) const
 }
 
 
-// ---------------------------- Diagnostic -----------------------------
-Diagnostic::~Diagnostic()
+// -------------------------- TDD_Diagnostic ---------------------------
+TDD_Diagnostic::~TDD_Diagnostic()
 {}
 
 
-Diagnostic::Diagnostic(std::string &&message)
+TDD_Diagnostic::TDD_Diagnostic(std::string &&message)
   : IMEMBMFP(message),
     m_related()
 {}
 
 
-Diagnostic::Diagnostic(std::string &&message,
+TDD_Diagnostic::TDD_Diagnostic(std::string &&message,
                        std::vector<TDD_Related> &&related)
   : IMEMBMFP(message),
     IMEMBMFP(related)
 {}
 
 
-int Diagnostic::compareTo(Diagnostic const &b) const
+int TDD_Diagnostic::compareTo(TDD_Diagnostic const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_message);
@@ -90,7 +90,7 @@ int Diagnostic::compareTo(Diagnostic const &b) const
 }
 
 
-Diagnostic::operator gdv::GDValue() const
+TDD_Diagnostic::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "TDD_Diagnostic"_sym);
 
@@ -109,7 +109,7 @@ TextDocumentDiagnostics::DocEntry::~DocEntry()
 
 TextDocumentDiagnostics::DocEntry::DocEntry(
   TextMCoordRange range,
-  Diagnostic const *diagnostic)
+  TDD_Diagnostic const *diagnostic)
   : m_range(range),
     m_diagnostic(diagnostic)
 {}
@@ -143,7 +143,7 @@ TextDocumentDiagnostics::LineEntry::~LineEntry()
 TextDocumentDiagnostics::LineEntry::LineEntry(
   std::optional<int> startByteIndex,
   std::optional<int> endByteIndex,
-  Diagnostic const *m_diagnostic)
+  TDD_Diagnostic const *m_diagnostic)
   : m_startByteIndex(startByteIndex),
     m_endByteIndex(endByteIndex),
     m_diagnostic(m_diagnostic)
@@ -292,7 +292,7 @@ void TextDocumentDiagnostics::clear()
 }
 
 
-void TextDocumentDiagnostics::insert(TextMCoordRange range, Diagnostic &&diag)
+void TextDocumentDiagnostics::insert(TextMCoordRange range, TDD_Diagnostic &&diag)
 {
   DiagnosticIndex index =
     convertNumber<DiagnosticIndex>(m_diagnostics.size());
@@ -302,7 +302,7 @@ void TextDocumentDiagnostics::insert(TextMCoordRange range, Diagnostic &&diag)
 
 
 bool TextDocumentDiagnostics::insertWithAdjust(
-  TextMCoordRange /*INOUT*/ &range, Diagnostic &&diag)
+  TextMCoordRange /*INOUT*/ &range, TDD_Diagnostic &&diag)
 {
   bool adjusted = m_doc->adjustMCoordRange(range);
   insert(range, std::move(diag));
@@ -350,7 +350,7 @@ auto TextDocumentDiagnostics::getAllEntries() const
 
 
 auto TextDocumentDiagnostics::getDiagnosticAt(TextMCoord tc) const
-  -> RCSerf<Diagnostic const>
+  -> RCSerf<TDD_Diagnostic const>
 {
   std::set<LineEntry> lineEntries = getLineEntries(tc.m_line);
 

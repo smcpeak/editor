@@ -31,7 +31,7 @@ void testOneContainsByteIndex(
   EXN_CONTEXT_EXPR(toGDValue(endByteIndex));
   EXN_CONTEXT_EXPR(testByteIndex);
 
-  Diagnostic dummy("");
+  TDD_Diagnostic dummy("");
   TextDocumentDiagnostics::LineEntry entry(
     startByteIndex, endByteIndex, &dummy);
 
@@ -76,7 +76,7 @@ void testOneGetDiagnosticsAt(
   EXN_CONTEXT_EXPR(line);
   EXN_CONTEXT_EXPR(byteIndex);
 
-  RCSerf<Diagnostic const> actual =
+  RCSerf<TDD_Diagnostic const> actual =
     tdd.getDiagnosticAt(TextMCoord(line, byteIndex));
 
   EXPECT_EQ(actual==nullptr, expect==nullptr);
@@ -164,28 +164,28 @@ void test_TDD_getDiagnosticAt()
   TextDocumentDiagnostics tdd(1 /*version*/, &doc);
   tdd.selfCheck();
   EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
-  tdd.insert({{0,3}, {0,6}}, Diagnostic("1"));
+  tdd.insert({{0,3}, {0,6}}, TDD_Diagnostic("1"));
   tdd.selfCheck();
-  tdd.insert({{0,11}, {0,16}}, Diagnostic("2"));
+  tdd.insert({{0,11}, {0,16}}, TDD_Diagnostic("2"));
   tdd.selfCheck();
-  tdd.insert({{2,2}, {2,17}}, Diagnostic("3"));
+  tdd.insert({{2,2}, {2,17}}, TDD_Diagnostic("3"));
   tdd.selfCheck();
-  tdd.insert({{2,5}, {2,14}}, Diagnostic("4"));
+  tdd.insert({{2,5}, {2,14}}, TDD_Diagnostic("4"));
   tdd.selfCheck();
-  tdd.insert({{2,8}, {2,11}}, Diagnostic("5"));
-  tdd.insert({{3,2}, {3,14}}, Diagnostic("6"));
-  tdd.insert({{3,7}, {3,18}}, Diagnostic("7"));
+  tdd.insert({{2,8}, {2,11}}, TDD_Diagnostic("5"));
+  tdd.insert({{3,2}, {3,14}}, TDD_Diagnostic("6"));
+  tdd.insert({{3,7}, {3,18}}, TDD_Diagnostic("7"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 3);
   // I skipped "8" I guess.
-  tdd.insert({{4,10}, {4,10}}, Diagnostic("9"));
-  tdd.insert({{5,6}, {6,18}}, Diagnostic("10"));
+  tdd.insert({{4,10}, {4,10}}, TDD_Diagnostic("9"));
+  tdd.insert({{5,6}, {6,18}}, TDD_Diagnostic("10"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 6);
-  tdd.insert({{5,11}, {5,15}}, Diagnostic("11"));
-  tdd.insert({{6,3}, {6,7}}, Diagnostic("12"));
-  tdd.insert({{7,3}, {7,11}}, Diagnostic("13"));
-  tdd.insert({{7,3}, {7,16}}, Diagnostic("14"));
-  tdd.insert({{8,3}, {8,16}}, Diagnostic("15"));
-  tdd.insert({{8,8}, {8,16}}, Diagnostic("16"));
+  tdd.insert({{5,11}, {5,15}}, TDD_Diagnostic("11"));
+  tdd.insert({{6,3}, {6,7}}, TDD_Diagnostic("12"));
+  tdd.insert({{7,3}, {7,11}}, TDD_Diagnostic("13"));
+  tdd.insert({{7,3}, {7,16}}, TDD_Diagnostic("14"));
+  tdd.insert({{8,3}, {8,16}}, TDD_Diagnostic("15"));
+  tdd.insert({{8,8}, {8,16}}, TDD_Diagnostic("16"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 8);
   tdd.selfCheck();
 

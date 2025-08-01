@@ -213,7 +213,7 @@ void NamedTextDocument::updateDiagnostics(
 }
 
 
-RCSerf<Diagnostic const> NamedTextDocument::getDiagnosticAt(
+RCSerf<TDD_Diagnostic const> NamedTextDocument::getDiagnosticAt(
   TextMCoord tc) const
 {
   if (m_diagnostics.get()) {

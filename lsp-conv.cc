@@ -81,7 +81,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
     std::vector<TDD_Related> related =
       convertLSPRelatedList(lspDiag.m_relatedInformation);
 
-    Diagnostic tddDiag(std::move(message), std::move(related));
+    TDD_Diagnostic tddDiag(std::move(message), std::move(related));
 
     if (ret->insertWithAdjust(range, std::move(tddDiag))) {
       TRACE1("adjusted LSP range " << toGDValue(range) <<

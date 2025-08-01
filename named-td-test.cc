@@ -5,8 +5,6 @@
 
 #include "named-td.h"                            // module to test
 
-#include "td-diagnostics.h"                      // Diagnostic, TextDocumentDiagnostics
-
 // smbase
 #include "smbase/nonport.h"                      // fileOrDirectoryExists, removeFile
 #include "smbase/sm-file-util.h"                 // SMFileUtil
