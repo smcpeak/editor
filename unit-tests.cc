@@ -72,6 +72,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(td_core);
   RUN_TEST(td_diagnostics);
   RUN_TEST(td_editor);
+  RUN_TEST(td_obs_recorder);
   RUN_TEST(text_search);
   RUN_TEST(textcategory);
   RUN_TEST(textmcoord_map);

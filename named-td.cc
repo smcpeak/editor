@@ -6,10 +6,12 @@
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
+#include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/map-util.h"           // smbase::mapContains
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/overflow.h"           // smbase::convertNumber
 #include "smbase/sm-file-util.h"       // SMFileUtil
@@ -38,6 +40,7 @@ NamedTextDocument::NamedTextDocument()
     m_documentName(),
     m_diagnostics(),
     m_tddUpdater(),
+    m_observationRecorder(getCore()),
     m_receivedStaleDiagnostics(false),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
@@ -77,6 +80,13 @@ void NamedTextDocument::selfCheck() const
     xassert(m_tddUpdater->getDocument() == this);
 
     m_tddUpdater->selfCheck();
+
+    // We should not be waiting for any version for which we already
+    // have more recent diagnostics.
+    if (std::optional<VersionNumber> earliestTracked =
+          m_observationRecorder.getEarliestVersion()) {
+      xassert(*earliestTracked >= m_diagnostics->getOriginVersion());
+    }
   }
 }
 
@@ -216,20 +226,48 @@ bool NamedTextDocument::hasReceivedStaleDiagnostics() const
 void NamedTextDocument::updateDiagnostics(
   std::unique_ptr<TextDocumentDiagnostics> diagnostics)
 {
-  m_tddUpdater.reset(nullptr);
+  if (diagnostics) {
+    // The document version from which the diagnostics were generated.
+    VersionNumber diagVersion = diagnostics->getOriginVersion();
+    TRACE1("updateDiagnostics: Received diagnostics for version " <<
+           diagVersion << " of " << documentName());
 
-  m_diagnostics = std::move(diagnostics);
+    if (!m_observationRecorder.isTracking(diagVersion)) {
+      // We cannot roll the diagnostics forward, so we cannot use them.
+      // Do not change anything.
+      TRACE1("updateDiagnostics: Received diagnostics I wasn't "
+             "expecting.  Discarding them.");
+      return;
+    }
 
-  if (m_diagnostics) {
-    // Modify `m_diagnostics` to it conforms to this document's shape.
-    m_diagnostics->adjustForDocument(getCore());
+    // Roll the diagnostics forward to account for changes made to the
+    // document since `diagVersion`.  Additionally, discard the change
+    // records associated with all versions up to and including
+    // `diagVersion`.
+    m_observationRecorder.applyChangesToDiagnostics(diagnostics.get());
+
+    // Modify `m_diagnostics` so it conforms to this document's shape.
+    // This is necessary even with version roll-forward because the
+    // diagnostic source could have generated arbitrary junk.
+    diagnostics->adjustForDocument(getCore());
+
+    // We are about to deallocate the existing diagnostics, so detach
+    // the updater.
+    m_tddUpdater.reset(nullptr);
+
+    // Replace the existing diagnostics, if any.
+    m_diagnostics = std::move(diagnostics);
 
     // Create the object that allows `m_diagnostics` to track the
     // subsequent file modifications made by the user.
     m_tddUpdater.reset(
       new TextDocumentDiagnosticsUpdater(m_diagnostics.get(), this));
   }
+
   else {
+    // Reset all diagnostics state.
+    m_tddUpdater.reset(nullptr);
+    m_diagnostics.reset(nullptr);
     m_receivedStaleDiagnostics = false;
   }
 
@@ -249,40 +287,25 @@ RCSerf<TDD_Diagnostic const> NamedTextDocument::getDiagnosticAt(
 }
 
 
+// TODO: This function is not specific to LSP.
 void NamedTextDocument::sentLSPFileContents()
 {
+  TRACE1("sentLSPFileContents: version is " << getVersionNumber());
+
+  m_observationRecorder.beginTracking(getVersionNumber());
+
   notifyMetadataChange();
 }
 
 
+// TODO: I think this conversion step should be moved outside this
+// class.
 void NamedTextDocument::receivedLSPDiagnostics(
   LSP_PublishDiagnosticsParams const *diags)
 {
   xassertPrecondition(diags->m_version.has_value());
 
-  // Convert the version number data type.
-  TextDocument::VersionNumber receivedDiagsVersion =
-    convertNumber<TextDocument::VersionNumber>(*diags->m_version);
-
-  if (receivedDiagsVersion == getVersionNumber()) {
-    TRACE1("received updated diagnostics for " << documentName());
-
-    m_receivedStaleDiagnostics = false;
-
-    updateDiagnostics(convertLSPDiagsToTDD(diags));
-  }
-
-  else {
-    // TODO: Adapt them rather than discard them.
-    TRACE1(
-      "received diagnostics for " << documentName() <<
-      ", but doc is now version " << getVersionNumber() <<
-      " while diags have version " << receivedDiagsVersion);
-
-    m_receivedStaleDiagnostics = true;
-
-    notifyMetadataChange();
-  }
+  updateDiagnostics(convertLSPDiagsToTDD(diags));
 }
 
 

@@ -36,6 +36,7 @@ void test_python_hilite(CmdlineArgsSpan args);
 void test_td_core(CmdlineArgsSpan args);
 void test_td_diagnostics(CmdlineArgsSpan args);
 void test_td_editor(CmdlineArgsSpan args);
+void test_td_obs_recorder(CmdlineArgsSpan args);
 void test_text_search(CmdlineArgsSpan args);
 void test_textcategory(CmdlineArgsSpan args);
 void test_textmcoord_map(CmdlineArgsSpan args);

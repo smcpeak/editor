@@ -1,0 +1,35 @@
+td-obs-recorder-design.txt
+
+This file has design rationale the `td-obs-recorder` module.
+
+
+Comparison with `TextDocument` undo/redo history
+------------------------------------------------
+
+The primary intended use of this module is to record the changes that
+are made to a document between the time its contents are sent to the LSP
+server and when the corresponding diagnostics are received so we can
+adjust those diagnostics' source locations to match the edited text.
+
+Originally, I thought I should just use the undo/redo history data since
+that already exists and thus I would not need to store anything more
+than an index into that history.  However, that mechanism has several
+issues:
+
+* The history gets truncated whenever the user undoes a change and then
+  does something other than redo.  This loses information I need, and
+  creates potential confusion regarding the meaning of an index.
+
+* Although the undo history currently grows without bound, I intend to
+  eventually bound it, which again creates problems for indices, as well
+  as risking the required change history being lost.
+
+* It's a somewhat complicated and a bit crufty mechanism written a long
+  time ago.  Making it serviceable for this purpose without breaking its
+  primary purpose could be challenging.
+
+Consequently, I decided it was cleaner and easier to just maintain a
+separate history.
+
+
+EOF

@@ -10,12 +10,14 @@
 #include "hilite.h"                    // Highlighter
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
+#include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 #include "td.h"                        // TextDocument
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/str.h"                // string
 
 #include <cstdint>                     // std::int64_t
+#include <map>                         // std::map
 #include <memory>                      // std::unique_ptr
 #include <optional>                    // std::optional
 
@@ -61,7 +63,22 @@ private:     // data
   //
   // That is, the stated invariants of `m_tddUpdater` hold with respect
   // to `this` and `m_diagnostics`.
+  //
   std::unique_ptr<TextDocumentDiagnosticsUpdater> m_tddUpdater;
+
+  // Each entry in this map represents a document version that has been
+  // sent to a diagnostic source (such as an LSP server) but for which
+  // the resulting diagnostics have not been received.
+  //
+  // Invariant: If `m_diagnostics!=nullptr` and the recorder has an
+  // earliest version, then:
+  //
+  //   m_observationRecorder.getEarliestVersion().value() >= m_diagnostics->m_originVersion
+  //
+  // That is, we do not keep information about document versions older
+  // the on the current diagnostics were derived from.
+  //
+  TextDocumentObservationRecorder m_observationRecorder;
 
   // True when we tried to get updated diagnostics but the file changed
   // in the meantime.  For now I just report the condition; I plan to
@@ -181,6 +198,10 @@ public:      // funcs
   // shape of the current document.
   void updateDiagnostics(
     std::unique_ptr<TextDocumentDiagnostics> diagnostics);
+
+  // If `m_versionToObservationRecorder` contains any that are watching
+  // for changes since a version before `version`, discard them.
+  void removeObservationRecordersBefore(VersionNumber version);
 
   // Get diagnostic at `tc`.  See
   // `TextDocumentDiagnostics::getDiagnosticAt` for details.
