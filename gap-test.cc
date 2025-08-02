@@ -302,8 +302,6 @@ void test_gap(CmdlineArgsSpan args)
   //srand(time());
 
   {
-    // TODO: This test fails if `iters` is set to 1000.
-
     int iters = 100;
     if (!args.empty()) {
       iters = atoi(args[0]);
