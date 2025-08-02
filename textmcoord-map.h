@@ -305,10 +305,7 @@ public:      // methods
 
   // ---- Manipulate the mapping directly ----
   // Add an entry.  Requires that its value not already be in the map.
-  //
-  // TODO: Rename to reduce potential for confusion with `insertLines`
-  // and `insertLineBytes`.
-  void insert(DocEntry entry);
+  void insertEntry(DocEntry entry);
 
   // There is not currently a way to remove individual entries because I
   // don't anticipate needing to do so.

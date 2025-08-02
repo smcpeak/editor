@@ -52,7 +52,7 @@ public:
   ~ReferenceMap() = default;
   ReferenceMap() = default;
 
-  void insert(DocEntry entry)
+  void insertEntry(DocEntry entry)
   {
     m_entries.insert(entry);
   }
@@ -369,14 +369,14 @@ public:      // methods
 
   // Mutations: Perform on each in parallel.
 
-  void insert(DocEntry entry)
+  void insertEntry(DocEntry entry)
   {
     // Print these operations as C++ code that I can copy into my
     // tests to recreate a scenario that was generated randomly.
     DIAG("m.insert(" << toCode(entry) << ");");
 
-    m_sut.insert(entry);
-    m_ref.insert(entry);
+    m_sut.insertEntry(entry);
+    m_ref.insertEntry(entry);
   }
 
   void clear()
@@ -540,7 +540,7 @@ void test_commentsExample()
   EXPECT_EQ(lineEntriesString(m, 0), "{}");
 
   DIAG("Insert value 1 at 1:5 to 1:12.");
-  m.insert({{{1,5}, {1,12}}, 1});
+  m.insertEntry({{{1,5}, {1,12}}, 1});
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -572,7 +572,7 @@ void test_commentsExample()
     ])");
 
   DIAG("Insert value 2 at 3:5 to 5:12.");
-  m.insert({{{3,5}, {5,12}}, 2});
+  m.insertEntry({{{3,5}, {5,12}}, 2});
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -747,7 +747,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   DIAG("Make a span.");
-  m.insert({{{0,5}, {0,10}}, 1});
+  m.insertEntry({{{0,5}, {0,10}}, 1});
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
@@ -829,7 +829,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   DIAG("Make a span.");
-  m.insert({{{0,5}, {1,10}}, 1});
+  m.insertEntry({{{0,5}, {1,10}}, 1});
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
@@ -945,7 +945,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   DIAG("Make a span.");
-  m.insert({{{0,10}, {0,20}}, 1});
+  m.insertEntry({{{0,10}, {0,20}}, 1});
   m.selfCheck();
 
   EXPECT_EQ(stringb(toGDValue(m)),
@@ -1084,7 +1084,7 @@ void test_multilineDeletions()
 {
   MapPair m;
 
-  m.insert({{{2,24}, {4,1}}, 3});
+  m.insertEntry({{{2,24}, {4,1}}, 3});
   m.selfCheck();
   EXPECT_EQ(stringb(toGDValue(m)),
     "{DocEntry[range:MCR(MC(2 24) MC(4 1)) value:3]}");
@@ -1117,7 +1117,7 @@ void test_multilineDeletion2()
 {
   MapPair m;
 
-  m.insert({{{0,21}, {3,0}}, 3});
+  m.insertEntry({{{0,21}, {3,0}}, 3});
   m.selfCheck();
   EXPECT_EQ(stringb(toGDValue(m)),
     "{DocEntry[range:MCR(MC(0 21) MC(3 0)) value:3]}");
@@ -1220,7 +1220,7 @@ void randomInsert(MapPair &m)
     endCol = randomColumn() + startCol;
   }
 
-  m.insert(MapPair::DocEntry(
+  m.insertEntry(MapPair::DocEntry(
     TextMCoordRange(
       TextMCoord(startLine, startCol),
       TextMCoord(endLine, endCol)
@@ -1320,7 +1320,7 @@ void test_insertAfterLast()
 {
   MapPair m;
 
-  m.insert({{{1,4}, {1,42}}, 2});
+  m.insertEntry({{{1,4}, {1,42}}, 2});
   m.selfCheck();
   EXPECT_EQ(m.numLines(), 2);
 
@@ -1334,7 +1334,7 @@ void test_insertAfterLast()
 void test_clear()
 {
   MapPair m;
-  m.insert({{{1,4}, {1,42}}, 2});
+  m.insertEntry({{{1,4}, {1,42}}, 2});
   m.selfCheck();
   EXPECT_EQ(m.numLines(), 2);
 
@@ -1349,7 +1349,7 @@ void test_multilineDeletion3()
 {
   MapPair m;
 
-  m.insert({{{3,0}, {4,8}}, 2});
+  m.insertEntry({{{3,0}, {4,8}}, 2});
 
   VPVAL(toGDValue(m));
 
@@ -1367,7 +1367,7 @@ void test_multilineDeletion4()
 {
   MapPair m;
 
-  m.insert({{{19,11}, {20,27}}, 3});
+  m.insertEntry({{{19,11}, {20,27}}, 3});
 
   VPVAL(toGDValue(m));
 
@@ -1386,7 +1386,7 @@ void test_insertMakesLongLine()
 {
   MapPair m;
 
-  m.insert({{{0,94}, {1,0}}, 3});
+  m.insertEntry({{{0,94}, {1,0}}, 3});
   m.selfCheck();
 
   m.insertLineBytes({0,11}, 33);
@@ -1428,22 +1428,22 @@ void test_adjustForDocument()
   MapPair m;
 
   // Simple case of reducing the end coordinate within a line.
-  m.insert({{{1,1}, {1,42}}, 1});
+  m.insertEntry({{{1,1}, {1,42}}, 1});
 
   // Reduce both coordinates
-  m.insert({{{2,20}, {2,42}}, 2});
+  m.insertEntry({{{2,20}, {2,42}}, 2});
 
   // Span where the first coordinate gets reduced.
-  m.insert({{{1,40}, {2,2}}, 3});
+  m.insertEntry({{{1,40}, {2,2}}, 3});
 
   // Single-line span near EOF that is not affected.
-  m.insert({{{4,1}, {4,2}}, 4});
+  m.insertEntry({{{4,1}, {4,2}}, 4});
 
   // Single-line span beyond EOF.
-  m.insert({{{5,1}, {5,42}}, 5});
+  m.insertEntry({{{5,1}, {5,42}}, 5});
 
   // Multiline span where only the end gets moved.
-  m.insert({{{4,1}, {6,42}}, 6});
+  m.insertEntry({{{4,1}, {6,42}}, 6});
 
 
   EXPECT_EQ(toGDValue(m).asIndentedString(), "{\n"

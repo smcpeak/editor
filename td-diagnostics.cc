@@ -284,7 +284,7 @@ void TextDocumentDiagnostics::insert(TextMCoordRange range, TDD_Diagnostic &&dia
   DiagnosticIndex index =
     convertNumber<DiagnosticIndex>(m_diagnostics.size());
   m_diagnostics.push_back(std::move(diag));
-  m_rangeToDiagIndex.insert({range, index});
+  m_rangeToDiagIndex.insertEntry({range, index});
 }
 
 

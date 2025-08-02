@@ -773,7 +773,7 @@ void TextMCoordMap::selfCheck() const
 }
 
 
-void TextMCoordMap::insert(DocEntry entry)
+void TextMCoordMap::insertEntry(DocEntry entry)
 {
   setInsertUnique(m_values, entry.m_value);
 
