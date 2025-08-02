@@ -11,6 +11,7 @@
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/overflow.h"           // smbase::convertNumber
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // CMEMB
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -21,6 +22,7 @@
 #include <utility>                     // std::move
 
 using namespace gdv;
+using namespace smbase;
 
 
 INIT_TRACE("named-td");
@@ -260,7 +262,7 @@ void NamedTextDocument::receivedLSPDiagnostics(
 
   // Convert the version number data type.
   TextDocument::VersionNumber receivedDiagsVersion =
-    static_cast<TextDocument::VersionNumber>(*diags->m_version);
+    convertNumber<TextDocument::VersionNumber>(*diags->m_version);
 
   if (receivedDiagsVersion == getVersionNumber()) {
     TRACE1("received updated diagnostics for " << documentName());
