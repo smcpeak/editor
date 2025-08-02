@@ -309,12 +309,12 @@ TextMCoord TextDocument::redo()
 }
 
 
-void TextDocument::addObserver(TextDocumentObserver *observer)
+void TextDocument::addObserver(TextDocumentObserver *observer) const
 {
   this->m_core.addObserver(observer);
 }
 
-void TextDocument::removeObserver(TextDocumentObserver *observer)
+void TextDocument::removeObserver(TextDocumentObserver *observer) const
 {
   this->m_core.removeObserver(observer);
 }

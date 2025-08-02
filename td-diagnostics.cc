@@ -447,7 +447,7 @@ TextDocumentDiagnosticsUpdater::~TextDocumentDiagnosticsUpdater()
 
 TextDocumentDiagnosticsUpdater::TextDocumentDiagnosticsUpdater(
   TextDocumentDiagnostics *diagnostics,
-  NamedTextDocument *document)
+  NamedTextDocument const *document)
   : IMEMBFP(diagnostics),
     IMEMBFP(document)
 {
@@ -475,7 +475,7 @@ TextDocumentDiagnostics *TextDocumentDiagnosticsUpdater::getDiagnostics() const
 }
 
 
-NamedTextDocument *TextDocumentDiagnosticsUpdater::getDocument() const
+NamedTextDocument const *TextDocumentDiagnosticsUpdater::getDocument() const
 {
   return m_document;
 }

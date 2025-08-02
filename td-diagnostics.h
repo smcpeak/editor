@@ -265,8 +265,10 @@ private:     // data
 
   // The document we are watching.
   //
-  // TODO: Can I put `const` on the template argument?
-  RCSerf<NamedTextDocument> const m_document;
+  // We watch it, but do not modify it, hence the inner `const`.  (In
+  // the `NamedTextDocument` API, adding or removing an observer is
+  // considered a const-compatible action.)
+  RCSerf<NamedTextDocument const> const m_document;
 
 public:      // methods
   ~TextDocumentDiagnosticsUpdater();
@@ -277,13 +279,13 @@ public:      // methods
   // time.
   explicit TextDocumentDiagnosticsUpdater(
     TextDocumentDiagnostics *diagnostics,
-    NamedTextDocument *document);
+    NamedTextDocument const *document);
 
   void selfCheck() const;
 
   // Return the constructor parameters.
   TextDocumentDiagnostics *getDiagnostics() const;
-  NamedTextDocument *getDocument() const;
+  NamedTextDocument const *getDocument() const;
 
 public:      // TextDocumentObserver methods
   // Each of these calls corresponding methods on `m_diagnostics` to

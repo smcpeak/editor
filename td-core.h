@@ -87,7 +87,10 @@ private:     // instance data
   // List of observers.  This is mutable because the highlighter wants
   // to declare, through its signature, that it does not modify the
   // document on which it operates, yet it needs to make itself an
-  // observer of that document.
+  // observer of that document.  More generally, the set of observers is
+  // considered outside the "data model" of this class, being more akin
+  // to a form of control flow than primary data with meaning to the
+  // user.
   mutable RCSerfList<TextDocumentObserver> m_observers;
 
   // Number of outstanding iterators.  This is used to check that we do

@@ -246,10 +246,13 @@ public:      // funcs
   // -------------------------- observers ---------------------------
   // Add a new observer of this document's contents.  This observer
   // must not already be observing this document.
-  void addObserver(TextDocumentObserver *observer);
+  //
+  // This is `const` for consistency with
+  // `TextDocumentCore::addObserver`.
+  void addObserver(TextDocumentObserver *observer) const;
 
   // Remove an observer, which must be observing this document.
-  void removeObserver(TextDocumentObserver *observer);
+  void removeObserver(TextDocumentObserver *observer) const;
 
   // Return true if 'observer' is among our current observers.
   bool hasObserver(TextDocumentObserver const *observer) const;
