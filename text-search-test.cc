@@ -10,19 +10,20 @@
 
 // smbase
 #include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // DIAG, EXPECT_EQ, VPVAL
 
 
-// TODO: Use anonymous namespace.
+OPEN_ANONYMOUS_NAMESPACE
 
 
-static void expectTotalMatches(TextSearch const &ts, int expect)
+void expectTotalMatches(TextSearch const &ts, int expect)
 {
   EXPECT_EQ(ts.countRangeMatches(0, ts.documentLines()), expect);
 }
 
 
-static string dumpMatches(TextSearch const &ts)
+string dumpMatches(TextSearch const &ts)
 {
   std::ostringstream sb;
 
@@ -42,14 +43,14 @@ static string dumpMatches(TextSearch const &ts)
   return sb.str();
 }
 
-static void expectMatches(TextSearch const &ts, string const &expect)
+void expectMatches(TextSearch const &ts, string const &expect)
 {
   string actual = dumpMatches(ts);
   EXPECT_EQ(actual, expect);
 }
 
 
-static void testEmpty()
+void testEmpty()
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -60,7 +61,7 @@ static void testEmpty()
 }
 
 
-static void testSimple()
+void testSimple()
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -115,7 +116,7 @@ static void testSimple()
 }
 
 
-static void expectRIM(TextSearch &ts,
+void expectRIM(TextSearch &ts,
   int lineA, int colA, int lineB, int colB, bool expectRes)
 {
   TextMCoord a(lineA,colA);
@@ -125,7 +126,7 @@ static void expectRIM(TextSearch &ts,
 }
 
 
-static void expectNM_true(TextSearch const &ts,
+void expectNM_true(TextSearch const &ts,
   int cursorLine, int cursorCol,
   int markLine, int markCol,
   bool reverse,
@@ -152,7 +153,7 @@ static void expectNM_true(TextSearch const &ts,
 }
 
 
-static void expectNM_false(TextSearch const &ts,
+void expectNM_false(TextSearch const &ts,
   int cursorLine, int cursorCol,
   int markLine, int markCol,
   bool reverse)
@@ -175,7 +176,7 @@ static void expectNM_false(TextSearch const &ts,
 }
 
 
-static void testCaseInsensitive()
+void testCaseInsensitive()
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -326,7 +327,7 @@ static void testCaseInsensitive()
 }
 
 
-static void testRegex()
+void testRegex()
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -368,7 +369,7 @@ static void testRegex()
 }
 
 
-static void expectGRT(TextSearch const &ts,
+void expectGRT(TextSearch const &ts,
   string const &existing,
   string const &replaceSpec,
   string const &expect)
@@ -377,7 +378,7 @@ static void expectGRT(TextSearch const &ts,
   EXPECT_EQ(actual, expect);
 }
 
-static void testGetReplacementText()
+void testGetReplacementText()
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -400,7 +401,7 @@ static void testGetReplacementText()
 }
 
 
-static void populateDocument(TextDocumentEditor &tde, int lines)
+void populateDocument(TextDocumentEditor &tde, int lines)
 {
   for (int i=0; i < lines; i++) {
     // Each line has a line number to ensure the strings are not exactly
@@ -413,7 +414,7 @@ static void populateDocument(TextDocumentEditor &tde, int lines)
 }
 
 
-static void testPerformance()
+void testPerformance()
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -456,7 +457,7 @@ static void testPerformance()
 }
 
 
-static void testRegexPerf2(bool nolimit)
+void testRegexPerf2(bool nolimit)
 {
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
@@ -500,7 +501,7 @@ static void testRegexPerf2(bool nolimit)
   DIAG(#stmt ": " << elapsed) /* user ; */
 
 
-static void testPerf3()
+void testPerf3()
 {
   DIAG("testPerf3");
 
@@ -531,6 +532,9 @@ static void testPerf3()
   PRINT_ELAPSED(ts.setSearchString("eed lots of room "));
   VPVAL(ts.countAllMatches());
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
 
 
 // Called from unit-tests.cc.
