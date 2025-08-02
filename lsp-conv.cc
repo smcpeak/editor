@@ -10,6 +10,7 @@
 #include "uri-util.h"                  // getFileURIPath
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
+#include "smbase/overflow.h"           // convertNumber
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
 
@@ -68,7 +69,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
   xassertPrecondition(lspDiags->m_version.has_value());
 
   TextDocument::VersionNumber diagsVersion =
-    static_cast<TextDocument::VersionNumber>(*lspDiags->m_version);
+    convertNumber<TextDocument::VersionNumber>(*lspDiags->m_version);
 
   std::unique_ptr<TextDocumentDiagnostics> ret(
     new TextDocumentDiagnostics(diagsVersion));
