@@ -2188,7 +2188,7 @@ static std::unique_ptr<TextDocumentDiagnostics> makeFakeDiagnostics()
     new TextDocumentDiagnostics(1 /*version*/));
   TextMCoordRange range{{10,10}, {10,30}};
 
-  diags->insert(range, {
+  diags->insertDiagnostic(range, {
     "A very long message. "
     "A very long message. "
     "A very long message. "

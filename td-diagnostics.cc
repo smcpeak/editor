@@ -279,7 +279,8 @@ void TextDocumentDiagnostics::clear()
 }
 
 
-void TextDocumentDiagnostics::insert(TextMCoordRange range, TDD_Diagnostic &&diag)
+void TextDocumentDiagnostics::insertDiagnostic(
+  TextMCoordRange range, TDD_Diagnostic &&diag)
 {
   DiagnosticIndex index =
     convertNumber<DiagnosticIndex>(m_diagnostics.size());

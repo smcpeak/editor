@@ -82,7 +82,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
 
     TDD_Diagnostic tddDiag(std::move(message), std::move(related));
 
-    ret->insert(range, std::move(tddDiag));
+    ret->insertDiagnostic(range, std::move(tddDiag));
   }
 
   return ret;

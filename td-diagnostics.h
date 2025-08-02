@@ -200,10 +200,7 @@ public:      // methods
   void clear();
 
   // Insert the mapping `range` -> `diag`.
-  //
-  // TODO: Rename this to avoid confusion with `insertLines` and
-  // `insertLineBytes`.
-  void insert(TextMCoordRange range, TDD_Diagnostic &&diag);
+  void insertDiagnostic(TextMCoordRange range, TDD_Diagnostic &&diag);
 
   // Return all diagnostic entries that intersect `line`.
   std::set<LineEntry> getLineEntries(int line) const;
