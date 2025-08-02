@@ -63,7 +63,6 @@ std::vector<TDD_Related> convertLSPRelatedList(
 
 
 std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
-  NamedTextDocument *doc,
   LSP_PublishDiagnosticsParams const *lspDiags)
 {
   xassertPrecondition(lspDiags->m_version.has_value());
@@ -72,7 +71,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
     static_cast<TextDocument::VersionNumber>(*lspDiags->m_version);
 
   std::unique_ptr<TextDocumentDiagnostics> ret(
-    new TextDocumentDiagnostics(diagsVersion, doc));
+    new TextDocumentDiagnostics(diagsVersion));
 
   for (LSP_Diagnostic const &lspDiag : lspDiags->m_diagnostics) {
     TextMCoordRange range = convertLSPRange(lspDiag.m_range);
@@ -83,10 +82,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
 
     TDD_Diagnostic tddDiag(std::move(message), std::move(related));
 
-    if (ret->insertWithAdjust(range, std::move(tddDiag))) {
-      TRACE1("adjusted LSP range " << toGDValue(range) <<
-             " to " << toGDValue(range));
-    }
+    ret->insert(range, std::move(tddDiag));
   }
 
   return ret;

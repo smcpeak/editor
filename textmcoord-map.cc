@@ -8,6 +8,8 @@
 
 #include "textmcoord-map.h"                      // this module
 
+#include "td-core.h"                             // TextDocumentCore
+
 #include "smbase/compare-util-iface.h"           // RET_IF_COMPARE_MEMBERS
 #include "smbase/container-util.h"               // smbase::contains
 #include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
@@ -16,10 +18,15 @@
 #include "smbase/map-util.h"                     // mapMoveValueAt
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/set-util.h"                     // smbase::setInsertUnique
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 
+#include <optional>                              // std::optional
 
 using namespace gdv;
 using namespace smbase;
+
+
+INIT_TRACE("textmcoord-map");
 
 
 // ----------------------------- DocEntry ------------------------------
@@ -585,6 +592,62 @@ auto TextMCoordMap::LineData::getLineEntries() const
 }
 
 
+// If `opt` has no value, set it to `t`.  Otherwise, set it to the
+// larger of `t` and the value it contains.
+//
+// Candidate to move to `smbase`.
+template <typename T>
+void optAccumulateMax(std::optional<T> &opt, T const &t)
+{
+  if (opt.has_value()) {
+    opt = std::max(*opt, t);
+  }
+  else {
+    opt = t;
+  }
+}
+
+
+std::optional<int> TextMCoordMap::LineData::largestByteIndex() const
+{
+  std::optional<int> largest = std::nullopt;
+
+  for (SingleLineSpan const &span : m_singleLineSpans) {
+    optAccumulateMax(largest, span.m_startByteIndex);
+    optAccumulateMax(largest, span.m_endByteIndex);
+  }
+
+  for (Boundary const &b : m_startsHere) {
+    optAccumulateMax(largest, b.m_byteIndex);
+  }
+
+  for (Boundary const &b : m_endsHere) {
+    optAccumulateMax(largest, b.m_byteIndex);
+  }
+
+  return largest;
+}
+
+
+void TextMCoordMap::LineData::adjustForDocument(
+  TextDocumentCore const &doc, int line)
+{
+  int docLineBytes = doc.lineLengthBytes(line);
+
+  if (std::optional<int> largestCoordByteIndex = this->largestByteIndex()) {
+    int excessBytes = *largestCoordByteIndex - docLineBytes;
+    if (excessBytes > 0) {
+      // All coordinates larger than `docLineBytes` are invalid.  Delete
+      // the intervening characters to collapse the coordinates into
+      // `docLineBytes`.
+      TRACE1("LineData::adjustForDocument: deleting " << excessBytes <<
+             " bytes from line " << line);
+      deleteBytes(docLineBytes, excessBytes);
+    }
+  }
+}
+
+
 // --------------------------- TextMCoordMap ---------------------------
 auto TextMCoordMap::getOrCreateLineData(int line) -> LineData *
 {
@@ -759,6 +822,38 @@ void TextMCoordMap::clear()
   // Having removed all of the `LineData` objects, clear the array as
   // well in order to ensure `numLines()==0`.
   m_lineData.clear();
+}
+
+
+void TextMCoordMap::adjustForDocument(TextDocumentCore const &doc)
+{
+  // Confine the line counts.
+  {
+    int numDiagLines = numLines();
+    int numDocLines = doc.numLines();
+
+    int excessLines = numDiagLines - numDocLines;
+    if (excessLines > 0) {
+      // Adjust by deleting extra lines.
+      TRACE1("adjustForDocument: deleting " << excessLines <<
+             " lines at the end of the (virtual) document so its" <<
+             " line count drops from " << numDiagLines <<
+             " to " << numDocLines);
+      deleteLines(numDocLines-1, excessLines);
+
+      // After the deletion, the number of lines according to the
+      // diagnostics should be the same as the number according to the
+      // document.
+      xassert(numLines() == numDocLines);
+    }
+  }
+
+  // Confine the line lengths.
+  for (int i=0; i < m_lineData.length(); ++i) {
+    if (LineData *data = m_lineData.get(i)) {
+      data->adjustForDocument(doc, i);
+    }
+  }
 }
 
 

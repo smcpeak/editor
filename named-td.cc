@@ -35,6 +35,7 @@ NamedTextDocument::NamedTextDocument()
   : TextDocument(),
     m_documentName(),
     m_diagnostics(),
+    m_tddUpdater(),
     m_receivedStaleDiagnostics(false),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
@@ -52,6 +53,7 @@ NamedTextDocument::~NamedTextDocument()
 {
   // Explicitly do this so the diagnostics detach while we are still in
   // the explicit part of the dtor, mostly for ease of debugging.
+  m_tddUpdater.reset(nullptr);
   m_diagnostics.reset(nullptr);
 
   NamedTextDocument::s_objectCount--;
@@ -64,8 +66,15 @@ void NamedTextDocument::selfCheck() const
 
   m_documentName.selfCheck();
 
+  xassert((m_diagnostics==nullptr) == (m_tddUpdater==nullptr));
+
   if (m_diagnostics) {
     m_diagnostics->selfCheck();
+
+    xassert(m_tddUpdater->getDiagnostics() == m_diagnostics.get());
+    xassert(m_tddUpdater->getDocument() == this);
+
+    m_tddUpdater->selfCheck();
   }
 }
 
@@ -205,10 +214,23 @@ bool NamedTextDocument::hasReceivedStaleDiagnostics() const
 void NamedTextDocument::updateDiagnostics(
   std::unique_ptr<TextDocumentDiagnostics> diagnostics)
 {
+  m_tddUpdater.reset(nullptr);
+
   m_diagnostics = std::move(diagnostics);
-  if (!m_diagnostics) {
+
+  if (m_diagnostics) {
+    // Modify `m_diagnostics` to it conforms to this document's shape.
+    m_diagnostics->adjustForDocument(getCore());
+
+    // Create the object that allows `m_diagnostics` to track the
+    // subsequent file modifications made by the user.
+    m_tddUpdater.reset(
+      new TextDocumentDiagnosticsUpdater(m_diagnostics.get(), this));
+  }
+  else {
     m_receivedStaleDiagnostics = false;
   }
+
   notifyMetadataChange();
 }
 
@@ -245,7 +267,7 @@ void NamedTextDocument::receivedLSPDiagnostics(
 
     m_receivedStaleDiagnostics = false;
 
-    updateDiagnostics(convertLSPDiagsToTDD(this, diags));
+    updateDiagnostics(convertLSPDiagsToTDD(diags));
   }
 
   else {

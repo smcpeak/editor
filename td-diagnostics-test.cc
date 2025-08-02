@@ -139,6 +139,30 @@ void testOnePreviousDiagnostic(
 }
 
 
+// Combination of diagnostics and updater for convenient testing, in
+// particular combining their `selfCheck`s.
+//
+// This could potentially be moved into the main `td-diagnostics`
+// module, but for the moment I don't need to use it anywhere but here.
+class TextDocumentDiagnosticsAndUpdater :
+  public TextDocumentDiagnostics,
+  public TextDocumentDiagnosticsUpdater {
+public:      // methods
+  explicit TextDocumentDiagnosticsAndUpdater(
+    VersionNumber originVersion,
+    NamedTextDocument *document)
+    : TextDocumentDiagnostics(originVersion),
+      TextDocumentDiagnosticsUpdater(this, document)
+  {}
+
+  void selfCheck()
+  {
+    TextDocumentDiagnostics::selfCheck();
+    TextDocumentDiagnosticsUpdater::selfCheck();
+  }
+};
+
+
 // This also tests next/previous diagnostic navigation.
 void test_TDD_getDiagnosticAt()
 {
@@ -161,9 +185,10 @@ void test_TDD_getDiagnosticAt()
   EXPECT_EQ(doc.numLines(), 10);  // The final line-without-NL counts.
   doc.selfCheck();
 
-  TextDocumentDiagnostics tdd(1 /*version*/, &doc);
+  TextDocumentDiagnosticsAndUpdater tdd(1 /*version*/, &doc);
   tdd.selfCheck();
   EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
+
   tdd.insert({{0,3}, {0,6}}, TDD_Diagnostic("1"));
   tdd.selfCheck();
   tdd.insert({{0,11}, {0,16}}, TDD_Diagnostic("2"));

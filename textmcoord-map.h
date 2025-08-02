@@ -7,6 +7,7 @@
 #define EDITOR_TEXTMCOORD_MAP_H
 
 #include "gap.h"                       // GapArray
+#include "td-core-fwd.h"               // TextDocumentCore
 #include "textmcoord.h"                // TextMCoord
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
@@ -67,13 +68,21 @@
   a single line, multi-line spans are fairly short, and the total number
   of spans is reasonably small.  In particular, the primary intended use
   of spans is to record the text described by compiler error messages.
+
+  That said, the class `TextDocumentDiagnostics` (`td-diagnostics.h`) is
+  built on top of this one and is what is intended to be directly used
+  by an editor application.  This class merely provides the algorithmic
+  core.
 */
 class TextMCoordMap {
   // Not impossible, just not implemented, and automatic would be wrong.
   NO_OBJECT_COPIES(TextMCoordMap);
 
 public:      // types
-  // For the moment, just say values are integers.
+  // In this class, values are simply integers.  Clients are expected to
+  // have some sort of auxiliary array of more meaningful values to
+  // associate with ranges, and use indices into that array as the
+  // `Value`s here.
   typedef int Value;
 
   // "Document entry", an element stored in the map.
@@ -244,6 +253,12 @@ private:     // types
 
     // Return the `LineEntry`s for this line.
     std::set<LineEntry> getLineEntries() const;
+
+    // The largest byte index mentioned by any end point.
+    std::optional<int> largestByteIndex() const;
+
+    // Ensure the coordinates are valid for `line` in `doc`.
+    void adjustForDocument(TextDocumentCore const &doc, int line);
   };
 
 private:     // data
@@ -251,7 +266,7 @@ private:     // data
   //
   // Invariant: This is the set of values mentioned across all of
   // `m_lineData`, which is also the set of values mentioned in all of
-  // the `insert` calls.
+  // the `insert()` calls since the last call to `clear()`.
   std::set<Value> m_values;
 
   /* Map from 0-based line number to associated data.
@@ -290,6 +305,9 @@ public:      // methods
 
   // ---- Manipulate the mapping directly ----
   // Add an entry.  Requires that its value not already be in the map.
+  //
+  // TODO: Rename to reduce potential for confusion with `insertLines`
+  // and `insertLineBytes`.
   void insert(DocEntry entry);
 
   // There is not currently a way to remove individual entries because I
@@ -297,6 +315,11 @@ public:      // methods
 
   // Remove all entries.
   void clear();
+
+  // Adjust all diagnostic ranges to be valid for `doc`.  See the
+  // comments on `TextDocumentDiagnostics::adjustForDocument` for
+  // motivation, etc.
+  void adjustForDocument(TextDocumentCore const &doc);
 
 
   // ---- Manipulate the mapping indirectly via text insert/delete ----

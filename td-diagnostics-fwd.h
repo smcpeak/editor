@@ -9,5 +9,6 @@
 class TDD_Related;
 class TDD_Diagnostic;
 class TextDocumentDiagnostics;
+class TextDocumentDiagnosticsUpdater;
 
 #endif // EDITOR_TD_DIAGNOSTICS_FWD_H

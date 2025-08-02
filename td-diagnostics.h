@@ -57,6 +57,12 @@ public:      // methods
 
 
 // A single diagnostic message.
+//
+// Aside from the locations in `m_related`, this object is not directly
+// associated with a location.  Instead, the `TextDocumentDiagnostics`
+// map keeps the association with a range, and has facilities for
+// updating the association as the document changes.
+//
 class TDD_Diagnostic : public SerfRefCount {
 public:      // data
   // What the diagnostic says.
@@ -79,8 +85,16 @@ public:      // methods
 };
 
 
-// A set of diagnostics associated with one text document.
-class TextDocumentDiagnostics : public TextDocumentObserver {
+// A set of `(TextMCoordRange, TDD_Diagnostic)` tuples, stored in a way
+// that allows efficient incremental updating when the document changes.
+//
+// This class exposes methods by which incremental update can be
+// effected, but does not do those updates itself because it is not
+// associated with any specific document.  Instead,
+// `TextDocumentDiagnosticsUpdater`, below, is what ties diagnostics and
+// document together and performs the updates to keep them synchronized.
+//
+class TextDocumentDiagnostics : public SerfRefCount {
 public:      // types
   // Type use to record document version numbers.
   typedef TextDocumentCore::VersionNumber VersionNumber;
@@ -151,11 +165,6 @@ private:     // data
   // version of the document.
   VersionNumber const m_originVersion;
 
-  // Pointer to the document the diagnostics apply to.  We act as an
-  // observer of `m_doc` in order to update the diagnostic locations
-  // when the document changes.
-  RCSerf<NamedTextDocument> const m_doc;
-
   // Set of diagnostics, organized into a sequence so each has a unique
   // index that can be used with `m_rangeToDiagIndex`.
   std::vector<TDD_Diagnostic> m_diagnostics;
@@ -164,17 +173,13 @@ private:     // data
   //
   // Invariant: The set of values in `m_rangeToDiagIndex` is
   // [0, m_diagnostics.size()-1].
-  //
-  // Invariant: Every range consists of valid model coordinates for
-  // `m_doc` with start <= end.
   TextMCoordMap m_rangeToDiagIndex;
 
 public:      // methods
   ~TextDocumentDiagnostics();
 
   // Initially empty set.
-  explicit TextDocumentDiagnostics(
-    VersionNumber originVersion, NamedTextDocument *doc);
+  explicit TextDocumentDiagnostics(VersionNumber originVersion);
 
   // Assert all invariants.
   void selfCheck() const;
@@ -195,13 +200,10 @@ public:      // methods
   void clear();
 
   // Insert the mapping `range` -> `diag`.
+  //
+  // TODO: Rename this to avoid confusion with `insertLines` and
+  // `insertLineBytes`.
   void insert(TextMCoordRange range, TDD_Diagnostic &&diag);
-
-  // Insert `range` -> `diag`, except first adjust `range` to be valid
-  // for the document using `TextDocument::adjustMCoordRange`, returning
-  // true and updating `range` if a change is made to it.
-  bool insertWithAdjust(
-    TextMCoordRange /*INOUT*/ &range, TDD_Diagnostic &&diag);
 
   // Return all diagnostic entries that intersect `line`.
   std::set<LineEntry> getLineEntries(int line) const;
@@ -229,19 +231,77 @@ public:      // methods
   std::optional<TextMCoord> getAdjacentDiagnosticLocation(
     bool next, TextMCoord tc) const;
 
+  // Adjust all diagnostic ranges to be valid for `doc`.  This is meant
+  // to be used when a set of diagnostics is received from some external
+  // source (like compiler error messages) and we want to bind them to a
+  // document.  Since the incoming diagnostics could have any locations,
+  // this procedure forcibly confines them to the current document
+  // shape, thus establishing the correspondence invariant that
+  // `TextDocumentDiagnosticsUpdater` can then maintain going forward.
+  void adjustForDocument(TextDocumentCore const &doc);
+
+  // Perform updates on the underlying mapping in order to track text
+  // updates.  These have the same semantics as the same-named methods
+  // on `TextMCoordMap`.
+  void insertLines(int line, int count);
+  void deleteLines(int line, int count);
+  void insertLineBytes(TextMCoord tc, int lengthBytes);
+  void deleteLineBytes(TextMCoord tc, int lengthBytes);
+
+  // Equivalent to `toGDValue(getAllEntries())`.
   operator gdv::GDValue() const;
+};
+
+
+// An object that watches a particular document for changes and updates
+// a set of diagnostics accordingly.
+class TextDocumentDiagnosticsUpdater : public TextDocumentObserver {
+private:     // data
+  // The set of diagnostics we will update when `m_doc` changes.
+  //
+  // Invariant: Every range consists of valid model coordinates for
+  // `m_doc` with start <= end.
+  RCSerf<TextDocumentDiagnostics> const m_diagnostics;
+
+  // The document we are watching.
+  //
+  // TODO: Can I put `const` on the template argument?
+  RCSerf<NamedTextDocument> const m_document;
+
+public:      // methods
+  ~TextDocumentDiagnosticsUpdater();
+
+  // `diagnostics` must already describe ranges that are valid for
+  // `doc`.  This can be done by calling
+  // `diagnostics->adjustForDocument(document->getCore())` ahead of
+  // time.
+  explicit TextDocumentDiagnosticsUpdater(
+    TextDocumentDiagnostics *diagnostics,
+    NamedTextDocument *document);
+
+  void selfCheck() const;
+
+  // Return the constructor parameters.
+  TextDocumentDiagnostics *getDiagnostics() const;
+  NamedTextDocument *getDocument() const;
 
 public:      // TextDocumentObserver methods
-  // Each of these adjusts the entries so that the "same" text is mapped
-  // before and after.
+  // Each of these calls corresponding methods on `m_diagnostics` to
+  // keep them up to date, i.e., so each diagnostic continues to apply
+  // to the "same" range of text.
   virtual void observeInsertLine(TextDocumentCore const &doc, int line) noexcept override;
   virtual void observeDeleteLine(TextDocumentCore const &doc, int line) noexcept override;
   virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept override;
   virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept override;
 
-  // This clears the map.
+  // This clears the diagnostics.
   virtual void observeTotalChange(TextDocumentCore const &doc) noexcept override;
 };
+
+
+// The test code, `td-diagnostics-test.cc`, defines
+// `TextDocumentDiagnosticsAndUpdater`, which could be moved here if
+// there is a need for it.
 
 
 #endif // EDITOR_TD_DIAGNOSTICS_H

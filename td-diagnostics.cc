@@ -227,22 +227,16 @@ int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
 
 // ---------------------- TextDocumentDiagnostics ----------------------
 TextDocumentDiagnostics::~TextDocumentDiagnostics()
-{
-  m_doc->removeObserver(this);
-}
+{}
 
 
 TextDocumentDiagnostics::TextDocumentDiagnostics(
-  VersionNumber originVersion,
-  NamedTextDocument *doc)
+  VersionNumber originVersion)
   : IMEMBFP(originVersion),
-    IMEMBFP(doc),
     m_diagnostics(),
     m_rangeToDiagIndex()
 {
   selfCheck();
-
-  m_doc->addObserver(this);
 }
 
 
@@ -257,13 +251,6 @@ void TextDocumentDiagnostics::selfCheck() const
     m_rangeToDiagIndex.getMappedValues();
 
   xassert(vectorIndices == mapIndices);
-
-  std::set<TextMCoordMap::DocEntry> underEntries =
-    m_rangeToDiagIndex.getAllEntries();
-  for (auto const &underEntry : underEntries) {
-    xassert(m_doc->validRange(underEntry.m_range));
-    xassert(underEntry.m_range.isRectified());
-  }
 }
 
 
@@ -298,15 +285,6 @@ void TextDocumentDiagnostics::insert(TextMCoordRange range, TDD_Diagnostic &&dia
     convertNumber<DiagnosticIndex>(m_diagnostics.size());
   m_diagnostics.push_back(std::move(diag));
   m_rangeToDiagIndex.insert({range, index});
-}
-
-
-bool TextDocumentDiagnostics::insertWithAdjust(
-  TextMCoordRange /*INOUT*/ &range, TDD_Diagnostic &&diag)
-{
-  bool adjusted = m_doc->adjustMCoordRange(range);
-  insert(range, std::move(diag));
-  return adjusted;
 }
 
 
@@ -427,35 +405,105 @@ TextDocumentDiagnostics::getAdjacentDiagnosticLocation(
 }
 
 
+void TextDocumentDiagnostics::adjustForDocument(
+  TextDocumentCore const &doc)
+{
+  m_rangeToDiagIndex.adjustForDocument(doc);
+}
+
+
+void TextDocumentDiagnostics::insertLines(int line, int count)
+{
+  m_rangeToDiagIndex.insertLines(line, count);
+}
+
+void TextDocumentDiagnostics::deleteLines(int line, int count)
+{
+  m_rangeToDiagIndex.deleteLines(line, count);
+}
+
+void TextDocumentDiagnostics::insertLineBytes(TextMCoord tc, int lengthBytes)
+{
+  m_rangeToDiagIndex.insertLineBytes(tc, lengthBytes);
+}
+
+void TextDocumentDiagnostics::deleteLineBytes(TextMCoord tc, int lengthBytes)
+{
+  m_rangeToDiagIndex.deleteLineBytes(tc, lengthBytes);
+}
+
+
 TextDocumentDiagnostics::operator gdv::GDValue() const
 {
   return toGDValue(getAllEntries());
 }
 
 
-void TextDocumentDiagnostics::observeInsertLine(TextDocumentCore const &doc, int line) noexcept
+// ------------------ TextDocumentDiagnosticsUpdater -------------------
+TextDocumentDiagnosticsUpdater::~TextDocumentDiagnosticsUpdater()
 {
-  m_rangeToDiagIndex.insertLines(line, 1);
+  m_document->removeObserver(this);
 }
 
-void TextDocumentDiagnostics::observeDeleteLine(TextDocumentCore const &doc, int line) noexcept
+TextDocumentDiagnosticsUpdater::TextDocumentDiagnosticsUpdater(
+  TextDocumentDiagnostics *diagnostics,
+  NamedTextDocument *document)
+  : IMEMBFP(diagnostics),
+    IMEMBFP(document)
 {
-  m_rangeToDiagIndex.deleteLines(line, 1);
+  selfCheck();
+
+  m_document->addObserver(this);
 }
 
-void TextDocumentDiagnostics::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept
+
+void TextDocumentDiagnosticsUpdater::selfCheck() const
 {
-  m_rangeToDiagIndex.insertLineBytes(tc, lengthBytes);
+  std::set<TextDocumentDiagnostics::DocEntry> entries =
+    m_diagnostics->getAllEntries();
+
+  for (auto const &entry : entries) {
+    xassert(m_document->validRange(entry.m_range));
+    xassert(entry.m_range.isRectified());
+  }
 }
 
-void TextDocumentDiagnostics::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept
+
+TextDocumentDiagnostics *TextDocumentDiagnosticsUpdater::getDiagnostics() const
 {
-  m_rangeToDiagIndex.deleteLineBytes(tc, lengthBytes);
+  return m_diagnostics;
 }
 
-void TextDocumentDiagnostics::observeTotalChange(TextDocumentCore const &doc) noexcept
+
+NamedTextDocument *TextDocumentDiagnosticsUpdater::getDocument() const
 {
-  clear();
+  return m_document;
+}
+
+
+void TextDocumentDiagnosticsUpdater::observeInsertLine(TextDocumentCore const &doc, int line) noexcept
+{
+  m_diagnostics->insertLines(line, 1);
+}
+
+void TextDocumentDiagnosticsUpdater::observeDeleteLine(TextDocumentCore const &doc, int line) noexcept
+{
+  m_diagnostics->deleteLines(line, 1);
+}
+
+void TextDocumentDiagnosticsUpdater::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept
+{
+  m_diagnostics->insertLineBytes(tc, lengthBytes);
+}
+
+void TextDocumentDiagnosticsUpdater::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept
+{
+  m_diagnostics->deleteLineBytes(tc, lengthBytes);
+}
+
+void TextDocumentDiagnosticsUpdater::observeTotalChange(TextDocumentCore const &doc) noexcept
+{
+  m_diagnostics->clear();
 }
 
 

@@ -2182,15 +2182,13 @@ void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
 }
 
 
-static std::unique_ptr<TextDocumentDiagnostics>
-makeFakeDiagnostics(NamedTextDocument *doc)
+static std::unique_ptr<TextDocumentDiagnostics> makeFakeDiagnostics()
 {
   std::unique_ptr<TextDocumentDiagnostics> diags(
-    new TextDocumentDiagnostics(1 /*version*/, doc));
+    new TextDocumentDiagnostics(1 /*version*/));
   TextMCoordRange range{{10,10}, {10,30}};
 
-  // Here, I don't care about the modified `range` or the return value.
-  diags->insertWithAdjust(range, {
+  diags->insert(range, {
     "A very long message. "
     "A very long message. "
     "A very long message. "
@@ -2234,7 +2232,7 @@ void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
   xassert(doc);
 
   // Temporary: fake some diagnostics.
-  doc->updateDiagnostics(makeFakeDiagnostics(doc));
+  doc->updateDiagnostics(makeFakeDiagnostics());
 
   lspStatusWidget()->on_changedLSPStatus();
   editorWidget()->redraw();

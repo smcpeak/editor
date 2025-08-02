@@ -48,7 +48,8 @@ void convertToTDDExpect(
 
   // Convert to TDD.
   std::unique_ptr<TextDocumentDiagnostics> tdd =
-    convertLSPDiagsToTDD(&doc, &lspPDP);
+    convertLSPDiagsToTDD(&lspPDP);
+  tdd->adjustForDocument(doc.getCore());
 
   // Render that as GDValue.
   GDValue tddGDV = toGDValue(*tdd);

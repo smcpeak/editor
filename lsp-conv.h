@@ -7,7 +7,6 @@
 #define EDITOR_LSP_CONV_H
 
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
-#include "named-td-fwd.h"              // NamedTextDocument
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr
@@ -17,7 +16,6 @@
 //
 // Requires: lspDiags->m_version.has_value()
 stdfwd::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
-  NamedTextDocument *doc,
   LSP_PublishDiagnosticsParams const *lspDiags);
 
 

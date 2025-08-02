@@ -7,13 +7,15 @@
 
 #include "textmcoord-map.h"            // module under test
 
+#include "td-core.h"                   // TextDocumentCore
+
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES
 #include "smbase/sm-test.h"            // ARGS_MAIN
-#include "smbase/string-util.h"        // join, suffixAll
+#include "smbase/string-util.h"        // join, suffixAll, stringToVectorOfUChar
 
 #include <algorithm>                   // std::max
 #include <cstdlib>                     // std::rand
@@ -59,6 +61,31 @@ public:
   {
     m_entries.clear();
   }
+
+
+  static TextMCoord adjustMC_forDocument(
+    TextMCoord mc, TextDocumentCore const &doc)
+  {
+    doc.adjustMCoord(mc);
+    return mc;
+  }
+
+  void adjustForDocument(TextDocumentCore const &doc)
+  {
+    std::set<DocEntry> newEntries;
+
+    for (DocEntry const &e : m_entries) {
+      newEntries.insert(DocEntry(
+        TextMCoordRange(
+          adjustMC_forDocument(e.m_range.m_start, doc),
+          adjustMC_forDocument(e.m_range.m_end, doc)
+        ),
+        e.m_value));
+    }
+
+    m_entries.swap(newEntries);
+  }
+
 
   static TextMCoord adjustMC_insertLines(TextMCoord mc, int line, int count)
   {
@@ -357,6 +384,13 @@ public:      // methods
     DIAG("m.clear();");
     m_sut.clear();
     m_ref.clear();
+  }
+
+  void adjustForDocument(TextDocumentCore const &doc)
+  {
+    DIAG("m.adjustForDocument(doc);");
+    m_sut.adjustForDocument(doc);
+    m_ref.adjustForDocument(doc);
   }
 
   void insertLines(int line, int count)
@@ -1389,6 +1423,91 @@ void test_parseLineEntry()
 }
 
 
+void test_adjustForDocument()
+{
+  MapPair m;
+
+  // Simple case of reducing the end coordinate within a line.
+  m.insert({{{1,1}, {1,42}}, 1});
+
+  // Reduce both coordinates
+  m.insert({{{2,20}, {2,42}}, 2});
+
+  // Span where the first coordinate gets reduced.
+  m.insert({{{1,40}, {2,2}}, 3});
+
+  // Single-line span near EOF that is not affected.
+  m.insert({{{4,1}, {4,2}}, 4});
+
+  // Single-line span beyond EOF.
+  m.insert({{{5,1}, {5,42}}, 5});
+
+  // Multiline span where only the end gets moved.
+  m.insert({{{4,1}, {6,42}}, 6});
+
+
+  EXPECT_EQ(toGDValue(m).asIndentedString(), "{\n"
+  "  DocEntry[range:MCR(MC(1 1) MC(1 42)) value:1]\n"
+  "  DocEntry[range:MCR(MC(1 40) MC(2 2)) value:3]\n"
+  "  DocEntry[range:MCR(MC(2 20) MC(2 42)) value:2]\n"
+  "  DocEntry[range:MCR(MC(4 1) MC(4 2)) value:4]\n"
+  "  DocEntry[range:MCR(MC(4 1) MC(6 42)) value:6]\n"
+  "  DocEntry[range:MCR(MC(5 1) MC(5 42)) value:5]\n"
+  "}");
+  m.selfCheck();
+
+  TextDocumentCore doc;
+  doc.replaceWholeFile(stringToVectorOfUChar(
+    "zero\n"
+    "one\n"
+    "two\n"
+    "three\n"
+    "four\n"));
+
+  m.adjustForDocument(doc);
+  EXPECT_EQ(toGDValue(m).asIndentedString(), "{\n"
+  "  DocEntry[range:MCR(MC(1 1) MC(1 3)) value:1]\n"
+  "  DocEntry[range:MCR(MC(1 3) MC(2 2)) value:3]\n"
+  "  DocEntry[range:MCR(MC(2 3) MC(2 3)) value:2]\n"
+  "  DocEntry[range:MCR(MC(4 1) MC(4 2)) value:4]\n"
+  "  DocEntry[range:MCR(MC(4 1) MC(5 0)) value:6]\n"
+  "  DocEntry[range:MCR(MC(5 0) MC(5 0)) value:5]\n"
+  "}");
+  m.selfCheck();
+}
+
+
+void randomDocInsertions(TextDocumentCore &doc, int n)
+{
+  for (int i=0; i < n; ++i) {
+    doc.insertLine(i);
+    doc.insertText(TextMCoord(i,0),
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", random(40));
+  }
+}
+
+
+void test_adjustForDocumentRandomized()
+{
+  // On my computer, 100 iterations takes ~0.3s.
+  int const iters = envAsIntOr(100, "AFDR_ITERS");
+
+  for (int i=0; i < iters; ++i) {
+    // Random diagnostics.
+    MapPair m;
+    randomInsertions(m, 10);
+
+    // Random document.
+    TextDocumentCore doc;
+    randomDocInsertions(doc, 10);
+
+    // Confine diagnostics to document.
+    m.adjustForDocument(doc);
+    m.selfCheck();
+  }
+}
+
+
 // Ad-hoc reproduction of problematic sequences.
 void test_repro()
 {
@@ -1424,6 +1543,8 @@ void test_textmcoord_map(CmdlineArgsSpan args)
   RUN_TEST(test_insertMakesLongLine);
   RUN_TEST(test_randomOps);
   RUN_TEST(test_parseLineEntry);
+  RUN_TEST(test_adjustForDocument);
+  RUN_TEST(test_adjustForDocumentRandomized);
 
   #undef RUN_TEST
 }

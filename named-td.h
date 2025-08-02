@@ -49,6 +49,20 @@ private:     // data
   // If set, the diagnostics associated with this document.
   std::unique_ptr<TextDocumentDiagnostics> m_diagnostics;
 
+  // If set, an object watching `this` and updating `m_diagnostics`
+  // accordingly.
+  //
+  // Invariant: (m_diagnostics==nullptr) == (m_tddUpdater==nullptr)
+  //
+  // Invariant: if m_tddUpdater!=nullptr:
+  //   m_tddUpdater->getDiagnostics() == m_diagnostics &&
+  //   m_tddUpdater->getDocument() == this &&
+  //   m_tddUpdater->selfCheck() succeeds
+  //
+  // That is, the stated invariants of `m_tddUpdater` hold with respect
+  // to `this` and `m_diagnostics`.
+  std::unique_ptr<TextDocumentDiagnosticsUpdater> m_tddUpdater;
+
   // True when we tried to get updated diagnostics but the file changed
   // in the meantime.  For now I just report the condition; I plan to
   // handle it better in the future.
@@ -162,7 +176,9 @@ public:      // funcs
   // was already out of date.
   bool hasReceivedStaleDiagnostics() const;
 
-  // Set `m_diagnostics` and notify observers.
+  // Set `m_diagnostics` and notify observers.  This automatically
+  // adjusts the incoming diagnostics as necessary to conform to the
+  // shape of the current document.
   void updateDiagnostics(
     std::unique_ptr<TextDocumentDiagnostics> diagnostics);
 
