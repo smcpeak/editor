@@ -19,7 +19,7 @@
 #include "smbase/gdvalue-set.h"                  // gdv::GDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::GDValue(std::vector)
 #include "smbase/overflow.h"                     // convertNumber
-#include "smbase/sm-macros.h"                    // IMEMBFP, IMEMBMFP
+#include "smbase/sm-macros.h"                    // IMEMBFP, IMEMBMFP, DMEMB
 
 #include <optional>                              // std::optional
 #include <string>                                // std::string
@@ -231,6 +231,16 @@ TextDocumentDiagnostics::~TextDocumentDiagnostics()
 
 
 TextDocumentDiagnostics::TextDocumentDiagnostics(
+  TextDocumentDiagnostics const &obj)
+  : DMEMB(m_originVersion),
+    DMEMB(m_diagnostics),
+    DMEMB(m_rangeToDiagIndex)
+{
+  selfCheck();
+}
+
+
+TextDocumentDiagnostics::TextDocumentDiagnostics(
   VersionNumber originVersion)
   : IMEMBFP(originVersion),
     m_diagnostics(),
@@ -251,6 +261,15 @@ void TextDocumentDiagnostics::selfCheck() const
     m_rangeToDiagIndex.getMappedValues();
 
   xassert(vectorIndices == mapIndices);
+}
+
+
+bool TextDocumentDiagnostics::operator==(
+  TextDocumentDiagnostics const &obj) const
+{
+  return EMEMB(m_originVersion) &&
+         EMEMB(m_diagnostics) &&
+         EMEMB(m_rangeToDiagIndex);
 }
 
 
@@ -445,6 +464,7 @@ TextDocumentDiagnosticsUpdater::~TextDocumentDiagnosticsUpdater()
 {
   m_document->removeObserver(this);
 }
+
 
 TextDocumentDiagnosticsUpdater::TextDocumentDiagnosticsUpdater(
   TextDocumentDiagnostics *diagnostics,

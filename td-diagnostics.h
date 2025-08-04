@@ -178,11 +178,17 @@ private:     // data
 public:      // methods
   ~TextDocumentDiagnostics();
 
+  TextDocumentDiagnostics(TextDocumentDiagnostics const &obj);
+
   // Initially empty set.
   explicit TextDocumentDiagnostics(VersionNumber originVersion);
 
   // Assert all invariants.
   void selfCheck() const;
+
+  bool operator==(TextDocumentDiagnostics const &obj) const;
+  bool operator!=(TextDocumentDiagnostics const &obj) const
+    { return !operator==(obj); }
 
   VersionNumber getOriginVersion() const { return m_originVersion; }
 
@@ -253,6 +259,9 @@ public:      // methods
 // An object that watches a particular document for changes and updates
 // a set of diagnostics accordingly.
 class TextDocumentDiagnosticsUpdater : public TextDocumentObserver {
+  // Would be unsafe due to add/remove observer.
+  NO_OBJECT_COPIES(TextDocumentDiagnosticsUpdater);
+
 private:     // data
   // The set of diagnostics we will update when `m_doc` changes.
   //

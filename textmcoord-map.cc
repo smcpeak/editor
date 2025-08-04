@@ -19,6 +19,7 @@
 #include "smbase/optional-util.h"                // optAccumulateMax
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/set-util.h"                     // smbase::setInsertUnique
+#include "smbase/sm-macros.h"                    // DMEMB, EMEMB
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 
 #include <optional>                              // std::optional
@@ -218,6 +219,16 @@ TextMCoordMap::LineData::~LineData()
 {}
 
 
+TextMCoordMap::LineData::LineData(LineData const &obj)
+  : DMEMB(m_singleLineSpans),
+    DMEMB(m_startsHere),
+    DMEMB(m_continuesHere),
+    DMEMB(m_endsHere)
+{
+  selfCheck();
+}
+
+
 TextMCoordMap::LineData::LineData()
   : m_singleLineSpans(),
     m_startsHere(),
@@ -225,6 +236,15 @@ TextMCoordMap::LineData::LineData()
     m_endsHere()
 {
   selfCheck();
+}
+
+
+bool TextMCoordMap::LineData::operator==(LineData const &obj) const
+{
+  return EMEMB(m_singleLineSpans) &&
+         EMEMB(m_startsHere) &&
+         EMEMB(m_continuesHere) &&
+         EMEMB(m_endsHere);
 }
 
 
@@ -674,10 +694,51 @@ TextMCoordMap::~TextMCoordMap()
 }
 
 
+TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
+  : DMEMB(m_values),
+    m_lineData()
+{
+  m_lineData.insertManyZeroes(0, obj.m_lineData.length());
+  for (int i=0; i < obj.m_lineData.length(); ++i) {
+    if (LineData const *lineData = obj.getLineDataC(i)) {
+      m_lineData.set(i, new LineData(*lineData));
+    }
+  }
+
+  selfCheck();
+}
+
+
 TextMCoordMap::TextMCoordMap()
   : m_values(),
     m_lineData()
 {}
+
+
+bool TextMCoordMap::operator==(TextMCoordMap const &obj) const
+{
+  if (!EMEMB(m_values)) {
+    return false;
+  }
+
+  if (m_lineData.length() != obj.m_lineData.length()) {
+    return false;
+  }
+
+  for (int i=0; i < m_lineData.length(); ++i) {
+    LineData const *thisLineData = getLineDataC(i);
+    LineData const *objLineData = obj.getLineDataC(i);
+
+    if ((thisLineData==nullptr) != (objLineData==nullptr)) {
+      return false;
+    }
+    if (thisLineData && (*thisLineData) != (*objLineData)) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 
 void TextMCoordMap::selfCheck() const

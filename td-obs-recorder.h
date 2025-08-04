@@ -16,6 +16,7 @@
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr
 #include "smbase/std-optional-fwd.h"   // std::optional
+#include "smbase/std-set-fwd.h"        // stdfwd::set
 #include "smbase/std-vector-fwd.h"     // stdfwd::vector
 
 #include <map>                         // std::map
@@ -160,6 +161,9 @@ public:      // methods
   explicit TextDocumentObservationRecorder(
     TextDocumentCore const &document);
 
+  // Assert invariants.
+  void selfCheck() const;
+
   // Dump for test/debug.
   operator gdv::GDValue() const;
 
@@ -173,6 +177,9 @@ public:      // methods
   // True if we are tracking `version` and hence can roll forward
   // changes from there.
   bool isTracking(VersionNumber version) const;
+
+  // Get the set of all versions being tracked.
+  stdfwd::set<VersionNumber> getTrackedVersions() const;
 
   // Track all future changes as applying on top of `version`.
   void beginTracking(VersionNumber version);

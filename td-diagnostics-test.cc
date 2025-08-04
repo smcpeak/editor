@@ -13,7 +13,7 @@
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"                      // EXPECT_EQ, TEST_CASE_EXPRS
+#include "smbase/sm-test.h"                      // EXPECT_EQ[_GDVSER], TEST_CASE_EXPRS
 
 using namespace gdv;
 
@@ -214,6 +214,14 @@ void test_TDD_getDiagnosticAt()
   EXPECT_EQ(tdd.maxDiagnosticLine(), 8);
   tdd.selfCheck();
 
+  // Check copying and comparison.
+  TextDocumentDiagnostics diagnosticsCopy(tdd);
+  xassert(diagnosticsCopy == tdd);
+
+  // This doesn't work?  GCC bug?  Clang accepts.
+  //EXPECT_EQ_GDVSER(diagnosticsCopy, tdd);
+  EXPECT_EQ_GDV(diagnosticsCopy, tdd);
+
   testOneGetDiagnosticsAt(tdd, 0,0, nullptr);
   testOneGetDiagnosticsAt(tdd, 0,2, nullptr);
   testOneGetDiagnosticsAt(tdd, 0,3, "1");
@@ -332,6 +340,9 @@ void test_TDD_getDiagnosticAt()
   EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
   tdd.selfCheck();
   doc.selfCheck();
+
+  // After the changes, the copy should no longer be equal.
+  xassert(diagnosticsCopy != tdd);
 }
 
 

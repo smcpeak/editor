@@ -9,7 +9,7 @@
 #include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/map-util.h"           // smbase::{mapContains, mapInsertMove}
+#include "smbase/map-util.h"           // smbase::{mapContains, mapInsertMove, mapKeySet}
 #include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
@@ -17,6 +17,7 @@
 #include <map>                         // std::map
 #include <memory>                      // std::unique_ptr
 #include <optional>                    // std::optional
+#include <set>                         // std::set
 #include <utility>                     // std::move
 #include <vector>                      // std::vector
 
@@ -181,6 +182,13 @@ TextDocumentObservationRecorder::TextDocumentObservationRecorder(
 }
 
 
+void TextDocumentObservationRecorder::selfCheck() const
+{
+  // I don't have anything to check right now, but I want clients to be
+  // able to call `selfCheck` regardless.
+}
+
+
 TextDocumentObservationRecorder::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
@@ -220,6 +228,13 @@ bool TextDocumentObservationRecorder::isTracking(
   VersionNumber version) const
 {
   return mapContains(m_versionToChanges, version);
+}
+
+
+auto TextDocumentObservationRecorder::getTrackedVersions() const
+  -> std::set<VersionNumber>
+{
+  return mapKeySet(m_versionToChanges);
 }
 
 

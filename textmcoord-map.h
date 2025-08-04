@@ -6,6 +6,8 @@
 #ifndef EDITOR_TEXTMCOORD_MAP_H
 #define EDITOR_TEXTMCOORD_MAP_H
 
+#include "textmcoord-map-fwd.h"        // fwds for this module
+
 #include "gap.h"                       // GapArray
 #include "td-core-fwd.h"               // TextDocumentCore
 #include "textmcoord.h"                // TextMCoord
@@ -75,8 +77,11 @@
   core.
 */
 class TextMCoordMap {
+  // Allow test code to access private members.
+  friend class TextMCoordMap_LineData_Tester;
+
   // Not impossible, just not implemented, and automatic would be wrong.
-  NO_OBJECT_COPIES(TextMCoordMap);
+  void operator=(TextMCoordMap const &obj) = delete;
 
 public:      // types
   // In this class, values are simply integers.  Clients are expected to
@@ -233,7 +238,12 @@ private:     // types
 
   public:      // methods
     ~LineData();
+    LineData(LineData const &obj);
     LineData();
+
+    bool operator==(LineData const &obj) const;
+    bool operator!=(LineData const &obj) const
+      { return !operator==(obj); }
 
     void selfCheck() const;
 
@@ -296,8 +306,14 @@ private:     // methods
 public:      // methods
   ~TextMCoordMap();
 
+  TextMCoordMap(TextMCoordMap const &obj);
+
   // Make an empty map.
   TextMCoordMap();
+
+  bool operator==(TextMCoordMap const &obj) const;
+  bool operator!=(TextMCoordMap const &obj) const
+    { return !operator==(obj); }
 
   // Assert all invariants.
   void selfCheck() const;

@@ -12,6 +12,7 @@
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::toGDValue
+#include "smbase/set-util.h"           // smbase::setInsert
 #include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES
 #include "smbase/sm-random.h"          // smbase::{sm_random, RandomChoice}
@@ -28,7 +29,67 @@ using namespace gdv;
 using namespace smbase;
 
 
+// This class tests some things that require accessing private members
+// of `TextMCoordMap`.
+class TextMCoordMap_LineData_Tester {
+public:      // types
+  typedef TextMCoordMap::SingleLineSpan SingleLineSpan;
+  typedef TextMCoordMap::Boundary Boundary;
+  typedef TextMCoordMap::LineData LineData;
+
+public:      // methods
+  static void testCopyCompare()
+  {
+    LineData d;
+    setInsert(d.m_singleLineSpans, SingleLineSpan(1, 2, 3));
+    setInsert(d.m_startsHere, Boundary(4, 5));
+    setInsert(d.m_continuesHere, 6);
+    setInsert(d.m_endsHere, Boundary(7, 8));
+
+    {
+      LineData d2(d);
+      xassert(d == d2);
+      xassert(!( d != d2 ));
+      EXPECT_EQ(toGDValue(d2), toGDValue(d));
+
+      // Check that comparison detects changes in each field.
+      d2.m_singleLineSpans.clear();
+      xassert(d != d2);
+      xassert(!( d == d2 ));
+    }
+
+    {
+      LineData d2(d);
+      xassert(d == d2);
+      d2.m_startsHere.clear();
+      xassert(d != d2);
+    }
+
+    {
+      LineData d2(d);
+      xassert(d == d2);
+      d2.m_continuesHere.clear();
+      xassert(d != d2);
+    }
+
+    {
+      LineData d2(d);
+      xassert(d == d2);
+      d2.m_endsHere.clear();
+      xassert(d != d2);
+    }
+  }
+};
+
+
 OPEN_ANONYMOUS_NAMESPACE
+
+
+void test_lineData()
+{
+  TextMCoordMap_LineData_Tester tester;
+  tester.testCopyCompare();
+}
 
 
 // Simple but inefficient implementation of `TextMCoordMap`.
@@ -1481,6 +1542,7 @@ void test_textmcoord_map(CmdlineArgsSpan args)
   }
 
   RUN_TEST(test_repro);
+  RUN_TEST(test_lineData);
   RUN_TEST(test_editEmpty);
   RUN_TEST(test_commentsExample);
   RUN_TEST(test_lineInsertions);
