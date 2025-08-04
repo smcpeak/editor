@@ -74,25 +74,32 @@ LIBSMBASE   := $(SMBASE)/obj/libsmbase.a
 LIBSMQTUTIL := $(SMQTUTIL)/libsmqtutil.a
 LIBASTGEN   := $(ASTGEN)/libast.a
 
+# Libraries for console programs, suitable for use as a dependency in a
+# recipe.
+CONSOLE_LIBRARIES :=
+CONSOLE_LIBRARIES += $(LIBSMBASE)
+
 # Flags for the linker for console programs.
 CONSOLE_LDFLAGS := -g
-CONSOLE_LDFLAGS += $(LIBSMBASE)
+CONSOLE_LDFLAGS += $(CONSOLE_LIBRARIES)
 CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
+
+# Libraries for GUI programs, usable as dependencies.
+GUI_LIBRARIES :=
+GUI_LIBRARIES += $(LIBSMQTUTIL)
+GUI_LIBRARIES += $(LIBASTGEN)
+GUI_LIBRARIES += $(LIBSMBASE)
 
 # Link flags for GUI programs.
 GUI_LDFLAGS := -g
-GUI_LDFLAGS += $(LIBSMQTUTIL)
-GUI_LDFLAGS += $(LIBASTGEN)
-GUI_LDFLAGS += $(LIBSMBASE)
+GUI_LDFLAGS += $(GUI_LIBRARIES)
 GUI_LDFLAGS += $(QT_LDFLAGS)
 GUI_LDFLAGS += $(EXTRA_LDFLAGS)
 
 # Link flags for console programs that use Qt5Core.  Specifically,
 # I am using QRegularExpression in the 'justify' module.
 QT_CONSOLE_LDFLAGS := -g
-QT_CONSOLE_LDFLAGS += $(LIBSMQTUTIL)
-QT_CONSOLE_LDFLAGS += $(LIBASTGEN)
-QT_CONSOLE_LDFLAGS += $(LIBSMBASE)
+QT_CONSOLE_LDFLAGS += $(GUI_LIBRARIES)
 QT_CONSOLE_LDFLAGS += -L$(QT5LIB) -lQt5Core -Wl,-rpath=$(QT5LIB)
 QT_CONSOLE_LDFLAGS += $(EXTRA_LDFLAGS)
 
@@ -268,7 +275,7 @@ UNIT_TESTS_OBJS += uri-util-test.o
 UNIT_TESTS_OBJS += vfs-connections-test.moc.o
 UNIT_TESTS_OBJS += vfs-connections-test.o
 
-unit-tests.exe: $(UNIT_TESTS_OBJS)
+unit-tests.exe: $(UNIT_TESTS_OBJS) $(GUI_LIBRARIES)
 	@# I link with `GUI_LDFLAGS` because lots of modules that need
 	@# to link with GUI elements of Qt are included among the
 	@# dependencies even though they won't get run by these tests.
@@ -290,7 +297,7 @@ EDITOR_FS_SERVER_OBJS += editor-fs-server.o
 EDITOR_FS_SERVER_OBJS += vfs-local.o
 EDITOR_FS_SERVER_OBJS += vfs-msg.o
 
-editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(LIBSMBASE)
+editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LIBRARIES)
 	@# Link this with -static because it gets invoked over an SSH
 	@# connection, which makes it difficult to arrange for the proper
 	@# library search path to be set.
@@ -325,7 +332,7 @@ EDITOR_OBJS += diagnostic-details-dialog.o
 DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS := $(EDITOR_OBJS)
 DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o
 
-diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS)
+diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LIBRARIES)
 	$(CXX) -o $@ $(CCFLAGS) $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LDFLAGS)
 
 # This has to be run manually.
@@ -463,7 +470,7 @@ EDITOR_OBJS += textinput.moc.o
 EDITOR_OBJS += vfs-query-sync.o
 EDITOR_OBJS += vfs-query-sync.moc.o
 
-editor.exe: $(EDITOR_OBJS) $(LIBSMQTUTIL) $(LIBSMBASE)
+editor.exe: $(EDITOR_OBJS) $(GUI_LIBRARIES)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
 
 
