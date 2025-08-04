@@ -14,6 +14,7 @@
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES
+#include "smbase/sm-random.h"          // smbase::{sm_random, RandomChoice}
 #include "smbase/sm-test.h"            // ARGS_MAIN
 #include "smbase/string-util.h"        // join, suffixAll, stringToVectorOfUChar
 
@@ -1139,64 +1140,15 @@ void test_multilineDeletion2()
 }
 
 
-// Return a number in [0,n-1], approximately uniformly at random.
-int random(int n)
-{
-  return std::rand() % n;
-}
-
-
 int randomLine()
 {
-  return random(20);
+  return sm_random(20);
 }
 
 int randomColumn()
 {
-  return random(40);
+  return sm_random(40);
 }
-
-
-// Facilitate making a weighted random choice.
-//
-// Candidate to move to someplace more general.
-class RandomChoice {
-public:      // data
-  // Size of the uniform range.
-  int m_rangeSize;
-
-  // We've checked for all numbers below this value.
-  int m_checkLimit;
-
-  // Selected element in [0, m_rangeSize-1].
-  int m_choice;
-
-public:
-  RandomChoice(int rangeSize)
-    : m_rangeSize(rangeSize),
-      m_checkLimit(0),
-      m_choice(random(rangeSize))
-  {}
-
-  // Check whether the choice lands within the next `n` numbers.  That
-  // is, the probability of `check(n)` is proportional to `n`.  The sum
-  // of all `n` passed to `check` must not exceed `m_rangeSize`.
-  bool check(int n)
-  {
-    int oldLimit = m_checkLimit;
-    m_checkLimit += n;
-    xassert(m_checkLimit <= m_rangeSize);
-
-    return oldLimit <= m_choice &&
-                       m_choice < m_checkLimit;
-  }
-
-  // True if the choice has not been in any checked range.
-  bool remains() const
-  {
-    return m_choice >= m_checkLimit;
-  }
-};
 
 
 void randomInsert(MapPair &m)
@@ -1209,9 +1161,9 @@ void randomInsert(MapPair &m)
   int endLine;
   int endCol;
 
-  if (random(7) == 0) {
+  if (sm_random(7) == 0) {
     // Multi-line (rare).
-    endLine = startLine + 1 + random(2);
+    endLine = startLine + 1 + sm_random(2);
     endCol = randomColumn();
   }
   else {
@@ -1255,11 +1207,11 @@ void randomEdit(MapPair &m)
   }
 
   else if (c.check(200)) {
-    m.insertLines(randomLine(), random(3));
+    m.insertLines(randomLine(), sm_random(3));
   }
 
   else if (c.check(200)) {
-    m.deleteLines(randomLine(), random(3));
+    m.deleteLines(randomLine(), sm_random(3));
   }
 
   else if (c.check(200)) {
@@ -1482,7 +1434,7 @@ void randomDocInsertions(TextDocumentCore &doc, int n)
   for (int i=0; i < n; ++i) {
     doc.insertLine(i);
     doc.insertText(TextMCoord(i,0),
-      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", random(40));
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", sm_random(40));
   }
 }
 

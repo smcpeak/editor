@@ -16,6 +16,7 @@
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/map-util.h"                     // mapMoveValueAt
+#include "smbase/optional-util.h"                // optAccumulateMax
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/set-util.h"                     // smbase::setInsertUnique
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
@@ -589,22 +590,6 @@ auto TextMCoordMap::LineData::getLineEntries() const
   }
 
   return ret;
-}
-
-
-// If `opt` has no value, set it to `t`.  Otherwise, set it to the
-// larger of `t` and the value it contains.
-//
-// Candidate to move to `smbase`.
-template <typename T>
-void optAccumulateMax(std::optional<T> &opt, T const &t)
-{
-  if (opt.has_value()) {
-    opt = std::max(*opt, t);
-  }
-  else {
-    opt = t;
-  }
 }
 
 
