@@ -3,8 +3,11 @@
 
 #include "td-core.h"                   // this module
 
+#include "gap-gdvalue.h"               // toGDValue(GapArray)
+
 // smbase
 #include "smbase/array.h"              // Array
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/overflow.h"           // preIncrementWithOverflowCheck
 #include "smbase/sm-test.h"            // USUAL_MAIN, PVAL
@@ -15,6 +18,8 @@
 #include <assert.h>                    // assert
 #include <ctype.h>                     // isalnum, isspace
 #include <string.h>                    // strncasecmp
+
+using namespace gdv;
 
 
 // ---------------------- TextDocumentCore --------------------------
@@ -70,6 +75,49 @@ void TextDocumentCore::selfCheck() const
   }
 
   xassert(m_longestLengthSoFar >= 0);
+}
+
+
+TextDocumentCore::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TextDocumentCore"_sym);
+
+  m.mapSetValueAtSym("version", getVersionNumber());
+  m.mapSetValueAtSym("lines", getAllLines());
+
+  return m;
+}
+
+
+gdv::GDValue TextDocumentCore::getAllLines() const
+{
+  GDValue seq(GDVK_SEQUENCE);
+
+  for (int i=0; i < numLines(); i++) {
+    seq.sequenceAppend(GDValue(getWholeLineString(i)));
+  }
+
+  return seq;
+}
+
+
+gdv::GDValue TextDocumentCore::dumpInternals() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TextDocumentCoreInternals"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_lines);
+  GDV_WRITE_MEMBER_SYM(m_recent);
+  GDV_WRITE_MEMBER_SYM(m_longestLengthSoFar);
+  GDV_WRITE_MEMBER_SYM(m_recentLine);
+  GDV_WRITE_MEMBER_SYM(m_versionNumber);
+
+  // Serf pointers generally don't get serialized, but a count could be
+  // informative.
+  m.mapSetValueAtSym("numObservers", m_observers.count());
+
+  GDV_WRITE_MEMBER_SYM(m_iteratorCount);
+
+  return m;
 }
 
 

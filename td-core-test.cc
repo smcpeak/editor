@@ -8,15 +8,17 @@
 // smbase
 #include "smbase/autofile.h"           // AutoFILE
 #include "smbase/exc.h"                // smbase::xmessage
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // IGNORE_RESULT, OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ[_GDV]
 #include "smbase/string-util.h"        // vectorOfUCharToString
 
 // libc
 #include <assert.h>                    // assert
 #include <stdlib.h>                    // system
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -219,6 +221,49 @@ void testVarious()
                         "    four    \n"
                         "     \n"
                         "      "));
+  fullSelfCheck(tdc);
+
+  // Test conversion to `GDValue`.
+  EXPECT_EQ_GDV(tdc, fromGDVN(R"(
+    TextDocumentCore[
+      version: 27
+      lines: [
+        "one"
+        "  two"
+        "three   "
+        "    four    "
+        "     "
+        "      "
+      ]
+    ]
+  )"));
+  EXPECT_EQ_GDV(tdc.getAllLines(), fromGDVN(R"(
+    [
+      "one"
+      "  two"
+      "three   "
+      "    four    "
+      "     "
+      "      "
+    ]
+  )"));
+  EXPECT_EQ_GDV(tdc.dumpInternals(), fromGDVN(R"(
+    TextDocumentCoreInternals[
+      lines: [
+        "one"
+        "  two"
+        "three   "
+        "    four    "
+        "     "
+        ""]
+      recent: 5
+      longestLengthSoFar: 13
+      recentLine: "      "
+      versionNumber: 27
+      numObservers: 0
+      iteratorCount: 0
+    ]
+  )"));
 }
 
 

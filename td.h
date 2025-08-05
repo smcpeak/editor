@@ -12,6 +12,7 @@
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/objstack.h"           // ObjStack
 #include "smbase/refct-serf.h"         // RCSerf
 
@@ -35,6 +36,9 @@ enum DocumentProcessStatus {
 
 // Return "DPS_NONE", etc.
 char const *toString(DocumentProcessStatus dps);
+
+// Return a symbol named as `toString`.
+gdv::GDValue toGDValue(DocumentProcessStatus dps);
 
 
 // This class represents a text document (which is a sequence of lines)
@@ -124,6 +128,9 @@ public:      // funcs
   virtual ~TextDocument();
 
   virtual void selfCheck() const;
+
+  // Dump internals for test/debug purposes.
+  virtual operator gdv::GDValue() const;
 
   // Read-only access to the underlying representation.  Use of this
   // should be infrequent, as I prefer to use the delegation queries.

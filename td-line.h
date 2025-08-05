@@ -4,7 +4,9 @@
 #ifndef TD_LINE_H
 #define TD_LINE_H
 
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB, CMEMB
+#include "smbase/xassert.h"            // xassert
 
 #include <stddef.h>                    // NULL
 
@@ -61,6 +63,9 @@ public:
 
   // Again, a shallow copy.
   TextDocumentLine& operator= (TextDocumentLine const &obj) = default;
+
+  // Return the contents as a string, without any final newline.
+  operator gdv::GDValue() const;
 
   bool isEmpty() const { return m_length == 0; }
 

@@ -128,6 +128,8 @@ public:      // funcs
 
   virtual void selfCheck() const override;
 
+  virtual operator gdv::GDValue() const override;
+
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 

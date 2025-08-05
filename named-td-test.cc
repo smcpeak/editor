@@ -6,12 +6,13 @@
 #include "named-td.h"                            // module to test
 
 // smbase
+#include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/nonport.h"                      // fileOrDirectoryExists, removeFile
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-override.h"                  // OVERRIDE
-#include "smbase/sm-test.h"                      // EXPECT_EQ
+#include "smbase/sm-test.h"                      // EXPECT_EQ[_GDV]
 
 #include <fstream>                               // std::ofstream
 
@@ -194,6 +195,39 @@ void testApplyCommandSubstitutions()
 }
 
 
+void test_toGDValue()
+{
+  NamedTextDocument doc;
+
+  // This mostly just confirms that all the elements are present.  It is
+  // a very denegerate case.
+  EXPECT_EQ_GDV(doc, fromGDVN(R"(
+    NamedTextDocument[
+      core: TextDocumentCore[version:0 lines:[""]]
+      historyIndex: 0
+      savedHistoryIndex: 0
+      documentProcessStatus: DPS_NONE
+      readOnly: false
+      documentName: DocumentName[
+        hostName: HostName[sshHostName:""]
+        resourceName: ""
+        hasFilename: false
+        directory: ""
+      ]
+      diagnostics: null
+      hasTddUpdater: false
+      observationRecorder: {:}
+      receivedStaleDiagnostics: false
+      lastFileTimestamp: 0
+      modifiedOnDisk: false
+      title: ""
+      highlighter: null
+      highlightTrailingWhitespace: true
+    ]
+  )"));
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -205,6 +239,7 @@ void test_named_td(CmdlineArgsSpan args)
   testSetDocumentProcessStatus();
   testUndoPastSavePoint();
   testApplyCommandSubstitutions();
+  test_toGDValue();
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);

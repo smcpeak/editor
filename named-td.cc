@@ -10,6 +10,7 @@
 
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
+#include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // smbase::mapContains
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
@@ -88,6 +89,31 @@ void NamedTextDocument::selfCheck() const
       xassert(*earliestTracked >= m_diagnostics->getOriginVersion());
     }
   }
+}
+
+
+NamedTextDocument::operator gdv::GDValue() const
+{
+  GDValue m(TextDocument::operator GDValue());
+  m.taggedContainerSetTag("NamedTextDocument"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_documentName);
+  GDV_WRITE_MEMBER_SYM(m_diagnostics);
+
+  // m_tddUpdater simply contains two serf pointers, so does not have
+  // anything useful to contribute to a `GDValue`.  But we can record
+  // whether it is present.
+  m.mapSetValueAtSym("hasTddUpdater", m_tddUpdater.operator bool());
+
+  GDV_WRITE_MEMBER_SYM(m_observationRecorder);
+  GDV_WRITE_MEMBER_SYM(m_receivedStaleDiagnostics);
+  GDV_WRITE_MEMBER_SYM(m_lastFileTimestamp);
+  GDV_WRITE_MEMBER_SYM(m_modifiedOnDisk);
+  GDV_WRITE_MEMBER_SYM(m_title);
+  GDV_WRITE_MEMBER_SYM(m_highlighter);
+  GDV_WRITE_MEMBER_SYM(m_highlightTrailingWhitespace);
+
+  return m;
 }
 
 

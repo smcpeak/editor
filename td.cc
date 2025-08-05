@@ -4,21 +4,33 @@
 #include "td.h"                        // this module
 
 // smbase
+#include "smbase/chained-cond.h"       // smbase:cc::{le_le, z_le_le}
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/mysig.h"              // printSegfaultAddrs
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
-#include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING
+#include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
 #include "smbase/trace.h"              // TRACE
 
+using namespace gdv;
+using namespace smbase;
 
-DEFINE_ENUMERATION_TO_STRING(
+
+DEFINE_ENUMERATION_TO_STRING_OR(
   DocumentProcessStatus,
   NUM_DOCUMENT_PROCESS_STATUSES,
   (
     "DPS_NONE",
     "DPS_RUNNING",
-    "DPS_FINISHED"
-  )
+    "DPS_FINISHED",
+  ),
+  "DPS_<invalid>"
 )
+
+
+gdv::GDValue toGDValue(DocumentProcessStatus dps)
+{
+  return GDValue(GDVSymbol(toString(dps)));
+}
 
 
 // ------------------------- TextDocument ---------------------------
@@ -56,11 +68,23 @@ void TextDocument::selfCheck() const
 {
   m_core.selfCheck();
 
-  xassert(0 <= m_historyIndex &&
-               m_historyIndex <= m_history.seqLength());
+  xassert(cc::z_le_le(m_historyIndex, m_history.seqLength()));
 
-  xassert(-1 <= m_savedHistoryIndex &&
-                m_savedHistoryIndex <= m_history.seqLength());
+  xassert(cc::le_le(-1, m_savedHistoryIndex, m_history.seqLength()));
+}
+
+
+TextDocument::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TextDocument"_sym);
+  GDV_WRITE_MEMBER_SYM(m_core);
+  // TODO: GDV_WRITE_MEMBER_SYM(m_history);
+  GDV_WRITE_MEMBER_SYM(m_historyIndex);
+  GDV_WRITE_MEMBER_SYM(m_savedHistoryIndex);
+  // TODO: GDV_WRITE_MEMBER_SYM(m_groupStack);
+  GDV_WRITE_MEMBER_SYM(m_documentProcessStatus);
+  GDV_WRITE_MEMBER_SYM(m_readOnly);
+  return m;
 }
 
 

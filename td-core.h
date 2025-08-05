@@ -14,6 +14,7 @@
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/rcserflist.h"         // RCSerfList
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
@@ -58,8 +59,10 @@ private:     // instance data
   // the "blank line" case.
   GapArray<TextDocumentLine> m_lines;
 
-  // the most-recently edited line number, or -1 to mean that
-  // no line's contents are stored
+  // The most-recently edited line number, or -1 to mean that no line's
+  // contents are stored.
+  //
+  // TODO: Rename to `m_recentIndex`.
   int m_recent;
 
   // Length of the longest line this file has ever had, in bytes.  This
@@ -67,8 +70,8 @@ private:     // instance data
   // able to answer the 'maxLineLength()' query.
   int m_longestLengthSoFar;
 
-  // if recent != -1, then this holds the contents of that line,
-  // and lines[recent] is NULL
+  // If `m_recent != -1`, then this holds the contents of that line, and
+  // `m_lines[m_recent]` is empty.  Otherwise, this is empty.
   GapArray<char> m_recentLine;
 
   // Version number for the contents.  This starts at 1 and increases by
@@ -129,6 +132,18 @@ public:    // funcs
 
   // Check internal invariants, throwing assertion if broken.
   void selfCheck() const;
+
+  // ------------------------- GDValue export --------------------------
+  // Logically, this object represents a versioned sequence of strings,
+  // so this operator returns an ordered map with `version` and `lines`
+  // attributes.
+  operator gdv::GDValue() const;
+
+  // Just get the sequence of strings for the lines.
+  gdv::GDValue getAllLines() const;
+
+  // Dump internals for test/debug.
+  gdv::GDValue dumpInternals() const;
 
   // ---------------------- document shape ------------------------
   // # of lines stored; always at least 1

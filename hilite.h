@@ -7,6 +7,8 @@
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "td-editor.h"                 // TextDocumentEditor
 
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+
 class LineCategories;                  // textcategory.h
 
 
@@ -19,7 +21,10 @@ class Highlighter : public TextDocumentObserver {
 public:
   // Clients *are* allowed to delete objects known only as
   // implementors of Highlighter.
-  virtual ~Highlighter() {}
+  virtual ~Highlighter();
+
+  // The default just returns `highlighterName` as a symbol.
+  virtual operator gdv::GDValue() const;
 
   // Name of this highlighter.
   virtual string highlighterName() const = 0;
