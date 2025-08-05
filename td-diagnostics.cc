@@ -294,7 +294,7 @@ std::size_t TextDocumentDiagnostics::size() const
 
 int TextDocumentDiagnostics::maxDiagnosticLine() const
 {
-  return m_rangeToDiagIndex.lineIndexAfterLastEntry() - 1;
+  return m_rangeToDiagIndex.maxEntryLine();
 }
 
 

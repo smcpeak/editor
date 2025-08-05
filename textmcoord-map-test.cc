@@ -327,12 +327,12 @@ public:
     return m_entries.size();
   }
 
-  int lineIndexAfterLastEntry() const
+  int maxEntryLine() const
   {
-    int ret = 0;
+    int ret = -1;
 
     for (DocEntry const &e : m_entries) {
-      ret = std::max(ret, e.m_range.m_end.m_line+1);
+      ret = std::max(ret, e.m_range.m_end.m_line);
     }
 
     return ret;
@@ -434,7 +434,7 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
 
   EXPECT_EQ(m.empty(), r.empty());
   EXPECT_EQ(m.numEntries(), r.numEntries());
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), r.lineIndexAfterLastEntry());
+  EXPECT_EQ(m.maxEntryLine(), r.maxEntryLine());
   EXPECT_EQ_GDV(m.getNumLinesOpt(), r.getNumLinesOpt());
 
   // Compare as GDValue first so we get a printout on mismatch.
@@ -444,7 +444,7 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
   // this would ever fail if the above succeeded, but it won't hurt.
   xassert(m.getAllEntries() == r.getAllEntries());
 
-  for (int i=0; i < r.lineIndexAfterLastEntry(); ++i) {
+  for (int i=0; i <= r.maxEntryLine(); ++i) {
     EXN_CONTEXT_EXPR(i);
 
     EXPECT_EQ(toGDValue(m.getLineEntries(i)),
@@ -572,9 +572,9 @@ public:      // methods
     return m_sut.numEntries();
   }
 
-  int lineIndexAfterLastEntry() const
+  int maxEntryLine() const
   {
-    return m_sut.lineIndexAfterLastEntry();
+    return m_sut.maxEntryLine();
   }
 
   int getNumLines() const
@@ -635,7 +635,7 @@ std::string allLineEntries(MapPair const &m)
 {
   std::vector<std::string> results;
 
-  for (int i=0; i < m.lineIndexAfterLastEntry(); ++i) {
+  for (int i=0; i <= m.maxEntryLine(); ++i) {
     results.push_back(lineEntriesString(m, i));
   }
 
@@ -648,7 +648,7 @@ void checkLineEntriesRoundtrip(MapPair const &m)
 {
   typedef MapPair::LineEntry LineEntry;
 
-  for (int i=0; i < m.lineIndexAfterLastEntry(); ++i) {
+  for (int i=0; i <= m.maxEntryLine(); ++i) {
     std::set<LineEntry> lineEntries = m.getLineEntries(i);
     GDValue v(toGDValue(lineEntries));
     std::set<LineEntry> after =
@@ -671,7 +671,7 @@ void test_commentsExample()
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), true);
   EXPECT_EQ(m.numEntries(), 0);
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 0);
+  EXPECT_EQ(m.maxEntryLine(), -1);
   EXPECT_EQ(stringb(toGDValue(m)),
     "TextMCoordMap[numLines:7 entries:{}]");
   EXPECT_EQ(toGDValue(m.getMappedValues()).asString(),
@@ -689,7 +689,7 @@ void test_commentsExample()
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 1);
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 2);
+  EXPECT_EQ(m.maxEntryLine(), 1);
   EXPECT_EQ(stringb(toGDValue(m)),
     "TextMCoordMap["
       "numLines:7 "
@@ -725,7 +725,7 @@ void test_commentsExample()
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 6);
+  EXPECT_EQ(m.maxEntryLine(), 5);
   EXPECT_EQ(stringb(toGDValue(m)),
     "TextMCoordMap["
       "numLines:7 "
@@ -788,7 +788,7 @@ void test_commentsExample()
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 7);
+  EXPECT_EQ(m.maxEntryLine(), 6);
   EXPECT_EQ(stringb(toGDValue(m)),
     "TextMCoordMap["
       "numLines:8 "
@@ -853,7 +853,7 @@ void test_commentsExample()
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
   EXPECT_EQ(m.numEntries(), 2);
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 6);
+  EXPECT_EQ(m.maxEntryLine(), 5);
   EXPECT_EQ(stringb(toGDValue(m)),
     "TextMCoordMap["
       "numLines:7 "
@@ -1470,25 +1470,25 @@ void test_insertAfterLast()
 
   m.insertEntry({{{1,4}, {1,42}}, 2});
   m.selfCheck();
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 2);
+  EXPECT_EQ(m.maxEntryLine(), 1);
 
   m.insertLines(2, 1);
   m.selfCheck();
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 2);
+  EXPECT_EQ(m.maxEntryLine(), 1);
 }
 
 
-// Clearing should ensure `lineIndexAfterLastEntry()==0`.
+// Clearing should ensure `maxEntryLine()==-1`.
 void test_clear()
 {
   MapPair m(2 /*numLines*/);
   m.insertEntry({{{1,4}, {1,42}}, 2});
   m.selfCheck();
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 2);
+  EXPECT_EQ(m.maxEntryLine(), 1);
 
   m.clearEverything(2 /*numLines*/);
   m.selfCheck();
-  EXPECT_EQ(m.lineIndexAfterLastEntry(), 0);
+  EXPECT_EQ(m.maxEntryLine(), -1);
 }
 
 

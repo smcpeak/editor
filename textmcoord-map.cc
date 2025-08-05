@@ -773,8 +773,6 @@ TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
 
 
 // Assert that `opt` is positive if it has a value.
-//
-// TODO: Move?
 static void xassertOptPositive(std::optional<int> const &opt)
 {
   if (opt.has_value()) {
@@ -932,7 +930,7 @@ void TextMCoordMap::clearEntries()
   }
 
   // Having removed all of the `LineData` objects, clear the array as
-  // well in order to ensure `lineIndexAfterLastEntry()==0`.
+  // well in order to ensure `maxEntryLine()==-1`.
   m_lineData.clear();
 
   selfCheck();
@@ -954,7 +952,7 @@ void TextMCoordMap::confineLineIndices(int maxNumLines)
 {
   xassertPrecondition(maxNumLines > 0);
 
-  int numDiagLines = lineIndexAfterLastEntry();
+  int numDiagLines = maxEntryLine() + 1;
 
   int excessLines = numDiagLines - maxNumLines;
   if (excessLines > 0) {
@@ -968,7 +966,7 @@ void TextMCoordMap::confineLineIndices(int maxNumLines)
     // After the deletion, the number of lines according to the
     // diagnostics should be the same as the number according to the
     // document.
-    xassert(lineIndexAfterLastEntry() == maxNumLines);
+    xassert(maxEntryLine()+1 == maxNumLines);
   }
 }
 
@@ -1188,9 +1186,10 @@ int TextMCoordMap::numEntries() const
 }
 
 
-int TextMCoordMap::lineIndexAfterLastEntry() const
+int TextMCoordMap::maxEntryLine() const
 {
-  return m_lineData.length();
+  int len = m_lineData.length();
+  return len - 1;
 }
 
 
@@ -1257,7 +1256,7 @@ auto TextMCoordMap::getAllEntries() const -> std::set<DocEntry>
   // spans for which we have seen the start but not the end.
   std::map<Value, TextMCoord> openSpans;
 
-  for (int line=0; line < lineIndexAfterLastEntry(); ++line) {
+  for (int line=0; line <= maxEntryLine(); ++line) {
     if (LineData const *lineData = getLineDataC(line)) {
 
       for (SingleLineSpan const &span : lineData->m_singleLineSpans) {

@@ -214,8 +214,6 @@ public:      // methods
 
   // If there are no diagnostics, this returns -1.  Otherwise, it is the
   // largest line number for which there is any intersecting diagnostic.
-  //
-  // TODO: Do I need this?
   int maxDiagnosticLine() const;
 
   // Remove all diagnostics and reset to `numLines`, which must be

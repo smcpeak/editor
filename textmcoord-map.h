@@ -436,18 +436,11 @@ public:      // methods
   // been performed since the last `clear()`.
   int numEntries() const;
 
-  // Line numbers outside [0, lineIndexAfterLastEntry()-1] have no
-  // entries.  This is 0 if there are no entries, and otherwise it is
-  // one larger than the largest endpoint line.
-  //
-  // TODO: I'd like to remove this if I can, as it exposes
-  // implementation details.
-  int lineIndexAfterLastEntry() const;
+  // If there are no entries, this returns -1.  Otherwise, it is the
+  // largest line number for which there is any intersecting entry.
+  int maxEntryLine() const;
 
   // Number of lines in the file, if known.
-  //
-  // TODO: Rename this to `numLines` once I've audited all of the
-  // existing calls that use the old name.
   std::optional<int> getNumLinesOpt() const;
 
   // True if we can track document updates, which requires that we know
