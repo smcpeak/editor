@@ -151,7 +151,7 @@ public:      // methods
   explicit TextDocumentDiagnosticsAndUpdater(
     VersionNumber originVersion,
     NamedTextDocument *document)
-    : TextDocumentDiagnostics(originVersion),
+    : TextDocumentDiagnostics(originVersion, document->numLines()),
       TextDocumentDiagnosticsUpdater(this, document)
   {}
 
@@ -346,6 +346,51 @@ void test_TDD_getDiagnosticAt()
 }
 
 
+// This reproduces a problem found during randomized testing of
+// `td-obs-recorder`.
+void test_deleteNearEnd()
+{
+  NamedTextDocument doc;
+  doc.appendString("GGGGPPPPGgggg\n");
+  doc.appendString("GGGBBBBZZZZZ\n");
+  doc.appendString("zzzzZZZZZzzzzzZZZZZ");
+  EXPECT_EQ(doc.numLines(), 3);
+  doc.selfCheck();
+
+  TextDocumentDiagnosticsAndUpdater tdd(doc.getVersionNumber(), &doc);
+  tdd.selfCheck();
+
+  // This diagnostic goes right to the end of the file.
+  tdd.insertDiagnostic({{1,0}, {2,19}}, TDD_Diagnostic("msg8740"));
+  tdd.selfCheck();
+
+  // We then delete a span that has the effect of removing one line, so
+  // the diagnostic should be adjusted to end on line 1, not 2.
+  doc.deleteTextRange(TextMCoordRange({1,8}, {2,6}));
+
+  // In the buggy version, this would fail because the endpoint of the
+  // adjusted diagnostic was still on line 2.
+  tdd.selfCheck();
+
+  // The actual result is we get a zero-length span at the start of the
+  // second line.  This is questionable because the span originally went
+  // to the end of the document, yet after deleting some text, it now
+  // ends before the document end.  But, at least with the information I
+  // currently track, this isn't easy to solve, and anyway should have
+  // almost no practical effect.  The important thing at the moment is
+  // simply that it preserves the invariant that the coordinates are
+  // valid w.r.t. the document contents.
+  EXPECT_EQ_GDV(tdd, fromGDVN(R"(
+    {
+      TDD_DocEntry[
+        range: MCR(MC(1 0) MC(1 0))
+        diagnostic: TDD_Diagnostic[message:"msg8740" related:[]]
+      ]
+    }
+  )"));
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -354,6 +399,7 @@ void test_td_diagnostics(CmdlineArgsSpan args)
 {
   test_TDD_LineEntry_containsByteIndex();
   test_TDD_getDiagnosticAt();
+  test_deleteNearEnd();
 }
 
 

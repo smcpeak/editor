@@ -10,6 +10,7 @@
 
 #include "td-core.h"                             // TextDocumentCore
 
+#include "smbase/chained-cond.h"                 // smbase::cc::{z_le_lt, etc.}
 #include "smbase/compare-util-iface.h"           // RET_IF_COMPARE_MEMBERS
 #include "smbase/container-util.h"               // smbase::contains
 #include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
@@ -19,7 +20,7 @@
 #include "smbase/optional-util.h"                // optAccumulateMax
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/set-util.h"                     // smbase::setInsertUnique
-#include "smbase/sm-macros.h"                    // DMEMB, EMEMB
+#include "smbase/sm-macros.h"                    // DMEMB, EMEMB, IMEMBFP
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 
 #include <optional>                              // std::optional
@@ -653,10 +654,37 @@ void TextMCoordMap::LineData::adjustForDocument(
 }
 
 
+void TextMCoordMap::LineData::addEndBoundaryToLastLine(Value v)
+{
+  // First check for a continuation since that's faster.
+  if (setRemove(m_continuesHere, v)) {
+    // Add an end to replace the continuation.  (In this class, we have
+    // no information about the line length, so cannot make it end at
+    // the line end.)
+    m_endsHere.insert(Boundary(0, v));
+  }
+
+  else {
+    // I have to resort to linear search to find the start boundary.
+    for (auto it = m_startsHere.begin(); it != m_startsHere.end(); ++it) {
+      Boundary const &boundary = *it;
+      if (boundary.m_value == v) {
+        // Convert the start into a zero-width single-line segment.
+        int bi = boundary.m_byteIndex;
+        m_singleLineSpans.insert(SingleLineSpan(bi, bi, v));
+        m_startsHere.erase(it);
+        return;
+      }
+    }
+    xfailure("no start?");
+  }
+}
+
+
 // --------------------------- TextMCoordMap ---------------------------
 auto TextMCoordMap::getOrCreateLineData(int line) -> LineData *
 {
-  xassert(line >= 0);
+  validateLineIndex(line);
 
   m_lineData.ensureValidIndex(line);
 
@@ -672,11 +700,12 @@ auto TextMCoordMap::getOrCreateLineData(int line) -> LineData *
 
 auto TextMCoordMap::getLineDataC(int line) const -> LineData const * NULLABLE
 {
-  if (line < 0 || line >= m_lineData.length()) {
+  if (cc::z_le_lt(line, m_lineData.length())) {
+    return m_lineData.get(line);
+  }
+  else {
     return nullptr;
   }
-
-  return m_lineData.get(line);
 }
 
 
@@ -686,17 +715,51 @@ auto TextMCoordMap::getLineData(int line) -> LineData * NULLABLE
 }
 
 
+void TextMCoordMap::validateLineIndex(int line) const
+{
+  xassert(0 <= line);
+  if (m_numLines.has_value()) {
+    xassert(line < *m_numLines);
+  }
+}
+
+
+/*static*/ bool TextMCoordMap::equalLineData(
+  LineDataGapArray const &a,
+  LineDataGapArray const &b)
+{
+  if (a.length() != b.length()) {
+    return false;
+  }
+
+  for (int i=0; i < a.length(); ++i) {
+    LineData const * NULLABLE aLineData = a.get(i);
+    LineData const * NULLABLE bLineData = b.get(i);
+
+    if ((aLineData==nullptr) != (bLineData==nullptr)) {
+      return false;
+    }
+    if (aLineData && (*aLineData) != (*bLineData)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
 TextMCoordMap::~TextMCoordMap()
 {
   // This has to be done explicitly because `m_lineData` does not know
   // it owns the objects it points at.
-  clear();
+  clearEntries();
 }
 
 
 TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
   : DMEMB(m_values),
-    m_lineData()
+    m_lineData(),
+    DMEMB(m_numLines)
 {
   m_lineData.insertManyZeroes(0, obj.m_lineData.length());
   for (int i=0; i < obj.m_lineData.length(); ++i) {
@@ -709,41 +772,43 @@ TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
 }
 
 
-TextMCoordMap::TextMCoordMap()
+// Assert that `opt` is positive if it has a value.
+//
+// TODO: Move?
+static void xassertOptPositive(std::optional<int> const &opt)
+{
+  if (opt.has_value()) {
+    xassert(*opt > 0);
+  }
+}
+
+
+TextMCoordMap::TextMCoordMap(std::optional<int> numLines)
   : m_values(),
-    m_lineData()
-{}
+    m_lineData(),
+    IMEMBFP(numLines)
+{
+  xassertOptPositive(numLines);
+  selfCheck();
+}
 
 
 bool TextMCoordMap::operator==(TextMCoordMap const &obj) const
 {
-  if (!EMEMB(m_values)) {
-    return false;
-  }
-
-  if (m_lineData.length() != obj.m_lineData.length()) {
-    return false;
-  }
-
-  for (int i=0; i < m_lineData.length(); ++i) {
-    LineData const *thisLineData = getLineDataC(i);
-    LineData const *objLineData = obj.getLineDataC(i);
-
-    if ((thisLineData==nullptr) != (objLineData==nullptr)) {
-      return false;
-    }
-    if (thisLineData && (*thisLineData) != (*objLineData)) {
-      return false;
-    }
-  }
-
-  return true;
+  return EMEMB(m_values) &&
+         EMEMB(m_numLines) &&
+         equalLineData(m_lineData, obj.m_lineData);
 }
 
 
 void TextMCoordMap::selfCheck() const
 {
   EXN_CONTEXT("selfCheck");
+
+  if (m_numLines.has_value()) {
+    xassert(*m_numLines >= 1);
+    xassert(m_lineData.length() <= *m_numLines);
+  }
 
   // All values we have seen in `m_lineData`.
   std::set<Value> seenValues;
@@ -821,11 +886,12 @@ void TextMCoordMap::selfCheck() const
 
 void TextMCoordMap::insertEntry(DocEntry entry)
 {
+  xassert(validRange(entry.m_range));
+
   setInsertUnique(m_values, entry.m_value);
 
-  // We accept a non-normalized range as input, but normalize it here so
-  // only normalized ranges are present in the map.
-  TextMCoordRange const range = entry.m_range.normalized();
+  // Slightly shorter name for convenience.
+  TextMCoordRange const &range = entry.m_range;
 
   if (range.m_start.m_line == range.m_end.m_line) {
     getOrCreateLineData(range.m_start.m_line)->
@@ -854,7 +920,7 @@ void TextMCoordMap::insertEntry(DocEntry entry)
 }
 
 
-void TextMCoordMap::clear()
+void TextMCoordMap::clearEntries()
 {
   m_values.clear();
 
@@ -866,33 +932,50 @@ void TextMCoordMap::clear()
   }
 
   // Having removed all of the `LineData` objects, clear the array as
-  // well in order to ensure `numLines()==0`.
+  // well in order to ensure `lineIndexAfterLastEntry()==0`.
   m_lineData.clear();
+
+  selfCheck();
+}
+
+
+void TextMCoordMap::clearEverything(std::optional<int> numLines)
+{
+  xassertOptPositive(numLines);
+
+  clearEntries();
+  m_numLines = numLines;
+
+  selfCheck();
+}
+
+
+void TextMCoordMap::confineLineIndices(int maxNumLines)
+{
+  xassertPrecondition(maxNumLines > 0);
+
+  int numDiagLines = lineIndexAfterLastEntry();
+
+  int excessLines = numDiagLines - maxNumLines;
+  if (excessLines > 0) {
+    // Adjust by deleting extra lines.
+    TRACE1("adjustForDocument: deleting " << excessLines <<
+           " lines at the end of the (virtual) document so its" <<
+           " line count drops from " << numDiagLines <<
+           " to " << maxNumLines);
+    deleteLines(maxNumLines-1, excessLines);
+
+    // After the deletion, the number of lines according to the
+    // diagnostics should be the same as the number according to the
+    // document.
+    xassert(lineIndexAfterLastEntry() == maxNumLines);
+  }
 }
 
 
 void TextMCoordMap::adjustForDocument(TextDocumentCore const &doc)
 {
-  // Confine the line counts.
-  {
-    int numDiagLines = numLines();
-    int numDocLines = doc.numLines();
-
-    int excessLines = numDiagLines - numDocLines;
-    if (excessLines > 0) {
-      // Adjust by deleting extra lines.
-      TRACE1("adjustForDocument: deleting " << excessLines <<
-             " lines at the end of the (virtual) document so its" <<
-             " line count drops from " << numDiagLines <<
-             " to " << numDocLines);
-      deleteLines(numDocLines-1, excessLines);
-
-      // After the deletion, the number of lines according to the
-      // diagnostics should be the same as the number according to the
-      // document.
-      xassert(numLines() == numDocLines);
-    }
-  }
+  confineLineIndices(doc.numLines());
 
   // Confine the line lengths.
   for (int i=0; i < m_lineData.length(); ++i) {
@@ -900,11 +983,31 @@ void TextMCoordMap::adjustForDocument(TextDocumentCore const &doc)
       data->adjustForDocument(doc, i);
     }
   }
+
+  // Set `m_numLines` to match `doc`.
+  m_numLines = doc.numLines();
+}
+
+
+void TextMCoordMap::setNumLinesAndAdjustAccordingly(int numLines)
+{
+  confineLineIndices(numLines);
+  m_numLines = numLines;
 }
 
 
 void TextMCoordMap::insertLines(int line, int count)
 {
+  xassert(canTrackUpdates());
+
+  // Following the rules of `TextDocumentCore::insertLine`, it is
+  // permissible to "insert" a line right after the last one,
+  // effectively appending new lines.
+  xassert(cc::z_le_le(line, *m_numLines));
+
+  xassert(count >= 0);
+  *m_numLines += count;
+
   // Above the insertion point.
   LineData const * NULLABLE lineAbove = getLineDataC(line-1);
 
@@ -941,6 +1044,13 @@ void TextMCoordMap::insertLines(int line, int count)
 
 void TextMCoordMap::deleteLines(int line, int count)
 {
+  xassert(canTrackUpdates());
+
+  xassert(cc::z_le_le_le(line, line+count, *m_numLines));
+  //                 0 <=    <=          <=
+
+  // m_numLines gets decreased during the loop below.
+
   // Single line spans in the deleted region, which will be deposited
   // at the start of the line that ends up at index `line`.
   std::set<SingleLineSpan> singleLineSpans;
@@ -974,10 +1084,10 @@ void TextMCoordMap::deleteLines(int line, int count)
     if (line < m_lineData.length()) {
       m_lineData.remove(line);
     }
-    else {
-      // We're beyond any recorded spans.
-      break;
-    }
+
+    // Reduce the total number of lines.
+    --*m_numLines;
+    xassert(*m_numLines >= 1);
   }
 
   if (singleLineSpans.empty() &&
@@ -988,11 +1098,17 @@ void TextMCoordMap::deleteLines(int line, int count)
   }
 
   // Now we need to put everything we collected from the deleted lines
-  // onto `line`.
-  LineData *lineBelow = getOrCreateLineData(line);
+  // onto `line`, unless we just deleted the last line, in which case it
+  // goes to the line above.
+  xassert(line <= *m_numLines);
+  LineData *recipientLine =
+    // This test of `m_numLines` is the primary reason it exists.
+    line < *m_numLines?
+      getOrCreateLineData(line) :      // Line after deletion range.
+      getOrCreateLineData(line-1);     // Line before deletion range.
 
   for (SingleLineSpan const &span : singleLineSpans) {
-    lineBelow->m_singleLineSpans.insert(
+    recipientLine->m_singleLineSpans.insert(
       SingleLineSpan(0, 0, span.m_value));
   }
 
@@ -1000,23 +1116,23 @@ void TextMCoordMap::deleteLines(int line, int count)
     if (contains(ends, v)) {
       // This value's range started and ended in the deleted section
       // (above), so put it all on this (the next) line.
-      lineBelow->m_singleLineSpans.insert(
+      recipientLine->m_singleLineSpans.insert(
         SingleLineSpan(0, 0, v));
     }
 
-    else if (contains(lineBelow->m_continuesHere, v)) {
+    else if (contains(recipientLine->m_continuesHere, v)) {
       // Replace the continuation with a start.
-      setRemoveExisting(lineBelow->m_continuesHere, v);
-      lineBelow->m_startsHere.insert(
+      setRemoveExisting(recipientLine->m_continuesHere, v);
+      recipientLine->m_startsHere.insert(
         Boundary(0, v));
     }
 
     else {
       // The span must have previously ended here.
-      int endByteIndex = lineBelow->removeEnd_getByteIndex(v);
+      int endByteIndex = recipientLine->removeEnd_getByteIndex(v);
 
       // Replace the end with a single-line span.
-      lineBelow->m_singleLineSpans.insert(
+      recipientLine->m_singleLineSpans.insert(
         SingleLineSpan(0, endByteIndex, v));
     }
   }
@@ -1025,9 +1141,16 @@ void TextMCoordMap::deleteLines(int line, int count)
     if (contains(starts, v)) {
       // Already dealt with it in the previous loop.
     }
-    else {
-      lineBelow->m_endsHere.insert(
+    else if (line < *m_numLines) {
+      // We can be sure that the value did not start or continue on
+      // `recipientLine`, so just add an end.
+      recipientLine->m_endsHere.insert(
         Boundary(0, v));
+    }
+    else {
+      // In the case of deleting the last line, we need more complicated
+      // logic to handle it.
+      recipientLine->addEndBoundaryToLastLine(v);
     }
   }
 }
@@ -1035,6 +1158,8 @@ void TextMCoordMap::deleteLines(int line, int count)
 
 void TextMCoordMap::insertLineBytes(TextMCoord tc, int lengthBytes)
 {
+  xassert(canTrackUpdates());
+
   if (LineData *lineData = getLineData(tc.m_line)) {
     lineData->insertBytes(tc.m_byteIndex, lengthBytes);
   }
@@ -1043,6 +1168,8 @@ void TextMCoordMap::insertLineBytes(TextMCoord tc, int lengthBytes)
 
 void TextMCoordMap::deleteLineBytes(TextMCoord tc, int lengthBytes)
 {
+  xassert(canTrackUpdates());
+
   if (LineData *lineData = getLineData(tc.m_line)) {
     lineData->deleteBytes(tc.m_byteIndex, lengthBytes);
   }
@@ -1061,9 +1188,53 @@ int TextMCoordMap::numEntries() const
 }
 
 
-int TextMCoordMap::numLines() const
+int TextMCoordMap::lineIndexAfterLastEntry() const
 {
   return m_lineData.length();
+}
+
+
+std::optional<int> TextMCoordMap::getNumLinesOpt() const
+{
+  return m_numLines;
+}
+
+
+int TextMCoordMap::getNumLines() const
+{
+  xassert(canTrackUpdates());
+
+  return m_numLines.value();
+}
+
+
+bool TextMCoordMap::canTrackUpdates() const
+{
+  return m_numLines.has_value();
+}
+
+
+bool TextMCoordMap::validCoord(TextMCoord tc) const
+{
+  if (!( 0 <= tc.m_line )) {
+    return false;
+  }
+
+  if (m_numLines.has_value()) {
+    if (!( tc.m_line < *m_numLines )) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+bool TextMCoordMap::validRange(TextMCoordRange const &range) const
+{
+  return validCoord(range.m_start) &&
+         validCoord(range.m_end) &&
+         range.isRectified();
 }
 
 
@@ -1086,7 +1257,7 @@ auto TextMCoordMap::getAllEntries() const -> std::set<DocEntry>
   // spans for which we have seen the start but not the end.
   std::map<Value, TextMCoord> openSpans;
 
-  for (int line=0; line < numLines(); ++line) {
+  for (int line=0; line < lineIndexAfterLastEntry(); ++line) {
     if (LineData const *lineData = getLineDataC(line)) {
 
       for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
@@ -1137,7 +1308,10 @@ auto TextMCoordMap::getMappedValues() const -> std::set<Value>
 
 TextMCoordMap::operator gdv::GDValue() const
 {
-  return toGDValue(getAllEntries());
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "TextMCoordMap"_sym);
+  GDV_WRITE_MEMBER_SYM(m_numLines);
+  m.mapSetValueAtSym("entries", toGDValue(getAllEntries()));
+  return m;
 }
 
 
@@ -1146,6 +1320,7 @@ gdv::GDValue TextMCoordMap::dumpInternals() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP);
   m.taggedContainerSetTag("TextMCoordMapInternals"_sym);
 
+  GDV_WRITE_MEMBER_SYM(m_numLines);
   GDV_WRITE_MEMBER_SYM(m_values);
 
   // Build a map containing `m_lineData`.  (Unfortunately, C++

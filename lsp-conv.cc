@@ -72,7 +72,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
     convertNumber<TextDocument::VersionNumber>(*lspDiags->m_version);
 
   std::unique_ptr<TextDocumentDiagnostics> ret(
-    new TextDocumentDiagnostics(diagsVersion));
+    new TextDocumentDiagnostics(diagsVersion, std::nullopt));
 
   for (LSP_Diagnostic const &lspDiag : lspDiags->m_diagnostics) {
     TextMCoordRange range = convertLSPRange(lspDiag.m_range);

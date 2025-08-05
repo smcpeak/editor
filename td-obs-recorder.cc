@@ -148,20 +148,22 @@ TDCO_TotalChange::~TDCO_TotalChange()
 {}
 
 
-TDCO_TotalChange::TDCO_TotalChange()
+TDCO_TotalChange::TDCO_TotalChange(int numLines)
+  : IMEMBFP(numLines)
 {}
 
 
 void TDCO_TotalChange::applyChangeToDiagnostics(
   TextDocumentDiagnostics *diagnostics) const
 {
-  diagnostics->clear();
+  diagnostics->clearEverything(m_numLines);
 }
 
 
 TDCO_TotalChange::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "TotalChange"_sym);
+  GDV_WRITE_MEMBER_SYM(m_numLines);
   return m;
 }
 
@@ -365,7 +367,7 @@ void TextDocumentObservationRecorder::observeTotalChange(
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_TotalChange>());
+    addObservation(std::make_unique<TDCO_TotalChange>(doc.numLines()));
   }
   GENERIC_CATCH_END
 }

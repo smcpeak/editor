@@ -117,10 +117,14 @@ public:      // methods
 
 // Records `observeTotalChange`.
 class TDCO_TotalChange : public TextDocumentChangeObservation {
+private:     // data
+  // Number of lines in the document after the change.
+  int m_numLines;
+
 public:      // methods
   virtual ~TDCO_TotalChange() override;
 
-  explicit TDCO_TotalChange();
+  explicit TDCO_TotalChange(int m_numLines);
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;

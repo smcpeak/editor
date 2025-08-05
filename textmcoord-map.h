@@ -71,10 +71,15 @@
   of spans is reasonably small.  In particular, the primary intended use
   of spans is to record the text described by compiler error messages.
 
-  That said, the class `TextDocumentDiagnostics` (`td-diagnostics.h`) is
-  built on top of this one and is what is intended to be directly used
-  by an editor application.  This class merely provides the algorithmic
-  core.
+  The map can operate in two "modes", one where it merely holds the
+  diagnostic data without being able to update it, and the other where
+  it can perform updates.  The latter mode requires that the map know
+  the number of lines in the document being tracked; see
+  `canTrackUpdates()`.
+
+  The class `TextDocumentDiagnostics` (`td-diagnostics.h`) is built on
+  top of this one and is what is intended to be directly used by an
+  editor application.  This class merely provides the algorithmic core.
 */
 class TextMCoordMap {
   // Allow test code to access private members.
@@ -269,7 +274,16 @@ private:     // types
 
     // Ensure the coordinates are valid for `line` in `doc`.
     void adjustForDocument(TextDocumentCore const &doc, int line);
+
+    // In the somewhat rare case that the last line is deleted but it
+    // had an entry, add an end for the value to this line, the one that
+    // was just before the last line.  This line must either have a
+    // start or a continuation of `v`.
+    void addEndBoundaryToLastLine(Value v);
   };
+
+  // Array of owner pointers to `LineData`.
+  typedef GapArray<LineData * NULLABLE /*owner*/> LineDataGapArray;
 
 private:     // data
   // Set of values that are part of some range.
@@ -289,8 +303,30 @@ private:     // data
      * it occurs as the value of exactly one start Boundary, exactly one
        stop Boundary (which is after the start), all intervening
        continuations, and no SingleLineSpans.
+
+     Furthermore, the last entry in this array, if it is not empty, is
+     not null.  That is, it is only as long as it needs to be in order
+     to hold the `LineData` closest to the end.
   */
-  GapArray<LineData * NULLABLE /*owner*/> m_lineData;
+  LineDataGapArray m_lineData;
+
+  // If set, this is the number of lines in the file, i.e., the number
+  // of newline characters in the document plus one (since newline
+  // characters are treated as line *separators* in this context).
+  //
+  // We need this information in order to properly handle the case of
+  // deleting the last line in the file, since otherwise we would not
+  // know when to diagnostics on a deleted line up one line (normally
+  // they keep their line number).
+  //
+  // However, it is optional because for part of the lifecycle of this
+  // object, it is just a passive container for diagnostics, not
+  // associated with any document contents.  In that mode, it cannot
+  // update the diagnostics in response to document changes.
+  //
+  // Invariant: if has value, m_lineData.length() <= m_numLines
+  // Invariant: if has value, m_numLines >= 1
+  std::optional<int> m_numLines;
 
 private:     // methods
   // Get the data for `line`, creating it if necessary.
@@ -303,13 +339,34 @@ private:     // methods
   // Same, but non-const.
   LineData * NULLABLE getLineData(int line);
 
+  // Assert:
+  //   0 <= line &&
+  //   m_numLines.has_value() ==>
+  //     line < *m_numLines
+  void validateLineIndex(int line) const;
+
+  // True if `a` and `b` are (logically) equal.
+  static bool equalLineData(
+    LineDataGapArray const &a,
+    LineDataGapArray const &b);
+
+  // Ensure all line indices are in [0, maxNumLines-1].
+  //
+  // Requires: maxNumLines > 0
+  void confineLineIndices(int maxNumLines);
+
 public:      // methods
   ~TextMCoordMap();
 
   TextMCoordMap(TextMCoordMap const &obj);
 
-  // Make an empty map.
-  TextMCoordMap();
+  // Make an empty map corresponding to a document with the given
+  // number of lines initially.
+  //
+  // Requires: if has value, numLines > 0
+  //
+  // TODO: I think I only ever pass `nullopt` as `numLines`.
+  explicit TextMCoordMap(std::optional<int> numLines);
 
   bool operator==(TextMCoordMap const &obj) const;
   bool operator!=(TextMCoordMap const &obj) const
@@ -321,21 +378,36 @@ public:      // methods
 
   // ---- Manipulate the mapping directly ----
   // Add an entry.  Requires that its value not already be in the map.
+  // Also requires `validRange(entry.m_range)`.
   void insertEntry(DocEntry entry);
 
   // There is not currently a way to remove individual entries because I
   // don't anticipate needing to do so.
 
-  // Remove all entries.
-  void clear();
+  // Remove all entries, but leave the number of lines as-is.
+  void clearEntries();
+
+  // Remove entries and set `numLines`, which must be positive if it has
+  // a value.
+  void clearEverything(std::optional<int> numLines);
 
   // Adjust all diagnostic ranges to be valid for `doc`.  See the
   // comments on `TextDocumentDiagnostics::adjustForDocument` for
   // motivation, etc.
+  //
+  // This sets `m_numLines`, thus enabling `canTrackUpdates()`.
   void adjustForDocument(TextDocumentCore const &doc);
+
+  // Adjust all diagnostic ranges so their line indices are in [0,
+  // numLines-1].  We do this after receiving diagnostics for a
+  // potentially old version of a document, for which we only know the
+  // line count.  This enables tracking updates.
+  void setNumLinesAndAdjustAccordingly(int numLines);
 
 
   // ---- Manipulate the mapping indirectly via text insert/delete ----
+  // All of the methods in this section require `canTrackUpdates()`.
+
   // Insert `count` lines starting at `line`, shifting all range
   // boundaries that come after the line down.
   void insertLines(int line, int count);
@@ -364,10 +436,40 @@ public:      // methods
   // been performed since the last `clear()`.
   int numEntries() const;
 
-  // Total number of lines currently known.  Line numbers outside [0,
-  // numLines()-1] have no entries.  This is 0 if there are no entries,
-  // and otherwise it is one larger than the largest endpoint line.
-  int numLines() const;
+  // Line numbers outside [0, lineIndexAfterLastEntry()-1] have no
+  // entries.  This is 0 if there are no entries, and otherwise it is
+  // one larger than the largest endpoint line.
+  //
+  // TODO: I'd like to remove this if I can, as it exposes
+  // implementation details.
+  int lineIndexAfterLastEntry() const;
+
+  // Number of lines in the file, if known.
+  //
+  // TODO: Rename this to `numLines` once I've audited all of the
+  // existing calls that use the old name.
+  std::optional<int> getNumLinesOpt() const;
+
+  // True if we can track document updates, which requires that we know
+  // the number of lines.  Setting the number of lines is normally done
+  // for the first time in `adjustForDocument` or
+  // `setNumLinesAndAdjustAccordingly`.
+  //
+  // TODO: Is it either?  Can I make it consistently one of them?
+  bool canTrackUpdates() const;
+
+  // Return `getNumLinesOpt().value()`.
+  //
+  // Requires: canTrackUpdates()
+  int getNumLines() const;
+
+  // True if `tc` is valid for the current number of lines.
+  // Specifically, `0 <= tc.m_line` and, if `m_numLines` has a value,
+  // then `tc.m_line < getNumLines()`.
+  bool validCoord(TextMCoord tc) const;
+
+  // True if both endpoints are valid and `range.isRectified()`.
+  bool validRange(TextMCoordRange const &range) const;
 
   // Get all the entries that intersect `line`.  This will include
   // partial entries for multi-line spans, which describe only the
@@ -386,7 +488,8 @@ public:      // methods
   // Get the set of values that are mapped.
   std::set<Value> getMappedValues() const;
 
-  // Equivalent to `toGDValue(getAllEntries())`.
+  // Return a tagged (`TextMCoordMap`) ordered map with `numLines` and
+  // `entries`, the latter containing `toGDValue(getAllEntries())`.
   operator gdv::GDValue() const;
 
   // Internal data as GDValue, for debug/test purposes.

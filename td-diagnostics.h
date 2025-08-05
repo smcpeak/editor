@@ -94,6 +94,10 @@ public:      // methods
 // `TextDocumentDiagnosticsUpdater`, below, is what ties diagnostics and
 // document together and performs the updates to keep them synchronized.
 //
+// However, the `adjustForDocument` method must be called before updates
+// are tracked; prior to that, this class can hold the diagnostics, but
+// cannot update them.
+//
 class TextDocumentDiagnostics : public SerfRefCount {
 public:      // types
   // Type use to record document version numbers.
@@ -180,8 +184,15 @@ public:      // methods
 
   TextDocumentDiagnostics(TextDocumentDiagnostics const &obj);
 
-  // Initially empty set.
-  explicit TextDocumentDiagnostics(VersionNumber originVersion);
+  // Make an initially empty set of diagnostics.
+  //
+  // `originVersion` is the version number of the document with which
+  // these diagnostics are associated.
+  //
+  // `numLines` is the number of lines (newline characters plus one) in
+  // the associated document, if that is known.
+  explicit TextDocumentDiagnostics(
+    VersionNumber originVersion, std::optional<int> numLines);
 
   // Assert all invariants.
   void selfCheck() const;
@@ -192,6 +203,9 @@ public:      // methods
 
   VersionNumber getOriginVersion() const { return m_originVersion; }
 
+  // Number of lines in the document the diagnostics apply to.
+  std::optional<int> getNumLinesOpt() const;
+
   // True if there are no mappings.
   bool empty() const;
 
@@ -200,10 +214,13 @@ public:      // methods
 
   // If there are no diagnostics, this returns -1.  Otherwise, it is the
   // largest line number for which there is any intersecting diagnostic.
+  //
+  // TODO: Do I need this?
   int maxDiagnosticLine() const;
 
-  // Remove all diagnostics.
-  void clear();
+  // Remove all diagnostics and reset to `numLines`, which must be
+  // positive.
+  void clearEverything(int numLines);
 
   // Insert the mapping `range` -> `diag`.
   void insertDiagnostic(TextMCoordRange range, TDD_Diagnostic &&diag);
@@ -242,6 +259,10 @@ public:      // methods
   // shape, thus establishing the correspondence invariant that
   // `TextDocumentDiagnosticsUpdater` can then maintain going forward.
   void adjustForDocument(TextDocumentCore const &doc);
+
+  // Set the line count and confine line indices accordingly.  This is
+  // a cruder form of `adjustForDocument`.
+  void setNumLinesAndAdjustAccordingly(int numLines);
 
   // Perform updates on the underlying mapping in order to track text
   // updates.  These have the same semantics as the same-named methods
@@ -296,13 +317,15 @@ public:      // methods
 public:      // TextDocumentObserver methods
   // Each of these calls corresponding methods on `m_diagnostics` to
   // keep them up to date, i.e., so each diagnostic continues to apply
-  // to the "same" range of text.
+  // to the "same" range of text.  They also maintain the number of
+  // lines.
   virtual void observeInsertLine(TextDocumentCore const &doc, int line) noexcept override;
   virtual void observeDeleteLine(TextDocumentCore const &doc, int line) noexcept override;
   virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept override;
   virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept override;
 
-  // This clears the diagnostics.
+  // This clears the diagnostics and resets the number of lines to match
+  // `doc`.
   virtual void observeTotalChange(TextDocumentCore const &doc) noexcept override;
 };
 

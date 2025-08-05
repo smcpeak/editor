@@ -2185,7 +2185,8 @@ void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
 static std::unique_ptr<TextDocumentDiagnostics> makeFakeDiagnostics()
 {
   std::unique_ptr<TextDocumentDiagnostics> diags(
-    new TextDocumentDiagnostics(1 /*version*/));
+    new TextDocumentDiagnostics(1 /*version*/,
+    std::nullopt /*numLines*/));
   TextMCoordRange range{{10,10}, {10,30}};
 
   diags->insertDiagnostic(range, {
