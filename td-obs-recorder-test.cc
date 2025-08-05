@@ -14,10 +14,9 @@
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // smbase::{mapKeySet, mapFirstKeyOpt}
-#include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-random.h"          // smbase::{sm_random, RandomChoice}
-#include "smbase/sm-test.h"            // EXPECT_EQ[_GDV}, TEST_CASE
+#include "smbase/sm-test.h"            // EXPECT_EQ[_GDV}, TEST_CASE, envRandomizedTestIters
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
 #include <set>                         // std::set
@@ -715,8 +714,10 @@ void test_randomized()
 {
   TEST_CASE("test_randomized");
 
-  int const outerLimit = envAsIntOr(10, "TORT_OUTER_LIMIT");
-  int const innerLimit = envAsIntOr(100, "TORT_INNER_LIMIT");
+  int const outerLimit =
+    envRandomizedTestIters(10, "TORT_OUTER_LIMIT", 2);
+  int const innerLimit =
+    envRandomizedTestIters(100, "TORT_INNER_LIMIT", 2);
 
   for (int outer=0; outer < outerLimit; ++outer) {
     EXN_CONTEXT_EXPR(outer);

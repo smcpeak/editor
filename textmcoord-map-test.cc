@@ -15,10 +15,9 @@
 #include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/set-util.h"           // smbase::setInsert
-#include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES, IMEMBFP
 #include "smbase/sm-random.h"          // smbase::{sm_random, RandomChoice}
-#include "smbase/sm-test.h"            // ARGS_MAIN, EXPECT_EQ[_GDV]
+#include "smbase/sm-test.h"            // ARGS_MAIN, EXPECT_EQ[_GDV], envRandomizedTestIters
 #include "smbase/string-util.h"        // join, suffixAll, stringToVectorOfUChar
 
 #include <algorithm>                   // std::max
@@ -1427,8 +1426,10 @@ void randomEdit(MapPair &m)
 void test_randomOps()
 {
   // On my machine, with the defaults, the test takes ~1s.
-  int const outerLimit = envAsIntOr(10, "TMT_OUTER_LIMIT");
-  int const innerLimit = envAsIntOr(100, "TMT_INNER_LIMIT");
+  int const outerLimit =
+    envRandomizedTestIters(10, "TMT_OUTER_LIMIT", 2);
+  int const innerLimit =
+    envRandomizedTestIters(100, "TMT_INNER_LIMIT", 2);
 
   for (int outer=0; outer < outerLimit; ++outer) {
     EXN_CONTEXT_EXPR(outer);
@@ -1638,7 +1639,7 @@ void randomDocInsertions(TextDocumentCore &doc, int n)
 void test_adjustForDocumentRandomized()
 {
   // On my computer, 100 iterations takes ~0.3s.
-  int const iters = envAsIntOr(100, "AFDR_ITERS");
+  int const iters = envRandomizedTestIters(100, "AFDR_ITERS");
 
   for (int i=0; i < iters; ++i) {
     // Random diagnostics.
