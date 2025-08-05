@@ -256,7 +256,7 @@ void testVarious()
         "    four    "
         "     "
         ""]
-      recent: 5
+      recentIndex: 5
       longestLengthSoFar: 13
       recentLine: "      "
       versionNumber: 27

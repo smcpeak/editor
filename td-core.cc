@@ -25,7 +25,7 @@ using namespace gdv;
 // ---------------------- TextDocumentCore --------------------------
 TextDocumentCore::TextDocumentCore()
   : m_lines(),               // empty sequence of lines
-    m_recent(-1),
+    m_recentIndex(-1),
     m_longestLengthSoFar(0),
     m_recentLine(),
     m_versionNumber(0),
@@ -61,9 +61,9 @@ TextDocumentCore::~TextDocumentCore()
 
 void TextDocumentCore::selfCheck() const
 {
-  xassert(m_recent >= -1);
-  if (m_recent >= 0) {
-    xassert(m_lines.get(m_recent).isEmpty());
+  xassert(m_recentIndex >= -1);
+  if (m_recentIndex >= 0) {
+    xassert(m_lines.get(m_recentIndex).isEmpty());
   }
   else {
     xassert(m_recentLine.length() == 0);
@@ -106,7 +106,7 @@ gdv::GDValue TextDocumentCore::dumpInternals() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "TextDocumentCoreInternals"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_lines);
-  GDV_WRITE_MEMBER_SYM(m_recent);
+  GDV_WRITE_MEMBER_SYM(m_recentIndex);
   GDV_WRITE_MEMBER_SYM(m_longestLengthSoFar);
   GDV_WRITE_MEMBER_SYM(m_recentLine);
   GDV_WRITE_MEMBER_SYM(m_versionNumber);
@@ -123,11 +123,11 @@ gdv::GDValue TextDocumentCore::dumpInternals() const
 
 void TextDocumentCore::detachRecent()
 {
-  if (m_recent == -1) { return; }
+  if (m_recentIndex == -1) { return; }
 
   // The slot in 'm_lines' should currently be empty because the content
   // is in 'm_recentLine'.
-  xassert(m_lines.get(m_recent).isEmpty());
+  xassert(m_lines.get(m_recentIndex).isEmpty());
 
   // copy 'recentLine' into lines[recent]
   int len = m_recentLine.length();
@@ -137,7 +137,7 @@ void TextDocumentCore::detachRecent()
     m_recentLine.writeIntoArray(p, len);
     xassert(p[len] == '\n');   // may as well check for overrun..
 
-    m_lines.set(m_recent, TextDocumentLine(len+1, p));
+    m_lines.set(m_recentIndex, TextDocumentLine(len+1, p));
 
     m_recentLine.clear();
   }
@@ -145,13 +145,13 @@ void TextDocumentCore::detachRecent()
     // lines[recent] is already empty, nothing needs to be done.
   }
 
-  m_recent = -1;
+  m_recentIndex = -1;
 }
 
 
 void TextDocumentCore::attachRecent(TextMCoord tc, int insLength)
 {
-  if (m_recent == tc.m_line) { return; }
+  if (m_recentIndex == tc.m_line) { return; }
   detachRecent();
 
   TextDocumentLine const &tdl = m_lines.get(tc.m_line);
@@ -168,7 +168,7 @@ void TextDocumentCore::attachRecent(TextMCoord tc, int insLength)
     xassert(m_recentLine.length() == 0);
   }
 
-  m_recent = tc.m_line;
+  m_recentIndex = tc.m_line;
 }
 
 
@@ -176,7 +176,7 @@ bool TextDocumentCore::isEmptyLine(int line) const
 {
   bc(line);
 
-  if (line == m_recent) {
+  if (line == m_recentIndex) {
     return m_recentLine.length() == 0;
   }
   else {
@@ -189,7 +189,7 @@ int TextDocumentCore::lineLengthBytes(int line) const
 {
   bc(line);
 
-  if (line == m_recent) {
+  if (line == m_recentIndex) {
     return m_recentLine.length();
   }
   else {
@@ -231,7 +231,7 @@ void TextDocumentCore::getPartialLine(TextMCoord tc,
 
   char *destPtr = dest.ptrToPushedMultipleAlt(numBytes);
 
-  if (tc.m_line == m_recent) {
+  if (tc.m_line == m_recentIndex) {
     m_recentLine.writeIntoArray(destPtr, numBytes, tc.m_byteIndex);
   }
   else {
@@ -346,8 +346,8 @@ void TextDocumentCore::insertLine(int const line)
   m_lines.insert(line, TextDocumentLine() /*value*/);
 
   // adjust which line is 'recent'
-  if (m_recent >= line) {
-    m_recent++;
+  if (m_recentIndex >= line) {
+    m_recentIndex++;
   }
 
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
@@ -360,7 +360,7 @@ void TextDocumentCore::deleteLine(int const line)
 {
   bumpVersionNumber();
 
-  if (line == m_recent) {
+  if (line == m_recentIndex) {
     xassert(m_recentLine.length() == 0);
     detachRecent();
   }
@@ -375,8 +375,8 @@ void TextDocumentCore::deleteLine(int const line)
   m_lines.remove(line);
 
   // adjust which line is 'recent'
-  if (m_recent > line) {
-    m_recent--;
+  if (m_recentIndex > line) {
+    m_recentIndex--;
   }
 
   FOREACH_RCSERFLIST_NC(TextDocumentObserver, m_observers, iter) {
@@ -404,7 +404,9 @@ void TextDocumentCore::insertText(TextMCoord const tc,
     }
   #endif
 
-  if (tc.m_byteIndex==0 && isEmptyLine(tc.m_line) && tc.m_line!=m_recent) {
+  if (tc.m_byteIndex == 0 &&
+      isEmptyLine(tc.m_line) &&
+      tc.m_line != m_recentIndex) {
     // setting a new line, can leave 'recent' alone
     char *p = new char[length+1];
     memcpy(p, text, length);
@@ -432,7 +434,9 @@ void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
   bctc(tc);
   bumpVersionNumber();
 
-  if (tc.m_byteIndex==0 && length==lineLengthBytes(tc.m_line) && tc.m_line!=m_recent) {
+  if (tc.m_byteIndex == 0 &&
+      length == lineLengthBytes(tc.m_line) &&
+      tc.m_line != m_recentIndex) {
     // removing entire line, no need to move 'recent'
     TextDocumentLine const &tdl = m_lines.get(tc.m_line);
     if (!tdl.isEmpty()) {
@@ -463,7 +467,7 @@ void TextDocumentCore::dumpRepresentation() const
 
   // recent
   m_recentLine.getInternals(L, G, R);
-  printf("  recent=%d: L=%d G=%d R=%d, L+R=%d\n", m_recent, L,G,R, L+R);
+  printf("  recent=%d: L=%d G=%d R=%d, L+R=%d\n", m_recentIndex, L,G,R, L+R);
 
   // line contents
   for (int i=0; i<numLines(); i++) {
@@ -812,7 +816,7 @@ TextDocumentCore::LineIterator::LineIterator(
   m_nonRecentLine(NULL),
   m_byteOffset(0)
 {
-  if (line == m_tdc->m_recent) {
+  if (line == m_tdc->m_recentIndex) {
     m_isRecentLine = true;
   }
   else if (0 <= line && line < m_tdc->numLines()) {

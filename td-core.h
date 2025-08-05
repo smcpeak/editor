@@ -61,17 +61,16 @@ private:     // instance data
 
   // The most-recently edited line number, or -1 to mean that no line's
   // contents are stored.
-  //
-  // TODO: Rename to `m_recentIndex`.
-  int m_recent;
+  int m_recentIndex;
 
   // Length of the longest line this file has ever had, in bytes.  This
   // is my poor-man's substitute for a proper interval map, etc., to be
   // able to answer the 'maxLineLength()' query.
   int m_longestLengthSoFar;
 
-  // If `m_recent != -1`, then this holds the contents of that line, and
-  // `m_lines[m_recent]` is empty.  Otherwise, this is empty.
+  // If `m_recentIndex != -1`, then this holds the contents of that
+  // line, and `m_lines[m_recentIndex]` is empty.  Otherwise, this is
+  // empty.
   GapArray<char> m_recentLine;
 
   // Version number for the contents.  This starts at 1 and increases by
