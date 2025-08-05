@@ -192,9 +192,10 @@ public:    // funcs
   // distance>0) or backwards (left, then up, when distance<0) by the
   // given distance in *bytes* through the valid coordinates of the
   // file.  It must initially be a valid coordinate, but if by walking
-  // we reach an invalid coordinate, then the function simply returns
-  // false (otherwise true).
-  bool walkCoordBytes(TextMCoord &tc, int distance) const;
+  // we reach an invalid coordinate, then the function returns false,
+  // leaving `tc` at the invalid coordinate.  Otherwise it returns true
+  // and `tc` is valid afterward.
+  bool walkCoordBytes(TextMCoord &tc /*INOUT*/, int distance) const;
 
   // Compute the number of bytes in a range.
   int countBytesInRange(TextMCoordRange const &range) const;

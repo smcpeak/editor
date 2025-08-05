@@ -299,7 +299,7 @@ int TextDocumentCore::numLinesExceptFinalEmpty() const
 }
 
 
-bool TextDocumentCore::walkCoordBytes(TextMCoord &tc, int len) const
+bool TextDocumentCore::walkCoordBytes(TextMCoord &tc /*INOUT*/, int len) const
 {
   xassert(this->validCoord(tc));
 
