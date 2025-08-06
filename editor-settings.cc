@@ -212,7 +212,8 @@ EditorSettings::EditorSettings()
     m_applyHistory(),
     m_runHistory(),
     m_leftWindowPos(),
-    m_rightWindowPos()
+    m_rightWindowPos(),
+    m_grepsrcSearchesSubrepos(false)
 {}
 
 
@@ -222,7 +223,8 @@ EditorSettings::EditorSettings(GDValueParser const &p)
     GDVP_READ_OPT_MEMBER_SYM(m_applyHistory),
     GDVP_READ_OPT_MEMBER_SYM(m_runHistory),
     GDVP_READ_OPT_MEMBER_SYM(m_leftWindowPos),
-    GDVP_READ_OPT_MEMBER_SYM(m_rightWindowPos)
+    GDVP_READ_OPT_MEMBER_SYM(m_rightWindowPos),
+    GDVP_READ_OPT_MEMBER_SYM(m_grepsrcSearchesSubrepos)
 {
   p.checkTaggedOrderedMapTag("EditorSettings");
 
@@ -249,6 +251,7 @@ EditorSettings::operator GDValue() const
   GDV_WRITE_MEMBER_SYM(m_runHistory);
   GDV_WRITE_MEMBER_SYM(m_leftWindowPos);
   GDV_WRITE_MEMBER_SYM(m_rightWindowPos);
+  GDV_WRITE_MEMBER_SYM(m_grepsrcSearchesSubrepos);
 
   return m;
 }
@@ -265,6 +268,7 @@ void EditorSettings::swap(EditorSettings &obj)
     SWAP_MEMB(m_runHistory);
     SWAP_MEMB(m_leftWindowPos);
     SWAP_MEMB(m_rightWindowPos);
+    SWAP_MEMB(m_grepsrcSearchesSubrepos);
   }
 }
 
@@ -396,6 +400,13 @@ void EditorSettings::setLeftWindowPos(WindowPosition const &pos)
 void EditorSettings::setRightWindowPos(WindowPosition const &pos)
 {
   m_rightWindowPos = pos;
+}
+
+
+// ------------------------------- misc --------------------------------
+void EditorSettings::setGrepsrcSearchesSubrepos(bool b)
+{
+  m_grepsrcSearchesSubrepos = b;
 }
 
 

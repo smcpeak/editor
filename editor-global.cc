@@ -1186,6 +1186,15 @@ void EditorGlobal::settings_setRightWindowPos(
 }
 
 
+void EditorGlobal::settings_setGrepsrcSearchesSubrepos(
+  QWidget * NULLABLE parent,
+  bool b)
+{
+  m_settings.setGrepsrcSearchesSubrepos(b);
+  saveSettingsFile(parent);
+}
+
+
 void EditorGlobal::addLSPErrorMessage(std::string &&msg)
 {
   // I'm thinking this should also emit a signal, although right now I

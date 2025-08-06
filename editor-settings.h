@@ -140,6 +140,10 @@ private:     // data
   WindowPosition m_leftWindowPos;
   WindowPosition m_rightWindowPos;
 
+  // If true, Ctrl+Alt+D will pass `--recurse` to `grepsrc` in order to
+  // search within submodule repositories.
+  bool m_grepsrcSearchesSubrepos;
+
 private:     // funcs
   // Get a wriable reference to a command history.
   CommandLineHistory &getCommandHistory(
@@ -217,6 +221,12 @@ public:      // funcs
 
   void setLeftWindowPos(WindowPosition const &pos);
   void setRightWindowPos(WindowPosition const &pos);
+
+  // ------------------------------ misc -------------------------------
+  bool getGrepsrcSearchesSubrepos() const
+    { return m_grepsrcSearchesSubrepos; }
+
+  void setGrepsrcSearchesSubrepos(bool b);
 };
 
 

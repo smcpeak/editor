@@ -77,6 +77,7 @@ private:     // data
 
   // Actions for toggle options.
   QAction *m_toggleReadOnlyAction;
+  QAction *m_toggleGrepsrcSearchesSubreposAction;
   QAction *m_toggleVisibleWhitespaceAction;
   QAction *m_toggleVisibleSoftMarginAction;
   QAction *m_toggleHighlightTrailingWSAction;
@@ -268,6 +269,7 @@ public Q_SLOTS:
   void editPreviousSearchHit() NOEXCEPT;
   void editGotoLine() NOEXCEPT;
   void editGrepSource() NOEXCEPT;
+  void editToggleGrepsrcSearchesSubrepos() NOEXCEPT;
   void editRigidIndent() NOEXCEPT;
   void editRigidUnindent() NOEXCEPT;
   void editJustifyParagraph() NOEXCEPT;

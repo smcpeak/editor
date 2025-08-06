@@ -324,7 +324,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
     menu->setObjectName("editMenu");
 
-    // Used shortcut letters: ACDJFGKLNPRSTU
+    // Used shortcut letters: ACDJFGKNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
@@ -351,8 +351,8 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
-    MENU_ITEM_KEY("&Search ...", editSearch, Qt::CTRL + Qt::Key_S);
-    MENU_ITEM_KEY("Rep&lace", editReplace, Qt::CTRL + Qt::Key_R);
+    MENU_ITEM_KEY("Search ...", editSearch, Qt::CTRL + Qt::Key_S);
+    MENU_ITEM_KEY("Replace", editReplace, Qt::CTRL + Qt::Key_R);
     MENU_ITEM_KEY("Replace and next", editReplaceAndNext,
                   Qt::CTRL + Qt::SHIFT + Qt::Key_R);
     MENU_ITEM_KEY("&Next search hit\tCtrl+Period", editNextSearchHit,
@@ -365,6 +365,11 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("&Goto line ...", editGotoLine, Qt::ALT + Qt::Key_G);
     MENU_ITEM_KEY("Grep source for symbol at cursor", editGrepSource,
                   Qt::CTRL + Qt::ALT + Qt::Key_G);
+    CHECKABLE_ACTION(m_toggleGrepsrcSearchesSubreposAction,
+      "Grep source: &Search in subrepos",
+      editToggleGrepsrcSearchesSubrepos,
+      editorSettings().getGrepsrcSearchesSubrepos());
+
 
     menu->addSeparator();
 
@@ -1491,8 +1496,29 @@ void EditorWindow::editGrepSource() NOEXCEPT
       currentDocument()->hostName(),
       toQString(dir),
       true /*prefixStderrLines*/,
-      qstringb("grepsrc " << shellDoubleQuote(searchText)));
+      qstringb(
+        "grepsrc " <<
+        (editorSettings().getGrepsrcSearchesSubrepos()?
+           "--recurse " : "") <<
+        shellDoubleQuote(searchText)));
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editToggleGrepsrcSearchesSubrepos() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  // Compute the negated value.
+  bool b = !editorSettings().getGrepsrcSearchesSubrepos();
+
+  // Save it.
+  editorGlobal()->settings_setGrepsrcSearchesSubrepos(this, b);
+
+  // Toggle the menu item.
+  m_toggleGrepsrcSearchesSubreposAction->setChecked(b);
 
   GENERIC_CATCH_END
 }

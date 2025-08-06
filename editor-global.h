@@ -352,6 +352,9 @@ public:       // funcs
   void settings_setRightWindowPos(
     QWidget * NULLABLE parent,
     WindowPosition const &pos);
+  void settings_setGrepsrcSearchesSubrepos(
+    QWidget * NULLABLE parent,
+    bool b);
 
   // Append an LSP error message.
   void addLSPErrorMessage(std::string &&msg);
