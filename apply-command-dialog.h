@@ -83,10 +83,6 @@ private:     // methods
   // Navigate to the `EditorGlobal`.
   EditorGlobal *editorGlobal() const;
 
-private Q_SLOTS:
-  // Update the list based on the filter string changing.
-  void filterChanged(QString const &) NOEXCEPT;
-
   // Populate `m_prevCommandsListWidget`.  If `initial`, then this is
   // the first time, otherwise it is after a changed filter.
   void populateListWidget(bool initial);
@@ -100,6 +96,10 @@ private Q_SLOTS:
 
   // If the list has exactly one element, select it.
   void selectListElementIfOne();
+
+private Q_SLOTS:
+  // Update the list based on the filter string changing.
+  void filterChanged(QString const &) NOEXCEPT;
 
   // Copy the selected item in `m_prevCommandsListWidget` into
   // `m_newCommandLineEdit`.

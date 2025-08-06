@@ -32,24 +32,10 @@ using namespace gdv;
 INIT_TRACE("apply-command-dialog");
 
 
+// -------------------------- private methods --------------------------
 EditorGlobal *ApplyCommandDialog::editorGlobal() const
 {
   return m_editorWidget->editorGlobal();
-}
-
-
-void ApplyCommandDialog::filterChanged(QString const &) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  populateListWidget(false /*initial*/);
-
-  // If this causes the list to have exactly one element, select it so
-  // the user can then press Enter to run it without having to move to
-  // the list box.
-  selectListElementIfOne();
-
-  GENERIC_CATCH_END
 }
 
 
@@ -146,6 +132,22 @@ void ApplyCommandDialog::selectListElementIfOne()
 }
 
 
+void ApplyCommandDialog::filterChanged(QString const &) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  populateListWidget(false /*initial*/);
+
+  // If this causes the list to have exactly one element, select it so
+  // the user can then press Enter to run it without having to move to
+  // the list box.
+  selectListElementIfOne();
+
+  GENERIC_CATCH_END
+}
+
+
+// --------------------------- private slots ---------------------------
 void ApplyCommandDialog::copyToNew() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -201,6 +203,7 @@ void ApplyCommandDialog::clearNewCommand() NOEXCEPT
 }
 
 
+// -------------------------- public methods ---------------------------
 ApplyCommandDialog::ApplyCommandDialog(
   EditorWidget *editorWidget,
   EditorCommandLineFunction whichFunction)
