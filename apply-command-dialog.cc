@@ -32,6 +32,12 @@ using namespace gdv;
 INIT_TRACE("apply-command-dialog");
 
 
+EditorGlobal *ApplyCommandDialog::editorGlobal() const
+{
+  return m_editorWidget->editorGlobal();
+}
+
+
 void ApplyCommandDialog::filterChanged(QString const &) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -98,7 +104,7 @@ void ApplyCommandDialog::populateListWidget(bool initial)
 
 CommandLineHistory const &ApplyCommandDialog::getHistory()
 {
-  return m_editorWidget->editorGlobal()->getSettings().
+  return editorGlobal()->getSettings().
            getCommandHistoryC(m_whichFunction);
 }
 
@@ -172,7 +178,7 @@ void ApplyCommandDialog::deleteSelected() NOEXCEPT
 
   QListWidgetItem *item = m_prevCommandsListWidget->takeItem(row);
   std::string cmd = toString(item->text());
-  if (!m_editorWidget->editorGlobal()->
+  if (!editorGlobal()->
          settings_removeHistoryCommand(this, m_whichFunction, cmd)) {
     DEV_WARNING("delete: non-existent command: " << doubleQuote(cmd));
   }

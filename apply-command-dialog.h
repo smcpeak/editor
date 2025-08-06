@@ -5,6 +5,7 @@
 #define EDITOR_APPLY_COMMAND_DIALOG_H
 
 #include "eclf.h"                      // EditorCommandLineFunction
+#include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-settings-fwd.h"       // CommandLineHistory
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "modal-dialog.h"              // ModalDialog
@@ -78,6 +79,10 @@ private:     // data
   // `m_whichFunction` is not `ECLF_RUN`.
   QCheckBox * NULLABLE m_prefixStderrLinesCheckBox = nullptr;
 
+private:     // methods
+  // Navigate to the `EditorGlobal`.
+  EditorGlobal *editorGlobal() const;
+
 private Q_SLOTS:
   // Update the list based on the filter string changing.
   void filterChanged(QString const &) NOEXCEPT;
@@ -107,7 +112,7 @@ private Q_SLOTS:
   // Clear `m_newCommandLineEdit`.
   void clearNewCommand() NOEXCEPT;
 
-public:      // funcs
+public:      // methods
   ApplyCommandDialog(
     EditorWidget *editorWidget,
     EditorCommandLineFunction whichFunction);
