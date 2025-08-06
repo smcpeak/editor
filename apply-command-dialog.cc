@@ -209,7 +209,7 @@ ApplyCommandDialog::ApplyCommandDialog(
   EditorCommandLineFunction whichFunction,
   EditorWidget *editorWidget)
 
-  : ModalDialog(editorWidget),
+  : ModalDialog(),
     IMEMBFP(editorGlobal),
     IMEMBFP(whichFunction),
     IMEMBFP(editorWidget)

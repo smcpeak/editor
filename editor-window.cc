@@ -1232,7 +1232,7 @@ bool EditorWindow::promptForCommandLine(
   EditorCommandLineFunction whichFunction)
 {
   ApplyCommandDialog dlg(editorGlobal(), whichFunction, editorWidget());
-  if (!dlg.exec()) {
+  if (!dlg.execCentered(this)) {
     return false;
   }
 
