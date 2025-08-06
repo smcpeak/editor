@@ -442,8 +442,8 @@ public:      // methods
       edd.m_delayedDiags.adjustForDocument(m_doc.getCore());
 
       // They should now match the eager diagnostics.
-      TRACE3("delayed: " << toGDValue(edd.m_delayedDiags).asIndentedString());
-      TRACE3("eager: " << toGDValue(edd.m_eagerDiags).asIndentedString());
+      TRACE3_GDVN_EXPRS("should now match",
+        edd.m_delayedDiags, edd.m_eagerDiags);
       EXPECT_EQ_GDV(edd.m_delayedDiags, edd.m_eagerDiags);
       xassert(edd.m_delayedDiags == edd.m_eagerDiags);
 
@@ -714,7 +714,7 @@ void randomAction(DocDiagsRecorderHistory &ddrh)
   }
 
   ddrh.selfCheck();
-  TRACE2("ddrh: " << toGDValue(ddrh).asIndentedString());
+  TRACE2_GDVN_EXPRS("after random action", ddrh);
 }
 
 
