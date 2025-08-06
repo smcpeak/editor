@@ -5,7 +5,6 @@
 
 // editor
 #include "editor-global.h"             // EditorGlobal
-#include "pixmaps.h"                   // g_editorPixmaps
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 // smqtutil
@@ -65,11 +64,7 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
     SET_QOBJECT_NAME(tableLabel);
     hbox->addWidget(tableLabel);
 
-    QLabel *downArrowLabel = new QLabel();
-    downArrowLabel->setPixmap(g_editorPixmaps->downArrow);
-    hbox->addWidget(downArrowLabel);
-
-    hbox->addSpacing(15);
+    hbox->addSpacing(30);
 
     QLabel *filterLabel = new QLabel("&Filter");
     SET_QOBJECT_NAME(filterLabel);
