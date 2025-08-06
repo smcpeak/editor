@@ -251,6 +251,20 @@ public:
     m_entries.swap(newEntries);
   }
 
+  // If the end is before the start, return a range where the end is at
+  // the start.
+  //
+  // This is needed because `deleteLines` can move an endpoint on a
+  // deleted last line to the start of the preceding line, but if the
+  // start is on that line, then we want to match it.
+  TextMCoordRange fixEnd(TextMCoordRange range)
+  {
+    if (range.m_end < range.m_start) {
+      range.m_end = range.m_start;
+    }
+    return range;
+  }
+
   void deleteLines(int line, int count)
   {
     xassert(m_numLines.has_value());
@@ -268,10 +282,10 @@ public:
 
     for (DocEntry const &e : m_entries) {
       newEntries.insert(DocEntry(
-        TextMCoordRange(
+        fixEnd(TextMCoordRange(
           adjustMC_deleteLines(e.m_range.m_start, line, count),
           adjustMC_deleteLines(e.m_range.m_end, line, count)
-        ),
+        )),
         e.m_value));
     }
 
@@ -1669,7 +1683,8 @@ void test_deleteNearEnd()
 
   // This is supposed to represent a diagnostic that goes right to the
   // end of a file that has 3 lines total.
-  m.insertEntry({{{1,0}, {2,19}}, 8740});
+  m.insertEntry({{{1,0}, {2,19}}, 8740});        // Start at BOL.
+  m.insertEntry({{{1,5}, {2,19}}, 8745});        // Start a little after.
   m.selfCheck();
 
   // We then delete a span that has the effect of removing one line, so
@@ -1686,7 +1701,8 @@ void test_deleteNearEnd()
   EXPECT_EQ(m.getNumLines(), 2);
 
   EXPECT_EQ_GDV(m.getAllEntries(), fromGDVN(R"(
-    {DocEntry[range:MCR(MC(1 0) MC(1 0)) value:8740]}
+    {DocEntry[range:MCR(MC(1 0) MC(1 0)) value:8740]
+     DocEntry[range:MCR(MC(1 5) MC(1 5)) value:8745]}
   )"));
 }
 
