@@ -42,7 +42,6 @@ NamedTextDocument::NamedTextDocument()
     m_diagnostics(),
     m_tddUpdater(),
     m_observationRecorder(getCore()),
-    m_receivedStaleDiagnostics(false),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
@@ -106,7 +105,6 @@ NamedTextDocument::operator gdv::GDValue() const
   m.mapSetValueAtSym("hasTddUpdater", m_tddUpdater.operator bool());
 
   GDV_WRITE_MEMBER_SYM(m_observationRecorder);
-  GDV_WRITE_MEMBER_SYM(m_receivedStaleDiagnostics);
   GDV_WRITE_MEMBER_SYM(m_lastFileTimestamp);
   GDV_WRITE_MEMBER_SYM(m_modifiedOnDisk);
   GDV_WRITE_MEMBER_SYM(m_title);
@@ -212,7 +210,6 @@ GDValue NamedTextDocument::getDiagnosticsSummary() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "NTD_DiagSummary"_sym);
 
   m.mapSetValueAtSym("numDiagnostics", toGDValue(getNumDiagnostics()));
-  GDV_WRITE_MEMBER_SYM(m_receivedStaleDiagnostics);
 
   return m;
 }
@@ -240,12 +237,6 @@ bool NamedTextDocument::hasOutOfDateDiagnostics() const
 {
   return m_diagnostics != nullptr &&
          getVersionNumber() != m_diagnostics->getOriginVersion();
-}
-
-
-bool NamedTextDocument::hasReceivedStaleDiagnostics() const
-{
-  return m_receivedStaleDiagnostics;
 }
 
 
@@ -295,7 +286,6 @@ void NamedTextDocument::updateDiagnostics(
     // Reset all diagnostics state.
     m_tddUpdater.reset(nullptr);
     m_diagnostics.reset(nullptr);
-    m_receivedStaleDiagnostics = false;
   }
 
   notifyMetadataChange();

@@ -94,7 +94,6 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
   static QColor const zeroDiagsColor    (102, 255, 102); // light green
   static QColor const hasDiagsColor     (255, 223, 128); // light yellow with hint of orange
   static QColor const transitioningColor(128, 128, 255); // light blue/purple
-  static QColor const staleColor        (255, 128,  64); // light orange
   static QColor const protoErrorColor   (255, 100, 100); // soft red
   static QColor const internalErrorColor(255,   0,   0); // hard red
 
@@ -152,10 +151,6 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
       else if (lspDocInfo->m_waitingForDiagnostics) {
         TRACE2("  on_changedLSPStatus: waiting color");
         bgColor = waitingColor;
-      }
-      else if (doc->hasReceivedStaleDiagnostics()) {
-        TRACE2("  on_changedLSPStatus: stale color");
-        bgColor = staleColor;
       }
       else if (numDiagnostics.has_value()) {
         if (*numDiagnostics == 0) {

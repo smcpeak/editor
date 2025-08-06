@@ -80,11 +80,6 @@ private:     // data
   //
   TextDocumentObservationRecorder m_observationRecorder;
 
-  // True when we tried to get updated diagnostics but the file changed
-  // in the meantime.  For now I just report the condition; I plan to
-  // handle it better in the future.
-  bool m_receivedStaleDiagnostics;
-
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
@@ -190,10 +185,6 @@ public:      // funcs
   // True if we have diagnostics, but they apply to a different version
   // of the document from the one we now have in memory.
   bool hasOutOfDateDiagnostics() const;
-
-  // True if the latest diagnostics we received were for a version that
-  // was already out of date.
-  bool hasReceivedStaleDiagnostics() const;
 
   // Set `m_diagnostics` and notify observers.  This automatically
   // adjusts the incoming diagnostics as necessary to conform to the

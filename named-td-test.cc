@@ -217,7 +217,6 @@ void test_toGDValue()
       diagnostics: null
       hasTddUpdater: false
       observationRecorder: {:}
-      receivedStaleDiagnostics: false
       lastFileTimestamp: 0
       modifiedOnDisk: false
       title: ""
