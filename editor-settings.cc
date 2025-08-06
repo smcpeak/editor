@@ -23,6 +23,7 @@
 #include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
+#include <optional>                    // std::optional
 #include <utility>                     // std::swap
 
 
@@ -218,7 +219,7 @@ EditorSettings::EditorSettings()
 
 
 EditorSettings::EditorSettings(GDValueParser const &p)
-  : GDVP_READ_OPT_MEMBER_SYM(m_macros),
+  : m_macros(parseMacrosMap(p.mapGetValueAtSymOpt("macros"))),
     GDVP_READ_OPT_MEMBER_SYM(m_mostRecentlyRunMacro),
     GDVP_READ_OPT_MEMBER_SYM(m_applyHistory),
     GDVP_READ_OPT_MEMBER_SYM(m_runHistory),
@@ -236,6 +237,39 @@ EditorSettings::EditorSettings(GDValueParser const &p)
   }
 
   TRACE1("Loaded settings: " << toGDValue(*this));
+}
+
+
+namespace {
+  class HandleMacroError : public HandleXGDValueError {
+  public:
+    virtual void handle(GDValueParser const &p, XGDValueError &x) override
+    {
+      // One possible cause is that a command name was changed or had
+      // its parameters altered.
+      std::cout <<
+        // The context string includes the file name.
+        "Warning: " << getExnContextString() <<
+        x.m_path << ": " << x.m_message <<
+        "; macro discarded.\n";
+    }
+  };
+}
+
+/*static*/ MacroDefinitionMap EditorSettings::parseMacrosMap(
+  std::optional<gdv::GDValueParser> pOpt)
+{
+  if (pOpt) {
+    HandleMacroError handleMacroError;
+
+    GDValueParser p = *pOpt;
+    p.m_errorHandler = &handleMacroError;
+
+    return gdvpTo<MacroDefinitionMap>(p);
+  }
+  else {
+    return {};
+  }
 }
 
 

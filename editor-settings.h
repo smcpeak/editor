@@ -11,6 +11,7 @@
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
 #include "smbase/gdvalue-parser-fwd.h"           // gdv::GDValueParser
+#include "smbase/std-optional-fwd.h"             // std::optional
 
 #include <map>                                   // std::map
 #include <memory>                                // std::unique_ptr
@@ -148,6 +149,11 @@ private:     // funcs
   // Get a wriable reference to a command history.
   CommandLineHistory &getCommandHistory(
     EditorCommandLineFunction whichFunction);
+
+  // Parse the map in `p` that holds the macros, discarding any that
+  // have an issue.  If it is absent, return an empty map.
+  static MacroDefinitionMap parseMacrosMap(
+    std::optional<gdv::GDValueParser> pOpt);
 
 public:      // funcs
   ~EditorSettings();
