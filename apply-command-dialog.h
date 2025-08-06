@@ -33,13 +33,16 @@ class ApplyCommandDialog : public ModalDialog {
 
 private:     // data
   // --------------------------- editor data ---------------------------
+  // The `EditorGlobal` singleton.
+  EditorGlobal * const m_editorGlobal;
+
+  // Which function this dialog is for.
+  EditorCommandLineFunction const m_whichFunction;
+
   // The widget the user was interacting with when they spawned this
   // dialog.  This gives us access to the document name and directory,
   // as well as `EditorGlobal`.
   EditorWidget *m_editorWidget;
-
-  // Which function this dialog is for.
-  EditorCommandLineFunction m_whichFunction;
 
   // ---------------------------- controls -----------------------------
   // "Command to run in $PWD."
@@ -114,8 +117,9 @@ private Q_SLOTS:
 
 public:      // methods
   ApplyCommandDialog(
-    EditorWidget *editorWidget,
-    EditorCommandLineFunction whichFunction);
+    EditorGlobal *editorGlobal,
+    EditorCommandLineFunction whichFunction,
+    EditorWidget *editorWidget);
 
   ~ApplyCommandDialog();
 

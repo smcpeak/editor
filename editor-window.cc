@@ -1231,7 +1231,7 @@ bool EditorWindow::promptForCommandLine(
   bool /*OUT*/ &prefixStderrLines,
   EditorCommandLineFunction whichFunction)
 {
-  ApplyCommandDialog dlg(editorWidget(), whichFunction);
+  ApplyCommandDialog dlg(editorGlobal(), whichFunction, editorWidget());
   if (!dlg.exec()) {
     return false;
   }

@@ -35,7 +35,7 @@ INIT_TRACE("apply-command-dialog");
 // -------------------------- private methods --------------------------
 EditorGlobal *ApplyCommandDialog::editorGlobal() const
 {
-  return m_editorWidget->editorGlobal();
+  return m_editorGlobal;
 }
 
 
@@ -205,12 +205,14 @@ void ApplyCommandDialog::clearNewCommand() NOEXCEPT
 
 // -------------------------- public methods ---------------------------
 ApplyCommandDialog::ApplyCommandDialog(
-  EditorWidget *editorWidget,
-  EditorCommandLineFunction whichFunction)
+  EditorGlobal *editorGlobal,
+  EditorCommandLineFunction whichFunction,
+  EditorWidget *editorWidget)
 
   : ModalDialog(editorWidget),
-    m_editorWidget(editorWidget),
-    m_whichFunction(whichFunction)
+    IMEMBFP(editorGlobal),
+    IMEMBFP(whichFunction),
+    IMEMBFP(editorWidget)
 {
   TRACE1("creating ApplyCommandDialog, whichFunction=" <<
          toGDValue(m_whichFunction));
