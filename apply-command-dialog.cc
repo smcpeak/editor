@@ -132,6 +132,31 @@ void ApplyCommandDialog::selectListElementIfOne()
 }
 
 
+void ApplyCommandDialog::setPwdLabel(EditorWidget *editorWidget)
+{
+  HostName const hostName =
+    editorWidget->getDocumentDirectoryHarn().hostName();
+
+  QString const dir = toQString(editorWidget->getDocumentDirectory());
+
+  QString labelText;
+  if (hostName.isLocal()) {
+    labelText =
+      tr("Command to run in %1.")
+        .arg(dir);
+  }
+  else {
+    QString host = toQString(hostName.toString());
+    labelText =
+      tr("Command to run on %1 in %2.")
+        .arg(dir)
+        .arg(host);
+  }
+  m_pwdLabel->setText(labelText);
+}
+
+
+// --------------------------- private slots ---------------------------
 void ApplyCommandDialog::filterChanged(QString const &) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -147,7 +172,6 @@ void ApplyCommandDialog::filterChanged(QString const &) NOEXCEPT
 }
 
 
-// --------------------------- private slots ---------------------------
 void ApplyCommandDialog::copyToNew() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -206,13 +230,11 @@ void ApplyCommandDialog::clearNewCommand() NOEXCEPT
 // -------------------------- public methods ---------------------------
 ApplyCommandDialog::ApplyCommandDialog(
   EditorGlobal *editorGlobal,
-  EditorCommandLineFunction whichFunction,
-  EditorWidget *editorWidget)
+  EditorCommandLineFunction whichFunction)
 
   : ModalDialog(),
     IMEMBFP(editorGlobal),
-    IMEMBFP(whichFunction),
-    IMEMBFP(editorWidget)
+    IMEMBFP(whichFunction)
 {
   TRACE1("creating ApplyCommandDialog, whichFunction=" <<
          toGDValue(m_whichFunction));
@@ -233,23 +255,9 @@ ApplyCommandDialog::ApplyCommandDialog(
 
   // Location label.
   {
-    HostName hostName =
-      m_editorWidget->getDocumentDirectoryHarn().hostName();
+    // Initially the label is empty.  It is populated by `setPwdLabel`.
+    m_pwdLabel = new QLabel();
 
-    QString dir = toQString(m_editorWidget->getDocumentDirectory());
-
-    if (hostName.isLocal()) {
-      m_pwdLabel = new QLabel(
-        tr("Command to run in %1.")
-          .arg(dir));
-    }
-    else {
-      QString host = toQString(hostName.toString());
-      m_pwdLabel = new QLabel(
-        tr("Command to run on %1 in %2.")
-          .arg(dir)
-          .arg(host));
-    }
     SET_QOBJECT_NAME(m_pwdLabel);
 
     vbox->addWidget(m_pwdLabel);
@@ -398,6 +406,13 @@ ApplyCommandDialog::~ApplyCommandDialog()
   QObject::disconnect(m_copyButton, nullptr, this, nullptr);
   QObject::disconnect(m_deleteButton, nullptr, this, nullptr);
   QObject::disconnect(m_clearNewCommandButton, nullptr, this, nullptr);
+}
+
+
+bool ApplyCommandDialog::execForWidget(EditorWidget *editorWidget)
+{
+  setPwdLabel(editorWidget);
+  return execCentered(editorWidget->editorWindow());
 }
 
 

@@ -39,11 +39,6 @@ private:     // data
   // Which function this dialog is for.
   EditorCommandLineFunction const m_whichFunction;
 
-  // The widget the user was interacting with when they spawned this
-  // dialog.  This gives us access to the document name and directory,
-  // as well as `EditorGlobal`.
-  EditorWidget *m_editorWidget;
-
   // ---------------------------- controls -----------------------------
   // "Command to run in $PWD."
   QLabel *m_pwdLabel = nullptr;
@@ -100,6 +95,9 @@ private:     // methods
   // If the list has exactly one element, select it.
   void selectListElementIfOne();
 
+  // Set the contents of `m_pwdLabel`.
+  void setPwdLabel(EditorWidget *editorWidget);
+
 private Q_SLOTS:
   // Update the list based on the filter string changing.
   void filterChanged(QString const &) NOEXCEPT;
@@ -118,16 +116,25 @@ private Q_SLOTS:
 public:      // methods
   ApplyCommandDialog(
     EditorGlobal *editorGlobal,
-    EditorCommandLineFunction whichFunction,
-    EditorWidget *editorWidget);
+    EditorCommandLineFunction whichFunction);
 
   ~ApplyCommandDialog();
 
-  // After `exec()` returns true, get the command the user chose.
+  // Run, returning only when the dialog is closed.  Return true if the
+  // user pressed "Ok" and false for "Cancel".
+  //
+  // `editorWidget` is the active widget at the time the dialog was
+  // opened, which is used to position the dialog onscreen and inform
+  // the user of which directory (and on which machine) the command will
+  // run in.
+  bool execForWidget(EditorWidget *editorWidget);
+
+  // After `execForWidget()` returns true, get the command the user
+  // chose.
   QString getSpecifiedCommand() const;
 
-  // After `exec()` returns true, true if the substitution checkbox is
-  // enabled.
+  // After `execForWidget()` returns true, true if the substitution
+  // checkbox is enabled.
   bool isSubstitutionEnabled() const;
 
   // Similarly, true if prefixing is enabled.
