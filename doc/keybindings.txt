@@ -1,4 +1,5 @@
-List of all keybindings, including what is listed in the menu:
+List of all keybindings, including what is listed in the menu and the
+bindings to open the menus:
 
 
 Context indicators:
@@ -149,7 +150,6 @@ J+Ctrl                       Edit | Justify paragraph to soft margin
 K+Ctrl                       Edit | Kill (cut) current line
 
 L+Alt                        LSP menu
-L+Ctrl                       Scroll to put cursor in center of window
 
 M+Alt                        Macro menu
 

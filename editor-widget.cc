@@ -1772,9 +1772,15 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
         COMMAND_MU(EC_BackspaceFunction);
         break;
 
+      // I've decided I don't like this binding because I never use it
+      // on purpose, and when I fat-finger it (while trying to press
+      // Ctrl+K), the sudden jump in the location of text onscreen is
+      // disorienting.
+      #if 0
       case Qt::Key_L:
         COMMAND_MU(EC_CenterVisibleOnCursorLine);
         break;
+      #endif
 
       default:
         k->ignore();
