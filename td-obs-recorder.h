@@ -14,12 +14,12 @@
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
-#include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr
 #include "smbase/std-optional-fwd.h"   // std::optional
 #include "smbase/std-set-fwd.h"        // stdfwd::set
-#include "smbase/std-vector-fwd.h"     // stdfwd::vector
 
 #include <map>                         // std::map
+#include <memory>                      // std::unique_ptr
+#include <vector>                      // std::vector
 
 
 // A record of one of the changes that can be observed via the
@@ -136,21 +136,44 @@ public:      // methods
 // `TextDocumentObserver` interface, associated with the document
 // versions to which they apply.
 class TextDocumentObservationRecorder : public TextDocumentObserver {
-public:      // types
+private:     // types
   typedef TextDocumentCore::VersionNumber VersionNumber;
 
-  // A sequence of observed changes, in the order they happened.
-  typedef stdfwd::vector<stdfwd::unique_ptr<TextDocumentChangeObservation>>
-    ChangeSequence;
+  // Data associated with a version being tracked.
+  class VersionDetails {
+    // Not implemented, although it could be if needed.
+    void operator=(VersionDetails const &) = delete;
+
+  public:      // data
+    // Number of lines that were in the file for this version.  It is
+    // non-negative.
+    int const m_numLines;
+
+    // The changes that were applied to this document, in the order they
+    // happened, since the version with which this object is associated
+    // was current, but before a later version started being tracked.
+    std::vector<std::unique_ptr<TextDocumentChangeObservation>>
+      m_changeSequence;
+
+  public:
+    ~VersionDetails();
+
+    VersionDetails(VersionDetails &&obj);
+
+    // The sequence is initially empty.
+    explicit VersionDetails(int numLines);
+
+    void selfCheck() const;
+
+    operator gdv::GDValue() const;
+  };
 
 private:     // data
   // The document we are observing.
   TextDocumentCore const &m_document;
 
-  // Map from document version number to the sequence of changes that
-  // have been made on top of it in order to get to either the current
-  // version or the next-highest version in the map.
-  std::map<VersionNumber, ChangeSequence> m_versionToChanges;
+  // Map from document version number to its tracked details.
+  std::map<VersionNumber, VersionDetails> m_versionToDetails;
 
 private:     // methods
   // Append `observation` to the latest tracked version.
@@ -185,11 +208,16 @@ public:      // methods
   // Get the set of all versions being tracked.
   stdfwd::set<VersionNumber> getTrackedVersions() const;
 
-  // Track all future changes as applying on top of `version`.
-  void beginTracking(VersionNumber version);
+  // Track all future changes as applying on top of `version`, which has
+  // `numLines` lines.
+  void beginTracking(VersionNumber version, int numLines);
 
   // Apply the changes we recorded to `diagnostics`.  Discard the
   // information for its version and all earlier ones.
+  //
+  // Before applying changes, this call enables change tracking for
+  // `diagnostics` by supplying it with the number of lines that was
+  // supplied to `beginTracking`.
   //
   // Requires: isTracking(diagnostics->getOriginVersion())
   void applyChangesToDiagnostics(TextDocumentDiagnostics *diagnostics);

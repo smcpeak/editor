@@ -274,7 +274,8 @@ void NamedTextDocument::updateDiagnostics(
 
     // Modify `m_diagnostics` so it conforms to this document's shape.
     // This is necessary even with version roll-forward because the
-    // diagnostic source could have generated arbitrary junk.
+    // diagnostic source could have generated arbitrary junk (e.g.,
+    // byte indices within a line that are too large).
     diagnostics->adjustForDocument(getCore());
 
     // We are about to deallocate the existing diagnostics, so detach
@@ -313,12 +314,12 @@ RCSerf<TDD_Diagnostic const> NamedTextDocument::getDiagnosticAt(
 }
 
 
-// TODO: This function is not specific to LSP.
+// TODO: This function is not specific to LSP, so should be renamed.
 void NamedTextDocument::sentLSPFileContents()
 {
   TRACE1("sentLSPFileContents: version is " << getVersionNumber());
 
-  m_observationRecorder.beginTracking(getVersionNumber());
+  m_observationRecorder.beginTracking(getVersionNumber(), numLines());
 
   notifyMetadataChange();
 }

@@ -434,17 +434,17 @@ TextDocumentDiagnostics::getAdjacentDiagnosticLocation(
 }
 
 
-void TextDocumentDiagnostics::adjustForDocument(
-  TextDocumentCore const &doc)
-{
-  m_rangeToDiagIndex.adjustForDocument(doc);
-}
-
-
 void TextDocumentDiagnostics::setNumLinesAndAdjustAccordingly(
   int numLines)
 {
   m_rangeToDiagIndex.setNumLinesAndAdjustAccordingly(numLines);
+}
+
+
+void TextDocumentDiagnostics::adjustForDocument(
+  TextDocumentCore const &doc)
+{
+  m_rangeToDiagIndex.adjustForDocument(doc);
 }
 
 

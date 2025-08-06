@@ -391,18 +391,20 @@ public:      // methods
   // a value.
   void clearEverything(std::optional<int> numLines);
 
+  // Adjust all diagnostic ranges so their line indices are in [0,
+  // numLines-1].  We do this after receiving diagnostics for a
+  // potentially old version of a document, for which we only know the
+  // line count.  This enables tracking updates.
+  //
+  // This is normally done before `adjustForDocument`.
+  void setNumLinesAndAdjustAccordingly(int numLines);
+
   // Adjust all diagnostic ranges to be valid for `doc`.  See the
   // comments on `TextDocumentDiagnostics::adjustForDocument` for
   // motivation, etc.
   //
   // This sets `m_numLines`, thus enabling `canTrackUpdates()`.
   void adjustForDocument(TextDocumentCore const &doc);
-
-  // Adjust all diagnostic ranges so their line indices are in [0,
-  // numLines-1].  We do this after receiving diagnostics for a
-  // potentially old version of a document, for which we only know the
-  // line count.  This enables tracking updates.
-  void setNumLinesAndAdjustAccordingly(int numLines);
 
 
   // ---- Manipulate the mapping indirectly via text insert/delete ----

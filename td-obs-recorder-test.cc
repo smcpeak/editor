@@ -42,6 +42,17 @@ void checkFile(TextDocumentCore const &doc, char const *expect)
 }
 
 
+// Return a GDValue for a `VersionDetails` with `numLines` and
+// `changesGDVN` describing the changes.
+GDValue versionDetailsGDV(int numLines, char const *changesGDVN)
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "VersionDetails"_sym);
+  m.mapSetValueAtSym("numLines", numLines);
+  m.mapSetValueAtSym("changeSequence", fromGDVN(changesGDVN));
+  return m;
+}
+
+
 void test_basics()
 {
   TEST_CASE("test_basics");
@@ -53,89 +64,86 @@ void test_basics()
   EXPECT_EQ(recorder.getEarliestVersion().has_value(), false);
   EXPECT_EQ(recorder.isTracking(0), false);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{});
-  EXPECT_EQ(toGDValue(recorder), GDValue(GDVMap{}));
+  EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
 
   // Make a change while not tracking anything.
   doc.insertLine(0);
   checkFile(doc, "\n");
   EXPECT_EQ(recorder.trackingSomething(), false);
-  EXPECT_EQ(toGDValue(recorder), GDValue(GDVMap{}));
+  EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
 
   // Begin tracking.
   VersionNumber ver1 = doc.getVersionNumber();
-  int numLinesForVer1 = doc.numLines();
-  recorder.beginTracking(ver1);
+  recorder.beginTracking(ver1, doc.numLines());
   EXPECT_EQ(recorder.trackingSomething(), true);
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
   EXPECT_EQ(recorder.isTracking(ver1), true);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver1});
-  EXPECT_EQ(toGDValue(recorder), GDValue(GDVMap{
-    { ver1, GDVSequence{} },
+  EXPECT_EQ_GDV(recorder, GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "[]") },
   }));
 
   // Make a change while tracking is enabled.
   doc.insertLine(0);
   checkFile(doc, "\n\n");
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    {
-      ver1, GDVSequence{
-        GDVTaggedOrderedMap("InsertLine"_sym, {
-          GDVMapEntry("line"_sym, 0),
-        }),
-      }
-    },
-  })));
-
-  // Switch to GDVN-based expectation for more convenient notation.
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    { ver1, fromGDVN("[InsertLine[line:0]]") },
+  EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "["
+              "InsertLine[line:0]"
+            "]") },
   })));
 
   // Insert some text.
   doc.insertString(TextMCoord(0, 0), "hello");
   checkFile(doc, "hello\n\n");
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    { ver1, fromGDVN("[InsertLine[line:0] "
-                      "InsertText[tc:MC(0 0) text:\"hello\"]]") },
+  EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "["
+              "InsertLine[line:0] "
+              "InsertText[tc:MC(0 0) text:\"hello\"]"
+            "]") },
   })));
 
   // Delete text.
   doc.deleteTextBytes(TextMCoord(0, 1), 2);
   checkFile(doc, "hlo\n\n");
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    { ver1, fromGDVN("[InsertLine[line:0] "
-                      "InsertText[tc:MC(0 0) text:\"hello\"] "
-                      "DeleteText[tc:MC(0 1) lengthBytes:2]]") },
+  EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "["
+              "InsertLine[line:0] "
+              "InsertText[tc:MC(0 0) text:\"hello\"] "
+              "DeleteText[tc:MC(0 1) lengthBytes:2]"
+            "]") },
   })));
 
   // Delete remainder of text on that line, since that is required
   // before we can delete the line itself.
   doc.deleteTextBytes(TextMCoord(0, 0), 3);
   checkFile(doc, "\n\n");
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    { ver1, fromGDVN("[InsertLine[line:0] "
-                      "InsertText[tc:MC(0 0) text:\"hello\"] "
-                      "DeleteText[tc:MC(0 1) lengthBytes:2] "
-                      "DeleteText[tc:MC(0 0) lengthBytes:3]]") },
+  EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "["
+              "InsertLine[line:0] "
+              "InsertText[tc:MC(0 0) text:\"hello\"] "
+              "DeleteText[tc:MC(0 1) lengthBytes:2] "
+              "DeleteText[tc:MC(0 0) lengthBytes:3]"
+            "]") },
   })));
 
 
   // Delete the line now that it is empty.
   doc.deleteLine(0);
   checkFile(doc, "\n");
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    { ver1, fromGDVN("[InsertLine[line:0] "
-                      "InsertText[tc:MC(0 0) text:\"hello\"] "
-                      "DeleteText[tc:MC(0 1) lengthBytes:2] "
-                      "DeleteText[tc:MC(0 0) lengthBytes:3] "
-                      "DeleteLine[line:0]]") },
+  EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "["
+              "InsertLine[line:0] "
+              "InsertText[tc:MC(0 0) text:\"hello\"] "
+              "DeleteText[tc:MC(0 1) lengthBytes:2] "
+              "DeleteText[tc:MC(0 0) lengthBytes:3] "
+              "DeleteLine[line:0]"
+            "]") },
   })));
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
 
   // Track a new version.
   VersionNumber ver2 = doc.getVersionNumber();
-  int numLinesForVer2 = doc.numLines();
-  recorder.beginTracking(ver2);
+  recorder.beginTracking(ver2, doc.numLines());
   EXPECT_EQ(recorder.trackingSomething(), true);
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);  // ver1 is still earliest
   EXPECT_EQ(recorder.isTracking(ver1), true);
@@ -147,15 +155,19 @@ void test_basics()
   doc.insertLine(1);
   doc.insertLine(2);
   checkFile(doc, "\n\n\n\n");
-  EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-    { ver1, fromGDVN("[InsertLine[line:0] "
-                      "InsertText[tc:MC(0 0) text:\"hello\"] "
-                      "DeleteText[tc:MC(0 1) lengthBytes:2] "
-                      "DeleteText[tc:MC(0 0) lengthBytes:3] "
-                      "DeleteLine[line:0]]") },
-    { ver2, fromGDVN("[InsertLine[line:0] "
-                      "InsertLine[line:1] "
-                      "InsertLine[line:2]]") },
+  EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+    { ver1, versionDetailsGDV(2, "["
+              "InsertLine[line:0] "
+              "InsertText[tc:MC(0 0) text:\"hello\"] "
+              "DeleteText[tc:MC(0 1) lengthBytes:2] "
+              "DeleteText[tc:MC(0 0) lengthBytes:3] "
+              "DeleteLine[line:0]"
+            "]") },
+    { ver2, versionDetailsGDV(2, "["
+              "InsertLine[line:0] "
+              "InsertLine[line:1] "
+              "InsertLine[line:2]"
+            "]") },
   })));
 
   {
@@ -168,7 +180,6 @@ void test_basics()
         "diagnostic:TDD_Diagnostic[message:\"msg\" related:[]]"
       "]"
     "}"));
-    diagnostics.setNumLinesAndAdjustAccordingly(numLinesForVer1);
 
     // Roll them forward.
     recorder.applyChangesToDiagnostics(&diagnostics);
@@ -180,10 +191,12 @@ void test_basics()
     EXPECT_EQ(recorder.isTracking(ver1), false);
     EXPECT_EQ(recorder.isTracking(ver2), true);
     EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver2});
-    EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
-      { ver2, fromGDVN("[InsertLine[line:0] "
-                        "InsertLine[line:1] "
-                        "InsertLine[line:2]]") },
+    EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+      { ver2, versionDetailsGDV(2, "["
+                "InsertLine[line:0] "
+                "InsertLine[line:1] "
+                "InsertLine[line:2]"
+              "]") },
     })));
 
     // It should have modified the diagnostic, pushing it down to line 4;
@@ -214,7 +227,6 @@ void test_basics()
         "diagnostic:TDD_Diagnostic[message:\"msg1\" related:[]]"
       "]"
     "}"));
-    diagnostics.setNumLinesAndAdjustAccordingly(numLinesForVer2);
 
     // Roll them forward.
     recorder.applyChangesToDiagnostics(&diagnostics);
@@ -225,7 +237,7 @@ void test_basics()
     EXPECT_EQ(recorder.isTracking(ver1), false);
     EXPECT_EQ(recorder.isTracking(ver2), false);
     EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{});
-    EXPECT_EQ(toGDValue(recorder), (GDValue(GDVMap{
+    EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     })));
 
     // It should have modified the diagnostics.
@@ -393,7 +405,7 @@ public:      // methods
     xassert(diags.getOriginVersion() == ver);
     mapInsertUnique(m_verToDiags, ver,
       EagerAndDelayedDiags(diags, &m_doc));
-    m_recorder.beginTracking(ver);
+    m_recorder.beginTracking(ver, m_doc.numLines());
 
     selfCheck();
   }
@@ -422,10 +434,6 @@ public:      // methods
       xassert(it != m_verToDiags.end());
       xassert((*it).first == oldVer);
       EagerAndDelayedDiags &edd = (*it).second;
-
-      // Confine the diagnostics to the document length at the time they
-      // apply, and in so doing, transition into updating mode.
-      edd.m_delayedDiags.setNumLinesAndAdjustAccordingly(edd.m_numLines);
 
       // Roll the delayed diagnostics forward.
       m_recorder.applyChangesToDiagnostics(&edd.m_delayedDiags);

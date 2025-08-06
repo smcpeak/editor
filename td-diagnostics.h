@@ -249,6 +249,10 @@ public:      // methods
   std::optional<TextMCoord> getAdjacentDiagnosticLocation(
     bool next, TextMCoord tc) const;
 
+  // Set the line count and confine line indices accordingly.  This is
+  // normally done before `adjustForDocument`.
+  void setNumLinesAndAdjustAccordingly(int numLines);
+
   // Adjust all diagnostic ranges to be valid for `doc`.  This is meant
   // to be used when a set of diagnostics is received from some external
   // source (like compiler error messages) and we want to bind them to a
@@ -257,10 +261,6 @@ public:      // methods
   // shape, thus establishing the correspondence invariant that
   // `TextDocumentDiagnosticsUpdater` can then maintain going forward.
   void adjustForDocument(TextDocumentCore const &doc);
-
-  // Set the line count and confine line indices accordingly.  This is
-  // a cruder form of `adjustForDocument`.
-  void setNumLinesAndAdjustAccordingly(int numLines);
 
   // Perform updates on the underlying mapping in order to track text
   // updates.  These have the same semantics as the same-named methods
