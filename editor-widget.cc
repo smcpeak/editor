@@ -1918,7 +1918,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
     switch (k->key()) {
       case Qt::Key_Insert:
         if (shift) {
-          commandEditPaste();
+          commandEditPaste(false /*cursorToStart*/);
         }
         else {
           // TODO: toggle insert/overwrite mode
@@ -2201,10 +2201,10 @@ void EditorWidget::commandEditCopy()
 }
 
 
-void EditorWidget::commandEditPaste()
+void EditorWidget::commandEditPaste(bool cursorToStart)
 {
   if (editSafetyCheck()) {
-    COMMAND_MU(EC_Paste);
+    COMMAND_MU(EC_Paste, cursorToStart);
   }
 }
 
@@ -2897,7 +2897,7 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       }
     }
 
-    ASTNEXTC1(EC_Paste) {
+    ASTNEXTC(EC_Paste, ec) {
       QClipboard *cb = QApplication::clipboard();
       QString text;
 
@@ -2918,7 +2918,8 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       // purpose, so I removed it.
 
       QByteArray utf8(text.toUtf8());
-      m_editor->clipboardPaste(utf8.constData(), utf8.length());
+      m_editor->clipboardPaste(utf8.constData(), utf8.length(),
+                               ec->m_cursorToStart);
       this->redrawAfterContentChange();
     }
 

@@ -172,6 +172,7 @@ U+Ctrl+Alt                   Dump editor internal state to console
 
 V+Alt                        View menu
 V+Ctrl                       Edit | Paste
+V+Ctrl+Shift                 Edit | Paste, leaving cursor at start
 
 W+Alt                        Window menu
 W+Ctrl                       Scroll up one line

@@ -46,6 +46,11 @@ public:      // types
     // When set, select the just-inserted text, specifically placing the
     // mark at the start and the cursor at the end.
     ITF_SELECT_AFTERWARD     = 0x1,
+
+    // When set, instead of putting the cursor at the end of the
+    // inserted text, leave it at the start.  This flag is incompatible
+    // with `ITF_SELECT_AFTERWARD`.
+    ITF_CURSOR_AT_START      = 0x2,
   };
 
 public:      // static data
@@ -620,9 +625,12 @@ public:      // funcs
   string clipboardCut();
 
   // Delete any current selection, then insert 'text', which can be
-  // empty, although clients should normally avoid that.  The cursor
-  // is left at the end of the inserted text.
-  void clipboardPaste(char const *text, int textLen);
+  // empty, although clients should normally avoid that.
+  //
+  // If `cursorToStart`, the cursor is left at the start of the inserted
+  // text, and at the end otherwise.
+  void clipboardPaste(char const *text, int textLen,
+                      bool cursorToStart = false);
 
   // -------------------- undo/redo -----------------------
   // True if we can go back another step in the undo history.

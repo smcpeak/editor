@@ -459,7 +459,7 @@ public:      // funcs
   void editRedo();
   void commandEditCut();
   void commandEditCopy();
-  void commandEditPaste();
+  void commandEditPaste(bool cursorToStart);
   void commandEditDelete();
   void commandEditKillLine();
   void commandEditSelectEntireFile();

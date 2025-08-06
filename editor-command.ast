@@ -22,8 +22,10 @@ class EditorCommand {
   // Copy selected text to the clipboard.
   -> EC_Copy();
 
-  // Insert the clipboard into the document.
-  -> EC_Paste();
+  // Insert the clipboard into the document.  If `m_cursorToStart`,
+  // leave the cursor at the start of the inserted text, whereas
+  // normally it goes at the end.
+  -> EC_Paste(bool m_cursorToStart);
 
   // If nothing is selected, select the entire current line.  Then, cut.
   -> EC_KillLine();

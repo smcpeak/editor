@@ -340,6 +340,9 @@ void EditorWindow::buildMenu()
     MENU_ITEM_KEY("Cu&t", editCut, Qt::CTRL + Qt::Key_X);
     MENU_ITEM_KEY("&Copy", editCopy, Qt::CTRL + Qt::Key_C);
     MENU_ITEM_KEY("&Paste", editPaste, Qt::CTRL + Qt::Key_V);
+    MENU_ITEM_KEY("Paste, leaving cursor at start",
+                  editPaste_cursorToStart,
+                  Qt::CTRL + Qt::SHIFT + Qt::Key_V);
 
     // Here, I'm faking something that looks like a shortcut since the
     // menu Delete function is slightly different from the keyboard one,
@@ -1390,7 +1393,16 @@ void EditorWindow::editPaste() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->commandEditPaste();
+  editorWidget()->commandEditPaste(false /*cursorToStart*/);
+
+  GENERIC_CATCH_END
+}
+
+void EditorWindow::editPaste_cursorToStart() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->commandEditPaste(true /*cursorToStart*/);
 
   GENERIC_CATCH_END
 }

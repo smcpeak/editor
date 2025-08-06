@@ -484,12 +484,14 @@ void TextDocumentEditor::insertText(char const *text, int textLen,
 
   m_doc->insertAt(this->toMCoord(origCursor), text, textLen);
 
-  // Put the cursor at the end of the inserted text.
-  this->walkCursorBytes(textLen);
+  if (!( flags & ITF_CURSOR_AT_START )) {
+    // Put the cursor at the end of the inserted text.
+    this->walkCursorBytes(textLen);
 
-  // Optionally put the mark at the start.
-  if (flags & ITF_SELECT_AFTERWARD) {
-    this->setMark(origCursor);
+    // Optionally put the mark at the start.
+    if (flags & ITF_SELECT_AFTERWARD) {
+      this->setMark(origCursor);
+    }
   }
 
   this->scrollToCursor();
@@ -1325,9 +1327,11 @@ string TextDocumentEditor::clipboardCut()
 }
 
 
-void TextDocumentEditor::clipboardPaste(char const *text, int textLen)
+void TextDocumentEditor::clipboardPaste(char const *text, int textLen,
+                                        bool cursorToStart)
 {
-  this->insertText(text, textLen);
+  this->insertText(text, textLen,
+    cursorToStart? ITF_CURSOR_AT_START : ITF_NONE);
 }
 
 

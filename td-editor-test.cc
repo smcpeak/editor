@@ -2478,6 +2478,35 @@ void testSelectEntireFile()
 }
 
 
+// ------------------ test_clipboardPaste_cursorStart ------------------
+// Test `clipboardPaste` with `cursorToStart==true`.
+void test_clipboardPaste_cursorStart()
+{
+  bool const cursorToStart = true;
+
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+
+  // Paste without any selection.
+  tde.setCursor(TextLCoord(1,1));
+  tde.clipboardPaste("abc", 3, cursorToStart);
+  expectNM(tde, 1,1,
+    "one\n"
+    "tabcwo\n"
+    "three\n");
+
+  // Paste with selection.
+  tde.setMark(TextLCoord(2,2));
+  tde.clipboardPaste("def", 3, cursorToStart);
+  expectNM(tde, 1,1,
+    "one\n"
+    "tdefree\n");
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -2522,6 +2551,7 @@ void test_td_editor(CmdlineArgsSpan args)
   testModelToLayoutSpans();
   testLineEndLCoord();
   testSelectEntireFile();
+  test_clipboardPaste_cursorStart();
 }
 
 
