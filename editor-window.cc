@@ -40,6 +40,7 @@
 #include "smqtutil/qtutil.h"           // toQString
 
 // smbase
+#include "smbase/chained-cond.h"       // cc::z_le_lt
 #include "smbase/exc.h"                // XOpen, GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/mysig.h"              // printSegfaultAddrs
@@ -52,7 +53,9 @@
 #include "smbase/stringb.h"            // stringbc
 #include "smbase/strutil.h"            // dirname
 #include "smbase/syserr.h"             // smbase::XSysError
+#include "smbase/sm-macros.h"          // ASSERT_TABLESIZE
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
+#include "smbase/xassert.h"            // xassert
 #include "smbase/xoverflow.h"          // smbase::XNumericConversion
 
 // Qt
@@ -1231,7 +1234,24 @@ bool EditorWindow::promptForCommandLine(
   bool /*OUT*/ &prefixStderrLines,
   EditorCommandLineFunction whichFunction)
 {
-  ApplyCommandDialog dlg(editorGlobal(), whichFunction);
+  // Use two process-lifetime instances so the window size is remembered
+  // across invocations.  (This isn't important enough to add to the
+  // user settings, IMO.)
+  //
+  // These are never deallocated.  (I cannot just allocate them directly
+  // into the global data because they would fail an assertion when
+  // being destroyed.)
+  static ApplyCommandDialog *dialogs[] = {
+    new ApplyCommandDialog(editorGlobal(), ECLF_APPLY),
+    new ApplyCommandDialog(editorGlobal(), ECLF_RUN),
+  };
+  ASSERT_TABLESIZE(dialogs, NUM_EDITOR_COMMAND_LINE_FUNCTIONS);
+
+  // Select the proper dialog.
+  xassert(cc::z_le_lt(whichFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
+  ApplyCommandDialog &dlg = *( dialogs[whichFunction] );
+
+  // Run it.
   if (!dlg.execForWidget(editorWidget())) {
     return false;
   }

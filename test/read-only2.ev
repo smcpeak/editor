@@ -7,7 +7,7 @@ CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 
 # Run 'date' command.
 Shortcut "window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R"
-CheckFocusWindow "window1.frame1.editorFrame.m_editorWidget.RunCommandDialog"
+CheckFocusWindow "RunCommandDialog"
 KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_D" "d"
 KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_A" "a"
 KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_T" "t"

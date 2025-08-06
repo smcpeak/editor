@@ -10,6 +10,8 @@
 enum EditorCommandLineFunction {
   ECLF_APPLY,
   ECLF_RUN,
+
+  NUM_EDITOR_COMMAND_LINE_FUNCTIONS
 };
 
 
