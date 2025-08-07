@@ -40,7 +40,7 @@
 #include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-test.h"            // PVAL
-#include "smbase/string-util.h"        // beginsWith
+#include "smbase/string-util.h"        // beginsWith, shellDoubleQuoteCommand
 #include "smbase/stringb.h"            // stringb
 #include "smbase/strtokp.h"            // StrtokParse
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -1574,8 +1574,8 @@ static char *dupString(std::string const &s)
 // non-zero if the attempt fails.
 static int runOneCommand(std::vector<std::string> const &command)
 {
-  // TODO: I should make a function to shell-quote a command line.
-  std::cout << "Command: " << join(command, " ") << "\n";
+  std::cout << "Command: "
+            << shellDoubleQuoteCommand(command) << "\n";
 
   // The tests unfortunately have some race conditions I have not
   // been able to fully eliminate, so try each one up to 3 times.
