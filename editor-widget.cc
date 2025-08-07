@@ -249,6 +249,9 @@ void EditorWidget::selfCheck() const
   xassert(m_hitTextFlags == m_textSearch->searchStringFlags());
   xassert(m_textSearch->document() == m_editor->getDocumentCore());
   m_textSearch->selfCheck();
+
+  xassert(m_minihexFont != nullptr);
+  m_minihexFont->selfCheck();
 }
 
 

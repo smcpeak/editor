@@ -189,7 +189,7 @@ public:      // data
   ObjArrayStack<QtBDFFont> m_cursorFontForFV;
 
   // Font containing miniature hexadecimal characters for use when
-  // a glyph is missing.
+  // a glyph is missing.  Never null.
   Owner<QtBDFFont> m_minihexFont;
 
   // When true, draw visible markers on whitespace characters.
