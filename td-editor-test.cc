@@ -8,14 +8,17 @@
 // smbase
 #include "smbase/datablok.h"           // DataBlock
 #include "smbase/exc.h"                // EXN_CONTEXT
+#include "smbase/gdvalue.h"            // GDVN_OMAP_EXPRS [h] (for TEST_CASE_EXPRS)
 #include "smbase/nonport.h"            // removeFile
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // EXPECT_EQ, expectEq
+#include "smbase/sm-test.h"            // EXPECT_EQ, expectEq, TEST_CASE_EXPRS
 #include "smbase/string-util.h"        // doubleQuote
 
 // libc
 #include <stdio.h>                     // printf
 #include <stdlib.h>                    // system
+
+using namespace gdv;
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -754,6 +757,116 @@ void testScrollToCursor()
   tde.setCursor(TextLCoord(1,0));
   tde.scrollToCursor(10 /*gap*/);
   expectFV(tde, 1,0, 0,0, 5,10);
+}
+
+
+// Test one call to `scrollToCursorIfBarelyOffscreen`.
+void testOne_stcibo(
+  int cursorLine, int cursorCol,
+  int fvLine, int fvCol,
+  int visLines, int visColumns,
+  int howFar,
+  int edgeGap,
+  int expectFVLine, int expectFVCol)
+{
+  TextDocumentAndEditor tde;
+  tde.setVisibleSize(visLines, visColumns);
+  tde.setFirstVisible(TextLCoord(fvLine, fvCol));
+  tde.setCursor(TextLCoord(cursorLine, cursorCol));
+
+  expectFV(tde,
+    cursorLine, cursorCol,
+    fvLine, fvCol,
+    visLines, visColumns);
+
+  tde.scrollToCursorIfBarelyOffscreen(howFar, edgeGap);
+
+  expectFV(tde,
+    cursorLine, cursorCol,
+    expectFVLine, expectFVCol,
+    visLines, visColumns);
+}
+
+
+// Like above, except automatically offset the first visible line by
+// several values to test that everything works relative to it.
+void testOne_stcibo_multiFVL(
+  int cursorLine, int cursorCol,
+  int fvLine, int fvCol,
+  int visLines, int visColumns,
+  int howFar,
+  int edgeGap,
+  int expectFVLine, int expectFVCol)
+{
+  TEST_CASE_EXPRS("testOne_stcibo_multiFVL",
+    cursorLine, cursorCol,
+    fvLine, fvCol,
+    visLines, visColumns,
+    howFar,
+    edgeGap);
+
+  for (int deltaLine : {0, 1, 10}) {
+    EXN_CONTEXT_EXPR(deltaLine);
+
+    testOne_stcibo(
+      cursorLine + deltaLine, cursorCol,
+      fvLine + deltaLine, fvCol,
+      visLines, visColumns,
+      howFar,
+      edgeGap,
+      expectFVLine + deltaLine, expectFVCol);
+  }
+}
+
+
+void test_scrollToCursorIfBarelyOffscreen()
+{
+  // No change, cursor onscreen, in top-left.
+  testOne_stcibo_multiFVL(0,0, 0,0, 10,10, 3, 2, 0,0);
+
+  // ---- Vertical behavior ----
+
+  // Barely still onscreen (lines 0 through 9 are visible).
+  testOne_stcibo_multiFVL(9,0, 0,0, 10,10, 3, 2, 0,0);
+
+  // Barely offscreen below.  Scroll so lines 3 through 12 are visible,
+  // thus satisfying the required 2 line gap.
+  testOne_stcibo_multiFVL(10,0, 0,0, 10,10, 3, 2, 3,0);
+
+  // Offscreen just within `howFar`.
+  testOne_stcibo_multiFVL(12,0, 0,0, 10,10, 3, 2, 5,0);
+
+  // Just beyond `howFar`, so no scroll occurs.
+  testOne_stcibo_multiFVL(13,0, 0,0, 10,10, 3, 2, 0,0);
+
+  // ---- Horizontal behavior ----
+
+  // Back to barely offscreen, but now scrolled right a little
+  // initially so the cursor is outside the horizontal bounds.  No
+  // scroll occurs.
+  testOne_stcibo_multiFVL(10,0, 0,1, 10,10, 3, 2, 0,1);
+
+  // This time the cursor is within horizontal bounds.  We return to
+  // `fvCol==0` because of the gap applied horizontally.
+  testOne_stcibo_multiFVL(10,1, 0,1, 10,10, 3, 2, 3,0);
+
+  // Initial cursor gap is only 1, so again `fvCol==0` afterward.
+  testOne_stcibo_multiFVL(10,2, 0,1, 10,10, 3, 2, 3,0);
+
+  // Initial cursor gap is 2, so `fvCol` is unchanged.
+  testOne_stcibo_multiFVL(10,3, 0,1, 10,10, 3, 2, 3,1);
+
+  // This applies up to the cursor near the right edge.
+  testOne_stcibo_multiFVL(10,8, 0,1, 10,10, 3, 2, 3,1);
+
+  // Encroaching on gap on right side, we scroll a little.
+  testOne_stcibo_multiFVL(10,9, 0,1, 10,10, 3, 2, 3,2);
+
+  // Right at right edge.
+  testOne_stcibo_multiFVL(10,10, 0,1, 10,10, 3, 2, 3,3);
+
+  // Now we're offscreen right, so no scroll occurs.
+  testOne_stcibo_multiFVL(10,11, 0,1, 10,10, 3, 2, 0,1);
 }
 
 
@@ -2521,6 +2634,7 @@ void test_td_editor(CmdlineArgsSpan args)
   testBlockIndent2();
   testFillToCursor();
   testScrollToCursor();
+  test_scrollToCursorIfBarelyOffscreen();
   testGetWordAfter();
   testGetAboveIndentation();
   testMoveCursor();

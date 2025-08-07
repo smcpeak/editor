@@ -397,6 +397,12 @@ public:      // funcs
   // the cursor in view.
   void centerVisibleOnCursorLine();
 
+  // If the cursor is below the bottom edge of the visible area, but
+  // within `howFar` lines of being visible, and within the horizontal
+  // bounds, then scroll to make the cursor visible with `edgeGap`
+  // between the cursor and the edge.
+  void scrollToCursorIfBarelyOffscreen(int howFar, int edgeGap);
+
   // ---------------- general text queries -------------------
   // If character 'c' is displayed at column 'col', what column do we
   // end up in right after that?  Usually it is 'c+1' but if 'c' is the

@@ -393,6 +393,18 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
 
   m_editor = this->getOrMakeEditor(file);
 
+  if (recomputeLastVisible()) {
+    // If `file` was most recently shown with the cursor at the bottom
+    // of the screen and the search-and-replace bar *not* shown, but now
+    // the bar *is* shown, then the cursor will be just barely
+    // offscreen, hidden by the bar.  That's annoying because I can't
+    // immediately tell where it is or that it is nearby.  So, if the
+    // cursor is near the bottom edge, scroll a little so it becomes
+    // visible.
+    m_editor->scrollToCursorIfBarelyOffscreen(
+      3 /*howFar*/, 2 /*edgeGap*/);
+  }
+
   // This deallocates the old 'TextSearch'.
   m_textSearch.reset(new TextSearch(m_editor->getDocumentCore()));
   this->setTextSearchParameters();
@@ -821,7 +833,7 @@ void EditorWidget::commandMoveFirstVisibleAndCursor(
 }
 
 
-void EditorWidget::recomputeLastVisible()
+bool EditorWidget::recomputeLastVisible()
 {
   int h = this->height();
   int w = this->width();
@@ -833,9 +845,12 @@ void EditorWidget::recomputeLastVisible()
     m_editor->setVisibleSize(
       (h - m_topMargin) / this->lineHeight(),
       (w - m_leftMargin) / m_fontWidth);
+
+    return true;
   }
   else {
     // font info not set, leave them alone
+    return false;
   }
 }
 

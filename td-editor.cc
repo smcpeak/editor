@@ -9,6 +9,7 @@
 
 // smbase
 #include "smbase/array.h"              // Array
+#include "smbase/chained-cond.h"       // smbase::cc::{le_le, lt_le}
 #include "smbase/datetime.h"           // DateTimeSeconds
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/sm-swap.h"            // swap
@@ -16,6 +17,8 @@
 
 // libc++
 #include <algorithm>                   // std::{min, max}
+
+using namespace smbase;
 
 
 int TextDocumentEditor::s_objectCount = 0;
@@ -437,6 +440,28 @@ void TextDocumentEditor::centerVisibleOnCursorLine()
   int newfv = std::max(0, m_cursor.m_line - this->visLines()/2);
   this->setFirstVisible(TextLCoord(newfv, 0));
   this->scrollToCursor();
+}
+
+
+void TextDocumentEditor::scrollToCursorIfBarelyOffscreen(
+  int howFar, int edgeGap)
+{
+  // Check that the cursor is within horizontal bounds.
+  if (!cc::le_le(m_firstVisible.m_column,
+                 m_cursor.m_column,
+                 m_lastVisible.m_column)) {
+    return;
+  }
+
+  // Check that the vertical coordinate is in the designated area.
+  if (!cc::lt_le(m_lastVisible.m_line,
+                 m_cursor.m_line,
+                 m_lastVisible.m_line + howFar)) {
+    return;
+  }
+
+  // Scroll.
+  scrollToCursor(edgeGap);
 }
 
 

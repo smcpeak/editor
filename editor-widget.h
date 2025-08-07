@@ -397,7 +397,10 @@ public:      // funcs
   //   - width(), height()
   //   - topMargin, leftMargin, interLineSpace
   //   - fontHeight, fontWidth
-  void recomputeLastVisible();
+  //
+  // If we do not have font information, this does not set the size, and
+  // return false.  Returns true otherwise.
+  bool recomputeLastVisible();
 
   // scroll the view the minimum amount so that the cursor line/col
   // is visible; if it's already visible, do nothing; 'edgeGap' says
