@@ -6,6 +6,14 @@
   [ "./editor.exe" "-ev=test/copy-paste.ev" "test/file1.h" ]
   [ "./editor.exe" "-ev=test/file-open-dialog1.ev" "test/file1.h" ]
   [ "./editor.exe" "-ev=test/file-open-nonexist.ev" ]
+
+  // This test touches `gets-modified.txt`, making it relatively recent
+  // by the time we run the second test, below, that uses that file.
+  // Therefore, this test is run near the start, so time can elapse
+  // between them.  The test will work even if they are adjacent, but a
+  // sleep typically gets activated in that case.
+  [ "./editor.exe" "-ev=test/reload-after-modification.ev" "test/gets-modified.txt" ]
+
   [ "./editor.exe" "-ev=test/simple-text-ins.ev" ]
   [ "./editor.exe" "-ev=test/sar-find-cs-completion.ev" "test/file1.h" ]
   [ "./editor.exe" "-ev=test/sar-repl-cs-completion.ev" "test/file1.h" ]
@@ -27,9 +35,8 @@
   [ "./editor.exe" "-ev=test/cut-then-paste.ev" ]
   [ "./editor.exe" "-ev=test/select-beyond-eof.ev" ]
   [ "./editor.exe" "-ev=test/fn-input-repeat-tab.ev" ]
-  [ "./editor.exe" "-ev=test/reload-after-modification.ev" "test/gets-modified.txt" ]
 
-  // This test seems to need retries...
+  // This test also touches `gets-modified.txt`.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]
 ]
 
