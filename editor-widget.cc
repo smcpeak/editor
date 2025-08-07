@@ -244,8 +244,11 @@ void EditorWidget::selfCheck() const
   xassert(m_listening);
 
   // Check 'm_textSearch'.
+  xassert(m_textSearch != nullptr);
   xassert(m_hitText == m_textSearch->searchString());
   xassert(m_hitTextFlags == m_textSearch->searchStringFlags());
+  xassert(m_textSearch->document() == m_editor->getDocumentCore());
+  m_textSearch->selfCheck();
 }
 
 

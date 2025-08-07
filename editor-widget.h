@@ -158,9 +158,11 @@ private:     // data
   string m_hitText;
   TextSearch::SearchStringFlags m_hitTextFlags;
 
-  // Incremental search algorithm object.  Its 'searchText' and flags
-  // are kept in sync with 'm_hitText' and 'm_hitTextFlags', and its
-  // document is always 'm_editor->getDocumentCore()'.
+  // Incremental search algorithm object.  Never null.
+  //
+  // Its 'searchText' and flags are kept in sync with 'm_hitText' and
+  // 'm_hitTextFlags', and its document is always
+  // 'm_editor->getDocumentCore()'.
   Owner<TextSearch> m_textSearch;
 
 public:      // data
