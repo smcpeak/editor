@@ -16,7 +16,7 @@
 // smbase
 #include "smbase/c-string-reader.h"    // parseQuotedCString
 #include "smbase/exc.h"                // smbase::{XBase, XMessage}
-#include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/stringb.h"            // stringb
@@ -576,8 +576,30 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "TouchFile") {
     BIND_ARGS1(fname);
 
+    std::int64_t beforeModUnixTime = 0;
+    getFileModificationTime(fname.c_str(), beforeModUnixTime /*OUT*/);
+
     SMFileUtil sfu;
     sfu.touchFile(fname);
+
+    std::int64_t afterModUnixTime = 0;
+    getFileModificationTime(fname.c_str(), afterModUnixTime /*OUT*/);
+
+    if (beforeModUnixTime == afterModUnixTime &&
+        beforeModUnixTime != 0) {
+      // The purpose of `TouchFile` is to get a file with a different
+      // timestamp, but depending on which tests run in what order, it
+      // could be that the file was modified so recently that this
+      // "touch" did not affect it at the granularity we measure (one
+      // second).  Therefore, sleep one second and try again.
+      TRACE("EventReplay", "TouchFile: unchanged file modification time, sleeping...");
+      sleepForMS(1000);
+
+      sfu.touchFile(fname);
+
+      // There's not much point in checking again.  If it worked, great.
+      // If not, I don't want to sit in a loop, so just keep going.
+    }
   }
 
   else {

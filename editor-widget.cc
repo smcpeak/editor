@@ -528,6 +528,12 @@ void EditorWidget::on_vfsReplyAvailable(
         getDocument()->m_modifiedOnDisk = true;
         this->redraw();
       }
+      else {
+        TRACE2(
+          "Document modTime " << getDocument()->m_lastFileTimestamp <<
+          " is same as reply modTime " << reply->m_fileModificationTime <<
+          ", NOT marking as modified on disk.");
+      }
     }
   }
 
