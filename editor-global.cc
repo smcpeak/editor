@@ -32,6 +32,7 @@
 #include "smbase/exc.h"                // smbase::{XBase, xformat}
 #include "smbase/gdv-ordered-map.h"    // gdv::GDVOrderedMap
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
@@ -54,7 +55,9 @@
 
 // libc++
 #include <algorithm>                   // std::max
+#include <cstring>                     // std::{strlen, memcpy}
 #include <deque>                       // std::deque
+#include <exception>                   // std::exception
 #include <string>                      // std::string
 #include <utility>                     // std::move
 
@@ -249,6 +252,11 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // Open the first window, initially showing the default "untitled"
   // file that 'fileDocuments' made in its constructor.
   EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
+
+  // To ensure consistency of names when running multiple tests in the
+  // same process, set the first window's name.
+  ed->setObjectName("window1");
+  TRACE1("first window object name: " << toString(ed->objectName()));
 
   // TODO: Why do I create a window before processing the command line?
   try {
@@ -1467,7 +1475,7 @@ static void customMessageHandler(
 }
 
 
-int main(int argc, char **argv)
+static int innerMain(int argc, char **argv)
 {
   // Not implemented in smbase for mingw.
   //printSegfaultAddrs();
@@ -1548,6 +1556,129 @@ int main(int argc, char **argv)
   }
 
   return ret;
+}
+
+
+// Return a dynamically-allocated, NUL-terminated array holding the
+// contents of `s`.
+static char *dupString(std::string const &s)
+{
+  char *ret = new char[s.size() + 1];
+  std::memcpy(ret, s.data(), s.size());
+  ret[s.size()] = 0;
+  return ret;
+}
+
+
+// Run `command` as if it were this program's `argc/argv`.  Return
+// non-zero if the attempt fails.
+static int runOneCommand(std::vector<std::string> const &command)
+{
+  // TODO: I should make a function to shell-quote a command line.
+  std::cout << "Command: " << join(command, " ") << "\n";
+
+  // The tests unfortunately have some race conditions I have not
+  // been able to fully eliminate, so try each one up to 3 times.
+  int attempts = 0;
+  int const retryLimit = 3;
+
+  while (true) {
+    ++attempts;
+
+    // The `argc/argv` passed to the `QApplication` ctor must be
+    // mutable, so make copies of everything.
+    char **argv = new char*[command.size()+1];
+    std::vector<char*> argvPointers;
+    for (std::size_t i=0; i < command.size(); ++i) {
+      argv[i] = dupString(command.at(i));
+      argvPointers.push_back(argv[i]);
+    }
+    argv[command.size()] = nullptr;
+
+    // Run the constructed command line.
+    int result = innerMain(command.size()+1, argv);
+
+    // Free the `argv` array.
+    delete[] argv;
+
+    // Free the individual strings.  We do not read `argv` to find
+    // them because `QApplication` can modify the `argv` array.
+    for (char *p : argvPointers) {
+      delete[] p;
+    }
+
+    if (result == 0) {
+      // Test passed.
+      return 0;
+    }
+    else {
+      if (attempts < retryLimit) {
+        std::cout << "Attempt " << attempts << " of " << retryLimit
+                  << " failed (code=" << result << "), retrying...\n";
+      }
+      else {
+        std::cout << "All " << retryLimit
+                  << " attempts failed, stopping with code "
+                  << result << "\n";
+        return result;
+      }
+    }
+  }
+
+  // Not reached.
+}
+
+
+// Read `cmdsFname` as GDVN and treat its contents as a sequence of
+// command lines to run, in sequence, as if they were this program's
+// command line.  The expectation is these are automated GUI tests.
+//
+// It is faster to run all the tests in one process if possible rather
+// than starting a new process for each.
+static int runCommandList(std::string const &cmdsFname)
+{
+  try {
+    std::cout << "Executing commands from " << cmdsFname << "\n";
+
+    // Parse the file as GDVN and parse the GDV as a sequence of
+    // sequences of strings.
+    GDValue commandGDV = GDValue::readFromFile(cmdsFname);
+    std::vector<std::vector<std::string>> allCommands =
+      gdvpTo<decltype(allCommands)>(GDValueParser(commandGDV));
+
+    // Treat each sequence of strings as a command line.
+    for (std::vector<std::string> const &command : allCommands) {
+      int result = runOneCommand(command);
+      if (result != 0) {
+        return result;
+      }
+    }
+
+    // All tests passed.
+    return 0;
+  }
+
+  catch (std::exception &x) {
+    // At least for now, if a test fails with an exception, I do not
+    // treat that as retryable.
+    std::cout << "Test failed: " << x.what() << "\n";
+    return 2;
+  }
+}
+
+
+int main(int argc, char **argv)
+{
+  if (argc >= 2) {
+    std::string firstArg(argv[1]);
+    char const *prefix = "-testCommands=";
+    if (beginsWith(firstArg, prefix)) {
+      std::string cmdsFname = firstArg.substr(std::strlen(prefix));
+      return runCommandList(cmdsFname);
+    }
+  }
+
+  return innerMain(argc, argv);
 }
 
 

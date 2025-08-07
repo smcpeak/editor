@@ -544,40 +544,17 @@ check:
 	@# The first test runs without any retry.
 	./editor.exe -ev=test/empty.ev
 	@#
-	@# Remaining tests have retry active.
-	$(RETRY) ./editor.exe -ev=test/down.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/copy-paste.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/file-open-dialog1.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/file-open-nonexist.ev
-	$(RETRY) ./editor.exe -ev=test/simple-text-ins.ev
-	$(RETRY) ./editor.exe -ev=test/sar-find-cs-completion.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/sar-repl-cs-completion.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/sar-match-limit.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/sar-replace-bol.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/resize1.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/read-only1.ev
-	$(RETRY) ./editor.exe -ev=test/read-only2.ev
-	$(RETRY) ./editor.exe -ev=test/read-only3.ev
-	$(RETRY) ./editor.exe -ev=test/prompt-unsaved-changes.ev
-	$(RETRY) ./editor.exe -ev=test/screenshot1.ev test/file1.h
-	$(RETRY) ./editor.exe -ev=test/visible-tabs.ev test/tabs-test.txt
-	$(RETRY) ./editor.exe -ev=test/search-hits-with-tab.ev test/tabs-test.txt
+	@# Run the big batch of tests that all run in one process, with
+	@# internal retry capabilities.
+	./editor.exe -testCommands=test/all-tests.gdvn
+	@#
+	@# Remaining tests that can't easily run in the big batch.
 	cp test/file1.h tmp.h && $(RETRY) ./editor.exe -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
-	$(RETRY) ./editor.exe -ev=test/keysequence.ev
-	$(RETRY) ./editor.exe -ev=test/keysequence2.ev
 	cd test && sh ../retry.sh 3 ../editor.exe -ev=fn-input-dialog-size.ev
-	$(RETRY) ./editor.exe -ev=test/screenshot-has-tabs.ev test/has-tabs.c
-	$(RETRY) ./editor.exe -ev=test/open-files-close-docs.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
-	$(RETRY) ./editor.exe -ev=test/open-files-filter.ev test/read-only1.ev test/read-only2.ev test/read-only3.ev test/resize1.ev
-	$(RETRY) ./editor.exe -ev=test/cut-then-paste.ev
-	$(RETRY) ./editor.exe -ev=test/select-beyond-eof.ev
 	cp test/robotank.info.json.crlf.bin tmp.h && \
 	  $(RETRY) ./editor.exe -ev=test/sar-remove-ctlm.ev tmp.h && \
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
-	$(RETRY) ./editor.exe -ev=test/fn-input-repeat-tab.ev
-	$(RETRY) ./editor.exe -ev=test/reload-after-modification.ev test/gets-modified.txt
-	$(RETRY) ./editor.exe -ev=test/reload-from-files-dialog.ev test/gets-modified.txt test/gets-modified2.txt
 	@#
 	@# There isn't an easy way to do this automatically elsewhere,
 	@# mainly due to how my test programs are built, so remake
