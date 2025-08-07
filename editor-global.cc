@@ -1580,7 +1580,7 @@ static int runOneCommand(std::vector<std::string> const &command)
   // The tests unfortunately have some race conditions I have not
   // been able to fully eliminate, so try each one up to 3 times.
   int attempts = 0;
-  int const retryLimit = 3;
+  int const retryLimit = envAsIntOr(3, "EDITOR_TEST_RETRIES");
 
   while (true) {
     ++attempts;
