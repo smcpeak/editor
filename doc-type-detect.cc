@@ -207,7 +207,9 @@ KnownDocumentType detectDocumentType(DocumentName const &docName)
       "h",
       "hh",
       "hpp",
+      "gdvn",      // C/C++ is almost right (except for nested comments).
       "java",      // C/C++ highlighting is better than none.
+      "json",      // Should work fine.
       "lex",
       "tcc",
       "y",

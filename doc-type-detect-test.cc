@@ -60,6 +60,8 @@ void test_detectDocumentType()
   testOne_detectFileType("other_iostream", KDT_UNKNOWN);
 
   testOne_detectFileType("ostream.tcc", KDT_C);
+  testOne_detectFileType("something.json", KDT_C);
+  testOne_detectFileType("else.gdvn", KDT_C);
 }
 
 
