@@ -35,6 +35,9 @@
 // Qt
 #include <QWidget>
 
+// libc++
+#include <memory>                                // std::unique_ptr
+
 
 class QtBDFFont;                                 // qtbdffont.h
 class SearchAndReplacePanel;                     // sar-panel.h
@@ -163,7 +166,7 @@ private:     // data
   // Its 'searchText' and flags are kept in sync with 'm_hitText' and
   // 'm_hitTextFlags', and its document is always
   // 'm_editor->getDocumentCore()'.
-  Owner<TextSearch> m_textSearch;
+  std::unique_ptr<TextSearch> m_textSearch;
 
 public:      // data
   // ------ rendering options ------

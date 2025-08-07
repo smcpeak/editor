@@ -126,7 +126,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_fileStatusRequestEditor(),
     m_hitText(""),
     m_hitTextFlags(TextSearch::SS_CASE_INSENSITIVE),
-    m_textSearch(NULL),
+    m_textSearch(),
     m_topMargin(1),
     m_leftMargin(1),
     m_interLineSpace(0),
@@ -163,7 +163,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   m_editor = this->getOrMakeEditor(tdf);
   this->startListening();
 
-  m_textSearch = new TextSearch(m_editor->getDocumentCore());
+  m_textSearch.reset(new TextSearch(m_editor->getDocumentCore()));
   this->setTextSearchParameters();
 
   m_documentList->addObserver(this);
@@ -200,7 +200,7 @@ EditorWidget::~EditorWidget()
   m_documentList->removeObserver(this);
   m_documentList = NULL;
 
-  m_textSearch.del();
+  m_textSearch.reset();
 
   QObject::disconnect(vfsConnections(), nullptr, this, nullptr);
   cancelFileStatusRequestIfAny();
@@ -391,7 +391,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
   m_editor = this->getOrMakeEditor(file);
 
   // This deallocates the old 'TextSearch'.
-  m_textSearch = new TextSearch(m_editor->getDocumentCore());
+  m_textSearch.reset(new TextSearch(m_editor->getDocumentCore()));
   this->setTextSearchParameters();
 
   // Move the chosen file to the top of the document list since it is
