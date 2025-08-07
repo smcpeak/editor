@@ -25,7 +25,6 @@
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
-#include "smbase/owner.h"                        // Owner
 #include "smbase/refct-serf.h"                   // RCSerf, SerfRefCount
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
@@ -190,7 +189,7 @@ public:      // data
 
   // Font containing miniature hexadecimal characters for use when
   // a glyph is missing.  Never null.
-  Owner<QtBDFFont> m_minihexFont;
+  std::unique_ptr<QtBDFFont> m_minihexFont;
 
   // When true, draw visible markers on whitespace characters.
   bool m_visibleWhitespace;

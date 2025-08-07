@@ -24,7 +24,7 @@
 #include "smqtutil/editor14r.bdf.gen.h"          // bdfFontData_editor14r
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
 #include "smqtutil/qstringb.h"                   // qstringb
-#include "smqtutil/qtbdffont.h"                  // QtBDFFont
+#include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
 
@@ -381,7 +381,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 
   // Font for missing glyphs.
   Owner<BDFFont> minihexBDFFont(makeBDFFont(bdfFontData_minihex6, "minihex font"));
-  m_minihexFont = new QtBDFFont(*minihexBDFFont);
+  m_minihexFont.reset(new QtBDFFont(*minihexBDFFont));
   m_minihexFont->setTransparent(false);
 }
 
@@ -1573,7 +1573,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
     // I know I need it.
     m_minihexFont->setSameFgBgColors(*font);
 
-    drawHexQuad(*(m_minihexFont), paint, bounds, codePoint);
+    drawHexQuad(*m_minihexFont, paint, bounds, codePoint);
   }
 }
 
