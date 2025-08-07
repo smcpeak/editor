@@ -1475,10 +1475,19 @@ static void customMessageHandler(
 }
 
 
+// Defined in `smbase/trace.h`.  But I can't include that file because
+// it conflicts with `sm-trace.h`.
+void traceAddFromEnvVar();
+
+
 static int innerMain(int argc, char **argv)
 {
   // Not implemented in smbase for mingw.
   //printSegfaultAddrs();
+
+  // I still have some modules using the older `trace` facility, and
+  // this is needed to allow them to respond to the "TRACE" envvar.
+  traceAddFromEnvVar();
 
   int ret;
   {
