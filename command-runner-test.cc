@@ -16,16 +16,19 @@
 #include "smbase/datablok.h"           // DataBlock
 #include "smbase/datetime.h"           // getCurrentUnixTime
 #include "smbase/exc.h"                // xfatal
-#include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/nonport.h"            // getMilliseconds, portableSleep
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // ARGS_MAIN, VPVAL, DIAG, EXPECT_EQ, verbose
-#include "smbase/string-util.h"        // beginsWith, replaceAll
+#include "smbase/string-util.h"        // beginsWith, replaceAll, shellDoubleQuoteCommand
 #include "smbase/xassert.h"            // xfailure_stringbc
 
 // Qt
 #include <QCoreApplication>
 #include <QProcessEnvironment>
+
+// libc++
+#include <cstring>                     // std::strcmp
 
 // libc
 #include <assert.h>                    // assert
@@ -940,11 +943,15 @@ void printStatus(CommandRunner &runner)
   }
 }
 
+
 // Run a program and then kill it.  This is meant for interactive
 // testing.
 //
+// If `wait`, wait indefinitely for the child.  Otherwise, kill it
+// relatively quickly after spawning.
+//
 // Adapted from wrk/learn/qt5/qproc.cc.
-void runAndKill(CmdlineArgsSpan commandAndArgs)
+void runAndKill(CmdlineArgsSpan commandAndArgs, bool wait)
 {
   UnixTime startTime = 0;
 
@@ -960,22 +967,28 @@ void runAndKill(CmdlineArgsSpan commandAndArgs)
     // Child will inherit stdin/out/err.
     runner.forwardChannels();
 
-    DIAG("starting: " << commandAndArgs[0] << (args.isEmpty()? "" : " ") <<
-         args.join(' ').toUtf8().constData());
+    DIAG("starting: " << shellDoubleQuoteCommand(commandAndArgs));
     runner.startAsynchronous();
 
-    // Wait a moment to reach quiescence.
-    DIAG("waiting for 200 ms ...");
-    sleepWhilePumpingEvents(200);
-    printStatus(runner);
+    if (wait) {
+      DIAG("waiting for child to terminate ...");
+      runner.waitForNotRunning();
+    }
+    else {
+      // Wait a moment to reach quiescence.
+      DIAG("waiting for 200 ms ...");
+      sleepWhilePumpingEvents(200);
+      printStatus(runner);
 
-    // Attempt to kill the process.
-    DIAG("calling killProcessNoWait ...");
-    runner.killProcessNoWait();
+      // Attempt to kill the process.
+      DIAG("calling killProcessNoWait ...");
+      runner.killProcessNoWait();
 
-    // Wait again.
-    DIAG("waiting for 200 ms ...");
-    sleepWhilePumpingEvents(200);
+      // Wait again.
+      DIAG("waiting for 200 ms ...");
+      sleepWhilePumpingEvents(200);
+    }
+
     printStatus(runner);
 
     // Now let the destructor run.
@@ -991,10 +1004,10 @@ void runAndKill(CmdlineArgsSpan commandAndArgs)
 CLOSE_ANONYMOUS_NAMESPACE
 
 
-#define RUN(statement)                              \
-  if (!oneTest || 0==strcmp(oneTest, #statement)) { \
-    DIAG("------ " << #statement << " ------");     \
-    statement;                                      \
+#define RUN(statement)                                   \
+  if (!oneTest || 0==std::strcmp(oneTest, #statement)) { \
+    DIAG("------ " << #statement << " ------");          \
+    statement;                                           \
   }
 
 
@@ -1003,7 +1016,26 @@ void test_command_runner(CmdlineArgsSpan args)
 {
   if (!args.empty()) {
     // Special mode for interactive testing of CommandRunner.
-    runAndKill(args);
+
+    // With `-wait`, this is a general-purpose spawn-and-wait utility.
+    bool wait = false;
+    if (0==std::strcmp(args[0], "-wait")) {
+      wait = true;
+      args = args.subspan(1);
+    }
+
+    // The sleep ability is convenient for testing a native Windows
+    // program that sleeps, whereas otherwise Cygwin `sleep` might be
+    // the only option.
+    if (0==std::strcmp(args[0], "-sleep") && args.size() >= 2) {
+      int s = std::atoi(args[1]);
+      std::cout << "sleeping for " << s << " seconds\n";
+      portableSleep(s);
+      return;
+    }
+
+    // Run the program and arguments given as this program's arguments.
+    runAndKill(args, wait);
     return;
   }
 
