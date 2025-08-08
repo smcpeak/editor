@@ -9,6 +9,7 @@
 #include "smbase/sm-test.h"            // EXPECT_EQ
 #include "smbase/str.h"                // streq
 #include "smbase/stringb.h"            // stringb
+#include "smbase/trace.h"              // traceAddFromEnvVar
 
 #include <QCoreApplication>
 
@@ -21,6 +22,9 @@ using namespace smbase;
 // of the `extern` declarations inside it.
 static void entry(int argc, char **argv)
 {
+  // Enable old-style tracing in unit tests.
+  traceAddFromEnvVar();
+
   // Console-only Qt apps use `QCoreApplication`, which does not need
   // any access to a Windowing API.  This is particularly relevant on
   // unix, where X11 may or may not be available.
