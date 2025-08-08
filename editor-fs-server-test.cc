@@ -107,6 +107,8 @@ void FSServerTest::runPathQuery(string const &path)
 
 void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
 {
+  DIAG("runEchoTest: data size is " << data.size());
+
   VFS_Echo request;
   request.m_data = data;
   m_fsQuery.sendRequest(request);
@@ -140,6 +142,14 @@ void FSServerTest::runEchoTests()
   // Character 26 (0x1A) is treated as signalling EOF by the Windows
   // file system layer in text mode, so it's an important case to check.
   runEchoTest(std::vector<unsigned char>{26});
+
+  // Check for CR/LF issues.
+  runEchoTest(std::vector<unsigned char>{'\n'});
+  runEchoTest(std::vector<unsigned char>{'\r'});
+  runEchoTest(std::vector<unsigned char>{'\r', '\n'});
+  runEchoTest(std::vector<unsigned char>{'\r', '\r', '\n', '\n'});
+  runEchoTest(std::vector<unsigned char>{'\n', '\r'});
+  runEchoTest(std::vector<unsigned char>{'\n', '\n', '\r', '\r'});
 
   // Send the SSH escape sequence that disconnects.  This should be
   // simply passed through as-is without interpretation.
