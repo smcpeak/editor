@@ -37,7 +37,7 @@
 #include "smbase/map-util.h"           // keySet
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
-#include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, envAsIntOr, envAsBool}
+#include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-test.h"            // PVAL
 #include "smbase/string-util.h"        // beginsWith, shellDoubleQuoteCommand
