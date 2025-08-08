@@ -322,7 +322,14 @@ test-prog-outs: out/vfs-connections-test-localhost.ok
 out/vfs-connections-test-localhost.ok: unit-tests.exe editor-fs-server.exe
 	$(CREATE_OUTPUT_DIRECTORY)
 	$(RUN_WITH_TIMEOUT) ./unit-tests.exe vfs_connections localhost \
-	  </dev/null >out/vfs-connections-test-localhost.ok 2>&1
+	  </dev/null >out/vfs-connections-test-localhost.out 2>&1
+	touch $@
+
+test-prog-outs: out/editor-fs-server-test-localhost.ok
+out/editor-fs-server-test-localhost.ok: unit-tests.exe editor-fs-server.exe
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(RUN_WITH_TIMEOUT) ./unit-tests.exe editor_fs_server localhost \
+	  </dev/null >out/editor-fs-server-test-localhost.out 2>&1
 	touch $@
 
 endif # TEST_SSH_LOCALHOST

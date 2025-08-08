@@ -6,15 +6,18 @@
 // smbase
 #include "smbase/bflatten.h"           // StreamFlatten
 #include "smbase/binary-stdin.h"       // setStdinToBinary, setStdoutToBinary
+#include "smbase/datetime.h"           // DateTimeSeconds
 #include "smbase/exc.h"                // xfatal, smbase::XBase
 #include "smbase/flatten.h"            // de/serializeIntNBO
-#include "smbase/nonport.h"            // sleepForMilliseconds
+#include "smbase/nonport.h"            // sleepForMilliseconds, getProcessId
 #include "smbase/overflow.h"           // convertWithoutLoss
+#include "smbase/sm-env.h"             // smbase::getXDGStateHome
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/syserr.h"             // smbase::xsyserror
 
 // libc++
+#include <cstdlib>                     // std::min
 #include <fstream>                     // std::ofstream
 #include <memory>                      // std::unique_ptr
 #include <sstream>                     // std::i/ostringstream
@@ -43,22 +46,40 @@ static std::ofstream *logStream = nullptr;
 
 // Read 'size' bytes from 'stream'.  Return false on EOF.  If we do not
 // get an immediate EOF, but still fail to read 'size' bytes, throw.
-static bool freadAll(void *ptr, size_t size, FILE *stream)
+static bool freadAll(unsigned char *ptr, size_t size, FILE *stream)
 {
   LOG("freadAll(size=" << size << ")");
 
-  size_t res = fread(ptr, 1, size, stream);
-  LOG("  fread returned " << res);
+  size_t totalRead = 0;
+  while (totalRead < size) {
+    // There is a strange problem when reading too much data at once if
+    // we are running under `ssh`:
+    //
+    //   https://stackoverflow.com/questions/79729658/why-does-readfile-on-stdin-with-size-at-least-64kib-hang-under-ssh
+    //
+    // The workaround is to limit the read size to 32kiB.
+    size_t maxToRead = std::min(size - totalRead,
+                                static_cast<size_t>(0x8000));
 
-  if (res == 0) {
+    size_t res = fread(ptr+totalRead, 1, maxToRead, stream);
+    LOG("  fread returned " << res);
+
+    if (res == 0) {
+      break;
+    }
+
+    totalRead += res;
+  }
+
+  if (totalRead == 0) {
     // Clean EOF.
     return false;
   }
 
-  if (res < size) {
+  if (totalRead < size) {
     if (feof(stream)) {
       xfatal(stringb(
-        "Unexpected end of input; got " << res <<
+        "Unexpected end of input; got " << totalRead <<
         " bytes, expected " << size << "."));
     }
     else {
@@ -66,7 +87,7 @@ static bool freadAll(void *ptr, size_t size, FILE *stream)
     }
   }
 
-  xassert(res == size);
+  xassert(totalRead == size);
   return true;
 }
 
@@ -225,10 +246,19 @@ static int innerMain()
 int main()
 {
   try {
+    // Set up log file.
     SMFileUtil sfu;
-    sfu.createDirectoryAndParents("out");
-    logStream = new std::ofstream("out/fs-server.log");
-    LOG("editor-fs-server started");
+    std::string logFileName =
+      sfu.normalizePathSeparators(getXDGStateHome()) +
+      "/sm-editor/fs-server.log";
+    sfu.createParentDirectories(logFileName);
+    logStream = new std::ofstream(logFileName);
+
+    // Write first log line.
+    DateTimeSeconds dts;
+    dts.fromCurrentTime();
+    LOG("editor-fs-server started at " << dts.dateTimeString() <<
+        ", pid=" << getProcessId());
 
     // Since we are using stdin and stdout as the message channel, it
     // needs to be able to transport arbitrary data.  Windows text mode

@@ -297,7 +297,6 @@ void test_editor_fs_server(CmdlineArgsSpan args)
   HostName hostname(HostName::asLocal());
 
   if (!args.empty()) {
-    // TODO: This test is broken.  It's evidently been that way a while.
     hostname = HostName::asSSH(args[0]);
     DIAG("Running test with hostname: " << hostname);
 
