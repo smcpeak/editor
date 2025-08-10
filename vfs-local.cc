@@ -17,7 +17,7 @@ using namespace smbase;
 // It sets the failure code and reason of 'reply'.
 #define PATH_REQUEST_CATCH_BLOCK                                     \
   catch (XSysError &x) {                                             \
-    reply.setFailureReason(x.reason, x.why());                       \
+    reply.setFailureReason(x.getPortableErrorCode(), x.why());       \
   }                                                                  \
   catch (XBase &x) {                                                 \
     reply.setFailureReason(PortableErrorCode::PEC_UNKNOWN, x.why()); \
