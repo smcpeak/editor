@@ -1,73 +1,73 @@
 // editor-window.cc
 // code for editor-window.h
 
-#include "editor-window.h"             // this module
+#include "editor-window.h"                       // this module
 
 // editor
-#include "apply-command-dialog.h"      // ApplyCommandDialog
-#include "c_hilite.h"                  // C_Highlighter
-#include "command-runner.h"            // CommandRunner
-#include "diff-hilite.h"               // DiffHighlighter
-#include "doc-type-detect.h"           // detectDocumentType
-#include "editor-global.h"             // EditorGlobal
-#include "editor-widget-frame.h"       // EditorWidgetFrame
-#include "editor-widget.h"             // EditorWidget
-#include "filename-input.h"            // FilenameInputDialog
-#include "fonts-dialog.h"              // FontsDialog
-#include "git-version.h"               // editor_git_version
-#include "hashcomment_hilite.h"        // HashComment_Highlighter
-#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
-#include "lsp-manager.h"               // LSPManager
-#include "lsp-status-widget.h"         // LSPStatusWidget
-#include "macro-creator-dialog.h"      // MacroCreatorDialog
-#include "macro-run-dialog.h"          // MacroRunDialog
-#include "makefile_hilite.h"           // Makefile_Highlighter
-#include "ocaml_hilite.h"              // OCaml_Highlighter
-#include "pixmaps.h"                   // g_editorPixmaps
-#include "python_hilite.h"             // Python_Highlighter
-#include "sar-panel.h"                 // SearchAndReplacePanel
-#include "status-bar.h"                // StatusBarDisplay
-#include "td-diagnostics.h"            // TextDocumentDiagnostics
-#include "td-editor.h"                 // TextDocumentEditor
-#include "textinput.h"                 // TextInputDialog
-#include "vfs-query-sync.h"            // VFS_QuerySync
-#include "vfs-msg.h"                   // VFS_ReadFileRequest
+#include "apply-command-dialog.h"                // ApplyCommandDialog
+#include "c_hilite.h"                            // C_Highlighter
+#include "command-runner.h"                      // CommandRunner
+#include "diff-hilite.h"                         // DiffHighlighter
+#include "doc-type-detect.h"                     // detectDocumentType
+#include "editor-global.h"                       // EditorGlobal
+#include "editor-widget-frame.h"                 // EditorWidgetFrame
+#include "editor-widget.h"                       // EditorWidget
+#include "filename-input.h"                      // FilenameInputDialog
+#include "fonts-dialog.h"                        // FontsDialog
+#include "git-version.h"                         // editor_git_version
+#include "hashcomment_hilite.h"                  // HashComment_Highlighter
+#include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "lsp-manager.h"                         // LSPManager
+#include "lsp-status-widget.h"                   // LSPStatusWidget
+#include "macro-creator-dialog.h"                // MacroCreatorDialog
+#include "macro-run-dialog.h"                    // MacroRunDialog
+#include "makefile_hilite.h"                     // Makefile_Highlighter
+#include "ocaml_hilite.h"                        // OCaml_Highlighter
+#include "pixmaps.h"                             // g_editorPixmaps
+#include "python_hilite.h"                       // Python_Highlighter
+#include "sar-panel.h"                           // SearchAndReplacePanel
+#include "status-bar.h"                          // StatusBarDisplay
+#include "td-diagnostics.h"                      // TextDocumentDiagnostics
+#include "td-editor.h"                           // TextDocumentEditor
+#include "textinput.h"                           // TextInputDialog
+#include "vfs-query-sync.h"                      // VFS_QuerySync
+#include "vfs-msg.h"                             // VFS_ReadFileRequest
 
 // smqtutil
-#include "smqtutil/qhboxframe.h"       // QHBoxFrame
-#include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtguiutil.h"        // CursorSetRestore
-#include "smqtutil/qtutil.h"           // toQString
+#include "smqtutil/qhboxframe.h"                 // QHBoxFrame
+#include "smqtutil/qstringb.h"                   // qstringb
+#include "smqtutil/qtguiutil.h"                  // CursorSetRestore
+#include "smqtutil/qtutil.h"                     // toQString
 
 // smbase
-#include "smbase/chained-cond.h"       // cc::z_le_lt
-#include "smbase/exc.h"                // XOpen, GENERIC_CATCH_BEGIN/END
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/mysig.h"              // printSegfaultAddrs
-#include "smbase/nonport.h"            // fileOrDirectoryExists
-#include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
-#include "smbase/overflow.h"           // safeToInt
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-test.h"            // PVAL
-#include "smbase/string-util.h"        // endsWith, vectorOfUCharToString
-#include "smbase/stringb.h"            // stringbc
-#include "smbase/strutil.h"            // dirname
-#include "smbase/syserr.h"             // smbase::XSysError
-#include "smbase/sm-macros.h"          // ASSERT_TABLESIZE
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
-#include "smbase/xassert.h"            // xassert
-#include "smbase/xoverflow.h"          // smbase::XNumericConversion
+#include "smbase/chained-cond.h"                 // cc::z_le_lt
+#include "smbase/exc.h"                          // XOpen, GENERIC_CATCH_BEGIN/END
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/mysig.h"                        // printSegfaultAddrs
+#include "smbase/nonport.h"                      // fileOrDirectoryExists
+#include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
+#include "smbase/overflow.h"                     // safeToInt
+#include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-test.h"                      // PVAL
+#include "smbase/string-util.h"                  // endsWith, vectorOfUCharToString
+#include "smbase/stringb.h"                      // stringbc
+#include "smbase/strutil.h"                      // dirname
+#include "smbase/sm-macros.h"                    // ASSERT_TABLESIZE
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/xassert.h"                      // xassert
+#include "smbase/xoverflow.h"                    // smbase::XNumericConversion
 
 // Qt
-#include <qmenubar.h>                  // QMenuBar
-#include <qscrollbar.h>                // QScrollBar
-#include <qlabel.h>                    // QLabel
-#include <qfiledialog.h>               // QFileDialog
-#include <qmessagebox.h>               // QMessageBox
-#include <qlayout.h>                   // QVBoxLayout
-#include <qsizegrip.h>                 // QSizeGrip
-#include <qstatusbar.h>                // QStatusBar
-#include <qlineedit.h>                 // QLineEdit
+#include <qmenubar.h>                            // QMenuBar
+#include <qscrollbar.h>                          // QScrollBar
+#include <qlabel.h>                              // QLabel
+#include <qfiledialog.h>                         // QFileDialog
+#include <qmessagebox.h>                         // QMessageBox
+#include <qlayout.h>                             // QVBoxLayout
+#include <qsizegrip.h>                           // QSizeGrip
+#include <qstatusbar.h>                          // QStatusBar
+#include <qlineedit.h>                           // QLineEdit
 
 #include <QCloseEvent>
 #include <QDesktopWidget>
@@ -75,14 +75,14 @@
 #include <QInputDialog>
 
 // libc++
-#include <exception>                   // std::exception
-#include <optional>                    // std::optional
-#include <string_view>                 // std::string_view
-#include <utility>                     // std::move
+#include <exception>                             // std::exception
+#include <optional>                              // std::optional
+#include <string_view>                           // std::string_view
+#include <utility>                               // std::move
 
 // libc
-#include <string.h>                    // strrchr
-#include <stdlib.h>                    // atoi
+#include <string.h>                              // strrchr
+#include <stdlib.h>                              // atoi
 
 using namespace gdv;
 using namespace smbase;
@@ -732,7 +732,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
                               rfr->m_readOnly);
   }
   else {
-    if (rfr->m_failureReasonCode == XSysError::R_FILE_NOT_FOUND) {
+    if (rfr->m_failureReasonCode == PortableErrorCode::PEC_FILE_NOT_FOUND) {
       // Just have the file open with its name set but no content.
     }
     else {

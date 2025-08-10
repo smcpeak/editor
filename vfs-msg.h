@@ -8,19 +8,19 @@
 #ifndef EDITOR_VFS_MSG_H
 #define EDITOR_VFS_MSG_H
 
-#include "vfs-msg-fwd.h"               // FOR_EACH_VFS_MESSAGE_TYPE, plus fwds for this module
+#include "vfs-msg-fwd.h"                         // FOR_EACH_VFS_MESSAGE_TYPE, plus fwds for this module
 
 // smbase
-#include "smbase/flatten-fwd.h"        // Flatten
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/str.h"                // string
-#include "smbase/syserr.h"             // smbase::XSysError
+#include "smbase/flatten-fwd.h"                  // Flatten
+#include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/str.h"                          // string
 
 // libc++
-#include <vector>                      // std::vector
+#include <vector>                                // std::vector
 
 // libc
-#include <stdint.h>                    // int64_t, int32_t
+#include <stdint.h>                              // int64_t, int32_t
 
 
 // Protocol version described in this file.
@@ -37,8 +37,9 @@
 //    3: Make FileStatus{Request,Reply} inherit Path{Request,Reply}.
 //    4: Add GetDirEntries{Request,Reply}.
 //    5: Add VFS_PathReply::m_failureReasonCode.
+//    6: Modify set of PortableErrorCodes.
 //
-int32_t const VFS_currentVersion = 5;
+int32_t const VFS_currentVersion = 6;
 
 
 // Possible kinds of VFS messages.
@@ -158,8 +159,8 @@ public:      // data
   bool m_success;
 
   // If '!m_success', the reason for the failure as a machine-readable
-  // error code.  Initially R_NO_ERROR.
-  smbase::XSysError::Reason m_failureReasonCode;
+  // error code.  Initially PEC_NO_ERROR.
+  smbase::PortableErrorCode m_failureReasonCode;
 
   // If '!m_success', the reason for the failure as a human-readable
   // string.  Initially empty.
@@ -170,7 +171,7 @@ public:      // methods
   virtual ~VFS_PathReply() override;
 
   // Set the failure reason, and set 'm_success' to false.
-  void setFailureReason(smbase::XSysError::Reason reasonCode,
+  void setFailureReason(smbase::PortableErrorCode reasonCode,
                         string const &reasonString);
 
   // VFS_Message methods.

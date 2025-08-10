@@ -1,17 +1,17 @@
 // editor-fs-server-test.cc
 // Code for editor-fs-server-test.h.
 
-#include "editor-fs-server-test.h"     // this module
-#include "unit-tests.h"                // decl for my entry point
+#include "editor-fs-server-test.h"               // this module
+#include "unit-tests.h"                          // decl for my entry point
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString)
 
 // smbase
-#include "smbase/exc.h"                // smbase::XBase
-#include "smbase/sm-test.h"            // DIAG, VPVAL
-#include "smbase/string-util.h"        // doubleQuote
-#include "smbase/syserr.h"             // smbase::XSysError
+#include "smbase/exc.h"                          // smbase::XBase
+#include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
+#include "smbase/sm-test.h"                      // DIAG, VPVAL
+#include "smbase/string-util.h"                  // doubleQuote
 
 using namespace smbase;
 
@@ -248,7 +248,7 @@ void FSServerTest::runFileReadWriteTests()
     std::unique_ptr<VFS_Message> replyMsg(getNextReply());
     VFS_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
     xassert(!reply->m_success);
-    xassert(reply->m_failureReasonCode == XSysError::R_FILE_NOT_FOUND);
+    xassert(reply->m_failureReasonCode == PortableErrorCode::PEC_FILE_NOT_FOUND);
   }
 }
 

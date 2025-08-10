@@ -218,7 +218,7 @@ void VFS_PathRequest::xfer(Flatten &flat)
 VFS_PathReply::VFS_PathReply()
   : VFS_Message(),
     m_success(true),
-    m_failureReasonCode(XSysError::R_NO_ERROR),
+    m_failureReasonCode(PortableErrorCode::PEC_NO_ERROR),
     m_failureReasonString()
 {}
 
@@ -227,14 +227,14 @@ VFS_PathReply::~VFS_PathReply()
 {}
 
 
-void VFS_PathReply::setFailureReason(XSysError::Reason reasonCode,
+void VFS_PathReply::setFailureReason(PortableErrorCode reasonCode,
                                      string const &reasonString)
 {
   m_success = false;
   m_failureReasonCode = reasonCode;
   m_failureReasonString = reasonString;
 
-  static_assert(XSysError::NUM_REASONS == 14,
+  static_assert(int(PortableErrorCode::NUM_REASONS) == 13,
     "Must bump VFS version number if set of reason codes change.");
 }
 
