@@ -12,7 +12,7 @@
 #include "vfs-query-fwd.h"             // VFS_FileSystemQuery
 
 // smbase
-#include "smbase/ordered-map.h"        // smbase::OrderedMap
+#include "smbase/ordered-map-iface.h"  // smbase::OrderedMap
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 

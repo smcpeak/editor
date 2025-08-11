@@ -7,7 +7,7 @@
 
 #include "smbase/exc.h"                // smbase::XFormat
 #include "smbase/gdvalue.h"            // gdv::GDValue (for TEST_CASE_EXPRS)
-#include "smbase/ordered-map-ops.h"    // smbase::OrderedMap (for TEST_CASE_EXPRS)
+#include "smbase/ordered-map.h"        // smbase::OrderedMap (for TEST_CASE_EXPRS)
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // EXPECT_EQ, TEST_CASE_EXPRS
 

@@ -10,7 +10,7 @@
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/map-util.h"           // mapInsertUniqueMove, keySet
-#include "smbase/ordered-map-ops.h"    // smbase::OrderedMap
+#include "smbase/ordered-map.h"        // smbase::OrderedMap
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/trace.h"              // TRACE
 #include "smbase/vector-util.h"        // vecEraseAll, vecToElementSet
@@ -193,11 +193,8 @@ void VFS_Connections::connect(HostName const &hostName)
   // Add 'hostName' to our data structures, and create the Connection
   // object to hold its details.  The Connection constructor starts the
   // process of establishing a connection.
-  //
-  // TODO: Add `setValueAtNewKey` to `OrderedMap`.
-  bool newlyInserted = m_connections.setValueAtKey(HostName(hostName),
+  m_connections.setValueAtNewKey(HostName(hostName),
     std::unique_ptr<Connection>(new Connection(this, hostName)));
-  xassert(newlyInserted);
 
   // Enqueue an initial request to get the starting directory.  Only
   // when that reply is received will we inform clients that the
@@ -409,9 +406,7 @@ void VFS_Connections::shutdown(HostName const &hostName)
 
   conn(hostName)->m_fsQuery->shutdown();
 
-  // TODO: Add `eraseExistingKey` to `OrderedMap`.
-  bool erased = m_connections.eraseKey(hostName);
-  xassert(erased);
+  m_connections.eraseExistingKey(hostName);
 }
 
 
