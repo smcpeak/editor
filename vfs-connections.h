@@ -12,31 +12,32 @@
 #include "vfs-query-fwd.h"             // VFS_FileSystemQuery
 
 // smbase
+#include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 // qt
 #include <QObject>
 
 // libc++
+#include <cstdint>                     // std::uint64_t
 #include <list>                        // std::list
 #include <map>                         // std::map
 #include <memory>                      // std::unique_ptr
+#include <string>                      // std::string
 #include <utility>                     // std::move
 #include <vector>                      // std::vector
-
-// libc
-#include <stdint.h>                    // uint64_t
 
 
 // Collection of active VFS_FileSystemQuery objects, and an asynchronous
 // query interface on top of them.
-class VFS_Connections : public QObject {
+class VFS_Connections : public QObject,
+                        public SerfRefCount {
   Q_OBJECT
   NO_OBJECT_COPIES(VFS_Connections);
 
 public:      // types
   // Unique identifier for a request.  Never zero for a valid request.
-  typedef uint64_t RequestID;
+  typedef std::uint64_t RequestID;
 
   // State of the connection to a single host.
   //
@@ -78,13 +79,14 @@ private:     // types
   // Information related to the connection to a specific host.
   class Connection {
   public:      // data
-    // Owning set of connections.
-    VFS_Connections *m_connections;
+    // Parent set of connections.  Never null.
+    RCSerf<VFS_Connections> m_connections;
 
     // The host.
     HostName m_hostName;
 
-    // The underlying query object.
+    // The underlying query object.  Never null until teardown in the
+    // destructor.
     std::unique_ptr<VFS_FileSystemQuery> m_fsQuery;
 
     // If true, we have 'm_startingDirectory'.  Otherwise, we are still
@@ -97,7 +99,7 @@ private:     // types
     //
     // In this path, only forward slashes are used as directory
     // separators.
-    string m_startingDirectory;
+    std::string m_startingDirectory;
 
     // ID of the request currently being serviced by 'm_fsQuery', or 0
     // if none is.
@@ -109,8 +111,16 @@ private:     // types
     std::list<QueuedRequest> m_queuedRequests;
 
   public:      // methods
+    // Establish a new connection to `hostName`, as a part of the
+    // collection `connections`.
+    //
+    // Requires: connections != nullptr
     Connection(VFS_Connections *connections, HostName const &hostName);
+
     ~Connection();
+
+    // Assert invariants.
+    void selfCheck() const;
 
     // Report this connection's state.
     ConnectionState connectionState() const;
@@ -146,9 +156,10 @@ private:     // data
   // Invariant: The set of keys in 'm_connections' is equal to the set
   // of values in 'm_validHostNames'.
   //
-  // TODO: I have map-with-vector.h in the 'inst' repo that could
-  // combine the map and vector, but it needs to be moved to smbase, and
-  // it needs to have the capability of removing items.
+  // Invariant: For every key `k`:
+  //   m_connections[k]->m_hostName == k
+  //
+  // TODO: Use smbase::OrderedMap here.
   std::map<HostName, std::unique_ptr<Connection> > m_connections;
 
   // Map from request ID to the corresponding reply object, for those
@@ -230,7 +241,7 @@ public:      // methods
   // browsing the files at 'hostName'.
   //
   // Requires: isOrWasConnected(hostName)
-  string getStartingDirectory(HostName const &hostName) const;
+  std::string getStartingDirectory(HostName const &hostName) const;
 
   // Issue new request 'req'.  The request ID is stored in 'requestID'
   // *before* anything is done that might lead to delivery of the
@@ -311,7 +322,7 @@ Q_SIGNALS:
   void signal_vfsReplyAvailable(RequestID requestID);
 
   // Emitted when 'connectionFailed' becomes true.
-  void signal_vfsFailed(HostName hostName, string reason);
+  void signal_vfsFailed(HostName hostName, std::string reason);
 
 protected Q_SLOTS:
   // Handlers for VFS_FileSystemQuery.
