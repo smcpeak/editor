@@ -1,39 +1,53 @@
 // editor-fs-server.cc
 // Program to serve virtual file system requests.
 
-#include "vfs-local.h"                 // VFS_LocalImpl
+#include "vfs-local.h"                           // VFS_LocalImpl
 
 // smbase
-#include "smbase/bflatten.h"           // StreamFlatten
-#include "smbase/binary-stdin.h"       // setStdinToBinary, setStdoutToBinary
-#include "smbase/datetime.h"           // DateTimeSeconds
-#include "smbase/exc.h"                // xfatal, smbase::XBase
-#include "smbase/flatten.h"            // de/serializeIntNBO
-#include "smbase/nonport.h"            // sleepForMilliseconds, getProcessId
-#include "smbase/overflow.h"           // convertWithoutLoss
-#include "smbase/sm-env.h"             // smbase::getXDGStateHome
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/string-util.h"        // doubleQuote
-#include "smbase/syserr.h"             // smbase::xsyserror
+#include "smbase/bflatten.h"                     // StreamFlatten
+#include "smbase/binary-stdin.h"                 // setStdinToBinary, setStdoutToBinary
+#include "smbase/datetime.h"                     // DateTimeSeconds
+#include "smbase/exc.h"                          // xfatal, smbase::XBase
+#include "smbase/exclusive-write-file.h"         // smbase::{ExclusiveWriteFile, tryCreateExclusiveWriteFile}
+#include "smbase/flatten.h"                      // de/serializeIntNBO
+#include "smbase/nonport.h"                      // sleepForMilliseconds, getProcessId
+#include "smbase/overflow.h"                     // convertWithoutLoss
+#include "smbase/sm-env.h"                       // smbase::{getXDGStateHome, envAsIntOr}
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-macros.h"                    // NULLABLE
+#include "smbase/string-util.h"                  // doubleQuote
+#include "smbase/syserr.h"                       // smbase::xsyserror
 
 // libc++
-#include <cstdlib>                     // std::min
-#include <fstream>                     // std::ofstream
-#include <memory>                      // std::unique_ptr
-#include <sstream>                     // std::i/ostringstream
-#include <string>                      // std::string
-#include <vector>                      // std::vector
+#include <cstdlib>                               // std::min
+#include <fstream>                               // std::ofstream
+#include <memory>                                // std::unique_ptr
+#include <sstream>                               // std::i/ostringstream
+#include <string>                                // std::string
+#include <vector>                                // std::vector
 
 using namespace smbase;
 
 
+// NOTE: It is not possible (without some work) to use the `sm-trace`
+// module here because the client treats anything appearing on stderr as
+// indicative of an error, and stdout carries protocol data.
+//INIT_TRACE("editor-fs-server");
+
+
+// TODO: Use anonymous namespace.
+
+
 // If not null, stream to log to.
-static std::ofstream *logStream = nullptr;
+//
+// This does not use a smart pointer because I want to ensure it still
+// exists while handling exceptions, etc.
+static ExclusiveWriteFile * NULLABLE logStream = nullptr;
 
 // Normal logging.
-#define LOG(stuff)                    \
-  if (logStream) {                    \
-    *logStream << stuff << std::endl; \
+#define LOG(stuff)                             \
+  if (logStream) {                             \
+    logStream->stream() << stuff << std::endl; \
   }
 
 // Verbose logging, normally disabled.
@@ -242,7 +256,6 @@ static int innerMain()
   return 0;
 }
 
-
 int main()
 {
   try {
@@ -252,7 +265,7 @@ int main()
       sfu.normalizePathSeparators(getXDGStateHome()) +
       "/sm-editor/fs-server.log";
     sfu.createParentDirectories(logFileName);
-    logStream = new std::ofstream(logFileName);
+    logStream = tryCreateExclusiveWriteFile(logFileName);
 
     // Write first log line.
     DateTimeSeconds dts;
@@ -270,6 +283,8 @@ int main()
 
     if (logStream) {
       LOG("editor-fs-server terminating with code " << ret);
+      delete logStream;
+      logStream = nullptr;
     }
     return ret;
   }
