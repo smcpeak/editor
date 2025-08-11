@@ -1,36 +1,38 @@
 // lsp-manager.cc
 // Code for `lsp-manger.h`.
 
-#include "lsp-manager.h"               // this module
+#include "lsp-manager.h"                         // this module
 
-#include "command-runner.h"            // CommandRunner
-#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
-#include "lsp-client.h"                // LSPClient
-#include "uri-util.h"                  // makeFileURI, getFileURIPath
+#include "command-runner.h"                      // CommandRunner
+#include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "lsp-client.h"                          // LSPClient
+#include "uri-util.h"                            // makeFileURI, getFileURIPath
 
-#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString)
 
-#include "smbase/container-util.h"     // smbase::contains
-#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END, smbase::XFormat
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
-#include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/list-util.h"          // smbase::listMoveFront
-#include "smbase/map-util.h"           // smbase::mapGetValueAt
-#include "smbase/overflow.h"           // safeToInt
-#include "smbase/set-util.h"           // smbase::{setInsert, setContains}
-#include "smbase/sm-env.h"             // smbase::envAsBool
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-macros.h"          // IMEMBFP, IMEMBMFP
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
-#include "smbase/string-util.h"        // join
-#include "smbase/stringb.h"            // stringb
-#include "smbase/xassert.h"            // xassert, xassertPrecondition
+#include "smbase/container-util.h"               // smbase::contains
+#include "smbase/datetime.h"                     // localTimeString
+#include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::XFormat
+#include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
+#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
+#include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/list-util.h"                    // smbase::listMoveFront
+#include "smbase/map-util.h"                     // smbase::mapGetValueAt
+#include "smbase/overflow.h"                     // safeToInt
+#include "smbase/set-util.h"                     // smbase::{setInsert, setContains}
+#include "smbase/sm-env.h"                       // smbase::envAsBool
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-macros.h"                    // IMEMBFP, IMEMBMFP
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/string-util.h"                  // join
+#include "smbase/stringb.h"                      // stringb
+#include "smbase/xassert.h"                      // xassert, xassertPrecondition
 
-#include <memory>                      // std::make_unique
-#include <string>                      // std::string
-#include <utility>                     // std::move
-#include <vector>                      // std::vector
+#include <memory>                                // std::make_unique
+#include <string>                                // std::string
+#include <utility>                               // std::move
+#include <vector>                                // std::vector
 
 
 using namespace gdv;
@@ -169,6 +171,8 @@ void LSPManager::forciblyShutDown()
   }
 
   if (m_commandRunner) {
+    QObject::disconnect(m_commandRunner.get(), nullptr, this, nullptr);
+
     m_commandRunner->killProcess();
     m_commandRunner.reset();
   }
@@ -361,6 +365,22 @@ void LSPManager::on_childProcessTerminated() NOEXCEPT
 }
 
 
+void LSPManager::on_errorDataReady() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (m_commandRunner->hasErrorData()) {
+    QByteArray data = m_commandRunner->takeErrorData();
+    TRACE2("Copying " << data.size() << " bytes of stderr data "
+           "to LSP stderr log file.");
+    m_lspStderrFile->stream().write(data.data(), data.size());
+    m_lspStderrFile->stream().flush();
+  }
+
+  GENERIC_CATCH_END
+}
+
+
 LSPManager::~LSPManager()
 {
   // Don't send a signal due to the forcible shutdown.
@@ -372,10 +392,11 @@ LSPManager::~LSPManager()
 
 LSPManager::LSPManager(
   bool useRealClangd,
-  std::string lspStderrLogFname)
+  std::string const &lspStderrLogFname)
   : m_useRealClangd(useRealClangd),
     m_lspStderrLogFname(
       SMFileUtil().normalizePathSeparators(lspStderrLogFname)),
+    m_lspStderrFile(),
     m_commandRunner(),
     m_lsp(),
     m_sfu(),
@@ -385,6 +406,15 @@ LSPManager::LSPManager(
     m_documentInfo(),
     m_pendingErrorMessages()
 {
+  SMFileUtil().createParentDirectories(m_lspStderrLogFname);
+  m_lspStderrFile.reset(
+    tryCreateExclusiveWriteFile(m_lspStderrLogFname /*INOUT*/));
+
+  TRACE1("Server log file: " << m_lspStderrLogFname);
+  m_lspStderrFile->stream() << "Started LSP server at " <<
+    localTimeString() << "\n";
+  m_lspStderrFile->stream().flush();
+
   selfCheck();
 }
 
@@ -444,8 +474,26 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
       "python3" << "./lsp-test-server.py");
   }
 
-  SMFileUtil().createParentDirectories(m_lspStderrLogFname);
-  m_commandRunner->setStandardErrorFile(toQString(m_lspStderrLogFname));
+  /* Although the goal is to send the server process stderr to
+     `m_lspStderrLogFname`, the mutual exclusion mechanism that prevents
+     log stomping when multiple editor processes are running does not
+     allow us to use `setStandardErrorFile`.  This is because:
+
+     * On Windows, we have a `HANDLE`, and `QProcess` cannot accept that
+       for redirection (it only accepts a file name), and opening the
+       file again using its name would fail due to the exclusion.
+
+     * On Linux, we have a file descriptor, and again `QProcess` cannot
+       accept that.  Furthermore, we are currently using a type of file
+       locking that is not inherited by child processes, so the server
+       would not be allowed to write to it even if we could pass a file
+       descriptor.
+
+     So, we process the stderr bytes ourslves in this process.  That has
+     the downside of sometimes losing the last few lines when we run the
+     destructor without first shutting down the server cleanly with
+     `stopServer`.
+  */
 
   TRACE1("Starting server process: " <<
          toString(m_commandRunner->getCommandLine()));
@@ -479,6 +527,10 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
                    this,           &LSPManager::on_hasProtocolError);
   QObject::connect(m_lsp.get(), &LSPClient::signal_childProcessTerminated,
                    this,           &LSPManager::on_childProcessTerminated);
+
+  QObject::connect(
+    m_commandRunner.get(), &CommandRunner::signal_errorDataReady,
+    this,                         &LSPManager::on_errorDataReady);
 
   // Kick off the initialization process.
   TRACE1("Sending initialize request.");

@@ -4,23 +4,24 @@
 #ifndef EDITOR_LSP_MANAGER_H
 #define EDITOR_LSP_MANAGER_H
 
-#include "lsp-manager-fwd.h"           // fwds for this module
+#include "lsp-manager-fwd.h"                     // fwds for this module
 
-#include "command-runner-fwd.h"        // CommandRunner
-#include "lsp-client-fwd.h"            // LSPClient
-#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
+#include "command-runner-fwd.h"                  // CommandRunner
+#include "lsp-client-fwd.h"                      // LSPClient
+#include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams
 
 #include <QObject>
 
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/refct-serf.h"         // SerfRefCount, RCSerf
-#include "smbase/sm-noexcept.h"        // NOEXCEPT
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/std-string-fwd.h"     // std::string
+#include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf
+#include "smbase/sm-noexcept.h"                  // NOEXCEPT
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/std-string-fwd.h"               // std::string
 
-#include <list>                        // std::list
-#include <memory>                      // std::unique_ptr
-#include <string>                      // std::string
+#include <list>                                  // std::list
+#include <memory>                                // std::unique_ptr
+#include <string>                                // std::string
 
 
 // Status of the LSPManager protocol.
@@ -175,6 +176,9 @@ private:     // data
   // written.
   std::string m_lspStderrLogFname;
 
+  // The file to which we send the server's stderr.
+  std::unique_ptr<smbase::ExclusiveWriteFile> m_lspStderrFile;
+
   // Object to manage the child process.  This is null until the server
   // has been started, and returns to null if it is stopped.
   std::unique_ptr<CommandRunner> m_commandRunner;
@@ -241,8 +245,8 @@ private Q_SLOTS:
   void on_hasProtocolError() NOEXCEPT;
   void on_childProcessTerminated() NOEXCEPT;
 
-  // We do not have `on_hasErrorData` because the server process is
-  // started with its stderr redirected to a file.
+  // Slots for CommandRunner signals.
+  void on_errorDataReady() NOEXCEPT;
 
 public:      // methods
   ~LSPManager();
@@ -251,7 +255,7 @@ public:      // methods
   // `clangd` instead of `./lsp-test-server.py`.
   explicit LSPManager(
     bool useRealClangd,
-    std::string lspStderrLogFname);
+    std::string const &lspStderrLogFname);
 
   // Check invariants, throwing an exception on failure.
   void selfCheck() const;

@@ -269,7 +269,7 @@ int main()
       sfu.normalizePathSeparators(getXDGStateHome()) +
       "/sm-editor/fs-server.log";
     sfu.createParentDirectories(logFileName);
-    logStream = tryCreateExclusiveWriteFile(logFileName);
+    logStream = tryCreateExclusiveWriteFile(logFileName /*INOUT*/);
 
     // Write first log line.
     DateTimeSeconds dts;
