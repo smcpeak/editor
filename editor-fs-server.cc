@@ -14,7 +14,7 @@
 #include "smbase/overflow.h"                     // convertWithoutLoss
 #include "smbase/sm-env.h"                       // smbase::{getXDGStateHome, envAsIntOr}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
-#include "smbase/sm-macros.h"                    // NULLABLE
+#include "smbase/sm-macros.h"                    // NULLABLE, OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/string-util.h"                  // doubleQuote
 #include "smbase/syserr.h"                       // smbase::xsyserror
 
@@ -29,20 +29,20 @@
 using namespace smbase;
 
 
+OPEN_ANONYMOUS_NAMESPACE
+
+
 // NOTE: It is not possible (without some work) to use the `sm-trace`
 // module here because the client treats anything appearing on stderr as
 // indicative of an error, and stdout carries protocol data.
 //INIT_TRACE("editor-fs-server");
 
 
-// TODO: Use anonymous namespace.
-
-
 // If not null, stream to log to.
 //
 // This does not use a smart pointer because I want to ensure it still
 // exists while handling exceptions, etc.
-static ExclusiveWriteFile * NULLABLE logStream = nullptr;
+ExclusiveWriteFile * NULLABLE logStream = nullptr;
 
 // Normal logging.
 #define LOG(stuff)                             \
@@ -60,7 +60,7 @@ static ExclusiveWriteFile * NULLABLE logStream = nullptr;
 
 // Read 'size' bytes from 'stream'.  Return false on EOF.  If we do not
 // get an immediate EOF, but still fail to read 'size' bytes, throw.
-static bool freadAll(unsigned char *ptr, size_t size, FILE *stream)
+bool freadAll(unsigned char *ptr, size_t size, FILE *stream)
 {
   LOG("freadAll(size=" << size << ")");
 
@@ -107,7 +107,7 @@ static bool freadAll(unsigned char *ptr, size_t size, FILE *stream)
 
 
 // Write 'size' bytes to 'stream'.
-static void fwriteAll(void const *ptr, size_t size, FILE *stream)
+void fwriteAll(void const *ptr, size_t size, FILE *stream)
 {
   LOG("fwriteAll(size=" << size << ")");
 
@@ -125,7 +125,7 @@ static void fwriteAll(void const *ptr, size_t size, FILE *stream)
 //
 // If there are no more requests (the stream has been closed), return an
 // empty string.
-static std::string receiveMessage(FILE *stream)
+std::string receiveMessage(FILE *stream)
 {
   // Read the message length.
   unsigned char buf[4];
@@ -151,7 +151,7 @@ static std::string receiveMessage(FILE *stream)
 
 // Write the given reply to stdout.  The syntax is the same as for
 // requests: 4-byte NBO length, then that many bytes of message data.
-static void sendMessage(FILE *stream, std::string const &reply)
+void sendMessage(FILE *stream, std::string const &reply)
 {
   // Send length.
   uint32_t len;
@@ -166,7 +166,7 @@ static void sendMessage(FILE *stream, std::string const &reply)
 
 
 // Send 'msg' as a message on stdout.
-static void sendReply(VFS_Message const &msg)
+void sendReply(VFS_Message const &msg)
 {
   // Serialize the reply.
   std::ostringstream oss;
@@ -180,7 +180,7 @@ static void sendReply(VFS_Message const &msg)
 }
 
 
-static int innerMain()
+int innerMain()
 {
   VFS_LocalImpl localImpl;
 
@@ -255,6 +255,10 @@ static int innerMain()
 
   return 0;
 }
+
+
+CLOSE_ANONYMOUS_NAMESPACE
+
 
 int main()
 {
