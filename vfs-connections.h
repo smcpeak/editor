@@ -12,6 +12,7 @@
 #include "vfs-query-fwd.h"             // VFS_FileSystemQuery
 
 // smbase
+#include "smbase/ordered-map.h"        // smbase::OrderedMap
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
@@ -147,20 +148,15 @@ private:     // data
   // Next ID to assign to a request.
   RequestID m_nextRequestID;
 
-  // Sequence of valid host names, in the order they were passed to
-  // 'connect'.
-  std::vector<HostName> m_validHostNames;
-
   // Map from a name to its connection info.
   //
-  // Invariant: The set of keys in 'm_connections' is equal to the set
-  // of values in 'm_validHostNames'.
+  // The extrinsic order is that in which the hosts were passed to
+  // `connect`.
   //
   // Invariant: For every key `k`:
   //   m_connections[k]->m_hostName == k
-  //
-  // TODO: Use smbase::OrderedMap here.
-  std::map<HostName, std::unique_ptr<Connection> > m_connections;
+  smbase::OrderedMap<HostName, std::unique_ptr<Connection>>
+    m_connections;
 
   // Map from request ID to the corresponding reply object, for those
   // requests whose reply is available.
