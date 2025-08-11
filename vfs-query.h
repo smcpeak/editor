@@ -97,7 +97,7 @@ public:      // methods
 
   // Preferably, 'shutdown' should be explicitly called before the
   // destructor is.
-  virtual ~VFS_FileSystemQuery();
+  virtual ~VFS_FileSystemQuery() noexcept;
 
   // Get current state.
   State state() const { return m_state; }

@@ -48,10 +48,20 @@ VFS_FileSystemQuery::VFS_FileSystemQuery()
 }
 
 
-VFS_FileSystemQuery::~VFS_FileSystemQuery()
+VFS_FileSystemQuery::~VFS_FileSystemQuery() noexcept
 {
+  GENERIC_CATCH_BEGIN
+
   // See doc/signals-and-dtors.txt.
   disconnectSignals();
+
+  // Try to kill the server process since otherwise QProcess will print
+  // a warning about it.
+  if (m_commandRunner.isRunning()) {
+    shutdown();
+  }
+
+  GENERIC_CATCH_END
 }
 
 
