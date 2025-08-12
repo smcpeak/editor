@@ -131,23 +131,6 @@ HostAndResourceName NamedTextDocument::directoryHarn() const
 }
 
 
-string NamedTextDocument::applyCommandSubstitutions(string const &orig) const
-{
-  // If the document does not have a file name, we will return a pair of
-  // quotes, signifying an empty string in the context of a shell
-  // command.
-  string fname = "''";
-
-  if (m_documentName.hasFilename()) {
-    SMFileUtil sfu;
-    fname = sfu.splitPathBase(m_documentName.filename());
-  }
-
-  // Very simple, naive implementation.
-  return replaceAll(orig, "$f", fname);
-}
-
-
 static char const *documentProcessStatusIndicator(
   NamedTextDocument const *doc)
 {

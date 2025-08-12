@@ -29,6 +29,7 @@ void test_lsp_data(CmdlineArgsSpan args);
 void test_lsp_manager(CmdlineArgsSpan args);
 void test_makefile_hilite(CmdlineArgsSpan args);
 void test_named_td(CmdlineArgsSpan args);
+void test_named_td_editor(CmdlineArgsSpan args);
 void test_named_td_list(CmdlineArgsSpan args);
 void test_nearby_file(CmdlineArgsSpan args);
 void test_ocaml_hilite(CmdlineArgsSpan args);

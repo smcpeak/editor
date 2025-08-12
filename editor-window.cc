@@ -1277,7 +1277,7 @@ bool EditorWindow::promptForCommandLine(
 
   if (useSubst) {
     command = toQString(
-      currentDocument()->applyCommandSubstitutions(toString(command)));
+      editorWidget()->applyCommandSubstitutions(toString(command)));
   }
 
   return true;
