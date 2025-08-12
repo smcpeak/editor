@@ -9,10 +9,10 @@
 
 #include <utility>                     // std::move
 
-int main(int argc, char *argv[])
-{
-  QApplication app(argc, argv);
 
+// Called from gui-tests.cc.
+int diagnostic_details_dialog_test(QApplication &app)
+{
   // Use a larger (12-point) font.
   if (true) {
     QFont fontSpec = QApplication::font();

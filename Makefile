@@ -332,18 +332,19 @@ out/editor-fs-server-test-localhost.ok: unit-tests.exe editor-fs-server.exe
 endif # TEST_SSH_LOCALHOST
 
 
-# ------------------- diagnostic-details-dialog-test -------------------
+# ----------------------------- gui-tests ------------------------------
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS := $(EDITOR_OBJS)
-DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS += diagnostic-details-dialog-test.o
+GUI_TESTS_OBJS := $(EDITOR_OBJS)
+GUI_TESTS_OBJS += diagnostic-details-dialog-test.o
+GUI_TESTS_OBJS += gui-tests.o
 
-diagnostic-details-dialog-test.exe: $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LIBRARIES)
-	$(CXX) -o $@ $(CCFLAGS) $(DIAGNOSTIC_DETAILS_DIALOG_TEST_OBJS) $(GUI_LDFLAGS)
+gui-tests.exe: $(GUI_TESTS_OBJS) $(GUI_LIBRARIES)
+	$(CXX) -o $@ $(CCFLAGS) $(GUI_TESTS_OBJS) $(GUI_LDFLAGS)
 
 # This has to be run manually.
-all: diagnostic-details-dialog-test.exe
+all: gui-tests.exe
 
 
 # ----------------- git version ---------------------
