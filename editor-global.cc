@@ -394,6 +394,8 @@ static char const *optionsDescription =
   "options:\n"
   "  -help           Print this message and exit.\n"
   "  -ev=file.ev     Replay events in file.ev for testing.\n"
+  "  -testCommands=tests.gdvn\n"
+  "                  Replay all tests in tests.gdvn.\n"
   "  -record         Record events to events.out.\n"
   "  -conn=hostname  Start with an active remote connection to hostname.\n"
   "\n"
