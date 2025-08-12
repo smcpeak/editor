@@ -135,89 +135,12 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     QApplication::setFont(fontSpec);
   }
 
-  // Get the actual font, influenced by the setting above.
-  QFontInfo fi(QApplication::font());
-  int sz = fi.pixelSize();
-  TRACE1("font info pixel size: " << sz);
-
   if (getenv("EDITOR_USE_LARGE_FONT")) {
     m_editorBuiltinFont = BF_COURIER24;
   }
 
-  // Set the scrollbars to have a darker thumb.  Otherwise this is
-  // meant to imitate the Windows 10 scrollbars.  (That is just for
-  // consistency with other apps; I don't think the design is good.)
-  //
-  // Changing the color of the thumb requires basically re-implementing
-  // the entire scrollbar visuals, unfortunately.  This specification is
-  // based on the examples in the Qt docs at:
-  //
-  //   http://doc.qt.io/qt-5/stylesheet-examples.html#customizing-qscrollbar
-  //
-  // but I then modified it quite a bit.
-  //
-  // The sz+1 and sz-1 stuff is because the default font on Windows
-  // seems to have a pixel size of 16, and I originally had used sizes
-  // of 15 and 17 in this style sheet, so I've now adjusted it so the
-  // sizes should scale with the initial font, but be the same as they
-  // were when using the default font.
-  string borderColor("#C0C0C0");
-  this->setStyleSheet(qstringb(
-    "QScrollBar:vertical {"
-    "  background: white;"
-    "  width: "<<(sz+1)<<"px;"
-    "  margin: "<<(sz+1)<<"px 0 "<<(sz+1)<<"px 0;" // top left right bottom?
-    "}"
-    "QScrollBar::handle:vertical {"
-    "  border: 1px solid #404040;"
-    "  background: #808080;"
-    "  min-height: 20px;"
-    "}"
-    "QScrollBar::add-line:vertical {"
-    "  border: 1px solid " << borderColor << ";"
-    "  background: white;"
-    "  height: "<<(sz+1)<<"px;"
-    "  subcontrol-position: bottom;"
-    "  subcontrol-origin: margin;"
-    "}"
-    "QScrollBar::sub-line:vertical {"
-    "  border: 1px solid " << borderColor << ";"
-    "  background: white;"
-    "  height: "<<(sz+1)<<"px;"
-    "  subcontrol-position: top;"
-    "  subcontrol-origin: margin;"
-    "}"
-    "QScrollBar::up-arrow:vertical {"
-    // This border-image trick causes the image to be stretched to fill
-    // the available space, whereas with just 'image' it would always
-    // be the original 15x15 size.
-    "  border-image: url(:/pix/scroll-up-arrow.png) 0 0 0 0 stretch stretch;"
-    "  width: "<<(sz-1)<<"px;"
-    "  height: "<<(sz-1)<<"px;"
-    "}"
-    "QScrollBar::down-arrow:vertical {"
-    "  border-image: url(:/pix/scroll-down-arrow.png) 0 0 0 0 stretch stretch;"
-    "  width: "<<(sz-1)<<"px;"
-    "  height: "<<(sz-1)<<"px;"
-    "}"
-    "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
-    "  border-left: 1px solid " << borderColor << ";"
-    "  border-right: 1px solid " << borderColor << ";"
-    "  background: none;"
-    "}"
-
-    /* Adjust the color of items in list views that are selected but the
-       list does not have focus.  The default is a light gray that is
-       almost indistinguishable from the zebra color, such that it is
-       very hard to see what is selected.  This color is much more
-       distinct.
-
-       The default color for an item that is selected, while the list
-       view has focus, is #0078D7. */
-    "MyTableWidget:item:selected:!active {"
-    "  background: #88CCEE;"
-    "}"
-  ));
+  // Do this after setting the font since it depends on it.
+  installEditorStyleSheet(*this);
 
   // Establish the initial VFS connection before creating the first
   // EditorWindow, since the EW can issue VFS requests.
@@ -275,6 +198,9 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // ignore the initially chosen font, but then change itself in
   // response to the *first* font change after startup, after which it
   // resumes ignoring font updates.
+  //
+  // Experimentation in `gui-tests` suggests this is related to setting
+  // the global style sheet (above), which might conflict somehow.
   qApp->setFont(qApp->font());
 
   selfCheck();

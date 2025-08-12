@@ -10,6 +10,8 @@
 
 #include <QProxyStyle>
 
+class QApplication;
+
 
 // Define my look and feel overrides.
 class EditorProxyStyle : public QProxyStyle {
@@ -34,6 +36,13 @@ public:
     QPainter *painter,
     const QWidget *widget) const override;
 };
+
+
+// Install the style sheet I use.
+//
+// This isn't directly related to the proxy style, but the purpose and
+// usage is similar.
+void installEditorStyleSheet(QApplication &app);
 
 
 #endif // EDITOR_EDITOR_PROXY_STYLE_H

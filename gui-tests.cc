@@ -3,7 +3,7 @@
 
 #include "smbase/string-util.h"        // doubleQuote
 
-#include "editor-proxy-style.h"        // EditorProxyStyle
+#include "editor-proxy-style.h"        // EditorProxyStyle, installEditorStyleSheet
 #include "pixmaps.h"                   // Pixmaps
 
 #include <QApplication>
@@ -19,12 +19,6 @@
 int innerMain(int argc, char **argv)
 {
   QApplication app(argc, argv);
-
-  // This loads the pixmaps and sets `g_editorPixmaps`.
-  Pixmaps pixmaps;
-
-  // Override styles.  `app` takes ownership of the style object.
-  app.setStyle(new EditorProxyStyle);
 
   // Map from module name to its test function.
   typedef int (*TestFunc)(QApplication &app);
@@ -51,10 +45,24 @@ int innerMain(int argc, char **argv)
     return 2;
   }
 
+  // This loads the pixmaps and sets `g_editorPixmaps`.
+  Pixmaps pixmaps;
+
+  // Override styles.  `app` takes ownership of the style object.
+  app.setStyle(new EditorProxyStyle);
+
   // Use a larger (12-point) font.
   QFont fontSpec = QApplication::font();
   fontSpec.setPointSize(12);
   QApplication::setFont(fontSpec);
+
+  // Global style sheet after setting font.
+  installEditorStyleSheet(app);
+
+  // Evidently setting the style sheet partially breaks the font (some
+  // places revert to the default, which is too small).  Setting it
+  // again fixes it.
+  app.setFont(app.font());
 
   // Process command line.
   for (int i=1; i < argc; ++i) {
