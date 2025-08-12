@@ -333,10 +333,17 @@ endif # TEST_SSH_LOCALHOST
 
 
 # ----------------------------- gui-tests ------------------------------
+EDITOR_OBJS += connections-dialog.o
+EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
+EDITOR_OBJS += editor-proxy-style.o
+EDITOR_OBJS += my-table-widget.o
+EDITOR_OBJS += my-table-widget.moc.o
+EDITOR_OBJS += pixmaps.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
+GUI_TESTS_OBJS += connections-dialog-test.o
 GUI_TESTS_OBJS += diagnostic-details-dialog-test.o
 GUI_TESTS_OBJS += gui-tests.o
 
@@ -431,13 +438,10 @@ validate-extradep: all
 EDITOR_OBJS += apply-command-dialog.moc.o
 EDITOR_OBJS += apply-command-dialog.o
 EDITOR_OBJS += builtin-font.o
-EDITOR_OBJS += connections-dialog.o
-EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diff-hilite.o
 EDITOR_OBJS += editor-command.ast.gen.o
 EDITOR_OBJS += editor-global.moc.o
 EDITOR_OBJS += editor-global.o
-EDITOR_OBJS += editor-proxy-style.o
 EDITOR_OBJS += editor-settings.o
 EDITOR_OBJS += editor-version.o
 EDITOR_OBJS += editor-widget-frame.moc.o
@@ -463,11 +467,8 @@ EDITOR_OBJS += macro-run-dialog.o
 EDITOR_OBJS += macro-run-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
-EDITOR_OBJS += my-table-widget.o
-EDITOR_OBJS += my-table-widget.moc.o
 EDITOR_OBJS += open-files-dialog.o
 EDITOR_OBJS += open-files-dialog.moc.o
-EDITOR_OBJS += pixmaps.o
 EDITOR_OBJS += process-watcher.o
 EDITOR_OBJS += process-watcher.moc.o
 EDITOR_OBJS += resources.qrc.gen.o

@@ -4,7 +4,6 @@
 #include "diagnostic-details-dialog.h" // module under test
 
 #include <QApplication>
-#include <QFont>
 #include <QMessageBox>
 
 #include <utility>                     // std::move
@@ -13,13 +12,6 @@
 // Called from gui-tests.cc.
 int diagnostic_details_dialog_test(QApplication &app)
 {
-  // Use a larger (12-point) font.
-  if (true) {
-    QFont fontSpec = QApplication::font();
-    fontSpec.setPointSize(12);
-    QApplication::setFont(fontSpec);
-  }
-
   typedef DiagnosticDetailsDialog::Element Element;
   QVector<Element> diagnostics;
   diagnostics.reserve(10);
@@ -37,8 +29,9 @@ int diagnostic_details_dialog_test(QApplication &app)
     diagnostics.append(de);
   }
 
+  // This is freed by Qt due to `WA_DeleteOnClose`.
   DiagnosticDetailsDialog *dlg = new DiagnosticDetailsDialog;
-  dlg->setAttribute(Qt::WA_DeleteOnClose);  // Clean up when closed
+  dlg->setAttribute(Qt::WA_DeleteOnClose);
   dlg->setDiagnostics(std::move(diagnostics));
 
   QObject::connect(dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,

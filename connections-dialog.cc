@@ -72,6 +72,8 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
 {
   setObjectName("ConnectionsDialog");
   setWindowTitle("Editor Connections");
+
+  xassert(g_editorPixmaps);
   setWindowIcon(g_editorPixmaps->connectionsIcon);
 
   QVBoxLayout *outerVBox = new QVBoxLayout();
