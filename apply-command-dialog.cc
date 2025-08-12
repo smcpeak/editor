@@ -411,7 +411,15 @@ ApplyCommandDialog::~ApplyCommandDialog()
 
 bool ApplyCommandDialog::execForWidget(EditorWidget *editorWidget)
 {
+  // Update for the directory of the document in `editorWidget`.
   setPwdLabel(editorWidget);
+
+  // Clear the "new command" box.
+  m_newCommandLineEdit->setText("");
+
+  // Ensure the list widget starts with focus.
+  m_prevCommandsListWidget->setFocus();
+
   return execCentered(editorWidget->editorWindow());
 }
 

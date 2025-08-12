@@ -12,6 +12,7 @@
 
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/syserr.h"             // smbase::xsyserror
 
@@ -19,6 +20,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QMouseEvent>
 #include <QShortcutEvent>
 #include <QWidget>
@@ -27,6 +29,9 @@
 #include <string.h>                    // strcmp
 
 using namespace smbase;
+
+
+INIT_TRACE("event-recorder");
 
 
 EventRecorder::EventRecorder(string const &filename)
@@ -74,9 +79,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
     else if (type == QEvent::Shortcut) {
       if (QShortcutEvent const *shortcutEvent =
             dynamic_cast<QShortcutEvent const *>(event)) {
-        this->recordEvent(stringb(
-          "Shortcut " << doubleQuote(qObjectPath(receiver)) <<
-          " " << doubleQuote(shortcutEvent->key().toString())));
+        recordShortcutEvent(receiver, shortcutEvent);
       }
     }
     else if (type == QEvent::MouseButtonPress) {
@@ -125,6 +128,29 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
   }
 
   return false;
+}
+
+
+
+void EventRecorder::recordShortcutEvent(
+  QObject *receiver, QShortcutEvent const *shortcutEvent)
+{
+  if (QLabel *label = dynamic_cast<QLabel*>(receiver)) {
+    TRACE1("Shortcut receiver is a label: " << label->objectName());
+    if (QWidget *buddy = label->buddy()) {
+      TRACE1("Its buddy is: " << buddy->objectName());
+
+      // If we record this as a Shortcut event, it will not work (for
+      // unknown reasons).  So turn it into SetFocus.
+      this->recordEvent(stringb(
+        "SetFocus " << doubleQuote(qObjectPath(buddy))));
+      return;
+    }
+  }
+
+  this->recordEvent(stringb(
+    "Shortcut " << doubleQuote(qObjectPath(receiver)) <<
+    " " << doubleQuote(shortcutEvent->key().toString())));
 }
 
 

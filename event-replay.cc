@@ -34,6 +34,7 @@
 #include <QImage>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QLineEdit>
 #include <QRegularExpression>
 #include <QStringList>
 #include <QTableWidget>
@@ -403,6 +404,18 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
       getShortcutEventFromString(keys));
   }
 
+  else if (funcName == "SetFocus") {
+    BIND_ARGS1(widget);
+
+    // Give the named widget the focus.
+    //
+    // Normally, we would want this to happen as a consequence of the
+    // recorded events, but for some reason, replaying a shortcut event
+    // that utilizes a buddy control has no effect.  The event recorder
+    // module automatically turns those into SetFocus events.
+    getObjectFromPath<QWidget>(widget)->setFocus();
+  }
+
   else if (funcName == "ResizeEvent") {
     BIND_ARGS2(receiver, size);
 
@@ -480,6 +493,14 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     QComboBox *cbox = getObjectFromPath<QComboBox>(path);
     string actual = toString(cbox->currentText());
     EXPECT_EQ("CheckComboBoxText " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckLineEditText") {
+    BIND_ARGS2(path, expect);
+
+    QLineEdit *lineEdit = getObjectFromPath<QLineEdit>(path);
+    string actual = toString(lineEdit->text());
+    EXPECT_EQ("CheckLineEditText " << doubleQuote(path));
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {

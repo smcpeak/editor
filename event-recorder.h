@@ -16,6 +16,8 @@
 #include <fstream>                     // std::ofstream
 #include <sstream>                     // std::ostringstream
 
+class QShortcutEvent;
+
 
 // Acts as an event filter to record input events for later replay as
 // part of an automated test.
@@ -30,6 +32,8 @@ private:     // data
   std::ostringstream m_ordinaryKeyChars;
 
 private:     // funcs
+  void recordShortcutEvent(
+    QObject *receiver, QShortcutEvent const *shortcutEvent);
   void recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent);
   void recordOrdinaryKeyPress(char c);
   void flushOrdinaryKeyChars();

@@ -1,0 +1,43 @@
+# apply-command-clear-new.ev
+# In the Apply Command Dialog, ensure that if we type a string into the
+# "new command" box, then close and reopen the dialog, that string has
+# been cleared.
+
+# Initial state.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# Open the dialog.
+Shortcut "window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R"
+CheckFocusWidget "RunCommandDialog.m_prevCommandsListWidget"
+
+# Go to "new command".
+SetFocus "RunCommandDialog.m_newCommandLineEdit"
+CheckFocusWidget "RunCommandDialog.m_newCommandLineEdit"
+
+# Should be initially empty.
+CheckLineEditText "RunCommandDialog.m_newCommandLineEdit" ""
+
+# Type in a string.
+FocusKeySequence "date"
+CheckLineEditText "RunCommandDialog.m_newCommandLineEdit" "date"
+
+# Run it as a command.
+FocusKeyPR "Key_Return" "\r"
+
+# Dialog is closed.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+
+# Re-open it.
+Shortcut "window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R"
+CheckFocusWidget "RunCommandDialog.m_prevCommandsListWidget"
+
+# Check that "run command" is empty.
+CheckLineEditText "RunCommandDialog.m_newCommandLineEdit" ""
+
+# Quit.
+FocusKeyPR "Key_Escape" "\033"
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+
+# EOF
