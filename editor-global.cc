@@ -10,6 +10,7 @@
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
+#include "git-version.h"               // editor_git_version
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "lsp-client.h"                // LSPClient
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
@@ -19,6 +20,7 @@
 #include "textinput.h"                 // TextInputDialog
 #include "uri-util.h"                  // getFileURIPath
 #include "vfs-query-sync.h"            // readFileSynchronously
+#include "vfs-msg.h"                   // VFS_currentVersion
 
 // smqtutil
 #include "smqtutil/gdvalue-qstring.h"  // toGDValue(QString)
@@ -393,6 +395,7 @@ void EditorGlobal::selfCheck() const
 static char const *optionsDescription =
   "options:\n"
   "  -help           Print this message and exit.\n"
+  "  -version        Print the version and exit.\n"
   "  -ev=file.ev     Replay events in file.ev for testing.\n"
   "  -testCommands=tests.gdvn\n"
   "                  Replay all tests in tests.gdvn.\n"
@@ -440,6 +443,16 @@ void EditorGlobal::processCommandLineOptions(
         string hostName = arg.substr(6, arg.length()-6);
         m_vfsConnections.connect(HostName::asSSH(hostName));
       }
+
+      else if (arg == "-version") {
+        // The editor version string has a newline.
+        cout << "Editor version: " << editor_git_version;
+        cout << "VFS protocol version: " << VFS_currentVersion << "\n";
+        THROW(QuitAfterPrintingHelp(""));
+      }
+
+      // Remember to update the "-help" output after adding a new
+      // option.
 
       else {
         xformat(stringb("Unknown option: " << quoted(arg) <<
