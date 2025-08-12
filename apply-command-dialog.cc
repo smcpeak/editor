@@ -248,9 +248,6 @@ ApplyCommandDialog::ApplyCommandDialog(
     setObjectName("RunCommandDialog");
   }
 
-  // History to use to populate the dialog.
-  CommandLineHistory const &history = getHistory();
-
   QVBoxLayout *vbox = new QVBoxLayout(this);
 
   // Location label.
@@ -306,9 +303,6 @@ ApplyCommandDialog::ApplyCommandDialog(
     vbox->addLayout(hbox);
   }
 
-  // Do this now that `m_filterLineEdit` exists.
-  populateListWidget(true /*initial*/);
-
   m_newCommandLabel = new QLabel(tr("Run a &new command (if not empty)"));
   SET_QOBJECT_NAME(m_newCommandLabel);
   vbox->addWidget(m_newCommandLabel);
@@ -337,14 +331,12 @@ ApplyCommandDialog::ApplyCommandDialog(
 
   m_enableSubstitutionCheckBox = new QCheckBox(tr(
     "Enable &substitution (see help)"));
-  m_enableSubstitutionCheckBox->setChecked(history.m_useSubstitution);
   SET_QOBJECT_NAME(m_enableSubstitutionCheckBox);
   vbox->addWidget(m_enableSubstitutionCheckBox);
 
   if (m_whichFunction == ECLF_RUN) {
     m_prefixStderrLinesCheckBox = new QCheckBox(tr(
       "Prefix stderr lines &with \"STDERR: \""));
-    m_prefixStderrLinesCheckBox->setChecked(history.m_prefixStderrLines);
     SET_QOBJECT_NAME(m_prefixStderrLinesCheckBox);
     vbox->addWidget(m_prefixStderrLinesCheckBox);
   }
@@ -411,11 +403,24 @@ ApplyCommandDialog::~ApplyCommandDialog()
 
 bool ApplyCommandDialog::execForWidget(EditorWidget *editorWidget)
 {
+  // History to use to populate the dialog.
+  CommandLineHistory const &history = getHistory();
+
   // Update for the directory of the document in `editorWidget`.
   setPwdLabel(editorWidget);
 
-  // Clear the "new command" box.
+  // Set checkbox state.
+  m_enableSubstitutionCheckBox->setChecked(history.m_useSubstitution);
+  if (m_whichFunction == ECLF_RUN) {
+    m_prefixStderrLinesCheckBox->setChecked(history.m_prefixStderrLines);
+  }
+
+  // Clear the line edits.
   m_newCommandLineEdit->setText("");
+  m_filterLineEdit->setText("");
+
+  // Populate the list.
+  populateListWidget(true /*initial*/);
 
   // Ensure the list widget starts with focus.
   m_prevCommandsListWidget->setFocus();

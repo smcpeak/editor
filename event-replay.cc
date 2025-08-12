@@ -35,6 +35,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QRegularExpression>
 #include <QStringList>
 #include <QTableWidget>
@@ -292,6 +293,16 @@ static int intFromString(string const &s)
 }
 
 
+static string getListWidgetContents(QListWidget *listWidget)
+{
+  std::vector<std::string> items;
+  for (int i=0; i < listWidget->count(); ++i) {
+    items.push_back(toString(listWidget->item(i)->text()));
+  }
+  return join(suffixAll(items, "\n"), "");
+}
+
+
 // Complain unless 'numArgs==required'.
 #define CHECK_NUM_ARGS(required)                           \
   if (numArgs != required) {                               \
@@ -501,6 +512,30 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     QLineEdit *lineEdit = getObjectFromPath<QLineEdit>(path);
     string actual = toString(lineEdit->text());
     EXPECT_EQ("CheckLineEditText " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckListWidgetCount") {
+    BIND_ARGS2(path, expect);
+
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
+    string actual = stringb(listWidget->count());
+    EXPECT_EQ("CheckListWidgetCount " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckListWidgetContents") {
+    BIND_ARGS2(path, expect);
+
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
+    string actual = getListWidgetContents(listWidget);
+    EXPECT_EQ("CheckListWidgetContents " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckListWidgetCurrentRow") {
+    BIND_ARGS2(path, expect);
+
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
+    string actual = stringb(listWidget->currentRow());
+    EXPECT_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
