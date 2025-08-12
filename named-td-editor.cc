@@ -6,6 +6,7 @@
 #include "named-td.h"                  // NamedTextDocument
 
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/string-util.h"        // shellDoubleQuote, replaceAllMultiple
 
 
 NamedTextDocumentEditor::~NamedTextDocumentEditor()
@@ -22,20 +23,25 @@ NamedTextDocumentEditor::NamedTextDocumentEditor(
 string NamedTextDocumentEditor::applyCommandSubstitutions(
   string const &orig) const
 {
-  // If the document does not have a file name, we will return a pair of
-  // quotes, signifying an empty string in the context of a shell
-  // command.
-  string fname = "''";
-
-  DocumentName const &documentName = m_namedDoc->documentName();
-
-  if (documentName.hasFilename()) {
-    SMFileUtil sfu;
-    fname = sfu.splitPathBase(documentName.filename());
+  string fname;
+  {
+    DocumentName const &documentName = m_namedDoc->documentName();
+    if (documentName.hasFilename()) {
+      SMFileUtil sfu;
+      fname = sfu.splitPathBase(documentName.filename());
+    }
   }
 
-  // Very simple, naive implementation.
-  return replaceAll(orig, "$f", fname);
+  string wordAfter = getWordAfter(cursor());
+
+  // Quote the values for use in a shell context.
+  fname = shellDoubleQuote(fname);
+  wordAfter = shellDoubleQuote(wordAfter);
+
+  return replaceAllMultiple(orig, {
+    {"$f", fname},
+    {"$w", wordAfter},
+  });
 }
 
 

@@ -367,7 +367,8 @@ ApplyCommandDialog::ApplyCommandDialog(
     "substitutions will be performed on the command line before "
     "executing:\n"
     "\n\n"
-    "  - $f: Current document file name, without directory\n";
+    "  - $f: Current document file name, without directory\n"
+    "  - $w: Word at+after cursor\n";
 
   if (m_whichFunction == ECLF_RUN) {
     m_helpText +=
