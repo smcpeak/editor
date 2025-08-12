@@ -9,6 +9,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue (for TEST_CASE_EXPRS)
 #include "smbase/ordered-map.h"        // smbase::OrderedMap (for TEST_CASE_EXPRS)
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
 #include "smbase/sm-test.h"            // EXPECT_EQ, TEST_CASE_EXPRS
 
 using namespace gdv;
@@ -35,8 +36,14 @@ void test_makeFileURI()
   roundTripFileToURL("/a/b/c",
               "file:///a/b/c");
 
-  roundTripFileToURL("c:/users/user/foo.h",
-             "file:///c:/users/user/foo.h");
+  if (PLATFORM_IS_WINDOWS) {
+    roundTripFileToURL("c:/users/user/foo.h",
+               "file:///c:/users/user/foo.h");
+  }
+  else {
+    // On POSIX, "c:/..." is not considered absolute, so the current dir
+    // gets prepended.  Skip the test for now.
+  }
 
   roundTripFileToURL("/a/b/c++",
               "file:///a/b/c%2B%2B");
