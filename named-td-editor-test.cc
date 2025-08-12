@@ -21,7 +21,7 @@ void test_applyCommandSubstitutions()
   doc.appendString(
 R"(zero
 one
-4b45a58a (Scott McPeak 2024-05-25 05:23:07 -0700 40)   // Open, throwing XSysError on failure.
+4b45a58a td.h (Scott McPeak 2024-05-25 05:23:07 -0700 40)   // Open, throwing XSysError on failure.
 three
 )");
 
@@ -62,6 +62,18 @@ three
 
   ntde.setCursor(TextLCoord(10,1));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "\"\"");
+
+  ntde.setCursor(TextLCoord(2,0));
+  EXPECT_EQ(ntde.applyCommandSubstitutions("git blame -f $t1^ -- $t2"),
+            "git blame -f 4b45a58a^ -- td.h");
+
+  ntde.setCursor(TextLCoord(2,10));
+  EXPECT_EQ(ntde.applyCommandSubstitutions("$t9 $t5 $t1"),
+            "// 2024-05-25 4b45a58a");
+
+  ntde.setCursor(TextLCoord(3,10));
+  EXPECT_EQ(ntde.applyCommandSubstitutions("$t9 $t5 $t1"),
+            "\"\" \"\" three");
 }
 
 

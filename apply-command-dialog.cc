@@ -368,7 +368,8 @@ ApplyCommandDialog::ApplyCommandDialog(
     "executing:\n"
     "\n\n"
     "  - $f: Current document file name, without directory\n"
-    "  - $w: Word at+after cursor\n";
+    "  - $w: Word at+after cursor\n"
+    "  - $t1 ... $t9: Whitespace-separated tokens on cursor line\n";
 
   if (m_whichFunction == ECLF_RUN) {
     m_helpText +=
