@@ -30,33 +30,9 @@ using namespace smbase;
 INIT_TRACE("connections-dialog");
 
 
-// Height of each row in pixels.
-static int const ROW_HEIGHT = 20;
-
 // Initial dialog dimensions in pixels.
 static int const INIT_DIALOG_WIDTH = 500;
 static int const INIT_DIALOG_HEIGHT = 400;
-
-
-MyTableWidget::ColumnInitInfo const
-  ConnectionsDialog::s_columnInitInfo[NUM_TABLE_COLUMNS] =
-{
-  {
-    "Host name",
-    350,
-  },
-  {
-    "Status",
-    100,
-  },
-};
-
-
-// Iterate over TableColumn.
-#define FOREACH_TABLE_COLUMN(tc)            \
-  for (TableColumn tc = (TableColumn)0;     \
-       tc < NUM_TABLE_COLUMNS;              \
-       tc = (TableColumn)(tc+1))
 
 
 ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
@@ -82,12 +58,19 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
   QVBoxLayout *outerVBox = new QVBoxLayout();
   this->setLayout(outerVBox);
 
-  m_tableWidget = new MyTableWidget();
+  m_tableWidget = new SMTableWidget();
   outerVBox->addWidget(m_tableWidget);
   SET_QOBJECT_NAME(m_tableWidget);
 
   m_tableWidget->configureAsListView();
-  m_tableWidget->initializeColumns(s_columnInitInfo, NUM_TABLE_COLUMNS);
+  m_tableWidget->setColumnsFillWidth(true);
+
+  std::vector<SMTableWidget::ColumnInfo> columnInfo = {
+    //name        init  min           max  prio
+    { "Host name", 350, 100, std::nullopt, 1 },
+    { "Status",    100,  50, std::nullopt, 0 },
+  };
+  m_tableWidget->setColumnInfo(columnInfo);
 
   {
     QHBoxLayout *buttonsHBox = new QHBoxLayout();
@@ -178,12 +161,15 @@ void ConnectionsDialog::repopulateTable()
     Qt::ItemFlags itemFlags =
       Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
+    // Column index.
+    int c = 0;
+
     // Host name.
     {
       QTableWidgetItem *item = new QTableWidgetItem(
         toQString(hostName.toString()));
       item->setFlags(itemFlags);
-      m_tableWidget->setItem(r, TC_HOST_NAME, item);
+      m_tableWidget->setItem(r, c++, item /*transfer*/);
     }
 
     // Status.
@@ -191,12 +177,11 @@ void ConnectionsDialog::repopulateTable()
       QTableWidgetItem *item = new QTableWidgetItem(
         toQString(status));
       item->setFlags(itemFlags);
-      m_tableWidget->setItem(r, TC_STATUS, item);
+      m_tableWidget->setItem(r, c++, item /*transfer*/);
     }
 
-    // Apparently I have to set every row's height manually.  QTreeView
-    // has a 'uniformRowHeights' property, but QListView does not.
-    m_tableWidget->setRowHeight(r, ROW_HEIGHT);
+    // Apparently I have to set every row's height manually.
+    m_tableWidget->setNaturalTextRowHeight(r);
   }
 }
 

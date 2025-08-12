@@ -5,8 +5,9 @@
 #define EDITOR_CONNECTIONS_DIALOG_H
 
 #include "host-name.h"                 // HostName
-#include "my-table-widget.h"           // MyTableWidget
 #include "vfs-connections-fwd.h"       // VFS_Connections
+
+#include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 #include "smbase/refct-serf.h"         // RCSerf
 
@@ -22,26 +23,12 @@ class QPushButton;
 class ConnectionsDialog : public QDialog {
   Q_OBJECT
 
-public:      // types
-  // The columns of this table.
-  enum TableColumn {
-    TC_HOST_NAME,
-    TC_STATUS,
-
-    NUM_TABLE_COLUMNS
-  };
-
-private:     // class data
-  // Information about each column.
-  static MyTableWidget::ColumnInitInfo const
-    s_columnInitInfo[NUM_TABLE_COLUMNS];
-
 private:     // instance data
   // Connections being managed.
   RCSerf<VFS_Connections> m_vfsConnections;
 
   // Widget showing the list.
-  MyTableWidget *m_tableWidget;
+  SMTableWidget *m_tableWidget;
 
   // Buttons.
   QPushButton *m_refreshButton;

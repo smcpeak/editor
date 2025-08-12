@@ -338,8 +338,6 @@ EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
-EDITOR_OBJS += my-table-widget.o
-EDITOR_OBJS += my-table-widget.moc.o
 EDITOR_OBJS += pixmaps.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
