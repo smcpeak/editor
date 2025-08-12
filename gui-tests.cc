@@ -1,10 +1,12 @@
 // gui-tests.cc
 // Driver program for non-automated GUI tests.
 
-#include "smbase/string-util.h"        // doubleQuote
-
 #include "editor-proxy-style.h"        // EditorProxyStyle, installEditorStyleSheet
 #include "pixmaps.h"                   // Pixmaps
+
+#include "smqtutil/qtutil.h"           // installSMQtUtilMessageHandler
+
+#include "smbase/string-util.h"        // doubleQuote
 
 #include <QApplication>
 #include <QFont>
@@ -47,6 +49,9 @@ int innerMain(int argc, char **argv)
 
   // This loads the pixmaps and sets `g_editorPixmaps`.
   Pixmaps pixmaps;
+
+  // Suppress "Unable to set geometry" warning.
+  installSMQtUtilMessageHandler();
 
   // Override styles.  `app` takes ownership of the style object.
   app.setStyle(new EditorProxyStyle);
