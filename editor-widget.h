@@ -12,6 +12,7 @@
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
+#include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
 #include "styledb-fwd.h"                         // TextCategoryAndStyle
 #include "td-editor.h"                           // TextDocumentEditor
@@ -78,24 +79,6 @@ public:     // static data
   // when refreshing file contents to avoid disturbing the cursor
   // position.
   static bool s_ignoreTextDocumentNotificationsGlobally;
-
-private:     // types
-  // For this EditorWidget, and for a given NamedTextDocument, this is
-  // the editing state for that document.  This state is *not* shared with
-  // other widgets in the editor application, although it contains a
-  // pointer to a NamedTextDocument, which *is* shared.
-  class NamedTextDocumentEditor : public TextDocumentEditor {
-  public:    // data
-    // Process-wide record of the open file.  Not an owner pointer.
-    // Must not be null.
-    RCSerf<NamedTextDocument> m_namedDoc;
-
-  public:
-    NamedTextDocumentEditor(NamedTextDocument *d) :
-      TextDocumentEditor(d),
-      m_namedDoc(d)
-    {}
-  };
 
 private:     // data
   // ------ widgets -----

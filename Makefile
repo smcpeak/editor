@@ -465,6 +465,7 @@ EDITOR_OBJS += macro-run-dialog.o
 EDITOR_OBJS += macro-run-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
+EDITOR_OBJS += named-td-editor.o
 EDITOR_OBJS += open-files-dialog.o
 EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += process-watcher.o

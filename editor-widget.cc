@@ -423,8 +423,8 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
 }
 
 
-EditorWidget::NamedTextDocumentEditor *
-  EditorWidget::getOrMakeEditor(NamedTextDocument *file_)
+NamedTextDocumentEditor *EditorWidget::getOrMakeEditor(
+  NamedTextDocument *file_)
 {
   // Hold 'file' in an RCSerf to ensure it does not go away.  In
   // particular, this method calls a 'notify' routine, which could
