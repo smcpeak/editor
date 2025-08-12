@@ -296,10 +296,12 @@ static char const *optionsDescription =
   "  -help           Print this message and exit.\n"
   "  -version        Print the version and exit.\n"
   "  -ev=file.ev     Replay events in file.ev for testing.\n"
+  "                  (Implies -no-settings.)\n"
   "  -testCommands=tests.gdvn\n"
   "                  Replay all tests in tests.gdvn.\n"
   "  -record         Record events to events.out.\n"
   "  -conn=hostname  Start with an active remote connection to hostname.\n"
+  "  -no-settings    Do not read or write user settings.\n"
   "\n"
   "With -ev, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to\n"
   "stop after replay regardless of failure.\n"
@@ -313,6 +315,8 @@ DEFINE_XBASE_SUBCLASS(QuitAfterPrintingHelp);
 void EditorGlobal::processCommandLineOptions(
   EditorWindow *editorWindow, int argc, char **argv)
 {
+  bool useSettings = true;
+
   SMFileUtil sfu;
   for (int i=1; i < argc; i++) {
     string arg(argv[i]);
@@ -330,6 +334,10 @@ void EditorGlobal::processCommandLineOptions(
       else if (beginsWith(arg, "-ev=")) {
         // Replay a sequence of events as part of a test.
         m_eventFileTest = arg.substr(4, arg.length()-4);
+
+        // We are going to run an automated test, so ignore user
+        // settings.
+        useSettings = false;
       }
 
       else if (arg == "-record") {
@@ -346,6 +354,13 @@ void EditorGlobal::processCommandLineOptions(
       else if (arg == "-version") {
         cout << getEditorVersionString();    // Has a newline already.
         THROW(QuitAfterPrintingHelp(""));
+      }
+
+      else if (arg == "-no-settings") {
+        // One reason to use this option is to do interactive
+        // preliminary testing or event recording meant as preparation
+        // for an automated test.
+        useSettings = false;
       }
 
       // Remember to update the "-help" output after adding a new
@@ -365,11 +380,12 @@ void EditorGlobal::processCommandLineOptions(
     }
   }
 
-  if (m_eventFileTest.empty()) {
+  if (useSettings) {
     loadSettingsFile_throwIfError();
   }
   else {
-    // We are going to run an automated test, so ignore user settings.
+    // If we did not read the settings, we should not write them either
+    // since that would effectively delete them.
     m_doNotSaveSettings = true;
   }
 }
