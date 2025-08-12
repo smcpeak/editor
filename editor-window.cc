@@ -808,6 +808,25 @@ void EditorWindow::fileSave() NOEXCEPT
     }
   }
 
+  // If the file has no unsaved changes, there is a decent chance that I
+  // fat-fingered F2 while trying to press F3.  That can be annoying
+  // because it will update the file timestamp and cause `make` to
+  // rebuild things unnecessarily.  So, confirm first.
+  if (!b->unsavedChanges()) {
+    QMessageBox box(this);
+    box.setObjectName("noUnsavedChangesBox");
+    box.setWindowTitle("No unsaved changes");
+    box.setText(toQString(stringb(
+      "The file " << b->documentName() << " does not have any unsaved "
+      "changes.  Save anyway?")));
+    box.addButton(QMessageBox::Save);
+    box.addButton(QMessageBox::Cancel);
+    int ret = box.exec();
+    if (ret != QMessageBox::Save) {
+      return;
+    }
+  }
+
   writeTheFile();
 
   GENERIC_CATCH_END

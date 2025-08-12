@@ -1,0 +1,35 @@
+# prompt-no-unsaved.ev
+# Test the prompt that appears when trying to save a file that does not
+# have any unsaved changes.
+
+# This test does not confirm that saving the file actually writes to
+# the disk, in part because that has issues with timestamp granularity.
+# I just checks that the dialog pops up at the right time.
+
+# Verify initial state.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "gets-saved.txt"
+
+# Try to save the file.
+Shortcut "window1.m_menuBar.fileMenu.fileSave" "F2"
+
+# Observe we get the confirmation prompt.  This "#1" is unfortunate.
+CheckFocusWidget "window1.noUnsavedChangesBox.qt_msgbox_buttonbox.#1"
+
+# Cancel it.
+FocusKeyPR "Key_Escape" "\033"
+
+# Back in the editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# Make and undo a change.
+FocusKeySequence " "
+FocusKeyPR "Key_Backspace" "\b"
+
+# Save the file.
+Shortcut "window1.m_menuBar.fileMenu.fileSave" "F2"
+
+# No dialog appears.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# EOF

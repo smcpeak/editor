@@ -35,6 +35,7 @@
   [ "./editor.exe" "-ev=test/cut-then-paste.ev" ]
   [ "./editor.exe" "-ev=test/select-beyond-eof.ev" ]
   [ "./editor.exe" "-ev=test/fn-input-repeat-tab.ev" ]
+  [ "./editor.exe" "-ev=test/prompt-no-unsaved.ev" "test/gets-saved.txt" ]
 
   // This test also touches `gets-modified.txt`.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]
