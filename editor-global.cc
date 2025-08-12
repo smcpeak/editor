@@ -75,7 +75,7 @@ using namespace smbase;
 INIT_TRACE("editor-global");
 
 
-// ---------------- EditorProxyStyle ----------------
+// ------------------------- EditorProxyStyle --------------------------
 int EditorProxyStyle::pixelMetric(
   PixelMetric metric,
   const QStyleOption *option,
@@ -104,6 +104,41 @@ int EditorProxyStyle::styleHint(
   }
 
   return QProxyStyle::styleHint(hint, option, widget, returnData);
+}
+
+
+void EditorProxyStyle::drawControl(
+  ControlElement element,
+  const QStyleOption *option,
+  QPainter *painter,
+  const QWidget *widget) const
+{
+  // Prevent a mouse-hovered list item from being drawn differently,
+  // which is confusing since it looks similar to the currently selected
+  // item.  I want to do everything primarily with the keyboard without
+  // visual interference depending on where the mouse cursor happens to
+  // be.
+  if (element == CE_ItemViewItem) {
+    // Get the detailed options for this kind of item so that when we
+    // make a copy we get all the required info.
+    if (auto optViewItemSrc =
+          qstyleoption_cast<const QStyleOptionViewItem *>(option)) {
+      // Make a copy of the options, with full info, so we can adjust
+      // them.
+      QStyleOptionViewItem opt(*optViewItemSrc);
+
+      // Remove the mouse hover state so the item will draw the same
+      // as if the mouse was not hovering on it.
+      opt.state &= ~State_MouseOver;
+
+      // Proceed with otherwise normal drawing.
+      QProxyStyle::drawControl(element, &opt, painter, widget);
+      return;
+    }
+  }
+
+  // Completely normal drawing.
+  QProxyStyle::drawControl(element, option, painter, widget);
 }
 
 
@@ -149,6 +184,9 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // Activate my own modification to the Qt style.  This works even
   // if the user overrides the default style, for example, by passing
   // "-style Windows" on the command line.
+  //
+  // Note that `QApplication` takes ownership of the style object, so
+  // this is not a memory leak.
   this->setStyle(new EditorProxyStyle);
 
   // Choose the app font size.  For now the UI is very crude.

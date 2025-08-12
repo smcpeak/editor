@@ -56,6 +56,12 @@ public:
     QStyleOption const *option,
     QWidget const *widget,
     QStyleHintReturn *returnData) const override;
+
+  virtual void drawControl(
+    ControlElement element,
+    const QStyleOption *option,
+    QPainter *painter,
+    const QWidget *widget) const override;
 };
 
 
