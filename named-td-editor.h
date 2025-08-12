@@ -30,6 +30,12 @@ public:
 
   // Build an editor for the given document.
   NamedTextDocumentEditor(NamedTextDocument *d);
+
+  // Replace occurrences of variables like "$f" with their meanings,
+  // which derive from things like the file name.  See the
+  // implementation for the exact substitutions implemented at the
+  // moment.
+  string applyCommandSubstitutions(string const &orig) const;
 };
 
 

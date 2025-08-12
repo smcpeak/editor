@@ -169,32 +169,6 @@ void testUndoPastSavePoint()
 }
 
 
-void testApplyCommandSubstitutions()
-{
-  NamedTextDocument doc;
-
-  // Initially it has no file name.
-  EXPECT_EQ(doc.applyCommandSubstitutions("$f"),
-    "''");
-
-  doc.setDocumentName(DocumentName::fromFilename(
-    HostName::asLocal(), "tmp.h"));
-  EXPECT_EQ(doc.applyCommandSubstitutions("$f"),
-    "tmp.h");
-  EXPECT_EQ(doc.applyCommandSubstitutions("abc $f def $f hij"),
-    "abc tmp.h def tmp.h hij");
-
-  // This isn't necessariliy ideal, but it is the current behavior.
-  EXPECT_EQ(doc.applyCommandSubstitutions("$$f"),
-    "$tmp.h");
-
-  doc.setDocumentName(DocumentName::fromFilename(
-    HostName::asLocal(), "d1/d2/foo.txt"));
-  EXPECT_EQ(doc.applyCommandSubstitutions("$f"),
-    "foo.txt");
-}
-
-
 void test_toGDValue()
 {
   NamedTextDocument doc;
@@ -237,7 +211,6 @@ void test_named_td(CmdlineArgsSpan args)
   testReadFile();
   testSetDocumentProcessStatus();
   testUndoPastSavePoint();
-  testApplyCommandSubstitutions();
   test_toGDValue();
 
   xassert(NamedTextDocument::s_objectCount == 0);

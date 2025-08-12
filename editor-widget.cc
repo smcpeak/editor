@@ -724,6 +724,12 @@ QImage EditorWidget::getScreenshot()
 }
 
 
+string EditorWidget::applyCommandSubstitutions(string const &orig) const
+{
+  return m_editor->applyCommandSubstitutions(orig);
+}
+
+
 // Compute and broadcast match status indicator.
 void EditorWidget::emitSearchStatusIndicator()
 {

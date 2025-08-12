@@ -660,6 +660,10 @@ public:      // funcs
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
+  // ------------------------------ misc -------------------------------
+  // Pass through to `NamedTextDocumentEditor`.
+  string applyCommandSubstitutions(string const &orig) const;
+
   // -------------------------- testing ----------------------------
   // EventReplayQueryable methods.
   virtual string eventReplayQuery(string const &state) OVERRIDE;
