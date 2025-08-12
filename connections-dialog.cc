@@ -15,7 +15,7 @@
 // smbase
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
-#include "smbase/trace.h"              // TRACE
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
 // qt
 #include <QInputDialog>
@@ -27,12 +27,15 @@
 using namespace smbase;
 
 
+INIT_TRACE("connections-dialog");
+
+
 // Height of each row in pixels.
-int const ROW_HEIGHT = 20;
+static int const ROW_HEIGHT = 20;
 
 // Initial dialog dimensions in pixels.
-int const INIT_DIALOG_WIDTH = 500;
-int const INIT_DIALOG_HEIGHT = 400;
+static int const INIT_DIALOG_WIDTH = 500;
+static int const INIT_DIALOG_HEIGHT = 400;
 
 
 MyTableWidget::ColumnInitInfo const
@@ -209,7 +212,7 @@ std::set<HostName> ConnectionsDialog::selectedHostNames() const
        ++it)
   {
     QModelIndex index = *it;
-    TRACE("ConnectionsDialog", "  selRow: " << index);
+    TRACE1("  selRow: " << index);
 
     if (index.isValid() && !index.parent().isValid()) {
       int r = index.row();
@@ -223,7 +226,7 @@ std::set<HostName> ConnectionsDialog::selectedHostNames() const
 
 void ConnectionsDialog::showEvent(QShowEvent *event) noexcept
 {
-  TRACE("ConnectionsDialog", "showEvent");
+  TRACE1("showEvent");
 
   GENERIC_CATCH_BEGIN
 
@@ -240,7 +243,7 @@ void ConnectionsDialog::keyPressEvent(QKeyEvent *k) noexcept
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE("ConnectionsDialog", "keyPressEvent: key=" << keysString(*k));
+  TRACE1("keyPressEvent: key=" << keysString(*k));
 
   if (k->modifiers() == Qt::NoModifier) {
     switch (k->key()) {
@@ -261,7 +264,7 @@ void ConnectionsDialog::keyPressEvent(QKeyEvent *k) noexcept
 
 void ConnectionsDialog::on_vfsConnected(HostName hostName) noexcept
 {
-  TRACE("ConnectionsDialog", "on_vfsConnected: host=" << hostName);
+  TRACE1("on_vfsConnected: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 
@@ -274,7 +277,7 @@ void ConnectionsDialog::on_vfsConnected(HostName hostName) noexcept
 
 void ConnectionsDialog::on_vfsFailed(HostName hostName, string reason) noexcept
 {
-  TRACE("ConnectionsDialog", "on_vfsFailed: host=" << hostName);
+  TRACE1("on_vfsFailed: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 
@@ -287,7 +290,7 @@ void ConnectionsDialog::on_vfsFailed(HostName hostName, string reason) noexcept
 
 void ConnectionsDialog::on_refreshPressed() noexcept
 {
-  TRACE("ConnectionsDialog", "on_refreshPressed");
+  TRACE1("on_refreshPressed");
 
   GENERIC_CATCH_BEGIN
 
@@ -299,7 +302,7 @@ void ConnectionsDialog::on_refreshPressed() noexcept
 
 void ConnectionsDialog::on_connectPressed() noexcept
 {
-  TRACE("ConnectionsDialog", "on_connectPressed");
+  TRACE1("on_connectPressed");
 
   GENERIC_CATCH_BEGIN
 
@@ -329,13 +332,13 @@ void ConnectionsDialog::on_connectPressed() noexcept
 
 void ConnectionsDialog::on_restartPressed() noexcept
 {
-  TRACE("ConnectionsDialog", "on_restartPressed");
+  TRACE1("on_restartPressed");
 
   GENERIC_CATCH_BEGIN
 
   std::set<HostName> hostNames = selectedHostNames();
   for (HostName const &hostName : hostNames) {
-    TRACE("ConnectionsDialog", "  restart: " << hostName);
+    TRACE1("  restart: " << hostName);
     m_vfsConnections->shutdown(hostName);
     m_vfsConnections->connect(hostName);
   }
@@ -348,7 +351,7 @@ void ConnectionsDialog::on_restartPressed() noexcept
 
 void ConnectionsDialog::on_disconnectPressed() noexcept
 {
-  TRACE("ConnectionsDialog", "on_disconnectPressed");
+  TRACE1("on_disconnectPressed");
 
   GENERIC_CATCH_BEGIN
 
@@ -365,7 +368,7 @@ void ConnectionsDialog::on_disconnectPressed() noexcept
 
   // Disconnect them.
   for (HostName const &hostName : hostNamesToDisconnect) {
-    TRACE("ConnectionsDialog", "  disconnect: " << hostName);
+    TRACE1("  disconnect: " << hostName);
     m_vfsConnections->shutdown(hostName);
   }
 
@@ -377,7 +380,7 @@ void ConnectionsDialog::on_disconnectPressed() noexcept
 
 void ConnectionsDialog::on_closePressed() noexcept
 {
-  TRACE("ConnectionsDialog", "on_closePressed");
+  TRACE1("on_closePressed");
 
   GENERIC_CATCH_BEGIN
 
