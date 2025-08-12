@@ -32,7 +32,6 @@
 
 // Qt
 #include <QApplication>
-#include <QProxyStyle>
 
 // libc++
 #include <deque>                                 // std::deque
@@ -43,28 +42,6 @@ class ConnectionsDialog;                         // connections-dialog.h
 class ProcessWatcher;                            // process-watcher.h
 
 class QWidget;
-
-
-// Define my look and feel overrides.
-class EditorProxyStyle : public QProxyStyle {
-public:
-  virtual int pixelMetric(
-    PixelMetric metric,
-    const QStyleOption *option = NULL,
-    const QWidget *widget = NULL) const override;
-
-  virtual int styleHint(
-    StyleHint hint,
-    QStyleOption const *option,
-    QWidget const *widget,
-    QStyleHintReturn *returnData) const override;
-
-  virtual void drawControl(
-    ControlElement element,
-    const QStyleOption *option,
-    QPainter *painter,
-    const QWidget *widget) const override;
-};
 
 
 // global state of the editor: files, windows, etc.

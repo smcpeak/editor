@@ -437,6 +437,7 @@ EDITOR_OBJS += diff-hilite.o
 EDITOR_OBJS += editor-command.ast.gen.o
 EDITOR_OBJS += editor-global.moc.o
 EDITOR_OBJS += editor-global.o
+EDITOR_OBJS += editor-proxy-style.o
 EDITOR_OBJS += editor-settings.o
 EDITOR_OBJS += editor-version.o
 EDITOR_OBJS += editor-widget-frame.moc.o
