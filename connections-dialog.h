@@ -4,15 +4,14 @@
 #ifndef EDITOR_CONNECTIONS_DIALOG_H
 #define EDITOR_CONNECTIONS_DIALOG_H
 
-// editor
 #include "host-name.h"                 // HostName
 #include "my-table-widget.h"           // MyTableWidget
 #include "vfs-connections-fwd.h"       // VFS_Connections
 
-// qt
+#include "smbase/refct-serf.h"         // RCSerf
+
 #include <QDialog>
 
-// libc++
 #include <set>                         // std::set
 #include <vector>                      // std::vector
 
@@ -39,7 +38,7 @@ private:     // class data
 
 private:     // instance data
   // Connections being managed.
-  VFS_Connections *m_vfsConnections;
+  RCSerf<VFS_Connections> m_vfsConnections;
 
   // Widget showing the list.
   MyTableWidget *m_tableWidget;
