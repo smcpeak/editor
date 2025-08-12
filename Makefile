@@ -297,6 +297,8 @@ TOCLEAN += td-core.tmp
 # ------------------------- editor-fs-server ---------------------------
 EDITOR_FS_SERVER_OBJS :=
 EDITOR_FS_SERVER_OBJS += editor-fs-server.o
+EDITOR_FS_SERVER_OBJS += editor-version.o
+EDITOR_FS_SERVER_OBJS += git-version.gen.o
 EDITOR_FS_SERVER_OBJS += vfs-local.o
 EDITOR_FS_SERVER_OBJS += vfs-msg.o
 
@@ -309,13 +311,8 @@ editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LIBRARIES)
 all: editor-fs-server.exe
 
 
-# ----------------------- editor-fs-server-test ------------------------
-# TODO: `editor-fs-server-test` has an option to test using SSH, but
-# the test is currently broken.
-
-
-# ------------------------ vfs-connections-test ------------------------
-# Optionally run a test that uses SSH to connect to localhost.
+# ---------------------- VFS localhost SSH tests -----------------------
+# Optionally run tests that use SSH to connect to localhost.
 ifeq ($(TEST_SSH_LOCALHOST),1)
 
 test-prog-outs: out/vfs-connections-test-localhost.ok
@@ -440,6 +437,7 @@ EDITOR_OBJS += editor-command.ast.gen.o
 EDITOR_OBJS += editor-global.moc.o
 EDITOR_OBJS += editor-global.o
 EDITOR_OBJS += editor-settings.o
+EDITOR_OBJS += editor-version.o
 EDITOR_OBJS += editor-widget-frame.moc.o
 EDITOR_OBJS += editor-widget-frame.o
 EDITOR_OBJS += editor-widget.moc.o

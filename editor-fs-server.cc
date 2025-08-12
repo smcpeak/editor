@@ -3,6 +3,8 @@
 
 #include "vfs-local.h"                           // VFS_LocalImpl
 
+#include "editor-version.h"                      // getEditorVersionString
+
 // smbase
 #include "smbase/bflatten.h"                     // StreamFlatten
 #include "smbase/binary-stdin.h"                 // setStdinToBinary, setStdoutToBinary
@@ -20,6 +22,7 @@
 
 // libc++
 #include <cstdlib>                               // std::min
+#include <cstring>                               // std::strcmp
 #include <fstream>                               // std::ofstream
 #include <memory>                                // std::unique_ptr
 #include <sstream>                               // std::i/ostringstream
@@ -257,12 +260,59 @@ int innerMain()
 }
 
 
+void printUsage()
+{
+  std::cout <<
+R"(Usage: editor-fs-server [options]
+
+Options:
+  -help          Print this message and exit.
+  -version       Print version and exit.
+
+This program provides file system services via a custom protocol over
+stdin and stdout.  It is how the editor accesses files and runs
+programs.  It can spawn the server process on a remote machine via SSH
+to do remote editing.
+)";
+}
+
+
+// Process the command line.  Return true if we should proceed with
+// normal server activities, and false to stop.
+bool processCommandLine(int argc, char **argv)
+{
+  for (int i=1; i < argc; ++i) {
+    char const *opt = argv[i];
+    if (0==std::strcmp(opt, "-version")) {
+      std::cout << getEditorVersionString();   // Has newline.
+      return false;
+    }
+
+    else if (0==std::strcmp(opt, "-help")) {
+      printUsage();
+      return false;
+    }
+
+    else {
+      xmessage(stringb("Unknown option: " << doubleQuote(opt) <<
+                       ".  Try -help."));
+    }
+  }
+
+  return true;
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
-int main()
+int main(int argc, char **argv)
 {
   try {
+    if (!processCommandLine(argc, argv)) {
+      return 0;
+    }
+
     // Set up log file.
     SMFileUtil sfu;
     std::string logFileName =

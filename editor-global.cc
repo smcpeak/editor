@@ -7,10 +7,10 @@
 #include "command-runner.h"            // CommandRunner
 #include "connections-dialog.h"        // ConnectionsDialog
 #include "editor-command.ast.gen.h"    // EditorCommand
+#include "editor-version.h"            // getEditorVersionString
 #include "editor-widget.h"             // EditorWidget
 #include "event-recorder.h"            // EventRecorder
 #include "event-replay.h"              // EventReplay
-#include "git-version.h"               // editor_git_version
 #include "keybindings.doc.gen.h"       // doc_keybindings
 #include "lsp-client.h"                // LSPClient
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
@@ -20,7 +20,6 @@
 #include "textinput.h"                 // TextInputDialog
 #include "uri-util.h"                  // getFileURIPath
 #include "vfs-query-sync.h"            // readFileSynchronously
-#include "vfs-msg.h"                   // VFS_currentVersion
 
 // smqtutil
 #include "smqtutil/gdvalue-qstring.h"  // toGDValue(QString)
@@ -445,9 +444,7 @@ void EditorGlobal::processCommandLineOptions(
       }
 
       else if (arg == "-version") {
-        // The editor version string has a newline.
-        cout << "Editor version: " << editor_git_version;
-        cout << "VFS protocol version: " << VFS_currentVersion << "\n";
+        cout << getEditorVersionString();    // Has a newline already.
         THROW(QuitAfterPrintingHelp(""));
       }
 
