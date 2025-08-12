@@ -4,12 +4,15 @@
 #ifndef EDITOR_APPLY_COMMAND_DIALOG_H
 #define EDITOR_APPLY_COMMAND_DIALOG_H
 
+#include "apply-command-dialog-fwd.h"  // fwds for this module
+
 #include "eclf.h"                      // EditorCommandLineFunction
 #include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-settings-fwd.h"       // CommandLineHistory
 #include "editor-widget-fwd.h"         // EditorWidget
 #include "modal-dialog.h"              // ModalDialog
 
+#include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
@@ -34,7 +37,7 @@ class ApplyCommandDialog : public ModalDialog {
 private:     // data
   // --------------------------- editor data ---------------------------
   // The `EditorGlobal` singleton.
-  EditorGlobal * const m_editorGlobal;
+  RCSerf<EditorGlobal> const m_editorGlobal;
 
   // Which function this dialog is for.
   EditorCommandLineFunction const m_whichFunction;

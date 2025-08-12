@@ -7,8 +7,10 @@
 #include "editor-global-fwd.h"                   // fwds for this module
 
 // editor
+#include "apply-command-dialog-fwd.h"            // ApplyCommandDialog
 #include "builtin-font.h"                        // BuiltinFont
 #include "command-runner-fwd.h"                  // CommandRunner
+#include "eclf.h"                                // EditorCommandLineFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 #include "editor-settings.h"                     // EditorSettings
 #include "editor-window.h"                       // EditorWindow
@@ -124,7 +126,13 @@ private:     // data
   // around persistently so it remembers its size (but not location...)
   // across invocations.  It contains a pointer to m_documentList, so
   // must be destroyed before the list.
+  //
+  // TODO: Change this to `std::unique_ptr`.
   Owner<OpenFilesDialog> m_openFilesDialog;
+
+  // Each of the two dialogs used to prompt for a command line.
+  std::unique_ptr<ApplyCommandDialog>
+  m_applyCommandDialogs[NUM_EDITOR_COMMAND_LINE_FUNCTIONS];
 
   // Connections dialog, even when not shown.
   std::unique_ptr<ConnectionsDialog> m_connectionsDialog;
@@ -373,6 +381,10 @@ public:       // funcs
   // details.  Otherwise return nullptr.
   RCSerf<LSPDocumentInfo const> getLSPDocInfo(
     NamedTextDocument const *doc) const;
+
+  // Get or create the dialog for `eclf`.
+  ApplyCommandDialog &getApplyCommandDialog(
+    EditorCommandLineFunction eclf);
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

@@ -4,6 +4,7 @@
 #include "editor-global.h"             // this module
 
 // editor
+#include "apply-command-dialog.h"      // ApplyCommandDialog
 #include "command-runner.h"            // CommandRunner
 #include "connections-dialog.h"        // ConnectionsDialog
 #include "editor-command.ast.gen.h"    // EditorCommand
@@ -29,6 +30,7 @@
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
 // smbase
+#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
 #include "smbase/dev-warning.h"        // g_devWarningHandler
 #include "smbase/exc.h"                // smbase::{XBase, xformat}
 #include "smbase/gdv-ordered-map.h"    // gdv::GDVOrderedMap
@@ -163,6 +165,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_vfsConnections(),
     m_processes(),
     m_openFilesDialog(NULL),
+    m_applyCommandDialogs(),
     m_connectionsDialog(),
     m_recentCommands(),
     m_settings(),
@@ -1292,6 +1295,18 @@ RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
   }
 
   return nullptr;
+}
+
+
+ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
+  EditorCommandLineFunction eclf)
+{
+  xassert(cc::z_le_lt(eclf, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
+  if (!m_applyCommandDialogs[eclf]) {
+    m_applyCommandDialogs[eclf].reset(
+      new ApplyCommandDialog(this, eclf));
+  }
+  return *( m_applyCommandDialogs[eclf] );
 }
 
 

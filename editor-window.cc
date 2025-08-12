@@ -1256,22 +1256,9 @@ bool EditorWindow::promptForCommandLine(
   bool /*OUT*/ &prefixStderrLines,
   EditorCommandLineFunction whichFunction)
 {
-  // Use two process-lifetime instances so the window size is remembered
-  // across invocations.  (This isn't important enough to add to the
-  // user settings, IMO.)
-  //
-  // These are never deallocated.  (I cannot just allocate them directly
-  // into the global data because they would fail an assertion when
-  // being destroyed.)
-  static ApplyCommandDialog *dialogs[] = {
-    new ApplyCommandDialog(editorGlobal(), ECLF_APPLY),
-    new ApplyCommandDialog(editorGlobal(), ECLF_RUN),
-  };
-  ASSERT_TABLESIZE(dialogs, NUM_EDITOR_COMMAND_LINE_FUNCTIONS);
-
-  // Select the proper dialog.
-  xassert(cc::z_le_lt(whichFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
-  ApplyCommandDialog &dlg = *( dialogs[whichFunction] );
+  // Get the dialog.
+  ApplyCommandDialog &dlg =
+    editorGlobal()->getApplyCommandDialog(whichFunction);
 
   // Run it.
   if (!dlg.execForWidget(editorWidget())) {
