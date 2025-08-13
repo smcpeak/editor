@@ -454,7 +454,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: cdo
+    // Used mnemonics: cdio
 
     MENU_ITEM    ("Start LSP server",
                   lspStartServer);
@@ -474,8 +474,14 @@ void EditorWindow::buildMenu()
                   lspGoToNextDiagnostic, Qt::Key_F8);
     MENU_ITEM_KEY("Go to previous diagnostic",
                   lspGoToPreviousDiagnostic, Qt::SHIFT + Qt::Key_F8);
-    MENU_ITEM    ("Show diagnostic at cursor",
-                  lspShowDiagnosticAtCursor);  // TODO: Show Ctrl+I here.
+
+    // I use Ctrl+I both to open a file whose name is under the cursor
+    // and to inspect a diagnostic there, with the diagnostic taking
+    // precedence.  The actual binding is above, associated with
+    // `fileOpenAtCursor`.  The fake binding here is thus just to
+    // inform the user.
+    MENU_ITEM    ("&Inspect diagnostic at cursor\tCtrl+I",
+                  lspShowDiagnosticAtCursor);
 
     menu->addSeparator();
 
