@@ -18,6 +18,12 @@ TODOs:
     I switch away, more text is added, then switch back, the cursor is
     no longer tracking the end of the file.
 
+  - Event replay problems on Linux
+    - Currently I have some ugly sleeps in event-replay.cc; see
+      `checkFocusWorkaround`
+    - Also the tests sometimes just hang and I have to kill the
+      process in another terminal
+
   - Would like to be able to jump to a byte offset in the file.
   - Command to create header file boilerplate.
   - Crash when opening the manage-connections dialog!  But I cannot
