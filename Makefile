@@ -38,13 +38,12 @@ MYPY = mypy
 # If 1, hook the `mypy` checks into the `all` target.
 ENABLE_MYPY = 0
 
-# Pull in build configuration.  This must provide definitions of
-# QT5INCLUDE, QT5LIB and QT5BIN.  It can optionally override the
-# variables defined above.
-ifeq (,$(wildcard config.mk))
-$(error The file config.mk does not exist.  You have to copy config.mk.template to config.mk and then edit the latter by hand)
-endif
-include config.mk
+# Pull in Qt configuration from smqtutil, which provides
+# QT5INCLUDE, QT5LIB and QT5BIN.
+include $(SMQTUTIL)/config.mk
+
+# User customizations.
+-include config.mk
 
 # Set QT_CCFLAGS, QT_LDFLAGS, QT_TOCLEAN, and the 'moc' rule.
 include $(SMQTUTIL)/qtvars.mk
