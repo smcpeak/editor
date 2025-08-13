@@ -35,6 +35,10 @@ CheckFocusWindowTitle "Read-only Document"
 FocusKeyPress "Key_Tab" "\t"
 FocusKeyPress "Key_Space" " "
 FocusKeyRelease "Key_Space" " "
+
+# TODO: Linux replay issues.
+Sleep "0"
+
 CheckFocusWindowTitle "untitled.txt * - Editor"
 
 # Check that the status area reflects the modified status.

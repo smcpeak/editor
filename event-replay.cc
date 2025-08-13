@@ -5,7 +5,7 @@
 
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
-#include "waiting-counter.h"           // g_waitingCounter
+#include "waiting-counter.h"           // g_waitingCounter, IncDecWaitingCounter
 
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
@@ -390,14 +390,18 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "FocusKeyPR") {
     BIND_ARGS2(keys, text);
 
+    QWidget *focusWidget = getFocusWidget();
+    TRACE("EventReplay", "FocusKeyPR: focusWidget: " <<
+          doubleQuote(focusWidget->objectName()));
+
     // It is not always safe to post multiple events since, in the real
     // execution, events could intervene or state (e.g., focus!) could
     // change.  But for a press-release sequence this should be safe.
     QCoreApplication::postEvent(
-      getFocusWidget(),
+      focusWidget,
       getKeyPressEventFromString(keys, toQString(text)));
     QCoreApplication::postEvent(
-      getFocusWidget(),
+      focusWidget,
       getKeyReleaseEventFromString(keys, toQString(text)));
   }
 
@@ -574,6 +578,11 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "CheckFocusWindowTitle") {
     BIND_ARGS1(expect);
 
+    // Same issue was with "CheckFocusWidget"?
+    if (!PLATFORM_IS_WINDOWS) {
+      sleepForMS(100);
+    }
+
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_EQ("CheckFocusWindowTitle");
   }
@@ -581,12 +590,22 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "CheckFocusWindowTitleMatches") {
     BIND_ARGS1(expectRE);
 
+    // Same issue was with "CheckFocusWidget"?
+    if (!PLATFORM_IS_WINDOWS) {
+      sleepForMS(100);
+    }
+
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_RE_MATCH("CheckFocusWindowTitleMatches");
   }
 
   else if (funcName == "CheckFocusWindow") {
     BIND_ARGS1(expect);
+
+    // Same issue was with "CheckFocusWidget"?
+    if (!PLATFORM_IS_WINDOWS) {
+      sleepForMS(100);
+    }
 
     string actual = qObjectPath(getFocusWidget()->window());
     EXPECT_EQ("CheckFocusWindow");
@@ -923,7 +942,11 @@ bool EventReplay::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
     TRACE("EventReplay", "received QuiescenceEvent");
-    if (this->callReplayNextEvent()) {
+    if (g_waitingCounter) {
+      TRACE("EventReplay", "ignoring QuiescenceEvent because g_waitingCounter is " <<
+                           g_waitingCounter);
+    }
+    else if (this->callReplayNextEvent()) {
       // Test is continuing.  We don't have to do anything to keep
       // receiving 'aboutToBlock' and hence enqueueing QuiescenceEvents.
     }
@@ -934,6 +957,7 @@ bool EventReplay::event(QEvent *ev)
                           this, NULL);
     }
 
+    TRACE("EventReplay", "finished with QuiescenceEvent");
     return true;
   }
 

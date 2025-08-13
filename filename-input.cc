@@ -706,10 +706,13 @@ void FilenameInputDialog::accept() NOEXCEPT
         "Create new file \"" << filename << "\"?"));
       box.addButton(QMessageBox::Yes);
       box.addButton(QMessageBox::Cancel);
+      TRACE("FilenameInputDialog", "opening createFilePrompt dialog");
       if (box.exec() != QMessageBox::Yes) {
         // Bail out without closing.
+        TRACE("FilenameInputDialog", "createFilePrompt canceled");
         return;
       }
+      TRACE("FilenameInputDialog", "createFilePrompt confirmed");
     }
   }
   else {
