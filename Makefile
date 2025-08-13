@@ -308,6 +308,15 @@ editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LIBRARIES)
 	@# Link this with -static because it gets invoked over an SSH
 	@# connection, which makes it difficult to arrange for the proper
 	@# library search path to be set.
+	@#
+	@# On Linux, this causes the warning:
+	@#
+	@#   warning: Using 'getpwuid' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+	@#
+	@# That does not matter in this program since the FS server
+	@# never queries the current username, but there's no simple way
+	@# to suppress it, so I just have to live with it.
+	@#
 	$(CXX) -o $@ -static $(CCFLAGS) $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LDFLAGS)
 
 all: editor-fs-server.exe
