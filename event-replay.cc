@@ -18,6 +18,7 @@
 #include "smbase/exc.h"                // smbase::{XBase, XMessage}
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/stringb.h"            // stringb
 #include "smbase/syserr.h"             // xsyserror
@@ -369,8 +370,12 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "FocusKeyPress") {
     BIND_ARGS2(keys, text);
 
+    QWidget *focusWidget = getFocusWidget();
+    TRACE("EventReplay", "FocusKeyPress: focusWidget: " <<
+          doubleQuote(focusWidget->objectName()));
+
     QCoreApplication::postEvent(
-      getFocusWidget(),
+      focusWidget,
       getKeyPressEventFromString(keys, toQString(text)));
   }
 
@@ -589,6 +594,20 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
   else if (funcName == "CheckFocusWidget") {
     BIND_ARGS1(expect);
+
+    // Workaround for problem on Linux I haven't solved: wait a little
+    // before checking focus.
+    //
+    // The problem manifests with `file-open-dialog1.ev` (and this sleep
+    // disabled).  We replay the Return keypress that should close the
+    // dialog, but if we immediately check focus, then no widget has
+    // focus.  I think there is a problem with how my event loops are
+    // nested.
+    //
+    // TODO: Debug and fix.
+    if (!PLATFORM_IS_WINDOWS) {
+      sleepForMS(100);
+    }
 
     string actual = qObjectPath(getFocusWidget());
     EXPECT_EQ("CheckFocusWidget");

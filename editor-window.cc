@@ -2684,10 +2684,15 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
   HostAndResourceName confirmedHarn = hfl.m_harn;
 
-  TRACE1("slot_openOrSwitchToFileAtLineOpt: prompting");
+  TRACE1("slot_openOrSwitchToFileAtLineOpt: Running FilenameInputDialog");
   if (dialog.runDialog(&(m_editorGlobal->m_documentList),
                        confirmedHarn)) {
+    TRACE1("slot_openOrSwitchToFileAtLineOpt: FilenameInputDialog finished, chose " <<
+           confirmedHarn);
     this->openOrSwitchToFile(confirmedHarn);
+  }
+  else {
+    TRACE1("slot_openOrSwitchToFileAtLineOpt: FilenameInputDialog canceled");
   }
 
   GENERIC_CATCH_END

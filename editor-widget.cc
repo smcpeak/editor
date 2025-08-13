@@ -2212,6 +2212,10 @@ void EditorWidget::editRedo()
 static void setClipboard(string newText)
 {
   QClipboard *cb = QApplication::clipboard();
+
+  TRACE1("setClipboard: newText=" << doubleQuote(newText) <<
+         " supportsSelection=" << cb->supportsSelection());
+
   cb->setText(toQString(newText), QClipboard::Clipboard);
   if (cb->supportsSelection()) {
     // Also set the X selection so I can paste it into an xterm.
@@ -2938,11 +2942,13 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       // the "more recent" deliberate clipboard interaction.
       if (cb->supportsSelection()) {
         text = cb->text(QClipboard::Selection);
+        TRACE1("EC_Paste: Got selection: " << doubleQuote(text));
       }
 
       // Then the regular clipboard.
       if (text.isEmpty()) {
         text = cb->text(QClipboard::Clipboard);
+        TRACE1("EC_Paste: Got clipboard: " << doubleQuote(text));
       }
 
       // Previously, I had a check here for empty `text`, and a warning
