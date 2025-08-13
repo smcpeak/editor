@@ -578,11 +578,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "CheckFocusWindowTitle") {
     BIND_ARGS1(expect);
 
-    // Same issue was with "CheckFocusWidget"?
-    if (!PLATFORM_IS_WINDOWS) {
-      sleepForMS(100);
-    }
-
+    checkFocusWorkaround();
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_EQ("CheckFocusWindowTitle");
   }
@@ -590,11 +586,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "CheckFocusWindowTitleMatches") {
     BIND_ARGS1(expectRE);
 
-    // Same issue was with "CheckFocusWidget"?
-    if (!PLATFORM_IS_WINDOWS) {
-      sleepForMS(100);
-    }
-
+    checkFocusWorkaround();
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_RE_MATCH("CheckFocusWindowTitleMatches");
   }
@@ -602,11 +594,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "CheckFocusWindow") {
     BIND_ARGS1(expect);
 
-    // Same issue was with "CheckFocusWidget"?
-    if (!PLATFORM_IS_WINDOWS) {
-      sleepForMS(100);
-    }
-
+    checkFocusWorkaround();
     string actual = qObjectPath(getFocusWidget()->window());
     EXPECT_EQ("CheckFocusWindow");
   }
@@ -614,20 +602,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "CheckFocusWidget") {
     BIND_ARGS1(expect);
 
-    // Workaround for problem on Linux I haven't solved: wait a little
-    // before checking focus.
-    //
-    // The problem manifests with `file-open-dialog1.ev` (and this sleep
-    // disabled).  We replay the Return keypress that should close the
-    // dialog, but if we immediately check focus, then no widget has
-    // focus.  I think there is a problem with how my event loops are
-    // nested.
-    //
-    // TODO: Debug and fix.
-    if (!PLATFORM_IS_WINDOWS) {
-      sleepForMS(100);
-    }
-
+    checkFocusWorkaround();
     string actual = qObjectPath(getFocusWidget());
     EXPECT_EQ("CheckFocusWidget");
   }
@@ -708,6 +683,24 @@ void EventReplay::sleepForMS(int ms)
   IncDecWaitingCounter idwc;
   sleepWhilePumpingEvents(ms);
   TRACE("EventReplay", "done sleeping");
+}
+
+
+// Workaround for problem on Linux I haven't solved: wait a little
+// before checking focus.
+//
+// The problem manifests with `file-open-dialog1.ev` (and this sleep
+// disabled), among others.  We replay the Return keypress that should
+// close the dialog, but if we immediately check focus, then no widget
+// has focus.  I think there is a problem with how my event loops are
+// nested.
+//
+// TODO: Debug and fix.
+void EventReplay::checkFocusWorkaround()
+{
+  if (!PLATFORM_IS_WINDOWS) {
+    sleepForMS(100);
+  }
 }
 
 

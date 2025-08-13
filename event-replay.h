@@ -115,6 +115,10 @@ private:     // funcs
   // object if there is a problem.
   void replayCall(QRegularExpressionMatch &match);
 
+  // Do an extra sleep on Linux as a workaround for a bug.  See comments
+  // on implementation.
+  void checkFocusWorkaround();
+
   // Sleep for 'ms' milliseconds while pumping the event queue.
   void sleepForMS(int ms);
 
