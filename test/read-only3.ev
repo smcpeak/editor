@@ -56,6 +56,9 @@ KeyPress "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" 
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 KeyPress "OpenFilesDialog.m_tableWidget" "Key_N" "n"
 KeyPress "OpenFilesDialog" "Key_Return" "\r"
+
+# Back in editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 CheckQuery "window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled.txt"
 
 # Verify the menu item shows it is not read-only.
@@ -69,6 +72,9 @@ Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
 Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
 KeyPress "OpenFilesDialog.m_tableWidget" "Key_N" "n"
 KeyPress "OpenFilesDialog" "Key_Return" "\r"
+
+# Back in editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 CheckQuery "window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt"
 
 # It is read-only.

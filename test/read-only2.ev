@@ -14,6 +14,9 @@ KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_T" "t"
 KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_E" "e"
 KeyPress "RunCommandDialog" "Key_Return" "\r"
 
+# Back in editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
 # Wait until it finishes.
 WaitUntilCheckQuery "200" "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"
 

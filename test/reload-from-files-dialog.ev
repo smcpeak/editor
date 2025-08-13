@@ -39,7 +39,11 @@ CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "1" "0" "gets-modifi
 ClickButton "OpenFilesDialog.m_reloadAllButton"
 
 # Dismiss the confirmation dialog.
+CheckFocusWidget "OpenFilesDialog.Done.qt_msgbox_buttonbox.#1"
 FocusKeyPR "Key_Return" "\r"
+
+# Back in the main dialog.
+CheckFocusWidget "OpenFilesDialog.m_tableWidget"
 
 # Check that the list entries have been refreshed.
 CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt$"
@@ -47,6 +51,8 @@ CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "1" "0" "gets-modifi
 
 # Close the dialog.
 ClickButton "OpenFilesDialog.m_cancelButton"
+
+# Back in the editor.
 CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
 
 # Check that "[DISKMOD]" is gone in the editor.
