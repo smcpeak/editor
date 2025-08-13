@@ -454,16 +454,12 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: cfos
+    // Used mnemonics: cdo
 
     MENU_ITEM    ("Start LSP server",
                   lspStartServer);
     MENU_ITEM    ("Stop LSP server",
                   lspStopServer);
-    MENU_ITEM    ("Check LSP server &status",
-                  lspCheckStatus);
-    MENU_ITEM    ("Show LSP server capabilities",
-                  lspShowServerCapabilities);
 
     menu->addSeparator();
 
@@ -471,23 +467,42 @@ void EditorWindow::buildMenu()
                   lspOpenOrUpdateFile, Qt::Key_F7);
     MENU_ITEM_KEY("&Close this file",
                   lspCloseFile, Qt::CTRL + Qt::Key_F7);
-    MENU_ITEM    ("Review diagnostics for this file",
-                  lspReviewDiagnostics);
+
+    menu->addSeparator();
+
     MENU_ITEM_KEY("Go to next diagnostic",
                   lspGoToNextDiagnostic, Qt::Key_F8);
     MENU_ITEM_KEY("Go to previous diagnostic",
                   lspGoToPreviousDiagnostic, Qt::SHIFT + Qt::Key_F8);
     MENU_ITEM    ("Show diagnostic at cursor",
-                  lspShowDiagnosticAtCursor);
+                  lspShowDiagnosticAtCursor);  // TODO: Show Ctrl+I here.
 
     menu->addSeparator();
 
-    MENU_ITEM    ("Insert &fake diagnostics",
-                  lspInsertFakeDiagnostics);
-    MENU_ITEM    ("Remove diagnostics",
-                  lspRemoveDiagnostics);
-    MENU_ITEM    ("Set fake LSP status",
-                  lspSetFakeStatus);
+    {
+      QMenu *submenu = menu->addMenu("&Debug");
+      submenu->setObjectName("lspDebugMenu");
+      QMenu *menu = submenu;
+
+      // Used mnemonics: s
+
+      MENU_ITEM    ("Check LSP server &status",
+                    lspCheckStatus);
+      MENU_ITEM    ("Show LSP server capabilities",
+                    lspShowServerCapabilities);
+
+      menu->addSeparator();
+
+      MENU_ITEM    ("Review diagnostics for this file",
+                    lspReviewDiagnostics);
+      MENU_ITEM    ("Insert fake diagnostics",
+                    lspInsertFakeDiagnostics);
+      MENU_ITEM    ("Remove diagnostics",
+                    lspRemoveDiagnostics);
+      MENU_ITEM    ("Set fake LSP status",
+                    lspSetFakeStatus);
+    }
+
   }
 
   {
@@ -528,7 +543,7 @@ void EditorWindow::buildMenu()
 
     {
       QMenu *submenu = menu->addMenu("&Debug");
-      submenu->setObjectName("debugMenu");
+      submenu->setObjectName("helpDebugMenu");
       QMenu *menu = submenu;
 
       // Used letters: agsw
