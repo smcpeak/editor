@@ -716,7 +716,7 @@ void EditorWindow::fileOpen() NOEXCEPT
   TRACE1("fileOpen");
 
   HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
-  this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(dirHarn, 0));
+  this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(dirHarn, 0, -1));
 
   GENERIC_CATCH_END
 }
@@ -2721,7 +2721,8 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt:"
     " harn=" << hfl.m_harn <<
-    " line=" << hfl.m_line);
+    " line=" << hfl.m_line <<
+    " byteIndex=" << hfl.m_byteIndex);
 
   if (!hfl.hasFilename()) {
     // Ignore empty object.
@@ -2738,8 +2739,11 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
       TRACE1("slot_openOrSwitchToFileAtLineOpt: fast path open");
       this->openOrSwitchToFile(hfl.m_harn);
       if (hfl.m_line != 0) {
-        // Also go to line number, if provided.
-        editorWidget()->cursorTo(TextLCoord(hfl.m_line-1, 0));
+        // Also go to line/col, if provided.
+        TextLCoord targetLC(
+          hfl.m_line - 1,
+          std::max(0, hfl.m_byteIndex));
+        editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();
         editorWidget()->scrollToCursor(-1 /*gap*/);
       }

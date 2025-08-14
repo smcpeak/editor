@@ -164,12 +164,12 @@ void getCandidateSuffixes(
   // Return what we found.
   candidates.push(HostFileAndLineOpt(
     HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
-    line));
+    line, -1));
 }
 
 
 // Return an object with the prefix hostname, a file name created by
-// joining prefix+suffix, and line from the suffix.
+// joining prefix+suffix, and line/col from the suffix.
 static HostFileAndLineOpt joinHFL(
   SMFileUtil &sfu,
   HostAndResourceName const &prefix,
@@ -180,11 +180,12 @@ static HostFileAndLineOpt joinHFL(
     suffix.m_harn.resourceName());
   joinedFileName = sfu.collapseDots(joinedFileName);
 
-  // Take the host from the prefix and the line number from the
+  // Take the host from the prefix and the line/col number from the
   // suffix.
   return HostFileAndLineOpt(
     HostAndResourceName(prefix.hostName(), joinedFileName),
-    suffix.m_line);
+    suffix.m_line,
+    suffix.m_byteIndex);
 }
 
 

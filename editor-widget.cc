@@ -2652,11 +2652,13 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 
 void EditorWidget::goToLocalFileAndLineOpt(
   std::string const &fname,
-  int lineOpt)
+  int lineOpt,
+  int byteIndexOpt)
 {
   HostFileAndLineOpt hostFileAndLine(
     HostAndResourceName::localFile(fname),
-    lineOpt);
+    lineOpt,
+    byteIndexOpt);
 
   Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
 }
@@ -2671,7 +2673,7 @@ void EditorWidget::on_jumpToDiagnosticLocation(
     " fname=" << doubleQuote(fname) <<
     " line=" << line);
 
-  goToLocalFileAndLineOpt(toString(fname), line);
+  goToLocalFileAndLineOpt(toString(fname), line, -1);
 
   GENERIC_CATCH_END
 }
@@ -2764,7 +2766,8 @@ void EditorWidget::handleLSPLocationReply(
       // going to the start line.
       goToLocalFileAndLineOpt(
         getFileURIPath(loc.m_uri),
-        loc.m_range.m_start.m_line + 1);
+        loc.m_range.m_start.m_line + 1,
+        loc.m_range.m_start.m_character);
     }
     else {
       editorWindow()->complain(stringb(

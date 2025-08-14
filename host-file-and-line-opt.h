@@ -12,19 +12,23 @@
 
 
 // An optional host and file name, and if the name is present, an
-// optional line number.
+// optional line and byte number.
 class HostFileAndLineOpt {
 public:      // data
   // Host and file name.  Can be empty() to mean none.
   HostAndResourceName m_harn;
 
-  // The line number, or 0 to mean "none".
+  // The 1-based line number, or 0 to mean "none".
   int m_line;
+
+  // The 0-based byte index, or -1 to mean "none".
+  int m_byteIndex;
 
 public:      // funcs
   HostFileAndLineOpt()
     : m_harn(),
-      m_line(0)
+      m_line(0),
+      m_byteIndex(-1)
   {}
 
   ~HostFileAndLineOpt()
@@ -37,16 +41,22 @@ public:      // funcs
 
   HostFileAndLineOpt(HostFileAndLineOpt const &obj)
     : DMEMB(m_harn),
-      DMEMB(m_line)
+      DMEMB(m_line),
+      DMEMB(m_byteIndex)
   {}
 
-  HostFileAndLineOpt(HostAndResourceName const &harn, int line)
-    : m_harn(harn),
-      m_line(line)
+  HostFileAndLineOpt(
+    HostAndResourceName const &harn,
+    int line,
+    int byteIndex)
+    : IMEMBFP(harn),
+      IMEMBFP(line),
+      IMEMBFP(byteIndex)
   {}
 
   bool hasFilename() const { return !m_harn.empty(); }
   bool hasLine() const { return m_line != 0; }
+  bool hasByteIndex() const { return m_byteIndex >= 0; }
 };
 
 
