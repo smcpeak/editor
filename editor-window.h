@@ -54,7 +54,7 @@ class EditorWindow : public QWidget,
                      public NamedTextDocumentListObserver {
   Q_OBJECT
 
-private:     // types
+public:      // types
   // Things we can do with one file and LSP.
   enum LSPFileOperation {
     LSPFO_OPEN_OR_UPDATE,    // Open or update the file.
@@ -135,9 +135,6 @@ private:     // funcs
   // converted to `int32_t` (because it is too big), pop up an error box
   // if `wantErrors`, then return nullopt.
   std::optional<std::int32_t> getDocLSPVersionNumber(bool wantErrors);
-
-  // Do `operation` with the current file.
-  void doLSPFileOperation(LSPFileOperation operation);
 
   // Go to the next/previous diagnostic.
   void lspGoToAdjacentDiagnostic(bool next);
@@ -225,6 +222,9 @@ public:      // funcs
 
   // Pop up a message for general information.
   void inform(std::string_view msg);
+
+  // Do `operation` with the current file.
+  void doLSPFileOperation(LSPFileOperation operation);
 
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAdded(

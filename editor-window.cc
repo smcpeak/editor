@@ -2074,6 +2074,7 @@ std::optional<std::int32_t> EditorWindow::getDocLSPVersionNumber(bool wantErrors
 }
 
 
+// TODO: This should be a method of `EditorWidget`, not `EditorWindow`.
 void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
 {
   // True if we want a popup for errors.
