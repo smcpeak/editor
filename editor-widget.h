@@ -479,6 +479,10 @@ public:      // funcs
     gdv::GDValue const &gdvReply,
     LSPSymbolRequestKind lsrk);
 
+  // Handle the reply to a request for symbol hover information.
+  void handleLSPHoverInfoReply(
+    gdv::GDValue const &gdvReply);
+
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
   VFS_Connections *vfsConnections() const;

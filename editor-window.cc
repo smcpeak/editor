@@ -490,7 +490,7 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("lspGoToMenu");
       QMenu *menu = submenu;
 
-      // Used mnemonics: acf
+      // Used mnemonics: acfh
 
       // The fact that this goes to the declaration if we are already at
       // the definition is simply how `clangd` responds, not something I
@@ -501,6 +501,8 @@ void EditorWindow::buildMenu()
                     lspGoToDeclaration, Qt::SHIFT + Qt::Key_F12);
       MENU_ITEM    ("&All uses",
                     lspGoToAllUses);
+      MENU_ITEM    ("&Hover info",
+                    lspHoverInfo);
     }
 
     menu->addSeparator();
@@ -2423,6 +2425,17 @@ void EditorWindow::lspGoToAllUses() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   inform("TODO");
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspHoverInfo() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_HOVER_INFO);
+
   GENERIC_CATCH_END
 }
 

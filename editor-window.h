@@ -307,6 +307,7 @@ public Q_SLOTS:
   void lspGoToDefinition() NOEXCEPT;
   void lspGoToDeclaration() NOEXCEPT;
   void lspGoToAllUses() NOEXCEPT;
+  void lspHoverInfo() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

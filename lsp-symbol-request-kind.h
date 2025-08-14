@@ -11,6 +11,7 @@
 enum class LSPSymbolRequestKind {
   K_DECLARATION,
   K_DEFINITION,
+  K_HOVER_INFO,
 
   NUM_KINDS
 };
@@ -20,5 +21,8 @@ char const *toString(LSPSymbolRequestKind lsrk);
 
 // Return a string like "declaration".
 char const *toMessageString(LSPSymbolRequestKind lsrk);
+
+// Return a string like "textDocument/declaration".
+char const *toRequestName(LSPSymbolRequestKind lsrk);
 
 #endif // EDITOR_LSP_SYMBOL_REQUEST_KIND_H

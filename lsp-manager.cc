@@ -936,10 +936,7 @@ int LSPManager::requestRelatedLocation(
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(isFileOpen(fname));
 
-  char const *requestName =
-    (lsrk == LSPSymbolRequestKind::K_DECLARATION)?
-      "textDocument/declaration" :
-      "textDocument/definition";
+  char const *requestName = toRequestName(lsrk);
 
   TRACE1("Sending " << requestName <<
          " request for " << position << " in " <<

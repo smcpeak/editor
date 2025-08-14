@@ -12,6 +12,7 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   (
     "K_DECLARATION",
     "K_DEFINITION",
+    "K_HOVER_INFO",
   ),
   "<invalid kind>"
 )
@@ -25,6 +26,23 @@ char const *toMessageString(LSPSymbolRequestKind lsrk)
     (
       "declaration",
       "definition",
+      "hover info",
+    ),
+    lsrk,
+    "<invalid kind>"
+  )
+}
+
+
+char const *toRequestName(LSPSymbolRequestKind lsrk)
+{
+  RETURN_ENUMERATION_STRING_OR(
+    LSPSymbolRequestKind,
+    LSPSymbolRequestKind::NUM_KINDS,
+    (
+      "textDocument/declaration",
+      "textDocument/definition",
+      "textDocument/hover",
     ),
     lsrk,
     "<invalid kind>"

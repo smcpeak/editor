@@ -2759,6 +2759,11 @@ void EditorWidget::handleLSPLocationReply(
 {
   char const *lsrkMsgStr = toMessageString(lsrk);
 
+  if (lsrk == LSPSymbolRequestKind::K_HOVER_INFO) {
+    handleLSPHoverInfoReply(gdvReply);
+    return;
+  }
+
   try {
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
@@ -2770,7 +2775,7 @@ void EditorWidget::handleLSPLocationReply(
       LSP_Location const &loc = lseq.m_locations.front();
 
       // TODO: Be able to select the entire range, rather than only
-      // going to the start line.
+      // going to the start line/col.
       goToLocalFileAndLineOpt(
         getFileURIPath(loc.m_uri),
         loc.m_range.m_start.m_line + 1,
@@ -2787,6 +2792,25 @@ void EditorWidget::handleLSPLocationReply(
     // then provide a more concise explanation to the user.
     editorWindow()->complain(stringb(
       "Failed to parse " << lsrkMsgStr << " reply: " << x));
+  }
+}
+
+
+void EditorWidget::handleLSPHoverInfoReply(
+  GDValue const &gdvReply)
+{
+  try {
+    // Elsewhere I first parse the GDV into a more structured format
+    // defined in `lsp-data`, but let's try just taking the GDV apart
+    // directly here.
+    GDValueParser top(gdvReply);
+    GDValueParser contents = top.mapGetValueAtStr("contents");
+    GDValueParser value = contents.mapGetValueAtStr("value");
+    editorWindow()->inform(value.stringGet());
+  }
+  catch (XBase &x) {
+    editorWindow()->complain(stringb(
+      "Failed to parse hover info reply: " << x));
   }
 }
 
