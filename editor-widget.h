@@ -473,6 +473,9 @@ public:      // funcs
   // Go to the declaration of the symbol at the cursor.
   void lspGoToDeclaration();
 
+  // Handle the reply to a request for a location.
+  void handleLSPLocationReply(gdv::GDValue const &gdvReply);
+
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
   VFS_Connections *vfsConnections() const;
@@ -535,6 +538,15 @@ public:      // funcs
   // Make the document shown in the widget be topmost in the global list
   // of open documents.
   void makeCurrentDocumentTopmost();
+
+  // Navigate in this widget to local file `fname` at `lineOpt`.  The
+  // latter can be 0 to mean "no line", otherwise it is 1-based.
+  //
+  // TODO: The callers of this function, along with the function itself,
+  // should be generalized to work with remote files too.
+  void goToLocalFileAndLineOpt(
+    std::string const &fname,
+    int lineOpt);
 
   // ---------------------------- input -----------------------------
   // We are about to edit the text in the file.  If we are going from

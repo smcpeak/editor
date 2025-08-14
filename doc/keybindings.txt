@@ -34,6 +34,8 @@ F9                           File | Run "run-make-from-editor"
 
 F10                          Debug | Run &global invariant self-check ...
 
+F12                          LSP | Go to | Declaration
+
 
 # -------------------------- keys with names ---------------------------
 

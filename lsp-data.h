@@ -23,9 +23,11 @@
 
 #include "lsp-data-fwd.h"              // fwds for this module
 
+#include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser
 
+#include <iosfwd>                      // std::ostream
 #include <list>                        // std::list
 #include <optional>                    // std::optional
 #include <string>                      // std::string
@@ -44,10 +46,17 @@ public:      // data
   int m_character;
 
 public:      // methods
-  // create-tuple-class: declarations for LSP_Position
+  // create-tuple-class: declarations for LSP_Position +compare +write
   /*AUTO_CTC*/ explicit LSP_Position(int line, int character);
   /*AUTO_CTC*/ LSP_Position(LSP_Position const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Position &operator=(LSP_Position const &obj) noexcept;
+  /*AUTO_CTC*/ // For +compare:
+  /*AUTO_CTC*/ friend int compare(LSP_Position const &a, LSP_Position const &b);
+  /*AUTO_CTC*/ DEFINE_FRIEND_RELATIONAL_OPERATORS(LSP_Position)
+  /*AUTO_CTC*/ // For +write:
+  /*AUTO_CTC*/ std::string toString() const;
+  /*AUTO_CTC*/ void write(std::ostream &os) const;
+  /*AUTO_CTC*/ friend std::ostream &operator<<(std::ostream &os, LSP_Position const &obj);
 
   operator gdv::GDValue() const;
 
@@ -65,10 +74,17 @@ public:      // data
   LSP_Position m_end;
 
 public:      // methods
-  // create-tuple-class: declarations for LSP_Range
+  // create-tuple-class: declarations for LSP_Range +compare +write
   /*AUTO_CTC*/ explicit LSP_Range(LSP_Position const &start, LSP_Position const &end);
   /*AUTO_CTC*/ LSP_Range(LSP_Range const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Range &operator=(LSP_Range const &obj) noexcept;
+  /*AUTO_CTC*/ // For +compare:
+  /*AUTO_CTC*/ friend int compare(LSP_Range const &a, LSP_Range const &b);
+  /*AUTO_CTC*/ DEFINE_FRIEND_RELATIONAL_OPERATORS(LSP_Range)
+  /*AUTO_CTC*/ // For +write:
+  /*AUTO_CTC*/ std::string toString() const;
+  /*AUTO_CTC*/ void write(std::ostream &os) const;
+  /*AUTO_CTC*/ friend std::ostream &operator<<(std::ostream &os, LSP_Range const &obj);
 
   operator gdv::GDValue() const;
 
@@ -79,7 +95,7 @@ public:      // methods
 // Location potentially in another file.
 class LSP_Location final {
 public:
-  // File name.
+  // File name, encoded as a URI.
   std::string m_uri;
 
   // Location within that file.
@@ -179,6 +195,28 @@ public:      // methods
   operator gdv::GDValue() const;
 
   explicit LSP_PublishDiagnosticsParams(gdv::GDValueParser const &p);
+};
+
+
+// The data received for "textDocument/declaration".
+class LSP_LocationSequence final {
+public:      // data
+  // The locations of, e.g., declarations, definition, or uses,
+  // depending on the originating request.
+  std::list<LSP_Location> m_locations;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_LocationSequence +move
+  /*AUTO_CTC*/ explicit LSP_LocationSequence(std::list<LSP_Location> const &locations);
+  /*AUTO_CTC*/ explicit LSP_LocationSequence(std::list<LSP_Location> &&locations);
+  /*AUTO_CTC*/ LSP_LocationSequence(LSP_LocationSequence const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_LocationSequence(LSP_LocationSequence &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_LocationSequence &operator=(LSP_LocationSequence const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_LocationSequence &operator=(LSP_LocationSequence &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_LocationSequence(gdv::GDValueParser const &p);
 };
 
 

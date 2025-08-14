@@ -8,6 +8,7 @@
 
 #include "named-td.h"                  // NamedTextDocument
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
+#include "uri-util.h"                  // getFileURIPath
 
 #include "smbase/gdvalue-json.h"       // gdv::gdvToJSON
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
@@ -210,6 +211,76 @@ void test_PublishDiagnosticsParams_withRelated()
 }
 
 
+void test_LocationSequence1()
+{
+  LSP_LocationSequence seq(GDValueParser(fromGDVN(R"(
+    [
+      {
+        "range": {
+          "end": {"character":8 "line":18}
+          "start": {"character":5 "line":18}
+        }
+        "uri":
+          "file:///D:/cygwin/home/Scott/wrk/editor/test/language-test.cc"
+      }
+    ]
+  )")));
+
+  EXPECT_EQ(seq.m_locations.size(), 1);
+
+  LSP_Location const &loc = seq.m_locations.front();
+  EXPECT_EQ(getFileURIPath(loc.m_uri),
+    "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
+  EXPECT_EQ(loc.m_range,
+    LSP_Range(LSP_Position(18, 5), LSP_Position(18, 8)));
+}
+
+
+void test_LocationSequence2()
+{
+  LSP_LocationSequence seq(GDValueParser(fromGDVN(R"(
+    [
+      {
+        "range": {
+          "end": {"character":8 "line":18}
+          "start": {"character":5 "line":18}
+        }
+        "uri":
+          "file:///D:/cygwin/home/Scott/wrk/editor/test/language-test.cc"
+      }
+      {
+        "range": {
+          "end": {"character":18 "line":118}
+          "start": {"character":15 "line":118}
+        }
+        "uri":
+          "file:///D:/cygwin/home/Scott/wrk/editor/test/language-test.cc"
+      }
+    ]
+  )")));
+
+  EXPECT_EQ(seq.m_locations.size(), 2);
+
+  auto it = seq.m_locations.begin();
+  {
+    LSP_Location const &loc = *it;
+    EXPECT_EQ(getFileURIPath(loc.m_uri),
+      "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
+    EXPECT_EQ(loc.m_range,
+      LSP_Range(LSP_Position(18, 5), LSP_Position(18, 8)));
+  }
+
+  ++it;
+  {
+    LSP_Location const &loc = *it;
+    EXPECT_EQ(getFileURIPath(loc.m_uri),
+      "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
+    EXPECT_EQ(loc.m_range,
+      LSP_Range(LSP_Position(118, 15), LSP_Position(118, 18)));
+  }
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -217,6 +288,8 @@ void test_lsp_data(CmdlineArgsSpan args)
 {
   test_PublishDiagnosticsParams_simple();
   test_PublishDiagnosticsParams_withRelated();
+  test_LocationSequence1();
+  test_LocationSequence2();
 }
 
 

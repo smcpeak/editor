@@ -3,15 +3,19 @@
 
 #include "lsp-data.h"                  // this module
 
+#include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS, smbase::compare
 #include "smbase/gdvalue-list.h"       // gdv::gdvTo<std::list>
 #include "smbase/gdvalue-optional.h"   // gdv::gdvTo<std::optional>
 #include "smbase/gdvalue-parser-ops.h" // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 
 #include <optional>                    // std::optional
+#include <list>                        // std::list
+#include <sstream>                     // std::ostringstream
 
 
 using namespace gdv;
+using namespace smbase;
 
 
 // --------------------------- LSP_Position ----------------------------
@@ -19,8 +23,8 @@ using namespace gdv;
 /*AUTO_CTC*/ LSP_Position::LSP_Position(
 /*AUTO_CTC*/   int line,
 /*AUTO_CTC*/   int character)
-/*AUTO_CTC*/   : m_line(line),
-/*AUTO_CTC*/     m_character(character)
+/*AUTO_CTC*/   : IMEMBFP(line),
+/*AUTO_CTC*/     IMEMBFP(character)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Position::LSP_Position(LSP_Position const &obj) noexcept
@@ -35,6 +39,34 @@ using namespace gdv;
 /*AUTO_CTC*/     CMEMB(m_character);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ int compare(LSP_Position const &a, LSP_Position const &b)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_line);
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_character);
+/*AUTO_CTC*/   return 0;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ std::string LSP_Position::toString() const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   std::ostringstream oss;
+/*AUTO_CTC*/   write(oss);
+/*AUTO_CTC*/   return oss.str();
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ void LSP_Position::write(std::ostream &os) const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   os << "{";
+/*AUTO_CTC*/   WRITE_MEMBER(m_line);
+/*AUTO_CTC*/   WRITE_MEMBER(m_character);
+/*AUTO_CTC*/   os << " }";
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ std::ostream &operator<<(std::ostream &os, LSP_Position const &obj)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   obj.write(os);
+/*AUTO_CTC*/   return os;
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
 
@@ -61,8 +93,8 @@ LSP_Position::LSP_Position(gdv::GDValueParser const &p)
 /*AUTO_CTC*/ LSP_Range::LSP_Range(
 /*AUTO_CTC*/   LSP_Position const &start,
 /*AUTO_CTC*/   LSP_Position const &end)
-/*AUTO_CTC*/   : m_start(start),
-/*AUTO_CTC*/     m_end(end)
+/*AUTO_CTC*/   : IMEMBFP(start),
+/*AUTO_CTC*/     IMEMBFP(end)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Range::LSP_Range(LSP_Range const &obj) noexcept
@@ -77,6 +109,34 @@ LSP_Position::LSP_Position(gdv::GDValueParser const &p)
 /*AUTO_CTC*/     CMEMB(m_end);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ int compare(LSP_Range const &a, LSP_Range const &b)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_start);
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_end);
+/*AUTO_CTC*/   return 0;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ std::string LSP_Range::toString() const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   std::ostringstream oss;
+/*AUTO_CTC*/   write(oss);
+/*AUTO_CTC*/   return oss.str();
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ void LSP_Range::write(std::ostream &os) const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   os << "{";
+/*AUTO_CTC*/   WRITE_MEMBER(m_start);
+/*AUTO_CTC*/   WRITE_MEMBER(m_end);
+/*AUTO_CTC*/   os << " }";
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ std::ostream &operator<<(std::ostream &os, LSP_Range const &obj)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   obj.write(os);
+/*AUTO_CTC*/   return os;
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
 
@@ -103,8 +163,8 @@ LSP_Range::LSP_Range(gdv::GDValueParser const &p)
 /*AUTO_CTC*/ LSP_Location::LSP_Location(
 /*AUTO_CTC*/   std::string const &uri,
 /*AUTO_CTC*/   LSP_Range const &range)
-/*AUTO_CTC*/   : m_uri(uri),
-/*AUTO_CTC*/     m_range(range)
+/*AUTO_CTC*/   : IMEMBFP(uri),
+/*AUTO_CTC*/     IMEMBFP(range)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Location::LSP_Location(LSP_Location const &obj) noexcept
@@ -145,8 +205,8 @@ LSP_Location::LSP_Location(gdv::GDValueParser const &p)
 /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(
 /*AUTO_CTC*/   LSP_Location const &location,
 /*AUTO_CTC*/   std::string const &message)
-/*AUTO_CTC*/   : m_location(location),
-/*AUTO_CTC*/     m_message(message)
+/*AUTO_CTC*/   : IMEMBFP(location),
+/*AUTO_CTC*/     IMEMBFP(message)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(LSP_DiagnosticRelatedInformation const &obj) noexcept
@@ -190,11 +250,11 @@ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(gdv::GDValueP
 /*AUTO_CTC*/   std::optional<std::string> const &source,
 /*AUTO_CTC*/   std::string const &message,
 /*AUTO_CTC*/   std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation)
-/*AUTO_CTC*/   : m_range(range),
-/*AUTO_CTC*/     m_severity(severity),
-/*AUTO_CTC*/     m_source(source),
-/*AUTO_CTC*/     m_message(message),
-/*AUTO_CTC*/     m_relatedInformation(relatedInformation)
+/*AUTO_CTC*/   : IMEMBFP(range),
+/*AUTO_CTC*/     IMEMBFP(severity),
+/*AUTO_CTC*/     IMEMBFP(source),
+/*AUTO_CTC*/     IMEMBFP(message),
+/*AUTO_CTC*/     IMEMBFP(relatedInformation)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Diagnostic::LSP_Diagnostic(LSP_Diagnostic const &obj) noexcept
@@ -253,9 +313,9 @@ LSP_Diagnostic::LSP_Diagnostic(gdv::GDValueParser const &p)
 /*AUTO_CTC*/   std::string const &uri,
 /*AUTO_CTC*/   std::optional<int> const &version,
 /*AUTO_CTC*/   std::list<LSP_Diagnostic> const &diagnostics)
-/*AUTO_CTC*/   : m_uri(uri),
-/*AUTO_CTC*/     m_version(version),
-/*AUTO_CTC*/     m_diagnostics(diagnostics)
+/*AUTO_CTC*/   : IMEMBFP(uri),
+/*AUTO_CTC*/     IMEMBFP(version),
+/*AUTO_CTC*/     IMEMBFP(diagnostics)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_PublishDiagnosticsParams::LSP_PublishDiagnosticsParams(LSP_PublishDiagnosticsParams const &obj) noexcept
@@ -292,6 +352,58 @@ LSP_PublishDiagnosticsParams::LSP_PublishDiagnosticsParams(gdv::GDValueParser co
   : GDVP_READ_MEMBER_STR(m_uri),
     GDVP_READ_OPT_MEMBER_STR(m_version),
     GDVP_READ_MEMBER_STR(m_diagnostics)
+{}
+
+
+// ----------------------- LSP_LocationSequence ------------------------
+// create-tuple-class: definitions for LSP_LocationSequence
+/*AUTO_CTC*/ LSP_LocationSequence::LSP_LocationSequence(
+/*AUTO_CTC*/   std::list<LSP_Location> const &locations)
+/*AUTO_CTC*/   : IMEMBFP(locations)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_LocationSequence::LSP_LocationSequence(
+/*AUTO_CTC*/   std::list<LSP_Location> &&locations)
+/*AUTO_CTC*/   : IMEMBMFP(locations)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_LocationSequence::LSP_LocationSequence(LSP_LocationSequence const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_locations)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_LocationSequence::LSP_LocationSequence(LSP_LocationSequence &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_locations)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_LocationSequence &LSP_LocationSequence::operator=(LSP_LocationSequence const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_locations);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_LocationSequence &LSP_LocationSequence::operator=(LSP_LocationSequence &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_locations);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_LocationSequence::operator gdv::GDValue() const
+{
+  return toGDValue(m_locations);
+}
+
+
+LSP_LocationSequence::LSP_LocationSequence(gdv::GDValueParser const &p)
+    // The spec lists some other possibilities, including a Location not
+    // wrapped in an array container, and `null`, but `clangd` appears
+    // to always provide the container.
+  : m_locations(gdvpTo<std::list<LSP_Location>>(p))
 {}
 
 

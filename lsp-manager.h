@@ -376,7 +376,7 @@ public:      // methods
   bool hasReplyForID(int id) const;
 
   // Take the pending reply for `id`, thus removing it from the manager
-  // object.
+  // object.  This yields just the "result" part of the JSONRPC reply.
   //
   // Requires: hasReplyForID(id)
   gdv::GDValue takeReplyForID(int id);

@@ -494,8 +494,8 @@ void EditorWindow::buildMenu()
 
       MENU_ITEM    ("De&finition",
                     lspGoToDefinition);
-      MENU_ITEM    ("De&claration",
-                    lspGoToDeclaration);
+      MENU_ITEM_KEY("De&claration",
+                    lspGoToDeclaration, Qt::Key_F12);
       MENU_ITEM    ("&All uses",
                     lspGoToAllUses);
     }

@@ -108,9 +108,6 @@ private:     // methods
   // Like `inner`, except skip any IDs already in use.
   int getNextRequestID();
 
-  // True if `id` is either outstanding or pending.
-  bool idInUse(int id) const;
-
   // Send `data` to the child process stdn.
   void send(std::string &&data);
 
@@ -209,6 +206,8 @@ public:      // methods
   std::set<int> getPendingReplyIDs() const;
 
   // Return the reply for `id`.  Requires `hasReplyForID(id)`.
+  //
+  // This returns the value of the "result" field of the entire reply.
   gdv::GDValue takeReplyForID(int id);
 
   // If the reply for `id` is pending, discard it.  If not, arrange to

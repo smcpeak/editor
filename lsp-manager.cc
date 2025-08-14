@@ -293,17 +293,8 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
 
   if (id == m_initializeRequestID) {
     TRACE1("received initialize reply");
-    GDValue reply = m_lsp->takeReplyForID(id);
+    m_serverCapabilities = m_lsp->takeReplyForID(id);
     m_initializeRequestID = 0;
-
-    if (reply.isMap() && reply.mapContains("result")) {
-      m_serverCapabilities = reply.mapGetValueAt("result");
-    }
-    else {
-      addErrorMessage("Reply to \"initialize\" was missing \"result\".");
-
-      // This isn't necessarily fatal, so keep going.
-    }
 
     // Send "initialized" to complete the startup procedure.  There is
     // no reply to this so we simply assume we're ready now.
@@ -315,7 +306,7 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
 
   else if (id == m_shutdownRequestID) {
     TRACE1("received shutdown reply");
-    m_lsp->takeReplyForID(id);
+    m_lsp->takeReplyForID(id);         // Data is discarded.
     m_shutdownRequestID = 0;
 
     // Now, we send the "exit" notification, which should cause the

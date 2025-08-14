@@ -87,13 +87,6 @@ int LSPClient::getNextRequestID()
 }
 
 
-bool LSPClient::idInUse(int id) const
-{
-  return contains(m_outstandingRequests, id) ||
-         contains(m_pendingReplies, id);
-}
-
-
 void LSPClient::send(std::string &&data)
 {
   m_child.putInputData(QByteArray::fromStdString(data));
@@ -233,6 +226,12 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
       gdvId.throwError(stringb("ID is negative: " << id));
     }
 
+    // It must have a "result" field.  This call will throw if not.
+    msg.mapGetValueAt("result");
+
+    // Get the contained result.
+    GDValue &result = msgValue.mapGetValueAt("result");
+
     // We are done with the parsers, and about to move `msgValue`.
     gdvId.clearParserPointers();
     msg.clearParserPointers();
@@ -241,7 +240,9 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
            msgValue.asIndentedString());
 
     setRemoveExisting(m_outstandingRequests, id);
-    mapInsertUnique(m_pendingReplies, id, std::move(msgValue));
+
+    // Move just the `result` portion.
+    mapInsertUnique(m_pendingReplies, id, std::move(result));
 
     Q_EMIT signal_hasReplyForID(id);
   }

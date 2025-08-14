@@ -9,10 +9,13 @@
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
+#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-data.h"                            // LSP_LocationSequence
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "textcategory.h"                        // LineCategories, etc.
+#include "uri-util.h"                            // getFileURIPath
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 
 // smqtutil
@@ -34,13 +37,15 @@
 #include "smbase/bdffont.h"                      // BDFFont
 #include "smbase/dev-warning.h"                  // DEV_WARNING
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
+#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
-#include "smbase/save-restore.h"                 // SetRestore
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
+#include "smbase/save-restore.h"                 // SetRestore
 #include "smbase/sm-file-util.h"                 // SMFileUtil
-#include "smbase/strutil.h"                      // dirname
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/stringb.h"                      // stringb
+#include "smbase/strutil.h"                      // dirname
 #include "smbase/xassert.h"                      // xassert
 
 // Qt
@@ -2644,6 +2649,18 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 }
 
 
+void EditorWidget::goToLocalFileAndLineOpt(
+  std::string const &fname,
+  int lineOpt)
+{
+  HostFileAndLineOpt hostFileAndLine(
+    HostAndResourceName::localFile(fname),
+    lineOpt);
+
+  Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
+}
+
+
 void EditorWidget::on_jumpToDiagnosticLocation(
   QString const &fname, int line) NOEXCEPT
 {
@@ -2653,11 +2670,7 @@ void EditorWidget::on_jumpToDiagnosticLocation(
     " fname=" << doubleQuote(fname) <<
     " line=" << line);
 
-  HostFileAndLineOpt hostFileAndLine(
-    HostAndResourceName::localFile(toString(fname)),
-    line);
-
-  Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
+  goToLocalFileAndLineOpt(toString(fname), line);
 
   GENERIC_CATCH_END
 }
@@ -2715,15 +2728,46 @@ void EditorWidget::lspGoToDeclaration()
           "Waiting for LSP server",
           "Waiting for reply for declaration request...")) {
       GDValue gdvReply = lspManager()->takeReplyForID(id);
-
-      // TODO: Handle this properly.
       TRACE1("received reply: " << gdvReply.asIndentedString());
-      editorWindow()->inform(gdvReply.asIndentedString());
+
+      handleLSPLocationReply(gdvReply);
     }
     else {
       TRACE1("canceled wait for declaration reply");
       lspManager()->cancelRequestWithID(id);
     }
+  }
+}
+
+
+void EditorWidget::handleLSPLocationReply(GDValue const &gdvReply)
+{
+  try {
+    LSP_LocationSequence lseq{GDValueParser(gdvReply)};
+    if (lseq.m_locations.empty()) {
+      // TODO: This message will have to be generalized.
+      editorWindow()->inform(
+        "No declaration found for symbol at cursor.");
+    }
+    else if (lseq.m_locations.size() == 1) {
+      LSP_Location const &loc = lseq.m_locations.front();
+
+      // TODO: Be able to select the entire range, rather than only
+      // going to the start line.
+      goToLocalFileAndLineOpt(
+        getFileURIPath(loc.m_uri),
+        loc.m_range.m_start.m_line + 1);
+    }
+    else {
+      editorWindow()->complain(stringb(
+        "Mutliple declarations found.  TODO: Handle this!"));
+    }
+  }
+  catch (XBase &x) {
+    // TODO: I should log the GDValue and exception somewhere and
+    // then provide a more concise explanation to the user.
+    editorWindow()->complain(stringb(
+      "Failed to parse declaration reply: " << x));
   }
 }
 
