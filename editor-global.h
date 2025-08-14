@@ -165,6 +165,7 @@ public:       // funcs
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
+  // TODO: I think all the `lspManager` methods should return pointers.
   LSPManager &lspManager() { return m_lspManager; }
 
   // Create an empty "untitled" file, add it to the set of documents,

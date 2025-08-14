@@ -32,6 +32,9 @@ public:      // data
   // In async mode, this means we stopped early due to a failure.
   bool m_failed;
 
+  // If non-zero, the ID of the `declaration` request we sent.
+  int m_declarationRequestID;
+
 public:      // methods
   ~LSPManagerTester();
 
@@ -45,6 +48,12 @@ public:      // methods
 
   // Dequeue pending diagnostics.
   void takeDiagnostics();
+
+  // Send "textDocument/declaration" request.
+  void sendDeclarationRequest();
+
+  // Take its reply, which must have been received.
+  void takeDeclarationReply();
 
   // Tell the server to shut down.
   void stopServer();
@@ -66,6 +75,7 @@ private Q_SLOTS:
   // Handle corresponding `LSPManager` signals.
   void on_changedProtocolState() NOEXCEPT;
   void on_hasPendingDiagnostics() NOEXCEPT;
+  void on_hasReplyForID(int id) NOEXCEPT;
   void on_hasPendingErrorMessages() NOEXCEPT;
 };
 

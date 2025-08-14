@@ -269,6 +269,9 @@ public:      // funcs
   // back is the identity function.
   bool cursorOnModelCoord() const;
 
+  // Get the nearest model coordinate to the cursor.
+  TextMCoord cursorAsModelCoord() const;
+
   // ------------------------- mark ------------------------------
   // Current mark location.  The mark is the counterpart to the cursor
   // for defining a selection region.  This asserts that the mark is

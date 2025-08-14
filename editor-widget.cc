@@ -27,6 +27,7 @@
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
+#include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil
 
 // smbase
 #include "smbase/array.h"                        // Array
@@ -53,9 +54,11 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPixmap>
+#include <QProgressDialog>
 
 // libc++
 #include <algorithm>                             // std::min
+#include <functional>                            // std::function
 #include <optional>                              // std::optional
 #include <utility>                               // std::move
 
@@ -280,6 +283,12 @@ EditorGlobal *EditorWidget::editorGlobal() const
 EditorSettings const &EditorWidget::editorSettings() const
 {
   return editorGlobal()->getSettings();
+}
+
+
+LSPManager *EditorWidget::lspManager() const
+{
+  return &( editorGlobal()->lspManager() );
 }
 
 
@@ -2577,7 +2586,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
-    TextMCoord cursorMC = m_editor->toMCoord(m_editor->cursor());
+    TextMCoord cursorMC = m_editor->cursorAsModelCoord();
     if (RCSerf<TDD_Diagnostic const> diag = tdd->getDiagnosticAt(cursorMC)) {
 
       // Copy `diag` into a vector of elements for the dialog.
@@ -2660,10 +2669,60 @@ void EditorWidget::lspGoToAdjacentDiagnostic(bool next)
         getDocument()->getDiagnostics()) {
     if (std::optional<TextMCoord> nextLoc =
           tdd->getAdjacentDiagnosticLocation(next,
-            m_editor->toMCoord(m_editor->cursor()))) {
+            m_editor->cursorAsModelCoord())) {
       cursorTo(m_editor->toLCoord(*nextLoc));
       scrollToCursor(3 /*edgeGap*/);
       redraw();
+    }
+  }
+}
+
+
+void EditorWidget::lspGoToDeclaration()
+{
+  NamedTextDocument *ntd = getDocument();
+  DocumentName const &docName = ntd->documentName();
+
+  if (!docName.isLocalFilename()) {
+    editorWindow()->complain("LSP only works with local files.");
+    return;
+  }
+
+  std::string fname = docName.filename();
+
+  if (!lspManager()->isRunningNormally()) {
+    editorWindow()->complain(
+     "LSP manager is not running or it has malfunctioned.");
+  }
+  else if (!lspManager()->isFileOpen(fname)) {
+    editorWindow()->complain(stringb(
+      "File " << doubleQuote(fname) << " is not open with the "
+      "LSP server.  Open it first."));
+  }
+  else {
+    TRACE1("sending request for declaration in " << fname <<
+           " at " << m_editor->cursorAsModelCoord());
+    int id = lspManager()->request_textDocument_declaration(
+      fname,
+      m_editor->cursorAsModelCoord());
+
+    // Synchronously wait for the reply.
+    TRACE1("waiting for declaration reply, id=" << id);
+    auto lambda = [this, id]() -> bool {
+      return this->lspManager()->hasReplyForID(id);
+    };
+    if (synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
+          "Waiting for LSP server",
+          "Waiting for reply for declaration request...")) {
+      GDValue gdvReply = lspManager()->takeReplyForID(id);
+
+      // TODO: Handle this properly.
+      TRACE1("received reply: " << gdvReply.asIndentedString());
+      editorWindow()->inform(gdvReply.asIndentedString());
+    }
+    else {
+      TRACE1("canceled wait for declaration reply");
+      lspManager()->cancelRequestWithID(id);
     }
   }
 }

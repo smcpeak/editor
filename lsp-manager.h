@@ -9,6 +9,7 @@
 #include "command-runner-fwd.h"                  // CommandRunner
 #include "lsp-client-fwd.h"                      // LSPClient
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams
+#include "textmcoord.h"                          // TextMCoord
 
 #include <QObject>
 
@@ -362,6 +363,30 @@ public:      // methods
   // Requires: hasPendingErrorMessges()
   std::string takePendingErrorMessage();
 
+  // Request information about the declaration at `position`.  Returns
+  // the request ID.
+  //
+  // Requires: isRunningNormally()
+  // Requires: isFileOpen(fname)
+  int request_textDocument_declaration(
+    std::string const &fname,
+    TextMCoord position);
+
+  // True if we have a reply for request `id`.
+  bool hasReplyForID(int id) const;
+
+  // Take the pending reply for `id`, thus removing it from the manager
+  // object.
+  //
+  // Requires: hasReplyForID(id)
+  gdv::GDValue takeReplyForID(int id);
+
+  // If the reply for `id` is ready, discard it.  If not, arrange to
+  // discard it when it arrives.
+  //
+  // TODO: Send a cancelation to the server.
+  void cancelRequestWithID(int id);
+
 Q_SIGNALS:
   // Emitted when the protocol state has (potentially) changed.  The
   // client must call `getProtocolState` to get the new state, which in
@@ -375,6 +400,9 @@ Q_SIGNALS:
 
   // Emitted when an error message is enqueued.
   void signal_hasPendingErrorMessages();
+
+  // Emitted when a reply to request `id` is received.
+  void signal_hasReplyForID(int id);
 };
 
 

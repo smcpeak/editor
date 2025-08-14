@@ -329,9 +329,9 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
 
   else {
     TRACE1("received reply with ID " << id);
-    m_lsp->takeReplyForID(id);
-    // TODO: Arrange for the client to be able to submit their own
-    // requests and receive the replies.
+
+    // Relay to our client.
+    Q_EMIT signal_hasReplyForID(id);
   }
 
   GENERIC_CATCH_END
@@ -424,6 +424,10 @@ void LSPManager::selfCheck() const
   // Either both are present or neither is.
   xassert(m_commandRunner.operator bool() ==
           m_lsp.operator bool());
+
+  if (m_lsp) {
+    m_lsp->selfCheck();
+  }
 
   // Set of files for which we observe pending diagnostics.
   std::set<std::string> filesWithPending;
@@ -930,6 +934,54 @@ std::string LSPManager::takePendingErrorMessage()
 {
   xassert(hasPendingErrorMessages());
   return listMoveFront(m_pendingErrorMessages);
+}
+
+
+int LSPManager::request_textDocument_declaration(
+  std::string const &fname,
+  TextMCoord position)
+{
+  xassertPrecondition(isRunningNormally());
+  xassertPrecondition(isFileOpen(fname));
+
+  TRACE1("Sending declaration request for " << position << " in " <<
+         doubleQuote(fname) << ".");
+  return m_lsp->sendRequest("textDocument/declaration", GDVMap{
+    {
+      "textDocument",
+      GDVMap{
+        { "uri", makeFileURI(fname) },
+      }
+    },
+    {
+      "position",
+      GDVMap{
+        { "line", position.m_line },
+        { "character", position.m_byteIndex },
+      }
+    },
+  });
+}
+
+
+bool LSPManager::hasReplyForID(int id) const
+{
+  xassertPrecondition(isRunningNormally());
+  return m_lsp->hasReplyForID(id);
+}
+
+
+gdv::GDValue LSPManager::takeReplyForID(int id)
+{
+  xassertPrecondition(isRunningNormally());
+  return m_lsp->takeReplyForID(id);
+}
+
+
+void LSPManager::cancelRequestWithID(int id)
+{
+  xassertPrecondition(isRunningNormally());
+  m_lsp->cancelRequestWithID(id);
 }
 
 

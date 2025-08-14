@@ -1096,8 +1096,14 @@ void TextDocumentEditor::walkCursorBytes(int distance)
 
 bool TextDocumentEditor::cursorOnModelCoord() const
 {
-  TextLCoord lc(this->toLCoord(this->toMCoord(this->cursor())));
+  TextLCoord lc(this->toLCoord(this->cursorAsModelCoord()));
   return lc == this->cursor();
+}
+
+
+TextMCoord TextDocumentEditor::cursorAsModelCoord() const
+{
+  return this->toMCoord(this->cursor());
 }
 
 

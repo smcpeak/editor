@@ -69,6 +69,8 @@ bool VFS_QuerySync::issueRequestSynchronously(
   TRACE("VFS_QuerySync",
     "request " << origRequestID << ": issued: " << requestDescription);
 
+  // TODO: Change the code below to use `smqtutil/sync-wait`.
+
   // Phase 1: No dialog.
   {
     // During the initial wait, we do not accept any input.

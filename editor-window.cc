@@ -486,6 +486,23 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     {
+      QMenu *submenu = menu->addMenu("&Go to");
+      submenu->setObjectName("lspGoToMenu");
+      QMenu *menu = submenu;
+
+      // Used mnemonics: acf
+
+      MENU_ITEM    ("De&finition",
+                    lspGoToDefinition);
+      MENU_ITEM    ("De&claration",
+                    lspGoToDeclaration);
+      MENU_ITEM    ("&All uses",
+                    lspGoToAllUses);
+    }
+
+    menu->addSeparator();
+
+    {
       QMenu *submenu = menu->addMenu("&Debug");
       submenu->setObjectName("lspDebugMenu");
       QMenu *menu = submenu;
@@ -2372,6 +2389,30 @@ void EditorWindow::lspSetFakeStatus() NOEXCEPT
     lspStatusWidget()->on_changedLSPStatus();
   }
 
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspGoToDefinition() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  inform("TODO");
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspGoToDeclaration() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  editorWidget()->lspGoToDeclaration();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspGoToAllUses() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  inform("TODO");
   GENERIC_CATCH_END
 }
 

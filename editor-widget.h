@@ -11,6 +11,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-manager-fwd.h"                     // LSPManager
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
@@ -312,6 +313,9 @@ public:      // funcs
   // User settings.
   EditorSettings const &editorSettings() const;
 
+  // Global LSP manager.
+  LSPManager *lspManager() const;
+
   // Read the font choice stored in 'editorGlobal()' and set this
   // widget's editor fonts accordingly.
   void setFontsFromEditorGlobal();
@@ -455,7 +459,7 @@ public:      // funcs
   void commandEditSelectEntireFile();
   void editGrepSource();
 
-  // --------------------------- diagnostics ---------------------------
+  // ------------------------------- LSP -------------------------------
   // If there are diagnostics associated with the current document, and
   // the cursor is in one of the marked ranges, show its message and
   // return nullopt.  Otherwise, return a string explaining the issue.
@@ -465,6 +469,9 @@ public:      // funcs
   // nothing if we have no diagnostics or there are no more in the
   // indicated direction.
   void lspGoToAdjacentDiagnostic(bool next);
+
+  // Go to the declaration of the symbol at the cursor.
+  void lspGoToDeclaration();
 
   // -------------------- interaction with files ------------------
   // Get the connections interface object.

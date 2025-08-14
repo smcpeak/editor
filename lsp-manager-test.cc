@@ -39,7 +39,8 @@ LSPManagerTester::LSPManagerTester(LSPTestRequestParams const &params)
       "out/lsp-manager-test-server-stderr.txt"),
     m_params(params),
     m_done(false),
-    m_failed(false)
+    m_failed(false),
+    m_declarationRequestID(0)
 {
   // I do not connect the signals here because the synchronous tests are
   // meant to run without using signals.
@@ -95,6 +96,39 @@ void LSPManagerTester::takeDiagnostics()
 }
 
 
+void LSPManagerTester::sendDeclarationRequest()
+{
+  xassert(m_declarationRequestID == 0);
+
+  DIAG("Sending declaration request...");
+  m_declarationRequestID =
+    m_lspManager.request_textDocument_declaration(
+      m_params.m_fname,
+      TextMCoord(m_params.m_line, m_params.m_col));
+  m_lspManager.selfCheck();
+
+  DIAG("Status: " << m_lspManager.checkStatus());
+
+  // The ID should not be pending yet.
+  xassert(!m_lspManager.hasReplyForID(m_declarationRequestID));
+
+  DIAG("Declaration request ID is " << m_declarationRequestID <<
+       "; awaiting reply.");
+}
+
+
+void LSPManagerTester::takeDeclarationReply()
+{
+  xassert(m_lspManager.hasReplyForID(m_declarationRequestID));
+  GDValue reply = m_lspManager.takeReplyForID(m_declarationRequestID);
+  xassert(!m_lspManager.hasReplyForID(m_declarationRequestID));
+  m_lspManager.selfCheck();
+
+  DIAG("Declaration reply: " << reply.asIndentedString());
+  DIAG("Status: " << m_lspManager.checkStatus());
+}
+
+
 void LSPManagerTester::stopServer()
 {
   std::string stopResult = m_lspManager.stopServer();
@@ -133,6 +167,17 @@ void LSPManagerTester::testSynchronously()
   }
 
   takeDiagnostics();
+
+  sendDeclarationRequest();
+
+  while (!m_lspManager.hasReplyForID(m_declarationRequestID)) {
+    waitForQtEvent();
+    DIAG("Status: " << m_lspManager.checkStatus());
+    m_lspManager.selfCheck();
+  }
+
+  takeDeclarationReply();
+
   stopServer();
 
   while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
@@ -153,6 +198,9 @@ void LSPManagerTester::connectSignals()
   QObject::connect(
     &m_lspManager, &LSPManager::signal_hasPendingDiagnostics,
     this,        &LSPManagerTester::on_hasPendingDiagnostics);
+  QObject::connect(
+    &m_lspManager, &LSPManager::signal_hasReplyForID,
+    this,        &LSPManagerTester::on_hasReplyForID);
   QObject::connect(
     &m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
     this,        &LSPManagerTester::on_hasPendingErrorMessages);
@@ -223,9 +271,31 @@ void LSPManagerTester::on_hasPendingDiagnostics() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   takeDiagnostics();
-  stopServer();
 
-  // Await `LSP_PS_MANAGER_INACTIVE`.
+  sendDeclarationRequest();
+
+  GENERIC_CATCH_END
+}
+
+
+void LSPManagerTester::on_hasReplyForID(int id) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (id == m_declarationRequestID) {
+    DIAG("Received diagnostic reply ID " << id);
+
+    takeDeclarationReply();
+
+    stopServer();
+
+    // Await `LSP_PS_MANAGER_INACTIVE`.
+  }
+
+  else {
+    DIAG("Received unexpected reply ID " << id);
+    m_failed = true;
+  }
 
   GENERIC_CATCH_END
 }

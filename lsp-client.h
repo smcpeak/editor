@@ -77,7 +77,17 @@ private:     // data
 
   // Map from ID to received reply that has not yet been taken by the
   // client.
+  //
+  // Invariant: The key set of this map is disjoint with
+  // `m_outstandingRequests`.
   std::map<int, gdv::GDValue> m_pendingReplies;
+
+  // Set of IDs of requests that have been canceled, but for which we
+  // have not seen the reply yet.
+  //
+  // Invariant: This set is disjoint with both `m_outstandingRequests`
+  // and the key set of `m_pendingReplies`.
+  std::set<int> m_canceledRequests;
 
   // Sequence of received notifications, in chronological order, oldest
   // first, that have not been taken by the client.
@@ -154,6 +164,9 @@ public:      // methods
   // already been started.
   explicit LSPClient(CommandRunner &child);
 
+  // Assert invariants.
+  void selfCheck() const;
+
   // Send a notification.  Do not wait for any responses.
   //
   // Requires `!hasProtocolError()`.
@@ -197,6 +210,12 @@ public:      // methods
 
   // Return the reply for `id`.  Requires `hasReplyForID(id)`.
   gdv::GDValue takeReplyForID(int id);
+
+  // If the reply for `id` is pending, discard it.  If not, arrange to
+  // discard it when it arrives.
+  //
+  // TODO: Send a cancelation to the server.
+  void cancelRequestWithID(int id);
 
   // True if a protocol error has occurred.  In this state, no further
   // messages can be sent or received.

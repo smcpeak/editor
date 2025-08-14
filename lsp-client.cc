@@ -12,11 +12,13 @@
 #include "smbase/gdvalue-json.h"       // gdv::{gdvToJSON, jsonToGDV}
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/iter-and-end.h"       // smbase::ConstIterAndEnd
 #include "smbase/list-util.h"          // smbase::listMoveFront
 #include "smbase/map-util.h"           // mapMoveValueAt, keySet
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/parsestring.h"        // ParseString
 #include "smbase/set-util.h"           // smbase::setRemoveExisting
+#include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote, trimWhitespace, split
 #include "smbase/stringb.h"            // stringb
@@ -346,6 +348,7 @@ LSPClient::LSPClient(CommandRunner &child)
     m_nextRequestID(1),
     m_outstandingRequests(),
     m_pendingReplies(),
+    m_canceledRequests(),
     m_pendingNotifications(),
     m_protocolError()
 {
@@ -353,6 +356,47 @@ LSPClient::LSPClient(CommandRunner &child)
                    this, &LSPClient::processOutputData);
   QObject::connect(&child, &CommandRunner::signal_processTerminated,
                    this, &LSPClient::on_processTerminated);
+}
+
+
+void LSPClient::selfCheck() const
+{
+  xassert(m_nextRequestID > 0);
+
+  std::set<int> pendingIDs = mapKeySet(m_pendingReplies);
+
+  // The three ID sets should all be mutually disjoint.
+  ConstIterAndEnd<std::set<int>> iterAndEnds[] = {
+    constIterAndEnd(m_outstandingRequests),
+    constIterAndEnd(pendingIDs),
+    constIterAndEnd(m_canceledRequests),
+  };
+  if (!setsAreDisjoint(Span(iterAndEnds))) {
+    // The sets were not disjoint.  Diagnose.
+    NWayComparisonResult const result =
+      compareNSetIterators(Span(iterAndEnds));
+    xassert(result.hasEqualIndices());
+
+    auto const [ai, bi] = result.getEqualIndices();
+    int const commonElement = *iterAndEnds[ai];
+
+    static char const * const names[] = {
+      "m_outstandingRequests",
+      "pendingIDs",
+      "m_canceledRequests",
+    };
+
+    xassert(cc::z_le_lt(ai, TABLESIZE(names)));
+    xassert(cc::z_le_lt(bi, TABLESIZE(names)));
+
+    // I don't currently have any reason to believe I will *need* this
+    // extra diagnosis, but it's a nice demonstration of an application
+    // of the `compareNSetIterators` function.
+    xfailure_stringbc(
+      "ID sets should have been mutually disjoint, but " <<
+      names[ai] << " and " << names[bi] <<
+      " both have " << commonElement << ".");
+  }
 }
 
 
@@ -436,6 +480,29 @@ GDValue LSPClient::takeReplyForID(int id)
   xassert(hasReplyForID(id));
 
   return mapMoveValueAt(m_pendingReplies, id);
+}
+
+
+void LSPClient::cancelRequestWithID(int id)
+{
+  if (setRemove(m_outstandingRequests, id)) {
+    // The request was outstanding, meaning the server will eventually
+    // send a reply.  Keep track of it until it does.
+    TRACE1("Canceled outstanding reply for request " << id);
+    setInsert(m_canceledRequests, id);
+  }
+
+  else {
+    // If we already have a reply, discard it.
+    if (mapRemove(m_pendingReplies, id)) {
+      TRACE1("Canceled pending reply for request " << id);
+    }
+    else {
+      // This is unexpected, but probably not worth asserting.
+      TRACE1("Cancel attempted for request " << id <<
+             " that was neither outstanding nor pending.");
+    }
+  }
 }
 
 
