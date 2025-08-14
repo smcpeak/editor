@@ -11,6 +11,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "lsp-data.h"                            // LSP_LocationSequence
+#include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -2691,7 +2692,7 @@ void EditorWidget::lspGoToAdjacentDiagnostic(bool next)
 }
 
 
-void EditorWidget::lspGoToDeclaration()
+void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
 {
   NamedTextDocument *ntd = getDocument();
   DocumentName const &docName = ntd->documentName();
@@ -2713,24 +2714,27 @@ void EditorWidget::lspGoToDeclaration()
       "LSP server.  Open it first."));
   }
   else {
-    TRACE1("sending request for declaration in " << fname <<
+    TRACE1("sending request for " << toString(lsrk) <<
+           " of symbol in " << fname <<
            " at " << m_editor->cursorAsModelCoord());
-    int id = lspManager()->request_textDocument_declaration(
+    int id = lspManager()->requestRelatedLocation(lsrk,
       fname,
       m_editor->cursorAsModelCoord());
 
     // Synchronously wait for the reply.
-    TRACE1("waiting for declaration reply, id=" << id);
+    TRACE1("waiting for symbol information reply, id=" << id);
     auto lambda = [this, id]() -> bool {
       return this->lspManager()->hasReplyForID(id);
     };
+    std::string message = stringb(
+      "Waiting for reply for " << toMessageString(lsrk) <<
+      " request...");
     if (synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
-          "Waiting for LSP server",
-          "Waiting for reply for declaration request...")) {
+          "Waiting for LSP server", message)) {
       GDValue gdvReply = lspManager()->takeReplyForID(id);
       TRACE1("received reply: " << gdvReply.asIndentedString());
 
-      handleLSPLocationReply(gdvReply);
+      handleLSPLocationReply(gdvReply, lsrk);
     }
     else {
       TRACE1("canceled wait for declaration reply");
@@ -2740,14 +2744,18 @@ void EditorWidget::lspGoToDeclaration()
 }
 
 
-void EditorWidget::handleLSPLocationReply(GDValue const &gdvReply)
+void EditorWidget::handleLSPLocationReply(
+  GDValue const &gdvReply,
+  LSPSymbolRequestKind lsrk)
 {
+  char const *lsrkMsgStr = toMessageString(lsrk);
+
   try {
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
       // TODO: This message will have to be generalized.
-      editorWindow()->inform(
-        "No declaration found for symbol at cursor.");
+      editorWindow()->inform(stringb(
+        "No " << lsrkMsgStr << " found for symbol at cursor."));
     }
     else if (lseq.m_locations.size() == 1) {
       LSP_Location const &loc = lseq.m_locations.front();
@@ -2760,14 +2768,15 @@ void EditorWidget::handleLSPLocationReply(GDValue const &gdvReply)
     }
     else {
       editorWindow()->complain(stringb(
-        "Mutliple declarations found.  TODO: Handle this!"));
+        "Mutliple results for " << lsrkMsgStr <<
+        " found.  TODO: Handle this!"));
     }
   }
   catch (XBase &x) {
     // TODO: I should log the GDValue and exception somewhere and
     // then provide a more concise explanation to the user.
     editorWindow()->complain(stringb(
-      "Failed to parse declaration reply: " << x));
+      "Failed to parse " << lsrkMsgStr << " reply: " << x));
   }
 }
 

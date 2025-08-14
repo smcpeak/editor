@@ -7,6 +7,7 @@
 #include "lsp-manager.h"               // module under test
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
+#include "lsp-symbol-request-kind.h"   // LSPSymbolRequestKind
 
 #include "smqtutil/qtutil.h"           // waitForQtEvent
 
@@ -102,7 +103,8 @@ void LSPManagerTester::sendDeclarationRequest()
 
   DIAG("Sending declaration request...");
   m_declarationRequestID =
-    m_lspManager.request_textDocument_declaration(
+    m_lspManager.requestRelatedLocation(
+      LSPSymbolRequestKind::K_DECLARATION,
       m_params.m_fname,
       TextMCoord(m_params.m_line, m_params.m_col));
   m_lspManager.selfCheck();

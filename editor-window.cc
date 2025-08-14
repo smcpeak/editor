@@ -492,10 +492,13 @@ void EditorWindow::buildMenu()
 
       // Used mnemonics: acf
 
-      MENU_ITEM    ("De&finition",
-                    lspGoToDefinition);
+      // The fact that this goes to the declaration if we are already at
+      // the definition is simply how `clangd` responds, not something I
+      // have easy, direct control over.
+      MENU_ITEM_KEY("De&finition (or decl if at defn)",
+                    lspGoToDefinition, Qt::Key_F12);
       MENU_ITEM_KEY("De&claration",
-                    lspGoToDeclaration, Qt::Key_F12);
+                    lspGoToDeclaration, Qt::SHIFT + Qt::Key_F12);
       MENU_ITEM    ("&All uses",
                     lspGoToAllUses);
     }
@@ -2396,7 +2399,10 @@ void EditorWindow::lspSetFakeStatus() NOEXCEPT
 void EditorWindow::lspGoToDefinition() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  inform("TODO");
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_DEFINITION);
+
   GENERIC_CATCH_END
 }
 
@@ -2404,7 +2410,10 @@ void EditorWindow::lspGoToDefinition() NOEXCEPT
 void EditorWindow::lspGoToDeclaration() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editorWidget()->lspGoToDeclaration();
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_DECLARATION);
+
   GENERIC_CATCH_END
 }
 

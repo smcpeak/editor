@@ -12,6 +12,7 @@
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "lsp-manager-fwd.h"                     // LSPManager
+#include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
@@ -470,11 +471,13 @@ public:      // funcs
   // indicated direction.
   void lspGoToAdjacentDiagnostic(bool next);
 
-  // Go to the declaration of the symbol at the cursor.
-  void lspGoToDeclaration();
+  // Go to a location related to the symbol at the cursor.
+  void lspGoToRelatedLocation(LSPSymbolRequestKind lsrk);
 
   // Handle the reply to a request for a location.
-  void handleLSPLocationReply(gdv::GDValue const &gdvReply);
+  void handleLSPLocationReply(
+    gdv::GDValue const &gdvReply,
+    LSPSymbolRequestKind lsrk);
 
   // -------------------- interaction with files ------------------
   // Get the connections interface object.

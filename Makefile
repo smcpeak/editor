@@ -215,6 +215,7 @@ EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
+EDITOR_OBJS += lsp-symbol-request-kind.o
 EDITOR_OBJS += makefile_hilite.yy.o
 EDITOR_OBJS += named-td-editor.o
 EDITOR_OBJS += named-td-list.o

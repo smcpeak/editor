@@ -9,6 +9,7 @@
 #include "command-runner-fwd.h"                  // CommandRunner
 #include "lsp-client-fwd.h"                      // LSPClient
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams
+#include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "textmcoord.h"                          // TextMCoord
 
 #include <QObject>
@@ -368,7 +369,8 @@ public:      // methods
   //
   // Requires: isRunningNormally()
   // Requires: isFileOpen(fname)
-  int request_textDocument_declaration(
+  int requestRelatedLocation(
+    LSPSymbolRequestKind lsrk,
     std::string const &fname,
     TextMCoord position);
 

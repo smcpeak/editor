@@ -928,16 +928,23 @@ std::string LSPManager::takePendingErrorMessage()
 }
 
 
-int LSPManager::request_textDocument_declaration(
+int LSPManager::requestRelatedLocation(
+  LSPSymbolRequestKind lsrk,
   std::string const &fname,
   TextMCoord position)
 {
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(isFileOpen(fname));
 
-  TRACE1("Sending declaration request for " << position << " in " <<
+  char const *requestName =
+    (lsrk == LSPSymbolRequestKind::K_DECLARATION)?
+      "textDocument/declaration" :
+      "textDocument/definition";
+
+  TRACE1("Sending " << requestName <<
+         " request for " << position << " in " <<
          doubleQuote(fname) << ".");
-  return m_lsp->sendRequest("textDocument/declaration", GDVMap{
+  return m_lsp->sendRequest(requestName, GDVMap{
     {
       "textDocument",
       GDVMap{
