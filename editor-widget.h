@@ -483,6 +483,10 @@ public:      // funcs
   void handleLSPHoverInfoReply(
     gdv::GDValue const &gdvReply);
 
+  // Handle the reply to a request for completion.
+  void handleLSPCompletionReply(
+    gdv::GDValue const &gdvReply);
+
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
   VFS_Connections *vfsConnections() const;

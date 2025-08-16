@@ -12,6 +12,7 @@ enum class LSPSymbolRequestKind {
   K_DECLARATION,
   K_DEFINITION,
   K_HOVER_INFO,
+  K_COMPLETION,
 
   NUM_KINDS
 };

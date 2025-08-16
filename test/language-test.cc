@@ -10,7 +10,11 @@ y
 
 int z;
 
-class C {};
+struct C {
+  int m_one;
+  int m_two;
+  int m_three;
+};
 
 void bar(int);
 void bar(float);
@@ -26,6 +30,8 @@ void foo(C &c)
 
   // Failed lookup example with a large number of candidates.
   //std::cout << c;
+
+  c.
 }
 
 void caller(C &c)

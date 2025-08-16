@@ -211,6 +211,8 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
     return MPR_INCOMPLETE_BODY;
   }
 
+  TRACE3("ipod: bodyJSON: " << bodyJSON);
+
   GDValue msgValue(jsonToGDV(bodyJSON));
   GDValueParser msg(msgValue);
   msg.checkIsMap();

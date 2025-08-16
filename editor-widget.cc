@@ -2764,6 +2764,11 @@ void EditorWidget::handleLSPLocationReply(
     return;
   }
 
+  if (lsrk == LSPSymbolRequestKind::K_COMPLETION) {
+    handleLSPCompletionReply(gdvReply);
+    return;
+  }
+
   try {
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
@@ -2812,6 +2817,14 @@ void EditorWidget::handleLSPHoverInfoReply(
     editorWindow()->complain(stringb(
       "Failed to parse hover info reply: " << x));
   }
+}
+
+
+void EditorWidget::handleLSPCompletionReply(
+  GDValue const &gdvReply)
+{
+  // TODO: Parse this.
+  editorWindow()->inform(gdvReply.asIndentedString());
 }
 
 

@@ -490,7 +490,7 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("lspGoToMenu");
       QMenu *menu = submenu;
 
-      // Used mnemonics: acfh
+      // Used mnemonics: acfhn
 
       // The fact that this goes to the declaration if we are already at
       // the definition is simply how `clangd` responds, not something I
@@ -503,6 +503,8 @@ void EditorWindow::buildMenu()
                     lspGoToAllUses);
       MENU_ITEM    ("&Hover info",
                     lspHoverInfo);
+      MENU_ITEM    ("Completio&n",
+                    lspCompletion);
     }
 
     menu->addSeparator();
@@ -2435,6 +2437,17 @@ void EditorWindow::lspHoverInfo() NOEXCEPT
 
   editorWidget()->lspGoToRelatedLocation(
     LSPSymbolRequestKind::K_HOVER_INFO);
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspCompletion() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_COMPLETION);
 
   GENERIC_CATCH_END
 }

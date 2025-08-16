@@ -168,6 +168,7 @@ void performLSPInteractionSemiSynchronously(
   sendRequestPrintReply(lsp, "textDocument/hover", paramsGDV);
   sendRequestPrintReply(lsp, "textDocument/declaration", paramsGDV);
   sendRequestPrintReply(lsp, "textDocument/definition", paramsGDV);
+  sendRequestPrintReply(lsp, "textDocument/completion", paramsGDV);
 
   // Shut down the protocol.
   sendRequestPrintReply(lsp, "shutdown", GDVMap{});
