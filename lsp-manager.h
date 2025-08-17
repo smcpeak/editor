@@ -294,6 +294,11 @@ public:      // methods
   // send requests and notifications.
   bool isRunningNormally() const;
 
+  // When `!isRunningNormally()`, this is a human-readable string
+  // explaining what is abnormal about the current state.  If the
+  // server is running normally, the string says so.
+  std::string explainAbnormality() const;
+
   gdv::GDValue getServerCapabilities() const
     { return m_serverCapabilities; }
 
@@ -377,11 +382,14 @@ public:      // methods
     TextMCoord position);
 
   // True if we have a reply for request `id`.
+  //
+  // Requires: isRunningNormally()
   bool hasReplyForID(int id) const;
 
   // Take the pending reply for `id`, thus removing it from the manager
   // object.  This yields just the "result" part of the JSONRPC reply.
   //
+  // Requires: isRunningNormally()
   // Requires: hasReplyForID(id)
   gdv::GDValue takeReplyForID(int id);
 
@@ -389,6 +397,8 @@ public:      // methods
   // discard it when it arrives.
   //
   // TODO: Send a cancelation to the server.
+  //
+  // Requires: isRunningNormally()
   void cancelRequestWithID(int id);
 
 Q_SIGNALS:

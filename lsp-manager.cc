@@ -684,6 +684,9 @@ std::string LSPManager::describeProtocolState() const
 
 LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
 {
+  // This conditions checked here must be kept synchronized with
+  // `isRunningNormally`.
+
   if (!m_commandRunner) {
     xassert(!m_lsp);
     return LSPAnnotatedProtocolState(
@@ -702,7 +705,7 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
     return LSPAnnotatedProtocolState(
       LSP_PS_PROTOCOL_ERROR,
       stringb(
-        "There was a protocol error, please restart: " <<
+        "There was an LSP protocol error: " <<
         m_lsp->getProtocolError()));
   }
 
@@ -747,6 +750,8 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
 
 bool LSPManager::isRunningNormally() const
 {
+  // This set of conditions must be kept synchronized with the code in
+  // `getAnnotatedProtocolState`.
   return
     m_commandRunner &&
     m_lsp &&
@@ -756,6 +761,15 @@ bool LSPManager::isRunningNormally() const
     !m_shutdownRequestID &&
     !m_waitingForTermination &&
     true;
+}
+
+
+std::string LSPManager::explainAbnormality() const
+{
+  // This is less about debugging than informing, so it does not include
+  // the symbolic name of the protocol state.
+  LSPAnnotatedProtocolState aps = getAnnotatedProtocolState();
+  return aps.m_description;
 }
 
 
@@ -968,6 +982,7 @@ bool LSPManager::hasReplyForID(int id) const
 gdv::GDValue LSPManager::takeReplyForID(int id)
 {
   xassertPrecondition(isRunningNormally());
+  xassertPrecondition(hasReplyForID(id));
   return m_lsp->takeReplyForID(id);
 }
 

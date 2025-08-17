@@ -2707,8 +2707,7 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
   std::string fname = docName.filename();
 
   if (!lspManager()->isRunningNormally()) {
-    editorWindow()->complain(
-      "LSP manager is not running or it has malfunctioned.");
+    editorWindow()->complain(lspManager()->explainAbnormality());
     return;
   }
 
@@ -2731,20 +2730,27 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
     fname,
     m_editor->cursorAsModelCoord());
 
-  // Synchronously wait for the reply.
+  // Synchronously wait for the reply (or for the server to
+  // malfunction).
   TRACE1("waiting for symbol information reply, id=" << id);
   auto lambda = [this, id]() -> bool {
-    return this->lspManager()->hasReplyForID(id);
+    return (!this->lspManager()->isRunningNormally()) ||
+           this->lspManager()->hasReplyForID(id);
   };
   std::string message = stringb(
     "Waiting for reply for " << toMessageString(lsrk) <<
     " request...");
   if (synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
         "Waiting for LSP server", message)) {
-    GDValue gdvReply = lspManager()->takeReplyForID(id);
-    TRACE1("received reply: " << gdvReply.asIndentedString());
+    if (lspManager()->isRunningNormally()) {
+      GDValue gdvReply = lspManager()->takeReplyForID(id);
+      TRACE1("received reply: " << gdvReply.asIndentedString());
 
-    handleLSPLocationReply(gdvReply, lsrk);
+      handleLSPLocationReply(gdvReply, lsrk);
+    }
+    else {
+      editorWindow()->complain(lspManager()->explainAbnormality());
+    }
   }
   else {
     TRACE1("canceled wait for declaration reply");
