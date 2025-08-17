@@ -231,6 +231,8 @@ private:     // methods
   void resetProtocolState();
 
   // Kill the server and return this object to its initial state.
+  //
+  // Modifies `m_lsp`, among others.
   void forciblyShutDown();
 
   // Append `msg` to the pending messages and signal the client.

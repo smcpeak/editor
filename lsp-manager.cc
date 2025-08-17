@@ -589,8 +589,7 @@ std::string LSPManager::stopServer()
     std::string msg = m_lsp->getProtocolError();
     forciblyShutDown();
     return stringb(
-      "There was a protocol error, so server was killed: " <<
-      m_lsp->getProtocolError());
+      "There was a protocol error, so server was killed: " << msg);
   }
 
   std::vector<std::string> msgs;
