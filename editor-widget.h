@@ -35,6 +35,7 @@
 #include "smbase/std-string-fwd.h"               // std::string
 
 // Qt
+#include <QRect>
 #include <QWidget>
 
 // libc++
@@ -664,6 +665,11 @@ public:      // funcs
 
   // Return the style info for `cat`.
   TextCategoryAndStyle getTextCategoryAndStyle(TextCategory cat) const;
+
+  // Get the widget-relative pixel rectangle where the cursor is
+  // onscreen.  Since the cursor can be offscreen, this rectangle can be
+  // too.
+  QRect getCursorRect() const;
 
   // show the info box near the cursor
   void showInfo(char const *info);

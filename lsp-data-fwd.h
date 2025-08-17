@@ -8,7 +8,13 @@
 
 class LSP_Position;
 class LSP_Range;
+class LSP_Location;
+class LSP_DiagnosticRelatedInformation;
 class LSP_Diagnostic;
 class LSP_PublishDiagnosticsParams;
+class LSP_LocationSequence;
+class LSP_TextEdit;
+class LSP_CompletionItem;
+class LSP_CompletionList;
 
 #endif // EDITOR_LSP_DATA_FWD_H

@@ -90,4 +90,19 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
 }
 
 
+TextMCoord toMCoord(LSP_Position const &pos)
+{
+  // TODO: This assumes that the units are the same, but I have not
+  // properly negotiated that.
+  return TextMCoord(pos.m_line, pos.m_character);
+}
+
+
+TextMCoordRange toMCoordRange(LSP_Range const &range)
+{
+  return TextMCoordRange(
+    toMCoord(range.m_start), toMCoord(range.m_end));
+}
+
+
 // EOF

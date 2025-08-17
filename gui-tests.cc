@@ -31,6 +31,7 @@ int innerMain(int argc, char **argv)
     extern int module##_test(QApplication &app);                          \
     testFuncs.insert({std::string(#module), &module##_test}) /* user ; */
 
+  TEST_MODULE(completions_dialog);
   TEST_MODULE(connections_dialog);
   TEST_MODULE(diagnostic_details_dialog);
 

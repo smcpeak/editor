@@ -1,0 +1,171 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 20,
+        "y": 30
+      },
+      "name": "Completions",
+      "shape": "ES_WINDOW",
+      "shapeFlags": ["SF_HAS_CLOSE"],
+      "shapeParams": [
+        225,
+        215
+      ],
+      "size": {
+        "h": 200,
+        "w": 210
+      }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 20,
+        "y": 50
+      },
+      "name": "filter text",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_TEXT_EDIT",
+      "size": {
+        "h": 20,
+        "w": 210
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 70
+      },
+      "name": "completion 1",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "loc": {
+        "x": 210,
+        "y": 70
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 160,
+        "w": 20
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 90
+      },
+      "name": "completion 2",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 20,
+        "y": 110
+      },
+      "name": "completion 3",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 130
+      },
+      "name": "completion 4",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 150
+      },
+      "name": "completion 5",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 170
+      },
+      "name": "completion 6",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 190
+      },
+      "name": "completion 7",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 20,
+        "y": 210
+      },
+      "name": "completion 8",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    }
+  ],
+  "inheritances": [],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 262,
+    "w": 264
+  }
+}

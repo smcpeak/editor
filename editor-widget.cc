@@ -4,6 +4,7 @@
 #include "editor-widget.h"                       // this module
 
 // editor
+#include "completions-dialog.h"                  // CompletionsDialog
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "editor-command.ast.gen.h"              // EditorCommand
@@ -11,6 +12,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "lsp-data.h"                            // LSP_LocationSequence
+#include "lsp-conv.h"                            // toMCoordRange
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
@@ -40,6 +42,7 @@
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/list-util.h"                    // smbase::listAtC
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
 #include "smbase/save-restore.h"                 // SetRestore
@@ -60,11 +63,14 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPixmap>
+#include <QPoint>
 #include <QProgressDialog>
+#include <QRect>
 
 // libc++
 #include <algorithm>                             // std::min
 #include <functional>                            // std::function
+#include <memory>                                // std::shared_ptr
 #include <optional>                              // std::optional
 #include <utility>                               // std::move
 
@@ -2284,6 +2290,16 @@ void EditorWidget::commandEditSelectEntireFile()
 }
 
 
+QRect EditorWidget::getCursorRect() const
+{
+  return QRect(
+    (cursorCol() - this->firstVisibleCol()) * m_fontWidth,
+    (cursorLine() - this->firstVisibleLine()) * m_fontHeight,
+    m_fontWidth,
+    m_fontHeight);
+}
+
+
 void EditorWidget::showInfo(char const *infoString)
 {
   QWidget *main = this->window();
@@ -2306,9 +2322,7 @@ void EditorWidget::showInfo(char const *infoString)
 
   // Compute a position just below the lower-left corner
   // of the cursor box, in the coordinates of 'this'.
-  QPoint target(
-    (cursorCol() - this->firstVisibleCol()) * m_fontWidth,
-    (cursorLine() - this->firstVisibleLine() + 1) * m_fontHeight + 1);
+  QPoint target = getCursorRect().bottomLeft() + QPoint(0,1);
 
   // Translate that to the coordinates of 'main'.
   target = this->mapTo(main, target);
@@ -2829,20 +2843,55 @@ void EditorWidget::handleLSPHoverInfoReply(
 void EditorWidget::handleLSPCompletionReply(
   GDValue const &gdvReply)
 {
+  // Parse the incoming GDV.
+  std::shared_ptr<LSP_CompletionList> clist;
   try {
-    LSP_CompletionList clist{GDValueParser(gdvReply)};
-
-    std::ostringstream oss;
-    for (LSP_CompletionItem const &item : clist.m_items) {
-      oss << item.m_label << "\n";
-    }
-
-    // TODO: Pop up a GUI here.
-    editorWindow()->inform(oss.str());
+    clist =
+      std::make_shared<LSP_CompletionList>(GDValueParser(gdvReply));
   }
   catch (XBase &x) {
+    // TODO: I should have a log file to write this to.
     editorWindow()->complain(stringb(
       "Failed to parse completion reply: " << x));
+    return;
+  }
+
+  // Calculate the widget-relative coordinate where we want the
+  // completions dialog to appear.
+  QPoint targetPt = getCursorRect().bottomRight() + QPoint(2,2);
+
+  // Open the window that lets the user choose a completion.
+  CompletionsDialog dlg(clist, targetPt, this);
+  if (dlg.exec()) {
+    if (auto selItemIndex = dlg.getSelectedItemIndex()) {
+      // Edit to perform for this completion.
+      LSP_TextEdit const &edit =
+        listAtC(clist->m_items, *selItemIndex).m_textEdit;
+      TRACE1("Applying completion edit: " << toGDValue(edit));
+
+      // Ensure the coordinates are valid.
+      TextMCoordRange modelRange = toMCoordRange(edit.m_range);
+      m_editor->getDocument()->adjustMCoordRange(modelRange /*INOUT*/);
+
+      // The editor interface works with layout coordinates.
+      TextLCoordRange layoutRange = m_editor->toLCoordRange(modelRange);
+
+      // Ensure the entire edit is one undo action.  (A single
+      // `insertString` is already one action, but in the future I may
+      // handle edits that also add #includes, etc.)
+      UndoHistoryGrouper grouper(*m_editor);
+
+      // Select the affected text.
+      m_editor->setSelectRange(layoutRange);
+
+      // Replace it with the new text.
+      m_editor->insertString(edit.m_newText);
+    }
+    else {
+      // The dialog is not supposed to allow accepting without anything
+      // selected.
+      DEV_WARNING("CompletionsDialog getSelectedItemIndex is nullopt");
+    }
   }
 }
 

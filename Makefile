@@ -344,17 +344,23 @@ endif # TEST_SSH_LOCALHOST
 
 
 # ----------------------------- gui-tests ------------------------------
+EDITOR_OBJS += completions-dialog.o
+EDITOR_OBJS += completions-dialog.moc.o
 EDITOR_OBJS += connections-dialog.o
 EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
+EDITOR_OBJS += modal-dialog.o
+EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
+GUI_TESTS_OBJS += completions-dialog-test.o
 GUI_TESTS_OBJS += connections-dialog-test.o
 GUI_TESTS_OBJS += diagnostic-details-dialog-test.o
 GUI_TESTS_OBJS += gui-tests.o
+GUI_TESTS_OBJS += resources.qrc.gen.o
 
 gui-tests.exe: $(GUI_TESTS_OBJS) $(GUI_LIBRARIES)
 	$(CXX) -o $@ $(CCFLAGS) $(GUI_TESTS_OBJS) $(GUI_LDFLAGS)
@@ -474,8 +480,6 @@ EDITOR_OBJS += macro-creator-dialog.o
 EDITOR_OBJS += macro-creator-dialog.moc.o
 EDITOR_OBJS += macro-run-dialog.o
 EDITOR_OBJS += macro-run-dialog.moc.o
-EDITOR_OBJS += modal-dialog.o
-EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += open-files-dialog.o
 EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += process-watcher.o

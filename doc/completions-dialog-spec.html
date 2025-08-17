@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Completions Dialog Specification</title>
+</head>
+<body>
+
+<p>
+The "Completions" dialog allows the user to see the list of possible
+completions returned by the Language Server Protocol server and choose
+one to apply.
+
+<p>
+This dialog is modal.
+
+<img src="completions-dialog.ded.png" alt="Dialog wireframe" style="display: block">
+
+<p>
+The input to the dialog is a non-empty ordered list of completions.
+Each has a text label, although it need not be unique.
+
+<p>
+The output of the dialog is the index (within the full list) of the
+particular chosen completion, or an indicator that the choice was
+canceled.
+
+<p>
+The dialog has the following elements, top to bottom:
+
+<ul>
+
+<li>Filter text: A line text edit into which the user can type to
+    filter the displayed list of completions.  It is initially empty.
+
+<li>Completion list: A vertically scrolling list box of completions
+    that contain the filter text as a substring.  It allows one item
+    to be selected at a time, and an item is always selected unless
+    the list is empty.  Initially the first item is selected.
+
+</ul>
+
+<p>
+Those elements are tightly packed into the dialog without any padding
+between them or between the controls and the dialog edge.
+
+<p>
+Both the filter text and completion list can receive keyboard focus.
+Initially the filter has focus.
+
+
+<p>
+These keys are available regardless of which element has focus:
+
+<ul>
+
+<li>Tab, Shift+Tab: Move focus among dialog elements.
+
+<li>Enter: Choose the currently selected list item and close the dialog.
+    If the list is empty, and hence there is no selected item, pressing
+    Enter does nothing.
+
+<li>Esc: Close the dialog without choosing anything.
+
+</ul>
+
+
+<p>
+When the filter has focus:
+
+<ul>
+
+<li>Normal text edit controls edit the text.  (Implementation note: let
+    <code>QLineEdit</code> handle this.)
+
+<li>Down-arrow moves focus to the list box.
+
+</ul>
+
+
+<p>
+When the list box has focus:
+
+<ul>
+
+<li>Up/down arrow or "P"/"N" (previous/next) keys moves the selected
+    item by one, scrolling as needed to keep the selected item in view.
+
+<li>Page up/down moves and scrolls by a page.
+
+</ul>
+
+
+</body>
+</html>

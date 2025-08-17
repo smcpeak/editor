@@ -150,6 +150,10 @@ void installEditorStyleSheet(QApplication &app)
     // This border-image trick causes the image to be stretched to fill
     // the available space, whereas with just 'image' it would always
     // be the original 15x15 size.
+    //
+    // The images themselves are made available to Qt by compiling
+    // `resources.qrc` with the Qt `rcc` tool and linking that into the
+    // executable.
     "  border-image: url(:/pix/scroll-up-arrow.png) 0 0 0 0 stretch stretch;"
     "  width: "<<(sz-1)<<"px;"
     "  height: "<<(sz-1)<<"px;"
