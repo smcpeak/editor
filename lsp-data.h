@@ -220,4 +220,129 @@ public:      // methods
 };
 
 
+// An edit that serves as the action for a chosen completion.
+class LSP_TextEdit final {
+public:      // data
+  // The range of text to be replaced with `newText`.  For a pure
+  // insertion, the range has zero length.
+  LSP_Range m_range;
+
+  // Text to insert.
+  std::string m_newText;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_TextEdit +move
+  /*AUTO_CTC*/ explicit LSP_TextEdit(LSP_Range const &range, std::string const &newText);
+  /*AUTO_CTC*/ explicit LSP_TextEdit(LSP_Range &&range, std::string &&newText);
+  /*AUTO_CTC*/ LSP_TextEdit(LSP_TextEdit const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextEdit(LSP_TextEdit &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextEdit &operator=(LSP_TextEdit const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextEdit &operator=(LSP_TextEdit &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_TextEdit(gdv::GDValueParser const &p);
+};
+
+
+// One possible completion for "textDocument/completion".
+class LSP_CompletionItem final {
+public:      // data
+  // The completion "label".  I take it this is the text that should
+  // appear in the list of choices presented to the user.  It is also
+  // "by default" (?) the text that gets inserted into the code if the
+  // user chooses this item.
+  std::string m_label;
+
+  // TODO: labelDetails
+
+  // TODO: kind
+
+  // TODO: tags
+
+  // TODO: detail
+
+  // TODO: documentation
+
+  // TODO: deprecated
+
+  // TODO: preselect
+
+  // TODO: Sorting key.
+  //std::optional<std::string> m_sortText;
+
+  // TODO: filterText
+
+  // Ignored: `insertText`
+  //
+  // We use `textEdit` instead.
+
+  // TODO: insertTextFormat
+
+  // TODO: insertTextMode
+
+  // The edit to perform if this item is chosen.
+  //
+  // The spec treats this as optional, but I assume it is always present
+  // since it is the only method my editor can handle.
+  //
+  // TODO: The spec allows `InsertReplaceEdit` here too.
+  LSP_TextEdit m_textEdit;
+
+  // TODO: textEditText
+
+  // TODO: additionalTextEdits
+
+  // TODO: commitCharacters
+
+  // TODO: command
+
+  // TODO: data
+
+  // TODO: `clangd` also provides a "score".
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_CompletionItem +move
+  /*AUTO_CTC*/ explicit LSP_CompletionItem(std::string const &label, LSP_TextEdit const &textEdit);
+  /*AUTO_CTC*/ explicit LSP_CompletionItem(std::string &&label, LSP_TextEdit &&textEdit);
+  /*AUTO_CTC*/ LSP_CompletionItem(LSP_CompletionItem const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_CompletionItem(LSP_CompletionItem &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_CompletionItem &operator=(LSP_CompletionItem const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_CompletionItem &operator=(LSP_CompletionItem &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_CompletionItem(gdv::GDValueParser const &p);
+};
+
+
+// The data received for "textDocument/completion".
+class LSP_CompletionList final {
+public:      // data
+  // The list is not complete.
+  //
+  // I think this implies another message might arrive with a
+  // complete list?  The spec doesn't really say.
+  bool m_isIncomplete;
+
+  // TODO: itemDefaults
+
+  // The list of completions.
+  std::list<LSP_CompletionItem> m_items;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_CompletionList +move
+  /*AUTO_CTC*/ explicit LSP_CompletionList(bool isIncomplete, std::list<LSP_CompletionItem> const &items);
+  /*AUTO_CTC*/ explicit LSP_CompletionList(bool isIncomplete, std::list<LSP_CompletionItem> &&items);
+  /*AUTO_CTC*/ LSP_CompletionList(LSP_CompletionList const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_CompletionList(LSP_CompletionList &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_CompletionList &operator=(LSP_CompletionList const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_CompletionList &operator=(LSP_CompletionList &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_CompletionList(gdv::GDValueParser const &p);
+};
+
+
 #endif // EDITOR_LSP_DATA_H

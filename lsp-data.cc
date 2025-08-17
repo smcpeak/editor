@@ -407,4 +407,193 @@ LSP_LocationSequence::LSP_LocationSequence(gdv::GDValueParser const &p)
 {}
 
 
+// ------------------------ LSP_TextEdit -------------------------
+// create-tuple-class: definitions for LSP_TextEdit
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
+/*AUTO_CTC*/   LSP_Range const &range,
+/*AUTO_CTC*/   std::string const &newText)
+/*AUTO_CTC*/   : IMEMBFP(range),
+/*AUTO_CTC*/     IMEMBFP(newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
+/*AUTO_CTC*/   LSP_Range &&range,
+/*AUTO_CTC*/   std::string &&newText)
+/*AUTO_CTC*/   : IMEMBMFP(range),
+/*AUTO_CTC*/     IMEMBMFP(newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(LSP_TextEdit const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_range),
+/*AUTO_CTC*/     DMEMB(m_newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(LSP_TextEdit &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_range),
+/*AUTO_CTC*/     MDMEMB(m_newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit &LSP_TextEdit::operator=(LSP_TextEdit const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_range);
+/*AUTO_CTC*/     CMEMB(m_newText);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit &LSP_TextEdit::operator=(LSP_TextEdit &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_range);
+/*AUTO_CTC*/     MCMEMB(m_newText);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_TextEdit::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_range);
+  GDV_WRITE_MEMBER_STR(m_newText);
+
+  return m;
+}
+
+
+LSP_TextEdit::LSP_TextEdit(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_range),
+    GDVP_READ_MEMBER_STR(m_newText)
+{}
+
+
+// ------------------------ LSP_CompletionItem -------------------------
+// create-tuple-class: definitions for LSP_CompletionItem
+/*AUTO_CTC*/ LSP_CompletionItem::LSP_CompletionItem(
+/*AUTO_CTC*/   std::string const &label,
+/*AUTO_CTC*/   LSP_TextEdit const &textEdit)
+/*AUTO_CTC*/   : IMEMBFP(label),
+/*AUTO_CTC*/     IMEMBFP(textEdit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionItem::LSP_CompletionItem(
+/*AUTO_CTC*/   std::string &&label,
+/*AUTO_CTC*/   LSP_TextEdit &&textEdit)
+/*AUTO_CTC*/   : IMEMBMFP(label),
+/*AUTO_CTC*/     IMEMBMFP(textEdit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionItem::LSP_CompletionItem(LSP_CompletionItem const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_label),
+/*AUTO_CTC*/     DMEMB(m_textEdit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionItem::LSP_CompletionItem(LSP_CompletionItem &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_label),
+/*AUTO_CTC*/     MDMEMB(m_textEdit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionItem &LSP_CompletionItem::operator=(LSP_CompletionItem const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_label);
+/*AUTO_CTC*/     CMEMB(m_textEdit);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionItem &LSP_CompletionItem::operator=(LSP_CompletionItem &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_label);
+/*AUTO_CTC*/     MCMEMB(m_textEdit);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_CompletionItem::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_label);
+  GDV_WRITE_MEMBER_STR(m_textEdit);
+
+  return m;
+}
+
+
+LSP_CompletionItem::LSP_CompletionItem(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_label),
+    GDVP_READ_MEMBER_STR(m_textEdit)
+{}
+
+
+// ------------------------ LSP_CompletionList -------------------------
+// create-tuple-class: definitions for LSP_CompletionList
+/*AUTO_CTC*/ LSP_CompletionList::LSP_CompletionList(
+/*AUTO_CTC*/   bool isIncomplete,
+/*AUTO_CTC*/   std::list<LSP_CompletionItem> const &items)
+/*AUTO_CTC*/   : IMEMBFP(isIncomplete),
+/*AUTO_CTC*/     IMEMBFP(items)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionList::LSP_CompletionList(
+/*AUTO_CTC*/   bool isIncomplete,
+/*AUTO_CTC*/   std::list<LSP_CompletionItem> &&items)
+/*AUTO_CTC*/   : IMEMBMFP(isIncomplete),
+/*AUTO_CTC*/     IMEMBMFP(items)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionList::LSP_CompletionList(LSP_CompletionList const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_isIncomplete),
+/*AUTO_CTC*/     DMEMB(m_items)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionList::LSP_CompletionList(LSP_CompletionList &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_isIncomplete),
+/*AUTO_CTC*/     MDMEMB(m_items)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionList &LSP_CompletionList::operator=(LSP_CompletionList const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_isIncomplete);
+/*AUTO_CTC*/     CMEMB(m_items);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CompletionList &LSP_CompletionList::operator=(LSP_CompletionList &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_isIncomplete);
+/*AUTO_CTC*/     MCMEMB(m_items);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_CompletionList::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_isIncomplete);
+  GDV_WRITE_MEMBER_STR(m_items);
+
+  return m;
+}
+
+
+LSP_CompletionList::LSP_CompletionList(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_isIncomplete),
+    GDVP_READ_MEMBER_STR(m_items)
+{}
+
+
 // EOF

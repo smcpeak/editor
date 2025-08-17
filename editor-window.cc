@@ -503,8 +503,8 @@ void EditorWindow::buildMenu()
                     lspGoToAllUses);
       MENU_ITEM    ("&Hover info",
                     lspHoverInfo);
-      MENU_ITEM    ("Completio&n",
-                    lspCompletion);
+      MENU_ITEM_KEY("Completio&n",
+                    lspCompletion, Qt::CTRL + Qt::Key_Space);
     }
 
     menu->addSeparator();

@@ -2829,8 +2829,21 @@ void EditorWidget::handleLSPHoverInfoReply(
 void EditorWidget::handleLSPCompletionReply(
   GDValue const &gdvReply)
 {
-  // TODO: Parse this.
-  editorWindow()->inform(gdvReply.asIndentedString());
+  try {
+    LSP_CompletionList clist{GDValueParser(gdvReply)};
+
+    std::ostringstream oss;
+    for (LSP_CompletionItem const &item : clist.m_items) {
+      oss << item.m_label << "\n";
+    }
+
+    // TODO: Pop up a GUI here.
+    editorWindow()->inform(oss.str());
+  }
+  catch (XBase &x) {
+    editorWindow()->complain(stringb(
+      "Failed to parse completion reply: " << x));
+  }
 }
 
 

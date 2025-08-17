@@ -112,6 +112,8 @@ Enter (sar)                  Jump to nearby match, focus on editor
 <printable>                  Insert corresponding character
 <printable>+Shift            Insert corresponding character
 
+' '+Ctrl                     LSP | Go to | Completion
+
 '.'+Ctrl                     Edit | Next search hit
 
 ','+Ctrl                     Edit | Previous search hit
