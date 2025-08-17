@@ -145,6 +145,24 @@ void LSPClient::setProtocolError(std::string &&msg)
 }
 
 
+/*static*/ GDValue LSPClient::call_jsonToGDV(
+  std::string const &bodyJSON)
+{
+  try {
+    return jsonToGDV(bodyJSON);
+  }
+  catch (std::exception &x) {
+    // Provide at least some ability to diagnose the deeper problem by
+    // printing out the offending JSON.
+    //
+    // TODO: It would be better to have a proper logging interface here.
+    TRACE0("Error while parsing message JSON: " << x.what());
+    TRACE0("Offending JSON text: " << bodyJSON);
+    throw;
+  }
+}
+
+
 // Diagnosing specific problems with partial messages upon termination
 // is not terribly important (since early termination is a problem
 // regardless of the data that was sent before), but it provides a
@@ -213,7 +231,7 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
 
   TRACE3("ipod: bodyJSON: " << bodyJSON);
 
-  GDValue msgValue(jsonToGDV(bodyJSON));
+  GDValue msgValue(call_jsonToGDV(bodyJSON));
   GDValueParser msg(msgValue);
   msg.checkIsMap();
 

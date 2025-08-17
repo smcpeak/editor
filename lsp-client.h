@@ -129,6 +129,9 @@ private:     // methods
   // the appropriate signal.  Otherwise do nothing.
   void setProtocolError(std::string &&msg);
 
+  // Parse `bodyJSON` into GDV.
+  static gdv::GDValue call_jsonToGDV(std::string const &bodyJSON);
+
   // Attempt to parse the current output data as a message.  If
   // successful, remove the message data from the queue, add an entry to
   // `m_pendingReplies` or `m_pendingNotifications` as appropriate for
