@@ -11,9 +11,6 @@ TODOs:
   - During search, Ctrl+W misbehaves of there are more than 1000 matches
     for the text matched so far.
 
-  - The Line:Col status display is cut off when using large fonts and
-    the line is 4 digits and column is 2 digits.
-
   - When I have a document showing the output of a build process, and
     I switch away, more text is added, then switch back, the cursor is
     no longer tracking the end of the file.

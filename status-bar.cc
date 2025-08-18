@@ -33,7 +33,7 @@ StatusBarDisplay::StatusBarDisplay(
 
   m_cursor = new QLabel();
   m_cursor->setObjectName("m_cursor");
-  m_cursor->setFixedWidth(80);      // TODO: This is too small.
+  m_cursor->setMinimumWidth(80);
   //m_cursor->setBackgroundColor(QColor(0x60, 0x00, 0x80));   // purple
   //m_cursor->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   //m_cursor->setLineWidth(1);
