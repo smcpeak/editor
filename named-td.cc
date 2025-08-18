@@ -287,13 +287,14 @@ RCSerf<TDD_Diagnostic const> NamedTextDocument::getDiagnosticAt(
 }
 
 
-// TODO: This function is not specific to LSP, so should be renamed.
-void NamedTextDocument::sentLSPFileContents()
+void NamedTextDocument::beginTrackingChangesForFutureDiagnostics()
 {
-  TRACE1("sentLSPFileContents: version is " << getVersionNumber());
+  TRACE1("beginTrackingChangesForFutureDiagnostics: version is " <<
+         getVersionNumber());
 
   m_observationRecorder.beginTracking(getVersionNumber(), numLines());
 
+  // Alert observers that a request for diagnostics is in flight.
   notifyMetadataChange();
 }
 

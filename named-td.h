@@ -194,8 +194,10 @@ public:      // funcs
   // `TextDocumentDiagnostics::getDiagnosticAt` for details.
   RCSerf<TDD_Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 
-  // Notify observers that we sent the current contents and version.
-  void sentLSPFileContents();
+  // We sent the current contents and version to an LSP server.  Begin
+  // tracking subsequent document changes so when the diagnostics arrive
+  // we can adjust them accordingly.
+  void beginTrackingChangesForFutureDiagnostics();
 
   // Process incoming `diags` for this document.
   //

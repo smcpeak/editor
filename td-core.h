@@ -416,30 +416,32 @@ public:      // funcs
   // allow for incremental updates.  Observers must refresh completely.
   virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT;
 
-  // This notification is sent to observers if some data in one of the
-  // higher-level document classes changed (or might have changed), and
-  // that change should trigger a redraw of a widget showing this
-  // document.  Currently, there are three such cases:
-  //
-  // 1. The "has unsaved changes" property changes
-  //    (`TextDocument::unsavedChanges()`).
-  //
-  // 2. Updated language diagnostics were received from an LSP server
-  //    (`NamedTextDocument::m_diagnostics`).
-  //
-  // 3. The file contents were reloaded from disk, which means they are
-  //    out of date w.r.t. any previously received diagnostics.
-  //
-  // Since the only expected reaction is a redraw, there's not a high
-  // penalty for firing this off when unnecessary, but it's not entirely
-  // negligible either (we don't want to redraw the entire UI every time
-  // there is incidental network activty, for example).
-  //
-  // Design-wise, having a notification here that pertains to data that
-  // `TextDocumentCore` lacks is not ideal, but the only obvious
-  // alternative is to have parallel observers at each level, which
-  // seems like overkill.
-  //
+  /* This notification is sent to observers if some data in one of the
+     higher-level document classes changed (or might have changed), and
+     that change should trigger a redraw of a widget showing this
+     document.  Currently, there are three such cases:
+
+     1. The "has unsaved changes" property changes
+        (`TextDocument::unsavedChanges()`).
+
+     2. Updated language diagnostics were received from an LSP server
+        (`NamedTextDocument::m_diagnostics`) or a document version was
+        sent to the server and the diagnostics are pending
+        (`NamedTextDocument::m_observationRecorder`).
+
+     3. The file contents were reloaded from disk, which means they are
+        out of date w.r.t. any previously received diagnostics.
+
+     Since the only expected reaction is a redraw, there's not a high
+     penalty for firing this off when unnecessary, but it's not entirely
+     negligible either (we don't want to redraw the entire UI every time
+     there is incidental network activty, for example).
+
+     Design-wise, having a notification here that pertains to data that
+     `TextDocumentCore` lacks is not ideal, but the only obvious
+     alternative is to have parallel observers at each level, which
+     seems like overkill.
+  */
   virtual void observeMetadataChange(TextDocumentCore const &doc) NOEXCEPT;
 };
 

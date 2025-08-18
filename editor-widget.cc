@@ -2695,7 +2695,7 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
 
     lspManager()->notify_textDocument_didOpen(
       fname, languageId, *version, std::move(contents));
-    ntd->sentLSPFileContents();
+    ntd->beginTrackingChangesForFutureDiagnostics();
   }
 
   else /*update*/ {
@@ -2751,7 +2751,7 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
 
     lspManager()->notify_textDocument_didChange(
       fname, *version, std::move(contents));
-    ntd->sentLSPFileContents();
+    ntd->beginTrackingChangesForFutureDiagnostics();
   }
 }
 
