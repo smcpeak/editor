@@ -227,9 +227,9 @@ EditorSettings const &EditorWindow::editorSettings() const
 }
 
 
-LSPManager &EditorWindow::lspManager()
+LSPManager *EditorWindow::lspManager() const
 {
-  return editorGlobal()->m_lspManager;
+  return &( editorGlobal()->m_lspManager );
 }
 
 
@@ -2037,7 +2037,7 @@ void EditorWindow::lspStartServer() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   bool dummy;
-  lspManager().startServer(dummy);
+  lspManager()->startServer(dummy);
 
   GENERIC_CATCH_END
 }
@@ -2047,7 +2047,7 @@ void EditorWindow::lspStopServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  lspManager().stopServer();
+  lspManager()->stopServer();
 
   GENERIC_CATCH_END
 }

@@ -148,9 +148,7 @@ public:      // funcs
   EditorSettings const &editorSettings() const;
 
   // Global LSP manager.
-  //
-  // TODO: Change this to return a pointer.
-  LSPManager &lspManager();
+  LSPManager *lspManager() const;
 
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;
