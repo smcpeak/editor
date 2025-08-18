@@ -314,10 +314,10 @@ public:      // methods
   RCSerf<LSPDocumentInfo const> getDocInfo(
     std::string const &fname) const;
 
-  // Send the "textDocument/didOpen" notification.  Requires that
-  // `fname` be absolute, and that the file not already be open.
+  // Send the "textDocument/didOpen" notification.
   //
   // Requires: isRunningNormally()
+  // Requires: isValidLSPPath(fname)
   // Requires: !isFileOpen(fname)
   void notify_textDocument_didOpen(
     std::string const &fname,

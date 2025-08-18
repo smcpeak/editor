@@ -802,6 +802,7 @@ void LSPManager::notify_textDocument_didOpen(
   std::string &&contents)
 {
   xassertPrecondition(isRunningNormally());
+  xassertPrecondition(isValidLSPPath(fname));
   xassertPrecondition(!isFileOpen(fname));
 
   TRACE1("Sending didOpen for " << doubleQuote(fname) <<
