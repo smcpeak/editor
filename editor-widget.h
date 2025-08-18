@@ -87,7 +87,7 @@ private:     // data
   // ------ widgets -----
   // Containing editor window, through which file system access is
   // performed.
-  EditorWindow *m_editorWindow;
+  RCSerf<EditorWindow> m_editorWindow;
 
   // floating info box
   QLabel *m_infoBox;               // (nullable owner)

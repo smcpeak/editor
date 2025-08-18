@@ -459,7 +459,9 @@ bool NamedTextDocumentListObserver::getNamedTextDocumentInitialView(
 }
 
 NamedTextDocumentListObserver::~NamedTextDocumentListObserver()
-{}
+{
+  verifyZeroRefCount();
+}
 
 
 // EOF

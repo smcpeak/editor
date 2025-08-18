@@ -400,7 +400,7 @@ public:      // static data
 public:      // funcs
   TextDocumentObserver();
   TextDocumentObserver(TextDocumentObserver const &obj);
-  virtual ~TextDocumentObserver();     // virtual to silence warning
+  virtual ~TextDocumentObserver();
 
   // These are analogues of the TextDocumentCore manipulation interface, but
   // we also pass the TextDocumentCore itself so the observer doesn't need

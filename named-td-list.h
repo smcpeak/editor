@@ -226,7 +226,7 @@ public:      // funcs
     NamedTextDocumentList *documentList, NamedTextDocument *doc,
     NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT;
 
-  // Silence dumb warnings.
+  // Verifies zero reference count.
   virtual ~NamedTextDocumentListObserver();
 };
 

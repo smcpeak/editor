@@ -226,6 +226,9 @@ EditorWidget::~EditorWidget()
   m_editorList.deleteAll();
 
   m_fontForCategory.deleteAll();
+
+  // Explicit for clarity.
+  m_editorWindow = nullptr;
 }
 
 

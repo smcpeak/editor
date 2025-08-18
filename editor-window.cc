@@ -197,6 +197,18 @@ EditorWindow::~EditorWindow()
   // Similarly disconnect the status bar.
   m_statusArea->resetEditorWidget();
 
+  // Destroy the frame and its widget before allowing the `QWidget` dtor
+  // to run, which would destroy them as well, but only after this
+  // object loses its `SerfRefCount` capabilities.  The widget has an
+  // `RCSerf` pointer to this object that must be cleaned up.
+  //
+  // Note: Deleting a child widget like this automatically removes it
+  // from the parent object's list of children, so it will not be
+  // deleted twice.
+  //
+  delete m_editorWidgetFrame;
+  m_editorWidgetFrame = nullptr;
+
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
   QObject::disconnect(m_editorGlobal, NULL, this, NULL);

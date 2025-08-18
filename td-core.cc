@@ -893,6 +893,8 @@ TextDocumentObserver::TextDocumentObserver(TextDocumentObserver const &obj)
 TextDocumentObserver::~TextDocumentObserver()
 {
   s_objectCount--;
+
+  verifyZeroRefCount();
 }
 
 void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, int) NOEXCEPT
