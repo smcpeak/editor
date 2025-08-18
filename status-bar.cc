@@ -39,11 +39,6 @@ StatusBarDisplay::StatusBarDisplay(
   //m_cursor->setLineWidth(1);
   hb->addWidget(m_cursor);
 
-  m_mode = new QLabel();
-  //m_mode->setPixmap(state->pixSearch);
-  m_mode->setFixedWidth(65);
-  hb->addWidget(m_mode);
-
   m_filename = new QLabel();
   m_filename->setObjectName("m_filename");
 

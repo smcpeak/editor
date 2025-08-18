@@ -27,7 +27,6 @@ public:      // data
 
   // Controls.
   QLabel *m_cursor;                    // Cursor position.
-  QLabel *m_mode;                      // Mode pixmap.  TODO: Unused!
   QLabel *m_filename;                  // Current file name.
   LSPStatusWidget *m_lspStatusWidget;  // LSP status indicator.
   QSizeGrip *m_corner;                 // Corner resize grippy.
