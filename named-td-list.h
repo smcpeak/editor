@@ -17,7 +17,7 @@
 
 // Forward in this file.
 class NamedTextDocumentListObserver;
-class NamedTextDocumentInitialView;
+struct NamedTextDocumentInitialView;
 
 
 // A list of named documents being edited.
