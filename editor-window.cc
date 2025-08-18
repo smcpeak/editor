@@ -2620,7 +2620,7 @@ void EditorWindow::helpAbout() NOEXCEPT
 
   QMessageBox::about(this, "About Scott's Editor",
     qstringb(
-      "This is a text editor that has a user interface I like.\n"
+      "It's an editor?\n"
       "\n"
       "Version: " << editor_git_version));
 
