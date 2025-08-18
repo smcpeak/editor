@@ -13,6 +13,7 @@
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange
+#include "lsp-manager.h"                         // LSPManager::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
@@ -45,12 +46,14 @@
 #include "smbase/list-util.h"                    // smbase::listAtC
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
+#include "smbase/overflow.h"                     // convertNumber
 #include "smbase/save-restore.h"                 // SetRestore
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/strutil.h"                      // dirname
 #include "smbase/xassert.h"                      // xassert
+#include "smbase/xoverflow.h"                    // smbase::XNumericConversion
 
 // Qt
 #include <QApplication>
@@ -72,6 +75,8 @@
 #include <functional>                            // std::function
 #include <memory>                                // std::shared_ptr
 #include <optional>                              // std::optional
+#include <string>                                // std::string
+#include <string_view>                           // std::string_view
 #include <utility>                               // std::move
 
 using namespace gdv;
@@ -745,6 +750,18 @@ QImage EditorWidget::getScreenshot()
     this->paintFrame(paint);
   }
   return image;
+}
+
+
+void EditorWidget::complain(std::string_view msg) const
+{
+  editorWindow()->complain(msg);
+}
+
+
+void EditorWidget::inform(std::string_view msg) const
+{
+  editorWindow()->inform(msg);
 }
 
 
@@ -2602,6 +2619,143 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 }
 
 
+std::optional<LSP_VersionNumber> EditorWidget::getDocLSPVersionNumber(
+  bool wantErrors) const
+{
+  try {
+    return convertNumber<LSP_VersionNumber>(
+      getDocument()->getVersionNumber());
+  }
+  catch (XNumericConversion &x) {
+    if (wantErrors) {
+      complain(stringb(
+        "The version number cannot be represented as an LSP int: " <<
+        x.what()));
+    }
+    return {};
+  }
+}
+
+
+void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
+{
+  // True if we want a popup for errors.
+  bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
+
+  if (!lspManager()->isRunningNormally()) {
+    if (wantErrors) {
+      complain(stringb("Server not ready: " <<
+        lspManager()->describeProtocolState()));
+    }
+    return;
+  }
+
+  NamedTextDocument *ntd = getDocument();
+  DocumentName const &docName = ntd->documentName();
+
+  if (!docName.isLocalFilename()) {
+    if (wantErrors) {
+      inform("LSP only works with local files.");
+    }
+    return;
+  }
+
+  std::string fname = docName.filename();
+  bool alreadyOpen = lspManager()->isFileOpen(fname);
+
+  if (operation == LSPFO_CLOSE) {
+    if (!alreadyOpen) {
+      if (wantErrors) {
+        inform(stringb("Document " << doubleQuote(fname) <<
+                       " is not open."));
+      }
+    }
+    else {
+      lspManager()->notify_textDocument_didClose(fname);
+      ntd->updateDiagnostics(nullptr);
+    }
+    return;
+  }
+
+  if (operation == LSPFO_UPDATE_IF_OPEN && !alreadyOpen) {
+    return;
+  }
+
+  std::optional<LSP_VersionNumber> version =
+    getDocLSPVersionNumber(wantErrors);
+  if (!version) {
+    return;    // Error reported if desired.
+  }
+
+  std::string contents = vectorOfUCharToString(ntd->getWholeFile());
+
+  if (!alreadyOpen) {
+    // TODO: Compute this properly.
+    std::string languageId = "cpp";
+
+    lspManager()->notify_textDocument_didOpen(
+      fname, languageId, *version, std::move(contents));
+    ntd->sentLSPFileContents();
+  }
+
+  else /*update*/ {
+    RCSerf<LSPDocumentInfo const> docInfo =
+      lspManager()->getDocInfo(fname);
+    xassert(docInfo);
+
+    if (*version == docInfo->m_lastSentVersion ||
+        contents == docInfo->m_lastSentContents) {
+      TRACE1("LSP: While updating " << doubleQuote(fname) <<
+             ": previous version is " << docInfo->m_lastSentVersion <<
+             ", new version is " << *version <<
+             ", and contents are " <<
+             (contents == docInfo->m_lastSentContents? "" : "NOT ") <<
+             "the same; bumping to force re-analysis.");
+
+      // We want to re-send despite no content changes, for example
+      // because a header file changed that should fix issues in the
+      // current file.  Bump the version and try again.
+      ntd->bumpVersionNumber();
+
+      version = getDocLSPVersionNumber(wantErrors);
+      if (!version) {
+        return;    // Error reported if desired.
+      }
+
+      // In this situation, `clangd` would normally ignore the
+      // notification because it realizes the file hasn't changed
+      // (despite the new version number) and thinks that means the
+      // diagnostics would be the same too.
+      //
+      // `clangd` accepts a `forceRebuild` parameter that would force
+      // new diagnostics, but it also rebuilds other things, making it
+      // quite slow.
+      //
+      // So, instead, we will just append some junk that should not
+      // cause the diagnostics to be different, but will make `clangd`
+      // re-analyze the contents.  This is much faster than
+      // `forceRebuild`.
+      contents += stringb("//" << *version);
+    }
+
+    if (!( *version > docInfo->m_lastSentVersion )) {
+      // Sending this would be a protocol violation.
+      if (wantErrors) {
+        complain(stringb(
+          "The current document version (" << *version <<
+          ") is not greater than the previously sent document version (" <<
+          docInfo->m_lastSentVersion << ")."));
+      }
+      return;
+    }
+
+    lspManager()->notify_textDocument_didChange(
+      fname, *version, std::move(contents));
+    ntd->sentLSPFileContents();
+  }
+}
+
+
 std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 {
   static DiagnosticDetailsDialog *dlg = new DiagnosticDetailsDialog();
@@ -2717,22 +2871,21 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
   DocumentName const &docName = ntd->documentName();
 
   if (!docName.isLocalFilename()) {
-    editorWindow()->complain("LSP only works with local files.");
+    complain("LSP only works with local files.");
     return;
   }
 
   std::string fname = docName.filename();
 
   if (!lspManager()->isRunningNormally()) {
-    editorWindow()->complain(lspManager()->explainAbnormality());
+    complain(lspManager()->explainAbnormality());
     return;
   }
 
   if (!lspManager()->isFileOpen(fname)) {
     // Go ahead and open the file automatically.  This will entail more
     // delay than usual, but everything should work.
-    editorWindow()->doLSPFileOperation(
-      EditorWindow::LSPFO_OPEN_OR_UPDATE);
+    doLSPFileOperation(LSPFO_OPEN_OR_UPDATE);
 
     if (!lspManager()->isFileOpen(fname)) {
       // Still not open, must have gotten an error, bail.
@@ -2766,7 +2919,7 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
       handleLSPLocationReply(gdvReply, lsrk);
     }
     else {
-      editorWindow()->complain(lspManager()->explainAbnormality());
+      complain(lspManager()->explainAbnormality());
     }
   }
   else {
@@ -2796,7 +2949,7 @@ void EditorWidget::handleLSPLocationReply(
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
       // TODO: This message will have to be generalized.
-      editorWindow()->inform(stringb(
+      inform(stringb(
         "No " << lsrkMsgStr << " found for symbol at cursor."));
     }
     else if (lseq.m_locations.size() == 1) {
@@ -2810,7 +2963,7 @@ void EditorWidget::handleLSPLocationReply(
         loc.m_range.m_start.m_character);
     }
     else {
-      editorWindow()->complain(stringb(
+      complain(stringb(
         "Mutliple results for " << lsrkMsgStr <<
         " found.  TODO: Handle this!"));
     }
@@ -2818,7 +2971,7 @@ void EditorWidget::handleLSPLocationReply(
   catch (XBase &x) {
     // TODO: I should log the GDValue and exception somewhere and
     // then provide a more concise explanation to the user.
-    editorWindow()->complain(stringb(
+    complain(stringb(
       "Failed to parse " << lsrkMsgStr << " reply: " << x));
   }
 }
@@ -2834,10 +2987,10 @@ void EditorWidget::handleLSPHoverInfoReply(
     GDValueParser top(gdvReply);
     GDValueParser contents = top.mapGetValueAtStr("contents");
     GDValueParser value = contents.mapGetValueAtStr("value");
-    editorWindow()->inform(value.stringGet());
+    inform(value.stringGet());
   }
   catch (XBase &x) {
-    editorWindow()->complain(stringb(
+    complain(stringb(
       "Failed to parse hover info reply: " << x));
   }
 }
@@ -2854,7 +3007,7 @@ void EditorWidget::handleLSPCompletionReply(
   }
   catch (XBase &x) {
     // TODO: I should have a log file to write this to.
-    editorWindow()->complain(stringb(
+    complain(stringb(
       "Failed to parse completion reply: " << x));
     return;
   }

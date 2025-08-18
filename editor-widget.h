@@ -11,6 +11,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-data-types.h"                      // LSP_VersionNumber
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
@@ -33,6 +34,7 @@
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
 #include "smbase/std-optional-fwd.h"             // std::optional
 #include "smbase/std-string-fwd.h"               // std::string
+#include "smbase/std-string-view-fwd.h"          // std::string_view
 
 // Qt
 #include <QRect>
@@ -73,6 +75,14 @@ class EditorWidget
   // Currently, SAR needs access to m_editor, and I am torn about
   // whether that is acceptable.
   friend class SearchAndReplacePanel;
+
+public:      // types
+  // Things we can do with one file and LSP.
+  enum LSPFileOperation {
+    LSPFO_OPEN_OR_UPDATE,    // Open or update the file.
+    LSPFO_UPDATE_IF_OPEN,    // Update if it is open.
+    LSPFO_CLOSE,             // Close the file.
+  };
 
 public:     // static data
   // Instances created minus instances destroyed.
@@ -462,6 +472,16 @@ public:      // funcs
   void editGrepSource();
 
   // ------------------------------- LSP -------------------------------
+  // Get the version number of the current document as an
+  // `LSP_VersionNumber`, which is what we need for LSP.  If the version
+  // number cannot be converted to that type (because it is too big),
+  // pop up an error box if `wantErrors`, then return nullopt.
+  std::optional<LSP_VersionNumber> getDocLSPVersionNumber(
+    bool wantErrors) const;
+
+  // Do `operation` with the current file.
+  void doLSPFileOperation(LSPFileOperation operation);
+
   // If there are diagnostics associated with the current document, and
   // the cursor is in one of the marked ranges, show its message and
   // return nullopt.  Otherwise, return a string explaining the issue.
@@ -697,6 +717,12 @@ public:      // funcs
 
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
+
+  // Pop up a message related to a problem.
+  void complain(std::string_view msg) const;
+
+  // Pop up a message for general information.
+  void inform(std::string_view msg) const;
 
   // ------------------------------ misc -------------------------------
   // Pass through to `NamedTextDocumentEditor`.

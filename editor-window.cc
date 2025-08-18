@@ -46,7 +46,6 @@
 #include "smbase/mysig.h"                        // printSegfaultAddrs
 #include "smbase/nonport.h"                      // fileOrDirectoryExists
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
-#include "smbase/overflow.h"                     // safeToInt
 #include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-test.h"                      // PVAL
@@ -56,7 +55,6 @@
 #include "smbase/sm-macros.h"                    // ASSERT_TABLESIZE
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/xassert.h"                      // xassert
-#include "smbase/xoverflow.h"                    // smbase::XNumericConversion
 
 // Qt
 #include <qmenubar.h>                            // QMenuBar
@@ -907,10 +905,13 @@ void EditorWindow::writeTheFile()
       file->m_modifiedOnDisk = false;
       file->noUnsavedChanges();
 
-      // Remove the asterisk indicating unsaved changes.
+      // Remove the asterisk indicating unsaved changes in the title bar
+      // and status bar.  (But this is unrelated to the asterisk in the
+      // LSP status box.)
       editorViewChanged();
 
-      doLSPFileOperation(LSPFO_UPDATE_IF_OPEN);
+      editorWidget()->doLSPFileOperation(
+        EditorWidget::LSPFO_UPDATE_IF_OPEN);
     }
     else {
       // There is not a severity between "warning" and "critical",
@@ -2073,149 +2074,11 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
 }
 
 
-std::optional<LSP_VersionNumber> EditorWindow::getDocLSPVersionNumber(
-  bool wantErrors)
-{
-  try {
-    return convertNumber<LSP_VersionNumber>(
-      currentDocument()->getVersionNumber());
-  }
-  catch (XNumericConversion &x) {
-    if (wantErrors) {
-      complain(stringb(
-        "The version number cannot be represented as an LSP int: " <<
-        x.what()));
-    }
-    return {};
-  }
-}
-
-
-// TODO: This should be a method of `EditorWidget`, not `EditorWindow`.
-void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
-{
-  // True if we want a popup for errors.
-  bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
-
-  if (!lspManager().isRunningNormally()) {
-    if (wantErrors) {
-      complain(stringb("Server not ready: " <<
-        lspManager().describeProtocolState()));
-    }
-    return;
-  }
-
-  NamedTextDocument *ntd = currentDocument();
-  DocumentName const &docName = ntd->documentName();
-
-  if (!docName.isLocalFilename()) {
-    if (wantErrors) {
-      inform("LSP only works with local files.");
-    }
-    return;
-  }
-
-  std::string fname = docName.filename();
-  bool alreadyOpen = lspManager().isFileOpen(fname);
-
-  if (operation == LSPFO_CLOSE) {
-    if (!alreadyOpen) {
-      if (wantErrors) {
-        inform(stringb("Document " << doubleQuote(fname) <<
-                       " is not open."));
-      }
-    }
-    else {
-      lspManager().notify_textDocument_didClose(fname);
-      ntd->updateDiagnostics(nullptr);
-    }
-    return;
-  }
-
-  if (operation == LSPFO_UPDATE_IF_OPEN && !alreadyOpen) {
-    return;
-  }
-
-  std::optional<LSP_VersionNumber> version =
-    getDocLSPVersionNumber(wantErrors);
-  if (!version) {
-    return;    // Error reported if desired.
-  }
-
-  std::string contents = vectorOfUCharToString(ntd->getWholeFile());
-
-  if (!alreadyOpen) {
-    // TODO: Compute this properly.
-    std::string languageId = "cpp";
-
-    lspManager().notify_textDocument_didOpen(
-      fname, languageId, *version, std::move(contents));
-    ntd->sentLSPFileContents();
-  }
-
-  else /*update*/ {
-    RCSerf<LSPDocumentInfo const> docInfo =
-      lspManager().getDocInfo(fname);
-    xassert(docInfo);
-
-    if (*version == docInfo->m_lastSentVersion ||
-        contents == docInfo->m_lastSentContents) {
-      TRACE1("LSP: While updating " << doubleQuote(fname) <<
-             ": previous version is " << docInfo->m_lastSentVersion <<
-             ", new version is " << *version <<
-             ", and contents are " <<
-             (contents == docInfo->m_lastSentContents? "" : "NOT ") <<
-             "the same; bumping to force re-analysis.");
-
-      // We want to re-send despite no content changes, for example
-      // because a header file changed that should fix issues in the
-      // current file.  Bump the version and try again.
-      ntd->bumpVersionNumber();
-
-      version = getDocLSPVersionNumber(wantErrors);
-      if (!version) {
-        return;    // Error reported if desired.
-      }
-
-      // In this situation, `clangd` would normally ignore the
-      // notification because it realizes the file hasn't changed
-      // (despite the new version number) and thinks that means the
-      // diagnostics would be the same too.
-      //
-      // `clangd` accepts a `forceRebuild` parameter that would force
-      // new diagnostics, but it also rebuilds other things, making it
-      // quite slow.
-      //
-      // So, instead, we will just append some junk that should not
-      // cause the diagnostics to be different, but will make `clangd`
-      // re-analyze the contents.  This is much faster than
-      // `forceRebuild`.
-      contents += stringb("//" << *version);
-    }
-
-    if (!( *version > docInfo->m_lastSentVersion )) {
-      // Sending this would be a protocol violation.
-      if (wantErrors) {
-        complain(stringb(
-          "The current document version (" << *version <<
-          ") is not greater than the previously sent document version (" <<
-          docInfo->m_lastSentVersion << ")."));
-      }
-      return;
-    }
-
-    lspManager().notify_textDocument_didChange(
-      fname, *version, std::move(contents));
-    ntd->sentLSPFileContents();
-  }
-}
-
-
 void EditorWindow::lspOpenOrUpdateFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  doLSPFileOperation(LSPFO_OPEN_OR_UPDATE);
+  editorWidget()->doLSPFileOperation(EditorWidget::LSPFO_OPEN_OR_UPDATE);
 
   GENERIC_CATCH_END
 }
@@ -2225,7 +2088,7 @@ void EditorWindow::lspCloseFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  doLSPFileOperation(LSPFO_CLOSE);
+  editorWidget()->doLSPFileOperation(EditorWidget::LSPFO_CLOSE);
 
   GENERIC_CATCH_END
 }
@@ -2814,13 +2677,18 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 }
 
 
-void EditorWindow::complain(std::string_view msg)
+void EditorWindow::complain(std::string_view msg) const
 {
-  QMessageBox::information(this, EditorGlobal::appName, toQString(msg));
+  // `QMessageBox::information` takes a non-const pointer simply because
+  // parent pointers in Qt are non-const.  But we can be pretty sure
+  // that popping up a modal is not going to alter the state of `this`.
+  auto *ths = const_cast<EditorWindow*>(this);
+
+  QMessageBox::information(ths, EditorGlobal::appName, toQString(msg));
 }
 
 
-void EditorWindow::inform(std::string_view msg)
+void EditorWindow::inform(std::string_view msg) const
 {
   // On my system, QMessageBox::information rings the bell, and I do
   // not want that here.  Removing the icon seems to disable that.

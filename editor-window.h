@@ -13,7 +13,6 @@
 #include "editor-widget-frame-fwd.h"             // EditorWidgetFrame
 #include "editor-widget-fwd.h"                   // EditorWidget
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
-#include "lsp-data-types.h"                      // LSP_VersionNumber
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td.h"                            // NamedTextDocument
@@ -53,14 +52,6 @@ class SearchAndReplacePanel;                     // sar-panel.h
 class EditorWindow : public QWidget,
                      public NamedTextDocumentListObserver {
   Q_OBJECT
-
-public:      // types
-  // Things we can do with one file and LSP.
-  enum LSPFileOperation {
-    LSPFO_OPEN_OR_UPDATE,    // Open or update the file.
-    LSPFO_UPDATE_IF_OPEN,    // Update if it is open.
-    LSPFO_CLOSE,             // Close the file.
-  };
 
 public:      // static data
   static int s_objectCount;
@@ -130,14 +121,6 @@ private:     // funcs
     bool prefixStderrLines,
     QString command);
 
-  // Get the version number of the current document as an
-  // `LSP_VersionNumber`, which is what we need for LSP.  If the version
-  // number cannot be converted to that type (because it is too big),
-  // pop up an error box if `wantErrors`, then return nullopt.
-  //
-  // TODO: Move this to `EditorWidget`.
-  std::optional<LSP_VersionNumber> getDocLSPVersionNumber(bool wantErrors);
-
   // Go to the next/previous diagnostic.
   void lspGoToAdjacentDiagnostic(bool next);
 
@@ -165,6 +148,8 @@ public:      // funcs
   EditorSettings const &editorSettings() const;
 
   // Global LSP manager.
+  //
+  // TODO: Change this to return a pointer.
   LSPManager &lspManager();
 
   // For now, the one editor widget in the one frame.
@@ -220,13 +205,10 @@ public:      // funcs
     EditorCommandLineFunction whichFunction);
 
   // Pop up a message related to a problem.
-  void complain(std::string_view msg);
+  void complain(std::string_view msg) const;
 
   // Pop up a message for general information.
-  void inform(std::string_view msg);
-
-  // Do `operation` with the current file.
-  void doLSPFileOperation(LSPFileOperation operation);
+  void inform(std::string_view msg) const;
 
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAdded(
