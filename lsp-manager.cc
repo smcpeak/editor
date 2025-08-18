@@ -398,8 +398,8 @@ LSPManager::LSPManager(
     m_pendingErrorMessages()
 {
   SMFileUtil().createParentDirectories(m_lspStderrLogFname);
-  m_lspStderrFile.reset(
-    tryCreateExclusiveWriteFile(m_lspStderrLogFname /*INOUT*/));
+  m_lspStderrFile =
+    tryCreateExclusiveWriteFile(m_lspStderrLogFname /*INOUT*/);
 
   TRACE1("Server log file: " << m_lspStderrLogFname);
   m_lspStderrFile->stream() << "Started LSP server at " <<
