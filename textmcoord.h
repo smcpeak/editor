@@ -4,11 +4,13 @@
 #ifndef EDITOR_TEXTMCOORD_H
 #define EDITOR_TEXTMCOORD_H
 
+#include "textmcoord-fwd.h"            // fwds for this module
+
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB
 
-#include <iostream>                    // std::ostream
+#include <iosfwd>                      // std::ostream
 
 
 // The coordinates of a location within a text document *model*.  This

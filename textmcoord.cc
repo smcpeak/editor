@@ -7,6 +7,8 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-swap.h"            // swap
 
+#include <iostream>                    // std::ostream
+
 
 using namespace gdv;
 using namespace smbase;

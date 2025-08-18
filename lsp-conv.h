@@ -8,7 +8,7 @@
 
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
-#include "textmcoord.h"                // TextMCoord
+#include "textmcoord-fwd.h"            // TextMCoord
 
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr
 
