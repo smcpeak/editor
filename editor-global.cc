@@ -889,7 +889,7 @@ EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
 {
   return getOrCreateGeneratedDocument(
     "LSP Server Capabilities",
-    lspManager().getServerCapabilities().asLinesString());
+    lspManager()->getServerCapabilities().asLinesString());
 }
 
 

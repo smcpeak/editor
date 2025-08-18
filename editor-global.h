@@ -84,6 +84,8 @@ public:       // data
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
   // Object to manage communication with the LSP server.
+  //
+  // TODO: Make private.
   LSPManager m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.
@@ -169,8 +171,7 @@ public:       // funcs
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
-  // TODO: I think all the `lspManager` methods should return pointers.
-  LSPManager &lspManager() { return m_lspManager; }
+  LSPManager *lspManager() { return &m_lspManager; }
 
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
