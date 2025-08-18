@@ -34,10 +34,13 @@ LSPManagerTester::~LSPManagerTester()
 }
 
 
-LSPManagerTester::LSPManagerTester(LSPTestRequestParams const &params)
+LSPManagerTester::LSPManagerTester(
+  LSPTestRequestParams const &params,
+  std::ostream * NULLABLE protocolDiagnosticLog)
   : m_lspManager(
       params.m_useRealClangd,
-      "out/lsp-manager-test-server-stderr.txt"),
+      "out/lsp-manager-test-server-stderr.txt",
+      protocolDiagnosticLog),
     m_params(params),
     m_done(false),
     m_failed(false),
@@ -326,13 +329,13 @@ void test_lsp_manager(CmdlineArgsSpan args)
 
   DIAG("-------- synchronous --------");
   {
-    LSPManagerTester tester(params);
+    LSPManagerTester tester(params, &std::cout);
     tester.testSynchronously();
   }
 
   DIAG("-------- asynchronous --------");
   {
-    LSPManagerTester tester(params);
+    LSPManagerTester tester(params, &std::cout);
     tester.testAsynchronously();
   }
 }

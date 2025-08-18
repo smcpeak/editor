@@ -362,10 +362,16 @@ void LSPManager::on_errorDataReady() NOEXCEPT
 
   if (m_commandRunner->hasErrorData()) {
     QByteArray data = m_commandRunner->takeErrorData();
-    TRACE2("Copying " << data.size() << " bytes of stderr data "
-           "to LSP stderr log file.");
-    m_lspStderrFile->stream().write(data.data(), data.size());
-    m_lspStderrFile->stream().flush();
+    if (m_lspStderrFile) {
+      TRACE2("Copying " << data.size() << " bytes of stderr data "
+             "to LSP stderr log file.");
+      m_lspStderrFile->stream().write(data.data(), data.size());
+      m_lspStderrFile->stream().flush();
+    }
+    else {
+      TRACE2("Discarding " << data.size() << " bytes of stderr data "
+             "because there is no LSP stderr log file.");
+    }
   }
 
   GENERIC_CATCH_END
@@ -383,11 +389,13 @@ LSPManager::~LSPManager()
 
 LSPManager::LSPManager(
   bool useRealClangd,
-  std::string const &lspStderrLogFname)
-  : m_useRealClangd(useRealClangd),
+  std::string const &lspStderrLogFname,
+  std::ostream * NULLABLE protocolDiagnosticLog)
+  : IMEMBFP(useRealClangd),
     m_lspStderrLogFname(
       SMFileUtil().normalizePathSeparators(lspStderrLogFname)),
     m_lspStderrFile(),
+    IMEMBFP(protocolDiagnosticLog),
     m_commandRunner(),
     m_lsp(),
     m_sfu(),
@@ -401,10 +409,12 @@ LSPManager::LSPManager(
   m_lspStderrFile =
     tryCreateExclusiveWriteFile(m_lspStderrLogFname /*INOUT*/);
 
-  TRACE1("Server log file: " << m_lspStderrLogFname);
-  m_lspStderrFile->stream() << "Started LSP server at " <<
-    localTimeString() << "\n";
-  m_lspStderrFile->stream().flush();
+  if (m_lspStderrFile) {
+    TRACE1("Server log file: " << m_lspStderrLogFname);
+    m_lspStderrFile->stream() << "Started LSP manager at " <<
+      localTimeString() << "\n";
+    m_lspStderrFile->stream().flush();
+  }
 
   selfCheck();
 }
@@ -511,7 +521,7 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
 
 
   // ---- Start the LSP protocol communicator ----
-  m_lsp.reset(new LSPClient(*m_commandRunner));
+  m_lsp.reset(new LSPClient(*m_commandRunner, m_protocolDiagnosticLog));
 
   // Connect the signals.
   QObject::connect(m_lsp.get(), &LSPClient::signal_hasPendingNotifications,

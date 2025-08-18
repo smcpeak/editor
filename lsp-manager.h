@@ -21,6 +21,7 @@
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/std-string-fwd.h"               // std::string
 
+#include <iosfwd>                                // std::ostream
 #include <list>                                  // std::list
 #include <memory>                                // std::unique_ptr
 #include <string>                                // std::string
@@ -178,8 +179,14 @@ private:     // data
   // written.
   std::string m_lspStderrLogFname;
 
-  // The file to which we send the server's stderr.
+  // The file to which we send the server's stderr.  Can be null
+  // depending on an envvar.
   std::unique_ptr<smbase::ExclusiveWriteFile> m_lspStderrFile;
+
+  // If something goes wrong on the protocol level, debugging details
+  // will be logged here.  If it is null, those details will just be
+  // discarded.
+  std::ostream * NULLABLE m_protocolDiagnosticLog;
 
   // Object to manage the child process.  This is null until the server
   // has been started, and returns to null if it is stopped.
@@ -259,7 +266,8 @@ public:      // methods
   // `clangd` instead of `./lsp-test-server.py`.
   explicit LSPManager(
     bool useRealClangd,
-    std::string const &lspStderrLogFname);
+    std::string const &lspStderrLogFname,
+    std::ostream * NULLABLE protocolDiagnosticLog);
 
   // Check invariants, throwing an exception on failure.
   void selfCheck() const;

@@ -22,6 +22,7 @@
 #include <QCoreApplication>
 
 #include <iostream>                    // std::cerr
+#include <sstream>                     // std::ostringstream
 #include <string>                      // std::string
 #include <vector>                      // std::vector
 
@@ -573,9 +574,10 @@ void runTests(
     xfailure("server failed");
   }
 
+  std::ostringstream diagnosticLog;
   try {
     // Wrap it in the LSP client protocol object.
-    LSPClient lsp(cr);
+    LSPClient lsp(cr, &diagnosticLog);
 
     // Do all the protocol stuff.
     if (semiSynchronous) {
@@ -587,6 +589,12 @@ void runTests(
   }
   catch (XBase &x) {
     cr.killProcess();
+
+    // This is just for manual inspection.
+    if (std::string logMsg = diagnosticLog.str(); !logMsg.empty()) {
+      DIAG("diagnostic log: " << logMsg);
+    }
+
     if (failureKind != FK_NONE) {
       std::string msg = x.what();
       std::string expectSubstring = substringForFK(failureKind);

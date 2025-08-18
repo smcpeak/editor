@@ -1,53 +1,55 @@
 // editor-global.cc
 // code for editor-global.cc, and application main() function
 
-#include "editor-global.h"             // this module
+#include "editor-global.h"                       // this module
 
 // editor
-#include "apply-command-dialog.h"      // ApplyCommandDialog
-#include "command-runner.h"            // CommandRunner
-#include "connections-dialog.h"        // ConnectionsDialog
-#include "editor-command.ast.gen.h"    // EditorCommand
-#include "editor-proxy-style.h"        // EditorProxyStyle
-#include "editor-version.h"            // getEditorVersionString
-#include "editor-widget.h"             // EditorWidget
-#include "event-recorder.h"            // EventRecorder
-#include "event-replay.h"              // EventReplay
-#include "keybindings.doc.gen.h"       // doc_keybindings
-#include "lsp-client.h"                // LSPClient
-#include "lsp-conv.h"                  // convertLSPDiagsToTDD
-#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
-#include "process-watcher.h"           // ProcessWatcher
-#include "td-diagnostics.h"            // TextDocumentDiagnostics (implicit)
-#include "textinput.h"                 // TextInputDialog
-#include "uri-util.h"                  // getFileURIPath
-#include "vfs-query-sync.h"            // readFileSynchronously
+#include "apply-command-dialog.h"                // ApplyCommandDialog
+#include "command-runner.h"                      // CommandRunner
+#include "connections-dialog.h"                  // ConnectionsDialog
+#include "editor-command.ast.gen.h"              // EditorCommand
+#include "editor-proxy-style.h"                  // EditorProxyStyle
+#include "editor-version.h"                      // getEditorVersionString
+#include "editor-widget.h"                       // EditorWidget
+#include "event-recorder.h"                      // EventRecorder
+#include "event-replay.h"                        // EventReplay
+#include "keybindings.doc.gen.h"                 // doc_keybindings
+#include "lsp-client.h"                          // LSPClient
+#include "lsp-conv.h"                            // convertLSPDiagsToTDD
+#include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "process-watcher.h"                     // ProcessWatcher
+#include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
+#include "textinput.h"                           // TextInputDialog
+#include "uri-util.h"                            // getFileURIPath
+#include "vfs-query-sync.h"                      // readFileSynchronously
 
 // smqtutil
-#include "smqtutil/gdvalue-qstring.h"  // toGDValue(QString)
-#include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtguiutil.h"        // showRaiseAndActivateWindow
-#include "smqtutil/qtutil.h"           // toQString
-#include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
+#include "smqtutil/gdvalue-qstring.h"            // toGDValue(QString)
+#include "smqtutil/qstringb.h"                   // qstringb
+#include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow
+#include "smqtutil/qtutil.h"                     // toQString
+#include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
-#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
-#include "smbase/dev-warning.h"        // g_devWarningHandler
-#include "smbase/exc.h"                // smbase::{XBase, xformat}
-#include "smbase/gdv-ordered-map.h"    // gdv::GDVOrderedMap
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
-#include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
-#include "smbase/gdvalue.h"            // gdv::toGDValue
-#include "smbase/map-util.h"           // keySet
-#include "smbase/objcount.h"           // CheckObjectCount
-#include "smbase/save-restore.h"       // SET_RESTORE, SetRestore
-#include "smbase/sm-env.h"             // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-test.h"            // PVAL
-#include "smbase/string-util.h"        // beginsWith, shellDoubleQuoteCommand
-#include "smbase/stringb.h"            // stringb
-#include "smbase/strtokp.h"            // StrtokParse
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
+#include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
+#include "smbase/datetime.h"                     // localTimeString
+#include "smbase/dev-warning.h"                  // g_devWarningHandler
+#include "smbase/exc.h"                          // smbase::{XBase, xformat}
+#include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
+#include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
+#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
+#include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
+#include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/map-util.h"                     // keySet
+#include "smbase/objcount.h"                     // CheckObjectCount
+#include "smbase/save-restore.h"                 // SET_RESTORE, SetRestore
+#include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-test.h"                      // PVAL
+#include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand
+#include "smbase/stringb.h"                      // stringb
+#include "smbase/strtokp.h"                      // StrtokParse
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 
 // Qt
 #include <QKeyEvent>
@@ -57,15 +59,15 @@
 #include <QStyleFactory>
 
 // libc++
-#include <algorithm>                   // std::max
-#include <cstring>                     // std::{strlen, memcpy}
-#include <deque>                       // std::deque
-#include <exception>                   // std::exception
-#include <string>                      // std::string
-#include <utility>                     // std::move
+#include <algorithm>                             // std::max
+#include <cstring>                               // std::{strlen, memcpy}
+#include <deque>                                 // std::deque
+#include <exception>                             // std::exception
+#include <string>                                // std::string
+#include <utility>                               // std::move
 
 // libc
-#include <stdlib.h>                    // atoi
+#include <stdlib.h>                              // atoi
 
 using namespace gdv;
 using namespace smbase;
@@ -91,8 +93,11 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_recordInputEvents(false),
     m_eventFileTest(),
     m_filenameInputDialogHistory(),
+    m_editorLogFile(openEditorLogFile()),
     m_lspManager(true /*useRealClangd*/,
-                 getLSPStderrLogFileName()),
+                 getLSPStderrLogFileInitialName(),
+                 (m_editorLogFile?
+                    &(m_editorLogFile->stream()) : nullptr)),
     m_lspErrorMessages(),
     m_windowCounter(1),
     m_editorBuiltinFont(BF_EDITOR14),
@@ -956,19 +961,54 @@ void EditorGlobal::warningBox(
 }
 
 
-/*static*/ std::string EditorGlobal::getSettingsFileName()
+/*static*/ std::unique_ptr<smbase::ExclusiveWriteFile>
+  EditorGlobal::openEditorLogFile()
 {
-  std::string dir =
-    SMFileUtil().normalizePathSeparators(getXDGConfigHome());
-  return dir + "/sm-editor/editor-settings.gdvn";
+  // TODO: This should be a field of `ExclusiveWriteFile`.
+  std::string actualFname = getEditorLogFileInitialName();
+
+  std::unique_ptr<ExclusiveWriteFile> ret(
+    tryCreateExclusiveWriteFile(actualFname));
+  if (ret) {
+    ret->stream()
+      << getEditorVersionString()    // Has label, ends with newline.
+      << "Started at " << localTimeString() << ".\n";
+    ret->stream().flush();
+  }
+  return ret;
 }
 
 
-/*static*/ std::string EditorGlobal::getLSPStderrLogFileName()
+/*static*/ std::string EditorGlobal::getEditorStateFileName(
+  std::string const &globalAppStateDir,
+  char const *fname)
 {
-  std::string dir =
-    SMFileUtil().normalizePathSeparators(getXDGStateHome());
-  return dir + "/sm-editor/lsp-server.log";
+  SMFileUtil sfu;
+  std::string dir = sfu.normalizePathSeparators(globalAppStateDir);
+  std::string combined = dir + "/sm-editor/" + fname;
+  sfu.createParentDirectories(combined);
+  return combined;
+}
+
+
+/*static*/ std::string EditorGlobal::getSettingsFileName()
+{
+  return getEditorStateFileName(
+    getXDGConfigHome(), "editor-settings.gdvn");
+}
+
+
+/*static*/ std::string EditorGlobal::getEditorLogFileInitialName()
+{
+  return getEditorStateFileName(
+    getXDGStateHome(), "editor.log");
+}
+
+
+/*static*/ std::string EditorGlobal::getLSPStderrLogFileInitialName()
+{
+  return getEditorStateFileName(
+    getXDGStateHome(), "lsp-server.log");
 }
 
 

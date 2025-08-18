@@ -9,9 +9,12 @@
 #include "lsp-manager.h"               // LSPManager
 #include "lsp-test-request-params.h"   // LSPTestRequestParams
 
+#include "smbase/sm-macros.h"          // NULLABLE
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 
 #include <QObject>
+
+#include <iosfwd>                      // std::ostream
 
 
 // Test harness for `LSPManager`.  Also serves as the recipients for its
@@ -38,7 +41,9 @@ public:      // data
 public:      // methods
   ~LSPManagerTester();
 
-  LSPManagerTester(LSPTestRequestParams const &params);
+  explicit LSPManagerTester(
+    LSPTestRequestParams const &params,
+    std::ostream * NULLABLE protocolDiagnosticLog);
 
   // Start the server process.
   void startServer();

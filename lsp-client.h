@@ -9,10 +9,12 @@
 #include "command-runner-fwd.h"        // CommandRunner
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/sm-macros.h"          // NULLABLE
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 
 #include <QObject>
 
+#include <iosfwd>                      // std::ostream
 #include <list>                        // std::list
 #include <map>                         // std::map
 #include <optional>                    // std::optional
@@ -67,6 +69,11 @@ private:     // types
 private:     // data
   // Object managing byte-level communication with the child.
   CommandRunner &m_child;
+
+  // If something goes wrong on the protocol level, debugging details
+  // will be logged here.  If it is null, those details will just be
+  // discarded.
+  std::ostream * NULLABLE m_protocolDiagnosticLog;
 
   // The ID to use for the next request we send.  Always positive.
   int m_nextRequestID;
@@ -130,7 +137,7 @@ private:     // methods
   void setProtocolError(std::string &&msg);
 
   // Parse `bodyJSON` into GDV.
-  static gdv::GDValue call_jsonToGDV(std::string const &bodyJSON);
+  gdv::GDValue call_jsonToGDV(std::string const &bodyJSON) const;
 
   // Attempt to parse the current output data as a message.  If
   // successful, remove the message data from the queue, add an entry to
@@ -162,7 +169,9 @@ public:      // methods
 
   // Begin communicating using LSP with `child`, a process that has
   // already been started.
-  explicit LSPClient(CommandRunner &child);
+  explicit LSPClient(
+    CommandRunner &child,
+    std::ostream * NULLABLE protocolDiagnosticLog);
 
   // Assert invariants.
   void selfCheck() const;

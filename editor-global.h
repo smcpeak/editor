@@ -23,6 +23,7 @@
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smbase
+#include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile
 #include "smbase/objlist.h"                      // ObjList
 #include "smbase/refct-serf.h"                   // SerfRefCount
 #include "smbase/sm-macros.h"                    // NULLABLE
@@ -84,10 +85,16 @@ public:       // data
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
 private:     // data
+  // General editor-wide log file.  Can be null, depending on an envvar
+  // setting.
+  std::unique_ptr<smbase::ExclusiveWriteFile> m_editorLogFile;
+
   // Object to manage communication with the LSP server.
   LSPManager m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.
+  //
+  // TODO: Send them to the log file.
   std::list<std::string> m_lspErrorMessages;
 
   // Counter for window numbering in the Qt object naming system.  This
@@ -134,6 +141,19 @@ private:      // funcs
 
   NamedTextDocument *getCommandOutputDocument(
     HostName const &hostName, QString dir, QString command);
+
+  // Open the general editor log file.
+  static std::unique_ptr<smbase::ExclusiveWriteFile>
+    openEditorLogFile();
+
+  // Given a directory in which application state files are generally
+  // placed, such as `getXDGStateHome()`, and the name of a specific
+  // file associated with the editor application, return the combined
+  // name after normalizing path separators and ensuring the directory
+  // containing the returned file name exists.
+  static std::string getEditorStateFileName(
+    std::string const &globalAppStateDir,
+    char const *fname);
 
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
@@ -292,9 +312,13 @@ public:       // funcs
   // Get the path to the user settings file.
   static std::string getSettingsFileName();
 
-  // Get the path to the file that holds the stderr from the LSP server
-  // process (clangd).
-  static std::string getLSPStderrLogFileName();
+  // Initial name to attempt to use for the general editor logs.  The
+  // actual name might be different.
+  static std::string getEditorLogFileInitialName();
+
+  // Initial name for the path to the file that holds the stderr from
+  // the LSP server process (clangd).
+  static std::string getLSPStderrLogFileInitialName();
 
   // Write settings to the user settings file and return true.  If there
   // is a problem, this pops up a dialog box above the given `parent`,

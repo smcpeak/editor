@@ -18,6 +18,7 @@
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/parsestring.h"        // ParseString
 #include "smbase/set-util.h"           // smbase::setRemoveExisting
+#include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-span.h"            // smbase::Span
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote, trimWhitespace, split
@@ -145,19 +146,20 @@ void LSPClient::setProtocolError(std::string &&msg)
 }
 
 
-/*static*/ GDValue LSPClient::call_jsonToGDV(
-  std::string const &bodyJSON)
+GDValue LSPClient::call_jsonToGDV(std::string const &bodyJSON) const
 {
   try {
     return jsonToGDV(bodyJSON);
   }
   catch (std::exception &x) {
-    // Provide at least some ability to diagnose the deeper problem by
-    // printing out the offending JSON.
-    //
-    // TODO: It would be better to have a proper logging interface here.
-    TRACE0("Error while parsing message JSON: " << x.what());
-    TRACE0("Offending JSON text: " << bodyJSON);
+    // Facilitate diagnosing the deeper problem by logging the offending
+    // JSON.
+    if (m_protocolDiagnosticLog) {
+      *m_protocolDiagnosticLog
+        << "Error while parsing message JSON: " << x.what() << "\n"
+        << "Offending JSON text: " << bodyJSON << "\n";
+      m_protocolDiagnosticLog->flush();
+    }
     throw;
   }
 }
@@ -364,8 +366,11 @@ LSPClient::~LSPClient()
 }
 
 
-LSPClient::LSPClient(CommandRunner &child)
-  : m_child(child),
+LSPClient::LSPClient(
+  CommandRunner &child,
+  std::ostream * NULLABLE protocolDiagnosticLog)
+  : IMEMBFP(child),
+    IMEMBFP(protocolDiagnosticLog),
     m_nextRequestID(1),
     m_outstandingRequests(),
     m_pendingReplies(),
