@@ -24,7 +24,6 @@
 
 // smbase
 #include "smbase/objlist.h"                      // ObjList
-#include "smbase/owner.h"                        // Owner
 #include "smbase/refct-serf.h"                   // SerfRefCount
 #include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
@@ -36,6 +35,7 @@
 // libc++
 #include <deque>                                 // std::deque
 #include <list>                                  // std::list
+#include <memory>                                // std::unique_ptr
 #include <set>                                   // std::set
 
 class ConnectionsDialog;                         // connections-dialog.h
@@ -107,9 +107,7 @@ private:     // data
   // around persistently so it remembers its size (but not location...)
   // across invocations.  It contains a pointer to m_documentList, so
   // must be destroyed before the list.
-  //
-  // TODO: Change this to `std::unique_ptr`.
-  Owner<OpenFilesDialog> m_openFilesDialog;
+  std::unique_ptr<OpenFilesDialog> m_openFilesDialog;
 
   // Each of the two dialogs used to prompt for a command line.
   std::unique_ptr<ApplyCommandDialog>

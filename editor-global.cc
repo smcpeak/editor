@@ -98,7 +98,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
-    m_openFilesDialog(NULL),
+    m_openFilesDialog(),
     m_applyCommandDialogs(),
     m_connectionsDialog(),
     m_recentCommands(),
@@ -498,8 +498,8 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
 
 NamedTextDocument *EditorGlobal::runOpenFilesDialog(QWidget *callerWindow)
 {
-  if (!m_openFilesDialog.get()) {
-    m_openFilesDialog = new OpenFilesDialog(this);
+  if (!m_openFilesDialog) {
+    m_openFilesDialog.reset(new OpenFilesDialog(this));
   }
   return m_openFilesDialog->runDialog(callerWindow);
 }
