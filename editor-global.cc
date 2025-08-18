@@ -94,6 +94,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_lspManager(true /*useRealClangd*/,
                  getLSPStderrLogFileName()),
     m_lspErrorMessages(),
+    m_windowCounter(1),
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
     m_processes(),
@@ -151,10 +152,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // file that 'fileDocuments' made in its constructor.
   EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
 
-  // To ensure consistency of names when running multiple tests in the
-  // same process, set the first window's name.
-  ed->setObjectName("window1");
-  TRACE1("first window object name: " << toString(ed->objectName()));
+  // The tests rely on the first window having this name.
+  xassert(ed->objectName() == "window1");
 
   // TODO: Why do I create a window before processing the command line?
   try {
@@ -393,10 +392,8 @@ void EditorGlobal::processCommandLineOptions(
 
 EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
 {
-  static int windowCounter = 1;
-
   EditorWindow *ed = new EditorWindow(this, initFile);
-  ed->setObjectName(qstringb("window" << windowCounter++));
+  ed->setObjectName(qstringb("window" << m_windowCounter++));
 
   // NOTE: caller still has to say 'ed->show()'!
 

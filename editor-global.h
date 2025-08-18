@@ -90,6 +90,10 @@ public:       // data
   std::list<std::string> m_lspErrorMessages;
 
 private:     // data
+  // Counter for window numbering in the Qt object naming system.  This
+  // starts at 1 and counts up each time a window is created.
+  int m_windowCounter;
+
   // Built-in font to use in the editor widgets.
   BuiltinFont m_editorBuiltinFont;
 
