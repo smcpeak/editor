@@ -392,8 +392,6 @@ LSPManager::LSPManager(
   std::string const &lspStderrLogFname,
   std::ostream * NULLABLE protocolDiagnosticLog)
   : IMEMBFP(useRealClangd),
-    m_lspStderrLogFname(
-      SMFileUtil().normalizePathSeparators(lspStderrLogFname)),
     m_lspStderrFile(),
     IMEMBFP(protocolDiagnosticLog),
     m_commandRunner(),
@@ -405,12 +403,14 @@ LSPManager::LSPManager(
     m_documentInfo(),
     m_pendingErrorMessages()
 {
-  SMFileUtil().createParentDirectories(m_lspStderrLogFname);
-  m_lspStderrFile =
-    tryCreateExclusiveWriteFile(m_lspStderrLogFname /*INOUT*/);
+  SMFileUtil sfu;
+  std::string const fname =
+    sfu.normalizePathSeparators(lspStderrLogFname);
+  sfu.createParentDirectories(fname);
+  m_lspStderrFile = tryCreateExclusiveWriteFile(fname);
 
   if (m_lspStderrFile) {
-    TRACE1("Server log file: " << m_lspStderrLogFname);
+    TRACE1("Server log file: " << m_lspStderrFile->getFname());
     m_lspStderrFile->stream() << "Started LSP manager at " <<
       localTimeString() << "\n";
     m_lspStderrFile->stream().flush();
@@ -670,8 +670,15 @@ std::string LSPManager::checkStatus() const
     }
   }
 
-  msgs.push_back(stringb(
-    "Server stderr is in " << doubleQuote(m_lspStderrLogFname) << "."));
+  if (m_lspStderrFile) {
+    msgs.push_back(stringb(
+      "Server stderr is in " <<
+      doubleQuote(m_lspStderrFile->getFname()) << "."));
+  }
+  else {
+    msgs.push_back(stringb(
+      "Server stderr is being discarded."));
+  }
 
   return join(msgs, "\n");
 }

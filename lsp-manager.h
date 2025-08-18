@@ -175,10 +175,6 @@ private:     // data
   // True to run `clangd` instead of the test server instead.
   bool m_useRealClangd;
 
-  // Name of the file to which the stderr of the LSP process will be
-  // written.
-  std::string m_lspStderrLogFname;
-
   // The file to which we send the server's stderr.  Can be null
   // depending on an envvar.
   std::unique_ptr<smbase::ExclusiveWriteFile> m_lspStderrFile;

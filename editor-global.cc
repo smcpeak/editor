@@ -964,11 +964,8 @@ void EditorGlobal::warningBox(
 /*static*/ std::unique_ptr<smbase::ExclusiveWriteFile>
   EditorGlobal::openEditorLogFile()
 {
-  // TODO: This should be a field of `ExclusiveWriteFile`.
-  std::string actualFname = getEditorLogFileInitialName();
-
   std::unique_ptr<ExclusiveWriteFile> ret(
-    tryCreateExclusiveWriteFile(actualFname));
+    tryCreateExclusiveWriteFile(getEditorLogFileInitialName()));
   if (ret) {
     ret->stream()
       << getEditorVersionString()    // Has label, ends with newline.
@@ -1071,6 +1068,17 @@ void EditorGlobal::loadSettingsFile_throwIfError()
   }
   else {
     TRACE1("loadSettingsFile: Settings file does not exist: " << doubleQuote(fname));
+  }
+}
+
+
+std::optional<std::string> EditorGlobal::getEditorLogFileNameOpt() const
+{
+  if (m_editorLogFile) {
+    return m_editorLogFile->getFname();
+  }
+  else {
+    return std::nullopt;
   }
 }
 

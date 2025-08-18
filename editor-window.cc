@@ -2482,11 +2482,16 @@ void EditorWindow::helpAbout() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  std::optional<std::string> logFnameOpt =
+    editorGlobal()->getEditorLogFileNameOpt();
+
   QMessageBox::about(this, "About Scott's Editor",
     qstringb(
       "It's an editor?\n"
       "\n"
-      "Version: " << editor_git_version));
+      "Version: " << editor_git_version <<    // has newline
+      "Log file: " << logFnameOpt.value_or("(disabled)")
+    ));
 
   GENERIC_CATCH_END
 }

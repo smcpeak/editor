@@ -337,6 +337,9 @@ public:       // funcs
   // also save the settings to a file.)
   EditorSettings const &getSettings() { return m_settings; }
 
+  // If we have a log file, return its name.
+  std::optional<std::string> getEditorLogFileNameOpt() const;
+
   // Methods to change `m_settings` via methods that have names and
   // signatures that reflect those of `EditorSettings`.  Each call saves
   // the settings file afterward.  Any error is reported with a message

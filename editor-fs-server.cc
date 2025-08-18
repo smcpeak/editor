@@ -315,15 +315,15 @@ int main(int argc, char **argv)
 
     // Prepare the log file name and directory.
     SMFileUtil sfu;
-    std::string logFileName =
+    std::string const logFileInitialName =
       sfu.normalizePathSeparators(getXDGStateHome()) +
       "/sm-editor/fs-server.log";
-    sfu.createParentDirectories(logFileName);
+    sfu.createParentDirectories(logFileInitialName);
 
     // Open the log.  As explained above, using an ordinary pointer here
     // (and consequently `release()`) is deliberate.
     logStream =
-      tryCreateExclusiveWriteFile(logFileName /*INOUT*/).release();
+      tryCreateExclusiveWriteFile(logFileInitialName).release();
 
     // Write first log line.
     DateTimeSeconds dts;
