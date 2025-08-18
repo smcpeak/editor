@@ -23,6 +23,8 @@
 
 #include "lsp-data-fwd.h"              // fwds for this module
 
+#include "lsp-data-types.h"            // LSP_VersionNumber
+
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser
@@ -181,14 +183,14 @@ public:      // data
   std::string m_uri;
 
   // Document version number the diagnostics apply to.
-  std::optional<int> m_version;
+  std::optional<LSP_VersionNumber> m_version;
 
   // The individual diagnostic messages.
   std::list<LSP_Diagnostic> m_diagnostics;
 
 public:      // methods
   // create-tuple-class: declarations for LSP_PublishDiagnosticsParams
-  /*AUTO_CTC*/ explicit LSP_PublishDiagnosticsParams(std::string const &uri, std::optional<int> const &version, std::list<LSP_Diagnostic> const &diagnostics);
+  /*AUTO_CTC*/ explicit LSP_PublishDiagnosticsParams(std::string const &uri, std::optional<LSP_VersionNumber> const &version, std::list<LSP_Diagnostic> const &diagnostics);
   /*AUTO_CTC*/ LSP_PublishDiagnosticsParams(LSP_PublishDiagnosticsParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_PublishDiagnosticsParams &operator=(LSP_PublishDiagnosticsParams const &obj) noexcept;
 

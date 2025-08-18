@@ -311,7 +311,7 @@ LSP_Diagnostic::LSP_Diagnostic(gdv::GDValueParser const &p)
 // create-tuple-class: definitions for LSP_PublishDiagnosticsParams
 /*AUTO_CTC*/ LSP_PublishDiagnosticsParams::LSP_PublishDiagnosticsParams(
 /*AUTO_CTC*/   std::string const &uri,
-/*AUTO_CTC*/   std::optional<int> const &version,
+/*AUTO_CTC*/   std::optional<LSP_VersionNumber> const &version,
 /*AUTO_CTC*/   std::list<LSP_Diagnostic> const &diagnostics)
 /*AUTO_CTC*/   : IMEMBFP(uri),
 /*AUTO_CTC*/     IMEMBFP(version),

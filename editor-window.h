@@ -13,6 +13,7 @@
 #include "editor-widget-frame-fwd.h"             // EditorWidgetFrame
 #include "editor-widget-fwd.h"                   // EditorWidget
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-data-types.h"                      // LSP_VersionNumber
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td.h"                            // NamedTextDocument
@@ -35,7 +36,6 @@
 #include <QWidget>
 
 // libc++
-#include <cstdint>                               // std::int32_t
 #include <memory>                                // std::unique_ptr
 #include <optional>                              // std::optional
 
@@ -130,11 +130,13 @@ private:     // funcs
     bool prefixStderrLines,
     QString command);
 
-  // Get the version number of the current document as an `int32_t`,
-  // which is what we need for LSP.  If the version number cannot be
-  // converted to `int32_t` (because it is too big), pop up an error box
-  // if `wantErrors`, then return nullopt.
-  std::optional<std::int32_t> getDocLSPVersionNumber(bool wantErrors);
+  // Get the version number of the current document as an
+  // `LSP_VersionNumber`, which is what we need for LSP.  If the version
+  // number cannot be converted to that type (because it is too big),
+  // pop up an error box if `wantErrors`, then return nullopt.
+  //
+  // TODO: Move this to `EditorWidget`.
+  std::optional<LSP_VersionNumber> getDocLSPVersionNumber(bool wantErrors);
 
   // Go to the next/previous diagnostic.
   void lspGoToAdjacentDiagnostic(bool next);

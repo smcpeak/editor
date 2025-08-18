@@ -2073,10 +2073,11 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
 }
 
 
-std::optional<std::int32_t> EditorWindow::getDocLSPVersionNumber(bool wantErrors)
+std::optional<LSP_VersionNumber> EditorWindow::getDocLSPVersionNumber(
+  bool wantErrors)
 {
   try {
-    return convertNumber<std::int32_t>(
+    return convertNumber<LSP_VersionNumber>(
       currentDocument()->getVersionNumber());
   }
   catch (XNumericConversion &x) {
@@ -2135,7 +2136,7 @@ void EditorWindow::doLSPFileOperation(LSPFileOperation operation)
     return;
   }
 
-  std::optional<std::int32_t> version =
+  std::optional<LSP_VersionNumber> version =
     getDocLSPVersionNumber(wantErrors);
   if (!version) {
     return;    // Error reported if desired.
