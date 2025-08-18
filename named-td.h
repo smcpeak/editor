@@ -8,7 +8,6 @@
 
 #include "doc-name.h"                  // DocumentName
 #include "hilite.h"                    // Highlighter
-#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 #include "td.h"                        // TextDocument
@@ -198,12 +197,6 @@ public:      // funcs
   // tracking subsequent document changes so when the diagnostics arrive
   // we can adjust them accordingly.
   void beginTrackingChangesForFutureDiagnostics();
-
-  // Process incoming `diags` for this document.
-  //
-  // Requires: diags->m_version.has_value()
-  void receivedLSPDiagnostics(
-    LSP_PublishDiagnosticsParams const *diags);
 };
 
 

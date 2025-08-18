@@ -299,15 +299,4 @@ void NamedTextDocument::beginTrackingChangesForFutureDiagnostics()
 }
 
 
-// TODO: I think this conversion step should be moved outside this
-// class.
-void NamedTextDocument::receivedLSPDiagnostics(
-  LSP_PublishDiagnosticsParams const *diags)
-{
-  xassertPrecondition(diags->m_version.has_value());
-
-  updateDiagnostics(convertLSPDiagsToTDD(diags));
-}
-
-
 // EOF

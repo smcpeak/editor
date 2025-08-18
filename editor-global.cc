@@ -753,15 +753,27 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   while (m_lspManager.hasPendingDiagnostics()) {
+    // Get some pending diagnostics.
     std::string fname = m_lspManager.getFileWithPendingDiagnostics();
-    std::unique_ptr<LSP_PublishDiagnosticsParams> diags(
+    std::unique_ptr<LSP_PublishDiagnosticsParams> lspDiags(
       m_lspManager.takePendingDiagnosticsFor(fname));
+
+    if (!lspDiags->m_version.has_value()) {
+      // Just discard them.
+      TRACE1("lsp: Received LSP diagnostics without a version.");
+      continue;
+    }
+
+    // Convert to our internal format.
+    std::unique_ptr<TextDocumentDiagnostics> tdd(
+      convertLSPDiagsToTDD(lspDiags.get()));
+    lspDiags.reset();
 
     DocumentName docName =
       DocumentName::fromFilename(HostName::asLocal(), fname);
 
     if (NamedTextDocument *doc = getFileWithName(docName)) {
-      doc->receivedLSPDiagnostics(diags.get());
+      doc->updateDiagnostics(std::move(tdd));
     }
     else {
       // This could happen if we notify the server of new contents and
