@@ -42,11 +42,11 @@ void checkFile(TextDocumentCore const &doc, char const *expect)
 }
 
 
-// Return a GDValue for a `VersionDetails` with `numLines` and
+// Return a GDValue for a `AwaitingDiagnostics` with `numLines` and
 // `changesGDVN` describing the changes.
-GDValue versionDetailsGDV(int numLines, char const *changesGDVN)
+GDValue awaitingDiagnosticsGDV(int numLines, char const *changesGDVN)
 {
-  GDValue m(GDVK_TAGGED_ORDERED_MAP, "VersionDetails"_sym);
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "AwaitingDiagnostics"_sym);
   m.mapSetValueAtSym("numLines", numLines);
   m.mapSetValueAtSym("changeSequence", fromGDVN(changesGDVN));
   return m;
@@ -80,14 +80,14 @@ void test_basics()
   EXPECT_EQ(recorder.isTracking(ver1), true);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver1});
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "[]") },
+    { ver1, awaitingDiagnosticsGDV(2, "[]") },
   }));
 
   // Make a change while tracking is enabled.
   doc.insertLine(0);
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "["
+    { ver1, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0]"
             "]") },
   })));
@@ -96,7 +96,7 @@ void test_basics()
   doc.insertString(TextMCoord(0, 0), "hello");
   checkFile(doc, "hello\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "["
+    { ver1, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"]"
             "]") },
@@ -106,7 +106,7 @@ void test_basics()
   doc.deleteTextBytes(TextMCoord(0, 1), 2);
   checkFile(doc, "hlo\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "["
+    { ver1, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2]"
@@ -118,7 +118,7 @@ void test_basics()
   doc.deleteTextBytes(TextMCoord(0, 0), 3);
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "["
+    { ver1, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
@@ -131,7 +131,7 @@ void test_basics()
   doc.deleteLine(0);
   checkFile(doc, "\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "["
+    { ver1, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
@@ -156,14 +156,14 @@ void test_basics()
   doc.insertLine(2);
   checkFile(doc, "\n\n\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(2, "["
+    { ver1, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
               "DeleteText[tc:MC(0 0) lengthBytes:3] "
               "DeleteLine[line:0]"
             "]") },
-    { ver2, versionDetailsGDV(2, "["
+    { ver2, awaitingDiagnosticsGDV(2, "["
               "InsertLine[line:0] "
               "InsertLine[line:1] "
               "InsertLine[line:2]"
@@ -192,7 +192,7 @@ void test_basics()
     EXPECT_EQ(recorder.isTracking(ver2), true);
     EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver2});
     EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-      { ver2, versionDetailsGDV(2, "["
+      { ver2, awaitingDiagnosticsGDV(2, "["
                 "InsertLine[line:0] "
                 "InsertLine[line:1] "
                 "InsertLine[line:2]"

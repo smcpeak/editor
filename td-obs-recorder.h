@@ -139,29 +139,35 @@ class TextDocumentObservationRecorder : public TextDocumentObserver {
 private:     // types
   typedef TextDocumentCore::VersionNumber VersionNumber;
 
-  // Data associated with a version being tracked.
-  class VersionDetails {
+  // A sequence of changes that were applied to the document since some
+  // point in the past, in the order they happened.  The relevant "point
+  // in the past" depends on where this sequence is stored.
+  typedef std::vector<std::unique_ptr<TextDocumentChangeObservation>>
+    ChangeSequence;
+
+  // Data associated with a document version for which we are awaiting
+  // the associated diagnostics.
+  class AwaitingDiagnostics {
     // Not implemented, although it could be if needed.
-    void operator=(VersionDetails const &) = delete;
+    void operator=(AwaitingDiagnostics const &) = delete;
 
   public:      // data
     // Number of lines that were in the file for this version.  It is
     // non-negative.
     int const m_numLines;
 
-    // The changes that were applied to this document, in the order they
-    // happened, since the version with which this object is associated
-    // was current, but before a later version started being tracked.
-    std::vector<std::unique_ptr<TextDocumentChangeObservation>>
-      m_changeSequence;
+    // Changes that were applied to this document, since the version
+    // with which this object is associated was current, but before a
+    // later version started awaiting diagnostics.
+    ChangeSequence m_changeSequence;
 
   public:
-    ~VersionDetails();
+    ~AwaitingDiagnostics();
 
-    VersionDetails(VersionDetails &&obj);
+    AwaitingDiagnostics(AwaitingDiagnostics &&obj);
 
     // The sequence is initially empty.
-    explicit VersionDetails(int numLines);
+    explicit AwaitingDiagnostics(int numLines);
 
     void selfCheck() const;
 
@@ -173,7 +179,7 @@ private:     // data
   TextDocumentCore const &m_document;
 
   // Map from document version number to its tracked details.
-  std::map<VersionNumber, VersionDetails> m_versionToDetails;
+  std::map<VersionNumber, AwaitingDiagnostics> m_awaitingDiagnostics;
 
 private:     // methods
   // Append `observation` to the latest tracked version.
