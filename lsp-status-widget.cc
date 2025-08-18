@@ -71,7 +71,7 @@ EditorGlobal *LSPStatusWidget::editorGlobal() const
 
 LSPManager *LSPStatusWidget::lspManager() const
 {
-  return &( editorGlobal()->m_lspManager );
+  return editorGlobal()->lspManager();
 }
 
 

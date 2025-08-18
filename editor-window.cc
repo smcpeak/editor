@@ -229,7 +229,7 @@ EditorSettings const &EditorWindow::editorSettings() const
 
 LSPManager *EditorWindow::lspManager() const
 {
-  return &( editorGlobal()->m_lspManager );
+  return editorGlobal()->lspManager();
 }
 
 

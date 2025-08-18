@@ -83,15 +83,13 @@ public:       // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
+private:     // data
   // Object to manage communication with the LSP server.
-  //
-  // TODO: Make private.
   LSPManager m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.
   std::list<std::string> m_lspErrorMessages;
 
-private:     // data
   // Counter for window numbering in the Qt object naming system.  This
   // starts at 1 and counts up each time a window is created.
   int m_windowCounter;
