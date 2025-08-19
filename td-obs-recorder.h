@@ -164,14 +164,16 @@ public:      // methods
    and (2) the version for which we most recently received diagnostics.
    If a version has diagnostics, then it is the first (oldest); any
    older that might still (somehow) be awaiting diagnostics are
-   discareded.
+   discarded when later diagnostics are received.
 
    Among the operations this supports is sending all of the changes
-   associated with the latest version to the server in order to bring it
-   up to date.
+   associated with the latest tracked version to the server in order to
+   initiate the process of bringing it up to date.  In the diagram, the
+   "changes 3 -> current" is that set of changes.
 
-   In the quiesscent fully up-to-date state, there is a single version,
-   for which we have diagnostics, and no recorded changes after it.
+   In the quiescent fully up-to-date state, there is a single tracked
+   version, and we have diagnostics for it, and there are no recorded
+   changes associated with it.
 */
 class TextDocumentObservationRecorder : public TextDocumentObserver {
 private:     // types
@@ -184,7 +186,7 @@ private:     // types
 
   // Data associated with a document version.
   class VersionDetails {
-    // Not implemented, although it could be if needed.
+    // Not needed, and would conflict with `const` members.
     void operator=(VersionDetails const &) = delete;
 
   public:      // data
@@ -194,6 +196,16 @@ private:     // types
     // Number of lines that were in the file for this version.  It is
     // non-negative.
     int const m_numLines;
+
+    // True if this is a version for which we have received diagnostics.
+    // It is initially false.
+    //
+    // The diagnostics are not actually stored here, but instead in a
+    // `TextDocumentDiagnostics` object (`td-diagnostics.h`), itself
+    // contained in a `NamedTextDocument` (`named-td.h`) that also
+    // contains the `TextDocumentObservationRecorder`.
+    //
+    bool m_hasDiagnostics;
 
     // Changes that were applied to this document since
     // `m_versionNumber` was current, but before a later version started
@@ -221,6 +233,9 @@ private:     // data
   //
   // Invariant: for all `vn`:
   //   m_versionToDetails[vn].m_versionNumber == vn
+  //
+  // Invariant: for all `vn` except the first:
+  //   m_versionToDetails[vn].m_hasDiagnostics == false
   //
   std::map<VersionNumber, VersionDetails> m_versionToDetails;
 
@@ -250,12 +265,20 @@ public:      // methods
   // changes forward.
   std::optional<VersionNumber> getEarliestVersion() const;
 
+  // True if we are tracking at least one version, and that version has
+  // received diagnostics.
+  bool earliestVersionHasDiagnostics() const;
+
   // True if we are tracking `version` and hence can roll forward
   // changes from there.
   bool isTracking(VersionNumber version) const;
 
   // Get the set of all versions being tracked.
   stdfwd::set<VersionNumber> getTrackedVersions() const;
+
+  // Get the set of all versions being tracked that do not have
+  // diagnostics.
+  stdfwd::set<VersionNumber> getNoDiagsVersions() const;
 
   // Track all future changes as applying on top of `version`, which has
   // `numLines` lines.

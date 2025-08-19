@@ -42,14 +42,17 @@ void checkFile(TextDocumentCore const &doc, char const *expect)
 }
 
 
-// Return a GDValue for a `VersionDetails` with `vn`, `numLines`, and
-// `changesGDVN` describing the changes.
+// Return a GDValue for a `VersionDetails`.
 GDValue versionDetailsGDV(
-  VersionNumber vn, int numLines, char const *changesGDVN)
+  VersionNumber versionNumber,
+  int numLines,
+  bool hasDiagnostics,
+  char const *changesGDVN)
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "VersionDetails"_sym);
-  m.mapSetValueAtSym("versionNumber", vn);
+  m.mapSetValueAtSym("versionNumber", versionNumber);
   m.mapSetValueAtSym("numLines", numLines);
+  m.mapSetValueAtSym("hasDiagnostics", hasDiagnostics);
   m.mapSetValueAtSym("changeSequence", fromGDVN(changesGDVN));
   return m;
 }
@@ -66,6 +69,7 @@ void test_basics()
   EXPECT_EQ(recorder.getEarliestVersion().has_value(), false);
   EXPECT_EQ(recorder.isTracking(0), false);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{});
+  EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), VersionSet{});
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
 
   // Make a change while not tracking anything.
@@ -81,15 +85,16 @@ void test_basics()
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
   EXPECT_EQ(recorder.isTracking(ver1), true);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver1});
+  EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), VersionSet{ver1});
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "[]") },
+    { ver1, versionDetailsGDV(ver1, 2, false, "[]") },
   }));
 
   // Make a change while tracking is enabled.
   doc.insertLine(0);
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "["
+    { ver1, versionDetailsGDV(ver1, 2, false, "["
               "InsertLine[line:0]"
             "]") },
   })));
@@ -98,7 +103,7 @@ void test_basics()
   doc.insertString(TextMCoord(0, 0), "hello");
   checkFile(doc, "hello\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "["
+    { ver1, versionDetailsGDV(ver1, 2, false, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"]"
             "]") },
@@ -108,7 +113,7 @@ void test_basics()
   doc.deleteTextBytes(TextMCoord(0, 1), 2);
   checkFile(doc, "hlo\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "["
+    { ver1, versionDetailsGDV(ver1, 2, false, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2]"
@@ -120,7 +125,7 @@ void test_basics()
   doc.deleteTextBytes(TextMCoord(0, 0), 3);
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "["
+    { ver1, versionDetailsGDV(ver1, 2, false, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
@@ -133,7 +138,7 @@ void test_basics()
   doc.deleteLine(0);
   checkFile(doc, "\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "["
+    { ver1, versionDetailsGDV(ver1, 2, false, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
@@ -151,6 +156,7 @@ void test_basics()
   EXPECT_EQ(recorder.isTracking(ver1), true);
   EXPECT_EQ(recorder.isTracking(ver2), true);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), (VersionSet{ver1, ver2}));
+  EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), (VersionSet{ver1, ver2}));
 
   // Insert a few lines.
   doc.insertLine(0);
@@ -158,14 +164,14 @@ void test_basics()
   doc.insertLine(2);
   checkFile(doc, "\n\n\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-    { ver1, versionDetailsGDV(ver1, 2, "["
+    { ver1, versionDetailsGDV(ver1, 2, false, "["
               "InsertLine[line:0] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
               "DeleteText[tc:MC(0 0) lengthBytes:3] "
               "DeleteLine[line:0]"
             "]") },
-    { ver2, versionDetailsGDV(ver2, 2, "["
+    { ver2, versionDetailsGDV(ver2, 2, false, "["
               "InsertLine[line:0] "
               "InsertLine[line:1] "
               "InsertLine[line:2]"
@@ -183,18 +189,23 @@ void test_basics()
       "]"
     "}"));
 
-    // Roll them forward.
+    // Roll them forward, transitioning `ver` to having diagnostics.
     recorder.applyChangesToDiagnostics(&diagnostics);
-
-    // That should have removed the changes recorded on top of `ver1`, but
-    // kept the changes for `ver2`.
     EXPECT_EQ(recorder.trackingSomething(), true);
-    EXPECT_EQ(recorder.getEarliestVersion().value(), ver2);
-    EXPECT_EQ(recorder.isTracking(ver1), false);
+    EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
+    EXPECT_EQ(recorder.isTracking(ver1), true);
     EXPECT_EQ(recorder.isTracking(ver2), true);
-    EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver2});
+    EXPECT_EQ_GDV(recorder.getTrackedVersions(), (VersionSet{ver1, ver2}));
+    EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), (VersionSet{      ver2}));
     EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
-      { ver2, versionDetailsGDV(ver2, 2, "["
+      { ver1, versionDetailsGDV(ver1, 2, true, "["
+                "InsertLine[line:0] "
+                "InsertText[tc:MC(0 0) text:\"hello\"] "
+                "DeleteText[tc:MC(0 1) lengthBytes:2] "
+                "DeleteText[tc:MC(0 0) lengthBytes:3] "
+                "DeleteLine[line:0]"
+              "]") },
+      { ver2, versionDetailsGDV(ver2, 2, false, "["
                 "InsertLine[line:0] "
                 "InsertLine[line:1] "
                 "InsertLine[line:2]"
@@ -230,16 +241,22 @@ void test_basics()
       "]"
     "}"));
 
-    // Roll them forward.
+    // Roll them forward, thereby discarding `ver1` and transitioning
+    // `ver2` to having diagnostics.
     recorder.applyChangesToDiagnostics(&diagnostics);
 
-    // That should have removed the changes recorded on top of `ver2`.
-    EXPECT_EQ(recorder.trackingSomething(), false);
-    EXPECT_EQ(recorder.getEarliestVersion().has_value(), false);
+    EXPECT_EQ(recorder.trackingSomething(), true);
+    EXPECT_EQ(recorder.getEarliestVersion().value(), ver2);
     EXPECT_EQ(recorder.isTracking(ver1), false);
-    EXPECT_EQ(recorder.isTracking(ver2), false);
-    EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{});
+    EXPECT_EQ(recorder.isTracking(ver2), true);
+    EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{ver2});
+    EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), VersionSet{    });
     EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
+      { ver2, versionDetailsGDV(ver2, 2, true, "["
+                "InsertLine[line:0] "
+                "InsertLine[line:1] "
+                "InsertLine[line:2]"
+              "]") },
     })));
 
     // It should have modified the diagnostics.
@@ -348,6 +365,10 @@ public:      // data
   // Diagnostics pairs for some previous document versions.
   std::map<VersionNumber, EagerAndDelayedDiags> m_verToDiags;
 
+  // True if the first element of `m_verToDiags` has received
+  // diagnostics.
+  bool m_firstHasDiagnostics;
+
 public:      // methods
   ~DocDiagsRecorderHistory()
   {}
@@ -355,7 +376,8 @@ public:      // methods
   DocDiagsRecorderHistory()
     : m_doc(),
       m_recorder(m_doc.getCore()),
-      m_verToDiags()
+      m_verToDiags(),
+      m_firstHasDiagnostics(false)
   {
     selfCheck();
   }
@@ -376,6 +398,15 @@ public:      // methods
     VersionSet verSet = mapKeySet(m_verToDiags);
     EXPECT_EQ_GDV(m_recorder.getTrackedVersions(), verSet);
 
+    {
+      VersionSet verSetNoDiags = verSet;
+      if (m_firstHasDiagnostics) {
+        xassert(!verSetNoDiags.empty());
+        verSetNoDiags.erase(verSetNoDiags.begin());
+      }
+      EXPECT_EQ_GDV(verSetNoDiags, m_recorder.getNoDiagsVersions());
+    }
+
     // Check some other recorder queries.
     EXPECT_EQ(m_recorder.trackingSomething(), !verSet.empty());
     EXPECT_EQ_GDV(m_recorder.getEarliestVersion(),
@@ -383,6 +414,9 @@ public:      // methods
     for (VersionNumber ver : verSet) {
       EXPECT_EQ(m_recorder.isTracking(ver), true);
     }
+
+    xassert(m_recorder.earliestVersionHasDiagnostics() ==
+            m_firstHasDiagnostics);
   }
 
   operator GDValue() const
@@ -391,6 +425,7 @@ public:      // methods
     GDV_WRITE_MEMBER_SYM(m_doc);
     GDV_WRITE_MEMBER_SYM(m_recorder);
     GDV_WRITE_MEMBER_SYM(m_verToDiags);
+    GDV_WRITE_MEMBER_SYM(m_firstHasDiagnostics);
     return m;
   }
 
@@ -423,6 +458,7 @@ public:      // methods
       xassert(it != m_verToDiags.end());
       if ((*it).first < oldVer) {
         m_verToDiags.erase(it);
+        m_firstHasDiagnostics = false;
       }
       else {
         break;
@@ -437,6 +473,9 @@ public:      // methods
       xassert((*it).first == oldVer);
       EagerAndDelayedDiags &edd = (*it).second;
 
+      // And it should not already have diagnostics.
+      xassert(!m_firstHasDiagnostics);
+
       // Roll the delayed diagnostics forward.
       m_recorder.applyChangesToDiagnostics(&edd.m_delayedDiags);
 
@@ -449,8 +488,7 @@ public:      // methods
       EXPECT_EQ_GDV(edd.m_delayedDiags, edd.m_eagerDiags);
       xassert(edd.m_delayedDiags == edd.m_eagerDiags);
 
-      // We are done with `oldVer` and its `edd`.
-      m_verToDiags.erase(it);
+      m_firstHasDiagnostics = true;
     }
 
     // Now the recorder's earliest version should be the same as the
@@ -554,9 +592,9 @@ void test_DDRH()
   // Roll forward version 1, checking it matches the eager diags.
   ddrh.checkSavedVersion(ver1);
 
-  // Same for versin 2.
+  // Same for version 2.
   ddrh.checkSavedVersion(ver2);
-  EXPECT_EQ(ddrh.m_recorder.trackingSomething(), false);
+  xassert(ddrh.m_recorder.getTrackedVersions() == VersionSet{ver2});
 }
 
 
@@ -700,7 +738,7 @@ void randomAction(DocDiagsRecorderHistory &ddrh)
   else if (c.check(1)) {
     // Roll random diagnostics forward.
     std::set<VersionNumber> trackedVersions =
-      ddrh.m_recorder.getTrackedVersions();
+      ddrh.m_recorder.getNoDiagsVersions();
     if (!trackedVersions.empty()) {
       VersionNumber ver = randomElement(trackedVersions);
       DIAG("randomAction: diag: checkSavedVersion(" << ver << ")");
@@ -744,7 +782,7 @@ void test_randomized()
 
     // Roll all remaining versions forward.
     std::set<VersionNumber> trackedVersions =
-      ddrh.m_recorder.getTrackedVersions();
+      ddrh.m_recorder.getNoDiagsVersions();
     for (VersionNumber ver : trackedVersions) {
       DIAG("checkSavedVersion(" << ver << ")");
       ddrh.checkSavedVersion(ver);

@@ -177,6 +177,7 @@ TextDocumentObservationRecorder::VersionDetails::VersionDetails(
   VersionDetails &&obj)
   : MDMEMB(m_versionNumber),
     MDMEMB(m_numLines),
+    MDMEMB(m_hasDiagnostics),
     MDMEMB(m_changeSequence)
 {
   selfCheck();
@@ -187,6 +188,7 @@ TextDocumentObservationRecorder::VersionDetails::VersionDetails(
   VersionNumber versionNumber, int numLines)
   : IMEMBFP(versionNumber),
     IMEMBFP(numLines),
+    m_hasDiagnostics(false),
     m_changeSequence()
 {
   selfCheck();
@@ -204,6 +206,7 @@ TextDocumentObservationRecorder::VersionDetails::operator gdv::GDValue() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "VersionDetails"_sym);
   GDV_WRITE_MEMBER_SYM(m_versionNumber);
   GDV_WRITE_MEMBER_SYM(m_numLines);
+  GDV_WRITE_MEMBER_SYM(m_hasDiagnostics);
   GDV_WRITE_MEMBER_SYM(m_changeSequence);
   return m;
 }
@@ -227,12 +230,19 @@ TextDocumentObservationRecorder::TextDocumentObservationRecorder(
 
 void TextDocumentObservationRecorder::selfCheck() const
 {
+  bool isFirstElement = true;
+
   for (auto const &kv : m_versionToDetails) {
     VersionNumber vn = kv.first;
     VersionDetails const &details = kv.second;
 
     xassert(details.m_versionNumber == vn);
     details.selfCheck();
+
+    if (!isFirstElement) {
+      xassert(details.m_hasDiagnostics == false);
+    }
+    isFirstElement = false;
   }
 }
 
@@ -272,6 +282,18 @@ auto TextDocumentObservationRecorder::getEarliestVersion() const
 }
 
 
+bool TextDocumentObservationRecorder::earliestVersionHasDiagnostics() const
+{
+  if (m_versionToDetails.empty()) {
+    return false;
+  }
+  else {
+    auto it = m_versionToDetails.begin();
+    return (*it).second.m_hasDiagnostics;
+  }
+}
+
+
 bool TextDocumentObservationRecorder::isTracking(
   VersionNumber version) const
 {
@@ -283,6 +305,17 @@ auto TextDocumentObservationRecorder::getTrackedVersions() const
   -> std::set<VersionNumber>
 {
   return mapKeySet(m_versionToDetails);
+}
+
+
+auto TextDocumentObservationRecorder::getNoDiagsVersions() const
+  -> std::set<VersionNumber>
+{
+  std::set<VersionNumber> ret = getTrackedVersions();
+  if (earliestVersionHasDiagnostics()) {
+    ret.erase(ret.begin());
+  }
+  return ret;
 }
 
 
@@ -311,7 +344,7 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   while (!m_versionToDetails.empty()) {
     auto it = m_versionToDetails.begin();
     VersionNumber trackedVersion = (*it).first;
-    VersionDetails const &details = (*it).second;
+    VersionDetails &details = (*it).second;
 
     if (trackedVersion < diagVersion) {
       // This version is older than what we care about; discard it.
@@ -329,6 +362,9 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
       // lines in case they have bogus data.
       TRACE1("Setting num lines to: " << details.m_numLines);
       diagnostics->setNumLinesAndAdjustAccordingly(details.m_numLines);
+
+      // These details are now the one that has diagnostics.
+      details.m_hasDiagnostics = true;
 
       break;
     }
@@ -351,20 +387,6 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
       obsPtr->applyChangeToDiagnostics(diagnostics);
     }
   }
-
-  // Discard the first element since we have no more need to replay
-  // changes from `diagVersion`, as the updated `diagnostics` will
-  // become the current diagnostics, and its origin version is at least
-  // as recent, so if new diagnostics arrive for that same version,
-  // we'll just discard them.
-  auto it = m_versionToDetails.begin();
-  xassert(it != m_versionToDetails.end());
-  xassert((*it).first == diagVersion);
-  m_versionToDetails.erase(diagVersion);
-
-  // Note: We do not discard all recorded changes since there could be
-  // another set of diagnostics, derived from a more recent version,
-  // still in flight right now.
 }
 
 
