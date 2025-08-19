@@ -175,7 +175,8 @@ TextDocumentObservationRecorder::VersionDetails::~VersionDetails()
 
 TextDocumentObservationRecorder::VersionDetails::VersionDetails(
   VersionDetails &&obj)
-  : MDMEMB(m_numLines),
+  : MDMEMB(m_versionNumber),
+    MDMEMB(m_numLines),
     MDMEMB(m_changeSequence)
 {
   selfCheck();
@@ -183,8 +184,9 @@ TextDocumentObservationRecorder::VersionDetails::VersionDetails(
 
 
 TextDocumentObservationRecorder::VersionDetails::VersionDetails(
-  int numLines)
-  : IMEMBFP(numLines),
+  VersionNumber versionNumber, int numLines)
+  : IMEMBFP(versionNumber),
+    IMEMBFP(numLines),
     m_changeSequence()
 {
   selfCheck();
@@ -200,6 +202,7 @@ void TextDocumentObservationRecorder::VersionDetails::selfCheck() const
 TextDocumentObservationRecorder::VersionDetails::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "VersionDetails"_sym);
+  GDV_WRITE_MEMBER_SYM(m_versionNumber);
   GDV_WRITE_MEMBER_SYM(m_numLines);
   GDV_WRITE_MEMBER_SYM(m_changeSequence);
   return m;
@@ -225,8 +228,10 @@ TextDocumentObservationRecorder::TextDocumentObservationRecorder(
 void TextDocumentObservationRecorder::selfCheck() const
 {
   for (auto const &kv : m_versionToDetails) {
+    VersionNumber vn = kv.first;
     VersionDetails const &details = kv.second;
 
+    xassert(details.m_versionNumber == vn);
     details.selfCheck();
   }
 }
@@ -286,7 +291,7 @@ void TextDocumentObservationRecorder::beginTracking(
 {
   if (!mapInsertMove(m_versionToDetails,
                      version,
-                     VersionDetails(numLines))) {
+                     VersionDetails(version, numLines))) {
     // This isn't a problem, but it is noteworthy.
     TRACE1("beginTracking: we are already waiting for version " <<
            version);

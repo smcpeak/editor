@@ -188,13 +188,16 @@ private:     // types
     void operator=(VersionDetails const &) = delete;
 
   public:      // data
+    // The version number this object describes.
+    VersionNumber const m_versionNumber;
+
     // Number of lines that were in the file for this version.  It is
     // non-negative.
     int const m_numLines;
 
-    // Changes that were applied to this document, since the version
-    // with which this object is associated was current, but before a
-    // later version started awaiting diagnostics.
+    // Changes that were applied to this document since
+    // `m_versionNumber` was current, but before a later version started
+    // being tracked.
     ChangeSequence m_changeSequence;
 
   public:
@@ -203,7 +206,7 @@ private:     // types
     VersionDetails(VersionDetails &&obj);
 
     // The sequence is initially empty.
-    explicit VersionDetails(int numLines);
+    explicit VersionDetails(VersionNumber versionNumber, int numLines);
 
     void selfCheck() const;
 
@@ -215,6 +218,10 @@ private:     // data
   TextDocumentCore const &m_document;
 
   // Map from document version number to its tracked details.
+  //
+  // Invariant: for all `vn`:
+  //   m_versionToDetails[vn].m_versionNumber == vn
+  //
   std::map<VersionNumber, VersionDetails> m_versionToDetails;
 
 private:     // methods
