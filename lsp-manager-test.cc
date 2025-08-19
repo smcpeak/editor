@@ -6,26 +6,36 @@
 
 #include "lsp-manager.h"               // module under test
 
+#include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "lsp-symbol-request-kind.h"   // LSPSymbolRequestKind
+#include "td-core.h"                   // TextDocumentCore
+#include "td-diagnostics.h"            // TextDocumentDiagnostics
+#include "td-obs-recorder.h"           // TextDocumentObservationRecorder
+#include "uri-util.h"                  // makeFileURI
 
 #include "smqtutil/qtutil.h"           // waitForQtEvent
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
+#include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // DIAG
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // stringVectorFromPointerArray
-#include "smbase/trace.h"              // TRACE_ARGS
 #include "smbase/xassert.h"            // xassert
 
+#include <memory>                      // std::unique_ptr
 #include <string>                      // std::string
 #include <vector>                      // std::vector
 
 
 using namespace gdv;
 using namespace smbase;
+
+
+INIT_TRACE("lsp-manager-test");
 
 
 LSPManagerTester::~LSPManagerTester()
@@ -44,8 +54,11 @@ LSPManagerTester::LSPManagerTester(
     m_params(params),
     m_done(false),
     m_failed(false),
-    m_declarationRequestID(0)
+    m_declarationRequestID(0),
+    m_doc()
 {
+  m_doc.replaceWholeFileString(m_params.m_fileContents);
+
   // I do not connect the signals here because the synchronous tests are
   // meant to run without using signals.
 }
@@ -74,8 +87,8 @@ void LSPManagerTester::sendDidOpen()
   m_lspManager.notify_textDocument_didOpen(
     m_params.m_fname,
     "cpp",
-    1,
-    std::string(m_params.m_fileContents));
+    m_doc.getVersionNumber(),
+    m_doc.getWholeFileString());
   DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
 
@@ -87,7 +100,8 @@ void LSPManagerTester::sendDidOpen()
 }
 
 
-void LSPManagerTester::takeDiagnostics()
+std::unique_ptr<LSP_PublishDiagnosticsParams>
+LSPManagerTester::takeDiagnostics()
 {
   std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
     m_lspManager.takePendingDiagnosticsFor(
@@ -97,6 +111,8 @@ void LSPManagerTester::takeDiagnostics()
   EXPECT_EQ(
     m_lspManager.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
     false);
+
+  return diags;
 }
 
 
@@ -159,7 +175,7 @@ void LSPManagerTester::testSynchronously()
 
   while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
     waitForQtEvent();
-    DIAG("Status: " << m_lspManager.checkStatus());
+    TRACE1("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
@@ -167,31 +183,121 @@ void LSPManagerTester::testSynchronously()
 
   while (!m_lspManager.hasPendingDiagnostics()) {
     waitForQtEvent();
-    DIAG("Status: " << m_lspManager.checkStatus());
+    TRACE1("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
-  takeDiagnostics();
+  std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
+    takeDiagnostics();
 
   sendDeclarationRequest();
 
   while (!m_lspManager.hasReplyForID(m_declarationRequestID)) {
     waitForQtEvent();
-    DIAG("Status: " << m_lspManager.checkStatus());
+    TRACE1("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
   takeDeclarationReply();
 
+  syncCheckDocumentContents();
+
+  // Experiment with incremental edits.
+  {
+    // Get the manager's view of the document.
+    RCSerf<LSPDocumentInfo const> docInfo =
+      m_lspManager.getDocInfo(m_params.m_fname);
+    xassert(docInfo->getLastSentContentsString() ==
+            m_doc.getWholeFileString());
+
+    // Set up a recorder for our copy.
+    TextDocumentObservationRecorder recorder(m_doc);
+    recorder.beginTrackingCurrentDoc();
+    recorder.applyChangesToDiagnostics(
+      convertLSPDiagsToTDD(diags.get()).get());
+    xassert(recorder.isTracking(m_doc.getVersionNumber()));
+
+    // Make a sample edit.
+    m_doc.insertText(TextMCoord(5, 0), "hello", 5);
+
+    // Get the recorded changes.
+    TextDocumentChangeObservationSequence const &recordedChanges =
+      recorder.getUnsentChanges();
+
+    // Convert changes to the LSP format and package them into a
+    // "didChange" params structure.
+    LSP_DidChangeTextDocumentParams changeParams(
+      LSP_VersionedTextDocumentIdentifier::fromFname(
+        m_params.m_fname, m_doc.getVersionNumber()),
+      convertRecordedChangesToLSPChanges(recordedChanges));
+
+    // Send them to the server, and have the manager update its copy.
+    m_lspManager.notify_textDocument_didChange(changeParams);
+
+    // Check the manager's copy.
+    xassert(docInfo->getLastSentContentsString() ==
+            m_doc.getWholeFileString());
+
+    // The recorder must also know this was sent.
+    recorder.beginTrackingCurrentDoc();
+
+    // Wait for the server to send diagnostics for the new version.
+    while (!m_lspManager.hasPendingDiagnostics()) {
+      waitForQtEvent();
+      TRACE1("Status: " << m_lspManager.checkStatus());
+      m_lspManager.selfCheck();
+    }
+
+    // Incorporate the reply.
+    diags = takeDiagnostics();
+    recorder.applyChangesToDiagnostics(
+      convertLSPDiagsToTDD(diags.get()).get());
+
+    // Now ask the server what it thinks the document looks like.
+    syncCheckDocumentContents();
+
+    // TODO: Do more edits.
+  }
+
   stopServer();
 
   while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
     waitForQtEvent();
-    DIAG("Status: " << m_lspManager.checkStatus());
+    TRACE1("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
   }
 
   acknowledgeShutdown();
+}
+
+
+void LSPManagerTester::syncCheckDocumentContents()
+{
+  DIAG("Sending getTextDocumentContents request");
+  GDValue params(GDVMap{
+    { "textDocument", GDVMap {
+      { "uri", makeFileURI(m_params.m_fname) },
+      { "version", m_doc.getVersionNumber() },
+    }},
+  });
+  int id = m_lspManager.sendRequest(
+    "$/getTextDocumentContents", params);
+
+  // Wait for the reply.
+  DIAG("Waiting for getTextDocumentContents reply, id=" << id);
+  while (!m_lspManager.hasReplyForID(id)) {
+    waitForQtEvent();
+    TRACE1("Status: " << m_lspManager.checkStatus());
+    m_lspManager.selfCheck();
+  }
+
+  GDValue reply = m_lspManager.takeReplyForID(id);
+
+  std::string text = reply.mapGetValueAt("text").stringGet();
+  xassert(text == m_doc.getWholeFileString());
+
+  int version = reply.mapGetValueAt("version").smallIntegerGet();
+  xassert(version == safeToInt(m_doc.getVersionNumber()));
 }
 
 
@@ -327,14 +433,19 @@ void test_lsp_manager(CmdlineArgsSpan args)
   LSPTestRequestParams params =
     LSPTestRequestParams::getFromCmdLine(args);
 
-  DIAG("-------- synchronous --------");
+  VPVAL(params.m_fname);
+  VPVAL(params.m_line);
+  VPVAL(params.m_col);
+  VPVAL(params.m_useRealClangd);
+
   {
+    DIAG("-------- synchronous --------");
     LSPManagerTester tester(params, &std::cout);
     tester.testSynchronously();
   }
 
-  DIAG("-------- asynchronous --------");
-  {
+  if (!envAsBool("SYNC_ONLY")) {
+    DIAG("-------- asynchronous --------");
     LSPManagerTester tester(params, &std::cout);
     tester.testAsynchronously();
   }

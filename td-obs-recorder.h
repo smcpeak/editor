@@ -19,16 +19,31 @@
 
 #include <map>                         // std::map
 #include <memory>                      // std::unique_ptr
+#include <optional>                    // std::optional
 #include <vector>                      // std::vector
 
 
 // A record of one of the changes that can be observed via the
 // `TextDocumentObserver` interface.
 class TextDocumentChangeObservation {
+public:      // types
+  // Enumeration of all concrete `TextDocumentChangeObservation`
+  // subclasses.
+  enum ObsKind {
+    OK_INSERT_LINE,
+    OK_DELETE_LINE,
+    OK_INSERT_TEXT,
+    OK_DELETE_TEXT,
+    OK_TOTAL_CHANGE
+  };
+
 public:      // methods
   virtual ~TextDocumentChangeObservation();
 
   explicit TextDocumentChangeObservation();
+
+  // Specific subclass.
+  virtual ObsKind kind() const = 0;
 
   // Apply the change recored in this object to `diagnostics`.
   virtual void applyChangeToDiagnostics(
@@ -41,14 +56,22 @@ public:      // methods
 
 // Records `observeInsertLine`.
 class TDCO_InsertLine : public TextDocumentChangeObservation {
-private:     // data
+public:      // data
   // Observer method arguments.
   int m_line;
+
+  // If set, then `m_line` is to become the new last line in the
+  // document.  In order to express this as a range replacement, we need
+  // to know the length of the previous line in bytes.
+  std::optional<int> m_prevLineBytes;
 
 public:      // methods
   virtual ~TDCO_InsertLine() override;
 
-  explicit TDCO_InsertLine(int line);
+  explicit TDCO_InsertLine(int line, std::optional<int> prevLineBytes);
+
+  virtual ObsKind kind() const override
+    { return OK_INSERT_LINE; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -58,14 +81,22 @@ public:      // methods
 
 // Records `observeDeleteLine`.
 class TDCO_DeleteLine : public TextDocumentChangeObservation {
-private:     // data
+public:      // data
   // Observer method arguments.
   int m_line;
+
+  // If set, then `m_line` is the last line in the document.  In order
+  // to express this deletion as a range replacement, we need to know
+  // the length of the previous line in bytes.
+  std::optional<int> m_prevLineBytes;
 
 public:      // methods
   virtual ~TDCO_DeleteLine() override;
 
-  explicit TDCO_DeleteLine(int line);
+  explicit TDCO_DeleteLine(int line, std::optional<int> prevLineBytes);
+
+  virtual ObsKind kind() const override
+    { return OK_DELETE_LINE; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -75,13 +106,14 @@ public:      // methods
 
 // Records `observeInsertText`.
 class TDCO_InsertText : public TextDocumentChangeObservation {
-private:     // data
+public:      // data
   // Observer method arguments.
   TextMCoord m_tc;
 
-  // Although not needed for replaying to diagnostics, I'll keep a copy
-  // of the text in case I want to use this for something else.  The
-  // length of `m_text` is the original `lengthBytes` argument.
+  // Although not needed for replaying to diagnostics, this is needed
+  // for incremental content update for LSP.
+  //
+  // The length of `m_text` is the original `lengthBytes` argument.
   std::string m_text;
 
 public:      // methods
@@ -89,6 +121,9 @@ public:      // methods
 
   explicit TDCO_InsertText(
     TextMCoord tc, char const *text, int lengthBytes);
+
+  virtual ObsKind kind() const override
+    { return OK_INSERT_TEXT; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -98,7 +133,7 @@ public:      // methods
 
 // Records `observeDeleteText`.
 class TDCO_DeleteText : public TextDocumentChangeObservation {
-private:     // data
+public:      // data
   // Observer method arguments.
   TextMCoord m_tc;
   int m_lengthBytes;
@@ -109,6 +144,9 @@ public:      // methods
   explicit TDCO_DeleteText(
     TextMCoord tc, int lengthBytes);
 
+  virtual ObsKind kind() const override
+    { return OK_DELETE_TEXT; }
+
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
@@ -117,18 +155,48 @@ public:      // methods
 
 // Records `observeTotalChange`.
 class TDCO_TotalChange : public TextDocumentChangeObservation {
-private:     // data
+public:      // data
   // Number of lines in the document after the change.
   int m_numLines;
+
+  // Full contents.
+  std::string m_contents;
 
 public:      // methods
   virtual ~TDCO_TotalChange() override;
 
-  explicit TDCO_TotalChange(int m_numLines);
+  explicit TDCO_TotalChange(int m_numLines, std::string &&contents);
+
+  virtual ObsKind kind() const override
+    { return OK_TOTAL_CHANGE; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
+};
+
+
+// Sequence of changes.
+class TextDocumentChangeObservationSequence {
+  NO_OBJECT_COPIES(TextDocumentChangeObservationSequence);
+
+public:      // data
+  // A sequence of changes that were applied to the document in the
+  // order they happened.
+  std::vector<std::unique_ptr<TextDocumentChangeObservation>>
+    m_seq;
+
+public:
+  ~TextDocumentChangeObservationSequence();
+
+  // Initially empty sequence.
+  TextDocumentChangeObservationSequence();
+
+  TextDocumentChangeObservationSequence(TextDocumentChangeObservationSequence &&obj);
+
+  std::size_t size() const;
+
+  operator gdv::GDValue() const;
 };
 
 
@@ -176,18 +244,13 @@ public:      // methods
    changes associated with it.
 */
 class TextDocumentObservationRecorder : public TextDocumentObserver {
-private:     // types
+public:      // types
   typedef TextDocumentCore::VersionNumber VersionNumber;
 
-  // A sequence of changes that were applied to the document in the
-  // order they happened.
-  typedef std::vector<std::unique_ptr<TextDocumentChangeObservation>>
-    ChangeSequence;
-
+private:     // types
   // Data associated with a document version.
   class VersionDetails {
-    // Not needed, and would conflict with `const` members.
-    void operator=(VersionDetails const &) = delete;
+    NO_OBJECT_COPIES(VersionDetails);
 
   public:      // data
     // The version number this object describes.
@@ -210,7 +273,7 @@ private:     // types
     // Changes that were applied to this document since
     // `m_versionNumber` was current, but before a later version started
     // being tracked.
-    ChangeSequence m_changeSequence;
+    TextDocumentChangeObservationSequence m_changeSequence;
 
   public:
     ~VersionDetails();
@@ -240,9 +303,15 @@ private:     // data
   std::map<VersionNumber, VersionDetails> m_versionToDetails;
 
 private:     // methods
+  // Get the most recent tracked version.
+  //
+  // Requires: trackingSomething()
+  VersionDetails const &getLastTrackedVersionC() const;
+  VersionDetails &getLastTrackedVersion();
+
   // Append `observation` to the latest tracked version.
   //
-  // Requires `trackingSomething()`.
+  // Requires: trackingSomething()
   void addObservation(
     stdfwd::unique_ptr<TextDocumentChangeObservation> observation);
 
@@ -284,6 +353,11 @@ public:      // methods
   // `numLines` lines.
   void beginTracking(VersionNumber version, int numLines);
 
+  // Begin tracking with details from `m_document`.
+  //
+  // TODO: Do I need the other `beginTracking`?
+  void beginTrackingCurrentDoc();
+
   // Apply the changes we recorded to `diagnostics`.  Discard the
   // information for its version and all earlier ones.
   //
@@ -293,6 +367,12 @@ public:      // methods
   //
   // Requires: isTracking(diagnostics->getOriginVersion())
   void applyChangesToDiagnostics(TextDocumentDiagnostics *diagnostics);
+
+  // Return the sequence of changes that have been observed but not yet
+  // sent to the server.
+  //
+  // Requires: trackingSomething()
+  TextDocumentChangeObservationSequence const &getUnsentChanges() const;
 
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &doc, int line) noexcept override;

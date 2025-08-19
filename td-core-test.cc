@@ -134,6 +134,7 @@ void testVarious()
   EXPECT_EQ(tdc.endCoord(), TextMCoord(0,0));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 0);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
+  EXPECT_EQ(tdc.getWholeFileString(), "");
   fullSelfCheck(tdc);
 
   CHECK_VER_SAME(tdc, vnum);
@@ -156,6 +157,14 @@ void testVarious()
   CHECK_VER_DIFF(tdc, vnum);
   insText(tdc, 6,0, "      ");
   CHECK_VER_DIFF(tdc, vnum);
+  EXPECT_EQ(tdc.getWholeFileString(),
+    "one\n"
+    "  two\n"
+    "three   \n"
+    "    four    \n"
+    "     \n"
+    "\n"
+    "      ");
 
   EXPECT_EQ(tdc.numLines(), 7);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 7);
@@ -557,6 +566,75 @@ void test_adjustMCoord()
 }
 
 
+void test_wholeFileString()
+{
+  TextDocumentCore doc;
+  std::string str = "a\nb\nc";
+  doc.replaceWholeFileString(str);
+  EXPECT_EQ(doc.getWholeFileString(), str);
+}
+
+
+void testOne_replaceMultilineRange(
+  TextDocumentCore &doc,
+  int startLine,
+  int startByteIndex,
+  int endLine,
+  int endByteIndex,
+  char const *text,
+  char const *expect)
+{
+  TEST_CASE_EXPRS("testOne_replaceMultilineRange",
+    startLine,
+    startByteIndex,
+    endLine,
+    endByteIndex,
+    text);
+
+  doc.replaceMultilineRange(
+    TextMCoordRange(
+      TextMCoord(startLine, startByteIndex),
+      TextMCoord(endLine, endByteIndex)),
+    text);
+  EXPECT_EQ(doc.getWholeFileString(), expect);
+}
+
+
+void test_replaceMultilineRange()
+{
+  TextDocumentCore doc;
+  EXPECT_EQ(doc.getWholeFileString(), "");
+
+  testOne_replaceMultilineRange(doc, 0,0,0,0, "zero\none\n",
+    "zero\n"
+    "one\n");
+
+  testOne_replaceMultilineRange(doc, 2,0,2,0, "two\nthree\n",
+    "zero\n"
+    "one\n"
+    "two\n"
+    "three\n");
+
+  testOne_replaceMultilineRange(doc, 1,1,2,2, "XXXX\nYYYY",
+    "zero\n"
+    "oXXXX\n"
+    "YYYYo\n"
+    "three\n");
+
+  testOne_replaceMultilineRange(doc, 0,4,3,0, "",
+    "zerothree\n");
+
+  testOne_replaceMultilineRange(doc, 0,9,1,0, "",
+    "zerothree");
+
+  testOne_replaceMultilineRange(doc, 0,2,0,3, "0\n1\n2\n3",
+    "ze0\n"
+    "1\n"
+    "2\n"
+    "3othree");
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -569,6 +647,8 @@ void test_td_core(CmdlineArgsSpan args)
   testVarious();
   testWalkCoordBytes();
   test_adjustMCoord();
+  test_wholeFileString();
+  test_replaceMultilineRange();
 }
 
 

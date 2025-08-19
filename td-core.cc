@@ -4,13 +4,15 @@
 #include "td-core.h"                   // this module
 
 #include "gap-gdvalue.h"               // toGDValue(GapArray)
+#include "history.h"                   // HE_text
 
 // smbase
 #include "smbase/array.h"              // Array
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/objcount.h"           // CheckObjectCount
-#include "smbase/overflow.h"           // preIncrementWithOverflowCheck
+#include "smbase/overflow.h"           // preIncrementWithOverflowCheck, safeToInt
 #include "smbase/sm-test.h"            // USUAL_MAIN, PVAL
+#include "smbase/string-util.h"        // vectorOfUCharToString, stringToVectorOfUChar
 #include "smbase/strutil.h"            // encodeWithEscapes
 #include "smbase/syserr.h"             // xsyserror
 
@@ -456,6 +458,37 @@ void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
 }
 
 
+void TextDocumentCore::replaceMultilineRange(
+  TextMCoordRange const &range, std::string const &text)
+{
+  xassertPrecondition(validRange(range));
+
+  if (int deletionByteCount = countBytesInRange(range)) {
+    // This is what `TextDocument::deleteAt` does, in essence.
+    HE_text elt(range.m_start,
+                false /*insertion*/,
+                NULL /*text*/, 0 /*textLen*/);
+
+    // This step is a bit wasteful because we make a copy of the text we
+    // are about to delete (since `HE_text` is part of the undo/redo
+    // mechanism), when all we really need is the count.  (But we cannot
+    // skip this call because the `apply` call gets its byte count from
+    // the copy made here.)
+    elt.computeText(*this, deletionByteCount);
+
+    elt.apply(*this, false /*reverse*/);
+  }
+
+  if (int insertionByteCount = safeToInt(text.size())) {
+    // This is what `TextDocument::insertAt` does.
+    HE_text elt(range.m_start,
+                true /*insertion*/,
+                text.data(), insertionByteCount);
+    elt.apply(*this, false /*reverse*/);
+  }
+}
+
+
 void TextDocumentCore::dumpRepresentation() const
 {
   printf("-- td-core --\n");
@@ -621,6 +654,18 @@ std::vector<unsigned char> TextDocumentCore::getWholeFile() const
   }
 
   return fileBytes;
+}
+
+
+std::string TextDocumentCore::getWholeFileString() const
+{
+  return vectorOfUCharToString(getWholeFile());
+}
+
+
+void TextDocumentCore::replaceWholeFileString(std::string const &str)
+{
+  replaceWholeFile(stringToVectorOfUChar(str));
 }
 
 

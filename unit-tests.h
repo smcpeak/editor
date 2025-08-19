@@ -25,6 +25,7 @@ void test_gap(CmdlineArgsSpan args);
 void test_hashcomment_hilite(CmdlineArgsSpan args);
 void test_justify(CmdlineArgsSpan args);
 void test_lsp_client(CmdlineArgsSpan args);
+void test_lsp_conv(CmdlineArgsSpan args);
 void test_lsp_data(CmdlineArgsSpan args);
 void test_lsp_manager(CmdlineArgsSpan args);
 void test_makefile_hilite(CmdlineArgsSpan args);

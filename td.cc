@@ -3,6 +3,8 @@
 
 #include "td.h"                        // this module
 
+#include "history.h"                   // HE_text
+
 // smbase
 #include "smbase/chained-cond.h"       // smbase:cc::{le_le, z_le_le}
 #include "smbase/gdvalue.h"            // gdv::GDValue

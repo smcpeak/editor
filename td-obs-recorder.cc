@@ -6,6 +6,7 @@
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 #include "smbase/exc.h"                // GENERIC_CATCH_{BEGIN,END}
+#include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -42,8 +43,10 @@ TDCO_InsertLine::~TDCO_InsertLine()
 {}
 
 
-TDCO_InsertLine::TDCO_InsertLine(int line)
-  : IMEMBFP(line)
+TDCO_InsertLine::TDCO_InsertLine(
+  int line, std::optional<int> prevLineBytes)
+  : IMEMBFP(line),
+    IMEMBFP(prevLineBytes)
 {}
 
 
@@ -58,6 +61,7 @@ TDCO_InsertLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertLine"_sym);
   GDV_WRITE_MEMBER_SYM(m_line);
+  GDV_WRITE_MEMBER_SYM(m_prevLineBytes);
   return m;
 }
 
@@ -67,8 +71,10 @@ TDCO_DeleteLine::~TDCO_DeleteLine()
 {}
 
 
-TDCO_DeleteLine::TDCO_DeleteLine(int line)
-  : IMEMBFP(line)
+TDCO_DeleteLine::TDCO_DeleteLine(
+  int line, std::optional<int> prevLineBytes)
+  : IMEMBFP(line),
+    IMEMBFP(prevLineBytes)
 {}
 
 
@@ -83,6 +89,7 @@ TDCO_DeleteLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "DeleteLine"_sym);
   GDV_WRITE_MEMBER_SYM(m_line);
+  GDV_WRITE_MEMBER_SYM(m_prevLineBytes);
   return m;
 }
 
@@ -148,8 +155,9 @@ TDCO_TotalChange::~TDCO_TotalChange()
 {}
 
 
-TDCO_TotalChange::TDCO_TotalChange(int numLines)
-  : IMEMBFP(numLines)
+TDCO_TotalChange::TDCO_TotalChange(int numLines, std::string &&contents)
+  : IMEMBFP(numLines),
+    IMEMBMFP(contents)
 {}
 
 
@@ -164,6 +172,7 @@ TDCO_TotalChange::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "TotalChange"_sym);
   GDV_WRITE_MEMBER_SYM(m_numLines);
+  GDV_WRITE_MEMBER_SYM(m_contents);
   return m;
 }
 
@@ -209,6 +218,34 @@ TextDocumentObservationRecorder::VersionDetails::operator gdv::GDValue() const
   GDV_WRITE_MEMBER_SYM(m_hasDiagnostics);
   GDV_WRITE_MEMBER_SYM(m_changeSequence);
   return m;
+}
+
+
+// --------------- TextDocumentChangeObservationSequence ---------------
+TextDocumentChangeObservationSequence::~TextDocumentChangeObservationSequence()
+{}
+
+
+TextDocumentChangeObservationSequence::TextDocumentChangeObservationSequence()
+  : m_seq()
+{}
+
+
+TextDocumentChangeObservationSequence::TextDocumentChangeObservationSequence(
+  TextDocumentChangeObservationSequence &&obj)
+  : MDMEMB(m_seq)
+{}
+
+
+std::size_t TextDocumentChangeObservationSequence::size() const
+{
+  return m_seq.size();
+}
+
+
+TextDocumentChangeObservationSequence::operator gdv::GDValue() const
+{
+  return toGDValue(m_seq);
 }
 
 
@@ -332,6 +369,12 @@ void TextDocumentObservationRecorder::beginTracking(
 }
 
 
+void TextDocumentObservationRecorder::beginTrackingCurrentDoc()
+{
+  beginTracking(m_document.getVersionNumber(), m_document.numLines());
+}
+
+
 void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   TextDocumentDiagnostics *diagnostics)
 {
@@ -383,24 +426,45 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
 
     // Walk the sequence, applying changes in order.
     for (std::unique_ptr<TextDocumentChangeObservation> const &obsPtr :
-           details.m_changeSequence) {
+           details.m_changeSequence.m_seq) {
       obsPtr->applyChangeToDiagnostics(diagnostics);
     }
   }
 }
 
 
-void TextDocumentObservationRecorder::addObservation(
-  std::unique_ptr<TextDocumentChangeObservation> observation)
+auto TextDocumentObservationRecorder::getLastTrackedVersionC() const
+  -> VersionDetails const &
 {
   xassertPrecondition(trackingSomething());
 
-  // Get the *last* version we are tracking.
+  // Get last entry.
   auto it = m_versionToDetails.rbegin();
   xassert(it != m_versionToDetails.rend());
+  return (*it).second;
+}
 
-  // Append the record to that version.
-  (*it).second.m_changeSequence.push_back(std::move(observation));
+
+auto TextDocumentObservationRecorder::getLastTrackedVersion()
+  -> VersionDetails &
+{
+  return const_cast<VersionDetails &>(getLastTrackedVersionC());
+}
+
+
+TextDocumentChangeObservationSequence const &
+TextDocumentObservationRecorder::getUnsentChanges() const
+{
+  return getLastTrackedVersionC().m_changeSequence;
+}
+
+
+void TextDocumentObservationRecorder::addObservation(
+  std::unique_ptr<TextDocumentChangeObservation> observation)
+{
+  // Append the record to the last version.
+  getLastTrackedVersion().
+    m_changeSequence.m_seq.push_back(std::move(observation));
 }
 
 
@@ -408,9 +472,19 @@ void TextDocumentObservationRecorder::observeInsertLine(
   TextDocumentCore const &doc, int line) noexcept
 {
   GENERIC_CATCH_BEGIN
+
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_InsertLine>(line));
+    std::optional<int> prevLineBytes;
+    if (line == doc.numLines() - 1) {
+      // We just inserted a new last line.  (`doc` already has the
+      // change applied to it).
+      prevLineBytes = doc.lineLengthBytes(line-1);
+    }
+
+    addObservation(
+      std::make_unique<TDCO_InsertLine>(line, prevLineBytes));
   }
+
   GENERIC_CATCH_END
 }
 
@@ -419,9 +493,18 @@ void TextDocumentObservationRecorder::observeDeleteLine(
   TextDocumentCore const &doc, int line) noexcept
 {
   GENERIC_CATCH_BEGIN
+
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_DeleteLine>(line));
+    std::optional<int> prevLineBytes;
+    if (line == doc.numLines()) {
+      // We just deleted the last line.
+      prevLineBytes = doc.lineLengthBytes(line-1);
+    }
+
+    addObservation(
+      std::make_unique<TDCO_DeleteLine>(line, prevLineBytes));
   }
+
   GENERIC_CATCH_END
 }
 
@@ -453,7 +536,9 @@ void TextDocumentObservationRecorder::observeTotalChange(
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_TotalChange>(doc.numLines()));
+    addObservation(std::make_unique<TDCO_TotalChange>(
+      doc.numLines(),
+      doc.getWholeFileString()));
   }
   GENERIC_CATCH_END
 }

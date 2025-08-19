@@ -6,6 +6,8 @@
 #include "command-runner.h"                      // CommandRunner
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                          // LSPClient
+#include "lsp-conv.h"                            // applyLSPDocumentChanges
+#include "td-core.h"                             // TextDocumentCore
 #include "uri-util.h"                            // makeFileURI, getFileURIPath
 
 #include "smqtutil/qtutil.h"                     // toString(QString)
@@ -102,13 +104,15 @@ LSPDocumentInfo::~LSPDocumentInfo()
 LSPDocumentInfo::LSPDocumentInfo(
   std::string const &fname,
   int lastSentVersion,
-  std::string &&lastSentContents)
+  std::string const &lastSentContentsString)
   : IMEMBFP(fname),
     IMEMBFP(lastSentVersion),
-    IMEMBMFP(lastSentContents),
+    m_lastSentContents(new TextDocumentCore),
     m_waitingForDiagnostics(false),
     m_pendingDiagnostics()
 {
+  m_lastSentContents->replaceWholeFileString(lastSentContentsString);
+
   selfCheck();
 }
 
@@ -127,6 +131,7 @@ LSPDocumentInfo::LSPDocumentInfo(LSPDocumentInfo &&obj)
 void LSPDocumentInfo::selfCheck() const
 {
   xassert(isValidLSPPath(m_fname));
+  xassert(m_lastSentContents != nullptr);
 }
 
 
@@ -135,7 +140,7 @@ LSPDocumentInfo::operator gdv::GDValue() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "LSPDocumentInfo"_sym);
   GDV_WRITE_MEMBER_SYM(m_fname);
   GDV_WRITE_MEMBER_SYM(m_lastSentVersion);
-  m.mapSetValueAtSym("lastSentContents_len", m_lastSentContents.size());
+  m.mapSetValueAtSym("lastSentContents_numLines", m_lastSentContents->numLines());
   GDV_WRITE_MEMBER_SYM(m_waitingForDiagnostics);
   m.mapSetValueAtSym("hasPendingDiagnostics", !!m_pendingDiagnostics);
   return m;
@@ -145,6 +150,20 @@ LSPDocumentInfo::operator gdv::GDValue() const
 bool LSPDocumentInfo::hasPendingDiagnostics() const
 {
   return !!m_pendingDiagnostics;
+}
+
+
+std::string LSPDocumentInfo::getLastSentContentsString() const
+{
+  return m_lastSentContents->getWholeFileString();
+}
+
+
+bool LSPDocumentInfo::lastContentsEquals(TextDocumentCore const &doc) const
+{
+  // TODO: Make this more efficient.
+  return getLastSentContentsString() ==
+         doc.getWholeFileString();
 }
 
 
@@ -839,7 +858,7 @@ void LSPManager::notify_textDocument_didOpen(
 
   // `emplace` would be better here, but GCC rejects (Clang accepts).
   m_documentInfo.insert(std::make_pair(fname,
-    LSPDocumentInfo(fname, version, std::move(contents))));
+    LSPDocumentInfo(fname, version, contents)));
 
   //m_documentInfo.emplace(fname,
   //  fname, version, std::move(contents));
@@ -850,38 +869,44 @@ void LSPManager::notify_textDocument_didOpen(
 
 
 void LSPManager::notify_textDocument_didChange(
+  LSP_DidChangeTextDocumentParams const &params)
+{
+  xassertPrecondition(isRunningNormally());
+
+  std::string fname = params.getFname();
+  xassertPrecondition(isFileOpen(fname));
+
+  TRACE1("Sending didChange for " << toGDValue(params.m_textDocument));
+
+  m_lsp->sendNotification("textDocument/didChange", toGDValue(params));
+
+  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
+
+  applyLSPDocumentChanges(params, *docInfo.m_lastSentContents);
+
+  docInfo.m_lastSentVersion = params.m_textDocument.m_version;
+  docInfo.m_waitingForDiagnostics = true;
+}
+
+
+void LSPManager::notify_textDocument_didChange_all(
   std::string const &fname,
   int version,
   std::string &&contents)
 {
-  xassertPrecondition(isRunningNormally());
-  xassertPrecondition(isFileOpen(fname));
+  std::list<LSP_TextDocumentContentChangeEvent> changes;
+  std::optional<LSP_Range> noRange;
+  changes.push_back(LSP_TextDocumentContentChangeEvent(
+    std::move(noRange),
+    std::move(contents)));
 
-  TRACE1("Sending didChange for " << doubleQuote(fname) <<
-         " with updated version " << version << ".");
+  LSP_DidChangeTextDocumentParams params(
+    LSP_VersionedTextDocumentIdentifier::fromFname(
+      fname,
+      version),
+    std::move(changes));
 
-  m_lsp->sendNotification("textDocument/didChange", GDVMap{
-    {
-      "textDocument",
-      GDVMap{
-        { "uri", makeFileURI(fname) },
-        { "version", version },
-      }
-    },
-    {
-      "contentChanges",
-      GDVSequence{
-        GDVMap{
-          { "text", GDValue(contents /*copy*/) },
-        },
-      },
-    },
-  });
-
-  LSPDocumentInfo &docInfo = mapGetValueAt(m_documentInfo, fname);
-  docInfo.m_lastSentVersion = version;
-  docInfo.m_lastSentContents = std::move(contents);
-  docInfo.m_waitingForDiagnostics = true;
+  notify_textDocument_didChange(std::move(params));
 }
 
 
@@ -969,10 +994,7 @@ int LSPManager::requestRelatedLocation(
 
   char const *requestName = toRequestName(lsrk);
 
-  TRACE1("Sending " << requestName <<
-         " request for " << position << " in " <<
-         doubleQuote(fname) << ".");
-  return m_lsp->sendRequest(requestName, GDVMap{
+  return sendRequest(requestName, GDVMap{
     {
       "textDocument",
       GDVMap{
@@ -990,6 +1012,18 @@ int LSPManager::requestRelatedLocation(
 }
 
 
+int LSPManager::sendRequest(
+  std::string const &method,
+  gdv::GDValue const &params)
+{
+  xassertPrecondition(isRunningNormally());
+
+  TRACE1("Sending request " << doubleQuote(method) <<
+         ": " << params.asIndentedString());
+  return m_lsp->sendRequest(method, params);
+}
+
+
 bool LSPManager::hasReplyForID(int id) const
 {
   xassertPrecondition(isRunningNormally());
@@ -1001,7 +1035,11 @@ gdv::GDValue LSPManager::takeReplyForID(int id)
 {
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(hasReplyForID(id));
-  return m_lsp->takeReplyForID(id);
+
+  GDValue ret = m_lsp->takeReplyForID(id);
+  TRACE2("reply " << id << ": " << ret.asIndentedString());
+
+  return ret;
 }
 
 

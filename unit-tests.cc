@@ -65,6 +65,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(hashcomment_hilite);
   RUN_TEST(justify);
   RUN_TEST(lsp_client);
+  RUN_TEST(lsp_conv);
   RUN_TEST(lsp_data);
   RUN_TEST(lsp_manager);
   RUN_TEST(makefile_hilite);

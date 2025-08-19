@@ -2703,13 +2703,13 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
       lspManager()->getDocInfo(fname);
     xassert(docInfo);
 
-    if (*version == docInfo->m_lastSentVersion ||
-        contents == docInfo->m_lastSentContents) {
+    if (docInfo->m_lastSentVersion == *version ||
+        docInfo->lastContentsEquals(ntd->getCore())) {
       TRACE1("LSP: While updating " << doubleQuote(fname) <<
              ": previous version is " << docInfo->m_lastSentVersion <<
              ", new version is " << *version <<
              ", and contents are " <<
-             (contents == docInfo->m_lastSentContents? "" : "NOT ") <<
+             (docInfo->lastContentsEquals(ntd->getCore())? "" : "NOT ") <<
              "the same; bumping to force re-analysis.");
 
       // We want to re-send despite no content changes, for example
@@ -2749,7 +2749,8 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
       return;
     }
 
-    lspManager()->notify_textDocument_didChange(
+    // TODO: Use incremental update here.
+    lspManager()->notify_textDocument_didChange_all(
       fname, *version, std::move(contents));
     ntd->beginTrackingChangesForFutureDiagnostics();
   }

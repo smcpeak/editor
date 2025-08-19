@@ -6,6 +6,8 @@
 #ifndef EDITOR_LSP_MANAGER_TEST_H
 #define EDITOR_LSP_MANAGER_TEST_H
 
+#include "td-core.h"                   // TextDocumentCore
+#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "lsp-manager.h"               // LSPManager
 #include "lsp-test-request-params.h"   // LSPTestRequestParams
 
@@ -15,6 +17,7 @@
 #include <QObject>
 
 #include <iosfwd>                      // std::ostream
+#include <memory>                      // std::unique_ptr
 
 
 // Test harness for `LSPManager`.  Also serves as the recipients for its
@@ -38,6 +41,10 @@ public:      // data
   // If non-zero, the ID of the `declaration` request we sent.
   int m_declarationRequestID;
 
+  // The document we will simulate editing and exchanging with the
+  // server.
+  TextDocumentCore m_doc;
+
 public:      // methods
   ~LSPManagerTester();
 
@@ -52,7 +59,7 @@ public:      // methods
   void sendDidOpen();
 
   // Dequeue pending diagnostics.
-  void takeDiagnostics();
+  std::unique_ptr<LSP_PublishDiagnosticsParams> takeDiagnostics();
 
   // Send "textDocument/declaration" request.
   void sendDeclarationRequest();
@@ -68,6 +75,10 @@ public:      // methods
 
   // Run the tests using explicit (but not busy) wait loops.
   void testSynchronously();
+
+  // Synchronously check that the server agrees about the document
+  // contents.
+  void syncCheckDocumentContents();
 
   // Dis/connect signals to `m_lspManager`.
   void connectSignals();

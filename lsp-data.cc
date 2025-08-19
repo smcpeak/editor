@@ -3,6 +3,8 @@
 
 #include "lsp-data.h"                  // this module
 
+#include "uri-util.h"                  // makeFileURI, getFileURIPath
+
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS, smbase::compare
 #include "smbase/gdvalue-list.h"       // gdv::gdvTo<std::list>
 #include "smbase/gdvalue-optional.h"   // gdv::gdvTo<std::optional>
@@ -25,18 +27,23 @@ using namespace smbase;
 /*AUTO_CTC*/   int character)
 /*AUTO_CTC*/   : IMEMBFP(line),
 /*AUTO_CTC*/     IMEMBFP(character)
-/*AUTO_CTC*/ {}
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   selfCheck();
+/*AUTO_CTC*/ }
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Position::LSP_Position(LSP_Position const &obj) noexcept
 /*AUTO_CTC*/   : DMEMB(m_line),
 /*AUTO_CTC*/     DMEMB(m_character)
-/*AUTO_CTC*/ {}
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   selfCheck();
+/*AUTO_CTC*/ }
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Position &LSP_Position::operator=(LSP_Position const &obj) noexcept
 /*AUTO_CTC*/ {
 /*AUTO_CTC*/   if (this != &obj) {
 /*AUTO_CTC*/     CMEMB(m_line);
 /*AUTO_CTC*/     CMEMB(m_character);
+/*AUTO_CTC*/     selfCheck();
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
 /*AUTO_CTC*/ }
@@ -71,6 +78,13 @@ using namespace smbase;
 /*AUTO_CTC*/
 
 
+void LSP_Position::selfCheck() const
+{
+  xassert(m_line >= 0);
+  xassert(m_character >= 0);
+}
+
+
 LSP_Position::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
@@ -85,7 +99,15 @@ LSP_Position::operator gdv::GDValue() const
 LSP_Position::LSP_Position(gdv::GDValueParser const &p)
   : GDVP_READ_MEMBER_STR(m_line),
     GDVP_READ_MEMBER_STR(m_character)
-{}
+{
+  selfCheck();
+}
+
+
+LSP_Position LSP_Position::plusCharacters(int n) const
+{
+  return LSP_Position(m_line, m_character + n);
+}
 
 
 // ----------------------------- LSP_Range -----------------------------
@@ -594,6 +616,199 @@ LSP_CompletionList::LSP_CompletionList(gdv::GDValueParser const &p)
   : GDVP_READ_MEMBER_STR(m_isIncomplete),
     GDVP_READ_MEMBER_STR(m_items)
 {}
+
+
+// ------------------------ LSP_VersionedTextDocumentIdentifier -------------------------
+// create-tuple-class: definitions for LSP_VersionedTextDocumentIdentifier
+/*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(
+/*AUTO_CTC*/   std::string const &uri,
+/*AUTO_CTC*/   LSP_VersionNumber const &version)
+/*AUTO_CTC*/   : IMEMBFP(uri),
+/*AUTO_CTC*/     IMEMBFP(version)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(
+/*AUTO_CTC*/   std::string &&uri,
+/*AUTO_CTC*/   LSP_VersionNumber &&version)
+/*AUTO_CTC*/   : IMEMBMFP(uri),
+/*AUTO_CTC*/     IMEMBMFP(version)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(LSP_VersionedTextDocumentIdentifier const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_uri),
+/*AUTO_CTC*/     DMEMB(m_version)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(LSP_VersionedTextDocumentIdentifier &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_uri),
+/*AUTO_CTC*/     MDMEMB(m_version)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier &LSP_VersionedTextDocumentIdentifier::operator=(LSP_VersionedTextDocumentIdentifier const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_uri);
+/*AUTO_CTC*/     CMEMB(m_version);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier &LSP_VersionedTextDocumentIdentifier::operator=(LSP_VersionedTextDocumentIdentifier &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_uri);
+/*AUTO_CTC*/     MCMEMB(m_version);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_VersionedTextDocumentIdentifier::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_uri);
+  GDV_WRITE_MEMBER_STR(m_version);
+
+  return m;
+}
+
+
+/*static*/ LSP_VersionedTextDocumentIdentifier
+LSP_VersionedTextDocumentIdentifier::fromFname(
+  std::string fname,
+  LSP_VersionNumber version)
+{
+  return LSP_VersionedTextDocumentIdentifier(
+    makeFileURI(fname), version);
+}
+
+
+std::string LSP_VersionedTextDocumentIdentifier::getFname() const
+{
+  return getFileURIPath(m_uri);
+}
+
+
+// ------------------------ LSP_TextDocumentContentChangeEvent -------------------------
+// create-tuple-class: definitions for LSP_TextDocumentContentChangeEvent
+/*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent::LSP_TextDocumentContentChangeEvent(
+/*AUTO_CTC*/   std::optional<LSP_Range> const &range,
+/*AUTO_CTC*/   std::string const &text)
+/*AUTO_CTC*/   : IMEMBFP(range),
+/*AUTO_CTC*/     IMEMBFP(text)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent::LSP_TextDocumentContentChangeEvent(
+/*AUTO_CTC*/   std::optional<LSP_Range> &&range,
+/*AUTO_CTC*/   std::string &&text)
+/*AUTO_CTC*/   : IMEMBMFP(range),
+/*AUTO_CTC*/     IMEMBMFP(text)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent::LSP_TextDocumentContentChangeEvent(LSP_TextDocumentContentChangeEvent const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_range),
+/*AUTO_CTC*/     DMEMB(m_text)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent::LSP_TextDocumentContentChangeEvent(LSP_TextDocumentContentChangeEvent &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_range),
+/*AUTO_CTC*/     MDMEMB(m_text)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent &LSP_TextDocumentContentChangeEvent::operator=(LSP_TextDocumentContentChangeEvent const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_range);
+/*AUTO_CTC*/     CMEMB(m_text);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent &LSP_TextDocumentContentChangeEvent::operator=(LSP_TextDocumentContentChangeEvent &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_range);
+/*AUTO_CTC*/     MCMEMB(m_text);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_TextDocumentContentChangeEvent::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_range);
+  GDV_WRITE_MEMBER_STR(m_text);
+
+  return m;
+}
+
+
+// ------------------------ LSP_DidChangeTextDocumentParams -------------------------
+// create-tuple-class: definitions for LSP_DidChangeTextDocumentParams
+/*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
+/*AUTO_CTC*/   LSP_VersionedTextDocumentIdentifier const &textDocument,
+/*AUTO_CTC*/   std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges)
+/*AUTO_CTC*/   : IMEMBFP(textDocument),
+/*AUTO_CTC*/     IMEMBFP(contentChanges)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
+/*AUTO_CTC*/   LSP_VersionedTextDocumentIdentifier &&textDocument,
+/*AUTO_CTC*/   std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges)
+/*AUTO_CTC*/   : IMEMBMFP(textDocument),
+/*AUTO_CTC*/     IMEMBMFP(contentChanges)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_textDocument),
+/*AUTO_CTC*/     DMEMB(m_contentChanges)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_textDocument),
+/*AUTO_CTC*/     MDMEMB(m_contentChanges)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &LSP_DidChangeTextDocumentParams::operator=(LSP_DidChangeTextDocumentParams const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_textDocument);
+/*AUTO_CTC*/     CMEMB(m_contentChanges);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &LSP_DidChangeTextDocumentParams::operator=(LSP_DidChangeTextDocumentParams &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_textDocument);
+/*AUTO_CTC*/     MCMEMB(m_contentChanges);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_DidChangeTextDocumentParams::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_textDocument);
+  GDV_WRITE_MEMBER_STR(m_contentChanges);
+
+  return m;
+}
+
+
+std::string LSP_DidChangeTextDocumentParams::getFname() const
+{
+  return m_textDocument.getFname();
+}
 
 
 // EOF

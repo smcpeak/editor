@@ -16,5 +16,8 @@ class LSP_LocationSequence;
 class LSP_TextEdit;
 class LSP_CompletionItem;
 class LSP_CompletionList;
+class LSP_VersionedTextDocumentIdentifier;
+class LSP_TextDocumentContentChangeEvent;
+class LSP_DidChangeTextDocumentParams;
 
 #endif // EDITOR_LSP_DATA_FWD_H

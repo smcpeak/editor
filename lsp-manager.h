@@ -8,8 +8,9 @@
 
 #include "command-runner-fwd.h"                  // CommandRunner
 #include "lsp-client-fwd.h"                      // LSPClient
-#include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams
+#include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
+#include "td-core-fwd.h"                         // TextDocumentCore
 #include "textmcoord.h"                          // TextMCoord
 
 #include <QObject>
@@ -122,7 +123,14 @@ public:      // data
 
   // The contents most recently sent.  They were labeled with
   // `m_lastSentVersion`.
-  std::string m_lastSentContents;
+  //
+  // One reason we store this is to detect the case where we are trying
+  // to refresh diagnostics for a file that has not changed (because
+  // another file changed that affected its results).
+  //
+  // Never null.
+  //
+  std::unique_ptr<TextDocumentCore> m_lastSentContents;
 
   // True when we have sent updated contents but not received the
   // associated diagnostics.  Initially false.
@@ -138,7 +146,10 @@ public:      // methods
   LSPDocumentInfo(
     std::string const &fname,
     int lastSentVersion,
-    std::string &&lastSentContents);
+    std::string const &lastSentContentsString);
+
+  // I only want to use the move ctor.
+  LSPDocumentInfo(LSPDocumentInfo const &obj) = delete;
 
   LSPDocumentInfo(LSPDocumentInfo &&obj);
 
@@ -150,6 +161,12 @@ public:      // methods
 
   // True if `m_pendingDiagnostics` is not null.
   bool hasPendingDiagnostics() const;
+
+  // Get `m_lastSentContents` as a string.
+  std::string getLastSentContentsString() const;
+
+  // True if `m_lastSentContents` equals `doc`.
+  bool lastContentsEquals(TextDocumentCore const &doc) const;
 };
 
 
@@ -214,8 +231,9 @@ private:     // data
   // other LSP data.
   gdv::GDValue m_serverCapabilities;
 
-  // Map from document name to its protocol state.  This has the set of
-  // documents that are considered "open" w.r.t. the LSP protocol.
+  // Map from document file name (not URI) to its protocol state.  This
+  // has the set of documents that are considered "open" w.r.t. the LSP
+  // protocol.
   //
   // Invariant: For all `k`, `m_documentInfo[k].m_fname == k`.
   std::map<std::string, LSPDocumentInfo> m_documentInfo;
@@ -329,13 +347,15 @@ public:      // methods
     int version,
     std::string &&contents);
 
-  // Send the "textDocument/didChange" notification.  Currently this
-  // only supports replacing the entire file's content, rather than
-  // incremental changes.
+  // Send the "textDocument/didChange" notification.
   //
   // Requires: isRunningNormally()
-  // Requires: isFileOpen(fname)
+  // Requires: isFileOpen(params.getFname())
   void notify_textDocument_didChange(
+    LSP_DidChangeTextDocumentParams const &params);
+
+  // Convenience method for updating the entire document.
+  void notify_textDocument_didChange_all(
     std::string const &fname,
     int version,
     std::string &&contents);
@@ -384,6 +404,13 @@ public:      // methods
     LSPSymbolRequestKind lsrk,
     std::string const &fname,
     TextMCoord position);
+
+  // Send request `method` with `params`, returning the request ID.
+  //
+  // Requires: isRunningNormally()
+  int sendRequest(
+    std::string const &method,
+    gdv::GDValue const &params);
 
   // True if we have a reply for request `id`.
   //

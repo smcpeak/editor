@@ -257,6 +257,7 @@ UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += justify-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
 UNIT_TESTS_OBJS += lsp-client-test.o
+UNIT_TESTS_OBJS += lsp-conv-test.o
 UNIT_TESTS_OBJS += lsp-data-test.o
 UNIT_TESTS_OBJS += lsp-manager-test.moc.o
 UNIT_TESTS_OBJS += lsp-manager-test.o

@@ -38,19 +38,20 @@
 // A position in a document.
 class LSP_Position final {
 public:      // data
-  // 0-based line number.
+  // 0-based line number.  Non-negative.
   int m_line;
 
-  // 0-based character number within the line.
+  // 0-based character number within the line.  Non-negative.
   //
   // In the absence of a different negotiated value, this counts UTF-16
   // code units.
   int m_character;
 
 public:      // methods
-  // create-tuple-class: declarations for LSP_Position +compare +write
+  // create-tuple-class: declarations for LSP_Position +compare +write +selfCheck
   /*AUTO_CTC*/ explicit LSP_Position(int line, int character);
   /*AUTO_CTC*/ LSP_Position(LSP_Position const &obj) noexcept;
+  /*AUTO_CTC*/ void selfCheck() const;
   /*AUTO_CTC*/ LSP_Position &operator=(LSP_Position const &obj) noexcept;
   /*AUTO_CTC*/ // For +compare:
   /*AUTO_CTC*/ friend int compare(LSP_Position const &a, LSP_Position const &b);
@@ -64,6 +65,9 @@ public:      // methods
 
   // Parse, throwing `XGDValueError` on error.
   explicit LSP_Position(gdv::GDValueParser const &p);
+
+  // Return the same position but at `m_character + n`.
+  LSP_Position plusCharacters(int n) const;
 };
 
 
@@ -344,6 +348,99 @@ public:      // methods
   operator gdv::GDValue() const;
 
   explicit LSP_CompletionList(gdv::GDValueParser const &p);
+};
+
+
+// Identifier of a specific document version.  This is used, among other
+// things, when sending the "didChange" notification.
+//
+// The real protocol describes this as inheriting
+// `LSP_TextDocumentIdentifier`, but my create-tuple-class script does
+// not handle that right, so I embed its one `m_uri` field.
+//
+class LSP_VersionedTextDocumentIdentifier {
+public:      // data
+  // File name, essentially.
+  std::string m_uri;
+
+  // The version.
+  LSP_VersionNumber m_version;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_VersionedTextDocumentIdentifier +move
+  /*AUTO_CTC*/ explicit LSP_VersionedTextDocumentIdentifier(std::string const &uri, LSP_VersionNumber const &version);
+  /*AUTO_CTC*/ explicit LSP_VersionedTextDocumentIdentifier(std::string &&uri, LSP_VersionNumber &&version);
+  /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier(LSP_VersionedTextDocumentIdentifier const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier(LSP_VersionedTextDocumentIdentifier &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier &operator=(LSP_VersionedTextDocumentIdentifier const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier &operator=(LSP_VersionedTextDocumentIdentifier &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  // No need to parse currently.
+
+  // Encode `fname` as a URI to build this object.
+  static LSP_VersionedTextDocumentIdentifier fromFname(
+    std::string fname,
+    LSP_VersionNumber version);
+
+  // Decode the URI as a file name.
+  std::string getFname() const;
+};
+
+
+// One change to a document.
+class LSP_TextDocumentContentChangeEvent {
+public:      // data
+  // The range to replace with `m_text`.  If this is absent, the text
+  // replaces the entire document.
+  std::optional<LSP_Range> m_range;
+
+  // The real LSP protocol has an optional but deprecated `rangeLength`
+  // here, which I ignore.
+
+  // New text for the range or document.
+  std::string m_text;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_TextDocumentContentChangeEvent +move
+  /*AUTO_CTC*/ explicit LSP_TextDocumentContentChangeEvent(std::optional<LSP_Range> const &range, std::string const &text);
+  /*AUTO_CTC*/ explicit LSP_TextDocumentContentChangeEvent(std::optional<LSP_Range> &&range, std::string &&text);
+  /*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent(LSP_TextDocumentContentChangeEvent const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent(LSP_TextDocumentContentChangeEvent &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent &operator=(LSP_TextDocumentContentChangeEvent const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent &operator=(LSP_TextDocumentContentChangeEvent &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  // No need to parse currently.
+};
+
+
+// Parameters for "textDocument/didChange".
+class LSP_DidChangeTextDocumentParams {
+public:      // data
+  // The document that changed.  The version is *after* the changes.
+  LSP_VersionedTextDocumentIdentifier m_textDocument;
+
+  // The changes to apply, in order.
+  std::list<LSP_TextDocumentContentChangeEvent> m_contentChanges;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_DidChangeTextDocumentParams +move
+  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges);
+  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier &&textDocument, std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges);
+  /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  // No need to parse currently.
+
+  // Get the file name in `m_textDocument`.
+  std::string getFname() const;
 };
 
 

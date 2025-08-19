@@ -249,7 +249,7 @@ public:    // funcs
   // the given line, as a byte count.
   int countTrailingSpacesTabs(int line) const;
 
-  // ----------------- manipulation interface -------------------
+  // ------------------- Core manipulation interface -------------------
   // This interface is deliberately very simple to *implement*: you are
   // either inserting or removing *blank* lines, or are editing the
   // contents of a *single* line.  TextDocumentEditor, built on top of
@@ -273,6 +273,17 @@ public:    // funcs
   // Delete 'length' bytes at and the right of 'tc'.
   void deleteTextBytes(TextMCoord tc, int lengthBytes);
 
+  // --------------------- Multi-line manipulation ---------------------
+  // Although the above comment mentions `TextDocumentEditor`, an editor
+  // cannot be created to operate on an arbitrary `TextDocumentCore`,
+  // only a `TextDocument`.  So, here is one more convenient editing
+  // function.
+
+  // Replace the text in `range` (which be have valid coordinates with
+  // start <= end) with `text`.
+  void replaceMultilineRange(
+    TextMCoordRange const &range, std::string const &text);
+
   // ---------------------- whole file -------------------------
   // clear buffer contents, returning to just one empty line
   void clear();
@@ -287,6 +298,10 @@ public:    // funcs
   // in-memory line contents, and will then be written out as such as
   // well, like any other character.  This is not ideal of course.
   void replaceWholeFile(std::vector<unsigned char> const &bytes);
+
+  // Same, but using `string`.
+  std::string getWholeFileString() const;
+  void replaceWholeFileString(std::string const &str);
 
   // Get the current version number.
   //

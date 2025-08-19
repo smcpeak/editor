@@ -95,7 +95,7 @@ void test_basics()
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
-              "InsertLine[line:0]"
+              "InsertLine[line:0 prevLineBytes:null]"
             "]") },
   })));
 
@@ -104,7 +104,7 @@ void test_basics()
   checkFile(doc, "hello\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
-              "InsertLine[line:0] "
+              "InsertLine[line:0 prevLineBytes:null] "
               "InsertText[tc:MC(0 0) text:\"hello\"]"
             "]") },
   })));
@@ -114,7 +114,7 @@ void test_basics()
   checkFile(doc, "hlo\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
-              "InsertLine[line:0] "
+              "InsertLine[line:0 prevLineBytes:null] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2]"
             "]") },
@@ -126,7 +126,7 @@ void test_basics()
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
-              "InsertLine[line:0] "
+              "InsertLine[line:0 prevLineBytes:null] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
               "DeleteText[tc:MC(0 0) lengthBytes:3]"
@@ -139,11 +139,11 @@ void test_basics()
   checkFile(doc, "\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
-              "InsertLine[line:0] "
+              "InsertLine[line:0 prevLineBytes:null] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
               "DeleteText[tc:MC(0 0) lengthBytes:3] "
-              "DeleteLine[line:0]"
+              "DeleteLine[line:0 prevLineBytes:null]"
             "]") },
   })));
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
@@ -165,16 +165,16 @@ void test_basics()
   checkFile(doc, "\n\n\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
-              "InsertLine[line:0] "
+              "InsertLine[line:0 prevLineBytes:null] "
               "InsertText[tc:MC(0 0) text:\"hello\"] "
               "DeleteText[tc:MC(0 1) lengthBytes:2] "
               "DeleteText[tc:MC(0 0) lengthBytes:3] "
-              "DeleteLine[line:0]"
+              "DeleteLine[line:0 prevLineBytes:null]"
             "]") },
     { ver2, versionDetailsGDV(ver2, 2, false, "["
-              "InsertLine[line:0] "
-              "InsertLine[line:1] "
-              "InsertLine[line:2]"
+              "InsertLine[line:0 prevLineBytes:null] "
+              "InsertLine[line:1 prevLineBytes:null] "
+              "InsertLine[line:2 prevLineBytes:null]"
             "]") },
   })));
 
@@ -199,16 +199,16 @@ void test_basics()
     EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), (VersionSet{      ver2}));
     EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
       { ver1, versionDetailsGDV(ver1, 2, true, "["
-                "InsertLine[line:0] "
+                "InsertLine[line:0 prevLineBytes:null] "
                 "InsertText[tc:MC(0 0) text:\"hello\"] "
                 "DeleteText[tc:MC(0 1) lengthBytes:2] "
                 "DeleteText[tc:MC(0 0) lengthBytes:3] "
-                "DeleteLine[line:0]"
+                "DeleteLine[line:0 prevLineBytes:null]"
               "]") },
       { ver2, versionDetailsGDV(ver2, 2, false, "["
-                "InsertLine[line:0] "
-                "InsertLine[line:1] "
-                "InsertLine[line:2]"
+                "InsertLine[line:0 prevLineBytes:null] "
+                "InsertLine[line:1 prevLineBytes:null] "
+                "InsertLine[line:2 prevLineBytes:null]"
               "]") },
     })));
 
@@ -253,9 +253,9 @@ void test_basics()
     EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), VersionSet{    });
     EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
       { ver2, versionDetailsGDV(ver2, 2, true, "["
-                "InsertLine[line:0] "
-                "InsertLine[line:1] "
-                "InsertLine[line:2]"
+                "InsertLine[line:0 prevLineBytes:null] "
+                "InsertLine[line:1 prevLineBytes:null] "
+                "InsertLine[line:2 prevLineBytes:null]"
               "]") },
     })));
 
