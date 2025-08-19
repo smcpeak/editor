@@ -168,13 +168,13 @@ TDCO_TotalChange::operator gdv::GDValue() const
 }
 
 
-// ------------------------ AwaitingDiagnostics ------------------------
-TextDocumentObservationRecorder::AwaitingDiagnostics::~AwaitingDiagnostics()
+// -------------------------- VersionDetails ---------------------------
+TextDocumentObservationRecorder::VersionDetails::~VersionDetails()
 {}
 
 
-TextDocumentObservationRecorder::AwaitingDiagnostics::AwaitingDiagnostics(
-  AwaitingDiagnostics &&obj)
+TextDocumentObservationRecorder::VersionDetails::VersionDetails(
+  VersionDetails &&obj)
   : MDMEMB(m_numLines),
     MDMEMB(m_changeSequence)
 {
@@ -182,7 +182,7 @@ TextDocumentObservationRecorder::AwaitingDiagnostics::AwaitingDiagnostics(
 }
 
 
-TextDocumentObservationRecorder::AwaitingDiagnostics::AwaitingDiagnostics(
+TextDocumentObservationRecorder::VersionDetails::VersionDetails(
   int numLines)
   : IMEMBFP(numLines),
     m_changeSequence()
@@ -191,15 +191,15 @@ TextDocumentObservationRecorder::AwaitingDiagnostics::AwaitingDiagnostics(
 }
 
 
-void TextDocumentObservationRecorder::AwaitingDiagnostics::selfCheck() const
+void TextDocumentObservationRecorder::VersionDetails::selfCheck() const
 {
   xassert(m_numLines >= 0);
 }
 
 
-TextDocumentObservationRecorder::AwaitingDiagnostics::operator gdv::GDValue() const
+TextDocumentObservationRecorder::VersionDetails::operator gdv::GDValue() const
 {
-  GDValue m(GDVK_TAGGED_ORDERED_MAP, "AwaitingDiagnostics"_sym);
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "VersionDetails"_sym);
   GDV_WRITE_MEMBER_SYM(m_numLines);
   GDV_WRITE_MEMBER_SYM(m_changeSequence);
   return m;
@@ -224,10 +224,10 @@ TextDocumentObservationRecorder::TextDocumentObservationRecorder(
 
 void TextDocumentObservationRecorder::selfCheck() const
 {
-  for (auto const &kv : m_awaitingDiagnostics) {
-    AwaitingDiagnostics const &awaiting = kv.second;
+  for (auto const &kv : m_versionToDetails) {
+    VersionDetails const &details = kv.second;
 
-    awaiting.selfCheck();
+    details.selfCheck();
   }
 }
 
@@ -236,12 +236,12 @@ TextDocumentObservationRecorder::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
 
-  for (auto const &kv : m_awaitingDiagnostics) {
+  for (auto const &kv : m_versionToDetails) {
     VersionNumber version = kv.first;
-    AwaitingDiagnostics const &awaiting = kv.second;
+    VersionDetails const &details = kv.second;
 
     // Map from version to the associated details.
-    m.mapSetValueAt(version, toGDValue(awaiting));
+    m.mapSetValueAt(version, toGDValue(details));
   }
 
   return m;
@@ -250,18 +250,18 @@ TextDocumentObservationRecorder::operator gdv::GDValue() const
 
 bool TextDocumentObservationRecorder::trackingSomething() const
 {
-  return !m_awaitingDiagnostics.empty();
+  return !m_versionToDetails.empty();
 }
 
 
 auto TextDocumentObservationRecorder::getEarliestVersion() const
   -> std::optional<VersionNumber>
 {
-  if (m_awaitingDiagnostics.empty()) {
+  if (m_versionToDetails.empty()) {
     return std::nullopt;
   }
   else {
-    auto it = m_awaitingDiagnostics.begin();
+    auto it = m_versionToDetails.begin();
     return (*it).first;
   }
 }
@@ -270,23 +270,23 @@ auto TextDocumentObservationRecorder::getEarliestVersion() const
 bool TextDocumentObservationRecorder::isTracking(
   VersionNumber version) const
 {
-  return mapContains(m_awaitingDiagnostics, version);
+  return mapContains(m_versionToDetails, version);
 }
 
 
 auto TextDocumentObservationRecorder::getTrackedVersions() const
   -> std::set<VersionNumber>
 {
-  return mapKeySet(m_awaitingDiagnostics);
+  return mapKeySet(m_versionToDetails);
 }
 
 
 void TextDocumentObservationRecorder::beginTracking(
   VersionNumber version, int numLines)
 {
-  if (!mapInsertMove(m_awaitingDiagnostics,
+  if (!mapInsertMove(m_versionToDetails,
                      version,
-                     AwaitingDiagnostics(numLines))) {
+                     VersionDetails(numLines))) {
     // This isn't a problem, but it is noteworthy.
     TRACE1("beginTracking: we are already waiting for version " <<
            version);
@@ -303,15 +303,15 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   xassertPrecondition(isTracking(diagVersion));
 
   // Process the tracked versions in order.
-  while (!m_awaitingDiagnostics.empty()) {
-    auto it = m_awaitingDiagnostics.begin();
+  while (!m_versionToDetails.empty()) {
+    auto it = m_versionToDetails.begin();
     VersionNumber trackedVersion = (*it).first;
-    AwaitingDiagnostics const &awaiting = (*it).second;
+    VersionDetails const &details = (*it).second;
 
     if (trackedVersion < diagVersion) {
       // This version is older than what we care about; discard it.
       TRACE1("Discarding unneeded old version: " << trackedVersion);
-      m_awaitingDiagnostics.erase(it);
+      m_versionToDetails.erase(it);
     }
 
     else {
@@ -322,8 +322,8 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
       // the file in order to process updates (which is what we're about
       // to do), and they need first to be confined to that number of
       // lines in case they have bogus data.
-      TRACE1("Setting num lines to: " << awaiting.m_numLines);
-      diagnostics->setNumLinesAndAdjustAccordingly(awaiting.m_numLines);
+      TRACE1("Setting num lines to: " << details.m_numLines);
+      diagnostics->setNumLinesAndAdjustAccordingly(details.m_numLines);
 
       break;
     }
@@ -332,17 +332,17 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   // Now, walk the map, applying all recorded changes in ascending
   // version order.  This brings `diagnostics` up to date with all
   // changes that have been made to the document.
-  for (auto const &kv : m_awaitingDiagnostics) {
+  for (auto const &kv : m_versionToDetails) {
     VersionNumber trackedVersion = kv.first;
-    AwaitingDiagnostics const &awaiting = kv.second;
+    VersionDetails const &details = kv.second;
 
     TRACE1("Rolling forward from version " << trackedVersion <<
-           " by applying " << awaiting.m_changeSequence.size() <<
+           " by applying " << details.m_changeSequence.size() <<
            " observed changes.");
 
     // Walk the sequence, applying changes in order.
     for (std::unique_ptr<TextDocumentChangeObservation> const &obsPtr :
-           awaiting.m_changeSequence) {
+           details.m_changeSequence) {
       obsPtr->applyChangeToDiagnostics(diagnostics);
     }
   }
@@ -352,10 +352,10 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   // become the current diagnostics, and its origin version is at least
   // as recent, so if new diagnostics arrive for that same version,
   // we'll just discard them.
-  auto it = m_awaitingDiagnostics.begin();
-  xassert(it != m_awaitingDiagnostics.end());
+  auto it = m_versionToDetails.begin();
+  xassert(it != m_versionToDetails.end());
   xassert((*it).first == diagVersion);
-  m_awaitingDiagnostics.erase(diagVersion);
+  m_versionToDetails.erase(diagVersion);
 
   // Note: We do not discard all recorded changes since there could be
   // another set of diagnostics, derived from a more recent version,
@@ -369,8 +369,8 @@ void TextDocumentObservationRecorder::addObservation(
   xassertPrecondition(trackingSomething());
 
   // Get the *last* version we are tracking.
-  auto it = m_awaitingDiagnostics.rbegin();
-  xassert(it != m_awaitingDiagnostics.rend());
+  auto it = m_versionToDetails.rbegin();
+  xassert(it != m_versionToDetails.rend());
 
   // Append the record to that version.
   (*it).second.m_changeSequence.push_back(std::move(observation));

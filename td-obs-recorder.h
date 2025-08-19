@@ -132,24 +132,60 @@ public:      // methods
 };
 
 
-// Records the sequence of changes observed via the
-// `TextDocumentObserver` interface, associated with the document
-// versions to which they apply.
+/* Records the sequence of changes observed via the
+   `TextDocumentObserver` interface, associated with the document
+   versions to which they apply.
+
+   Conceptually, we can think of the history of a document as a
+   sequence of versions separated by changes:
+
+     version 1               most recent with diagnostics
+        |
+        | changes 1 -> 2
+        V
+     version 2               awaiting diagnostics
+        |
+        | changes 2 -> 3
+        V
+     version 3               awaiting diagnostics
+        |
+        | changes 3 -> current
+        V
+     (current version)
+
+   This class records a suffix of the document's complete history,
+   organized as a map from a version number to the sequence of changes
+   that were applied to get to the *next* version.  The versions that
+   are keys in the map are called the "tracked" versions.  There might
+   not be any tracked versions.
+
+   The set of tracked versions is (1) any for which we have sent the
+   contents to the LSP server but not yet received a diagnostics reply,
+   and (2) the version for which we most recently received diagnostics.
+   If a version has diagnostics, then it is the first (oldest); any
+   older that might still (somehow) be awaiting diagnostics are
+   discareded.
+
+   Among the operations this supports is sending all of the changes
+   associated with the latest version to the server in order to bring it
+   up to date.
+
+   In the quiesscent fully up-to-date state, there is a single version,
+   for which we have diagnostics, and no recorded changes after it.
+*/
 class TextDocumentObservationRecorder : public TextDocumentObserver {
 private:     // types
   typedef TextDocumentCore::VersionNumber VersionNumber;
 
-  // A sequence of changes that were applied to the document since some
-  // point in the past, in the order they happened.  The relevant "point
-  // in the past" depends on where this sequence is stored.
+  // A sequence of changes that were applied to the document in the
+  // order they happened.
   typedef std::vector<std::unique_ptr<TextDocumentChangeObservation>>
     ChangeSequence;
 
-  // Data associated with a document version for which we are awaiting
-  // the associated diagnostics.
-  class AwaitingDiagnostics {
+  // Data associated with a document version.
+  class VersionDetails {
     // Not implemented, although it could be if needed.
-    void operator=(AwaitingDiagnostics const &) = delete;
+    void operator=(VersionDetails const &) = delete;
 
   public:      // data
     // Number of lines that were in the file for this version.  It is
@@ -162,12 +198,12 @@ private:     // types
     ChangeSequence m_changeSequence;
 
   public:
-    ~AwaitingDiagnostics();
+    ~VersionDetails();
 
-    AwaitingDiagnostics(AwaitingDiagnostics &&obj);
+    VersionDetails(VersionDetails &&obj);
 
     // The sequence is initially empty.
-    explicit AwaitingDiagnostics(int numLines);
+    explicit VersionDetails(int numLines);
 
     void selfCheck() const;
 
@@ -179,7 +215,7 @@ private:     // data
   TextDocumentCore const &m_document;
 
   // Map from document version number to its tracked details.
-  std::map<VersionNumber, AwaitingDiagnostics> m_awaitingDiagnostics;
+  std::map<VersionNumber, VersionDetails> m_versionToDetails;
 
 private:     // methods
   // Append `observation` to the latest tracked version.
