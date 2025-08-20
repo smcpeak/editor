@@ -80,7 +80,7 @@ void test_basics()
 
   // Begin tracking.
   VersionNumber ver1 = doc.getVersionNumber();
-  recorder.beginTracking(ver1, doc.numLines());
+  recorder.beginTrackingCurrentDoc();
   EXPECT_EQ(recorder.trackingSomething(), true);
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
   EXPECT_EQ(recorder.isTracking(ver1), true);
@@ -150,7 +150,7 @@ void test_basics()
 
   // Track a new version.
   VersionNumber ver2 = doc.getVersionNumber();
-  recorder.beginTracking(ver2, doc.numLines());
+  recorder.beginTrackingCurrentDoc();
   EXPECT_EQ(recorder.trackingSomething(), true);
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);  // ver1 is still earliest
   EXPECT_EQ(recorder.isTracking(ver1), true);
@@ -442,7 +442,7 @@ public:      // methods
     xassert(diags.getOriginVersion() == ver);
     mapInsertUnique(m_verToDiags, ver,
       EagerAndDelayedDiags(diags, &m_doc));
-    m_recorder.beginTracking(ver, m_doc.numLines());
+    m_recorder.beginTrackingCurrentDoc();
 
     selfCheck();
   }

@@ -356,9 +356,11 @@ auto TextDocumentObservationRecorder::getNoDiagsVersions() const
 }
 
 
-void TextDocumentObservationRecorder::beginTracking(
-  VersionNumber version, int numLines)
+void TextDocumentObservationRecorder::beginTrackingCurrentDoc()
 {
+  VersionNumber version = m_document.getVersionNumber();
+  int numLines = m_document.numLines();
+
   if (!mapInsertMove(m_versionToDetails,
                      version,
                      VersionDetails(version, numLines))) {
@@ -366,12 +368,6 @@ void TextDocumentObservationRecorder::beginTracking(
     TRACE1("beginTracking: we are already waiting for version " <<
            version);
   }
-}
-
-
-void TextDocumentObservationRecorder::beginTrackingCurrentDoc()
-{
-  beginTracking(m_document.getVersionNumber(), m_document.numLines());
 }
 
 

@@ -292,7 +292,7 @@ void NamedTextDocument::beginTrackingChangesForFutureDiagnostics()
   TRACE1("beginTrackingChangesForFutureDiagnostics: version is " <<
          getVersionNumber());
 
-  m_observationRecorder.beginTracking(getVersionNumber(), numLines());
+  m_observationRecorder.beginTrackingCurrentDoc();
 
   // Alert observers that a request for diagnostics is in flight.
   notifyMetadataChange();

@@ -349,13 +349,8 @@ public:      // methods
   // diagnostics.
   stdfwd::set<VersionNumber> getNoDiagsVersions() const;
 
-  // Track all future changes as applying on top of `version`, which has
-  // `numLines` lines.
-  void beginTracking(VersionNumber version, int numLines);
-
-  // Begin tracking with details from `m_document`.
-  //
-  // TODO: Do I need the other `beginTracking`?
+  // Track all future changes as applying on top of the current version
+  // of `m_document`.
   void beginTrackingCurrentDoc();
 
   // Apply the changes we recorded to `diagnostics`.  Discard the
