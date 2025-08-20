@@ -13,6 +13,7 @@
 #include "td-core.h"                   // TextDocumentObserver
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 
+#include "smbase/ast-switch.h"         // DECL_AST_DOWNCASTS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/std-optional-fwd.h"   // std::optional
 #include "smbase/std-set-fwd.h"        // stdfwd::set
@@ -29,12 +30,12 @@ class TextDocumentChangeObservation {
 public:      // types
   // Enumeration of all concrete `TextDocumentChangeObservation`
   // subclasses.
-  enum ObsKind {
-    OK_INSERT_LINE,
-    OK_DELETE_LINE,
-    OK_INSERT_TEXT,
-    OK_DELETE_TEXT,
-    OK_TOTAL_CHANGE
+  enum Kind {
+    K_INSERT_LINE,
+    K_DELETE_LINE,
+    K_INSERT_TEXT,
+    K_DELETE_TEXT,
+    K_TOTAL_CHANGE
   };
 
 public:      // methods
@@ -43,7 +44,13 @@ public:      // methods
   explicit TextDocumentChangeObservation();
 
   // Specific subclass.
-  virtual ObsKind kind() const = 0;
+  virtual Kind kind() const = 0;
+
+  DECL_AST_DOWNCASTS(TDCO_InsertLine, K_INSERT_LINE)
+  DECL_AST_DOWNCASTS(TDCO_DeleteLine, K_DELETE_LINE)
+  DECL_AST_DOWNCASTS(TDCO_InsertText, K_INSERT_TEXT)
+  DECL_AST_DOWNCASTS(TDCO_DeleteText, K_DELETE_TEXT)
+  DECL_AST_DOWNCASTS(TDCO_TotalChange, K_TOTAL_CHANGE)
 
   // Apply the change recored in this object to `diagnostics`.
   virtual void applyChangeToDiagnostics(
@@ -70,8 +77,8 @@ public:      // methods
 
   explicit TDCO_InsertLine(int line, std::optional<int> prevLineBytes);
 
-  virtual ObsKind kind() const override
-    { return OK_INSERT_LINE; }
+  static Kind constexpr TYPE_TAG = K_INSERT_LINE;
+  virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -95,8 +102,8 @@ public:      // methods
 
   explicit TDCO_DeleteLine(int line, std::optional<int> prevLineBytes);
 
-  virtual ObsKind kind() const override
-    { return OK_DELETE_LINE; }
+  static Kind constexpr TYPE_TAG = K_DELETE_LINE;
+  virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -122,8 +129,8 @@ public:      // methods
   explicit TDCO_InsertText(
     TextMCoord tc, char const *text, int lengthBytes);
 
-  virtual ObsKind kind() const override
-    { return OK_INSERT_TEXT; }
+  static Kind constexpr TYPE_TAG = K_INSERT_TEXT;
+  virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -144,8 +151,8 @@ public:      // methods
   explicit TDCO_DeleteText(
     TextMCoord tc, int lengthBytes);
 
-  virtual ObsKind kind() const override
-    { return OK_DELETE_TEXT; }
+  static Kind constexpr TYPE_TAG = K_DELETE_TEXT;
+  virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;
@@ -167,8 +174,8 @@ public:      // methods
 
   explicit TDCO_TotalChange(int m_numLines, std::string &&contents);
 
-  virtual ObsKind kind() const override
-    { return OK_TOTAL_CHANGE; }
+  static Kind constexpr TYPE_TAG = K_TOTAL_CHANGE;
+  virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyChangeToDiagnostics(
     TextDocumentDiagnostics *diagnostics) const override;

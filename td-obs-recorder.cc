@@ -5,6 +5,7 @@
 
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
+#include "smbase/ast-switch.h"         // DEFN_AST_DOWNCASTS
 #include "smbase/exc.h"                // GENERIC_CATCH_{BEGIN,END}
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
@@ -36,6 +37,13 @@ TextDocumentChangeObservation::~TextDocumentChangeObservation()
 
 TextDocumentChangeObservation::TextDocumentChangeObservation()
 {}
+
+
+DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_InsertLine, K_INSERT_LINE)
+DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_DeleteLine, K_DELETE_LINE)
+DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_InsertText, K_INSERT_TEXT)
+DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_DeleteText, K_DELETE_TEXT)
+DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_TotalChange, K_TOTAL_CHANGE)
 
 
 // -------------------------- TDCO_InsertLine --------------------------

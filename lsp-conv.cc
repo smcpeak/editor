@@ -10,6 +10,7 @@
 #include "textmcoord.h"                // TextMCoord[Range]
 #include "uri-util.h"                  // getFileURIPath
 
+#include "smbase/ast-switch.h"         // ASTSWITCHC
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/overflow.h"           // convertNumber
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -129,69 +130,62 @@ static LSP_Range emptyRange(LSP_Position pos)
 static LSP_TextDocumentContentChangeEvent convertOneChange(
   TextDocumentChangeObservation const &obs)
 {
-  switch (obs.kind()) {
-    case TextDocumentChangeObservation::OK_INSERT_LINE: {
-      auto insertLine = dynamic_cast<TDCO_InsertLine const &>(obs);
-
+  ASTSWITCHC(TextDocumentChangeObservation, &obs) {
+    ASTCASEC(TDCO_InsertLine, insertLine) {
       // Normally we insert at the start of the line in question.
-      LSP_Position pos(insertLine.m_line, 0);
+      LSP_Position pos(insertLine->m_line, 0);
 
-      if (insertLine.m_prevLineBytes) {
+      if (insertLine->m_prevLineBytes) {
         // But if we are appending a new line, then the position at
         // that line does not exist yet.  Append to the previous line
         // instead.
         pos = LSP_Position(
-          insertLine.m_line-1, *insertLine.m_prevLineBytes);
+          insertLine->m_line-1, *insertLine->m_prevLineBytes);
       }
 
       return LSP_TextDocumentContentChangeEvent(
         emptyRange(pos), std::string("\n"));
     }
 
-    case TextDocumentChangeObservation::OK_DELETE_LINE: {
-      auto deleteLine = dynamic_cast<TDCO_DeleteLine const &>(obs);
-
+    ASTNEXTC(TDCO_DeleteLine, deleteLine) {
       // Normally we delete the line by extending the range forward.
       LSP_Range range(
-        LSP_Position(deleteLine.m_line, 0),
-        LSP_Position(deleteLine.m_line+1, 0));
+        LSP_Position(deleteLine->m_line, 0),
+        LSP_Position(deleteLine->m_line+1, 0));
 
-      if (deleteLine.m_prevLineBytes) {
+      if (deleteLine->m_prevLineBytes) {
         // But if it was the last line, going forward is a no-op, so
         // go backward instead.
         range = LSP_Range(
-          LSP_Position(deleteLine.m_line-1, *deleteLine.m_prevLineBytes),
-          LSP_Position(deleteLine.m_line, 0));
+          LSP_Position(deleteLine->m_line-1, *deleteLine->m_prevLineBytes),
+          LSP_Position(deleteLine->m_line, 0));
       }
 
       return LSP_TextDocumentContentChangeEvent(
         range, std::string());
     }
 
-    case TextDocumentChangeObservation::OK_INSERT_TEXT: {
-      auto insertText = dynamic_cast<TDCO_InsertText const &>(obs);
+    ASTNEXTC(TDCO_InsertText, insertText) {
       return LSP_TextDocumentContentChangeEvent(
-        emptyRange(toLSP_Position(insertText.m_tc)),
-        insertText.m_text);
+        emptyRange(toLSP_Position(insertText->m_tc)),
+        insertText->m_text);
     }
 
-    case TextDocumentChangeObservation::OK_DELETE_TEXT: {
-      auto deleteText = dynamic_cast<TDCO_DeleteText const &>(obs);
+    ASTNEXTC(TDCO_DeleteText, deleteText) {
       return LSP_TextDocumentContentChangeEvent(
         rangeAtPlus(
-          toLSP_Position(deleteText.m_tc),
-          deleteText.m_lengthBytes),
+          toLSP_Position(deleteText->m_tc),
+          deleteText->m_lengthBytes),
         std::string());
     }
 
-    case TextDocumentChangeObservation::OK_TOTAL_CHANGE: {
-      auto totalChange = dynamic_cast<TDCO_TotalChange const &>(obs);
+    ASTNEXTC(TDCO_TotalChange, totalChange) {
       return LSP_TextDocumentContentChangeEvent(
         std::nullopt,
-        totalChange.m_contents);
+        totalChange->m_contents);
     }
 
-    // No default because I want a warning if an enumerator is missed.
+    ASTENDCASEC
   }
 
   xfailure("not reached");
