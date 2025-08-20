@@ -6,7 +6,7 @@
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
 #include "named-td.h"                  // NamedTextDocument
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
-#include "td-obs-recorder.h"           // TextDocumentChangeObservationSequence
+#include "td-obs-recorder.h"           // TextDocumentChangeSequence
 #include "textmcoord.h"                // TextMCoord[Range]
 #include "uri-util.h"                  // getFileURIPath
 
@@ -128,10 +128,10 @@ static LSP_Range emptyRange(LSP_Position pos)
 
 
 static LSP_TextDocumentContentChangeEvent convertOneChange(
-  TextDocumentChangeObservation const &obs)
+  TextDocumentChange const &obs)
 {
-  ASTSWITCHC(TextDocumentChangeObservation, &obs) {
-    ASTCASEC(TDCO_InsertLine, insertLine) {
+  ASTSWITCHC(TextDocumentChange, &obs) {
+    ASTCASEC(TDC_InsertLine, insertLine) {
       // Normally we insert at the start of the line in question.
       LSP_Position pos(insertLine->m_line, 0);
 
@@ -147,7 +147,7 @@ static LSP_TextDocumentContentChangeEvent convertOneChange(
         emptyRange(pos), std::string("\n"));
     }
 
-    ASTNEXTC(TDCO_DeleteLine, deleteLine) {
+    ASTNEXTC(TDC_DeleteLine, deleteLine) {
       // Normally we delete the line by extending the range forward.
       LSP_Range range(
         LSP_Position(deleteLine->m_line, 0),
@@ -165,13 +165,13 @@ static LSP_TextDocumentContentChangeEvent convertOneChange(
         range, std::string());
     }
 
-    ASTNEXTC(TDCO_InsertText, insertText) {
+    ASTNEXTC(TDC_InsertText, insertText) {
       return LSP_TextDocumentContentChangeEvent(
         emptyRange(toLSP_Position(insertText->m_tc)),
         insertText->m_text);
     }
 
-    ASTNEXTC(TDCO_DeleteText, deleteText) {
+    ASTNEXTC(TDC_DeleteText, deleteText) {
       return LSP_TextDocumentContentChangeEvent(
         rangeAtPlus(
           toLSP_Position(deleteText->m_tc),
@@ -179,7 +179,7 @@ static LSP_TextDocumentContentChangeEvent convertOneChange(
         std::string());
     }
 
-    ASTNEXTC(TDCO_TotalChange, totalChange) {
+    ASTNEXTC(TDC_TotalChange, totalChange) {
       return LSP_TextDocumentContentChangeEvent(
         std::nullopt,
         totalChange->m_contents);
@@ -195,7 +195,7 @@ static LSP_TextDocumentContentChangeEvent convertOneChange(
 
 std::list<LSP_TextDocumentContentChangeEvent>
 convertRecordedChangesToLSPChanges(
-  TextDocumentChangeObservationSequence const &seq)
+  TextDocumentChangeSequence const &seq)
 {
   std::list<LSP_TextDocumentContentChangeEvent> ret;
 

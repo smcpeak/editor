@@ -220,7 +220,7 @@ void LSPManagerTester::testSynchronously()
     m_doc.insertText(TextMCoord(5, 0), "hello", 5);
 
     // Get the recorded changes.
-    TextDocumentChangeObservationSequence const &recordedChanges =
+    TextDocumentChangeSequence const &recordedChanges =
       recorder.getUnsentChanges();
 
     // Convert changes to the LSP format and package them into a

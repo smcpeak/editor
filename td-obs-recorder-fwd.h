@@ -6,13 +6,13 @@
 #ifndef EDITOR_TD_OBS_RECORDER_FWD_H
 #define EDITOR_TD_OBS_RECORDER_FWD_H
 
-class TextDocumentChangeObservation;
-class TDCO_InsertLine;
-class TDCO_DeleteLine;
-class TDCO_InsertText;
-class TDCO_DeleteText;
-class TDCO_TotalChange;
-class TextDocumentChangeObservationSequence;
+class TextDocumentChange;
+class TDC_InsertLine;
+class TDC_DeleteLine;
+class TDC_InsertText;
+class TDC_DeleteText;
+class TDC_TotalChange;
+class TextDocumentChangeSequence;
 class TextDocumentObservationRecorder;
 
 #endif // EDITOR_TD_OBS_RECORDER_FWD_H

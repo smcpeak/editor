@@ -26,9 +26,9 @@
 
 // A record of one of the changes that can be observed via the
 // `TextDocumentObserver` interface.
-class TextDocumentChangeObservation {
+class TextDocumentChange {
 public:      // types
-  // Enumeration of all concrete `TextDocumentChangeObservation`
+  // Enumeration of all concrete `TextDocumentChange`
   // subclasses.
   enum Kind {
     K_INSERT_LINE,
@@ -39,18 +39,18 @@ public:      // types
   };
 
 public:      // methods
-  virtual ~TextDocumentChangeObservation();
+  virtual ~TextDocumentChange();
 
-  explicit TextDocumentChangeObservation();
+  explicit TextDocumentChange();
 
   // Specific subclass.
   virtual Kind kind() const = 0;
 
-  DECL_AST_DOWNCASTS(TDCO_InsertLine, K_INSERT_LINE)
-  DECL_AST_DOWNCASTS(TDCO_DeleteLine, K_DELETE_LINE)
-  DECL_AST_DOWNCASTS(TDCO_InsertText, K_INSERT_TEXT)
-  DECL_AST_DOWNCASTS(TDCO_DeleteText, K_DELETE_TEXT)
-  DECL_AST_DOWNCASTS(TDCO_TotalChange, K_TOTAL_CHANGE)
+  DECL_AST_DOWNCASTS(TDC_InsertLine, K_INSERT_LINE)
+  DECL_AST_DOWNCASTS(TDC_DeleteLine, K_DELETE_LINE)
+  DECL_AST_DOWNCASTS(TDC_InsertText, K_INSERT_TEXT)
+  DECL_AST_DOWNCASTS(TDC_DeleteText, K_DELETE_TEXT)
+  DECL_AST_DOWNCASTS(TDC_TotalChange, K_TOTAL_CHANGE)
 
   // Apply the change recored in this object to `diagnostics`.
   virtual void applyChangeToDiagnostics(
@@ -62,7 +62,7 @@ public:      // methods
 
 
 // Records `observeInsertLine`.
-class TDCO_InsertLine : public TextDocumentChangeObservation {
+class TDC_InsertLine : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
   int m_line;
@@ -73,9 +73,9 @@ public:      // data
   std::optional<int> m_prevLineBytes;
 
 public:      // methods
-  virtual ~TDCO_InsertLine() override;
+  virtual ~TDC_InsertLine() override;
 
-  explicit TDCO_InsertLine(int line, std::optional<int> prevLineBytes);
+  explicit TDC_InsertLine(int line, std::optional<int> prevLineBytes);
 
   static Kind constexpr TYPE_TAG = K_INSERT_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
@@ -87,7 +87,7 @@ public:      // methods
 
 
 // Records `observeDeleteLine`.
-class TDCO_DeleteLine : public TextDocumentChangeObservation {
+class TDC_DeleteLine : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
   int m_line;
@@ -98,9 +98,9 @@ public:      // data
   std::optional<int> m_prevLineBytes;
 
 public:      // methods
-  virtual ~TDCO_DeleteLine() override;
+  virtual ~TDC_DeleteLine() override;
 
-  explicit TDCO_DeleteLine(int line, std::optional<int> prevLineBytes);
+  explicit TDC_DeleteLine(int line, std::optional<int> prevLineBytes);
 
   static Kind constexpr TYPE_TAG = K_DELETE_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
@@ -112,7 +112,7 @@ public:      // methods
 
 
 // Records `observeInsertText`.
-class TDCO_InsertText : public TextDocumentChangeObservation {
+class TDC_InsertText : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
   TextMCoord m_tc;
@@ -124,9 +124,9 @@ public:      // data
   std::string m_text;
 
 public:      // methods
-  virtual ~TDCO_InsertText() override;
+  virtual ~TDC_InsertText() override;
 
-  explicit TDCO_InsertText(
+  explicit TDC_InsertText(
     TextMCoord tc, char const *text, int lengthBytes);
 
   static Kind constexpr TYPE_TAG = K_INSERT_TEXT;
@@ -139,16 +139,16 @@ public:      // methods
 
 
 // Records `observeDeleteText`.
-class TDCO_DeleteText : public TextDocumentChangeObservation {
+class TDC_DeleteText : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
   TextMCoord m_tc;
   int m_lengthBytes;
 
 public:      // methods
-  virtual ~TDCO_DeleteText() override;
+  virtual ~TDC_DeleteText() override;
 
-  explicit TDCO_DeleteText(
+  explicit TDC_DeleteText(
     TextMCoord tc, int lengthBytes);
 
   static Kind constexpr TYPE_TAG = K_DELETE_TEXT;
@@ -161,7 +161,7 @@ public:      // methods
 
 
 // Records `observeTotalChange`.
-class TDCO_TotalChange : public TextDocumentChangeObservation {
+class TDC_TotalChange : public TextDocumentChange {
 public:      // data
   // Number of lines in the document after the change.
   int m_numLines;
@@ -170,9 +170,9 @@ public:      // data
   std::string m_contents;
 
 public:      // methods
-  virtual ~TDCO_TotalChange() override;
+  virtual ~TDC_TotalChange() override;
 
-  explicit TDCO_TotalChange(int m_numLines, std::string &&contents);
+  explicit TDC_TotalChange(int m_numLines, std::string &&contents);
 
   static Kind constexpr TYPE_TAG = K_TOTAL_CHANGE;
   virtual Kind kind() const override { return TYPE_TAG; }
@@ -184,22 +184,22 @@ public:      // methods
 
 
 // Sequence of changes.
-class TextDocumentChangeObservationSequence {
-  NO_OBJECT_COPIES(TextDocumentChangeObservationSequence);
+class TextDocumentChangeSequence {
+  NO_OBJECT_COPIES(TextDocumentChangeSequence);
 
 public:      // data
   // A sequence of changes that were applied to the document in the
   // order they happened.
-  std::vector<std::unique_ptr<TextDocumentChangeObservation>>
+  std::vector<std::unique_ptr<TextDocumentChange>>
     m_seq;
 
 public:
-  ~TextDocumentChangeObservationSequence();
+  ~TextDocumentChangeSequence();
 
   // Initially empty sequence.
-  TextDocumentChangeObservationSequence();
+  TextDocumentChangeSequence();
 
-  TextDocumentChangeObservationSequence(TextDocumentChangeObservationSequence &&obj);
+  TextDocumentChangeSequence(TextDocumentChangeSequence &&obj);
 
   std::size_t size() const;
 
@@ -280,7 +280,7 @@ private:     // types
     // Changes that were applied to this document since
     // `m_versionNumber` was current, but before a later version started
     // being tracked.
-    TextDocumentChangeObservationSequence m_changeSequence;
+    TextDocumentChangeSequence m_changeSequence;
 
   public:
     ~VersionDetails();
@@ -320,7 +320,7 @@ private:     // methods
   //
   // Requires: trackingSomething()
   void addObservation(
-    stdfwd::unique_ptr<TextDocumentChangeObservation> observation);
+    stdfwd::unique_ptr<TextDocumentChange> observation);
 
 public:      // methods
   virtual ~TextDocumentObservationRecorder() override;
@@ -374,7 +374,7 @@ public:      // methods
   // sent to the server.
   //
   // Requires: trackingSomething()
-  TextDocumentChangeObservationSequence const &getUnsentChanges() const;
+  TextDocumentChangeSequence const &getUnsentChanges() const;
 
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &doc, int line) noexcept override;

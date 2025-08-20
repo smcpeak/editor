@@ -8,7 +8,7 @@
 
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams, LSP_TextDocumentContentChangeEvent
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
-#include "td-obs-recorder-fwd.h"       // TextDocumentChangeObservationSequence
+#include "td-obs-recorder-fwd.h"       // TextDocumentChangeSequence
 #include "td-core.h"                   // TextDocumentCore
 #include "textmcoord-fwd.h"            // TextMCoord
 
@@ -31,7 +31,7 @@ TextMCoordRange toMCoordRange(LSP_Range const &range);
 // Convert recorded changes to LSP changes.
 stdfwd::list<LSP_TextDocumentContentChangeEvent>
 convertRecordedChangesToLSPChanges(
-  TextDocumentChangeObservationSequence const &seq);
+  TextDocumentChangeSequence const &seq);
 
 
 // Apply changes in `params` to `doc`.

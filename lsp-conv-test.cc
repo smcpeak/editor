@@ -67,7 +67,7 @@ public:      // methods
   void syncAfterChange()
   {
     // Get recorded changes.
-    TextDocumentChangeObservationSequence const &recordedChanges =
+    TextDocumentChangeSequence const &recordedChanges =
       m_recorder.getUnsentChanges();
     VPVAL(toGDValue(recordedChanges).asIndentedString());
 

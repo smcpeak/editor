@@ -30,42 +30,42 @@ using namespace smbase;
 INIT_TRACE("td-obs-recorder");
 
 
-// ------------------- TextDocumentChangeObservation -------------------
-TextDocumentChangeObservation::~TextDocumentChangeObservation()
+// ------------------------ TextDocumentChange -------------------------
+TextDocumentChange::~TextDocumentChange()
 {}
 
 
-TextDocumentChangeObservation::TextDocumentChangeObservation()
+TextDocumentChange::TextDocumentChange()
 {}
 
 
-DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_InsertLine, K_INSERT_LINE)
-DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_DeleteLine, K_DELETE_LINE)
-DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_InsertText, K_INSERT_TEXT)
-DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_DeleteText, K_DELETE_TEXT)
-DEFN_AST_DOWNCASTS(TextDocumentChangeObservation, TDCO_TotalChange, K_TOTAL_CHANGE)
+DEFN_AST_DOWNCASTS(TextDocumentChange, TDC_InsertLine, K_INSERT_LINE)
+DEFN_AST_DOWNCASTS(TextDocumentChange, TDC_DeleteLine, K_DELETE_LINE)
+DEFN_AST_DOWNCASTS(TextDocumentChange, TDC_InsertText, K_INSERT_TEXT)
+DEFN_AST_DOWNCASTS(TextDocumentChange, TDC_DeleteText, K_DELETE_TEXT)
+DEFN_AST_DOWNCASTS(TextDocumentChange, TDC_TotalChange, K_TOTAL_CHANGE)
 
 
-// -------------------------- TDCO_InsertLine --------------------------
-TDCO_InsertLine::~TDCO_InsertLine()
+// -------------------------- TDC_InsertLine ---------------------------
+TDC_InsertLine::~TDC_InsertLine()
 {}
 
 
-TDCO_InsertLine::TDCO_InsertLine(
+TDC_InsertLine::TDC_InsertLine(
   int line, std::optional<int> prevLineBytes)
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
 
 
-void TDCO_InsertLine::applyChangeToDiagnostics(
+void TDC_InsertLine::applyChangeToDiagnostics(
   TextDocumentDiagnostics *diagnostics) const
 {
   diagnostics->insertLines(m_line, 1);
 }
 
 
-TDCO_InsertLine::operator gdv::GDValue() const
+TDC_InsertLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertLine"_sym);
   GDV_WRITE_MEMBER_SYM(m_line);
@@ -74,26 +74,26 @@ TDCO_InsertLine::operator gdv::GDValue() const
 }
 
 
-// -------------------------- TDCO_DeleteLine --------------------------
-TDCO_DeleteLine::~TDCO_DeleteLine()
+// -------------------------- TDC_DeleteLine ---------------------------
+TDC_DeleteLine::~TDC_DeleteLine()
 {}
 
 
-TDCO_DeleteLine::TDCO_DeleteLine(
+TDC_DeleteLine::TDC_DeleteLine(
   int line, std::optional<int> prevLineBytes)
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
 
 
-void TDCO_DeleteLine::applyChangeToDiagnostics(
+void TDC_DeleteLine::applyChangeToDiagnostics(
   TextDocumentDiagnostics *diagnostics) const
 {
   diagnostics->deleteLines(m_line, 1);
 }
 
 
-TDCO_DeleteLine::operator gdv::GDValue() const
+TDC_DeleteLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "DeleteLine"_sym);
   GDV_WRITE_MEMBER_SYM(m_line);
@@ -102,26 +102,26 @@ TDCO_DeleteLine::operator gdv::GDValue() const
 }
 
 
-// -------------------------- TDCO_InsertText --------------------------
-TDCO_InsertText::~TDCO_InsertText()
+// -------------------------- TDC_InsertText ---------------------------
+TDC_InsertText::~TDC_InsertText()
 {}
 
 
-TDCO_InsertText::TDCO_InsertText(
+TDC_InsertText::TDC_InsertText(
   TextMCoord tc, char const *text, int lengthBytes)
   : IMEMBFP(tc),
     m_text(text, lengthBytes)
 {}
 
 
-void TDCO_InsertText::applyChangeToDiagnostics(
+void TDC_InsertText::applyChangeToDiagnostics(
   TextDocumentDiagnostics *diagnostics) const
 {
   diagnostics->insertLineBytes(m_tc, m_text.size());
 }
 
 
-TDCO_InsertText::operator gdv::GDValue() const
+TDC_InsertText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertText"_sym);
   GDV_WRITE_MEMBER_SYM(m_tc);
@@ -130,26 +130,26 @@ TDCO_InsertText::operator gdv::GDValue() const
 }
 
 
-// -------------------------- TDCO_DeleteText --------------------------
-TDCO_DeleteText::~TDCO_DeleteText()
+// -------------------------- TDC_DeleteText ---------------------------
+TDC_DeleteText::~TDC_DeleteText()
 {}
 
 
-TDCO_DeleteText::TDCO_DeleteText(
+TDC_DeleteText::TDC_DeleteText(
   TextMCoord tc, int lengthBytes)
   : IMEMBFP(tc),
     IMEMBFP(lengthBytes)
 {}
 
 
-void TDCO_DeleteText::applyChangeToDiagnostics(
+void TDC_DeleteText::applyChangeToDiagnostics(
   TextDocumentDiagnostics *diagnostics) const
 {
   diagnostics->deleteLineBytes(m_tc, m_lengthBytes);
 }
 
 
-TDCO_DeleteText::operator gdv::GDValue() const
+TDC_DeleteText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "DeleteText"_sym);
   GDV_WRITE_MEMBER_SYM(m_tc);
@@ -158,25 +158,25 @@ TDCO_DeleteText::operator gdv::GDValue() const
 }
 
 
-// ------------------------- TDCO_TotalChange --------------------------
-TDCO_TotalChange::~TDCO_TotalChange()
+// -------------------------- TDC_TotalChange --------------------------
+TDC_TotalChange::~TDC_TotalChange()
 {}
 
 
-TDCO_TotalChange::TDCO_TotalChange(int numLines, std::string &&contents)
+TDC_TotalChange::TDC_TotalChange(int numLines, std::string &&contents)
   : IMEMBFP(numLines),
     IMEMBMFP(contents)
 {}
 
 
-void TDCO_TotalChange::applyChangeToDiagnostics(
+void TDC_TotalChange::applyChangeToDiagnostics(
   TextDocumentDiagnostics *diagnostics) const
 {
   diagnostics->clearEverything(m_numLines);
 }
 
 
-TDCO_TotalChange::operator gdv::GDValue() const
+TDC_TotalChange::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "TotalChange"_sym);
   GDV_WRITE_MEMBER_SYM(m_numLines);
@@ -229,29 +229,29 @@ TextDocumentObservationRecorder::VersionDetails::operator gdv::GDValue() const
 }
 
 
-// --------------- TextDocumentChangeObservationSequence ---------------
-TextDocumentChangeObservationSequence::~TextDocumentChangeObservationSequence()
+// --------------- TextDocumentChangeSequence ---------------
+TextDocumentChangeSequence::~TextDocumentChangeSequence()
 {}
 
 
-TextDocumentChangeObservationSequence::TextDocumentChangeObservationSequence()
+TextDocumentChangeSequence::TextDocumentChangeSequence()
   : m_seq()
 {}
 
 
-TextDocumentChangeObservationSequence::TextDocumentChangeObservationSequence(
-  TextDocumentChangeObservationSequence &&obj)
+TextDocumentChangeSequence::TextDocumentChangeSequence(
+  TextDocumentChangeSequence &&obj)
   : MDMEMB(m_seq)
 {}
 
 
-std::size_t TextDocumentChangeObservationSequence::size() const
+std::size_t TextDocumentChangeSequence::size() const
 {
   return m_seq.size();
 }
 
 
-TextDocumentChangeObservationSequence::operator gdv::GDValue() const
+TextDocumentChangeSequence::operator gdv::GDValue() const
 {
   return toGDValue(m_seq);
 }
@@ -429,7 +429,7 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
            " observed changes.");
 
     // Walk the sequence, applying changes in order.
-    for (std::unique_ptr<TextDocumentChangeObservation> const &obsPtr :
+    for (std::unique_ptr<TextDocumentChange> const &obsPtr :
            details.m_changeSequence.m_seq) {
       obsPtr->applyChangeToDiagnostics(diagnostics);
     }
@@ -456,7 +456,7 @@ auto TextDocumentObservationRecorder::getLastTrackedVersion()
 }
 
 
-TextDocumentChangeObservationSequence const &
+TextDocumentChangeSequence const &
 TextDocumentObservationRecorder::getUnsentChanges() const
 {
   return getLastTrackedVersionC().m_changeSequence;
@@ -464,7 +464,7 @@ TextDocumentObservationRecorder::getUnsentChanges() const
 
 
 void TextDocumentObservationRecorder::addObservation(
-  std::unique_ptr<TextDocumentChangeObservation> observation)
+  std::unique_ptr<TextDocumentChange> observation)
 {
   // Append the record to the last version.
   getLastTrackedVersion().
@@ -486,7 +486,7 @@ void TextDocumentObservationRecorder::observeInsertLine(
     }
 
     addObservation(
-      std::make_unique<TDCO_InsertLine>(line, prevLineBytes));
+      std::make_unique<TDC_InsertLine>(line, prevLineBytes));
   }
 
   GENERIC_CATCH_END
@@ -506,7 +506,7 @@ void TextDocumentObservationRecorder::observeDeleteLine(
     }
 
     addObservation(
-      std::make_unique<TDCO_DeleteLine>(line, prevLineBytes));
+      std::make_unique<TDC_DeleteLine>(line, prevLineBytes));
   }
 
   GENERIC_CATCH_END
@@ -518,7 +518,7 @@ void TextDocumentObservationRecorder::observeInsertText(
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_InsertText>(tc, text, lengthBytes));
+    addObservation(std::make_unique<TDC_InsertText>(tc, text, lengthBytes));
   }
   GENERIC_CATCH_END
 }
@@ -529,7 +529,7 @@ void TextDocumentObservationRecorder::observeDeleteText(
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_DeleteText>(tc, lengthBytes));
+    addObservation(std::make_unique<TDC_DeleteText>(tc, lengthBytes));
   }
   GENERIC_CATCH_END
 }
@@ -540,7 +540,7 @@ void TextDocumentObservationRecorder::observeTotalChange(
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
-    addObservation(std::make_unique<TDCO_TotalChange>(
+    addObservation(std::make_unique<TDC_TotalChange>(
       doc.numLines(),
       doc.getWholeFileString()));
   }
