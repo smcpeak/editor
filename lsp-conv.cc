@@ -5,6 +5,7 @@
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
 #include "named-td.h"                  // NamedTextDocument
+#include "td-change.h"                 // TextDocumentChange
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentChangeSequence
 #include "textmcoord.h"                // TextMCoord[Range]
