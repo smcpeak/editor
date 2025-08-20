@@ -223,6 +223,7 @@ EDITOR_OBJS += named-td.o
 EDITOR_OBJS += nearby-file.o
 EDITOR_OBJS += ocaml_hilite.yy.o
 EDITOR_OBJS += python_hilite.yy.o
+EDITOR_OBJS += td-change-seq.o
 EDITOR_OBJS += td-change.o
 EDITOR_OBJS += td-core.o
 EDITOR_OBJS += td-diagnostics.o

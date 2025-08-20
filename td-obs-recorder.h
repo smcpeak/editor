@@ -10,42 +10,17 @@
 
 #include "td-obs-recorder-fwd.h"       // fwds for this module
 
-#include "td-change-fwd.h"             // TextDocumentChange
+#include "td-change-fwd.h"             // TextDocumentChange [n]
+#include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-core.h"                   // TextDocumentObserver
-#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
+#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]
 
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
-#include "smbase/std-optional-fwd.h"   // std::optional
-#include "smbase/std-set-fwd.h"        // stdfwd::set
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+#include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
+#include "smbase/std-optional-fwd.h"   // std::optional [n]
+#include "smbase/std-set-fwd.h"        // stdfwd::set [n]
 
 #include <map>                         // std::map
-#include <memory>                      // std::unique_ptr
-#include <optional>                    // std::optional
-#include <vector>                      // std::vector
-
-
-// Sequence of changes.
-class TextDocumentChangeSequence {
-  NO_OBJECT_COPIES(TextDocumentChangeSequence);
-
-public:      // data
-  // A sequence of changes that were applied to the document in the
-  // order they happened.
-  std::vector<std::unique_ptr<TextDocumentChange>>
-    m_seq;
-
-public:
-  ~TextDocumentChangeSequence();
-
-  // Initially empty sequence.
-  TextDocumentChangeSequence();
-
-  TextDocumentChangeSequence(TextDocumentChangeSequence &&obj);
-
-  std::size_t size() const;
-
-  operator gdv::GDValue() const;
-};
 
 
 /* Records the sequence of changes observed via the
@@ -180,7 +155,7 @@ public:      // methods
 
   // Return the earliest version for which we have the ability to roll
   // changes forward.
-  std::optional<VersionNumber> getEarliestVersion() const;
+  stdfwd::optional<VersionNumber> getEarliestVersion() const;
 
   // True if we are tracking at least one version, and that version has
   // received diagnostics.

@@ -7,8 +7,6 @@
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 
 #include "smbase/exc.h"                // GENERIC_CATCH_{BEGIN,END}
-#include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
-#include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // smbase::{mapContains, mapInsertMove, mapKeySet}
 #include "smbase/sm-macros.h"          // IMEMBFP
@@ -70,34 +68,6 @@ TextDocumentObservationRecorder::VersionDetails::operator gdv::GDValue() const
   GDV_WRITE_MEMBER_SYM(m_hasDiagnostics);
   GDV_WRITE_MEMBER_SYM(m_changeSequence);
   return m;
-}
-
-
-// --------------- TextDocumentChangeSequence ---------------
-TextDocumentChangeSequence::~TextDocumentChangeSequence()
-{}
-
-
-TextDocumentChangeSequence::TextDocumentChangeSequence()
-  : m_seq()
-{}
-
-
-TextDocumentChangeSequence::TextDocumentChangeSequence(
-  TextDocumentChangeSequence &&obj)
-  : MDMEMB(m_seq)
-{}
-
-
-std::size_t TextDocumentChangeSequence::size() const
-{
-  return m_seq.size();
-}
-
-
-TextDocumentChangeSequence::operator gdv::GDValue() const
-{
-  return toGDValue(m_seq);
 }
 
 
