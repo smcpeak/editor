@@ -5,9 +5,10 @@
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
 #include "named-td.h"                  // NamedTextDocument
+#include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-change.h"                 // TextDocumentChange
+#include "td-core.h"                   // TextDocumentCore
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
-#include "td-obs-recorder.h"           // TextDocumentChangeSequence
 #include "textmcoord.h"                // TextMCoord[Range]
 #include "uri-util.h"                  // getFileURIPath
 

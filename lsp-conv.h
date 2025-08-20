@@ -6,14 +6,14 @@
 #ifndef EDITOR_LSP_CONV_H
 #define EDITOR_LSP_CONV_H
 
-#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams, LSP_TextDocumentContentChangeEvent
-#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
-#include "td-obs-recorder-fwd.h"       // TextDocumentChangeSequence
-#include "td-core.h"                   // TextDocumentCore
-#include "textmcoord-fwd.h"            // TextMCoord
+#include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams [n], LSP_TextDocumentContentChangeEvent [n]
+#include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
+#include "td-core-fwd.h"               // TextDocumentCore [n]
+#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]
+#include "textmcoord-fwd.h"            // TextMCoord [n]
 
-#include "smbase/std-list-fwd.h"       // stdfwd::list
-#include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr
+#include "smbase/std-list-fwd.h"       // stdfwd::list [n]
+#include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
 
 
 // Convert `lspDiags`.

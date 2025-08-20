@@ -5,6 +5,7 @@
 #include "unit-tests.h"                // decl for my entry point
 
 #include "lsp-data.h"                  // LSP_TextDocumentContentChangeEvent
+#include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 
