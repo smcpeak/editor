@@ -1347,7 +1347,8 @@ void ensureValidLineIndex(MapPair &m, int line)
 }
 
 
-void randomInsert(MapPair &m)
+// Insert a random coordinate-map entry.
+void randomInsertEntry(MapPair &m)
 {
   int spanID = m.numEntries() + 1;
 
@@ -1382,10 +1383,10 @@ void randomInsert(MapPair &m)
 }
 
 
-void randomInsertions(MapPair &m, int n)
+void randomInsertMultipleEntries(MapPair &m, int n)
 {
   while (n--) {
-    randomInsert(m);
+    randomInsertEntry(m);
   }
 }
 
@@ -1396,13 +1397,13 @@ void randomEdit(MapPair &m)
 
   if (c.check(2)) {
     // Insert a new span after (most likely) having done some edits.
-    randomInsert(m);
+    randomInsertEntry(m);
   }
 
   else if (c.check(1)) {
     m.clearEverything(1);
     m.selfCheck();
-    randomInsertions(m, 10);
+    randomInsertMultipleEntries(m, 10);
   }
 
   else if (c.check(200)) {
@@ -1451,7 +1452,7 @@ void test_randomOps()
     MapPair m(1 /*numLines*/);
     m.selfCheck();
 
-    randomInsertions(m, 10);
+    randomInsertMultipleEntries(m, 10);
 
     for (int inner=0; inner < innerLimit; ++inner) {
       EXN_CONTEXT_EXPR(inner);
@@ -1658,7 +1659,7 @@ void test_adjustForDocumentRandomized()
   for (int i=0; i < iters; ++i) {
     // Random diagnostics.
     MapPair m(1 /*numLines*/);
-    randomInsertions(m, 10);
+    randomInsertMultipleEntries(m, 10);
 
     // Random document.
     TextDocumentCore doc;
