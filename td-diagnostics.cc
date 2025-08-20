@@ -10,8 +10,11 @@
 #include "td-diagnostics.h"                      // this module
 
 #include "named-td.h"                            // NamedTextDocument
+#include "td-change.h"                           // TextDocumentChange
+#include "td-change-seq.h"                       // TextDocumentChangeSequence
 #include "textmcoord-map.h"                      // TextMCoordMap
 
+#include "smbase/ast-switch.h"                   // ASTSWITCHC
 #include "smbase/compare-util.h"                 // smbase::compare
 #include "smbase/container-util.h"               // smbase::reverseIterRange
 #include "smbase/gdvalue.h"                      // gdv::GDValue
@@ -472,6 +475,47 @@ void TextDocumentDiagnostics::deleteLineBytes(TextMCoord tc, int lengthBytes)
 TextDocumentDiagnostics::operator gdv::GDValue() const
 {
   return toGDValue(getAllEntries());
+}
+
+
+void TextDocumentDiagnostics::applyDocumentChange(
+  TextDocumentChange const &change)
+{
+  ASTSWITCHC(TextDocumentChange, &change) {
+    ASTCASEC(TDC_InsertLine, insertLine) {
+      this->insertLines(insertLine->m_line, 1);
+    }
+
+    ASTNEXTC(TDC_DeleteLine, deleteLine) {
+      this->deleteLines(deleteLine->m_line, 1);
+    }
+
+    ASTNEXTC(TDC_InsertText, insertText) {
+      this->insertLineBytes(insertText->m_tc,
+                            insertText->m_text.size());
+    }
+
+    ASTNEXTC(TDC_DeleteText, deleteText) {
+      this->deleteLineBytes(deleteText->m_tc,
+                            deleteText->m_lengthBytes);
+    }
+
+    ASTNEXTC(TDC_TotalChange, totalChange) {
+      this->clearEverything(totalChange->m_numLines);
+    }
+
+    ASTENDCASEC
+  }
+}
+
+
+void TextDocumentDiagnostics::applyDocumentChangeSequence(
+  TextDocumentChangeSequence const &seq)
+{
+  for (std::unique_ptr<TextDocumentChange> const &changePtr :
+         seq.m_seq) {
+    applyDocumentChange(*changePtr);
+  }
 }
 
 

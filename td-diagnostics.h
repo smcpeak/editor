@@ -15,12 +15,14 @@
 
 #include "td-diagnostics-fwd.h"        // fwds for this module
 
-#include "named-td-fwd.h"              // NamedTextDocument
+#include "named-td-fwd.h"              // NamedTextDocument [n]
+#include "td-change-fwd.h"             // TextDocumentChange [n]
+#include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
 #include "td-core.h"                   // TextDocumentObserver, TextDocumentCore
 #include "textmcoord-map.h"            // TextMCoordMap
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/refct-serf.h"         // RCSerf, SerfRefCount
 
 #include <string>                      // std::string
@@ -272,6 +274,13 @@ public:      // methods
 
   // Equivalent to `toGDValue(getAllEntries())`.
   operator gdv::GDValue() const;
+
+  // Apply `change`.
+  void applyDocumentChange(TextDocumentChange const &change);
+
+  // Apply every change in `seq`.
+  void applyDocumentChangeSequence(
+    TextDocumentChangeSequence const &seq);
 };
 
 

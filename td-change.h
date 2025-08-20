@@ -8,7 +8,6 @@
 
 #include "td-change-fwd.h"             // fwds for this module
 
-#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "textmcoord.h"                // TextMCoord
 
 #include "smbase/ast-switch.h"         // DECL_AST_DOWNCASTS
@@ -46,10 +45,6 @@ public:      // methods
   DECL_AST_DOWNCASTS(TDC_DeleteText, K_DELETE_TEXT)
   DECL_AST_DOWNCASTS(TDC_TotalChange, K_TOTAL_CHANGE)
 
-  // Apply the change recored in this object to `diagnostics`.
-  virtual void applyChangeToDiagnostics(
-    TextDocumentDiagnostics *diagnostics) const = 0;
-
   // Dump data for testing and debugging.
   virtual operator gdv::GDValue() const = 0;
 };
@@ -74,8 +69,6 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_INSERT_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
 
-  virtual void applyChangeToDiagnostics(
-    TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -99,8 +92,6 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_DELETE_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
 
-  virtual void applyChangeToDiagnostics(
-    TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -126,8 +117,6 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_INSERT_TEXT;
   virtual Kind kind() const override { return TYPE_TAG; }
 
-  virtual void applyChangeToDiagnostics(
-    TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -148,8 +137,6 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_DELETE_TEXT;
   virtual Kind kind() const override { return TYPE_TAG; }
 
-  virtual void applyChangeToDiagnostics(
-    TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -171,8 +158,6 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_TOTAL_CHANGE;
   virtual Kind kind() const override { return TYPE_TAG; }
 
-  virtual void applyChangeToDiagnostics(
-    TextDocumentDiagnostics *diagnostics) const override;
   virtual operator gdv::GDValue() const override;
 };
 

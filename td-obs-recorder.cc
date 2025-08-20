@@ -242,11 +242,7 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
            " by applying " << details.m_changeSequence.size() <<
            " observed changes.");
 
-    // Walk the sequence, applying changes in order.
-    for (std::unique_ptr<TextDocumentChange> const &obsPtr :
-           details.m_changeSequence.m_seq) {
-      obsPtr->applyChangeToDiagnostics(diagnostics);
-    }
+    diagnostics->applyDocumentChangeSequence(details.m_changeSequence);
   }
 }
 

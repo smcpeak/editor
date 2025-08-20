@@ -10,7 +10,6 @@
 
 #include "td-obs-recorder-fwd.h"       // fwds for this module
 
-#include "td-change-fwd.h"             // TextDocumentChange [n]
 #include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-core.h"                   // TextDocumentObserver
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]

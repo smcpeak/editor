@@ -41,13 +41,6 @@ TDC_InsertLine::TDC_InsertLine(
 {}
 
 
-void TDC_InsertLine::applyChangeToDiagnostics(
-  TextDocumentDiagnostics *diagnostics) const
-{
-  diagnostics->insertLines(m_line, 1);
-}
-
-
 TDC_InsertLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertLine"_sym);
@@ -67,13 +60,6 @@ TDC_DeleteLine::TDC_DeleteLine(
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
-
-
-void TDC_DeleteLine::applyChangeToDiagnostics(
-  TextDocumentDiagnostics *diagnostics) const
-{
-  diagnostics->deleteLines(m_line, 1);
-}
 
 
 TDC_DeleteLine::operator gdv::GDValue() const
@@ -97,13 +83,6 @@ TDC_InsertText::TDC_InsertText(
 {}
 
 
-void TDC_InsertText::applyChangeToDiagnostics(
-  TextDocumentDiagnostics *diagnostics) const
-{
-  diagnostics->insertLineBytes(m_tc, m_text.size());
-}
-
-
 TDC_InsertText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertText"_sym);
@@ -125,13 +104,6 @@ TDC_DeleteText::TDC_DeleteText(
 {}
 
 
-void TDC_DeleteText::applyChangeToDiagnostics(
-  TextDocumentDiagnostics *diagnostics) const
-{
-  diagnostics->deleteLineBytes(m_tc, m_lengthBytes);
-}
-
-
 TDC_DeleteText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "DeleteText"_sym);
@@ -150,13 +122,6 @@ TDC_TotalChange::TDC_TotalChange(int numLines, std::string &&contents)
   : IMEMBFP(numLines),
     IMEMBMFP(contents)
 {}
-
-
-void TDC_TotalChange::applyChangeToDiagnostics(
-  TextDocumentDiagnostics *diagnostics) const
-{
-  diagnostics->clearEverything(m_numLines);
-}
 
 
 TDC_TotalChange::operator gdv::GDValue() const
