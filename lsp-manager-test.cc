@@ -207,8 +207,7 @@ void LSPManagerTester::testSynchronously()
     // Get the manager's view of the document.
     RCSerf<LSPDocumentInfo const> docInfo =
       m_lspManager.getDocInfo(m_params.m_fname);
-    xassert(docInfo->getLastSentContentsString() ==
-            m_doc.getWholeFileString());
+    xassert(docInfo->lastContentsEquals(m_doc));
 
     // Set up a recorder for our copy.
     TextDocumentObservationRecorder recorder(m_doc);
@@ -235,8 +234,7 @@ void LSPManagerTester::testSynchronously()
     m_lspManager.notify_textDocument_didChange(changeParams);
 
     // Check the manager's copy.
-    xassert(docInfo->getLastSentContentsString() ==
-            m_doc.getWholeFileString());
+    xassert(docInfo->lastContentsEquals(m_doc));
 
     // The recorder must also know this was sent.
     recorder.beginTrackingCurrentDoc();

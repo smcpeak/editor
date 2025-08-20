@@ -31,8 +31,8 @@ public:
 
   // If 'm_length' is not zero, pointer to array of bytes in the line,
   // allocated with 'new[]'.  This is nominally an owner pointer, except
-  // when this instance is an inactivelement in a GapArray.  Again, the
-  // class that contains the GapArray does memory management.
+  // when this instance is an inactive element in a GapArray.  Again,
+  // the class that contains the GapArray does memory management.
   //
   // TODO: Change this to 'unsigned char'.
   char *m_bytes;
@@ -63,6 +63,12 @@ public:
 
   // Again, a shallow copy.
   TextDocumentLine& operator= (TextDocumentLine const &obj) = default;
+
+  // True if both objects represent the same sequence of bytes.
+  bool operator==(TextDocumentLine const &obj) const;
+
+  bool operator!=(TextDocumentLine const &obj) const
+    { return !operator==(obj); }
 
   // Return the contents as a string, without any final newline.
   operator gdv::GDValue() const;

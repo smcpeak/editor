@@ -11,7 +11,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // IGNORE_RESULT, OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ[_GDV]
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ[_GDV], op_eq
 #include "smbase/string-util.h"        // vectorOfUCharToString
 
 // libc
@@ -575,6 +575,22 @@ void test_wholeFileString()
 }
 
 
+void replaceRange(
+  TextDocumentCore &doc,
+  int startLine,
+  int startByteIndex,
+  int endLine,
+  int endByteIndex,
+  char const *text)
+{
+  doc.replaceMultilineRange(
+    TextMCoordRange(
+      TextMCoord(startLine, startByteIndex),
+      TextMCoord(endLine, endByteIndex)),
+    text);
+}
+
+
 void testOne_replaceMultilineRange(
   TextDocumentCore &doc,
   int startLine,
@@ -591,10 +607,12 @@ void testOne_replaceMultilineRange(
     endByteIndex,
     text);
 
-  doc.replaceMultilineRange(
-    TextMCoordRange(
-      TextMCoord(startLine, startByteIndex),
-      TextMCoord(endLine, endByteIndex)),
+  replaceRange(
+    doc,
+    startLine,
+    startByteIndex,
+    endLine,
+    endByteIndex,
     text);
   EXPECT_EQ(doc.getWholeFileString(), expect);
 }
@@ -635,6 +653,66 @@ void test_replaceMultilineRange()
 }
 
 
+void test_equals()
+{
+  TextDocumentCore doc1, doc2;
+  xassert(op_eq(doc1, doc2));
+
+  replaceRange(doc1, 0,0,0,0, "zero\none\ntwo\n");
+  xassert(!op_eq(doc1, doc2));
+
+  replaceRange(doc2, 0,0,0,0, "two\n");
+  xassert(!op_eq(doc1, doc2));
+
+  replaceRange(doc2, 0,0,0,0, "zero\n");
+  xassert(!op_eq(doc1, doc2));
+
+  replaceRange(doc2, 1,0,1,0, "one\n");
+  xassert(op_eq(doc1, doc2));
+
+  replaceRange(doc1, 3,0,3,0, "D\n");
+  xassert(!op_eq(doc1, doc2));
+  replaceRange(doc2, 3,0,3,0, "D\n");
+  xassert(op_eq(doc1, doc2));
+
+  doc1.deleteTextBytes(TextMCoord(3, 0), 1);
+  xassert(!op_eq(doc1, doc2));
+  doc2.deleteTextBytes(TextMCoord(3, 0), 1);
+
+  // Both should have line 3 as recent.
+  xassert(op_eq(doc1, doc2));
+
+  doc1.deleteLine(3);
+  doc2.deleteLine(3);
+
+  // Neither document has a recent line since we deleted the recent
+  // lines.
+  xassert(op_eq(doc1, doc2));
+
+  replaceRange(doc1, 1,0,1,0, "B");
+  xassert(!op_eq(doc1, doc2));
+  replaceRange(doc2, 1,0,1,0, "B");
+
+  // Both have a recent line, and it is the same line.
+  xassert(op_eq(doc2, doc2));
+
+  replaceRange(doc1, 0,0,0,0, "A");
+  xassert(!op_eq(doc1, doc2));
+  replaceRange(doc1, 2,0,2,0, "C");
+  xassert(!op_eq(doc1, doc2));
+
+  replaceRange(doc2, 2,0,2,0, "C");
+  xassert(!op_eq(doc1, doc2));
+  replaceRange(doc2, 0,0,0,0, "A");
+
+  // Both documents have a recent line, but it is different.
+  xassert(op_eq(doc1, doc2));
+
+  replaceRange(doc1, 0,0,0,0, "A");
+  xassert(!op_eq(doc1, doc2));
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -649,6 +727,7 @@ void test_td_core(CmdlineArgsSpan args)
   test_adjustMCoord();
   test_wholeFileString();
   test_replaceMultilineRange();
+  test_equals();
 }
 
 

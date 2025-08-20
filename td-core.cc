@@ -8,6 +8,7 @@
 
 // smbase
 #include "smbase/array.h"              // Array
+#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/objcount.h"           // CheckObjectCount
 #include "smbase/overflow.h"           // preIncrementWithOverflowCheck, safeToInt
@@ -15,6 +16,7 @@
 #include "smbase/string-util.h"        // vectorOfUCharToString, stringToVectorOfUChar
 #include "smbase/strutil.h"            // encodeWithEscapes
 #include "smbase/syserr.h"             // xsyserror
+#include "smbase/xassert.h"            // xassert
 
 // libc
 #include <assert.h>                    // assert
@@ -22,6 +24,7 @@
 #include <string.h>                    // strncasecmp
 
 using namespace gdv;
+using namespace smbase;
 
 
 // ---------------------- TextDocumentCore --------------------------
@@ -77,6 +80,68 @@ void TextDocumentCore::selfCheck() const
   }
 
   xassert(m_longestLengthSoFar >= 0);
+}
+
+
+// True if `ga` and `tdl` represent the same sequence of bytes.
+static bool equal_GA_TDL(
+  GapArray<char> const &ga,
+  TextDocumentLine const &tdl)
+{
+  int len = ga.length();
+  xassert(len >= 0);
+  if (static_cast<unsigned>(len) != tdl.lengthWithoutNL()) {
+    return false;
+  }
+
+  for (int i=0; i < len; ++i) {
+    if (ga.get(i) != tdl.at(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+bool TextDocumentCore::equalLineAt(
+  int i, TextDocumentCore const &obj) const
+{
+  xassert(cc::z_le_lt(i, numLines()));
+  xassert(cc::z_le_lt(i, obj.numLines()));
+
+  if (i == m_recentIndex) {
+    if (i == obj.m_recentIndex) {
+      return m_recentLine == obj.m_recentLine;
+    }
+    else {
+      return equal_GA_TDL(m_recentLine, obj.m_lines.get(i));
+    }
+  }
+  else {
+    if (i == obj.m_recentIndex) {
+      return equal_GA_TDL(obj.m_recentLine, m_lines.get(i));
+    }
+    else {
+      return m_lines.get(i) == obj.m_lines.get(i);
+    }
+  }
+}
+
+
+bool TextDocumentCore::operator==(TextDocumentCore const &obj) const
+{
+  if (numLines() != obj.numLines()) {
+    return false;
+  }
+
+  for (int i=0; i < m_lines.length(); i++) {
+    if (!equalLineAt(i, obj)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 

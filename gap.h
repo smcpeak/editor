@@ -64,6 +64,12 @@ public:      // funcs
   GapArray();      // empty sequence
   ~GapArray();     // release storage
 
+  // True if both arrays represent the same sequence.
+  bool operator==(GapArray const &obj) const;
+
+  bool operator!=(GapArray const &obj) const
+    { return !operator==(obj); }
+
   // number of elements in sequence
   int length() const                { return left+right; }
 
@@ -144,6 +150,23 @@ GapArray<T>::~GapArray()
   if (array) {
     delete[] array;
   }
+}
+
+
+template <class T>
+bool GapArray<T>::operator==(GapArray const &obj) const
+{
+  if (length() != obj.length()) {
+    return false;
+  }
+
+  for (int i=0; i < length(); ++i) {
+    if (get(i) != obj.get(i)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 

@@ -82,7 +82,9 @@ public:      // methods
     // Apply LSP to secondary.
     applyLSPDocumentChanges(lspParams, m_secondaryDoc);
 
-    // Verify secondary agrees with primary.
+    // Verify secondary agrees with primary.  (This gets the strings and
+    // quotes them, as opposed to using operator==, so the output in the
+    // case of a difference is informative.)
     EXPECT_EQ(doubleQuote(m_secondaryDoc.getWholeFileString()),
               doubleQuote(m_primaryDoc.getWholeFileString()));
 

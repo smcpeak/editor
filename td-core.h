@@ -100,6 +100,11 @@ private:     // instance data
   mutable int m_iteratorCount;
 
 private:     // funcs
+  // True if line `i` of `*this` and `obj` is equal.
+  //
+  // Requires: `i` is within bounds for both.
+  bool equalLineAt(int i, TextDocumentCore const &obj) const;
+
   // strlen, but NULL yields 0 and '\n' is terminator, in bytes.
   static int bufStrlen(char const *p);
 
@@ -131,6 +136,13 @@ public:    // funcs
 
   // Check internal invariants, throwing assertion if broken.
   void selfCheck() const;
+
+  // True if both documents represent the same sequence of lines, i.e.,
+  // that their `getWholeFileString()` returns would be the same.
+  bool operator==(TextDocumentCore const &obj) const;
+
+  bool operator!=(TextDocumentCore const &obj) const
+    { return !operator==(obj); }
 
   // ------------------------- GDValue export --------------------------
   // Logically, this object represents a versioned sequence of strings,

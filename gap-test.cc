@@ -7,7 +7,7 @@
 
 // smbase
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // tprintf
+#include "smbase/sm-test.h"            // tprintf, op_eq
 
 // libc
 #include <stdio.h>                     // printf
@@ -290,6 +290,46 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
 }
 
 
+void test_equals()
+{
+  GapArray<char> ga1, ga2;
+  xassert(op_eq(ga1, ga2));
+
+  ga1.insert(0, 'a');
+  xassert(!op_eq(ga1, ga2));
+
+  ga2.insert(0, 'a');
+  xassert(op_eq(ga1, ga2));
+
+  ga1.insertMany(1, "bcd", 3);
+  xassert(!op_eq(ga1, ga2));
+
+  ga2.insertMany(1, "cd", 2);
+  xassert(!op_eq(ga1, ga2));
+
+  ga2.insert(1, 'b');
+  xassert(op_eq(ga1, ga2));
+
+  ga1.remove(2);   // 'c'
+  xassert(!op_eq(ga1, ga2));
+
+  ga1.remove(0);   // 'a'
+  xassert(!op_eq(ga1, ga2));
+
+  ga2.remove(0);   // 'a'
+  xassert(!op_eq(ga1, ga2));
+
+  ga2.remove(1);   // 'c'
+  xassert(op_eq(ga1, ga2));
+
+  ga1.clear();
+  xassert(!op_eq(ga1, ga2));
+
+  ga2.clear();
+  xassert(op_eq(ga1, ga2));
+}
+
+
 int const PRINT = 0;
 
 
@@ -300,6 +340,8 @@ CLOSE_ANONYMOUS_NAMESPACE
 void test_gap(CmdlineArgsSpan args)
 {
   //srand(time());
+
+  test_equals();
 
   {
     int iters = 100;

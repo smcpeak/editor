@@ -272,6 +272,7 @@ UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += td-core-test.o
 UNIT_TESTS_OBJS += td-diagnostics-test.o
 UNIT_TESTS_OBJS += td-editor-test.o
+UNIT_TESTS_OBJS += td-line-test.o
 UNIT_TESTS_OBJS += td-obs-recorder-test.o
 UNIT_TESTS_OBJS += text-search-test.o
 UNIT_TESTS_OBJS += textcategory-test.o

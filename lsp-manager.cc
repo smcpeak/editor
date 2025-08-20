@@ -161,9 +161,7 @@ std::string LSPDocumentInfo::getLastSentContentsString() const
 
 bool LSPDocumentInfo::lastContentsEquals(TextDocumentCore const &doc) const
 {
-  // TODO: Make this more efficient.
-  return getLastSentContentsString() ==
-         doc.getWholeFileString();
+  return *m_lastSentContents == doc;
 }
 
 
