@@ -2699,7 +2699,7 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
 
     lspManager()->notify_textDocument_didOpen(
       fname, languageId, *version, std::move(contents));
-    ntd->beginTrackingChangesForFutureDiagnostics();
+    ntd->beginTrackingChanges();
   }
 
   else /*update*/ {
@@ -2756,7 +2756,7 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
     // TODO: Use incremental update here.
     lspManager()->notify_textDocument_didChange_all(
       fname, *version, std::move(contents));
-    ntd->beginTrackingChangesForFutureDiagnostics();
+    ntd->beginTrackingChanges();
   }
 }
 

@@ -200,10 +200,8 @@ public:      // funcs
   // making some document changes, we can send incremental changes to
   // the server.
   //
-  // TODO: Rename this to `beginTrackingChanges`.
-  //
   // Ensures: trackingChanges()
-  void beginTrackingChangesForFutureDiagnostics();
+  void beginTrackingChanges();
 
   // True if we are recording changes in order to be able to send them
   // to the LSP server and to incorporate diagnostics from previous

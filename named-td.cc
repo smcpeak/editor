@@ -292,10 +292,9 @@ RCSerf<TDD_Diagnostic const> NamedTextDocument::getDiagnosticAt(
 }
 
 
-void NamedTextDocument::beginTrackingChangesForFutureDiagnostics()
+void NamedTextDocument::beginTrackingChanges()
 {
-  TRACE1("beginTrackingChangesForFutureDiagnostics: version is " <<
-         getVersionNumber());
+  TRACE1("beginTrackingChanges: version is " << getVersionNumber());
 
   m_observationRecorder.beginTrackingCurrentDoc();
 

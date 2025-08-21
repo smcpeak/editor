@@ -57,7 +57,7 @@ public:      // methods
       m_tdd()
   {
     // Steady state is we are tracking.
-    m_primaryDoc.beginTrackingChangesForFutureDiagnostics();
+    m_primaryDoc.beginTrackingChanges();
 
     makeDiagnostics();
 
@@ -122,7 +122,7 @@ public:      // methods
 
     // Bring the recorder up to date.
     m_primaryDoc.updateDiagnostics(std::move(m_tdd));
-    m_primaryDoc.beginTrackingChangesForFutureDiagnostics();
+    m_primaryDoc.beginTrackingChanges();
 
     // Prepare for the next cycle.
     makeDiagnostics();
