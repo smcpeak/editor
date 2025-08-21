@@ -8,11 +8,12 @@
 
 #include "td-change-seq-fwd.h"         // fwds for this module
 
-#include "td-change-fwd.h"             // TextDocumentChange
+#include "td-change-fwd.h"             // TextDocumentChange [n]
+#include "td-core-fwd.h"               // TextDocumentCore [n]
 
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
-#include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr
+#include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
 
 #include <cstddef>                     // std::size_t
 #include <vector>                      // std::vector
@@ -35,11 +36,27 @@ public:
   TextDocumentChangeSequence();
 
   TextDocumentChangeSequence(TextDocumentChangeSequence &&obj);
+  TextDocumentChangeSequence &operator=(TextDocumentChangeSequence &&obj);
 
   std::size_t size() const;
 
   operator gdv::GDValue() const;
+
+  // Append `change` to the sequence.
+  void append(stdfwd::unique_ptr<TextDocumentChange> change);
+
+  // Apply `m_seq` to `doc`.
+  void applyToDoc(TextDocumentCore &doc) const;
 };
+
+
+// Randomly create a change that could be applied to `doc`.  This does
+// not actually make the change.
+//
+// Usually this is just one change, but deleting a line requires first
+// clearing it, so that is two changes.
+TextDocumentChangeSequence makeRandomChange(
+  TextDocumentCore const &doc);
 
 
 #endif // EDITOR_TD_CHANGE_SEQ_H

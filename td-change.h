@@ -8,6 +8,7 @@
 
 #include "td-change-fwd.h"             // fwds for this module
 
+#include "td-core-fwd.h"               // TextDocumentCore [n]
 #include "textmcoord.h"                // TextMCoord
 
 #include "smbase/ast-switch.h"         // DECL_AST_DOWNCASTS
@@ -45,6 +46,9 @@ public:      // methods
   DECL_AST_DOWNCASTS(TDC_DeleteText, K_DELETE_TEXT)
   DECL_AST_DOWNCASTS(TDC_TotalChange, K_TOTAL_CHANGE)
 
+  // Apply this change to `doc`.
+  virtual void applyToDoc(TextDocumentCore &doc) const = 0;
+
   // Dump data for testing and debugging.
   virtual operator gdv::GDValue() const = 0;
 };
@@ -69,6 +73,7 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_INSERT_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
 
+  virtual void applyToDoc(TextDocumentCore &doc) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -92,6 +97,7 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_DELETE_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
 
+  virtual void applyToDoc(TextDocumentCore &doc) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -113,10 +119,13 @@ public:      // methods
 
   explicit TDC_InsertText(
     TextMCoord tc, char const *text, int lengthBytes);
+  explicit TDC_InsertText(
+    TextMCoord tc, std::string const &&text);
 
   static Kind constexpr TYPE_TAG = K_INSERT_TEXT;
   virtual Kind kind() const override { return TYPE_TAG; }
 
+  virtual void applyToDoc(TextDocumentCore &doc) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -137,6 +146,7 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_DELETE_TEXT;
   virtual Kind kind() const override { return TYPE_TAG; }
 
+  virtual void applyToDoc(TextDocumentCore &doc) const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -158,6 +168,7 @@ public:      // methods
   static Kind constexpr TYPE_TAG = K_TOTAL_CHANGE;
   virtual Kind kind() const override { return TYPE_TAG; }
 
+  virtual void applyToDoc(TextDocumentCore &doc) const override;
   virtual operator gdv::GDValue() const override;
 };
 

@@ -41,6 +41,12 @@ TDC_InsertLine::TDC_InsertLine(
 {}
 
 
+void TDC_InsertLine::applyToDoc(TextDocumentCore &doc) const
+{
+  doc.insertLine(m_line);
+}
+
+
 TDC_InsertLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertLine"_sym);
@@ -60,6 +66,12 @@ TDC_DeleteLine::TDC_DeleteLine(
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
+
+
+void TDC_DeleteLine::applyToDoc(TextDocumentCore &doc) const
+{
+  doc.deleteLine(m_line);
+}
 
 
 TDC_DeleteLine::operator gdv::GDValue() const
@@ -83,6 +95,19 @@ TDC_InsertText::TDC_InsertText(
 {}
 
 
+TDC_InsertText::TDC_InsertText(
+  TextMCoord tc, std::string const &&text)
+  : IMEMBFP(tc),
+    IMEMBMFP(text)
+{}
+
+
+void TDC_InsertText::applyToDoc(TextDocumentCore &doc) const
+{
+  doc.insertString(m_tc, m_text);
+}
+
+
 TDC_InsertText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertText"_sym);
@@ -104,6 +129,12 @@ TDC_DeleteText::TDC_DeleteText(
 {}
 
 
+void TDC_DeleteText::applyToDoc(TextDocumentCore &doc) const
+{
+  doc.deleteTextBytes(m_tc, m_lengthBytes);
+}
+
+
 TDC_DeleteText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "DeleteText"_sym);
@@ -122,6 +153,12 @@ TDC_TotalChange::TDC_TotalChange(int numLines, std::string &&contents)
   : IMEMBFP(numLines),
     IMEMBMFP(contents)
 {}
+
+
+void TDC_TotalChange::applyToDoc(TextDocumentCore &doc) const
+{
+  doc.replaceWholeFileString(m_contents);
+}
 
 
 TDC_TotalChange::operator gdv::GDValue() const

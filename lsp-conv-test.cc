@@ -10,7 +10,7 @@
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue for TEST_CASE_EXPRS
-#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, smbase_loopi
 #include "smbase/sm-test.h"            // EXPECT_EQ
 
 #include <list>                        // std::list
@@ -18,6 +18,7 @@
 #include <utility>                     // std::move
 
 using namespace gdv;
+using namespace smbase;
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -39,7 +40,7 @@ public:      // data
 
   // Diagnostics ostensibly derived from the lastest tracked version,
   // although in reality just empty; this is part of the protocol used
-  // by the recorder to stay in sync.
+  // by the recorder to stay in sync.  Never null.
   std::unique_ptr<TextDocumentDiagnostics> m_tdd;
 
 public:      // methods
@@ -53,6 +54,18 @@ public:      // methods
     m_recorder.beginTrackingCurrentDoc();
 
     makeDiagnostics();
+
+    selfCheck();
+  }
+
+  void selfCheck() const
+  {
+    m_primaryDoc.selfCheck();
+    m_recorder.selfCheck();
+    m_secondaryDoc.selfCheck();
+
+    xassert(m_tdd);
+    m_tdd->selfCheck();
   }
 
   // Make empty diagnostics corresponding to the current version of
@@ -93,8 +106,13 @@ public:      // methods
     m_recorder.applyChangesToDiagnostics(m_tdd.get());
     m_recorder.beginTrackingCurrentDoc();
 
+    // Check the diagnostics before we replace them.
+    m_tdd->selfCheck();
+
     // Prepare for the next cycle.
     makeDiagnostics();
+
+    selfCheck();
   }
 
   void test_replaceWhole()
@@ -161,10 +179,16 @@ public:      // methods
       "2\n"
       "3othree");
   }
+
+  void makeRandomEdit()
+  {
+    TextDocumentChangeSequence changes = makeRandomChange(m_primaryDoc);
+    changes.applyToDoc(m_primaryDoc);
+  }
 };
 
 
-void test_corePair()
+void test_replace()
 {
   {
     TDCorePair docs;
@@ -178,13 +202,36 @@ void test_corePair()
 }
 
 
+void test_randomEdits()
+{
+  int const outerLimit =
+    envRandomizedTestIters(10, "LCT_OUTER_LIMIT", 2);
+  int const innerLimit =
+    envRandomizedTestIters(200, "LCT_INNER_LIMIT", 2);
+
+  for (int outer=0; outer < outerLimit; ++outer) {
+    EXN_CONTEXT_EXPR(outer);
+
+    TDCorePair docs;
+
+    for (int inner=0; inner < innerLimit; ++inner) {
+      EXN_CONTEXT_EXPR(inner);
+
+      docs.makeRandomEdit();
+      docs.syncAfterChange();
+    }
+  }
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
 // Called from unit-tests.cc.
 void test_lsp_conv(CmdlineArgsSpan args)
 {
-  test_corePair();
+  test_replace();
+  test_randomEdits();
 }
 
 

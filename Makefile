@@ -272,6 +272,7 @@ UNIT_TESTS_OBJS += nearby-file-test.o
 UNIT_TESTS_OBJS += ocaml-hilite-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += td-core-test.o
+UNIT_TESTS_OBJS += td-change-test.o
 UNIT_TESTS_OBJS += td-diagnostics-test.o
 UNIT_TESTS_OBJS += td-editor-test.o
 UNIT_TESTS_OBJS += td-line-test.o
