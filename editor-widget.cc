@@ -2673,6 +2673,10 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
     else {
       lspManager()->notify_textDocument_didClose(fname);
       ntd->updateDiagnostics(nullptr);
+
+      // Since `fname` is now closed w.r.t. LSP, we should stop tracking
+      // its changes.
+      ntd->stopTrackingChanges();
     }
     return;
   }

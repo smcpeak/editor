@@ -8,6 +8,7 @@
 
 #include "td-change-fwd.h"             // fwds for this module
 
+#include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core-fwd.h"               // TextDocumentCore [n]
 #include "textmcoord.h"                // TextMCoord
 
@@ -49,6 +50,9 @@ public:      // methods
   // Apply this change to `doc`.
   virtual void applyToDoc(TextDocumentCore &doc) const = 0;
 
+  // Express as a range text replacement.
+  virtual RangeTextReplacement getRangeTextReplacement() const = 0;
+
   // Dump data for testing and debugging.
   virtual operator gdv::GDValue() const = 0;
 };
@@ -74,6 +78,7 @@ public:      // methods
   virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyToDoc(TextDocumentCore &doc) const override;
+  virtual RangeTextReplacement getRangeTextReplacement() const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -98,6 +103,7 @@ public:      // methods
   virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyToDoc(TextDocumentCore &doc) const override;
+  virtual RangeTextReplacement getRangeTextReplacement() const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -126,6 +132,7 @@ public:      // methods
   virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyToDoc(TextDocumentCore &doc) const override;
+  virtual RangeTextReplacement getRangeTextReplacement() const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -147,6 +154,7 @@ public:      // methods
   virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyToDoc(TextDocumentCore &doc) const override;
+  virtual RangeTextReplacement getRangeTextReplacement() const override;
   virtual operator gdv::GDValue() const override;
 };
 
@@ -169,6 +177,7 @@ public:      // methods
   virtual Kind kind() const override { return TYPE_TAG; }
 
   virtual void applyToDoc(TextDocumentCore &doc) const override;
+  virtual RangeTextReplacement getRangeTextReplacement() const override;
   virtual operator gdv::GDValue() const override;
 };
 

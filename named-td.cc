@@ -15,6 +15,7 @@
 #include "smbase/map-util.h"           // smbase::mapContains
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/overflow.h"           // smbase::convertNumber
+#include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // CMEMB
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -88,6 +89,8 @@ void NamedTextDocument::selfCheck() const
       xassert(*earliestTracked >= m_diagnostics->getOriginVersion());
     }
   }
+
+  m_observationRecorder.selfCheck();
 }
 
 
@@ -242,8 +245,7 @@ void NamedTextDocument::updateDiagnostics(
 
     // Roll the diagnostics forward to account for changes made to the
     // document since `diagVersion`.  Additionally, discard the change
-    // records associated with all versions up to and including
-    // `diagVersion`.
+    // records associated with all versions before `diagVersion`.
     m_observationRecorder.applyChangesToDiagnostics(diagnostics.get());
 
     // Modify `m_diagnostics` so it conforms to this document's shape.
@@ -251,6 +253,9 @@ void NamedTextDocument::updateDiagnostics(
     // diagnostic source could have generated arbitrary junk (e.g.,
     // byte indices within a line that are too large).
     diagnostics->adjustForDocument(getCore());
+
+    // Double-check them before adding.
+    diagnostics->selfCheck();
 
     // We are about to deallocate the existing diagnostics, so detach
     // the updater.
@@ -296,6 +301,26 @@ void NamedTextDocument::beginTrackingChangesForFutureDiagnostics()
 
   // Alert observers that a request for diagnostics is in flight.
   notifyMetadataChange();
+}
+
+
+bool NamedTextDocument::trackingChanges() const
+{
+  return m_observationRecorder.trackingSomething();
+}
+
+
+RCSerf<TextDocumentChangeSequence const>
+NamedTextDocument::getUnsentChanges() const
+{
+  xassert(trackingChanges());
+  return m_observationRecorder.getUnsentChanges();
+}
+
+
+void NamedTextDocument::stopTrackingChanges()
+{
+  m_observationRecorder.clear();
 }
 
 

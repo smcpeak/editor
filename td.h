@@ -8,13 +8,16 @@
 
 // editor
 #include "history.h"                   // HE_group
+#include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
+#include "textmcoord.h"                // TextMCoord, TextMCoordRange
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/objstack.h"           // ObjStack
 #include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 // libc++
 #include <vector>                      // std::vector
@@ -83,11 +86,11 @@ private:      // data
   // invariant: -1 <= m_savedHistoryIndex <= m_history.seqLength()
   int m_savedHistoryIndex;
 
-  // stack of open history groups, which will soon be collapsed
-  // and added to their parent group, or 'history' for the last
-  // (outermost) group; typically this stack is empty, or has
-  // just one element between beginGroup() and endGroup(), but
-  // I allow for the generality of a stack anyway
+  // Stack of open history groups, which will soon be collapsed and
+  // added to their parent group, or `m_history` for the last
+  // (outermost) group.  Typically this stack is empty, or has just one
+  // element between `beginUndoGroup()` and `endUndoGroup()`, but I
+  // allow for the generality of a stack anyway.
   ObjStack<HE_group> m_groupStack;
 
   // State of an associated process, if any.
@@ -191,6 +194,10 @@ public:      // funcs
   // to 0,0 and clears the undo history and undo group stack.
   void replaceWholeFile(std::vector<unsigned char> const &bytes);
 
+  // Same, but using `string`.
+  std::string getWholeFileString() const;
+  void replaceWholeFileString(std::string const &str);
+
   // Change the 'm_documentProcessStatus' setting.  Setting it to a
   // value DPS_RUNNING will set the document as read-only and
   // immediately discard all undo/redo history.  There must not be any
@@ -221,6 +228,14 @@ public:      // funcs
   void appendCStr(char const *s);
   void appendString(string const &s);
 
+  // Like the `TextDocumentCore` method, but with a different
+  // implementation.
+  void replaceMultilineRange(
+    TextMCoordRange const &range, std::string const &text);
+
+  // Change this document according to `repl`.
+  void applyRangeTextReplacement(RangeTextReplacement const &repl);
+
   // -------------------------- undo/redo --------------------------
   // Group actions with HE_group.
   //
@@ -238,6 +253,11 @@ public:      // funcs
   // direction, and hence the operation can be invoked.
   bool canUndo() const        { return m_historyIndex > 0; }
   bool canRedo() const        { return m_historyIndex < m_history.seqLength(); }
+
+  // Number of steps in the history.  This is mainly exposed in order to
+  // test that the proper number of undo steps is generated for certain
+  // operations.
+  int historyLength() const   { return m_history.seqLength(); }
 
   // These return the location at the left edge of the modified text.
   TextMCoord undo();
@@ -300,6 +320,23 @@ public:      // types
     int byteAt() const                 { return m_iter.byteAt(); }
     void advByte()                     { return m_iter.advByte(); }
   };
+};
+
+
+// Scoped begin/end grouping.
+//
+// Similar to `UndoHistoryGrouper`, but operating directly on the
+// document rather than through the editor interface.
+class TextDocumentHistoryGrouper {
+  NO_OBJECT_COPIES(TextDocumentHistoryGrouper);
+
+public:      // data
+  // The document to group operations upon.
+  RCSerf<TextDocument> m_doc;
+
+public:      // methods
+  TextDocumentHistoryGrouper(TextDocument &doc);
+  ~TextDocumentHistoryGrouper() noexcept;
 };
 
 

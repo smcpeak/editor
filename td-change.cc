@@ -3,7 +3,9 @@
 
 #include "td-change.h"                 // this module
 
-#include "td-diagnostics.h"            // TextDocumentDiagnostics
+#include "td-core.h"                   // TextDocumentCore
+#include "textmcoord.h"                // TextMCoord, TextMCoordRange
+#include "range-text-repl.h"           // RangeTextReplacement
 
 #include "smbase/ast-switch.h"         // DEFN_AST_DOWNCASTS
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
@@ -11,6 +13,18 @@
 #include "smbase/xassert.h"            // xassert
 
 using namespace gdv;
+
+
+// Return a range with size `n` at `pos`.
+static TextMCoordRange rangeAtPlus(TextMCoord pos, int n)
+{
+  return TextMCoordRange(pos, pos.plusBytes(n));
+}
+
+static TextMCoordRange emptyRange(TextMCoord pos)
+{
+  return rangeAtPlus(pos, 0);
+}
 
 
 // ------------------------ TextDocumentChange -------------------------
@@ -47,6 +61,23 @@ void TDC_InsertLine::applyToDoc(TextDocumentCore &doc) const
 }
 
 
+RangeTextReplacement TDC_InsertLine::getRangeTextReplacement() const
+{
+  // Normally we insert at the start of the line in question.
+  TextMCoord pos(m_line, 0);
+
+  if (m_prevLineBytes) {
+    // But if we are appending a new line, then the position at
+    // that line does not exist yet.  Append to the previous line
+    // instead.
+    pos = TextMCoord(m_line-1, *m_prevLineBytes);
+  }
+
+  return RangeTextReplacement(
+    emptyRange(pos), std::string("\n"));
+}
+
+
 TDC_InsertLine::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertLine"_sym);
@@ -71,6 +102,25 @@ TDC_DeleteLine::TDC_DeleteLine(
 void TDC_DeleteLine::applyToDoc(TextDocumentCore &doc) const
 {
   doc.deleteLine(m_line);
+}
+
+
+RangeTextReplacement TDC_DeleteLine::getRangeTextReplacement() const
+{
+  // Normally we delete the line by extending the range forward.
+  TextMCoordRange range(
+    TextMCoord(m_line, 0),
+    TextMCoord(m_line+1, 0));
+
+  if (m_prevLineBytes) {
+    // But if it was the last line, going forward is a no-op, so
+    // go backward instead.
+    range = TextMCoordRange(
+      TextMCoord(m_line-1, *m_prevLineBytes),
+      TextMCoord(m_line, 0));
+  }
+
+  return RangeTextReplacement(range, std::string());
 }
 
 
@@ -108,6 +158,14 @@ void TDC_InsertText::applyToDoc(TextDocumentCore &doc) const
 }
 
 
+RangeTextReplacement TDC_InsertText::getRangeTextReplacement() const
+{
+  return RangeTextReplacement(
+    emptyRange(m_tc),
+    m_text);
+}
+
+
 TDC_InsertText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "InsertText"_sym);
@@ -135,6 +193,14 @@ void TDC_DeleteText::applyToDoc(TextDocumentCore &doc) const
 }
 
 
+RangeTextReplacement TDC_DeleteText::getRangeTextReplacement() const
+{
+  return RangeTextReplacement(
+    rangeAtPlus(m_tc, m_lengthBytes),
+    std::string());
+}
+
+
 TDC_DeleteText::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "DeleteText"_sym);
@@ -158,6 +224,14 @@ TDC_TotalChange::TDC_TotalChange(int numLines, std::string &&contents)
 void TDC_TotalChange::applyToDoc(TextDocumentCore &doc) const
 {
   doc.replaceWholeFileString(m_contents);
+}
+
+
+RangeTextReplacement TDC_TotalChange::getRangeTextReplacement() const
+{
+  return RangeTextReplacement(
+    std::nullopt,
+    m_contents);
 }
 
 

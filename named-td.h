@@ -13,6 +13,7 @@
 #include "td.h"                        // TextDocument
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/str.h"                // string
 
 #include <cstdint>                     // std::int64_t
@@ -66,16 +67,16 @@ private:     // data
   std::unique_ptr<TextDocumentDiagnosticsUpdater> m_tddUpdater;
 
   // Each entry in this map represents a document version that has been
-  // sent to a diagnostic source (such as an LSP server) but for which
-  // the resulting diagnostics have not been received.
+  // sent to a diagnostic source (such as an LSP server).
   //
   // Invariant: If `m_diagnostics!=nullptr` and the recorder has an
   // earliest version, then:
   //
-  //   m_observationRecorder.getEarliestVersion().value() >= m_diagnostics->m_originVersion
+  //   m_observationRecorder.getEarliestVersion().value() >=
+  //     m_diagnostics->m_originVersion
   //
   // That is, we do not keep information about document versions older
-  // the on the current diagnostics were derived from.
+  // the one the current diagnostics were derived from.
   //
   TextDocumentObservationRecorder m_observationRecorder;
 
@@ -127,7 +128,7 @@ public:      // funcs
   // Perform additional actions when setting process status.
   virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
-  // ----------------------------- names ----------------------------
+  // ------------------------------ names ------------------------------
   DocumentName const &documentName() const
     { return m_documentName; }
   void setDocumentName(DocumentName const &docName)
@@ -194,9 +195,31 @@ public:      // funcs
   RCSerf<TDD_Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
 
   // We sent the current contents and version to an LSP server.  Begin
-  // tracking subsequent document changes so when the diagnostics arrive
-  // we can adjust them accordingly.
+  // tracking subsequent document changes so that (1) when the
+  // diagnostics arrive, we can adjust them accordingly, and (2) after
+  // making some document changes, we can send incremental changes to
+  // the server.
+  //
+  // TODO: Rename this to `beginTrackingChanges`.
+  //
+  // Ensures: trackingChanges()
   void beginTrackingChangesForFutureDiagnostics();
+
+  // True if we are recording changes in order to be able to send them
+  // to the LSP server and to incorporate diagnostics from previous
+  // versions.
+  bool trackingChanges() const;
+
+  // Return the sequence of changes that have been made to this document
+  // but not yet sent to the server.
+  //
+  // Requires: trackingChanges()
+  RCSerf<TextDocumentChangeSequence const> getUnsentChanges() const;
+
+  // Discard all saved history related to LSP interaction.
+  //
+  // Ensures: !trackingChanges()
+  void stopTrackingChanges();
 };
 
 

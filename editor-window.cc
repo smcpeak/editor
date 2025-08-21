@@ -2170,7 +2170,11 @@ void EditorWindow::lspRemoveDiagnostics() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  currentDocument()->updateDiagnostics({});
+  // Here, we do not stop tracking changes.  The goal is to temporarily
+  // remove the visual clutter of the diagnostics without completely
+  // halting LSP interaction potential.
+  currentDocument()->updateDiagnostics(nullptr);
+
   lspStatusWidget()->on_changedLSPStatus();
   editorWidget()->redraw();
 

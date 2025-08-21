@@ -7,5 +7,6 @@
 #define EDITOR_TD_FWD_H
 
 class TextDocument;
+class TextDocumentHistoryGrouper;
 
 #endif // EDITOR_TD_FWD_H

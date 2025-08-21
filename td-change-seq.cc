@@ -3,8 +3,10 @@
 
 #include "td-change-seq.h"             // this module
 
+#include "range-text-repl.h"           // RangeTextReplacement
 #include "td-change.h"                 // TextDocumentChange
 #include "td-core.h"                   // TextDocumentCore
+#include "td.h"                        // TextDocument
 
 #include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
@@ -63,10 +65,33 @@ void TextDocumentChangeSequence::append(
 }
 
 
-void TextDocumentChangeSequence::applyToDoc(TextDocumentCore &doc) const
+void TextDocumentChangeSequence::applyToDocCore(
+  TextDocumentCore &doc) const
 {
   for (auto const &changePtr : m_seq) {
     changePtr->applyToDoc(doc);
+  }
+}
+
+std::vector<RangeTextReplacement>
+TextDocumentChangeSequence::getRangeTextReplacements() const
+{
+  std::vector<RangeTextReplacement> ret;
+
+  for (auto const &changePtr : m_seq) {
+    ret.push_back(changePtr->getRangeTextReplacement());
+  }
+
+  return ret;
+}
+
+
+void TextDocumentChangeSequence::applyToDocument(TextDocument &doc) const
+{
+  std::vector<RangeTextReplacement> replacements =
+    getRangeTextReplacements();
+  for (auto const &repl : replacements) {
+    doc.applyRangeTextReplacement(repl);
   }
 }
 

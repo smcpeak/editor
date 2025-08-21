@@ -32,6 +32,12 @@ int TextMCoord::compareTo(TextMCoord const &b) const
 }
 
 
+TextMCoord TextMCoord::plusBytes(int n) const
+{
+  return TextMCoord(m_line, m_byteIndex + n);
+}
+
+
 void TextMCoord::insert(std::ostream &os) const
 {
   os << this->m_line << ':' << this->m_byteIndex;

@@ -291,6 +291,14 @@ void EditorGlobal::selfCheck() const
 
   m_lspManager.selfCheck();
 
+#if 0  // TODO: Implement this check.
+  std::set<std::string> openLSPFiles =
+    m_lspManager.getOpenFileNames();
+  std::set<std::string> trackedFiles =
+    m_documentList.getTrackingChangesFileNames();
+  XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
+#endif
+
   m_vfsConnections.selfCheck();
 }
 

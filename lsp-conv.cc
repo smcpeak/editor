@@ -5,6 +5,7 @@
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
 #include "named-td.h"                  // NamedTextDocument
+#include "range-text-repl.h"           // RangeTextReplacement
 #include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-change.h"                 // TextDocumentChange
 #include "td-core.h"                   // TextDocumentCore
@@ -14,6 +15,7 @@
 
 #include "smbase/ast-switch.h"         // ASTSWITCHC
 #include "smbase/gdvalue.h"            // gdv::toGDValue
+#include "smbase/optional-util.h"      // smbase::optInvoke
 #include "smbase/overflow.h"           // convertNumber
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
@@ -23,6 +25,7 @@
 #include <utility>                     // std::move
 
 using namespace gdv;
+using namespace smbase;
 
 
 INIT_TRACE("lsp-conv");
@@ -110,88 +113,29 @@ TextMCoordRange toMCoordRange(LSP_Range const &range)
 }
 
 
-LSP_Position toLSP_Position(TextMCoord mc)
+static LSP_Position toLSP_Position(TextMCoord mc)
 {
   // This has the same column interpretation issue as `toMCoord`.
   return LSP_Position(mc.m_line, mc.m_byteIndex);
 }
 
 
-// Return a range with size `n` at `pos`.
-static LSP_Range rangeAtPlus(LSP_Position pos, int n)
+static LSP_Range toLSP_Range(TextMCoordRange mcr)
 {
-  return LSP_Range(pos, pos.plusCharacters(n));
-}
-
-static LSP_Range emptyRange(LSP_Position pos)
-{
-  return rangeAtPlus(pos, 0);
+  return LSP_Range(
+    toLSP_Position(mcr.m_start),
+    toLSP_Position(mcr.m_end));
 }
 
 
 static LSP_TextDocumentContentChangeEvent convertOneChange(
   TextDocumentChange const &obs)
 {
-  ASTSWITCHC(TextDocumentChange, &obs) {
-    ASTCASEC(TDC_InsertLine, insertLine) {
-      // Normally we insert at the start of the line in question.
-      LSP_Position pos(insertLine->m_line, 0);
+  RangeTextReplacement rtr = obs.getRangeTextReplacement();
 
-      if (insertLine->m_prevLineBytes) {
-        // But if we are appending a new line, then the position at
-        // that line does not exist yet.  Append to the previous line
-        // instead.
-        pos = LSP_Position(
-          insertLine->m_line-1, *insertLine->m_prevLineBytes);
-      }
-
-      return LSP_TextDocumentContentChangeEvent(
-        emptyRange(pos), std::string("\n"));
-    }
-
-    ASTNEXTC(TDC_DeleteLine, deleteLine) {
-      // Normally we delete the line by extending the range forward.
-      LSP_Range range(
-        LSP_Position(deleteLine->m_line, 0),
-        LSP_Position(deleteLine->m_line+1, 0));
-
-      if (deleteLine->m_prevLineBytes) {
-        // But if it was the last line, going forward is a no-op, so
-        // go backward instead.
-        range = LSP_Range(
-          LSP_Position(deleteLine->m_line-1, *deleteLine->m_prevLineBytes),
-          LSP_Position(deleteLine->m_line, 0));
-      }
-
-      return LSP_TextDocumentContentChangeEvent(
-        range, std::string());
-    }
-
-    ASTNEXTC(TDC_InsertText, insertText) {
-      return LSP_TextDocumentContentChangeEvent(
-        emptyRange(toLSP_Position(insertText->m_tc)),
-        insertText->m_text);
-    }
-
-    ASTNEXTC(TDC_DeleteText, deleteText) {
-      return LSP_TextDocumentContentChangeEvent(
-        rangeAtPlus(
-          toLSP_Position(deleteText->m_tc),
-          deleteText->m_lengthBytes),
-        std::string());
-    }
-
-    ASTNEXTC(TDC_TotalChange, totalChange) {
-      return LSP_TextDocumentContentChangeEvent(
-        std::nullopt,
-        totalChange->m_contents);
-    }
-
-    ASTENDCASEC
-  }
-
-  xfailure("not reached");
-  return LSP_TextDocumentContentChangeEvent(std::nullopt, {});
+  return LSP_TextDocumentContentChangeEvent(
+    optInvoke(toLSP_Range, rtr.m_range),
+    rtr.m_text);
 }
 
 

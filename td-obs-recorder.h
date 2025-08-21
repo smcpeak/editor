@@ -15,6 +15,7 @@
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+#include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
 #include "smbase/std-optional-fwd.h"   // std::optional [n]
 #include "smbase/std-set-fwd.h"        // stdfwd::set [n]
@@ -149,6 +150,11 @@ public:      // methods
   // Dump for test/debug.
   operator gdv::GDValue() const;
 
+  // Discard all recorded history and stop recording new history.
+  //
+  // Ensures: !trackingSomething()
+  void clear();
+
   // True if we are tracking at least one version.
   bool trackingSomething() const;
 
@@ -189,7 +195,7 @@ public:      // methods
   // sent to the server.
   //
   // Requires: trackingSomething()
-  TextDocumentChangeSequence const &getUnsentChanges() const;
+  RCSerf<TextDocumentChangeSequence const> getUnsentChanges() const;
 
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &doc, int line) noexcept override;

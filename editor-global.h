@@ -90,6 +90,10 @@ private:     // data
   std::unique_ptr<smbase::ExclusiveWriteFile> m_editorLogFile;
 
   // Object to manage communication with the LSP server.
+  //
+  // Invariant: The set of documents open in `m_lspManager` is the same
+  // as the set of documents in `m_documentList` that are tracking
+  // changes.
   LSPManager m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.

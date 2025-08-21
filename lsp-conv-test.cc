@@ -5,6 +5,8 @@
 #include "unit-tests.h"                // decl for my entry point
 
 #include "lsp-data.h"                  // LSP_TextDocumentContentChangeEvent
+#include "named-td.h"                  // NamedTextDocument
+#include "range-text-repl.h"           // RangeTextReplacement
 #include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
@@ -16,6 +18,7 @@
 #include <list>                        // std::list
 #include <memory>                      // std::unique_ptr
 #include <utility>                     // std::move
+#include <vector>                      // std::vector
 
 using namespace gdv;
 using namespace smbase;
@@ -27,11 +30,10 @@ OPEN_ANONYMOUS_NAMESPACE
 // Pair of docs and a recorder.
 class TDCorePair {
 public:      // data
-  // The document we will change directly.
-  TextDocumentCore m_primaryDoc;
-
-  // Recorder watching the primary.
-  TextDocumentObservationRecorder m_recorder;
+  // The document we will change directly.  It has an observation
+  // recorder inside it that we will be using to replay changes onto
+  // `m_secondaryDoc`.
+  NamedTextDocument m_primaryDoc;
 
   // This one will be changed indirectly by recording changes to the
   // primary, then sending them through the conversion cycle, and
@@ -43,15 +45,19 @@ public:      // data
   // by the recorder to stay in sync.  Never null.
   std::unique_ptr<TextDocumentDiagnostics> m_tdd;
 
+  // Another copy of the primary, which is also directly modified in
+  // lock step with `m_primaryDoc`, but using different code for
+  // interpreting `TextDocumentChangeSequence`.
+  TextDocumentCore m_shadowPrimaryDoc;
+
 public:      // methods
   TDCorePair()
     : m_primaryDoc(),
-      m_recorder(m_primaryDoc),
       m_secondaryDoc(),
       m_tdd()
   {
     // Steady state is we are tracking.
-    m_recorder.beginTrackingCurrentDoc();
+    m_primaryDoc.beginTrackingChangesForFutureDiagnostics();
 
     makeDiagnostics();
 
@@ -61,11 +67,20 @@ public:      // methods
   void selfCheck() const
   {
     m_primaryDoc.selfCheck();
-    m_recorder.selfCheck();
+    xassert(m_primaryDoc.trackingChanges());
+
     m_secondaryDoc.selfCheck();
 
     xassert(m_tdd);
     m_tdd->selfCheck();
+
+    m_shadowPrimaryDoc.selfCheck();
+    if (m_shadowPrimaryDoc != m_primaryDoc.getCore()) {
+      // Print more detail.
+      EXPECT_EQ(doubleQuote(m_shadowPrimaryDoc.getWholeFileString()),
+                doubleQuote(m_primaryDoc.getWholeFileString()));
+    }
+    xassert(m_shadowPrimaryDoc == m_primaryDoc.getCore());
   }
 
   // Make empty diagnostics corresponding to the current version of
@@ -81,17 +96,20 @@ public:      // methods
   void syncAfterChange()
   {
     // Get recorded changes.
-    TextDocumentChangeSequence const &recordedChanges =
-      m_recorder.getUnsentChanges();
-    VPVAL(toGDValue(recordedChanges).asIndentedString());
+    RCSerf<TextDocumentChangeSequence const> recordedChanges =
+      m_primaryDoc.getUnsentChanges();
+    VPVAL(toGDValue(*recordedChanges).asIndentedString());
 
     // Convert to LSP.
     std::list<LSP_TextDocumentContentChangeEvent> lspChanges =
-      convertRecordedChangesToLSPChanges(recordedChanges);
+      convertRecordedChangesToLSPChanges(*recordedChanges);
     LSP_DidChangeTextDocumentParams lspParams(
       LSP_VersionedTextDocumentIdentifier("irrelevant", 1),
       std::move(lspChanges));
     VPVAL(toGDValue(lspParams).asIndentedString());
+
+    // We're done with these.
+    recordedChanges.reset();
 
     // Apply LSP to secondary.
     applyLSPDocumentChanges(lspParams, m_secondaryDoc);
@@ -103,11 +121,8 @@ public:      // methods
               doubleQuote(m_primaryDoc.getWholeFileString()));
 
     // Bring the recorder up to date.
-    m_recorder.applyChangesToDiagnostics(m_tdd.get());
-    m_recorder.beginTrackingCurrentDoc();
-
-    // Check the diagnostics before we replace them.
-    m_tdd->selfCheck();
+    m_primaryDoc.updateDiagnostics(std::move(m_tdd));
+    m_primaryDoc.beginTrackingChangesForFutureDiagnostics();
 
     // Prepare for the next cycle.
     makeDiagnostics();
@@ -118,6 +133,7 @@ public:      // methods
   void test_replaceWhole()
   {
     m_primaryDoc.replaceWholeFileString("zero\none\ntwo\n");
+    m_shadowPrimaryDoc.replaceWholeFileString("zero\none\ntwo\n");
     syncAfterChange();
   }
 
@@ -142,6 +158,12 @@ public:      // methods
         TextMCoord(endLine, endByteIndex)),
       text);
     EXPECT_EQ(m_primaryDoc.getWholeFileString(), expect);
+
+    m_shadowPrimaryDoc.replaceMultilineRange(
+      TextMCoordRange(
+        TextMCoord(startLine, startByteIndex),
+        TextMCoord(endLine, endByteIndex)),
+      text);
 
     syncAfterChange();
   }
@@ -182,8 +204,11 @@ public:      // methods
 
   void makeRandomEdit()
   {
-    TextDocumentChangeSequence changes = makeRandomChange(m_primaryDoc);
-    changes.applyToDoc(m_primaryDoc);
+    TextDocumentChangeSequence changes =
+      makeRandomChange(m_primaryDoc.getCore());
+
+    changes.applyToDocCore(m_shadowPrimaryDoc);
+    changes.applyToDocument(m_primaryDoc);
   }
 };
 

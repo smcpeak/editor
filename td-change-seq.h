@@ -8,10 +8,13 @@
 
 #include "td-change-seq-fwd.h"         // fwds for this module
 
+#include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-change-fwd.h"             // TextDocumentChange [n]
 #include "td-core-fwd.h"               // TextDocumentCore [n]
+#include "td-fwd.h"                    // TextDocument [n]
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+#include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
 
@@ -20,7 +23,7 @@
 
 
 // Sequence of changes.
-class TextDocumentChangeSequence {
+class TextDocumentChangeSequence : public SerfRefCount {
   NO_OBJECT_COPIES(TextDocumentChangeSequence);
 
 public:      // data
@@ -46,7 +49,13 @@ public:
   void append(stdfwd::unique_ptr<TextDocumentChange> change);
 
   // Apply `m_seq` to `doc`.
-  void applyToDoc(TextDocumentCore &doc) const;
+  void applyToDocCore(TextDocumentCore &doc) const;
+
+  // Express as a sequence of range text replacements.
+  std::vector<RangeTextReplacement> getRangeTextReplacements() const;
+
+  // Apply `m_seq` to `doc`.
+  void applyToDocument(TextDocument &doc) const;
 };
 
 

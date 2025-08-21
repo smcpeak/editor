@@ -429,6 +429,14 @@ public:      // methods
     return m;
   }
 
+  void clear()
+  {
+    m_recorder.clear();
+    m_verToDiags.clear();
+    m_firstHasDiagnostics = false;
+    selfCheck();
+  }
+
   void checkFile(char const *contents) const
   {
     ::checkFile(m_doc.getCore(), contents);
@@ -595,6 +603,10 @@ void test_DDRH()
   // Same for version 2.
   ddrh.checkSavedVersion(ver2);
   xassert(ddrh.m_recorder.getTrackedVersions() == VersionSet{ver2});
+
+  // Exercise `m_recorder.clear()`.
+  ddrh.clear();
+  EXPECT_EQ(ddrh.m_recorder.trackingSomething(), false);
 }
 
 

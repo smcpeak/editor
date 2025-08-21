@@ -4,13 +4,17 @@
 #include "td.h"                        // this module
 
 #include "history.h"                   // HE_text
+#include "range-text-repl.h"           // RangeTextReplacement
 
 // smbase
-#include "smbase/chained-cond.h"       // smbase:cc::{le_le, z_le_le}
+#include "smbase/chained-cond.h"       // smbase::cc::{le_le, z_le_le}
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/mysig.h"              // printSegfaultAddrs
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
+#include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
+#include "smbase/string-util.h"        // stringToVectorOfUChar
 #include "smbase/trace.h"              // TRACE
 
 using namespace gdv;
@@ -167,6 +171,20 @@ void TextDocument::replaceWholeFile(std::vector<unsigned char> const &bytes)
 }
 
 
+std::string TextDocument::getWholeFileString() const
+{
+  return m_core.getWholeFileString();
+}
+
+
+void TextDocument::replaceWholeFileString(std::string const &str)
+{
+  // This does not just call the `m_core` method because we want to
+  // clear the history, etc.
+  replaceWholeFile(stringToVectorOfUChar(str));
+}
+
+
 void TextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 {
   xassert(m_groupStack.isEmpty());
@@ -237,6 +255,35 @@ void TextDocument::appendCStr(char const *s)
 void TextDocument::appendString(string const &s)
 {
   this->appendCStr(s.c_str());
+}
+
+
+void TextDocument::replaceMultilineRange(
+  TextMCoordRange const &range, std::string const &text)
+{
+  xassert(validRange(range));
+
+  TextDocumentHistoryGrouper grouper(*this);
+
+  if (!range.empty()) {
+    deleteTextRange(range);
+  }
+
+  if (!text.empty()) {
+    insertAt(range.m_start, text.data(), safeToInt(text.size()));
+  }
+}
+
+
+void TextDocument::applyRangeTextReplacement(
+  RangeTextReplacement const &repl)
+{
+  if (repl.m_range) {
+    replaceMultilineRange(*repl.m_range, repl.m_text);
+  }
+  else {
+    replaceWholeFileString(repl.m_text);
+  }
 }
 
 
@@ -375,6 +422,24 @@ void TextDocument::printHistoryStats() const
   HistoryStats stats;
   historyStats(stats);
   stats.printInfo();
+}
+
+
+// -------------------- TextDocumentHistoryGrouper ---------------------
+TextDocumentHistoryGrouper::TextDocumentHistoryGrouper(TextDocument &doc)
+  : m_doc(&doc)
+{
+  m_doc->beginUndoGroup();
+}
+
+
+TextDocumentHistoryGrouper::~TextDocumentHistoryGrouper() noexcept
+{
+  GENERIC_CATCH_BEGIN
+
+  m_doc->endUndoGroup();
+
+  GENERIC_CATCH_END
 }
 
 

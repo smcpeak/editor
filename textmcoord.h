@@ -50,6 +50,9 @@ public:      // funcs
 
   bool isZero() const { return m_line==0 && m_byteIndex==0; }
 
+  // Return `*this` except with `m_byteIndex` increased by `n`.
+  TextMCoord plusBytes(int n) const;
+
   // Insert as "<line>:<byteIndex>".
   void insert(std::ostream &os) const;
 
@@ -94,15 +97,20 @@ public:      // funcs
 
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextMCoordRange)
 
+  // Both coordinates are zero.
   bool isZero() const { return m_start.isZero() && m_end.isZero(); }
 
   // True if both endpoints are on the same line.
   bool withinOneLine() const { return m_start.m_line == m_end.m_line; }
 
+  // True if start <= end.
   bool isRectified() const { return m_start <= m_end; }
 
   // Swap 'start' and 'end'.
   void swapEnds();
+
+  // True if end <= start.
+  bool empty() const { return m_end <= m_start; }
 
   TextMCoordRange rectified() const {
     TextMCoordRange ret(*this);

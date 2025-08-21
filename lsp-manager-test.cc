@@ -220,7 +220,7 @@ void LSPManagerTester::testSynchronously()
     m_doc.insertText(TextMCoord(5, 0), "hello", 5);
 
     // Get the recorded changes.
-    TextDocumentChangeSequence const &recordedChanges =
+    RCSerf<TextDocumentChangeSequence const> recordedChanges =
       recorder.getUnsentChanges();
 
     // Convert changes to the LSP format and package them into a
@@ -228,7 +228,10 @@ void LSPManagerTester::testSynchronously()
     LSP_DidChangeTextDocumentParams changeParams(
       LSP_VersionedTextDocumentIdentifier::fromFname(
         m_params.m_fname, m_doc.getVersionNumber()),
-      convertRecordedChangesToLSPChanges(recordedChanges));
+      convertRecordedChangesToLSPChanges(*recordedChanges));
+
+    // Done with these.
+    recordedChanges.reset();
 
     // Send them to the server, and have the manager update its copy.
     m_lspManager.notify_textDocument_didChange(changeParams);

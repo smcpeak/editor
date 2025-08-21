@@ -12,6 +12,7 @@
 // smbase
 #include "smbase/datetime.h"           // DateTimeProvider
 #include "smbase/refct-serf.h"         // RCSerf, SerfRefCount
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 
 // This class is a "stateful metaphor UI API".  That is, it
@@ -749,7 +750,11 @@ public:      // funcs
 
 
 // Class to begin/end an undo group.
+//
+// TODO: Rename to `TextDocumentEditorHistoryGrouper`.
 class UndoHistoryGrouper {
+  NO_OBJECT_COPIES(UndoHistoryGrouper);
+
 private:     // data
   RCSerf<TextDocumentEditor> m_editor;
 

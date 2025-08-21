@@ -9,6 +9,7 @@
 #include "smbase/exc.h"                // GENERIC_CATCH_{BEGIN,END}
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/map-util.h"           // smbase::{mapContains, mapInsertMove, mapKeySet}
+#include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
@@ -119,6 +120,12 @@ TextDocumentObservationRecorder::operator gdv::GDValue() const
   }
 
   return m;
+}
+
+
+void TextDocumentObservationRecorder::clear()
+{
+  m_versionToDetails.clear();
 }
 
 
@@ -266,10 +273,10 @@ auto TextDocumentObservationRecorder::getLastTrackedVersion()
 }
 
 
-TextDocumentChangeSequence const &
+RCSerf<TextDocumentChangeSequence const>
 TextDocumentObservationRecorder::getUnsentChanges() const
 {
-  return getLastTrackedVersionC().m_changeSequence;
+  return &( getLastTrackedVersionC().m_changeSequence );
 }
 
 
