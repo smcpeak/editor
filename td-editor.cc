@@ -500,7 +500,7 @@ void TextDocumentEditor::insertText(char const *text, int textLen,
                                     InsertTextFlags flags)
 {
   // The entire process of insertion should create one undo record.
-  UndoHistoryGrouper ugh(*this);
+  TDE_HistoryGrouper grouper(*this);
 
   this->deleteSelectionIf();
   this->fillToCursor();
@@ -1269,7 +1269,7 @@ void TextDocumentEditor::deleteTextMRange(TextMCoordRange const &range)
 
 void TextDocumentEditor::indentLines(int start, int lines, int ind)
 {
-  UndoHistoryGrouper ugh(*this);
+  TDE_HistoryGrouper grouper(*this);
   CursorRestorer cr(*this);
 
   // Don't let the selection interfere with the text insertions below.
@@ -1421,14 +1421,14 @@ CursorRestorer::~CursorRestorer() NOEXCEPT
 }
 
 
-// --------------------- UndoHistoryGrouper ---------------
-UndoHistoryGrouper::UndoHistoryGrouper(TextDocumentEditor &e)
+// --------------------- TDE_HistoryGrouper ---------------
+TDE_HistoryGrouper::TDE_HistoryGrouper(TextDocumentEditor &e)
   : m_editor(&e)
 {
   m_editor->beginUndoGroup();
 }
 
-UndoHistoryGrouper::~UndoHistoryGrouper() NOEXCEPT
+TDE_HistoryGrouper::~TDE_HistoryGrouper() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   m_editor->endUndoGroup();

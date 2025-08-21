@@ -325,7 +325,7 @@ public:      // types
 
 // Scoped begin/end grouping.
 //
-// Similar to `UndoHistoryGrouper`, but operating directly on the
+// Similar to `TDE_HistoryGrouper`, but operating directly on the
 // document rather than through the editor interface.
 class TextDocumentHistoryGrouper {
   NO_OBJECT_COPIES(TextDocumentHistoryGrouper);

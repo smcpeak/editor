@@ -652,7 +652,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor()
   // This should be sent on a Qt::QueuedConnection, meaning the slot
   // will be invoked later, once the current event is done processing.
   // That is important because right now we have an open
-  // UndoHistoryGrouper, but opening a new file might close the one we
+  // TDE_HistoryGrouper, but opening a new file might close the one we
   // are currently looking at if it is untitled, which will cause the
   // RCSerf infrastructure to abort just before memory corruption would
   // have resulted.
@@ -1777,7 +1777,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 
   // TODO: I think this grouper should be removed in favor of whatever
   // is needed inside the command object handler.
-  UndoHistoryGrouper hbgrouper(*m_editor);
+  TDE_HistoryGrouper hbgrouper(*m_editor);
 
   Qt::KeyboardModifiers modifiers = k->modifiers();
 
@@ -2517,7 +2517,7 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
   TRACE2("replaceSearchHit: " << DEBUG_VALUES3(existing, replaceSpec, replacement));
 
   INITIATING_DOCUMENT_CHANGE();
-  UndoHistoryGrouper ugh(*m_editor);
+  TDE_HistoryGrouper grouper(*m_editor);
   m_editor->insertString(replacement);
 
   // If we are replacing at EOL, then advance to the next line so we do
@@ -2565,7 +2565,7 @@ void EditorWidget::editJustifyParagraph()
   }
   else {
     INITIATING_DOCUMENT_CHANGE();
-    UndoHistoryGrouper ugh(*m_editor);
+    TDE_HistoryGrouper grouper(*m_editor);
     m_editor->justifyNearCursor(m_softMarginColumn);
     this->redrawAfterContentChange();
   }
@@ -2575,7 +2575,7 @@ void EditorWidget::editJustifyParagraph()
 void EditorWidget::editInsertDateTime()
 {
   INITIATING_DOCUMENT_CHANGE();
-  UndoHistoryGrouper ugh(*m_editor);
+  TDE_HistoryGrouper grouper(*m_editor);
   m_editor->insertDateTime();
   this->redrawAfterContentChange();
 }
@@ -2585,7 +2585,7 @@ void EditorWidget::insertText(char const *text, int length,
                               TextDocumentEditor::InsertTextFlags flags)
 {
   INITIATING_DOCUMENT_CHANGE();
-  UndoHistoryGrouper ugh(*m_editor);
+  TDE_HistoryGrouper grouper(*m_editor);
   m_editor->insertText(text, length, flags);
   this->redrawAfterContentChange();
 }
@@ -3040,7 +3040,7 @@ void EditorWidget::handleLSPCompletionReply(
       // Ensure the entire edit is one undo action.  (A single
       // `insertString` is already one action, but in the future I may
       // handle edits that also add #includes, etc.)
-      UndoHistoryGrouper grouper(*m_editor);
+      TDE_HistoryGrouper grouper(*m_editor);
 
       // Select the affected text.
       m_editor->setSelectRange(layoutRange);

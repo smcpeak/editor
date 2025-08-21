@@ -750,17 +750,15 @@ public:      // funcs
 
 
 // Class to begin/end an undo group.
-//
-// TODO: Rename to `TextDocumentEditorHistoryGrouper`.
-class UndoHistoryGrouper {
-  NO_OBJECT_COPIES(UndoHistoryGrouper);
+class TDE_HistoryGrouper {
+  NO_OBJECT_COPIES(TDE_HistoryGrouper);
 
 private:     // data
   RCSerf<TextDocumentEditor> m_editor;
 
 public:      // funcs
-  UndoHistoryGrouper(TextDocumentEditor &e);
-  ~UndoHistoryGrouper() NOEXCEPT;
+  TDE_HistoryGrouper(TextDocumentEditor &e);
+  ~TDE_HistoryGrouper() NOEXCEPT;
 };
 
 
