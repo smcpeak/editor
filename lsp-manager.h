@@ -25,6 +25,7 @@
 #include <iosfwd>                                // std::ostream
 #include <list>                                  // std::list
 #include <memory>                                // std::unique_ptr
+#include <set>                                   // std::set
 #include <string>                                // std::string
 
 
@@ -328,6 +329,9 @@ public:      // methods
   //
   // Requires: isValidLSPPath(fname)
   bool isFileOpen(std::string const &fname) const;
+
+  // Return the set of names for which `isFileOpen` would return true.
+  std::set<std::string> getOpenFileNames() const;
 
   // Get the document details for `fname`, or nullptr if it is not open.
   // This pointer is invalidated if `this` object changes.

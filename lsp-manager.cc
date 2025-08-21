@@ -20,7 +20,7 @@
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/list-util.h"                    // smbase::listMoveFront
-#include "smbase/map-util.h"                     // smbase::mapGetValueAt
+#include "smbase/map-util.h"                     // smbase::{mapGetValueAt, mapKeySet}
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/set-util.h"                     // smbase::{setInsert, setContains}
 #include "smbase/sm-env.h"                       // smbase::envAsBool
@@ -811,6 +811,12 @@ bool LSPManager::isFileOpen(std::string const &fname) const
 {
   xassertPrecondition(isValidLSPPath(fname));
   return contains(m_documentInfo, fname);
+}
+
+
+std::set<std::string> LSPManager::getOpenFileNames() const
+{
+  return mapKeySet(m_documentInfo);
 }
 
 

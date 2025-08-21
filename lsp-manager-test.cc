@@ -1,34 +1,35 @@
 // lsp-manager-test.cc
 // Tests for `lsp-manager`.
 
-#include "lsp-manager-test.h"          // this module
-#include "unit-tests.h"                // decl for my entry point
+#include "lsp-manager-test.h"                    // this module
+#include "unit-tests.h"                          // decl for my entry point
 
-#include "lsp-manager.h"               // module under test
+#include "lsp-manager.h"                         // module under test
 
-#include "lsp-conv.h"                  // convertLSPDiagsToTDD
-#include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
-#include "lsp-symbol-request-kind.h"   // LSPSymbolRequestKind
-#include "td-core.h"                   // TextDocumentCore
-#include "td-diagnostics.h"            // TextDocumentDiagnostics
-#include "td-obs-recorder.h"           // TextDocumentObservationRecorder
-#include "uri-util.h"                  // makeFileURI
+#include "lsp-conv.h"                            // convertLSPDiagsToTDD
+#include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
+#include "td-core.h"                             // TextDocumentCore
+#include "td-diagnostics.h"                      // TextDocumentDiagnostics
+#include "td-obs-recorder.h"                     // TextDocumentObservationRecorder
+#include "uri-util.h"                            // makeFileURI
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent
+#include "smqtutil/qtutil.h"                     // waitForQtEvent
 
-#include "smbase/gdvalue.h"            // gdv::toGDValue
-#include "smbase/overflow.h"           // safeToInt
-#include "smbase/sm-env.h"             // smbase::envAsBool
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // DIAG
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
-#include "smbase/string-util.h"        // stringVectorFromPointerArray
-#include "smbase/xassert.h"            // xassert
+#include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/overflow.h"                     // safeToInt
+#include "smbase/sm-env.h"                       // smbase::envAsBool
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-test.h"                      // DIAG
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/string-util.h"                  // stringVectorFromPointerArray
+#include "smbase/xassert.h"                      // xassert
+#include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
-#include <memory>                      // std::unique_ptr
-#include <string>                      // std::string
-#include <vector>                      // std::vector
+#include <memory>                                // std::unique_ptr
+#include <string>                                // std::string
+#include <vector>                                // std::vector
 
 
 using namespace gdv;
@@ -58,6 +59,8 @@ LSPManagerTester::LSPManagerTester(
     m_doc()
 {
   m_doc.replaceWholeFileString(m_params.m_fileContents);
+
+  xassert(m_lspManager.getOpenFileNames().empty());
 
   // I do not connect the signals here because the synchronous tests are
   // meant to run without using signals.
@@ -92,6 +95,8 @@ void LSPManagerTester::sendDidOpen()
   DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
 
+  XASSERT_EQUAL_SETS(m_lspManager.getOpenFileNames(),
+                     std::set<string>{m_params.m_fname});
   EXPECT_EQ(
     m_lspManager.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
     true);
