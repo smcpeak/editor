@@ -535,8 +535,6 @@ void EditorWindow::buildMenu()
 
       MENU_ITEM    ("Review diagnostics for this file",
                     lspReviewDiagnostics);
-      MENU_ITEM    ("Insert fake diagnostics",
-                    lspInsertFakeDiagnostics);
       MENU_ITEM    ("Remove diagnostics",
                     lspRemoveDiagnostics);
       MENU_ITEM    ("Set fake LSP status",
@@ -2163,66 +2161,6 @@ void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
         editorWidget()->lspShowDiagnosticAtCursor()) {
     inform(*msg);
   }
-
-  GENERIC_CATCH_END
-}
-
-
-static std::unique_ptr<TextDocumentDiagnostics> makeFakeDiagnostics()
-{
-  std::unique_ptr<TextDocumentDiagnostics> diags(
-    new TextDocumentDiagnostics(1 /*version*/,
-    std::nullopt /*numLines*/));
-  TextMCoordRange range{{10,10}, {10,30}};
-
-  diags->insertDiagnostic(range, {
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-    "A very long message. "
-  });
-
-  diags->selfCheck();
-  return diags;
-}
-
-
-void EditorWindow::lspInsertFakeDiagnostics() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  NamedTextDocument *doc = currentDocument();
-  xassert(doc);
-
-  // Temporary: fake some diagnostics.
-  doc->updateDiagnostics(makeFakeDiagnostics());
-
-  lspStatusWidget()->on_changedLSPStatus();
-  editorWidget()->redraw();
 
   GENERIC_CATCH_END
 }

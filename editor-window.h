@@ -283,7 +283,6 @@ public Q_SLOTS:
   void lspGoToNextDiagnostic() NOEXCEPT;
   void lspGoToPreviousDiagnostic() NOEXCEPT;
   void lspShowDiagnosticAtCursor() NOEXCEPT;
-  void lspInsertFakeDiagnostics() NOEXCEPT;
   void lspRemoveDiagnostics() NOEXCEPT;
   void lspSetFakeStatus() NOEXCEPT;
   void lspGoToDefinition() NOEXCEPT;
