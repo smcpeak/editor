@@ -61,6 +61,9 @@ private:     // instance data
   QPushButton *m_helpButton;
 
 private:     // funcs
+  // Allow access with similar syntax to other classes.
+  EditorGlobal *editorGlobal() const;
+
   // Recompute 'm_filteredDocuments' from 'm_editorGlobal' and
   // 'm_filterLineEdit'.
   void computeFilteredDocuments();

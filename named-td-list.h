@@ -13,6 +13,8 @@
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sobjlist.h"           // SObjList
+#include "smbase/std-set-fwd.h"        // stdfwd::set
+#include "smbase/std-string-fwd.h"     // std::string
 
 
 // Forward in this file.
@@ -106,15 +108,15 @@ public:      // funcs
   // Create a new untitled document and add it the end of the list.  It
   // will have a name like "untitled.txt" or "untitled$N.txt" such that
   // it is unique, and its 'hasFilename()' will be false.
-  NamedTextDocument *createUntitledDocument(string const &dir);
+  NamedTextDocument *createUntitledDocument(std::string const &dir);
 
   // Find and return the document with the given name, else NULL.
   NamedTextDocument       *findDocumentByName (DocumentName const &name);
   NamedTextDocument const *findDocumentByNameC(DocumentName const &name) const;
 
   // Find and return the document with the given title, else NULL.
-  NamedTextDocument       *findDocumentByTitle (string const &title);
-  NamedTextDocument const *findDocumentByTitleC(string const &title) const;
+  NamedTextDocument       *findDocumentByTitle (std::string const &title);
+  NamedTextDocument const *findDocumentByTitleC(std::string const &title) const;
 
   // Find a document that is untitled and has no modifications, else NULL.
   NamedTextDocument       *findUntitledUnmodifiedDocument ();
@@ -126,7 +128,7 @@ public:      // funcs
   // As a special exception to the usual invariant, this method is
   // allowed to be called while one document's title is temporarily empty
   // so that it does not play a role in the uniqueness check.
-  string computeUniqueTitle(DocumentName const &docName) const;
+  std::string computeUniqueTitle(DocumentName const &docName) const;
 
   // Given a document that is already in the collection (with a unique
   // name, per usual) compute a new unique title based on the
@@ -141,6 +143,15 @@ public:      // funcs
   // True if at least one document is associated with an on-disk file
   // and has unsaved changes.
   bool hasUnsavedFiles() const;
+
+  // Get the file names of all `NamedTextDocument`s for which
+  // `trackingChanges()` is true.
+  stdfwd::set<std::string> getTrackingChangesFileNames() const;
+
+  // Tell all files to stop tracking changes.
+  //
+  // Ensures: getTrackingChangesFileNames().empty()
+  void allFilesStopTrackingChanges();
 
   // ------------------------- observers ----------------------------
   // Add an observer.  It must not already be one.

@@ -2045,7 +2045,7 @@ void EditorWindow::lspStopServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  lspManager()->stopServer();
+  editorGlobal()->lspStopServer();
 
   GENERIC_CATCH_END
 }

@@ -40,7 +40,6 @@
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
-#include "smbase/map-util.h"                     // keySet
 #include "smbase/objcount.h"                     // CheckObjectCount
 #include "smbase/save-restore.h"                 // SET_RESTORE, SetRestore
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
@@ -50,6 +49,7 @@
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/strtokp.h"                      // StrtokParse
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
 // Qt
 #include <QKeyEvent>
@@ -73,7 +73,7 @@ using namespace gdv;
 using namespace smbase;
 
 
-// Tracing leves:
+// Tracing levels:
 //   1. File or app
 //   2. Keystroke
 INIT_TRACE("editor-global");
@@ -291,13 +291,14 @@ void EditorGlobal::selfCheck() const
 
   m_lspManager.selfCheck();
 
-#if 0  // TODO: Implement this check.
-  std::set<std::string> openLSPFiles =
-    m_lspManager.getOpenFileNames();
-  std::set<std::string> trackedFiles =
-    m_documentList.getTrackingChangesFileNames();
-  XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
-#endif
+  // LSP manager and document list agree about what is open.
+  if (m_lspManager.isRunningNormally()) {
+    std::set<std::string> openLSPFiles =
+      m_lspManager.getOpenFileNames();
+    std::set<std::string> trackedFiles =
+      m_documentList.getTrackingChangesFileNames();
+    XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
+  }
 
   m_vfsConnections.selfCheck();
 }
@@ -460,6 +461,13 @@ void EditorGlobal::trackNewDocumentFile(NamedTextDocument *f)
 
 void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 {
+  if (file->isCompatibleWithLSP() && m_lspManager.isRunningNormally()) {
+    std::string fname = file->filename();
+    if (m_lspManager.isFileOpen(fname)) {
+      m_lspManager.notify_textDocument_didClose(fname);
+    }
+  }
+
   m_documentList.removeDocument(file);
   delete file;
 }
@@ -1247,6 +1255,18 @@ ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
       new ApplyCommandDialog(this, eclf));
   }
   return *( m_applyCommandDialogs[eclf] );
+}
+
+
+std::string EditorGlobal::lspStopServer()
+{
+  std::string report = m_lspManager.stopServer();
+
+  // With the server shut down, all files are effectively closed w.r.t.
+  // the LSP protocol.  Stop tracking changes for all files.
+  m_documentList.allFilesStopTrackingChanges();
+
+  return report;
 }
 
 

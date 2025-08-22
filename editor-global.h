@@ -69,6 +69,10 @@ public:       // data
   // was shown (regardless of whether the user switched away), with the
   // most recent at the top.  The documents currently *shown* in a
   // window are not necessarily near the top.
+  //
+  // TODO: Make this private so I can ensure the invariant relationship
+  // with `m_lspManager`.
+  //
   NamedTextDocumentList m_documentList;
 
   // currently open editor windows; nominally, once the
@@ -91,9 +95,10 @@ private:     // data
 
   // Object to manage communication with the LSP server.
   //
-  // Invariant: The set of documents open in `m_lspManager` is the same
-  // as the set of documents in `m_documentList` that are tracking
-  // changes.
+  // Invariant: If `m_lspManager.isRunningNormally()`, then the set of
+  // documents open in `m_lspManager` is the same as the set of
+  // documents in `m_documentList` that are tracking changes.
+  //
   LSPManager m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.
@@ -191,6 +196,8 @@ public:       // funcs
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
+  // TODO: Replace this with methods to do the individual tasks so I can
+  // ensure the global invariants.
   LSPManager *lspManager() { return &m_lspManager; }
 
   // Create an empty "untitled" file, add it to the set of documents,
@@ -221,9 +228,12 @@ public:       // funcs
   // Add 'f' to the set of file documents.
   void trackNewDocumentFile(NamedTextDocument *f);
 
-  // Remove 'f' from the set of file documents and deallocate it.
-  // This will tell all of the editor widgets to forget about it
-  // first so they switch to some other file.
+  // Remove 'f' from the set of file documents and deallocate it.  This
+  // will tell all of the editor widgets to forget about it first so
+  // they switch to some other file.
+  //
+  // This also closes the file with the LSP server if it is open there.
+  //
   void deleteDocumentFile(NamedTextDocument *f);
 
   // Move `f` to the top of the list.
@@ -380,6 +390,9 @@ public:       // funcs
     QWidget * NULLABLE parent,
     bool b);
 
+  // ------------------------------- LSP -------------------------------
+  // TODO: Consolidate all LSP-related functions in one section.
+
   // Append an LSP error message.
   void addLSPErrorMessage(std::string &&msg);
 
@@ -395,6 +408,11 @@ public:       // funcs
   // Get or create the dialog for `eclf`.
   ApplyCommandDialog &getApplyCommandDialog(
     EditorCommandLineFunction eclf);
+
+  // Stop the LSP server, presumably as part of resetting it.  Return a
+  // human-readable string describing what happened during the attempt.
+  std::string lspStopServer();
+
 
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

@@ -166,6 +166,13 @@ public:      // funcs
                            bool readOnly);
 
   // --------------------------- diagnostics ---------------------------
+  // True if we could open this file with the LSP server.
+  bool isCompatibleWithLSP() const;
+
+  // If this file can be opened with the LSP server, return nullopt.
+  // Otherwise return a user-facing explanation of why not.
+  std::optional<std::string> isIncompatibleWithLSP() const;
+
   // Get a summary of this document's diagnostic status.
   gdv::GDValue getDiagnosticsSummary() const;
 

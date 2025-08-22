@@ -191,6 +191,24 @@ void NamedTextDocument::replaceFileAndStats(
 }
 
 
+bool NamedTextDocument::isCompatibleWithLSP() const
+{
+  return !isIncompatibleWithLSP().has_value();
+}
+
+
+std::optional<std::string>
+NamedTextDocument::isIncompatibleWithLSP() const
+{
+  if (m_documentName.isLocalFilename()) {
+    return std::nullopt;
+  }
+  else {
+    return "LSP only works with local files.";
+  }
+}
+
+
 GDValue NamedTextDocument::getDiagnosticsSummary() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "NTD_DiagSummary"_sym);

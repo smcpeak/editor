@@ -14,6 +14,7 @@
 
 // libc++
 #include <set>                         // std::set
+#include <string>                      // std::string
 
 using namespace smbase;
 
@@ -337,6 +338,33 @@ bool NamedTextDocumentList::hasUnsavedFiles() const
   }
 
   return false;
+}
+
+
+std::set<std::string>
+NamedTextDocumentList::getTrackingChangesFileNames() const
+{
+  std::set<std::string> ret;
+
+  for (int i=0; i < m_documents.length(); i++) {
+    NamedTextDocument const *ntd = m_documents[i];
+    if (ntd->trackingChanges()) {
+      ret.insert(ntd->filename());
+    }
+  }
+
+  return ret;
+}
+
+
+void NamedTextDocumentList::allFilesStopTrackingChanges()
+{
+  for (int i=0; i < m_documents.length(); i++) {
+    NamedTextDocument *ntd = m_documents[i];
+    if (ntd->trackingChanges()) {
+      ntd->stopTrackingChanges();
+    }
+  }
 }
 
 

@@ -368,6 +368,7 @@ public:      // methods
   //
   // Requires: isRunningNormally()
   // Requires: isFileOpen(fname)
+  // Ensures:  !isFileOpen(fname)
   void notify_textDocument_didClose(
     std::string const &fname);
 

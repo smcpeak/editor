@@ -931,6 +931,7 @@ void LSPManager::notify_textDocument_didClose(
   });
 
   mapRemoveExisting(m_documentInfo, fname);
+  xassert(!isFileOpen(fname));
 }
 
 

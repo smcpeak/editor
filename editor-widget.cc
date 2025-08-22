@@ -2653,9 +2653,10 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
   NamedTextDocument *ntd = getDocument();
   DocumentName const &docName = ntd->documentName();
 
-  if (!docName.isLocalFilename()) {
+  if (std::optional<std::string> reason =
+        ntd->isIncompatibleWithLSP()) {
     if (wantErrors) {
-      inform("LSP only works with local files.");
+      inform(*reason);
     }
     return;
   }
@@ -2873,13 +2874,13 @@ void EditorWidget::lspGoToAdjacentDiagnostic(bool next)
 void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
 {
   NamedTextDocument *ntd = getDocument();
-  DocumentName const &docName = ntd->documentName();
-
-  if (!docName.isLocalFilename()) {
-    complain("LSP only works with local files.");
+  if (std::optional<std::string> reason =
+        ntd->isIncompatibleWithLSP()) {
+    complain(*reason);
     return;
   }
 
+  DocumentName const &docName = ntd->documentName();
   std::string fname = docName.filename();
 
   if (!lspManager()->isRunningNormally()) {

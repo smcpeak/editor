@@ -147,6 +147,12 @@ OpenFilesDialog::~OpenFilesDialog()
 }
 
 
+EditorGlobal *OpenFilesDialog::editorGlobal() const
+{
+  return m_editorGlobal;
+}
+
+
 void OpenFilesDialog::computeFilteredDocuments()
 {
   m_filteredDocuments.clear();
@@ -227,7 +233,7 @@ void OpenFilesDialog::repopulateTable()
 
 NamedTextDocumentList *OpenFilesDialog::unfilteredDocList() const
 {
-  return &(m_editorGlobal->m_documentList);
+  return &( editorGlobal()->m_documentList );
 }
 
 
@@ -403,8 +409,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
   for (int i=0; i < docsToClose.length(); i++) {
     NamedTextDocument *doc = docsToClose[i];
     TRACE("OpenFilesDialog", "  removeFile: " << doc->documentName());
-    unfilteredDocList()->removeDocument(doc);
-    delete doc;
+    editorGlobal()->deleteDocumentFile(doc);
   }
 
   // Refresh table contents.
@@ -428,7 +433,7 @@ void OpenFilesDialog::on_reloadAll() NOEXCEPT
   int failureCount = 0;
 
   for (NamedTextDocument *doc : m_filteredDocuments) {
-    if (m_editorGlobal->reloadDocumentFile(this, doc)) {
+    if (editorGlobal()->reloadDocumentFile(this, doc)) {
       successCount++;
     }
     else {
@@ -437,7 +442,7 @@ void OpenFilesDialog::on_reloadAll() NOEXCEPT
   }
 
   // Update window titles and status bars to remove "[DISKMOD]".
-  m_editorGlobal->broadcastEditorViewChanged();
+  editorGlobal()->broadcastEditorViewChanged();
 
   // Update table entries.
   repopulateTable();
