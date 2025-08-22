@@ -2034,13 +2034,9 @@ void EditorWindow::lspStartServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  bool success = false;
-  std::string msg = editorGlobal()->lspStartServer(success /*OUT*/);
-  if (!success) {
-    complain(msg);
-  }
-  else {
-    // The success message is not very interesting, so discard it.
+  if (std::optional<std::string> failureReason =
+        editorGlobal()->lspStartServer()) {
+    complain(*failureReason);
   }
 
   GENERIC_CATCH_END

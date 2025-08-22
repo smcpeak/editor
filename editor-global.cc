@@ -63,6 +63,7 @@
 #include <cstring>                               // std::{strlen, memcpy}
 #include <deque>                                 // std::deque
 #include <exception>                             // std::exception
+#include <optional>                              // std::optional
 #include <string>                                // std::string
 #include <utility>                               // std::move
 
@@ -1306,9 +1307,9 @@ void EditorGlobal::on_lspChangedProtocolState() NOEXCEPT
 }
 
 
-std::string EditorGlobal::lspStartServer(bool &success /*OUT*/)
+std::optional<std::string> EditorGlobal::lspStartServer()
 {
-  return m_lspManager.startServer(success /*OUT*/);
+  return m_lspManager.startServer();
 }
 
 

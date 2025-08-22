@@ -20,6 +20,7 @@
 #include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/std-optional-fwd.h"             // std::optional
 #include "smbase/std-string-fwd.h"               // std::string
 
 #include <iosfwd>                                // std::ostream
@@ -287,14 +288,15 @@ public:      // methods
   // Check invariants, throwing an exception on failure.
   void selfCheck() const;
 
-  // Start the server process and initialize the protocol.  Return a
-  // string suitable for display to the user regarding the success of
-  // that activity.  The string may consist of multiple lines separated
-  // by newlines, but there is no final newline.
+  // Start the server process and initialize the protocol.  On success,
+  // return nullopt.
   //
-  // Sets `success` to true if the server process started successfully,
-  // false otherwise.
-  std::string startServer(bool /*OUT*/ &success);
+  // If this attempt fails, return a string suitable for display to the
+  // user regarding what happened.  that activity.  The string may
+  // consist of multiple lines separated by newlines, but there is no
+  // final newline.
+  //
+  std::optional<std::string> startServer();
 
   // Stop the server process.  Return a success report for the user.
   std::string stopServer();

@@ -28,6 +28,7 @@
 #include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
 #include <memory>                                // std::unique_ptr
+#include <optional>                              // std::optional
 #include <string>                                // std::string
 #include <vector>                                // std::vector
 
@@ -72,10 +73,10 @@ void LSPManagerTester::startServer()
   m_lspManager.selfCheck();
   xassert(m_lspManager.getProtocolState() == LSP_PS_MANAGER_INACTIVE);
 
-  bool success;
-  std::string startResult = m_lspManager.startServer(success);
-  DIAG("Start: " << startResult)
-  xassert(success);
+  if (std::optional<std::string> failureReason =
+        m_lspManager.startServer()) {
+    xfailure_stringbc("startServer: " << *failureReason);
+  }
 
   DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();

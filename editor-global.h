@@ -28,6 +28,7 @@
 #include "smbase/refct-serf.h"                   // SerfRefCount
 #include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
+#include "smbase/std-optional-fwd.h"             // std::optional
 #include "smbase/std-string-fwd.h"               // std::string
 
 // Qt
@@ -403,12 +404,8 @@ public:       // funcs
   // the LSP server process (clangd).
   static std::string lspGetStderrLogFileInitialName();
 
-  // Start the LSP server.  Set `success` to true if it works.  Return
-  // a string either explaining the failure or giving the server PID.
-  //
-  // TODO: Change this, and the underlying function, to return an
-  // optional string.  The PID could be obtained separately if needed.
-  std::string lspStartServer(bool &success /*OUT*/);
+  // Start the LSP server.  Return an explanation string on failure.
+  std::optional<std::string> lspStartServer();
 
   // Get the LSP protocol state.
   LSPProtocolState lspGetProtocolState() const;

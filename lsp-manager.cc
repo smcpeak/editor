@@ -32,6 +32,7 @@
 #include "smbase/xassert.h"                      // xassert, xassertPrecondition
 
 #include <memory>                                // std::make_unique
+#include <optional>                              // std::{optional, nullopt}
 #include <string>                                // std::string
 #include <utility>                               // std::move
 #include <vector>                                // std::vector
@@ -467,10 +468,8 @@ void LSPManager::selfCheck() const
 }
 
 
-std::string LSPManager::startServer(bool /*OUT*/ &success)
+std::optional<std::string> LSPManager::startServer()
 {
-  success = false;
-
   // ---- Start the server process ----
   if (m_commandRunner) {
     return "Server process has already been started and not stopped.";
@@ -586,15 +585,10 @@ std::string LSPManager::startServer(bool /*OUT*/ &success)
     },
   });
 
-  success = true;
-  std::string result =
-    stringb("Server started.  Server PID is " <<
-            m_commandRunner->getChildPID() << ".");
-
   // Now in `LSP_PS_INITIALIZING`.
   Q_EMIT signal_changedProtocolState();
 
-  return result;
+  return std::nullopt;
 }
 
 
