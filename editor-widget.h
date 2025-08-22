@@ -325,8 +325,9 @@ public:      // funcs
   // User settings.
   EditorSettings const &editorSettings() const;
 
-  // Global LSP manager.
-  LSPManager *lspManager() const;
+  // Global LSP manager, read-only.  Writes have to go through
+  // `editorGlobal()`.
+  LSPManager const *lspManagerC() const;
 
   // Read the font choice stored in 'editorGlobal()' and set this
   // widget's editor fonts accordingly.

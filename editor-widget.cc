@@ -306,9 +306,9 @@ EditorSettings const &EditorWidget::editorSettings() const
 }
 
 
-LSPManager *EditorWidget::lspManager() const
+LSPManager const *EditorWidget::lspManagerC() const
 {
-  return editorGlobal()->lspManager();
+  return editorGlobal()->lspManagerC();
 }
 
 
@@ -2642,17 +2642,15 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
   // True if we want a popup for errors.
   bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
 
-  if (!lspManager()->isRunningNormally()) {
+  if (!editorGlobal()->lspIsRunningNormally()) {
     if (wantErrors) {
       complain(stringb("Server not ready: " <<
-        lspManager()->describeProtocolState()));
+        lspManagerC()->describeProtocolState()));
     }
     return;
   }
 
   NamedTextDocument *ntd = getDocument();
-  DocumentName const &docName = ntd->documentName();
-
   if (std::optional<std::string> reason =
         ntd->isIncompatibleWithLSP()) {
     if (wantErrors) {
@@ -2661,23 +2659,17 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
     return;
   }
 
-  std::string fname = docName.filename();
-  bool alreadyOpen = lspManager()->isFileOpen(fname);
+  bool alreadyOpen = editorGlobal()->lspFileIsOpen(ntd);
 
   if (operation == LSPFO_CLOSE) {
     if (!alreadyOpen) {
       if (wantErrors) {
-        inform(stringb("Document " << doubleQuote(fname) <<
+        inform(stringb("Document " << ntd->documentName() <<
                        " is not open."));
       }
     }
     else {
-      lspManager()->notify_textDocument_didClose(fname);
-      ntd->updateDiagnostics(nullptr);
-
-      // Since `fname` is now closed w.r.t. LSP, we should stop tracking
-      // its changes.
-      ntd->stopTrackingChanges();
+      editorGlobal()->lspCloseFile(ntd);
     }
     return;
   }
@@ -2686,78 +2678,18 @@ void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
     return;
   }
 
-  std::optional<LSP_VersionNumber> version =
-    getDocLSPVersionNumber(wantErrors);
-  if (!version) {
-    return;    // Error reported if desired.
-  }
-
-  std::string contents = vectorOfUCharToString(ntd->getWholeFile());
-
-  if (!alreadyOpen) {
-    // TODO: Compute this properly.
-    std::string languageId = "cpp";
-
-    lspManager()->notify_textDocument_didOpen(
-      fname, languageId, *version, std::move(contents));
-    ntd->beginTrackingChanges();
-  }
-
-  else /*update*/ {
-    RCSerf<LSPDocumentInfo const> docInfo =
-      lspManager()->getDocInfo(fname);
-    xassert(docInfo);
-
-    if (docInfo->m_lastSentVersion == *version ||
-        docInfo->lastContentsEquals(ntd->getCore())) {
-      TRACE1("LSP: While updating " << doubleQuote(fname) <<
-             ": previous version is " << docInfo->m_lastSentVersion <<
-             ", new version is " << *version <<
-             ", and contents are " <<
-             (docInfo->lastContentsEquals(ntd->getCore())? "" : "NOT ") <<
-             "the same; bumping to force re-analysis.");
-
-      // We want to re-send despite no content changes, for example
-      // because a header file changed that should fix issues in the
-      // current file.  Bump the version and try again.
-      ntd->bumpVersionNumber();
-
-      version = getDocLSPVersionNumber(wantErrors);
-      if (!version) {
-        return;    // Error reported if desired.
-      }
-
-      // In this situation, `clangd` would normally ignore the
-      // notification because it realizes the file hasn't changed
-      // (despite the new version number) and thinks that means the
-      // diagnostics would be the same too.
-      //
-      // `clangd` accepts a `forceRebuild` parameter that would force
-      // new diagnostics, but it also rebuilds other things, making it
-      // quite slow.
-      //
-      // So, instead, we will just append some junk that should not
-      // cause the diagnostics to be different, but will make `clangd`
-      // re-analyze the contents.  This is much faster than
-      // `forceRebuild`.
-      contents += stringb("//" << *version);
+  try {
+    if (!alreadyOpen) {
+      editorGlobal()->lspOpenFile(ntd);
     }
-
-    if (!( *version > docInfo->m_lastSentVersion )) {
-      // Sending this would be a protocol violation.
-      if (wantErrors) {
-        complain(stringb(
-          "The current document version (" << *version <<
-          ") is not greater than the previously sent document version (" <<
-          docInfo->m_lastSentVersion << ")."));
-      }
-      return;
+    else /*update*/ {
+      editorGlobal()->lspUpdateFile(ntd);
     }
-
-    // TODO: Use incremental update here.
-    lspManager()->notify_textDocument_didChange_all(
-      fname, *version, std::move(contents));
-    ntd->beginTrackingChanges();
+  }
+  catch (XBase &x) {
+    if (wantErrors) {
+      complain(x.getMessage());
+    }
   }
 }
 
@@ -2883,54 +2815,54 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
   DocumentName const &docName = ntd->documentName();
   std::string fname = docName.filename();
 
-  if (!lspManager()->isRunningNormally()) {
-    complain(lspManager()->explainAbnormality());
+  if (!lspManagerC()->isRunningNormally()) {
+    complain(lspManagerC()->explainAbnormality());
     return;
   }
 
-  if (!lspManager()->isFileOpen(fname)) {
+  if (!editorGlobal()->lspFileIsOpen(ntd)) {
     // Go ahead and open the file automatically.  This will entail more
     // delay than usual, but everything should work.
     doLSPFileOperation(LSPFO_OPEN_OR_UPDATE);
 
-    if (!lspManager()->isFileOpen(fname)) {
+    if (!editorGlobal()->lspFileIsOpen(ntd)) {
       // Still not open, must have gotten an error, bail.
       return;
     }
   }
 
+  TextMCoord coord = m_editor->cursorAsModelCoord();
   TRACE1("sending request for " << toString(lsrk) <<
-         " of symbol in " << fname <<
-         " at " << m_editor->cursorAsModelCoord());
-  int id = lspManager()->requestRelatedLocation(lsrk,
-    fname,
-    m_editor->cursorAsModelCoord());
+         " of symbol in " << ntd->documentName() <<
+         " at " << coord);
+  int id = editorGlobal()->lspRequestRelatedLocation(
+                             lsrk, ntd, coord);
 
   // Synchronously wait for the reply (or for the server to
   // malfunction).
   TRACE1("waiting for symbol information reply, id=" << id);
   auto lambda = [this, id]() -> bool {
-    return (!this->lspManager()->isRunningNormally()) ||
-           this->lspManager()->hasReplyForID(id);
+    return (!this->editorGlobal()->lspIsRunningNormally()) ||
+           this->editorGlobal()->lspHasReplyForID(id);
   };
   std::string message = stringb(
     "Waiting for reply for " << toMessageString(lsrk) <<
     " request...");
   if (synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
         "Waiting for LSP server", message)) {
-    if (lspManager()->isRunningNormally()) {
-      GDValue gdvReply = lspManager()->takeReplyForID(id);
+    if (editorGlobal()->lspIsRunningNormally()) {
+      GDValue gdvReply = editorGlobal()->lspTakeReplyForID(id);
       TRACE1("received reply: " << gdvReply.asIndentedString());
 
       handleLSPLocationReply(gdvReply, lsrk);
     }
     else {
-      complain(lspManager()->explainAbnormality());
+      complain(editorGlobal()->lspExplainAbnormality());
     }
   }
   else {
-    TRACE1("canceled wait for declaration reply");
-    lspManager()->cancelRequestWithID(id);
+    TRACE1("canceled wait for " << toString(lsrk) << " reply");
+    editorGlobal()->lspCancelRequestWithID(id);
   }
 }
 

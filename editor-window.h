@@ -147,8 +147,8 @@ public:      // funcs
   // Current user settings object.
   EditorSettings const &editorSettings() const;
 
-  // Global LSP manager.
-  LSPManager *lspManager() const;
+  // Global LSP manager, read-only.
+  LSPManager const *lspManagerC() const;
 
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;

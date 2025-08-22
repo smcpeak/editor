@@ -19,7 +19,9 @@ INIT_TRACE("lsp-status-widget");
 
 LSPStatusWidget::~LSPStatusWidget()
 {
-  // The editor widget signal connection should already be disconnected.
+  // The signal connections should already be disconnected, and by the
+  // time we get here, the widget pointer should be null so we cannot
+  // disconnect anymore.
 }
 
 
@@ -33,12 +35,10 @@ LSPStatusWidget::LSPStatusWidget(
 
   setAlignment(Qt::AlignCenter);
 
-  // Monitor for changes via signals.
-  QObject::connect(
-    lspManager(), &LSPManager::signal_changedProtocolState,
-    this,        &LSPStatusWidget::on_changedLSPStatus);
-
   // These are disconnected in `resetEditorWidget`.
+  QObject::connect(
+    editorGlobal(), &EditorGlobal::signal_lspChangedProtocolState,
+    this, &LSPStatusWidget::on_changedLSPStatus);
   QObject::connect(
     m_editorWidget, &EditorWidget::signal_metadataChange,
     this, &LSPStatusWidget::on_changedLSPStatus);
@@ -69,15 +69,11 @@ EditorGlobal *LSPStatusWidget::editorGlobal() const
 }
 
 
-LSPManager *LSPStatusWidget::lspManager() const
-{
-  return editorGlobal()->lspManager();
-}
-
-
 void LSPStatusWidget::resetEditorWidget()
 {
   if (m_editorWidget) {
+    QObject::disconnect(editorGlobal(), nullptr, this, nullptr);
+
     QObject::disconnect(m_editorWidget, nullptr, this, nullptr);
     m_editorWidget = nullptr;
   }
@@ -107,7 +103,7 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
   // information is out of date due to the user modifying the file.
   bool addAsterisk = false;
 
-  LSPProtocolState state = lspManager()->getProtocolState();
+  LSPProtocolState state = editorGlobal()->lspGetProtocolState();
   if (m_fakeStatus) {
     state = static_cast<LSPProtocolState>(m_fakeStatus-1);
   }

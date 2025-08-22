@@ -227,9 +227,9 @@ EditorSettings const &EditorWindow::editorSettings() const
 }
 
 
-LSPManager *EditorWindow::lspManager() const
+LSPManager const *EditorWindow::lspManagerC() const
 {
-  return editorGlobal()->lspManager();
+  return editorGlobal()->lspManagerC();
 }
 
 
@@ -2034,8 +2034,14 @@ void EditorWindow::lspStartServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  bool dummy;
-  lspManager()->startServer(dummy);
+  bool success = false;
+  std::string msg = editorGlobal()->lspStartServer(success /*OUT*/);
+  if (!success) {
+    complain(msg);
+  }
+  else {
+    // The success message is not very interesting, so discard it.
+  }
 
   GENERIC_CATCH_END
 }

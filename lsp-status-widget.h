@@ -51,9 +51,6 @@ public:      // methods
   // Get the global editor object.
   EditorGlobal *editorGlobal() const;
 
-  // Navigate to the global LSP manager.
-  LSPManager *lspManager() const;
-
   // Nullify `m_editorWidget` and disconnect any signals.
   void resetEditorWidget();
 

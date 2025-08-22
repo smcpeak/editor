@@ -7,7 +7,6 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-macros.h"          // COMPARE_MEMB
-#include "smbase/strutil.h"            // quoted
 
 // libc++
 #include <iostream>                    // std::ostream
@@ -103,6 +102,18 @@ void DocumentName::setNonFileResourceName(HostName const &hostName,
   this->setDirectory(dir);
 
   selfCheck();
+}
+
+
+std::string DocumentName::toString() const
+{
+  return harn().toString();
+}
+
+
+void DocumentName::write(std::ostream &os) const
+{
+  os << harn();
 }
 
 

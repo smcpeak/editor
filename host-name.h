@@ -55,7 +55,7 @@ public:      // methods
   // Requires: isSSH().
   string getSSHHostName() const;
 
-  // Return "local" or "ssh:<hostname>".
+  // Return "local" or "ssh:<hostname>" (without quotes).
   string toString() const;
 
   // Print 'toString()' to 'os'.

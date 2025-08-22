@@ -63,8 +63,14 @@ public:      // methods
   // Get the resource that provides the document content.
   string resourceName() const          { return m_resourceName; }
 
-  // Return a string suitable for naming this document within an error
-  // message.
+  /* Return a string like:
+
+       "<filename>"
+
+     or:
+
+       "<filename>" on ssh:<host>
+  */
   string toString() const;
 
   // Print 'toString()' to 'os'.

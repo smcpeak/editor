@@ -165,13 +165,14 @@ private:      // funcs
     char const *fname);
 
   // Connect signals from `m_lspManager` to `this`.
+  //
+  // TODO: Rename to `lspConnectSignals`.
   void connectLSPSignals();
 
   // Disconnect signals and shut down the server.
+  //
+  // TODO: Rename to `lspDisconnectSignals`.
   void disconnectLSPSignals();
-
-  // If `file` is open with the LSP server, close it.
-  void closeFileWithLSP(NamedTextDocument *file);
 
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
@@ -191,6 +192,9 @@ private Q_SLOTS:
 
   // Called when `m_lspManager` has an error message to deliver.
   void on_lspHasPendingErrorMessages() NOEXCEPT;
+
+  // Called when `m_lspManager` may have changed its protocol state.
+  void on_lspChangedProtocolState() NOEXCEPT;
 
 public:       // funcs
   // intent is to make one of these in main()
@@ -391,41 +395,125 @@ public:       // funcs
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
 
-  // ------------------------------- LSP -------------------------------
-  // TODO: Replace this with methods to do the individual tasks so I can
-  // ensure the global invariants.
-  LSPManager *lspManager() { return &m_lspManager; }
+  // Get or create the dialog for `eclf`.
+  ApplyCommandDialog &getApplyCommandDialog(
+    EditorCommandLineFunction eclf);
+
+  // --------------------------- LSP Global ----------------------------
+  // Read-only access to the manager.
+  LSPManager const *lspManagerC() { return &m_lspManager; }
 
   // Initial name for the path to the file that holds the stderr from
   // the LSP server process (clangd).
+  //
+  // TODO: Rename to `lspGetStderrLogFileInitialName`.
   static std::string getLSPStderrLogFileInitialName();
 
+  // Start the LSP server.  Set `success` to true if it works.  Return
+  // a string either explaining the failure or giving the server PID.
+  //
+  // TODO: Change this, and the underlying function, to return an
+  // optional string.  The PID could be obtained separately if needed.
+  std::string lspStartServer(bool &success /*OUT*/);
+
+  // Get the LSP protocol state.
+  LSPProtocolState lspGetProtocolState() const;
+
+  // True if the LSP connection is normal.
+  bool lspIsRunningNormally() const;
+
+  // Return a string that explains why `!lspIsRunningNormally()`.  If it
+  // is in fact running normally, say so.
+  std::string lspExplainAbnormality() const;
+
   // Generate a document with the LSP server's capabilities.
+  //
+  // TODO: Rename to `lspGetOrCreateServerCapabilitiesDocument`.
   NamedTextDocument *getOrCreateLSPServerCapabilitiesDocument();
 
   // Append an LSP error message.
+  //
+  // TODO: Rename to `lspAddErrorMessage`.
   void addLSPErrorMessage(std::string &&msg);
 
   // Return a string summarizing the overall LSP state.  (This is a
   // temporary substitute for better error reporting.)
+  //
+  // TODO: Rename to `lspGetServerStatus`.
   std::string getLSPStatus() const;
-
-  // If `doc` is "open" w.r.t. the LSP manager, return a pointer to its
-  // details.  Otherwise return nullptr.
-  RCSerf<LSPDocumentInfo const> getLSPDocInfo(
-    NamedTextDocument const *doc) const;
-
-  // Get or create the dialog for `eclf`.
-  ApplyCommandDialog &getApplyCommandDialog(
-    EditorCommandLineFunction eclf);
 
   // Stop the LSP server, presumably as part of resetting it.  Return a
   // human-readable string describing what happened during the attempt.
   std::string lspStopServer();
 
+  // -------------------------- LSP Per-file ---------------------------
+  // True if `ntd` is open w.r.t. the LSP server.
+  bool lspFileIsOpen(NamedTextDocument const *ntd) const;
+
+  // If `doc` is "open" w.r.t. the LSP manager, return a pointer to its
+  // details.  Otherwise return nullptr.
+  //
+  // TODO: Rename to `lspGetDocInfo`.
+  RCSerf<LSPDocumentInfo const> getLSPDocInfo(
+    NamedTextDocument const *doc) const;
+
+  // Open `ntd` with the server.
+  //
+  // This can throw `XNumericConversion` if the version of `ntd` cannot
+  // be expressed as an LSP version.
+  //
+  // Requires: !lspFileIsOpen(ntd)
+  // Ensures:  lspFileIsOpen(ntd)
+  void lspOpenFile(NamedTextDocument *ntd);
+
+  // Update `ntd` with the server.
+  //
+  // This can throw `XNumericConversion` if the version of `ntd` cannot
+  // be expressed as an LSP version.  It can also throw `XMessage` if
+  // some unexpected version number issues arise.
+  //
+  // Requires: lspFileIsOpen(ntd)
+  void lspUpdateFile(NamedTextDocument *ntd);
+
+  // Close `ntd` if it is open.  This also discards any diagnostics it
+  // may have and tells it to stop tracking changes.
+  //
+  // Ensures: !lspFileIsOpen(ntd)
+  void lspCloseFile(NamedTextDocument *ntd);
+
+  // --------------------------- LSP Queries ---------------------------
+  // Cancel request `id` if it is outstanding.  Discard any reply that
+  // has already been received.
+  //
+  // Requires: lspIsRunningNormally()
+  void lspCancelRequestWithID(int id);
+
+  // True if we have a reply for `id` waiting to be taken.
+  //
+  // Requires: lspIsRunningNormally()
+  bool lspHasReplyForID(int id) const;
+
+  // Take and return the reply for `id`.
+  //
+  // Requires: lspIsRunningNormally()
+  // Requires: lspHasReplyForID(id)
+  gdv::GDValue lspTakeReplyForID(int id);
+
+  // Issue an `lsrk` request for information about the symbol at `coord`
+  // in `ntd`.  Returns the request ID.
+  //
+  // Requires: lspFileIsOpen(ntd)
+  int lspRequestRelatedLocation(
+    LSPSymbolRequestKind lsrk,
+    NamedTextDocument const *ntd,
+    TextMCoord coord);
+
 Q_SIGNALS:
-  // Emitted when 'm_editorBuiltinFont' changes.
+  // Emitted when `m_editorBuiltinFont` changes.
   void signal_editorFontChanged();
+
+  // Emitted when `lspGetProtocolState()` potentially changes.
+  void signal_lspChangedProtocolState();
 
 public Q_SLOTS:
   // Called when the search panel in some window has changed.  Broadcast

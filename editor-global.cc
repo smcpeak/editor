@@ -452,7 +452,7 @@ void EditorGlobal::trackNewDocumentFile(NamedTextDocument *f)
 
 void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 {
-  closeFileWithLSP(file);
+  lspCloseFile(file);
   m_documentList.removeDocument(file);
   delete file;
 }
@@ -1201,7 +1201,19 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
 }
 
 
-// -------------------------------- LSP --------------------------------
+ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
+  EditorCommandLineFunction eclf)
+{
+  xassert(cc::z_le_lt(eclf, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
+  if (!m_applyCommandDialogs[eclf]) {
+    m_applyCommandDialogs[eclf].reset(
+      new ApplyCommandDialog(this, eclf));
+  }
+  return *( m_applyCommandDialogs[eclf] );
+}
+
+
+// ---------------------------- LSP Global -----------------------------
 void EditorGlobal::connectLSPSignals()
 {
   // Connect LSP signals.
@@ -1209,6 +1221,8 @@ void EditorGlobal::connectLSPSignals()
                    this,         &EditorGlobal::on_lspHasPendingDiagnostics);
   QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
                    this,         &EditorGlobal::on_lspHasPendingErrorMessages);
+  QObject::connect(&m_lspManager, &LSPManager::signal_changedProtocolState,
+                   this,         &EditorGlobal::on_lspChangedProtocolState);
 }
 
 
@@ -1222,16 +1236,6 @@ void EditorGlobal::disconnectLSPSignals()
   }
 }
 
-
-void EditorGlobal::closeFileWithLSP(NamedTextDocument *file)
-{
-  if (file->isCompatibleWithLSP() && m_lspManager.isRunningNormally()) {
-    std::string fname = file->filename();
-    if (m_lspManager.isFileOpen(fname)) {
-      m_lspManager.notify_textDocument_didClose(fname);
-    }
-  }
-}
 
 void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
 {
@@ -1284,6 +1288,16 @@ void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
 }
 
 
+void EditorGlobal::on_lspChangedProtocolState() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  // Relay, primarily to the LSP status widgets.
+  Q_EMIT signal_lspChangedProtocolState();
+
+  GENERIC_CATCH_END
+}
+
 
 /*static*/ std::string EditorGlobal::getLSPStderrLogFileInitialName()
 {
@@ -1292,12 +1306,36 @@ void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
 }
 
 
+std::string EditorGlobal::lspStartServer(bool &success /*OUT*/)
+{
+  return m_lspManager.startServer(success /*OUT*/);
+}
+
+
+LSPProtocolState EditorGlobal::lspGetProtocolState() const
+{
+  return m_lspManager.getProtocolState();
+}
+
+
+bool EditorGlobal::lspIsRunningNormally() const
+{
+  return m_lspManager.isRunningNormally();
+}
+
+
+std::string EditorGlobal::lspExplainAbnormality() const
+{
+  return m_lspManager.explainAbnormality();
+}
+
+
 NamedTextDocument *
 EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
 {
   return getOrCreateGeneratedDocument(
     "LSP Server Capabilities",
-    lspManager()->getServerCapabilities().asLinesString());
+    m_lspManager.getServerCapabilities().asLinesString());
 }
 
 
@@ -1329,32 +1367,6 @@ std::string EditorGlobal::getLSPStatus() const
 }
 
 
-RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
-  NamedTextDocument const *doc) const
-{
-  DocumentName const &docName = doc->documentName();
-
-  // Currently, LSP only works for local files.
-  if (docName.isLocal() && docName.hasFilename()) {
-    return m_lspManager.getDocInfo(docName.filename());
-  }
-
-  return nullptr;
-}
-
-
-ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
-  EditorCommandLineFunction eclf)
-{
-  xassert(cc::z_le_lt(eclf, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
-  if (!m_applyCommandDialogs[eclf]) {
-    m_applyCommandDialogs[eclf].reset(
-      new ApplyCommandDialog(this, eclf));
-  }
-  return *( m_applyCommandDialogs[eclf] );
-}
-
-
 std::string EditorGlobal::lspStopServer()
 {
   std::string report = m_lspManager.stopServer();
@@ -1364,6 +1376,171 @@ std::string EditorGlobal::lspStopServer()
   m_documentList.allFilesStopTrackingChanges();
 
   return report;
+}
+
+
+// --------------------------- LSP Per-file ----------------------------
+bool EditorGlobal::lspFileIsOpen(NamedTextDocument const *ntd) const
+{
+  return
+    m_lspManager.isRunningNormally() &&
+    ntd->isCompatibleWithLSP() &&
+    m_lspManager.isFileOpen(ntd->filename());
+}
+
+
+RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
+  NamedTextDocument const *doc) const
+{
+  if (lspFileIsOpen(doc)) {
+    return m_lspManager.getDocInfo(doc->filename());
+  }
+  else {
+    return nullptr;
+  }
+}
+
+
+void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
+{
+  xassertPrecondition(!lspFileIsOpen(ntd));
+
+  // TODO: Compute this properly.
+  std::string languageId = "cpp";
+
+  // This can throw `XNumericConversion`.
+  LSP_VersionNumber version =
+    convertNumber<LSP_VersionNumber>(
+      ntd->getVersionNumber());
+
+  m_lspManager.notify_textDocument_didOpen(
+    ntd->filename(),
+    languageId,
+    version,
+    ntd->getWholeFileString());
+
+  ntd->beginTrackingChanges();
+}
+
+
+void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
+{
+  xassertPrecondition(lspFileIsOpen(ntd));
+
+  RCSerf<LSPDocumentInfo const> docInfo = getLSPDocInfo(ntd);
+  xassert(docInfo);
+
+  // This can throw `XNumericConversion`.
+  LSP_VersionNumber version =
+    convertNumber<LSP_VersionNumber>(
+      ntd->getVersionNumber());
+
+  std::string contents = ntd->getWholeFileString();
+
+  if (docInfo->m_lastSentVersion == version ||
+      docInfo->lastContentsEquals(ntd->getCore())) {
+    TRACE1("LSP: While updating " << ntd->documentName() <<
+           ": previous version is " << docInfo->m_lastSentVersion <<
+           ", new version is " << version <<
+           ", and contents are " <<
+           (docInfo->lastContentsEquals(ntd->getCore())? "" : "NOT ") <<
+           "the same; bumping to force re-analysis.");
+
+    // We want to re-send despite no content changes, for example
+    // because a header file changed that should fix issues in the
+    // current file.  Bump the version and try again.
+    ntd->bumpVersionNumber();
+
+    version =
+      convertNumber<LSP_VersionNumber>(
+        ntd->getVersionNumber());
+
+    // In this situation, `clangd` would normally ignore the
+    // notification because it realizes the file hasn't changed
+    // (despite the new version number) and thinks that means the
+    // diagnostics would be the same too.
+    //
+    // `clangd` accepts a `forceRebuild` parameter that would force
+    // new diagnostics, but it also rebuilds other things, making it
+    // quite slow.
+    //
+    // So, instead, we will just append some junk that should not
+    // cause the diagnostics to be different, but will make `clangd`
+    // re-analyze the contents.  This is much faster than
+    // `forceRebuild`.
+    contents += stringb("//" << version);
+  }
+
+  if (!( version > docInfo->m_lastSentVersion )) {
+    // Sending this would be a protocol violation.
+    xmessage(stringb(
+      "The current document version (" << version <<
+      ") is not greater than the previously sent document version (" <<
+      docInfo->m_lastSentVersion << ")."));
+  }
+
+  // TODO: Use incremental update here.
+  m_lspManager.notify_textDocument_didChange_all(
+    ntd->filename(),
+    convertNumber<LSP_VersionNumber>(
+      ntd->getVersionNumber()),
+    std::move(contents));
+
+  // We were already tracking changes, but on top of a previous version.
+  ntd->beginTrackingChanges();
+}
+
+
+void EditorGlobal::lspCloseFile(NamedTextDocument *ntd)
+{
+  if (lspFileIsOpen(ntd)) {
+    m_lspManager.notify_textDocument_didClose(ntd->filename());
+
+    // Clear the diagnostics.
+    ntd->updateDiagnostics(nullptr);
+
+    // Since `fname` is now closed w.r.t. LSP, we should stop tracking
+    // its changes.
+    ntd->stopTrackingChanges();
+  }
+}
+
+
+// ---------------------------- LSP Queries ----------------------------
+void EditorGlobal::lspCancelRequestWithID(int id)
+{
+  xassertPrecondition(lspIsRunningNormally());
+
+  m_lspManager.cancelRequestWithID(id);
+}
+
+
+bool EditorGlobal::lspHasReplyForID(int id) const
+{
+  xassertPrecondition(lspIsRunningNormally());
+
+  return m_lspManager.hasReplyForID(id);
+}
+
+
+gdv::GDValue EditorGlobal::lspTakeReplyForID(int id)
+{
+  xassertPrecondition(lspIsRunningNormally());
+  xassertPrecondition(lspHasReplyForID(id));
+
+  return m_lspManager.takeReplyForID(id);
+}
+
+
+int EditorGlobal::lspRequestRelatedLocation(
+  LSPSymbolRequestKind lsrk,
+  NamedTextDocument const *ntd,
+  TextMCoord coord)
+{
+  xassertPrecondition(lspFileIsOpen(ntd));
+
+  return m_lspManager.requestRelatedLocation(
+    lsrk, ntd->filename(), coord);
 }
 
 

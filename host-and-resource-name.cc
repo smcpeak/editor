@@ -70,7 +70,8 @@ string HostAndResourceName::toString() const
     return doubleQuote(resourceName());
   }
   else {
-    return stringb(m_hostName << ": " << doubleQuote(resourceName()));
+    return stringb(doubleQuote(resourceName()) << " on " <<
+                   m_hostName);
   }
 }
 

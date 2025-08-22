@@ -68,6 +68,7 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
+  // Debug dump.
   operator gdv::GDValue() const;
 
   // Compare by host and resource name.
@@ -105,6 +106,14 @@ public:      // methods
 
   // Get the directory associated with the document.
   string directory() const             { return m_directory; }
+
+  // Return `harn.toString()`.
+  std::string toString() const;
+
+  // Write the `toString()` format.
+  void write(std::ostream &os) const;
+  friend std::ostream &operator<<(std::ostream &os, DocumentName const &obj)
+    { obj.write(os); return os; }
 };
 
 
