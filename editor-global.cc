@@ -452,13 +452,7 @@ void EditorGlobal::trackNewDocumentFile(NamedTextDocument *f)
 
 void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 {
-  if (file->isCompatibleWithLSP() && m_lspManager.isRunningNormally()) {
-    std::string fname = file->filename();
-    if (m_lspManager.isFileOpen(fname)) {
-      m_lspManager.notify_textDocument_didClose(fname);
-    }
-  }
-
+  closeFileWithLSP(file);
   m_documentList.removeDocument(file);
   delete file;
 }
@@ -1228,6 +1222,16 @@ void EditorGlobal::disconnectLSPSignals()
   }
 }
 
+
+void EditorGlobal::closeFileWithLSP(NamedTextDocument *file)
+{
+  if (file->isCompatibleWithLSP() && m_lspManager.isRunningNormally()) {
+    std::string fname = file->filename();
+    if (m_lspManager.isFileOpen(fname)) {
+      m_lspManager.notify_textDocument_didClose(fname);
+    }
+  }
+}
 
 void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
 {

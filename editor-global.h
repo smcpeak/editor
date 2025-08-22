@@ -170,6 +170,9 @@ private:      // funcs
   // Disconnect signals and shut down the server.
   void disconnectLSPSignals();
 
+  // If `file` is open with the LSP server, close it.
+  void closeFileWithLSP(NamedTextDocument *file);
+
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
   void focusChangedHandler(QWidget *from, QWidget *to);
