@@ -769,58 +769,6 @@ void EditorGlobal::on_vfsConnectionFailed(
 }
 
 
-void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  while (m_lspManager.hasPendingDiagnostics()) {
-    // Get some pending diagnostics.
-    std::string fname = m_lspManager.getFileWithPendingDiagnostics();
-    std::unique_ptr<LSP_PublishDiagnosticsParams> lspDiags(
-      m_lspManager.takePendingDiagnosticsFor(fname));
-
-    if (!lspDiags->m_version.has_value()) {
-      // Just discard them.
-      TRACE1("lsp: Received LSP diagnostics without a version.");
-      continue;
-    }
-
-    // Convert to our internal format.
-    std::unique_ptr<TextDocumentDiagnostics> tdd(
-      convertLSPDiagsToTDD(lspDiags.get()));
-    lspDiags.reset();
-
-    DocumentName docName =
-      DocumentName::fromFilename(HostName::asLocal(), fname);
-
-    if (NamedTextDocument *doc = getFileWithName(docName)) {
-      doc->updateDiagnostics(std::move(tdd));
-    }
-    else {
-      // This could happen if we notify the server of new contents and
-      // then immediately close the document.
-      TRACE1("lsp: Received LSP diagnostics for " << docName <<
-             " but that file is not open in the editor.");
-    }
-  }
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  while (m_lspManager.hasPendingErrorMessages()) {
-    addLSPErrorMessage(m_lspManager.takePendingErrorMessage());
-  }
-
-  GENERIC_CATCH_END
-}
-
-
-
 void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
 {
   TRACE2("focus changed from " << qObjectDesc(from) <<
@@ -917,15 +865,6 @@ NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
 }
 
 
-NamedTextDocument *
-EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
-{
-  return getOrCreateGeneratedDocument(
-    "LSP Server Capabilities",
-    lspManager()->getServerCapabilities().asLinesString());
-}
-
-
 void EditorGlobal::hideModelessDialogs()
 {
   if (m_connectionsDialog) {
@@ -1015,13 +954,6 @@ void EditorGlobal::warningBox(
 {
   return getEditorStateFileName(
     getXDGStateHome(), "editor.log");
-}
-
-
-/*static*/ std::string EditorGlobal::getLSPStderrLogFileInitialName()
-{
-  return getEditorStateFileName(
-    getXDGStateHome(), "lsp-server.log");
 }
 
 
@@ -1204,72 +1136,6 @@ void EditorGlobal::settings_setGrepsrcSearchesSubrepos(
 }
 
 
-void EditorGlobal::addLSPErrorMessage(std::string &&msg)
-{
-  // I'm thinking this should also emit a signal, although right now I
-  // don't have any component prepared to receive it.
-  m_lspErrorMessages.push_back(std::move(msg));
-}
-
-
-std::string EditorGlobal::getLSPStatus() const
-{
-  std::ostringstream oss;
-
-  oss << "Status: " << m_lspManager.checkStatus() << "\n";
-
-  oss << "Has pending diagnostics: "
-      << GDValue(m_lspManager.hasPendingDiagnostics()) << "\n";
-
-  if (std::size_t n = m_lspErrorMessages.size()) {
-    oss << n << " errors:\n";
-    for (std::string const &m : m_lspErrorMessages) {
-      oss << "  " << m << "\n";
-    }
-  }
-
-  return oss.str();
-}
-
-
-RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
-  NamedTextDocument const *doc) const
-{
-  DocumentName const &docName = doc->documentName();
-
-  // Currently, LSP only works for local files.
-  if (docName.isLocal() && docName.hasFilename()) {
-    return m_lspManager.getDocInfo(docName.filename());
-  }
-
-  return nullptr;
-}
-
-
-ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
-  EditorCommandLineFunction eclf)
-{
-  xassert(cc::z_le_lt(eclf, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
-  if (!m_applyCommandDialogs[eclf]) {
-    m_applyCommandDialogs[eclf].reset(
-      new ApplyCommandDialog(this, eclf));
-  }
-  return *( m_applyCommandDialogs[eclf] );
-}
-
-
-std::string EditorGlobal::lspStopServer()
-{
-  std::string report = m_lspManager.stopServer();
-
-  // With the server shut down, all files are effectively closed w.r.t.
-  // the LSP protocol.  Stop tracking changes for all files.
-  m_documentList.allFilesStopTrackingChanges();
-
-  return report;
-}
-
-
 static string objectDesc(QObject const *obj)
 {
   if (!obj) {
@@ -1350,6 +1216,142 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
 }
 
 
+// -------------------------------- LSP --------------------------------
+void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  while (m_lspManager.hasPendingDiagnostics()) {
+    // Get some pending diagnostics.
+    std::string fname = m_lspManager.getFileWithPendingDiagnostics();
+    std::unique_ptr<LSP_PublishDiagnosticsParams> lspDiags(
+      m_lspManager.takePendingDiagnosticsFor(fname));
+
+    if (!lspDiags->m_version.has_value()) {
+      // Just discard them.
+      TRACE1("lsp: Received LSP diagnostics without a version.");
+      continue;
+    }
+
+    // Convert to our internal format.
+    std::unique_ptr<TextDocumentDiagnostics> tdd(
+      convertLSPDiagsToTDD(lspDiags.get()));
+    lspDiags.reset();
+
+    DocumentName docName =
+      DocumentName::fromFilename(HostName::asLocal(), fname);
+
+    if (NamedTextDocument *doc = getFileWithName(docName)) {
+      doc->updateDiagnostics(std::move(tdd));
+    }
+    else {
+      // This could happen if we notify the server of new contents and
+      // then immediately close the document.
+      TRACE1("lsp: Received LSP diagnostics for " << docName <<
+             " but that file is not open in the editor.");
+    }
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  while (m_lspManager.hasPendingErrorMessages()) {
+    addLSPErrorMessage(m_lspManager.takePendingErrorMessage());
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+
+/*static*/ std::string EditorGlobal::getLSPStderrLogFileInitialName()
+{
+  return getEditorStateFileName(
+    getXDGStateHome(), "lsp-server.log");
+}
+
+
+NamedTextDocument *
+EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
+{
+  return getOrCreateGeneratedDocument(
+    "LSP Server Capabilities",
+    lspManager()->getServerCapabilities().asLinesString());
+}
+
+
+void EditorGlobal::addLSPErrorMessage(std::string &&msg)
+{
+  // I'm thinking this should also emit a signal, although right now I
+  // don't have any component prepared to receive it.
+  m_lspErrorMessages.push_back(std::move(msg));
+}
+
+
+std::string EditorGlobal::getLSPStatus() const
+{
+  std::ostringstream oss;
+
+  oss << "Status: " << m_lspManager.checkStatus() << "\n";
+
+  oss << "Has pending diagnostics: "
+      << GDValue(m_lspManager.hasPendingDiagnostics()) << "\n";
+
+  if (std::size_t n = m_lspErrorMessages.size()) {
+    oss << n << " errors:\n";
+    for (std::string const &m : m_lspErrorMessages) {
+      oss << "  " << m << "\n";
+    }
+  }
+
+  return oss.str();
+}
+
+
+RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
+  NamedTextDocument const *doc) const
+{
+  DocumentName const &docName = doc->documentName();
+
+  // Currently, LSP only works for local files.
+  if (docName.isLocal() && docName.hasFilename()) {
+    return m_lspManager.getDocInfo(docName.filename());
+  }
+
+  return nullptr;
+}
+
+
+ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
+  EditorCommandLineFunction eclf)
+{
+  xassert(cc::z_le_lt(eclf, NUM_EDITOR_COMMAND_LINE_FUNCTIONS));
+  if (!m_applyCommandDialogs[eclf]) {
+    m_applyCommandDialogs[eclf].reset(
+      new ApplyCommandDialog(this, eclf));
+  }
+  return *( m_applyCommandDialogs[eclf] );
+}
+
+
+std::string EditorGlobal::lspStopServer()
+{
+  std::string report = m_lspManager.stopServer();
+
+  // With the server shut down, all files are effectively closed w.r.t.
+  // the LSP protocol.  Stop tracking changes for all files.
+  m_documentList.allFilesStopTrackingChanges();
+
+  return report;
+}
+
+
+// ------------------------- Global functions --------------------------
 std::string serializeECV(EditorCommandVector const &commands)
 {
   std::ostringstream oss;

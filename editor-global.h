@@ -196,10 +196,6 @@ public:       // funcs
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
-  // TODO: Replace this with methods to do the individual tasks so I can
-  // ensure the global invariants.
-  LSPManager *lspManager() { return &m_lspManager; }
-
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
   NamedTextDocument *createNewFile(string const &dir);
@@ -299,9 +295,6 @@ public:       // funcs
   // Generate a document with `doc/keybindings.txt`.
   NamedTextDocument *getOrCreateKeybindingsDocument();
 
-  // Generate a document with the LSP server's capabilities.
-  NamedTextDocument *getOrCreateLSPServerCapabilitiesDocument();
-
   // Hide any open modeless dialogs since we are about to quit.
   void hideModelessDialogs();
 
@@ -329,10 +322,6 @@ public:       // funcs
   // Initial name to attempt to use for the general editor logs.  The
   // actual name might be different.
   static std::string getEditorLogFileInitialName();
-
-  // Initial name for the path to the file that holds the stderr from
-  // the LSP server process (clangd).
-  static std::string getLSPStderrLogFileInitialName();
 
   // Write settings to the user settings file and return true.  If there
   // is a problem, this pops up a dialog box above the given `parent`,
@@ -390,8 +379,20 @@ public:       // funcs
     QWidget * NULLABLE parent,
     bool b);
 
+  // QCoreApplication methods.
+  virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
+
   // ------------------------------- LSP -------------------------------
-  // TODO: Consolidate all LSP-related functions in one section.
+  // TODO: Replace this with methods to do the individual tasks so I can
+  // ensure the global invariants.
+  LSPManager *lspManager() { return &m_lspManager; }
+
+  // Initial name for the path to the file that holds the stderr from
+  // the LSP server process (clangd).
+  static std::string getLSPStderrLogFileInitialName();
+
+  // Generate a document with the LSP server's capabilities.
+  NamedTextDocument *getOrCreateLSPServerCapabilitiesDocument();
 
   // Append an LSP error message.
   void addLSPErrorMessage(std::string &&msg);
@@ -412,10 +413,6 @@ public:       // funcs
   // Stop the LSP server, presumably as part of resetting it.  Return a
   // human-readable string describing what happened during the attempt.
   std::string lspStopServer();
-
-
-  // QCoreApplication methods.
-  virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
 
 Q_SIGNALS:
   // Emitted when 'm_editorBuiltinFont' changes.
