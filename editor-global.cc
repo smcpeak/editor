@@ -93,7 +93,6 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_windows(),
     m_recordInputEvents(false),
     m_eventFileTest(),
-    m_filenameInputDialogHistory(),
     m_editorLogFile(openEditorLogFile()),
     m_lspManager(true /*useRealClangd*/,
                  lspGetStderrLogFileInitialName(),
@@ -109,7 +108,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_connectionsDialog(),
     m_recentCommands(),
     m_settings(),
-    m_doNotSaveSettings(false)
+    m_doNotSaveSettings(false),
+    m_filenameInputDialogHistory()
 {
   m_documentList.addObserver(this);
 

@@ -86,9 +86,6 @@ public:       // data
   // Name of an event file test to run, or empty for none.
   string m_eventFileTest;
 
-  // Shared history for a dialog.
-  FilenameInputDialog::History m_filenameInputDialogHistory;
-
 private:     // data
   // General editor-wide log file.  Can be null, depending on an envvar
   // setting.
@@ -145,7 +142,11 @@ private:     // data
   // use during automated testing.
   bool m_doNotSaveSettings;
 
-private:      // funcs
+public:      // data
+  // Shared history for a dialog.
+  FilenameInputDialog::History m_filenameInputDialogHistory;
+
+private:     // methods
   void processCommandLineOptions(
     EditorWindow *editorWindow, int argc, char **argv);
 
