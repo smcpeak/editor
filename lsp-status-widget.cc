@@ -139,7 +139,7 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
       // Color indicates protocol state and (under otherwise normal
       // circumstances) number of diagnostics.
       RCSerf<LSPDocumentInfo const> lspDocInfo =
-        editorGlobal()->getLSPDocInfo(doc);
+        editorGlobal()->lspGetDocInfo(doc);
       if (!lspDocInfo) {
         TRACE2("  on_changedLSPStatus: inactive color");
         bgColor = inactiveColor;

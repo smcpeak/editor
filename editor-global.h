@@ -165,14 +165,10 @@ private:      // funcs
     char const *fname);
 
   // Connect signals from `m_lspManager` to `this`.
-  //
-  // TODO: Rename to `lspConnectSignals`.
-  void connectLSPSignals();
+  void lspConnectSignals();
 
   // Disconnect signals and shut down the server.
-  //
-  // TODO: Rename to `lspDisconnectSignals`.
-  void disconnectLSPSignals();
+  void lspDisconnectSignals();
 
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
@@ -405,9 +401,7 @@ public:       // funcs
 
   // Initial name for the path to the file that holds the stderr from
   // the LSP server process (clangd).
-  //
-  // TODO: Rename to `lspGetStderrLogFileInitialName`.
-  static std::string getLSPStderrLogFileInitialName();
+  static std::string lspGetStderrLogFileInitialName();
 
   // Start the LSP server.  Set `success` to true if it works.  Return
   // a string either explaining the failure or giving the server PID.
@@ -427,20 +421,14 @@ public:       // funcs
   std::string lspExplainAbnormality() const;
 
   // Generate a document with the LSP server's capabilities.
-  //
-  // TODO: Rename to `lspGetOrCreateServerCapabilitiesDocument`.
-  NamedTextDocument *getOrCreateLSPServerCapabilitiesDocument();
+  NamedTextDocument *lspGetOrCreateServerCapabilitiesDocument();
 
   // Append an LSP error message.
-  //
-  // TODO: Rename to `lspAddErrorMessage`.
-  void addLSPErrorMessage(std::string &&msg);
+  void lspAddErrorMessage(std::string &&msg);
 
   // Return a string summarizing the overall LSP state.  (This is a
   // temporary substitute for better error reporting.)
-  //
-  // TODO: Rename to `lspGetServerStatus`.
-  std::string getLSPStatus() const;
+  std::string lspGetServerStatus() const;
 
   // Stop the LSP server, presumably as part of resetting it.  Return a
   // human-readable string describing what happened during the attempt.
@@ -452,9 +440,7 @@ public:       // funcs
 
   // If `doc` is "open" w.r.t. the LSP manager, return a pointer to its
   // details.  Otherwise return nullptr.
-  //
-  // TODO: Rename to `lspGetDocInfo`.
-  RCSerf<LSPDocumentInfo const> getLSPDocInfo(
+  RCSerf<LSPDocumentInfo const> lspGetDocInfo(
     NamedTextDocument const *doc) const;
 
   // Open `ntd` with the server.

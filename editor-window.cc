@@ -2061,7 +2061,7 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform(editorGlobal()->getLSPStatus());
+  inform(editorGlobal()->lspGetServerStatus());
 
   GENERIC_CATCH_END
 }
@@ -2072,7 +2072,7 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   setDocumentFile(
-    m_editorGlobal->getOrCreateLSPServerCapabilitiesDocument());
+    m_editorGlobal->lspGetOrCreateServerCapabilitiesDocument());
 
   GENERIC_CATCH_END
 }
@@ -2112,7 +2112,7 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
       << doc->getDiagnosticsSummary().asLinesString();
 
   RCSerf<LSPDocumentInfo const> lspDocInfo =
-    editorGlobal()->getLSPDocInfo(doc);
+    editorGlobal()->lspGetDocInfo(doc);
   if (lspDocInfo) {
     oss << "LSP Manager doc info: "
         << toGDValue(*lspDocInfo).asLinesString();

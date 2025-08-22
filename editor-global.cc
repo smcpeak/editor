@@ -95,7 +95,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_filenameInputDialogHistory(),
     m_editorLogFile(openEditorLogFile()),
     m_lspManager(true /*useRealClangd*/,
-                 getLSPStderrLogFileInitialName(),
+                 lspGetStderrLogFileInitialName(),
                  (m_editorLogFile?
                     &(m_editorLogFile->stream()) : nullptr)),
     m_lspErrorMessages(),
@@ -189,7 +189,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   QObject::connect(this, &EditorGlobal::focusChanged,
                    this, &EditorGlobal::focusChangedHandler);
 
-  connectLSPSignals();
+  lspConnectSignals();
 
   showRaiseAndActivateWindow(ed);
 
@@ -213,7 +213,7 @@ EditorGlobal::~EditorGlobal()
   // signals I am not prepared for.
   m_windows.deleteAll();
 
-  disconnectLSPSignals();
+  lspDisconnectSignals();
 
   if (m_processes.isNotEmpty()) {
     // Now try to kill any running processes.  Do not wait for any of
@@ -1214,7 +1214,7 @@ ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
 
 
 // ---------------------------- LSP Global -----------------------------
-void EditorGlobal::connectLSPSignals()
+void EditorGlobal::lspConnectSignals()
 {
   // Connect LSP signals.
   QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingDiagnostics,
@@ -1226,7 +1226,7 @@ void EditorGlobal::connectLSPSignals()
 }
 
 
-void EditorGlobal::disconnectLSPSignals()
+void EditorGlobal::lspDisconnectSignals()
 {
   // Shut down the LSP server.
   QObject::disconnect(&m_lspManager, nullptr, this, nullptr);
@@ -1281,7 +1281,7 @@ void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   while (m_lspManager.hasPendingErrorMessages()) {
-    addLSPErrorMessage(m_lspManager.takePendingErrorMessage());
+    lspAddErrorMessage(m_lspManager.takePendingErrorMessage());
   }
 
   GENERIC_CATCH_END
@@ -1299,7 +1299,7 @@ void EditorGlobal::on_lspChangedProtocolState() NOEXCEPT
 }
 
 
-/*static*/ std::string EditorGlobal::getLSPStderrLogFileInitialName()
+/*static*/ std::string EditorGlobal::lspGetStderrLogFileInitialName()
 {
   return getEditorStateFileName(
     getXDGStateHome(), "lsp-server.log");
@@ -1331,7 +1331,7 @@ std::string EditorGlobal::lspExplainAbnormality() const
 
 
 NamedTextDocument *
-EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
+EditorGlobal::lspGetOrCreateServerCapabilitiesDocument()
 {
   return getOrCreateGeneratedDocument(
     "LSP Server Capabilities",
@@ -1339,7 +1339,7 @@ EditorGlobal::getOrCreateLSPServerCapabilitiesDocument()
 }
 
 
-void EditorGlobal::addLSPErrorMessage(std::string &&msg)
+void EditorGlobal::lspAddErrorMessage(std::string &&msg)
 {
   // I'm thinking this should also emit a signal, although right now I
   // don't have any component prepared to receive it.
@@ -1347,7 +1347,7 @@ void EditorGlobal::addLSPErrorMessage(std::string &&msg)
 }
 
 
-std::string EditorGlobal::getLSPStatus() const
+std::string EditorGlobal::lspGetServerStatus() const
 {
   std::ostringstream oss;
 
@@ -1389,7 +1389,7 @@ bool EditorGlobal::lspFileIsOpen(NamedTextDocument const *ntd) const
 }
 
 
-RCSerf<LSPDocumentInfo const> EditorGlobal::getLSPDocInfo(
+RCSerf<LSPDocumentInfo const> EditorGlobal::lspGetDocInfo(
   NamedTextDocument const *doc) const
 {
   if (lspFileIsOpen(doc)) {
@@ -1427,7 +1427,7 @@ void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
 {
   xassertPrecondition(lspFileIsOpen(ntd));
 
-  RCSerf<LSPDocumentInfo const> docInfo = getLSPDocInfo(ntd);
+  RCSerf<LSPDocumentInfo const> docInfo = lspGetDocInfo(ntd);
   xassert(docInfo);
 
   // This can throw `XNumericConversion`.
