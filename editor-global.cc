@@ -90,7 +90,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   : QApplication(argc, argv),
     m_pixmaps(),
     m_documentList(),
-    m_windows(),
+    m_editorWindows(),
     m_editorLogFile(openEditorLogFile()),
     m_lspManager(true /*useRealClangd*/,
                  lspGetStderrLogFileInitialName(),
@@ -212,7 +212,7 @@ EditorGlobal::~EditorGlobal()
   // First get rid of the windows so I don't have other entities
   // watching documents and potentially getting confused and/or sending
   // signals I am not prepared for.
-  m_windows.deleteAll();
+  m_editorWindows.deleteAll();
 
   lspDisconnectSignals();
 
@@ -277,7 +277,7 @@ void EditorGlobal::selfCheck() const
 {
   m_documentList.selfCheck();
 
-  FOREACH_OBJLIST(EditorWindow, m_windows, iter) {
+  FOREACH_OBJLIST(EditorWindow, m_editorWindows, iter) {
     iter.data()->selfCheck();
   }
 
@@ -410,6 +410,31 @@ EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
 NamedTextDocument *EditorGlobal::createNewFile(std::string const &dir)
 {
   return m_documentList.createUntitledDocument(dir);
+}
+
+
+void EditorGlobal::registerEditorWindow(EditorWindow *ew)
+{
+  m_editorWindows.append(ew);
+  m_documentList.addObserver(ew);
+}
+
+
+void EditorGlobal::unregisterEditorWindow(EditorWindow *ew)
+{
+  m_documentList.removeObserver(ew);
+
+  // This object might have already been removed, for example because
+  // the EditorGlobal destructor is running, and is in the process of
+  // removing elements from the list and destroying them.  Hence the
+  // "IfPresent" part of this call.
+  m_editorWindows.removeIfPresent(ew);
+}
+
+
+int EditorGlobal::numEditorWindows() const
+{
+  return m_editorWindows.count();
 }
 
 
@@ -709,7 +734,7 @@ void EditorGlobal::namedTextDocumentRemoved(
 
 void EditorGlobal::broadcastEditorViewChanged()
 {
-  FOREACH_OBJLIST_NC(EditorWindow, m_windows, w) {
+  FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, w) {
     w.data()->editorViewChanged();
   }
 }
@@ -799,7 +824,7 @@ void EditorGlobal::slot_broadcastSearchPanelChanged(
   GENERIC_CATCH_BEGIN
 
   TRACE2("slot_broadcastSearchPanelChanged");
-  FOREACH_OBJLIST_NC(EditorWindow, m_windows, iter) {
+  FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, iter) {
     iter.data()->searchPanelChanged(panel);
   }
 

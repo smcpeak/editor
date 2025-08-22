@@ -76,11 +76,11 @@ public:       // data
   //
   NamedTextDocumentList m_documentList;
 
-  // currently open editor windows; nominally, once the
-  // last one of these closes, the app quits
-  ObjList<EditorWindow> m_windows;
-
 private:     // data
+  // Currently open editor windows.  Once the last one of these closes,
+  // the app quits.
+  ObjList<EditorWindow> m_editorWindows;
+
   // General editor-wide log file.  Can be null, depending on an envvar
   // setting.
   std::unique_ptr<smbase::ExclusiveWriteFile> m_editorLogFile;
@@ -231,6 +231,15 @@ public:       // funcs
 
   // Open a new editor window.
   EditorWindow *createNewWindow(NamedTextDocument *initFile);
+
+  // Called by the EditorWindow ctor to register its presence.
+  void registerEditorWindow(EditorWindow *ew);
+
+  // Called by the EditorWindow dtor to unregister.
+  void unregisterEditorWindow(EditorWindow *ew);
+
+  // Return the current number of editor windows.
+  int numEditorWindows() const;
 
   // Add 'f' to the set of file documents.
   void trackNewDocumentFile(NamedTextDocument *f);

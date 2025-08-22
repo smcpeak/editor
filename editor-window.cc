@@ -162,8 +162,7 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   // I want this object destroyed when it is closed.
   this->setAttribute(Qt::WA_DeleteOnClose);
 
-  this->m_editorGlobal->m_windows.append(this);
-  this->m_editorGlobal->m_documentList.addObserver(this);
+  this->m_editorGlobal->registerEditorWindow(this);
 
   QObject::connect(
     m_editorGlobal, &EditorGlobal::signal_editorFontChanged,
@@ -179,13 +178,7 @@ EditorWindow::~EditorWindow()
 {
   EditorWindow::s_objectCount--;
 
-  m_editorGlobal->m_documentList.removeObserver(this);
-
-  // This object might have already been removed, for example because
-  // the EditorGlobal destructor is running, and is in the process of
-  // removing elements from the list and destroying them.  Hence the
-  // "IfPresent" part of this call.
-  m_editorGlobal->m_windows.removeIfPresent(this);
+  m_editorGlobal->unregisterEditorWindow(this);
 
   // The QObject destructor will destroy both 'm_sarPanel' and
   // 'editorWidget()', but the documentation of ~QObject does not
@@ -2674,7 +2667,7 @@ void EditorWindow::windowCloseWindow() NOEXCEPT
 
 void EditorWindow::closeEvent(QCloseEvent *event)
 {
-  if (this->m_editorGlobal->m_windows.count() == 1) {
+  if (this->m_editorGlobal->numEditorWindows() == 1) {
     if (!this->canQuitApplication()) {
       event->ignore();    // Prevent app from closing.
       return;
@@ -2683,6 +2676,11 @@ void EditorWindow::closeEvent(QCloseEvent *event)
     // Close the connections dialog if it is open, since otherwise that
     // will prevent the program from terminating.
     m_editorGlobal->hideModelessDialogs();
+  }
+  else {
+    // When there are other windows open, the user can keep editing
+    // documents through those windows, and closing this one will not
+    // close the app, so there is no need for confirmation.
   }
 
   event->accept();
