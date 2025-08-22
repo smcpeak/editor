@@ -16,7 +16,7 @@ OPEN_ANONYMOUS_NAMESPACE
 
 DocumentName fileDocName(char const *fname)
 {
-  return DocumentName::fromFilename(HostName::asLocal(), fname);
+  return DocumentName::fromLocalFilename(fname);
 }
 
 DocumentName cmdDocName(char const *cmd)

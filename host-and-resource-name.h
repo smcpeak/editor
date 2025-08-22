@@ -18,7 +18,7 @@
 
 // Pair of a host name and a resource found on that host.
 class HostAndResourceName {
-protected:   // data
+private:     // data
   // Host that has the resource.
   HostName m_hostName;
 
@@ -44,6 +44,7 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
+  // Debug dump.
   operator gdv::GDValue() const;
 
   // Make an object carrying 'filename' and a local host designator.
