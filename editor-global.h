@@ -230,6 +230,14 @@ public:       // funcs
   NamedTextDocument * NULLABLE
   getFileWithName(DocumentName &docName);
 
+  // Find a document that is untitled and has no modifications if one
+  // exists.
+  NamedTextDocument * NULLABLE findUntitledUnmodifiedDocument();
+
+  // Notify observers of the document list that an attribute of one of
+  // the documents has changed.
+  void notifyDocumentAttributeChanged(NamedTextDocument *ntd);
+
   // Return true if any file document has the given name.
   bool hasFileWithName(DocumentName const &docName) const;
 

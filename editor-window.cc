@@ -752,9 +752,8 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   docName.setFilenameHarn(harn);
 
   // If this file is already open, switch to it.
-  NamedTextDocument *file =
-    m_editorGlobal->m_documentList.findDocumentByName(docName);
-  if (file) {
+  if (NamedTextDocument *file =
+        m_editorGlobal->getFileWithName(docName)) {
     this->setDocumentFile(file);
     return;
   }
@@ -768,7 +767,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     return;
   }
 
-  file = new NamedTextDocument();
+  NamedTextDocument *file = new NamedTextDocument();
   file->setDocumentName(docName);
   file->m_title = m_editorGlobal->uniqueTitleFor(docName);
 
@@ -794,7 +793,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 
   // is there an untitled, empty file hanging around?
   RCSerf<NamedTextDocument> untitled =
-    this->m_editorGlobal->m_documentList.findUntitledUnmodifiedDocument();
+    this->m_editorGlobal->findUntitledUnmodifiedDocument();
 
   // now that we've opened the file, set the editor widget to edit it
   m_editorGlobal->trackNewDocumentFile(file);
@@ -982,7 +981,7 @@ void EditorWindow::fileSaveAs() NOEXCEPT
 
       // Notify observers of the file name and highlighter change.  This
       // includes myself.
-      m_editorGlobal->m_documentList.notifyAttributeChanged(fileDoc);
+      m_editorGlobal->notifyDocumentAttributeChanged(fileDoc);
 
       return;
     }
@@ -1266,8 +1265,8 @@ int EditorWindow::getUnsavedChanges(std::ostream &msg)
   int ct = 0;
 
   msg << "The following documents have unsaved changes:\n\n";
-  for (int i=0; i < this->m_editorGlobal->m_documentList.numDocuments(); i++) {
-    NamedTextDocument *file = this->m_editorGlobal->m_documentList.getDocumentAt(i);
+  for (int i=0; i < this->m_editorGlobal->numDocuments(); i++) {
+    NamedTextDocument *file = this->m_editorGlobal->getDocumentByIndex(i);
     if (file->unsavedChanges()) {
       ct++;
       msg << " * " << file->resourceName() << '\n';
@@ -1924,7 +1923,7 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
   }
 
   // Notify everyone of the change.
-  this->m_editorGlobal->m_documentList.notifyAttributeChanged(doc);
+  this->m_editorGlobal->notifyDocumentAttributeChanged(doc);
 
   GENERIC_CATCH_END
 }
@@ -2315,14 +2314,13 @@ void EditorWindow::windowPreviousFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  NamedTextDocumentList &docList = m_editorGlobal->m_documentList;
-  if (docList.numDocuments() > 1) {
+  if (editorGlobal()->numDocuments() > 1) {
     NamedTextDocument *current = this->currentDocument();
-    NamedTextDocument *previous = docList.getDocumentAt(0);
+    NamedTextDocument *previous = editorGlobal()->getDocumentByIndex(0);
     if (current == previous) {
       // The current document is already at the top, so use the one
       // underneath it.
-      previous = docList.getDocumentAt(1);
+      previous = editorGlobal()->getDocumentByIndex(1);
     }
 
     this->setDocumentFile(previous);
