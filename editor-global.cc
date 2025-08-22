@@ -457,6 +457,20 @@ int EditorGlobal::numEditorWindows() const
 }
 
 
+void EditorGlobal::addDocumentListObserver(
+  NamedTextDocumentListObserver *observer)
+{
+  m_documentList.addObserver(observer);
+}
+
+
+void EditorGlobal::removeDocumentListObserver(
+  NamedTextDocumentListObserver *observer)
+{
+  m_documentList.removeObserver(observer);
+}
+
+
 NamedTextDocument const * NULLABLE
 EditorGlobal::getFileWithNameC(DocumentName const &docName) const
 {
@@ -530,9 +544,30 @@ void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 }
 
 
+bool EditorGlobal::hasDocumentFile(NamedTextDocument const *ntd) const
+{
+  return m_documentList.hasDocument(ntd);
+}
+
+
 void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
 {
   m_documentList.moveDocument(f, 0);
+}
+
+
+bool EditorGlobal::getInitialViewForFile(
+  NamedTextDocument *ntd,
+  NamedTextDocumentInitialView &view /*OUT*/)
+{
+  return m_documentList.notifyGetInitialView(ntd, view /*OUT*/);
+}
+
+
+void EditorGlobal::getUniqueDocumentDirectories(
+  ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const
+{
+  m_documentList.getUniqueDirectories(dirs);
 }
 
 

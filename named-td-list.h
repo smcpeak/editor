@@ -201,6 +201,10 @@ public:      // funcs
 // that TextDocumentObserver does.
 class NamedTextDocumentListObserver : virtual public SerfRefCount {
 public:      // funcs
+  // TODO: Consider making all of the observer methods accept a const
+  // pointer to `NamedTextDocumentList` since I am trying to force all
+  // write accesses to go through `EditorGlobal`.
+
   // A document was added to the list.
   virtual void namedTextDocumentAdded(
     NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;

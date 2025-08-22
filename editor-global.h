@@ -63,6 +63,7 @@ public:       // data
   // pixmap set
   Pixmaps m_pixmaps;
 
+private:     // data
   // List of open files.  Never empty (see NamedTextDocumentList).
   //
   // This list is ordered by how recently each document was switched
@@ -71,12 +72,8 @@ public:       // data
   // most recent at the top.  The documents currently *shown* in a
   // window are not necessarily near the top.
   //
-  // TODO: Make this private so I can ensure the invariant relationship
-  // with `m_lspManager`.
-  //
   NamedTextDocumentList m_documentList;
 
-private:     // data
   // Currently open editor windows.  Once the last one of these closes,
   // the app quits.
   ObjList<EditorWindow> m_editorWindows;
@@ -260,6 +257,12 @@ public:       // funcs
   // Return the current number of editor windows.
   int numEditorWindows() const;
 
+  // Add/remove a document list observer.
+  void addDocumentListObserver(
+    NamedTextDocumentListObserver *observer);
+  void removeDocumentListObserver(
+    NamedTextDocumentListObserver *observer);
+
   // Add 'f' to the set of file documents.
   void trackNewDocumentFile(NamedTextDocument *f);
 
@@ -271,8 +274,24 @@ public:       // funcs
   //
   void deleteDocumentFile(NamedTextDocument *f);
 
+  // True if `ntd` is among the documents we know about.
+  bool hasDocumentFile(NamedTextDocument const *ntd) const;
+
   // Move `f` to the top of the list.
   void makeDocumentTopmost(NamedTextDocument *f);
+
+  // If there is some observer of the document list (an editor widget)
+  // that already has a view for `ntd`, set `view` to that and return
+  // true.  Otherwise return false.
+  bool getInitialViewForFile(
+    NamedTextDocument *ntd,
+    NamedTextDocumentInitialView &view /*OUT*/);
+
+  // Put into `dirs` the unique set of directories containing files
+  // currently open, in order from most to least recently used.  Any
+  // existing entries in `dirs` are *retained* ahead of added entries.
+  void getUniqueDocumentDirectories(
+    ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const;
 
   // Reload the contents of 'f'.  Return false if there was an error or
   // the reload was canceled.  If interaction is required, a modal

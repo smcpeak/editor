@@ -127,11 +127,6 @@ private:     // data
   // after 'm_editorList' so it is destroyed first.
   RCSerf<NamedTextDocumentEditor> m_editor;
 
-  // The list of documents we can potentially switch among.  This is
-  // needed so I can switch to a different file when the open file gets
-  // closed by another widget operating on the same document list.
-  RCSerf<NamedTextDocumentList> m_documentList;
-
   // ------ file modification query ------
   // If not zero, the ID of the outstanding request for the file status
   // of the document being edited.
@@ -306,7 +301,6 @@ protected:   // funcs
 
 public:      // funcs
   EditorWidget(NamedTextDocument *docFile,
-               NamedTextDocumentList *documentList,
                EditorWindow *editorWindow);
   ~EditorWidget();
 

@@ -59,9 +59,7 @@ EditorWidgetFrame::EditorWidgetFrame(EditorWindow *editorWindow,
   editorFrame->setFrameStyle(QFrame::Box);
   editArea->addWidget(editorFrame, 0 /*row*/, 0 /*col*/);
 
-  m_editorWidget = new EditorWidget(initFile,
-    &(m_editorWindow->editorGlobal()->m_documentList),
-    m_editorWindow);
+  m_editorWidget = new EditorWidget(initFile, m_editorWindow);
   m_editorWidget->setObjectName("m_editorWidget");
   editorFrame->addWidget(m_editorWidget);
 

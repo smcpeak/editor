@@ -132,7 +132,6 @@ CHECK_OBJECT_COUNT(EditorWidget);
 
 
 EditorWidget::EditorWidget(NamedTextDocument *tdf,
-                           NamedTextDocumentList *documentList,
                            EditorWindow *editorWindow)
   : QWidget(editorWindow),
     m_editorWindow(editorWindow),
@@ -141,7 +140,6 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_matchesBelowLabel(NULL),
     m_editorList(),
     m_editor(NULL),
-    m_documentList(documentList),
     m_fileStatusRequestID(0),
     m_fileStatusRequestEditor(),
     m_hitText(""),
@@ -186,7 +184,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   m_textSearch.reset(new TextSearch(m_editor->getDocumentCore()));
   this->setTextSearchParameters();
 
-  m_documentList->addObserver(this);
+  editorGlobal()->addDocumentListObserver(this);
 
   setFontsFromEditorGlobal();
 
@@ -217,8 +215,7 @@ EditorWidget::~EditorWidget()
 
   this->stopListening();
 
-  m_documentList->removeObserver(this);
-  m_documentList = NULL;
+  editorGlobal()->removeDocumentListObserver(this);
 
   m_textSearch.reset();
 
@@ -239,8 +236,8 @@ EditorWidget::~EditorWidget()
 
 void EditorWidget::selfCheck() const
 {
-  // Check that 'editor' is among 'm_editors' and that the files in
-  // 'm_editors' are a subset of 'm_documentList'.
+  // Check that `editor` is among `m_editors` and that the files in
+  // `m_editors` are a subset of those known to `editorGlobal()`.
   bool foundEditor = false;
   FOREACH_OBJLIST(NamedTextDocumentEditor, m_editorList, iter) {
     NamedTextDocumentEditor const *tdfe = iter.data();
@@ -248,12 +245,12 @@ void EditorWidget::selfCheck() const
       foundEditor = true;
     }
     tdfe->selfCheck();
-    xassert(m_documentList->hasDocument(tdfe->m_namedDoc));
+    xassert(editorGlobal()->hasDocumentFile(tdfe->m_namedDoc));
   }
   xassert(foundEditor);
 
   // There should never be more m_editors than fileDocuments.
-  xassert(m_documentList->numDocuments() >= m_editorList.count());
+  xassert(editorGlobal()->numDocuments() >= m_editorList.count());
 
   xassert((m_fileStatusRequestID == 0) ==
           (m_fileStatusRequestEditor == nullptr));
@@ -440,7 +437,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
 
   // Move the chosen file to the top of the document list since it is
   // now the most recently used.
-  m_documentList->moveDocument(file, 0);
+  editorGlobal()->makeDocumentTopmost(file);
 
   this->startListening();
 
@@ -473,7 +470,7 @@ NamedTextDocumentEditor *EditorWidget::getOrMakeEditor(
   // This allows a user to open a new window without losing their
   // position in all of the open files.
   NamedTextDocumentInitialView view;
-  bool hasView = m_documentList->notifyGetInitialView(file, view);
+  bool hasView = editorGlobal()->getInitialViewForFile(file, view);
 
   // Make the new editor.
   NamedTextDocumentEditor *ret = new NamedTextDocumentEditor(file);
@@ -632,9 +629,15 @@ void EditorWidget::openDiagnosticOrFileAtCursor()
 
   string lineText = m_editor->getWholeLineString(m_editor->cursor().m_line);
 
+  // We will look for the file whose name is under the cursor in any
+  // directory where we already have an open file, starting with the
+  // directory where the current file is.
   ArrayStack<HostAndResourceName> prefixes;
   prefixes.push(getDocumentDirectoryHarn());
-  m_documentList->getUniqueDirectories(prefixes);
+
+  // Then, look in directories of other files, with the most recently
+  // used files considered first.
+  editorGlobal()->getUniqueDocumentDirectories(prefixes);
 
   VFS_QuerySync querySync(vfsConnections(), this);
 
@@ -667,15 +670,15 @@ void EditorWidget::makeCurrentDocumentTopmost()
 
 
 void EditorWidget::namedTextDocumentRemoved(
-  NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT
+  NamedTextDocumentList * /*documentList*/,
+  NamedTextDocument *file) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  xassert(documentList == m_documentList);
 
   // Change files if that was the one we were editing.  Do this before
   // destroying any editors.
   if (m_editor->m_namedDoc == file) {
-    this->setDocumentFile(documentList->getDocumentAt(0));
+    this->setDocumentFile(editorGlobal()->getDocumentByIndex(0));
   }
 
   // Remove 'file' from my list if I have it.
@@ -695,7 +698,8 @@ void EditorWidget::namedTextDocumentRemoved(
 
 
 bool EditorWidget::getNamedTextDocumentInitialView(
-  NamedTextDocumentList *documentList, NamedTextDocument *file,
+  NamedTextDocumentList * /*documentList*/,
+  NamedTextDocument *file,
   NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
