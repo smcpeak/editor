@@ -91,8 +91,6 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_pixmaps(),
     m_documentList(),
     m_windows(),
-    m_recordInputEvents(false),
-    m_eventFileTest(),
     m_editorLogFile(openEditorLogFile()),
     m_lspManager(true /*useRealClangd*/,
                  lspGetStderrLogFileInitialName(),
@@ -109,7 +107,9 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_recentCommands(),
     m_settings(),
     m_doNotSaveSettings(false),
-    m_filenameInputDialogHistory()
+    m_filenameInputDialogHistory(),
+    m_recordInputEvents(false),
+    m_eventFileTest()
 {
   m_documentList.addObserver(this);
 
@@ -324,7 +324,7 @@ void EditorGlobal::processCommandLineOptions(
 
   SMFileUtil sfu;
   for (int i=1; i < argc; i++) {
-    string arg(argv[i]);
+    std::string arg(argv[i]);
     if (arg.empty()) {
       xformat("An empty command line argument is not allowed.");
     }
@@ -352,7 +352,7 @@ void EditorGlobal::processCommandLineOptions(
 
       else if (beginsWith(arg, "-conn=")) {
         // Open a connection to a specified host.
-        string hostName = arg.substr(6, arg.length()-6);
+        std::string hostName = arg.substr(6, arg.length()-6);
         m_vfsConnections.connect(HostName::asSSH(hostName));
       }
 
@@ -379,7 +379,7 @@ void EditorGlobal::processCommandLineOptions(
 
     else {
       // Open all non-option files specified on the command line.
-      string path = sfu.getAbsolutePath(arg);
+      std::string path = sfu.getAbsolutePath(arg);
       path = sfu.normalizePathSeparators(path);
       editorWindow->openOrSwitchToFile(HostAndResourceName::localFile(path));
     }
@@ -407,7 +407,7 @@ EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
 }
 
 
-NamedTextDocument *EditorGlobal::createNewFile(string const &dir)
+NamedTextDocument *EditorGlobal::createNewFile(std::string const &dir)
 {
   return m_documentList.createUntitledDocument(dir);
 }
@@ -433,13 +433,13 @@ bool EditorGlobal::hasFileWithName(DocumentName const &docName) const
 }
 
 
-bool EditorGlobal::hasFileWithTitle(string const &title) const
+bool EditorGlobal::hasFileWithTitle(std::string const &title) const
 {
   return m_documentList.findDocumentByTitleC(title) != NULL;
 }
 
 
-string EditorGlobal::uniqueTitleFor(DocumentName const &docName) const
+std::string EditorGlobal::uniqueTitleFor(DocumentName const &docName) const
 {
   return m_documentList.computeUniqueTitle(docName);
 }
@@ -518,8 +518,8 @@ NamedTextDocument *EditorGlobal::getCommandOutputDocument(
   HostName const &hostName, QString origDir, QString command)
 {
   // Create a name based on the command and directory.
-  string dir = SMFileUtil().stripTrailingDirectorySeparator(toString(origDir));
-  string base = stringb(dir << "$ " << toString(command));
+  std::string dir = SMFileUtil().stripTrailingDirectorySeparator(toString(origDir));
+  std::string base = stringb(dir << "$ " << toString(command));
   DocumentName docName;
   docName.setNonFileResourceName(hostName, base, dir);
 
@@ -649,7 +649,7 @@ void EditorGlobal::configureCommandRunner(
 }
 
 
-string EditorGlobal::killCommand(NamedTextDocument *doc)
+std::string EditorGlobal::killCommand(NamedTextDocument *doc)
 {
   ProcessWatcher *watcher = this->findWatcherForDoc(doc);
   if (!watcher) {
@@ -742,7 +742,7 @@ void EditorGlobal::on_processTerminated(ProcessWatcher *watcher)
 
 
 void EditorGlobal::on_vfsConnectionFailed(
-  HostName hostName, string reason) NOEXCEPT
+  HostName hostName, std::string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -1122,7 +1122,7 @@ void EditorGlobal::settings_setGrepsrcSearchesSubrepos(
 }
 
 
-static string objectDesc(QObject const *obj)
+static std::string objectDesc(QObject const *obj)
 {
   if (!obj) {
     return "NULL";
@@ -1669,7 +1669,7 @@ static int innerMain(int argc, char **argv)
         g_abortUponDevWarning = true;
         cout << "running test: " << app.m_eventFileTest << endl;
         EventReplay replay(app.m_eventFileTest);
-        string error = replay.runTest();
+        std::string error = replay.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;
 

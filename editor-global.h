@@ -80,12 +80,6 @@ public:       // data
   // last one of these closes, the app quits
   ObjList<EditorWindow> m_windows;
 
-  // True to record input to "events.out" for test case creation.
-  bool m_recordInputEvents;
-
-  // Name of an event file test to run, or empty for none.
-  string m_eventFileTest;
-
 private:     // data
   // General editor-wide log file.  Can be null, depending on an envvar
   // setting.
@@ -146,6 +140,12 @@ public:      // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
+  // True to record input to "events.out" for test case creation.
+  bool m_recordInputEvents;
+
+  // Name of an event file test to run, or empty for none.
+  std::string m_eventFileTest;
+
 private:     // methods
   void processCommandLineOptions(
     EditorWindow *editorWindow, int argc, char **argv);
@@ -183,7 +183,7 @@ private Q_SLOTS:
   void on_processTerminated(ProcessWatcher *watcher);
 
   // Called when a VFS connection fails.
-  void on_vfsConnectionFailed(HostName hostName, string reason) NOEXCEPT;
+  void on_vfsConnectionFailed(HostName hostName, std::string reason) NOEXCEPT;
 
   // Called when `m_lspManager` has pending diagnostics.
   void on_lspHasPendingDiagnostics() NOEXCEPT;
@@ -209,7 +209,7 @@ public:       // funcs
 
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
-  NamedTextDocument *createNewFile(string const &dir);
+  NamedTextDocument *createNewFile(std::string const &dir);
 
   // Get the document with `docName` if there is one.
   NamedTextDocument const * NULLABLE
@@ -223,11 +223,11 @@ public:       // funcs
   bool hasFileWithName(DocumentName const &docName) const;
 
   // Return true if any file document has the given title.
-  bool hasFileWithTitle(string const &title) const;
+  bool hasFileWithTitle(std::string const &title) const;
 
   // Calculate a minimal suffix of path components in 'filename' that
   // forms a title not shared by any open file.
-  string uniqueTitleFor(DocumentName const &docName) const;
+  std::string uniqueTitleFor(DocumentName const &docName) const;
 
   // Open a new editor window.
   EditorWindow *createNewWindow(NamedTextDocument *initFile);
@@ -284,7 +284,7 @@ public:       // funcs
   // Otherwise it can remain in DPS_RUNNING indefinitely for an
   // unkillable child.  Even in that state, the document can be safely
   // closed.
-  string killCommand(NamedTextDocument *doc);
+  std::string killCommand(NamedTextDocument *doc);
 
   // EditorGlobal has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.
