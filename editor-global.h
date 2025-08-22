@@ -164,6 +164,12 @@ private:      // funcs
     std::string const &globalAppStateDir,
     char const *fname);
 
+  // Connect signals from `m_lspManager` to `this`.
+  void connectLSPSignals();
+
+  // Disconnect signals and shut down the server.
+  void disconnectLSPSignals();
+
 private Q_SLOTS:
   // Called when focus changes anywhere in the app.
   void focusChangedHandler(QWidget *from, QWidget *to);

@@ -189,11 +189,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   QObject::connect(this, &EditorGlobal::focusChanged,
                    this, &EditorGlobal::focusChangedHandler);
 
-  // Connect LSP signals.
-  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingDiagnostics,
-                   this,         &EditorGlobal::on_lspHasPendingDiagnostics);
-  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
-                   this,         &EditorGlobal::on_lspHasPendingErrorMessages);
+  connectLSPSignals();
 
   showRaiseAndActivateWindow(ed);
 
@@ -217,12 +213,7 @@ EditorGlobal::~EditorGlobal()
   // signals I am not prepared for.
   m_windows.deleteAll();
 
-  // Shut down the LSP server.
-  QObject::disconnect(&m_lspManager, nullptr, this, nullptr);
-  {
-    std::string shutdownMsg = m_lspManager.stopServer();
-    TRACE1("dtor: LSP Manager stopServer() returned: " << shutdownMsg);
-  }
+  disconnectLSPSignals();
 
   if (m_processes.isNotEmpty()) {
     // Now try to kill any running processes.  Do not wait for any of
@@ -1217,6 +1208,27 @@ bool EditorGlobal::notify(QObject *receiver, QEvent *event)
 
 
 // -------------------------------- LSP --------------------------------
+void EditorGlobal::connectLSPSignals()
+{
+  // Connect LSP signals.
+  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingDiagnostics,
+                   this,         &EditorGlobal::on_lspHasPendingDiagnostics);
+  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
+                   this,         &EditorGlobal::on_lspHasPendingErrorMessages);
+}
+
+
+void EditorGlobal::disconnectLSPSignals()
+{
+  // Shut down the LSP server.
+  QObject::disconnect(&m_lspManager, nullptr, this, nullptr);
+  {
+    std::string shutdownMsg = m_lspManager.stopServer();
+    TRACE1("dtor: LSP Manager stopServer() returned: " << shutdownMsg);
+  }
+}
+
+
 void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
