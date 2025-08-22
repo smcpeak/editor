@@ -1332,24 +1332,6 @@ bool EditorWindow::promptForCommandLine(
 }
 
 
-void EditorWindow::namedTextDocumentAdded(
-  NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
-{}
-
-void EditorWindow::namedTextDocumentRemoved(
-  NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
-{
-  // It is possible that the file our widget is editing is being
-  // removed, in which case the widget will switch to another file and
-  // we will have to update the filename display.  But it would be
-  // wrong to assume here that the widget has already updated to the
-  // new file since the order in which observers are notified is
-  // undefined.
-  //
-  // Instead, those updates happen in response to the 'viewChanged'
-  // signal, which the widget will emit when it learns of the change.
-}
-
 void EditorWindow::namedTextDocumentAttributeChanged(
   NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
 {
@@ -1363,10 +1345,6 @@ void EditorWindow::namedTextDocumentAttributeChanged(
 
   GENERIC_CATCH_END
 }
-
-void EditorWindow::namedTextDocumentListOrderChanged(
-  NamedTextDocumentList *) NOEXCEPT
-{}
 
 
 void EditorWindow::fileLoadSettings() NOEXCEPT

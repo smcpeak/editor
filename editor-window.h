@@ -209,14 +209,8 @@ public:      // funcs
   void inform(std::string_view msg) const;
 
   // NamedTextDocumentListObserver methods.
-  virtual void namedTextDocumentAdded(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
-  virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
   virtual void namedTextDocumentAttributeChanged(
     NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
-  virtual void namedTextDocumentListOrderChanged(
-    NamedTextDocumentList *documentList) NOEXCEPT OVERRIDE;
 
 public Q_SLOTS:
   void fileNewFile() NOEXCEPT;
