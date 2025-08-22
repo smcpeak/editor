@@ -19,13 +19,14 @@
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/sm-env.h"                       // smbase::envAsBool
 #include "smbase/sm-file-util.h"                 // SMFileUtil
-#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"                      // DIAG
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE, smbase_loopi
+#include "smbase/sm-test.h"                      // DIAG, envRandomizedTestIters
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/string-util.h"                  // stringVectorFromPointerArray
 #include "smbase/xassert.h"                      // xassert
 #include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
+#include <functional>                            // std::function
 #include <memory>                                // std::unique_ptr
 #include <optional>                              // std::optional
 #include <string>                                // std::string
@@ -166,6 +167,21 @@ void LSPManagerTester::takeDeclarationReply()
 }
 
 
+void LSPManagerTester::waitUntil(std::function<bool()> condition)
+{
+  while (m_lspManager.isRunningNormally() && !condition()) {
+    waitForQtEvent();
+    TRACE1("Status: " << m_lspManager.checkStatus());
+    m_lspManager.selfCheck();
+  }
+
+  if (!m_lspManager.isRunningNormally()) {
+    xfailure_stringbc(
+      "Manager not running normally: " << m_lspManager.checkStatus());
+  }
+}
+
+
 void LSPManagerTester::stopServer()
 {
   std::string stopResult = m_lspManager.stopServer();
@@ -189,6 +205,8 @@ void LSPManagerTester::testSynchronously()
 {
   startServer();
 
+  // This cannot use `waitUntil` because we are not running normally
+  // until the condition is satisfied.
   while (m_lspManager.getProtocolState() != LSP_PS_NORMAL) {
     waitForQtEvent();
     TRACE1("Status: " << m_lspManager.checkStatus());
@@ -197,35 +215,31 @@ void LSPManagerTester::testSynchronously()
 
   sendDidOpen();
 
-  while (!m_lspManager.hasPendingDiagnostics()) {
-    waitForQtEvent();
-    TRACE1("Status: " << m_lspManager.checkStatus());
-    m_lspManager.selfCheck();
-  }
+  waitUntil([this]() -> bool
+    { return m_lspManager.hasPendingDiagnostics(); });
 
   takeDiagnostics();
 
   sendDeclarationRequest();
 
-  while (!m_lspManager.hasReplyForID(m_declarationRequestID)) {
-    waitForQtEvent();
-    TRACE1("Status: " << m_lspManager.checkStatus());
-    m_lspManager.selfCheck();
-  }
+  waitUntil([this]() -> bool
+    { return m_lspManager.hasReplyForID(m_declarationRequestID); });
 
   takeDeclarationReply();
 
   syncCheckDocumentContents();
 
+  // Prepare for incremental edits.
+  checkManagerContents();
+  m_doc.beginTrackingChanges();
+
   // Experiment with incremental edits.
-  {
-    checkManagerContents();
-
-    // Track changes to send them incrementally.
-    m_doc.beginTrackingChanges();
-
-    // Make a sample edit.
-    m_doc.insertAt(TextMCoord(5, 0), "hello", 5);
+  int const numIters = envRandomizedTestIters(20, "LMT_EDIT_ITERS");
+  smbase_loopi(numIters) {
+    // Randomly make an edit.
+    TextDocumentChangeSequence edit = makeRandomChange(m_doc.getCore());
+    VPVAL(toGDValue(edit));
+    edit.applyToDocument(m_doc);
 
     // Get the recorded changes.
     RCSerf<TextDocumentChangeSequence const> recordedChanges =
@@ -253,23 +267,20 @@ void LSPManagerTester::testSynchronously()
     m_doc.beginTrackingChanges();
 
     // Wait for the server to send diagnostics for the new version.
-    while (!m_lspManager.hasPendingDiagnostics()) {
-      waitForQtEvent();
-      TRACE1("Status: " << m_lspManager.checkStatus());
-      m_lspManager.selfCheck();
-    }
+    waitUntil([this]() -> bool
+      { return m_lspManager.hasPendingDiagnostics(); });
 
     // Incorporate the reply.
     takeDiagnostics();
 
     // Now ask the server what it thinks the document looks like.
     syncCheckDocumentContents();
-
-    // TODO: Do more edits.
   }
 
   stopServer();
 
+  // Cannot use `waitUntil` because the goal is to wait until the server
+  // is not running normally.
   while (m_lspManager.getProtocolState() != LSP_PS_MANAGER_INACTIVE) {
     waitForQtEvent();
     TRACE1("Status: " << m_lspManager.checkStatus());
@@ -294,11 +305,8 @@ void LSPManagerTester::syncCheckDocumentContents()
 
   // Wait for the reply.
   DIAG("Waiting for getTextDocumentContents reply, id=" << id);
-  while (!m_lspManager.hasReplyForID(id)) {
-    waitForQtEvent();
-    TRACE1("Status: " << m_lspManager.checkStatus());
-    m_lspManager.selfCheck();
-  }
+  waitUntil([this, id]() -> bool
+    { return m_lspManager.hasReplyForID(id); });
 
   GDValue reply = m_lspManager.takeReplyForID(id);
 

@@ -16,6 +16,7 @@
 
 #include <QObject>
 
+#include <functional>                  // std::function
 #include <iosfwd>                      // std::ostream
 
 
@@ -68,6 +69,10 @@ public:      // methods
 
   // Take its reply, which must have been received.
   void takeDeclarationReply();
+
+  // For the synchonous test, wait until `condition` becomes true.  If
+  // the manager stops running normally, throw.
+  void waitUntil(std::function<bool()> condition);
 
   // Tell the server to shut down.
   void stopServer();

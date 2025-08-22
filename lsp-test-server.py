@@ -17,13 +17,18 @@ does not respond to them.  It replies to all requests other than startup
 and shutdown with an empty result.
 """
 
-# This script was written largely by ChatGPT, based on a prompt very
-# similar to the description above.
-
-import sys
 import json
+import os
+import sys
+import traceback
 
 from typing import Any, Dict, List, Tuple
+
+
+# Positive if debug is enabled, with higher values enabling more printing.
+debugLevel: int = 0
+if debugEnvVal := os.getenv("DEBUG"):
+  debugLevel = int(debugEnvVal)
 
 
 # Use binary mode for stdin/stdout for LSP protocol.
@@ -80,6 +85,42 @@ def complain(msg: str) -> None:
   sys.exit(2);
 
 
+def expect_eq(actual: Any, expect: Any) -> None:
+  """
+  Complain if `actual` is not `expect`.
+  """
+  if actual != expect:
+    complain("expect_eq: values are not equal:\n"+
+      f"  actual: {actual!r}\n"
+      f"  expect: {expect!r}")
+
+
+def split_lines(text: str) -> List[str]:
+  """
+  Divide `text` into lines, treating the newline character as a
+  separator.  The newlines are retained for all but the last element.
+  The concatenation of the returned list equals the original string.
+  """
+
+  parts = text.split("\n")
+
+  # Reattach '\n' to every part except the last.
+  lines = [p + "\n" for p in parts[:-1]]
+
+  lines.append(parts[-1])
+  return lines
+
+
+def test_split_lines() -> None:
+  """Unit tests for `split_lines`."""
+
+  expect_eq(split_lines(""), [""])
+  expect_eq(split_lines("\n"), ["\n", ""])
+  expect_eq(split_lines("a\nb"), ["a\n", "b"])
+  expect_eq(split_lines("a\nb\n"), ["a\n", "b\n", ""])
+  expect_eq(split_lines("a\n\nb\n"), ["a\n", "\n", "b\n", ""])
+
+
 def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
   """
   Apply a list of LSP TextDocumentContentChangeEvent edits to the old text.
@@ -88,7 +129,7 @@ def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
   """
   text = old_text
   for change in changes:
-    if "range" not in change:
+    if "range" not in change or change["range"] is None:
       # Full text replacement
       text = change["text"]
     else:
@@ -98,13 +139,18 @@ def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
 
       def offset(pos: Dict[str, int]) -> int:
         """Convert line/character to byte offset into text."""
-        lines = text.splitlines(keepends=True)
+
+        lines = split_lines(text)
+
         line_idx = pos["line"]
         char_idx = pos["character"]
-        if not 0 <= line_idx <= len(lines):
+
+        if not 0 <= line_idx < len(lines):
           raise RuntimeError("Position line out of range")
+
         if not 0 <= char_idx <= len(lines[line_idx]):
           raise RuntimeError("Position character out of range")
+
         line_start = sum(len(lines[i]) for i in range(line_idx))
         return line_start + char_idx
 
@@ -113,6 +159,57 @@ def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
       text = text[:start_off] + change["text"] + text[end_off:]
 
   return text
+
+
+def test_one_apply_text_edit(
+  start_line: int,
+  start_character: int,
+  end_line: int,
+  end_character: int,
+  edit_text: str,
+  orig_text: str,
+  expect: str) -> str:
+  """
+  Apply a single edit to `orig_text`, expecting `expect`, which is
+  returned.
+  """
+
+  changes = [
+    {
+      "range": {
+        "start": {
+          "line": start_line,
+          "character": start_character,
+        },
+        "end": {
+          "line": end_line,
+          "character": end_character,
+        },
+      },
+      "text": edit_text,
+    }
+  ]
+
+  actual: str = apply_text_edits(orig_text, changes)
+  expect_eq(actual, expect);
+
+  return actual
+
+
+def test_apply_text_edits() -> None:
+  """Unit tests for `apply_text_edits`."""
+
+  text = ""
+  text = test_one_apply_text_edit(0,0,0,0, "zero\none\ntwo\n",
+    text, "zero\none\ntwo\n")
+  text = test_one_apply_text_edit(3,0,3,0, "three\nfour",
+    text, "zero\none\ntwo\nthree\nfour")
+  text = test_one_apply_text_edit(1,1,2,2, "ZZZ",
+    text, "zero\noZZZo\nthree\nfour")
+  text = test_one_apply_text_edit(0,4,0,4, "ZERO",
+    text, "zeroZERO\noZZZo\nthree\nfour")
+  text = test_one_apply_text_edit(0,0,0,0, "ABC",
+    text, "ABCzeroZERO\noZZZo\nthree\nfour")
 
 
 def publish_diagnostics(uri: str, version: int) -> None:
@@ -134,6 +231,11 @@ def publish_diagnostics(uri: str, version: int) -> None:
 
 def main() -> None:
   global initialized, shutdown_received
+
+  if os.getenv("UNIT_TEST"):
+    test_split_lines()
+    test_apply_text_edits()
+    return
 
   try:
     while True:
@@ -216,6 +318,8 @@ def main() -> None:
 
   except Exception as e:
     print(f"Error: {e}", file=sys.stderr)
+    if debugLevel >= 1:
+      traceback.print_exc(file=sys.stderr)
     sys.exit(2)
 
 
