@@ -402,6 +402,19 @@ NamedTextDocumentList const *EditorGlobal::documentList() const
 }
 
 
+int EditorGlobal::numDocuments() const
+{
+  return m_documentList.numDocuments();
+}
+
+
+NamedTextDocument *EditorGlobal::getDocumentByIndex(int index)
+{
+  xassertPrecondition(cc::z_le_lt(index, numDocuments()));
+  return m_documentList.getDocumentAt(index);
+}
+
+
 EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
 {
   EditorWindow *ed = new EditorWindow(this, initFile);

@@ -72,9 +72,6 @@ private:     // funcs
   // it into the table widget.
   void repopulateTable();
 
-  // Get the unfiltered document list to edit.
-  NamedTextDocumentList *unfilteredDocList() const;
-
   // If 'r' is a valid index into 'm_filteredDocuments', return the
   // element at that index.  Otherwise return nullptr.
   NamedTextDocument *getDocAtIf(int r);

@@ -158,8 +158,8 @@ void OpenFilesDialog::computeFilteredDocuments()
   m_filteredDocuments.clear();
   string filter = toString(m_filterLineEdit->text());
 
-  for (int r=0; r < unfilteredDocList()->numDocuments(); r++) {
-    NamedTextDocument *doc = unfilteredDocList()->getDocumentAt(r);
+  for (int r=0; r < editorGlobal()->numDocuments(); r++) {
+    NamedTextDocument *doc = editorGlobal()->getDocumentByIndex(r);
 
     if (hasSubstring_insens_ascii(
           doc->nameWithStatusIndicators(), filter)) {
@@ -228,12 +228,6 @@ void OpenFilesDialog::repopulateTable()
     // Apparently I have to set every row's height explicitly.
     m_tableWidget->setNaturalTextRowHeight(r);
   }
-}
-
-
-NamedTextDocumentList *OpenFilesDialog::unfilteredDocList() const
-{
-  return &( editorGlobal()->m_documentList );
 }
 
 

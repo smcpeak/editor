@@ -210,6 +210,14 @@ public:       // funcs
   // Read-only access to the document list.
   NamedTextDocumentList const *documentList() const;
 
+  // Current number of documents.
+  int numDocuments() const;
+
+  // Get a document in `m_documentList` order.
+  //
+  // Requires: 0 <= index < numDocuments()
+  NamedTextDocument *getDocumentByIndex(int index);
+
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
   NamedTextDocument *createNewFile(std::string const &dir);
