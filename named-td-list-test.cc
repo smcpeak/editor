@@ -53,28 +53,28 @@ public:      // funcs
   {}
 
   void namedTextDocumentAdded(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE
+    NamedTextDocumentList const *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ADDED, file));
   }
 
   void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE
+    NamedTextDocumentList const *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_REMOVED, file));
   }
 
   void namedTextDocumentAttributeChanged(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE
+    NamedTextDocumentList const *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ATTRIBUTE, file));
   }
 
   void namedTextDocumentListOrderChanged(
-    NamedTextDocumentList *documentList) NOEXCEPT OVERRIDE
+    NamedTextDocumentList const *documentList) NOEXCEPT OVERRIDE
   {
     xassert(documentList == m_documentList);
     m_pendingNotifications.append(new Notification(NF_ORDER));

@@ -183,36 +183,39 @@ public:      // funcs
 };
 
 
-// Interface for an observer of a NamedTextDocumentList.
-//
-// All methods have default no-op implementations.  There is no need
-// for subclass implementations to call them.
-//
-// Currently, it is not allowed for an observer method to invoke a
-// method on the observee that modifies the set of observers.
-//
-// These method names are relatively long because it is expected that
-// a class implementing the interface will itself have many members,
-// and these methods need to be uniquely named among that larger set.
-//
-// As these are notification methods, they should not throw exceptions.
-//
-// This inherts SerfRefCount for the same reason, and in the same way,
-// that TextDocumentObserver does.
+/* Interface for an observer of a NamedTextDocumentList.
+
+   All methods have default no-op implementations.  There is no need
+   for subclass implementations to call them.
+
+   Currently, it is not allowed for an observer method to invoke a
+   method on the observee that modifies the set of observers.
+
+   These method names are relatively long because it is expected that
+   a class implementing the interface will itself have many members,
+   and these methods need to be uniquely named among that larger set.
+
+   As these are notification methods, they should not throw exceptions.
+
+   This inherts SerfRefCount for the same reason, and in the same way,
+   that TextDocumentObserver does.
+
+   The methods all accept const pointers to the list because I want to
+   ensure that modifications go through `EditorGlobal`.
+
+   TODO: I'm thinking I should remove this interfaace entirely in favor
+   of Qt slots and signals connected to `EditorGlobal`.
+*/
 class NamedTextDocumentListObserver : virtual public SerfRefCount {
 public:      // funcs
-  // TODO: Consider making all of the observer methods accept a const
-  // pointer to `NamedTextDocumentList` since I am trying to force all
-  // write accesses to go through `EditorGlobal`.
-
   // A document was added to the list.
   virtual void namedTextDocumentAdded(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;
+    NamedTextDocumentList const *documentList, NamedTextDocument *doc) NOEXCEPT;
 
   // A document was removed.  When this is called, the document has already
   // been removed from the list, but the object is still valid.
   virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;
+    NamedTextDocumentList const *documentList, NamedTextDocument *doc) NOEXCEPT;
 
   // An attribute of a document may have changed.  The client has to
   // inspect the document to determine what has changed.
@@ -226,19 +229,20 @@ public:      // funcs
   // concept, since we are notifying about a single object, rather
   // that something intrinsically tied to the "list" aspect.
   virtual void namedTextDocumentAttributeChanged(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc) NOEXCEPT;
+    NamedTextDocumentList const *documentList, NamedTextDocument *doc) NOEXCEPT;
 
   // The order of documents in the list may have changed.  Observers must
   // query the list in order to obtain the new order.
   virtual void namedTextDocumentListOrderChanged(
-    NamedTextDocumentList *documentList) NOEXCEPT;
+    NamedTextDocumentList const *documentList) NOEXCEPT;
 
   // This is a question, not a notification.  Some widget is about to
   // show 'doc' for the first time and wants to know a good view area
   // within the document to start at.  If the observer has one, it should
   // fill in 'view' and return true; else false.
   virtual bool getNamedTextDocumentInitialView(
-    NamedTextDocumentList *documentList, NamedTextDocument *doc,
+    NamedTextDocumentList const *documentList,
+    NamedTextDocument *doc,
     NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT;
 
   // Verifies zero reference count.

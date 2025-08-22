@@ -492,19 +492,6 @@ EditorGlobal::findUntitledUnmodifiedDocument()
 }
 
 
-/* This design is a bit weird.
-
-   First, I'm using my ad-hoc observer pattern rather than Qt slots and
-   signals.  The former ensures synchronous delivery (but of course Qt
-   signals are synchronous by default), but is a bit inflexible.
-
-   Then there is the issue of trying to control write access to the
-   document list in order to ensure the invariants w.r.t. the LSP
-   manager, but notification subverts that by giving observers a
-   non-const pointer.
-
-   I don't have a plan to fix this, just noting some issues.
-*/
 void EditorGlobal::notifyDocumentAttributeChanged(
   NamedTextDocument *ntd)
 {
@@ -789,7 +776,7 @@ ProcessWatcher *EditorGlobal::findWatcherForDoc(NamedTextDocument *fileDoc)
 
 
 void EditorGlobal::namedTextDocumentRemoved(
-  NamedTextDocumentList *documentList,
+  NamedTextDocumentList const *documentList,
   NamedTextDocument *fileDoc) NOEXCEPT
 {
   ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);

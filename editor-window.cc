@@ -1333,7 +1333,7 @@ bool EditorWindow::promptForCommandLine(
 
 
 void EditorWindow::namedTextDocumentAttributeChanged(
-  NamedTextDocumentList *, NamedTextDocument *) NOEXCEPT
+  NamedTextDocumentList const *, NamedTextDocument *) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 

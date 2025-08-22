@@ -528,11 +528,13 @@ public:      // funcs
   // 'file' is going away.  Remove all references to it.  If it is the
   // open file, pick another from the document list.
   virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
+    NamedTextDocumentList const *documentList,
+    NamedTextDocument *file) NOEXCEPT OVERRIDE;
 
   // Answer a query from the NamedTextDocumentList.
   virtual bool getNamedTextDocumentInitialView(
-    NamedTextDocumentList *documentList, NamedTextDocument *file,
+    NamedTextDocumentList const *documentList,
+    NamedTextDocument *file,
     NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT OVERRIDE;
 
   // Current document being edited.  This is 'const' because the file is

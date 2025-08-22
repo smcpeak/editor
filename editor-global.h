@@ -336,7 +336,7 @@ public:       // funcs
   // EditorGlobal has to monitor for closing a document that a process
   // is writing to, since that indicates to kill that process.
   virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList *documentList,
+    NamedTextDocumentList const *documentList,
     NamedTextDocument *file) NOEXCEPT OVERRIDE;
 
   // Tell all windows that their view has changed.

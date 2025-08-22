@@ -210,7 +210,8 @@ public:      // funcs
 
   // NamedTextDocumentListObserver methods.
   virtual void namedTextDocumentAttributeChanged(
-    NamedTextDocumentList *documentList, NamedTextDocument *file) NOEXCEPT OVERRIDE;
+    NamedTextDocumentList const *documentList,
+    NamedTextDocument *file) NOEXCEPT OVERRIDE;
 
 public Q_SLOTS:
   void fileNewFile() NOEXCEPT;

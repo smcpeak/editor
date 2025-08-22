@@ -670,7 +670,7 @@ void EditorWidget::makeCurrentDocumentTopmost()
 
 
 void EditorWidget::namedTextDocumentRemoved(
-  NamedTextDocumentList * /*documentList*/,
+  NamedTextDocumentList const * /*documentList*/,
   NamedTextDocument *file) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -698,7 +698,7 @@ void EditorWidget::namedTextDocumentRemoved(
 
 
 bool EditorWidget::getNamedTextDocumentInitialView(
-  NamedTextDocumentList * /*documentList*/,
+  NamedTextDocumentList const * /*documentList*/,
   NamedTextDocument *file,
   NamedTextDocumentInitialView /*OUT*/ &view) NOEXCEPT
 {
