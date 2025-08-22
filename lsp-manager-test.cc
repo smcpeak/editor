@@ -9,7 +9,6 @@
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
-#include "td-core.h"                             // TextDocumentCore
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "td-obs-recorder.h"                     // TextDocumentObservationRecorder
 #include "uri-util.h"                            // makeFileURI
@@ -102,6 +101,8 @@ void LSPManagerTester::sendDidOpen()
     m_lspManager.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
     true);
 
+  m_doc.beginTrackingChanges();
+
   DIAG("Waiting for diagnostics notification...");
 }
 
@@ -117,6 +118,8 @@ LSPManagerTester::takeDiagnostics()
   EXPECT_EQ(
     m_lspManager.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
     false);
+
+  m_doc.updateDiagnostics(convertLSPDiagsToTDD(diags.get()));
 
   return diags;
 }
@@ -193,8 +196,7 @@ void LSPManagerTester::testSynchronously()
     m_lspManager.selfCheck();
   }
 
-  std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
-    takeDiagnostics();
+  takeDiagnostics();
 
   sendDeclarationRequest();
 
@@ -213,21 +215,17 @@ void LSPManagerTester::testSynchronously()
     // Get the manager's view of the document.
     RCSerf<LSPDocumentInfo const> docInfo =
       m_lspManager.getDocInfo(m_params.m_fname);
-    xassert(docInfo->lastContentsEquals(m_doc));
+    xassert(docInfo->lastContentsEquals(m_doc.getCore()));
 
-    // Set up a recorder for our copy.
-    TextDocumentObservationRecorder recorder(m_doc);
-    recorder.beginTrackingCurrentDoc();
-    recorder.applyChangesToDiagnostics(
-      convertLSPDiagsToTDD(diags.get()).get());
-    xassert(recorder.isTracking(m_doc.getVersionNumber()));
+    // Track changes to send them incrementally.
+    m_doc.beginTrackingChanges();
 
     // Make a sample edit.
-    m_doc.insertText(TextMCoord(5, 0), "hello", 5);
+    m_doc.insertAt(TextMCoord(5, 0), "hello", 5);
 
     // Get the recorded changes.
     RCSerf<TextDocumentChangeSequence const> recordedChanges =
-      recorder.getUnsentChanges();
+      m_doc.getUnsentChanges();
 
     // Convert changes to the LSP format and package them into a
     // "didChange" params structure.
@@ -240,13 +238,15 @@ void LSPManagerTester::testSynchronously()
     recordedChanges.reset();
 
     // Send them to the server, and have the manager update its copy.
+    DIAG("Sending incremental changes: " <<
+         toGDValue(changeParams).asIndentedString());
     m_lspManager.notify_textDocument_didChange(changeParams);
 
     // Check the manager's copy.
-    xassert(docInfo->lastContentsEquals(m_doc));
+    xassert(docInfo->lastContentsEquals(m_doc.getCore()));
 
     // The recorder must also know this was sent.
-    recorder.beginTrackingCurrentDoc();
+    m_doc.beginTrackingChanges();
 
     // Wait for the server to send diagnostics for the new version.
     while (!m_lspManager.hasPendingDiagnostics()) {
@@ -256,9 +256,7 @@ void LSPManagerTester::testSynchronously()
     }
 
     // Incorporate the reply.
-    diags = takeDiagnostics();
-    recorder.applyChangesToDiagnostics(
-      convertLSPDiagsToTDD(diags.get()).get());
+    takeDiagnostics();
 
     // Now ask the server what it thinks the document looks like.
     syncCheckDocumentContents();

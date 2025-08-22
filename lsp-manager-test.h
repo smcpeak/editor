@@ -6,18 +6,18 @@
 #ifndef EDITOR_LSP_MANAGER_TEST_H
 #define EDITOR_LSP_MANAGER_TEST_H
 
-#include "td-core.h"                   // TextDocumentCore
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
 #include "lsp-manager.h"               // LSPManager
 #include "lsp-test-request-params.h"   // LSPTestRequestParams
+#include "named-td.h"                  // NamedTextDocument
 
 #include "smbase/sm-macros.h"          // NULLABLE
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/std-memory-fwd.h"     // std::unique_ptr
 
 #include <QObject>
 
 #include <iosfwd>                      // std::ostream
-#include <memory>                      // std::unique_ptr
 
 
 // Test harness for `LSPManager`.  Also serves as the recipients for its
@@ -43,7 +43,7 @@ public:      // data
 
   // The document we will simulate editing and exchanging with the
   // server.
-  TextDocumentCore m_doc;
+  NamedTextDocument m_doc;
 
 public:      // methods
   ~LSPManagerTester();
