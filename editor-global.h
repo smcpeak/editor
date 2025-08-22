@@ -46,12 +46,12 @@ class ProcessWatcher;                            // process-watcher.h
 class QWidget;
 
 
-// global state of the editor: files, windows, etc.
+// Global state of the editor: files, windows, etc.
 class EditorGlobal : public QApplication,
                      public NamedTextDocumentListObserver {
   Q_OBJECT
 
-public:       // class data
+public:      // class data
   // Name of this application, used in the main window title as well as
   // some message boxes.
   static char const appName[];
@@ -59,11 +59,11 @@ public:       // class data
   // Maximum size of `m_recentCommand`.
   static int const MAX_NUM_RECENT_COMMANDS;
 
-public:       // data
-  // pixmap set
+private:     // instance data
+  // Pixmap set.  This appears unused at first, but creating it sets a
+  // global pointer that allows other classes to use it.
   Pixmaps m_pixmaps;
 
-private:     // data
   // List of open files.  Never empty (see NamedTextDocumentList).
   //
   // This list is ordered by how recently each document was switched
