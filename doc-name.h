@@ -49,21 +49,17 @@ public:      // methods
   DocumentName(DocumentName const &obj) = default;
   DocumentName& operator=(DocumentName const &obj) = default;
 
-  static DocumentName fromFilename(HostName const &hostName,
-                                   string const &filename)
-  {
-    DocumentName ret;
-    ret.setFilename(hostName, filename);
-    return ret;
-  }
+  static DocumentName fromLocalFilename(
+    string const &filename);
 
-  static DocumentName fromNonFileResourceName(HostName const &hostName,
-    string const &name, string const &dir)
-  {
-    DocumentName ret;
-    ret.setNonFileResourceName(hostName, name, dir);
-    return ret;
-  }
+  static DocumentName fromFilename(
+    HostName const &hostName,
+    string const &filename);
+
+  static DocumentName fromNonFileResourceName(
+    HostName const &hostName,
+    string const &name,
+    string const &dir);
 
   // Assert invariants.
   void selfCheck() const;

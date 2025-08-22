@@ -48,6 +48,34 @@ void DocumentName::setDirectory(string const &dir)
 }
 
 
+/*static*/ DocumentName DocumentName::fromLocalFilename(
+  string const &filename)
+{
+  return fromFilename(HostName::asLocal(), filename);
+}
+
+
+/*static*/ DocumentName DocumentName::fromFilename(
+  HostName const &hostName,
+  string const &filename)
+{
+  DocumentName ret;
+  ret.setFilename(hostName, filename);
+  return ret;
+}
+
+
+/*static*/ DocumentName DocumentName::fromNonFileResourceName(
+  HostName const &hostName,
+  string const &name,
+  string const &dir)
+{
+  DocumentName ret;
+  ret.setNonFileResourceName(hostName, name, dir);
+  return ret;
+}
+
+
 void DocumentName::selfCheck() const
 {
   HostAndResourceName::selfCheck();

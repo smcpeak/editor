@@ -13,7 +13,6 @@
 
 #include "smbase/sm-macros.h"          // NULLABLE
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
-#include "smbase/std-memory-fwd.h"     // std::unique_ptr
 
 #include <QObject>
 
@@ -58,8 +57,11 @@ public:      // methods
   // Send "textDocument/didOpen" notification.
   void sendDidOpen();
 
-  // Dequeue pending diagnostics.
-  std::unique_ptr<LSP_PublishDiagnosticsParams> takeDiagnostics();
+  // Dequeue pending diagnostics and apply them to `m_doc`.
+  void takeDiagnostics();
+
+  // Check that `m_lspManager` and `m_doc` have the same contents.
+  void checkManagerContents() const;
 
   // Send "textDocument/declaration" request.
   void sendDeclarationRequest();

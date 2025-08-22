@@ -58,6 +58,8 @@ LSPManagerTester::LSPManagerTester(
     m_declarationRequestID(0),
     m_doc()
 {
+  m_doc.setDocumentName(
+    DocumentName::fromLocalFilename(m_params.m_fname));
   m_doc.replaceWholeFileString(m_params.m_fileContents);
 
   xassert(m_lspManager.getOpenFileNames().empty());
@@ -107,8 +109,7 @@ void LSPManagerTester::sendDidOpen()
 }
 
 
-std::unique_ptr<LSP_PublishDiagnosticsParams>
-LSPManagerTester::takeDiagnostics()
+void LSPManagerTester::takeDiagnostics()
 {
   std::unique_ptr<LSP_PublishDiagnosticsParams> diags =
     m_lspManager.takePendingDiagnosticsFor(
@@ -120,8 +121,14 @@ LSPManagerTester::takeDiagnostics()
     false);
 
   m_doc.updateDiagnostics(convertLSPDiagsToTDD(diags.get()));
+}
 
-  return diags;
+
+void LSPManagerTester::checkManagerContents() const
+{
+  RCSerf<LSPDocumentInfo const> docInfo =
+    m_lspManager.getDocInfo(m_doc.filename());
+  xassert(docInfo->lastContentsEquals(m_doc.getCore()));
 }
 
 
@@ -212,10 +219,7 @@ void LSPManagerTester::testSynchronously()
 
   // Experiment with incremental edits.
   {
-    // Get the manager's view of the document.
-    RCSerf<LSPDocumentInfo const> docInfo =
-      m_lspManager.getDocInfo(m_params.m_fname);
-    xassert(docInfo->lastContentsEquals(m_doc.getCore()));
+    checkManagerContents();
 
     // Track changes to send them incrementally.
     m_doc.beginTrackingChanges();
@@ -243,7 +247,7 @@ void LSPManagerTester::testSynchronously()
     m_lspManager.notify_textDocument_didChange(changeParams);
 
     // Check the manager's copy.
-    xassert(docInfo->lastContentsEquals(m_doc.getCore()));
+    checkManagerContents();
 
     // The recorder must also know this was sent.
     m_doc.beginTrackingChanges();
