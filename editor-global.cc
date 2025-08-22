@@ -396,6 +396,12 @@ void EditorGlobal::processCommandLineOptions(
 }
 
 
+NamedTextDocumentList const *EditorGlobal::documentList() const
+{
+  return &m_documentList;
+}
+
+
 EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
 {
   EditorWindow *ed = new EditorWindow(this, initFile);

@@ -696,7 +696,7 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
   }
 
   FilenameInputDialog dialog(
-    &(m_editorGlobal->m_filenameInputDialogHistory),
+    &(editorGlobal()->m_filenameInputDialogHistory),
     vfsConnections(),
     this);
   dialog.setSaveAs(saveAs);
@@ -704,7 +704,7 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
   QString choice = toQString(dir);
 
   HostAndResourceName harn(hostName, dir);
-  if (dialog.runDialog(&(m_editorGlobal->m_documentList), harn)) {
+  if (dialog.runDialog(editorGlobal()->documentList(), harn)) {
     hostName = harn.hostName();
     return harn.resourceName();
   }
@@ -1173,7 +1173,7 @@ void EditorWindow::fileRunMake() NOEXCEPT
   // Warn if there are unsaved files.  Sometimes I forget to save files
   // before building, resulting in errors that due to trying to compile
   // files that have old content.
-  if (editorGlobal()->m_documentList.hasUnsavedFiles()) {
+  if (editorGlobal()->documentList()->hasUnsavedFiles()) {
     auto response = QMessageBox::question(editorWidget(),
       "Unsaved Files",
       "There are unsaved files.  Build anyway?");
@@ -2598,14 +2598,14 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
   // Prompt to confirm.
   FilenameInputDialog dialog(
-    &(m_editorGlobal->m_filenameInputDialogHistory),
+    &(editorGlobal()->m_filenameInputDialogHistory),
     vfsConnections(),
     this);
 
   HostAndResourceName confirmedHarn = hfl.m_harn;
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt: Running FilenameInputDialog");
-  if (dialog.runDialog(&(m_editorGlobal->m_documentList),
+  if (dialog.runDialog(editorGlobal()->documentList(),
                        confirmedHarn)) {
     TRACE1("slot_openOrSwitchToFileAtLineOpt: FilenameInputDialog finished, chose " <<
            confirmedHarn);

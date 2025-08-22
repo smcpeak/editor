@@ -207,6 +207,9 @@ public:       // funcs
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
+  // Read-only access to the document list.
+  NamedTextDocumentList const *documentList() const;
+
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
   NamedTextDocument *createNewFile(std::string const &dir);
