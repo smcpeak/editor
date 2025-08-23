@@ -54,9 +54,12 @@ LSPManagerTester::LSPManagerTester(
       "out/lsp-manager-test-server-stderr.txt",
       protocolDiagnosticLog),
     m_params(params),
-    m_done(false),
+    m_state(S_INIT),
     m_failed(false),
     m_declarationRequestID(0),
+    m_contentRequestID(0),
+    m_numEditsMade(0),
+    m_numEditsToMake(envRandomizedTestIters(20, "LMT_EDIT_ITERS")),
     m_doc()
 {
   m_doc.setDocumentName(
@@ -67,6 +70,36 @@ LSPManagerTester::LSPManagerTester(
 
   // I do not connect the signals here because the synchronous tests are
   // meant to run without using signals.
+}
+
+
+/*static*/ char const *LSPManagerTester::toString(State state)
+{
+  RETURN_ENUMERATION_STRING_OR(
+    State,
+    NUM_STATES,
+    (
+      "S_INIT",
+      "S_STARTING",
+      "S_AWAITING_INITIAL_DIAGNOSTICS",
+      "S_AWAITING_DECLARATION_REPLY",
+      "S_AWAITING_INITIAL_CONTENTS",
+      "S_AWAITING_UPDATED_DIAGNOSTICS",
+      "S_AWAITING_UPDATED_CONTENTS",
+      "S_STOPPING",
+      "S_DONE",
+    ),
+    state,
+    "<invalid state>"
+  )
+}
+
+
+void LSPManagerTester::setState(State newState)
+{
+  DIAG("State transition: " << toString(m_state) <<
+       " -> " << toString(newState));
+  m_state = newState;
 }
 
 
@@ -160,6 +193,8 @@ void LSPManagerTester::takeDeclarationReply()
   xassert(m_lspManager.hasReplyForID(m_declarationRequestID));
   GDValue reply = m_lspManager.takeReplyForID(m_declarationRequestID);
   xassert(!m_lspManager.hasReplyForID(m_declarationRequestID));
+  m_declarationRequestID = 0;
+
   m_lspManager.selfCheck();
 
   DIAG("Declaration reply: " << reply.asIndentedString());
@@ -187,6 +222,8 @@ void LSPManagerTester::makeRandomEdit()
   TextDocumentChangeSequence edit = makeRandomChange(m_doc.getCore());
   VPVAL(toGDValue(edit));
   edit.applyToDocument(m_doc);
+
+  ++m_numEditsMade;
 }
 
 
@@ -219,6 +256,33 @@ void LSPManagerTester::sendUpdatedContents()
 }
 
 
+void LSPManagerTester::requestDocumentContents()
+{
+  DIAG("Sending getTextDocumentContents request");
+  GDValue params(GDVMap{
+    { "textDocument", GDVMap {
+      { "uri", makeFileURI(m_params.m_fname) },
+      { "version", m_doc.getVersionNumber() },
+    }},
+  });
+  m_contentRequestID = m_lspManager.sendRequest(
+    "$/getTextDocumentContents", params);
+}
+
+
+void LSPManagerTester::processContentsReply()
+{
+  GDValue reply = m_lspManager.takeReplyForID(m_contentRequestID);
+  m_contentRequestID = 0;
+
+  std::string text = reply.mapGetValueAt("text").stringGet();
+  xassert(text == m_doc.getWholeFileString());
+
+  int version = reply.mapGetValueAt("version").smallIntegerGet();
+  xassert(version == safeToInt(m_doc.getVersionNumber()));
+}
+
+
 void LSPManagerTester::stopServer()
 {
   std::string stopResult = m_lspManager.stopServer();
@@ -238,9 +302,27 @@ void LSPManagerTester::acknowledgeShutdown()
 }
 
 
+void LSPManagerTester::checkFinalState()
+{
+  // The main purpose of these checks is to ensure that both sync and
+  // async properly maintain the state variables.
+  xassert(m_state == S_DONE);
+  xassert(m_failed == false);
+  xassert(m_declarationRequestID == 0);
+  xassert(m_contentRequestID == 0);
+  xassert(m_numEditsMade == m_numEditsToMake);
+  m_doc.selfCheck();
+}
+
+
 void LSPManagerTester::testSynchronously()
 {
+  // The synchronous code doesn't really use the state, but I update it
+  // as a guide to what is supposed to happen in async mode.
+  xassert(m_state == S_INIT);
+
   startServer();
+  setState(S_STARTING);
 
   // This cannot use `waitUntil` because we are not running normally
   // until the condition is satisfied.
@@ -251,6 +333,7 @@ void LSPManagerTester::testSynchronously()
   }
 
   sendDidOpen();
+  setState(S_AWAITING_INITIAL_DIAGNOSTICS);
 
   waitUntil([this]() -> bool
     { return m_lspManager.hasPendingDiagnostics(); });
@@ -258,12 +341,14 @@ void LSPManagerTester::testSynchronously()
   takeDiagnostics();
 
   sendDeclarationRequest();
+  setState(S_AWAITING_DECLARATION_REPLY);
 
   waitUntil([this]() -> bool
     { return m_lspManager.hasReplyForID(m_declarationRequestID); });
 
   takeDeclarationReply();
 
+  setState(S_AWAITING_INITIAL_CONTENTS);
   syncCheckDocumentContents();
 
   // Prepare for incremental edits.
@@ -271,11 +356,11 @@ void LSPManagerTester::testSynchronously()
   m_doc.beginTrackingChanges();
 
   // Experiment with incremental edits.
-  int const numIters = envRandomizedTestIters(20, "LMT_EDIT_ITERS");
-  smbase_loopi(numIters) {
+  while (m_numEditsMade < m_numEditsToMake) {
     makeRandomEdit();
 
     sendUpdatedContents();
+    setState(S_AWAITING_UPDATED_DIAGNOSTICS);
 
     // Wait for the server to send diagnostics for the new version.
     waitUntil([this]() -> bool
@@ -285,10 +370,12 @@ void LSPManagerTester::testSynchronously()
     takeDiagnostics();
 
     // Now ask the server what it thinks the document looks like.
+    setState(S_AWAITING_UPDATED_CONTENTS);
     syncCheckDocumentContents();
   }
 
   stopServer();
+  setState(S_STOPPING);
 
   // Cannot use `waitUntil` because the goal is to wait until the server
   // is not running normally.
@@ -298,34 +385,21 @@ void LSPManagerTester::testSynchronously()
     m_lspManager.selfCheck();
   }
 
+  setState(S_DONE);
   acknowledgeShutdown();
 }
 
 
 void LSPManagerTester::syncCheckDocumentContents()
 {
-  DIAG("Sending getTextDocumentContents request");
-  GDValue params(GDVMap{
-    { "textDocument", GDVMap {
-      { "uri", makeFileURI(m_params.m_fname) },
-      { "version", m_doc.getVersionNumber() },
-    }},
-  });
-  int id = m_lspManager.sendRequest(
-    "$/getTextDocumentContents", params);
+  requestDocumentContents();
 
   // Wait for the reply.
-  DIAG("Waiting for getTextDocumentContents reply, id=" << id);
-  waitUntil([this, id]() -> bool
-    { return m_lspManager.hasReplyForID(id); });
+  DIAG("Waiting for getTextDocumentContents reply, id=" << m_contentRequestID);
+  waitUntil([this]() -> bool
+    { return m_lspManager.hasReplyForID(m_contentRequestID); });
 
-  GDValue reply = m_lspManager.takeReplyForID(id);
-
-  std::string text = reply.mapGetValueAt("text").stringGet();
-  xassert(text == m_doc.getWholeFileString());
-
-  int version = reply.mapGetValueAt("version").smallIntegerGet();
-  xassert(version == safeToInt(m_doc.getVersionNumber()));
+  processContentsReply();
 }
 
 
@@ -357,13 +431,14 @@ void LSPManagerTester::testAsynchronously()
   connectSignals();
 
   startServer();
+  setState(S_STARTING);
 
   xassert(m_lspManager.getProtocolState() == LSP_PS_INITIALIZING);
 
   // The immediate next state is `LSP_PS_NORMAL`.
 
   // Meanwhile, pump the event queue until we are completely done.
-  while (!m_done && !m_failed) {
+  while (m_state != S_DONE && !m_failed) {
     waitForQtEvent();
     //DIAG("Status: " << m_lspManager.checkStatus());
     m_lspManager.selfCheck();
@@ -382,23 +457,17 @@ void LSPManagerTester::on_changedProtocolState() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  LSPProtocolState state = m_lspManager.getProtocolState();
+  LSPProtocolState lspState = m_lspManager.getProtocolState();
 
-  DIAG("changedProtocolState to: " << toString(state));
+  DIAG("changedProtocolState to: " << ::toString(lspState));
 
-  switch (state) {
-    default:
-      // Ignore.
-      break;
+  if (m_state == S_STARTING && lspState == LSP_PS_NORMAL) {
+    sendDidOpen();
+    setState(S_AWAITING_INITIAL_DIAGNOSTICS);
+  }
 
-    case LSP_PS_NORMAL:
-      sendDidOpen();
-      // Await the diagnostics notification.
-      break;
-
-    case LSP_PS_MANAGER_INACTIVE:
-      m_done = true;
-      break;
+  else if (m_state == S_STOPPING && lspState == LSP_PS_MANAGER_INACTIVE) {
+    setState(S_DONE);
   }
 
   GENERIC_CATCH_END
@@ -411,7 +480,20 @@ void LSPManagerTester::on_hasPendingDiagnostics() NOEXCEPT
 
   takeDiagnostics();
 
-  sendDeclarationRequest();
+  if (m_state == S_AWAITING_INITIAL_DIAGNOSTICS) {
+    sendDeclarationRequest();
+    setState(S_AWAITING_DECLARATION_REPLY);
+  }
+
+  else if (m_state == S_AWAITING_UPDATED_DIAGNOSTICS) {
+    requestDocumentContents();
+    setState(S_AWAITING_UPDATED_CONTENTS);
+  }
+
+  else {
+    xfailure("bad state");
+  }
+
 
   GENERIC_CATCH_END
 }
@@ -421,14 +503,31 @@ void LSPManagerTester::on_hasReplyForID(int id) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (id == m_declarationRequestID) {
+  if (m_state == S_AWAITING_DECLARATION_REPLY &&
+      id == m_declarationRequestID) {
     DIAG("Received diagnostic reply ID " << id);
 
     takeDeclarationReply();
 
-    stopServer();
+    requestDocumentContents();
+    setState(S_AWAITING_INITIAL_CONTENTS);
+  }
 
-    // Await `LSP_PS_MANAGER_INACTIVE`.
+  else if ((m_state == S_AWAITING_INITIAL_CONTENTS ||
+            m_state == S_AWAITING_UPDATED_CONTENTS) &&
+           id == m_contentRequestID) {
+    processContentsReply();
+
+    if (m_numEditsMade < m_numEditsToMake) {
+      makeRandomEdit();
+
+      sendUpdatedContents();
+      setState(S_AWAITING_UPDATED_DIAGNOSTICS);
+    }
+    else {
+      stopServer();
+      setState(S_STOPPING);
+    }
   }
 
   else {
@@ -470,12 +569,14 @@ void test_lsp_manager(CmdlineArgsSpan args)
     DIAG("-------- synchronous --------");
     LSPManagerTester tester(params, &std::cout);
     tester.testSynchronously();
+    tester.checkFinalState();
   }
 
   if (!envAsBool("SYNC_ONLY")) {
     DIAG("-------- asynchronous --------");
     LSPManagerTester tester(params, &std::cout);
     tester.testAsynchronously();
+    tester.checkFinalState();
   }
 }
 
