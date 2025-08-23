@@ -45,6 +45,9 @@ private:     // methods
     LSP_CompletionItem const &item,
     std::string const &filterText);
 
+  // Scroll the list horizontally by `delta` pixels.
+  void scrollListHorizontallyBy(int delta);
+
 private Q_SLOTS:
   // Repopulate `m_listWidget` from `m_completionList` based on the
   // current `m_filterLineEdit` text.

@@ -17,6 +17,7 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QScrollBar>
 #include <QVBoxLayout>
 
 #include <optional>                    // std::{optional, nullopt}
@@ -25,6 +26,10 @@ using namespace gdv;
 
 
 INIT_TRACE("completions-dialog");
+
+
+// By how much do we scroll horizontally per keypress?
+static int const HSCROLL_STEP = 100;
 
 
 CompletionsDialog::~CompletionsDialog()
@@ -99,6 +104,13 @@ CompletionsDialog::CompletionsDialog(
 
   return hasSubstring(item.m_label, filterText,
     SubstringSearchFlags::SSF_CASE_INSENSITIVE);
+}
+
+
+void CompletionsDialog::scrollListHorizontallyBy(int delta)
+{
+  QScrollBar *sb = m_listWidget->horizontalScrollBar();
+  sb->setValue(sb->value() + delta);
 }
 
 
@@ -183,6 +195,14 @@ void CompletionsDialog::keyPressEvent(QKeyEvent *event)
           m_listWidget->setFocus();
           return;
         }
+        break;
+
+      case Qt::Key_Right:
+        scrollListHorizontallyBy(+HSCROLL_STEP);
+        break;
+
+      case Qt::Key_Left:
+        scrollListHorizontallyBy(-HSCROLL_STEP);
         break;
     }
   }

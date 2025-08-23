@@ -8,6 +8,7 @@
 #include "smbase/list-util.h"          // smbase::listAtC
 #include "smbase/sm-macros.h"          // smbase_loopi
 #include "smbase/stringb.h"            // stringb
+#include "smbase/string-util.h"        // join
 
 #include <QApplication>
 #include <QMessageBox>
@@ -35,9 +36,12 @@ int completions_dialog_test(QApplication &app)
 
   std::list<LSP_CompletionItem> items;
   smbase_loopi(25) {
+    std::string label = stringb("completion " << (i+1));
     items.push_back(
       LSP_CompletionItem(
-        stringb("completion " << (i+1)),
+        // Make the some of the text items very long so I can experiment
+        // with horizontal scrolling.
+        join(std::vector<std::string>(i+1, label), " "),
         textEdit
       ));
   }
