@@ -172,6 +172,79 @@ def test_Position() -> None:
   check_sorted([p1, p2, p3])
 
 
+# ------------------------------- Range --------------------------------
+@total_ordering
+class Range:
+  """Range of positions within a document."""
+
+  def __init__(self, start: Position, end: Position) -> None:
+    # Inclusive start point.
+    self.start = start
+
+    # Exclusive end point.
+    self.end = end
+
+    assert(self.start <= self.end)
+
+  def to_dict(self) -> dict[str, dict[str, int]]:
+    """Return a dict suitable for use in LSP."""
+    return {"start": self.start.to_dict(),
+            "end":   self.end.to_dict()}
+
+  @classmethod
+  def from_dict(cls, data: dict[str, dict[str, int]]) -> "Range":
+    """Construct a range from LSP data."""
+    return cls(Position.from_dict(data["start"]),
+               Position.from_dict(data["end"]))
+
+  def __repr__(self) -> str:
+    return f"Range(start={self.start}, end={self.end})"
+
+  def compare(self, other: "Range") -> int:
+    if not isinstance(other, Range):
+      raise TypeError(f"Cannot compare Range with {type(other)}")
+
+    c = compare(self.start, other.start)
+    if c != 0:
+      return c;
+
+    return compare(self.end, other.end)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, Range):
+      return NotImplemented
+    return self.compare(other) == 0
+
+  def __lt__(self, other: Any) -> bool:
+    if not isinstance(other, Range):
+      return NotImplemented
+    return self.compare(other) < 0
+
+
+def test_Range() -> None:
+  """Unit tests for `Range`."""
+
+  p1 = Position(1, 1)
+  p2 = Position(1, 5)
+  p3 = Position(2, 2)
+
+  r11 = Range(p1, p1)
+  r12 = Range(p1, p2)
+  r13 = Range(p1, p3)
+  r22 = Range(p2, p2)
+  r23 = Range(p2, p3)
+  r33 = Range(p3, p3)
+
+  d = r12.to_dict()
+  expect_eq(d, {
+    "start": { "line": 1, "character": 1 },
+    "end":   { "line": 1, "character": 5 },
+  })
+  expect_eq(Range.from_dict(d), r12)
+
+  check_sorted([r11, r12, r13, r22, r23, r33])
+
+
 # ---------------------- Language Server Protocol ----------------------
 def read_message() -> Dict[str, Any]:
   """
@@ -246,9 +319,7 @@ def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
       # Full text replacement
       text = change["text"]
     else:
-      rng = change["range"]
-      start = Position.from_dict(rng["start"])
-      end = Position.from_dict(rng["end"])
+      rng: Range = Range.from_dict(change["range"])
 
       def offset(pos: Position) -> int:
         """Convert line/character to byte offset into text."""
@@ -264,8 +335,8 @@ def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
         line_start = sum(len(lines[i]) for i in range(pos.line))
         return line_start + pos.character
 
-      start_off = offset(start)
-      end_off = offset(end)
+      start_off = offset(rng.start)
+      end_off = offset(rng.end)
       text = text[:start_off] + change["text"] + text[end_off:]
 
   return text
@@ -338,6 +409,7 @@ def main() -> None:
 
   if os.getenv("UNIT_TEST"):
     test_Position()
+    test_Range()
     test_split_lines()
     test_apply_text_edits()
     return
