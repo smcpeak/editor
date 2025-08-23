@@ -15,7 +15,7 @@
 #include "event-replay.h"                        // EventReplay
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "lsp-client.h"                          // LSPClient
-#include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber
+#include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "process-watcher.h"                     // ProcessWatcher
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
@@ -1519,64 +1519,7 @@ void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
 void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
 {
   xassertPrecondition(lspFileIsOpen(ntd));
-
-  RCSerf<LSPDocumentInfo const> docInfo = lspGetDocInfo(ntd);
-  xassert(docInfo);
-
-  // This can throw `XNumericConversion`.
-  LSP_VersionNumber version =
-    toLSP_VersionNumber(ntd->getVersionNumber());
-
-  std::string contents = ntd->getWholeFileString();
-
-  if (docInfo->m_lastSentVersion == version ||
-      docInfo->lastContentsEquals(ntd->getCore())) {
-    TRACE1("LSP: While updating " << ntd->documentName() <<
-           ": previous version is " << docInfo->m_lastSentVersion <<
-           ", new version is " << version <<
-           ", and contents are " <<
-           (docInfo->lastContentsEquals(ntd->getCore())? "" : "NOT ") <<
-           "the same; bumping to force re-analysis.");
-
-    // We want to re-send despite no content changes, for example
-    // because a header file changed that should fix issues in the
-    // current file.  Bump the version and try again.
-    ntd->bumpVersionNumber();
-
-    version = toLSP_VersionNumber(ntd->getVersionNumber());
-
-    // In this situation, `clangd` would normally ignore the
-    // notification because it realizes the file hasn't changed
-    // (despite the new version number) and thinks that means the
-    // diagnostics would be the same too.
-    //
-    // `clangd` accepts a `forceRebuild` parameter that would force
-    // new diagnostics, but it also rebuilds other things, making it
-    // quite slow.
-    //
-    // So, instead, we will just append some junk that should not
-    // cause the diagnostics to be different, but will make `clangd`
-    // re-analyze the contents.  This is much faster than
-    // `forceRebuild`.
-    contents += stringb("//" << version);
-  }
-
-  if (!( version > docInfo->m_lastSentVersion )) {
-    // Sending this would be a protocol violation.
-    xmessage(stringb(
-      "The current document version (" << version <<
-      ") is not greater than the previously sent document version (" <<
-      docInfo->m_lastSentVersion << ")."));
-  }
-
-  // TODO: Use incremental update here.
-  m_lspManager.notify_textDocument_didChange_all(
-    ntd->filename(),
-    version,
-    std::move(contents));
-
-  // We were already tracking changes, but on top of a previous version.
-  ntd->beginTrackingChanges();
+  lspSendUpdatedContents(m_lspManager, *ntd);
 }
 
 
