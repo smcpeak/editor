@@ -416,7 +416,7 @@ def main() -> None:
       method = msg["method"]
 
       # Requests have an ID; notifications do not.
-      msg_id = msg.get("id")
+      msg_id: Optional[int] = msg.get("id")
 
       if method == "initialize":
         # Reply with capabilities
