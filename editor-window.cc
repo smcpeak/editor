@@ -914,8 +914,10 @@ void EditorWindow::writeTheFile()
       // LSP status box.)
       editorViewChanged();
 
-      editorWidget()->lspDoFileOperation(
-        EditorWidget::LSPFO_UPDATE_IF_OPEN);
+      if (!editorWidget()->getLSPUpdateContinuously()) {
+        editorWidget()->lspDoFileOperation(
+          EditorWidget::LSPFO_UPDATE_IF_OPEN);
+      }
     }
     else {
       // There is not a severity between "warning" and "critical",
