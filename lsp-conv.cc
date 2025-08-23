@@ -196,57 +196,51 @@ void lspSendUpdatedContents(
   xassertPrecondition(doc.trackingChanges());
   xassertPrecondition(lspManager.isFileOpen(doc.filename()));
 
+  RCSerf<LSPDocumentInfo const> docInfo =
+    lspManager.getDocInfo(doc.filename());
+  xassert(docInfo);
+
   // This can throw `XNumericConversion`.
   LSP_VersionNumber version =
     toLSP_VersionNumber(doc.getVersionNumber());
 
-  // TODO: I need something like this eventually, but it has to change.
-  if (false) {
-    RCSerf<LSPDocumentInfo const> docInfo =
-      lspManager.getDocInfo(doc.filename());
-    xassert(docInfo);
+  if (docInfo->m_lastSentVersion == version) {
+    TRACE1("LSP: While updating " << doc.documentName() <<
+           ": previous version is " << docInfo->m_lastSentVersion <<
+           ", same as new version;; bumping to force re-analysis.");
 
-    std::string contents = doc.getWholeFileString();
+    // We want to re-send despite no content changes, for example
+    // because a header file changed that should fix issues in the
+    // current file.  Bump the version and try again.
+    doc.bumpVersionNumber();
 
-    if (docInfo->m_lastSentVersion == version ||
-        docInfo->lastContentsEquals(doc.getCore())) {
-      TRACE1("LSP: While updating " << doc.documentName() <<
-             ": previous version is " << docInfo->m_lastSentVersion <<
-             ", new version is " << version <<
-             ", and contents are " <<
-             (docInfo->lastContentsEquals(doc.getCore())? "" : "NOT ") <<
-             "the same; bumping to force re-analysis.");
+    version = toLSP_VersionNumber(doc.getVersionNumber());
 
-      // We want to re-send despite no content changes, for example
-      // because a header file changed that should fix issues in the
-      // current file.  Bump the version and try again.
-      doc.bumpVersionNumber();
+    // In this situation, `clangd` would normally ignore the
+    // notification because it realizes the file hasn't changed
+    // (despite the new version number) and thinks that means the
+    // diagnostics would be the same too.
+    //
+    // `clangd` accepts a `forceRebuild` parameter that would force
+    // new diagnostics, but it also rebuilds other things, making it
+    // quite slow.
+    //
+    // So, instead, we will just append some junk that should not
+    // cause the diagnostics to be different, but will make `clangd`
+    // re-analyze the contents.  This is much faster than
+    // `forceRebuild`.
+    //
+    // TODO: Figure out what to do here.
+    //
+    //contents += stringb("//" << version);
+  }
 
-      version = toLSP_VersionNumber(doc.getVersionNumber());
-
-      // In this situation, `clangd` would normally ignore the
-      // notification because it realizes the file hasn't changed
-      // (despite the new version number) and thinks that means the
-      // diagnostics would be the same too.
-      //
-      // `clangd` accepts a `forceRebuild` parameter that would force
-      // new diagnostics, but it also rebuilds other things, making it
-      // quite slow.
-      //
-      // So, instead, we will just append some junk that should not
-      // cause the diagnostics to be different, but will make `clangd`
-      // re-analyze the contents.  This is much faster than
-      // `forceRebuild`.
-      contents += stringb("//" << version);
-    }
-
-    if (!( version > docInfo->m_lastSentVersion )) {
-      // Sending this would be a protocol violation.
-      xmessage(stringb(
-        "The current document version (" << version <<
-        ") is not greater than the previously sent document version (" <<
-        docInfo->m_lastSentVersion << ")."));
-    }
+  if (!( version > docInfo->m_lastSentVersion )) {
+    // Sending this would be a protocol violation.
+    xmessage(stringb(
+      "The current document version (" << version <<
+      ") is not greater than the previously sent document version (" <<
+      docInfo->m_lastSentVersion << ")."));
   }
 
   // Get the recorded changes.
