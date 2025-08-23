@@ -74,6 +74,12 @@ public:      // methods
   // the manager stops running normally, throw.
   void waitUntil(std::function<bool()> condition);
 
+  // Make a random edit to `m_doc`.
+  void makeRandomEdit();
+
+  // Send pending changes in `m_doc` to the LSP server.
+  void sendUpdatedContents();
+
   // Tell the server to shut down.
   void stopServer();
 

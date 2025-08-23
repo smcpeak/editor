@@ -182,6 +182,43 @@ void LSPManagerTester::waitUntil(std::function<bool()> condition)
 }
 
 
+void LSPManagerTester::makeRandomEdit()
+{
+  TextDocumentChangeSequence edit = makeRandomChange(m_doc.getCore());
+  VPVAL(toGDValue(edit));
+  edit.applyToDocument(m_doc);
+}
+
+
+void LSPManagerTester::sendUpdatedContents()
+{
+  // Get the recorded changes.
+  RCSerf<TextDocumentChangeSequence const> recordedChanges =
+    m_doc.getUnsentChanges();
+
+  // Convert changes to the LSP format and package them into a
+  // "didChange" params structure.
+  LSP_DidChangeTextDocumentParams changeParams(
+    LSP_VersionedTextDocumentIdentifier::fromFname(
+      m_params.m_fname, m_doc.getVersionNumber()),
+    convertRecordedChangesToLSPChanges(*recordedChanges));
+
+  // Done with these.
+  recordedChanges.reset();
+
+  // Send them to the server, and have the manager update its copy.
+  DIAG("Sending incremental changes: " <<
+       toGDValue(changeParams).asIndentedString());
+  m_lspManager.notify_textDocument_didChange(changeParams);
+
+  // Check the manager's copy.
+  checkManagerContents();
+
+  // The recorder must also know this was sent.
+  m_doc.beginTrackingChanges();
+}
+
+
 void LSPManagerTester::stopServer()
 {
   std::string stopResult = m_lspManager.stopServer();
@@ -236,35 +273,9 @@ void LSPManagerTester::testSynchronously()
   // Experiment with incremental edits.
   int const numIters = envRandomizedTestIters(20, "LMT_EDIT_ITERS");
   smbase_loopi(numIters) {
-    // Randomly make an edit.
-    TextDocumentChangeSequence edit = makeRandomChange(m_doc.getCore());
-    VPVAL(toGDValue(edit));
-    edit.applyToDocument(m_doc);
+    makeRandomEdit();
 
-    // Get the recorded changes.
-    RCSerf<TextDocumentChangeSequence const> recordedChanges =
-      m_doc.getUnsentChanges();
-
-    // Convert changes to the LSP format and package them into a
-    // "didChange" params structure.
-    LSP_DidChangeTextDocumentParams changeParams(
-      LSP_VersionedTextDocumentIdentifier::fromFname(
-        m_params.m_fname, m_doc.getVersionNumber()),
-      convertRecordedChangesToLSPChanges(*recordedChanges));
-
-    // Done with these.
-    recordedChanges.reset();
-
-    // Send them to the server, and have the manager update its copy.
-    DIAG("Sending incremental changes: " <<
-         toGDValue(changeParams).asIndentedString());
-    m_lspManager.notify_textDocument_didChange(changeParams);
-
-    // Check the manager's copy.
-    checkManagerContents();
-
-    // The recorder must also know this was sent.
-    m_doc.beginTrackingChanges();
+    sendUpdatedContents();
 
     // Wait for the server to send diagnostics for the new version.
     waitUntil([this]() -> bool
