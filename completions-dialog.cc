@@ -193,6 +193,15 @@ void CompletionsDialog::keyPressEvent(QKeyEvent *event)
       case Qt::Key_Down:
         if (focusWidget() == m_filterLineEdit) {
           m_listWidget->setFocus();
+
+          if (m_listWidget->currentRow() == 0 &&
+              m_listWidget->count() >= 2) {
+            // When we down-arrow into the list, usually it is because
+            // we want to pick an item other than the that would be
+            // chosen by pressing Enter.  If that's the top item, move
+            // to the next one right away.
+            m_listWidget->setCurrentRow(1);
+          }
           return;
         }
         break;
