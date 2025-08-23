@@ -281,6 +281,15 @@ def send_message(message: Dict[str, Any]) -> None:
   stdout.flush()
 
 
+def send_reply(msg_id: Optional[int], result: Any) -> None:
+  """Send one LSP reply."""
+
+  if msg_id is None:
+    complain("Missing message ID in request.")
+  else:
+    send_message({"jsonrpc": "2.0", "id": msg_id, "result": result})
+
+
 def split_lines(text: str) -> List[str]:
   """
   Divide `text` into lines, treating the newline character as a
@@ -430,7 +439,7 @@ def main() -> None:
             }
           }
         }
-        send_message({"jsonrpc": "2.0", "id": msg_id, "result": result})
+        send_reply(msg_id, result)
 
       elif method == "initialized":
         initialized = True
@@ -439,7 +448,7 @@ def main() -> None:
         if not initialized:
           complain("Received `shutdown` without `initialized`.")
         shutdown_received = True
-        send_message({"jsonrpc": "2.0", "id": msg_id, "result": None})
+        send_reply(msg_id, None)
 
       elif method == "exit":
         if not shutdown_received:
@@ -470,21 +479,19 @@ def main() -> None:
         td = msg["params"]["textDocument"]
         uri = td["uri"]
         version, contents = documents.get(uri, (-1, "<no doc>"))
-        send_message({
-          "jsonrpc": "2.0",
-          "id": msg_id,
-          "result": {
-            "uri": uri,
-            "text": contents,
-            "version": version
-          }
+        send_reply(msg_id, {
+          "uri": uri,
+          "text": contents,
+          "version": version
         })
 
       else:
-        # For other requests, respond with empty result
         if msg_id is not None:
-          send_message({"jsonrpc": "2.0", "id": msg_id, "result": None})
-        # Notifications: just accept and ignore
+          # For other requests, respond with empty result.
+          send_reply(msg_id, None)
+        else:
+          # For other notifications, just accept and ignore.
+          pass
 
   except Exception as e:
     print(f"Error: {e}", file=sys.stderr)
