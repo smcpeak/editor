@@ -15,7 +15,7 @@
 #include "event-replay.h"                        // EventReplay
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "lsp-client.h"                          // LSPClient
-#include "lsp-conv.h"                            // convertLSPDiagsToTDD
+#include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "process-watcher.h"                     // ProcessWatcher
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
@@ -1504,8 +1504,7 @@ void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
 
   // This can throw `XNumericConversion`.
   LSP_VersionNumber version =
-    convertNumber<LSP_VersionNumber>(
-      ntd->getVersionNumber());
+    toLSP_VersionNumber(ntd->getVersionNumber());
 
   m_lspManager.notify_textDocument_didOpen(
     ntd->filename(),
@@ -1526,8 +1525,7 @@ void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
 
   // This can throw `XNumericConversion`.
   LSP_VersionNumber version =
-    convertNumber<LSP_VersionNumber>(
-      ntd->getVersionNumber());
+    toLSP_VersionNumber(ntd->getVersionNumber());
 
   std::string contents = ntd->getWholeFileString();
 
@@ -1545,9 +1543,7 @@ void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
     // current file.  Bump the version and try again.
     ntd->bumpVersionNumber();
 
-    version =
-      convertNumber<LSP_VersionNumber>(
-        ntd->getVersionNumber());
+    version = toLSP_VersionNumber(ntd->getVersionNumber());
 
     // In this situation, `clangd` would normally ignore the
     // notification because it realizes the file hasn't changed
@@ -1576,8 +1572,7 @@ void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
   // TODO: Use incremental update here.
   m_lspManager.notify_textDocument_didChange_all(
     ntd->filename(),
-    convertNumber<LSP_VersionNumber>(
-      ntd->getVersionNumber()),
+    version,
     std::move(contents));
 
   // We were already tracking changes, but on top of a previous version.

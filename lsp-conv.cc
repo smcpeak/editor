@@ -4,6 +4,7 @@
 #include "lsp-conv.h"                  // this module
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
+#include "lsp-manager.h"               // LSPManager
 #include "named-td.h"                  // NamedTextDocument
 #include "range-text-repl.h"           // RangeTextReplacement
 #include "td-change-seq.h"             // TextDocumentChangeSequence
@@ -29,6 +30,12 @@ using namespace smbase;
 
 
 INIT_TRACE("lsp-conv");
+
+
+LSP_VersionNumber toLSP_VersionNumber(std::uint64_t n)
+{
+  return convertNumber<LSP_VersionNumber>(n);
+}
 
 
 TextMCoord convertLSPPosition(LSP_Position const &pos)
@@ -180,6 +187,38 @@ void applyLSPDocumentChanges(
          params.m_contentChanges) {
     applyOneLSPDocumentChange(change, doc);
   }
+}
+
+
+void lspSendUpdatedContents(
+  LSPManager &lspManager,
+  NamedTextDocument &doc)
+{
+  xassertPrecondition(doc.trackingChanges());
+  xassertPrecondition(lspManager.isFileOpen(doc.filename()));
+
+  // Get the recorded changes.
+  RCSerf<TextDocumentChangeSequence const> recordedChanges =
+    doc.getUnsentChanges();
+
+  // Convert changes to the LSP format and package them into a
+  // "didChange" params structure.
+  LSP_DidChangeTextDocumentParams changeParams(
+    LSP_VersionedTextDocumentIdentifier::fromFname(
+      doc.filename(),
+      toLSP_VersionNumber(doc.getVersionNumber())),
+    convertRecordedChangesToLSPChanges(*recordedChanges));
+
+  // Done with these.
+  recordedChanges.reset();
+
+  // Send them to the server, and have the manager update its copy.
+  TRACE2("Sending incremental changes: " <<
+         toGDValue(changeParams).asIndentedString());
+  lspManager.notify_textDocument_didChange(changeParams);
+
+  // The document's change recorder must also know this was sent.
+  doc.beginTrackingChanges();
 }
 
 

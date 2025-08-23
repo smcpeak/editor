@@ -7,6 +7,9 @@
 #define EDITOR_LSP_CONV_H
 
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams [n], LSP_TextDocumentContentChangeEvent [n]
+#include "lsp-data-types.h"            // LSP_VersionNumber
+#include "lsp-manager-fwd.h"           // LSPManager [n]
+#include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
 #include "td-core-fwd.h"               // TextDocumentCore [n]
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]
@@ -14,6 +17,12 @@
 
 #include "smbase/std-list-fwd.h"       // stdfwd::list [n]
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
+
+#include <cstdint>                     // std::int32_t
+
+
+// Convert `n` to `LSP_VersionNumber`.  May throw `XNumericConversion`.
+LSP_VersionNumber toLSP_VersionNumber(std::uint64_t n);
 
 
 // Convert `lspDiags`.
@@ -38,6 +47,13 @@ convertRecordedChangesToLSPChanges(
 void applyLSPDocumentChanges(
   LSP_DidChangeTextDocumentParams const &params,
   TextDocumentCore &doc);
+
+
+// Incrementally send to `lspManager` the changes made to `doc` since
+// the last update.
+void lspSendUpdatedContents(
+  LSPManager &lspManager,
+  NamedTextDocument &doc);
 
 
 #endif // EDITOR_LSP_CONV_H

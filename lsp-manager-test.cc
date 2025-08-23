@@ -6,7 +6,7 @@
 
 #include "lsp-manager.h"                         // module under test
 
-#include "lsp-conv.h"                            // convertLSPDiagsToTDD
+#include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -16,7 +16,6 @@
 #include "smqtutil/qtutil.h"                     // waitForQtEvent
 
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
-#include "smbase/overflow.h"                     // safeToInt
 #include "smbase/sm-env.h"                       // smbase::envAsBool
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE, smbase_loopi
@@ -229,30 +228,10 @@ void LSPManagerTester::makeRandomEdit()
 
 void LSPManagerTester::sendUpdatedContents()
 {
-  // Get the recorded changes.
-  RCSerf<TextDocumentChangeSequence const> recordedChanges =
-    m_doc.getUnsentChanges();
-
-  // Convert changes to the LSP format and package them into a
-  // "didChange" params structure.
-  LSP_DidChangeTextDocumentParams changeParams(
-    LSP_VersionedTextDocumentIdentifier::fromFname(
-      m_params.m_fname, m_doc.getVersionNumber()),
-    convertRecordedChangesToLSPChanges(*recordedChanges));
-
-  // Done with these.
-  recordedChanges.reset();
-
-  // Send them to the server, and have the manager update its copy.
-  DIAG("Sending incremental changes: " <<
-       toGDValue(changeParams).asIndentedString());
-  m_lspManager.notify_textDocument_didChange(changeParams);
+  lspSendUpdatedContents(m_lspManager, m_doc);
 
   // Check the manager's copy.
   checkManagerContents();
-
-  // The recorder must also know this was sent.
-  m_doc.beginTrackingChanges();
 }
 
 
@@ -278,8 +257,8 @@ void LSPManagerTester::processContentsReply()
   std::string text = reply.mapGetValueAt("text").stringGet();
   xassert(text == m_doc.getWholeFileString());
 
-  int version = reply.mapGetValueAt("version").smallIntegerGet();
-  xassert(version == safeToInt(m_doc.getVersionNumber()));
+  LSP_VersionNumber version = reply.mapGetValueAt("version").smallIntegerGet();
+  xassert(version == toLSP_VersionNumber(m_doc.getVersionNumber()));
 }
 
 

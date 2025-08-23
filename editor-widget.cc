@@ -12,7 +12,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "lsp-data.h"                            // LSP_LocationSequence
-#include "lsp-conv.h"                            // toMCoordRange
+#include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
 #include "lsp-manager.h"                         // LSPManager::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "nearby-file.h"                         // getNearbyFilename
@@ -46,7 +46,6 @@
 #include "smbase/list-util.h"                    // smbase::listAtC
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
-#include "smbase/overflow.h"                     // convertNumber
 #include "smbase/save-restore.h"                 // SetRestore
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
@@ -2627,8 +2626,7 @@ std::optional<LSP_VersionNumber> EditorWidget::lspGetDocVersionNumber(
   bool wantErrors) const
 {
   try {
-    return convertNumber<LSP_VersionNumber>(
-      getDocument()->getVersionNumber());
+    return toLSP_VersionNumber(getDocument()->getVersionNumber());
   }
   catch (XNumericConversion &x) {
     if (wantErrors) {
