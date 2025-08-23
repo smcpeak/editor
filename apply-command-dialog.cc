@@ -385,8 +385,8 @@ ApplyCommandDialog::ApplyCommandDialog(
   adjustSize();
   TRACE2("size after adjustSize: " << toString(size()));
 
-  // Ensure it is at least 550x450 initially.
-  resize(size().expandedTo(QSize(550, 450)));
+  // Ensure it is at least 550x800 initially.
+  resize(size().expandedTo(QSize(550, 800)));
   TRACE2("size after resize: " << toString(size()));
 }
 
