@@ -13,8 +13,8 @@ internal copy of the contents, which can then be retrieved with
 "$/getTextDocumentContents".
 
 It accepts and checks for well-formedness all other notifications, but
-does not respond to them.  It replies to all requests other than startup
-and shutdown with an empty result.
+does not respond to them.  It replies to all unknown requests with an
+empty result.
 """
 
 import json
@@ -22,9 +22,11 @@ import os
 import sys
 import traceback
 
-from typing import Any, Dict, List, Tuple
+from functools import total_ordering
+from typing import Any, Dict, List, Optional, Tuple
 
 
+# ------------------------------ Globals -------------------------------
 # Positive if debug is enabled, with higher values enabling more printing.
 debugLevel: int = 0
 if debugEnvVal := os.getenv("DEBUG"):
@@ -43,6 +45,134 @@ shutdown_received = False
 documents: Dict[str, Tuple[int, str]] = {}
 
 
+# -------------------------- General purpose ---------------------------
+def complain(msg: str) -> None:
+  """Print `msg` to stderr and quit."""
+
+  print(msg, file=sys.stderr);
+  sys.exit(2);
+
+
+def expect_eq(actual: Any, expect: Any) -> None:
+  """
+  Complain if `actual` is not `expect`.
+  """
+  if actual != expect:
+    complain("expect_eq: values are not equal:\n"+
+      f"  actual: {actual!r}\n"
+      f"  expect: {expect!r}")
+
+
+def compare(a: Any, b: Any) -> int:
+  """
+  Return -1 if a < b, 0 if a == b, 1 if a > b.
+  """
+  if a < b:
+    return -1
+  elif a > b:
+    return 1
+  else:
+    return 0
+
+
+def check_compare(a: Any, b: Any, expect: int) -> None:
+  """Check that comparing `a` and `b` yields `expect`."""
+
+  expect_eq(compare(a, b), expect);
+
+  # Verify all the binary comparison operators.
+  expect_eq(a == b, expect == 0);
+  expect_eq(a != b, expect != 0);
+  expect_eq(a <= b, expect <= 0);
+  expect_eq(a <  b, expect <  0);
+  expect_eq(a >= b, expect >= 0);
+  expect_eq(a >  b, expect >  0);
+
+
+def check_compare_sym(a: Any, b: Any, expect: int) -> None:
+  """Check that comparing `a` and `b` yields `expect`, symmetrically."""
+
+  check_compare(a, b, expect)
+  check_compare(b, a, -expect)
+
+
+def check_sorted(lst: List[Any]) -> None:
+  """Check that `lst` is sorted."""
+
+  i = 0
+  while i < len(lst):
+    a = lst[i]
+    check_compare(a, a, 0)
+
+    j = i+1
+    while j < len(lst):
+      b = lst[j]
+      check_compare_sym(a, b, -1)
+      j += 1
+
+    i += 1
+
+
+# ------------------------------ Position ------------------------------
+@total_ordering
+class Position:
+  """Position within a document."""
+
+  def __init__(self, line: int, character: int) -> None:
+    # 0-based line number.
+    self.line = int(line)
+
+    # 0-based character number within a line.
+    self.character = int(character)
+
+  def to_dict(self) -> dict[str, int]:
+    """Return a dict suitable for use in LSP."""
+    return {"line": self.line, "character": self.character}
+
+  @classmethod
+  def from_dict(cls, data: dict[str, int]) -> "Position":
+    """Construct a position from LSP data."""
+    return cls(data["line"], data["character"])
+
+  def __repr__(self) -> str:
+    return f"Position(line={self.line}, character={self.character})"
+
+  def compare(self, other: "Position") -> int:
+    if not isinstance(other, Position):
+      raise TypeError(f"Cannot compare Position with {type(other)}")
+
+    c = compare(self.line, other.line)
+    if c != 0:
+      return c;
+
+    return compare(self.character, other.character)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, Position):
+      return NotImplemented
+    return self.compare(other) == 0
+
+  def __lt__(self, other: Any) -> bool:
+    if not isinstance(other, Position):
+      return NotImplemented
+    return self.compare(other) < 0
+
+
+def test_Position() -> None:
+  """Unit tests for `Position`."""
+
+  p1 = Position(1, 1)
+  p2 = Position(1, 5)
+  p3 = Position(2, 2)
+
+  d = p2.to_dict()
+  expect_eq(d, { "line": 1, "character": 5})
+  expect_eq(Position.from_dict(d), p2)
+
+  check_sorted([p1, p2, p3])
+
+
+# ---------------------- Language Server Protocol ----------------------
 def read_message() -> Dict[str, Any]:
   """
   Read one LSP message from stdin.
@@ -76,23 +206,6 @@ def send_message(message: Dict[str, Any]) -> None:
   header = f"Content-Length: {len(body_bytes)}\r\n\r\n".encode("utf-8")
   stdout.write(header + body_bytes)
   stdout.flush()
-
-
-def complain(msg: str) -> None:
-  """Print `msg` to stderr and quit."""
-
-  print(msg, file=sys.stderr);
-  sys.exit(2);
-
-
-def expect_eq(actual: Any, expect: Any) -> None:
-  """
-  Complain if `actual` is not `expect`.
-  """
-  if actual != expect:
-    complain("expect_eq: values are not equal:\n"+
-      f"  actual: {actual!r}\n"
-      f"  expect: {expect!r}")
 
 
 def split_lines(text: str) -> List[str]:
@@ -134,25 +247,22 @@ def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
       text = change["text"]
     else:
       rng = change["range"]
-      start = rng["start"]
-      end = rng["end"]
+      start = Position.from_dict(rng["start"])
+      end = Position.from_dict(rng["end"])
 
-      def offset(pos: Dict[str, int]) -> int:
+      def offset(pos: Position) -> int:
         """Convert line/character to byte offset into text."""
 
         lines = split_lines(text)
 
-        line_idx = pos["line"]
-        char_idx = pos["character"]
-
-        if not 0 <= line_idx < len(lines):
+        if not 0 <= pos.line < len(lines):
           raise RuntimeError("Position line out of range")
 
-        if not 0 <= char_idx <= len(lines[line_idx]):
+        if not 0 <= pos.character <= len(lines[pos.line]):
           raise RuntimeError("Position character out of range")
 
-        line_start = sum(len(lines[i]) for i in range(line_idx))
-        return line_start + char_idx
+        line_start = sum(len(lines[i]) for i in range(pos.line))
+        return line_start + pos.character
 
       start_off = offset(start)
       end_off = offset(end)
@@ -177,14 +287,8 @@ def test_one_apply_text_edit(
   changes = [
     {
       "range": {
-        "start": {
-          "line": start_line,
-          "character": start_character,
-        },
-        "end": {
-          "line": end_line,
-          "character": end_character,
-        },
+        "start": Position(start_line, start_character).to_dict(),
+        "end": Position(end_line, end_character).to_dict(),
       },
       "text": edit_text,
     }
@@ -233,6 +337,7 @@ def main() -> None:
   global initialized, shutdown_received
 
   if os.getenv("UNIT_TEST"):
+    test_Position()
     test_split_lines()
     test_apply_text_edits()
     return
