@@ -119,14 +119,14 @@ TextMCoordRange toMCoordRange(LSP_Range const &range)
 }
 
 
-static LSP_Position toLSP_Position(TextMCoord mc)
+LSP_Position toLSP_Position(TextMCoord mc)
 {
   // TODO: This has the same column interpretation issue as `toMCoord`.
   return LSP_Position(mc.m_line, mc.m_byteIndex);
 }
 
 
-static LSP_Range toLSP_Range(TextMCoordRange mcr)
+LSP_Range toLSP_Range(TextMCoordRange mcr)
 {
   return LSP_Range(
     toLSP_Position(mcr.m_start),

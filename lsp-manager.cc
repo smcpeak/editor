@@ -6,7 +6,7 @@
 #include "command-runner.h"                      // CommandRunner
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                          // LSPClient
-#include "lsp-conv.h"                            // applyLSPDocumentChanges
+#include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
 #include "td-core.h"                             // TextDocumentCore
 #include "uri-util.h"                            // makeFileURI, getFileURIPath
 
@@ -993,21 +993,10 @@ int LSPManager::requestRelatedLocation(
 
   char const *requestName = toRequestName(lsrk);
 
-  return sendRequest(requestName, GDVMap{
-    {
-      "textDocument",
-      GDVMap{
-        { "uri", makeFileURI(fname) },
-      }
-    },
-    {
-      "position",
-      GDVMap{
-        { "line", position.m_line },
-        { "character", position.m_byteIndex },
-      }
-    },
-  });
+  return sendRequest(requestName,
+    LSP_TextDocumentPositionParams(
+      LSP_TextDocumentIdentifier::fromFname(fname),
+      toLSP_Position(position)));
 }
 
 

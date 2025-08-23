@@ -37,6 +37,11 @@ TextMCoord toMCoord(LSP_Position const &pos);
 TextMCoordRange toMCoordRange(LSP_Range const &range);
 
 
+// Convert model to LSP coordinates.
+LSP_Position toLSP_Position(TextMCoord mc);
+LSP_Range toLSP_Range(TextMCoordRange mcr);
+
+
 // Convert recorded changes to LSP changes.
 stdfwd::list<LSP_TextDocumentContentChangeEvent>
 convertRecordedChangesToLSPChanges(

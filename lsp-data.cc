@@ -429,7 +429,7 @@ LSP_LocationSequence::LSP_LocationSequence(gdv::GDValueParser const &p)
 {}
 
 
-// ------------------------ LSP_TextEdit -------------------------
+// --------------------------- LSP_TextEdit ----------------------------
 // create-tuple-class: definitions for LSP_TextEdit
 /*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
 /*AUTO_CTC*/   LSP_Range const &range,
@@ -618,7 +618,69 @@ LSP_CompletionList::LSP_CompletionList(gdv::GDValueParser const &p)
 {}
 
 
-// ------------------------ LSP_VersionedTextDocumentIdentifier -------------------------
+// -------------------- LSP_TextDocumentIdentifier ---------------------
+// create-tuple-class: definitions for LSP_TextDocumentIdentifier
+/*AUTO_CTC*/ LSP_TextDocumentIdentifier::LSP_TextDocumentIdentifier(
+/*AUTO_CTC*/   std::string const &uri)
+/*AUTO_CTC*/   : IMEMBFP(uri)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentIdentifier::LSP_TextDocumentIdentifier(
+/*AUTO_CTC*/   std::string &&uri)
+/*AUTO_CTC*/   : IMEMBMFP(uri)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentIdentifier::LSP_TextDocumentIdentifier(LSP_TextDocumentIdentifier const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_uri)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentIdentifier::LSP_TextDocumentIdentifier(LSP_TextDocumentIdentifier &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_uri)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentIdentifier &LSP_TextDocumentIdentifier::operator=(LSP_TextDocumentIdentifier const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_uri);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentIdentifier &LSP_TextDocumentIdentifier::operator=(LSP_TextDocumentIdentifier &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_uri);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_TextDocumentIdentifier::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_uri);
+
+  return m;
+}
+
+
+/*static*/ LSP_TextDocumentIdentifier
+LSP_TextDocumentIdentifier::fromFname(
+  std::string const &fname)
+{
+  return LSP_TextDocumentIdentifier(makeFileURI(fname));
+}
+
+
+std::string LSP_TextDocumentIdentifier::getFname() const
+{
+  return getFileURIPath(m_uri);
+}
+
+
+// ---------------- LSP_VersionedTextDocumentIdentifier ----------------
 // create-tuple-class: definitions for LSP_VersionedTextDocumentIdentifier
 /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(
 /*AUTO_CTC*/   std::string const &uri,
@@ -677,7 +739,7 @@ LSP_VersionedTextDocumentIdentifier::operator gdv::GDValue() const
 
 /*static*/ LSP_VersionedTextDocumentIdentifier
 LSP_VersionedTextDocumentIdentifier::fromFname(
-  std::string fname,
+  std::string const &fname,
   LSP_VersionNumber version)
 {
   return LSP_VersionedTextDocumentIdentifier(
@@ -691,7 +753,7 @@ std::string LSP_VersionedTextDocumentIdentifier::getFname() const
 }
 
 
-// ------------------------ LSP_TextDocumentContentChangeEvent -------------------------
+// ---------------- LSP_TextDocumentContentChangeEvent -----------------
 // create-tuple-class: definitions for LSP_TextDocumentContentChangeEvent
 /*AUTO_CTC*/ LSP_TextDocumentContentChangeEvent::LSP_TextDocumentContentChangeEvent(
 /*AUTO_CTC*/   std::optional<LSP_Range> const &range,
@@ -748,7 +810,7 @@ LSP_TextDocumentContentChangeEvent::operator gdv::GDValue() const
 }
 
 
-// ------------------------ LSP_DidChangeTextDocumentParams -------------------------
+// ------------------ LSP_DidChangeTextDocumentParams ------------------
 // create-tuple-class: definitions for LSP_DidChangeTextDocumentParams
 /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
 /*AUTO_CTC*/   LSP_VersionedTextDocumentIdentifier const &textDocument,
@@ -806,6 +868,69 @@ LSP_DidChangeTextDocumentParams::operator gdv::GDValue() const
 
 
 std::string LSP_DidChangeTextDocumentParams::getFname() const
+{
+  return m_textDocument.getFname();
+}
+
+
+// ------------------ LSP_TextDocumentPositionParams -------------------
+// create-tuple-class: definitions for LSP_TextDocumentPositionParams
+/*AUTO_CTC*/ LSP_TextDocumentPositionParams::LSP_TextDocumentPositionParams(
+/*AUTO_CTC*/   LSP_TextDocumentIdentifier const &textDocument,
+/*AUTO_CTC*/   LSP_Position const &position)
+/*AUTO_CTC*/   : IMEMBFP(textDocument),
+/*AUTO_CTC*/     IMEMBFP(position)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentPositionParams::LSP_TextDocumentPositionParams(
+/*AUTO_CTC*/   LSP_TextDocumentIdentifier &&textDocument,
+/*AUTO_CTC*/   LSP_Position &&position)
+/*AUTO_CTC*/   : IMEMBMFP(textDocument),
+/*AUTO_CTC*/     IMEMBMFP(position)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentPositionParams::LSP_TextDocumentPositionParams(LSP_TextDocumentPositionParams const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_textDocument),
+/*AUTO_CTC*/     DMEMB(m_position)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentPositionParams::LSP_TextDocumentPositionParams(LSP_TextDocumentPositionParams &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_textDocument),
+/*AUTO_CTC*/     MDMEMB(m_position)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentPositionParams &LSP_TextDocumentPositionParams::operator=(LSP_TextDocumentPositionParams const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_textDocument);
+/*AUTO_CTC*/     CMEMB(m_position);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextDocumentPositionParams &LSP_TextDocumentPositionParams::operator=(LSP_TextDocumentPositionParams &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_textDocument);
+/*AUTO_CTC*/     MCMEMB(m_position);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_TextDocumentPositionParams::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_textDocument);
+  GDV_WRITE_MEMBER_STR(m_position);
+
+  return m;
+}
+
+
+std::string LSP_TextDocumentPositionParams::getFname() const
 {
   return m_textDocument.getFname();
 }

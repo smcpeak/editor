@@ -351,12 +351,42 @@ public:      // methods
 };
 
 
+// Document identifier without specified version.
+class LSP_TextDocumentIdentifier {
+public:      // data
+  // File name, essentially.
+  std::string m_uri;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_TextDocumentIdentifier +move
+  /*AUTO_CTC*/ explicit LSP_TextDocumentIdentifier(std::string const &uri);
+  /*AUTO_CTC*/ explicit LSP_TextDocumentIdentifier(std::string &&uri);
+  /*AUTO_CTC*/ LSP_TextDocumentIdentifier(LSP_TextDocumentIdentifier const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentIdentifier(LSP_TextDocumentIdentifier &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentIdentifier &operator=(LSP_TextDocumentIdentifier const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentIdentifier &operator=(LSP_TextDocumentIdentifier &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  // No need to parse currently.
+
+  // Encode `fname` as a URI to build this object.
+  static LSP_TextDocumentIdentifier fromFname(
+    std::string const &fname);
+
+  // Decode the URI as a file name.
+  std::string getFname() const;
+};
+
+
 // Identifier of a specific document version.  This is used, among other
 // things, when sending the "didChange" notification.
 //
 // The real protocol describes this as inheriting
 // `LSP_TextDocumentIdentifier`, but my create-tuple-class script does
 // not handle that right, so I embed its one `m_uri` field.
+//
+// TODO: Fix the script so I can use inheritance here.
 //
 class LSP_VersionedTextDocumentIdentifier {
 public:      // data
@@ -381,7 +411,7 @@ public:      // methods
 
   // Encode `fname` as a URI to build this object.
   static LSP_VersionedTextDocumentIdentifier fromFname(
-    std::string fname,
+    std::string const &fname,
     LSP_VersionNumber version);
 
   // Decode the URI as a file name.
@@ -434,6 +464,34 @@ public:      // methods
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams &&obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  // No need to parse currently.
+
+  // Get the file name in `m_textDocument`.
+  std::string getFname() const;
+};
+
+
+// Parameters for symbol queries:  "textDocument/{declaration,
+// definition, hover, completion}".
+class LSP_TextDocumentPositionParams {
+public:      // data
+  // The document for which we want information.
+  LSP_TextDocumentIdentifier m_textDocument;
+
+  // The location of an occurrence of the symbol of interest.
+  LSP_Position m_position;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_TextDocumentPositionParams +move
+  /*AUTO_CTC*/ explicit LSP_TextDocumentPositionParams(LSP_TextDocumentIdentifier const &textDocument, LSP_Position const &position);
+  /*AUTO_CTC*/ explicit LSP_TextDocumentPositionParams(LSP_TextDocumentIdentifier &&textDocument, LSP_Position &&position);
+  /*AUTO_CTC*/ LSP_TextDocumentPositionParams(LSP_TextDocumentPositionParams const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentPositionParams(LSP_TextDocumentPositionParams &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentPositionParams &operator=(LSP_TextDocumentPositionParams const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextDocumentPositionParams &operator=(LSP_TextDocumentPositionParams &&obj) noexcept;
 
   operator gdv::GDValue() const;
 
