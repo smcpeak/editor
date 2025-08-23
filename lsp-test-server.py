@@ -407,13 +407,6 @@ def publish_diagnostics(uri: str, version: int) -> None:
 def main() -> None:
   global initialized, shutdown_received
 
-  if os.getenv("UNIT_TEST"):
-    test_Position()
-    test_Range()
-    test_split_lines()
-    test_apply_text_edits()
-    return
-
   try:
     while True:
       msg = read_message()
@@ -501,7 +494,16 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-  main()
+  test_Position()
+  test_Range()
+  test_split_lines()
+  test_apply_text_edits()
+
+  if os.getenv("UNIT_TEST"):
+    # Only run the unit tests.
+    pass
+  else:
+    main()
 
 
 # EOF
