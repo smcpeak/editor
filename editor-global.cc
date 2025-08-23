@@ -34,7 +34,7 @@
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/datetime.h"                     // localTimeString
 #include "smbase/dev-warning.h"                  // g_devWarningHandler
-#include "smbase/exc.h"                          // smbase::{XBase, xformat}
+#include "smbase/exc.h"                          // smbase::{XBase, xformat}, EXN_CONTEXT
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
@@ -44,6 +44,7 @@
 #include "smbase/save-restore.h"                 // SET_RESTORE, SetRestore
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-is-equal.h"                  // smbase::is_equal
 #include "smbase/sm-test.h"                      // PVAL
 #include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand
 #include "smbase/stringb.h"                      // stringb
@@ -292,6 +293,33 @@ void EditorGlobal::selfCheck() const
     XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
   }
 
+  // Count the LSP-open files we do and do not check, so I can manually
+  // confirm nearly all are checked.
+  int numChecked = 0;
+  int numUnchecked = 0;
+
+  // For all files open with the LSP server, if it is supposed to be up
+  // to date in server manager, its copy should agree with the editor's
+  // copy.
+  for (int index=0; index < numDocuments(); ++index) {
+    NamedTextDocument const *ntd = getDocumentByIndexC(index);
+    EXN_CONTEXT(ntd->documentName());
+
+    if (RCSerf<LSPDocumentInfo const> docInfo = lspGetDocInfo(ntd)) {
+      if (is_equal(docInfo->m_lastSentVersion, ntd->getVersionNumber())) {
+        xassert(docInfo->lastContentsEquals(ntd->getCore()));
+        ++numChecked;
+      }
+      else {
+        // The manager's version is behind, presumably because
+        // continuous update is not enabled.  Don't check anything in
+        // this case.
+        ++numUnchecked;
+      }
+    }
+  }
+  TRACE1_GDVN_EXPRS("EditorGlobal::selfCheck", numChecked, numUnchecked);
+
   m_vfsConnections.selfCheck();
 }
 
@@ -408,10 +436,17 @@ int EditorGlobal::numDocuments() const
 }
 
 
-NamedTextDocument *EditorGlobal::getDocumentByIndex(int index)
+NamedTextDocument const *EditorGlobal::getDocumentByIndexC(
+  int index) const
 {
   xassertPrecondition(cc::z_le_lt(index, numDocuments()));
-  return m_documentList.getDocumentAt(index);
+  return m_documentList.getDocumentAtC(index);
+}
+
+
+NamedTextDocument *EditorGlobal::getDocumentByIndex(int index)
+{
+  return const_cast<NamedTextDocument*>(getDocumentByIndexC(index));
 }
 
 

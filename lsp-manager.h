@@ -121,6 +121,8 @@ public:      // data
 
   // The version number of the most recent document contents that were
   // sent to the server.
+  //
+  // TODO: This should have type `LSP_VersionNumber`.
   int m_lastSentVersion;
 
   // The contents most recently sent.  They were labeled with
@@ -128,7 +130,12 @@ public:      // data
   //
   // One reason we store this is to detect the case where we are trying
   // to refresh diagnostics for a file that has not changed (because
-  // another file changed that affected its results).
+  // another file changed that affected its results).  Update: I'm not
+  // currently doing that.  It might not actually be necessary.
+  //
+  // Another reason is to allow checking that the editor's idea of the
+  // file contents agrees with the manager's after potentially many
+  // incremental updates.
   //
   // Never null.
   //

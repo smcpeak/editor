@@ -88,6 +88,11 @@ private:     // instance data
   // documents open in `m_lspManager` is the same as the set of
   // documents in `m_documentList` that are tracking changes.
   //
+  // Invariant: For all files that are open in the manager, if the most
+  // recently sent version is the same as the version in
+  // `m_documentList`, then the manager and document agree about the
+  // contents.
+  //
   LSPManager m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.
@@ -213,7 +218,8 @@ public:       // funcs
   // Get a document in `m_documentList` order.
   //
   // Requires: 0 <= index < numDocuments()
-  NamedTextDocument *getDocumentByIndex(int index);
+  NamedTextDocument const *getDocumentByIndexC(int index) const;
+  NamedTextDocument       *getDocumentByIndex (int index);
 
   // Create an empty "untitled" file, add it to the set of documents,
   // and return it.
