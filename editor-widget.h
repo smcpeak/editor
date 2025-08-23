@@ -471,11 +471,11 @@ public:      // funcs
   // `LSP_VersionNumber`, which is what we need for LSP.  If the version
   // number cannot be converted to that type (because it is too big),
   // pop up an error box if `wantErrors`, then return nullopt.
-  std::optional<LSP_VersionNumber> getDocLSPVersionNumber(
+  std::optional<LSP_VersionNumber> lspGetDocVersionNumber(
     bool wantErrors) const;
 
   // Do `operation` with the current file.
-  void doLSPFileOperation(LSPFileOperation operation);
+  void lspDoFileOperation(LSPFileOperation operation);
 
   // If there are diagnostics associated with the current document, and
   // the cursor is in one of the marked ranges, show its message and
@@ -491,16 +491,16 @@ public:      // funcs
   void lspGoToRelatedLocation(LSPSymbolRequestKind lsrk);
 
   // Handle the reply to a request for a location.
-  void handleLSPLocationReply(
+  void lspHandleLocationReply(
     gdv::GDValue const &gdvReply,
     LSPSymbolRequestKind lsrk);
 
   // Handle the reply to a request for symbol hover information.
-  void handleLSPHoverInfoReply(
+  void lspHandleHoverInfoReply(
     gdv::GDValue const &gdvReply);
 
   // Handle the reply to a request for completion.
-  void handleLSPCompletionReply(
+  void lspHandleCompletionReply(
     gdv::GDValue const &gdvReply);
 
   // -------------------- interaction with files ------------------

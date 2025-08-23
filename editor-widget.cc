@@ -2623,7 +2623,7 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 }
 
 
-std::optional<LSP_VersionNumber> EditorWidget::getDocLSPVersionNumber(
+std::optional<LSP_VersionNumber> EditorWidget::lspGetDocVersionNumber(
   bool wantErrors) const
 {
   try {
@@ -2641,7 +2641,7 @@ std::optional<LSP_VersionNumber> EditorWidget::getDocLSPVersionNumber(
 }
 
 
-void EditorWidget::doLSPFileOperation(LSPFileOperation operation)
+void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 {
   // True if we want a popup for errors.
   bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
@@ -2827,7 +2827,7 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
   if (!editorGlobal()->lspFileIsOpen(ntd)) {
     // Go ahead and open the file automatically.  This will entail more
     // delay than usual, but everything should work.
-    doLSPFileOperation(LSPFO_OPEN_OR_UPDATE);
+    lspDoFileOperation(LSPFO_OPEN_OR_UPDATE);
 
     if (!editorGlobal()->lspFileIsOpen(ntd)) {
       // Still not open, must have gotten an error, bail.
@@ -2858,7 +2858,7 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
       GDValue gdvReply = editorGlobal()->lspTakeReplyForID(id);
       TRACE1("received reply: " << gdvReply.asIndentedString());
 
-      handleLSPLocationReply(gdvReply, lsrk);
+      lspHandleLocationReply(gdvReply, lsrk);
     }
     else {
       complain(editorGlobal()->lspExplainAbnormality());
@@ -2871,19 +2871,19 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
 }
 
 
-void EditorWidget::handleLSPLocationReply(
+void EditorWidget::lspHandleLocationReply(
   GDValue const &gdvReply,
   LSPSymbolRequestKind lsrk)
 {
   char const *lsrkMsgStr = toMessageString(lsrk);
 
   if (lsrk == LSPSymbolRequestKind::K_HOVER_INFO) {
-    handleLSPHoverInfoReply(gdvReply);
+    lspHandleHoverInfoReply(gdvReply);
     return;
   }
 
   if (lsrk == LSPSymbolRequestKind::K_COMPLETION) {
-    handleLSPCompletionReply(gdvReply);
+    lspHandleCompletionReply(gdvReply);
     return;
   }
 
@@ -2919,7 +2919,7 @@ void EditorWidget::handleLSPLocationReply(
 }
 
 
-void EditorWidget::handleLSPHoverInfoReply(
+void EditorWidget::lspHandleHoverInfoReply(
   GDValue const &gdvReply)
 {
   try {
@@ -2938,7 +2938,7 @@ void EditorWidget::handleLSPHoverInfoReply(
 }
 
 
-void EditorWidget::handleLSPCompletionReply(
+void EditorWidget::lspHandleCompletionReply(
   GDValue const &gdvReply)
 {
   // Parse the incoming GDV.

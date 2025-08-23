@@ -900,7 +900,7 @@ void EditorWindow::writeTheFile()
       // LSP status box.)
       editorViewChanged();
 
-      editorWidget()->doLSPFileOperation(
+      editorWidget()->lspDoFileOperation(
         EditorWidget::LSPFO_UPDATE_IF_OPEN);
     }
     else {
@@ -2048,7 +2048,7 @@ void EditorWindow::lspOpenOrUpdateFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->doLSPFileOperation(EditorWidget::LSPFO_OPEN_OR_UPDATE);
+  editorWidget()->lspDoFileOperation(EditorWidget::LSPFO_OPEN_OR_UPDATE);
 
   GENERIC_CATCH_END
 }
@@ -2058,7 +2058,7 @@ void EditorWindow::lspCloseFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->doLSPFileOperation(EditorWidget::LSPFO_CLOSE);
+  editorWidget()->lspDoFileOperation(EditorWidget::LSPFO_CLOSE);
 
   GENERIC_CATCH_END
 }
