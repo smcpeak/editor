@@ -1,6 +1,8 @@
 // language-test.cc
 // Syntax example for testing LSP services.
 
+#include "language-test.h"             // this module
+
 #include <iostream>
 
 int x;
@@ -45,6 +47,12 @@ void caller(C &c)
   foo(c);
   foo(c);
   foo(c);
+}
+
+
+void useGlobals()
+{
+  g_var3 = 3;
 }
 
 // EOF
