@@ -2386,10 +2386,10 @@ bool EditorWidget::getLSPUpdateContinuously() const
   return m_editor->m_namedDoc->m_lspUpdateContinuously;
 }
 
-void EditorWidget::toggleLSPUpdateContinuously()
+bool EditorWidget::toggleLSPUpdateContinuously()
 {
-  m_editor->m_namedDoc->m_lspUpdateContinuously =
-    !m_editor->m_namedDoc->m_lspUpdateContinuously;
+  return (( m_editor->m_namedDoc->m_lspUpdateContinuously =
+              !m_editor->m_namedDoc->m_lspUpdateContinuously ));
 }
 
 

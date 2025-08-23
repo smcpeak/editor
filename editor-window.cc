@@ -2074,7 +2074,11 @@ void EditorWindow::lspToggleUpdateContinuously() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->toggleLSPUpdateContinuously();
+  if (editorWidget()->toggleLSPUpdateContinuously()) {
+    // If we turn it on, immediately open or update.
+    editorWidget()->lspDoFileOperation(
+      EditorWidget::LSPFO_OPEN_OR_UPDATE);
+  }
 
   // Update the menu item checkmark state.
   editorViewChanged();
