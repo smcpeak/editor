@@ -3270,90 +3270,11 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
   // notifications here that might be caused by the change.
   INITIATING_DOCUMENT_CHANGE();
 
+  // The cases here should be in the same order as in
+  // `editor-command.ast`.
   ASTSWITCHC(EditorCommand, cmd) {
-    ASTCASEC1(EC_Cut) {
-      if (this->selectEnabled()) {
-        setClipboard(m_editor->clipboardCut());
-        this->redrawAfterContentChange();
-      }
-    }
-
-    ASTNEXTC1(EC_Copy) {
-      if (this->selectEnabled()) {
-        setClipboard(m_editor->clipboardCopy());
-        this->redraw();
-      }
-    }
-
-    ASTNEXTC(EC_Paste, ec) {
-      QClipboard *cb = QApplication::clipboard();
-      QString text;
-
-      // Try reading the X selection first.  Generally this seems to reflect
-      // the "more recent" deliberate clipboard interaction.
-      if (cb->supportsSelection()) {
-        text = cb->text(QClipboard::Selection);
-        TRACE1("EC_Paste: Got selection: " << doubleQuote(text));
-      }
-
-      // Then the regular clipboard.
-      if (text.isEmpty()) {
-        text = cb->text(QClipboard::Clipboard);
-        TRACE1("EC_Paste: Got clipboard: " << doubleQuote(text));
-      }
-
-      // Previously, I had a check here for empty `text`, and a warning
-      // dialog.  But I want the processing of command objects to not
-      // rely on being interactive, and the warning served little real
-      // purpose, so I removed it.
-
-      QByteArray utf8(text.toUtf8());
-      m_editor->clipboardPaste(utf8.constData(), utf8.length(),
-                               ec->m_cursorToStart);
-      this->redrawAfterContentChange();
-    }
-
-    ASTNEXTC1(EC_KillLine) {
-      if (!selectEnabled()) {
-        m_editor->selectCursorLine();
-      }
-      setClipboard(m_editor->clipboardCut());
-      this->redrawAfterContentChange();
-    }
-
-    ASTNEXTC1(EC_SelectEntireFile) {
-      m_editor->selectEntireFile();
-      this->redraw();
-    }
-
-    ASTNEXTC(EC_CursorToEndOfNextLine, ec) {
-      m_editor->turnSelection(ec->m_select);
-      int line = m_editor->cursor().m_line;
-      m_editor->setCursor(m_editor->lineEndLCoord(line+1));
-      scrollToCursor();
-    }
-
-    // This case is currently not called by anything.  I created it for
-    // consistency with the other "EC_MoveFirstVisible..." commands.
-    ASTNEXTC(EC_MoveFirstVisibleBy, ec) {
-      m_editor->moveFirstVisibleBy(
-        ec->m_deltaLine, ec->m_deltaColumn);
-      redraw();
-    }
-
-    ASTNEXTC(EC_MoveFirstVisibleAndCursor, ec) {
-      m_editor->moveFirstVisibleAndCursor(
-        ec->m_deltaLine, ec->m_deltaColumn);
-      redraw();
-    }
-
-    ASTNEXTC(EC_MoveFirstVisibleConfineCursor, ec) {
-      m_editor->moveFirstVisibleConfineCursor(
-        ec->m_deltaLine, ec->m_deltaColumn);
-      redraw();
-    }
-
-    ASTNEXTC(EC_MoveCursorByCell, ec) {
+    // ---------------------------- Cursor -----------------------------
+    ASTCASEC(EC_MoveCursorByCell, ec) {
       m_editor->turnSelection(ec->m_select);
       m_editor->moveCursorBy(ec->m_deltaLine, ec->m_deltaColumn);
       scrollToCursor();
@@ -3387,6 +3308,58 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       redraw();
     }
 
+    ASTNEXTC(EC_CursorToEndOfNextLine, ec) {
+      // TODO: Encapsulate this as an editor method.
+      m_editor->turnSelection(ec->m_select);
+      int line = m_editor->cursor().m_line;
+      m_editor->setCursor(m_editor->lineEndLCoord(line+1));
+      scrollToCursor();
+    }
+
+    // --------------------------- Selection ---------------------------
+    ASTNEXTC1(EC_SelectEntireFile) {
+      m_editor->selectEntireFile();
+      this->redraw();
+    }
+
+    // --------------------------- Scrolling ---------------------------
+    // This case is currently not called by anything.  I created it for
+    // consistency with the other "EC_MoveFirstVisible..." commands.
+    ASTNEXTC(EC_MoveFirstVisibleBy, ec) {
+      m_editor->moveFirstVisibleBy(
+        ec->m_deltaLine, ec->m_deltaColumn);
+      redraw();
+    }
+
+    ASTNEXTC(EC_MoveFirstVisibleAndCursor, ec) {
+      m_editor->moveFirstVisibleAndCursor(
+        ec->m_deltaLine, ec->m_deltaColumn);
+      redraw();
+    }
+
+    ASTNEXTC(EC_MoveFirstVisibleConfineCursor, ec) {
+      m_editor->moveFirstVisibleConfineCursor(
+        ec->m_deltaLine, ec->m_deltaColumn);
+      redraw();
+    }
+
+    ASTNEXTC1(EC_CenterVisibleOnCursorLine) {
+      m_editor->centerVisibleOnCursorLine();
+      redraw();
+    }
+
+    // ------------------------ Text insertion -------------------------
+    ASTNEXTC(EC_InsertString, ec) {
+      m_editor->insertString(ec->m_text);
+      this->redrawAfterContentChange();
+    }
+
+    // ------------------------- Text deletion -------------------------
+    ASTNEXTC1(EC_BackspaceFunction) {
+      m_editor->backspaceFunction();
+      redrawAfterContentChange();
+    }
+
     ASTNEXTC1(EC_DeleteKeyFunction) {
       m_editor->deleteKeyFunction();
       redrawAfterContentChange();
@@ -3399,14 +3372,10 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       }
     }
 
-    ASTNEXTC1(EC_BackspaceFunction) {
-      m_editor->backspaceFunction();
+    // ----------------------- Adding whitespace -----------------------
+    ASTNEXTC1(EC_InsertNewlineAutoIndent) {
+      m_editor->insertNewlineAutoIndent();
       redrawAfterContentChange();
-    }
-
-    ASTNEXTC1(EC_CenterVisibleOnCursorLine) {
-      m_editor->centerVisibleOnCursorLine();
-      redraw();
     }
 
     ASTNEXTC(EC_BlockIndent, ec) {
@@ -3415,13 +3384,55 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       }
     }
 
-    ASTNEXTC1(EC_InsertNewlineAutoIndent) {
-      m_editor->insertNewlineAutoIndent();
-      redrawAfterContentChange();
+    // --------------------------- Clipboard ---------------------------
+    ASTNEXTC1(EC_Copy) {
+      if (this->selectEnabled()) {
+        setClipboard(m_editor->clipboardCopy());
+        this->redraw();
+      }
     }
 
-    ASTNEXTC(EC_InsertString, ec) {
-      m_editor->insertString(ec->m_text);
+    ASTNEXT1(EC_Cut) {
+      if (this->selectEnabled()) {
+        setClipboard(m_editor->clipboardCut());
+        this->redrawAfterContentChange();
+      }
+    }
+
+    ASTNEXTC1(EC_KillLine) {
+      // TODO: Encapsulate as an editor method.
+      if (!selectEnabled()) {
+        m_editor->selectCursorLine();
+      }
+      setClipboard(m_editor->clipboardCut());
+      this->redrawAfterContentChange();
+    }
+
+    ASTNEXTC(EC_Paste, ec) {
+      QClipboard *cb = QApplication::clipboard();
+      QString text;
+
+      // Try reading the X selection first.  Generally this seems to reflect
+      // the "more recent" deliberate clipboard interaction.
+      if (cb->supportsSelection()) {
+        text = cb->text(QClipboard::Selection);
+        TRACE1("EC_Paste: Got selection: " << doubleQuote(text));
+      }
+
+      // Then the regular clipboard.
+      if (text.isEmpty()) {
+        text = cb->text(QClipboard::Clipboard);
+        TRACE1("EC_Paste: Got clipboard: " << doubleQuote(text));
+      }
+
+      // Previously, I had a check here for empty `text`, and a warning
+      // dialog.  But I want the processing of command objects to not
+      // rely on being interactive, and the warning served little real
+      // purpose, so I removed it.
+
+      QByteArray utf8(text.toUtf8());
+      m_editor->clipboardPaste(utf8.constData(), utf8.length(),
+                               ec->m_cursorToStart);
       this->redrawAfterContentChange();
     }
 
