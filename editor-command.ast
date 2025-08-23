@@ -116,6 +116,13 @@ class EditorCommand {
   // normally it goes at the end.
   -> EC_Paste(bool m_cursorToStart);
 
+  // ---------------------------- Undo/redo ----------------------------
+  // Undo a recent change.
+  -> EC_Undo();
+
+  // Redo a change that was recently undone.
+  -> EC_Redo();
+
 }
 
 

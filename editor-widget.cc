@@ -2227,28 +2227,16 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m) NOEXCEPT
 // ----------------------- edit menu -----------------------
 void EditorWidget::editUndo()
 {
-  INITIATING_DOCUMENT_CHANGE();
-  if (m_editor->canUndo()) {
-    m_editor->undo();
-    this->redrawAfterContentChange();
-  }
-  else {
-    QMessageBox::information(this, "Can't undo",
-      "There are no actions to undo in the history.");
+  if (editSafetyCheck()) {
+    COMMAND_MU(EC_Undo);
   }
 }
 
 
 void EditorWidget::editRedo()
 {
-  INITIATING_DOCUMENT_CHANGE();
-  if (m_editor->canRedo()) {
-    m_editor->redo();
-    this->redrawAfterContentChange();
-  }
-  else {
-    QMessageBox::information(this, "Can't redo",
-      "There are no actions to redo in the history.");
+  if (editSafetyCheck()) {
+    COMMAND_MU(EC_Redo);
   }
 }
 
@@ -3245,9 +3233,12 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
   NamedTextDocument *ntd = getDocument();
   TextDocument::VersionNumber origVersion = ntd->getVersionNumber();
 
-  innerCommand(cmd.get());
-
-  editorGlobal()->recordCommand(std::move(cmd));
+  if (std::optional<std::string> msg = innerCommand(cmd.get())) {
+    QMessageBox::information(this, "Error", toQString(*msg));
+  }
+  else {
+    editorGlobal()->recordCommand(std::move(cmd));
+  }
 
   if (ntd->m_lspUpdateContinuously &&
       origVersion != ntd->getVersionNumber() &&
@@ -3264,7 +3255,8 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
 }
 
 
-void EditorWidget::innerCommand(EditorCommand const *cmd)
+std::optional<std::string> EditorWidget::innerCommand(
+  EditorCommand const *cmd)
 {
   // As this is where we act on the command to make a change, suppress
   // notifications here that might be caused by the change.
@@ -3436,8 +3428,30 @@ void EditorWidget::innerCommand(EditorCommand const *cmd)
       this->redrawAfterContentChange();
     }
 
+    ASTNEXTC1(EC_Undo) {
+      if (m_editor->canUndo()) {
+        m_editor->undo();
+        this->redrawAfterContentChange();
+      }
+      else {
+        return "There are no actions to undo in the history.";
+      }
+    }
+
+    ASTNEXTC1(EC_Redo) {
+      if (m_editor->canRedo()) {
+        m_editor->redo();
+        this->redrawAfterContentChange();
+      }
+      else {
+        return "There are no actions to redo in the history.";
+      }
+    }
+
     ASTENDCASECD
   }
+
+  return std::nullopt;
 }
 
 
