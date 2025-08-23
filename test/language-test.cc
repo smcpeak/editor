@@ -16,6 +16,9 @@ struct C {
   int m_one;
   int m_two;
   int m_three;
+
+  void method1(int);
+  void method2(float, char *p = nullptr);
 };
 
 void bar(int);
