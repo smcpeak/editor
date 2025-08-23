@@ -106,7 +106,8 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
     m_toggleReadOnlyAction(NULL),
     m_toggleVisibleWhitespaceAction(NULL),
     m_toggleVisibleSoftMarginAction(NULL),
-    m_toggleHighlightTrailingWSAction(NULL)
+    m_toggleHighlightTrailingWSAction(NULL),
+    m_toggleLSPUpdateContinuously(NULL)
 {
   xassert(m_editorGlobal);
   xassert(initFile);
@@ -283,6 +284,11 @@ void EditorWindow::buildMenu()
     this->field->setCheckable(true);                             \
     this->field->setChecked(initChecked) /* user ; */
 
+  #define CHECKABLE_ACTION_KEY(field, title, function, key, initChecked) \
+    this->field = MENU_ITEM_KEY(title, function, key);                   \
+    this->field->setCheckable(true);                                     \
+    this->field->setChecked(initChecked) /* user ; */
+
   {
     QMenu *menu = this->m_menuBar->addMenu("&File");
     menu->setObjectName("fileMenu");
@@ -437,8 +443,6 @@ void EditorWindow::buildMenu()
     }
   }
 
-  #undef CHECKABLE_ACTION
-
   {
     QMenu *menu = this->m_menuBar->addMenu("&Macro");
     menu->setObjectName("macroMenu");
@@ -457,7 +461,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: cdio
+    // Used mnemonics: cdiou
 
     MENU_ITEM    ("Start LSP server",
                   lspStartServer);
@@ -468,6 +472,13 @@ void EditorWindow::buildMenu()
 
     MENU_ITEM_KEY("&Open or update this file",
                   lspOpenOrUpdateFile, Qt::Key_F7);
+
+    CHECKABLE_ACTION_KEY(m_toggleLSPUpdateContinuously,
+      "&Update continuously",
+      lspToggleUpdateContinuously,
+      Qt::SHIFT + Qt::Key_F7,
+      editorWidget()->getLSPUpdateContinuously());
+
     MENU_ITEM_KEY("&Close this file",
                   lspCloseFile, Qt::CTRL + Qt::Key_F7);
 
@@ -592,6 +603,9 @@ void EditorWindow::buildMenu()
                     helpDebugEditorScreenshot);
     }
   }
+
+  #undef CHECKABLE_ACTION
+  #undef CHECKABLE_ACTION_KEY
 }
 
 
@@ -2054,6 +2068,19 @@ void EditorWindow::lspOpenOrUpdateFile() NOEXCEPT
 }
 
 
+void EditorWindow::lspToggleUpdateContinuously() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->toggleLSPUpdateContinuously();
+
+  // Update the menu item checkmark state.
+  editorViewChanged();
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::lspCloseFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2504,6 +2531,10 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 
   // Read-only menu checkbox.
   m_toggleReadOnlyAction->setChecked(editorWidget()->isReadOnly());
+
+  // LSP continuous update menu check.
+  m_toggleLSPUpdateContinuously->setChecked(
+    editorWidget()->getLSPUpdateContinuously());
 
   GENERIC_CATCH_END
 }

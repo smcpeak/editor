@@ -72,6 +72,7 @@ private:     // data
   QAction *m_toggleVisibleWhitespaceAction;
   QAction *m_toggleVisibleSoftMarginAction;
   QAction *m_toggleHighlightTrailingWSAction;
+  QAction *m_toggleLSPUpdateContinuously;
 
 private:     // funcs
   void buildMenu();
@@ -273,6 +274,7 @@ public Q_SLOTS:
   void lspCheckStatus() NOEXCEPT;
   void lspShowServerCapabilities() NOEXCEPT;
   void lspOpenOrUpdateFile() NOEXCEPT;
+  void lspToggleUpdateContinuously() NOEXCEPT;
   void lspCloseFile() NOEXCEPT;
   void lspReviewDiagnostics() NOEXCEPT;
   void lspGoToNextDiagnostic() NOEXCEPT;

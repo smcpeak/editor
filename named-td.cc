@@ -47,7 +47,8 @@ NamedTextDocument::NamedTextDocument()
     m_modifiedOnDisk(false),
     m_title(),
     m_highlighter(),
-    m_highlightTrailingWhitespace(true)
+    m_highlightTrailingWhitespace(true),
+    m_lspUpdateContinuously(false)
 {
   selfCheck();
 
@@ -113,6 +114,7 @@ NamedTextDocument::operator gdv::GDValue() const
   GDV_WRITE_MEMBER_SYM(m_title);
   GDV_WRITE_MEMBER_SYM(m_highlighter);
   GDV_WRITE_MEMBER_SYM(m_highlightTrailingWhitespace);
+  GDV_WRITE_MEMBER_SYM(m_lspUpdateContinuously);
 
   return m;
 }

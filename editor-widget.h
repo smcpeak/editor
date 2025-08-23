@@ -703,6 +703,10 @@ public:      // funcs
   // Toggle whether trailing whitespace should be shown for this document.
   void toggleHighlightTrailingWhitespace();
 
+  // Get/toggle for whether to update LSP continously.
+  bool getLSPUpdateContinuously() const;
+  void toggleLSPUpdateContinuously();
+
   // redraw widget, etc.; calls updateView() and viewChanged()
   void redraw();
 

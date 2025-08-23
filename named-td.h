@@ -114,6 +114,10 @@ public:      // data
   // of highlighting compositions at some point.
   bool m_highlightTrailingWhitespace;
 
+  // When true, and the file is open on the LSP server, every time the
+  // file is modified, we send updated contents.
+  bool m_lspUpdateContinuously;
+
 public:      // funcs
   // Create an anonymous document.  The caller must call
   // 'setDocumentName' before adding it to a document list.

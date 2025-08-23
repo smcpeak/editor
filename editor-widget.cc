@@ -2381,6 +2381,18 @@ void EditorWidget::toggleHighlightTrailingWhitespace()
 }
 
 
+bool EditorWidget::getLSPUpdateContinuously() const
+{
+  return m_editor->m_namedDoc->m_lspUpdateContinuously;
+}
+
+void EditorWidget::toggleLSPUpdateContinuously()
+{
+  m_editor->m_namedDoc->m_lspUpdateContinuously =
+    !m_editor->m_namedDoc->m_lspUpdateContinuously;
+}
+
+
 void EditorWidget::commandCursorLeft(bool shift)
 {
   COMMAND_MU(EC_MoveCursorByCell, 0, -1, shift);
@@ -3230,9 +3242,25 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
 {
   TRACE2("command: " << toGDValue(*cmd).asString());
 
+  NamedTextDocument *ntd = getDocument();
+  TextDocument::VersionNumber origVersion = ntd->getVersionNumber();
+
   innerCommand(cmd.get());
 
   editorGlobal()->recordCommand(std::move(cmd));
+
+  if (ntd->m_lspUpdateContinuously &&
+      origVersion != ntd->getVersionNumber() &&
+      editorGlobal()->lspIsRunningNormally() &&
+      editorGlobal()->lspFileIsOpen(ntd)) {
+    try {
+      editorGlobal()->lspUpdateFile(ntd);
+    }
+    catch (XBase &x) {
+      complain(stringb("LSP update: " << x));
+      ntd->m_lspUpdateContinuously = false;
+    }
+  }
 }
 
 
