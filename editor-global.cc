@@ -11,12 +11,14 @@
 #include "editor-proxy-style.h"                  // EditorProxyStyle
 #include "editor-version.h"                      // getEditorVersionString
 #include "editor-widget.h"                       // EditorWidget
+#include "editor-window.h"                       // EditorWindow
 #include "event-recorder.h"                      // EventRecorder
 #include "event-replay.h"                        // EventReplay
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "lsp-client.h"                          // LSPClient
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog

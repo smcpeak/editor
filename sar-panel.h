@@ -4,8 +4,10 @@
 #ifndef SAR_PANEL_H
 #define SAR_PANEL_H
 
+#include "sar-panel-fwd.h"             // fwds for this module
+
 // editor
-#include "editor-widget-fwd.h"         // EditorWidget
+#include "editor-widget-fwd.h"         // EditorWidget [n]
 
 // smbase
 #include "smbase/refct-serf.h"         // RCSerf

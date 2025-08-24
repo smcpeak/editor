@@ -7,29 +7,32 @@
 #include "editor-global-fwd.h"                   // fwds for this module
 
 // editor
-#include "apply-command-dialog-fwd.h"            // ApplyCommandDialog
+#include "apply-command-dialog-fwd.h"            // ApplyCommandDialog [n]
 #include "builtin-font.h"                        // BuiltinFont
-#include "command-runner-fwd.h"                  // CommandRunner
+#include "command-runner-fwd.h"                  // CommandRunner [n]
+#include "connections-dialog-fwd.h"              // ConnectionsDialog [n]
 #include "eclf.h"                                // EditorCommandLineFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS
-#include "editor-command.ast.gen.fwd.h"          // EditorCommand
+#include "editor-command.ast.gen.fwd.h"          // EditorCommand [n]
 #include "editor-settings.h"                     // EditorSettings
-#include "editor-window.h"                       // EditorWindow
+#include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "filename-input.h"                      // FilenameInputDialog
 #include "lsp-manager.h"                         // LSPManager, LSPDocumentInfo
+#include "named-td-fwd.h"                        // NamedTextDocument [n]
 #include "named-td-list.h"                       // NamedTextDocumentList
-#include "named-td.h"                            // NamedTextDocument
-#include "open-files-dialog.h"                   // OpenFilesDialog
+#include "open-files-dialog-fwd.h"               // OpenFilesDialog [n]
 #include "pixmaps.h"                             // Pixmaps
+#include "process-watcher-fwd.h"                 // ProcessWatcher [n]
+#include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smbase
-#include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile
+#include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile [n]
 #include "smbase/objlist.h"                      // ObjList
 #include "smbase/refct-serf.h"                   // SerfRefCount
 #include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
-#include "smbase/std-optional-fwd.h"             // std::optional
-#include "smbase/std-string-fwd.h"               // std::string
+#include "smbase/std-optional-fwd.h"             // std::optional [n]
+#include "smbase/std-string-fwd.h"               // std::string [n]
 
 // Qt
 #include <QApplication>
@@ -38,10 +41,6 @@
 #include <deque>                                 // std::deque
 #include <list>                                  // std::list
 #include <memory>                                // std::unique_ptr
-#include <set>                                   // std::set
-
-class ConnectionsDialog;                         // connections-dialog.h
-class ProcessWatcher;                            // process-watcher.h
 
 class QWidget;
 

@@ -4,6 +4,8 @@
 #ifndef EDITOR_CONNECTIONS_DIALOG_H
 #define EDITOR_CONNECTIONS_DIALOG_H
 
+#include "connections-dialog-fwd.h"    // fwds for this module
+
 #include "host-name.h"                 // HostName
 #include "vfs-connections-fwd.h"       // VFS_Connections
 

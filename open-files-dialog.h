@@ -4,6 +4,8 @@
 #ifndef OPEN_FILES_DIALOG_H
 #define OPEN_FILES_DIALOG_H
 
+#include "open-files-dialog-fwd.h"               // fwds for this module
+
 #include "editor-global-fwd.h"                   // EditorGlobal
 #include "event-replay.h"                        // EventReplayQueryable
 #include "modal-dialog.h"                        // ModalDialog

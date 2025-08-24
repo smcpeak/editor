@@ -4,6 +4,8 @@
 #ifndef PROCESS_WATCHER_H
 #define PROCESS_WATCHER_H
 
+#include "process-watcher-fwd.h"       // fwds for this module
+
 // editor
 #include "command-runner.h"            // CommandRunner
 #include "named-td.h"                  // NamedTextDocument

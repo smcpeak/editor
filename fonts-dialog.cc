@@ -7,6 +7,7 @@
 #include "editor-global.h"             // EditorGlobal
 
 // smqtutil
+#include "smqtutil/qtguiutil.h"        // messageBox
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 
 // smbase

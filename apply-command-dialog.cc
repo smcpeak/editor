@@ -6,6 +6,7 @@
 #include "editor-global.h"             // EditorGlobal
 #include "editor-settings.h"           // EditorSettings
 #include "editor-widget.h"             // EditorWidget
+#include "editor-window.h"             // EditorWindow (for conversion to QWidget*)
 
 #include "smqtutil/qtutil.h"           // toQString, toString(QSize)
 
