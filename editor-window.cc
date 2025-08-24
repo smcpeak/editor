@@ -513,8 +513,8 @@ void EditorWindow::buildMenu()
                     lspGoToDefinition, Qt::Key_F12);
       MENU_ITEM_KEY("De&claration",
                     lspGoToDeclaration, Qt::SHIFT + Qt::Key_F12);
-      MENU_ITEM    ("&All uses",
-                    lspGoToAllUses);
+      MENU_ITEM_KEY("&All uses",
+                    lspGoToAllUses, Qt::CTRL + Qt::Key_F12);
       MENU_ITEM    ("&Hover info",
                     lspHoverInfo);
       MENU_ITEM_KEY("Completio&n",
