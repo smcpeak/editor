@@ -93,7 +93,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_documentList(),
     m_editorWindows(),
     m_editorLogFile(openEditorLogFile()),
-    m_lspManager(true /*useRealClangd*/,
+    m_lspManager(!envAsBool("USE_FAKE_LSP_SERVER") /*useRealClangd*/,
                  lspGetStderrLogFileInitialName(),
                  (m_editorLogFile?
                     &(m_editorLogFile->stream()) : nullptr)),
