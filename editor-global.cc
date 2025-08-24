@@ -7,6 +7,7 @@
 #include "apply-command-dialog.h"                // ApplyCommandDialog
 #include "command-runner.h"                      // CommandRunner
 #include "connections-dialog.h"                  // ConnectionsDialog
+#include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-proxy-style.h"                  // EditorProxyStyle
 #include "editor-version.h"                      // getEditorVersionString
@@ -66,6 +67,7 @@
 #include <cstring>                               // std::{strlen, memcpy}
 #include <deque>                                 // std::deque
 #include <exception>                             // std::exception
+#include <memory>                                // std::{unique_ptr, make_unique}
 #include <optional>                              // std::optional
 #include <string>                                // std::string
 #include <utility>                               // std::move
@@ -107,6 +109,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_openFilesDialog(),
     m_applyCommandDialogs(),
     m_connectionsDialog(),
+    m_diagnosticDetailsDialog(),
     m_recentCommands(),
     m_settings(),
     m_doNotSaveSettings(false),
@@ -1341,6 +1344,16 @@ ApplyCommandDialog &EditorGlobal::getApplyCommandDialog(
       new ApplyCommandDialog(this, eclf));
   }
   return *( m_applyCommandDialogs[eclf] );
+}
+
+
+RCSerf<DiagnosticDetailsDialog> EditorGlobal::getDiagnosticDetailsDialog()
+{
+  if (!m_diagnosticDetailsDialog) {
+    m_diagnosticDetailsDialog =
+      std::make_unique<DiagnosticDetailsDialog>();
+  }
+  return m_diagnosticDetailsDialog.get();
 }
 
 

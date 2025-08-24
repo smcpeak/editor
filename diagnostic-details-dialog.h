@@ -8,6 +8,8 @@
 
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
+#include "smbase/refct-serf.h"                   // SerfRefCount
+
 #include <QDialog>
 #include <QString>
 #include <QVector>
@@ -24,7 +26,8 @@ class QSplitter;
 //
 // See `doc/diagnostic-details-spec.html` for details.
 //
-class DiagnosticDetailsDialog : public QDialog {
+class DiagnosticDetailsDialog : public QDialog,
+                                public SerfRefCount {
   Q_OBJECT
 
 public:      // types

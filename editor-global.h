@@ -11,6 +11,7 @@
 #include "builtin-font.h"                        // BuiltinFont
 #include "command-runner-fwd.h"                  // CommandRunner [n]
 #include "connections-dialog-fwd.h"              // ConnectionsDialog [n]
+#include "diagnostic-details-dialog-fwd.h"       // DiagnosticDetailsDialog [n]
 #include "eclf.h"                                // EditorCommandLineFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand [n]
 #include "editor-settings.h"                     // EditorSettings
@@ -28,7 +29,7 @@
 // smbase
 #include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile [n]
 #include "smbase/objlist.h"                      // ObjList
-#include "smbase/refct-serf.h"                   // SerfRefCount
+#include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf
 #include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
@@ -124,6 +125,9 @@ private:     // instance data
 
   // Connections dialog, even when not shown.
   std::unique_ptr<ConnectionsDialog> m_connectionsDialog;
+
+  // Dialog for showing LSP diagnostics.
+  std::unique_ptr<DiagnosticDetailsDialog> m_diagnosticDetailsDialog;
 
   // Partial history of recently executed commands.  The element at the
   // back is the most recent, such that the sequence is in chronological
@@ -448,6 +452,9 @@ public:       // funcs
   // Get or create the dialog for `eclf`.
   ApplyCommandDialog &getApplyCommandDialog(
     EditorCommandLineFunction eclf);
+
+  // Get this dialog, creating it if needed.
+  RCSerf<DiagnosticDetailsDialog> getDiagnosticDetailsDialog();
 
   // --------------------------- LSP Global ----------------------------
   // Read-only access to the manager.

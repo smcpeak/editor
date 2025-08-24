@@ -2698,8 +2698,9 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 
 std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 {
-  static DiagnosticDetailsDialog *dlg = new DiagnosticDetailsDialog();
-  static SMFileUtil sfu;
+  DiagnosticDetailsDialog *dlg =
+    editorGlobal()->getDiagnosticDetailsDialog();
+  SMFileUtil sfu;
 
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
@@ -2888,7 +2889,6 @@ void EditorWidget::lspHandleLocationReply(
   try {
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
-      // TODO: This message will have to be generalized.
       inform(stringb(
         "No " << lsrkMsgStr << " found for symbol at cursor."));
     }
