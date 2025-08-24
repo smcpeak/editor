@@ -7,6 +7,7 @@
 #include "completions-dialog.h"                  // CompletionsDialog
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
+#include "diagnostic-element.h"                  // DiagnosticElement
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
@@ -2697,7 +2698,7 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 
 
 void EditorWidget::showDiagnosticDetailsDialog(
-  QVector<DiagnosticDetailsDialog::Element> &&elts) const
+  QVector<DiagnosticElement> &&elts) const
 {
   DiagnosticDetailsDialog *dlg =
     editorGlobal()->getDiagnosticDetailsDialog();
@@ -2733,12 +2734,11 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
     if (RCSerf<TDD_Diagnostic const> diag = tdd->getDiagnosticAt(cursorMC)) {
 
       // Copy `diag` into a vector of elements for the dialog.
-      typedef DiagnosticDetailsDialog::Element Element;
-      QVector<Element> elts;
+      QVector<DiagnosticElement> elts;
 
       // Primary location and message.
       DocumentName docName = getDocument()->documentName();
-      elts.push_back(Element{
+      elts.push_back(DiagnosticElement{
         toQString(docName.directory()),
         toQString(sfu.splitPathBase(docName.filename())),
         cursorMC.m_line + 1,           // TextMCoord uses 0-based lines.
@@ -2749,7 +2749,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
       for (TDD_Related const &rel : diag->m_related) {
         std::string d, b;
         sfu.splitPath(d, b, rel.m_file);
-        elts.push_back(Element{
+        elts.push_back(DiagnosticElement{
           toQString(d),
           toQString(b),
           rel.m_line,                  // 1-based.
@@ -2911,8 +2911,7 @@ void EditorWidget::lspHandleLocationReply(
         loc.m_range.m_start.m_character);
     }
     else {
-      using Element = DiagnosticDetailsDialog::Element;
-      QVector<Element> elts;
+      QVector<DiagnosticElement> elts;
 
       SMFileUtil sfu;
 
@@ -2920,7 +2919,7 @@ void EditorWidget::lspHandleLocationReply(
         std::string d, b;
         sfu.splitPath(d, b, loc.getFname());
 
-        elts.push_back(Element{
+        elts.push_back(DiagnosticElement{
           toQString(d),
           toQString(b),
           loc.m_range.m_start.m_line + 1,

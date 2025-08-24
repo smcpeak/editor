@@ -6,6 +6,8 @@
 #ifndef EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 #define EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 
+#include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
+
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
 #include "smbase/refct-serf.h"                   // SerfRefCount
@@ -30,32 +32,10 @@ class DiagnosticDetailsDialog : public QDialog,
                                 public SerfRefCount {
   Q_OBJECT
 
-public:      // types
-  // One element of a diagnostic message.
-  //
-  // TODO: Make this a global class called `DiagnosticElement` that
-  // carries `std::string`, and combines dir+file.
-  struct Element {
-    // Absolute directory path containing `file`.  It ends with a slash.
-    QString m_dir;
-
-    // Name of a file within `dir`
-    QString m_file;
-
-    // 1-based line number within `file` where the syntax of interest
-    // is.
-    int m_line;
-
-    // The relevance of the indicated line.  This might be very long,
-    // often hundreds and occasionally more than 1000 characters, due to
-    // the "explosive" nature of C++ template error messages.
-    QString m_message;
-  };
-
 private:     // data
   // Sequence of elements being shown.  The first is the "main" one,
   // identifying some problem, while others are supporing evidence.
-  QVector<Element> m_diagnostics;
+  QVector<DiagnosticElement> m_diagnostics;
 
   // Controls.
   QLabel *m_locationLabel;             // Selected element file/line.
@@ -84,7 +64,7 @@ public:      // methods
   DiagnosticDetailsDialog(QWidget *parent = nullptr);
 
   // Replace the current set of diagnostics.
-  void setDiagnostics(QVector<Element> &&diagnostics);
+  void setDiagnostics(QVector<DiagnosticElement> &&diagnostics);
 
 Q_SIGNALS:
   // Emitted when the user indicates they want to see this location in

@@ -3,6 +3,8 @@
 
 #include "diagnostic-details-dialog.h" // this module
 
+#include "diagnostic-element.h"        // DiagnosticElement
+
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
@@ -27,7 +29,7 @@ void DiagnosticDetailsDialog::updateTopPanel()
 {
   int row = m_table->currentRow();
   if (0 <= row && row < m_diagnostics.size()) {
-    Element const &elt = m_diagnostics[row];
+    DiagnosticElement const &elt = m_diagnostics[row];
     m_locationLabel->setText(QString("%1%2:%3")
       .arg(elt.m_dir)
       .arg(elt.m_file)
@@ -55,7 +57,7 @@ void DiagnosticDetailsDialog::repopulateTable()
   m_table->setRowCount(m_diagnostics.size());
 
   for (int row=0; row < m_diagnostics.size(); ++row) {
-    Element const &elt = m_diagnostics[row];
+    DiagnosticElement const &elt = m_diagnostics[row];
 
     // Next column index to use.
     int c = 0;
@@ -124,7 +126,7 @@ void DiagnosticDetailsDialog::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Return: {
       int row = m_table->currentRow();
       if (0 <= row && row < m_diagnostics.size()) {
-        Element const &elt = m_diagnostics[row];
+        DiagnosticElement const &elt = m_diagnostics[row];
         Q_EMIT signal_jumpToLocation(
           elt.m_dir + elt.m_file,
           elt.m_line);
@@ -260,7 +262,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
 
 
 void DiagnosticDetailsDialog::setDiagnostics(
-  QVector<Element> &&diagnostics)
+  QVector<DiagnosticElement> &&diagnostics)
 {
   m_diagnostics = std::move(diagnostics);
   repopulateTable();

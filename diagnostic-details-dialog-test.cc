@@ -3,6 +3,8 @@
 
 #include "diagnostic-details-dialog.h" // module under test
 
+#include "diagnostic-element.h"        // DiagnosticElement
+
 #include <QApplication>
 #include <QMessageBox>
 
@@ -12,12 +14,11 @@
 // Called from gui-tests.cc.
 int diagnostic_details_dialog_test(QApplication &app)
 {
-  typedef DiagnosticDetailsDialog::Element Element;
-  QVector<Element> diagnostics;
+  QVector<DiagnosticElement> diagnostics;
   diagnostics.reserve(10);
 
   for (int i = 0; i < 10; ++i) {
-    Element de;
+    DiagnosticElement de;
     de.m_dir = QString("/long/path/to/source/directory/number/%1/").arg(i);
     de.m_file = QString("file%1.cpp").arg(i);
     de.m_line = i * 10 + 1;
