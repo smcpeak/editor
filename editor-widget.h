@@ -754,7 +754,7 @@ public Q_SLOTS:
   void on_vfsConnectionFailed(HostName hostName, string reason) NOEXCEPT;
 
   // Handler for `DiagnosticDetailsDialog`.
-  void on_jumpToDiagnosticLocation(QString const &fname, int line) NOEXCEPT;
+  void on_jumpToDiagnosticLocation(DiagnosticElement const &element) NOEXCEPT;
 
 Q_SIGNALS:
   // Emitted when some aspect of the document that is shown outside the

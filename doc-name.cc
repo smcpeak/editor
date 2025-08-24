@@ -65,6 +65,15 @@ void DocumentName::setDirectory(string const &dir)
 }
 
 
+/*static*/ DocumentName DocumentName::fromFilenameHarn(
+  HostAndResourceName const &harn)
+{
+  DocumentName ret;
+  ret.setFilenameHarn(harn);
+  return ret;
+}
+
+
 /*static*/ DocumentName DocumentName::fromNonFileResourceName(
   HostName const &hostName,
   string const &name,

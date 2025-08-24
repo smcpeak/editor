@@ -61,6 +61,9 @@ public:      // methods
     HostName const &hostName,
     string const &filename);
 
+  static DocumentName fromFilenameHarn(
+    HostAndResourceName const &harn);
+
   static DocumentName fromNonFileResourceName(
     HostName const &hostName,
     string const &name,

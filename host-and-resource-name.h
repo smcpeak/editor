@@ -4,16 +4,18 @@
 #ifndef EDITOR_HOST_AND_RESOURCE_NAME_H
 #define EDITOR_HOST_AND_RESOURCE_NAME_H
 
+#include "host-and-resource-name-fwd.h"          // fwds for this module
+
 // editor
-#include "host-name.h"                 // HostName
+#include "host-name.h"                           // HostName
 
 // smbase
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
-#include "smbase/sm-compare.h"         // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
-#include "smbase/str.h"                // string
+#include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
+#include "smbase/sm-compare.h"                   // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
+#include "smbase/str.h"                          // string
 
 // libc++
-#include <iosfwd>                      // std::ostream
+#include <iosfwd>                                // std::ostream
 
 
 // Pair of a host name and a resource found on that host.

@@ -2731,7 +2731,8 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
     TextMCoord cursorMC = m_editor->cursorAsModelCoord();
-    if (RCSerf<TDD_Diagnostic const> diag = tdd->getDiagnosticAt(cursorMC)) {
+    if (RCSerf<TDD_Diagnostic const> diag =
+          tdd->getDiagnosticAt(cursorMC)) {
 
       // Copy `diag` into a vector of elements for the dialog.
       QVector<DiagnosticElement> elts;
@@ -2739,21 +2740,17 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
       // Primary location and message.
       DocumentName docName = getDocument()->documentName();
       elts.push_back(DiagnosticElement{
-        toQString(docName.directory()),
-        toQString(sfu.splitPathBase(docName.filename())),
+        docName.harn(),
         cursorMC.m_line + 1,           // TextMCoord uses 0-based lines.
-        toQString(diag->m_message)
+        diag->m_message
       });
 
       // Related messages.
       for (TDD_Related const &rel : diag->m_related) {
-        std::string d, b;
-        sfu.splitPath(d, b, rel.m_file);
         elts.push_back(DiagnosticElement{
-          toQString(d),
-          toQString(b),
+          HostAndResourceName::localFile(rel.m_file),
           rel.m_line,                  // 1-based.
-          toQString(rel.m_message)
+          rel.m_message
         });
       }
 
@@ -2785,15 +2782,16 @@ void EditorWidget::goToLocalFileAndLineOpt(
 
 
 void EditorWidget::on_jumpToDiagnosticLocation(
-  QString const &fname, int line) NOEXCEPT
+  DiagnosticElement const &element) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   TRACE1("on_jumpToDiagnosticLocation:"
-    " fname=" << doubleQuote(fname) <<
-    " line=" << line);
+    " harn=" << element.m_harn <<
+    " line=" << element.m_line);
 
-  goToLocalFileAndLineOpt(toString(fname), line, -1);
+  goToLocalFileAndLineOpt(
+    element.m_harn.resourceName(), element.m_line, -1);
 
   GENERIC_CATCH_END
 }
@@ -2916,12 +2914,8 @@ void EditorWidget::lspHandleLocationReply(
       SMFileUtil sfu;
 
       for (LSP_Location const &loc : lseq.m_locations) {
-        std::string d, b;
-        sfu.splitPath(d, b, loc.getFname());
-
         elts.push_back(DiagnosticElement{
-          toQString(d),
-          toQString(b),
+          HostAndResourceName::localFile(loc.getFname()),
           loc.m_range.m_start.m_line + 1,
 
           // TODO: Use the line of code as the message.

@@ -5,11 +5,13 @@
 
 #include "diagnostic-element.h"        // DiagnosticElement
 
+#include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/xassert.h"            // xassert
 
 #include <QHeaderView>
@@ -30,24 +32,10 @@ void DiagnosticDetailsDialog::updateTopPanel()
   int row = m_table->currentRow();
   if (0 <= row && row < m_diagnostics.size()) {
     DiagnosticElement const &elt = m_diagnostics[row];
-    m_locationLabel->setText(QString("%1%2:%3")
-      .arg(elt.m_dir)
-      .arg(elt.m_file)
-      .arg(elt.m_line));
-    m_messageText->setPlainText(elt.m_message);
-  }
-}
-
-
-// Return `s` without its final slash if it has one; otherwise just
-// return `s` as-is.
-static QString removeFinalSlash(QString const &s)
-{
-  if (s.endsWith('/')) {
-    return s.chopped(1);
-  }
-  else {
-    return s;
+    m_locationLabel->setText(qstringb(
+      // TODO: Adjust when `m_harn` can be remote.
+      elt.m_harn.resourceName() << ":" << elt.m_line));
+    m_messageText->setPlainText(toQString(elt.m_message));
   }
 }
 
@@ -56,23 +44,26 @@ void DiagnosticDetailsDialog::repopulateTable()
 {
   m_table->setRowCount(m_diagnostics.size());
 
+  SMFileUtil sfu;
+
   for (int row=0; row < m_diagnostics.size(); ++row) {
     DiagnosticElement const &elt = m_diagnostics[row];
 
     // Next column index to use.
     int c = 0;
 
+    std::string dir, base;
+    sfu.splitPath(dir, base, elt.m_harn.resourceName());
+
+    // Remove the trailing slash, and add a trailing space to get a bit
+    // more visual separation.  (I would prefer to somehow adjust the
+    // column's built-in padding, but I think I need a delegate for
+    // that, which is overkill for the moment.)
+    dir = sfu.stripTrailingDirectorySeparator(dir) + " ";
+
     {
-      // Although `m_dir` has (should have) a final slash, in this
-      // column I want to not have it.
-      //
-      // Also add a trailing space to get a bit more visual separation.
-      // (I would prefer to somehow adjust the column's built-in
-      // padding, but I think I need a delegate for that, which is
-      // overkill for the moment.)
-      //
-      QTableWidgetItem *item = new QTableWidgetItem(
-        removeFinalSlash(elt.m_dir) + " ");
+      QTableWidgetItem *item = new QTableWidgetItem(toQString(
+        dir));
 
       // Use right alignment so the final part of the path name is
       // visible, as this is mainly for disambiguation among files.
@@ -82,13 +73,14 @@ void DiagnosticDetailsDialog::repopulateTable()
     }
 
     {
-      QTableWidgetItem *item = new QTableWidgetItem(
-        QString("%1:%2").arg(elt.m_file).arg(elt.m_line));
+      QTableWidgetItem *item = new QTableWidgetItem(qstringb(
+        base << ":" << elt.m_line));
       m_table->setItem(row, c++, item);
     }
 
     {
-      QTableWidgetItem *item = new QTableWidgetItem(elt.m_message);
+      QTableWidgetItem *item = new QTableWidgetItem(toQString(
+        elt.m_message));
       m_table->setItem(row, c++, item);
     }
 
@@ -127,9 +119,7 @@ void DiagnosticDetailsDialog::keyPressEvent(QKeyEvent *event)
       int row = m_table->currentRow();
       if (0 <= row && row < m_diagnostics.size()) {
         DiagnosticElement const &elt = m_diagnostics[row];
-        Q_EMIT signal_jumpToLocation(
-          elt.m_dir + elt.m_file,
-          elt.m_line);
+        Q_EMIT signal_jumpToLocation(elt);
       }
       break;
     }

@@ -67,9 +67,9 @@ public:      // methods
   void setDiagnostics(QVector<DiagnosticElement> &&diagnostics);
 
 Q_SIGNALS:
-  // Emitted when the user indicates they want to see this location in
-  // an editor.  `fname` is an absolute path, and `line` is 1-based.
-  void signal_jumpToLocation(QString const &fname, int line);
+  // Emitted when the user indicates they want to see one element in
+  // an editor.
+  void signal_jumpToLocation(DiagnosticElement const &element);
 };
 
 

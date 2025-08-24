@@ -5,6 +5,11 @@
 
 #include "diagnostic-element.h"        // DiagnosticElement
 
+#include "smqtutil/qstringb.h"         // qstringb
+
+#include "smbase/string-util.h"        // repeatString
+#include "smbase/stringb.h"            // stringb
+
 #include <QApplication>
 #include <QMessageBox>
 
@@ -18,15 +23,16 @@ int diagnostic_details_dialog_test(QApplication &app)
   diagnostics.reserve(10);
 
   for (int i = 0; i < 10; ++i) {
-    DiagnosticElement de;
-    de.m_dir = QString("/long/path/to/source/directory/number/%1/").arg(i);
-    de.m_file = QString("file%1.cpp").arg(i);
-    de.m_line = i * 10 + 1;
-    if (i == 5) {
-      de.m_message = QString("This is a very long diagnostic message. ").repeated(40);
-    } else {
-      de.m_message = QString("Message for element %1.").arg(i);
-    }
+    DiagnosticElement de{
+      HostAndResourceName::localFile(stringb(
+        "/long/path/to/source/directory/number/" << i <<
+        "/file" << i << ".cpp")),
+      i * 10 + 1,
+      (i == 5?
+         repeatString("This is a very long diagnostic message. ", 40) :
+         stringb("Message for element " << i << "."))
+    };
+
     diagnostics.append(de);
   }
 
@@ -36,9 +42,11 @@ int diagnostic_details_dialog_test(QApplication &app)
   dlg->setDiagnostics(std::move(diagnostics));
 
   QObject::connect(dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
-                   [dlg](const QString &path, int line) {
+                   [dlg](DiagnosticElement const &element) {
     QMessageBox::information(dlg, "Jump To",
-      QString("Jump to:\n%1\nLine: %2").arg(path).arg(line));
+      qstringb("Jump to:\n" <<
+               element.m_harn << "\n"
+               "Line: " << element.m_line));
   });
 
   QObject::connect(dlg, &QObject::destroyed, &app, &QApplication::quit);
