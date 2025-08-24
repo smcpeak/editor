@@ -216,6 +216,7 @@ EditorWidget::~EditorWidget()
   this->stopListening();
 
   editorGlobal()->removeDocumentListObserver(this);
+  editorGlobal()->removeRecentEditorWidget(this);
 
   m_textSearch.reset();
 
@@ -2600,13 +2601,16 @@ void EditorWidget::focusInEvent(QFocusEvent *e) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE2("focusInEvent: editor(" << (void*)this << "): focus in");
+  TRACE2("focusInEvent: this=" << (void*)this <<
+         ", doc=" << this->getDocument()->documentName());
   QWidget::focusInEvent(e);
 
   // Refreshing when we gain focus interacts badly with the window that
   // pops up when a VFS operation is delayed.  Let's turn this off for
   // now.
   //this->requestFileStatus();
+
+  editorGlobal()->addRecentEditorWidget(this);
 
   GENERIC_CATCH_END
 }
@@ -2616,7 +2620,8 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE2("focusOutEvent: editor(" << (void*)this << "): focus out");
+  TRACE2("focusOutEvent: this=" << (void*)this <<
+         ", doc=" << this->getDocument()->documentName());
   QWidget::focusOutEvent(e);
 
   GENERIC_CATCH_END
@@ -2812,7 +2817,9 @@ void EditorWidget::lspGoToAdjacentDiagnostic(bool next)
 }
 
 
-void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
+void EditorWidget::lspGoToRelatedLocation(
+  LSPSymbolRequestKind lsrk,
+  LSPSymbolRequestOptions options)
 {
   NamedTextDocument *ntd = getDocument();
   if (std::optional<std::string> reason =
@@ -2863,7 +2870,12 @@ void EditorWidget::lspGoToRelatedLocation(LSPSymbolRequestKind lsrk)
       GDValue gdvReply = editorGlobal()->lspTakeReplyForID(id);
       TRACE1("received reply: " << gdvReply.asIndentedString());
 
-      lspHandleLocationReply(gdvReply, lsrk);
+      EditorWidget *widgetToShow = this;
+      if (options == LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW) {
+        widgetToShow = editorGlobal()->getOtherEditorWidget(this);
+      }
+
+      widgetToShow->lspHandleLocationReply(gdvReply, lsrk);
     }
     else {
       complain(editorGlobal()->lspExplainAbnormality());

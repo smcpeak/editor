@@ -511,10 +511,17 @@ void EditorWindow::buildMenu()
       // have easy, direct control over.
       MENU_ITEM_KEY("De&finition (or decl if at defn)",
                     lspGoToDefinition, Qt::Key_F12);
-      MENU_ITEM_KEY("De&claration",
-                    lspGoToDeclaration, Qt::SHIFT + Qt::Key_F12);
+      MENU_ITEM    ("Definition, in other window",
+                    lspGoToDefinitionInOtherWindow);
+      MENU_ITEM    ("Declaration",
+                    lspGoToDeclaration);
+      MENU_ITEM_KEY("De&claration, in other window",
+                    lspGoToDeclarationInOtherWindow,
+                    Qt::SHIFT + Qt::Key_F12);
       MENU_ITEM_KEY("&All uses",
                     lspGoToAllUses, Qt::CTRL + Qt::Key_F12);
+      MENU_ITEM    ("&All uses, in other window",
+                    lspGoToAllUsesInOtherWindow);
       MENU_ITEM    ("&Hover info",
                     lspHoverInfo);
       MENU_ITEM_KEY("Completio&n",
@@ -2235,6 +2242,18 @@ void EditorWindow::lspGoToDefinition() NOEXCEPT
 }
 
 
+void EditorWindow::lspGoToDefinitionInOtherWindow() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_DEFINITION,
+    LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW);
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::lspGoToDeclaration() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2246,12 +2265,36 @@ void EditorWindow::lspGoToDeclaration() NOEXCEPT
 }
 
 
+void EditorWindow::lspGoToDeclarationInOtherWindow() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_DECLARATION,
+    LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW);
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::lspGoToAllUses() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   editorWidget()->lspGoToRelatedLocation(
     LSPSymbolRequestKind::K_REFERENCES);
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspGoToAllUsesInOtherWindow() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_REFERENCES,
+    LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW);
 
   GENERIC_CATCH_END
 }

@@ -15,6 +15,7 @@
 #include "lsp-data-types.h"                      // LSP_VersionNumber
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
+#include "lsp-symbol-request-options.h"          // LSPSymbolRequestOptions
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
@@ -493,7 +494,9 @@ public:      // funcs
   void lspGoToAdjacentDiagnostic(bool next);
 
   // Go to a location related to the symbol at the cursor.
-  void lspGoToRelatedLocation(LSPSymbolRequestKind lsrk);
+  void lspGoToRelatedLocation(
+    LSPSymbolRequestKind lsrk,
+    LSPSymbolRequestOptions options = LSPSymbolRequestOptions::LSRO_NORMAL);
 
   // Handle the reply to a request for a location.
   void lspHandleLocationReply(

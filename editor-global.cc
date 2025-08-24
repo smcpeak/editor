@@ -21,6 +21,7 @@
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
+#include "recent-items-list.h"                   // RecentItemsList
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
 #include "uri-util.h"                            // getFileURIPath
@@ -45,6 +46,7 @@
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/objcount.h"                     // CheckObjectCount
 #include "smbase/save-restore.h"                 // SET_RESTORE, SetRestore
+#include "smbase/set-util.h"                     // smbase::{setInsertUnique, setContains}
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-is-equal.h"                  // smbase::is_equal
@@ -281,6 +283,8 @@ EditorGlobal::~EditorGlobal()
 
 void EditorGlobal::selfCheck() const
 {
+  EXN_CONTEXT("EditorGlobal::selfCheck");
+
   m_documentList.selfCheck();
 
   FOREACH_OBJLIST(EditorWindow, m_editorWindows, iter) {
@@ -298,32 +302,50 @@ void EditorGlobal::selfCheck() const
     XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
   }
 
-  // Count the LSP-open files we do and do not check, so I can manually
-  // confirm nearly all are checked.
-  int numChecked = 0;
-  int numUnchecked = 0;
+  {
+    // Count the LSP-open files we do and do not check, so I can manually
+    // confirm nearly all are checked.
+    int numChecked = 0;
+    int numUnchecked = 0;
 
-  // For all files open with the LSP server, if it is supposed to be up
-  // to date in server manager, its copy should agree with the editor's
-  // copy.
-  for (int index=0; index < numDocuments(); ++index) {
-    NamedTextDocument const *ntd = getDocumentByIndexC(index);
-    EXN_CONTEXT(ntd->documentName());
+    // For all files open with the LSP server, if it is supposed to be up
+    // to date in server manager, its copy should agree with the editor's
+    // copy.
+    for (int index=0; index < numDocuments(); ++index) {
+      NamedTextDocument const *ntd = getDocumentByIndexC(index);
+      EXN_CONTEXT(ntd->documentName());
 
-    if (RCSerf<LSPDocumentInfo const> docInfo = lspGetDocInfo(ntd)) {
-      if (is_equal(docInfo->m_lastSentVersion, ntd->getVersionNumber())) {
-        xassert(docInfo->lastContentsEquals(ntd->getCore()));
-        ++numChecked;
-      }
-      else {
-        // The manager's version is behind, presumably because
-        // continuous update is not enabled.  Don't check anything in
-        // this case.
-        ++numUnchecked;
+      if (RCSerf<LSPDocumentInfo const> docInfo = lspGetDocInfo(ntd)) {
+        if (is_equal(docInfo->m_lastSentVersion, ntd->getVersionNumber())) {
+          xassert(docInfo->lastContentsEquals(ntd->getCore()));
+          ++numChecked;
+        }
+        else {
+          // The manager's version is behind, presumably because
+          // continuous update is not enabled.  Don't check anything in
+          // this case.
+          ++numUnchecked;
+        }
       }
     }
+    TRACE1_GDVN_EXPRS("EditorGlobal::selfCheck", numChecked, numUnchecked);
   }
-  TRACE1_GDVN_EXPRS("EditorGlobal::selfCheck", numChecked, numUnchecked);
+
+  {
+    // Collect the set of widgets in all windows.
+    std::set<EditorWidget*> allWidgets;
+    FOREACH_OBJLIST(EditorWindow, m_editorWindows, iter) {
+      setInsertUnique(allWidgets, iter.data()->editorWidget());
+    }
+
+    // That should be a superset of `m_recentEditorWidgets`.
+    for (RCSerf<EditorWidget> const &recent :
+           m_recentEditorWidgets.getListC()) {
+      xassert(setContains(allWidgets, recent));
+    }
+
+    m_recentEditorWidgets.selfCheck();
+  }
 
   m_vfsConnections.selfCheck();
 }
@@ -1354,6 +1376,25 @@ RCSerf<DiagnosticDetailsDialog> EditorGlobal::getDiagnosticDetailsDialog()
       std::make_unique<DiagnosticDetailsDialog>();
   }
   return m_diagnosticDetailsDialog.get();
+}
+
+
+// ---------------------- Recent editor widgets ----------------------
+void EditorGlobal::addRecentEditorWidget(EditorWidget *ew)
+{
+  m_recentEditorWidgets.add(ew);
+}
+
+
+void EditorGlobal::removeRecentEditorWidget(EditorWidget *ew)
+{
+  m_recentEditorWidgets.remove(ew);
+}
+
+
+EditorWidget *EditorGlobal::getOtherEditorWidget(EditorWidget *ew)
+{
+  return m_recentEditorWidgets.getRecentOther(ew);
 }
 
 

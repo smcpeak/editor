@@ -76,6 +76,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(ocaml_hilite);
   RUN_TEST(python_hilite);
   RUN_TEST(range_text_repl);
+  RUN_TEST(recent_items_list);
   RUN_TEST(td);
   RUN_TEST(td_change);
   RUN_TEST(td_core);

@@ -36,6 +36,7 @@ void test_nearby_file(CmdlineArgsSpan args);
 void test_ocaml_hilite(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
 void test_range_text_repl(CmdlineArgsSpan args);
+void test_recent_items_list(CmdlineArgsSpan args);
 void test_td(CmdlineArgsSpan args);
 void test_td_change(CmdlineArgsSpan args);
 void test_td_core(CmdlineArgsSpan args);

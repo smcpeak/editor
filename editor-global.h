@@ -16,6 +16,7 @@
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand [n]
 #include "editor-settings.h"                     // EditorSettings
 #include "editor-window-fwd.h"                   // EditorWindow [n]
+#include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
 #include "lsp-manager.h"                         // LSPManager, LSPDocumentInfo
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
@@ -23,6 +24,7 @@
 #include "open-files-dialog-fwd.h"               // OpenFilesDialog [n]
 #include "pixmaps.h"                             // Pixmaps
 #include "process-watcher-fwd.h"                 // ProcessWatcher [n]
+#include "recent-items-list-iface.h"             // RecentItemsList
 #include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
 #include "vfs-connections.h"                     // VFS_Connections
 
@@ -77,6 +79,13 @@ private:     // instance data
   // Currently open editor windows.  Once the last one of these closes,
   // the app quits.
   ObjList<EditorWindow> m_editorWindows;
+
+  // List of recently used editor widgets.  This is used to support
+  // opening files in the "other" window.
+  //
+  // Invariant: Every widget is the widget for some window in
+  // `m_editorWindows`.
+  RecentItemsList<RCSerf<EditorWidget>> m_recentEditorWidgets;
 
   // General editor-wide log file.  Can be null, depending on an envvar
   // setting.
@@ -209,6 +218,8 @@ public:       // funcs
 
   // To run the app, use the 'exec()' method, inherited
   // from QApplication.
+
+  // TODO: Organize this list of methods.
 
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
@@ -455,6 +466,17 @@ public:       // funcs
 
   // Get this dialog, creating it if needed.
   RCSerf<DiagnosticDetailsDialog> getDiagnosticDetailsDialog();
+
+  // ---------------------- Recent editor widgets ----------------------
+  // Add or move `ew` to the front of "recent" list.
+  void addRecentEditorWidget(EditorWidget *ew);
+
+  // Remove `ew` from the "recent" list.
+  void removeRecentEditorWidget(EditorWidget *ew);
+
+  // Get the most recently used widget other than `ew`.  Return `ew` if
+  // there is no alternative.
+  EditorWidget *getOtherEditorWidget(EditorWidget *ew);
 
   // --------------------------- LSP Global ----------------------------
   // Read-only access to the manager.

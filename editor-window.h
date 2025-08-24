@@ -283,8 +283,11 @@ public Q_SLOTS:
   void lspRemoveDiagnostics() NOEXCEPT;
   void lspSetFakeStatus() NOEXCEPT;
   void lspGoToDefinition() NOEXCEPT;
+  void lspGoToDefinitionInOtherWindow() NOEXCEPT;
   void lspGoToDeclaration() NOEXCEPT;
+  void lspGoToDeclarationInOtherWindow() NOEXCEPT;
   void lspGoToAllUses() NOEXCEPT;
+  void lspGoToAllUsesInOtherWindow() NOEXCEPT;
   void lspHoverInfo() NOEXCEPT;
   void lspCompletion() NOEXCEPT;
 
