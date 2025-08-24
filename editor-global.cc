@@ -451,6 +451,21 @@ void EditorGlobal::processCommandLineOptions(
 }
 
 
+void EditorGlobal::on_vfsConnectionFailed(
+  HostName hostName, std::string reason) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  QMessageBox::warning(nullptr, "Connection Failed", qstringb(
+    "The connection to " << hostName << " has failed.  Reads "
+    "and writes will not work until this connection is restarted.  "
+    "Error message: " << reason));
+
+  GENERIC_CATCH_END
+}
+
+
+// ---------------------- Documents being edited -----------------------
 NamedTextDocumentList const *EditorGlobal::documentList() const
 {
   return &m_documentList;
@@ -477,59 +492,9 @@ NamedTextDocument *EditorGlobal::getDocumentByIndex(int index)
 }
 
 
-EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
-{
-  EditorWindow *ed = new EditorWindow(this, initFile);
-  ed->setObjectName(qstringb("window" << m_windowCounter++));
-
-  // NOTE: caller still has to say 'ed->show()'!
-
-  return ed;
-}
-
-
 NamedTextDocument *EditorGlobal::createNewFile(std::string const &dir)
 {
   return m_documentList.createUntitledDocument(dir);
-}
-
-
-void EditorGlobal::registerEditorWindow(EditorWindow *ew)
-{
-  m_editorWindows.append(ew);
-  m_documentList.addObserver(ew);
-}
-
-
-void EditorGlobal::unregisterEditorWindow(EditorWindow *ew)
-{
-  m_documentList.removeObserver(ew);
-
-  // This object might have already been removed, for example because
-  // the EditorGlobal destructor is running, and is in the process of
-  // removing elements from the list and destroying them.  Hence the
-  // "IfPresent" part of this call.
-  m_editorWindows.removeIfPresent(ew);
-}
-
-
-int EditorGlobal::numEditorWindows() const
-{
-  return m_editorWindows.count();
-}
-
-
-void EditorGlobal::addDocumentListObserver(
-  NamedTextDocumentListObserver *observer)
-{
-  m_documentList.addObserver(observer);
-}
-
-
-void EditorGlobal::removeDocumentListObserver(
-  NamedTextDocumentListObserver *observer)
-{
-  m_documentList.removeObserver(observer);
 }
 
 
@@ -547,20 +512,6 @@ EditorGlobal::getFileWithName(DocumentName &docName)
 }
 
 
-NamedTextDocument * NULLABLE
-EditorGlobal::findUntitledUnmodifiedDocument()
-{
-  return m_documentList.findUntitledUnmodifiedDocument();
-}
-
-
-void EditorGlobal::notifyDocumentAttributeChanged(
-  NamedTextDocument *ntd)
-{
-  m_documentList.notifyAttributeChanged(ntd);
-}
-
-
 bool EditorGlobal::hasFileWithName(DocumentName const &docName) const
 {
   return getFileWithNameC(docName) != nullptr;
@@ -570,12 +521,6 @@ bool EditorGlobal::hasFileWithName(DocumentName const &docName) const
 bool EditorGlobal::hasFileWithTitle(std::string const &title) const
 {
   return m_documentList.findDocumentByTitleC(title) != NULL;
-}
-
-
-std::string EditorGlobal::uniqueTitleFor(DocumentName const &docName) const
-{
-  return m_documentList.computeUniqueTitle(docName);
 }
 
 
@@ -602,21 +547,6 @@ bool EditorGlobal::hasDocumentFile(NamedTextDocument const *ntd) const
 void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
 {
   m_documentList.moveDocument(f, 0);
-}
-
-
-bool EditorGlobal::getInitialViewForFile(
-  NamedTextDocument *ntd,
-  NamedTextDocumentInitialView &view /*OUT*/)
-{
-  return m_documentList.notifyGetInitialView(ntd, view /*OUT*/);
-}
-
-
-void EditorGlobal::getUniqueDocumentDirectories(
-  ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const
-{
-  m_documentList.getUniqueDirectories(dirs);
 }
 
 
@@ -658,15 +588,138 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
 }
 
 
-NamedTextDocument *EditorGlobal::runOpenFilesDialog(QWidget *callerWindow)
+// ------------------------- Special documents -------------------------
+NamedTextDocument * NULLABLE
+EditorGlobal::findUntitledUnmodifiedDocument()
 {
-  if (!m_openFilesDialog) {
-    m_openFilesDialog.reset(new OpenFilesDialog(this));
-  }
-  return m_openFilesDialog->runDialog(callerWindow);
+  return m_documentList.findUntitledUnmodifiedDocument();
 }
 
 
+NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
+  std::string const &title,
+  std::string const &contents)
+{
+  DocumentName docName;
+  docName.setNonFileResourceName(HostName::asLocal(),
+    title, SMFileUtil().currentDirectory());
+
+  NamedTextDocument *doc = m_documentList.findDocumentByName(docName);
+  if (!doc) {
+    doc = new NamedTextDocument();
+    doc->setDocumentName(docName);
+    doc->m_title = uniqueTitleFor(docName);
+    doc->appendString(contents);
+    doc->noUnsavedChanges();
+    doc->setReadOnly(true);
+    trackNewDocumentFile(doc);
+  }
+  else {
+    // TODO: I think I should reset the document contents here.
+  }
+
+  return doc;
+}
+
+
+NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
+{
+  return getOrCreateGeneratedDocument(
+    "Editor Keybindings",
+    std::string(doc_keybindings, sizeof(doc_keybindings)-1));
+}
+
+
+// ---------------------- Multi-document queries -----------------------
+std::string EditorGlobal::uniqueTitleFor(DocumentName const &docName) const
+{
+  return m_documentList.computeUniqueTitle(docName);
+}
+
+
+bool EditorGlobal::getInitialViewForFile(
+  NamedTextDocument *ntd,
+  NamedTextDocumentInitialView &view /*OUT*/)
+{
+  return m_documentList.notifyGetInitialView(ntd, view /*OUT*/);
+}
+
+
+void EditorGlobal::getUniqueDocumentDirectories(
+  ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const
+{
+  m_documentList.getUniqueDirectories(dirs);
+}
+
+
+// -------------------------- Editor windows ---------------------------
+int EditorGlobal::numEditorWindows() const
+{
+  return m_editorWindows.count();
+}
+
+
+EditorWindow *EditorGlobal::createNewWindow(NamedTextDocument *initFile)
+{
+  EditorWindow *ed = new EditorWindow(this, initFile);
+  ed->setObjectName(qstringb("window" << m_windowCounter++));
+
+  // NOTE: caller still has to say 'ed->show()'!
+
+  return ed;
+}
+
+
+void EditorGlobal::registerEditorWindow(EditorWindow *ew)
+{
+  m_editorWindows.append(ew);
+  m_documentList.addObserver(ew);
+}
+
+
+void EditorGlobal::unregisterEditorWindow(EditorWindow *ew)
+{
+  m_documentList.removeObserver(ew);
+
+  // This object might have already been removed, for example because
+  // the EditorGlobal destructor is running, and is in the process of
+  // removing elements from the list and destroying them.  Hence the
+  // "IfPresent" part of this call.
+  m_editorWindows.removeIfPresent(ew);
+}
+
+
+// --------------------------- Notification ----------------------------
+void EditorGlobal::notifyDocumentAttributeChanged(
+  NamedTextDocument *ntd)
+{
+  m_documentList.notifyAttributeChanged(ntd);
+}
+
+
+void EditorGlobal::broadcastEditorViewChanged()
+{
+  FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, w) {
+    w.data()->editorViewChanged();
+  }
+}
+
+
+void EditorGlobal::addDocumentListObserver(
+  NamedTextDocumentListObserver *observer)
+{
+  m_documentList.addObserver(observer);
+}
+
+
+void EditorGlobal::removeDocumentListObserver(
+  NamedTextDocumentListObserver *observer)
+{
+  m_documentList.removeObserver(observer);
+}
+
+
+// ---------------------- Running child processes ----------------------
 // Return a document that was or will be populated by running 'command'
 // in 'dir'.
 NamedTextDocument *EditorGlobal::getCommandOutputDocument(
@@ -804,6 +857,31 @@ void EditorGlobal::configureCommandRunner(
 }
 
 
+void EditorGlobal::namedTextDocumentRemoved(
+  NamedTextDocumentList const *documentList,
+  NamedTextDocument *fileDoc) NOEXCEPT
+{
+  ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
+  if (watcher) {
+    // Closing an output document.  Break the connection to the
+    // document so it can go away safely, and start killing the
+    // process.
+    TRACE1("namedTextDocumentRemoved: killing watcher: " << watcher);
+    watcher->m_namedDoc = NULL;
+    watcher->m_commandRunner.killProcessNoWait();
+
+    // This is a safe way to kill a child process.  We've detached it
+    // from the document, which has been removed from the list and is
+    // about to be deallocated, so we're good there.  And we're not
+    // waiting for the process to exit, but we haven't forgotten about
+    // it either, so we'll reap it if/when it dies.  Finally,
+    // ProcessWatcher is servicing the output and error channels,
+    // discarding any data that arrives, so we don't expend memory
+    // without bound.
+  }
+}
+
+
 std::string EditorGlobal::killCommand(NamedTextDocument *doc)
 {
   ProcessWatcher *watcher = this->findWatcherForDoc(doc);
@@ -837,39 +915,6 @@ ProcessWatcher *EditorGlobal::findWatcherForDoc(NamedTextDocument *fileDoc)
 }
 
 
-void EditorGlobal::namedTextDocumentRemoved(
-  NamedTextDocumentList const *documentList,
-  NamedTextDocument *fileDoc) NOEXCEPT
-{
-  ProcessWatcher *watcher = this->findWatcherForDoc(fileDoc);
-  if (watcher) {
-    // Closing an output document.  Break the connection to the
-    // document so it can go away safely, and start killing the
-    // process.
-    TRACE1("namedTextDocumentRemoved: killing watcher: " << watcher);
-    watcher->m_namedDoc = NULL;
-    watcher->m_commandRunner.killProcessNoWait();
-
-    // This is a safe way to kill a child process.  We've detached it
-    // from the document, which has been removed from the list and is
-    // about to be deallocated, so we're good there.  And we're not
-    // waiting for the process to exit, but we haven't forgotten about
-    // it either, so we'll reap it if/when it dies.  Finally,
-    // ProcessWatcher is servicing the output and error channels,
-    // discarding any data that arrives, so we don't expend memory
-    // without bound.
-  }
-}
-
-
-void EditorGlobal::broadcastEditorViewChanged()
-{
-  FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, w) {
-    w.data()->editorViewChanged();
-  }
-}
-
-
 void EditorGlobal::on_processTerminated(ProcessWatcher *watcher)
 {
   TRACE1("on_processTerminated: terminated watcher: " << watcher);
@@ -896,124 +941,7 @@ void EditorGlobal::on_processTerminated(ProcessWatcher *watcher)
 }
 
 
-void EditorGlobal::on_vfsConnectionFailed(
-  HostName hostName, std::string reason) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  QMessageBox::warning(nullptr, "Connection Failed", qstringb(
-    "The connection to " << hostName << " has failed.  Reads "
-    "and writes will not work until this connection is restarted.  "
-    "Error message: " << reason));
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
-{
-  TRACE2("focus changed from " << qObjectDesc(from) <<
-         " to " << qObjectDesc(to));
-
-  if (!from && to && qobject_cast<QMenuBar*>(to)) {
-    TRACE2("focus arrived at menu bar from alt-tab");
-    QWidget *p = to->parentWidget();
-    if (p) {
-      // This is part of a workaround for an apparent Qt bug: if I
-      // press Alt, the menu bar gets focus.  If then press Alt+Tab,
-      // another window gets focus.  If then press Alt+Tab again, my
-      // window gets focus again.  So far so good.
-      //
-      // Except the menu bar still has focus from the earlier Alt!  And
-      // pressing Alt again does not help; I have to Tab out of there.
-      //
-      // The fix is in two parts.  First, we recognize the buggy focus
-      // transition here: 'from' is null, meaning focus came from
-      // another window (including another window in my application),
-      // and 'to' is a QMenuBar.  Then we reassign focus to the menu
-      // bar's parent, which will be EditorWindow.
-      //
-      // Finally, EditorWindow has its EditorWidget as a focus proxy,
-      // so focus automatically goes to it instead.
-      //
-      // Found the bug in Qt tracker:
-      // https://bugreports.qt.io/browse/QTBUG-44405
-      TRACE2("setting focus to " << qObjectDesc(p));
-      p->setFocus(Qt::ActiveWindowFocusReason);
-    }
-    else {
-      TRACE2("menu has no parent?");
-    }
-  }
-}
-
-
-void EditorGlobal::slot_broadcastSearchPanelChanged(
-  SearchAndReplacePanel *panel) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  TRACE2("slot_broadcastSearchPanelChanged");
-  FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, iter) {
-    iter.data()->searchPanelChanged(panel);
-  }
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorGlobal::showConnectionsDialog()
-{
-  if (!m_connectionsDialog) {
-    m_connectionsDialog.reset(new ConnectionsDialog(&m_vfsConnections));
-  }
-
-  showRaiseAndActivateWindow(m_connectionsDialog.get());
-}
-
-
-NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
-  std::string const &title,
-  std::string const &contents)
-{
-  DocumentName docName;
-  docName.setNonFileResourceName(HostName::asLocal(),
-    title, SMFileUtil().currentDirectory());
-
-  NamedTextDocument *doc = m_documentList.findDocumentByName(docName);
-  if (!doc) {
-    doc = new NamedTextDocument();
-    doc->setDocumentName(docName);
-    doc->m_title = uniqueTitleFor(docName);
-    doc->appendString(contents);
-    doc->noUnsavedChanges();
-    doc->setReadOnly(true);
-    trackNewDocumentFile(doc);
-  }
-  else {
-    // TODO: I think I should reset the document contents here.
-  }
-
-  return doc;
-}
-
-
-NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
-{
-  return getOrCreateGeneratedDocument(
-    "Editor Keybindings",
-    std::string(doc_keybindings, sizeof(doc_keybindings)-1));
-}
-
-
-void EditorGlobal::hideModelessDialogs()
-{
-  if (m_connectionsDialog) {
-    m_connectionsDialog->hide();
-  }
-}
-
-
+// ------------------------------- Fonts -------------------------------
 void EditorGlobal::setEditorBuiltinFont(BuiltinFont newFont)
 {
   m_editorBuiltinFont = newFont;
@@ -1022,6 +950,7 @@ void EditorGlobal::setEditorBuiltinFont(BuiltinFont newFont)
 }
 
 
+// -------------------------- Macro recorder ---------------------------
 void EditorGlobal::recordCommand(std::unique_ptr<EditorCommand> cmd)
 {
   m_recentCommands.push_back(std::move(cmd));
@@ -1049,29 +978,7 @@ EditorCommandVector EditorGlobal::getRecentCommands(int n) const
 }
 
 
-void EditorGlobal::warningBox(
-  QWidget * NULLABLE parent,
-  std::string const &str) const
-{
-  QMessageBox::warning(parent, toQString(appName), toQString(str));
-}
-
-
-/*static*/ std::unique_ptr<smbase::ExclusiveWriteFile>
-  EditorGlobal::openEditorLogFile()
-{
-  std::unique_ptr<ExclusiveWriteFile> ret(
-    tryCreateExclusiveWriteFile(getEditorLogFileInitialName()));
-  if (ret) {
-    ret->stream()
-      << getEditorVersionString()    // Has label, ends with newline.
-      << "Started at " << localTimeString() << ".\n";
-    ret->stream().flush();
-  }
-  return ret;
-}
-
-
+// -------------------------- Editor settings --------------------------
 /*static*/ std::string EditorGlobal::getEditorStateFileName(
   std::string const &globalAppStateDir,
   char const *fname)
@@ -1088,13 +995,6 @@ void EditorGlobal::warningBox(
 {
   return getEditorStateFileName(
     getXDGConfigHome(), "editor-settings.gdvn");
-}
-
-
-/*static*/ std::string EditorGlobal::getEditorLogFileInitialName()
-{
-  return getEditorStateFileName(
-    getXDGStateHome(), "editor.log");
 }
 
 
@@ -1157,17 +1057,6 @@ void EditorGlobal::loadSettingsFile_throwIfError()
   }
   else {
     TRACE1("loadSettingsFile: Settings file does not exist: " << doubleQuote(fname));
-  }
-}
-
-
-std::optional<std::string> EditorGlobal::getEditorLogFileNameOpt() const
-{
-  if (m_editorLogFile) {
-    return m_editorLogFile->getFname();
-  }
-  else {
-    return std::nullopt;
   }
 }
 
@@ -1277,83 +1166,23 @@ void EditorGlobal::settings_setGrepsrcSearchesSubrepos(
 }
 
 
-static std::string objectDesc(QObject const *obj)
+// ------------------------------ Dialogs ------------------------------
+NamedTextDocument *EditorGlobal::runOpenFilesDialog(QWidget *callerWindow)
 {
-  if (!obj) {
-    return "NULL";
+  if (!m_openFilesDialog) {
+    m_openFilesDialog.reset(new OpenFilesDialog(this));
   }
-
-  std::ostringstream sb;
-  sb << "{name=\"" << obj->objectName()
-     << "\" path=\"" << qObjectPath(obj)
-     << "\" addr=" << (void*)obj
-     << " class=" << obj->metaObject()->className()
-     << "}";
-  return sb.str();
+  return m_openFilesDialog->runDialog(callerWindow);
 }
 
 
-// For debugging, this function allows me to inspect certain events as
-// they are dispatched.
-bool EditorGlobal::notify(QObject *receiver, QEvent *event)
+void EditorGlobal::showConnectionsDialog()
 {
-  static int s_eventCounter=0;
-  int const eventNo = s_eventCounter++;
-
-  QEvent::Type const type = event->type();
-
-  if (type == QEvent::KeyPress) {
-    if (QKeyEvent const *keyEvent =
-          dynamic_cast<QKeyEvent const *>(event)) {
-      TRACE2("notifyInput: " << eventNo << ": "
-        "KeyPress to " << objectDesc(receiver) <<
-        ": ts=" << keyEvent->timestamp() <<
-        " key=" << keysString(*keyEvent) <<
-        " acc=" << keyEvent->isAccepted() <<
-        " focus=" << objectDesc(QApplication::focusWidget()));
-
-      bool ret = this->QApplication::notify(receiver, event);
-
-      TRACE2("notifyInput: " << eventNo << ": returns " << ret <<
-        ", acc=" << keyEvent->isAccepted());
-
-      return ret;
-    }
+  if (!m_connectionsDialog) {
+    m_connectionsDialog.reset(new ConnectionsDialog(&m_vfsConnections));
   }
 
-  if (type == QEvent::Shortcut) {
-    if (QShortcutEvent const *shortcutEvent =
-          dynamic_cast<QShortcutEvent const *>(event)) {
-      TRACE2("notifyInput: " << eventNo << ": "
-        "Shortcut to " << objectDesc(receiver) <<
-        ": ambig=" << shortcutEvent->isAmbiguous() <<
-        " id=" << shortcutEvent->shortcutId() <<
-        " keys=" << shortcutEvent->key().toString() <<
-        " acc=" << shortcutEvent->isAccepted() <<
-        " focus=" << objectDesc(QApplication::focusWidget()));
-
-      bool ret = this->QApplication::notify(receiver, event);
-
-      TRACE2("notifyInput: " << eventNo << ": returns " << ret <<
-        ", acc=" << shortcutEvent->isAccepted());
-
-      return ret;
-    }
-  }
-
-  // This is normally too noisy.
-  if (false && type == QEvent::Resize) {
-    if (QResizeEvent const *resizeEvent =
-          dynamic_cast<QResizeEvent const *>(event)) {
-      TRACE2("notifyInput: " << eventNo << ": "
-        "ResizeEvent to " << objectDesc(receiver) <<
-        ": spontaneous=" << resizeEvent->spontaneous() <<
-        " oldSize=" << toString(resizeEvent->oldSize()) <<
-        " size=" << toString(resizeEvent->size()));
-    }
-  }
-
-  return this->QApplication::notify(receiver, event);
+  showRaiseAndActivateWindow(m_connectionsDialog.get());
 }
 
 
@@ -1379,6 +1208,22 @@ RCSerf<DiagnosticDetailsDialog> EditorGlobal::getDiagnosticDetailsDialog()
 }
 
 
+void EditorGlobal::warningBox(
+  QWidget * NULLABLE parent,
+  std::string const &str) const
+{
+  QMessageBox::warning(parent, toQString(appName), toQString(str));
+}
+
+
+void EditorGlobal::hideModelessDialogs()
+{
+  if (m_connectionsDialog) {
+    m_connectionsDialog->hide();
+  }
+}
+
+
 // ---------------------- Recent editor widgets ----------------------
 void EditorGlobal::addRecentEditorWidget(EditorWidget *ew)
 {
@@ -1395,6 +1240,40 @@ void EditorGlobal::removeRecentEditorWidget(EditorWidget *ew)
 EditorWidget *EditorGlobal::getOtherEditorWidget(EditorWidget *ew)
 {
   return m_recentEditorWidgets.getRecentOther(ew);
+}
+
+
+// ------------------------------ Logging ------------------------------
+/*static*/ std::unique_ptr<smbase::ExclusiveWriteFile>
+  EditorGlobal::openEditorLogFile()
+{
+  std::unique_ptr<ExclusiveWriteFile> ret(
+    tryCreateExclusiveWriteFile(getEditorLogFileInitialName()));
+  if (ret) {
+    ret->stream()
+      << getEditorVersionString()    // Has label, ends with newline.
+      << "Started at " << localTimeString() << ".\n";
+    ret->stream().flush();
+  }
+  return ret;
+}
+
+
+/*static*/ std::string EditorGlobal::getEditorLogFileInitialName()
+{
+  return getEditorStateFileName(
+    getXDGStateHome(), "editor.log");
+}
+
+
+std::optional<std::string> EditorGlobal::getEditorLogFileNameOpt() const
+{
+  if (m_editorLogFile) {
+    return m_editorLogFile->getFname();
+  }
+  else {
+    return std::nullopt;
+  }
 }
 
 
@@ -1693,6 +1572,139 @@ int EditorGlobal::lspRequestRelatedLocation(
 
   return m_lspManager.requestRelatedLocation(
     lsrk, ntd->filename(), coord);
+}
+
+
+// --------------------- Qt infrastructure-related ---------------------
+void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
+{
+  TRACE2("focus changed from " << qObjectDesc(from) <<
+         " to " << qObjectDesc(to));
+
+  if (!from && to && qobject_cast<QMenuBar*>(to)) {
+    TRACE2("focus arrived at menu bar from alt-tab");
+    QWidget *p = to->parentWidget();
+    if (p) {
+      // This is part of a workaround for an apparent Qt bug: if I
+      // press Alt, the menu bar gets focus.  If then press Alt+Tab,
+      // another window gets focus.  If then press Alt+Tab again, my
+      // window gets focus again.  So far so good.
+      //
+      // Except the menu bar still has focus from the earlier Alt!  And
+      // pressing Alt again does not help; I have to Tab out of there.
+      //
+      // The fix is in two parts.  First, we recognize the buggy focus
+      // transition here: 'from' is null, meaning focus came from
+      // another window (including another window in my application),
+      // and 'to' is a QMenuBar.  Then we reassign focus to the menu
+      // bar's parent, which will be EditorWindow.
+      //
+      // Finally, EditorWindow has its EditorWidget as a focus proxy,
+      // so focus automatically goes to it instead.
+      //
+      // Found the bug in Qt tracker:
+      // https://bugreports.qt.io/browse/QTBUG-44405
+      TRACE2("setting focus to " << qObjectDesc(p));
+      p->setFocus(Qt::ActiveWindowFocusReason);
+    }
+    else {
+      TRACE2("menu has no parent?");
+    }
+  }
+}
+
+
+static std::string objectDesc(QObject const *obj)
+{
+  if (!obj) {
+    return "NULL";
+  }
+
+  std::ostringstream sb;
+  sb << "{name=\"" << obj->objectName()
+     << "\" path=\"" << qObjectPath(obj)
+     << "\" addr=" << (void*)obj
+     << " class=" << obj->metaObject()->className()
+     << "}";
+  return sb.str();
+}
+
+
+// For debugging, this function allows me to inspect certain events as
+// they are dispatched.
+bool EditorGlobal::notify(QObject *receiver, QEvent *event)
+{
+  static int s_eventCounter=0;
+  int const eventNo = s_eventCounter++;
+
+  QEvent::Type const type = event->type();
+
+  if (type == QEvent::KeyPress) {
+    if (QKeyEvent const *keyEvent =
+          dynamic_cast<QKeyEvent const *>(event)) {
+      TRACE2("notifyInput: " << eventNo << ": "
+        "KeyPress to " << objectDesc(receiver) <<
+        ": ts=" << keyEvent->timestamp() <<
+        " key=" << keysString(*keyEvent) <<
+        " acc=" << keyEvent->isAccepted() <<
+        " focus=" << objectDesc(QApplication::focusWidget()));
+
+      bool ret = this->QApplication::notify(receiver, event);
+
+      TRACE2("notifyInput: " << eventNo << ": returns " << ret <<
+        ", acc=" << keyEvent->isAccepted());
+
+      return ret;
+    }
+  }
+
+  if (type == QEvent::Shortcut) {
+    if (QShortcutEvent const *shortcutEvent =
+          dynamic_cast<QShortcutEvent const *>(event)) {
+      TRACE2("notifyInput: " << eventNo << ": "
+        "Shortcut to " << objectDesc(receiver) <<
+        ": ambig=" << shortcutEvent->isAmbiguous() <<
+        " id=" << shortcutEvent->shortcutId() <<
+        " keys=" << shortcutEvent->key().toString() <<
+        " acc=" << shortcutEvent->isAccepted() <<
+        " focus=" << objectDesc(QApplication::focusWidget()));
+
+      bool ret = this->QApplication::notify(receiver, event);
+
+      TRACE2("notifyInput: " << eventNo << ": returns " << ret <<
+        ", acc=" << shortcutEvent->isAccepted());
+
+      return ret;
+    }
+  }
+
+  // This is normally too noisy.
+  if (false && type == QEvent::Resize) {
+    if (QResizeEvent const *resizeEvent =
+          dynamic_cast<QResizeEvent const *>(event)) {
+      TRACE2("notifyInput: " << eventNo << ": "
+        "ResizeEvent to " << objectDesc(receiver) <<
+        ": spontaneous=" << resizeEvent->spontaneous() <<
+        " oldSize=" << toString(resizeEvent->oldSize()) <<
+        " size=" << toString(resizeEvent->size()));
+    }
+  }
+
+  return this->QApplication::notify(receiver, event);
+}
+
+
+void EditorGlobal::slot_broadcastSearchPanelChanged(
+  SearchAndReplacePanel *panel) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE2("slot_broadcastSearchPanelChanged");
+  FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, iter) {
+    iter.data()->searchPanelChanged(panel);
+  }
+
+  GENERIC_CATCH_END
 }
 
 

@@ -167,10 +167,6 @@ private:     // methods
   NamedTextDocument *getCommandOutputDocument(
     HostName const &hostName, QString dir, QString command);
 
-  // Open the general editor log file.
-  static std::unique_ptr<smbase::ExclusiveWriteFile>
-    openEditorLogFile();
-
   // Given a directory in which application state files are generally
   // placed, such as `getXDGStateHome()`, and the name of a specific
   // file associated with the editor application, return the combined
@@ -180,6 +176,10 @@ private:     // methods
     std::string const &globalAppStateDir,
     char const *fname);
 
+  // Open the general editor log file.
+  static std::unique_ptr<smbase::ExclusiveWriteFile>
+    openEditorLogFile();
+
   // Connect signals from `m_lspManager` to `this`.
   void lspConnectSignals();
 
@@ -187,17 +187,14 @@ private:     // methods
   void lspDisconnectSignals();
 
 private Q_SLOTS:
-  // Called when focus changes anywhere in the app.
-  void focusChangedHandler(QWidget *from, QWidget *to);
+  // Called when a VFS connection fails.
+  void on_vfsConnectionFailed(HostName hostName, std::string reason) NOEXCEPT;
 
   // Find the watcher feeding data to 'fileDoc', if any.
   ProcessWatcher *findWatcherForDoc(NamedTextDocument *fileDoc);
 
   // Called when a watched process terminates.
   void on_processTerminated(ProcessWatcher *watcher);
-
-  // Called when a VFS connection fails.
-  void on_vfsConnectionFailed(HostName hostName, std::string reason) NOEXCEPT;
 
   // Called when `m_lspManager` has pending diagnostics.
   void on_lspHasPendingDiagnostics() NOEXCEPT;
@@ -208,8 +205,11 @@ private Q_SLOTS:
   // Called when `m_lspManager` may have changed its protocol state.
   void on_lspChangedProtocolState() NOEXCEPT;
 
+  // Called when focus changes anywhere in the app.
+  void focusChangedHandler(QWidget *from, QWidget *to);
+
 public:       // funcs
-  // intent is to make one of these in main()
+  // Construct application state from `main()`.
   EditorGlobal(int argc, char **argv);
   ~EditorGlobal();
 
@@ -219,10 +219,9 @@ public:       // funcs
   // To run the app, use the 'exec()' method, inherited
   // from QApplication.
 
-  // TODO: Organize this list of methods.
-
   VFS_Connections *vfsConnections() { return &m_vfsConnections; }
 
+  // --------------------- Documents being edited ----------------------
   // Read-only access to the document list.
   NamedTextDocumentList const *documentList() const;
 
@@ -247,41 +246,11 @@ public:       // funcs
   NamedTextDocument * NULLABLE
   getFileWithName(DocumentName &docName);
 
-  // Find a document that is untitled and has no modifications if one
-  // exists.
-  NamedTextDocument * NULLABLE findUntitledUnmodifiedDocument();
-
-  // Notify observers of the document list that an attribute of one of
-  // the documents has changed.
-  void notifyDocumentAttributeChanged(NamedTextDocument *ntd);
-
   // Return true if any file document has the given name.
   bool hasFileWithName(DocumentName const &docName) const;
 
   // Return true if any file document has the given title.
   bool hasFileWithTitle(std::string const &title) const;
-
-  // Calculate a minimal suffix of path components in 'filename' that
-  // forms a title not shared by any open file.
-  std::string uniqueTitleFor(DocumentName const &docName) const;
-
-  // Open a new editor window.
-  EditorWindow *createNewWindow(NamedTextDocument *initFile);
-
-  // Called by the EditorWindow ctor to register its presence.
-  void registerEditorWindow(EditorWindow *ew);
-
-  // Called by the EditorWindow dtor to unregister.
-  void unregisterEditorWindow(EditorWindow *ew);
-
-  // Return the current number of editor windows.
-  int numEditorWindows() const;
-
-  // Add/remove a document list observer.
-  void addDocumentListObserver(
-    NamedTextDocumentListObserver *observer);
-  void removeDocumentListObserver(
-    NamedTextDocumentListObserver *observer);
 
   // Add 'f' to the set of file documents.
   void trackNewDocumentFile(NamedTextDocument *f);
@@ -297,8 +266,33 @@ public:       // funcs
   // True if `ntd` is among the documents we know about.
   bool hasDocumentFile(NamedTextDocument const *ntd) const;
 
-  // Move `f` to the top of the list.
+  // Move `f` to the front of `m_documentList`, so it is regarded as
+  // being the most recent when switching among them.
   void makeDocumentTopmost(NamedTextDocument *f);
+
+  // Reload the contents of 'f'.  Return false if there was an error or
+  // the reload was canceled.  If interaction is required, a modal
+  // dialog may appear on top of 'parentWindow'.
+  bool reloadDocumentFile(QWidget *parentWidget,
+                          NamedTextDocument *f);
+
+  // ------------------------ Special documents ------------------------
+  // Find a document that is untitled and has no modifications if one
+  // exists.
+  NamedTextDocument * NULLABLE findUntitledUnmodifiedDocument();
+
+  // Get or create a read-only document called `title` with `contents`.
+  NamedTextDocument *getOrCreateGeneratedDocument(
+    std::string const &title,
+    std::string const &contents);
+
+  // Generate a document with `doc/keybindings.txt`.
+  NamedTextDocument *getOrCreateKeybindingsDocument();
+
+  // --------------------- Multi-document queries ----------------------
+  // Calculate a minimal suffix of path components in 'filename' that
+  // forms a title not shared by any open file.
+  std::string uniqueTitleFor(DocumentName const &docName) const;
 
   // If there is some observer of the document list (an editor widget)
   // that already has a view for `ntd`, set `view` to that and return
@@ -313,19 +307,34 @@ public:       // funcs
   void getUniqueDocumentDirectories(
     ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const;
 
-  // Reload the contents of 'f'.  Return false if there was an error or
-  // the reload was canceled.  If interaction is required, a modal
-  // dialog may appear on top of 'parentWindow'.
-  bool reloadDocumentFile(QWidget *parentWidget,
-                          NamedTextDocument *f);
+  // ------------------------- Editor windows --------------------------
+  // Return the current number of editor windows.
+  int numEditorWindows() const;
 
-  // Show the open-files dialog and wait for the user to choose a file
-  // or cancel.  If a choice is made, return it.
-  //
-  // Note that the dialog also allows the user to close files, which
-  // uses the NamedTextDocumentListObserver notification system.
-  NamedTextDocument *runOpenFilesDialog(QWidget *callerWindow);
+  // Open a new editor window.
+  EditorWindow *createNewWindow(NamedTextDocument *initFile);
 
+  // Called by the EditorWindow ctor to register its presence.
+  void registerEditorWindow(EditorWindow *ew);
+
+  // Called by the EditorWindow dtor to unregister.
+  void unregisterEditorWindow(EditorWindow *ew);
+
+  // -------------------------- Notification ---------------------------
+  // Notify observers of the document list that an attribute of one of
+  // the documents has changed.
+  void notifyDocumentAttributeChanged(NamedTextDocument *ntd);
+
+  // Tell all windows that their view has changed.
+  void broadcastEditorViewChanged();
+
+  // Add/remove a document list observer.
+  void addDocumentListObserver(
+    NamedTextDocumentListObserver *observer);
+  void removeDocumentListObserver(
+    NamedTextDocumentListObserver *observer);
+
+  // --------------------- Running child processes ---------------------
   // Find or start a child process and return the document into which
   // that process' output is written.
   NamedTextDocument *launchCommand(
@@ -343,6 +352,12 @@ public:       // funcs
     QString dir,
     QString command);
 
+  // EditorGlobal has to monitor for closing a document that a process
+  // is writing to, since that indicates to kill that process.
+  virtual void namedTextDocumentRemoved(
+    NamedTextDocumentList const *documentList,
+    NamedTextDocument *file) NOEXCEPT OVERRIDE;
+
   // Kill the process driving 'doc'.  If there is a problem doing that,
   // return a string explaining it; otherwise "".
   //
@@ -353,29 +368,7 @@ public:       // funcs
   // closed.
   std::string killCommand(NamedTextDocument *doc);
 
-  // EditorGlobal has to monitor for closing a document that a process
-  // is writing to, since that indicates to kill that process.
-  virtual void namedTextDocumentRemoved(
-    NamedTextDocumentList const *documentList,
-    NamedTextDocument *file) NOEXCEPT OVERRIDE;
-
-  // Tell all windows that their view has changed.
-  void broadcastEditorViewChanged();
-
-  // Show the connections dialog.
-  void showConnectionsDialog();
-
-  // Get or create a read-only document called `title` with `contents`.
-  NamedTextDocument *getOrCreateGeneratedDocument(
-    std::string const &title,
-    std::string const &contents);
-
-  // Generate a document with `doc/keybindings.txt`.
-  NamedTextDocument *getOrCreateKeybindingsDocument();
-
-  // Hide any open modeless dialogs since we are about to quit.
-  void hideModelessDialogs();
-
+  // ------------------------------ Fonts ------------------------------
   BuiltinFont getEditorBuiltinFont() const
     { return m_editorBuiltinFont; }
 
@@ -383,23 +376,16 @@ public:       // funcs
   // accordingly.
   void setEditorBuiltinFont(BuiltinFont newFont);
 
+  // ------------------------- Macro recorder --------------------------
   // Add `cmd` to the partial command history.
   void recordCommand(std::unique_ptr<EditorCommand> cmd);
 
   // Get up to `n` recent commands.
   EditorCommandVector getRecentCommands(int n) const;
 
-  // Pop up a warning dialog box on top of `parent`.
-  void warningBox(
-    QWidget * NULLABLE parent,
-    std::string const &str) const;
-
+  // ------------------------- Editor settings -------------------------
   // Get the path to the user settings file.
   static std::string getSettingsFileName();
-
-  // Initial name to attempt to use for the general editor logs.  The
-  // actual name might be different.
-  static std::string getEditorLogFileInitialName();
 
   // Write settings to the user settings file and return true.  If there
   // is a problem, this pops up a dialog box above the given `parent`,
@@ -417,9 +403,6 @@ public:       // funcs
   // Read-only settings access.  (Writing is done through methods that
   // also save the settings to a file.)
   EditorSettings const &getSettings() { return m_settings; }
-
-  // If we have a log file, return its name.
-  std::optional<std::string> getEditorLogFileNameOpt() const;
 
   // Methods to change `m_settings` via methods that have names and
   // signatures that reflect those of `EditorSettings`.  Each call saves
@@ -457,8 +440,16 @@ public:       // funcs
     QWidget * NULLABLE parent,
     bool b);
 
-  // QCoreApplication methods.
-  virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
+  // ----------------------------- Dialogs -----------------------------
+  // Show the open-files dialog and wait for the user to choose a file
+  // or cancel.  If a choice is made, return it.
+  //
+  // Note that the dialog also allows the user to close files, which
+  // uses the `NamedTextDocumentListObserver` notification system.
+  NamedTextDocument *runOpenFilesDialog(QWidget *callerWindow);
+
+  // Show the connections dialog.
+  void showConnectionsDialog();
 
   // Get or create the dialog for `eclf`.
   ApplyCommandDialog &getApplyCommandDialog(
@@ -466,6 +457,14 @@ public:       // funcs
 
   // Get this dialog, creating it if needed.
   RCSerf<DiagnosticDetailsDialog> getDiagnosticDetailsDialog();
+
+  // Pop up a warning dialog box on top of `parent`.
+  void warningBox(
+    QWidget * NULLABLE parent,
+    std::string const &str) const;
+
+  // Hide any open modeless dialogs since we are about to quit.
+  void hideModelessDialogs();
 
   // ---------------------- Recent editor widgets ----------------------
   // Add or move `ew` to the front of "recent" list.
@@ -477,6 +476,14 @@ public:       // funcs
   // Get the most recently used widget other than `ew`.  Return `ew` if
   // there is no alternative.
   EditorWidget *getOtherEditorWidget(EditorWidget *ew);
+
+  // ----------------------------- Logging -----------------------------
+  // Initial name to attempt to use for the general editor logs.  The
+  // actual name might be different.
+  static std::string getEditorLogFileInitialName();
+
+  // If we have a log file, return its name.
+  std::optional<std::string> getEditorLogFileNameOpt() const;
 
   // --------------------------- LSP Global ----------------------------
   // Read-only access to the manager.
@@ -579,6 +586,10 @@ public:       // funcs
     LSPSymbolRequestKind lsrk,
     NamedTextDocument const *ntd,
     TextMCoord coord);
+
+  // -------------------- Qt infrastructure-related --------------------
+  // QCoreApplication methods.
+  virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;
 
 Q_SIGNALS:
   // Emitted when `m_editorBuiltinFont` changes.
