@@ -1523,6 +1523,35 @@ std::string EditorGlobal::lspStopServer()
 }
 
 
+std::string EditorGlobal::lspGetCodeLine(
+  HostAndResourceName const &harn, int lineIndex) const
+{
+  if (!harn.isLocal()) {
+    return stringb("<Not local: " << harn << ">");
+  }
+
+  std::string const fname = harn.resourceName();
+
+  // Allow injecting an offset to test handling of invalid line indices.
+  static int const offsetForTesting =
+    envAsIntOr(0, "EDITOR_GLOBAL_GET_CODE_LINE_OFFSET");
+  lineIndex += offsetForTesting;
+
+  // If the file is open with the LSP manager, then use the most recent
+  // copy it has sent to the server, since that is what the server's
+  // line numbers will (should!) be referring to.
+  if (RCSerf<LSPDocumentInfo const> docInfo =
+        m_lspManager.getDocInfo(fname)) {
+    return docInfo->getLastContentsCodeLine(lineIndex);
+  }
+
+  // If not open with LSP, get the file from the file system.
+  //
+  // This is non-trivial because I need to deal with VFS latency.
+  return "<TODO: Get line from file system.>";
+}
+
+
 // --------------------------- LSP Per-file ----------------------------
 bool EditorGlobal::lspFileIsOpen(NamedTextDocument const *ntd) const
 {

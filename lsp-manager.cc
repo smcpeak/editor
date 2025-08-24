@@ -166,6 +166,23 @@ bool LSPDocumentInfo::lastContentsEquals(TextDocumentCore const &doc) const
 }
 
 
+std::string LSPDocumentInfo::getLastContentsCodeLine(int lineIndex) const
+{
+  TextDocumentCore const *td = m_lastSentContents.get();
+
+  if (td->validLine(lineIndex)) {
+    return td->getWholeLineString(lineIndex);
+  }
+  else {
+    return stringb(
+      "<Line number " << (lineIndex+1) <<
+      " is out of range for " << doubleQuote(m_fname) <<
+      ", which has " << td->numLines() <<
+      " lines.>");
+  }
+}
+
+
 // ---------------------------- LSPManager -----------------------------
 void LSPManager::resetProtocolState()
 {

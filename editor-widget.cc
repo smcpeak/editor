@@ -2914,12 +2914,12 @@ void EditorWidget::lspHandleLocationReply(
       SMFileUtil sfu;
 
       for (LSP_Location const &loc : lseq.m_locations) {
+        auto harn = HostAndResourceName::localFile(loc.getFname());
         elts.push_back(DiagnosticElement{
-          HostAndResourceName::localFile(loc.getFname()),
+          harn,
           loc.m_range.m_start.m_line + 1,
-
-          // TODO: Use the line of code as the message.
-          ""
+          editorGlobal()->lspGetCodeLine(
+            harn, loc.m_range.m_start.m_line)
         });
       }
 

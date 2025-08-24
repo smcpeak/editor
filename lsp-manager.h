@@ -176,6 +176,11 @@ public:      // methods
 
   // True if `m_lastSentContents` equals `doc`.
   bool lastContentsEquals(TextDocumentCore const &doc) const;
+
+  // Return the text of the line at (0-based) `lineIndex` in the last
+  // contents sent to the server.  If it is out of range, just report
+  // that fact in the string.
+  std::string getLastContentsCodeLine(int lineIndex) const;
 };
 
 

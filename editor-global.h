@@ -491,6 +491,13 @@ public:       // funcs
   // human-readable string describing what happened during the attempt.
   std::string lspStopServer();
 
+  // Get the line of code containing (0-based) `lineIndex` in `harn`
+  // that was referenced in an LSP response (e.g., all-uses).  If there
+  // is a problem, just encode that in the returned string, as this is
+  // going straight to the user.
+  std::string lspGetCodeLine(
+    HostAndResourceName const &harn, int lineIndex) const;
+
   // -------------------------- LSP Per-file ---------------------------
   // True if `ntd` is open w.r.t. the LSP server.
   bool lspFileIsOpen(NamedTextDocument const *ntd) const;

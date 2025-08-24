@@ -109,7 +109,7 @@ private:     // funcs
   static int bufStrlen(char const *p);
 
   // bounds check line
-  void bc(int line) const { xassert(0 <= line && line < numLines()); }
+  void bc(int line) const { xassert(validLine(line)); }
 
   // Counds check a coordinate.
   void bctc(TextMCoord tc) const { xassert(validCoord(tc)); }
@@ -159,6 +159,10 @@ public:    // funcs
   // ---------------------- document shape ------------------------
   // # of lines stored; always at least 1
   int numLines() const { return m_lines.length(); }
+
+  // True if `line` is valid, i.e., within range for this document.
+  bool validLine(int line) const
+    { return 0 <= line && line < numLines(); }
 
   // True if the given line is empty.
   bool isEmptyLine(int line) const;
