@@ -2696,10 +2696,35 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 }
 
 
-std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
+void EditorWidget::showDiagnosticDetailsDialog(
+  QVector<DiagnosticDetailsDialog::Element> &&elts) const
 {
   DiagnosticDetailsDialog *dlg =
     editorGlobal()->getDiagnosticDetailsDialog();
+
+  dlg->setDiagnostics(std::move(elts));
+
+  // Disconnect any previous connections for the "jump" signal.
+  // This way the dialog object can be reused by any editor widget.
+  QObject::disconnect(
+    dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
+    nullptr, nullptr);
+
+  // Connect the signal to jump to location.
+  //
+  // Note: Qt connections are automatically removed if either object
+  // is destroyed, so it is not a problem if this widget starts the
+  // dialog and is then destroyed while the dialog is still open.
+  QObject::connect(
+    dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
+    this, &EditorWidget::on_jumpToDiagnosticLocation);
+
+  showRaiseAndActivateWindow(dlg);
+}
+
+
+std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
+{
   SMFileUtil sfu;
 
   if (TextDocumentDiagnostics const *tdd =
@@ -2727,29 +2752,12 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
         elts.push_back(Element{
           toQString(d),
           toQString(b),
-          rel.m_line,
+          rel.m_line,                  // 1-based.
           toQString(rel.m_message)
         });
       }
 
-      dlg->setDiagnostics(std::move(elts));
-
-      // Disconnect any previous connections for the "jump" signal.
-      // This way the dialog object can be reused by any editor widget.
-      QObject::disconnect(
-        dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
-        nullptr, nullptr);
-
-      // Connect the signal to jump to location.
-      //
-      // Note: Qt connections are automatically removed if either object
-      // is destroyed, so it is not a problem if this widget starts the
-      // dialog and is then destroyed while the dialog is still open.
-      QObject::connect(
-        dlg, &DiagnosticDetailsDialog::signal_jumpToLocation,
-        this, &EditorWidget::on_jumpToDiagnosticLocation);
-
-      showRaiseAndActivateWindow(dlg);
+      showDiagnosticDetailsDialog(std::move(elts));
       return {};
     }
     else {
@@ -2898,14 +2906,31 @@ void EditorWidget::lspHandleLocationReply(
       // TODO: Be able to select the entire range, rather than only
       // going to the start line/col.
       goToLocalFileAndLineOpt(
-        getFileURIPath(loc.m_uri),
+        loc.getFname(),
         loc.m_range.m_start.m_line + 1,
         loc.m_range.m_start.m_character);
     }
     else {
-      complain(stringb(
-        "Mutliple results for " << lsrkMsgStr <<
-        " found.  TODO: Handle this!"));
+      using Element = DiagnosticDetailsDialog::Element;
+      QVector<Element> elts;
+
+      SMFileUtil sfu;
+
+      for (LSP_Location const &loc : lseq.m_locations) {
+        std::string d, b;
+        sfu.splitPath(d, b, loc.getFname());
+
+        elts.push_back(Element{
+          toQString(d),
+          toQString(b),
+          loc.m_range.m_start.m_line + 1,
+
+          // TODO: Use the line of code as the message.
+          ""
+        });
+      }
+
+      showDiagnosticDetailsDialog(std::move(elts));
     }
   }
   catch (XBase &x) {

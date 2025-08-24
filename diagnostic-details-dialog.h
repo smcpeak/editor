@@ -32,6 +32,9 @@ class DiagnosticDetailsDialog : public QDialog,
 
 public:      // types
   // One element of a diagnostic message.
+  //
+  // TODO: Make this a global class called `DiagnosticElement` that
+  // carries `std::string`, and combines dir+file.
   struct Element {
     // Absolute directory path containing `file`.  It ends with a slash.
     QString m_dir;

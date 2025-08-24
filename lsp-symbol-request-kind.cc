@@ -12,6 +12,7 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   (
     "K_DECLARATION",
     "K_DEFINITION",
+    "K_REFERENCES",
     "K_HOVER_INFO",
     "K_COMPLETION",
   ),
@@ -27,6 +28,7 @@ char const *toMessageString(LSPSymbolRequestKind lsrk)
     (
       "declaration",
       "definition",
+      "references",
       "hover info",
       "completion",
     ),
@@ -44,6 +46,7 @@ char const *toRequestName(LSPSymbolRequestKind lsrk)
     (
       "textDocument/declaration",
       "textDocument/definition",
+      "textDocument/references",
       "textDocument/hover",
       "textDocument/completion",
     ),

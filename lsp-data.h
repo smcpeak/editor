@@ -102,6 +102,8 @@ public:      // methods
 class LSP_Location final {
 public:
   // File name, encoded as a URI.
+  //
+  // TODO: Wrap this in a class so I can centralize `getFname`.
   std::string m_uri;
 
   // Location within that file.
@@ -116,6 +118,9 @@ public:      // methods
   operator gdv::GDValue() const;
 
   explicit LSP_Location(gdv::GDValueParser const &p);
+
+  // Decode the URI as a file name.
+  std::string getFname() const;
 };
 
 

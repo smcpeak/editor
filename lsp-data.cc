@@ -222,6 +222,12 @@ LSP_Location::LSP_Location(gdv::GDValueParser const &p)
 {}
 
 
+std::string LSP_Location::getFname() const
+{
+  return getFileURIPath(m_uri);
+}
+
+
 // ----------------- LSP_DiagnosticRelatedInformation ------------------
 // create-tuple-class: definitions for LSP_DiagnosticRelatedInformation
 /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(

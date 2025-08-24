@@ -5,6 +5,7 @@
 #define EDITOR_WIDGET_H
 
 // editor
+#include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog::Element
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 #include "editor-global-fwd.h"                   // EditorGlobal
 #include "editor-settings-fwd.h"                 // EditorSettings
@@ -271,6 +272,10 @@ private:     // funcs
 
   // Compute both corner labels.
   void computeOffscreenMatchIndicators();
+
+  // Show the diagnostic details dialog, populated with `elts`.
+  void showDiagnosticDetailsDialog(
+    QVector<DiagnosticDetailsDialog::Element> &&elts) const;
 
   // The user is trying to make a change to a read-only document.
   // Prompt to override the flag.

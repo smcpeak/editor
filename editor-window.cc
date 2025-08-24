@@ -2249,7 +2249,10 @@ void EditorWindow::lspGoToDeclaration() NOEXCEPT
 void EditorWindow::lspGoToAllUses() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  inform("TODO");
+
+  editorWidget()->lspGoToRelatedLocation(
+    LSPSymbolRequestKind::K_REFERENCES);
+
   GENERIC_CATCH_END
 }
 
