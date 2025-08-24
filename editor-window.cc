@@ -474,7 +474,7 @@ void EditorWindow::buildMenu()
                   lspOpenOrUpdateFile, Qt::Key_F7);
 
     CHECKABLE_ACTION_KEY(m_toggleLSPUpdateContinuously,
-      "&Update continuously",
+      "&Update continuously (when open)",
       lspToggleUpdateContinuously,
       Qt::SHIFT + Qt::Key_F7,
       editorWidget()->getLSPUpdateContinuously());

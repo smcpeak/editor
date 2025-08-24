@@ -196,7 +196,7 @@ void test_toGDValue()
       title: ""
       highlighter: null
       highlightTrailingWhitespace: true
-      lspUpdateContinuously: false
+      lspUpdateContinuously: true
     ]
   )"));
 }

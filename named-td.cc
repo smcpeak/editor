@@ -48,7 +48,7 @@ NamedTextDocument::NamedTextDocument()
     m_title(),
     m_highlighter(),
     m_highlightTrailingWhitespace(true),
-    m_lspUpdateContinuously(false)
+    m_lspUpdateContinuously(true)
 {
   selfCheck();
 

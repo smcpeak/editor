@@ -25,7 +25,7 @@ F5                           File | Reload
 F6                           Window | Switch to Previous Document
 
 F7                           LSP | Open or update this file
-F7+Shift                     LSP | Update continuously (toggle)
+F7+Shift                     LSP | Update continuously (when open) (toggle)
 F7+Ctrl                      LSP | Close this file
 
 F8                           LSP | Go to next diagnostic
