@@ -4,6 +4,7 @@
 #include "diagnostic-details-dialog.h" // this module
 
 #include "diagnostic-element.h"        // DiagnosticElement
+#include "pixmaps.h"                   // g_editorPixmaps
 
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
@@ -170,6 +171,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     m_table(nullptr)
 {
   setWindowTitle("Diagnostic Details");
+  setWindowIcon(g_editorPixmaps->diagnosticsIcon);
   resize(800, 600);
   setModal(false);
   removeWindowContextHelpButton(this);

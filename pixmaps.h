@@ -14,6 +14,7 @@ public:
   QPixmap replace;           // y/n "replace?" mode
   QPixmap connectionsIcon;   // Icon for ConnectionsDialog.
   QPixmap downArrow;         // 16x16 Down-arrow.
+  QPixmap diagnosticsIcon;   // Icon for Diagnostic Details dialog.
 
 public:
   Pixmaps();
