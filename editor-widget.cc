@@ -2521,9 +2521,7 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
 
   TRACE2("replaceSearchHit: " << DEBUG_VALUES3(existing, replaceSpec, replacement));
 
-  INITIATING_DOCUMENT_CHANGE();
-  TDE_HistoryGrouper grouper(*m_editor);
-  m_editor->insertString(replacement);
+  COMMAND_MU(EC_InsertString, replacement);
 
   // If we are replacing at EOL, then advance to the next line so we do
   // not repeatedly replace the same EOL.
