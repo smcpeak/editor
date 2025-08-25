@@ -457,9 +457,7 @@ public:      // funcs
   void editInsertDateTime();
 
   // Insert text at cursor, overwriting selection if active.
-  void insertText(char const *text, int length,
-                  TextDocumentEditor::InsertTextFlags flags =
-                    TextDocumentEditor::ITF_NONE);
+  void insertText(char const *text, int length);
 
   // Edit menu functions.
   void editUndo();

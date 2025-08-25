@@ -2584,13 +2584,9 @@ void EditorWidget::editInsertDateTime()
 }
 
 
-void EditorWidget::insertText(char const *text, int length,
-                              TextDocumentEditor::InsertTextFlags flags)
+void EditorWidget::insertText(char const *text, int length)
 {
-  INITIATING_DOCUMENT_CHANGE();
-  TDE_HistoryGrouper grouper(*m_editor);
-  m_editor->insertText(text, length, flags);
-  this->redrawAfterContentChange();
+  COMMAND_MU(EC_InsertString, std::string(text, length));
 }
 
 
