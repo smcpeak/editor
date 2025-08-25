@@ -504,23 +504,23 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("lspGoToMenu");
       QMenu *menu = submenu;
 
-      // Used mnemonics: acfhn
+      // Used mnemonics: acdfhnou
 
       // The fact that this goes to the declaration if we are already at
       // the definition is simply how `clangd` responds, not something I
       // have easy, direct control over.
       MENU_ITEM_KEY("De&finition (or decl if at defn)",
                     lspGoToDefinition, Qt::Key_F12);
-      MENU_ITEM    ("Definition, in other window",
+      MENU_ITEM    ("Definition, in &other window",
                     lspGoToDefinitionInOtherWindow);
-      MENU_ITEM    ("Declaration",
+      MENU_ITEM    ("&Declaration",
                     lspGoToDeclaration);
       MENU_ITEM_KEY("De&claration, in other window",
                     lspGoToDeclarationInOtherWindow,
                     Qt::SHIFT + Qt::Key_F12);
       MENU_ITEM_KEY("&All uses",
                     lspGoToAllUses, Qt::CTRL + Qt::Key_F12);
-      MENU_ITEM    ("&All uses, in other window",
+      MENU_ITEM    ("All &uses, in other window",
                     lspGoToAllUsesInOtherWindow);
       MENU_ITEM    ("&Hover info",
                     lspHoverInfo);
