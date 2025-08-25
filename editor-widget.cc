@@ -2888,6 +2888,12 @@ void EditorWidget::lspHandleLocationReply(
 {
   char const *lsrkMsgStr = toMessageString(lsrk);
 
+  if (gdvReply.isNull()) {
+    inform(stringb(
+      "No " << lsrkMsgStr << " found for symbol at cursor."));
+    return;
+  }
+
   if (lsrk == LSPSymbolRequestKind::K_HOVER_INFO) {
     lspHandleHoverInfoReply(gdvReply);
     return;
@@ -2901,6 +2907,8 @@ void EditorWidget::lspHandleLocationReply(
   try {
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
+      // Note that an empty sequence is different from `null`, which is
+      // handled above (with the same message).
       inform(stringb(
         "No " << lsrkMsgStr << " found for symbol at cursor."));
     }
