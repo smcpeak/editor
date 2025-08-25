@@ -87,8 +87,10 @@ void DiagnosticDetailsDialog::repopulateTable()
     m_table->setNaturalTextRowHeight(row);
   }
 
-  // The first two column widths are initialized in the ctor, but the
-  // final column size is computed from the actual data.
+  // The first column is meant to be narrower than the data, with extra
+  // info cut off on the left side.  But columns 1 and 2 should be sized
+  // to the actual data.
+  m_table->resizeColumnToContents(1);
   m_table->resizeColumnToContents(2);
 
   if (!m_diagnostics.isEmpty()) {

@@ -7,6 +7,7 @@
 
 #include "smqtutil/qstringb.h"         // qstringb
 
+#include "smbase/sm-env.h"             // smbase::envOrEmpty
 #include "smbase/string-util.h"        // repeatString
 #include "smbase/stringb.h"            // stringb
 
@@ -15,6 +16,8 @@
 
 #include <utility>                     // std::move
 
+using namespace smbase;
+
 
 // Called from gui-tests.cc.
 int diagnostic_details_dialog_test(QApplication &app)
@@ -22,11 +25,15 @@ int diagnostic_details_dialog_test(QApplication &app)
   QVector<DiagnosticElement> diagnostics;
   diagnostics.reserve(10);
 
+  // Provide a way to cause the file names to be longer in order to
+  // test the column's ability to handle that.
+  std::string const nameExtension = envOrEmpty("NAME_EXTENSION");
+
   for (int i = 0; i < 10; ++i) {
     DiagnosticElement de{
       HostAndResourceName::localFile(stringb(
         "/long/path/to/source/directory/number/" << i <<
-        "/file" << i << ".cpp")),
+        "/file" << i << nameExtension << ".cpp")),
       i * 10 + 1,
       (i == 5?
          repeatString("This is a very long diagnostic message. ", 40) :
