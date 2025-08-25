@@ -2933,11 +2933,21 @@ void EditorWidget::lspHandleLocationReply(
     }
   }
   catch (XBase &x) {
-    // TODO: I should log the GDValue and exception somewhere and
-    // then provide a more concise explanation to the user.
-    complain(stringb(
-      "Failed to parse " << lsrkMsgStr << " reply: " << x));
+    logAndWarnFailedLocationReply(gdvReply, lsrk, x);
   }
+}
+
+
+void EditorWidget::logAndWarnFailedLocationReply(
+  GDValue const &gdvReply,
+  LSPSymbolRequestKind lsrk,
+  XBase &x)
+{
+  char const *lsrkMsgStr = toMessageString(lsrk);
+  editorGlobal()->logAndWarn(this,
+    stringb("Failed to parse " << lsrkMsgStr << " reply: " << x),
+    stringb("Reply GDVN: " << gdvReply.asIndentedString())
+  );
 }
 
 
@@ -2954,8 +2964,8 @@ void EditorWidget::lspHandleHoverInfoReply(
     inform(value.stringGet());
   }
   catch (XBase &x) {
-    complain(stringb(
-      "Failed to parse hover info reply: " << x));
+    logAndWarnFailedLocationReply(
+      gdvReply, LSPSymbolRequestKind::K_HOVER_INFO, x);
   }
 }
 
@@ -2970,9 +2980,8 @@ void EditorWidget::lspHandleCompletionReply(
       std::make_shared<LSP_CompletionList>(GDValueParser(gdvReply));
   }
   catch (XBase &x) {
-    // TODO: I should have a log file to write this to.
-    complain(stringb(
-      "Failed to parse completion reply: " << x));
+    logAndWarnFailedLocationReply(
+      gdvReply, LSPSymbolRequestKind::K_COMPLETION, x);
     return;
   }
 

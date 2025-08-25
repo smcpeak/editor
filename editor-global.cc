@@ -70,6 +70,7 @@
 #include <deque>                                 // std::deque
 #include <exception>                             // std::exception
 #include <memory>                                // std::{unique_ptr, make_unique}
+#include <iostream>                              // std::endl
 #include <optional>                              // std::optional
 #include <string>                                // std::string
 #include <utility>                               // std::move
@@ -1274,6 +1275,37 @@ std::optional<std::string> EditorGlobal::getEditorLogFileNameOpt() const
   else {
     return std::nullopt;
   }
+}
+
+
+void EditorGlobal::log(std::string const &msg)
+{
+  // Always write the message to the trace output if active.
+  TRACE1("log: " << msg);
+
+  // Then log if we have a log file.
+  if (m_editorLogFile) {
+    m_editorLogFile->stream() << msg << std::endl;
+  }
+}
+
+
+void EditorGlobal::logAndWarn(
+  QWidget * NULLABLE parent,
+  std::string const &dialogMessage,
+  std::string const &logMessage)
+{
+  log(stringb(dialogMessage << "\n" << logMessage));
+
+  std::string const followUp =
+    (m_editorLogFile?
+       stringb("See log file in " <<
+               doubleQuote(m_editorLogFile->getFname()) <<
+               " for more details.") :
+       std::string("Logging is currently disabled, so additional "
+                   "detail is not available."));
+
+  warningBox(parent, stringb(dialogMessage << "\n" << followUp));
 }
 
 

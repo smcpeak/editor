@@ -485,6 +485,18 @@ public:       // funcs
   // If we have a log file, return its name.
   std::optional<std::string> getEditorLogFileNameOpt() const;
 
+  // Append `msg` to the log file.  A newline will be added and the log
+  // immediately flushed.  If there is no log file, this does nothing.
+  void log(std::string const &msg);
+
+  // Pop up a modal warning dialog with `dialogMessage` on `parent`, and
+  // log `logMessage`.  The dialog also directs the user to the log file
+  // for more information.
+  void logAndWarn(
+    QWidget * NULLABLE parent,
+    std::string const &dialogMessage,
+    std::string const &logMessage);
+
   // --------------------------- LSP Global ----------------------------
   // Read-only access to the manager.
   LSPManager const *lspManagerC() { return &m_lspManager; }

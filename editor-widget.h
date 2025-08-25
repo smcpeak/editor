@@ -278,6 +278,13 @@ private:     // funcs
   void showDiagnosticDetailsDialog(
     QVector<DiagnosticElement> &&elts) const;
 
+  // An attempt to parse `gdvReply` in response to `lsrk` yielded
+  // exception `x`.  Log the details and warn the user.
+  void logAndWarnFailedLocationReply(
+    gdv::GDValue const &gdvReply,
+    LSPSymbolRequestKind lsrk,
+    smbase::XBase &x);
+
   // The user is trying to make a change to a read-only document.
   // Prompt to override the flag.
   bool promptOverrideReadOnly();
