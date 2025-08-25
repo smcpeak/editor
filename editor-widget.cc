@@ -3009,7 +3009,7 @@ void EditorWidget::lspHandleCompletionReply(
       m_editor->setSelectRange(layoutRange);
 
       // Replace it with the new text.
-      m_editor->insertString(edit.m_newText);
+      COMMAND_MU(EC_InsertString, edit.m_newText);
     }
     else {
       // The dialog is not supposed to allow accepting without anything
