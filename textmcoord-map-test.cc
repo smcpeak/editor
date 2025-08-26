@@ -169,7 +169,7 @@ public:
   }
 
 
-  static TextMCoord adjustMC_insertLines(TextMCoord mc, int line, int count)
+  static TextMCoord adjustMC_insertLines(TextMCoord mc, LineIndex line, int count)
   {
     // Push at or later lines down by `count`.
     if (mc.m_line >= line) {
@@ -192,7 +192,7 @@ public:
     return mc;
   }
 
-  TextMCoord adjustMC_deleteLines(TextMCoord mc, int line, int count) const
+  TextMCoord adjustMC_deleteLines(TextMCoord mc, LineIndex line, int count) const
   {
     if (cc::le_lt(line, mc.m_line, line+count)) {
       // The endpoint is in the deleted region, so its column gets
@@ -202,13 +202,13 @@ public:
 
     // Pull later lines up, but not above `line`.
     if (mc.m_line > line) {
-      mc.m_line = std::max(line, mc.m_line - count);
+      mc.m_line = LineIndex(std::max(line.get(), mc.m_line.get() - count));
     }
 
     // Except, the line must be less than `*m_numLines`.
     xassert(mc.m_line <= *m_numLines);
-    if (mc.m_line == *m_numLines) {
-      mc.m_line = *m_numLines - 1;
+    if (mc.m_line.get() == *m_numLines) {
+      mc.m_line = LineIndex(*m_numLines - 1);
     }
 
     return mc;
@@ -226,13 +226,13 @@ public:
     return mc;
   }
 
-  void insertLines(int line, int count)
+  void insertLines(LineIndex line, int count)
   {
     xassert(m_numLines.has_value());
 
     // Any number of lines can be appended, so we merely require that
     // `line` be at most `*m_numLines`.
-    xassert(cc::z_le_le(line, *m_numLines));
+    xassert(line <= *m_numLines);
     xassert(count >= 0);
 
     *m_numLines += count;
@@ -265,12 +265,12 @@ public:
     return range;
   }
 
-  void deleteLines(int line, int count)
+  void deleteLines(LineIndex line, int count)
   {
     xassert(m_numLines.has_value());
 
     // All the lines being deleted must currently exist.
-    xassert(cc::z_le_le_le(line, line+count, *m_numLines));
+    xassert(cc::le_le(line, line+count, LineIndex(*m_numLines)));
 
     // The count must be non-negative, and you can't delete all of the
     // lines.
@@ -295,7 +295,7 @@ public:
   void insertLineBytes(TextMCoord tc, int lengthBytes)
   {
     xassert(m_numLines.has_value());
-    xassert(cc::z_le_lt(tc.m_line, *m_numLines));
+    xassert(tc.m_line < *m_numLines);
 
     std::set<DocEntry> newEntries;
 
@@ -314,7 +314,7 @@ public:
   void deleteLineBytes(TextMCoord tc, int lengthBytes)
   {
     xassert(m_numLines.has_value());
-    xassert(cc::z_le_lt(tc.m_line, *m_numLines));
+    xassert(tc.m_line < *m_numLines);
 
     std::set<DocEntry> newEntries;
 
@@ -345,7 +345,7 @@ public:
     int ret = -1;
 
     for (DocEntry const &e : m_entries) {
-      ret = std::max(ret, e.m_range.m_end.m_line);
+      ret = std::max(ret, e.m_range.m_end.m_line.get());
     }
 
     return ret;
@@ -362,7 +362,7 @@ public:
     return *m_numLines;
   }
 
-  std::set<LineEntry> getLineEntries(int line) const
+  std::set<LineEntry> getLineEntries(LineIndex line) const
   {
     std::set<LineEntry> ret;
 
@@ -457,7 +457,7 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
   // this would ever fail if the above succeeded, but it won't hurt.
   xassert(m.getAllEntries() == r.getAllEntries());
 
-  for (int i=0; i <= r.maxEntryLine(); ++i) {
+  for (LineIndex i(0); i <= r.maxEntryLine(); ++i) {
     EXN_CONTEXT_EXPR(i);
 
     EXPECT_EQ(toGDValue(m.getLineEntries(i)),
@@ -545,14 +545,14 @@ public:      // methods
     m_ref.adjustForDocument(doc);
   }
 
-  void insertLines(int line, int count)
+  void insertLines(LineIndex line, int count)
   {
     DIAG("m.insertLines(" << line << ", " << count << ");");
     m_sut.insertLines(line, count);
     m_ref.insertLines(line, count);
   }
 
-  void deleteLines(int line, int count)
+  void deleteLines(LineIndex line, int count)
   {
     DIAG("m.deleteLines(" << line << ", " << count << ");");
     m_sut.deleteLines(line, count);
@@ -595,7 +595,7 @@ public:      // methods
     return m_sut.getNumLines();
   }
 
-  std::set<LineEntry> getLineEntries(int line) const
+  std::set<LineEntry> getLineEntries(LineIndex line) const
   {
     return m_sut.getLineEntries(line);
   }
@@ -639,7 +639,12 @@ std::string internals(MapPair const &m)
 // Get the entries for `line` as a string.
 std::string lineEntriesString(MapPair const &m, int line)
 {
-  return toGDValue(m.getLineEntries(line)).asString();
+  if (line < 0) {
+    // Disable tests that relied on negative line indices.
+    return "{}";
+  }
+
+  return toGDValue(m.getLineEntries(LineIndex(line))).asString();
 }
 
 
@@ -661,7 +666,7 @@ void checkLineEntriesRoundtrip(MapPair const &m)
 {
   typedef MapPair::LineEntry LineEntry;
 
-  for (int i=0; i <= m.maxEntryLine(); ++i) {
+  for (LineIndex i(0); i <= m.maxEntryLine(); ++i) {
     std::set<LineEntry> lineEntries = m.getLineEntries(i);
     GDValue v(toGDValue(lineEntries));
     std::set<LineEntry> after =
@@ -673,11 +678,21 @@ void checkLineEntriesRoundtrip(MapPair const &m)
 }
 
 
+static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
+{
+  return TextMCoordRange(
+    TextMCoord(LineIndex(sl), sb),
+    TextMCoord(LineIndex(el), eb));
+}
+
+
 // This test follows the example in the comments above the declaration
 // of the `TextMCoordMap` class in the header file.  Note: That example
 // only does edits at the line granularity.
 void test_commentsExample()
 {
+  TEST_CASE("test_commentsExample");
+
   DIAG("Start with empty map.");
   MapPair m(7 /*numLines*/);
   m.selfCheck();
@@ -697,7 +712,7 @@ void test_commentsExample()
   EXPECT_EQ(lineEntriesString(m, 0), "{}");
 
   DIAG("Insert value 1 at 1:5 to 1:12.");
-  m.insertEntry({{{1,5}, {1,12}}, 1});
+  m.insertEntry({tmcr(1,5, 1,12), 1});
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -733,7 +748,7 @@ void test_commentsExample()
     ])");
 
   DIAG("Insert value 2 at 3:5 to 5:12.");
-  m.insertEntry({{{3,5}, {5,12}}, 2});
+  m.insertEntry({tmcr(3,5, 5,12), 2});
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -796,7 +811,7 @@ void test_commentsExample()
     ])");
 
   DIAG("Insert line at 3.");
-  m.insertLines(3, 1);
+  m.insertLines(LineIndex(3), 1);
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -861,7 +876,7 @@ void test_commentsExample()
     ])");
 
   DIAG("Delete line 5.");
-  m.deleteLines(5, 1);
+  m.deleteLines(LineIndex(5), 1);
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -926,6 +941,12 @@ std::string allEntriesString(MapPair const &m)
 }
 
 
+static TextMCoord tmc(int l, int b)
+{
+  return TextMCoord(LineIndex(l), b);
+}
+
+
 // Insertions within a single line.
 void test_lineInsertions()
 {
@@ -933,7 +954,7 @@ void test_lineInsertions()
   m.selfCheck();
 
   DIAG("Make a span.");
-  m.insertEntry({{{0,5}, {0,10}}, 1});
+  m.insertEntry({tmcr(0,5, 0,10), 1});
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -946,7 +967,7 @@ void test_lineInsertions()
   //         ins
 
   DIAG("Insert within.");
-  m.insertLineBytes({0, 7}, 1);
+  m.insertLineBytes(tmc(0,7), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -958,7 +979,7 @@ void test_lineInsertions()
   //       ins
 
   DIAG("Insert just inside left edge.");
-  m.insertLineBytes({0, 5}, 1);
+  m.insertLineBytes(tmc(0,5), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -970,7 +991,7 @@ void test_lineInsertions()
   //       ins
 
   DIAG("Insert just outside left edge.");
-  m.insertLineBytes({0, 5}, 1);
+  m.insertLineBytes(tmc(0,5), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -982,7 +1003,7 @@ void test_lineInsertions()
   //              ins
 
   DIAG("Insert just inside right edge.");
-  m.insertLineBytes({0, 12}, 1);
+  m.insertLineBytes(tmc(0,12), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -994,7 +1015,7 @@ void test_lineInsertions()
   //                ins
 
   DIAG("Insert just outside right edge.");
-  m.insertLineBytes({0, 14}, 1);
+  m.insertLineBytes(tmc(0,14), 1);
   m.selfCheck();
 
   // It is questionable behavior to expand the range here, but that is
@@ -1015,7 +1036,7 @@ void test_multilineInsertions()
   m.selfCheck();
 
   DIAG("Make a span.");
-  m.insertEntry({{{0,5}, {1,10}}, 1});
+  m.insertEntry({tmcr(0,5, 1,10), 1});
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1031,7 +1052,7 @@ void test_multilineInsertions()
   // 1           )
 
   DIAG("Insert within first line (no effect).");
-  m.insertLineBytes({0, 7}, 1);
+  m.insertLineBytes(tmc(0,7), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1046,7 +1067,7 @@ void test_multilineInsertions()
   //          ^ ins
 
   DIAG("Insert within second line.");
-  m.insertLineBytes({1, 7}, 1);
+  m.insertLineBytes(tmc(1,7), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1061,7 +1082,7 @@ void test_multilineInsertions()
   // 1            )
 
   DIAG("Insert just inside left edge.");
-  m.insertLineBytes({0, 5}, 1);
+  m.insertLineBytes(tmc(0,5), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1076,7 +1097,7 @@ void test_multilineInsertions()
   // 1            )
 
   DIAG("Insert just outside left edge.");
-  m.insertLineBytes({0, 5}, 1);
+  m.insertLineBytes(tmc(0,5), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1091,7 +1112,7 @@ void test_multilineInsertions()
   //             ^ ins
 
   DIAG("Insert just inside right edge.");
-  m.insertLineBytes({1, 10}, 1);
+  m.insertLineBytes(tmc(1,10), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1106,7 +1127,7 @@ void test_multilineInsertions()
   //               ^ ins
 
   DIAG("Insert just outside right edge.");
-  m.insertLineBytes({1, 12}, 1);
+  m.insertLineBytes(tmc(1,12), 1);
   m.selfCheck();
 
   // It is questionable behavior to expand the range here, but that is
@@ -1131,7 +1152,7 @@ void test_lineDeletions()
   m.selfCheck();
 
   DIAG("Make a span.");
-  m.insertEntry({{{0,10}, {0,20}}, 1});
+  m.insertEntry({tmcr(0,10, 0,20), 1});
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1144,7 +1165,7 @@ void test_lineDeletions()
   //                del
 
   DIAG("Delete one byte in the middle.");
-  m.deleteLineBytes({0,14}, 1);
+  m.deleteLineBytes(tmc(0,14), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1156,7 +1177,7 @@ void test_lineDeletions()
   //            del
 
   DIAG("Delete one byte just inside the left edge.");
-  m.deleteLineBytes({0,10}, 1);
+  m.deleteLineBytes(tmc(0,10), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1168,7 +1189,7 @@ void test_lineDeletions()
   //           del
 
   DIAG("Delete one byte just outside the left edge.");
-  m.deleteLineBytes({0,9}, 1);
+  m.deleteLineBytes(tmc(0,9), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1180,7 +1201,7 @@ void test_lineDeletions()
   //                  del
 
   DIAG("Delete one byte just inside the right edge.");
-  m.deleteLineBytes({0,16}, 1);
+  m.deleteLineBytes(tmc(0,16), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1192,7 +1213,7 @@ void test_lineDeletions()
   //                  del
 
   DIAG("Delete one byte just outside the right edge (no effect).");
-  m.deleteLineBytes({0,16}, 1);
+  m.deleteLineBytes(tmc(0,16), 1);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1204,7 +1225,7 @@ void test_lineDeletions()
   //          del
 
   DIAG("Delete two bytes straddling the left edge.");
-  m.deleteLineBytes({0,8}, 2);
+  m.deleteLineBytes(tmc(0,8), 2);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1216,7 +1237,7 @@ void test_lineDeletions()
   //               del
 
   DIAG("Delete two bytes straddling the right edge.");
-  m.deleteLineBytes({0,13}, 2);
+  m.deleteLineBytes(tmc(0,13), 2);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1228,7 +1249,7 @@ void test_lineDeletions()
   //            del
 
   DIAG("Delete the exact range.");
-  m.deleteLineBytes({0,8}, 5);
+  m.deleteLineBytes(tmc(0,8), 5);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1240,7 +1261,7 @@ void test_lineDeletions()
   //          del
 
   DIAG("Delete two bytes straddling the empty range.");
-  m.deleteLineBytes({0,7}, 2);
+  m.deleteLineBytes(tmc(0,7), 2);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1252,7 +1273,7 @@ void test_lineDeletions()
   //     del
 
   DIAG("Delete all preceding bytes.");
-  m.deleteLineBytes({0,0}, 7);
+  m.deleteLineBytes(tmc(0,0), 7);
   m.selfCheck();
 
   EXPECT_EQ(allEntriesString(m),
@@ -1270,7 +1291,7 @@ void test_multilineDeletions()
 {
   MapPair m(7 /*numLines*/);
 
-  m.insertEntry({{{2,24}, {4,1}}, 3});
+  m.insertEntry({tmcr(2,24, 4,1), 3});
   m.selfCheck();
   EXPECT_EQ(allEntriesString(m),
     "{DocEntry[range:MCR(MC(2 24) MC(4 1)) value:3]}");
@@ -1283,7 +1304,7 @@ void test_multilineDeletions()
   // 3
   // 4  )         <-- del two lines starting here
 
-  m.deleteLines(4, 2);
+  m.deleteLines(LineIndex(4), 2);
   m.selfCheck();
   EXPECT_EQ(allEntriesString(m),
     "{DocEntry[range:MCR(MC(2 24) MC(4 0)) value:3]}");
@@ -1303,7 +1324,7 @@ void test_multilineDeletion2()
 {
   MapPair m(4 /*numLines*/);
 
-  m.insertEntry({{{0,21}, {3,0}}, 3});
+  m.insertEntry({tmcr(0,21, 3,0), 3});
   m.selfCheck();
   EXPECT_EQ(allEntriesString(m),
     "{DocEntry[range:MCR(MC(0 21) MC(3 0)) value:3]}");
@@ -1314,7 +1335,7 @@ void test_multilineDeletion2()
   // 2
   // 3 )
 
-  m.deleteLines(0, 2);
+  m.deleteLines(LineIndex(0), 2);
   m.selfCheck();
   EXPECT_EQ(allEntriesString(m),
     "{DocEntry[range:MCR(MC(0 0) MC(1 0)) value:3]}");
@@ -1325,9 +1346,9 @@ void test_multilineDeletion2()
 }
 
 
-int randomLine()
+LineIndex randomLine()
 {
-  return sm_random(20);
+  return LineIndex(sm_random(20));
 }
 
 int randomColumn()
@@ -1337,9 +1358,9 @@ int randomColumn()
 
 
 // Append lines to ensure `line` is a valid index.
-void ensureValidLineIndex(MapPair &m, int line)
+void ensureValidLineIndex(MapPair &m, LineIndex line)
 {
-  int maxLine = m.getNumLines() - 1;
+  LineIndex maxLine = LineIndex(m.getNumLines() - 1);
   if (line > maxLine) {
     m.insertLines(maxLine+1, line - maxLine);
   }
@@ -1352,10 +1373,10 @@ void randomInsertEntry(MapPair &m)
 {
   int spanID = m.numEntries() + 1;
 
-  int startLine = randomLine();
+  LineIndex startLine = randomLine();
   int startCol = randomColumn();
 
-  int endLine;
+  LineIndex endLine;
   int endCol;
 
   if (sm_random(7) == 0) {
@@ -1407,27 +1428,27 @@ void randomEdit(MapPair &m)
   }
 
   else if (c.check(200)) {
-    int line = randomLine();
+    LineIndex line = randomLine();
     int count = sm_random(3);
-    ensureValidLineIndex(m, line-1);
+    ensureValidLineIndex(m, line.pred());
     m.insertLines(line, count);
   }
 
   else if (c.check(200)) {
-    int line = randomLine();
+    LineIndex line = randomLine();
     int count = sm_random(3);
-    ensureValidLineIndex(m, line+count-1);
+    ensureValidLineIndex(m, (line+count).pred());
     m.deleteLines(line, count);
   }
 
   else if (c.check(200)) {
-    int line = randomLine();
+    LineIndex line = randomLine();
     ensureValidLineIndex(m, line);
     m.insertLineBytes(TextMCoord(line, randomColumn()), randomColumn());
   }
 
   else if (c.check(200)) {
-    int line = randomLine();
+    LineIndex line = randomLine();
     ensureValidLineIndex(m, line);
     m.deleteLineBytes(TextMCoord(line, randomColumn()), randomColumn());
   }
@@ -1472,10 +1493,10 @@ void test_editEmpty()
   MapPair m(20 /*numLines*/);
   m.selfCheck();
 
-  m.insertLineBytes({13,13}, 2);
-  m.deleteLineBytes({13,31}, 21);
-  m.insertLines(18, 1);
-  m.deleteLines(10, 2);
+  m.insertLineBytes(tmc(13,13), 2);
+  m.deleteLineBytes(tmc(13,31), 21);
+  m.insertLines(LineIndex(18), 1);
+  m.deleteLines(LineIndex(10), 2);
 }
 
 
@@ -1484,11 +1505,11 @@ void test_insertAfterLast()
 {
   MapPair m(2 /*numLines*/);
 
-  m.insertEntry({{{1,4}, {1,42}}, 2});
+  m.insertEntry({tmcr(1,4, 1,42), 2});
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), 1);
 
-  m.insertLines(2, 1);
+  m.insertLines(LineIndex(2), 1);
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), 1);
 }
@@ -1498,7 +1519,7 @@ void test_insertAfterLast()
 void test_clear()
 {
   MapPair m(2 /*numLines*/);
-  m.insertEntry({{{1,4}, {1,42}}, 2});
+  m.insertEntry({tmcr(1,4, 1,42), 2});
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), 1);
 
@@ -1513,14 +1534,14 @@ void test_multilineDeletion3()
 {
   MapPair m(5 /*numLines*/);
 
-  m.insertEntry({{{3,0}, {4,8}}, 2});
+  m.insertEntry({tmcr(3,0, 4,8), 2});
 
   VPVAL(toGDValue(m));
 
   // The issue here is we have a multiline deletion that ends just
   // before the line containing the endpoint.  Consequently, what was
   // a multiline range has to be converted to a single-line range.
-  m.deleteLines(3, 1);
+  m.deleteLines(LineIndex(3), 1);
 
   m.selfCheck();
 }
@@ -1531,12 +1552,12 @@ void test_multilineDeletion4()
 {
   MapPair m(30 /*numLines*/);
 
-  m.insertEntry({{{19,11}, {20,27}}, 3});
+  m.insertEntry({tmcr(19,11, 20,27), 3});
 
   VPVAL(toGDValue(m));
 
   // Multiline deletion that covers the entire span.
-  m.deleteLines(19, 2);
+  m.deleteLines(LineIndex(19), 2);
 
   VPVAL(toGDValue(m));
   m.selfCheck();
@@ -1550,10 +1571,10 @@ void test_insertMakesLongLine()
 {
   MapPair m(2 /*numLines*/);
 
-  m.insertEntry({{{0,94}, {1,0}}, 3});
+  m.insertEntry({tmcr(0,94, 1,0), 3});
   m.selfCheck();
 
-  m.insertLineBytes({0,11}, 33);
+  m.insertLineBytes(tmc(0,11), 33);
   m.selfCheck();
 }
 
@@ -1592,22 +1613,22 @@ void test_adjustForDocument()
   MapPair m(10 /*numLines*/);
 
   // Simple case of reducing the end coordinate within a line.
-  m.insertEntry({{{1,1}, {1,42}}, 1});
+  m.insertEntry({tmcr(1,1, 1,42), 1});
 
   // Reduce both coordinates
-  m.insertEntry({{{2,20}, {2,42}}, 2});
+  m.insertEntry({tmcr(2,20, 2,42), 2});
 
   // Span where the first coordinate gets reduced.
-  m.insertEntry({{{1,40}, {2,2}}, 3});
+  m.insertEntry({tmcr(1,40, 2,2), 3});
 
   // Single-line span near EOF that is not affected.
-  m.insertEntry({{{4,1}, {4,2}}, 4});
+  m.insertEntry({tmcr(4,1, 4,2), 4});
 
   // Single-line span beyond EOF.
-  m.insertEntry({{{5,1}, {5,42}}, 5});
+  m.insertEntry({tmcr(5,1, 5,42), 5});
 
   // Multiline span where only the end gets moved.
-  m.insertEntry({{{4,1}, {6,42}}, 6});
+  m.insertEntry({tmcr(4,1, 6,42), 6});
 
 
   EXPECT_EQ(allEntriesString(m), "{\n"
@@ -1643,7 +1664,7 @@ void test_adjustForDocument()
 
 void randomDocInsertions(TextDocumentCore &doc, int n)
 {
-  for (int i=0; i < n; ++i) {
+  for (LineIndex i(0); i < n; ++i) {
     doc.insertLine(i);
     doc.insertText(TextMCoord(i,0),
       "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", sm_random(40));
@@ -1684,18 +1705,18 @@ void test_deleteNearEnd()
 
   // This is supposed to represent a diagnostic that goes right to the
   // end of a file that has 3 lines total.
-  m.insertEntry({{{1,0}, {2,19}}, 8740});        // Start at BOL.
-  m.insertEntry({{{1,5}, {2,19}}, 8745});        // Start a little after.
+  m.insertEntry({tmcr(1,0, 2,19), 8740});        // Start at BOL.
+  m.insertEntry({tmcr(1,5, 2,19), 8745});        // Start a little after.
   m.selfCheck();
 
   // We then delete a span that has the effect of removing one line, so
   // the diagnostic should be adjusted to end on line 1, not 2.
-  //doc.deleteTextRange(TextMCoordRange({1,8}, {2,6}));
-  m.deleteLineBytes({1, 8}, 4);        // End of first line.
-  m.deleteLineBytes({2, 0}, 6);        // Start of next line.
-  m.deleteLineBytes({2, 0}, 13);       // Remainder of next line (for splice).
-  m.deleteLines(2, 1);                 // Remove the next line.
-  m.insertLineBytes({1, 8}, 13);       // Put the spliced part back.
+  //doc.deleteTextRange(TextMCoordRange(tmc(1,8), tmc(2,6)));
+  m.deleteLineBytes(tmc(1,8), 4);        // End of first line.
+  m.deleteLineBytes(tmc(2,0), 6);        // Start of next line.
+  m.deleteLineBytes(tmc(2,0), 13);       // Remainder of next line (for splice).
+  m.deleteLines(LineIndex(2), 1);        // Remove the next line.
+  m.insertLineBytes(tmc(1,8), 13);       // Put the spliced part back.
 
   // Now, the endpoint of the adjusted diagnostic should be on line 1.
   m.selfCheck();

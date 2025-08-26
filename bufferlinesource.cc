@@ -26,12 +26,12 @@ BufferLineSource::~BufferLineSource()
 {}
 
 
-void BufferLineSource::beginScan(TextDocumentCore const *b, int line)
+void BufferLineSource::beginScan(TextDocumentCore const *b, LineIndex line)
 {
   // set up variables so we'll be able to do fillBuffer()
   buffer = b;
   bufferLine = line;
-  lineLength = buffer->lineLengthBytes(line)+1;
+  lineLength = buffer->lineLengthBytes(LineIndex(line))+1;
   nextSlurpCol = 0;
 }
 
@@ -46,7 +46,10 @@ int BufferLineSource::fillBuffer(void *dest, int max_size)
 
   int len = std::min(max_size, (lineLength-1)-nextSlurpCol);
   tmpArray.clear();
-  buffer->getPartialLine(TextMCoord(bufferLine, nextSlurpCol), tmpArray, len);
+  buffer->getPartialLine(
+    TextMCoord(LineIndex(bufferLine), nextSlurpCol),
+    tmpArray,
+    len);
   xassert(tmpArray.length() == len);
   nextSlurpCol += len;
 

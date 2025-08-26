@@ -92,7 +92,7 @@ TextMCoord toMCoord(LSP_Position const &pos)
 {
   // TODO: This assumes that the units are the same, but I have not
   // properly negotiated that.
-  return TextMCoord(pos.m_line.getForNow(), pos.m_character);
+  return TextMCoord(pos.m_line, pos.m_character);
 }
 
 

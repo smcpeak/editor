@@ -4,6 +4,8 @@
 #ifndef TEXTLCOORD_H
 #define TEXTLCOORD_H
 
+#include "line-index.h"                // LineIndex
+
 #include "smbase/sm-macros.h"          // DMEMB
 
 #include <iostream>                    // std::ostream
@@ -34,22 +36,20 @@
 // coordinates for interaction with the user.
 class TextLCoord {
 public:      // data
-  // 0-based line number.  Should not be negative, although nothing in
-  // this class prohibits that, and it could potentially be useful to
-  // allow a negative value in the middle of a calculation.
+  // 0-based line number.
   //
   // Eventually I plan to replace "line" with "row" in order to decouple
   // the vertical dimension of layout and model, just as "byte" and
   // "column" decouple the horizontal dimension.  But, currently, the
   // model and layout line numbers are always the same.
-  int m_line;
+  LineIndex m_line;
 
   // 0-based column number.  Should not be negative.
   int m_column;
 
 public:      // funcs
   TextLCoord() : m_line(0), m_column(0) {}
-  TextLCoord(int line_, int column_) : m_line(line_), m_column(column_) {}
+  TextLCoord(LineIndex line_, int column_) : m_line(line_), m_column(column_) {}
   TextLCoord(TextLCoord const &obj) : DMEMB(m_line), DMEMB(m_column) {}
 
   TextLCoord& operator= (TextLCoord const &obj);
@@ -61,12 +61,12 @@ public:      // funcs
 
   RELATIONAL_OPERATORS(TextLCoord);
 
-  bool isZero() const { return m_line==0 && m_column==0; }
+  bool isZero() const { return m_line.isZero() && m_column==0; }
 
-  // Although not disallowed, we provide a convenient way to test that
-  // coordinates are non-negative in case clients want to enforce that
-  // in certain places.
-  bool nonNegative() const { return m_line>=0 && m_column>=0; }
+  // Although not disallowed for columns, we provide a convenient way to
+  // test that coordinates are non-negative in case clients want to
+  // enforce that in certain places.
+  bool nonNegative() const { return m_column>=0; }
 
   // Insert as "<line>:<col>".
   void insert(std::ostream &os) const;

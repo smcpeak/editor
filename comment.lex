@@ -174,7 +174,7 @@ CommentLexer::~CommentLexer()
 }
 
 
-void CommentLexer::beginScan(TextDocumentCore const *buffer, int line, LexerState state)
+void CommentLexer::beginScan(TextDocumentCore const *buffer, LineIndex line, LexerState state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);

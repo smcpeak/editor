@@ -6,35 +6,16 @@
 #include "smbase/compare-util-iface.h" // COMPARE_MEMBERS
 #include "smbase/gdvalue.h"            // gdv::{GDValue, GDVInteger}
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/overflow.h"           // addWithOverflowCheck, preIncrementWithOverflowCheck
 #include "smbase/sm-macros.h"          // DMEMB
 #include "smbase/stringb.h"            // stringb
 
 #include <iostream>                    // std::ostream
+#include <limits>                      // std::numeric_limits
 #include <optional>                    // std::optional
 
 using namespace gdv;
 using namespace smbase;
-
-
-LineIndex::LineIndex(int value)
-  : IMEMBFP(value)
-{
-  xassertPrecondition(value >= 0);
-}
-
-
-LineIndex::LineIndex(LineIndex const &obj)
-  : DMEMB(m_value)
-{}
-
-
-LineIndex &LineIndex::operator=(LineIndex const &obj)
-{
-  if (this != &obj) {
-    CMEMB(m_value);
-  }
-  return *this;
-}
 
 
 void LineIndex::selfCheck() const
@@ -48,6 +29,100 @@ int LineIndex::compareTo(LineIndex const &b) const
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_value);
   return 0;
+}
+
+
+LineIndex &LineIndex::operator--()
+{
+  xassert(isPositive());
+  --m_value;
+  selfCheck();
+  return *this;
+}
+
+
+LineIndex &LineIndex::operator++()
+{
+  preIncrementWithOverflowCheck(m_value);
+  return *this;
+}
+
+
+LineIndex LineIndex::operator+(int delta) const
+{
+  return LineIndex(addWithOverflowCheck(m_value, delta));
+}
+
+
+LineIndex &LineIndex::operator+=(int delta)
+{
+  return *this = *this + delta;
+}
+
+
+bool LineIndex::tryIncrease(int delta)
+{
+  try {
+    int newValue = addWithOverflowCheck(m_value, delta);
+    if (newValue >= 0) {
+      m_value = newValue;
+      selfCheck();
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  catch (...) {
+    return false;
+  }
+}
+
+
+void LineIndex::clampIncrease(int delta)
+{
+  int newValue = addWithOverflowCheck(m_value, delta);
+  if (newValue >= 0) {
+    m_value = newValue;
+  }
+  else {
+    m_value = 0;
+  }
+}
+
+
+LineIndex LineIndex::clampIncreased(int delta) const
+{
+  LineIndex ret(*this);
+  ret.clampIncrease(delta);
+  return ret;
+}
+
+
+LineIndex LineIndex::succ() const
+{
+  return clampIncreased(+1);
+}
+
+
+LineIndex LineIndex::pred() const
+{
+  return clampIncreased(-1);
+}
+
+
+LineIndex LineIndex::nzpred() const
+{
+  xassertPrecondition(isPositive());
+  return pred();
+}
+
+
+int LineIndex::operator-(LineIndex const &b) const
+{
+  // Since both are non-negative, this cannot overflow, although it can
+  // of course return a negative value.
+  return m_value - b.m_value;
 }
 
 

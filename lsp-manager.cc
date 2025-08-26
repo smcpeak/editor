@@ -172,8 +172,8 @@ std::string LSPDocumentInfo::getLastContentsCodeLine(
 {
   TextDocumentCore const *td = m_lastSentContents.get();
 
-  if (td->validLine(lineIndex.getForNow())) {
-    return td->getWholeLineString(lineIndex.getForNow());
+  if (td->validLine(lineIndex)) {
+    return td->getWholeLineString(lineIndex);
   }
   else {
     return stringb(

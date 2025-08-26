@@ -320,7 +320,7 @@ void TextDocumentDiagnostics::insertDiagnostic(
 }
 
 
-auto TextDocumentDiagnostics::getLineEntries(int line) const
+auto TextDocumentDiagnostics::getLineEntries(LineIndex line) const
   -> std::set<LineEntry>
 {
   std::set<LineEntry> ret;
@@ -392,7 +392,7 @@ TextDocumentDiagnostics::getNextDiagnosticLocation(TextMCoord tc) const
   // inside `m_rangeToDiagIndex`.
 
   int maxLine = maxDiagnosticLine();
-  for (int line = tc.m_line; line <= maxLine; ++line) {
+  for (LineIndex line = tc.m_line; line <= maxLine; ++line) {
     std::set<LineEntry> lineEntries = getLineEntries(line);
     for (LineEntry const &entry : lineEntries) {
       if (entry.m_startByteIndex.has_value() &&
@@ -412,7 +412,7 @@ TextDocumentDiagnostics::getNextDiagnosticLocation(TextMCoord tc) const
 std::optional<TextMCoord>
 TextDocumentDiagnostics::getPreviousDiagnosticLocation(TextMCoord tc) const
 {
-  for (int line = tc.m_line; line >= 0; --line) {
+  for (LineIndex line = tc.m_line; true; --line) {
     std::set<LineEntry> lineEntries = getLineEntries(line);
     for (LineEntry const &entry : reverseIterRange(lineEntries)) {
       if (entry.m_startByteIndex.has_value() &&
@@ -420,6 +420,10 @@ TextDocumentDiagnostics::getPreviousDiagnosticLocation(TextMCoord tc) const
            *entry.m_startByteIndex < tc.m_byteIndex)) {
         return TextMCoord(line, *entry.m_startByteIndex);
       }
+    }
+
+    if (line.isZero()) {
+      break;
     }
   }
 
@@ -451,12 +455,12 @@ void TextDocumentDiagnostics::adjustForDocument(
 }
 
 
-void TextDocumentDiagnostics::insertLines(int line, int count)
+void TextDocumentDiagnostics::insertLines(LineIndex line, int count)
 {
   m_rangeToDiagIndex.insertLines(line, count);
 }
 
-void TextDocumentDiagnostics::deleteLines(int line, int count)
+void TextDocumentDiagnostics::deleteLines(LineIndex line, int count)
 {
   m_rangeToDiagIndex.deleteLines(line, count);
 }
@@ -562,14 +566,14 @@ NamedTextDocument const *TextDocumentDiagnosticsUpdater::getDocument() const
 }
 
 
-void TextDocumentDiagnosticsUpdater::observeInsertLine(TextDocumentCore const &doc, int line) noexcept
+void TextDocumentDiagnosticsUpdater::observeInsertLine(TextDocumentCore const &doc, LineIndex line) noexcept
 {
   GENERIC_CATCH_BEGIN
   m_diagnostics->insertLines(line, 1);
   GENERIC_CATCH_END
 }
 
-void TextDocumentDiagnosticsUpdater::observeDeleteLine(TextDocumentCore const &doc, int line) noexcept
+void TextDocumentDiagnosticsUpdater::observeDeleteLine(TextDocumentCore const &doc, LineIndex line) noexcept
 {
   GENERIC_CATCH_BEGIN
   m_diagnostics->deleteLines(line, 1);

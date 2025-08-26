@@ -154,15 +154,15 @@ public:      // methods
 
     m_primaryDoc.replaceMultilineRange(
       TextMCoordRange(
-        TextMCoord(startLine, startByteIndex),
-        TextMCoord(endLine, endByteIndex)),
+        TextMCoord(LineIndex(startLine), startByteIndex),
+        TextMCoord(LineIndex(endLine), endByteIndex)),
       text);
     EXPECT_EQ(m_primaryDoc.getWholeFileString(), expect);
 
     m_shadowPrimaryDoc.replaceMultilineRange(
       TextMCoordRange(
-        TextMCoord(startLine, startByteIndex),
-        TextMCoord(endLine, endByteIndex)),
+        TextMCoord(LineIndex(startLine), startByteIndex),
+        TextMCoord(LineIndex(endLine), endByteIndex)),
       text);
 
     syncAfterChange();

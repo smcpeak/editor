@@ -5,6 +5,7 @@
 #define TEXT_SEARCH_H
 
 // editor
+#include "line-index.h"                // LineIndex
 #include "ogap.h"                      // OGapArray
 #include "td-core.h"                   // TextDocumentCore
 
@@ -111,10 +112,10 @@ private:     // funcs
   void recomputeMatches();
 
   // Recompute a given range.  The document sizes have to be right.
-  void recomputeLineRange(int startLine, int endLinePlusOne);
+  void recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOne);
 
   // Recompute a single line.
-  void recomputeLine(int line) { recomputeLineRange(line, line+1); }
+  void recomputeLine(LineIndex line) { recomputeLineRange(line, line+1); }
 
   // Compute 'm_regex' from the search string and flags.
   void computeRegex();
@@ -179,23 +180,23 @@ public:      // funcs
 
   // Count the matches within a given range of lines.  Lines beyond
   // the document's current contents silently yield a 0 count.
-  int countRangeMatches(int startLine, int endPlusOneLine) const;
+  int countRangeMatches(LineIndex startLine, LineIndex endPlusOneLine) const;
 
   // Count the matches above a line.
-  int countMatchesAbove(int line) const
-    { return countRangeMatches(0, line); }
+  int countMatchesAbove(LineIndex line) const
+    { return countRangeMatches(LineIndex(0), line); }
 
   // Count the matches on a single line.
-  int countLineMatches(int line) const
+  int countLineMatches(LineIndex line) const
     { return countRangeMatches(line, line+1); }
 
   // Count the matches below a line.
-  int countMatchesBelow(int line) const
-    { return countRangeMatches(line+1, this->documentLines()); }
+  int countMatchesBelow(LineIndex line) const
+    { return countRangeMatches(line+1, LineIndex(this->documentLines())); }
 
   // Count all matches.
   int countAllMatches() const
-    { return countRangeMatches(0, this->documentLines()); }
+    { return countRangeMatches(LineIndex(0), LineIndex(this->documentLines())); }
 
   // Get the matches on a single line.  This can only be called if there
   // is at least one match on the line.  The returned reference is
@@ -204,7 +205,7 @@ public:      // funcs
   //
   // Extents are ordered first by 'm_start', then 'm_length'.  There are
   // no duplicates.
-  ArrayStack<MatchExtent> const &getLineMatches(int line) const;
+  ArrayStack<MatchExtent> const &getLineMatches(LineIndex line) const;
 
   // Given the current 'range', locate the next match (previous match if
   // 'reverse') and set 'range' to it.  If there is no next match,
@@ -226,8 +227,8 @@ public:      // funcs
                             string const &replaceSpec) const;
 
   // TextDocumentObserver methods.
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
+  virtual void observeInsertLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
   virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
   virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT OVERRIDE;

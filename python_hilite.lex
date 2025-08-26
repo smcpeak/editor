@@ -386,7 +386,7 @@ Python_Lexer::~Python_Lexer()
 }
 
 
-void Python_Lexer::beginScan(TextDocumentCore const *buffer, int line, LexerState state)
+void Python_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line, LexerState state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);

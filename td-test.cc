@@ -29,8 +29,8 @@ void replaceRange(
 {
   doc.replaceMultilineRange(
     TextMCoordRange(
-      TextMCoord(startLine, startByteIndex),
-      TextMCoord(endLine, endByteIndex)),
+      TextMCoord(LineIndex(startLine), startByteIndex),
+      TextMCoord(LineIndex(endLine), endByteIndex)),
     text);
 }
 
@@ -119,8 +119,8 @@ void test_applyRangeTextReplacement()
   {
     RangeTextReplacement repl(
       TextMCoordRange(
-        TextMCoord(1, 2),
-        TextMCoord(2, 1)),
+        TextMCoord(LineIndex(1), 2),
+        TextMCoord(LineIndex(2), 1)),
       "ABC");
     doc.applyRangeTextReplacement(repl);
     EXPECT_EQ(doc.getWholeFileString(), "zero\nonABCwo\n");

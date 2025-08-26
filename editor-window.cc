@@ -1552,7 +1552,7 @@ void EditorWindow::editGotoLine() NOEXCEPT
     if (!s.empty()) {
       int n = atoi(s);
       if (n > 0) {
-        editorWidget()->cursorTo(TextLCoord(n-1, 0));
+        editorWidget()->cursorTo(TextLCoord(LineIndex(n-1), 0));
         editorWidget()->scrollToCursor(-1 /*center*/);
       }
       else {
@@ -2645,7 +2645,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
       if (hfl.m_line != 0) {
         // Also go to line/col, if provided.
         TextLCoord targetLC(
-          hfl.m_line - 1,
+          LineIndex(hfl.m_line - 1),
           std::max(0, hfl.m_byteIndex));
         editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();

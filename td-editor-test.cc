@@ -37,7 +37,7 @@ void checkCoord(TextLCoord actual, TextLCoord expect, char const *label)
 
 void expectCursor(TextDocumentEditor const &tde, int line, int col)
 {
-  checkCoord(tde.cursor(), TextLCoord(line, col), "cursor");
+  checkCoord(tde.cursor(), TextLCoord(LineIndex(line), col), "cursor");
 }
 
 void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
@@ -243,13 +243,18 @@ void testUndoOfBlockIndent()
 
 // --------------------- testTextManipulation -----------------------
 // test TextDocumentEditor::getTextForLRange
-void testGetRange(TextDocumentEditor &tde, int line1, int col1,
-                         int line2, int col2, char const *expect)
+void testGetRange(
+  TextDocumentEditor &tde,
+  int line1, int col1,
+  int line2, int col2,
+  char const *expect)
 {
   tde.selfCheck();
 
   string actual =
-    tde.getTextForLRangeString(TextLCoord(line1, col1), TextLCoord(line2, col2));
+    tde.getTextForLRangeString(
+      TextLCoord(LineIndex(line1), col1),
+      TextLCoord(LineIndex(line2), col2));
 
   if (actual != expect) {
     tde.debugPrint();
@@ -262,6 +267,13 @@ void testGetRange(TextDocumentEditor &tde, int line1, int col1,
 }
 
 
+// Make `TextLCoord` using "I"nteger line coordinate.
+static TextLCoord TextILCoord(int line, int col)
+{
+  return TextLCoord(LineIndex(line), col);
+}
+
+
 void testTextManipulation()
 {
   TextDocumentAndEditor tde;
@@ -269,7 +281,7 @@ void testTextManipulation()
   tde.insertNulTermText("foo\nbar\n");
     // result: foo\n
     //         bar\n
-  xassert(tde.cursor() == TextLCoord(2, 0));
+  xassert(tde.cursor() == TextILCoord(2, 0));
   xassert(tde.numLines() == 3);    // so final 'line' is valid
 
   testGetRange(tde, 0,0, 2,0, "foo\nbar\n");
@@ -280,12 +292,12 @@ void testTextManipulation()
   testGetRange(tde, 1,2, 1,3, "r");
   testGetRange(tde, 1,3, 1,3, "");
 
-  tde.setCursor(TextLCoord(0, 1));
+  tde.setCursor(TextILCoord(0, 1));
   tde.insertNulTermText("arf\ngak");
     // result: farf\n
     //         gakoo\n
     //         bar\n
-  xassert(tde.cursor() == TextLCoord(1, 3));
+  xassert(tde.cursor() == TextILCoord(1, 3));
   xassert(tde.numLines() == 4);
   testGetRange(tde, 0,0, 3,0, "farf\ngakoo\nbar\n");
 
@@ -294,7 +306,7 @@ void testTextManipulation()
     //         gak\n
     //         oo\n
     //         bar\n
-  xassert(tde.cursor() == TextLCoord(2, 0));
+  xassert(tde.cursor() == TextILCoord(2, 0));
   xassert(tde.numLines() == 5);
   testGetRange(tde, 0,0, 4,0, "farf\ngak\noo\nbar\n");
 
@@ -312,7 +324,7 @@ void testTextManipulation()
   testGetRange(tde, 12,5, 12,10, "");
   testGetRange(tde, 12,5, 14,5, "");
 
-  tde.deleteTextLRange(TextLCoord(1,1), TextLCoord(1,2));
+  tde.deleteTextLRange(TextILCoord(1,1), TextILCoord(1,2));
     // result: farf\n
     //         gk\n
     //         oo\n
@@ -320,44 +332,44 @@ void testTextManipulation()
   testGetRange(tde, 0,0, 4,0, "farf\ngk\noo\nbar\n");
   xassert(tde.numLines() == 5);
 
-  tde.deleteTextLRange(TextLCoord(0,3), TextLCoord(1,1));
+  tde.deleteTextLRange(TextILCoord(0,3), TextILCoord(1,1));
     // result: fark\n
     //         oo\n
     //         bar\n
   testGetRange(tde, 0,0, 3,0, "fark\noo\nbar\n");
   xassert(tde.numLines() == 4);
 
-  tde.deleteTextLRange(TextLCoord(1,3), TextLCoord(1,5));   // nop
+  tde.deleteTextLRange(TextILCoord(1,3), TextILCoord(1,5));   // nop
     // result: fark\n
     //         oo\n
     //         bar\n
   testGetRange(tde, 0,0, 3,0, "fark\noo\nbar\n");
   xassert(tde.numLines() == 4);
 
-  tde.deleteTextLRange(TextLCoord(2,2), TextLCoord(6,4));
+  tde.deleteTextLRange(TextILCoord(2,2), TextILCoord(6,4));
     // result: fark\n
     //         oo\n
     //         ba
   testGetRange(tde, 0,0, 2,2, "fark\noo\nba");
   xassert(tde.numLines() == 3);
 
-  tde.deleteTextLRange(TextLCoord(1,2), TextLCoord(2,2));
+  tde.deleteTextLRange(TextILCoord(1,2), TextILCoord(2,2));
     // result: fark\n
     //         oo
   testGetRange(tde, 0,0, 1,2, "fark\noo");
   xassert(tde.numLines() == 2);
 
-  tde.deleteTextLRange(TextLCoord(1,0), TextLCoord(1,2));
+  tde.deleteTextLRange(TextILCoord(1,0), TextILCoord(1,2));
     // result: fark\n
   testGetRange(tde, 0,0, 1,0, "fark\n");
   xassert(tde.numLines() == 2);
 
-  tde.deleteTextLRange(TextLCoord(0,0), TextLCoord(1,0));
+  tde.deleteTextLRange(TextILCoord(0,0), TextILCoord(1,0));
     // result: <empty>
   testGetRange(tde, 0,0, 0,0, "");
   xassert(tde.numLines() == 1);
-  xassert(tde.isEmptyLine(0));
-  xassert(tde.lineLengthColumns(0) == 0);
+  xassert(tde.isEmptyLine(LineIndex(0)));
+  xassert(tde.lineLengthColumns(LineIndex(0)) == 0);
 }
 
 
@@ -373,7 +385,7 @@ void expectNM(TextDocumentEditor const &tde, int line, int col, char const *text
 void expectMark(TextDocumentEditor const &tde, int line, int col)
 {
   xassert(tde.markActive());
-  checkCoord(tde.mark(), TextLCoord(line, col), "mark");
+  checkCoord(tde.mark(), TextILCoord(line, col), "mark");
 }
 
 // Expect, and mark is active.
@@ -394,8 +406,8 @@ void expectBlockIndent(
   int markLine, int markCol,
   char const *expectText)
 {
-  tde.setCursor(TextLCoord(cursorLine, cursorCol));
-  tde.setMark(TextLCoord(markLine, markCol));
+  tde.setCursor(TextILCoord(cursorLine, cursorCol));
+  tde.setMark(TextILCoord(markLine, markCol));
   tde.blockIndent(amt);
   expectM(tde, cursorLine, cursorCol, markLine, markCol, expectText);
 }
@@ -415,7 +427,7 @@ void testBlockIndent()
     "two\n"
     "three\n");
 
-  tde.setMark(TextLCoord(1, 0));
+  tde.setMark(TextILCoord(1, 0));
   expectM(tde, 3,0, 1,0,
     "one\n"
     "two\n"
@@ -487,7 +499,7 @@ void testBlockIndent()
 
   // Test 'insertNewline' while beyond EOL.
   tde.clearMark();
-  tde.setCursor(TextLCoord(1, 40));
+  tde.setCursor(TextILCoord(1, 40));
   tde.insertNewline();
   expectNM(tde, 2,0,
     "  one\n"
@@ -513,13 +525,13 @@ void testBlockIndent()
   // Test 'getSelectedText'.
   tde.clearMark();
   xassert(tde.getSelectedText() == "");
-  tde.setCursor(TextLCoord(0,3));
-  tde.setMark(TextLCoord(1,7));
+  tde.setCursor(TextILCoord(0,3));
+  tde.setMark(TextILCoord(1,7));
   xassert(tde.getSelectedText() == "ne\n      t");
 
   // Test 'insertNewline' while beyond EOF.
   tde.clearMark();
-  tde.setCursor(TextLCoord(6,6));
+  tde.setCursor(TextILCoord(6,6));
   tde.insertNewline();
   expectNM(tde, 7,0,
     "  one\n"
@@ -547,7 +559,7 @@ void testBlockIndent2()
 
   // Meanwhile, when there is a line that only has spaces on it, and
   // we unindent, that should remove spaces.
-  tde.setCursor(TextLCoord(3,0));
+  tde.setCursor(TextILCoord(3,0));
   tde.insertNulTermText("  \n");
   expectBlockIndent(tde, -1, 0,0, 4,0,
     " one\n"
@@ -563,7 +575,7 @@ void expectFillToCursor(
   int cursorLine, int cursorCol,
   char const *expectText)
 {
-  tde.setCursor(TextLCoord(cursorLine, cursorCol));
+  tde.setCursor(TextILCoord(cursorLine, cursorCol));
   tde.fillToCursor();
   expect(tde, cursorLine, cursorCol, expectText);
 }
@@ -632,8 +644,8 @@ void expectFV(TextDocumentEditor const &tde,
 {
   tde.selfCheck();
 
-  checkCoord(tde.cursor(), TextLCoord(cursorLine, cursorCol), "cursor");
-  checkCoord(tde.firstVisible(), TextLCoord(fvLine, fvCol), "firstVisible");
+  checkCoord(tde.cursor(), TextILCoord(cursorLine, cursorCol), "cursor");
+  checkCoord(tde.firstVisible(), TextILCoord(fvLine, fvCol), "firstVisible");
   xassert(visLines == tde.visLines());
   xassert(visColumns == tde.visColumns());
 }
@@ -657,8 +669,8 @@ void testScrollToCursor()
   // Insert a test for getSelectLayoutRange with mark inactive.
   {
     TextLCoordRange range = tde.getSelectLayoutRange();
-    xassert(range.m_start == TextLCoord(3, 0));
-    xassert(range.m_end == TextLCoord(3, 0));
+    xassert(range.m_start == TextILCoord(3, 0));
+    xassert(range.m_end == TextILCoord(3, 0));
   }
 
   // Add enough text to start scrolling vertically.
@@ -678,7 +690,7 @@ void testScrollToCursor()
   xassert(tde.cursorAtEnd() == true);
 
   // Put the cursor beyond EOF.
-  tde.setCursor(TextLCoord(6, 20));
+  tde.setCursor(TextILCoord(6, 20));
   expectFV(tde, 6,20, 2,0, 5,10);      // did not scroll yet
   tde.scrollToCursor();
   expectFV(tde, 6,20, 2,11, 5,10);
@@ -690,21 +702,21 @@ void testScrollToCursor()
   xassert(tde.cursorAtEnd() == false); // beyond end
 
   // Back to the start with edgeGap>0, which will have no effect.
-  tde.setCursor(TextLCoord(0,0));
+  tde.setCursor(TextILCoord(0,0));
   tde.scrollToCursor(1 /*edgeGap*/);
   expectFV(tde, 0,0, 0,0, 5,10);
 
   xassert(tde.cursorAtEnd() == false); // at start
 
   // Test with -1 edgeGap.
-  tde.setCursor(TextLCoord(20, 20));    // offscreen
+  tde.setCursor(TextILCoord(20, 20));    // offscreen
   tde.scrollToCursor(-1 /*edgeGap*/);
   expectFV(tde, 20,20, 18,15, 5,10);
 
   // Test with -1 and a coordinate just barely offscreen.  This kills
   // a testing mutant where, in 'stcHelper', we do not reset the gap
   // to 0 in the -1 case.
-  tde.setCursor(TextLCoord(17,15));     // just above FV
+  tde.setCursor(TextILCoord(17,15));     // just above FV
   expectFV(tde, 17,15, 18,15, 5,10);
   tde.scrollToCursor(-1 /*edgeGap*/);
   expectFV(tde, 17,15, 15,15, 5,10);
@@ -725,11 +737,11 @@ void testScrollToCursor()
   expectFV(tde, 3,0, 0,0, 5,10);
 
   // Test 'moveFirstVisibleAndCursor'.
-  tde.setFirstVisible(TextLCoord(10,10));
+  tde.setFirstVisible(TextILCoord(10,10));
   expectFV(tde, 3,0, 10,10, 5,10);
   tde.moveFirstVisibleAndCursor(0, +1);    // scroll to cursor, then shift right
   expectFV(tde, 3,1, 3,1, 5,10);
-  tde.setCursor(TextLCoord(4,2));           // one in from left/top
+  tde.setCursor(TextILCoord(4,2));           // one in from left/top
   expectFV(tde, 4,2, 3,1, 5,10);
   tde.moveFirstVisibleAndCursor(+2, +1);
   expectFV(tde, 6,3, 5,2, 5,10);
@@ -741,20 +753,20 @@ void testScrollToCursor()
   // Test 'centerVisibleOnCursorLine'.
   tde.centerVisibleOnCursorLine();         // no-op
   expectFV(tde, 1,1, 0,0, 5,10);
-  tde.setCursor(TextLCoord(50,50));
+  tde.setCursor(TextILCoord(50,50));
   tde.centerVisibleOnCursorLine();         // cursor at right edge
   expectFV(tde, 50,50, 48,41, 5,10);
-  tde.setCursor(TextLCoord(5,1));
+  tde.setCursor(TextILCoord(5,1));
   tde.centerVisibleOnCursorLine();         // back near top-left
   expectFV(tde, 5,1, 3,0, 5,10);
 
   // Test with a gap size bigger than the viewport.
-  tde.setCursor(TextLCoord(10,0));
+  tde.setCursor(TextILCoord(10,0));
   tde.scrollToCursor(10 /*gap*/);
   expectFV(tde, 10,0, 8,0, 5,10);
 
   // Again, but near the top edge (don't go negative!).
-  tde.setCursor(TextLCoord(1,0));
+  tde.setCursor(TextILCoord(1,0));
   tde.scrollToCursor(10 /*gap*/);
   expectFV(tde, 1,0, 0,0, 5,10);
 }
@@ -771,8 +783,8 @@ void testOne_stcibo(
 {
   TextDocumentAndEditor tde;
   tde.setVisibleSize(visLines, visColumns);
-  tde.setFirstVisible(TextLCoord(fvLine, fvCol));
-  tde.setCursor(TextLCoord(cursorLine, cursorCol));
+  tde.setFirstVisible(TextILCoord(fvLine, fvCol));
+  tde.setCursor(TextILCoord(cursorLine, cursorCol));
 
   expectFV(tde,
     cursorLine, cursorCol,
@@ -874,13 +886,23 @@ void test_scrollToCursorIfBarelyOffscreen()
 void testOneWordAfter(TextDocumentEditor &tde,
   int line, int col, char const *expect)
 {
-  string actual = tde.getWordAfter(TextLCoord(line, col));
-  xassert(actual == expect);
+  // Disable tests that previously relied on being able to express
+  // negative line indices.
+  if (line < 0) {
+    return;
+  }
+
+  TEST_CASE_EXPRS("testOneWordAfter", line, col, expect);
+
+  string actual = tde.getWordAfter(TextILCoord(line, col));
+  EXPECT_EQ(actual, expect);
 }
 
 
 void testGetWordAfter()
 {
+  TEST_CASE("testGetWordAfter");
+
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
     "one\n"
@@ -916,8 +938,23 @@ void testOneGAI(TextDocumentEditor &tde, int line,
   int expectIndCols, string const &expectIndText)
 {
   string actualIndText;
-  int actualIndCols =
-    tde.getAboveIndentationColumns(line, actualIndText /*OUT*/);
+  int actualIndCols;
+
+  // Originally, `getAboveIndentationColumns` began searching at `line`
+  // itself.  Now it starts searching at `line-1`.  The call sites to
+  // `testOneGAI` still assume the former convention, so adapt.
+  ++line;
+
+  if (line >= 0) {
+    actualIndCols = tde.getAboveIndentationColumns(
+      LineIndex(line), actualIndText /*OUT*/);
+  }
+  else {
+    // The old implementation allowed `line` to be negative, and
+    // returned 0 in that case.
+    actualIndCols = 0;
+  }
+
   EXPECT_EQ(actualIndCols, expectIndCols);
   EXPECT_EQ(actualIndText, expectIndText);
 }
@@ -1004,7 +1041,7 @@ void testMoveCursor()
   // Test 'selectCursorLine'.
   tde.selectCursorLine();
   expectCursor(tde, 0,0); expectMark(tde, 1,0);
-  tde.setCursor(TextLCoord(44,44));
+  tde.setCursor(TextILCoord(44,44));
   tde.selectCursorLine();
   expectCursor(tde, 44,0); expectMark(tde, 45,0);
 
@@ -1014,7 +1051,7 @@ void testMoveCursor()
   tde.advanceWithWrap(true /*backwards*/);
   expectCursor(tde, 44,0);
 
-  tde.setCursor(TextLCoord(1,1));
+  tde.setCursor(TextILCoord(1,1));
   tde.advanceWithWrap(false /*backwards*/);
   expectCursor(tde, 1,2);
   tde.advanceWithWrap(false /*backwards*/);
@@ -1024,15 +1061,15 @@ void testMoveCursor()
   tde.advanceWithWrap(true /*backwards*/);
   expectCursor(tde, 1,3);
 
-  tde.setCursor(TextLCoord(1, 45));
+  tde.setCursor(TextILCoord(1, 45));
   tde.advanceWithWrap(false /*backwards*/);
   expectCursor(tde, 2,0);
 
-  tde.setCursor(TextLCoord(1, 45));
+  tde.setCursor(TextILCoord(1, 45));
   tde.advanceWithWrap(true /*backwards*/);
   expectCursor(tde, 1,44);
 
-  tde.setCursor(TextLCoord(0, 0));
+  tde.setCursor(TextILCoord(0, 0));
   tde.advanceWithWrap(true /*backwards*/);
   expectCursor(tde, 0,0);
 
@@ -1070,8 +1107,8 @@ void testBackspaceFunction()
     "three");
 
   // Backspace selected text.
-  tde.setMark(TextLCoord(0,1));
-  tde.setCursor(TextLCoord(0,2));
+  tde.setMark(TextILCoord(0,1));
+  tde.setCursor(TextILCoord(0,2));
   tde.backspaceFunction();
   expect(tde, 0,1,
     "oe\n"
@@ -1093,7 +1130,7 @@ void testBackspaceFunction()
     "three");
 
   // Backspace beyond EOF: move up.
-  tde.setCursor(TextLCoord(4,0));
+  tde.setCursor(TextILCoord(4,0));
   tde.backspaceFunction();
   expect(tde, 3,0,
     "e\n"
@@ -1101,14 +1138,14 @@ void testBackspaceFunction()
     "three");
 
   // Backspace at left edge to join two lines.
-  tde.setCursor(TextLCoord(1,0));
+  tde.setCursor(TextILCoord(1,0));
   tde.backspaceFunction();
   expect(tde, 0,1,
     "etwo  \n"
     "three");
 
   // Backspace beyond EOL: move left.
-  tde.setCursor(TextLCoord(0,7));
+  tde.setCursor(TextILCoord(0,7));
   tde.backspaceFunction();
   expect(tde, 0,6,
     "etwo  \n"
@@ -1121,12 +1158,12 @@ void testBackspaceFunction()
     "three");
 
   // Scroll induced by backspace.
-  tde.setCursor(TextLCoord(1,0));
-  tde.setFirstVisible(TextLCoord(1,0));
+  tde.setCursor(TextILCoord(1,0));
+  tde.setFirstVisible(TextILCoord(1,0));
   tde.backspaceFunction();
   expect(tde, 0,5,
     "etwo three");
-  checkCoord(tde.firstVisible(), TextLCoord(0,0), "first visible");
+  checkCoord(tde.firstVisible(), TextILCoord(0,0), "first visible");
 }
 
 
@@ -1152,8 +1189,8 @@ void testDeleteKeyFunction()
     "three\n");
 
   // Delete with selection.
-  tde.setMark(TextLCoord(0,1));
-  tde.setCursor(TextLCoord(0,2));
+  tde.setMark(TextILCoord(0,1));
+  tde.setCursor(TextILCoord(0,2));
   tde.deleteKeyFunction();
   expect(tde, 0,1,
     "oe\n"
@@ -1161,14 +1198,14 @@ void testDeleteKeyFunction()
     "three\n");
 
   // Delete beyond EOL: fill then splice.
-  tde.setCursor(TextLCoord(1, 10));
+  tde.setCursor(TextILCoord(1, 10));
   tde.deleteKeyFunction();
   expect(tde, 1,10,
     "oe\n"
     "two       three\n");
 
   // Delete well beyond EOF: no-op.
-  tde.setCursor(TextLCoord(10, 10));
+  tde.setCursor(TextILCoord(10, 10));
   tde.deleteKeyFunction();
   expect(tde, 10,10,
     "oe\n"
@@ -1176,14 +1213,14 @@ void testDeleteKeyFunction()
 
   // Selection that is partly offscreen such that after
   // deletion scrolling changes visible region.
-  tde.setCursor(TextLCoord(1, 10));
-  tde.setMark(TextLCoord(1, 0));
-  tde.setFirstVisible(TextLCoord(1, 10));
+  tde.setCursor(TextILCoord(1, 10));
+  tde.setMark(TextILCoord(1, 0));
+  tde.setFirstVisible(TextILCoord(1, 10));
   tde.deleteSelection();
   expectNM(tde, 1,0,
     "oe\n"
     "three\n");
-  checkCoord(tde.firstVisible(), TextLCoord(1,0), "first visible");
+  checkCoord(tde.firstVisible(), TextILCoord(1,0), "first visible");
 }
 
 
@@ -1206,8 +1243,8 @@ void testClipboard()
     "three\n");
 
   // Copy.
-  tde.setCursor(TextLCoord(0,1));
-  tde.setMark(TextLCoord(1,2));
+  tde.setCursor(TextILCoord(0,1));
+  tde.setMark(TextILCoord(1,2));
   xassert(tde.clipboardCopy() == "ne\ntw");
   expectNM(tde, 0,1,
     "one\n"
@@ -1215,8 +1252,8 @@ void testClipboard()
     "three\n");
 
   // Cut with cursor ahead of mark.
-  tde.setCursor(TextLCoord(2,4));
-  tde.setMark(TextLCoord(2,2));
+  tde.setCursor(TextILCoord(2,4));
+  tde.setMark(TextILCoord(2,2));
   xassert(tde.clipboardCut() == "re");
   expectNM(tde, 2,2,
     "one\n"
@@ -1232,14 +1269,14 @@ void testClipboard()
     "ce\n");
 
   // Paste, overwriting a selection.
-  tde.setMark(TextLCoord(1,2));
+  tde.setMark(TextILCoord(1,2));
   tde.clipboardPaste("xyz", 3);
   expectNM(tde, 1,5,
     "one\n"
     "twxyze\n");
 
   // Paste while beyond EOL.
-  tde.setCursor(TextLCoord(0, 5));
+  tde.setCursor(TextILCoord(0, 5));
   tde.clipboardPaste("123", 3);
   expectNM(tde, 0,8,
     "one  123\n"
@@ -1265,7 +1302,7 @@ void testInsertNewlineAutoIndent()
     "\n");
 
   // Enter at left edge, middle of document.
-  tde.setCursor(TextLCoord(2, 0));
+  tde.setCursor(TextILCoord(2, 0));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 3,0,
     "one\n"
@@ -1275,7 +1312,7 @@ void testInsertNewlineAutoIndent()
     "\n");
 
   // Enter to break a line.
-  tde.setCursor(TextLCoord(3, 2));
+  tde.setCursor(TextILCoord(3, 2));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 4,0,
     "one\n"
@@ -1286,7 +1323,7 @@ void testInsertNewlineAutoIndent()
     "\n");
 
   // Not adding extra spaces when beyond EOL.
-  tde.setCursor(TextLCoord(1, 10));
+  tde.setCursor(TextILCoord(1, 10));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 2,0,
     "one\n"
@@ -1318,7 +1355,7 @@ void testInsertNewlineAutoIndent2()
     "\n");
 
   // Enter at left edge, middle of document.
-  tde.setCursor(TextLCoord(2, 0));
+  tde.setCursor(TextILCoord(2, 0));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 3,3,
     "  one\n"
@@ -1328,7 +1365,7 @@ void testInsertNewlineAutoIndent2()
     "\n");
 
   // Enter to break a line.
-  tde.setCursor(TextLCoord(3, 6));
+  tde.setCursor(TextILCoord(3, 6));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 4,4,
     "  one\n"
@@ -1339,7 +1376,7 @@ void testInsertNewlineAutoIndent2()
     "\n");
 
   // Not adding extra spaces when beyond EOL.
-  tde.setCursor(TextLCoord(1, 10));
+  tde.setCursor(TextILCoord(1, 10));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 2,3,
     "  one\n"
@@ -1382,8 +1419,8 @@ void testInsertNewlineAutoIndent2()
   expectFV(tde, 6,3, 4,1, 3,3);
 
   // Hit Enter while something is selected.
-  tde.setMark(TextLCoord(2,0));
-  tde.setCursor(TextLCoord(8,4));
+  tde.setMark(TextILCoord(2,0));
+  tde.setCursor(TextILCoord(8,4));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 3,3,
     "  one\n"
@@ -1395,8 +1432,8 @@ void testInsertNewlineAutoIndent2()
 
   // Do the above again but with cursor and mark swapped;
   // result should be the same.
-  tde.deleteTextLRange(TextLCoord(0,0), tde.endLCoord());
-  tde.setCursor(TextLCoord(0,0));
+  tde.deleteTextLRange(TextILCoord(0,0), tde.endLCoord());
+  tde.setCursor(TextILCoord(0,0));
   tde.insertNulTermText(
     "  one\n"
     "   two  \n"
@@ -1409,8 +1446,8 @@ void testInsertNewlineAutoIndent2()
     "    th\n"
     "    ree\n"
     "\n");
-  tde.setCursor(TextLCoord(2,0));
-  tde.setMark(TextLCoord(8,4));
+  tde.setCursor(TextILCoord(2,0));
+  tde.setMark(TextILCoord(8,4));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 3,3,
     "  one\n"
@@ -1430,7 +1467,7 @@ void testInsertNewlineAutoIndent3()
     "two\n");
 
   // Hit Enter while beyond EOF.
-  tde.setCursor(TextLCoord(4,0));
+  tde.setCursor(TextILCoord(4,0));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 5,0,
     "one\n"
@@ -1441,8 +1478,8 @@ void testInsertNewlineAutoIndent3()
   tde.undo();
 
   // Now with selected text, entirely beyond EOF.
-  tde.setMark(TextLCoord(4,0));
-  tde.setCursor(TextLCoord(4,4));
+  tde.setMark(TextILCoord(4,0));
+  tde.setCursor(TextILCoord(4,4));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 5,0,
     "one\n"
@@ -1453,8 +1490,8 @@ void testInsertNewlineAutoIndent3()
   tde.undo();
 
   // Selected text straddling EOF.
-  tde.setMark(TextLCoord(1,1));
-  tde.setCursor(TextLCoord(4,4));
+  tde.setMark(TextILCoord(1,1));
+  tde.setCursor(TextILCoord(4,4));
   tde.insertNewlineAutoIndent();
   expectNM(tde, 2,0,
     "one\n"
@@ -1473,8 +1510,8 @@ void testInsertNewlineAutoIndent4()
 
   // Start with the display scrolled to the right.  It should
   // return to the left edge.
-  tde.setFirstVisible(TextLCoord(0,1));
-  tde.setCursor(TextLCoord(1,3));
+  tde.setFirstVisible(TextILCoord(0,1));
+  tde.setCursor(TextILCoord(1,3));
   tde.insertNewlineAutoIndent();
   expectFV(tde, 2,2, 0,0, 5,10);
   expectNM(tde, 2,2,
@@ -1492,7 +1529,7 @@ void testInsertNewlineAutoIndentWithTab()
     "\tb\n");
 
   // Auto-indent itself should *not* add a Tab.
-  tde.setCursor(TextLCoord(1, 9));
+  tde.setCursor(TextILCoord(1, 9));
   xassert(tde.cursorAtLineEnd());
   tde.insertNewlineAutoIndent();
   expectNM(tde, 2,8,
@@ -1586,7 +1623,7 @@ void testInsertNewlineAutoIndentWithTab()
     "\t\t \t \n");
 
   // Go beyond the end of the document and type.
-  tde.setCursor(TextLCoord(8,25));
+  tde.setCursor(TextILCoord(8,25));
   tde.insertNulTermText("y");
   expectNM(tde, 8,26,
     "a\n"
@@ -1608,22 +1645,22 @@ void testSetVisibleSize()
 
   // Try with negative sizes.
   tde.setVisibleSize(-1, -1);
-  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
-  checkCoord(tde.lastVisible(), TextLCoord(0,0), "lastVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(0,0), "firstVisible");
+  checkCoord(tde.lastVisible(), TextILCoord(0,0), "lastVisible");
 
   // See if things work at this size.
   tde.insertNulTermText(
     "  one\n"
     "   two  \n"
     " three");
-  checkCoord(tde.firstVisible(), TextLCoord(2,6), "firstVisible");
-  checkCoord(tde.lastVisible(), TextLCoord(2,6), "lastVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(2,6), "firstVisible");
+  checkCoord(tde.lastVisible(), TextILCoord(2,6), "lastVisible");
 
   // Cursor movement does not automatically scroll.
   tde.moveCursorBy(-1,0);
-  checkCoord(tde.firstVisible(), TextLCoord(2,6), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(2,6), "firstVisible");
   tde.scrollToCursor();
-  checkCoord(tde.firstVisible(), TextLCoord(1,6), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(1,6), "firstVisible");
 }
 
 
@@ -1638,14 +1675,14 @@ void testCursorRestorer()
     "three\n");
 
   // Restore an active mark and a scroll position.
-  tde.setMark(TextLCoord(2,1));
-  tde.setCursor(TextLCoord(2,2));
-  tde.setFirstVisible(TextLCoord(1,1));
+  tde.setMark(TextILCoord(2,1));
+  tde.setCursor(TextILCoord(2,2));
+  tde.setFirstVisible(TextILCoord(1,1));
   {
     CursorRestorer restorer(tde);
     tde.clearMark();
-    tde.setCursor(TextLCoord(4,4));
-    tde.setFirstVisible(TextLCoord(0,0));
+    tde.setCursor(TextILCoord(4,4));
+    tde.setFirstVisible(TextILCoord(0,0));
   }
   expectMark(tde, 2,1);
   expectFV(tde, 2,2, 1,1, 5,10);
@@ -1654,7 +1691,7 @@ void testCursorRestorer()
   tde.clearMark();
   {
     CursorRestorer restorer(tde);
-    tde.setMark(TextLCoord(0,0));
+    tde.setMark(TextILCoord(0,0));
   }
   expectNM(tde, 2,2,
     "one\n"
@@ -1673,7 +1710,7 @@ void testSetMark()
     "three\n");
   xassert(!tde.markActive());
 
-  tde.setMark(TextLCoord(1,1));
+  tde.setMark(TextILCoord(1,1));
   expectMark(tde, 1,1);
 
   tde.moveMarkBy(+1,+1);
@@ -1694,7 +1731,7 @@ void testSetMark()
 
   // Test 'turnOnSelection' with mark inactive.
   tde.clearMark();
-  tde.setCursor(TextLCoord(2,2));
+  tde.setCursor(TextILCoord(2,2));
   xassert(!tde.markActive());
   tde.turnOnSelection();
   expectMark(tde, 2,2);
@@ -1708,7 +1745,7 @@ void testSetMark()
   xassert(!tde.markActive());
 
   // Test 'turnOffSelectionIfEmpty' with non-empty selection.
-  tde.setMark(TextLCoord(2,3));
+  tde.setMark(TextILCoord(2,3));
   tde.turnOffSelectionIfEmpty();
   expectMark(tde, 2,3);
 }
@@ -1725,27 +1762,27 @@ void testConfineCursorToVisible()
   expectCursor(tde, 0,0);
 
   // Pull in from corner.
-  tde.setFirstVisible(TextLCoord(1,1));
+  tde.setFirstVisible(TextILCoord(1,1));
   tde.confineCursorToVisible();
   expectCursor(tde, 1,1);
 
   // From top.
-  tde.setCursor(TextLCoord(0,2));
+  tde.setCursor(TextILCoord(0,2));
   tde.confineCursorToVisible();
   expectCursor(tde, 1,2);
 
   // From bottom.
-  tde.setCursor(TextLCoord(4,2));
+  tde.setCursor(TextILCoord(4,2));
   tde.confineCursorToVisible();
   expectCursor(tde, 3,2);
 
   // From left.
-  tde.setCursor(TextLCoord(2,0));
+  tde.setCursor(TextILCoord(2,0));
   tde.confineCursorToVisible();
   expectCursor(tde, 2,1);
 
   // From right.
-  tde.setCursor(TextLCoord(2,4));
+  tde.setCursor(TextILCoord(2,4));
   tde.confineCursorToVisible();
   expectCursor(tde, 2,3);
 }
@@ -1772,7 +1809,7 @@ void testJustifyNearCursor()
     "eleven twelve\n");
 
   // Cursor on first paragraph.
-  tde.setCursor(TextLCoord(0,5));
+  tde.setCursor(TextILCoord(0,5));
   tde.justifyNearCursor(10);
   expect(tde, 4,0,
     "one two\n"
@@ -1784,7 +1821,7 @@ void testJustifyNearCursor()
     "eleven twelve\n");
 
   // Cursor on second paragraph.
-  tde.setCursor(TextLCoord(6,0));
+  tde.setCursor(TextILCoord(6,0));
   tde.justifyNearCursor(10);
   expect(tde, 8,0,
     "one two\n"
@@ -1812,15 +1849,15 @@ void testInsertDateTime()
 
   // Test inserting while text is selected.
   tde.insertNulTermText("xyz\n");
-  tde.setCursor(TextLCoord(1,1));
-  tde.setMark(TextLCoord(1,2));
+  tde.setCursor(TextILCoord(1,1));
+  tde.setMark(TextILCoord(1,2));
   tde.insertDateTime(&fdtp);
   expectNM(tde, 1, 17,
     "2001-09-09 01:46\n"
     "x2001-09-09 01:46z\n");
 
   // Test inserting beyond EOF.
-  tde.setCursor(TextLCoord(5, 2));
+  tde.setCursor(TextILCoord(5, 2));
   tde.insertDateTime(&fdtp);
   expectNM(tde, 5, 18,
     "2001-09-09 01:46\n"
@@ -1831,7 +1868,7 @@ void testInsertDateTime()
     "  2001-09-09 01:46");
 
   // Test with current date/time, validating size only.
-  tde.setCursor(TextLCoord(2,0));
+  tde.setCursor(TextILCoord(2,0));
   tde.insertDateTime();
   expectCursor(tde, 2, 16);
 }
@@ -1846,8 +1883,8 @@ void replaceText(
   TextDocumentEditor::InsertTextFlags flags =
     TextDocumentEditor::ITF_NONE)
 {
-  tde.setCursor(TextLCoord(line1, col1));
-  tde.setMark(TextLCoord(line2, col2));
+  tde.setCursor(TextILCoord(line1, col1));
+  tde.setMark(TextILCoord(line2, col2));
   if (swapCM) {
     tde.swapCursorAndMark();
   }
@@ -1957,10 +1994,10 @@ void testReplaceAndSelect(bool swapCM)
 void expectCountSpace(TextDocumentEditor &tde,
   int line, int expectLeading, int expectTrailing)
 {
-  int leading = tde.countLeadingSpacesTabs(line);
+  int leading = tde.countLeadingSpacesTabs(LineIndex(line));
   EXPECT_EQ(leading, expectLeading);
 
-  int trailing = tde.countTrailingSpacesTabsColumns(line);
+  int trailing = tde.countTrailingSpacesTabsColumns(LineIndex(line));
   EXPECT_EQ(trailing, expectTrailing);
 }
 
@@ -2008,7 +2045,7 @@ void testCountSpaceCharsWithTabs()
 void expectGSOI_nm(TextDocumentEditor &tde, int line, int col,
                           string const &expect)
 {
-  tde.setCursor(TextLCoord(line, col));
+  tde.setCursor(TextILCoord(line, col));
   tde.clearMark();
   string actual = tde.getSelectedOrIdentifier();
   EXPECT_EQ(actual, expect);
@@ -2046,8 +2083,8 @@ void testGetSelectedOrIdentifier()
   expectGSOI_nm(tde, 7,7, "a");
 
   // Test with a selection.
-  tde.setCursor(TextLCoord(4, 2));
-  tde.setMark(TextLCoord(4, 4));
+  tde.setCursor(TextILCoord(4, 2));
+  tde.setMark(TextILCoord(4, 4));
   string actual = tde.getSelectedOrIdentifier();
   EXPECT_EQ(actual, string("zA"));
 }
@@ -2080,7 +2117,7 @@ void innerExpectLayoutWindow(TextDocumentEditor &tde,
   std::ostringstream sb;
   for (int line = fvLine; line <= lvLine; line++) {
     text.clear();
-    tde.getLineLayout(TextLCoord(line, fvCol), text, width);
+    tde.getLineLayout(TextILCoord(line, fvCol), text, width);
     sb << string(text.getArray(), width);
   }
   string actual = sb.str();
@@ -2096,8 +2133,8 @@ void expectLayoutWindow(TextDocumentEditor &tde,
   innerExpectLayoutWindow(tde, fvLine, fvCol, lvLine, lvCol, preExpect);
 
   // Probe all of the layout coordinates in the window.
-  for (int line = fvLine; line <= lvLine; line++) {
-    for (int col = fvCol; col <= fvCol; col++) {
+  for (LineIndex line(fvLine); line <= lvLine; ++line) {
+    for (int col = fvCol; col <= fvCol; ++col) {
       TextLCoord lc(line, col);
       TextMCoord mc(tde.toMCoord(lc));
       xassert(lc.m_line == mc.m_line);
@@ -2152,8 +2189,8 @@ void expectLCoord(TextDocumentEditor &tde,
   int line, int byteIndex,
   int row, int col)
 {
-  TextMCoord mc(line, byteIndex);
-  TextLCoord expect(row, col);
+  TextMCoord mc(LineIndex(line), byteIndex);
+  TextLCoord expect(LineIndex(row), col);
   TextLCoord actual = tde.toLCoord(mc);
   EXPECT_EQ(actual, expect);
 
@@ -2166,8 +2203,15 @@ void expectMCoord(TextDocumentEditor &tde,
   int row, int col,
   int line, int byteIndex)
 {
-  TextLCoord lc(row, col);
-  TextMCoord expect(line, byteIndex);
+  if (row < 0) {
+    // Disable tests that relied on negative line indices.
+    return;
+  }
+
+  TEST_CASE_EXPRS("expectMCoord", row, col);
+
+  TextLCoord lc(LineIndex(row), col);
+  TextMCoord expect(LineIndex(line), byteIndex);
   TextMCoord actual = tde.toMCoord(lc);
   EXPECT_EQ(actual, expect);
 
@@ -2179,6 +2223,8 @@ void expectMCoord(TextDocumentEditor &tde,
 
 void testLineLayout()
 {
+  TEST_CASE("testLineLayout");
+
   TextDocumentAndEditor tde;
   tde.insertNulTermText(
     "one\n"
@@ -2232,12 +2278,12 @@ void expectVisibleWindow(TextDocumentEditor &tde,
   int cursorLine, int cursorCol,
   string const &preExpect)
 {
-  TextLCoord expectCursor(cursorLine, cursorCol);
+  TextLCoord expectCursor(LineIndex(cursorLine), cursorCol);
   EXPECT_EQ(tde.cursor(), expectCursor);
 
   expectLayoutWindow(tde,
-    tde.firstVisible().m_line, tde.firstVisible().m_column,
-    tde.lastVisible().m_line, tde.lastVisible().m_column,
+    tde.firstVisible().m_line.get(), tde.firstVisible().m_column,
+    tde.lastVisible().m_line.get(), tde.lastVisible().m_column,
     preExpect);
 }
 
@@ -2255,9 +2301,9 @@ void testEditingWithTabs()
     "1234567\t12345678\t123456789\n"
     "");
 
-  tde.setCursor(TextLCoord(1,0));
-  tde.setFirstVisible(TextLCoord(0, 0));
-  tde.setLastVisible(TextLCoord(3, 19));
+  tde.setCursor(TextILCoord(1,0));
+  tde.setFirstVisible(TextILCoord(0, 0));
+  tde.setLastVisible(TextILCoord(3, 19));
   expectVisibleWindow(tde, 1,0,
   //           1
   // 01234567890123456789
@@ -2298,7 +2344,7 @@ void testEditingWithTabs()
   );
 
   // Backspace while in the Tab span deletes it.
-  tde.setCursor(TextLCoord(1,6));
+  tde.setCursor(TextILCoord(1,6));
   tde.backspaceFunction();
   expectVisibleWindow(tde, 1,4,
   //           1
@@ -2333,8 +2379,8 @@ void testEditingWithTabs()
   // Select text starting and ending within Tab spans.  The Tab on the
   // left is deleted, along with enclosed text, but not the Tab on the
   // right.
-  tde.setCursor(TextLCoord(2,6));
-  tde.setMark(TextLCoord(2,14));
+  tde.setCursor(TextILCoord(2,6));
+  tde.setMark(TextILCoord(2,14));
   tde.deleteKeyFunction();
   expectVisibleWindow(tde, 2,6,
   //           1
@@ -2346,7 +2392,7 @@ void testEditingWithTabs()
   );
 
   // Automatic indentation merely positions the cursor.
-  tde.setCursor(TextLCoord(3, 13));
+  tde.setCursor(TextILCoord(3, 13));
   tde.insertNewlineAutoIndent();
   expectVisibleWindow(tde, 4,8,
   //           1
@@ -2389,7 +2435,7 @@ void expectMTLS(TextDocumentAndEditor &tde,
   LineCategories const &modelCategories)
 {
   LineCategories actualLayoutCategories(TC_NORMAL);
-  tde.modelToLayoutSpans(line, actualLayoutCategories, modelCategories);
+  tde.modelToLayoutSpans(LineIndex(line), actualLayoutCategories, modelCategories);
   if (expectLayoutCategories != actualLayoutCategories) {
     cout << "expect: " << expectLayoutCategories.asString() << endl;
     cout << "actual: " << actualLayoutCategories.asString() << endl;
@@ -2530,8 +2576,8 @@ void expectLELC(
   int line,
   int expectCol)
 {
-  TextLCoord actual = tde.lineEndLCoord(line);
-  EXPECT_EQ(actual.m_line, line);
+  TextLCoord actual = tde.lineEndLCoord(LineIndex(line));
+  EXPECT_EQ(actual.m_line, LineIndex(line));
   EXPECT_EQ(actual.m_column, expectCol);
 }
 
@@ -2564,7 +2610,7 @@ void testSelectEntireFile()
 
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 0,0);
-  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(0,0), "firstVisible");
 
   tde.insertNulTermText(
     "one\n"
@@ -2573,21 +2619,21 @@ void testSelectEntireFile()
 
   // Due to the small window dimensions, inserting the above text should
   // leave the first visible line as "three".
-  checkCoord(tde.firstVisible(), TextLCoord(2,0), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(2,0), "firstVisible");
 
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 3,0);
 
   // `selectEntireFile` should scroll to make the cursor visible.
-  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(0,0), "firstVisible");
 
   tde.insertNulTermText(
     "one\n"
     "two");
-  checkCoord(tde.firstVisible(), TextLCoord(0,1), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(0,1), "firstVisible");
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 1,3);
-  checkCoord(tde.firstVisible(), TextLCoord(0,0), "firstVisible");
+  checkCoord(tde.firstVisible(), TextILCoord(0,0), "firstVisible");
 }
 
 
@@ -2604,7 +2650,7 @@ void test_clipboardPaste_cursorStart()
     "three\n");
 
   // Paste without any selection.
-  tde.setCursor(TextLCoord(1,1));
+  tde.setCursor(TextILCoord(1,1));
   tde.clipboardPaste("abc", 3, cursorToStart);
   expectNM(tde, 1,1,
     "one\n"
@@ -2612,7 +2658,7 @@ void test_clipboardPaste_cursorStart()
     "three\n");
 
   // Paste with selection.
-  tde.setMark(TextLCoord(2,2));
+  tde.setMark(TextILCoord(2,2));
   tde.clipboardPaste("def", 3, cursorToStart);
   expectNM(tde, 1,1,
     "one\n"

@@ -4,6 +4,7 @@
 #ifndef JUSTIFY_H
 #define JUSTIFY_H
 
+#include "line-index.h"                // LineIndex
 #include "td-editor.h"                 // TextDocumentEditor
 
 #include "smbase/array.h"              // ArrayStack
@@ -39,7 +40,7 @@ void justifyTextLines(
 // Within the framing, tab characters are treated as representing 8
 // columns of width.  Elsewhere they are treated as just 1 (which is
 // arguably a bug).
-bool justifyNearLine(TextDocumentEditor &tde, int originLine,
+bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLine,
                      int desiredWidth);
 
 

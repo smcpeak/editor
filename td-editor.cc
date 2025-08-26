@@ -38,7 +38,7 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
     // where I want a small size in order to incidentally exercise the
     // scrolling code.  Tests that actually check scrolling should set
     // their own size though.
-    m_lastVisible(4, 9),
+    m_lastVisible(LineIndex(4), 9),
 
     m_tabWidth(8)
 {
@@ -86,11 +86,7 @@ void TextDocumentEditor::setTabWidth(int tabWidth)
 
 TextMCoord TextDocumentEditor::innerToMCoord(TextLCoord lc) const
 {
-  if (lc.m_line < 0) {
-    return this->beginMCoord();
-  }
-
-  if (lc.m_line >= this->numLines()) {
+  if (!( lc.m_line < this->numLines() )) {
     return this->endMCoord();
   }
 
@@ -146,9 +142,9 @@ TextLCoordRange TextDocumentEditor::toLCoordRange(
 }
 
 
-int TextDocumentEditor::lineLengthColumns(int line) const
+int TextDocumentEditor::lineLengthColumns(LineIndex line) const
 {
-  if (0 <= line && line < numLines()) {
+  if (line < numLines()) {
     return this->lineEndLCoord(line).m_column;
   }
   else {
@@ -157,7 +153,7 @@ int TextDocumentEditor::lineLengthColumns(int line) const
 }
 
 
-TextLCoord TextDocumentEditor::lineEndLCoord(int line) const
+TextLCoord TextDocumentEditor::lineEndLCoord(LineIndex line) const
 {
   if (line < numLines()) {
     return this->toLCoord(m_doc->lineEndCoord(line));
@@ -211,11 +207,36 @@ void TextDocumentEditor::setMark(TextLCoord m)
 }
 
 
+// `v += delta`, but stop at 0.  This is intended to achieve logical
+// symmetry with `LineIndex::clampIncrease`.
+static void clampIncrease(int &v, int delta)
+{
+  v += delta;
+  if (v < 0) {
+    v = 0;
+  }
+}
+
+
+static void clampMove(TextLCoord &coord, int deltaLine, int deltaCol)
+{
+  coord.m_line.clampIncrease(deltaLine);
+  clampIncrease(coord.m_column, deltaCol);
+}
+
+
+static TextLCoord clampMoved(TextLCoord coord, int deltaLine, int deltaCol)
+{
+  clampMove(coord, deltaLine, deltaCol);
+  return coord;
+}
+
+
 void TextDocumentEditor::moveMarkBy(int deltaLine, int deltaCol)
 {
   xassert(m_markActive);
-  m_mark.m_line = std::max(0, m_mark.m_line + deltaLine);
-  m_mark.m_column = std::max(0, m_mark.m_column + deltaCol);
+
+  clampMove(m_mark, deltaLine, deltaCol);
 }
 
 
@@ -336,9 +357,7 @@ void TextDocumentEditor::setFirstVisible(TextLCoord fv)
 
 void TextDocumentEditor::moveFirstVisibleBy(int deltaLine, int deltaCol)
 {
-  int line = std::max(0, m_firstVisible.m_line + deltaLine);
-  int col = std::max(0, m_firstVisible.m_column + deltaCol);
-  this->setFirstVisible(TextLCoord(line, col));
+  setFirstVisible(clampMoved(m_firstVisible, deltaLine, deltaCol));
 }
 
 
@@ -347,14 +366,15 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
   TRACE("moveFirstVisibleAndCursor",
         "start: firstVis=" << m_firstVisible
      << ", cursor=" << m_cursor
-     << ", delta=" << TextLCoord(deltaLine, deltaCol));
+     << ", deltaLine=" << deltaLine
+     << ", deltaCol=" << deltaCol);
 
   // first make sure the view contains the cursor
   this->scrollToCursor();
 
   // move viewport, but remember original so we can tell
   // when there's truncation
-  int origVL = m_firstVisible.m_line;
+  LineIndex origVL = m_firstVisible.m_line;
   int origVC = m_firstVisible.m_column;
   this->moveFirstVisibleBy(deltaLine, deltaCol);
 
@@ -371,7 +391,8 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
 void TextDocumentEditor::setLastVisible(TextLCoord lv)
 {
   // If the user resizes the window down to nothing, we might calculate
-  // a visible region with zero width.  Require it to be positive.
+  // a visible region with zero width.  Require it to be positive, i.e.,
+  // that last >= first.
   m_lastVisible.m_line = std::max(lv.m_line, m_firstVisible.m_line);
   m_lastVisible.m_column = std::max(lv.m_column, m_firstVisible.m_column);
 }
@@ -379,8 +400,13 @@ void TextDocumentEditor::setLastVisible(TextLCoord lv)
 
 void TextDocumentEditor::setVisibleSize(int lines, int columns)
 {
+  // The size must always be positive, i.e., at least one line and one
+  // column must be visible.
+  lines = std::max(1, lines);
+  columns = std::max(1, columns);
+
   this->setLastVisible(TextLCoord(
-    m_firstVisible.m_line + lines - 1,
+    LineIndex(m_firstVisible.m_line.get() + lines - 1),
     m_firstVisible.m_column + columns - 1
   ));
 }
@@ -421,9 +447,9 @@ static int stcHelper(int firstVis, int lastVis, int cur, int gap)
 
 void TextDocumentEditor::scrollToCoord(TextLCoord tc, int edgeGap)
 {
-  int fvline = stcHelper(this->firstVisible().m_line,
-                         this->lastVisible().m_line,
-                         tc.m_line,
+  int fvline = stcHelper(this->firstVisible().m_line.get(),
+                         this->lastVisible().m_line.get(),
+                         tc.m_line.get(),
                          edgeGap);
 
   int fvcol = stcHelper(this->firstVisible().m_column,
@@ -431,14 +457,14 @@ void TextDocumentEditor::scrollToCoord(TextLCoord tc, int edgeGap)
                         tc.m_column,
                         edgeGap);
 
-  setFirstVisible(TextLCoord(fvline, fvcol));
+  setFirstVisible(TextLCoord(LineIndex(fvline), fvcol));
 }
 
 
 void TextDocumentEditor::centerVisibleOnCursorLine()
 {
-  int newfv = std::max(0, m_cursor.m_line - this->visLines()/2);
-  this->setFirstVisible(TextLCoord(newfv, 0));
+  int newfv = std::max(0, m_cursor.m_line.get() - this->visLines()/2);
+  this->setFirstVisible(TextLCoord(LineIndex(newfv), 0));
   this->scrollToCursor();
 }
 
@@ -471,9 +497,8 @@ void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col
     m_cursor.m_line += line;
   }
   else {
-    m_cursor.m_line = line;
+    m_cursor.m_line = LineIndex(line);
   }
-  xassert(m_cursor.m_line >= 0);
 
   if (relCol) {
     m_cursor.m_column += col;
@@ -590,10 +615,10 @@ void TextDocumentEditor::backspaceFunction()
     this->deleteSelection();
   }
   else if (m_cursor.m_column == 0) {
-    if (m_cursor.m_line == 0) {
+    if (m_cursor.m_line.isZero()) {
       // BOF, do nothing.
     }
-    else if (m_cursor.m_line > m_doc->numLines() - 1) {
+    else if (m_cursor.m_line > m_doc->lastLineIndex()) {
       // Move cursor up non-destructively.
       this->moveCursorBy(-1, 0);
     }
@@ -661,7 +686,7 @@ void TextDocumentEditor::walkLCoordColumns(TextLCoord &tc, int len) const
   for (; len > 0; len--) {
     if (tc.m_column >= this->lineLengthColumns(tc.m_line)) {
       // cycle to next line
-      tc.m_line++;
+      ++tc.m_line;
       tc.m_column = 0;
     }
     else {
@@ -672,10 +697,10 @@ void TextDocumentEditor::walkLCoordColumns(TextLCoord &tc, int len) const
   for (; len < 0; len++) {
     if (tc.m_column == 0) {
       // cycle up to end of preceding line
-      if (tc.m_line == 0) {
+      if (tc.m_line.isZero()) {
         return;      // Stop at BOF.
       }
-      tc.m_line--;
+      --tc.m_line;
       tc.m_column = this->lineLengthColumns(tc.m_line);
     }
     else {
@@ -698,7 +723,7 @@ void TextDocumentEditor::walkMCoordBytes(TextMCoord &mc, int len) const
   for (; len > 0; len--) {
     if (mc.m_byteIndex >= this->lineLengthBytes(mc.m_line)) {
       // cycle to next line
-      mc.m_line++;
+      ++mc.m_line;
       mc.m_byteIndex = 0;
     }
     else {
@@ -709,10 +734,10 @@ void TextDocumentEditor::walkMCoordBytes(TextMCoord &mc, int len) const
   for (; len < 0; len++) {
     if (mc.m_byteIndex == 0) {
       // cycle up to end of preceding line
-      if (mc.m_line == 0) {
+      if (mc.m_line.isZero()) {
         return;      // Stop at BOF.
       }
-      mc.m_line--;
+      --mc.m_line;
       mc.m_byteIndex = this->lineLengthBytes(mc.m_line);
     }
     else {
@@ -797,10 +822,9 @@ string TextDocumentEditor::getTextForLRangeString(TextLCoordRange const &range) 
 }
 
 
-void TextDocumentEditor::getWholeLine(int line,
+void TextDocumentEditor::getWholeLine(LineIndex line,
   ArrayStack<char> /*INOUT*/ &dest) const
 {
-  xassert(line >= 0);
   if (line < m_doc->numLines()) {
     m_doc->getWholeLine(line, dest);
   }
@@ -810,7 +834,7 @@ void TextDocumentEditor::getWholeLine(int line,
 }
 
 
-string TextDocumentEditor::getWholeLineString(int line) const
+string TextDocumentEditor::getWholeLineString(LineIndex line) const
 {
   ArrayStack<char> text;
   this->getWholeLine(line, text);
@@ -836,7 +860,7 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
 {
   std::ostringstream sb;
 
-  if (!( 0 <= tc.m_line && tc.m_line < numLines() )) {
+  if (!( tc.m_line < numLines() )) {
     return "";
   }
 
@@ -870,7 +894,7 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
 }
 
 
-void TextDocumentEditor::modelToLayoutSpans(int line,
+void TextDocumentEditor::modelToLayoutSpans(LineIndex line,
   LineCategories /*OUT*/ &layoutCategories,
   LineCategories /*IN*/ const &modelCategories)
 {
@@ -909,10 +933,9 @@ void TextDocumentEditor::modelToLayoutSpans(int line,
 }
 
 
-int TextDocumentEditor::countLeadingSpacesTabs(int line) const
+int TextDocumentEditor::countLeadingSpacesTabs(LineIndex line) const
 {
-  xassert(line >= 0);
-  if (line >= m_doc->numLines()) {
+  if (!m_doc->validLine(line)) {
     return 0;
   }
   else {
@@ -921,10 +944,9 @@ int TextDocumentEditor::countLeadingSpacesTabs(int line) const
 }
 
 
-int TextDocumentEditor::countTrailingSpacesTabsColumns(int line) const
+int TextDocumentEditor::countTrailingSpacesTabsColumns(LineIndex line) const
 {
-  xassert(line >= 0);
-  if (line >= m_doc->numLines()) {
+  if (!m_doc->validLine(line)) {
     return 0;
   }
   else {
@@ -950,11 +972,10 @@ int TextDocumentEditor::countTrailingSpacesTabsColumns(int line) const
 }
 
 
-int TextDocumentEditor::getIndentationColumns(int line,
+int TextDocumentEditor::getIndentationColumns(LineIndex line,
   string /*OUT*/ &indText) const
 {
-  xassert(line >= 0);
-  if (line >= m_doc->numLines()) {
+  if (!m_doc->validLine(line)) {
     return -1;
   }
   else {
@@ -980,15 +1001,19 @@ int TextDocumentEditor::getIndentationColumns(int line,
 }
 
 
-int TextDocumentEditor::getAboveIndentationColumns(int line,
+int TextDocumentEditor::getAboveIndentationColumns(LineIndex line,
   string /*OUT*/ &indText) const
 {
-  while (line >= 0) {
+  while (true) {
+    if (line.isZero()) {
+      break;
+    }
+    --line;
+
     int ind = this->getIndentationColumns(line, indText);
     if (ind >= 0) {
       return ind;
     }
-    line--;
   }
   indText = "";
   return 0;
@@ -1000,7 +1025,7 @@ int TextDocumentEditor::getAboveIndentationColumns(int line,
 void TextDocumentEditor::moveCursorBy(int deltaLine, int deltaCol)
 {
   // prevent moving into negative territory
-  deltaLine = std::max(deltaLine, - cursor().m_line);
+  deltaLine = std::max(deltaLine, - cursor().m_line.get());
   deltaCol = std::max(deltaCol, - cursor().m_column);
 
   if (deltaLine || deltaCol) {
@@ -1025,9 +1050,9 @@ void TextDocumentEditor::moveToNextLineStart()
 
 void TextDocumentEditor::moveToPrevLineEnd()
 {
-  int prevLine = std::max(0, cursor().m_line - 1);
+  int prevLine = std::max(0, cursor().m_line.get() - 1);
   moveCursor(false /*relLine*/, prevLine,
-             false /*relCol*/, lineLengthColumns(prevLine));
+             false /*relCol*/, lineLengthColumns(LineIndex(prevLine)));
 }
 
 
@@ -1039,19 +1064,18 @@ void TextDocumentEditor::moveCursorToTop()
 
 void TextDocumentEditor::moveCursorToBottom()
 {
-  setCursor(TextLCoord(m_doc->numLines() - 1, 0));
+  setCursor(TextLCoord(m_doc->lastLineIndex(), 0));
   scrollToCursor();
 }
 
 
 void TextDocumentEditor::advanceWithWrap(bool backwards)
 {
-  int line = cursor().m_line;
+  LineIndex line = cursor().m_line;
   int col = cursor().m_column;
 
   if (!backwards) {
-    if (0 <= line &&
-        line < numLines() &&
+    if (line < numLines() &&
         col < cursorLineLengthColumns()) {
       moveCursorBy(0, 1);
     }
@@ -1061,12 +1085,11 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   }
 
   else {
-    if (0 <= line &&
-        line < numLines() &&
+    if (line < numLines() &&
         col > 0) {
       moveCursorBy(0, -1);
     }
-    else if (line > 0) {
+    else if (!line.isZero()) {
       moveToPrevLineEnd();
     }
     else {
@@ -1133,7 +1156,7 @@ void TextDocumentEditor::fillToCoord(TextLCoord const &tc)
     // possible and as needed, with the effect that we continue the
     // prevailing indentation style.
     string indText;
-    this->getAboveIndentationColumns(tc.m_line - 1, indText /*OUT*/);
+    this->getAboveIndentationColumns(tc.m_line, indText /*OUT*/);
 
     // Process each character in 'indText'.
     size_t indTextLen = indText.length();
@@ -1169,8 +1192,8 @@ void TextDocumentEditor::fillToCoord(TextLCoord const &tc)
 
   // Move cursor the end of the 'tc' line if it exists in the model, or
   // the end of the last line otherwise.
-  int lineToEdit = std::min(tc.m_line, this->numLines()-1);
-  moveCursor(false /*relLine*/, lineToEdit,
+  LineIndex lineToEdit = std::min(tc.m_line, m_doc->lastLineIndex());
+  moveCursor(false /*relLine*/, lineToEdit.get(),
              false /*relCol*/, lineLengthColumns(lineToEdit));
 
   // Do not delete things implicitly here due to a selection!
@@ -1224,7 +1247,7 @@ void TextDocumentEditor::insertNewlineAutoIndent()
 
   // Auto-indent.
   string indText;
-  int indCols = this->getAboveIndentationColumns(m_cursor.m_line - 1,
+  int indCols = this->getAboveIndentationColumns(m_cursor.m_line,
                                                  indText /*OUT*/);
   if (hadCharsToRight) {
     // Insert indentation so the carried forward text starts
@@ -1267,7 +1290,7 @@ void TextDocumentEditor::deleteTextMRange(TextMCoordRange const &range)
 }
 
 
-void TextDocumentEditor::indentLines(int start, int lines, int ind)
+void TextDocumentEditor::indentLines(LineIndex start, int lines, int ind)
 {
   TDE_HistoryGrouper grouper(*this);
   CursorRestorer cr(*this);
@@ -1275,8 +1298,8 @@ void TextDocumentEditor::indentLines(int start, int lines, int ind)
   // Don't let the selection interfere with the text insertions below.
   this->clearMark();
 
-  for (int line=start; line < start+lines &&
-                       line < this->numLines(); line++) {
+  for (LineIndex line=start; line < start+lines &&
+                             line < this->numLines(); ++line) {
     this->setCursor(TextLCoord(line, 0));
 
     if (ind > 0) {
@@ -1308,7 +1331,13 @@ bool TextDocumentEditor::blockIndent(int amt)
 
   TextLCoordRange range = this->getSelectLayoutRange();
 
-  int endLine = (range.m_end.m_column==0? range.m_end.m_line - 1 : range.m_end.m_line);
+  // If no characters on the last line are selected, then do not modify
+  // that line.
+  LineIndex endLine =
+    (range.m_end.m_column==0?
+       range.m_end.m_line.clampIncreased(-1) :
+       range.m_end.m_line);
+
   this->indentLines(range.m_start.m_line, endLine - range.m_start.m_line + 1, amt);
 
   return true;
@@ -1380,7 +1409,7 @@ void TextDocumentEditor::debugPrint() const
 
 // --------------- TextDocumentEditor::LineIterator ---------------
 TextDocumentEditor::LineIterator::LineIterator(
-  TextDocumentEditor const &tde, int line)
+  TextDocumentEditor const &tde, LineIndex line)
 :
   m_tde(tde),
   m_iter(*(tde.getDocument()), line),

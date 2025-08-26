@@ -122,7 +122,7 @@ HashComment_Lexer::~HashComment_Lexer()
 }
 
 
-void HashComment_Lexer::beginScan(TextDocumentCore const *buffer, int line, LexerState state)
+void HashComment_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line, LexerState state)
 {
   lexer->bufsrc.beginScan(buffer, line);
   lexer->setState(state);

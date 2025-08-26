@@ -4,6 +4,7 @@
 #ifndef EDITOR_HILITE_H
 #define EDITOR_HILITE_H
 
+#include "line-index.h"                // LineIndex
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "td-editor.h"                 // TextDocumentEditor
 
@@ -38,11 +39,11 @@ public:
   //
   // The resulting 'categories' has spans expressed in *model*
   // (not layout) coordinates.
-  virtual void highlight(TextDocumentCore const &doc, int line,
+  virtual void highlight(TextDocumentCore const &doc, LineIndex line,
                          LineCategories &categories) = 0;
 
   // Convenience method.
-  void highlightTDE(TextDocumentEditor const *tde, int line,
+  void highlightTDE(TextDocumentEditor const *tde, LineIndex line,
                     LineCategories &categories)
     { this->highlight(tde->getDocument()->getCore(), line, categories); }
 };

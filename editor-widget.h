@@ -258,7 +258,7 @@ private:     // funcs
 
   // Add the search hits for 'line' to 'categories.
   void addSearchMatchesToLineCategories(
-    LineCategories &categories, int line);
+    LineCategories &categories, LineIndex line);
 
   // Scroll the display to the next/prev search it.  If found, return
   // true and, if also 'select', set the cursor/mark to select the
@@ -354,7 +354,7 @@ public:      // funcs
   //
   // Hmmm, m_editor is private.  Maybe I just want to expose the same
   // interface then?
-  int cursorLine() const                  { return m_editor->cursor().m_line; }
+  LineIndex cursorLine() const            { return m_editor->cursor().m_line; }
   int cursorCol() const                   { return m_editor->cursor().m_column; }
 
   // absolute cursor movement
@@ -383,7 +383,7 @@ public:      // funcs
   void initCursorForProcessOutput();
 
   // ----------------------------- mark ------------------------------
-  TextLCoord mark() const                  { return m_editor->mark(); }
+  TextLCoord mark() const                 { return m_editor->mark(); }
   bool selectEnabled() const              { return m_editor->markActive(); }
   void clearMark()                        { m_editor->clearMark(); }
   string getSelectedText() const          { return m_editor->getSelectedText(); }
@@ -391,9 +391,9 @@ public:      // funcs
 
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
-  int firstVisibleLine() const            { return m_editor->firstVisible().m_line; }
+  LineIndex firstVisibleLine() const      { return m_editor->firstVisible().m_line; }
   int firstVisibleCol() const             { return m_editor->firstVisible().m_column; }
-  int lastVisibleLine() const             { return m_editor->lastVisible().m_line; }
+  LineIndex lastVisibleLine() const       { return m_editor->lastVisible().m_line; }
   int lastVisibleCol() const              { return m_editor->lastVisible().m_column; }
 
   // Move both the screen and cursor by the same amount.
@@ -602,8 +602,8 @@ public:      // funcs
   bool editSafetyCheck();
 
   // TextDocumentObserver funcs
-  virtual void observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
-  virtual void observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT OVERRIDE;
+  virtual void observeInsertLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
   virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
   virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &buf) NOEXCEPT OVERRIDE;
@@ -651,14 +651,14 @@ public:      // funcs
 
   // Map a byte index to a column index; and nullopt to nullopt.
   std::optional<int> byteIndexToLayoutColOpt(
-    int line,
+    LineIndex line,
     std::optional<int> byteIndex) const;
 
   // Draw on `paint`, a one-line canvas, boxes around spans associated
   // with diagnostics for `line`.
   void drawDiagnosticBoxes(
     QPainter &paint,
-    int line);
+    LineIndex line);
 
   // Draw to `paint`, the canvas for one line, a diagnostic box
   // surrounding the text starting at `startVisCol` and going up to but

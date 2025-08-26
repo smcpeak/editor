@@ -6,6 +6,8 @@
 
 #include "textmcoord-fwd.h"            // fwds for this module
 
+#include "line-index.h"                // LineIndex
+
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB
@@ -28,8 +30,8 @@ public:      // data
   // 0-based line number.  "Line" is a concept defined by
   // TextDocumentCore.  This should be in [0,numLines()-1] for the
   // document it refers to, but this class does not enforce any
-  // constraints on the value.
-  int m_line;
+  // upper limit on the value.
+  LineIndex m_line;
 
   // 0-based byte index into a line.  Should be in
   // [0,lineLengthBytes(line)] for the relevant document and line.  It
@@ -40,7 +42,7 @@ public:      // data
 
 public:      // funcs
   TextMCoord() : m_line(0), m_byteIndex(0) {}
-  TextMCoord(int line, int byteIndex) : m_line(line), m_byteIndex(byteIndex) {}
+  TextMCoord(LineIndex line, int byteIndex) : m_line(line), m_byteIndex(byteIndex) {}
   TextMCoord(TextMCoord const &obj) : DMEMB(m_line), DMEMB(m_byteIndex) {}
 
   TextMCoord& operator= (TextMCoord const &obj);
@@ -48,7 +50,7 @@ public:      // funcs
   // Lexicographic order by line then byteIndex.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextMCoord)
 
-  bool isZero() const { return m_line==0 && m_byteIndex==0; }
+  bool isZero() const { return m_line.isZero() && m_byteIndex==0; }
 
   // Return `*this` except with `m_byteIndex` increased by `n`.
   TextMCoord plusBytes(int n) const;

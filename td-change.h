@@ -8,6 +8,7 @@
 
 #include "td-change-fwd.h"             // fwds for this module
 
+#include "line-index.h"                // LineIndex
 #include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core-fwd.h"               // TextDocumentCore [n]
 #include "textmcoord.h"                // TextMCoord
@@ -62,7 +63,7 @@ public:      // methods
 class TDC_InsertLine : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
-  int m_line;
+  LineIndex m_line;
 
   // If set, then `m_line` is to become the new last line in the
   // document.  In order to express this as a range replacement, we need
@@ -72,7 +73,7 @@ public:      // data
 public:      // methods
   virtual ~TDC_InsertLine() override;
 
-  explicit TDC_InsertLine(int line, std::optional<int> prevLineBytes);
+  explicit TDC_InsertLine(LineIndex line, std::optional<int> prevLineBytes);
 
   static Kind constexpr TYPE_TAG = K_INSERT_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
@@ -87,7 +88,7 @@ public:      // methods
 class TDC_DeleteLine : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
-  int m_line;
+  LineIndex m_line;
 
   // If set, then `m_line` is the last line in the document.  In order
   // to express this deletion as a range replacement, we need to know
@@ -97,7 +98,7 @@ public:      // data
 public:      // methods
   virtual ~TDC_DeleteLine() override;
 
-  explicit TDC_DeleteLine(int line, std::optional<int> prevLineBytes);
+  explicit TDC_DeleteLine(LineIndex line, std::optional<int> prevLineBytes);
 
   static Kind constexpr TYPE_TAG = K_DELETE_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }

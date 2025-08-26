@@ -19,7 +19,9 @@ OPEN_ANONYMOUS_NAMESPACE
 
 void expectTotalMatches(TextSearch const &ts, int expect)
 {
-  EXPECT_EQ(ts.countRangeMatches(0, ts.documentLines()), expect);
+  EXPECT_EQ(
+    ts.countRangeMatches(LineIndex(0), LineIndex(ts.documentLines())),
+    expect);
 }
 
 
@@ -27,7 +29,7 @@ string dumpMatches(TextSearch const &ts)
 {
   std::ostringstream sb;
 
-  for (int line=0; line < ts.documentLines(); line++) {
+  for (LineIndex line(0); line < ts.documentLines(); ++line) {
     if (ts.countLineMatches(line)) {
       sb << line << ':';
       ArrayStack<TextSearch::MatchExtent> const &matches =
@@ -90,15 +92,15 @@ void testSimple()
   expectMatches(ts, "");
 
   // Insert text so it finds things.
-  tde.setCursor(TextLCoord(0, 2));
+  tde.setCursor(TextLCoord(LineIndex(0), 2));
   tde.insertNulTermText("xyz");
   expectMatches(ts, "0:[0,3]\n");
   tde.insertNulTermText("onxonx onx");
   expectMatches(ts, "0:[0,3][5,3][12,3]\n");
 
   // Delete some of those things.
-  tde.setCursor(TextLCoord(0,0));
-  tde.setMark(TextLCoord(0,11));
+  tde.setCursor(TextLCoord(LineIndex(0),0));
+  tde.setMark(TextLCoord(LineIndex(0),11));
   tde.deleteSelection();
   expectMatches(ts, "0:[1,3]\n");
 
@@ -119,8 +121,8 @@ void testSimple()
 void expectRIM(TextSearch &ts,
   int lineA, int colA, int lineB, int colB, bool expectRes)
 {
-  TextMCoord a(lineA,colA);
-  TextMCoord b(lineB,colB);
+  TextMCoord a(LineIndex(lineA), colA);
+  TextMCoord b(LineIndex(lineB), colB);
   bool actualRes = ts.rangeIsMatch(a, b);
   EXPECT_EQ(actualRes, expectRes);
 }
@@ -134,8 +136,8 @@ void expectNM_true(TextSearch const &ts,
   int expectMarkLine, int expectMarkCol)
 {
   for (int i=0; i < 2; i++) {
-    TextMCoord cursor(cursorLine, cursorCol);
-    TextMCoord mark(markLine, markCol);
+    TextMCoord cursor(LineIndex(cursorLine), cursorCol);
+    TextMCoord mark(LineIndex(markLine), markCol);
     if (i==1) {
       // The result should be independent of the order of 'cursor' and
       // 'mark'.
@@ -145,9 +147,9 @@ void expectNM_true(TextSearch const &ts,
     TextMCoordRange range(cursor, mark);
     bool actualRes = ts.nextMatch(reverse, range);
     EXPECT_EQ(actualRes, true);
-    EXPECT_EQ(range.m_start.m_line, expectCursorLine);
+    EXPECT_EQ(range.m_start.m_line, LineIndex(expectCursorLine));
     EXPECT_EQ(range.m_start.m_byteIndex, expectCursorCol);
-    EXPECT_EQ(range.m_end.m_line, expectMarkLine);
+    EXPECT_EQ(range.m_end.m_line, LineIndex(expectMarkLine));
     EXPECT_EQ(range.m_end.m_byteIndex, expectMarkCol);
   }
 }
@@ -159,8 +161,8 @@ void expectNM_false(TextSearch const &ts,
   bool reverse)
 {
   for (int i=0; i < 2; i++) {
-    TextMCoord cursor(cursorLine, cursorCol);
-    TextMCoord mark(markLine, markCol);
+    TextMCoord cursor(LineIndex(cursorLine), cursorCol);
+    TextMCoord mark(LineIndex(markLine), markCol);
     if (i==1) {
       // The result should be independent of the order of 'cursor' and
       // 'mark'.

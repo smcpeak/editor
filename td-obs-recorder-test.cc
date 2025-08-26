@@ -58,6 +58,12 @@ GDValue versionDetailsGDV(
 }
 
 
+static TextMCoord textiMCoord(int line, int byteIndex)
+{
+  return TextMCoord(LineIndex(line), byteIndex);
+}
+
+
 void test_basics()
 {
   TEST_CASE("test_basics");
@@ -73,7 +79,8 @@ void test_basics()
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
 
   // Make a change while not tracking anything.
-  doc.insertLine(0);
+  LineIndex const li0;
+  doc.insertLine(li0);
   checkFile(doc, "\n");
   EXPECT_EQ(recorder.trackingSomething(), false);
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
@@ -91,7 +98,7 @@ void test_basics()
   }));
 
   // Make a change while tracking is enabled.
-  doc.insertLine(0);
+  doc.insertLine(li0);
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -100,7 +107,7 @@ void test_basics()
   })));
 
   // Insert some text.
-  doc.insertString(TextMCoord(0, 0), "hello");
+  doc.insertString(textiMCoord(0, 0), "hello");
   checkFile(doc, "hello\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -110,7 +117,7 @@ void test_basics()
   })));
 
   // Delete text.
-  doc.deleteTextBytes(TextMCoord(0, 1), 2);
+  doc.deleteTextBytes(textiMCoord(0, 1), 2);
   checkFile(doc, "hlo\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -122,7 +129,7 @@ void test_basics()
 
   // Delete remainder of text on that line, since that is required
   // before we can delete the line itself.
-  doc.deleteTextBytes(TextMCoord(0, 0), 3);
+  doc.deleteTextBytes(textiMCoord(0, 0), 3);
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -135,7 +142,7 @@ void test_basics()
 
 
   // Delete the line now that it is empty.
-  doc.deleteLine(0);
+  doc.deleteLine(li0);
   checkFile(doc, "\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -159,9 +166,11 @@ void test_basics()
   EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), (VersionSet{ver1, ver2}));
 
   // Insert a few lines.
-  doc.insertLine(0);
-  doc.insertLine(1);
-  doc.insertLine(2);
+  doc.insertLine(li0);
+  LineIndex const li1(1);
+  doc.insertLine(li1);
+  LineIndex const li2(2);
+  doc.insertLine(li2);
   checkFile(doc, "\n\n\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -181,7 +190,7 @@ void test_basics()
   {
     // Make some diagnostics that could have applied to `ver1`.
     TextDocumentDiagnostics diagnostics(ver1, std::nullopt);
-    diagnostics.insertDiagnostic({{1,0}, {1,0}}, TDD_Diagnostic("msg"));
+    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg"));
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(1 0) MC(1 0)) "
@@ -228,8 +237,8 @@ void test_basics()
     // Make some diagnostics that could have applied to `ver2`.  Since
     // it is textually the same as `ver1`, we use similar diagnostics.
     TextDocumentDiagnostics diagnostics(ver2, std::nullopt);
-    diagnostics.insertDiagnostic({{0,0}, {0,0}}, TDD_Diagnostic("msg0"));
-    diagnostics.insertDiagnostic({{1,0}, {1,0}}, TDD_Diagnostic("msg1"));
+    diagnostics.insertDiagnostic({{li0,0}, {li0,0}}, TDD_Diagnostic("msg0"));
+    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg1"));
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(0 0) MC(0 0)) "
@@ -528,10 +537,13 @@ void test_DDRH()
   // Call this version 1.
   VersionNumber ver1 = ddrh.m_doc.getVersionNumber();
 
+  LineIndex const li0(0);
+  LineIndex const li1(1);
+
   // Make a diagnostic for version 1 and begin tracking changes.
   {
     TextDocumentDiagnostics diagnostics(ver1, std::nullopt);
-    diagnostics.insertDiagnostic({{1,0}, {1,0}}, TDD_Diagnostic("msg"));
+    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg"));
     ddrh.saveVersion(diagnostics);
 
     EXPECT_EQ(ddrh.m_recorder.trackingSomething(), true);
@@ -539,23 +551,23 @@ void test_DDRH()
   }
 
   // Make a change while tracking is enabled.
-  ddrh.m_doc.insertAt(TextMCoord(0,0), "\n", 1);
+  ddrh.m_doc.insertAt(textiMCoord(0,0), "\n", 1);
   ddrh.checkFile("\n\n");
 
   // Insert some text.
-  ddrh.m_doc.insertAt(TextMCoord(0, 0), "hello", 5);
+  ddrh.m_doc.insertAt(textiMCoord(0, 0), "hello", 5);
   ddrh.checkFile("hello\n\n");
 
   // Delete text.
-  ddrh.m_doc.deleteAt(TextMCoord(0, 1), 2);
+  ddrh.m_doc.deleteAt(textiMCoord(0, 1), 2);
   ddrh.checkFile("hlo\n\n");
 
   // Delete the remaining text on the line.
-  ddrh.m_doc.deleteAt(TextMCoord(0, 0), 3);
+  ddrh.m_doc.deleteAt(textiMCoord(0, 0), 3);
   ddrh.checkFile("\n\n");
 
   // Delete the entire line.
-  ddrh.m_doc.deleteAt(TextMCoord(0, 0), 1);
+  ddrh.m_doc.deleteAt(textiMCoord(0, 0), 1);
   ddrh.checkFile("\n");
 
   // Track a new version.
@@ -564,15 +576,15 @@ void test_DDRH()
   // Make diagnostics for the new version and track them.
   {
     TextDocumentDiagnostics diagnostics(ver2, std::nullopt);
-    diagnostics.insertDiagnostic({{0,0}, {0,0}}, TDD_Diagnostic("msg0"));
-    diagnostics.insertDiagnostic({{1,0}, {1,0}}, TDD_Diagnostic("msg1"));
+    diagnostics.insertDiagnostic({{li0,0}, {li0,0}}, TDD_Diagnostic("msg0"));
+    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg1"));
     ddrh.saveVersion(diagnostics);
 
     EXPECT_EQ(ddrh.m_recorder.isTracking(ver2), true);
   }
 
   // Insert a few lines.
-  ddrh.m_doc.insertAt(TextMCoord(0, 0), "\n\n\n", 3);
+  ddrh.m_doc.insertAt(textiMCoord(0, 0), "\n\n\n", 3);
   ddrh.checkFile("\n\n\n\n");
 
   // Check that the eagerly-updated diagnostics are right.
@@ -613,7 +625,7 @@ void test_DDRH()
 // Return a random valid coordinate in `doc`.
 TextMCoord randomMC(NamedTextDocument const &doc)
 {
-  int line = sm_random(doc.numLines());
+  LineIndex line( sm_random(doc.numLines()) );
   int bytes = sm_random(doc.lineLengthBytes(line) + 1);
   return TextMCoord(line, bytes);
 }

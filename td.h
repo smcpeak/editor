@@ -8,6 +8,7 @@
 
 // editor
 #include "history.h"                   // HE_group
+#include "line-index.h"                // LineIndex
 #include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "textmcoord.h"                // TextMCoord, TextMCoordRange
@@ -146,14 +147,16 @@ public:      // funcs
   // must go through the undo/redo mechanism in this class.
 
   int numLines() const                                       { return m_core.numLines(); }
-  bool isEmptyLine(int line) const                           { return m_core.isEmptyLine(line); }
-  int lineLengthBytes(int line) const                        { return m_core.lineLengthBytes(line); }
+  bool validLine(LineIndex line) const                       { return m_core.validLine(line); }
+  LineIndex lastLineIndex() const                            { return m_core.lastLineIndex(); }
+  bool isEmptyLine(LineIndex line) const                     { return m_core.isEmptyLine(line); }
+  int lineLengthBytes(LineIndex line) const                  { return m_core.lineLengthBytes(line); }
   bool validCoord(TextMCoord tc) const                       { return m_core.validCoord(tc); }
   bool validRange(TextMCoordRange const &range) const        { return m_core.validRange(range); }
   TextMCoord beginCoord() const                              { return m_core.beginCoord(); }
   TextMCoord endCoord() const                                { return m_core.endCoord(); }
-  TextMCoord lineBeginCoord(int line) const                  { return m_core.lineBeginCoord(line); }
-  TextMCoord lineEndCoord(int line) const                    { return m_core.lineEndCoord(line); }
+  TextMCoord lineBeginCoord(LineIndex line) const            { return m_core.lineBeginCoord(line); }
+  TextMCoord lineEndCoord(LineIndex line) const              { return m_core.lineEndCoord(line); }
   int maxLineLengthBytes() const                             { return m_core.maxLineLengthBytes(); }
   int numLinesExceptFinalEmpty() const                       { return m_core.numLinesExceptFinalEmpty(); }
   bool walkCoordBytes(TextMCoord &tc, int distance) const    { return m_core.walkCoordBytes(tc, distance); }
@@ -163,9 +166,9 @@ public:      // funcs
   void getPartialLine(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getPartialLine(tc, dest, numBytes); }
   bool getTextSpanningLines(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getTextSpanningLines(tc, dest, numBytes); }
   void getTextForRange(TextMCoordRange const &range, ArrayStack<char> /*INOUT*/ &dest) const { m_core.getTextForRange(range, dest); }
-  void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const { return m_core.getWholeLine(line, dest); }
-  int countLeadingSpacesTabs(int line) const                 { return m_core.countLeadingSpacesTabs(line); }
-  int countTrailingSpacesTabs(int line) const                { return m_core.countTrailingSpacesTabs(line); }
+  void getWholeLine(LineIndex line, ArrayStack<char> /*INOUT*/ &dest) const { return m_core.getWholeLine(line, dest); }
+  int countLeadingSpacesTabs(LineIndex line) const           { return m_core.countLeadingSpacesTabs(line); }
+  int countTrailingSpacesTabs(LineIndex line) const          { return m_core.countTrailingSpacesTabs(line); }
   VersionNumber getVersionNumber() const                     { return m_core.getVersionNumber(); }
 
   // This is a modification of sorts, but does not need undo/redo.
@@ -312,7 +315,7 @@ public:      // types
 
   public:      // funcs
     // Same interface as TextDocumentCore::LineIterator.
-    LineIterator(TextDocument const &td, int line)
+    LineIterator(TextDocument const &td, LineIndex line)
       : m_iter(td.getCore(), line)     {}
     ~LineIterator()                    {}
     bool has() const                   { return m_iter.has(); }

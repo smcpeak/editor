@@ -7,7 +7,8 @@
 #include "td-core-fwd.h"               // fwds for this module
 
 // editor
-#include "gap.h"                       // GapArray
+#include "line-gap-array.h"            // LineGapArray
+#include "line-index.h"                // LineIndex
 #include "td-fwd.h"                    // TextDocument
 #include "td-line.h"                   // TextDocumentLine
 #include "textmcoord.h"                // TextMCoord
@@ -23,6 +24,7 @@
 
 // libc++
 #include <cstdint>                     // std::uint64_t
+#include <optional>                    // std::optional
 #include <vector>                      // std::vector
 
 
@@ -57,20 +59,20 @@ private:     // instance data
   //
   // TODO: I should not store the newline.  That is inconsistent with
   // the "blank line" case.
-  GapArray<TextDocumentLine> m_lines;
+  LineGapArray<TextDocumentLine> m_lines;
 
-  // The most-recently edited line number, or -1 to mean that no line's
-  // contents are stored.
-  int m_recentIndex;
+  // The most-recently edited line number, or `nullopt` to mean that no
+  // line's contents are stored.
+  std::optional<LineIndex> m_recentIndex;
 
   // Length of the longest line this file has ever had, in bytes.  This
   // is my poor-man's substitute for a proper interval map, etc., to be
   // able to answer the 'maxLineLength()' query.
   int m_longestLengthSoFar;
 
-  // If `m_recentIndex != -1`, then this holds the contents of that
-  // line, and `m_lines[m_recentIndex]` is empty.  Otherwise, this is
-  // empty.
+  // If `m_recentIndex.has_value()`, then this holds the contents of
+  // that line, and `m_lines[*m_recentIndex]` is empty.  Otherwise, this
+  // is empty.
   GapArray<char> m_recentLine;
 
   // Version number for the contents.  This starts at 1 and increases by
@@ -100,16 +102,25 @@ private:     // instance data
   mutable int m_iteratorCount;
 
 private:     // funcs
+  // The 'M' reflects the fact that this directly accesses `m_lines`,
+  // bypassing consideration of `m_recentLine`.
+  TextDocumentLine const &getMLine(LineIndex lineIndex) const
+    { return m_lines.get(lineIndex); }
+
+  // Directly write an `m_lines` entry.
+  void setMLine(LineIndex lineIndex, TextDocumentLine const &lineContents)
+    { m_lines.set(lineIndex, lineContents); }
+
   // True if line `i` of `*this` and `obj` is equal.
   //
   // Requires: `i` is within bounds for both.
-  bool equalLineAt(int i, TextDocumentCore const &obj) const;
+  bool equalLineAt(LineIndex i, TextDocumentCore const &obj) const;
 
   // strlen, but NULL yields 0 and '\n' is terminator, in bytes.
   static int bufStrlen(char const *p);
 
   // bounds check line
-  void bc(int line) const { xassert(validLine(line)); }
+  void bc(LineIndex line) const { xassert(validLine(line)); }
 
   // Counds check a coordinate.
   void bctc(TextMCoord tc) const { xassert(validCoord(tc)); }
@@ -161,14 +172,17 @@ public:    // funcs
   int numLines() const { return m_lines.length(); }
 
   // True if `line` is valid, i.e., within range for this document.
-  bool validLine(int line) const
-    { return 0 <= line && line < numLines(); }
+  bool validLine(LineIndex line) const
+    { return line.get() < numLines(); }
+
+  // Index of the last valid line.  There is always at least one.
+  LineIndex lastLineIndex() const;
 
   // True if the given line is empty.
-  bool isEmptyLine(int line) const;
+  bool isEmptyLine(LineIndex line) const;
 
   // Length of a given line, not including the '\n', in bytes.
-  int lineLengthBytes(int line) const;
+  int lineLengthBytes(LineIndex line) const;
 
   // True if 'tc' has a line in [0,numLines()-1] and a byteIndex in
   // [0,lineLengthBytes(line)] that is not in the middle of a multibyte
@@ -190,8 +204,8 @@ public:    // funcs
   TextMCoord endCoord() const;
 
   // Coordinates for begin and end of a line, which must be valid.
-  TextMCoord lineBeginCoord(int line) const;
-  TextMCoord lineEndCoord(int line) const;
+  TextMCoord lineBeginCoord(LineIndex line) const;
+  TextMCoord lineEndCoord(LineIndex line) const;
 
   // Maximum length of a line.  TODO: Implement this properly (right
   // now it just uses the length of the longest line ever seen, even
@@ -208,19 +222,26 @@ public:    // funcs
   // given distance in *bytes* through the valid coordinates of the
   // file.  It must initially be a valid coordinate, but if by walking
   // we reach an invalid coordinate, then the function returns false,
-  // leaving `tc` at the invalid coordinate.  Otherwise it returns true
-  // and `tc` is valid afterward.
+  // leaving `tc` at the invalid coordinate if we walked past the end,
+  // or the zero coordinate if we walked past the start.
+  //
+  // Otherwise it returns true and `tc` is valid afterward.
   bool walkCoordBytes(TextMCoord &tc /*INOUT*/, int distance) const;
+
+  // Same, but asserting we did not walk off either end.
+  void walkCoordBytesValid(TextMCoord &tc /*INOUT*/, int distance) const;
 
   // Compute the number of bytes in a range.
   int countBytesInRange(TextMCoordRange const &range) const;
 
   // If `tc` is not valid, adjust it to the nearest coordinate that is.
-  // Specifically, if the line is too large, set `tc` to `endCoord()`,
-  // and if it is negative, then set `tc` to `beginCoord()`.  If the
-  // line is ok but the byte index is out of bounds, similarly confine
-  // it to its line.  If the byte index points into the middle of a
-  // multibyte character, move it to the start of that character.
+  // Specifically, if the line is too large, set `tc` to `endCoord()`.
+  // (Due to the `LineIndex` constraint, it cannot be negative.)  If the
+  // line is ok but the byte index is out of bounds, confine it to its
+  // line.  If the byte index points into the middle of a multibyte
+  // character, move it to the start of that character.  (TODO: The
+  // multibyte part is unimplemented.)
+  //
   // Return true iff a change was made.
   bool adjustMCoord(TextMCoord /*INOUT*/ &tc) const;
 
@@ -252,18 +273,18 @@ public:    // funcs
 
   // Get a complete line of text, not including the newline.  'line'
   // must be within range.  Result is appended to 'dest'.
-  void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const;
+  void getWholeLine(LineIndex line, ArrayStack<char> /*INOUT*/ &dest) const;
 
   // Same, but returning the line as a string.
-  string getWholeLineString(int line) const;
+  string getWholeLineString(LineIndex line) const;
 
   // Return the number of consecutive spaces and tabs at the start of
   // the given line, as a byte count.
-  int countLeadingSpacesTabs(int line) const;
+  int countLeadingSpacesTabs(LineIndex line) const;
 
   // Return the number of consecutive spaces and tabs at the end of
   // the given line, as a byte count.
-  int countTrailingSpacesTabs(int line) const;
+  int countTrailingSpacesTabs(LineIndex line) const;
 
   // ------------------- Core manipulation interface -------------------
   // This interface is deliberately very simple to *implement*: you are
@@ -273,11 +294,11 @@ public:    // funcs
 
   // insert a new blank line, where the new line will be line 'line';
   // 'line' must be in [0,numLines()]
-  void insertLine(int line);
+  void insertLine(LineIndex line);
 
   // delete a blank line; the line must *already* be blank!  also,
   // you can't delete the last line
-  void deleteLine(int line);
+  void deleteLine(LineIndex line);
 
   // Insert text into a given line, starting at the given coord, which
   // must be valid.  The inserted text must *not* contain the '\n'
@@ -384,7 +405,7 @@ public:      // types
     // Unlike most TDC methods, here, 'line' can be out of bounds, with
     // the result being the same as an empty line.  This choice is made
     // since it is sometimes awkward to avoid creating an iterator.
-    LineIterator(TextDocumentCore const &tdc, int line);
+    LineIterator(TextDocumentCore const &tdc, LineIndex line);
 
     ~LineIterator();
 
@@ -407,6 +428,12 @@ public:      // types
 };
 
 
+// Iterate over all of the line indices in `doc`.
+#define FOR_EACH_LINE_INDEX_IN(indexVar, doc) \
+  for (LineIndex indexVar(0); indexVar < (doc).numLines(); ++indexVar)
+
+
+// TODO: Move to `codepoint` module.
 inline bool isSpaceOrTab(int c)
 {
   return c == ' ' || c == '\t';
@@ -438,8 +465,8 @@ public:      // funcs
   // to remember which buffer it's observing.  These are called
   // *after* the TextDocumentCore updates its internal representation.  The
   // default implementations do nothing.
-  virtual void observeInsertLine(TextDocumentCore const &doc, int line) NOEXCEPT;
-  virtual void observeDeleteLine(TextDocumentCore const &doc, int line) NOEXCEPT;
+  virtual void observeInsertLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT;
+  virtual void observeDeleteLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT;
   virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) NOEXCEPT;
   virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) NOEXCEPT;
 

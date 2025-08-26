@@ -141,24 +141,24 @@ public:      // funcs
 
   // ------------------- query model dimensions --------------------
   // Number of lines in the document.  Always positive.
-  int numLines() const                 { return m_doc->numLines(); }
+  int numLines() const                             { return m_doc->numLines(); }
 
-  bool isEmptyLine(int line) const     { return m_doc->isEmptyLine(line); }
+  bool isEmptyLine(LineIndex line) const           { return m_doc->isEmptyLine(line); }
 
   // Length of the line in bytes, not including the newline.  'line'
   // must be in [0,numLines()-1].
-  int lineLengthBytes(int line) const  { return m_doc->lineLengthBytes(line); }
+  int lineLengthBytes(LineIndex line) const        { return m_doc->lineLengthBytes(line); }
 
-  int maxLineLengthBytes() const       { return m_doc->maxLineLengthBytes(); }
+  int maxLineLengthBytes() const                   { return m_doc->maxLineLengthBytes(); }
 
   // Begin/end model coordinates.
-  TextMCoord beginMCoord() const       { return m_doc->beginCoord(); }
-  TextMCoord endMCoord() const         { return m_doc->endCoord(); }
+  TextMCoord beginMCoord() const                   { return m_doc->beginCoord(); }
+  TextMCoord endMCoord() const                     { return m_doc->endCoord(); }
 
-  TextMCoord lineBeginMCoord(int line) const { return m_doc->lineBeginCoord(line); }
-  TextMCoord lineEndMCoord(int line) const   { return m_doc->lineEndCoord(line); }
+  TextMCoord lineBeginMCoord(LineIndex line) const { return m_doc->lineBeginCoord(line); }
+  TextMCoord lineEndMCoord(LineIndex line) const   { return m_doc->lineEndCoord(line); }
 
-  bool validMCoord(TextMCoord mc) const{ return m_doc->validCoord(mc); }
+  bool validMCoord(TextMCoord mc) const            { return m_doc->validCoord(mc); }
 
   // ------------------- coordinate transformation -----------------
   // Convert the given layout coordinate to a valid model coordinate.
@@ -180,7 +180,7 @@ public:      // funcs
   // Number of populated cells on the given line, in columns.  This does
   // not count the newline.  If 'line' is outside [0,numLines()-1],
   // returns 0.
-  int lineLengthColumns(int line) const;
+  int lineLengthColumns(LineIndex line) const;
 
   // Length of line containing cursor.
   int cursorLineLengthColumns() const  { return lineLengthColumns(cursor().m_line); }
@@ -189,7 +189,7 @@ public:      // funcs
   int maxLineLengthColumns() const;
 
   // First position in the file.
-  TextLCoord beginLCoord() const         { return TextLCoord(0,0); }
+  TextLCoord beginLCoord() const         { return TextLCoord(LineIndex(0),0); }
 
   // Position right after last character in file.
   TextLCoord endLCoord() const;
@@ -199,7 +199,7 @@ public:      // funcs
     { return TextLCoordRange(beginLCoord(), endLCoord()); }
 
   // Position at end of specified line, which may be beyond EOF.
-  TextLCoord lineEndLCoord(int line) const;
+  TextLCoord lineEndLCoord(LineIndex line) const;
 
   // Walk the given coordinate forwards (right, then down, when
   // distance>0) or backwards (left, then up, when distance<0) through
@@ -342,7 +342,7 @@ public:      // funcs
   TextLCoord lastVisible() const        { return m_lastVisible; }
 
   int visLines() const
-    { return m_lastVisible.m_line - m_firstVisible.m_line + 1; }
+    { return m_lastVisible.m_line.get() - m_firstVisible.m_line.get() + 1; }
   int visColumns() const
     { return m_lastVisible.m_column - m_firstVisible.m_column + 1; }
 
@@ -351,7 +351,7 @@ public:      // funcs
   void setFirstVisible(TextLCoord fv);
 
   // Scroll in one dimension.
-  void setFirstVisibleLine(int L)
+  void setFirstVisibleLine(LineIndex L)
     { this->setFirstVisible(TextLCoord(L, m_firstVisible.m_column)); }
   void setFirstVisibleCol(int C)
     { this->setFirstVisible(TextLCoord(m_firstVisible.m_line, C)); }
@@ -444,8 +444,8 @@ public:      // funcs
 
   // Get a complete line.  Returns "" when beyond EOF.  'line' must
   // be non-negative.
-  void getWholeLine(int line, ArrayStack<char> /*INOUT*/ &dest) const;
-  string getWholeLineString(int line) const;
+  void getWholeLine(LineIndex line, ArrayStack<char> /*INOUT*/ &dest) const;
+  string getWholeLineString(LineIndex line) const;
 
   // get the word following the given coordinate, including any non-word
   // characters that precede that word; stop at end of line
@@ -453,17 +453,17 @@ public:      // funcs
 
   // Given the character style info in 'modelCategories', compute
   // column style info in 'layoutCategories'.
-  void modelToLayoutSpans(int line,
+  void modelToLayoutSpans(LineIndex line,
     LineCategories /*OUT*/ &layoutCategories,
     LineCategories /*IN*/ const &modelCategories);
 
   // ---------------- whitespace text queries -------------------
   // For the given line, count the number of whitespace characters
   // before either a non-ws character or EOL.  Beyond EOF, return 0.
-  int countLeadingSpacesTabs(int line) const;
+  int countLeadingSpacesTabs(LineIndex line) const;
 
   // Count them from the end instead.
-  int countTrailingSpacesTabsColumns(int line) const;
+  int countTrailingSpacesTabsColumns(LineIndex line) const;
 
   // On a particular line, get # of whitespace chars before first
   // non-ws char, or -1 if there are no non-ws chars.  Lines beyond
@@ -474,16 +474,16 @@ public:      // funcs
   // a count of columns instead of bytes.
   //
   // This also sets 'indText' to the actual indentation string.
-  int getIndentationColumns(int line, string /*OUT*/ &indText) const;
+  int getIndentationColumns(LineIndex line, string /*OUT*/ &indText) const;
 
-  // Starting at 'line', including that line, search up until we find a
-  // line that is not entirely blank (whitespace), and return the number
-  // of whitespace columns to the left of the first non-whitespace
-  // character.  Lines beyond EOF are treated as entirely whitespace.
-  // If we hit BOF, return 0.
+  // Starting at 'line-1', search up until we find a line that is not
+  // entirely blank (whitespace), and return the number of whitespace
+  // columns to the left of the first non-whitespace character.  Lines
+  // beyond EOF are treated as entirely whitespace.  If we hit BOF,
+  // return 0.
   //
   // If the return is non-negative, also set 'indText'.
-  int getAboveIndentationColumns(int line, string /*OUT*/ &indText) const;
+  int getAboveIndentationColumns(LineIndex line, string /*OUT*/ &indText) const;
 
   // ------------------- general text insertion ------------------
   // 1. If the mark is active, deleteSelection().
@@ -601,7 +601,7 @@ public:      // funcs
   // there are not enough spaces, then the line is unindented as much
   // as possible w/o removing non-ws chars; the cursor is left in its
   // original position at the end
-  void indentLines(int start, int lines, int ind);
+  void indentLines(LineIndex start, int lines, int ind);
 
   // Do 'indentLines' for the span of lines corresponding to the
   // current selection.  Every line that has at least one selected
@@ -711,7 +711,7 @@ public:      // types
 
   public:      // funcs
     // Same interface as TextDocument::LineIterator.
-    LineIterator(TextDocumentEditor const &tde, int line);
+    LineIterator(TextDocumentEditor const &tde, LineIndex line);
     ~LineIterator()                    {}
     bool has() const                   { return m_iter.has(); }
     int byteOffset() const             { return m_iter.byteOffset(); }

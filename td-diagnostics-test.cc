@@ -77,7 +77,7 @@ void testOneGetDiagnosticsAt(
   EXN_CONTEXT_EXPR(byteIndex);
 
   RCSerf<TDD_Diagnostic const> actual =
-    tdd.getDiagnosticAt(TextMCoord(line, byteIndex));
+    tdd.getDiagnosticAt(TextMCoord(LineIndex(line), byteIndex));
 
   EXPECT_EQ(actual==nullptr, expect==nullptr);
 
@@ -99,7 +99,7 @@ void testOneAdjacentDiagnostic(
     next, startLine, startByteIndex);
 
   std::optional<TextMCoord> actual = tdd.getAdjacentDiagnosticLocation(
-    next, TextMCoord(startLine, startByteIndex));
+    next, TextMCoord(LineIndex(startLine), startByteIndex));
 
   if (expectLine == -1) {
     xassert(!actual.has_value());
@@ -107,7 +107,7 @@ void testOneAdjacentDiagnostic(
   else {
     xassert(actual.has_value());
 
-    EXPECT_EQ(actual->m_line, expectLine);
+    EXPECT_EQ(actual->m_line.get(), expectLine);
     EXPECT_EQ(actual->m_byteIndex, expectByteIndex);
   }
 }
@@ -163,6 +163,14 @@ public:      // methods
 };
 
 
+static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
+{
+  return TextMCoordRange(
+    TextMCoord(LineIndex(sl), sb),
+    TextMCoord(LineIndex(el), eb));
+}
+
+
 // This also tests next/previous diagnostic navigation.
 void test_TDD_getDiagnosticAt()
 {
@@ -189,28 +197,28 @@ void test_TDD_getDiagnosticAt()
   tdd.selfCheck();
   EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
 
-  tdd.insertDiagnostic({{0,3}, {0,6}}, TDD_Diagnostic("1"));
+  tdd.insertDiagnostic(tmcr(0,3, 0,6), TDD_Diagnostic("1"));
   tdd.selfCheck();
-  tdd.insertDiagnostic({{0,11}, {0,16}}, TDD_Diagnostic("2"));
+  tdd.insertDiagnostic(tmcr(0,11, 0,16), TDD_Diagnostic("2"));
   tdd.selfCheck();
-  tdd.insertDiagnostic({{2,2}, {2,17}}, TDD_Diagnostic("3"));
+  tdd.insertDiagnostic(tmcr(2,2, 2,17), TDD_Diagnostic("3"));
   tdd.selfCheck();
-  tdd.insertDiagnostic({{2,5}, {2,14}}, TDD_Diagnostic("4"));
+  tdd.insertDiagnostic(tmcr(2,5, 2,14), TDD_Diagnostic("4"));
   tdd.selfCheck();
-  tdd.insertDiagnostic({{2,8}, {2,11}}, TDD_Diagnostic("5"));
-  tdd.insertDiagnostic({{3,2}, {3,14}}, TDD_Diagnostic("6"));
-  tdd.insertDiagnostic({{3,7}, {3,18}}, TDD_Diagnostic("7"));
+  tdd.insertDiagnostic(tmcr(2,8, 2,11), TDD_Diagnostic("5"));
+  tdd.insertDiagnostic(tmcr(3,2, 3,14), TDD_Diagnostic("6"));
+  tdd.insertDiagnostic(tmcr(3,7, 3,18), TDD_Diagnostic("7"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 3);
   // I skipped "8" I guess.
-  tdd.insertDiagnostic({{4,10}, {4,10}}, TDD_Diagnostic("9"));
-  tdd.insertDiagnostic({{5,6}, {6,18}}, TDD_Diagnostic("10"));
+  tdd.insertDiagnostic(tmcr(4,10, 4,10), TDD_Diagnostic("9"));
+  tdd.insertDiagnostic(tmcr(5,6, 6,18), TDD_Diagnostic("10"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 6);
-  tdd.insertDiagnostic({{5,11}, {5,15}}, TDD_Diagnostic("11"));
-  tdd.insertDiagnostic({{6,3}, {6,7}}, TDD_Diagnostic("12"));
-  tdd.insertDiagnostic({{7,3}, {7,11}}, TDD_Diagnostic("13"));
-  tdd.insertDiagnostic({{7,3}, {7,16}}, TDD_Diagnostic("14"));
-  tdd.insertDiagnostic({{8,3}, {8,16}}, TDD_Diagnostic("15"));
-  tdd.insertDiagnostic({{8,8}, {8,16}}, TDD_Diagnostic("16"));
+  tdd.insertDiagnostic(tmcr(5,11, 5,15), TDD_Diagnostic("11"));
+  tdd.insertDiagnostic(tmcr(6,3, 6,7), TDD_Diagnostic("12"));
+  tdd.insertDiagnostic(tmcr(7,3, 7,11), TDD_Diagnostic("13"));
+  tdd.insertDiagnostic(tmcr(7,3, 7,16), TDD_Diagnostic("14"));
+  tdd.insertDiagnostic(tmcr(8,3, 8,16), TDD_Diagnostic("15"));
+  tdd.insertDiagnostic(tmcr(8,8, 8,16), TDD_Diagnostic("16"));
   EXPECT_EQ(tdd.maxDiagnosticLine(), 8);
   tdd.selfCheck();
 
@@ -361,12 +369,12 @@ void test_deleteNearEnd()
   tdd.selfCheck();
 
   // This diagnostic goes right to the end of the file.
-  tdd.insertDiagnostic({{1,0}, {2,19}}, TDD_Diagnostic("msg8740"));
+  tdd.insertDiagnostic(tmcr(1,0, 2,19), TDD_Diagnostic("msg8740"));
   tdd.selfCheck();
 
   // We then delete a span that has the effect of removing one line, so
   // the diagnostic should be adjusted to end on line 1, not 2.
-  doc.deleteTextRange(TextMCoordRange({1,8}, {2,6}));
+  doc.deleteTextRange(tmcr(1,8, 2,6));
 
   // In the buggy version, this would fail because the endpoint of the
   // adjusted diagnostic was still on line 2.

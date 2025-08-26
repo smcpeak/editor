@@ -35,7 +35,7 @@ void test_bufferlinesource(CmdlineArgsSpan args)
     Array<char> buffer(bufSize);
     BufferLineSource bls;
     std::ostringstream sb;
-    for (int line=0; line < tde.numLines(); line++) {
+    FOR_EACH_LINE_INDEX_IN(line, tde) {
       bls.beginScan(tde.getDocumentCore(), line);
 
       int len = bls.fillBuffer(buffer.ptr(), bufSize);

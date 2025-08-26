@@ -5,6 +5,7 @@
 #define BUFFERLINESOURCE_H
 
 // editor
+#include "line-index.h"                // LineIndex
 #include "td-core.h"                   // TextDocumentCore
 
 // smbase
@@ -19,7 +20,7 @@ private:     // data
   RCSerf<TextDocumentCore const> buffer;
 
   // which line we're working on
-  int bufferLine;
+  LineIndex bufferLine;
 
   // Length of that line, including a synthetic final newline.
   int lineLength;
@@ -45,7 +46,7 @@ public:      // funcs
   ~BufferLineSource();
 
   // set up the variables to begin reading from the given line
-  void beginScan(TextDocumentCore const *buffer, int line);
+  void beginScan(TextDocumentCore const *buffer, LineIndex line);
 
   // read the next chunk of the current line, up to 'size' bytes;
   // returns # of bytes read, or 0 for end-of-input (end of line)

@@ -25,7 +25,7 @@ public:      // funcs
   ~Python_Lexer();
 
   // IncLexer funcs
-  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state) OVERRIDE;
+  virtual void beginScan(TextDocumentCore const *buffer, LineIndex line, LexerState state) OVERRIDE;
   virtual int getNextToken(TextCategory &code) OVERRIDE;
   virtual LexerState getState() const OVERRIDE;
 };

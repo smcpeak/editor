@@ -133,7 +133,7 @@ static int prefixColumnWidth(string const &prefix)
 }
 
 
-bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredWidth)
+bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int desiredWidth)
 {
   string startLine = tde.getWholeLineString(originLineNumber);
 
@@ -161,19 +161,19 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
 
   // Look for adjacent lines that start with the same prefix and have
   // some content after it.
-  int upperEdge = originLineNumber;
-  while (upperEdge-1 >= 0) {
-    if (properStartsWith(tde.getWholeLineString(upperEdge-1), prefix)) {
-      upperEdge--;
+  LineIndex upperEdge = originLineNumber;
+  while (upperEdge.isPositive()) {
+    if (properStartsWith(tde.getWholeLineString(upperEdge.pred()), prefix)) {
+      --upperEdge;
     }
     else {
       break;
     }
   }
-  int lowerEdge = originLineNumber;
+  LineIndex lowerEdge = originLineNumber;
   while (lowerEdge+1 < tde.numLines()) {
-    if (properStartsWith(tde.getWholeLineString(lowerEdge+1), prefix)) {
-      lowerEdge++;
+    if (properStartsWith(tde.getWholeLineString(lowerEdge.succ()), prefix)) {
+      ++lowerEdge;
     }
     else {
       break;
@@ -182,7 +182,7 @@ bool justifyNearLine(TextDocumentEditor &tde, int originLineNumber, int desiredW
 
   // Put all the content into a sequence of lines.
   ArrayStack<string> originalContent;
-  for (int i=upperEdge; i <= lowerEdge; i++) {
+  for (LineIndex i=upperEdge; i <= lowerEdge; ++i) {
     string line = tde.getWholeLineString(i);
     originalContent.push(line.c_str() + prefix.length());
   }

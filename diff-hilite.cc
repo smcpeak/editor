@@ -16,7 +16,7 @@ string DiffHighlighter::highlighterName() const
 }
 
 
-void DiffHighlighter::highlight(TextDocumentCore const &doc, int line,
+void DiffHighlighter::highlight(TextDocumentCore const &doc, LineIndex line,
                                 LineCategories &categories)
 {
   // Get the line contents.

@@ -127,7 +127,7 @@ STATICDEF void HE_text::insert(
           buf.deleteTextBytes(tc, excessLength);
         }
 
-        tc.m_line++;
+        ++tc.m_line;
         buf.insertLine(tc.m_line);
         tc.m_byteIndex = 0;
         len++;   // so we skip '\n' too
@@ -196,7 +196,7 @@ STATICDEF void HE_text::insert(
           // move line/col to beginning of next line, so that from
           // now on we can work with whole deleted lines, but remember
           // that there's a pending line splice
-          tc.m_line++;
+          ++tc.m_line;
           tc.m_byteIndex=0;
           pendingSplice++;
         }
@@ -221,7 +221,7 @@ STATICDEF void HE_text::insert(
       buf.deleteLine(tc.m_line);
 
       // move up to end of previous line
-      tc.m_line--;
+      --tc.m_line;
       tc.m_byteIndex = buf.lineLengthBytes(tc.m_line);
 
       // append splice text

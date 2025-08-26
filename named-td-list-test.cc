@@ -296,7 +296,7 @@ static void testCreateUntitled()
   xassert(f != NULL);
   xassert(!dlist.hasUnsavedFiles());
 
-  file1->insertAt(TextMCoord(0,0), "hi", 2);
+  file1->insertAt(TextMCoord(LineIndex(0),0), "hi", 2);
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0 || f == file2);
   xassert(dlist.hasUnsavedFiles());
@@ -307,7 +307,7 @@ static void testCreateUntitled()
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == file0);
 
-  file0->insertAt(TextMCoord(0,0), "\n", 1);
+  file0->insertAt(TextMCoord(LineIndex(0),0), "\n", 1);
   f = dlist.findUntitledUnmodifiedDocument();
   xassert(f == NULL);
 

@@ -1031,12 +1031,11 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   // the last fully visible column, which might be partially visible.
   int const visibleCols = this->visColsPlusPartial();
   int const firstCol = this->firstVisibleCol();
-  int const firstLine = this->firstVisibleLine();
+  LineIndex const firstLine = this->firstVisibleLine();
 
   // I think it might be useful to support negative values for these
   // variables, but the code below is not prepared to deal with such
   // values at this time
-  xassert(firstLine >= 0);
   xassert(firstCol >= 0);
 
   // another sanity check
@@ -1050,9 +1049,9 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
   // Paint the window, one line at a time.  Both 'line' and 'y' act
   // as loop control variables.
-  for (int line = firstLine;
+  for (LineIndex line = firstLine;
        y < this->height();
-       line++, y += fullLineHeight)
+       ++line, y += fullLineHeight)
   {
     // ---- compute style segments ----
     // Number of columns from this line that are visible.
@@ -1372,7 +1371,7 @@ void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
 
 
 std::optional<int> EditorWidget::byteIndexToLayoutColOpt(
-  int line,
+  LineIndex line,
   std::optional<int> byteIndex) const
 {
   if (byteIndex) {
@@ -1386,7 +1385,7 @@ std::optional<int> EditorWidget::byteIndexToLayoutColOpt(
 
 void EditorWidget::drawDiagnosticBoxes(
   QPainter &paint,
-  int line)
+  LineIndex line)
 {
   // Does the document have any associated diagnostics?
   TextDocumentDiagnostics const *diagnostics =
@@ -1704,7 +1703,7 @@ void EditorWidget::drawOneCornerLabel(
 
 
 void EditorWidget::addSearchMatchesToLineCategories(
-  LineCategories &categories, int line)
+  LineCategories &categories, LineIndex line)
 {
   if (m_textSearch->countLineMatches(line)) {
     ArrayStack<TextSearch::MatchExtent> const &matches =
@@ -2139,7 +2138,7 @@ void EditorWidget::scrollToLine(int line)
   INITIATING_DOCUMENT_CHANGE();
   if (!m_ignoreScrollSignals) {
     xassert(line >= 0);
-    m_editor->setFirstVisibleLine(line);
+    m_editor->setFirstVisibleLine(LineIndex(line));
     redraw();
   }
 }
@@ -2164,7 +2163,7 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
   inc(x, -m_leftMargin);
   inc(y, -m_topMargin);
 
-  int newLine = y/lineHeight() + this->firstVisibleLine();
+  LineIndex newLine( y/lineHeight() + this->firstVisibleLine().get() );
   int newCol = x/m_fontWidth + this->firstVisibleCol();
 
   cursorTo(TextLCoord(newLine, newCol));
@@ -2435,7 +2434,7 @@ void EditorWidget::commandCursorToEndOfNextLine(bool shift)
 void EditorWidget::initCursorForProcessOutput()
 {
   // Start by making the start of the document visible.
-  m_editor->setFirstVisible(TextLCoord(0,0));
+  m_editor->setFirstVisible(TextLCoord(LineIndex(0),0));
 
   // Jump to the end of the document.  Even for a new process document,
   // there are a few lines of status information at the top.
@@ -2740,7 +2739,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
       DocumentName docName = getDocument()->documentName();
       elts.push_back(DiagnosticElement{
         docName.harn(),
-        cursorMC.m_line + 1,           // TextMCoord uses 0-based lines.
+        cursorMC.m_line.getForNow() + 1,   // TextMCoord uses 0-based lines.
         diag->m_message
       });
 
@@ -3063,7 +3062,7 @@ void EditorWidget::startListening()
 // same line (sequence of chars).  See doc/test-plan.txt, test
 // "Multiple window simultaneous edit".
 
-void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEXCEPT
+void EditorWidget::observeInsertLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {
@@ -3087,7 +3086,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
   // observers ought to know about the mechanism.  But for now at least
   // I will compensate here by changing the line number to match what I
   // think of as the conceptually inserted line.
-  line--;
+  line.clampIncrease(-1);
 
   if (line <= m_editor->cursor().m_line) {
     m_editor->moveCursorBy(+1, 0);
@@ -3107,7 +3106,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, int line) NOEX
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, int line) NOEXCEPT
+void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {
@@ -3344,7 +3343,7 @@ std::optional<std::string> EditorWidget::innerCommand(
     ASTNEXTC(EC_CursorToEndOfNextLine, ec) {
       // TODO: Encapsulate this as an editor method.
       m_editor->turnSelection(ec->m_select);
-      int line = m_editor->cursor().m_line;
+      LineIndex line = m_editor->cursor().m_line;
       m_editor->setCursor(m_editor->lineEndLCoord(line+1));
       scrollToCursor();
     }

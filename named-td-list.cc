@@ -221,7 +221,7 @@ NamedTextDocument const *NamedTextDocumentList::findUntitledUnmodifiedDocumentC(
     NamedTextDocument const *file = m_documents[i];
     if (!file->hasFilename() &&
         file->numLines() == 1 &&
-        file->isEmptyLine(0)) {
+        file->isEmptyLine(LineIndex(0))) {
       TRACE("named-td-list", "findUntitledUnmodifiedFile: " << file->documentName());
       return file;
     }

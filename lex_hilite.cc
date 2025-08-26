@@ -19,6 +19,9 @@
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xfailure_stringbc
 
+// libc++
+#include <memory>                      // std::unique_ptr
+
 // libc
 #include <stdlib.h>                    // exit
 
@@ -34,7 +37,7 @@ LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
   buffer->addObserver(this);
 
   // all of the saved state is stale
-  savedState.insertManyZeroes(0, buf.numLines());
+  savedState.insertManyZeroes(LineIndex(0), buf.numLines());
 
   checkInvar();
 }
@@ -47,20 +50,18 @@ LexHighlighter::~LexHighlighter()
 
 void LexHighlighter::checkInvar() const
 {
-  xassert(0 <= waterline &&
-               waterline <= buffer->numLines());
+  xassert(waterline <= buffer->numLines());
 
   if (!changedIsEmpty()) {
     xassert(changedBegin < changedEnd);
     xassert(waterline >= changedEnd);
 
-    xassert(0 <= changedBegin &&
-                 changedEnd <= buffer->numLines());
+    xassert(changedEnd <= buffer->numLines());
   }
 }
 
 
-void LexHighlighter::addToChanged(int line)
+void LexHighlighter::addToChanged(LineIndex line)
 {
   // invariant: considering the actual set of changed lines (not the
   // conservative overapproximation I store), the 'changed' region is
@@ -74,13 +75,13 @@ void LexHighlighter::addToChanged(int line)
     changedBegin = line;
     changedEnd = line+1;
   }
-  else if (line == changedBegin-1) {
+  else if (line.succ() == changedBegin) {
     // extend changed region up by 1
-    changedBegin--;
+    --changedBegin;
   }
   else if (line == changedEnd) {
     // extend changed region down by 1
-    changedEnd++;
+    ++changedEnd;
   }
   else if (line < changedBegin) {
     // line is discontiguous with existing changed region, so absorb
@@ -104,55 +105,55 @@ void LexHighlighter::addToChanged(int line)
 }
 
 
-LexerState LexHighlighter::getSavedState(int line)
+LexerState LexHighlighter::getPreviousLineSavedState(LineIndex line) const
 {
-  if (line < 0) {
+  if (line.isZero()) {
     return LS_INITIAL;
   }
   else {
-    return (LexerState)savedState.get(line);
+    return (LexerState)savedState.get(line.nzpred());
   }
 }
 
 
-void LexHighlighter::observeInsertLine(TextDocumentCore const &, int line) NOEXCEPT
+void LexHighlighter::observeInsertLine(TextDocumentCore const &, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   // if region ends after 'line', then now it ends one line later
   if (!changedIsEmpty() &&
       changedEnd >= line+1) {
-    changedEnd++;
+    ++changedEnd;
   }
 
   // similarly for the waterline
   if (waterline >= line) {
-    waterline++;
+    ++waterline;
   }
 
   addToChanged(line);
 
   // insert a new saved state, initialized to the state of the
   // line above it
-  savedState.insert(line, getSavedState(line-1));
+  savedState.insert(line, getPreviousLineSavedState(line));
 
   GENERIC_CATCH_END
 }
 
 
-void LexHighlighter::observeDeleteLine(TextDocumentCore const &, int line) NOEXCEPT
+void LexHighlighter::observeDeleteLine(TextDocumentCore const &, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   // if region ends after 'line', then now it ends one line earlier
   if (!changedIsEmpty() &&
       changedEnd > line) {
-    changedEnd--;
+    --changedEnd;
   }
 
   // similarly for waterline
   if (waterline > line) {
-    waterline--;
+    --waterline;
   }
 
   addToChanged(line);
@@ -183,19 +184,19 @@ void LexHighlighter::observeTotalChange(TextDocumentCore const &doc) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  changedBegin = 0;
-  changedEnd = 0;
-  waterline = 0;
+  changedBegin = LineIndex(0);
+  changedEnd = LineIndex(0);
+  waterline = LineIndex(0);
 
   // all of the saved state is stale
   savedState.clear();
-  savedState.insertManyZeroes(0, doc.numLines());
+  savedState.insertManyZeroes(LineIndex(0), doc.numLines());
 
   GENERIC_CATCH_END
 }
 
 
-void LexHighlighter::saveLineState(int line, LexerState _state)
+void LexHighlighter::saveLineState(LineIndex line, LexerState _state)
 {
   LineState state = (LineState)_state;
   xassert(state == _state);      // make sure didn't truncate; if did, need to enlarge LineState's representation size
@@ -206,7 +207,7 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
     savedState.set(line, state);
     if (line == waterline) {
       // push down waterline by 1
-      waterline++;
+      ++waterline;
     }
   }
   else if (changedIsEmpty()) {
@@ -214,14 +215,14 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
   }
   else {
     if (line == changedBegin) {
-      changedBegin++;
+      ++changedBegin;
       savedState.set(line, state);
     }
 
     if (line+1 == changedEnd && prev != state) {
       // the state has changed, so we need to re-eval the next line
       if (changedEnd < waterline) {
-        changedEnd++;
+        ++changedEnd;
       }
       else {
         // no need to keep moving the 'changed' region, the waterline
@@ -235,12 +236,15 @@ void LexHighlighter::saveLineState(int line, LexerState _state)
 }
 
 
-void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCategories &categories)
+void LexHighlighter::highlight(
+  TextDocumentCore const &buf,
+  LineIndex line,
+  LineCategories &categories)
 {
   xassert(&buf == buffer);
 
   // push the changed region down to the line of interest
-  LexerState prevState = getSavedState(changedBegin-1);
+  LexerState prevState = getPreviousLineSavedState(changedBegin);
   while (!changedIsEmpty() && changedBegin < line) {
     TRACE("highlight", "push changed: scanning line " << changedBegin);
     lexer.beginScan(&buf, changedBegin, prevState);
@@ -260,7 +264,7 @@ void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCatego
   // push the waterline down also; do this after moving 'changed'
   // because 'changes' is above and we need those highlighting actions
   // to have completed so we're not working with stale saved stages
-  prevState = getSavedState(waterline-1);
+  prevState = getPreviousLineSavedState(waterline);
   while (waterline < line) {
     TRACE("highlight", "push waterline: scanning line " << waterline);
     lexer.beginScan(&buf, waterline, prevState);
@@ -277,7 +281,7 @@ void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCatego
 
   // recall the saved state for the line of interest
   TRACE("highlight", "at requested: scanning line " << line);
-  prevState = getSavedState(line-1);
+  prevState = getPreviousLineSavedState(line);
   lexer.beginScan(&buf, line, prevState);
 
   // Append each categorized segment.
@@ -294,7 +298,7 @@ void LexHighlighter::highlight(TextDocumentCore const &buf, int line, LineCatego
 
 
 void printHighlightedLine(TextDocumentCore const &tdc,
-                          LexHighlighter &hi, int line)
+                          LexHighlighter &hi, LineIndex line)
 {
   LineCategories categories(TC_NORMAL);
   hi.highlight(tdc, line, categories);
@@ -311,7 +315,7 @@ void printHighlightedLine(TextDocumentCore const &tdc,
 void printHighlightedLines(TextDocumentCore const &tdc,
                            LexHighlighter &hi)
 {
-  for (int i=0; i < tdc.numLines(); i++) {
+  FOR_EACH_LINE_INDEX_IN(i, tdc) {
     printHighlightedLine(tdc, hi, i);
   }
 }
@@ -343,7 +347,7 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
   // Work through them, highlighting each line, storing the result
   // in 'actualOutputLines'.
   ArrayStack<string> actualOutputLines;
-  for (int line=0; line < tde.numLines(); line++) {
+  FOR_EACH_LINE_INDEX_IN(line, tde) {
     // Highlight the line in model coordinates.
     LineCategories modelCategories(TC_NORMAL);
     hi.highlight(tde.getDocument()->getCore(),
@@ -368,10 +372,10 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
 
     // Now compare them line by line so we can identify where the mismatch
     // is if there is one.
-    for (int line=0; line < actualOutputLines.length(); line++) {
+    for (LineIndex line(0); line < actualOutputLines.length(); ++line) {
       // Compare the highlighted results.
-      string actual = actualOutputLines[line];
-      string expect = expectedOutputLines[line];
+      string actual = actualOutputLines[line.get()];
+      string expect = expectedOutputLines[line.get()];
       if (actual != expect) {
         xfailure_stringbc("testHighlighter failure:\n" <<
           "  index : " << line << "\n" <<
@@ -395,7 +399,7 @@ static TextDocumentEditor *tde;
 
 static void printLine(LexHighlighter &hi, int line)
 {
-  printHighlightedLine(tde->getDocument()->getCore(), hi, line);
+  printHighlightedLine(tde->getDocument()->getCore(), hi, LineIndex(line));
 }
 
 static void printCategories(LexHighlighter &hi)
@@ -407,14 +411,14 @@ static void insert(int line, int col, char const *text)
 {
   DIAG("insert(" << line << ", " << col << ", " <<
        doubleQuote(text) << ")");
-  tde->setCursor(TextLCoord(line, col));
+  tde->setCursor(TextLCoord(LineIndex(line), col));
   tde->insertNulTermText(text);
 }
 
 static void del(int line, int col, int len)
 {
   DIAG("del(" << line << ", " << col << ", " << len << ")");
-  tde->setCursor(TextLCoord(line, col));
+  tde->setCursor(TextLCoord(LineIndex(line), col));
   tde->deleteTextBytes(len);
 }
 
@@ -422,11 +426,11 @@ static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
   LineCategories categories1(TC_NORMAL);
-  hi.highlightTDE(tde, i, categories1);
+  hi.highlightTDE(tde, LineIndex(i), categories1);
   string rendered1 = categories1.asUnaryString();
 
   LineCategories categories2(TC_NORMAL);
-  batch.highlightTDE(tde, i, categories2);
+  batch.highlightTDE(tde, LineIndex(i), categories2);
   string rendered2 = categories2.asUnaryString();
 
   // compare using rendered strings, instead of looking at
@@ -436,7 +440,7 @@ static void innerCheckLine(LexHighlighter &hi,
 
   if (rendered1 != rendered2) {
     cout << "check: mismatch at line " << i << ":\n"
-         << "  line: " << tde->getWholeLineString(i) << "\n"
+         << "  line: " << tde->getWholeLineString(LineIndex(i)) << "\n"
          << "  inc.: " << rendered1 << "\n"
          << "  bat.: " << rendered2 << "\n"
          ;
@@ -448,24 +452,22 @@ static void innerCheckLine(LexHighlighter &hi,
 static void check(LexHighlighter &hi)
 {
   // batch because it has no initial info
-  LexHighlighter *batch = makeHigh(tde->getDocument()->getCore());
+  std::unique_ptr<LexHighlighter> batch(
+    makeHigh(tde->getDocument()->getCore()));
 
   // go backwards in hopes of finding more incrementality bugs
   for (int i = tde->numLines()-1; i>=0; i--) {
     innerCheckLine(hi, *batch, i);
   }
-
-  delete batch;
 }
 
 
 static void checkLine(LexHighlighter &hi, int line)
 {
-  LexHighlighter *batch = makeHigh(tde->getDocument()->getCore());
+  std::unique_ptr<LexHighlighter> batch(
+    makeHigh(tde->getDocument()->getCore()));
 
   innerCheckLine(hi, *batch, line);
-
-  delete batch;
 }
 
 
@@ -477,11 +479,12 @@ void exerciseHighlighter(MakeHighlighterFunc func)
   tde = &tde_;
 
   makeHigh = func;
-  LexHighlighter *hi_ = makeHigh(tde->getDocument()->getCore());
+  std::unique_ptr<LexHighlighter> hi_(
+    makeHigh(tde->getDocument()->getCore()));
   LexHighlighter &hi = *hi_;
 
   int line=0, col=0;
-  tde->setCursor(TextLCoord(line, col));
+  tde->setCursor(TextLCoord(LineIndex(line), col));
   tde->insertNulTermText(
     "hi there\n"
     "here is \"a string\" ok?\n"
@@ -527,8 +530,6 @@ void exerciseHighlighter(MakeHighlighterFunc func)
 
   tde = NULL;
   makeHigh = NULL;
-
-  delete hi_;
 }
 
 

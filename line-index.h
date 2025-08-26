@@ -11,7 +11,7 @@
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
-#include "smbase/sm-macros.h"          // IMEMBFP
+#include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB
 #include "smbase/xassert.h"            // xassertPrecondition
 
 #include <iosfwd>                      // std::ostream
@@ -36,13 +36,36 @@ private:     // data
 
 public:      // methods
   // Requires: value >= 0
-  explicit LineIndex(int value = 0);
+  explicit LineIndex(int value = 0)
+    : m_value(value)
+  {
+    selfCheck();
+  }
 
-  LineIndex(LineIndex const &obj);
-  LineIndex &operator=(LineIndex const &obj);
+  LineIndex(LineIndex const &obj)
+    : DMEMB(m_value)
+  {
+    selfCheck();
+  }
+
+  LineIndex &operator=(LineIndex const &obj)
+  {
+    if (this != &obj) {
+      CMEMB(m_value);
+      selfCheck();
+    }
+    return *this;
+  }
 
   // Assert invariants.
   void selfCheck() const;
+
+  bool isZero() const
+    { return m_value == 0; }
+
+  // Opposite of `isZero()`.
+  bool isPositive() const
+    { return m_value > 0; }
 
   // Ensures: return >= 0
   int get() const
@@ -56,6 +79,49 @@ public:      // methods
 
   // Compare in the usual order for integers.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineIndex);
+
+  // I want to be able to use `LineIndex` as a `for` loop variable where
+  // the upper bound is a line count, not a line index.
+  //
+  // TODO: Idea: I could define a class `LineCount` and more freely
+  // permit arithmetic and comparison with it.
+  bool operator<(int i) const
+    { return m_value < i; }
+  bool operator<=(int i) const
+    { return m_value <= i; }
+
+  // Requires: m_value is not the max representable.
+  LineIndex &operator++();
+
+  // Requires: isPositive()
+  LineIndex &operator--();
+
+  // Requires: `m_value+delta >= 0`, and the sum is representable.
+  LineIndex operator+(int delta) const;
+
+  LineIndex &operator+=(int delta);
+
+  // If `*this += delta` is valid, do it and return true.  Otherwise
+  // return false.
+  bool tryIncrease(int delta);
+
+  // Nominally `m_value += delta`.  If the result would be negative, set
+  // `m_value` to zero.  It must not overflow.
+  void clampIncrease(int delta);
+
+  // Like `clampIncrease`, but returning a new object.
+  LineIndex clampIncreased(int delta) const;
+
+  // Return `clampIncreased(+1)`.
+  LineIndex succ() const;
+
+  // Return `clampIncreased(-1)`.
+  LineIndex pred() const;
+
+  // Like `pred`, but first assert we are Not Zero.
+  LineIndex nzpred() const;
+
+  int operator-(LineIndex const &b) const;
 
   // Returns a GDV integer.
   operator gdv::GDValue() const;

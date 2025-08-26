@@ -55,6 +55,11 @@ static void entry(int argc, char **argv)
       ranOne = true;                                    \
     }
 
+  // Do this first due to minimal dependencies.
+  RUN_TEST(line_index);
+
+  // TODO: Topologically sort this list.
+
   RUN_TEST(bufferlinesource);
   RUN_TEST(c_hilite);
   RUN_TEST(command_runner);
@@ -64,7 +69,6 @@ static void entry(int argc, char **argv)
   RUN_TEST(gap);
   RUN_TEST(hashcomment_hilite);
   RUN_TEST(justify);
-  RUN_TEST(line_index);
   RUN_TEST(lsp_client);
   RUN_TEST(lsp_conv);
   RUN_TEST(lsp_data);

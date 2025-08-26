@@ -87,16 +87,15 @@ void TextSearch::recomputeMatches()
     m_lineToMatches.deleteElt(m_lineToMatches.length()-1);
   }
 
-  this->recomputeLineRange(0, m_document->numLines());
+  this->recomputeLineRange(LineIndex(0), LineIndex(m_document->numLines()));
 }
 
 
-void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
+void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOne)
 {
   this->selfCheck();
-  xassert(0 <= startLine &&
-               startLine <= endLinePlusOne &&
-                            endLinePlusOne <= m_document->numLines());
+  xassert(startLine <= endLinePlusOne &&
+                       endLinePlusOne <= m_document->numLines());
 
   // Performance measurement.
   unsigned startTime = fastTimeMilliseconds;
@@ -127,7 +126,7 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
   // each line, but only rarely reallocated.
   ArrayStack<MatchExtent> lineMatches;
 
-  for (int line=startLine; line < endLinePlusOne; line++) {
+  for (LineIndex line=startLine; line < endLinePlusOne; ++line) {
     // Discard matches from prior lines.
     lineMatches.clear();
 
@@ -222,7 +221,7 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
     // different from what we just computed.  This algorithm tries to
     // minimize allocator traffic in the common case that the matches
     // from a previous run are similar or identical to those now.
-    ArrayStack<MatchExtent> *existing = m_lineToMatches.get(line);
+    ArrayStack<MatchExtent> *existing = m_lineToMatches.get(line.get());
     if (lineMatches.length() == 0) {
       if (existing == NULL) {
         // Both empty.
@@ -230,13 +229,13 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
       else {
         // Remove and deallocate.
         FastTimeAccumulator acc(totalDeletionTime);
-        delete m_lineToMatches.replace(line, NULL);
+        delete m_lineToMatches.replace(line.get(), NULL);
       }
     }
     else {
       if (existing == NULL) {
         // Install copy of new array.
-        m_lineToMatches.replace(line,
+        m_lineToMatches.replace(line.get(),
           new ArrayStack<MatchExtent>(lineMatches));
       }
       else if (lineMatches == *existing) {
@@ -257,21 +256,21 @@ void TextSearch::recomputeLineRange(int startLine, int endLinePlusOne)
 }
 
 
-void TextSearch::observeInsertLine(TextDocumentCore const &doc, int line) NOEXCEPT
+void TextSearch::observeInsertLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
-  m_lineToMatches.insert(line, NULL);
+  m_lineToMatches.insert(line.get(), NULL);
   this->selfCheck();
   GENERIC_CATCH_END
 }
 
 
-void TextSearch::observeDeleteLine(TextDocumentCore const &doc, int line) NOEXCEPT
+void TextSearch::observeDeleteLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
-  m_lineToMatches.deleteElt(line);
+  m_lineToMatches.deleteElt(line.get());
   this->selfCheck();
   GENERIC_CATCH_END
 }
@@ -417,13 +416,13 @@ bool TextSearch::searchStringEndsWithEOL() const
 }
 
 
-int TextSearch::countRangeMatches(int startLine, int endPlusOneLine) const
+int TextSearch::countRangeMatches(LineIndex startLine, LineIndex endPlusOneLine) const
 {
   int ret = 0;
 
-  for (int line=startLine; line < endPlusOneLine; line++) {
-    if (0 <= line && line < m_lineToMatches.length()) {
-      ArrayStack<MatchExtent> const *matches = m_lineToMatches.getC(line);
+  for (LineIndex line=startLine; line < endPlusOneLine; ++line) {
+    if (line < m_lineToMatches.length()) {
+      ArrayStack<MatchExtent> const *matches = m_lineToMatches.getC(line.get());
       if (matches) {
         ret += matches->length();
       }
@@ -434,10 +433,10 @@ int TextSearch::countRangeMatches(int startLine, int endPlusOneLine) const
 }
 
 
-ArrayStack<TextSearch::MatchExtent> const &TextSearch::getLineMatches(int line) const
+ArrayStack<TextSearch::MatchExtent> const &TextSearch::getLineMatches(LineIndex line) const
 {
-  xassert(0 <= line && line < m_lineToMatches.length());
-  ArrayStack<MatchExtent> const *matches = m_lineToMatches.getC(line);
+  xassert(line < m_lineToMatches.length());
+  ArrayStack<MatchExtent> const *matches = m_lineToMatches.getC(line.get());
   xassert(matches);
   return *matches;
 }
@@ -487,7 +486,7 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
 
       // Where does this match end?
       TextMCoord matchEnd(range.m_start.m_line, m.m_startByte);
-      m_document->walkCoordBytes(matchEnd, +m.m_lengthBytes);
+      m_document->walkCoordBytesValid(matchEnd, +m.m_lengthBytes);
 
       // Now, how does its start compare to 'range.start'?
       if (m.m_startByte == range.m_start.m_byteIndex) {
@@ -516,8 +515,10 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
   }
 
   // Consider other lines.
-  range.m_start.m_line += inc;
-  while (reverse? 0 <= range.m_start.m_line :
+  if (!range.m_start.m_line.tryIncrease(inc)) {
+    return false;
+  }
+  while (reverse? true /*tryIncrease does the check*/ :
                   range.m_start.m_line < this->documentLines()) {
     if (countLineMatches(range.m_start.m_line)) {
       // Grab the extreme match on this line.
@@ -529,12 +530,14 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
       // Found first match after 'range.start' on another line.
       range.m_start.m_byteIndex = m.m_startByte;
       range.m_end = range.m_start;
-      m_document->walkCoordBytes(range.m_end, +m.m_lengthBytes);
+      m_document->walkCoordBytesValid(range.m_end, +m.m_lengthBytes);
       return true;
     }
 
     // Keep looking on subsequent lines.
-    range.m_start.m_line += inc;
+    if (!range.m_start.m_line.tryIncrease(inc)) {
+      return false;
+    }
   }
 
   return false;

@@ -250,12 +250,12 @@ void testJustifyTextLines()
 
 string docToString(TextDocumentEditor const &d)
 {
-  return d.getTextForLRangeString(TextLCoord(0,0), d.endLCoord());
+  return d.getTextForLRangeString(TextLCoord(LineIndex(0),0), d.endLCoord());
 }
 
 
 bool equalDocuments(TextDocumentEditor const &d1,
-                           TextDocumentEditor const &d2)
+                    TextDocumentEditor const &d2)
 {
   string b1s = docToString(d1);
   string b2s = docToString(d2);
@@ -293,7 +293,7 @@ void testOneJustifyNearLine(
     actual.insertNulTermText("\n");
   }
 
-  justifyNearLine(actual, originLine, desiredWidth);
+  justifyNearLine(actual, LineIndex(originLine), desiredWidth);
 
   if (!equalDocuments(expect, actual)) {
     cout << "originLine: " << originLine << endl;

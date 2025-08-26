@@ -6,6 +6,8 @@
 #ifndef EDITOR_LSP_TEST_REQUEST_PARAMS_H
 #define EDITOR_LSP_TEST_REQUEST_PARAMS_H
 
+#include "line-index.h"                // LineIndex
+
 #include "smbase/sm-span-fwd.h"        // smbase::Span
 
 #include <string>                      // std::string
@@ -21,7 +23,7 @@ public:      // data
   std::string m_fname;
 
   // 0-based line and column of location of interest.
-  int m_line;
+  LineIndex m_line;
   int m_col;
 
   // True to use the real `clangd`, false to use a stand-in script.
@@ -39,7 +41,7 @@ public:      // methods
   // This normalizes `fname` on the way in.
   LSPTestRequestParams(
     std::string const &fname,
-    int line,
+    LineIndex line,
     int col,
     bool useRealClangd);
 

@@ -132,8 +132,8 @@ void EditorWidgetFrame::setScrollbarRangesAndValues()
 
   if (m_vertScroll) {
     m_vertScroll->setRange(0, std::max(tde->numLines(),
-                                       editorWidget()->firstVisibleLine()));
-    m_vertScroll->setValue(editorWidget()->firstVisibleLine());
+                                       editorWidget()->firstVisibleLine().get()));
+    m_vertScroll->setValue(editorWidget()->firstVisibleLine().get());
     m_vertScroll->setSingleStep(1);
     m_vertScroll->setPageStep(editorWidget()->visLines());
   }

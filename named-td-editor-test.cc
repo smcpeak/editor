@@ -48,30 +48,30 @@ three
     "foo.txt");
 
 
-  ntde.setCursor(TextLCoord(0,0));
+  ntde.setCursor(TextLCoord(LineIndex(0),0));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "zero");
 
-  ntde.setCursor(TextLCoord(1,1));
+  ntde.setCursor(TextLCoord(LineIndex(1),1));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "ne");
 
-  ntde.setCursor(TextLCoord(2,0));
+  ntde.setCursor(TextLCoord(LineIndex(2),0));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "4b45a58a");
 
-  ntde.setCursor(TextLCoord(1,10));
+  ntde.setCursor(TextLCoord(LineIndex(1),10));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "\"\"");
 
-  ntde.setCursor(TextLCoord(10,1));
+  ntde.setCursor(TextLCoord(LineIndex(10),1));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "\"\"");
 
-  ntde.setCursor(TextLCoord(2,0));
+  ntde.setCursor(TextLCoord(LineIndex(2),0));
   EXPECT_EQ(ntde.applyCommandSubstitutions("git blame -f $t1^ -- $t2"),
             "git blame -f 4b45a58a^ -- td.h");
 
-  ntde.setCursor(TextLCoord(2,10));
+  ntde.setCursor(TextLCoord(LineIndex(2),10));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$t9 $t5 $t1"),
             "// 2024-05-25 4b45a58a");
 
-  ntde.setCursor(TextLCoord(3,10));
+  ntde.setCursor(TextLCoord(LineIndex(3),10));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$t9 $t5 $t1"),
             "\"\" \"\" three");
 }

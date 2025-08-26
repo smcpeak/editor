@@ -15,6 +15,7 @@
 
 #include "td-diagnostics-fwd.h"        // fwds for this module
 
+#include "line-index.h"                // LineIndex
 #include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-fwd.h"             // TextDocumentChange [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
@@ -226,7 +227,7 @@ public:      // methods
   void insertDiagnostic(TextMCoordRange range, TDD_Diagnostic &&diag);
 
   // Return all diagnostic entries that intersect `line`.
-  std::set<LineEntry> getLineEntries(int line) const;
+  std::set<LineEntry> getLineEntries(LineIndex line) const;
 
   // Return all entries for the entire document.
   std::set<DocEntry> getAllEntries() const;
@@ -267,8 +268,8 @@ public:      // methods
   // Perform updates on the underlying mapping in order to track text
   // updates.  These have the same semantics as the same-named methods
   // on `TextMCoordMap`.
-  void insertLines(int line, int count);
-  void deleteLines(int line, int count);
+  void insertLines(LineIndex line, int count);
+  void deleteLines(LineIndex line, int count);
   void insertLineBytes(TextMCoord tc, int lengthBytes);
   void deleteLineBytes(TextMCoord tc, int lengthBytes);
 
@@ -326,8 +327,8 @@ public:      // TextDocumentObserver methods
   // keep them up to date, i.e., so each diagnostic continues to apply
   // to the "same" range of text.  They also maintain the number of
   // lines.
-  virtual void observeInsertLine(TextDocumentCore const &doc, int line) noexcept override;
-  virtual void observeDeleteLine(TextDocumentCore const &doc, int line) noexcept override;
+  virtual void observeInsertLine(TextDocumentCore const &doc, LineIndex line) noexcept override;
+  virtual void observeDeleteLine(TextDocumentCore const &doc, LineIndex line) noexcept override;
   virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept override;
   virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept override;
 

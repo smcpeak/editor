@@ -4,6 +4,7 @@
 #ifndef INCLEXER_H
 #define INCLEXER_H
 
+#include "line-index.h"                // LineIndex
 #include "textcategory.h"              // TextCategory
 
 class TextDocumentCore;                // buffer.h
@@ -21,7 +22,7 @@ public:
   // begin scanning a buffer line; must call this before any calls
   // to 'getNextToken'; 'state' is the result of a prior getState()
   // call, or LS_INITIAL for the beginning-of-file state
-  virtual void beginScan(TextDocumentCore const *buffer, int line, LexerState state)=0;
+  virtual void beginScan(TextDocumentCore const *buffer, LineIndex line, LexerState state)=0;
 
   // get next token in line, returning its length; 'code' signifies
   // what text style to use for the token, including the code for

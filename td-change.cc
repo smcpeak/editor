@@ -49,7 +49,7 @@ TDC_InsertLine::~TDC_InsertLine()
 
 
 TDC_InsertLine::TDC_InsertLine(
-  int line, std::optional<int> prevLineBytes)
+  LineIndex line, std::optional<int> prevLineBytes)
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
@@ -70,7 +70,7 @@ RangeTextReplacement TDC_InsertLine::getRangeTextReplacement() const
     // But if we are appending a new line, then the position at
     // that line does not exist yet.  Append to the previous line
     // instead.
-    pos = TextMCoord(m_line-1, *m_prevLineBytes);
+    pos = TextMCoord(m_line.pred(), *m_prevLineBytes);
   }
 
   return RangeTextReplacement(
@@ -93,7 +93,7 @@ TDC_DeleteLine::~TDC_DeleteLine()
 
 
 TDC_DeleteLine::TDC_DeleteLine(
-  int line, std::optional<int> prevLineBytes)
+  LineIndex line, std::optional<int> prevLineBytes)
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
@@ -110,13 +110,13 @@ RangeTextReplacement TDC_DeleteLine::getRangeTextReplacement() const
   // Normally we delete the line by extending the range forward.
   TextMCoordRange range(
     TextMCoord(m_line, 0),
-    TextMCoord(m_line+1, 0));
+    TextMCoord(m_line.succ(), 0));
 
   if (m_prevLineBytes) {
     // But if it was the last line, going forward is a no-op, so
     // go backward instead.
     range = TextMCoordRange(
-      TextMCoord(m_line-1, *m_prevLineBytes),
+      TextMCoord(m_line.pred(), *m_prevLineBytes),
       TextMCoord(m_line, 0));
   }
 

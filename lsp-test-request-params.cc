@@ -23,7 +23,7 @@ LSPTestRequestParams::~LSPTestRequestParams()
 
 LSPTestRequestParams::LSPTestRequestParams(
   std::string const &fname,
-  int line,
+  LineIndex line,
   int col,
   bool useRealClangd)
   : m_fname(normalizeLSPPath(fname)),
@@ -47,7 +47,7 @@ void LSPTestRequestParams::selfCheck() const
 {
   if (args.empty()) {
     // Default query parameters, used when run without arguments.
-    return LSPTestRequestParams("eclf.h", 9, 5, false /*useReal*/);
+    return LSPTestRequestParams("eclf.h", LineIndex(9), 5, false /*useReal*/);
   }
 
   else {
@@ -62,7 +62,7 @@ void LSPTestRequestParams::selfCheck() const
     // work with 1-based coordinates, so convert those here.  (I do not
     // convert back in the output, however; the responses are just shown
     // as they were sent.)
-    int line = parseDecimalInt_noSign(args[1])-1;
+    LineIndex line( parseDecimalInt_noSign(args[1])-1 );
     int col = parseDecimalInt_noSign(args[2])-1;
 
     return LSPTestRequestParams(fname, line, col, true /*useReal*/);

@@ -8,7 +8,8 @@
 
 #include "textmcoord-map-fwd.h"        // fwds for this module
 
-#include "gap.h"                       // GapArray
+#include "line-gap-array.h"            // LineGapArray
+#include "line-index.h"                // LineIndex
 #include "td-core-fwd.h"               // TextDocumentCore
 #include "textmcoord.h"                // TextMCoord
 
@@ -273,7 +274,7 @@ private:     // types
     std::optional<int> largestByteIndex() const;
 
     // Ensure the coordinates are valid for `line` in `doc`.
-    void adjustForDocument(TextDocumentCore const &doc, int line);
+    void adjustForDocument(TextDocumentCore const &doc, LineIndex line);
 
     // In the somewhat rare case that the last line is deleted but it
     // had an entry, add an end for the value to this line, the one that
@@ -283,7 +284,7 @@ private:     // types
   };
 
   // Array of owner pointers to `LineData`.
-  typedef GapArray<LineData * NULLABLE /*owner*/> LineDataGapArray;
+  typedef LineGapArray<LineData * NULLABLE /*owner*/> LineDataGapArray;
 
 private:     // data
   // Set of values that are part of some range.
@@ -330,20 +331,20 @@ private:     // data
 
 private:     // methods
   // Get the data for `line`, creating it if necessary.
-  LineData *getOrCreateLineData(int line);
+  LineData *getOrCreateLineData(LineIndex line);
 
   // Get the data, or nullptr if there is no data for that line.  This
   // allows `line` to be out of range, including negative.
-  LineData const * NULLABLE getLineDataC(int line) const;
+  LineData const * NULLABLE getLineDataC(LineIndex line) const;
 
   // Same, but non-const.
-  LineData * NULLABLE getLineData(int line);
+  LineData * NULLABLE getLineData(LineIndex line);
 
   // Assert:
   //   0 <= line &&
   //   m_numLines.has_value() ==>
   //     line < *m_numLines
-  void validateLineIndex(int line) const;
+  void validateLineIndex(LineIndex line) const;
 
   // True if `a` and `b` are (logically) equal.
   static bool equalLineData(
@@ -412,14 +413,14 @@ public:      // methods
 
   // Insert `count` lines starting at `line`, shifting all range
   // boundaries that come after the line down.
-  void insertLines(int line, int count);
+  void insertLines(LineIndex line, int count);
 
   // Delete `count` lines, starting at `line` and going down, shifting
   // all later boundaries up.  A boundary that is on the line will be
   // shifted to the start of the line.  Thus, any range that started and
   // ended on the line will, afterward, have an associated zero-length
   // range at the start of the line; but it will still be in the map.
-  void deleteLines(int line, int count);
+  void deleteLines(LineIndex line, int count);
 
   // Insert characters on a single line, at `tc`, shifting later
   // boundaries to the right.
@@ -470,7 +471,7 @@ public:      // methods
   // partial entries for multi-line spans, which describe only the
   // portion of the original `DocEntry` that intersects the specified
   // line.
-  std::set<LineEntry> getLineEntries(int line) const;
+  std::set<LineEntry> getLineEntries(LineIndex line) const;
 
   // Get all current entries for this document, each as a complete
   // (possibly multi-line) `DocEntry`.  This is the set of entries that
