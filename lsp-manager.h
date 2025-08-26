@@ -6,22 +6,23 @@
 
 #include "lsp-manager-fwd.h"                     // fwds for this module
 
-#include "command-runner-fwd.h"                  // CommandRunner
-#include "lsp-client-fwd.h"                      // LSPClient
-#include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams, etc.
+#include "command-runner-fwd.h"                  // CommandRunner [n]
+#include "line-index-fwd.h"                      // LineIndex [n]
+#include "lsp-client-fwd.h"                      // LSPClient [n]
+#include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
-#include "td-core-fwd.h"                         // TextDocumentCore
+#include "td-core-fwd.h"                         // TextDocumentCore [n]
 #include "textmcoord.h"                          // TextMCoord
 
 #include <QObject>
 
-#include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile
+#include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile [n]
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-file-util.h"                 // SMFileUtil
-#include "smbase/std-optional-fwd.h"             // std::optional
-#include "smbase/std-string-fwd.h"               // std::string
+#include "smbase/std-optional-fwd.h"             // std::optional [n]
+#include "smbase/std-string-fwd.h"               // std::string [n]
 
 #include <iosfwd>                                // std::ostream
 #include <list>                                  // std::list
@@ -180,7 +181,7 @@ public:      // methods
   // Return the text of the line at (0-based) `lineIndex` in the last
   // contents sent to the server.  If it is out of range, just report
   // that fact in the string.
-  std::string getLastContentsCodeLine(int lineIndex) const;
+  std::string getLastContentsCodeLine(LineIndex lineIndex) const;
 };
 
 

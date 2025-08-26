@@ -37,6 +37,12 @@ LineIndex &LineIndex::operator=(LineIndex const &obj)
 }
 
 
+void LineIndex::selfCheck() const
+{
+  xassert(m_value >= 0);
+}
+
+
 int LineIndex::compareTo(LineIndex const &b) const
 {
   auto const &a = *this;

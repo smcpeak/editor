@@ -28,8 +28,8 @@ int completions_dialog_test(QApplication &app)
   // at them.
   LSP_TextEdit const textEdit(
     LSP_Range(
-      LSP_Position(1, 2),
-      LSP_Position(1, 2)
+      LSP_Position(LineIndex(1), 2),
+      LSP_Position(LineIndex(1), 2)
     ),
     "newText"
   );

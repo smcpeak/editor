@@ -2919,7 +2919,7 @@ void EditorWidget::lspHandleLocationReply(
       // going to the start line/col.
       goToLocalFileAndLineOpt(
         loc.getFname(),
-        loc.m_range.m_start.m_line + 1,
+        loc.m_range.m_start.m_line.getForNow() + 1,
         loc.m_range.m_start.m_character);
     }
     else {
@@ -2931,7 +2931,7 @@ void EditorWidget::lspHandleLocationReply(
         auto harn = HostAndResourceName::localFile(loc.getFname());
         elts.push_back(DiagnosticElement{
           harn,
-          loc.m_range.m_start.m_line + 1,
+          loc.m_range.m_start.m_line.getForNow() + 1,
           editorGlobal()->lspGetCodeLine(
             harn, loc.m_range.m_start.m_line)
         });

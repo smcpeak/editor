@@ -4,6 +4,7 @@
 #include "lsp-manager.h"                         // this module
 
 #include "command-runner.h"                      // CommandRunner
+#include "line-index.h"                          // LineIndex
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                          // LSPClient
 #include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
@@ -166,16 +167,17 @@ bool LSPDocumentInfo::lastContentsEquals(TextDocumentCore const &doc) const
 }
 
 
-std::string LSPDocumentInfo::getLastContentsCodeLine(int lineIndex) const
+std::string LSPDocumentInfo::getLastContentsCodeLine(
+  LineIndex lineIndex) const
 {
   TextDocumentCore const *td = m_lastSentContents.get();
 
-  if (td->validLine(lineIndex)) {
-    return td->getWholeLineString(lineIndex);
+  if (td->validLine(lineIndex.getForNow())) {
+    return td->getWholeLineString(lineIndex.getForNow());
   }
   else {
     return stringb(
-      "<Line number " << (lineIndex+1) <<
+      "<Line number " << (lineIndex.getForNow()+1) <<  // TODO: Convert to `LineNumber`, then print.
       " is out of range for " << doubleQuote(m_fname) <<
       ", which has " << td->numLines() <<
       " lines.>");

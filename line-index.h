@@ -29,7 +29,7 @@
    former but not the latter.  I'd like to find a way to generalize this
    fully so this can just be a template specialization.
 */
-class LineIndex {
+class LineIndex final {
 private:     // data
   // The index.  Non-negative.
   int m_value;
@@ -41,11 +41,18 @@ public:      // methods
   LineIndex(LineIndex const &obj);
   LineIndex &operator=(LineIndex const &obj);
 
+  // Assert invariants.
+  void selfCheck() const;
+
   // Ensures: return >= 0
   int get() const
-  {
-    return m_value;
-  }
+    { return m_value; }
+
+  // I'm using this as a sort of marker, for places where for the moment
+  // I need `get()`, but my intention is to change the interface of the
+  // thing receiving the `int` to the `get()` call is not needed.
+  int getForNow() const
+    { return get(); }
 
   // Compare in the usual order for integers.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineIndex);

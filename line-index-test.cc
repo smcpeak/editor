@@ -25,12 +25,15 @@ OPEN_ANONYMOUS_NAMESPACE
 void test_ctor()
 {
   LineIndex i0(0);
+  i0.selfCheck();
   EXPECT_EQ(i0.get(), 0);
 
   LineIndex i1(1);
+  i1.selfCheck();
   EXPECT_EQ(i1.get(), 1);
 
   LineIndex i2(2);
+  i2.selfCheck();
   EXPECT_EQ(i2.get(), 2);
 
   EXPECT_STRICTLY_ORDERED(LineIndex, i0, i1, i2);

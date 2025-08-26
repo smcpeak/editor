@@ -16,6 +16,7 @@
 #include "event-recorder.h"                      // EventRecorder
 #include "event-replay.h"                        // EventReplay
 #include "keybindings.doc.gen.h"                 // doc_keybindings
+#include "line-index.h"                          // LineIndex
 #include "lsp-client.h"                          // LSPClient
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
@@ -1476,7 +1477,7 @@ std::string EditorGlobal::lspStopServer()
 
 
 std::string EditorGlobal::lspGetCodeLine(
-  HostAndResourceName const &harn, int lineIndex) const
+  HostAndResourceName const &harn, LineIndex lineIndex) const
 {
   if (!harn.isLocal()) {
     return stringb("<Not local: " << harn << ">");
@@ -1487,7 +1488,7 @@ std::string EditorGlobal::lspGetCodeLine(
   // Allow injecting an offset to test handling of invalid line indices.
   static int const offsetForTesting =
     envAsIntOr(0, "EDITOR_GLOBAL_GET_CODE_LINE_OFFSET");
-  lineIndex += offsetForTesting;
+  lineIndex = LineIndex(lineIndex.get() + offsetForTesting);
 
   // If the file is open with the LSP manager, then use the most recent
   // copy it has sent to the server, since that is what the server's

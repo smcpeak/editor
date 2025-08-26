@@ -23,7 +23,7 @@ using namespace smbase;
 // --------------------------- LSP_Position ----------------------------
 // create-tuple-class: definitions for LSP_Position
 /*AUTO_CTC*/ LSP_Position::LSP_Position(
-/*AUTO_CTC*/   int line,
+/*AUTO_CTC*/   LineIndex const &line,
 /*AUTO_CTC*/   int character)
 /*AUTO_CTC*/   : IMEMBFP(line),
 /*AUTO_CTC*/     IMEMBFP(character)
@@ -80,7 +80,7 @@ using namespace smbase;
 
 void LSP_Position::selfCheck() const
 {
-  xassert(m_line >= 0);
+  m_line.selfCheck();
   xassert(m_character >= 0);
 }
 

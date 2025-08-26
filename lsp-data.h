@@ -23,6 +23,7 @@
 
 #include "lsp-data-fwd.h"              // fwds for this module
 
+#include "line-index.h"                // LineIndex
 #include "lsp-data-types.h"            // LSP_VersionNumber
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
@@ -39,7 +40,7 @@
 class LSP_Position final {
 public:      // data
   // 0-based line number.  Non-negative.
-  int m_line;
+  LineIndex m_line;
 
   // 0-based character number within the line.  Non-negative.
   //
@@ -49,7 +50,7 @@ public:      // data
 
 public:      // methods
   // create-tuple-class: declarations for LSP_Position +compare +write +selfCheck
-  /*AUTO_CTC*/ explicit LSP_Position(int line, int character);
+  /*AUTO_CTC*/ explicit LSP_Position(LineIndex const &line, int character);
   /*AUTO_CTC*/ LSP_Position(LSP_Position const &obj) noexcept;
   /*AUTO_CTC*/ void selfCheck() const;
   /*AUTO_CTC*/ LSP_Position &operator=(LSP_Position const &obj) noexcept;

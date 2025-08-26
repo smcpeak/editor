@@ -18,6 +18,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
+#include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-manager.h"                         // LSPManager, LSPDocumentInfo
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
 #include "named-td-list.h"                       // NamedTextDocumentList
@@ -537,7 +538,7 @@ public:       // funcs
   // is a problem, just encode that in the returned string, as this is
   // going straight to the user.
   std::string lspGetCodeLine(
-    HostAndResourceName const &harn, int lineIndex) const;
+    HostAndResourceName const &harn, LineIndex lineIndex) const;
 
   // -------------------------- LSP Per-file ---------------------------
   // True if `ntd` is open w.r.t. the LSP server.
