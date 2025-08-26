@@ -55,45 +55,81 @@ static void entry(int argc, char **argv)
       ranOne = true;                                    \
     }
 
-  // Do this first due to minimal dependencies.
-  RUN_TEST(line_index);
+  /* This list is meant to be in bottom-up topological order so the
+     low-level modules get tested first.  Then, tests should ideally be
+     in order from fastest to slowest, but I haven't done systematic
+     measurements of that.
 
-  // TODO: Topologically sort this list.
+     The dependencies listed are what I collected using a script:
 
-  RUN_TEST(bufferlinesource);
-  RUN_TEST(c_hilite);
-  RUN_TEST(command_runner);
-  RUN_TEST(doc_type_detect);
-  RUN_TEST(editor_fs_server);
-  RUN_TEST(editor_strutil);
-  RUN_TEST(gap);
-  RUN_TEST(hashcomment_hilite);
-  RUN_TEST(justify);
-  RUN_TEST(lsp_client);
-  RUN_TEST(lsp_conv);
-  RUN_TEST(lsp_data);
-  RUN_TEST(lsp_manager);
-  RUN_TEST(makefile_hilite);
-  RUN_TEST(named_td);
-  RUN_TEST(named_td_editor);
-  RUN_TEST(named_td_list);
-  RUN_TEST(nearby_file);
-  RUN_TEST(ocaml_hilite);
-  RUN_TEST(python_hilite);
-  RUN_TEST(range_text_repl);
-  RUN_TEST(recent_items_list);
-  RUN_TEST(td);
-  RUN_TEST(td_change);
-  RUN_TEST(td_core);
-  RUN_TEST(td_diagnostics);
-  RUN_TEST(td_editor);
-  RUN_TEST(td_line);
-  RUN_TEST(td_obs_recorder);
-  RUN_TEST(text_search);
-  RUN_TEST(textcategory);
-  RUN_TEST(textmcoord_map);
-  RUN_TEST(uri_util);
-  RUN_TEST(vfs_connections);
+       https://github.com/smcpeak/scripts/blob/master/analyze-cpp-module-deps.py
+
+     However, they are incomplete because they are only the direct
+     dependencies, so if a module does not have any test, there are
+     missing edges.
+
+     I don't necessarily intend to maintain them in this form.  It's a
+     first cut though.
+  */
+
+  // No deps in this repo (except for `command-runner`).
+  RUN_TEST(editor_strutil);       // deps: (none)
+  RUN_TEST(gap);                  // deps: (none)
+  RUN_TEST(line_index);           // deps: (none)
+  RUN_TEST(recent_items_list);    // deps: (none)
+  RUN_TEST(td_line);              // deps: (none)
+  RUN_TEST(textcategory);         // deps: (none)
+  RUN_TEST(uri_util);             // deps: (none)
+
+  // Deps only on things that do not have their own tests.
+  RUN_TEST(doc_type_detect);      // deps: doc-name
+  RUN_TEST(range_text_repl);      // deps: textmcoord
+
+  // SCC: history, td, td-core
+  RUN_TEST(td_core);              // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord
+  RUN_TEST(td);                   // deps: history, line-index, range-text-repl, td-core, textmcoord
+
+  RUN_TEST(td_change);            // deps: line-index, range-text-repl, td-core, textmcoord
+
+  RUN_TEST(textmcoord_map);       // deps: line-index, td-core, textmcoord
+
+  // SCC: justify, td-editor
+  RUN_TEST(justify);              // deps: line-index, td-editor
+  RUN_TEST(td_editor);            // deps: editor-strutil, justify, td, textcategory, textlcoord
+
+  RUN_TEST(bufferlinesource);     // deps: line-index, td-core, td-editor
+
+  RUN_TEST(c_hilite);             // deps: bufferlinesource, textcategory
+  RUN_TEST(hashcomment_hilite);   // deps: bufferlinesource, textcategory
+  RUN_TEST(makefile_hilite);      // deps: bufferlinesource, textcategory
+  RUN_TEST(ocaml_hilite);         // deps: bufferlinesource, textcategory
+  RUN_TEST(python_hilite);        // deps: bufferlinesource, textcategory
+
+  RUN_TEST(editor_fs_server);     // deps: editor-version, vfs-local
+
+  // SCC: lsp-conv, lsp-data, lsp-manager, named-td, td-diagnostics, td-obs-recorder
+  RUN_TEST(lsp_conv);             // deps: lsp-data, lsp-manager, named-td, range-text-repl, td-change, td-change-seq, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
+  RUN_TEST(lsp_data);             // deps: line-index, lsp-conv, named-td, td-diagnostics, uri-util
+  RUN_TEST(td_diagnostics);       // deps: line-index, named-td, td-change, td-change-seq, td-core, textmcoord-map
+  RUN_TEST(td_obs_recorder);      // deps: named-td, td-change, td-change-seq, td-core, td-diagnostics
+  RUN_TEST(named_td);             // deps: doc-name, hilite, lsp-conv, lsp-data, td, td-diagnostics, td-obs-recorder
+
+  RUN_TEST(named_td_editor);      // deps: doc-name, named-td, td-editor
+
+  RUN_TEST(named_td_list);        // deps: named-td
+
+  RUN_TEST(nearby_file);          // deps: host-and-resource-name
+
+  RUN_TEST(text_search);          // deps: fasttime, line-index, td-core, td-editor
+
+  RUN_TEST(vfs_connections);      // deps: host-name, vfs-msg, vfs-query
+
+  // This is the slowest test, but lsp-manager uses it, so it needs to
+  // be before that.
+  RUN_TEST(command_runner);       // deps: (none)
+
+  RUN_TEST(lsp_manager);          // deps: command-runner, line-index, lsp-client, lsp-conv, lsp-data, lsp-symbol-request-kind, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
+  RUN_TEST(lsp_client);           // deps: command-runner, uri-util
 
   #undef RUN_TEST
 
