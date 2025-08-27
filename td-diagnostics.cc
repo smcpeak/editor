@@ -301,6 +301,12 @@ int TextDocumentDiagnostics::maxDiagnosticLine() const
 }
 
 
+LineCount TextDocumentDiagnostics::numLinesWithData() const
+{
+  return m_rangeToDiagIndex.numLinesWithData();
+}
+
+
 void TextDocumentDiagnostics::clearEverything(PositiveLineCount numLines)
 {
   xassertPrecondition(numLines > 0);
@@ -391,8 +397,8 @@ TextDocumentDiagnostics::getNextDiagnosticLocation(TextMCoord tc) const
   // It could be more efficient by taking advantage of the line array
   // inside `m_rangeToDiagIndex`.
 
-  int maxLine = maxDiagnosticLine();
-  for (LineIndex line = tc.m_line; line <= maxLine; ++line) {
+  LineCount const linesWithData = numLinesWithData();
+  for (LineIndex line = tc.m_line; line < linesWithData; ++line) {
     std::set<LineEntry> lineEntries = getLineEntries(line);
     for (LineEntry const &entry : lineEntries) {
       if (entry.m_startByteIndex.has_value() &&

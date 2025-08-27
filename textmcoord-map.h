@@ -444,6 +444,10 @@ public:      // methods
   // largest line number for which there is any intersecting entry.
   int maxEntryLine() const;
 
+  // The number of lines that potentially have associated entry data.
+  // Numerically, this is `maxEntryLine() + 1`.
+  LineCount numLinesWithData() const;
+
   // Number of lines in the file, if known.
   std::optional<PositiveLineCount> getNumLinesOpt() const;
 

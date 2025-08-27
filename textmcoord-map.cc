@@ -700,7 +700,7 @@ auto TextMCoordMap::getOrCreateLineData(LineIndex line) -> LineData *
 
 auto TextMCoordMap::getLineDataC(LineIndex line) const -> LineData const * NULLABLE
 {
-  if (line < m_lineData.length()) {
+  if (line < numLinesWithData()) {
     return m_lineData.get(line);
   }
   else {
@@ -760,9 +760,8 @@ TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
     m_lineData(),
     DMEMB(m_numLines)
 {
-  m_lineData.insertManyZeroes(
-    LineIndex(0), LineCount(obj.m_lineData.length()));
-  for (LineIndex i(0); i < obj.m_lineData.length(); ++i) {
+  m_lineData.insertManyZeroes(LineIndex(0), obj.numLinesWithData());
+  for (LineIndex i(0); i < obj.numLinesWithData(); ++i) {
     if (LineData const *lineData = obj.getLineDataC(i)) {
       m_lineData.set(i, new LineData(*lineData));
     }
@@ -805,7 +804,7 @@ void TextMCoordMap::selfCheck() const
 
   if (m_numLines.has_value()) {
     xassert(*m_numLines >= 1);
-    xassert(m_lineData.length() <= *m_numLines);
+    xassert(numLinesWithData() <= *m_numLines);
   }
 
   // All values we have seen in `m_lineData`.
@@ -814,7 +813,7 @@ void TextMCoordMap::selfCheck() const
   // Values for which we have seen the start but not the end.
   std::set<Value> activeValues;
 
-  for (LineIndex i(0); i < m_lineData.length(); ++i) {
+  for (LineIndex i(0); i < numLinesWithData(); ++i) {
     if (LineData const *lineData = getLineDataC(i)) {
       for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
         span.selfCheck();
@@ -922,7 +921,7 @@ void TextMCoordMap::clearEntries()
 {
   m_values.clear();
 
-  for (LineIndex i(0); i < m_lineData.length(); ++i) {
+  for (LineIndex i(0); i < numLinesWithData(); ++i) {
     if (LineData *data = m_lineData.get(i)) {
       delete data;
       m_lineData.replace(i, nullptr);
@@ -977,7 +976,7 @@ void TextMCoordMap::adjustForDocument(TextDocumentCore const &doc)
   confineLineIndices(doc.numLines());
 
   // Confine the line lengths.
-  for (LineIndex i(0); i < m_lineData.length(); ++i) {
+  for (LineIndex i(0); i < numLinesWithData(); ++i) {
     if (LineData *data = m_lineData.get(i)) {
       data->adjustForDocument(doc, i);
     }
@@ -1015,7 +1014,7 @@ void TextMCoordMap::insertLines(LineIndex line, LineCount count)
       nullptr;
 
   // Insert blank entries in the array.
-  if (line < m_lineData.length()) {
+  if (line < numLinesWithData()) {
     m_lineData.insertManyZeroes(line, count);
   }
   else {
@@ -1084,7 +1083,7 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
 
     // And remove its pointer from the table, shifting the indices so
     // the next line will be at index `line`.
-    if (line < m_lineData.length()) {
+    if (line < numLinesWithData()) {
       m_lineData.remove(line);
     }
 
@@ -1193,8 +1192,13 @@ int TextMCoordMap::numEntries() const
 
 int TextMCoordMap::maxEntryLine() const
 {
-  int len = m_lineData.length();
-  return len - 1;
+  return numLinesWithData().get() - 1;
+}
+
+
+LineCount TextMCoordMap::numLinesWithData() const
+{
+  return LineCount(m_lineData.length());
 }
 
 
@@ -1257,7 +1261,7 @@ auto TextMCoordMap::getAllEntries() const -> std::set<DocEntry>
   // spans for which we have seen the start but not the end.
   std::map<Value, TextMCoord> openSpans;
 
-  for (LineIndex line(0); line <= maxEntryLine(); ++line) {
+  for (LineIndex line(0); line < numLinesWithData(); ++line) {
     if (LineData const *lineData = getLineDataC(line)) {
 
       for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
@@ -1329,14 +1333,14 @@ gdv::GDValue TextMCoordMap::dumpInternals() const
   {
     GDValue ldm(GDVK_MAP);
 
-    for (LineIndex i(0); i < m_lineData.length(); ++i) {
+    for (LineIndex i(0); i < numLinesWithData(); ++i) {
       if (LineData const *lineData = m_lineData.get(i)) {
         ldm.mapSetValueAt(i, toGDValue(*lineData));
       }
     }
 
     // Include the length as well, since it's not otherwise visible.
-    ldm.mapSetValueAtSym("length", m_lineData.length());
+    ldm.mapSetValueAtSym("length", numLinesWithData());
 
     // Add it to the outer `m`.
     m.mapSetValueAtSym("lineData", std::move(ldm));

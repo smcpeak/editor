@@ -36,8 +36,8 @@ public:      // methods
   bool operator!=(LineGapArray const &obj) const
     { return !operator==(obj); }
 
-  int length() const
-    { return m_arr.length(); }
+  LineCount length() const
+    { return LineCount(m_arr.length()); }
 
   T const &get(LineIndex elt) const
     { return m_arr.get(elt.get()); }

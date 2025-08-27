@@ -372,7 +372,9 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
 
     // Now compare them line by line so we can identify where the mismatch
     // is if there is one.
-    for (LineIndex line(0); line < actualOutputLines.length(); ++line) {
+    for (LineIndex line(0);
+         line < LineCount(actualOutputLines.length());
+         ++line) {
       // Compare the highlighted results.
       string actual = actualOutputLines[line.get()];
       string expect = expectedOutputLines[line.get()];

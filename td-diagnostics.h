@@ -220,6 +220,10 @@ public:      // methods
   // largest line number for which there is any intersecting diagnostic.
   int maxDiagnosticLine() const;
 
+  // The number of lines that potentially have associated diagnostic
+  // data.  Numerically, this is `maxDiagnosticLine() + 1`.
+  LineCount numLinesWithData() const;
+
   // Remove all diagnostics and reset to `numLines`, which must be
   // positive.
   void clearEverything(PositiveLineCount numLines);

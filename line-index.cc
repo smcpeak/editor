@@ -42,14 +42,10 @@ int LineIndex::compareTo(LineIndex const &b) const
 }
 
 
-bool LineIndex::operator<(LineDifference i) const
+int LineIndex::compareTo(LineDifference const &b) const
 {
-  return m_value < i.get();
-}
-
-bool LineIndex::operator<=(LineDifference i) const
-{
-  return m_value <= i.get();
+  auto const &a = *this;
+  return compare(a.get(), b.get());
 }
 
 

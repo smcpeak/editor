@@ -428,7 +428,7 @@ int TextSearch::countRangeMatches(LineIndex startLine, LineIndex endPlusOneLine)
   int ret = 0;
 
   for (LineIndex line=startLine; line < endPlusOneLine; ++line) {
-    if (line < m_lineToMatches.length()) {
+    if (line < documentLines()) {
       ArrayStack<MatchExtent> const *matches = m_lineToMatches.getC(line.get());
       if (matches) {
         ret += matches->length();
@@ -442,7 +442,7 @@ int TextSearch::countRangeMatches(LineIndex startLine, LineIndex endPlusOneLine)
 
 ArrayStack<TextSearch::MatchExtent> const &TextSearch::getLineMatches(LineIndex line) const
 {
-  xassert(line < m_lineToMatches.length());
+  xassert(line < documentLines());
   ArrayStack<MatchExtent> const *matches = m_lineToMatches.getC(line.get());
   xassert(matches);
   return *matches;

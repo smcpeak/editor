@@ -11,7 +11,7 @@
 #include "line-count-fwd.h"            // LineCount [n]
 #include "line-difference-fwd.h"       // LineDifference [n]
 
-#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
+#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS, DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
 #include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB
@@ -85,18 +85,9 @@ public:      // methods
   // Compare in the usual order for integers.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineIndex);
 
-  // I want to be able to use `LineIndex` as a `for` loop variable where
-  // the upper bound is a line count, not a line index.
-  //
-  // TODO: Idea: I could define a class `LineCount` and more freely
-  // permit arithmetic and comparison with it.
-  bool operator<(int i) const
-    { return m_value < i; }
-  bool operator<=(int i) const
-    { return m_value <= i; }
-
-  bool operator<(LineDifference i) const;
-  bool operator<=(LineDifference i) const;
+  // Allow comparison with `LineDifference`, primarily so the latter can
+  // act as a loop bound.
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, LineDifference);
 
   // Requires: m_value is not the max representable.
   LineIndex &operator++();

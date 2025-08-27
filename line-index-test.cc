@@ -59,17 +59,10 @@ void test_ctor()
   EXPECT_EQ(stringb(i1), "1");
   EXPECT_EQ(stringb(i2), "2");
 
-  EXPECT_EQ(i0 < 0, false);
-  EXPECT_EQ(i0 < 1, true);
-  EXPECT_EQ(i0 <= 0, true);
-  EXPECT_EQ(i0 <= 1, true);
-
-  EXPECT_EQ(i1 < 0, false);
-  EXPECT_EQ(i1 < 1, false);
-  EXPECT_EQ(i1 < 2, true);
-  EXPECT_EQ(i1 <= 0, false);
-  EXPECT_EQ(i1 <= 1, true);
-  EXPECT_EQ(i1 <= 2, true);
+  EXPECT_EQ(i0 < LineDifference(0), false);
+  EXPECT_EQ(i0 < LineDifference(1), true);
+  EXPECT_EQ(i0 <= LineDifference(0), true);
+  EXPECT_EQ(i0 <= LineDifference(1), true);
 
   EXPECT_EQ(i1 < LineDifference(0), false);
   EXPECT_EQ(i1 < LineDifference(1), false);
@@ -78,12 +71,12 @@ void test_ctor()
   EXPECT_EQ(i1 <= LineDifference(1), true);
   EXPECT_EQ(i1 <= LineDifference(2), true);
 
-  EXPECT_EQ(i2 < 0, false);
-  EXPECT_EQ(i2 < 1, false);
-  EXPECT_EQ(i2 < 2, false);
-  EXPECT_EQ(i2 <= 0, false);
-  EXPECT_EQ(i2 <= 1, false);
-  EXPECT_EQ(i2 <= 2, true);
+  EXPECT_EQ(i2 < LineDifference(0), false);
+  EXPECT_EQ(i2 < LineDifference(1), false);
+  EXPECT_EQ(i2 < LineDifference(2), false);
+  EXPECT_EQ(i2 <= LineDifference(0), false);
+  EXPECT_EQ(i2 <= LineDifference(1), false);
+  EXPECT_EQ(i2 <= LineDifference(2), true);
 }
 
 
@@ -118,13 +111,13 @@ void test_iterate()
   TEST_CASE("test_iterate");
 
   int expect = 0;
-  for (LineIndex i; i < 3; ++i) {
+  for (LineIndex i; i < LineCount(3); ++i) {
     EXPECT_EQ(i.get(), expect);
     ++expect;
   }
 
   expect = 0;
-  for (LineIndex i(0); i < 3; ++i) {
+  for (LineIndex i(0); i < LineCount(3); ++i) {
     EXPECT_EQ(i.get(), expect);
     ++expect;
   }

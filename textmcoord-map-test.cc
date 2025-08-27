@@ -352,6 +352,11 @@ public:
     return ret;
   }
 
+  LineCount numLinesWithData() const
+  {
+    return LineCount(maxEntryLine() + 1);
+  }
+
   std::optional<PositiveLineCount> getNumLinesOpt() const
   {
     return m_numLines;
@@ -458,7 +463,7 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
   // this would ever fail if the above succeeded, but it won't hurt.
   xassert(m.getAllEntries() == r.getAllEntries());
 
-  for (LineIndex i(0); i <= r.maxEntryLine(); ++i) {
+  for (LineIndex i(0); i < r.numLinesWithData(); ++i) {
     EXN_CONTEXT_EXPR(i);
 
     EXPECT_EQ(toGDValue(m.getLineEntries(i)),
@@ -591,6 +596,11 @@ public:      // methods
     return m_sut.maxEntryLine();
   }
 
+  LineCount numLinesWithData() const
+  {
+    return m_sut.numLinesWithData();
+  }
+
   PositiveLineCount getNumLines() const
   {
     return m_sut.getNumLines();
@@ -667,7 +677,7 @@ void checkLineEntriesRoundtrip(MapPair const &m)
 {
   typedef MapPair::LineEntry LineEntry;
 
-  for (LineIndex i(0); i <= m.maxEntryLine(); ++i) {
+  for (LineIndex i(0); i < m.numLinesWithData(); ++i) {
     std::set<LineEntry> lineEntries = m.getLineEntries(i);
     GDValue v(toGDValue(lineEntries));
     std::set<LineEntry> after =
@@ -1665,7 +1675,7 @@ void test_adjustForDocument()
 
 void randomDocInsertions(TextDocumentCore &doc, int n)
 {
-  for (LineIndex i(0); i < n; ++i) {
+  for (LineIndex i(0); i < LineCount(n); ++i) {
     doc.insertLine(i);
     doc.insertText(TextMCoord(i,0),
       "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", sm_random(40));

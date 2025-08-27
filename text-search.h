@@ -5,6 +5,7 @@
 #define TEXT_SEARCH_H
 
 // editor
+#include "line-count.h"                // LineCount
 #include "line-index.h"                // LineIndex
 #include "ogap.h"                      // OGapArray
 #include "td-core.h"                   // TextDocumentCore
@@ -134,7 +135,8 @@ public:      // funcs
 
   // Number of lines in the document, which establishes the range from
   // which 'countRangeMatches' can yield useful data.
-  int documentLines() const { return m_lineToMatches.length(); }
+  LineCount documentLines() const
+    { return LineCount(m_lineToMatches.length()); }
 
   // True if we have an active search string.
   bool hasSearchString() const { return !m_searchString.empty(); }

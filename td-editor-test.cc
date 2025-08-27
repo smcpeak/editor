@@ -2133,7 +2133,7 @@ void expectLayoutWindow(TextDocumentEditor &tde,
   innerExpectLayoutWindow(tde, fvLine, fvCol, lvLine, lvCol, preExpect);
 
   // Probe all of the layout coordinates in the window.
-  for (LineIndex line(fvLine); line <= lvLine; ++line) {
+  for (LineIndex line(fvLine); line <= LineDifference(lvLine); ++line) {
     for (int col = fvCol; col <= fvCol; ++col) {
       TextLCoord lc(line, col);
       TextMCoord mc(tde.toMCoord(lc));
