@@ -4,6 +4,8 @@
 #ifndef TD_EDITOR_H
 #define TD_EDITOR_H
 
+#include "td-editor-fwd.h"             // fwds for this module
+
 // editor
 #include "line-count.h"                // PositiveLineCount, LineCount
 #include "line-difference-fwd.h"       // LineDifference [n]

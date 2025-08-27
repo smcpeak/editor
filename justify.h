@@ -1,14 +1,14 @@
 // justify.h
 // Text justification routines.
 
-#ifndef JUSTIFY_H
-#define JUSTIFY_H
+#ifndef EDITOR_JUSTIFY_H
+#define EDITOR_JUSTIFY_H
 
-#include "line-index.h"                // LineIndex
-#include "td-editor.h"                 // TextDocumentEditor
+#include "line-index-fwd.h"            // LineIndex [n]
+#include "td-editor-fwd.h"             // TextDocumentEditor [n]
 
-#include "smbase/array.h"              // ArrayStack
-#include "smbase/str.h"                // string
+#include "smbase/std-string-fwd.h"     // std::string [n]
+#include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
 
 
 // Given 'originalContent', rearrange its whitespace to obtain a
@@ -25,8 +25,8 @@
 // spaces for what appear to be sentence boundaries, reflecting
 // my own typographical preferences.
 void justifyTextLines(
-  ArrayStack<string> &justifiedContent,
-  ArrayStack<string> const &originalContent,
+  stdfwd::vector<std::string> &justifiedContent,
+  stdfwd::vector<std::string> const &originalContent,
   int desiredWidth);
 
 
@@ -44,4 +44,4 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLine,
                      int desiredWidth);
 
 
-#endif // JUSTIFY_H
+#endif // EDITOR_JUSTIFY_H

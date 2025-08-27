@@ -3,15 +3,23 @@
 
 #include "justify.h"                   // this module
 
+#include "line-index.h"                // LineIndex
+#include "td-editor.h"                 // TextDocumentEditor
+
 #include "smqtutil/qtutil.h"           // toString(QString)
 
 #include "smbase/str.h"                // stringBuilder
+#include "smbase/stringb.h"            // stringb
 
 #include <QRegularExpression>
 
+#include <string>                      // std::string
+#include <vector>                      // std::vector
+
 
 // Return true if 'subject' is 'prefix' plus some non-empty suffix.
-static bool properStartsWith(string const &subject, string const &prefix)
+static bool properStartsWith(
+  std::string const &subject, std::string const &prefix)
 {
   if (subject.length() <= prefix.length()) {
     return false;
@@ -39,15 +47,20 @@ static bool isSentenceEnd(char c)
 
 
 void justifyTextLines(
-  ArrayStack<string> &justifiedContent,
-  ArrayStack<string> const &originalContent,
+  std::vector<std::string> &justifiedContent,
+  std::vector<std::string> const &originalContent,
   int desiredWidth)
 {
   // Line being built.
+  //
+  // This use of `stringBuilder` is not trivially replaceable with
+  // `std::ostringstream` since it queries the length of the string as
+  // it is being built.
+  //
   stringBuilder curLine;
 
   // Process all input lines.
-  for (int i=0; i < originalContent.length(); i++) {
+  for (std::size_t i=0; i < originalContent.size(); i++) {
     char const *p = originalContent[i].c_str();
 
     // Loop over words in 'p'.
@@ -87,7 +100,7 @@ void justifyTextLines(
       if (curLine.length() + spaces + (r-q) > desiredWidth) {
         // Yes, emit the existing line and start a new one.
         if (!curLine.isempty()) {
-          justifiedContent.push(curLine);
+          justifiedContent.push_back(curLine);
           curLine.clear();
         }
         curLine.append(q, r-q);
@@ -108,7 +121,7 @@ void justifyTextLines(
 
   // Emit the partial line if not empty.
   if (!curLine.isempty()) {
-    justifiedContent.push(curLine);
+    justifiedContent.push_back(curLine);
   }
 }
 
@@ -118,7 +131,7 @@ void justifyTextLines(
 // all tabs as being 8 columns wide.  It could in the future also
 // account for UTF-8 characters, although that requires the editor
 // itself to handle those.
-static int prefixColumnWidth(string const &prefix)
+static int prefixColumnWidth(std::string const &prefix)
 {
   int width = 0;
   for (char const *p = prefix.c_str(); *p; ++p) {
@@ -135,7 +148,7 @@ static int prefixColumnWidth(string const &prefix)
 
 bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int desiredWidth)
 {
-  string startLine = tde.getWholeLineString(originLineNumber);
+  std::string startLine = tde.getWholeLineString(originLineNumber);
 
   // Split the line into a prefix of whitespace and framing punctuation,
   // and a suffix with alphanumeric content.  In a programming language,
@@ -157,7 +170,7 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
   }
 
   // Grab the prefix string.
-  string prefix = toString(match.captured(1));
+  std::string prefix = toString(match.captured(1));
 
   // Look for adjacent lines that start with the same prefix and have
   // some content after it.
@@ -181,14 +194,14 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
   }
 
   // Put all the content into a sequence of lines.
-  ArrayStack<string> originalContent;
+  std::vector<std::string> originalContent;
   for (LineIndex i=upperEdge; i <= lowerEdge; ++i) {
-    string line = tde.getWholeLineString(i);
-    originalContent.push(line.c_str() + prefix.length());
+    std::string line = tde.getWholeLineString(i);
+    originalContent.push_back(line.substr(prefix.size()));
   }
 
   // Reformat it.
-  ArrayStack<string> justifiedContent;
+  std::vector<std::string> justifiedContent;
   justifyTextLines(justifiedContent, originalContent,
     desiredWidth - prefixColumnWidth(prefix));
 
@@ -199,10 +212,8 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
   tde.deleteTextLRange(
     TextLCoord(upperEdge, 0),
     TextLCoord(lowerEdge.succ(), 0));
-  for (int i=0; i < justifiedContent.length(); i++) {
-    stringBuilder sb;
-    sb << prefix << justifiedContent[i] << '\n';
-    tde.insertText(sb.c_str(), sb.length());
+  for (std::size_t i=0; i < justifiedContent.size(); i++) {
+    tde.insertString(stringb(prefix << justifiedContent[i] << '\n'));
   }
 
   return true;

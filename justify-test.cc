@@ -2,10 +2,15 @@
 // Tests for 'justify' module.
 
 #include "unit-tests.h"                // decl for my entry point
-
 #include "justify.h"                   // module to test
 
+#include "line-index.h"                // LineIndex
+#include "td-editor.h"                 // TextDocumentEditor
+
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
+
+#include <string>                      // std::string
+#include <vector>                      // std::vector
 
 #include <assert.h>                    // assert
 
@@ -13,10 +18,10 @@
 OPEN_ANONYMOUS_NAMESPACE
 
 
-void print(char const *label, ArrayStack<string> const &arr)
+void print(char const *label, std::vector<std::string> const &arr)
 {
-  cout << label << " (" << arr.length() << "):" << endl;
-  for (int i=0; i < arr.length(); i++) {
+  cout << label << " (" << arr.size() << "):" << endl;
+  for (std::size_t i=0; i < arr.size(); i++) {
     cout << "  " << arr[i] << endl;
   }
 }
@@ -27,17 +32,17 @@ void testOneJustifyTextLines(
   char const **out, int outSize,
   int desiredWidth)
 {
-  ArrayStack<string> original;
+  std::vector<std::string> original;
   for (int i=0; i < inSize; i++) {
-    original.push(in[i]);
+    original.push_back(in[i]);
   }
 
-  ArrayStack<string> expect;
+  std::vector<std::string> expect;
   for (int i=0; i < outSize; i++) {
-    expect.push(out[i]);
+    expect.push_back(out[i]);
   }
 
-  ArrayStack<string> actual;
+  std::vector<std::string> actual;
   justifyTextLines(actual, original, desiredWidth);
 
   if (expect != actual) {
@@ -248,7 +253,7 @@ void testJustifyTextLines()
 }
 
 
-string docToString(TextDocumentEditor const &d)
+std::string docToString(TextDocumentEditor const &d)
 {
   return d.getTextForLRangeString(TextLCoord(LineIndex(0),0), d.endLCoord());
 }
@@ -257,8 +262,8 @@ string docToString(TextDocumentEditor const &d)
 bool equalDocuments(TextDocumentEditor const &d1,
                     TextDocumentEditor const &d2)
 {
-  string b1s = docToString(d1);
-  string b2s = docToString(d2);
+  std::string b1s = docToString(d1);
+  std::string b2s = docToString(d2);
   return b1s == b2s;
 }
 
