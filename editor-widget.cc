@@ -102,15 +102,23 @@ INIT_TRACE("editor-widget");
 // functions that make direct calls.  For consistency, I even do this
 // for the destructor, or when I know I am not listening, since there is
 // essentially no cost to doing it.
-#define INITIATING_DOCUMENT_CHANGE()                       \
-  SetRestore<bool> ignoreNotificationsRestorer(              \
+#define INITIATING_DOCUMENT_CHANGE()                      \
+  SetRestore<bool> ignoreNotificationsRestorer(           \
     m_ignoreTextDocumentNotifications, true) /* user ; */
 
 
 // Invoke `command`, passing a `unique_ptr` to a newly created command
 // object of type `CommandType`, and forwarding arguments as needed.
 #define COMMAND_MU(CommandType, ...) \
-  command(std::make_unique<CommandType>(__VA_ARGS__));
+  command(std::make_unique<CommandType>(__VA_ARGS__)) /* user ; */
+
+
+// Run a command if the edit safety check passes.  Generally this should
+// be used whenever the command could change the document contents.
+#define EDIT_COMMAND_MU(CommandType, ...) \
+  if (editSafetyCheck()) {                \
+    COMMAND_MU(CommandType, __VA_ARGS__); \
+  }
 
 
 // Distance below the baseline to draw an underline.
@@ -1843,11 +1851,11 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
       // not going to bind either by default
 
       case Qt::Key_D:
-        COMMAND_MU(EC_DeleteKeyFunction);
+        EDIT_COMMAND_MU(EC_DeleteKeyFunction);
         break;
 
       case Qt::Key_H:
-        COMMAND_MU(EC_BackspaceFunction);
+        EDIT_COMMAND_MU(EC_BackspaceFunction);
         break;
 
       // I've decided I don't like this binding because I never use it
@@ -2013,28 +2021,22 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
       case Qt::Key_PageDown: commandCursorPageDown(shift); break;
 
       case Qt::Key_Backspace: {
-        if (!editSafetyCheck()) {
-          return;
-        }
         if (shift) {
           // I'm deliberately leaving Shift+Backspace unbound in
           // case I want to use it for something else later.
         }
         else {
-          COMMAND_MU(EC_BackspaceFunction);
+          EDIT_COMMAND_MU(EC_BackspaceFunction);
         }
         break;
       }
 
       case Qt::Key_Delete: {
-        if (!this->editSafetyCheck()) {
-          return;
-        }
         if (shift) {
           this->commandEditCut();
         }
         else {
-          COMMAND_MU(EC_DeleteKeyFunction);
+          EDIT_COMMAND_MU(EC_DeleteKeyFunction);
         }
         break;
       }
@@ -2045,28 +2047,24 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
           // Shift+Enter is deliberately left unbound.
         }
         else {
-          if (this->editSafetyCheck()) {
-            COMMAND_MU(EC_InsertNewlineAutoIndent);
-          }
+          EDIT_COMMAND_MU(EC_InsertNewlineAutoIndent);
         }
         break;
       }
 
       case Qt::Key_Tab: {
-        if (this->editSafetyCheck()) {
-          if (shift) {
-            // In my testing on Windows, this does not get executed,
-            // rather Shift+Tab is delivered as Key_Backtab.  I do not
-            // know if the same is true on Linux and Mac, so I will
-            // leave this here just in case.
-            this->commandEditRigidUnindent();
-          }
-          else if (this->selectEnabled()) {
-            this->commandEditRigidIndent();
-          }
-          else {
-            COMMAND_MU(EC_InsertString, std::string("\t"));
-          }
+        if (shift) {
+          // In my testing on Windows, this does not get executed,
+          // rather Shift+Tab is delivered as Key_Backtab.  I do not
+          // know if the same is true on Linux and Mac, so I will
+          // leave this here just in case.
+          this->commandEditRigidUnindent();
+        }
+        else if (this->selectEnabled()) {
+          this->commandEditRigidIndent();
+        }
+        else {
+          EDIT_COMMAND_MU(EC_InsertString, std::string("\t"));
         }
         break;
       }
@@ -2085,12 +2083,8 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
       default: {
         QString text = k->text();
         if (text.length() && text[0].isPrint()) {
-          if (!editSafetyCheck()) {
-            return;
-          }
-
           // Insert this character at the cursor.
-          COMMAND_MU(EC_InsertString, toString(text));
+          EDIT_COMMAND_MU(EC_InsertString, toString(text));
         }
         else {
           k->ignore();
@@ -2228,17 +2222,13 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m) NOEXCEPT
 // ----------------------- edit menu -----------------------
 void EditorWidget::editUndo()
 {
-  if (editSafetyCheck()) {
-    COMMAND_MU(EC_Undo);
-  }
+  EDIT_COMMAND_MU(EC_Undo);
 }
 
 
 void EditorWidget::editRedo()
 {
-  if (editSafetyCheck()) {
-    COMMAND_MU(EC_Redo);
-  }
+  EDIT_COMMAND_MU(EC_Redo);
 }
 
 
@@ -2259,40 +2249,31 @@ static void setClipboard(string newText)
 
 void EditorWidget::commandEditCut()
 {
-  if (editSafetyCheck()) {
-    COMMAND_MU(EC_Cut);
-  }
+  EDIT_COMMAND_MU(EC_Cut);
 }
 
 
 void EditorWidget::commandEditCopy()
 {
-  COMMAND_MU(EC_Copy);
+  EDIT_COMMAND_MU(EC_Copy);
 }
 
 
 void EditorWidget::commandEditPaste(bool cursorToStart)
 {
-  if (editSafetyCheck()) {
-    COMMAND_MU(EC_Paste, cursorToStart);
-  }
+  EDIT_COMMAND_MU(EC_Paste, cursorToStart);
 }
 
 
 void EditorWidget::commandEditDelete()
 {
-  if (editSafetyCheck()) {
-    COMMAND_MU(EC_DeleteMenuFunction);
-  }
+  EDIT_COMMAND_MU(EC_DeleteMenuFunction);
 }
 
 
 void EditorWidget::commandEditKillLine()
 {
-  if (!editSafetyCheck()) {
-    return;
-  }
-  COMMAND_MU(EC_KillLine);
+  EDIT_COMMAND_MU(EC_KillLine);
 }
 
 
@@ -2520,7 +2501,7 @@ void EditorWidget::replaceSearchHit(string const &replaceSpec)
 
   TRACE2("replaceSearchHit: " << DEBUG_VALUES3(existing, replaceSpec, replacement));
 
-  COMMAND_MU(EC_InsertString, replacement);
+  EDIT_COMMAND_MU(EC_InsertString, replacement);
 
   // If we are replacing at EOL, then advance to the next line so we do
   // not repeatedly replace the same EOL.
@@ -2551,17 +2532,13 @@ void EditorWidget::doCloseSARPanel()
 
 void EditorWidget::commandBlockIndent(int amt)
 {
-  COMMAND_MU(EC_BlockIndent, amt);
+  EDIT_COMMAND_MU(EC_BlockIndent, amt);
 }
 
 
 void EditorWidget::editJustifyParagraph()
 {
-  // TODO: Factor `editSafetyCheck` followed by `COMMAND_MU`.
-  if (!editSafetyCheck()) {
-    return;
-  }
-  COMMAND_MU(EC_JustifyNearCursor, m_softMarginColumn);
+  EDIT_COMMAND_MU(EC_JustifyNearCursor, m_softMarginColumn);
 }
 
 
@@ -2576,7 +2553,7 @@ void EditorWidget::editInsertDateTime()
 
 void EditorWidget::insertText(char const *text, int length)
 {
-  COMMAND_MU(EC_InsertString, std::string(text, length));
+  EDIT_COMMAND_MU(EC_InsertString, std::string(text, length));
 }
 
 
@@ -3012,7 +2989,7 @@ void EditorWidget::lspHandleCompletionReply(
       m_editor->setSelectRange(layoutRange);
 
       // Replace it with the new text.
-      COMMAND_MU(EC_InsertString, edit.m_newText);
+      EDIT_COMMAND_MU(EC_InsertString, edit.m_newText);
     }
     else {
       // The dialog is not supposed to allow accepting without anything
@@ -3204,16 +3181,6 @@ bool EditorWidget::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 }
 
 
-// This is not called before every possible editing operation, since
-// that would add considerable clutter, just the most common.  A
-// missing edit safety check merely delays the user getting the
-// warning until they try to save.
-//
-// There is a danger in scattering the warnings too widely because I
-// might end up prompting in an inappropriate context, so currently
-// the warnings are only in places where I can clearly see that the
-// user just initiated an edit action and it is therefore safe to
-// cancel it.
 bool EditorWidget::editSafetyCheck()
 {
   if (m_editor->isReadOnly() && !this->promptOverrideReadOnly()) {
