@@ -9,60 +9,13 @@
 
 #include "line-difference-fwd.h"       // fwds for this module
 
-#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
+#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS, DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
 #include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB
 #include "smbase/std-string-fwd.h"     // std::string
 
 #include <iosfwd>                      // std::ostream
-
-
-// --------------------- BEGIN: To copy to smbase ----------------------
-// Define one operator that compares this `Class` to `Other` in either
-// direction.
-#define DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, op) \
-  [[maybe_unused]]                                                       \
-  friend bool operator op (Class const &a, Other const &b)               \
-    { return compare(a,b) op 0; }                                        \
-  [[maybe_unused]]                                                       \
-  friend bool operator op (Other const &a, Class const &b)               \
-    { return compare(a,b) op 0; }
-
-
-// Declare a set of friend comparison-to-other operators, *excluding*
-// the equality operators, assuming that a 'compare' function exists.
-#define DEFINE_FRIEND_NON_EQUALITY_RELATIONAL_TO_OTHER_OPERATORS(Class, Other) \
-  DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, < )             \
-  DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, <=)             \
-  DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, > )             \
-  DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, >=)
-
-
-// Declare a set of friend comparison-to-other operators, assuming that
-// a 'compare' function exists.
-#define DEFINE_FRIEND_RELATIONAL_TO_OTHER_OPERATORS(Class, Other)        \
-  DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, ==)       \
-  DEFINE_ONE_FRIEND_RELATIONAL_TO_OTHER_OPERATOR(Class, Other, !=)       \
-  DEFINE_FRIEND_NON_EQUALITY_RELATIONAL_TO_OTHER_OPERATORS(Class, Other)
-
-
-/* Declare a `compareTo` method, to compare to an `Other` type, that
-   must be implemented elsewhere.  Then, define friend `compare` methods
-   terms of it, and friend relational operators in terms of that.
-*/
-#define DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(Class, Other) \
-  int compareTo(Other const &b) const;                                  \
-  [[maybe_unused]]                                                      \
-  friend int compare(Class const &a, Other const &b)                    \
-    { return a.compareTo(b); }                                          \
-  [[maybe_unused]]                                                      \
-  friend int compare(Other const &a, Class const &b)                    \
-    { return -(b.compareTo(a)); }                                       \
-  DEFINE_FRIEND_RELATIONAL_TO_OTHER_OPERATORS(Class, Other)
-
-
-// ---------------------- END: To copy to smbase -----------------------
 
 
 /* This type is an experiment in creating unique integer-like types for
