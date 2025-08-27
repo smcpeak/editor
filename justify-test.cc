@@ -531,6 +531,26 @@ void testJustifyNearLine()
 }
 
 
+void test_justifyNoOp()
+{
+  TextDocumentAndEditor actual;
+  actual.writableDoc().replaceWholeFileString(
+    "one\n"
+    "two\n"
+  );
+
+  auto originalVersion = actual.writableDoc().getVersionNumber();
+
+  bool wrappable =
+    justifyNearLine(actual, LineIndex(0), 4 /*desiredWidth*/);
+  xassert(wrappable);
+
+  // Justification should not only have left the contents as they were,
+  // but not even issued any edit commands.
+  xassert(originalVersion == actual.writableDoc().getVersionNumber());
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -539,6 +559,7 @@ void test_justify(CmdlineArgsSpan args)
 {
   testJustifyTextLines();
   testJustifyNearLine();
+  test_justifyNoOp();
 }
 
 

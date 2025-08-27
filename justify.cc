@@ -205,8 +205,16 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
   justifyTextLines(justifiedContent, originalContent,
     desiredWidth - prefixColumnWidth(prefix));
 
-  // TODO: If the original and justified content are the same, do not
-  // actually perform the replacement.
+  if (originalContent == justifiedContent) {
+    // If the original and justified content are the same, do not
+    // actually perform the replacement.  Among other reasons, this
+    // avoids creating spurious edits that, as it happens, cause the LSP
+    // interaction to enter a temporarily desynchronized state because
+    // `clangd` determines the diagnostics will not have changed, so
+    // does not send them at all, whereas my LSP code assumes every
+    // change is acknowledged with diagnostics.
+    return true;
+  }
 
   // Replace the content.
   tde.deleteTextLRange(
