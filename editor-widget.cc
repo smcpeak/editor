@@ -2255,7 +2255,9 @@ void EditorWidget::commandEditCut()
 
 void EditorWidget::commandEditCopy()
 {
-  EDIT_COMMAND_MU(EC_Copy);
+  // This is not "EDIT_" because copying to the clipboard does not
+  // change the document.
+  COMMAND_MU(EC_Copy);
 }
 
 
