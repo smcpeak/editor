@@ -8,6 +8,7 @@
 
 // editor
 #include "history.h"                   // HE_group
+#include "line-count.h"                // PositiveLineCount, LineCount
 #include "line-index.h"                // LineIndex
 #include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
@@ -146,7 +147,7 @@ public:      // funcs
   // modification routines are *not* exposed because document changes
   // must go through the undo/redo mechanism in this class.
 
-  int numLines() const                                       { return m_core.numLines(); }
+  PositiveLineCount numLines() const                         { return m_core.numLines(); }
   bool validLine(LineIndex line) const                       { return m_core.validLine(line); }
   LineIndex lastLineIndex() const                            { return m_core.lastLineIndex(); }
   bool isEmptyLine(LineIndex line) const                     { return m_core.isEmptyLine(line); }
@@ -158,7 +159,7 @@ public:      // funcs
   TextMCoord lineBeginCoord(LineIndex line) const            { return m_core.lineBeginCoord(line); }
   TextMCoord lineEndCoord(LineIndex line) const              { return m_core.lineEndCoord(line); }
   int maxLineLengthBytes() const                             { return m_core.maxLineLengthBytes(); }
-  int numLinesExceptFinalEmpty() const                       { return m_core.numLinesExceptFinalEmpty(); }
+  LineCount numLinesExceptFinalEmpty() const                 { return m_core.numLinesExceptFinalEmpty(); }
   bool walkCoordBytes(TextMCoord &tc, int distance) const    { return m_core.walkCoordBytes(tc, distance); }
   int countBytesInRange(TextMCoordRange const &range) const  { return m_core.countBytesInRange(range); }
   bool adjustMCoord(TextMCoord /*INOUT*/ &tc) const          { return m_core.adjustMCoord(tc); }

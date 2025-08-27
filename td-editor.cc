@@ -6,6 +6,7 @@
 // editor
 #include "editor-strutil.h"            // cIdentifierAt
 #include "justify.h"                   // justifyNearLine
+#include "line-difference.h"           // LineDifference
 
 // smbase
 #include "smbase/array.h"              // Array
@@ -218,21 +219,24 @@ static void clampIncrease(int &v, int delta)
 }
 
 
-static void clampMove(TextLCoord &coord, int deltaLine, int deltaCol)
+static void clampMove(
+  TextLCoord &coord, LineDifference deltaLine, int deltaCol)
 {
   coord.m_line.clampIncrease(deltaLine);
   clampIncrease(coord.m_column, deltaCol);
 }
 
 
-static TextLCoord clampMoved(TextLCoord coord, int deltaLine, int deltaCol)
+static TextLCoord clampMoved(
+  TextLCoord coord, LineDifference deltaLine, int deltaCol)
 {
   clampMove(coord, deltaLine, deltaCol);
   return coord;
 }
 
 
-void TextDocumentEditor::moveMarkBy(int deltaLine, int deltaCol)
+void TextDocumentEditor::moveMarkBy(
+  LineDifference deltaLine, int deltaCol)
 {
   xassert(m_markActive);
 
@@ -263,7 +267,7 @@ void TextDocumentEditor::selectCursorLine()
   this->setCursorColumn(0);
 
   // Make the selection end at the start of the next line.
-  this->setMark(TextLCoord(this->cursor().m_line + 1, 0));
+  this->setMark(TextLCoord(this->cursor().m_line.succ(), 0));
 }
 
 
@@ -343,7 +347,7 @@ void TextDocumentEditor::normalizeCursorGTEMark()
 void TextDocumentEditor::setFirstVisible(TextLCoord fv)
 {
   xassert(fv.nonNegative());
-  int h = m_lastVisible.m_line - m_firstVisible.m_line;
+  LineDifference h = m_lastVisible.m_line - m_firstVisible.m_line;
   int w = m_lastVisible.m_column - m_firstVisible.m_column;
   m_firstVisible = fv;
   m_lastVisible.m_line = fv.m_line + h;
@@ -355,13 +359,15 @@ void TextDocumentEditor::setFirstVisible(TextLCoord fv)
 }
 
 
-void TextDocumentEditor::moveFirstVisibleBy(int deltaLine, int deltaCol)
+void TextDocumentEditor::moveFirstVisibleBy(
+  LineDifference deltaLine, int deltaCol)
 {
   setFirstVisible(clampMoved(m_firstVisible, deltaLine, deltaCol));
 }
 
 
-void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
+void TextDocumentEditor::moveFirstVisibleAndCursor(
+  LineDifference deltaLine, int deltaCol)
 {
   TRACE("moveFirstVisibleAndCursor",
         "start: firstVis=" << m_firstVisible
@@ -385,6 +391,14 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(int deltaLine, int deltaCol)
   TRACE("moveFirstVisibleAndCursor",
         "end: firstVis=" << m_firstVisible <<
         ", cursor=" << m_cursor);
+}
+
+
+void TextDocumentEditor::moveFirstVisibleConfineCursor(
+  LineDifference deltaLine, int deltaCol)
+{
+  moveFirstVisibleBy(deltaLine, deltaCol);
+  confineCursorToVisible();
 }
 
 
@@ -470,7 +484,7 @@ void TextDocumentEditor::centerVisibleOnCursorLine()
 
 
 void TextDocumentEditor::scrollToCursorIfBarelyOffscreen(
-  int howFar, int edgeGap)
+  LineDifference howFar, int edgeGap)
 {
   // Check that the cursor is within horizontal bounds.
   if (!cc::le_le(m_firstVisible.m_column,
@@ -494,7 +508,7 @@ void TextDocumentEditor::scrollToCursorIfBarelyOffscreen(
 void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col)
 {
   if (relLine) {
-    m_cursor.m_line += line;
+    m_cursor.m_line += LineDifference(line);
   }
   else {
     m_cursor.m_line = LineIndex(line);
@@ -620,7 +634,7 @@ void TextDocumentEditor::backspaceFunction()
     }
     else if (m_cursor.m_line > m_doc->lastLineIndex()) {
       // Move cursor up non-destructively.
-      this->moveCursorBy(-1, 0);
+      this->moveCursorBy(LineDifference(-1), 0);
     }
     else {
       // Move to end of previous line.
@@ -632,7 +646,7 @@ void TextDocumentEditor::backspaceFunction()
   }
   else if (m_cursor.m_column > this->cursorLineLengthColumns()) {
     // Move cursor left non-destructively.
-    this->moveCursorBy(0, -1);
+    this->moveCursorBy(LineDifference(0), -1);
   }
   else {
     // Remove the character to the left of the cursor.
@@ -1022,14 +1036,15 @@ int TextDocumentEditor::getAboveIndentationColumns(LineIndex line,
 
 // ---------------- TextDocumentEditor: modifications ------------------
 
-void TextDocumentEditor::moveCursorBy(int deltaLine, int deltaCol)
+void TextDocumentEditor::moveCursorBy(
+  LineDifference deltaLine, int deltaCol)
 {
   // prevent moving into negative territory
-  deltaLine = std::max(deltaLine, - cursor().m_line.get());
+  deltaLine.clampLower( - cursor().m_line.get());
   deltaCol = std::max(deltaCol, - cursor().m_column);
 
   if (deltaLine || deltaCol) {
-    moveCursor(true /*relLine*/, deltaLine,
+    moveCursor(true /*relLine*/, deltaLine.get(),
                true /*relCol*/, deltaCol);
   }
 }
@@ -1077,7 +1092,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   if (!backwards) {
     if (line < numLines() &&
         col < cursorLineLengthColumns()) {
-      moveCursorBy(0, 1);
+      moveCursorBy(LineDifference(0), 1);
     }
     else {
       moveToNextLineStart();
@@ -1087,7 +1102,7 @@ void TextDocumentEditor::advanceWithWrap(bool backwards)
   else {
     if (line < numLines() &&
         col > 0) {
-      moveCursorBy(0, -1);
+      moveCursorBy(LineDifference(0), -1);
     }
     else if (!line.isZero()) {
       moveToPrevLineEnd();
@@ -1223,7 +1238,7 @@ void TextDocumentEditor::insertNewline()
   int overEdge = cursor().m_column - cursorLineLengthColumns();
   if (overEdge > 0) {
     // move back to the end of this line
-    moveCursorBy(0, -overEdge);
+    moveCursorBy(LineDifference(0), -overEdge);
   }
 
   insertNulTermText("\n");
@@ -1258,7 +1273,7 @@ void TextDocumentEditor::insertNewlineAutoIndent()
     // Move the cursor to the auto-indent column but do not
     // fill with spaces.  This way I can press Enter more
     // than once without adding lots of spaces.
-    this->moveCursorBy(0, indCols);
+    this->moveCursorBy(LineDifference(0), indCols);
   }
 
   this->scrollToCursor();
@@ -1290,7 +1305,7 @@ void TextDocumentEditor::deleteTextMRange(TextMCoordRange const &range)
 }
 
 
-void TextDocumentEditor::indentLines(LineIndex start, int lines, int ind)
+void TextDocumentEditor::indentLines(LineIndex start, LineCount lines, int ind)
 {
   TDE_HistoryGrouper grouper(*this);
   CursorRestorer cr(*this);
@@ -1335,7 +1350,7 @@ bool TextDocumentEditor::blockIndent(int amt)
   // that line.
   LineIndex endLine =
     (range.m_end.m_column==0?
-       range.m_end.m_line.clampIncreased(-1) :
+       range.m_end.m_line.pred() :
        range.m_end.m_line);
 
   this->indentLines(range.m_start.m_line, endLine - range.m_start.m_line + 1, amt);

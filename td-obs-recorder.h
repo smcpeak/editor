@@ -10,6 +10,7 @@
 
 #include "td-obs-recorder-fwd.h"       // fwds for this module
 
+#include "line-count.h"                // LineCount
 #include "td-change-seq.h"             // TextDocumentChangeSequence
 #include "td-core.h"                   // TextDocumentObserver
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]
@@ -81,7 +82,7 @@ private:     // types
 
     // Number of lines that were in the file for this version.  It is
     // non-negative.
-    int const m_numLines;
+    LineCount const m_numLines;
 
     // True if this is a version for which we have received diagnostics.
     // It is initially false.
@@ -104,7 +105,8 @@ private:     // types
     VersionDetails(VersionDetails &&obj);
 
     // The sequence is initially empty.
-    explicit VersionDetails(VersionNumber versionNumber, int numLines);
+    explicit VersionDetails(
+      VersionNumber versionNumber, LineCount numLines);
 
     void selfCheck() const;
 

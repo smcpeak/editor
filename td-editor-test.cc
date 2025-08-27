@@ -183,7 +183,7 @@ void testUndoOfPaste()
 
   // Select line with "two".
   tde.turnOnSelection();
-  tde.moveMarkBy(+1 /*detaLine*/, 0 /*deltaCol*/);
+  tde.moveMarkBy(LineDifference(+1) /*detaLine*/, 0 /*deltaCol*/);
 
   // Replace it the way `clipboardPaste` would.
   tde.insertString("TWO\n");
@@ -223,7 +223,7 @@ void testUndoOfBlockIndent()
              "four\n");
   tde.moveCursor(false /*relLine*/, 1, false /*relCol*/, 0);
   tde.turnOnSelection();
-  tde.moveMarkBy(+2 /*deltaLine*/, 0 /*deltaCol*/);
+  tde.moveMarkBy(LineDifference(+2) /*deltaLine*/, 0 /*deltaCol*/);
   tde.blockIndent(+2);
   expect(tde, 1,0,
     "one\n"
@@ -727,27 +727,27 @@ void testScrollToCursor()
   expectFV(tde, 3,0, 3,0, 5,10);
 
   // Test 'moveFirstVisibleBy'.
-  tde.moveFirstVisibleBy(0, +1);
+  tde.moveFirstVisibleBy(LineDifference(0), +1);
   expectFV(tde, 3,0, 3,1, 5,10);
-  tde.moveFirstVisibleBy(+1, 0);
+  tde.moveFirstVisibleBy(LineDifference(+1), 0);
   expectFV(tde, 3,0, 4,1, 5,10);
-  tde.moveFirstVisibleBy(-3, -3);
+  tde.moveFirstVisibleBy(LineDifference(-3), -3);
   expectFV(tde, 3,0, 1,0, 5,10);
-  tde.moveFirstVisibleBy(-3, -3);
+  tde.moveFirstVisibleBy(LineDifference(-3), -3);
   expectFV(tde, 3,0, 0,0, 5,10);
 
   // Test 'moveFirstVisibleAndCursor'.
   tde.setFirstVisible(TextILCoord(10,10));
   expectFV(tde, 3,0, 10,10, 5,10);
-  tde.moveFirstVisibleAndCursor(0, +1);    // scroll to cursor, then shift right
+  tde.moveFirstVisibleAndCursor(LineDifference(0), +1);    // scroll to cursor, then shift right
   expectFV(tde, 3,1, 3,1, 5,10);
   tde.setCursor(TextILCoord(4,2));           // one in from left/top
   expectFV(tde, 4,2, 3,1, 5,10);
-  tde.moveFirstVisibleAndCursor(+2, +1);
+  tde.moveFirstVisibleAndCursor(LineDifference(+2), +1);
   expectFV(tde, 6,3, 5,2, 5,10);
-  tde.moveFirstVisibleAndCursor(0, -10);   // hit left edge
+  tde.moveFirstVisibleAndCursor(LineDifference(0), -10);   // hit left edge
   expectFV(tde, 6,1, 5,0, 5,10);
-  tde.moveFirstVisibleAndCursor(-10, 0);   // hit top edge
+  tde.moveFirstVisibleAndCursor(LineDifference(-10), 0);   // hit top edge
   expectFV(tde, 1,1, 0,0, 5,10);
 
   // Test 'centerVisibleOnCursorLine'.
@@ -791,7 +791,7 @@ void testOne_stcibo(
     fvLine, fvCol,
     visLines, visColumns);
 
-  tde.scrollToCursorIfBarelyOffscreen(howFar, edgeGap);
+  tde.scrollToCursorIfBarelyOffscreen(LineDifference(howFar), edgeGap);
 
   expectFV(tde,
     cursorLine, cursorCol,
@@ -1004,7 +1004,7 @@ void testMoveCursor()
   expectCursor(tde, 3,0);
 
   // Test 'moveCursorBy'.
-  tde.moveCursorBy(-1, +1);
+  tde.moveCursorBy(LineDifference(-1), +1);
   expectCursor(tde, 2,1);
 
   // Test 'setCursorColumn'.
@@ -1081,7 +1081,7 @@ void testMoveCursor()
   expectFV(tde, 0,0, 0,0, 2,2);
 
   // Test 'moveCursorBy' attempting to move to negative values.
-  tde.moveCursorBy(-1, -1);
+  tde.moveCursorBy(LineDifference(-1), -1);
   expectCursor(tde, 0,0);
 }
 
@@ -1657,7 +1657,7 @@ void testSetVisibleSize()
   checkCoord(tde.lastVisible(), TextILCoord(2,6), "lastVisible");
 
   // Cursor movement does not automatically scroll.
-  tde.moveCursorBy(-1,0);
+  tde.moveCursorBy(LineDifference(-1),0);
   checkCoord(tde.firstVisible(), TextILCoord(2,6), "firstVisible");
   tde.scrollToCursor();
   checkCoord(tde.firstVisible(), TextILCoord(1,6), "firstVisible");
@@ -1713,16 +1713,16 @@ void testSetMark()
   tde.setMark(TextILCoord(1,1));
   expectMark(tde, 1,1);
 
-  tde.moveMarkBy(+1,+1);
+  tde.moveMarkBy(LineDifference(+1),+1);
   expectMark(tde, 2,2);
 
-  tde.moveMarkBy(+3,+4);
+  tde.moveMarkBy(LineDifference(+3),+4);
   expectMark(tde, 5,6);
 
-  tde.moveMarkBy(-10,+1);
+  tde.moveMarkBy(LineDifference(-10),+1);
   expectMark(tde, 0,7);
 
-  tde.moveMarkBy(0,-10);
+  tde.moveMarkBy(LineDifference(0),-10);
   expectMark(tde, 0,0);
 
   // Test 'turnOnSelection' with mark already active.

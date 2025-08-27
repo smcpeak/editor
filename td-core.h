@@ -7,6 +7,7 @@
 #include "td-core-fwd.h"               // fwds for this module
 
 // editor
+#include "line-count.h"                // PositiveLineCount, LineCount
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
 #include "td-fwd.h"                    // TextDocument
@@ -169,7 +170,8 @@ public:    // funcs
 
   // ---------------------- document shape ------------------------
   // # of lines stored; always at least 1
-  int numLines() const { return m_lines.length(); }
+  PositiveLineCount numLines() const
+    { return PositiveLineCount(m_lines.length()); }
 
   // True if `line` is valid, i.e., within range for this document.
   bool validLine(LineIndex line) const
@@ -215,7 +217,7 @@ public:    // funcs
   // Number of lines in the file as a user would typically view it: if
   // the file ends in a newline, then return the number of newlines.
   // Otherwise return newlines+1, the same as numLines().
-  int numLinesExceptFinalEmpty() const;
+  LineCount numLinesExceptFinalEmpty() const;
 
   // Walk the given coordinate forwards (right, then down, when
   // distance>0) or backwards (left, then up, when distance<0) by the

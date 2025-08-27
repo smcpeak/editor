@@ -5,6 +5,8 @@
 #define TD_EDITOR_H
 
 // editor
+#include "line-count.h"                // PositiveLineCount, LineCount
+#include "line-difference-fwd.h"       // LineDifference [n]
 #include "td.h"                        // TextDocument
 #include "textcategory.h"              // LineCategories
 #include "textlcoord.h"                // TextLCoord
@@ -141,7 +143,7 @@ public:      // funcs
 
   // ------------------- query model dimensions --------------------
   // Number of lines in the document.  Always positive.
-  int numLines() const                             { return m_doc->numLines(); }
+  PositiveLineCount numLines() const               { return m_doc->numLines(); }
 
   bool isEmptyLine(LineIndex line) const           { return m_doc->isEmptyLine(line); }
 
@@ -237,7 +239,7 @@ public:      // funcs
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
   // move by relative line/col
-  void moveCursorBy(int deltaLine, int deltaCol);
+  void moveCursorBy(LineDifference deltaLine, int deltaCol);
 
   // line++, col=0.  Ok to move beyond EOF.
   void moveToNextLineStart();
@@ -291,7 +293,7 @@ public:      // funcs
 
   // Move the mark by the indicated amount, clamping at 0.  Requires
   // markActive().
-  void moveMarkBy(int deltaLine, int deltaCol);
+  void moveMarkBy(LineDifference deltaLine, int deltaCol);
 
   // ----------------- cursor+mark = selection --------------------
   // If the mark is inactive, activate it at the cursor.
@@ -358,18 +360,18 @@ public:      // funcs
 
   // Move the view by a relative amount.  Any attempt to go negative
   // is treated as a move to zero.
-  void moveFirstVisibleBy(int deltaLine, int deltaCol);
+  void moveFirstVisibleBy(LineDifference deltaLine, int deltaCol);
 
   // First, scroll the view, if necessary, so the cursor is in the
   // visible region.  Then, behave like 'moveFirstVisibleBy', but also
   // move the cursor as necessary so its position on the screen stays
   // the same.
-  void moveFirstVisibleAndCursor(int deltaLine, int deltaCol);
+  void moveFirstVisibleAndCursor(LineDifference deltaLine, int deltaCol);
 
   // Like 'moveFirstVisibleBy', but after scrolling, adjust the cursor
   // by the minimum amount so it is onscreen.
-  void moveFirstVisibleConfineCursor(int deltaLine, int deltaCol)
-    { moveFirstVisibleBy(deltaLine, deltaCol); confineCursorToVisible(); }
+  void moveFirstVisibleConfineCursor(
+    LineDifference deltaLine, int deltaCol);
 
   // Set the lower-right corner, preserving 'firstVisible'.  This will
   // silently force it to be greater than or equal to 'firstVisible'.
@@ -405,7 +407,8 @@ public:      // funcs
   // within `howFar` lines of being visible, and within the horizontal
   // bounds, then scroll to make the cursor visible with `edgeGap`
   // between the cursor and the edge.
-  void scrollToCursorIfBarelyOffscreen(int howFar, int edgeGap);
+  void scrollToCursorIfBarelyOffscreen(
+    LineDifference howFar, int edgeGap);
 
   // ---------------- general text queries -------------------
   // If character 'c' is displayed at column 'col', what column do we
@@ -601,7 +604,7 @@ public:      // funcs
   // there are not enough spaces, then the line is unindented as much
   // as possible w/o removing non-ws chars; the cursor is left in its
   // original position at the end
-  void indentLines(LineIndex start, int lines, int ind);
+  void indentLines(LineIndex start, LineCount lines, int ind);
 
   // Do 'indentLines' for the span of lines corresponding to the
   // current selection.  Every line that has at least one selected

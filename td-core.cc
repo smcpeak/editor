@@ -252,7 +252,7 @@ void TextDocumentCore::attachRecent(TextMCoord tc, int insLength)
 
 LineIndex TextDocumentCore::lastLineIndex() const
 {
-  return LineIndex(numLines() - 1);
+  return LineIndex(numLines().get() - 1);
 }
 
 
@@ -369,14 +369,14 @@ TextMCoord TextDocumentCore::lineEndCoord(LineIndex line) const
 // Interestingly, this is *not* what "wc -l" returns.  Instead, wc -l
 // returns a count of the newline characters.  But that seems like a bug
 // in 'wc' to me.
-int TextDocumentCore::numLinesExceptFinalEmpty() const
+LineCount TextDocumentCore::numLinesExceptFinalEmpty() const
 {
   LineIndex lastIndex = lastLineIndex();
   if (this->isEmptyLine(lastIndex)) {
-    return lastIndex.get();
+    return LineCount(lastIndex.get());
   }
   else {
-    return lastIndex.get() + 1;
+    return LineCount(lastIndex.get() + 1);
   }
 }
 
@@ -584,7 +584,7 @@ void TextDocumentCore::dumpRepresentation() const
   // lines
   int L, G, R;
   m_lines.getInternals(L, G, R);
-  printf("  lines: L=%d G=%d R=%d, num=%d\n", L,G,R, numLines());
+  printf("  lines: L=%d G=%d R=%d, num=%d\n", L,G,R, numLines().get());
 
   // recent
   m_recentLine.getInternals(L, G, R);
@@ -854,7 +854,7 @@ void TextDocumentCore::getTextForRange(TextMCoordRange const &range,
     dest);
 
   // Full lines between start and end.
-  for (LineIndex i = range.m_start.m_line + 1; i < range.m_end.m_line; ++i) {
+  for (LineIndex i = range.m_start.m_line.succ(); i < range.m_end.m_line; ++i) {
     dest.push('\n');
     this->getWholeLine(i, dest);
   }

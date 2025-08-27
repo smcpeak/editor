@@ -2562,7 +2562,7 @@ void EditorWindow::editorViewChanged() NOEXCEPT
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
   m_statusArea->m_cursor->setText(qstringb(
-    (editorWidget()->cursorLine()+1) << ':' <<
+    (editorWidget()->cursorLine().getForNow()+1) << ':' <<
     (editorWidget()->cursorCol()+1)));
 
   // Status text: full document name plus status indicators.

@@ -15,6 +15,7 @@
 
 #include "td-diagnostics-fwd.h"        // fwds for this module
 
+#include "line-count.h"                // LineCount, PositiveLineCount
 #include "line-index.h"                // LineIndex
 #include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-fwd.h"             // TextDocumentChange [n]
@@ -195,7 +196,7 @@ public:      // methods
   // `numLines` is the number of lines (newline characters plus one) in
   // the associated document, if that is known.
   explicit TextDocumentDiagnostics(
-    VersionNumber originVersion, std::optional<int> numLines);
+    VersionNumber originVersion, std::optional<PositiveLineCount> numLines);
 
   // Assert all invariants.
   void selfCheck() const;
@@ -207,7 +208,7 @@ public:      // methods
   VersionNumber getOriginVersion() const { return m_originVersion; }
 
   // Number of lines in the document the diagnostics apply to.
-  std::optional<int> getNumLinesOpt() const;
+  std::optional<PositiveLineCount> getNumLinesOpt() const;
 
   // True if there are no mappings.
   bool empty() const;
@@ -221,7 +222,7 @@ public:      // methods
 
   // Remove all diagnostics and reset to `numLines`, which must be
   // positive.
-  void clearEverything(int numLines);
+  void clearEverything(PositiveLineCount numLines);
 
   // Insert the mapping `range` -> `diag`.
   void insertDiagnostic(TextMCoordRange range, TDD_Diagnostic &&diag);
@@ -254,7 +255,7 @@ public:      // methods
 
   // Set the line count and confine line indices accordingly.  This is
   // normally done before `adjustForDocument`.
-  void setNumLinesAndAdjustAccordingly(int numLines);
+  void setNumLinesAndAdjustAccordingly(PositiveLineCount numLines);
 
   // Adjust all diagnostic ranges to be valid for `doc`.  This is meant
   // to be used when a set of diagnostics is received from some external
@@ -268,8 +269,8 @@ public:      // methods
   // Perform updates on the underlying mapping in order to track text
   // updates.  These have the same semantics as the same-named methods
   // on `TextMCoordMap`.
-  void insertLines(LineIndex line, int count);
-  void deleteLines(LineIndex line, int count);
+  void insertLines(LineIndex line, LineCount count);
+  void deleteLines(LineIndex line, LineCount count);
   void insertLineBytes(TextMCoord tc, int lengthBytes);
   void deleteLineBytes(TextMCoord tc, int lengthBytes);
 

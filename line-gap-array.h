@@ -7,6 +7,7 @@
 #define EDITOR_LINE_GAP_ARRAY_H
 
 #include "gap.h"                       // GapArray
+#include "line-count.h"                // LineCount
 #include "line-index.h"                // LineIndex
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
@@ -50,17 +51,17 @@ public:      // methods
   void insert(LineIndex elt, T const &value)
     { m_arr.insert(elt.get(), value); }
 
-  void insertMany(LineIndex elt, T const *src, int srcLen)
-    { m_arr.insertMany(elt.get(), src, srcLen); }
+  void insertMany(LineIndex elt, T const *src, LineCount srcLen)
+    { m_arr.insertMany(elt.get(), src, srcLen.get()); }
 
-  void insertManyZeroes(LineIndex elt, int insLen)
-    { m_arr.insertManyZeroes(elt.get(), insLen); }
+  void insertManyZeroes(LineIndex elt, LineCount insLen)
+    { m_arr.insertManyZeroes(elt.get(), insLen.get()); }
 
   T remove(LineIndex elt)
     { return m_arr.remove(elt.get()); }
 
-  void removeMany(LineIndex elt, int numElts)
-    { m_arr.removeMany(elt.get(), numElts); }
+  void removeMany(LineIndex elt, LineCount numElts)
+    { m_arr.removeMany(elt.get(), numElts.get()); }
 
   void clear()
     { m_arr.clear(); }
@@ -73,15 +74,20 @@ public:      // methods
 
   void fillFromArray(
     T const *src,
-    int srcLen,
+    LineCount srcLen,
     LineIndex elt = LineIndex(0),
     int gapSize=10)
   {
-    m_arr.fillFromArray(src, srcLen, elt.get(), gapSize);
+    m_arr.fillFromArray(src, srcLen.get(), elt.get(), gapSize);
   }
 
-  void writeIntoArray(T *dest, int destLen, LineIndex elt = LineIndex(0)) const
-    { m_arr.writeIntoArray(dest, destLen, elt.get()); }
+  void writeIntoArray(
+    T *dest,
+    LineCount destLen,
+    LineIndex elt = LineIndex(0)) const
+  {
+    m_arr.writeIntoArray(dest, destLen.get(), elt.get());
+  }
 
   void ensureValidIndex(LineIndex index)
     { m_arr.ensureValidIndex(index.get()); }

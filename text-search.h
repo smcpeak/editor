@@ -115,7 +115,7 @@ private:     // funcs
   void recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOne);
 
   // Recompute a single line.
-  void recomputeLine(LineIndex line) { recomputeLineRange(line, line+1); }
+  void recomputeLine(LineIndex line);
 
   // Compute 'm_regex' from the search string and flags.
   void computeRegex();
@@ -188,11 +188,11 @@ public:      // funcs
 
   // Count the matches on a single line.
   int countLineMatches(LineIndex line) const
-    { return countRangeMatches(line, line+1); }
+    { return countRangeMatches(line, line.succ()); }
 
   // Count the matches below a line.
   int countMatchesBelow(LineIndex line) const
-    { return countRangeMatches(line+1, LineIndex(this->documentLines())); }
+    { return countRangeMatches(line.succ(), LineIndex(this->documentLines())); }
 
   // Count all matches.
   int countAllMatches() const

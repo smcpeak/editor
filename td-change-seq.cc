@@ -96,6 +96,13 @@ void TextDocumentChangeSequence::applyToDocument(TextDocument &doc) const
 }
 
 
+// Return a random line number in [0,n-1].
+static LineIndex randomLine(PositiveLineCount n)
+{
+  return LineIndex(sm_random(n.get()));
+}
+
+
 TextDocumentChangeSequence makeRandomChange(
   TextDocumentCore const &doc)
 {
@@ -107,7 +114,7 @@ TextDocumentChangeSequence makeRandomChange(
     std::string newContents = randomStringWithNL(100);
 
     // For our purposes, newline characters *separate* lines.
-    int numLines = numOccurrences(newContents, '\n') + 1;
+    PositiveLineCount numLines(numOccurrences(newContents, '\n') + 1);
 
     seq.append(std::make_unique<TDC_TotalChange>(
       numLines, std::move(newContents)));
@@ -115,7 +122,7 @@ TextDocumentChangeSequence makeRandomChange(
 
   else if (c.check(20)) {
     // Insert line.
-    LineIndex line(sm_random(doc.numLines() + 1));
+    LineIndex line(randomLine(doc.numLines() + 1));
 
     std::optional<int> prevLineBytes;
     if (line.get() == doc.numLines()) {
@@ -129,7 +136,7 @@ TextDocumentChangeSequence makeRandomChange(
   else if (c.check(20)) {
     // Delete line.
     if (doc.numLines() > 1) {
-      LineIndex line = LineIndex(sm_random(doc.numLines()));
+      LineIndex line = LineIndex(randomLine(doc.numLines()));
 
       // First clear the line.
       seq.append(std::make_unique<TDC_DeleteText>(
@@ -151,7 +158,7 @@ TextDocumentChangeSequence makeRandomChange(
 
   else if (c.check(20)) {
     // Insert text.
-    LineIndex line(sm_random(doc.numLines()));
+    LineIndex line(randomLine(doc.numLines()));
     int byteIndex = sm_random(doc.lineLengthBytes(line) + 1);
 
     seq.append(std::make_unique<TDC_InsertText>(
@@ -160,7 +167,7 @@ TextDocumentChangeSequence makeRandomChange(
 
   else if (c.check(20)) {
     // Delete text.
-    LineIndex line(sm_random(doc.numLines()));
+    LineIndex line(randomLine(doc.numLines()));
     int len = doc.lineLengthBytes(line);
 
     int startByteIndex = sm_random(len+1);

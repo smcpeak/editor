@@ -4,6 +4,8 @@
 #include "unit-tests.h"                // decl for my entry point
 #include "line-index.h"                // module under test
 
+#include "line-difference.h"           // LineDifference
+
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, XGDValueError}
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
@@ -68,6 +70,13 @@ void test_ctor()
   EXPECT_EQ(i1 <= 0, false);
   EXPECT_EQ(i1 <= 1, true);
   EXPECT_EQ(i1 <= 2, true);
+
+  EXPECT_EQ(i1 < LineDifference(0), false);
+  EXPECT_EQ(i1 < LineDifference(1), false);
+  EXPECT_EQ(i1 < LineDifference(2), true);
+  EXPECT_EQ(i1 <= LineDifference(0), false);
+  EXPECT_EQ(i1 <= LineDifference(1), true);
+  EXPECT_EQ(i1 <= LineDifference(2), true);
 
   EXPECT_EQ(i2 < 0, false);
   EXPECT_EQ(i2 < 1, false);
@@ -147,19 +156,19 @@ void test_add()
 {
   TEST_CASE("test_add");
 
-  EXPECT_EQ(LineIndex(1) + 2, LineIndex(3));
-  EXPECT_EQ(LineIndex(1) + (-1), LineIndex(0));
+  EXPECT_EQ(LineIndex(1) + LineDifference(2), LineIndex(3));
+  EXPECT_EQ(LineIndex(1) + LineDifference(-1), LineIndex(0));
 
   LineIndex i(0);
   EXPECT_EQ(i.get(), 0);
 
-  i += 3;
+  i += LineDifference(3);
   EXPECT_EQ(i.get(), 3);
 
-  i += 2;
+  i += LineDifference(2);
   EXPECT_EQ(i.get(), 5);
 
-  i += (-4);
+  i += LineDifference(-4);
   EXPECT_EQ(i.get(), 1);
 }
 
@@ -171,22 +180,22 @@ void test_tryIncrease()
   LineIndex i(0);
   EXPECT_EQ(i.get(), 0);
 
-  xassert(!i.tryIncrease(-1));
+  xassert(!i.tryIncrease(LineDifference(-1)));
   EXPECT_EQ(i.get(), 0);
 
-  xassert(i.tryIncrease(2));
+  xassert(i.tryIncrease(LineDifference(2)));
   EXPECT_EQ(i.get(), 2);
 
-  xassert(i.tryIncrease(-1));
+  xassert(i.tryIncrease(LineDifference(-1)));
   EXPECT_EQ(i.get(), 1);
 
-  xassert(i.tryIncrease(3));
+  xassert(i.tryIncrease(LineDifference(3)));
   EXPECT_EQ(i.get(), 4);
 
-  xassert(!i.tryIncrease(-5));
+  xassert(!i.tryIncrease(LineDifference(-5)));
   EXPECT_EQ(i.get(), 4);
 
-  xassert(!i.tryIncrease(std::numeric_limits<int>::max()));
+  xassert(!i.tryIncrease(LineDifference(std::numeric_limits<int>::max())));
   EXPECT_EQ(i.get(), 4);
 }
 
@@ -198,25 +207,41 @@ void test_clampIncrease()
   LineIndex i(0);
   EXPECT_EQ(i.get(), 0);
 
-  EXPECT_EQ(i.clampIncreased(-1).get(), 0);
-  i.clampIncrease(-1);
+  EXPECT_EQ(i.clampIncreased(LineDifference(-1)).get(), 0);
+  i.clampIncrease(LineDifference(-1));
   EXPECT_EQ(i.get(), 0);
 
-  EXPECT_EQ(i.clampIncreased(2).get(), 2);
-  i.clampIncrease(2);
+  EXPECT_EQ(i.clampIncreased(LineDifference(2)).get(), 2);
+  i.clampIncrease(LineDifference(2));
   EXPECT_EQ(i.get(), 2);
 
-  EXPECT_EQ(i.clampIncreased(-1).get(), 1);
-  i.clampIncrease(-1);
+  EXPECT_EQ(i.clampIncreased(LineDifference(-1)).get(), 1);
+  i.clampIncrease(LineDifference(-1));
   EXPECT_EQ(i.get(), 1);
 
-  EXPECT_EQ(i.clampIncreased(3).get(), 4);
-  i.clampIncrease(3);
+  EXPECT_EQ(i.clampIncreased(LineDifference(3)).get(), 4);
+  i.clampIncrease(LineDifference(3));
   EXPECT_EQ(i.get(), 4);
 
-  EXPECT_EQ(i.clampIncreased(-5).get(), 0);
-  i.clampIncrease(-5);
+  EXPECT_EQ(i.clampIncreased(LineDifference(-5)).get(), 0);
+  i.clampIncrease(LineDifference(-5));
   EXPECT_EQ(i.get(), 0);
+
+  EXPECT_EQ(i.clampIncreased(LineDifference(10), LineIndex(5)).get(), 10);
+  i.clampIncrease(LineDifference(10), LineIndex(5));
+  EXPECT_EQ(i.get(), 10);
+
+  EXPECT_EQ(i.clampIncreased(LineDifference(1), LineIndex(20)).get(), 20);
+  i.clampIncrease(LineDifference(1), LineIndex(20));
+  EXPECT_EQ(i.get(), 20);
+
+  EXPECT_EQ(i.clampIncreased(LineDifference(-1), LineIndex(3)).get(), 19);
+  i.clampIncrease(LineDifference(-1), LineIndex(3));
+  EXPECT_EQ(i.get(), 19);
+
+  EXPECT_EQ(i.clampIncreased(LineDifference(-100), LineIndex(3)).get(), 3);
+  i.clampIncrease(LineDifference(-100), LineIndex(3));
+  EXPECT_EQ(i.get(), 3);
 }
 
 

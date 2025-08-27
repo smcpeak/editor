@@ -300,7 +300,7 @@ public:      // data
   // Number of lines in the document when this object was first created,
   // and with which the original version of the diagnostics is
   // associated.
-  int m_numLines;
+  PositiveLineCount m_numLines;
 
 public:      // methods
   ~EagerAndDelayedDiags()
@@ -625,7 +625,7 @@ void test_DDRH()
 // Return a random valid coordinate in `doc`.
 TextMCoord randomMC(NamedTextDocument const &doc)
 {
-  LineIndex line( sm_random(doc.numLines()) );
+  LineIndex line( sm_random(doc.numLines().get()) );
   int bytes = sm_random(doc.lineLengthBytes(line) + 1);
   return TextMCoord(line, bytes);
 }

@@ -8,6 +8,7 @@
 
 #include "textmcoord-map-fwd.h"        // fwds for this module
 
+#include "line-count.h"                // LineCount, PositiveLineCount
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
 #include "td-core-fwd.h"               // TextDocumentCore
@@ -327,7 +328,7 @@ private:     // data
   //
   // Invariant: if has value, m_lineData.length() <= m_numLines
   // Invariant: if has value, m_numLines >= 1
-  std::optional<int> m_numLines;
+  std::optional<PositiveLineCount> m_numLines;
 
 private:     // methods
   // Get the data for `line`, creating it if necessary.
@@ -354,7 +355,7 @@ private:     // methods
   // Ensure all line indices are in [0, maxNumLines-1].
   //
   // Requires: maxNumLines > 0
-  void confineLineIndices(int maxNumLines);
+  void confineLineIndices(PositiveLineCount maxNumLines);
 
 public:      // methods
   ~TextMCoordMap();
@@ -367,7 +368,7 @@ public:      // methods
   // Requires: if has value, numLines > 0
   //
   // TODO: I think I only ever pass `nullopt` as `numLines`.
-  explicit TextMCoordMap(std::optional<int> numLines);
+  explicit TextMCoordMap(std::optional<PositiveLineCount> numLines);
 
   bool operator==(TextMCoordMap const &obj) const;
   bool operator!=(TextMCoordMap const &obj) const
@@ -390,7 +391,7 @@ public:      // methods
 
   // Remove entries and set `numLines`, which must be positive if it has
   // a value.
-  void clearEverything(std::optional<int> numLines);
+  void clearEverything(std::optional<PositiveLineCount> numLines);
 
   // Adjust all diagnostic ranges so their line indices are in [0,
   // numLines-1].  We do this after receiving diagnostics for a
@@ -398,7 +399,7 @@ public:      // methods
   // line count.  This enables tracking updates.
   //
   // This is normally done before `adjustForDocument`.
-  void setNumLinesAndAdjustAccordingly(int numLines);
+  void setNumLinesAndAdjustAccordingly(PositiveLineCount numLines);
 
   // Adjust all diagnostic ranges to be valid for `doc`.  See the
   // comments on `TextDocumentDiagnostics::adjustForDocument` for
@@ -413,14 +414,14 @@ public:      // methods
 
   // Insert `count` lines starting at `line`, shifting all range
   // boundaries that come after the line down.
-  void insertLines(LineIndex line, int count);
+  void insertLines(LineIndex line, LineCount count);
 
   // Delete `count` lines, starting at `line` and going down, shifting
   // all later boundaries up.  A boundary that is on the line will be
   // shifted to the start of the line.  Thus, any range that started and
   // ended on the line will, afterward, have an associated zero-length
   // range at the start of the line; but it will still be in the map.
-  void deleteLines(LineIndex line, int count);
+  void deleteLines(LineIndex line, LineCount count);
 
   // Insert characters on a single line, at `tc`, shifting later
   // boundaries to the right.
@@ -444,7 +445,7 @@ public:      // methods
   int maxEntryLine() const;
 
   // Number of lines in the file, if known.
-  std::optional<int> getNumLinesOpt() const;
+  std::optional<PositiveLineCount> getNumLinesOpt() const;
 
   // True if we can track document updates, which requires that we know
   // the number of lines.  Setting the number of lines is normally done
@@ -457,7 +458,7 @@ public:      // methods
   // Return `getNumLinesOpt().value()`.
   //
   // Requires: canTrackUpdates()
-  int getNumLines() const;
+  PositiveLineCount getNumLines() const;
 
   // True if `tc` is valid for the current number of lines.
   // Specifically, `0 <= tc.m_line` and, if `m_numLines` has a value,

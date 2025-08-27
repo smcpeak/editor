@@ -19,7 +19,7 @@ void test_1()
   EXPECT_EQ(doc.getWholeFileString(), "");
 
   {
-    TDC_TotalChange change(4, "zero\none\ntwo\n");
+    TDC_TotalChange change(LineCount(4), "zero\none\ntwo\n");
     change.applyToDoc(doc);
     EXPECT_EQ(doc.getWholeFileString(), "zero\none\ntwo\n");
     EXPECT_EQ(doc.numLines(), 4);

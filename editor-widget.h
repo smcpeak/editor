@@ -12,6 +12,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "line-difference.h"                     // LineDifference
 #include "lsp-data-types.h"                      // LSP_VersionNumber
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
@@ -397,7 +398,8 @@ public:      // funcs
   int lastVisibleCol() const              { return m_editor->lastVisible().m_column; }
 
   // Move both the screen and cursor by the same amount.
-  void commandMoveFirstVisibleAndCursor(int deltaLine, int deltaCol);
+  void commandMoveFirstVisibleAndCursor(
+    LineDifference deltaLine, int deltaCol);
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col

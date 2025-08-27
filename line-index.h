@@ -8,6 +8,9 @@
 
 #include "line-index-fwd.h"            // fwds for this module
 
+#include "line-count-fwd.h"            // LineCount [n]
+#include "line-difference-fwd.h"       // LineDifference [n]
+
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
@@ -41,6 +44,8 @@ public:      // methods
   {
     selfCheck();
   }
+
+  explicit LineIndex(LineCount value);
 
   LineIndex(LineIndex const &obj)
     : DMEMB(m_value)
@@ -90,6 +95,9 @@ public:      // methods
   bool operator<=(int i) const
     { return m_value <= i; }
 
+  bool operator<(LineDifference i) const;
+  bool operator<=(LineDifference i) const;
+
   // Requires: m_value is not the max representable.
   LineIndex &operator++();
 
@@ -97,20 +105,23 @@ public:      // methods
   LineIndex &operator--();
 
   // Requires: `m_value+delta >= 0`, and the sum is representable.
-  LineIndex operator+(int delta) const;
+  LineIndex operator+(LineDifference delta) const;
 
-  LineIndex &operator+=(int delta);
+  LineIndex &operator+=(LineDifference delta);
 
   // If `*this += delta` is valid, do it and return true.  Otherwise
   // return false.
-  bool tryIncrease(int delta);
+  bool tryIncrease(LineDifference delta);
 
-  // Nominally `m_value += delta`.  If the result would be negative, set
-  // `m_value` to zero.  It must not overflow.
-  void clampIncrease(int delta);
+  // Nominally `m_value += delta`.  If the result would be less than
+  // `limit, set `*this` to `limit`.  Also the addition must not
+  // overflow.
+  void clampIncrease(
+    LineDifference delta, LineIndex limit = LineIndex(0));
 
   // Like `clampIncrease`, but returning a new object.
-  LineIndex clampIncreased(int delta) const;
+  LineIndex clampIncreased(
+    LineDifference delta, LineIndex limit = LineIndex(0)) const;
 
   // Return `clampIncreased(+1)`.
   LineIndex succ() const;
@@ -121,7 +132,9 @@ public:      // methods
   // Like `pred`, but first assert we are Not Zero.
   LineIndex nzpred() const;
 
-  int operator-(LineIndex const &b) const;
+  LineDifference operator-(LineIndex b) const;
+  LineIndex operator-(LineDifference b) const;
+  LineIndex &operator-=(LineDifference delta);
 
   // Returns a GDV integer.
   operator gdv::GDValue() const;

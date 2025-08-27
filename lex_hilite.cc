@@ -73,7 +73,7 @@ void LexHighlighter::addToChanged(LineIndex line)
   }
   else if (changedIsEmpty()) {
     changedBegin = line;
-    changedEnd = line+1;
+    changedEnd = line.succ();
   }
   else if (line.succ() == changedBegin) {
     // extend changed region up by 1
@@ -89,7 +89,7 @@ void LexHighlighter::addToChanged(LineIndex line)
     // to contain just this line
     waterline = changedBegin;
     changedBegin = line;
-    changedEnd = line+1;
+    changedEnd = line.succ();
   }
   else if (line > changedEnd) {
     // line is below changed region, move the water up to absorb it
@@ -122,7 +122,7 @@ void LexHighlighter::observeInsertLine(TextDocumentCore const &, LineIndex line)
 
   // if region ends after 'line', then now it ends one line later
   if (!changedIsEmpty() &&
-      changedEnd >= line+1) {
+      changedEnd >= line.succ()) {
     ++changedEnd;
   }
 
@@ -219,7 +219,7 @@ void LexHighlighter::saveLineState(LineIndex line, LexerState _state)
       savedState.set(line, state);
     }
 
-    if (line+1 == changedEnd && prev != state) {
+    if (line.succ() == changedEnd && prev != state) {
       // the state has changed, so we need to re-eval the next line
       if (changedEnd < waterline) {
         ++changedEnd;
@@ -456,7 +456,7 @@ static void check(LexHighlighter &hi)
     makeHigh(tde->getDocument()->getCore()));
 
   // go backwards in hopes of finding more incrementality bugs
-  for (int i = tde->numLines()-1; i>=0; i--) {
+  for (int i = tde->numLines().get() - 1; i>=0; i--) {
     innerCheckLine(hi, *batch, i);
   }
 }

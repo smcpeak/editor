@@ -7,6 +7,7 @@
 
 #include "textmcoord-map.h"            // module under test
 
+#include "line-count.h"                // PositiveLineCount
 #include "td-core.h"                   // TextDocumentCore
 
 #include "smbase/chained-cond.h"       // smbase::cc::{z_le_le_le, le_lt, z_le_lt}
@@ -112,12 +113,12 @@ public:      // data
   std::set<DocEntry> m_entries;
 
   // Number of lines if known.  Must be positive if set.
-  std::optional<int> m_numLines;
+  std::optional<PositiveLineCount> m_numLines;
 
 public:
   ~ReferenceMap() = default;
 
-  ReferenceMap(std::optional<int> numLines)
+  ReferenceMap(std::optional<PositiveLineCount> numLines)
     : m_entries(),
       IMEMBFP(numLines)
   {
@@ -136,7 +137,7 @@ public:
     m_entries.insert(entry);
   }
 
-  void clearEverything(std::optional<int> numLines)
+  void clearEverything(std::optional<PositiveLineCount> numLines)
   {
     m_entries.clear();
     m_numLines = numLines;
@@ -169,7 +170,7 @@ public:
   }
 
 
-  static TextMCoord adjustMC_insertLines(TextMCoord mc, LineIndex line, int count)
+  static TextMCoord adjustMC_insertLines(TextMCoord mc, LineIndex line, LineCount count)
   {
     // Push at or later lines down by `count`.
     if (mc.m_line >= line) {
@@ -192,7 +193,7 @@ public:
     return mc;
   }
 
-  TextMCoord adjustMC_deleteLines(TextMCoord mc, LineIndex line, int count) const
+  TextMCoord adjustMC_deleteLines(TextMCoord mc, LineIndex line, LineCount count) const
   {
     if (cc::le_lt(line, mc.m_line, line+count)) {
       // The endpoint is in the deleted region, so its column gets
@@ -202,7 +203,7 @@ public:
 
     // Pull later lines up, but not above `line`.
     if (mc.m_line > line) {
-      mc.m_line = LineIndex(std::max(line.get(), mc.m_line.get() - count));
+      mc.m_line.clampIncrease(-count, line);
     }
 
     // Except, the line must be less than `*m_numLines`.
@@ -226,7 +227,7 @@ public:
     return mc;
   }
 
-  void insertLines(LineIndex line, int count)
+  void insertLines(LineIndex line, LineCount count)
   {
     xassert(m_numLines.has_value());
 
@@ -265,7 +266,7 @@ public:
     return range;
   }
 
-  void deleteLines(LineIndex line, int count)
+  void deleteLines(LineIndex line, LineCount count)
   {
     xassert(m_numLines.has_value());
 
@@ -351,12 +352,12 @@ public:
     return ret;
   }
 
-  std::optional<int> getNumLinesOpt() const
+  std::optional<PositiveLineCount> getNumLinesOpt() const
   {
     return m_numLines;
   }
 
-  int getNumLines() const
+  PositiveLineCount getNumLines() const
   {
     xassert(m_numLines.has_value());
     return *m_numLines;
@@ -505,7 +506,7 @@ public:      // data
 public:      // methods
   ~MapPair() = default;
 
-  MapPair(std::optional<int> numLines)
+  MapPair(std::optional<PositiveLineCount> numLines)
     : m_sut(numLines),
       m_ref(numLines)
   {
@@ -531,7 +532,7 @@ public:      // methods
     m_ref.insertEntry(entry);
   }
 
-  void clearEverything(std::optional<int> numLines)
+  void clearEverything(std::optional<PositiveLineCount> numLines)
   {
     DIAG("m.clear();");
     m_sut.clearEverything(numLines);
@@ -545,14 +546,14 @@ public:      // methods
     m_ref.adjustForDocument(doc);
   }
 
-  void insertLines(LineIndex line, int count)
+  void insertLines(LineIndex line, LineCount count)
   {
     DIAG("m.insertLines(" << line << ", " << count << ");");
     m_sut.insertLines(line, count);
     m_ref.insertLines(line, count);
   }
 
-  void deleteLines(LineIndex line, int count)
+  void deleteLines(LineIndex line, LineCount count)
   {
     DIAG("m.deleteLines(" << line << ", " << count << ");");
     m_sut.deleteLines(line, count);
@@ -590,7 +591,7 @@ public:      // methods
     return m_sut.maxEntryLine();
   }
 
-  int getNumLines() const
+  PositiveLineCount getNumLines() const
   {
     return m_sut.getNumLines();
   }
@@ -694,7 +695,7 @@ void test_commentsExample()
   TEST_CASE("test_commentsExample");
 
   DIAG("Start with empty map.");
-  MapPair m(7 /*numLines*/);
+  MapPair m(PositiveLineCount(7) /*numLines*/);
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), true);
@@ -811,7 +812,7 @@ void test_commentsExample()
     ])");
 
   DIAG("Insert line at 3.");
-  m.insertLines(LineIndex(3), 1);
+  m.insertLines(LineIndex(3), LineCount(1));
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -876,7 +877,7 @@ void test_commentsExample()
     ])");
 
   DIAG("Delete line 5.");
-  m.deleteLines(LineIndex(5), 1);
+  m.deleteLines(LineIndex(5), LineCount(1));
   m.selfCheck();
   checkLineEntriesRoundtrip(m);
   EXPECT_EQ(m.empty(), false);
@@ -950,7 +951,7 @@ static TextMCoord tmc(int l, int b)
 // Insertions within a single line.
 void test_lineInsertions()
 {
-  MapPair m(1 /*numLines*/);
+  MapPair m(PositiveLineCount(1) /*numLines*/);
   m.selfCheck();
 
   DIAG("Make a span.");
@@ -1032,7 +1033,7 @@ void test_lineInsertions()
 // Insertions affecting a multi-line span.
 void test_multilineInsertions()
 {
-  MapPair m(2 /*numLines*/);
+  MapPair m(PositiveLineCount(2) /*numLines*/);
   m.selfCheck();
 
   DIAG("Make a span.");
@@ -1148,7 +1149,7 @@ void test_multilineInsertions()
 // Do some deletions within a single line.
 void test_lineDeletions()
 {
-  MapPair m(1 /*numLines*/);
+  MapPair m(PositiveLineCount(1) /*numLines*/);
   m.selfCheck();
 
   DIAG("Make a span.");
@@ -1289,7 +1290,7 @@ void test_lineDeletions()
 // testing.
 void test_multilineDeletions()
 {
-  MapPair m(7 /*numLines*/);
+  MapPair m(PositiveLineCount(7) /*numLines*/);
 
   m.insertEntry({tmcr(2,24, 4,1), 3});
   m.selfCheck();
@@ -1304,7 +1305,7 @@ void test_multilineDeletions()
   // 3
   // 4  )         <-- del two lines starting here
 
-  m.deleteLines(LineIndex(4), 2);
+  m.deleteLines(LineIndex(4), LineCount(2));
   m.selfCheck();
   EXPECT_EQ(allEntriesString(m),
     "{DocEntry[range:MCR(MC(2 24) MC(4 0)) value:3]}");
@@ -1322,7 +1323,7 @@ void test_multilineDeletions()
 // A specific scenario found through random testing.
 void test_multilineDeletion2()
 {
-  MapPair m(4 /*numLines*/);
+  MapPair m(PositiveLineCount(4) /*numLines*/);
 
   m.insertEntry({tmcr(0,21, 3,0), 3});
   m.selfCheck();
@@ -1335,7 +1336,7 @@ void test_multilineDeletion2()
   // 2
   // 3 )
 
-  m.deleteLines(LineIndex(0), 2);
+  m.deleteLines(LineIndex(0), LineCount(2));
   m.selfCheck();
   EXPECT_EQ(allEntriesString(m),
     "{DocEntry[range:MCR(MC(0 0) MC(1 0)) value:3]}");
@@ -1362,7 +1363,7 @@ void ensureValidLineIndex(MapPair &m, LineIndex line)
 {
   LineIndex maxLine = LineIndex(m.getNumLines() - 1);
   if (line > maxLine) {
-    m.insertLines(maxLine+1, line - maxLine);
+    m.insertLines(maxLine.succ(), line - maxLine);
   }
   xassert(line < m.getNumLines());
 }
@@ -1381,7 +1382,7 @@ void randomInsertEntry(MapPair &m)
 
   if (sm_random(7) == 0) {
     // Multi-line (rare).
-    endLine = startLine + 1 + sm_random(2);
+    endLine = startLine + LineDifference(1 + sm_random(2));
     endCol = randomColumn();
   }
   else {
@@ -1422,21 +1423,21 @@ void randomEdit(MapPair &m)
   }
 
   else if (c.check(1)) {
-    m.clearEverything(1);
+    m.clearEverything(PositiveLineCount(1));
     m.selfCheck();
     randomInsertMultipleEntries(m, 10);
   }
 
   else if (c.check(200)) {
     LineIndex line = randomLine();
-    int count = sm_random(3);
+    LineCount count(sm_random(3));
     ensureValidLineIndex(m, line.pred());
     m.insertLines(line, count);
   }
 
   else if (c.check(200)) {
     LineIndex line = randomLine();
-    int count = sm_random(3);
+    LineCount count(sm_random(3));
     ensureValidLineIndex(m, (line+count).pred());
     m.deleteLines(line, count);
   }
@@ -1470,7 +1471,7 @@ void test_randomOps()
   for (int outer=0; outer < outerLimit; ++outer) {
     EXN_CONTEXT_EXPR(outer);
 
-    MapPair m(1 /*numLines*/);
+    MapPair m(PositiveLineCount(1) /*numLines*/);
     m.selfCheck();
 
     randomInsertMultipleEntries(m, 10);
@@ -1490,26 +1491,26 @@ void test_randomOps()
 // Test issuing edit commands on top of an empty map.
 void test_editEmpty()
 {
-  MapPair m(20 /*numLines*/);
+  MapPair m(PositiveLineCount(20) /*numLines*/);
   m.selfCheck();
 
   m.insertLineBytes(tmc(13,13), 2);
   m.deleteLineBytes(tmc(13,31), 21);
-  m.insertLines(LineIndex(18), 1);
-  m.deleteLines(LineIndex(10), 2);
+  m.insertLines(LineIndex(18), LineCount(1));
+  m.deleteLines(LineIndex(10), LineCount(2));
 }
 
 
 // Issue with inserting right after the last range.
 void test_insertAfterLast()
 {
-  MapPair m(2 /*numLines*/);
+  MapPair m(PositiveLineCount(2) /*numLines*/);
 
   m.insertEntry({tmcr(1,4, 1,42), 2});
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), 1);
 
-  m.insertLines(LineIndex(2), 1);
+  m.insertLines(LineIndex(2), LineCount(1));
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), 1);
 }
@@ -1518,12 +1519,12 @@ void test_insertAfterLast()
 // Clearing should ensure `maxEntryLine()==-1`.
 void test_clear()
 {
-  MapPair m(2 /*numLines*/);
+  MapPair m(PositiveLineCount(2) /*numLines*/);
   m.insertEntry({tmcr(1,4, 1,42), 2});
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), 1);
 
-  m.clearEverything(2 /*numLines*/);
+  m.clearEverything(PositiveLineCount(2) /*numLines*/);
   m.selfCheck();
   EXPECT_EQ(m.maxEntryLine(), -1);
 }
@@ -1532,7 +1533,7 @@ void test_clear()
 // Another one found by random testing.
 void test_multilineDeletion3()
 {
-  MapPair m(5 /*numLines*/);
+  MapPair m(PositiveLineCount(5) /*numLines*/);
 
   m.insertEntry({tmcr(3,0, 4,8), 2});
 
@@ -1541,7 +1542,7 @@ void test_multilineDeletion3()
   // The issue here is we have a multiline deletion that ends just
   // before the line containing the endpoint.  Consequently, what was
   // a multiline range has to be converted to a single-line range.
-  m.deleteLines(LineIndex(3), 1);
+  m.deleteLines(LineIndex(3), LineCount(1));
 
   m.selfCheck();
 }
@@ -1550,14 +1551,14 @@ void test_multilineDeletion3()
 // Found by random testing.
 void test_multilineDeletion4()
 {
-  MapPair m(30 /*numLines*/);
+  MapPair m(PositiveLineCount(30) /*numLines*/);
 
   m.insertEntry({tmcr(19,11, 20,27), 3});
 
   VPVAL(toGDValue(m));
 
   // Multiline deletion that covers the entire span.
-  m.deleteLines(LineIndex(19), 2);
+  m.deleteLines(LineIndex(19), LineCount(2));
 
   VPVAL(toGDValue(m));
   m.selfCheck();
@@ -1569,7 +1570,7 @@ void test_multilineDeletion4()
 // code.
 void test_insertMakesLongLine()
 {
-  MapPair m(2 /*numLines*/);
+  MapPair m(PositiveLineCount(2) /*numLines*/);
 
   m.insertEntry({tmcr(0,94, 1,0), 3});
   m.selfCheck();
@@ -1610,7 +1611,7 @@ void test_parseLineEntry()
 
 void test_adjustForDocument()
 {
-  MapPair m(10 /*numLines*/);
+  MapPair m(PositiveLineCount(10) /*numLines*/);
 
   // Simple case of reducing the end coordinate within a line.
   m.insertEntry({tmcr(1,1, 1,42), 1});
@@ -1679,7 +1680,7 @@ void test_adjustForDocumentRandomized()
 
   for (int i=0; i < iters; ++i) {
     // Random diagnostics.
-    MapPair m(1 /*numLines*/);
+    MapPair m(PositiveLineCount(1) /*numLines*/);
     randomInsertMultipleEntries(m, 10);
 
     // Random document.
@@ -1701,7 +1702,7 @@ void test_adjustForDocumentRandomized()
 // another way to make this work the way I want.
 void test_deleteNearEnd()
 {
-  MapPair m(3 /*numLines*/);
+  MapPair m(PositiveLineCount(3) /*numLines*/);
 
   // This is supposed to represent a diagnostic that goes right to the
   // end of a file that has 3 lines total.
@@ -1715,7 +1716,7 @@ void test_deleteNearEnd()
   m.deleteLineBytes(tmc(1,8), 4);        // End of first line.
   m.deleteLineBytes(tmc(2,0), 6);        // Start of next line.
   m.deleteLineBytes(tmc(2,0), 13);       // Remainder of next line (for splice).
-  m.deleteLines(LineIndex(2), 1);        // Remove the next line.
+  m.deleteLines(LineIndex(2), LineCount(1));  // Remove the next line.
   m.insertLineBytes(tmc(1,8), 13);       // Put the spliced part back.
 
   // Now, the endpoint of the adjusted diagnostic should be on line 1.
@@ -1732,7 +1733,7 @@ void test_deleteNearEnd()
 // Ad-hoc reproduction of problematic sequences.
 void test_repro()
 {
-  MapPair m(2 /*numLines*/);
+  MapPair m(PositiveLineCount(2) /*numLines*/);
 
   return;
 }

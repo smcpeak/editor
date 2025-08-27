@@ -3,6 +3,9 @@
 
 #include "line-index.h"                // this module
 
+#include "line-count.h"                // LineCount
+#include "line-difference.h"           // LineDifference
+
 #include "smbase/compare-util-iface.h" // COMPARE_MEMBERS
 #include "smbase/gdvalue.h"            // gdv::{GDValue, GDVInteger}
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
@@ -16,6 +19,13 @@
 
 using namespace gdv;
 using namespace smbase;
+
+
+LineIndex::LineIndex(LineCount value)
+  : m_value(value.get())
+{
+  selfCheck();
+}
 
 
 void LineIndex::selfCheck() const
@@ -32,12 +42,14 @@ int LineIndex::compareTo(LineIndex const &b) const
 }
 
 
-LineIndex &LineIndex::operator--()
+bool LineIndex::operator<(LineDifference i) const
 {
-  xassert(isPositive());
-  --m_value;
-  selfCheck();
-  return *this;
+  return m_value < i.get();
+}
+
+bool LineIndex::operator<=(LineDifference i) const
+{
+  return m_value <= i.get();
 }
 
 
@@ -48,22 +60,31 @@ LineIndex &LineIndex::operator++()
 }
 
 
-LineIndex LineIndex::operator+(int delta) const
+LineIndex &LineIndex::operator--()
 {
-  return LineIndex(addWithOverflowCheck(m_value, delta));
+  xassert(isPositive());
+  --m_value;
+  selfCheck();
+  return *this;
 }
 
 
-LineIndex &LineIndex::operator+=(int delta)
+LineIndex LineIndex::operator+(LineDifference delta) const
+{
+  return LineIndex(addWithOverflowCheck(m_value, delta.get()));
+}
+
+
+LineIndex &LineIndex::operator+=(LineDifference delta)
 {
   return *this = *this + delta;
 }
 
 
-bool LineIndex::tryIncrease(int delta)
+bool LineIndex::tryIncrease(LineDifference delta)
 {
   try {
-    int newValue = addWithOverflowCheck(m_value, delta);
+    int newValue = addWithOverflowCheck(m_value, delta.get());
     if (newValue >= 0) {
       m_value = newValue;
       selfCheck();
@@ -79,35 +100,37 @@ bool LineIndex::tryIncrease(int delta)
 }
 
 
-void LineIndex::clampIncrease(int delta)
+void LineIndex::clampIncrease(
+  LineDifference delta, LineIndex limit)
 {
-  int newValue = addWithOverflowCheck(m_value, delta);
-  if (newValue >= 0) {
+  int newValue = addWithOverflowCheck(m_value, delta.get());
+  if (newValue >= limit.get()) {
     m_value = newValue;
   }
   else {
-    m_value = 0;
+    m_value = limit.get();
   }
 }
 
 
-LineIndex LineIndex::clampIncreased(int delta) const
+LineIndex LineIndex::clampIncreased(
+  LineDifference delta, LineIndex limit) const
 {
   LineIndex ret(*this);
-  ret.clampIncrease(delta);
+  ret.clampIncrease(delta, limit);
   return ret;
 }
 
 
 LineIndex LineIndex::succ() const
 {
-  return clampIncreased(+1);
+  return clampIncreased(LineDifference(+1));
 }
 
 
 LineIndex LineIndex::pred() const
 {
-  return clampIncreased(-1);
+  return clampIncreased(LineDifference(-1));
 }
 
 
@@ -118,11 +141,23 @@ LineIndex LineIndex::nzpred() const
 }
 
 
-int LineIndex::operator-(LineIndex const &b) const
+LineDifference LineIndex::operator-(LineIndex b) const
 {
   // Since both are non-negative, this cannot overflow, although it can
   // of course return a negative value.
-  return m_value - b.m_value;
+  return LineDifference(m_value - b.m_value);
+}
+
+
+LineIndex LineIndex::operator-(LineDifference b) const
+{
+  return LineIndex(m_value - b.get());
+}
+
+
+LineIndex &LineIndex::operator-=(LineDifference delta)
+{
+  return *this = *this - delta;
 }
 
 

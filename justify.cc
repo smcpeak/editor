@@ -171,7 +171,7 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
     }
   }
   LineIndex lowerEdge = originLineNumber;
-  while (lowerEdge+1 < tde.numLines()) {
+  while (lowerEdge.succ() < tde.numLines()) {
     if (properStartsWith(tde.getWholeLineString(lowerEdge.succ()), prefix)) {
       ++lowerEdge;
     }
@@ -192,8 +192,13 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
   justifyTextLines(justifiedContent, originalContent,
     desiredWidth - prefixColumnWidth(prefix));
 
+  // TODO: If the original and justified content are the same, do not
+  // actually perform the replacement.
+
   // Replace the content.
-  tde.deleteTextLRange(TextLCoord(upperEdge, 0), TextLCoord(lowerEdge+1, 0));
+  tde.deleteTextLRange(
+    TextLCoord(upperEdge, 0),
+    TextLCoord(lowerEdge.succ(), 0));
   for (int i=0; i < justifiedContent.length(); i++) {
     stringBuilder sb;
     sb << prefix << justifiedContent[i] << '\n';

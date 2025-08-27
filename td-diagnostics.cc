@@ -245,7 +245,7 @@ TextDocumentDiagnostics::TextDocumentDiagnostics(
 
 TextDocumentDiagnostics::TextDocumentDiagnostics(
   VersionNumber originVersion,
-  std::optional<int> numLines)
+  std::optional<PositiveLineCount> numLines)
   : IMEMBFP(originVersion),
     m_diagnostics(),
     m_rangeToDiagIndex(numLines)
@@ -277,7 +277,7 @@ bool TextDocumentDiagnostics::operator==(
 }
 
 
-std::optional<int> TextDocumentDiagnostics::getNumLinesOpt() const
+std::optional<PositiveLineCount> TextDocumentDiagnostics::getNumLinesOpt() const
 {
   return m_rangeToDiagIndex.getNumLinesOpt();
 }
@@ -301,7 +301,7 @@ int TextDocumentDiagnostics::maxDiagnosticLine() const
 }
 
 
-void TextDocumentDiagnostics::clearEverything(int numLines)
+void TextDocumentDiagnostics::clearEverything(PositiveLineCount numLines)
 {
   xassertPrecondition(numLines > 0);
 
@@ -442,7 +442,7 @@ TextDocumentDiagnostics::getAdjacentDiagnosticLocation(
 
 
 void TextDocumentDiagnostics::setNumLinesAndAdjustAccordingly(
-  int numLines)
+  PositiveLineCount numLines)
 {
   m_rangeToDiagIndex.setNumLinesAndAdjustAccordingly(numLines);
 }
@@ -455,12 +455,12 @@ void TextDocumentDiagnostics::adjustForDocument(
 }
 
 
-void TextDocumentDiagnostics::insertLines(LineIndex line, int count)
+void TextDocumentDiagnostics::insertLines(LineIndex line, PositiveLineCount count)
 {
   m_rangeToDiagIndex.insertLines(line, count);
 }
 
-void TextDocumentDiagnostics::deleteLines(LineIndex line, int count)
+void TextDocumentDiagnostics::deleteLines(LineIndex line, PositiveLineCount count)
 {
   m_rangeToDiagIndex.deleteLines(line, count);
 }
@@ -487,11 +487,11 @@ void TextDocumentDiagnostics::applyDocumentChange(
 {
   ASTSWITCHC(TextDocumentChange, &change) {
     ASTCASEC(TDC_InsertLine, insertLine) {
-      this->insertLines(insertLine->m_line, 1);
+      this->insertLines(insertLine->m_line, LineCount(1));
     }
 
     ASTNEXTC(TDC_DeleteLine, deleteLine) {
-      this->deleteLines(deleteLine->m_line, 1);
+      this->deleteLines(deleteLine->m_line, LineCount(1));
     }
 
     ASTNEXTC(TDC_InsertText, insertText) {
@@ -569,14 +569,14 @@ NamedTextDocument const *TextDocumentDiagnosticsUpdater::getDocument() const
 void TextDocumentDiagnosticsUpdater::observeInsertLine(TextDocumentCore const &doc, LineIndex line) noexcept
 {
   GENERIC_CATCH_BEGIN
-  m_diagnostics->insertLines(line, 1);
+  m_diagnostics->insertLines(line, LineCount(1));
   GENERIC_CATCH_END
 }
 
 void TextDocumentDiagnosticsUpdater::observeDeleteLine(TextDocumentCore const &doc, LineIndex line) noexcept
 {
   GENERIC_CATCH_BEGIN
-  m_diagnostics->deleteLines(line, 1);
+  m_diagnostics->deleteLines(line, LineCount(1));
   GENERIC_CATCH_END
 }
 

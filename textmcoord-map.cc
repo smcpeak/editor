@@ -760,7 +760,8 @@ TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
     m_lineData(),
     DMEMB(m_numLines)
 {
-  m_lineData.insertManyZeroes(LineIndex(0), obj.m_lineData.length());
+  m_lineData.insertManyZeroes(
+    LineIndex(0), LineCount(obj.m_lineData.length()));
   for (LineIndex i(0); i < obj.m_lineData.length(); ++i) {
     if (LineData const *lineData = obj.getLineDataC(i)) {
       m_lineData.set(i, new LineData(*lineData));
@@ -772,7 +773,7 @@ TextMCoordMap::TextMCoordMap(TextMCoordMap const &obj)
 
 
 // Assert that `opt` is positive if it has a value.
-static void xassertOptPositive(std::optional<int> const &opt)
+static void xassertOptPositive(std::optional<PositiveLineCount> const &opt)
 {
   if (opt.has_value()) {
     xassert(*opt > 0);
@@ -780,7 +781,7 @@ static void xassertOptPositive(std::optional<int> const &opt)
 }
 
 
-TextMCoordMap::TextMCoordMap(std::optional<int> numLines)
+TextMCoordMap::TextMCoordMap(std::optional<PositiveLineCount> numLines)
   : m_values(),
     m_lineData(),
     IMEMBFP(numLines)
@@ -903,7 +904,7 @@ void TextMCoordMap::insertEntry(DocEntry entry)
       m_startsHere.insert(
         Boundary(range.m_start.m_byteIndex, entry.m_value));
 
-    for (LineIndex line = range.m_start.m_line+1;
+    for (LineIndex line = range.m_start.m_line.succ();
          line < range.m_end.m_line;
          ++line) {
       getOrCreateLineData(line)->
@@ -936,7 +937,8 @@ void TextMCoordMap::clearEntries()
 }
 
 
-void TextMCoordMap::clearEverything(std::optional<int> numLines)
+void TextMCoordMap::clearEverything(
+  std::optional<PositiveLineCount> numLines)
 {
   xassertOptPositive(numLines);
 
@@ -947,20 +949,20 @@ void TextMCoordMap::clearEverything(std::optional<int> numLines)
 }
 
 
-void TextMCoordMap::confineLineIndices(int maxNumLines)
+void TextMCoordMap::confineLineIndices(PositiveLineCount maxNumLines)
 {
   xassertPrecondition(maxNumLines > 0);
 
-  int numDiagLines = maxEntryLine() + 1;
+  LineCount numDiagLines(maxEntryLine() + 1);
 
-  int excessLines = numDiagLines - maxNumLines;
+  LineDifference excessLines = numDiagLines - maxNumLines;
   if (excessLines > 0) {
     // Adjust by deleting extra lines.
     TRACE1("adjustForDocument: deleting " << excessLines <<
            " lines at the end of the (virtual) document so its" <<
            " line count drops from " << numDiagLines <<
            " to " << maxNumLines);
-    deleteLines(LineIndex(maxNumLines-1), excessLines);
+    deleteLines(LineIndex(maxNumLines.get() - 1), excessLines);
 
     // After the deletion, the number of lines according to the
     // diagnostics should be the same as the number according to the
@@ -986,14 +988,15 @@ void TextMCoordMap::adjustForDocument(TextDocumentCore const &doc)
 }
 
 
-void TextMCoordMap::setNumLinesAndAdjustAccordingly(int numLines)
+void TextMCoordMap::setNumLinesAndAdjustAccordingly(
+  PositiveLineCount numLines)
 {
   confineLineIndices(numLines);
   m_numLines = numLines;
 }
 
 
-void TextMCoordMap::insertLines(LineIndex line, int count)
+void TextMCoordMap::insertLines(LineIndex line, LineCount count)
 {
   xassert(canTrackUpdates());
 
@@ -1042,7 +1045,7 @@ void TextMCoordMap::insertLines(LineIndex line, int count)
 }
 
 
-void TextMCoordMap::deleteLines(LineIndex line, int count)
+void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
 {
   xassert(canTrackUpdates());
 
@@ -1195,13 +1198,13 @@ int TextMCoordMap::maxEntryLine() const
 }
 
 
-std::optional<int> TextMCoordMap::getNumLinesOpt() const
+std::optional<PositiveLineCount> TextMCoordMap::getNumLinesOpt() const
 {
   return m_numLines;
 }
 
 
-int TextMCoordMap::getNumLines() const
+PositiveLineCount TextMCoordMap::getNumLines() const
 {
   xassert(canTrackUpdates());
 

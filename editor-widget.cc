@@ -124,7 +124,7 @@ INIT_TRACE("editor-widget");
 // Distance below the baseline to draw an underline.
 int const UNDERLINE_OFFSET = 2;
 
-// Number of columns to move for Ctrl+Shift+<arrow>.
+// Number of lines or columns to move for Ctrl+Shift+<arrow>.
 int const CTRL_SHIFT_DISTANCE = 10;
 
 // Desired line/column gap between search match and screen edge.
@@ -437,7 +437,7 @@ void EditorWidget::setDocumentFile(NamedTextDocument *file)
     // cursor is near the bottom edge, scroll a little so it becomes
     // visible.
     m_editor->scrollToCursorIfBarelyOffscreen(
-      3 /*howFar*/, 2 /*edgeGap*/);
+      LineDifference(3) /*howFar*/, 2 /*edgeGap*/);
   }
 
   // This deallocates the old 'TextSearch'.
@@ -893,7 +893,7 @@ void EditorWidget::computeOffscreenMatchIndicators()
 
 
 void EditorWidget::commandMoveFirstVisibleAndCursor(
-  int deltaLine, int deltaCol)
+  LineDifference deltaLine, int deltaCol)
 {
   COMMAND_MU(EC_MoveFirstVisibleAndCursor, deltaLine, deltaCol);
 }
@@ -1817,27 +1817,27 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
       }
 
       case Qt::Key_W:
-        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, -1, 0);
+        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, LineDifference(-1), 0);
         break;
 
       case Qt::Key_Z:
-        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, +1, 0);
+        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, LineDifference(+1), 0);
         break;
 
       case Qt::Key_Up:
-        commandMoveFirstVisibleAndCursor(-1, 0);
+        commandMoveFirstVisibleAndCursor(LineDifference(-1), 0);
         break;
 
       case Qt::Key_Down:
-        commandMoveFirstVisibleAndCursor(+1, 0);
+        commandMoveFirstVisibleAndCursor(LineDifference(+1), 0);
         break;
 
       case Qt::Key_Left:
-        commandMoveFirstVisibleAndCursor(0, -1);
+        commandMoveFirstVisibleAndCursor(LineDifference(0), -1);
         break;
 
       case Qt::Key_Right:
-        commandMoveFirstVisibleAndCursor(0, +1);
+        commandMoveFirstVisibleAndCursor(LineDifference(0), +1);
         break;
 
       case Qt::Key_B:      commandCursorLeft(false); break;
@@ -1954,19 +1954,19 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
     switch (k->key()) {
       case Qt::Key_Up:
-        commandMoveFirstVisibleAndCursor(-CTRL_SHIFT_DISTANCE, 0);
+        commandMoveFirstVisibleAndCursor(LineDifference(-CTRL_SHIFT_DISTANCE), 0);
         break;
 
       case Qt::Key_Down:
-        commandMoveFirstVisibleAndCursor(+CTRL_SHIFT_DISTANCE, 0);
+        commandMoveFirstVisibleAndCursor(LineDifference(+CTRL_SHIFT_DISTANCE), 0);
         break;
 
       case Qt::Key_Left:
-        commandMoveFirstVisibleAndCursor(0, -CTRL_SHIFT_DISTANCE);
+        commandMoveFirstVisibleAndCursor(LineDifference(0), -CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_Right:
-        commandMoveFirstVisibleAndCursor(0, +CTRL_SHIFT_DISTANCE);
+        commandMoveFirstVisibleAndCursor(LineDifference(0), +CTRL_SHIFT_DISTANCE);
         break;
 
       case Qt::Key_PageUp:
@@ -2287,7 +2287,7 @@ QRect EditorWidget::getCursorRect() const
 {
   return QRect(
     (cursorCol() - this->firstVisibleCol()) * m_fontWidth,
-    (cursorLine() - this->firstVisibleLine()) * m_fontHeight,
+    (cursorLine() - this->firstVisibleLine()).get() * m_fontHeight,
     m_fontWidth,
     m_fontHeight);
 }
@@ -2365,12 +2365,12 @@ bool EditorWidget::toggleLSPUpdateContinuously()
 
 void EditorWidget::commandCursorLeft(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, 0, -1, shift);
+  COMMAND_MU(EC_MoveCursorByCell, LineDifference(0), -1, shift);
 }
 
 void EditorWidget::commandCursorRight(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, 0, +1, shift);
+  COMMAND_MU(EC_MoveCursorByCell, LineDifference(0), +1, shift);
 }
 
 void EditorWidget::commandCursorHome(bool shift)
@@ -2387,12 +2387,12 @@ void EditorWidget::commandCursorEnd(bool shift)
 
 void EditorWidget::commandCursorUp(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, -1, 0, shift);
+  COMMAND_MU(EC_MoveCursorByCell, LineDifference(-1), 0, shift);
 }
 
 void EditorWidget::commandCursorDown(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, +1, 0, shift);
+  COMMAND_MU(EC_MoveCursorByCell, LineDifference(+1), 0, shift);
 }
 
 void EditorWidget::commandCursorPageUp(bool shift)
@@ -3054,12 +3054,12 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, LineIndex line
   // observers ought to know about the mechanism.  But for now at least
   // I will compensate here by changing the line number to match what I
   // think of as the conceptually inserted line.
-  line.clampIncrease(-1);
+  line.clampIncrease(LineDifference(-1));
 
   if (line <= m_editor->cursor().m_line) {
-    m_editor->moveCursorBy(+1, 0);
+    m_editor->moveCursorBy(LineDifference(+1), 0);
     if (keepCursorStationary) {
-      m_editor->moveFirstVisibleBy(+1, 0);
+      m_editor->moveFirstVisibleBy(LineDifference(+1), 0);
     }
     else {
       m_editor->scrollToCursor();
@@ -3067,7 +3067,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, LineIndex line
   }
 
   if (m_editor->markActive() && line <= m_editor->mark().m_line) {
-    m_editor->moveMarkBy(+1, 0);
+    m_editor->moveMarkBy(LineDifference(+1), 0);
   }
 
   redrawAfterContentChange();
@@ -3085,12 +3085,12 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, LineIndex line
   INITIATING_DOCUMENT_CHANGE();
 
   if (line < m_editor->cursor().m_line) {
-    m_editor->moveCursorBy(-1, 0);
-    m_editor->moveFirstVisibleBy(-1, 0);
+    m_editor->moveCursorBy(LineDifference(-1), 0);
+    m_editor->moveFirstVisibleBy(LineDifference(-1), 0);
   }
 
   if (m_editor->markActive() && line < m_editor->mark().m_line) {
-    m_editor->moveMarkBy(-1, 0);
+    m_editor->moveMarkBy(LineDifference(-1), 0);
   }
 
   redrawAfterContentChange();
@@ -3272,7 +3272,8 @@ std::optional<std::string> EditorWidget::innerCommand(
 
     ASTNEXTC(EC_MoveCursorByPage, ec) {
       m_editor->turnSelection(ec->m_select);
-      m_editor->moveFirstVisibleAndCursor(ec->m_sign * this->visLines(), 0);
+      m_editor->moveFirstVisibleAndCursor(
+        LineDifference(ec->m_sign * this->visLines()), 0);
       redraw();
     }
 
@@ -3302,7 +3303,7 @@ std::optional<std::string> EditorWidget::innerCommand(
       // TODO: Encapsulate this as an editor method.
       m_editor->turnSelection(ec->m_select);
       LineIndex line = m_editor->cursor().m_line;
-      m_editor->setCursor(m_editor->lineEndLCoord(line+1));
+      m_editor->setCursor(m_editor->lineEndLCoord(line.succ()));
       scrollToCursor();
     }
 

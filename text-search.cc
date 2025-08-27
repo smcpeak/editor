@@ -6,6 +6,7 @@
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
 #include "fasttime.h"                  // fastTimeMilliseconds
+#include "line-difference.h"           // LineDifference
 
 // smqtutil
 #include "smqtutil/qtutil.h"           // toQString(QString), operator<<(QString)
@@ -256,6 +257,12 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
 }
 
 
+void TextSearch::recomputeLine(LineIndex line)
+{
+  recomputeLineRange(line, line.succ());
+}
+
+
 void TextSearch::observeInsertLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -459,7 +466,8 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
   // Normalize coordinates.
   range.rectify();
 
-  // Direction of travel.
+  // Direction of travel.  (This is applied to both lines and bytes, so
+  // it is not a `LineDifference`.)
   int inc = (reverse? -1 : +1);
 
   // Consider line with range start.
@@ -515,7 +523,7 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
   }
 
   // Consider other lines.
-  if (!range.m_start.m_line.tryIncrease(inc)) {
+  if (!range.m_start.m_line.tryIncrease(LineDifference(inc))) {
     return false;
   }
   while (reverse? true /*tryIncrease does the check*/ :
@@ -535,7 +543,7 @@ bool TextSearch::nextMatch(bool reverse, TextMCoordRange &range /*INOUT*/) const
     }
 
     // Keep looking on subsequent lines.
-    if (!range.m_start.m_line.tryIncrease(inc)) {
+    if (!range.m_start.m_line.tryIncrease(LineDifference(inc))) {
       return false;
     }
   }

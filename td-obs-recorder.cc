@@ -45,7 +45,7 @@ TextDocumentObservationRecorder::VersionDetails::VersionDetails(
 
 
 TextDocumentObservationRecorder::VersionDetails::VersionDetails(
-  VersionNumber versionNumber, int numLines)
+  VersionNumber versionNumber, LineCount numLines)
   : IMEMBFP(versionNumber),
     IMEMBFP(numLines),
     m_hasDiagnostics(false),
@@ -188,7 +188,7 @@ auto TextDocumentObservationRecorder::getNoDiagsVersions() const
 void TextDocumentObservationRecorder::beginTrackingCurrentDoc()
 {
   VersionNumber version = m_document.getVersionNumber();
-  int numLines = m_document.numLines();
+  PositiveLineCount numLines = m_document.numLines();
 
   if (!mapInsertMove(m_versionToDetails,
                      version,

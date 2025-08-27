@@ -94,7 +94,7 @@ void appendLine(TextDocumentCore &tdc, char const *text)
 {
   // There is always a line at the end without a newline terminator.  We
   // insert above it.
-  int line = tdc.numLines()-1;
+  int line = tdc.numLines().get() - 1;
 
   insLine(tdc, line, 0, text);
 }
