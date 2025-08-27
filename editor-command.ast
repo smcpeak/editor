@@ -101,6 +101,9 @@ class EditorCommand {
   // character is indented.  If nothing is selected, do nothing.
   -> EC_BlockIndent(int m_amt);
 
+  // Justify text near the cursor to `desiredWidth`.
+  -> EC_JustifyNearCursor(int desiredWidth);
+
   // ---------------------------- Clipboard ----------------------------
   // Copy selected text to the clipboard.
   -> EC_Copy();

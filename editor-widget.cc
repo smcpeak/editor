@@ -2557,20 +2557,11 @@ void EditorWidget::commandBlockIndent(int amt)
 
 void EditorWidget::editJustifyParagraph()
 {
+  // TODO: Factor `editSafetyCheck` followed by `COMMAND_MU`.
   if (!editSafetyCheck()) {
     return;
   }
-  if (selectEnabled()) {
-    // TODO: This.
-    QMessageBox::information(this, "Unimplemented",
-      "Unimplemented: justification of selected region.");
-  }
-  else {
-    INITIATING_DOCUMENT_CHANGE();
-    TDE_HistoryGrouper grouper(*m_editor);
-    m_editor->justifyNearCursor(m_softMarginColumn);
-    this->redrawAfterContentChange();
-  }
+  COMMAND_MU(EC_JustifyNearCursor, m_softMarginColumn);
 }
 
 
@@ -3412,6 +3403,17 @@ std::optional<std::string> EditorWidget::innerCommand(
 
     ASTNEXTC(EC_BlockIndent, ec) {
       if (m_editor->blockIndent(ec->m_amt)) {
+        redrawAfterContentChange();
+      }
+    }
+
+    ASTNEXTC(EC_JustifyNearCursor, ec) {
+      if (selectEnabled()) {
+        // TODO: This.
+        return "Unimplemented: justification of selected region.";
+      }
+      else {
+        m_editor->justifyNearCursor(ec->desiredWidth);
         redrawAfterContentChange();
       }
     }
