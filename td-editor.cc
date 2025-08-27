@@ -11,6 +11,7 @@
 // smbase
 #include "smbase/array.h"              // Array
 #include "smbase/chained-cond.h"       // smbase::cc::{le_le, lt_le}
+#include "smbase/codepoint.h"          // isSpaceOrTab
 #include "smbase/datetime.h"           // DateTimeSeconds
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/sm-swap.h"            // swap

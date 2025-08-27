@@ -9,6 +9,7 @@
 // smbase
 #include "smbase/array.h"              // Array
 #include "smbase/chained-cond.h"       // smbase::cc::{z_le_lt, z_le_le}
+#include "smbase/codepoint.h"          // isSpaceOrTab
 #include "smbase/gdvalue-optional.h"   // gdv::GDValue(std::optional)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/objcount.h"           // CheckObjectCount

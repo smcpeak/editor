@@ -435,13 +435,6 @@ public:      // types
   for (LineIndex indexVar(0); indexVar < (doc).numLines(); ++indexVar)
 
 
-// TODO: Move to `codepoint` module.
-inline bool isSpaceOrTab(int c)
-{
-  return c == ' ' || c == '\t';
-}
-
-
 // Interface for observing changes to a TextDocumentCore.
 //
 // All methods have 'NOEXCEPT'.  From the perspective of the observee,
