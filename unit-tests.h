@@ -52,6 +52,7 @@ void test_textcategory(CmdlineArgsSpan args);
 void test_textmcoord_map(CmdlineArgsSpan args);
 void test_uri_util(CmdlineArgsSpan args);
 void test_vfs_connections(CmdlineArgsSpan args);
+void test_wrapped_integer(CmdlineArgsSpan args);
 
 
 #endif // EDITOR_UNIT_TESTS_H

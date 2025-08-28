@@ -295,6 +295,7 @@ UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
 UNIT_TESTS_OBJS += vfs-connections-test.moc.o
 UNIT_TESTS_OBJS += vfs-connections-test.o
+UNIT_TESTS_OBJS += wrapped-integer-test.o
 
 unit-tests.exe: $(UNIT_TESTS_OBJS) $(GUI_LIBRARIES)
 	@# I link with `GUI_LDFLAGS` because lots of modules that need

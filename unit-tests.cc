@@ -81,6 +81,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(td_line);              // deps: (none)
   RUN_TEST(textcategory);         // deps: (none)
   RUN_TEST(uri_util);             // deps: (none)
+  RUN_TEST(wrapped_integer);
 
   // Deps only on things that do not have their own tests.
   RUN_TEST(doc_type_detect);      // deps: doc-name
