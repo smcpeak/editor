@@ -4,6 +4,7 @@
 #include "unit-tests.h"                // decl for my entry point
 #include "line-index.h"                // module under test
 
+#include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
 
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, XGDValueError}

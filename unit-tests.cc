@@ -86,6 +86,8 @@ static void entry(int argc, char **argv)
   RUN_TEST(doc_type_detect);      // deps: doc-name
   RUN_TEST(range_text_repl);      // deps: textmcoord
 
+  RUN_TEST(line_count);           // deps: line-difference
+
   // SCC: history, td, td-core
   RUN_TEST(td_core);              // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord
   RUN_TEST(td);                   // deps: history, line-index, range-text-repl, td-core, textmcoord

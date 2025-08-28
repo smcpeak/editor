@@ -1354,7 +1354,10 @@ bool TextDocumentEditor::blockIndent(int amt)
        range.m_end.m_line.pred() :
        range.m_end.m_line);
 
-  this->indentLines(range.m_start.m_line, endLine - range.m_start.m_line + 1, amt);
+  this->indentLines(
+    range.m_start.m_line,
+    LineCount(endLine - range.m_start.m_line + 1),
+    amt);
 
   return true;
 }

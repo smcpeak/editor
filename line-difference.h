@@ -66,7 +66,7 @@ public:      // methods
   // I think omitting this in `LineIndex` was a mistake.  It is
   // sufficiently explicit.
   void set(int value)
-    { m_value = value; }
+    { m_value = value; selfCheck(); }
 
   // Compare in the usual order for integers.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineDifference);
@@ -106,8 +106,8 @@ public:      // methods
   // Returns a GDV integer.
   operator gdv::GDValue() const;
 
-  // Expects an integer, throws `XGDValueError` if it is negative or
-  // too large to represent.
+  // Expects an integer, throws `XGDValueError` if it is too large to
+  // represent.
   explicit LineDifference(gdv::GDValueParser const &p);
 
   // Write using `os << m_value`.

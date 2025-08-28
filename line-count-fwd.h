@@ -6,15 +6,11 @@
 #ifndef EDITOR_LINE_COUNT_FWD_H
 #define EDITOR_LINE_COUNT_FWD_H
 
-#include "line-difference-fwd.h"       // LineDifference
-
-// A non-negative `LineDifference`.
-//
-// My plan is to make a `LineCount` class that only holds non-negative
-// values, but for the moment I will just use this alias.
-using LineCount = LineDifference;
+class LineCount;
 
 // A positive `LineDifference`.
-using PositiveLineCount = LineDifference;
+//
+// TODO: Make this a real class too.
+using PositiveLineCount = LineCount;
 
 #endif // EDITOR_LINE_COUNT_FWD_H

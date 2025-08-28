@@ -24,6 +24,7 @@ void test_editor_strutil(CmdlineArgsSpan args);
 void test_gap(CmdlineArgsSpan args);
 void test_hashcomment_hilite(CmdlineArgsSpan args);
 void test_justify(CmdlineArgsSpan args);
+void test_line_count(CmdlineArgsSpan args);
 void test_line_difference(CmdlineArgsSpan args);
 void test_line_index(CmdlineArgsSpan args);
 void test_lsp_client(CmdlineArgsSpan args);

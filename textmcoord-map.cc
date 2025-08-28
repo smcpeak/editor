@@ -954,14 +954,14 @@ void TextMCoordMap::confineLineIndices(PositiveLineCount maxNumLines)
 
   LineCount numDiagLines(maxEntryLine() + 1);
 
-  LineDifference excessLines = numDiagLines - maxNumLines;
+  LineDifference const excessLines = numDiagLines - maxNumLines;
   if (excessLines > 0) {
     // Adjust by deleting extra lines.
     TRACE1("adjustForDocument: deleting " << excessLines <<
            " lines at the end of the (virtual) document so its" <<
            " line count drops from " << numDiagLines <<
            " to " << maxNumLines);
-    deleteLines(LineIndex(maxNumLines.get() - 1), excessLines);
+    deleteLines(LineIndex(maxNumLines.get() - 1), LineCount(excessLines));
 
     // After the deletion, the number of lines according to the
     // diagnostics should be the same as the number according to the
