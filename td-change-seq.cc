@@ -126,7 +126,7 @@ TextDocumentChangeSequence makeRandomChange(
 
     std::optional<int> prevLineBytes;
     if (line.get() == doc.numLines()) {
-      prevLineBytes = doc.lineLengthBytes(line.nzpred());
+      prevLineBytes = doc.lineLengthBytes(line.pred());
     }
 
     seq.append(std::make_unique<TDC_InsertLine>(
@@ -145,7 +145,7 @@ TextDocumentChangeSequence makeRandomChange(
       // Then erase it.
       std::optional<int> prevLineBytes;
       if (line == doc.lastLineIndex()) {
-        prevLineBytes = doc.lineLengthBytes(line.nzpred());
+        prevLineBytes = doc.lineLengthBytes(line.pred());
       }
       seq.append(std::make_unique<TDC_DeleteLine>(
         line, prevLineBytes));

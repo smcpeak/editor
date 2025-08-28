@@ -111,7 +111,7 @@ LexerState LexHighlighter::getPreviousLineSavedState(LineIndex line) const
     return LS_INITIAL;
   }
   else {
-    return (LexerState)savedState.get(line.nzpred());
+    return (LexerState)savedState.get(line.pred());
   }
 }
 

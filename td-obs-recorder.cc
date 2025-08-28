@@ -299,7 +299,7 @@ void TextDocumentObservationRecorder::observeInsertLine(
     if (line == doc.lastLineIndex()) {
       // We just inserted a new last line.  (`doc` already has the
       // change applied to it).
-      prevLineBytes = doc.lineLengthBytes(line.nzpred());
+      prevLineBytes = doc.lineLengthBytes(line.pred());
     }
 
     addObservation(
@@ -319,7 +319,7 @@ void TextDocumentObservationRecorder::observeDeleteLine(
     std::optional<int> prevLineBytes;
     if (line.get() == doc.numLines()) {
       // We just deleted the last line.
-      prevLineBytes = doc.lineLengthBytes(line.nzpred());
+      prevLineBytes = doc.lineLengthBytes(line.pred());
     }
 
     addObservation(

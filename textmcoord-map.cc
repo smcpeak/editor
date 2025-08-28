@@ -1009,7 +1009,7 @@ void TextMCoordMap::insertLines(LineIndex line, LineCount count)
   // Above the insertion point.
   LineData const * NULLABLE lineAbove =
     line.isPositive()?
-      getLineDataC(line.nzpred()) :
+      getLineDataC(line.pred()) :
       nullptr;
 
   // Insert blank entries in the array.
@@ -1106,7 +1106,7 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
     // This test of `m_numLines` is the primary reason it exists.
     line < *m_numLines?
       getOrCreateLineData(line) :          // Line after deletion range.
-      getOrCreateLineData(line.nzpred());  // Line before deletion range.
+      getOrCreateLineData(line.pred());    // Line before deletion range.
 
   for (SingleLineSpan const &span : singleLineSpans) {
     recipientLine->m_singleLineSpans.insert(

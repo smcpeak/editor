@@ -271,10 +271,10 @@ void test_succ_pred()
   EXPECT_EQ(i1.predClamped().get(), 0);
   EXPECT_EQ(i2.predClamped().get(), 1);
 
-  EXPECT_EXN_SUBSTR(i0.nzpred(),
+  EXPECT_EXN_SUBSTR(i0.pred(),
     XAssert, "isPositive");
-  EXPECT_EQ(i1.nzpred().get(), 0);
-  EXPECT_EQ(i2.nzpred().get(), 1);
+  EXPECT_EQ(i1.pred().get(), 0);
+  EXPECT_EQ(i2.pred().get(), 1);
 }
 
 
