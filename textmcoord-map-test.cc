@@ -209,7 +209,7 @@ public:
     // Except, the line must be less than `*m_numLines`.
     xassert(mc.m_line <= *m_numLines);
     if (mc.m_line.get() == *m_numLines) {
-      mc.m_line = LineIndex(m_numLines->nzpred());
+      mc.m_line = LineIndex(m_numLines->pred());
     }
 
     return mc;
@@ -1371,7 +1371,7 @@ int randomColumn()
 // Append lines to ensure `line` is a valid index.
 void ensureValidLineIndex(MapPair &m, LineIndex line)
 {
-  LineIndex maxLine = LineIndex(m.getNumLines().nzpred());
+  LineIndex maxLine = LineIndex(m.getNumLines().pred());
   if (line > maxLine) {
     m.insertLines(maxLine.succ(), PositiveLineCount(line - maxLine));
   }

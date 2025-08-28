@@ -4,6 +4,8 @@
 #include "unit-tests.h"                // decl for my entry point
 #include "line-count.h"                // module under test
 
+#include "line-difference.h"           // LineDifference
+
 #include "smbase/exc.h"                // smbase::XAssert
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, XGDValueError}
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -56,6 +58,18 @@ void test_ctor()
 }
 
 
+void test_ctor_LineDifference()
+{
+  TEST_CASE("test_ctor_LineDifference");
+
+  LineCount c(LineDifference(3));
+  EXPECT_EQ(c.get(), 3);
+
+  EXPECT_EXN_SUBSTR(LineCount(LineDifference(-1)),
+    XAssert, "Value violates constraint for LineCount: -1.");
+}
+
+
 void test_assignment()
 {
   TEST_CASE("test_assignment");
@@ -80,7 +94,7 @@ void test_set_get()
   EXPECT_EQ(d.get(), 42);
 
   EXPECT_EXN_SUBSTR(d.set(-7),
-    XAssert, "m_value >= 0");
+    XAssert, "Value violates constraint for LineCount: -7.");
 }
 
 
@@ -203,21 +217,21 @@ void test_unary()
 }
 
 
-void test_nzpred()
+void test_pred()
 {
-  TEST_CASE("test_nzpred");
+  TEST_CASE("test_pred");
 
   LineCount d(2);
   EXPECT_EQ(d.get(), 2);
 
-  d = d.nzpred();
+  d = d.pred();
   EXPECT_EQ(d.get(), 1);
 
-  d = d.nzpred();
+  d = d.pred();
   EXPECT_EQ(d.get(), 0);
 
-  EXPECT_EXN_SUBSTR(d.nzpred(),
-    XAssert, "isPositive");
+  EXPECT_EXN_SUBSTR(d.pred(),
+    XAssert, "Value violates constraint for LineCount: -1.");
 }
 
 
@@ -231,13 +245,13 @@ void test_gdv()
   EXPECT_EQ(d, c);
 
   EXPECT_EXN_SUBSTR(LineCount(GDValueParser(GDValue(-2))),
-    XGDValueError, "negative: -2");
+    XGDValueError, "Invalid LineCount: -2.");
   EXPECT_EXN_SUBSTR(LineCount(GDValueParser(GDValue("abc"))),
     XGDValueError, "Expected integer, not string.");
   EXPECT_EXN_SUBSTR(
     LineCount(GDValueParser(GDValue(
       GDVInteger::fromDigits("123456789012345678901234567890")))),
-    XGDValueError, "out of range: 123456789012345678901234567890.");
+    XGDValueError, "Out of range for LineCount: 123456789012345678901234567890.");
 }
 
 
@@ -254,6 +268,7 @@ CLOSE_ANONYMOUS_NAMESPACE
 void test_line_count(CmdlineArgsSpan args)
 {
   test_ctor();
+  test_ctor_LineDifference();
   test_assignment();
   test_set_get();
   test_bool_conversion();
@@ -261,7 +276,7 @@ void test_line_count(CmdlineArgsSpan args)
   test_arithmetic();
   test_comparisons();
   test_unary();
-  test_nzpred();
+  test_pred();
   test_gdv();
   test_write();
 }
