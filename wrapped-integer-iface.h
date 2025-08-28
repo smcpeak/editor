@@ -141,7 +141,6 @@ public:      // methods
   Derived operator++(int);
 
   // ---------------------- Subtraction/inversion ----------------------
-  // Inversion widens to the difference type.
   Derived operator-() const;
   Derived operator-(Derived delta) const;
 
