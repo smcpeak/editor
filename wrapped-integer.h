@@ -12,6 +12,7 @@
 #include "smbase/compare-util.h"       // smbase::compare
 #include "smbase/gdvalue.h"            // gdv::GDValue [n]
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser [n]
+#include "smbase/overflow.h"           // addWithOverflowCheck
 #include "smbase/xassert.h"            // xassert, xfailure_stringbc
 
 #include <iostream>                    // std::ostream
@@ -60,21 +61,21 @@ Derived WrappedInteger<Derived>::operator+() const
 template <typename Derived>
 Derived WrappedInteger<Derived>::operator+(Derived delta) const
 {
-  return Derived(derivedC().get() + delta.get());
+  return Derived(addWithOverflowCheck(derivedC().get(), delta.get()));
 }
 
 
 template <typename Derived>
 Derived WrappedInteger<Derived>::succ() const
 {
-  return Derived(derivedC().get() + 1);
+  return Derived(addWithOverflowCheck(derivedC().get(), 1));
 }
 
 
 template <typename Derived>
 Derived &WrappedInteger<Derived>::operator+=(Derived delta)
 {
-  derived().set(derivedC().get() + delta.get());
+  derived().set(addWithOverflowCheck(derivedC().get(), delta.get()));
   return derived();
 }
 
@@ -82,7 +83,7 @@ Derived &WrappedInteger<Derived>::operator+=(Derived delta)
 template <typename Derived>
 Derived &WrappedInteger<Derived>::operator++()
 {
-  derived().set(derivedC().get() + 1);
+  derived().set(addWithOverflowCheck(derivedC().get(), 1));
   return derived();
 }
 
@@ -91,7 +92,7 @@ template <typename Derived>
 Derived WrappedInteger<Derived>::operator++(int)
 {
   Derived ret(derivedC());
-  derived().set(derivedC().get() + 1);
+  derived().set(addWithOverflowCheck(derivedC().get(), 1));
   return ret;
 }
 
@@ -100,28 +101,28 @@ Derived WrappedInteger<Derived>::operator++(int)
 template <typename Derived>
 Derived WrappedInteger<Derived>::operator-() const
 {
-  return Derived(- derivedC().get());
+  return Derived(subtractWithOverflowCheck(0, derivedC().get()));
 }
 
 
 template <typename Derived>
 Derived WrappedInteger<Derived>::operator-(Derived delta) const
 {
-  return Derived(derivedC().get() - delta.get());
+  return Derived(subtractWithOverflowCheck(derivedC().get(), delta.get()));
 }
 
 
 template <typename Derived>
 Derived WrappedInteger<Derived>::pred() const
 {
-  return Derived(derivedC().get() - 1);
+  return Derived(subtractWithOverflowCheck(derivedC().get(), 1));
 }
 
 
 template <typename Derived>
 Derived &WrappedInteger<Derived>::operator-=(Derived delta)
 {
-  derived().set(derivedC().get() - delta.get());
+  derived().set(subtractWithOverflowCheck(derivedC().get(), delta.get()));
   return derived();
 }
 
@@ -129,7 +130,7 @@ Derived &WrappedInteger<Derived>::operator-=(Derived delta)
 template <typename Derived>
 Derived &WrappedInteger<Derived>::operator--()
 {
-  derived().set(derivedC().get() - 1);
+  derived().set(subtractWithOverflowCheck(derivedC().get(), 1));
   return derived();
 }
 
@@ -138,7 +139,7 @@ template <typename Derived>
 Derived WrappedInteger<Derived>::operator--(int)
 {
   Derived ret(derivedC());
-  derived().set(derivedC().get() - 1);
+  derived().set(subtractWithOverflowCheck(derivedC().get(), 1));
   return ret;
 }
 

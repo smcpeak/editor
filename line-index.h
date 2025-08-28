@@ -10,71 +10,38 @@
 
 #include "line-count-fwd.h"            // LineCount [n]
 #include "line-difference-fwd.h"       // LineDifference [n]
+#include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS, DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
-#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
 #include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB
 #include "smbase/xassert.h"            // xassertPrecondition
-
-#include <iosfwd>                      // std::ostream
 
 
 /* 0-based index into an array of lines, generally used in internal data
    structures.
 
-   This type exists to prevent confusion with `LineNumber`, the 1-based
-   variation generally used in user interfaces.
-
-   TODO: This class is an example of a family of classes that works like
-   an integer but is not implicitly convertible to other integers and
-   has a constraint on the value.  `smbase::DistinctNumber` does the
-   former but not the latter.  I'd like to find a way to generalize this
-   fully so this can just be a template specialization.
+   This type exists, among other reasons, to prevent confusion with
+   `LineNumber`, the 1-based variation generally used in user
+   interfaces.
 */
-class LineIndex final {
-private:     // data
-  // The index.  Non-negative.
-  int m_value;
+class LineIndex final : public WrappedInteger<LineIndex> {
+public:      // types
+  using Base = WrappedInteger<LineIndex>;
+  friend Base;
+
+protected:   // methods
+  static bool isValid(int value)
+    { return value >= 0; }
+
+  static char const *getTypeName()
+    { return "LineIndex"; }
 
 public:      // methods
-  // Requires: value >= 0
-  explicit LineIndex(int value = 0)
-    : m_value(value)
-  {
-    selfCheck();
-  }
+  // Inherit ctors.
+  using Base::Base;
 
+  // Conversion from `LineCount` is safe.
   explicit LineIndex(LineCount value);
-
-  LineIndex(LineIndex const &obj)
-    : DMEMB(m_value)
-  {
-    selfCheck();
-  }
-
-  LineIndex &operator=(LineIndex const &obj)
-  {
-    if (this != &obj) {
-      CMEMB(m_value);
-      selfCheck();
-    }
-    return *this;
-  }
-
-  // Assert invariants.
-  void selfCheck() const;
-
-  bool isZero() const
-    { return m_value == 0; }
-
-  // Opposite of `isZero()`.
-  bool isPositive() const
-    { return m_value > 0; }
-
-  // Ensures: return >= 0
-  int get() const
-    { return m_value; }
 
   // I'm using this as a sort of marker, for places where for the moment
   // I need `get()`, but my intention is to change the interface of the
@@ -82,18 +49,16 @@ public:      // methods
   int getForNow() const
     { return get(); }
 
-  // Compare in the usual order for integers.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(LineIndex);
+  // -------------------------- Binary tests ---------------------------
+  using Base::compareTo;
 
   // Allow comparison with `LineDifference`, primarily so the latter can
   // act as a loop bound.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, LineDifference);
 
-  // Requires: m_value is not the max representable.
-  LineIndex &operator++();
-
-  // Requires: isPositive()
-  LineIndex &operator--();
+  // ---------------------------- Addition -----------------------------
+  using Base::operator+;
+  using Base::operator+=;
 
   // Requires: `m_value+delta >= 0`, and the sum is representable.
   LineIndex operator+(LineDifference delta) const;
@@ -114,37 +79,20 @@ public:      // methods
   LineIndex clampIncreased(
     LineDifference delta, LineIndex limit = LineIndex(0)) const;
 
-  // Return `clampIncreased(+1)`.
-  LineIndex succ() const;
+  // ---------------------- Subtraction/inversion ----------------------
+  // Don't inherit `operator-` or `operator-=`.
 
-  // Return `LineIndex(get()-1)`.
+  // Subtracting two indices yields a difference.
+  LineDifference operator-(LineIndex b) const;
+
+  // index-difference yields index.
   //
-  // Requires: isPositive()
-  LineIndex pred() const;
+  // Requires: *this >= delta
+  LineIndex operator-(LineDifference delta) const;
+  LineIndex &operator-=(LineDifference delta);
 
   // Return `clampIncreased(-1)`.
   LineIndex predClamped() const;
-
-  LineDifference operator-(LineIndex b) const;
-  LineIndex operator-(LineDifference b) const;
-  LineIndex &operator-=(LineDifference delta);
-
-  // Returns a GDV integer.
-  operator gdv::GDValue() const;
-
-  // Expects an integer, throws `XGDValueError` if it is negative or
-  // too large to represent.
-  explicit LineIndex(gdv::GDValueParser const &p);
-
-  // Write using `os << m_value`.
-  void write(std::ostream &os) const;
-
-  friend std::ostream &operator<<(std::ostream &os,
-                                  LineIndex const &obj)
-  {
-    obj.write(os);
-    return os;
-  }
 };
 
 
