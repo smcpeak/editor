@@ -8,9 +8,4 @@
 
 class LineCount;
 
-// A positive `LineDifference`.
-//
-// TODO: Make this a real class too.
-using PositiveLineCount = LineCount;
-
 #endif // EDITOR_LINE_COUNT_FWD_H

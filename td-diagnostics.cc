@@ -461,12 +461,12 @@ void TextDocumentDiagnostics::adjustForDocument(
 }
 
 
-void TextDocumentDiagnostics::insertLines(LineIndex line, PositiveLineCount count)
+void TextDocumentDiagnostics::insertLines(LineIndex line, LineCount count)
 {
   m_rangeToDiagIndex.insertLines(line, count);
 }
 
-void TextDocumentDiagnostics::deleteLines(LineIndex line, PositiveLineCount count)
+void TextDocumentDiagnostics::deleteLines(LineIndex line, LineCount count)
 {
   m_rangeToDiagIndex.deleteLines(line, count);
 }

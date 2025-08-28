@@ -215,7 +215,8 @@ TDC_TotalChange::~TDC_TotalChange()
 {}
 
 
-TDC_TotalChange::TDC_TotalChange(LineCount numLines, std::string &&contents)
+TDC_TotalChange::TDC_TotalChange(
+  PositiveLineCount numLines, std::string &&contents)
   : IMEMBFP(numLines),
     IMEMBMFP(contents)
 {}

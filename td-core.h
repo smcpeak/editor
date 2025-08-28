@@ -7,9 +7,10 @@
 #include "td-core-fwd.h"               // fwds for this module
 
 // editor
-#include "line-count.h"                // PositiveLineCount, LineCount
+#include "line-count.h"                // LineCount
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
+#include "positive-line-count.h"       // PositiveLineCount
 #include "td-fwd.h"                    // TextDocument
 #include "td-line.h"                   // TextDocumentLine
 #include "textmcoord.h"                // TextMCoord

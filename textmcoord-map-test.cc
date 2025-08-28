@@ -273,9 +273,8 @@ public:
     // All the lines being deleted must currently exist.
     xassert(cc::le_le(line, line+count, LineIndex(*m_numLines)));
 
-    // The count must be non-negative, and you can't delete all of the
-    // lines.
-    xassert(cc::z_le_lt(count, *m_numLines));
+    // You can't delete all of the lines.
+    xassert(count < *m_numLines);
 
     *m_numLines -= count;
 

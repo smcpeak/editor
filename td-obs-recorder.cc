@@ -45,7 +45,7 @@ TextDocumentObservationRecorder::VersionDetails::VersionDetails(
 
 
 TextDocumentObservationRecorder::VersionDetails::VersionDetails(
-  VersionNumber versionNumber, LineCount numLines)
+  VersionNumber versionNumber, PositiveLineCount numLines)
   : IMEMBFP(versionNumber),
     IMEMBFP(numLines),
     m_hasDiagnostics(false),

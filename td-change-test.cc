@@ -4,6 +4,8 @@
 #include "td-change.h"                 // module under test
 #include "unit-tests.h"                // decl for my entry point
 
+#include "line-index.h"                // LineIndex
+#include "positive-line-count.h"       // PositiveLineCount
 #include "td-core.h"                   // TextDocumentCore
 
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
@@ -19,7 +21,7 @@ void test_1()
   EXPECT_EQ(doc.getWholeFileString(), "");
 
   {
-    TDC_TotalChange change(LineCount(4), "zero\none\ntwo\n");
+    TDC_TotalChange change(PositiveLineCount(4), "zero\none\ntwo\n");
     change.applyToDoc(doc);
     EXPECT_EQ(doc.getWholeFileString(), "zero\none\ntwo\n");
     EXPECT_EQ(doc.numLines(), 4);

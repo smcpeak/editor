@@ -8,9 +8,10 @@
 
 #include "textmcoord-map-fwd.h"        // fwds for this module
 
-#include "line-count.h"                // LineCount, PositiveLineCount
+#include "line-count.h"                // LineCount
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
+#include "positive-line-count.h"       // PositiveLineCount
 #include "td-core-fwd.h"               // TextDocumentCore
 #include "textmcoord.h"                // TextMCoord
 

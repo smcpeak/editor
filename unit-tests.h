@@ -37,6 +37,7 @@ void test_named_td_editor(CmdlineArgsSpan args);
 void test_named_td_list(CmdlineArgsSpan args);
 void test_nearby_file(CmdlineArgsSpan args);
 void test_ocaml_hilite(CmdlineArgsSpan args);
+void test_positive_line_count(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
 void test_range_text_repl(CmdlineArgsSpan args);
 void test_recent_items_list(CmdlineArgsSpan args);

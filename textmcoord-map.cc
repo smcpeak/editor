@@ -1004,7 +1004,6 @@ void TextMCoordMap::insertLines(LineIndex line, LineCount count)
   // effectively appending new lines.
   xassert(line <= *m_numLines);
 
-  xassert(count >= 0);
   *m_numLines += count;
 
   // Above the insertion point.

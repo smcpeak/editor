@@ -88,6 +88,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(range_text_repl);      // deps: textmcoord
 
   RUN_TEST(line_count);           // deps: line-difference
+  RUN_TEST(positive_line_count);  // deps: line-count, line-difference
 
   // SCC: history, td, td-core
   RUN_TEST(td_core);              // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord

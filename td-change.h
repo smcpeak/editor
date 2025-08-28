@@ -10,6 +10,7 @@
 
 #include "line-count.h"                // LineCount
 #include "line-index.h"                // LineIndex
+#include "positive-line-count.h"       // PositiveLineCount
 #include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core-fwd.h"               // TextDocumentCore [n]
 #include "textmcoord.h"                // TextMCoord
@@ -165,7 +166,7 @@ public:      // methods
 class TDC_TotalChange : public TextDocumentChange {
 public:      // data
   // Number of lines in the document after the change.
-  LineCount m_numLines;
+  PositiveLineCount m_numLines;
 
   // Full contents.
   std::string m_contents;
@@ -173,7 +174,8 @@ public:      // data
 public:      // methods
   virtual ~TDC_TotalChange() override;
 
-  explicit TDC_TotalChange(LineCount m_numLines, std::string &&contents);
+  explicit TDC_TotalChange(
+    PositiveLineCount m_numLines, std::string &&contents);
 
   static Kind constexpr TYPE_TAG = K_TOTAL_CHANGE;
   virtual Kind kind() const override { return TYPE_TAG; }
