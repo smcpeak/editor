@@ -26,24 +26,24 @@
    This is meant to be inherited using the Curiously-Recurring Template
    Pattern (CRTP) like this (see `wrapped-integer-test.cc`):
 
-     class NonNegativeInteger : public WrappedInteger<NonNegativeInteger> {
-     public:      // types
-       using Base = WrappedInteger<NonNegativeInteger>;
-       friend Base;
+      class NonNegativeInteger : public WrappedInteger<NonNegativeInteger> {
+      public:      // types
+        using Base = WrappedInteger<NonNegativeInteger>;
+        friend Base;
 
-     protected:   // methods
-       static bool isValid(int value)
-         { return value >= 0; }
+      protected:   // methods
+        static bool isValid(int value)
+          { return value >= 0; }
 
-       static char const *getTypeName()
-         { return "NonNegativeInteger"; }
+        static char const *getTypeName()
+          { return "NonNegativeInteger"; }
 
-     public:      // methods
-       // Inherit ctors.
-       using Base::Base;
+      public:      // methods
+        // Inherit ctors.
+        using Base::Base;
 
-       // Possibly additional methods or overrides here.
-     };
+        // Possibly additional methods or overrides here.
+      };
 
    Thus, the `Derived` type here is that "derived" from a specialization
    of this one.
