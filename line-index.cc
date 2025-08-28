@@ -124,7 +124,7 @@ LineIndex LineIndex::succ() const
 }
 
 
-LineIndex LineIndex::pred() const
+LineIndex LineIndex::predClamped() const
 {
   return clampIncreased(LineDifference(-1));
 }
@@ -133,7 +133,7 @@ LineIndex LineIndex::pred() const
 LineIndex LineIndex::nzpred() const
 {
   xassertPrecondition(isPositive());
-  return pred();
+  return predClamped();
 }
 
 

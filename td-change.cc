@@ -70,7 +70,7 @@ RangeTextReplacement TDC_InsertLine::getRangeTextReplacement() const
     // But if we are appending a new line, then the position at
     // that line does not exist yet.  Append to the previous line
     // instead.
-    pos = TextMCoord(m_line.pred(), *m_prevLineBytes);
+    pos = TextMCoord(m_line.predClamped(), *m_prevLineBytes);
   }
 
   return RangeTextReplacement(
@@ -116,7 +116,7 @@ RangeTextReplacement TDC_DeleteLine::getRangeTextReplacement() const
     // But if it was the last line, going forward is a no-op, so
     // go backward instead.
     range = TextMCoordRange(
-      TextMCoord(m_line.pred(), *m_prevLineBytes),
+      TextMCoord(m_line.predClamped(), *m_prevLineBytes),
       TextMCoord(m_line, 0));
   }
 

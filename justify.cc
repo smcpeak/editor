@@ -176,7 +176,7 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
   // some content after it.
   LineIndex upperEdge = originLineNumber;
   while (upperEdge.isPositive()) {
-    if (properStartsWith(tde.getWholeLineString(upperEdge.pred()), prefix)) {
+    if (properStartsWith(tde.getWholeLineString(upperEdge.nzpred()), prefix)) {
       --upperEdge;
     }
     else {

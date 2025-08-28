@@ -117,10 +117,15 @@ public:      // methods
   // Return `clampIncreased(+1)`.
   LineIndex succ() const;
 
+  // TODO: Remove all call sites.
+  LineIndex pred() const = delete;
+
   // Return `clampIncreased(-1)`.
-  LineIndex pred() const;
+  LineIndex predClamped() const;
 
   // Like `pred`, but first assert we are Not Zero.
+  //
+  // TODO: This will become `pred`.
   LineIndex nzpred() const;
 
   LineDifference operator-(LineIndex b) const;

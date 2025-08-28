@@ -1440,14 +1440,14 @@ void randomEdit(MapPair &m)
   else if (c.check(200)) {
     LineIndex line = randomLine();
     LineCount count(sm_random(3));
-    ensureValidLineIndex(m, line.pred());
+    ensureValidLineIndex(m, line.predClamped());
     m.insertLines(line, count);
   }
 
   else if (c.check(200)) {
     LineIndex line = randomLine();
     LineCount count(sm_random(3));
-    ensureValidLineIndex(m, (line+count).pred());
+    ensureValidLineIndex(m, (line+count).predClamped());
     m.deleteLines(line, count);
   }
 

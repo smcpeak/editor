@@ -1351,7 +1351,7 @@ bool TextDocumentEditor::blockIndent(int amt)
   // that line.
   LineIndex endLine =
     (range.m_end.m_column==0?
-       range.m_end.m_line.pred() :
+       range.m_end.m_line.predClamped() :
        range.m_end.m_line);
 
   this->indentLines(
