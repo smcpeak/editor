@@ -158,25 +158,11 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_editorBuiltinFont = BF_COURIER24;
   }
 
-  // Do this after setting the font since it depends on it.
-  installEditorStyleSheet(*this);
-
-  // Establish the initial VFS connection before creating the first
-  // EditorWindow, since the EW can issue VFS requests.
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsFailed,
-                   this, &EditorGlobal::on_vfsConnectionFailed);
-  m_vfsConnections.connectLocal();
-
-  // Open the first window, initially showing the default "untitled"
-  // file that 'fileDocuments' made in its constructor.
-  EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
-
-  // The tests rely on the first window having this name.
-  xassert(ed->objectName() == "window1");
-
-  // TODO: Why do I create a window before processing the command line?
+  // Processing the command line.  Do this relatively early so it can
+  // influence how `m_lspManager` is created.
+  std::vector<std::string> filesToOpen;
   try {
-    processCommandLineOptions(ed, argc, argv);
+    filesToOpen = processCommandLineOptions(argc, argv);
   }
   catch (...) {
     // Errors in command line processing are communicated with
@@ -187,6 +173,15 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     throw;
   }
 
+  // Do this after setting the font since it depends on it.
+  installEditorStyleSheet(*this);
+
+  // Establish the initial VFS connection before creating the first
+  // EditorWindow, since the EW can issue VFS requests.
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsFailed,
+                   this, &EditorGlobal::on_vfsConnectionFailed);
+  m_vfsConnections.connectLocal();
+
   // Create the LSP manager after processing the command line so the
   // effect of setting `m_lspIsFakeServer` in response to "-ev" and
   // "-record" will be effective.
@@ -196,6 +191,18 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     (m_editorLogFile?
        &(m_editorLogFile->stream()) : nullptr)
   ));
+
+  // Open the first window, initially showing the default "untitled"
+  // file that 'fileDocuments' made in its constructor.
+  EditorWindow *ed = createNewWindow(m_documentList.getDocumentAt(0));
+
+  // The tests rely on the first window having this name.
+  xassert(ed->objectName() == "window1");
+
+  // In the initial window, open all the files from the command line.
+  for (std::string const &path : filesToOpen) {
+    ed->openOrSwitchToFile(HostAndResourceName::localFile(path));
+  }
 
   // TODO: replacement?  Need to test on Linux.
 #if 0
@@ -390,9 +397,13 @@ static char const *optionsDescription =
 DEFINE_XBASE_SUBCLASS(QuitAfterPrintingHelp);
 
 
-void EditorGlobal::processCommandLineOptions(
-  EditorWindow *editorWindow, int argc, char **argv)
+std::vector<std::string> EditorGlobal::processCommandLineOptions(
+  int argc, char **argv)
 {
+  // Files to open specified on the command line.
+  std::vector<std::string> filesToOpen;
+
+  // True if we will open the user settings file.
   bool useSettings = true;
 
   SMFileUtil sfu;
@@ -460,7 +471,7 @@ void EditorGlobal::processCommandLineOptions(
       // Open all non-option files specified on the command line.
       std::string path = sfu.getAbsolutePath(arg);
       path = sfu.normalizePathSeparators(path);
-      editorWindow->openOrSwitchToFile(HostAndResourceName::localFile(path));
+      filesToOpen.push_back(path);
     }
   }
 
@@ -472,6 +483,8 @@ void EditorGlobal::processCommandLineOptions(
     // since that would effectively delete them.
     m_doNotSaveSettings = true;
   }
+
+  return filesToOpen;
 }
 
 
@@ -1454,27 +1467,13 @@ std::optional<std::string> EditorGlobal::lspStartServer()
 
 LSPProtocolState EditorGlobal::lspGetProtocolState() const
 {
-  if (!m_lspManager) {
-    // This happens during the constructor since we make the first
-    // editor window before processing the command line, and hence
-    // before making the LSP manager.  There is already a TODO to fix
-    // that.
-    return LSP_PS_MANAGER_INACTIVE;
-  }
-  else {
-    return m_lspManager->getProtocolState();
-  }
+  return m_lspManager->getProtocolState();
 }
 
 
 bool EditorGlobal::lspIsRunningNormally() const
 {
-  if (!m_lspManager) {
-    return false;
-  }
-  else {
-    return m_lspManager->isRunningNormally();
-  }
+  return m_lspManager->isRunningNormally();
 }
 
 
@@ -1486,12 +1485,7 @@ bool EditorGlobal::lspIsInitializing() const
 
 std::string EditorGlobal::lspExplainAbnormality() const
 {
-  if (!m_lspManager) {
-    return "TODO: This is stupid.";
-  }
-  else {
-    return m_lspManager->explainAbnormality();
-  }
+  return m_lspManager->explainAbnormality();
 }
 
 

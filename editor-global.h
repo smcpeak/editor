@@ -48,6 +48,8 @@
 #include <deque>                                 // std::deque
 #include <list>                                  // std::list
 #include <memory>                                // std::unique_ptr
+#include <string>                                // std::string
+#include <vector>                                // std::vector
 
 class QWidget;
 
@@ -103,7 +105,10 @@ private:     // instance data
 
   // Object to manage communication with the LSP server.
   //
-  // Invariant: Never null, except during part of the ctor.
+  // Invariant: Never null, except during the first part of the ctor.
+  // Consequently, the protocol is to *not* check this for null before
+  // use; it is the responsibility of the ctor to initialize it before
+  // anything else can observe it being null.
   //
   // Invariant: If `m_lspManager->isRunningNormally()`, then the set of
   // documents open in `m_lspManager` is the same as the set of
@@ -173,8 +178,10 @@ public:      // data
   std::string m_eventFileTest;
 
 private:     // methods
-  void processCommandLineOptions(
-    EditorWindow *editorWindow, int argc, char **argv);
+  // Process the command line.  Return the sequence of files to be
+  // opened initially.
+  std::vector<std::string> processCommandLineOptions(
+    int argc, char **argv);
 
   NamedTextDocument *getCommandOutputDocument(
     HostName const &hostName, QString dir, QString command);
