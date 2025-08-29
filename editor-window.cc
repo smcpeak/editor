@@ -337,7 +337,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
     menu->setObjectName("editMenu");
 
-    // Used shortcut letters: ACDJFGKNPRSTU
+    // Used shortcut letters: 1ACDJFGKNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
@@ -395,6 +395,13 @@ void EditorWindow::buildMenu()
                   editRigidIndent);
     MENU_ITEM    ("Rigidly un-indent selected lines\tShift+Tab",
                   editRigidUnindent);
+
+    MENU_ITEM    ("Rigidly indent selected lines &1 space",
+                  editRigidIndent1);
+    MENU_ITEM    ("Rigidly un-indent selected lines 1 space",
+                  editRigidUnindent1);
+
+    menu->addSeparator();
 
     MENU_ITEM_KEY("&Justify paragraph to soft margin",
                   editJustifyParagraph, Qt::CTRL + Qt::Key_J);
@@ -1611,6 +1618,22 @@ void EditorWindow::editToggleGrepsrcSearchesSubrepos() NOEXCEPT
   // Toggle the menu item.
   m_toggleGrepsrcSearchesSubreposAction->setChecked(b);
 
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editRigidIndent1() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  editorWidget()->commandBlockIndent(+1);
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editRigidUnindent1() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  editorWidget()->commandBlockIndent(-1);
   GENERIC_CATCH_END
 }
 

@@ -249,6 +249,8 @@ public Q_SLOTS:
   void editGotoLine() NOEXCEPT;
   void editGrepSource() NOEXCEPT;
   void editToggleGrepsrcSearchesSubrepos() NOEXCEPT;
+  void editRigidIndent1() NOEXCEPT;
+  void editRigidUnindent1() NOEXCEPT;
   void editRigidIndent() NOEXCEPT;
   void editRigidUnindent() NOEXCEPT;
   void editJustifyParagraph() NOEXCEPT;
