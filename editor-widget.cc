@@ -2801,7 +2801,7 @@ void EditorWidget::lspGoToAdjacentDiagnostic(bool next)
 
 void EditorWidget::lspGoToRelatedLocation(
   LSPSymbolRequestKind lsrk,
-  LSPSymbolRequestOptions options)
+  EditorNavigationOptions options)
 {
   NamedTextDocument *ntd = getDocument();
   if (std::optional<std::string> reason =
@@ -2852,10 +2852,8 @@ void EditorWidget::lspGoToRelatedLocation(
       GDValue gdvReply = editorGlobal()->lspTakeReplyForID(id);
       TRACE1("received reply: " << gdvReply.asIndentedString());
 
-      EditorWidget *widgetToShow = this;
-      if (options == LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW) {
-        widgetToShow = editorGlobal()->getOtherEditorWidget(this);
-      }
+      EditorWidget *widgetToShow =
+        editorGlobal()->selectEditorWidget(this, options);
 
       widgetToShow->lspHandleLocationReply(gdvReply, lsrk);
     }

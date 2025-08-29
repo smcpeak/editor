@@ -2312,7 +2312,7 @@ void EditorWindow::lspGoToDefinitionInOtherWindow() NOEXCEPT
 
   editorWidget()->lspGoToRelatedLocation(
     LSPSymbolRequestKind::K_DEFINITION,
-    LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW);
+    EditorNavigationOptions::ENO_OTHER_WINDOW);
 
   GENERIC_CATCH_END
 }
@@ -2335,7 +2335,7 @@ void EditorWindow::lspGoToDeclarationInOtherWindow() NOEXCEPT
 
   editorWidget()->lspGoToRelatedLocation(
     LSPSymbolRequestKind::K_DECLARATION,
-    LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW);
+    EditorNavigationOptions::ENO_OTHER_WINDOW);
 
   GENERIC_CATCH_END
 }
@@ -2358,7 +2358,7 @@ void EditorWindow::lspGoToAllUsesInOtherWindow() NOEXCEPT
 
   editorWidget()->lspGoToRelatedLocation(
     LSPSymbolRequestKind::K_REFERENCES,
-    LSPSymbolRequestOptions::LSRO_OPEN_IN_OTHER_WINDOW);
+    EditorNavigationOptions::ENO_OTHER_WINDOW);
 
   GENERIC_CATCH_END
 }
