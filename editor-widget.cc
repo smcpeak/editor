@@ -9,6 +9,7 @@
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "diagnostic-element.h"                  // DiagnosticElement
 #include "editor-command.ast.gen.h"              // EditorCommand
+#include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
@@ -627,9 +628,10 @@ HostAndResourceName EditorWidget::getDocumentDirectoryHarn() const
 }
 
 
-void EditorWidget::openDiagnosticOrFileAtCursor()
+void EditorWidget::openDiagnosticOrFileAtCursor(
+  EditorNavigationOptions opts)
 {
-  if (std::optional<std::string> msg = lspShowDiagnosticAtCursor();
+  if (std::optional<std::string> msg = lspShowDiagnosticAtCursor(opts);
       !msg.has_value()) {
     // We successfully showed the diagnostic messge, so do not proceed
     // with trying to open a file.
@@ -655,12 +657,27 @@ void EditorWidget::openDiagnosticOrFileAtCursor()
                       lineText, m_editor->cursor().m_column);
 
   if (!hostFileAndLine.hasFilename()) {
+    if (opts == EditorNavigationOptions::ENO_OTHER_WINDOW) {
+      // Prompting when the file is not found is dodgy behavior already,
+      // but we definitely do not want it in the "other window" case.
+      return;
+    }
+
     // Prompt with the document directory.
     hostFileAndLine.m_harn = getDocumentDirectoryHarn();
   }
 
+  // Choose which widget will navigate.
+  EditorWidget *ew = editorGlobal()->selectEditorWidget(this, opts);
+
   // Go to the indicated file and line.
-  //
+  ew->doOpenOrSwitchToFileAtLineOpt(hostFileAndLine);
+}
+
+
+void EditorWidget::doOpenOrSwitchToFileAtLineOpt(
+  HostFileAndLineOpt const &hostFileAndLine)
+{
   // This should be sent on a Qt::QueuedConnection, meaning the slot
   // will be invoked later, once the current event is done processing.
   // That is important because right now we have an open
@@ -2666,7 +2683,7 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 
 
 void EditorWidget::showDiagnosticDetailsDialog(
-  QVector<DiagnosticElement> &&elts) const
+  QVector<DiagnosticElement> &&elts)
 {
   DiagnosticDetailsDialog *dlg =
     editorGlobal()->getDiagnosticDetailsDialog();
@@ -2692,7 +2709,8 @@ void EditorWidget::showDiagnosticDetailsDialog(
 }
 
 
-std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
+std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
+  EditorNavigationOptions opts)
 {
   SMFileUtil sfu;
 
@@ -2722,7 +2740,8 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
         });
       }
 
-      showDiagnosticDetailsDialog(std::move(elts));
+      editorGlobal()->selectEditorWidget(this, opts)
+        ->showDiagnosticDetailsDialog(std::move(elts));
       return {};
     }
     else {

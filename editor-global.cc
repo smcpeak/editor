@@ -9,6 +9,7 @@
 #include "connections-dialog.h"                  // ConnectionsDialog
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "editor-command.ast.gen.h"              // EditorCommand
+#include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-proxy-style.h"                  // EditorProxyStyle
 #include "editor-version.h"                      // getEditorVersionString
 #include "editor-widget.h"                       // EditorWidget
@@ -1242,6 +1243,18 @@ void EditorGlobal::removeRecentEditorWidget(EditorWidget *ew)
 EditorWidget *EditorGlobal::getOtherEditorWidget(EditorWidget *ew)
 {
   return m_recentEditorWidgets.getRecentOther(ew);
+}
+
+
+EditorWidget *EditorGlobal::selectEditorWidget(
+  EditorWidget *ew, EditorNavigationOptions opts)
+{
+  if (opts == EditorNavigationOptions::ENO_NORMAL) {
+    return ew;
+  }
+  else {
+    return getOtherEditorWidget(ew);
+  }
 }
 
 

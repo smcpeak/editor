@@ -8,6 +8,7 @@
 #include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 #include "editor-global-fwd.h"                   // EditorGlobal
+#include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-settings-fwd.h"                 // EditorSettings
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
@@ -278,7 +279,7 @@ private:     // funcs
 
   // Show the diagnostic details dialog, populated with `elts`.
   void showDiagnosticDetailsDialog(
-    QVector<DiagnosticElement> &&elts) const;
+    QVector<DiagnosticElement> &&elts);
 
   // An attempt to parse `gdvReply` in response to `lsrk` yielded
   // exception `x`.  Log the details and warn the user.
@@ -494,7 +495,12 @@ public:      // funcs
   // If there are diagnostics associated with the current document, and
   // the cursor is in one of the marked ranges, show its message and
   // return nullopt.  Otherwise, return a string explaining the issue.
-  std::optional<std::string> lspShowDiagnosticAtCursor() const;
+  //
+  // The dialog that appears can be used to navigate to the relevant
+  // lines; the navigation takes place in a widget that depends on
+  // `opts`.
+  std::optional<std::string> lspShowDiagnosticAtCursor(
+    EditorNavigationOptions opts);
 
   // Move the cursor to the next or previous diagnostic message.  Do
   // nothing if we have no diagnostics or there are no more in the
@@ -578,7 +584,14 @@ public:      // funcs
   // If the cursor is on a diagnostic, open its details.  Otherwise,
   // scan the text near the cursor to try to find the name of a file,
   // and open it in the editor.
-  void openDiagnosticOrFileAtCursor();
+  void openDiagnosticOrFileAtCursor(EditorNavigationOptions opts);
+
+  // Navigate to `hostFileAndLine`, opening the file first if necessary.
+  //
+  // The awkward method name is due to avoiding the signal of the same
+  // name that is used to implement this method.
+  void doOpenOrSwitchToFileAtLineOpt(
+    HostFileAndLineOpt const &hostFileAndLine);
 
   // Make the document shown in the widget be topmost in the global list
   // of open documents.

@@ -217,7 +217,8 @@ public:      // funcs
 public Q_SLOTS:
   void fileNewFile() NOEXCEPT;
   void fileOpen() NOEXCEPT;
-  void fileOpenAtCursor() NOEXCEPT;
+  void fileInspectAtCursor() NOEXCEPT;
+  void fileInspectAtCursorOtherWindow() NOEXCEPT;
   void fileSave() NOEXCEPT;
   void fileSaveAs() NOEXCEPT;
   void fileClose() NOEXCEPT;
@@ -282,6 +283,7 @@ public Q_SLOTS:
   void lspGoToNextDiagnostic() NOEXCEPT;
   void lspGoToPreviousDiagnostic() NOEXCEPT;
   void lspShowDiagnosticAtCursor() NOEXCEPT;
+  void lspShowDiagnosticAtCursorOtherWindow() NOEXCEPT;
   void lspRemoveDiagnostics() NOEXCEPT;
   void lspSetFakeStatus() NOEXCEPT;
   void lspGoToDefinition() NOEXCEPT;

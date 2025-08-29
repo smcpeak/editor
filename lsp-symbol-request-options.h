@@ -7,6 +7,8 @@
 #define EDITOR_LSP_SYMBOL_REQUEST_OPTIONS_H
 
 // For the moment it's just one flag.
+//
+// TODO: Replace this with `EditorNavigationOptions`.
 enum class LSPSymbolRequestOptions {
   // Defaults.
   LSRO_NORMAL,

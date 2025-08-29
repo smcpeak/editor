@@ -151,7 +151,13 @@ H+Alt                        Help menu
 H+Ctrl                       Delete character to left of cursor
 H+Ctrl+Alt                   Dump editor history to console
 
-I+Ctrl                       File | Open file or show diagnostic at cursor
+I+Ctrl                       File | Inspect file or diagnostic at cursor
+I+Ctrl+Shift                 File | Inspect in other window
+
+  As a discoverability aid, I+Ctrl and I+Ctrl+Shift are also shown in
+  the menu under "LSP | Inspect diagnostic at cursor" and "LSP | Inspect
+  diagnostic, other window", but the real bindings are to the File menu
+  items, which behave slightly differently.
 
 J+Ctrl                       Edit | Justify paragraph to soft margin
 

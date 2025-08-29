@@ -14,6 +14,7 @@
 #include "diagnostic-details-dialog-fwd.h"       // DiagnosticDetailsDialog [n]
 #include "eclf.h"                                // EditorCommandLineFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand [n]
+#include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-settings.h"                     // EditorSettings
 #include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
@@ -477,6 +478,11 @@ public:       // funcs
   // Get the most recently used widget other than `ew`.  Return `ew` if
   // there is no alternative.
   EditorWidget *getOtherEditorWidget(EditorWidget *ew);
+
+  // If `opts` is normal, return `ew`.  Otherwise return the "other"
+  // widget, per `getOtherEditorWidget`.
+  EditorWidget *selectEditorWidget(
+    EditorWidget *ew, EditorNavigationOptions opts);
 
   // ----------------------------- Logging -----------------------------
   // Initial name to attempt to use for the general editor logs.  The

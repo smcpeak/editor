@@ -10,6 +10,7 @@
 #include "diff-hilite.h"                         // DiffHighlighter
 #include "doc-type-detect.h"                     // detectDocumentType
 #include "editor-global.h"                       // EditorGlobal
+#include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-widget-frame.h"                 // EditorWidgetFrame
 #include "editor-widget.h"                       // EditorWidget
 #include "filename-input.h"                      // FilenameInputDialog
@@ -294,10 +295,16 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&File");
     menu->setObjectName("fileMenu");
 
+    // Used letters: acilmnorswx
+
     MENU_ITEM    ("&New", fileNewFile);
     MENU_ITEM_KEY("&Open ...", fileOpen, Qt::Key_F3);
-    MENU_ITEM_KEY("Open f&ile or show diagnostic at cursor", fileOpenAtCursor,
+    MENU_ITEM_KEY("&Inspect file or diagnostic at cursor",
+                  fileInspectAtCursor,
                   Qt::CTRL + Qt::Key_I);
+    MENU_ITEM_KEY("Inspect in other &window",
+                  fileInspectAtCursorOtherWindow,
+                  Qt::CTRL + Qt::SHIFT + Qt::Key_I);
 
     MENU_ITEM_KEY("&Save", fileSave, Qt::Key_F2);
     MENU_ITEM    ("Save &as ...", fileSaveAs);
@@ -469,7 +476,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: cdiou
+    // Used mnemonics: cdiouw
 
     MENU_ITEM    ("Start LSP server",
                   lspStartServer);
@@ -500,10 +507,12 @@ void EditorWindow::buildMenu()
     // I use Ctrl+I both to open a file whose name is under the cursor
     // and to inspect a diagnostic there, with the diagnostic taking
     // precedence.  The actual binding is above, associated with
-    // `fileOpenAtCursor`.  The fake binding here is thus just to
+    // `fileInspectAtCursor`.  The fake binding here is thus just to
     // inform the user.
     MENU_ITEM    ("&Inspect diagnostic at cursor\tCtrl+I",
                   lspShowDiagnosticAtCursor);
+    MENU_ITEM    ("Inspect diagnostic, other &window\tCtrl+Shift+I",
+                  lspShowDiagnosticAtCursorOtherWindow);
 
     menu->addSeparator();
 
@@ -760,11 +769,23 @@ void EditorWindow::fileOpen() NOEXCEPT
 }
 
 
-void EditorWindow::fileOpenAtCursor() NOEXCEPT
+void EditorWindow::fileInspectAtCursor() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->openDiagnosticOrFileAtCursor();
+  editorWidget()->openDiagnosticOrFileAtCursor(
+    EditorNavigationOptions::ENO_NORMAL);
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::fileInspectAtCursorOtherWindow() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->openDiagnosticOrFileAtCursor(
+    EditorNavigationOptions::ENO_OTHER_WINDOW);
 
   GENERIC_CATCH_END
 }
@@ -2198,7 +2219,22 @@ void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   if (std::optional<std::string> msg =
-        editorWidget()->lspShowDiagnosticAtCursor()) {
+        editorWidget()->lspShowDiagnosticAtCursor(
+          EditorNavigationOptions::ENO_NORMAL)) {
+    inform(*msg);
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspShowDiagnosticAtCursorOtherWindow() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (std::optional<std::string> msg =
+        editorWidget()->lspShowDiagnosticAtCursor(
+          EditorNavigationOptions::ENO_OTHER_WINDOW)) {
     inform(*msg);
   }
 
