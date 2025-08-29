@@ -43,7 +43,7 @@ TDD_Related convertLSPRelated(
 {
   return TDD_Related(
     getFileURIPath(lspRelated.m_location.m_uri),
-    lspRelated.m_location.m_range.m_start.m_line.getForNow() + 1,
+    lspRelated.m_location.m_range.m_start.m_line.toLineNumber(),
     std::string(lspRelated.m_message));
 }
 

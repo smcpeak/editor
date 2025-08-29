@@ -17,6 +17,7 @@
 
 #include "line-count.h"                // LineCount, PositiveLineCount
 #include "line-index.h"                // LineIndex
+#include "line-number.h"               // LineNumber
 #include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-fwd.h"             // TextDocumentChange [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
@@ -45,14 +46,14 @@ public:      // data
   // updated automatically when the file is edited.
   //
   // TODO: Maybe design a way that they can be?
-  int m_line;
+  LineNumber m_line;
 
   // Relevance of this line to the primary diagnostic.
   std::string m_message;
 
 public:      // methods
   ~TDD_Related();
-  TDD_Related(std::string &&file, int line, std::string &&message);
+  TDD_Related(std::string &&file, LineNumber line, std::string &&message);
 
   operator gdv::GDValue() const;
 

@@ -5,6 +5,7 @@
 
 #include "command-runner.h"                      // CommandRunner
 #include "line-index.h"                          // LineIndex
+#include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-client.h"                          // LSPClient
 #include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
@@ -177,7 +178,7 @@ std::string LSPDocumentInfo::getLastContentsCodeLine(
   }
   else {
     return stringb(
-      "<Line number " << (lineIndex.getForNow()+1) <<  // TODO: Convert to `LineNumber`, then print.
+      "<Line number " << lineIndex.toLineNumber() <<
       " is out of range for " << doubleQuote(m_fname) <<
       ", which has " << td->numLines() <<
       " lines.>");

@@ -35,21 +35,18 @@ void test_ctor()
   EXPECT_EQ(i0.isZero(), true);
   EXPECT_EQ(i0.isPositive(), false);
   EXPECT_EQ(i0.get(), 0);
-  EXPECT_EQ(i0.getForNow(), 0);
 
   LineIndex i1(1);
   i1.selfCheck();
   EXPECT_EQ(i1.isZero(), false);
   EXPECT_EQ(i1.isPositive(), true);
   EXPECT_EQ(i1.get(), 1);
-  EXPECT_EQ(i1.getForNow(), 1);
 
   LineIndex i2(2);
   i2.selfCheck();
   EXPECT_EQ(i2.isZero(), false);
   EXPECT_EQ(i2.isPositive(), true);
   EXPECT_EQ(i2.get(), 2);
-  EXPECT_EQ(i2.getForNow(), 2);
 
   EXPECT_STRICTLY_ORDERED(LineIndex, i0, i1, i2);
 

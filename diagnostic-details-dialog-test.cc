@@ -4,6 +4,7 @@
 #include "diagnostic-details-dialog.h" // module under test
 
 #include "diagnostic-element.h"        // DiagnosticElement
+#include "line-number.h"               // LineNumber
 
 #include "smqtutil/qstringb.h"         // qstringb
 
@@ -34,7 +35,7 @@ int diagnostic_details_dialog_test(QApplication &app)
       HostAndResourceName::localFile(stringb(
         "/long/path/to/source/directory/number/" << i <<
         "/file" << i << nameExtension << ".cpp")),
-      i * 10 + 1,
+      LineNumber(i * 10 + 1),
       (i == 5?
          repeatString("This is a very long diagnostic message. ", 40) :
          stringb("Message for element " << i << "."))

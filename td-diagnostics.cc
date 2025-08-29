@@ -37,7 +37,8 @@ TDD_Related::~TDD_Related()
 {}
 
 
-TDD_Related::TDD_Related(std::string &&file, int line, std::string &&message)
+TDD_Related::TDD_Related(
+  std::string &&file, LineNumber line, std::string &&message)
   : IMEMBMFP(file),
     IMEMBMFP(line),
     IMEMBMFP(message)

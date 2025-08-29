@@ -3,12 +3,19 @@
 
 #include "nearby-file.h"               // this module
 
-// smbase
+#include "line-number.h"               // LineNumber
+
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
+#include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
+#include "smbase/overflow.h"           // multiplyAddWithOverflowCheck
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // prefixAll, suffixAll, join, doubleQuote
 #include "smbase/trace.h"              // TRACE
 #include "smbase/vector-util.h"        // vecConvertElements, vecMapElements
+
+#include <optional>                    // std::optional
+
+using namespace gdv;
 
 
 // Return true if 'c' is a digit for the purpose of the file name
@@ -54,27 +61,35 @@ static bool isFilenameChar(char c)
 
 // If the characters at 'haystack[i]' look like a line number in the
 // form ":$N", return the number, otherwise return 0.
-static int getLineNumberAt(string const &haystack, int i)
+static std::optional<LineNumber>
+getLineNumberAt(string const &haystack, int i)
 {
-  char const *start = haystack.c_str() + i;
-  char const *p = start;
-  if (*p == ':') {
-    p++;
-    int ret = 0;
-    while (isFilenameDigit(*p) && (p-start < 10)) {
-      ret = ret*10 + (*p - '0');
+  try {
+    char const *start = haystack.c_str() + i;
+    char const *p = start;
+    if (*p == ':') {
       p++;
-    }
+      int ret = 0;
+      while (isFilenameDigit(*p) && (p-start < 10)) {
+        ret = multiplyAddWithOverflowCheck(ret, 10, (*p - '0'));
+        p++;
+      }
 
-    // We should have ended on something other than a digit or letter.
-    if (isFilenameCore(*p)) {
-      return 0;
-    }
+      // We should have ended on something other than a digit or letter.
+      if (isFilenameCore(*p)) {
+        return std::nullopt;
+      }
 
-    return ret;
+      if (ret > 0) {
+        return LineNumber(ret);
+      }
+    }
+  }
+  catch (...) {
+    // Ignore overflowed arithmetic and fall back to no detection.
   }
 
-  return 0;
+  return std::nullopt;
 }
 
 
@@ -159,7 +174,7 @@ void getCandidateSuffixes(
   }
 
   // See if there is a line number here.
-  int line = getLineNumberAt(haystack, high+1);
+  std::optional<LineNumber> line = getLineNumberAt(haystack, high+1);
 
   // Return what we found.
   candidates.push(HostFileAndLineOpt(
@@ -259,7 +274,7 @@ HostFileAndLineOpt getNearbyFilename(
     "  haystack: " << doubleQuote(haystack) << "\n"
     "  charOffset: " << charOffset << "\n"
     "  ret.harn: " << ret.m_harn << "\n"
-    "  ret.line: " << ret.m_line);
+    "  ret.line: " << toGDValue(ret.m_line));
 
   return ret;
 }

@@ -7,12 +7,15 @@
 
 // smbase
 #include "smbase/container-util.h"     // smbase::contains
+#include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional) for EXPECT_EQ_GDVSER
 #include "smbase/sm-file-util.h"       // TestSMFileUtil
 #include "smbase/sm-test.h"            // USUAL_TEST_MAIN
 
 // libc++
+#include <optional>                    // std::{make_optional, nullopt, optional}
 #include <set>                         // std::set
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -26,7 +29,7 @@ static void expectIGNF(
   HostFileAndLineOpt actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   EXPECT_EQ(actual.m_harn, expectHARN);
-  EXPECT_EQ(actual.m_line, 0);
+  EXPECT_EQ_GDVSER(actual.m_line, std::nullopt);
 }
 
 
@@ -173,12 +176,20 @@ static void expectIGNFL(
   string const &haystack,
   int charOffset,
   HostAndResourceName const &expectHARN,
-  int expectLine)     // Hence the final "L" in this function's name.
+  int intExpectLine)     // Hence the final "L" in this function's name.
 {
   HostFileAndLineOpt actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   EXPECT_EQ(actual.m_harn, expectHARN);
-  EXPECT_EQ(actual.m_line, expectLine);
+
+  // Make a properly typed `expectLine` from the integer code used in
+  // the tests.
+  std::optional<LineNumber> expectLine =
+    intExpectLine?
+      std::make_optional<LineNumber>(intExpectLine) :
+      std::nullopt;
+
+  EXPECT_EQ_GDVSER(actual.m_line, expectLine);
 }
 
 

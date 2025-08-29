@@ -42,6 +42,7 @@
 // smbase
 #include "smbase/chained-cond.h"                 // cc::z_le_lt
 #include "smbase/exc.h"                          // XOpen, GENERIC_CATCH_BEGIN/END
+#include "smbase/gdvalue-optional.h"             // gdv::GDValue(td::optional)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/mysig.h"                        // printSegfaultAddrs
 #include "smbase/nonport.h"                      // fileOrDirectoryExists
@@ -742,7 +743,10 @@ void EditorWindow::fileOpen() NOEXCEPT
   TRACE1("fileOpen");
 
   HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
-  this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(dirHarn, 0, -1));
+  this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(
+    dirHarn,
+    std::nullopt,
+    -1));
 
   GENERIC_CATCH_END
 }
@@ -2562,7 +2566,7 @@ void EditorWindow::editorViewChanged() NOEXCEPT
   // I want the user to interact with line/col with a 1:1 origin,
   // even though the TextDocument interface uses 0:0.
   m_statusArea->m_cursor->setText(qstringb(
-    (editorWidget()->cursorLine().getForNow()+1) << ':' <<
+    (editorWidget()->cursorLine().toLineNumber()) << ':' <<
     (editorWidget()->cursorCol()+1)));
 
   // Status text: full document name plus status indicators.
@@ -2625,7 +2629,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt:"
     " harn=" << hfl.m_harn <<
-    " line=" << hfl.m_line <<
+    " line=" << toGDValue(hfl.m_line) <<
     " byteIndex=" << hfl.m_byteIndex);
 
   if (!hfl.hasFilename()) {
@@ -2642,10 +2646,10 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
       // prompting.
       TRACE1("slot_openOrSwitchToFileAtLineOpt: fast path open");
       this->openOrSwitchToFile(hfl.m_harn);
-      if (hfl.m_line != 0) {
+      if (hfl.m_line) {
         // Also go to line/col, if provided.
         TextLCoord targetLC(
-          LineIndex(hfl.m_line - 1),
+          hfl.m_line->toLineIndex(),
           std::max(0, hfl.m_byteIndex));
         editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();

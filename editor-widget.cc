@@ -2709,7 +2709,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
       DocumentName docName = getDocument()->documentName();
       elts.push_back(DiagnosticElement{
         docName.harn(),
-        cursorMC.m_line.getForNow() + 1,   // TextMCoord uses 0-based lines.
+        cursorMC.m_line.toLineNumber(),
         diag->m_message
       });
 
@@ -2737,7 +2737,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor() const
 
 void EditorWidget::goToLocalFileAndLineOpt(
   std::string const &fname,
-  int lineOpt,
+  std::optional<LineNumber> lineOpt,
   int byteIndexOpt)
 {
   HostFileAndLineOpt hostFileAndLine(
@@ -2888,7 +2888,7 @@ void EditorWidget::lspHandleLocationReply(
       // going to the start line/col.
       goToLocalFileAndLineOpt(
         loc.getFname(),
-        loc.m_range.m_start.m_line.getForNow() + 1,
+        loc.m_range.m_start.m_line.toLineNumber(),
         loc.m_range.m_start.m_character);
     }
     else {
@@ -2900,7 +2900,7 @@ void EditorWidget::lspHandleLocationReply(
         auto harn = HostAndResourceName::localFile(loc.getFname());
         elts.push_back(DiagnosticElement{
           harn,
-          loc.m_range.m_start.m_line.getForNow() + 1,
+          loc.m_range.m_start.m_line.toLineNumber(),
           editorGlobal()->lspGetCodeLine(
             harn, loc.m_range.m_start.m_line)
         });

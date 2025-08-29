@@ -9,6 +9,7 @@
 #include "diagnostic-element-fwd.h"    // fwds for this module
 
 #include "host-and-resource-name.h"    // HostAndResourceName
+#include "line-number.h"               // LineNumber
 
 #include <string>                      // std::string
 
@@ -20,7 +21,7 @@ struct DiagnosticElement {
 
   // 1-based line number within `m_harn` where the syntax of interest
   // is.
-  int m_line;
+  LineNumber m_line;
 
   // The relevance of the indicated line.  This might be very long,
   // often hundreds and occasionally more than 1000 characters, due to

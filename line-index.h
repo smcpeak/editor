@@ -10,11 +10,10 @@
 
 #include "line-count-fwd.h"            // LineCount [n]
 #include "line-difference-fwd.h"       // LineDifference [n]
+#include "line-number-fwd.h"           // LineNumber [n]
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
-#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS, DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
-#include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB
-#include "smbase/xassert.h"            // xassertPrecondition
+#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 
 
 /* 0-based index into an array of lines, generally used in internal data
@@ -43,11 +42,8 @@ public:      // methods
   // Conversion from `LineCount` is safe.
   explicit LineIndex(LineCount value);
 
-  // I'm using this as a sort of marker, for places where for the moment
-  // I need `get()`, but my intention is to change the interface of the
-  // thing receiving the `int` to the `get()` call is not needed.
-  int getForNow() const
-    { return get(); }
+  // Convert to line number by adding one.
+  LineNumber toLineNumber() const;
 
   // -------------------------- Binary tests ---------------------------
   using Base::compareTo;

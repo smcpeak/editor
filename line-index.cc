@@ -5,20 +5,12 @@
 
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
+#include "line-number.h"               // LineNumber
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/compare-util-iface.h" // smbase::compare
-#include "smbase/gdvalue.h"            // gdv::{GDValue, GDVInteger}
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
-#include "smbase/overflow.h"           // addWithOverflowCheck, preIncrementWithOverflowCheck
-#include "smbase/sm-macros.h"          // DMEMB
-#include "smbase/stringb.h"            // stringb
+#include "smbase/overflow.h"           // addWithOverflowCheck, subtractWithOverflowCheck
 
-#include <iostream>                    // std::ostream
-#include <limits>                      // std::numeric_limits
-#include <optional>                    // std::optional
-
-using namespace gdv;
 using namespace smbase;
 
 
@@ -29,6 +21,12 @@ template class WrappedInteger<LineIndex>;
 LineIndex::LineIndex(LineCount value)
   : Base(value.get())
 {}
+
+
+LineNumber LineIndex::toLineNumber() const
+{
+  return LineNumber(addWithOverflowCheck(get(), 1));
+}
 
 
 int LineIndex::compareTo(LineDifference const &b) const
@@ -100,7 +98,7 @@ LineDifference LineIndex::operator-(LineIndex b) const
 
 LineIndex LineIndex::operator-(LineDifference b) const
 {
-  return LineIndex(get() - b.get());
+  return LineIndex(subtractWithOverflowCheck(get(), b.get()));
 }
 
 
