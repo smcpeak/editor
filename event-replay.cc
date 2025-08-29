@@ -338,6 +338,7 @@ static string getListWidgetContents(QListWidget *listWidget)
   string arg4 = getCapturedArg(match, 5) /* user ; */
 
 
+// TODO: Rename this to not clash with a macro in `sm-test.h`.
 #define EXPECT_EQ(context)                            \
   if (actual != expect) {                             \
     xstringb(context << ": should have been " <<      \
@@ -589,6 +590,14 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     checkFocusWorkaround();
     string actual = toString(getFocusWidget()->window()->windowTitle());
     EXPECT_RE_MATCH("CheckFocusWindowTitleMatches");
+  }
+
+  else if (funcName == "CheckWindowTitle") {
+    BIND_ARGS2(path, expect);
+
+    QWidget *widget = getObjectFromPath<QWidget>(path);
+    string actual = toString(widget->window()->windowTitle());
+    EXPECT_EQ("CheckWindowTitle");
   }
 
   else if (funcName == "CheckFocusWindow") {

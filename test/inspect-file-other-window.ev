@@ -1,0 +1,46 @@
+# inspect-file-other-window.ev
+# Test "File | Inspect in other window" menu item when used on a file.
+
+# In editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# I expect this to be run with "test/language-test.cc" on the command
+# line.
+CheckFocusWindowTitle "language-test.cc - Editor"
+
+# Split the window vertically.
+Shortcut "window1.m_menuBar" "Alt+W"
+KeyPress "window1.m_menuBar.windowMenu" "Key_V" "v"
+
+# We should now have a second window, and it should be focused.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+
+# Both windows should show `language-test.cc`.
+CheckFocusWindowTitle "language-test.cc - Editor"
+CheckWindowTitle "window1" "language-test.cc - Editor"
+CheckWindowTitle "window2" "language-test.cc - Editor"
+
+# Navigate to where "language-test.h" is in the file.
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+
+# Inspect that file in the other (original) window.
+Shortcut "window2.m_menuBar.fileMenu.fileInspectAtCursorOtherWindow" "Ctrl+Shift+I"
+
+# Check that the other window title has changed but ours (window2) has
+# not.
+CheckWindowTitle "window1" "language-test.h - Editor"
+CheckWindowTitle "window2" "language-test.cc - Editor"
+
+# EOF

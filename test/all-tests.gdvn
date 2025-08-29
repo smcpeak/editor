@@ -39,6 +39,7 @@
   [ "./editor.exe" "-ev=test/apply-command-initial-focus.ev" ]
   [ "./editor.exe" "-ev=test/apply-command-clear-new.ev" ]
   [ "./editor.exe" "-ev=test/apply-command-history.ev" ]
+  [ "./editor.exe" "-ev=test/inspect-file-other-window.ev" "test/language-test.cc" ]
 
   // This test also touches `gets-modified.txt`.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]
