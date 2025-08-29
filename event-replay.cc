@@ -338,15 +338,14 @@ static string getListWidgetContents(QListWidget *listWidget)
   string arg4 = getCapturedArg(match, 5) /* user ; */
 
 
-// TODO: Rename this to not clash with a macro in `sm-test.h`.
-#define EXPECT_EQ(context)                            \
+#define CHECK_EQ(context)                             \
   if (actual != expect) {                             \
     xstringb(context << ": should have been " <<      \
       doubleQuote(expect) << " but was " <<           \
       doubleQuote(actual) << ".");                    \
   }
 
-#define EXPECT_RE_MATCH(context)                            \
+#define CHECK_RE_MATCH(context)                             \
   if (!regexSearch(actual, expectRE)) {                     \
     xstringb(context << ": the actual string " <<           \
       doubleQuote(actual) << " did not match the regex " << \
@@ -488,8 +487,8 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
     string actual = q->eventReplayQuery(state);
-    EXPECT_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
-              doubleQuote(state));
+    CHECK_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
+             doubleQuote(state));
   }
 
   else if (funcName == "CheckLabel") {
@@ -497,7 +496,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
-    EXPECT_EQ("CheckLabel " << doubleQuote(path));
+    CHECK_EQ("CheckLabel " << doubleQuote(path));
   }
 
   else if (funcName == "CheckLabelMatches") {
@@ -505,7 +504,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
-    EXPECT_RE_MATCH("CheckLabelMatches " << doubleQuote(path));
+    CHECK_RE_MATCH("CheckLabelMatches " << doubleQuote(path));
   }
 
   else if (funcName == "CheckComboBoxText") {
@@ -513,7 +512,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QComboBox *cbox = getObjectFromPath<QComboBox>(path);
     string actual = toString(cbox->currentText());
-    EXPECT_EQ("CheckComboBoxText " << doubleQuote(path));
+    CHECK_EQ("CheckComboBoxText " << doubleQuote(path));
   }
 
   else if (funcName == "CheckLineEditText") {
@@ -521,7 +520,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QLineEdit *lineEdit = getObjectFromPath<QLineEdit>(path);
     string actual = toString(lineEdit->text());
-    EXPECT_EQ("CheckLineEditText " << doubleQuote(path));
+    CHECK_EQ("CheckLineEditText " << doubleQuote(path));
   }
 
   else if (funcName == "CheckListWidgetCount") {
@@ -529,7 +528,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     string actual = stringb(listWidget->count());
-    EXPECT_EQ("CheckListWidgetCount " << doubleQuote(path));
+    CHECK_EQ("CheckListWidgetCount " << doubleQuote(path));
   }
 
   else if (funcName == "CheckListWidgetContents") {
@@ -537,7 +536,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     string actual = getListWidgetContents(listWidget);
-    EXPECT_EQ("CheckListWidgetContents " << doubleQuote(path));
+    CHECK_EQ("CheckListWidgetContents " << doubleQuote(path));
   }
 
   else if (funcName == "CheckListWidgetCurrentRow") {
@@ -545,7 +544,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     string actual = stringb(listWidget->currentRow());
-    EXPECT_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
+    CHECK_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
@@ -557,15 +556,15 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     QTableWidgetItem *item = table->item(r, c);
     xassert(item);
     string actual = toString(item->text());
-    EXPECT_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
-                    " " << row << " " << col);
+    CHECK_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
+                   " " << row << " " << col);
   }
 
   else if (funcName == "CheckClipboard") {
     BIND_ARGS1(expect);
 
     string actual = toString(QApplication::clipboard()->text());
-    EXPECT_EQ("CheckClipboard");
+    CHECK_EQ("CheckClipboard");
   }
 
   else if (funcName == "CheckActionChecked") {
@@ -573,7 +572,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QAction *action = getObjectFromPath<QAction>(path);
     string actual = (action->isChecked()? "true" : "false");
-    EXPECT_EQ("CheckActionChecked " << doubleQuote(path));
+    CHECK_EQ("CheckActionChecked " << doubleQuote(path));
   }
 
   else if (funcName == "CheckFocusWindowTitle") {
@@ -581,7 +580,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     checkFocusWorkaround();
     string actual = toString(getFocusWidget()->window()->windowTitle());
-    EXPECT_EQ("CheckFocusWindowTitle");
+    CHECK_EQ("CheckFocusWindowTitle");
   }
 
   else if (funcName == "CheckFocusWindowTitleMatches") {
@@ -589,7 +588,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     checkFocusWorkaround();
     string actual = toString(getFocusWidget()->window()->windowTitle());
-    EXPECT_RE_MATCH("CheckFocusWindowTitleMatches");
+    CHECK_RE_MATCH("CheckFocusWindowTitleMatches");
   }
 
   else if (funcName == "CheckWindowTitle") {
@@ -597,7 +596,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QWidget *widget = getObjectFromPath<QWidget>(path);
     string actual = toString(widget->window()->windowTitle());
-    EXPECT_EQ("CheckWindowTitle");
+    CHECK_EQ("CheckWindowTitle");
   }
 
   else if (funcName == "CheckFocusWindow") {
@@ -605,7 +604,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     checkFocusWorkaround();
     string actual = qObjectPath(getFocusWidget()->window());
-    EXPECT_EQ("CheckFocusWindow");
+    CHECK_EQ("CheckFocusWindow");
   }
 
   else if (funcName == "CheckFocusWidget") {
@@ -613,7 +612,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     checkFocusWorkaround();
     string actual = qObjectPath(getFocusWidget());
-    EXPECT_EQ("CheckFocusWidget");
+    CHECK_EQ("CheckFocusWidget");
   }
 
   else if (funcName == "CheckImage") {
@@ -648,7 +647,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
 
     QWidget *widget = getObjectFromPath<QWidget>(path);
     string actual = toString(widget->size());
-    EXPECT_EQ("CheckSize " << doubleQuote(path));
+    CHECK_EQ("CheckSize " << doubleQuote(path));
   }
 
   else if (funcName == "TouchFile") {
