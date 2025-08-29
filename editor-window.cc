@@ -587,9 +587,9 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     MENU_ITEM    ("&New Window", windowNewWindow);
-    MENU_ITEM    ("Split window &vertically",
+    MENU_ITEM    ("Split window &vertically (top and bottom)",
       windowSplitWindowVertically);
-    MENU_ITEM    ("Split window &horizontally",
+    MENU_ITEM    ("Split window &horizontally (side by side)",
       windowSplitWindowHorizontally);
     MENU_ITEM_KEY("&Close Window",
       windowCloseWindow, Qt::CTRL + Qt::Key_F4);
