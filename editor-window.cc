@@ -35,9 +35,10 @@
 #include "vfs-msg.h"                             // VFS_ReadFileRequest
 
 // smqtutil
+#include "smqtutil/gdvalue-qrect.h"              // toGDValue(QRect)
 #include "smqtutil/qhboxframe.h"                 // QHBoxFrame
 #include "smqtutil/qstringb.h"                   // qstringb
-#include "smqtutil/qtguiutil.h"                  // CursorSetRestore
+#include "smqtutil/qtguiutil.h"                  // CursorSetRestore, setTrueFrameGeometry
 #include "smqtutil/qtutil.h"                     // toQString
 
 // smbase
@@ -576,7 +577,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Window");
     menu->setObjectName("windowMenu");
 
-    // Used mnemonics: cnop
+    // Used mnemonics: chnopv
 
     MENU_ITEM_KEY("Choose an &Open Document ...",
                   windowOpenFilesList, Qt::CTRL + Qt::Key_O);
@@ -586,8 +587,15 @@ void EditorWindow::buildMenu()
     menu->addSeparator();
 
     MENU_ITEM    ("&New Window", windowNewWindow);
+    MENU_ITEM    ("Split window &vertically",
+      windowSplitWindowVertically);
+    MENU_ITEM    ("Split window &horizontally",
+      windowSplitWindowHorizontally);
     MENU_ITEM_KEY("&Close Window",
       windowCloseWindow, Qt::CTRL + Qt::Key_F4);
+
+    menu->addSeparator();
+
     MENU_ITEM_KEY("Move/size to left saved position",
       windowMoveToLeftSavedPos, Qt::CTRL + Qt::ALT + Qt::Key_Left);
     MENU_ITEM_KEY("Move/size to right saved position",
@@ -2765,12 +2773,67 @@ void EditorWindow::inform(std::string_view msg) const
 }
 
 
+EditorWindow *EditorWindow::createNewWindow()
+{
+  return editorGlobal()->createNewWindow(this->currentDocument());
+}
+
+
 void EditorWindow::windowNewWindow() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  EditorWindow *ed = this->m_editorGlobal->createNewWindow(this->currentDocument());
+  EditorWindow *ed = createNewWindow();
   ed->show();
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::splitWindow(bool vert)
+{
+  EditorWindow *ed = createNewWindow();
+  ed->show();
+
+  // Current space.
+  QRect origRect = getTrueFrameGeometry(this);
+  QPoint center = origRect.center();
+
+  // Calculate rectangles that divide the current space in half.
+  QRect firstRect = origRect;
+  QRect secondRect = origRect;
+  if (vert) {
+    firstRect.setBottom(center.y());
+    secondRect.setTop(center.y() + 1);
+  }
+  else {
+    firstRect.setRight(center.x());
+    secondRect.setLeft(center.x() + 1);
+  }
+
+  TRACE1_GDVN_EXPRS("splitWindow",
+    vert, origRect, center, firstRect, secondRect);
+
+  setTrueFrameGeometry(this, firstRect);
+  setTrueFrameGeometry(ed, secondRect);
+}
+
+
+void EditorWindow::windowSplitWindowVertically() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  splitWindow(true /*vert*/);
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::windowSplitWindowHorizontally() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  splitWindow(false /*vert*/);
 
   GENERIC_CATCH_END
 }

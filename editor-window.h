@@ -131,6 +131,14 @@ private:     // funcs
   // Get curent window position.
   WindowPosition getWindowPosition() const;
 
+  // Make a new window that shows the same document as the current
+  // window.
+  EditorWindow *createNewWindow();
+
+  // Split the current window horizontally or vertically depending on
+  // `vert`.
+  void splitWindow(bool vert);
+
 protected:   // funcs
   void closeEvent(QCloseEvent *event) OVERRIDE;
 
@@ -298,6 +306,8 @@ public Q_SLOTS:
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;
   void windowNewWindow() NOEXCEPT;
+  void windowSplitWindowVertically() NOEXCEPT;
+  void windowSplitWindowHorizontally() NOEXCEPT;
   void windowCloseWindow() NOEXCEPT;
   void windowMoveToLeftSavedPos() NOEXCEPT;
   void windowMoveToRightSavedPos() NOEXCEPT;
