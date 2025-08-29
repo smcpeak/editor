@@ -9,7 +9,6 @@ CheckFocusWindowTitle "language-test.cc - Editor"
 CheckQuery "window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true"
 Shortcut "window1.m_menuBar" "Alt+L"
 KeyPress "window1.m_menuBar.lspMenu" "Key_A" "a"
-WaitUntilCheckQuery "2000" "window1.frame1.editorFrame.m_editorWidget" "lspIsRunningNormally" "true"
 
 # Open this file in LSP.
 Shortcut "window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7"
@@ -42,12 +41,6 @@ CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
 
 # Navigate to the declaration of `foo` in the other window.
 Shortcut "window2.m_menuBar.lspMenu.lspGoToMenu.lspGoToDeclarationInOtherWindow" "Shift+F12"
-
-# TODO: Fix the need for this sleep.  Experimentally, at around 13 ms it
-# has roughly a 50% chance of succeeding.  I think the problem is
-# related to using a queued event for the relevant signal, but the event
-# quiescence system really ought to handle that.
-Sleep "50"
 
 # Check we're at the right place.
 CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:6"

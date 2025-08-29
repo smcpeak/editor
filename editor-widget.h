@@ -44,6 +44,7 @@
 #include <QWidget>
 
 // libc++
+#include <functional>                            // std::function
 #include <memory>                                // std::unique_ptr
 #include <optional>                              // std::optional
 
@@ -244,6 +245,8 @@ public:      // data
   bool m_ignoreScrollSignals;
 
 private:     // funcs
+  // TODO: Sort these declarations.
+
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
 
@@ -266,6 +269,12 @@ private:     // funcs
   // true and, if also 'select', set the cursor/mark to select the
   // match.
   bool scrollToNextSearchHit(bool reverse, bool select);
+
+  // Wait, possibly with an activity dialog, until `condition` is true.
+  // Return false if the wait is canceled.
+  bool lspSynchronouslyWaitUntil(
+    std::function<bool()> condition,
+    std::string const &activityDialogMessage);
 
   // Compute and emit 'signal_searchStatusIndicator'.
   void emitSearchStatusIndicator();

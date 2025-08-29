@@ -2357,6 +2357,7 @@ void EditorWindow::lspGoToDeclarationInOtherWindow() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE1("lspGoToDeclarationInOtherWindow");
   editorWidget()->lspGoToRelatedLocation(
     LSPSymbolRequestKind::K_DECLARATION,
     EditorNavigationOptions::ENO_OTHER_WINDOW);

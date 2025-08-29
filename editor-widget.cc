@@ -23,6 +23,7 @@
 #include "textcategory.h"                        // LineCategories, etc.
 #include "uri-util.h"                            // getFileURIPath
 #include "vfs-query-sync.h"                      // VFS_QuerySync
+#include "waiting-counter.h"                     // IncDecWaitingCounter
 
 // smqtutil
 #include "smqtutil/courB24_ISO8859_1.bdf.gen.h"  // bdfFontData_courB24_ISO8859_1
@@ -2635,6 +2636,20 @@ std::optional<LSP_VersionNumber> EditorWidget::lspGetDocVersionNumber(
 }
 
 
+bool EditorWidget::lspSynchronouslyWaitUntil(
+  std::function<bool()> condition,
+  std::string const &activityDialogMessage)
+{
+  // Record that we are waiting for an external process.  This prevents
+  // the GUI test infrastructure from continuing with the next command
+  // until this call completes.
+  IncDecWaitingCounter idwc;
+
+  return synchronouslyWaitUntil(this, condition, 500 /*ms*/,
+           "Waiting for LSP server", activityDialogMessage);
+}
+
+
 bool EditorWidget::lspWaitUntilNotInitializing()
 {
   if (editorGlobal()->lspIsInitializing()) {
@@ -2645,8 +2660,7 @@ bool EditorWidget::lspWaitUntilNotInitializing()
     };
     std::string message = stringb(
       "Waiting for LSP server to start...");
-    return synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
-             "Waiting for LSP server", message);
+    return lspSynchronouslyWaitUntil(lambda, message);
   }
 
   return true;
@@ -2878,8 +2892,7 @@ void EditorWidget::lspGoToRelatedLocation(
   std::string message = stringb(
     "Waiting for reply for " << toMessageString(lsrk) <<
     " request...");
-  if (synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
-        "Waiting for LSP server", message)) {
+  if (lspSynchronouslyWaitUntil(lambda, message)) {
     if (editorGlobal()->lspIsRunningNormally()) {
       GDValue gdvReply = editorGlobal()->lspTakeReplyForID(id);
       TRACE1("received reply: " << gdvReply.asIndentedString());
