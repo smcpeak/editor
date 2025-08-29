@@ -245,13 +245,17 @@ public:      // data
   bool m_ignoreScrollSignals;
 
 private:     // funcs
-  // TODO: Sort these declarations.
-
   // set fonts, given actual BDF description data (*not* file names)
   void setFonts(char const *normal, char const *italic, char const *bold);
 
-  // Copy 'm_hitText' and 'm_hitTextFlags' into 'm_textSearch'.
-  void setTextSearchParameters();
+  // Compute and emit 'signal_searchStatusIndicator'.
+  void emitSearchStatusIndicator();
+
+  // Store into 'label' the text to show in the corner of the widget.
+  void computeOffscreenMatchIndicator(QLabel *label, int numMatches);
+
+  // Compute both corner labels.
+  void computeOffscreenMatchIndicators();
 
   // Draw the digits in the corner that indicate the number of search
   // matches that are off the screen.
@@ -265,6 +269,9 @@ private:     // funcs
   void addSearchMatchesToLineCategories(
     LineCategories &categories, LineIndex line);
 
+  // Copy 'm_hitText' and 'm_hitTextFlags' into 'm_textSearch'.
+  void setTextSearchParameters();
+
   // Scroll the display to the next/prev search it.  If found, return
   // true and, if also 'select', set the cursor/mark to select the
   // match.
@@ -275,15 +282,6 @@ private:     // funcs
   bool lspSynchronouslyWaitUntil(
     std::function<bool()> condition,
     std::string const &activityDialogMessage);
-
-  // Compute and emit 'signal_searchStatusIndicator'.
-  void emitSearchStatusIndicator();
-
-  // Store into 'label' the text to show in the corner of the widget.
-  void computeOffscreenMatchIndicator(QLabel *label, int numMatches);
-
-  // Compute both corner labels.
-  void computeOffscreenMatchIndicators();
 
   // Show the diagnostic details dialog, populated with `elts`.
   void showDiagnosticDetailsDialog(
@@ -313,12 +311,12 @@ private:     // funcs
 
 protected:   // funcs
   // QWidget funcs
+  virtual void resizeEvent(QResizeEvent *r) NOEXCEPT OVERRIDE;
   virtual void paintEvent(QPaintEvent *) NOEXCEPT OVERRIDE;
   virtual void keyPressEvent(QKeyEvent *k) NOEXCEPT OVERRIDE;
   virtual void keyReleaseEvent(QKeyEvent *k) NOEXCEPT OVERRIDE;
-  virtual void resizeEvent(QResizeEvent *r) NOEXCEPT OVERRIDE;
-  virtual void mousePressEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
   virtual void mouseMoveEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
+  virtual void mousePressEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
   virtual void mouseReleaseEvent(QMouseEvent *m) NOEXCEPT OVERRIDE;
   virtual void focusInEvent(QFocusEvent *e) NOEXCEPT OVERRIDE;
   virtual void focusOutEvent(QFocusEvent *e) NOEXCEPT OVERRIDE;
