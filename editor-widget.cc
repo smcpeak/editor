@@ -2185,6 +2185,16 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
 }
 
 
+std::string EditorWidget::cursorPositionUIString() const
+{
+  // I want the user to interact with line/col with a 1:1 origin, even
+  // though the TextDocument interface uses 0:0.
+  return stringb(
+    cursorLine().toLineNumber() << ':' <<
+    (cursorCol()+1));
+}
+
+
 void EditorWidget::mousePressEvent(QMouseEvent *m) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2625,10 +2635,32 @@ std::optional<LSP_VersionNumber> EditorWidget::lspGetDocVersionNumber(
 }
 
 
+bool EditorWidget::lspWaitUntilNotInitializing()
+{
+  if (editorGlobal()->lspIsInitializing()) {
+    // Synchronously wait until LSP changes state.
+    TRACE1("waiting for LSP to initialize");
+    auto lambda = [this]() -> bool {
+      return (!this->editorGlobal()->lspIsInitializing());
+    };
+    std::string message = stringb(
+      "Waiting for LSP server to start...");
+    return synchronouslyWaitUntil(this, lambda, 500 /*ms*/,
+             "Waiting for LSP server", message);
+  }
+
+  return true;
+}
+
+
 void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 {
   // True if we want a popup for errors.
   bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
+
+  if (!lspWaitUntilNotInitializing()) {
+    return;
+  }
 
   if (!editorGlobal()->lspIsRunningNormally()) {
     if (wantErrors) {
@@ -3545,6 +3577,12 @@ int EditorWidget::getFullLineHeight() const
 }
 
 
+static char const *boolToString(bool b)
+{
+  return b? "true" : "false";
+}
+
+
 string EditorWidget::eventReplayQuery(string const &state)
 {
   if (state == "firstVisible") {
@@ -3557,7 +3595,7 @@ string EditorWidget::eventReplayQuery(string const &state)
     return toString(m_editor->documentProcessStatus());
   }
   else if (state == "hasUnsavedChanges") {
-    return string(m_editor->unsavedChanges()? "true" : "false");
+    return boolToString(m_editor->unsavedChanges());
   }
   else if (state == "resourceName") {
     return m_editor->m_namedDoc->resourceName();
@@ -3568,6 +3606,15 @@ string EditorWidget::eventReplayQuery(string const &state)
   }
   else if (state == "documentText") {
     return m_editor->getTextForLRangeString(m_editor->documentLRange());
+  }
+  else if (state == "cursorPosition") {
+    return cursorPositionUIString();
+  }
+  else if (state == "lspIsFakeServer") {
+    return boolToString(editorGlobal()->lspIsFakeServer());
+  }
+  else if (state == "lspIsRunningNormally") {
+    return boolToString(editorGlobal()->lspIsRunningNormally());
   }
   else if (state == "selfCheck") {
     // Just invoke self check, throwing if it fails.  The returned

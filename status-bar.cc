@@ -39,6 +39,9 @@ StatusBarDisplay::StatusBarDisplay(
   //m_cursor->setLineWidth(1);
   hb->addWidget(m_cursor);
 
+  // Note: The text of `m_cursor` is set in
+  // `EditorWindow::editorViewChanged()`.
+
   m_filename = new QLabel();
   m_filename->setObjectName("m_filename");
 

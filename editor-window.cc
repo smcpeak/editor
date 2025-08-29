@@ -477,11 +477,11 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: cdiouw
+    // Used mnemonics: acdiopuw
 
-    MENU_ITEM    ("Start LSP server",
+    MENU_ITEM    ("St&art LSP server",
                   lspStartServer);
-    MENU_ITEM    ("Stop LSP server",
+    MENU_ITEM    ("Sto&p LSP server",
                   lspStopServer);
 
     menu->addSeparator();
@@ -554,8 +554,10 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("lspDebugMenu");
       QMenu *menu = submenu;
 
-      // Used mnemonics: s
+      // Used mnemonics: as
 
+      MENU_ITEM    ("St&art LSP server and immediately open file",
+                    lspStartServerAndOpenFile);
       MENU_ITEM    ("Check LSP server &status",
                     lspCheckStatus);
       MENU_ITEM    ("Show LSP server capabilities",
@@ -2124,6 +2126,20 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
 }
 
 
+void EditorWindow::lspStartServerAndOpenFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  // Start the server and immediately try to open the file.  This is
+  // meant to help test the case of trying to open a file before the
+  // server is fully initialized.
+  lspStartServer();
+  lspOpenOrUpdateFile();
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::lspOpenOrUpdateFile() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2631,11 +2647,8 @@ void EditorWindow::editorViewChanged() NOEXCEPT
 
   m_editorWidgetFrame->setScrollbarRangesAndValues();
 
-  // I want the user to interact with line/col with a 1:1 origin,
-  // even though the TextDocument interface uses 0:0.
-  m_statusArea->m_cursor->setText(qstringb(
-    (editorWidget()->cursorLine().toLineNumber()) << ':' <<
-    (editorWidget()->cursorCol()+1)));
+  m_statusArea->m_cursor->setText(
+    toQString(editorWidget()->cursorPositionUIString()));
 
   // Status text: full document name plus status indicators.
   NamedTextDocument *file = currentDocument();

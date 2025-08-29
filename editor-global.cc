@@ -21,6 +21,7 @@
 #include "lsp-client.h"                          // LSPClient
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "lsp-manager.h"                         // LSPManager, LSPDocumentInfo
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "recent-items-list.h"                   // RecentItemsList
@@ -102,10 +103,11 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_documentList(),
     m_editorWindows(),
     m_editorLogFile(openEditorLogFile()),
-    m_lspManager(!envAsBool("USE_FAKE_LSP_SERVER") /*useRealClangd*/,
-                 lspGetStderrLogFileInitialName(),
-                 (m_editorLogFile?
-                    &(m_editorLogFile->stream()) : nullptr)),
+
+    // This can also be set during command line processing.
+    m_lspIsFakeServer(envAsBool("USE_FAKE_LSP_SERVER")),
+
+    m_lspManager(),          // Set to non-null below.
     m_lspErrorMessages(),
     m_windowCounter(1),
     m_editorBuiltinFont(BF_EDITOR14),
@@ -184,6 +186,16 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_vfsConnections.shutdownAll();
     throw;
   }
+
+  // Create the LSP manager after processing the command line so the
+  // effect of setting `m_lspIsFakeServer` in response to "-ev" and
+  // "-record" will be effective.
+  m_lspManager.reset(new LSPManager(
+    !m_lspIsFakeServer /*useRealClangd*/,
+    lspGetStderrLogFileInitialName(),
+    (m_editorLogFile?
+       &(m_editorLogFile->stream()) : nullptr)
+  ));
 
   // TODO: replacement?  Need to test on Linux.
 #if 0
@@ -281,6 +293,8 @@ EditorGlobal::~EditorGlobal()
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(this, 0, this, 0);
   QObject::disconnect(&m_vfsConnections, 0, this, 0);
+
+  m_lspManager.reset();
 }
 
 
@@ -294,12 +308,13 @@ void EditorGlobal::selfCheck() const
     iter.data()->selfCheck();
   }
 
-  m_lspManager.selfCheck();
+  xassert(m_lspManager);
+  m_lspManager->selfCheck();
 
   // LSP manager and document list agree about what is open.
-  if (m_lspManager.isRunningNormally()) {
+  if (m_lspManager->isRunningNormally()) {
     std::set<std::string> openLSPFiles =
-      m_lspManager.getOpenFileNames();
+      m_lspManager->getOpenFileNames();
     std::set<std::string> trackedFiles =
       m_documentList.getTrackingChangesFileNames();
     XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
@@ -401,11 +416,17 @@ void EditorGlobal::processCommandLineOptions(
         // We are going to run an automated test, so ignore user
         // settings.
         useSettings = false;
+
+        // Only use the fake server with record/replay
+        m_lspIsFakeServer = true;
       }
 
       else if (arg == "-record") {
         // Record events to seed a new test.
         m_recordInputEvents = true;
+
+        // Only use the fake server with record/replay
+        m_lspIsFakeServer = true;
       }
 
       else if (beginsWith(arg, "-conn=")) {
@@ -1327,21 +1348,24 @@ void EditorGlobal::logAndWarn(
 void EditorGlobal::lspConnectSignals()
 {
   // Connect LSP signals.
-  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingDiagnostics,
-                   this,         &EditorGlobal::on_lspHasPendingDiagnostics);
-  QObject::connect(&m_lspManager, &LSPManager::signal_hasPendingErrorMessages,
-                   this,         &EditorGlobal::on_lspHasPendingErrorMessages);
-  QObject::connect(&m_lspManager, &LSPManager::signal_changedProtocolState,
-                   this,         &EditorGlobal::on_lspChangedProtocolState);
+  QObject::connect(
+    m_lspManager.get(), &LSPManager::signal_hasPendingDiagnostics,
+    this,              &EditorGlobal::on_lspHasPendingDiagnostics);
+  QObject::connect(
+    m_lspManager.get(), &LSPManager::signal_hasPendingErrorMessages,
+    this,              &EditorGlobal::on_lspHasPendingErrorMessages);
+  QObject::connect(
+    m_lspManager.get(), &LSPManager::signal_changedProtocolState,
+    this,              &EditorGlobal::on_lspChangedProtocolState);
 }
 
 
 void EditorGlobal::lspDisconnectSignals()
 {
   // Shut down the LSP server.
-  QObject::disconnect(&m_lspManager, nullptr, this, nullptr);
+  QObject::disconnect(m_lspManager.get(), nullptr, this, nullptr);
   {
-    std::string shutdownMsg = m_lspManager.stopServer();
+    std::string shutdownMsg = m_lspManager->stopServer();
     TRACE1("dtor: LSP Manager stopServer() returned: " << shutdownMsg);
   }
 }
@@ -1351,11 +1375,11 @@ void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  while (m_lspManager.hasPendingDiagnostics()) {
+  while (m_lspManager->hasPendingDiagnostics()) {
     // Get some pending diagnostics.
-    std::string fname = m_lspManager.getFileWithPendingDiagnostics();
+    std::string fname = m_lspManager->getFileWithPendingDiagnostics();
     std::unique_ptr<LSP_PublishDiagnosticsParams> lspDiags(
-      m_lspManager.takePendingDiagnosticsFor(fname));
+      m_lspManager->takePendingDiagnosticsFor(fname));
 
     if (!lspDiags->m_version.has_value()) {
       // Just discard them.
@@ -1390,8 +1414,8 @@ void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  while (m_lspManager.hasPendingErrorMessages()) {
-    lspAddErrorMessage(m_lspManager.takePendingErrorMessage());
+  while (m_lspManager->hasPendingErrorMessages()) {
+    lspAddErrorMessage(m_lspManager->takePendingErrorMessage());
   }
 
   GENERIC_CATCH_END
@@ -1409,6 +1433,12 @@ void EditorGlobal::on_lspChangedProtocolState() NOEXCEPT
 }
 
 
+LSPManager const *EditorGlobal::lspManagerC()
+{
+  return m_lspManager.get();
+}
+
+
 /*static*/ std::string EditorGlobal::lspGetStderrLogFileInitialName()
 {
   return getEditorStateFileName(
@@ -1418,25 +1448,50 @@ void EditorGlobal::on_lspChangedProtocolState() NOEXCEPT
 
 std::optional<std::string> EditorGlobal::lspStartServer()
 {
-  return m_lspManager.startServer();
+  return m_lspManager->startServer();
 }
 
 
 LSPProtocolState EditorGlobal::lspGetProtocolState() const
 {
-  return m_lspManager.getProtocolState();
+  if (!m_lspManager) {
+    // This happens during the constructor since we make the first
+    // editor window before processing the command line, and hence
+    // before making the LSP manager.  There is already a TODO to fix
+    // that.
+    return LSP_PS_MANAGER_INACTIVE;
+  }
+  else {
+    return m_lspManager->getProtocolState();
+  }
 }
 
 
 bool EditorGlobal::lspIsRunningNormally() const
 {
-  return m_lspManager.isRunningNormally();
+  if (!m_lspManager) {
+    return false;
+  }
+  else {
+    return m_lspManager->isRunningNormally();
+  }
+}
+
+
+bool EditorGlobal::lspIsInitializing() const
+{
+  return lspGetProtocolState() == LSP_PS_INITIALIZING;
 }
 
 
 std::string EditorGlobal::lspExplainAbnormality() const
 {
-  return m_lspManager.explainAbnormality();
+  if (!m_lspManager) {
+    return "TODO: This is stupid.";
+  }
+  else {
+    return m_lspManager->explainAbnormality();
+  }
 }
 
 
@@ -1445,7 +1500,7 @@ EditorGlobal::lspGetOrCreateServerCapabilitiesDocument()
 {
   return getOrCreateGeneratedDocument(
     "LSP Server Capabilities",
-    m_lspManager.getServerCapabilities().asLinesString());
+    m_lspManager->getServerCapabilities().asLinesString());
 }
 
 
@@ -1461,10 +1516,10 @@ std::string EditorGlobal::lspGetServerStatus() const
 {
   std::ostringstream oss;
 
-  oss << "Status: " << m_lspManager.checkStatus() << "\n";
+  oss << "Status: " << m_lspManager->checkStatus() << "\n";
 
   oss << "Has pending diagnostics: "
-      << GDValue(m_lspManager.hasPendingDiagnostics()) << "\n";
+      << GDValue(m_lspManager->hasPendingDiagnostics()) << "\n";
 
   if (std::size_t n = m_lspErrorMessages.size()) {
     oss << n << " errors:\n";
@@ -1479,7 +1534,7 @@ std::string EditorGlobal::lspGetServerStatus() const
 
 std::string EditorGlobal::lspStopServer()
 {
-  std::string report = m_lspManager.stopServer();
+  std::string report = m_lspManager->stopServer();
 
   // With the server shut down, all files are effectively closed w.r.t.
   // the LSP protocol.  Stop tracking changes for all files.
@@ -1507,7 +1562,7 @@ std::string EditorGlobal::lspGetCodeLine(
   // copy it has sent to the server, since that is what the server's
   // line numbers will (should!) be referring to.
   if (RCSerf<LSPDocumentInfo const> docInfo =
-        m_lspManager.getDocInfo(fname)) {
+        m_lspManager->getDocInfo(fname)) {
     return docInfo->getLastContentsCodeLine(lineIndex);
   }
 
@@ -1522,9 +1577,9 @@ std::string EditorGlobal::lspGetCodeLine(
 bool EditorGlobal::lspFileIsOpen(NamedTextDocument const *ntd) const
 {
   return
-    m_lspManager.isRunningNormally() &&
+    lspIsRunningNormally() &&
     ntd->isCompatibleWithLSP() &&
-    m_lspManager.isFileOpen(ntd->filename());
+    m_lspManager->isFileOpen(ntd->filename());
 }
 
 
@@ -1532,7 +1587,7 @@ RCSerf<LSPDocumentInfo const> EditorGlobal::lspGetDocInfo(
   NamedTextDocument const *doc) const
 {
   if (lspFileIsOpen(doc)) {
-    return m_lspManager.getDocInfo(doc->filename());
+    return m_lspManager->getDocInfo(doc->filename());
   }
   else {
     return nullptr;
@@ -1551,7 +1606,7 @@ void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
   LSP_VersionNumber version =
     toLSP_VersionNumber(ntd->getVersionNumber());
 
-  m_lspManager.notify_textDocument_didOpen(
+  m_lspManager->notify_textDocument_didOpen(
     ntd->filename(),
     languageId,
     version,
@@ -1564,14 +1619,14 @@ void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
 void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
 {
   xassertPrecondition(lspFileIsOpen(ntd));
-  lspSendUpdatedContents(m_lspManager, *ntd);
+  lspSendUpdatedContents(*m_lspManager, *ntd);
 }
 
 
 void EditorGlobal::lspCloseFile(NamedTextDocument *ntd)
 {
   if (lspFileIsOpen(ntd)) {
-    m_lspManager.notify_textDocument_didClose(ntd->filename());
+    m_lspManager->notify_textDocument_didClose(ntd->filename());
 
     // Clear the diagnostics.
     ntd->updateDiagnostics(nullptr);
@@ -1588,7 +1643,7 @@ void EditorGlobal::lspCancelRequestWithID(int id)
 {
   xassertPrecondition(lspIsRunningNormally());
 
-  m_lspManager.cancelRequestWithID(id);
+  m_lspManager->cancelRequestWithID(id);
 }
 
 
@@ -1596,7 +1651,7 @@ bool EditorGlobal::lspHasReplyForID(int id) const
 {
   xassertPrecondition(lspIsRunningNormally());
 
-  return m_lspManager.hasReplyForID(id);
+  return m_lspManager->hasReplyForID(id);
 }
 
 
@@ -1605,7 +1660,7 @@ gdv::GDValue EditorGlobal::lspTakeReplyForID(int id)
   xassertPrecondition(lspIsRunningNormally());
   xassertPrecondition(lspHasReplyForID(id));
 
-  return m_lspManager.takeReplyForID(id);
+  return m_lspManager->takeReplyForID(id);
 }
 
 
@@ -1616,7 +1671,7 @@ int EditorGlobal::lspRequestRelatedLocation(
 {
   xassertPrecondition(lspFileIsOpen(ntd));
 
-  return m_lspManager.requestRelatedLocation(
+  return m_lspManager->requestRelatedLocation(
     lsrk, ntd->filename(), coord);
 }
 

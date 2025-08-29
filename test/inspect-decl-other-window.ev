@@ -1,0 +1,61 @@
+# inspect-decl-other-window.ev
+# Test Shift+F12, inspecting a symbol declaration in another window.
+
+# In editor with correct file open.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckFocusWindowTitle "language-test.cc - Editor"
+
+# Activate fake LSP server.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true"
+Shortcut "window1.m_menuBar" "Alt+L"
+KeyPress "window1.m_menuBar.lspMenu" "Key_A" "a"
+WaitUntilCheckQuery "2000" "window1.frame1.editorFrame.m_editorWidget" "lspIsRunningNormally" "true"
+
+# Open this file in LSP.
+#
+# TODO: Add a "FocusShortcut" so I don't have to specify a path here.
+Shortcut "window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7"
+
+# Split the window.
+Shortcut "window1.m_menuBar" "Alt+W"
+KeyPress "window1.m_menuBar.windowMenu" "Key_V" "v"
+
+# Should now be in the second window.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+CheckWindowTitle "window1" "language-test.cc - Editor"
+CheckWindowTitle "window2" "language-test.cc - Editor"
+
+# Go to line 45.
+Shortcut "window2.m_menuBar.editMenu.editGotoLine" "Alt+G"
+FocusKeySequence "45"
+FocusKeyPR "Key_Return" "\r"
+
+# Back in editor on line 45.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+CheckQuery "window2.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:1"
+
+# Move to the first call to `foo` inside `caller`.
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+CheckQuery "window2.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:3"
+
+# Meanwhile, the other window should still be at the origin.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
+
+# Navigate to the declaration of `foo` in the other window.
+Shortcut "window2.m_menuBar.lspMenu.lspGoToMenu.lspGoToDeclarationInOtherWindow" "Shift+F12"
+
+# TODO: Fix the need for this sleep.  Experimentally, at around 13 ms it
+# has roughly a 50% chance of succeeding.  I think the problem is
+# related to using a queued event for the relevant signal, but the event
+# quiescence system really ought to handle that.
+Sleep "50"
+
+# Check we're at the right place.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:6"
+
+# But focus is still on window2, and its cursor has not moved.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+CheckQuery "window2.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:3"
+
+# EOF

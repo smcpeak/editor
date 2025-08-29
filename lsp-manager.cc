@@ -47,39 +47,6 @@ using namespace smbase;
 INIT_TRACE("lsp-manager");
 
 
-// ------------------------- LSPProtocolState --------------------------
-DEFINE_ENUMERATION_TO_STRING_OR(
-  LSPProtocolState,
-  NUM_LSP_PROTOCOL_STATES,
-  (
-    "LSP_PS_MANAGER_INACTIVE",
-    "LSP_PS_INITIALIZING",
-    "LSP_PS_NORMAL",
-    "LSP_PS_SHUTDOWN1",
-    "LSP_PS_SHUTDOWN2",
-
-    "LSP_PS_PROTOCOL_ERROR",
-
-    "LSP_PS_PROTOCOL_OBJECT_MISSING",
-    "LSP_PS_SERVER_NOT_RUNNING",
-  ),
-  "Unknown LSP"
-)
-
-
-// --------------------- LSPAnnotatedProtocolState ---------------------
-LSPAnnotatedProtocolState::~LSPAnnotatedProtocolState()
-{}
-
-
-LSPAnnotatedProtocolState::LSPAnnotatedProtocolState(
-  LSPProtocolState ps,
-  std::string &&desc)
-  : m_protocolState(ps),
-    m_description(std::move(desc))
-{}
-
-
 // ----------------------------- LSP path ------------------------------
 bool isValidLSPPath(std::string const &fname)
 {

@@ -10,6 +10,7 @@
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-client-fwd.h"                      // LSPClient [n]
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
+#include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "td-core-fwd.h"                         // TextDocumentCore [n]
 #include "textmcoord.h"                          // TextMCoord
@@ -29,78 +30,6 @@
 #include <memory>                                // std::unique_ptr
 #include <set>                                   // std::set
 #include <string>                                // std::string
-
-
-// Status of the LSPManager protocol.
-enum LSPProtocolState {
-  // ---- Normal lifecycle states ----
-
-  // Normally, we transition through these in order, cycling back to
-  // "inactive" at the end.
-
-  // `LSPManager` is inactive; both of its pointers are null.  If we
-  // were active previously, the old server process has terminated.
-  LSP_PS_MANAGER_INACTIVE,
-
-  // We have sent the "initialize" request, but not received its reply.
-  LSP_PS_INITIALIZING,
-
-  // We have received the "initialize" reply, and sent the "initialized"
-  // notification.  The server is operating normally and can service
-  // requests.
-  LSP_PS_NORMAL,
-
-  // We have sent the "shutdown" request, but not received a reply.
-  LSP_PS_SHUTDOWN1,
-
-  // We have sent the "exit" notification, but the server process has
-  // not terminated.
-  LSP_PS_SHUTDOWN2,
-
-  // ---- Error states ----
-
-  // Any of the above states except `LSP_PS_MANAGER_INACTIVE` can
-  // transition to the error state.
-
-  // `LSPClient` detected a protocol error.  We can't do anything more
-  // with the server process.
-  LSP_PS_PROTOCOL_ERROR,
-
-  // ---- Broken states ----
-
-  // These states should not occur, but I defined enumerators for them
-  // since `checkStatus` reports them.  There is no place in the code
-  // that emits `signal_changedProtocolState` for them since a
-  // transition into these states is never expected.
-
-  // The `LSPClient` is missing.  This is a broken state.
-  LSP_PS_PROTOCOL_OBJECT_MISSING,
-
-  // Despite the `CommandRunner` existing, it reports the server process
-  // is not running.  This is a broken state.
-  LSP_PS_SERVER_NOT_RUNNING,
-
-  NUM_LSP_PROTOCOL_STATES
-};
-
-// Return a string like "LSP_PS_MANAGER_INACTIVE".
-char const *toString(LSPProtocolState ps);
-
-
-// Protocol state and a human-readable description of the state, which
-// can have information beyond what is in `m_protocolState`.
-class LSPAnnotatedProtocolState {
-public:      // data
-  // Basic state.
-  LSPProtocolState m_protocolState;
-
-  // Annotation/description.
-  std::string m_description;
-
-public:
-  ~LSPAnnotatedProtocolState();
-  LSPAnnotatedProtocolState(LSPProtocolState ps, std::string &&desc);
-};
 
 
 // True if `fname` is *absolute* and exclusively uses *forward* slashes

@@ -20,7 +20,9 @@
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
 #include "line-index-fwd.h"                      // LineIndex [n]
-#include "lsp-manager.h"                         // LSPManager, LSPDocumentInfo
+#include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
+#include "lsp-protocol-state.h"                  // LSPProtocolState
+#include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
 #include "named-td-list.h"                       // NamedTextDocumentList
 #include "open-files-dialog-fwd.h"               // OpenFilesDialog [n]
@@ -93,9 +95,17 @@ private:     // instance data
   // setting.
   std::unique_ptr<smbase::ExclusiveWriteFile> m_editorLogFile;
 
+  // If true, then `m_lspManager` uses the "fake" server that is just a
+  // Python script doing very simple textual analysis.  This avoids
+  // using the real `clangd` during testing, both for dependency and
+  // speed reasons.
+  bool m_lspIsFakeServer;
+
   // Object to manage communication with the LSP server.
   //
-  // Invariant: If `m_lspManager.isRunningNormally()`, then the set of
+  // Invariant: Never null, except during part of the ctor.
+  //
+  // Invariant: If `m_lspManager->isRunningNormally()`, then the set of
   // documents open in `m_lspManager` is the same as the set of
   // documents in `m_documentList` that are tracking changes.
   //
@@ -104,7 +114,7 @@ private:     // instance data
   // `m_documentList`, then the manager and document agree about the
   // contents.
   //
-  LSPManager m_lspManager;
+  std::unique_ptr<LSPManager> m_lspManager;
 
   // List of LSP protocol errors.  For now, these just accumulate.
   //
@@ -505,8 +515,10 @@ public:       // funcs
     std::string const &logMessage);
 
   // --------------------------- LSP Global ----------------------------
+  bool lspIsFakeServer() const { return m_lspIsFakeServer; }
+
   // Read-only access to the manager.
-  LSPManager const *lspManagerC() { return &m_lspManager; }
+  LSPManager const *lspManagerC();
 
   // Initial name for the path to the file that holds the stderr from
   // the LSP server process (clangd).
@@ -520,6 +532,10 @@ public:       // funcs
 
   // True if the LSP connection is normal.
   bool lspIsRunningNormally() const;
+
+  // True if we have begun the process of initializing the LSP server,
+  // but that has not resolved as either a success or failure.
+  bool lspIsInitializing() const;
 
   // Return a string that explains why `!lspIsRunningNormally()`.  If it
   // is in fact running normally, say so.

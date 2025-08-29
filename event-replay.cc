@@ -3,6 +3,10 @@
 
 #include "event-replay.h"              // this module
 
+// NOTE: There should not be any dependencies here on the editor per se.
+// If you want to, say, query an EditorWidget from a test script, use
+// the "CheckQuery" generic query.
+
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
 #include "waiting-counter.h"           // g_waitingCounter, IncDecWaitingCounter

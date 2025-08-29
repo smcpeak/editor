@@ -359,6 +359,10 @@ public:      // funcs
   LineIndex cursorLine() const            { return m_editor->cursor().m_line; }
   int cursorCol() const                   { return m_editor->cursor().m_column; }
 
+  // Return the cursor position as "<line>:<col>" where both are 1-based
+  // for the user interface.
+  std::string cursorPositionUIString() const;
+
   // absolute cursor movement
   void cursorTo(TextLCoord tc);
 
@@ -487,6 +491,13 @@ public:      // funcs
   // pop up an error box if `wantErrors`, then return nullopt.
   std::optional<LSP_VersionNumber> lspGetDocVersionNumber(
     bool wantErrors) const;
+
+  // If the LSP server is currently initializing, wait until that is not
+  // the case (it succeeds or it fails), or the user cancels.  Return
+  // true if the server changed state and false if the user canceled the
+  // wait.  If the server is *not* initializing, just return true
+  // immediately.
+  bool lspWaitUntilNotInitializing();
 
   // Do `operation` with the current file.
   void lspDoFileOperation(LSPFileOperation operation);

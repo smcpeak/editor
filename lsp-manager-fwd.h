@@ -6,6 +6,7 @@
 #ifndef EDITOR_LSP_MANAGER_FWD_H
 #define EDITOR_LSP_MANAGER_FWD_H
 
+class LSPDocumentInfo;
 class LSPManager;
 
 #endif // EDITOR_LSP_MANAGER_FWD_H
