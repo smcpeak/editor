@@ -12,8 +12,6 @@ KeyPress "window1.m_menuBar.lspMenu" "Key_A" "a"
 WaitUntilCheckQuery "2000" "window1.frame1.editorFrame.m_editorWidget" "lspIsRunningNormally" "true"
 
 # Open this file in LSP.
-#
-# TODO: Add a "FocusShortcut" so I don't have to specify a path here.
 Shortcut "window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7"
 
 # Split the window.

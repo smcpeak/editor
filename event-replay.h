@@ -108,8 +108,9 @@ private:     // funcs
   // widget expands or contracts the same amount as its parent windows.
   void resizeChildWidget(QWidget *widget, QSize const &targetSize);
 
-  // Get the focus widget, throwing if there is none.
-  QWidget *getFocusWidget();
+  // Get the focus widget, throwing if there is none.  `funcName` is
+  // the function we are performing, and used in a `TRACE` call.
+  QWidget *getFocusWidget(QString const &funcName);
 
   // Replay a single call line as matched by 'match'.  Throw a string
   // object if there is a problem.

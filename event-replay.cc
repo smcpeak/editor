@@ -267,13 +267,17 @@ static EventReplayQueryable *getQueryableFromPath(string const &path)
 }
 
 
-QWidget *EventReplay::getFocusWidget()
+QWidget *EventReplay::getFocusWidget(QString const &funcName)
 {
-  QWidget *widget = QApplication::focusWidget();
-  if (!widget) {
+  QWidget *focusWidget = QApplication::focusWidget();
+  if (!focusWidget) {
     xstringb("No widget has focus.");
   }
-  return widget;
+
+  TRACE("EventReplay", toString(funcName) << ": focusWidget: " <<
+        doubleQuote(focusWidget->objectName()));
+
+  return focusWidget;
 }
 
 
@@ -374,12 +378,8 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   else if (funcName == "FocusKeyPress") {
     BIND_ARGS2(keys, text);
 
-    QWidget *focusWidget = getFocusWidget();
-    TRACE("EventReplay", "FocusKeyPress: focusWidget: " <<
-          doubleQuote(focusWidget->objectName()));
-
     QCoreApplication::postEvent(
-      focusWidget,
+      getFocusWidget(funcName),
       getKeyPressEventFromString(keys, toQString(text)));
   }
 
@@ -387,16 +387,14 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS2(keys, text);
 
     QCoreApplication::postEvent(
-      getFocusWidget(),
+      getFocusWidget(funcName),
       getKeyReleaseEventFromString(keys, toQString(text)));
   }
 
   else if (funcName == "FocusKeyPR") {
     BIND_ARGS2(keys, text);
 
-    QWidget *focusWidget = getFocusWidget();
-    TRACE("EventReplay", "FocusKeyPR: focusWidget: " <<
-          doubleQuote(focusWidget->objectName()));
+    QWidget *focusWidget = getFocusWidget(funcName);
 
     // It is not always safe to post multiple events since, in the real
     // execution, events could intervene or state (e.g., focus!) could
@@ -427,6 +425,10 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
       getQObjectFromPath(receiver),
       getShortcutEventFromString(keys));
   }
+
+  // I tried creating a "FocusShortcut", but it does not work
+  // consistently.  So I'll have to stick with the more explicit
+  // "Shortcut" action.
 
   else if (funcName == "SetFocus") {
     BIND_ARGS1(widget);
@@ -583,7 +585,8 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS1(expect);
 
     checkFocusWorkaround();
-    string actual = toString(getFocusWidget()->window()->windowTitle());
+    string actual =
+      toString(getFocusWidget(funcName)->window()->windowTitle());
     CHECK_EQ("CheckFocusWindowTitle");
   }
 
@@ -591,7 +594,8 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS1(expectRE);
 
     checkFocusWorkaround();
-    string actual = toString(getFocusWidget()->window()->windowTitle());
+    string actual =
+      toString(getFocusWidget(funcName)->window()->windowTitle());
     CHECK_RE_MATCH("CheckFocusWindowTitleMatches");
   }
 
@@ -607,7 +611,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS1(expect);
 
     checkFocusWorkaround();
-    string actual = qObjectPath(getFocusWidget()->window());
+    string actual = qObjectPath(getFocusWidget(funcName)->window());
     CHECK_EQ("CheckFocusWindow");
   }
 
@@ -615,7 +619,7 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     BIND_ARGS1(expect);
 
     checkFocusWorkaround();
-    string actual = qObjectPath(getFocusWidget());
+    string actual = qObjectPath(getFocusWidget(funcName));
     CHECK_EQ("CheckFocusWidget");
   }
 
@@ -735,12 +739,14 @@ static QKeyEvent *charToKeyEvent(QEvent::Type eventType, char c)
 
 void EventReplay::replayFocusKey(char c)
 {
+  QWidget *focusWidget = getFocusWidget("replayFocusKey");
+
   // As for 'FocusKeyPR', posting both events at once should be safe.
   QCoreApplication::postEvent(
-    getFocusWidget(),
+    focusWidget,
     charToKeyEvent(QEvent::KeyPress, c));
   QCoreApplication::postEvent(
-    getFocusWidget(),
+    focusWidget,
     charToKeyEvent(QEvent::KeyRelease, c));
 }
 
