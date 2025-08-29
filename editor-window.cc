@@ -528,8 +528,9 @@ void EditorWindow::buildMenu()
                     Qt::SHIFT + Qt::Key_F12);
       MENU_ITEM_KEY("&All uses",
                     lspGoToAllUses, Qt::CTRL + Qt::Key_F12);
-      MENU_ITEM    ("All &uses, in other window",
-                    lspGoToAllUsesInOtherWindow);
+      MENU_ITEM_KEY("All &uses, in other window",
+                    lspGoToAllUsesInOtherWindow,
+                    Qt::CTRL + Qt::SHIFT + Qt::Key_F12);
       MENU_ITEM    ("&Hover info",
                     lspHoverInfo);
       MENU_ITEM_KEY("Completio&n",

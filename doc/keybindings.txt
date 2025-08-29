@@ -38,6 +38,7 @@ F10                          Debug | Run &global invariant self-check ...
 F12                          LSP | Go to | Definition (or decl if at defn)
 F12+Shift                    LSP | Go to | Declaration, in other window
 F12+Ctrl                     LSP | Go to | All uses
+F12+Ctrl+Shift               LSP | Go to | All uses, in other window
 
 
 # -------------------------- keys with names ---------------------------
