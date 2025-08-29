@@ -21,6 +21,7 @@ import json
 import os
 import re
 import sys
+import time                  # sleep
 import traceback
 
 from enum import Enum
@@ -828,6 +829,11 @@ def main() -> None:
       msg_id: Optional[int] = msg.get("id")
 
       if method == "initialize":
+        # This lets me test how the editor responds when the server is
+        # slow to initialize.
+        if delayMS := os.getenv("LSP_TEST_SERVER_INITIALIZE_DELAY_MS"):
+          time.sleep(int(delayMS) / 1000)
+
         # Reply with capabilities
         result = {
           "capabilities": {
