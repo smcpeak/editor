@@ -2803,8 +2803,12 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
 void EditorWidget::goToLocalFileAndLineOpt(
   std::string const &fname,
   std::optional<LineNumber> lineOpt,
-  int byteIndexOpt)
+  std::optional<int> byteIndexOpt)
 {
+  if (byteIndexOpt) {
+    xassertPrecondition(*byteIndexOpt >= 0);
+  }
+
   HostFileAndLineOpt hostFileAndLine(
     HostAndResourceName::localFile(fname),
     lineOpt,

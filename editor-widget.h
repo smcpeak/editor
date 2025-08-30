@@ -615,14 +615,14 @@ public:      // funcs
   void makeCurrentDocumentTopmost();
 
   // Navigate in this widget to local file `fname` at `lineOpt` and
-  // `byteIndexOpt`.  The byte index is 0-based, or -1 to mean "none".
+  // `byteIndexOpt`.  The byte index is 0-based.
   //
   // TODO: The callers of this function, along with the function itself,
   // should be generalized to work with remote files too.
   void goToLocalFileAndLineOpt(
     std::string const &fname,
     std::optional<LineNumber> lineOpt,
-    int byteIndexOpt);
+    std::optional<int> byteIndexOpt);
 
   // ---------------------------- input -----------------------------
   // We are about to edit the text in the file.  If we are going from

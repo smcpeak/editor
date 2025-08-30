@@ -17,22 +17,24 @@
 class HostFileAndLineOpt {
 public:      // data
   // Host and file name.  Can be empty() to mean none.
+  //
+  // TODO: Use std::optional for this one too.
   HostAndResourceName m_harn;
 
   // Optional 1-based line number.
   std::optional<LineNumber> m_line;
 
-  // The 0-based byte index, or -1 to mean "none".
-  //
-  // TODO: Change this to `std::optional`.
-  int m_byteIndex;
+  // Optional 0-based byte index.
+  std::optional<int> m_byteIndex;
 
 public:      // funcs
   HostFileAndLineOpt()
     : m_harn(),
       m_line(),
-      m_byteIndex(-1)
-  {}
+      m_byteIndex()
+  {
+    selfCheck();
+  }
 
   ~HostFileAndLineOpt()
   {}
@@ -41,20 +43,27 @@ public:      // funcs
     : DMEMB(m_harn),
       DMEMB(m_line),
       DMEMB(m_byteIndex)
-  {}
+  {
+    selfCheck();
+  }
 
   HostFileAndLineOpt(
     HostAndResourceName const &harn,
     std::optional<LineNumber> line,
-    int byteIndex)
+    std::optional<int> byteIndex)
     : IMEMBFP(harn),
       IMEMBFP(line),
       IMEMBFP(byteIndex)
-  {}
+  {
+    selfCheck();
+  }
+
+  // Assert invariants.
+  void selfCheck() const;
 
   bool hasFilename() const { return !m_harn.empty(); }
   bool hasLine() const { return m_line.has_value(); }
-  bool hasByteIndex() const { return m_byteIndex >= 0; }
+  bool hasByteIndex() const { return m_byteIndex.has_value(); }
 };
 
 

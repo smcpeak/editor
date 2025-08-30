@@ -13,7 +13,7 @@
 #include "smbase/trace.h"              // TRACE
 #include "smbase/vector-util.h"        // vecConvertElements, vecMapElements
 
-#include <optional>                    // std::optional
+#include <optional>                    // std::{nullopt, optional}
 
 using namespace gdv;
 
@@ -179,7 +179,7 @@ void getCandidateSuffixes(
   // Return what we found.
   candidates.push(HostFileAndLineOpt(
     HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
-    line, -1));
+    line, std::nullopt));
 }
 
 

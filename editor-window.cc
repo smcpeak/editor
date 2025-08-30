@@ -773,7 +773,7 @@ void EditorWindow::fileOpen() NOEXCEPT
   this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(
     dirHarn,
     std::nullopt,
-    -1));
+    std::nullopt));
 
   GENERIC_CATCH_END
 }
@@ -2712,7 +2712,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   TRACE1("slot_openOrSwitchToFileAtLineOpt:"
     " harn=" << hfl.m_harn <<
     " line=" << toGDValue(hfl.m_line) <<
-    " byteIndex=" << hfl.m_byteIndex);
+    " byteIndex=" << toGDValue(hfl.m_byteIndex));
 
   if (!hfl.hasFilename()) {
     // Ignore empty object.
@@ -2732,7 +2732,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
         // Also go to line/col, if provided.
         TextLCoord targetLC(
           hfl.m_line->toLineIndex(),
-          std::max(0, hfl.m_byteIndex));
+          hfl.m_byteIndex.value_or(0));
         editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();
         editorWidget()->scrollToCursor(-1 /*gap*/);
