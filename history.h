@@ -30,6 +30,9 @@ class XHistory : public smbase::XMessage {
 public:
   XHistory(char const *msg) : smbase::XMessage(stringb("XHistory: " << msg)) {}
   XHistory(XHistory const &obj) : smbase::XMessage(obj) {}
+
+  virtual char const *getTypeName() const noexcept override
+    { return "XHistory"; }
 };
 
 
