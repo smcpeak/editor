@@ -1,0 +1,61 @@
+# lsp-all-uses-other-window.ev
+# Exercise the "all uses, other window" LSP function.
+
+# In editor with correct file open.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckFocusWindowTitle "language-test.cc - Editor"
+
+# Activate fake LSP server.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true"
+Shortcut "window1.m_menuBar" "Alt+L"
+KeyPress "window1.m_menuBar.lspMenu" "Key_A" "a"
+
+# Open this file in LSP.
+Shortcut "window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7"
+
+# Split window horizontally.
+Shortcut "window1.m_menuBar" "Alt+W"
+KeyPress "window1.m_menuBar.windowMenu" "Key_H" "h"
+
+# We are in window2 now.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+
+# Go to line 52.
+Shortcut "window2.m_menuBar.editMenu.editGotoLine" "Alt+G"
+FocusKeySequence "52"
+FocusKeyPR "Key_Return" "\r"
+
+# Back in editor on line 52.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+CheckQuery "window2.frame1.editorFrame.m_editorWidget" "cursorPosition" "52:1"
+
+# Move to the call to `foo` on that line.
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+CheckQuery "window2.frame1.editorFrame.m_editorWidget" "cursorPosition" "52:3"
+
+# Open the all-uses dialog, targeting the other window.
+Shortcut "window2.m_menuBar.lspMenu.lspGoToMenu.lspGoToAllUsesInOtherWindow" "Ctrl+Shift+F12"
+CheckFocusWidget "diagnostic_details.m_splitter.m_table"
+
+# Go to the first entry.
+FocusKeyPR "Key_Return" "\r"
+
+# Confirm we navigated there in window1.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:1"
+
+# Focus stays on the table.
+CheckFocusWidget "diagnostic_details.m_splitter.m_table"
+
+# Go to the second entry.
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Return" "\r"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "31:1"
+
+# Close the dialog.
+FocusKeyPR "Key_Escape" "\033"
+
+# Back in the editor window2.
+CheckFocusWidget "window2.frame1.editorFrame.m_editorWidget"
+
+# EOF

@@ -42,6 +42,7 @@
   [ "./editor.exe" "-ev=test/inspect-file-other-window.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/inspect-decl-other-window.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/lsp-all-uses.ev" "test/language-test.cc" ]
+  [ "./editor.exe" "-ev=test/lsp-all-uses-other-window.ev" "test/language-test.cc" ]
 
   // This test also touches `gets-modified.txt`.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]
