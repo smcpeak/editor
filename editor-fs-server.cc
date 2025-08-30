@@ -13,7 +13,7 @@
 #include "smbase/exclusive-write-file.h"         // smbase::{ExclusiveWriteFile, tryCreateExclusiveWriteFile}
 #include "smbase/flatten.h"                      // de/serializeIntNBO
 #include "smbase/nonport.h"                      // sleepForMilliseconds, getProcessId
-#include "smbase/overflow.h"                     // convertWithRTIP
+#include "smbase/overflow.h"                     // writeConvertedNumber
 #include "smbase/sm-env.h"                       // smbase::{getXDGStateHome, envAsIntOr}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // NULLABLE, OPEN_ANONYMOUS_NAMESPACE
@@ -158,10 +158,7 @@ void sendMessage(FILE *stream, std::string const &reply)
 {
   // Send length.
   uint32_t len;
-
-  // TODO: Use `convertNumber`, except I want a form that takes two
-  // arguments.
-  convertWithRTIP(len, reply.size());
+  writeConvertedNumber(len, reply.size());
   unsigned char buf[4];
   serializeIntNBO(buf, len);
   fwriteAll(buf, 4, stream);

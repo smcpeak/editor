@@ -14,7 +14,7 @@
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/flatten.h"            // serializeIntNBO
 #include "smbase/nonport.h"            // getFileModificationTime
-#include "smbase/overflow.h"           // convertWithRTIP
+#include "smbase/overflow.h"           // writeConvertedNumber
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING
 #include "smbase/trace.h"              // TRACE
 
@@ -271,7 +271,7 @@ void VFS_FileSystemQuery::innerSendRequest(VFS_Message const &msg)
   // Get its length.
   unsigned char lenBuf[4];
   uint32_t serMsgLen;
-  convertWithRTIP(serMsgLen, serMessage.size());
+  writeConvertedNumber(serMsgLen, serMessage.size());
   serializeIntNBO(lenBuf, serMsgLen);
 
   // Combine the length and serialized message into an envelope.
