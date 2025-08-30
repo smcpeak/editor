@@ -72,11 +72,11 @@ Some notable features:
 * Due to running on top of Qt, it is portable to Windows, Linux, and
   Mac, although I've never built it for Mac.
 
+* C++ Language Server Protocol support with `clangd`.
+
 Major limitations:
 
 * No support for UTF-8 (right now it treats all text as Latin-1).
-
-* No language server support.
 
 * No plugin interface.
 
@@ -84,9 +84,7 @@ Major limitations:
 
 * No support for calling out to AI tools.
 
-I hope to address all of these limitations at some point, but for now at
-least one of them is probably a deal-breaker for most people, so I don't
-envision attracting a significant number of users.
+These are all things I hope to address.
 
 Medium (IMO) limitations:
 
