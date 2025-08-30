@@ -1,0 +1,70 @@
+# lsp-all-uses.ev
+# Exercise the "all uses" LSP function.
+
+# In editor with correct file open.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckFocusWindowTitle "language-test.cc - Editor"
+
+# Activate fake LSP server.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true"
+Shortcut "window1.m_menuBar" "Alt+L"
+KeyPress "window1.m_menuBar.lspMenu" "Key_A" "a"
+
+# Open this file in LSP.
+Shortcut "window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7"
+
+# Go to line 52.
+Shortcut "window1.m_menuBar.editMenu.editGotoLine" "Alt+G"
+FocusKeySequence "52"
+FocusKeyPR "Key_Return" "\r"
+
+# Back in editor on line 52.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "52:1"
+
+# Move to the call to `foo` on that line.
+FocusKeyPR "Key_Right" ""
+FocusKeyPR "Key_Right" ""
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "52:3"
+
+# Open the all-uses dialog.
+Shortcut "window1.m_menuBar.lspMenu.lspGoToMenu.lspGoToAllUses" "Ctrl+F12"
+CheckFocusWidget "diagnostic_details.m_splitter.m_table"
+
+# Go to the first entry.
+FocusKeyPR "Key_Return" "\r"
+
+# We should be there.  But right now I don't have column information so
+# we go to column 1.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:1"
+
+# Focus stays on the table.
+CheckFocusWidget "diagnostic_details.m_splitter.m_table"
+
+# Go to the second entry.
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Return" "\r"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "31:1"
+
+# Go to the third entry.
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Return" "\r"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:1"
+
+# Go to the fourth entry.
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Return" "\r"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "48:1"
+
+# Go to the fifth entry.
+FocusKeyPR "Key_Down" ""
+FocusKeyPR "Key_Return" "\r"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "49:1"
+
+# Close the dialog.
+FocusKeyPR "Key_Escape" "\033"
+
+# Back in the editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# EOF

@@ -170,6 +170,7 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     m_splitter(nullptr),
     m_table(nullptr)
 {
+  setObjectName("diagnostic_details");
   setWindowTitle("Diagnostic Details");
   setWindowIcon(g_editorPixmaps->diagnosticsIcon);
   resize(800, 600);
