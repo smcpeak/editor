@@ -30,6 +30,8 @@ three
   // Initially it has no file name.
   EXPECT_EQ(ntde.applyCommandSubstitutions("$f"),
     "\"\"");
+  EXPECT_EQ(ntde.applyCommandSubstitutions("$cc"),
+    "\"\"");
 
   doc.setDocumentName(DocumentName::fromFilename(
     HostName::asLocal(), "tmp.h"));
@@ -37,6 +39,8 @@ three
     "tmp.h");
   EXPECT_EQ(ntde.applyCommandSubstitutions("abc $f def $f hij"),
     "abc tmp.h def tmp.h hij");
+  EXPECT_EQ(ntde.applyCommandSubstitutions("abc $f def $cc hij"),
+    "abc tmp.h def tmp.cc hij");
 
   // This isn't necessarily ideal, but it is the current behavior.
   EXPECT_EQ(ntde.applyCommandSubstitutions("$$f"),

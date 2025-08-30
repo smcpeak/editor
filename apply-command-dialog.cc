@@ -367,10 +367,8 @@ ApplyCommandDialog::ApplyCommandDialog(
     "If \"Enable substitution\" is checked, then the following "
     "substitutions will be performed on the command line before "
     "executing:\n"
-    "\n\n"
-    "  - $f: Current document file name, without directory\n"
-    "  - $w: Word at+after cursor\n"
-    "  - $t1 ... $t9: Whitespace-separated tokens on cursor line\n";
+    "\n\n";
+  m_helpText += NamedTextDocumentEditor::s_substitutionsHelpString;
 
   if (m_whichFunction == ECLF_RUN) {
     m_helpText +=

@@ -24,20 +24,31 @@ NamedTextDocumentEditor::NamedTextDocumentEditor(
 {}
 
 
+char const * const NamedTextDocumentEditor::s_substitutionsHelpString =
+  "  - $f: Current document file name, without directory\n"
+  "  - $cc: Current name with extension replaced with \".cc\"\n"
+  "  - $w: Word at+after cursor\n"
+  "  - $t1 ... $t9: Whitespace-separated tokens on cursor line\n";
+
+
 std::string NamedTextDocumentEditor::applyCommandSubstitutions(
   std::string const &orig) const
 {
   std::vector<std::pair<std::string, std::string>> replacements;
 
   // $f: File name.
+  // $cc: The .cc file for the current header file.
   {
     std::string fname;
+    std::string ccname;
     DocumentName const &documentName = m_namedDoc->documentName();
     if (documentName.hasFilename()) {
       SMFileUtil sfu;
       fname = sfu.splitPathBase(documentName.filename());
+      ccname = stripExtension(fname) + ".cc";
     }
     replacements.push_back({"$f", shellDoubleQuote(fname)});
+    replacements.push_back({"$cc", shellDoubleQuote(ccname)});
   }
 
   // $w: Word at cursor.

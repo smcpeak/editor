@@ -20,7 +20,13 @@
 // shared with other widgets in the editor application, although it
 // contains a pointer to a `NamedTextDocument`, which *is* shared.
 class NamedTextDocumentEditor : public TextDocumentEditor {
-public:    // data
+public:    // class data
+  // A string containing one line for each of the substitutions that
+  // `applyCommandSubstitution` can perform.  This gets included in the
+  // help text of `ApplyCommandDialog`.
+  static char const * const s_substitutionsHelpString;
+
+public:    // instance data
   // Process-wide record of the open file.  Not an owner pointer.
   // Must not be null.
   RCSerf<NamedTextDocument> m_namedDoc;
@@ -32,9 +38,8 @@ public:
   NamedTextDocumentEditor(NamedTextDocument *d);
 
   // Replace occurrences of variables like "$f" with their meanings,
-  // which derive from things like the file name.  See the
-  // implementation for the exact substitutions implemented at the
-  // moment.
+  // which derive from things like the file name.  See the definition of
+  // `s_substitutionsHelpString`.
   string applyCommandSubstitutions(string const &orig) const;
 };
 
