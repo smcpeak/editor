@@ -17,9 +17,9 @@
 
 
 // A positive `LineCount`.
-class PositiveLineCount final : public WrappedInteger<PositiveLineCount> {
+class PositiveLineCount final : public WrappedInteger<int, PositiveLineCount> {
 public:      // types
-  using Base = WrappedInteger<PositiveLineCount>;
+  using Base = WrappedInteger<int, PositiveLineCount>;
   friend Base;
 
 protected:   // methods

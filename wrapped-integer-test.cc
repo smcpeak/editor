@@ -20,9 +20,9 @@ OPEN_ANONYMOUS_NAMESPACE
 
 
 // Wrapped integer that is never negative.
-class NonNegativeInteger : public WrappedInteger<NonNegativeInteger> {
+class NonNegativeInteger : public WrappedInteger<int, NonNegativeInteger> {
 public:      // types
-  using Base = WrappedInteger<NonNegativeInteger>;
+  using Base = WrappedInteger<int, NonNegativeInteger>;
   friend Base;
 
 protected:   // methods

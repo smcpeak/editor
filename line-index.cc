@@ -15,7 +15,7 @@ using namespace smbase;
 
 
 // Instantiate base class methods.
-template class WrappedInteger<LineIndex>;
+template class WrappedInteger<int, LineIndex>;
 
 
 LineIndex::LineIndex(LineCount value)

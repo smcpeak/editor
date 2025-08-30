@@ -20,8 +20,8 @@
 #include <string>                      // std::string
 
 
-template <typename Derived>
-void WrappedInteger<Derived>::selfCheck() const
+template <typename UnderInt, typename Derived>
+void WrappedInteger<UnderInt, Derived>::selfCheck() const
 {
   if (!Derived::isValid(derivedC().get())) {
     xfailure_stringbc(
@@ -32,8 +32,8 @@ void WrappedInteger<Derived>::selfCheck() const
 
 
 // --------------------------- Binary tests ----------------------------
-template <typename Derived>
-int WrappedInteger<Derived>::compareTo(Derived const &b) const
+template <typename UnderInt, typename Derived>
+int WrappedInteger<UnderInt, Derived>::compareTo(Derived const &b) const
 {
   using smbase::compare;
 
@@ -41,8 +41,8 @@ int WrappedInteger<Derived>::compareTo(Derived const &b) const
 }
 
 
-template <typename Derived>
-int WrappedInteger<Derived>::compareTo(int const &b) const
+template <typename UnderInt, typename Derived>
+int WrappedInteger<UnderInt, Derived>::compareTo(UnderInt const &b) const
 {
   using smbase::compare;
 
@@ -51,45 +51,45 @@ int WrappedInteger<Derived>::compareTo(int const &b) const
 
 
 // ----------------------------- Addition ------------------------------
-template <typename Derived>
-Derived WrappedInteger<Derived>::operator+() const
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::operator+() const
 {
   return derivedC();
 }
 
 
-template <typename Derived>
-Derived WrappedInteger<Derived>::operator+(Derived delta) const
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::operator+(Derived delta) const
 {
   return Derived(addWithOverflowCheck(derivedC().get(), delta.get()));
 }
 
 
-template <typename Derived>
-Derived WrappedInteger<Derived>::succ() const
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::succ() const
 {
   return Derived(addWithOverflowCheck(derivedC().get(), 1));
 }
 
 
-template <typename Derived>
-Derived &WrappedInteger<Derived>::operator+=(Derived delta)
+template <typename UnderInt, typename Derived>
+Derived &WrappedInteger<UnderInt, Derived>::operator+=(Derived delta)
 {
   derived().set(addWithOverflowCheck(derivedC().get(), delta.get()));
   return derived();
 }
 
 
-template <typename Derived>
-Derived &WrappedInteger<Derived>::operator++()
+template <typename UnderInt, typename Derived>
+Derived &WrappedInteger<UnderInt, Derived>::operator++()
 {
   derived().set(addWithOverflowCheck(derivedC().get(), 1));
   return derived();
 }
 
 
-template <typename Derived>
-Derived WrappedInteger<Derived>::operator++(int)
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::operator++(int)
 {
   Derived ret(derivedC());
   derived().set(addWithOverflowCheck(derivedC().get(), 1));
@@ -98,45 +98,45 @@ Derived WrappedInteger<Derived>::operator++(int)
 
 
 // ---------------------- Subtraction/inversion ----------------------
-template <typename Derived>
-Derived WrappedInteger<Derived>::operator-() const
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::operator-() const
 {
   return Derived(subtractWithOverflowCheck(0, derivedC().get()));
 }
 
 
-template <typename Derived>
-Derived WrappedInteger<Derived>::operator-(Derived delta) const
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::operator-(Derived delta) const
 {
   return Derived(subtractWithOverflowCheck(derivedC().get(), delta.get()));
 }
 
 
-template <typename Derived>
-Derived WrappedInteger<Derived>::pred() const
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::pred() const
 {
   return Derived(subtractWithOverflowCheck(derivedC().get(), 1));
 }
 
 
-template <typename Derived>
-Derived &WrappedInteger<Derived>::operator-=(Derived delta)
+template <typename UnderInt, typename Derived>
+Derived &WrappedInteger<UnderInt, Derived>::operator-=(Derived delta)
 {
   derived().set(subtractWithOverflowCheck(derivedC().get(), delta.get()));
   return derived();
 }
 
 
-template <typename Derived>
-Derived &WrappedInteger<Derived>::operator--()
+template <typename UnderInt, typename Derived>
+Derived &WrappedInteger<UnderInt, Derived>::operator--()
 {
   derived().set(subtractWithOverflowCheck(derivedC().get(), 1));
   return derived();
 }
 
 
-template <typename Derived>
-Derived WrappedInteger<Derived>::operator--(int)
+template <typename UnderInt, typename Derived>
+Derived WrappedInteger<UnderInt, Derived>::operator--(int)
 {
   Derived ret(derivedC());
   derived().set(subtractWithOverflowCheck(derivedC().get(), 1));
@@ -145,21 +145,21 @@ Derived WrappedInteger<Derived>::operator--(int)
 
 
 // -------------------------- Serialization --------------------------
-template <typename Derived>
-WrappedInteger<Derived>::operator gdv::GDValue() const
+template <typename UnderInt, typename Derived>
+WrappedInteger<UnderInt, Derived>::operator gdv::GDValue() const
 {
   return gdv::GDValue(derivedC().get());
 }
 
 
-template <typename Derived>
-WrappedInteger<Derived>::WrappedInteger(gdv::GDValueParser const &p)
+template <typename UnderInt, typename Derived>
+WrappedInteger<UnderInt, Derived>::WrappedInteger(gdv::GDValueParser const &p)
 {
   p.checkIsInteger();
 
   gdv::GDVInteger v = p.integerGet();
 
-  if (std::optional<int> i = v.getAsOpt<int>()) {
+  if (std::optional<UnderInt> i = v.getAsOpt<UnderInt>()) {
     if (!Derived::isValid(*i)) {
       p.throwError(stringb(
         "Invalid " << Derived::getTypeName() << ": " << v << "."));
@@ -173,8 +173,8 @@ WrappedInteger<Derived>::WrappedInteger(gdv::GDValueParser const &p)
 }
 
 
-template <typename Derived>
-void WrappedInteger<Derived>::write(std::ostream &os) const
+template <typename UnderInt, typename Derived>
+void WrappedInteger<UnderInt, Derived>::write(std::ostream &os) const
 {
   os << derivedC().get();
 }

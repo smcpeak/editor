@@ -14,7 +14,7 @@ using namespace smbase;
 
 
 // Instantiate base class methods.
-template class WrappedInteger<LineNumber>;
+template class WrappedInteger<int, LineNumber>;
 
 
 LineIndex LineNumber::toLineIndex() const

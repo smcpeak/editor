@@ -54,11 +54,11 @@
    This class currently only provides arithmetic operations related to
    addition and subtraction.
 */
-template <typename Derived>
+template <typename UnderInt, typename Derived>
 class WrappedInteger {
 protected:   // data
   // The wrapped value.
-  int m_value;
+  UnderInt m_value;
 
 protected:   // methods
   // Access the derived class to allow static overriding.
@@ -69,7 +69,7 @@ protected:   // methods
 
   // Condition for validity of a value.  This is meant to be statically
   // overridden by `Derived`.
-  static bool isValid(int value)
+  static bool isValid(UnderInt value)
     { return true; }
 
   // Return the name of this type.  Meant to be overridden.
@@ -79,7 +79,7 @@ protected:   // methods
 public:      // methods
   // One of the purposes of the "wrapped integer" concept is to be a
   // distinct integer type, so conversions in and out are explicit.
-  explicit WrappedInteger(int value = 0)
+  explicit WrappedInteger(UnderInt value = 0)
     : m_value(value)
   {
     derivedC().selfCheck();
@@ -103,12 +103,12 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
-  int get() const
+  UnderInt get() const
   {
     return m_value;
   }
 
-  void set(int value)
+  void set(UnderInt value)
   {
     m_value = value;
     derivedC().selfCheck();
@@ -126,7 +126,7 @@ public:      // methods
   // -------------------------- Binary tests ---------------------------
   // Compare in the usual order for integers.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Derived);
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(Derived, int);
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(Derived, UnderInt);
 
   // ---------------------------- Addition -----------------------------
   Derived operator+() const;

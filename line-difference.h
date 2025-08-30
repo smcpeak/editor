@@ -16,9 +16,9 @@
 
 // Represent a difference between two line indices or line numbers.  Can
 // be negative or positive (or zero).
-class LineDifference final : public WrappedInteger<LineDifference> {
+class LineDifference final : public WrappedInteger<int, LineDifference> {
 public:      // types
-  using Base = WrappedInteger<LineDifference>;
+  using Base = WrappedInteger<int, LineDifference>;
   friend Base;
 
 protected:   // methods

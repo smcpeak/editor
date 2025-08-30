@@ -20,7 +20,7 @@ using namespace smbase;
 // Explicitly instantiate all of the class template methods.  The header
 // file for this module deliberately does not expose them, so they won't
 // be implicitly instantiated.
-template class WrappedInteger<LineDifference>;
+template class WrappedInteger<int, LineDifference>;
 
 
 LineDifference LineDifference::operator+(int delta) const

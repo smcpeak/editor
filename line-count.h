@@ -15,9 +15,9 @@
 
 
 // A non-negative `LineDifference`.
-class LineCount final : public WrappedInteger<LineCount> {
+class LineCount final : public WrappedInteger<int, LineCount> {
 public:      // types
-  using Base = WrappedInteger<LineCount>;
+  using Base = WrappedInteger<int, LineCount>;
   friend Base;
 
 protected:   // methods

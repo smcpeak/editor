@@ -23,9 +23,9 @@
    `LineNumber`, the 1-based variation generally used in user
    interfaces.
 */
-class LineIndex final : public WrappedInteger<LineIndex> {
+class LineIndex final : public WrappedInteger<int, LineIndex> {
 public:      // types
-  using Base = WrappedInteger<LineIndex>;
+  using Base = WrappedInteger<int, LineIndex>;
   friend Base;
 
 protected:   // methods

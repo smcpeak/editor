@@ -12,7 +12,7 @@ using namespace smbase;
 
 
 // Explicitly instantiate the base class methods.
-template class WrappedInteger<PositiveLineCount>;
+template class WrappedInteger<int, PositiveLineCount>;
 
 
 // --------------------------- Binary tests ----------------------------

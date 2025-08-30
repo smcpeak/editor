@@ -6,7 +6,7 @@
 #ifndef EDITOR_WRAPPED_INTEGER_FWD_H
 #define EDITOR_WRAPPED_INTEGER_FWD_H
 
-template <typename Derived>
+template <typename UnderInt, typename Derived>
 class WrappedInteger;
 
 #endif // EDITOR_WRAPPED_INTEGER_FWD_H

@@ -24,9 +24,9 @@
    but conceptually is different since it is meant to identify a single
    line rather than measure a distance or count.
 */
-class LineNumber final : public WrappedInteger<LineNumber> {
+class LineNumber final : public WrappedInteger<int, LineNumber> {
 public:      // types
-  using Base = WrappedInteger<LineNumber>;
+  using Base = WrappedInteger<int, LineNumber>;
   friend Base;
 
 protected:   // methods
