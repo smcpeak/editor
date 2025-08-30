@@ -5,6 +5,7 @@
 
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
 #include "lsp-manager.h"               // LSPManager
+#include "lsp-version-number.h"        // LSP_VersionNumber
 #include "named-td.h"                  // NamedTextDocument
 #include "range-text-repl.h"           // RangeTextReplacement
 #include "td-change-seq.h"             // TextDocumentChangeSequence
@@ -30,12 +31,6 @@ using namespace smbase;
 
 
 INIT_TRACE("lsp-conv");
-
-
-LSP_VersionNumber toLSP_VersionNumber(std::uint64_t n)
-{
-  return convertNumber<LSP_VersionNumber>(n);
-}
 
 
 TDD_Related convertLSPRelated(
@@ -66,8 +61,8 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
 {
   xassertPrecondition(lspDiags->m_version.has_value());
 
-  TextDocument::VersionNumber diagsVersion =
-    convertNumber<TextDocument::VersionNumber>(*lspDiags->m_version);
+  TD_VersionNumber diagsVersion =
+    lspDiags->m_version->toTD_VersionNumber();
 
   std::unique_ptr<TextDocumentDiagnostics> ret(
     new TextDocumentDiagnostics(diagsVersion, std::nullopt));
@@ -186,7 +181,7 @@ void lspSendUpdatedContents(
 
   // This can throw `XNumericConversion`.
   LSP_VersionNumber version =
-    toLSP_VersionNumber(doc.getVersionNumber());
+    LSP_VersionNumber::fromTDVN(doc.getVersionNumber());
 
   if (docInfo->m_lastSentVersion == version) {
     TRACE1("LSP: While updating " << doc.documentName() <<
@@ -198,7 +193,7 @@ void lspSendUpdatedContents(
     // current file.  Bump the version and try again.
     doc.bumpVersionNumber();
 
-    version = toLSP_VersionNumber(doc.getVersionNumber());
+    version = LSP_VersionNumber::fromTDVN(doc.getVersionNumber());
 
     // In this situation, `clangd` would normally ignore the
     // notification because it realizes the file hasn't changed

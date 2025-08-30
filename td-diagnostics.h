@@ -105,9 +105,6 @@ public:      // methods
 //
 class TextDocumentDiagnostics : public SerfRefCount {
 public:      // types
-  // Type use to record document version numbers.
-  typedef TextDocumentCore::VersionNumber VersionNumber;
-
   // Type that acts as the value for the range map, and the index into
   // `m_diagnostics`.
   typedef TextMCoordMap::Value DiagnosticIndex;
@@ -172,7 +169,7 @@ public:      // types
 private:     // data
   // When the diagnostics were originally received, they described this
   // version of the document.
-  VersionNumber const m_originVersion;
+  TD_VersionNumber const m_originVersion;
 
   // Set of diagnostics, organized into a sequence so each has a unique
   // index that can be used with `m_rangeToDiagIndex`.
@@ -197,7 +194,7 @@ public:      // methods
   // `numLines` is the number of lines (newline characters plus one) in
   // the associated document, if that is known.
   explicit TextDocumentDiagnostics(
-    VersionNumber originVersion, std::optional<PositiveLineCount> numLines);
+    TD_VersionNumber originVersion, std::optional<PositiveLineCount> numLines);
 
   // Assert all invariants.
   void selfCheck() const;
@@ -206,7 +203,7 @@ public:      // methods
   bool operator!=(TextDocumentDiagnostics const &obj) const
     { return !operator==(obj); }
 
-  VersionNumber getOriginVersion() const { return m_originVersion; }
+  TD_VersionNumber getOriginVersion() const { return m_originVersion; }
 
   // Number of lines in the document the diagnostics apply to.
   std::optional<PositiveLineCount> getNumLinesOpt() const;

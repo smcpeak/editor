@@ -29,8 +29,7 @@ using namespace smbase;
 INIT_TRACE("td-obs-recorder-test");
 
 
-typedef TextDocumentCore::VersionNumber VersionNumber;
-typedef std::set<VersionNumber> VersionSet;
+typedef std::set<TD_VersionNumber> VersionSet;
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -44,7 +43,7 @@ void checkFile(TextDocumentCore const &doc, char const *expect)
 
 // Return a GDValue for a `VersionDetails`.
 GDValue versionDetailsGDV(
-  VersionNumber versionNumber,
+  TD_VersionNumber versionNumber,
   int numLines,
   bool hasDiagnostics,
   char const *changesGDVN)
@@ -73,7 +72,7 @@ void test_basics()
   TextDocumentObservationRecorder recorder(doc);
   EXPECT_EQ(recorder.trackingSomething(), false);
   EXPECT_EQ(recorder.getEarliestVersion().has_value(), false);
-  EXPECT_EQ(recorder.isTracking(0), false);
+  EXPECT_EQ(recorder.isTracking(TD_VersionNumber(0)), false);
   EXPECT_EQ_GDV(recorder.getTrackedVersions(), VersionSet{});
   EXPECT_EQ_GDV(recorder.getNoDiagsVersions(), VersionSet{});
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
@@ -86,7 +85,7 @@ void test_basics()
   EXPECT_EQ_GDV(recorder, GDValue(GDVMap{}));
 
   // Begin tracking.
-  VersionNumber ver1 = doc.getVersionNumber();
+  TD_VersionNumber ver1 = doc.getVersionNumber();
   recorder.beginTrackingCurrentDoc();
   EXPECT_EQ(recorder.trackingSomething(), true);
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
@@ -156,7 +155,7 @@ void test_basics()
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);
 
   // Track a new version.
-  VersionNumber ver2 = doc.getVersionNumber();
+  TD_VersionNumber ver2 = doc.getVersionNumber();
   recorder.beginTrackingCurrentDoc();
   EXPECT_EQ(recorder.trackingSomething(), true);
   EXPECT_EQ(recorder.getEarliestVersion().value(), ver1);  // ver1 is still earliest
@@ -350,7 +349,7 @@ public:      // methods
     return m;
   }
 
-  VersionNumber getOriginVersion() const
+  TD_VersionNumber getOriginVersion() const
   {
     return m_eagerDiags.getOriginVersion();
   }
@@ -372,7 +371,7 @@ public:      // data
   TextDocumentObservationRecorder m_recorder;
 
   // Diagnostics pairs for some previous document versions.
-  std::map<VersionNumber, EagerAndDelayedDiags> m_verToDiags;
+  std::map<TD_VersionNumber, EagerAndDelayedDiags> m_verToDiags;
 
   // True if the first element of `m_verToDiags` has received
   // diagnostics.
@@ -420,7 +419,7 @@ public:      // methods
     EXPECT_EQ(m_recorder.trackingSomething(), !verSet.empty());
     EXPECT_EQ_GDV(m_recorder.getEarliestVersion(),
                   mapFirstKeyOpt(m_verToDiags));
-    for (VersionNumber ver : verSet) {
+    for (TD_VersionNumber ver : verSet) {
       EXPECT_EQ(m_recorder.isTracking(ver), true);
     }
 
@@ -455,7 +454,7 @@ public:      // methods
   // to record accumulated changes.
   void saveVersion(TextDocumentDiagnostics const &diags)
   {
-    VersionNumber ver = m_doc.getVersionNumber();
+    TD_VersionNumber ver = m_doc.getVersionNumber();
     xassert(diags.getOriginVersion() == ver);
     mapInsertUnique(m_verToDiags, ver,
       EagerAndDelayedDiags(diags, &m_doc));
@@ -467,7 +466,7 @@ public:      // methods
   // Simulate having just received the diagnostics for `oldVer`: roll
   // the delayed diagnostics forward and check they match the eager
   // ones.
-  void checkSavedVersion(VersionNumber oldVer)
+  void checkSavedVersion(TD_VersionNumber oldVer)
   {
     // Discard any older versions.
     while (!m_verToDiags.empty()) {
@@ -535,7 +534,7 @@ void test_DDRH()
   ddrh.checkFile("\n");
 
   // Call this version 1.
-  VersionNumber ver1 = ddrh.m_doc.getVersionNumber();
+  TD_VersionNumber ver1 = ddrh.m_doc.getVersionNumber();
 
   LineIndex const li0(0);
   LineIndex const li1(1);
@@ -571,7 +570,7 @@ void test_DDRH()
   ddrh.checkFile("\n");
 
   // Track a new version.
-  VersionNumber ver2 = ddrh.m_doc.getVersionNumber();
+  TD_VersionNumber ver2 = ddrh.m_doc.getVersionNumber();
 
   // Make diagnostics for the new version and track them.
   {
@@ -743,7 +742,7 @@ void randomAction(DocDiagsRecorderHistory &ddrh)
 
   else if (c.check(1)) {
     // Add random diagnostics.
-    VersionNumber ver = ddrh.m_doc.getVersionNumber();
+    TD_VersionNumber ver = ddrh.m_doc.getVersionNumber();
     if (ddrh.m_recorder.isTracking(ver)) {
       // There might be a case to be made to allow this, presumably with
       // replacement semantics, but I'll keep things simple for now.
@@ -761,10 +760,10 @@ void randomAction(DocDiagsRecorderHistory &ddrh)
 
   else if (c.check(1)) {
     // Roll random diagnostics forward.
-    std::set<VersionNumber> trackedVersions =
+    std::set<TD_VersionNumber> trackedVersions =
       ddrh.m_recorder.getNoDiagsVersions();
     if (!trackedVersions.empty()) {
-      VersionNumber ver = randomElement(trackedVersions);
+      TD_VersionNumber ver = randomElement(trackedVersions);
       DIAG("randomAction: diag: checkSavedVersion(" << ver << ")");
       ddrh.checkSavedVersion(ver);
     }
@@ -805,9 +804,9 @@ void test_randomized()
     }
 
     // Roll all remaining versions forward.
-    std::set<VersionNumber> trackedVersions =
+    std::set<TD_VersionNumber> trackedVersions =
       ddrh.m_recorder.getNoDiagsVersions();
-    for (VersionNumber ver : trackedVersions) {
+    for (TD_VersionNumber ver : trackedVersions) {
       DIAG("checkSavedVersion(" << ver << ")");
       ddrh.checkSavedVersion(ver);
     }

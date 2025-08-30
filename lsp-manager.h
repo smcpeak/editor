@@ -12,6 +12,7 @@
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
+#include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "td-core-fwd.h"                         // TextDocumentCore [n]
 #include "textmcoord.h"                          // TextMCoord
 
@@ -51,9 +52,7 @@ public:      // data
 
   // The version number of the most recent document contents that were
   // sent to the server.
-  //
-  // TODO: This should have type `LSP_VersionNumber`.
-  int m_lastSentVersion;
+  LSP_VersionNumber m_lastSentVersion;
 
   // The contents most recently sent.  They were labeled with
   // `m_lastSentVersion`.
@@ -84,7 +83,7 @@ public:      // methods
 
   LSPDocumentInfo(
     std::string const &fname,
-    int lastSentVersion,
+    LSP_VersionNumber lastSentVersion,
     std::string const &lastSentContentsString);
 
   // I only want to use the move ctor.
@@ -158,6 +157,8 @@ private:     // data
   // If nonzero, then we have sent the "initialize" request with this
   // ID, but not yet received the corresponding reply.  In that state,
   // the LSP is not available to service other requests.
+  //
+  // TODO: Make a wrapped integer class for request IDs.
   int m_initializeRequestID;
 
   // If nonzero, we have sent the "shutdown" request but not received
@@ -292,7 +293,7 @@ public:      // methods
   void notify_textDocument_didOpen(
     std::string const &fname,
     std::string const &languageId,
-    int version,
+    LSP_VersionNumber version,
     std::string &&contents);
 
   // Send the "textDocument/didChange" notification.
@@ -305,7 +306,7 @@ public:      // methods
   // Convenience method for updating the entire document.
   void notify_textDocument_didChange_all(
     std::string const &fname,
-    int version,
+    LSP_VersionNumber version,
     std::string &&contents);
 
   // Send the "textDocument/didClose" notification.

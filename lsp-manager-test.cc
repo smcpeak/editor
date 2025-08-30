@@ -125,7 +125,7 @@ void LSPManagerTester::sendDidOpen()
   m_lspManager.notify_textDocument_didOpen(
     m_params.m_fname,
     "cpp",
-    m_doc.getVersionNumber(),
+    LSP_VersionNumber::fromTDVN(m_doc.getVersionNumber()),
     m_doc.getWholeFileString());
   DIAG("Status: " << m_lspManager.checkStatus());
   m_lspManager.selfCheck();
@@ -257,8 +257,9 @@ void LSPManagerTester::processContentsReply()
   std::string text = reply.mapGetValueAt("text").stringGet();
   xassert(text == m_doc.getWholeFileString());
 
-  LSP_VersionNumber version = reply.mapGetValueAt("version").smallIntegerGet();
-  xassert(version == toLSP_VersionNumber(m_doc.getVersionNumber()));
+  LSP_VersionNumber version =
+    LSP_VersionNumber(reply.mapGetValueAt("version").smallIntegerGet());
+  xassert(version == LSP_VersionNumber::fromTDVN(m_doc.getVersionNumber()));
 }
 
 

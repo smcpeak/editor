@@ -12,6 +12,7 @@
 #include "line-index.h"                // LineIndex
 #include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
+#include "td-version-number.h"         // TD_VersionNumber
 #include "textmcoord.h"                // TextMCoord, TextMCoordRange
 
 // smbase
@@ -54,9 +55,6 @@ gdv::GDValue toGDValue(DocumentProcessStatus dps);
 // inherit TextDocumentCore, it instead explicitly repeats that
 // interface and delegates to 'm_core'.
 class TextDocument : public SerfRefCount {
-public:       // types
-  typedef TextDocumentCore::VersionNumber VersionNumber;
-
 public:       // static data
   static int s_objectCount;
 
@@ -170,7 +168,7 @@ public:      // funcs
   void getWholeLine(LineIndex line, ArrayStack<char> /*INOUT*/ &dest) const { return m_core.getWholeLine(line, dest); }
   int countLeadingSpacesTabs(LineIndex line) const           { return m_core.countLeadingSpacesTabs(line); }
   int countTrailingSpacesTabs(LineIndex line) const          { return m_core.countTrailingSpacesTabs(line); }
-  VersionNumber getVersionNumber() const                     { return m_core.getVersionNumber(); }
+  TD_VersionNumber getVersionNumber() const                  { return m_core.getVersionNumber(); }
 
   // This is a modification of sorts, but does not need undo/redo.
   void bumpVersionNumber()                                   { m_core.bumpVersionNumber(); }

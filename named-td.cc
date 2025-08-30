@@ -85,7 +85,7 @@ void NamedTextDocument::selfCheck() const
 
     // We should not be waiting for any version for which we already
     // have more recent diagnostics.
-    if (std::optional<VersionNumber> earliestTracked =
+    if (std::optional<TD_VersionNumber> earliestTracked =
           m_observationRecorder.getEarliestVersion()) {
       xassert(*earliestTracked >= m_diagnostics->getOriginVersion());
     }
@@ -251,7 +251,7 @@ void NamedTextDocument::updateDiagnostics(
 {
   if (diagnostics) {
     // The document version from which the diagnostics were generated.
-    VersionNumber diagVersion = diagnostics->getOriginVersion();
+    TD_VersionNumber diagVersion = diagnostics->getOriginVersion();
     TRACE1("updateDiagnostics: Received diagnostics for version " <<
            diagVersion << " of " << documentName());
 

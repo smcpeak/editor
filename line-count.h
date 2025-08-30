@@ -11,7 +11,7 @@
 #include "line-difference.h"           // LineDifference
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
-#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS, DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
+#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 
 
 // A non-negative `LineDifference`.

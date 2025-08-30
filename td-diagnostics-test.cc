@@ -149,7 +149,7 @@ class TextDocumentDiagnosticsAndUpdater :
   public TextDocumentDiagnosticsUpdater {
 public:      // methods
   explicit TextDocumentDiagnosticsAndUpdater(
-    VersionNumber originVersion,
+    TD_VersionNumber originVersion,
     NamedTextDocument *document)
     : TextDocumentDiagnostics(originVersion, document->numLines()),
       TextDocumentDiagnosticsUpdater(this, document)
@@ -193,7 +193,7 @@ void test_TDD_getDiagnosticAt()
   EXPECT_EQ(doc.numLines(), 10);  // The final line-without-NL counts.
   doc.selfCheck();
 
-  TextDocumentDiagnosticsAndUpdater tdd(1 /*version*/, &doc);
+  TextDocumentDiagnosticsAndUpdater tdd(TD_VersionNumber(1), &doc);
   tdd.selfCheck();
   EXPECT_EQ(tdd.maxDiagnosticLine(), -1);
 

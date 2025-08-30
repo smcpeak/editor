@@ -45,7 +45,7 @@ TextDocumentObservationRecorder::VersionDetails::VersionDetails(
 
 
 TextDocumentObservationRecorder::VersionDetails::VersionDetails(
-  VersionNumber versionNumber, PositiveLineCount numLines)
+  TD_VersionNumber versionNumber, PositiveLineCount numLines)
   : IMEMBFP(versionNumber),
     IMEMBFP(numLines),
     m_hasDiagnostics(false),
@@ -93,7 +93,7 @@ void TextDocumentObservationRecorder::selfCheck() const
   bool isFirstElement = true;
 
   for (auto const &kv : m_versionToDetails) {
-    VersionNumber vn = kv.first;
+    TD_VersionNumber vn = kv.first;
     VersionDetails const &details = kv.second;
 
     xassert(details.m_versionNumber == vn);
@@ -112,7 +112,7 @@ TextDocumentObservationRecorder::operator gdv::GDValue() const
   GDValue m(GDVK_MAP);
 
   for (auto const &kv : m_versionToDetails) {
-    VersionNumber version = kv.first;
+    TD_VersionNumber version = kv.first;
     VersionDetails const &details = kv.second;
 
     // Map from version to the associated details.
@@ -136,7 +136,7 @@ bool TextDocumentObservationRecorder::trackingSomething() const
 
 
 auto TextDocumentObservationRecorder::getEarliestVersion() const
-  -> std::optional<VersionNumber>
+  -> std::optional<TD_VersionNumber>
 {
   if (m_versionToDetails.empty()) {
     return std::nullopt;
@@ -161,23 +161,23 @@ bool TextDocumentObservationRecorder::earliestVersionHasDiagnostics() const
 
 
 bool TextDocumentObservationRecorder::isTracking(
-  VersionNumber version) const
+  TD_VersionNumber version) const
 {
   return mapContains(m_versionToDetails, version);
 }
 
 
 auto TextDocumentObservationRecorder::getTrackedVersions() const
-  -> std::set<VersionNumber>
+  -> std::set<TD_VersionNumber>
 {
   return mapKeySet(m_versionToDetails);
 }
 
 
 auto TextDocumentObservationRecorder::getNoDiagsVersions() const
-  -> std::set<VersionNumber>
+  -> std::set<TD_VersionNumber>
 {
-  std::set<VersionNumber> ret = getTrackedVersions();
+  std::set<TD_VersionNumber> ret = getTrackedVersions();
   if (earliestVersionHasDiagnostics()) {
     ret.erase(ret.begin());
   }
@@ -187,7 +187,7 @@ auto TextDocumentObservationRecorder::getNoDiagsVersions() const
 
 void TextDocumentObservationRecorder::beginTrackingCurrentDoc()
 {
-  VersionNumber version = m_document.getVersionNumber();
+  TD_VersionNumber version = m_document.getVersionNumber();
   PositiveLineCount numLines = m_document.numLines();
 
   if (!mapInsertMove(m_versionToDetails,
@@ -204,14 +204,14 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   TextDocumentDiagnostics *diagnostics)
 {
   // The document version from which the diagnostics were generated.
-  VersionNumber diagVersion = diagnostics->getOriginVersion();
+  TD_VersionNumber diagVersion = diagnostics->getOriginVersion();
 
   xassertPrecondition(isTracking(diagVersion));
 
   // Process the tracked versions in order.
   while (!m_versionToDetails.empty()) {
     auto it = m_versionToDetails.begin();
-    VersionNumber trackedVersion = (*it).first;
+    TD_VersionNumber trackedVersion = (*it).first;
     VersionDetails &details = (*it).second;
 
     if (trackedVersion < diagVersion) {
@@ -242,7 +242,7 @@ void TextDocumentObservationRecorder::applyChangesToDiagnostics(
   // version order.  This brings `diagnostics` up to date with all
   // changes that have been made to the document.
   for (auto const &kv : m_versionToDetails) {
-    VersionNumber trackedVersion = kv.first;
+    TD_VersionNumber trackedVersion = kv.first;
     VersionDetails const &details = kv.second;
 
     TRACE1("Rolling forward from version " << trackedVersion <<

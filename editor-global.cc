@@ -1598,7 +1598,7 @@ void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
 
   // This can throw `XNumericConversion`.
   LSP_VersionNumber version =
-    toLSP_VersionNumber(ntd->getVersionNumber());
+    LSP_VersionNumber::fromTDVN(ntd->getVersionNumber());
 
   m_lspManager->notify_textDocument_didOpen(
     ntd->filename(),

@@ -124,7 +124,7 @@ void checkSpaces(TextDocumentCore const &tdc,
 void testVarious()
 {
   TextDocumentCore tdc;
-  TextDocumentCore::VersionNumber vnum = tdc.getVersionNumber();
+  TD_VersionNumber vnum = tdc.getVersionNumber();
 
   LineIndex const z(0);
 

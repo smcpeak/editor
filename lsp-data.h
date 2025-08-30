@@ -24,7 +24,7 @@
 #include "lsp-data-fwd.h"              // fwds for this module
 
 #include "line-index.h"                // LineIndex
-#include "lsp-data-types.h"            // LSP_VersionNumber
+#include "lsp-version-number.h"        // LSP_VersionNumber
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue

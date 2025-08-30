@@ -68,9 +68,6 @@
    changes associated with it.
 */
 class TextDocumentObservationRecorder : public TextDocumentObserver {
-public:      // types
-  typedef TextDocumentCore::VersionNumber VersionNumber;
-
 private:     // types
   // Data associated with a document version.
   class VersionDetails {
@@ -78,7 +75,7 @@ private:     // types
 
   public:      // data
     // The version number this object describes.
-    VersionNumber const m_versionNumber;
+    TD_VersionNumber const m_versionNumber;
 
     // Number of lines that were in the file for this version.
     PositiveLineCount const m_numLines;
@@ -105,7 +102,7 @@ private:     // types
 
     // The sequence is initially empty.
     explicit VersionDetails(
-      VersionNumber versionNumber, PositiveLineCount numLines);
+      TD_VersionNumber versionNumber, PositiveLineCount numLines);
 
     void selfCheck() const;
 
@@ -124,7 +121,7 @@ private:     // data
   // Invariant: for all `vn` except the first:
   //   m_versionToDetails[vn].m_hasDiagnostics == false
   //
-  std::map<VersionNumber, VersionDetails> m_versionToDetails;
+  std::map<TD_VersionNumber, VersionDetails> m_versionToDetails;
 
 private:     // methods
   // Get the most recent tracked version.
@@ -161,7 +158,7 @@ public:      // methods
 
   // Return the earliest version for which we have the ability to roll
   // changes forward.
-  stdfwd::optional<VersionNumber> getEarliestVersion() const;
+  stdfwd::optional<TD_VersionNumber> getEarliestVersion() const;
 
   // True if we are tracking at least one version, and that version has
   // received diagnostics.
@@ -169,14 +166,14 @@ public:      // methods
 
   // True if we are tracking `version` and hence can roll forward
   // changes from there.
-  bool isTracking(VersionNumber version) const;
+  bool isTracking(TD_VersionNumber version) const;
 
   // Get the set of all versions being tracked.
-  stdfwd::set<VersionNumber> getTrackedVersions() const;
+  stdfwd::set<TD_VersionNumber> getTrackedVersions() const;
 
   // Get the set of all versions being tracked that do not have
   // diagnostics.
-  stdfwd::set<VersionNumber> getNoDiagsVersions() const;
+  stdfwd::set<TD_VersionNumber> getNoDiagsVersions() const;
 
   // Track all future changes as applying on top of the current version
   // of `m_document`.

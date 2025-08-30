@@ -199,7 +199,7 @@ public:      // funcs
 
   // If `m_versionToObservationRecorder` contains any that are watching
   // for changes since a version before `version`, discard them.
-  void removeObservationRecordersBefore(VersionNumber version);
+  void removeObservationRecordersBefore(TD_VersionNumber version);
 
   // Get diagnostic at `tc`.  See
   // `TextDocumentDiagnostics::getDiagnosticAt` for details.

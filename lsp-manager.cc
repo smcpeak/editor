@@ -73,7 +73,7 @@ LSPDocumentInfo::~LSPDocumentInfo()
 
 LSPDocumentInfo::LSPDocumentInfo(
   std::string const &fname,
-  int lastSentVersion,
+  LSP_VersionNumber lastSentVersion,
   std::string const &lastSentContentsString)
   : IMEMBFP(fname),
     IMEMBFP(lastSentVersion),
@@ -819,7 +819,7 @@ RCSerf<LSPDocumentInfo const> LSPManager::getDocInfo(
 void LSPManager::notify_textDocument_didOpen(
   std::string const &fname,
   std::string const &languageId,
-  int version,
+  LSP_VersionNumber version,
   std::string &&contents)
 {
   xassertPrecondition(isRunningNormally());
@@ -876,7 +876,7 @@ void LSPManager::notify_textDocument_didChange(
 
 void LSPManager::notify_textDocument_didChange_all(
   std::string const &fname,
-  int version,
+  LSP_VersionNumber version,
   std::string &&contents)
 {
   std::list<LSP_TextDocumentContentChangeEvent> changes;

@@ -14,9 +14,9 @@
 #include "event-replay.h"                        // EventReplayQueryable
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
 #include "line-difference.h"                     // LineDifference
-#include "lsp-data-types.h"                      // LSP_VersionNumber
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
+#include "lsp-version-number-fwd.h"              // LSP_VersionNumber [n]
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument

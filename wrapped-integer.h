@@ -61,21 +61,25 @@ Derived WrappedInteger<UnderInt, Derived>::operator+() const
 template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::operator+(Derived delta) const
 {
-  return Derived(addWithOverflowCheck(derivedC().get(), delta.get()));
+  return Derived(addWithOverflowCheck<UnderInt>(derivedC().get(), delta.get()));
 }
 
 
 template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::succ() const
 {
-  return Derived(addWithOverflowCheck(derivedC().get(), 1));
+  // Here, we need to explicitly provide the template argument for
+  // `addWithOverflowCheck` in case `UnderInt` is not `int` since `1`
+  // has type `int`.  For uniformity, that is done everywhere in this
+  // file, even when not needed.
+  return Derived(addWithOverflowCheck<UnderInt>(derivedC().get(), 1));
 }
 
 
 template <typename UnderInt, typename Derived>
 Derived &WrappedInteger<UnderInt, Derived>::operator+=(Derived delta)
 {
-  derived().set(addWithOverflowCheck(derivedC().get(), delta.get()));
+  derived().set(addWithOverflowCheck<UnderInt>(derivedC().get(), delta.get()));
   return derived();
 }
 
@@ -83,7 +87,7 @@ Derived &WrappedInteger<UnderInt, Derived>::operator+=(Derived delta)
 template <typename UnderInt, typename Derived>
 Derived &WrappedInteger<UnderInt, Derived>::operator++()
 {
-  derived().set(addWithOverflowCheck(derivedC().get(), 1));
+  derived().set(addWithOverflowCheck<UnderInt>(derivedC().get(), 1));
   return derived();
 }
 
@@ -92,7 +96,7 @@ template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::operator++(int)
 {
   Derived ret(derivedC());
-  derived().set(addWithOverflowCheck(derivedC().get(), 1));
+  derived().set(addWithOverflowCheck<UnderInt>(derivedC().get(), 1));
   return ret;
 }
 
@@ -101,28 +105,28 @@ Derived WrappedInteger<UnderInt, Derived>::operator++(int)
 template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::operator-() const
 {
-  return Derived(subtractWithOverflowCheck(0, derivedC().get()));
+  return Derived(subtractWithOverflowCheck<UnderInt>(0, derivedC().get()));
 }
 
 
 template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::operator-(Derived delta) const
 {
-  return Derived(subtractWithOverflowCheck(derivedC().get(), delta.get()));
+  return Derived(subtractWithOverflowCheck<UnderInt>(derivedC().get(), delta.get()));
 }
 
 
 template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::pred() const
 {
-  return Derived(subtractWithOverflowCheck(derivedC().get(), 1));
+  return Derived(subtractWithOverflowCheck<UnderInt>(derivedC().get(), 1));
 }
 
 
 template <typename UnderInt, typename Derived>
 Derived &WrappedInteger<UnderInt, Derived>::operator-=(Derived delta)
 {
-  derived().set(subtractWithOverflowCheck(derivedC().get(), delta.get()));
+  derived().set(subtractWithOverflowCheck<UnderInt>(derivedC().get(), delta.get()));
   return derived();
 }
 
@@ -130,7 +134,7 @@ Derived &WrappedInteger<UnderInt, Derived>::operator-=(Derived delta)
 template <typename UnderInt, typename Derived>
 Derived &WrappedInteger<UnderInt, Derived>::operator--()
 {
-  derived().set(subtractWithOverflowCheck(derivedC().get(), 1));
+  derived().set(subtractWithOverflowCheck<UnderInt>(derivedC().get(), 1));
   return derived();
 }
 
@@ -139,7 +143,7 @@ template <typename UnderInt, typename Derived>
 Derived WrappedInteger<UnderInt, Derived>::operator--(int)
 {
   Derived ret(derivedC());
-  derived().set(subtractWithOverflowCheck(derivedC().get(), 1));
+  derived().set(subtractWithOverflowCheck<UnderInt>(derivedC().get(), 1));
   return ret;
 }
 

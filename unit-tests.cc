@@ -75,20 +75,23 @@ static void entry(int argc, char **argv)
   // No deps in this repo (except for `command-runner`).
   RUN_TEST(editor_strutil);       // deps: (none)
   RUN_TEST(gap);                  // deps: (none)
-  RUN_TEST(line_difference);
-  RUN_TEST(line_index);           // deps: (none)
   RUN_TEST(recent_items_list);    // deps: (none)
   RUN_TEST(td_line);              // deps: (none)
   RUN_TEST(textcategory);         // deps: (none)
   RUN_TEST(uri_util);             // deps: (none)
+
+  // Wrapped integers.
   RUN_TEST(wrapped_integer);
+  RUN_TEST(line_difference);      // deps: wrapped-integer
+  RUN_TEST(line_index);           // deps: wrapped-integer
+  RUN_TEST(line_count);           // deps: wrapped-integer, line-difference
+  RUN_TEST(positive_line_count);  // deps: wrapped-integer, line-count, line-difference
+  RUN_TEST(td_version_number);    // deps: wrapped-integer
+  RUN_TEST(lsp_version_number);   // deps: wrapped-integer, td-version-number
 
   // Deps only on things that do not have their own tests.
   RUN_TEST(doc_type_detect);      // deps: doc-name
   RUN_TEST(range_text_repl);      // deps: textmcoord
-
-  RUN_TEST(line_count);           // deps: line-difference
-  RUN_TEST(positive_line_count);  // deps: line-count, line-difference
 
   // SCC: history, td, td-core
   RUN_TEST(td_core);              // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord

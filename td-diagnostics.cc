@@ -245,7 +245,7 @@ TextDocumentDiagnostics::TextDocumentDiagnostics(
 
 
 TextDocumentDiagnostics::TextDocumentDiagnostics(
-  VersionNumber originVersion,
+  TD_VersionNumber originVersion,
   std::optional<PositiveLineCount> numLines)
   : IMEMBFP(originVersion),
     m_diagnostics(),

@@ -13,6 +13,7 @@
 #include "positive-line-count.h"       // PositiveLineCount
 #include "td-fwd.h"                    // TextDocument
 #include "td-line.h"                   // TextDocumentLine
+#include "td-version-number.h"         // TD_VersionNumber
 #include "textmcoord.h"                // TextMCoord
 
 // smbase
@@ -50,10 +51,6 @@
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
 class TextDocumentCore : public SerfRefCount {
-public:      // types
-  // Type use to record document version numbers.
-  typedef std::uint64_t VersionNumber;
-
 private:     // instance data
   // This array is the spine of the document.  Every element is either
   // empty, meaning a blank line, or is a '\n'-terminated sequence of
@@ -81,7 +78,7 @@ private:     // instance data
   // one each time the logical contents, i.e., the sequence of lines, is
   // modified.  An assertion failure exception is thrown if this would
   // overflow on an increment.
-  VersionNumber m_versionNumber;
+  TD_VersionNumber m_versionNumber;
 
   // invariants:
   //   - recent >= -1
@@ -347,7 +344,7 @@ public:    // funcs
   //
   // When a change happens, the version number is incremented *before*
   // observers are notified, so they see the new number.
-  VersionNumber getVersionNumber() const { return m_versionNumber; }
+  TD_VersionNumber getVersionNumber() const { return m_versionNumber; }
 
   // Increment `m_versionNumber`.  Also check that there are no
   // outstanding iterators.

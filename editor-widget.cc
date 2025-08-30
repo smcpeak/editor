@@ -17,6 +17,7 @@
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
 #include "lsp-manager.h"                         // LSPManager::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
+#include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -2623,7 +2624,7 @@ std::optional<LSP_VersionNumber> EditorWidget::lspGetDocVersionNumber(
   bool wantErrors) const
 {
   try {
-    return toLSP_VersionNumber(getDocument()->getVersionNumber());
+    return LSP_VersionNumber::fromTDVN(getDocument()->getVersionNumber());
   }
   catch (XNumericConversion &x) {
     if (wantErrors) {
@@ -3297,7 +3298,7 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
   TRACE2("command: " << toGDValue(*cmd).asString());
 
   NamedTextDocument *ntd = getDocument();
-  TextDocument::VersionNumber origVersion = ntd->getVersionNumber();
+  TD_VersionNumber origVersion = ntd->getVersionNumber();
 
   if (std::optional<std::string> msg = innerCommand(cmd.get())) {
     QMessageBox::information(this, "Error", toQString(*msg));
