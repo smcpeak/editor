@@ -99,20 +99,54 @@ public:      // methods
 };
 
 
+// A filename in LSP, encoded as a URI.
+//
+// This layer is not present in the actual protocol spec; it just uses
+// plain `string` in many places.  I use this class to encapsulate the
+// translation to and from URI form.  The spec has
+// `TextDocumentIdentifier`, which arguably *should* play that role, but
+// it is not used consistently.
+//
+class LSP_FilenameURI final {
+public:      // data
+  // File name, encoded as a "file:" URI.  This is called "inner"
+  // because Names of fields of this type carry the name `m_uri` to
+  // match the name `uri` used in the spec.
+  std::string m_innerUri;
+
+public:
+  // create-tuple-class: declarations for LSP_FilenameURI
+  /*AUTO_CTC*/ explicit LSP_FilenameURI(std::string const &innerUri);
+  /*AUTO_CTC*/ LSP_FilenameURI(LSP_FilenameURI const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_FilenameURI &operator=(LSP_FilenameURI const &obj) noexcept;
+
+  // Yields a string in URI form.
+  operator gdv::GDValue() const;
+
+  // Expects a string in URI form.
+  explicit LSP_FilenameURI(gdv::GDValueParser const &p);
+
+  // Encode an ordinary file name as an LSP URI.
+  static LSP_FilenameURI fromFname(
+    std::string const &fname);
+
+  // Decode the URI as a file name.
+  std::string getFname() const;
+};
+
+
 // Location potentially in another file.
 class LSP_Location final {
-public:
-  // File name, encoded as a URI.
-  //
-  // TODO: Wrap this in a class so I can centralize `getFname`.
-  std::string m_uri;
+public:      // data
+  // File containing the location.
+  LSP_FilenameURI m_uri;
 
   // Location within that file.
   LSP_Range m_range;
 
 public:      // methods
   // create-tuple-class: declarations for LSP_Location
-  /*AUTO_CTC*/ explicit LSP_Location(std::string const &uri, LSP_Range const &range);
+  /*AUTO_CTC*/ explicit LSP_Location(LSP_FilenameURI const &uri, LSP_Range const &range);
   /*AUTO_CTC*/ LSP_Location(LSP_Location const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Location &operator=(LSP_Location const &obj) noexcept;
 
@@ -121,7 +155,8 @@ public:      // methods
   explicit LSP_Location(gdv::GDValueParser const &p);
 
   // Decode the URI as a file name.
-  std::string getFname() const;
+  std::string getFname() const
+    { return m_uri.getFname(); }
 };
 
 
@@ -361,12 +396,12 @@ public:      // methods
 class LSP_TextDocumentIdentifier {
 public:      // data
   // File name, essentially.
-  std::string m_uri;
+  LSP_FilenameURI m_uri;
 
 public:      // methods
   // create-tuple-class: declarations for LSP_TextDocumentIdentifier +move
-  /*AUTO_CTC*/ explicit LSP_TextDocumentIdentifier(std::string const &uri);
-  /*AUTO_CTC*/ explicit LSP_TextDocumentIdentifier(std::string &&uri);
+  /*AUTO_CTC*/ explicit LSP_TextDocumentIdentifier(LSP_FilenameURI const &uri);
+  /*AUTO_CTC*/ explicit LSP_TextDocumentIdentifier(LSP_FilenameURI &&uri);
   /*AUTO_CTC*/ LSP_TextDocumentIdentifier(LSP_TextDocumentIdentifier const &obj) noexcept;
   /*AUTO_CTC*/ LSP_TextDocumentIdentifier(LSP_TextDocumentIdentifier &&obj) noexcept;
   /*AUTO_CTC*/ LSP_TextDocumentIdentifier &operator=(LSP_TextDocumentIdentifier const &obj) noexcept;
@@ -381,7 +416,8 @@ public:      // methods
     std::string const &fname);
 
   // Decode the URI as a file name.
-  std::string getFname() const;
+  std::string getFname() const
+    { return m_uri.getFname(); }
 };
 
 
@@ -397,15 +433,15 @@ public:      // methods
 class LSP_VersionedTextDocumentIdentifier {
 public:      // data
   // File name, essentially.
-  std::string m_uri;
+  LSP_FilenameURI m_uri;
 
   // The version.
   LSP_VersionNumber m_version;
 
 public:      // methods
   // create-tuple-class: declarations for LSP_VersionedTextDocumentIdentifier +move
-  /*AUTO_CTC*/ explicit LSP_VersionedTextDocumentIdentifier(std::string const &uri, LSP_VersionNumber const &version);
-  /*AUTO_CTC*/ explicit LSP_VersionedTextDocumentIdentifier(std::string &&uri, LSP_VersionNumber &&version);
+  /*AUTO_CTC*/ explicit LSP_VersionedTextDocumentIdentifier(LSP_FilenameURI const &uri, LSP_VersionNumber const &version);
+  /*AUTO_CTC*/ explicit LSP_VersionedTextDocumentIdentifier(LSP_FilenameURI &&uri, LSP_VersionNumber &&version);
   /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier(LSP_VersionedTextDocumentIdentifier const &obj) noexcept;
   /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier(LSP_VersionedTextDocumentIdentifier &&obj) noexcept;
   /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier &operator=(LSP_VersionedTextDocumentIdentifier const &obj) noexcept;
@@ -421,7 +457,8 @@ public:      // methods
     LSP_VersionNumber version);
 
   // Decode the URI as a file name.
-  std::string getFname() const;
+  std::string getFname() const
+    { return m_uri.getFname(); }
 };
 
 

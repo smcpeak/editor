@@ -180,10 +180,55 @@ LSP_Range::LSP_Range(gdv::GDValueParser const &p)
 {}
 
 
+// -------------------------- LSP_FilenameURI --------------------------
+// create-tuple-class: definitions for LSP_FilenameURI
+/*AUTO_CTC*/ LSP_FilenameURI::LSP_FilenameURI(
+/*AUTO_CTC*/   std::string const &innerUri)
+/*AUTO_CTC*/   : IMEMBFP(innerUri)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_FilenameURI::LSP_FilenameURI(LSP_FilenameURI const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_innerUri)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_FilenameURI &LSP_FilenameURI::operator=(LSP_FilenameURI const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_innerUri);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_FilenameURI::operator gdv::GDValue() const
+{
+  return GDValue(m_innerUri);
+}
+
+
+LSP_FilenameURI::LSP_FilenameURI(gdv::GDValueParser const &p)
+  : m_innerUri(gdvpTo<std::string>(p))
+{}
+
+
+/*static*/ LSP_FilenameURI LSP_FilenameURI::fromFname(
+  std::string const &fname)
+{
+  return LSP_FilenameURI(makeFileURI(fname));
+}
+
+
+std::string LSP_FilenameURI::getFname() const
+{
+  return getFileURIPath(m_innerUri);
+}
+
+
 // --------------------------- LSP_Location ----------------------------
 // create-tuple-class: definitions for LSP_Location
 /*AUTO_CTC*/ LSP_Location::LSP_Location(
-/*AUTO_CTC*/   std::string const &uri,
+/*AUTO_CTC*/   LSP_FilenameURI const &uri,
 /*AUTO_CTC*/   LSP_Range const &range)
 /*AUTO_CTC*/   : IMEMBFP(uri),
 /*AUTO_CTC*/     IMEMBFP(range)
@@ -220,12 +265,6 @@ LSP_Location::LSP_Location(gdv::GDValueParser const &p)
   : GDVP_READ_MEMBER_STR(m_uri),
     GDVP_READ_MEMBER_STR(m_range)
 {}
-
-
-std::string LSP_Location::getFname() const
-{
-  return getFileURIPath(m_uri);
-}
 
 
 // ----------------- LSP_DiagnosticRelatedInformation ------------------
@@ -627,12 +666,12 @@ LSP_CompletionList::LSP_CompletionList(gdv::GDValueParser const &p)
 // -------------------- LSP_TextDocumentIdentifier ---------------------
 // create-tuple-class: definitions for LSP_TextDocumentIdentifier
 /*AUTO_CTC*/ LSP_TextDocumentIdentifier::LSP_TextDocumentIdentifier(
-/*AUTO_CTC*/   std::string const &uri)
+/*AUTO_CTC*/   LSP_FilenameURI const &uri)
 /*AUTO_CTC*/   : IMEMBFP(uri)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_TextDocumentIdentifier::LSP_TextDocumentIdentifier(
-/*AUTO_CTC*/   std::string &&uri)
+/*AUTO_CTC*/   LSP_FilenameURI &&uri)
 /*AUTO_CTC*/   : IMEMBMFP(uri)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
@@ -676,27 +715,21 @@ LSP_TextDocumentIdentifier::operator gdv::GDValue() const
 LSP_TextDocumentIdentifier::fromFname(
   std::string const &fname)
 {
-  return LSP_TextDocumentIdentifier(makeFileURI(fname));
-}
-
-
-std::string LSP_TextDocumentIdentifier::getFname() const
-{
-  return getFileURIPath(m_uri);
+  return LSP_TextDocumentIdentifier(LSP_FilenameURI::fromFname(fname));
 }
 
 
 // ---------------- LSP_VersionedTextDocumentIdentifier ----------------
 // create-tuple-class: definitions for LSP_VersionedTextDocumentIdentifier
 /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(
-/*AUTO_CTC*/   std::string const &uri,
+/*AUTO_CTC*/   LSP_FilenameURI const &uri,
 /*AUTO_CTC*/   LSP_VersionNumber const &version)
 /*AUTO_CTC*/   : IMEMBFP(uri),
 /*AUTO_CTC*/     IMEMBFP(version)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_VersionedTextDocumentIdentifier::LSP_VersionedTextDocumentIdentifier(
-/*AUTO_CTC*/   std::string &&uri,
+/*AUTO_CTC*/   LSP_FilenameURI &&uri,
 /*AUTO_CTC*/   LSP_VersionNumber &&version)
 /*AUTO_CTC*/   : IMEMBMFP(uri),
 /*AUTO_CTC*/     IMEMBMFP(version)
@@ -749,13 +782,7 @@ LSP_VersionedTextDocumentIdentifier::fromFname(
   LSP_VersionNumber version)
 {
   return LSP_VersionedTextDocumentIdentifier(
-    makeFileURI(fname), version);
-}
-
-
-std::string LSP_VersionedTextDocumentIdentifier::getFname() const
-{
-  return getFileURIPath(m_uri);
+    LSP_FilenameURI::fromFname(fname), version);
 }
 
 

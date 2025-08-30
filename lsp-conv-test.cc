@@ -104,7 +104,7 @@ public:      // methods
     std::list<LSP_TextDocumentContentChangeEvent> lspChanges =
       convertRecordedChangesToLSPChanges(*recordedChanges);
     LSP_DidChangeTextDocumentParams lspParams(
-      LSP_VersionedTextDocumentIdentifier("irrelevant", 1),
+      LSP_VersionedTextDocumentIdentifier::fromFname("irrelevant", 1),
       std::move(lspChanges));
     VPVAL(toGDValue(lspParams).asIndentedString());
 
