@@ -19,6 +19,21 @@ using namespace gdv;
 using namespace smbase;
 
 
+// Check that the "harn" element of `actual` is what we expect.
+static void checkActualHarn(
+  HostFileAndLineOpt const &actual,
+  HostAndResourceName const &expectHARN)
+{
+  // The test infrastructure uses empty names to indicate places we
+  // expect to get an absent `HostFileAndLineOpt`.
+  EXPECT_EQ(actual.hasFilename(), !expectHARN.empty());
+
+  if (actual.hasFilename()) {
+    EXPECT_EQ(actual.getHarn(), expectHARN);
+  }
+}
+
+
 static void expectIGNF(
   IHFExists &hfe,
   ArrayStack<HostAndResourceName> const &candidatePrefixes,
@@ -28,8 +43,8 @@ static void expectIGNF(
 {
   HostFileAndLineOpt actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
-  EXPECT_EQ(actual.m_harn, expectHARN);
-  EXPECT_EQ_GDVSER(actual.m_line, std::nullopt);
+  checkActualHarn(actual, expectHARN);
+  EXPECT_EQ_GDVSER(actual.getLineOpt(), std::nullopt);
 }
 
 
@@ -180,7 +195,7 @@ static void expectIGNFL(
 {
   HostFileAndLineOpt actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
-  EXPECT_EQ(actual.m_harn, expectHARN);
+  checkActualHarn(actual, expectHARN);
 
   // Make a properly typed `expectLine` from the integer code used in
   // the tests.
@@ -189,7 +204,7 @@ static void expectIGNFL(
       std::make_optional<LineNumber>(intExpectLine) :
       std::nullopt;
 
-  EXPECT_EQ_GDVSER(actual.m_line, expectLine);
+  EXPECT_EQ_GDVSER(actual.getLineOpt(), expectLine);
 }
 
 

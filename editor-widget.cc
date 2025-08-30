@@ -665,7 +665,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
     }
 
     // Prompt with the document directory.
-    hostFileAndLine.m_harn = getDocumentDirectoryHarn();
+    hostFileAndLine.setHarn(getDocumentDirectoryHarn());
   }
 
   // Choose which widget will navigate.

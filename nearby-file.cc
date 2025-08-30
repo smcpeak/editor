@@ -103,6 +103,9 @@ getLineNumberAt(string const &haystack, int i)
 // interface to anticipate the ability to return multiple candidates.
 // For example, a first candidate might never consider filenames to
 // have spaces, but the next candidate might allow spaces, etc.
+//
+// Ensures: For every `c` added to `candidates`, `c.hasFilename()`.
+//
 void getCandidateSuffixes(
   ArrayStack<HostFileAndLineOpt> /*OUT*/ &candidates,
   string const &haystack,
@@ -185,22 +188,27 @@ void getCandidateSuffixes(
 
 // Return an object with the prefix hostname, a file name created by
 // joining prefix+suffix, and line/col from the suffix.
+//
+// Requires: suffix.hasFilename()
+//
 static HostFileAndLineOpt joinHFL(
   SMFileUtil &sfu,
   HostAndResourceName const &prefix,
   HostFileAndLineOpt const &suffix)
 {
+  xassertPrecondition(suffix.hasFilename());
+
   string joinedFileName = sfu.joinIfRelativeFilename(
     prefix.resourceName(),
-    suffix.m_harn.resourceName());
+    suffix.getHarn().resourceName());
   joinedFileName = sfu.collapseDots(joinedFileName);
 
   // Take the host from the prefix and the line/col number from the
   // suffix.
   return HostFileAndLineOpt(
     HostAndResourceName(prefix.hostName(), joinedFileName),
-    suffix.m_line,
-    suffix.m_byteIndex);
+    suffix.getLineOpt(),
+    suffix.getByteIndexOpt());
 }
 
 
@@ -216,7 +224,7 @@ static HostFileAndLineOpt innerGetNearbyFilename(
     return HostFileAndLineOpt();
   }
 
-  // Extract candidate suffixes.
+  // Extract candidate suffixes, which always have filenames.
   ArrayStack<HostFileAndLineOpt> candidateSuffixes;
   getCandidateSuffixes(candidateSuffixes, haystack, charOffset);
   if (candidateSuffixes.isEmpty()) {
@@ -230,7 +238,7 @@ static HostFileAndLineOpt innerGetNearbyFilename(
         candidatePrefixes[prefix],
         candidateSuffixes[suffix]));
 
-      if (ihfExists.hfExists(candidate.m_harn)) {
+      if (ihfExists.hfExists(candidate.getHarn())) {
         return candidate;
       }
     }
@@ -273,8 +281,8 @@ HostFileAndLineOpt getNearbyFilename(
       "") <<                           // separator
     "  haystack: " << doubleQuote(haystack) << "\n"
     "  charOffset: " << charOffset << "\n"
-    "  ret.harn: " << ret.m_harn << "\n"
-    "  ret.line: " << toGDValue(ret.m_line));
+    "  ret.harn: " << toGDValue(ret.getHarnOpt()) << "\n"
+    "  ret.line: " << toGDValue(ret.getLineOpt()));
 
   return ret;
 }

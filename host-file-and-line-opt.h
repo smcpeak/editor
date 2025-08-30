@@ -15,11 +15,10 @@
 // An optional host and file name, and if the name is present, an
 // optional line and byte number.
 class HostFileAndLineOpt {
-public:      // data
-  // Host and file name.  Can be empty() to mean none.
-  //
-  // TODO: Use std::optional for this one too.
-  HostAndResourceName m_harn;
+private:     // data
+  // Optional host and file name.  If this is absent, then the whole
+  // object effectively represents an absent value.
+  std::optional<HostAndResourceName> m_harn;
 
   // Optional 1-based line number.
   std::optional<LineNumber> m_line;
@@ -48,7 +47,7 @@ public:      // funcs
   }
 
   HostFileAndLineOpt(
-    HostAndResourceName const &harn,
+    std::optional<HostAndResourceName> harn,
     std::optional<LineNumber> line,
     std::optional<int> byteIndex)
     : IMEMBFP(harn),
@@ -61,9 +60,30 @@ public:      // funcs
   // Assert invariants.
   void selfCheck() const;
 
-  bool hasFilename() const { return !m_harn.empty(); }
+  // Read-only member access.
+  std::optional<HostAndResourceName> const &getHarnOpt() const
+    { return m_harn; }
+  std::optional<LineNumber> const &getLineOpt() const
+    { return m_line; }
+  std::optional<int> const &getByteIndexOpt() const
+    { return m_byteIndex; }
+
+  // Tests for member presence.
+  bool hasFilename() const { return m_harn.has_value(); }
   bool hasLine() const { return m_line.has_value(); }
   bool hasByteIndex() const { return m_byteIndex.has_value(); }
+
+  // Requires: hasFilename()
+  HostAndResourceName const &getHarn() const;
+
+  // Requires: hasLine()
+  LineNumber getLine() const;
+
+  // Requires: hasByteIndex()
+  int getByteIndex() const;
+
+  // Set `m_harn` to a present value.
+  void setHarn(HostAndResourceName const &harn);
 };
 
 

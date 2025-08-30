@@ -2710,9 +2710,9 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   GENERIC_CATCH_BEGIN
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt:"
-    " harn=" << hfl.m_harn <<
-    " line=" << toGDValue(hfl.m_line) <<
-    " byteIndex=" << toGDValue(hfl.m_byteIndex));
+    " harn=" << toGDValue(hfl.getHarnOpt()) <<
+    " line=" << toGDValue(hfl.getLineOpt()) <<
+    " byteIndex=" << toGDValue(hfl.getByteIndexOpt()));
 
   if (!hfl.hasFilename()) {
     // Ignore empty object.
@@ -2722,17 +2722,17 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   // Check for fast-open conditions.
   {
     SMFileUtil sfu;
-    if (!sfu.endsWithDirectorySeparator(hfl.m_harn.resourceName()) &&
-        checkFileExistenceSynchronously(hfl.m_harn)) {
+    if (!sfu.endsWithDirectorySeparator(hfl.getHarn().resourceName()) &&
+        checkFileExistenceSynchronously(hfl.getHarn())) {
       // The file exists.  Just go straight to opening it without
       // prompting.
       TRACE1("slot_openOrSwitchToFileAtLineOpt: fast path open");
-      this->openOrSwitchToFile(hfl.m_harn);
-      if (hfl.m_line) {
+      this->openOrSwitchToFile(hfl.getHarn());
+      if (hfl.hasLine()) {
         // Also go to line/col, if provided.
         TextLCoord targetLC(
-          hfl.m_line->toLineIndex(),
-          hfl.m_byteIndex.value_or(0));
+          hfl.getLine().toLineIndex(),
+          hfl.getByteIndexOpt().value_or(0));
         editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();
         editorWidget()->scrollToCursor(-1 /*gap*/);
@@ -2747,7 +2747,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
     vfsConnections(),
     this);
 
-  HostAndResourceName confirmedHarn = hfl.m_harn;
+  HostAndResourceName confirmedHarn = hfl.getHarn();
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt: Running FilenameInputDialog");
   if (dialog.runDialog(editorGlobal()->documentList(),
