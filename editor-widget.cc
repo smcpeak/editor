@@ -77,7 +77,7 @@
 #include <algorithm>                             // std::min
 #include <functional>                            // std::function
 #include <memory>                                // std::shared_ptr
-#include <optional>                              // std::optional
+#include <optional>                              // std::{nullopt, optional}
 #include <string>                                // std::string
 #include <string_view>                           // std::string_view
 #include <utility>                               // std::move
@@ -2829,7 +2829,7 @@ void EditorWidget::on_jumpToDiagnosticLocation(
     " line=" << element.m_line);
 
   goToLocalFileAndLineOpt(
-    element.m_harn.resourceName(), element.m_line, -1);
+    element.m_harn.resourceName(), element.m_line, std::nullopt);
 
   GENERIC_CATCH_END
 }
