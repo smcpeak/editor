@@ -1545,11 +1545,16 @@ std::string EditorGlobal::lspStopServer()
 }
 
 
-// TODO: Refactor this for automated testing.
-std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
+// TODO: Move this function to its own module for stand-alone automated
+// testing.
+static std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
-  std::vector<HostFileAndLineOpt> const &locations)
+  std::vector<HostFileAndLineOpt> const &locations,
+  LSPManager *lspManager,
+  VFS_Connections &vfsConnections)
 {
+  xassertPrecondition(lspManager != nullptr);
+
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
 
   // First, get the set of files that require a VFS query.
@@ -1559,7 +1564,7 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
 
     HostAndResourceName const &harn = hfal.getHarn();
     if (harn.isLocal() &&
-        !m_lspManager->isFileOpen(harn.resourceName())) {
+        !lspManager->isFileOpen(harn.resourceName())) {
       // It is a local file, but it is not open with the LSP manager, so
       // we will need to query for it.
       filesToQuery.insert(harn);
@@ -1583,7 +1588,7 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
     // the requests into a single message.
     TRACE2("lspGetCodeLines: querying: " << toGDValue(harn));
     auto replyOrError(
-      readFileSynchronously(&m_vfsConnections, waiter, harn));
+      readFileSynchronously(&vfsConnections, waiter, harn));
 
     if (std::optional<std::string> errorMsg =
           getROEErrorMessage(replyOrError)) {
@@ -1644,7 +1649,7 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
     // recent copy it has sent to the server, since that is what the
     // server's line numbers will (should!) be referring to.
     if (RCSerf<LSPDocumentInfo const> docInfo =
-          m_lspManager->getDocInfo(fname)) {
+          lspManager->getDocInfo(fname)) {
       ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
     }
     else {
@@ -1665,6 +1670,18 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
   // TODO: Create `xassertPostcondition` and use it here.
   xassert(ret.size() == locations.size());
   return ret;
+}
+
+
+std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
+  SynchronousWaiter &waiter,
+  std::vector<HostFileAndLineOpt> const &locations)
+{
+  return lspGetCodeLinesFunction(
+    waiter,
+    locations,
+    m_lspManager.get(),
+    m_vfsConnections);
 }
 
 
