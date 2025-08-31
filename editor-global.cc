@@ -1550,11 +1550,9 @@ std::string EditorGlobal::lspStopServer()
 static std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
   std::vector<HostFileAndLineOpt> const &locations,
-  LSPManager *lspManager,
+  LSPManager &lspManager,
   VFS_Connections &vfsConnections)
 {
-  xassertPrecondition(lspManager != nullptr);
-
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
 
   // First, get the set of files that require a VFS query.
@@ -1564,7 +1562,7 @@ static std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
 
     HostAndResourceName const &harn = hfal.getHarn();
     if (harn.isLocal() &&
-        !lspManager->isFileOpen(harn.resourceName())) {
+        !lspManager.isFileOpen(harn.resourceName())) {
       // It is a local file, but it is not open with the LSP manager, so
       // we will need to query for it.
       filesToQuery.insert(harn);
@@ -1649,7 +1647,7 @@ static std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
     // recent copy it has sent to the server, since that is what the
     // server's line numbers will (should!) be referring to.
     if (RCSerf<LSPDocumentInfo const> docInfo =
-          lspManager->getDocInfo(fname)) {
+          lspManager.getDocInfo(fname)) {
       ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
     }
     else {
@@ -1680,7 +1678,7 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
   return lspGetCodeLinesFunction(
     waiter,
     locations,
-    m_lspManager.get(),
+    *m_lspManager,
     m_vfsConnections);
 }
 
