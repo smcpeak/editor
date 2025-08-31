@@ -153,6 +153,67 @@ std::string LSPDocumentInfo::getLastContentsCodeLine(
 }
 
 
+// ---------------------- LSPManagerDocumentState ----------------------
+LSPManagerDocumentState::~LSPManagerDocumentState()
+{}
+
+
+LSPManagerDocumentState::LSPManagerDocumentState()
+  : m_documentInfo(),
+    m_filesWithPendingDiagnostics()
+{}
+
+
+void LSPManagerDocumentState::selfCheck() const
+{
+  // Set of files for which we observe pending diagnostics.
+  std::set<std::string> filesWithPending;
+
+  // The map keys agree with the associated values.
+  for (auto const &kv : m_documentInfo) {
+    std::string const &fname = kv.first;
+    LSPDocumentInfo const &docInfo = kv.second;
+
+    xassert(fname == docInfo.m_fname);
+    if (docInfo.m_pendingDiagnostics) {
+      setInsert(filesWithPending, fname);
+    }
+
+    docInfo.selfCheck();
+  }
+
+  xassert(filesWithPending == m_filesWithPendingDiagnostics);
+}
+
+
+bool LSPManagerDocumentState::isFileOpen(std::string const &fname) const
+{
+  xassertPrecondition(isValidLSPPath(fname));
+  return contains(m_documentInfo, fname);
+}
+
+
+std::set<std::string> LSPManagerDocumentState::getOpenFileNames() const
+{
+  return mapKeySet(m_documentInfo);
+}
+
+
+RCSerf<LSPDocumentInfo const> LSPManagerDocumentState::getDocInfo(
+  std::string const &fname) const
+{
+  xassertPrecondition(isValidLSPPath(fname));
+
+  auto it = m_documentInfo.find(fname);
+  if (it == m_documentInfo.end()) {
+    return nullptr;
+  }
+  else {
+    return &( (*it).second );
+  }
+}
+
+
 // ---------------------------- LSPManager -----------------------------
 void LSPManager::resetProtocolState()
 {
@@ -405,7 +466,6 @@ LSPManager::LSPManager(
     m_initializeRequestID(0),
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
-    m_documentInfo(),
     m_pendingErrorMessages()
 {
   SMFileUtil sfu;
@@ -427,6 +487,8 @@ LSPManager::LSPManager(
 
 void LSPManager::selfCheck() const
 {
+  LSPManagerDocumentState::selfCheck();
+
   // Either both are present or neither is.
   xassert(m_commandRunner.operator bool() ==
           m_lsp.operator bool());
@@ -434,24 +496,6 @@ void LSPManager::selfCheck() const
   if (m_lsp) {
     m_lsp->selfCheck();
   }
-
-  // Set of files for which we observe pending diagnostics.
-  std::set<std::string> filesWithPending;
-
-  // The map keys agree with the associated values.
-  for (auto const &kv : m_documentInfo) {
-    std::string const &fname = kv.first;
-    LSPDocumentInfo const &docInfo = kv.second;
-
-    xassert(fname == docInfo.m_fname);
-    if (docInfo.m_pendingDiagnostics) {
-      setInsert(filesWithPending, fname);
-    }
-
-    docInfo.selfCheck();
-  }
-
-  xassert(filesWithPending == m_filesWithPendingDiagnostics);
 }
 
 
@@ -785,34 +829,6 @@ std::string LSPManager::explainAbnormality() const
   // the symbolic name of the protocol state.
   LSPAnnotatedProtocolState aps = getAnnotatedProtocolState();
   return aps.m_description;
-}
-
-
-bool LSPManager::isFileOpen(std::string const &fname) const
-{
-  xassertPrecondition(isValidLSPPath(fname));
-  return contains(m_documentInfo, fname);
-}
-
-
-std::set<std::string> LSPManager::getOpenFileNames() const
-{
-  return mapKeySet(m_documentInfo);
-}
-
-
-RCSerf<LSPDocumentInfo const> LSPManager::getDocInfo(
-  std::string const &fname) const
-{
-  xassertPrecondition(isValidLSPPath(fname));
-
-  auto it = m_documentInfo.find(fname);
-  if (it == m_documentInfo.end()) {
-    return nullptr;
-  }
-  else {
-    return &( (*it).second );
-  }
 }
 
 

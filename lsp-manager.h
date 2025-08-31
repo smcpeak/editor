@@ -113,6 +113,51 @@ public:      // methods
 };
 
 
+// Portion of the LSP manager functionality related to maintaining the
+// state of tracked documents.  This part can be independently
+// instantiated to help write tests.
+//
+// By itself, this class cannot add anything to its state.  A subclass
+// has to do that.
+class LSPManagerDocumentState {
+protected:   // data
+  // Map from document file name (not URI) to its protocol state.  This
+  // has the set of documents that are considered "open" w.r.t. the LSP
+  // protocol.
+  //
+  // Invariant: For all `k`, `m_documentInfo[k].m_fname == k`.
+  std::map<std::string, LSPDocumentInfo> m_documentInfo;
+
+  // Set of files `f` for which `m_documentInfo[f].m_pendingDiagnostics`
+  // is not null.
+  std::set<std::string> m_filesWithPendingDiagnostics;
+
+public:      // methods
+  ~LSPManagerDocumentState();
+
+  // Initially, no documents are open.
+  LSPManagerDocumentState();
+
+  // Assert invariants.
+  void selfCheck() const;
+
+  // True if `fname` is open w.r.t. the LSP protocol.
+  //
+  // Requires: isValidLSPPath(fname)
+  bool isFileOpen(std::string const &fname) const;
+
+  // Return the set of names for which `isFileOpen` would return true.
+  std::set<std::string> getOpenFileNames() const;
+
+  // Get the document details for `fname`, or nullptr if it is not open.
+  // This pointer is invalidated if `this` object changes.
+  //
+  // Requires: isValidLSPPath(fname)
+  RCSerf<LSPDocumentInfo const> getDocInfo(
+    std::string const &fname) const;
+};
+
+
 // Act as the central interface between the editor and the LSP server.
 //
 // This is a higher-level wrapper than `LSPClient`.  `LSPClient`
@@ -128,7 +173,8 @@ public:      // methods
 // the files individually, are summarized in the diagram
 // doc/lsp-state-diagram.ded.png .
 //
-class LSPManager : public QObject {
+class LSPManager : public QObject,
+                   public LSPManagerDocumentState {
   Q_OBJECT;
 
 private:     // data
@@ -175,17 +221,6 @@ private:     // data
   // TODO: This is not a good way to store this.  I should parse it like
   // other LSP data.
   gdv::GDValue m_serverCapabilities;
-
-  // Map from document file name (not URI) to its protocol state.  This
-  // has the set of documents that are considered "open" w.r.t. the LSP
-  // protocol.
-  //
-  // Invariant: For all `k`, `m_documentInfo[k].m_fname == k`.
-  std::map<std::string, LSPDocumentInfo> m_documentInfo;
-
-  // Set of files `f` for which `m_documentInfo[f].m_pendingDiagnostics`
-  // is not null.
-  std::set<std::string> m_filesWithPendingDiagnostics;
 
   // Error messages derived from unexpected protocol interactions that
   // don't break the protocol stream.
@@ -269,21 +304,6 @@ public:      // methods
 
   gdv::GDValue getServerCapabilities() const
     { return m_serverCapabilities; }
-
-  // True if `fname` is open w.r.t. the LSP protocol.
-  //
-  // Requires: isValidLSPPath(fname)
-  bool isFileOpen(std::string const &fname) const;
-
-  // Return the set of names for which `isFileOpen` would return true.
-  std::set<std::string> getOpenFileNames() const;
-
-  // Get the document details for `fname`, or nullptr if it is not open.
-  // This pointer is invalidated if `this` object changes.
-  //
-  // Requires: isValidLSPPath(fname)
-  RCSerf<LSPDocumentInfo const> getDocInfo(
-    std::string const &fname) const;
 
   // Send the "textDocument/didOpen" notification.
   //

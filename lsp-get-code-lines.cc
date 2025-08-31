@@ -5,7 +5,7 @@
 
 #include "td-core.h"                   // TextDocumentCore
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
-#include "lsp-manager.h"               // LSPManager
+#include "lsp-manager.h"               // LSPManagerDocumentState
 #include "vfs-connections.h"           // VFS_Connections
 #include "vfs-query-sync.h"            // readFileSynchronously
 
@@ -35,7 +35,7 @@ INIT_TRACE("lsp-get-code-lines");
 std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
   std::vector<HostFileAndLineOpt> const &locations,
-  LSPManager &lspManager,
+  LSPManagerDocumentState const &lspManager,
   VFS_Connections &vfsConnections)
 {
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
