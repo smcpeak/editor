@@ -505,6 +505,7 @@ EDITOR_OBJS += fonts-dialog.o
 EDITOR_OBJS += fonts-dialog.moc.o
 EDITOR_OBJS += git-version.gen.o
 EDITOR_OBJS += keybindings.doc.gen.o
+EDITOR_OBJS += lsp-get-code-lines.o
 EDITOR_OBJS += lsp-status-widget.moc.o
 EDITOR_OBJS += lsp-status-widget.o
 EDITOR_OBJS += macro-creator-dialog.o
