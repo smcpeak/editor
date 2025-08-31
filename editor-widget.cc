@@ -38,7 +38,7 @@
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
-#include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil
+#include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil, SynchronousWaiter
 
 // smbase
 #include "smbase/array.h"                        // Array
@@ -652,7 +652,8 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   // used files considered first.
   editorGlobal()->getUniqueDocumentDirectories(prefixes);
 
-  VFS_QuerySync querySync(vfsConnections(), this);
+  SynchronousWaiter waiter(this);
+  VFS_QuerySync querySync(vfsConnections(), waiter);
 
   HostFileAndLineOpt hostFileAndLine =
     getNearbyFilename(querySync, prefixes,

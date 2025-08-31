@@ -33,8 +33,9 @@
 // smqtutil
 #include "smqtutil/gdvalue-qstring.h"            // toGDValue(QString)
 #include "smqtutil/qstringb.h"                   // qstringb
-#include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow
+#include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
 #include "smqtutil/qtutil.h"                     // toQString
+#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
@@ -593,29 +594,33 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
   if (doc->hasFilename()) {
-    std::unique_ptr<VFS_ReadFileReply> rfr(
-      readFileSynchronously(&m_vfsConnections, parentWidget,
-                            doc->harn()));
+    SynchronousWaiter waiter(parentWidget);
+    auto replyOrError(
+      readFileSynchronously(&m_vfsConnections, waiter, doc->harn()));
+
+    if (std::optional<std::string> errorMsg =
+          getROEErrorMessage(replyOrError)) {
+      messageBox(parentWidget, "Error", toQString(*errorMsg));
+      return false;
+    }
+
+    std::unique_ptr<VFS_ReadFileReply> &rfr = replyOrError.left();
     if (!rfr) {
+      // User canceled.
       return false;
     }
 
-    if (rfr->m_success) {
-      // Have widgets ignore the notifications arising from the refresh
-      // so their cursor position is not affected.
-      SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
-        true);
+    // The error case should have been handled above.
+    xassert(rfr->m_success);
 
-      doc->replaceFileAndStats(rfr->m_contents,
-                               rfr->m_fileModificationTime,
-                               rfr->m_readOnly);
-    }
-    else {
-      messageBox(parentWidget, "Error", qstringb(
-        rfr->m_failureReasonString <<
-        " (code " << rfr->m_failureReasonCode << ")"));
-      return false;
-    }
+    // Have widgets ignore the notifications arising from the refresh
+    // so their cursor position is not affected.
+    SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+      true);
+
+    doc->replaceFileAndStats(rfr->m_contents,
+                             rfr->m_fileModificationTime,
+                             rfr->m_readOnly);
 
     // Among other things, we want to let the LSP status indicator
     // update itself to show that the file contents have changed since
@@ -1545,8 +1550,10 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
   QWidget *widget,
   std::vector<HostFileAndLineOpt> const &locations)
 {
-  xassertPrecondition(widget != nullptr);
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
+
+  xassertPrecondition(widget != nullptr);
+  SynchronousWaiter waiter(widget);
 
   // First, get the set of files that require a VFS query.
   std::set<HostAndResourceName> filesToQuery;
@@ -1578,9 +1585,23 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
     // TODO: This queries one file at a time.  I want to batch all of
     // the requests into a single message.
     TRACE2("lspGetCodeLines: querying: " << toGDValue(harn));
-    if (std::unique_ptr<VFS_ReadFileReply> rfr =
-          readFileSynchronously(&m_vfsConnections, widget, harn)) {
-      if (rfr->m_success) {
+    auto replyOrError(
+      readFileSynchronously(&m_vfsConnections, waiter, harn));
+
+    if (std::optional<std::string> errorMsg =
+          getROEErrorMessage(replyOrError)) {
+      // Store the error message.
+      TRACE2("lspGetCodeLines: got error for " << toGDValue(harn) <<
+             ": " << *errorMsg);
+      mapInsertUniqueMove(nameToDocOrError, harn,
+        DocOrError(*errorMsg));
+    }
+    else {
+      std::unique_ptr<VFS_ReadFileReply> &rfr = replyOrError.left();
+      if (rfr) {
+        // Error would be handled above.
+        xassert(rfr->m_success);
+
         // Copy the contents into a `TextDocumentCore` for easy line
         // querying later.
         auto doc = std::make_unique<TextDocumentCore>();
@@ -1591,18 +1612,11 @@ std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
           DocOrError(std::move(doc)));
       }
       else {
-        // Store the error message.
-        TRACE2("lspGetCodeLines: got error for " << toGDValue(harn) <<
-               ": " << rfr->m_failureReasonString);
-        mapInsertUniqueMove(nameToDocOrError, harn,
-          DocOrError(rfr->m_failureReasonString));
+        // User canceled the wait, bail out entirely.
+        TRACE2("lspGetCodeLines: while querying " << toGDValue(harn) <<
+               ", user canceled");
+        return std::nullopt;
       }
-    }
-    else {
-      // User canceled the wait, bail out entirely.
-      TRACE2("lspGetCodeLines: while querying " << toGDValue(harn) <<
-             ", user canceled");
-      return std::nullopt;
     }
   }
 

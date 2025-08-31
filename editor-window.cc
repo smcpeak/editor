@@ -40,6 +40,7 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // CursorSetRestore, setTrueFrameGeometry
 #include "smqtutil/qtutil.h"                     // toQString
+#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
 // smbase
 #include "smbase/chained-cond.h"                 // cc::z_le_lt
@@ -823,11 +824,18 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   }
 
   // Load the file contents.
-  std::unique_ptr<VFS_ReadFileReply> rfr(
-    readFileSynchronously(vfsConnections(), this, harn));
+  SynchronousWaiter waiter(this);
+  auto replyOrError(
+    readFileSynchronously(vfsConnections(), waiter, harn));
+
+  if (replyOrError.isRight()) {
+    this->complain(replyOrError.right());
+    return;
+  }
+
+  std::unique_ptr<VFS_ReadFileReply> &rfr = replyOrError.left();
   if (!rfr) {
-    // Either the request was canceled or an error has already been
-    // reported.
+    // The request was canceled.
     return;
   }
 
@@ -874,20 +882,38 @@ template <class REPLY_TYPE>
 std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
   HostName const &hostName, std::unique_ptr<VFS_Message> request)
 {
-  VFS_QuerySync querySync(vfsConnections(), this);
-  return querySync.issueTypedRequestSynchronously<REPLY_TYPE>(
-    hostName, std::move(request));
+  SynchronousWaiter waiter(this);
+  VFS_QuerySync querySync(vfsConnections(), waiter);
+  auto replyOrError(
+    querySync.issueTypedRequestSynchronously<REPLY_TYPE>(
+      hostName, std::move(request)));
+
+  if (replyOrError.isRight()) {
+    complain(replyOrError.right());
+    return {};
+  }
+  else {
+    return std::move(replyOrError.left());
+  }
 }
 
 
 bool EditorWindow::checkFileExistenceSynchronously(
   HostAndResourceName const &harn)
 {
-  std::unique_ptr<VFS_FileStatusReply> reply(
-    getFileStatusSynchronously(vfsConnections(), this, harn));
-  return reply &&
-         reply->m_success &&
-         reply->m_fileKind == SMFileUtil::FK_REGULAR;
+  SynchronousWaiter waiter(this);
+  auto replyOrError(
+    getFileStatusSynchronously(vfsConnections(), waiter, harn));
+
+  if (replyOrError.isRight()) {
+    return false;
+  }
+  else {
+    std::unique_ptr<VFS_FileStatusReply> &reply = replyOrError.left();
+    return reply &&
+           reply->m_success &&
+           reply->m_fileKind == SMFileUtil::FK_REGULAR;
+  }
 }
 
 
@@ -1096,8 +1122,16 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
 
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
-    std::unique_ptr<VFS_FileStatusReply> reply(
-      getFileStatusSynchronously(vfsConnections(), this, doc->harn()));
+    SynchronousWaiter waiter(this);
+    auto replyOrError(
+      getFileStatusSynchronously(vfsConnections(), waiter, doc->harn()));
+
+    if (replyOrError.isRight()) {
+      complain(replyOrError.right());
+      return false;
+    }
+
+    std::unique_ptr<VFS_FileStatusReply> &reply = replyOrError.left();
     if (!reply) {
       return false;    // Canceled.
     }

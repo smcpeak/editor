@@ -11,6 +11,7 @@
 #include "smqtutil/sync-wait.h"        // synchronouslyWaitUntil
 
 // smbase
+#include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassert
 
@@ -24,15 +25,13 @@
 
 
 VFS_QuerySync::VFS_QuerySync(
-  VFS_Connections *vfsConnections,
-  QWidget *parentWidget)
-:
-  m_vfsConnections(vfsConnections),
-  m_parentWidget(parentWidget),
-  m_requestID(0),
-  m_hostName(HostName::asLocal()),
-  m_reply(),
-  m_connLostMessage()
+  VFS_Connections *vfsConnections, SynchronousWaiter &waiter)
+  : IMEMBFP(vfsConnections),
+    IMEMBFP(waiter),
+    m_requestID(0),
+    m_hostName(HostName::asLocal()),
+    m_reply(),
+    m_connLostMessage()
 {
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
                    this, &VFS_QuerySync::on_vfsReplyAvailable);
@@ -74,8 +73,7 @@ bool VFS_QuerySync::issueRequestSynchronously(
     return this->m_requestID == 0;
   };
 
-  bool completed = synchronouslyWaitUntil(
-    m_parentWidget,
+  bool completed = m_waiter.waitUntil(
     doneCondition,
     500 /*msec*/,
     "Waiting for VFS query",
@@ -113,28 +111,31 @@ bool VFS_QuerySync::issueRequestSynchronously(
 }
 
 
-void VFS_QuerySync::complain(string message)
-{
-  messageBox(m_parentWidget, "Error", message.c_str());
-}
-
-
 bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
 {
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
   req->m_path = harn.resourceName();
 
-  std::unique_ptr<VFS_FileStatusReply> reply(
+  auto replyOrError(
     issueTypedRequestSynchronously<VFS_FileStatusReply>(
       harn.hostName(), std::move(req)));
 
-  if (reply) {
-    return reply->m_success &&
-           reply->m_fileKind == SMFileUtil::FK_REGULAR;
+  if (replyOrError.isLeft()) {
+    std::unique_ptr<VFS_FileStatusReply> &reply = replyOrError.left();
+    if (reply) {
+      return reply->m_success &&
+             reply->m_fileKind == SMFileUtil::FK_REGULAR;
+    }
+    else {
+      // If the user cancels, we will say the file does not exist.
+      return false;
+    }
   }
   else {
-    // If there is an error or the user cancels, we will say the file
-    // does not exist.
+    TRACE("VFS_QuerySync",
+      "hfExists(" << harn << "): " << replyOrError.right());
+
+    // On error, just say the file does not exist.
     return false;
   }
 }
@@ -159,29 +160,31 @@ void VFS_QuerySync::on_vfsFailed(
 }
 
 
-std::unique_ptr<VFS_ReadFileReply> readFileSynchronously(
+smbase::Either<std::unique_ptr<VFS_ReadFileReply>, std::string>
+readFileSynchronously(
   VFS_Connections *vfsConnections,
-  QWidget *parentWidget,
+  SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
   std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, parentWidget);
+  VFS_QuerySync querySync(vfsConnections, waiter);
   return querySync.issueTypedRequestSynchronously<VFS_ReadFileReply>(
     harn.hostName(), std::move(req));
 }
 
 
-std::unique_ptr<VFS_FileStatusReply> getFileStatusSynchronously(
+smbase::Either<std::unique_ptr<VFS_FileStatusReply>, std::string>
+getFileStatusSynchronously(
   VFS_Connections *vfsConnections,
-  QWidget *parentWidget,
+  SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
   std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, parentWidget);
+  VFS_QuerySync querySync(vfsConnections, waiter);
   return querySync.issueTypedRequestSynchronously<VFS_FileStatusReply>(
     harn.hostName(), std::move(req));
 }
