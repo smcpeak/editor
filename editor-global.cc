@@ -1547,13 +1547,10 @@ std::string EditorGlobal::lspStopServer()
 
 // TODO: Refactor this for automated testing.
 std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
-  QWidget *widget,
+  SynchronousWaiter &waiter,
   std::vector<HostFileAndLineOpt> const &locations)
 {
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
-
-  xassertPrecondition(widget != nullptr);
-  SynchronousWaiter waiter(widget);
 
   // First, get the set of files that require a VFS query.
   std::set<HostAndResourceName> filesToQuery;

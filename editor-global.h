@@ -42,6 +42,9 @@
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
 #include "smbase/std-string-fwd.h"               // std::string [n]
 
+// smqtutil
+#include "smqtutil/sync-wait-fwd.h"              // SynchronousWaiter [n]
+
 // Qt
 #include <QApplication>
 
@@ -569,20 +572,21 @@ public:       // funcs
      with a particular file, just encode that in the returned string, as
      this is going straight to the user.
 
-     This may perform a synchronous wait, in which case it will modally
-     block `widget`.  It returns `nullopt` if the wait is canceled.
+     This may perform a synchronous wait, in which case it will use
+     `waiter`.  It returns `nullopt` if the wait is canceled.
 
      This is not `const` because it causes state transitions within
      `m_vfsConnections`, although the nominal expectation is there is no
      durable change after this call.
 
-     Requires: widget != nullptr
      Requires: for_all L in locations: L.hasFilename() && L.hasLine()
+
+     TODO: Introduce a new type that has that requirement built-in.
 
      Ensures: if return then return->size() == locations.size()
   */
   std::optional<std::vector<std::string>> lspGetCodeLines(
-    QWidget *widget,
+    SynchronousWaiter &waiter,
     std::vector<HostFileAndLineOpt> const &locations);
 
   // -------------------------- LSP Per-file ---------------------------

@@ -2970,8 +2970,9 @@ void EditorWidget::lspHandleLocationReply(
       }
 
       // Query them all.  This does a synchronous wait.
+      SynchronousWaiter waiter(this);
       if (std::optional<std::vector<std::string>> codeLines =
-            editorGlobal()->lspGetCodeLines(this, locations)) {
+            editorGlobal()->lspGetCodeLines(waiter, locations)) {
         xassert(codeLines->size() == locations.size());
 
         // Populate the information vector for the dialog.
