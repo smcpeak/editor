@@ -12,8 +12,6 @@
 
 // qt
 #include <QObject>
-#include <QEventLoop>
-#include <QTimer>
 
 class QWidget;
 
@@ -47,12 +45,6 @@ private:     // data
 
   // Connection lost message, or empty string.
   string m_connLostMessage;
-
-  // Event loop to allow waiting.
-  QEventLoop m_eventLoop;
-
-  // Timer object to wake up after a certain delay.
-  QTimer m_timer;
 
 public:      // instance methods
   // Create an object to issue queries via 'vfsConnections', and if
@@ -89,12 +81,6 @@ protected Q_SLOTS:
   // Handlers for VFS_Connections.
   void on_vfsReplyAvailable(RequestID requestID) NOEXCEPT;
   void on_vfsFailed(HostName hostName, string reason) NOEXCEPT;
-
-  // Handlers for QTimer.
-  void on_timeout() NOEXCEPT;
-
-  // Handlers for QProgressDialog.
-  void on_canceled() NOEXCEPT;
 };
 
 

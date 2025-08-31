@@ -8,6 +8,7 @@
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // messageBox
+#include "smqtutil/sync-wait.h"        // synchronouslyWaitUntil
 
 // smbase
 #include "smbase/trace.h"              // TRACE
@@ -31,18 +32,12 @@ VFS_QuerySync::VFS_QuerySync(
   m_requestID(0),
   m_hostName(HostName::asLocal()),
   m_reply(),
-  m_connLostMessage(),
-  m_eventLoop(),
-  m_timer()
+  m_connLostMessage()
 {
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
                    this, &VFS_QuerySync::on_vfsReplyAvailable);
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsFailed,
                    this, &VFS_QuerySync::on_vfsFailed);
-  QObject::connect(&m_timer, &QTimer::timeout,
-                   this, &VFS_QuerySync::on_timeout);
-
-  m_timer.setSingleShot(true);
 }
 
 
@@ -50,7 +45,6 @@ VFS_QuerySync::~VFS_QuerySync()
 {
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_vfsConnections, nullptr, this, nullptr);
-  QObject::disconnect(&m_timer, nullptr, this, nullptr);
 }
 
 
@@ -74,60 +68,24 @@ bool VFS_QuerySync::issueRequestSynchronously(
   // Inform the test infrastructure that we are awaiting IPC.
   IncDecWaitingCounter idwc;
 
-  // TODO: Change the code below to use `smqtutil/sync-wait`.
+  auto doneCondition = [this]() -> bool {
+    // When the correct reply arrives, or a failure happens, we reset
+    // this to zero.
+    return this->m_requestID == 0;
+  };
 
-  // Phase 1: No dialog.
-  {
-    // During the initial wait, we do not accept any input.
-    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+  bool completed = synchronouslyWaitUntil(
+    m_parentWidget,
+    doneCondition,
+    500 /*msec*/,
+    "Waiting for VFS query",
+    requestDescription);
 
-    m_timer.start(500 /*msec*/);
-
-    while (m_requestID != 0 && m_timer.isActive()) {
-      // Pump the event queue but defer processing input events.
-      TRACE("VFS_QuerySync",
-        "request " << origRequestID << ": waiting for reply, timer active");
-      m_eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
-    }
-
-    m_timer.stop();
-
-    QGuiApplication::restoreOverrideCursor();
-  }
-
-  // Phase 2: Progress dialog.
-  if (m_requestID != 0) {
-    // The "busy" cursor is a pointer with an hourglass or similar, to
-    // indicate we are doing something, but will accept input.
-    QGuiApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-
-    QProgressDialog progress(
-      toQString(requestDescription),   // labelText
-      "Cancel",                        // cancelButtonText,
-      0, 1,                            // minimum and maximum,
-      m_parentWidget);                 // parent
-    progress.setWindowModality(Qt::WindowModal);
-    progress.setMinimumDuration(0 /*ms*/);
-    progress.setWindowTitle("Waiting for VFS query");
-
-    QObject::connect(&progress, &QProgressDialog::canceled,
-                     this, &VFS_QuerySync::on_canceled);
-
-    // The minimum, maximum, and value do not make sense in this
-    // situation, but I don't think I can just remove them.
-    progress.setValue(0);
-
-    while (m_requestID != 0 && !progress.wasCanceled()) {
-      // Pump the event queue but defer processing input events.
-      TRACE("VFS_QuerySync",
-        "request " << origRequestID << ": waiting for reply, dialog active");
-      m_eventLoop.exec();
-    }
-
-    // Dismiss the progress dialog.
-    progress.reset();
-
-    QGuiApplication::restoreOverrideCursor();
+  if (!completed) {
+    TRACE("VFS_QuerySync",
+      "request " << origRequestID << ": canceled");
+    m_requestID = 0;
+    return false;
   }
 
   if (m_reply) {
@@ -146,8 +104,10 @@ bool VFS_QuerySync::issueRequestSynchronously(
     return true;
   }
   else {
+    // Should not happen.
     TRACE("VFS_QuerySync",
-      "request " << origRequestID << ": canceled");
+      "request " << origRequestID << ": what happened?");
+    DEV_WARNING("VFS_QuerySync: not canceled, succeeded, nor failed?");
     return false;
   }
 }
@@ -185,7 +145,6 @@ void VFS_QuerySync::on_vfsReplyAvailable(RequestID requestID) NOEXCEPT
   if (requestID == m_requestID) {
     m_reply = m_vfsConnections->takeReply(requestID);
     m_requestID = 0;
-    m_eventLoop.exit();
   }
 }
 
@@ -196,20 +155,7 @@ void VFS_QuerySync::on_vfsFailed(
   if (m_requestID != 0 && hostName == m_hostName) {
     m_connLostMessage = reason;
     m_requestID = 0;
-    m_eventLoop.exit();
   }
-}
-
-
-void VFS_QuerySync::on_timeout() NOEXCEPT
-{
-  m_eventLoop.exit();
-}
-
-
-void VFS_QuerySync::on_canceled() NOEXCEPT
-{
-  m_eventLoop.exit();
 }
 
 
