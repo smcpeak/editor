@@ -20,12 +20,14 @@ empty result.
 import json
 import os
 import re
+import subprocess
 import sys
 import time                  # sleep
 import traceback
 
 from enum import Enum
 from functools import total_ordering
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -49,11 +51,17 @@ documents: Dict[str, Tuple[int, str]] = {}
 
 
 # -------------------------- General purpose ---------------------------
-def complain(msg: str) -> None:
-  """Print `msg` to stderr and quit."""
+def debugPrint(level: int, msg: str) -> None:
+  """Print `msg` if `debugLevel` is at least `level`."""
 
-  print(msg, file=sys.stderr);
-  sys.exit(2);
+  if debugLevel >= level:
+    print(msg)
+
+
+def complain(msg: str) -> None:
+  """Fail with `msg`."""
+
+  raise RuntimeError(msg)
 
 
 def compare_structured_values(val1: Any, val2: Any, path: str = "") -> None:
@@ -157,6 +165,98 @@ def check_sorted(lst: List[Any]) -> None:
       j += 1
 
     i += 1
+
+
+# ----------------------------- URI stuff ------------------------------
+# True if we are running Cygwin Python.
+is_cygwin: bool = (sys.platform == "cygwin")
+
+
+def cygwin_to_mixed_path(src_path: str) -> str:
+  """Convert `path` to a Cygwin "mixed" Windows path."""
+
+  b = subprocess.check_output(['cygpath', '-m', src_path])
+  return b.decode().strip()
+
+
+def get_abspath(fname: str) -> str:
+  """Turn `fname` into an absolute path.  Uses Windows mixed path
+  syntax on Windows."""
+
+  if (len(fname) >= 3 and
+      fname[1] == ":" and
+      fname[2] == "/"):
+    # Ugly hack: This is already a Windows absolute path.
+    return fname
+
+  ret: str = os.path.abspath(fname)
+  if is_cygwin:
+    ret = cygwin_to_mixed_path(ret)
+
+  return ret;
+
+
+def uri_from_path(fname: str) -> str:
+  # TODO: This hardcodes the Windows-specific triple slash.
+  return "file:///" + get_abspath(fname)
+
+
+def path_from_uri(uri: str) -> str:
+  # TODO: This also hardcodes the Windows-specific triple slash.
+  return uri.removeprefix("file:///")
+
+
+def adjust_fname_rel_to(fname: str, doc: str) -> str:
+  """Interpret `fname` as being relative to the directory of `doc`.
+  Return it as a concatenated path."""
+
+  last_slash = doc.rfind("/")
+  if last_slash < 0:
+    return fname
+  else:
+    return doc[:last_slash] + "/" + fname
+
+
+def test_adjust_fname_rel_to() -> None:
+  """Unit tests for `adjust_fname_rel_to`."""
+
+  expect_eq(adjust_fname_rel_to("foo.h", "doc"), "foo.h")
+  expect_eq(adjust_fname_rel_to("foo.h", "dir/doc"), "dir/foo.h")
+
+
+# ----------------------------------------------------------------------
+# File system abstraction
+class FileSystem:
+  """Abstraction for reading files and listing directory contents."""
+
+  def listdir(self, path: str) -> List[str]:
+    """Return the list of filenames in `path`."""
+    return os.listdir(path)
+
+  def read(self, path: str) -> str:
+    """Return the contents of file `path` as a string."""
+    with open(path, "r", encoding="utf-8") as f:
+      return f.read()
+
+
+class FakeFileSystem(FileSystem):
+  """In-memory file system for testing."""
+
+  def __init__(self, files: Dict[str, str]):
+    self._files = files
+
+  def listdir(self, path: str) -> List[str]:
+    return sorted(self._files.keys())
+
+  def read(self, path: str) -> str:
+    return self._files[path]
+
+
+def test_fake_filesystem() -> None:
+  """Unit test for FakeFileSystem."""
+  fs = FakeFileSystem({"a.cc": "int main(){}", "b.h": "#pragma once"})
+  assert "a.cc" in fs.listdir(".")
+  assert fs.read("a.cc") == "int main(){}"
 
 
 # ------------------------------ Position ------------------------------
@@ -304,6 +404,69 @@ def test_Range() -> None:
   expect_eq(r13.contains(p3), False)
 
 
+# ----------------------------- FileRange ------------------------------
+@total_ordering
+class FileRange:
+  """Range of positions within a specified file (named by URI)."""
+
+  def __init__(self, uri: str, range: Range) -> None:
+    self.uri = uri
+    self.range = range
+
+  def to_dict(self) -> dict[str, Any]:
+    """Return a dict suitable for use in LSP."""
+    return {
+      "uri": self.uri,
+      "range": self.range.to_dict()
+    }
+
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> "FileRange":
+    """Construct a range from LSP data."""
+    return cls(data["uri"],
+               Range.from_dict(data["range"]))
+
+  def __repr__(self) -> str:
+    return f"FileRange(uri={self.uri!r}, range={self.range})"
+
+  def compare(self, other: "FileRange") -> int:
+    if not isinstance(other, FileRange):
+      raise TypeError(f"Cannot compare FileRange with {type(other)}")
+
+    c = compare(self.uri, other.uri)
+    if c != 0:
+      return c;
+
+    return compare(self.range, other.range)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, FileRange):
+      return NotImplemented
+    return self.compare(other) == 0
+
+  def __lt__(self, other: Any) -> bool:
+    if not isinstance(other, FileRange):
+      return NotImplemented
+    return self.compare(other) < 0
+
+
+def test_FileRange() -> None:
+  """Unit tests for `FileRange`."""
+
+  fr1a = FileRange("file1", Range(Position(1,1), Position(2,2)))
+  fr1b = FileRange("file1", Range(Position(3,3), Position(4,4)))
+  fr2a = FileRange("file2", Range(Position(1,2), Position(3,4)))
+  check_sorted([fr1a, fr1b, fr2a])
+
+  expect_eq(fr1a.to_dict(), {
+    "uri": "file1",
+    "range": {
+      "start": { "line": 1, "character": 1 },
+      "end"  : { "line": 2, "character": 2 },
+    },
+  })
+
+
 # ---------------------------- split_lines -----------------------------
 def split_lines(text: str) -> List[str]:
   """
@@ -395,23 +558,27 @@ class OccurrenceKind(Enum):
 class Occurrence:
   """Occurrence of a symbol within a document."""
 
-  def __init__(self, name: str, kind: OccurrenceKind, range: Range) -> None:
+  def __init__(self,
+               name: str,
+               kind: OccurrenceKind,
+               file_range: FileRange) -> None:
     self.name = name
     self.kind = kind
-    self.range = range
+    self.file_range = file_range
 
   def __repr__(self) -> str:
-    return f"Occurrence(name={self.name!r}, kind={self.kind}, range={self.range})"
+    return f"Occurrence(name={self.name!r}, kind={self.kind}, file_range={self.file_range})"
 
   def __eq__(self, other: Any) -> bool:
     if not isinstance(other, Occurrence):
       return NotImplemented
     return (self.name == other.name and
             self.kind == other.kind and
-            self.range == other.range)
+            self.file_range == other.file_range)
 
 
-# Collection of all Occurrences for a document.
+# For a document and those it directly includes, a map from the symbol
+# name to the list of Occurrences, in the order they were found.
 SymbolTable = dict[str, List[Occurrence]]
 
 
@@ -435,55 +602,115 @@ def test_brace_on_line_or_next() -> None:
   assert(brace_on_line_or_next(["x", "y", "{"], 0) == False)
 
 
-def build_symbol_table(contents: str) -> SymbolTable:
+INCLUDE_RE = re.compile(r"""
+  ^\s*\#           # hash
+  \s*include       # include
+  \s*"             # open-quote
+  ([^"]+)          # 1: fname
+  "                # close-quote
+  .*$              # trailing text
+""", re.VERBOSE)
+
+
+def test_INCLUDE_RE() -> None:
+  """Tests for `INCLUDE_RE`."""
+
+  def one(line: str, expect: Optional[str]) -> None:
+    if m := INCLUDE_RE.match(line):
+      expect_eq(m.group(1), expect)
+    else:
+      expect_eq(None, expect)
+
+  one('#include "foo.h"', "foo.h")
+  one('#include "foo.h', None)
+
+
+def build_symbol_table(
+  uri: str,
+  contents: str,
+  fs: Optional[FileSystem],
+  table: SymbolTable) -> None:
   """
-  Scan `contents` to build a symbol table.
+  Scan `contents`, presumed to come from `uri`, to build a symbol table.
+  Store the results in `table`.
 
   Every word in `contents` matching the regex [a-zA-Z_][a-zA-Z0-9_]*
   is considered to be an occurrence.
 
   If there is a "{" on the same line or on the next line, then the
   occurrence is a DEFINITION.  Otherwise, if it is the first occurrence
-  in `contents`, then it is a DECLARATION, otherwise a REFERENCE.
-  """
+  in `contents` plus any #included files, then it is a DECLARATION,
+  otherwise a REFERENCE.
 
-  table: SymbolTable = {}
+  If `contents` contains a line like:
+
+    #include "<fname>"
+
+  then read <fname> from `fs` and add its symbols, marked as coming from
+  another file.  If `fs` is `None`, then ignore that line; this does not
+  do recursive reading.
+  """
 
   lines: List[str] = split_lines(contents)
 
+  path_of_uri: str = path_from_uri(uri)
+  debugPrint(3, f"uri: {uri!r}")
+  debugPrint(3, f"path_of_uri: {path_of_uri!r}")
+
   line_index: int = 0
   for line in lines:
-    for character_index, word in get_words(line):
-      occurrences = table.setdefault(word, [])
+    if m := INCLUDE_RE.match(line):
+      raw_fname = m.group(1)
+      debugPrint(3, f"raw_fname: {raw_fname!r}")
+      if fs:
+        fname = adjust_fname_rel_to(raw_fname, path_of_uri)
+        debugPrint(3, f"fname: {fname!r}")
+        try:
+          inc_contents = fs.read(fname)
+          build_symbol_table(
+            uri_from_path(fname), inc_contents, None, table)
 
-      kind = OccurrenceKind.REFERENCE
-      if brace_on_line_or_next(lines, line_index):
-        kind = OccurrenceKind.DEFINITION
-      elif len(occurrences) == 0:
-        kind = OccurrenceKind.DECLARATION
+        except:
+          # Ignore error trying to open (e.g.) nonexistent file.
+          debugPrint(2, f"Could not read: {fname!r}.")
 
-      occurrences.append(Occurrence(
-        word,
-        kind,
-        Range(
-          Position(line_index, character_index),
-          Position(line_index, character_index + len(word))
-        )))
+      else:
+        debugPrint(3, f"Skipping recursive #include: {raw_fname!r}.")
+
+    else:
+      for character_index, word in get_words(line):
+        occurrences = table.setdefault(word, [])
+
+        kind = OccurrenceKind.REFERENCE
+        if brace_on_line_or_next(lines, line_index):
+          kind = OccurrenceKind.DEFINITION
+        elif len(occurrences) == 0:
+          kind = OccurrenceKind.DECLARATION
+
+        occurrences.append(Occurrence(
+          word,
+          kind,
+          FileRange(
+            uri,
+            Range(
+              Position(line_index, character_index),
+              Position(line_index, character_index + len(word))
+            ))))
 
     line_index += 1
-
-  return table
 
 
 def sym_find_name_by_position(
   table: SymbolTable,
+  uri: str,
   pos: Position) -> Optional[str]:
   """Return the name of the symbol at the occurrence enclosing `pos`
-  if there is one."""
+  in `uri` if there is one."""
 
   for name, occurrences in table.items():
     for occurrence in occurrences:
-      if occurrence.range.contains(pos):
+      if (occurrence.file_range.uri == uri and
+          occurrence.file_range.range.contains(pos)):
         return name
 
   return None
@@ -497,57 +724,86 @@ one{}
 
 two
 {}
-three""")
+three
+
+#include "foo.h"
+#include "nonexist.h"
+
+last""")
+
+sample_foo_h: str = (
+"""two
+#include "bar.h"
+three
+""")
+
+sample_bar_h: str = "this should not get scanned"
+
+sample_fs: FileSystem = FakeFileSystem({
+  get_abspath("dir/foo.h"): sample_foo_h,
+  get_abspath("dir/bar.h"): sample_bar_h
+})
 
 
 def test_build_symbol_table() -> None:
   """Unit tests for `build_symbol_table`."""
 
-  table: SymbolTable = build_symbol_table(sample_document)
+  doc_uri = uri_from_path("dir/doc")
+  foo_uri = uri_from_path("dir/foo.h")
+
+  table: SymbolTable = {}
+  build_symbol_table(doc_uri, sample_document, sample_fs, table)
 
   decl = OccurrenceKind.DECLARATION
   defn = OccurrenceKind.DEFINITION
   ref = OccurrenceKind.REFERENCE
 
-  def r(a: int, b: int, c: int, d: int) -> Range:
-    return Range(Position(a,b), Position(c,d))
+  def r(u: str, a: int, b: int, c: int, d: int) -> FileRange:
+    return FileRange(u, Range(Position(a,b), Position(c,d)))
 
   expect_eq(table, {
     "one": [
-      Occurrence("one", decl, r(0, 0, 0, 3)),
-      Occurrence("one", ref,  r(1, 0, 1, 3)),
-      Occurrence("one", defn, r(3, 0, 3, 3)),
+      Occurrence("one", decl, r(doc_uri, 0, 0, 0, 3)),
+      Occurrence("one", ref,  r(doc_uri, 1, 0, 1, 3)),
+      Occurrence("one", defn, r(doc_uri, 3, 0, 3, 3)),
     ],
     "two": [
-      Occurrence("two", decl, r(0, 4, 0, 7)),
-      Occurrence("two", defn, r(5, 0, 5, 3)),
+      Occurrence("two", decl, r(doc_uri, 0, 4, 0, 7)),
+      Occurrence("two", defn, r(doc_uri, 5, 0, 5, 3)),
+      Occurrence("two", ref,  r(foo_uri, 0, 0, 0, 3)),
     ],
     "three": [
-      Occurrence("three", decl, r(0, 8, 0, 13)),
-      Occurrence("three", ref,  r(7, 0, 7, 5)),
+      Occurrence("three", decl, r(doc_uri, 0, 8, 0, 13)),
+      Occurrence("three", ref,  r(doc_uri, 7, 0, 7, 5)),
+      Occurrence("three", ref,  r(foo_uri, 2, 0, 2, 5)),
     ],
     "four": [
-      Occurrence("four", decl, r(1, 4, 1, 8)),
+      Occurrence("four", decl, r(doc_uri, 1, 4, 1, 8)),
+    ],
+    "last": [
+      Occurrence("last", decl, r(doc_uri, 12, 0, 12, 4)),
     ],
   })
 
-  expect_eq(sym_find_name_by_position(table, Position(0,0)), "one")
-  expect_eq(sym_find_name_by_position(table, Position(0,3)), None)
-  expect_eq(sym_find_name_by_position(table, Position(1,5)), "four")
+  expect_eq(sym_find_name_by_position(table, doc_uri, Position(0,0)), "one")
+  expect_eq(sym_find_name_by_position(table, doc_uri, Position(0,3)), None)
+  expect_eq(sym_find_name_by_position(table, doc_uri, Position(1,5)), "four")
 
 
 # ------------------------ handle_symbol_query -------------------------
 def get_symbols(
   method: str,
   table: SymbolTable,
+  uri: str,
   pos: Position) -> List[Occurrence]:
-  """Get the occurrences of the symbol at `pos` satisfying `method`."""
+  """Get the occurrences of the symbol at `pos` in `uri` satisfying
+  `method`."""
 
   # Occurrences that satisfy the method.
   satisfying_occurrences: List[Occurrence] = []
 
   # Locate the symbol under `pos` in the table.
-  name: Optional[str] = sym_find_name_by_position(table, pos)
+  name: Optional[str] = sym_find_name_by_position(table, uri, pos)
   if name is not None:
     occurrences = table[name]
 
@@ -562,58 +818,60 @@ def get_symbols(
 def test_get_symbols() -> None:
   """Unit tests for `get_symbols`."""
 
-  table: SymbolTable = build_symbol_table(sample_document)
+  doc_uri: str = uri_from_path("dir/doc")
+  foo_uri: str = uri_from_path("dir/foo.h")
+
+  table: SymbolTable = {}
+  build_symbol_table(doc_uri, sample_document, sample_fs, table)
 
   decl = OccurrenceKind.DECLARATION
   defn = OccurrenceKind.DEFINITION
   ref = OccurrenceKind.REFERENCE
 
-  def r(a: int, b: int, c: int, d: int) -> Range:
-    return Range(Position(a,b), Position(c,d))
+  def r(u: str, a: int, b: int, c: int, d: int) -> FileRange:
+    return FileRange(u, Range(Position(a,b), Position(c,d)))
 
-  expect_eq(get_symbols(declMethod, table, Position(0,0)),
-    [Occurrence("one", decl, r(0, 0, 0, 3))])
+  expect_eq(get_symbols(declMethod, table, doc_uri, Position(0,0)),
+    [Occurrence("one", decl, r(doc_uri, 0, 0, 0, 3))])
 
-  expect_eq(get_symbols(defnMethod, table, Position(0,0)),
-    [Occurrence("one", defn, r(3, 0, 3, 3))])
+  expect_eq(get_symbols(defnMethod, table, doc_uri, Position(0,0)),
+    [Occurrence("one", defn, r(doc_uri, 3, 0, 3, 3))])
 
-  expect_eq(get_symbols(refsMethod, table, Position(0,0)),
+  expect_eq(get_symbols(refsMethod, table, doc_uri, Position(0,0)),
     [
-      Occurrence("one", decl, r(0, 0, 0, 3)),
-      Occurrence("one", ref,  r(1, 0, 1, 3)),
-      Occurrence("one", defn, r(3, 0, 3, 3)),
+      Occurrence("one", decl, r(doc_uri, 0, 0, 0, 3)),
+      Occurrence("one", ref,  r(doc_uri, 1, 0, 1, 3)),
+      Occurrence("one", defn, r(doc_uri, 3, 0, 3, 3)),
     ])
 
-  expect_eq(get_symbols(declMethod, table, Position(0,3)),
+  expect_eq(get_symbols(declMethod, table, doc_uri, Position(0,3)),
     [])
 
-  expect_eq(get_symbols(declMethod, table, Position(5,1)),
-    [Occurrence("two", decl, r(0, 4, 0, 7))])
+  expect_eq(get_symbols(declMethod, table, doc_uri, Position(5,1)),
+    [Occurrence("two", decl, r(doc_uri, 0, 4, 0, 7))])
 
-  expect_eq(get_symbols(defnMethod, table, Position(5,1)),
-    [Occurrence("two", defn, r(5, 0, 5, 3))])
+  expect_eq(get_symbols(defnMethod, table, doc_uri, Position(5,1)),
+    [Occurrence("two", defn, r(doc_uri, 5, 0, 5, 3))])
 
-  expect_eq(get_symbols(refsMethod, table, Position(0,6)),
+  expect_eq(get_symbols(refsMethod, table, doc_uri, Position(0,6)),
     [
-      Occurrence("two", decl, r(0, 4, 0, 7)),
-      Occurrence("two", defn, r(5, 0, 5, 3)),
+      Occurrence("two", decl, r(doc_uri, 0, 4, 0, 7)),
+      Occurrence("two", defn, r(doc_uri, 5, 0, 5, 3)),
+      Occurrence("two", ref , r(foo_uri, 0, 0, 0, 3)),
     ])
 
 
 def get_locations(
-  uri: str,
   method: str,
   table: SymbolTable,
+  uri: str,
   pos: Position) -> List[Dict[str, Any]]:
   """Get the LSP reply for a symbol query."""
 
-  occurrences: List[Occurrence] = get_symbols(method, table, pos)
+  occurrences: List[Occurrence] = get_symbols(method, table, uri, pos)
 
   return [
-    {
-      "uri": uri,
-      "range": occurrence.range.to_dict()
-    }
+    occurrence.file_range.to_dict()
     for occurrence
     in occurrences
   ]
@@ -622,28 +880,31 @@ def get_locations(
 def test_get_locations() -> None:
   """Unit tests for `get_locations`."""
 
-  table: SymbolTable = build_symbol_table(sample_document)
-  uri: str = "myURI"
+  uri: str = uri_from_path("dir/myURI")
 
+  table: SymbolTable = {}
+  build_symbol_table(uri, sample_document, sample_fs, table)
+
+  # Locations for symbol `one`.
   expect_eq(
-    get_locations(uri, refsMethod, table, Position(0,0)),
+    get_locations(refsMethod, table, uri, Position(0,0)),
     [
       {
-        "uri": "myURI",
+        "uri": uri,
         "range": {
           "start": { "line": 0, "character": 0 },
           "end":   { "line": 0, "character": 3 },
         }
       },
       {
-        "uri": "myURI",
+        "uri": uri,
         "range": {
           "start": { "line": 1, "character": 0 },
           "end":   { "line": 1, "character": 3 },
         }
       },
       {
-        "uri": "myURI",
+        "uri": uri,
         "range": {
           "start": { "line": 3, "character": 0 },
           "end":   { "line": 3, "character": 3 },
@@ -664,10 +925,12 @@ def handle_symbol_query(
 
   contents: str = documents.get(uri, (-1, "<no doc>"))[1]
 
-  table: SymbolTable = build_symbol_table(contents)
+  fs: FileSystem = FileSystem()
+  table: SymbolTable = {}
+  build_symbol_table(uri, contents, fs, table)
 
   locations: List[Dict[str, Any]] = (
-    get_locations(uri, method, table, pos))
+    get_locations(method, table, uri, pos))
 
   send_reply(msg_id, locations)
 
@@ -912,11 +1175,14 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+  test_fake_filesystem()
   test_Position()
   test_Range()
+  test_FileRange()
   test_split_lines()
   test_get_words()
   test_brace_on_line_or_next()
+  test_INCLUDE_RE()
   test_build_symbol_table()
   test_get_symbols()
   test_get_locations()

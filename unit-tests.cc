@@ -73,71 +73,72 @@ static void entry(int argc, char **argv)
   */
 
   // No deps in this repo (except for `command-runner`).
-  RUN_TEST(editor_strutil);       // deps: (none)
-  RUN_TEST(gap);                  // deps: (none)
-  RUN_TEST(recent_items_list);    // deps: (none)
-  RUN_TEST(td_line);              // deps: (none)
-  RUN_TEST(textcategory);         // deps: (none)
-  RUN_TEST(uri_util);             // deps: (none)
+  RUN_TEST(editor_strutil);            // deps: (none)
+  RUN_TEST(gap);                       // deps: (none)
+  RUN_TEST(recent_items_list);         // deps: (none)
+  RUN_TEST(td_line);                   // deps: (none)
+  RUN_TEST(textcategory);              // deps: (none)
+  RUN_TEST(uri_util);                  // deps: (none)
 
   // Wrapped integers.
   RUN_TEST(wrapped_integer);
-  RUN_TEST(line_difference);      // deps: wrapped-integer
-  RUN_TEST(line_index);           // deps: wrapped-integer
-  RUN_TEST(line_count);           // deps: wrapped-integer, line-difference
-  RUN_TEST(positive_line_count);  // deps: wrapped-integer, line-count, line-difference
-  RUN_TEST(td_version_number);    // deps: wrapped-integer
-  RUN_TEST(lsp_version_number);   // deps: wrapped-integer, td-version-number
+  RUN_TEST(line_difference);           // deps: wrapped-integer
+  RUN_TEST(line_index);                // deps: wrapped-integer
+  RUN_TEST(line_count);                // deps: wrapped-integer, line-difference
+  RUN_TEST(positive_line_count);       // deps: wrapped-integer, line-count, line-difference
+  RUN_TEST(td_version_number);         // deps: wrapped-integer
+  RUN_TEST(lsp_version_number);        // deps: wrapped-integer, td-version-number
 
   // Deps only on things that do not have their own tests.
-  RUN_TEST(doc_type_detect);      // deps: doc-name
-  RUN_TEST(range_text_repl);      // deps: textmcoord
+  RUN_TEST(doc_type_detect);           // deps: doc-name
+  RUN_TEST(host_file_and_line_opt);
+  RUN_TEST(range_text_repl);           // deps: textmcoord
 
   // SCC: history, td, td-core
-  RUN_TEST(td_core);              // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord
-  RUN_TEST(td);                   // deps: history, line-index, range-text-repl, td-core, textmcoord
+  RUN_TEST(td_core);                   // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord
+  RUN_TEST(td);                        // deps: history, line-index, range-text-repl, td-core, textmcoord
 
-  RUN_TEST(td_change);            // deps: line-index, range-text-repl, td-core, textmcoord
+  RUN_TEST(td_change);                 // deps: line-index, range-text-repl, td-core, textmcoord
 
-  RUN_TEST(textmcoord_map);       // deps: line-index, td-core, textmcoord
+  RUN_TEST(textmcoord_map);            // deps: line-index, td-core, textmcoord
 
   // SCC: justify, td-editor
-  RUN_TEST(justify);              // deps: line-index, td-editor
-  RUN_TEST(td_editor);            // deps: editor-strutil, justify, td, textcategory, textlcoord
+  RUN_TEST(justify);                   // deps: line-index, td-editor
+  RUN_TEST(td_editor);                 // deps: editor-strutil, justify, td, textcategory, textlcoord
 
-  RUN_TEST(bufferlinesource);     // deps: line-index, td-core, td-editor
+  RUN_TEST(bufferlinesource);          // deps: line-index, td-core, td-editor
 
-  RUN_TEST(c_hilite);             // deps: bufferlinesource, textcategory
-  RUN_TEST(hashcomment_hilite);   // deps: bufferlinesource, textcategory
-  RUN_TEST(makefile_hilite);      // deps: bufferlinesource, textcategory
-  RUN_TEST(ocaml_hilite);         // deps: bufferlinesource, textcategory
-  RUN_TEST(python_hilite);        // deps: bufferlinesource, textcategory
+  RUN_TEST(c_hilite);                  // deps: bufferlinesource, textcategory
+  RUN_TEST(hashcomment_hilite);        // deps: bufferlinesource, textcategory
+  RUN_TEST(makefile_hilite);           // deps: bufferlinesource, textcategory
+  RUN_TEST(ocaml_hilite);              // deps: bufferlinesource, textcategory
+  RUN_TEST(python_hilite);             // deps: bufferlinesource, textcategory
 
-  RUN_TEST(editor_fs_server);     // deps: editor-version, vfs-local
+  RUN_TEST(editor_fs_server);          // deps: editor-version, vfs-local
 
   // SCC: lsp-conv, lsp-data, lsp-manager, named-td, td-diagnostics, td-obs-recorder
-  RUN_TEST(lsp_conv);             // deps: lsp-data, lsp-manager, named-td, range-text-repl, td-change, td-change-seq, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
-  RUN_TEST(lsp_data);             // deps: line-index, lsp-conv, named-td, td-diagnostics, uri-util
-  RUN_TEST(td_diagnostics);       // deps: line-index, named-td, td-change, td-change-seq, td-core, textmcoord-map
-  RUN_TEST(td_obs_recorder);      // deps: named-td, td-change, td-change-seq, td-core, td-diagnostics
-  RUN_TEST(named_td);             // deps: doc-name, hilite, lsp-conv, lsp-data, td, td-diagnostics, td-obs-recorder
+  RUN_TEST(lsp_conv);                  // deps: lsp-data, lsp-manager, named-td, range-text-repl, td-change, td-change-seq, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
+  RUN_TEST(lsp_data);                  // deps: line-index, lsp-conv, named-td, td-diagnostics, uri-util
+  RUN_TEST(td_diagnostics);            // deps: line-index, named-td, td-change, td-change-seq, td-core, textmcoord-map
+  RUN_TEST(td_obs_recorder);           // deps: named-td, td-change, td-change-seq, td-core, td-diagnostics
+  RUN_TEST(named_td);                  // deps: doc-name, hilite, lsp-conv, lsp-data, td, td-diagnostics, td-obs-recorder
 
-  RUN_TEST(named_td_editor);      // deps: doc-name, named-td, td-editor
+  RUN_TEST(named_td_editor);           // deps: doc-name, named-td, td-editor
 
-  RUN_TEST(named_td_list);        // deps: named-td
+  RUN_TEST(named_td_list);             // deps: named-td
 
-  RUN_TEST(nearby_file);          // deps: host-and-resource-name
+  RUN_TEST(nearby_file);               // deps: host-and-resource-name
 
-  RUN_TEST(text_search);          // deps: fasttime, line-index, td-core, td-editor
+  RUN_TEST(text_search);               // deps: fasttime, line-index, td-core, td-editor
 
-  RUN_TEST(vfs_connections);      // deps: host-name, vfs-msg, vfs-query
+  RUN_TEST(vfs_connections);           // deps: host-name, vfs-msg, vfs-query
 
   // This is the slowest test, but lsp-manager uses it, so it needs to
   // be before that.
-  RUN_TEST(command_runner);       // deps: (none)
+  RUN_TEST(command_runner);            // deps: (none)
 
-  RUN_TEST(lsp_manager);          // deps: command-runner, line-index, lsp-client, lsp-conv, lsp-data, lsp-symbol-request-kind, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
-  RUN_TEST(lsp_client);           // deps: command-runner, uri-util
+  RUN_TEST(lsp_manager);               // deps: command-runner, line-index, lsp-client, lsp-conv, lsp-data, lsp-symbol-request-kind, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
+  RUN_TEST(lsp_client);                // deps: command-runner, uri-util
 
   #undef RUN_TEST
 

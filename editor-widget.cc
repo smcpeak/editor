@@ -2959,21 +2959,36 @@ void EditorWidget::lspHandleLocationReply(
         loc.m_range.m_start.m_character);
     }
     else {
-      QVector<DiagnosticElement> elts;
-
-      SMFileUtil sfu;
-
+      // Populate a vector of locations to query.
+      std::vector<HostFileAndLineOpt> locations;
       for (LSP_Location const &loc : lseq.m_locations) {
-        auto harn = HostAndResourceName::localFile(loc.getFname());
-        elts.push_back(DiagnosticElement{
-          harn,
+        locations.push_back(HostFileAndLineOpt(
+          HostAndResourceName::localFile(loc.getFname()),
           loc.m_range.m_start.m_line.toLineNumber(),
-          editorGlobal()->lspGetCodeLine(
-            harn, loc.m_range.m_start.m_line)
-        });
+          std::nullopt));
       }
 
-      showDiagnosticDetailsDialog(std::move(elts));
+      // Query them all.  This does a synchronous wait.
+      if (std::optional<std::vector<std::string>> codeLines =
+            editorGlobal()->lspGetCodeLines(this, locations)) {
+        xassert(codeLines->size() == locations.size());
+
+        // Populate the information vector for the dialog.
+        QVector<DiagnosticElement> elts;
+        for (std::size_t i=0; i < locations.size(); ++i) {
+          elts.push_back(DiagnosticElement{
+            locations.at(i).getHarn(),
+            locations.at(i).getLine(),
+            codeLines->at(i)
+          });
+        }
+
+        // Show the results.
+        showDiagnosticDetailsDialog(std::move(elts));
+      }
+      else {
+        // User canceled the wait.
+      }
     }
   }
   catch (XBase &x) {

@@ -23,6 +23,12 @@ LineIndex LineNumber::toLineIndex() const
 }
 
 
+LineNumber LineNumber::operator+(LineDifference delta) const
+{
+  return LineNumber(get() + delta.get());
+}
+
+
 LineDifference LineNumber::operator-(LineNumber b) const
 {
   // Overflow is not possible.

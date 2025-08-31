@@ -41,10 +41,12 @@
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/datetime.h"                     // localTimeString
 #include "smbase/dev-warning.h"                  // g_devWarningHandler
+#include "smbase/either.h"                       // smbase::Either
 #include "smbase/exc.h"                          // smbase::{XBase, xformat}, EXN_CONTEXT
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
+#include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/objcount.h"                     // CheckObjectCount
@@ -1538,32 +1540,120 @@ std::string EditorGlobal::lspStopServer()
 }
 
 
-std::string EditorGlobal::lspGetCodeLine(
-  HostAndResourceName const &harn, LineIndex lineIndex) const
+// TODO: Refactor this for automated testing.
+std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
+  QWidget *widget,
+  std::vector<HostFileAndLineOpt> const &locations)
 {
-  if (!harn.isLocal()) {
-    return stringb("<Not local: " << harn << ">");
+  xassertPrecondition(widget != nullptr);
+  TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
+
+  // First, get the set of files that require a VFS query.
+  std::set<HostAndResourceName> filesToQuery;
+  for (HostFileAndLineOpt const &hfal : locations) {
+    xassertPrecondition(hfal.hasFilename() && hfal.hasLine());
+
+    HostAndResourceName const &harn = hfal.getHarn();
+    if (harn.isLocal() &&
+        !m_lspManager->isFileOpen(harn.resourceName())) {
+      // It is a local file, but it is not open with the LSP manager, so
+      // we will need to query for it.
+      filesToQuery.insert(harn);
+    }
+  }
+  TRACE2_GDVN_EXPRS("lspGetCodeLines", filesToQuery);
+
+  // Either a parsed (into lines of text) document, or an error message
+  // explaining why the contents could not be read.
+  using DocOrError =
+    Either<std::unique_ptr<TextDocumentCore>, std::string>;
+
+  // Map holding the result of the queries.
+  std::map<HostAndResourceName, DocOrError> nameToDocOrError;
+
+  // Issue a query for each of those files.
+  for (HostAndResourceName const &harn : filesToQuery) {
+    // Issue a request and synchronously wait for the reply.
+    //
+    // TODO: This queries one file at a time.  I want to batch all of
+    // the requests into a single message.
+    TRACE2("lspGetCodeLines: querying: " << toGDValue(harn));
+    if (std::unique_ptr<VFS_ReadFileReply> rfr =
+          readFileSynchronously(&m_vfsConnections, widget, harn)) {
+      if (rfr->m_success) {
+        // Copy the contents into a `TextDocumentCore` for easy line
+        // querying later.
+        auto doc = std::make_unique<TextDocumentCore>();
+        doc->replaceWholeFile(rfr->m_contents);
+
+        // Store the contents in the map.
+        mapInsertUniqueMove(nameToDocOrError, harn,
+          DocOrError(std::move(doc)));
+      }
+      else {
+        // Store the error message.
+        TRACE2("lspGetCodeLines: got error for " << toGDValue(harn) <<
+               ": " << rfr->m_failureReasonString);
+        mapInsertUniqueMove(nameToDocOrError, harn,
+          DocOrError(rfr->m_failureReasonString));
+      }
+    }
+    else {
+      // User canceled the wait, bail out entirely.
+      TRACE2("lspGetCodeLines: while querying " << toGDValue(harn) <<
+             ", user canceled");
+      return std::nullopt;
+    }
   }
 
-  std::string const fname = harn.resourceName();
+  // TODO: Provide GDV serialization for Either, and use it here to
+  // trace the value of `nameToDocOrError`.
 
-  // Allow injecting an offset to test handling of invalid line indices.
-  static int const offsetForTesting =
-    envAsIntOr(0, "EDITOR_GLOBAL_GET_CODE_LINE_OFFSET");
-  lineIndex = LineIndex(lineIndex.get() + offsetForTesting);
+  // Allow injecting an offset to test handling of invalid (too large)
+  // line indices.
+  static LineCount const offsetForTesting(
+    envAsIntOr(0, "EDITOR_GLOBAL_GET_CODE_LINE_OFFSET"));
 
-  // If the file is open with the LSP manager, then use the most recent
-  // copy it has sent to the server, since that is what the server's
-  // line numbers will (should!) be referring to.
-  if (RCSerf<LSPDocumentInfo const> docInfo =
-        m_lspManager->getDocInfo(fname)) {
-    return docInfo->getLastContentsCodeLine(lineIndex);
+  // Now go over the original set of locations again, populating the
+  // sequence to return.
+  std::vector<std::string> ret;
+  for (HostFileAndLineOpt const &hfal : locations) {
+    // Already checked above, but no harm in checking again.
+    xassertPrecondition(hfal.hasFilename() && hfal.hasLine());
+
+    HostAndResourceName const &harn = hfal.getHarn();
+    if (!harn.isLocal()) {
+      ret.push_back(stringb("<Not local: " << harn << ">"));
+    }
+
+    std::string const fname = harn.resourceName();
+    LineIndex lineIndex = hfal.getLine().toLineIndex() + offsetForTesting;
+
+    // If the file is open with the LSP manager, then use the most
+    // recent copy it has sent to the server, since that is what the
+    // server's line numbers will (should!) be referring to.
+    if (RCSerf<LSPDocumentInfo const> docInfo =
+          m_lspManager->getDocInfo(fname)) {
+      ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
+    }
+    else {
+      // We should have queried this file's details via VFS.
+      auto const &docOrError = mapGetValueAtC(nameToDocOrError, harn);
+      if (docOrError.isLeft()) {
+        ret.push_back(
+          docOrError.leftC()->getWholeLineString(lineIndex));
+      }
+      else {
+        ret.push_back(
+          stringb("<Error: " << docOrError.rightC() << ">"));
+      }
+    }
   }
+  TRACE2_GDVN_EXPRS("lspGetCodeLines", ret);
 
-  // If not open with LSP, get the file from the file system.
-  //
-  // This is non-trivial because I need to deal with VFS latency.
-  return "<TODO: Get line from file system.>";
+  // TODO: Create `xassertPostcondition` and use it here.
+  xassert(ret.size() == locations.size());
+  return ret;
 }
 
 

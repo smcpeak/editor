@@ -127,8 +127,10 @@ std::unique_ptr<REPLY_TYPE> VFS_QuerySync::issueTypedRequestSynchronously(
   }
 
   if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(genericReply.get())) {
-    // Move the pointer from 'genericReply' to 'typedReply'.
-    genericReply.release();
+    // Move the pointer from `genericReply` to `typedReply`.  This
+    // discards the return value from `release()` because it has the
+    // generic type, while `r` has the specific type.
+    (void)genericReply.release();
     typedReply.reset(r);
     return typedReply;
   }

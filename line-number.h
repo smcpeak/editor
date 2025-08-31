@@ -52,6 +52,12 @@ public:      // methods
   // Convert a number to an index by subtracting one.
   LineIndex toLineIndex() const;
 
+  // ---------------------------- Addition -----------------------------
+  using Base::operator+;
+
+  // Requires: *this + delta > 0
+  LineNumber operator+(LineDifference delta) const;
+
   // ---------------------- Subtraction/inversion ----------------------
   // Don't inherit `operator-` or `operator-=`.
 

@@ -267,6 +267,7 @@ UNIT_TESTS_OBJS += editor-fs-server-test.o
 UNIT_TESTS_OBJS += editor-strutil-test.o
 UNIT_TESTS_OBJS += gap-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
+UNIT_TESTS_OBJS += host-file-and-line-opt-test.o
 UNIT_TESTS_OBJS += justify-test.o
 UNIT_TESTS_OBJS += line-count-test.o
 UNIT_TESTS_OBJS += line-difference-test.o
@@ -318,6 +319,9 @@ $(eval $(call RUN_TEST_PROG,unit-tests))
 # Some of the unit tests (e.g., vfs-connections-test) require the server
 # executable.
 out/unit-tests.ok: editor-fs-server.exe
+
+# Some use the test server, so make sure to run its self-tests first.
+out/unit-tests.ok: out/lsp-test-server.ok
 
 # `td-core-test` might leave this file (but only if the test fails).
 TOCLEAN += td-core.tmp
@@ -378,6 +382,8 @@ EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
+EDITOR_OBJS += event-replay.o
+EDITOR_OBJS += event-replay.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
@@ -493,8 +499,6 @@ EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += editor-window.o
 EDITOR_OBJS += event-recorder.o
-EDITOR_OBJS += event-replay.o
-EDITOR_OBJS += event-replay.moc.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
 EDITOR_OBJS += fonts-dialog.o
@@ -564,6 +568,15 @@ check-mypy: out/lsp-test-server.py.mypy.ok
 ifeq ($(ENABLE_MYPY),1)
 all: check-mypy
 endif
+
+
+# -------------------------- lsp-test-server ---------------------------
+out/lsp-test-server.ok: lsp-test-server.py out/lsp-test-server.py.mypy.ok
+	$(CREATE_OUTPUT_DIRECTORY)
+	env UNIT_TEST=1 $(PYTHON3) ./lsp-test-server.py
+	touch $@
+
+check: out/lsp-test-server.ok
 
 
 # --------------------- misc ------------------------

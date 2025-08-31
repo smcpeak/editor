@@ -11,7 +11,9 @@
 #include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
-#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END, smbase::XBase
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/xassert.h"            // xassert
 
@@ -26,6 +28,9 @@
 
 #include <utility>                     // std::move
 #include <vector>                      // std::vector
+
+using namespace smbase;
+using namespace gdv;
 
 
 void DiagnosticDetailsDialog::updateTopPanel()
@@ -261,6 +266,34 @@ void DiagnosticDetailsDialog::setDiagnostics(
 {
   m_diagnostics = std::move(diagnostics);
   repopulateTable();
+}
+
+
+std::string DiagnosticDetailsDialog::eventReplayQuery(
+  std::string const &state)
+{
+  try {
+    GDValue query = fromGDVN(state);
+    GDValueParser p(query);
+
+    // Curretly the only query we understand is `cell(r,c)`, requesting
+    // the text at the designated cell.
+    p.checkIsTuple();
+    p.checkContainerTag("cell");
+
+    auto row = p.tupleGetValueAt(0).smallIntegerGet();
+    auto col = p.tupleGetValueAt(1).smallIntegerGet();
+
+    if (QTableWidgetItem *item = m_table->item(row, col)) {
+      return toString(item->text());
+    }
+    else {
+      return stringb("Invalid cell coordinate: " << query);
+    }
+  }
+  catch (XBase &x) {
+    return stringb("Exn: " << x.getMessage());
+  }
 }
 
 

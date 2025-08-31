@@ -3,6 +3,8 @@
 
 #include "vfs-query-sync.h"            // this module
 
+#include "waiting-counter.h"           // IncDecWaitingCounter
+
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // messageBox
@@ -68,6 +70,9 @@ bool VFS_QuerySync::issueRequestSynchronously(
 
   TRACE("VFS_QuerySync",
     "request " << origRequestID << ": issued: " << requestDescription);
+
+  // Inform the test infrastructure that we are awaiting IPC.
+  IncDecWaitingCounter idwc;
 
   // TODO: Change the code below to use `smqtutil/sync-wait`.
 

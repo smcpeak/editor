@@ -4,12 +4,15 @@
 #ifndef EDITOR_HOST_FILE_AND_LINE_OPT_H
 #define EDITOR_HOST_FILE_AND_LINE_OPT_H
 
-#include "host-and-resource-name.h"    // HostAndResourceName
-#include "line-number.h"               // LineNumber
+#include "host-file-and-line-opt-fwd.h"          // fwds for this module
 
-#include "smbase/sm-macros.h"          // DMEMB
+#include "host-and-resource-name.h"              // HostAndResourceName
+#include "line-number.h"                         // LineNumber
 
-#include <optional>                    // std::optional
+#include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
+#include "smbase/sm-macros.h"                    // DMEMB
+
+#include <optional>                              // std::optional
 
 
 // An optional host and file name, and if the name is present, an
@@ -84,6 +87,9 @@ public:      // funcs
 
   // Set `m_harn` to a present value.
   void setHarn(HostAndResourceName const &harn);
+
+  // Debug dump.
+  operator gdv::GDValue() const;
 };
 
 

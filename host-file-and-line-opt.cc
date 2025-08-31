@@ -3,7 +3,11 @@
 
 #include "host-file-and-line-opt.h"    // this module
 
+#include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/xassert.h"            // xassert, xassertPrecondition
+
+using namespace gdv;
 
 
 void HostFileAndLineOpt::selfCheck() const
@@ -42,6 +46,16 @@ int HostFileAndLineOpt::getByteIndex() const
 void HostFileAndLineOpt::setHarn(HostAndResourceName const &harn)
 {
   m_harn = harn;
+}
+
+
+HostFileAndLineOpt::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "HostFileAndLineOpt"_sym);
+  GDV_WRITE_MEMBER_SYM(m_harn);
+  GDV_WRITE_MEMBER_SYM(m_line);
+  GDV_WRITE_MEMBER_SYM(m_byteIndex);
+  return m;
 }
 
 

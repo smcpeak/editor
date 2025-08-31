@@ -23,6 +23,7 @@ void test_editor_fs_server(CmdlineArgsSpan args);
 void test_editor_strutil(CmdlineArgsSpan args);
 void test_gap(CmdlineArgsSpan args);
 void test_hashcomment_hilite(CmdlineArgsSpan args);
+void test_host_file_and_line_opt(CmdlineArgsSpan args);
 void test_justify(CmdlineArgsSpan args);
 void test_line_count(CmdlineArgsSpan args);
 void test_line_difference(CmdlineArgsSpan args);

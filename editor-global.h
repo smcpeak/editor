@@ -19,6 +19,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
+#include "host-file-and-line-opt-fwd.h"          // HostFileAndLineOpt [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
@@ -48,6 +49,7 @@
 #include <deque>                                 // std::deque
 #include <list>                                  // std::list
 #include <memory>                                // std::unique_ptr
+#include <optional>                              // std::optional
 #include <string>                                // std::string
 #include <vector>                                // std::vector
 
@@ -562,12 +564,26 @@ public:       // funcs
   // human-readable string describing what happened during the attempt.
   std::string lspStopServer();
 
-  // Get the line of code containing (0-based) `lineIndex` in `harn`
-  // that was referenced in an LSP response (e.g., all-uses).  If there
-  // is a problem, just encode that in the returned string, as this is
-  // going straight to the user.
-  std::string lspGetCodeLine(
-    HostAndResourceName const &harn, LineIndex lineIndex) const;
+  /* Get all of the code lines for `locations`.  The returned vector has
+     one result for each element of `locations`.  If there is a problem
+     with a particular file, just encode that in the returned string, as
+     this is going straight to the user.
+
+     This may perform a synchronous wait, in which case it will modally
+     block `widget`.  It returns `nullopt` if the wait is canceled.
+
+     This is not `const` because it causes state transitions within
+     `m_vfsConnections`, although the nominal expectation is there is no
+     durable change after this call.
+
+     Requires: widget != nullptr
+     Requires: for_all L in locations: L.hasFilename() && L.hasLine()
+
+     Ensures: if return then return->size() == locations.size()
+  */
+  std::optional<std::vector<std::string>> lspGetCodeLines(
+    QWidget *widget,
+    std::vector<HostFileAndLineOpt> const &locations);
 
   // -------------------------- LSP Per-file ---------------------------
   // True if `ntd` is open w.r.t. the LSP server.
