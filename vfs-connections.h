@@ -1,5 +1,6 @@
 // vfs-connections.h
-// VFS_Connections class.
+// `VFS_Connections`, which accesses the VFS distributed virtual file
+// system.
 
 #ifndef EDITOR_VFS_CONNECTIONS_H
 #define EDITOR_VFS_CONNECTIONS_H
@@ -29,12 +30,25 @@
 #include <vector>                      // std::vector
 
 
-// Collection of active VFS_FileSystemQuery objects, and an asynchronous
-// query interface on top of them.
-class VFS_Connections : public QObject,
-                        public SerfRefCount {
+/* Interface to a collection of VFS connections.  This is separated from
+   `VFS_Connections` to facilitate testing; a test class can provide
+   definitions of the virtual functions that avoids making actual IPC
+   calls.
+
+   This methods in this class (as opposed to `VFS_Connections`) provide:
+
+     * Read-only queries for the state of host connections.
+
+     * Read/write request and reply interaction.
+
+   It thereby provides an interface that clients can use to access what
+   is effectively a distributed virtual file system, but not to alter
+   the set of hosts participating in that file system.
+*/
+class VFS_AbstractConnections : public QObject,
+                                public SerfRefCount {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_Connections);
+  NO_OBJECT_COPIES(VFS_AbstractConnections);
 
 public:      // types
   // Unique identifier for a request.  Never zero for a valid request.
@@ -57,6 +71,141 @@ public:      // types
 
     NUM_CONNECTION_STATES
   };
+
+protected:   // data
+  // Next ID to assign to a request.
+  RequestID m_nextRequestID;
+
+  // Map from request ID to the corresponding reply object, for those
+  // requests whose reply is available.
+  std::map<RequestID, std::unique_ptr<VFS_Message> > m_availableReplies;
+
+public:      // methods
+  virtual ~VFS_AbstractConnections() override;
+
+  // Initial state with no pending replies.
+  VFS_AbstractConnections();
+
+  // Assert invariants.
+  virtual void selfCheck() const;
+
+  // --------------------------- Connections ---------------------------
+  // Query the state of the connection to 'hostName'.
+  //
+  // All other methods in this section are defined in terms of this one.
+  virtual ConnectionState connectionState(
+    HostName const &hostName) const = 0;
+
+  // True if `hostName` is a known host.
+  bool isValid(HostName const &hostName) const
+    { return connectionState(hostName) != CS_INVALID; }
+
+  // True while we are setting up the connection to 'hostName'.
+  bool isConnecting(HostName const &hostName) const
+    { return connectionState(hostName) == CS_CONNECTING; }
+
+  bool localIsConnecting() const { return isConnecting(HostName::asLocal()); }
+
+  // True when 'hostName' is ready to receive requests and has not
+  // failed.  This is true even if a request is being processed.
+  //
+  // Note that CS_READY can transition spontaneously to
+  // CS_FAILED_AFTER_CONNECTING, so 'isReady' is never a method
+  // precondition.
+  bool isReady(HostName const &hostName) const
+    { return connectionState(hostName) == CS_READY; }
+
+  bool localIsReady() const { return isReady(HostName::asLocal()); }
+
+  // True if we finished connecting to 'hostName' (and therefore became
+  // 'isReady' and emitted 'signal_vfsConnected'), even if we then lost
+  // the connection.
+  bool isOrWasConnected(HostName const &hostName) const;
+
+  // True if a connection was attempted, and possibly succeeded, but has
+  // now failed, and 'shutdown' has not been called.
+  bool connectionFailed(HostName const &hostName) const;
+
+  // ---------------------- Requests and replies -----------------------
+  // Issue new request 'req'.  The request ID is stored in 'requestID'
+  // *before* anything is done that might lead to delivery of the
+  // reply.
+  //
+  // Note that it *is* legal to call this while 'connectionFailed' (the
+  // connection can be lost at any time, so the client would have no way
+  // of reliably avoiding calling this in that state).  In that case,
+  // the request will be effectively discarded, since it cannot be sent.
+  //
+  // It is also legal to call this while 'isConnecting'.  The request
+  // will be enqueued and sent when the connection is ready.
+  //
+  // Requires: isValid(hostName)
+  virtual void issueRequest(
+    RequestID &requestID /*OUT*/,
+    HostName const &hostName,
+    std::unique_ptr<VFS_Message> req) = 0;
+
+  // True if the given request is being processed.  False once the reply
+  // is available.
+  virtual bool requestIsPending(RequestID requestID) const = 0;
+
+  // True if the reply to the indicated request is available.
+  bool replyIsAvailable(RequestID requestID) const;
+
+  // Retrieve the reply for the given request, removing it from the set
+  // of pending replies.
+  //
+  // It is legal to call this even if the connection from which it
+  // originated has failed or been shut down.
+  //
+  // Requires: replyIsAvailable(requestID)
+  std::unique_ptr<VFS_Message> takeReply(RequestID requestID);
+
+  // Stop delivery of 'signal_replyArrived' for the named request if it
+  // has not already been delivered.  Remove it from
+  // 'm_availableReplies' if it is present there.
+  //
+  // This does not interrupt processing of the request on the server, so
+  // for example would not help if the server hangs (for that, one must
+  // call 'shutdown' and then 'connect' again).  But it will prevent the
+  // request from being sent if it is still queued, and causes the reply
+  // to be discarded without notification if it is in flight.  It is
+  // meant for cases where the client no longer needs the information
+  // contained in the reply.
+  virtual void cancelRequest(RequestID requestID) = 0;
+
+  // Across all connections, the total number of requests that have been
+  // issued (via 'issueRequest'), but whose reply has not arrived.  It
+  // includes requests that are queued to be sent.  It does not count
+  // requests that have been canceled.
+  virtual int numPendingRequests() const = 0;
+
+  // Total number of replies that are available but have not been taken
+  // or canceled.
+  int numAvailableReplies() const;
+
+Q_SIGNALS:
+  // Emitted when 'isConnecting(hostName)==true' transitions to
+  // 'isReady(hostName)'.
+  void signal_vfsConnected(HostName hostName);
+
+  // Emitted when 'replyIsAvailable(requestID)' becomes true.
+  void signal_vfsReplyAvailable(RequestID requestID);
+
+  // Emitted when 'connectionFailed' becomes true.
+  void signal_vfsFailed(HostName hostName, std::string reason);
+};
+
+
+// Returns a string like "CS_READY".
+char const *toString(VFS_AbstractConnections::ConnectionState s);
+
+
+// Collection of active VFS_FileSystemQuery objects, and an asynchronous
+// query interface on top of them.
+class VFS_Connections : public VFS_AbstractConnections {
+  Q_OBJECT
+  NO_OBJECT_COPIES(VFS_Connections);
 
 private:     // types
   // A request that has been issued by a client but not yet sent on any
@@ -145,9 +294,6 @@ private:     // types
   };
 
 private:     // data
-  // Next ID to assign to a request.
-  RequestID m_nextRequestID;
-
   // Map from a name to its connection info.
   //
   // The extrinsic order is that in which the hosts were passed to
@@ -157,10 +303,6 @@ private:     // data
   //   m_connections[k]->m_hostName == k
   smbase::OrderedMap<HostName, std::unique_ptr<Connection>>
     m_connections;
-
-  // Map from request ID to the corresponding reply object, for those
-  // requests whose reply is available.
-  std::map<RequestID, std::unique_ptr<VFS_Message> > m_availableReplies;
 
 private:      // methods
   // Get the connection for the given hostName, or NULL if it is
@@ -188,15 +330,13 @@ public:      // methods
   virtual ~VFS_Connections() override;
 
   // Throw an exception if an invariant does not hold.
-  void selfCheck() const;
+  void selfCheck() const override;
 
-  // Query the state of the connection to 'hostName'.
-  ConnectionState connectionState(HostName const &hostName) const;
-
-  // True if 'connect(hostName)' has been called and
-  // 'shutdown(hostName)' has not.
-  bool isValid(HostName const &hostName) const
-    { return connectionState(hostName) != CS_INVALID; }
+  // --------------------------- Connections ---------------------------
+  // True if `connect(hostName)` has been called and
+  // `shutdown(hostName)` has not.
+  virtual ConnectionState connectionState(
+    HostName const &hostName) const override;
 
   // Get the set of HostNames for which 'isValid' is true, in the order
   // in which 'connect' was called.
@@ -211,89 +351,11 @@ public:      // methods
 
   void connectLocal() { connect(HostName::asLocal()); }
 
-  // True while we are setting up the connection to 'hostName'.
-  bool isConnecting(HostName const &hostName) const
-    { return connectionState(hostName) == CS_CONNECTING; }
-
-  bool localIsConnecting() const { return isConnecting(HostName::asLocal()); }
-
-  // True when 'hostName' is ready to receive requests and has not
-  // failed.  This is true even if a request is being processed.
-  //
-  // Note that CS_READY can transition spontaneously to
-  // CS_FAILED_AFTER_CONNECTING, so 'isReady' is never a method
-  // precondition.
-  bool isReady(HostName const &hostName) const
-    { return connectionState(hostName) == CS_READY; }
-
-  bool localIsReady() const { return isReady(HostName::asLocal()); }
-
-  // True if we finished connecting to 'hostName' (and therefore became
-  // 'isReady' and emitted 'signal_vfsConnected'), even if we then lost
-  // the connection.
-  bool isOrWasConnected(HostName const &hostName) const;
-
   // Return the absolute path that clients should normally start in when
   // browsing the files at 'hostName'.
   //
   // Requires: isOrWasConnected(hostName)
   std::string getStartingDirectory(HostName const &hostName) const;
-
-  // Issue new request 'req'.  The request ID is stored in 'requestID'
-  // *before* anything is done that might lead to delivery of the
-  // reply.
-  //
-  // Note that it *is* legal to call this while 'connectionFailed' (the
-  // connection can be lost at any time, so the client would have no way
-  // of reliably avoiding calling this in that state).  In that case,
-  // the request will be effectively discarded, since it cannot be sent.
-  //
-  // It is also legal to call this while 'isConnecting'.  The request
-  // will be enqueued and sent when the connection is ready.
-  //
-  // Requires: isValid(hostName)
-  void issueRequest(RequestID /*OUT*/ &requestID,
-                    HostName const &hostName,
-                    std::unique_ptr<VFS_Message> req);
-
-  // True if the given request is being processed.  False once the reply
-  // is available.
-  bool requestIsPending(RequestID requestID) const;
-
-  // True if the reply to the indicated request is available.
-  bool replyIsAvailable(RequestID requestID) const;
-
-  // Retrieve the reply for the given request, removing it from the set
-  // of pending replies.
-  //
-  // It is legal to call this even if the connection from which it
-  // originated has failed or been shut down.
-  //
-  // Requires: replyIsAvailable(requestID)
-  std::unique_ptr<VFS_Message> takeReply(RequestID requestID);
-
-  // Stop delivery of 'signal_replyArrived' for the named request if it
-  // has not already been delivered.  Remove it from
-  // 'm_availableReplies' if it is present there.
-  //
-  // This does not interrupt processing of the request on the server, so
-  // for example would not help if the server hangs (for that, one must
-  // call 'shutdown' and then 'connect' again).  But it will prevent the
-  // request from being sent if it is still queued, and causes the reply
-  // to be discarded without notification if it is in flight.  It is
-  // meant for cases where the client no longer needs the information
-  // contained in the reply.
-  void cancelRequest(RequestID requestID);
-
-  // Across all connections, the total number of requests that have been
-  // issued (via 'issueRequest'), but whose reply has not arrived.  It
-  // includes requests that are queued to be sent.  It does not count
-  // requests that have been canceled.
-  int numPendingRequests() const;
-
-  // Total number of replies that are available but have not been taken
-  // or canceled.
-  int numAvailableReplies() const;
 
   // Shut down connection to 'hostName' and remove it from the set of
   // valid hosts.
@@ -306,19 +368,15 @@ public:      // methods
   // Shut down all connections.
   void shutdownAll();
 
-  // True if a connection was attempted, and possibly succeeded, but has
-  // now failed, and 'shutdown' has not been called.
-  bool connectionFailed(HostName const &hostName) const;
-
-Q_SIGNALS:
-  // Emitted when 'isConnecting()' transitions to 'isReady()'.
-  void signal_vfsConnected(HostName hostName);
-
-  // Emitted when 'replyIsAvailable(requestID)' becomes true.
-  void signal_vfsReplyAvailable(RequestID requestID);
-
-  // Emitted when 'connectionFailed' becomes true.
-  void signal_vfsFailed(HostName hostName, std::string reason);
+  // ---------------------- Requests and replies -----------------------
+  // `VFS_AbstractConnections` request methods.
+  virtual void issueRequest(
+    RequestID &requestID /*OUT*/,
+    HostName const &hostName,
+    std::unique_ptr<VFS_Message> req) override;
+  virtual bool requestIsPending(RequestID requestID) const override;
+  virtual void cancelRequest(RequestID requestID) override;
+  virtual int numPendingRequests() const override;
 
 protected Q_SLOTS:
   // Handlers for VFS_FileSystemQuery.
@@ -326,10 +384,6 @@ protected Q_SLOTS:
   void on_vfsReplyAvailable() NOEXCEPT;
   void on_vfsFailureAvailable() NOEXCEPT;
 };
-
-
-// Returns a string like "CS_READY".
-char const *toString(VFS_Connections::ConnectionState s);
 
 
 #endif // EDITOR_VFS_CONNECTIONS_H

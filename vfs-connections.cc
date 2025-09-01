@@ -23,6 +23,81 @@
 using namespace smbase;
 
 
+// ---------------------- VFS_AbstractConnections ----------------------
+VFS_AbstractConnections::~VFS_AbstractConnections()
+{}
+
+
+VFS_AbstractConnections::VFS_AbstractConnections()
+  : QObject(),
+    m_nextRequestID(1),
+    m_availableReplies()
+{}
+
+
+void VFS_AbstractConnections::selfCheck() const
+{}
+
+
+bool VFS_AbstractConnections::isOrWasConnected(HostName const &hostName) const
+{
+  ConnectionState cs = connectionState(hostName);
+  return cs == CS_READY ||
+         cs == CS_FAILED_AFTER_CONNECTING;
+}
+
+
+bool VFS_AbstractConnections::connectionFailed(HostName const &hostName) const
+{
+  ConnectionState cs = connectionState(hostName);
+  return cs == CS_FAILED_BEFORE_CONNECTING ||
+         cs == CS_FAILED_AFTER_CONNECTING;
+}
+
+
+bool VFS_AbstractConnections::replyIsAvailable(RequestID requestID) const
+{
+  return contains(m_availableReplies, requestID);
+}
+
+
+std::unique_ptr<VFS_Message> VFS_AbstractConnections::takeReply(
+  RequestID requestID)
+{
+  auto it = m_availableReplies.find(requestID);
+  xassert(it != m_availableReplies.end());
+
+  std::unique_ptr<VFS_Message> ret(std::move((*it).second));
+
+  TRACE("VFS_Connections",
+    "takeReply: requestID=" << requestID <<
+    " " << ret->description());
+
+  m_availableReplies.erase(it);
+
+  return ret;
+}
+
+
+int VFS_AbstractConnections::numAvailableReplies() const
+{
+  return (int)(m_availableReplies.size());
+}
+
+
+DEFINE_ENUMERATION_TO_STRING(
+  VFS_AbstractConnections::ConnectionState,
+  VFS_AbstractConnections::NUM_CONNECTION_STATES,
+  (
+    "CS_INVALID",
+    "CS_CONNECTING",
+    "CS_READY",
+    "CS_FAILED_BEFORE_CONNECTING",
+    "CS_FAILED_AFTER_CONNECTING",
+  )
+)
+
+
 // ---------------------------- Connection -----------------------------
 VFS_Connections::Connection::Connection(VFS_Connections *connections,
                                         HostName const &hostName)
@@ -77,10 +152,8 @@ void VFS_Connections::Connection::selfCheck() const
 
 // ------------------------- VFS_Connections ---------------------------
 VFS_Connections::VFS_Connections()
-  : QObject(),
-    m_nextRequestID(1),
-    m_connections(),
-    m_availableReplies()
+  : VFS_AbstractConnections(),
+    m_connections()
 {}
 
 
@@ -100,6 +173,7 @@ void VFS_Connections::selfCheck() const
 }
 
 
+// ------------------- VFS_Connections: Connections --------------------
 VFS_Connections::Connection const * NULLABLE VFS_Connections::ifConnC(
   HostName const &hostName) const
 {
@@ -207,14 +281,6 @@ void VFS_Connections::connect(HostName const &hostName)
 }
 
 
-bool VFS_Connections::isOrWasConnected(HostName const &hostName) const
-{
-  ConnectionState cs = connectionState(hostName);
-  return cs == CS_READY ||
-         cs == CS_FAILED_AFTER_CONNECTING;
-}
-
-
 string VFS_Connections::getStartingDirectory(HostName const &hostName) const
 {
   xassert(isOrWasConnected(hostName));
@@ -222,6 +288,31 @@ string VFS_Connections::getStartingDirectory(HostName const &hostName) const
 }
 
 
+void VFS_Connections::shutdown(HostName const &hostName)
+{
+  TRACE("VFS_Connections", "shutdown(" << hostName << ")");
+
+  conn(hostName)->m_fsQuery->shutdown();
+
+  m_connections.eraseExistingKey(hostName);
+}
+
+
+void VFS_Connections::shutdownAll()
+{
+  TRACE("VFS_Connections", "shutdownAll");
+
+  // Make a copy of the names so I can safely iterate over it while
+  // modifying the real data.
+  std::vector<HostName> names(getHostNames());
+
+  for (HostName const &hn : names) {
+    shutdown(hn);
+  }
+}
+
+
+// --------------- VFS_Connections: Requests and replies ---------------
 void VFS_Connections::issueRequest(RequestID /*OUT*/ &requestID,
                                    HostName const &hostName,
                                    std::unique_ptr<VFS_Message> req)
@@ -275,12 +366,6 @@ bool VFS_Connections::requestIsPending(RequestID requestID) const
 }
 
 
-bool VFS_Connections::replyIsAvailable(RequestID requestID) const
-{
-  return contains(m_availableReplies, requestID);
-}
-
-
 void VFS_Connections::Connection::issuePendingRequest()
 {
   if (!m_queuedRequests.empty()) {
@@ -305,24 +390,6 @@ void VFS_Connections::Connection::issuePendingRequest()
     TRACE("VFS_Connections",
       "issuePendingRequest(" << m_hostName << "): no queued requests");
   }
-}
-
-
-std::unique_ptr<VFS_Message> VFS_Connections::takeReply(
-  RequestID requestID)
-{
-  auto it = m_availableReplies.find(requestID);
-  xassert(it != m_availableReplies.end());
-
-  std::unique_ptr<VFS_Message> ret(std::move((*it).second));
-
-  TRACE("VFS_Connections",
-    "takeReply: requestID=" << requestID <<
-    " " << ret->description());
-
-  m_availableReplies.erase(it);
-
-  return ret;
 }
 
 
@@ -394,44 +461,7 @@ int VFS_Connections::Connection::numPendingRequests() const
 }
 
 
-int VFS_Connections::numAvailableReplies() const
-{
-  return (int)(m_availableReplies.size());
-}
-
-
-void VFS_Connections::shutdown(HostName const &hostName)
-{
-  TRACE("VFS_Connections", "shutdown(" << hostName << ")");
-
-  conn(hostName)->m_fsQuery->shutdown();
-
-  m_connections.eraseExistingKey(hostName);
-}
-
-
-void VFS_Connections::shutdownAll()
-{
-  TRACE("VFS_Connections", "shutdownAll");
-
-  // Make a copy of the names so I can safely iterate over it while
-  // modifying the real data.
-  std::vector<HostName> names(getHostNames());
-
-  for (HostName const &hn : names) {
-    shutdown(hn);
-  }
-}
-
-
-bool VFS_Connections::connectionFailed(HostName const &hostName) const
-{
-  ConnectionState cs = connectionState(hostName);
-  return cs == CS_FAILED_BEFORE_CONNECTING ||
-         cs == CS_FAILED_AFTER_CONNECTING;
-}
-
-
+// ---------------------- VFS_Connections: Slots -----------------------
 VFS_Connections::Connection * NULLABLE
   VFS_Connections::signalRecipientConnection()
 {
@@ -571,19 +601,6 @@ void VFS_Connections::on_vfsFailureAvailable() NOEXCEPT
 
   GENERIC_CATCH_END
 }
-
-
-DEFINE_ENUMERATION_TO_STRING(
-  VFS_Connections::ConnectionState,
-  VFS_Connections::NUM_CONNECTION_STATES,
-  (
-    "CS_INVALID",
-    "CS_CONNECTING",
-    "CS_READY",
-    "CS_FAILED_BEFORE_CONNECTING",
-    "CS_FAILED_AFTER_CONNECTING",
-  )
-)
 
 
 // EOF

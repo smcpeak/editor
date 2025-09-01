@@ -25,7 +25,7 @@
 
 
 VFS_QuerySync::VFS_QuerySync(
-  VFS_Connections *vfsConnections, SynchronousWaiter &waiter)
+  VFS_AbstractConnections *vfsConnections, SynchronousWaiter &waiter)
   : IMEMBFP(vfsConnections),
     IMEMBFP(waiter),
     m_requestID(0),
@@ -33,10 +33,13 @@ VFS_QuerySync::VFS_QuerySync(
     m_reply(),
     m_connLostMessage()
 {
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
-                   this, &VFS_QuerySync::on_vfsReplyAvailable);
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsFailed,
-                   this, &VFS_QuerySync::on_vfsFailed);
+  QObject::connect(
+    m_vfsConnections, &VFS_AbstractConnections::signal_vfsReplyAvailable,
+                              this, &VFS_QuerySync::on_vfsReplyAvailable);
+
+  QObject::connect(
+    m_vfsConnections, &VFS_AbstractConnections::signal_vfsFailed,
+                              this, &VFS_QuerySync::on_vfsFailed);
 }
 
 
@@ -57,7 +60,7 @@ bool VFS_QuerySync::issueRequestSynchronously(
   m_hostName = hostName;
 
   string requestDescription = request->description();
-  m_vfsConnections->issueRequest(m_requestID,
+  m_vfsConnections->issueRequest(m_requestID /*OUT*/,
     m_hostName, std::move(request));
   RequestID origRequestID = m_requestID;
 
@@ -162,7 +165,7 @@ void VFS_QuerySync::on_vfsFailed(
 
 smbase::Either<std::unique_ptr<VFS_ReadFileReply>, std::string>
 readFileSynchronously(
-  VFS_Connections *vfsConnections,
+  VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
@@ -177,7 +180,7 @@ readFileSynchronously(
 
 smbase::Either<std::unique_ptr<VFS_FileStatusReply>, std::string>
 getFileStatusSynchronously(
-  VFS_Connections *vfsConnections,
+  VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {

@@ -7,7 +7,7 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
 #include "nearby-file.h"               // IHFExists
-#include "vfs-connections.h"           // VFS_Connections
+#include "vfs-connections.h"           // VFS_AbstractConnections
 
 #include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
@@ -27,11 +27,11 @@ class VFS_QuerySync : public QObject,
   NO_OBJECT_COPIES(VFS_QuerySync);
 
 public:      // types
-  typedef VFS_Connections::RequestID RequestID;
+  typedef VFS_AbstractConnections::RequestID RequestID;
 
 private:     // data
   // Query interface to use.
-  VFS_Connections *m_vfsConnections;
+  VFS_AbstractConnections *m_vfsConnections;
 
   // Wait mechanism.
   SynchronousWaiter &m_waiter;
@@ -53,7 +53,7 @@ public:      // instance methods
   // Create an object to issue queries via `vfsConnections`.  Use
   // `waiter` to wait, which can (e.g.) pop up a modal window.
   VFS_QuerySync(
-    VFS_Connections *vfsConnections, SynchronousWaiter &waiter);
+    VFS_AbstractConnections *vfsConnections, SynchronousWaiter &waiter);
 
   virtual ~VFS_QuerySync() override;
 
@@ -89,7 +89,7 @@ public:      // instance methods
   virtual bool hfExists(HostAndResourceName const &harn) override;
 
 protected Q_SLOTS:
-  // Handlers for VFS_Connections.
+  // Handlers for VFS_AbstractConnections.
   void on_vfsReplyAvailable(RequestID requestID) NOEXCEPT;
   void on_vfsFailed(HostName hostName, string reason) NOEXCEPT;
 };
@@ -189,7 +189,7 @@ std::optional<std::string> getROEErrorMessage(
 */
 smbase::Either<std::unique_ptr<VFS_ReadFileReply>, std::string>
 readFileSynchronously(
-  VFS_Connections *vfsConnections,
+  VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn);
 
@@ -199,7 +199,7 @@ readFileSynchronously(
 // This has the same return cases as `readFileSynchronously`.
 smbase::Either<std::unique_ptr<VFS_FileStatusReply>, std::string>
 getFileStatusSynchronously(
-  VFS_Connections *vfsConnections,
+  VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn);
 
