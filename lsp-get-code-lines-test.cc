@@ -495,6 +495,32 @@ public:      // methods
       "<Error: File not found (code PEC_FILE_NOT_FOUND)>");
     EXPECT_EQ(waiter.m_waitUntilCount, 1);
   }
+
+
+  // Try to get a line from a non-local file.
+  //
+  // Eventually my LSP implementation should allow this, but for now it
+  // does not and I want to exercise the refusal.
+  //
+  void test_nonLocal()
+  {
+    TEST_CASE("test_nonLocal");
+
+    locations.push_back(HostFileAndLineOpt(
+      HostAndResourceName(HostName::asSSH("somehost"), "/some/file"),
+      LineNumber(3),
+      0 /*byteIndex*/
+    ));
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 1);
+    EXPECT_EQ(linesOpt->at(0),
+      "<Not local: \"/some/file\" on ssh:somehost>");
+    EXPECT_EQ(waiter.m_waitUntilCount, 0);
+  }
 };
 
 
@@ -516,6 +542,7 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   Tester().test_largeLineNumberLSP();
   Tester().test_largeLineNumberVFS();
   Tester().test_errorVFSLookup();
+  Tester().test_nonLocal();
 }
 
 

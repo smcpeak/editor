@@ -147,27 +147,29 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
       ret.push_back(stringb("<Not local: " << harn << ">"));
     }
 
-    std::string const fname = harn.resourceName();
-    LineIndex lineIndex = hfal.getLine().toLineIndex() + offsetForTesting;
+    else /*local*/ {
+      std::string const fname = harn.resourceName();
+      LineIndex lineIndex = hfal.getLine().toLineIndex() + offsetForTesting;
 
-    // If the file is open with the LSP manager, then use the most
-    // recent copy it has sent to the server, since that is what the
-    // server's line numbers will (should!) be referring to.
-    if (RCSerf<LSPDocumentInfo const> docInfo =
-          lspManager.getDocInfo(fname)) {
-      ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
-    }
-    else {
-      // We should have queried this file's details via VFS.
-      auto const &docOrError = mapGetValueAtC(nameToDocOrError, harn);
-      if (docOrError.isLeft()) {
-        ret.push_back(
-          docOrError.leftC()->getWholeLineStringOrRangeErrorMessage(
-            lineIndex, fname));
+      // If the file is open with the LSP manager, then use the most
+      // recent copy it has sent to the server, since that is what the
+      // server's line numbers will (should!) be referring to.
+      if (RCSerf<LSPDocumentInfo const> docInfo =
+            lspManager.getDocInfo(fname)) {
+        ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
       }
-      else {
-        ret.push_back(
-          stringb("<Error: " << docOrError.rightC() << ">"));
+      else /*not LSP*/ {
+        // We should have queried this file's details via VFS.
+        auto const &docOrError = mapGetValueAtC(nameToDocOrError, harn);
+        if (docOrError.isLeft()) {
+          ret.push_back(
+            docOrError.leftC()->getWholeLineStringOrRangeErrorMessage(
+              lineIndex, fname));
+        }
+        else {
+          ret.push_back(
+            stringb("<Error: " << docOrError.rightC() << ">"));
+        }
       }
     }
   }
