@@ -11,6 +11,8 @@
 
 #include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
+#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
+#include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/map-util.h"           // smbase::{mapInsertUniqueMove, mapInsertUnique}
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/set-util.h"           // smbase::setIsDisjointWith
@@ -27,6 +29,7 @@
 #include <utility>                     // std::move
 #include <vector>                      // std::vector
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -177,11 +180,22 @@ class Tester {
 public:      // data
   std::string const languageId = "cpp";
 
-  std::string const fname1 = "/home/user/file1.cc";
-  char const * const fname1Data =
+  // File names.
+  std::string const fname[2] = {
+    "/home/user/file0.cc",
+    "/home/user/file1.cc",
+  };
+
+  // File contents.
+  char const * const fnameData[2] = {
     "one\n"
     "two\n"
-    "three\n";
+    "three\n",
+
+    "ONE\n"
+    "TWO\n"
+    "THREE\n",
+  };
 
   // Locations to look up.
   std::vector<HostFileAndLineOpt> locations;
@@ -211,6 +225,7 @@ public:      // methods
     }
   }
 
+  // ----------------------------- Helpers -----------------------------
   // Call the function under test using the populated data members.
   std::optional<std::vector<std::string>> callLspGetCodeLinesFunction()
   {
@@ -221,30 +236,47 @@ public:      // methods
       vfsConnections);
   }
 
-  // Add to `locations` a request for `lineNumber` in `fname1`.
-  void addFname1Line(int lineNumber)
+  // Add to `locations` a request for `lineNumber` in `fileIndex`.
+  void locAddFileLine(int fileIndex, int lineNumber)
   {
+    xassert(cc::z_le_lt(fileIndex, 2));
     locations.push_back(HostFileAndLineOpt(
-      HostAndResourceName::localFile(fname1),
+      HostAndResourceName::localFile(fname[fileIndex]),
       LineNumber(lineNumber),
       0 /*byteIndex*/
     ));
   }
 
+  // Add `fileIndex` to LSP.
+  void addFileToLSP(int fileIndex)
+  {
+    xassert(cc::z_le_lt(fileIndex, 2));
+    lspManager.addDoc(LSPDocumentInfo(
+      fname[fileIndex],
+      LSP_VersionNumber(1),
+      fnameData[fileIndex]));
+  }
 
+  // Add `fileIndex` to VFS.
+  void addFileToVFS(int fileIndex)
+  {
+    xassert(cc::z_le_lt(fileIndex, 2));
+    mapInsertUnique(vfsConnections.m_files,
+      fname[fileIndex], std::string(fnameData[fileIndex]));
+  }
+
+
+  // ------------------------------ Tests ------------------------------
   // Simple example of "happy path" lookup of one location for which the
   // file is in the LSP manager already (so no waiting occurs).
   void test_oneLSPLookup()
   {
     TEST_CASE("test_oneLSPLookup");
 
-    addFname1Line(2);
+    locAddFileLine(0, 2);
 
     // Serve the data from the LSP manager's copy.
-    lspManager.addDoc(LSPDocumentInfo(
-      fname1,
-      LSP_VersionNumber(1),
-      fname1Data));
+    addFileToLSP(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -261,11 +293,10 @@ public:      // methods
   {
     TEST_CASE("test_oneVFSLookup");
 
-    addFname1Line(2);
+    locAddFileLine(0, 2);
 
     // Serve the data from VFS.
-    mapInsertUnique(vfsConnections.m_files,
-      fname1, std::string(fname1Data));
+    addFileToVFS(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -282,19 +313,45 @@ public:      // methods
   {
     TEST_CASE("test_cancelVFSLookup");
 
-    addFname1Line(2);
+    locAddFileLine(0, 2);
 
     // Cancel the first wait attempt.
     waiter.m_cancelCountdown = 0;
 
     // Serve the data from VFS.
-    mapInsertUnique(vfsConnections.m_files,
-      fname1, std::string(fname1Data));
+    addFileToVFS(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
 
     EXPECT_FALSE(linesOpt.has_value());
+    EXPECT_EQ(waiter.m_waitUntilCount, 1);
+  }
+
+
+  // One lookup goes to LSP and one to VFS.
+  void test_oneLSP_oneVFS(bool lspFirst)
+  {
+    TEST_CASE_EXPRS("test_oneLSP_oneVFS", lspFirst);
+
+    locAddFileLine(0, 2);
+    locAddFileLine(1, 3);
+
+    // Serve file 0/1 data from the LSP manager's copy.
+    addFileToLSP(lspFirst? 0:1);
+
+    // Serve file 1/0 data from VFS.
+    addFileToVFS(lspFirst? 1:0);
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 2);
+    EXPECT_EQ(linesOpt->at(0), "two");
+    EXPECT_EQ(linesOpt->at(1), "THREE");
+
+    // Reading LSP does not require a wait, but reading VFS does.
     EXPECT_EQ(waiter.m_waitUntilCount, 1);
   }
 };
@@ -312,6 +369,8 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   Tester().test_oneLSPLookup();
   Tester().test_oneVFSLookup();
   Tester().test_cancelVFSLookup();
+  Tester().test_oneLSP_oneVFS(true /*lspFirst*/);
+  Tester().test_oneLSP_oneVFS(false /*lspFirst*/);
 }
 
 
