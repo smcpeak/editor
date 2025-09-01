@@ -5,6 +5,7 @@
 
 #include "gap-gdvalue.h"               // toGDValue(LineGapArray)
 #include "history.h"                   // HE_text
+#include "line-number.h"               // LineNumber
 
 // smbase
 #include "smbase/array.h"              // Array
@@ -17,6 +18,7 @@
 #include "smbase/sm-test.h"            // USUAL_MAIN, PVAL
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // vectorOfUCharToString, stringToVectorOfUChar
+#include "smbase/stringb.h"            // stringb
 #include "smbase/strutil.h"            // encodeWithEscapes
 #include "smbase/syserr.h"             // xsyserror
 #include "smbase/xassert.h"            // xassert
@@ -883,6 +885,23 @@ string TextDocumentCore::getWholeLineString(LineIndex line) const
   ArrayStack<char> text;
   this->getWholeLine(line, text);
   return toString(text);
+}
+
+
+std::string TextDocumentCore::getWholeLineStringOrRangeErrorMessage(
+  LineIndex lineIndex,
+  std::string const &fname) const
+{
+  if (validLine(lineIndex)) {
+    return getWholeLineString(lineIndex);
+  }
+  else {
+    return stringb(
+      "<Line number " << lineIndex.toLineNumber() <<
+      " is out of range for " << doubleQuote(fname) <<
+      ", which has " << numLines() <<
+      " lines.>");
+  }
 }
 
 

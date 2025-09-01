@@ -162,7 +162,8 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
       auto const &docOrError = mapGetValueAtC(nameToDocOrError, harn);
       if (docOrError.isLeft()) {
         ret.push_back(
-          docOrError.leftC()->getWholeLineString(lineIndex));
+          docOrError.leftC()->getWholeLineStringOrRangeErrorMessage(
+            lineIndex, fname));
       }
       else {
         ret.push_back(

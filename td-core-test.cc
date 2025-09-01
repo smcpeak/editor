@@ -739,6 +739,24 @@ void test_equals()
 }
 
 
+void test_getWholeLineStringOrRangeErrorMessage()
+{
+  TextDocumentCore doc;
+  doc.replaceWholeFileString("zero\none\ntwo\n");
+
+  std::string const fname("the-fname");
+
+  EXPECT_EQ(
+    doc.getWholeLineStringOrRangeErrorMessage(LineIndex(2), fname),
+    "two");
+
+  EXPECT_EQ(
+    doc.getWholeLineStringOrRangeErrorMessage(LineIndex(4), fname),
+    "<Line number 5 is out of range for \"the-fname\", "
+    "which has 4 lines.>");
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -754,6 +772,7 @@ void test_td_core(CmdlineArgsSpan args)
   test_wholeFileString();
   test_replaceMultilineRange();
   test_equals();
+  test_getWholeLineStringOrRangeErrorMessage();
 }
 
 

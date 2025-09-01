@@ -278,6 +278,13 @@ public:    // funcs
   // Same, but returning the line as a string.
   string getWholeLineString(LineIndex line) const;
 
+  // If `validLine(lineIndex)`, return `getWholeLineString(lineIndex)`.
+  // Otherwise, return a string describing the out-of-range error, which
+  // refers to the file as having `fname`.
+  std::string getWholeLineStringOrRangeErrorMessage(
+    LineIndex lineIndex,
+    std::string const &fname) const;
+
   // Return the number of consecutive spaces and tabs at the start of
   // the given line, as a byte count.
   int countLeadingSpacesTabs(LineIndex line) const;

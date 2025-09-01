@@ -354,6 +354,50 @@ public:      // methods
     // Reading LSP does not require a wait, but reading VFS does.
     EXPECT_EQ(waiter.m_waitUntilCount, 1);
   }
+
+
+  // Line number too large for LSP.
+  void test_largeLineNumberLSP()
+  {
+    TEST_CASE("test_largeLuneNumberLSP");
+
+    locAddFileLine(0, 5);
+
+    // Serve the data from the LSP manager's copy.
+    addFileToLSP(0);
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 1);
+    EXPECT_EQ(linesOpt->at(0),
+      "<Line number 5 is out of range for \"/home/user/file0.cc\", "
+      "which has 4 lines.>");
+    EXPECT_EQ(waiter.m_waitUntilCount, 0);
+  }
+
+
+  // Line number too large for VFS.
+  void test_largeLineNumberVFS()
+  {
+    TEST_CASE("test_largeLuneNumberVFS");
+
+    locAddFileLine(0, 5);
+
+    // Serve the data from VFS.
+    addFileToVFS(0);
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 1);
+    EXPECT_EQ(linesOpt->at(0),
+      "<Line number 5 is out of range for \"/home/user/file0.cc\", "
+      "which has 4 lines.>");
+    EXPECT_EQ(waiter.m_waitUntilCount, 1);
+  }
 };
 
 
@@ -371,6 +415,8 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   Tester().test_cancelVFSLookup();
   Tester().test_oneLSP_oneVFS(true /*lspFirst*/);
   Tester().test_oneLSP_oneVFS(false /*lspFirst*/);
+  Tester().test_largeLineNumberLSP();
+  Tester().test_largeLineNumberVFS();
 }
 
 

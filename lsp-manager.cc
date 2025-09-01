@@ -139,17 +139,7 @@ std::string LSPDocumentInfo::getLastContentsCodeLine(
   LineIndex lineIndex) const
 {
   TextDocumentCore const *td = m_lastSentContents.get();
-
-  if (td->validLine(lineIndex)) {
-    return td->getWholeLineString(lineIndex);
-  }
-  else {
-    return stringb(
-      "<Line number " << lineIndex.toLineNumber() <<
-      " is out of range for " << doubleQuote(m_fname) <<
-      ", which has " << td->numLines() <<
-      " lines.>");
-  }
+  return td->getWholeLineStringOrRangeErrorMessage(lineIndex, m_fname);
 }
 
 
