@@ -6,19 +6,28 @@
 #ifndef EDITOR_LSP_GET_CODE_LINES_TEST_H
 #define EDITOR_LSP_GET_CODE_LINES_TEST_H
 
-#include "host-name-fwd.h"             // HostName [n]
-#include "vfs-connections.h"           // VFS_Connections
-#include "vfs-msg-fwd.h"               // VFS_ReadFile{Request,Reply} [n]
+#include "host-name-fwd.h"                       // HostName [n]
+#include "vfs-connections.h"                     // VFS_Connections
+#include "vfs-msg-fwd.h"                         // VFS_ReadFile{Request,Reply} [n]
 
-#include <map>                         // std::map
-#include <memory>                      // std::unique_ptr
-#include <string>                      // std::string
+#include "smbase/either-fwd.h"                   // smbase::Either
+#include "smbase/portable-error-code-fwd.h"      // smbase::PortableErrorCode [n]
+
+#include <map>                                   // std::map
+#include <memory>                                // std::unique_ptr
+#include <string>                                // std::string
 
 
 // VFS access for testing purposes, without actual IPC.
 class VFS_TestConnections : public VFS_AbstractConnections {
   Q_OBJECT
   NO_OBJECT_COPIES(VFS_TestConnections);
+
+public:      // types
+  // Data we know about one file: either its contents for a successful
+  // read, or the error code.
+  using FileReplyData =
+    smbase::Either<std::string, smbase::PortableErrorCode>;
 
 public:      // data
   // Hosts considered connected.
@@ -27,8 +36,8 @@ public:      // data
   // Issued requests.
   std::map<RequestID, std::unique_ptr<VFS_Message>> m_issuedRequests;
 
-  // Map from file names to contents to be served as replies.
-  std::map<std::string, std::string> m_files;
+  // Map from file names to reply data.
+  std::map<std::string, FileReplyData> m_files;
 
 protected Q_SLOTS:
   // Process the enqueued requests.
@@ -39,6 +48,9 @@ protected Q_SLOTS:
     VFS_ReadFileRequest const *rfr);
 
 public:      // methods
+  virtual ~VFS_TestConnections() override;
+
+  // Initially empty maps.
   VFS_TestConnections();
 
   virtual void selfCheck() const override;

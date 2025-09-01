@@ -1,33 +1,35 @@
 // lsp-get-code-lines-test.cc
 // Tests for `lsp-get-code-lines` module.
 
-#include "unit-tests.h"                // decl for my entry point
-#include "lsp-get-code-lines-test.h"   // this module
+#include "unit-tests.h"                          // decl for my entry point
+#include "lsp-get-code-lines-test.h"             // this module
 
-#include "lsp-get-code-lines.h"        // module under test
+#include "lsp-get-code-lines.h"                  // module under test
 
-#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
-#include "lsp-manager.h"               // LSPManagerDocumentState
+#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-manager.h"                         // LSPManagerDocumentState
 
-#include "smqtutil/sync-wait.h"        // SynchronousWaiter
+#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
-#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
-#include "smbase/gdvalue.h"            // gdv::toGDValue
-#include "smbase/map-util.h"           // smbase::{mapInsertUniqueMove, mapInsertUnique}
-#include "smbase/overflow.h"           // safeToInt
-#include "smbase/set-util.h"           // smbase::setIsDisjointWith
-#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // EXPECT_EQ
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
-#include "smbase/string-util.h"        // stringToVectorOfUChar
-#include "smbase/xassert.h"            // xassert
+#include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
+#include "smbase/either.h"                       // smbase::Either
+#include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/map-util.h"                     // smbase::{mapInsertUniqueMove, mapInsertUnique}
+#include "smbase/overflow.h"                     // safeToInt
+#include "smbase/portable-error-code.h"          // smbase::{PortableErrorCode, portableCodeDescription}
+#include "smbase/set-util.h"                     // smbase::setIsDisjointWith
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE, TABLESIZE
+#include "smbase/sm-test.h"                      // EXPECT_EQ
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/string-util.h"                  // stringToVectorOfUChar
+#include "smbase/xassert.h"                      // xassert
 
-#include <exception>                   // std::uncaught_exceptions
-#include <memory>                      // std::unique_ptr
-#include <optional>                    // std::optional
-#include <string>                      // std::string
-#include <utility>                     // std::move
-#include <vector>                      // std::vector
+#include <exception>                             // std::uncaught_exceptions
+#include <memory>                                // std::unique_ptr
+#include <optional>                              // std::optional
+#include <string>                                // std::string
+#include <utility>                               // std::move
+#include <vector>                                // std::vector
 
 using namespace gdv;
 using namespace smbase;
@@ -37,6 +39,13 @@ INIT_TRACE("lsp-get-code-lines-test");
 
 
 // ------------------------ VFS_TestConnections ------------------------
+// An explicit definition of this dtor is required because, without it,
+// it gets implicitly defined in the .moc.cc file, which only has a
+// forward declaration of `smbase::Either`, so that fails to compile.
+VFS_TestConnections::~VFS_TestConnections()
+{}
+
+
 VFS_TestConnections::VFS_TestConnections()
   : m_hosts(),
     m_issuedRequests()
@@ -140,8 +149,18 @@ std::unique_ptr<VFS_ReadFileReply> VFS_TestConnections::processRFR(
   std::unique_ptr<VFS_ReadFileReply> reply(new VFS_ReadFileReply);
 
   if (auto itOpt = mapFindOpt(m_files, rfr->m_path)) {
-    reply->m_success = true;
-    reply->m_contents = stringToVectorOfUChar((**itOpt).second);
+    FileReplyData const &fdata = (**itOpt).second;
+
+    if (fdata.isLeft()) {
+      reply->m_success = true;
+      reply->m_contents = stringToVectorOfUChar(fdata.left());
+    }
+    else {
+      PortableErrorCode code = fdata.right();
+      reply->m_success = false;
+      reply->m_failureReasonCode = code;
+      reply->m_failureReasonString = portableCodeDescription(code);
+    }
   }
   else {
     reply->m_success = false;
@@ -177,6 +196,9 @@ public:      // methods
 
 // Class to encapsulate some common data.
 class Tester {
+public:      // types
+  using FileReplyData = VFS_TestConnections::FileReplyData;
+
 public:      // data
   std::string const languageId = "cpp";
 
@@ -195,6 +217,16 @@ public:      // data
     "ONE\n"
     "TWO\n"
     "THREE\n",
+  };
+
+  // File names for files yielding errors from VFS.
+  std::string const errFname[1] = {
+    "/home/user/errfile0.cc",
+  };
+
+  // Corresponding error codes.
+  PortableErrorCode errCode[1] = {
+    PortableErrorCode::PEC_FILE_NOT_FOUND,
   };
 
   // Locations to look up.
@@ -239,9 +271,20 @@ public:      // methods
   // Add to `locations` a request for `lineNumber` in `fileIndex`.
   void locAddFileLine(int fileIndex, int lineNumber)
   {
-    xassert(cc::z_le_lt(fileIndex, 2));
+    xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName::localFile(fname[fileIndex]),
+      LineNumber(lineNumber),
+      0 /*byteIndex*/
+    ));
+  }
+
+  // Add to `locations` a request for `lineNumber` in `errFileIndex`.
+  void locAddErrFileLine(int errFileIndex, int lineNumber)
+  {
+    xassert(cc::z_le_lt(errFileIndex, TABLESIZE(errFname)));
+    locations.push_back(HostFileAndLineOpt(
+      HostAndResourceName::localFile(errFname[errFileIndex]),
       LineNumber(lineNumber),
       0 /*byteIndex*/
     ));
@@ -250,7 +293,7 @@ public:      // methods
   // Add `fileIndex` to LSP.
   void addFileToLSP(int fileIndex)
   {
-    xassert(cc::z_le_lt(fileIndex, 2));
+    xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
     lspManager.addDoc(LSPDocumentInfo(
       fname[fileIndex],
       LSP_VersionNumber(1),
@@ -260,9 +303,19 @@ public:      // methods
   // Add `fileIndex` to VFS.
   void addFileToVFS(int fileIndex)
   {
-    xassert(cc::z_le_lt(fileIndex, 2));
+    xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
     mapInsertUnique(vfsConnections.m_files,
-      fname[fileIndex], std::string(fnameData[fileIndex]));
+      fname[fileIndex],
+      FileReplyData(std::string(fnameData[fileIndex])));
+  }
+
+  // Add `errFileIndex` to VFS.
+  void addErrFileToVFS(int errFileIndex)
+  {
+    xassert(cc::z_le_lt(errFileIndex, TABLESIZE(errFname)));
+    mapInsertUnique(vfsConnections.m_files,
+      errFname[errFileIndex],
+      FileReplyData(errCode[errFileIndex]));
   }
 
 
@@ -421,6 +474,27 @@ public:      // methods
       "which has 4 lines.>");
     EXPECT_EQ(waiter.m_waitUntilCount, 1);
   }
+
+
+  // One lookup to VFS, and it yields an error.
+  void test_errorVFSLookup()
+  {
+    TEST_CASE("test_errorVFSLookup");
+
+    locAddErrFileLine(0, 5);
+
+    // Serve the data from VFS.
+    addErrFileToVFS(0);
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 1);
+    EXPECT_EQ(linesOpt->at(0),
+      "<Error: File not found (code PEC_FILE_NOT_FOUND)>");
+    EXPECT_EQ(waiter.m_waitUntilCount, 1);
+  }
 };
 
 
@@ -441,6 +515,7 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   Tester().test_oneLSP_oneVFS(false /*lspFirst*/);
   Tester().test_largeLineNumberLSP();
   Tester().test_largeLineNumberVFS();
+  Tester().test_errorVFSLookup();
 }
 
 
