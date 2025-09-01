@@ -329,6 +329,29 @@ public:      // methods
   }
 
 
+  // Two VFS lookups, and the second gets canceled.
+  void test_cancelSecondVFSLookup()
+  {
+    TEST_CASE("test_cancelSecondVFSLookup");
+
+    locAddFileLine(0, 2);
+    locAddFileLine(1, 3);
+
+    // Cancel the second wait attempt.
+    waiter.m_cancelCountdown = 1;
+
+    // Serve both files from VFS.
+    addFileToVFS(0);
+    addFileToVFS(1);
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_FALSE(linesOpt.has_value());
+    EXPECT_EQ(waiter.m_waitUntilCount, 2);
+  }
+
+
   // One lookup goes to LSP and one to VFS.
   void test_oneLSP_oneVFS(bool lspFirst)
   {
@@ -413,6 +436,7 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   Tester().test_oneLSPLookup();
   Tester().test_oneVFSLookup();
   Tester().test_cancelVFSLookup();
+  Tester().test_cancelSecondVFSLookup();
   Tester().test_oneLSP_oneVFS(true /*lspFirst*/);
   Tester().test_oneLSP_oneVFS(false /*lspFirst*/);
   Tester().test_largeLineNumberLSP();
