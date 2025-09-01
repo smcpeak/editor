@@ -365,7 +365,8 @@ void TextDocument::endUndoGroup()
 
 TextMCoord TextDocument::undo()
 {
-  xassert(canUndo() && !inUndoGroup());
+  xassert(canUndo());
+  xassert(!inUndoGroup());
 
   this->bumpHistoryIndex(-1);
   return m_history.applyOne(m_core, m_historyIndex, true /*reverse*/);
@@ -374,7 +375,8 @@ TextMCoord TextDocument::undo()
 
 TextMCoord TextDocument::redo()
 {
-  xassert(canRedo() && !inUndoGroup());
+  xassert(canRedo());
+  xassert(!inUndoGroup());
 
   TextMCoord tc = m_history.applyOne(m_core, m_historyIndex, false /*reverse*/);
   this->bumpHistoryIndex(+1);

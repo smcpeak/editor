@@ -1807,10 +1807,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   // "command" infrastructure, I can remove this.
   INITIATING_DOCUMENT_CHANGE();
 
-  // TODO: I think this grouper should be removed in favor of whatever
-  // is needed inside the command object handler.
-  TDE_HistoryGrouper hbgrouper(*m_editor);
-
   Qt::KeyboardModifiers modifiers = k->modifiers();
 
   // Ctrl+<key>
@@ -3346,6 +3342,36 @@ std::optional<std::string> EditorWidget::innerCommand(
   // notifications here that might be caused by the change.
   INITIATING_DOCUMENT_CHANGE();
 
+  // Handle undo/redo first, before the catch-all undo grouper.
+  ASTSWITCHC(EditorCommand, cmd) {
+    ASTCASEC1(EC_Undo) {
+      if (m_editor->canUndo()) {
+        m_editor->undo();
+        this->redrawAfterContentChange();
+        return std::nullopt;
+      }
+      else {
+        return "There are no actions to undo in the history.";
+      }
+    }
+
+    ASTNEXTC1(EC_Redo) {
+      if (m_editor->canRedo()) {
+        m_editor->redo();
+        this->redrawAfterContentChange();
+        return std::nullopt;
+      }
+      else {
+        return "There are no actions to redo in the history.";
+      }
+    }
+
+    ASTENDCASECD
+  }
+
+  // Group everything arising from one command.
+  TDE_HistoryGrouper hbgrouper(*m_editor);
+
   // The cases here should be in the same order as in
   // `editor-command.ast`.
   ASTSWITCHC(EditorCommand, cmd) {
@@ -3524,25 +3550,7 @@ std::optional<std::string> EditorWidget::innerCommand(
       this->redrawAfterContentChange();
     }
 
-    ASTNEXTC1(EC_Undo) {
-      if (m_editor->canUndo()) {
-        m_editor->undo();
-        this->redrawAfterContentChange();
-      }
-      else {
-        return "There are no actions to undo in the history.";
-      }
-    }
-
-    ASTNEXTC1(EC_Redo) {
-      if (m_editor->canRedo()) {
-        m_editor->redo();
-        this->redrawAfterContentChange();
-      }
-      else {
-        return "There are no actions to redo in the history.";
-      }
-    }
+    // Undo and redo are handled in the `switch` above this one.
 
     ASTENDCASECD
   }
