@@ -32,6 +32,28 @@ using namespace smbase;
 INIT_TRACE("lsp-get-code-lines");
 
 
+/* It might seem excessive to factor this one function, and each of
+   the interfaces it uses, just so it can be tested in isolation.  The
+   code is not that long after all, just a little over 100 lines.
+
+   However, it sits at the nexus of three different IPC mechanisms:
+
+     1. The user interface and the user's ability to cancel waits,
+        embodied by `waiter`.
+
+     2. Communication with the LSP server, embodied by `lspManager`.
+        (This function does not actually perform any LSP communication,
+        hence the `const` qualifier, but it accesses data closely
+        related to it.)
+
+     3. Communication with the VFS server(s), embodied by
+        `vfsConnections`.
+
+   Since each of these can be in various states on entry, and the
+   several communication attempts can have various outcomes, it seems
+   worthwhile to engineer this function for separate testability.  It
+   might also serve as an example for similar efforts elsewhere.
+*/
 std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
   std::vector<HostFileAndLineOpt> const &locations,

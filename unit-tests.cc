@@ -133,6 +133,10 @@ static void entry(int argc, char **argv)
 
   RUN_TEST(vfs_connections);           // deps: host-name, vfs-msg, vfs-query
 
+  // This depends on `lsp_manager`, but only in a fairly simple way, and
+  // this test should be much faster.
+  RUN_TEST(lsp_get_code_lines);
+
   // This is the slowest test, but lsp-manager uses it, so it needs to
   // be before that.
   RUN_TEST(command_runner);            // deps: (none)

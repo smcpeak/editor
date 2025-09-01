@@ -4,6 +4,8 @@
 #ifndef EDITOR_HOST_NAME_H
 #define EDITOR_HOST_NAME_H
 
+#include "host-name-fwd.h"             // fwds for this module
+
 // smbase
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-compare.h"         // StrongOrdering, DEFINE_RELOPS_FROM_COMPARE_TO
