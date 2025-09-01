@@ -573,11 +573,12 @@ public:       // funcs
      this is going straight to the user.
 
      This may perform a synchronous wait, in which case it will use
-     `waiter`.  It returns `nullopt` if the wait is canceled.
+     `waiter`, possibly multiple times.  It returns `nullopt` if the
+     wait is canceled at any point (no partial results are returned).
 
      This is not `const` because it causes state transitions within
-     `m_vfsConnections`, although the nominal expectation is there is no
-     durable change after this call.
+     `m_vfsConnections`, although the expectation is there is no durable
+     change after this call.
 
      Requires: for_all L in locations: L.hasFilename() && L.hasLine()
 

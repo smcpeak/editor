@@ -231,6 +231,7 @@ public:      // methods
     ));
   }
 
+
   // Simple example of "happy path" lookup of one location for which the
   // file is in the LSP manager already (so no waiting occurs).
   void test_oneLSPLookup()
@@ -274,6 +275,28 @@ public:      // methods
     EXPECT_EQ(linesOpt->at(0), "two");
     EXPECT_EQ(waiter.m_waitUntilCount, 1);
   }
+
+
+  // Single VFS lookup but the user cancels it.
+  void test_cancelVFSLookup()
+  {
+    TEST_CASE("test_cancelVFSLookup");
+
+    addFname1Line(2);
+
+    // Cancel the first wait attempt.
+    waiter.m_cancelCountdown = 0;
+
+    // Serve the data from VFS.
+    mapInsertUnique(vfsConnections.m_files,
+      fname1, std::string(fname1Data));
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_FALSE(linesOpt.has_value());
+    EXPECT_EQ(waiter.m_waitUntilCount, 1);
+  }
 };
 
 
@@ -288,6 +311,7 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   // cross-contamination.
   Tester().test_oneLSPLookup();
   Tester().test_oneVFSLookup();
+  Tester().test_cancelVFSLookup();
 }
 
 
