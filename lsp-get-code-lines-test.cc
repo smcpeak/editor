@@ -11,14 +11,16 @@
 
 #include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
-#include "smbase/map-util.h"           // smbase::mapInsertUniqueMove
+#include "smbase/map-util.h"           // smbase::{mapInsertUniqueMove, mapInsertUnique}
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/set-util.h"           // smbase::setIsDisjointWith
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // EXPECT_EQ
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // stringToVectorOfUChar
 #include "smbase/xassert.h"            // xassert
 
+#include <exception>                   // std::uncaught_exceptions
 #include <memory>                      // std::unique_ptr
 #include <optional>                    // std::optional
 #include <string>                      // std::string
@@ -26,6 +28,9 @@
 #include <vector>                      // std::vector
 
 using namespace smbase;
+
+
+INIT_TRACE("lsp-get-code-lines-test");
 
 
 // ------------------------ VFS_TestConnections ------------------------
@@ -75,6 +80,7 @@ void VFS_TestConnections::issueRequest(
   requestID = m_nextRequestID++;
   mapInsertUniqueMove(m_issuedRequests, requestID, std::move(req));
 
+  TRACE1("emitting signal_processRequests");
   Q_EMIT signal_processRequests();
 }
 
@@ -100,6 +106,9 @@ int VFS_TestConnections::numOutstandingRequests() const
 
 void VFS_TestConnections::slot_processRequests()
 {
+  TRACE1("in slot_processRequests; num issued requests is " <<
+         m_issuedRequests.size());
+
   while (!m_issuedRequests.empty()) {
     // Dequeue the next request.
     auto it = m_issuedRequests.begin();
@@ -110,6 +119,9 @@ void VFS_TestConnections::slot_processRequests()
     if (auto rfr = dynamic_cast<VFS_ReadFileRequest const *>(msg.get())) {
       mapInsertUniqueMove(m_availableReplies, id,
         std::unique_ptr<VFS_Message>(processRFR(rfr).release()));
+
+      TRACE1("emitting signal_vfsReplyAvailable(" << id << ")");
+      Q_EMIT signal_vfsReplyAvailable(id);
     }
 
     else {
@@ -142,21 +154,6 @@ std::unique_ptr<VFS_ReadFileReply> VFS_TestConnections::processRFR(
 OPEN_ANONYMOUS_NAMESPACE
 
 
-// "Waiter" that insists the client not wait at all.
-class NoWaitingWaiter : public SynchronousWaiter {
-public:      // methods
-  virtual bool waitUntil(
-    std::function<bool()> condition,
-    int activityDialogDelayMS,
-    std::string const &activityDialogTitle,
-    std::string const &activityDialogMessage) override
-  {
-    xfailure("should not wait");
-    return false;
-  }
-};
-
-
 // LSP manager that just serves a document set.
 class TestLSPManager : public LSPManagerDocumentState {
 public:      // methods
@@ -175,46 +172,109 @@ public:      // methods
 };
 
 
-// Simple example of "happy path" lookup of one location for which the
-// file is in the LSP manager already (so no waiting occurs).
-void test_oneLSPLookup()
-{
-  std::string const fname1("/home/user/file1.cc");
-  std::string const languageId("cpp");
+// Class to encapsulate some common data.
+class Tester {
+public:      // data
+  std::string const languageId = "cpp";
+
+  std::string const fname1 = "/home/user/file1.cc";
+  char const * const fname1Data =
+    "one\n"
+    "two\n"
+    "three\n";
 
   // Locations to look up.
   std::vector<HostFileAndLineOpt> locations;
-  locations.push_back(HostFileAndLineOpt(
-    HostAndResourceName::localFile(fname1),
-    LineNumber(2),
-    0 /*byteIndex*/
-  ));
 
-  NoWaitingWaiter waiter;
+  TestSynchronousWaiter waiter;
 
   TestLSPManager lspManager;
-  lspManager.addDoc(LSPDocumentInfo(
-    fname1,
-    LSP_VersionNumber(1),
-    std::string(
-      "one\n"
-      "two\n"
-      "three\n")));
 
-  // This object has no files to serve.
   VFS_TestConnections vfsConnections;
 
-  std::optional<std::vector<std::string>> linesOpt =
-    lspGetCodeLinesFunction(
+public:      // methods
+  Tester()
+  {
+    // Start willing to serve from the local machine.
+    mapInsertUnique(vfsConnections.m_hosts,
+      HostName::asLocal(), VFS_AbstractConnections::CS_READY);
+  }
+
+  ~Tester()
+  {
+    if (std::uncaught_exceptions() == 0) {
+      lspManager.selfCheck();
+      vfsConnections.selfCheck();
+    }
+    else {
+      // The test is already failing for another reason.
+    }
+  }
+
+  // Call the function under test using the populated data members.
+  std::optional<std::vector<std::string>> callLspGetCodeLinesFunction()
+  {
+    return lspGetCodeLinesFunction(
       waiter,
       locations,
       lspManager,
       vfsConnections);
+  }
 
-  EXPECT_TRUE(linesOpt.has_value());
-  EXPECT_EQ(linesOpt->size(), 1);
-  EXPECT_EQ(linesOpt->at(0), "two");
-}
+  // Add to `locations` a request for `lineNumber` in `fname1`.
+  void addFname1Line(int lineNumber)
+  {
+    locations.push_back(HostFileAndLineOpt(
+      HostAndResourceName::localFile(fname1),
+      LineNumber(lineNumber),
+      0 /*byteIndex*/
+    ));
+  }
+
+  // Simple example of "happy path" lookup of one location for which the
+  // file is in the LSP manager already (so no waiting occurs).
+  void test_oneLSPLookup()
+  {
+    TEST_CASE("test_oneLSPLookup");
+
+    addFname1Line(2);
+
+    // Serve the data from the LSP manager's copy.
+    lspManager.addDoc(LSPDocumentInfo(
+      fname1,
+      LSP_VersionNumber(1),
+      fname1Data));
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 1);
+    EXPECT_EQ(linesOpt->at(0), "two");
+    EXPECT_EQ(waiter.m_waitUntilCount, 0);
+  }
+
+
+  // As in the previous test, but get one file from VFS.
+  void test_oneVFSLookup()
+  {
+    TEST_CASE("test_oneVFSLookup");
+
+    addFname1Line(2);
+
+    // Serve the data from VFS.
+    mapInsertUnique(vfsConnections.m_files,
+      fname1, std::string(fname1Data));
+
+    std::optional<std::vector<std::string>> linesOpt =
+      callLspGetCodeLinesFunction();
+
+    EXPECT_TRUE(linesOpt.has_value());
+    EXPECT_EQ(linesOpt->size(), 1);
+    EXPECT_EQ(linesOpt->at(0), "two");
+    EXPECT_EQ(waiter.m_waitUntilCount, 1);
+  }
+};
 
 
 CLOSE_ANONYMOUS_NAMESPACE
@@ -224,7 +284,10 @@ CLOSE_ANONYMOUS_NAMESPACE
 // Called from unit-tests.cc.
 void test_lsp_get_code_lines(CmdlineArgsSpan args)
 {
-  test_oneLSPLookup();
+  // Each test runs with a fresh copy of `Tester` to avoid
+  // cross-contamination.
+  Tester().test_oneLSPLookup();
+  Tester().test_oneVFSLookup();
 }
 
 
