@@ -42,8 +42,8 @@ public:      // types
     S_CREATED,     // Just created.
     S_CONNECTING,  // Establishing connection.
     S_READY,       // Ready for requests.
-    S_PENDING,     // Request sent, reply not received.
-    S_HAS_REPLY,   // Reply waiting.
+    S_WAITING,     // Request sent, reply not received.
+    S_HAS_REPLY,   // Reply received and available for client.
     S_FAILED,      // A failure happened.
     S_DEAD,        // Connection was shut down.
 

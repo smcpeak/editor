@@ -83,7 +83,7 @@
         "x": 145,
         "y": 325
       },
-      "name": "Pending",
+      "name": "Waiting",
       "size": {
         "h": 20,
         "w": 100
@@ -163,6 +163,12 @@
       "name": "Blue"
     }
   ],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
   "relations": [
     {
       "end": {"entityRef": 3},
@@ -243,7 +249,7 @@
     }
   ],
   "type": "Diagram Editor Diagram",
-  "version": 24,
+  "version": 32,
   "windowSize": {
     "h": 502,
     "w": 627

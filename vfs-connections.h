@@ -44,6 +44,26 @@
    It thereby provides an interface that clients can use to access what
    is effectively a distributed virtual file system, but not to alter
    the set of hosts participating in that file system.
+
+   From the perspective of this class, the request/reply lifecycle is:
+
+     1. The request becomes "queued" as a result of `issueRequest`.
+
+     2. The request is transmitted to the VFS server for the appropriate
+        host, at which point we are "waiting" for the reply.  In states
+        1 and 2 collectively, the request is "outstanding".  (A client
+        of this class cannot distinguish between states 1 and 2.)
+
+     3. The reply is received, making it "available".  The
+        `signal_vfsReplyAvailable` fires upon this event.
+
+     4. The reply is taken by `takeReply`, at which point its lifecycle
+        for the purpose of this class ends.
+
+   Note that I avoid the term "pending", as that can be ambiguous.
+   Elsewhere (in the LSP manager), "pending" means "available", but in
+   the past I used it to mean "outstanding", and I'm trying to avoid
+   re-creating that confusion.
 */
 class VFS_AbstractConnections : public QObject,
                                 public SerfRefCount {
@@ -83,7 +103,7 @@ protected:   // data
 public:      // methods
   virtual ~VFS_AbstractConnections() override;
 
-  // Initial state with no pending replies.
+  // Initial state with no available replies.
   VFS_AbstractConnections();
 
   // Assert invariants.
@@ -147,13 +167,13 @@ public:      // methods
 
   // True if the given request is being processed.  False once the reply
   // is available.
-  virtual bool requestIsPending(RequestID requestID) const = 0;
+  virtual bool requestIsOutstanding(RequestID requestID) const = 0;
 
   // True if the reply to the indicated request is available.
   bool replyIsAvailable(RequestID requestID) const;
 
   // Retrieve the reply for the given request, removing it from the set
-  // of pending replies.
+  // of available replies.
   //
   // It is legal to call this even if the connection from which it
   // originated has failed or been shut down.
@@ -178,7 +198,7 @@ public:      // methods
   // issued (via 'issueRequest'), but whose reply has not arrived.  It
   // includes requests that are queued to be sent.  It does not count
   // requests that have been canceled.
-  virtual int numPendingRequests() const = 0;
+  virtual int numOutstandingRequests() const = 0;
 
   // Total number of replies that are available but have not been taken
   // or canceled.
@@ -279,18 +299,18 @@ private:     // types
     void issueRequest(RequestID requestID, std::unique_ptr<VFS_Message> req);
 
     // True if 'requestID' has not received its reply.
-    bool requestIsPending(RequestID requestID) const;
+    bool requestIsOutstanding(RequestID requestID) const;
 
     // If 'm_fsQuery' is ready, and there are queued requests, send the
     // next one.
-    void issuePendingRequest();
+    void issueQueuedRequest();
 
     // Cancel issuing and/or delivering reply for 'requestID'.  Return
     // true if the ID was found and canceled.
     bool cancelRequest(RequestID requestID);
 
     // Number of pending requests associated with this connection.
-    int numPendingRequests() const;
+    int numOutstandingRequests() const;
   };
 
 private:     // data
@@ -374,9 +394,9 @@ public:      // methods
     RequestID &requestID /*OUT*/,
     HostName const &hostName,
     std::unique_ptr<VFS_Message> req) override;
-  virtual bool requestIsPending(RequestID requestID) const override;
+  virtual bool requestIsOutstanding(RequestID requestID) const override;
   virtual void cancelRequest(RequestID requestID) override;
-  virtual int numPendingRequests() const override;
+  virtual int numOutstandingRequests() const override;
 
 protected Q_SLOTS:
   // Handlers for VFS_FileSystemQuery.

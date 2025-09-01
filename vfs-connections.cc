@@ -225,7 +225,7 @@ VFS_Connections::Connection::connectionState() const
       return CS_CONNECTING;
 
     case VFS_FileSystemQuery::S_READY:
-    case VFS_FileSystemQuery::S_PENDING:
+    case VFS_FileSystemQuery::S_WAITING:
     case VFS_FileSystemQuery::S_HAS_REPLY:
       if (m_haveStartingDirectory) {
         return CS_READY;
@@ -333,11 +333,11 @@ void VFS_Connections::Connection::issueRequest(
     " type=" << toString(req->messageType()));
 
   m_queuedRequests.push_front(QueuedRequest(requestID, std::move(req)));
-  issuePendingRequest();
+  issueQueuedRequest();
 }
 
 
-bool VFS_Connections::Connection::requestIsPending(RequestID requestID) const
+bool VFS_Connections::Connection::requestIsOutstanding(RequestID requestID) const
 {
   if (m_currentRequestID == requestID) {
     return true;
@@ -353,11 +353,11 @@ bool VFS_Connections::Connection::requestIsPending(RequestID requestID) const
 }
 
 
-bool VFS_Connections::requestIsPending(RequestID requestID) const
+bool VFS_Connections::requestIsOutstanding(RequestID requestID) const
 {
   for (auto const &kv : m_connections) {
     Connection const *c = kv.second.get();
-    if (c->requestIsPending(requestID)) {
+    if (c->requestIsOutstanding(requestID)) {
       return true;
     }
   }
@@ -366,7 +366,7 @@ bool VFS_Connections::requestIsPending(RequestID requestID) const
 }
 
 
-void VFS_Connections::Connection::issuePendingRequest()
+void VFS_Connections::Connection::issueQueuedRequest()
 {
   if (!m_queuedRequests.empty()) {
     if (m_fsQuery->isReady()) {
@@ -383,12 +383,12 @@ void VFS_Connections::Connection::issuePendingRequest()
     }
     else {
       TRACE("VFS_Connections",
-        "issuePendingRequest(" << m_hostName << "): connection not ready");
+        "issueQueuedRequest(" << m_hostName << "): connection not ready");
     }
   }
   else {
     TRACE("VFS_Connections",
-      "issuePendingRequest(" << m_hostName << "): no queued requests");
+      "issueQueuedRequest(" << m_hostName << "): no queued requests");
   }
 }
 
@@ -419,7 +419,7 @@ void VFS_Connections::cancelRequest(RequestID requestID)
 {
   TRACE("VFS_Connections", "cancelRequest(" << requestID << ")");
 
-  // Remove a pending reply.
+  // Remove an available reply.
   auto it = m_availableReplies.find(requestID);
   if (it != m_availableReplies.end()) {
     m_availableReplies.erase(it);
@@ -436,18 +436,18 @@ void VFS_Connections::cancelRequest(RequestID requestID)
 }
 
 
-int VFS_Connections::numPendingRequests() const
+int VFS_Connections::numOutstandingRequests() const
 {
   int ret = 0;
   for (auto const &kv : m_connections) {
     Connection const *c = kv.second.get();
-    ret += c->numPendingRequests();
+    ret += c->numOutstandingRequests();
   }
   return ret;
 }
 
 
-int VFS_Connections::Connection::numPendingRequests() const
+int VFS_Connections::Connection::numOutstandingRequests() const
 {
   int ret = 0;
 
@@ -492,7 +492,7 @@ void VFS_Connections::on_vfsConnected() NOEXCEPT
   if (Connection *c = signalRecipientConnection()) {
     // Trigger sending the first request, which should be the query for
     // the starting directory.
-    c->issuePendingRequest();
+    c->issueQueuedRequest();
     return;
   }
 
@@ -571,7 +571,7 @@ void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
     }
 
     // Send the next request, if there is one.
-    c->issuePendingRequest();
+    c->issueQueuedRequest();
 
     return;
   }

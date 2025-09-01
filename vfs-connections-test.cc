@@ -92,9 +92,9 @@ VFS_Connections::RequestID
 void VFS_ConnectionsTest::waitForReply(
   VFS_Connections::RequestID requestID)
 {
-  while (m_vfsConnections.requestIsPending(requestID)) {
+  while (m_vfsConnections.requestIsOutstanding(requestID)) {
     DIAG("waiting for reply " << requestID);
-    xassert(m_vfsConnections.numPendingRequests() > 0);
+    xassert(m_vfsConnections.numOutstandingRequests() > 0);
     m_eventLoop.exec();
   }
   if (!m_vfsConnections.replyIsAvailable(requestID)) {
@@ -121,7 +121,7 @@ void VFS_ConnectionsTest::testOneEcho()
 
   m_vfsConnections.selfCheck();
 
-  xassert(m_vfsConnections.numPendingRequests() == 0);
+  xassert(m_vfsConnections.numOutstandingRequests() == 0);
   xassert(m_vfsConnections.numAvailableReplies() == 0);
 
   // Send requests.
@@ -144,7 +144,7 @@ void VFS_ConnectionsTest::testOneEcho()
     receiveEchoReply(secondaryRequestID);
   }
 
-  xassert(m_vfsConnections.numPendingRequests() == 0);
+  xassert(m_vfsConnections.numOutstandingRequests() == 0);
   xassert(m_vfsConnections.numAvailableReplies() == 0);
 }
 

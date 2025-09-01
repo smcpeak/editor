@@ -68,7 +68,7 @@ VFS_FileSystemQuery::~VFS_FileSystemQuery() noexcept
 static bool isWaitingState(VFS_FileSystemQuery::State s)
 {
   return s == VFS_FileSystemQuery::S_CONNECTING ||
-         s == VFS_FileSystemQuery::S_PENDING;
+         s == VFS_FileSystemQuery::S_WAITING;
 }
 
 
@@ -296,7 +296,7 @@ void VFS_FileSystemQuery::sendRequest(VFS_Message const &msg)
 
   innerSendRequest(msg);
 
-  setState(S_PENDING);
+  setState(S_WAITING);
 }
 
 
@@ -372,7 +372,7 @@ DEFINE_ENUMERATION_TO_STRING(
     "S_CREATED",
     "S_CONNECTING",
     "S_READY",
-    "S_PENDING",
+    "S_WAITING",
     "S_HAS_REPLY",
     "S_FAILED",
     "S_DEAD",
