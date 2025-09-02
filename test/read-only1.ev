@@ -37,7 +37,7 @@ FocusKeyPress("Key_Space" " ")
 FocusKeyRelease("Key_Space" " ")
 
 // TODO: Linux replay issues.
-Sleep("0")
+Sleep(0)
 
 CheckFocusWindowTitle("untitled.txt * - Editor")
 

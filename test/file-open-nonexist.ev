@@ -16,7 +16,7 @@ CheckFocusWidget("window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1
 FocusKeyPR("Key_Return" "\r")
 
 // TODO: This is part of my Linux replay issues.
-Sleep("0")
+Sleep(0)
 
 // Should now be open for editing.
 CheckFocusWindow("window1")
@@ -37,7 +37,7 @@ CheckFocusWidget("window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1
 FocusKeyPR("Key_Escape" "\u{1B}")
 
 // TODO: This is part of my Linux replay issues.
-Sleep("0")
+Sleep(0)
 
 // We should still be in the file-open dialog.
 CheckFocusWindow("window1.filename_input")

@@ -325,6 +325,13 @@ static string getListWidgetContents(QListWidget *listWidget)
   parser.tupleGetValueAt(n).stringGet()
 
 
+// Bind `arg1` to a (parser for) the single argument of a replay
+// function.
+#define BIND_GDVALUE_ARGS1(arg1)                              \
+  CHECK_NUM_ARGS(1);                                          \
+  GDValueParser arg1 = parser.tupleGetValueAt(0) /* user ; */
+
+
 // Bind 'arg1' to the single expected string argument of a replay
 // function.
 #define BIND_STRING_ARGS1(arg1)                \
@@ -464,9 +471,9 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "Sleep") {
-    BIND_STRING_ARGS1(duration);
+    BIND_GDVALUE_ARGS1(duration);
 
-    sleepForMS(intFromString(duration));
+    sleepForMS(duration.smallIntegerGet());
   }
 
   else if (funcName == "ClickButton") {
