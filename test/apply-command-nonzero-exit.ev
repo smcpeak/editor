@@ -19,10 +19,8 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("commandExitCode.qt_msgbox_buttonbox.#1")
 
 // Check the message.
-//
-// TODO: This should be an exact match, but it cannot because my event
-// replay parser cannot handle escaped quotes.  Change to GDVN.
-CheckLabelMatches("commandExitCode.qt_msgbox_label" "The command .false. exited with code 1, although it produced no error output.  .Text was replaced with command output anyway..")
+CheckLabel("commandExitCode.qt_msgbox_label"
+  "The command \"false\" exited with code 1, although it produced no error output.  (Text was replaced with command output anyway.)")
 
 // Dismiss the dialog.
 FocusKeyPR("Key_Return" "\r")

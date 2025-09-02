@@ -19,9 +19,8 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("commandErrorOutput.qt_msgbox_buttonbox.#1")
 
 // Check message.
-//
-// TODO: Use exact match after changing to GDVN.
-CheckLabelMatches("commandErrorOutput.qt_msgbox_label" "The command .echo hi; echo err >&2; false. exited with code 1 and produced some error output.  .Text was replaced with command output anyway..")
+CheckLabel("commandErrorOutput.qt_msgbox_label"
+  "The command \"echo hi; echo err >&2; false\" exited with code 1 and produced some error output.  (Text was replaced with command output anyway.)")
 
 // Check the details message.
 CheckMessageBoxDetailsText("commandErrorOutput" "err\n")
