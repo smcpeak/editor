@@ -337,6 +337,13 @@ static string getListWidgetContents(QListWidget *listWidget)
   GDValueParser arg1 = parser.tupleGetValueAt(0);             \
   GDValueParser arg2 = parser.tupleGetValueAt(1) /* user ; */
 
+#define BIND_GDVALUE_ARGS4(arg1, arg2, arg3, arg4)            \
+  CHECK_NUM_ARGS(4);                                          \
+  GDValueParser arg1 = parser.tupleGetValueAt(0);             \
+  GDValueParser arg2 = parser.tupleGetValueAt(1);             \
+  GDValueParser arg3 = parser.tupleGetValueAt(2);             \
+  GDValueParser arg4 = parser.tupleGetValueAt(3) /* user ; */
+
 
 // Bind 'arg1' to the single expected string argument of a replay
 // function.
@@ -584,16 +591,17 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
-    BIND_STRING_ARGS4(objPath, row, col, expectRE);
+    BIND_GDVALUE_ARGS4(objPath, row, col, expectREP);
 
-    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
-    int r = intFromString(row);
-    int c = intFromString(col);
+    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath.stringGet());
+    int r = row.integerGetAs<int>();
+    int c = col.integerGetAs<int>();
+    string expectRE = expectREP.stringGet();
     QTableWidgetItem *item = table->item(r, c);
     xassert(item);
     string actual = toString(item->text());
-    CHECK_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
-                   " " << row << " " << col);
+    CHECK_RE_MATCH("CheckTableWidgetCellMatches " << objPath.getValue() <<
+                   " " << r << " " << c);
   }
 
   else if (funcName == "CheckMessageBoxDetailsText") {

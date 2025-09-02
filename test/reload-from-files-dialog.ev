@@ -32,8 +32,8 @@ Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
 CheckFocusWidget("OpenFilesDialog.m_tableWidget")
 
 // Check that the list shows them both as modified.
-CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt \\[DISKMOD\\]$")
-CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt \\[DISKMOD\\]$")
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" 0 0 "gets-modified.txt \\[DISKMOD\\]$")
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" 1 0 "gets-modified2.txt \\[DISKMOD\\]$")
 
 // Press the reload button.
 ClickButton("OpenFilesDialog.m_reloadAllButton")
@@ -46,8 +46,8 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("OpenFilesDialog.m_tableWidget")
 
 // Check that the list entries have been refreshed.
-CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt$")
-CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt$")
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" 0 0 "gets-modified.txt$")
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" 1 0 "gets-modified2.txt$")
 
 // Close the dialog.
 ClickButton("OpenFilesDialog.m_cancelButton")
