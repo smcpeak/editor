@@ -402,6 +402,10 @@ public:      // funcs
   string getSelectedText() const          { return m_editor->getSelectedText(); }
   string getSelectedOrIdentifier() const  { return m_editor->getSelectedOrIdentifier(); }
 
+  // Return the mark position as 1-based "<line>:<col>", or "none" if
+  // the mark is not active.
+  std::string markPositionUIString() const;
+
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
   LineIndex firstVisibleLine() const      { return m_editor->firstVisible().m_line; }
@@ -479,6 +483,7 @@ public:      // funcs
 
   // Insert text at cursor, overwriting selection if active.
   void insertText(char const *text, int length);
+  void insertTextString(std::string const &text);
 
   // Edit menu functions.
   void editUndo();

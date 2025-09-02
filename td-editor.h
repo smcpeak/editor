@@ -291,7 +291,7 @@ public:      // funcs
   void setMark(TextLCoord m);
 
   // Make the mark inactive.
-  void clearMark() { m_mark = TextLCoord(); m_markActive = false; }
+  void clearMark();
 
   // Move the mark by the indicated amount, clamping at 0.  Requires
   // markActive().

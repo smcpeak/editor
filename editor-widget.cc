@@ -2455,6 +2455,20 @@ void EditorWidget::initCursorForProcessOutput()
 }
 
 
+std::string EditorWidget::markPositionUIString() const
+{
+  if (selectEnabled()) {
+    TextLCoord m = mark();
+    return stringb(
+      m.m_line.toLineNumber() << ':' <<
+      (m.m_column+1));
+  }
+  else {
+    return "none";
+  }
+}
+
+
 void EditorWidget::setTextSearchParameters()
 {
   m_textSearch->setSearchStringAndFlags(m_hitText, m_hitTextFlags);
@@ -2581,7 +2595,13 @@ void EditorWidget::editInsertDateTime()
 
 void EditorWidget::insertText(char const *text, int length)
 {
-  EDIT_COMMAND_MU(EC_InsertString, std::string(text, length));
+  insertTextString(std::string(text, length));
+}
+
+
+void EditorWidget::insertTextString(std::string const &text)
+{
+  EDIT_COMMAND_MU(EC_InsertString, text);
 }
 
 
@@ -3650,8 +3670,14 @@ string EditorWidget::eventReplayQuery(string const &state)
   else if (state == "documentText") {
     return m_editor->getTextForLRangeString(m_editor->documentLRange());
   }
+  else if (state == "selectedText") {
+    return m_editor->getSelectedText();
+  }
   else if (state == "cursorPosition") {
     return cursorPositionUIString();
+  }
+  else if (state == "markPosition") {
+    return markPositionUIString();
   }
   else if (state == "lspIsFakeServer") {
     return boolToString(editorGlobal()->lspIsFakeServer());

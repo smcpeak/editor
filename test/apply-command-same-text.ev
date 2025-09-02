@@ -1,0 +1,60 @@
+# apply-command-same-text.ev
+# Test "Apply command" when the output is the same as the input.
+
+# In editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
+
+# Select the first line.
+FocusKeyPR "Shift+Key_Down" ""
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "selectedText" "// language-test.cc\n"
+
+# Pass it through "cat".
+Shortcut "window1.m_menuBar.editMenu.editApplyCommand" "Alt+A"
+
+# TODO: When I type Alt+N, this is all that gets records.  The shortcut
+# should ideally be recorded and replayed properly.
+SetFocus "ApplyCommandDialog.m_newCommandLineEdit"
+
+CheckFocusWidget "ApplyCommandDialog.m_newCommandLineEdit"
+FocusKeySequence "cat"
+FocusKeyPR "Key_Return" "\r"
+
+# Back in editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# Since the new text is the same, no change should be recorded.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
+
+# The cursor should be left right after the output text, with no
+# selection.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "markPosition" "none"
+
+# Select that line again.
+FocusKeyPR "Shift+Key_Up" ""
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "markPosition" "2:1"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "selectedText" "// language-test.cc\n"
+
+# Pass it through "tr a-z A-Z".
+Shortcut "window1.m_menuBar.editMenu.editApplyCommand" "Alt+A"
+SetFocus "ApplyCommandDialog.m_newCommandLineEdit"
+CheckFocusWidget "ApplyCommandDialog.m_newCommandLineEdit"
+FocusKeySequence "tr a-z A-Z"
+FocusKeyPR "Key_Return" "\r"
+
+# Back in editor.
+CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+
+# This is different, so now we have unsaved changes.
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
+
+# Select the line again to check its contents.
+FocusKeyPR "Shift+Key_Up" ""
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
+CheckQuery "window1.frame1.editorFrame.m_editorWidget" "selectedText" "// LANGUAGE-TEST.CC\n"
+
+# EOF

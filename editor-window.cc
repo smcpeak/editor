@@ -33,6 +33,7 @@
 #include "textinput.h"                           // TextInputDialog
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 #include "vfs-msg.h"                             // VFS_ReadFileRequest
+#include "waiting-counter.h"                     // IncDecWaitingCounter
 
 // smqtutil
 #include "smqtutil/gdvalue-qrect.h"              // toGDValue(QRect)
@@ -1732,6 +1733,8 @@ void EditorWindow::editApplyCommand() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE1("editApplyCommand");
+
   // Object to manage the child process.
   CommandRunner runner;
 
@@ -1750,6 +1753,12 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // The active editor when the command was started.
   TextDocumentEditor *tde = NULL;
 
+  // Selected text, functioning as in the input to the command.
+  std::string inputText;
+
+  // Where the selected text ends.
+  TextLCoord endOfSelection;
+
   // Inside this block are variables and code used before the
   // child process is launched.  The block ends when the child
   // process terminates.  At that point, all variables in here
@@ -1765,7 +1774,8 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     }
 
     tde = editorWidget()->getDocumentEditor();
-    string input = tde->getSelectedText();
+    inputText = tde->getSelectedText();
+    endOfSelection = tde->getSelectLayoutRange().m_end;
 
     // Set the working directory and command of 'runner'.
     string dir = editorWidget()->getDocumentDirectory();
@@ -1774,7 +1784,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
       hostName, toQString(dir), commandString);
 
     // TODO: This mishandles NUL bytes.
-    runner.setInputData(QByteArray(input.c_str()));
+    runner.setInputData(QByteArray(inputText.c_str()));
 
     // It would be bad to hold an undo group open while we pump
     // the event queue.
@@ -1785,6 +1795,9 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     // non-standard cursor set.
     CursorSetRestore csr(this, Qt::WaitCursor);
     CursorSetRestore csr2(editorWidget(), Qt::WaitCursor);
+
+    // The test infrastructure has to pause until the command finishes.
+    IncDecWaitingCounter idwc;
 
     // This blocks until the program terminates or times out.  However,
     // it will pump the GUI event queue while waiting.
@@ -1819,28 +1832,56 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     return;
   }
 
-  // Replace the selected text with the command's output.
-  //
-  // 2024-01-16: I previously passed ITF_SELECT_AFTERWARD in order to
-  // leave the new text selected so it could easily be further
-  // manipulated.  However, there is then no clear indication of when
-  // the command has finished, since the UI only changes to the extent
-  // that the new text is different.  Therefore, I've reverted that
-  // change until I can design a way to better indicate completion.
-  editorWidget()->insertText(runner.getOutputData().constData(),
-                             runner.getOutputData().size());
+  // Command output.
+  std::string const newText = runner.getOutputData().toStdString();
+
+  // Explanation of replacement behavior, in case we also pop up a
+  // dialog because of stderr or the exit code.
+  char const *replaceBehavior;
+
+  if (newText == inputText) {
+    TRACE1("editApplyCommand: new text is the same");
+
+    // When new == old, do not make any changes.  Among other things,
+    // this avoids confusing the LSP interface, which does not properly
+    // handle "changes" that leave the document in the same state.  It
+    // also means we won't create an undo stop, which could be argued
+    // either way.
+    replaceBehavior = "  (Command output was the same as its input.)";
+
+    // However, if we had performed a replacement, it would cause the
+    // text to no longer be selected, and the cursor to go to the spot
+    // right after the new text, so simulate that.
+    editorWidget()->clearMark();
+    editorWidget()->cursorTo(endOfSelection);
+    editorWidget()->redraw();
+  }
+  else {
+    TRACE1("editApplyCommand: new text is different");
+
+    // Replace the selected text with the command's output.
+    //
+    // 2024-01-16: I previously passed ITF_SELECT_AFTERWARD in order to
+    // leave the new text selected so it could easily be further
+    // manipulated.  However, there is then no clear indication of when
+    // the command has finished, since the UI only changes to the extent
+    // that the new text is different.  Therefore, I've reverted that
+    // change until I can design a way to better indicate completion.
+    editorWidget()->insertTextString(newText);
+    replaceBehavior = "  (Text was replaced with command output anyway.)";
+  }
 
   // For error output or non-zero exit code, we show a warning, but
-  // still insert the text.  Note that we do this *after* inserting
-  // the text because showing a dialog is another way to pump the
-  // event queue.
+  // still replace the text.  Note that we do this *after* inserting the
+  // text because showing a dialog is another way to pump the event
+  // queue.
   if (!runner.getErrorData().isEmpty()) {
     QMessageBox mb;
     mb.setWindowTitle("Command Error Output");
     mb.setText(qstringb(
       "The command \"" << commandString <<
       "\" exited with code " << runner.getExitCode() <<
-      " and produced some error output."));
+      " and produced some error output." << replaceBehavior));
     mb.setDetailedText(QString::fromUtf8(runner.getErrorData()));
     mb.exec();
   }
@@ -1850,7 +1891,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
     mb.setText(qstringb(
       "The command \"" << commandString <<
       "\" exited with code " << runner.getExitCode() <<
-      ", although it produced no error output."));
+      ", although it produced no error output." << replaceBehavior));
     mb.exec();
   }
 

@@ -203,9 +203,20 @@ void TextDocumentEditor::setCursor(TextLCoord c)
 
 void TextDocumentEditor::setMark(TextLCoord m)
 {
+  TRACE("TextDocumentEditor", "setMark(" << m << ")");
+
   xassert(m.nonNegative());
   m_mark = m;
   m_markActive = true;
+}
+
+
+void TextDocumentEditor::clearMark()
+{
+  TRACE("TextDocumentEditor", "clearMark()");
+
+  m_mark = TextLCoord();
+  m_markActive = false;
 }
 
 
