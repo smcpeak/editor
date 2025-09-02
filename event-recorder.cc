@@ -7,6 +7,7 @@
 #include "event-replay.h"              // EventReplayQueryable
 
 // smqtutil
+#include "smqtutil/gdvalue-qt.h"       // toGDValue(QSize)
 #include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent)
 #include "smqtutil/qtutil.h"           // operator<<(QString), qObjectPath, isModifierKey
 
@@ -55,16 +56,6 @@ EventRecorder::~EventRecorder()
 }
 
 
-// TODO: If this works, add it to `GDValue`.
-static GDValue makeGDVTuple(
-  GDVSymbol tag, std::initializer_list<GDValue> elements)
-{
-  GDValue tuple(GDVK_TAGGED_TUPLE, tag);
-  tuple.tupleSet(GDVTuple(elements));
-  return tuple;
-}
-
-
 bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
 {
   QEvent::Type type = event->type();
@@ -97,7 +88,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
     else if (type == QEvent::MouseButtonPress) {
       if (QMouseEvent const *mouseEvent =
             dynamic_cast<QMouseEvent const *>(event)) {
-        this->recordEvent(makeGDVTuple("MouseEvent"_sym, {
+        this->recordEvent(GDVTaggedTuple("MouseEvent"_sym, {
           qObjectPath(receiver),
           toString(mouseEvent->buttons()),
           toString(mouseEvent->pos()),
@@ -113,9 +104,9 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         if (EventReplayQueryable *queryable =
               dynamic_cast<EventReplayQueryable*>(receiver)) {
           if (queryable->wantResizeEventsRecorded()) {
-            this->recordEvent(makeGDVTuple("ResizeEvent"_sym, {
+            this->recordEvent(GDVTaggedTuple("ResizeEvent"_sym, {
               qObjectPath(receiver),
-              toString(resizeEvent->size()),
+              toGDValue(resizeEvent->size()),
             }));
           }
         }
@@ -131,7 +122,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         // test and application, so I will automatically emit a check
         // during recording.  (I can then choose whether to keep it when
         // editing the test.)
-        this->recordEvent(makeGDVTuple("CheckFocusWidget"_sym, {
+        this->recordEvent(GDVTaggedTuple("CheckFocusWidget"_sym, {
           qObjectPath(receiver),
         }));
       }
@@ -157,14 +148,14 @@ void EventRecorder::recordShortcutEvent(
 
       // If we record this as a Shortcut event, it will not work (for
       // unknown reasons).  So turn it into SetFocus.
-      this->recordEvent(makeGDVTuple("SetFocus"_sym, {
+      this->recordEvent(GDVTaggedTuple("SetFocus"_sym, {
         qObjectPath(buddy),
       }));
       return;
     }
   }
 
-  this->recordEvent(makeGDVTuple("Shortcut"_sym, {
+  this->recordEvent(GDVTaggedTuple("Shortcut"_sym, {
     qObjectPath(receiver),
     toString(shortcutEvent->key().toString()),  // ->QString->std::string
   }));
@@ -263,7 +254,7 @@ void EventRecorder::flushOrdinaryKeyChars()
   if (!keys.empty()) {
     m_ordinaryKeyChars.str("");
 
-    this->recordEvent(makeGDVTuple("FocusKeySequence"_sym, {
+    this->recordEvent(GDVTaggedTuple("FocusKeySequence"_sym, {
       keys,
     }));
   }

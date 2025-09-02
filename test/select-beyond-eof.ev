@@ -6,7 +6,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "")
 
 // Resize to something reasonably small.
-ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(400,156)")
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(400 156))
 
 // Put some text in.
 FocusKeySequence("foo")

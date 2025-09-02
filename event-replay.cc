@@ -12,6 +12,7 @@
 #include "waiting-counter.h"           // g_waitingCounter, IncDecWaitingCounter
 
 // smqtutil
+#include "smqtutil/gdvalue-qt.h"       // gdvpTo(QSize)
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // getKeyPressFromString
 #include "smqtutil/qtutil.h"           // operator<<(QString)
@@ -20,7 +21,7 @@
 // smbase
 #include "smbase/c-string-reader.h"    // parseQuotedCString
 #include "smbase/exc.h"                // smbase::{XBase, XMessage}, EXN_CONTEXT
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpTo}
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
@@ -331,6 +332,11 @@ static string getListWidgetContents(QListWidget *listWidget)
   CHECK_NUM_ARGS(1);                                          \
   GDValueParser arg1 = parser.tupleGetValueAt(0) /* user ; */
 
+#define BIND_GDVALUE_ARGS2(arg1, arg2)                        \
+  CHECK_NUM_ARGS(2);                                          \
+  GDValueParser arg1 = parser.tupleGetValueAt(0);             \
+  GDValueParser arg2 = parser.tupleGetValueAt(1) /* user ; */
+
 
 // Bind 'arg1' to the single expected string argument of a replay
 // function.
@@ -357,11 +363,11 @@ static string getListWidgetContents(QListWidget *listWidget)
   string arg4 = GET_STRING_ARG(3) /* user ; */
 
 
-#define CHECK_EQ(context)                             \
-  if (actual != expect) {                             \
-    xstringb(context << ": should have been " <<      \
-      doubleQuote(expect) << " but was " <<           \
-      doubleQuote(actual) << ".");                    \
+#define CHECK_EQ(context)                        \
+  if (actual != expect) {                        \
+    xstringb(context << ": should have been " << \
+      toGDValue(expect) << " but was " <<        \
+      toGDValue(actual) << ".");                 \
   }
 
 #define CHECK_RE_MATCH(context)                             \
@@ -456,11 +462,11 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "ResizeEvent") {
-    BIND_STRING_ARGS2(receiver, size);
+    BIND_GDVALUE_ARGS2(receiver, size);
 
     resizeChildWidget(
-      getObjectFromPath<QWidget>(receiver),
-      qSizeFromString(size));
+      getObjectFromPath<QWidget>(receiver.stringGet()),
+      gdvpTo<QSize>(size));
   }
 
   else if (funcName == "TriggerAction") {
@@ -686,11 +692,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckSize") {
-    BIND_STRING_ARGS2(path, expect);
+    BIND_GDVALUE_ARGS2(path, expectP);
 
-    QWidget *widget = getObjectFromPath<QWidget>(path);
-    string actual = toString(widget->size());
-    CHECK_EQ("CheckSize " << doubleQuote(path));
+    QWidget *widget = getObjectFromPath<QWidget>(path.stringGet());
+    QSize expect(gdvpTo<QSize>(expectP));
+    QSize actual = widget->size();
+    CHECK_EQ("CheckSize " << path.getValue());
   }
 
   else if (funcName == "TouchFile") {

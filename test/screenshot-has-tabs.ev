@@ -5,7 +5,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "has-tabs.c")
 
 // Resize so all the text is visible, with not too much blank space.
-ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(476,256)")
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(476 256))
 
 // Take a screenshot.
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/screenshot-has-tabs.png")

@@ -12,7 +12,7 @@ FocusKeyPress("Key_E" "e")
 Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
 
 // Set size to match screenshots (now that search panel is open).
-ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(600,400)")
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(600 400))
 
 // Check first shot with all hits shown onscreen.
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab1.png")
@@ -62,7 +62,7 @@ CheckLabel("window1.m_statusArea.m_cursor" "2:27")
 CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "0 [] 20")
 
 // Now resize so only part of the text is visible.
-ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(500,200)")
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(500 200))
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab2.png")
 
 // Scroll the view.

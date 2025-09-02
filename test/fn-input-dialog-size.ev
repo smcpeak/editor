@@ -7,10 +7,10 @@ Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
 CheckFocusWidget("window1.filename_input.m_filenameEdit")
 
 // This is the initial size.
-CheckSize("window1.filename_input" "(800,800)")
+CheckSize("window1.filename_input" QSize(800 800))
 
 // Change size.
-ResizeEvent("window1.filename_input" "(500,600)")
+ResizeEvent("window1.filename_input" QSize(500 600))
 
 // Close dialog.
 FocusKeySequence("copy-paste.ev")
@@ -22,10 +22,10 @@ Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
 CheckFocusWidget("window1.filename_input.m_filenameEdit")
 
 // Check that size was remembered.
-CheckSize("window1.filename_input" "(500,600)")
+CheckSize("window1.filename_input" QSize(500 600))
 
 // Change size again.
-ResizeEvent("window1.filename_input" "(500,500)")
+ResizeEvent("window1.filename_input" QSize(500 500))
 
 // Cancel dialog; this discards the new size too.
 FocusKeyPR("Key_Escape" "\u{1B}")
@@ -36,7 +36,7 @@ Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
 CheckFocusWidget("window1.filename_input.m_filenameEdit")
 
 // Check that first size was remembered, not the second.
-CheckSize("window1.filename_input" "(500,600)")
+CheckSize("window1.filename_input" QSize(500 600))
 
 // Cancel dialog.
 FocusKeyPR("Key_Escape" "\u{1B}")

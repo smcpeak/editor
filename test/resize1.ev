@@ -6,7 +6,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "firstVisible" "0:0")
 
 // This is a sort of random size I happened to create when testing the
 // ability to record resize events.
-ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(548,524)")
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(548 524))
 
 // Check that the first/last visible are correct.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "firstVisible" "0:0")

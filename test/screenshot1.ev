@@ -7,7 +7,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "file1
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "firstVisible" "0:0")
 
 // Set a certain size, chosen more or less at random.
-ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(420,207)")
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(420 207))
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lastVisible" "11:45")
 
 // Scroll down and right and then select some text.
