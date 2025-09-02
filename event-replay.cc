@@ -41,6 +41,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QRegularExpression>
 #include <QStringList>
 #include <QTableWidget>
@@ -573,6 +574,19 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
     string actual = toString(item->text());
     CHECK_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
                    " " << row << " " << col);
+  }
+
+  else if (funcName == "CheckMessageBoxDetailsText") {
+    BIND_ARGS2(path, expect);
+
+    QMessageBox *mb = getObjectFromPath<QMessageBox>(path);
+
+    // It's tempting to navigate directly within the object tree here,
+    // but most of the objects do not have names, and the exact
+    // structure is an internal Qt implementation detail, so I will rely
+    // on just calling `QMessageBox::detailedText()`.
+    string actual = toString(mb->detailedText());
+    CHECK_EQ("CheckMessageBoxDetailsText");
   }
 
   else if (funcName == "CheckClipboard") {
