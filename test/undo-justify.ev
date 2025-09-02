@@ -1,45 +1,45 @@
-# undo-justify.ev
-# Test "undo" for "Justify paragraph" command.
+// undo-justify.ev
+// Test "undo" for "Justify paragraph" command.
 
-# In editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// In editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Type some text.
-FocusKeySequence "abc"
-FocusKeyPR "Key_Return" "\r"
-FocusKeySequence "def"
-FocusKeyPR "Key_Return" "\r"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\n"
+// Type some text.
+FocusKeySequence("abc")
+FocusKeyPR("Key_Return" "\r")
+FocusKeySequence("def")
+FocusKeyPR("Key_Return" "\r")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\n")
 
-# Type a few more letters.
-FocusKeySequence "ghi"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\nghi"
+// Type a few more letters.
+FocusKeySequence("ghi")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\nghi")
 
-# Undo them.
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\n"
+// Undo them.
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\n")
 
-# Type another line.
-FocusKeySequence "jkl"
-FocusKeyPR "Key_Return" "\r"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\njkl\n"
+// Type another line.
+FocusKeySequence("jkl")
+FocusKeyPR("Key_Return" "\r")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\njkl\n")
 
-# Go to the start.
-FocusKeyPR "Key_Up" ""
-FocusKeyPR "Key_Up" ""
-FocusKeyPR "Key_Up" ""
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
+// Go to the start.
+FocusKeyPR("Key_Up" "")
+FocusKeyPR("Key_Up" "")
+FocusKeyPR("Key_Up" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1")
 
-# Justify the entire paragraph.
-Shortcut "window1.m_menuBar.editMenu.editJustifyParagraph" "Ctrl+J"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "abc def jkl\n"
+// Justify the entire paragraph.
+Shortcut("window1.m_menuBar.editMenu.editJustifyParagraph" "Ctrl+J")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc def jkl\n")
 
-# Undo that, returning to the state before justification.  Crucially,
-# this does *not* merely undo one step of what justification does
-# internally.
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\njkl\n"
+// Undo that, returning to the state before justification.  Crucially,
+// this does *not* merely undo one step of what justification does
+// internally.
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\njkl\n")
 
-# EOF
+// EOF

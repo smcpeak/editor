@@ -1,45 +1,45 @@
-# sar-match-limit.ev
-# Test hitting the match limit.
+// sar-match-limit.ev
+// Test hitting the match limit.
 
-# Expected file: test/file1.h.
+// Expected file: test/file1.h.
 
-# Initially the corner labels should be hidden.
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" ""
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" ""
+// Initially the corner labels should be hidden.
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "")
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "")
 
-# Search for the regex ".".
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
-KeyPress "window1.m_sarPanel.m_findBox" "Ctrl+Key_E" "\x05"
-KeyPress "window1.m_sarPanel.m_findBox" "Key_Period" "."
+// Search for the regex ".".
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
+KeyPress("window1.m_sarPanel.m_findBox" "Ctrl+Key_E" "\u{05}")
+KeyPress("window1.m_sarPanel.m_findBox" "Key_Period" ".")
 
-# Check for the trailing "+" in the status.  It so happens we reach 1027
-# when the limit is hit.
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 1027+"
+// Check for the trailing "+" in the status.  It so happens we reach 1027
+// when the limit is hit.
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "0 [] 1027+")
 
-# Check corner labels.
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "0+"
+// Check corner labels.
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "0+")
 
-# The number of matches below the visible area is problematic to check
-# because it depends on the window size and system font size (as the
-# latter affects how big the menu, SAR panel, and status bar are).  We
-# check its value later, so I'll just refrain from checking here.
-#CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+"
+// The number of matches below the visible area is problematic to check
+// because it depends on the window size and system font size (as the
+// latter affects how big the menu, SAR panel, and status bar are).  We
+// check its value later, so I'll just refrain from checking here.
+//CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+"
 
-# Return to the editor and go down a couple of pages.
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_PageDown" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_PageDown" ""
+// Return to the editor and go down a couple of pages.
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_PageDown" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_PageDown" "")
 
-# Check the status there.
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1027 [] 0+"
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "1027+"
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+"
+// Check the status there.
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "1027 [] 0+")
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "1027+")
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "0+")
 
-# Close the SAR panel.
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Escape" "\x1B"
+// Close the SAR panel.
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Escape" "\u{1B}")
 
-# Corner labels should be gone.
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" ""
-CheckLabel "window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" ""
+// Corner labels should be gone.
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "")
+CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "")
 
-# EOF
+// EOF

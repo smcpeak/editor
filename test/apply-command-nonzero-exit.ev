@@ -1,40 +1,40 @@
-# apply-command-nonzero-exit.ev
-# "Apply command" command has a non-zero exit status.
+// apply-command-nonzero-exit.ev
+// "Apply command" command has a non-zero exit status.
 
-# In editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc"
+// In editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
 
-# Select the first lne.
-FocusKeyPR "Shift+Key_Down" ""
+// Select the first lne.
+FocusKeyPR("Shift+Key_Down" "")
 
-# Pass it through "false".
-Shortcut "window1.m_menuBar.editMenu.editApplyCommand" "Alt+A"
-SetFocus "ApplyCommandDialog.m_newCommandLineEdit"
-CheckFocusWidget "ApplyCommandDialog.m_newCommandLineEdit"
-FocusKeySequence "false"
-FocusKeyPR "Key_Return" "\r"
+// Pass it through "false".
+Shortcut("window1.m_menuBar.editMenu.editApplyCommand" "Alt+A")
+SetFocus("ApplyCommandDialog.m_newCommandLineEdit")
+CheckFocusWidget("ApplyCommandDialog.m_newCommandLineEdit")
+FocusKeySequence("false")
+FocusKeyPR("Key_Return" "\r")
 
-# This should cause a dialog box to appear.
-CheckFocusWidget "commandExitCode.qt_msgbox_buttonbox.#1"
+// This should cause a dialog box to appear.
+CheckFocusWidget("commandExitCode.qt_msgbox_buttonbox.#1")
 
-# Check the message.
-#
-# TODO: This should be an exact match, but it cannot because my event
-# replay parser cannot handle escaped quotes.  Change to GDVN.
-CheckLabelMatches "commandExitCode.qt_msgbox_label" "The command .false. exited with code 1, although it produced no error output.  .Text was replaced with command output anyway.."
+// Check the message.
+//
+// TODO: This should be an exact match, but it cannot because my event
+// replay parser cannot handle escaped quotes.  Change to GDVN.
+CheckLabelMatches("commandExitCode.qt_msgbox_label" "The command .false. exited with code 1, although it produced no error output.  .Text was replaced with command output anyway..")
 
-# Dismiss the dialog.
-FocusKeyPR "Key_Return" "\r"
+// Dismiss the dialog.
+FocusKeyPR("Key_Return" "\r")
 
-# Back in editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Check the new first line, which should be the old second line.
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
-FocusKeyPR "Shift+Key_Down" ""
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "markPosition" "1:1"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "selectedText" "// Syntax example for testing LSP services.\n"
+// Check the new first line, which should be the old second line.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1")
+FocusKeyPR("Shift+Key_Down" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "markPosition" "1:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "// Syntax example for testing LSP services.\n")
 
-# EOF
+// EOF

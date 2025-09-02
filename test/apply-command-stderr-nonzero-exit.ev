@@ -1,43 +1,43 @@
-# apply-command-stderr-nonzer-exit.ev
-# "Apply command" has stderr and a non-zero exit status.
+// apply-command-stderr-nonzer-exit.ev
+// "Apply command" has stderr and a non-zero exit status.
 
-# In editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc"
+// In editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
 
-# Select the first lne.
-FocusKeyPR "Shift+Key_Down" ""
+// Select the first lne.
+FocusKeyPR("Shift+Key_Down" "")
 
-# Pass it through "echo hi; echo err >&2; false"
-Shortcut "window1.m_menuBar.editMenu.editApplyCommand" "Alt+A"
-SetFocus "ApplyCommandDialog.m_newCommandLineEdit"
-CheckFocusWidget "ApplyCommandDialog.m_newCommandLineEdit"
-FocusKeySequence "echo hi; echo err >&2; false"
-FocusKeyPR "Key_Return" "\r"
+// Pass it through "echo hi; echo err >&2; false"
+Shortcut("window1.m_menuBar.editMenu.editApplyCommand" "Alt+A")
+SetFocus("ApplyCommandDialog.m_newCommandLineEdit")
+CheckFocusWidget("ApplyCommandDialog.m_newCommandLineEdit")
+FocusKeySequence("echo hi; echo err >&2; false")
+FocusKeyPR("Key_Return" "\r")
 
-# Warning dialog appears.
-CheckFocusWidget "commandErrorOutput.qt_msgbox_buttonbox.#1"
+// Warning dialog appears.
+CheckFocusWidget("commandErrorOutput.qt_msgbox_buttonbox.#1")
 
-# Check message.
-#
-# TODO: Use exact match after changing to GDVN.
-CheckLabelMatches "commandErrorOutput.qt_msgbox_label" "The command .echo hi; echo err >&2; false. exited with code 1 and produced some error output.  .Text was replaced with command output anyway.."
+// Check message.
+//
+// TODO: Use exact match after changing to GDVN.
+CheckLabelMatches("commandErrorOutput.qt_msgbox_label" "The command .echo hi; echo err >&2; false. exited with code 1 and produced some error output.  .Text was replaced with command output anyway..")
 
-# Check the details message.
-CheckMessageBoxDetailsText "commandErrorOutput" "err\n"
+// Check the details message.
+CheckMessageBoxDetailsText("commandErrorOutput" "err\n")
 
-# Dismiss the dialog.
-FocusKeyPR "Key_Return" "\r"
+// Dismiss the dialog.
+FocusKeyPR("Key_Return" "\r")
 
-# Back in editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Select the new text.
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1"
-FocusKeyPR "Shift+Key_Up" ""
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "markPosition" "2:1"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "selectedText" "hi\n"
+// Select the new text.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1")
+FocusKeyPR("Shift+Key_Up" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "markPosition" "2:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "hi\n")
 
 
-# EOF
+// EOF

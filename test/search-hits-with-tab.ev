@@ -1,77 +1,77 @@
-# search-hits-with-tab.ev
-# Showing search hits in presence of Tab character.
+// search-hits-with-tab.ev
+// Showing search hits in presence of Tab character.
 
-# Expected file: test/tabs-test.txt
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "tabs-test.txt"
+// Expected file: test/tabs-test.txt
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "tabs-test.txt")
 
-# Search for "e".
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
-CheckFocusWidget "window1.m_sarPanel.m_findBox"
-FocusKeyPress "Key_E" "e"
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
+// Search for "e".
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
+CheckFocusWidget("window1.m_sarPanel.m_findBox")
+FocusKeyPress("Key_E" "e")
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
 
-# Set size to match screenshots (now that search panel is open).
-ResizeEvent "window1.frame1.editorFrame.m_editorWidget" "(600,400)"
+// Set size to match screenshots (now that search panel is open).
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(600,400)")
 
-# Check first shot with all hits shown onscreen.
-CheckImage "window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab1.png"
+// Check first shot with all hits shown onscreen.
+CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab1.png")
 
-# Check cursor and search status indicator.
-CheckLabel "window1.m_statusArea.m_cursor" "1:1"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 20"
+// Check cursor and search status indicator.
+CheckLabel("window1.m_statusArea.m_cursor" "1:1")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "0 [] 20")
 
-# Go to end of second line.
-FocusKeyPress "Key_Down" ""
-FocusKeyPress "Ctrl+Key_E" "\x05"
-CheckLabel "window1.m_statusArea.m_cursor" "2:41"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "2 [] 18"
+// Go to end of second line.
+FocusKeyPress("Key_Down" "")
+FocusKeyPress("Ctrl+Key_E" "\u{05}")
+CheckLabel("window1.m_statusArea.m_cursor" "2:41")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "2 [] 18")
 
-# Move left past the tab to just beyond last hit on the line.
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-FocusKeyPress "Key_Left" ""
-CheckLabel "window1.m_statusArea.m_cursor" "2:32"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "2 [] 18"
+// Move left past the tab to just beyond last hit on the line.
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+FocusKeyPress("Key_Left" "")
+CheckLabel("window1.m_statusArea.m_cursor" "2:32")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "2 [] 18")
 
-# Move left one column at a time, past both hits, checking status as we go.
-FocusKeyPress "Key_Left" ""
-CheckLabel "window1.m_statusArea.m_cursor" "2:31"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1 [] 19"
+// Move left one column at a time, past both hits, checking status as we go.
+FocusKeyPress("Key_Left" "")
+CheckLabel("window1.m_statusArea.m_cursor" "2:31")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "1 [] 19")
 
-FocusKeyPress "Key_Left" ""
-CheckLabel "window1.m_statusArea.m_cursor" "2:30"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1 [] 19"
+FocusKeyPress("Key_Left" "")
+CheckLabel("window1.m_statusArea.m_cursor" "2:30")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "1 [] 19")
 
-FocusKeyPress "Key_Left" ""
-CheckLabel "window1.m_statusArea.m_cursor" "2:29"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "1 [] 19"
+FocusKeyPress("Key_Left" "")
+CheckLabel("window1.m_statusArea.m_cursor" "2:29")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "1 [] 19")
 
-FocusKeyPress "Key_Left" ""
-CheckLabel "window1.m_statusArea.m_cursor" "2:28"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 20"
+FocusKeyPress("Key_Left" "")
+CheckLabel("window1.m_statusArea.m_cursor" "2:28")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "0 [] 20")
 
-FocusKeyPress "Key_Left" ""
-CheckLabel "window1.m_statusArea.m_cursor" "2:27"
-CheckLabel "window1.m_sarPanel.m_matchStatusLabel" "0 [] 20"
+FocusKeyPress("Key_Left" "")
+CheckLabel("window1.m_statusArea.m_cursor" "2:27")
+CheckLabel("window1.m_sarPanel.m_matchStatusLabel" "0 [] 20")
 
-# Now resize so only part of the text is visible.
-ResizeEvent "window1.frame1.editorFrame.m_editorWidget" "(500,200)"
-CheckImage "window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab2.png"
+// Now resize so only part of the text is visible.
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(500,200)")
+CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab2.png")
 
-# Scroll the view.
-FocusKeyPress "Ctrl+Key_Right" ""
-FocusKeyPress "Ctrl+Key_Right" ""
-FocusKeyPress "Ctrl+Key_Right" ""
-FocusKeyPress "Ctrl+Key_Right" ""
-FocusKeyPress "Ctrl+Key_Right" ""
-FocusKeyPress "Ctrl+Key_Down" ""
-CheckImage "window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab3.png"
+// Scroll the view.
+FocusKeyPress("Ctrl+Key_Right" "")
+FocusKeyPress("Ctrl+Key_Right" "")
+FocusKeyPress("Ctrl+Key_Right" "")
+FocusKeyPress("Ctrl+Key_Right" "")
+FocusKeyPress("Ctrl+Key_Right" "")
+FocusKeyPress("Ctrl+Key_Down" "")
+CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab3.png")
 
-# EOF
+// EOF

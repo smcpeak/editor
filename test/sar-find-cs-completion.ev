@@ -1,26 +1,26 @@
-# sar-find-cs-completion.ev
-# Test that the SAR "Find" box does not use case-insensitive completion.
+// sar-find-cs-completion.ev
+// Test that the SAR "Find" box does not use case-insensitive completion.
 
-# Expected file: test/file1.h.
+// Expected file: test/file1.h.
 
-# Search for "DPS".
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
-KeyPress "window1.m_sarPanel.m_findBox" "Shift+Key_D" "D"
-KeyPress "window1.m_sarPanel.m_findBox" "Shift+Key_P" "P"
-KeyPress "window1.m_sarPanel.m_findBox" "Shift+Key_S" "S"
-KeyPress "window1.m_sarPanel.m_findBox" "Key_Return" "\r"
+// Search for "DPS".
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
+KeyPress("window1.m_sarPanel.m_findBox" "Shift+Key_D" "D")
+KeyPress("window1.m_sarPanel.m_findBox" "Shift+Key_P" "P")
+KeyPress("window1.m_sarPanel.m_findBox" "Shift+Key_S" "S")
+KeyPress("window1.m_sarPanel.m_findBox" "Key_Return" "\r")
 
-# Deselect "DPS" and move away from it.
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\x01"
+// Deselect "DPS" and move away from it.
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\u{01}")
 
-# Now search for "dps".
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
-KeyPress "window1.m_sarPanel.m_findBox" "Key_D" "d"
-KeyPress "window1.m_sarPanel.m_findBox" "Key_P" "p"
-KeyPress "window1.m_sarPanel.m_findBox" "Key_S" "s"
-KeyPress "window1.m_sarPanel.m_findBox" "Key_Return" "\r"
+// Now search for "dps".
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
+KeyPress("window1.m_sarPanel.m_findBox" "Key_D" "d")
+KeyPress("window1.m_sarPanel.m_findBox" "Key_P" "p")
+KeyPress("window1.m_sarPanel.m_findBox" "Key_S" "s")
+KeyPress("window1.m_sarPanel.m_findBox" "Key_Return" "\r")
 
-# The Find box should have "dps", not "DPS".
-CheckComboBoxText "window1.m_sarPanel.m_findBox" "dps"
+// The Find box should have "dps", not "DPS".
+CheckComboBoxText("window1.m_sarPanel.m_findBox" "dps")
 
-# EOF
+// EOF

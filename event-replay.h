@@ -6,6 +6,7 @@
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
+#include "smbase/gdvalue-reader.h"     // gdv::GDValueReader
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/str.h"                // string
@@ -18,7 +19,6 @@
 #include <fstream>                     // std::ifstream
 
 class QImage;
-class QRegularExpressionMatch;
 class QWidget;
 
 
@@ -80,8 +80,8 @@ private:     // instance data
   // File we are reading from.
   std::ifstream m_in;
 
-  // Current line number in 'm_in'.
-  int m_lineNumber;
+  // Reader to get `GDValue`s from `m_in`.
+  gdv::GDValueReader m_gdvalueReader;
 
   // Queue of ordinary typing characters to replay before continuing
   // with the events in 'm_in'.
@@ -112,9 +112,9 @@ private:     // funcs
   // the function we are performing, and used in a `TRACE` call.
   QWidget *getFocusWidget(QString const &funcName);
 
-  // Replay a single call line as matched by 'match'.  Throw a string
-  // object if there is a problem.
-  void replayCall(QRegularExpressionMatch &match);
+  // Replay a single `command`.  Throw an exception if there is a
+  // problem.
+  void replayCall(gdv::GDValue const &command);
 
   // Do an extra sleep on Linux as a workaround for a bug.  See comments
   // on implementation.

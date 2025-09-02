@@ -1,28 +1,28 @@
-# select-beyond-eof.ev
-# Test visual depiction of selection that extends beyond EOF.
+// select-beyond-eof.ev
+// Test visual depiction of selection that extends beyond EOF.
 
-# Expect to begin with an empty file.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" ""
+// Expect to begin with an empty file.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "")
 
-# Resize to something reasonably small.
-ResizeEvent "window1.frame1.editorFrame.m_editorWidget" "(400,156)"
+// Resize to something reasonably small.
+ResizeEvent("window1.frame1.editorFrame.m_editorWidget" "(400,156)")
 
-# Put some text in.
-FocusKeySequence "foo"
-FocusKeyPR "Key_Return" "\r"
+// Put some text in.
+FocusKeySequence("foo")
+FocusKeyPR("Key_Return" "\r")
 
-# Select the inserted line and the next one, going beyond EOF.
-FocusKeyPR "Key_Up" ""
-FocusKeyPR "Shift+Key_Down" ""
-FocusKeyPR "Shift+Key_Down" ""
+// Select the inserted line and the next one, going beyond EOF.
+FocusKeyPR("Key_Up" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
 
-# Check rendering.
-CheckImage "window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/select-beyond-eof1.png"
+// Check rendering.
+CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/select-beyond-eof1.png")
 
-# Move down and select the fourth line, entirely beyond EOF.
-FocusKeyPR "Key_Down" ""
-FocusKeyPR "Shift+Key_Down" ""
-CheckImage "window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/select-beyond-eof2.png"
+// Move down and select the fourth line, entirely beyond EOF.
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/select-beyond-eof2.png")
 
-# EOF
+// EOF

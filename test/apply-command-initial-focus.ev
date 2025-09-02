@@ -1,41 +1,41 @@
-# apply-command-initial-focus.ev
-# Check that the initial focus in the "Apply Command" dialog is on the
-# list box even if it was on a different control when it was last
-# closed.
+// apply-command-initial-focus.ev
+// Check that the initial focus in the "Apply Command" dialog is on the
+// list box even if it was on a different control when it was last
+// closed.
 
-# Initial state.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Initial state.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Run the dialog.
-Shortcut "window1.m_menuBar.editMenu.editApplyCommand" "Alt+A"
+// Run the dialog.
+Shortcut("window1.m_menuBar.editMenu.editApplyCommand" "Alt+A")
 
-# Focus is on the list.
-CheckFocusWidget "ApplyCommandDialog.m_prevCommandsListWidget"
+// Focus is on the list.
+CheckFocusWidget("ApplyCommandDialog.m_prevCommandsListWidget")
 
-# Move the focus to another control.
-FocusKeyPR "Key_Tab" "\t"
-CheckFocusWidget "ApplyCommandDialog.m_filterLineEdit"
-FocusKeyPR "Key_Tab" "\t"
-CheckFocusWidget "ApplyCommandDialog.m_copyButton"
-FocusKeyPR "Key_Tab" "\t"
-CheckFocusWidget "ApplyCommandDialog.m_deleteButton"
+// Move the focus to another control.
+FocusKeyPR("Key_Tab" "\t")
+CheckFocusWidget("ApplyCommandDialog.m_filterLineEdit")
+FocusKeyPR("Key_Tab" "\t")
+CheckFocusWidget("ApplyCommandDialog.m_copyButton")
+FocusKeyPR("Key_Tab" "\t")
+CheckFocusWidget("ApplyCommandDialog.m_deleteButton")
 
-# Close the dialog.
-FocusKeyPR "Key_Escape" "\033"
+// Close the dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
 
-# Back in the editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in the editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Open the dialog again.
-Shortcut "window1.m_menuBar.editMenu.editApplyCommand" "Alt+A"
+// Open the dialog again.
+Shortcut("window1.m_menuBar.editMenu.editApplyCommand" "Alt+A")
 
-# Focus has been reset to the list.
-CheckFocusWidget "ApplyCommandDialog.m_prevCommandsListWidget"
+// Focus has been reset to the list.
+CheckFocusWidget("ApplyCommandDialog.m_prevCommandsListWidget")
 
-# Close dialog.
-FocusKeyPR "Key_Escape" "\033"
+// Close dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
 
-# Back in editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# EOF
+// EOF

@@ -1,28 +1,28 @@
-# file-open-dialog1.ev
-# Use the file-open dialog to open a file, using Tab completion once.
+// file-open-dialog1.ev
+// Use the file-open dialog to open a file, using Tab completion once.
 
-# In editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// In editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Type in "a/b/fo", then tab-complete it to "a/b/foo.txt".
-Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
-KeyPress "filename_input.m_filenameEdit" "Key_A" "a"
-KeyPress "filename_input.m_filenameEdit" "Key_Slash" "/"
-KeyPress "filename_input.m_filenameEdit" "Key_B" "b"
-KeyPress "filename_input.m_filenameEdit" "Key_Slash" "/"
-KeyPress "filename_input.m_filenameEdit" "Key_F" "f"
-KeyPress "filename_input.m_filenameEdit" "Key_O" "o"
-KeyPress "filename_input.m_filenameEdit" "Key_Tab" ""
-KeyPress "filename_input.m_filenameEdit" "Key_Return" ""
+// Type in "a/b/fo", then tab-complete it to "a/b/foo.txt".
+Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
+KeyPress("filename_input.m_filenameEdit" "Key_A" "a")
+KeyPress("filename_input.m_filenameEdit" "Key_Slash" "/")
+KeyPress("filename_input.m_filenameEdit" "Key_B" "b")
+KeyPress("filename_input.m_filenameEdit" "Key_Slash" "/")
+KeyPress("filename_input.m_filenameEdit" "Key_F" "f")
+KeyPress("filename_input.m_filenameEdit" "Key_O" "o")
+KeyPress("filename_input.m_filenameEdit" "Key_Tab" "")
+KeyPress("filename_input.m_filenameEdit" "Key_Return" "")
 
-# Back in editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Copy the first line.
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" ""
-Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+// Copy the first line.
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" "")
+Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 
-# Confirm it got copied.
-CheckClipboard "foo\n"
+// Confirm it got copied.
+CheckClipboard("foo\n")
 
-# EOF
+// EOF

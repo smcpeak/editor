@@ -1,40 +1,40 @@
-# read-only2.ev
-# Process output document should be read-only.
+// read-only2.ev
+// Process output document should be read-only.
 
-# No particular document needs to be open initially but the edit widget
-# should have focus.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// No particular document needs to be open initially but the edit widget
+// should have focus.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Run 'date' command.
-Shortcut "window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R"
-CheckFocusWindow "RunCommandDialog"
-KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_D" "d"
-KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_A" "a"
-KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_T" "t"
-KeyPress "RunCommandDialog.m_newCommandLineEdit" "Key_E" "e"
-KeyPress "RunCommandDialog" "Key_Return" "\r"
+// Run 'date' command.
+Shortcut("window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R")
+CheckFocusWindow("RunCommandDialog")
+KeyPress("RunCommandDialog.m_newCommandLineEdit" "Key_D" "d")
+KeyPress("RunCommandDialog.m_newCommandLineEdit" "Key_A" "a")
+KeyPress("RunCommandDialog.m_newCommandLineEdit" "Key_T" "t")
+KeyPress("RunCommandDialog.m_newCommandLineEdit" "Key_E" "e")
+KeyPress("RunCommandDialog" "Key_Return" "\r")
 
-# Back in editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Wait until it finishes.
-WaitUntilCheckQuery "200" "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED"
+// Wait until it finishes.
+WaitUntilCheckQuery("200" "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED")
 
-# Check that it is marked as read-only in the File menu.
-CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "true"
+// Check that it is marked as read-only in the File menu.
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "true")
 
-# Try to make an edit.
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_K" "k"
-KeyPress "window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\x1B"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false"
+// Try to make an edit.
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_K" "k")
+KeyPress("window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\u{1B}")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false")
 
-# Toggle the read-only state.
-TriggerAction "window1.m_menuBar.fileMenu.fileToggleReadOnly"
-CheckActionChecked "window1.m_menuBar.fileMenu.fileToggleReadOnly" "false"
+// Toggle the read-only state.
+TriggerAction("window1.m_menuBar.fileMenu.fileToggleReadOnly")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "false")
 
-# Now make an edit.
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_K" "k"
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true"
+// Now make an edit.
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_K" "k")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true")
 
-# EOF
+// EOF

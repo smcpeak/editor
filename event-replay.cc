@@ -19,7 +19,10 @@
 
 // smbase
 #include "smbase/c-string-reader.h"    // parseQuotedCString
-#include "smbase/exc.h"                // smbase::{XBase, XMessage}
+#include "smbase/exc.h"                // smbase::{XBase, XMessage}, EXN_CONTEXT
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/overflow.h"           // safeToInt
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
@@ -42,7 +45,6 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
-#include <QRegularExpression>
 #include <QStringList>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -51,6 +53,7 @@
 
 // libc++
 #include <fstream>                     // std::ofstream
+#include <optional>                    // std::optional
 #include <regex>                       // std::regex_search
 #include <string>                      // std::string, getline
 #include <typeinfo>                    // typeid
@@ -58,6 +61,7 @@
 // libc
 #include <stdlib.h>                    // getenv, atoi
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -93,7 +97,7 @@ EventReplay::QuiescenceEvent::~QuiescenceEvent()
 EventReplay::EventReplay(string const &fname)
   : m_fname(fname),
     m_in(m_fname.c_str()),
-    m_lineNumber(0),
+    m_gdvalueReader(m_in, fname),
     m_queuedFocusKeySequence(),
     m_testResult(),
     m_eventLoop(),
@@ -290,13 +294,6 @@ static bool regexSearch(string const &str, string const &re)
 }
 
 
-// Get the string value of a quoted argument to a replay function.
-static string getCapturedArg(QRegularExpressionMatch &match, int n)
-{
-  return parseQuotedCString(toString(match.captured(n)));
-}
-
-
 static int intFromString(string const &s)
 {
   return atoi(s.c_str());
@@ -323,28 +320,33 @@ static string getListWidgetContents(QListWidget *listWidget)
   else ((void)0) /* user ; */
 
 
+// Return 0-based argument `n` as a string.
+#define GET_STRING_ARG(n) \
+  parser.tupleGetValueAt(n).stringGet()
+
+
 // Bind 'arg1' to the single expected argument of a replay function.
-#define BIND_ARGS1(arg1)                              \
-  CHECK_NUM_ARGS(1);                                  \
-  string arg1 = getCapturedArg(match, 2) /* user ; */
+#define BIND_ARGS1(arg1)                       \
+  CHECK_NUM_ARGS(1);                           \
+  string arg1 = GET_STRING_ARG(0) /* user ; */
 
-#define BIND_ARGS2(arg1, arg2)                        \
-  CHECK_NUM_ARGS(2);                                  \
-  string arg1 = getCapturedArg(match, 2);             \
-  string arg2 = getCapturedArg(match, 3) /* user ; */
+#define BIND_ARGS2(arg1, arg2)                 \
+  CHECK_NUM_ARGS(2);                           \
+  string arg1 = GET_STRING_ARG(0);             \
+  string arg2 = GET_STRING_ARG(1) /* user ; */
 
-#define BIND_ARGS3(arg1, arg2, arg3)                  \
-  CHECK_NUM_ARGS(3);                                  \
-  string arg1 = getCapturedArg(match, 2);             \
-  string arg2 = getCapturedArg(match, 3);             \
-  string arg3 = getCapturedArg(match, 4) /* user ; */
+#define BIND_ARGS3(arg1, arg2, arg3)           \
+  CHECK_NUM_ARGS(3);                           \
+  string arg1 = GET_STRING_ARG(0);             \
+  string arg2 = GET_STRING_ARG(1);             \
+  string arg3 = GET_STRING_ARG(2) /* user ; */
 
-#define BIND_ARGS4(arg1, arg2, arg3, arg4)            \
-  CHECK_NUM_ARGS(4);                                  \
-  string arg1 = getCapturedArg(match, 2);             \
-  string arg2 = getCapturedArg(match, 3);             \
-  string arg3 = getCapturedArg(match, 4);             \
-  string arg4 = getCapturedArg(match, 5) /* user ; */
+#define BIND_ARGS4(arg1, arg2, arg3, arg4)     \
+  CHECK_NUM_ARGS(4);                           \
+  string arg1 = GET_STRING_ARG(0);             \
+  string arg2 = GET_STRING_ARG(1);             \
+  string arg3 = GET_STRING_ARG(2);             \
+  string arg4 = GET_STRING_ARG(3) /* user ; */
 
 
 #define CHECK_EQ(context)                             \
@@ -362,10 +364,12 @@ static string getListWidgetContents(QListWidget *listWidget)
   }
 
 
-void EventReplay::replayCall(QRegularExpressionMatch &match)
+void EventReplay::replayCall(GDValue const &command)
 {
-  QString funcName(match.captured(1));
-  int numArgs = match.lastCapturedIndex() - 1;
+  GDValueParser parser(command);
+  parser.checkIsTuple();
+  QString const funcName(toQString(parser.taggedContainerGetTagName()));
+  int const numArgs = safeToInt(parser.containerSize());
 
   // --------------- events/actions ---------------
   if (funcName == "KeyPress") {
@@ -776,16 +780,6 @@ void EventReplay::replayFocusKey(char c)
 
 bool EventReplay::replayNextEvent()
 {
-  QRegularExpression reBlank("^\\s*(#.*)?$");
-
-  QRegularExpression reCall(
-    "^\\s*(\\w+)"                      // 1: Function name
-    "(?:\\s+(\"[^\"]*\"))?"            // 2: Quoted optional arg 1
-    "(?:\\s+(\"[^\"]*\"))?"            // etc.
-    "(?:\\s+(\"[^\"]*\"))?"
-    "(?:\\s+(\"[^\"]*\"))?"
-    "\\s*$");
-
   try {
     // Process any queued focus keys first.
     if (!m_queuedFocusKeySequence.isEmpty()) {
@@ -796,51 +790,36 @@ bool EventReplay::replayNextEvent()
       return true;
     }
 
-    // Loop in order to skip comments and blank lines.  We do *not*
-    // replay more than one event at a time, since after each event we
-    // need to then wait for application quiescence.
-    while (!m_in.eof()) {
-      // Read the next line.
-      m_lineNumber++;
-      std::string line;
-      getline(m_in, line);
-      if (m_in.eof()) {
-        return false;
-      }
-      if (m_in.fail()) {
-        // The C++ iostreams library does not provide a portable way to
-        // get an error reason here.
-        xstringb("reading the next line failed");
-      }
-      QString qline(line.c_str());
+    // Get the next command.
+    m_gdvalueReader.skipWhitespaceAndComments();
+    FileLineCol loc = m_gdvalueReader.getLocation();
+    if (std::optional<GDValue> command = m_gdvalueReader.readNextValue()) {
+      TRACE("EventReplay", "replaying: " << *command);
 
-      // Skip comments and blank lines.
-      if (reBlank.match(qline).hasMatch()) {
-        continue;
-      }
+      // Use the location of `command` as context.  (We do not push it
+      // until now because a parse error in `readNextValue` will already
+      // include it as context.)
+      EXN_CONTEXT(loc);
 
-      // Match call lines.
-      QRegularExpressionMatch match(reCall.match(qline));
-      if (match.hasMatch()) {
-        TRACE("EventReplay", "replaying: " << line);
-        this->replayCall(match);
-        return true;
-      }
-
-      xstringb("unrecognized line: \"" << qline << "\"");
+      this->replayCall(*command);
+      return true;
+    }
+    else {
+      // EOF.
+      return false;
     }
   }
   catch (string const &msg) {
-    m_testResult = stringb(m_fname << ':' << m_lineNumber << ": " << msg);
+    m_testResult = msg;
   }
   catch (XBase &x) {
-    m_testResult = stringb(m_fname << ':' << m_lineNumber << ": " << x.why());
+    m_testResult = x.getMessage();
   }
   catch (...) {
     m_testResult = "caught unknown exception!";
   }
 
-  // EOF, or test failed.
+  // Test failed.
   return false;
 }
 

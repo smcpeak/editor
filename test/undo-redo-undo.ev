@@ -1,56 +1,56 @@
-# undo-redo-undo.ev
-# Reproduce a crash involving undo and redo and file save.
+// undo-redo-undo.ev
+// Reproduce a crash involving undo and redo and file save.
 
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# This is supposed to be started with the temporary file open
-# so I can overwrite it without adverse consequence.
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "tmp.h"
+// This is supposed to be started with the temporary file open
+// so I can overwrite it without adverse consequence.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "tmp.h")
 
-# Make a bunch of changes and then undo them.
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-FocusKeyPress "Key_X" "x"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
+// Make a bunch of changes and then undo them.
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+FocusKeyPress("Key_X" "x")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
 
-# Redo some of them.
-Shortcut "window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace"
+// Redo some of them.
+Shortcut("window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editRedo" "Alt+Shift+Backspace")
 
-# Make a different edit.
-FocusKeyPress "Key_Return" "\r"
+// Make a different edit.
+FocusKeyPress("Key_Return" "\r")
 
-# Save the file.  This changes m_savedHistoryIndex.
-Shortcut "window1.m_menuBar.fileMenu.fileSave" "F2"
+// Save the file.  This changes m_savedHistoryIndex.
+Shortcut("window1.m_menuBar.fileMenu.fileSave" "F2")
 
-# Try to undo some more.
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
+// Try to undo some more.
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
 
-# The "PR" here is important because selfCheck only runs on key release.
-# In the buggy version this fails an assertion.
-FocusKeyPR "Key_Return" "\r"
+// The "PR" here is important because selfCheck only runs on key release.
+// In the buggy version this fails an assertion.
+FocusKeyPR("Key_Return" "\r")
 
-# Explicitly call selfCheck, mainly just to have an example of calling
-# it explicitly among my tests.
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "selfCheck" ""
+// Explicitly call selfCheck, mainly just to have an example of calling
+// it explicitly among my tests.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selfCheck" "")
 
-# EOF
+// EOF

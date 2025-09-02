@@ -1,51 +1,51 @@
-# sar-replace-bol.ev
-# Check for a bug involving replacing the beginning of the line.
+// sar-replace-bol.ev
+// Check for a bug involving replacing the beginning of the line.
 
-# Should have file1.h open and be at the top of it.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "file1.h"
-CheckLabel "window1.m_statusArea.m_cursor" "1:1"
+// Should have file1.h open and be at the top of it.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "file1.h")
+CheckLabel("window1.m_statusArea.m_cursor" "1:1")
 
-# Search for "^" as a regex.
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
-KeyPress "window1.m_sarPanel.m_findBox" "Shift+Key_AsciiCircum" "^"
-KeyPress "window1.m_sarPanel.m_findBox" "Ctrl+Key_E" "\x05"
+// Search for "^" as a regex.
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
+KeyPress("window1.m_sarPanel.m_findBox" "Shift+Key_AsciiCircum" "^")
+KeyPress("window1.m_sarPanel.m_findBox" "Ctrl+Key_E" "\u{05}")
 
-# Specify "blah" as replacement text.
-KeyPress "window1.m_sarPanel.m_findBox" "Key_Tab" "\t"
-KeyPress "window1.m_sarPanel.m_replBox" "Key_B" "b"
-KeyPress "window1.m_sarPanel.m_replBox" "Key_L" "l"
-KeyPress "window1.m_sarPanel.m_replBox" "Key_A" "a"
-KeyPress "window1.m_sarPanel.m_replBox" "Key_H" "h"
+// Specify "blah" as replacement text.
+KeyPress("window1.m_sarPanel.m_findBox" "Key_Tab" "\t")
+KeyPress("window1.m_sarPanel.m_replBox" "Key_B" "b")
+KeyPress("window1.m_sarPanel.m_replBox" "Key_L" "l")
+KeyPress("window1.m_sarPanel.m_replBox" "Key_A" "a")
+KeyPress("window1.m_sarPanel.m_replBox" "Key_H" "h")
 
-# The first Ctrl+R should replace, leaving cursor at 1:5.
-Shortcut "window1.m_menuBar.editMenu.editReplace" "Ctrl+R"
-CheckLabel "window1.m_statusArea.m_cursor" "1:5"
+// The first Ctrl+R should replace, leaving cursor at 1:5.
+Shortcut("window1.m_menuBar.editMenu.editReplace" "Ctrl+R")
+CheckLabel("window1.m_statusArea.m_cursor" "1:5")
 
-# Next Ctrl+R should go to next match.
-Shortcut "window1.m_menuBar.editMenu.editReplace" "Ctrl+R"
-CheckLabel "window1.m_statusArea.m_cursor" "2:1"
+// Next Ctrl+R should go to next match.
+Shortcut("window1.m_menuBar.editMenu.editReplace" "Ctrl+R")
+CheckLabel("window1.m_statusArea.m_cursor" "2:1")
 
-# Then replace.
-Shortcut "window1.m_menuBar.editMenu.editReplace" "Ctrl+R"
-CheckLabel "window1.m_statusArea.m_cursor" "2:5"
+// Then replace.
+Shortcut("window1.m_menuBar.editMenu.editReplace" "Ctrl+R")
+CheckLabel("window1.m_statusArea.m_cursor" "2:5")
 
-# And the next match.
-Shortcut "window1.m_menuBar.editMenu.editReplace" "Ctrl+R"
-CheckLabel "window1.m_statusArea.m_cursor" "3:1"
+// And the next match.
+Shortcut("window1.m_menuBar.editMenu.editReplace" "Ctrl+R")
+CheckLabel("window1.m_statusArea.m_cursor" "3:1")
 
-# Return to the editor widget.
-Shortcut "window1.m_menuBar.editMenu.editSearch" "Ctrl+S"
+// Return to the editor widget.
+Shortcut("window1.m_menuBar.editMenu.editSearch" "Ctrl+S")
 
-# Copy the top three lines to the clipboard.
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\x01"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Down" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Up" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Up" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Up" ""
-Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+// Copy the top three lines to the clipboard.
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\u{01}")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Down" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Up" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Up" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Up" "")
+Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 
-# Check them.
-CheckClipboard "blah// file1.h\nblah// Sample file to edit during tests.\n\n"
+// Check them.
+CheckClipboard("blah// file1.h\nblah// Sample file to edit during tests.\n\n")
 
-# EOF
+// EOF

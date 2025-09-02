@@ -1,62 +1,62 @@
-# reload-from-files-dialog.ev
-# Test the behavior of the reload button in the open-files dialog.
+// reload-from-files-dialog.ev
+// Test the behavior of the reload button in the open-files dialog.
 
-# Check which file is open.  This test is intended to be run with two
-# files specified on the command line, and the second will be initially
-# open.
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "gets-modified2.txt"
+// Check which file is open.  This test is intended to be run with two
+// files specified on the command line, and the second will be initially
+// open.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "gets-modified2.txt")
 
-# The "[DISKMOD]" label should be absent.
-CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified2.txt$"
+// The "[DISKMOD]" label should be absent.
+CheckLabelMatches("window1.m_statusArea.m_filename" "gets-modified2.txt$")
 
-# Touch the files.
-TouchFile "test/gets-modified.txt"
-TouchFile "test/gets-modified2.txt"
+// Touch the files.
+TouchFile("test/gets-modified.txt")
+TouchFile("test/gets-modified2.txt")
 
-# Check for on-disk modification.
-TriggerAction "window1.m_menuBar.fileMenu.fileCheckForChanges"
+// Check for on-disk modification.
+TriggerAction("window1.m_menuBar.fileMenu.fileCheckForChanges")
 
-# Switch to the other file.
-Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
-CheckFocusWidget "OpenFilesDialog.m_tableWidget"
-FocusKeyPR "Key_Down" ""
-FocusKeyPR "Key_Return" "\r"
+// Switch to the other file.
+Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
+CheckFocusWidget("OpenFilesDialog.m_tableWidget")
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Return" "\r")
 
-# The "[DISKMOD]" label should be present for this one because it gets
-# refreshed when we switch to it.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt \\[DISKMOD\\]$"
+// The "[DISKMOD]" label should be present for this one because it gets
+// refreshed when we switch to it.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckLabelMatches("window1.m_statusArea.m_filename" "gets-modified.txt \\[DISKMOD\\]$")
 
-# Go back into the open-files dialog.
-Shortcut "window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O"
-CheckFocusWidget "OpenFilesDialog.m_tableWidget"
+// Go back into the open-files dialog.
+Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
+CheckFocusWidget("OpenFilesDialog.m_tableWidget")
 
-# Check that the list shows them both as modified.
-CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt \\[DISKMOD\\]$"
-CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt \\[DISKMOD\\]$"
+// Check that the list shows them both as modified.
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt \\[DISKMOD\\]$")
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt \\[DISKMOD\\]$")
 
-# Press the reload button.
-ClickButton "OpenFilesDialog.m_reloadAllButton"
+// Press the reload button.
+ClickButton("OpenFilesDialog.m_reloadAllButton")
 
-# Dismiss the confirmation dialog.
-CheckFocusWidget "OpenFilesDialog.Done.qt_msgbox_buttonbox.#1"
-FocusKeyPR "Key_Return" "\r"
+// Dismiss the confirmation dialog.
+CheckFocusWidget("OpenFilesDialog.Done.qt_msgbox_buttonbox.#1")
+FocusKeyPR("Key_Return" "\r")
 
-# Back in the main dialog.
-CheckFocusWidget "OpenFilesDialog.m_tableWidget"
+// Back in the main dialog.
+CheckFocusWidget("OpenFilesDialog.m_tableWidget")
 
-# Check that the list entries have been refreshed.
-CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt$"
-CheckTableWidgetCellMatches "OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt$"
+// Check that the list entries have been refreshed.
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "0" "0" "gets-modified.txt$")
+CheckTableWidgetCellMatches("OpenFilesDialog.m_tableWidget" "1" "0" "gets-modified2.txt$")
 
-# Close the dialog.
-ClickButton "OpenFilesDialog.m_cancelButton"
+// Close the dialog.
+ClickButton("OpenFilesDialog.m_cancelButton")
 
-# Back in the editor.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+// Back in the editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-# Check that "[DISKMOD]" is gone in the editor.
-CheckLabelMatches "window1.m_statusArea.m_filename" "gets-modified.txt$"
+// Check that "[DISKMOD]" is gone in the editor.
+CheckLabelMatches("window1.m_statusArea.m_filename" "gets-modified.txt$")
 
 
-# EOF
+// EOF

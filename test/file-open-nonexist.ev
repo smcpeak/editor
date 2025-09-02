@@ -1,54 +1,54 @@
-# file-open-nonexist.ev
-# Test the prompt for opening a file that does not exist.
+// file-open-nonexist.ev
+// Test the prompt for opening a file that does not exist.
 
-# Try opening a non-existing file.
-Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
-CheckFocusWindow "window1.filename_input"
-CheckFocusWidget "window1.filename_input.m_filenameEdit"
-FocusKeySequence "nonexist"
-FocusKeyPR "Key_Return" "\r"
+// Try opening a non-existing file.
+Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
+CheckFocusWindow("window1.filename_input")
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
+FocusKeySequence("nonexist")
+FocusKeyPR("Key_Return" "\r")
 
-# This should prompt.
-CheckFocusWindow "window1.filename_input.createFilePrompt"
-CheckFocusWidget "window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1"
+// This should prompt.
+CheckFocusWindow("window1.filename_input.createFilePrompt")
+CheckFocusWidget("window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1")
 
-# Say yes to the prompt.
-FocusKeyPR "Key_Return" "\r"
+// Say yes to the prompt.
+FocusKeyPR("Key_Return" "\r")
 
-# TODO: This is part of my Linux replay issues.
-Sleep "0"
+// TODO: This is part of my Linux replay issues.
+Sleep("0")
 
-# Should now be open for editing.
-CheckFocusWindow "window1"
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
+// Should now be open for editing.
+CheckFocusWindow("window1")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist")
 
 
-# Open another one.
-Shortcut "window1.m_menuBar.fileMenu.fileOpen" "F3"
-CheckFocusWindow "window1.filename_input"
-CheckFocusWidget "window1.filename_input.m_filenameEdit"
-FocusKeySequence "another-nonexist"
-FocusKeyPR "Key_Return" "\r"
+// Open another one.
+Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
+CheckFocusWindow("window1.filename_input")
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
+FocusKeySequence("another-nonexist")
+FocusKeyPR("Key_Return" "\r")
 
-# Say no to the prompt.
-CheckFocusWindow "window1.filename_input.createFilePrompt"
-CheckFocusWidget "window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1"
-FocusKeyPR "Key_Escape" "\x1B"
+// Say no to the prompt.
+CheckFocusWindow("window1.filename_input.createFilePrompt")
+CheckFocusWidget("window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1")
+FocusKeyPR("Key_Escape" "\u{1B}")
 
-# TODO: This is part of my Linux replay issues.
-Sleep "0"
+// TODO: This is part of my Linux replay issues.
+Sleep("0")
 
-# We should still be in the file-open dialog.
-CheckFocusWindow "window1.filename_input"
-CheckFocusWidget "window1.filename_input.m_filenameEdit"
+// We should still be in the file-open dialog.
+CheckFocusWindow("window1.filename_input")
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
 
-# Bail out of that.
-FocusKeyPR "Key_Escape" "\x1B"
+// Bail out of that.
+FocusKeyPR("Key_Escape" "\u{1B}")
 
-# Now we should have the first non-existent file still open.
-CheckFocusWindow "window1"
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist"
+// Now we should have the first non-existent file still open.
+CheckFocusWindow("window1")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist")
 
-# EOF
+// EOF

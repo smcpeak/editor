@@ -1,38 +1,38 @@
-# simple-text-ins.ev
-# Starting with an empty file, insert some text and edit it slightly.
+// simple-text-ins.ev
+// Starting with an empty file, insert some text and edit it slightly.
 
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_H" "h"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_E" "e"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_L" "l"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_L" "l"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_O" "o"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_S" "s"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_E" "e"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_C" "c"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_O" "o"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_N" "n"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_D" "d"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Up" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Right" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Right" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Space" " "
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_I" "i"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_N" "n"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_S" "s"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_E" "e"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_R" "r"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_T" "t"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_E" "e"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_D" "d"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Space" " "
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\x01"
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Key_Up" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" ""
-KeyPress "window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" ""
-Shortcut "window1.m_menuBar.editMenu.editCopy" "Ctrl+C"
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_H" "h")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_E" "e")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_L" "l")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_L" "l")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_O" "o")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_S" "s")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_E" "e")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_C" "c")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_O" "o")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_N" "n")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_D" "d")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Up" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Right" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Right" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Space" " ")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_I" "i")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_N" "n")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_S" "s")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_E" "e")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_R" "r")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_T" "t")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_E" "e")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_D" "d")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Space" " ")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Ctrl+Key_A" "\u{01}")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Up" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" "")
+KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Key_Down" "")
+Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 
-CheckClipboard "hello\nse inserted cond\n"
+CheckClipboard("hello\nse inserted cond\n")
 
-# EOF
+// EOF

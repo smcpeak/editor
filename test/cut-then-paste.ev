@@ -1,31 +1,31 @@
-# cut-then-paste.ev
-# Simple test of Ctrl+K then Ctrl+V restoring the line.
+// cut-then-paste.ev
+// Simple test of Ctrl+K then Ctrl+V restoring the line.
 
-# This sort of thing is tested at a lower level too, but this test
-# is sensitive to the interaction with the X clipboard and selection.
+// This sort of thing is tested at a lower level too, but this test
+// is sensitive to the interaction with the X clipboard and selection.
 
-# Test begins with an empty document.
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" ""
+// Test begins with an empty document.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "")
 
-# Type some text.
-FocusKeySequence "one"
-FocusKeyPR "Key_Return" "\r"
-FocusKeySequence "two"
-FocusKeyPR "Key_Return" "\r"
-FocusKeySequence "three"
-FocusKeyPR "Key_Return" "\r"
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "one\ntwo\nthree\n"
+// Type some text.
+FocusKeySequence("one")
+FocusKeyPR("Key_Return" "\r")
+FocusKeySequence("two")
+FocusKeyPR("Key_Return" "\r")
+FocusKeySequence("three")
+FocusKeyPR("Key_Return" "\r")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "one\ntwo\nthree\n")
 
-# Go to the line with "two".
-FocusKeyPR "Key_Up" ""
-FocusKeyPR "Key_Up" ""
+// Go to the line with "two".
+FocusKeyPR("Key_Up" "")
+FocusKeyPR("Key_Up" "")
 
-# Cut the line, then paste it back.
-Shortcut "window1.m_menuBar.editMenu.editKillLine" "Ctrl+K"
-Shortcut "window1.m_menuBar.editMenu.editPaste" "Ctrl+V"
+// Cut the line, then paste it back.
+Shortcut("window1.m_menuBar.editMenu.editKillLine" "Ctrl+K")
+Shortcut("window1.m_menuBar.editMenu.editPaste" "Ctrl+V")
 
-# The text should be as it was before.
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "one\ntwo\nthree\n"
+// The text should be as it was before.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "one\ntwo\nthree\n")
 
-# EOF
+// EOF

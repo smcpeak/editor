@@ -1,13 +1,13 @@
-# keysequence.ev
-# Test that FocusKeySequence works as intended.
+// keysequence.ev
+// Test that FocusKeySequence works as intended.
 
-CheckFocusWidget "window1.frame1.editorFrame.m_editorWidget"
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-FocusKeySequence "hello"
-FocusKeyPR "Key_Return" "\r"
-FocusKeySequence "there"
-FocusKeyPR "Key_Return" "\r"
+FocusKeySequence("hello")
+FocusKeyPR("Key_Return" "\r")
+FocusKeySequence("there")
+FocusKeyPR("Key_Return" "\r")
 
-CheckQuery "window1.frame1.editorFrame.m_editorWidget" "documentText" "hello\nthere\n"
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "hello\nthere\n")
 
-# EOF
+// EOF
