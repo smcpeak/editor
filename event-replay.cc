@@ -481,6 +481,15 @@ void EventReplay::replayCall(QRegularExpressionMatch &match)
   }
 
   // -------------------- checks --------------------
+  else if (funcName == "DumpObjectTree") {
+    BIND_ARGS1(path);
+
+    // This can be used during test development to get details about
+    // what is inside, e.g., some Qt-provided dialog box.
+    QWidget *widget = getObjectFromPath<QWidget>(path);
+    widget->dumpObjectTree();
+  }
+
   else if (funcName == "WaitUntilCheckQuery") {
     BIND_ARGS4(duration, receiver, state, expect);
 

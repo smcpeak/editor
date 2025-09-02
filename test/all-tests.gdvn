@@ -46,6 +46,7 @@
   [ "./editor.exe" "-ev=test/lsp-all-uses-not-open-file.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/undo-justify.ev" ]
   [ "./editor.exe" "-ev=test/apply-command-same-text.ev" "test/language-test.cc" ]
+  [ "./editor.exe" "-ev=test/apply-command-nonzero-exit.ev" "test/language-test.cc" ]
 
   // This test also touches `gets-modified.txt`.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]

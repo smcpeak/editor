@@ -1877,6 +1877,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   // queue.
   if (!runner.getErrorData().isEmpty()) {
     QMessageBox mb;
+    mb.setObjectName("commandErrorOutput");
     mb.setWindowTitle("Command Error Output");
     mb.setText(qstringb(
       "The command \"" << commandString <<
@@ -1887,6 +1888,7 @@ void EditorWindow::editApplyCommand() NOEXCEPT
   }
   else if (runner.getExitCode() != 0) {
     QMessageBox mb;
+    mb.setObjectName("commandExitCode");
     mb.setWindowTitle("Command Exit Code");
     mb.setText(qstringb(
       "The command \"" << commandString <<
