@@ -575,11 +575,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetCurrentRow") {
-    BIND_STRING_ARGS2(path, expect);
+    BIND_GDVALUE_ARGS2(path, expectP);
 
-    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
-    string actual = stringb(listWidget->currentRow());
-    CHECK_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path.stringGet());
+    int expect = expectP.integerGetAs<int>();
+    int actual = listWidget->currentRow();
+    CHECK_EQ("CheckListWidgetCurrentRow " << path.getValue());
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
