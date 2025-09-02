@@ -12,6 +12,7 @@
 
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/syserr.h"             // smbase::xsyserror
@@ -28,6 +29,7 @@
 // libc
 #include <string.h>                    // strcmp
 
+using namespace gdv;
 using namespace smbase;
 
 
@@ -50,6 +52,16 @@ EventRecorder::~EventRecorder()
 {
   this->flushOrdinaryKeyChars();
   QCoreApplication::instance()->removeEventFilter(this);
+}
+
+
+// TODO: If this works, add it to `GDValue`.
+static GDValue makeGDVTuple(
+  GDVSymbol tag, std::initializer_list<GDValue> elements)
+{
+  GDValue tuple(GDVK_TAGGED_TUPLE, tag);
+  tuple.tupleSet(GDVTuple(elements));
+  return tuple;
 }
 
 
@@ -85,10 +97,11 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
     else if (type == QEvent::MouseButtonPress) {
       if (QMouseEvent const *mouseEvent =
             dynamic_cast<QMouseEvent const *>(event)) {
-        this->recordEvent(stringb(
-          "MouseEvent " << doubleQuote(qObjectPath(receiver)) <<
-          " " << doubleQuote(toString(mouseEvent->buttons())) <<
-          " " << doubleQuote(toString(mouseEvent->pos()))));
+        this->recordEvent(makeGDVTuple("MouseEvent"_sym, {
+          qObjectPath(receiver),
+          toString(mouseEvent->buttons()),
+          toString(mouseEvent->pos()),
+        }));
       }
     }
     else if (type == QEvent::Resize) {
@@ -100,9 +113,10 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         if (EventReplayQueryable *queryable =
               dynamic_cast<EventReplayQueryable*>(receiver)) {
           if (queryable->wantResizeEventsRecorded()) {
-            this->recordEvent(stringb(
-              "ResizeEvent " << doubleQuote(qObjectPath(receiver)) <<
-              " " << doubleQuote(toString(resizeEvent->size()))));
+            this->recordEvent(makeGDVTuple("ResizeEvent"_sym, {
+              qObjectPath(receiver),
+              toString(resizeEvent->size()),
+            }));
           }
         }
       }
@@ -117,8 +131,9 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         // test and application, so I will automatically emit a check
         // during recording.  (I can then choose whether to keep it when
         // editing the test.)
-        this->recordEvent(stringb(
-          "CheckFocusWidget " << doubleQuote(qObjectPath(receiver))));
+        this->recordEvent(makeGDVTuple("CheckFocusWidget"_sym, {
+          qObjectPath(receiver),
+        }));
       }
     }
     else {
@@ -142,15 +157,17 @@ void EventRecorder::recordShortcutEvent(
 
       // If we record this as a Shortcut event, it will not work (for
       // unknown reasons).  So turn it into SetFocus.
-      this->recordEvent(stringb(
-        "SetFocus " << doubleQuote(qObjectPath(buddy))));
+      this->recordEvent(makeGDVTuple("SetFocus"_sym, {
+        qObjectPath(buddy),
+      }));
       return;
     }
   }
 
-  this->recordEvent(stringb(
-    "Shortcut " << doubleQuote(qObjectPath(receiver)) <<
-    " " << doubleQuote(shortcutEvent->key().toString())));
+  this->recordEvent(makeGDVTuple("Shortcut"_sym, {
+    qObjectPath(receiver),
+    toString(shortcutEvent->key().toString()),  // ->QString->std::string
+  }));
 }
 
 
@@ -200,7 +217,8 @@ void EventRecorder::recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent)
     return;
   }
 
-  string eventPrefix;
+  GDValue event(GDVK_TAGGED_TUPLE);
+
   if (receiver == QApplication::focusWidget()) {
     // Normally keypresses go to the focused widget, in which
     // case we can save a lot of noise by using the focus.
@@ -216,16 +234,19 @@ void EventRecorder::recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent)
     // press is followed immediately by release.  The release
     // event is important because, as it happens, that is when
     // I call selfCheck in the editor.
-    eventPrefix = "FocusKeyPR";
+    event.taggedContainerSetTag("FocusKeyPR"_sym);
   }
   else {
     // This happens, e.g., when interacting with the menus.
     // Focus in menus is a bit weird.
-    eventPrefix = stringb("KeyPress " << doubleQuote(qObjectPath(receiver)));
+    event.taggedContainerSetTag("KeyPress"_sym);
+    event.tupleAppend(qObjectPath(receiver));
   }
-  this->recordEvent(stringb(
-    eventPrefix << " " << doubleQuote(keysString(*keyEvent)) <<
-    " " << doubleQuote(keyEvent->text())));
+
+  event.tupleAppend(keysString(*keyEvent));
+  event.tupleAppend(toString(keyEvent->text()));
+
+  this->recordEvent(event);
 }
 
 
@@ -242,15 +263,17 @@ void EventRecorder::flushOrdinaryKeyChars()
   if (!keys.empty()) {
     m_ordinaryKeyChars.str("");
 
-    this->recordEvent(stringb("FocusKeySequence " << doubleQuote(keys)));
+    this->recordEvent(makeGDVTuple("FocusKeySequence"_sym, {
+      keys,
+    }));
   }
 }
 
 
-void EventRecorder::recordEvent(string const &ev)
+void EventRecorder::recordEvent(GDValue const &event)
 {
   this->flushOrdinaryKeyChars();
-  m_outStream << ev << endl;
+  m_outStream << event << endl;
 }
 
 

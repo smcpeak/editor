@@ -5,6 +5,7 @@
 #define EVENT_RECORDER_H
 
 // smbase
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/std-string-fwd.h"     // std::string
 
@@ -37,7 +38,7 @@ private:     // funcs
   void recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent);
   void recordOrdinaryKeyPress(char c);
   void flushOrdinaryKeyChars();
-  void recordEvent(std::string const &ev);
+  void recordEvent(gdv::GDValue const &event);
 
 public:      // funcs
   // Automatically installs itself as an event filter for
