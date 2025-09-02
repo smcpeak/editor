@@ -32,7 +32,7 @@
 #include "vfs-query-sync.h"                      // readFileSynchronously
 
 // smqtutil
-#include "smqtutil/gdvalue-qstring.h"            // toGDValue(QString)
+#include "smqtutil/gdvalue-qt.h"                 // toGDValue(QString)
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
 #include "smqtutil/qtutil.h"                     // toQString

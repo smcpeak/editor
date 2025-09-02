@@ -36,7 +36,7 @@
 #include "waiting-counter.h"                     // IncDecWaitingCounter
 
 // smqtutil
-#include "smqtutil/gdvalue-qrect.h"              // toGDValue(QRect)
+#include "smqtutil/gdvalue-qt.h"                 // toGDValue(QRect)
 #include "smqtutil/qhboxframe.h"                 // QHBoxFrame
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // CursorSetRestore, setTrueFrameGeometry
