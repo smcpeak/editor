@@ -440,6 +440,10 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         // Record events to seed a new test.
         m_recordInputEvents = true;
 
+        // Since this is preparatory to an automated test, which will
+        // not have user settings, turn them off here too.
+        useSettings = false;
+
         // Only use the fake server with record/replay
         m_lspIsFakeServer = true;
       }
