@@ -558,11 +558,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetCount") {
-    BIND_STRING_ARGS2(path, expect);
+    BIND_GDVALUE_ARGS2(path, expectP);
 
-    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
-    string actual = stringb(listWidget->count());
-    CHECK_EQ("CheckListWidgetCount " << doubleQuote(path));
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path.stringGet());
+    int expect = expectP.integerGetAs<int>();
+    int actual = listWidget->count();
+    CHECK_EQ("CheckListWidgetCount " << path.getValue());
   }
 
   else if (funcName == "CheckListWidgetContents") {
