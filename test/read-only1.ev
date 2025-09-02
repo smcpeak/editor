@@ -6,7 +6,7 @@ CheckLabel("window1.m_statusArea.m_filename" "untitled.txt")
 CheckFocusWindowTitle("untitled.txt - Editor")
 
 // Check that the read-only checkbox is off.
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "false")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" false)
 
 // Verify we can make a change and undo it.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
@@ -16,7 +16,7 @@ CheckLabel("window1.m_statusArea.m_filename" "untitled.txt")
 
 // Toggle the read-only flag.
 TriggerAction("window1.m_menuBar.fileMenu.fileToggleReadOnly")
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "true")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" true)
 
 // Try to make a change.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
@@ -27,7 +27,7 @@ FocusKeyPress("Key_Return" "\r")
 CheckFocusWindowTitle("untitled.txt - Editor")
 
 // Still read-only since we canceled that dialog.
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "true")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" true)
 
 // Do it again and this time say Yes.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")

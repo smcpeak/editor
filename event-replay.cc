@@ -625,11 +625,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckActionChecked") {
-    BIND_STRING_ARGS2(path, expect);
+    BIND_GDVALUE_ARGS2(path, expectP);
 
-    QAction *action = getObjectFromPath<QAction>(path);
-    string actual = (action->isChecked()? "true" : "false");
-    CHECK_EQ("CheckActionChecked " << doubleQuote(path));
+    QAction *action = getObjectFromPath<QAction>(path.stringGet());
+    bool expect = expectP.boolGet();
+    bool actual = action->isChecked();
+    CHECK_EQ("CheckActionChecked " << path.getValue());
   }
 
   else if (funcName == "CheckFocusWindowTitle") {

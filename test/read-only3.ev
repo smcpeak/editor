@@ -6,7 +6,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled.txt")
 
 // Not initially read-only.
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "false")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" false)
 
 // Enter some text.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_N" "n")
@@ -29,7 +29,7 @@ Shortcut("window1.m_menuBar" "Alt+F")
 KeyPress("window1.m_menuBar.fileMenu" "Key_N" "n")
 
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt")
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "false")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" false)
 
 // Enter some text there too.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_R" "r")
@@ -45,7 +45,7 @@ KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Return" "\r")
 
 // Mark it read-only.
 TriggerAction("window1.m_menuBar.fileMenu.fileToggleReadOnly")
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "true")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" true)
 
 // Verify it is read-only.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
@@ -62,7 +62,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled.txt")
 
 // Verify the menu item shows it is not read-only.
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "false")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" false)
 
 // Confirm we can edit it.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
@@ -78,7 +78,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName" "untitled2.txt")
 
 // It is read-only.
-CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" "true")
+CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" true)
 
 // Confirm it cannot be edited.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
