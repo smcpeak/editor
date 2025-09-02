@@ -325,27 +325,28 @@ static string getListWidgetContents(QListWidget *listWidget)
   parser.tupleGetValueAt(n).stringGet()
 
 
-// Bind 'arg1' to the single expected argument of a replay function.
-#define BIND_ARGS1(arg1)                       \
+// Bind 'arg1' to the single expected string argument of a replay
+// function.
+#define BIND_STRING_ARGS1(arg1)                \
   CHECK_NUM_ARGS(1);                           \
   string arg1 = GET_STRING_ARG(0) /* user ; */
 
-#define BIND_ARGS2(arg1, arg2)                 \
+#define BIND_STRING_ARGS2(arg1, arg2)          \
   CHECK_NUM_ARGS(2);                           \
   string arg1 = GET_STRING_ARG(0);             \
   string arg2 = GET_STRING_ARG(1) /* user ; */
 
-#define BIND_ARGS3(arg1, arg2, arg3)           \
+#define BIND_STRING_ARGS3(arg1, arg2, arg3)    \
   CHECK_NUM_ARGS(3);                           \
   string arg1 = GET_STRING_ARG(0);             \
   string arg2 = GET_STRING_ARG(1);             \
   string arg3 = GET_STRING_ARG(2) /* user ; */
 
-#define BIND_ARGS4(arg1, arg2, arg3, arg4)     \
-  CHECK_NUM_ARGS(4);                           \
-  string arg1 = GET_STRING_ARG(0);             \
-  string arg2 = GET_STRING_ARG(1);             \
-  string arg3 = GET_STRING_ARG(2);             \
+#define BIND_STRING_ARGS4(arg1, arg2, arg3, arg4) \
+  CHECK_NUM_ARGS(4);                              \
+  string arg1 = GET_STRING_ARG(0);                \
+  string arg2 = GET_STRING_ARG(1);                \
+  string arg3 = GET_STRING_ARG(2);                \
   string arg4 = GET_STRING_ARG(3) /* user ; */
 
 
@@ -373,7 +374,7 @@ void EventReplay::replayCall(GDValue const &command)
 
   // --------------- events/actions ---------------
   if (funcName == "KeyPress") {
-    BIND_ARGS3(receiver, keys, text);
+    BIND_STRING_ARGS3(receiver, keys, text);
 
     QCoreApplication::postEvent(
       getQObjectFromPath(receiver),
@@ -381,7 +382,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "FocusKeyPress") {
-    BIND_ARGS2(keys, text);
+    BIND_STRING_ARGS2(keys, text);
 
     QCoreApplication::postEvent(
       getFocusWidget(funcName),
@@ -389,7 +390,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "FocusKeyRelease") {
-    BIND_ARGS2(keys, text);
+    BIND_STRING_ARGS2(keys, text);
 
     QCoreApplication::postEvent(
       getFocusWidget(funcName),
@@ -397,7 +398,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "FocusKeyPR") {
-    BIND_ARGS2(keys, text);
+    BIND_STRING_ARGS2(keys, text);
 
     QWidget *focusWidget = getFocusWidget(funcName);
 
@@ -413,7 +414,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "FocusKeySequence") {
-    BIND_ARGS1(keys);
+    BIND_STRING_ARGS1(keys);
 
     // Enqueue the keys in reverse order.
     for (int i = keys.length()-1; i >= 0; i--) {
@@ -424,7 +425,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "Shortcut") {
-    BIND_ARGS2(receiver, keys);
+    BIND_STRING_ARGS2(receiver, keys);
 
     QCoreApplication::postEvent(
       getQObjectFromPath(receiver),
@@ -436,7 +437,7 @@ void EventReplay::replayCall(GDValue const &command)
   // "Shortcut" action.
 
   else if (funcName == "SetFocus") {
-    BIND_ARGS1(widget);
+    BIND_STRING_ARGS1(widget);
 
     // Give the named widget the focus.
     //
@@ -448,7 +449,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "ResizeEvent") {
-    BIND_ARGS2(receiver, size);
+    BIND_STRING_ARGS2(receiver, size);
 
     resizeChildWidget(
       getObjectFromPath<QWidget>(receiver),
@@ -456,20 +457,20 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "TriggerAction") {
-    BIND_ARGS1(path);
+    BIND_STRING_ARGS1(path);
 
     QAction *action = getObjectFromPath<QAction>(path);
     action->trigger();
   }
 
   else if (funcName == "Sleep") {
-    BIND_ARGS1(duration);
+    BIND_STRING_ARGS1(duration);
 
     sleepForMS(intFromString(duration));
   }
 
   else if (funcName == "ClickButton") {
-    BIND_ARGS1(path);
+    BIND_STRING_ARGS1(path);
 
     QAbstractButton *button = getObjectFromPath<QAbstractButton>(path);
 
@@ -487,7 +488,7 @@ void EventReplay::replayCall(GDValue const &command)
 
   // -------------------- checks --------------------
   else if (funcName == "DumpObjectTree") {
-    BIND_ARGS1(path);
+    BIND_STRING_ARGS1(path);
 
     // This can be used during test development to get details about
     // what is inside, e.g., some Qt-provided dialog box.
@@ -496,14 +497,14 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "WaitUntilCheckQuery") {
-    BIND_ARGS4(duration, receiver, state, expect);
+    BIND_STRING_ARGS4(duration, receiver, state, expect);
 
     this->waitUntilCheckQuery(
       intFromString(duration), receiver, state, expect);
   }
 
   else if (funcName == "CheckQuery") {
-    BIND_ARGS3(receiver, state, expect);
+    BIND_STRING_ARGS3(receiver, state, expect);
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
     string actual = q->eventReplayQuery(state);
@@ -512,7 +513,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckLabel") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
@@ -520,7 +521,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckLabelMatches") {
-    BIND_ARGS2(path, expectRE);
+    BIND_STRING_ARGS2(path, expectRE);
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     string actual = toString(label->text());
@@ -528,7 +529,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckComboBoxText") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QComboBox *cbox = getObjectFromPath<QComboBox>(path);
     string actual = toString(cbox->currentText());
@@ -536,7 +537,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckLineEditText") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QLineEdit *lineEdit = getObjectFromPath<QLineEdit>(path);
     string actual = toString(lineEdit->text());
@@ -544,7 +545,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetCount") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     string actual = stringb(listWidget->count());
@@ -552,7 +553,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetContents") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     string actual = getListWidgetContents(listWidget);
@@ -560,7 +561,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetCurrentRow") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     string actual = stringb(listWidget->currentRow());
@@ -568,7 +569,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
-    BIND_ARGS4(objPath, row, col, expectRE);
+    BIND_STRING_ARGS4(objPath, row, col, expectRE);
 
     QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
     int r = intFromString(row);
@@ -581,7 +582,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckMessageBoxDetailsText") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QMessageBox *mb = getObjectFromPath<QMessageBox>(path);
 
@@ -594,14 +595,14 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckClipboard") {
-    BIND_ARGS1(expect);
+    BIND_STRING_ARGS1(expect);
 
     string actual = toString(QApplication::clipboard()->text());
     CHECK_EQ("CheckClipboard");
   }
 
   else if (funcName == "CheckActionChecked") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QAction *action = getObjectFromPath<QAction>(path);
     string actual = (action->isChecked()? "true" : "false");
@@ -609,7 +610,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckFocusWindowTitle") {
-    BIND_ARGS1(expect);
+    BIND_STRING_ARGS1(expect);
 
     checkFocusWorkaround();
     string actual =
@@ -618,7 +619,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckFocusWindowTitleMatches") {
-    BIND_ARGS1(expectRE);
+    BIND_STRING_ARGS1(expectRE);
 
     checkFocusWorkaround();
     string actual =
@@ -627,7 +628,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckWindowTitle") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QWidget *widget = getObjectFromPath<QWidget>(path);
     string actual = toString(widget->window()->windowTitle());
@@ -635,7 +636,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckFocusWindow") {
-    BIND_ARGS1(expect);
+    BIND_STRING_ARGS1(expect);
 
     checkFocusWorkaround();
     string actual = qObjectPath(getFocusWidget(funcName)->window());
@@ -643,7 +644,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckFocusWidget") {
-    BIND_ARGS1(expect);
+    BIND_STRING_ARGS1(expect);
 
     checkFocusWorkaround();
     string actual = qObjectPath(getFocusWidget(funcName));
@@ -651,7 +652,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckImage") {
-    BIND_ARGS3(path, what, expectFname);
+    BIND_STRING_ARGS3(path, what, expectFname);
 
     QImage expectImage;
     if (!expectImage.load(toQString(expectFname), "PNG")) {
@@ -678,7 +679,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckSize") {
-    BIND_ARGS2(path, expect);
+    BIND_STRING_ARGS2(path, expect);
 
     QWidget *widget = getObjectFromPath<QWidget>(path);
     string actual = toString(widget->size());
@@ -686,7 +687,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "TouchFile") {
-    BIND_ARGS1(fname);
+    BIND_STRING_ARGS1(fname);
 
     std::int64_t beforeModUnixTime = 0;
     getFileModificationTime(fname.c_str(), beforeModUnixTime /*OUT*/);
