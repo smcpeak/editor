@@ -201,6 +201,7 @@ KnownDocumentType detectDocumentType(DocumentName const &docName)
       "c",
       "cc",
       "cpp",
+      "ev",        // Also GDVN.
       "gr",
       "i",
       "ii",
@@ -223,7 +224,6 @@ KnownDocumentType detectDocumentType(DocumentName const &docName)
     }
 
     static char const * const hashCommentExts[] = {
-      "ev",
       "pl",
       "sh",
     };

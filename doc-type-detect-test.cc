@@ -49,6 +49,8 @@ void test_detectDocumentType()
   testOne_detectFileType("foo.patch", KDT_DIFF);
   testOne_detectFileType("foo.patch.cc", KDT_C);
 
+  testOne_detectFileType("some-test.ev", KDT_C);
+
   testOne_detectDocumentType(cmdDocName("differences"), KDT_UNKNOWN);
   testOne_detectDocumentType(cmdDocName("diff ere nces"), KDT_DIFF);
   testOne_detectDocumentType(cmdDocName("git diff ere nces"), KDT_DIFF);
