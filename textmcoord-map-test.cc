@@ -197,7 +197,7 @@ public:
   TextMCoord adjustMC_deleteLines(TextMCoord mc, LineIndex line, LineCount count) const
   {
     if (cc::le_lt(line, mc.m_line, line+count)) {
-      // The endpoint is in the deleted region, so its column gets
+      // The endpoint is in the deleted region, so its byte index gets
       // zeroed.
       mc.m_byteIndex.set(0);
     }
@@ -1363,8 +1363,7 @@ LineIndex randomLine()
   return LineIndex(sm_random(20));
 }
 
-// TODO: Straighten out the terminology.  These are not columns.
-ByteIndex randomColumn()
+ByteIndex randomByteIndex()
 {
   return ByteIndex(sm_random(40));
 }
@@ -1392,20 +1391,20 @@ void randomInsertEntry(MapPair &m)
   int spanID = m.numEntries() + 1;
 
   LineIndex startLine = randomLine();
-  ByteIndex startCol = randomColumn();
+  ByteIndex startByteIndex = randomByteIndex();
 
   LineIndex endLine;
-  ByteIndex endCol;
+  ByteIndex endByteIndex;
 
   if (sm_random(7) == 0) {
     // Multi-line (rare).
     endLine = startLine + LineDifference(1 + sm_random(2));
-    endCol = randomColumn();
+    endByteIndex = randomByteIndex();
   }
   else {
     // Single-line (common).
     endLine = startLine;
-    endCol = randomColumn() + startCol;
+    endByteIndex = randomByteIndex() + startByteIndex;
   }
 
   // Append lines if needed to allow the entry to be added.
@@ -1413,8 +1412,8 @@ void randomInsertEntry(MapPair &m)
 
   m.insertEntry(MapPair::DocEntry(
     TextMCoordRange(
-      TextMCoord(startLine, startCol),
-      TextMCoord(endLine, endCol)
+      TextMCoord(startLine, startByteIndex),
+      TextMCoord(endLine, endByteIndex)
     ),
     spanID));
 
@@ -1462,13 +1461,13 @@ void randomEdit(MapPair &m)
   else if (c.check(200)) {
     LineIndex line = randomLine();
     ensureValidLineIndex(m, line);
-    m.insertLineBytes(TextMCoord(line, randomColumn()), randomByteCount());
+    m.insertLineBytes(TextMCoord(line, randomByteIndex()), randomByteCount());
   }
 
   else if (c.check(200)) {
     LineIndex line = randomLine();
     ensureValidLineIndex(m, line);
-    m.deleteLineBytes(TextMCoord(line, randomColumn()), randomByteCount());
+    m.deleteLineBytes(TextMCoord(line, randomByteIndex()), randomByteCount());
   }
 
   else {
