@@ -141,17 +141,27 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
 void EventRecorder::recordShortcutEvent(
   QObject *receiver, QShortcutEvent const *shortcutEvent)
 {
-  if (QLabel *label = dynamic_cast<QLabel*>(receiver)) {
-    TRACE1("Shortcut receiver is a label: " << label->objectName());
-    if (QWidget *buddy = label->buddy()) {
-      TRACE1("Its buddy is: " << buddy->objectName());
+  TRACE1_GDVN_EXPRS("recordShortcutEvent",
+    shortcutEvent->key().toString(),
+    shortcutEvent->shortcutId(),
+    shortcutEvent->isAmbiguous());
 
-      // If we record this as a Shortcut event, it will not work (for
-      // unknown reasons).  So turn it into SetFocus.
-      this->recordEvent(GDVTaggedTuple("SetFocus"_sym, {
-        qObjectPath(buddy),
-      }));
-      return;
+  // I've fixed the problem this was meant to address on the replay
+  // side, but I'll keep this code around in case a related problem
+  // reappears.
+  if (false) {
+    if (QLabel *label = dynamic_cast<QLabel*>(receiver)) {
+      TRACE1("Shortcut receiver is a label: " << label->objectName());
+      if (QWidget *buddy = label->buddy()) {
+        TRACE1("Its buddy is: " << buddy->objectName());
+
+        // If we record this as a Shortcut event, it will not work (for
+        // unknown reasons).  So turn it into SetFocus.
+        this->recordEvent(GDVTaggedTuple("SetFocus"_sym, {
+          qObjectPath(buddy),
+        }));
+        return;
+      }
     }
   }
 

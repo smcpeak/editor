@@ -123,6 +123,11 @@ private:     // funcs
   // Sleep for 'ms' milliseconds while pumping the event queue.
   void sleepForMS(int ms);
 
+  // Replay a "Shortcut" event.
+  void replayShortcut(
+    std::string const &receiverPath,
+    std::string const &keys);
+
   // Replay an ordinary typing event.
   void replayFocusKey(char c);
 

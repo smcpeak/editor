@@ -428,11 +428,9 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "Shortcut") {
-    BIND_STRING_ARGS2(receiver, keys);
+    BIND_STRING_ARGS2(receiverPath, keys);
 
-    QCoreApplication::postEvent(
-      getQObjectFromPath(receiver),
-      getShortcutEventFromString(keys));
+    replayShortcut(receiverPath, keys);
   }
 
   // I tried creating a "FocusShortcut", but it does not work
@@ -442,12 +440,15 @@ void EventReplay::replayCall(GDValue const &command)
   else if (funcName == "SetFocus") {
     BIND_STRING_ARGS1(widget);
 
-    // Give the named widget the focus.
-    //
-    // Normally, we would want this to happen as a consequence of the
-    // recorded events, but for some reason, replaying a shortcut event
-    // that utilizes a buddy control has no effect.  The event recorder
-    // module automatically turns those into SetFocus events.
+    /* Give the named widget the focus.
+
+       Ordinarilly, we would let focus change in response to user input.
+       This command was originally created as a workaround for a problem
+       with buddy control focus changes.  I think I've solved that
+       problem in the Shortcut event handler, but I will keep SetFocus
+       as a potential diagnostic tool, and because some tests are still
+       using it, which seems harmless.
+    */
     getObjectFromPath<QWidget>(widget)->setFocus();
   }
 
@@ -735,6 +736,33 @@ void EventReplay::sleepForMS(int ms)
   IncDecWaitingCounter idwc;
   sleepWhilePumpingEvents(ms);
   TRACE("EventReplay", "done sleeping");
+}
+
+
+void EventReplay::replayShortcut(
+  std::string const &receiverPath,
+  std::string const &keys)
+{
+  QObject *receiverObject = getQObjectFromPath(receiverPath);
+
+  if (QLabel *label = dynamic_cast<QLabel*>(receiverObject)) {
+    TRACE("EventReplay",
+      "Shortcut receiver is a label: " << label->objectName());
+
+    if (QWidget *buddy = label->buddy()) {
+      TRACE("EventReplay", "Its buddy is: " << buddy->objectName());
+
+      // If we replay this as a Shortcut event, it will not work (for
+      // unknown reasons).  So manually set the focus.
+      buddy->setFocus();
+      return;
+    }
+  }
+
+  // Normal shortcut replay.
+  QCoreApplication::postEvent(
+    receiverObject,
+    getShortcutEventFromString(keys));
 }
 
 
