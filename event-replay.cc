@@ -21,6 +21,7 @@
 // smbase
 #include "smbase/c-string-reader.h"    // parseQuotedCString
 #include "smbase/exc.h"                // smbase::{XBase, XMessage}, EXN_CONTEXT
+#include "smbase/gdvalue-tuple.h"      // gdv::gdvpToTuple
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpTo}
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/overflow.h"           // safeToInt
@@ -57,6 +58,7 @@
 #include <optional>                    // std::optional
 #include <regex>                       // std::regex_search
 #include <string>                      // std::string, getline
+#include <tuple>                       // std::tuple
 #include <typeinfo>                    // typeid
 
 // libc
@@ -326,25 +328,6 @@ static string getListWidgetContents(QListWidget *listWidget)
   parser.tupleGetValueAt(n).stringGet()
 
 
-// Bind `arg1` to a (parser for) the single argument of a replay
-// function.
-#define BIND_GDVALUE_ARGS1(arg1)                              \
-  CHECK_NUM_ARGS(1);                                          \
-  GDValueParser arg1 = parser.tupleGetValueAt(0) /* user ; */
-
-#define BIND_GDVALUE_ARGS2(arg1, arg2)                        \
-  CHECK_NUM_ARGS(2);                                          \
-  GDValueParser arg1 = parser.tupleGetValueAt(0);             \
-  GDValueParser arg2 = parser.tupleGetValueAt(1) /* user ; */
-
-#define BIND_GDVALUE_ARGS4(arg1, arg2, arg3, arg4)            \
-  CHECK_NUM_ARGS(4);                                          \
-  GDValueParser arg1 = parser.tupleGetValueAt(0);             \
-  GDValueParser arg2 = parser.tupleGetValueAt(1);             \
-  GDValueParser arg3 = parser.tupleGetValueAt(2);             \
-  GDValueParser arg4 = parser.tupleGetValueAt(3) /* user ; */
-
-
 // Bind 'arg1' to the single expected string argument of a replay
 // function.
 #define BIND_STRING_ARGS1(arg1)                \
@@ -469,11 +452,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "ResizeEvent") {
-    BIND_GDVALUE_ARGS2(receiver, size);
+    auto [receiver, size] =
+      gdvpToTuple<std::string, QSize>(parser);
 
     resizeChildWidget(
-      getObjectFromPath<QWidget>(receiver.stringGet()),
-      gdvpTo<QSize>(size));
+      getObjectFromPath<QWidget>(receiver),
+      size);
   }
 
   else if (funcName == "TriggerAction") {
@@ -484,9 +468,10 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "Sleep") {
-    BIND_GDVALUE_ARGS1(duration);
+    auto [duration] =
+      gdvpToTuple<int>(parser);
 
-    sleepForMS(duration.smallIntegerGet());
+    sleepForMS(duration);
   }
 
   else if (funcName == "ClickButton") {
@@ -565,12 +550,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetCount") {
-    BIND_GDVALUE_ARGS2(path, expectP);
+    auto [path, expect] =
+      gdvpToTuple<std::string, int>(parser);
 
-    QListWidget *listWidget = getObjectFromPath<QListWidget>(path.stringGet());
-    int expect = expectP.integerGetAs<int>();
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     int actual = listWidget->count();
-    CHECK_EQ("CheckListWidgetCount " << path.getValue());
+    CHECK_EQ("CheckListWidgetCount " << doubleQuote(path));
   }
 
   else if (funcName == "CheckListWidgetContents") {
@@ -582,25 +567,23 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetCurrentRow") {
-    BIND_GDVALUE_ARGS2(path, expectP);
+    auto [path, expect] =
+      gdvpToTuple<std::string, int>(parser);
 
-    QListWidget *listWidget = getObjectFromPath<QListWidget>(path.stringGet());
-    int expect = expectP.integerGetAs<int>();
+    QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
     int actual = listWidget->currentRow();
-    CHECK_EQ("CheckListWidgetCurrentRow " << path.getValue());
+    CHECK_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
   }
 
   else if (funcName == "CheckTableWidgetCellMatches") {
-    BIND_GDVALUE_ARGS4(objPath, row, col, expectREP);
+    auto [objPath, r, c, expectRE] =
+      gdvpToTuple<std::string, int, int, std::string>(parser);
 
-    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath.stringGet());
-    int r = row.integerGetAs<int>();
-    int c = col.integerGetAs<int>();
-    string expectRE = expectREP.stringGet();
+    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
     QTableWidgetItem *item = table->item(r, c);
     xassert(item);
     string actual = toString(item->text());
-    CHECK_RE_MATCH("CheckTableWidgetCellMatches " << objPath.getValue() <<
+    CHECK_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
                    " " << r << " " << c);
   }
 
@@ -625,12 +608,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckActionChecked") {
-    BIND_GDVALUE_ARGS2(path, expectP);
+    auto [path, expect] =
+      gdvpToTuple<std::string, bool>(parser);
 
-    QAction *action = getObjectFromPath<QAction>(path.stringGet());
-    bool expect = expectP.boolGet();
+    QAction *action = getObjectFromPath<QAction>(path);
     bool actual = action->isChecked();
-    CHECK_EQ("CheckActionChecked " << path.getValue());
+    CHECK_EQ("CheckActionChecked " << doubleQuote(path));
   }
 
   else if (funcName == "CheckFocusWindowTitle") {
@@ -703,12 +686,12 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckSize") {
-    BIND_GDVALUE_ARGS2(path, expectP);
+    auto [path, expect] =
+      gdvpToTuple<std::string, QSize>(parser);
 
-    QWidget *widget = getObjectFromPath<QWidget>(path.stringGet());
-    QSize expect(gdvpTo<QSize>(expectP));
+    QWidget *widget = getObjectFromPath<QWidget>(path);
     QSize actual = widget->size();
-    CHECK_EQ("CheckSize " << path.getValue());
+    CHECK_EQ("CheckSize " << doubleQuote(path));
   }
 
   else if (funcName == "TouchFile") {
