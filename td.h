@@ -7,9 +7,11 @@
 #include "td-fwd.h"                    // fwds for this module
 
 // editor
+#include "byte-count.h"                // ByteCount
 #include "history.h"                   // HE_group
-#include "line-count.h"                // PositiveLineCount, LineCount
+#include "line-count.h"                // LineCount
 #include "line-index.h"                // LineIndex
+#include "positive-line-count.h"       // PositiveLineCount
 #include "range-text-repl-fwd.h"       // RangeTextReplacement [n]
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "td-version-number.h"         // TD_VersionNumber
@@ -149,25 +151,26 @@ public:      // funcs
   bool validLine(LineIndex line) const                       { return m_core.validLine(line); }
   LineIndex lastLineIndex() const                            { return m_core.lastLineIndex(); }
   bool isEmptyLine(LineIndex line) const                     { return m_core.isEmptyLine(line); }
-  int lineLengthBytes(LineIndex line) const                  { return m_core.lineLengthBytes(line); }
+  ByteCount lineLengthBytes(LineIndex line) const            { return m_core.lineLengthBytes(line); }
+  ByteIndex lineLengthByteIndex(LineIndex line) const        { return m_core.lineLengthByteIndex(line); }
   bool validCoord(TextMCoord tc) const                       { return m_core.validCoord(tc); }
   bool validRange(TextMCoordRange const &range) const        { return m_core.validRange(range); }
   TextMCoord beginCoord() const                              { return m_core.beginCoord(); }
   TextMCoord endCoord() const                                { return m_core.endCoord(); }
   TextMCoord lineBeginCoord(LineIndex line) const            { return m_core.lineBeginCoord(line); }
   TextMCoord lineEndCoord(LineIndex line) const              { return m_core.lineEndCoord(line); }
-  int maxLineLengthBytes() const                             { return m_core.maxLineLengthBytes(); }
+  ByteCount maxLineLengthBytes() const                       { return m_core.maxLineLengthBytes(); }
   LineCount numLinesExceptFinalEmpty() const                 { return m_core.numLinesExceptFinalEmpty(); }
-  bool walkCoordBytes(TextMCoord &tc, int distance) const    { return m_core.walkCoordBytes(tc, distance); }
-  int countBytesInRange(TextMCoordRange const &range) const  { return m_core.countBytesInRange(range); }
+  bool walkCoordBytes(TextMCoord &tc, ByteDifference distance) const { return m_core.walkCoordBytes(tc, distance); }
+  ByteCount countBytesInRange(TextMCoordRange const &range) const { return m_core.countBytesInRange(range); }
   bool adjustMCoord(TextMCoord /*INOUT*/ &tc) const          { return m_core.adjustMCoord(tc); }
   bool adjustMCoordRange(TextMCoordRange /*INOUT*/ &range) const { return m_core.adjustMCoordRange(range); }
-  void getPartialLine(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getPartialLine(tc, dest, numBytes); }
-  bool getTextSpanningLines(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const { return m_core.getTextSpanningLines(tc, dest, numBytes); }
+  void getPartialLine(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const { return m_core.getPartialLine(tc, dest, numBytes); }
+  bool getTextSpanningLines(TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const { return m_core.getTextSpanningLines(tc, dest, numBytes); }
   void getTextForRange(TextMCoordRange const &range, ArrayStack<char> /*INOUT*/ &dest) const { m_core.getTextForRange(range, dest); }
   void getWholeLine(LineIndex line, ArrayStack<char> /*INOUT*/ &dest) const { return m_core.getWholeLine(line, dest); }
-  int countLeadingSpacesTabs(LineIndex line) const           { return m_core.countLeadingSpacesTabs(line); }
-  int countTrailingSpacesTabs(LineIndex line) const          { return m_core.countTrailingSpacesTabs(line); }
+  ByteCount countLeadingSpacesTabs(LineIndex line) const     { return m_core.countLeadingSpacesTabs(line); }
+  ByteCount countTrailingSpacesTabs(LineIndex line) const    { return m_core.countTrailingSpacesTabs(line); }
   TD_VersionNumber getVersionNumber() const                  { return m_core.getVersionNumber(); }
 
   // This is a modification of sorts, but does not need undo/redo.
@@ -215,18 +218,18 @@ public:      // funcs
   // ------------- modify document, appending to history -----------
   // Insert 'text' at 'tc'.  'text' may contain newline characters.
   // 'tc' must be valid for the document.
-  void insertAt(TextMCoord tc, char const *text, int textLen);
+  void insertAt(TextMCoord tc, char const *text, ByteCount textLen);
 
   // Delete 'byteCount' bytes at (to the right of) 'tc'.  This
   // may span lines.  Each end-of-line counts as one byte.
   // 'tc' must be valid for the document.
-  void deleteAt(TextMCoord tc, int byteCount);
+  void deleteAt(TextMCoord tc, ByteCount byteCount);
 
   // Delete text specified by a range.
   void deleteTextRange(TextMCoordRange const &range);
 
   // Convenience functions to append to the end of the document.
-  void appendText(char const *text, int textLen);
+  void appendText(char const *text, ByteCount textLen);
   void appendCStr(char const *s);
   void appendString(string const &s);
 
@@ -318,7 +321,7 @@ public:      // types
       : m_iter(td.getCore(), line)     {}
     ~LineIterator()                    {}
     bool has() const                   { return m_iter.has(); }
-    int byteOffset() const             { return m_iter.byteOffset(); }
+    ByteIndex byteOffset() const       { return m_iter.byteOffset(); }
     int byteAt() const                 { return m_iter.byteAt(); }
     void advByte()                     { return m_iter.advByte(); }
   };

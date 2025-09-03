@@ -3,6 +3,9 @@
 
 #include "history.h"                   // this module
 
+#include "byte-count.h"                // ByteCount, memcpyBC
+#include "byte-difference.h"           // ByteDifference
+
 #include "smbase/array.h"              // Array
 #include "smbase/strutil.h"            // encodeWithEscapes
 
@@ -32,14 +35,14 @@ HistoryElt::~HistoryElt()
 
 // ------------------------ HE_text ----------------------
 HE_text::HE_text(TextMCoord tc_, bool i,
-                 char const *t, int len)
+                 char const *t, ByteCount len)
   : tc(tc_),
     insertion(i),
-    text(len)
+    text(len.get())
 {
   if (len > 0) {
-    memcpy(text.getArrayNC(), t, len);
-    text.setLength(len);
+    memcpyBC(text.getArrayNC(), t, len);
+    text.setLength(len.get());
   }
 }
 
@@ -102,7 +105,7 @@ STATICDEF void HE_text::insert(
       }
 
       // length of this segment
-      int len = nl-p;
+      ByteCount len(nl - p);
 
       // insert this text at line/col
       buf.insertText(tc, p, len);
@@ -113,13 +116,14 @@ STATICDEF void HE_text::insert(
         // if there is text beyond 'col' on 'line-1', then that text
         // gets floated down to the end of the insertion
         if (tc.m_line==begin.m_line &&     // optimization: can only happen on first line
-            tc.m_byteIndex < buf.lineLengthBytes(tc.m_line)) {
+            tc.m_byteIndex < buf.lineLengthByteIndex(tc.m_line)) {
           // this can only happen on the first line of the insertion
           // procedure, so check that we don't already have excess
           xassert(excess.length() == 0);
 
           // get the excess
-          int excessLength = buf.lineLengthBytes(tc.m_line) - tc.m_byteIndex;
+          ByteCount excessLength(
+            buf.lineLengthByteIndex(tc.m_line) - tc.m_byteIndex);
           buf.getPartialLine(tc, excess, excessLength);
           xassert(excess.length() == excessLength);
 
@@ -129,7 +133,7 @@ STATICDEF void HE_text::insert(
 
         ++tc.m_line;
         buf.insertLine(tc.m_line);
-        tc.m_byteIndex = 0;
+        tc.m_byteIndex.set(0);
         len++;   // so we skip '\n' too
       }
 
@@ -140,7 +144,7 @@ STATICDEF void HE_text::insert(
 
     // insert the floated excess text, if any
     if (excess.allocatedSize() > 0) {
-      buf.insertText(tc, excess.getArray(), excess.length());
+      buf.insertText(tc, excess.getArray(), ByteCount(excess.length()));
     }
   }
 
@@ -156,7 +160,8 @@ STATICDEF void HE_text::insert(
     // check correspondence between the text in the event record and
     // what's in the buffer, without modifying the buffer yet
     ArrayStack<char> actualText(text.length());
-    if (!buf.getTextSpanningLines(tc, actualText, text.length())) {
+    if (!buf.getTextSpanningLines(tc, actualText,
+                                  ByteCount(text.length()))) {
       deletionMismatch();      // span isn't valid
     }
     if (0!=memcmp(text.getArray(), actualText.getArray(), text.length())) {
@@ -177,7 +182,7 @@ STATICDEF void HE_text::insert(
       }
 
       // length of this segment
-      int len = nl-p;
+      ByteCount len(nl - p);
 
       // delete the segment
       buf.deleteTextBytes(tc, len);
@@ -197,7 +202,7 @@ STATICDEF void HE_text::insert(
           // now on we can work with whole deleted lines, but remember
           // that there's a pending line splice
           ++tc.m_line;
-          tc.m_byteIndex=0;
+          tc.m_byteIndex.set(0);
           pendingSplice++;
         }
         len++;   // so we skip '\n' too
@@ -212,8 +217,8 @@ STATICDEF void HE_text::insert(
       xassert(tc.m_byteIndex == 0);   // it's this entire line that goes
 
       // grab this line's contents
-      int spliceLen = buf.lineLengthBytes(tc.m_line);
-      ArrayStack<char> splice(spliceLen);
+      ByteCount spliceLen = buf.lineLengthBytes(tc.m_line);
+      ArrayStack<char> splice(spliceLen.get());
       buf.getPartialLine(tc, splice, spliceLen);
 
       // blow it away
@@ -222,7 +227,7 @@ STATICDEF void HE_text::insert(
 
       // move up to end of previous line
       --tc.m_line;
-      tc.m_byteIndex = buf.lineLengthBytes(tc.m_line);
+      tc.m_byteIndex = buf.lineLengthByteIndex(tc.m_line);
 
       // append splice text
       buf.insertText(tc, splice.getArray(), spliceLen);
@@ -231,13 +236,13 @@ STATICDEF void HE_text::insert(
 }
 
 
-void HE_text::computeText(TextDocumentCore const &buf, int count)
+void HE_text::computeText(TextDocumentCore const &buf, ByteCount count)
 {
   xassert(insertion == false);
   xassert(text.isEmpty());
   xassert(buf.validCoord(tc));
 
-  text.setAllocatedSize(count);
+  text.setAllocatedSize(count.get());
   if (!buf.getTextSpanningLines(tc, text, count)) {
     xfailure("deletion span is not entirely within defined text area");
   }

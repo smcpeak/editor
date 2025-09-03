@@ -42,6 +42,9 @@ public:      // methods
   // Conversion from `LineCount` is safe.
   explicit LineIndex(LineCount value);
 
+  // TODO: Revise my implicit conversions for Line measures to be like
+  // the ones for Byte measures.
+
   // Convert to line number by adding one.
   LineNumber toLineNumber() const;
 

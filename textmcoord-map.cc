@@ -70,8 +70,8 @@ int TextMCoordMap::DocEntry::compareTo(DocEntry const &b) const
 
 // ----------------------------- LineEntry -----------------------------
 TextMCoordMap::LineEntry::LineEntry(
-  std::optional<int> startByteIndex,
-  std::optional<int> endByteIndex,
+  std::optional<ByteIndex> startByteIndex,
+  std::optional<ByteIndex> endByteIndex,
   Value value)
   : m_startByteIndex(startByteIndex),
     m_endByteIndex(endByteIndex),
@@ -138,8 +138,8 @@ int TextMCoordMap::LineEntry::compareTo(LineEntry const &b) const
 
 // -------------------------- SingleLineSpan ---------------------------
 TextMCoordMap::SingleLineSpan::SingleLineSpan(
-  int startByteIndex,
-  int endByteIndex,
+  ByteIndex startByteIndex,
+  ByteIndex endByteIndex,
   Value value)
   : m_startByteIndex(startByteIndex),
     m_endByteIndex(endByteIndex),
@@ -180,7 +180,7 @@ int TextMCoordMap::SingleLineSpan::compareTo(SingleLineSpan const &b) const
 
 
 // ----------------------------- Boundary ------------------------------
-TextMCoordMap::Boundary::Boundary(int byteIndex, Value value)
+TextMCoordMap::Boundary::Boundary(ByteIndex byteIndex, Value value)
   : m_byteIndex(byteIndex),
     m_value(value)
 {
@@ -321,7 +321,7 @@ public:
 };
 
 
-void TextMCoordMap::LineData::insertBytes(int insStart, int lengthBytes)
+void TextMCoordMap::LineData::insertBytes(ByteIndex insStart, ByteCount lengthBytes)
 {
   insertBytes_spans(insStart, lengthBytes);
 
@@ -331,7 +331,7 @@ void TextMCoordMap::LineData::insertBytes(int insStart, int lengthBytes)
 
 
 void TextMCoordMap::LineData::insertBytes_spans(
-  int insStart, int lengthBytes)
+  ByteIndex insStart, ByteCount lengthBytes)
 {
   DelayedSetChanges<SingleLineSpan> changes;
 
@@ -379,8 +379,8 @@ void TextMCoordMap::LineData::insertBytes_spans(
 
 /*static*/ void TextMCoordMap::LineData::insertBytes_boundaries(
   std::set<Boundary> &boundaries,
-  int insStart,
-  int lengthBytes)
+  ByteIndex insStart,
+  ByteCount lengthBytes)
 {
   DelayedSetChanges<Boundary> changes;
 
@@ -425,7 +425,7 @@ void TextMCoordMap::LineData::insertBytes_spans(
 }
 
 
-void TextMCoordMap::LineData::deleteBytes(int delStart, int lengthBytes)
+void TextMCoordMap::LineData::deleteBytes(ByteIndex delStart, ByteCount lengthBytes)
 {
   deleteBytes_spans(delStart, lengthBytes);
 
@@ -435,11 +435,11 @@ void TextMCoordMap::LineData::deleteBytes(int delStart, int lengthBytes)
 
 
 void TextMCoordMap::LineData::deleteBytes_spans(
-  int delStart, int lengthBytes)
+  ByteIndex delStart, ByteCount lengthBytes)
 {
   DelayedSetChanges<SingleLineSpan> changes;
 
-  int delEnd = delStart + lengthBytes;
+  ByteIndex delEnd = delStart + lengthBytes;
 
   for (SingleLineSpan const &span : m_singleLineSpans) {
     // We will modify `newSpan` to compute the replacement for `span`.
@@ -468,7 +468,7 @@ void TextMCoordMap::LineData::deleteBytes_spans(
 
         // Move the left side to the deletion point, and put the right
         // side at deletion point plus overhang.
-        int overhang = span.m_endByteIndex - delEnd;
+        ByteCount overhang(span.m_endByteIndex - delEnd);
         newSpan.m_startByteIndex = delStart;
         newSpan.m_endByteIndex = delStart + overhang;
       }
@@ -509,12 +509,12 @@ void TextMCoordMap::LineData::deleteBytes_spans(
 
 /*static*/ void TextMCoordMap::LineData::deleteBytes_boundaries(
   std::set<Boundary> &boundaries,
-  int delStart,
-  int lengthBytes)
+  ByteIndex delStart,
+  ByteCount lengthBytes)
 {
   DelayedSetChanges<Boundary> changes;
 
-  int delEnd = delStart + lengthBytes;
+  ByteIndex delEnd = delStart + lengthBytes;
 
   for (Boundary const &b : boundaries) {
     Boundary newBoundary(b);
@@ -556,20 +556,20 @@ void TextMCoordMap::LineData::deleteBytes_spans(
 }
 
 
-int TextMCoordMap::LineData::removeEnd_getByteIndex(Value v)
+ByteIndex TextMCoordMap::LineData::removeEnd_getByteIndex(Value v)
 {
   // Since the set is indexed by byte index first, we have to resort to
   // linear search.
   for (auto it = m_endsHere.begin(); it != m_endsHere.end(); ++it) {
     if ((*it).m_value == v) {
-      int byteIndex = (*it).m_byteIndex;
+      ByteIndex byteIndex = (*it).m_byteIndex;
       m_endsHere.erase(it);
       return byteIndex;
     }
   }
 
   xfailure("no endpoint with specified value");
-  return 0;        // not reached
+  return ByteIndex(0);        // not reached
 }
 
 
@@ -614,9 +614,9 @@ auto TextMCoordMap::LineData::getLineEntries() const
 }
 
 
-std::optional<int> TextMCoordMap::LineData::largestByteIndex() const
+std::optional<ByteIndex> TextMCoordMap::LineData::largestByteIndex() const
 {
-  std::optional<int> largest = std::nullopt;
+  std::optional<ByteIndex> largest = std::nullopt;
 
   for (SingleLineSpan const &span : m_singleLineSpans) {
     optAccumulateMax(largest, span.m_startByteIndex);
@@ -638,17 +638,17 @@ std::optional<int> TextMCoordMap::LineData::largestByteIndex() const
 void TextMCoordMap::LineData::adjustForDocument(
   TextDocumentCore const &doc, LineIndex line)
 {
-  int docLineBytes = doc.lineLengthBytes(line);
+  ByteIndex docLineEnd = doc.lineLengthByteIndex(line);
 
-  if (std::optional<int> largestCoordByteIndex = this->largestByteIndex()) {
-    int excessBytes = *largestCoordByteIndex - docLineBytes;
+  if (std::optional<ByteIndex> largestCoordByteIndex = this->largestByteIndex()) {
+    ByteDifference excessBytes = *largestCoordByteIndex - docLineEnd;
     if (excessBytes > 0) {
-      // All coordinates larger than `docLineBytes` are invalid.  Delete
+      // All coordinates larger than `docLineEnd` are invalid.  Delete
       // the intervening characters to collapse the coordinates into
-      // `docLineBytes`.
+      // `docLineEnd`.
       TRACE1("LineData::adjustForDocument: deleting " << excessBytes <<
              " bytes from line " << line);
-      deleteBytes(docLineBytes, excessBytes);
+      deleteBytes(docLineEnd, ByteCount(excessBytes));
     }
   }
 }
@@ -661,7 +661,7 @@ void TextMCoordMap::LineData::addEndBoundaryToLastLine(Value v)
     // Add an end to replace the continuation.  (In this class, we have
     // no information about the line length, so cannot make it end at
     // the line end.)
-    m_endsHere.insert(Boundary(0, v));
+    m_endsHere.insert(Boundary(ByteIndex(0), v));
   }
 
   else {
@@ -670,7 +670,7 @@ void TextMCoordMap::LineData::addEndBoundaryToLastLine(Value v)
       Boundary const &boundary = *it;
       if (boundary.m_value == v) {
         // Convert the start into a zero-width single-line segment.
-        int bi = boundary.m_byteIndex;
+        ByteIndex bi = boundary.m_byteIndex;
         m_singleLineSpans.insert(SingleLineSpan(bi, bi, v));
         m_startsHere.erase(it);
         return;
@@ -1110,7 +1110,7 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
 
   for (SingleLineSpan const &span : singleLineSpans) {
     recipientLine->m_singleLineSpans.insert(
-      SingleLineSpan(0, 0, span.m_value));
+      SingleLineSpan(ByteIndex(0), ByteIndex(0), span.m_value));
   }
 
   for (Value const &v : starts) {
@@ -1118,23 +1118,23 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
       // This value's range started and ended in the deleted section
       // (above), so put it all on this (the next) line.
       recipientLine->m_singleLineSpans.insert(
-        SingleLineSpan(0, 0, v));
+        SingleLineSpan(ByteIndex(0), ByteIndex(0), v));
     }
 
     else if (contains(recipientLine->m_continuesHere, v)) {
       // Replace the continuation with a start.
       setRemoveExisting(recipientLine->m_continuesHere, v);
       recipientLine->m_startsHere.insert(
-        Boundary(0, v));
+        Boundary(ByteIndex(0), v));
     }
 
     else {
       // The span must have previously ended here.
-      int endByteIndex = recipientLine->removeEnd_getByteIndex(v);
+      ByteIndex endByteIndex = recipientLine->removeEnd_getByteIndex(v);
 
       // Replace the end with a single-line span.
       recipientLine->m_singleLineSpans.insert(
-        SingleLineSpan(0, endByteIndex, v));
+        SingleLineSpan(ByteIndex(0), endByteIndex, v));
     }
   }
 
@@ -1146,7 +1146,7 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
       // We can be sure that the value did not start or continue on
       // `recipientLine`, so just add an end.
       recipientLine->m_endsHere.insert(
-        Boundary(0, v));
+        Boundary(ByteIndex(0), v));
     }
     else {
       // In the case of deleting the last line, we need more complicated
@@ -1157,7 +1157,7 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
 }
 
 
-void TextMCoordMap::insertLineBytes(TextMCoord tc, int lengthBytes)
+void TextMCoordMap::insertLineBytes(TextMCoord tc, ByteCount lengthBytes)
 {
   xassert(canTrackUpdates());
 
@@ -1167,7 +1167,7 @@ void TextMCoordMap::insertLineBytes(TextMCoord tc, int lengthBytes)
 }
 
 
-void TextMCoordMap::deleteLineBytes(TextMCoord tc, int lengthBytes)
+void TextMCoordMap::deleteLineBytes(TextMCoord tc, ByteCount lengthBytes)
 {
   xassert(canTrackUpdates());
 

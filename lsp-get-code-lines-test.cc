@@ -275,7 +275,7 @@ public:      // methods
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName::localFile(fname[fileIndex]),
       LineNumber(lineNumber),
-      0 /*byteIndex*/
+      ByteIndex(0)
     ));
   }
 
@@ -286,7 +286,7 @@ public:      // methods
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName::localFile(errFname[errFileIndex]),
       LineNumber(lineNumber),
-      0 /*byteIndex*/
+      ByteIndex(0)
     ));
   }
 
@@ -509,7 +509,7 @@ public:      // methods
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName(HostName::asSSH("somehost"), "/some/file"),
       LineNumber(3),
-      0 /*byteIndex*/
+      ByteIndex(0)
     ));
 
     std::optional<std::vector<std::string>> linesOpt =

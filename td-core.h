@@ -7,6 +7,9 @@
 #include "td-core-fwd.h"               // fwds for this module
 
 // editor
+#include "byte-count.h"                // ByteCount
+#include "byte-gap-array.h"            // ByteGapArray
+#include "byte-index.h"                // ByteIndex
 #include "line-count.h"                // LineCount
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
@@ -67,12 +70,12 @@ private:     // instance data
   // Length of the longest line this file has ever had, in bytes.  This
   // is my poor-man's substitute for a proper interval map, etc., to be
   // able to answer the 'maxLineLength()' query.
-  int m_longestLengthSoFar;
+  ByteCount m_longestLengthSoFar;
 
   // If `m_recentIndex.has_value()`, then this holds the contents of
   // that line, and `m_lines[*m_recentIndex]` is empty.  Otherwise, this
   // is empty.
-  GapArray<char> m_recentLine;
+  ByteGapArray<char> m_recentLine;
 
   // Version number for the contents.  This starts at 1 and increases by
   // one each time the logical contents, i.e., the sequence of lines, is
@@ -127,7 +130,7 @@ private:     // funcs
   // copy the given line into 'recentLine', with given hints as to
   // where the gap should go and how big it should be
   // postcondition: recent==tc.line
-  void attachRecent(TextMCoord tc, int insLength);
+  void attachRecent(TextMCoord tc, ByteCount insLength);
 
   // copy contents of 'recentLine', if any, back into lines[];
   // postcondition: recent==-1
@@ -135,7 +138,7 @@ private:     // funcs
 
   // update 'longestLineSoFar', given the existence of a line
   // that is 'len' long
-  void seenLineLength(int len);
+  void seenLineLength(ByteCount len);
 
   // Notify all observers of a total change to the document.
   void notifyTotalChange();
@@ -182,7 +185,10 @@ public:    // funcs
   bool isEmptyLine(LineIndex line) const;
 
   // Length of a given line, not including the '\n', in bytes.
-  int lineLengthBytes(LineIndex line) const;
+  ByteCount lineLengthBytes(LineIndex line) const;
+
+  // Same, but as a byte index.
+  ByteIndex lineLengthByteIndex(LineIndex line) const;
 
   // True if 'tc' has a line in [0,numLines()-1] and a byteIndex in
   // [0,lineLengthBytes(line)] that is not in the middle of a multibyte
@@ -210,7 +216,7 @@ public:    // funcs
   // Maximum length of a line.  TODO: Implement this properly (right
   // now it just uses the length of the longest line ever seen, even
   // if that line is subsequently deleted).
-  int maxLineLengthBytes() const { return m_longestLengthSoFar; }
+  ByteCount maxLineLengthBytes() const { return m_longestLengthSoFar; }
 
   // Number of lines in the file as a user would typically view it: if
   // the file ends in a newline, then return the number of newlines.
@@ -226,13 +232,15 @@ public:    // funcs
   // or the zero coordinate if we walked past the start.
   //
   // Otherwise it returns true and `tc` is valid afterward.
-  bool walkCoordBytes(TextMCoord &tc /*INOUT*/, int distance) const;
+  bool walkCoordBytes(
+    TextMCoord &tc /*INOUT*/, ByteDifference distance) const;
 
   // Same, but asserting we did not walk off either end.
-  void walkCoordBytesValid(TextMCoord &tc /*INOUT*/, int distance) const;
+  void walkCoordBytesValid(
+    TextMCoord &tc /*INOUT*/, ByteDifference distance) const;
 
   // Compute the number of bytes in a range.
-  int countBytesInRange(TextMCoordRange const &range) const;
+  ByteCount countBytesInRange(TextMCoordRange const &range) const;
 
   // If `tc` is not valid, adjust it to the nearest coordinate that is.
   // Specifically, if the line is too large, set `tc` to `endCoord()`.
@@ -256,7 +264,7 @@ public:    // funcs
   //
   // The retrieved bytes are appended to 'dest'.
   void getPartialLine(TextMCoord tc,
-    ArrayStack<char> /*INOUT*/ &dest, int numBytes) const;
+    ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const;
 
   // Retrieve text that may span line boundaries.  Line boundaries are
   // represented in the returned string as newlines.  The span begins at
@@ -265,7 +273,7 @@ public:    // funcs
   // changing 'dest' (otherwise true).  If it returns true then exactly
   // 'textLenBytes' bytes have been appended to 'dest'.
   bool getTextSpanningLines(TextMCoord tc,
-    ArrayStack<char> /*INOUT*/ &dest, int numBytes) const;
+    ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const;
 
   // Get using a range.
   void getTextForRange(TextMCoordRange const &range,
@@ -287,11 +295,11 @@ public:    // funcs
 
   // Return the number of consecutive spaces and tabs at the start of
   // the given line, as a byte count.
-  int countLeadingSpacesTabs(LineIndex line) const;
+  ByteCount countLeadingSpacesTabs(LineIndex line) const;
 
   // Return the number of consecutive spaces and tabs at the end of
   // the given line, as a byte count.
-  int countTrailingSpacesTabs(LineIndex line) const;
+  ByteCount countTrailingSpacesTabs(LineIndex line) const;
 
   // ------------------- Core manipulation interface -------------------
   // This interface is deliberately very simple to *implement*: you are
@@ -310,12 +318,12 @@ public:    // funcs
   // Insert text into a given line, starting at the given coord, which
   // must be valid.  The inserted text must *not* contain the '\n'
   // character.
-  void insertText(TextMCoord tc, char const *text, int lengthBytes);
+  void insertText(TextMCoord tc, char const *text, ByteCount lengthBytes);
   void insertString(TextMCoord tc, string const &str)
-    { insertText(tc, str.c_str(), str.length()); }
+    { insertText(tc, str.c_str(), ByteCount(str.length())); }
 
   // Delete 'length' bytes at and the right of 'tc'.
-  void deleteTextBytes(TextMCoord tc, int lengthBytes);
+  void deleteTextBytes(TextMCoord tc, ByteCount lengthBytes);
 
   // --------------------- Multi-line manipulation ---------------------
   // Although the above comment mentions `TextDocumentEditor`, an editor
@@ -403,7 +411,7 @@ public:      // types
     char const *m_nonRecentLine;
 
     // Byte offset of the iterator within the current line.
-    int m_byteOffset;
+    ByteIndex m_byteOffset;
 
   public:      // funcs
     // Iterate over the given line number.  While this object exists, it
@@ -423,7 +431,7 @@ public:      // types
     // Current byte offset within the iterated line.  It *is* legal to
     // call this when '!has()', in which case it returns the length of
     // the line in bytes.
-    int byteOffset() const { return m_byteOffset; }
+    ByteIndex byteOffset() const { return m_byteOffset; }
 
     // Current byte value in [0,255].  Requires 'has()'.
     int byteAt() const;
@@ -467,8 +475,8 @@ public:      // funcs
   // default implementations do nothing.
   virtual void observeInsertLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT;
   virtual void observeDeleteLine(TextDocumentCore const &doc, LineIndex line) NOEXCEPT;
-  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) NOEXCEPT;
-  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) NOEXCEPT;
+  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, ByteCount lengthBytes) NOEXCEPT;
+  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, ByteCount lengthBytes) NOEXCEPT;
 
   // The document has changed in some major way that does not easily
   // allow for incremental updates.  Observers must refresh completely.

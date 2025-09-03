@@ -40,13 +40,13 @@ void test_1()
   }
 
   {
-    TDC_InsertText change(TextMCoord(LineIndex(1), 1), "XYZ");
+    TDC_InsertText change(TextMCoord(LineIndex(1), ByteIndex(1)), "XYZ");
     change.applyToDoc(doc);
     EXPECT_EQ(doc.getWholeFileString(), "zero\noXYZne\ntwo\n");
   }
 
   {
-    TDC_DeleteText change(TextMCoord(LineIndex(1), 2), 3);
+    TDC_DeleteText change(TextMCoord(LineIndex(1), ByteIndex(2)), ByteCount(3));
     change.applyToDoc(doc);
     EXPECT_EQ(doc.getWholeFileString(), "zero\noXe\ntwo\n");
   }

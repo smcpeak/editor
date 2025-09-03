@@ -5,6 +5,8 @@
 #define EDITOR_WIDGET_H
 
 // editor
+#include "byte-count.h"                          // ByteCount
+#include "byte-index.h"                          // ByteIndex
 #include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 #include "editor-global-fwd.h"                   // EditorGlobal
@@ -484,7 +486,7 @@ public:      // funcs
   void editInsertDateTime();
 
   // Insert text at cursor, overwriting selection if active.
-  void insertText(char const *text, int length);
+  void insertText(char const *text, ByteCount length);
   void insertTextString(std::string const &text);
 
   // Edit menu functions.
@@ -629,7 +631,7 @@ public:      // funcs
   void goToLocalFileAndLineOpt(
     std::string const &fname,
     std::optional<LineNumber> lineOpt,
-    std::optional<int> byteIndexOpt);
+    std::optional<ByteIndex> byteIndexOpt);
 
   // ---------------------------- input -----------------------------
   // We are about to edit the text in the file.  If we are going from
@@ -643,8 +645,8 @@ public:      // funcs
   // TextDocumentObserver funcs
   virtual void observeInsertLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
   virtual void observeDeleteLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, ByteCount length) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, ByteCount length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &buf) NOEXCEPT OVERRIDE;
   virtual void observeMetadataChange(TextDocumentCore const &buf) NOEXCEPT OVERRIDE;
 
@@ -691,7 +693,7 @@ public:      // funcs
   // Map a byte index to a column index; and nullopt to nullopt.
   std::optional<int> byteIndexToLayoutColOpt(
     LineIndex line,
-    std::optional<int> byteIndex) const;
+    std::optional<ByteIndex> byteIndex) const;
 
   // Draw on `paint`, a one-line canvas, boxes around spans associated
   // with diagnostics for `line`.

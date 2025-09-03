@@ -22,7 +22,7 @@ void test_gdvn()
     "HostFileAndLineOpt[harn:null line:null byteIndex:null]");
 
   HostAndResourceName harn(HostName::asSSH("host"), "resName");
-  HostFileAndLineOpt hfal(harn, LineNumber(3), 4);
+  HostFileAndLineOpt hfal(harn, LineNumber(3), ByteIndex(4));
   EXPECT_EQ(toGDValue(hfal).asString(),
     "HostFileAndLineOpt["
       "harn:HostAndResourceName["

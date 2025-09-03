@@ -2809,7 +2809,9 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
         // Also go to line/col, if provided.
         TextLCoord targetLC(
           hfl.getLine().toLineIndex(),
-          hfl.getByteIndexOpt().value_or(0));
+
+          // TODO: Bug: This is a coordinate mismatch.
+          (hfl.getByteIndexOpt().value_or(ByteIndex(0))).get());
         editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();
         editorWidget()->scrollToCursor(-1 /*gap*/);

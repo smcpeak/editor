@@ -3,6 +3,7 @@
 
 #include "td.h"                        // this module
 
+#include "byte-count.h"                // strlenBC, sizeBC
 #include "history.h"                   // HE_text
 #include "range-text-repl.h"           // RangeTextReplacement
 
@@ -12,7 +13,6 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/mysig.h"              // printSegfaultAddrs
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
-#include "smbase/overflow.h"           // safeToInt
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
 #include "smbase/string-util.h"        // stringToVectorOfUChar
 #include "smbase/trace.h"              // TRACE
@@ -207,7 +207,7 @@ void TextDocument::setReadOnly(bool readOnly)
 }
 
 
-void TextDocument::insertAt(TextMCoord tc, char const *text, int textLen)
+void TextDocument::insertAt(TextMCoord tc, char const *text, ByteCount textLen)
 {
   // Ignore insertions of nothing.
   if (textLen > 0) {
@@ -220,12 +220,12 @@ void TextDocument::insertAt(TextMCoord tc, char const *text, int textLen)
 }
 
 
-void TextDocument::deleteAt(TextMCoord tc, int byteCount)
+void TextDocument::deleteAt(TextMCoord tc, ByteCount byteCount)
 {
   if (byteCount > 0) {
     HE_text *e = new HE_text(tc,
                              false /*insertion*/,
-                             NULL /*text*/, 0 /*textLen*/);
+                             NULL /*text*/, ByteCount(0) /*textLen*/);
     e->computeText(m_core, byteCount);
     e->apply(m_core, false /*reverse*/);
     appendElement(e);
@@ -237,19 +237,19 @@ void TextDocument::deleteTextRange(TextMCoordRange const &range)
 {
   xassert(range.isRectified());
 
-  int byteCount = m_core.countBytesInRange(range);
+  ByteCount byteCount = m_core.countBytesInRange(range);
   this->deleteAt(range.m_start, byteCount);
 }
 
 
-void TextDocument::appendText(char const *text, int textLen)
+void TextDocument::appendText(char const *text, ByteCount textLen)
 {
   this->insertAt(this->endCoord(), text, textLen);
 }
 
 void TextDocument::appendCStr(char const *s)
 {
-  this->appendText(s, strlen(s));
+  this->appendText(s, strlenBC(s));
 }
 
 void TextDocument::appendString(string const &s)
@@ -270,7 +270,7 @@ void TextDocument::replaceMultilineRange(
   }
 
   if (!text.empty()) {
-    insertAt(range.m_start, text.data(), safeToInt(text.size()));
+    insertAt(range.m_start, text.data(), sizeBC(text));
   }
 }
 

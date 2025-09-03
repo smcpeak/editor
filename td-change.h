@@ -8,6 +8,7 @@
 
 #include "td-change-fwd.h"             // fwds for this module
 
+#include "byte-count.h"                // ByteCount
 #include "line-count.h"                // LineCount
 #include "line-index.h"                // LineIndex
 #include "positive-line-count.h"       // PositiveLineCount
@@ -70,12 +71,12 @@ public:      // data
   // If set, then `m_line` is to become the new last line in the
   // document.  In order to express this as a range replacement, we need
   // to know the length of the previous line in bytes.
-  std::optional<int> m_prevLineBytes;
+  std::optional<ByteCount> m_prevLineBytes;
 
 public:      // methods
   virtual ~TDC_InsertLine() override;
 
-  explicit TDC_InsertLine(LineIndex line, std::optional<int> prevLineBytes);
+  explicit TDC_InsertLine(LineIndex line, std::optional<ByteCount> prevLineBytes);
 
   static Kind constexpr TYPE_TAG = K_INSERT_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
@@ -95,12 +96,12 @@ public:      // data
   // If set, then `m_line` is the last line in the document.  In order
   // to express this deletion as a range replacement, we need to know
   // the length of the previous line in bytes.
-  std::optional<int> m_prevLineBytes;
+  std::optional<ByteCount> m_prevLineBytes;
 
 public:      // methods
   virtual ~TDC_DeleteLine() override;
 
-  explicit TDC_DeleteLine(LineIndex line, std::optional<int> prevLineBytes);
+  explicit TDC_DeleteLine(LineIndex line, std::optional<ByteCount> prevLineBytes);
 
   static Kind constexpr TYPE_TAG = K_DELETE_LINE;
   virtual Kind kind() const override { return TYPE_TAG; }
@@ -127,7 +128,7 @@ public:      // methods
   virtual ~TDC_InsertText() override;
 
   explicit TDC_InsertText(
-    TextMCoord tc, char const *text, int lengthBytes);
+    TextMCoord tc, char const *text, ByteCount lengthBytes);
   explicit TDC_InsertText(
     TextMCoord tc, std::string const &&text);
 
@@ -145,13 +146,13 @@ class TDC_DeleteText : public TextDocumentChange {
 public:      // data
   // Observer method arguments.
   TextMCoord m_tc;
-  int m_lengthBytes;
+  ByteCount m_lengthBytes;
 
 public:      // methods
   virtual ~TDC_DeleteText() override;
 
   explicit TDC_DeleteText(
-    TextMCoord tc, int lengthBytes);
+    TextMCoord tc, ByteCount lengthBytes);
 
   static Kind constexpr TYPE_TAG = K_DELETE_TEXT;
   virtual Kind kind() const override { return TYPE_TAG; }

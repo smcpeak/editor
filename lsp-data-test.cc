@@ -232,8 +232,8 @@ void test_LocationSequence1()
   EXPECT_EQ(loc.getFname(),
     "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
   EXPECT_EQ(loc.m_range,
-    LSP_Range(LSP_Position(LineIndex(18), 5),
-              LSP_Position(LineIndex(18), 8)));
+    LSP_Range(LSP_Position(LineIndex(18), ByteIndex(5)),
+              LSP_Position(LineIndex(18), ByteIndex(8))));
 }
 
 
@@ -268,8 +268,8 @@ void test_LocationSequence2()
     EXPECT_EQ(loc.getFname(),
       "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
     EXPECT_EQ(loc.m_range,
-      LSP_Range(LSP_Position(LineIndex(18), 5),
-                LSP_Position(LineIndex(18), 8)));
+      LSP_Range(LSP_Position(LineIndex(18), ByteIndex(5)),
+                LSP_Position(LineIndex(18), ByteIndex(8))));
   }
 
   ++it;
@@ -278,8 +278,8 @@ void test_LocationSequence2()
     EXPECT_EQ(loc.getFname(),
       "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
     EXPECT_EQ(loc.m_range,
-      LSP_Range(LSP_Position(LineIndex(118), 15),
-                LSP_Position(LineIndex(118), 18)));
+      LSP_Range(LSP_Position(LineIndex(118), ByteIndex(15)),
+                LSP_Position(LineIndex(118), ByteIndex(18))));
   }
 }
 

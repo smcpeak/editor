@@ -18,6 +18,7 @@
 #include "smbase/std-string-fwd.h"     // std::string
 
 #include <iosfwd>                      // std::ostream
+#include <type_traits>                 // std::{enable_if_t, is_integral_v}
 
 
 /* Class template to use a common base for purpose-specific wrapped
@@ -113,6 +114,12 @@ public:      // methods
     m_value = value;
     derivedC().selfCheck();
   }
+
+  // --------------------------- Conversion ----------------------------
+  // Convert to integral `T`, confirming value preservation.
+  template <typename T,
+            typename = std::enable_if<std::is_integral_v<T>>>
+  inline T getAs() const;
 
   // --------------------------- Unary tests ---------------------------
   bool isZero() const

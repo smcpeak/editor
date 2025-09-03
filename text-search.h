@@ -5,6 +5,7 @@
 #define TEXT_SEARCH_H
 
 // editor
+#include "byte-index.h"                // ByteIndex
 #include "line-count.h"                // LineCount
 #include "line-index.h"                // LineIndex
 #include "ogap.h"                      // OGapArray
@@ -45,14 +46,14 @@ public:      // types
   class MatchExtent {
   public:
     // Byte offset of the start of the match.
-    int m_startByte;
+    ByteIndex m_startByte;
 
     // Length of the match, in bytes.
-    int m_lengthBytes;
+    ByteCount m_lengthBytes;
 
   public:
     MatchExtent();
-    MatchExtent(int start, int length);
+    MatchExtent(ByteIndex start, ByteCount length);
     MatchExtent(MatchExtent const &obj);
     MatchExtent& operator= (MatchExtent const &obj);
 
@@ -231,8 +232,8 @@ public:      // funcs
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
   virtual void observeDeleteLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, ByteCount length) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, ByteCount length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT OVERRIDE;
 };
 

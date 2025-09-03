@@ -165,14 +165,14 @@ void LexHighlighter::observeDeleteLine(TextDocumentCore const &, LineIndex line)
 }
 
 
-void LexHighlighter::observeInsertText(TextDocumentCore const &, TextMCoord tc, char const *, int) NOEXCEPT
+void LexHighlighter::observeInsertText(TextDocumentCore const &, TextMCoord tc, char const *, ByteCount) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   addToChanged(tc.m_line);
   GENERIC_CATCH_END
 }
 
-void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextMCoord tc, int) NOEXCEPT
+void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextMCoord tc, ByteCount) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   addToChanged(tc.m_line);
@@ -421,7 +421,7 @@ static void del(int line, int col, int len)
 {
   DIAG("del(" << line << ", " << col << ", " << len << ")");
   tde->setCursor(TextLCoord(LineIndex(line), col));
-  tde->deleteTextBytes(len);
+  tde->deleteTextBytes(ByteCount(len));
 }
 
 static void innerCheckLine(LexHighlighter &hi,

@@ -1,5 +1,5 @@
 // gap-gdvalue.h
-// Conversion between `[Line]GapArray` and `GDValue`.
+// Conversion between `[Specialized]GapArray` and `GDValue`.
 
 // See license.txt for copyright and terms of use.
 
@@ -7,7 +7,7 @@
 #define EDITOR_GAP_GDVALUE_H
 
 #include "gap.h"                       // GapArray
-#include "line-gap-array.h"            // LineGapArray
+#include "spec-gap-array.h"            // SpecializedGapArray
 
 #include "smbase/gdvalue.h"            // gdv::GDValue
 
@@ -29,8 +29,8 @@ gdv::GDValue toGDValue(GapArray<T> const &arr)
 
 
 // Yield as a sequence.
-template <typename T>
-LineGapArray<T>::operator gdv::GDValue() const
+template <typename Elem, typename ElemIndex, typename ElemCount>
+SpecializedGapArray<Elem, ElemIndex, ElemCount>::operator gdv::GDValue() const
 {
   return toGDValue(m_arr);
 }

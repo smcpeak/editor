@@ -79,9 +79,12 @@ void testAtomicRead()
 }
 
 
+// `col` here is a misnomer...
 void insText(TextDocumentCore &tdc, int line, int col, char const *text)
 {
-  tdc.insertText(TextMCoord(LineIndex(line), col), text, strlen(text));
+  tdc.insertText(
+    TextMCoord(LineIndex(line), ByteIndex(col)),
+    text, strlenBC(text));
 }
 
 void insLine(TextDocumentCore &tdc, int line, int col, char const *text)
@@ -121,6 +124,17 @@ void checkSpaces(TextDocumentCore const &tdc,
   }
 
 
+TextMCoord tmc(LineIndex line, int byteIndex)
+{
+  return TextMCoord(line, ByteIndex(byteIndex));
+}
+
+TextMCoord tmc(int line, int byteIndex)
+{
+  return TextMCoord(LineIndex(line), ByteIndex(byteIndex));
+}
+
+
 void testVarious()
 {
   TextDocumentCore tdc;
@@ -130,9 +144,9 @@ void testVarious()
 
   EXPECT_EQ(tdc.numLines(), 1);
   EXPECT_EQ(tdc.lineLengthBytes(z), 0);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(z,0)), true);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(z,1)), false);
-  EXPECT_EQ(tdc.endCoord(), TextMCoord(z,0));
+  EXPECT_EQ(tdc.validCoord(tmc(0,0)), true);
+  EXPECT_EQ(tdc.validCoord(tmc(0,1)), false);
+  EXPECT_EQ(tdc.endCoord(), tmc(0,0));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 0);
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
   EXPECT_EQ(tdc.getWholeFileString(), "");
@@ -171,12 +185,12 @@ void testVarious()
   EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 7);
   EXPECT_EQ(tdc.lineLengthBytes(z), 3);
   EXPECT_EQ(tdc.lineLengthBytes(LineIndex(6)), 6);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(z,0)), true);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(z,1)), true);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(LineIndex(6),6)), true);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(LineIndex(6),7)), false);
-  EXPECT_EQ(tdc.validCoord(TextMCoord(LineIndex(7),0)), false);
-  EXPECT_EQ(tdc.endCoord(), TextMCoord(LineIndex(6),6));
+  EXPECT_EQ(tdc.validCoord(tmc(z,0)), true);
+  EXPECT_EQ(tdc.validCoord(tmc(z,1)), true);
+  EXPECT_EQ(tdc.validCoord(tmc(LineIndex(6),6)), true);
+  EXPECT_EQ(tdc.validCoord(tmc(LineIndex(6),7)), false);
+  EXPECT_EQ(tdc.validCoord(tmc(LineIndex(7),0)), false);
+  EXPECT_EQ(tdc.endCoord(), tmc(LineIndex(6),6));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 12);
   fullSelfCheck(tdc);
 
@@ -191,12 +205,12 @@ void testVarious()
 
   for (int line=0; line <= 6; line++) {
     // Tweak 'line' so it is recent and then repeat the whitespace queries.
-    TextMCoord tc(LineIndex(line), 0);
+    TextMCoord tc(LineIndex(line), ByteIndex(0));
     char c = 'x';
     CHECK_VER_SAME(tdc, vnum);
-    tdc.insertText(tc, &c, 1);
+    tdc.insertText(tc, &c, ByteCount(1));
     CHECK_VER_DIFF(tdc, vnum);
-    tdc.deleteTextBytes(tc, 1);
+    tdc.deleteTextBytes(tc, ByteCount(1));
     CHECK_VER_DIFF(tdc, vnum);
 
     checkSpaces(tdc, 0, 0, 0);
@@ -348,7 +362,7 @@ void expectWalkCoordBytes(
   TextMCoord const &expect)
 {
   TextMCoord actual(tc);
-  bool res = tdc.walkCoordBytes(actual, distance);
+  bool res = tdc.walkCoordBytes(actual, ByteDifference(distance));
   EXPECT_EQ(res, true);
   EXPECT_EQ(actual, expect);
 }
@@ -359,7 +373,7 @@ void expectWalkCoordBytes_false(
   int distance)
 {
   TextMCoord actual(tc);
-  bool res = tdc.walkCoordBytes(actual, distance);
+  bool res = tdc.walkCoordBytes(actual, ByteDifference(distance));
   EXPECT_EQ(res, false);
 }
 
@@ -381,71 +395,67 @@ void testWalkCoordBytes()
 
   TextDocumentCore tdc;
   tdc.insertLine(li0);
-  tdc.insertString(TextMCoord(li0,0), "one");
+  tdc.insertString(tmc(li0,0), "one");
   tdc.insertLine(li1);
   tdc.insertLine(li2);
-  tdc.insertString(TextMCoord(li2,0), "three");
+  tdc.insertString(tmc(li2,0), "three");
 
-  expectWalkCoordBytes_false(tdc, TextMCoord(li0,0), -1);
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  0, TextMCoord(li0,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  1, TextMCoord(li0,1));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  2, TextMCoord(li0,2));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  3, TextMCoord(li0,3));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  4, TextMCoord(li1,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  5, TextMCoord(li2,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  6, TextMCoord(li2,1));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  7, TextMCoord(li2,2));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  8, TextMCoord(li2,3));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0),  9, TextMCoord(li2,4));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0), 10, TextMCoord(li2,5));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,0), 11, TextMCoord(li3,0));
-  expectWalkCoordBytes_false(tdc, TextMCoord(li0,0), 12);
+  expectWalkCoordBytes_false(tdc, tmc(li0,0), -1);
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  0, tmc(li0,0));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  1, tmc(li0,1));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  2, tmc(li0,2));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  3, tmc(li0,3));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  4, tmc(li1,0));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  5, tmc(li2,0));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  6, tmc(li2,1));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  7, tmc(li2,2));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  8, tmc(li2,3));
+  expectWalkCoordBytes      (tdc, tmc(li0,0),  9, tmc(li2,4));
+  expectWalkCoordBytes      (tdc, tmc(li0,0), 10, tmc(li2,5));
+  expectWalkCoordBytes      (tdc, tmc(li0,0), 11, tmc(li3,0));
+  expectWalkCoordBytes_false(tdc, tmc(li0,0), 12);
 
-  expectWalkCoordBytes_false(tdc, TextMCoord(li0,1), -2);
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,1), -1, TextMCoord(li0,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,1),  0, TextMCoord(li0,1));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,1),  1, TextMCoord(li0,2));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,1), 10, TextMCoord(li3,0));
-  expectWalkCoordBytes_false(tdc, TextMCoord(li0,1), 11);
+  expectWalkCoordBytes_false(tdc, tmc(li0,1), -2);
+  expectWalkCoordBytes      (tdc, tmc(li0,1), -1, tmc(li0,0));
+  expectWalkCoordBytes      (tdc, tmc(li0,1),  0, tmc(li0,1));
+  expectWalkCoordBytes      (tdc, tmc(li0,1),  1, tmc(li0,2));
+  expectWalkCoordBytes      (tdc, tmc(li0,1), 10, tmc(li3,0));
+  expectWalkCoordBytes_false(tdc, tmc(li0,1), 11);
 
-  expectWalkCoordBytes_false(tdc, TextMCoord(li0,3), -4);
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,3), -1, TextMCoord(li0,2));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,3),  0, TextMCoord(li0,3));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,3),  1, TextMCoord(li1,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li0,3),  8, TextMCoord(li3,0));
-  expectWalkCoordBytes_false(tdc, TextMCoord(li0,3),  9);
+  expectWalkCoordBytes_false(tdc, tmc(li0,3), -4);
+  expectWalkCoordBytes      (tdc, tmc(li0,3), -1, tmc(li0,2));
+  expectWalkCoordBytes      (tdc, tmc(li0,3),  0, tmc(li0,3));
+  expectWalkCoordBytes      (tdc, tmc(li0,3),  1, tmc(li1,0));
+  expectWalkCoordBytes      (tdc, tmc(li0,3),  8, tmc(li3,0));
+  expectWalkCoordBytes_false(tdc, tmc(li0,3),  9);
 
-  expectWalkCoordBytes_false(tdc, TextMCoord(li2,4),-10);
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,4), -9, TextMCoord(li0,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,4), -1, TextMCoord(li2,3));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,4),  0, TextMCoord(li2,4));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,4),  1, TextMCoord(li2,5));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,4),  2, TextMCoord(li3,0));
-  expectWalkCoordBytes_false(tdc, TextMCoord(li2,4),  3);
-  expectWalkCoordBytes_false(tdc, TextMCoord(li2,4), 99);
+  expectWalkCoordBytes_false(tdc, tmc(li2,4),-10);
+  expectWalkCoordBytes      (tdc, tmc(li2,4), -9, tmc(li0,0));
+  expectWalkCoordBytes      (tdc, tmc(li2,4), -1, tmc(li2,3));
+  expectWalkCoordBytes      (tdc, tmc(li2,4),  0, tmc(li2,4));
+  expectWalkCoordBytes      (tdc, tmc(li2,4),  1, tmc(li2,5));
+  expectWalkCoordBytes      (tdc, tmc(li2,4),  2, tmc(li3,0));
+  expectWalkCoordBytes_false(tdc, tmc(li2,4),  3);
+  expectWalkCoordBytes_false(tdc, tmc(li2,4), 99);
 
-  expectWalkCoordBytes_false(tdc, TextMCoord(li2,5),-11);
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,5),-10, TextMCoord(li0,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,5), -1, TextMCoord(li2,4));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,5),  0, TextMCoord(li2,5));
-  expectWalkCoordBytes      (tdc, TextMCoord(li2,5),  1, TextMCoord(li3,0));
-  expectWalkCoordBytes_false(tdc, TextMCoord(li2,5),  2);
+  expectWalkCoordBytes_false(tdc, tmc(li2,5),-11);
+  expectWalkCoordBytes      (tdc, tmc(li2,5),-10, tmc(li0,0));
+  expectWalkCoordBytes      (tdc, tmc(li2,5), -1, tmc(li2,4));
+  expectWalkCoordBytes      (tdc, tmc(li2,5),  0, tmc(li2,5));
+  expectWalkCoordBytes      (tdc, tmc(li2,5),  1, tmc(li3,0));
+  expectWalkCoordBytes_false(tdc, tmc(li2,5),  2);
 
-  expectWalkCoordBytes_false(tdc, TextMCoord(li3,0),-12);
-  expectWalkCoordBytes      (tdc, TextMCoord(li3,0),-11, TextMCoord(li0,0));
-  expectWalkCoordBytes      (tdc, TextMCoord(li3,0), -1, TextMCoord(li2,5));
-  expectWalkCoordBytes      (tdc, TextMCoord(li3,0),  0, TextMCoord(li3,0));
-  expectWalkCoordBytes_false(tdc, TextMCoord(li3,0),  1);
+  expectWalkCoordBytes_false(tdc, tmc(li3,0),-12);
+  expectWalkCoordBytes      (tdc, tmc(li3,0),-11, tmc(li0,0));
+  expectWalkCoordBytes      (tdc, tmc(li3,0), -1, tmc(li2,5));
+  expectWalkCoordBytes      (tdc, tmc(li3,0),  0, tmc(li3,0));
+  expectWalkCoordBytes_false(tdc, tmc(li3,0),  1);
 
-  expectInvalidCoord(tdc, TextMCoord(li0,-1));
-  expectInvalidCoord(tdc, TextMCoord(li0,4));
-  expectInvalidCoord(tdc, TextMCoord(li1,-1));
-  expectInvalidCoord(tdc, TextMCoord(li1,1));
-  expectInvalidCoord(tdc, TextMCoord(li2,-1));
-  expectInvalidCoord(tdc, TextMCoord(li2,6));
-  expectInvalidCoord(tdc, TextMCoord(li3,-1));
-  expectInvalidCoord(tdc, TextMCoord(li3,1));
-  expectInvalidCoord(tdc, TextMCoord(li4,0));
+  expectInvalidCoord(tdc, tmc(li0,4));
+  expectInvalidCoord(tdc, tmc(li1,1));
+  expectInvalidCoord(tdc, tmc(li2,6));
+  expectInvalidCoord(tdc, tmc(li3,1));
+  expectInvalidCoord(tdc, tmc(li4,0));
 }
 
 
@@ -456,13 +466,15 @@ void testOneAdjustMCoord_adj(
   // so the non-negative requirement was imposed by `adjustMCoord`.  Now
   // that `LineIndex` requires a non-negative value, I'll do this to
   // effectively disable those tests, at least for now.
-  if (il < 0) {
+  //
+  // Same for `ByteIndex`.
+  if (il < 0 || ib < 0) {
     return;
   }
 
   TEST_CASE_EXPRS("testOneAdjustMCoord_adj", il, ib);
 
-  TextMCoord tc(LineIndex(il), ib);
+  TextMCoord tc{LineIndex(il), ByteIndex(ib)};
   xassert(tdc.adjustMCoord(tc));
 
   EXPECT_EQ(tc.m_line, LineIndex(ol));
@@ -473,7 +485,7 @@ void testOneAdjustMCoord_adj(
 void testOneAdjustMCoord_noAdj(
   TextDocumentCore &tdc, int il, int ib)
 {
-  TextMCoord tc(LineIndex(il), ib);
+  TextMCoord tc{LineIndex(il), ByteIndex(ib)};
   xassert(!tdc.adjustMCoord(tc));
 
   EXPECT_EQ(tc.m_line, LineIndex(il));
@@ -487,14 +499,16 @@ void testOneAdjustMCoordRange_adj(
   int osl, int osb, int oel, int oeb)
 {
   // Similar to above.
-  if (isl < 0 || iel < 0) {
+  if (isl < 0 || isb < 0 || iel < 0 || ieb < 0) {
     return;
   }
 
   TEST_CASE_EXPRS("testOneAdjustMCoordRange_adj",
     isl, isb, iel, ieb);
 
-  TextMCoordRange range{{LineIndex(isl), isb}, {LineIndex(iel), ieb}};
+  TextMCoordRange range{
+    {LineIndex(isl), ByteIndex(isb)},
+    {LineIndex(iel), ByteIndex(ieb)}};
   xassert(tdc.adjustMCoordRange(range));
 
   EXPECT_EQ(range.m_start.m_line, LineIndex(osl));
@@ -508,7 +522,9 @@ void testOneAdjustMCoordRange_noAdj(
   TextDocumentCore &tdc,
   int isl, int isb, int iel, int ieb)
 {
-  TextMCoordRange range{{LineIndex(isl), isb}, {LineIndex(iel), ieb}};
+  TextMCoordRange range{
+    {LineIndex(isl), ByteIndex(isb)},
+    {LineIndex(iel), ByteIndex(ieb)}};
   xassert(!tdc.adjustMCoordRange(range));
 
   EXPECT_EQ(range.m_start.m_line, LineIndex(isl));
@@ -611,8 +627,8 @@ void replaceRange(
 {
   doc.replaceMultilineRange(
     TextMCoordRange(
-      TextMCoord(LineIndex(startLine), startByteIndex),
-      TextMCoord(LineIndex(endLine), endByteIndex)),
+      TextMCoord(LineIndex(startLine), ByteIndex(startByteIndex)),
+      TextMCoord(LineIndex(endLine), ByteIndex(endByteIndex))),
     text);
 }
 
@@ -701,9 +717,9 @@ void test_equals()
   replaceRange(doc2, 3,0,3,0, "D\n");
   xassert(op_eq(doc1, doc2));
 
-  doc1.deleteTextBytes(TextMCoord(LineIndex(3), 0), 1);
+  doc1.deleteTextBytes(tmc(LineIndex(3), 0), ByteCount(1));
   xassert(!op_eq(doc1, doc2));
-  doc2.deleteTextBytes(TextMCoord(LineIndex(3), 0), 1);
+  doc2.deleteTextBytes(tmc(LineIndex(3), 0), ByteCount(1));
 
   // Both should have line 3 as recent.
   xassert(op_eq(doc1, doc2));

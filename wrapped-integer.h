@@ -12,7 +12,7 @@
 #include "smbase/compare-util.h"       // smbase::compare
 #include "smbase/gdvalue.h"            // gdv::GDValue [n]
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser [n]
-#include "smbase/overflow.h"           // addWithOverflowCheck
+#include "smbase/overflow.h"           // addWithOverflowCheck, convertNumber
 #include "smbase/xassert.h"            // xassert, xfailure_stringbc
 
 #include <iostream>                    // std::ostream
@@ -28,6 +28,16 @@ void WrappedInteger<UnderInt, Derived>::selfCheck() const
       "Value violates constraint for " << Derived::getTypeName() <<
       ": " << derivedC().get() << ".");
   }
+}
+
+
+// ---------------------------- Conversion -----------------------------
+template <typename UnderInt, typename Derived>
+template <typename T,
+          typename>
+T WrappedInteger<UnderInt, Derived>::getAs() const
+{
+  return convertNumber<T>(get());
 }
 
 

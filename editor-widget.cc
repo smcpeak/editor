@@ -1400,7 +1400,7 @@ void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
 
 std::optional<int> EditorWidget::byteIndexToLayoutColOpt(
   LineIndex line,
-  std::optional<int> byteIndex) const
+  std::optional<ByteIndex> byteIndex) const
 {
   if (byteIndex) {
     return m_editor->toLCoord(TextMCoord(line, *byteIndex)).m_column;
@@ -2593,9 +2593,9 @@ void EditorWidget::editInsertDateTime()
 }
 
 
-void EditorWidget::insertText(char const *text, int length)
+void EditorWidget::insertText(char const *text, ByteCount length)
 {
-  insertTextString(std::string(text, length));
+  insertTextString(mkString(text, length));
 }
 
 
@@ -2824,7 +2824,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
 void EditorWidget::goToLocalFileAndLineOpt(
   std::string const &fname,
   std::optional<LineNumber> lineOpt,
-  std::optional<int> byteIndexOpt)
+  std::optional<ByteIndex> byteIndexOpt)
 {
   if (byteIndexOpt) {
     xassertPrecondition(*byteIndexOpt >= 0);
@@ -3207,7 +3207,7 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, LineIndex line
 // For inserted characters, I don't do anything special, so
 // the cursor says in the same column of text.
 
-void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, int) NOEXCEPT
+void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, ByteCount) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {
@@ -3217,7 +3217,7 @@ void EditorWidget::observeInsertText(TextDocumentCore const &, TextMCoord, char 
   GENERIC_CATCH_END
 }
 
-void EditorWidget::observeDeleteText(TextDocumentCore const &, TextMCoord, int) NOEXCEPT
+void EditorWidget::observeDeleteText(TextDocumentCore const &, TextMCoord, ByteCount) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   if (ignoringChangeNotifications()) {
@@ -3569,7 +3569,7 @@ std::optional<std::string> EditorWidget::innerCommand(
       // purpose, so I removed it.
 
       QByteArray utf8(text.toUtf8());
-      m_editor->clipboardPaste(utf8.constData(), utf8.length(),
+      m_editor->clipboardPaste(utf8.constData(), ByteCount(utf8.length()),
                                ec->m_cursorToStart);
       this->redrawAfterContentChange();
     }

@@ -103,6 +103,13 @@ static LineIndex randomLine(PositiveLineCount n)
 }
 
 
+// Return an index in [0, index], i.e., *including* `index` itself.
+static ByteIndex randomByteIndexUpTo(ByteIndex index)
+{
+  return ByteIndex(sm_random(index.get() + 1));
+}
+
+
 TextDocumentChangeSequence makeRandomChange(
   TextDocumentCore const &doc)
 {
@@ -124,7 +131,7 @@ TextDocumentChangeSequence makeRandomChange(
     // Insert line.
     LineIndex line(randomLine(doc.numLines() + 1));
 
-    std::optional<int> prevLineBytes;
+    std::optional<ByteCount> prevLineBytes;
     if (line.get() == doc.numLines()) {
       prevLineBytes = doc.lineLengthBytes(line.pred());
     }
@@ -140,10 +147,11 @@ TextDocumentChangeSequence makeRandomChange(
 
       // First clear the line.
       seq.append(std::make_unique<TDC_DeleteText>(
-        TextMCoord(line, 0), doc.lineLengthBytes(line)));
+        TextMCoord(line, ByteIndex(0)),
+        doc.lineLengthBytes(line)));
 
       // Then erase it.
-      std::optional<int> prevLineBytes;
+      std::optional<ByteCount> prevLineBytes;
       if (line == doc.lastLineIndex()) {
         prevLineBytes = doc.lineLengthBytes(line.pred());
       }
@@ -159,7 +167,8 @@ TextDocumentChangeSequence makeRandomChange(
   else if (c.check(20)) {
     // Insert text.
     LineIndex line(randomLine(doc.numLines()));
-    int byteIndex = sm_random(doc.lineLengthBytes(line) + 1);
+    ByteIndex byteIndex =
+      randomByteIndexUpTo(doc.lineLengthByteIndex(line));
 
     seq.append(std::make_unique<TDC_InsertText>(
       TextMCoord(line, byteIndex), randomStringNoNL(20)));
@@ -168,14 +177,15 @@ TextDocumentChangeSequence makeRandomChange(
   else if (c.check(20)) {
     // Delete text.
     LineIndex line(randomLine(doc.numLines()));
-    int len = doc.lineLengthBytes(line);
+    ByteIndex endIndex = doc.lineLengthByteIndex(line);
 
-    int startByteIndex = sm_random(len+1);
-    int endByteIndex = sm_random(len+1);
+    ByteIndex startByteIndex = randomByteIndexUpTo(endIndex);
+    ByteIndex endByteIndex = randomByteIndexUpTo(endIndex);
     swapIfGreaterThan(startByteIndex, endByteIndex);
 
     seq.append(std::make_unique<TDC_DeleteText>(
-      TextMCoord(line, startByteIndex), endByteIndex - startByteIndex));
+      TextMCoord(line, startByteIndex),
+      ByteCount(endByteIndex - startByteIndex)));
   }
 
   else {

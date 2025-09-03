@@ -198,8 +198,8 @@ public:      // methods
   // TextDocumentObserver methods.
   virtual void observeInsertLine(TextDocumentCore const &doc, LineIndex line) noexcept override;
   virtual void observeDeleteLine(TextDocumentCore const &doc, LineIndex line) noexcept override;
-  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept override;
-  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept override;
+  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, ByteCount lengthBytes) noexcept override;
+  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, ByteCount lengthBytes) noexcept override;
   virtual void observeTotalChange(TextDocumentCore const &doc) noexcept override;
 };
 

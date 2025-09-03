@@ -6,6 +6,7 @@
 
 #include "host-file-and-line-opt-fwd.h"          // fwds for this module
 
+#include "byte-index.h"                          // ByteIndex
 #include "host-and-resource-name.h"              // HostAndResourceName
 #include "line-number.h"                         // LineNumber
 
@@ -27,7 +28,7 @@ private:     // data
   std::optional<LineNumber> m_line;
 
   // Optional 0-based byte index.
-  std::optional<int> m_byteIndex;
+  std::optional<ByteIndex> m_byteIndex;
 
 public:      // funcs
   HostFileAndLineOpt()
@@ -52,7 +53,7 @@ public:      // funcs
   HostFileAndLineOpt(
     std::optional<HostAndResourceName> harn,
     std::optional<LineNumber> line,
-    std::optional<int> byteIndex)
+    std::optional<ByteIndex> byteIndex)
     : IMEMBFP(harn),
       IMEMBFP(line),
       IMEMBFP(byteIndex)
@@ -68,7 +69,7 @@ public:      // funcs
     { return m_harn; }
   std::optional<LineNumber> const &getLineOpt() const
     { return m_line; }
-  std::optional<int> const &getByteIndexOpt() const
+  std::optional<ByteIndex> const &getByteIndexOpt() const
     { return m_byteIndex; }
 
   // Tests for member presence.
@@ -83,7 +84,7 @@ public:      // funcs
   LineNumber getLine() const;
 
   // Requires: hasByteIndex()
-  int getByteIndex() const;
+  ByteIndex getByteIndex() const;
 
   // Set `m_harn` to a present value.
   void setHarn(HostAndResourceName const &harn);

@@ -3,6 +3,8 @@
 
 #include "textmcoord.h"                // this module
 
+#include "byte-difference.h"           // ByteDifference
+
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-swap.h"            // swap
@@ -32,7 +34,7 @@ int TextMCoord::compareTo(TextMCoord const &b) const
 }
 
 
-TextMCoord TextMCoord::plusBytes(int n) const
+TextMCoord TextMCoord::plusBytes(ByteDifference n) const
 {
   return TextMCoord(m_line, m_byteIndex + n);
 }

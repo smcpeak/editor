@@ -9,6 +9,7 @@
 
 #include "td-diagnostics.h"                      // this module
 
+#include "byte-count.h"                          // sizeBC
 #include "named-td.h"                            // NamedTextDocument
 #include "td-change.h"                           // TextDocumentChange
 #include "td-change-seq.h"                       // TextDocumentChangeSequence
@@ -145,8 +146,8 @@ TextDocumentDiagnostics::LineEntry::~LineEntry()
 
 
 TextDocumentDiagnostics::LineEntry::LineEntry(
-  std::optional<int> startByteIndex,
-  std::optional<int> endByteIndex,
+  std::optional<ByteIndex> startByteIndex,
+  std::optional<ByteIndex> endByteIndex,
   TDD_Diagnostic const *m_diagnostic)
   : m_startByteIndex(startByteIndex),
     m_endByteIndex(endByteIndex),
@@ -164,7 +165,7 @@ void TextDocumentDiagnostics::LineEntry::selfCheck() const
 }
 
 
-bool TextDocumentDiagnostics::LineEntry::containsByteIndex(int byteIndex) const
+bool TextDocumentDiagnostics::LineEntry::containsByteIndex(ByteIndex byteIndex) const
 {
   if (m_startByteIndex && *m_startByteIndex > byteIndex) {
     return false;
@@ -472,12 +473,12 @@ void TextDocumentDiagnostics::deleteLines(LineIndex line, LineCount count)
   m_rangeToDiagIndex.deleteLines(line, count);
 }
 
-void TextDocumentDiagnostics::insertLineBytes(TextMCoord tc, int lengthBytes)
+void TextDocumentDiagnostics::insertLineBytes(TextMCoord tc, ByteCount lengthBytes)
 {
   m_rangeToDiagIndex.insertLineBytes(tc, lengthBytes);
 }
 
-void TextDocumentDiagnostics::deleteLineBytes(TextMCoord tc, int lengthBytes)
+void TextDocumentDiagnostics::deleteLineBytes(TextMCoord tc, ByteCount lengthBytes)
 {
   m_rangeToDiagIndex.deleteLineBytes(tc, lengthBytes);
 }
@@ -503,12 +504,12 @@ void TextDocumentDiagnostics::applyDocumentChange(
 
     ASTNEXTC(TDC_InsertText, insertText) {
       this->insertLineBytes(insertText->m_tc,
-                            insertText->m_text.size());
+                            sizeBC(insertText->m_text));
     }
 
     ASTNEXTC(TDC_DeleteText, deleteText) {
       this->deleteLineBytes(deleteText->m_tc,
-                            deleteText->m_lengthBytes);
+                            ByteCount(deleteText->m_lengthBytes));
     }
 
     ASTNEXTC(TDC_TotalChange, totalChange) {
@@ -587,14 +588,14 @@ void TextDocumentDiagnosticsUpdater::observeDeleteLine(TextDocumentCore const &d
   GENERIC_CATCH_END
 }
 
-void TextDocumentDiagnosticsUpdater::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept
+void TextDocumentDiagnosticsUpdater::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, ByteCount lengthBytes) noexcept
 {
   GENERIC_CATCH_BEGIN
   m_diagnostics->insertLineBytes(tc, lengthBytes);
   GENERIC_CATCH_END
 }
 
-void TextDocumentDiagnosticsUpdater::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept
+void TextDocumentDiagnosticsUpdater::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, ByteCount lengthBytes) noexcept
 {
   GENERIC_CATCH_BEGIN
   m_diagnostics->deleteLineBytes(tc, lengthBytes);

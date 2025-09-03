@@ -4,6 +4,7 @@
 #include "sar-panel.h"                 // this module
 
 // editor
+#include "byte-count.h"                // sizeBC
 #include "debug-values.h"              // DEBUG_VALUES
 #include "editor-widget.h"             // EditorWidget
 
@@ -551,7 +552,7 @@ bool SearchAndReplacePanel::eventFilter(QObject *watched, QEvent *event) NOEXCEP
             if (!ed->markActive()) {
               ed->setMark(tc);
             }
-            ed->walkCursorBytes(word.length());
+            ed->walkCursorBytes(sizeBC(word));
 
             // Hack: I want these swapped.  TODO: I should turn things
             // around so SAR creates selections with cursor >= mark,

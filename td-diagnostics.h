@@ -15,6 +15,8 @@
 
 #include "td-diagnostics-fwd.h"        // fwds for this module
 
+#include "byte-count.h"                // ByteCount
+#include "byte-index.h"                // ByteIndex
 #include "line-count.h"                // LineCount, PositiveLineCount
 #include "line-index.h"                // LineIndex
 #include "line-number.h"               // LineNumber
@@ -134,13 +136,13 @@ public:      // types
   public:      // data
     // If set, the index where the range starts on this line.  If not
     // set, the range begins on a previous line.
-    std::optional<int> m_startByteIndex;
+    std::optional<ByteIndex> m_startByteIndex;
 
     // If set, the index where the range ends on this line.  If not set,
     // the range ends on a subsequent line.
     //
     // Invariant: If both indices are set, then start <= end.
-    std::optional<int> m_endByteIndex;
+    std::optional<ByteIndex> m_endByteIndex;
 
     // The associated diagnostic.  This is a pointer into
     // `m_diagnostics`, so is invalidated by anything that changes that
@@ -151,15 +153,15 @@ public:      // types
     ~LineEntry();
 
     explicit LineEntry(
-      std::optional<int> startByteIndex,
-      std::optional<int> endByteIndex,
+      std::optional<ByteIndex> startByteIndex,
+      std::optional<ByteIndex> endByteIndex,
       TDD_Diagnostic const *m_diagnostic);
 
     // Assert invariants.
     void selfCheck() const;
 
     // True if `byteIndex` is between start and end.
-    bool containsByteIndex(int byteIndex) const;
+    bool containsByteIndex(ByteIndex byteIndex) const;
 
     operator gdv::GDValue() const;
 
@@ -273,8 +275,8 @@ public:      // methods
   // on `TextMCoordMap`.
   void insertLines(LineIndex line, LineCount count);
   void deleteLines(LineIndex line, LineCount count);
-  void insertLineBytes(TextMCoord tc, int lengthBytes);
-  void deleteLineBytes(TextMCoord tc, int lengthBytes);
+  void insertLineBytes(TextMCoord tc, ByteCount lengthBytes);
+  void deleteLineBytes(TextMCoord tc, ByteCount lengthBytes);
 
   // Equivalent to `toGDValue(getAllEntries())`.
   operator gdv::GDValue() const;
@@ -332,8 +334,8 @@ public:      // TextDocumentObserver methods
   // lines.
   virtual void observeInsertLine(TextDocumentCore const &doc, LineIndex line) noexcept override;
   virtual void observeDeleteLine(TextDocumentCore const &doc, LineIndex line) noexcept override;
-  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept override;
-  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept override;
+  virtual void observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, ByteCount lengthBytes) noexcept override;
+  virtual void observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, ByteCount lengthBytes) noexcept override;
 
   // This clears the diagnostics and resets the number of lines to match
   // `doc`.

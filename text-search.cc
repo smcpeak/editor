@@ -36,7 +36,7 @@ TextSearch::MatchExtent::MatchExtent()
 {}
 
 
-TextSearch::MatchExtent::MatchExtent(int start, int length)
+TextSearch::MatchExtent::MatchExtent(ByteIndex start, ByteCount length)
   : m_startByte(start),
     m_lengthBytes(length)
 {}
@@ -113,11 +113,11 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
 
   // Get search string info into locals.
   char const *searchString = searchStringCopy.c_str();
-  int searchStringLength = searchStringCopy.length();
+  ByteCount searchStringLength(searchStringCopy.length());
 
   // Treat an invalid regex like an empty search string.
   if (m_regex.get() && !m_regex->isValid()) {
-    searchStringLength = 0;
+    searchStringLength.set(0);
   }
 
   // Temporary array into which we copy line contents.
@@ -174,19 +174,19 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
           // TODO UTF-8: This incorrectly equates UTF-16 code units with
           // UTF-8 octets.
           lineMatches.push(MatchExtent(
-            match.capturedStart(),
-            match.capturedLength()));
+            ByteIndex(match.capturedStart()),
+            ByteCount(match.capturedLength())));
         }
       }
       else {
         // Byte offset within the line to begin the next search.
-        int offset = 0;
+        ByteIndex offset(0);
 
         while (offset+searchStringLength <= lineLength) {
           char *nextMatch = strstr(buffer+offset, searchString);
           if (nextMatch) {
             // Offset where we found the match.
-            offset = nextMatch - buffer;
+            offset = ByteIndex(nextMatch - buffer);
 
             // Record the match.
             lineMatches.push(MatchExtent(offset, searchStringLength));
@@ -198,7 +198,7 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
             // Note: With the regex engine, I can get both adjacent and
             // zero-width matches.  The handling in EditorWidget isn't
             // great, but it is not catastrophic.
-            offset += searchStringLength+1;
+            offset += searchStringLength.succ();
           }
           else {
             break;
@@ -214,7 +214,7 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
 
         // Skip all remaining matches, but do continue iterating through
         // the file in order to discard previous matches.
-        searchStringLength = 0;
+        searchStringLength.set(0);
       }
     }
 
@@ -283,7 +283,7 @@ void TextSearch::observeDeleteLine(TextDocumentCore const &doc, LineIndex line) 
 }
 
 
-void TextSearch::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, int length) NOEXCEPT
+void TextSearch::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, char const *text, ByteCount length) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);
@@ -292,7 +292,7 @@ void TextSearch::observeInsertText(TextDocumentCore const &doc, TextMCoord tc, c
 }
 
 
-void TextSearch::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, int length) NOEXCEPT
+void TextSearch::observeDeleteText(TextDocumentCore const &doc, TextMCoord tc, ByteCount length) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   xassert(&doc == m_document);

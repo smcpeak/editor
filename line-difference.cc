@@ -5,16 +5,7 @@
 
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
-#include "smbase/compare-util.h"       // smbase::compare
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/stringb.h"            // stringb
-
-#include <iostream>                    // std::ostream
-#include <optional>                    // std::optional
-
-using namespace gdv;
-using namespace smbase;
 
 
 // Explicitly instantiate all of the class template methods.  The header

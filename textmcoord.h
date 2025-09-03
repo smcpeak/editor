@@ -6,6 +6,8 @@
 
 #include "textmcoord-fwd.h"            // fwds for this module
 
+#include "byte-difference-fwd.h"       // ByteDifference [n]
+#include "byte-index.h"                // ByteIndex
 #include "line-index.h"                // LineIndex
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
@@ -38,11 +40,11 @@ public:      // data
   // should not be in the middle of a multibyte code unit sequence.  An
   // index equal to the length refers to the end of the line, such that,
   // for example, inserting a character there would append it.
-  int m_byteIndex;
+  ByteIndex m_byteIndex;
 
 public:      // funcs
   TextMCoord() : m_line(0), m_byteIndex(0) {}
-  TextMCoord(LineIndex line, int byteIndex) : m_line(line), m_byteIndex(byteIndex) {}
+  TextMCoord(LineIndex line, ByteIndex byteIndex) : m_line(line), m_byteIndex(byteIndex) {}
   TextMCoord(TextMCoord const &obj) : DMEMB(m_line), DMEMB(m_byteIndex) {}
 
   TextMCoord& operator= (TextMCoord const &obj);
@@ -50,10 +52,10 @@ public:      // funcs
   // Lexicographic order by line then byteIndex.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextMCoord)
 
-  bool isZero() const { return m_line.isZero() && m_byteIndex==0; }
+  bool isZero() const { return m_line.isZero() && m_byteIndex.isZero(); }
 
   // Return `*this` except with `m_byteIndex` increased by `n`.
-  TextMCoord plusBytes(int n) const;
+  TextMCoord plusBytes(ByteDifference n) const;
 
   // Insert as "<line>:<byteIndex>".
   void insert(std::ostream &os) const;

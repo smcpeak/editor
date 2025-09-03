@@ -36,7 +36,7 @@ LineNumber HostFileAndLineOpt::getLine() const
 }
 
 
-int HostFileAndLineOpt::getByteIndex() const
+ByteIndex HostFileAndLineOpt::getByteIndex() const
 {
   xassertPrecondition(hasByteIndex());
   return *m_byteIndex;

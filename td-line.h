@@ -1,14 +1,22 @@
 // td-line.h
 // TextDocumentLine
 
-#ifndef TD_LINE_H
-#define TD_LINE_H
+#ifndef EDITOR_TD_LINE_H
+#define EDITOR_TD_LINE_H
+
+#include "td-line-fwd.h"               // fwds for this module
+
+#include "byte-count.h"                // ByteCount
+#include "byte-difference.h"           // ByteDifference
+#include "byte-index.h"                // ByteIndex
+#include "td-core-fwd.h"               // TextDocumentCore [n]
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
 #include "smbase/sm-macros.h"          // DMEMB, CMEMB
 #include "smbase/xassert.h"            // xassert
 
 #include <stddef.h>                    // NULL
+
 
 // Holds one line of text.  A line is a sequence of bytes (octets).
 //
@@ -20,24 +28,32 @@
 // copied using ordinary operator=, and the class that contains the
 // GapArray is responsible for doing memory management.
 //
-// The data members are public to allow the client to manage memory, but
-// the intention is the GapArray is private, limiting the code that
-// directly accesses the data.
-//
 class TextDocumentLine {
-public:
-  // Number of bytes in the line.  If this is 0, then 'm_bytes' is NULL.
-  unsigned m_length;
+  // TDC does the direct field manipulation.
+  friend TextDocumentCore;
+
+  // Test class (in `td-line-test.cc`) also does direct manipulation.
+  friend TextDocumentLineTester;
+
+private:     // data
+  // Number of bytes in the line, *including* the newline, except when
+  // the line only has a newline, in which case this is 0 and `m_bytes`
+  // is null.
+  //
+  // Logically this is a `ByteCount`, but because of how I do memory
+  // management, this class has to be trivially copyable, so I use plain
+  // `int` here.
+  //
+  // TODO: Never count the newline!
+  int m_length;
 
   // If 'm_length' is not zero, pointer to array of bytes in the line,
   // allocated with 'new[]'.  This is nominally an owner pointer, except
   // when this instance is an inactive element in a GapArray.  Again,
   // the class that contains the GapArray does memory management.
-  //
-  // TODO: Change this to 'unsigned char'.
   char *m_bytes;
 
-public:
+public:      // methods
   // An empty line.
   TextDocumentLine() :
     m_length(0),
@@ -52,8 +68,8 @@ public:
   TextDocumentLine(TextDocumentLine const &obj) = default;
 
   // This takes ownership of 'bytes'.
-  TextDocumentLine(unsigned length, char *bytes) :
-    m_length(length),
+  TextDocumentLine(ByteCount length, char *bytes) :
+    m_length(length.get()),
     m_bytes(bytes)
   {}
 
@@ -75,26 +91,27 @@ public:
 
   bool isEmpty() const { return m_length == 0; }
 
-  char at(unsigned index) const
+  char at(ByteIndex index) const
   {
     xassert(index < m_length);
-    return m_bytes[index];
+    return m_bytes[index.get()];
   }
 
   // Length of sequence in bytes, not counting the assumed final newline
   // for a non-empty sequence.
   //
-  // TODO: This is weird and inconsistent.
-  unsigned lengthWithoutNL() const
+  // TODO: This is weird and inconsistent.  Or rather, `m_length` is
+  // weird for not doing it this way.
+  ByteCount lengthWithoutNL() const
   {
     if (m_length) {
-      return m_length - 1;
+      return ByteCount(m_length - 1);
     }
     else {
-      return 0;
+      return ByteCount(0);
     }
   }
 };
 
 
-#endif // TD_LINE_H
+#endif // EDITOR_TD_LINE_H

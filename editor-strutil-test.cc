@@ -5,6 +5,8 @@
 
 #include "editor-strutil.h"            // module under test
 
+#include "byte-index.h"                // ByteIndex
+
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // EXPECT_EQ
 
@@ -17,26 +19,22 @@ OPEN_ANONYMOUS_NAMESPACE
 void expectCIA(std::string const &text, int byteOffset,
                std::string const &expect)
 {
-  std::string actual = cIdentifierAt(text, byteOffset);
+  std::string actual = cIdentifierAt(text, ByteIndex(byteOffset));
   EXPECT_EQ(actual, expect);
 }
 
 
 void test1()
 {
-  expectCIA("", -1, "");
   expectCIA("", 0, "");
   expectCIA("", 1, "");
 
-  expectCIA(" ", -1, "");
   expectCIA(" ", 0, "");
   expectCIA(" ", 1, "");
 
-  expectCIA("$", -1, "");
   expectCIA("$", 0, "");
   expectCIA("$", 1, "");
 
-  expectCIA("a", -1, "");
   expectCIA("a", 0, "a");
   expectCIA("a", 1, "");
 

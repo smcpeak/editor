@@ -192,6 +192,9 @@ $(ASTGEN)/astgen.exe:
 
 
 # ----------------------------- unit-tests -----------------------------
+EDITOR_OBJS += byte-count.o
+EDITOR_OBJS += byte-difference.o
+EDITOR_OBJS += byte-index.o
 EDITOR_OBJS += bufferlinesource.o
 EDITOR_OBJS += c_hilite.yy.o
 EDITOR_OBJS += command-runner.moc.o
@@ -260,6 +263,8 @@ EDITOR_OBJS += waiting-counter.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
+UNIT_TESTS_OBJS += byte-count-test.o
+UNIT_TESTS_OBJS += byte-index-test.o
 UNIT_TESTS_OBJS += bufferlinesource-test.o
 UNIT_TESTS_OBJS += c-hilite-test.o
 UNIT_TESTS_OBJS += command-runner-test.moc.o

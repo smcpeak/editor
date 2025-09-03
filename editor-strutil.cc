@@ -3,6 +3,10 @@
 
 #include "editor-strutil.h"            // this module
 
+#include "byte-count.h"                // ByteCount
+#include "byte-difference.h"           // ByteDifference
+#include "byte-index.h"                // ByteIndex
+
 // smbase
 #include "smbase/codepoint.h"          // isCIdentifierCharacter
 
@@ -10,26 +14,26 @@
 #include <string>                      // std::string
 
 
-std::string cIdentifierAt(std::string const &text, int byteOffset)
+std::string cIdentifierAt(std::string const &text, ByteIndex byteOffset)
 {
-  int len = text.length();
-  if (0 <= byteOffset && byteOffset < len) {
-    if (!isCIdentifierCharacter(text[byteOffset])) {
+  ByteCount len = sizeBC(text);
+  if (byteOffset < len) {
+    if (!isCIdentifierCharacter(at(text, byteOffset))) {
       return "";
     }
 
-    int start = byteOffset;
-    while (start > 0 && isCIdentifierCharacter(text[start-1])) {
+    ByteIndex start = byteOffset;
+    while (start > 0 && isCIdentifierCharacter(at(text, start.pred()))) {
       start--;
     }
 
     // One past the last character to return.
-    int end = byteOffset+1;
-    while (end < len && isCIdentifierCharacter(text[end])) {
+    ByteIndex end = byteOffset.succ();
+    while (end < len && isCIdentifierCharacter(at(text, end))) {
       end++;
     }
 
-    return text.substr(start, end-start);
+    return substr(text, start, ByteCount(end-start));
   }
   else {
     return "";

@@ -23,6 +23,8 @@
 
 #include "lsp-data-fwd.h"              // fwds for this module
 
+#include "byte-difference.h"           // ByteDifference
+#include "byte-index.h"                // ByteIndex
 #include "line-index.h"                // LineIndex
 #include "lsp-version-number.h"        // LSP_VersionNumber
 
@@ -45,12 +47,12 @@ public:      // data
   // 0-based character number within the line.  Non-negative.
   //
   // In the absence of a different negotiated value, this counts UTF-16
-  // code units.
-  int m_character;
+  // code units, but my plan (TODO!) is to negotiate UTF-8 code units.
+  ByteIndex m_character;
 
 public:      // methods
   // create-tuple-class: declarations for LSP_Position +compare +write +selfCheck
-  /*AUTO_CTC*/ explicit LSP_Position(LineIndex const &line, int character);
+  /*AUTO_CTC*/ explicit LSP_Position(LineIndex const &line, ByteIndex const &character);
   /*AUTO_CTC*/ LSP_Position(LSP_Position const &obj) noexcept;
   /*AUTO_CTC*/ void selfCheck() const;
   /*AUTO_CTC*/ LSP_Position &operator=(LSP_Position const &obj) noexcept;
@@ -68,7 +70,7 @@ public:      // methods
   explicit LSP_Position(gdv::GDValueParser const &p);
 
   // Return the same position but at `m_character + n`.
-  LSP_Position plusCharacters(int n) const;
+  LSP_Position plusCharacters(ByteDifference n) const;
 };
 
 

@@ -21,6 +21,22 @@ using namespace gdv;
 OPEN_ANONYMOUS_NAMESPACE
 
 
+// If `s` has a value, construct `DEST(*s)` and wrap that in an
+// `optional`.  Otherwise return `nullopt`.
+//
+// TODO: Move this into `smbase`.
+template <typename DEST, typename SRC>
+std::optional<DEST> makeOptFromOpt(std::optional<SRC> const &s)
+{
+  if (s.has_value()) {
+    return std::optional<DEST>(*s);
+  }
+  else {
+    return std::nullopt;
+  }
+}
+
+
 void testOneContainsByteIndex(
   std::optional<int> startByteIndex,
   std::optional<int> endByteIndex,
@@ -33,9 +49,11 @@ void testOneContainsByteIndex(
 
   TDD_Diagnostic dummy("");
   TextDocumentDiagnostics::LineEntry entry(
-    startByteIndex, endByteIndex, &dummy);
+    makeOptFromOpt<ByteIndex>(startByteIndex),
+    makeOptFromOpt<ByteIndex>(endByteIndex),
+    &dummy);
 
-  EXPECT_EQ(entry.containsByteIndex(testByteIndex), expect);
+  EXPECT_EQ(entry.containsByteIndex(ByteIndex(testByteIndex)), expect);
 }
 
 
@@ -77,7 +95,7 @@ void testOneGetDiagnosticsAt(
   EXN_CONTEXT_EXPR(byteIndex);
 
   RCSerf<TDD_Diagnostic const> actual =
-    tdd.getDiagnosticAt(TextMCoord(LineIndex(line), byteIndex));
+    tdd.getDiagnosticAt(TextMCoord(LineIndex(line), ByteIndex(byteIndex)));
 
   EXPECT_EQ(actual==nullptr, expect==nullptr);
 
@@ -99,7 +117,7 @@ void testOneAdjacentDiagnostic(
     next, startLine, startByteIndex);
 
   std::optional<TextMCoord> actual = tdd.getAdjacentDiagnosticLocation(
-    next, TextMCoord(LineIndex(startLine), startByteIndex));
+    next, TextMCoord(LineIndex(startLine), ByteIndex(startByteIndex)));
 
   if (expectLine == -1) {
     xassert(!actual.has_value());
@@ -166,8 +184,8 @@ public:      // methods
 static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
 {
   return TextMCoordRange(
-    TextMCoord(LineIndex(sl), sb),
-    TextMCoord(LineIndex(el), eb));
+    TextMCoord(LineIndex(sl), ByteIndex(sb)),
+    TextMCoord(LineIndex(el), ByteIndex(eb)));
 }
 
 

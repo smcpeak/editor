@@ -3,6 +3,8 @@
 
 #include "td-line.h"                   // this module
 
+#include "byte-count.h"                // memcmpBC, mkString
+
 #include "smbase/gdvalue.h"            // gdv::GDValue
 
 #include <cstring>                     // std::memcmp
@@ -16,9 +18,9 @@ bool TextDocumentLine::operator==(TextDocumentLine const &obj) const
     return false;
   }
 
-  int len = lengthWithoutNL();
+  ByteCount len = lengthWithoutNL();
   if (len) {
-    return 0==std::memcmp(m_bytes, obj.m_bytes, len);
+    return 0==memcmpBC(m_bytes, obj.m_bytes, len);
   }
   else {
     return true;
@@ -32,7 +34,7 @@ TextDocumentLine::operator gdv::GDValue() const
     return GDValue(GDVString());
   }
   else {
-    return GDValue(GDVString(m_bytes, lengthWithoutNL()));
+    return GDValue(mkString(m_bytes, lengthWithoutNL()));
   }
 }
 

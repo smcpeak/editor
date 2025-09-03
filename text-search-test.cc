@@ -118,11 +118,12 @@ void testSimple()
 }
 
 
+// These "columns" are misnamed...
 void expectRIM(TextSearch &ts,
   int lineA, int colA, int lineB, int colB, bool expectRes)
 {
-  TextMCoord a(LineIndex(lineA), colA);
-  TextMCoord b(LineIndex(lineB), colB);
+  TextMCoord a{LineIndex(lineA), ByteIndex(colA)};
+  TextMCoord b{LineIndex(lineB), ByteIndex(colB)};
   bool actualRes = ts.rangeIsMatch(a, b);
   EXPECT_EQ(actualRes, expectRes);
 }
@@ -136,8 +137,8 @@ void expectNM_true(TextSearch const &ts,
   int expectMarkLine, int expectMarkCol)
 {
   for (int i=0; i < 2; i++) {
-    TextMCoord cursor(LineIndex(cursorLine), cursorCol);
-    TextMCoord mark(LineIndex(markLine), markCol);
+    TextMCoord cursor{LineIndex(cursorLine), ByteIndex(cursorCol)};
+    TextMCoord mark{LineIndex(markLine), ByteIndex(markCol)};
     if (i==1) {
       // The result should be independent of the order of 'cursor' and
       // 'mark'.
@@ -161,8 +162,8 @@ void expectNM_false(TextSearch const &ts,
   bool reverse)
 {
   for (int i=0; i < 2; i++) {
-    TextMCoord cursor(LineIndex(cursorLine), cursorCol);
-    TextMCoord mark(LineIndex(markLine), markCol);
+    TextMCoord cursor{LineIndex(cursorLine), ByteIndex(cursorCol)};
+    TextMCoord mark{LineIndex(markLine), ByteIndex(markCol)};
     if (i==1) {
       // The result should be independent of the order of 'cursor' and
       // 'mark'.

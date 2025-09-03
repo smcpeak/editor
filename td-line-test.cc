@@ -4,41 +4,38 @@
 #include "td-line.h"                   // module under test
 #include "unit-tests.h"                // decl for my entry point
 
-#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"            // EXPECT_EQ, op_eq
+#include "smbase/xassert.h"            // xassert
 
 
-OPEN_ANONYMOUS_NAMESPACE
+class TextDocumentLineTester {
+public:      // methods
+  void test_equals()
+  {
+    TextDocumentLine tdl1, tdl2;
+    xassert(op_eq(tdl1, tdl2));
 
+    char arr1[] = "abc\n";
+    tdl1.m_bytes = arr1;
+    tdl1.m_length = 4;
+    xassert(!op_eq(tdl1, tdl2));
+    xassert(tdl1.lengthWithoutNL() == 3);
 
-void test_equals()
-{
-  TextDocumentLine tdl1, tdl2;
-  xassert(op_eq(tdl1, tdl2));
+    char arr2[] = "xabc\n";
+    tdl2.m_bytes = arr2;
+    tdl2.m_length = 4;
+    xassert(!op_eq(tdl1, tdl2));
 
-  char arr1[] = "abc\n";
-  tdl1.m_bytes = arr1;
-  tdl1.m_length = 4;
-  xassert(!op_eq(tdl1, tdl2));
-  xassert(tdl1.lengthWithoutNL() == 3);
-
-  char arr2[] = "xabc\n";
-  tdl2.m_bytes = arr2;
-  tdl2.m_length = 4;
-  xassert(!op_eq(tdl1, tdl2));
-
-  ++tdl2.m_bytes;
-  xassert(op_eq(tdl1, tdl2));
-}
-
-
-CLOSE_ANONYMOUS_NAMESPACE
+    ++tdl2.m_bytes;
+    xassert(op_eq(tdl1, tdl2));
+  }
+};
 
 
 // Called from unit-tests.cc.
 void test_td_line(CmdlineArgsSpan args)
 {
-  test_equals();
+  TextDocumentLineTester().test_equals();
 }
 
 

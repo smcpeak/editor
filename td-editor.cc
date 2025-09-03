@@ -4,6 +4,7 @@
 #include "td-editor.h"                 // this module
 
 // editor
+#include "byte-count.h"                // ByteCount, sizeBC
 #include "editor-strutil.h"            // cIdentifierAt
 #include "justify.h"                   // justifyNearLine
 #include "line-difference.h"           // LineDifference
@@ -93,7 +94,7 @@ TextMCoord TextDocumentEditor::innerToMCoord(TextLCoord lc) const
   }
 
   if (lc.m_column < 0) {
-    return TextMCoord(lc.m_line, 0);
+    return TextMCoord(lc.m_line, ByteIndex(0));
   }
 
   LineIterator it(*this, lc.m_line);
@@ -169,7 +170,10 @@ TextLCoord TextDocumentEditor::lineEndLCoord(LineIndex line) const
 int TextDocumentEditor::maxLineLengthColumns() const
 {
   // TODO: Layout.
-  return m_doc->maxLineLengthBytes();
+  //
+  // Note the units mismatch!  That is because this is wrong, using
+  // a byte count where a column count is advertised.
+  return m_doc->maxLineLengthBytes().get();
 }
 
 
@@ -547,7 +551,7 @@ TextLCoord TextDocumentEditor::mark() const
 }
 
 
-void TextDocumentEditor::insertText(char const *text, int textLen,
+void TextDocumentEditor::insertText(char const *text, ByteCount textLen,
                                     InsertTextFlags flags)
 {
   // The entire process of insertion should create one undo record.
@@ -581,7 +585,7 @@ void TextDocumentEditor::insertString(string const &text,
   // because I am still using my own string class which does not
   // handle them.  But at some point I will switch to std::string,
   // and then this will work as intended.
-  this->insertText(text.c_str(), text.length(), flags);
+  this->insertText(text.c_str(), sizeBC(text), flags);
 }
 
 
@@ -599,7 +603,7 @@ void TextDocumentEditor::deleteLRColumns(bool left, int columnCount)
 }
 
 
-void TextDocumentEditor::deleteLRBytes(bool left, int byteCount)
+void TextDocumentEditor::deleteLRBytes(bool left, ByteCount byteCount)
 {
   TextMCoord start(this->toMCoord(this->cursor()));
 
@@ -616,7 +620,7 @@ void TextDocumentEditor::deleteLRBytes(bool left, int byteCount)
 void TextDocumentEditor::deleteLRAbsCharacters(bool left, int characterCount)
 {
   // TODO UTF-8: Do this right.
-  this->deleteLRBytes(left, characterCount);
+  this->deleteLRBytes(left, ByteCount(characterCount /*units mismatch!*/));
 }
 
 
@@ -705,7 +709,8 @@ void TextDocumentEditor::redo()
 }
 
 
-void TextDocumentEditor::walkLCoordColumns(TextLCoord &tc, int len) const
+void TextDocumentEditor::walkLCoordColumns(
+  TextLCoord &tc /*INOUT*/, int len) const
 {
   xassert(tc.nonNegative());
 
@@ -736,7 +741,8 @@ void TextDocumentEditor::walkLCoordColumns(TextLCoord &tc, int len) const
 }
 
 
-void TextDocumentEditor::walkLCoordBytes(TextLCoord &lc, int len) const
+void TextDocumentEditor::walkLCoordBytes(
+  TextLCoord &lc /*INOUT*/, ByteDifference len) const
 {
   TextMCoord mc(this->toMCoord(lc));
   this->walkMCoordBytes(mc, len);
@@ -744,13 +750,14 @@ void TextDocumentEditor::walkLCoordBytes(TextLCoord &lc, int len) const
 }
 
 
-void TextDocumentEditor::walkMCoordBytes(TextMCoord &mc, int len) const
+void TextDocumentEditor::walkMCoordBytes(
+  TextMCoord &mc /*INOUT*/, ByteDifference len) const
 {
   for (; len > 0; len--) {
     if (mc.m_byteIndex >= this->lineLengthBytes(mc.m_line)) {
       // cycle to next line
       ++mc.m_line;
-      mc.m_byteIndex = 0;
+      mc.m_byteIndex.set(0);
     }
     else {
       mc.m_byteIndex++;
@@ -764,7 +771,7 @@ void TextDocumentEditor::walkMCoordBytes(TextMCoord &mc, int len) const
         return;      // Stop at BOF.
       }
       --mc.m_line;
-      mc.m_byteIndex = this->lineLengthBytes(mc.m_line);
+      mc.m_byteIndex = this->lineLengthByteIndex(mc.m_line);
     }
     else {
       mc.m_byteIndex--;
@@ -959,10 +966,10 @@ void TextDocumentEditor::modelToLayoutSpans(LineIndex line,
 }
 
 
-int TextDocumentEditor::countLeadingSpacesTabs(LineIndex line) const
+ByteCount TextDocumentEditor::countLeadingSpacesTabs(LineIndex line) const
 {
   if (!m_doc->validLine(line)) {
-    return 0;
+    return ByteCount(0);
   }
   else {
     return m_doc->countLeadingSpacesTabs(line);
@@ -976,7 +983,10 @@ int TextDocumentEditor::countTrailingSpacesTabsColumns(LineIndex line) const
     return 0;
   }
   else {
-    int trailBytes = m_doc->countTrailingSpacesTabs(line);
+    // Get a count of trailing WS *bytes*.
+    ByteCount trailBytes = m_doc->countTrailingSpacesTabs(line);
+
+    // Convert that to a count of trailing *columns*.
     if (trailBytes) {
       // This is somewhat inefficient...
       TextMCoord mcEnd(m_doc->lineEndCoord(line));
@@ -1138,7 +1148,7 @@ void TextDocumentEditor::confineCursorToVisible()
 }
 
 
-void TextDocumentEditor::walkCursorBytes(int distance)
+void TextDocumentEditor::walkCursorBytes(ByteDifference distance)
 {
   this->walkLCoordBytes(m_cursor, distance);
 }
@@ -1341,7 +1351,7 @@ void TextDocumentEditor::indentLines(LineIndex start, LineCount lines, int ind)
     }
 
     else {
-      int lineInd = this->countLeadingSpacesTabs(line);
+      ByteCount lineInd = this->countLeadingSpacesTabs(line);
       for (int i=0; i<(-ind) && i<lineInd; i++) {
         this->deleteChar();
       }
@@ -1417,8 +1427,8 @@ string TextDocumentEditor::clipboardCut()
 }
 
 
-void TextDocumentEditor::clipboardPaste(char const *text, int textLen,
-                                        bool cursorToStart)
+void TextDocumentEditor::clipboardPaste(
+  char const *text, ByteCount textLen, bool cursorToStart)
 {
   this->insertText(text, textLen,
     cursorToStart? ITF_CURSOR_AT_START : ITF_NONE);

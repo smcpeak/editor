@@ -15,6 +15,8 @@ typedef smbase::Span<char const * const> CmdlineArgsSpan;
 
 
 // Prototypes of tests defined in various *-test.cc files.
+void test_byte_count(CmdlineArgsSpan args);
+void test_byte_index(CmdlineArgsSpan args);
 void test_bufferlinesource(CmdlineArgsSpan args);
 void test_c_hilite(CmdlineArgsSpan args);
 void test_command_runner(CmdlineArgsSpan args);

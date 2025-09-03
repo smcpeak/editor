@@ -8,6 +8,8 @@
 
 #include "textmcoord-map-fwd.h"        // fwds for this module
 
+#include "byte-count.h"                // ByteCount
+#include "byte-index.h"                // ByteIndex
 #include "line-count.h"                // LineCount
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
@@ -132,21 +134,21 @@ public:      // types
   public:      // data
     // If set, the index where the range starts on this line.  If not
     // set, the range begins on a previous line.
-    std::optional<int> m_startByteIndex;
+    std::optional<ByteIndex> m_startByteIndex;
 
     // If set, the index where the range ends on this line.  If not set,
     // the range ends on a subsequent line.
     //
     // Invariant: If both indices are set, then start <= end.
-    std::optional<int> m_endByteIndex;
+    std::optional<ByteIndex> m_endByteIndex;
 
     // The associated value.
     Value m_value;
 
   public:
     LineEntry(
-      std::optional<int> startByteIndex,
-      std::optional<int> endByteIndex,
+      std::optional<ByteIndex> startByteIndex,
+      std::optional<ByteIndex> endByteIndex,
       Value value);
 
     void selfCheck();
@@ -166,19 +168,20 @@ private:     // types
   class SingleLineSpan {
   public:      // data
     // 0-based byte index of the start.
-    int m_startByteIndex;
+    ByteIndex m_startByteIndex;
 
     // Byte index of the end.  The spanned region is [start,end), i.e.,
     // it does not include the byte with at end index.
     //
     // Invariant: 0 <= m_startByteIndex <= m_endByteIndex.
-    int m_endByteIndex;
+    ByteIndex m_endByteIndex;
 
     // The value associated with this span.
     Value m_value;
 
   public:      // methods
-    SingleLineSpan(int startByteIndex, int endByteIndex, Value value);
+    SingleLineSpan(
+      ByteIndex startByteIndex, ByteIndex endByteIndex, Value value);
 
     void selfCheck() const;
 
@@ -193,13 +196,13 @@ private:     // types
     // 0-based byte index of the boundary within its line.  If this is
     // a start point, the named byte is included in the range.  If this
     // is an end point, the named byte is *not* included.
-    int m_byteIndex;
+    ByteIndex m_byteIndex;
 
     // The associated value.
     Value m_value;
 
   public:      // methods
-    Boundary(int byteIndex, Value value);
+    Boundary(ByteIndex byteIndex, Value value);
 
     void selfCheck() const;
 
@@ -227,22 +230,22 @@ private:     // types
 
   private:     // methods
     // Insertion as it affects `m_singleLineSpans`.
-    void insertBytes_spans(int insStart, int lengthBytes);
+    void insertBytes_spans(ByteIndex insStart, ByteCount lengthBytes);
 
     // Insertion as it affects one of the boundary sets.
     static void insertBytes_boundaries(
       std::set<Boundary> &boundaries,
-      int insStart,
-      int lengthBytes);
+      ByteIndex insStart,
+      ByteCount lengthBytes);
 
     // Deletion as it affects `m_singleLineSpans`.
-    void deleteBytes_spans(int delStart, int lengthBytes);
+    void deleteBytes_spans(ByteIndex delStart, ByteCount lengthBytes);
 
     // Deletion as it affects one of the boundary sets.
     static void deleteBytes_boundaries(
       std::set<Boundary> &boundaries,
-      int delStart,
-      int lengthBytes);
+      ByteIndex delStart,
+      ByteCount lengthBytes);
 
   public:      // methods
     ~LineData();
@@ -259,21 +262,21 @@ private:     // types
 
     // Modify the associated spans to reflect inserting `lengthBytes`
     // bytes starting at `insStart`.
-    void insertBytes(int insStart, int lengthBytes);
+    void insertBytes(ByteIndex insStart, ByteCount lengthBytes);
 
     // Modify the associated spans to reflect deleting `lengthBytes`
     // bytes starting at `delStart`.
-    void deleteBytes(int delStart, int lengthBytes);
+    void deleteBytes(ByteIndex delStart, ByteCount lengthBytes);
 
     // Remove from `m_endsHere` the boundary that applies to `v`, which
     // must exist.  Return the byte index it carried.
-    int removeEnd_getByteIndex(Value v);
+    ByteIndex removeEnd_getByteIndex(Value v);
 
     // Return the `LineEntry`s for this line.
     std::set<LineEntry> getLineEntries() const;
 
     // The largest byte index mentioned by any end point.
-    std::optional<int> largestByteIndex() const;
+    std::optional<ByteIndex> largestByteIndex() const;
 
     // Ensure the coordinates are valid for `line` in `doc`.
     void adjustForDocument(TextDocumentCore const &doc, LineIndex line);
@@ -426,11 +429,11 @@ public:      // methods
 
   // Insert characters on a single line, at `tc`, shifting later
   // boundaries to the right.
-  void insertLineBytes(TextMCoord tc, int lengthBytes);
+  void insertLineBytes(TextMCoord tc, ByteCount lengthBytes);
 
   // Remove characters from a line, shifting later boundaries to the
   // left, and boundaries within the deleted region to `tc`.
-  void deleteLineBytes(TextMCoord tc, int lengthBytes);
+  void deleteLineBytes(TextMCoord tc, ByteCount lengthBytes);
 
 
   // ---- Query the mapping ----

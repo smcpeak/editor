@@ -295,7 +295,7 @@ void TextDocumentObservationRecorder::observeInsertLine(
   GENERIC_CATCH_BEGIN
 
   if (trackingSomething()) {
-    std::optional<int> prevLineBytes;
+    std::optional<ByteCount> prevLineBytes;
     if (line == doc.lastLineIndex()) {
       // We just inserted a new last line.  (`doc` already has the
       // change applied to it).
@@ -316,7 +316,7 @@ void TextDocumentObservationRecorder::observeDeleteLine(
   GENERIC_CATCH_BEGIN
 
   if (trackingSomething()) {
-    std::optional<int> prevLineBytes;
+    std::optional<ByteCount> prevLineBytes;
     if (line.get() == doc.numLines()) {
       // We just deleted the last line.
       prevLineBytes = doc.lineLengthBytes(line.pred());
@@ -331,7 +331,7 @@ void TextDocumentObservationRecorder::observeDeleteLine(
 
 
 void TextDocumentObservationRecorder::observeInsertText(
-  TextDocumentCore const &doc, TextMCoord tc, char const *text, int lengthBytes) noexcept
+  TextDocumentCore const &doc, TextMCoord tc, char const *text, ByteCount lengthBytes) noexcept
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
@@ -342,7 +342,7 @@ void TextDocumentObservationRecorder::observeInsertText(
 
 
 void TextDocumentObservationRecorder::observeDeleteText(
-  TextDocumentCore const &doc, TextMCoord tc, int lengthBytes) noexcept
+  TextDocumentCore const &doc, TextMCoord tc, ByteCount lengthBytes) noexcept
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {

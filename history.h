@@ -5,6 +5,7 @@
 #define HISTORY_H
 
 // editor
+#include "byte-count-fwd.h"            // ByteCount [n]
 #include "td-core.h"                   // TextDocumentCore
 
 // smbase
@@ -81,7 +82,7 @@ private:     // funcs
 
 public:      // funcs
   // This makes a copy of 'text'.
-  HE_text(TextMCoord tc, bool insertion, char const *text, int textLen);
+  HE_text(TextMCoord tc, bool insertion, char const *text, ByteCount textLen);
   ~HE_text();
 
   // HistoryElt funcs
@@ -95,10 +96,10 @@ public:      // funcs
     TextDocumentCore &buf, TextMCoord tc, bool insertion,
     ArrayStack<char> const &text, bool reverse);
 
-  // compute correct 'text' and 'textLen' for forward application of a
-  // deletion of 'count' characters; entire span of deleted text must
-  // be in defined area
-  void computeText(TextDocumentCore const &buf, int count);
+  // Compute `text` for forward application of a deletion of `count`
+  // bytes; i.e., get the text that is deleted.  The entire span of
+  // deleted text must be inside the document boundaries.
+  void computeText(TextDocumentCore const &buf, ByteCount count);
 };
 
 

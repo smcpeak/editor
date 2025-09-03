@@ -3,6 +3,7 @@
 
 #include "td-change.h"                 // this module
 
+#include "byte-count.h"                // ByteCount, mkString
 #include "td-core.h"                   // TextDocumentCore
 #include "textmcoord.h"                // TextMCoord, TextMCoordRange
 #include "range-text-repl.h"           // RangeTextReplacement
@@ -16,14 +17,14 @@ using namespace gdv;
 
 
 // Return a range with size `n` at `pos`.
-static TextMCoordRange rangeAtPlus(TextMCoord pos, int n)
+static TextMCoordRange rangeAtPlus(TextMCoord pos, ByteCount n)
 {
   return TextMCoordRange(pos, pos.plusBytes(n));
 }
 
 static TextMCoordRange emptyRange(TextMCoord pos)
 {
-  return rangeAtPlus(pos, 0);
+  return rangeAtPlus(pos, ByteCount(0));
 }
 
 
@@ -49,7 +50,7 @@ TDC_InsertLine::~TDC_InsertLine()
 
 
 TDC_InsertLine::TDC_InsertLine(
-  LineIndex line, std::optional<int> prevLineBytes)
+  LineIndex line, std::optional<ByteCount> prevLineBytes)
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
@@ -64,13 +65,13 @@ void TDC_InsertLine::applyToDoc(TextDocumentCore &doc) const
 RangeTextReplacement TDC_InsertLine::getRangeTextReplacement() const
 {
   // Normally we insert at the start of the line in question.
-  TextMCoord pos(m_line, 0);
+  TextMCoord pos(m_line, ByteIndex(0));
 
   if (m_prevLineBytes) {
     // But if we are appending a new line, then the position at
     // that line does not exist yet.  Append to the previous line
     // instead.
-    pos = TextMCoord(m_line.predClamped(), *m_prevLineBytes);
+    pos = TextMCoord(m_line.predClamped(), ByteIndex(*m_prevLineBytes));
   }
 
   return RangeTextReplacement(
@@ -93,7 +94,7 @@ TDC_DeleteLine::~TDC_DeleteLine()
 
 
 TDC_DeleteLine::TDC_DeleteLine(
-  LineIndex line, std::optional<int> prevLineBytes)
+  LineIndex line, std::optional<ByteCount> prevLineBytes)
   : IMEMBFP(line),
     IMEMBFP(prevLineBytes)
 {}
@@ -109,15 +110,15 @@ RangeTextReplacement TDC_DeleteLine::getRangeTextReplacement() const
 {
   // Normally we delete the line by extending the range forward.
   TextMCoordRange range(
-    TextMCoord(m_line, 0),
-    TextMCoord(m_line.succ(), 0));
+    TextMCoord(m_line, ByteIndex(0)),
+    TextMCoord(m_line.succ(), ByteIndex(0)));
 
   if (m_prevLineBytes) {
     // But if it was the last line, going forward is a no-op, so
     // go backward instead.
     range = TextMCoordRange(
-      TextMCoord(m_line.predClamped(), *m_prevLineBytes),
-      TextMCoord(m_line, 0));
+      TextMCoord(m_line.predClamped(), ByteIndex(*m_prevLineBytes)),
+      TextMCoord(m_line, ByteIndex(0)));
   }
 
   return RangeTextReplacement(range, std::string());
@@ -139,9 +140,9 @@ TDC_InsertText::~TDC_InsertText()
 
 
 TDC_InsertText::TDC_InsertText(
-  TextMCoord tc, char const *text, int lengthBytes)
+  TextMCoord tc, char const *text, ByteCount lengthBytes)
   : IMEMBFP(tc),
-    m_text(text, lengthBytes)
+    m_text(mkString(text, lengthBytes))
 {}
 
 
@@ -181,7 +182,7 @@ TDC_DeleteText::~TDC_DeleteText()
 
 
 TDC_DeleteText::TDC_DeleteText(
-  TextMCoord tc, int lengthBytes)
+  TextMCoord tc, ByteCount lengthBytes)
   : IMEMBFP(tc),
     IMEMBFP(lengthBytes)
 {}

@@ -21,8 +21,8 @@ OPEN_ANONYMOUS_NAMESPACE
 TextMCoordRange makeMCR(int n)
 {
   return TextMCoordRange(
-    TextMCoord(LineIndex(n), n),
-    TextMCoord(LineIndex(n+1), n+1));
+    TextMCoord(LineIndex(n), ByteIndex(n)),
+    TextMCoord(LineIndex(n+1), ByteIndex(n+1)));
 }
 
 

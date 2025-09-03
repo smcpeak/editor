@@ -7,6 +7,7 @@
 #include "td-editor-fwd.h"             // fwds for this module
 
 // editor
+#include "byte-count.h"                // strlenBC
 #include "line-count.h"                // PositiveLineCount, LineCount
 #include "line-difference-fwd.h"       // LineDifference [n]
 #include "td.h"                        // TextDocument
@@ -151,9 +152,12 @@ public:      // funcs
 
   // Length of the line in bytes, not including the newline.  'line'
   // must be in [0,numLines()-1].
-  int lineLengthBytes(LineIndex line) const        { return m_doc->lineLengthBytes(line); }
+  ByteCount lineLengthBytes(LineIndex line) const  { return m_doc->lineLengthBytes(line); }
 
-  int maxLineLengthBytes() const                   { return m_doc->maxLineLengthBytes(); }
+  // Same, but as an index.
+  ByteIndex lineLengthByteIndex(LineIndex line) const { return m_doc->lineLengthByteIndex(line); }
+
+  ByteCount maxLineLengthBytes() const             { return m_doc->maxLineLengthBytes(); }
 
   // Begin/end model coordinates.
   TextMCoord beginMCoord() const                   { return m_doc->beginCoord(); }
@@ -210,11 +214,14 @@ public:      // funcs
   // the layout coordinates of the file.  If distance is negative, we
   // silently stop at the document start even if the magnitude would
   // take us into negative line numbers.
-  void walkLCoordColumns(TextLCoord &tc, int distance) const;
+  void walkLCoordColumns(
+    TextLCoord &tc /*INOUT*/, int distance) const;
 
   // Walk forward or backward the given number of bytes.
-  void walkLCoordBytes(TextLCoord &tc, int distance) const;
-  void walkMCoordBytes(TextMCoord &tc, int distance) const;
+  void walkLCoordBytes(
+    TextLCoord &tc /*INOUT*/, ByteDifference distance) const;
+  void walkMCoordBytes(
+    TextMCoord &tc /*INOUT*/, ByteDifference distance) const;
 
   // ---------------------------- cursor ---------------------------
   // Current cursor position.  Always non-negative, but may be beyond
@@ -268,7 +275,7 @@ public:      // funcs
 
   // Walk the cursor forward or backward by 'distance' bytes.  It must
   // be possible to do so and remain in the valid area.
-  void walkCursorBytes(int distance);
+  void walkCursorBytes(ByteDifference distance);
 
   // True if converting the cursor's location to a model coordinate and
   // back is the identity function.
@@ -462,12 +469,13 @@ public:      // funcs
     LineCategories /*OUT*/ &layoutCategories,
     LineCategories /*IN*/ const &modelCategories);
 
-  // ---------------- whitespace text queries -------------------
+  // --------------------- whitespace text queries ---------------------
   // For the given line, count the number of whitespace characters
-  // before either a non-ws character or EOL.  Beyond EOF, return 0.
-  int countLeadingSpacesTabs(LineIndex line) const;
+  // (bytes) before either a non-ws character or EOL.  Beyond EOF,
+  // return 0.
+  ByteCount countLeadingSpacesTabs(LineIndex line) const;
 
-  // Count them from the end instead.
+  // Count them from the end instead, in *columns*.
   int countTrailingSpacesTabsColumns(LineIndex line) const;
 
   // On a particular line, get # of whitespace chars before first
@@ -500,7 +508,7 @@ public:      // funcs
   // ensure the cursor is in visible region afterward.
   //
   // 'textLen' is measured in bytes, not characters.
-  void insertText(char const *text, int textLen,
+  void insertText(char const *text, ByteCount textLen,
                   InsertTextFlags flags = ITF_NONE);
 
   // Same, but using a 'string' object.
@@ -514,19 +522,21 @@ public:      // funcs
   // Same, but assuming NUL termination.  Potentially dangerous!
   void insertNulTermText(char const *text,
                          InsertTextFlags flags = ITF_NONE)
-    { insertText(text, strlen(text), flags); }
+    { insertText(text, strlenBC(text), flags); }
 
   // ------------------- general text deletion ------------------
   // Delete at cursor.  'left' or 'right' refers to which side of
   // the cursor has the text to be deleted.  This can delete newline
   // characters.
   void deleteLRColumns(bool left, int columnCount);
-  void deleteLRBytes(bool left, int byteCount);
+  void deleteLRBytes(bool left, ByteCount byteCount);
   void deleteLRAbsCharacters(bool left, int characterCount);
 
-  void deleteTextBytes(int len)  { deleteLRBytes(false /*left*/, len); }
+  void deleteTextBytes(ByteCount len)
+    { deleteLRBytes(false /*left*/, len); }
 
-  void deleteChar()              { deleteLRAbsCharacters(false /*left*/, 1); }
+  void deleteChar()
+    { deleteLRAbsCharacters(false /*left*/, 1); }
 
   // Delete the characters between the range start and end.  Both are
   // truncated to ensure validity (this implies it does *not* fill to
@@ -644,7 +654,7 @@ public:      // funcs
   //
   // If `cursorToStart`, the cursor is left at the start of the inserted
   // text, and at the end otherwise.
-  void clipboardPaste(char const *text, int textLen,
+  void clipboardPaste(char const *text, ByteCount textLen,
                       bool cursorToStart = false);
 
   // -------------------- undo/redo -----------------------
@@ -719,7 +729,7 @@ public:      // types
     LineIterator(TextDocumentEditor const &tde, LineIndex line);
     ~LineIterator()                    {}
     bool has() const                   { return m_iter.has(); }
-    int byteOffset() const             { return m_iter.byteOffset(); }
+    ByteIndex byteOffset() const       { return m_iter.byteOffset(); }
     int byteAt() const                 { return m_iter.byteAt(); }
     void advByte();
 

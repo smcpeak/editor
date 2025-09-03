@@ -83,9 +83,11 @@ static void entry(int argc, char **argv)
   // Wrapped integers.
   RUN_TEST(wrapped_integer);
   RUN_TEST(line_difference);           // deps: wrapped-integer
-  RUN_TEST(line_index);                // deps: wrapped-integer
   RUN_TEST(line_count);                // deps: wrapped-integer, line-difference
+  RUN_TEST(line_index);                // deps: wrapped-integer
   RUN_TEST(positive_line_count);       // deps: wrapped-integer, line-count, line-difference
+  RUN_TEST(byte_count);
+  RUN_TEST(byte_index);
   RUN_TEST(td_version_number);         // deps: wrapped-integer
   RUN_TEST(lsp_version_number);        // deps: wrapped-integer, td-version-number
 

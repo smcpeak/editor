@@ -62,7 +62,7 @@ void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
 void chars(TextDocumentEditor &tde, char const *str)
 {
   while (*str) {
-    tde.insertText(str, 1);
+    tde.insertText(str, ByteCount(1));
     str++;
   }
 }
@@ -1236,7 +1236,7 @@ void testClipboard()
   // Try with empty strings.
   xassert(tde.clipboardCopy().empty());
   xassert(tde.clipboardCut().empty());
-  tde.clipboardPaste("", 0);
+  tde.clipboardPaste("", ByteCount(0));
   expectNM(tde, 3,0,
     "one\n"
     "two  \n"
@@ -1261,7 +1261,7 @@ void testClipboard()
     "the\n");
 
   // Paste with nothing selected.
-  tde.clipboardPaste("ab\nc", 4);
+  tde.clipboardPaste("ab\nc", ByteCount(4));
   expectNM(tde, 3,1,
     "one\n"
     "two  \n"
@@ -1270,14 +1270,14 @@ void testClipboard()
 
   // Paste, overwriting a selection.
   tde.setMark(TextILCoord(1,2));
-  tde.clipboardPaste("xyz", 3);
+  tde.clipboardPaste("xyz", ByteCount(3));
   expectNM(tde, 1,5,
     "one\n"
     "twxyze\n");
 
   // Paste while beyond EOL.
   tde.setCursor(TextILCoord(0, 5));
-  tde.clipboardPaste("123", 3);
+  tde.clipboardPaste("123", ByteCount(3));
   expectNM(tde, 0,8,
     "one  123\n"
     "twxyze\n");
@@ -1994,7 +1994,7 @@ void testReplaceAndSelect(bool swapCM)
 void expectCountSpace(TextDocumentEditor &tde,
   int line, int expectLeading, int expectTrailing)
 {
-  int leading = tde.countLeadingSpacesTabs(LineIndex(line));
+  int leading = tde.countLeadingSpacesTabs(LineIndex(line)).get();
   EXPECT_EQ(leading, expectLeading);
 
   int trailing = tde.countTrailingSpacesTabsColumns(LineIndex(line));
@@ -2189,7 +2189,7 @@ void expectLCoord(TextDocumentEditor &tde,
   int line, int byteIndex,
   int row, int col)
 {
-  TextMCoord mc(LineIndex(line), byteIndex);
+  TextMCoord mc{LineIndex(line), ByteIndex(byteIndex)};
   TextLCoord expect(LineIndex(row), col);
   TextLCoord actual = tde.toLCoord(mc);
   EXPECT_EQ(actual, expect);
@@ -2211,7 +2211,7 @@ void expectMCoord(TextDocumentEditor &tde,
   TEST_CASE_EXPRS("expectMCoord", row, col);
 
   TextLCoord lc(LineIndex(row), col);
-  TextMCoord expect(LineIndex(line), byteIndex);
+  TextMCoord expect{LineIndex(line), ByteIndex(byteIndex)};
   TextMCoord actual = tde.toMCoord(lc);
   EXPECT_EQ(actual, expect);
 
@@ -2651,7 +2651,7 @@ void test_clipboardPaste_cursorStart()
 
   // Paste without any selection.
   tde.setCursor(TextILCoord(1,1));
-  tde.clipboardPaste("abc", 3, cursorToStart);
+  tde.clipboardPaste("abc", ByteCount(3), cursorToStart);
   expectNM(tde, 1,1,
     "one\n"
     "tabcwo\n"
@@ -2659,7 +2659,7 @@ void test_clipboardPaste_cursorStart()
 
   // Paste with selection.
   tde.setMark(TextILCoord(2,2));
-  tde.clipboardPaste("def", 3, cursorToStart);
+  tde.clipboardPaste("def", ByteCount(3), cursorToStart);
   expectNM(tde, 1,1,
     "one\n"
     "tdefree\n");

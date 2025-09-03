@@ -3,13 +3,15 @@
 
 #include "td-core.h"                   // this module
 
+#include "byte-count.h"                // sizeBC, memcpyBC
+#include "byte-difference.h"           // ByteDifference
 #include "gap-gdvalue.h"               // toGDValue(LineGapArray)
 #include "history.h"                   // HE_text
 #include "line-number.h"               // LineNumber
+#include "wrapped-integer.h"           // WrappedInteger::getAs
 
 // smbase
 #include "smbase/array.h"              // Array
-#include "smbase/chained-cond.h"       // smbase::cc::{z_le_lt, z_le_le}
 #include "smbase/codepoint.h"          // isSpaceOrTab
 #include "smbase/gdvalue-optional.h"   // gdv::GDValue(std::optional)
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -90,7 +92,7 @@ void TextDocumentCore::selfCheck() const
 
   FOR_EACH_LINE_INDEX_IN(i, *this) {
     TextDocumentLine const &tdl = m_lines.get(i);
-    xassert(tdl.isEmpty() || tdl.at(0) != '\n');
+    xassert(tdl.isEmpty() || tdl.at(ByteIndex(0)) != '\n');
   }
 
   xassert(m_longestLengthSoFar >= 0);
@@ -98,17 +100,16 @@ void TextDocumentCore::selfCheck() const
 
 
 // True if `ga` and `tdl` represent the same sequence of bytes.
-static bool equal_GA_TDL(
-  GapArray<char> const &ga,
+static bool equal_BGA_TDL(
+  ByteGapArray<char> const &ga,
   TextDocumentLine const &tdl)
 {
-  int len = ga.length();
-  xassert(len >= 0);
-  if (static_cast<unsigned>(len) != tdl.lengthWithoutNL()) {
+  ByteCount len = ga.length();
+  if (len.getAs<unsigned>() != tdl.lengthWithoutNL()) {
     return false;
   }
 
-  for (int i=0; i < len; ++i) {
+  for (ByteIndex i(0); i < len; ++i) {
     if (ga.get(i) != tdl.at(i)) {
       return false;
     }
@@ -129,12 +130,12 @@ bool TextDocumentCore::equalLineAt(
       return m_recentLine == obj.m_recentLine;
     }
     else {
-      return equal_GA_TDL(m_recentLine, obj.getMLine(i));
+      return equal_BGA_TDL(m_recentLine, obj.getMLine(i));
     }
   }
   else {
     if (i == obj.m_recentIndex) {
-      return equal_GA_TDL(obj.m_recentLine, getMLine(i));
+      return equal_BGA_TDL(obj.m_recentLine, getMLine(i));
     }
     else {
       return getMLine(i) == obj.getMLine(i);
@@ -211,14 +212,15 @@ void TextDocumentCore::detachRecent()
   xassert(getMLine(*m_recentIndex).isEmpty());
 
   // copy 'recentLine' into lines[recent]
-  int len = m_recentLine.length();
+  ByteCount len = m_recentLine.length();
   if (len) {
-    char *p = new char[len+1];
-    p[len] = '\n';
+    char *p = new char[len.get() + 1];
+    p[len.get()] = '\n';
     m_recentLine.writeIntoArray(p, len);
-    xassert(p[len] == '\n');   // may as well check for overrun..
+    xassert(p[len.get()] == '\n');   // may as well check for overrun...
 
-    setMLine(*m_recentIndex, TextDocumentLine(len+1, p));
+    setMLine(*m_recentIndex,
+      TextDocumentLine(len + ByteDifference(1), p));
 
     m_recentLine.clear();
   }
@@ -230,16 +232,17 @@ void TextDocumentCore::detachRecent()
 }
 
 
-void TextDocumentCore::attachRecent(TextMCoord tc, int insLength)
+void TextDocumentCore::attachRecent(TextMCoord tc, ByteCount insLength)
 {
   if (m_recentIndex == tc.m_line) { return; }
   detachRecent();
 
   TextDocumentLine const &tdl = getMLine(tc.m_line);
-  int len = tdl.lengthWithoutNL();
+  ByteCount len = tdl.lengthWithoutNL();
   if (len) {
     // copy contents into 'recentLine'
-    m_recentLine.fillFromArray(tdl.m_bytes, len, tc.m_byteIndex, insLength);
+    m_recentLine.fillFromArray(
+      tdl.m_bytes, len, tc.m_byteIndex, insLength);
 
     // deallocate the source
     delete[] tdl.m_bytes;
@@ -272,7 +275,7 @@ bool TextDocumentCore::isEmptyLine(LineIndex line) const
 }
 
 
-int TextDocumentCore::lineLengthBytes(LineIndex line) const
+ByteCount TextDocumentCore::lineLengthBytes(LineIndex line) const
 {
   bc(line);
 
@@ -288,9 +291,15 @@ int TextDocumentCore::lineLengthBytes(LineIndex line) const
       return tdl.lengthWithoutNL();
     }
     else {
-      return 0;
+      return ByteCount(0);
     }
   }
+}
+
+
+ByteIndex TextDocumentCore::lineLengthByteIndex(LineIndex line) const
+{
+  return ByteIndex(lineLengthBytes(line));
 }
 
 
@@ -311,22 +320,22 @@ STATICDEF int TextDocumentCore::bufStrlen(char const *p)
 
 
 void TextDocumentCore::getPartialLine(TextMCoord tc,
-  ArrayStack<char> /*INOUT*/ &dest, int numBytes) const
+  ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const
 {
   bc(tc.m_line);
-  xassert(numBytes >= 0);
 
-  char *destPtr = dest.ptrToPushedMultipleAlt(numBytes);
+  char *destPtr = dest.ptrToPushedMultipleAlt(numBytes.get());
 
   if (tc.m_line == m_recentIndex) {
     m_recentLine.writeIntoArray(destPtr, numBytes, tc.m_byteIndex);
   }
   else {
     TextDocumentLine const &tdl = getMLine(tc.m_line);
-    int len = tdl.lengthWithoutNL();
-    xassert(0 <= tc.m_byteIndex && tc.m_byteIndex + numBytes <= len);
+    ByteCount len = tdl.lengthWithoutNL();
+    xassert(0 <= tc.m_byteIndex &&
+                 tc.m_byteIndex + numBytes <= len);
 
-    memcpy(destPtr, tdl.m_bytes + tc.m_byteIndex, numBytes);
+    memcpyBC(destPtr, tdl.m_bytes + tc.m_byteIndex, numBytes);
   }
 }
 
@@ -337,7 +346,7 @@ bool TextDocumentCore::validCoord(TextMCoord tc) const
   // multibyte sequence.
 
   return validLine(tc.m_line) &&
-         cc::z_le_le(tc.m_byteIndex, lineLengthBytes(tc.m_line)); // EOL is ok
+         tc.m_byteIndex <= lineLengthBytes(tc.m_line); // EOL is ok
 }
 
 
@@ -352,20 +361,20 @@ bool TextDocumentCore::validRange(TextMCoordRange const &range) const
 TextMCoord TextDocumentCore::endCoord() const
 {
   LineIndex line = lastLineIndex();
-  return TextMCoord(line, this->lineLengthBytes(line));
+  return TextMCoord(line, this->lineLengthByteIndex(line));
 }
 
 
 TextMCoord TextDocumentCore::lineBeginCoord(LineIndex line) const
 {
   bc(line);
-  return TextMCoord(line, 0);
+  return TextMCoord(line, ByteIndex(0));
 }
 
 
 TextMCoord TextDocumentCore::lineEndCoord(LineIndex line) const
 {
-  return TextMCoord(line, this->lineLengthBytes(line));
+  return TextMCoord(line, this->lineLengthByteIndex(line));
 }
 
 
@@ -384,18 +393,19 @@ LineCount TextDocumentCore::numLinesExceptFinalEmpty() const
 }
 
 
-bool TextDocumentCore::walkCoordBytes(TextMCoord &tc /*INOUT*/, int len) const
+bool TextDocumentCore::walkCoordBytes(
+  TextMCoord &tc /*INOUT*/, ByteDifference len) const
 {
   xassert(this->validCoord(tc));
 
   for (; len > 0; len--) {
-    if (tc.m_byteIndex == this->lineLengthBytes(tc.m_line)) {
+    if (tc.m_byteIndex == this->lineLengthByteIndex(tc.m_line)) {
       // cycle to next line
       ++tc.m_line;
       if (!validLine(tc.m_line)) {
         return false;      // beyond EOF
       }
-      tc.m_byteIndex=0;
+      tc.m_byteIndex.set(0);
     }
     else {
       ++tc.m_byteIndex;
@@ -409,7 +419,7 @@ bool TextDocumentCore::walkCoordBytes(TextMCoord &tc /*INOUT*/, int len) const
         return false;      // before BOF
       }
       --tc.m_line;
-      tc.m_byteIndex = this->lineLengthBytes(tc.m_line);
+      tc.m_byteIndex = this->lineLengthByteIndex(tc.m_line);
     }
     else {
       tc.m_byteIndex--;
@@ -421,7 +431,7 @@ bool TextDocumentCore::walkCoordBytes(TextMCoord &tc /*INOUT*/, int len) const
 
 
 void TextDocumentCore::walkCoordBytesValid(
-  TextMCoord &tc /*INOUT*/, int distance) const
+  TextMCoord &tc /*INOUT*/, ByteDifference distance) const
 {
   bool valid = walkCoordBytes(tc /*INOUT*/, distance);
   xassert(valid);
@@ -480,7 +490,7 @@ void TextDocumentCore::deleteLine(LineIndex const line)
 
 void TextDocumentCore::insertText(TextMCoord const tc,
                                   char const * const text,
-                                  int const length)
+                                  ByteCount const length)
 {
   bctc(tc);
   bumpVersionNumber();
@@ -501,10 +511,10 @@ void TextDocumentCore::insertText(TextMCoord const tc,
       isEmptyLine(tc.m_line) &&
       tc.m_line != m_recentIndex) {
     // setting a new line, can leave 'recent' alone
-    char *p = new char[length+1];
-    memcpy(p, text, length);
-    p[length] = '\n';
-    setMLine(tc.m_line, TextDocumentLine(length+1, p));
+    char *p = new char[length.get() + 1];
+    memcpyBC(p, text, length);
+    p[length.get()] = '\n';
+    setMLine(tc.m_line, TextDocumentLine(length.succ(), p));
 
     seenLineLength(length);
   }
@@ -522,7 +532,8 @@ void TextDocumentCore::insertText(TextMCoord const tc,
 }
 
 
-void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
+void TextDocumentCore::deleteTextBytes(
+  TextMCoord const tc, ByteCount const length)
 {
   bctc(tc);
   bumpVersionNumber();
@@ -539,7 +550,7 @@ void TextDocumentCore::deleteTextBytes(TextMCoord const tc, int const length)
   }
   else {
     // use recent
-    attachRecent(tc, 0);
+    attachRecent(tc, ByteCount(0));
     m_recentLine.removeMany(tc.m_byteIndex, length);
   }
 
@@ -554,11 +565,11 @@ void TextDocumentCore::replaceMultilineRange(
 {
   xassertPrecondition(validRange(range));
 
-  if (int deletionByteCount = countBytesInRange(range)) {
+  if (ByteCount deletionByteCount = countBytesInRange(range)) {
     // This is what `TextDocument::deleteAt` does, in essence.
     HE_text elt(range.m_start,
                 false /*insertion*/,
-                NULL /*text*/, 0 /*textLen*/);
+                NULL /*text*/, ByteCount(0) /*textLen*/);
 
     // This step is a bit wasteful because we make a copy of the text we
     // are about to delete (since `HE_text` is part of the undo/redo
@@ -570,7 +581,7 @@ void TextDocumentCore::replaceMultilineRange(
     elt.apply(*this, false /*reverse*/);
   }
 
-  if (int insertionByteCount = safeToInt(text.size())) {
+  if (ByteCount insertionByteCount = sizeBC(text)) {
     // This is what `TextDocument::insertAt` does.
     HE_text elt(range.m_start,
                 true /*insertion*/,
@@ -629,12 +640,12 @@ void TextDocumentCore::printMemStats() const
   FOR_EACH_LINE_INDEX_IN(i, *this) {
     TextDocumentLine const &tdl = getMLine(i);
 
-    textBytes += tdl.lengthWithoutNL();
+    textBytes += tdl.lengthWithoutNL().get();
 
     int alloc = 0;
     if (!tdl.isEmpty()) {
-      alloc = tdl.lengthWithoutNL()+1;    // for '\n'
-      overheadBytes += sizeof(size_t);    // malloc's internal 'size' field
+      alloc = tdl.lengthWithoutNL().get() + 1;        // +1 for '\n'
+      overheadBytes += sizeof(size_t);  // malloc's internal 'size' field
     }
     int sst = sizeof(size_t);
     intFragBytes = (alloc%sst)? (sst - alloc%sst) : 0;    // bytes to round up
@@ -650,7 +661,7 @@ void TextDocumentCore::printMemStats() const
 }
 
 
-void TextDocumentCore::seenLineLength(int len)
+void TextDocumentCore::seenLineLength(ByteCount len)
 {
   if (len > m_longestLengthSoFar) {
     m_longestLengthSoFar = len;
@@ -660,16 +671,18 @@ void TextDocumentCore::seenLineLength(int len)
 
 void TextDocumentCore::clear()
 {
-  LineIndex zeroLI(0);
+  LineIndex const zeroLI(0);
+  ByteIndex const zeroBI(0);
+
   while (this->numLines() > 1) {
     this->deleteTextBytes(
-      TextMCoord(zeroLI, 0), this->lineLengthBytes(zeroLI));
+      TextMCoord(zeroLI, zeroBI), this->lineLengthBytes(zeroLI));
     this->deleteLine(zeroLI);
   }
 
   // delete contents of last remaining line
   this->deleteTextBytes(
-    TextMCoord(zeroLI, 0), this->lineLengthBytes(zeroLI));
+    TextMCoord(zeroLI, zeroBI), this->lineLengthBytes(zeroLI));
 }
 
 
@@ -709,15 +722,16 @@ void TextDocumentCore::replaceWholeFile(
     }
 
     // insert this line fragment
-    this->insertText(tc, p, nl-p);
-    tc.m_byteIndex += nl-p;
+    ByteCount numBytes(nl - p);
+    this->insertText(tc, p, numBytes);
+    tc.m_byteIndex += numBytes;
 
     if (nl < end) {
       // skip newline
       ++nl;
       ++tc.m_line;
       this->insertLine(tc.m_line);
-      tc.m_byteIndex=0;
+      tc.m_byteIndex.set(0);
     }
     p = nl;
   }
@@ -766,7 +780,7 @@ void TextDocumentCore::replaceWholeFileString(std::string const &str)
 
 
 bool TextDocumentCore::getTextSpanningLines(
-  TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, int numBytes) const
+  TextMCoord tc, ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const
 {
   xassert(this->validCoord(tc));
   xassert(numBytes >= 0);
@@ -785,12 +799,12 @@ bool TextDocumentCore::getTextSpanningLines(
 }
 
 
-int TextDocumentCore::countBytesInRange(TextMCoordRange const &range) const
+ByteCount TextDocumentCore::countBytesInRange(TextMCoordRange const &range) const
 {
   // Inefficient!
   ArrayStack<char> arr;
   this->getTextForRange(range, arr);
-  return arr.length();
+  return ByteCount(arr.length());
 }
 
 
@@ -802,11 +816,11 @@ bool TextDocumentCore::adjustMCoord(TextMCoord /*INOUT*/ &tc) const
   }
 
   if (tc.m_byteIndex < 0) {
-    tc.m_byteIndex = 0;
+    tc.m_byteIndex.set(0);
     return true;
   }
 
-  auto len = lineLengthBytes(tc.m_line);
+  auto len = lineLengthByteIndex(tc.m_line);
   if (tc.m_byteIndex > len) {
     tc.m_byteIndex = len;
     return true;
@@ -845,9 +859,9 @@ void TextDocumentCore::getTextForRange(TextMCoordRange const &range,
 
   if (range.withinOneLine()) {
     // extracting text from a single line
-    int lenBytes = range.m_end.m_byteIndex - range.m_start.m_byteIndex;
+    ByteDifference lenBytes = range.m_end.m_byteIndex - range.m_start.m_byteIndex;
 
-    this->getPartialLine(range.m_start, dest, lenBytes);
+    this->getPartialLine(range.m_start, dest, ByteCount(lenBytes));
     return;
   }
 
@@ -905,9 +919,9 @@ std::string TextDocumentCore::getWholeLineStringOrRangeErrorMessage(
 }
 
 
-int TextDocumentCore::countLeadingSpacesTabs(LineIndex line) const
+ByteCount TextDocumentCore::countLeadingSpacesTabs(LineIndex line) const
 {
-  int ret = 0;
+  ByteCount ret(0);
   for (LineIterator it(*this, line); it.has(); it.advByte()) {
     if (isSpaceOrTab(it.byteAt())) {
       ret++;
@@ -920,15 +934,15 @@ int TextDocumentCore::countLeadingSpacesTabs(LineIndex line) const
 }
 
 
-int TextDocumentCore::countTrailingSpacesTabs(LineIndex line) const
+ByteCount TextDocumentCore::countTrailingSpacesTabs(LineIndex line) const
 {
-  int ret = 0;
+  ByteCount ret(0);
   for (LineIterator it(*this, line); it.has(); it.advByte()) {
     if (isSpaceOrTab(it.byteAt())) {
       ret++;
     }
     else {
-      ret = 0;
+      ret.set(0);
     }
   }
   return ret;
@@ -993,7 +1007,7 @@ TextDocumentCore::LineIterator::~LineIterator()
 bool TextDocumentCore::LineIterator::has() const
 {
   if (m_nonRecentLine) {
-    return m_nonRecentLine[m_byteOffset] != '\n';
+    return m_nonRecentLine[m_byteOffset.get()] != '\n';
   }
   else if (m_isRecentLine) {
     return m_byteOffset < m_tdc->m_recentLine.length();
@@ -1008,7 +1022,7 @@ int TextDocumentCore::LineIterator::byteAt() const
 {
   int ret = 0;
   if (m_nonRecentLine) {
-    ret = (unsigned char)(m_nonRecentLine[m_byteOffset]);
+    ret = (unsigned char)(m_nonRecentLine[m_byteOffset.get()]);
   }
   else if (m_isRecentLine) {
     ret = (unsigned char)(m_tdc->m_recentLine.get(m_byteOffset));
@@ -1057,10 +1071,10 @@ void TextDocumentObserver::observeInsertLine(TextDocumentCore const &, LineIndex
 void TextDocumentObserver::observeDeleteLine(TextDocumentCore const &, LineIndex) NOEXCEPT
 {}
 
-void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, int) NOEXCEPT
+void TextDocumentObserver::observeInsertText(TextDocumentCore const &, TextMCoord, char const *, ByteCount) NOEXCEPT
 {}
 
-void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextMCoord, int) NOEXCEPT
+void TextDocumentObserver::observeDeleteText(TextDocumentCore const &, TextMCoord, ByteCount) NOEXCEPT
 {}
 
 void TextDocumentObserver::observeTotalChange(TextDocumentCore const &doc) NOEXCEPT

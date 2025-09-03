@@ -24,7 +24,7 @@ using namespace smbase;
 // create-tuple-class: definitions for LSP_Position
 /*AUTO_CTC*/ LSP_Position::LSP_Position(
 /*AUTO_CTC*/   LineIndex const &line,
-/*AUTO_CTC*/   int character)
+/*AUTO_CTC*/   ByteIndex const &character)
 /*AUTO_CTC*/   : IMEMBFP(line),
 /*AUTO_CTC*/     IMEMBFP(character)
 /*AUTO_CTC*/ {
@@ -104,7 +104,7 @@ LSP_Position::LSP_Position(gdv::GDValueParser const &p)
 }
 
 
-LSP_Position LSP_Position::plusCharacters(int n) const
+LSP_Position LSP_Position::plusCharacters(ByteDifference n) const
 {
   return LSP_Position(m_line, m_character + n);
 }

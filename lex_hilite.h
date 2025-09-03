@@ -67,8 +67,8 @@ public:      // funcs
   // TextDocumentObserver funcs
   virtual void observeInsertLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
   virtual void observeDeleteLine(TextDocumentCore const &buf, LineIndex line) NOEXCEPT OVERRIDE;
-  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, int length) NOEXCEPT OVERRIDE;
-  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, int length) NOEXCEPT OVERRIDE;
+  virtual void observeInsertText(TextDocumentCore const &buf, TextMCoord tc, char const *text, ByteCount length) NOEXCEPT OVERRIDE;
+  virtual void observeDeleteText(TextDocumentCore const &buf, TextMCoord tc, ByteCount length) NOEXCEPT OVERRIDE;
   virtual void observeTotalChange(TextDocumentCore const &doc) NOEXCEPT OVERRIDE;
 
   // Highlighter funcs

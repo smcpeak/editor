@@ -59,7 +59,15 @@ GDValue versionDetailsGDV(
 
 static TextMCoord textiMCoord(int line, int byteIndex)
 {
-  return TextMCoord(LineIndex(line), byteIndex);
+  return TextMCoord(LineIndex(line), ByteIndex(byteIndex));
+}
+
+
+static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
+{
+  return TextMCoordRange(
+    TextMCoord(LineIndex(sl), ByteIndex(sb)),
+    TextMCoord(LineIndex(el), ByteIndex(eb)));
 }
 
 
@@ -116,7 +124,7 @@ void test_basics()
   })));
 
   // Delete text.
-  doc.deleteTextBytes(textiMCoord(0, 1), 2);
+  doc.deleteTextBytes(textiMCoord(0, 1), ByteCount(2));
   checkFile(doc, "hlo\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -128,7 +136,7 @@ void test_basics()
 
   // Delete remainder of text on that line, since that is required
   // before we can delete the line itself.
-  doc.deleteTextBytes(textiMCoord(0, 0), 3);
+  doc.deleteTextBytes(textiMCoord(0, 0), ByteCount(3));
   checkFile(doc, "\n\n");
   EXPECT_EQ_GDV(recorder, (GDValue(GDVMap{
     { ver1, versionDetailsGDV(ver1, 2, false, "["
@@ -189,7 +197,7 @@ void test_basics()
   {
     // Make some diagnostics that could have applied to `ver1`.
     TextDocumentDiagnostics diagnostics(ver1, std::nullopt);
-    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg"));
+    diagnostics.insertDiagnostic(tmcr(1,0,1,0), TDD_Diagnostic("msg"));
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(1 0) MC(1 0)) "
@@ -236,8 +244,8 @@ void test_basics()
     // Make some diagnostics that could have applied to `ver2`.  Since
     // it is textually the same as `ver1`, we use similar diagnostics.
     TextDocumentDiagnostics diagnostics(ver2, std::nullopt);
-    diagnostics.insertDiagnostic({{li0,0}, {li0,0}}, TDD_Diagnostic("msg0"));
-    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg1"));
+    diagnostics.insertDiagnostic(tmcr(0,0,0,0), TDD_Diagnostic("msg0"));
+    diagnostics.insertDiagnostic(tmcr(1,0,1,0), TDD_Diagnostic("msg1"));
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(0 0) MC(0 0)) "
@@ -542,7 +550,7 @@ void test_DDRH()
   // Make a diagnostic for version 1 and begin tracking changes.
   {
     TextDocumentDiagnostics diagnostics(ver1, std::nullopt);
-    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg"));
+    diagnostics.insertDiagnostic(tmcr(1,0,1,0), TDD_Diagnostic("msg"));
     ddrh.saveVersion(diagnostics);
 
     EXPECT_EQ(ddrh.m_recorder.trackingSomething(), true);
@@ -550,23 +558,23 @@ void test_DDRH()
   }
 
   // Make a change while tracking is enabled.
-  ddrh.m_doc.insertAt(textiMCoord(0,0), "\n", 1);
+  ddrh.m_doc.insertAt(textiMCoord(0,0), "\n", ByteCount(1));
   ddrh.checkFile("\n\n");
 
   // Insert some text.
-  ddrh.m_doc.insertAt(textiMCoord(0, 0), "hello", 5);
+  ddrh.m_doc.insertAt(textiMCoord(0, 0), "hello", ByteCount(5));
   ddrh.checkFile("hello\n\n");
 
   // Delete text.
-  ddrh.m_doc.deleteAt(textiMCoord(0, 1), 2);
+  ddrh.m_doc.deleteAt(textiMCoord(0, 1), ByteCount(2));
   ddrh.checkFile("hlo\n\n");
 
   // Delete the remaining text on the line.
-  ddrh.m_doc.deleteAt(textiMCoord(0, 0), 3);
+  ddrh.m_doc.deleteAt(textiMCoord(0, 0), ByteCount(3));
   ddrh.checkFile("\n\n");
 
   // Delete the entire line.
-  ddrh.m_doc.deleteAt(textiMCoord(0, 0), 1);
+  ddrh.m_doc.deleteAt(textiMCoord(0, 0), ByteCount(1));
   ddrh.checkFile("\n");
 
   // Track a new version.
@@ -575,15 +583,15 @@ void test_DDRH()
   // Make diagnostics for the new version and track them.
   {
     TextDocumentDiagnostics diagnostics(ver2, std::nullopt);
-    diagnostics.insertDiagnostic({{li0,0}, {li0,0}}, TDD_Diagnostic("msg0"));
-    diagnostics.insertDiagnostic({{li1,0}, {li1,0}}, TDD_Diagnostic("msg1"));
+    diagnostics.insertDiagnostic(tmcr(0,0,0,0), TDD_Diagnostic("msg0"));
+    diagnostics.insertDiagnostic(tmcr(1,0,1,0), TDD_Diagnostic("msg1"));
     ddrh.saveVersion(diagnostics);
 
     EXPECT_EQ(ddrh.m_recorder.isTracking(ver2), true);
   }
 
   // Insert a few lines.
-  ddrh.m_doc.insertAt(textiMCoord(0, 0), "\n\n\n", 3);
+  ddrh.m_doc.insertAt(textiMCoord(0, 0), "\n\n\n", ByteCount(3));
   ddrh.checkFile("\n\n\n\n");
 
   // Check that the eagerly-updated diagnostics are right.
@@ -625,8 +633,8 @@ void test_DDRH()
 TextMCoord randomMC(NamedTextDocument const &doc)
 {
   LineIndex line( sm_random(doc.numLines().get()) );
-  int bytes = sm_random(doc.lineLengthBytes(line) + 1);
-  return TextMCoord(line, bytes);
+  int bytes = sm_random(doc.lineLengthBytes(line).get() + 1);
+  return TextMCoord(line, ByteIndex(bytes));
 }
 
 
@@ -641,7 +649,7 @@ TextMCoordRange randomMCRange(NamedTextDocument const &doc)
     // Use a temporary coordinate variable since `walkCoordBytes` can
     // set its argument coordinate to be invalid.
     TextMCoord tc = end;
-    if (!doc.walkCoordBytes(tc /*INOUT*/, 1 /*distance*/)) {
+    if (!doc.walkCoordBytes(tc /*INOUT*/, ByteDifference(1) /*distance*/)) {
       break;
     }
     else {
@@ -730,7 +738,7 @@ void randomAction(DocDiagsRecorderHistory &ddrh)
     std::string text = randomText();
     DIAG("randomAction: text: insertAt(" << tc << ", " <<
          doubleQuote(text) << ")");
-    ddrh.m_doc.insertAt(tc, text.data(), text.size());
+    ddrh.m_doc.insertAt(tc, text.data(), sizeBC(text));
   }
 
   else if (c.check(5)) {

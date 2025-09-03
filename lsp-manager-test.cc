@@ -174,7 +174,10 @@ void LSPManagerTester::sendDeclarationRequest()
     m_lspManager.requestRelatedLocation(
       LSPSymbolRequestKind::K_DECLARATION,
       m_params.m_fname,
-      TextMCoord(m_params.m_line, m_params.m_col));
+
+      // Coordinate mismatch for the column, but it doesn't really
+      // matter here.
+      TextMCoord(m_params.m_line, ByteIndex(m_params.m_col)));
   m_lspManager.selfCheck();
 
   DIAG("Status: " << m_lspManager.checkStatus());
