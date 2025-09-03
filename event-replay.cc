@@ -28,10 +28,10 @@
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/stringb.h"            // stringb
 #include "smbase/syserr.h"             // xsyserror
-#include "smbase/trace.h"              // TRACE
 
 // Qt
 #include <QAbstractButton>
@@ -66,6 +66,9 @@
 
 using namespace gdv;
 using namespace smbase;
+
+
+INIT_TRACE("event-replay");
 
 
 // -------------------- EventReplayQueryable --------------------
@@ -115,7 +118,7 @@ EventReplay::EventReplay(string const &fname)
 
   if (s_quiescenceEventType == 0) {
     s_quiescenceEventType = QEvent::registerEventType();
-    TRACE("EventReplay", DEBUG_VALUES(s_quiescenceEventType));
+    TRACE1(DEBUG_VALUES(s_quiescenceEventType));
     xassert(s_quiescenceEventType > 0);
   }
 
@@ -165,8 +168,8 @@ void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
     // resize gets reverted quickly afterward, causing a race condition
     // in tests where that happens.  It seems I have to instead make
     // sure my tests never go below the minimum.
-    //TRACE("EventReplay", "changing min size from " << toString(curMinSize) <<
-    //                     " to " << toString(newMinSize));
+    //TRACE1("changing min size from " << toString(curMinSize) <<
+    //       " to " << toString(newMinSize));
     //window->setMinimumSize(newMinSize);
     xstringb("Cannot resize widget to " << toString(targetSize) <<
              " because that would require resizing the window to " <<
@@ -282,8 +285,8 @@ QWidget *EventReplay::getFocusWidget(QString const &funcName)
     xstringb("No widget has focus.");
   }
 
-  TRACE("EventReplay", toString(funcName) << ": focusWidget: " <<
-        doubleQuote(focusWidget->objectName()));
+  TRACE1(toString(funcName) << ": focusWidget: " <<
+         doubleQuote(focusWidget->objectName()));
 
   return focusWidget;
 }
@@ -714,7 +717,7 @@ void EventReplay::replayCall(GDValue const &command)
       // could be that the file was modified so recently that this
       // "touch" did not affect it at the granularity we measure (one
       // second).  Therefore, sleep one second and try again.
-      TRACE("EventReplay", "TouchFile: unchanged file modification time, sleeping...");
+      TRACE1("TouchFile: unchanged file modification time, sleeping...");
       sleepForMS(1000);
 
       sfu.touchFile(fname);
@@ -732,10 +735,10 @@ void EventReplay::replayCall(GDValue const &command)
 
 void EventReplay::sleepForMS(int ms)
 {
-  TRACE("EventReplay", "sleeping for " << ms << " ms");
+  TRACE1("sleeping for " << ms << " ms");
   IncDecWaitingCounter idwc;
   sleepWhilePumpingEvents(ms);
-  TRACE("EventReplay", "done sleeping");
+  TRACE1("done sleeping");
 }
 
 
@@ -746,11 +749,10 @@ void EventReplay::replayShortcut(
   QObject *receiverObject = getQObjectFromPath(receiverPath);
 
   if (QLabel *label = dynamic_cast<QLabel*>(receiverObject)) {
-    TRACE("EventReplay",
-      "Shortcut receiver is a label: " << label->objectName());
+    TRACE1("Shortcut receiver is a label: " << label->objectName());
 
     if (QWidget *buddy = label->buddy()) {
-      TRACE("EventReplay", "Its buddy is: " << buddy->objectName());
+      TRACE1("Its buddy is: " << buddy->objectName());
 
       // If we replay this as a Shortcut event, it will not work (for
       // unknown reasons).  So manually set the focus.
@@ -831,7 +833,7 @@ bool EventReplay::replayNextEvent()
     m_gdvalueReader.skipWhitespaceAndComments();
     FileLineCol loc = m_gdvalueReader.getLocation();
     if (std::optional<GDValue> command = m_gdvalueReader.readNextValue()) {
-      TRACE("EventReplay", "replaying: " << *command);
+      TRACE1("replaying: " << *command);
 
       // Use the location of `command` as context.  (We do not push it
       // until now because a parse error in `readNextValue` will already
@@ -870,7 +872,7 @@ void EventReplay::waitUntilCheckQuery(
   long startMS = getMilliseconds();
   int checkCount = 0;
 
-  TRACE("EventReplay", "waiting for up to " << durationMS << " ms");
+  TRACE1("waiting for up to " << durationMS << " ms");
 
   // Arrange to receive an event after 'durationMS'.  We do not directly
   // handle the event; rather, we use it to cause 'processEvents' to
@@ -902,8 +904,8 @@ void EventReplay::waitUntilCheckQuery(
   }
 
   long elapsedMS = getMilliseconds() - startMS;
-  TRACE("EventReplay", "condition satisfied after " << elapsedMS <<
-                       " ms and " << checkCount << " checks");
+  TRACE1("condition satisfied after " << elapsedMS <<
+         " ms and " << checkCount << " checks");
 }
 
 
@@ -916,7 +918,7 @@ void EventReplay::postQuiescenceEvent()
 void EventReplay::installTimer()
 {
   xassert(m_eventReplayDelayMS);
-  TRACE("EventReplay", "starting timer");
+  TRACE1("starting timer");
 
   this->killTimerIf();
   m_timerId = this->startTimer(m_eventReplayDelayMS);
@@ -927,7 +929,7 @@ void EventReplay::installTimer()
 void EventReplay::killTimerIf()
 {
   if (m_timerId != 0) {
-    TRACE("EventReplay", "killing timer");
+    TRACE1("killing timer");
     this->killTimer(m_timerId);
     m_timerId = 0;
   }
@@ -938,13 +940,13 @@ string EventReplay::runTest()
 {
   if (m_eventReplayDelayMS) {
     // Use timer-based notification.
-    TRACE("EventReplay", "installing first timer");
+    TRACE1("installing first timer");
     this->installTimer();
   }
   else {
     // Arrange to get notified just before the event dispatcher yields
     // control to the OS.  See doc/event-replay.txt.
-    TRACE("EventReplay", "connecting slot_aboutToBlock");
+    TRACE1("connecting slot_aboutToBlock");
     QObject::connect(QAbstractEventDispatcher::instance(),
                      &QAbstractEventDispatcher::aboutToBlock,
                      this, &EventReplay::slot_aboutToBlock);
@@ -956,10 +958,10 @@ string EventReplay::runTest()
   // event loop.  While the test runs, the app may start other event
   // loops, e.g., for modal dialogs.  Thus, it would not work to simply
   // unpack this loop and replay events here.
-  TRACE("EventReplay", "runTest starting top-level event loop");
+  TRACE1("runTest starting top-level event loop");
   m_eventLoop.exec();
 
-  TRACE("EventReplay", "runTest finished; result: " << m_testResult);
+  TRACE1("runTest finished; result: " << m_testResult);
   return m_testResult;
 }
 
@@ -979,11 +981,11 @@ bool EventReplay::callReplayNextEvent()
       // dialog is closed, which is misleading.)
       cout << "test FAILED: " << m_testResult << endl;
     }
-    TRACE("EventReplay", "test complete, stopping replay event loop");
+    TRACE1("test complete, stopping replay event loop");
     m_eventLoop.exit(0);
   }
 
-  TRACE("EventReplay", "callReplayNextEvent returning " << ret);
+  TRACE1("callReplayNextEvent returning " << ret);
   return ret;
 }
 
@@ -991,10 +993,10 @@ bool EventReplay::callReplayNextEvent()
 bool EventReplay::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
-    TRACE("EventReplay", "received QuiescenceEvent");
+    TRACE1("received QuiescenceEvent");
     if (g_waitingCounter) {
-      TRACE("EventReplay", "ignoring QuiescenceEvent because g_waitingCounter is " <<
-                           g_waitingCounter);
+      TRACE1("ignoring QuiescenceEvent because g_waitingCounter is " <<
+             g_waitingCounter);
     }
     else if (this->callReplayNextEvent()) {
       // Test is continuing.  We don't have to do anything to keep
@@ -1002,17 +1004,17 @@ bool EventReplay::event(QEvent *ev)
     }
     else {
       // Disconnect from the event dispatcher to stop getting signals.
-      TRACE("EventReplay", "disconnecting slot_aboutToBlock");
+      TRACE1("disconnecting slot_aboutToBlock");
       QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
                           this, NULL);
     }
 
-    TRACE("EventReplay", "finished with QuiescenceEvent");
+    TRACE1("finished with QuiescenceEvent");
     return true;
   }
 
   if (ev->type() == QEvent::Timer) {
-    TRACE("EventReplay", "received TimerEvent");
+    TRACE1("received TimerEvent");
     this->killTimerIf();
 
     // Post the next event.
@@ -1022,7 +1024,7 @@ bool EventReplay::event(QEvent *ev)
     }
     else {
       // The timer has been killed so we will not get any more events.
-      TRACE("EventReplay", "refraining from installing another timer");
+      TRACE1("refraining from installing another timer");
     }
 
     return true;
@@ -1045,12 +1047,12 @@ void EventReplay::slot_aboutToBlock() NOEXCEPT
     return;
   }
 
-  TRACE("EventReplay", "in slot_aboutToBlock");
+  TRACE1("in slot_aboutToBlock");
 
   if (m_in.eof()) {
     // This should not happen since, once EOF is hit, we disconnect this
     // slot, but I will be defensive here.
-    TRACE("EventReplay", "we already hit EOF in the input file");
+    TRACE1("we already hit EOF in the input file");
     return;
   }
 
