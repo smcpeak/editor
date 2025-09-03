@@ -2747,12 +2747,14 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 
 
 void EditorWidget::showDiagnosticDetailsDialog(
-  QVector<DiagnosticElement> &&elts)
+  QVector<DiagnosticElement> &&elts,
+  std::string const &windowTitle)
 {
   DiagnosticDetailsDialog *dlg =
     editorGlobal()->getDiagnosticDetailsDialog();
 
   dlg->setDiagnostics(std::move(elts));
+  dlg->setWindowTitle(toQString(windowTitle));
 
   // Disconnect any previous connections for the "jump" signal.
   // This way the dialog object can be reused by any editor widget.
@@ -2805,7 +2807,8 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
       }
 
       editorGlobal()->selectEditorWidget(this, opts)
-        ->showDiagnosticDetailsDialog(std::move(elts));
+        ->showDiagnosticDetailsDialog(std::move(elts),
+            "Diagnostic Details");
       return {};
     }
     else {
@@ -3002,7 +3005,8 @@ void EditorWidget::lspHandleLocationReply(
         }
 
         // Show the results.
-        showDiagnosticDetailsDialog(std::move(elts));
+        showDiagnosticDetailsDialog(std::move(elts),
+          stringb("Symbol query: " << lsrkMsgStr));
       }
       else {
         // User canceled the wait.

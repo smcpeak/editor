@@ -283,9 +283,11 @@ private:     // funcs
     std::function<bool()> condition,
     std::string const &activityDialogMessage);
 
-  // Show the diagnostic details dialog, populated with `elts`.
+  // Show the diagnostic details dialog, populated with `elts`, and with
+  // `windowTitle`.
   void showDiagnosticDetailsDialog(
-    QVector<DiagnosticElement> &&elts);
+    QVector<DiagnosticElement> &&elts,
+    std::string const &windowTitle);
 
   // An attempt to parse `gdvReply` in response to `lsrk` yielded
   // exception `x`.  Log the details and warn the user.

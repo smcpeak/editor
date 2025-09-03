@@ -30,6 +30,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "52:3")
 // Open the all-uses dialog.
 Shortcut("window1.m_menuBar.lspMenu.lspGoToMenu.lspGoToAllUses" "Ctrl+F12")
 CheckFocusWidget("diagnostic_details.m_splitter.m_table")
+CheckFocusWindowTitle("Symbol query: references")
 
 // Go to the first entry.
 FocusKeyPR("Key_Return" "\r")

@@ -176,7 +176,12 @@ DiagnosticDetailsDialog::DiagnosticDetailsDialog(QWidget *parent)
     m_table(nullptr)
 {
   setObjectName("diagnostic_details");
+
+  // Note: Within the editor proper, the window title is set each time
+  // the dialog is shown.  The title set here is only effective during
+  // the dedicated GUI test for this module.
   setWindowTitle("Diagnostic Details");
+
   setWindowIcon(g_editorPixmaps->diagnosticsIcon);
   resize(800, 600);
   setModal(false);
