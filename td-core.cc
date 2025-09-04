@@ -477,15 +477,13 @@ void TextDocumentCore::insertText(TextMCoord const tc,
   xassertPrecondition(memchrBC(text, '\n', length) == nullptr);
 
   bctc(tc);
-  bumpVersionNumber();
 
   if (length == 0) {
-    // This prevents needlessly allocating an array for an empty line.
-    //
-    // TODO: I should move this check to before the bump of the version
-    // number.
+    // Bail early if there is nothing to change.
     return;
   }
+
+  bumpVersionNumber();
 
   if (tc.m_byteIndex == 0 &&
       isEmptyLine(tc.m_line) &&
