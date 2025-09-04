@@ -226,7 +226,6 @@ EDITOR_OBJS += lsp-manager.moc.o
 EDITOR_OBJS += lsp-manager.o
 EDITOR_OBJS += lsp-protocol-state.o
 EDITOR_OBJS += lsp-symbol-request-kind.o
-EDITOR_OBJS += lsp-symbol-request-options.o
 EDITOR_OBJS += lsp-version-number.o
 EDITOR_OBJS += makefile_hilite.yy.o
 EDITOR_OBJS += named-td-editor.o
