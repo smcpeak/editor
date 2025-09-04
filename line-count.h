@@ -17,13 +17,8 @@
 
 /* A non-negative `LineDifference`.
 
-   This class is here in the Line measure logical hierarchy:
-
-     LineDifference
-       LineCount             <---
-         LineIndex
-         PositiveLineCount
-     LineNumber
+   See doc/line-measures.txt for more on how this class relates to
+   others it is semantically related to.
 */
 class LineCount final : public WrappedInteger<int, LineCount> {
 public:      // types

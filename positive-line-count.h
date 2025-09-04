@@ -18,13 +18,8 @@
 
 /* A positive `LineCount`.
 
-   This class is here in the Line measure logical hierarchy:
-
-     LineDifference
-       LineCount
-         LineIndex
-         PositiveLineCount   <---
-     LineNumber
+   See doc/line-measures.txt for more on how this class relates to
+   others it is semantically related to.
 */
 class PositiveLineCount final : public WrappedInteger<int, PositiveLineCount> {
 public:      // types

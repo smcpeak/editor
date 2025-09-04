@@ -1,0 +1,190 @@
+line-measures.txt
+=================
+
+Explanation of the "Line measures" hierarchy of classes.
+
+
+Intro
+-----
+
+The "Line measures" hierarchy is a collection of five classes, arranged
+in a logical hierarchy like this:
+
+  LineDifference
+    LineCount
+      PositiveLineCount
+      LineIndex
+  LineNumber
+
+That is, there are two logical roots, LineDifference and LineNumber.
+LineCount is a subclass of LineDifference, and it in turn has two
+subclasses that are siblings, LineIndex and PositiveLineCount.
+
+All five classes are implemented using the WrappedInteger class template
+with `int` as the underlying representation type.  So, everything here
+is effectively a discussion of the surprisingly intricate relationships
+among types that are all, under the hood, just plain `int`s.
+
+
+The classes and their roles
+---------------------------
+
+If we imagine Lines arranged along an abstract number line, a
+LineDifference is the difference between any two points, and can be
+positive or negative (or zero).  It is the most general, and therefore
+defining, notion of a "Line measure".
+
+LineCount is a LineDifference that is non-negative.  PositiveLineCount
+is a LineCount that is positive.  These are two examples of *intrinsic*
+restriction, as the relevant constraint is on the value stored.
+
+In contrast, LineIndex is primarily distinguished by its *role*, i.e.,
+how it is used with other interfaces.  This is an *extrinsic*
+constraint.  LineIndex acts like a pointer, identifying a particular
+line within a document, while LineCount acts like a size.  Every
+LineIndex is a LineCount (namely, counting lines from the zero origin
+point), but not every LineCount is a LineIndex.
+
+LineNumber is then another class that is extrinsically distinguished, in
+this case because it carries the 1-based number normally used in user
+interfaces.  It has the same intrinsic numeric constraint as
+PositiveLineCount (namely, that the value is positive), but its usage is
+completely different.
+
+Furthermore, note that while a LineNumber lives in a measure space
+defined by LineDifference, in particular using LineDifference in its
+arithmetic operations (see below), a LineNumber itself is *not* a
+LineDifference.
+
+
+Conversion
+----------
+
+These classes are not related to each other in the C++ class hierarchy
+sense.  It might be nice if they were, but that has its own challenges.
+
+Consequently, the way we simulate a hierarchy is to define the
+conversions between them.  Specifically, conversions going "down" and
+"across" are explicit (in the form of explicit constructors), while
+conversions going "up" are implicit (in the form of user-defined
+conversion operators).  This convertibility relation provides the
+semantic backbone.
+
+LineNumber is disconnected from the others, lacking even explicit
+conversion, except for two special methods:
+
+  LineNumber::toLineIndex()
+  LineIndex::toLineNumber()
+
+These methods add or subtract one to/from the numeric value to account
+for the differing basis.
+
+
+Comparison
+----------
+
+Logically, we would like to allow comparison among all pairs of classes
+within the same rooted subtree, i.e., among all of the LineDifference
+subclasses, and excluding LineNumber.  The latter is easy (just don't
+define it), and the former seems easy at first since everything can
+convert to LineDifference, and the desired semantics is always that a
+comparison should yield the same result as converting to LineDifference
+(or just `int`) and comparing there.
+
+Now, WrappedInteger provides comparisons within types for all five
+classes.  So comparing, say, LineIndex and LineCount works like this:
+
+  LineIndex LI;
+  LineCount LC;
+
+  LI                            < LC     becomes
+  LI.operator LineCount()       < LC     which is defined.
+
+Since all classes under LineDifference can convert to it implicitly,
+there is another potential conversion sequence:
+
+  LI                            < LC                           becomes
+  LI.operator LineDifference()  < LC.operatorLineDifference()
+
+but this is a "worse" sequence than the previous one since both operands
+had to be converted instead of just one.
+
+But consider comparing LineIndex to PositiveLineCount:
+
+  PositiveLineCount PLC;
+  LineIndex LI;
+
+  PLC                           < LI
+
+Option 1:
+
+  PLC.operator LineCount()      < LI.operator LineCount()
+
+Option 2:
+
+  PLC.operator LineDifference() < LI.operator LineDifference()
+
+These are seen as incomparable (neither is worse than the other), so we
+have an ambiguity.  If these classes were related by inheritance, and
+the conversions were the built-in derived-to-base conversions, then
+option 2 would be worse due to converting to a more distant ancestor on
+both sides.  But since they are in fact both just user-defined
+conversions, they have equal "badness".
+
+To resolve this, comparision operators are provided specifically between
+PositiveLineCount and LineIndex.
+
+
+Arithmetic
+----------
+
+WrappedInteger provides increment and decrement that stay within the
+type, both with side effects (`++` and `--`) and without (`succ()` and
+`pred()`).  For the most part these classes do not alter the semantics
+of increment and decrement, although one exception is PositiveLineCount,
+whose `pred()` yields LineCount.
+
+WrappedInteger<_, T> also provides addition and subtraction operators:
+
+  + T            ->  T
+  T + T          ->  T
+  T += T         ->  T&
+
+  - T            ->  T
+  T - T          ->  T
+  T -= T         ->  T&
+
+While this is probably a sensible default, and works fine for
+LineDifference, all of the other types instead want a structure
+something like, for D as the difference type (LineDifference):
+
+  + T            ->  T                 // like T + D(0)
+  T + T          ->  undefined         // like ptr + ptr
+  T + D          ->  T                 // like ptr + int
+  T += D         ->  T&
+
+  - T            ->  D                 // like T(0) - T
+  T - T          ->  D                 // like ptr - ptr
+  T - D          ->  T                 // like ptr - int
+  T -= D         ->  T&
+
+For the moment, I've provided this structure manually with each class,
+but abstracting it is a future goal.
+
+It's worth noting some ways this structure differs from similar-looking
+mathematical structures.  The most obvious is that addition is not
+symmetric; we provide T+D but not D+T.  Or, if D+T happens to be defined
+in some case, it yields D, not T.  The result type of addition is always
+the left-hand operand's type.  This convention is ubiquitous in practice
+for nearly all programming languages; for example, while C/C++ actually
+allows the syntax "int + ptr", yielding a pointer, no one does that
+(outside of deliberate obfuscation).
+
+The second difference is how subtraction works.  It is not merely the
+same as adding an arithmetic inverse.  Rather, subtracting like
+quantities yields the difference type, and otherwise it works like
+adding the additive inverse, but inversion is performed in the space of
+the difference type.
+
+
+EOF

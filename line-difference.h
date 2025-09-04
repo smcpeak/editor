@@ -17,13 +17,8 @@
 /* Represent a difference between two line indices or line numbers.  Can
    be negative or positive (or zero).
 
-   This class is here in the Line measure logical hierarchy:
-
-     LineDifference          <---
-       LineCount
-         LineIndex
-         PositiveLineCount
-     LineNumber
+   See doc/line-measures.txt for more on how this class relates to
+   others it is semantically related to.
 */
 class LineDifference final : public WrappedInteger<int, LineDifference> {
 public:      // types

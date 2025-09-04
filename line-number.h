@@ -27,19 +27,8 @@
    but conceptually is different since it is meant to identify a single
    line rather than measure a distance or count.
 
-   This class is here in the Line measure logical hierarchy:
-
-     LineDifference
-       LineCount
-         LineIndex
-         PositiveLineCount
-     LineNumber              <---
-
-   Line numbers are Line measures in the most general sense, but are not
-   a "difference" or "count" the way the others are, so they do not
-   convert or compare between the others (not even explicitly, other
-   than via `get()`).  They do, however, interact arithmetically,
-   allowing differences to be added and subtracted.
+   See doc/line-measures.txt for more on how this class relates to
+   others it is semantically related to.
 */
 class LineNumber final : public WrappedInteger<int, LineNumber> {
 public:      // types
