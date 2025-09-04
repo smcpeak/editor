@@ -66,7 +66,11 @@ public:      // methods
   // -------------------------- Binary tests ---------------------------
   using Base::compareTo;
 
-  // Enable "cross" comparison.
+  // Enable "cross" comparison.  This has to be explicitly specified
+  // because otherwise comparing LineIndex to PositiveLineCount is
+  // ambiguous since both could first convert to either LineDifference
+  // or LineCount to do the comparison, and as far as the language is
+  // concerned, those are unrelated classes.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, PositiveLineCount);
 
   // ---------------------------- Addition -----------------------------
