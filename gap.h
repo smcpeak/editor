@@ -49,9 +49,6 @@ private:     // funcs
   // bounds check
   void bc(int elt) const { xassert(0 <= elt && elt < left+right); }
 
-  // element reference
-  T &eltRef(int elt) const;
-
   // move/widen the gap; postcondition:
   //   - left == elt
   //   - gap >= gapSize
@@ -75,8 +72,12 @@ public:      // funcs
 
   // get/set an element of the sequence; 'elt' must be
   // between 0 and length()-1
-  T const &get(int elt) const       { return eltRef(elt); }
+  T const &get(int elt) const       { return eltRefC(elt); }
   void set(int elt, T const &value) { eltRef(elt) = value; }
+
+  // Element reference.
+  T const &eltRefC(int elt) const;
+  T &eltRef(int elt);
 
   // set an element, yielding the old value as the return value
   T replace(int elt, T value);
@@ -171,7 +172,7 @@ bool GapArray<T>::operator==(GapArray const &obj) const
 
 
 template <class T>
-T &GapArray<T>::eltRef(int elt) const
+T const &GapArray<T>::eltRefC(int elt) const
 {
   bc(elt);
 
@@ -181,6 +182,13 @@ T &GapArray<T>::eltRef(int elt) const
   else {
     return array[elt+gap];
   }
+}
+
+
+template <class T>
+T &GapArray<T>::eltRef(int elt)
+{
+  return const_cast<T&>(eltRefC(elt));
 }
 
 

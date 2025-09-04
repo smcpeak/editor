@@ -45,6 +45,12 @@ public:      // methods
   void set(ElemIndex elt, Elem const &value)
     { m_arr.set(elt.get(), value); }
 
+  Elem const &eltRefC(ElemIndex elt) const
+    { return m_arr.eltRefC(elt.get()); }
+
+  Elem &eltRef(ElemIndex elt)
+    { return m_arr.eltRef(elt.get()); }
+
   Elem replace(ElemIndex elt, Elem const &value)
     { return m_arr.replace(elt.get(), value); }
 

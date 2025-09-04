@@ -36,6 +36,9 @@ public:
   int get(int elt) const              { bc(elt); return arr[elt]; }
   void set(int elt, int value) const  { bc(elt); arr[elt] = value; }
 
+  int const &eltRefC(int elt) const   { bc(elt); return arr[elt]; }
+  int &eltRef(int elt)                { bc(elt); return arr[elt]; }
+
   void insert(int elt, int value);
   void remove(int elt);
 
@@ -129,9 +132,10 @@ void checkEqual(GapArray<int> const &seq1, Sequence const &seq2)
   xassert(seq1.length() == seq2.length());
   int len = seq1.length();
 
-  // test get()
+  // test get() and eltRefC()
   for (int i=0; i<len; i++) {
     xassert(seq1.get(i) == seq2.get(i));
+    xassert(seq1.eltRefC(i) == seq2.eltRefC(i));
   }
 
   // test writeIntoArray()
@@ -175,7 +179,7 @@ void checkEqual(GapArray<int> const &seq1, Sequence const &seq2)
 // Counts of each operation we test so we can tell, at the end, if we
 // have adequately exercised each method.
 int ctSet=0, ctInsert=0, ctInsertMany=0, ctRemove=0, ctRemoveMany=0,
-    ctClear=0, ctFillFromArray=0, ctSwap=0, ctEnsure=0;
+    ctClear=0, ctFillFromArray=0, ctSwap=0, ctEnsure=0, ctEltRef=0;
 
 
 int randValue(int numValues = 100)
@@ -192,12 +196,21 @@ void mutate(GapArray<int> &seq1, Sequence &seq2)
   int choice = rand() % 100;
 
   // use set()
-  if (choice < 20 && seq1.length()) {
+  if (choice < 10 && seq1.length()) {
     ctSet++;
     int elt = randValue(seq1.length());
     int val = randValue();
     seq1.set(elt, val);
     seq2.set(elt, val);
+  }
+
+  // Use `eltRef()`.
+  if (choice < 20 && seq1.length()) {
+    ctEltRef++;
+    int elt = randValue(seq1.length());
+    int val = randValue();
+    seq1.eltRef(elt) = val;
+    seq2.eltRef(elt) = val;
   }
 
   // use insert()
@@ -372,14 +385,14 @@ void test_gap(CmdlineArgsSpan args)
     tprintf("ok!\n");
     tprintf("ctSet=%d ctInsert=%d ctInsertMany=%d ctRemove=%d\n"
             "ctRemoveMany=%d ctClear=%d ctFillFromArray=%d ctSwap=%d\n"
-            "ctEnsure=%d\n",
+            "ctEnsure=%d ctEltRef=%d\n",
             ctSet, ctInsert, ctInsertMany, ctRemove,
             ctRemoveMany, ctClear, ctFillFromArray, ctSwap,
-            ctEnsure);
+            ctEnsure, ctEltRef);
     tprintf("total: %d\n",
             ctSet + ctInsert + ctInsertMany + ctRemove +
             ctRemoveMany + ctClear + ctFillFromArray +
-            ctEnsure);
+            ctEnsure + ctEltRef);
   }
 }
 

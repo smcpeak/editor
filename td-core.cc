@@ -76,13 +76,12 @@ TextDocumentCore::~TextDocumentCore()
 
   // Deallocate the non-null lines.
   FOR_EACH_LINE_INDEX_IN(i, *this) {
-    TextDocumentLine const &tdl = m_lines.get(i);
+    TextDocumentLine &tdl = m_lines.eltRef(i);
     if (tdl.m_bytes) {
       delete[] tdl.m_bytes;
 
-      // TODO: Nullify `m_bytes` here.  That requires adjusting the
-      // `GapArray` interface though.
-      //tdl.m_bytes = nullptr;
+      // Just for safety; should not be necessary.
+      tdl.m_bytes = nullptr;
     }
   }
 }
