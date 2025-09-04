@@ -26,6 +26,8 @@
 // (compared to difference and count), as it is a count measured from a
 // specific origin position.
 //
+// See doc/byte-measures.txt.
+//
 class ByteIndex final : public WrappedInteger<int, ByteIndex> {
 public:      // types
   using Base = WrappedInteger<int, ByteIndex>;
@@ -44,34 +46,24 @@ public:      // methods
 
   // --------------------------- Conversion ----------------------------
   // These check for range compatibility.
-  explicit ByteIndex(std::ptrdiff_t size);
+  //
+  // Requires: delta >= 0
   explicit ByteIndex(std::size_t size);
+  explicit ByteIndex(std::ptrdiff_t delta);
 
-  // Explicit "downcast": count -> index.
+  // Explicit "down" conversions.
+  //
+  // Requires: delta >= 0
   explicit ByteIndex(ByteCount count);
-
-  // Explicit "downcast": difference -> index.
   explicit ByteIndex(ByteDifference delta);
 
-  // Implicit "upcast": index -> count.
+  // Implicit "up" conversions.
   operator ByteCount() const;
-
-  // Implicit "upcast": index -> difference.
   operator ByteDifference() const;
-
-  // -------------------------- Binary tests ---------------------------
-  using Base::compareTo;
-
-  // Allow comparison with `ByteDifference` and `ByteCount`.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(ByteIndex, ByteDifference);
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(ByteIndex, ByteCount);
 
   // ---------------------------- Addition -----------------------------
   using Base::operator+;
   using Base::operator+=;
-
-  ByteIndex operator+(ByteCount delta) const;
-  ByteIndex &operator+=(ByteCount delta);
 
   // Requires: `m_value+delta >= 0`, and the sum is representable.
   ByteIndex operator+(ByteDifference delta) const;

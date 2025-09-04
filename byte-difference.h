@@ -16,6 +16,8 @@
 // In the hierarchy of "byte" measures, a difference is the most general
 // category.
 //
+// See doc/byte-measures.txt.
+//
 class ByteDifference final : public WrappedInteger<int, ByteDifference> {
 public:      // types
   using Base = WrappedInteger<int, ByteDifference>;

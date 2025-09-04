@@ -52,33 +52,7 @@ ByteIndex::operator ByteDifference() const
 }
 
 
-// --------------------------- Binary tests ----------------------------
-int ByteIndex::compareTo(ByteDifference const &obj) const
-{
-  return compare(get(), obj.get());
-}
-
-
-int ByteIndex::compareTo(ByteCount const &obj) const
-{
-  return compare(get(), obj.get());
-}
-
-
 // ----------------------------- Addition ------------------------------
-ByteIndex ByteIndex::operator+(ByteCount count) const
-{
-  return ByteIndex(addWithOverflowCheck(get(), count.get()));
-}
-
-
-ByteIndex &ByteIndex::operator+=(ByteCount count)
-{
-  set(addWithOverflowCheck(get(), count.get()));
-  return *this;
-}
-
-
 ByteIndex ByteIndex::operator+(ByteDifference delta) const
 {
   return ByteIndex(addWithOverflowCheck(get(), delta.get()));

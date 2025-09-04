@@ -12,6 +12,7 @@
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
+#include "smbase/std-string-fwd.h"     // std::string [n]
 
 #include <cstddef>                     // std::{ptrdiff_t, size_t}
 
@@ -23,6 +24,8 @@
 //
 // In the hierarchy of "byte" measures, a count is more specific than a
 // difference, but less specific than an index.
+//
+// See doc/byte-measures.txt.
 //
 class ByteCount final : public WrappedInteger<int, ByteCount> {
 public:      // types
@@ -45,19 +48,13 @@ public:      // methods
   explicit ByteCount(std::ptrdiff_t size);
   explicit ByteCount(std::size_t size);
 
-  // Explicit "downcast": difference -> count.
+  // Explicit "down" conversion.
   //
   // Requires: delta >= 0
   explicit ByteCount(ByteDifference delta);
 
-  // Implicit "upcast": count -> difference.
+  // Implicit "up" conversion.
   operator ByteDifference() const;
-
-  // -------------------------- Binary tests ---------------------------
-  using Base::compareTo;
-
-  // Allow comparison with `ByteDifference`.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(ByteCount, ByteDifference);
 
   // ---------------------------- Addition -----------------------------
   using Base::operator+;
@@ -98,6 +95,8 @@ void memcpyBC(char *dest, char const *src, ByteCount length);
 ByteCount sizeBC(std::string const &str);
 
 // Make a string using a `ByteCount` length.
+//
+// TODO: Rename to `stringBC`.
 std::string mkString(char const *text, ByteCount length);
 
 

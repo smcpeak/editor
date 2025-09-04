@@ -41,13 +41,6 @@ ByteCount::operator ByteDifference() const
 }
 
 
-// --------------------------- Binary tests ----------------------------
-int ByteCount::compareTo(ByteDifference const &obj) const
-{
-  return compare(get(), obj.get());
-}
-
-
 // ----------------------------- Addition ------------------------------
 ByteCount ByteCount::operator+(ByteDifference delta) const
 {

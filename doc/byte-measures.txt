@@ -1,0 +1,70 @@
+byte-measures.txt
+=================
+
+This explains the "Byte measures" logical class hierarchy.
+
+
+Intro
+-----
+
+The "Byte measures" hierarchy is a collection of three classes, arranged
+in a logical hierarchy like this:
+
+  ByteDifference
+    ByteCount
+      ByteIndex
+
+That is, ByteDifference is the root, ByteCount is its immediate
+subclass, and ByteIndex is the most-derived subclass.
+
+See line-measures.txt for more background on the concept and
+implementation of such a logical hierarchy.  The rest of this document
+assumes familarity with that one.
+
+
+The classes and their roles
+---------------------------
+
+If we imagine Bytes arranged along an abstract number line, a
+ByteDifference is the difference between any two points, and can be
+positive or negative (or zero).  It is the most general, and therefore
+defining, notion of a "Byte measure".
+
+ByteCount is a LineDifference that is non-negative.
+
+ByteIndex, meanwhile, is primarily a *name* for a particular byte.  It
+is a count from a known zero orign.  Every index is a count, but not
+every count is an index, even though both have the same numeric
+constraint (i.e., being non-negative).
+
+Conversion, comparison, and arithmetic among these classes are designed
+and implemented the same way as for the Line measures hierarchy.
+
+
+Relationship to std::size_t and std::ptrdiff_t
+----------------------------------------------
+
+byte-difference has overloads to allow ByteDifference to be used for
+pointer arithmetic (which is otherwise the domain of `ptrdiff_t`).
+
+byte-count has functions like `strlenBC` that return or accept a
+`ByteCount` in place of `size_t`.
+
+byte-index has functions like `at` that operate on `std::string` in a
+manner similar to the corresponding `std::string` methods, but taking
+`ByteIndex` and `ByteCount` (as appropriate) in place of
+`std::string:size_type`.
+
+
+Future work
+-----------
+
+There are at least two major missing concepts:
+
+1. A measure of "columns" in the layout sense.
+
+2. A measure of "characters", or perhaps "code points", as arises when
+   dealing with UTF-8 encoding.
+
+Designing both of the above, and how they interact with the Byte
+measures, is future work.
