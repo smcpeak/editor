@@ -160,7 +160,7 @@ public:      // funcs
   TextMCoord lineBeginCoord(LineIndex line) const            { return m_core.lineBeginCoord(line); }
   TextMCoord lineEndCoord(LineIndex line) const              { return m_core.lineEndCoord(line); }
   ByteCount maxLineLengthBytes() const                       { return m_core.maxLineLengthBytes(); }
-  LineCount numLinesExceptFinalEmpty() const                 { return m_core.numLinesExceptFinalEmpty(); }
+  LineCount numLinesExcludingFinalEmpty() const              { return m_core.numLinesExcludingFinalEmpty(); }
   bool walkCoordBytes(TextMCoord &tc, ByteDifference distance) const { return m_core.walkCoordBytes(tc, distance); }
   ByteCount countBytesInRange(TextMCoordRange const &range) const { return m_core.countBytesInRange(range); }
   bool adjustMCoord(TextMCoord /*INOUT*/ &tc) const          { return m_core.adjustMCoord(tc); }

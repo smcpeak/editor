@@ -379,7 +379,7 @@ TextMCoord TextDocumentCore::lineEndCoord(LineIndex line) const
 // Interestingly, this is *not* what "wc -l" returns.  Instead, wc -l
 // returns a count of the newline characters.  But that seems like a bug
 // in 'wc' to me.
-LineCount TextDocumentCore::numLinesExceptFinalEmpty() const
+LineCount TextDocumentCore::numLinesExcludingFinalEmpty() const
 {
   LineIndex lastIndex = lastLineIndex();
   if (this->isEmptyLine(lastIndex)) {

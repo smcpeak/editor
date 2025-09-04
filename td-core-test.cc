@@ -148,7 +148,7 @@ void testVarious()
   EXPECT_EQ(tdc.validCoord(tmc(0,1)), false);
   EXPECT_EQ(tdc.endCoord(), tmc(0,0));
   EXPECT_EQ(tdc.maxLineLengthBytes(), 0);
-  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 0);
+  EXPECT_EQ(tdc.numLinesExcludingFinalEmpty(), 0);
   EXPECT_EQ(tdc.getWholeFileString(), "");
   fullSelfCheck(tdc);
 
@@ -156,12 +156,12 @@ void testVarious()
   insLine(tdc, 0,0, "one");
   CHECK_VER_DIFF(tdc, vnum);
   EXPECT_EQ(tdc.numLines(), 2);
-  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 1);
+  EXPECT_EQ(tdc.numLinesExcludingFinalEmpty(), 1);
   CHECK_VER_SAME(tdc, vnum);
   insLine(tdc, 1,0, "  two");
   CHECK_VER_DIFF(tdc, vnum);
   EXPECT_EQ(tdc.numLines(), 3);
-  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 2);
+  EXPECT_EQ(tdc.numLinesExcludingFinalEmpty(), 2);
   insLine(tdc, 2,0, "three   ");
   CHECK_VER_DIFF(tdc, vnum);
   insLine(tdc, 3,0, "    four    ");
@@ -182,7 +182,7 @@ void testVarious()
     "      ");
 
   EXPECT_EQ(tdc.numLines(), 7);
-  EXPECT_EQ(tdc.numLinesExceptFinalEmpty(), 7);
+  EXPECT_EQ(tdc.numLinesExcludingFinalEmpty(), 7);
   EXPECT_EQ(tdc.lineLengthBytes(z), 3);
   EXPECT_EQ(tdc.lineLengthBytes(LineIndex(6)), 6);
   EXPECT_EQ(tdc.validCoord(tmc(z,0)), true);

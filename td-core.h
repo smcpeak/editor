@@ -230,9 +230,7 @@ public:    // funcs
   // the last line is empty, meaning the on-disk file ends in a newline,
   // then return the number of newline separators.  Otherwise return
   // newlines+1, the same as numLines().
-  //
-  // TODO: Rename to `numLinesExcludingFinalEmpty`.
-  LineCount numLinesExceptFinalEmpty() const;
+  LineCount numLinesExcludingFinalEmpty() const;
 
   // Walk the given coordinate forwards (right, then down, when
   // distance>0) or backwards (left, then up, when distance<0) by the

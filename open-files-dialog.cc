@@ -203,7 +203,7 @@ void OpenFilesDialog::repopulateTable()
     // Lines.
     {
       QTableWidgetItem *item = new QTableWidgetItem(
-        qstringb(doc->numLinesExceptFinalEmpty()));
+        qstringb(doc->numLinesExcludingFinalEmpty()));
       item->setFlags(itemFlags);
       item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
       m_tableWidget->setItem(r, c++, item /*transfer ownership*/);
