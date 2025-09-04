@@ -19,6 +19,7 @@
 #include "smbase/map-util.h"           // smbase::mapInsertUniqueMove
 #include "smbase/sm-env.h"             // smbase::envAsIntOr
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
+#include "smbase/xassert.h"            // xassertPostcondition
 
 #include <memory>                      // std::make_unique
 #include <optional>                    // std::optional
@@ -175,8 +176,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   }
   TRACE2_GDVN_EXPRS("lspGetCodeLines", ret);
 
-  // TODO: Create `xassertPostcondition` and use it here.
-  xassert(ret.size() == locations.size());
+  xassertPostcondition(ret.size() == locations.size());
   return ret;
 }
 
