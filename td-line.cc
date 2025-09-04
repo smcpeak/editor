@@ -13,7 +13,7 @@
 using namespace gdv;
 
 
-TextDocumentLine::TextDocumentLine(ByteCount length, char *bytes) :
+TextDocumentLine::TextDocumentLine(char *bytes, ByteCount length) :
   m_length(length.get()),
   m_bytes(bytes)
 {

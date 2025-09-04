@@ -228,7 +228,7 @@ void TextDocumentCore::detachRecent()
     char *p = new char[len.get()];
     m_recentLine.writeIntoArray(p, len);
 
-    setMLine(*m_recentIndex, TextDocumentLine(len, p));
+    setMLine(*m_recentIndex, TextDocumentLine(p, len));
 
     m_recentLine.clear();
   }
@@ -509,7 +509,7 @@ void TextDocumentCore::insertText(TextMCoord const tc,
     // Inserting an entirely new line, can leave recent alone.
     char *p = new char[length.get()];
     memcpyBC(p, text, length);
-    setMLine(tc.m_line, TextDocumentLine(length, p));
+    setMLine(tc.m_line, TextDocumentLine(p, length));
 
     seenLineLength(length);
   }

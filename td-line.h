@@ -67,13 +67,10 @@ public:      // methods
 
   // This takes ownership of 'bytes'.
   //
-  // TODO: Swap the order of the arguments here so they are the same
-  // as in `std::string`, which this class resembles.
-  //
   // Requires: (length.isZero()) == (bytes == nullptr)
   //
   // Requires: There are no newlines in bytes[0, length-1].
-  explicit TextDocumentLine(ByteCount length, char *bytes);
+  explicit TextDocumentLine(char *bytes, ByteCount length);
 
   // The dtor does nothing.  The containing class is responsible for
   // memory management.
