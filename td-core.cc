@@ -737,9 +737,7 @@ std::vector<unsigned char> TextDocumentCore::getWholeFile() const
 
   // Buffer into which we will copy each line before copying it to
   // 'fileBytes'.  (This is necessitated by my use of ArrayStack instead
-  // of vector in the document interface.)
-  //
-  // TODO: But now I *am* using vector, so can I remove this?
+  // of vector in the `getWholeLine` interface.)
   ArrayStack<char> buffer;
 
   FOR_EACH_LINE_INDEX_IN(line, *this) {
