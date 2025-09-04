@@ -17,13 +17,13 @@
 
 /* A non-negative `LineDifference`.
 
-   This is the first child in the Line measure logical hierarchy:
+   This class is here in the Line measure logical hierarchy:
 
      LineDifference
        LineCount             <---
          LineIndex
          PositiveLineCount
-           LineNumber
+     LineNumber
 */
 class LineCount final : public WrappedInteger<int, LineCount> {
 public:      // types

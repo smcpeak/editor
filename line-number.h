@@ -27,13 +27,19 @@
    but conceptually is different since it is meant to identify a single
    line rather than measure a distance or count.
 
-   This class is the here in the Line measure logical hierarchy:
+   This class is here in the Line measure logical hierarchy:
 
      LineDifference
        LineCount
          LineIndex
          PositiveLineCount
-           LineNumber        <---
+     LineNumber              <---
+
+   Line numbers are Line measures in the most general sense, but are not
+   a "difference" or "count" the way the others are, so they do not
+   convert or compare between the others (not even explicitly, other
+   than via `get()`).  They do, however, interact arithmetically,
+   allowing differences to be added and subtracted.
 */
 class LineNumber final : public WrappedInteger<int, LineNumber> {
 public:      // types
@@ -56,16 +62,8 @@ public:      // methods
   {}
 
   // --------------------------- Conversion ----------------------------
-  // Explicit "down" conversions.
-  //
   // Requires: value > 0
   explicit LineNumber(int value);
-  explicit LineNumber(LineDifference value);
-
-  // Implicit "up" conversions.
-  operator LineDifference() const;
-  operator LineCount() const;
-  operator PositiveLineCount() const;
 
   // Convert a number to an index by subtracting one.
   LineIndex toLineIndex() const;

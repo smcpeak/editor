@@ -18,13 +18,13 @@
 
 /* A positive `LineCount`.
 
-   This class is the here in the Line measure logical hierarchy:
+   This class is here in the Line measure logical hierarchy:
 
      LineDifference
        LineCount
          LineIndex
          PositiveLineCount   <---
-           LineNumber
+     LineNumber
 */
 class PositiveLineCount final : public WrappedInteger<int, PositiveLineCount> {
 public:      // types

@@ -17,13 +17,13 @@
 /* Represent a difference between two line indices or line numbers.  Can
    be negative or positive (or zero).
 
-   This is the root of the Line measure logical hierarchy:
+   This class is here in the Line measure logical hierarchy:
 
-     LineDifference
+     LineDifference          <---
        LineCount
          LineIndex
          PositiveLineCount
-           LineNumber
+     LineNumber
 */
 class LineDifference final : public WrappedInteger<int, LineDifference> {
 public:      // types

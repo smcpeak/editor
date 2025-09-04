@@ -25,29 +25,6 @@ LineNumber::LineNumber(int value)
 {}
 
 
-LineNumber::LineNumber(LineDifference value)
-  : Base(value.get())
-{}
-
-
-LineNumber::operator LineDifference() const
-{
-  return LineDifference(get());
-}
-
-
-LineNumber::operator LineCount() const
-{
-  return LineCount(get());
-}
-
-
-LineNumber::operator PositiveLineCount() const
-{
-  return PositiveLineCount(get());
-}
-
-
 LineIndex LineNumber::toLineIndex() const
 {
   return LineIndex(get() - 1);

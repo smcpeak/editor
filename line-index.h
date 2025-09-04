@@ -24,13 +24,13 @@
    `LineNumber`, the 1-based variation generally used in user
    interfaces.
 
-   This class is the here in the Line measure logical hierarchy:
+   This class is here in the Line measure logical hierarchy:
 
      LineDifference
        LineCount
          LineIndex           <---
          PositiveLineCount
-           LineNumber
+     LineNumber
 */
 class LineIndex final : public WrappedInteger<int, LineIndex> {
 public:      // types
