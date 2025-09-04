@@ -146,16 +146,16 @@ void test_arithmetic()
   LineCount d2(3);
 
   EXPECT_EQ((d1 + d2).get(), 13);
-  EXPECT_EQ((d1 + 5).get(), 15);
+  EXPECT_EQ((d1 + LineDifference(5)).get(), 15);
 
   LineCount d3(7);
   d3 += d2;
   EXPECT_EQ(d3.get(), 10);
-  d3 += 2;
+  d3 += LineDifference(2);
   EXPECT_EQ(d3.get(), 12);
 
   EXPECT_EQ((d1 - d2).get(), 7);
-  EXPECT_EQ((d1 - 4).get(), 6);
+  EXPECT_EQ((d1 - LineDifference(4)).get(), 6);
 
   LineCount d4(20);
   d4 -= d2;

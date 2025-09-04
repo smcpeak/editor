@@ -16,7 +16,16 @@
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
 
 
-// A positive `LineCount`.
+/* A positive `LineCount`.
+
+   This class is the here in the Line measure logical hierarchy:
+
+     LineDifference
+       LineCount
+         LineIndex
+         PositiveLineCount   <---
+           LineNumber
+*/
 class PositiveLineCount final : public WrappedInteger<int, PositiveLineCount> {
 public:      // types
   using Base = WrappedInteger<int, PositiveLineCount>;
@@ -35,34 +44,20 @@ public:      // methods
   // zero value, but that is not allowed here.  I could of course
   // default-initialize to 1, but I think that would be confusing.
 
-  // Requires: value > 0
-  explicit PositiveLineCount(int value)
-    : Base(value)
-  {}
-
   PositiveLineCount(PositiveLineCount const &obj)
     : Base(obj)
   {}
 
+  // --------------------------- Conversion ----------------------------
+  // Explicit "down" conversions.
+  //
   // Requires: value > 0
-  explicit PositiveLineCount(LineDifference value)
-    : Base(value.get())
-  {}
+  explicit PositiveLineCount(int value);
+  explicit PositiveLineCount(LineDifference value);
 
-  // Requires: value > 0
-  explicit PositiveLineCount(LineCount value)
-    : Base(value.get())
-  {}
-
-  // Since a `PositiveLineCount` is logically just a restricted
-  // `LineCount`, allow it to be implicitly converted.
-  operator LineCount() const
-    { return LineCount(m_value); }
-
-  // Also allow conversion to the even more general class.  This is how
-  // comparison of `LineIndex` and `PositiveLineCount` works.
-  operator LineDifference() const
-    { return LineDifference(m_value); }
+  // Implicit "up" conversions.
+  operator LineDifference() const;
+  operator LineCount() const;
 
   // --------------------------- Unary tests ---------------------------
   // For `PositiveLineCount`, `operator bool()` can only return true, so
@@ -70,39 +65,23 @@ public:      // methods
   // error.
   explicit operator bool() const = delete;
 
-  // -------------------------- Binary tests ---------------------------
-  // Keep the default comparisons.
-  using Base::compareTo;
-
-  // Allow comparing a count to a difference.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(
-    PositiveLineCount, LineDifference);
-
-  // And to a non-negative count.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(
-    PositiveLineCount, LineCount);
-
   // ---------------------------- Addition -----------------------------
-  // Inherit all addition operators.
+  // Inherit addition operators on `PositiveLineCount`.
   using Base::operator+;
   using Base::operator+=;
 
   // Requires: *this + delta > 0
-  PositiveLineCount operator+(int delta) const;
-
-  // Requires: *this + delta > 0
-  PositiveLineCount &operator+=(int delta);
-
-  // Always safe.
-  PositiveLineCount &operator+=(LineCount delta);
+  PositiveLineCount operator+(LineDifference delta) const;
+  PositiveLineCount &operator+=(LineDifference delta);
 
   // ---------------------- Subtraction/inversion ----------------------
   // Inversion widens to the difference type.
   LineDifference operator-() const;
+  LineDifference operator-(LineCount delta) const;
   LineDifference operator-(PositiveLineCount delta) const;
-  LineDifference operator-(int delta) const;
 
   // Requires: *this > delta
+  PositiveLineCount operator-(LineDifference delta) const;
   PositiveLineCount &operator-=(LineDifference delta);
 
   // The predecessor yields a `LineCount`, which is always safe (for one

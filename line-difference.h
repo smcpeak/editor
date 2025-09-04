@@ -14,8 +14,17 @@
 #include "smbase/std-string-fwd.h"     // std::string
 
 
-// Represent a difference between two line indices or line numbers.  Can
-// be negative or positive (or zero).
+/* Represent a difference between two line indices or line numbers.  Can
+   be negative or positive (or zero).
+
+   This is the root of the Line measure logical hierarchy:
+
+     LineDifference
+       LineCount
+         LineIndex
+         PositiveLineCount
+           LineNumber
+*/
 class LineDifference final : public WrappedInteger<int, LineDifference> {
 public:      // types
   using Base = WrappedInteger<int, LineDifference>;

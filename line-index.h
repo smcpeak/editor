@@ -23,6 +23,14 @@
    This type exists, among other reasons, to prevent confusion with
    `LineNumber`, the 1-based variation generally used in user
    interfaces.
+
+   This class is the here in the Line measure logical hierarchy:
+
+     LineDifference
+       LineCount
+         LineIndex           <---
+         PositiveLineCount
+           LineNumber
 */
 class LineIndex final : public WrappedInteger<int, LineIndex> {
 public:      // types
@@ -41,31 +49,24 @@ public:      // methods
   using Base::Base;
 
   // --------------------------- Conversion ----------------------------
-  // Conversion from `LineCount` is safe, but is explicit because
-  // count -> index is a downcast.
-  explicit LineIndex(LineCount value);
+  // Explicit "down" conversions.
+  explicit LineIndex(LineDifference delta);
+  explicit LineIndex(LineCount count);
 
-  // TODO: Revise my implicit conversions for Line measures to be like
-  // the ones for Byte measures.
+  // Explicit "cross" conversion.
+  explicit LineIndex(PositiveLineCount count);
+
+  // Implicit "up" conversions.
+  operator LineDifference() const;
+  operator LineCount() const;
 
   // Convert to line number by adding one.
   LineNumber toLineNumber() const;
 
-  // Implicit upcast to a count or difference.
-  operator LineCount() const;
-  operator LineDifference() const;
-
   // -------------------------- Binary tests ---------------------------
   using Base::compareTo;
 
-  // Allow comparison with `LineDifference`, primarily so the latter can
-  // act as a loop bound.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, LineDifference);
-
-  // Resolve an ambiguity.
-  //
-  // TODO: What is a more principled way to do this?
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, LineCount);
+  // Enable "cross" comparison.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, PositiveLineCount);
 
   // ---------------------------- Addition -----------------------------
@@ -74,7 +75,6 @@ public:      // methods
 
   // Requires: `m_value+delta >= 0`, and the sum is representable.
   LineIndex operator+(LineDifference delta) const;
-
   LineIndex &operator+=(LineDifference delta);
 
   // If `*this += delta` is valid, do it and return true.  Otherwise

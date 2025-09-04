@@ -6,6 +6,7 @@
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/compare-util.h"       // smbase::compare, COMPARE_MEMBERS
+#include "smbase/overflow.h"           // {add,subtract}WithOverflowCheck
 #include "smbase/xassert.h"            // xassert
 
 using namespace smbase;
@@ -15,36 +16,39 @@ using namespace smbase;
 template class WrappedInteger<int, PositiveLineCount>;
 
 
-// --------------------------- Binary tests ----------------------------
-int PositiveLineCount::compareTo(LineDifference const &b) const
+// ---------------------------- Conversion -----------------------------
+PositiveLineCount::PositiveLineCount(int value)
+  : Base(value)
+{}
+
+
+PositiveLineCount::PositiveLineCount(LineDifference delta)
+  : Base(delta.get())
+{}
+
+
+PositiveLineCount::operator LineDifference() const
 {
-  return compare(m_value, b.get());
+  return LineDifference(get());
 }
 
 
-int PositiveLineCount::compareTo(LineCount const &b) const
+PositiveLineCount::operator LineCount() const
 {
-  return compare(m_value, b.get());
+  return LineCount(get());
 }
 
 
 // ----------------------------- Addition ------------------------------
-PositiveLineCount PositiveLineCount::operator+(int delta) const
+PositiveLineCount PositiveLineCount::operator+(LineDifference delta) const
 {
-  return PositiveLineCount(get() + delta);
+  return PositiveLineCount(addWithOverflowCheck(get(), delta.get()));
 }
 
 
-PositiveLineCount &PositiveLineCount::operator+=(int delta)
+PositiveLineCount &PositiveLineCount::operator+=(LineDifference delta)
 {
-  set(get() + delta);
-  return *this;
-}
-
-
-PositiveLineCount &PositiveLineCount::operator+=(LineCount delta)
-{
-  set(get() + delta.get());
+  set(addWithOverflowCheck(get(), delta.get()));
   return *this;
 }
 
@@ -56,21 +60,28 @@ LineDifference PositiveLineCount::operator-() const
 }
 
 
-LineDifference PositiveLineCount::operator-(PositiveLineCount delta) const
+
+LineDifference PositiveLineCount::operator-(LineCount delta) const
 {
-  return LineDifference(get() - delta.get());
+  return LineDifference(subtractWithOverflowCheck(get(), delta.get()));
 }
 
 
-LineDifference PositiveLineCount::operator-(int delta) const
+LineDifference PositiveLineCount::operator-(PositiveLineCount delta) const
 {
-  return LineDifference(get() - delta);
+  return *this - delta.operator LineCount();
+}
+
+
+PositiveLineCount PositiveLineCount::operator-(LineDifference delta) const
+{
+  return PositiveLineCount(subtractWithOverflowCheck(get(), delta.get()));
 }
 
 
 PositiveLineCount &PositiveLineCount::operator-=(LineDifference delta)
 {
-  set(get() - delta.get());
+  set(subtractWithOverflowCheck(get(), delta.get()));
   return *this;
 }
 

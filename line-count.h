@@ -9,12 +9,22 @@
 #include "line-count-fwd.h"            // fwds for this module
 
 #include "line-difference.h"           // LineDifference
+#include "positive-line-count-fwd.h"   // PositiveLineCount [n]
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 
 
-// A non-negative `LineDifference`.
+/* A non-negative `LineDifference`.
+
+   This is the first child in the Line measure logical hierarchy:
+
+     LineDifference
+       LineCount             <---
+         LineIndex
+         PositiveLineCount
+           LineNumber
+*/
 class LineCount final : public WrappedInteger<int, LineCount> {
 public:      // types
   using Base = WrappedInteger<int, LineCount>;
@@ -31,22 +41,17 @@ public:      // methods
   // Inherit ctors.
   using Base::Base;
 
+  // --------------------------- Conversion ----------------------------
+  // Explicit "down" conversion.
+  //
   // Requires: value >= 0
   explicit LineCount(LineDifference value)
     : Base(value.get())
   {}
 
-  // Since a `LineCount` is logically just a restricted
-  // `LineDifference`, allow it to be implicitly converted.
+  // Implicit "up" conversion.
   operator LineDifference() const
-    { return LineDifference(m_value); }
-
-  // -------------------------- Binary tests ---------------------------
-  // Keep the default comparisons.
-  using Base::compareTo;
-
-  // Allow comparing a count to a difference.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineCount, LineDifference);
+    { return LineDifference(get()); }
 
   // ---------------------------- Addition -----------------------------
   // Inherit all addition operators.
@@ -54,16 +59,20 @@ public:      // methods
   using Base::operator+=;
 
   // Requires: *this + delta >= 0
-  LineCount operator+(int delta) const;
-
-  // Requires: *this + delta >= 0
-  LineCount &operator+=(int delta);
+  LineCount operator+(LineDifference delta) const;
+  LineCount &operator+=(LineDifference delta);
 
   // ---------------------- Subtraction/inversion ----------------------
   // Inversion widens to the difference type.
   LineDifference operator-() const;
+
+  // Subtraction of counts also widens.
   LineDifference operator-(LineCount delta) const;
-  LineDifference operator-(int delta) const;
+  LineDifference operator-(PositiveLineCount delta) const;
+
+  // Requires: *this - delta >= 0
+  LineCount operator-(LineDifference delta) const;
+  LineCount &operator-=(LineDifference delta);
 };
 
 

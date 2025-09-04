@@ -8,11 +8,14 @@
 
 #include "line-number-fwd.h"           // fwds for this module
 
+#include "line-count-fwd.h"            // LineCount [n]
 #include "line-index-fwd.h"            // LineIndex [n]
 #include "line-difference-fwd.h"       // LineDifference [n]
+#include "positive-line-count-fwd.h"   // PositiveLineCount [n]
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
+#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
 
 
 /* 1-based line identifier, generally used for user interfaces.
@@ -23,6 +26,14 @@
    This class has the same `isValid` requirement as `PositiveLineCount`,
    but conceptually is different since it is meant to identify a single
    line rather than measure a distance or count.
+
+   This class is the here in the Line measure logical hierarchy:
+
+     LineDifference
+       LineCount
+         LineIndex
+         PositiveLineCount
+           LineNumber        <---
 */
 class LineNumber final : public WrappedInteger<int, LineNumber> {
 public:      // types
@@ -40,23 +51,36 @@ public:      // methods
   // We do not inherit the ctors because we want to require explicit
   // initialization due to the positivity requirement.
 
-  // Requires: value > 0
-  explicit LineNumber(int value)
-    : Base(value)
-  {}
-
   LineNumber(LineNumber const &obj)
     : Base(obj)
   {}
 
+  // --------------------------- Conversion ----------------------------
+  // Explicit "down" conversions.
+  //
+  // Requires: value > 0
+  explicit LineNumber(int value);
+  explicit LineNumber(LineDifference value);
+
+  // Implicit "up" conversions.
+  operator LineDifference() const;
+  operator LineCount() const;
+  operator PositiveLineCount() const;
+
   // Convert a number to an index by subtracting one.
   LineIndex toLineIndex() const;
+
+  // --------------------------- Unary tests ---------------------------
+  // For `LineNumber`, `operator bool()` can only return true, so delete
+  // it instead so an attempt to test it will yield a compilation error.
+  explicit operator bool() const = delete;
 
   // ---------------------------- Addition -----------------------------
   using Base::operator+;
 
   // Requires: *this + delta > 0
   LineNumber operator+(LineDifference delta) const;
+  LineNumber& operator+=(LineDifference delta);
 
   // ---------------------- Subtraction/inversion ----------------------
   // Don't inherit `operator-` or `operator-=`.
@@ -69,6 +93,11 @@ public:      // methods
   // Requires: *this > delta
   LineNumber operator-(LineDifference delta) const;
   LineNumber &operator-=(LineDifference delta);
+
+  // -------------------------- Serialization --------------------------
+  // Since we didn't inherit the ctors, this has to be explicitly
+  // repeated.
+  explicit LineNumber(gdv::GDValueParser const &p);
 };
 
 

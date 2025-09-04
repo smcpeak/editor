@@ -1173,7 +1173,7 @@ void TextDocumentEditor::fillToCoord(TextLCoord const &tc)
   std::ostringstream textToAdd;
 
   // Layout lines added by 'textToAdd'.
-  int textToAddLines = 0;
+  LineCount textToAddLines(0);
 
   // Plan to add blank lines to the end of the model until the target
   // coordinate is within an existing line.

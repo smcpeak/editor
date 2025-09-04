@@ -1092,7 +1092,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     // This is 1 if we will behave as though a newline character is
     // at the end of this line, 0 otherwise.
     int newlineAdjust = 0;
-    if (m_visibleWhitespace && line < m_editor->numLines()-1) {
+    if (m_visibleWhitespace && line < m_editor->numLines().pred()) {
       newlineAdjust = 1;
     }
 

@@ -19,14 +19,25 @@ using namespace smbase;
 template class WrappedInteger<int, LineIndex>;
 
 
-LineIndex::LineIndex(LineCount value)
-  : Base(value.get())
+// ---------------------------- Conversion -----------------------------
+LineIndex::LineIndex(LineDifference delta)
+  : Base(delta.get())
 {}
 
 
-LineNumber LineIndex::toLineNumber() const
+LineIndex::LineIndex(LineCount count)
+  : Base(count.get())
+{}
+
+
+LineIndex::LineIndex(PositiveLineCount count)
+  : Base(count.get())
+{}
+
+
+LineIndex::operator LineDifference() const
 {
-  return LineNumber(addWithOverflowCheck(get(), 1));
+  return LineDifference(get());
 }
 
 
@@ -36,26 +47,13 @@ LineIndex::operator LineCount() const
 }
 
 
-LineIndex::operator LineDifference() const
+LineNumber LineIndex::toLineNumber() const
 {
-  return LineDifference(get());
+  return LineNumber(addWithOverflowCheck(get(), 1));
 }
 
 
-int LineIndex::compareTo(LineDifference const &b) const
-{
-  auto const &a = *this;
-  return compare(a.get(), b.get());
-}
-
-
-int LineIndex::compareTo(LineCount const &b) const
-{
-  auto const &a = *this;
-  return compare(a.get(), b.get());
-}
-
-
+// --------------------------- Binary tests ----------------------------
 int LineIndex::compareTo(PositiveLineCount const &b) const
 {
   auto const &a = *this;
@@ -63,6 +61,7 @@ int LineIndex::compareTo(PositiveLineCount const &b) const
 }
 
 
+// ----------------------------- Addition ------------------------------
 LineIndex LineIndex::operator+(LineDifference delta) const
 {
   return LineIndex(addWithOverflowCheck(get(), delta.get()));
@@ -115,6 +114,7 @@ LineIndex LineIndex::clampIncreased(
 }
 
 
+// ---------------------------- Subtraction ----------------------------
 LineDifference LineIndex::operator-(LineIndex b) const
 {
   // Since both are non-negative, this cannot overflow, although it can

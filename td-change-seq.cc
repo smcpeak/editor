@@ -129,7 +129,7 @@ TextDocumentChangeSequence makeRandomChange(
 
   else if (c.check(20)) {
     // Insert line.
-    LineIndex line(randomLine(doc.numLines() + 1));
+    LineIndex line(randomLine(doc.numLines().succ()));
 
     std::optional<ByteCount> prevLineBytes;
     if (line.get() == doc.numLines()) {
