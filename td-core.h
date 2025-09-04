@@ -122,11 +122,6 @@ private:     // funcs
   // Requires: `i` is within bounds for both.
   bool equalLineAt(LineIndex i, TextDocumentCore const &obj) const;
 
-  // strlen, but NULL yields 0 and '\n' is terminator, in bytes.
-  //
-  // TODO: Remove this.
-  static int bufStrlen(char const *p);
-
   // bounds check line
   void bc(LineIndex line) const { xassert(validLine(line)); }
 

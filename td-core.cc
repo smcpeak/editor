@@ -302,22 +302,6 @@ ByteIndex TextDocumentCore::lineLengthByteIndex(LineIndex line) const
 }
 
 
-STATICDEF int TextDocumentCore::bufStrlen(char const *p)
-{
-  if (p) {
-    int ret = 0;
-    while (*p != '\n') {
-      ret++;
-      p++;
-    }
-    return ret;
-  }
-  else {
-    return 0;
-  }
-}
-
-
 void TextDocumentCore::getPartialLine(TextMCoord tc,
   ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const
 {
