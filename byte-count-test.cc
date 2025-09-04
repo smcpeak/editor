@@ -102,9 +102,9 @@ void test_sizeBC()
 }
 
 
-void test_mkString()
+void test_stringBC()
 {
-  EXPECT_EQ(mkString("foobar", ByteCount(3)), "foo");
+  EXPECT_EQ(stringBC("foobar", ByteCount(3)), "foo");
 }
 
 
@@ -124,7 +124,7 @@ void test_byte_count(CmdlineArgsSpan args)
   test_memcpyBC();
   test_memcmpBC();
   test_sizeBC();
-  test_mkString();
+  test_stringBC();
 }
 
 

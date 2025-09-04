@@ -113,7 +113,7 @@ ByteCount sizeBC(std::string const &str)
 }
 
 
-std::string mkString(char const *text, ByteCount length)
+std::string stringBC(char const *text, ByteCount length)
 {
   return std::string(text, length.get());
 }

@@ -3,7 +3,7 @@
 
 #include "td-change.h"                 // this module
 
-#include "byte-count.h"                // ByteCount, mkString
+#include "byte-count.h"                // ByteCount, stringBC
 #include "td-core.h"                   // TextDocumentCore
 #include "textmcoord.h"                // TextMCoord, TextMCoordRange
 #include "range-text-repl.h"           // RangeTextReplacement
@@ -142,7 +142,7 @@ TDC_InsertText::~TDC_InsertText()
 TDC_InsertText::TDC_InsertText(
   TextMCoord tc, char const *text, ByteCount lengthBytes)
   : IMEMBFP(tc),
-    m_text(mkString(text, lengthBytes))
+    m_text(stringBC(text, lengthBytes))
 {}
 
 

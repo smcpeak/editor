@@ -95,9 +95,7 @@ void memcpyBC(char *dest, char const *src, ByteCount length);
 ByteCount sizeBC(std::string const &str);
 
 // Make a string using a `ByteCount` length.
-//
-// TODO: Rename to `stringBC`.
-std::string mkString(char const *text, ByteCount length);
+std::string stringBC(char const *text, ByteCount length);
 
 
 #endif // EDITOR_BYTE_COUNT_H

@@ -2595,7 +2595,7 @@ void EditorWidget::editInsertDateTime()
 
 void EditorWidget::insertText(char const *text, ByteCount length)
 {
-  insertTextString(mkString(text, length));
+  insertTextString(stringBC(text, length));
 }
 
 

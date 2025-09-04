@@ -3,7 +3,7 @@
 
 #include "td-line.h"                   // this module
 
-#include "byte-count.h"                // memcmpBC, mkString
+#include "byte-count.h"                // memcmpBC, stringBC
 
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/xassert.h"            // xassertPrecondition
@@ -57,7 +57,7 @@ TextDocumentLine::operator gdv::GDValue() const
     return GDValue(GDVString());
   }
   else {
-    return GDValue(mkString(m_bytes, length()));
+    return GDValue(stringBC(m_bytes, length()));
   }
 }
 
