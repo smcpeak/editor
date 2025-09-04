@@ -1,30 +1,36 @@
 // lsp-get-code-lines.cc
 // Code for `lsp-get-code-lines` module.
 
-#include "lsp-get-code-lines.h"        // this module
+#include "lsp-get-code-lines.h"                  // this module
 
-#include "td-core.h"                   // TextDocumentCore
-#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
-#include "lsp-manager.h"               // LSPManagerDocumentState
-#include "vfs-connections.h"           // VFS_AbstractConnections
-#include "vfs-query-sync.h"            // readFileSynchronously
+#include "td-core.h"                             // TextDocumentCore
+#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "lsp-manager.h"                         // LSPManagerDocumentState
+#include "vfs-connections.h"                     // VFS_AbstractConnections
+#include "vfs-query-sync.h"                      // readFileSynchronously
 
-#include "smqtutil/sync-wait.h"        // SynchronousWaiter
+#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
-#include "smbase/either.h"             // smbase::Either
-#include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
-#include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
-#include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/map-util.h"           // smbase::mapInsertUniqueMove
-#include "smbase/sm-env.h"             // smbase::envAsIntOr
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
-#include "smbase/xassert.h"            // xassertPostcondition
+// This has to come before gdvalue-map.
+#include "smbase/gdvalue-unique-ptr-fwd.h"       // gdv::toGDValue(std::unique_ptr)
 
-#include <memory>                      // std::make_unique
-#include <optional>                    // std::optional
-#include <string>                      // std::string
-#include <vector>                      // std::vector
+#include "smbase/either.h"                       // smbase::Either
+#include "smbase/gdvalue-either.h"               // gdv::toGDValue(smbase::Either)
+#include "smbase/gdvalue-map.h"                  // gdv::toGDValue(std::map)
+#include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
+#include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
+#include "smbase/gdvalue-unique-ptr.h"           // gdv::toGDValue(std::unique_ptr)
+#include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/map-util.h"                     // smbase::mapInsertUniqueMove
+#include "smbase/sm-env.h"                       // smbase::envAsIntOr
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/xassert.h"                      // xassertPostcondition
+
+#include <memory>                                // std::make_unique
+#include <optional>                              // std::optional
+#include <string>                                // std::string
+#include <vector>                                // std::vector
 
 using namespace gdv;
 using namespace smbase;
@@ -127,9 +133,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
       }
     }
   }
-
-  // TODO: Provide GDV serialization for Either, and use it here to
-  // trace the value of `nameToDocOrError`.
+  TRACE2_GDVN_EXPRS("lspGetCodeLines", nameToDocOrError);
 
   // Allow injecting an offset to test handling of invalid (too large)
   // line indices.
