@@ -521,7 +521,10 @@ void TextDocumentCore::deleteTextBytes(
 {
   bctc(tc);
 
-  // TODO: Like with insertion, bail early if `length==0`.
+  if (length == 0) {
+    // Like with insertion, bail early if `length==0`.
+    return;
+  }
 
   bumpVersionNumber();
 
