@@ -15,19 +15,19 @@
 #include "smbase/sm-macros.h"          // DMEMB, CMEMB
 #include "smbase/xassert.h"            // xassert
 
-#include <stddef.h>                    // NULL
 
+/* Holds one line of text.  A line is a sequence of bytes (octets) that
+   does *not* include a newline character.  An entire document is a
+   non-empty sequence of such lines, separated by newlines.
 
-// Holds one line of text.  A line is a sequence of bytes (octets).
-//
-// This class is agnostic to how those bytes are interpreted, although
-// my general intent is to use UTF-8 encoding.
-//
-// This structure is meant to be an element of GapArray, where some
-// instances are "active" and others are not.  As such, it can be
-// copied using ordinary operator=, and the class that contains the
-// GapArray is responsible for doing memory management.
-//
+   This class is agnostic to how those bytes are interpreted, although
+   my general intent is to use UTF-8 encoding.
+
+   This structure is meant to be an element of GapArray, where some
+   instances are "active" and others are not.  As such, it can be
+   copied using ordinary operator=, and the class that contains the
+   GapArray is responsible for doing memory management.
+*/
 class TextDocumentLine {
   // TDC does the direct field manipulation.
   friend TextDocumentCore;
@@ -36,15 +36,13 @@ class TextDocumentLine {
   friend TextDocumentLineTester;
 
 private:     // data
-  // Number of bytes in the line, *including* the newline, except when
-  // the line only has a newline, in which case this is 0 and `m_bytes`
-  // is null.
+  // Number of bytes in the line, which again never includes any
+  // newline.  When this is 0, `m_bytes` is null.
   //
   // Logically this is a `ByteCount`, but because of how I do memory
   // management, this class has to be trivially copyable, so I use plain
   // `int` here.
   //
-  // TODO: Never count the newline!
   int m_length;
 
   // If 'm_length' is not zero, pointer to array of bytes in the line,
@@ -57,7 +55,7 @@ public:      // methods
   // An empty line.
   TextDocumentLine() :
     m_length(0),
-    m_bytes(NULL)
+    m_bytes(nullptr)
   {}
 
   // This does a *shallow* copy.
@@ -68,14 +66,21 @@ public:      // methods
   TextDocumentLine(TextDocumentLine const &obj) = default;
 
   // This takes ownership of 'bytes'.
-  TextDocumentLine(ByteCount length, char *bytes) :
-    m_length(length.get()),
-    m_bytes(bytes)
-  {}
+  //
+  // TODO: Swap the order of the arguments here so they are the same
+  // as in `std::string`, which this class resembles.
+  //
+  // Requires: (length.isZero()) == (bytes == nullptr)
+  //
+  // Requires: There are no newlines in bytes[0, length-1].
+  explicit TextDocumentLine(ByteCount length, char *bytes);
 
   // The dtor does nothing.  The containing class is responsible for
   // memory management.
   ~TextDocumentLine() = default;
+
+  // Assert invariants.
+  void selfCheck() const;
 
   // Again, a shallow copy.
   TextDocumentLine& operator= (TextDocumentLine const &obj) = default;
@@ -97,19 +102,10 @@ public:      // methods
     return m_bytes[index.get()];
   }
 
-  // Length of sequence in bytes, not counting the assumed final newline
-  // for a non-empty sequence.
-  //
-  // TODO: This is weird and inconsistent.  Or rather, `m_length` is
-  // weird for not doing it this way.
-  ByteCount lengthWithoutNL() const
+  // Number of bytes in the line, which never has a newline.
+  ByteCount length() const
   {
-    if (m_length) {
-      return ByteCount(m_length - 1);
-    }
-    else {
-      return ByteCount(0);
-    }
+    return ByteCount(m_length);
   }
 };
 

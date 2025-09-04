@@ -11,6 +11,7 @@
 #include "line-count-fwd.h"            // LineCount [n]
 #include "line-difference-fwd.h"       // LineDifference [n]
 #include "line-number-fwd.h"           // LineNumber [n]
+#include "positive-line-count-fwd.h"   // PositiveLineCount [n]
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
@@ -39,7 +40,9 @@ public:      // methods
   // Inherit ctors.
   using Base::Base;
 
-  // Conversion from `LineCount` is safe.
+  // --------------------------- Conversion ----------------------------
+  // Conversion from `LineCount` is safe, but is explicit because
+  // count -> index is a downcast.
   explicit LineIndex(LineCount value);
 
   // TODO: Revise my implicit conversions for Line measures to be like
@@ -48,12 +51,22 @@ public:      // methods
   // Convert to line number by adding one.
   LineNumber toLineNumber() const;
 
+  // Implicit upcast to a count or difference.
+  operator LineCount() const;
+  operator LineDifference() const;
+
   // -------------------------- Binary tests ---------------------------
   using Base::compareTo;
 
   // Allow comparison with `LineDifference`, primarily so the latter can
   // act as a loop bound.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, LineDifference);
+
+  // Resolve an ambiguity.
+  //
+  // TODO: What is a more principled way to do this?
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, LineCount);
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(LineIndex, PositiveLineCount);
 
   // ---------------------------- Addition -----------------------------
   using Base::operator+;

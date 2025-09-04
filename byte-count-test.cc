@@ -64,6 +64,18 @@ void test_strlenBC()
 }
 
 
+void test_memchrBC()
+{
+  char arr[4] = "abc";
+  xassert(memchrBC(arr, 'a', ByteCount(3)) == arr+0);
+  xassert(memchrBC(arr, 'b', ByteCount(3)) == arr+1);
+  xassert(memchrBC(arr, 'c', ByteCount(3)) == arr+2);
+  xassert(memchrBC(arr, 'c', ByteCount(2)) == nullptr);
+  xassert(memchrBC(arr, '\0', ByteCount(3)) == nullptr);
+  xassert(memchrBC(arr, '\0', ByteCount(4)) == arr+3);
+}
+
+
 void test_memcpyBC()
 {
   char arr[5] = "abcd";
@@ -108,6 +120,7 @@ void test_byte_count(CmdlineArgsSpan args)
   test_addition();
   test_subtraction();
   test_strlenBC();
+  test_memchrBC();
   test_memcpyBC();
   test_memcmpBC();
   test_sizeBC();

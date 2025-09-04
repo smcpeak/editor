@@ -3,7 +3,7 @@
 
 #include "td-core.h"                   // this module
 
-#include "byte-count.h"                // sizeBC, memcpyBC
+#include "byte-count.h"                // sizeBC, memchrBC, memcpyBC
 #include "byte-difference.h"           // ByteDifference
 #include "gap-gdvalue.h"               // toGDValue(LineGapArray)
 #include "history.h"                   // HE_text
@@ -39,17 +39,24 @@ INIT_TRACE("td-core");
 
 // ---------------------- TextDocumentCore --------------------------
 TextDocumentCore::TextDocumentCore()
-  : m_lines(),               // empty sequence of lines
+  : m_lines(),               // Momentarily empty sequence of lines.
     m_recentIndex(),
     m_longestLengthSoFar(0),
     m_recentLine(),
+
+    // TODO: FIX: The comment says this starts at 1, but it clearly does
+    // not.
     m_versionNumber(0),
+
     m_observers(),
     m_iteratorCount(0)
 {
   // There is always at least one line.
   m_lines.insert(LineIndex(0) /*line*/, TextDocumentLine() /*value*/);
+
+  selfCheck();
 }
+
 
 TextDocumentCore::~TextDocumentCore()
 {
@@ -71,11 +78,15 @@ TextDocumentCore::~TextDocumentCore()
 
   assert(m_iteratorCount == 0);
 
-  // deallocate the non-NULL lines
+  // Deallocate the non-null lines.
   FOR_EACH_LINE_INDEX_IN(i, *this) {
     TextDocumentLine const &tdl = m_lines.get(i);
     if (tdl.m_bytes) {
       delete[] tdl.m_bytes;
+
+      // TODO: Nullify `m_bytes` here.  That requires adjusting the
+      // `GapArray` interface though.
+      //tdl.m_bytes = nullptr;
     }
   }
 }
@@ -92,7 +103,7 @@ void TextDocumentCore::selfCheck() const
 
   FOR_EACH_LINE_INDEX_IN(i, *this) {
     TextDocumentLine const &tdl = m_lines.get(i);
-    xassert(tdl.isEmpty() || tdl.at(ByteIndex(0)) != '\n');
+    tdl.selfCheck();
   }
 
   xassert(m_longestLengthSoFar >= 0);
@@ -105,7 +116,7 @@ static bool equal_BGA_TDL(
   TextDocumentLine const &tdl)
 {
   ByteCount len = ga.length();
-  if (len.getAs<unsigned>() != tdl.lengthWithoutNL()) {
+  if (len != tdl.length()) {
     return false;
   }
 
@@ -214,13 +225,10 @@ void TextDocumentCore::detachRecent()
   // copy 'recentLine' into lines[recent]
   ByteCount len = m_recentLine.length();
   if (len) {
-    char *p = new char[len.get() + 1];
-    p[len.get()] = '\n';
+    char *p = new char[len.get()];
     m_recentLine.writeIntoArray(p, len);
-    xassert(p[len.get()] == '\n');   // may as well check for overrun...
 
-    setMLine(*m_recentIndex,
-      TextDocumentLine(len + ByteDifference(1), p));
+    setMLine(*m_recentIndex, TextDocumentLine(len, p));
 
     m_recentLine.clear();
   }
@@ -238,7 +246,7 @@ void TextDocumentCore::attachRecent(TextMCoord tc, ByteCount insLength)
   detachRecent();
 
   TextDocumentLine const &tdl = getMLine(tc.m_line);
-  ByteCount len = tdl.lengthWithoutNL();
+  ByteCount len = tdl.length();
   if (len) {
     // copy contents into 'recentLine'
     m_recentLine.fillFromArray(
@@ -258,7 +266,7 @@ void TextDocumentCore::attachRecent(TextMCoord tc, ByteCount insLength)
 
 LineIndex TextDocumentCore::lastLineIndex() const
 {
-  return LineIndex(numLines().get() - 1);
+  return LineIndex(numLines().pred());
 }
 
 
@@ -283,16 +291,7 @@ ByteCount TextDocumentCore::lineLengthBytes(LineIndex line) const
     return m_recentLine.length();
   }
   else {
-    TextDocumentLine const &tdl = getMLine(line);
-    if (!tdl.isEmpty()) {
-      // An empty line should be represented with a NULL pointer.
-      // Otherwise, 'isEmptyLine' will get the wrong answer.
-      xassert(tdl.m_bytes[0] != '\n');
-      return tdl.lengthWithoutNL();
-    }
-    else {
-      return ByteCount(0);
-    }
+    return getMLine(line).length();
   }
 }
 
@@ -331,9 +330,8 @@ void TextDocumentCore::getPartialLine(TextMCoord tc,
   }
   else {
     TextDocumentLine const &tdl = getMLine(tc.m_line);
-    ByteCount len = tdl.lengthWithoutNL();
-    xassert(0 <= tc.m_byteIndex &&
-                 tc.m_byteIndex + numBytes <= len);
+    ByteCount len = tdl.length();
+    xassert(tc.m_byteIndex + numBytes <= len);
 
     memcpyBC(destPtr, tdl.m_bytes + tc.m_byteIndex, numBytes);
   }
@@ -385,10 +383,10 @@ LineCount TextDocumentCore::numLinesExceptFinalEmpty() const
 {
   LineIndex lastIndex = lastLineIndex();
   if (this->isEmptyLine(lastIndex)) {
-    return LineCount(lastIndex.get());
+    return lastIndex;
   }
   else {
-    return LineCount(lastIndex.get() + 1);
+    return lastIndex.succ();
   }
 }
 
@@ -492,29 +490,26 @@ void TextDocumentCore::insertText(TextMCoord const tc,
                                   char const * const text,
                                   ByteCount const length)
 {
+  xassertPrecondition(memchrBC(text, '\n', length) == nullptr);
+
   bctc(tc);
   bumpVersionNumber();
 
-  xassert(length >= 0);
   if (length == 0) {
     // This prevents needlessly allocating an array for an empty line.
+    //
+    // TODO: I should move this check to before the bump of the version
+    // number.
     return;
   }
-
-  #ifndef NDEBUG
-    for (int i=0; i<length; i++) {
-      xassert(text[i] != '\n');
-    }
-  #endif
 
   if (tc.m_byteIndex == 0 &&
       isEmptyLine(tc.m_line) &&
       tc.m_line != m_recentIndex) {
-    // setting a new line, can leave 'recent' alone
-    char *p = new char[length.get() + 1];
+    // Inserting an entirely new line, can leave recent alone.
+    char *p = new char[length.get()];
     memcpyBC(p, text, length);
-    p[length.get()] = '\n';
-    setMLine(tc.m_line, TextDocumentLine(length.succ(), p));
+    setMLine(tc.m_line, TextDocumentLine(length, p));
 
     seenLineLength(length);
   }
@@ -532,10 +527,20 @@ void TextDocumentCore::insertText(TextMCoord const tc,
 }
 
 
+void TextDocumentCore::insertString(
+  TextMCoord tc, std::string const &str)
+{
+  insertText(tc, str.data(), sizeBC(str));
+}
+
+
 void TextDocumentCore::deleteTextBytes(
   TextMCoord const tc, ByteCount const length)
 {
   bctc(tc);
+
+  // TODO: Like with insertion, bail early if `length==0`.
+
   bumpVersionNumber();
 
   if (tc.m_byteIndex == 0 &&
@@ -640,11 +645,11 @@ void TextDocumentCore::printMemStats() const
   FOR_EACH_LINE_INDEX_IN(i, *this) {
     TextDocumentLine const &tdl = getMLine(i);
 
-    textBytes += tdl.lengthWithoutNL().get();
+    textBytes += tdl.length().get();
 
     int alloc = 0;
     if (!tdl.isEmpty()) {
-      alloc = tdl.lengthWithoutNL().get() + 1;        // +1 for '\n'
+      alloc = tdl.length().get() + 1;        // +1 for '\n'
       overheadBytes += sizeof(size_t);  // malloc's internal 'size' field
     }
     int sst = sizeof(size_t);
@@ -749,6 +754,8 @@ std::vector<unsigned char> TextDocumentCore::getWholeFile() const
   // Buffer into which we will copy each line before copying it to
   // 'fileBytes'.  (This is necessitated by my use of ArrayStack instead
   // of vector in the document interface.)
+  //
+  // TODO: But now I *am* using vector, so can I remove this?
   ArrayStack<char> buffer;
 
   FOR_EACH_LINE_INDEX_IN(line, *this) {
@@ -801,7 +808,7 @@ bool TextDocumentCore::getTextSpanningLines(
 
 ByteCount TextDocumentCore::countBytesInRange(TextMCoordRange const &range) const
 {
-  // Inefficient!
+  // TODO: Inefficient!
   ArrayStack<char> arr;
   this->getTextForRange(range, arr);
   return ByteCount(arr.length());
@@ -982,13 +989,17 @@ TextDocumentCore::LineIterator::LineIterator(
   m_tdc(&tdc),
   m_isRecentLine(false),
   m_nonRecentLine(NULL),
+  m_totalBytes(0),
   m_byteOffset(0)
 {
   if (line == m_tdc->m_recentIndex) {
     m_isRecentLine = true;
+    m_totalBytes = m_tdc->m_recentLine.length();
   }
   else if (line < m_tdc->numLines()) {
-    m_nonRecentLine = m_tdc->getMLine(line).m_bytes; // Might be NULL.
+    TextDocumentLine const &tdl = m_tdc->getMLine(line);
+    m_nonRecentLine = tdl.m_bytes;       // Might be NULL.
+    m_totalBytes = tdl.length();
   }
   else {
     // Treat an invalid line like an empty line.
@@ -1006,20 +1017,14 @@ TextDocumentCore::LineIterator::~LineIterator()
 
 bool TextDocumentCore::LineIterator::has() const
 {
-  if (m_nonRecentLine) {
-    return m_nonRecentLine[m_byteOffset.get()] != '\n';
-  }
-  else if (m_isRecentLine) {
-    return m_byteOffset < m_tdc->m_recentLine.length();
-  }
-  else {
-    return false;
-  }
+  return m_byteOffset < m_totalBytes;
 }
 
 
 int TextDocumentCore::LineIterator::byteAt() const
 {
+  xassertPrecondition(has());
+
   int ret = 0;
   if (m_nonRecentLine) {
     ret = (unsigned char)(m_nonRecentLine[m_byteOffset.get()]);
@@ -1037,7 +1042,8 @@ int TextDocumentCore::LineIterator::byteAt() const
 
 void TextDocumentCore::LineIterator::advByte()
 {
-  xassert(this->has());
+  xassertPrecondition(has());
+
   m_byteOffset++;
 }
 

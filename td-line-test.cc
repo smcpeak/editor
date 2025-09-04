@@ -15,18 +15,21 @@ public:      // methods
     TextDocumentLine tdl1, tdl2;
     xassert(op_eq(tdl1, tdl2));
 
-    char arr1[] = "abc\n";
+    char arr1[] = "abc";
     tdl1.m_bytes = arr1;
-    tdl1.m_length = 4;
+    tdl1.m_length = 3;
+    tdl1.selfCheck();
     xassert(!op_eq(tdl1, tdl2));
-    xassert(tdl1.lengthWithoutNL() == 3);
+    xassert(tdl1.length() == 3);
 
-    char arr2[] = "xabc\n";
+    char arr2[] = "xabc";
     tdl2.m_bytes = arr2;
-    tdl2.m_length = 4;
+    tdl2.m_length = 3;
+    tdl2.selfCheck();
     xassert(!op_eq(tdl1, tdl2));
 
     ++tdl2.m_bytes;
+    tdl2.selfCheck();
     xassert(op_eq(tdl1, tdl2));
   }
 };

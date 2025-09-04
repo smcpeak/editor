@@ -85,11 +85,14 @@ public:      // methods
 // `strlen`, but returning a `ByteCount`.
 ByteCount strlenBC(char const *str);
 
-// `memcpy`, but using a `ByteCount`.
-void memcpyBC(char *dest, char const *src, ByteCount length);
+// `memchr`, but using a `ByteCount`.
+void const *memchrBC(void const *p, char c, ByteCount length);
 
 // `memcmp`, but using a `ByteCount`.
 int memcmpBC(void const *a, void const *b, ByteCount length);
+
+// `memcpy`, but using a `ByteCount`.
+void memcpyBC(char *dest, char const *src, ByteCount length);
 
 // `str.size()`, but returning a `ByteCount`.
 ByteCount sizeBC(std::string const &str);

@@ -14,24 +14,23 @@
 #include "line-gap-array.h"            // LineGapArray
 #include "line-index.h"                // LineIndex
 #include "positive-line-count.h"       // PositiveLineCount
-#include "td-fwd.h"                    // TextDocument
+#include "td-fwd.h"                    // TextDocument [n]
 #include "td-line.h"                   // TextDocumentLine
 #include "td-version-number.h"         // TD_VersionNumber
 #include "textmcoord.h"                // TextMCoord
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/rcserflist.h"         // RCSerfList
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sobjlist.h"           // SObjList
-#include "smbase/str.h"                // string
+#include "smbase/std-string-fwd.h"     // std::string [n]
+#include "smbase/std-vector-fwd.h"     // std::vector [n]
 
 // libc++
-#include <cstdint>                     // std::uint64_t
 #include <optional>                    // std::optional
-#include <vector>                      // std::vector
 
 
 // A text document is a non-empty sequence of lines.
@@ -42,7 +41,13 @@
 // with 0 bytes.
 //
 // A line is a possibly empty sequence of Latin-1 code points, each
-// in [0,255].  TODO UTF-8: Change to Unicode code points.
+// in [0,255], except that newline (0x0A) is never present.
+//
+// The carriage return character (0x0D) is not special in any way to
+// this class.  Lines that (on disk) end in CRLF are represented (in
+// memory) as an array that ends with CR.
+//
+// TODO UTF-8: Change to Unicode code points.
 //
 // All uses of char* in this interface use Latin-1 encoding.  If 'char'
 // is signed, the values [-128,-1] are interpreted as naming the code
@@ -53,23 +58,22 @@
 // This class is the "core" of a text document because it does not have
 // any facilities for undo and redo.  Those are added by TextDocument
 // (declared in td.h).
+//
 class TextDocumentCore : public SerfRefCount {
 private:     // instance data
   // This array is the spine of the document.  Every element is either
-  // empty, meaning a blank line, or is a '\n'-terminated sequence of
-  // bytes that represent the line's contents.
-  //
-  // TODO: I should not store the newline.  That is inconsistent with
-  // the "blank line" case.
+  // empty, meaning a blank line, or is a non-empty sequence of bytes
+  // that represent the line's contents.
   LineGapArray<TextDocumentLine> m_lines;
 
   // The most-recently edited line number, or `nullopt` to mean that no
   // line's contents are stored.
   std::optional<LineIndex> m_recentIndex;
 
-  // Length of the longest line this file has ever had, in bytes.  This
-  // is my poor-man's substitute for a proper interval map, etc., to be
-  // able to answer the 'maxLineLength()' query.
+  // Length of the longest line this file has ever had, in bytes, not
+  // counting any newline separator.  This is my poor-man's substitute
+  // for a proper interval map, etc., to be able to answer the
+  // 'maxLineLength()' query.
   ByteCount m_longestLengthSoFar;
 
   // If `m_recentIndex.has_value()`, then this holds the contents of
@@ -119,6 +123,8 @@ private:     // funcs
   bool equalLineAt(LineIndex i, TextDocumentCore const &obj) const;
 
   // strlen, but NULL yields 0 and '\n' is terminator, in bytes.
+  //
+  // TODO: Remove this.
   static int bufStrlen(char const *p);
 
   // bounds check line
@@ -184,7 +190,7 @@ public:    // funcs
   // True if the given line is empty.
   bool isEmptyLine(LineIndex line) const;
 
-  // Length of a given line, not including the '\n', in bytes.
+  // Length of a given line, not including any newline, in bytes.
   ByteCount lineLengthBytes(LineIndex line) const;
 
   // Same, but as a byte index.
@@ -213,14 +219,19 @@ public:    // funcs
   TextMCoord lineBeginCoord(LineIndex line) const;
   TextMCoord lineEndCoord(LineIndex line) const;
 
-  // Maximum length of a line.  TODO: Implement this properly (right
-  // now it just uses the length of the longest line ever seen, even
-  // if that line is subsequently deleted).
+  // Maximum length of a line, not including any newline separator.
+  //
+  // TODO: Implement this properly (right now it just uses the length of
+  // the longest line ever seen, even if that line is subsequently
+  // deleted).
   ByteCount maxLineLengthBytes() const { return m_longestLengthSoFar; }
 
   // Number of lines in the file as a user would typically view it: if
-  // the file ends in a newline, then return the number of newlines.
-  // Otherwise return newlines+1, the same as numLines().
+  // the last line is empty, meaning the on-disk file ends in a newline,
+  // then return the number of newline separators.  Otherwise return
+  // newlines+1, the same as numLines().
+  //
+  // TODO: Rename to `numLinesExcludingFinalEmpty`.
   LineCount numLinesExceptFinalEmpty() const;
 
   // Walk the given coordinate forwards (right, then down, when
@@ -231,6 +242,9 @@ public:    // funcs
   // leaving `tc` at the invalid coordinate if we walked past the end,
   // or the zero coordinate if we walked past the start.
   //
+  // When walking between lines, it takes one byte to advance past the
+  // implicit newline separating them.
+  //
   // Otherwise it returns true and `tc` is valid afterward.
   bool walkCoordBytes(
     TextMCoord &tc /*INOUT*/, ByteDifference distance) const;
@@ -239,7 +253,8 @@ public:    // funcs
   void walkCoordBytesValid(
     TextMCoord &tc /*INOUT*/, ByteDifference distance) const;
 
-  // Compute the number of bytes in a range.
+  // Compute the number of bytes in a range, *including* any implicit
+  // newline separators the range spans.
   ByteCount countBytesInRange(TextMCoordRange const &range) const;
 
   // If `tc` is not valid, adjust it to the nearest coordinate that is.
@@ -257,20 +272,20 @@ public:    // funcs
   // the start.  Return true iff a change was made.
   bool adjustMCoordRange(TextMCoordRange /*INOUT*/ &range) const;
 
-  // --------------------- line contents ------------------------
+  // -------------------------- line contents --------------------------
   // Get part of a line's contents, starting at 'tc' and getting
-  // 'numBytes'.  All bytes must be in the line now.  The retrieved
-  // text never includes the '\n' character, nor a terminating NUL.
+  // 'numBytes'.  All bytes must be in the line now.  The retrieved text
+  // never includes the newline character, nor a terminating NUL.
   //
   // The retrieved bytes are appended to 'dest'.
   void getPartialLine(TextMCoord tc,
     ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const;
 
-  // Retrieve text that may span line boundaries.  Line boundaries are
-  // represented in the returned string as newlines.  The span begins at
-  // 'tc' (which must be valid) and proceeds for 'numBytes' bytes, but
-  // if that goes beyond the end then this simply returns false without
-  // changing 'dest' (otherwise true).  If it returns true then exactly
+  // Retrieve text that may span line separators, which are represented
+  // in the returned string as newlines.  The span begins at 'tc' (which
+  // must be valid) and proceeds for 'numBytes' bytes, but if that goes
+  // beyond the end then this simply returns false without changing
+  // 'dest' (otherwise true).  If it returns true then exactly
   // 'textLenBytes' bytes have been appended to 'dest'.
   bool getTextSpanningLines(TextMCoord tc,
     ArrayStack<char> /*INOUT*/ &dest, ByteCount numBytes) const;
@@ -284,7 +299,7 @@ public:    // funcs
   void getWholeLine(LineIndex line, ArrayStack<char> /*INOUT*/ &dest) const;
 
   // Same, but returning the line as a string.
-  string getWholeLineString(LineIndex line) const;
+  std::string getWholeLineString(LineIndex line) const;
 
   // If `validLine(lineIndex)`, return `getWholeLineString(lineIndex)`.
   // Otherwise, return a string describing the out-of-range error, which
@@ -316,23 +331,24 @@ public:    // funcs
   void deleteLine(LineIndex line);
 
   // Insert text into a given line, starting at the given coord, which
-  // must be valid.  The inserted text must *not* contain the '\n'
-  // character.
+  // must be valid.
+  //
+  // Requires: `text` must *not* contain the '\n' character.
   void insertText(TextMCoord tc, char const *text, ByteCount lengthBytes);
-  void insertString(TextMCoord tc, string const &str)
-    { insertText(tc, str.c_str(), ByteCount(str.length())); }
+  void insertString(TextMCoord tc, std::string const &str);
 
   // Delete 'length' bytes at and the right of 'tc'.
   void deleteTextBytes(TextMCoord tc, ByteCount lengthBytes);
 
   // --------------------- Multi-line manipulation ---------------------
-  // Although the above comment mentions `TextDocumentEditor`, an editor
+  // Although a above comment mentions `TextDocumentEditor`, an editor
   // cannot be created to operate on an arbitrary `TextDocumentCore`,
   // only a `TextDocument`.  So, here is one more convenient editing
   // function.
 
-  // Replace the text in `range` (which be have valid coordinates with
-  // start <= end) with `text`.
+  // Replace the text in `range` (which must have valid coordinates with
+  // start <= end) with `text`.  The range can span multiple lines, and
+  // `text` can have newlines in it.
   void replaceMultilineRange(
     TextMCoordRange const &range, std::string const &text);
 
@@ -344,11 +360,6 @@ public:    // funcs
   std::vector<unsigned char> getWholeFile() const;
 
   // Replace the file contents with those from 'bytes'.
-  //
-  // Note: Currently, the file parser assumes that LF is the sole line
-  // terminator.  Any CR characters in the file become part of the
-  // in-memory line contents, and will then be written out as such as
-  // well, like any other character.  This is not ideal of course.
   void replaceWholeFile(std::vector<unsigned char> const &bytes);
 
   // Same, but using `string`.
@@ -364,9 +375,8 @@ public:    // funcs
   // Increment `m_versionNumber`.  Also check that there are no
   // outstanding iterators.
   //
-  // Normally this is done when the content changes.  However, there are
-  // times when we want to re-send the same content to the LSP server,
-  // but it needs a different version number to do that.
+  // Normally this is done when the content changes, but it is fine to
+  // bump the version even when nothing has changed.
   void bumpVersionNumber();
 
   // ---------------------- observers ---------------------------
@@ -392,7 +402,8 @@ public:    // funcs
 
   // ---------------------- iterator ----------------------------
 public:      // types
-  // Iterate over the bytes in a line.
+  // Iterate over the bytes in a line, not including any newline
+  // separtor.
   //
   // TODO UTF-8: Allow iteration over code points.
   class LineIterator {
@@ -409,6 +420,9 @@ public:      // types
     // '!m_isRecentLine', this is the pointer to the start of the line
     // data.  Otherwise NULL (use 'm_tdc.m_recentLine').
     char const *m_nonRecentLine;
+
+    // Number of bytes in the line we are iterating over.
+    ByteCount m_totalBytes;
 
     // Byte offset of the iterator within the current line.
     ByteIndex m_byteOffset;
@@ -433,10 +447,14 @@ public:      // types
     // the line in bytes.
     ByteIndex byteOffset() const { return m_byteOffset; }
 
-    // Current byte value in [0,255].  Requires 'has()'.
+    // Current byte value in [0,255], excluding newline (0x0A).
+    //
+    // Requires: has()
     int byteAt() const;
 
-    // Advance to the next byte.  Requires 'has()'.
+    // Advance to the next byte.
+    //
+    // Requires: has()
     void advByte();
   };
   friend LineIterator;

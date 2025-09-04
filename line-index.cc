@@ -6,6 +6,7 @@
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
 #include "line-number.h"               // LineNumber
+#include "positive-line-count.h"       // PositiveLineCount
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/compare-util-iface.h" // smbase::compare
@@ -29,7 +30,33 @@ LineNumber LineIndex::toLineNumber() const
 }
 
 
+LineIndex::operator LineCount() const
+{
+  return LineCount(get());
+}
+
+
+LineIndex::operator LineDifference() const
+{
+  return LineDifference(get());
+}
+
+
 int LineIndex::compareTo(LineDifference const &b) const
+{
+  auto const &a = *this;
+  return compare(a.get(), b.get());
+}
+
+
+int LineIndex::compareTo(LineCount const &b) const
+{
+  auto const &a = *this;
+  return compare(a.get(), b.get());
+}
+
+
+int LineIndex::compareTo(PositiveLineCount const &b) const
 {
   auto const &a = *this;
   return compare(a.get(), b.get());

@@ -9,7 +9,7 @@
 #include "smbase/compare-util.h"       // smbase::compare
 #include "smbase/overflow.h"           // convertNumber, {add,subtract}WithOverflowCheck
 
-#include <cstring>                     // std::{memcmp, memcpy, strlen}
+#include <cstring>                     // std::{memchr, memcmp, memcpy, strlen}
 #include <string>                      // std::string
 
 using namespace smbase;
@@ -96,15 +96,21 @@ ByteCount strlenBC(char const *str)
 }
 
 
-void memcpyBC(char *dest, char const *src, ByteCount length)
+void const *memchrBC(void const *p, char c, ByteCount length)
 {
-  std::memcpy(dest, src, length.get());
+  return std::memchr(p, c, length.get());
 }
 
 
 int memcmpBC(void const *a, void const *b, ByteCount length)
 {
   return std::memcmp(a, b, length.get());
+}
+
+
+void memcpyBC(char *dest, char const *src, ByteCount length)
+{
+  std::memcpy(dest, src, length.get());
 }
 
 
