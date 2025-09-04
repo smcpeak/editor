@@ -12,29 +12,15 @@
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap (for TEST_CASE_EXPRS)
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(std::optional)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/optional-util.h"                // smbase::optFromOpt
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"                      // EXPECT_EQ[_GDVSER], TEST_CASE_EXPRS
 
 using namespace gdv;
+using namespace smbase;
 
 
 OPEN_ANONYMOUS_NAMESPACE
-
-
-// If `s` has a value, construct `DEST(*s)` and wrap that in an
-// `optional`.  Otherwise return `nullopt`.
-//
-// TODO: Move this into `smbase`.
-template <typename DEST, typename SRC>
-std::optional<DEST> makeOptFromOpt(std::optional<SRC> const &s)
-{
-  if (s.has_value()) {
-    return std::optional<DEST>(*s);
-  }
-  else {
-    return std::nullopt;
-  }
-}
 
 
 void testOneContainsByteIndex(
@@ -49,8 +35,8 @@ void testOneContainsByteIndex(
 
   TDD_Diagnostic dummy("");
   TextDocumentDiagnostics::LineEntry entry(
-    makeOptFromOpt<ByteIndex>(startByteIndex),
-    makeOptFromOpt<ByteIndex>(endByteIndex),
+    optFromOpt<ByteIndex>(startByteIndex),
+    optFromOpt<ByteIndex>(endByteIndex),
     &dummy);
 
   EXPECT_EQ(entry.containsByteIndex(ByteIndex(testByteIndex)), expect);
