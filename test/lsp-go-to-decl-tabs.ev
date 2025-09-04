@@ -1,0 +1,41 @@
+// lsp-go-to-decl-tabs.ev
+// Test using LSP to jump to a declaration that has tab characters.
+
+// In editor with correct file..
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Activate fake LSP server.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+
+// Open this file in LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Go to line 59.
+Shortcut("window1.m_menuBar.editMenu.editGotoLine" "Alt+G")
+FocusKeySequence("59")
+FocusKeyPR("Key_Return" "\r")
+
+// Move to the use of `g_var4` on that line.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "59:1")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "59:3")
+
+// Go to declaration.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_G" "g")
+KeyPress("window1.m_menuBar.lspMenu.lspGoToMenu" "Key_D" "d")
+
+// Should be in the decl file.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.h")
+
+// And, key for this test, we should be in column 44, not some much
+// smaller column value that would correspond to the byte index.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "10:44")
+
+// EOF

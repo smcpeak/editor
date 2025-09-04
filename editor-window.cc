@@ -2806,12 +2806,17 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
       TRACE1("slot_openOrSwitchToFileAtLineOpt: fast path open");
       this->openOrSwitchToFile(hfl.getHarn());
       if (hfl.hasLine()) {
-        // Also go to line/col, if provided.
-        TextLCoord targetLC(
+        // Also go to line/byte, if provided.  `hfl` provides model
+        // coordinates.
+        TextMCoord targetMC(
           hfl.getLine().toLineIndex(),
+          hfl.getByteIndexOpt().value_or(ByteIndex(0)));
 
-          // TODO: Bug: This is a coordinate mismatch.
-          (hfl.getByteIndexOpt().value_or(ByteIndex(0))).get());
+        // Transform to layout coordinates.
+        TextLCoord targetLC =
+          editorWidget()->getDocumentEditor()->toLCoord(targetMC);
+
+        // Then go there.
         editorWidget()->cursorTo(targetLC);
         editorWidget()->clearMark();
         editorWidget()->scrollToCursor(-1 /*gap*/);

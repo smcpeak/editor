@@ -56,6 +56,7 @@ void caller(C &c)
 void useGlobals()
 {
   g_var3 = 3;
+  g_var4 = 4;
 }
 
 // EOF
