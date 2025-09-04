@@ -250,7 +250,7 @@ void testVarious()
   // Test conversion to `GDValue`.
   EXPECT_EQ_GDV(tdc, fromGDVN(R"(
     TextDocumentCore[
-      version: 27
+      version: 28
       lines: [
         "one"
         "  two"
@@ -283,7 +283,7 @@ void testVarious()
       recentIndex: 5
       longestLengthSoFar: 13
       recentLine: "      "
-      versionNumber: 27
+      versionNumber: 28
       numObservers: 0
       iteratorCount: 0
     ]

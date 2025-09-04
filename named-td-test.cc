@@ -177,7 +177,7 @@ void test_toGDValue()
   // a very denegerate case.
   EXPECT_EQ_GDV(doc, fromGDVN(R"(
     NamedTextDocument[
-      core: TextDocumentCore[version:0 lines:[""]]
+      core: TextDocumentCore[version:1 lines:[""]]
       historyIndex: 0
       savedHistoryIndex: 0
       documentProcessStatus: DPS_NONE

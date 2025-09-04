@@ -43,11 +43,7 @@ TextDocumentCore::TextDocumentCore()
     m_recentIndex(),
     m_longestLengthSoFar(0),
     m_recentLine(),
-
-    // TODO: FIX: The comment says this starts at 1, but it clearly does
-    // not.
-    m_versionNumber(0),
-
+    m_versionNumber(1),
     m_observers(),
     m_iteratorCount(0)
 {
