@@ -580,7 +580,8 @@ public:       // funcs
      `m_vfsConnections`, although the expectation is there is no durable
      change after this call.
 
-     Requires: for_all L in locations: L.hasFilename() && L.hasLine()
+     Requires: for_all L in locations:
+                 L.hasFilename() && L.hasLineIndex()
 
      TODO: Introduce a new type that has that requirement built-in.
 

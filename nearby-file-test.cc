@@ -5,11 +5,13 @@
 
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-and-line-opt.h"    // HostFileAndLineOpt
+#include "line-number.h"               // LineNumber
 #include "nearby-file.h"               // module to test
 
 // smbase
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional) for EXPECT_EQ_GDVSER
+#include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector) for TEST_FUNC_EXPRS
 #include "smbase/sm-file-util.h"       // TestSMFileUtil
 #include "smbase/sm-test.h"            // USUAL_TEST_MAIN
 
@@ -41,14 +43,25 @@ static void checkActualHarn(
 // Check that the `m_line` element of `actual` is what we expect.
 static void checkActualLine(
   std::optional<HostFileAndLineOpt> const &actual,
-  std::optional<LineNumber> expectLine)
+  std::optional<LineNumber> expectLineNumber)
 {
-  if (expectLine) {
+  if (expectLineNumber) {
     EXPECT_TRUE(actual.has_value());
   }
 
   if (actual.has_value()) {
-    EXPECT_EQ_GDVSER(actual->getLineOpt(), expectLine);
+    std::optional<LineIndex> actualLineIndexOpt =
+      actual->getLineIndexOpt();
+
+    EXPECT_EQ(actualLineIndexOpt.has_value(),
+              expectLineNumber.has_value());
+
+    if (expectLineNumber.has_value()) {
+      // The tests are written using line *numbers*, but the internal
+      // interface uses line *indices*.
+      EXPECT_EQ(actualLineIndexOpt->toLineNumber(),
+                *expectLineNumber);
+    }
   }
 }
 
@@ -210,19 +223,21 @@ static void expectIGNFL(
   std::string const &haystack,
   int charOffset,
   HostAndResourceName const &expectHARN,
-  int intExpectLine)     // Hence the final "L" in this function's name.
+  int intExpectLineNumber)     // Hence the final "L" in this function's name.
 {
+  TEST_FUNC_EXPRS(candidatePrefixes, haystack, charOffset);
+
   std::optional<HostFileAndLineOpt> actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   checkActualHarn(actual, expectHARN);
 
-  // Make a properly typed `expectLine` from the integer code used in
-  // the tests.
-  std::optional<LineNumber> expectLine =
-    intExpectLine?
-      std::make_optional<LineNumber>(intExpectLine) :
+  // Make a properly typed `expectLineNumber` from the integer code used
+  // in the tests.
+  std::optional<LineNumber> expectLineNumber =
+    intExpectLineNumber?
+      std::make_optional<LineNumber>(intExpectLineNumber) :
       std::nullopt;
-  checkActualLine(actual, expectLine);
+  checkActualLine(actual, expectLineNumber);
 }
 
 

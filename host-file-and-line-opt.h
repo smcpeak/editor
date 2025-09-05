@@ -8,7 +8,7 @@
 
 #include "byte-index.h"                          // ByteIndex
 #include "host-and-resource-name.h"              // HostAndResourceName
-#include "line-number.h"                         // LineNumber
+#include "line-index.h"                          // LineIndex
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
 #include "smbase/sm-macros.h"                    // DMEMB
@@ -24,8 +24,8 @@ private:     // data
   // object effectively represents an absent value.
   std::optional<HostAndResourceName> m_harn;
 
-  // Optional 1-based line number.
-  std::optional<LineNumber> m_line;
+  // Optional 0-based line index.
+  std::optional<LineIndex> m_lineIndex;
 
   // Optional 0-based byte index.
   std::optional<ByteIndex> m_byteIndex;
@@ -33,7 +33,7 @@ private:     // data
 public:      // funcs
   HostFileAndLineOpt()
     : m_harn(),
-      m_line(),
+      m_lineIndex(),
       m_byteIndex()
   {
     selfCheck();
@@ -44,7 +44,7 @@ public:      // funcs
 
   HostFileAndLineOpt(HostFileAndLineOpt const &obj)
     : DMEMB(m_harn),
-      DMEMB(m_line),
+      DMEMB(m_lineIndex),
       DMEMB(m_byteIndex)
   {
     selfCheck();
@@ -52,10 +52,10 @@ public:      // funcs
 
   HostFileAndLineOpt(
     std::optional<HostAndResourceName> harn,
-    std::optional<LineNumber> line,
+    std::optional<LineIndex> lineIndex,
     std::optional<ByteIndex> byteIndex)
     : IMEMBFP(harn),
-      IMEMBFP(line),
+      IMEMBFP(lineIndex),
       IMEMBFP(byteIndex)
   {
     selfCheck();
@@ -67,14 +67,14 @@ public:      // funcs
   // Read-only member access.
   std::optional<HostAndResourceName> const &getHarnOpt() const
     { return m_harn; }
-  std::optional<LineNumber> const &getLineOpt() const
-    { return m_line; }
+  std::optional<LineIndex> const &getLineIndexOpt() const
+    { return m_lineIndex; }
   std::optional<ByteIndex> const &getByteIndexOpt() const
     { return m_byteIndex; }
 
   // Tests for member presence.
   bool hasFilename() const { return m_harn.has_value(); }
-  bool hasLine() const { return m_line.has_value(); }
+  bool hasLineIndex() const { return m_lineIndex.has_value(); }
   bool hasByteIndex() const { return m_byteIndex.has_value(); }
 
   // Requires: hasFilename()
@@ -82,7 +82,7 @@ public:      // funcs
   std::string getFilename() const;
 
   // Requires: hasLine()
-  LineNumber getLine() const;
+  LineIndex getLineIndex() const;
 
   // Requires: hasByteIndex()
   ByteIndex getByteIndex() const;

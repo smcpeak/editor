@@ -21,6 +21,8 @@ struct DiagnosticElement {
 
   // 1-based line number within `m_harn` where the syntax of interest
   // is.
+  //
+  // TODO: Change to `LineIndex`.
   LineNumber m_line;
 
   // The relevance of the indicated line.  This might be very long,

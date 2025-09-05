@@ -7,6 +7,7 @@
 #include "lsp-get-code-lines.h"                  // module under test
 
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "line-number.h"                         // LineNumber
 #include "lsp-manager.h"                         // LSPManagerDocumentState
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
@@ -268,13 +269,20 @@ public:      // methods
       vfsConnections);
   }
 
+  // The tests are written using line numbers, but the internal
+  // interface uses line indices.
+  LineIndex ln2li(int lineNumber)
+  {
+    return LineNumber(lineNumber).toLineIndex();
+  }
+
   // Add to `locations` a request for `lineNumber` in `fileIndex`.
   void locAddFileLine(int fileIndex, int lineNumber)
   {
     xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName::localFile(fname[fileIndex]),
-      LineNumber(lineNumber),
+      ln2li(lineNumber),
       ByteIndex(0)
     ));
   }
@@ -285,7 +293,7 @@ public:      // methods
     xassert(cc::z_le_lt(errFileIndex, TABLESIZE(errFname)));
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName::localFile(errFname[errFileIndex]),
-      LineNumber(lineNumber),
+      ln2li(lineNumber),
       ByteIndex(0)
     ));
   }
@@ -508,7 +516,7 @@ public:      // methods
 
     locations.push_back(HostFileAndLineOpt(
       HostAndResourceName(HostName::asSSH("somehost"), "/some/file"),
-      LineNumber(3),
+      ln2li(3),
       ByteIndex(0)
     ));
 

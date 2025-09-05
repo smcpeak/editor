@@ -72,7 +72,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   // First, get the set of files that require a VFS query.
   std::set<HostAndResourceName> filesToQuery;
   for (HostFileAndLineOpt const &hfal : locations) {
-    xassertPrecondition(hfal.hasFilename() && hfal.hasLine());
+    xassertPrecondition(hfal.hasFilename() && hfal.hasLineIndex());
 
     HostAndResourceName const &harn = hfal.getHarn();
     if (harn.isLocal() &&
@@ -145,7 +145,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   std::vector<std::string> ret;
   for (HostFileAndLineOpt const &hfal : locations) {
     // Already checked above, but no harm in checking again.
-    xassertPrecondition(hfal.hasFilename() && hfal.hasLine());
+    xassertPrecondition(hfal.hasFilename() && hfal.hasLineIndex());
 
     HostAndResourceName const &harn = hfal.getHarn();
     if (!harn.isLocal()) {
@@ -154,7 +154,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
 
     else /*local*/ {
       std::string const fname = harn.resourceName();
-      LineIndex lineIndex = hfal.getLine().toLineIndex() + offsetForTesting;
+      LineIndex lineIndex = hfal.getLineIndex() + offsetForTesting;
 
       // If the file is open with the LSP manager, then use the most
       // recent copy it has sent to the server, since that is what the

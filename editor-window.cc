@@ -2788,7 +2788,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt:"
     " harn=" << toGDValue(hfl.getHarnOpt()) <<
-    " line=" << toGDValue(hfl.getLineOpt()) <<
+    " line=" << toGDValue(hfl.getLineIndexOpt()) <<
     " byteIndex=" << toGDValue(hfl.getByteIndexOpt()));
 
   if (!hfl.hasFilename()) {
@@ -2805,11 +2805,11 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
       // prompting.
       TRACE1("slot_openOrSwitchToFileAtLineOpt: fast path open");
       this->openOrSwitchToFile(hfl.getHarn());
-      if (hfl.hasLine()) {
+      if (hfl.hasLineIndex()) {
         // Also go to line/byte, if provided.  `hfl` provides model
         // coordinates.
         TextMCoord targetMC(
-          hfl.getLine().toLineIndex(),
+          hfl.getLineIndex(),
           hfl.getByteIndexOpt().value_or(ByteIndex(0)));
 
         // Transform to layout coordinates.

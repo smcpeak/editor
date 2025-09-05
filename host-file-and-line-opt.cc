@@ -12,8 +12,8 @@ using namespace gdv;
 
 void HostFileAndLineOpt::selfCheck() const
 {
-  if (m_line) {
-    m_line->selfCheck();
+  if (m_lineIndex) {
+    m_lineIndex->selfCheck();
   }
 
   if (m_byteIndex) {
@@ -36,10 +36,10 @@ std::string HostFileAndLineOpt::getFilename() const
 }
 
 
-LineNumber HostFileAndLineOpt::getLine() const
+LineIndex HostFileAndLineOpt::getLineIndex() const
 {
-  xassertPrecondition(hasLine());
-  return *m_line;
+  xassertPrecondition(hasLineIndex());
+  return *m_lineIndex;
 }
 
 
@@ -60,7 +60,7 @@ HostFileAndLineOpt::operator gdv::GDValue() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "HostFileAndLineOpt"_sym);
   GDV_WRITE_MEMBER_SYM(m_harn);
-  GDV_WRITE_MEMBER_SYM(m_line);
+  GDV_WRITE_MEMBER_SYM(m_lineIndex);
   GDV_WRITE_MEMBER_SYM(m_byteIndex);
   return m;
 }

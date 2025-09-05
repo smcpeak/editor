@@ -2820,16 +2820,12 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
 
 void EditorWidget::goToLocalFileAndLineOpt(
   std::string const &fname,
-  std::optional<LineNumber> lineOpt,
+  std::optional<LineIndex> lineIndexOpt,
   std::optional<ByteIndex> byteIndexOpt)
 {
-  if (byteIndexOpt) {
-    xassertPrecondition(*byteIndexOpt >= 0);
-  }
-
   HostFileAndLineOpt hostFileAndLine(
     HostAndResourceName::localFile(fname),
-    lineOpt,
+    lineIndexOpt,
     byteIndexOpt);
 
   Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
@@ -2846,7 +2842,9 @@ void EditorWidget::on_jumpToDiagnosticLocation(
     " line=" << element.m_line);
 
   goToLocalFileAndLineOpt(
-    element.m_harn.resourceName(), element.m_line, std::nullopt);
+    element.m_harn.resourceName(),
+    element.m_line.toLineIndex(),
+    std::nullopt);
 
   GENERIC_CATCH_END
 }
@@ -2972,7 +2970,7 @@ void EditorWidget::lspHandleLocationReply(
       // going to the start line/col.
       goToLocalFileAndLineOpt(
         loc.getFname(),
-        loc.m_range.m_start.m_line.toLineNumber(),
+        loc.m_range.m_start.m_line,
         loc.m_range.m_start.m_character);
     }
     else {
@@ -2981,7 +2979,7 @@ void EditorWidget::lspHandleLocationReply(
       for (LSP_Location const &loc : lseq.m_locations) {
         locations.push_back(HostFileAndLineOpt(
           HostAndResourceName::localFile(loc.getFname()),
-          loc.m_range.m_start.m_line.toLineNumber(),
+          loc.m_range.m_start.m_line,
           std::nullopt));
       }
 
@@ -2996,7 +2994,7 @@ void EditorWidget::lspHandleLocationReply(
         for (std::size_t i=0; i < locations.size(); ++i) {
           elts.push_back(DiagnosticElement{
             locations.at(i).getHarn(),
-            locations.at(i).getLine(),
+            locations.at(i).getLineIndex().toLineNumber(),
             codeLines->at(i)
           });
         }

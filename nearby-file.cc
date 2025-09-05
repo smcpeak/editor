@@ -10,6 +10,7 @@
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
+#include "smbase/optional-util.h"      // OPT_INVOKE_METHOD
 #include "smbase/overflow.h"           // multiplyAddWithOverflowCheck
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -188,12 +189,14 @@ static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
   }
 
   // See if there is a line number here.
-  std::optional<LineNumber> line = getLineNumberAt(haystack, high+1);
+  std::optional<LineNumber> lineNumber =
+    getLineNumberAt(haystack, high+1);
 
   // Return what we found.
   candidates.push_back(HostFileAndLineOpt(
     HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
-    line, std::nullopt));
+    OPT_INVOKE_METHOD(lineNumber, toLineIndex),
+    std::nullopt));
 
   xassertPostcondition(vecForAllElements(candidates,
     [](HostFileAndLineOpt const &c) -> bool {
@@ -228,7 +231,7 @@ static HostFileAndLineOpt joinHFL(
   // suffix.
   return HostFileAndLineOpt(
     HostAndResourceName(prefix.hostName(), joinedFileName),
-    suffix.getLineOpt(),
+    suffix.getLineIndexOpt(),
     suffix.getByteIndexOpt());
 }
 
