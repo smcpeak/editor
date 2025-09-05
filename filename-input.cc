@@ -36,9 +36,6 @@
 #include <QVBoxLayout>
 
 
-// TODO: Replace "NULL" with "nullptr" everywhere.
-
-
 FilenameInputDialog::History::History()
   : m_dialogSize(800, 800)
 {}
@@ -57,12 +54,12 @@ FilenameInputDialog::FilenameInputDialog(
   ModalDialog(parent, f),
   m_history(history),
   m_connectionDropDown(nullptr),
-  m_filenameLabel(NULL),
-  m_filenameEdit(NULL),
-  m_completionsEdit(NULL),
-  m_helpButton(NULL),
-  m_makeDirectoryButton(NULL),
-  m_refreshButton(NULL),
+  m_filenameLabel(nullptr),
+  m_filenameEdit(nullptr),
+  m_completionsEdit(nullptr),
+  m_helpButton(nullptr),
+  m_makeDirectoryButton(nullptr),
+  m_refreshButton(nullptr),
   m_vfsConnections(vfsConnections),
   m_hostNameList(),
   m_currentHostName(HostName::asLocal()),
@@ -70,7 +67,7 @@ FilenameInputDialog::FilenameInputDialog(
   m_currentRequestDir(""),
   m_cachedDirectory(""),
   m_cachedDirectoryEntries(),
-  m_docList(NULL),
+  m_docList(nullptr),
   m_saveAs(false)
 {
   this->setObjectName("filename_input");
@@ -165,8 +162,8 @@ FilenameInputDialog::~FilenameInputDialog()
 {
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_connectionDropDown, nullptr, this, nullptr);
-  QObject::disconnect(m_filenameEdit, NULL, this, NULL);
-  QObject::disconnect(m_helpButton, NULL, this, NULL);
+  QObject::disconnect(m_filenameEdit, nullptr, this, nullptr);
+  QObject::disconnect(m_helpButton, nullptr, this, nullptr);
   QObject::disconnect(m_vfsConnections, nullptr, this, nullptr);
 }
 

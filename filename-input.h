@@ -121,7 +121,7 @@ private:     // data
   // ---- other state ----
   // List of open documents so we can query it as the user types.
   //
-  // This is only non-NULL while 'runDialog' is running.
+  // This is only non-null while 'runDialog' is running.
   RCSerf<NamedTextDocumentList const> m_docList;
 
   // True if we should be prompting for a file to save.  False means
@@ -179,7 +179,7 @@ private:     // funcs
 public:      // funcs
   FilenameInputDialog(History *history,
                       VFS_Connections *vfsConnections,
-                      QWidget *parent = NULL, Qt::WindowFlags f = Qt::WindowFlags());
+                      QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
   ~FilenameInputDialog();
 
   void setSaveAs(bool s) { m_saveAs = s; }
