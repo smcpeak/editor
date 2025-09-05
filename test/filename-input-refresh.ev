@@ -22,7 +22,7 @@ CheckPathExists("out/dir1" true)
 FocusKeySequence("/")
 
 // Wait for the new directory to load.
-WaitUntilCheckQuery("1000" "window1.filename_input" "currentRequestDir" "")
+WaitUntilCheckQuery(1000 "window1.filename_input" "currentRequestDir" "")
 
 // The file list should now be empty.
 CheckTextEditText("window1.filename_input.m_completionsEdit", "")
@@ -34,7 +34,7 @@ WriteFileContents("out/dir1/some-file.txt", "one\ntwo\n")
 Shortcut("window1.filename_input.m_refreshButton" "Alt+R")
 
 // Now we should see it.
-WaitUntilCheckQuery("1000" "window1.filename_input" "currentRequestDir" "")
+WaitUntilCheckQuery(1000 "window1.filename_input" "currentRequestDir" "")
 CheckTextEditText("window1.filename_input.m_completionsEdit", "some-file.txt\n")
 
 // Open it.

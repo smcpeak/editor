@@ -305,12 +305,6 @@ static bool regexSearch(string const &str, string const &re)
 }
 
 
-static int intFromString(string const &s)
-{
-  return atoi(s.c_str());
-}
-
-
 static string getListWidgetContents(QListWidget *listWidget)
 {
   std::vector<std::string> items;
@@ -511,11 +505,11 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "WaitUntilCheckQuery") {
-    // TODO: Accept an integer here.
-    BIND_STRING_ARGS4(duration, receiver, state, expect);
+    auto [durationMS, receiver, state, expect] =
+      gdvpToTuple<int, std::string, std::string, std::string>(parser);
 
     this->waitUntilCheckQuery(
-      intFromString(duration), receiver, state, expect);
+      durationMS, receiver, state, expect);
   }
 
   else if (funcName == "CheckQuery") {
