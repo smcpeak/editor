@@ -18,8 +18,8 @@ OPEN_ANONYMOUS_NAMESPACE
 // serialization covers a lot of its functionality.
 void test_gdvn()
 {
-  EXPECT_EQ(toGDValue(HostFileAndLineOpt()).asString(),
-    "HostFileAndLineOpt["
+  EXPECT_EQ(toGDValue(HostFile_OptLineByte()).asString(),
+    "HostFile_OptLineByte["
       "harn:HostAndResourceName["
         "hostName:HostName[sshHostName:\"\"] "
         "resourceName:\"\""
@@ -29,9 +29,9 @@ void test_gdvn()
     "]");
 
   HostAndResourceName harn(HostName::asSSH("host"), "resName");
-  HostFileAndLineOpt hfal(harn, LineIndex(3), ByteIndex(4));
+  HostFile_OptLineByte hfal(harn, LineIndex(3), ByteIndex(4));
   EXPECT_EQ(toGDValue(hfal).asString(),
-    "HostFileAndLineOpt["
+    "HostFile_OptLineByte["
       "harn:HostAndResourceName["
         "hostName:HostName[sshHostName:\"host\"] "
         "resourceName:\"resName\""

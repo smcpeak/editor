@@ -19,7 +19,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
-#include "host-file-and-line-opt-fwd.h"          // HostFileAndLineOpt [n]
+#include "host-file-and-line-opt-fwd.h"          // HostFile_OptLineByte [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
@@ -589,7 +589,7 @@ public:       // funcs
   */
   std::optional<std::vector<std::string>> lspGetCodeLines(
     SynchronousWaiter &waiter,
-    std::vector<HostFileAndLineOpt> const &locations);
+    std::vector<HostFile_OptLineByte> const &locations);
 
   // -------------------------- LSP Per-file ---------------------------
   // True if `ntd` is open w.r.t. the LSP server.

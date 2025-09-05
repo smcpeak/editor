@@ -14,7 +14,7 @@
 #include "editor-settings-fwd.h"                 // EditorSettings
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
-#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "host-file-and-line-opt.h"              // HostFile_OptLineByte
 #include "line-difference.h"                     // LineDifference
 #include "line-index.h"                          // LineIndex
 #include "lsp-manager-fwd.h"                     // LSPManager
@@ -618,7 +618,7 @@ public:      // funcs
   // The awkward method name is due to avoiding the signal of the same
   // name that is used to implement this method.
   void doOpenOrSwitchToFileAtLineOpt(
-    HostFileAndLineOpt const &hostFileAndLine);
+    HostFile_OptLineByte const &hostFileAndLine);
 
   // Make the document shown in the widget be topmost in the global list
   // of open documents.
@@ -817,7 +817,7 @@ Q_SIGNALS:
   // Emitted when the user indicates, via some widget functionality,
   // that they want to go to a particular file, and possibly a specific
   // line.
-  void signal_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt hfl);
+  void signal_openOrSwitchToFileAtLineOpt(HostFile_OptLineByte hfl);
 
   // The user wants to close the search and replace panel if it is open.
   void closeSARPanel();
@@ -838,8 +838,8 @@ Q_SIGNALS:
 };
 
 
-// Allow 'HostFileAndLineOpt' to be used as a queued signal parameter.
-Q_DECLARE_METATYPE(HostFileAndLineOpt)
+// Allow 'HostFile_OptLineByte' to be used as a queued signal parameter.
+Q_DECLARE_METATYPE(HostFile_OptLineByte)
 
 
 #endif // EDITOR_WIDGET_H

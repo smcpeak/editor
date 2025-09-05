@@ -12,7 +12,7 @@
 #include "editor-settings-fwd.h"                 // EditorSettings, WindowPosition
 #include "editor-widget-frame-fwd.h"             // EditorWidgetFrame
 #include "editor-widget-fwd.h"                   // EditorWidget
-#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "host-file-and-line-opt.h"              // HostFile_OptLineByte
 #include "lsp-manager-fwd.h"                     // LSPManager
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td.h"                            // NamedTextDocument
@@ -356,7 +356,7 @@ public Q_SLOTS:
   // TODO: Really the widget should be in control of this, not the
   // window, in order to allow for eventually having multiple widgets
   // per window.
-  void slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt hfl) NOEXCEPT;
+  void slot_openOrSwitchToFileAtLineOpt(HostFile_OptLineByte hfl) NOEXCEPT;
 };
 
 

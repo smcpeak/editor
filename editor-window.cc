@@ -772,7 +772,7 @@ void EditorWindow::fileOpen() NOEXCEPT
   TRACE1("fileOpen");
 
   HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
-  this->slot_openOrSwitchToFileAtLineOpt(HostFileAndLineOpt(
+  this->slot_openOrSwitchToFileAtLineOpt(HostFile_OptLineByte(
     dirHarn,
     std::nullopt,
     std::nullopt));
@@ -2782,7 +2782,7 @@ void EditorWindow::on_closeSARPanel() NOEXCEPT
 
 
 void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
-  HostFileAndLineOpt hfl) NOEXCEPT
+  HostFile_OptLineByte hfl) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 

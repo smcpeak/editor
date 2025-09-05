@@ -1552,7 +1552,7 @@ std::string EditorGlobal::lspStopServer()
 
 std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
   SynchronousWaiter &waiter,
-  std::vector<HostFileAndLineOpt> const &locations)
+  std::vector<HostFile_OptLineByte> const &locations)
 {
   return lspGetCodeLinesFunction(
     waiter,

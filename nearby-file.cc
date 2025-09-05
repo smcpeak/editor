@@ -4,7 +4,7 @@
 #include "nearby-file.h"               // this module
 
 #include "host-and-resource-name.h"    // HostAndResourceName
-#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
+#include "host-file-and-line-opt.h"    // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
 
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
@@ -118,11 +118,11 @@ getLineNumberAt(string const &haystack, int i)
 //
 // Ensures: For every `c` in `return`, `!c.getFilename().empty()`.
 //
-static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
+static std::vector<HostFile_OptLineByte> getCandidateSuffixes(
   string const &haystack,
   int charOffset)
 {
-  std::vector<HostFileAndLineOpt> candidates;
+  std::vector<HostFile_OptLineByte> candidates;
 
   // I want this to be usable without too much pre-checking, so just
   // silently discard an invalid offset or empty string.
@@ -192,13 +192,13 @@ static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
     getLineNumberAt(haystack, high+1);
 
   // Return what we found.
-  candidates.push_back(HostFileAndLineOpt(
+  candidates.push_back(HostFile_OptLineByte(
     HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
     OPT_INVOKE_METHOD(lineNumber, toLineIndex),
     std::nullopt));
 
   xassertPostcondition(vecForAllElements(candidates,
-    [](HostFileAndLineOpt const &c) -> bool {
+    [](HostFile_OptLineByte const &c) -> bool {
       return !c.getFilename().empty();
     }));
 
@@ -208,10 +208,10 @@ static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
 
 // Return an object with the prefix hostname, a file name created by
 // joining prefix+suffix, and line/col from the suffix.
-static HostFileAndLineOpt joinHFL(
+static HostFile_OptLineByte joinHFL(
   SMFileUtil &sfu,
   HostAndResourceName const &prefix,
-  HostFileAndLineOpt const &suffix)
+  HostFile_OptLineByte const &suffix)
 {
   string joinedFileName = sfu.joinIfRelativeFilename(
     prefix.resourceName(),
@@ -220,7 +220,7 @@ static HostFileAndLineOpt joinHFL(
 
   // Take the host from the prefix and the line/col number from the
   // suffix.
-  return HostFileAndLineOpt(
+  return HostFile_OptLineByte(
     HostAndResourceName(prefix.hostName(), joinedFileName),
     suffix.getLineIndexOpt(),
     suffix.getByteIndexOpt());
@@ -228,7 +228,7 @@ static HostFileAndLineOpt joinHFL(
 
 
 // Ensures: If `return.has_value()` then `return->hasFilename()`.
-static std::optional<HostFileAndLineOpt> innerGetNearbyFilename(
+static std::optional<HostFile_OptLineByte> innerGetNearbyFilename(
   IHFExists &ihfExists,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
@@ -241,7 +241,7 @@ static std::optional<HostFileAndLineOpt> innerGetNearbyFilename(
   }
 
   // Extract candidate suffixes, which always have filenames.
-  std::vector<HostFileAndLineOpt> candidateSuffixes =
+  std::vector<HostFile_OptLineByte> candidateSuffixes =
     getCandidateSuffixes(haystack, charOffset);
   if (candidateSuffixes.empty()) {
     return std::nullopt;
@@ -250,7 +250,7 @@ static std::optional<HostFileAndLineOpt> innerGetNearbyFilename(
   // Look for a combination that exists on disk.
   for (std::size_t prefix=0; prefix < candidatePrefixes.size(); ++prefix) {
     for (std::size_t suffix=0; suffix < candidateSuffixes.size(); ++suffix) {
-      HostFileAndLineOpt candidate(joinHFL(sfu,
+      HostFile_OptLineByte candidate(joinHFL(sfu,
         candidatePrefixes.at(prefix),
         candidateSuffixes.at(suffix)));
 
@@ -265,13 +265,13 @@ static std::optional<HostFileAndLineOpt> innerGetNearbyFilename(
 }
 
 
-std::optional<HostFileAndLineOpt> getNearbyFilename(
+std::optional<HostFile_OptLineByte> getNearbyFilename(
   IHFExists &ihfExists,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset)
 {
-  std::optional<HostFileAndLineOpt> ret = innerGetNearbyFilename(
+  std::optional<HostFile_OptLineByte> ret = innerGetNearbyFilename(
     ihfExists,
     candidatePrefixes,
     haystack,

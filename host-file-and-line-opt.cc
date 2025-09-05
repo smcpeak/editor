@@ -10,7 +10,7 @@
 using namespace gdv;
 
 
-void HostFileAndLineOpt::selfCheck() const
+void HostFile_OptLineByte::selfCheck() const
 {
   if (m_lineIndex) {
     m_lineIndex->selfCheck();
@@ -23,35 +23,35 @@ void HostFileAndLineOpt::selfCheck() const
 }
 
 
-std::string HostFileAndLineOpt::getFilename() const
+std::string HostFile_OptLineByte::getFilename() const
 {
   return getHarn().resourceName();
 }
 
 
-LineIndex HostFileAndLineOpt::getLineIndex() const
+LineIndex HostFile_OptLineByte::getLineIndex() const
 {
   xassertPrecondition(hasLineIndex());
   return *m_lineIndex;
 }
 
 
-ByteIndex HostFileAndLineOpt::getByteIndex() const
+ByteIndex HostFile_OptLineByte::getByteIndex() const
 {
   xassertPrecondition(hasByteIndex());
   return *m_byteIndex;
 }
 
 
-void HostFileAndLineOpt::setHarn(HostAndResourceName const &harn)
+void HostFile_OptLineByte::setHarn(HostAndResourceName const &harn)
 {
   m_harn = harn;
 }
 
 
-HostFileAndLineOpt::operator gdv::GDValue() const
+HostFile_OptLineByte::operator gdv::GDValue() const
 {
-  GDValue m(GDVK_TAGGED_ORDERED_MAP, "HostFileAndLineOpt"_sym);
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "HostFile_OptLineByte"_sym);
   GDV_WRITE_MEMBER_SYM(m_harn);
   GDV_WRITE_MEMBER_SYM(m_lineIndex);
   GDV_WRITE_MEMBER_SYM(m_byteIndex);

@@ -6,6 +6,6 @@
 #ifndef EDITOR_HOST_FILE_AND_LINE_OPT_FWD_H
 #define EDITOR_HOST_FILE_AND_LINE_OPT_FWD_H
 
-class HostFileAndLineOpt;
+class HostFile_OptLineByte;
 
 #endif // EDITOR_HOST_FILE_AND_LINE_OPT_FWD_H

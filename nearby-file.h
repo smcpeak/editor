@@ -6,7 +6,7 @@
 
 // editor
 #include "host-and-resource-name-fwd.h"          // HostAndResourceName [n]
-#include "host-file-and-line-opt-fwd.h"          // HostFileAndLineOpt [n]
+#include "host-file-and-line-opt-fwd.h"          // HostFile_OptLineByte [n]
 
 // smbase
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
@@ -53,7 +53,7 @@ public:      // methods
    If no candidate file name string can be found, or no candidate
    prefixes are provided, this returns `nullopt`.
 */
-std::optional<HostFileAndLineOpt> getNearbyFilename(
+std::optional<HostFile_OptLineByte> getNearbyFilename(
   IHFExists &ihfExists,
   stdfwd::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,

@@ -12,7 +12,7 @@
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
-#include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "host-file-and-line-opt.h"              // HostFile_OptLineByte
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
@@ -656,7 +656,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   SynchronousWaiter waiter(this);
   VFS_QuerySync querySync(vfsConnections(), waiter);
 
-  std::optional<HostFileAndLineOpt> hostFileAndLine =
+  std::optional<HostFile_OptLineByte> hostFileAndLine =
     getNearbyFilename(querySync, prefixes,
                       lineText, m_editor->cursor().m_column);
 
@@ -675,7 +675,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
 
 
 void EditorWidget::doOpenOrSwitchToFileAtLineOpt(
-  HostFileAndLineOpt const &hostFileAndLine)
+  HostFile_OptLineByte const &hostFileAndLine)
 {
   // This should be sent on a Qt::QueuedConnection, meaning the slot
   // will be invoked later, once the current event is done processing.
@@ -2822,7 +2822,7 @@ void EditorWidget::goToLocalFileAndLineOpt(
   std::optional<LineIndex> lineIndexOpt,
   std::optional<ByteIndex> byteIndexOpt)
 {
-  HostFileAndLineOpt hostFileAndLine(
+  HostFile_OptLineByte hostFileAndLine(
     HostAndResourceName::localFile(fname),
     lineIndexOpt,
     byteIndexOpt);
@@ -2974,9 +2974,9 @@ void EditorWidget::lspHandleLocationReply(
     }
     else {
       // Populate a vector of locations to query.
-      std::vector<HostFileAndLineOpt> locations;
+      std::vector<HostFile_OptLineByte> locations;
       for (LSP_Location const &loc : lseq.m_locations) {
-        locations.push_back(HostFileAndLineOpt(
+        locations.push_back(HostFile_OptLineByte(
           HostAndResourceName::localFile(loc.getFname()),
           loc.m_range.m_start.m_line,
           std::nullopt));

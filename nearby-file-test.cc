@@ -4,7 +4,7 @@
 #include "unit-tests.h"                // decl for my entry point
 
 #include "host-and-resource-name.h"    // HostAndResourceName
-#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
+#include "host-file-and-line-opt.h"    // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
 #include "nearby-file.h"               // module to test
 
@@ -27,11 +27,11 @@ using namespace smbase;
 
 // Check that the "harn" element of `actual` is what we expect.
 static void checkActualHarn(
-  std::optional<HostFileAndLineOpt> const &actual,
+  std::optional<HostFile_OptLineByte> const &actual,
   HostAndResourceName const &expectHARN)
 {
   // The test infrastructure uses empty names to indicate places we
-  // expect to get an absent `HostFileAndLineOpt`.
+  // expect to get an absent `HostFile_OptLineByte`.
   EXPECT_EQ(actual.has_value(), !expectHARN.empty());
 
   if (actual) {
@@ -42,7 +42,7 @@ static void checkActualHarn(
 
 // Check that the `m_line` element of `actual` is what we expect.
 static void checkActualLine(
-  std::optional<HostFileAndLineOpt> const &actual,
+  std::optional<HostFile_OptLineByte> const &actual,
   std::optional<LineNumber> expectLineNumber)
 {
   if (expectLineNumber) {
@@ -73,7 +73,7 @@ static void expectIGNF(
   int charOffset,
   HostAndResourceName const &expectHARN)
 {
-  std::optional<HostFileAndLineOpt> actual = getNearbyFilename(hfe,
+  std::optional<HostFile_OptLineByte> actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   checkActualHarn(actual, expectHARN);
   checkActualLine(actual, std::nullopt);
@@ -227,7 +227,7 @@ static void expectIGNFL(
 {
   TEST_FUNC_EXPRS(candidatePrefixes, haystack, charOffset);
 
-  std::optional<HostFileAndLineOpt> actual = getNearbyFilename(hfe,
+  std::optional<HostFile_OptLineByte> actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   checkActualHarn(actual, expectHARN);
 

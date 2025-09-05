@@ -1,5 +1,7 @@
 // host-file-and-line-opt.h
-// HostFileAndLineOpt class.
+// HostFile_OptLineByte class.
+
+// TODO: Rename this file to `host-file-olb.h`.
 
 #ifndef EDITOR_HOST_FILE_AND_LINE_OPT_H
 #define EDITOR_HOST_FILE_AND_LINE_OPT_H
@@ -17,9 +19,7 @@
 
 
 // A host and file name, and optional line and byte indices.
-//
-// TODO: Rename to `HostFile_OptLineByte`.
-class HostFileAndLineOpt {
+class HostFile_OptLineByte {
 private:     // data
   // Host and file name.
   //
@@ -39,7 +39,7 @@ private:     // data
 public:      // funcs
   // The default ctor is required to allow this type to be used as a
   // parameter type for a signal.
-  HostFileAndLineOpt()
+  HostFile_OptLineByte()
     : m_harn(),
       m_lineIndex(),
       m_byteIndex()
@@ -47,10 +47,10 @@ public:      // funcs
     selfCheck();
   }
 
-  ~HostFileAndLineOpt()
+  ~HostFile_OptLineByte()
   {}
 
-  HostFileAndLineOpt(HostFileAndLineOpt const &obj)
+  HostFile_OptLineByte(HostFile_OptLineByte const &obj)
     : DMEMB(m_harn),
       DMEMB(m_lineIndex),
       DMEMB(m_byteIndex)
@@ -58,7 +58,7 @@ public:      // funcs
     selfCheck();
   }
 
-  HostFileAndLineOpt(
+  HostFile_OptLineByte(
     HostAndResourceName const &harn,
     std::optional<LineIndex> lineIndex,
     std::optional<ByteIndex> byteIndex)
