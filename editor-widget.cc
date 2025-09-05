@@ -645,8 +645,8 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   // We will look for the file whose name is under the cursor in any
   // directory where we already have an open file, starting with the
   // directory where the current file is.
-  ArrayStack<HostAndResourceName> prefixes;
-  prefixes.push(getDocumentDirectoryHarn());
+  std::vector<HostAndResourceName> prefixes;
+  prefixes.push_back(getDocumentDirectoryHarn());
 
   // Then, look in directories of other files, with the most recently
   // used files considered first.

@@ -15,6 +15,7 @@
 // libc++
 #include <set>                         // std::set
 #include <string>                      // std::string
+#include <vector>                      // std::vector
 
 using namespace smbase;
 
@@ -299,14 +300,13 @@ void NamedTextDocumentList::assignUniqueTitle(NamedTextDocument *file)
 
 
 void NamedTextDocumentList::getUniqueDirectories(
-  ArrayStack<HostAndResourceName> /*INOUT*/ &dirs) const
+  std::vector<HostAndResourceName> /*INOUT*/ &dirs) const
 {
   // Set of directories put into 'dirs' so far.
   std::set<HostAndResourceName> dirSet;
 
   // Add the existing entries so we do not duplicate them.
-  for (int i=0; i < dirs.length(); i++) {
-    HostAndResourceName const &dir = dirs[i];
+  for (HostAndResourceName const &dir : dirs) {
     dirSet.insert(dir);
     TRACE("named-td-list", "getUniqueDirectories: "
       "dirs already contains: " << dir);
@@ -316,7 +316,7 @@ void NamedTextDocumentList::getUniqueDirectories(
     if (m_documents[i]->hasFilename()) {
       HostAndResourceName dir = m_documents[i]->directoryHarn();
       if (!contains(dirSet, dir)) {
-        dirs.push(dir);
+        dirs.push_back(dir);
         dirSet.insert(dir);
 
         TRACE("named-td-list", "getUniqueDirectories: "

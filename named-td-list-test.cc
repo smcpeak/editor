@@ -5,14 +5,15 @@
 
 #include "named-td-list.h"             // module to test
 
-// smbase
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/sm-test.h"            // EXPECT_EQ
 #include "smbase/strutil.h"            // dirname
 
-// libc
+#include <cstddef>                     // std::size_t
+#include <vector>                      // std::vector
+
 #include <stdarg.h>                    // va_start, etc.
 
 
@@ -371,17 +372,17 @@ static void testColon3()
 // sequence of arguments.
 static void expectDirs(NamedTextDocumentList &dlist, char const *dir0, ...)
 {
-  ArrayStack<HostAndResourceName> actual;
+  std::vector<HostAndResourceName> actual;
   dlist.getUniqueDirectories(actual);
 
   if (!dir0) {
-    xassert(actual.isEmpty());
+    xassert(actual.empty());
     return;
   }
-  xassert(!actual.isEmpty());
+  xassert(!actual.empty());
 
   EXPECT_EQ(actual[0].resourceName(), dir0);
-  int i = 1;
+  std::size_t i = 1;
 
   va_list args;
   va_start(args, dir0);
@@ -391,7 +392,7 @@ static void expectDirs(NamedTextDocumentList &dlist, char const *dir0, ...)
   }
   va_end(args);
 
-  xassert(actual.length() == i);
+  xassert(actual.size() == i);
 }
 
 
@@ -405,20 +406,20 @@ static void testGetUniqueDirectories()
 
   // Check that existing entries are preserved.
   {
-    ArrayStack<HostAndResourceName> actual;
-    actual.push(HostAndResourceName::localFile("existing/"));
+    std::vector<HostAndResourceName> actual;
+    actual.push_back(HostAndResourceName::localFile("existing/"));
     dlist.getUniqueDirectories(actual);
-    xassert(actual.length() == 2);
+    xassert(actual.size() == 2);
     xassert(actual[0].resourceName() == "existing/");
     xassert(actual[1].resourceName() == "/a/");
   }
 
   // Check that existing entries are not duplicated.
   {
-    ArrayStack<HostAndResourceName> actual;
-    actual.push(HostAndResourceName::localFile("/a/"));
+    std::vector<HostAndResourceName> actual;
+    actual.push_back(HostAndResourceName::localFile("/a/"));
     dlist.getUniqueDirectories(actual);
-    xassert(actual.length() == 1);
+    xassert(actual.size() == 1);
     xassert(actual[0].resourceName() == "/a/");
   }
 

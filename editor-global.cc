@@ -695,7 +695,7 @@ bool EditorGlobal::getInitialViewForFile(
 
 
 void EditorGlobal::getUniqueDocumentDirectories(
-  ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const
+  std::vector<HostAndResourceName> &dirs /*INOUT*/) const
 {
   m_documentList.getUniqueDirectories(dirs);
 }

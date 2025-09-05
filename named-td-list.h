@@ -13,8 +13,9 @@
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sobjlist.h"           // SObjList
-#include "smbase/std-set-fwd.h"        // stdfwd::set
-#include "smbase/std-string-fwd.h"     // std::string
+#include "smbase/std-set-fwd.h"        // stdfwd::set [n]
+#include "smbase/std-string-fwd.h"     // std::string [n]
+#include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
 
 
 // Forward in this file.
@@ -138,7 +139,8 @@ public:      // funcs
   // Put into 'dirs' the unique set of directories containing files
   // currently open, in order from most to least recently used.  Any
   // existing entries in 'dirs' are *retained* ahead of added entries.
-  void getUniqueDirectories(ArrayStack<HostAndResourceName> /*INOUT*/ &dirs) const;
+  void getUniqueDirectories(
+    stdfwd::vector<HostAndResourceName> /*INOUT*/ &dirs) const;
 
   // True if at least one document is associated with an on-disk file
   // and has unsaved changes.

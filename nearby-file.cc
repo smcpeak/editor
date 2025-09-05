@@ -3,6 +3,8 @@
 
 #include "nearby-file.h"               // this module
 
+#include "host-and-resource-name.h"    // HostAndResourceName
+#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
 #include "line-number.h"               // LineNumber
 
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
@@ -14,6 +16,8 @@
 #include "smbase/vector-util.h"        // vecConvertElements, vecMapElements
 
 #include <optional>                    // std::{nullopt, optional}
+#include <string>                      // std::string
+#include <vector>                      // std::vector
 
 using namespace gdv;
 
@@ -107,7 +111,7 @@ getLineNumberAt(string const &haystack, int i)
 // Ensures: For every `c` added to `candidates`, `c.hasFilename()`.
 //
 void getCandidateSuffixes(
-  ArrayStack<HostFileAndLineOpt> /*OUT*/ &candidates,
+  std::vector<HostFileAndLineOpt> /*OUT*/ &candidates,
   string const &haystack,
   int charOffset)
 {
@@ -180,7 +184,7 @@ void getCandidateSuffixes(
   std::optional<LineNumber> line = getLineNumberAt(haystack, high+1);
 
   // Return what we found.
-  candidates.push(HostFileAndLineOpt(
+  candidates.push_back(HostFileAndLineOpt(
     HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
     line, std::nullopt));
 }
@@ -214,29 +218,29 @@ static HostFileAndLineOpt joinHFL(
 
 static HostFileAndLineOpt innerGetNearbyFilename(
   IHFExists &ihfExists,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
   int charOffset)
 {
   SMFileUtil sfu;
 
-  if (candidatePrefixes.isEmpty()) {
+  if (candidatePrefixes.empty()) {
     return HostFileAndLineOpt();
   }
 
   // Extract candidate suffixes, which always have filenames.
-  ArrayStack<HostFileAndLineOpt> candidateSuffixes;
+  std::vector<HostFileAndLineOpt> candidateSuffixes;
   getCandidateSuffixes(candidateSuffixes, haystack, charOffset);
-  if (candidateSuffixes.isEmpty()) {
+  if (candidateSuffixes.empty()) {
     return HostFileAndLineOpt();
   }
 
   // Look for a combination that exists on disk.
-  for (int prefix=0; prefix < candidatePrefixes.length(); prefix++) {
-    for (int suffix=0; suffix < candidateSuffixes.length(); suffix++) {
+  for (std::size_t prefix=0; prefix < candidatePrefixes.size(); ++prefix) {
+    for (std::size_t suffix=0; suffix < candidateSuffixes.size(); ++suffix) {
       HostFileAndLineOpt candidate(joinHFL(sfu,
-        candidatePrefixes[prefix],
-        candidateSuffixes[suffix]));
+        candidatePrefixes.at(prefix),
+        candidateSuffixes.at(suffix)));
 
       if (ihfExists.hfExists(candidate.getHarn())) {
         return candidate;
@@ -257,8 +261,8 @@ static string harnToString(HostAndResourceName const &harn)
 
 HostFileAndLineOpt getNearbyFilename(
   IHFExists &ihfExists,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
-  string const &haystack,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
+  std::string const &haystack,
   int charOffset)
 {
   HostFileAndLineOpt ret = innerGetNearbyFilename(
@@ -272,10 +276,9 @@ HostFileAndLineOpt getNearbyFilename(
     join(
       suffixAll(
         prefixAll(
-          vecConvertElements<std::string>(
-            vecMapElements<string>(
-              candidatePrefixes.asVector(),
-              harnToString)),          // map function
+          vecMapElements<std::string>(
+            candidatePrefixes,
+            harnToString),             // map function
           "    "),                     // prefix
         "\n"),                         // suffix
       "") <<                           // separator

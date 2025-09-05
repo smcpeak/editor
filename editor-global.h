@@ -329,7 +329,7 @@ public:       // funcs
   // currently open, in order from most to least recently used.  Any
   // existing entries in `dirs` are *retained* ahead of added entries.
   void getUniqueDocumentDirectories(
-    ArrayStack<HostAndResourceName> &dirs /*INOUT*/) const;
+    std::vector<HostAndResourceName> &dirs /*INOUT*/) const;
 
   // ------------------------- Editor windows --------------------------
   // Return the current number of editor windows.

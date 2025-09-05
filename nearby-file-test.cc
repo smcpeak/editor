@@ -3,6 +3,8 @@
 
 #include "unit-tests.h"                // decl for my entry point
 
+#include "host-and-resource-name.h"    // HostAndResourceName
+#include "host-file-and-line-opt.h"    // HostFileAndLineOpt
 #include "nearby-file.h"               // module to test
 
 // smbase
@@ -14,6 +16,8 @@
 // libc++
 #include <optional>                    // std::{make_optional, nullopt, optional}
 #include <set>                         // std::set
+#include <string>                      // std::string
+#include <vector>                      // std::vector
 
 using namespace gdv;
 using namespace smbase;
@@ -36,8 +40,8 @@ static void checkActualHarn(
 
 static void expectIGNF(
   IHFExists &hfe,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
-  string const &haystack,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
+  std::string const &haystack,
   int charOffset,
   HostAndResourceName const &expectHARN)
 {
@@ -50,10 +54,10 @@ static void expectIGNF(
 
 static void expectLocalIGNF(
   IHFExists &hfe,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
-  string const &haystack,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
+  std::string const &haystack,
   int charOffset,
-  string const &expectLocalFile)
+  std::string const &expectLocalFile)
 {
   HostAndResourceName expectHARN(
     HostAndResourceName::localFile(expectLocalFile));
@@ -108,12 +112,12 @@ static void test1()
   TestIHFExists hfe;
   populate(hfe);
 
-  ArrayStack<HostAndResourceName> prefixes;
+  std::vector<HostAndResourceName> prefixes;
 
   // No prefixes.
   expectLocalIGNF(hfe, prefixes, "anything", 0, "");
 
-  prefixes.push(HostAndResourceName::localFile("/home"));
+  prefixes.push_back(HostAndResourceName::localFile("/home"));
   expectLocalIGNF(hfe, prefixes, "foo.txt", 0, "/home/foo.txt");
   expectLocalIGNF(hfe, prefixes, "foo.txt", 6, "/home/foo.txt");
   expectLocalIGNF(hfe, prefixes, "foo.txt", 7, "/home/foo.txt");
@@ -131,12 +135,12 @@ static void test1()
   expectLocalIGNF(hfe, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
 
   // Now it will work.
-  prefixes.push(HostAndResourceName::localFile(""));
+  prefixes.push_back(HostAndResourceName::localFile(""));
   expectLocalIGNF(hfe, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
 
   // Prefix priority.
   expectLocalIGNF(hfe, prefixes, "bar.txt", 0, "/home/bar.txt");       // not found
-  prefixes.push(HostAndResourceName::localFile("/home/user"));
+  prefixes.push_back(HostAndResourceName::localFile("/home/user"));
   expectLocalIGNF(hfe, prefixes, "foo.txt", 0, "/home/foo.txt");       // still
   expectLocalIGNF(hfe, prefixes, "bar.txt", 0, "/home/user/bar.txt");  // now found
 
@@ -187,8 +191,8 @@ static void test1()
 
 static void expectIGNFL(
   IHFExists &hfe,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
-  string const &haystack,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
+  std::string const &haystack,
   int charOffset,
   HostAndResourceName const &expectHARN,
   int intExpectLine)     // Hence the final "L" in this function's name.
@@ -210,10 +214,10 @@ static void expectIGNFL(
 
 static void expectLocalIGNFL(
   IHFExists &hfe,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
-  string const &haystack,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
+  std::string const &haystack,
   int charOffset,
-  string const &expectName,
+  std::string const &expectName,
   int expectLine)
 {
   HostAndResourceName expectHARN(
@@ -226,11 +230,11 @@ static void expectLocalIGNFL(
 
 static void expectRemoteIGNFL(
   IHFExists &hfe,
-  ArrayStack<HostAndResourceName> const &candidatePrefixes,
-  string const &haystack,
+  std::vector<HostAndResourceName> const &candidatePrefixes,
+  std::string const &haystack,
   int charOffset,
   HostName const &expectHostName,
-  string const &expectName,
+  std::string const &expectName,
   int expectLine)
 {
   HostAndResourceName expectHARN(expectHostName, expectName);
@@ -245,13 +249,13 @@ static void testLineNumbers()
   TestIHFExists hfe;
   populate(hfe);
 
-  ArrayStack<HostAndResourceName> prefixes;
+  std::vector<HostAndResourceName> prefixes;
 
   // No prefixes.
   expectLocalIGNFL(hfe, prefixes, "anything:1", 0, "", 0);
 
   // Limits on where the search can begin.
-  prefixes.push(HostAndResourceName::localFile("/home"));
+  prefixes.push_back(HostAndResourceName::localFile("/home"));
   expectLocalIGNFL(hfe, prefixes, "foo.txt:3", -1, "", 0);
   expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 0, "/home/foo.txt", 3);
   expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 6, "/home/foo.txt", 3);
@@ -284,8 +288,8 @@ static void testRemoteFiles()
   TestIHFExists hfe;
   populate(hfe);
 
-  ArrayStack<HostAndResourceName> prefixes;
-  prefixes.push(HostAndResourceName::localFile("/home"));
+  std::vector<HostAndResourceName> prefixes;
+  prefixes.push_back(HostAndResourceName::localFile("/home"));
 
   // Look for a file that exists remotely but isn't in 'prefixes' yet.
   // The returned name in this case is due to the fallback behavior.
@@ -293,7 +297,7 @@ static void testRemoteFiles()
 
   // Now add the remote prefix.
   HostName host(HostName::asSSH("host"));
-  prefixes.push(HostAndResourceName(host, "/mnt"));
+  prefixes.push_back(HostAndResourceName(host, "/mnt"));
 
   // Should find the file.
   expectRemoteIGNFL(hfe, prefixes, "file1.txt:3", 0, host, "/mnt/file1.txt", 3);
