@@ -52,6 +52,7 @@
 #include <QStringList>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QTextEdit>
 #include <QTimer>
 #include <QWidget>
 
@@ -143,6 +144,8 @@ EventReplay::~EventReplay()
 
 
 // Throw a string built using 'stringb'.
+//
+// TODO: FIX: This does not capture the exception context info.
 #define xstringb(msg) throw stringb(msg) /* user ; */
 
 
@@ -508,6 +511,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "WaitUntilCheckQuery") {
+    // TODO: Accept an integer here.
     BIND_STRING_ARGS4(duration, receiver, state, expect);
 
     this->waitUntilCheckQuery(
@@ -553,6 +557,15 @@ void EventReplay::replayCall(GDValue const &command)
     QLineEdit *lineEdit = getObjectFromPath<QLineEdit>(path);
     string actual = toString(lineEdit->text());
     CHECK_EQ("CheckLineEditText " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckTextEditText") {
+    auto [path, expect] =
+      gdvpToTuple<std::string, std::string>(parser);
+
+    auto *textEdit = getObjectFromPath<QTextEdit>(path);
+    string actual = toString(textEdit->toPlainText());
+    CHECK_EQ("CheckTextEditText " << doubleQuote(path));
   }
 
   else if (funcName == "CheckListWidgetCount") {
@@ -756,11 +769,18 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckFileContents") {
-    auto [path, expect] =
+    auto [fname, expect] =
       gdvpToTuple<std::string, std::string>(parser);
 
-    string actual = SMFileUtil().readFileAsString(path);
-    CHECK_EQ("CheckFileContentsSize " << doubleQuote(path));
+    string actual = SMFileUtil().readFileAsString(fname);
+    CHECK_EQ("CheckFileContentsSize " << doubleQuote(fname));
+  }
+
+  else if (funcName == "WriteFileContents") {
+    auto [fname, contents] =
+      gdvpToTuple<std::string, std::string>(parser);
+
+    SMFileUtil().writeFileAsString(fname, contents);
   }
 
   else {

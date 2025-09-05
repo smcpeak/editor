@@ -1,0 +1,50 @@
+// filename-input-refresh.ev
+// Test the "Refresh" button of the file name input dialog.
+
+// Clear the output from a previous attempt.
+RecursivelyRemoveFilePath("out/dir1")
+CheckPathExists("out/dir1" false)
+
+// Open the dialog.
+Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
+
+// Type the directory to create.
+FocusKeySequence("out/dir1")
+
+// Make it.
+Shortcut("window1.filename_input.m_makeDirectoryButton" "Alt+M")
+
+// Check that we made it.
+CheckPathExists("out/dir1" true)
+
+// Go in to the new directory.
+FocusKeySequence("/")
+
+// Wait for the new directory to load.
+WaitUntilCheckQuery("1000" "window1.filename_input" "currentRequestDir" "")
+
+// The file list should now be empty.
+CheckTextEditText("window1.filename_input.m_completionsEdit", "")
+
+// Externally to the editor, create a file in that directory.
+WriteFileContents("out/dir1/some-file.txt", "one\ntwo\n")
+
+// In the dialog, refresh the view.
+Shortcut("window1.filename_input.m_refreshButton" "Alt+R")
+
+// Now we should see it.
+WaitUntilCheckQuery("1000" "window1.filename_input" "currentRequestDir" "")
+CheckTextEditText("window1.filename_input.m_completionsEdit", "some-file.txt\n")
+
+// Open it.
+FocusKeySequence("so")
+FocusKeyPR("Key_Tab" "\t")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor with the file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "some-file.txt")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "one\ntwo\n")
+
+// EOF

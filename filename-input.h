@@ -87,6 +87,7 @@ private:     // data
   // Buttons.
   QPushButton *m_helpButton;
   QPushButton *m_makeDirectoryButton;
+  QPushButton *m_refreshButton;
 
   // ---- vfs access state ----
   // Interface to issue VFS queries.
@@ -195,6 +196,7 @@ public:      // funcs
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
   // EventReplayQueryable methods.
+  virtual std::string eventReplayQuery(std::string const &state) OVERRIDE;
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:
@@ -203,6 +205,7 @@ public Q_SLOTS:
   void on_textEdited(QString const &) NOEXCEPT;
   void on_help() NOEXCEPT;
   void on_makeDirectory() NOEXCEPT;
+  void on_refresh() NOEXCEPT;
 
   // VFS_Connections slots.
   void on_vfsReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;

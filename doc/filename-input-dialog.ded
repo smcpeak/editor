@@ -152,6 +152,18 @@
         "h": 30,
         "w": 110
       }
+    },
+    {
+      "loc": {
+        "x": 230,
+        "y": 435
+      },
+      "name": "Refresh",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 85
+      }
     }
   ],
   "inheritances": [],

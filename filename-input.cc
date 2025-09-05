@@ -36,6 +36,9 @@
 #include <QVBoxLayout>
 
 
+// TODO: Replace "NULL" with "nullptr" everywhere.
+
+
 FilenameInputDialog::History::History()
   : m_dialogSize(800, 800)
 {}
@@ -59,6 +62,7 @@ FilenameInputDialog::FilenameInputDialog(
   m_completionsEdit(NULL),
   m_helpButton(NULL),
   m_makeDirectoryButton(NULL),
+  m_refreshButton(NULL),
   m_vfsConnections(vfsConnections),
   m_hostNameList(),
   m_currentHostName(HostName::asLocal()),
@@ -137,6 +141,12 @@ FilenameInputDialog::FilenameInputDialog(
     SET_QOBJECT_NAME(m_makeDirectoryButton);
     QObject::connect(m_makeDirectoryButton, &QPushButton::clicked,
                      this, &FilenameInputDialog::on_makeDirectory);
+
+    m_refreshButton = new QPushButton("&Refresh");
+    hbox->addWidget(m_refreshButton);
+    SET_QOBJECT_NAME(m_refreshButton);
+    QObject::connect(m_refreshButton, &QPushButton::clicked,
+                     this, &FilenameInputDialog::on_refresh);
 
     hbox->addStretch(1);
 
@@ -585,6 +595,20 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 }
 
 
+std::string FilenameInputDialog::eventReplayQuery(
+  std::string const &state)
+{
+  if (state == "currentRequestDir") {
+    return m_currentRequestDir;
+  }
+
+  else {
+    // Complain about unknown state.
+    return EventReplayQueryable::eventReplayQuery(state);
+  }
+}
+
+
 bool FilenameInputDialog::wantResizeEventsRecorded()
 {
   return true;
@@ -694,9 +718,23 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
     // Success; refresh the directory contents.
     TRACE("FilenameInputDialog",
       "Directory created successfully.");
-    m_cachedDirectory.clear();
-    queryDirectoryIfNeeded();
+    on_refresh();
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void FilenameInputDialog::on_refresh() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE("FilenameInputDialog", "on_refresh");
+
+  m_cachedDirectory.clear();
+  m_completionsEdit->setPlainText("Loading ...");
+
+  queryDirectoryIfNeeded();
 
   GENERIC_CATCH_END
 }
