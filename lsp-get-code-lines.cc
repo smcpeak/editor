@@ -4,7 +4,7 @@
 #include "lsp-get-code-lines.h"                  // this module
 
 #include "td-core.h"                             // TextDocumentCore
-#include "host-file-and-line-opt.h"              // HostFile_OptLineByte
+#include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "lsp-manager.h"                         // LSPManagerDocumentState
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-query-sync.h"                      // readFileSynchronously

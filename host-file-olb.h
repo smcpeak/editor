@@ -1,21 +1,19 @@
-// host-file-and-line-opt.h
+// host-file-olb.h
 // HostFile_OptLineByte class.
 
-// TODO: Rename this file to `host-file-olb.h`.
+#ifndef EDITOR_HOST_FILE_OLB_H
+#define EDITOR_HOST_FILE_OLB_H
 
-#ifndef EDITOR_HOST_FILE_AND_LINE_OPT_H
-#define EDITOR_HOST_FILE_AND_LINE_OPT_H
+#include "host-file-olb-fwd.h"         // fwds for this module
 
-#include "host-file-and-line-opt-fwd.h"          // fwds for this module
+#include "byte-index.h"                // ByteIndex
+#include "host-and-resource-name.h"    // HostAndResourceName
+#include "line-index.h"                // LineIndex
 
-#include "byte-index.h"                          // ByteIndex
-#include "host-and-resource-name.h"              // HostAndResourceName
-#include "line-index.h"                          // LineIndex
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/sm-macros.h"          // DMEMB
 
-#include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
-#include "smbase/sm-macros.h"                    // DMEMB
-
-#include <optional>                              // std::optional
+#include <optional>                    // std::optional
 
 
 // A host and file name, and optional line and byte indices.
@@ -101,4 +99,4 @@ public:      // funcs
 };
 
 
-#endif // EDITOR_HOST_FILE_AND_LINE_OPT_H
+#endif // EDITOR_HOST_FILE_OLB_H

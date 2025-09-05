@@ -6,7 +6,7 @@
 
 // editor
 #include "host-and-resource-name-fwd.h"          // HostAndResourceName [n]
-#include "host-file-and-line-opt-fwd.h"          // HostFile_OptLineByte [n]
+#include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [n]
 
 // smbase
 #include "smbase/std-optional-fwd.h"             // std::optional [n]

@@ -4,7 +4,7 @@
 #include "nearby-file.h"               // this module
 
 #include "host-and-resource-name.h"    // HostAndResourceName
-#include "host-file-and-line-opt.h"    // HostFile_OptLineByte
+#include "host-file-olb.h"             // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
 
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.

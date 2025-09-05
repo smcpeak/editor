@@ -10,15 +10,15 @@
 #ifndef EDITOR_LSP_GET_CODE_LINES_H
 #define EDITOR_LSP_GET_CODE_LINES_H
 
-#include "host-file-and-line-opt-fwd.h"          // HostFile_OptLineByte [n]
-#include "lsp-manager-fwd.h"                     // LSPManagerDocumentState [n]
-#include "vfs-connections-fwd.h"                 // VFS_AbstractConnections [n]
+#include "host-file-olb-fwd.h"         // HostFile_OptLineByte [n]
+#include "lsp-manager-fwd.h"           // LSPManagerDocumentState [n]
+#include "vfs-connections-fwd.h"       // VFS_AbstractConnections [n]
 
-#include "smqtutil/sync-wait-fwd.h"              // SynchronousWaiter [n]
+#include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [n]
 
-#include "smbase/std-optional-fwd.h"             // std::optional [n]
-#include "smbase/std-string-fwd.h"               // std::string [n]
-#include "smbase/std-vector-fwd.h"               // stdfwd::vector [n]
+#include "smbase/std-optional-fwd.h"   // std::optional [n]
+#include "smbase/std-string-fwd.h"     // std::string [n]
+#include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
 
 
 // This is the core of `EditorGlobal::lspGetCodeLines`.  See its

@@ -6,7 +6,7 @@
 
 #include "lsp-get-code-lines.h"                  // module under test
 
-#include "host-file-and-line-opt.h"              // HostFile_OptLineByte
+#include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-number.h"                         // LineNumber
 #include "lsp-manager.h"                         // LSPManagerDocumentState
 

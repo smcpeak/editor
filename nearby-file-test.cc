@@ -4,7 +4,7 @@
 #include "unit-tests.h"                // decl for my entry point
 
 #include "host-and-resource-name.h"    // HostAndResourceName
-#include "host-file-and-line-opt.h"    // HostFile_OptLineByte
+#include "host-file-olb.h"             // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
 #include "nearby-file.h"               // module to test
 

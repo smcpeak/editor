@@ -1,7 +1,7 @@
-// host-file-and-line-opt.cc
-// Code for `host-file-and-line-opt` module.
+// host-file-olb.cc
+// Code for `host-file-olb` module.
 
-#include "host-file-and-line-opt.h"    // this module
+#include "host-file-olb.h"             // this module
 
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue.h"            // gdv::GDValue

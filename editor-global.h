@@ -19,7 +19,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
-#include "host-file-and-line-opt-fwd.h"          // HostFile_OptLineByte [n]
+#include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState

@@ -1,8 +1,8 @@
-// host-file-and-line-opt-test.cc
-// Tests for `host-file-and-line-opt` module.
+// host-file-olb-test.cc
+// Tests for `host-file-olb` module.
 
 #include "unit-tests.h"                // decl for my entry point
-#include "host-file-and-line-opt.h"    // module under test
+#include "host-file-olb.h"             // module under test
 
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE

@@ -12,7 +12,7 @@
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
-#include "host-file-and-line-opt.h"              // HostFile_OptLineByte
+#include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
