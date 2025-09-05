@@ -2787,14 +2787,9 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   GENERIC_CATCH_BEGIN
 
   TRACE1("slot_openOrSwitchToFileAtLineOpt:"
-    " harn=" << toGDValue(hfl.getHarnOpt()) <<
+    " harn=" << toGDValue(hfl.getHarn()) <<
     " line=" << toGDValue(hfl.getLineIndexOpt()) <<
     " byteIndex=" << toGDValue(hfl.getByteIndexOpt()));
-
-  if (!hfl.hasFilename()) {
-    // Ignore empty object.
-    return;
-  }
 
   // Check for fast-open conditions.
   {

@@ -116,8 +116,7 @@ getLineNumberAt(string const &haystack, int i)
 // For example, a first candidate might never consider filenames to
 // have spaces, but the next candidate might allow spaces, etc.
 //
-// Ensures: For every `c` in `return`, `c.hasFilename()` and
-// `!c.getFilename().empty()`.
+// Ensures: For every `c` in `return`, `!c.getFilename().empty()`.
 //
 static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
   string const &haystack,
@@ -200,8 +199,7 @@ static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
 
   xassertPostcondition(vecForAllElements(candidates,
     [](HostFileAndLineOpt const &c) -> bool {
-      return c.hasFilename() &&
-             !c.getFilename().empty();
+      return !c.getFilename().empty();
     }));
 
   return candidates;
@@ -210,18 +208,11 @@ static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
 
 // Return an object with the prefix hostname, a file name created by
 // joining prefix+suffix, and line/col from the suffix.
-//
-// Requires: suffix.hasFilename()
-//
-// Ensures: return.hasFilename()
-//
 static HostFileAndLineOpt joinHFL(
   SMFileUtil &sfu,
   HostAndResourceName const &prefix,
   HostFileAndLineOpt const &suffix)
 {
-  xassertPrecondition(suffix.hasFilename());
-
   string joinedFileName = sfu.joinIfRelativeFilename(
     prefix.resourceName(),
     suffix.getHarn().resourceName());
@@ -291,10 +282,6 @@ std::optional<HostFileAndLineOpt> getNearbyFilename(
     haystack,
     charOffset,
     ret);
-
-  if (ret) {
-    xassertPostcondition(ret->hasFilename());
-  }
 
   return ret;
 }

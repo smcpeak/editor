@@ -581,7 +581,7 @@ public:       // funcs
      change after this call.
 
      Requires: for_all L in locations:
-                 L.hasFilename() && L.hasLineIndex()
+                 L.hasLineIndex()
 
      TODO: Introduce a new type that has that requirement built-in.
 

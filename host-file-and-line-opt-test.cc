@@ -19,7 +19,14 @@ OPEN_ANONYMOUS_NAMESPACE
 void test_gdvn()
 {
   EXPECT_EQ(toGDValue(HostFileAndLineOpt()).asString(),
-    "HostFileAndLineOpt[harn:null lineIndex:null byteIndex:null]");
+    "HostFileAndLineOpt["
+      "harn:HostAndResourceName["
+        "hostName:HostName[sshHostName:\"\"] "
+        "resourceName:\"\""
+        "] "
+      "lineIndex:null "
+      "byteIndex:null"
+    "]");
 
   HostAndResourceName harn(HostName::asSSH("host"), "resName");
   HostFileAndLineOpt hfal(harn, LineIndex(3), ByteIndex(4));

@@ -17,22 +17,15 @@ void HostFileAndLineOpt::selfCheck() const
   }
 
   if (m_byteIndex) {
-    xassert(*m_byteIndex >= 0);
+    xassert(m_lineIndex);
+    m_byteIndex->selfCheck();
   }
-}
-
-
-HostAndResourceName const &HostFileAndLineOpt::getHarn() const
-{
-  xassertPrecondition(hasFilename());
-  return *m_harn;
 }
 
 
 std::string HostFileAndLineOpt::getFilename() const
 {
-  xassertPrecondition(hasFilename());
-  return m_harn->resourceName();
+  return getHarn().resourceName();
 }
 
 

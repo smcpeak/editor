@@ -52,8 +52,6 @@ public:      // methods
 
    If no candidate file name string can be found, or no candidate
    prefixes are provided, this returns `nullopt`.
-
-   Ensures: If `return.has_value()` then `return->hasFilename()`.
 */
 std::optional<HostFileAndLineOpt> getNearbyFilename(
   IHFExists &ihfExists,

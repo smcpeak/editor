@@ -16,21 +16,29 @@
 #include <optional>                              // std::optional
 
 
-// An optional host and file name, and if the name is present, an
-// optional line and byte number.
+// A host and file name, and optional line and byte indices.
+//
+// TODO: Rename to `HostFile_OptLineByte`.
 class HostFileAndLineOpt {
 private:     // data
-  // Optional host and file name.  If this is absent, then the whole
-  // object effectively represents an absent value.
-  std::optional<HostAndResourceName> m_harn;
+  // Host and file name.
+  //
+  // The name can be empty, which is unusual, but in one case is
+  // effectively interpreted as naming the current directory.
+  HostAndResourceName m_harn;
 
   // Optional 0-based line index.
   std::optional<LineIndex> m_lineIndex;
 
   // Optional 0-based byte index.
+  //
+  // Invariant: `m_byteIndex.has_value()` implies
+  // `m_lineIndex.has_value()`.
   std::optional<ByteIndex> m_byteIndex;
 
 public:      // funcs
+  // The default ctor is required to allow this type to be used as a
+  // parameter type for a signal.
   HostFileAndLineOpt()
     : m_harn(),
       m_lineIndex(),
@@ -51,7 +59,7 @@ public:      // funcs
   }
 
   HostFileAndLineOpt(
-    std::optional<HostAndResourceName> harn,
+    HostAndResourceName const &harn,
     std::optional<LineIndex> lineIndex,
     std::optional<ByteIndex> byteIndex)
     : IMEMBFP(harn),
@@ -65,7 +73,7 @@ public:      // funcs
   void selfCheck() const;
 
   // Read-only member access.
-  std::optional<HostAndResourceName> const &getHarnOpt() const
+  HostAndResourceName const &getHarn() const
     { return m_harn; }
   std::optional<LineIndex> const &getLineIndexOpt() const
     { return m_lineIndex; }
@@ -73,12 +81,10 @@ public:      // funcs
     { return m_byteIndex; }
 
   // Tests for member presence.
-  bool hasFilename() const { return m_harn.has_value(); }
   bool hasLineIndex() const { return m_lineIndex.has_value(); }
   bool hasByteIndex() const { return m_byteIndex.has_value(); }
 
-  // Requires: hasFilename()
-  HostAndResourceName const &getHarn() const;
+  // Return: getHarn().resourceName()
   std::string getFilename() const;
 
   // Requires: hasLine()

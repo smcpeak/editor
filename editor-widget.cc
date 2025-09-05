@@ -665,8 +665,6 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
     complain("Did not find any files to open at cursor.");
   }
   else {
-    xassert(hostFileAndLine->hasFilename());
-
     // Choose which widget will navigate.
     EditorWidget *ew = editorGlobal()->selectEditorWidget(this, opts);
 
