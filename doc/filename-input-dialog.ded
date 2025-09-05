@@ -1,0 +1,209 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "Very Light Gray",
+      "loc": {
+        "x": 10,
+        "y": 20
+      },
+      "name": "Filename Input",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        710,
+        450
+      ],
+      "size": {
+        "h": 455,
+        "w": 715
+      }
+    },
+    {
+      "loc": {
+        "x": 20,
+        "y": 50
+      },
+      "name": "Connection:",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 70
+      }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 95,
+        "y": 50
+      },
+      "name": "local",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_DROPDOWN",
+      "size": {
+        "h": 20,
+        "w": 620
+      }
+    },
+    {
+      "loc": {
+        "x": 20,
+        "y": 75
+      },
+      "name": "File status: exists or not, etc.",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_NO_SHAPE",
+      "size": {
+        "h": 20,
+        "w": 190
+      }
+    },
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 20,
+        "y": 125
+      },
+      "name": "List of names",
+      "size": {
+        "h": 300,
+        "w": 675
+      }
+    },
+    {
+      "fillColor": "White",
+      "lineColor": "Gray",
+      "loc": {
+        "x": 20,
+        "y": 95
+      },
+      "name": "D:/cygwin/home/Scott/wrk/editor/app",
+      "nameAlign": "TA_LEFT",
+      "shape": "ES_TEXT_EDIT",
+      "size": {
+        "h": 25,
+        "w": 695
+      }
+    },
+    {
+      "loc": {
+        "x": 20,
+        "y": 435
+      },
+      "name": "Help",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 80
+      }
+    },
+    {
+      "loc": {
+        "x": 635,
+        "y": 435
+      },
+      "name": "Cancel",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 80
+      }
+    },
+    {
+      "loc": {
+        "x": 545,
+        "y": 435
+      },
+      "name": "Ok",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 30,
+        "w": 80
+      }
+    },
+    {
+      "loc": {
+        "x": 695,
+        "y": 125
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 300,
+        "w": 20
+      }
+    }
+  ],
+  "inheritances": [],
+  "namedColors": [
+    {
+      "color": "RGB(0,0,0)",
+      "name": "Black"
+    },
+    {
+      "color": "RGB(192,192,192)",
+      "name": "Gray"
+    },
+    {
+      "color": "RGB(255,255,255)",
+      "name": "White"
+    },
+    {
+      "color": "RGB(224,224,224)",
+      "name": "Light Gray"
+    },
+    {
+      "color": "RGB(236,125,70)",
+      "name": "Orange"
+    },
+    {
+      "color": "RGB(234,236,52)",
+      "name": "Yellow"
+    },
+    {
+      "color": "RGB(76,222,76)",
+      "name": "Green"
+    },
+    {
+      "color": "RGB(135,193,255)",
+      "name": "Sky Blue"
+    },
+    {
+      "color": "RGB(161,140,237)",
+      "name": "Purple"
+    },
+    {
+      "color": "RGB(227,120,236)",
+      "name": "Pink"
+    },
+    {
+      "color": "RGB(248,50,50)",
+      "name": "Red"
+    },
+    {
+      "color": "RGB(240,240,240)",
+      "name": "Very Light Gray"
+    }
+  ],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 483,
+    "w": 738
+  }
+}

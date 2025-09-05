@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Filename Input Dialog Specification</title>
+</head>
+<body>
+
+<p>
+The "Filename Input" dialog allows the user to choose a file to open, or
+the name of a new file to create, or the name to write the current
+document to ("Save as" mode).
+
+<p>
+<img src="filename-input-dialog.ded.png" alt="Dialog wireframe" style="display: block">
+
+
+<h2 id="layout">Layout</h2>
+
+<p>
+The dialog has these controls, laid out from top to bottom:
+
+<ul>
+
+<li><code>connection</code>: Connection dropdown, preceded by the label
+    "Connection:".  This controls which machine is being queried.  There
+    is always one entry for "local", but may be other names if other
+    machines are currently connected.  When the dropdown is changed,
+    <code>filename</code> is reset to the user's home directory on the
+    chosen machine.
+
+<li><code>status</code>: File name status label that shows whether the
+    current file name exists, etc.  See <a href="#file_status">File
+    status</a>.
+
+<li><code>filename</code>: Text line edit control containing the full
+    path to the file to open.  When focus is on this control, pressing
+    Tab completes the name with as much text as possible without
+    removing any choices.
+
+<li><code>list</code>: List of files that are in the directory of the
+    specified file name and begin with a matching prefix string.  This
+    control cannot receive focus, although its scrollbar can be
+    manipulated with the mouse.  Its contents are updated any time
+    <code>connection</code> or <code>filename</code> changes.
+
+<li>Three horizontally adjacent buttons, "Help", "Ok", "Cancel".  Help
+    pops up help text for the dialog.  Ok behaves as described under <a
+    href="#ok_button">Ok button</a>.  Cancel closes the dialog without
+    choosing anything.
+
+</ul>
+
+
+<h2 id="startup">Startup</h2>
+
+<p>
+When the dialog is invoked from the editor, it is passed an initial
+host and directory to show.  These are used to set the initial values
+of <code>connection</code> and <code>filename</code>.
+
+
+<h2 id="asynchronous">Asynchronous operation</h2>
+
+<p>
+The directory information shown comes from another process.  Changing
+the <code>filename</code> or <code>connection</code> may cause a new
+request to be sent, and while that request is outstanding, the
+<code>status</code> and <code>list</code> controls must reflect the lack
+of current information.
+
+<p>
+For <code>status</code>, if we are awaiting information about a
+directory, it shows "Loading directory: $DIR".
+
+<p>
+For <code>list</code>, the box simply shows "Loading ..." in that
+situation.
+
+
+<h2 id="file_status">File status</h2>
+
+<p>
+The file status indicator shows one of the following labels describing
+<code>filename</code> and how it relates to the files on disk (on the
+machine indicated by <code>connection</code>) and in the editor's list
+of open files:
+
+<ul>
+
+<li>If the file name is completely empty:
+
+    <ul>
+
+    <li>"File path is empty."
+
+    </ul>
+
+<li>If the file name matches another open editor document:
+
+    <ul>
+
+    <li>In "Save as" mode: "File already open, CANNOT save as this name:".
+
+    <li>In "Open" mode: "File already open, will switch to:".
+
+    </ul>
+
+<li>Else, the name is partitioned as "$DIR$BASE" where $DIR is the
+    longest prefix of the name that ends with "/" (it might be empty).
+    There are these cases:
+
+    <ul>
+
+    <li>If $DIR is empty or does not exist "Directory does not exist:
+        $DIR".
+
+    <li>Else, if $BASE is empty: "File name is empty.".
+
+    <li>Else, if the name refers to an existing regular file:
+
+        <ul>
+
+        <li>In "Save as" mode: "File exists, will overwrite:"
+
+        <li>In "Open" mode: "File exists:"
+
+        </ul>
+
+    <li>Else, if the name refers to a directory: "Is a directory:".
+
+    <li>Else, if the name does not refer to any file: "File does not
+        exist, will be created:"
+
+    <li>Else, "File kind is $KIND:", where $KIND describes the kind of
+        file it is, such as "pipe".
+
+    </ul>
+
+</ul>
+
+<p>
+The status label updates whenever <code>filename</code> or
+<code>connection</code> changes.
+
+
+<h2 id="ok_button">Ok button</h2>
+
+<p>
+When the Ok button is pressed:
+
+<ul>
+
+<li>If <code>filename</code> is empty, do nothing.
+
+<li>In "Save as" mode, if the name refers to an existing file,
+    prompt to overwrite; if accepted, close the dialog with that choice,
+    otherwise return to the dialog.
+
+<li>In "Open" mode, if the name does not refer to an existing file,
+    prompt to create a new file, and proceed only if that is confirmed.
+
+<li>Otherwise, or upon confirmation as indicated above, close the dialog
+    and return the file name to the caller.
+
+</ul>
+
+<p>
+Note that the logic does not exactly match the file name status
+indicator.  TODO: Perhaps reconcile them.
+
+
+<h2>Keyboard controls</h2>
+
+<ul>
+
+<li>With focus on <code>connection</code>:
+
+    <ul>
+    <li>Up/down: Move choice up and down.
+    <li>F4: Open the dropdown.
+    <li>Enter: Activate Ok button.
+    </ul>
+
+<li>With focus on <code>filename</code>:
+
+    <ul>
+    <li>Normal line edit controls to edit text.
+    <li>Tab: complete the name as much as possible.
+    <li>PgUp/PgDn: Scroll <code>list</code> up or down by one page.
+    <li>Enter: Activate Ok button.
+    </ul>
+
+<li>With focus on a button:
+
+    <ul>
+    <li>Enter or space: Activate the button.
+    </ul>
+
+<li>With any focused control:
+
+    <ul>
+    <li>Alt+C: Focus on <code>connection</code> dropdown.
+    <li>Alt+H: Activate help button.
+    <li>Tab: Move to next control, except if focus is on
+        <code>filename</code>.
+    <li>Shift+Tab: Move to previous control.
+    <li>Esc: Activate cancel button.
+    </ul>
+
+</ul>
+
+
+</body>
+</html>
