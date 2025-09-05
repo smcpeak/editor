@@ -13,11 +13,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "// langua
 
 // Pass it through "cat".
 Shortcut("window1.m_menuBar.editMenu.editApplyCommand" "Alt+A")
-
-// TODO: When I type Alt+N, this is all that gets records.  The shortcut
-// should ideally be recorded and replayed properly.
-SetFocus("ApplyCommandDialog.m_newCommandLineEdit")
-
+Shortcut("ApplyCommandDialog.m_newCommandLabel" "Alt+N")
 CheckFocusWidget("ApplyCommandDialog.m_newCommandLineEdit")
 FocusKeySequence("cat")
 FocusKeyPR("Key_Return" "\r")
