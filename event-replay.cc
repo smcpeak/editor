@@ -143,10 +143,8 @@ EventReplay::~EventReplay()
 }
 
 
-// Throw a string built using 'stringb'.
-//
-// TODO: FIX: This does not capture the exception context info.
-#define xstringb(msg) throw stringb(msg) /* user ; */
+// Throw an `XMessage` exception built using `stringb`.
+#define xmessagesb(msg) xmessage(stringb(msg))
 
 
 void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
@@ -176,11 +174,11 @@ void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
     //TRACE1("changing min size from " << toString(curMinSize) <<
     //       " to " << toString(newMinSize));
     //window->setMinimumSize(newMinSize);
-    xstringb("Cannot resize widget to " << toString(targetSize) <<
-             " because that would require resizing the window to " <<
-             toString(windowSize) <<
-             ", which violates the minimum size of " <<
-             toString(curMinSize) << ".");
+    xmessagesb("Cannot resize widget to " << toString(targetSize) <<
+               " because that would require resizing the window to " <<
+               toString(windowSize) <<
+               ", which violates the minimum size of " <<
+               toString(curMinSize) << ".");
   }
 
   // Now actually change the size.
@@ -192,10 +190,10 @@ void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
 
   // Check that we got the intended size.
   if (widget->size() != targetSize) {
-    xstringb("widget " << qObjectPath(widget) << ": size was " <<
-             toString(currentSize) << ", tried to resize to " <<
-             toString(targetSize) << ", but instead its size became " <<
-             toString(widget->size()));
+    xmessagesb("widget " << qObjectPath(widget) << ": size was " <<
+               toString(currentSize) << ", tried to resize to " <<
+               toString(targetSize) << ", but instead its size became " <<
+               toString(widget->size()));
   }
 }
 
@@ -215,23 +213,24 @@ static QObject *getQObjectFromPath(string const &path)
         for (int i=1; i < elts.count(); i++) {
           QString elt(elts.at(i));
           if (elt.isEmpty()) {
-            xstringb("empty path element " << (i+1));
+            xmessagesb("empty path element " << (i+1));
           }
           object = object->findChild<QObject*>(elt,
                                                Qt::FindDirectChildrenOnly);
           if (!object) {
-            xstringb("could not find child " << doubleQuote(elt) <<
-                     " at path element " << (i+1));
+            xmessagesb("could not find child " << doubleQuote(elt) <<
+                       " at path element " << (i+1));
           }
         }
         return object;
       }
     }
 
-    xstringb("could not find root element " << doubleQuote(elts.at(0)));
+    xmessagesb("could not find root element " << doubleQuote(elts.at(0)));
   }
-  catch (string const &msg) {
-    xstringb("in path " << doubleQuote(path) << ": " << msg);
+  catch (XMessage &msg) {
+    xmessagesb("in path " << doubleQuote(path) << ": " <<
+               msg.getRelayMessage());
   }
 }
 
@@ -245,9 +244,9 @@ T *getObjectFromPath(string const &path)
   xassert(o);
   T *t = qobject_cast<T*>(o);
   if (!t) {
-    xstringb("object at " << doubleQuote(path) <<
-             " has class " << o->metaObject()->className() <<
-             ", not " << T::staticMetaObject.className());
+    xmessagesb("object at " << doubleQuote(path) <<
+               " has class " << o->metaObject()->className() <<
+               ", not " << T::staticMetaObject.className());
   }
   return t;
 }
@@ -269,9 +268,9 @@ T *getObjectFromPathDC(string const &path)
   xassert(o);
   T *t = dynamic_cast<T*>(o);
   if (!t) {
-    xstringb("object at " << doubleQuote(path) <<
-             " has class " << typeid(*o).name() <<
-             ", not " << typeid(T).name());
+    xmessagesb("object at " << doubleQuote(path) <<
+               " has class " << typeid(*o).name() <<
+               ", not " << typeid(T).name());
   }
   return t;
 }
@@ -287,7 +286,7 @@ QWidget *EventReplay::getFocusWidget(QString const &funcName)
 {
   QWidget *focusWidget = QApplication::focusWidget();
   if (!focusWidget) {
-    xstringb("No widget has focus.");
+    xmessagesb("No widget has focus.");
   }
 
   TRACE1(toString(funcName) << ": focusWidget: " <<
@@ -318,9 +317,9 @@ static string getListWidgetContents(QListWidget *listWidget)
 // Complain unless 'numArgs==required'.
 #define CHECK_NUM_ARGS(required)                           \
   if (numArgs != required) {                               \
-    xstringb("incorrect number of arguments to " <<        \
-             funcName << "; " << numArgs <<                \
-             " passed but " << required << " required");   \
+    xmessagesb("incorrect number of arguments to " <<      \
+               funcName << "; " << numArgs <<              \
+               " passed but " << required << " required"); \
   }                                                        \
   else ((void)0) /* user ; */
 
@@ -355,16 +354,16 @@ static string getListWidgetContents(QListWidget *listWidget)
   string arg4 = GET_STRING_ARG(3) /* user ; */
 
 
-#define CHECK_EQ(context)                        \
-  if (actual != expect) {                        \
-    xstringb(context << ": should have been " << \
-      toGDValue(expect) << " but was " <<        \
-      toGDValue(actual) << ".");                 \
+#define CHECK_EQ(context)                          \
+  if (actual != expect) {                          \
+    xmessagesb(context << ": should have been " << \
+      toGDValue(expect) << " but was " <<          \
+      toGDValue(actual) << ".");                   \
   }
 
 #define CHECK_RE_MATCH(context)                             \
   if (!regexSearch(actual, expectRE)) {                     \
-    xstringb(context << ": the actual string " <<           \
+    xmessagesb(context << ": the actual string " <<         \
       doubleQuote(actual) << " did not match the regex " << \
       doubleQuote(expectRE) << ".");                        \
   }
@@ -676,7 +675,7 @@ void EventReplay::replayCall(GDValue const &command)
 
     QImage expectImage;
     if (!expectImage.load(toQString(expectFname), "PNG")) {
-      xstringb("Failed to load screenshot image: " << expectFname);
+      xmessagesb("Failed to load screenshot image: " << expectFname);
     }
 
     EventReplayQueryable *q = getQueryableFromPath(path);
@@ -685,15 +684,15 @@ void EventReplay::replayCall(GDValue const &command)
     if (actualImage != expectImage) {
       QString actualFname("failing-actual-image.png");
       if (!actualImage.save(actualFname, "PNG")) {
-        xstringb("CheckImage: Does not match expected image " <<
-                 expectFname << ".  Additionally, I "
-                 "failed to save the actual image to " <<
-                 actualFname);
+        xmessagesb("CheckImage: Does not match expected image " <<
+                   expectFname << ".  Additionally, I "
+                   "failed to save the actual image to " <<
+                   actualFname);
       }
       else {
-        xstringb("CheckImage: Does not match expected image " <<
-                 expectFname << ".  Actual image "
-                 "saved to " << actualFname);
+        xmessagesb("CheckImage: Does not match expected image " <<
+                   expectFname << ".  Actual image "
+                   "saved to " << actualFname);
       }
     }
   }
@@ -778,7 +777,7 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else {
-    xstringb("unrecognized function: " << doubleQuote(funcName));
+    xmessagesb("unrecognized function: " << doubleQuote(funcName));
   }
 }
 
@@ -948,9 +947,9 @@ void EventReplay::waitUntilCheckQuery(
     long elapsedMS = getMilliseconds() - startMS;
     long remainingMS = durationMS - elapsedMS;
     if (remainingMS <= 0) {
-      xstringb("WaitUntilCheckQuery: Slept for " << elapsedMS <<
-               " ms but value is " << doubleQuote(actual) << ", not " <<
-               doubleQuote(expect));
+      xmessagesb("WaitUntilCheckQuery: Slept for " << elapsedMS <<
+                 " ms but value is " << doubleQuote(actual) << ", not " <<
+                 doubleQuote(expect));
     }
 
     // Wait for something to happen.  This does not busy-wait.
