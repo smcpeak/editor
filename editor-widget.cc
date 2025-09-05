@@ -2790,7 +2790,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
       DocumentName docName = getDocument()->documentName();
       elts.push_back(DiagnosticElement{
         docName.harn(),
-        cursorMC.m_line.toLineNumber(),
+        cursorMC.m_line,
         diag->m_message
       });
 
@@ -2798,7 +2798,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
       for (TDD_Related const &rel : diag->m_related) {
         elts.push_back(DiagnosticElement{
           HostAndResourceName::localFile(rel.m_file),
-          rel.m_line,                  // 1-based.
+          rel.m_line.toLineIndex(),
           rel.m_message
         });
       }
@@ -2839,11 +2839,11 @@ void EditorWidget::on_jumpToDiagnosticLocation(
 
   TRACE1("on_jumpToDiagnosticLocation:"
     " harn=" << element.m_harn <<
-    " line=" << element.m_line);
+    " lineIndex=" << element.m_lineIndex);
 
   goToLocalFileAndLineOpt(
     element.m_harn.resourceName(),
-    element.m_line.toLineIndex(),
+    element.m_lineIndex,
     std::nullopt);
 
   GENERIC_CATCH_END
@@ -2994,7 +2994,7 @@ void EditorWidget::lspHandleLocationReply(
         for (std::size_t i=0; i < locations.size(); ++i) {
           elts.push_back(DiagnosticElement{
             locations.at(i).getHarn(),
-            locations.at(i).getLineIndex().toLineNumber(),
+            locations.at(i).getLineIndex(),
             codeLines->at(i)
           });
         }

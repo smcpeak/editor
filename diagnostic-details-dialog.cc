@@ -4,6 +4,7 @@
 #include "diagnostic-details-dialog.h" // this module
 
 #include "diagnostic-element.h"        // DiagnosticElement
+#include "line-number.h"               // LineNumber
 #include "pixmaps.h"                   // g_editorPixmaps
 
 #include "smqtutil/qstringb.h"         // qstringb
@@ -40,7 +41,7 @@ void DiagnosticDetailsDialog::updateTopPanel()
     DiagnosticElement const &elt = m_diagnostics[row];
     m_locationLabel->setText(qstringb(
       // TODO: Adjust when `m_harn` can be remote.
-      elt.m_harn.resourceName() << ":" << elt.m_line));
+      elt.m_harn.resourceName() << ":" << elt.m_lineIndex.toLineNumber()));
     m_messageText->setPlainText(toQString(elt.m_message));
   }
 }
@@ -80,7 +81,7 @@ void DiagnosticDetailsDialog::repopulateTable()
 
     {
       QTableWidgetItem *item = new QTableWidgetItem(qstringb(
-        base << ":" << elt.m_line));
+        base << ":" << elt.m_lineIndex.toLineNumber()));
       m_table->setItem(row, c++, item);
     }
 

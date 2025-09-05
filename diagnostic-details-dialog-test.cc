@@ -35,7 +35,7 @@ int diagnostic_details_dialog_test(QApplication &app)
       HostAndResourceName::localFile(stringb(
         "/long/path/to/source/directory/number/" << i <<
         "/file" << i << nameExtension << ".cpp")),
-      LineNumber(i * 10 + 1),
+      LineNumber(i * 10 + 1).toLineIndex(),
       (i == 5?
          repeatString("This is a very long diagnostic message. ", 40) :
          stringb("Message for element " << i << "."))
@@ -54,7 +54,7 @@ int diagnostic_details_dialog_test(QApplication &app)
     QMessageBox::information(dlg, "Jump To",
       qstringb("Jump to:\n" <<
                element.m_harn << "\n"
-               "Line: " << element.m_line));
+               "Line: " << element.m_lineIndex.toLineNumber()));
   });
 
   QObject::connect(dlg, &QObject::destroyed, &app, &QApplication::quit);

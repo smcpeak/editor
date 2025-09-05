@@ -44,6 +44,8 @@ public:      // data
 
   // 1-based line number.
   //
+  // TODO: Change to `LineIndex`.
+  //
   // Unlike the primary, the related message locations do not get
   // updated automatically when the file is edited.
   //
