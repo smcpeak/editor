@@ -32,6 +32,8 @@ void test_gdvn()
       "line:3 "
       "byteIndex:4"
     "]");
+
+  EXPECT_EQ(hfal.getFilename(), "resName");
 }
 
 

@@ -79,6 +79,7 @@ public:      // funcs
 
   // Requires: hasFilename()
   HostAndResourceName const &getHarn() const;
+  std::string getFilename() const;
 
   // Requires: hasLine()
   LineNumber getLine() const;

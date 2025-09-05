@@ -29,6 +29,13 @@ HostAndResourceName const &HostFileAndLineOpt::getHarn() const
 }
 
 
+std::string HostFileAndLineOpt::getFilename() const
+{
+  xassertPrecondition(hasFilename());
+  return m_harn->resourceName();
+}
+
+
 LineNumber HostFileAndLineOpt::getLine() const
 {
   xassertPrecondition(hasLine());
