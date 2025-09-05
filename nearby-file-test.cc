@@ -25,15 +25,30 @@ using namespace smbase;
 
 // Check that the "harn" element of `actual` is what we expect.
 static void checkActualHarn(
-  HostFileAndLineOpt const &actual,
+  std::optional<HostFileAndLineOpt> const &actual,
   HostAndResourceName const &expectHARN)
 {
   // The test infrastructure uses empty names to indicate places we
   // expect to get an absent `HostFileAndLineOpt`.
-  EXPECT_EQ(actual.hasFilename(), !expectHARN.empty());
+  EXPECT_EQ(actual.has_value(), !expectHARN.empty());
 
-  if (actual.hasFilename()) {
-    EXPECT_EQ(actual.getHarn(), expectHARN);
+  if (actual) {
+    EXPECT_EQ(actual->getHarn(), expectHARN);
+  }
+}
+
+
+// Check that the `m_line` element of `actual` is what we expect.
+static void checkActualLine(
+  std::optional<HostFileAndLineOpt> const &actual,
+  std::optional<LineNumber> expectLine)
+{
+  if (expectLine) {
+    EXPECT_TRUE(actual.has_value());
+  }
+
+  if (actual.has_value()) {
+    EXPECT_EQ_GDVSER(actual->getLineOpt(), expectLine);
   }
 }
 
@@ -45,10 +60,10 @@ static void expectIGNF(
   int charOffset,
   HostAndResourceName const &expectHARN)
 {
-  HostFileAndLineOpt actual = getNearbyFilename(hfe,
+  std::optional<HostFileAndLineOpt> actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   checkActualHarn(actual, expectHARN);
-  EXPECT_EQ_GDVSER(actual.getLineOpt(), std::nullopt);
+  checkActualLine(actual, std::nullopt);
 }
 
 
@@ -197,7 +212,7 @@ static void expectIGNFL(
   HostAndResourceName const &expectHARN,
   int intExpectLine)     // Hence the final "L" in this function's name.
 {
-  HostFileAndLineOpt actual = getNearbyFilename(hfe,
+  std::optional<HostFileAndLineOpt> actual = getNearbyFilename(hfe,
     candidatePrefixes, haystack, charOffset);
   checkActualHarn(actual, expectHARN);
 
@@ -207,8 +222,7 @@ static void expectIGNFL(
     intExpectLine?
       std::make_optional<LineNumber>(intExpectLine) :
       std::nullopt;
-
-  EXPECT_EQ_GDVSER(actual.getLineOpt(), expectLine);
+  checkActualLine(actual, expectLine);
 }
 
 

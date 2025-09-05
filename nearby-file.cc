@@ -9,17 +9,24 @@
 
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
+#include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector)
 #include "smbase/overflow.h"           // multiplyAddWithOverflowCheck
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // prefixAll, suffixAll, join, doubleQuote
-#include "smbase/trace.h"              // TRACE
-#include "smbase/vector-util.h"        // vecConvertElements, vecMapElements
+#include "smbase/vector-util.h"        // vecConvertElements, vecMapElements, vecForAllElements
+#include "smbase/xassert.h"            // xassertPostcondition
 
+#include <algorithm>                   // std::all_of
 #include <optional>                    // std::{nullopt, optional}
 #include <string>                      // std::string
+#include <type_traits>                 // std::remove_reference_t
 #include <vector>                      // std::vector
 
 using namespace gdv;
+
+
+INIT_TRACE("nearby-file");
 
 
 // Return true if 'c' is a digit for the purpose of the file name
@@ -108,23 +115,23 @@ getLineNumberAt(string const &haystack, int i)
 // For example, a first candidate might never consider filenames to
 // have spaces, but the next candidate might allow spaces, etc.
 //
-// Ensures: For every `c` added to `candidates`, `c.hasFilename()`.
+// Ensures: For every `c` in `return`, `c.hasFilename()` and
+// `!c.getFilename().empty()`.
 //
-void getCandidateSuffixes(
-  std::vector<HostFileAndLineOpt> /*OUT*/ &candidates,
+static std::vector<HostFileAndLineOpt> getCandidateSuffixes(
   string const &haystack,
   int charOffset)
 {
-  candidates.clear();
+  std::vector<HostFileAndLineOpt> candidates;
 
   // I want this to be usable without too much pre-checking, so just
   // silently discard an invalid offset or empty string.
   if (haystack.empty()) {
-    return;
+    return candidates;
   }
   int haystackLength = haystack.length();
   if (!( 0 <= charOffset && charOffset <= haystackLength )) {
-    return;
+    return candidates;
   }
 
   // Treat the EOL location as referring to the last character.  That
@@ -140,20 +147,20 @@ void getCandidateSuffixes(
       charOffset--;
     }
     else {
-      return;
+      return candidates;
     }
   }
 
   // Should not start on a digit.  For example, if the cursor is on the
   // "3" in "foo:3", I do not want to treat "3" as the file name.
   if (isFilenameDigit(haystack[charOffset])) {
-    return;
+    return candidates;
   }
 
   // File names do not usually end with punctuation or dots.
   if (isFilenamePunctuationOrDot(haystack[charOffset]) &&
       charOffset == haystackLength-1) {
-    return;
+    return candidates;
   }
 
   // The cursor should not be on consecutive punctuation if it really is
@@ -161,7 +168,7 @@ void getCandidateSuffixes(
   if (isFilenamePunctuation(haystack[charOffset]) &&
       (charOffset == haystackLength-1 ||
        !isFilenameCore(haystack[charOffset+1]))) {
-    return;
+    return candidates;
   }
 
   // Expand the range to include as many valid chars as possible.
@@ -187,6 +194,14 @@ void getCandidateSuffixes(
   candidates.push_back(HostFileAndLineOpt(
     HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
     line, std::nullopt));
+
+  xassertPostcondition(vecForAllElements(candidates,
+    [](HostFileAndLineOpt const &c) -> bool {
+      return c.hasFilename() &&
+             !c.getFilename().empty();
+    }));
+
+  return candidates;
 }
 
 
@@ -194,6 +209,8 @@ void getCandidateSuffixes(
 // joining prefix+suffix, and line/col from the suffix.
 //
 // Requires: suffix.hasFilename()
+//
+// Ensures: return.hasFilename()
 //
 static HostFileAndLineOpt joinHFL(
   SMFileUtil &sfu,
@@ -216,7 +233,8 @@ static HostFileAndLineOpt joinHFL(
 }
 
 
-static HostFileAndLineOpt innerGetNearbyFilename(
+// Ensures: If `return.has_value()` then `return->hasFilename()`.
+static std::optional<HostFileAndLineOpt> innerGetNearbyFilename(
   IHFExists &ihfExists,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
@@ -225,14 +243,14 @@ static HostFileAndLineOpt innerGetNearbyFilename(
   SMFileUtil sfu;
 
   if (candidatePrefixes.empty()) {
-    return HostFileAndLineOpt();
+    return std::nullopt;
   }
 
   // Extract candidate suffixes, which always have filenames.
-  std::vector<HostFileAndLineOpt> candidateSuffixes;
-  getCandidateSuffixes(candidateSuffixes, haystack, charOffset);
+  std::vector<HostFileAndLineOpt> candidateSuffixes =
+    getCandidateSuffixes(haystack, charOffset);
   if (candidateSuffixes.empty()) {
-    return HostFileAndLineOpt();
+    return std::nullopt;
   }
 
   // Look for a combination that exists on disk.
@@ -253,39 +271,27 @@ static HostFileAndLineOpt innerGetNearbyFilename(
 }
 
 
-static string harnToString(HostAndResourceName const &harn)
-{
-  return harn.toString();
-}
-
-
-HostFileAndLineOpt getNearbyFilename(
+std::optional<HostFileAndLineOpt> getNearbyFilename(
   IHFExists &ihfExists,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset)
 {
-  HostFileAndLineOpt ret = innerGetNearbyFilename(
+  std::optional<HostFileAndLineOpt> ret = innerGetNearbyFilename(
     ihfExists,
     candidatePrefixes,
     haystack,
     charOffset);
 
-  TRACE("nearby-file", "getNearbyFilename:\n"
-    "  candidatePrefixes:\n" <<
-    join(
-      suffixAll(
-        prefixAll(
-          vecMapElements<std::string>(
-            candidatePrefixes,
-            harnToString),             // map function
-          "    "),                     // prefix
-        "\n"),                         // suffix
-      "") <<                           // separator
-    "  haystack: " << doubleQuote(haystack) << "\n"
-    "  charOffset: " << charOffset << "\n"
-    "  ret.harn: " << toGDValue(ret.getHarnOpt()) << "\n"
-    "  ret.line: " << toGDValue(ret.getLineOpt()));
+  TRACE1_GDVN_EXPRS("getNearbyFilename",
+    candidatePrefixes,
+    haystack,
+    charOffset,
+    ret);
+
+  if (ret) {
+    xassertPostcondition(ret->hasFilename());
+  }
 
   return ret;
 }

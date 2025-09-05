@@ -1,0 +1,28 @@
+// inspect-file-no-candidates.ev
+// Use "Inspect file", but there are no candidates.
+
+// Editing the expected file.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Go to an empty line.
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Down" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "3:1")
+
+// Try to inspect the file.
+Shortcut("window1.m_menuBar.fileMenu.fileInspectAtCursor" "Ctrl+I")
+
+// Pops up a dialog saying no files were found.
+CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
+
+// TODO: Check its contents.
+//DumpObjectTree("window1.#5")
+
+// Dismiss it.
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// EOF

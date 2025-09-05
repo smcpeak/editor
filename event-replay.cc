@@ -20,6 +20,7 @@
 
 // smbase
 #include "smbase/c-string-reader.h"    // parseQuotedCString
+#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
 #include "smbase/exc.h"                // smbase::{XBase, XMessage}, EXN_CONTEXT
 #include "smbase/gdvalue-tuple.h"      // gdv::gdvpToTuple
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpTo}
@@ -198,13 +199,13 @@ void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
 }
 
 
-// Get an object from its path from a top-level window, or throw a
-// string if we cannot find it.
+// Get an object from its path from a top-level window, or throw
+// `XMessage` if we cannot find it.
 static QObject *getQObjectFromPath(string const &path)
 {
   QStringList elts = toQString(path).split('.');
   if (elts.isEmpty()) {
-    throw string("empty path");
+    xmessagesb("empty path");
   }
 
   try {
@@ -215,11 +216,27 @@ static QObject *getQObjectFromPath(string const &path)
           if (elt.isEmpty()) {
             xmessagesb("empty path element " << (i+1));
           }
-          object = object->findChild<QObject*>(elt,
-                                               Qt::FindDirectChildrenOnly);
-          if (!object) {
-            xmessagesb("could not find child " << doubleQuote(elt) <<
-                       " at path element " << (i+1));
+
+          if (elt.at(0) == '#') {
+            // This is an index conjured by my `qObjectPath` function.
+            int const index = elt.mid(1).toInt();
+            int const count = object->children().count();
+            if (cc::z_le_lt(index, count)) {
+              object = object->children().at(index);
+            }
+            else {
+              xmessagesb("Invalid child index " << index <<
+                         " for object with " << count <<
+                         "children.");
+            }
+          }
+          else{
+            object = object->findChild<QObject*>(elt,
+                                                 Qt::FindDirectChildrenOnly);
+            if (!object) {
+              xmessagesb("could not find child " << doubleQuote(elt) <<
+                         " at path element " << (i+1));
+            }
           }
         }
         return object;

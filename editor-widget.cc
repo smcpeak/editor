@@ -655,26 +655,23 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   SynchronousWaiter waiter(this);
   VFS_QuerySync querySync(vfsConnections(), waiter);
 
-  HostFileAndLineOpt hostFileAndLine =
+  std::optional<HostFileAndLineOpt> hostFileAndLine =
     getNearbyFilename(querySync, prefixes,
                       lineText, m_editor->cursor().m_column);
 
-  if (!hostFileAndLine.hasFilename()) {
-    if (opts == EditorNavigationOptions::ENO_OTHER_WINDOW) {
-      // Prompting when the file is not found is dodgy behavior already,
-      // but we definitely do not want it in the "other window" case.
-      return;
-    }
-
-    // Prompt with the document directory.
-    hostFileAndLine.setHarn(getDocumentDirectoryHarn());
+  if (!hostFileAndLine) {
+    // TODO: Show the list of candidate prefixes.
+    complain("Did not find any files to open at cursor.");
   }
+  else {
+    xassert(hostFileAndLine->hasFilename());
 
-  // Choose which widget will navigate.
-  EditorWidget *ew = editorGlobal()->selectEditorWidget(this, opts);
+    // Choose which widget will navigate.
+    EditorWidget *ew = editorGlobal()->selectEditorWidget(this, opts);
 
-  // Go to the indicated file and line.
-  ew->doOpenOrSwitchToFileAtLineOpt(hostFileAndLine);
+    // Go to the indicated file and line.
+    ew->doOpenOrSwitchToFileAtLineOpt(*hostFileAndLine);
+  }
 }
 
 
@@ -3669,7 +3666,7 @@ string EditorWidget::eventReplayQuery(string const &state)
   }
   else if (state == "documentFileName") {
     // Strip path info.
-    return SMFileUtil().splitPathBase(m_editor->m_namedDoc->filename());
+    return SMFileUtil().splitPathBase(m_editor->m_namedDoc->resourceName());
   }
   else if (state == "documentText") {
     return m_editor->getTextForLRangeString(m_editor->documentLRange());
