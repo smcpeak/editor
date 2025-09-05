@@ -13,6 +13,7 @@
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
 #include "host-file-and-line-opt.h"              // HostFileAndLineOpt
+#include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
 #include "lsp-manager.h"                         // LSPManager::notify_textDocument_didOpen, etc.
@@ -2798,7 +2799,7 @@ std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
       for (TDD_Related const &rel : diag->m_related) {
         elts.push_back(DiagnosticElement{
           HostAndResourceName::localFile(rel.m_file),
-          rel.m_line.toLineIndex(),
+          rel.m_lineIndex,
           rel.m_message
         });
       }

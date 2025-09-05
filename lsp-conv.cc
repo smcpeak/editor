@@ -38,7 +38,7 @@ TDD_Related convertLSPRelated(
 {
   return TDD_Related(
     lspRelated.m_location.m_uri.getFname(),
-    lspRelated.m_location.m_range.m_start.m_line.toLineNumber(),
+    lspRelated.m_location.m_range.m_start.m_line,
     std::string(lspRelated.m_message) /*move*/);
 }
 

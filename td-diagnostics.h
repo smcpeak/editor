@@ -19,7 +19,6 @@
 #include "byte-index.h"                // ByteIndex
 #include "line-count.h"                // LineCount, PositiveLineCount
 #include "line-index.h"                // LineIndex
-#include "line-number.h"               // LineNumber
 #include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-fwd.h"             // TextDocumentChange [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
@@ -42,22 +41,20 @@ public:      // data
   // Absolute file name.
   std::string m_file;
 
-  // 1-based line number.
-  //
-  // TODO: Change to `LineIndex`.
+  // 0-based line index.
   //
   // Unlike the primary, the related message locations do not get
   // updated automatically when the file is edited.
   //
   // TODO: Maybe design a way that they can be?
-  LineNumber m_line;
+  LineIndex m_lineIndex;
 
   // Relevance of this line to the primary diagnostic.
   std::string m_message;
 
 public:      // methods
   ~TDD_Related();
-  TDD_Related(std::string &&file, LineNumber line, std::string &&message);
+  TDD_Related(std::string &&file, LineIndex lineIndex, std::string &&message);
 
   operator gdv::GDValue() const;
 
