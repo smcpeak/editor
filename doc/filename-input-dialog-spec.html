@@ -44,10 +44,7 @@ The dialog has these controls, laid out from top to bottom:
     manipulated with the mouse.  Its contents are updated any time
     <code>connection</code> or <code>filename</code> changes.
 
-<li>Three horizontally adjacent buttons, "Help", "Ok", "Cancel".  Help
-    pops up help text for the dialog.  Ok behaves as described under <a
-    href="#ok_button">Ok button</a>.  Cancel closes the dialog without
-    choosing anything.
+<li>Horizontally adjacent buttons; see <a href="#buttons">Buttons</a>.
 
 </ul>
 
@@ -144,6 +141,37 @@ The status label updates whenever <code>filename</code> or
 <code>connection</code> changes.
 
 
+<h2 id="buttons">Buttons</h2>
+
+<p>
+Along the bottom edge of the dialog are these buttons:
+
+<dl>
+
+<dt>Help
+
+    <dd>Pops up help text for the dialog.
+
+<dt>Make directory
+
+    <dd>If <code>filename</code> does not currently refer to any file,
+        but the directory portion is valid, then pressing this button
+        will cause a directory to be created with the specified name.
+        <code>list</code> is refreshed accordingly, such that typing
+        a slash into <code>filename</code> will traverse into the newly
+        created directory.
+
+<dt>Ok
+
+    <dd>Behaves as described under <a href="#ok_button">Ok button</a>.
+
+<dt>Cancel
+
+    <dd>Closes the dialog without choosing anything.
+
+</dl>
+
+
 <h2 id="ok_button">Ok button</h2>
 
 <p>
@@ -202,6 +230,7 @@ indicator.  TODO: Perhaps reconcile them.
     <ul>
     <li>Alt+C: Focus on <code>connection</code> dropdown.
     <li>Alt+H: Activate help button.
+    <li>Alt+M: Activate Make directory button.
     <li>Tab: Move to next control, except if focus is on
         <code>filename</code>.
     <li>Shift+Tab: Move to previous control.

@@ -1,0 +1,47 @@
+// filename-input-mkdir.ev
+// Test making a directory from the filename input dialog.
+
+// Clear the output from a previous attempt.
+RecursivelyRemoveFilePath("out/dir1")
+CheckPathExists("out/dir1" false)
+
+// Open the dialog.
+Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
+
+// Type the first directory to create.
+FocusKeySequence("out/dir1")
+
+// Make it.
+Shortcut("window1.filename_input.m_makeDirectoryButton" "Alt+M")
+
+// Check that we made it.
+CheckPathExists("out/dir1" true)
+
+// Make the next part.
+FocusKeySequence("/dir2")
+Shortcut("window1.filename_input.m_makeDirectoryButton" "Alt+M")
+CheckPathExists("out/dir1/dir2" true)
+
+// Type the name of a file to create.
+FocusKeySequence("/file3.txt")
+FocusKeyPR("Key_Return" "\r")
+
+// Confirm.
+CheckFocusWidget("window1.filename_input.createFilePrompt.qt_msgbox_buttonbox.#1")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Type some text into the file.
+FocusKeySequence("In file3.txt.")
+FocusKeyPR("Key_Return" "\r")
+
+// Save it.
+Shortcut("window1.m_menuBar.fileMenu.fileSave" "F2")
+
+// Check that it all worked.
+CheckFileContents("out/dir1/dir2/file3.txt" "In file3.txt.\n")
+
+// EOF

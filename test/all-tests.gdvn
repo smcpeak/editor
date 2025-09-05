@@ -51,6 +51,7 @@
   [ "./editor.exe" "-ev=test/apply-command-stderr-nonzero-exit.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/apply-command-buddy-shortcut.ev" ]
   [ "./editor.exe" "-ev=test/lsp-go-to-decl-tabs.ev" "test/language-test.cc" ]
+  [ "./editor.exe" "-ev=test/filename-input-mkdir.ev" ]
 
   // This test also touches `gets-modified.txt`, so goes last.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]

@@ -53,7 +53,7 @@ void VFS_Message::serialize(Flatten &flat) const
 {
   xassert(flat.reading());
 
-  static_assert(NUM_VFS_MESSAGE_TYPES == 12,
+  static_assert(NUM_VFS_MESSAGE_TYPES == 14,
     "Bump protocol version when number of message types changes.");
 
   // Read message type.
@@ -363,7 +363,7 @@ VFS_DeleteFileReply::~VFS_DeleteFileReply()
 {}
 
 
-// ---------------------- VFS_DeleteFileRequest ------------------------
+// ---------------------- VFS_GetDirEnriesRequest ----------------------
 VFS_GetDirEntriesRequest::VFS_GetDirEntriesRequest()
   : VFS_PathRequest()
 {}
@@ -373,7 +373,7 @@ VFS_GetDirEntriesRequest::~VFS_GetDirEntriesRequest()
 {}
 
 
-// ----------------------- VFS_GetDirEntriesReply -------------------------
+// ---------------------- VFS_GetDirEntriesReply -----------------------
 VFS_GetDirEntriesReply::VFS_GetDirEntriesReply()
   : VFS_PathReply()
 {}
@@ -383,6 +383,7 @@ VFS_GetDirEntriesReply::~VFS_GetDirEntriesReply()
 {}
 
 
+[[maybe_unused]]   // clangd is confused, this is used.
 static void xfer(Flatten &flat, SMFileUtil::DirEntryInfo &info)
 {
   stringXfer(info.m_name, flat);
@@ -400,6 +401,26 @@ void VFS_GetDirEntriesReply::xfer(Flatten &flat)
 
   ::xfer(flat, m_entries);
 }
+
+
+// --------------------- VFS_MakeDirectoryRequest ----------------------
+VFS_MakeDirectoryRequest::VFS_MakeDirectoryRequest()
+  : VFS_PathRequest()
+{}
+
+
+VFS_MakeDirectoryRequest::~VFS_MakeDirectoryRequest()
+{}
+
+
+// ---------------------- VFS_MakeDirectoryReply -----------------------
+VFS_MakeDirectoryReply::VFS_MakeDirectoryReply()
+  : VFS_PathReply()
+{}
+
+
+VFS_MakeDirectoryReply::~VFS_MakeDirectoryReply()
+{}
 
 
 // EOF

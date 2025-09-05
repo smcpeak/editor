@@ -21,6 +21,7 @@ public:      // methods
   VFS_WriteFileReply     writeFile    (VFS_WriteFileRequest     const &req);
   VFS_DeleteFileReply    deleteFile   (VFS_DeleteFileRequest    const &req);
   VFS_GetDirEntriesReply getDirEntries(VFS_GetDirEntriesRequest const &req);
+  VFS_MakeDirectoryReply makeDirectory(VFS_MakeDirectoryRequest const &req);
 };
 
 

@@ -25,6 +25,8 @@ class VFS_PathReply;
   macro(DeleteFileReply)                 \
   macro(GetDirEntriesRequest)            \
   macro(GetDirEntriesReply)              \
+  macro(MakeDirectoryRequest)            \
+  macro(MakeDirectoryReply)              \
   /*nothing*/
 
 #define FORWARD_DECLARE_VFS_CLASS(type) class VFS_##type;

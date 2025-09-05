@@ -130,4 +130,20 @@ VFS_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
 }
 
 
+VFS_MakeDirectoryReply VFS_LocalImpl::makeDirectory(
+  VFS_MakeDirectoryRequest const &req)
+{
+  SMFileUtil sfu;
+
+  VFS_MakeDirectoryReply reply;
+
+  try {
+    sfu.createDirectory(req.m_path);
+  }
+  PATH_REQUEST_CATCH_BLOCK
+
+  return reply;
+}
+
+
 // EOF

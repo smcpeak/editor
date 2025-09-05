@@ -38,8 +38,9 @@
 //    4: Add GetDirEntries{Request,Reply}.
 //    5: Add VFS_PathReply::m_failureReasonCode.
 //    6: Modify set of PortableErrorCodes.
+//    7: Add MakeDirectory{Request,Reply}.
 //
-int32_t const VFS_currentVersion = 6;
+int32_t const VFS_currentVersion = 7;
 
 
 // Possible kinds of VFS messages.
@@ -348,6 +349,34 @@ public:      // methods
   virtual VFS_MessageType messageType() const override
     { return VFS_MT_GetDirEntriesReply; }
   virtual void xfer(Flatten &flat) override;
+};
+
+
+// Request to make a directory.
+//
+// This only creates one level of directory; `m_path` must be of the
+// form "$DIR/$NAME", where $DIR exists and $NAME does not.
+//
+class VFS_MakeDirectoryRequest : public VFS_PathRequest {
+public:      // methods
+  VFS_MakeDirectoryRequest();
+  virtual ~VFS_MakeDirectoryRequest() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_MakeDirectoryRequest; }
+};
+
+
+// Reply to VFS_MakeDirectoryRequest.
+class VFS_MakeDirectoryReply : public VFS_PathReply {
+public:      // methods
+  VFS_MakeDirectoryReply();
+  virtual ~VFS_MakeDirectoryReply() override;
+
+  // VFS_Message methods.
+  virtual VFS_MessageType messageType() const override
+    { return VFS_MT_MakeDirectoryReply; }
 };
 
 

@@ -253,6 +253,10 @@ int innerMain()
       case VFS_MT_GetDirEntriesRequest:
         sendReply(localImpl.getDirEntries(*(message->asGetDirEntriesRequestC())));
         break;
+
+      case VFS_MT_MakeDirectoryRequest:
+        sendReply(localImpl.makeDirectory(*(message->asMakeDirectoryRequestC())));
+        break;
     }
   }
 

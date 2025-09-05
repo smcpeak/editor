@@ -26,30 +26,30 @@ class QPushButton;
 class QTextEdit;
 
 
-// Prompt for a host and file name.
-//
-// The host name choice determines the host that the file name is
-// treated as referring to.
-//
-// I'm trying to develop this into a fairly powerful keyboard-driven
-// interface for selecting a file.  Currently it has:
-//
-//   * Immediate feedback on existence of what has been typed, including
-//     existence, type of entry if so, whether it is already open, and
-//     invalid directory.
-//
-//   * Feedback on possible completions.
-//
-//   * Tab completion of unambiguous fragment.
-//
-// Planned features:
-//
-//   * Optional extension filtering.
-//
-//   * Editing keybindings similar to the main editor window.
-//
-//   * Let me double-click on completion list items with mouse.
-//
+/* Prompt for a host and file name.
+
+   The host name choice determines the host that the file name is
+   treated as referring to.
+
+   I'm trying to develop this into a fairly powerful keyboard-driven
+   interface for selecting a file.  Currently it has:
+
+     * Immediate feedback on existence of what has been typed, including
+       existence, type of entry if so, whether it is already open, and
+       invalid directory.
+
+     * Feedback on possible completions.
+
+     * Tab completion of unambiguous fragment.
+
+   Planned features:
+
+     * Optional extension filtering.
+
+     * Editing keybindings similar to the main editor window.
+
+     * Let me double-click on completion list items with mouse.
+*/
 class FilenameInputDialog : public ModalDialog,
                             public EventReplayQueryable {
   Q_OBJECT
@@ -84,8 +84,9 @@ private:     // data
   // Text display of possible completions.
   QTextEdit *m_completionsEdit;
 
-  // The "help" button.
+  // Buttons.
   QPushButton *m_helpButton;
+  QPushButton *m_makeDirectoryButton;
 
   // ---- vfs access state ----
   // Interface to issue VFS queries.
@@ -171,6 +172,9 @@ private:     // funcs
   // Otherwise return false.
   bool knowFileExistence(bool /*OUT*/ &exists, string const &filename);
 
+  // Return `m_filenameEdit` as a normalized string.
+  std::string getNormalizedFilename() const;
+
 public:      // funcs
   FilenameInputDialog(History *history,
                       VFS_Connections *vfsConnections,
@@ -198,6 +202,7 @@ public Q_SLOTS:
   void on_connectionIndexChanged(int index) NOEXCEPT;
   void on_textEdited(QString const &) NOEXCEPT;
   void on_help() NOEXCEPT;
+  void on_makeDirectory() NOEXCEPT;
 
   // VFS_Connections slots.
   void on_vfsReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;

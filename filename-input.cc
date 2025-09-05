@@ -3,11 +3,15 @@
 
 #include "filename-input.h"            // this module
 
+// editor
+#include "vfs-query-sync.h"            // VFS_QuerySync
+
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // messageBox
 #include "smqtutil/qtutil.h"           // toString(QString)
 #include "smqtutil/sm-line-edit.h"     // SMLineEdit
+#include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
 // smbase
 #include "smbase/save-restore.h"       // SetRestore
@@ -54,6 +58,7 @@ FilenameInputDialog::FilenameInputDialog(
   m_filenameEdit(NULL),
   m_completionsEdit(NULL),
   m_helpButton(NULL),
+  m_makeDirectoryButton(NULL),
   m_vfsConnections(vfsConnections),
   m_hostNameList(),
   m_currentHostName(HostName::asLocal()),
@@ -126,6 +131,12 @@ FilenameInputDialog::FilenameInputDialog(
     SET_QOBJECT_NAME(m_helpButton);
     QObject::connect(m_helpButton, &QPushButton::clicked,
                      this, &FilenameInputDialog::on_help);
+
+    m_makeDirectoryButton = new QPushButton("&Make directory");
+    hbox->addWidget(m_makeDirectoryButton);
+    SET_QOBJECT_NAME(m_makeDirectoryButton);
+    QObject::connect(m_makeDirectoryButton, &QPushButton::clicked,
+                     this, &FilenameInputDialog::on_makeDirectory);
 
     hbox->addStretch(1);
 
@@ -641,6 +652,56 @@ void FilenameInputDialog::on_help() NOEXCEPT
 }
 
 
+void FilenameInputDialog::on_makeDirectory() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  string filename = getNormalizedFilename();
+  if (filename.empty()) {
+    return;
+  }
+
+  // If the file is known to exist, refuse.
+  bool exists;
+  if (knowFileExistence(exists /*OUT*/, filename)) {
+    if (exists) {
+      messageBox(this, "Path exists",
+        qstringb("Path already exists: " << doubleQuote(filename)));
+      return;
+    }
+  }
+
+  TRACE("FilenameInputDialog",
+    "Making directory: " << doubleQuote(filename));
+  SynchronousWaiter waiter(this);
+  VFS_QuerySync querySync(m_vfsConnections, waiter);
+
+  auto req = std::make_unique<VFS_MakeDirectoryRequest>();
+  req->m_path = filename;
+
+  // Synchronous request.
+  auto replyOrError =
+    querySync.issueTypedRequestSynchronously<VFS_MakeDirectoryReply>(
+      m_currentHostName, std::move(req));
+
+  if (std::optional<std::string> errorMsg =
+        getROEErrorMessage(replyOrError)) {
+    TRACE("FilenameInputDialog",
+      "Directory creation error: " << *errorMsg);
+    messageBox(this, "Make directory error", toQString(*errorMsg));
+  }
+  else {
+    // Success; refresh the directory contents.
+    TRACE("FilenameInputDialog",
+      "Directory created successfully.");
+    m_cachedDirectory.clear();
+    queryDirectoryIfNeeded();
+  }
+
+  GENERIC_CATCH_END
+}
+
+
 bool FilenameInputDialog::knowFileExistence(
   bool /*OUT*/ &exists, string const &filename)
 {
@@ -661,20 +722,29 @@ bool FilenameInputDialog::knowFileExistence(
 }
 
 
+std::string FilenameInputDialog::getNormalizedFilename() const
+{
+  string filename = toString(m_filenameEdit->text());
+  if (filename.empty()) {
+    return filename;
+  }
+
+  // Normalize by passing through SMFileName, throwing away any
+  // trailing slashes, and converting back to string.
+  return SMFileName(filename).withTrailingSlash(false).toString();
+}
+
+
 void FilenameInputDialog::accept() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  string filename = toString(m_filenameEdit->text());
+  string filename = getNormalizedFilename();
 
   if (filename.empty()) {
     // Silently ignore Ok press while name is empty.
     return;
   }
-
-  // Normalize by passing through SMFileName, throwing away any
-  // trailing slashes, and converting back to string.
-  filename = SMFileName(filename).withTrailingSlash(false).toString();
 
   // See if the file exists in order to provide extra prompting.
   bool exists;

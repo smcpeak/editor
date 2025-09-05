@@ -26,6 +26,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
+#include "smbase/run-process.h"        // RunProcess
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -47,6 +48,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QStringList>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -727,6 +729,40 @@ void EventReplay::replayCall(GDValue const &command)
     }
   }
 
+  else if (funcName == "RecursivelyRemoveFilePath") {
+    auto [path] =
+      gdvpToTuple<std::string>(parser);
+
+    // For safety, ensure the path is not absolute and has no "..".
+    xassert(!SMFileUtil().isAbsolutePath(path));
+    xassert(!hasSubstring(path, ".."));
+
+    if (!SMFileUtil().pathExists(path)) {
+      // Nothing to do.
+    }
+    else {
+      // I should not need "-f" here, in part because I have confirmed
+      // that the path exists.
+      RunProcess::check_run(std::vector<std::string>{"rm", "-r", path});
+    }
+  }
+
+  else if (funcName == "CheckPathExists") {
+    auto [path, expect] =
+      gdvpToTuple<std::string, bool>(parser);
+
+    bool actual = SMFileUtil().pathExists(path);
+    CHECK_EQ("CheckPathExists " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckFileContents") {
+    auto [path, expect] =
+      gdvpToTuple<std::string, std::string>(parser);
+
+    string actual = SMFileUtil().readFileAsString(path);
+    CHECK_EQ("CheckFileContentsSize " << doubleQuote(path));
+  }
+
   else {
     xstringb("unrecognized function: " << doubleQuote(funcName));
   }
@@ -759,6 +795,14 @@ void EventReplay::replayShortcut(
       buddy->setFocus();
       return;
     }
+  }
+
+  // I think perhaps shortcuts only work directly when the target is a
+  // menu item.  For a button I seem to have to click it myself.
+  if (auto *button = dynamic_cast<QPushButton*>(receiverObject)) {
+    TRACE1("Shortcut receiver is a button: " << button->objectName());
+    button->click();
+    return;
   }
 
   // Normal shortcut replay.
