@@ -6,7 +6,7 @@
 
 #include "lsp-get-code-lines.h"                  // module under test
 
-#include "host-file-olb.h"                       // HostFile_OptLineByte
+#include "host-file-line.h"                      // HostFileLine
 #include "line-number.h"                         // LineNumber
 #include "lsp-manager.h"                         // LSPManagerDocumentState
 
@@ -231,7 +231,7 @@ public:      // data
   };
 
   // Locations to look up.
-  std::vector<HostFile_OptLineByte> locations;
+  std::vector<HostFileLine> locations;
 
   TestSynchronousWaiter waiter;
 
@@ -280,10 +280,9 @@ public:      // methods
   void locAddFileLine(int fileIndex, int lineNumber)
   {
     xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
-    locations.push_back(HostFile_OptLineByte(
+    locations.push_back(HostFileLine(
       HostAndResourceName::localFile(fname[fileIndex]),
-      ln2li(lineNumber),
-      ByteIndex(0)
+      ln2li(lineNumber)
     ));
   }
 
@@ -291,10 +290,9 @@ public:      // methods
   void locAddErrFileLine(int errFileIndex, int lineNumber)
   {
     xassert(cc::z_le_lt(errFileIndex, TABLESIZE(errFname)));
-    locations.push_back(HostFile_OptLineByte(
+    locations.push_back(HostFileLine(
       HostAndResourceName::localFile(errFname[errFileIndex]),
-      ln2li(lineNumber),
-      ByteIndex(0)
+      ln2li(lineNumber)
     ));
   }
 
@@ -514,10 +512,9 @@ public:      // methods
   {
     TEST_CASE("test_nonLocal");
 
-    locations.push_back(HostFile_OptLineByte(
+    locations.push_back(HostFileLine(
       HostAndResourceName(HostName::asSSH("somehost"), "/some/file"),
-      ln2li(3),
-      ByteIndex(0)
+      ln2li(3)
     ));
 
     std::optional<std::vector<std::string>> linesOpt =

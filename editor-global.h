@@ -19,7 +19,7 @@
 #include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
-#include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [n]
+#include "host-file-line-fwd.h"                  // HostFileLine [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
@@ -580,16 +580,11 @@ public:       // funcs
      `m_vfsConnections`, although the expectation is there is no durable
      change after this call.
 
-     Requires: for_all L in locations:
-                 L.hasLineIndex()
-
-     TODO: Introduce a new type that has that requirement built-in.
-
      Ensures: if return then return->size() == locations.size()
   */
   std::optional<std::vector<std::string>> lspGetCodeLines(
     SynchronousWaiter &waiter,
-    std::vector<HostFile_OptLineByte> const &locations);
+    std::vector<HostFileLine> const &locations);
 
   // -------------------------- LSP Per-file ---------------------------
   // True if `ntd` is open w.r.t. the LSP server.

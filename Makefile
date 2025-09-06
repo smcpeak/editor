@@ -209,6 +209,7 @@ EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += hilite.o
 EDITOR_OBJS += history.o
 EDITOR_OBJS += host-and-resource-name.o
+EDITOR_OBJS += host-file-line.o
 EDITOR_OBJS += host-file-olb.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += justify.o

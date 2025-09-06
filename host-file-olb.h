@@ -10,7 +10,7 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "line-index.h"                // LineIndex
 
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/sm-macros.h"          // DMEMB
 
 #include <optional>                    // std::optional

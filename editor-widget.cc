@@ -12,6 +12,7 @@
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
+#include "host-file-line.h"                      // HostFileLine
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
@@ -2974,12 +2975,11 @@ void EditorWidget::lspHandleLocationReply(
     }
     else {
       // Populate a vector of locations to query.
-      std::vector<HostFile_OptLineByte> locations;
+      std::vector<HostFileLine> locations;
       for (LSP_Location const &loc : lseq.m_locations) {
-        locations.push_back(HostFile_OptLineByte(
+        locations.push_back(HostFileLine(
           HostAndResourceName::localFile(loc.getFname()),
-          loc.m_range.m_start.m_line,
-          std::nullopt));
+          loc.m_range.m_start.m_line));
       }
 
       // Query them all.  This does a synchronous wait.

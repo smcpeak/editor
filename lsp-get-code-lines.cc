@@ -4,7 +4,7 @@
 #include "lsp-get-code-lines.h"                  // this module
 
 #include "td-core.h"                             // TextDocumentCore
-#include "host-file-olb.h"                       // HostFile_OptLineByte
+#include "host-file-line.h"                      // HostFileLine
 #include "lsp-manager.h"                         // LSPManagerDocumentState
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-query-sync.h"                      // readFileSynchronously
@@ -63,7 +63,7 @@ INIT_TRACE("lsp-get-code-lines");
 */
 std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
-  std::vector<HostFile_OptLineByte> const &locations,
+  std::vector<HostFileLine> const &locations,
   LSPManagerDocumentState const &lspManager,
   VFS_AbstractConnections &vfsConnections)
 {
@@ -71,9 +71,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
 
   // First, get the set of files that require a VFS query.
   std::set<HostAndResourceName> filesToQuery;
-  for (HostFile_OptLineByte const &hfal : locations) {
-    xassertPrecondition(hfal.hasLineIndex());
-
+  for (HostFileLine const &hfal : locations) {
     HostAndResourceName const &harn = hfal.getHarn();
     if (harn.isLocal() &&
         !lspManager.isFileOpen(harn.resourceName())) {
@@ -143,10 +141,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   // Now go over the original set of locations again, populating the
   // sequence to return.
   std::vector<std::string> ret;
-  for (HostFile_OptLineByte const &hfal : locations) {
-    // Already checked above, but no harm in checking again.
-    xassertPrecondition(hfal.hasLineIndex());
-
+  for (HostFileLine const &hfal : locations) {
     HostAndResourceName const &harn = hfal.getHarn();
     if (!harn.isLocal()) {
       ret.push_back(stringb("<Not local: " << harn << ">"));
