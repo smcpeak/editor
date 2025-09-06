@@ -55,6 +55,7 @@
   [ "./editor.exe" "-ev=test/filename-input-refresh.ev" ]
   [ "./editor.exe" "-ev=test/inspect-file-same-window.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/inspect-file-no-candidates.ev" "test/language-test.cc" ]
+  [ "./editor.exe" "-ev=test/lsp-save-as.ev" "test/language-test.cc" ]
 
   // This test also touches `gets-modified.txt`, so goes last.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]

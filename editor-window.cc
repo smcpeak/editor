@@ -1033,11 +1033,11 @@ void EditorWindow::fileSaveAs() NOEXCEPT
 
   // Directory to start in.  This may change if we prompt the user
   // more than once.
-  string dir = fileDoc->directory();
+  std::string dir = fileDoc->directory();
 
   while (true) {
-    string chosenFilename =
-      this->fileChooseDialog(hostName, dir, true /*saveAs*/);
+    std::string const chosenFilename =
+      this->fileChooseDialog(hostName /*INOUT*/, dir, true /*saveAs*/);
     if (chosenFilename.empty()) {
       return;
     }
@@ -1053,8 +1053,8 @@ void EditorWindow::fileSaveAs() NOEXCEPT
       return;
     }
 
-    DocumentName docName;
-    docName.setFilename(hostName, chosenFilename);
+    DocumentName const docName =
+      DocumentName::fromFilename(hostName, chosenFilename);
 
     if (this->m_editorGlobal->hasFileWithName(docName)) {
       this->complain(stringbc(
@@ -1067,6 +1067,9 @@ void EditorWindow::fileSaveAs() NOEXCEPT
       // Now prompt again.
     }
     else {
+      // We have to close the file with LSP before renaming.
+      editorGlobal()->lspCloseFile(fileDoc);
+
       fileDoc->setDocumentName(docName);
       fileDoc->m_title = m_editorGlobal->uniqueTitleFor(docName);
       writeTheFile();

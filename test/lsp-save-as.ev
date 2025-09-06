@@ -1,0 +1,38 @@
+// lsp-save-as.ev
+// Check interaction of "Save as" and having a file open in LSP.
+
+// Have the right file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Remove the file we will create if one is left over.
+RemoveFileIfExists("test/language-test-copy.cc")
+
+// Activate fake LSP server.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+
+// Open in LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Save as...
+Shortcut("window1.m_menuBar" "Alt+F")
+KeyPress("window1.m_menuBar.fileMenu" "Key_A" "a")
+
+// Enter a new file name.
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
+FocusKeySequence("language-test-copy.cc")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor with new name.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test-copy.cc")
+
+// Clean up.
+RemoveFileIfExists("test/language-test-copy.cc")
+
+// Implicitly, we do a global self-check at the end, which would catch
+// the original problem with this sequence.
+
+// EOF

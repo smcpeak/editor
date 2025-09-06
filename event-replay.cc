@@ -752,6 +752,13 @@ void EventReplay::replayCall(GDValue const &command)
     }
   }
 
+  else if (funcName == "RemoveFileIfExists") {
+    auto [fname] =
+      gdvpToTuple<std::string>(parser);
+
+    SMFileUtil().removeFileIfExists(fname);
+  }
+
   else if (funcName == "RecursivelyRemoveFilePath") {
     auto [path] =
       gdvpToTuple<std::string>(parser);
