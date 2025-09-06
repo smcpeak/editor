@@ -88,6 +88,25 @@ GDValue printNotificationsUntil(JSON_RPC_Client &lsp, int id)
     if (lsp.hasReplyForID(id)) {
       return lsp.takeReplyForID(id);
     }
+    xassert(!lsp.hasErrorForID(id));
+
+    waitForQtEvent();
+  }
+}
+
+
+// Wait for an error response to request `id`, printing any received
+// notifications while waiting.
+JSON_RPC_Error printNotificationsUntilError(JSON_RPC_Client &lsp, int id)
+{
+  while (true) {
+    checkConnectionStatus(lsp);
+    printNotifications(lsp);
+
+    if (lsp.hasErrorForID(id)) {
+      return lsp.takeErrorForID(id);
+    }
+    xassert(!lsp.hasReplyForID(id));
 
     waitForQtEvent();
   }
@@ -108,6 +127,25 @@ void sendRequestPrintReply(
   GDValue resp(printNotificationsUntil(lsp, id));
 
   DIAG("Response: " << resp.asIndentedString());
+}
+
+
+// Send a request for `method` with `params`.  Synchronously print all
+// responses up to and including the reply to that request, which is
+// expected to be an error.
+JSON_RPC_Error sendRequestPrintErrorReply(
+  JSON_RPC_Client &lsp,
+  std::string_view method)
+{
+  int id = lsp.sendRequest(method, GDValue());
+
+  DIAG("Sent request " << method << ", id=" << id << " ...");
+
+  JSON_RPC_Error error(printNotificationsUntilError(lsp, id));
+
+  DIAG("Response: " << error);
+
+  return error;
 }
 
 
@@ -170,6 +208,22 @@ void performLSPInteractionSemiSynchronously(
   sendRequestPrintReply(lsp, "textDocument/declaration", paramsGDV);
   sendRequestPrintReply(lsp, "textDocument/definition", paramsGDV);
   sendRequestPrintReply(lsp, "textDocument/completion", paramsGDV);
+
+  {
+    JSON_RPC_Error error = sendRequestPrintErrorReply(lsp, "$/methodNotFound");
+    EXPECT_EQ_GDV(error, fromGDVN(R"(JSON_RPC_Error[
+      code: -32601
+      message: "The method does not exist (injected error)."
+      data: null
+    ])"));
+
+    error = sendRequestPrintErrorReply(lsp, "$/invalidRequest");
+    EXPECT_EQ_GDV(error, fromGDVN(R"(JSON_RPC_Error[
+      code: -32600,
+      message: "The request is invalid (injected error).",
+      data: ["Some", "data", "object", 1, 2, 3]
+    ])"));
+  }
 
   // Shut down the protocol.
   sendRequestPrintReply(lsp, "shutdown", GDVMap{});

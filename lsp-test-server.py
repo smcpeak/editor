@@ -980,6 +980,15 @@ def send_reply(msg_id: Optional[int], result: Any) -> None:
     send_message({"jsonrpc": "2.0", "id": msg_id, "result": result})
 
 
+def send_error(msg_id: Optional[int], error: Any) -> None:
+  """Send one LSP error."""
+
+  if msg_id is None:
+    complain("Missing message ID in request.")
+  else:
+    send_message({"jsonrpc": "2.0", "id": msg_id, "error": error})
+
+
 def apply_text_edits(old_text: str, changes: List[Dict[str, Any]]) -> str:
   """
   Apply a list of LSP TextDocumentContentChangeEvent edits to the old text.
@@ -1156,6 +1165,19 @@ def main() -> None:
           "uri": uri,
           "text": contents,
           "version": version
+        })
+
+      elif method == "$/methodNotFound":
+        send_error(msg_id, {
+          "code": -32601,
+          "message": "The method does not exist (injected error)."
+        })
+
+      elif method == "$/invalidRequest":
+        send_error(msg_id, {
+          "code": -32600,
+          "message": "The request is invalid (injected error).",
+          "data": ["Some", "data", "object", 1, 2, 3]
         })
 
       elif (method == declMethod or

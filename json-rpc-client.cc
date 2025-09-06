@@ -11,6 +11,7 @@
 #include "smbase/exc.h"                // smbase::xformat
 #include "smbase/gdvalue-json.h"       // gdv::{gdvToJSON, jsonToGDV}
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue-parser-ops.h" // gdv::gdvpOptTo
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/iter-and-end.h"       // smbase::ConstIterAndEnd
 #include "smbase/list-util.h"          // smbase::listMoveFront
@@ -39,6 +40,117 @@ using namespace smbase;
 INIT_TRACE("json-rpc-client");
 
 
+// -------------------------- JSON_RPC_Error ---------------------------
+// ---- create-tuple-class: definitions for JSON_RPC_Error
+/*AUTO_CTC*/ JSON_RPC_Error::JSON_RPC_Error(
+/*AUTO_CTC*/   int code,
+/*AUTO_CTC*/   std::string const &message,
+/*AUTO_CTC*/   gdv::GDValue const &data)
+/*AUTO_CTC*/   : IMEMBFP(code),
+/*AUTO_CTC*/     IMEMBFP(message),
+/*AUTO_CTC*/     IMEMBFP(data)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ JSON_RPC_Error::JSON_RPC_Error(
+/*AUTO_CTC*/   int code,
+/*AUTO_CTC*/   std::string &&message,
+/*AUTO_CTC*/   gdv::GDValue &&data)
+/*AUTO_CTC*/   : IMEMBMFP(code),
+/*AUTO_CTC*/     IMEMBMFP(message),
+/*AUTO_CTC*/     IMEMBMFP(data)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ JSON_RPC_Error::JSON_RPC_Error(JSON_RPC_Error const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_code),
+/*AUTO_CTC*/     DMEMB(m_message),
+/*AUTO_CTC*/     DMEMB(m_data)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ JSON_RPC_Error::JSON_RPC_Error(JSON_RPC_Error &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_code),
+/*AUTO_CTC*/     MDMEMB(m_message),
+/*AUTO_CTC*/     MDMEMB(m_data)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ JSON_RPC_Error &JSON_RPC_Error::operator=(JSON_RPC_Error const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_code);
+/*AUTO_CTC*/     CMEMB(m_message);
+/*AUTO_CTC*/     CMEMB(m_data);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ JSON_RPC_Error &JSON_RPC_Error::operator=(JSON_RPC_Error &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_code);
+/*AUTO_CTC*/     MCMEMB(m_message);
+/*AUTO_CTC*/     MCMEMB(m_data);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ std::string JSON_RPC_Error::toString() const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   std::ostringstream oss;
+/*AUTO_CTC*/   write(oss);
+/*AUTO_CTC*/   return oss.str();
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ void JSON_RPC_Error::write(std::ostream &os) const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   os << "{";
+/*AUTO_CTC*/   WRITE_MEMBER(m_code);
+/*AUTO_CTC*/   WRITE_MEMBER(m_message);
+/*AUTO_CTC*/   WRITE_MEMBER(m_data);
+/*AUTO_CTC*/   os << " }";
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ std::ostream &operator<<(std::ostream &os, JSON_RPC_Error const &obj)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   obj.write(os);
+/*AUTO_CTC*/   return os;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ JSON_RPC_Error::operator gdv::GDValue() const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   using namespace gdv;
+/*AUTO_CTC*/   GDValue m(GDVK_TAGGED_ORDERED_MAP, "JSON_RPC_Error"_sym);
+/*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_code);
+/*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_message);
+/*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_data);
+/*AUTO_CTC*/   return m;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+JSON_RPC_Error::JSON_RPC_Error()
+  : m_code(),
+    m_message(),
+    m_data()
+{}
+
+
+void JSON_RPC_Error::setFromProtocol(gdv::GDValueParser const &p)
+{
+  GDVP_SET_MEMBER_STR(m_code);
+  GDVP_SET_MEMBER_STR(m_message);
+  GDVP_SET_OPT_MEMBER_STR(m_data);
+}
+
+
+/*static*/ JSON_RPC_Error JSON_RPC_Error::fromProtocol(
+  gdv::GDValueParser const &p)
+{
+  JSON_RPC_Error obj;
+  obj.setFromProtocol(p);
+  return obj;
+}
+
+
+// -------------------------- JSON_RPC_Client --------------------------
 /*static*/ char const *JSON_RPC_Client::toString(MessageParseResult res)
 {
   RETURN_ENUMERATION_STRING_OR(
@@ -247,26 +359,35 @@ auto JSON_RPC_Client::innerProcessOutputData() -> MessageParseResult
     if (id < 0) {
       gdvId.throwError(stringb("ID is negative: " << id));
     }
-
-    // It must have a "result" field.  This call will throw if not.
-    msg.mapGetValueAt("result");
-
-    // Get the contained result.
-    GDValue &result = msgValue.mapGetValueAt("result");
-
-    // We are done with the parsers, and about to move `msgValue`.
-    gdvId.clearParserPointers();
-    msg.clearParserPointers();
-
     TRACE1("received reply with ID " << id << ": " <<
            msgValue.asIndentedString());
 
     setRemoveExisting(m_outstandingRequests, id);
 
-    // Move just the `result` portion.
-    mapInsertUnique(m_pendingReplies, id, std::move(result));
+    // Error reply?
+    if (msg.mapContains("error")) {
+      mapInsertUniqueMove(m_pendingErrors, id,
+        JSON_RPC_Error::fromProtocol(msg.mapGetValueAt("error")));
 
-    Q_EMIT signal_hasReplyForID(id);
+      Q_EMIT signal_hasErrorForID(id);
+    }
+
+    else {
+      // It must have a "result" field.  This call will throw if not.
+      msg.mapGetValueAt("result");
+
+      // Get the contained result.
+      GDValue &result = msgValue.mapGetValueAt("result");
+
+      // We are done with the parsers, and about to move `msgValue`.
+      gdvId.clearParserPointers();
+      msg.clearParserPointers();
+
+      // Move just the `result` portion.
+      mapInsertUnique(m_pendingReplies, id, std::move(result));
+
+      Q_EMIT signal_hasReplyForID(id);
+    }
   }
 
   else {
@@ -389,12 +510,14 @@ void JSON_RPC_Client::selfCheck() const
 {
   xassert(m_nextRequestID > 0);
 
-  std::set<int> pendingIDs = mapKeySet(m_pendingReplies);
+  std::set<int> pendingReplyIDs = mapKeySet(m_pendingReplies);
+  std::set<int> pendingErrorIDs = mapKeySet(m_pendingErrors);
 
-  // The three ID sets should all be mutually disjoint.
+  // The ID sets should all be mutually disjoint.
   ConstIterAndEnd<std::set<int>> iterAndEnds[] = {
     constIterAndEnd(m_outstandingRequests),
-    constIterAndEnd(pendingIDs),
+    constIterAndEnd(pendingReplyIDs),
+    constIterAndEnd(pendingErrorIDs),
     constIterAndEnd(m_canceledRequests),
   };
   if (!setsAreDisjoint(Span(iterAndEnds))) {
@@ -408,9 +531,11 @@ void JSON_RPC_Client::selfCheck() const
 
     static char const * const names[] = {
       "m_outstandingRequests",
-      "pendingIDs",
+      "pendingReplyIDs",
+      "pendingErrorIDs",
       "m_canceledRequests",
     };
+    static_assert(TABLESIZE(iterAndEnds) == TABLESIZE(names));
 
     xassert(cc::z_le_lt(ai, TABLESIZE(names)));
     xassert(cc::z_le_lt(bi, TABLESIZE(names)));
@@ -483,15 +608,15 @@ int JSON_RPC_Client::sendRequest(
 }
 
 
-bool JSON_RPC_Client::hasReplyForID(int id) const
-{
-  return contains(m_pendingReplies, id);
-}
-
-
 std::set<int> JSON_RPC_Client::getOutstandingRequestIDs() const
 {
   return m_outstandingRequests;
+}
+
+
+bool JSON_RPC_Client::hasReplyForID(int id) const
+{
+  return contains(m_pendingReplies, id);
 }
 
 
@@ -503,9 +628,29 @@ std::set<int> JSON_RPC_Client::getPendingReplyIDs() const
 
 GDValue JSON_RPC_Client::takeReplyForID(int id)
 {
-  xassert(hasReplyForID(id));
+  xassertPrecondition(hasReplyForID(id));
 
   return mapMoveValueAt(m_pendingReplies, id);
+}
+
+
+bool JSON_RPC_Client::hasErrorForID(int id) const
+{
+  return contains(m_pendingErrors, id);
+}
+
+
+std::set<int> JSON_RPC_Client::getPendingErrorIDs() const
+{
+  return mapKeySet(m_pendingErrors);
+}
+
+
+JSON_RPC_Error JSON_RPC_Client::takeErrorForID(int id)
+{
+  xassertPrecondition(hasErrorForID(id));
+
+  return mapMoveValueAt(m_pendingErrors, id);
 }
 
 

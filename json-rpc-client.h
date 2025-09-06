@@ -7,15 +7,16 @@
 
 #include "json-rpc-client-fwd.h"       // fwds for this module
 
-#include "command-runner-fwd.h"        // CommandRunner
+#include "command-runner-fwd.h"        // CommandRunner [n]
 
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // NULLABLE
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 
 #include <QObject>
 
-#include <iosfwd>                      // std::ostream
+#include <iosfwd>                      // std::ostream [n]
 #include <list>                        // std::list
 #include <map>                         // std::map
 #include <optional>                    // std::optional
@@ -23,6 +24,44 @@
 #include <string>                      // std::string
 #include <string_view>                 // std::string_view
 #include <vector>                      // std::vector
+
+
+// Error object from some reply.
+class JSON_RPC_Error {
+public:      // data
+  // Numeric error code.
+  int m_code;
+
+  // Human-readable description.  The spec says this should be "a
+  // concise single sentence".
+  std::string m_message;
+
+  // Additional data, if any.
+  gdv::GDValue m_data;
+
+public:      // methods
+  // ---- create-tuple-class: declarations for JSON_RPC_Error +move +write +gdvWrite
+  /*AUTO_CTC*/ explicit JSON_RPC_Error(int code, std::string const &message, gdv::GDValue const &data);
+  /*AUTO_CTC*/ explicit JSON_RPC_Error(int code, std::string &&message, gdv::GDValue &&data);
+  /*AUTO_CTC*/ JSON_RPC_Error(JSON_RPC_Error const &obj) noexcept;
+  /*AUTO_CTC*/ JSON_RPC_Error(JSON_RPC_Error &&obj) noexcept;
+  /*AUTO_CTC*/ JSON_RPC_Error &operator=(JSON_RPC_Error const &obj) noexcept;
+  /*AUTO_CTC*/ JSON_RPC_Error &operator=(JSON_RPC_Error &&obj) noexcept;
+  /*AUTO_CTC*/ // For +write:
+  /*AUTO_CTC*/ std::string toString() const;
+  /*AUTO_CTC*/ void write(std::ostream &os) const;
+  /*AUTO_CTC*/ friend std::ostream &operator<<(std::ostream &os, JSON_RPC_Error const &obj);
+  /*AUTO_CTC*/ // For +gdvWrite:
+  /*AUTO_CTC*/ operator gdv::GDValue() const;
+
+  JSON_RPC_Error();
+
+  // create-tuple-class "+gdvRead" would make a method that parses what
+  // `operator GDValue()` produces, but that is different from how these
+  // are represented in the protocol.
+  void setFromProtocol(gdv::GDValueParser const &p);
+  static JSON_RPC_Error fromProtocol(gdv::GDValueParser const &p);
+};
 
 
 // Manage communication with a child process that is a JSON-RPC server
@@ -81,17 +120,23 @@ private:     // data
 
   // Map from ID to received reply that has not yet been taken by the
   // client.
-  //
-  // Invariant: The key set of this map is disjoint with
-  // `m_outstandingRequests`.
   std::map<int, gdv::GDValue> m_pendingReplies;
+
+  // Map from ID to received error that has not yet been taken by the
+  // client.
+  std::map<int, JSON_RPC_Error> m_pendingErrors;
 
   // Set of IDs of requests that have been canceled, but for which we
   // have not seen the reply yet.
-  //
-  // Invariant: This set is disjoint with both `m_outstandingRequests`
-  // and the key set of `m_pendingReplies`.
   std::set<int> m_canceledRequests;
+
+  /* Invariant: The following sets are all mutually disjoint:
+
+       - m_outstandingRequests
+       - mapKeySet(m_pendingReplies)
+       - mapKeySet(m_pendingErrors)
+       - m_canceledRequests
+  */
 
   // Sequence of received notifications, in chronological order, oldest
   // first, that have not been taken by the client.
@@ -203,12 +248,12 @@ public:      // methods
     std::string_view method,
     gdv::GDValue const &params);
 
-  // True if we have received a reply for request `id`.
-  bool hasReplyForID(int id) const;
-
   // Return the set of IDs of requests that have been sent to the server
   // but for which no reply has been received.
   std::set<int> getOutstandingRequestIDs() const;
+
+  // True if we have received a reply for request `id`.
+  bool hasReplyForID(int id) const;
 
   // Return the set of IDs of replies that have been received but not
   // yet taken from this object.
@@ -218,6 +263,18 @@ public:      // methods
   //
   // This returns the value of the "result" field of the entire reply.
   gdv::GDValue takeReplyForID(int id);
+
+  // True if we have received an error for request `id`.
+  bool hasErrorForID(int id) const;
+
+  // Return the set of IDs of errors that have been received but not yet
+  // taken.
+  std::set<int> getPendingErrorIDs() const;
+
+  // Remove and return the error for `id`.
+  //
+  // Requires: hasErrorForID(id)
+  JSON_RPC_Error takeErrorForID(int id);
 
   // If the reply for `id` is pending, discard it.  If not, arrange to
   // discard it when it arrives.
@@ -248,6 +305,9 @@ Q_SIGNALS:
 
   // Emitted when `hasReplyForID(id)` becomes true.
   void signal_hasReplyForID(int id);
+
+  // Emitted when `hasErrorForID(id)` becomes true.
+  void signal_hasErrorForID(int id);
 
   // Emitted when `hasProtocolError()` becomes true.
   void signal_hasProtocolError();
