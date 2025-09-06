@@ -618,14 +618,16 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
     // The error case should have been handled above.
     xassert(rfr->m_success);
 
-    // Have widgets ignore the notifications arising from the refresh
-    // so their cursor position is not affected.
-    SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
-      true);
+    {
+      // Have widgets ignore the notifications arising from the refresh
+      // so their cursor position is not affected.
+      SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+        true);
 
-    doc->replaceFileAndStats(rfr->m_contents,
-                             rfr->m_fileModificationTime,
-                             rfr->m_readOnly);
+      doc->replaceFileAndStats(rfr->m_contents,
+                               rfr->m_fileModificationTime,
+                               rfr->m_readOnly);
+    }
 
     // Among other things, we want to let the LSP status indicator
     // update itself to show that the file contents have changed since
