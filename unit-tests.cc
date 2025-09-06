@@ -144,7 +144,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(command_runner);            // deps: (none)
 
   RUN_TEST(lsp_manager);               // deps: command-runner, line-index, json-rpc-client, lsp-conv, lsp-data, lsp-symbol-request-kind, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
-  RUN_TEST(lsp_client);                // deps: command-runner, uri-util
+  RUN_TEST(json_rpc_client);           // deps: command-runner, uri-util
 
   #undef RUN_TEST
 

@@ -732,7 +732,7 @@ void runTests(
 CLOSE_ANONYMOUS_NAMESPACE
 
 
-void test_lsp_client(CmdlineArgsSpan args)
+void test_json_rpc_client(CmdlineArgsSpan args)
 {
   LSPTestRequestParams params =
     LSPTestRequestParams::getFromCmdLine(args);
