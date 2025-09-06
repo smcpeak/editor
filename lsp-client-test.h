@@ -1,5 +1,5 @@
 // lsp-client-test.h
-// `LSPClientTester` class.
+// `JSON_RPC_ClientTester` class.
 
 // This has to be in its own file (rather than in `lsp-client-test.cc`)
 // in order to be able to run `moc` on it, which is in turn necessary
@@ -8,7 +8,7 @@
 #ifndef EDITOR_LSP_CLIENT_TEST_H
 #define EDITOR_LSP_CLIENT_TEST_H
 
-#include "lsp-client-fwd.h"                      // LSPClient
+#include "lsp-client-fwd.h"                      // JSON_RPC_Client
 #include "lsp-test-request-params.h"             // LSPTestRequestParams
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
@@ -21,13 +21,13 @@
 #include <string>                                // std::string
 
 
-// Class to receive signals from `LSPClient`.
-class LSPClientTester : public QObject {
+// Class to receive signals from `JSON_RPC_Client`.
+class JSON_RPC_ClientTester : public QObject {
   Q_OBJECT;
 
 public:      // data
   // Client interface we're connected to.
-  LSPClient &m_lsp;
+  JSON_RPC_Client &m_lsp;
 
   // Request details derived from the command line.
   LSPTestRequestParams m_params;
@@ -43,10 +43,10 @@ public:      // data
   std::optional<std::string> m_failureMsg;
 
 public:      // methods
-  ~LSPClientTester();
+  ~JSON_RPC_ClientTester();
 
-  LSPClientTester(
-    LSPClient &lsp,
+  JSON_RPC_ClientTester(
+    JSON_RPC_Client &lsp,
     LSPTestRequestParams const &params);
 
   // Send a request and check that its assigned ID is as expected.

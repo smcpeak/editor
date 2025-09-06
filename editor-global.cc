@@ -18,7 +18,7 @@
 #include "event-replay.h"                        // EventReplay
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "line-index.h"                          // LineIndex
-#include "lsp-client.h"                          // LSPClient
+#include "lsp-client.h"                          // JSON_RPC_Client
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-get-code-lines.h"                  // lspGetCodeLinesFunction

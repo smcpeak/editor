@@ -7,7 +7,7 @@
 #include "line-index.h"                          // LineIndex
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
-#include "lsp-client.h"                          // LSPClient
+#include "lsp-client.h"                          // JSON_RPC_Client
 #include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
 #include "td-core.h"                             // TextDocumentCore
 #include "uri-util.h"                            // makeFileURI, getFileURIPath
@@ -558,17 +558,21 @@ std::optional<std::string> LSPManager::startServer()
 
 
   // ---- Start the LSP protocol communicator ----
-  m_lsp.reset(new LSPClient(*m_commandRunner, m_protocolDiagnosticLog));
+  m_lsp.reset(new JSON_RPC_Client(*m_commandRunner, m_protocolDiagnosticLog));
 
   // Connect the signals.
-  QObject::connect(m_lsp.get(), &LSPClient::signal_hasPendingNotifications,
-                   this,           &LSPManager::on_hasPendingNotifications);
-  QObject::connect(m_lsp.get(), &LSPClient::signal_hasReplyForID,
-                   this,           &LSPManager::on_hasReplyForID);
-  QObject::connect(m_lsp.get(), &LSPClient::signal_hasProtocolError,
-                   this,           &LSPManager::on_hasProtocolError);
-  QObject::connect(m_lsp.get(), &LSPClient::signal_childProcessTerminated,
-                   this,           &LSPManager::on_childProcessTerminated);
+  QObject::connect(
+    m_lsp.get(), &JSON_RPC_Client::signal_hasPendingNotifications,
+    this,                 &LSPManager::on_hasPendingNotifications);
+  QObject::connect(
+    m_lsp.get(), &JSON_RPC_Client::signal_hasReplyForID,
+    this,                 &LSPManager::on_hasReplyForID);
+  QObject::connect(
+    m_lsp.get(), &JSON_RPC_Client::signal_hasProtocolError,
+    this,                 &LSPManager::on_hasProtocolError);
+  QObject::connect(
+    m_lsp.get(), &JSON_RPC_Client::signal_childProcessTerminated,
+    this,                 &LSPManager::on_childProcessTerminated);
 
   QObject::connect(
     m_commandRunner.get(), &CommandRunner::signal_errorDataReady,

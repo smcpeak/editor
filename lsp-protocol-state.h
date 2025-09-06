@@ -42,8 +42,8 @@ enum LSPProtocolState {
   // Any of the above states except `LSP_PS_MANAGER_INACTIVE` can
   // transition to the error state.
 
-  // `LSPClient` detected a protocol error.  We can't do anything more
-  // with the server process.
+  // `JSON_RPC_Client` detected a protocol error.  We can't do anything
+  // more with the server process.
   LSP_PS_PROTOCOL_ERROR,
 
   // ---- Broken states ----
@@ -53,7 +53,7 @@ enum LSPProtocolState {
   // that emits `signal_changedProtocolState` for them since a
   // transition into these states is never expected.
 
-  // The `LSPClient` is missing.  This is a broken state.
+  // The `JSON_RPC_Client` is missing.  This is a broken state.
   LSP_PS_PROTOCOL_OBJECT_MISSING,
 
   // Despite the `CommandRunner` existing, it reports the server process

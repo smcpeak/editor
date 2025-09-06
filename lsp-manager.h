@@ -1,5 +1,5 @@
 // lsp-manager.h
-// `LSPManager` class.
+// `LSPManager`, which speaks the Language Server Protocol.
 
 #ifndef EDITOR_LSP_MANAGER_H
 #define EDITOR_LSP_MANAGER_H
@@ -8,7 +8,7 @@
 
 #include "command-runner-fwd.h"                  // CommandRunner [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
-#include "lsp-client-fwd.h"                      // LSPClient [n]
+#include "lsp-client-fwd.h"                      // JSON_RPC_Client [n]
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
@@ -160,15 +160,6 @@ public:      // methods
 
 // Act as the central interface between the editor and the LSP server.
 //
-// This is a higher-level wrapper than `LSPClient`.  `LSPClient`
-// concerns itself with sending messages and receiving replies and
-// notifications, really just at the JSON-RPC level.  This class
-// packages those operations into bigger pieces, and tracks protocol
-// state related to document analysis and LSP itself.
-//
-// But it is also different in that it owns the `CommandRunner` that
-// manages the child process, whereas `LSPClient` does not.
-//
 // The state transitions for the LSPManager as a whole, and for each of
 // the files individually, are summarized in the diagram
 // doc/lsp-state-diagram.ded.png .
@@ -194,8 +185,8 @@ private:     // data
   // has been started, and returns to null if it is stopped.
   std::unique_ptr<CommandRunner> m_commandRunner;
 
-  // Protocol communicator.  null iff `m_commandRunner` is.
-  std::unique_ptr<LSPClient> m_lsp;
+  // JSON-RPC protocol communicator.  null iff `m_commandRunner` is.
+  std::unique_ptr<JSON_RPC_Client> m_lsp;
 
   // File system queries, etc.
   SMFileUtil m_sfu;
@@ -244,7 +235,7 @@ private:     // methods
     std::unique_ptr<LSP_PublishDiagnosticsParams> diags);
 
 private Q_SLOTS:
-  // Slots to respond to similarly-named `LSPClient` signals.
+  // Slots to respond to similarly-named `JSON_RPC_Client` signals.
   void on_hasPendingNotifications() NOEXCEPT;
   void on_hasReplyForID(int id) NOEXCEPT;
   void on_hasProtocolError() NOEXCEPT;

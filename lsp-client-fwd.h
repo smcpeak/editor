@@ -4,6 +4,6 @@
 #ifndef EDITOR_LSP_CLIENT_FWD_H
 #define EDITOR_LSP_CLIENT_FWD_H
 
-class LSPClient;
+class JSON_RPC_Client;
 
 #endif // EDITOR_LSP_CLIENT_FWD_H

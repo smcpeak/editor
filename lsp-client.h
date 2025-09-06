@@ -1,5 +1,8 @@
 // lsp-client.h
-// Client for the Language Server Protocol.
+// Client for JSON-RPC 2.0, which is the base layer for Language Server
+// Protocol.
+
+// TODO: Rename this module to `json-rpc-client`.
 
 #ifndef EDITOR_LSP_CLIENT_H
 #define EDITOR_LSP_CLIENT_H
@@ -24,13 +27,9 @@
 #include <vector>                      // std::vector
 
 
-// Manage communication with a child process that is an LSP server.
-//
-// TODO: Arguably, this class should be instead called "JSONRPCClient",
-// since really it manages the JSON-RPC level (requests, replies, and
-// notifications) without knowing anything about LSP specifically.
-//
-class LSPClient : public QObject {
+// Manage communication with a child process that is a JSON-RPC server
+// communicating over stdin and stdout.
+class JSON_RPC_Client : public QObject {
   Q_OBJECT
 
 private:     // types
@@ -165,11 +164,11 @@ private Q_SLOTS:
   void on_processTerminated() NOEXCEPT;
 
 public:      // methods
-  ~LSPClient();
+  ~JSON_RPC_Client();
 
   // Begin communicating using LSP with `child`, a process that has
   // already been started.
-  explicit LSPClient(
+  explicit JSON_RPC_Client(
     CommandRunner &child,
     std::ostream * NULLABLE protocolDiagnosticLog);
 

@@ -39,7 +39,7 @@ using namespace smbase;
 INIT_TRACE("lsp-client");
 
 
-/*static*/ char const *LSPClient::toString(MessageParseResult res)
+/*static*/ char const *JSON_RPC_Client::toString(MessageParseResult res)
 {
   RETURN_ENUMERATION_STRING_OR(
     MessageParseResult,
@@ -61,7 +61,7 @@ INIT_TRACE("lsp-client");
 }
 
 
-int LSPClient::innerGetNextRequestID()
+int JSON_RPC_Client::innerGetNextRequestID()
 {
   // If we hit the maximum, wrap back to 1.
   if (m_nextRequestID == std::numeric_limits<int>::max()) {
@@ -72,7 +72,7 @@ int LSPClient::innerGetNextRequestID()
 }
 
 
-int LSPClient::getNextRequestID()
+int JSON_RPC_Client::getNextRequestID()
 {
   // If the ID we want to use is already outstanding, skip it.  (This
   // should be very rare.)
@@ -88,13 +88,13 @@ int LSPClient::getNextRequestID()
 }
 
 
-void LSPClient::send(std::string &&data)
+void JSON_RPC_Client::send(std::string &&data)
 {
   m_child.putInputData(QByteArray::fromStdString(data));
 }
 
 
-/*static*/ std::string LSPClient::serializeMessage(GDValue const &msg)
+/*static*/ std::string JSON_RPC_Client::serializeMessage(GDValue const &msg)
 {
   std::string msgJSON = gdvToJSON(msg);
 
@@ -104,7 +104,7 @@ void LSPClient::send(std::string &&data)
 }
 
 
-/*static*/ std::string LSPClient::makeRequest(
+/*static*/ std::string JSON_RPC_Client::makeRequest(
   int id,
   std::string_view method,
   GDValue const &params)
@@ -118,7 +118,7 @@ void LSPClient::send(std::string &&data)
 }
 
 
-/*static*/ std::string LSPClient::makeNotificationBody(
+/*static*/ std::string JSON_RPC_Client::makeNotificationBody(
   std::string_view method,
   GDValue const &params)
 {
@@ -130,7 +130,7 @@ void LSPClient::send(std::string &&data)
 }
 
 
-void LSPClient::setProtocolError(std::string &&msg)
+void JSON_RPC_Client::setProtocolError(std::string &&msg)
 {
   if (!hasProtocolError()) {
     TRACE1("protocol error: " << msg);
@@ -146,7 +146,7 @@ void LSPClient::setProtocolError(std::string &&msg)
 }
 
 
-GDValue LSPClient::call_jsonToGDV(std::string const &bodyJSON) const
+GDValue JSON_RPC_Client::call_jsonToGDV(std::string const &bodyJSON) const
 {
   try {
     return jsonToGDV(bodyJSON);
@@ -170,7 +170,7 @@ GDValue LSPClient::call_jsonToGDV(std::string const &bodyJSON) const
 // regardless of the data that was sent before), but it provides a
 // convenient way for me to test, in `lsp-client-test`, that each of the
 // cases below is being exercised.
-auto LSPClient::innerProcessOutputData() -> MessageParseResult
+auto JSON_RPC_Client::innerProcessOutputData() -> MessageParseResult
 {
   // We can't do anything once a protocol error occurs.
   if (hasProtocolError()) {
@@ -287,7 +287,7 @@ auto LSPClient::innerProcessOutputData() -> MessageParseResult
 }
 
 
-void LSPClient::processOutputData() NOEXCEPT
+void JSON_RPC_Client::processOutputData() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -307,7 +307,7 @@ void LSPClient::processOutputData() NOEXCEPT
 }
 
 
-void LSPClient::on_errorDataReady() NOEXCEPT
+void JSON_RPC_Client::on_errorDataReady() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -319,7 +319,7 @@ void LSPClient::on_errorDataReady() NOEXCEPT
 }
 
 
-void LSPClient::on_processTerminated() NOEXCEPT
+void JSON_RPC_Client::on_processTerminated() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -360,13 +360,13 @@ void LSPClient::on_processTerminated() NOEXCEPT
 }
 
 
-LSPClient::~LSPClient()
+JSON_RPC_Client::~JSON_RPC_Client()
 {
   QObject::disconnect(&m_child, nullptr, this, nullptr);
 }
 
 
-LSPClient::LSPClient(
+JSON_RPC_Client::JSON_RPC_Client(
   CommandRunner &child,
   std::ostream * NULLABLE protocolDiagnosticLog)
   : IMEMBFP(child),
@@ -379,13 +379,13 @@ LSPClient::LSPClient(
     m_protocolError()
 {
   QObject::connect(&child, &CommandRunner::signal_outputDataReady,
-                   this, &LSPClient::processOutputData);
+                   this, &JSON_RPC_Client::processOutputData);
   QObject::connect(&child, &CommandRunner::signal_processTerminated,
-                   this, &LSPClient::on_processTerminated);
+                   this, &JSON_RPC_Client::on_processTerminated);
 }
 
 
-void LSPClient::selfCheck() const
+void JSON_RPC_Client::selfCheck() const
 {
   xassert(m_nextRequestID > 0);
 
@@ -426,7 +426,7 @@ void LSPClient::selfCheck() const
 }
 
 
-void LSPClient::sendNotification(
+void JSON_RPC_Client::sendNotification(
   std::string_view method,
   GDValue const &params)
 {
@@ -441,19 +441,19 @@ void LSPClient::sendNotification(
 }
 
 
-bool LSPClient::hasPendingNotifications() const
+bool JSON_RPC_Client::hasPendingNotifications() const
 {
   return !m_pendingNotifications.empty();
 }
 
 
-int LSPClient::numPendingNotifications() const
+int JSON_RPC_Client::numPendingNotifications() const
 {
   return safeToInt(m_pendingNotifications.size());
 }
 
 
-GDValue LSPClient::takeNextNotification()
+GDValue JSON_RPC_Client::takeNextNotification()
 {
   xassert(hasPendingNotifications());
 
@@ -461,7 +461,7 @@ GDValue LSPClient::takeNextNotification()
 }
 
 
-int LSPClient::sendRequest(
+int JSON_RPC_Client::sendRequest(
   std::string_view method,
   gdv::GDValue const &params)
 {
@@ -483,25 +483,25 @@ int LSPClient::sendRequest(
 }
 
 
-bool LSPClient::hasReplyForID(int id) const
+bool JSON_RPC_Client::hasReplyForID(int id) const
 {
   return contains(m_pendingReplies, id);
 }
 
 
-std::set<int> LSPClient::getOutstandingRequestIDs() const
+std::set<int> JSON_RPC_Client::getOutstandingRequestIDs() const
 {
   return m_outstandingRequests;
 }
 
 
-std::set<int> LSPClient::getPendingReplyIDs() const
+std::set<int> JSON_RPC_Client::getPendingReplyIDs() const
 {
   return mapKeySet(m_pendingReplies);
 }
 
 
-GDValue LSPClient::takeReplyForID(int id)
+GDValue JSON_RPC_Client::takeReplyForID(int id)
 {
   xassert(hasReplyForID(id));
 
@@ -509,7 +509,7 @@ GDValue LSPClient::takeReplyForID(int id)
 }
 
 
-void LSPClient::cancelRequestWithID(int id)
+void JSON_RPC_Client::cancelRequestWithID(int id)
 {
   if (setRemove(m_outstandingRequests, id)) {
     // The request was outstanding, meaning the server will eventually
@@ -532,32 +532,32 @@ void LSPClient::cancelRequestWithID(int id)
 }
 
 
-bool LSPClient::hasProtocolError() const
+bool JSON_RPC_Client::hasProtocolError() const
 {
   return m_protocolError.has_value();
 }
 
 
-std::string LSPClient::getProtocolError() const
+std::string JSON_RPC_Client::getProtocolError() const
 {
   xassert(hasProtocolError());
   return m_protocolError.value();
 }
 
 
-bool LSPClient::isChildRunning() const
+bool JSON_RPC_Client::isChildRunning() const
 {
   return m_child.isRunning();
 }
 
 
-bool LSPClient::hasErrorData() const
+bool JSON_RPC_Client::hasErrorData() const
 {
   return m_child.hasErrorData();
 }
 
 
-QByteArray LSPClient::takeErrorData()
+QByteArray JSON_RPC_Client::takeErrorData()
 {
   return m_child.takeErrorData();
 }

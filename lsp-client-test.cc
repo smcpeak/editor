@@ -39,10 +39,10 @@ OPEN_ANONYMOUS_NAMESPACE
 // wait for IPC.
 
 
-// If there are no errors in `lsp`, return "".  Otherwise, return them
-// prefixed with a prefix so the whole string is appropriate to append
-// to another error message.
-std::string getServerErrors(LSPClient &lsp)
+// If there are no errors in `client`, return "".  Otherwise, return
+// them prefixed with a prefix so the whole string is appropriate to
+// append to another error message.
+std::string getServerErrors(JSON_RPC_Client &lsp)
 {
   std::string errMsg = "";
   if (lsp.hasErrorData()) {
@@ -54,7 +54,7 @@ std::string getServerErrors(LSPClient &lsp)
 
 
 // If something has gone wrong with `lsp`, throw `XFormat`.
-void checkConnectionStatus(LSPClient &lsp)
+void checkConnectionStatus(JSON_RPC_Client &lsp)
 {
   if (lsp.hasProtocolError()) {
     xformatsb("LSP protocol error: " << lsp.getProtocolError());
@@ -67,8 +67,8 @@ void checkConnectionStatus(LSPClient &lsp)
 }
 
 
-// Print any pending notifications in `lsp.
-void printNotifications(LSPClient &lsp)
+// Print any pending notifications in `lsp`.
+void printNotifications(JSON_RPC_Client &lsp)
 {
   while (lsp.hasPendingNotifications()) {
     GDValue notification = lsp.takeNextNotification();
@@ -79,7 +79,7 @@ void printNotifications(LSPClient &lsp)
 
 // Wait for a reply to request `id`, printing any received notifications
 // while waiting.
-GDValue printNotificationsUntil(LSPClient &lsp, int id)
+GDValue printNotificationsUntil(JSON_RPC_Client &lsp, int id)
 {
   while (true) {
     checkConnectionStatus(lsp);
@@ -97,7 +97,7 @@ GDValue printNotificationsUntil(LSPClient &lsp, int id)
 // Send a request for `method` with `params`.  Synchronously print all
 // responses up to and including the reply to that request.
 void sendRequestPrintReply(
-  LSPClient &lsp,
+  JSON_RPC_Client &lsp,
   std::string_view method,
   gdv::GDValue const &params)
 {
@@ -112,7 +112,7 @@ void sendRequestPrintReply(
 
 
 void performLSPInteractionSemiSynchronously(
-  LSPClient &lsp,
+  JSON_RPC_Client &lsp,
   LSPTestRequestParams const &params)
 {
   // Initialize the protocol.
@@ -196,17 +196,17 @@ void performLSPInteractionSemiSynchronously(
 CLOSE_ANONYMOUS_NAMESPACE
 
 
-LSPClientTester::~LSPClientTester()
+JSON_RPC_ClientTester::~JSON_RPC_ClientTester()
 {
-  DIAG("LSPClientTester dtor");
+  DIAG("JSON_RPC_ClientTester dtor");
 
   QObject::disconnect(&m_lsp, nullptr,
                       this, nullptr);
 }
 
 
-LSPClientTester::LSPClientTester(
-  LSPClient &lsp,
+JSON_RPC_ClientTester::JSON_RPC_ClientTester(
+  JSON_RPC_Client &lsp,
   LSPTestRequestParams const &params)
   : QObject(),
     m_lsp(lsp),
@@ -215,20 +215,20 @@ LSPClientTester::LSPClientTester(
     m_done(false),
     m_failureMsg()
 {
-  DIAG("LSPClientTester ctor");
+  DIAG("JSON_RPC_ClientTester ctor");
 
-  QObject::connect(&m_lsp, &LSPClient::signal_hasPendingNotifications,
-                   this, &LSPClientTester::on_hasPendingNotifications);
-  QObject::connect(&m_lsp, &LSPClient::signal_hasReplyForID,
-                   this, &LSPClientTester::on_hasReplyForID);
-  QObject::connect(&m_lsp, &LSPClient::signal_hasProtocolError,
-                   this, &LSPClientTester::on_hasProtocolError);
-  QObject::connect(&m_lsp, &LSPClient::signal_childProcessTerminated,
-                   this, &LSPClientTester::on_childProcessTerminated);
+  QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasPendingNotifications,
+                   this, &JSON_RPC_ClientTester::on_hasPendingNotifications);
+  QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasReplyForID,
+                   this, &JSON_RPC_ClientTester::on_hasReplyForID);
+  QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasProtocolError,
+                   this, &JSON_RPC_ClientTester::on_hasProtocolError);
+  QObject::connect(&m_lsp, &JSON_RPC_Client::signal_childProcessTerminated,
+                   this, &JSON_RPC_ClientTester::on_childProcessTerminated);
 }
 
 
-void LSPClientTester::sendRequestCheckID(
+void JSON_RPC_ClientTester::sendRequestCheckID(
   int expectID,
   std::string_view method,
   GDValue const &params)
@@ -240,9 +240,9 @@ void LSPClientTester::sendRequestCheckID(
 }
 
 
-void LSPClientTester::sendNextRequest(int prevID)
+void JSON_RPC_ClientTester::sendNextRequest(int prevID)
 {
-  DIAG("LSPClient::sendNextRequest(prevID=" << prevID << ")");
+  DIAG("JSON_RPC_Client::sendNextRequest(prevID=" << prevID << ")");
 
   std::string fnameURI = makeFileURI(m_params.m_fname);
 
@@ -321,7 +321,7 @@ void LSPClientTester::sendNextRequest(int prevID)
 }
 
 
-void LSPClientTester::setFailureMsg(std::string &&msg)
+void JSON_RPC_ClientTester::setFailureMsg(std::string &&msg)
 {
   if (m_failureMsg) {
     // We already have a message, so ignore this one.
@@ -334,11 +334,11 @@ void LSPClientTester::setFailureMsg(std::string &&msg)
 }
 
 
-void LSPClientTester::on_hasPendingNotifications() NOEXCEPT
+void JSON_RPC_ClientTester::on_hasPendingNotifications() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  DIAG("LSPClientTester::on_hasPendingNotifications");
+  DIAG("JSON_RPC_ClientTester::on_hasPendingNotifications");
 
   printNotifications(m_lsp);
 
@@ -346,11 +346,11 @@ void LSPClientTester::on_hasPendingNotifications() NOEXCEPT
 }
 
 
-void LSPClientTester::on_hasReplyForID(int id) NOEXCEPT
+void JSON_RPC_ClientTester::on_hasReplyForID(int id) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  DIAG("LSPClientTester::on_hasReplyForID(" << id << ")");
+  DIAG("JSON_RPC_ClientTester::on_hasReplyForID(" << id << ")");
 
   GDValue resp(m_lsp.takeReplyForID(id));
   DIAG("Response: " << resp.asIndentedString());
@@ -361,11 +361,11 @@ void LSPClientTester::on_hasReplyForID(int id) NOEXCEPT
 }
 
 
-void LSPClientTester::on_hasProtocolError() NOEXCEPT
+void JSON_RPC_ClientTester::on_hasProtocolError() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  DIAG("LSPClientTester::on_hasProtocolError");
+  DIAG("JSON_RPC_ClientTester::on_hasProtocolError");
 
   setFailureMsg(stringb("Protocol error: " << m_lsp.getProtocolError()));
 
@@ -373,11 +373,11 @@ void LSPClientTester::on_hasProtocolError() NOEXCEPT
 }
 
 
-void LSPClientTester::on_childProcessTerminated() NOEXCEPT
+void JSON_RPC_ClientTester::on_childProcessTerminated() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  DIAG("LSPClientTester::on_childProcessTerminated");
+  DIAG("JSON_RPC_ClientTester::on_childProcessTerminated");
 
   if (m_initiatedShutdown) {
     DIAG("Child process terminated as requested");
@@ -385,7 +385,7 @@ void LSPClientTester::on_childProcessTerminated() NOEXCEPT
   }
   else {
     // If there had been a partial message, we would already have a
-    // failure message due to what LSPClient does internally (and hence
+    // failure message due to what JSON_RPC_Client does internally (and hence
     // the one we make here will be discarded by `setFailureMsg`).
     setFailureMsg(stringb(
       "Child process terminated unexpectedly, no partial message" <<
@@ -401,10 +401,10 @@ OPEN_ANONYMOUS_NAMESPACE
 
 
 void performLSPInteractionAsynchronously(
-  LSPClient &lsp,
+  JSON_RPC_Client &lsp,
   LSPTestRequestParams const &params)
 {
-  LSPClientTester tester(lsp, params);
+  JSON_RPC_ClientTester tester(lsp, params);
 
   // This kicks off the state machine.  All further steps will be taken
   // in response to specific signals.
@@ -428,7 +428,7 @@ void performLSPInteractionAsynchronously(
 // ------------------------------ driver -------------------------------
 // Set of possible protocol failures to exercise through deliberate
 // injection.  This is meant to reasonably thoroughly exercise the set
-// of things that `LSPClient::innerProcessOutputData()` checks for, but
+// of things that `JSON_RPC_Client::innerProcessOutputData()` checks for, but
 // not all conceivable problems.
 enum FailureKind {
   // No failure; invoke the real `clangd` and expect normal operation.
@@ -576,8 +576,8 @@ void runTests(
 
   std::ostringstream diagnosticLog;
   try {
-    // Wrap it in the LSP client protocol object.
-    LSPClient lsp(cr, &diagnosticLog);
+    // Wrap it in the JSON-RPC client protocol object.
+    JSON_RPC_Client lsp(cr, &diagnosticLog);
 
     // Do all the protocol stuff.
     if (semiSynchronous) {
