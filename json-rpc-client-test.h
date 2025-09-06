@@ -8,9 +8,10 @@
 #ifndef EDITOR_LSP_CLIENT_TEST_H
 #define EDITOR_LSP_CLIENT_TEST_H
 
-#include "json-rpc-client-fwd.h"                      // JSON_RPC_Client
+#include "json-rpc-client.h"                     // JSON_RPC_Client, JSON_RPC_Error
 #include "lsp-test-request-params.h"             // LSPTestRequestParams
 
+#include "smbase/either.h"                       // smbase::Either
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-string-view-fwd.h"          // std::string_view
@@ -24,6 +25,11 @@
 // Class to receive signals from `JSON_RPC_Client`.
 class JSON_RPC_ClientTester : public QObject {
   Q_OBJECT;
+
+public:      // types
+  // Type used to pass the previous response to `sendNextRequest`.
+  using ResponseOpt =
+    std::optional<smbase::Either<gdv::GDValue, JSON_RPC_Error>>;
 
 public:      // data
   // Client interface we're connected to.
@@ -55,10 +61,10 @@ public:      // methods
     std::string_view method,
     gdv::GDValue const &params);
 
-  // Given that we have just received the reply for `prevID` (where 0
-  // means we're just starting), send the next request, or else set
-  // `m_done` if we are done.
-  void sendNextRequest(int prevID);
+  // Given that we have just received `prevResponse` for `prevID` (where
+  // 0 and nullopt means we're just starting), send the next request, or
+  // else set `m_done` if we are done.
+  void sendNextRequest(int prevID, ResponseOpt const &prevResonse);
 
   // Set `m_failureMsg` and `m_done`, and print the mssage to stdout.
   // However, if `m_failureMsg` is already set, then ignore this.
@@ -67,6 +73,7 @@ public:      // methods
 public Q_SLOTS:
   void on_hasPendingNotifications() NOEXCEPT;
   void on_hasReplyForID(int id) NOEXCEPT;
+  void on_hasErrorForID(int id) NOEXCEPT;
   void on_hasProtocolError() NOEXCEPT;
   void on_childProcessTerminated() NOEXCEPT;
 };

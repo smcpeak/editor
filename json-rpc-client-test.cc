@@ -143,9 +143,29 @@ JSON_RPC_Error sendRequestPrintErrorReply(
 
   JSON_RPC_Error error(printNotificationsUntilError(lsp, id));
 
-  DIAG("Response: " << error);
+  DIAG("Error: " << error);
 
   return error;
+}
+
+
+void checkMethodNotFoundError(JSON_RPC_Error const &error)
+{
+  EXPECT_EQ_GDV(error, fromGDVN(R"(JSON_RPC_Error[
+    code: -32601
+    message: "The method does not exist (injected error)."
+    data: null
+  ])"));
+}
+
+
+void checkInvalidRequestError(JSON_RPC_Error const &error)
+{
+  EXPECT_EQ_GDV(error, fromGDVN(R"(JSON_RPC_Error[
+    code: -32600,
+    message: "The request is invalid (injected error).",
+    data: ["Some", "data", "object", 1, 2, 3]
+  ])"));
 }
 
 
@@ -211,18 +231,10 @@ void performLSPInteractionSemiSynchronously(
 
   {
     JSON_RPC_Error error = sendRequestPrintErrorReply(lsp, "$/methodNotFound");
-    EXPECT_EQ_GDV(error, fromGDVN(R"(JSON_RPC_Error[
-      code: -32601
-      message: "The method does not exist (injected error)."
-      data: null
-    ])"));
+    checkMethodNotFoundError(error);
 
     error = sendRequestPrintErrorReply(lsp, "$/invalidRequest");
-    EXPECT_EQ_GDV(error, fromGDVN(R"(JSON_RPC_Error[
-      code: -32600,
-      message: "The request is invalid (injected error).",
-      data: ["Some", "data", "object", 1, 2, 3]
-    ])"));
+    checkInvalidRequestError(error);
   }
 
   // Shut down the protocol.
@@ -275,6 +287,8 @@ JSON_RPC_ClientTester::JSON_RPC_ClientTester(
                    this, &JSON_RPC_ClientTester::on_hasPendingNotifications);
   QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasReplyForID,
                    this, &JSON_RPC_ClientTester::on_hasReplyForID);
+  QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasErrorForID,
+                   this, &JSON_RPC_ClientTester::on_hasErrorForID);
   QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasProtocolError,
                    this, &JSON_RPC_ClientTester::on_hasProtocolError);
   QObject::connect(&m_lsp, &JSON_RPC_Client::signal_childProcessTerminated,
@@ -294,9 +308,12 @@ void JSON_RPC_ClientTester::sendRequestCheckID(
 }
 
 
-void JSON_RPC_ClientTester::sendNextRequest(int prevID)
+void JSON_RPC_ClientTester::sendNextRequest(
+  int prevID, ResponseOpt const &prevResponse)
 {
   DIAG("JSON_RPC_Client::sendNextRequest(prevID=" << prevID << ")");
+
+  xassert((prevID==0) == (!prevResponse.has_value()));
 
   std::string fnameURI = makeFileURI(m_params.m_fname);
 
@@ -329,6 +346,8 @@ void JSON_RPC_ClientTester::sendNextRequest(int prevID)
       break;
 
     case 2:
+      xassert(prevResponse->isLeft());
+
       // Acknowledge initialization (no reply expected).
       m_lsp.sendNotification("initialized", GDVMap{});
 
@@ -350,20 +369,36 @@ void JSON_RPC_ClientTester::sendNextRequest(int prevID)
       break;
 
     case 3:
+      xassert(prevResponse->isLeft());
       sendRequestCheckID(nextID, "textDocument/declaration", params);
       break;
 
     case 4:
+      xassert(prevResponse->isLeft());
       sendRequestCheckID(nextID, "textDocument/definition", params);
       break;
 
     case 5:
-      sendRequestCheckID(nextID, "shutdown", GDVMap{});
+      xassert(prevResponse->isLeft());
+      sendRequestCheckID(nextID, "$/methodNotFound", GDVMap{});
       break;
 
     case 6:
+      xassert(prevResponse->isRight());
+      checkMethodNotFoundError(prevResponse->right());
+      sendRequestCheckID(nextID, "$/invalidRequest", GDVMap{});
+      break;
+
+    case 7:
+      xassert(prevResponse->isRight());
+      checkInvalidRequestError(prevResponse->right());
+      sendRequestCheckID(nextID, "shutdown", GDVMap{});
+      break;
+
+    case 8:
       // This should cause the child process to exit, which will trigger
       // a signal.
+      xassert(prevResponse->isLeft());
       m_lsp.sendNotification("exit", GDVMap{});
       m_initiatedShutdown = true;
       break;
@@ -409,7 +444,22 @@ void JSON_RPC_ClientTester::on_hasReplyForID(int id) NOEXCEPT
   GDValue resp(m_lsp.takeReplyForID(id));
   DIAG("Response: " << resp.asIndentedString());
 
-  sendNextRequest(id);
+  sendNextRequest(id, resp);
+
+  GENERIC_CATCH_END
+}
+
+
+void JSON_RPC_ClientTester::on_hasErrorForID(int id) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  DIAG("JSON_RPC_ClientTester::on_hasErrorForID(" << id << ")");
+
+  JSON_RPC_Error error(m_lsp.takeErrorForID(id));
+  DIAG("Error: " << toGDValue(error).asIndentedString());
+
+  sendNextRequest(id, error);
 
   GENERIC_CATCH_END
 }
@@ -462,7 +512,7 @@ void performLSPInteractionAsynchronously(
 
   // This kicks off the state machine.  All further steps will be taken
   // in response to specific signals.
-  tester.sendNextRequest(0 /*id*/);
+  tester.sendNextRequest(0 /*id*/, std::nullopt);
 
   // Now we just pump the event queue until the state machine says we
   // are done, at which point the child process will have terminated.
