@@ -303,6 +303,7 @@ public Q_SLOTS:
   void lspGoToAllUsesInOtherWindow() NOEXCEPT;
   void lspHoverInfo() NOEXCEPT;
   void lspCompletion() NOEXCEPT;
+  void lspSendSelectedText() NOEXCEPT;
 
   void windowOpenFilesList() NOEXCEPT;
   void windowPreviousFile() NOEXCEPT;

@@ -646,6 +646,13 @@ public:       // funcs
     NamedTextDocument const *ntd,
     TextMCoord coord);
 
+  // Send an arbitrary request, returning the request ID.
+  //
+  // Requires: lspIsRunningNormally()
+  int lspSendArbitraryRequest(
+    std::string const &method,
+    gdv::GDValue const &params);
+
   // -------------------- Qt infrastructure-related --------------------
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

@@ -4,6 +4,7 @@
 #include "editor-widget.h"                       // this module
 
 // editor
+#include "c_hilite.h"                            // C_Highlighter
 #include "completions-dialog.h"                  // CompletionsDialog
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
@@ -24,7 +25,7 @@
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "textcategory.h"                        // LineCategories, etc.
-#include "uri-util.h"                            // getFileURIPath
+#include "uri-util.h"                            // getFileURIPath, makeFileURI
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 #include "waiting-counter.h"                     // IncDecWaitingCounter
 
@@ -3097,6 +3098,100 @@ void EditorWidget::lspHandleCompletionReply(
       DEV_WARNING("CompletionsDialog getSelectedItemIndex is nullopt");
     }
   }
+}
+
+
+void EditorWidget::lspSendSelectedText()
+{
+  if (!editorGlobal()->lspIsRunningNormally()) {
+    complain(editorGlobal()->lspExplainAbnormality());
+    return;
+  }
+
+  // Get the selected text.
+  std::string selText = getSelectedText();
+  if (selText.empty()) {
+    complain("Nothing is selected.");
+    return;
+  }
+
+  // Substitute "$CUR_FILE_URI" for its URL.
+  //
+  // TODO: Build a system for GDValue->GDValue transformation and use it
+  // to replace a symbol inside the structure instead of doing this at
+  // the level of strings.
+  if (getDocument()->hasFilename()) {
+    std::string curFileUri = makeFileURI(getDocument()->filename());
+    selText = replaceAll(selText, "$CUR_FILE_URI", curFileUri);
+  }
+
+  // Parse it, expecting a method and parameters.
+  std::string method;
+  GDValue params;
+  try {
+    GDValue req = fromGDVN(selText);
+    GDValueParser p(req);
+    method = p.mapGetValueAtStr("method").stringGet();
+    params = p.mapGetValueAtStr("params").getValue();
+  }
+  catch (XBase &x) {
+    complain(x.getMessage());
+    return;
+  }
+
+  // Send these as a request.
+  int requestID =
+    editorGlobal()->lspSendArbitraryRequest(method, params);
+
+  // Synchronously wait for the reply.
+  IncDecWaitingCounter idwc;
+  auto doneCondition = [this, requestID]() -> bool {
+    return !editorGlobal()->lspIsRunningNormally() ||
+           editorGlobal()->lspHasReplyForID(requestID);
+  };
+  if (!synchronouslyWaitUntil(
+         this,
+         doneCondition,
+         500 /*ms*/,
+         "Waiting for LSP server",
+         stringb("Waiting for reply to request ID " << requestID <<
+                 ", method " << doubleQuote(method) << "."))) {
+    // Canceled.
+    return;
+  }
+
+  // Check if we stopped due to a protocol breakage.
+  if (!editorGlobal()->lspIsRunningNormally()) {
+    complain(editorGlobal()->lspExplainAbnormality());
+    return;
+  }
+
+  // Take the reply.
+  GDValue gdvReply = editorGlobal()->lspTakeReplyForID(requestID);
+
+  // Stringify it.
+  std::string strReply = gdvReply.asIndentedString();
+
+  // `method` is not a file path of course, but often (always?) has a
+  // slash, and when I try to set a window title to a string containing
+  // a slash, Windows seemingly throws away everything before it.
+  std::string abbrevMethod = withoutDirectoryPrefix(method.c_str());
+
+  // The title includes the request ID, and hence almost guaranteed to
+  // be unique, so it won't replace anything.
+  std::string docTitle = stringb(
+    "LSP reply " << requestID <<
+    " to " << doubleQuote(abbrevMethod) << " method");
+
+  // Put it into a document.
+  NamedTextDocument *ntd = editorGlobal()->getOrCreateGeneratedDocument(
+    docTitle, strReply);
+
+  // Use C/C++ highlighting for the result.
+  ntd->m_highlighter.reset(new C_Highlighter(ntd->getCore()));
+
+  // Show it.
+  setDocumentFile(ntd);
 }
 
 

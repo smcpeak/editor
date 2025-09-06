@@ -1,0 +1,49 @@
+// lsp-arbitrary-requests.ev
+// Issue an LSP arbitrary request.
+
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-arbitrary-requests.cc")
+
+// Start LSP and open the file.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Go to line 8.
+Shortcut("window1.m_menuBar.editMenu.editGotoLine" "Alt+G")
+FocusKeySequence("8")
+FocusKeyPR("Key_Return" "\r")
+
+// In the editor select the next lines to get the request text.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+FocusKeyPR("Shift+Key_Down" "")
+
+// Send it.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_T" "t")
+
+// We should be in the editor with a generated document.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1")
+
+// Select the first line.
+FocusKeyPR("Shift+Key_Down" "")
+
+// When using the fake server, its reply is always "null" (without a
+// newline, as it happens).
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "null")
+
+// EOF

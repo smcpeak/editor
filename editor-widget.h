@@ -552,6 +552,9 @@ public:      // funcs
   void lspHandleCompletionReply(
     gdv::GDValue const &gdvReply);
 
+  // Send the selected text to the LSP server as a request.
+  void lspSendSelectedText();
+
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
   VFS_Connections *vfsConnections() const;
