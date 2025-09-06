@@ -357,6 +357,13 @@ void TextDocumentObservationRecorder::observeTotalChange(
 {
   GENERIC_CATCH_BEGIN
   if (trackingSomething()) {
+    // Throw away all prior changes.  Without this, reloading a large
+    // file and then syncing with LSP causes a noticeable pause as all
+    // of the resulting deletions and insertions have to be processed
+    // individually.
+    getLastTrackedVersion().m_changeSequence.m_seq.clear();
+
+    // Record just the new state.
     addObservation(std::make_unique<TDC_TotalChange>(
       doc.numLines(),
       doc.getWholeFileString()));
