@@ -4,11 +4,11 @@
 #include "lsp-manager.h"                         // this module
 
 #include "command-runner.h"                      // CommandRunner
+#include "json-rpc-client.h"                     // JSON_RPC_Client
 #include "line-index.h"                          // LineIndex
 #include "line-number.h"                         // LineNumber
-#include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
-#include "lsp-client.h"                          // JSON_RPC_Client
 #include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
+#include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "td-core.h"                             // TextDocumentCore
 #include "uri-util.h"                            // makeFileURI, getFileURIPath
 

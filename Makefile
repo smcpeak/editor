@@ -27,7 +27,12 @@ EXTRA_CCFLAGS :=
 EXTRA_LDFLAGS :=
 
 # Run a program with a timeout in case it hangs.
-RUN_WITH_TIMEOUT := timeout 20
+#
+# This is used (among other things) for the unit tests, which take ~17s
+# on my machine right now, so 50s provides around a 3x margin.  This can
+# be important during a parallel rebuild since compilation process are
+# also taking CPU.
+RUN_WITH_TIMEOUT := timeout 50
 
 # Python interpreter.
 PYTHON3 = python3
@@ -212,14 +217,14 @@ EDITOR_OBJS += host-and-resource-name.o
 EDITOR_OBJS += host-file-line.o
 EDITOR_OBJS += host-file-olb.o
 EDITOR_OBJS += host-name.o
+EDITOR_OBJS += json-rpc-client.moc.o
+EDITOR_OBJS += json-rpc-client.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += lex_hilite.o
 EDITOR_OBJS += line-count.o
 EDITOR_OBJS += line-difference.o
 EDITOR_OBJS += line-index.o
 EDITOR_OBJS += line-number.o
-EDITOR_OBJS += lsp-client.moc.o
-EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-conv.o
 EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-get-code-lines.o
@@ -276,13 +281,13 @@ UNIT_TESTS_OBJS += editor-strutil-test.o
 UNIT_TESTS_OBJS += gap-test.o
 UNIT_TESTS_OBJS += hashcomment-hilite-test.o
 UNIT_TESTS_OBJS += host-file-olb-test.o
+UNIT_TESTS_OBJS += json-rpc-client-test.moc.o
+UNIT_TESTS_OBJS += json-rpc-client-test.o
 UNIT_TESTS_OBJS += justify-test.o
 UNIT_TESTS_OBJS += line-count-test.o
 UNIT_TESTS_OBJS += line-difference-test.o
 UNIT_TESTS_OBJS += line-index-test.o
 UNIT_TESTS_OBJS += line-number-test.o
-UNIT_TESTS_OBJS += lsp-client-test.moc.o
-UNIT_TESTS_OBJS += lsp-client-test.o
 UNIT_TESTS_OBJS += lsp-conv-test.o
 UNIT_TESTS_OBJS += lsp-data-test.o
 UNIT_TESTS_OBJS += lsp-get-code-lines-test.moc.o

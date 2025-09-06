@@ -1,13 +1,11 @@
-// lsp-client.h
+// json-rpc-client.h
 // Client for JSON-RPC 2.0, which is the base layer for Language Server
 // Protocol.
 
-// TODO: Rename this module to `json-rpc-client`.
+#ifndef EDITOR_JSON_RPC_CLIENT_H
+#define EDITOR_JSON_RPC_CLIENT_H
 
-#ifndef EDITOR_LSP_CLIENT_H
-#define EDITOR_LSP_CLIENT_H
-
-#include "lsp-client-fwd.h"            // fwds for this module
+#include "json-rpc-client-fwd.h"       // fwds for this module
 
 #include "command-runner-fwd.h"        // CommandRunner
 
@@ -267,4 +265,4 @@ Q_SIGNALS:
 };
 
 
-#endif // EDITOR_LSP_CLIENT_H
+#endif // EDITOR_JSON_RPC_CLIENT_H

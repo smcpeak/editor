@@ -1,14 +1,14 @@
-// lsp-client-test.h
+// json-rpc-client-test.h
 // `JSON_RPC_ClientTester` class.
 
-// This has to be in its own file (rather than in `lsp-client-test.cc`)
+// This has to be in its own file (rather than in `json-rpc-client-test.cc`)
 // in order to be able to run `moc` on it, which is in turn necessary
 // because the class inherits `QObject`.
 
 #ifndef EDITOR_LSP_CLIENT_TEST_H
 #define EDITOR_LSP_CLIENT_TEST_H
 
-#include "lsp-client-fwd.h"                      // JSON_RPC_Client
+#include "json-rpc-client-fwd.h"                      // JSON_RPC_Client
 #include "lsp-test-request-params.h"             // LSPTestRequestParams
 
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue

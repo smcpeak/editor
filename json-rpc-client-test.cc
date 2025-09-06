@@ -1,10 +1,10 @@
-// lsp-client-test.cc
-// Tests for `lsp-client`.
+// json-rpc-client-test.cc
+// Tests for `json-rpc-client`.
 
-#include "lsp-client-test.h"           // decls for this test module
+#include "json-rpc-client-test.h"      // decls for this test module
 #include "unit-tests.h"                // decl for my entry point
 
-#include "lsp-client.h"                // module under test
+#include "json-rpc-client.h"           // module under test
 
 #include "command-runner.h"            // CommandRunner
 #include "uri-util.h"                  // makeFileURI

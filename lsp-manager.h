@@ -7,8 +7,8 @@
 #include "lsp-manager-fwd.h"                     // fwds for this module
 
 #include "command-runner-fwd.h"                  // CommandRunner [n]
+#include "json-rpc-client-fwd.h"                 // JSON_RPC_Client [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
-#include "lsp-client-fwd.h"                      // JSON_RPC_Client [n]
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind

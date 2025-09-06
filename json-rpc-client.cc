@@ -1,7 +1,7 @@
-// lsp-client.cc
-// Code for `lsp-client.h`.
+// json-rpc-client.cc
+// Code for `json-rpc-client.h`.
 
-#include "lsp-client.h"                // this module
+#include "json-rpc-client.h"           // this module
 
 #include "command-runner.h"            // CommandRunner
 
@@ -36,7 +36,7 @@ using namespace gdv;
 using namespace smbase;
 
 
-INIT_TRACE("lsp-client");
+INIT_TRACE("json-rpc-client");
 
 
 /*static*/ char const *JSON_RPC_Client::toString(MessageParseResult res)
@@ -168,7 +168,7 @@ GDValue JSON_RPC_Client::call_jsonToGDV(std::string const &bodyJSON) const
 // Diagnosing specific problems with partial messages upon termination
 // is not terribly important (since early termination is a problem
 // regardless of the data that was sent before), but it provides a
-// convenient way for me to test, in `lsp-client-test`, that each of the
+// convenient way for me to test, in `json-rpc-client-test`, that each of the
 // cases below is being exercised.
 auto JSON_RPC_Client::innerProcessOutputData() -> MessageParseResult
 {
