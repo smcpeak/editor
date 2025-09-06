@@ -184,6 +184,10 @@ public:      // funcs
   // if we have not received a diagnostic report.
   std::optional<int> getNumDiagnostics() const;
 
+  // Get the version that was analyzed to produce the current set of
+  // diagnostics, if there are any.
+  std::optional<TD_VersionNumber> getDiagnosticsOriginVersion() const;
+
   // Get the current diagnostics, if any.
   TextDocumentDiagnostics const * NULLABLE getDiagnostics() const;
 

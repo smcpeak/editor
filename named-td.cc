@@ -232,6 +232,18 @@ std::optional<int> NamedTextDocument::getNumDiagnostics() const
 }
 
 
+std::optional<TD_VersionNumber>
+NamedTextDocument::getDiagnosticsOriginVersion() const
+{
+  if (m_diagnostics) {
+    return m_diagnostics->getOriginVersion();
+  }
+  else {
+    return std::nullopt;
+  }
+}
+
+
 TextDocumentDiagnostics const * NULLABLE
 NamedTextDocument::getDiagnostics() const
 {

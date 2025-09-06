@@ -1091,6 +1091,10 @@ def main() -> None:
       # Requests have an ID; notifications do not.
       msg_id: Optional[int] = msg.get("id")
 
+      # Allow testing for delays on all messages.
+      if delayMS := os.getenv("LSP_TEST_SERVER_DELAY_MS"):
+        time.sleep(int(delayMS) / 1000)
+
       if method == "initialize":
         # This lets me test how the editor responds when the server is
         # slow to initialize.

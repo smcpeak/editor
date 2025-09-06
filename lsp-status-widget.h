@@ -32,15 +32,24 @@ private:     // data
   // This is non-null except while destroying the containing window.
   RCSerf<EditorWidget> m_editorWidget;
 
+  // Background color to draw.
+  QColor m_bgColor;
+
+  // Message for the status report dialog.  This is built while doing
+  // normal status updates, but only shown if the user clicks on the
+  // widget.
+  std::string m_statusReport;
+
 public:      // data
   // If not 0, then this value minus 1 is used as the protocol state
   // rather than the real state.  The point is just to see how each of
   // the states looks in the GUI.
   int m_fakeStatus;
 
-private:     // methods
-  // Set the background color.
-  void setBackgroundColor(QColor color);
+protected:   // methods
+  // QWidget overrides.
+  virtual void mousePressEvent(QMouseEvent *e) override;
+  virtual void paintEvent(QPaintEvent *e) override;
 
 public:      // methods
   ~LSPStatusWidget();
