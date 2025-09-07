@@ -72,15 +72,6 @@ using namespace gdv;
 /*AUTO_CTC*/   return oss.str();
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
-/*AUTO_CTC*/ void JSON_RPC_Error::write(std::ostream &os) const
-/*AUTO_CTC*/ {
-/*AUTO_CTC*/   os << "{";
-/*AUTO_CTC*/   WRITE_MEMBER(m_code);
-/*AUTO_CTC*/   WRITE_MEMBER(m_message);
-/*AUTO_CTC*/   WRITE_MEMBER(m_data);
-/*AUTO_CTC*/   os << " }";
-/*AUTO_CTC*/ }
-/*AUTO_CTC*/
 /*AUTO_CTC*/ std::ostream &operator<<(std::ostream &os, JSON_RPC_Error const &obj)
 /*AUTO_CTC*/ {
 /*AUTO_CTC*/   obj.write(os);
@@ -95,6 +86,11 @@ using namespace gdv;
 /*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_message);
 /*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_data);
 /*AUTO_CTC*/   return m;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ void JSON_RPC_Error::write(std::ostream &os) const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   operator gdv::GDValue().writeIndented(os);
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
 

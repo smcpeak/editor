@@ -30,19 +30,18 @@ public:      // data
   gdv::GDValue m_data;
 
 public:      // methods
-  // ---- create-tuple-class: declarations for JSON_RPC_Error +move +write +gdvWrite
+  // ---- create-tuple-class: declarations for JSON_RPC_Error +move +gdvWrite
   /*AUTO_CTC*/ explicit JSON_RPC_Error(int code, std::string const &message, gdv::GDValue const &data);
   /*AUTO_CTC*/ explicit JSON_RPC_Error(int code, std::string &&message, gdv::GDValue &&data);
   /*AUTO_CTC*/ JSON_RPC_Error(JSON_RPC_Error const &obj) noexcept;
   /*AUTO_CTC*/ JSON_RPC_Error(JSON_RPC_Error &&obj) noexcept;
   /*AUTO_CTC*/ JSON_RPC_Error &operator=(JSON_RPC_Error const &obj) noexcept;
   /*AUTO_CTC*/ JSON_RPC_Error &operator=(JSON_RPC_Error &&obj) noexcept;
-  /*AUTO_CTC*/ // For +write:
+  /*AUTO_CTC*/ // For +gdvWrite:
+  /*AUTO_CTC*/ operator gdv::GDValue() const;
   /*AUTO_CTC*/ std::string toString() const;
   /*AUTO_CTC*/ void write(std::ostream &os) const;
   /*AUTO_CTC*/ friend std::ostream &operator<<(std::ostream &os, JSON_RPC_Error const &obj);
-  /*AUTO_CTC*/ // For +gdvWrite:
-  /*AUTO_CTC*/ operator gdv::GDValue() const;
 
   JSON_RPC_Error();
 
