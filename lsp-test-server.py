@@ -404,6 +404,14 @@ def test_Range() -> None:
   expect_eq(r13.contains(p3), False)
 
 
+def lspRange(start_line: int, start_character: int,
+             end_line: int, end_character: int) -> Dict[str, Any]:
+  """Return a range as a dictionary in LSP format."""
+
+  return Range(Position(start_line, start_character),
+               Position(end_line, end_character)).to_dict()
+
+
 # ----------------------------- FileRange ------------------------------
 @total_ordering
 class FileRange:
@@ -460,10 +468,7 @@ def test_FileRange() -> None:
 
   expect_eq(fr1a.to_dict(), {
     "uri": "file1",
-    "range": {
-      "start": { "line": 1, "character": 1 },
-      "end"  : { "line": 2, "character": 2 },
-    },
+    "range": lspRange(1,1, 2,2),
   })
 
 
@@ -891,24 +896,15 @@ def test_get_locations() -> None:
     [
       {
         "uri": uri,
-        "range": {
-          "start": { "line": 0, "character": 0 },
-          "end":   { "line": 0, "character": 3 },
-        }
+        "range": lspRange(0,0, 0,3)
       },
       {
         "uri": uri,
-        "range": {
-          "start": { "line": 1, "character": 0 },
-          "end":   { "line": 1, "character": 3 },
-        }
+        "range": lspRange(1,0, 1,3)
       },
       {
         "uri": uri,
-        "range": {
-          "start": { "line": 3, "character": 0 },
-          "end":   { "line": 3, "character": 3 },
-        }
+        "range": lspRange(3,0, 3,3)
       },
     ])
 
@@ -933,6 +929,54 @@ def handle_symbol_query(
     get_locations(method, table, uri, pos))
 
   send_reply(msg_id, locations)
+
+
+
+# ---------------------- diagnostics_for_contents ----------------------
+DIAGNOSTIC_RE = re.compile(r"\bdiagnostic\b")
+
+def diagnostics_for_contents(contents: str) -> List[Dict[str, Any]]:
+  """Get diagnostics for `contents`.  This returns one diagnostic for
+  every occurrence of the string "diagnostic"."""
+
+  lines: List[str] = split_lines(contents)
+  ret: List[Dict[str, Any]] = []
+
+  line_index: int = 0
+  for line in lines:
+    for m in DIAGNOSTIC_RE.finditer(line):
+      ret.append({
+        "range": lspRange(line_index, m.start(), line_index, m.end()),
+        "message": "The string \"diagnostic\" occurs."
+      })
+
+    line_index += 1
+
+  return ret;
+
+
+def test_diagnostics_for_contents() -> None:
+  """Unit tests for `diagnostics_for_contents`."""
+
+  contents = (
+"""zero
+one diagnostic blah diagnostic
+two
+diagnostic three
+""")
+  msg = "The string \"diagnostic\" occurs."
+
+  def oneDiag(sl: int, sc: int, el: int, ec: int) -> Dict[str, Any]:
+    return {
+      "range": lspRange(sl, sc, el, ec),
+      "message": msg
+    }
+
+  expect_eq(diagnostics_for_contents(contents), [
+    oneDiag(1,4, 1,14),
+    oneDiag(1,20, 1,30),
+    oneDiag(3,0, 3,10)
+  ])
 
 
 # ---------------------- Language Server Protocol ----------------------
@@ -1039,10 +1083,8 @@ def test_one_apply_text_edit(
 
   changes = [
     {
-      "range": {
-        "start": Position(start_line, start_character).to_dict(),
-        "end": Position(end_line, end_character).to_dict(),
-      },
+      "range": lspRange(start_line, start_character,
+                        end_line, end_character),
       "text": edit_text,
     }
   ]
@@ -1069,14 +1111,17 @@ def test_apply_text_edits() -> None:
     text, "ABCzeroZERO\noZZZo\nthree\nfour")
 
 
-def publish_diagnostics(uri: str, version: int) -> None:
-  """Send empty diagnostics notification."""
+def publish_diagnostics(uri: str) -> None:
+  """Send diagnostics notification."""
+
+  version, text = documents.get(uri, (-1, "<no doc>"))
+
   publish = {
     "jsonrpc": "2.0",
     "method": "textDocument/publishDiagnostics",
     "params": {
       "uri": uri,
-      "diagnostics": [],
+      "diagnostics": diagnostics_for_contents(text),
 
       # My `lsp-manager` module will discard diagnostics that do
       # not have a version number.
@@ -1145,7 +1190,7 @@ def main() -> None:
         version = td["version"]
         text = td["text"]
         documents[uri] = (version, text)
-        publish_diagnostics(uri, version)
+        publish_diagnostics(uri)
 
       elif method == "textDocument/didChange":
         # Record the incremental edits, then send diagnostics.
@@ -1155,7 +1200,7 @@ def main() -> None:
         changes = msg["params"]["contentChanges"]
         old_text = documents.get(uri, "")[1]
         documents[uri] = (version, apply_text_edits(old_text, changes))
-        publish_diagnostics(uri, version)
+        publish_diagnostics(uri)
 
       elif method == "$/getTextDocumentContents":
         td = msg["params"]["textDocument"]
@@ -1213,6 +1258,7 @@ if __name__ == "__main__":
   test_get_symbols()
   test_get_locations()
   test_apply_text_edits()
+  test_diagnostics_for_contents()
 
   if os.getenv("UNIT_TEST"):
     # Only run the unit tests.
