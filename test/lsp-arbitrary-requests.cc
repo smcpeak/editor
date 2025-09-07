@@ -9,7 +9,7 @@ int x;
     "method": "textDocument/hover"
     "params": {
       "textDocument": {
-        "uri": "$CUR_FILE_URI"
+        "uri": CUR_FILE_URI
       }
       "position": {
         "line": 4
@@ -22,7 +22,7 @@ int x;
     "method": "textDocument/diagnostic"
     "params": {
       "textDocument": {
-        "uri": "$CUR_FILE_URI"
+        "uri": CUR_FILE_URI
       }
     }
   }

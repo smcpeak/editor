@@ -50,6 +50,7 @@
 #include "smbase/dev-warning.h"                  // DEV_WARNING
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
+#include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/list-util.h"                    // smbase::listAtC
 #include "smbase/nonport.h"                      // getMilliseconds
@@ -3138,21 +3139,21 @@ void EditorWidget::lspSendSelectedText()
     return;
   }
 
-  // Substitute "$CUR_FILE_URI" for its URL.
-  //
-  // TODO: Build a system for GDValue->GDValue transformation and use it
-  // to replace a symbol inside the structure instead of doing this at
-  // the level of strings.
-  if (getDocument()->hasFilename()) {
-    std::string curFileUri = makeFileURI(getDocument()->filename());
-    selText = replaceAll(selText, "$CUR_FILE_URI", curFileUri);
-  }
-
   // Parse it, expecting a method and parameters.
   std::string method;
   GDValue params;
   try {
     GDValue req = fromGDVN(selText);
+
+    // Substitute `CUR_FILE_URI` for its URL.
+    if (getDocument()->hasFilename()) {
+      std::string curFileUri = makeFileURI(getDocument()->filename());
+      req = substitutionTransformGDValue(req,
+        std::map<GDValue, GDValue>{
+          { "CUR_FILE_URI"_sym, curFileUri },
+        });
+    }
+
     GDValueParser p(req);
     method = p.mapGetValueAtStr("method").stringGet();
     params = p.mapGetValueAtStr("params").getValue();
