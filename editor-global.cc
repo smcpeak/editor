@@ -1524,10 +1524,12 @@ std::string EditorGlobal::lspGetServerStatus() const
 {
   std::ostringstream oss;
 
+  oss << "Using fake server: " << GDValue(lspIsFakeServer()) << ".\n";
+
   oss << "Status: " << m_lspManager->checkStatus() << "\n";
 
   oss << "Has pending diagnostics: "
-      << GDValue(m_lspManager->hasPendingDiagnostics()) << "\n";
+      << GDValue(m_lspManager->hasPendingDiagnostics()) << ".\n";
 
   if (std::size_t n = m_lspErrorMessages.size()) {
     oss << n << " errors:\n";
