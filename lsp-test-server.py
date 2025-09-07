@@ -1199,8 +1199,18 @@ def main() -> None:
         version = td["version"]
         changes = msg["params"]["contentChanges"]
         old_text = documents.get(uri, "")[1]
-        documents[uri] = (version, apply_text_edits(old_text, changes))
-        publish_diagnostics(uri)
+        new_text = apply_text_edits(old_text, changes)
+        documents[uri] = (version, new_text)
+
+        # `clangd` has the annoying behavior that it will not send
+        # diagnostics for a no-op change.  Imitate that so I can use
+        # this script to test my workaround.
+        #
+        # Disabled since my workaround does not work...
+        if True or new_text != old_text:
+          publish_diagnostics(uri)
+        else:
+          pass
 
       elif method == "$/getTextDocumentContents":
         td = msg["params"]["textDocument"]

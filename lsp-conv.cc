@@ -234,6 +234,21 @@ void lspSendUpdatedContents(
   // Done with these.
   recordedChanges.reset();
 
+  // This seems difficult to make work.  Among the issues is `clangd`
+  // will ignore two changes in quick succession if they cancel each
+  // other, so I would have to maintain the out-of-sync state for some
+  // time.
+  #if 0
+  if (docInfo->lastContentsEquals(doc.getCore())) {
+    TextMCoord endPos = doc.endCoord();
+    LSP_TextDocumentContentChangeEvent extraEdit(
+      toLSP_Range(TextMCoordRange(endPos, endPos)),
+      stringb("//" << version)
+    );
+    changeParams.m_contentChanges.push_back(extraEdit);
+  }
+  #endif
+
   // Send them to the server, and have the manager update its copy.
   TRACE2("Sending incremental changes: " <<
          toGDValue(changeParams).asIndentedString());
