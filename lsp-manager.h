@@ -8,6 +8,7 @@
 
 #include "command-runner-fwd.h"                  // CommandRunner [n]
 #include "json-rpc-client-fwd.h"                 // JSON_RPC_Client [n]
+#include "json-rpc-reply-fwd.h"                  // JSON_RPC_Error, JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
 #include "lsp-protocol-state.h"                  // LSPProtocolState
@@ -217,6 +218,12 @@ private:     // data
   // don't break the protocol stream.
   std::list<std::string> m_pendingErrorMessages;
 
+  // If set, there was a protocol failure in the LSP layer that prevents
+  // further communication.  This is distinct from a protocol error in
+  // the JSON-RPC layer, which would be recorded inside the `m_lsp`
+  // object.  The string here is intended for presentation to the user.
+  std::optional<std::string> m_lspManagerProtocolError;
+
 private:     // methods
   // Reset the state associated with the protocol.  This is done when we
   // shut down the server, and prepares for starting it again.
@@ -229,6 +236,11 @@ private:     // methods
 
   // Append `msg` to the pending messages and signal the client.
   void addErrorMessage(std::string &&msg);
+
+  // Record `error` as a protocol error that stops further
+  // communication.  It was the response to `requestName`.
+  void recordManagerProtocolError(
+    JSON_RPC_Error const &error, char const *requestName);
 
   // Handle newly-arrived `diags`.
   void handleIncomingDiagnostics(
@@ -383,7 +395,7 @@ public:      // methods
   //
   // Requires: isRunningNormally()
   // Requires: hasReplyForID(id)
-  gdv::GDValue takeReplyForID(int id);
+  JSON_RPC_Reply takeReplyForID(int id);
 
   // If the reply for `id` is ready, discard it.  If not, arrange to
   // discard it when it arrives.

@@ -26,11 +26,6 @@
 class JSON_RPC_ClientTester : public QObject {
   Q_OBJECT;
 
-public:      // types
-  // Type used to pass the previous response to `sendNextRequest`.
-  using ResponseOpt =
-    std::optional<smbase::Either<gdv::GDValue, JSON_RPC_Error>>;
-
 public:      // data
   // Client interface we're connected to.
   JSON_RPC_Client &m_lsp;
@@ -61,10 +56,11 @@ public:      // methods
     std::string_view method,
     gdv::GDValue const &params);
 
-  // Given that we have just received `prevResponse` for `prevID` (where
-  // 0 and nullopt means we're just starting), send the next request, or
+  // Given that we have just received `prevReply` for `prevID` (where 0
+  // and nullopt means we're just starting), send the next request, or
   // else set `m_done` if we are done.
-  void sendNextRequest(int prevID, ResponseOpt const &prevResonse);
+  void sendNextRequest(
+    int prevID, std::optional<JSON_RPC_Reply> const &prevReply);
 
   // Set `m_failureMsg` and `m_done`, and print the mssage to stdout.
   // However, if `m_failureMsg` is already set, then ignore this.
@@ -73,7 +69,6 @@ public:      // methods
 public Q_SLOTS:
   void on_hasPendingNotifications() NOEXCEPT;
   void on_hasReplyForID(int id) NOEXCEPT;
-  void on_hasErrorForID(int id) NOEXCEPT;
   void on_hasProtocolError() NOEXCEPT;
   void on_childProcessTerminated() NOEXCEPT;
 };

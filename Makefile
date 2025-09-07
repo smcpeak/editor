@@ -219,6 +219,7 @@ EDITOR_OBJS += host-file-olb.o
 EDITOR_OBJS += host-name.o
 EDITOR_OBJS += json-rpc-client.moc.o
 EDITOR_OBJS += json-rpc-client.o
+EDITOR_OBJS += json-rpc-reply.o
 EDITOR_OBJS += justify.o
 EDITOR_OBJS += lex_hilite.o
 EDITOR_OBJS += line-count.o
@@ -553,7 +554,7 @@ compile_commands.json:
 # -------------- check create-tuple-class.py outputs -------------------
 # Set of header files that use create-tuple-class.py.
 CTC_HEADERS :=
-CTC_HEADERS += json-rpc-client.h
+CTC_HEADERS += json-rpc-reply.h
 CTC_HEADERS += lsp-data.h
 
 # Corresponding implementation files.

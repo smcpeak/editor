@@ -16,7 +16,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "event-recorder.h"                      // EventRecorder
 #include "event-replay.h"                        // EventReplay
-#include "json-rpc-client.h"                     // JSON_RPC_Client
+#include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "line-index.h"                          // LineIndex
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
@@ -1646,7 +1646,7 @@ bool EditorGlobal::lspHasReplyForID(int id) const
 }
 
 
-gdv::GDValue EditorGlobal::lspTakeReplyForID(int id)
+JSON_RPC_Reply EditorGlobal::lspTakeReplyForID(int id)
 {
   xassertPrecondition(lspIsRunningNormally());
   xassertPrecondition(lspHasReplyForID(id));

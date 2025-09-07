@@ -44,7 +44,11 @@ enum LSPProtocolState {
 
   // `JSON_RPC_Client` detected a protocol error.  We can't do anything
   // more with the server process.
-  LSP_PS_PROTOCOL_ERROR,
+  LSP_PS_JSON_RPC_PROTOCOL_ERROR,
+
+  // A protocol failure occurred in the LSP layer.  It also prevents
+  // further communication.
+  LSP_PS_MANAGER_PROTOCOL_ERROR,
 
   // ---- Broken states ----
 

@@ -5,6 +5,7 @@
 #include "unit-tests.h"                // decl for my entry point
 
 #include "json-rpc-client.h"           // module under test
+#include "json-rpc-reply.h"            // module under test
 
 #include "command-runner.h"            // CommandRunner
 #include "uri-util.h"                  // makeFileURI
@@ -12,6 +13,7 @@
 #include "smqtutil/qtutil.h"           // waitForQtEvent
 
 #include "smbase/exc.h"                // smbase::XBase
+#include "smbase/gdvalue-either.h"     // gdv::toGDValue(smbase::Either)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, RETURN_ENUMERATION_STRING_OR
 #include "smbase/sm-span.h"            // smbase::Span
@@ -79,7 +81,7 @@ void printNotifications(JSON_RPC_Client &lsp)
 
 // Wait for a reply to request `id`, printing any received notifications
 // while waiting.
-GDValue printNotificationsUntil(JSON_RPC_Client &lsp, int id)
+JSON_RPC_Reply printNotificationsUntil(JSON_RPC_Client &lsp, int id)
 {
   while (true) {
     checkConnectionStatus(lsp);
@@ -88,25 +90,6 @@ GDValue printNotificationsUntil(JSON_RPC_Client &lsp, int id)
     if (lsp.hasReplyForID(id)) {
       return lsp.takeReplyForID(id);
     }
-    xassert(!lsp.hasErrorForID(id));
-
-    waitForQtEvent();
-  }
-}
-
-
-// Wait for an error response to request `id`, printing any received
-// notifications while waiting.
-JSON_RPC_Error printNotificationsUntilError(JSON_RPC_Client &lsp, int id)
-{
-  while (true) {
-    checkConnectionStatus(lsp);
-    printNotifications(lsp);
-
-    if (lsp.hasErrorForID(id)) {
-      return lsp.takeErrorForID(id);
-    }
-    xassert(!lsp.hasReplyForID(id));
 
     waitForQtEvent();
   }
@@ -114,8 +97,9 @@ JSON_RPC_Error printNotificationsUntilError(JSON_RPC_Client &lsp, int id)
 
 
 // Send a request for `method` with `params`.  Synchronously print all
-// responses up to and including the reply to that request.
-void sendRequestPrintReply(
+// responses up to and including the reply to that request, which is
+// then returned.
+JSON_RPC_Reply sendRequestPrintReply(
   JSON_RPC_Client &lsp,
   std::string_view method,
   gdv::GDValue const &params)
@@ -124,28 +108,34 @@ void sendRequestPrintReply(
 
   DIAG("Sent request " << method << ", id=" << id << " ...");
 
-  GDValue resp(printNotificationsUntil(lsp, id));
+  JSON_RPC_Reply reply(printNotificationsUntil(lsp, id));
 
-  DIAG("Response: " << resp.asIndentedString());
+  DIAG("Reply: " << reply);
+
+  return reply;
 }
 
 
-// Send a request for `method` with `params`.  Synchronously print all
-// responses up to and including the reply to that request, which is
-// expected to be an error.
+// As above, but assert that the reply `isSuccess()`.
+void sendRequestPrintSuccessReply(
+  JSON_RPC_Client &lsp,
+  std::string_view method,
+  gdv::GDValue const &params)
+{
+  JSON_RPC_Reply reply(sendRequestPrintReply(lsp, method, params));
+  xassert(reply.isSuccess());
+}
+
+
+// Insist the reply is an error, and return the error component.
 JSON_RPC_Error sendRequestPrintErrorReply(
   JSON_RPC_Client &lsp,
-  std::string_view method)
+  std::string_view method,
+  gdv::GDValue const &params)
 {
-  int id = lsp.sendRequest(method, GDValue());
-
-  DIAG("Sent request " << method << ", id=" << id << " ...");
-
-  JSON_RPC_Error error(printNotificationsUntilError(lsp, id));
-
-  DIAG("Error: " << error);
-
-  return error;
+  JSON_RPC_Reply reply(sendRequestPrintReply(lsp, method, params));
+  xassert(reply.isError());
+  return std::move(reply.error());
 }
 
 
@@ -224,16 +214,16 @@ void performLSPInteractionSemiSynchronously(
   });
 
   // Get some info from the LSP server.
-  sendRequestPrintReply(lsp, "textDocument/hover", paramsGDV);
-  sendRequestPrintReply(lsp, "textDocument/declaration", paramsGDV);
-  sendRequestPrintReply(lsp, "textDocument/definition", paramsGDV);
-  sendRequestPrintReply(lsp, "textDocument/completion", paramsGDV);
+  sendRequestPrintSuccessReply(lsp, "textDocument/hover", paramsGDV);
+  sendRequestPrintSuccessReply(lsp, "textDocument/declaration", paramsGDV);
+  sendRequestPrintSuccessReply(lsp, "textDocument/definition", paramsGDV);
+  sendRequestPrintSuccessReply(lsp, "textDocument/completion", paramsGDV);
 
   {
-    JSON_RPC_Error error = sendRequestPrintErrorReply(lsp, "$/methodNotFound");
+    JSON_RPC_Error error = sendRequestPrintErrorReply(lsp, "$/methodNotFound", {});
     checkMethodNotFoundError(error);
 
-    error = sendRequestPrintErrorReply(lsp, "$/invalidRequest");
+    error = sendRequestPrintErrorReply(lsp, "$/invalidRequest", {});
     checkInvalidRequestError(error);
   }
 
@@ -287,8 +277,6 @@ JSON_RPC_ClientTester::JSON_RPC_ClientTester(
                    this, &JSON_RPC_ClientTester::on_hasPendingNotifications);
   QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasReplyForID,
                    this, &JSON_RPC_ClientTester::on_hasReplyForID);
-  QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasErrorForID,
-                   this, &JSON_RPC_ClientTester::on_hasErrorForID);
   QObject::connect(&m_lsp, &JSON_RPC_Client::signal_hasProtocolError,
                    this, &JSON_RPC_ClientTester::on_hasProtocolError);
   QObject::connect(&m_lsp, &JSON_RPC_Client::signal_childProcessTerminated,
@@ -309,11 +297,11 @@ void JSON_RPC_ClientTester::sendRequestCheckID(
 
 
 void JSON_RPC_ClientTester::sendNextRequest(
-  int prevID, ResponseOpt const &prevResponse)
+  int prevID, std::optional<JSON_RPC_Reply> const &prevReply)
 {
   DIAG("JSON_RPC_Client::sendNextRequest(prevID=" << prevID << ")");
 
-  xassert((prevID==0) == (!prevResponse.has_value()));
+  xassert((prevID==0) == (!prevReply.has_value()));
 
   std::string fnameURI = makeFileURI(m_params.m_fname);
 
@@ -346,7 +334,7 @@ void JSON_RPC_ClientTester::sendNextRequest(
       break;
 
     case 2:
-      xassert(prevResponse->isLeft());
+      xassert(prevReply->isSuccess());
 
       // Acknowledge initialization (no reply expected).
       m_lsp.sendNotification("initialized", GDVMap{});
@@ -369,36 +357,36 @@ void JSON_RPC_ClientTester::sendNextRequest(
       break;
 
     case 3:
-      xassert(prevResponse->isLeft());
+      xassert(prevReply->isSuccess());
       sendRequestCheckID(nextID, "textDocument/declaration", params);
       break;
 
     case 4:
-      xassert(prevResponse->isLeft());
+      xassert(prevReply->isSuccess());
       sendRequestCheckID(nextID, "textDocument/definition", params);
       break;
 
     case 5:
-      xassert(prevResponse->isLeft());
+      xassert(prevReply->isSuccess());
       sendRequestCheckID(nextID, "$/methodNotFound", GDVMap{});
       break;
 
     case 6:
-      xassert(prevResponse->isRight());
-      checkMethodNotFoundError(prevResponse->right());
+      xassert(prevReply->isError());
+      checkMethodNotFoundError(prevReply->right());
       sendRequestCheckID(nextID, "$/invalidRequest", GDVMap{});
       break;
 
     case 7:
-      xassert(prevResponse->isRight());
-      checkInvalidRequestError(prevResponse->right());
+      xassert(prevReply->isError());
+      checkInvalidRequestError(prevReply->right());
       sendRequestCheckID(nextID, "shutdown", GDVMap{});
       break;
 
     case 8:
       // This should cause the child process to exit, which will trigger
       // a signal.
-      xassert(prevResponse->isLeft());
+      xassert(prevReply->isSuccess());
       m_lsp.sendNotification("exit", GDVMap{});
       m_initiatedShutdown = true;
       break;
@@ -441,25 +429,10 @@ void JSON_RPC_ClientTester::on_hasReplyForID(int id) NOEXCEPT
 
   DIAG("JSON_RPC_ClientTester::on_hasReplyForID(" << id << ")");
 
-  GDValue resp(m_lsp.takeReplyForID(id));
-  DIAG("Response: " << resp.asIndentedString());
+  JSON_RPC_Reply reply(m_lsp.takeReplyForID(id));
+  DIAG("Reply: " << reply);
 
-  sendNextRequest(id, resp);
-
-  GENERIC_CATCH_END
-}
-
-
-void JSON_RPC_ClientTester::on_hasErrorForID(int id) NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  DIAG("JSON_RPC_ClientTester::on_hasErrorForID(" << id << ")");
-
-  JSON_RPC_Error error(m_lsp.takeErrorForID(id));
-  DIAG("Error: " << toGDValue(error).asIndentedString());
-
-  sendNextRequest(id, error);
+  sendNextRequest(id, reply);
 
   GENERIC_CATCH_END
 }

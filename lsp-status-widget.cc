@@ -229,7 +229,8 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
         "The LSP connection is in phase 2 shutdown.");
       break;
 
-    case LSP_PS_PROTOCOL_ERROR:
+    case LSP_PS_JSON_RPC_PROTOCOL_ERROR:
+    case LSP_PS_MANAGER_PROTOCOL_ERROR:
       text = "E";
       bgColor = protoErrorColor;
       statusMessages.push_back(stringb(

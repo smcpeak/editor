@@ -15,6 +15,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "host-file-line.h"                      // HostFileLine
 #include "host-file-olb.h"                       // HostFile_OptLineByte
+#include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
@@ -2915,13 +2916,18 @@ void EditorWidget::lspGoToRelatedLocation(
     " request...");
   if (lspSynchronouslyWaitUntil(lambda, message)) {
     if (editorGlobal()->lspIsRunningNormally()) {
-      GDValue gdvReply = editorGlobal()->lspTakeReplyForID(id);
-      TRACE1("received reply: " << gdvReply.asIndentedString());
+      JSON_RPC_Reply reply = editorGlobal()->lspTakeReplyForID(id);
+      TRACE1("received reply: " << reply);
 
-      EditorWidget *widgetToShow =
-        editorGlobal()->selectEditorWidget(this, options);
+      if (reply.isError()) {
+        complain(stringb("LSP error: " << reply.error().m_message));
+      }
+      else {
+        EditorWidget *widgetToShow =
+          editorGlobal()->selectEditorWidget(this, options);
 
-      widgetToShow->lspHandleLocationReply(gdvReply, lsrk);
+        widgetToShow->lspHandleLocationReply(reply.result(), lsrk);
+      }
     }
     else {
       complain(editorGlobal()->lspExplainAbnormality());
@@ -3167,10 +3173,14 @@ void EditorWidget::lspSendSelectedText()
   }
 
   // Take the reply.
-  GDValue gdvReply = editorGlobal()->lspTakeReplyForID(requestID);
+  JSON_RPC_Reply reply = editorGlobal()->lspTakeReplyForID(requestID);
+  if (reply.isError()) {
+    complain(stringb("LSP error: " << reply.error().m_message));
+    return;
+  }
 
   // Stringify it.
-  std::string strReply = gdvReply.asIndentedString();
+  std::string strReply = reply.result().asIndentedString();
 
   // `method` is not a file path of course, but often (always?) has a
   // slash, and when I try to set a window title to a string containing

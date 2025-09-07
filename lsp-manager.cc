@@ -5,6 +5,7 @@
 
 #include "command-runner.h"                      // CommandRunner
 #include "json-rpc-client.h"                     // JSON_RPC_Client
+#include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-index.h"                          // LineIndex
 #include "line-number.h"                         // LineNumber
 #include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
@@ -33,6 +34,7 @@
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/xassert.h"                      // xassert, xassertPrecondition
 
+#include <iostream>                              // std::{endl, ostream}
 #include <memory>                                // std::make_unique
 #include <optional>                              // std::{optional, nullopt}
 #include <string>                                // std::string
@@ -214,6 +216,7 @@ void LSPManager::resetProtocolState()
   m_documentInfo.clear();
   m_filesWithPendingDiagnostics.clear();
   m_pendingErrorMessages.clear();
+  m_lspManagerProtocolError.reset();
 }
 
 
@@ -244,6 +247,36 @@ void LSPManager::addErrorMessage(std::string &&msg)
 {
   m_pendingErrorMessages.push_back(std::move(msg));
   Q_EMIT signal_hasPendingErrorMessages();
+}
+
+
+void LSPManager::recordManagerProtocolError(
+  JSON_RPC_Error const &error, char const *requestName)
+{
+  // Message for the user interface.
+  std::string message = stringb(
+    "Error in response to " << doubleQuote(requestName) <<
+    " request: " << error.m_message);
+
+  // Additional detail for logging/tracing.
+  std::string details = stringb(
+    "Details: " << toGDValue(error).asString());
+
+  TRACE1(message);
+  TRACE1(details);
+
+  if (m_protocolDiagnosticLog) {
+    *m_protocolDiagnosticLog << message << std::endl;
+    *m_protocolDiagnosticLog << details << std::endl;
+  }
+
+  if (m_lspManagerProtocolError) {
+    // We already have a protocol error, keep it since it is closer to
+    // the point of original failure.
+  }
+  else {
+    m_lspManagerProtocolError = message;
+  }
 }
 
 
@@ -348,29 +381,41 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   if (id == m_initializeRequestID) {
-    TRACE1("received initialize reply");
-    m_serverCapabilities = m_lsp->takeReplyForID(id);
     m_initializeRequestID = 0;
+    JSON_RPC_Reply reply = m_lsp->takeReplyForID(id);
+    TRACE1("received initialize reply: " << reply);
 
-    // Send "initialized" to complete the startup procedure.  There is
-    // no reply to this so we simply assume we're ready now.
-    m_lsp->sendNotification("initialized", GDVMap{});
+    if (reply.isSuccess()) {
+      m_serverCapabilities = reply.result();
 
-    // Now in `LSP_PS_NORMAL`.
+      // Send "initialized" to complete the startup procedure.  There is
+      // no reply to this so we simply assume we're ready now.
+      m_lsp->sendNotification("initialized", GDVMap{});
+    }
+    else {
+      recordManagerProtocolError(reply.error(), "initialize");
+    }
+
+    // Now in `LSP_PS_NORMAL` or `LSP_PS_MANAGER_PROTOCOL_ERROR`.
     Q_EMIT signal_changedProtocolState();
   }
 
   else if (id == m_shutdownRequestID) {
-    TRACE1("received shutdown reply");
-    m_lsp->takeReplyForID(id);         // Data is discarded.
     m_shutdownRequestID = 0;
+    JSON_RPC_Reply reply = m_lsp->takeReplyForID(id);
+    TRACE1("received shutdown reply: " << reply);
 
-    // Now, we send the "exit" notification, which should cause the
-    // server process to terminate.
-    m_lsp->sendNotification("exit", GDVMap{});
-    m_waitingForTermination = true;
+    if (reply.isSuccess()) {
+      // Now, we send the "exit" notification, which should cause the
+      // server process to terminate.
+      m_lsp->sendNotification("exit", GDVMap{});
+      m_waitingForTermination = true;
+    }
+    else {
+      recordManagerProtocolError(reply.error(), "shutdown");
+    }
 
-    // Now in `LSP_PS_SHUTDOWN2`.
+    // Now in `LSP_PS_SHUTDOWN2` or `LSP_PS_MANAGER_PROTOCOL_ERROR`.
     Q_EMIT signal_changedProtocolState();
   }
 
@@ -391,7 +436,7 @@ void LSPManager::on_hasProtocolError() NOEXCEPT
 
   TRACE1("on_hasProtocolError");
 
-  // We are now in `LSP_PS_PROTOCOL_ERROR`.
+  // We are now in `LSP_PS_JSON_RPC_PROTOCOL_ERROR`.
   Q_EMIT signal_changedProtocolState();
 
   GENERIC_CATCH_END
@@ -456,7 +501,8 @@ LSPManager::LSPManager(
     m_initializeRequestID(0),
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
-    m_pendingErrorMessages()
+    m_pendingErrorMessages(),
+    m_lspManagerProtocolError()
 {
   SMFileUtil sfu;
   std::string const fname =
@@ -756,10 +802,18 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
 
   if (m_lsp->hasProtocolError()) {
     return LSPAnnotatedProtocolState(
-      LSP_PS_PROTOCOL_ERROR,
+      LSP_PS_JSON_RPC_PROTOCOL_ERROR,
       stringb(
-        "There was an LSP protocol error: " <<
+        "There was an LSP protocol error in the JSON-RPC layer: " <<
         m_lsp->getProtocolError()));
+  }
+
+  if (m_lspManagerProtocolError) {
+    return LSPAnnotatedProtocolState(
+      LSP_PS_MANAGER_PROTOCOL_ERROR,
+      stringb(
+        "There was an LSP protocol error in the LSP layer: " <<
+        *m_lspManagerProtocolError));
   }
 
   if (!m_lsp->isChildRunning()) {
@@ -809,6 +863,7 @@ bool LSPManager::isRunningNormally() const
     m_commandRunner &&
     m_lsp &&
     !m_lsp->hasProtocolError() &&
+    !m_lspManagerProtocolError.has_value() &&
     m_lsp->isChildRunning() &&
     !m_initializeRequestID &&
     !m_shutdownRequestID &&
@@ -1016,13 +1071,13 @@ bool LSPManager::hasReplyForID(int id) const
 }
 
 
-gdv::GDValue LSPManager::takeReplyForID(int id)
+JSON_RPC_Reply LSPManager::takeReplyForID(int id)
 {
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(hasReplyForID(id));
 
-  GDValue ret = m_lsp->takeReplyForID(id);
-  TRACE2("reply " << id << ": " << ret.asIndentedString());
+  JSON_RPC_Reply ret = m_lsp->takeReplyForID(id);
+  TRACE2("reply " << id << ": " << ret);
 
   return ret;
 }

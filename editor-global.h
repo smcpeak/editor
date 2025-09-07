@@ -20,6 +20,7 @@
 #include "editor-widget-fwd.h"                   // EditorWidget [n]
 #include "filename-input.h"                      // FilenameInputDialog
 #include "host-file-line-fwd.h"                  // HostFileLine [n]
+#include "json-rpc-reply-fwd.h"                  // JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
 #include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
@@ -635,7 +636,7 @@ public:       // funcs
   //
   // Requires: lspIsRunningNormally()
   // Requires: lspHasReplyForID(id)
-  gdv::GDValue lspTakeReplyForID(int id);
+  JSON_RPC_Reply lspTakeReplyForID(int id);
 
   // Issue an `lsrk` request for information about the symbol at `coord`
   // in `ntd`.  Returns the request ID.

@@ -6,6 +6,7 @@
 
 #include "lsp-manager.h"                         // module under test
 
+#include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
@@ -193,14 +194,16 @@ void LSPManagerTester::sendDeclarationRequest()
 void LSPManagerTester::takeDeclarationReply()
 {
   xassert(m_lspManager.hasReplyForID(m_declarationRequestID));
-  GDValue reply = m_lspManager.takeReplyForID(m_declarationRequestID);
+  JSON_RPC_Reply reply = m_lspManager.takeReplyForID(m_declarationRequestID);
   xassert(!m_lspManager.hasReplyForID(m_declarationRequestID));
   m_declarationRequestID = 0;
 
   m_lspManager.selfCheck();
 
-  DIAG("Declaration reply: " << reply.asIndentedString());
+  DIAG("Declaration reply: " << reply);
   DIAG("Status: " << m_lspManager.checkStatus());
+
+  xassert(reply.isSuccess());
 }
 
 
@@ -254,14 +257,16 @@ void LSPManagerTester::requestDocumentContents()
 
 void LSPManagerTester::processContentsReply()
 {
-  GDValue reply = m_lspManager.takeReplyForID(m_contentRequestID);
+  JSON_RPC_Reply reply = m_lspManager.takeReplyForID(m_contentRequestID);
   m_contentRequestID = 0;
 
-  std::string text = reply.mapGetValueAt("text").stringGet();
+  xassert(reply.isSuccess());
+
+  std::string text = reply.result().mapGetValueAt("text").stringGet();
   xassert(text == m_doc.getWholeFileString());
 
   LSP_VersionNumber version =
-    LSP_VersionNumber(reply.mapGetValueAt("version").smallIntegerGet());
+    LSP_VersionNumber(reply.result().mapGetValueAt("version").smallIntegerGet());
   xassert(version == LSP_VersionNumber::fromTDVN(m_doc.getVersionNumber()));
 }
 
