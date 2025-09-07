@@ -1173,6 +1173,9 @@ bool EditorWindow::reloadCurrentDocument()
   bool ret = m_editorGlobal->reloadDocumentFile(this, currentDocument());
 
   if (ret) {
+    // Get updated diagnostics for the new contents.
+    editorWidget()->lspUpdateFileIfContinuous();
+
     // Redraw file contents, update status bar including search hit
     // counts, etc., and remove "[DISKMOD]" from title bar.
     editorWidget()->redraw();

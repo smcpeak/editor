@@ -8,7 +8,7 @@
 int x;
 
 // Simple, isolated syntax error example.
-y
+y                                      // diagnostic
 
 int z;
 
@@ -31,7 +31,7 @@ void foo(C &c);
 void foo(C &c)
 {
   // Ambiguous lookup error with two candidates.
-  bar(c);
+  bar(c);                              // diagnostic
 
   // Failed lookup example with a large number of candidates.
   //std::cout << c;

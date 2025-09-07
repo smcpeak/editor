@@ -519,6 +519,15 @@ public:      // funcs
   // Do `operation` with the current file.
   void lspDoFileOperation(LSPFileOperation operation);
 
+  // If the current document is configured to update continuously, and
+  // is open with the LSP server, and the server connection is operating
+  // normally, send a request to get updated LSP diagnostics.  (If any
+  // of those is not true, do nothing.)
+  //
+  // If the update attempt fails, this will pop up an error box and then
+  // disable automatic update (so we don't get stuck in an error loop).
+  void lspUpdateFileIfContinuous();
+
   // If there are diagnostics associated with the current document, and
   // the cursor is in one of the marked ranges, show its message and
   // return nullopt.  Otherwise, return a string explaining the issue.

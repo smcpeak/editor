@@ -1,0 +1,47 @@
+// lsp-reload-file.ev
+// Test that reloading the file also syncs.
+
+// Have the right file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Remove the file we will create if one is left over.
+RemoveFileIfExists("test/language-test-copy.cc")
+
+// Save as...
+Shortcut("window1.m_menuBar" "Alt+F")
+KeyPress("window1.m_menuBar.fileMenu" "Key_A" "a")
+
+// Enter a new file name.
+CheckFocusWidget("window1.filename_input.m_filenameEdit")
+FocusKeySequence("language-test-copy.cc")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor with new name.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test-copy.cc")
+
+// Now start the LSP server.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Wait until it is ready.  The file has 2 diagnostics according to the
+// fake LSP server.
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
+
+// Overwrite the file outside the editor.
+WriteFileContents("test/language-test-copy.cc", "// diagnostic\n")
+
+// Refresh it.
+Shortcut("window1.m_menuBar.fileMenu.fileReload" "F5")
+
+// Aan LSP refresh should automatically run, and discover that the new
+// number of diagnostics is 1.
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "1")
+
+// Clean up.
+RemoveFileIfExists("test/language-test-copy.cc")
+
+// EOF

@@ -2745,6 +2745,23 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 }
 
 
+void EditorWidget::lspUpdateFileIfContinuous()
+{
+  NamedTextDocument *ntd = getDocument();
+  if (ntd->m_lspUpdateContinuously &&
+      editorGlobal()->lspIsRunningNormally() &&
+      editorGlobal()->lspFileIsOpen(ntd)) {
+    try {
+      editorGlobal()->lspUpdateFile(ntd);
+    }
+    catch (XBase &x) {
+      complain(stringb("LSP update: " << x));
+      ntd->m_lspUpdateContinuously = false;
+    }
+  }
+}
+
+
 void EditorWidget::showDiagnosticDetailsDialog(
   QVector<DiagnosticElement> &&elts,
   std::string const &windowTitle)
@@ -3443,17 +3460,9 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
     editorGlobal()->recordCommand(std::move(cmd));
   }
 
-  if (ntd->m_lspUpdateContinuously &&
-      origVersion != ntd->getVersionNumber() &&
-      editorGlobal()->lspIsRunningNormally() &&
-      editorGlobal()->lspFileIsOpen(ntd)) {
-    try {
-      editorGlobal()->lspUpdateFile(ntd);
-    }
-    catch (XBase &x) {
-      complain(stringb("LSP update: " << x));
-      ntd->m_lspUpdateContinuously = false;
-    }
+  // Update LSP if the document changed.
+  if (origVersion != ntd->getVersionNumber()) {
+    lspUpdateFileIfContinuous();
   }
 }
 

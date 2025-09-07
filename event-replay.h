@@ -17,6 +17,7 @@
 
 // libc++
 #include <fstream>                     // std::ifstream
+#include <functional>                  // std::function
 
 class QImage;
 class QWidget;
@@ -144,6 +145,13 @@ private:     // funcs
     long durationMS,
     string const &receiver,
     string const &state,
+    string const &expect);
+
+  // Wait for up to `durationMS` for `stringFunc` to return `expect`.
+  // If we timeout, throw.
+  void waitUntilCheckStringFunction(
+    long durationMS,
+    std::function<std::string ()> stringFunc,
     string const &expect);
 
   // Post a QuiescenceEvent to the application event queue.

@@ -59,6 +59,7 @@
 
 // libc++
 #include <fstream>                     // std::ofstream
+#include <functional>                  // std::function
 #include <optional>                    // std::optional
 #include <regex>                       // std::regex_search
 #include <string>                      // std::string, getline
@@ -545,6 +546,17 @@ void EventReplay::replayCall(GDValue const &command)
     CHECK_EQ("CheckLabel " << doubleQuote(path));
   }
 
+  else if (funcName == "WaitUntilCheckLabel") {
+    auto [durationMS, path, expect] =
+      gdvpToTuple<int, std::string, std::string>(parser);
+
+    QLabel *label = getObjectFromPath<QLabel>(path);
+    auto stringFunc = [label]() -> std::string {
+      return toString(label->text());
+    };
+    waitUntilCheckStringFunction(durationMS, stringFunc, expect);
+  }
+
   else if (funcName == "CheckLabelMatches") {
     BIND_STRING_ARGS2(path, expectRE);
 
@@ -950,6 +962,19 @@ void EventReplay::waitUntilCheckQuery(
   string const &state,
   string const &expect)
 {
+  auto stringFunc = [receiver, state]() -> std::string {
+    EventReplayQueryable *q = getQueryableFromPath(receiver);
+    return q->eventReplayQuery(state);
+  };
+  waitUntilCheckStringFunction(durationMS, stringFunc, expect);
+}
+
+
+void EventReplay::waitUntilCheckStringFunction(
+  long durationMS,
+  std::function<std::string ()> stringFunc,
+  string const &expect)
+{
   long startMS = getMilliseconds();
   int checkCount = 0;
 
@@ -963,8 +988,7 @@ void EventReplay::waitUntilCheckQuery(
 
   while (true) {
     checkCount++;
-    EventReplayQueryable *q = getQueryableFromPath(receiver);
-    string actual = q->eventReplayQuery(state);
+    string actual = stringFunc();
     if (actual == expect) {
       break;
     }
