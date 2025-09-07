@@ -26,6 +26,16 @@ int x;
       }
     }
   }
+
+  {
+    "method": "$/methodNotFound"
+    "params": null
+  }
+
+  {
+    "method": "$/invalidRequest"
+    "params": null
+  }
 */
 
 // EOF
