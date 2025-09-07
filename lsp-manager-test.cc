@@ -268,6 +268,8 @@ void LSPManagerTester::processContentsReply()
   LSP_VersionNumber version =
     LSP_VersionNumber(reply.result().mapGetValueAt("version").smallIntegerGet());
   xassert(version == LSP_VersionNumber::fromTDVN(m_doc.getVersionNumber()));
+
+  DIAG("confirmed server agrees about contents");
 }
 
 
