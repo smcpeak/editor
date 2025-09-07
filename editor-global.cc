@@ -391,6 +391,7 @@ static char const *optionsDescription =
   "  -record         Record events to events.out.\n"
   "  -conn=hostname  Start with an active remote connection to hostname.\n"
   "  -no-settings    Do not read or write user settings.\n"
+  "  -fake-lsp       Use `lsp-test-server.py` as the LSP server.\n"
   "\n"
   "With -ev, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to\n"
   "stop after replay regardless of failure.\n"
@@ -445,6 +446,11 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         useSettings = false;
 
         // Only use the fake server with record/replay
+        m_lspIsFakeServer = true;
+      }
+
+      else if (arg == "-fake-lsp") {
+        // Allow easily setting this independent of other things.
         m_lspIsFakeServer = true;
       }
 
