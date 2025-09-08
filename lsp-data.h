@@ -511,23 +511,16 @@ public:      // data
   // When unset, `clangd` does its usual change aggregation.
   //
   // This field is specific to `clangd`, not part of general LSP.
-  std::optional<bool> m_wantDiagnostics;
+  std::optional<bool> m_wantDiagnostics = {};
 
 public:      // methods
   // create-tuple-class: declarations for LSP_DidChangeTextDocumentParams +move
-  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges, std::optional<bool> const &wantDiagnostics);
-  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier &&textDocument, std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges, std::optional<bool> &&wantDiagnostics);
+  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges, std::optional<bool> const &wantDiagnostics = {});
+  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier &&textDocument, std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges, std::optional<bool> &&wantDiagnostics = {});
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams &&obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams &&obj) noexcept;
-
-  // Allow `m_wantDiagnostics` to default to unset at construction
-  // sites.
-  //
-  // TODO: Modify `create-tuple-class` to add a feature to do this
-  // automatically.
-  explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges);
 
   operator gdv::GDValue() const;
 

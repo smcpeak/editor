@@ -897,15 +897,6 @@ LSP_TextDocumentContentChangeEvent::operator gdv::GDValue() const
 /*AUTO_CTC*/
 
 
-LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
-  LSP_VersionedTextDocumentIdentifier const &textDocument,
-  std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges)
-  : IMEMBFP(textDocument),
-    IMEMBFP(contentChanges),
-    m_wantDiagnostics()
-{}
-
-
 LSP_DidChangeTextDocumentParams::operator gdv::GDValue() const
 {
   GDValue m(GDVK_MAP);
