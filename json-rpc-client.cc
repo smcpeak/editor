@@ -24,8 +24,11 @@
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote, trimWhitespace, split
 #include "smbase/stringb.h"            // stringb
+#include "smbase/stringf.h"            // stringf
 
+#include <cstdlib>                     // std::getenv
 #include <exception>                   // std::exception
+#include <fstream>                     // std::ofstream
 #include <limits>                      // std::numeric_limits
 #include <optional>                    // std::make_optional
 #include <string_view>                 // std::string_view
@@ -92,6 +95,20 @@ int JSON_RPC_Client::getNextRequestID()
 
 void JSON_RPC_Client::send(std::string &&data)
 {
+  // Provide a crude mechanism for logging all of the messages.
+  static char const *logAllMessagesDir =
+    std::getenv("JSON_RPC_CLIENT_SEND_LOG_DIR");
+  if (logAllMessagesDir) {
+    static int messageNumber = 1;
+
+    std::string fname =
+      stringf("%s/msg%04d.bin", logAllMessagesDir, messageNumber);
+    std::ofstream logFile(fname.c_str(), std::ios::binary);
+    logFile.write(data.data(), data.size());
+
+    ++messageNumber;
+  }
+
   m_child.putInputData(QByteArray::fromStdString(data));
 }
 
@@ -100,9 +117,11 @@ void JSON_RPC_Client::send(std::string &&data)
 {
   std::string msgJSON = gdvToJSON(msg);
 
+  // As a minor convenience for the log file, write a newline after each
+  // JSON payload.
   return stringb(
-    "Content-Length: " << msgJSON.size() << "\r\n\r\n" <<
-    msgJSON);
+    "Content-Length: " << (msgJSON.size()+1) << "\r\n\r\n" <<
+    msgJSON << '\n');
 }
 
 
