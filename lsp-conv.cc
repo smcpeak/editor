@@ -19,6 +19,7 @@
 #include "smbase/gdvalue.h"            // gdv::toGDValue
 #include "smbase/optional-util.h"      // smbase::optInvoke
 #include "smbase/overflow.h"           // convertNumber
+#include "smbase/sm-env.h"             // envAsBool
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/xassert.h"            // xassertPrecondition
 
@@ -165,6 +166,83 @@ void applyLSPDocumentChanges(
 }
 
 
+// As part of a `clangd` workaround, send a single change notification.
+static void lspSendOneChange(
+  LSPManager &lspManager,
+  NamedTextDocument &doc,
+  TextMCoord start,
+  TextMCoord end,
+  char const *newText,
+  std::optional<bool> wantDiagnostics,
+  char const *traceLabel)
+{
+  doc.bumpVersionNumber();
+
+  LSP_DidChangeTextDocumentParams changeParams(
+    LSP_VersionedTextDocumentIdentifier::fromFname(
+      doc.filename(),
+      LSP_VersionNumber::fromTDVN(doc.getVersionNumber())),
+    std::list<LSP_TextDocumentContentChangeEvent>{
+      LSP_TextDocumentContentChangeEvent(
+        toLSP_Range(TextMCoordRange(start, end)),
+        newText)
+    },
+    wantDiagnostics
+  );
+
+  TRACE1(traceLabel << ": " <<
+         toGDValue(changeParams).asIndentedString());
+  lspManager.notify_textDocument_didChange(changeParams);
+  doc.beginTrackingChanges();
+}
+
+
+// If the content is unchanged, and the preamble is also unchanged
+// (which we can't easily tell), `clangd` will not send updated
+// diagnostics.  As a workaround to force updated diagnostics, send a
+// series of two quick changes that are together a no-op.  For the first
+// change, disable `clangd`s usual change aggregation so it will emit
+// diagnostics for that version.  Then the second will also get
+// diagnostics soon afterward.
+static void lspSendNoOpChangeWorkaround(
+  LSPManager &lspManager,
+  NamedTextDocument &doc)
+{
+  // Provide a way to disable my workaround so I can keep experimenting
+  // with fixing `clangd` itself.
+  static bool disableWorkaround =
+    envAsBool("LSP_CONV_DISABLE_NO_OP_CHANGE_WORKAROUND");
+  if (disableWorkaround) {
+    return;
+  }
+
+  TextMCoord endPos = doc.endCoord();
+
+  // Change 1: Append "//", which should have minimal adverse impact, at
+  // least for C/C++.
+  lspSendOneChange(
+    lspManager,
+    doc,
+    endPos,
+    endPos,
+    "//",
+    true /*wantDiagnostics*/,
+    "Sending no-op change part 1");
+
+  TextMCoord newEndPos = endPos.plusBytes(ByteDifference(2));
+
+  // Change 2: Remove the appended "//".
+  lspSendOneChange(
+    lspManager,
+    doc,
+    endPos,
+    newEndPos,
+    "",
+    std::nullopt /*wantDiagnostics*/,
+    "Sending no-op change part 2");
+}
+
+
 void lspSendUpdatedContents(
   LSPManager &lspManager,
   NamedTextDocument &doc)
@@ -183,33 +261,18 @@ void lspSendUpdatedContents(
   if (docInfo->m_lastSentVersion == version) {
     TRACE1("LSP: While updating " << doc.documentName() <<
            ": previous version is " << docInfo->m_lastSentVersion <<
-           ", same as new version;; bumping to force re-analysis.");
+           ", same as new version; bumping to force re-analysis.");
 
     // We want to re-send despite no content changes, for example
     // because a header file changed that should fix issues in the
     // current file.  Bump the version and try again.
     doc.bumpVersionNumber();
-
     version = LSP_VersionNumber::fromTDVN(doc.getVersionNumber());
-
-    // In this situation, `clangd` would normally ignore the
-    // notification because it realizes the file hasn't changed
-    // (despite the new version number) and thinks that means the
-    // diagnostics would be the same too.
-    //
-    // `clangd` accepts a `forceRebuild` parameter that would force
-    // new diagnostics, but it also rebuilds other things, making it
-    // quite slow.
-    //
-    // So, instead, we will just append some junk that should not
-    // cause the diagnostics to be different, but will make `clangd`
-    // re-analyze the contents.  This is much faster than
-    // `forceRebuild`.
-    //
-    // TODO: Figure out what to do here.
-    //
-    //contents += stringb("//" << version);
   }
+
+  // Are the contents the same?  If so we use a workaround below.
+  bool const sameContentsAsBefore =
+    docInfo->lastContentsEquals(doc.getCore());
 
   if (!( version > docInfo->m_lastSentVersion )) {
     // Sending this would be a protocol violation.
@@ -234,21 +297,6 @@ void lspSendUpdatedContents(
   // Done with these.
   recordedChanges.reset();
 
-  // This seems difficult to make work.  Among the issues is `clangd`
-  // will ignore two changes in quick succession if they cancel each
-  // other, so I would have to maintain the out-of-sync state for some
-  // time.
-  #if 0
-  if (docInfo->lastContentsEquals(doc.getCore())) {
-    TextMCoord endPos = doc.endCoord();
-    LSP_TextDocumentContentChangeEvent extraEdit(
-      toLSP_Range(TextMCoordRange(endPos, endPos)),
-      stringb("//" << version)
-    );
-    changeParams.m_contentChanges.push_back(extraEdit);
-  }
-  #endif
-
   // Send them to the server, and have the manager update its copy.
   TRACE2("Sending incremental changes: " <<
          toGDValue(changeParams).asIndentedString());
@@ -256,6 +304,12 @@ void lspSendUpdatedContents(
 
   // The document's change recorder must also know this was sent.
   doc.beginTrackingChanges();
+
+  // If the content is unchanged, `clangd` might not send updated
+  // diagnostics.  Try to persuade it to do so anyway.
+  if (sameContentsAsBefore) {
+    lspSendNoOpChangeWorkaround(lspManager, doc);
+  }
 }
 
 

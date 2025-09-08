@@ -501,14 +501,33 @@ public:      // data
   // The changes to apply, in order.
   std::list<LSP_TextDocumentContentChangeEvent> m_contentChanges;
 
+  // When set to true, `clangd` will provide diagnostics for the
+  // specified version rather than waiting to combine these changes with
+  // some that might arrive soon after.  However, this does *not* force
+  // it to deliver diagnostics if the file has not changed at all.
+  //
+  // When false, `clangd` will not send diagnostics.
+  //
+  // When unset, `clangd` does its usual change aggregation.
+  //
+  // This field is specific to `clangd`, not part of general LSP.
+  std::optional<bool> m_wantDiagnostics;
+
 public:      // methods
   // create-tuple-class: declarations for LSP_DidChangeTextDocumentParams +move
-  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges);
-  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier &&textDocument, std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges);
+  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges, std::optional<bool> const &wantDiagnostics);
+  /*AUTO_CTC*/ explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier &&textDocument, std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges, std::optional<bool> &&wantDiagnostics);
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams &&obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams const &obj) noexcept;
   /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &operator=(LSP_DidChangeTextDocumentParams &&obj) noexcept;
+
+  // Allow `m_wantDiagnostics` to default to unset at construction
+  // sites.
+  //
+  // TODO: Modify `create-tuple-class` to add a feature to do this
+  // automatically.
+  explicit LSP_DidChangeTextDocumentParams(LSP_VersionedTextDocumentIdentifier const &textDocument, std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges);
 
   operator gdv::GDValue() const;
 

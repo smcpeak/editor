@@ -847,26 +847,32 @@ LSP_TextDocumentContentChangeEvent::operator gdv::GDValue() const
 // create-tuple-class: definitions for LSP_DidChangeTextDocumentParams
 /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
 /*AUTO_CTC*/   LSP_VersionedTextDocumentIdentifier const &textDocument,
-/*AUTO_CTC*/   std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges)
+/*AUTO_CTC*/   std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges,
+/*AUTO_CTC*/   std::optional<bool> const &wantDiagnostics)
 /*AUTO_CTC*/   : IMEMBFP(textDocument),
-/*AUTO_CTC*/     IMEMBFP(contentChanges)
+/*AUTO_CTC*/     IMEMBFP(contentChanges),
+/*AUTO_CTC*/     IMEMBFP(wantDiagnostics)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
 /*AUTO_CTC*/   LSP_VersionedTextDocumentIdentifier &&textDocument,
-/*AUTO_CTC*/   std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges)
+/*AUTO_CTC*/   std::list<LSP_TextDocumentContentChangeEvent> &&contentChanges,
+/*AUTO_CTC*/   std::optional<bool> &&wantDiagnostics)
 /*AUTO_CTC*/   : IMEMBMFP(textDocument),
-/*AUTO_CTC*/     IMEMBMFP(contentChanges)
+/*AUTO_CTC*/     IMEMBMFP(contentChanges),
+/*AUTO_CTC*/     IMEMBMFP(wantDiagnostics)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams const &obj) noexcept
 /*AUTO_CTC*/   : DMEMB(m_textDocument),
-/*AUTO_CTC*/     DMEMB(m_contentChanges)
+/*AUTO_CTC*/     DMEMB(m_contentChanges),
+/*AUTO_CTC*/     DMEMB(m_wantDiagnostics)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(LSP_DidChangeTextDocumentParams &&obj) noexcept
 /*AUTO_CTC*/   : MDMEMB(m_textDocument),
-/*AUTO_CTC*/     MDMEMB(m_contentChanges)
+/*AUTO_CTC*/     MDMEMB(m_contentChanges),
+/*AUTO_CTC*/     MDMEMB(m_wantDiagnostics)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_DidChangeTextDocumentParams &LSP_DidChangeTextDocumentParams::operator=(LSP_DidChangeTextDocumentParams const &obj) noexcept
@@ -874,6 +880,7 @@ LSP_TextDocumentContentChangeEvent::operator gdv::GDValue() const
 /*AUTO_CTC*/   if (this != &obj) {
 /*AUTO_CTC*/     CMEMB(m_textDocument);
 /*AUTO_CTC*/     CMEMB(m_contentChanges);
+/*AUTO_CTC*/     CMEMB(m_wantDiagnostics);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
 /*AUTO_CTC*/ }
@@ -883,10 +890,20 @@ LSP_TextDocumentContentChangeEvent::operator gdv::GDValue() const
 /*AUTO_CTC*/   if (this != &obj) {
 /*AUTO_CTC*/     MCMEMB(m_textDocument);
 /*AUTO_CTC*/     MCMEMB(m_contentChanges);
+/*AUTO_CTC*/     MCMEMB(m_wantDiagnostics);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
+
+
+LSP_DidChangeTextDocumentParams::LSP_DidChangeTextDocumentParams(
+  LSP_VersionedTextDocumentIdentifier const &textDocument,
+  std::list<LSP_TextDocumentContentChangeEvent> const &contentChanges)
+  : IMEMBFP(textDocument),
+    IMEMBFP(contentChanges),
+    m_wantDiagnostics()
+{}
 
 
 LSP_DidChangeTextDocumentParams::operator gdv::GDValue() const
@@ -895,6 +912,9 @@ LSP_DidChangeTextDocumentParams::operator gdv::GDValue() const
 
   GDV_WRITE_MEMBER_STR(m_textDocument);
   GDV_WRITE_MEMBER_STR(m_contentChanges);
+  if (m_wantDiagnostics) {
+    GDV_WRITE_MEMBER_STR(m_wantDiagnostics);
+  }
 
   return m;
 }

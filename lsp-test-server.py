@@ -1205,9 +1205,7 @@ def main() -> None:
         # `clangd` has the annoying behavior that it will not send
         # diagnostics for a no-op change.  Imitate that so I can use
         # this script to test my workaround.
-        #
-        # Disabled since my workaround does not work...
-        if True or new_text != old_text:
+        if new_text != old_text:
           publish_diagnostics(uri)
         else:
           pass
