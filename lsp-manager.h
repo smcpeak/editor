@@ -405,6 +405,13 @@ public:      // methods
   // Requires: isRunningNormally()
   void cancelRequestWithID(int id);
 
+  // Send notification `method` with `params`.
+  //
+  // Requires: isRunningNormally()
+  void sendNotification(
+    std::string const &method,
+    gdv::GDValue const &params);
+
 Q_SIGNALS:
   // Emitted when the protocol state has (potentially) changed.  The
   // client must call `getProtocolState` to get the new state, which in

@@ -33,7 +33,7 @@ FocusKeyPR("Shift+Key_Down" "")
 // Send it.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
-KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_T" "t")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_R" "r")
 
 // We should be in the editor with a generated document.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")

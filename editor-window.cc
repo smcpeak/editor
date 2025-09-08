@@ -556,7 +556,7 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("lspDebugMenu");
       QMenu *menu = submenu;
 
-      // Used mnemonics: ast
+      // Used mnemonics: ars
 
       MENU_ITEM    ("St&art LSP server and immediately open file",
                     lspStartServerAndOpenFile);
@@ -564,8 +564,10 @@ void EditorWindow::buildMenu()
                     lspCheckStatus);
       MENU_ITEM    ("Show LSP server capabilities",
                     lspShowServerCapabilities);
-      MENU_ITEM    ("Send selected &text as arbitrary LSP request",
-                    lspSendSelectedText);
+      MENU_ITEM    ("Send selected text as arbitrary LSP &request",
+                    lspSendSelectedTextAsRequest);
+      MENU_ITEM    ("Send selected text as arbitrary LSP &notification(s)",
+                    lspSendSelectedTextAsNotification);
 
       menu->addSeparator();
 
@@ -2496,11 +2498,21 @@ void EditorWindow::lspCompletion() NOEXCEPT
 }
 
 
-void EditorWindow::lspSendSelectedText() NOEXCEPT
+void EditorWindow::lspSendSelectedTextAsRequest() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->lspSendSelectedText();
+  editorWidget()->lspSendSelectedText(true /*asRequest*/);
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspSendSelectedTextAsNotification() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorWidget()->lspSendSelectedText(false /*asRequest*/);
 
   GENERIC_CATCH_END
 }

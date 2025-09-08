@@ -299,6 +299,14 @@ private:     // funcs
     LSPSymbolRequestKind lsrk,
     smbase::XBase &x);
 
+  // Send `gdvMessage` as an LSP notification.  If it is a sequence,
+  // then treat it as multiple notifications to send one after the
+  // other.  This may throw `XGDValueParser` if the/a message does not
+  // have the right elements, or `XMessage` if the LSP manager
+  // encounters a problem.
+  void lspSendArbitraryNotification(
+    gdv::GDValue const &gdvMessage);
+
   // The user is trying to make a change to a read-only document.
   // Prompt to override the flag.
   bool promptOverrideReadOnly();
@@ -561,8 +569,9 @@ public:      // funcs
   void lspHandleCompletionReply(
     gdv::GDValue const &gdvReply);
 
-  // Send the selected text to the LSP server as a request.
-  void lspSendSelectedText();
+  // Send the selected text to the LSP server as a request or as a
+  // notification, depending on `asRequest`.
+  void lspSendSelectedText(bool asRequest);
 
   // -------------------- interaction with files ------------------
   // Get the connections interface object.

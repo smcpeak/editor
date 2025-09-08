@@ -654,6 +654,13 @@ public:       // funcs
     std::string const &method,
     gdv::GDValue const &params);
 
+  // Send an arbitrary notification.
+  //
+  // Requires: lspIsRunningNormally()
+  void lspSendArbitraryNotification(
+    std::string const &method,
+    gdv::GDValue const &params);
+
   // -------------------- Qt infrastructure-related --------------------
   // QCoreApplication methods.
   virtual bool notify(QObject *receiver, QEvent *event) OVERRIDE;

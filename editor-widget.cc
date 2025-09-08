@@ -3125,7 +3125,7 @@ void EditorWidget::lspHandleCompletionReply(
 }
 
 
-void EditorWidget::lspSendSelectedText()
+void EditorWidget::lspSendSelectedText(bool asRequest)
 {
   if (!editorGlobal()->lspIsRunningNormally()) {
     complain(editorGlobal()->lspExplainAbnormality());
@@ -3139,22 +3139,41 @@ void EditorWidget::lspSendSelectedText()
     return;
   }
 
-  // Parse it, expecting a method and parameters.
+  // Parse it as GDVN.
+  GDValue gdvMessage;
+  try {
+    gdvMessage = fromGDVN(selText);
+  }
+  catch (XBase &x) {
+    complain(x.getMessage());
+    return;
+  }
+
+  // Substitute `CUR_FILE_URI` for its URL.
+  if (getDocument()->hasFilename()) {
+    std::string curFileUri = makeFileURI(getDocument()->filename());
+    gdvMessage = substitutionTransformGDValue(gdvMessage,
+      std::map<GDValue, GDValue>{
+        { "CUR_FILE_URI"_sym, curFileUri },
+        { "CUR_FILE_VERSION"_sym, getDocument()->getVersionNumber() },
+      });
+  }
+
+  if (!asRequest) {
+    try {
+      lspSendArbitraryNotification(gdvMessage);
+    }
+    catch (XBase &x) {
+      complain(x.getMessage());
+    }
+    return;
+  }
+
+  // Get request method and params.
   std::string method;
   GDValue params;
   try {
-    GDValue req = fromGDVN(selText);
-
-    // Substitute `CUR_FILE_URI` for its URL.
-    if (getDocument()->hasFilename()) {
-      std::string curFileUri = makeFileURI(getDocument()->filename());
-      req = substitutionTransformGDValue(req,
-        std::map<GDValue, GDValue>{
-          { "CUR_FILE_URI"_sym, curFileUri },
-        });
-    }
-
-    GDValueParser p(req);
+    GDValueParser p(gdvMessage);
     method = p.mapGetValueAtStr("method").stringGet();
     params = p.mapGetValueAtStr("params").getValue();
   }
@@ -3220,6 +3239,30 @@ void EditorWidget::lspSendSelectedText()
 
   // Show it.
   setDocumentFile(ntd);
+}
+
+
+void EditorWidget::lspSendArbitraryNotification(
+  GDValue const &gdvMessage)
+{
+  if (gdvMessage.isSequence()) {
+    for (GDValue const &elt : gdvMessage.sequenceIterableC()) {
+      // Since there could be many, check LSP health each time.
+      if (!editorGlobal()->lspIsRunningNormally()) {
+        xmessage(editorGlobal()->lspExplainAbnormality());
+      }
+
+      lspSendArbitraryNotification(elt);
+    }
+  }
+
+  else {
+    GDValueParser p(gdvMessage);
+    std::string method = p.mapGetValueAtStr("method").stringGet();
+    GDValue params = p.mapGetValueAtStr("params").getValue();
+
+    editorGlobal()->lspSendArbitraryNotification(method, params);
+  }
 }
 
 

@@ -1685,6 +1685,16 @@ int EditorGlobal::lspSendArbitraryRequest(
 }
 
 
+void EditorGlobal::lspSendArbitraryNotification(
+  std::string const &method,
+  gdv::GDValue const &params)
+{
+  xassertPrecondition(lspIsRunningNormally());
+
+  m_lspManager->sendNotification(method, params);
+}
+
+
 // --------------------- Qt infrastructure-related ---------------------
 void EditorGlobal::focusChangedHandler(QWidget *from, QWidget *to)
 {

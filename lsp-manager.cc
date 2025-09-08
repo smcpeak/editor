@@ -1090,4 +1090,16 @@ void LSPManager::cancelRequestWithID(int id)
 }
 
 
+void LSPManager::sendNotification(
+  std::string const &method,
+  gdv::GDValue const &params)
+{
+  xassertPrecondition(isRunningNormally());
+
+  TRACE1("Sending notification " << doubleQuote(method) <<
+         ": " << params.asIndentedString());
+  m_lsp->sendNotification(method, params);
+}
+
+
 // EOF
