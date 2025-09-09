@@ -4,6 +4,7 @@
 #include "doc-type-detect.h"           // this module
 
 #include "doc-name.h"                  // DocumentName
+#include "doc-type.h"                  // DocumentType
 
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-regex.h"           // smbase::Regex
@@ -166,11 +167,11 @@ DocumentType detectDocumentType(DocumentName const &docName)
 {
   // This handles both "foo.diff" and "git diff [<fname>]".
   if (isDiffName(docName)) {
-    return KDT_DIFF;
+    return DocumentType::KDT_DIFF;
   }
 
   if (!docName.hasFilename()) {
-    return KDT_UNKNOWN;
+    return DocumentType::KDT_UNKNOWN;
   }
 
   // Get file extension.
@@ -199,11 +200,11 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "y",
     };
     if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
-      return KDT_C;
+      return DocumentType::KDT_C;
     }
 
     if (streq(ext, "mk")) {
-      return KDT_MAKEFILE;
+      return DocumentType::KDT_MAKEFILE;
     }
 
     static char const * const hashCommentExts[] = {
@@ -211,7 +212,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "sh",
     };
     if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
-      return KDT_HASH_COMMENT;
+      return DocumentType::KDT_HASH_COMMENT;
     }
 
     static char const * const ocamlExts[] = {
@@ -219,7 +220,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "mli",
     };
     if (stringAmong(ext, ocamlExts, TABLESIZE(ocamlExts))) {
-      return KDT_OCAML;
+      return DocumentType::KDT_OCAML;
     }
 
     static char const * const pythonExts[] = {
@@ -227,20 +228,20 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "pyi",
     };
     if (stringAmong(ext, pythonExts, TABLESIZE(pythonExts))) {
-      return KDT_PYTHON;
+      return DocumentType::KDT_PYTHON;
     }
   }
 
   if (endsWith(filename, "Makefile")) {
-    return KDT_MAKEFILE;
+    return DocumentType::KDT_MAKEFILE;
   }
 
   string basename = SMFileUtil().splitPathBase(filename);
   if (isCppHeaderName(basename)) {
-    return KDT_C;
+    return DocumentType::KDT_C;
   }
 
-  return KDT_UNKNOWN;
+  return DocumentType::KDT_UNKNOWN;
 }
 
 

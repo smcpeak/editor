@@ -7,6 +7,7 @@
 #include "apply-command-dialog.h"                // ApplyCommandDialog
 #include "command-runner.h"                      // CommandRunner
 #include "doc-type-detect.h"                     // detectDocumentType
+#include "doc-type.h"                            // DocumentType
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-widget-frame.h"                 // EditorWidgetFrame
@@ -694,7 +695,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   DocumentType kdt = detectDocumentType(file->documentName());
   file->setLanguage(kdt);
 
-  if (kdt == KDT_DIFF) {
+  if (kdt == DocumentType::KDT_DIFF) {
     // Diff output has lots of lines that are not empty and have
     // whitespace on them.  I do not want that highlighted.
     file->m_highlightTrailingWhitespace = false;

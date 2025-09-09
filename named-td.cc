@@ -44,7 +44,7 @@ NamedTextDocument::NamedTextDocument()
     m_diagnostics(),
     m_tddUpdater(),
     m_observationRecorder(getCore()),
-    m_language(KDT_UNKNOWN),
+    m_language(DocumentType::KDT_UNKNOWN),
     m_highlighter(),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),

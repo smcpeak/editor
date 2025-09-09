@@ -6,9 +6,13 @@
 #ifndef EDITOR_DOC_TYPE_H
 #define EDITOR_DOC_TYPE_H
 
+#include "doc-type-fwd.h"              // fwds for this module
+
+#include <iosfwd>                      // std::ostream
+
 
 // All the kinds of documents I know about.
-enum DocumentType {
+enum class DocumentType : int {
   KDT_UNKNOWN,               // Unrecognized.
 
   KDT_C,                     // C or C++.
@@ -22,17 +26,20 @@ enum DocumentType {
 };
 
 // Return a string like "KDT_C".
-char const *toString(DocumentType kdt);
+char const *toString(DocumentType dt);
+
+// Write like `toString` does.
+std::ostream &operator<<(std::ostream &os, DocumentType dt);
 
 // Return a string like "None" or "C++".
-char const *languageName(DocumentType kdt);
+char const *languageName(DocumentType dt);
 
 
-// Iterate with `kdt` over all `DocumentType`s.
-#define FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt)   \
-  for (DocumentType kdt = KDT_UNKNOWN; \
-       kdt < NUM_KNOWN_DOCUMENT_TYPES;      \
-       kdt = (DocumentType)(kdt + 1))
+// Iterate with `dt` over all `DocumentType`s.
+#define FOR_EACH_KNOWN_DOCUMENT_TYPE(dt)            \
+  for (DocumentType dt = DocumentType::KDT_UNKNOWN; \
+       dt < DocumentType::NUM_KNOWN_DOCUMENT_TYPES; \
+       dt = DocumentType(int(dt) + 1))
 
 
 #endif // EDITOR_DOC_TYPE_H

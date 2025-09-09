@@ -5,6 +5,7 @@
 
 #include "c_hilite.h"                  // C_Highlighter
 #include "diff-hilite.h"               // DiffHighlighter
+#include "doc-type.h"                  // DocumentType
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "makefile_hilite.h"           // Makefile_Highlighter
 #include "ocaml_hilite.h"              // OCaml_Highlighter
@@ -21,22 +22,22 @@ std::unique_ptr<Highlighter> makeHighlighterForLanguage(
     default:
       return nullptr;
 
-    case KDT_C:
+    case DocumentType::KDT_C:
       return std::make_unique<C_Highlighter>(core);
 
-    case KDT_MAKEFILE:
+    case DocumentType::KDT_MAKEFILE:
       return std::make_unique<Makefile_Highlighter>(core);
 
-    case KDT_HASH_COMMENT:
+    case DocumentType::KDT_HASH_COMMENT:
       return std::make_unique<HashComment_Highlighter>(core);
 
-    case KDT_OCAML:
+    case DocumentType::KDT_OCAML:
       return std::make_unique<OCaml_Highlighter>(core);
 
-    case KDT_PYTHON:
+    case DocumentType::KDT_PYTHON:
       return std::make_unique<Python_Highlighter>(core);
 
-    case KDT_DIFF:
+    case DocumentType::KDT_DIFF:
       return std::make_unique<DiffHighlighter>();
   }
 }

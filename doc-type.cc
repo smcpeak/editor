@@ -5,10 +5,12 @@
 
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
 
+#include <iostream>                    // std::ostream
+
 
 DEFINE_ENUMERATION_TO_STRING_OR(
   DocumentType,
-  NUM_KNOWN_DOCUMENT_TYPES,
+  DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
   (
     "KDT_UNKNOWN",
     "KDT_C",
@@ -22,11 +24,17 @@ DEFINE_ENUMERATION_TO_STRING_OR(
 )
 
 
+std::ostream &operator<<(std::ostream &os, DocumentType dt)
+{
+  return os << toString(dt);
+}
+
+
 char const *languageName(DocumentType sl)
 {
   RETURN_ENUMERATION_STRING_OR(
     DocumentType,
-    NUM_KNOWN_DOCUMENT_TYPES,
+    DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
     (
       "None",
       "C++",

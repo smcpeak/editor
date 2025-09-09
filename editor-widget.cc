@@ -9,6 +9,7 @@
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "diagnostic-element.h"                  // DiagnosticElement
 #include "doc-type-detect.h"                     // languageName
+#include "doc-type.h"                            // DocumentType
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
@@ -3235,7 +3236,7 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
     docTitle, strReply);
 
   // Use C/C++ highlighting for the result.
-  ntd->setLanguage(KDT_C);
+  ntd->setLanguage(DocumentType::KDT_C);
 
   // Show it.
   setDocumentFile(ntd);
