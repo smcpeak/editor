@@ -12,7 +12,13 @@
 # This is not part of any automated test, just a tool for low-level
 # experimentation and debugging.
 
-for fn in out/sendlog/msg*; do
+if [ "x$1" = "x" ]; then
+  echo "usage: $0 <message-files>" >&2
+  echo "Sends each of <message-files> to stdout in sequence." >&2
+  exit 2
+fi
+
+for fn in "$@"; do
   # Console output to indicate where we are.
   echo "" >&2
   echo "----- $fn -----" >&2
