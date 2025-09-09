@@ -6,7 +6,7 @@
 #ifndef EDITOR_DOC_TYPE_HILITE_H
 #define EDITOR_DOC_TYPE_HILITE_H
 
-#include "doc-type-detect.h"           // DocumentType
+#include "doc-type.h"                  // DocumentType
 #include "hilite-fwd.h"                // Highlighter [n]
 #include "td-core-fwd.h"               // TextDocumentCore [n]
 

@@ -7,7 +7,7 @@
 #include "named-td-fwd.h"              // fwds for this module
 
 #include "doc-name.h"                  // DocumentName
-#include "doc-type-detect.h"           // DocumentType
+#include "doc-type.h"                  // DocumentType
 #include "hilite.h"                    // Highlighter
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
