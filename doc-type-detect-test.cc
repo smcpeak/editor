@@ -28,14 +28,14 @@ DocumentName cmdDocName(char const *cmd)
 
 void testOne_detectDocumentType(
   DocumentName const &docName,
-  KnownDocumentType expect)
+  DocumentType expect)
 {
   EXPECT_EQ(detectDocumentType(docName), expect);
 }
 
 void testOne_detectFileType(
   char const *fname,
-  KnownDocumentType expect)
+  DocumentType expect)
 {
   testOne_detectDocumentType(fileDocName(fname), expect);
 }

@@ -14,7 +14,7 @@
 
 
 std::unique_ptr<Highlighter> makeHighlighterForLanguage(
-  KnownDocumentType kdt,
+  DocumentType kdt,
   TextDocumentCore const &core)
 {
   switch (kdt) {

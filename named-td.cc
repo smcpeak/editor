@@ -138,7 +138,7 @@ HostAndResourceName NamedTextDocument::directoryHarn() const
 }
 
 
-void NamedTextDocument::setLanguage(KnownDocumentType kdt)
+void NamedTextDocument::setLanguage(DocumentType kdt)
 {
   m_language = kdt;
   m_highlighter = makeHighlighterForLanguage(kdt, getCore());

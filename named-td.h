@@ -7,7 +7,7 @@
 #include "named-td-fwd.h"              // fwds for this module
 
 #include "doc-name.h"                  // DocumentName
-#include "doc-type-detect.h"           // KnownDocumentType
+#include "doc-type-detect.h"           // DocumentType
 #include "hilite.h"                    // Highlighter
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
@@ -82,7 +82,7 @@ private:     // data
   TextDocumentObservationRecorder m_observationRecorder;
 
   // Which language to treat the contents as.
-  KnownDocumentType m_language;
+  DocumentType m_language;
 
   // Current highlighter, if any.
   std::unique_ptr<Highlighter> m_highlighter;
@@ -157,13 +157,13 @@ public:      // funcs
   string directory() const             { return m_documentName.directory(); }
 
   // ---------------------------- language -----------------------------
-  KnownDocumentType language() const
+  DocumentType language() const
     { return m_language; }
   Highlighter * NULLABLE highlighter() const
     { return m_highlighter.get(); }
 
   // Change the current language and highlighter.
-  void setLanguage(KnownDocumentType sl);
+  void setLanguage(DocumentType sl);
 
   // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.

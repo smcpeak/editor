@@ -19,7 +19,7 @@ using std::string;
 
 
 DEFINE_ENUMERATION_TO_STRING_OR(
-  KnownDocumentType,
+  DocumentType,
   NUM_KNOWN_DOCUMENT_TYPES,
   (
     "KDT_UNKNOWN",
@@ -34,10 +34,10 @@ DEFINE_ENUMERATION_TO_STRING_OR(
 )
 
 
-char const *languageName(KnownDocumentType sl)
+char const *languageName(DocumentType sl)
 {
   RETURN_ENUMERATION_STRING_OR(
-    KnownDocumentType,
+    DocumentType,
     NUM_KNOWN_DOCUMENT_TYPES,
     (
       "None",
@@ -199,7 +199,7 @@ static bool isCppHeaderName(string const &basename)
 }
 
 
-KnownDocumentType detectDocumentType(DocumentName const &docName)
+DocumentType detectDocumentType(DocumentName const &docName)
 {
   // This handles both "foo.diff" and "git diff [<fname>]".
   if (isDiffName(docName)) {

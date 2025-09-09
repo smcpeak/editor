@@ -10,7 +10,7 @@
 
 
 // All the kinds of documents I know about.
-enum KnownDocumentType {
+enum DocumentType {
   KDT_UNKNOWN,               // Unrecognized.
 
   KDT_C,                     // C or C++.
@@ -24,22 +24,22 @@ enum KnownDocumentType {
 };
 
 // Return a string like "KDT_C".
-char const *toString(KnownDocumentType kdt);
+char const *toString(DocumentType kdt);
 
 // Return a string like "None" or "C++".
-char const *languageName(KnownDocumentType kdt);
+char const *languageName(DocumentType kdt);
 
 
-// Iterate with `kdt` over all `KnownDocumentType`s.
+// Iterate with `kdt` over all `DocumentType`s.
 #define FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt)   \
-  for (KnownDocumentType kdt = KDT_UNKNOWN; \
+  for (DocumentType kdt = KDT_UNKNOWN; \
        kdt < NUM_KNOWN_DOCUMENT_TYPES;      \
-       kdt = (KnownDocumentType)(kdt + 1))
+       kdt = (DocumentType)(kdt + 1))
 
 
 // Determine the document type based on its name or command line.
 // Return `KDT_UNKNOWN` if it cannot be determined.
-KnownDocumentType detectDocumentType(DocumentName const &docName);
+DocumentType detectDocumentType(DocumentName const &docName);
 
 
 #endif // EDITOR_DOC_TYPE_DETECT_H

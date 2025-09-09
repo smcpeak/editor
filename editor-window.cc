@@ -691,7 +691,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   TRACE1("useDefaultHighlighter: file: " <<
          toGDValue(file->documentName()));
 
-  KnownDocumentType kdt = detectDocumentType(file->documentName());
+  DocumentType kdt = detectDocumentType(file->documentName());
   file->setLanguage(kdt);
 
   if (kdt == KDT_DIFF) {
