@@ -26,6 +26,16 @@ enum KnownDocumentType {
 // Return a string like "KDT_C".
 char const *toString(KnownDocumentType kdt);
 
+// Return a string like "None" or "C++".
+char const *languageName(KnownDocumentType kdt);
+
+
+// Iterate with `kdt` over all `KnownDocumentType`s.
+#define FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt)   \
+  for (KnownDocumentType kdt = KDT_UNKNOWN; \
+       kdt < NUM_KNOWN_DOCUMENT_TYPES;      \
+       kdt = (KnownDocumentType)(kdt + 1))
+
 
 // Determine the document type based on its name or command line.
 // Return `KDT_UNKNOWN` if it cannot be determined.

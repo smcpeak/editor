@@ -4,11 +4,11 @@
 #include "editor-widget.h"                       // this module
 
 // editor
-#include "c_hilite.h"                            // C_Highlighter
 #include "completions-dialog.h"                  // CompletionsDialog
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
 #include "diagnostic-element.h"                  // DiagnosticElement
+#include "doc-type-detect.h"                     // languageName
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
@@ -1137,8 +1137,8 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       }
 
       // Apply syntax highlighting.
-      if (m_editor->m_namedDoc->m_highlighter) {
-        m_editor->m_namedDoc->m_highlighter
+      if (m_editor->m_namedDoc->highlighter()) {
+        m_editor->m_namedDoc->highlighter()
           ->highlightTDE(m_editor, line, /*OUT*/ modelCategories);
         m_editor->modelToLayoutSpans(line,
           /*OUT*/ layoutCategories, /*IN*/ modelCategories);
@@ -3235,7 +3235,7 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
     docTitle, strReply);
 
   // Use C/C++ highlighting for the result.
-  ntd->m_highlighter.reset(new C_Highlighter(ntd->getCore()));
+  ntd->setLanguage(KDT_C);
 
   // Show it.
   setDocumentFile(ntd);
@@ -3822,6 +3822,9 @@ string EditorWidget::eventReplayQuery(string const &state)
   else if (state == "documentFileName") {
     // Strip path info.
     return SMFileUtil().splitPathBase(m_editor->m_namedDoc->resourceName());
+  }
+  else if (state == "documentLanguage") {
+    return languageName(m_editor->m_namedDoc->language());
   }
   else if (state == "documentText") {
     return m_editor->getTextForLRangeString(m_editor->documentLRange());

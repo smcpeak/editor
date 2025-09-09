@@ -34,6 +34,26 @@ DEFINE_ENUMERATION_TO_STRING_OR(
 )
 
 
+char const *languageName(KnownDocumentType sl)
+{
+  RETURN_ENUMERATION_STRING_OR(
+    KnownDocumentType,
+    NUM_KNOWN_DOCUMENT_TYPES,
+    (
+      "None",
+      "C++",
+      "Makefile",
+      "Hash comment",
+      "OCaml",
+      "Python",
+      "Unified diff",
+    ),
+    sl,
+    "<invalid language>"
+  )
+}
+
+
 static bool isDiffName(DocumentName const &docName)
 {
   std::string name = docName.resourceName();

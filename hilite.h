@@ -4,6 +4,8 @@
 #ifndef EDITOR_HILITE_H
 #define EDITOR_HILITE_H
 
+#include "hilite-fwd.h"                // fwds for this module
+
 #include "line-index.h"                // LineIndex
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "td-editor.h"                 // TextDocumentEditor

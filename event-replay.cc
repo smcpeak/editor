@@ -49,6 +49,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QModelIndex>
 #include <QPushButton>
 #include <QStringList>
 #include <QTableWidget>
@@ -588,6 +589,20 @@ void EventReplay::replayCall(GDValue const &command)
     auto *textEdit = getObjectFromPath<QTextEdit>(path);
     string actual = toString(textEdit->toPlainText());
     CHECK_EQ("CheckTextEditText " << doubleQuote(path));
+  }
+
+  else if (funcName == "CheckListViewSelectedItem") {
+    auto [path, expect] =
+      gdvpToTuple<std::string, std::string>(parser);
+
+    auto *listView = getObjectFromPath<QListView>(path);
+
+    // https://stackoverflow.com/a/38772280
+    QModelIndex index = listView->currentIndex();
+    QString itemText = index.data(Qt::DisplayRole).toString();
+
+    string actual = toString(itemText);
+    CHECK_EQ("CheckListViewSelectedItem " << doubleQuote(path));
   }
 
   else if (funcName == "CheckListWidgetCount") {

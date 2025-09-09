@@ -3,6 +3,7 @@
 
 #include "named-td.h"                  // this module
 
+#include "doc-type-hilite.h"           // makeHighlighterForLanguage
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
@@ -43,10 +44,11 @@ NamedTextDocument::NamedTextDocument()
     m_diagnostics(),
     m_tddUpdater(),
     m_observationRecorder(getCore()),
+    m_language(KDT_UNKNOWN),
+    m_highlighter(),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
-    m_highlighter(),
     m_highlightTrailingWhitespace(true),
     m_lspUpdateContinuously(true)
 {
@@ -133,6 +135,13 @@ void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
 HostAndResourceName NamedTextDocument::directoryHarn() const
 {
   return HostAndResourceName(hostName(), directory());
+}
+
+
+void NamedTextDocument::setLanguage(KnownDocumentType kdt)
+{
+  m_language = kdt;
+  m_highlighter = makeHighlighterForLanguage(kdt, getCore());
 }
 
 

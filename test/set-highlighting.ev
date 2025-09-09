@@ -1,0 +1,33 @@
+// set-highlighting.ev
+// Test the "View | Set highlighting..." menu item.
+
+// In editor with expected file.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Check that C++ is currently active.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentLanguage" "C++")
+
+// Open the dialog to change it.
+Shortcut("window1.m_menuBar" "Alt+V")
+KeyPress("window1.m_menuBar.viewMenu" "Key_H" "h")
+
+// Dialog is open, list box is focused.
+CheckFocusWidget("window1.chooseHighlight.#4")
+
+// "C/C++" is currently selected.
+CheckListViewSelectedItem("window1.chooseHighlight.#4", "C++")
+
+// Change to "Hash comment".
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Down" "")
+CheckListViewSelectedItem("window1.chooseHighlight.#4", "Hash comment")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Check that "Hash comment" is currently active.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentLanguage" "Hash comment")
+
+// EOF

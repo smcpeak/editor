@@ -5,9 +5,7 @@
 
 // editor
 #include "apply-command-dialog.h"                // ApplyCommandDialog
-#include "c_hilite.h"                            // C_Highlighter
 #include "command-runner.h"                      // CommandRunner
-#include "diff-hilite.h"                         // DiffHighlighter
 #include "doc-type-detect.h"                     // detectDocumentType
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-navigation-options.h"           // EditorNavigationOptions
@@ -16,16 +14,12 @@
 #include "filename-input.h"                      // FilenameInputDialog
 #include "fonts-dialog.h"                        // FontsDialog
 #include "git-version.h"                         // editor_git_version
-#include "hashcomment_hilite.h"                  // HashComment_Highlighter
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-manager.h"                         // LSPManager
 #include "lsp-status-widget.h"                   // LSPStatusWidget
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
 #include "macro-run-dialog.h"                    // MacroRunDialog
-#include "makefile_hilite.h"                     // Makefile_Highlighter
-#include "ocaml_hilite.h"                        // OCaml_Highlighter
 #include "pixmaps.h"                             // g_editorPixmaps
-#include "python_hilite.h"                       // Python_Highlighter
 #include "sar-panel.h"                           // SearchAndReplacePanel
 #include "status-bar.h"                          // StatusBarDisplay
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -697,42 +691,13 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   TRACE1("useDefaultHighlighter: file: " <<
          toGDValue(file->documentName()));
 
-  file->m_highlighter.reset();
-
   KnownDocumentType kdt = detectDocumentType(file->documentName());
-  switch (kdt) {
-    case KDT_DIFF:
-      file->m_highlighter.reset(new DiffHighlighter());
+  file->setLanguage(kdt);
 
-      // Diff output has lots of lines that are not empty and have
-      // whitespace on them.  I do not want that highlighted.
-      file->m_highlightTrailingWhitespace = false;
-
-      return;
-
-    case KDT_C:
-      file->m_highlighter.reset(new C_Highlighter(file->getCore()));
-      return;
-
-    case KDT_MAKEFILE:
-      file->m_highlighter.reset(new Makefile_Highlighter(file->getCore()));
-      return;
-
-    case KDT_HASH_COMMENT:
-      file->m_highlighter.reset(new HashComment_Highlighter(file->getCore()));
-      return;
-
-    case KDT_OCAML:
-      file->m_highlighter.reset(new OCaml_Highlighter(file->getCore()));
-      return;
-
-    case KDT_PYTHON:
-      file->m_highlighter.reset(new Python_Highlighter(file->getCore()));
-      return;
-
-    default:
-      // Leave it without any highlighter.
-      break;
+  if (kdt == KDT_DIFF) {
+    // Diff output has lots of lines that are not empty and have
+    // whitespace on them.  I do not want that highlighted.
+    file->m_highlightTrailingWhitespace = false;
   }
 }
 
@@ -2008,24 +1973,23 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
   NamedTextDocument *doc = this->currentDocument();
 
   QInputDialog dialog(this);
+  dialog.setObjectName("chooseHighlight");
   dialog.setWindowTitle("Set Highlighting");
   dialog.setLabelText("Highlighting to use for this file:");
-  dialog.setComboBoxItems(QStringList() <<
-    "None" <<
-    "C/C++" <<
-    "Diff" <<
-    "HashComment" <<
-    "Makefile" <<
-    "OCaml" <<
-    "Python");
+
+  // List of known languages.
+  QStringList languageNames;
+  FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt) {
+    languageNames.push_back(languageName(kdt));
+  }
+  dialog.setComboBoxItems(languageNames);
 
   // One annoying thing is you can't double-click an item to choose
   // it and simultaneously close the dialog.
   dialog.setOption(QInputDialog::UseListViewForComboBoxItems);
 
-  if (doc->m_highlighter) {
-    dialog.setTextValue(toQString(doc->m_highlighter->highlighterName()));
-  }
+  // Start with the current language selected.
+  dialog.setTextValue(languageName(doc->language()));
 
   if (!dialog.exec()) {
     return;
@@ -2039,35 +2003,19 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
   // 'textValue' is only used in TextInput mode without clarifying that
   // comboBox mode is a form of TextInput mode.  I determined that by
   // reading the source code.
-  QString chosen = dialog.textValue();
+  QString chosenName = dialog.textValue();
 
-  // We are going to replace the highlighter (even if we replace it with
-  // the same style), so remove the old one.
-  doc->m_highlighter.reset();
-
-  // TODO: Obviously this is not a good method of recognizing the chosen
-  // element, nor a scalable registry of available highlighters.
-  if (chosen == "C/C++") {
-    doc->m_highlighter.reset(new C_Highlighter(doc->getCore()));
+  // Somewhat crudely search for a language whose name matches what the
+  // dialog says was picked.
+  bool found = false;
+  FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt) {
+    if (chosenName == languageName(kdt)) {
+      doc->setLanguage(kdt);
+      found = true;
+      break;
+    }
   }
-  else if (chosen == "Diff") {
-    doc->m_highlighter.reset(new DiffHighlighter());
-  }
-  else if (chosen == "HashComment") {
-    doc->m_highlighter.reset(new HashComment_Highlighter(doc->getCore()));
-  }
-  else if (chosen == "Makefile") {
-    doc->m_highlighter.reset(new Makefile_Highlighter(doc->getCore()));
-  }
-  else if (chosen == "OCaml") {
-    doc->m_highlighter.reset(new OCaml_Highlighter(doc->getCore()));
-  }
-  else if (chosen == "Python") {
-    doc->m_highlighter.reset(new Python_Highlighter(doc->getCore()));
-  }
-  else {
-    // We use no highlighter.
-  }
+  xassert(found);
 
   // Notify everyone of the change.
   this->m_editorGlobal->notifyDocumentAttributeChanged(doc);

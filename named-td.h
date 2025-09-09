@@ -7,6 +7,7 @@
 #include "named-td-fwd.h"              // fwds for this module
 
 #include "doc-name.h"                  // DocumentName
+#include "doc-type-detect.h"           // KnownDocumentType
 #include "hilite.h"                    // Highlighter
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
@@ -80,6 +81,12 @@ private:     // data
   //
   TextDocumentObservationRecorder m_observationRecorder;
 
+  // Which language to treat the contents as.
+  KnownDocumentType m_language;
+
+  // Current highlighter, if any.
+  std::unique_ptr<Highlighter> m_highlighter;
+
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
@@ -98,12 +105,6 @@ public:      // data
   // NamedTextDocumentList.  This will usually be similar to the name,
   // but perhaps shortened so long as it remains unique.
   string m_title;
-
-  // Current highlighter, if any.  Clients can come in and replace the
-  // highlighter, but it must always be the case that the highlighter is
-  // attached to 'this' buffer (because it's allowed to maintain
-  // internal incremental state about the buffer contents).
-  std::unique_ptr<Highlighter> m_highlighter;
 
   // When true, the widget will highlight instances of whitespace at
   // the end of a line.  Initially true, but is set to false by
@@ -154,6 +155,15 @@ public:      // funcs
   bool hasFilename() const             { return m_documentName.hasFilename(); }
   string filename() const              { return m_documentName.filename(); }
   string directory() const             { return m_documentName.directory(); }
+
+  // ---------------------------- language -----------------------------
+  KnownDocumentType language() const
+    { return m_language; }
+  Highlighter * NULLABLE highlighter() const
+    { return m_highlighter.get(); }
+
+  // Change the current language and highlighter.
+  void setLanguage(KnownDocumentType sl);
 
   // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.
