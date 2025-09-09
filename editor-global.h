@@ -596,14 +596,15 @@ public:       // funcs
   RCSerf<LSPDocumentInfo const> lspGetDocInfo(
     NamedTextDocument const *doc) const;
 
-  // Open `ntd` with the server.
+  // Open `ntd` with the server as `languageId`.
   //
   // This can throw `XNumericConversion` if the version of `ntd` cannot
   // be expressed as an LSP version.
   //
   // Requires: !lspFileIsOpen(ntd)
   // Ensures:  lspFileIsOpen(ntd)
-  void lspOpenFile(NamedTextDocument *ntd);
+  void lspOpenFile(
+    NamedTextDocument *ntd, std::string const &languageId);
 
   // Update `ntd` with the server.
   //

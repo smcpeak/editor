@@ -3,6 +3,7 @@
 
 #include "lsp-conv.h"                  // this module
 
+#include "doc-type.h"                  // DocumentType
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
 #include "lsp-manager.h"               // LSPManager
 #include "lsp-version-number.h"        // LSP_VersionNumber
@@ -25,6 +26,8 @@
 
 #include <list>                        // std::list
 #include <memory>                      // std::unique_ptr
+#include <optional>                    // std::{nullopt, optional}
+#include <string>                      // std::string
 #include <utility>                     // std::move
 
 using namespace gdv;
@@ -309,6 +312,22 @@ void lspSendUpdatedContents(
   // diagnostics.  Try to persuade it to do so anyway.
   if (sameContentsAsBefore) {
     lspSendNoOpChangeWorkaround(lspManager, doc);
+  }
+}
+
+
+std::optional<std::string> lspLanguageIdForDT(DocumentType dt)
+{
+  switch (dt) {
+    case DocumentType::DT_C:
+      // `DT_C` means C and C++, and nearly always that means C++.
+      return "cpp";
+
+    case DocumentType::DT_PYTHON:
+      return "python";
+
+    default:
+      return std::nullopt;
   }
 }
 

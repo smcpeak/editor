@@ -6,6 +6,7 @@
 #ifndef EDITOR_LSP_CONV_H
 #define EDITOR_LSP_CONV_H
 
+#include "doc-type-fwd.h"              // DocumentType [n]
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams [n], LSP_TextDocumentContentChangeEvent [n]
 #include "lsp-manager-fwd.h"           // LSPManager [n]
 #include "lsp-version-number-fwd.h"    // LSP_VersionNumber [n]
@@ -17,6 +18,8 @@
 
 #include "smbase/std-list-fwd.h"       // stdfwd::list [n]
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
+#include "smbase/std-optional-fwd.h"   // std::optional [n]
+#include "smbase/std-string-fwd.h"     // std::string [n]
 
 #include <cstdint>                     // std::int32_t
 
@@ -55,6 +58,12 @@ void applyLSPDocumentChanges(
 void lspSendUpdatedContents(
   LSPManager &lspManager,
   NamedTextDocument &doc);
+
+
+// Return the string that LSP uses to identify `dt`, or nullopt if there
+// is none, or the editor app does not know how to interact with an LSP
+// server that could handle `dt`.
+std::optional<std::string> lspLanguageIdForDT(DocumentType dt);
 
 
 #endif // EDITOR_LSP_CONV_H

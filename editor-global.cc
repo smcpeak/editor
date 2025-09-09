@@ -1594,12 +1594,10 @@ RCSerf<LSPDocumentInfo const> EditorGlobal::lspGetDocInfo(
 }
 
 
-void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
+void EditorGlobal::lspOpenFile(
+  NamedTextDocument *ntd, std::string const &languageId)
 {
   xassertPrecondition(!lspFileIsOpen(ntd));
-
-  // TODO: Compute this properly.
-  std::string languageId = "cpp";
 
   // This can throw `XNumericConversion`.
   LSP_VersionNumber version =
@@ -1612,6 +1610,8 @@ void EditorGlobal::lspOpenFile(NamedTextDocument *ntd)
     ntd->getWholeFileString());
 
   ntd->beginTrackingChanges();
+
+  xassertPostcondition(lspFileIsOpen(ntd));
 }
 
 

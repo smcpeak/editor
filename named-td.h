@@ -180,7 +180,8 @@ public:      // funcs
                            bool readOnly);
 
   // --------------------------- diagnostics ---------------------------
-  // True if we could open this file with the LSP server.
+  // True if we could open this file with the LSP server, just based on
+  // where it is stored, not its document type.
   bool isCompatibleWithLSP() const;
 
   // If this file can be opened with the LSP server, return nullopt.

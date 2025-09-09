@@ -19,7 +19,7 @@
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
-#include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber
+#include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber, lspLanguageIdForDT
 #include "lsp-manager.h"                         // LSPManager::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number.h"                  // LSP_VersionNumber
@@ -2733,7 +2733,16 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 
   try {
     if (!alreadyOpen) {
-      editorGlobal()->lspOpenFile(ntd);
+      if (std::optional<std::string> languageIdOpt =
+            lspLanguageIdForDT(ntd->language())) {
+        editorGlobal()->lspOpenFile(ntd, *languageIdOpt);
+      }
+      else {
+        complain(stringb(
+          "This editor application does not know how to interact "
+          "with an LSP server for " <<
+          languageName(ntd->language()) << " documents."));
+      }
     }
     else /*update*/ {
       editorGlobal()->lspUpdateFile(ntd);
