@@ -404,12 +404,21 @@ def test_Range() -> None:
   expect_eq(r13.contains(p3), False)
 
 
+# This is for syntactic convenience.
+def mkRange(start_line: int, start_character: int,
+            end_line: int, end_character: int) -> Range:
+  """Return a Range for the given coordinates."""
+
+  return Range(Position(start_line, start_character),
+               Position(end_line, end_character))
+
+
 def lspRange(start_line: int, start_character: int,
              end_line: int, end_character: int) -> Dict[str, Any]:
   """Return a range as a dictionary in LSP format."""
 
-  return Range(Position(start_line, start_character),
-               Position(end_line, end_character)).to_dict()
+  return mkRange(start_line, start_character,
+                 end_line, end_character).to_dict()
 
 
 # ----------------------------- FileRange ------------------------------
@@ -817,6 +826,17 @@ def get_symbols(
       if occurrence.kind.satisfies(method):
         satisfying_occurrences.append(occurrence)
 
+    # For a particular symbol, inject a malformed URI in the response in
+    # order to test how the editor handles it.
+    if name == "has_malformed_uri_occurrence":
+      satisfying_occurrences.append(Occurrence(
+        name,
+        OccurrenceKind.REFERENCE,
+        FileRange(
+          "this_uri_is_malformed",
+          mkRange(0,0, 0,len(name))
+        )))
+
   return satisfying_occurrences
 
 
@@ -929,7 +949,6 @@ def handle_symbol_query(
     get_locations(method, table, uri, pos))
 
   send_reply(msg_id, locations)
-
 
 
 # ---------------------- diagnostics_for_contents ----------------------

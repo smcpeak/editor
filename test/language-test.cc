@@ -59,4 +59,8 @@ void useGlobals()
   g_var4 = 4;
 }
 
+// `lsp-test-server.py` responds with a malformed URI when asked for all
+// occurrences of the following symbol.
+int has_malformed_uri_occurrence;
+
 // EOF
