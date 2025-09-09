@@ -17,7 +17,7 @@
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-difference.h"                     // LineDifference
 #include "line-index.h"                          // LineIndex
-#include "lsp-manager-fwd.h"                     // LSPManager
+#include "lsp-client-fwd.h"                      // LSPManager
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number-fwd.h"              // LSP_VersionNumber [n]
 #include "named-td-list.h"                       // NamedTextDocumentListObserver

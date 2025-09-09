@@ -1,7 +1,7 @@
-// lsp-manager.cc
+// lsp-client.cc
 // Code for `lsp-manger.h`.
 
-#include "lsp-manager.h"                         // this module
+#include "lsp-client.h"                          // this module
 
 #include "command-runner.h"                      // CommandRunner
 #include "json-rpc-client.h"                     // JSON_RPC_Client
@@ -46,7 +46,7 @@ using namespace gdv;
 using namespace smbase;
 
 
-INIT_TRACE("lsp-manager");
+INIT_TRACE("lsp-client");
 
 
 // ----------------------------- LSP path ------------------------------

@@ -8,7 +8,7 @@
 
 #include "doc-type-fwd.h"              // DocumentType [n]
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams [n], LSP_TextDocumentContentChangeEvent [n]
-#include "lsp-manager-fwd.h"           // LSPManager [n]
+#include "lsp-client-fwd.h"            // LSPManager [n]
 #include "lsp-version-number-fwd.h"    // LSP_VersionNumber [n]
 #include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]

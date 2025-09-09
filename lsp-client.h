@@ -1,10 +1,10 @@
-// lsp-manager.h
+// lsp-client.h
 // `LSPManager`, which speaks the Language Server Protocol.
 
-#ifndef EDITOR_LSP_MANAGER_H
-#define EDITOR_LSP_MANAGER_H
+#ifndef EDITOR_LSP_CLIENT_H
+#define EDITOR_LSP_CLIENT_H
 
-#include "lsp-manager-fwd.h"                     // fwds for this module
+#include "lsp-client-fwd.h"                      // fwds for this module
 
 #include "command-runner-fwd.h"                  // CommandRunner [n]
 #include "json-rpc-client-fwd.h"                 // JSON_RPC_Client [n]
@@ -431,4 +431,4 @@ Q_SIGNALS:
 };
 
 
-#endif // EDITOR_LSP_MANAGER_H
+#endif // EDITOR_LSP_CLIENT_H

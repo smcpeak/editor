@@ -20,7 +20,7 @@
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber, lspLanguageIdForDT
-#include "lsp-manager.h"                         // LSPManager::notify_textDocument_didOpen, etc.
+#include "lsp-client.h"                          // LSPManager::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "nearby-file.h"                         // getNearbyFilename

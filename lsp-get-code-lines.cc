@@ -5,7 +5,7 @@
 
 #include "td-core.h"                             // TextDocumentCore
 #include "host-file-line.h"                      // HostFileLine
-#include "lsp-manager.h"                         // LSPManagerDocumentState
+#include "lsp-client.h"                          // LSPManagerDocumentState
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-query-sync.h"                      // readFileSynchronously
 

@@ -1,13 +1,13 @@
-// lsp-manager-test.h
-// `LSPManagerTester` class declaration for `lsp-manager-test.cpp`.
+// lsp-client-test.h
+// `LSPManagerTester` class declaration for `lsp-client-test.cc`.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_LSP_MANAGER_TEST_H
-#define EDITOR_LSP_MANAGER_TEST_H
+#ifndef EDITOR_LSP_CLIENT_TEST_H
+#define EDITOR_LSP_CLIENT_TEST_H
 
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
-#include "lsp-manager.h"               // LSPManager
+#include "lsp-client.h"                // LSPManager
 #include "lsp-test-request-params.h"   // LSPTestRequestParams
 #include "named-td.h"                  // NamedTextDocument
 
@@ -178,4 +178,4 @@ private Q_SLOTS:
 };
 
 
-#endif // EDITOR_LSP_MANAGER_TEST_H
+#endif // EDITOR_LSP_CLIENT_TEST_H

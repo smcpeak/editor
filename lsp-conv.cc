@@ -5,7 +5,7 @@
 
 #include "doc-type.h"                  // DocumentType
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
-#include "lsp-manager.h"               // LSPManager
+#include "lsp-client.h"                // LSPManager
 #include "lsp-version-number.h"        // LSP_VersionNumber
 #include "named-td.h"                  // NamedTextDocument
 #include "range-text-repl.h"           // RangeTextReplacement

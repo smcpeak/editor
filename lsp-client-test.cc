@@ -1,10 +1,10 @@
-// lsp-manager-test.cc
-// Tests for `lsp-manager`.
+// lsp-client-test.cc
+// Tests for `lsp-client`.
 
-#include "lsp-manager-test.h"                    // this module
+#include "lsp-client-test.h"                    // this module
 #include "unit-tests.h"                          // decl for my entry point
 
-#include "lsp-manager.h"                         // module under test
+#include "lsp-client.h"                          // module under test
 
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
@@ -37,7 +37,7 @@ using namespace gdv;
 using namespace smbase;
 
 
-INIT_TRACE("lsp-manager-test");
+INIT_TRACE("lsp-client-test");
 
 
 LSPManagerTester::~LSPManagerTester()
@@ -51,7 +51,7 @@ LSPManagerTester::LSPManagerTester(
   std::ostream * NULLABLE protocolDiagnosticLog)
   : m_lspManager(
       params.m_useRealClangd,
-      "out/lsp-manager-test-server-stderr.txt",
+      "out/lsp-client-test-server-stderr.txt",
       protocolDiagnosticLog),
     m_params(params),
     m_state(S_INIT),

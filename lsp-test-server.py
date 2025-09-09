@@ -1142,7 +1142,7 @@ def publish_diagnostics(uri: str) -> None:
       "uri": uri,
       "diagnostics": diagnostics_for_contents(text),
 
-      # My `lsp-manager` module will discard diagnostics that do
+      # My `lsp-client` module will discard diagnostics that do
       # not have a version number.
       "version": version,
     },

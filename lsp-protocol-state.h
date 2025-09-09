@@ -11,7 +11,7 @@
 
 // Status of the `LSPManager` protocol.
 //
-// `LSPManager` is declared in `lsp-manager.h`.
+// `LSPManager` is declared in `lsp-client.h`.
 enum LSPProtocolState {
   // ---- Normal lifecycle states ----
 

@@ -11,7 +11,7 @@
 #define EDITOR_LSP_GET_CODE_LINES_H
 
 #include "host-file-line-fwd.h"        // HostFileLine [n]
-#include "lsp-manager-fwd.h"           // LSPManagerDocumentState [n]
+#include "lsp-client-fwd.h"            // LSPManagerDocumentState [n]
 #include "vfs-connections-fwd.h"       // VFS_AbstractConnections [n]
 
 #include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [n]

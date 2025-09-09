@@ -118,8 +118,8 @@ static void entry(int argc, char **argv)
 
   RUN_TEST(editor_fs_server);          // deps: editor-version, vfs-local
 
-  // SCC: lsp-conv, lsp-data, lsp-manager, named-td, td-diagnostics, td-obs-recorder
-  RUN_TEST(lsp_conv);                  // deps: lsp-data, lsp-manager, named-td, range-text-repl, td-change, td-change-seq, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
+  // SCC: lsp-conv, lsp-data, lsp-client, named-td, td-diagnostics, td-obs-recorder
+  RUN_TEST(lsp_conv);                  // deps: lsp-data, lsp-client, named-td, range-text-repl, td-change, td-change-seq, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
   RUN_TEST(lsp_data);                  // deps: line-index, lsp-conv, named-td, td-diagnostics, uri-util
   RUN_TEST(td_diagnostics);            // deps: line-index, named-td, td-change, td-change-seq, td-core, textmcoord-map
   RUN_TEST(td_obs_recorder);           // deps: named-td, td-change, td-change-seq, td-core, td-diagnostics
@@ -139,7 +139,7 @@ static void entry(int argc, char **argv)
   // this test should be much faster.
   RUN_TEST(lsp_get_code_lines);
 
-  // This is the slowest test, but lsp-manager uses it, so it needs to
+  // This is the slowest test, but lsp-client uses it, so it needs to
   // be before that.
   RUN_TEST(command_runner);            // deps: (none)
 

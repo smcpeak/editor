@@ -22,7 +22,7 @@
 #include "host-file-line-fwd.h"                  // HostFileLine [n]
 #include "json-rpc-reply-fwd.h"                  // JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
-#include "lsp-manager-fwd.h"                     // LSPManager [n], LSPDocumentInfo [n]
+#include "lsp-client-fwd.h"                      // LSPManager [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-fwd.h"                        // NamedTextDocument [n]

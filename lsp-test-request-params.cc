@@ -5,7 +5,7 @@
 
 #include "lsp-test-request-params.h"   // this module
 
-#include "lsp-manager.h"               // isValidLSPPath
+#include "lsp-client.h"                // isValidLSPPath
 
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-span.h"            // smbase::Span

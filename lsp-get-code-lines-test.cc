@@ -8,7 +8,7 @@
 
 #include "host-file-line.h"                      // HostFileLine
 #include "line-number.h"                         // LineNumber
-#include "lsp-manager.h"                         // LSPManagerDocumentState
+#include "lsp-client.h"                          // LSPManagerDocumentState
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 

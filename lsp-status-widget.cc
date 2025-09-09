@@ -5,7 +5,7 @@
 
 #include "editor-global.h"             // EditorGlobal
 #include "editor-widget.h"             // EditorWidget
-#include "lsp-manager.h"               // LSPManager
+#include "lsp-client.h"                // LSPManager
 
 #include "smqtutil/qstringb.h"         // qstringb
 
