@@ -11,7 +11,7 @@
 #define EDITOR_LSP_GET_CODE_LINES_H
 
 #include "host-file-line-fwd.h"        // HostFileLine [n]
-#include "lsp-client-fwd.h"            // LSPManagerDocumentState [n]
+#include "lsp-client-fwd.h"            // LSPClientDocumentState [n]
 #include "vfs-connections-fwd.h"       // VFS_AbstractConnections [n]
 
 #include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [n]
@@ -26,7 +26,7 @@
 std::optional<stdfwd::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
   stdfwd::vector<HostFileLine> const &locations,
-  LSPManagerDocumentState const &lspManager,
+  LSPClientDocumentState const &lspClient,
   VFS_AbstractConnections &vfsConnections);
 
 

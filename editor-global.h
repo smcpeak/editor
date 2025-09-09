@@ -22,7 +22,7 @@
 #include "host-file-line-fwd.h"                  // HostFileLine [n]
 #include "json-rpc-reply-fwd.h"                  // JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
-#include "lsp-client-fwd.h"                      // LSPManager [n], LSPDocumentInfo [n]
+#include "lsp-client-fwd.h"                      // LSPClient [n], LSPDocumentInfo [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
@@ -103,7 +103,7 @@ private:     // instance data
   // setting.
   std::unique_ptr<smbase::ExclusiveWriteFile> m_editorLogFile;
 
-  // If true, then `m_lspManager` uses the "fake" server that is just a
+  // If true, then `m_lspClient` uses the "fake" server that is just a
   // Python script doing very simple textual analysis.  This avoids
   // using the real `clangd` during testing, both for dependency and
   // speed reasons.
@@ -116,16 +116,16 @@ private:     // instance data
   // use; it is the responsibility of the ctor to initialize it before
   // anything else can observe it being null.
   //
-  // Invariant: If `m_lspManager->isRunningNormally()`, then the set of
-  // documents open in `m_lspManager` is the same as the set of
+  // Invariant: If `m_lspClient->isRunningNormally()`, then the set of
+  // documents open in `m_lspClient` is the same as the set of
   // documents in `m_documentList` that are tracking changes.
   //
-  // Invariant: For all files that are open in the manager, if the most
+  // Invariant: For all files that are open in the client, if the most
   // recently sent version is the same as the version in
-  // `m_documentList`, then the manager and document agree about the
+  // `m_documentList`, then the client and document agree about the
   // contents.
   //
-  std::unique_ptr<LSPManager> m_lspManager;
+  std::unique_ptr<LSPClient> m_lspClient;
 
   // List of LSP protocol errors.  For now, these just accumulate.
   //
@@ -205,7 +205,7 @@ private:     // methods
   static std::unique_ptr<smbase::ExclusiveWriteFile>
     openEditorLogFile();
 
-  // Connect signals from `m_lspManager` to `this`.
+  // Connect signals from `m_lspClient` to `this`.
   void lspConnectSignals();
 
   // Disconnect signals and shut down the server.
@@ -221,13 +221,13 @@ private Q_SLOTS:
   // Called when a watched process terminates.
   void on_processTerminated(ProcessWatcher *watcher);
 
-  // Called when `m_lspManager` has pending diagnostics.
+  // Called when `m_lspClient` has pending diagnostics.
   void on_lspHasPendingDiagnostics() NOEXCEPT;
 
-  // Called when `m_lspManager` has an error message to deliver.
+  // Called when `m_lspClient` has an error message to deliver.
   void on_lspHasPendingErrorMessages() NOEXCEPT;
 
-  // Called when `m_lspManager` may have changed its protocol state.
+  // Called when `m_lspClient` may have changed its protocol state.
   void on_lspChangedProtocolState() NOEXCEPT;
 
   // Called when focus changes anywhere in the app.
@@ -530,8 +530,8 @@ public:       // funcs
   // --------------------------- LSP Global ----------------------------
   bool lspIsFakeServer() const { return m_lspIsFakeServer; }
 
-  // Read-only access to the manager.
-  LSPManager const *lspManagerC();
+  // Read-only access to the client object.
+  LSPClient const *lspClientC();
 
   // Initial name for the path to the file that holds the stderr from
   // the LSP server process (clangd).
@@ -591,7 +591,7 @@ public:       // funcs
   // True if `ntd` is open w.r.t. the LSP server.
   bool lspFileIsOpen(NamedTextDocument const *ntd) const;
 
-  // If `doc` is "open" w.r.t. the LSP manager, return a pointer to its
+  // If `doc` is "open" w.r.t. the LSP client, return a pointer to its
   // details.  Otherwise return nullptr.
   RCSerf<LSPDocumentInfo const> lspGetDocInfo(
     NamedTextDocument const *doc) const;

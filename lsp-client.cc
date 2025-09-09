@@ -145,18 +145,18 @@ std::string LSPDocumentInfo::getLastContentsCodeLine(
 }
 
 
-// ---------------------- LSPManagerDocumentState ----------------------
-LSPManagerDocumentState::~LSPManagerDocumentState()
+// ---------------------- LSPClientDocumentState -----------------------
+LSPClientDocumentState::~LSPClientDocumentState()
 {}
 
 
-LSPManagerDocumentState::LSPManagerDocumentState()
+LSPClientDocumentState::LSPClientDocumentState()
   : m_documentInfo(),
     m_filesWithPendingDiagnostics()
 {}
 
 
-void LSPManagerDocumentState::selfCheck() const
+void LSPClientDocumentState::selfCheck() const
 {
   // Set of files for which we observe pending diagnostics.
   std::set<std::string> filesWithPending;
@@ -178,20 +178,20 @@ void LSPManagerDocumentState::selfCheck() const
 }
 
 
-bool LSPManagerDocumentState::isFileOpen(std::string const &fname) const
+bool LSPClientDocumentState::isFileOpen(std::string const &fname) const
 {
   xassertPrecondition(isValidLSPPath(fname));
   return contains(m_documentInfo, fname);
 }
 
 
-std::set<std::string> LSPManagerDocumentState::getOpenFileNames() const
+std::set<std::string> LSPClientDocumentState::getOpenFileNames() const
 {
   return mapKeySet(m_documentInfo);
 }
 
 
-RCSerf<LSPDocumentInfo const> LSPManagerDocumentState::getDocInfo(
+RCSerf<LSPDocumentInfo const> LSPClientDocumentState::getDocInfo(
   std::string const &fname) const
 {
   xassertPrecondition(isValidLSPPath(fname));
@@ -206,8 +206,8 @@ RCSerf<LSPDocumentInfo const> LSPManagerDocumentState::getDocInfo(
 }
 
 
-// ---------------------------- LSPManager -----------------------------
-void LSPManager::resetProtocolState()
+// ----------------------------- LSPClient -----------------------------
+void LSPClient::resetProtocolState()
 {
   m_initializeRequestID = 0;
   m_shutdownRequestID = 0;
@@ -216,11 +216,11 @@ void LSPManager::resetProtocolState()
   m_documentInfo.clear();
   m_filesWithPendingDiagnostics.clear();
   m_pendingErrorMessages.clear();
-  m_lspManagerProtocolError.reset();
+  m_lspClientProtocolError.reset();
 }
 
 
-void LSPManager::forciblyShutDown()
+void LSPClient::forciblyShutDown()
 {
   if (m_lsp) {
     // Disconnect signals.
@@ -238,19 +238,19 @@ void LSPManager::forciblyShutDown()
 
   resetProtocolState();
 
-  // Now in `LSP_PS_MANAGER_INACTIVE`.
+  // Now in `LSP_PS_CLIENT_INACTIVE`.
   Q_EMIT signal_changedProtocolState();
 }
 
 
-void LSPManager::addErrorMessage(std::string &&msg)
+void LSPClient::addErrorMessage(std::string &&msg)
 {
   m_pendingErrorMessages.push_back(std::move(msg));
   Q_EMIT signal_hasPendingErrorMessages();
 }
 
 
-void LSPManager::recordManagerProtocolError(
+void LSPClient::recordLSPProtocolError(
   JSON_RPC_Error const &error, char const *requestName)
 {
   // Message for the user interface.
@@ -270,17 +270,17 @@ void LSPManager::recordManagerProtocolError(
     *m_protocolDiagnosticLog << details << std::endl;
   }
 
-  if (m_lspManagerProtocolError) {
+  if (m_lspClientProtocolError) {
     // We already have a protocol error, keep it since it is closer to
     // the point of original failure.
   }
   else {
-    m_lspManagerProtocolError = message;
+    m_lspClientProtocolError = message;
   }
 }
 
 
-void LSPManager::handleIncomingDiagnostics(
+void LSPClient::handleIncomingDiagnostics(
   std::unique_ptr<LSP_PublishDiagnosticsParams> diags)
 {
   std::string fname;
@@ -340,7 +340,7 @@ void LSPManager::handleIncomingDiagnostics(
 }
 
 
-void LSPManager::on_hasPendingNotifications() NOEXCEPT
+void LSPClient::on_hasPendingNotifications() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -376,7 +376,7 @@ void LSPManager::on_hasPendingNotifications() NOEXCEPT
 }
 
 
-void LSPManager::on_hasReplyForID(int id) NOEXCEPT
+void LSPClient::on_hasReplyForID(int id) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -393,10 +393,10 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
       m_lsp->sendNotification("initialized", GDVMap{});
     }
     else {
-      recordManagerProtocolError(reply.error(), "initialize");
+      recordLSPProtocolError(reply.error(), "initialize");
     }
 
-    // Now in `LSP_PS_NORMAL` or `LSP_PS_MANAGER_PROTOCOL_ERROR`.
+    // Now in `LSP_PS_NORMAL` or `LSP_PS_LSP_PROTOCOL_ERROR`.
     Q_EMIT signal_changedProtocolState();
   }
 
@@ -412,10 +412,10 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
       m_waitingForTermination = true;
     }
     else {
-      recordManagerProtocolError(reply.error(), "shutdown");
+      recordLSPProtocolError(reply.error(), "shutdown");
     }
 
-    // Now in `LSP_PS_SHUTDOWN2` or `LSP_PS_MANAGER_PROTOCOL_ERROR`.
+    // Now in `LSP_PS_SHUTDOWN2` or `LSP_PS_LSP_PROTOCOL_ERROR`.
     Q_EMIT signal_changedProtocolState();
   }
 
@@ -430,7 +430,7 @@ void LSPManager::on_hasReplyForID(int id) NOEXCEPT
 }
 
 
-void LSPManager::on_hasProtocolError() NOEXCEPT
+void LSPClient::on_hasProtocolError() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -443,7 +443,7 @@ void LSPManager::on_hasProtocolError() NOEXCEPT
 }
 
 
-void LSPManager::on_childProcessTerminated() NOEXCEPT
+void LSPClient::on_childProcessTerminated() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -457,7 +457,7 @@ void LSPManager::on_childProcessTerminated() NOEXCEPT
 }
 
 
-void LSPManager::on_errorDataReady() NOEXCEPT
+void LSPClient::on_errorDataReady() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -479,7 +479,7 @@ void LSPManager::on_errorDataReady() NOEXCEPT
 }
 
 
-LSPManager::~LSPManager()
+LSPClient::~LSPClient()
 {
   // Don't send a signal due to the forcible shutdown.
   QObject::disconnect(this, nullptr, nullptr, nullptr);
@@ -488,7 +488,7 @@ LSPManager::~LSPManager()
 }
 
 
-LSPManager::LSPManager(
+LSPClient::LSPClient(
   bool useRealClangd,
   std::string const &lspStderrLogFname,
   std::ostream * NULLABLE protocolDiagnosticLog)
@@ -502,7 +502,7 @@ LSPManager::LSPManager(
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
     m_pendingErrorMessages(),
-    m_lspManagerProtocolError()
+    m_lspClientProtocolError()
 {
   SMFileUtil sfu;
   std::string const fname =
@@ -512,7 +512,7 @@ LSPManager::LSPManager(
 
   if (m_lspStderrFile) {
     TRACE1("Server log file: " << m_lspStderrFile->getFname());
-    m_lspStderrFile->stream() << "Started LSP manager at " <<
+    m_lspStderrFile->stream() << "Started LSP client at " <<
       localTimeString() << "\n";
     m_lspStderrFile->stream().flush();
   }
@@ -521,9 +521,9 @@ LSPManager::LSPManager(
 }
 
 
-void LSPManager::selfCheck() const
+void LSPClient::selfCheck() const
 {
-  LSPManagerDocumentState::selfCheck();
+  LSPClientDocumentState::selfCheck();
 
   // Either both are present or neither is.
   xassert(m_commandRunner.operator bool() ==
@@ -535,7 +535,7 @@ void LSPManager::selfCheck() const
 }
 
 
-std::optional<std::string> LSPManager::startServer()
+std::optional<std::string> LSPClient::startServer()
 {
   // ---- Start the server process ----
   if (m_commandRunner) {
@@ -609,20 +609,20 @@ std::optional<std::string> LSPManager::startServer()
   // Connect the signals.
   QObject::connect(
     m_lsp.get(), &JSON_RPC_Client::signal_hasPendingNotifications,
-    this,                 &LSPManager::on_hasPendingNotifications);
+    this,                  &LSPClient::on_hasPendingNotifications);
   QObject::connect(
     m_lsp.get(), &JSON_RPC_Client::signal_hasReplyForID,
-    this,                 &LSPManager::on_hasReplyForID);
+    this,                  &LSPClient::on_hasReplyForID);
   QObject::connect(
     m_lsp.get(), &JSON_RPC_Client::signal_hasProtocolError,
-    this,                 &LSPManager::on_hasProtocolError);
+    this,                  &LSPClient::on_hasProtocolError);
   QObject::connect(
     m_lsp.get(), &JSON_RPC_Client::signal_childProcessTerminated,
-    this,                 &LSPManager::on_childProcessTerminated);
+    this,                  &LSPClient::on_childProcessTerminated);
 
   QObject::connect(
     m_commandRunner.get(), &CommandRunner::signal_errorDataReady,
-    this,                         &LSPManager::on_errorDataReady);
+    this,                          &LSPClient::on_errorDataReady);
 
   // Kick off the initialization process.
   TRACE1("Sending initialize request.");
@@ -663,7 +663,7 @@ std::optional<std::string> LSPManager::startServer()
 }
 
 
-std::string LSPManager::stopServer()
+std::string LSPClient::stopServer()
 {
   if (!m_lsp) {
     if (m_commandRunner) {
@@ -719,7 +719,7 @@ std::string LSPManager::stopServer()
 }
 
 
-std::string LSPManager::checkStatus() const
+std::string LSPClient::checkStatus() const
 {
   // Start with the protocol state.
   std::vector<std::string> msgs;
@@ -766,13 +766,13 @@ std::string LSPManager::checkStatus() const
 }
 
 
-LSPProtocolState LSPManager::getProtocolState() const
+LSPProtocolState LSPClient::getProtocolState() const
 {
   return getAnnotatedProtocolState().m_protocolState;
 }
 
 
-std::string LSPManager::describeProtocolState() const
+std::string LSPClient::describeProtocolState() const
 {
   LSPAnnotatedProtocolState aps = getAnnotatedProtocolState();
   return stringb(
@@ -781,7 +781,7 @@ std::string LSPManager::describeProtocolState() const
 }
 
 
-LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
+LSPAnnotatedProtocolState LSPClient::getAnnotatedProtocolState() const
 {
   // This conditions checked here must be kept synchronized with
   // `isRunningNormally`.
@@ -789,8 +789,8 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
   if (!m_commandRunner) {
     xassert(!m_lsp);
     return LSPAnnotatedProtocolState(
-      LSP_PS_MANAGER_INACTIVE,
-      "LSP manager is inactive.");
+      LSP_PS_CLIENT_INACTIVE,
+      "LSP client is inactive.");
   }
 
   if (!m_lsp) {
@@ -808,12 +808,12 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
         m_lsp->getProtocolError()));
   }
 
-  if (m_lspManagerProtocolError) {
+  if (m_lspClientProtocolError) {
     return LSPAnnotatedProtocolState(
-      LSP_PS_MANAGER_PROTOCOL_ERROR,
+      LSP_PS_LSP_PROTOCOL_ERROR,
       stringb(
         "There was an LSP protocol error in the LSP layer: " <<
-        *m_lspManagerProtocolError));
+        *m_lspClientProtocolError));
   }
 
   if (!m_lsp->isChildRunning()) {
@@ -855,7 +855,7 @@ LSPAnnotatedProtocolState LSPManager::getAnnotatedProtocolState() const
 }
 
 
-bool LSPManager::isRunningNormally() const
+bool LSPClient::isRunningNormally() const
 {
   // This set of conditions must be kept synchronized with the code in
   // `getAnnotatedProtocolState`.
@@ -863,7 +863,7 @@ bool LSPManager::isRunningNormally() const
     m_commandRunner &&
     m_lsp &&
     !m_lsp->hasProtocolError() &&
-    !m_lspManagerProtocolError.has_value() &&
+    !m_lspClientProtocolError.has_value() &&
     m_lsp->isChildRunning() &&
     !m_initializeRequestID &&
     !m_shutdownRequestID &&
@@ -872,7 +872,7 @@ bool LSPManager::isRunningNormally() const
 }
 
 
-std::string LSPManager::explainAbnormality() const
+std::string LSPClient::explainAbnormality() const
 {
   // This is less about debugging than informing, so it does not include
   // the symbolic name of the protocol state.
@@ -881,7 +881,7 @@ std::string LSPManager::explainAbnormality() const
 }
 
 
-void LSPManager::notify_textDocument_didOpen(
+void LSPClient::notify_textDocument_didOpen(
   std::string const &fname,
   std::string const &languageId,
   LSP_VersionNumber version,
@@ -918,7 +918,7 @@ void LSPManager::notify_textDocument_didOpen(
 }
 
 
-void LSPManager::notify_textDocument_didChange(
+void LSPClient::notify_textDocument_didChange(
   LSP_DidChangeTextDocumentParams const &params)
 {
   xassertPrecondition(isRunningNormally());
@@ -939,7 +939,7 @@ void LSPManager::notify_textDocument_didChange(
 }
 
 
-void LSPManager::notify_textDocument_didChange_all(
+void LSPClient::notify_textDocument_didChange_all(
   std::string const &fname,
   LSP_VersionNumber version,
   std::string &&contents)
@@ -960,7 +960,7 @@ void LSPManager::notify_textDocument_didChange_all(
 }
 
 
-void LSPManager::notify_textDocument_didClose(
+void LSPClient::notify_textDocument_didClose(
   std::string const &fname)
 {
   xassertPrecondition(isRunningNormally());
@@ -981,20 +981,20 @@ void LSPManager::notify_textDocument_didClose(
 }
 
 
-bool LSPManager::hasPendingDiagnostics() const
+bool LSPClient::hasPendingDiagnostics() const
 {
   return !m_filesWithPendingDiagnostics.empty();
 }
 
 
-bool LSPManager::hasPendingDiagnosticsFor(std::string const &fname) const
+bool LSPClient::hasPendingDiagnosticsFor(std::string const &fname) const
 {
   xassertPrecondition(isValidLSPPath(fname));
   return setContains(m_filesWithPendingDiagnostics, fname);
 }
 
 
-std::string LSPManager::getFileWithPendingDiagnostics() const
+std::string LSPClient::getFileWithPendingDiagnostics() const
 {
   xassertPrecondition(hasPendingDiagnostics());
   auto it = m_filesWithPendingDiagnostics.cbegin();
@@ -1003,7 +1003,7 @@ std::string LSPManager::getFileWithPendingDiagnostics() const
 
 
 std::unique_ptr<LSP_PublishDiagnosticsParams>
-LSPManager::takePendingDiagnosticsFor(std::string const &fname)
+LSPClient::takePendingDiagnosticsFor(std::string const &fname)
 {
   xassertPrecondition(hasPendingDiagnosticsFor(fname));
 
@@ -1016,26 +1016,26 @@ LSPManager::takePendingDiagnosticsFor(std::string const &fname)
 }
 
 
-bool LSPManager::hasPendingErrorMessages() const
+bool LSPClient::hasPendingErrorMessages() const
 {
   return !m_pendingErrorMessages.empty();
 }
 
 
-int LSPManager::numPendingErrorMessages() const
+int LSPClient::numPendingErrorMessages() const
 {
   return safeToInt(m_pendingErrorMessages.size());
 }
 
 
-std::string LSPManager::takePendingErrorMessage()
+std::string LSPClient::takePendingErrorMessage()
 {
   xassert(hasPendingErrorMessages());
   return listMoveFront(m_pendingErrorMessages);
 }
 
 
-int LSPManager::requestRelatedLocation(
+int LSPClient::requestRelatedLocation(
   LSPSymbolRequestKind lsrk,
   std::string const &fname,
   TextMCoord position)
@@ -1052,7 +1052,7 @@ int LSPManager::requestRelatedLocation(
 }
 
 
-int LSPManager::sendRequest(
+int LSPClient::sendRequest(
   std::string const &method,
   gdv::GDValue const &params)
 {
@@ -1064,14 +1064,14 @@ int LSPManager::sendRequest(
 }
 
 
-bool LSPManager::hasReplyForID(int id) const
+bool LSPClient::hasReplyForID(int id) const
 {
   xassertPrecondition(isRunningNormally());
   return m_lsp->hasReplyForID(id);
 }
 
 
-JSON_RPC_Reply LSPManager::takeReplyForID(int id)
+JSON_RPC_Reply LSPClient::takeReplyForID(int id)
 {
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(hasReplyForID(id));
@@ -1083,14 +1083,14 @@ JSON_RPC_Reply LSPManager::takeReplyForID(int id)
 }
 
 
-void LSPManager::cancelRequestWithID(int id)
+void LSPClient::cancelRequestWithID(int id)
 {
   xassertPrecondition(isRunningNormally());
   m_lsp->cancelRequestWithID(id);
 }
 
 
-void LSPManager::sendNotification(
+void LSPClient::sendNotification(
   std::string const &method,
   gdv::GDValue const &params)
 {

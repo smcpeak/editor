@@ -10,7 +10,7 @@
 
 #include "editor-global-fwd.h"         // EditorGlobal
 #include "editor-widget-fwd.h"         // EditorWidget
-#include "lsp-client-fwd.h"            // LSPManager
+#include "lsp-client-fwd.h"            // LSPClient
 
 #include "smbase/refct-serf.h"         // RCSerf
 

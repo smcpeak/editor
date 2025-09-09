@@ -5,7 +5,7 @@
 
 #include "td-core.h"                             // TextDocumentCore
 #include "host-file-line.h"                      // HostFileLine
-#include "lsp-client.h"                          // LSPManagerDocumentState
+#include "lsp-client.h"                          // LSPClientDocumentState
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-query-sync.h"                      // readFileSynchronously
 
@@ -48,7 +48,7 @@ INIT_TRACE("lsp-get-code-lines");
      1. The user interface and the user's ability to cancel waits,
         embodied by `waiter`.
 
-     2. Communication with the LSP server, embodied by `lspManager`.
+     2. Communication with the LSP server, embodied by `lspClient`.
         (This function does not actually perform any LSP communication,
         hence the `const` qualifier, but it accesses data closely
         related to it.)
@@ -64,7 +64,7 @@ INIT_TRACE("lsp-get-code-lines");
 std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
   std::vector<HostFileLine> const &locations,
-  LSPManagerDocumentState const &lspManager,
+  LSPClientDocumentState const &lspClient,
   VFS_AbstractConnections &vfsConnections)
 {
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
@@ -74,8 +74,8 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   for (HostFileLine const &hfal : locations) {
     HostAndResourceName const &harn = hfal.getHarn();
     if (harn.isLocal() &&
-        !lspManager.isFileOpen(harn.resourceName())) {
-      // It is a local file, but it is not open with the LSP manager, so
+        !lspClient.isFileOpen(harn.resourceName())) {
+      // It is a local file, but it is not open with the LSP client, so
       // we will need to query for it.
       filesToQuery.insert(harn);
     }
@@ -151,11 +151,11 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
       std::string const fname = harn.resourceName();
       LineIndex lineIndex = hfal.getLineIndex() + offsetForTesting;
 
-      // If the file is open with the LSP manager, then use the most
+      // If the file is open with the LSP client, then use the most
       // recent copy it has sent to the server, since that is what the
       // server's line numbers will (should!) be referring to.
       if (RCSerf<LSPDocumentInfo const> docInfo =
-            lspManager.getDocInfo(fname)) {
+            lspClient.getDocInfo(fname)) {
         ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
       }
       else /*not LSP*/ {

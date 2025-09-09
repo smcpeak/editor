@@ -1,5 +1,5 @@
 // lsp-protocol-state.h
-// `LSPProtocolState`, enumerating states of the `LSPManager` protocol.
+// `LSPProtocolState`, enumerating states of the `LSPClient` protocol.
 
 // See license.txt for copyright and terms of use.
 
@@ -9,18 +9,18 @@
 #include <string>                      // std::string
 
 
-// Status of the `LSPManager` protocol.
+// Status of the `LSPClient` protocol.
 //
-// `LSPManager` is declared in `lsp-client.h`.
+// `LSPClient` is declared in `lsp-client.h`.
 enum LSPProtocolState {
   // ---- Normal lifecycle states ----
 
   // Normally, we transition through these in order, cycling back to
   // "inactive" at the end.
 
-  // `LSPManager` is inactive; both of its pointers are null.  If we
-  // were active previously, the old server process has terminated.
-  LSP_PS_MANAGER_INACTIVE,
+  // `LSPClient` is inactive; both of its pointers are null.  If we were
+  // active previously, the old server process has terminated.
+  LSP_PS_CLIENT_INACTIVE,
 
   // We have sent the "initialize" request, but not received its reply.
   LSP_PS_INITIALIZING,
@@ -39,7 +39,7 @@ enum LSPProtocolState {
 
   // ---- Error states ----
 
-  // Any of the above states except `LSP_PS_MANAGER_INACTIVE` can
+  // Any of the above states except `LSP_PS_CLIENT_INACTIVE` can
   // transition to the error state.
 
   // `JSON_RPC_Client` detected a protocol error.  We can't do anything
@@ -48,7 +48,7 @@ enum LSPProtocolState {
 
   // A protocol failure occurred in the LSP layer.  It also prevents
   // further communication.
-  LSP_PS_MANAGER_PROTOCOL_ERROR,
+  LSP_PS_LSP_PROTOCOL_ERROR,
 
   // ---- Broken states ----
 
@@ -67,7 +67,7 @@ enum LSPProtocolState {
   NUM_LSP_PROTOCOL_STATES
 };
 
-// Return a string like "LSP_PS_MANAGER_INACTIVE".
+// Return a string like "LSP_PS_CLIENT_INACTIVE".
 char const *toString(LSPProtocolState ps);
 
 

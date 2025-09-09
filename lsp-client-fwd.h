@@ -7,7 +7,7 @@
 #define EDITOR_LSP_CLIENT_FWD_H
 
 class LSPDocumentInfo;
-class LSPManagerDocumentState;
-class LSPManager;
+class LSPClientDocumentState;
+class LSPClient;
 
 #endif // EDITOR_LSP_CLIENT_FWD_H

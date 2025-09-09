@@ -5,7 +5,7 @@
 
 #include "editor-global.h"             // EditorGlobal
 #include "editor-widget.h"             // EditorWidget
-#include "lsp-client.h"                // LSPManager
+#include "lsp-client.h"                // LSPClient
 
 #include "smqtutil/qstringb.h"         // qstringb
 
@@ -130,7 +130,7 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
   TRACE2("on_changedLSPStatus: " << toString(state));
 
   switch (state) {
-    case LSP_PS_MANAGER_INACTIVE:
+    case LSP_PS_CLIENT_INACTIVE:
       text = "_";
       bgColor = inactiveColor;
       statusMessages.push_back("The LSP server is inactive.");
@@ -230,7 +230,7 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
       break;
 
     case LSP_PS_JSON_RPC_PROTOCOL_ERROR:
-    case LSP_PS_MANAGER_PROTOCOL_ERROR:
+    case LSP_PS_LSP_PROTOCOL_ERROR:
       text = "E";
       bgColor = protoErrorColor;
       statusMessages.push_back(stringb(

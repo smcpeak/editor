@@ -1,5 +1,5 @@
 // lsp-client.h
-// `LSPManager`, which speaks the Language Server Protocol.
+// `LSPClient`, which speaks the Language Server Protocol.
 
 #ifndef EDITOR_LSP_CLIENT_H
 #define EDITOR_LSP_CLIENT_H
@@ -64,8 +64,8 @@ public:      // data
   // currently doing that.  It might not actually be necessary.
   //
   // Another reason is to allow checking that the editor's idea of the
-  // file contents agrees with the manager's after potentially many
-  // incremental updates.
+  // file contents agrees with the client object's after potentially
+  // many incremental updates.
   //
   // Never null.
   //
@@ -114,13 +114,13 @@ public:      // methods
 };
 
 
-// Portion of the LSP manager functionality related to maintaining the
+// Portion of the LSP client functionality related to maintaining the
 // state of tracked documents.  This part can be independently
 // instantiated to help write tests.
 //
 // By itself, this class cannot add anything to its state.  A subclass
 // has to do that.
-class LSPManagerDocumentState {
+class LSPClientDocumentState {
 protected:   // data
   // Map from document file name (not URI) to its protocol state.  This
   // has the set of documents that are considered "open" w.r.t. the LSP
@@ -134,10 +134,10 @@ protected:   // data
   std::set<std::string> m_filesWithPendingDiagnostics;
 
 public:      // methods
-  ~LSPManagerDocumentState();
+  ~LSPClientDocumentState();
 
   // Initially, no documents are open.
-  LSPManagerDocumentState();
+  LSPClientDocumentState();
 
   // Assert invariants.
   void selfCheck() const;
@@ -161,12 +161,12 @@ public:      // methods
 
 // Act as the central interface between the editor and the LSP server.
 //
-// The state transitions for the LSPManager as a whole, and for each of
+// The state transitions for the LSPClient as a whole, and for each of
 // the files individually, are summarized in the diagram
 // doc/lsp-state-diagram.ded.png .
 //
-class LSPManager : public QObject,
-                   public LSPManagerDocumentState {
+class LSPClient : public QObject,
+                  public LSPClientDocumentState {
   Q_OBJECT;
 
 private:     // data
@@ -222,7 +222,7 @@ private:     // data
   // further communication.  This is distinct from a protocol error in
   // the JSON-RPC layer, which would be recorded inside the `m_lsp`
   // object.  The string here is intended for presentation to the user.
-  std::optional<std::string> m_lspManagerProtocolError;
+  std::optional<std::string> m_lspClientProtocolError;
 
 private:     // methods
   // Reset the state associated with the protocol.  This is done when we
@@ -239,7 +239,7 @@ private:     // methods
 
   // Record `error` as a protocol error that stops further
   // communication.  It was the response to `requestName`.
-  void recordManagerProtocolError(
+  void recordLSPProtocolError(
     JSON_RPC_Error const &error, char const *requestName);
 
   // Handle newly-arrived `diags`.
@@ -257,11 +257,11 @@ private Q_SLOTS:
   void on_errorDataReady() NOEXCEPT;
 
 public:      // methods
-  ~LSPManager();
+  ~LSPClient();
 
-  // Create an inactive manager.  If `useRealClangd`, then run
-  // `clangd` instead of `./lsp-test-server.py`.
-  explicit LSPManager(
+  // Create an inactive client.  If `useRealClangd`, then run `clangd`
+  // instead of `./lsp-test-server.py`.
+  explicit LSPClient(
     bool useRealClangd,
     std::string const &lspStderrLogFname,
     std::ostream * NULLABLE protocolDiagnosticLog);
@@ -390,7 +390,7 @@ public:      // methods
   // Requires: isRunningNormally()
   bool hasReplyForID(int id) const;
 
-  // Take the pending reply for `id`, thus removing it from the manager
+  // Take the pending reply for `id`, thus removing it from the client
   // object.  This yields just the "result" part of the JSONRPC reply.
   //
   // Requires: isRunningNormally()

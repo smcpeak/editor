@@ -1,5 +1,5 @@
 // lsp-client-test.h
-// `LSPManagerTester` class declaration for `lsp-client-test.cc`.
+// `LSPClientTester` class declaration for `lsp-client-test.cc`.
 
 // See license.txt for copyright and terms of use.
 
@@ -7,7 +7,7 @@
 #define EDITOR_LSP_CLIENT_TEST_H
 
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams
-#include "lsp-client.h"                // LSPManager
+#include "lsp-client.h"                // LSPClient
 #include "lsp-test-request-params.h"   // LSPTestRequestParams
 #include "named-td.h"                  // NamedTextDocument
 
@@ -20,9 +20,9 @@
 #include <iosfwd>                      // std::ostream
 
 
-// Test harness for `LSPManager`.  Also serves as the recipients for its
+// Test harness for `LSPClient`.  Also serves as the recipients for its
 // signals.
-class LSPManagerTester : public QObject {
+class LSPClientTester : public QObject {
   Q_OBJECT;
 
 public:      // types
@@ -36,7 +36,7 @@ public:      // types
     // Initial state.
     S_INIT,
 
-    // Called `m_lspManager.startServer()`, waiting for it to be ready.
+    // Called `m_lspClient.startServer()`, waiting for it to be ready.
     S_STARTING,
 
     // Sent initial content, waiting for the diagnostics.
@@ -60,7 +60,7 @@ public:      // types
     // next state.
     S_AWAITING_UPDATED_CONTENTS,
 
-    // Called `m_lspManager.stopServer()`, waiting for it to be stopped.
+    // Called `m_lspClient.stopServer()`, waiting for it to be stopped.
     S_STOPPING,
 
     // Test is complete.
@@ -70,8 +70,8 @@ public:      // types
   };
 
 public:      // data
-  // The manager we are testing.
-  LSPManager m_lspManager;
+  // The client we are testing.
+  LSPClient m_lspClient;
 
   // Request details from the command line.
   LSPTestRequestParams m_params;
@@ -99,9 +99,9 @@ public:      // data
   NamedTextDocument m_doc;
 
 public:      // methods
-  ~LSPManagerTester();
+  ~LSPClientTester();
 
-  explicit LSPManagerTester(
+  explicit LSPClientTester(
     LSPTestRequestParams const &params,
     std::ostream * NULLABLE protocolDiagnosticLog);
 
@@ -120,8 +120,8 @@ public:      // methods
   // Dequeue pending diagnostics and apply them to `m_doc`.
   void takeDiagnostics();
 
-  // Check that `m_lspManager` and `m_doc` have the same contents.
-  void checkManagerContents() const;
+  // Check that `m_lspClient` and `m_doc` have the same contents.
+  void checkClientContents() const;
 
   // Send "textDocument/declaration" request.
   void sendDeclarationRequest();
@@ -130,7 +130,7 @@ public:      // methods
   void takeDeclarationReply();
 
   // For the synchonous test, wait until `condition` becomes true.  If
-  // the manager stops running normally, throw.
+  // the client stops running normally, throw.
   void waitUntil(std::function<bool()> condition);
 
   // Make a random edit to `m_doc`.
@@ -162,7 +162,7 @@ public:      // methods
   // contents.
   void syncCheckDocumentContents();
 
-  // Dis/connect signals to `m_lspManager`.
+  // Dis/connect signals to `m_lspClient`.
   void connectSignals();
   void disconnectSignals();
 
@@ -170,7 +170,7 @@ public:      // methods
   void testAsynchronously();
 
 private Q_SLOTS:
-  // Handle corresponding `LSPManager` signals.
+  // Handle corresponding `LSPClient` signals.
   void on_changedProtocolState() NOEXCEPT;
   void on_hasPendingDiagnostics() NOEXCEPT;
   void on_hasReplyForID(int id) NOEXCEPT;

@@ -13,7 +13,7 @@
 #include "editor-widget-frame-fwd.h"             // EditorWidgetFrame
 #include "editor-widget-fwd.h"                   // EditorWidget
 #include "host-file-olb.h"                       // HostFile_OptLineByte
-#include "lsp-client-fwd.h"                      // LSPManager
+#include "lsp-client-fwd.h"                      // LSPClient
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td.h"                            // NamedTextDocument
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
@@ -156,8 +156,8 @@ public:      // funcs
   // Current user settings object.
   EditorSettings const &editorSettings() const;
 
-  // Global LSP manager, read-only.
-  LSPManager const *lspManagerC() const;
+  // Global LSP client object, read-only.
+  LSPClient const *lspClientC() const;
 
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;

@@ -17,7 +17,7 @@
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-difference.h"                     // LineDifference
 #include "line-index.h"                          // LineIndex
-#include "lsp-client-fwd.h"                      // LSPManager
+#include "lsp-client-fwd.h"                      // LSPClient
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number-fwd.h"              // LSP_VersionNumber [n]
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
@@ -302,7 +302,7 @@ private:     // funcs
   // Send `gdvMessage` as an LSP notification.  If it is a sequence,
   // then treat it as multiple notifications to send one after the
   // other.  This may throw `XGDValueParser` if the/a message does not
-  // have the right elements, or `XMessage` if the LSP manager
+  // have the right elements, or `XMessage` if the LSP client
   // encounters a problem.
   void lspSendArbitraryNotification(
     gdv::GDValue const &gdvMessage);
@@ -354,9 +354,9 @@ public:      // funcs
   // User settings.
   EditorSettings const &editorSettings() const;
 
-  // Global LSP manager, read-only.  Writes have to go through
+  // Global LSP client object, read-only.  Writes have to go through
   // `editorGlobal()`.
-  LSPManager const *lspManagerC() const;
+  LSPClient const *lspClientC() const;
 
   // Read the font choice stored in 'editorGlobal()' and set this
   // widget's editor fonts accordingly.

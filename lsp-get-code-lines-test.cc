@@ -8,7 +8,7 @@
 
 #include "host-file-line.h"                      // HostFileLine
 #include "line-number.h"                         // LineNumber
-#include "lsp-client.h"                          // LSPManagerDocumentState
+#include "lsp-client.h"                          // LSPClientDocumentState
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
@@ -177,8 +177,8 @@ std::unique_ptr<VFS_ReadFileReply> VFS_TestConnections::processRFR(
 OPEN_ANONYMOUS_NAMESPACE
 
 
-// LSP manager that just serves a document set.
-class TestLSPManager : public LSPManagerDocumentState {
+// LSP client that just serves a document set.
+class TestLSPClient : public LSPClientDocumentState {
 public:      // methods
   // Arrange to serve `docInfo` in response to document queries.
   void addDoc(LSPDocumentInfo &&docInfo)
@@ -235,7 +235,7 @@ public:      // data
 
   TestSynchronousWaiter waiter;
 
-  TestLSPManager lspManager;
+  TestLSPClient lspClient;
 
   VFS_TestConnections vfsConnections;
 
@@ -250,7 +250,7 @@ public:      // methods
   ~Tester()
   {
     if (std::uncaught_exceptions() == 0) {
-      lspManager.selfCheck();
+      lspClient.selfCheck();
       vfsConnections.selfCheck();
     }
     else {
@@ -265,7 +265,7 @@ public:      // methods
     return lspGetCodeLinesFunction(
       waiter,
       locations,
-      lspManager,
+      lspClient,
       vfsConnections);
   }
 
@@ -300,7 +300,7 @@ public:      // methods
   void addFileToLSP(int fileIndex)
   {
     xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
-    lspManager.addDoc(LSPDocumentInfo(
+    lspClient.addDoc(LSPDocumentInfo(
       fname[fileIndex],
       LSP_VersionNumber(1),
       fnameData[fileIndex]));
@@ -327,14 +327,14 @@ public:      // methods
 
   // ------------------------------ Tests ------------------------------
   // Simple example of "happy path" lookup of one location for which the
-  // file is in the LSP manager already (so no waiting occurs).
+  // file is in the LSP client already (so no waiting occurs).
   void test_oneLSPLookup()
   {
     TEST_CASE("test_oneLSPLookup");
 
     locAddFileLine(0, 2);
 
-    // Serve the data from the LSP manager's copy.
+    // Serve the data from the LSP client's copy.
     addFileToLSP(0);
 
     std::optional<std::vector<std::string>> linesOpt =
@@ -419,7 +419,7 @@ public:      // methods
     locAddFileLine(0, 2);
     locAddFileLine(1, 3);
 
-    // Serve file 0/1 data from the LSP manager's copy.
+    // Serve file 0/1 data from the LSP client's copy.
     addFileToLSP(lspFirst? 0:1);
 
     // Serve file 1/0 data from VFS.
@@ -445,7 +445,7 @@ public:      // methods
 
     locAddFileLine(0, 5);
 
-    // Serve the data from the LSP manager's copy.
+    // Serve the data from the LSP client's copy.
     addFileToLSP(0);
 
     std::optional<std::vector<std::string>> linesOpt =

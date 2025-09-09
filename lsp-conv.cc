@@ -5,7 +5,7 @@
 
 #include "doc-type.h"                  // DocumentType
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams, etc.
-#include "lsp-client.h"                // LSPManager
+#include "lsp-client.h"                // LSPClient
 #include "lsp-version-number.h"        // LSP_VersionNumber
 #include "named-td.h"                  // NamedTextDocument
 #include "range-text-repl.h"           // RangeTextReplacement
@@ -171,7 +171,7 @@ void applyLSPDocumentChanges(
 
 // As part of a `clangd` workaround, send a single change notification.
 static void lspSendOneChange(
-  LSPManager &lspManager,
+  LSPClient &lspClient,
   NamedTextDocument &doc,
   TextMCoord start,
   TextMCoord end,
@@ -195,7 +195,7 @@ static void lspSendOneChange(
 
   TRACE1(traceLabel << ": " <<
          toGDValue(changeParams).asIndentedString());
-  lspManager.notify_textDocument_didChange(changeParams);
+  lspClient.notify_textDocument_didChange(changeParams);
   doc.beginTrackingChanges();
 }
 
@@ -208,7 +208,7 @@ static void lspSendOneChange(
 // diagnostics for that version.  Then the second will also get
 // diagnostics soon afterward.
 static void lspSendNoOpChangeWorkaround(
-  LSPManager &lspManager,
+  LSPClient &lspClient,
   NamedTextDocument &doc)
 {
   // Provide a way to disable my workaround so I can keep experimenting
@@ -224,7 +224,7 @@ static void lspSendNoOpChangeWorkaround(
   // Change 1: Append "//", which should have minimal adverse impact, at
   // least for C/C++.
   lspSendOneChange(
-    lspManager,
+    lspClient,
     doc,
     endPos,
     endPos,
@@ -236,7 +236,7 @@ static void lspSendNoOpChangeWorkaround(
 
   // Change 2: Remove the appended "//".
   lspSendOneChange(
-    lspManager,
+    lspClient,
     doc,
     endPos,
     newEndPos,
@@ -247,14 +247,14 @@ static void lspSendNoOpChangeWorkaround(
 
 
 void lspSendUpdatedContents(
-  LSPManager &lspManager,
+  LSPClient &lspClient,
   NamedTextDocument &doc)
 {
   xassertPrecondition(doc.trackingChanges());
-  xassertPrecondition(lspManager.isFileOpen(doc.filename()));
+  xassertPrecondition(lspClient.isFileOpen(doc.filename()));
 
   RCSerf<LSPDocumentInfo const> docInfo =
-    lspManager.getDocInfo(doc.filename());
+    lspClient.getDocInfo(doc.filename());
   xassert(docInfo);
 
   // This can throw `XNumericConversion`.
@@ -300,10 +300,11 @@ void lspSendUpdatedContents(
   // Done with these.
   recordedChanges.reset();
 
-  // Send them to the server, and have the manager update its copy.
+  // Send them to the server, and have the client object update its
+  // copy.
   TRACE2("Sending incremental changes: " <<
          toGDValue(changeParams).asIndentedString());
-  lspManager.notify_textDocument_didChange(changeParams);
+  lspClient.notify_textDocument_didChange(changeParams);
 
   // The document's change recorder must also know this was sent.
   doc.beginTrackingChanges();
@@ -311,7 +312,7 @@ void lspSendUpdatedContents(
   // If the content is unchanged, `clangd` might not send updated
   // diagnostics.  Try to persuade it to do so anyway.
   if (sameContentsAsBefore) {
-    lspSendNoOpChangeWorkaround(lspManager, doc);
+    lspSendNoOpChangeWorkaround(lspClient, doc);
   }
 }
 

@@ -8,7 +8,7 @@
 
 #include "doc-type-fwd.h"              // DocumentType [n]
 #include "lsp-data-fwd.h"              // LSP_PublishDiagnosticsParams [n], LSP_TextDocumentContentChangeEvent [n]
-#include "lsp-client-fwd.h"            // LSPManager [n]
+#include "lsp-client-fwd.h"            // LSPClient [n]
 #include "lsp-version-number-fwd.h"    // LSP_VersionNumber [n]
 #include "named-td-fwd.h"              // NamedTextDocument [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
@@ -53,10 +53,10 @@ void applyLSPDocumentChanges(
   TextDocumentCore &doc);
 
 
-// Incrementally send to `lspManager` the changes made to `doc` since
+// Incrementally send to `lspClient` the changes made to `doc` since
 // the last update.
 void lspSendUpdatedContents(
-  LSPManager &lspManager,
+  LSPClient &lspClient,
   NamedTextDocument &doc);
 
 

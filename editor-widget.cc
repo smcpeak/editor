@@ -20,7 +20,7 @@
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber, lspLanguageIdForDT
-#include "lsp-client.h"                          // LSPManager::notify_textDocument_didOpen, etc.
+#include "lsp-client.h"                          // LSPClient::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "nearby-file.h"                         // getNearbyFilename
@@ -321,9 +321,9 @@ EditorSettings const &EditorWidget::editorSettings() const
 }
 
 
-LSPManager const *EditorWidget::lspManagerC() const
+LSPClient const *EditorWidget::lspClientC() const
 {
-  return editorGlobal()->lspManagerC();
+  return editorGlobal()->lspClientC();
 }
 
 
@@ -2698,7 +2698,7 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
   if (!editorGlobal()->lspIsRunningNormally()) {
     if (wantErrors) {
       complain(stringb("Server not ready: " <<
-        lspManagerC()->describeProtocolState()));
+        lspClientC()->describeProtocolState()));
     }
     return;
   }
@@ -2909,8 +2909,8 @@ void EditorWidget::lspGoToRelatedLocation(
   DocumentName const &docName = ntd->documentName();
   std::string fname = docName.filename();
 
-  if (!lspManagerC()->isRunningNormally()) {
-    complain(lspManagerC()->explainAbnormality());
+  if (!lspClientC()->isRunningNormally()) {
+    complain(lspClientC()->explainAbnormality());
     return;
   }
 

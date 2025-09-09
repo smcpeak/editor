@@ -135,7 +135,7 @@ static void entry(int argc, char **argv)
 
   RUN_TEST(vfs_connections);           // deps: host-name, vfs-msg, vfs-query
 
-  // This depends on `lsp_manager`, but only in a fairly simple way, and
+  // This depends on `lsp_client`, but only in a fairly simple way, and
   // this test should be much faster.
   RUN_TEST(lsp_get_code_lines);
 
@@ -143,7 +143,7 @@ static void entry(int argc, char **argv)
   // be before that.
   RUN_TEST(command_runner);            // deps: (none)
 
-  RUN_TEST(lsp_manager);               // deps: command-runner, line-index, json-rpc-client, lsp-conv, lsp-data, lsp-symbol-request-kind, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
+  RUN_TEST(lsp_client);                // deps: command-runner, line-index, json-rpc-client, lsp-conv, lsp-data, lsp-symbol-request-kind, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util
   RUN_TEST(json_rpc_client);           // deps: command-runner, uri-util
 
   #undef RUN_TEST

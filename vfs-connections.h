@@ -61,7 +61,7 @@
         for the purpose of this class ends.
 
    Note that I avoid the term "pending", as that can be ambiguous.
-   Elsewhere (in the LSP manager), "pending" means "available", but in
+   Elsewhere (in the LSP client), "pending" means "available", but in
    the past I used it to mean "outstanding", and I'm trying to avoid
    re-creating that confusion.
 */

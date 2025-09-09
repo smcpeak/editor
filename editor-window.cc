@@ -16,7 +16,7 @@
 #include "fonts-dialog.h"                        // FontsDialog
 #include "git-version.h"                         // editor_git_version
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
-#include "lsp-client.h"                          // LSPManager
+#include "lsp-client.h"                          // LSPClient
 #include "lsp-status-widget.h"                   // LSPStatusWidget
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
 #include "macro-run-dialog.h"                    // MacroRunDialog
@@ -221,9 +221,9 @@ EditorSettings const &EditorWindow::editorSettings() const
 }
 
 
-LSPManager const *EditorWindow::lspManagerC() const
+LSPClient const *EditorWindow::lspClientC() const
 {
-  return editorGlobal()->lspManagerC();
+  return editorGlobal()->lspClientC();
 }
 
 
@@ -2229,11 +2229,11 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
   RCSerf<LSPDocumentInfo const> lspDocInfo =
     editorGlobal()->lspGetDocInfo(doc);
   if (lspDocInfo) {
-    oss << "LSP Manager doc info: "
+    oss << "LSPClient doc info: "
         << toGDValue(*lspDocInfo).asLinesString();
   }
   else {
-    oss << "LSP Manager doc info: null\n";
+    oss << "LSPClient doc info: null\n";
   }
 
   if (TextDocumentDiagnostics const *diags = doc->getDiagnostics()) {
