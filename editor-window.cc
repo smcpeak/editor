@@ -695,7 +695,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   DocumentType kdt = detectDocumentType(file->documentName());
   file->setLanguage(kdt);
 
-  if (kdt == DocumentType::KDT_DIFF) {
+  if (kdt == DocumentType::DT_DIFF) {
     // Diff output has lots of lines that are not empty and have
     // whitespace on them.  I do not want that highlighted.
     file->m_highlightTrailingWhitespace = false;

@@ -15,7 +15,7 @@
 
 // Get the highlighter for `kdt`.  It will be attached to `core` for its
 // highlighting work (if the highlighter needs such access).  May return
-// nullptr (as is the case for `KDT_UNKNOWN`, but possibly others).
+// nullptr (as is the case for `DT_UNKNOWN`, but possibly others).
 stdfwd::unique_ptr<Highlighter> makeHighlighterForLanguage(
   DocumentType kdt,
   TextDocumentCore const &core);

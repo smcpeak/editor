@@ -13,19 +13,19 @@
 
 // All the kinds of documents I know about.
 enum class DocumentType : int {
-  KDT_UNKNOWN,               // Unrecognized.
+  DT_UNKNOWN,                // Unrecognized.
 
-  KDT_C,                     // C or C++.
-  KDT_MAKEFILE,
-  KDT_HASH_COMMENT,          // Something that uses '#' for comments.
-  KDT_OCAML,
-  KDT_PYTHON,
-  KDT_DIFF,                  // Unified `diff` output.
+  DT_C,                      // C or C++.
+  DT_MAKEFILE,
+  DT_HASH_COMMENT,           // Something that uses '#' for comments.
+  DT_OCAML,
+  DT_PYTHON,
+  DT_DIFF,                   // Unified `diff` output.
 
   NUM_KNOWN_DOCUMENT_TYPES
 };
 
-// Return a string like "KDT_C".
+// Return a string like "DT_C".
 char const *toString(DocumentType dt);
 
 // Write like `toString` does.
@@ -37,7 +37,7 @@ char const *languageName(DocumentType dt);
 
 // Iterate with `dt` over all `DocumentType`s.
 #define FOR_EACH_KNOWN_DOCUMENT_TYPE(dt)            \
-  for (DocumentType dt = DocumentType::KDT_UNKNOWN; \
+  for (DocumentType dt = DocumentType::DT_UNKNOWN;  \
        dt < DocumentType::NUM_KNOWN_DOCUMENT_TYPES; \
        dt = DocumentType(int(dt) + 1))
 

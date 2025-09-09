@@ -3236,7 +3236,7 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
     docTitle, strReply);
 
   // Use C/C++ highlighting for the result.
-  ntd->setLanguage(DocumentType::KDT_C);
+  ntd->setLanguage(DocumentType::DT_C);
 
   // Show it.
   setDocumentFile(ntd);

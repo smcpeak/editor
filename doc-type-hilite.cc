@@ -22,22 +22,22 @@ std::unique_ptr<Highlighter> makeHighlighterForLanguage(
     default:
       return nullptr;
 
-    case DocumentType::KDT_C:
+    case DocumentType::DT_C:
       return std::make_unique<C_Highlighter>(core);
 
-    case DocumentType::KDT_MAKEFILE:
+    case DocumentType::DT_MAKEFILE:
       return std::make_unique<Makefile_Highlighter>(core);
 
-    case DocumentType::KDT_HASH_COMMENT:
+    case DocumentType::DT_HASH_COMMENT:
       return std::make_unique<HashComment_Highlighter>(core);
 
-    case DocumentType::KDT_OCAML:
+    case DocumentType::DT_OCAML:
       return std::make_unique<OCaml_Highlighter>(core);
 
-    case DocumentType::KDT_PYTHON:
+    case DocumentType::DT_PYTHON:
       return std::make_unique<Python_Highlighter>(core);
 
-    case DocumentType::KDT_DIFF:
+    case DocumentType::DT_DIFF:
       return std::make_unique<DiffHighlighter>();
   }
 }

@@ -12,15 +12,15 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   DocumentType,
   DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
   (
-    "KDT_UNKNOWN",
-    "KDT_C",
-    "KDT_MAKEFILE",
-    "KDT_HASH_COMMENT",
-    "KDT_OCAML",
-    "KDT_PYTHON",
-    "KDT_DIFF",
+    "DT_UNKNOWN",
+    "DT_C",
+    "DT_MAKEFILE",
+    "DT_HASH_COMMENT",
+    "DT_OCAML",
+    "DT_PYTHON",
+    "DT_DIFF",
   ),
-  "KDT_invalid"
+  "DT_invalid"
 )
 
 

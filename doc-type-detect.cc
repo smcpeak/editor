@@ -167,11 +167,11 @@ DocumentType detectDocumentType(DocumentName const &docName)
 {
   // This handles both "foo.diff" and "git diff [<fname>]".
   if (isDiffName(docName)) {
-    return DocumentType::KDT_DIFF;
+    return DocumentType::DT_DIFF;
   }
 
   if (!docName.hasFilename()) {
-    return DocumentType::KDT_UNKNOWN;
+    return DocumentType::DT_UNKNOWN;
   }
 
   // Get file extension.
@@ -200,11 +200,11 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "y",
     };
     if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
-      return DocumentType::KDT_C;
+      return DocumentType::DT_C;
     }
 
     if (streq(ext, "mk")) {
-      return DocumentType::KDT_MAKEFILE;
+      return DocumentType::DT_MAKEFILE;
     }
 
     static char const * const hashCommentExts[] = {
@@ -212,7 +212,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "sh",
     };
     if (stringAmong(ext, hashCommentExts, TABLESIZE(hashCommentExts))) {
-      return DocumentType::KDT_HASH_COMMENT;
+      return DocumentType::DT_HASH_COMMENT;
     }
 
     static char const * const ocamlExts[] = {
@@ -220,7 +220,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "mli",
     };
     if (stringAmong(ext, ocamlExts, TABLESIZE(ocamlExts))) {
-      return DocumentType::KDT_OCAML;
+      return DocumentType::DT_OCAML;
     }
 
     static char const * const pythonExts[] = {
@@ -228,20 +228,20 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "pyi",
     };
     if (stringAmong(ext, pythonExts, TABLESIZE(pythonExts))) {
-      return DocumentType::KDT_PYTHON;
+      return DocumentType::DT_PYTHON;
     }
   }
 
   if (endsWith(filename, "Makefile")) {
-    return DocumentType::KDT_MAKEFILE;
+    return DocumentType::DT_MAKEFILE;
   }
 
   string basename = SMFileUtil().splitPathBase(filename);
   if (isCppHeaderName(basename)) {
-    return DocumentType::KDT_C;
+    return DocumentType::DT_C;
   }
 
-  return DocumentType::KDT_UNKNOWN;
+  return DocumentType::DT_UNKNOWN;
 }
 
 

@@ -44,27 +44,27 @@ void testOne_detectFileType(
 
 void test_detectDocumentType()
 {
-  testOne_detectFileType("f", DocumentType::KDT_UNKNOWN);
-  testOne_detectFileType("foo.cc", DocumentType::KDT_C);
-  testOne_detectFileType("foo.diff", DocumentType::KDT_DIFF);
-  testOne_detectFileType("foo.patch", DocumentType::KDT_DIFF);
-  testOne_detectFileType("foo.patch.cc", DocumentType::KDT_C);
+  testOne_detectFileType("f", DocumentType::DT_UNKNOWN);
+  testOne_detectFileType("foo.cc", DocumentType::DT_C);
+  testOne_detectFileType("foo.diff", DocumentType::DT_DIFF);
+  testOne_detectFileType("foo.patch", DocumentType::DT_DIFF);
+  testOne_detectFileType("foo.patch.cc", DocumentType::DT_C);
 
-  testOne_detectFileType("some-test.ev", DocumentType::KDT_C);
+  testOne_detectFileType("some-test.ev", DocumentType::DT_C);
 
-  testOne_detectDocumentType(cmdDocName("differences"), DocumentType::KDT_UNKNOWN);
-  testOne_detectDocumentType(cmdDocName("diff ere nces"), DocumentType::KDT_DIFF);
-  testOne_detectDocumentType(cmdDocName("git diff ere nces"), DocumentType::KDT_DIFF);
-  testOne_detectDocumentType(cmdDocName("gitdiff ere nces"), DocumentType::KDT_UNKNOWN);
+  testOne_detectDocumentType(cmdDocName("differences"), DocumentType::DT_UNKNOWN);
+  testOne_detectDocumentType(cmdDocName("diff ere nces"), DocumentType::DT_DIFF);
+  testOne_detectDocumentType(cmdDocName("git diff ere nces"), DocumentType::DT_DIFF);
+  testOne_detectDocumentType(cmdDocName("gitdiff ere nces"), DocumentType::DT_UNKNOWN);
 
-  testOne_detectFileType("iostream", DocumentType::KDT_C);
-  testOne_detectFileType("string", DocumentType::KDT_C);
-  testOne_detectFileType("iostream_other", DocumentType::KDT_UNKNOWN);
-  testOne_detectFileType("other_iostream", DocumentType::KDT_UNKNOWN);
+  testOne_detectFileType("iostream", DocumentType::DT_C);
+  testOne_detectFileType("string", DocumentType::DT_C);
+  testOne_detectFileType("iostream_other", DocumentType::DT_UNKNOWN);
+  testOne_detectFileType("other_iostream", DocumentType::DT_UNKNOWN);
 
-  testOne_detectFileType("ostream.tcc", DocumentType::KDT_C);
-  testOne_detectFileType("something.json", DocumentType::KDT_C);
-  testOne_detectFileType("else.gdvn", DocumentType::KDT_C);
+  testOne_detectFileType("ostream.tcc", DocumentType::DT_C);
+  testOne_detectFileType("something.json", DocumentType::DT_C);
+  testOne_detectFileType("else.gdvn", DocumentType::DT_C);
 }
 
 
