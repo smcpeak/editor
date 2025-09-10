@@ -59,7 +59,7 @@
   [ "./editor.exe" "-ev=test/lsp-arbitrary-requests.ev" "test/lsp-arbitrary-requests.cc" ]
   [ "./editor.exe" "-ev=test/lsp-reload-file.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/lsp-no-op-change.ev" "test/language-test.cc" ]
-  [ "./editor.exe" "-ev=test/set-highlighting.ev" "test/language-test.cc" ]
+  [ "./editor.exe" "-ev=test/set-document-type.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/lsp-stop-server.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/lsp-start-server-other-language.ev" "README.md" ]
 

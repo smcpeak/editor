@@ -294,7 +294,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&File");
     menu->setObjectName("fileMenu");
 
-    // Used letters: acilmnorswx
+    // Used letters: acilmnorstwx
 
     MENU_ITEM    ("&New", fileNewFile);
     MENU_ITEM_KEY("&Open ...", fileOpen, Qt::Key_F3);
@@ -311,10 +311,14 @@ void EditorWindow::buildMenu()
 
     menu->addSeparator();
 
-    CHECKABLE_ACTION(m_toggleReadOnlyAction,
-                  "Read only", fileToggleReadOnly, false /*initChecked*/);
     MENU_ITEM_KEY("&Reload", fileReload, Qt::Key_F5);
     MENU_ITEM    ("Check for on-disk changes", fileCheckForChanges);
+
+    menu->addSeparator();
+
+    MENU_ITEM    ("Set document &type ...", fileSetDocumentType);
+    CHECKABLE_ACTION(m_toggleReadOnlyAction,
+                  "Read only", fileToggleReadOnly, false /*initChecked*/);
 
     menu->addSeparator();
 
@@ -418,7 +422,7 @@ void EditorWindow::buildMenu()
   }
 
   {
-    // Used mnemonics: fhmtvw
+    // Used mnemonics: fmtvw
 
     QMenu *menu = this->m_menuBar->addMenu("&View");
     menu->setObjectName("viewMenu");
@@ -441,8 +445,6 @@ void EditorWindow::buildMenu()
       "Highlight &trailing whitespace",
       viewToggleHighlightTrailingWS,
       editorWidget()->highlightTrailingWhitespace());
-
-    MENU_ITEM    ("Set &Highlighting...", viewSetHighlighting);
 
     {
       QMenu *submenu = menu->addMenu("&Fonts");
@@ -1933,6 +1935,9 @@ void EditorWindow::viewToggleVisibleSoftMargin() NOEXCEPT
 }
 
 
+#undef CHECKABLE_MENU_TOGGLE
+
+
 void EditorWindow::viewSetSoftMarginColumn() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -1965,19 +1970,16 @@ void EditorWindow::viewToggleHighlightTrailingWS() NOEXCEPT
 }
 
 
-#undef CHECKABLE_MENU_TOGGLE
-
-
-void EditorWindow::viewSetHighlighting() NOEXCEPT
+void EditorWindow::fileSetDocumentType() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   NamedTextDocument *doc = this->currentDocument();
 
   QInputDialog dialog(this);
-  dialog.setObjectName("chooseHighlight");
-  dialog.setWindowTitle("Set Highlighting");
-  dialog.setLabelText("Highlighting to use for this file:");
+  dialog.setObjectName("chooseDocumentType");
+  dialog.setWindowTitle("Set Document Type");
+  dialog.setLabelText("Document type to use for this file:");
 
   // List of known languages.
   QStringList languageNames;

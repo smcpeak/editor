@@ -232,9 +232,10 @@ public Q_SLOTS:
   void fileSave() NOEXCEPT;
   void fileSaveAs() NOEXCEPT;
   void fileClose() NOEXCEPT;
-  void fileToggleReadOnly() NOEXCEPT;
   void fileReload() NOEXCEPT;
   void fileCheckForChanges() NOEXCEPT;
+  void fileSetDocumentType() NOEXCEPT;
+  void fileToggleReadOnly() NOEXCEPT;
   void fileLaunchCommand() NOEXCEPT;
   void fileRunMake() NOEXCEPT;
   void fileKillProcess() NOEXCEPT;
@@ -273,7 +274,6 @@ public Q_SLOTS:
   void viewToggleVisibleSoftMargin() NOEXCEPT;
   void viewSetSoftMarginColumn() NOEXCEPT;
   void viewToggleHighlightTrailingWS() NOEXCEPT;
-  void viewSetHighlighting() NOEXCEPT;
   void viewSetApplicationFont() NOEXCEPT;
   void viewSetEditorFont() NOEXCEPT;
   void viewFontHelp() NOEXCEPT;

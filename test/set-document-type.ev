@@ -1,5 +1,5 @@
 // set-highlighting.ev
-// Test the "View | Set highlighting..." menu item.
+// Test the "File | Set document type ..." menu item.
 
 // In editor with expected file.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -9,19 +9,19 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
 
 // Open the dialog to change it.
-Shortcut("window1.m_menuBar" "Alt+V")
-KeyPress("window1.m_menuBar.viewMenu" "Key_H" "h")
+Shortcut("window1.m_menuBar" "Alt+F")
+KeyPress("window1.m_menuBar.fileMenu" "Key_T" "t")
 
 // Dialog is open, list box is focused.
-CheckFocusWidget("window1.chooseHighlight.#4")
+CheckFocusWidget("window1.chooseDocumentType.#4")
 
 // "C/C++" is currently selected.
-CheckListViewSelectedItem("window1.chooseHighlight.#4", "C++")
+CheckListViewSelectedItem("window1.chooseDocumentType.#4", "C++")
 
 // Change to "Hash comment".
 FocusKeyPR("Key_Down" "")
 FocusKeyPR("Key_Down" "")
-CheckListViewSelectedItem("window1.chooseHighlight.#4", "Hash comment")
+CheckListViewSelectedItem("window1.chooseDocumentType.#4", "Hash comment")
 FocusKeyPR("Key_Return" "\r")
 
 // Back in editor.
