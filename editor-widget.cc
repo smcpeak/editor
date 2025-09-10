@@ -2662,9 +2662,12 @@ RCSerfOpt<LSPClient const> EditorWidget::lspRunningClientOptC(
   // Get the relevant client connection object.
   RCSerfOpt<LSPClient const> lspClient = lspClientOptC();
   if (!lspClient) {
-    // TODO: This message could be more informative.
     if (wantErrors) {
-      complain("No LSP connection is active for the scope of this document.");
+      complain(stringb(
+        "No LSP connection is active for the scope of this document, "
+        "which is " <<
+        LSPClientScope::forNTD(getDocument()).description() << ".  "
+        "Use the \"LSP | Start LSP server\" menu item."));
     }
     return {};
   }

@@ -46,7 +46,7 @@ char const *languageName(DocumentType sl)
     DocumentType,
     DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
     (
-      "None",
+      "Plain text",
       "C-like for highlighting",
       "C++",
       "Makefile",

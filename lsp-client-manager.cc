@@ -121,6 +121,25 @@ INIT_TRACE("lsp-client-manager");
 }
 
 
+std::string LSPClientScope::languageName() const
+{
+  return ::languageName(m_documentType);
+}
+
+
+std::string LSPClientScope::hostString() const
+{
+  return m_hostName.toString();
+}
+
+
+std::string LSPClientScope::description() const
+{
+  return stringb(languageName() << " files on " <<
+                 hostString() << " host");
+}
+
+
 // -------------------------- ScopedLSPClient --------------------------
 ScopedLSPClient::~ScopedLSPClient()
 {}
