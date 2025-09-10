@@ -3870,8 +3870,7 @@ string EditorWidget::eventReplayQuery(string const &state)
     // Strip path info.
     return SMFileUtil().splitPathBase(m_editor->m_namedDoc->resourceName());
   }
-  // TODO: Rename this to "documentType".
-  else if (state == "documentLanguage") {
+  else if (state == "documentType") {
     return languageName(m_editor->m_namedDoc->documentType());
   }
   else if (state == "documentText") {

@@ -6,7 +6,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
 
 // Check that C++ is currently active.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentLanguage" "C++")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
 
 // Open the dialog to change it.
 Shortcut("window1.m_menuBar" "Alt+V")
@@ -28,6 +28,6 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Check that "Hash comment" is currently active.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentLanguage" "Hash comment")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "Hash comment")
 
 // EOF
