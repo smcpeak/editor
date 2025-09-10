@@ -6,6 +6,7 @@
 #ifndef EDITOR_LSP_CLIENT_MANAGER_FWD_H
 #define EDITOR_LSP_CLIENT_MANAGER_FWD_H
 
+class ScopedLSPClient;
 class LSPClientManager;
 
 #endif // EDITOR_LSP_CLIENT_MANAGER_FWD_H

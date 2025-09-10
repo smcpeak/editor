@@ -234,6 +234,7 @@ EDITOR_OBJS += lsp-data.o
 EDITOR_OBJS += lsp-get-code-lines.o
 EDITOR_OBJS += lsp-client-manager.moc.o
 EDITOR_OBJS += lsp-client-manager.o
+EDITOR_OBJS += lsp-client-scope.o
 EDITOR_OBJS += lsp-client.moc.o
 EDITOR_OBJS += lsp-client.o
 EDITOR_OBJS += lsp-protocol-state.o
@@ -300,6 +301,7 @@ UNIT_TESTS_OBJS += lsp-conv-test.o
 UNIT_TESTS_OBJS += lsp-data-test.o
 UNIT_TESTS_OBJS += lsp-get-code-lines-test.o
 UNIT_TESTS_OBJS += lsp-client-manager-test.o
+UNIT_TESTS_OBJS += lsp-client-scope-test.o
 UNIT_TESTS_OBJS += lsp-client-test.moc.o
 UNIT_TESTS_OBJS += lsp-client-test.o
 UNIT_TESTS_OBJS += lsp-test-request-params.o
@@ -561,6 +563,7 @@ compile_commands.json:
 # Set of header files that use create-tuple-class.py.
 CTC_HEADERS :=
 CTC_HEADERS += json-rpc-reply.h
+CTC_HEADERS += lsp-client-scope.h
 CTC_HEADERS += lsp-data.h
 
 # Corresponding implementation files.
