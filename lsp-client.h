@@ -172,9 +172,7 @@ class LSPClient : public QObject,
 
 private:     // data
   // True to run `clangd` instead of the test server instead.
-  //
-  // TODO: Rename to `m_useRealServer`.
-  bool m_useRealClangd;
+  bool m_useRealServer;
 
   // The file to which we send the server's stderr.  Can be null
   // depending on an envvar.

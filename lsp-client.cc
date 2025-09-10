@@ -489,10 +489,10 @@ LSPClient::~LSPClient()
 
 
 LSPClient::LSPClient(
-  bool useRealClangd,
+  bool useRealServer,
   std::string const &lspStderrLogFname,
   std::ostream * NULLABLE protocolDiagnosticLog)
-  : IMEMBFP(useRealClangd),
+  : IMEMBFP(useRealServer),
     m_lspStderrFile(),
     IMEMBFP(protocolDiagnosticLog),
     m_commandRunner(),
@@ -547,7 +547,7 @@ std::optional<std::string> LSPClient::startServer()
   xassert(!m_lsp);
 
   m_commandRunner.reset(new CommandRunner());
-  if (m_useRealClangd) {
+  if (m_useRealServer) {
     m_commandRunner->setProgram("clangd");
     if (envAsBool("CLANGD_VERBOSE_LOG")) {
       // Causes more details to be written to its stderr log file.
