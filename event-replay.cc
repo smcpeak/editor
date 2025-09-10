@@ -59,6 +59,7 @@
 #include <QWidget>
 
 // libc++
+#include <exception>                   // std::exception
 #include <fstream>                     // std::ofstream
 #include <functional>                  // std::function
 #include <optional>                    // std::optional
@@ -963,8 +964,8 @@ bool EventReplay::replayNextEvent()
   catch (string const &msg) {
     m_testResult = msg;
   }
-  catch (XBase &x) {
-    m_testResult = x.getMessage();
+  catch (std::exception &x) {
+    m_testResult = x.what();
   }
   catch (...) {
     m_testResult = "caught unknown exception!";
