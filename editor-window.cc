@@ -1200,6 +1200,64 @@ void EditorWindow::fileCheckForChanges() NOEXCEPT
 }
 
 
+void EditorWindow::fileSetDocumentType() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  NamedTextDocument *doc = this->currentDocument();
+
+  QInputDialog dialog(this);
+  dialog.setObjectName("chooseDocumentType");
+  dialog.setWindowTitle("Set Document Type");
+  dialog.setLabelText("Document type to use for this file:");
+
+  // List of known languages.
+  QStringList languageNames;
+  FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt) {
+    languageNames.push_back(languageName(kdt));
+  }
+  dialog.setComboBoxItems(languageNames);
+
+  // One annoying thing is you can't double-click an item to choose
+  // it and simultaneously close the dialog.
+  dialog.setOption(QInputDialog::UseListViewForComboBoxItems);
+
+  // Start with the current language selected.
+  dialog.setTextValue(languageName(doc->documentType()));
+
+  if (!dialog.exec()) {
+    return;
+  }
+
+  if (!stillCurrentDocument(doc)) {
+    return;
+  }
+
+  // The QInputDialog documentation is incomplete.  It says that
+  // 'textValue' is only used in TextInput mode without clarifying that
+  // comboBox mode is a form of TextInput mode.  I determined that by
+  // reading the source code.
+  QString chosenName = dialog.textValue();
+
+  // Somewhat crudely search for a language whose name matches what the
+  // dialog says was picked.
+  bool found = false;
+  FOR_EACH_KNOWN_DOCUMENT_TYPE(dt) {
+    if (chosenName == languageName(dt)) {
+      doc->setDocumentType(dt);
+      found = true;
+      break;
+    }
+  }
+  xassert(found);
+
+  // Notify everyone of the change.
+  this->m_editorGlobal->notifyDocumentAttributeChanged(doc);
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::fileLaunchCommand() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -1965,64 +2023,6 @@ void EditorWindow::viewToggleHighlightTrailingWS() NOEXCEPT
 
   // Includes firing 'editorViewChanged'.
   editorWidget()->redraw();
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorWindow::fileSetDocumentType() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  NamedTextDocument *doc = this->currentDocument();
-
-  QInputDialog dialog(this);
-  dialog.setObjectName("chooseDocumentType");
-  dialog.setWindowTitle("Set Document Type");
-  dialog.setLabelText("Document type to use for this file:");
-
-  // List of known languages.
-  QStringList languageNames;
-  FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt) {
-    languageNames.push_back(languageName(kdt));
-  }
-  dialog.setComboBoxItems(languageNames);
-
-  // One annoying thing is you can't double-click an item to choose
-  // it and simultaneously close the dialog.
-  dialog.setOption(QInputDialog::UseListViewForComboBoxItems);
-
-  // Start with the current language selected.
-  dialog.setTextValue(languageName(doc->documentType()));
-
-  if (!dialog.exec()) {
-    return;
-  }
-
-  if (!stillCurrentDocument(doc)) {
-    return;
-  }
-
-  // The QInputDialog documentation is incomplete.  It says that
-  // 'textValue' is only used in TextInput mode without clarifying that
-  // comboBox mode is a form of TextInput mode.  I determined that by
-  // reading the source code.
-  QString chosenName = dialog.textValue();
-
-  // Somewhat crudely search for a language whose name matches what the
-  // dialog says was picked.
-  bool found = false;
-  FOR_EACH_KNOWN_DOCUMENT_TYPE(dt) {
-    if (chosenName == languageName(dt)) {
-      doc->setDocumentType(dt);
-      found = true;
-      break;
-    }
-  }
-  xassert(found);
-
-  // Notify everyone of the change.
-  this->m_editorGlobal->notifyDocumentAttributeChanged(doc);
 
   GENERIC_CATCH_END
 }
