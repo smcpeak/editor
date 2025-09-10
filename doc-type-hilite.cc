@@ -22,7 +22,8 @@ std::unique_ptr<Highlighter> makeHighlighterForLanguage(
     default:
       return nullptr;
 
-    case DocumentType::DT_C:
+    case DocumentType::DT_C_LIKE:
+    case DocumentType::DT_CPP:
       return std::make_unique<C_Highlighter>(core);
 
     case DocumentType::DT_MAKEFILE:

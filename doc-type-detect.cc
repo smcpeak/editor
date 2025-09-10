@@ -180,27 +180,36 @@ DocumentType detectDocumentType(DocumentName const &docName)
   if (dot) {
     string ext = string(dot+1);
 
-    static char const * const cppExts[] = {
+    // Extensions that should be highlighted like C/C++, but for which
+    // language services (LSP) do not apply.
+    static char const * const cLikeExts[] = {
       "ast",
-      "c",
-      "cc",
-      "cpp",
       "ev",        // Also GDVN.
       "gr",
       "i",
       "ii",
-      "h",
-      "hh",
-      "hpp",
       "gdvn",      // C/C++ is almost right (except for nested comments).
       "java",      // C/C++ highlighting is better than none.
       "json",      // Should work fine.
       "lex",
-      "tcc",
       "y",
     };
+    if (stringAmong(ext, cLikeExts, TABLESIZE(cLikeExts))) {
+      return DocumentType::DT_C_LIKE;
+    }
+
+    // Actual C++ (and C), for use with LSP.
+    static char const * const cppExts[] = {
+      "c",
+      "cc",
+      "cpp",
+      "h",
+      "hh",
+      "hpp",
+      "tcc",
+    };
     if (stringAmong(ext, cppExts, TABLESIZE(cppExts))) {
-      return DocumentType::DT_C;
+      return DocumentType::DT_CPP;
     }
 
     if (streq(ext, "mk")) {
@@ -238,7 +247,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
 
   string basename = SMFileUtil().splitPathBase(filename);
   if (isCppHeaderName(basename)) {
-    return DocumentType::DT_C;
+    return DocumentType::DT_CPP;
   }
 
   return DocumentType::DT_UNKNOWN;

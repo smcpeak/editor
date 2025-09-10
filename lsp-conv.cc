@@ -320,8 +320,7 @@ void lspSendUpdatedContents(
 std::optional<std::string> lspLanguageIdForDTOpt(DocumentType dt)
 {
   switch (dt) {
-    case DocumentType::DT_C:
-      // `DT_C` means C and C++, and nearly always that means C++.
+    case DocumentType::DT_CPP:
       return "cpp";
 
     case DocumentType::DT_PYTHON:

@@ -3276,10 +3276,7 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
       docTitle, strReply);
 
   // Use C/C++ highlighting for the result.
-  //
-  // TODO: Make a new document type that has the same highlighting but
-  // does not imply it is actually C/C++.
-  newDocument->setDocumentType(DocumentType::DT_C);
+  newDocument->setDocumentType(DocumentType::DT_C_LIKE);
 
   // Show it.
   setDocumentFile(newDocument);

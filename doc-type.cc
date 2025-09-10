@@ -16,7 +16,8 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
   (
     "DT_UNKNOWN",
-    "DT_C",
+    "DT_C_LIKE",
+    "DT_CPP",
     "DT_MAKEFILE",
     "DT_HASH_COMMENT",
     "DT_OCAML",
@@ -46,6 +47,7 @@ char const *languageName(DocumentType sl)
     DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
     (
       "None",
+      "C-like for highlighting",
       "C++",
       "Makefile",
       "Hash comment",

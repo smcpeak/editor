@@ -17,7 +17,8 @@
 enum class DocumentType : int {
   DT_UNKNOWN,                // Unrecognized.
 
-  DT_C,                      // C or C++.
+  DT_C_LIKE,                 // C-like for highlighting only.
+  DT_CPP,                    // C++.
   DT_MAKEFILE,
   DT_HASH_COMMENT,           // Something that uses '#' for comments.
   DT_OCAML,
