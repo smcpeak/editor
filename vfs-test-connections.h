@@ -1,13 +1,13 @@
-// lsp-get-code-lines-test.h
-// Decls for `lsp-get-code-lines-test.cc`.
+// vfs-test-connections.h
+// `VFS_TestConnections`, a VFS mock object for testing.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_LSP_GET_CODE_LINES_TEST_H
-#define EDITOR_LSP_GET_CODE_LINES_TEST_H
+#ifndef EDITOR_VFS_TEST_CONNECTIONS_H
+#define EDITOR_VFS_TEST_CONNECTIONS_H
 
 #include "host-name-fwd.h"                       // HostName [n]
-#include "vfs-connections.h"                     // VFS_Connections
+#include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-msg-fwd.h"                         // VFS_ReadFile{Request,Reply} [n]
 
 #include "smbase/either-fwd.h"                   // smbase::Either
@@ -72,4 +72,4 @@ Q_SIGNALS:
 };
 
 
-#endif // EDITOR_LSP_GET_CODE_LINES_TEST_H
+#endif // EDITOR_VFS_TEST_CONNECTIONS_H

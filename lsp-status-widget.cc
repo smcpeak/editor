@@ -5,6 +5,7 @@
 
 #include "editor-global.h"             // EditorGlobal
 #include "editor-widget.h"             // EditorWidget
+#include "lsp-client-manager.h"        // LSPClientManager
 #include "lsp-client.h"                // LSPClient
 
 #include "smqtutil/qstringb.h"         // qstringb
@@ -46,7 +47,7 @@ LSPStatusWidget::LSPStatusWidget(
 
   // These are disconnected in `resetEditorWidget`.
   QObject::connect(
-    editorGlobal(), &EditorGlobal::signal_lspChangedProtocolState,
+    lspClientManager(), &LSPClientManager::signal_changedProtocolState,
     this, &LSPStatusWidget::on_changedLSPStatus);
   QObject::connect(
     m_editorWidget, &EditorWidget::signal_metadataChange,
@@ -80,16 +81,16 @@ void LSPStatusWidget::paintEvent(QPaintEvent *e)
 }
 
 
-EditorGlobal *LSPStatusWidget::editorGlobal() const
+LSPClientManager *LSPStatusWidget::lspClientManager() const
 {
-  return m_editorWidget->editorGlobal();
+  return m_editorWidget->editorGlobal()->lspClientManager();
 }
 
 
 void LSPStatusWidget::resetEditorWidget()
 {
   if (m_editorWidget) {
-    QObject::disconnect(editorGlobal(), nullptr, this, nullptr);
+    QObject::disconnect(lspClientManager(), nullptr, this, nullptr);
 
     QObject::disconnect(m_editorWidget, nullptr, this, nullptr);
     m_editorWidget = nullptr;
@@ -123,7 +124,8 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
   // information is out of date due to the user modifying the file.
   bool addAsterisk = false;
 
-  LSPProtocolState state = editorGlobal()->lspGetProtocolState();
+  NamedTextDocument const *doc = m_editorWidget->getDocument();
+  LSPProtocolState state = lspClientManager()->getProtocolState(doc);
   if (m_fakeStatus) {
     state = static_cast<LSPProtocolState>(m_fakeStatus-1);
   }
@@ -147,8 +149,8 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
       statusMessages.push_back(stringb(
         "Current document version is " << doc->getVersionNumber() << "."));
 
-      RCSerf<LSPDocumentInfo const> lspDocInfo =
-        editorGlobal()->lspGetDocInfo(doc);
+      RCSerfOpt<LSPDocumentInfo const> lspDocInfo =
+        lspClientManager()->getDocInfo(doc);
       if (!lspDocInfo) {
         TRACE2("  on_changedLSPStatus: inactive color");
         bgColor = inactiveColor;
@@ -235,7 +237,7 @@ void LSPStatusWidget::on_changedLSPStatus() noexcept
       bgColor = protoErrorColor;
       statusMessages.push_back(stringb(
         "There was an LSP protocol error: " <<
-        editorGlobal()->lspExplainAbnormality()));
+        lspClientManager()->explainAbnormality(doc)));
       break;
 
     case LSP_PS_PROTOCOL_OBJECT_MISSING:

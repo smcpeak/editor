@@ -82,7 +82,7 @@ private:     // data
   TextDocumentObservationRecorder m_observationRecorder;
 
   // Which language to treat the contents as.
-  DocumentType m_language;
+  DocumentType m_documentType;
 
   // Current highlighter, if any.
   std::unique_ptr<Highlighter> m_highlighter;
@@ -157,13 +157,13 @@ public:      // funcs
   string directory() const             { return m_documentName.directory(); }
 
   // ---------------------------- language -----------------------------
-  DocumentType language() const
-    { return m_language; }
+  DocumentType documentType() const
+    { return m_documentType; }
   Highlighter * NULLABLE highlighter() const
     { return m_highlighter.get(); }
 
   // Change the current language and highlighter.
-  void setLanguage(DocumentType sl);
+  void setDocumentType(DocumentType dt);
 
   // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.

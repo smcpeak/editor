@@ -19,7 +19,8 @@
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-number.h"                         // LineNumber
 #include "lsp-data.h"                            // LSP_LocationSequence
-#include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber, lspLanguageIdForDT
+#include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber, lspLanguageIdForDTOpt
+#include "lsp-client-manager.h"                  // LSPClientManager
 #include "lsp-client.h"                          // LSPClient::notify_textDocument_didOpen, etc.
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number.h"                  // LSP_VersionNumber
@@ -50,6 +51,7 @@
 #include "smbase/bdffont.h"                      // BDFFont
 #include "smbase/dev-warning.h"                  // DEV_WARNING
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
+#include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
@@ -318,12 +320,6 @@ EditorGlobal *EditorWidget::editorGlobal() const
 EditorSettings const &EditorWidget::editorSettings() const
 {
   return editorGlobal()->getSettings();
-}
-
-
-LSPClient const *EditorWidget::lspClientC() const
-{
-  return editorGlobal()->lspClientC();
 }
 
 
@@ -2638,6 +2634,61 @@ void EditorWidget::focusOutEvent(QFocusEvent *e) NOEXCEPT
 }
 
 
+// -------------------------------- LSP --------------------------------
+NNRCSerf<LSPClientManager> EditorWidget::lspClientManager() const
+{
+  return editorGlobal()->lspClientManager();
+}
+
+
+RCSerfOpt<LSPClient const> EditorWidget::lspClientOptC() const
+{
+  return lspClientManager()->getClientOptC(getDocument());
+}
+
+
+RCSerfOpt<LSPClient const> EditorWidget::lspRunningClientOptC(
+  bool wantErrors)
+{
+  // Make sure the document can have LSP services.
+  if (std::optional<std::string> reason =
+        getDocument()->isIncompatibleWithLSP()) {
+    if (wantErrors) {
+      complain(*reason);
+    }
+    return {};
+  }
+
+  // Get the relevant client connection object.
+  RCSerfOpt<LSPClient const> lspClient = lspClientOptC();
+  if (!lspClient) {
+    // TODO: This message could be more informative.
+    if (wantErrors) {
+      complain("No LSP connection is active for the scope of this document.");
+    }
+    return {};
+  }
+
+  // If we just started the server, wait for it to finish initializing.
+  // This is important during automated testing.
+  if (!lspWaitUntilNotInitializing(lspClient)) {
+    // User canceled the wait, no need for any error report.
+    return {};
+  }
+
+  if (!lspClient->isRunningNormally()) {
+    if (wantErrors) {
+      complain(stringb("LSP server not ready: " <<
+        lspClient->describeProtocolState()));
+    }
+    return {};
+  }
+
+  xassertPostcondition(lspClient->isRunningNormally());
+  return lspClient;
+}
+
+
 std::optional<LSP_VersionNumber> EditorWidget::lspGetDocVersionNumber(
   bool wantErrors) const
 {
@@ -2669,13 +2720,14 @@ bool EditorWidget::lspSynchronouslyWaitUntil(
 }
 
 
-bool EditorWidget::lspWaitUntilNotInitializing()
+bool EditorWidget::lspWaitUntilNotInitializing(
+  LSPClient const *lspClient)
 {
-  if (editorGlobal()->lspIsInitializing()) {
+  if (lspClient->isInitializing()) {
     // Synchronously wait until LSP changes state.
     TRACE1("waiting for LSP to initialize");
-    auto lambda = [this]() -> bool {
-      return (!this->editorGlobal()->lspIsInitializing());
+    auto lambda = [lspClient]() -> bool {
+      return (!lspClient->isInitializing());
     };
     std::string message = stringb(
       "Waiting for LSP server to start...");
@@ -2691,28 +2743,14 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
   // True if we want a popup for errors.
   bool const wantErrors = (operation != LSPFO_UPDATE_IF_OPEN);
 
-  if (!lspWaitUntilNotInitializing()) {
-    return;
+  if (!lspRunningClientOptC(wantErrors)) {
+    return;        // Error already reported if appropriate.
   }
+  NNRCSerf<LSPClientManager> lcm = lspClientManager();
 
-  if (!editorGlobal()->lspIsRunningNormally()) {
-    if (wantErrors) {
-      complain(stringb("Server not ready: " <<
-        lspClientC()->describeProtocolState()));
-    }
-    return;
-  }
-
-  NamedTextDocument *ntd = getDocument();
-  if (std::optional<std::string> reason =
-        ntd->isIncompatibleWithLSP()) {
-    if (wantErrors) {
-      inform(*reason);
-    }
-    return;
-  }
-
-  bool alreadyOpen = editorGlobal()->lspFileIsOpen(ntd);
+  // Is this file already open?
+  NamedTextDocument * const ntd = getDocument();
+  bool const alreadyOpen = lcm->fileIsOpen(ntd);
 
   if (operation == LSPFO_CLOSE) {
     if (!alreadyOpen) {
@@ -2722,7 +2760,7 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
       }
     }
     else {
-      editorGlobal()->lspCloseFile(ntd);
+      lcm->closeFile(ntd);
     }
     return;
   }
@@ -2734,18 +2772,18 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
   try {
     if (!alreadyOpen) {
       if (std::optional<std::string> languageIdOpt =
-            lspLanguageIdForDT(ntd->language())) {
-        editorGlobal()->lspOpenFile(ntd, *languageIdOpt);
+            lspLanguageIdForDTOpt(ntd->documentType())) {
+        lcm->openFile(ntd, *languageIdOpt);
       }
       else {
         complain(stringb(
           "This editor application does not know how to interact "
           "with an LSP server for " <<
-          languageName(ntd->language()) << " documents."));
+          languageName(ntd->documentType()) << " documents."));
       }
     }
     else /*update*/ {
-      editorGlobal()->lspUpdateFile(ntd);
+      lcm->updateFile(ntd);
     }
   }
   catch (XBase &x) {
@@ -2760,10 +2798,10 @@ void EditorWidget::lspUpdateFileIfContinuous()
 {
   NamedTextDocument *ntd = getDocument();
   if (ntd->m_lspUpdateContinuously &&
-      editorGlobal()->lspIsRunningNormally() &&
-      editorGlobal()->lspFileIsOpen(ntd)) {
+      lspClientManager()->isRunningNormally(ntd) &&
+      lspClientManager()->fileIsOpen(ntd)) {
     try {
-      editorGlobal()->lspUpdateFile(ntd);
+      lspClientManager()->updateFile(ntd);
     }
     catch (XBase &x) {
       complain(stringb("LSP update: " << x));
@@ -2899,27 +2937,18 @@ void EditorWidget::lspGoToRelatedLocation(
   LSPSymbolRequestKind lsrk,
   EditorNavigationOptions options)
 {
+  if (!lspRunningClientOptC(true /*wantErrors*/)) {
+    return;        // Error already reported.
+  }
+  NNRCSerf<LSPClientManager> lcm = lspClientManager();
+
   NamedTextDocument *ntd = getDocument();
-  if (std::optional<std::string> reason =
-        ntd->isIncompatibleWithLSP()) {
-    complain(*reason);
-    return;
-  }
-
-  DocumentName const &docName = ntd->documentName();
-  std::string fname = docName.filename();
-
-  if (!lspClientC()->isRunningNormally()) {
-    complain(lspClientC()->explainAbnormality());
-    return;
-  }
-
-  if (!editorGlobal()->lspFileIsOpen(ntd)) {
+  if (!lcm->fileIsOpen(ntd)) {
     // Go ahead and open the file automatically.  This will entail more
     // delay than usual, but everything should work.
     lspDoFileOperation(LSPFO_OPEN_OR_UPDATE);
 
-    if (!editorGlobal()->lspFileIsOpen(ntd)) {
+    if (!lcm->fileIsOpen(ntd)) {
       // Still not open, must have gotten an error, bail.
       return;
     }
@@ -2929,22 +2958,21 @@ void EditorWidget::lspGoToRelatedLocation(
   TRACE1("sending request for " << toString(lsrk) <<
          " of symbol in " << ntd->documentName() <<
          " at " << coord);
-  int id = editorGlobal()->lspRequestRelatedLocation(
-                             lsrk, ntd, coord);
+  int id = lcm->requestRelatedLocation(ntd, lsrk, coord);
 
   // Synchronously wait for the reply (or for the server to
   // malfunction).
   TRACE1("waiting for symbol information reply, id=" << id);
-  auto lambda = [this, id]() -> bool {
-    return (!this->editorGlobal()->lspIsRunningNormally()) ||
-           this->editorGlobal()->lspHasReplyForID(id);
+  auto lambda = [lcm, ntd, id]() -> bool {
+    return (!lcm->isRunningNormally(ntd)) ||
+           lcm->hasReplyForID(ntd, id);
   };
   std::string message = stringb(
     "Waiting for reply for " << toMessageString(lsrk) <<
     " request...");
   if (lspSynchronouslyWaitUntil(lambda, message)) {
-    if (editorGlobal()->lspIsRunningNormally()) {
-      JSON_RPC_Reply reply = editorGlobal()->lspTakeReplyForID(id);
+    if (lcm->isRunningNormally(ntd)) {
+      JSON_RPC_Reply reply = lcm->takeReplyForID(ntd, id);
       TRACE1("received reply: " << reply);
 
       if (reply.isError()) {
@@ -2958,12 +2986,12 @@ void EditorWidget::lspGoToRelatedLocation(
       }
     }
     else {
-      complain(editorGlobal()->lspExplainAbnormality());
+      complain(lcm->explainAbnormality(ntd));
     }
   }
   else {
     TRACE1("canceled wait for " << toString(lsrk) << " reply");
-    editorGlobal()->lspCancelRequestWithID(id);
+    lcm->cancelRequestWithID(ntd, id);
   }
 }
 
@@ -3020,7 +3048,8 @@ void EditorWidget::lspHandleLocationReply(
       // Query them all.  This does a synchronous wait.
       SynchronousWaiter waiter(this);
       if (std::optional<std::vector<std::string>> codeLines =
-            editorGlobal()->lspGetCodeLines(waiter, locations)) {
+            lspClientManager()->getCodeLines(
+              getDocument(), waiter, locations)) {
         xassert(codeLines->size() == locations.size());
 
         // Populate the information vector for the dialog.
@@ -3137,10 +3166,10 @@ void EditorWidget::lspHandleCompletionReply(
 
 void EditorWidget::lspSendSelectedText(bool asRequest)
 {
-  if (!editorGlobal()->lspIsRunningNormally()) {
-    complain(editorGlobal()->lspExplainAbnormality());
+  if (!lspRunningClientOptC(true /*wantErrors*/)) {
     return;
   }
+  NNRCSerf<LSPClientManager> lcm = lspClientManager();
 
   // Get the selected text.
   std::string selText = getSelectedText();
@@ -3160,12 +3189,13 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
   }
 
   // Substitute `CUR_FILE_URI` for its URL.
-  if (getDocument()->hasFilename()) {
-    std::string curFileUri = makeFileURI(getDocument()->filename());
+  NamedTextDocument const *ntd = getDocument();
+  if (ntd->hasFilename()) {
+    std::string curFileUri = makeFileURI(ntd->filename());
     gdvMessage = substitutionTransformGDValue(gdvMessage,
       std::map<GDValue, GDValue>{
         { "CUR_FILE_URI"_sym, curFileUri },
-        { "CUR_FILE_VERSION"_sym, getDocument()->getVersionNumber() },
+        { "CUR_FILE_VERSION"_sym, ntd->getVersionNumber() },
       });
   }
 
@@ -3194,13 +3224,13 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
 
   // Send these as a request.
   int requestID =
-    editorGlobal()->lspSendArbitraryRequest(method, params);
+    lcm->sendArbitraryRequest(ntd, method, params);
 
   // Synchronously wait for the reply.
   IncDecWaitingCounter idwc;
-  auto doneCondition = [this, requestID]() -> bool {
-    return !editorGlobal()->lspIsRunningNormally() ||
-           editorGlobal()->lspHasReplyForID(requestID);
+  auto doneCondition = [lcm, ntd, requestID]() -> bool {
+    return !lcm->isRunningNormally(ntd) ||
+           lcm->hasReplyForID(ntd, requestID);
   };
   if (!synchronouslyWaitUntil(
          this,
@@ -3214,13 +3244,13 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
   }
 
   // Check if we stopped due to a protocol breakage.
-  if (!editorGlobal()->lspIsRunningNormally()) {
-    complain(editorGlobal()->lspExplainAbnormality());
+  if (!lcm->isRunningNormally(ntd)) {
+    complain(lcm->explainAbnormality(ntd));
     return;
   }
 
   // Take the reply.
-  JSON_RPC_Reply reply = editorGlobal()->lspTakeReplyForID(requestID);
+  JSON_RPC_Reply reply = lcm->takeReplyForID(ntd, requestID);
   if (reply.isError()) {
     complain(stringb("LSP error: " << reply.error().m_message));
     return;
@@ -3241,25 +3271,32 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
     " to " << doubleQuote(abbrevMethod) << " method");
 
   // Put it into a document.
-  NamedTextDocument *ntd = editorGlobal()->getOrCreateGeneratedDocument(
-    docTitle, strReply);
+  NamedTextDocument *newDocument =
+    editorGlobal()->getOrCreateGeneratedDocument(
+      docTitle, strReply);
 
   // Use C/C++ highlighting for the result.
-  ntd->setLanguage(DocumentType::DT_C);
+  //
+  // TODO: Make a new document type that has the same highlighting but
+  // does not imply it is actually C/C++.
+  newDocument->setDocumentType(DocumentType::DT_C);
 
   // Show it.
-  setDocumentFile(ntd);
+  setDocumentFile(newDocument);
 }
 
 
 void EditorWidget::lspSendArbitraryNotification(
   GDValue const &gdvMessage)
 {
+  NNRCSerf<LSPClientManager> lcm = lspClientManager();
+  NamedTextDocument const *ntd = getDocument();
+
   if (gdvMessage.isSequence()) {
     for (GDValue const &elt : gdvMessage.sequenceIterableC()) {
       // Since there could be many, check LSP health each time.
-      if (!editorGlobal()->lspIsRunningNormally()) {
-        xmessage(editorGlobal()->lspExplainAbnormality());
+      if (!lcm->isRunningNormally(ntd)) {
+        xmessage(lcm->explainAbnormality(ntd));
       }
 
       lspSendArbitraryNotification(elt);
@@ -3271,7 +3308,7 @@ void EditorWidget::lspSendArbitraryNotification(
     std::string method = p.mapGetValueAtStr("method").stringGet();
     GDValue params = p.mapGetValueAtStr("params").getValue();
 
-    editorGlobal()->lspSendArbitraryNotification(method, params);
+    lcm->sendArbitraryNotification(ntd, method, params);
   }
 }
 
@@ -3833,8 +3870,9 @@ string EditorWidget::eventReplayQuery(string const &state)
     // Strip path info.
     return SMFileUtil().splitPathBase(m_editor->m_namedDoc->resourceName());
   }
+  // TODO: Rename this to "documentType".
   else if (state == "documentLanguage") {
-    return languageName(m_editor->m_namedDoc->language());
+    return languageName(m_editor->m_namedDoc->documentType());
   }
   else if (state == "documentText") {
     return m_editor->getTextForLRangeString(m_editor->documentLRange());
@@ -3852,7 +3890,12 @@ string EditorWidget::eventReplayQuery(string const &state)
     return boolToString(editorGlobal()->lspIsFakeServer());
   }
   else if (state == "lspIsRunningNormally") {
-    return boolToString(editorGlobal()->lspIsRunningNormally());
+    return boolToString(
+      lspClientManager()->isRunningNormally(getDocument()));
+  }
+  else if (state == "lspNumDiagnostics") {
+    // Returns a number or "null".
+    return stringb(toGDValue(getDocument()->getNumDiagnostics()));
   }
   else if (state == "selfCheck") {
     // Just invoke self check, throwing if it fails.  The returned

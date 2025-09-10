@@ -40,6 +40,10 @@ using namespace smbase;
 INIT_TRACE("lsp-client-test");
 
 
+char const *LSPClientTester::s_lspStderrInitialName =
+  "out/lsp-client-test-server-stderr.txt";
+
+
 LSPClientTester::~LSPClientTester()
 {
   disconnectSignals();
@@ -51,7 +55,7 @@ LSPClientTester::LSPClientTester(
   std::ostream * NULLABLE protocolDiagnosticLog)
   : m_lspClient(
       params.m_useRealClangd,
-      "out/lsp-client-test-server-stderr.txt",
+      s_lspStderrInitialName,
       protocolDiagnosticLog),
     m_params(params),
     m_state(S_INIT),
@@ -302,6 +306,10 @@ void LSPClientTester::checkFinalState()
   xassert(m_contentRequestID == 0);
   xassert(m_numEditsMade == m_numEditsToMake);
   m_doc.selfCheck();
+
+  // Also test this method.
+  EXPECT_EQ(m_lspClient.lspStderrLogFname().value(),
+    s_lspStderrInitialName);
 }
 
 

@@ -1,0 +1,22 @@
+// lsp-start-server-other-language.ev
+// Try to start an LSP server for a language we cannot handle.
+
+// In editor with expected file.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "README.md")
+
+// Try to start LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+
+// Pops up error box.
+CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
+CheckMessageBoxTextMatches("window1.#5", "Cannot create LSP client for language")
+
+// Dismiss dialog.
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// EOF

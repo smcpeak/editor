@@ -17,7 +17,8 @@
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-difference.h"                     // LineDifference
 #include "line-index.h"                          // LineIndex
-#include "lsp-client-fwd.h"                      // LSPClient
+#include "lsp-client-fwd.h"                      // LSPClient [n]
+#include "lsp-client-manager-fwd.h"              // LSPClientManager [n]
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number-fwd.h"              // LSP_VersionNumber [n]
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
@@ -35,7 +36,7 @@
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
-#include "smbase/refct-serf.h"                   // RCSerf, SerfRefCount
+#include "smbase/refct-serf.h"                   // RCSerf, RCSerfOpt SerfRefCount
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-memory-fwd.h"               // std::unique_ptr
 #include "smbase/std-optional-fwd.h"             // std::optional
@@ -354,10 +355,6 @@ public:      // funcs
   // User settings.
   EditorSettings const &editorSettings() const;
 
-  // Global LSP client object, read-only.  Writes have to go through
-  // `editorGlobal()`.
-  LSPClient const *lspClientC() const;
-
   // Read the font choice stored in 'editorGlobal()' and set this
   // widget's editor fonts accordingly.
   void setFontsFromEditorGlobal();
@@ -510,6 +507,21 @@ public:      // funcs
   void editGrepSource();
 
   // ------------------------------- LSP -------------------------------
+  // Global LSP client manager.  Never null.
+  NNRCSerf<LSPClientManager> lspClientManager() const;
+
+  // LSP client object for this document's scope, read-only.  Writes
+  // have to go through `lspClientManager()`.  This is null if this
+  // document does not have an associated LSP server.
+  RCSerfOpt<LSPClient const> lspClientOptC() const;
+
+  // Get the LSP client for this document's scope, and insist that it be
+  // running normally.  If it is not, return nullptr, and also show an
+  // error box if `wantErrors`.
+  //
+  // Ensures: If `return != nullptr`, `return->isRunningNormally()`.
+  RCSerfOpt<LSPClient const> lspRunningClientOptC(bool wantErrors);
+
   // Get the version number of the current document as an
   // `LSP_VersionNumber`, which is what we need for LSP.  If the version
   // number cannot be converted to that type (because it is too big),
@@ -517,12 +529,12 @@ public:      // funcs
   std::optional<LSP_VersionNumber> lspGetDocVersionNumber(
     bool wantErrors) const;
 
-  // If the LSP server is currently initializing, wait until that is not
-  // the case (it succeeds or it fails), or the user cancels.  Return
-  // true if the server changed state and false if the user canceled the
+  // If `client` is currently initializing, wait until that is not the
+  // case (it succeeds or it fails), or the user cancels.  Return true
+  // if the server changed state and false if the user canceled the
   // wait.  If the server is *not* initializing, just return true
   // immediately.
-  bool lspWaitUntilNotInitializing();
+  bool lspWaitUntilNotInitializing(LSPClient const *client);
 
   // Do `operation` with the current file.
   void lspDoFileOperation(LSPFileOperation operation);

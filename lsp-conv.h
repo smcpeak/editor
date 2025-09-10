@@ -63,7 +63,10 @@ void lspSendUpdatedContents(
 // Return the string that LSP uses to identify `dt`, or nullopt if there
 // is none, or the editor app does not know how to interact with an LSP
 // server that could handle `dt`.
-std::optional<std::string> lspLanguageIdForDT(DocumentType dt);
+std::optional<std::string> lspLanguageIdForDTOpt(DocumentType dt);
+
+// Same, but asserting we have the string.
+std::string lspLanguageIdForDT(DocumentType dt);
 
 
 #endif // EDITOR_LSP_CONV_H

@@ -1,0 +1,36 @@
+// lsp-stop-server.ev
+// Test stopping the server.
+
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Status widget indicates not started.
+CheckLabel("window1.m_statusArea.m_lspStatusWidget" "_")
+
+// Start LSP.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+
+// Status should change to "-".
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "null")
+
+// Open the file.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Status widget should change to 2.
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "2")
+
+// Stop the server.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
+
+// Status widget should change back to "_".
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+
+// The diagnostics should also be cleared.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "null")
+
+// EOF

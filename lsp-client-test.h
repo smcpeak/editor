@@ -69,7 +69,11 @@ public:      // types
     NUM_STATES
   };
 
-public:      // data
+public:      // class data
+  // Name to use as the basis for the stderr log file name.
+  static char const *s_lspStderrInitialName;
+
+public:      // instance data
   // The client we are testing.
   LSPClient m_lspClient;
 

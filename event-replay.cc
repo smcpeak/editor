@@ -643,17 +643,21 @@ void EventReplay::replayCall(GDValue const &command)
                    " " << r << " " << c);
   }
 
-  else if (funcName == "CheckMessageBoxDetailsText") {
+  else if (funcName == "CheckMessageBoxTextMatches") {
+    auto [path, expectRE] =
+      gdvpToTuple<std::string, std::string>(parser);
+
+    QMessageBox *mb = getObjectFromPath<QMessageBox>(path);
+    string actual = toString(mb->text());
+    CHECK_RE_MATCH("CheckMessageBoxTextMatches");
+  }
+
+  else if (funcName == "CheckMessageBoxDetailedText") {
     BIND_STRING_ARGS2(path, expect);
 
     QMessageBox *mb = getObjectFromPath<QMessageBox>(path);
-
-    // It's tempting to navigate directly within the object tree here,
-    // but most of the objects do not have names, and the exact
-    // structure is an internal Qt implementation detail, so I will rely
-    // on just calling `QMessageBox::detailedText()`.
     string actual = toString(mb->detailedText());
-    CHECK_EQ("CheckMessageBoxDetailsText");
+    CHECK_EQ("CheckMessageBoxDetailedText");
   }
 
   else if (funcName == "CheckClipboard") {

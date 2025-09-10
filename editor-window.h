@@ -14,6 +14,7 @@
 #include "editor-widget-fwd.h"                   // EditorWidget
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "lsp-client-fwd.h"                      // LSPClient
+#include "lsp-client-manager-fwd.h"              // LSPClientManager
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td.h"                            // NamedTextDocument
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
@@ -26,6 +27,7 @@
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
+#include "smbase/refct-serf.h"                   // NNRCSerf
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/sm-override.h"                  // OVERRIDE
 #include "smbase/std-string-view-fwd.h"          // std::string_view
@@ -156,8 +158,8 @@ public:      // funcs
   // Current user settings object.
   EditorSettings const &editorSettings() const;
 
-  // Global LSP client object, read-only.
-  LSPClient const *lspClientC() const;
+  // Global LSP client object manager.
+  NNRCSerf<LSPClientManager> lspClientManager() const;
 
   // For now, the one editor widget in the one frame.
   EditorWidget *editorWidget() const;

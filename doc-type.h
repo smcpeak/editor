@@ -8,7 +8,9 @@
 
 #include "doc-type-fwd.h"              // fwds for this module
 
-#include <iosfwd>                      // std::ostream
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+
+#include <iosfwd>                      // std::ostream [n]
 
 
 // All the kinds of documents I know about.
@@ -30,6 +32,9 @@ char const *toString(DocumentType dt);
 
 // Write like `toString` does.
 std::ostream &operator<<(std::ostream &os, DocumentType dt);
+
+// Return a symbol with the `toString` name.
+gdv::GDValue toGDValue(DocumentType dt);
 
 // Return a string like "None" or "C++".
 char const *languageName(DocumentType dt);

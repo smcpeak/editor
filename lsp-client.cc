@@ -766,6 +766,17 @@ std::string LSPClient::checkStatus() const
 }
 
 
+std::optional<std::string> LSPClient::lspStderrLogFname() const
+{
+  if (m_lspStderrFile) {
+    return m_lspStderrFile->getFname();
+  }
+  else {
+    return std::nullopt;
+  }
+}
+
+
 LSPProtocolState LSPClient::getProtocolState() const
 {
   return getAnnotatedProtocolState().m_protocolState;
@@ -790,7 +801,7 @@ LSPAnnotatedProtocolState LSPClient::getAnnotatedProtocolState() const
     xassert(!m_lsp);
     return LSPAnnotatedProtocolState(
       LSP_PS_CLIENT_INACTIVE,
-      "LSP client is inactive.");
+      "The LSP server has not been started.");
   }
 
   if (!m_lsp) {
@@ -869,6 +880,12 @@ bool LSPClient::isRunningNormally() const
     !m_shutdownRequestID &&
     !m_waitingForTermination &&
     true;
+}
+
+
+bool LSPClient::isInitializing() const
+{
+  return getProtocolState() == LSP_PS_INITIALIZING;
 }
 
 

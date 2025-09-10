@@ -22,7 +22,8 @@
 #include "host-file-line-fwd.h"                  // HostFileLine [n]
 #include "json-rpc-reply-fwd.h"                  // JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
-#include "lsp-client-fwd.h"                      // LSPClient [n], LSPDocumentInfo [n]
+#include "lsp-client-fwd.h"                      // LSPDocumentInfo [n]
+#include "lsp-client-manager-fwd.h"              // LSPClientManager [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
@@ -37,7 +38,7 @@
 // smbase
 #include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile [n]
 #include "smbase/objlist.h"                      // ObjList
-#include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf
+#include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf, RCSerfOpt, NNRCSerf
 #include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
@@ -103,34 +104,20 @@ private:     // instance data
   // setting.
   std::unique_ptr<smbase::ExclusiveWriteFile> m_editorLogFile;
 
-  // If true, then `m_lspClient` uses the "fake" server that is just a
-  // Python script doing very simple textual analysis.  This avoids
-  // using the real `clangd` during testing, both for dependency and
-  // speed reasons.
+  // If true, then `m_lspClientManager` uses the "fake" server that is
+  // just a Python script doing very simple textual analysis.  This
+  // avoids using the real `clangd` during testing, both for dependency
+  // and speed reasons.
   bool m_lspIsFakeServer;
 
-  // Object to manage communication with the LSP server.
-  //
-  // Invariant: Never null, except during the first part of the ctor.
-  // Consequently, the protocol is to *not* check this for null before
-  // use; it is the responsibility of the ctor to initialize it before
-  // anything else can observe it being null.
-  //
-  // Invariant: If `m_lspClient->isRunningNormally()`, then the set of
-  // documents open in `m_lspClient` is the same as the set of
-  // documents in `m_documentList` that are tracking changes.
-  //
-  // Invariant: For all files that are open in the client, if the most
-  // recently sent version is the same as the version in
-  // `m_documentList`, then the client and document agree about the
-  // contents.
-  //
-  std::unique_ptr<LSPClient> m_lspClient;
+  /* Object to manage communication with the LSP servers.
 
-  // List of LSP protocol errors.  For now, these just accumulate.
-  //
-  // TODO: Send them to the log file.
-  std::list<std::string> m_lspErrorMessages;
+     Invariant: Never null, except during the first part of the ctor.
+     Consequently, the protocol is to *not* check this for null before
+     use; it is the responsibility of the ctor to initialize it before
+     anything else can observe it being null.
+  */
+  std::unique_ptr<LSPClientManager> m_lspClientManager;
 
   // Counter for window numbering in the Qt object naming system.  This
   // starts at 1 and counts up each time a window is created.
@@ -192,24 +179,19 @@ private:     // methods
   NamedTextDocument *getCommandOutputDocument(
     HostName const &hostName, QString dir, QString command);
 
-  // Given a directory in which application state files are generally
-  // placed, such as `getXDGStateHome()`, and the name of a specific
-  // file associated with the editor application, return the combined
-  // name after normalizing path separators and ensuring the directory
-  // containing the returned file name exists.
-  static std::string getEditorStateFileName(
-    std::string const &globalAppStateDir,
-    char const *fname);
+  // Given a directory like `getXDGConfigHome()` that is meant to store
+  // files of a certain kind for all applications, return the name of
+  // a directory specifically for this editor application.
+  //
+  // The name has its path separators normalized to forward slashes and
+  // does not end with a separator.  This function creates the directory
+  // (and any needed parents) if needed.
+  static std::string getEditorStateDirectory(
+    std::string const &globalAppStateDir);
 
   // Open the general editor log file.
   static std::unique_ptr<smbase::ExclusiveWriteFile>
     openEditorLogFile();
-
-  // Connect signals from `m_lspClient` to `this`.
-  void lspConnectSignals();
-
-  // Disconnect signals and shut down the server.
-  void lspDisconnectSignals();
 
 private Q_SLOTS:
   // Called when a VFS connection fails.
@@ -220,15 +202,6 @@ private Q_SLOTS:
 
   // Called when a watched process terminates.
   void on_processTerminated(ProcessWatcher *watcher);
-
-  // Called when `m_lspClient` has pending diagnostics.
-  void on_lspHasPendingDiagnostics() NOEXCEPT;
-
-  // Called when `m_lspClient` has an error message to deliver.
-  void on_lspHasPendingErrorMessages() NOEXCEPT;
-
-  // Called when `m_lspClient` may have changed its protocol state.
-  void on_lspChangedProtocolState() NOEXCEPT;
 
   // Called when focus changes anywhere in the app.
   void focusChangedHandler(QWidget *from, QWidget *to);
@@ -508,6 +481,9 @@ public:       // funcs
     EditorWidget *ew, EditorNavigationOptions opts);
 
   // ----------------------------- Logging -----------------------------
+  // Get directory where we will write log files.
+  static std::string getLogFileDirectory();
+
   // Initial name to attempt to use for the general editor logs.  The
   // actual name might be different.
   static std::string getEditorLogFileInitialName();
@@ -528,139 +504,19 @@ public:       // funcs
     std::string const &logMessage);
 
   // --------------------------- LSP Global ----------------------------
+  // True if, whenever we start an LSP server process, we will use the
+  // "fake" server meant for automated testing.
   bool lspIsFakeServer() const { return m_lspIsFakeServer; }
 
-  // Read-only access to the client object.
-  LSPClient const *lspClientC();
+  // Client manager object, through which all LSP interaction takes
+  // place.  Never null.
+  NNRCSerf<LSPClientManager const> lspClientManagerC() const;
+  NNRCSerf<LSPClientManager> lspClientManager();
 
-  // Initial name for the path to the file that holds the stderr from
-  // the LSP server process (clangd).
-  static std::string lspGetStderrLogFileInitialName();
-
-  // Start the LSP server.  Return an explanation string on failure.
-  std::optional<std::string> lspStartServer();
-
-  // Get the LSP protocol state.
-  LSPProtocolState lspGetProtocolState() const;
-
-  // True if the LSP connection is normal.
-  bool lspIsRunningNormally() const;
-
-  // True if we have begun the process of initializing the LSP server,
-  // but that has not resolved as either a success or failure.
-  bool lspIsInitializing() const;
-
-  // Return a string that explains why `!lspIsRunningNormally()`.  If it
-  // is in fact running normally, say so.
-  std::string lspExplainAbnormality() const;
-
-  // Generate a document with the LSP server's capabilities.
-  NamedTextDocument *lspGetOrCreateServerCapabilitiesDocument();
-
-  // Append an LSP error message.
-  void lspAddErrorMessage(std::string &&msg);
-
-  // Return a string summarizing the overall LSP state.  (This is a
-  // temporary substitute for better error reporting.)
-  std::string lspGetServerStatus() const;
-
-  // Stop the LSP server, presumably as part of resetting it.  Return a
-  // human-readable string describing what happened during the attempt.
-  std::string lspStopServer();
-
-  /* Get all of the code lines for `locations`.  The returned vector has
-     one result for each element of `locations`.  If there is a problem
-     with a particular file, just encode that in the returned string, as
-     this is going straight to the user.
-
-     This may perform a synchronous wait, in which case it will use
-     `waiter`, possibly multiple times.  It returns `nullopt` if the
-     wait is canceled at any point (no partial results are returned).
-
-     This is not `const` because it causes state transitions within
-     `m_vfsConnections`, although the expectation is there is no durable
-     change after this call.
-
-     Ensures: if return then return->size() == locations.size()
-  */
-  std::optional<std::vector<std::string>> lspGetCodeLines(
-    SynchronousWaiter &waiter,
-    std::vector<HostFileLine> const &locations);
-
-  // -------------------------- LSP Per-file ---------------------------
-  // True if `ntd` is open w.r.t. the LSP server.
-  bool lspFileIsOpen(NamedTextDocument const *ntd) const;
-
-  // If `doc` is "open" w.r.t. the LSP client, return a pointer to its
-  // details.  Otherwise return nullptr.
-  RCSerf<LSPDocumentInfo const> lspGetDocInfo(
-    NamedTextDocument const *doc) const;
-
-  // Open `ntd` with the server as `languageId`.
-  //
-  // This can throw `XNumericConversion` if the version of `ntd` cannot
-  // be expressed as an LSP version.
-  //
-  // Requires: !lspFileIsOpen(ntd)
-  // Ensures:  lspFileIsOpen(ntd)
-  void lspOpenFile(
-    NamedTextDocument *ntd, std::string const &languageId);
-
-  // Update `ntd` with the server.
-  //
-  // This can throw `XNumericConversion` if the version of `ntd` cannot
-  // be expressed as an LSP version.  It can also throw `XMessage` if
-  // some unexpected version number issues arise.
-  //
-  // Requires: lspFileIsOpen(ntd)
-  void lspUpdateFile(NamedTextDocument *ntd);
-
-  // Close `ntd` if it is open.  This also discards any diagnostics it
-  // may have and tells it to stop tracking changes.
-  //
-  // Ensures: !lspFileIsOpen(ntd)
-  void lspCloseFile(NamedTextDocument *ntd);
-
-  // --------------------------- LSP Queries ---------------------------
-  // Cancel request `id` if it is outstanding.  Discard any reply that
-  // has already been received.
-  //
-  // Requires: lspIsRunningNormally()
-  void lspCancelRequestWithID(int id);
-
-  // True if we have a reply for `id` waiting to be taken.
-  //
-  // Requires: lspIsRunningNormally()
-  bool lspHasReplyForID(int id) const;
-
-  // Take and return the reply for `id`.
-  //
-  // Requires: lspIsRunningNormally()
-  // Requires: lspHasReplyForID(id)
-  JSON_RPC_Reply lspTakeReplyForID(int id);
-
-  // Issue an `lsrk` request for information about the symbol at `coord`
-  // in `ntd`.  Returns the request ID.
-  //
-  // Requires: lspFileIsOpen(ntd)
-  int lspRequestRelatedLocation(
-    LSPSymbolRequestKind lsrk,
-    NamedTextDocument const *ntd,
-    TextMCoord coord);
-
-  // Send an arbitrary request, returning the request ID.
-  //
-  // Requires: lspIsRunningNormally()
-  int lspSendArbitraryRequest(
-    std::string const &method,
-    gdv::GDValue const &params);
-
-  // Send an arbitrary notification.
-  //
-  // Requires: lspIsRunningNormally()
-  void lspSendArbitraryNotification(
-    std::string const &method,
-    gdv::GDValue const &params);
+  // Generate a document with the LSP server's capabilities for the
+  // server relevant to `doc`.
+  NamedTextDocument *lspGetOrCreateServerCapabilitiesDocument(
+    NamedTextDocument const *doc);
 
   // -------------------- Qt infrastructure-related --------------------
   // QCoreApplication methods.
@@ -669,9 +525,6 @@ public:       // funcs
 Q_SIGNALS:
   // Emitted when `m_editorBuiltinFont` changes.
   void signal_editorFontChanged();
-
-  // Emitted when `lspGetProtocolState()` potentially changes.
-  void signal_lspChangedProtocolState();
 
 public Q_SLOTS:
   // Called when the search panel in some window has changed.  Broadcast

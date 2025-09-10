@@ -4,7 +4,10 @@
 #ifndef NAMED_TD_LIST_H
 #define NAMED_TD_LIST_H
 
+#include "named-td-list-fwd.h"         // fwds for this module
+
 // editor
+#include "doc-name-fwd.h"              // DocumentName [n]
 #include "named-td.h"                  // NamedTextDocument
 
 // smbase
@@ -16,11 +19,6 @@
 #include "smbase/std-set-fwd.h"        // stdfwd::set [n]
 #include "smbase/std-string-fwd.h"     // std::string [n]
 #include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
-
-
-// Forward in this file.
-class NamedTextDocumentListObserver;
-struct NamedTextDocumentInitialView;
 
 
 // A list of named documents being edited.
@@ -146,9 +144,9 @@ public:      // funcs
   // and has unsaved changes.
   bool hasUnsavedFiles() const;
 
-  // Get the file names of all `NamedTextDocument`s for which
+  // Get the document names of all `NamedTextDocument`s for which
   // `trackingChanges()` is true.
-  stdfwd::set<std::string> getTrackingChangesFileNames() const;
+  stdfwd::set<DocumentName> getTrackingChangesDocumentNames() const;
 
   // Tell all files to stop tracking changes.
   //

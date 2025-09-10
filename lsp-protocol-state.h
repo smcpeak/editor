@@ -6,6 +6,7 @@
 #ifndef EDITOR_LSP_PROTOCOL_STATE_H
 #define EDITOR_LSP_PROTOCOL_STATE_H
 
+#include <iosfwd>                      // std::ostream
 #include <string>                      // std::string
 
 
@@ -69,6 +70,9 @@ enum LSPProtocolState {
 
 // Return a string like "LSP_PS_CLIENT_INACTIVE".
 char const *toString(LSPProtocolState ps);
+
+// Write like `toString`.
+std::ostream &operator<<(std::ostream &os, LSPProtocolState ps);
 
 
 // Protocol state and a human-readable description of the state, which

@@ -5,6 +5,7 @@
 
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
 
+#include <iostream>                    // std::ostream
 #include <string>                      // std::string
 #include <utility>                     // std::move
 
@@ -28,6 +29,12 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   ),
   "Unknown LSP"
 )
+
+
+std::ostream &operator<<(std::ostream &os, LSPProtocolState ps)
+{
+  return os << toString(ps);
+}
 
 
 // --------------------- LSPAnnotatedProtocolState ---------------------

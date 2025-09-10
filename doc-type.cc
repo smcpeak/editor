@@ -3,9 +3,12 @@
 
 #include "doc-type.h"                  // this module
 
+#include "smbase/gdvalue.h"            // gdv::GDValue [n]
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING_OR
 
 #include <iostream>                    // std::ostream
+
+using namespace gdv;
 
 
 DEFINE_ENUMERATION_TO_STRING_OR(
@@ -27,6 +30,12 @@ DEFINE_ENUMERATION_TO_STRING_OR(
 std::ostream &operator<<(std::ostream &os, DocumentType dt)
 {
   return os << toString(dt);
+}
+
+
+gdv::GDValue toGDValue(DocumentType dt)
+{
+  return GDVSymbol(toString(dt));
 }
 
 

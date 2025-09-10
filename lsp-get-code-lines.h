@@ -21,7 +21,7 @@
 #include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
 
 
-// This is the core of `EditorGlobal::lspGetCodeLines`.  See its
+// This is the core of `LSPClientManager::lspGetCodeLines`.  See its
 // documentation for details.
 std::optional<stdfwd::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,

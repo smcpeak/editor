@@ -31,7 +31,7 @@ OPEN_ANONYMOUS_NAMESPACE
 
 void checkCoord(TextLCoord actual, TextLCoord expect, char const *label)
 {
-  expectEq(label, actual, expect);
+  expectEq(HERE_PREPROC_FILE_LINE, label, actual, expect);
 }
 
 

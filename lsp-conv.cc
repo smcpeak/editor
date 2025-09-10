@@ -317,7 +317,7 @@ void lspSendUpdatedContents(
 }
 
 
-std::optional<std::string> lspLanguageIdForDT(DocumentType dt)
+std::optional<std::string> lspLanguageIdForDTOpt(DocumentType dt)
 {
   switch (dt) {
     case DocumentType::DT_C:
@@ -330,6 +330,14 @@ std::optional<std::string> lspLanguageIdForDT(DocumentType dt)
     default:
       return std::nullopt;
   }
+}
+
+
+std::string lspLanguageIdForDT(DocumentType dt)
+{
+  std::optional<std::string> idOpt = lspLanguageIdForDTOpt(dt);
+  xassert(idOpt.has_value());
+  return *idOpt;
 }
 
 

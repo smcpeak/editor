@@ -8,9 +8,10 @@
 
 #include "lsp-status-widget-fwd.h"     // fwds for this module
 
-#include "editor-global-fwd.h"         // EditorGlobal
-#include "editor-widget-fwd.h"         // EditorWidget
-#include "lsp-client-fwd.h"            // LSPClient
+#include "editor-global-fwd.h"         // EditorGlobal [n]
+#include "editor-widget-fwd.h"         // EditorWidget [n]
+#include "lsp-client-fwd.h"            // LSPClient [n]
+#include "lsp-client-manager-fwd.h"    // LSPClientManager [n]
 
 #include "smbase/refct-serf.h"         // RCSerf
 
@@ -57,8 +58,8 @@ public:      // methods
   explicit LSPStatusWidget(
     EditorWidget *editorWidget, QWidget *parent = nullptr);
 
-  // Get the global editor object.
-  EditorGlobal *editorGlobal() const;
+  // Get the LSP client manager.
+  LSPClientManager *lspClientManager() const;
 
   // Nullify `m_editorWidget` and disconnect any signals.
   void resetEditorWidget();

@@ -44,7 +44,7 @@ NamedTextDocument::NamedTextDocument()
     m_diagnostics(),
     m_tddUpdater(),
     m_observationRecorder(getCore()),
-    m_language(DocumentType::DT_UNKNOWN),
+    m_documentType(DocumentType::DT_UNKNOWN),
     m_highlighter(),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
@@ -138,10 +138,10 @@ HostAndResourceName NamedTextDocument::directoryHarn() const
 }
 
 
-void NamedTextDocument::setLanguage(DocumentType kdt)
+void NamedTextDocument::setDocumentType(DocumentType dt)
 {
-  m_language = kdt;
-  m_highlighter = makeHighlighterForLanguage(kdt, getCore());
+  m_documentType = dt;
+  m_highlighter = makeHighlighterForLanguage(dt, getCore());
 }
 
 

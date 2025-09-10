@@ -16,6 +16,7 @@
 #include "fonts-dialog.h"                        // FontsDialog
 #include "git-version.h"                         // editor_git_version
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
+#include "lsp-client-manager.h"                  // LSPClientManager
 #include "lsp-client.h"                          // LSPClient
 #include "lsp-status-widget.h"                   // LSPStatusWidget
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
@@ -221,9 +222,9 @@ EditorSettings const &EditorWindow::editorSettings() const
 }
 
 
-LSPClient const *EditorWindow::lspClientC() const
+NNRCSerf<LSPClientManager> EditorWindow::lspClientManager() const
 {
-  return editorGlobal()->lspClientC();
+  return editorGlobal()->lspClientManager();
 }
 
 
@@ -692,10 +693,10 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
   TRACE1("useDefaultHighlighter: file: " <<
          toGDValue(file->documentName()));
 
-  DocumentType kdt = detectDocumentType(file->documentName());
-  file->setLanguage(kdt);
+  DocumentType dt = detectDocumentType(file->documentName());
+  file->setDocumentType(dt);
 
-  if (kdt == DocumentType::DT_DIFF) {
+  if (dt == DocumentType::DT_DIFF) {
     // Diff output has lots of lines that are not empty and have
     // whitespace on them.  I do not want that highlighted.
     file->m_highlightTrailingWhitespace = false;
@@ -1038,7 +1039,7 @@ void EditorWindow::fileSaveAs() NOEXCEPT
     }
     else {
       // We have to close the file with LSP before renaming.
-      editorGlobal()->lspCloseFile(fileDoc);
+      lspClientManager()->closeFile(fileDoc);
 
       fileDoc->setDocumentName(docName);
       fileDoc->m_title = m_editorGlobal->uniqueTitleFor(docName);
@@ -1990,7 +1991,7 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
   dialog.setOption(QInputDialog::UseListViewForComboBoxItems);
 
   // Start with the current language selected.
-  dialog.setTextValue(languageName(doc->language()));
+  dialog.setTextValue(languageName(doc->documentType()));
 
   if (!dialog.exec()) {
     return;
@@ -2009,9 +2010,9 @@ void EditorWindow::viewSetHighlighting() NOEXCEPT
   // Somewhat crudely search for a language whose name matches what the
   // dialog says was picked.
   bool found = false;
-  FOR_EACH_KNOWN_DOCUMENT_TYPE(kdt) {
-    if (chosenName == languageName(kdt)) {
-      doc->setLanguage(kdt);
+  FOR_EACH_KNOWN_DOCUMENT_TYPE(dt) {
+    if (chosenName == languageName(dt)) {
+      doc->setDocumentType(dt);
       found = true;
       break;
     }
@@ -2123,7 +2124,7 @@ void EditorWindow::lspStartServer() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   if (std::optional<std::string> failureReason =
-        editorGlobal()->lspStartServer()) {
+        lspClientManager()->startServer(currentDocument())) {
     complain(*failureReason);
   }
 
@@ -2135,7 +2136,7 @@ void EditorWindow::lspStopServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorGlobal()->lspStopServer();
+  lspClientManager()->stopServer(currentDocument());
 
   GENERIC_CATCH_END
 }
@@ -2145,7 +2146,7 @@ void EditorWindow::lspCheckStatus() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  inform(editorGlobal()->lspGetServerStatus());
+  inform(lspClientManager()->getServerStatus(currentDocument()));
 
   GENERIC_CATCH_END
 }
@@ -2156,7 +2157,8 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   setDocumentFile(
-    m_editorGlobal->lspGetOrCreateServerCapabilitiesDocument());
+    m_editorGlobal->lspGetOrCreateServerCapabilitiesDocument(
+      currentDocument()));
 
   GENERIC_CATCH_END
 }
@@ -2227,7 +2229,7 @@ void EditorWindow::lspReviewDiagnostics() NOEXCEPT
       << doc->getDiagnosticsSummary().asLinesString();
 
   RCSerf<LSPDocumentInfo const> lspDocInfo =
-    editorGlobal()->lspGetDocInfo(doc);
+    lspClientManager()->getDocInfo(doc);
   if (lspDocInfo) {
     oss << "LSPClient doc info: "
         << toGDValue(*lspDocInfo).asLinesString();

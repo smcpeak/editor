@@ -166,11 +166,14 @@ public:      // methods
 // doc/lsp-state-diagram.ded.png .
 //
 class LSPClient : public QObject,
-                  public LSPClientDocumentState {
+                  public LSPClientDocumentState,
+                  public SerfRefCount {
   Q_OBJECT;
 
 private:     // data
   // True to run `clangd` instead of the test server instead.
+  //
+  // TODO: Rename to `m_useRealServer`.
   bool m_useRealClangd;
 
   // The file to which we send the server's stderr.  Can be null
@@ -259,15 +262,32 @@ private Q_SLOTS:
 public:      // methods
   ~LSPClient();
 
-  // Create an inactive client.  If `useRealClangd`, then run `clangd`
-  // instead of `./lsp-test-server.py`.
+  /* Create an inactive client.  `startServer()` still has to be called
+     to make it do anything.
+
+     If `useRealServer`, then (when `startServer()` is called) run the
+     actual LSP server program (e.g., `clangd`) instead of
+     `./lsp-test-server.py`.
+
+     `lspStderrLogFname` gives the initial name of the file to write the
+     LSP stderr to, but a different name may be chosen if the first is
+     already in use.
+
+     `protocolDiagnosticLog` is where (if anywhere) to send diagnostic
+     details for protocol violations.
+  */
   explicit LSPClient(
-    bool useRealClangd,
+    bool useRealServer,
     std::string const &lspStderrLogFname,
     std::ostream * NULLABLE protocolDiagnosticLog);
 
   // Check invariants, throwing an exception on failure.
   void selfCheck() const;
+
+  // Get the actual name of the stderr log file, which may be different
+  // from what was passed to the ctor.  It may also be absent because
+  // there is an envvar that can suppress its creation entirely.
+  std::optional<std::string> lspStderrLogFname() const;
 
   // Start the server process and initialize the protocol.  On success,
   // return nullopt.
@@ -299,6 +319,10 @@ public:      // methods
   // True if the server is running normally.  This is a requirement to
   // send requests and notifications.
   bool isRunningNormally() const;
+
+  // True if we have begun the process of initializing the LSP server,
+  // but that has not resolved as either a success or failure.
+  bool isInitializing() const;
 
   // When `!isRunningNormally()`, this is a human-readable string
   // explaining what is abnormal about the current state.  If the

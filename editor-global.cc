@@ -19,6 +19,7 @@
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "line-index.h"                          // LineIndex
+#include "lsp-client-manager.h"                  // LSPClientScope
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-get-code-lines.h"                  // lspGetCodeLinesFunction
@@ -56,13 +57,11 @@
 #include "smbase/set-util.h"                     // smbase::{setInsertUnique, setContains}
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
-#include "smbase/sm-is-equal.h"                  // smbase::is_equal
 #include "smbase/sm-test.h"                      // PVAL
 #include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/strtokp.h"                      // StrtokParse
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
-#include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
 // Qt
 #include <QKeyEvent>
@@ -111,8 +110,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     // This can also be set during command line processing.
     m_lspIsFakeServer(envAsBool("USE_FAKE_LSP_SERVER")),
 
-    m_lspClient(),           // Set to non-null below.
-    m_lspErrorMessages(),
+    m_lspClientManager(),    // Set to non-null below.
     m_windowCounter(1),
     m_editorBuiltinFont(BF_EDITOR14),
     m_vfsConnections(),
@@ -186,12 +184,14 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
                    this, &EditorGlobal::on_vfsConnectionFailed);
   m_vfsConnections.connectLocal();
 
-  // Create the LSP client after processing the command line so the
-  // effect of setting `m_lspIsFakeServer` in response to "-ev" and
+  // Create the LSP client manager after processing the command line so
+  // the effect of setting `m_lspIsFakeServer` in response to "-ev" and
   // "-record" will be effective.
-  m_lspClient.reset(new LSPClient(
-    !m_lspIsFakeServer /*useRealClangd*/,
-    lspGetStderrLogFileInitialName(),
+  m_lspClientManager.reset(new LSPClientManager(
+    &m_documentList,
+    &m_vfsConnections,
+    !m_lspIsFakeServer,
+    getLogFileDirectory(),
     (m_editorLogFile?
        &(m_editorLogFile->stream()) : nullptr)
   ));
@@ -224,8 +224,6 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   QObject::connect(this, &EditorGlobal::focusChanged,
                    this, &EditorGlobal::focusChangedHandler);
 
-  lspConnectSignals();
-
   showRaiseAndActivateWindow(ed);
 
   // This works around a weird problem with the menu bar, where it will
@@ -247,8 +245,6 @@ EditorGlobal::~EditorGlobal()
   // watching documents and potentially getting confused and/or sending
   // signals I am not prepared for.
   m_editorWindows.deleteAll();
-
-  lspDisconnectSignals();
 
   if (m_processes.isNotEmpty()) {
     // Now try to kill any running processes.  Do not wait for any of
@@ -305,7 +301,7 @@ EditorGlobal::~EditorGlobal()
   QObject::disconnect(this, 0, this, 0);
   QObject::disconnect(&m_vfsConnections, 0, this, 0);
 
-  m_lspClient.reset();
+  m_lspClientManager.reset();
 }
 
 
@@ -319,46 +315,8 @@ void EditorGlobal::selfCheck() const
     iter.data()->selfCheck();
   }
 
-  xassert(m_lspClient);
-  m_lspClient->selfCheck();
-
-  // LSP client and document list agree about what is open.
-  if (m_lspClient->isRunningNormally()) {
-    std::set<std::string> openLSPFiles =
-      m_lspClient->getOpenFileNames();
-    std::set<std::string> trackedFiles =
-      m_documentList.getTrackingChangesFileNames();
-    XASSERT_EQUAL_SETS(openLSPFiles, trackedFiles);
-  }
-
-  {
-    // Count the LSP-open files we do and do not check, so I can manually
-    // confirm nearly all are checked.
-    int numChecked = 0;
-    int numUnchecked = 0;
-
-    // For all files open with the LSP server, if it is supposed to be
-    // up to date in LSP client, its copy should agree with the editor's
-    // copy.
-    for (int index=0; index < numDocuments(); ++index) {
-      NamedTextDocument const *ntd = getDocumentByIndexC(index);
-      EXN_CONTEXT(ntd->documentName());
-
-      if (RCSerf<LSPDocumentInfo const> docInfo = lspGetDocInfo(ntd)) {
-        if (is_equal(docInfo->m_lastSentVersion, ntd->getVersionNumber())) {
-          xassert(docInfo->lastContentsEquals(ntd->getCore()));
-          ++numChecked;
-        }
-        else {
-          // The client's version is behind, presumably because
-          // continuous update is not enabled.  Don't check anything in
-          // this case.
-          ++numUnchecked;
-        }
-      }
-    }
-    TRACE1_GDVN_EXPRS("EditorGlobal::selfCheck", numChecked, numUnchecked);
-  }
+  xassert(m_lspClientManager);
+  m_lspClientManager->selfCheck();
 
   {
     // Collect the set of widgets in all windows.
@@ -583,7 +541,7 @@ void EditorGlobal::trackNewDocumentFile(NamedTextDocument *f)
 
 void EditorGlobal::deleteDocumentFile(NamedTextDocument *file)
 {
-  lspCloseFile(file);
+  lspClientManager()->closeFile(file);
   m_documentList.removeDocument(file);
   delete file;
 }
@@ -1036,22 +994,22 @@ EditorCommandVector EditorGlobal::getRecentCommands(int n) const
 
 
 // -------------------------- Editor settings --------------------------
-/*static*/ std::string EditorGlobal::getEditorStateFileName(
-  std::string const &globalAppStateDir,
-  char const *fname)
+/*static*/ std::string EditorGlobal::getEditorStateDirectory(
+  std::string const &globalAppStateDir)
 {
   SMFileUtil sfu;
   std::string dir = sfu.normalizePathSeparators(globalAppStateDir);
-  std::string combined = dir + "/sm-editor/" + fname;
-  sfu.createParentDirectories(combined);
+  std::string combined = dir + "/sm-editor";
+  sfu.createDirectoryAndParents(combined);
   return combined;
 }
 
 
 /*static*/ std::string EditorGlobal::getSettingsFileName()
 {
-  return getEditorStateFileName(
-    getXDGConfigHome(), "editor-settings.gdvn");
+  return stringb(
+    getEditorStateDirectory(getXDGConfigHome()) <<
+    "/editor-settings.gdvn");
 }
 
 
@@ -1328,10 +1286,15 @@ EditorWidget *EditorGlobal::selectEditorWidget(
 }
 
 
+/*static*/ std::string EditorGlobal::getLogFileDirectory()
+{
+  return getEditorStateDirectory(getXDGStateHome());
+}
+
+
 /*static*/ std::string EditorGlobal::getEditorLogFileInitialName()
 {
-  return getEditorStateFileName(
-    getXDGStateHome(), "editor.log");
+  return stringb(getLogFileDirectory() << "/editor.log");
 }
 
 
@@ -1378,320 +1341,32 @@ void EditorGlobal::logAndWarn(
 
 
 // ---------------------------- LSP Global -----------------------------
-void EditorGlobal::lspConnectSignals()
+NNRCSerf<LSPClientManager const> EditorGlobal::lspClientManagerC() const
 {
-  // Connect LSP signals.
-  QObject::connect(
-    m_lspClient.get(), &LSPClient::signal_hasPendingDiagnostics,
-    this,            &EditorGlobal::on_lspHasPendingDiagnostics);
-  QObject::connect(
-    m_lspClient.get(), &LSPClient::signal_hasPendingErrorMessages,
-    this,            &EditorGlobal::on_lspHasPendingErrorMessages);
-  QObject::connect(
-    m_lspClient.get(), &LSPClient::signal_changedProtocolState,
-    this,            &EditorGlobal::on_lspChangedProtocolState);
+  return m_lspClientManager.get();
 }
 
 
-void EditorGlobal::lspDisconnectSignals()
+NNRCSerf<LSPClientManager> EditorGlobal::lspClientManager()
 {
-  // Shut down the LSP server.
-  QObject::disconnect(m_lspClient.get(), nullptr, this, nullptr);
-  {
-    std::string shutdownMsg = m_lspClient->stopServer();
-    TRACE1("dtor: LSPClient stopServer() returned: " << shutdownMsg);
-  }
-}
-
-
-void EditorGlobal::on_lspHasPendingDiagnostics() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  while (m_lspClient->hasPendingDiagnostics()) {
-    // Get some pending diagnostics.
-    std::string fname = m_lspClient->getFileWithPendingDiagnostics();
-    std::unique_ptr<LSP_PublishDiagnosticsParams> lspDiags(
-      m_lspClient->takePendingDiagnosticsFor(fname));
-
-    if (!lspDiags->m_version.has_value()) {
-      // Just discard them.
-      TRACE1("lsp: Received LSP diagnostics without a version.");
-      continue;
-    }
-
-    // Convert to our internal format.
-    std::unique_ptr<TextDocumentDiagnostics> tdd(
-      convertLSPDiagsToTDD(lspDiags.get()));
-    lspDiags.reset();
-
-    DocumentName docName =
-      DocumentName::fromFilename(HostName::asLocal(), fname);
-
-    if (NamedTextDocument *doc = getFileWithName(docName)) {
-      doc->updateDiagnostics(std::move(tdd));
-    }
-    else {
-      // This could happen if we notify the server of new contents and
-      // then immediately close the document.
-      TRACE1("lsp: Received LSP diagnostics for " << docName <<
-             " but that file is not open in the editor.");
-    }
-  }
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorGlobal::on_lspHasPendingErrorMessages() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  while (m_lspClient->hasPendingErrorMessages()) {
-    lspAddErrorMessage(m_lspClient->takePendingErrorMessage());
-  }
-
-  GENERIC_CATCH_END
-}
-
-
-void EditorGlobal::on_lspChangedProtocolState() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  // Relay, primarily to the LSP status widgets.
-  Q_EMIT signal_lspChangedProtocolState();
-
-  GENERIC_CATCH_END
-}
-
-
-LSPClient const *EditorGlobal::lspClientC()
-{
-  return m_lspClient.get();
-}
-
-
-/*static*/ std::string EditorGlobal::lspGetStderrLogFileInitialName()
-{
-  return getEditorStateFileName(
-    getXDGStateHome(), "lsp-server.log");
-}
-
-
-std::optional<std::string> EditorGlobal::lspStartServer()
-{
-  return m_lspClient->startServer();
-}
-
-
-LSPProtocolState EditorGlobal::lspGetProtocolState() const
-{
-  return m_lspClient->getProtocolState();
-}
-
-
-bool EditorGlobal::lspIsRunningNormally() const
-{
-  return m_lspClient->isRunningNormally();
-}
-
-
-bool EditorGlobal::lspIsInitializing() const
-{
-  return lspGetProtocolState() == LSP_PS_INITIALIZING;
-}
-
-
-std::string EditorGlobal::lspExplainAbnormality() const
-{
-  return m_lspClient->explainAbnormality();
+  return m_lspClientManager.get();
 }
 
 
 NamedTextDocument *
-EditorGlobal::lspGetOrCreateServerCapabilitiesDocument()
+EditorGlobal::lspGetOrCreateServerCapabilitiesDocument(
+  NamedTextDocument const *ntd)
 {
+  GDValue capabilities;
+  if (auto client = lspClientManager()->getClientOptC(ntd)) {
+    capabilities = client->getServerCapabilities();
+  }
+
+  LSPClientScope scope = LSPClientScope::forNTD(ntd);
+
   return getOrCreateGeneratedDocument(
-    "LSP Server Capabilities",
-    m_lspClient->getServerCapabilities().asLinesString());
-}
-
-
-void EditorGlobal::lspAddErrorMessage(std::string &&msg)
-{
-  // I'm thinking this should also emit a signal, although right now I
-  // don't have any component prepared to receive it.
-  m_lspErrorMessages.push_back(std::move(msg));
-}
-
-
-std::string EditorGlobal::lspGetServerStatus() const
-{
-  std::ostringstream oss;
-
-  oss << "Using fake server: " << GDValue(lspIsFakeServer()) << ".\n";
-
-  oss << "Status: " << m_lspClient->checkStatus() << "\n";
-
-  oss << "Has pending diagnostics: "
-      << GDValue(m_lspClient->hasPendingDiagnostics()) << ".\n";
-
-  if (std::size_t n = m_lspErrorMessages.size()) {
-    oss << n << " errors:\n";
-    for (std::string const &m : m_lspErrorMessages) {
-      oss << "  " << m << "\n";
-    }
-  }
-
-  return oss.str();
-}
-
-
-std::string EditorGlobal::lspStopServer()
-{
-  std::string report = m_lspClient->stopServer();
-
-  // With the server shut down, all files are effectively closed w.r.t.
-  // the LSP protocol.  Stop tracking changes for all files.
-  m_documentList.allFilesStopTrackingChanges();
-
-  return report;
-}
-
-
-std::optional<std::vector<std::string>> EditorGlobal::lspGetCodeLines(
-  SynchronousWaiter &waiter,
-  std::vector<HostFileLine> const &locations)
-{
-  return lspGetCodeLinesFunction(
-    waiter,
-    locations,
-    *m_lspClient,
-    m_vfsConnections);
-}
-
-
-// --------------------------- LSP Per-file ----------------------------
-bool EditorGlobal::lspFileIsOpen(NamedTextDocument const *ntd) const
-{
-  return
-    lspIsRunningNormally() &&
-    ntd->isCompatibleWithLSP() &&
-    m_lspClient->isFileOpen(ntd->filename());
-}
-
-
-RCSerf<LSPDocumentInfo const> EditorGlobal::lspGetDocInfo(
-  NamedTextDocument const *doc) const
-{
-  if (lspFileIsOpen(doc)) {
-    return m_lspClient->getDocInfo(doc->filename());
-  }
-  else {
-    return nullptr;
-  }
-}
-
-
-void EditorGlobal::lspOpenFile(
-  NamedTextDocument *ntd, std::string const &languageId)
-{
-  xassertPrecondition(!lspFileIsOpen(ntd));
-
-  // This can throw `XNumericConversion`.
-  LSP_VersionNumber version =
-    LSP_VersionNumber::fromTDVN(ntd->getVersionNumber());
-
-  m_lspClient->notify_textDocument_didOpen(
-    ntd->filename(),
-    languageId,
-    version,
-    ntd->getWholeFileString());
-
-  ntd->beginTrackingChanges();
-
-  xassertPostcondition(lspFileIsOpen(ntd));
-}
-
-
-void EditorGlobal::lspUpdateFile(NamedTextDocument *ntd)
-{
-  xassertPrecondition(lspFileIsOpen(ntd));
-  lspSendUpdatedContents(*m_lspClient, *ntd);
-}
-
-
-void EditorGlobal::lspCloseFile(NamedTextDocument *ntd)
-{
-  if (lspFileIsOpen(ntd)) {
-    m_lspClient->notify_textDocument_didClose(ntd->filename());
-
-    // Clear the diagnostics.
-    ntd->updateDiagnostics(nullptr);
-
-    // Since `fname` is now closed w.r.t. LSP, we should stop tracking
-    // its changes.
-    ntd->stopTrackingChanges();
-  }
-}
-
-
-// ---------------------------- LSP Queries ----------------------------
-void EditorGlobal::lspCancelRequestWithID(int id)
-{
-  xassertPrecondition(lspIsRunningNormally());
-
-  m_lspClient->cancelRequestWithID(id);
-}
-
-
-bool EditorGlobal::lspHasReplyForID(int id) const
-{
-  xassertPrecondition(lspIsRunningNormally());
-
-  return m_lspClient->hasReplyForID(id);
-}
-
-
-JSON_RPC_Reply EditorGlobal::lspTakeReplyForID(int id)
-{
-  xassertPrecondition(lspIsRunningNormally());
-  xassertPrecondition(lspHasReplyForID(id));
-
-  return m_lspClient->takeReplyForID(id);
-}
-
-
-int EditorGlobal::lspRequestRelatedLocation(
-  LSPSymbolRequestKind lsrk,
-  NamedTextDocument const *ntd,
-  TextMCoord coord)
-{
-  xassertPrecondition(lspFileIsOpen(ntd));
-
-  return m_lspClient->requestRelatedLocation(
-    lsrk, ntd->filename(), coord);
-}
-
-
-int EditorGlobal::lspSendArbitraryRequest(
-  std::string const &method,
-  gdv::GDValue const &params)
-{
-  xassertPrecondition(lspIsRunningNormally());
-
-  return m_lspClient->sendRequest(method, params);
-}
-
-
-void EditorGlobal::lspSendArbitraryNotification(
-  std::string const &method,
-  gdv::GDValue const &params)
-{
-  xassertPrecondition(lspIsRunningNormally());
-
-  m_lspClient->sendNotification(method, params);
+    stringb("LSP Server Capabilities for " << scope),
+    capabilities.asLinesString());
 }
 
 

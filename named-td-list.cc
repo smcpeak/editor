@@ -3,6 +3,8 @@
 
 #include "named-td-list.h"             // this module
 
+#include "doc-name.h"                  // DocumentName
+
 // smbase
 #include "smbase/container-util.h"     // smbase::insertUnique
 #include "smbase/save-restore.h"       // SetRestore
@@ -341,15 +343,15 @@ bool NamedTextDocumentList::hasUnsavedFiles() const
 }
 
 
-std::set<std::string>
-NamedTextDocumentList::getTrackingChangesFileNames() const
+std::set<DocumentName>
+NamedTextDocumentList::getTrackingChangesDocumentNames() const
 {
-  std::set<std::string> ret;
+  std::set<DocumentName> ret;
 
   for (int i=0; i < m_documents.length(); i++) {
     NamedTextDocument const *ntd = m_documents[i];
     if (ntd->trackingChanges()) {
-      ret.insert(ntd->filename());
+      ret.insert(ntd->documentName());
     }
   }
 

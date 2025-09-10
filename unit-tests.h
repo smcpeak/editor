@@ -32,6 +32,7 @@ void test_line_count(CmdlineArgsSpan args);
 void test_line_difference(CmdlineArgsSpan args);
 void test_line_index(CmdlineArgsSpan args);
 void test_lsp_client(CmdlineArgsSpan args);
+void test_lsp_client_manager(CmdlineArgsSpan args);
 void test_lsp_conv(CmdlineArgsSpan args);
 void test_lsp_data(CmdlineArgsSpan args);
 void test_lsp_get_code_lines(CmdlineArgsSpan args);

@@ -112,11 +112,15 @@ int runCmdIn(char const *cmd, char const *input)
 }
 
 
-void expectEq(char const *label, QByteArray const &actual, char const *expect)
+void expectEq(
+  smbase::PreprocFileLine loc,
+  char const *label,
+  QByteArray const &actual,
+  char const *expect)
 {
   QByteArray expectBA(expect);
   if (actual != expectBA) {
-    DIAG("mismatched " << label << ':');
+    DIAG(loc << ": " << "mismatched " << label << ':');
     DIAG("  actual: " << actual.constData());
     DIAG("  expect: " << expect);
     xfailure_stringbc("mismatched " << label);
