@@ -16,8 +16,8 @@ Shortcut("window1.m_menuBar.fileMenu.fileInspectAtCursor" "Ctrl+I")
 // Pops up a dialog saying no files were found.
 CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
 
-// TODO: Check its contents.
-//DumpObjectTree("window1.#5")
+// Check its contents.
+CheckMessageBoxTextMatches("window1.#5", "Did not find any files to open at cursor.")
 
 // Dismiss it.
 FocusKeyPR("Key_Return" "\r")
