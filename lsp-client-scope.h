@@ -49,6 +49,9 @@ public:
   // Return the scope applicable to `ntd`.
   static LSPClientScope forNTD(NamedTextDocument const *ntd);
 
+  // Return a scope for C++ on the local host.
+  static LSPClientScope localCPP();
+
   // Return: ::languageName(m_documentType)
   std::string languageName() const;
 

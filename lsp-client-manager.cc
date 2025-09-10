@@ -219,7 +219,7 @@ void LSPClientManager::takePendingDiagnostics(LSPClient &client)
 
     // Convert to our internal format.
     std::unique_ptr<TextDocumentDiagnostics> tdd(
-      convertLSPDiagsToTDD(lspDiags.get()));
+      convertLSPDiagsToTDD(lspDiags.get(), client.uriPathSemantics()));
     lspDiags.reset();
 
     DocumentName docName =
@@ -410,7 +410,8 @@ std::optional<std::string> LSPClientManager::startServer(
   NamedTextDocument const *ntd)
 {
   try {
-    return getOrCreateClient(ntd)->startServer();
+    return getOrCreateClient(ntd)->startServer(
+      LSPClientScope::forNTD(ntd));
   }
   catch (XBase &x) {
     return x.getMessage();

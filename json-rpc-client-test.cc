@@ -182,7 +182,8 @@ void performLSPInteractionSemiSynchronously(
 
   // Prepare to ask questions about the source file.
   DIAG("Sending notification textDocument/didOpen ...");
-  std::string fnameURI = makeFileURI(params.m_fname);
+  std::string fnameURI =
+    makeFileURI(params.m_fname, URIPathSemantics::NORMAL);
   lsp.sendNotification("textDocument/didOpen", GDVMap{
     {
       "textDocument",
@@ -303,7 +304,8 @@ void JSON_RPC_ClientTester::sendNextRequest(
 
   xassert((prevID==0) == (!prevReply.has_value()));
 
-  std::string fnameURI = makeFileURI(m_params.m_fname);
+  std::string fnameURI =
+    makeFileURI(m_params.m_fname, URIPathSemantics::NORMAL);
 
   GDValue params(GDVMap{
     {

@@ -180,7 +180,7 @@ void test_basics()
       "$/getTextDocumentContents",
       GDValue(GDVMap{
         { "textDocument", GDVMap{
-           { "uri", makeFileURI(ntd1->filename()) }
+           { "uri", makeFileURI(ntd1->filename(), URIPathSemantics::NORMAL) }
         }}
       }));
 

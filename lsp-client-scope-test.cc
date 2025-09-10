@@ -16,8 +16,7 @@ OPEN_ANONYMOUS_NAMESPACE
 void test_basics()
 {
   EXPECT_EQ(
-    LSPClientScope(HostName::asLocal(),
-                   DocumentType::DT_CPP).description(),
+    LSPClientScope::localCPP().description(),
     "C++ files on local host");
 
   EXPECT_EQ(

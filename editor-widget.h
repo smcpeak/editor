@@ -28,6 +28,7 @@
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategories
+#include "uri-util.h"                            // URIPathSemantics
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
@@ -571,7 +572,8 @@ public:      // funcs
   // Handle the reply to a request for a location.
   void lspHandleLocationReply(
     gdv::GDValue const &gdvReply,
-    LSPSymbolRequestKind lsrk);
+    LSPSymbolRequestKind lsrk,
+    URIPathSemantics uriPathSemantics);
 
   // Handle the reply to a request for symbol hover information.
   void lspHandleHoverInfoReply(

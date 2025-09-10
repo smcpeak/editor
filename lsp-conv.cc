@@ -37,23 +37,25 @@ using namespace smbase;
 INIT_TRACE("lsp-conv");
 
 
-TDD_Related convertLSPRelated(
-  LSP_DiagnosticRelatedInformation const &lspRelated)
+static TDD_Related convertLSPRelated(
+  LSP_DiagnosticRelatedInformation const &lspRelated,
+  URIPathSemantics semantics)
 {
   return TDD_Related(
-    lspRelated.m_location.m_uri.getFname(),
+    lspRelated.m_location.m_uri.getFname(semantics),
     lspRelated.m_location.m_range.m_start.m_line,
     std::string(lspRelated.m_message) /*move*/);
 }
 
 
-std::vector<TDD_Related> convertLSPRelatedList(
-  std::list<LSP_DiagnosticRelatedInformation> const &relatedList)
+static std::vector<TDD_Related> convertLSPRelatedList(
+  std::list<LSP_DiagnosticRelatedInformation> const &relatedList,
+  URIPathSemantics semantics)
 {
   std::vector<TDD_Related> ret;
 
   for (auto const &r : relatedList) {
-    ret.push_back(convertLSPRelated(r));
+    ret.push_back(convertLSPRelated(r, semantics));
   }
 
   return ret;
@@ -61,7 +63,8 @@ std::vector<TDD_Related> convertLSPRelatedList(
 
 
 std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
-  LSP_PublishDiagnosticsParams const *lspDiags)
+  LSP_PublishDiagnosticsParams const *lspDiags,
+  URIPathSemantics semantics)
 {
   xassertPrecondition(lspDiags->m_version.has_value());
 
@@ -76,7 +79,7 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
 
     std::string message = lspDiag.m_message;
     std::vector<TDD_Related> related =
-      convertLSPRelatedList(lspDiag.m_relatedInformation);
+      convertLSPRelatedList(lspDiag.m_relatedInformation, semantics);
 
     TDD_Diagnostic tddDiag(std::move(message), std::move(related));
 
@@ -184,6 +187,7 @@ static void lspSendOneChange(
   LSP_DidChangeTextDocumentParams changeParams(
     LSP_VersionedTextDocumentIdentifier::fromFname(
       doc.filename(),
+      lspClient.uriPathSemantics(),
       LSP_VersionNumber::fromTDVN(doc.getVersionNumber())),
     std::list<LSP_TextDocumentContentChangeEvent>{
       LSP_TextDocumentContentChangeEvent(
@@ -294,6 +298,7 @@ void lspSendUpdatedContents(
   LSP_DidChangeTextDocumentParams changeParams(
     LSP_VersionedTextDocumentIdentifier::fromFname(
       doc.filename(),
+      lspClient.uriPathSemantics(),
       version),
     convertRecordedChangesToLSPChanges(*recordedChanges));
 

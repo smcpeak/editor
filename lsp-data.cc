@@ -213,15 +213,15 @@ LSP_FilenameURI::LSP_FilenameURI(gdv::GDValueParser const &p)
 
 
 /*static*/ LSP_FilenameURI LSP_FilenameURI::fromFname(
-  std::string const &fname)
+  std::string const &fname, URIPathSemantics semantics)
 {
-  return LSP_FilenameURI(makeFileURI(fname));
+  return LSP_FilenameURI(makeFileURI(fname, semantics));
 }
 
 
-std::string LSP_FilenameURI::getFname() const
+std::string LSP_FilenameURI::getFname(URIPathSemantics semantics) const
 {
-  return getFileURIPath(m_innerUri);
+  return getFileURIPath(m_innerUri, semantics);
 }
 
 
@@ -713,9 +713,10 @@ LSP_TextDocumentIdentifier::operator gdv::GDValue() const
 
 /*static*/ LSP_TextDocumentIdentifier
 LSP_TextDocumentIdentifier::fromFname(
-  std::string const &fname)
+  std::string const &fname, URIPathSemantics semantics)
 {
-  return LSP_TextDocumentIdentifier(LSP_FilenameURI::fromFname(fname));
+  return LSP_TextDocumentIdentifier(
+    LSP_FilenameURI::fromFname(fname, semantics));
 }
 
 
@@ -779,10 +780,11 @@ LSP_VersionedTextDocumentIdentifier::operator gdv::GDValue() const
 /*static*/ LSP_VersionedTextDocumentIdentifier
 LSP_VersionedTextDocumentIdentifier::fromFname(
   std::string const &fname,
+  URIPathSemantics semantics,
   LSP_VersionNumber version)
 {
   return LSP_VersionedTextDocumentIdentifier(
-    LSP_FilenameURI::fromFname(fname), version);
+    LSP_FilenameURI::fromFname(fname, semantics), version);
 }
 
 
@@ -911,9 +913,10 @@ LSP_DidChangeTextDocumentParams::operator gdv::GDValue() const
 }
 
 
-std::string LSP_DidChangeTextDocumentParams::getFname() const
+std::string LSP_DidChangeTextDocumentParams::getFname(
+  URIPathSemantics semantics) const
 {
-  return m_textDocument.getFname();
+  return m_textDocument.getFname(semantics);
 }
 
 
@@ -974,9 +977,10 @@ LSP_TextDocumentPositionParams::operator gdv::GDValue() const
 }
 
 
-std::string LSP_TextDocumentPositionParams::getFname() const
+std::string LSP_TextDocumentPositionParams::getFname(
+  URIPathSemantics semantics) const
 {
-  return m_textDocument.getFname();
+  return m_textDocument.getFname(semantics);
 }
 
 

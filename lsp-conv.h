@@ -15,6 +15,7 @@
 #include "td-core-fwd.h"               // TextDocumentCore [n]
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics [n]
 #include "textmcoord-fwd.h"            // TextMCoord [n]
+#include "uri-util.h"                  // URIPathSemantics
 
 #include "smbase/std-list-fwd.h"       // stdfwd::list [n]
 #include "smbase/std-memory-fwd.h"     // stdfwd::unique_ptr [n]
@@ -28,7 +29,8 @@
 //
 // Requires: lspDiags->m_version.has_value()
 stdfwd::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
-  LSP_PublishDiagnosticsParams const *lspDiags);
+  LSP_PublishDiagnosticsParams const *lspDiags,
+  URIPathSemantics semantics);
 
 
 // Convert LSP to model coordinates.

@@ -99,6 +99,12 @@ using namespace smbase;
 }
 
 
+/*static*/ LSPClientScope LSPClientScope::localCPP()
+{
+  return LSPClientScope(HostName::asLocal(), DocumentType::DT_CPP);
+}
+
+
 std::string LSPClientScope::languageName() const
 {
   return ::languageName(m_documentType);

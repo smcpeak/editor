@@ -105,7 +105,7 @@ public:      // methods
       convertRecordedChangesToLSPChanges(*recordedChanges);
     LSP_DidChangeTextDocumentParams lspParams(
       LSP_VersionedTextDocumentIdentifier::fromFname(
-        "irrelevant", LSP_VersionNumber(1)),
+        "irrelevant", URIPathSemantics::NORMAL, LSP_VersionNumber(1)),
       std::move(lspChanges));
     VPVAL(toGDValue(lspParams).asIndentedString());
 

@@ -49,7 +49,7 @@ void convertToTDDExpect(
 
   // Convert to TDD.
   std::unique_ptr<TextDocumentDiagnostics> tdd =
-    convertLSPDiagsToTDD(&lspPDP);
+    convertLSPDiagsToTDD(&lspPDP, URIPathSemantics::NORMAL);
   tdd->adjustForDocument(doc.getCore());
 
   // Render that as GDValue.
@@ -229,7 +229,7 @@ void test_LocationSequence1()
   EXPECT_EQ(seq.m_locations.size(), 1);
 
   LSP_Location const &loc = seq.m_locations.front();
-  EXPECT_EQ(loc.getFname(),
+  EXPECT_EQ(loc.getFname(URIPathSemantics::NORMAL),
     "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
   EXPECT_EQ(loc.m_range,
     LSP_Range(LSP_Position(LineIndex(18), ByteIndex(5)),
@@ -265,7 +265,7 @@ void test_LocationSequence2()
   auto it = seq.m_locations.begin();
   {
     LSP_Location const &loc = *it;
-    EXPECT_EQ(loc.getFname(),
+    EXPECT_EQ(loc.getFname(URIPathSemantics::NORMAL),
       "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
     EXPECT_EQ(loc.m_range,
       LSP_Range(LSP_Position(LineIndex(18), ByteIndex(5)),
@@ -275,7 +275,7 @@ void test_LocationSequence2()
   ++it;
   {
     LSP_Location const &loc = *it;
-    EXPECT_EQ(loc.getFname(),
+    EXPECT_EQ(loc.getFname(URIPathSemantics::NORMAL),
       "D:/cygwin/home/Scott/wrk/editor/test/language-test.cc");
     EXPECT_EQ(loc.m_range,
       LSP_Range(LSP_Position(LineIndex(118), ByteIndex(15)),

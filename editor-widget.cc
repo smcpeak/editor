@@ -2940,7 +2940,9 @@ void EditorWidget::lspGoToRelatedLocation(
   LSPSymbolRequestKind lsrk,
   EditorNavigationOptions options)
 {
-  if (!lspRunningClientOptC(true /*wantErrors*/)) {
+  RCSerfOpt<LSPClient const> client =
+    lspRunningClientOptC(true /*wantErrors*/);
+  if (!client) {
     return;        // Error already reported.
   }
   NNRCSerf<LSPClientManager> lcm = lspClientManager();
@@ -2985,7 +2987,8 @@ void EditorWidget::lspGoToRelatedLocation(
         EditorWidget *widgetToShow =
           editorGlobal()->selectEditorWidget(this, options);
 
-        widgetToShow->lspHandleLocationReply(reply.result(), lsrk);
+        widgetToShow->lspHandleLocationReply(
+          reply.result(), lsrk, client->uriPathSemantics());
       }
     }
     else {
@@ -3001,7 +3004,8 @@ void EditorWidget::lspGoToRelatedLocation(
 
 void EditorWidget::lspHandleLocationReply(
   GDValue const &gdvReply,
-  LSPSymbolRequestKind lsrk)
+  LSPSymbolRequestKind lsrk,
+  URIPathSemantics uriPathSemantics)
 {
   char const *lsrkMsgStr = toMessageString(lsrk);
 
@@ -3035,7 +3039,7 @@ void EditorWidget::lspHandleLocationReply(
       // TODO: Be able to select the entire range, rather than only
       // going to the start line/col.
       goToLocalFileAndLineOpt(
-        loc.getFname(),
+        loc.getFname(uriPathSemantics),
         loc.m_range.m_start.m_line,
         loc.m_range.m_start.m_character);
     }
@@ -3044,7 +3048,7 @@ void EditorWidget::lspHandleLocationReply(
       std::vector<HostFileLine> locations;
       for (LSP_Location const &loc : lseq.m_locations) {
         locations.push_back(HostFileLine(
-          HostAndResourceName::localFile(loc.getFname()),
+          HostAndResourceName::localFile(loc.getFname(uriPathSemantics)),
           loc.m_range.m_start.m_line));
       }
 
@@ -3169,7 +3173,9 @@ void EditorWidget::lspHandleCompletionReply(
 
 void EditorWidget::lspSendSelectedText(bool asRequest)
 {
-  if (!lspRunningClientOptC(true /*wantErrors*/)) {
+  RCSerfOpt<LSPClient const> client =
+    lspRunningClientOptC(true /*wantErrors*/);
+  if (!client) {
     return;
   }
   NNRCSerf<LSPClientManager> lcm = lspClientManager();
@@ -3194,7 +3200,7 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
   // Substitute `CUR_FILE_URI` for its URL.
   NamedTextDocument const *ntd = getDocument();
   if (ntd->hasFilename()) {
-    std::string curFileUri = makeFileURI(ntd->filename());
+    std::string curFileUri = client->makeFileURI(ntd->filename());
     gdvMessage = substitutionTransformGDValue(gdvMessage,
       std::map<GDValue, GDValue>{
         { "CUR_FILE_URI"_sym, curFileUri },

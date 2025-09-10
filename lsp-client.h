@@ -10,12 +10,14 @@
 #include "json-rpc-client-fwd.h"                 // JSON_RPC_Client [n]
 #include "json-rpc-reply-fwd.h"                  // JSON_RPC_Error, JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
+#include "lsp-client-scope-fwd.h"                // LSPClientScope [n]
 #include "lsp-data-fwd.h"                        // LSP_PublishDiagnosticsParams [n], etc.
 #include "lsp-protocol-state.h"                  // LSPProtocolState
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "td-core-fwd.h"                         // TextDocumentCore [n]
 #include "textmcoord.h"                          // TextMCoord
+#include "uri-util.h"                            // URIPathSemantics
 
 #include <QObject>
 
@@ -225,6 +227,9 @@ private:     // data
   // object.  The string here is intended for presentation to the user.
   std::optional<std::string> m_lspClientProtocolError;
 
+  // How should URIs be interpreted?  Initially `NORMAL`.
+  URIPathSemantics m_uriPathSemantics;
+
 private:     // methods
   // Reset the state associated with the protocol.  This is done when we
   // shut down the server, and prepares for starting it again.
@@ -246,6 +251,9 @@ private:     // methods
   // Handle newly-arrived `diags`.
   void handleIncomingDiagnostics(
     std::unique_ptr<LSP_PublishDiagnosticsParams> diags);
+
+  // Set `m_commandRunner` to run the LSP server program for `scope`.
+  void configureCommandRunner(LSPClientScope const &scope);
 
 private Q_SLOTS:
   // Slots to respond to similarly-named `JSON_RPC_Client` signals.
@@ -282,20 +290,28 @@ public:      // methods
   // Check invariants, throwing an exception on failure.
   void selfCheck() const;
 
+  // Get how URIs should be interpreted.  This is only set after the
+  // server has started since it is determined by the LSP scope.
+  URIPathSemantics uriPathSemantics() const
+    { return m_uriPathSemantics; }
+
+  // Do the things that `uri-util` does, using `m_uriPathSemantics`.
+  std::string makeFileURI(std::string_view fname) const;
+  std::string getFileURIPath(std::string const &uri) const;
+
   // Get the actual name of the stderr log file, which may be different
   // from what was passed to the ctor.  It may also be absent because
   // there is an envvar that can suppress its creation entirely.
   std::optional<std::string> lspStderrLogFname() const;
 
-  // Start the server process and initialize the protocol.  On success,
-  // return nullopt.
+  // Start the server process for `scope` and initialize the protocol.
+  // On success, return nullopt.
   //
   // If this attempt fails, return a string suitable for display to the
-  // user regarding what happened.  that activity.  The string may
-  // consist of multiple lines separated by newlines, but there is no
-  // final newline.
+  // user regarding what happened.  The string may consist of multiple
+  // lines separated by newlines, but there is no final newline.
   //
-  std::optional<std::string> startServer();
+  std::optional<std::string> startServer(LSPClientScope const &scope);
 
   // Stop the server process.  Return a success report for the user.
   std::string stopServer();

@@ -8,6 +8,7 @@
 
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
+#include "lsp-client-scope.h"                    // LSPClientScope
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -113,7 +114,7 @@ void LSPClientTester::startServer()
   xassert(m_lspClient.getProtocolState() == LSP_PS_CLIENT_INACTIVE);
 
   if (std::optional<std::string> failureReason =
-        m_lspClient.startServer()) {
+        m_lspClient.startServer(LSPClientScope::localCPP())) {
     xfailure_stringbc("startServer: " << *failureReason);
   }
 
@@ -158,7 +159,8 @@ void LSPClientTester::takeDiagnostics()
     m_lspClient.getDocInfo(m_params.m_fname)->m_waitingForDiagnostics,
     false);
 
-  m_doc.updateDiagnostics(convertLSPDiagsToTDD(diags.get()));
+  m_doc.updateDiagnostics(
+    convertLSPDiagsToTDD(diags.get(), URIPathSemantics::NORMAL));
 }
 
 
@@ -250,7 +252,7 @@ void LSPClientTester::requestDocumentContents()
   DIAG("Sending getTextDocumentContents request");
   GDValue params(GDVMap{
     { "textDocument", GDVMap {
-      { "uri", makeFileURI(m_params.m_fname) },
+      { "uri", makeFileURI(m_params.m_fname, URIPathSemantics::NORMAL) },
       { "version", m_doc.getVersionNumber() },
     }},
   });

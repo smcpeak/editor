@@ -5,6 +5,7 @@
 
 #include "smbase/codepoint.h"          // CodePoint
 #include "smbase/exc.h"                // EXN_CONTEXT, smbase::xformat
+#include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // beginsWith, doubleQuote, hasSubstring
 #include "smbase/stringb.h"            // stringb
@@ -91,13 +92,71 @@ std::string percentDecode(std::string_view src)
 }
 
 
-std::string makeFileURI(std::string_view fname)
+// TODO: Move someplace more general.
+char tolower_char(char c)
+{
+  if ('A' <= c && c <= 'Z') {
+    return c + ('a' - 'A');
+  }
+  else {
+    return c;
+  }
+}
+
+
+char toupper_char(char c)
+{
+  if ('a' <= c && c <= 'z') {
+    return c - ('a' - 'A');
+  }
+  else {
+    return c;
+  }
+}
+
+
+static std::string windowsToCygwin(std::string_view fname)
+{
+  if (fname.size() >= 3 &&
+      fname[1] == ':' &&
+      fname[2] == '/') {
+    // "C:/Windows" -> "/cygdrive/c/Windows"
+    return stringb(
+      "/cygdrive/" << tolower_char(fname[0]) << fname.substr(2));
+  }
+  else {
+    return std::string(fname);
+  }
+}
+
+
+static std::string cygwinToWindows(std::string_view fname)
+{
+  if (fname.size() >= 12 &&
+      fname.substr(0, 10) == "/cygdrive/" &&
+      fname[11] == '/') {
+    // "/cygdrive/c/Windows" -> "C:/Windows"
+    return stringb(
+      toupper_char(fname[10]) << ":" << fname.substr(11));
+  }
+  else {
+    return std::string(fname);
+  }
+}
+
+
+std::string makeFileURI(
+  std::string_view fname, URIPathSemantics semantics)
 {
   SMFileUtil sfu;
 
   std::string absFname = sfu.getAbsolutePath(std::string(fname));
 
   absFname = sfu.normalizePathSeparators(absFname);
+
+  if (semantics == URIPathSemantics::CYGWIN) {
+    absFname = windowsToCygwin(absFname);
+  }
 
   // In the URI format, a path like "C:/Windows" gets written
   // "/C:/Windows".
@@ -111,7 +170,8 @@ std::string makeFileURI(std::string_view fname)
 
 // For now this is very crude, doing just enough to invert the encodings
 // I see from `clangd`.
-std::string getFileURIPath(std::string const &uri)
+std::string getFileURIPath(
+  std::string const &uri, URIPathSemantics semantics)
 {
   EXN_CONTEXT(doubleQuote(uri));
 
@@ -134,6 +194,10 @@ std::string getFileURIPath(std::string const &uri)
   // The path should always be absolute.
   if (!beginsWith(path, "/")) {
     xformat("Path does not begin with '/'.");
+  }
+
+  if (semantics == URIPathSemantics::CYGWIN) {
+    path = cygwinToWindows(path);
   }
 
   // Check for Windows path stuff.

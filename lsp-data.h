@@ -27,6 +27,7 @@
 #include "byte-index.h"                // ByteIndex
 #include "line-index.h"                // LineIndex
 #include "lsp-version-number.h"        // LSP_VersionNumber
+#include "uri-util.h"                  // URIPathSemantics
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
@@ -130,10 +131,10 @@ public:
 
   // Encode an ordinary file name as an LSP URI.
   static LSP_FilenameURI fromFname(
-    std::string const &fname);
+    std::string const &fname, URIPathSemantics semantics);
 
   // Decode the URI as a file name.
-  std::string getFname() const;
+  std::string getFname(URIPathSemantics semantics) const;
 };
 
 
@@ -157,8 +158,8 @@ public:      // methods
   explicit LSP_Location(gdv::GDValueParser const &p);
 
   // Decode the URI as a file name.
-  std::string getFname() const
-    { return m_uri.getFname(); }
+  std::string getFname(URIPathSemantics semantics) const
+    { return m_uri.getFname(semantics); }
 };
 
 
@@ -415,11 +416,11 @@ public:      // methods
 
   // Encode `fname` as a URI to build this object.
   static LSP_TextDocumentIdentifier fromFname(
-    std::string const &fname);
+    std::string const &fname, URIPathSemantics semantics);
 
   // Decode the URI as a file name.
-  std::string getFname() const
-    { return m_uri.getFname(); }
+  std::string getFname(URIPathSemantics semantics) const
+    { return m_uri.getFname(semantics); }
 };
 
 
@@ -456,11 +457,12 @@ public:      // methods
   // Encode `fname` as a URI to build this object.
   static LSP_VersionedTextDocumentIdentifier fromFname(
     std::string const &fname,
+    URIPathSemantics semantics,
     LSP_VersionNumber version);
 
   // Decode the URI as a file name.
-  std::string getFname() const
-    { return m_uri.getFname(); }
+  std::string getFname(URIPathSemantics semantics) const
+    { return m_uri.getFname(semantics); }
 };
 
 
@@ -527,7 +529,7 @@ public:      // methods
   // No need to parse currently.
 
   // Get the file name in `m_textDocument`.
-  std::string getFname() const;
+  std::string getFname(URIPathSemantics semantics) const;
 };
 
 
@@ -555,7 +557,7 @@ public:      // methods
   // No need to parse currently.
 
   // Get the file name in `m_textDocument`.
-  std::string getFname() const;
+  std::string getFname(URIPathSemantics semantics) const;
 };
 
 

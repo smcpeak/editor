@@ -8,6 +8,7 @@
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-index.h"                          // LineIndex
 #include "line-number.h"                         // LineNumber
+#include "lsp-client-scope.h"                    // LSPClientScope
 #include "lsp-conv.h"                            // applyLSPDocumentChanges, toLSP_Position
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "td-core.h"                             // TextDocumentCore
@@ -217,6 +218,7 @@ void LSPClient::resetProtocolState()
   m_filesWithPendingDiagnostics.clear();
   m_pendingErrorMessages.clear();
   m_lspClientProtocolError.reset();
+  m_uriPathSemantics = URIPathSemantics::NORMAL;
 }
 
 
@@ -502,7 +504,8 @@ LSPClient::LSPClient(
     m_shutdownRequestID(0),
     m_waitingForTermination(false),
     m_pendingErrorMessages(),
-    m_lspClientProtocolError()
+    m_lspClientProtocolError(),
+    m_uriPathSemantics(URIPathSemantics::NORMAL)
 {
   SMFileUtil sfu;
   std::string const fname =
@@ -535,26 +538,56 @@ void LSPClient::selfCheck() const
 }
 
 
-std::optional<std::string> LSPClient::startServer()
+std::string LSPClient::makeFileURI(std::string_view fname) const
 {
-  // ---- Start the server process ----
-  if (m_commandRunner) {
-    return "Server process has already been started and not stopped.";
-  }
+  return ::makeFileURI(fname, m_uriPathSemantics);
+}
 
-  // There shouldn't be an LSP object because its `CommandReference`
-  // reference would be dangling.
-  xassert(!m_lsp);
 
+std::string LSPClient::getFileURIPath(std::string const &uri) const
+{
+  return ::getFileURIPath(uri, m_uriPathSemantics);
+}
+
+
+void LSPClient::configureCommandRunner(LSPClientScope const &scope)
+{
   m_commandRunner.reset(new CommandRunner());
+
   if (m_useRealServer) {
-    m_commandRunner->setProgram("clangd");
-    if (envAsBool("CLANGD_VERBOSE_LOG")) {
-      // Causes more details to be written to its stderr log file.
-      m_commandRunner->setArguments(QStringList() <<
-        "--log=verbose");
+    if (scope.m_documentType == DocumentType::DT_CPP) {
+      m_commandRunner->setProgram("clangd");
+      if (envAsBool("CLANGD_VERBOSE_LOG")) {
+        // Causes more details to be written to its stderr log file.
+        m_commandRunner->setArguments(QStringList() <<
+          "--log=verbose");
+      }
+    }
+
+    else if (scope.m_documentType == DocumentType::DT_PYTHON) {
+      // Use "env" for this too since `pylsp` is a shell script with a
+      // shebang.
+      m_commandRunner->setProgram("env");
+
+      QStringList args;
+      args << "pylsp";
+      if (envAsBool("PYLSP_VERBOSE_LOG")) {
+        // Log more details.  Without this, `pylsp` is very quiet.
+        args << "--verbose";
+      }
+      m_commandRunner->setArguments(args);
+
+      // For the moment I am using a Cygwin `pylsp`.
+      m_uriPathSemantics = URIPathSemantics::CYGWIN;
+    }
+
+    else {
+      xmessage(stringb(
+        "I don't know how to start an LSP server for " <<
+        scope.languageName() << "."));
     }
   }
+
   else {
     // Need to use `env` due to cygwin symlink issues.
     m_commandRunner->setProgram("env");
@@ -582,6 +615,22 @@ std::optional<std::string> LSPClient::startServer()
      destructor without first shutting down the server cleanly with
      `stopServer`.
   */
+}
+
+
+std::optional<std::string> LSPClient::startServer(
+  LSPClientScope const &scope)
+{
+  // ---- Start the server process ----
+  if (m_commandRunner) {
+    return "Server process has already been started and not stopped.";
+  }
+
+  // There shouldn't be an LSP object because its `CommandReference`
+  // reference would be dangling.
+  xassert(!m_lsp);
+
+  configureCommandRunner(scope);
 
   TRACE1("Starting server process: " <<
          toString(m_commandRunner->getCommandLine()));
@@ -940,7 +989,7 @@ void LSPClient::notify_textDocument_didChange(
 {
   xassertPrecondition(isRunningNormally());
 
-  std::string fname = params.getFname();
+  std::string fname = params.getFname(uriPathSemantics());
   xassertPrecondition(isFileOpen(fname));
 
   TRACE1("Sending didChange for " << toGDValue(params.m_textDocument));
@@ -970,6 +1019,7 @@ void LSPClient::notify_textDocument_didChange_all(
   LSP_DidChangeTextDocumentParams params(
     LSP_VersionedTextDocumentIdentifier::fromFname(
       fname,
+      uriPathSemantics(),
       version),
     std::move(changes));
 
@@ -1064,7 +1114,7 @@ int LSPClient::requestRelatedLocation(
 
   return sendRequest(requestName,
     LSP_TextDocumentPositionParams(
-      LSP_TextDocumentIdentifier::fromFname(fname),
+      LSP_TextDocumentIdentifier::fromFname(fname, uriPathSemantics()),
       toLSP_Position(position)));
 }
 

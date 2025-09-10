@@ -19,14 +19,18 @@ using namespace smbase;
 OPEN_ANONYMOUS_NAMESPACE
 
 
+// In most places in this test, we use normal semantics.
+static URIPathSemantics const semantics = URIPathSemantics::NORMAL;
+
+
 void roundTripFileToURL(char const *file, char const *expectURI)
 {
   TEST_CASE_EXPRS("roundTripFileToURL", file);
 
-  std::string actualURI = makeFileURI(file);
+  std::string actualURI = makeFileURI(file, semantics);
   EXPECT_EQ(actualURI, expectURI);
 
-  std::string decodedFile = getFileURIPath(actualURI);
+  std::string decodedFile = getFileURIPath(actualURI, semantics);
   EXPECT_EQ(decodedFile, file);
 }
 
@@ -55,14 +59,31 @@ void test_getFileURIPath()
   // The valid cases are tested as part of round-trip above, so here I
   // just focus on error cases.
 
-  EXPECT_EXN_SUBSTR(getFileURIPath("http://example.com"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("http://example.com", semantics),
     XFormat, "URI does not begin with \"file://\".");
 
-  EXPECT_EXN_SUBSTR(getFileURIPath("file:///a/b/c?q=4"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("file:///a/b/c?q=4", semantics),
     XFormat, "URI has a query part but I can't handle that.");
 
-  EXPECT_EXN_SUBSTR(getFileURIPath("user@file:///a/b/c"),
+  EXPECT_EXN_SUBSTR(getFileURIPath("user@file:///a/b/c", semantics),
     XFormat, "URI has a user name part but I can't handle that.");
+}
+
+
+void test_cygwinSemantics()
+{
+  if (!PLATFORM_IS_WINDOWS) {
+    // As above, we have a problem recognizing absolute paths.
+    return;
+  }
+
+  std::string uri =
+    makeFileURI("C:/Windows", URIPathSemantics::CYGWIN);
+  EXPECT_EQ(uri, "file:///cygdrive/c/Windows");
+
+  std::string path =
+    getFileURIPath(uri, URIPathSemantics::CYGWIN);
+  EXPECT_EQ(path, "C:/Windows");
 }
 
 
@@ -74,6 +95,7 @@ void test_uri_util(CmdlineArgsSpan args)
 {
   test_makeFileURI();
   test_getFileURIPath();
+  test_cygwinSemantics();
 }
 
 
