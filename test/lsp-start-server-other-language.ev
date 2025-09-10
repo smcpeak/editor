@@ -11,7 +11,7 @@ KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
 
 // Pops up error box.
 CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
-CheckMessageBoxTextMatches("window1.#5", "Cannot create LSP client for language")
+CheckMessageBoxTextMatches("window1.#5", "This editor does not know how to run an LSP server for Plain text.")
 
 // Dismiss dialog.
 FocusKeyPR("Key_Return" "\r")

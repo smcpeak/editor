@@ -487,8 +487,10 @@ NNRCSerf<LSPClient> LSPClientManager::getOrCreateClient(
     xmessage("Cannot create LSP client for non-local host.");
   }
 
-  if (scope.m_documentType != DocumentType::DT_CPP) {
-    xmessage("Cannot create LSP client for language other than C++.");
+  if (!lspLanguageIdForDTOpt(scope.m_documentType)) {
+    xmessage(stringb(
+      "This editor does not know how to run an LSP server for " <<
+      scope.languageName() << "."));
   }
 
   // Build a new LSP client object and store a pointer to it inside the
