@@ -3,6 +3,7 @@
 
 #include "line-index.h"                // this module
 
+#include "clampable-integer.h"         // ClampableInteger method defns
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
 #include "line-number.h"               // LineNumber
@@ -17,6 +18,7 @@ using namespace smbase;
 
 // Instantiate base class methods.
 template class WrappedInteger<int, LineIndex>;
+template class ClampableInteger<int, LineIndex, LineDifference>;
 
 
 // ---------------------------- Conversion -----------------------------
@@ -89,28 +91,6 @@ bool LineIndex::tryIncrease(LineDifference delta)
   catch (...) {
     return false;
   }
-}
-
-
-void LineIndex::clampIncrease(
-  LineDifference delta, LineIndex limit)
-{
-  int newValue = addWithOverflowCheck(get(), delta.get());
-  if (newValue >= limit.get()) {
-    set(newValue);
-  }
-  else {
-    set(limit.get());
-  }
-}
-
-
-LineIndex LineIndex::clampIncreased(
-  LineDifference delta, LineIndex limit) const
-{
-  LineIndex ret(*this);
-  ret.clampIncrease(delta, limit);
-  return ret;
 }
 
 

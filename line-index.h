@@ -8,6 +8,7 @@
 
 #include "line-index-fwd.h"            // fwds for this module
 
+#include "clampable-integer-iface.h"   // ClampableInteger
 #include "line-count-fwd.h"            // LineCount [n]
 #include "line-difference-fwd.h"       // LineDifference [n]
 #include "line-number-fwd.h"           // LineNumber [n]
@@ -27,7 +28,10 @@
    See doc/line-measures.txt for more on how this class relates to
    others it is semantically related to.
 */
-class LineIndex final : public WrappedInteger<int, LineIndex> {
+class LineIndex final
+  : public WrappedInteger<int, LineIndex>,
+    public ClampableInteger<int, LineIndex, LineDifference> {
+
 public:      // types
   using Base = WrappedInteger<int, LineIndex>;
   friend Base;
@@ -79,16 +83,6 @@ public:      // methods
   // If `*this += delta` is valid, do it and return true.  Otherwise
   // return false.
   bool tryIncrease(LineDifference delta);
-
-  // Nominally `m_value += delta`.  If the result would be less than
-  // `limit`, set `*this` to `limit`.  Also the addition must not
-  // overflow.
-  void clampIncrease(
-    LineDifference delta, LineIndex limit = LineIndex(0));
-
-  // Like `clampIncrease`, but returning a new object.
-  LineIndex clampIncreased(
-    LineDifference delta, LineIndex limit = LineIndex(0)) const;
 
   // ---------------------- Subtraction/inversion ----------------------
   // Don't inherit `operator-` or `operator-=`.

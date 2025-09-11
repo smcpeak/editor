@@ -3,6 +3,7 @@
 
 #include "column-index.h"              // this module
 
+#include "clampable-integer.h"         // ClampableInteger method defns
 #include "column-count.h"              // ColumnCount
 #include "column-difference.h"         // ColumnDifference
 #include "wrapped-integer.h"           // WrappedInteger method defns
@@ -15,6 +16,7 @@ using namespace smbase;
 
 
 template class WrappedInteger<int, ColumnIndex>;
+template class ClampableInteger<int, ColumnIndex, ColumnDifference>;
 
 
 // ---------------------------- Conversion -----------------------------
@@ -56,19 +58,6 @@ ColumnIndex ColumnIndex::operator+(ColumnDifference delta) const
 ColumnIndex &ColumnIndex::operator+=(ColumnDifference delta)
 {
   return *this = *this + delta;
-}
-
-
-void ColumnIndex::clampIncrease(
-  ColumnDifference delta, ColumnIndex limit)
-{
-  int newValue = addWithOverflowCheck(get(), delta.get());
-  if (newValue >= limit.get()) {
-    set(newValue);
-  }
-  else {
-    set(limit.get());
-  }
 }
 
 

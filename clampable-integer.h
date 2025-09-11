@@ -8,13 +8,57 @@
 
 #include "clampable-integer-iface.h"   // interface decls for this module
 
+#include "smbase/overflow.h"           // addWithOverflowCheck
 
-template <typename Derived, typename LimitType>
-void ClampableInteger<Derived, LimitType>::clampLower(LimitType lowerBound)
+
+template <typename UnderInt, typename Derived, typename Difference>
+void ClampableInteger<UnderInt, Derived, Difference>::clampLower(
+  Difference lowerBound)
 {
-  if (derived().get() < lowerBound.get()) {
+  if (derivedC().get() < lowerBound.get()) {
     derived().set(lowerBound.get());
   }
+}
+
+
+template <typename UnderInt, typename Derived, typename Difference>
+void ClampableInteger<UnderInt, Derived, Difference>::clampIncrease(
+  Difference delta, Difference limit)
+{
+  UnderInt newValue =
+    addWithOverflowCheck<UnderInt>(derivedC().get(), delta.get());
+  if (newValue >= limit.get()) {
+    derived().set(newValue);
+  }
+  else {
+    derived().set(limit.get());
+  }
+}
+
+
+template <typename UnderInt, typename Derived, typename Difference>
+void ClampableInteger<UnderInt, Derived, Difference>::clampIncrease(
+  Difference delta)
+{
+  derived().clampIncrease(delta, Difference(0));
+}
+
+
+template <typename UnderInt, typename Derived, typename Difference>
+Derived ClampableInteger<UnderInt, Derived, Difference>::clampIncreased(
+  Difference delta, Difference limit) const
+{
+  Derived ret(derivedC());
+  ret.clampIncrease(delta, limit);
+  return ret;
+}
+
+
+template <typename UnderInt, typename Derived, typename Difference>
+Derived ClampableInteger<UnderInt, Derived, Difference>::clampIncreased(
+  Difference delta) const
+{
+  return derivedC().clampIncreased(delta, Difference(0));
 }
 
 

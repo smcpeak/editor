@@ -63,6 +63,11 @@
 */
 template <typename UnderInt, typename Derived>
 class WrappedInteger {
+public:      // types
+  // Publish the underlying type.  Unfortunately, other mixins cannot
+  // access it due to when types get looked up.
+  using UnderIntType = UnderInt;
+
 protected:   // data
   // The wrapped value.
   UnderInt m_value;

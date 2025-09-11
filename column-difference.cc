@@ -10,7 +10,7 @@
 
 
 template class WrappedInteger<int, ColumnDifference>;
-template class ClampableInteger<ColumnDifference>;
+template class ClampableInteger<int, ColumnDifference>;
 
 
 int operator*(int n, ColumnDifference delta)

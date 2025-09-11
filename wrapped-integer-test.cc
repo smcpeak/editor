@@ -21,10 +21,32 @@ using namespace smbase;
 OPEN_ANONYMOUS_NAMESPACE
 
 
+// Unconstrained wrapped integer for use as the difference type in the
+// `ClampableInteger` specialization.
+class IntegerDifference
+  : public WrappedInteger<int, IntegerDifference> {
+
+public:      // types
+  using Base = WrappedInteger<int, IntegerDifference>;
+  friend Base;
+
+protected:   // methods
+  static bool isValid(int value)
+    { return true; }
+
+  static char const *getTypeName()
+    { return "IntegerDifference"; }
+
+public:      // methods
+  // Inherit ctors.
+  using Base::Base;
+};
+
+
 // Wrapped integer that is never negative.
 class NonNegativeInteger
   : public WrappedInteger<int, NonNegativeInteger>,
-    public ClampableInteger<NonNegativeInteger> {
+    public ClampableInteger<int, NonNegativeInteger, IntegerDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, NonNegativeInteger>;
@@ -40,6 +62,9 @@ protected:   // methods
 public:      // methods
   // Inherit ctors.
   using Base::Base;
+
+  operator IntegerDifference() const
+    { return IntegerDifference(get()); }
 };
 
 
@@ -263,6 +288,53 @@ void test_clampLower()
 }
 
 
+void test_clampIncrease()
+{
+  TEST_CASE("test_clampIncrease");
+
+  using Difference = IntegerDifference;
+
+  NonNegativeInteger i(0);
+  EXPECT_EQ(i.get(), 0);
+
+  EXPECT_EQ(i.clampIncreased(Difference(-1)).get(), 0);
+  i.clampIncrease(Difference(-1));
+  EXPECT_EQ(i.get(), 0);
+
+  EXPECT_EQ(i.clampIncreased(Difference(2)).get(), 2);
+  i.clampIncrease(Difference(2));
+  EXPECT_EQ(i.get(), 2);
+
+  EXPECT_EQ(i.clampIncreased(Difference(-1)).get(), 1);
+  i.clampIncrease(Difference(-1));
+  EXPECT_EQ(i.get(), 1);
+
+  EXPECT_EQ(i.clampIncreased(Difference(3)).get(), 4);
+  i.clampIncrease(Difference(3));
+  EXPECT_EQ(i.get(), 4);
+
+  EXPECT_EQ(i.clampIncreased(Difference(-5)).get(), 0);
+  i.clampIncrease(Difference(-5));
+  EXPECT_EQ(i.get(), 0);
+
+  EXPECT_EQ(i.clampIncreased(Difference(10), NonNegativeInteger(5)).get(), 10);
+  i.clampIncrease(Difference(10), NonNegativeInteger(5));
+  EXPECT_EQ(i.get(), 10);
+
+  EXPECT_EQ(i.clampIncreased(Difference(1), NonNegativeInteger(20)).get(), 20);
+  i.clampIncrease(Difference(1), NonNegativeInteger(20));
+  EXPECT_EQ(i.get(), 20);
+
+  EXPECT_EQ(i.clampIncreased(Difference(-1), NonNegativeInteger(3)).get(), 19);
+  i.clampIncrease(Difference(-1), NonNegativeInteger(3));
+  EXPECT_EQ(i.get(), 19);
+
+  EXPECT_EQ(i.clampIncreased(Difference(-100), NonNegativeInteger(3)).get(), 3);
+  i.clampIncrease(Difference(-100), NonNegativeInteger(3));
+  EXPECT_EQ(i.get(), 3);
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -280,6 +352,7 @@ void test_wrapped_integer(CmdlineArgsSpan args)
   test_gdv();
   test_write();
   test_clampLower();
+  test_clampIncrease();
 }
 
 

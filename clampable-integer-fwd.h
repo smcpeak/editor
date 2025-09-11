@@ -6,7 +6,9 @@
 #ifndef EDITOR_CLAMPABLE_INTEGER_FWD_H
 #define EDITOR_CLAMPABLE_INTEGER_FWD_H
 
-template <typename Derived, typename LimitType = Derived>
+template <typename UnderInt,
+          typename Derived,
+          typename LimitType = Derived>
 class ClampableInteger;
 
 #endif // EDITOR_CLAMPABLE_INTEGER_FWD_H

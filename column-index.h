@@ -8,6 +8,7 @@
 
 #include "column-index-fwd.h"          // fwds for this module
 
+#include "clampable-integer-iface.h"   // ClampableInteger
 #include "column-count-fwd.h"          // ColumnCount [n]
 #include "column-difference-fwd.h"     // ColumnDifference [n]
 #include "wrapped-integer-iface.h"     // WrappedInteger
@@ -21,7 +22,10 @@
 
    This is a logical subclass of `ColumnCount`.
 */
-class ColumnIndex final : public WrappedInteger<int, ColumnIndex> {
+class ColumnIndex final
+  : public WrappedInteger<int, ColumnIndex>,
+    public ClampableInteger<int, ColumnIndex, ColumnDifference> {
+
 public:      // types
   using Base = WrappedInteger<int, ColumnIndex>;
   friend Base;
@@ -59,12 +63,6 @@ public:      // methods
   // Requires: `m_value+delta >= 0`, and the sum is representable.
   ColumnIndex operator+(ColumnDifference delta) const;
   ColumnIndex &operator+=(ColumnDifference delta);
-
-  // Nominally `m_value += delta`.  If the result would be less than
-  // `limit`, set `*this` to `limit`.  Also the addition must not
-  // overflow.
-  void clampIncrease(
-    ColumnDifference delta, ColumnIndex limit = ColumnIndex(0));
 
   // ---------------------- Subtraction/inversion ----------------------
   // Don't inherit `operator-` or `operator-=`.

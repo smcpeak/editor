@@ -23,7 +23,7 @@
 */
 class LineDifference final
   : public WrappedInteger<int, LineDifference>,
-    public ClampableInteger<LineDifference> {
+    public ClampableInteger<int, LineDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, LineDifference>;

@@ -17,7 +17,7 @@ using namespace smbase;
 
 // Explicitly instantiate the base class methods.
 template class WrappedInteger<int, ColumnCount>;
-template class ClampableInteger<ColumnCount, ColumnDifference>;
+template class ClampableInteger<int, ColumnCount, ColumnDifference>;
 
 
 // ---------------------------- Conversion -----------------------------
@@ -49,19 +49,6 @@ ColumnCount &ColumnCount::operator+=(ColumnDifference delta)
 ColumnIndex ColumnCount::operator+(ColumnIndex delta) const
 {
   return ColumnIndex(addWithOverflowCheck(get(), delta.get()));
-}
-
-
-void ColumnCount::clampIncrease(
-  ColumnDifference delta, ColumnCount lowerBound)
-{
-  int newValue = addWithOverflowCheck(get(), delta.get());
-  if (newValue >= lowerBound.get()) {
-    set(newValue);
-  }
-  else {
-    set(lowerBound.get());
-  }
 }
 
 

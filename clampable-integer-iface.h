@@ -11,16 +11,19 @@
 
 /* This is meant to be derived from as a CRTP base.
 
+   `UnderInt` is the underlying integer type in which calculations are
+   performed.  (One might think we could get that from `Derived`, but
+   the name lookup rules don't entirely cooperate.)
+
    `Derived` has `set` and `get` methods.
 
-   `LimitType` has a `get` method.
+   `Difference` has a `get` method.
 
-   These methods are assumed to produce or accept a common underlying
-   integer type.
+   The methods are assumed to produce or accept `UnderIntType`.
 
    My expectation is both are subclasses of `WrappedInteger`.
 */
-template <typename Derived, typename LimitType>
+template <typename UnderInt, typename Derived, typename Difference>
 class ClampableInteger {
 protected:   // methods
   // Access the derived class to allow static overriding.
@@ -37,7 +40,19 @@ public:      // methods
   // calculation that produces the limit might in some cases yield a
   // limit that cannot be represented; for such a value, the limit will
   // simply not have any effect.
-  void clampLower(LimitType lowerBound);
+  void clampLower(Difference lowerBound);
+
+  // Nominally `m_value += delta`.  If the result would be less than
+  // `limit`, set `*this` to `limit`.  Also the addition must not
+  // overflow.
+  void clampIncrease(Difference delta, Difference limit);
+
+  // Same, with an implicit limit of 0.
+  void clampIncrease(Difference delta);
+
+  // Like `clampIncrease`, but returning a new object.
+  Derived clampIncreased(Difference delta, Difference limit) const;
+  Derived clampIncreased(Difference delta) const;
 };
 
 

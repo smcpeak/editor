@@ -19,7 +19,7 @@
 // A non-negative `ColumnDifference`.
 class ColumnCount final
   : public WrappedInteger<int, ColumnCount>,
-    public ClampableInteger<ColumnCount, ColumnDifference> {
+    public ClampableInteger<int, ColumnCount, ColumnDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, ColumnCount>;
@@ -56,10 +56,6 @@ public:      // methods
 
   // count+index yields count.  Defining this resolves an ambiguity.
   ColumnIndex operator+(ColumnIndex delta) const;
-
-  // `*this += delta`, but result is at least `lowerBound`.
-  void clampIncrease(
-    ColumnDifference delta, ColumnCount lowerBound = ColumnCount(0));
 
   // ---------------------- Subtraction/inversion ----------------------
   // Inversion widens to the difference type.

@@ -25,7 +25,7 @@
 */
 class ColumnDifference final
   : public WrappedInteger<int, ColumnDifference>,
-    public ClampableInteger<ColumnDifference> {
+    public ClampableInteger<int, ColumnDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, ColumnDifference>;
