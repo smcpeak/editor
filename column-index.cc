@@ -7,6 +7,7 @@
 #include "clampable-wrapped-integer.h" // ClampableWrappedInteger method defns
 #include "column-count.h"              // ColumnCount
 #include "column-difference.h"         // ColumnDifference
+#include "subbable-wrapped-integer.h"  // SubbableWrappedInteger method defns
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/compare-util-iface.h" // smbase::compare
@@ -18,6 +19,7 @@ using namespace smbase;
 
 template class WrappedInteger<int, ColumnIndex>;
 template class AddableWrappedInteger<int, ColumnIndex, ColumnDifference>;
+template class SubbableWrappedInteger<int, ColumnIndex, ColumnDifference>;
 template class ClampableWrappedInteger<int, ColumnIndex, ColumnDifference>;
 
 
@@ -51,33 +53,9 @@ int ColumnIndex::toColumnNumber() const
 
 
 // ---------------------------- Subtraction ----------------------------
-ColumnDifference ColumnIndex::operator-() const
-{
-  return ColumnDifference(- get());
-}
-
-
-ColumnDifference ColumnIndex::operator-(ColumnIndex index) const
-{
-  return ColumnDifference(subtractWithOverflowCheck(get(), index.get()));
-}
-
-
 ColumnDifference ColumnIndex::operator-(ColumnCount count) const
 {
   return ColumnDifference(subtractWithOverflowCheck(get(), count.get()));
-}
-
-
-ColumnIndex ColumnIndex::operator-(ColumnDifference b) const
-{
-  return ColumnIndex(subtractWithOverflowCheck(get(), b.get()));
-}
-
-
-ColumnIndex &ColumnIndex::operator-=(ColumnDifference delta)
-{
-  return *this = *this - delta;
 }
 
 

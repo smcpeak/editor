@@ -12,6 +12,7 @@
 #include "clampable-wrapped-integer-iface.h"     // ClampableWrappedInteger
 #include "column-difference-fwd.h"               // ColumnDifference [n]
 #include "column-index-fwd.h"                    // ColumnIndex [n]
+#include "subbable-wrapped-integer-iface.h"      // SubbableWrappedInteger
 #include "wrapped-integer-iface.h"               // WrappedInteger
 
 #include "smbase/compare-util-iface.h"           // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
@@ -21,6 +22,7 @@
 class ColumnCount final
   : public WrappedInteger<int, ColumnCount>,
     public AddableWrappedInteger<int, ColumnCount, ColumnDifference>,
+    public SubbableWrappedInteger<int, ColumnCount, ColumnDifference>,
     public ClampableWrappedInteger<int, ColumnCount, ColumnDifference> {
 
 public:      // types
@@ -28,6 +30,7 @@ public:      // types
   friend Base;
 
   using Addable = AddableWrappedInteger<int, ColumnCount, ColumnDifference>;
+  using Subbable = SubbableWrappedInteger<int, ColumnCount, ColumnDifference>;
 
 protected:   // methods
   static bool isValid(int value)
@@ -55,20 +58,17 @@ public:      // methods
   using Addable::operator+;
   using Addable::operator+=;
 
-  // count+index yields index.  Defining this resolves an ambiguity.
+  // count+index yields index.  Defining this resolves an ambiguity;
+  // without this method, `delta` could convert to either a difference
+  // or a count.
   ColumnIndex operator+(ColumnIndex delta) const;
 
   // ---------------------- Subtraction/inversion ----------------------
-  // Inversion widens to the difference type.
-  ColumnDifference operator-() const;
+  using Subbable::operator-;
+  using Subbable::operator-=;
 
-  // Subtraction of counts also widens.
-  ColumnDifference operator-(ColumnCount delta) const;
+  // This is needed because of the same ambiguity as for `+`.
   ColumnDifference operator-(ColumnIndex delta) const;
-
-  // Requires: *this - delta >= 0
-  ColumnCount operator-(ColumnDifference delta) const;
-  ColumnCount &operator-=(ColumnDifference delta);
 };
 
 

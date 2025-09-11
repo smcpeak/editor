@@ -12,6 +12,7 @@
 #include "clampable-wrapped-integer-iface.h"     // ClampableWrappedInteger
 #include "column-count-fwd.h"                    // ColumnCount [n]
 #include "column-difference-fwd.h"               // ColumnDifference [n]
+#include "subbable-wrapped-integer-iface.h"      // SubbableWrappedInteger
 #include "wrapped-integer-iface.h"               // WrappedInteger
 
 #include "smbase/compare-util-iface.h"           // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
@@ -26,6 +27,7 @@
 class ColumnIndex final
   : public WrappedInteger<int, ColumnIndex>,
     public AddableWrappedInteger<int, ColumnIndex, ColumnDifference>,
+    public SubbableWrappedInteger<int, ColumnIndex, ColumnDifference>,
     public ClampableWrappedInteger<int, ColumnIndex, ColumnDifference> {
 
 public:      // types
@@ -33,6 +35,7 @@ public:      // types
   friend Base;
 
   using Addable = AddableWrappedInteger<int, ColumnIndex, ColumnDifference>;
+  using Subbable = SubbableWrappedInteger<int, ColumnIndex, ColumnDifference>;
 
 protected:   // methods
   static bool isValid(int value)
@@ -67,21 +70,13 @@ public:      // methods
   using Addable::operator+=;
 
   // ---------------------- Subtraction/inversion ----------------------
-  // Don't inherit `operator-` or `operator-=`.
+  using Subbable::operator-;
+  using Subbable::operator-=;
 
-  // Subtracting two indices yields a difference.
-  ColumnDifference operator-() const;
-  ColumnDifference operator-(ColumnIndex index) const;
-
-  // Same for a count.  Without this overload, "index-count" is
-  // converted to "index-difference", which then cannot be negative.
+  // "index-count" yields difference.  Without this overload,
+  // "index-count" is treated as "index-difference", which then cannot
+  // be negative.
   ColumnDifference operator-(ColumnCount count) const;
-
-  // index-difference yields index.
-  //
-  // Requires: *this >= delta
-  ColumnIndex operator-(ColumnDifference delta) const;
-  ColumnIndex &operator-=(ColumnDifference delta);
 
   // ------------------------ Other arithmetic -------------------------
   // Return `*this` rounded up to the nearest multiple of `count`.

@@ -5,6 +5,7 @@
 
 #include "addable-wrapped-integer.h"   // module under test
 #include "clampable-wrapped-integer.h" // module under test
+#include "subbable-wrapped-integer.h"  // module under test
 #include "wrapped-integer.h"           // module under test
 
 #include "smbase/exc.h"                // smbase::XAssert
@@ -48,6 +49,7 @@ public:      // methods
 class NonNegativeInteger
   : public WrappedInteger<int, NonNegativeInteger>,
     public AddableWrappedInteger<int, NonNegativeInteger, IntegerDifference>,
+    public SubbableWrappedInteger<int, NonNegativeInteger, IntegerDifference>,
     public ClampableWrappedInteger<int, NonNegativeInteger, IntegerDifference> {
 
 public:      // types
@@ -55,6 +57,7 @@ public:      // types
   friend Base;
 
   using Addable = AddableWrappedInteger<int, NonNegativeInteger, IntegerDifference>;
+  using Subbable = SubbableWrappedInteger<int, NonNegativeInteger, IntegerDifference>;
 
 protected:   // methods
   static bool isValid(int value)
@@ -74,6 +77,11 @@ public:      // methods
   using Base::operator+=;
   using Addable::operator+;
   using Addable::operator+=;
+
+  // Unlike `Addable`, `Subbable` replaces the operators that
+  // `WrappedInteger` provides.
+  using Subbable::operator-;
+  using Subbable::operator-=;
 };
 
 
@@ -251,8 +259,7 @@ void test_unary()
   EXPECT_EQ((+d2).get(), 2);
 
   EXPECT_EQ((-d0).get(), 0);
-  EXPECT_EXN_SUBSTR(-d1,
-    XAssert, "Value violates constraint for NonNegativeInteger: -1.");
+  EXPECT_EQ((-d1).get(), -1);
 }
 
 
