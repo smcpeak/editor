@@ -9,7 +9,7 @@
 
 #include "line-difference-fwd.h"       // fwds for this module
 
-#include "clampable-integer.h"         // ClampableInteger
+#include "clampable-integer-iface.h"   // ClampableInteger
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/std-string-fwd.h"     // std::string
