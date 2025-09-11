@@ -1,0 +1,36 @@
+// lsp-go-to-decl-bad-loc.ev
+// Try to go to the decl of a symbol with bad location info.
+
+// In editor with correct file..
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Activate fake LSP server.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+
+// Open this file in LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Go to line 67.
+Shortcut("window1.m_menuBar.editMenu.editGotoLine" "Alt+G")
+FocusKeySequence("67")
+FocusKeyPR("Key_Return" "\r")
+
+// Move to the use of `has_bad_decl_location` on that line.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "67:1")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "67:5")
+
+// Go to definition.
+Shortcut("window1.m_menuBar.lspMenu.lspGoToMenu.lspGoToDefinition" "F12")
+
+// We should end up at 1:20 after adjusting the invalid coordinate.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:20")
+
+// EOF

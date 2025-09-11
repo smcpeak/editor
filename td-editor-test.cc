@@ -2674,9 +2674,47 @@ void test_clipboardPaste_cursorStart()
 }
 
 
+// ----------------------- test_toAdjustedLCoord -----------------------
+TextMCoord tmc(int li, int bi)
+{
+  return TextMCoord(LineIndex(li), ByteIndex(bi));
+}
+
+
+TextLCoord lmc(int li, int ci)
+{
+  return TextLCoord(LineIndex(li), ColumnIndex(ci));
+}
+
+
+void test_toAdjustedLCoord()
+{
+  TEST_CASE("test_toAdjustedLCoord");
+
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+
+  auto one = [&tde](int ili, int ibi, int oli, int oci) -> void {
+    EXN_CONTEXT_EXPR(ili);
+    EXN_CONTEXT_EXPR(ibi);
+    EXPECT_EQ(tde.toAdjustedLCoord(tmc(ili,ibi)), lmc(oli,oci));
+  };
+
+  one(0,0, 0,0);
+  one(0,100, 0,3);
+  one(2,0, 2,0);
+  one(3,0, 3,0);
+  one(4,0, 3,0);
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
+// ---------------------------- Entry point ----------------------------
 // Called from unit-tests.cc.
 void test_td_editor(CmdlineArgsSpan args)
 {
@@ -2720,6 +2758,7 @@ void test_td_editor(CmdlineArgsSpan args)
   testLineEndLCoord();
   testSelectEntireFile();
   test_clipboardPaste_cursorStart();
+  test_toAdjustedLCoord();
 }
 
 

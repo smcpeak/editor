@@ -112,6 +112,8 @@ TextMCoord TextDocumentEditor::toMCoord(TextLCoord lc) const
 
 TextLCoord TextDocumentEditor::toLCoord(TextMCoord mc) const
 {
+  xassertPrecondition(validMCoord(mc));
+
   LineIterator it(*this, mc.m_line);
   for (; it.has() && it.byteOffset() < mc.m_byteIndex; it.advByte()) {
     // Nothing.
@@ -139,6 +141,13 @@ TextLCoordRange TextDocumentEditor::toLCoordRange(
   return TextLCoordRange(
     this->toLCoord(range.m_start),
     this->toLCoord(range.m_end));
+}
+
+
+TextLCoord TextDocumentEditor::toAdjustedLCoord(TextMCoord mc) const
+{
+  m_doc->adjustMCoord(mc /*INOUT*/);
+  return toLCoord(mc);
 }
 
 

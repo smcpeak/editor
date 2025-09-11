@@ -837,6 +837,17 @@ def get_symbols(
           mkRange(0,0, 0,len(name))
         )))
 
+    # Similarly, have a symbol where the request for a declaration will
+    # yield an out of bounds character index.
+    if name == "has_bad_decl_location":
+      satisfying_occurrences.append(Occurrence(
+        name,
+        OccurrenceKind.DECLARATION,
+        FileRange(
+          uri,
+          mkRange(0,200, 0,210)      # Very large character indices.
+        )))
+
   return satisfying_occurrences
 
 

@@ -63,4 +63,7 @@ void useGlobals()
 // occurrences of the following symbol.
 int has_malformed_uri_occurrence;
 
+// This one has an out of bounds decl location.
+int has_bad_decl_location;
+
 // EOF

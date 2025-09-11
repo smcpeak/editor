@@ -2793,7 +2793,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
 
         // Transform to layout coordinates.
         TextLCoord targetLC =
-          editorWidget()->getDocumentEditor()->toLCoord(targetMC);
+          editorWidget()->getDocumentEditor()->toAdjustedLCoord(targetMC);
 
         // Then go there.
         editorWidget()->cursorTo(targetLC);

@@ -186,6 +186,10 @@ public:      // funcs
   TextMCoordRange toMCoordRange(TextLCoordRange const &range) const;
   TextLCoordRange toLCoordRange(TextMCoordRange const &range) const;
 
+  // First confine `mc` to the actual document, then translate it into
+  // layout coordinates.
+  TextLCoord toAdjustedLCoord(TextMCoord mc) const;
+
   // ------------------- query layout dimensions -------------------
   // Number of populated cells on the given line, in columns.  This does
   // not count the newline.  If 'line' is outside [0,numLines()-1],
