@@ -9,6 +9,7 @@
 
 #include "column-difference-fwd.h"     // fwds for this module
 
+#include "clampable-integer.h"         // ClampableInteger
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 
@@ -22,7 +23,10 @@
    line measures.  This class is meant to be the root of a similar
    hierarchy of layout column measures.
 */
-class ColumnDifference final : public WrappedInteger<int, ColumnDifference> {
+class ColumnDifference final
+  : public WrappedInteger<int, ColumnDifference>,
+    public ClampableInteger<ColumnDifference> {
+
 public:      // types
   using Base = WrappedInteger<int, ColumnDifference>;
   friend Base;
@@ -37,11 +41,6 @@ protected:   // methods
 public:      // methods
   // Inherit ctors.
   using Base::Base;
-
-  // Modify `*this` so it is no smaller than `lowerBound`.
-  //
-  // TODO: Add this to `WrappedInteger`.
-  void clampLower(ColumnDifference lowerBound);
 };
 
 

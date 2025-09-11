@@ -11,14 +11,6 @@
 template class WrappedInteger<int, ColumnDifference>;
 
 
-void ColumnDifference::clampLower(ColumnDifference value)
-{
-  if (*this < value) {
-    *this = value;
-  }
-}
-
-
 int operator*(int n, ColumnDifference delta)
 {
   return delta * n;

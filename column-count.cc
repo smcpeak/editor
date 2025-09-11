@@ -50,14 +50,6 @@ ColumnIndex ColumnCount::operator+(ColumnIndex delta) const
 }
 
 
-void ColumnCount::clampLower(ColumnCount lowerBound)
-{
-  if (*this < lowerBound) {
-    *this = lowerBound;
-  }
-}
-
-
 void ColumnCount::clampIncrease(
   ColumnDifference delta, ColumnCount lowerBound)
 {

@@ -94,6 +94,7 @@ public:      // methods
   // Don't inherit `operator-` or `operator-=`.
 
   // Subtracting two indices yields a difference.
+  LineDifference operator-() const;
   LineDifference operator-(LineIndex b) const;
 
   // index-difference yields index.

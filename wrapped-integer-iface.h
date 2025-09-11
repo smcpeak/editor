@@ -22,38 +22,44 @@
 
 
 /* Class template to use a common base for purpose-specific wrapped
-   integer classes.
+   integer classes.  There are two aspects to a "purpose" here:
+
+     1. Constraining the set of representable values.  That is done by
+        overriding `isValid`.
+
+     2. Constraining the set of allowed operations, and with what other
+        types.  This is much more varied, but the unifying idea is to
+        regard each `WrappedInteger` type as having some particular
+        *units*, and then making operations consistent with dimensional
+        analysis.  See `doc/line-measures.txt` for more on this.
 
    This is meant to be inherited using the Curiously-Recurring Template
    Pattern (CRTP) like this (see `wrapped-integer-test.cc`):
 
-      class NonNegativeInteger : public WrappedInteger<NonNegativeInteger> {
-      public:      // types
-        using Base = WrappedInteger<NonNegativeInteger>;
-        friend Base;
+     class NonNegativeInteger : public WrappedInteger<NonNegativeInteger> {
+     public:      // types
+       using Base = WrappedInteger<NonNegativeInteger>;
+       friend Base;
 
-      protected:   // methods
-        static bool isValid(int value)
-          { return value >= 0; }
+     protected:   // methods
+       static bool isValid(int value)
+         { return value >= 0; }
 
-        static char const *getTypeName()
-          { return "NonNegativeInteger"; }
+       static char const *getTypeName()
+         { return "NonNegativeInteger"; }
 
-      public:      // methods
-        // Inherit ctors.
-        using Base::Base;
+     public:      // methods
+       // Inherit ctors.
+       using Base::Base;
 
-        // Possibly additional methods or overrides here.
-      };
+       // Possibly additional methods or overrides here.
+     };
 
    Thus, the `Derived` type here is that "derived" from a specialization
    of this one.
 
    It is necessary for the derived class to befriend its base class
    since `isValid` and `getTypeName` are protected.
-
-   This class currently only provides arithmetic operations related to
-   addition and subtraction.
 */
 template <typename UnderInt, typename Derived>
 class WrappedInteger {

@@ -166,7 +166,7 @@ UnderInt WrappedInteger<UnderInt, Derived>::operator*(UnderInt n) const
 }
 
 
-// -------------------------- Serialization --------------------------
+// --------------------------- Serialization ---------------------------
 template <typename UnderInt, typename Derived>
 WrappedInteger<UnderInt, Derived>::operator gdv::GDValue() const
 {

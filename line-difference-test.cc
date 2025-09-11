@@ -207,13 +207,13 @@ void test_clampLower()
 
   LineDifference d(3);
 
-  d.clampLower(2);
+  d.clampLower(LineDifference(2));
   EXPECT_EQ(d.get(), 3);   // unchanged
 
-  d.clampLower(3);
+  d.clampLower(LineDifference(3));
   EXPECT_EQ(d.get(), 3);   // unchanged
 
-  d.clampLower(5);
+  d.clampLower(LineDifference(5));
   EXPECT_EQ(d.get(), 5);   // clamped up
 }
 

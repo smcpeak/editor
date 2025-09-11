@@ -9,6 +9,7 @@
 
 #include "line-difference-fwd.h"       // fwds for this module
 
+#include "clampable-integer.h"         // ClampableInteger
 #include "wrapped-integer-iface.h"     // WrappedInteger
 
 #include "smbase/std-string-fwd.h"     // std::string
@@ -20,7 +21,10 @@
    See doc/line-measures.txt for more on how this class relates to
    others it is semantically related to.
 */
-class LineDifference final : public WrappedInteger<int, LineDifference> {
+class LineDifference final
+  : public WrappedInteger<int, LineDifference>,
+    public ClampableInteger<LineDifference> {
+
 public:      // types
   using Base = WrappedInteger<int, LineDifference>;
   friend Base;
@@ -49,10 +53,6 @@ public:      // methods
   LineDifference &operator+=(int delta);
   LineDifference operator-(int delta) const;
   LineDifference &operator-=(int delta);
-
-  // If `m_value < value`, set it equal to `value`, such that `value`
-  // acts as a lower bound to be clamped to.
-  void clampLower(int value);
 };
 
 

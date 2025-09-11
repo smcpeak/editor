@@ -40,14 +40,6 @@ LineDifference &LineDifference::operator-=(int delta)
 }
 
 
-void LineDifference::clampLower(int value)
-{
-  if (m_value < value) {
-    m_value = value;
-  }
-}
-
-
 std::string toString(LineDifference obj)
 {
   return stringb(obj);

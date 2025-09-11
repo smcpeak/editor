@@ -8,6 +8,7 @@
 
 #include "column-count-fwd.h"          // fwds for this module
 
+#include "clampable-integer.h"         // ClampableInteger
 #include "column-difference-fwd.h"     // ColumnDifference [n]
 #include "column-index-fwd.h"          // ColumnIndex [n]
 #include "wrapped-integer-iface.h"     // WrappedInteger
@@ -16,7 +17,10 @@
 
 
 // A non-negative `ColumnDifference`.
-class ColumnCount final : public WrappedInteger<int, ColumnCount> {
+class ColumnCount final
+  : public WrappedInteger<int, ColumnCount>,
+    public ClampableInteger<ColumnCount, ColumnDifference> {
+
 public:      // types
   using Base = WrappedInteger<int, ColumnCount>;
   friend Base;
@@ -52,9 +56,6 @@ public:      // methods
 
   // count+index yields count.  Defining this resolves an ambiguity.
   ColumnIndex operator+(ColumnIndex delta) const;
-
-  // Set `*this` to `lowerBound` if it is less.
-  void clampLower(ColumnCount lowerBound);
 
   // `*this += delta`, but result is at least `lowerBound`.
   void clampIncrease(

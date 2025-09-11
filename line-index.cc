@@ -115,6 +115,12 @@ LineIndex LineIndex::clampIncreased(
 
 
 // ---------------------------- Subtraction ----------------------------
+LineDifference LineIndex::operator-() const
+{
+  return LineDifference(- get());
+}
+
+
 LineDifference LineIndex::operator-(LineIndex b) const
 {
   // Since both are non-negative, this cannot overflow, although it can

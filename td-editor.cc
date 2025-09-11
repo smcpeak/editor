@@ -1075,7 +1075,7 @@ void TextDocumentEditor::moveCursorBy(
   LineDifference deltaLine, ColumnDifference deltaCol)
 {
   // prevent moving into negative territory
-  deltaLine.clampLower( - cursor().m_line.get());
+  deltaLine.clampLower( - cursor().m_line);
   deltaCol.clampLower( - cursor().m_column);
 
   if (deltaLine || deltaCol) {

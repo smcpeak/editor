@@ -249,6 +249,10 @@ void test_subtract()
   EXPECT_EQ(i2 - i0, 2);
 
   EXPECT_EQ(i1 - i2, -1);
+
+  EXPECT_EQ(-i0, 0);
+  EXPECT_EQ(-i1, -1);
+  EXPECT_EQ(-i2, -2);
 }
 
 

@@ -2,6 +2,8 @@
 // Tests for `wrapped-integer` module.
 
 #include "unit-tests.h"                // decl for my entry point
+
+#include "clampable-integer.h"         // module under test
 #include "wrapped-integer.h"           // module under test
 
 #include "smbase/exc.h"                // smbase::XAssert
@@ -20,7 +22,10 @@ OPEN_ANONYMOUS_NAMESPACE
 
 
 // Wrapped integer that is never negative.
-class NonNegativeInteger : public WrappedInteger<int, NonNegativeInteger> {
+class NonNegativeInteger
+  : public WrappedInteger<int, NonNegativeInteger>,
+    public ClampableInteger<NonNegativeInteger> {
+
 public:      // types
   using Base = WrappedInteger<int, NonNegativeInteger>;
   friend Base;
@@ -243,6 +248,21 @@ void test_write()
 }
 
 
+void test_clampLower()
+{
+  NonNegativeInteger c(3);
+
+  c.clampLower(NonNegativeInteger(2));
+  EXPECT_EQ(c.get(), 3);
+
+  c.clampLower(NonNegativeInteger(3));
+  EXPECT_EQ(c.get(), 3);
+
+  c.clampLower(NonNegativeInteger(8));
+  EXPECT_EQ(c.get(), 8);
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -259,6 +279,7 @@ void test_wrapped_integer(CmdlineArgsSpan args)
   test_unary();
   test_gdv();
   test_write();
+  test_clampLower();
 }
 
 
