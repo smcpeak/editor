@@ -1667,7 +1667,8 @@ void EditorWindow::editGotoLine() NOEXCEPT
     if (!s.empty()) {
       int n = atoi(s);
       if (n > 0) {
-        editorWidget()->cursorTo(TextLCoord(LineIndex(n-1), 0));
+        editorWidget()->cursorTo(
+          TextLCoord(LineIndex(n-1), ColumnIndex(0)));
         editorWidget()->scrollToCursor(-1 /*center*/);
       }
       else {
@@ -1729,7 +1730,7 @@ void EditorWindow::editToggleGrepsrcSearchesSubrepos() NOEXCEPT
 void EditorWindow::editRigidIndent1() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editorWidget()->commandBlockIndent(+1);
+  editorWidget()->commandBlockIndent(ColumnDifference(+1));
   GENERIC_CATCH_END
 }
 
@@ -1737,7 +1738,7 @@ void EditorWindow::editRigidIndent1() NOEXCEPT
 void EditorWindow::editRigidUnindent1() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
-  editorWidget()->commandBlockIndent(-1);
+  editorWidget()->commandBlockIndent(ColumnDifference(-1));
   GENERIC_CATCH_END
 }
 
@@ -2004,10 +2005,10 @@ void EditorWindow::viewSetSoftMarginColumn() NOEXCEPT
   int n = QInputDialog::getInt(this,
     "Soft Margin Column",
     "Column number (positive):",
-    editorWidget()->m_softMarginColumn+1,
+    editorWidget()->m_softMarginColumn.toColumnNumber(),
     1 /*min*/, INT_MAX /*max*/, 1 /*step*/, &ok);
   if (ok) {
-    editorWidget()->m_softMarginColumn = n-1;
+    editorWidget()->m_softMarginColumn = ColumnIndex(n-1);
     editorWidget()->update();
   }
 

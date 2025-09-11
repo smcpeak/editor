@@ -4,6 +4,9 @@
 #ifndef TEXTCATEGORY_H
 #define TEXTCATEGORY_H
 
+#include "byte-or-column-count.h"      // ByteOrColumnCount
+#include "byte-or-column-index.h"      // ByteOrColumnIndex
+
 #include "smbase/array.h"              // ArrayStack
 #include "smbase/sm-macros.h"          // DMEMB, CMEMB
 #include "smbase/str.h"                // string
@@ -54,14 +57,18 @@ enum TextCategory {
 // 'LineCategories' with model coordinates, then convert those to
 // another 'LineCategories' with layout coordinates, which can then be
 // rendered to the screen.
+//
+// TODO: Find way to use a static type to distinguish whether `length`
+// is a byte or column count.
+//
 class TCSpan {
 public:
   TextCategory category;     // color/font to use
-  int length;                // # of characters or columns covered
+  ByteOrColumnCount length;  // # of characters or columns covered
 
 public:
   TCSpan() : category(TC_NORMAL), length(1) {}
-  TCSpan(TextCategory S, int L) : category(S), length(L)
+  TCSpan(TextCategory S, ByteOrColumnCount L) : category(S), length(L)
     { xassert(length > 0); }
   TCSpan(TCSpan const &obj)
     : DMEMB(category), DMEMB(length) {}
@@ -95,14 +102,17 @@ public:
     { empty(); endCategory=end; }
 
   // Add a new category run to those already present.
-  void append(TextCategory category, int length);
+  void append(TextCategory category, ByteOrColumnCount length);
 
   // Overwrite a subsequence of characters or columns with a given
   // category; 'length' can be 0 to mean infinite.
-  void overlay(int start, int length, TextCategory category);
+  void overlay(
+    ByteOrColumnIndex start,
+    ByteOrColumnCount length,
+    TextCategory category);
 
   // Retrieve the category for the given 0-indexed character.
-  TextCategory getCategoryAt(int index) const;
+  TextCategory getCategoryAt(ByteOrColumnIndex index) const;
 
   // debugging: render the runs as a string
   string asString() const;          // e.g. "[1,4][2,3][4"

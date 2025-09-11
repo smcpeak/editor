@@ -4,6 +4,7 @@
 #include "editor-widget.h"                       // this module
 
 // editor
+#include "column-difference.h"                   // ColumnDifference
 #include "completions-dialog.h"                  // CompletionsDialog
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
@@ -642,7 +643,8 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
     return;
   }
 
-  string lineText = m_editor->getWholeLineString(m_editor->cursor().m_line);
+  TextLCoord cursorLC = m_editor->cursor();
+  string lineText = m_editor->getWholeLineString(cursorLC.m_line);
 
   // We will look for the file whose name is under the cursor in any
   // directory where we already have an open file, starting with the
@@ -657,9 +659,13 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   SynchronousWaiter waiter(this);
   VFS_QuerySync querySync(vfsConnections(), waiter);
 
+  // Convert to model coordinates in order to get a byte index into
+  // `lineText`.
+  TextMCoord cursorMC = m_editor->toMCoord(cursorLC);
+
   std::optional<HostFile_OptLineByte> hostFileAndLine =
     getNearbyFilename(querySync, prefixes,
-                      lineText, m_editor->cursor().m_column);
+                      lineText, cursorMC.m_byteIndex);
 
   if (!hostFileAndLine) {
     // TODO: Show the list of candidate prefixes.
@@ -910,7 +916,7 @@ void EditorWidget::computeOffscreenMatchIndicators()
 
 
 void EditorWidget::commandMoveFirstVisibleAndCursor(
-  LineDifference deltaLine, int deltaCol)
+  LineDifference deltaLine, ColumnDifference deltaCol)
 {
   COMMAND_MU(EC_MoveFirstVisibleAndCursor, deltaLine, deltaCol);
 }
@@ -927,7 +933,7 @@ bool EditorWidget::recomputeLastVisible()
     // calculate viewport size
     m_editor->setVisibleSize(
       (h - m_topMargin) / this->lineHeight(),
-      (w - m_leftMargin) / m_fontWidth);
+      ColumnCount((w - m_leftMargin) / m_fontWidth));
 
     return true;
   }
@@ -1054,8 +1060,8 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   // ---- remaining setup ----
   // Visible area info.  The +1 here is to include the column after
   // the last fully visible column, which might be partially visible.
-  int const visibleCols = this->visColsPlusPartial();
-  int const firstCol = this->firstVisibleCol();
+  ColumnCount const visibleCols = this->visColsPlusPartial();
+  ColumnIndex const firstCol = this->firstVisibleCol();
   LineIndex const firstLine = this->firstVisibleLine();
 
   // I think it might be useful to support negative values for these
@@ -1067,7 +1073,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   xassert(lineHeight() > 0);
 
   // Buffer that will be used for each visible line of text.
-  ArrayStack<char> visibleText(visibleCols);
+  ArrayStack<char> visibleText(visibleCols.get());
 
   // Get region of selected text.
   TextLCoordRange selRange = m_editor->getSelectLayoutRange();
@@ -1080,7 +1086,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   {
     // ---- compute style segments ----
     // Number of columns from this line that are visible.
-    int visibleLineCols = 0;
+    ColumnCount visibleLineCols(0);
 
     // nominally the entire line is normal text
     modelCategories.clear(TC_NORMAL);
@@ -1088,9 +1094,9 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 
     // This is 1 if we will behave as though a newline character is
     // at the end of this line, 0 otherwise.
-    int newlineAdjust = 0;
+    ColumnDifference newlineAdjust(0);
     if (m_visibleWhitespace && line < m_editor->numLines().pred()) {
-      newlineAdjust = 1;
+      ++newlineAdjust;
     }
 
     // True if the cursor is on `line`.
@@ -1098,38 +1104,41 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       (line == m_editor->cursor().m_line);
 
     // Number of cells in the line, excluding newline.
-    int const lineLengthColumns = m_editor->lineLengthColumns(line);
+    ColumnCount const lineLengthColumns =
+      m_editor->lineLengthColumns(line);
 
     // How many columns of trailing whitespace does this line have?
-    int const lineTrailingWhitespaceCols =
+    ColumnCount const lineTrailingWhitespaceCols =
       cursorOnCurrentLine?
-        0 :     // Don't highlight trailing WS on the cursor line.
+        ColumnCount(0) :     // Don't highlight trailing WS on the cursor line.
         m_editor->countTrailingSpacesTabsColumns(line);
 
     // Column number within the visible window of the first trailing
     // whitespace character.  All characters in the line at or beyond
     // this value will be printed with a different background color.
-    int const startOfTrailingWhitespaceVisibleCol =
+    ColumnDifference const startOfTrailingWhitespaceVisibleCol =
       lineLengthColumns - lineTrailingWhitespaceCols - firstCol;
 
     // Number of columns with glyphs on this line, including possible
     // synthesized newline for 'visibleWhitespace'.  This value is
     // independent of the window size or scroll position.
-    int const lineGlyphColumns = lineLengthColumns + newlineAdjust;
+    ColumnCount const lineGlyphColumns =
+      lineLengthColumns + newlineAdjust;
 
     // fill with text from the file
     visibleText.clear();
     if (line < m_editor->numLines()) {
       if (firstCol < lineGlyphColumns) {
         // First get the text without any extra newline.
-        int const amt = std::min(lineLengthColumns - firstCol, visibleCols);
+        ColumnCount const visibleLengthColumns(lineLengthColumns - firstCol);
+        ColumnCount const amt = std::min(visibleLengthColumns, visibleCols);
         m_editor->getLineLayout(TextLCoord(line, firstCol), visibleText, amt);
         visibleLineCols = amt;
 
         // Now possibly add the newline.
         if (visibleLineCols < visibleCols && newlineAdjust != 0) {
           visibleText.push('\n');
-          visibleLineCols++;
+          ++visibleLineCols;
         }
       }
 
@@ -1151,9 +1160,9 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     // characters will only be used if there is style information out
     // beyond the actual line character data.
     {
-      int remainderLen = visibleCols - visibleLineCols;
-      memset(visibleText.ptrToPushedMultipleAlt(remainderLen),
-             ' ', remainderLen);
+      ColumnCount remainderLen(visibleCols - visibleLineCols);
+      memset(visibleText.ptrToPushedMultipleAlt(remainderLen.get()),
+             ' ', remainderLen.get());
     }
     xassert(visibleText.length() == visibleCols);
 
@@ -1168,18 +1177,20 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       else if (selRange.m_start.m_line < line && line == selRange.m_end.m_line) {
         // Left half of line is selected.
         if (selRange.m_end.m_column) {
-          layoutCategories.overlay(0, selRange.m_end.m_column, TC_SELECTION);
+          layoutCategories.overlay(0, selRange.m_end.m_column.get(), TC_SELECTION);
         }
       }
       else if (selRange.m_start.m_line == line && line < selRange.m_end.m_line) {
         // Right half of line is selected.
-        layoutCategories.overlay(selRange.m_start.m_column, 0 /*infinite*/, TC_SELECTION);
+        layoutCategories.overlay(selRange.m_start.m_column.get(), 0 /*infinite*/, TC_SELECTION);
       }
       else if (selRange.m_start.m_line == line && line == selRange.m_end.m_line) {
         // Middle part of line is selected.
         if (selRange.m_end.m_column != selRange.m_start.m_column) {
-          layoutCategories.overlay(selRange.m_start.m_column,
-            selRange.m_end.m_column - selRange.m_start.m_column, TC_SELECTION);
+          layoutCategories.overlay(
+            selRange.m_start.m_column.get(),
+            (selRange.m_end.m_column - selRange.m_start.m_column).get(),
+            TC_SELECTION);
         }
       }
       else {
@@ -1229,6 +1240,13 @@ void EditorWidget::paintFrame(QPainter &winPaint)
 }
 
 
+// In this code, we calculate layouts where each byte is one column.
+static char const &at(ArrayStack<char> const &arr, ColumnIndex index)
+{
+  return arr[index.get()];
+}
+
+
 void EditorWidget::paintOneLine(
   // Painting target.
   QPainter &paint,
@@ -1239,12 +1257,12 @@ void EditorWidget::paintOneLine(
   // blank space before the right edge of the widget, and we will paint
   // that space with one large rectangle rather than however many
   // character cells.
-  int visibleLineCols,
+  ColumnCount visibleLineCols,
 
   // Column number within the visible window of the first trailing
   // whitespace character.  All characters at or beyond this value will
   // be printed with a different background color.
-  int startOfTrailingWhitespaceVisibleCol,
+  ColumnDifference startOfTrailingWhitespaceVisibleCol,
 
   // The styles to apply to the entire line of text (independent of the
   // window).  This function has to ignore whatever is outside the
@@ -1276,8 +1294,8 @@ void EditorWidget::paintOneLine(
 
   int const lineWidth = width();
   int const fullLineHeight = getFullLineHeight();
-  int const visibleCols = visColsPlusPartial();
-  int const firstCol = firstVisibleCol();
+  ColumnCount const visibleCols = visColsPlusPartial();
+  ColumnIndex const firstCol = firstVisibleCol();
 
   // Clear the left margin to the normal background color.
   textCategoryAndStyle.setDrawStyleIfNewCategory(paint, TC_NORMAL);
@@ -1285,7 +1303,7 @@ void EditorWidget::paintOneLine(
 
   // Next category entry to use.
   LineCategoryIter category(layoutCategories);
-  category.advanceCharsOrCols(firstCol);
+  category.advanceCharsOrCols(firstCol.get());
 
   // ---- render text+style segments -----
   // right edge of what has not been painted, relative to
@@ -1293,7 +1311,7 @@ void EditorWidget::paintOneLine(
   int x = m_leftMargin;
 
   // Number of columns printed.
-  int printedCols = 0;
+  ColumnCount printedCols(0);
 
   // 'y' coordinate of the origin point of characters
   int baseline = getBaselineYCoordWithinLine();
@@ -1313,7 +1331,7 @@ void EditorWidget::paintOneLine(
       category.category);
 
     // compute how many characters to print in this segment
-    int len = category.length;
+    ColumnCount len(category.length);
     if (category.length == 0) {
       // actually means infinite length
       if (printedCols >= visibleLineCols) {
@@ -1328,9 +1346,9 @@ void EditorWidget::paintOneLine(
 
       // print only the remaining chars on the line, to improve
       // the chances we'll use the eraseRect() optimization above
-      len = visibleLineCols-printedCols;
+      len = ColumnCount(visibleLineCols-printedCols);
     }
-    len = std::min(len, visibleCols-printedCols);
+    len = std::min(len, ColumnCount(visibleCols-printedCols));
     xassert(len > 0);
 
     // The QtBDFFont package must be treated as if it draws
@@ -1340,10 +1358,11 @@ void EditorWidget::paintOneLine(
 
     // The number of columns to draw for this segment is the smaller of
     // (a) segment length and (b) the number of columns left to print.
-    int const colsToDraw = std::min(len, visibleLineCols-printedCols);
+    ColumnCount const colsToDraw =
+      std::min(len, ColumnCount(visibleLineCols-printedCols));
 
     // draw text
-    for (int i=0; i < colsToDraw; i++) {
+    for (ColumnIndex i(0); i < colsToDraw; ++i) {
       if (lineIter.has()) {
         if (lineIter.columnOffset() > firstCol+printedCols+i) {
           // This column is part of a multicolumn glyph.  Do not
@@ -1353,7 +1372,7 @@ void EditorWidget::paintOneLine(
         xassert(lineIter.columnOffset() == firstCol+printedCols+i);
         lineIter.advByte();
       }
-      else if (visibleText[printedCols+i] != '\n') {
+      else if (at(visibleText, i+printedCols) != '\n') {
         // The only thing we should need to print beyond what is in
         // the line iterator is a newline, so skip drawing here.
         continue;
@@ -1364,7 +1383,7 @@ void EditorWidget::paintOneLine(
       this->drawOneChar(paint,
                         textCategoryAndStyle.getFont(),
                         QPoint(x + m_fontWidth*i, baseline),
-                        visibleText[printedCols+i],
+                        at(visibleText, i+printedCols),
                         withinTrailingWhitespace);
 
     } // character loop (within segment)
@@ -1376,13 +1395,14 @@ void EditorWidget::paintOneLine(
     // Advance to next category segment.
     x += m_fontWidth * len;
     printedCols += len;
-    category.advanceCharsOrCols(len);
+    category.advanceCharsOrCols(len.get());
 
   } // segment loop
 }
 
 
-void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
+void EditorWidget::drawUnderline(
+  QPainter &paint, int x, ColumnCount numCols)
 {
   int const baseline = getBaselineYCoordWithinLine();
 
@@ -1395,7 +1415,7 @@ void EditorWidget::drawUnderline(QPainter &paint, int x, int numCols)
 }
 
 
-std::optional<int> EditorWidget::byteIndexToLayoutColOpt(
+std::optional<ColumnIndex> EditorWidget::byteIndexToLayoutColOpt(
   LineIndex line,
   std::optional<ByteIndex> byteIndex) const
 {
@@ -1426,7 +1446,7 @@ void EditorWidget::drawDiagnosticBoxes(
     return;
   }
 
-  int const firstCol = firstVisibleCol();
+  ColumnIndex const firstCol = firstVisibleCol();
 
   QPainterSaveRestore qpsr(paint);
 
@@ -1435,9 +1455,9 @@ void EditorWidget::drawDiagnosticBoxes(
   paint.setBrush(Qt::NoBrush);
 
   for (auto const &entry : entries) {
-    std::optional<int> startCol =
+    std::optional<ColumnIndex> startCol =
       byteIndexToLayoutColOpt(line, entry.m_startByteIndex);
-    std::optional<int> endCol =
+    std::optional<ColumnIndex> endCol =
       byteIndexToLayoutColOpt(line, entry.m_endByteIndex);
 
     int bottomY = m_fontHeight - 1;
@@ -1481,7 +1501,7 @@ void EditorWidget::drawCursorOnLine(
   QPainter &paint,
   LineCategories const &layoutCategories,
   ArrayStack<char> const &visibleText,
-  int lineGlyphColumns)
+  ColumnCount lineGlyphColumns)
 {
   // just testing the mechanism that catches exceptions
   // raised while drawing
@@ -1491,12 +1511,13 @@ void EditorWidget::drawCursorOnLine(
 
   QPainterSaveRestore qpsr(paint);
 
-  int const visibleCols = visColsPlusPartial();
+  ColumnCount const visibleCols = visColsPlusPartial();
+
+  ColumnIndex const firstCol = firstVisibleCol();
+  ColumnIndex const cursorCol = m_editor->cursor().m_column;
 
   // 0-based cursor column relative to what is visible
-  int const firstCol = firstVisibleCol();
-  int const cursorCol = m_editor->cursor().m_column;
-  int const visibleCursorCol = cursorCol - firstCol;
+  ColumnDifference const visibleCursorCol = cursorCol - firstCol;
 
   // 'x' coordinate of the leftmost column of the character cell
   // where the cursor is, i.e., the character that would be deleted
@@ -1528,13 +1549,17 @@ void EditorWidget::drawCursorOnLine(
     StyleDB const *styleDB = StyleDB::instance();
     int const baseline = getBaselineYCoordWithinLine();
 
+    // The test above ensures this is non-negative.
+    ColumnIndex visibleCursorColIndex(visibleCursorCol);
+
     // The character shown inside the box should use the same
     // font as if it were not inside the cursor box, to minimize
     // the visual disruption caused by the cursor's presence.
     //
     // Unfortunately, that leads to some code duplication with the
     // main painting code.
-    TextCategory cursorCategory = layoutCategories.getCategoryAt(cursorCol);
+    TextCategory cursorCategory =
+      layoutCategories.getCategoryAt(cursorCol.get());
     FontVariant cursorFV = styleDB->getStyle(cursorCategory).variant;
     bool underlineCursor = false;
     if (cursorFV == FV_UNDERLINE) {
@@ -1549,21 +1574,21 @@ void EditorWidget::drawCursorOnLine(
     if (cursorCol < lineGlyphColumns) {
       // Drawing the block cursor overwrote the glyph, so we
       // have to draw it again.
-      if (visibleText[visibleCursorCol] == ' ' &&
+      if (at(visibleText, visibleCursorColIndex) == ' ' &&
           !m_editor->cursorOnModelCoord()) {
         // This is a layout placeholder space, not really present in
         // the document, so don't draw it.
       }
       else {
         this->drawOneChar(paint, cursorFont, QPoint(x, baseline),
-                          visibleText[visibleCursorCol],
+                          at(visibleText, visibleCursorColIndex),
                           false /*withinTrailingWhitespace*/);
       }
     }
 
     if (underlineCursor) {
       paint.setPen(cursorFont->getFgColor());
-      drawUnderline(paint, x, 1 /*numCols*/);
+      drawUnderline(paint, x, ColumnCount(1));
     }
   }
 }
@@ -1576,7 +1601,7 @@ void EditorWidget::drawSoftMarginIndicator(QPainter &paint)
 
     paint.setPen(m_softMarginColor);
 
-    int firstCol = firstVisibleCol();
+    ColumnIndex firstCol = firstVisibleCol();
     int x = m_leftMargin + m_fontWidth * (m_softMarginColumn - firstCol);
     paint.drawLine(x, 0, x, m_fontHeight-1);
   }
@@ -1742,14 +1767,17 @@ void EditorWidget::addSearchMatchesToLineCategories(
           TextMCoord(line, m.m_startByte),
           TextMCoord(line, m.m_startByte + m.m_lengthBytes));
         TextLCoordRange lrange(m_editor->toLCoordRange(mrange));
-        int columns = lrange.m_end.m_column - lrange.m_start.m_column;
+        ColumnCount columns(lrange.m_end.m_column - lrange.m_start.m_column);
 
         // Double-check that the match is not zero columns.
         // Currently this cannot happen (if 'm_lengthBytes' is not
         // zero), but it will become possible if I lay out
         // zero-width characters properly.
         if (columns) {
-          categories.overlay(lrange.m_start.m_column, columns, TC_HITS);
+          categories.overlay(
+            lrange.m_start.m_column.get(),       // start
+            columns.get(),                       // length
+            TC_HITS);                            // category
         }
       }
       else {
@@ -1830,27 +1858,33 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
       }
 
       case Qt::Key_W:
-        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, LineDifference(-1), 0);
+        COMMAND_MU(EC_MoveFirstVisibleConfineCursor,
+          LineDifference(-1), ColumnDifference(0));
         break;
 
       case Qt::Key_Z:
-        COMMAND_MU(EC_MoveFirstVisibleConfineCursor, LineDifference(+1), 0);
+        COMMAND_MU(EC_MoveFirstVisibleConfineCursor,
+          LineDifference(+1), ColumnDifference(0));
         break;
 
       case Qt::Key_Up:
-        commandMoveFirstVisibleAndCursor(LineDifference(-1), 0);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(-1), ColumnDifference(0));
         break;
 
       case Qt::Key_Down:
-        commandMoveFirstVisibleAndCursor(LineDifference(+1), 0);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(+1), ColumnDifference(0));
         break;
 
       case Qt::Key_Left:
-        commandMoveFirstVisibleAndCursor(LineDifference(0), -1);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(0), ColumnDifference(-1));
         break;
 
       case Qt::Key_Right:
-        commandMoveFirstVisibleAndCursor(LineDifference(0), +1);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(0), ColumnDifference(+1));
         break;
 
       case Qt::Key_B:      commandCursorLeft(false); break;
@@ -1967,19 +2001,23 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
   else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
     switch (k->key()) {
       case Qt::Key_Up:
-        commandMoveFirstVisibleAndCursor(LineDifference(-CTRL_SHIFT_DISTANCE), 0);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(-CTRL_SHIFT_DISTANCE), ColumnDifference(0));
         break;
 
       case Qt::Key_Down:
-        commandMoveFirstVisibleAndCursor(LineDifference(+CTRL_SHIFT_DISTANCE), 0);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(+CTRL_SHIFT_DISTANCE), ColumnDifference(0));
         break;
 
       case Qt::Key_Left:
-        commandMoveFirstVisibleAndCursor(LineDifference(0), -CTRL_SHIFT_DISTANCE);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(0), ColumnDifference(-CTRL_SHIFT_DISTANCE));
         break;
 
       case Qt::Key_Right:
-        commandMoveFirstVisibleAndCursor(LineDifference(0), +CTRL_SHIFT_DISTANCE);
+        commandMoveFirstVisibleAndCursor(
+          LineDifference(0), ColumnDifference(+CTRL_SHIFT_DISTANCE));
         break;
 
       case Qt::Key_PageUp:
@@ -2155,7 +2193,7 @@ void EditorWidget::scrollToCol(int col)
   INITIATING_DOCUMENT_CHANGE();
   if (!m_ignoreScrollSignals) {
     xassert(col >= 0);
-    m_editor->setFirstVisibleCol(col);
+    m_editor->setFirstVisibleCol(ColumnIndex(col));
     redraw();
   }
 }
@@ -2171,7 +2209,7 @@ void EditorWidget::setCursorToClickLoc(QMouseEvent *m)
   inc(y, -m_topMargin);
 
   LineIndex newLine( y/lineHeight() + this->firstVisibleLine().get() );
-  int newCol = x/m_fontWidth + this->firstVisibleCol();
+  ColumnIndex newCol( x/m_fontWidth + this->firstVisibleCol().get() );
 
   cursorTo(TextLCoord(newLine, newCol));
 
@@ -2187,7 +2225,7 @@ std::string EditorWidget::cursorPositionUIString() const
   // though the TextDocument interface uses 0:0.
   return stringb(
     cursorLine().toLineNumber() << ':' <<
-    (cursorCol()+1));
+    cursorCol().toColumnNumber());
 }
 
 
@@ -2390,12 +2428,14 @@ bool EditorWidget::toggleLSPUpdateContinuously()
 
 void EditorWidget::commandCursorLeft(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, LineDifference(0), -1, shift);
+  COMMAND_MU(EC_MoveCursorByCell,
+    LineDifference(0), ColumnDifference(-1), shift);
 }
 
 void EditorWidget::commandCursorRight(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, LineDifference(0), +1, shift);
+  COMMAND_MU(EC_MoveCursorByCell,
+    LineDifference(0), ColumnDifference(+1), shift);
 }
 
 void EditorWidget::commandCursorHome(bool shift)
@@ -2412,12 +2452,14 @@ void EditorWidget::commandCursorEnd(bool shift)
 
 void EditorWidget::commandCursorUp(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, LineDifference(-1), 0, shift);
+  COMMAND_MU(EC_MoveCursorByCell,
+    LineDifference(-1), ColumnDifference(0), shift);
 }
 
 void EditorWidget::commandCursorDown(bool shift)
 {
-  COMMAND_MU(EC_MoveCursorByCell, LineDifference(+1), 0, shift);
+  COMMAND_MU(EC_MoveCursorByCell,
+    LineDifference(+1), ColumnDifference(0), shift);
 }
 
 void EditorWidget::commandCursorPageUp(bool shift)
@@ -2440,7 +2482,7 @@ void EditorWidget::commandCursorToEndOfNextLine(bool shift)
 void EditorWidget::initCursorForProcessOutput()
 {
   // Start by making the start of the document visible.
-  m_editor->setFirstVisible(TextLCoord(LineIndex(0),0));
+  m_editor->setFirstVisible(TextLCoord(LineIndex(0), ColumnIndex(0)));
 
   // Jump to the end of the document.  Even for a new process document,
   // there are a few lines of status information at the top.
@@ -2458,7 +2500,7 @@ std::string EditorWidget::markPositionUIString() const
     TextLCoord m = mark();
     return stringb(
       m.m_line.toLineNumber() << ':' <<
-      (m.m_column+1));
+      m.m_column.toColumnNumber());
   }
   else {
     return "none";
@@ -2569,9 +2611,21 @@ void EditorWidget::doCloseSARPanel()
 }
 
 
-void EditorWidget::commandBlockIndent(int amt)
+void EditorWidget::commandBlockIndent(ColumnDifference amt)
 {
   EDIT_COMMAND_MU(EC_BlockIndent, amt);
+}
+
+
+// TODO: Make the indentation amount configurable.
+void EditorWidget::commandEditRigidIndent()
+{
+  this->commandBlockIndent(ColumnDifference(+2));
+}
+
+void EditorWidget::commandEditRigidUnindent()
+{
+  this->commandBlockIndent(ColumnDifference(-2));
 }
 
 
@@ -3376,9 +3430,9 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, LineIndex line
   line.clampIncrease(LineDifference(-1));
 
   if (line <= m_editor->cursor().m_line) {
-    m_editor->moveCursorBy(LineDifference(+1), 0);
+    m_editor->moveCursorBy(LineDifference(+1), ColumnDifference(0));
     if (keepCursorStationary) {
-      m_editor->moveFirstVisibleBy(LineDifference(+1), 0);
+      m_editor->moveFirstVisibleBy(LineDifference(+1), ColumnDifference(0));
     }
     else {
       m_editor->scrollToCursor();
@@ -3386,7 +3440,7 @@ void EditorWidget::observeInsertLine(TextDocumentCore const &buf, LineIndex line
   }
 
   if (m_editor->markActive() && line <= m_editor->mark().m_line) {
-    m_editor->moveMarkBy(LineDifference(+1), 0);
+    m_editor->moveMarkBy(LineDifference(+1), ColumnDifference(0));
   }
 
   redrawAfterContentChange();
@@ -3404,12 +3458,12 @@ void EditorWidget::observeDeleteLine(TextDocumentCore const &buf, LineIndex line
   INITIATING_DOCUMENT_CHANGE();
 
   if (line < m_editor->cursor().m_line) {
-    m_editor->moveCursorBy(LineDifference(-1), 0);
-    m_editor->moveFirstVisibleBy(LineDifference(-1), 0);
+    m_editor->moveCursorBy(LineDifference(-1), ColumnDifference(0));
+    m_editor->moveFirstVisibleBy(LineDifference(-1), ColumnDifference(0));
   }
 
   if (m_editor->markActive() && line < m_editor->mark().m_line) {
-    m_editor->moveMarkBy(LineDifference(-1), 0);
+    m_editor->moveMarkBy(LineDifference(-1), ColumnDifference(0));
   }
 
   redrawAfterContentChange();
@@ -3614,17 +3668,19 @@ std::optional<std::string> EditorWidget::innerCommand(
     ASTNEXTC(EC_MoveCursorByPage, ec) {
       m_editor->turnSelection(ec->m_select);
       m_editor->moveFirstVisibleAndCursor(
-        LineDifference(ec->m_sign * this->visLines()), 0);
+        LineDifference(ec->m_sign * this->visLines()),
+        ColumnDifference(0));
       redraw();
     }
 
     ASTNEXTC(EC_MoveCursorToLineExtremum, ec) {
       m_editor->turnSelection(ec->m_select);
       if (ec->m_start) {
-        m_editor->setCursorColumn(0);
+        m_editor->setCursorColumn(ColumnIndex(0));
       }
       else {
-        m_editor->setCursorColumn(m_editor->cursorLineLengthColumns());
+        m_editor->setCursorColumn(
+          m_editor->cursorLineLengthAsColumnIndex());
       }
       scrollToCursor();
     }

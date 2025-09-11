@@ -4,6 +4,7 @@
 #ifndef EDITOR_JUSTIFY_H
 #define EDITOR_JUSTIFY_H
 
+#include "column-count-fwd.h"          // ColumnCount [n]
 #include "line-index-fwd.h"            // LineIndex [n]
 #include "td-editor-fwd.h"             // TextDocumentEditor [n]
 
@@ -24,10 +25,17 @@
 // However, when we have to synthesize space, we insert two
 // spaces for what appear to be sentence boundaries, reflecting
 // my own typographical preferences.
+//
+// TODO: This should accept another parameter that specifies how to lay
+// out tab characters.  It currently just assumes tabs are 8 columns,
+// but that is supposed to be configurable elsewhere in the editor.
+//
+// Requires: desiredWidth > 0
+//
 void justifyTextLines(
   stdfwd::vector<std::string> &justifiedContent,
   stdfwd::vector<std::string> const &originalContent,
-  int desiredWidth);
+  ColumnCount desiredWidth);
 
 
 // Heuristically identify the textual framing used for the text at and
@@ -40,8 +48,13 @@ void justifyTextLines(
 // Within the framing, tab characters are treated as representing 8
 // columns of width.  Elsewhere they are treated as just 1 (which is
 // arguably a bug).
-bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLine,
-                     int desiredWidth);
+//
+// Requires: desiredWidth > 0
+//
+bool justifyNearLine(
+  TextDocumentEditor &tde,
+  LineIndex originLine,
+  ColumnCount desiredWidth);
 
 
 #endif // EDITOR_JUSTIFY_H

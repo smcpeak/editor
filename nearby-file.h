@@ -5,6 +5,7 @@
 #define EDITOR_NEARBY_FILE_H
 
 // editor
+#include "byte-index-fwd.h"                      // ByteIndex [n]
 #include "host-and-resource-name-fwd.h"          // HostAndResourceName [n]
 #include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [n]
 
@@ -57,7 +58,7 @@ std::optional<HostFile_OptLineByte> getNearbyFilename(
   IHFExists &ihfExists,
   stdfwd::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
-  int charOffset);
+  ByteIndex charOffset);
 
 
 #endif // EDITOR_NEARBY_FILE_H

@@ -43,7 +43,7 @@ void testOneJustifyTextLines(
   }
 
   std::vector<std::string> actual;
-  justifyTextLines(actual, original, desiredWidth);
+  justifyTextLines(actual, original, ColumnCount(desiredWidth));
 
   if (expect != actual) {
     cout << "desiredWidth: " << desiredWidth << endl;
@@ -55,7 +55,7 @@ void testOneJustifyTextLines(
 
   // Confirm that indentation is idempotent.
   actual.clear();
-  justifyTextLines(actual, expect, desiredWidth);
+  justifyTextLines(actual, expect, ColumnCount(desiredWidth));
 
   if (expect != actual) {
     cout << "desiredWidth: " << desiredWidth << endl;
@@ -102,8 +102,6 @@ void testJustifyTextLines()
         "h",
         "i",
       };
-      TEST_MULTI(-1);
-      TEST_MULTI(0);
       TEST_MULTI(1);
       TEST_MULTI(2);
     }
@@ -255,7 +253,7 @@ void testJustifyTextLines()
 
 std::string docToString(TextDocumentEditor const &d)
 {
-  return d.getTextForLRangeString(TextLCoord(LineIndex(0),0), d.endLCoord());
+  return d.getTextForLRangeString(d.documentLRange());
 }
 
 
@@ -298,7 +296,8 @@ void testOneJustifyNearLine(
     actual.insertNulTermText("\n");
   }
 
-  justifyNearLine(actual, LineIndex(originLine), desiredWidth);
+  justifyNearLine(
+    actual, LineIndex(originLine), ColumnCount(desiredWidth));
 
   if (!equalDocuments(expect, actual)) {
     cout << "originLine: " << originLine << endl;
@@ -541,8 +540,8 @@ void test_justifyNoOp()
 
   auto originalVersion = actual.writableDoc().getVersionNumber();
 
-  bool wrappable =
-    justifyNearLine(actual, LineIndex(0), 4 /*desiredWidth*/);
+  bool wrappable = justifyNearLine(
+    actual, LineIndex(0), ColumnCount(4) /*desiredWidth*/);
   xassert(wrappable);
 
   // Justification should not only have left the contents as they were,

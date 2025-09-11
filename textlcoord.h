@@ -4,6 +4,7 @@
 #ifndef TEXTLCOORD_H
 #define TEXTLCOORD_H
 
+#include "column-index.h"              // ColumnIndex
 #include "line-index.h"                // LineIndex
 
 #include "smbase/sm-macros.h"          // DMEMB
@@ -44,12 +45,12 @@ public:      // data
   // model and layout line numbers are always the same.
   LineIndex m_line;
 
-  // 0-based column number.  Should not be negative.
-  int m_column;
+  // 0-based column number.
+  ColumnIndex m_column;
 
 public:      // funcs
   TextLCoord() : m_line(0), m_column(0) {}
-  TextLCoord(LineIndex line_, int column_) : m_line(line_), m_column(column_) {}
+  TextLCoord(LineIndex line_, ColumnIndex column_) : m_line(line_), m_column(column_) {}
   TextLCoord(TextLCoord const &obj) : DMEMB(m_line), DMEMB(m_column) {}
 
   TextLCoord& operator= (TextLCoord const &obj);
@@ -61,12 +62,7 @@ public:      // funcs
 
   RELATIONAL_OPERATORS(TextLCoord);
 
-  bool isZero() const { return m_line.isZero() && m_column==0; }
-
-  // Although not disallowed for columns, we provide a convenient way to
-  // test that coordinates are non-negative in case clients want to
-  // enforce that in certain places.
-  bool nonNegative() const { return m_column>=0; }
+  bool isZero() const { return m_line.isZero() && m_column.isZero(); }
 
   // Insert as "<line>:<col>".
   void insert(std::ostream &os) const;
@@ -107,7 +103,6 @@ public:      // funcs
   NOTEQUAL_OPERATOR(TextLCoordRange);
 
   bool isZero() const { return m_start.isZero() && m_end.isZero(); }
-  bool nonNegative() const { return m_start.nonNegative() && m_end.nonNegative(); }
 
   // True if both endpoints are on the same line.
   bool withinOneLine() const { return m_start.m_line == m_end.m_line; }

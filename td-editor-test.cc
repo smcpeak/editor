@@ -3,6 +3,7 @@
 
 #include "unit-tests.h"                // decl for my entry point
 
+#include "column-difference.h"         // ColumnDifference
 #include "td-editor.h"                 // module to test
 
 // smbase
@@ -37,7 +38,10 @@ void checkCoord(TextLCoord actual, TextLCoord expect, char const *label)
 
 void expectCursor(TextDocumentEditor const &tde, int line, int col)
 {
-  checkCoord(tde.cursor(), TextLCoord(LineIndex(line), col), "cursor");
+  checkCoord(
+    tde.cursor(),
+    TextLCoord(LineIndex(line), ColumnIndex(col)),
+    "cursor");
 }
 
 void expect(TextDocumentEditor const &tde, int line, int col, char const *text)
@@ -121,7 +125,7 @@ void testUndoRedo()
                     "This is the second line.\n"
                     "now on thir");
 
-  tde.deleteLRColumns(true /*left*/, 6);
+  tde.deleteLRColumns(true /*left*/, ColumnCount(6));
   expect(tde, 2,5,  "abce\n"
                     "This is the second line.\n"
                     "now o");
@@ -183,7 +187,8 @@ void testUndoOfPaste()
 
   // Select line with "two".
   tde.turnOnSelection();
-  tde.moveMarkBy(LineDifference(+1) /*detaLine*/, 0 /*deltaCol*/);
+  tde.moveMarkBy(LineDifference(+1) /*detaLine*/,
+                 ColumnDifference(0) /*deltaCol*/);
 
   // Replace it the way `clipboardPaste` would.
   tde.insertString("TWO\n");
@@ -223,8 +228,9 @@ void testUndoOfBlockIndent()
              "four\n");
   tde.moveCursor(false /*relLine*/, 1, false /*relCol*/, 0);
   tde.turnOnSelection();
-  tde.moveMarkBy(LineDifference(+2) /*deltaLine*/, 0 /*deltaCol*/);
-  tde.blockIndent(+2);
+  tde.moveMarkBy(LineDifference(+2) /*deltaLine*/,
+                 ColumnDifference(0) /*deltaCol*/);
+  tde.blockIndent(ColumnDifference(+2));
   expect(tde, 1,0,
     "one\n"
     "  two\n"
@@ -253,8 +259,8 @@ void testGetRange(
 
   string actual =
     tde.getTextForLRangeString(
-      TextLCoord(LineIndex(line1), col1),
-      TextLCoord(LineIndex(line2), col2));
+      TextLCoord(LineIndex(line1), ColumnIndex(col1)),
+      TextLCoord(LineIndex(line2), ColumnIndex(col2)));
 
   if (actual != expect) {
     tde.debugPrint();
@@ -270,7 +276,7 @@ void testGetRange(
 // Make `TextLCoord` using "I"nteger line coordinate.
 static TextLCoord TextILCoord(int line, int col)
 {
-  return TextLCoord(LineIndex(line), col);
+  return TextLCoord(LineIndex(line), ColumnIndex(col));
 }
 
 
@@ -408,7 +414,7 @@ void expectBlockIndent(
 {
   tde.setCursor(TextILCoord(cursorLine, cursorCol));
   tde.setMark(TextILCoord(markLine, markCol));
-  tde.blockIndent(amt);
+  tde.blockIndent(ColumnDifference(amt));
   expectM(tde, cursorLine, cursorCol, markLine, markCol, expectText);
 }
 
@@ -433,7 +439,7 @@ void testBlockIndent()
     "two\n"
     "three\n");
 
-  tde.blockIndent(+2);
+  tde.blockIndent(ColumnDifference(+2));
   expectM(tde, 3,0, 1,0,
     "one\n"
     "  two\n"
@@ -485,7 +491,7 @@ void testBlockIndent()
     "      two\n"
     "    three\n");
 
-  tde.blockIndent(+2);     // no-op, mark not active
+  tde.blockIndent(ColumnDifference(+2));     // no-op, mark not active
   expectNM(tde, 0,1,
     "  one\n"
     "      two\n"
@@ -653,7 +659,7 @@ void expectFV(TextDocumentEditor const &tde,
 void testScrollToCursor()
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(5, 10);
+  tde.setVisibleSize(5, ColumnCount(10));
 
   xassert(tde.cursorAtEnd() == true);
 
@@ -727,27 +733,27 @@ void testScrollToCursor()
   expectFV(tde, 3,0, 3,0, 5,10);
 
   // Test 'moveFirstVisibleBy'.
-  tde.moveFirstVisibleBy(LineDifference(0), +1);
+  tde.moveFirstVisibleBy(LineDifference(0), ColumnDifference(+1));
   expectFV(tde, 3,0, 3,1, 5,10);
-  tde.moveFirstVisibleBy(LineDifference(+1), 0);
+  tde.moveFirstVisibleBy(LineDifference(+1), ColumnDifference(0));
   expectFV(tde, 3,0, 4,1, 5,10);
-  tde.moveFirstVisibleBy(LineDifference(-3), -3);
+  tde.moveFirstVisibleBy(LineDifference(-3), ColumnDifference(-3));
   expectFV(tde, 3,0, 1,0, 5,10);
-  tde.moveFirstVisibleBy(LineDifference(-3), -3);
+  tde.moveFirstVisibleBy(LineDifference(-3), ColumnDifference(-3));
   expectFV(tde, 3,0, 0,0, 5,10);
 
   // Test 'moveFirstVisibleAndCursor'.
   tde.setFirstVisible(TextILCoord(10,10));
   expectFV(tde, 3,0, 10,10, 5,10);
-  tde.moveFirstVisibleAndCursor(LineDifference(0), +1);    // scroll to cursor, then shift right
+  tde.moveFirstVisibleAndCursor(LineDifference(0), ColumnDifference(+1));    // scroll to cursor, then shift right
   expectFV(tde, 3,1, 3,1, 5,10);
   tde.setCursor(TextILCoord(4,2));           // one in from left/top
   expectFV(tde, 4,2, 3,1, 5,10);
-  tde.moveFirstVisibleAndCursor(LineDifference(+2), +1);
+  tde.moveFirstVisibleAndCursor(LineDifference(+2), ColumnDifference(+1));
   expectFV(tde, 6,3, 5,2, 5,10);
-  tde.moveFirstVisibleAndCursor(LineDifference(0), -10);   // hit left edge
+  tde.moveFirstVisibleAndCursor(LineDifference(0), ColumnDifference(-10));   // hit left edge
   expectFV(tde, 6,1, 5,0, 5,10);
-  tde.moveFirstVisibleAndCursor(LineDifference(-10), 0);   // hit top edge
+  tde.moveFirstVisibleAndCursor(LineDifference(-10), ColumnDifference(0));   // hit top edge
   expectFV(tde, 1,1, 0,0, 5,10);
 
   // Test 'centerVisibleOnCursorLine'.
@@ -782,7 +788,7 @@ void testOne_stcibo(
   int expectFVLine, int expectFVCol)
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(visLines, visColumns);
+  tde.setVisibleSize(visLines, ColumnCount(visColumns));
   tde.setFirstVisible(TextILCoord(fvLine, fvCol));
   tde.setCursor(TextILCoord(cursorLine, cursorCol));
 
@@ -947,7 +953,7 @@ void testOneGAI(TextDocumentEditor &tde, int line,
 
   if (line >= 0) {
     actualIndCols = tde.getAboveIndentationColumns(
-      LineIndex(line), actualIndText /*OUT*/);
+      LineIndex(line), actualIndText /*OUT*/).get();
   }
   else {
     // The old implementation allowed `line` to be negative, and
@@ -1004,11 +1010,11 @@ void testMoveCursor()
   expectCursor(tde, 3,0);
 
   // Test 'moveCursorBy'.
-  tde.moveCursorBy(LineDifference(-1), +1);
+  tde.moveCursorBy(LineDifference(-1), ColumnDifference(+1));
   expectCursor(tde, 2,1);
 
   // Test 'setCursorColumn'.
-  tde.setCursorColumn(4);
+  tde.setCursorColumn(ColumnIndex(4));
   expectCursor(tde, 2,4);
 
   // Test 'moveToPrevLineEnd'.
@@ -1074,14 +1080,14 @@ void testMoveCursor()
   expectCursor(tde, 0,0);
 
   // Test 'moveCursorToTop/Bottom' with a tiny window.
-  tde.setVisibleSize(2,2);
+  tde.setVisibleSize(2, ColumnCount(2));
   tde.moveCursorToBottom();
   expectFV(tde, 3,0, 2,0, 2,2);
   tde.moveCursorToTop();
   expectFV(tde, 0,0, 0,0, 2,2);
 
   // Test 'moveCursorBy' attempting to move to negative values.
-  tde.moveCursorBy(LineDifference(-1), -1);
+  tde.moveCursorBy(LineDifference(-1), ColumnDifference(-1));
   expectCursor(tde, 0,0);
 }
 
@@ -1171,7 +1177,7 @@ void testBackspaceFunction()
 void testDeleteKeyFunction()
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(5, 10);
+  tde.setVisibleSize(5, ColumnCount(10));
   tde.insertNulTermText(
     "one\n"
     "two  \n"
@@ -1340,7 +1346,7 @@ void testInsertNewlineAutoIndent()
 void testInsertNewlineAutoIndent2()
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(3, 3);
+  tde.setVisibleSize(3, ColumnCount(3));
   tde.insertNulTermText(
     "  one\n"
     "   two  \n"
@@ -1503,7 +1509,7 @@ void testInsertNewlineAutoIndent3()
 void testInsertNewlineAutoIndent4()
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(5, 10);
+  tde.setVisibleSize(5, ColumnCount(10));
   tde.insertNulTermText(
     "  a\n"
     "  b\n");
@@ -1644,7 +1650,9 @@ void testSetVisibleSize()
   TextDocumentAndEditor tde;
 
   // Try with negative sizes.
-  tde.setVisibleSize(-1, -1);
+  //
+  // Well, zero for `ColumnCount` since it asserts non-negative.
+  tde.setVisibleSize(-1, ColumnCount(0));
   checkCoord(tde.firstVisible(), TextILCoord(0,0), "firstVisible");
   checkCoord(tde.lastVisible(), TextILCoord(0,0), "lastVisible");
 
@@ -1657,7 +1665,7 @@ void testSetVisibleSize()
   checkCoord(tde.lastVisible(), TextILCoord(2,6), "lastVisible");
 
   // Cursor movement does not automatically scroll.
-  tde.moveCursorBy(LineDifference(-1),0);
+  tde.moveCursorBy(LineDifference(-1), ColumnDifference(0));
   checkCoord(tde.firstVisible(), TextILCoord(2,6), "firstVisible");
   tde.scrollToCursor();
   checkCoord(tde.firstVisible(), TextILCoord(1,6), "firstVisible");
@@ -1668,7 +1676,7 @@ void testSetVisibleSize()
 void testCursorRestorer()
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(5, 10);
+  tde.setVisibleSize(5, ColumnCount(10));
   tde.insertNulTermText(
     "one\n"
     "two\n"
@@ -1713,16 +1721,16 @@ void testSetMark()
   tde.setMark(TextILCoord(1,1));
   expectMark(tde, 1,1);
 
-  tde.moveMarkBy(LineDifference(+1),+1);
+  tde.moveMarkBy(LineDifference(+1), ColumnDifference(+1));
   expectMark(tde, 2,2);
 
-  tde.moveMarkBy(LineDifference(+3),+4);
+  tde.moveMarkBy(LineDifference(+3), ColumnDifference(+4));
   expectMark(tde, 5,6);
 
-  tde.moveMarkBy(LineDifference(-10),+1);
+  tde.moveMarkBy(LineDifference(-10), ColumnDifference(+1));
   expectMark(tde, 0,7);
 
-  tde.moveMarkBy(LineDifference(0),-10);
+  tde.moveMarkBy(LineDifference(0), ColumnDifference(-10));
   expectMark(tde, 0,0);
 
   // Test 'turnOnSelection' with mark already active.
@@ -1755,7 +1763,7 @@ void testSetMark()
 void testConfineCursorToVisible()
 {
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(3,3);
+  tde.setVisibleSize(3, ColumnCount(3));
 
   // Already visible.
   tde.confineCursorToVisible();
@@ -1801,7 +1809,7 @@ void testJustifyNearCursor()
     "eleven twelve\n");
 
   // Cursor not on anything, no-op.
-  tde.justifyNearCursor(10);
+  tde.justifyNearCursor(ColumnCount(10));
   expect(tde, 4,0,
     "one two three four five six seven\n"
     "\n"
@@ -1810,7 +1818,7 @@ void testJustifyNearCursor()
 
   // Cursor on first paragraph.
   tde.setCursor(TextILCoord(0,5));
-  tde.justifyNearCursor(10);
+  tde.justifyNearCursor(ColumnCount(10));
   expect(tde, 4,0,
     "one two\n"
     "three four\n"
@@ -1822,7 +1830,7 @@ void testJustifyNearCursor()
 
   // Cursor on second paragraph.
   tde.setCursor(TextILCoord(6,0));
-  tde.justifyNearCursor(10);
+  tde.justifyNearCursor(ColumnCount(10));
   expect(tde, 8,0,
     "one two\n"
     "three four\n"
@@ -1997,7 +2005,7 @@ void expectCountSpace(TextDocumentEditor &tde,
   int leading = tde.countLeadingSpacesTabs(LineIndex(line)).get();
   EXPECT_EQ(leading, expectLeading);
 
-  int trailing = tde.countTrailingSpacesTabsColumns(LineIndex(line));
+  int trailing = tde.countTrailingSpacesTabsColumns(LineIndex(line)).get();
   EXPECT_EQ(trailing, expectTrailing);
 }
 
@@ -2117,7 +2125,7 @@ void innerExpectLayoutWindow(TextDocumentEditor &tde,
   std::ostringstream sb;
   for (int line = fvLine; line <= lvLine; line++) {
     text.clear();
-    tde.getLineLayout(TextILCoord(line, fvCol), text, width);
+    tde.getLineLayout(TextILCoord(line, fvCol), text, ColumnCount(width));
     sb << string(text.getArray(), width);
   }
   string actual = sb.str();
@@ -2133,8 +2141,8 @@ void expectLayoutWindow(TextDocumentEditor &tde,
   innerExpectLayoutWindow(tde, fvLine, fvCol, lvLine, lvCol, preExpect);
 
   // Probe all of the layout coordinates in the window.
-  for (LineIndex line(fvLine); line <= LineDifference(lvLine); ++line) {
-    for (int col = fvCol; col <= fvCol; ++col) {
+  for (LineIndex line(fvLine); line <= lvLine; ++line) {
+    for (ColumnIndex col(fvCol); col <= fvCol; ++col) {
       TextLCoord lc(line, col);
       TextMCoord mc(tde.toMCoord(lc));
       xassert(lc.m_line == mc.m_line);
@@ -2190,7 +2198,7 @@ void expectLCoord(TextDocumentEditor &tde,
   int row, int col)
 {
   TextMCoord mc{LineIndex(line), ByteIndex(byteIndex)};
-  TextLCoord expect(LineIndex(row), col);
+  TextLCoord expect{LineIndex(row), ColumnIndex(col)};
   TextLCoord actual = tde.toLCoord(mc);
   EXPECT_EQ(actual, expect);
 
@@ -2210,7 +2218,7 @@ void expectMCoord(TextDocumentEditor &tde,
 
   TEST_CASE_EXPRS("expectMCoord", row, col);
 
-  TextLCoord lc(LineIndex(row), col);
+  TextLCoord lc{LineIndex(row), ColumnIndex(col)};
   TextMCoord expect{LineIndex(line), ByteIndex(byteIndex)};
   TextMCoord actual = tde.toMCoord(lc);
   EXPECT_EQ(actual, expect);
@@ -2278,12 +2286,12 @@ void expectVisibleWindow(TextDocumentEditor &tde,
   int cursorLine, int cursorCol,
   string const &preExpect)
 {
-  TextLCoord expectCursor(LineIndex(cursorLine), cursorCol);
+  TextLCoord expectCursor{LineIndex(cursorLine), ColumnIndex(cursorCol)};
   EXPECT_EQ(tde.cursor(), expectCursor);
 
   expectLayoutWindow(tde,
-    tde.firstVisible().m_line.get(), tde.firstVisible().m_column,
-    tde.lastVisible().m_line.get(), tde.lastVisible().m_column,
+    tde.firstVisible().m_line.get(), tde.firstVisible().m_column.get(),
+    tde.lastVisible().m_line.get(), tde.lastVisible().m_column.get(),
     preExpect);
 }
 
@@ -2606,7 +2614,7 @@ void testSelectEntireFile()
   EXN_CONTEXT("testSelectEntireFile");
 
   TextDocumentAndEditor tde;
-  tde.setVisibleSize(2,3);
+  tde.setVisibleSize(2, ColumnCount(3));
 
   tde.selectEntireFile();
   expectCursor(tde, 0,0); expectMark(tde, 0,0);

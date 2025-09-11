@@ -15,6 +15,12 @@
 OPEN_ANONYMOUS_NAMESPACE
 
 
+TextLCoord tlc(int li, int ci)
+{
+  return TextLCoord(LineIndex(li), ColumnIndex(ci));
+}
+
+
 void test_applyCommandSubstitutions()
 {
   NamedTextDocument doc;
@@ -52,30 +58,30 @@ three
     "foo.txt");
 
 
-  ntde.setCursor(TextLCoord(LineIndex(0),0));
+  ntde.setCursor(tlc(0, 0));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "zero");
 
-  ntde.setCursor(TextLCoord(LineIndex(1),1));
+  ntde.setCursor(tlc(1, 1));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "ne");
 
-  ntde.setCursor(TextLCoord(LineIndex(2),0));
+  ntde.setCursor(tlc(2, 0));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "4b45a58a");
 
-  ntde.setCursor(TextLCoord(LineIndex(1),10));
+  ntde.setCursor(tlc(1, 10));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "\"\"");
 
-  ntde.setCursor(TextLCoord(LineIndex(10),1));
+  ntde.setCursor(tlc(10, 1));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$w"), "\"\"");
 
-  ntde.setCursor(TextLCoord(LineIndex(2),0));
+  ntde.setCursor(tlc(2, 0));
   EXPECT_EQ(ntde.applyCommandSubstitutions("git blame -f $t1^ -- $t2"),
             "git blame -f 4b45a58a^ -- td.h");
 
-  ntde.setCursor(TextLCoord(LineIndex(2),10));
+  ntde.setCursor(tlc(2, 10));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$t9 $t5 $t1"),
             "// 2024-05-25 4b45a58a");
 
-  ntde.setCursor(TextLCoord(LineIndex(3),10));
+  ntde.setCursor(tlc(3, 10));
   EXPECT_EQ(ntde.applyCommandSubstitutions("$t9 $t5 $t1"),
             "\"\" \"\" three");
 }

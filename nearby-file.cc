@@ -3,6 +3,9 @@
 
 #include "nearby-file.h"               // this module
 
+#include "byte-count.h"                // ByteCount, sizeBC
+#include "byte-difference.h"           // operator+(char*, ByteDifference)
+#include "byte-index.h"                // ByteIndex, at
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-olb.h"             // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
@@ -74,7 +77,7 @@ static bool isFilenameChar(char c)
 // If the characters at 'haystack[i]' look like a line number in the
 // form ":$N", return the number, otherwise return 0.
 static std::optional<LineNumber>
-getLineNumberAt(string const &haystack, int i)
+getLineNumberAt(string const &haystack, ByteIndex i)
 {
   try {
     char const *start = haystack.c_str() + i;
@@ -120,7 +123,7 @@ getLineNumberAt(string const &haystack, int i)
 //
 static std::vector<HostFile_OptLineByte> getCandidateSuffixes(
   string const &haystack,
-  int charOffset)
+  ByteIndex charOffset)
 {
   std::vector<HostFile_OptLineByte> candidates;
 
@@ -129,7 +132,7 @@ static std::vector<HostFile_OptLineByte> getCandidateSuffixes(
   if (haystack.empty()) {
     return candidates;
   }
-  int haystackLength = haystack.length();
+  ByteCount haystackLength = sizeBC(haystack);
   if (!( 0 <= charOffset && charOffset <= haystackLength )) {
     return candidates;
   }
@@ -138,13 +141,14 @@ static std::vector<HostFile_OptLineByte> getCandidateSuffixes(
   // way I can just hit End to go to EOL and then Ctrl+I to open the
   // file at the end of that line.
   if (charOffset == haystackLength) {
-    charOffset = haystackLength-1;
+    charOffset = ByteIndex(haystackLength.pred());
   }
 
   // Should be on or just beyond a filename character to begin with.
-  if (!isFilenameChar(haystack[charOffset])) {
-    if (charOffset > 0 && isFilenameChar(haystack[charOffset-1])) {
-      charOffset--;
+  if (!isFilenameChar(at(haystack, charOffset))) {
+    if (charOffset > 0 &&
+        isFilenameChar(at(haystack, charOffset.pred()))) {
+      --charOffset;
     }
     else {
       return candidates;
@@ -153,47 +157,50 @@ static std::vector<HostFile_OptLineByte> getCandidateSuffixes(
 
   // Should not start on a digit.  For example, if the cursor is on the
   // "3" in "foo:3", I do not want to treat "3" as the file name.
-  if (isFilenameDigit(haystack[charOffset])) {
+  if (isFilenameDigit(at(haystack, charOffset))) {
     return candidates;
   }
 
   // File names do not usually end with punctuation or dots.
-  if (isFilenamePunctuationOrDot(haystack[charOffset]) &&
-      charOffset == haystackLength-1) {
+  if (isFilenamePunctuationOrDot(at(haystack, charOffset)) &&
+      charOffset == haystackLength.pred()) {
     return candidates;
   }
 
   // The cursor should not be on consecutive punctuation if it really is
   // on a file name.
-  if (isFilenamePunctuation(haystack[charOffset]) &&
-      (charOffset == haystackLength-1 ||
-       !isFilenameCore(haystack[charOffset+1]))) {
+  if (isFilenamePunctuation(at(haystack, charOffset)) &&
+      (charOffset == haystackLength.pred() ||
+       !isFilenameCore(at(haystack, charOffset.succ())))) {
     return candidates;
   }
 
   // Expand the range to include as many valid chars as possible.
-  int low = charOffset;
-  while (low > 0 && isFilenameChar(haystack[low-1])) {
-    low--;
+  ByteIndex low = charOffset;
+  while (low > 0 &&
+         isFilenameChar(at(haystack, low.pred()))) {
+    --low;
   }
-  int high = charOffset;
-  while (high < haystackLength-1 && isFilenameChar(haystack[high+1])) {
-    high++;
+  ByteIndex high = charOffset;
+  while (high < haystackLength.pred() &&
+         isFilenameChar(at(haystack, high.succ()))) {
+    ++high;
   }
 
   // Remove trailing punctuation beyond the original offset.
   while (high > charOffset &&
-         isFilenamePunctuationOrDot(haystack[high])) {
+         isFilenamePunctuationOrDot(at(haystack, high))) {
     high--;
   }
 
   // See if there is a line number here.
   std::optional<LineNumber> lineNumber =
-    getLineNumberAt(haystack, high+1);
+    getLineNumberAt(haystack, high.succ());
 
   // Return what we found.
+  ByteCount spanSize((high-low).succ());
   candidates.push_back(HostFile_OptLineByte(
-    HostAndResourceName::localFile(haystack.substr(low, high-low+1)),
+    HostAndResourceName::localFile(substr(haystack, low, spanSize)),
     OPT_INVOKE_METHOD(lineNumber, toLineIndex),
     std::nullopt));
 
@@ -232,7 +239,7 @@ static std::optional<HostFile_OptLineByte> innerGetNearbyFilename(
   IHFExists &ihfExists,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
-  int charOffset)
+  ByteIndex charOffset)
 {
   SMFileUtil sfu;
 
@@ -269,7 +276,7 @@ std::optional<HostFile_OptLineByte> getNearbyFilename(
   IHFExists &ihfExists,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
-  int charOffset)
+  ByteIndex charOffset)
 {
   std::optional<HostFile_OptLineByte> ret = innerGetNearbyFilename(
     ihfExists,

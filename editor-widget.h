@@ -7,6 +7,9 @@
 // editor
 #include "byte-count.h"                          // ByteCount
 #include "byte-index.h"                          // ByteIndex
+#include "column-count.h"                        // ColumnCount
+#include "column-difference.h"                   // ColumnDifference
+#include "column-index.h"                        // ColumnIndex
 #include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
 #include "editor-global-fwd.h"                   // EditorGlobal
@@ -204,9 +207,9 @@ public:      // data
   // 'm_highlightTrailingWhitespace' flag is true.
   QColor m_trailingWhitespaceBgColor;
 
-  // Column number for a soft margin.  This is used for text
+  // Column index for a soft margin.  This is used for text
   // justification and optionally to draw a margin line.
-  int m_softMarginColumn;
+  ColumnIndex m_softMarginColumn;
 
   // True to draw the soft margin.
   bool m_visibleSoftMargin;
@@ -375,7 +378,7 @@ public:      // funcs
   // Hmmm, m_editor is private.  Maybe I just want to expose the same
   // interface then?
   LineIndex cursorLine() const            { return m_editor->cursor().m_line; }
-  int cursorCol() const                   { return m_editor->cursor().m_column; }
+  ColumnIndex cursorCol() const           { return m_editor->cursor().m_column; }
 
   // Return the cursor position as "<line>:<col>" where both are 1-based
   // for the user interface.
@@ -420,13 +423,13 @@ public:      // funcs
   // --------------------------- scrolling -------------------------
   // Refactoring transition compatibility functions.
   LineIndex firstVisibleLine() const      { return m_editor->firstVisible().m_line; }
-  int firstVisibleCol() const             { return m_editor->firstVisible().m_column; }
+  ColumnIndex firstVisibleCol() const     { return m_editor->firstVisible().m_column; }
   LineIndex lastVisibleLine() const       { return m_editor->lastVisible().m_line; }
-  int lastVisibleCol() const              { return m_editor->lastVisible().m_column; }
+  ColumnIndex lastVisibleCol() const      { return m_editor->lastVisible().m_column; }
 
   // Move both the screen and cursor by the same amount.
   void commandMoveFirstVisibleAndCursor(
-    LineDifference deltaLine, int deltaCol);
+    LineDifference deltaLine, ColumnDifference deltaCol);
 
   // recompute lastVisibleLine/Col, based on:
   //   - firstVisibleLine/Col
@@ -448,12 +451,12 @@ public:      // funcs
   // Number of fully visible lines/columns.  Part of the next
   // line/col may also be visible.
   int visLines() const { return m_editor->visLines(); }
-  int visCols() const { return m_editor->visColumns(); }
+  ColumnCount visCols() const { return m_editor->visColumns(); }
 
   // Number of columns that are either fully or partially visible.  (We
   // just assume there is always one partially-visible column, since
   // being wrong just means a little wasted drawing time.)
-  int visColsPlusPartial() const { return visCols() + 1; }
+  ColumnCount visColsPlusPartial() const { return visCols().succ(); }
 
   // --------------------------- matches ----------------------------
   // Change the match string and flags.  If 'scrollToHit', also scroll
@@ -480,11 +483,11 @@ public:      // funcs
 
   // ---------------------- document changes ----------------------
   // Indent or unindent selected lines.
-  void commandBlockIndent(int amt);
+  void commandBlockIndent(ColumnDifference amt);
 
-  // My standard indentation amounts.  TODO: Make configurable.
-  void commandEditRigidIndent()   { this->commandBlockIndent(+2); }
-  void commandEditRigidUnindent() { this->commandBlockIndent(-2); }
+  // My standard indentation amounts.
+  void commandEditRigidIndent();
+  void commandEditRigidUnindent();
 
   // Justify paragraph the cursor is on or paragraphs that are selected.
   void editJustifyParagraph();
@@ -715,8 +718,8 @@ public:      // funcs
   // detail at the implementation site.
   void paintOneLine(
     QPainter &paint,
-    int visibleLineCols,
-    int startOfTrailingWhitespaceVisibleCol,
+    ColumnCount visibleLineCols,
+    ColumnDifference startOfTrailingWhitespaceVisibleCol,
     LineCategories const &layoutCategories,
     ArrayStack<char> const &visibleText,
     TextDocumentEditor::LineIterator &&lineIter,
@@ -724,10 +727,10 @@ public:      // funcs
 
   // Draw an underline on `paint`, the canvas for one line, starting at
   // pixel `x` and continuing for `numCols` columns.
-  void drawUnderline(QPainter &paint, int x, int numCols);
+  void drawUnderline(QPainter &paint, int x, ColumnCount numCols);
 
   // Map a byte index to a column index; and nullopt to nullopt.
-  std::optional<int> byteIndexToLayoutColOpt(
+  std::optional<ColumnIndex> byteIndexToLayoutColOpt(
     LineIndex line,
     std::optional<ByteIndex> byteIndex) const;
 
@@ -761,7 +764,7 @@ public:      // funcs
     QPainter &paint,
     LineCategories const &layoutCategories,
     ArrayStack<char> const &text,
-    int lineGlyphColumns);
+    ColumnCount lineGlyphColumns);
 
   // If enabled, draw the soft margin on `paint`, which is the painting
   // area for a single line of text.
@@ -830,7 +833,11 @@ public:      // funcs
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:
-  // slots to respond to scrollbars
+  // Slots to respond to scrollbars.
+  //
+  // The arguments here are properly `LineIndex` and `ColumnIndex`, but
+  // need to be `int` for signature compatibility with the `QScrollBar`
+  // signals.
   void scrollToLine(int line);
   void scrollToCol(int col);
 

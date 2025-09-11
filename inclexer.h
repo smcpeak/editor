@@ -27,6 +27,8 @@ public:
   // get next token in line, returning its length; 'code' signifies
   // what text style to use for the token, including the code for
   // the trailing segment (when it returns 0)
+  //
+  // TODO: Change the return type to `ByteCount`.
   virtual int getNextToken(TextCategory &code)=0;
 
   // get the lexing state now; usually called at end-of-line to

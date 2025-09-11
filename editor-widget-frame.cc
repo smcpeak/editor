@@ -123,11 +123,11 @@ void EditorWidgetFrame::setScrollbarRangesAndValues()
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (m_horizScroll) {
-    m_horizScroll->setRange(0, std::max(tde->maxLineLengthColumns(),
-                                        editorWidget()->firstVisibleCol()));
-    m_horizScroll->setValue(editorWidget()->firstVisibleCol());
+    m_horizScroll->setRange(0, std::max(tde->maxLineLengthColumns().get(),
+                                        editorWidget()->firstVisibleCol().get()));
+    m_horizScroll->setValue(editorWidget()->firstVisibleCol().get());
     m_horizScroll->setSingleStep(1);
-    m_horizScroll->setPageStep(editorWidget()->visCols());
+    m_horizScroll->setPageStep(editorWidget()->visCols().get());
   }
 
   if (m_vertScroll) {

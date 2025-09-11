@@ -24,7 +24,7 @@ bool LineCategories::operator== (LineCategories const &obj) const
 }
 
 
-void LineCategories::append(TextCategory category, int length)
+void LineCategories::append(TextCategory category, ByteOrColumnCount length)
 {
   // same as preceeding category?
   if (isNotEmpty() && (top().category == category)) {

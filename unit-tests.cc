@@ -90,6 +90,9 @@ static void entry(int argc, char **argv)
   RUN_TEST(byte_index);
   RUN_TEST(td_version_number);         // deps: wrapped-integer
   RUN_TEST(lsp_version_number);        // deps: wrapped-integer, td-version-number
+  RUN_TEST(column_count);
+  RUN_TEST(column_difference);
+  RUN_TEST(column_index);
 
   // Deps only on things that do not have their own tests.
   RUN_TEST(doc_type_detect);           // deps: doc-name

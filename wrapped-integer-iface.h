@@ -126,6 +126,14 @@ public:      // methods
     { return m_value == 0; }
   bool isPositive() const
     { return m_value > 0; }
+  bool isNegative() const
+    { return m_value < 0; }
+  bool isNonZero() const
+    { return !isZero(); }
+  bool isNonPositive() const
+    { return !isPositive(); }
+  bool isNonNegative() const
+    { return !isNegative(); }
 
   explicit operator bool() const
     { return !derivedC().isZero(); }
@@ -158,6 +166,18 @@ public:      // methods
 
   Derived &operator--();
   Derived operator--(int);
+
+  // ------------------------- Multiplication --------------------------
+  // Multiplication by int yields int.
+  //
+  // Unlike addition and subtraction, which require both operands to
+  // have the same dimensions, multiplication is always sensible, but we
+  // have to regard the result as having unknown dimension.
+  //
+  // I only define it this way, rather than also allowing int*Derived,
+  // so it is easy in the derived class to hide this operator if
+  // desired.
+  UnderInt operator*(UnderInt n) const;
 
   // -------------------------- Serialization --------------------------
   // Returns a GDV integer.

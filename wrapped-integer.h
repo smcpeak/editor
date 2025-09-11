@@ -12,7 +12,7 @@
 #include "smbase/compare-util.h"       // smbase::compare
 #include "smbase/gdvalue.h"            // gdv::GDValue [n]
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser [n]
-#include "smbase/overflow.h"           // addWithOverflowCheck, convertNumber
+#include "smbase/overflow.h"           // {add,subtract,multiply}WithOverflowCheck, convertNumber
 #include "smbase/xassert.h"            // xassert, xfailure_stringbc
 
 #include <iostream>                    // std::ostream
@@ -155,6 +155,14 @@ Derived WrappedInteger<UnderInt, Derived>::operator--(int)
   Derived ret(derivedC());
   derived().set(subtractWithOverflowCheck<UnderInt>(derivedC().get(), 1));
   return ret;
+}
+
+
+// -------------------------- Multiplication ---------------------------
+template <typename UnderInt, typename Derived>
+UnderInt WrappedInteger<UnderInt, Derived>::operator*(UnderInt n) const
+{
+  return multiplyWithOverflowCheck<UnderInt>(get(), n);
 }
 
 

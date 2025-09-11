@@ -48,7 +48,7 @@ void LineDifference::clampLower(int value)
 }
 
 
-std::string toString(LineDifference const &obj)
+std::string toString(LineDifference obj)
 {
   return stringb(obj);
 }

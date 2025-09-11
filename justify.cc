@@ -3,6 +3,8 @@
 
 #include "justify.h"                   // this module
 
+#include "column-count.h"              // ColumnCount
+#include "column-difference.h"         // ColumnDifference
 #include "line-index.h"                // LineIndex
 #include "td-editor.h"                 // TextDocumentEditor
 
@@ -49,8 +51,10 @@ static bool isSentenceEnd(char c)
 void justifyTextLines(
   std::vector<std::string> &justifiedContent,
   std::vector<std::string> const &originalContent,
-  int desiredWidth)
+  ColumnCount desiredWidth)
 {
+  xassertPrecondition(desiredWidth > 0);
+
   // Line being built.
   //
   // This use of `stringBuilder` is not trivially replaceable with
@@ -131,12 +135,12 @@ void justifyTextLines(
 // all tabs as being 8 columns wide.  It could in the future also
 // account for UTF-8 characters, although that requires the editor
 // itself to handle those.
-static int prefixColumnWidth(std::string const &prefix)
+static ColumnCount prefixColumnWidth(std::string const &prefix)
 {
-  int width = 0;
+  ColumnCount width(0);
   for (char const *p = prefix.c_str(); *p; ++p) {
     if (*p == '\t') {
-      width += 8;
+      width += ColumnDifference(8);
     }
     else {
       ++width;
@@ -146,8 +150,13 @@ static int prefixColumnWidth(std::string const &prefix)
 }
 
 
-bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int desiredWidth)
+bool justifyNearLine(
+  TextDocumentEditor &tde,
+  LineIndex originLineNumber,
+  ColumnCount desiredWidth)
 {
+  xassertPrecondition(desiredWidth > 0);
+
   std::string startLine = tde.getWholeLineString(originLineNumber);
 
   // Split the line into a prefix of whitespace and framing punctuation,
@@ -200,10 +209,17 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
     originalContent.push_back(line.substr(prefix.size()));
   }
 
+  ColumnDifference widthWithoutPrefix =
+    desiredWidth - prefixColumnWidth(prefix);
+  if (widthWithoutPrefix.isNonPositive()) {
+    // No space in which to work.
+    return false;
+  }
+
   // Reformat it.
   std::vector<std::string> justifiedContent;
   justifyTextLines(justifiedContent, originalContent,
-    desiredWidth - prefixColumnWidth(prefix));
+    ColumnCount(widthWithoutPrefix));
 
   if (originalContent == justifiedContent) {
     // If the original and justified content are the same, do not
@@ -218,8 +234,8 @@ bool justifyNearLine(TextDocumentEditor &tde, LineIndex originLineNumber, int de
 
   // Replace the content.
   tde.deleteTextLRange(
-    TextLCoord(upperEdge, 0),
-    TextLCoord(lowerEdge.succ(), 0));
+    TextLCoord(upperEdge, ColumnIndex(0)),
+    TextLCoord(lowerEdge.succ(), ColumnIndex(0)));
   for (std::size_t i=0; i < justifiedContent.size(); i++) {
     tde.insertString(stringb(prefix << justifiedContent[i] << '\n'));
   }

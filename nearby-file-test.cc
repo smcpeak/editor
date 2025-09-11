@@ -74,7 +74,7 @@ static void expectIGNF(
   HostAndResourceName const &expectHARN)
 {
   std::optional<HostFile_OptLineByte> actual = getNearbyFilename(hfe,
-    candidatePrefixes, haystack, charOffset);
+    candidatePrefixes, haystack, ByteIndex(charOffset));
   checkActualHarn(actual, expectHARN);
   checkActualLine(actual, std::nullopt);
 }
@@ -154,7 +154,6 @@ static void test1()
   expectLocalIGNF(hfe, prefixes, "", 0, "");
 
   // Offset out of bounds.
-  expectLocalIGNF(hfe, prefixes, "foo.txt", -1, "");
   expectLocalIGNF(hfe, prefixes, "foo.txt", 8, "");
 
   // No absolute search path yet, but this is the result when nothing
@@ -228,7 +227,7 @@ static void expectIGNFL(
   TEST_FUNC_EXPRS(candidatePrefixes, haystack, charOffset);
 
   std::optional<HostFile_OptLineByte> actual = getNearbyFilename(hfe,
-    candidatePrefixes, haystack, charOffset);
+    candidatePrefixes, haystack, ByteIndex(charOffset));
   checkActualHarn(actual, expectHARN);
 
   // Make a properly typed `expectLineNumber` from the integer code used
@@ -285,7 +284,6 @@ static void testLineNumbers()
 
   // Limits on where the search can begin.
   prefixes.push_back(HostAndResourceName::localFile("/home"));
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", -1, "", 0);
   expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 0, "/home/foo.txt", 3);
   expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 6, "/home/foo.txt", 3);
   expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 7, "/home/foo.txt", 3);

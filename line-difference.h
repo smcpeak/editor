@@ -58,7 +58,7 @@ public:      // methods
 
 // Return the string that `obj.write` writes.  This is needed by the
 // `astgen` infrastructure.
-std::string toString(LineDifference const &obj);
+std::string toString(LineDifference obj);
 
 
 #endif // EDITOR_LINE_DIFFERENCE_H

@@ -81,7 +81,7 @@ public:      // methods
   bool tryIncrease(LineDifference delta);
 
   // Nominally `m_value += delta`.  If the result would be less than
-  // `limit, set `*this` to `limit`.  Also the addition must not
+  // `limit`, set `*this` to `limit`.  Also the addition must not
   // overflow.
   void clampIncrease(
     LineDifference delta, LineIndex limit = LineIndex(0));

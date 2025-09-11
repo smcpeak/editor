@@ -8,6 +8,7 @@
 
 // editor
 #include "byte-count.h"                // strlenBC
+#include "column-count.h"              // ColumnCount
 #include "line-count.h"                // PositiveLineCount, LineCount
 #include "line-difference-fwd.h"       // LineDifference [n]
 #include "td.h"                        // TextDocument
@@ -18,6 +19,7 @@
 #include "smbase/datetime.h"           // DateTimeProvider
 #include "smbase/refct-serf.h"         // RCSerf, SerfRefCount
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
+#include "smbase/std-optional-fwd.h"   // std::optional [n]
 
 
 // This class is a "stateful metaphor UI API".  That is, it
@@ -103,7 +105,7 @@ private:     // data
   TextLCoord m_lastVisible;
 
   // Width of a tab column.  Must be positive.  Initially 8.
-  int m_tabWidth;
+  ColumnCount m_tabWidth;
 
 private:     // funcs
   // Helper for 'toMCoord'.
@@ -141,8 +143,8 @@ public:      // funcs
   void setReadOnly(bool readOnly)      { m_doc->setReadOnly(readOnly); }
 
   // Get/set tab width.  Always positive.
-  int tabWidth() const                 { return m_tabWidth; }
-  void setTabWidth(int tabWidth);
+  ColumnCount tabWidth() const         { return m_tabWidth; }
+  void setTabWidth(ColumnCount tabWidth);
 
   // ------------------- query model dimensions --------------------
   // Number of lines in the document.  Always positive.
@@ -188,16 +190,18 @@ public:      // funcs
   // Number of populated cells on the given line, in columns.  This does
   // not count the newline.  If 'line' is outside [0,numLines()-1],
   // returns 0.
-  int lineLengthColumns(LineIndex line) const;
+  ColumnCount lineLengthColumns(LineIndex line) const;
+  ColumnIndex lineLengthAsColumnIndex(LineIndex line) const;
 
   // Length of line containing cursor.
-  int cursorLineLengthColumns() const  { return lineLengthColumns(cursor().m_line); }
+  ColumnCount cursorLineLengthColumns() const;
+  ColumnIndex cursorLineLengthAsColumnIndex() const;
 
   // Length of the longest line.  Note: This may overestimate.
-  int maxLineLengthColumns() const;
+  ColumnCount maxLineLengthColumns() const;
 
   // First position in the file.
-  TextLCoord beginLCoord() const         { return TextLCoord(LineIndex(0),0); }
+  TextLCoord beginLCoord() const;
 
   // Position right after last character in file.
   TextLCoord endLCoord() const;
@@ -215,7 +219,7 @@ public:      // funcs
   // silently stop at the document start even if the magnitude would
   // take us into negative line numbers.
   void walkLCoordColumns(
-    TextLCoord &tc /*INOUT*/, int distance) const;
+    TextLCoord &tc /*INOUT*/, ColumnDifference distance) const;
 
   // Walk forward or backward the given number of bytes.
   void walkLCoordBytes(
@@ -241,14 +245,18 @@ public:      // funcs
   void setCursor(TextLCoord newCursor);
 
   // Set the cursor column, keeping its line.
-  void setCursorColumn(int newCol);
+  void setCursorColumn(ColumnIndex newCol);
 
   // Cursor motion; line/col are relative if their respective 'rel'
   // flag is true.  The result must be non-negative.
+  //
+  // TODO: This method should be split into several based on whether
+  // each of `relLine` and `relCol` are true, since those affect the
+  // interpretation, and hence type, of `line` and `col`.
   void moveCursor(bool relLine, int line, bool relCol, int col);
 
   // move by relative line/col
-  void moveCursorBy(LineDifference deltaLine, int deltaCol);
+  void moveCursorBy(LineDifference deltaLine, ColumnDifference deltaCol);
 
   // line++, col=0.  Ok to move beyond EOF.
   void moveToNextLineStart();
@@ -302,7 +310,7 @@ public:      // funcs
 
   // Move the mark by the indicated amount, clamping at 0.  Requires
   // markActive().
-  void moveMarkBy(LineDifference deltaLine, int deltaCol);
+  void moveMarkBy(LineDifference deltaLine, ColumnDifference deltaCol);
 
   // ----------------- cursor+mark = selection --------------------
   // If the mark is inactive, activate it at the cursor.
@@ -352,10 +360,10 @@ public:      // funcs
   // Lower-right grid cell fully visible (not partial).
   TextLCoord lastVisible() const        { return m_lastVisible; }
 
+  // TODO: Why does this not return `LineCount`?
   int visLines() const
     { return m_lastVisible.m_line.get() - m_firstVisible.m_line.get() + 1; }
-  int visColumns() const
-    { return m_lastVisible.m_column - m_firstVisible.m_column + 1; }
+  ColumnCount visColumns() const;
 
   // Scroll so 'fv' is the first visible coordinate, retaining the
   // visible region size.
@@ -364,23 +372,25 @@ public:      // funcs
   // Scroll in one dimension.
   void setFirstVisibleLine(LineIndex L)
     { this->setFirstVisible(TextLCoord(L, m_firstVisible.m_column)); }
-  void setFirstVisibleCol(int C)
+  void setFirstVisibleCol(ColumnIndex C)
     { this->setFirstVisible(TextLCoord(m_firstVisible.m_line, C)); }
 
   // Move the view by a relative amount.  Any attempt to go negative
   // is treated as a move to zero.
-  void moveFirstVisibleBy(LineDifference deltaLine, int deltaCol);
+  void moveFirstVisibleBy(
+    LineDifference deltaLine, ColumnDifference deltaCol);
 
   // First, scroll the view, if necessary, so the cursor is in the
   // visible region.  Then, behave like 'moveFirstVisibleBy', but also
   // move the cursor as necessary so its position on the screen stays
   // the same.
-  void moveFirstVisibleAndCursor(LineDifference deltaLine, int deltaCol);
+  void moveFirstVisibleAndCursor(
+    LineDifference deltaLine, ColumnDifference deltaCol);
 
   // Like 'moveFirstVisibleBy', but after scrolling, adjust the cursor
   // by the minimum amount so it is onscreen.
   void moveFirstVisibleConfineCursor(
-    LineDifference deltaLine, int deltaCol);
+    LineDifference deltaLine, ColumnDifference deltaCol);
 
   // Set the lower-right corner, preserving 'firstVisible'.  This will
   // silently force it to be greater than or equal to 'firstVisible'.
@@ -388,7 +398,9 @@ public:      // funcs
 
   // Adjust the visible region size, preserving 'firstVisible'.  This
   // will silently ensure both sizes are positive.
-  void setVisibleSize(int lines, int columns);
+  //
+  // TODO: Why is `lines` not a `LineCount`?
+  void setVisibleSize(int lines, ColumnCount columns);
 
   // Scroll the view the minimum amount so that 'tc' is visible
   // and at least 'edgeGap' lines/columns from the edge (except that
@@ -425,18 +437,21 @@ public:      // funcs
   // tab character then it can be different.
   //
   // 'c' must not be newline.
-  int layoutColumnAfter(int col, int c) const;
+  ColumnIndex layoutColumnAfter(ColumnIndex col, int c) const;
 
-  // Get a range of text from a line, but if the position is outside
-  // the defined range, pretend the line exists (if necessary) and
-  // that there are space characters up to 'col+destLen' (if necessary).
+  // Get a range of text from a line, but if the position is outside the
+  // defined range, pretend the line exists (if necessary) and that
+  // there are space characters up to `tc.m_column+destLenCols` (if
+  // necessary).
   //
   // This is effectively computing the layout for a fragment of the
   // document and expressing it as a sequence of grid contents.  Each
   // grid cell's content is, for now, expressed as one byte.  Tacitly,
   // the bytes are interpreted as Latin-1 code points.
-  void getLineLayout(TextLCoord tc,
-                     ArrayStack<char> /*INOUT*/ &dest, int destLen) const;
+  void getLineLayout(
+    TextLCoord tc,
+    ArrayStack<char> /*INOUT*/ &dest,
+    ColumnCount destLen) const;
 
   // Retrieve the text between two positions, as in a text editor where
   // the positions are the selection endpoints and the user wants a
@@ -476,18 +491,20 @@ public:      // funcs
   ByteCount countLeadingSpacesTabs(LineIndex line) const;
 
   // Count them from the end instead, in *columns*.
-  int countTrailingSpacesTabsColumns(LineIndex line) const;
+  ColumnCount countTrailingSpacesTabsColumns(LineIndex line) const;
 
-  // On a particular line, get # of whitespace chars before first
-  // non-ws char, or -1 if there are no non-ws chars.  Lines beyond
-  // EOF return -1 (as if they are entirely whitespace).
+  // On a particular line, get # of whitespace chars before first non-ws
+  // char, or nullopt if there are no non-ws chars.  Lines beyond EOF
+  // return nullopt (as if they are entirely whitespace).
   //
-  // This is almost the same as 'countLeadingSpacesTabs', except that
-  // it returns -1 instead of lineLength for blank lines, and it returns
-  // a count of columns instead of bytes.
+  // This is almost the same as `countLeadingSpacesTabs`, except that it
+  // returns nullopt instead of lineLength for blank lines, and it
+  // returns a count of columns instead of bytes.
   //
-  // This also sets 'indText' to the actual indentation string.
-  int getIndentationColumns(LineIndex line, string /*OUT*/ &indText) const;
+  // This also sets `indText` to the actual indentation string if the
+  // return valueis not nullopt.
+  std::optional<ColumnCount> getIndentationColumns(
+    LineIndex line, string /*OUT*/ &indText) const;
 
   // Starting at 'line-1', search up until we find a line that is not
   // entirely blank (whitespace), and return the number of whitespace
@@ -495,8 +512,9 @@ public:      // funcs
   // beyond EOF are treated as entirely whitespace.  If we hit BOF,
   // return 0.
   //
-  // If the return is non-negative, also set 'indText'.
-  int getAboveIndentationColumns(LineIndex line, string /*OUT*/ &indText) const;
+  // Also set 'indText' to the indentation text.
+  ColumnCount getAboveIndentationColumns(
+    LineIndex line, string /*OUT*/ &indText) const;
 
   // ------------------- general text insertion ------------------
   // 1. If the mark is active, deleteSelection().
@@ -528,7 +546,7 @@ public:      // funcs
   // Delete at cursor.  'left' or 'right' refers to which side of
   // the cursor has the text to be deleted.  This can delete newline
   // characters.
-  void deleteLRColumns(bool left, int columnCount);
+  void deleteLRColumns(bool left, ColumnCount columnCount);
   void deleteLRBytes(bool left, ByteCount byteCount);
   void deleteLRAbsCharacters(bool left, int characterCount);
 
@@ -616,17 +634,18 @@ public:      // funcs
   // there are not enough spaces, then the line is unindented as much
   // as possible w/o removing non-ws chars; the cursor is left in its
   // original position at the end
-  void indentLines(LineIndex start, LineCount lines, int ind);
+  void indentLines(
+    LineIndex start, LineCount lines, ColumnDifference ind);
 
   // Do 'indentLines' for the span of lines corresponding to the
   // current selection.  Every line that has at least one selected
   // character is indented.  If nothing is selected, return false
   // without doing anything.
-  bool blockIndent(int amt);
+  bool blockIndent(ColumnDifference amt);
 
   // Call ::justifyNearLine on the cursor line, then scroll if needed
   // to keep the cursor in view.
-  bool justifyNearCursor(int desiredWidth);
+  bool justifyNearCursor(ColumnCount desiredWidth);
 
   // --------------------- other insertion ------------------------
   // Insert, at cursor, the local date/time as "YYYY-MM-DD hh:ss".
@@ -719,10 +738,10 @@ public:      // types
     // Underlying iterator.
     TextDocument::LineIterator m_iter;
 
-    // Column number where the current byte's glyph starts.  If
+    // Column index where the current byte's glyph starts.  If
     // '!has()', this is one more than the column number where the
     // previous glyph (the last one in the line) ends.
-    int m_column;
+    ColumnIndex m_column;
 
   public:      // funcs
     // Same interface as TextDocument::LineIterator.
@@ -734,7 +753,7 @@ public:      // types
     void advByte();
 
     // See 'm_column'.
-    int columnOffset() const           { return m_column; }
+    ColumnIndex columnOffset() const   { return m_column; }
   };
 };
 

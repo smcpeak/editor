@@ -288,7 +288,8 @@ void LexHighlighter::highlight(
   TextCategory code;
   int len = lexer.getNextToken(code);
   while (len) {
-    categories.append(code, len);
+    // Here, `len` is bytes.
+    categories.append(code, ByteOrColumnCount(len));
     len = lexer.getNextToken(code);
   }
   categories.endCategory = code;    // line trails off with the final code
@@ -413,14 +414,14 @@ static void insert(int line, int col, char const *text)
 {
   DIAG("insert(" << line << ", " << col << ", " <<
        doubleQuote(text) << ")");
-  tde->setCursor(TextLCoord(LineIndex(line), col));
+  tde->setCursor(TextLCoord(LineIndex(line), ColumnIndex(col)));
   tde->insertNulTermText(text);
 }
 
 static void del(int line, int col, int len)
 {
   DIAG("del(" << line << ", " << col << ", " << len << ")");
-  tde->setCursor(TextLCoord(LineIndex(line), col));
+  tde->setCursor(TextLCoord(LineIndex(line), ColumnIndex(col)));
   tde->deleteTextBytes(ByteCount(len));
 }
 
@@ -486,7 +487,7 @@ void exerciseHighlighter(MakeHighlighterFunc func)
   LexHighlighter &hi = *hi_;
 
   int line=0, col=0;
-  tde->setCursor(TextLCoord(LineIndex(line), col));
+  tde->setCursor(TextLCoord(LineIndex(line), ColumnIndex(col)));
   tde->insertNulTermText(
     "hi there\n"
     "here is \"a string\" ok?\n"
