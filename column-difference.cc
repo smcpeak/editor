@@ -3,14 +3,14 @@
 
 #include "column-difference.h"         // this module
 
-#include "clampable-wrapped-integer.h" // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableWrappedInteger method defns
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/stringb.h"            // stringb
 
 
 template class WrappedInteger<int, ColumnDifference>;
-template class ClampableInteger<int, ColumnDifference>;
+template class ClampableWrappedInteger<int, ColumnDifference>;
 
 
 int operator*(int n, ColumnDifference delta)

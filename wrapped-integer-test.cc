@@ -23,7 +23,7 @@ OPEN_ANONYMOUS_NAMESPACE
 
 
 // Unconstrained wrapped integer for use as the difference type in the
-// `ClampableInteger` specialization.
+// `ClampableWrappedInteger` specialization.
 class IntegerDifference
   : public WrappedInteger<int, IntegerDifference> {
 
@@ -48,7 +48,7 @@ public:      // methods
 class NonNegativeInteger
   : public WrappedInteger<int, NonNegativeInteger>,
     public AddableWrappedInteger<int, NonNegativeInteger, IntegerDifference>,
-    public ClampableInteger<int, NonNegativeInteger, IntegerDifference> {
+    public ClampableWrappedInteger<int, NonNegativeInteger, IntegerDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, NonNegativeInteger>;

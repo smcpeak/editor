@@ -9,6 +9,6 @@
 template <typename UnderInt,
           typename Derived,
           typename LimitType = Derived>
-class ClampableInteger;
+class ClampableWrappedInteger;
 
 #endif // EDITOR_CLAMPABLE_WRAPPED_INTEGER_FWD_H

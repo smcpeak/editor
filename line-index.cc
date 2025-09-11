@@ -3,7 +3,7 @@
 
 #include "line-index.h"                // this module
 
-#include "clampable-wrapped-integer.h" // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableWrappedInteger method defns
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
 #include "line-number.h"               // LineNumber
@@ -18,7 +18,7 @@ using namespace smbase;
 
 // Instantiate base class methods.
 template class WrappedInteger<int, LineIndex>;
-template class ClampableInteger<int, LineIndex, LineDifference>;
+template class ClampableWrappedInteger<int, LineIndex, LineDifference>;
 
 
 // ---------------------------- Conversion -----------------------------

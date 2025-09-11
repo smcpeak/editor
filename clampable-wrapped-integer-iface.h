@@ -24,7 +24,7 @@
    My expectation is both are subclasses of `WrappedInteger`.
 */
 template <typename UnderInt, typename Derived, typename Difference>
-class ClampableInteger {
+class ClampableWrappedInteger {
 protected:   // methods
   // Access the derived class to allow static overriding.
   Derived const &derivedC() const

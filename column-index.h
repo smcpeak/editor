@@ -9,7 +9,7 @@
 #include "column-index-fwd.h"                    // fwds for this module
 
 #include "addable-wrapped-integer-iface.h"       // AddableWrappedInteger
-#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableWrappedInteger
 #include "column-count-fwd.h"                    // ColumnCount [n]
 #include "column-difference-fwd.h"               // ColumnDifference [n]
 #include "wrapped-integer-iface.h"               // WrappedInteger
@@ -26,7 +26,7 @@
 class ColumnIndex final
   : public WrappedInteger<int, ColumnIndex>,
     public AddableWrappedInteger<int, ColumnIndex, ColumnDifference>,
-    public ClampableInteger<int, ColumnIndex, ColumnDifference> {
+    public ClampableWrappedInteger<int, ColumnIndex, ColumnDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, ColumnIndex>;

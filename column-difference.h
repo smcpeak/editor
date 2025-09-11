@@ -9,7 +9,7 @@
 
 #include "column-difference-fwd.h"               // fwds for this module
 
-#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableWrappedInteger
 #include "wrapped-integer-iface.h"               // WrappedInteger
 
 
@@ -25,7 +25,7 @@
 */
 class ColumnDifference final
   : public WrappedInteger<int, ColumnDifference>,
-    public ClampableInteger<int, ColumnDifference> {
+    public ClampableWrappedInteger<int, ColumnDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, ColumnDifference>;

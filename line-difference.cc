@@ -3,7 +3,7 @@
 
 #include "line-difference.h"           // this module
 
-#include "clampable-wrapped-integer.h" // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableWrappedInteger method defns
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/stringb.h"            // stringb
@@ -13,7 +13,7 @@
 // file for this module deliberately does not expose them, so they won't
 // be implicitly instantiated.
 template class WrappedInteger<int, LineDifference>;
-template class ClampableInteger<int, LineDifference>;
+template class ClampableWrappedInteger<int, LineDifference>;
 
 
 LineDifference LineDifference::operator+(int delta) const

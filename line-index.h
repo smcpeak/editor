@@ -8,7 +8,7 @@
 
 #include "line-index-fwd.h"                      // fwds for this module
 
-#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableWrappedInteger
 #include "line-count-fwd.h"                      // LineCount [n]
 #include "line-difference-fwd.h"                 // LineDifference [n]
 #include "line-number-fwd.h"                     // LineNumber [n]
@@ -30,7 +30,7 @@
 */
 class LineIndex final
   : public WrappedInteger<int, LineIndex>,
-    public ClampableInteger<int, LineIndex, LineDifference> {
+    public ClampableWrappedInteger<int, LineIndex, LineDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, LineIndex>;

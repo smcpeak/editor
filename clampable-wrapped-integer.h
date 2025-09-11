@@ -1,5 +1,5 @@
 // clampable-wrapped-integer.h
-// `ClampableInteger` CRTP mixin class.
+// `ClampableWrappedInteger` CRTP mixin class.
 
 // See license.txt for copyright and terms of use.
 
@@ -12,7 +12,7 @@
 
 
 template <typename UnderInt, typename Derived, typename Difference>
-void ClampableInteger<UnderInt, Derived, Difference>::clampLower(
+void ClampableWrappedInteger<UnderInt, Derived, Difference>::clampLower(
   Difference lowerBound)
 {
   if (derivedC().get() < lowerBound.get()) {
@@ -22,7 +22,7 @@ void ClampableInteger<UnderInt, Derived, Difference>::clampLower(
 
 
 template <typename UnderInt, typename Derived, typename Difference>
-void ClampableInteger<UnderInt, Derived, Difference>::clampIncrease(
+void ClampableWrappedInteger<UnderInt, Derived, Difference>::clampIncrease(
   Difference delta, Difference limit)
 {
   UnderInt newValue =
@@ -37,7 +37,7 @@ void ClampableInteger<UnderInt, Derived, Difference>::clampIncrease(
 
 
 template <typename UnderInt, typename Derived, typename Difference>
-void ClampableInteger<UnderInt, Derived, Difference>::clampIncrease(
+void ClampableWrappedInteger<UnderInt, Derived, Difference>::clampIncrease(
   Difference delta)
 {
   derived().clampIncrease(delta, Difference(0));
@@ -45,7 +45,7 @@ void ClampableInteger<UnderInt, Derived, Difference>::clampIncrease(
 
 
 template <typename UnderInt, typename Derived, typename Difference>
-Derived ClampableInteger<UnderInt, Derived, Difference>::clampIncreased(
+Derived ClampableWrappedInteger<UnderInt, Derived, Difference>::clampIncreased(
   Difference delta, Difference limit) const
 {
   Derived ret(derivedC());
@@ -55,7 +55,7 @@ Derived ClampableInteger<UnderInt, Derived, Difference>::clampIncreased(
 
 
 template <typename UnderInt, typename Derived, typename Difference>
-Derived ClampableInteger<UnderInt, Derived, Difference>::clampIncreased(
+Derived ClampableWrappedInteger<UnderInt, Derived, Difference>::clampIncreased(
   Difference delta) const
 {
   return derivedC().clampIncreased(delta, Difference(0));

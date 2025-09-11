@@ -9,7 +9,7 @@
 
 #include "line-difference-fwd.h"                 // fwds for this module
 
-#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableWrappedInteger
 #include "wrapped-integer-iface.h"               // WrappedInteger
 
 #include "smbase/std-string-fwd.h"               // std::string
@@ -23,7 +23,7 @@
 */
 class LineDifference final
   : public WrappedInteger<int, LineDifference>,
-    public ClampableInteger<int, LineDifference> {
+    public ClampableWrappedInteger<int, LineDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, LineDifference>;

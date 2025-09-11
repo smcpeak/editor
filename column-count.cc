@@ -4,7 +4,7 @@
 #include "column-count.h"              // this module
 
 #include "addable-wrapped-integer.h"   // AddableWrappedInteger method defns
-#include "clampable-wrapped-integer.h" // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableWrappedInteger method defns
 #include "column-difference.h"         // ColumnDifference
 #include "column-index.h"              // ColumnIndex
 #include "wrapped-integer.h"           // WrappedInteger method defns
@@ -18,7 +18,7 @@ using namespace smbase;
 
 // Explicitly instantiate the base class methods.
 template class WrappedInteger<int, ColumnCount>;
-template class ClampableInteger<int, ColumnCount, ColumnDifference>;
+template class ClampableWrappedInteger<int, ColumnCount, ColumnDifference>;
 template class AddableWrappedInteger<int, ColumnCount, ColumnDifference>;
 
 

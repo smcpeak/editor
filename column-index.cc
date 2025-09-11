@@ -4,7 +4,7 @@
 #include "column-index.h"              // this module
 
 #include "addable-wrapped-integer.h"   // AddableWrappedInteger method defns
-#include "clampable-wrapped-integer.h" // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableWrappedInteger method defns
 #include "column-count.h"              // ColumnCount
 #include "column-difference.h"         // ColumnDifference
 #include "wrapped-integer.h"           // WrappedInteger method defns
@@ -18,7 +18,7 @@ using namespace smbase;
 
 template class WrappedInteger<int, ColumnIndex>;
 template class AddableWrappedInteger<int, ColumnIndex, ColumnDifference>;
-template class ClampableInteger<int, ColumnIndex, ColumnDifference>;
+template class ClampableWrappedInteger<int, ColumnIndex, ColumnDifference>;
 
 
 // ---------------------------- Conversion -----------------------------
