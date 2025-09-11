@@ -745,10 +745,11 @@ void EditorWindow::fileOpen() NOEXCEPT
   TRACE1("fileOpen");
 
   HostAndResourceName dirHarn = editorWidget()->getDocumentDirectoryHarn();
-  this->slot_openOrSwitchToFileAtLineOpt(HostFile_OptLineByte(
-    dirHarn,
-    std::nullopt,
-    std::nullopt));
+
+  // TODO: This is a convoluted way of opening the file-open dialog.
+  this->slot_openOrSwitchToFileAtLineOpt(
+    HostFile_OptLineByte(dirHarn, std::nullopt, std::nullopt),
+    true /*promptIfNotFound*/);
 
   GENERIC_CATCH_END
 }
@@ -2766,14 +2767,12 @@ void EditorWindow::on_closeSARPanel() NOEXCEPT
 
 
 void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
-  HostFile_OptLineByte hfl) NOEXCEPT
+  HostFile_OptLineByte hfl, bool promptIfNotFound) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE1("slot_openOrSwitchToFileAtLineOpt:"
-    " harn=" << toGDValue(hfl.getHarn()) <<
-    " line=" << toGDValue(hfl.getLineIndexOpt()) <<
-    " byteIndex=" << toGDValue(hfl.getByteIndexOpt()));
+  TRACE1_GDVN_EXPRS("slot_openOrSwitchToFileAtLineOpt",
+    hfl, promptIfNotFound);
 
   // Check for fast-open conditions.
   {
@@ -2802,6 +2801,12 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
       }
       return;
     }
+  }
+
+  if (!promptIfNotFound) {
+    complain(stringb(
+      "File does not exist: " << hfl.getHarn().toString() << "."));
+    return;
   }
 
   // Prompt to confirm.

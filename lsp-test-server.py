@@ -848,6 +848,16 @@ def get_symbols(
           mkRange(0,200, 0,210)      # Very large character indices.
         )))
 
+    # Yield the name of a file that does not exist.
+    if name == "has_bad_decl_file":
+      satisfying_occurrences.append(Occurrence(
+        name,
+        OccurrenceKind.DECLARATION,
+        FileRange(
+          uri + "-nonexist",         # Presumably non-existent file.
+          mkRange(0,0, 0,0)
+        )))
+
   return satisfying_occurrences
 
 

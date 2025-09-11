@@ -66,4 +66,7 @@ int has_malformed_uri_occurrence;
 // This one has an out of bounds decl location.
 int has_bad_decl_location;
 
+// Has a bad decl file name.
+int has_bad_decl_file;
+
 // EOF

@@ -1,0 +1,44 @@
+// lsp-go-to-decl-bad-file.ev
+// Try to go to the decl of a symbol with bad file name info.
+
+// In editor with correct file..
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Activate fake LSP server.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+
+// Open this file in LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Go to line 70.
+Shortcut("window1.m_menuBar.editMenu.editGotoLine" "Alt+G")
+FocusKeySequence("70")
+FocusKeyPR("Key_Return" "\r")
+
+// Move to the use of `has_bad_decl_file` on that line.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "70:1")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+FocusKeyPR("Key_Right" "")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "70:5")
+
+// Go to definition.
+Shortcut("window1.m_menuBar.lspMenu.lspGoToMenu.lspGoToDefinition" "F12")
+
+// This pops up an error box.
+CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
+CheckMessageBoxTextMatches("window1.#5",
+  "File does not exist: \".*/test/language-test.cc-nonexist\".")
+
+// Dismiss the dialog.
+FocusKeyPR("Key_Return" "\r")
+
+// Back in the editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// EOF

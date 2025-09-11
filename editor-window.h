@@ -354,13 +354,18 @@ public Q_SLOTS:
   // specified file.  If `hfl` includes a line number, then also jump to
   // that line number.
   //
-  // If the file is not open and cannot be opened, open it in the
-  // file-open dialog.
+  // If the file name ends with a directory separator, treat this as a
+  // request to open the file-open dialog at that directory.
+  //
+  // If the file is not open and cannot be opened, then if
+  // `promptIfNotFound`, open the file-open dialog, initially set to
+  // the file name; otherwise, just pop up an error box.
   //
   // TODO: Really the widget should be in control of this, not the
   // window, in order to allow for eventually having multiple widgets
   // per window.
-  void slot_openOrSwitchToFileAtLineOpt(HostFile_OptLineByte hfl) NOEXCEPT;
+  void slot_openOrSwitchToFileAtLineOpt(
+    HostFile_OptLineByte hfl, bool promptIfNotFound) NOEXCEPT;
 };
 
 

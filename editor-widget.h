@@ -859,7 +859,8 @@ Q_SIGNALS:
   // Emitted when the user indicates, via some widget functionality,
   // that they want to go to a particular file, and possibly a specific
   // line.
-  void signal_openOrSwitchToFileAtLineOpt(HostFile_OptLineByte hfl);
+  void signal_openOrSwitchToFileAtLineOpt(
+    HostFile_OptLineByte hfl, bool promptIfNotFound);
 
   // The user wants to close the search and replace panel if it is open.
   void closeSARPanel();

@@ -691,7 +691,8 @@ void EditorWidget::doOpenOrSwitchToFileAtLineOpt(
   // are currently looking at if it is untitled, which will cause the
   // RCSerf infrastructure to abort just before memory corruption would
   // have resulted.
-  Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
+  Q_EMIT signal_openOrSwitchToFileAtLineOpt(
+    hostFileAndLine, false /*promptIfNotFound*/);
 }
 
 
@@ -2953,7 +2954,8 @@ void EditorWidget::goToLocalFileAndLineOpt(
     lineIndexOpt,
     byteIndexOpt);
 
-  Q_EMIT signal_openOrSwitchToFileAtLineOpt(hostFileAndLine);
+  Q_EMIT signal_openOrSwitchToFileAtLineOpt(
+    hostFileAndLine, false /*promptIfNotFound*/);
 }
 
 
