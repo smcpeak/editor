@@ -6,14 +6,15 @@
 #ifndef EDITOR_COLUMN_INDEX_H
 #define EDITOR_COLUMN_INDEX_H
 
-#include "column-index-fwd.h"          // fwds for this module
+#include "column-index-fwd.h"                    // fwds for this module
 
-#include "clampable-integer-iface.h"   // ClampableInteger
-#include "column-count-fwd.h"          // ColumnCount [n]
-#include "column-difference-fwd.h"     // ColumnDifference [n]
-#include "wrapped-integer-iface.h"     // WrappedInteger
+#include "addable-wrapped-integer-iface.h"       // AddableWrappedInteger
+#include "clampable-integer-iface.h"             // ClampableInteger
+#include "column-count-fwd.h"                    // ColumnCount [n]
+#include "column-difference-fwd.h"               // ColumnDifference [n]
+#include "wrapped-integer-iface.h"               // WrappedInteger
 
-#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
+#include "smbase/compare-util-iface.h"           // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 
 
 /* 0-based column index for use in layout coordinates.
@@ -24,11 +25,14 @@
 */
 class ColumnIndex final
   : public WrappedInteger<int, ColumnIndex>,
+    public AddableWrappedInteger<int, ColumnIndex, ColumnDifference>,
     public ClampableInteger<int, ColumnIndex, ColumnDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, ColumnIndex>;
   friend Base;
+
+  using Addable = AddableWrappedInteger<int, ColumnIndex, ColumnDifference>;
 
 protected:   // methods
   static bool isValid(int value)
@@ -59,10 +63,8 @@ public:      // methods
   // ---------------------------- Addition -----------------------------
   using Base::operator+;
   using Base::operator+=;
-
-  // Requires: `m_value+delta >= 0`, and the sum is representable.
-  ColumnIndex operator+(ColumnDifference delta) const;
-  ColumnIndex &operator+=(ColumnDifference delta);
+  using Addable::operator+;
+  using Addable::operator+=;
 
   // ---------------------- Subtraction/inversion ----------------------
   // Don't inherit `operator-` or `operator-=`.

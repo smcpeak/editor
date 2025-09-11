@@ -3,6 +3,7 @@
 
 #include "unit-tests.h"                // decl for my entry point
 
+#include "addable-wrapped-integer.h"   // module under test
 #include "clampable-integer.h"         // module under test
 #include "wrapped-integer.h"           // module under test
 
@@ -46,11 +47,14 @@ public:      // methods
 // Wrapped integer that is never negative.
 class NonNegativeInteger
   : public WrappedInteger<int, NonNegativeInteger>,
+    public AddableWrappedInteger<int, NonNegativeInteger, IntegerDifference>,
     public ClampableInteger<int, NonNegativeInteger, IntegerDifference> {
 
 public:      // types
   using Base = WrappedInteger<int, NonNegativeInteger>;
   friend Base;
+
+  using Addable = AddableWrappedInteger<int, NonNegativeInteger, IntegerDifference>;
 
 protected:   // methods
   static bool isValid(int value)
@@ -65,6 +69,11 @@ public:      // methods
 
   operator IntegerDifference() const
     { return IntegerDifference(get()); }
+
+  using Base::operator+;
+  using Base::operator+=;
+  using Addable::operator+;
+  using Addable::operator+=;
 };
 
 
@@ -335,6 +344,24 @@ void test_clampIncrease()
 }
 
 
+void test_addOther()
+{
+  EXPECT_EQ(NonNegativeInteger(3) + IntegerDifference(2), 5);
+  EXPECT_EQ(NonNegativeInteger(3) + IntegerDifference(-2), 1);
+
+  EXPECT_EXN_SUBSTR(NonNegativeInteger(3) + IntegerDifference(-5),
+    XAssert,
+    "Value violates constraint for NonNegativeInteger: -2.");
+
+  NonNegativeInteger nni(5);
+  nni += IntegerDifference(7);
+  EXPECT_EQ(nni, 12);
+
+  nni += IntegerDifference(-1);
+  EXPECT_EQ(nni, 11);
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -353,6 +380,7 @@ void test_wrapped_integer(CmdlineArgsSpan args)
   test_write();
   test_clampLower();
   test_clampIncrease();
+  test_addOther();
 }
 
 
