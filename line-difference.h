@@ -7,12 +7,12 @@
 #ifndef EDITOR_LINE_DIFFERENCE_H
 #define EDITOR_LINE_DIFFERENCE_H
 
-#include "line-difference-fwd.h"       // fwds for this module
+#include "line-difference-fwd.h"                 // fwds for this module
 
-#include "clampable-integer-iface.h"   // ClampableInteger
-#include "wrapped-integer-iface.h"     // WrappedInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "wrapped-integer-iface.h"               // WrappedInteger
 
-#include "smbase/std-string-fwd.h"     // std::string
+#include "smbase/std-string-fwd.h"               // std::string
 
 
 /* Represent a difference between two line indices or line numbers.  Can

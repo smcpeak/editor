@@ -1,14 +1,14 @@
-// clampable-integer.h
+// clampable-wrapped-integer.h
 // `ClampableInteger` CRTP mixin class.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_CLAMPABLE_INTEGER_H
-#define EDITOR_CLAMPABLE_INTEGER_H
+#ifndef EDITOR_CLAMPABLE_WRAPPED_INTEGER_H
+#define EDITOR_CLAMPABLE_WRAPPED_INTEGER_H
 
-#include "clampable-integer-iface.h"   // interface decls for this module
+#include "clampable-wrapped-integer-iface.h"     // interface decls for this module
 
-#include "smbase/overflow.h"           // addWithOverflowCheck
+#include "smbase/overflow.h"                     // addWithOverflowCheck
 
 
 template <typename UnderInt, typename Derived, typename Difference>
@@ -62,4 +62,4 @@ Derived ClampableInteger<UnderInt, Derived, Difference>::clampIncreased(
 }
 
 
-#endif // EDITOR_CLAMPABLE_INTEGER_H
+#endif // EDITOR_CLAMPABLE_WRAPPED_INTEGER_H

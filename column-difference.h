@@ -7,10 +7,10 @@
 #ifndef EDITOR_COLUMN_DIFFERENCE_H
 #define EDITOR_COLUMN_DIFFERENCE_H
 
-#include "column-difference-fwd.h"     // fwds for this module
+#include "column-difference-fwd.h"               // fwds for this module
 
-#include "clampable-integer-iface.h"   // ClampableInteger
-#include "wrapped-integer-iface.h"     // WrappedInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "wrapped-integer-iface.h"               // WrappedInteger
 
 
 /* Difference between two layout column indices or counts.  Can be

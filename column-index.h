@@ -9,7 +9,7 @@
 #include "column-index-fwd.h"                    // fwds for this module
 
 #include "addable-wrapped-integer-iface.h"       // AddableWrappedInteger
-#include "clampable-integer-iface.h"             // ClampableInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
 #include "column-count-fwd.h"                    // ColumnCount [n]
 #include "column-difference-fwd.h"               // ColumnDifference [n]
 #include "wrapped-integer-iface.h"               // WrappedInteger

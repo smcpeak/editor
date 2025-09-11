@@ -4,7 +4,7 @@
 #include "unit-tests.h"                // decl for my entry point
 
 #include "addable-wrapped-integer.h"   // module under test
-#include "clampable-integer.h"         // module under test
+#include "clampable-wrapped-integer.h" // module under test
 #include "wrapped-integer.h"           // module under test
 
 #include "smbase/exc.h"                // smbase::XAssert

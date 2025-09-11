@@ -4,7 +4,7 @@
 #include "column-count.h"              // this module
 
 #include "addable-wrapped-integer.h"   // AddableWrappedInteger method defns
-#include "clampable-integer.h"         // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableInteger method defns
 #include "column-difference.h"         // ColumnDifference
 #include "column-index.h"              // ColumnIndex
 #include "wrapped-integer.h"           // WrappedInteger method defns

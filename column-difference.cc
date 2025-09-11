@@ -3,7 +3,7 @@
 
 #include "column-difference.h"         // this module
 
-#include "clampable-integer.h"         // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableInteger method defns
 #include "wrapped-integer.h"           // WrappedInteger method defns
 
 #include "smbase/stringb.h"            // stringb

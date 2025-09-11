@@ -6,16 +6,16 @@
 #ifndef EDITOR_LINE_INDEX_H
 #define EDITOR_LINE_INDEX_H
 
-#include "line-index-fwd.h"            // fwds for this module
+#include "line-index-fwd.h"                      // fwds for this module
 
-#include "clampable-integer-iface.h"   // ClampableInteger
-#include "line-count-fwd.h"            // LineCount [n]
-#include "line-difference-fwd.h"       // LineDifference [n]
-#include "line-number-fwd.h"           // LineNumber [n]
-#include "positive-line-count-fwd.h"   // PositiveLineCount [n]
-#include "wrapped-integer-iface.h"     // WrappedInteger
+#include "clampable-wrapped-integer-iface.h"     // ClampableInteger
+#include "line-count-fwd.h"                      // LineCount [n]
+#include "line-difference-fwd.h"                 // LineDifference [n]
+#include "line-number-fwd.h"                     // LineNumber [n]
+#include "positive-line-count-fwd.h"             // PositiveLineCount [n]
+#include "wrapped-integer-iface.h"               // WrappedInteger
 
-#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
+#include "smbase/compare-util-iface.h"           // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER
 
 
 /* 0-based index into an array of lines, generally used in internal data

@@ -1,12 +1,12 @@
-// clampable-integer-iface.h
-// Interface decls for `clampable-integer`.
+// clampable-wrapped-integer-iface.h
+// Interface decls for `clampable-wrapped-integer`.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_CLAMPABLE_INTEGER_IFACE_H
-#define EDITOR_CLAMPABLE_INTEGER_IFACE_H
+#ifndef EDITOR_CLAMPABLE_WRAPPED_INTEGER_IFACE_H
+#define EDITOR_CLAMPABLE_WRAPPED_INTEGER_IFACE_H
 
-#include "clampable-integer-fwd.h"     // fwds for this module
+#include "clampable-wrapped-integer-fwd.h"       // fwds for this module
 
 
 /* This is meant to be derived from as a CRTP base.
@@ -56,4 +56,4 @@ public:      // methods
 };
 
 
-#endif // EDITOR_CLAMPABLE_INTEGER_IFACE_H
+#endif // EDITOR_CLAMPABLE_WRAPPED_INTEGER_IFACE_H

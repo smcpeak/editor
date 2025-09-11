@@ -3,7 +3,7 @@
 
 #include "line-index.h"                // this module
 
-#include "clampable-integer.h"         // ClampableInteger method defns
+#include "clampable-wrapped-integer.h" // ClampableInteger method defns
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
 #include "line-number.h"               // LineNumber
