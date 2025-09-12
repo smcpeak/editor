@@ -15,6 +15,7 @@
 #include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
 // smbase
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/save-restore.h"       // SetRestore
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // beginsWith
@@ -35,6 +36,8 @@
 #include <QScrollBar>
 #include <QTextEdit>
 #include <QVBoxLayout>
+
+using namespace gdv;
 
 
 FilenameInputDialog::History::History()
@@ -593,7 +596,7 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 }
 
 
-std::string FilenameInputDialog::eventReplayQuery(
+GDValue FilenameInputDialog::eventReplayQuery(
   std::string const &state)
 {
   if (state == "currentRequestDir") {

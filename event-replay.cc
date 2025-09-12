@@ -80,7 +80,7 @@ INIT_TRACE("event-replay");
 
 
 // -------------------- EventReplayQueryable --------------------
-string EventReplayQueryable::eventReplayQuery(string const &state)
+GDValue EventReplayQueryable::eventReplayQuery(string const &state)
 {
   return stringb("unknown state: " << doubleQuote(state));
 }
@@ -530,17 +530,18 @@ void EventReplay::replayCall(GDValue const &command)
 
   else if (funcName == "WaitUntilCheckQuery") {
     auto [durationMS, receiver, state, expect] =
-      gdvpToTuple<int, std::string, std::string, std::string>(parser);
+      gdvpToTuple<int, std::string, std::string, GDValue>(parser);
 
     this->waitUntilCheckQuery(
       durationMS, receiver, state, expect);
   }
 
   else if (funcName == "CheckQuery") {
-    BIND_STRING_ARGS3(receiver, state, expect);
+    auto [receiver, state, expect] =
+      gdvpToTuple<std::string, std::string, GDValue>(parser);
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
-    string actual = q->eventReplayQuery(state);
+    GDValue actual = q->eventReplayQuery(state);
     CHECK_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
              doubleQuote(state));
   }
@@ -550,7 +551,7 @@ void EventReplay::replayCall(GDValue const &command)
       gdvpToTuple<std::string, std::string, std::string>(parser);
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
-    string actual = q->eventReplayQuery(state);
+    std::string actual = q->eventReplayQuery(state).stringGet();
     CHECK_RE_MATCH("CheckQueryMatches " << doubleQuote(receiver) << ' ' <<
                    doubleQuote(state));
   }
@@ -568,10 +569,10 @@ void EventReplay::replayCall(GDValue const &command)
       gdvpToTuple<int, std::string, std::string>(parser);
 
     QLabel *label = getObjectFromPath<QLabel>(path);
-    auto stringFunc = [label]() -> std::string {
+    auto gdvFunc = [label]() -> GDValue {
       return toString(label->text());
     };
-    waitUntilCheckStringFunction(durationMS, stringFunc, expect);
+    waitUntilCheckGDValueFunction(durationMS, gdvFunc, expect);
   }
 
   else if (funcName == "CheckLabelMatches") {
@@ -997,20 +998,20 @@ void EventReplay::waitUntilCheckQuery(
   long durationMS,
   string const &receiver,
   string const &state,
-  string const &expect)
+  GDValue const &expect)
 {
-  auto stringFunc = [receiver, state]() -> std::string {
+  auto gdvFunc = [receiver, state]() -> GDValue {
     EventReplayQueryable *q = getQueryableFromPath(receiver);
     return q->eventReplayQuery(state);
   };
-  waitUntilCheckStringFunction(durationMS, stringFunc, expect);
+  waitUntilCheckGDValueFunction(durationMS, gdvFunc, expect);
 }
 
 
-void EventReplay::waitUntilCheckStringFunction(
+void EventReplay::waitUntilCheckGDValueFunction(
   long durationMS,
-  std::function<std::string ()> stringFunc,
-  string const &expect)
+  std::function<GDValue ()> gdvFunc,
+  GDValue const &expect)
 {
   long startMS = getMilliseconds();
   int checkCount = 0;
@@ -1025,7 +1026,7 @@ void EventReplay::waitUntilCheckStringFunction(
 
   while (true) {
     checkCount++;
-    string actual = stringFunc();
+    GDValue actual = gdvFunc();
     if (actual == expect) {
       break;
     }
@@ -1033,8 +1034,8 @@ void EventReplay::waitUntilCheckStringFunction(
     long remainingMS = durationMS - elapsedMS;
     if (remainingMS <= 0) {
       xmessagesb("WaitUntilCheckQuery: Slept for " << elapsedMS <<
-                 " ms but value is " << doubleQuote(actual) << ", not " <<
-                 doubleQuote(expect));
+                 " ms but value is " << actual << ", not " <<
+                 expect);
     }
 
     // Wait for something to happen.  This does not busy-wait.

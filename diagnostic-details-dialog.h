@@ -69,7 +69,7 @@ public:      // methods
   void setDiagnostics(QVector<DiagnosticElement> &&diagnostics);
 
   // EventReplayQueryable methods.
-  virtual string eventReplayQuery(string const &state) override;
+  virtual gdv::GDValue eventReplayQuery(string const &state) override;
 
 Q_SIGNALS:
   // Emitted when the user indicates they want to see one element in

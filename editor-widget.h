@@ -830,7 +830,7 @@ public:      // funcs
 
   // -------------------------- testing ----------------------------
   // EventReplayQueryable methods.
-  virtual string eventReplayQuery(string const &state) OVERRIDE;
+  virtual gdv::GDValue eventReplayQuery(string const &state) OVERRIDE;
   virtual QImage eventReplayImage(string const &what) OVERRIDE;
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 

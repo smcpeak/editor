@@ -196,7 +196,7 @@ public:      // funcs
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
   // EventReplayQueryable methods.
-  virtual std::string eventReplayQuery(std::string const &state) OVERRIDE;
+  virtual gdv::GDValue eventReplayQuery(std::string const &state) OVERRIDE;
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:

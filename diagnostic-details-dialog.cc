@@ -275,7 +275,7 @@ void DiagnosticDetailsDialog::setDiagnostics(
 }
 
 
-std::string DiagnosticDetailsDialog::eventReplayQuery(
+gdv::GDValue DiagnosticDetailsDialog::eventReplayQuery(
   std::string const &state)
 {
   try {

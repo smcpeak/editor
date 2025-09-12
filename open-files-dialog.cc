@@ -16,6 +16,7 @@
 // smbase
 #include "smbase/array.h"              // ArrayStack
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/strutil.h"            // hasSubstring_insens_ascii
 #include "smbase/trace.h"              // TRACE
@@ -29,6 +30,8 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QVBoxLayout>
+
+using namespace gdv;
 
 
 // Initial dialog dimensions in pixels.  I want it relatively tall by
@@ -275,7 +278,7 @@ static string filenamePathBase(NamedTextDocument const *doc)
 }
 
 
-string OpenFilesDialog::eventReplayQuery(string const &state)
+GDValue OpenFilesDialog::eventReplayQuery(string const &state)
 {
   if (state == "cursorRow") {
     QModelIndex idx = m_tableWidget->currentIndex();

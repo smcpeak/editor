@@ -6,6 +6,7 @@
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/gdvalue-reader.h"     // gdv::GDValueReader
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-override.h"        // OVERRIDE
@@ -38,7 +39,7 @@ public:
   // message, as that will not be what the test script is expecting.
   //
   // The default returns the string "unknown state: $state",
-  virtual string eventReplayQuery(string const &state);
+  virtual gdv::GDValue eventReplayQuery(string const &state);
 
   // Return an app-specific image, identified by 'what'.  Corresponds to
   // the "CheckQuery" command.  The default implementation returns a
@@ -149,14 +150,14 @@ private:     // funcs
     long durationMS,
     string const &receiver,
     string const &state,
-    string const &expect);
+    gdv::GDValue const &expect);
 
-  // Wait for up to `durationMS` for `stringFunc` to return `expect`.
+  // Wait for up to `durationMS` for `gdvFunc` to return `expect`.
   // If we timeout, throw.
-  void waitUntilCheckStringFunction(
+  void waitUntilCheckGDValueFunction(
     long durationMS,
-    std::function<std::string ()> stringFunc,
-    string const &expect);
+    std::function<gdv::GDValue ()> gdvFunc,
+    gdv::GDValue const &expect);
 
   // Post a QuiescenceEvent to the application event queue.
   void postQuiescenceEvent();

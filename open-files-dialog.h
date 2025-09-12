@@ -92,7 +92,7 @@ public:      // funcs
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
   // EventReplayQueryable methods.
-  virtual string eventReplayQuery(string const &state) OVERRIDE;
+  virtual gdv::GDValue eventReplayQuery(string const &state) OVERRIDE;
 
 public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) NOEXCEPT;

@@ -3923,7 +3923,7 @@ static char const *boolToString(bool b)
 }
 
 
-string EditorWidget::eventReplayQuery(string const &state)
+GDValue EditorWidget::eventReplayQuery(string const &state)
 {
   if (state == "firstVisible") {
     return stringb(m_editor->firstVisible());
