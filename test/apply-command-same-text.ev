@@ -4,7 +4,7 @@
 // In editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" false)
 
 // Select the first line.
 FocusKeyPR("Shift+Key_Down" "")
@@ -22,7 +22,7 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Since the new text is the same, no change should be recorded.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" false)
 
 // The cursor should be left right after the output text, with no
 // selection.
@@ -46,7 +46,7 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // This is different, so now we have unsaved changes.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" true)
 
 // Select the line again to check its contents.
 FocusKeyPR("Shift+Key_Up" "")

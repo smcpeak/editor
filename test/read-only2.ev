@@ -26,7 +26,7 @@ CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" true)
 // Try to make an edit.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_K" "k")
 KeyPress("window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\u{1B}")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" false)
 
 // Toggle the read-only state.
 TriggerAction("window1.m_menuBar.fileMenu.fileToggleReadOnly")
@@ -35,6 +35,6 @@ CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" false)
 // Now make an edit.
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_K" "k")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" true)
 
 // EOF

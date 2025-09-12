@@ -3,12 +3,12 @@
 
 // Expect to start with focus on the editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" false)
 
 // Type something.
 FocusKeyPress("Key_H" "h")
 FocusKeyPress("Key_I" "i")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" true)
 
 // Try to quit.
 Shortcut("window1.m_menuBar" "Alt+F")

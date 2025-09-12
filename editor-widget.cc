@@ -3935,7 +3935,7 @@ GDValue EditorWidget::eventReplayQuery(string const &state)
     return toString(m_editor->documentProcessStatus());
   }
   else if (state == "hasUnsavedChanges") {
-    return boolToString(m_editor->unsavedChanges());
+    return m_editor->unsavedChanges();
   }
   else if (state == "resourceName") {
     return m_editor->m_namedDoc->resourceName();
