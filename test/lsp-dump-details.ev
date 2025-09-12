@@ -1,0 +1,197 @@
+// lsp-dump-details.ev
+// Test "LSP | Debug | Dump all server details".
+
+// In editor with expected file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-test-server.py")
+
+// I expect that `test/language-test.cc` is also open.
+
+// Dump LSP in initial state.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+
+// In editor, showing dump.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check a couple strings.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "useRealServer: false")
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "clients: \\{:\\}")
+
+// Return to the Python file.
+Shortcut("window1.m_menuBar.windowMenu.windowPreviousFile" "F6")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-test-server.py")
+
+// Start the LSP server.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+
+// Dump LSP again.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "documentType: DT_PYTHON")
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "documentInfo: \\{:\\}")
+
+// Back to the Python file.
+Shortcut("window1.m_menuBar.windowMenu.windowPreviousFile" "F6")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-test-server.py")
+
+// Open it with LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Dump again.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "fname:(.|\\n)*lsp-test-server.py")
+
+// Switch to language-test.cc.
+Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
+CheckFocusWidget("OpenFilesDialog.m_tableWidget")
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Start LSP for C++.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+
+// Dump LSP again.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "documentType: DT_CPP")
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "documentInfo: \\{:\\}")
+
+// Back to the C++ file.
+Shortcut("window1.m_menuBar.windowMenu.windowPreviousFile" "F6")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Open it with LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+
+// Dump LSP again.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "language-test.cc")
+
+// Back to C++ file.
+Shortcut("window1.m_menuBar.windowMenu.windowPreviousFile" "F6")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Stop the C++ LSP without first closing the file.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
+
+// If we don't wait here, then an assertion will fail:
+//
+//   test FAILED: test/lsp-dump-details.ev: 124:1: EditorGlobal::selfCheck: xassert-eq-container.h:46: assertion failed: Expected equal sets, but `openLSPDocs` has element DocumentName[hostName:HostName[sshHostName:""] resourceName:"D:/cygwin/home/Scott/wrk/editor/test/language-test.cc" hasFilename:true directory:"D:/cygwin/home/Scott/wrk/editor/test/"] that `trackedDocs` lacks.
+//
+// This means there is a short period where the invariant does not hold.
+// TODO: Fix that invariant.
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Dump LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "commandLine: null")
+
+// Back to C++ file.
+Shortcut("window1.m_menuBar.windowMenu.windowPreviousFile" "F6")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Change to the Python file.
+Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
+CheckFocusWidget("OpenFilesDialog.m_tableWidget")
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Down" "")
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-test-server.py")
+
+// Close the file.
+Shortcut("window1.m_menuBar.lspMenu.lspCloseFile" "Ctrl+F7")
+
+// Dump LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "DT_PYTHON(.|\\n)*documentInfo: \\{:\\}")
+
+// Back to Python file.
+Shortcut("window1.m_menuBar.windowMenu.windowPreviousFile" "F6")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-test-server.py")
+
+// Stop Python LSP server.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Dump LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.lspMenu.lspDebugMenu" "Key_D" "d")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
+  "LSP All Server Details")
+
+// Check the output.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
+  "DT_PYTHON(.|\\n)*commandLine: null")
+
+// EOF

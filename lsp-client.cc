@@ -15,12 +15,16 @@
 #include "td-core.h"                             // TextDocumentCore
 #include "uri-util.h"                            // makeFileURI, getFileURIPath
 
+#include "smqtutil/gdvalue-qt.h"                 // toGDValue(QString)
 #include "smqtutil/qtutil.h"                     // toString(QString)
 
 #include "smbase/container-util.h"               // smbase::contains
 #include "smbase/datetime.h"                     // localTimeString
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::XFormat
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
+#include "smbase/gdvalue-list.h"                 // gdv::toGDValue(std::list)
+#include "smbase/gdvalue-map.h"                  // gdv::toGDValue(std::map)
+#include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
@@ -538,6 +542,49 @@ void LSPClient::selfCheck() const
   if (m_lsp) {
     m_lsp->selfCheck();
   }
+}
+
+
+LSPClient::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "LSPClient"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_useRealServer);
+
+  if (m_lspStderrFile) {
+    m.mapSetValueAtSym("lspStderrFileName", m_lspStderrFile->getFname());
+  }
+  else {
+    m.mapSetValueAtSym("lspStderrFileName", GDValue());
+  }
+
+  if (m_commandRunner) {
+    // TODO: Provide a sequence of strings.
+    m.mapSetValueAtSym("commandLine",
+      toGDValue(m_commandRunner->getCommandLine()));
+
+    // TODO: Get the working directory.
+  }
+  else {
+    m.mapSetValueAtSym("commandLine", GDValue());
+  }
+
+  if (m_lsp) {
+    m.mapSetValueAtSym("jsonRpc", toGDValue(*m_lsp));
+  }
+  else {
+    m.mapSetValueAtSym("jsonRpc", GDValue());
+  }
+
+  GDV_WRITE_MEMBER_SYM(m_serverCapabilities);
+  GDV_WRITE_MEMBER_SYM(m_pendingErrorMessages);
+  GDV_WRITE_MEMBER_SYM(m_lspClientProtocolError);
+  GDV_WRITE_MEMBER_SYM(m_uriPathSemantics);
+
+  GDV_WRITE_MEMBER_SYM(m_documentInfo);
+  GDV_WRITE_MEMBER_SYM(m_filesWithPendingDiagnostics);
+
+  return m;
 }
 
 

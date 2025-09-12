@@ -614,7 +614,8 @@ EditorGlobal::findUntitledUnmodifiedDocument()
 
 NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
   std::string const &title,
-  std::string const &contents)
+  std::string const &contents,
+  DocumentType documentType)
 {
   DocumentName docName;
   docName.setNonFileResourceName(HostName::asLocal(),
@@ -628,10 +629,11 @@ NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
     doc->appendString(contents);
     doc->noUnsavedChanges();
     doc->setReadOnly(true);
+    doc->setDocumentType(documentType);
     trackNewDocumentFile(doc);
   }
   else {
-    // TODO: I think I should reset the document contents here.
+    doc->replaceWholeFileString(contents);
   }
 
   return doc;
@@ -642,7 +644,8 @@ NamedTextDocument *EditorGlobal::getOrCreateKeybindingsDocument()
 {
   return getOrCreateGeneratedDocument(
     "Editor Keybindings",
-    std::string(doc_keybindings, sizeof(doc_keybindings)-1));
+    std::string(doc_keybindings, sizeof(doc_keybindings)-1),
+    DocumentType::DT_PLAIN_TEXT);
 }
 
 
@@ -1367,7 +1370,20 @@ EditorGlobal::lspGetOrCreateServerCapabilitiesDocument(
 
   return getOrCreateGeneratedDocument(
     stringb("LSP Server Capabilities for " << scope),
-    capabilities.asLinesString());
+    capabilities.asLinesString(),
+    DocumentType::DT_C_LIKE);
+}
+
+
+NamedTextDocument *
+EditorGlobal::lspGetOrCreateAllServerDetailsDocument()
+{
+  GDValue details = toGDValue(*( lspClientManager() ));
+
+  return getOrCreateGeneratedDocument(
+    stringb("LSP All Server Details"),
+    details.asLinesString(),
+    DocumentType::DT_C_LIKE);
 }
 
 

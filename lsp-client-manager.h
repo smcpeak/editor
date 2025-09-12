@@ -63,6 +63,12 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
+  // Return `toGDValue(m_client)`.  This omits `m_scope` because the
+  // intent is this provides the values for the
+  // `LSPClientManager::m_clients` map below, which has keys that are
+  // the same as the scope stored here.
+  operator gdv::GDValue() const;
+
   LSPClientScope const &scope() const
     { return m_scope; }
 
@@ -192,6 +198,9 @@ public:      // methods
 
   // Assert invariants.
   void selfCheck() const;
+
+  // Dump all details.
+  operator gdv::GDValue() const;
 
   bool useRealServer() const
     { return m_useRealServer; }

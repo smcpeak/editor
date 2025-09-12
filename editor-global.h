@@ -12,6 +12,7 @@
 #include "command-runner-fwd.h"                  // CommandRunner [n]
 #include "connections-dialog-fwd.h"              // ConnectionsDialog [n]
 #include "diagnostic-details-dialog-fwd.h"       // DiagnosticDetailsDialog [n]
+#include "doc-type.h"                            // DocumentType
 #include "eclf.h"                                // EditorCommandLineFunction, NUM_EDITOR_COMMAND_LINE_FUNCTIONS
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand [n]
 #include "editor-navigation-options.h"           // EditorNavigationOptions
@@ -282,7 +283,8 @@ public:       // funcs
   // Get or create a read-only document called `title` with `contents`.
   NamedTextDocument *getOrCreateGeneratedDocument(
     std::string const &title,
-    std::string const &contents);
+    std::string const &contents,
+    DocumentType documentType);
 
   // Generate a document with `doc/keybindings.txt`.
   NamedTextDocument *getOrCreateKeybindingsDocument();
@@ -517,6 +519,9 @@ public:       // funcs
   // server relevant to `doc`.
   NamedTextDocument *lspGetOrCreateServerCapabilitiesDocument(
     NamedTextDocument const *doc);
+
+  // Generate a document with all LSP server details.
+  NamedTextDocument *lspGetOrCreateAllServerDetailsDocument();
 
   // -------------------- Qt infrastructure-related --------------------
   // QCoreApplication methods.

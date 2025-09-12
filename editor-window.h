@@ -291,6 +291,7 @@ public Q_SLOTS:
   void lspStopServer() NOEXCEPT;
   void lspCheckStatus() NOEXCEPT;
   void lspShowServerCapabilities() NOEXCEPT;
+  void lspDumpAllServerDetails() NOEXCEPT;
   void lspStartServerAndOpenFile() NOEXCEPT;
   void lspOpenOrUpdateFile() NOEXCEPT;
   void lspToggleUpdateContinuously() NOEXCEPT;

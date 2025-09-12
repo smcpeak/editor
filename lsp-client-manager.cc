@@ -3,6 +3,9 @@
 
 #include "lsp-client-manager.h"                  // this module
 
+// Needs to come before something, not sure what.
+#include "smbase/gdvalue-unique-ptr-fwd.h"       // gdv::toGDValue(std::unique_ptr)
+
 #include "doc-name.h"                            // DocumentName
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-name.h"                           // HostName
@@ -16,6 +19,9 @@
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 
 #include "smbase/exc.h"                          // smbase::xmessage, GENERIC_CATCH_{BEGIN,END}
+#include "smbase/gdvalue-list.h"                 // gdv::toGDValue(std::list)
+#include "smbase/gdvalue-map.h"                  // gdv::toGDValue(std::map)
+#include "smbase/gdvalue-unique-ptr.h"           // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/set-util.h"                     // smbase::setInsertAll
 #include "smbase/sm-is-equal.h"                  // smbase::is_equal
@@ -56,6 +62,12 @@ ScopedLSPClient::ScopedLSPClient(
 void ScopedLSPClient::selfCheck() const
 {
   m_client.selfCheck();
+}
+
+
+ScopedLSPClient::operator gdv::GDValue() const
+{
+  return toGDValue(m_client);
 }
 
 
@@ -175,6 +187,19 @@ void LSPClientManager::selfCheck() const
     }
     TRACE1_GDVN_EXPRS("LSPClientManager::selfCheck", numChecked, numUnchecked);
   }
+}
+
+
+LSPClientManager::operator GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "LSPClientManager"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_useRealServer);
+  GDV_WRITE_MEMBER_SYM(m_logFileDirectory);
+  GDV_WRITE_MEMBER_SYM(m_lspErrorMessages);
+  GDV_WRITE_MEMBER_SYM(m_clients);
+
+  return m;
 }
 
 

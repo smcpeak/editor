@@ -555,27 +555,36 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("lspDebugMenu");
       QMenu *menu = submenu;
 
-      // Used mnemonics: ars
+      // Used mnemonics: adrs
 
+      // Global
       MENU_ITEM    ("St&art LSP server and immediately open file",
                     lspStartServerAndOpenFile);
       MENU_ITEM    ("Check LSP server &status",
                     lspCheckStatus);
       MENU_ITEM    ("Show LSP server capabilities",
                     lspShowServerCapabilities);
-      MENU_ITEM    ("Send selected text as arbitrary LSP &request",
-                    lspSendSelectedTextAsRequest);
-      MENU_ITEM    ("Send selected text as arbitrary LSP &notification(s)",
-                    lspSendSelectedTextAsNotification);
+      MENU_ITEM    ("&Dump all LSP server details",
+                    lspDumpAllServerDetails);
 
       menu->addSeparator();
 
+      // Per-file
       MENU_ITEM    ("Review diagnostics for this file",
                     lspReviewDiagnostics);
       MENU_ITEM    ("Remove diagnostics",
                     lspRemoveDiagnostics);
       MENU_ITEM    ("Set fake LSP status",
                     lspSetFakeStatus);
+
+      menu->addSeparator();
+
+      // Specific selected text
+      MENU_ITEM    ("Send selected text as arbitrary LSP &request",
+                    lspSendSelectedTextAsRequest);
+      MENU_ITEM    ("Send selected text as arbitrary LSP &notification(s)",
+                    lspSendSelectedTextAsNotification);
+
     }
 
   }
@@ -2176,6 +2185,17 @@ void EditorWindow::lspShowServerCapabilities() NOEXCEPT
   setDocumentFile(
     m_editorGlobal->lspGetOrCreateServerCapabilitiesDocument(
       currentDocument()));
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspDumpAllServerDetails() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  setDocumentFile(
+    m_editorGlobal->lspGetOrCreateAllServerDetailsDocument());
 
   GENERIC_CATCH_END
 }

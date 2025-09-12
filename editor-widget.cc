@@ -3349,10 +3349,7 @@ void EditorWidget::lspSendSelectedText(bool asRequest)
   // Put it into a document.
   NamedTextDocument *newDocument =
     editorGlobal()->getOrCreateGeneratedDocument(
-      docTitle, strReply);
-
-  // Use C/C++ highlighting for the result.
-  newDocument->setDocumentType(DocumentType::DT_C_LIKE);
+      docTitle, strReply, DocumentType::DT_C_LIKE);
 
   // Show it.
   setDocumentFile(newDocument);

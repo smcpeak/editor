@@ -11,7 +11,9 @@
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // smbase::xformat
 #include "smbase/gdvalue-json.h"       // gdv::{gdvToJSON, jsonToGDV}
+#include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue-set.h"        // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/iter-and-end.h"       // smbase::ConstIterAndEnd
 #include "smbase/list-util.h"          // smbase::listMoveFront
@@ -453,6 +455,22 @@ void JSON_RPC_Client::selfCheck() const
       names[ai] << " and " << names[bi] <<
       " both have " << commonElement << ".");
   }
+}
+
+
+JSON_RPC_Client::operator GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "JSON_RPC_Client"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_nextRequestID);
+  GDV_WRITE_MEMBER_SYM(m_outstandingRequests);
+  m.mapSetValueAtSym("numPendingReplies", m_pendingReplies.size());
+  GDV_WRITE_MEMBER_SYM(m_canceledRequests);
+  m.mapSetValueAtSym("numPendingNotifications",
+    m_pendingNotifications.size());
+  GDV_WRITE_MEMBER_SYM(m_protocolError);
+
+  return m;
 }
 
 

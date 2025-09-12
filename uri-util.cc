@@ -5,6 +5,7 @@
 
 #include "smbase/codepoint.h"          // CodePoint
 #include "smbase/exc.h"                // EXN_CONTEXT, smbase::xformat
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-env.h"             // smbase::envAsBool
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/string-util.h"        // beginsWith, doubleQuote, hasSubstring
@@ -15,7 +16,19 @@
 #include <string>                      // std::string
 #include <string_view>                 // std::string_view
 
+using namespace gdv;
 using namespace smbase;
+
+
+gdv::GDValue toGDValue(URIPathSemantics semantics)
+{
+  if (semantics == URIPathSemantics::NORMAL) {
+    return "NORMAL"_sym;
+  }
+  else {
+    return "CYGWIN"_sym;
+  }
+}
 
 
 // Return true if `pt` can be used as-is in a URI.

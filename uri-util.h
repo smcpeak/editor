@@ -6,6 +6,7 @@
 #ifndef EDITOR_URI_UTIL_H
 #define EDITOR_URI_UTIL_H
 
+#include "smbase/gdvalue-fwd.h"                  // gdv::GDValue
 #include "smbase/std-string-fwd.h"               // std::string
 #include "smbase/std-string-view-fwd.h"          // std::string_view
 
@@ -20,6 +21,9 @@ enum class URIPathSemantics {
   // URI has to have the reverse transformation to yield a native path.
   CYGWIN
 };
+
+// Return either `NORMAL` or `CYGWIN`.
+gdv::GDValue toGDValue(URIPathSemantics semantics);
 
 
 // Given a file name, convert that into a "file:" URI.

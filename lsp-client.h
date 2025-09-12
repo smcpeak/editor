@@ -297,6 +297,10 @@ public:      // methods
   // Check invariants, throwing an exception on failure.
   void selfCheck() const;
 
+  // Dump a large number of details of this object for diagnostic
+  // purposes.
+  operator gdv::GDValue() const;
+
   // Get how URIs should be interpreted.  This is only set after the
   // server has started since it is determined by the LSP scope.
   URIPathSemantics uriPathSemantics() const

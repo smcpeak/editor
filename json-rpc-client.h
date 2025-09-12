@@ -176,6 +176,9 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
+  // Dump some internals for diagnostic purposes.
+  operator gdv::GDValue() const;
+
   // Send a notification.  Do not wait for any responses.
   //
   // Requires `!hasProtocolError()`.
