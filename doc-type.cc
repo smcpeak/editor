@@ -15,7 +15,7 @@ DEFINE_ENUMERATION_TO_STRING_OR(
   DocumentType,
   DocumentType::NUM_KNOWN_DOCUMENT_TYPES,
   (
-    "DT_UNKNOWN",
+    "DT_PLAIN_TEXT",
     "DT_C_LIKE",
     "DT_CPP",
     "DT_MAKEFILE",

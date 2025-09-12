@@ -171,7 +171,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
   }
 
   if (!docName.hasFilename()) {
-    return DocumentType::DT_UNKNOWN;
+    return DocumentType::DT_PLAIN_TEXT;
   }
 
   // Get file extension.
@@ -250,7 +250,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
     return DocumentType::DT_CPP;
   }
 
-  return DocumentType::DT_UNKNOWN;
+  return DocumentType::DT_PLAIN_TEXT;
 }
 
 

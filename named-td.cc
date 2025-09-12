@@ -45,7 +45,7 @@ NamedTextDocument::NamedTextDocument()
     m_diagnostics(),
     m_tddUpdater(),
     m_observationRecorder(getCore()),
-    m_documentType(DocumentType::DT_UNKNOWN),
+    m_documentType(DocumentType::DT_PLAIN_TEXT),
     m_highlighter(),
     m_highlightTrailingWhitespace(true),
     m_lastFileTimestamp(0),

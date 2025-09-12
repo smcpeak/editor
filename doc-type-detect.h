@@ -11,7 +11,7 @@
 
 
 // Determine the document type based on its name or command line.
-// Return `DT_UNKNOWN` if it cannot be determined.
+// Return `DT_PLAIN_TEXT` if it cannot be determined.
 DocumentType detectDocumentType(DocumentName const &docName);
 
 
