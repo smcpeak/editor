@@ -163,6 +163,8 @@ public:      // funcs
     { return m_highlighter.get(); }
 
   // Change the current language and highlighter.
+  //
+  // Requires: !hasLanguageServicesData()
   void setDocumentType(DocumentType dt);
 
   // ---------------------------- status -------------------------------
@@ -188,6 +190,16 @@ public:      // funcs
   // Otherwise return a user-facing explanation of why not.
   std::optional<std::string> isIncompatibleWithLSP() const;
 
+  // True if we have diagnostics or are tracking changes (or both).  If
+  // this returns false, then this document is completely disassociated
+  // from any language service.
+  bool hasLanguageServicesData() const;
+
+  // Discard all language services data.
+  //
+  // Ensures: !hasLanguageServicesData()
+  void discardLanguageServicesData();
+
   // Get a summary of this document's diagnostic status.
   gdv::GDValue getDiagnosticsSummary() const;
 
@@ -201,6 +213,10 @@ public:      // funcs
 
   // Get the current diagnostics, if any.
   TextDocumentDiagnostics const * NULLABLE getDiagnostics() const;
+
+  // True if we have a set of reported diagnostics associated with this
+  // document, even if that set is empty.
+  bool hasDiagnostics() const;
 
   // True if we have diagnostics, but they apply to a different version
   // of the document from the one we now have in memory.

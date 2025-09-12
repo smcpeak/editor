@@ -64,6 +64,7 @@
   [ "./editor.exe" "-ev=test/lsp-start-server-other-language.ev" "README.md" ]
   [ "./editor.exe" "-ev=test/lsp-go-to-decl-bad-loc.ev" "test/language-test.cc" ]
   [ "./editor.exe" "-ev=test/lsp-go-to-decl-bad-file.ev" "test/language-test.cc" ]
+  [ "./editor.exe" "-ev=test/lsp-set-document-type.ev" "test/language-test.cc" ]
 
   // This test also touches `gets-modified.txt`, so goes last.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" "test/gets-modified.txt" "test/gets-modified2.txt" ]

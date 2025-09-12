@@ -140,6 +140,8 @@ HostAndResourceName NamedTextDocument::directoryHarn() const
 
 void NamedTextDocument::setDocumentType(DocumentType dt)
 {
+  xassertPrecondition(!hasLanguageServicesData());
+
   m_documentType = dt;
   m_highlighter = makeHighlighterForLanguage(dt, getCore());
 }
@@ -220,6 +222,23 @@ NamedTextDocument::isIncompatibleWithLSP() const
 }
 
 
+bool NamedTextDocument::hasLanguageServicesData() const
+{
+  return hasDiagnostics() ||
+         trackingChanges();
+}
+
+
+void NamedTextDocument::discardLanguageServicesData()
+{
+  // Clear the diagnostics.
+  updateDiagnostics(nullptr);
+
+  // Stop tracking changes meant to assist language services.
+  stopTrackingChanges();
+}
+
+
 GDValue NamedTextDocument::getDiagnosticsSummary() const
 {
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "NTD_DiagSummary"_sym);
@@ -260,9 +279,15 @@ NamedTextDocument::getDiagnostics() const
 }
 
 
+bool NamedTextDocument::hasDiagnostics() const
+{
+  return m_diagnostics != nullptr;
+}
+
+
 bool NamedTextDocument::hasOutOfDateDiagnostics() const
 {
-  return m_diagnostics != nullptr &&
+  return hasDiagnostics() &&
          getVersionNumber() != m_diagnostics->getOriginVersion();
 }
 

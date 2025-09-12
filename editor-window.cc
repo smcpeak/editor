@@ -696,13 +696,7 @@ void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
          toGDValue(file->documentName()));
 
   DocumentType dt = detectDocumentType(file->documentName());
-  file->setDocumentType(dt);
-
-  if (dt == DocumentType::DT_DIFF) {
-    // Diff output has lots of lines that are not empty and have
-    // whitespace on them.  I do not want that highlighted.
-    file->m_highlightTrailingWhitespace = false;
-  }
+  setDocumentType(file, dt);
 }
 
 
@@ -1245,17 +1239,37 @@ void EditorWindow::fileSetDocumentType() NOEXCEPT
   bool found = false;
   FOR_EACH_KNOWN_DOCUMENT_TYPE(dt) {
     if (chosenName == languageName(dt)) {
-      doc->setDocumentType(dt);
+      setDocumentType(doc, dt);
       found = true;
       break;
     }
   }
   xassert(found);
 
-  // Notify everyone of the change.
-  this->m_editorGlobal->notifyDocumentAttributeChanged(doc);
-
   GENERIC_CATCH_END
+}
+
+
+void EditorWindow::setDocumentType(
+  NamedTextDocument *ntd,
+  DocumentType newDT)
+{
+  // Close the file with LSP since the document type affects its scope.
+  lspClientManager()->closeFile(ntd);
+
+  // Make the change.
+  ntd->setDocumentType(newDT);
+
+  if (newDT == DocumentType::DT_DIFF) {
+    // Diff output has lots of lines that are not empty and have
+    // whitespace on them.  I do not want that highlighted.
+    //
+    // TODO: This should not be done by changing state.
+    ntd->m_highlightTrailingWhitespace = false;
+  }
+
+  // Notify observers.
+  m_editorGlobal->notifyDocumentAttributeChanged(ntd);
 }
 
 
@@ -1472,15 +1486,16 @@ bool EditorWindow::promptForCommandLine(
 
 
 void EditorWindow::namedTextDocumentAttributeChanged(
-  NamedTextDocumentList const *, NamedTextDocument *) NOEXCEPT
+  NamedTextDocumentList const *, NamedTextDocument *ntd) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   // The title of the file we are looking at could have changed.
   this->editorViewChanged();
 
-  // The highlighter might have changed too.
-  editorWidget()->update();
+  // The widget could be affected in various ways, such as the
+  // highlighter changing, or the LSP status being different.
+  editorWidget()->observeMetadataChange(ntd->getCore());
 
   GENERIC_CATCH_END
 }

@@ -116,6 +116,11 @@ private:     // funcs
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
+  // Set the document type of `ntd` and notify observers.
+  void setDocumentType(
+    NamedTextDocument *ntd,
+    DocumentType newDT);
+
   // Find or start a document running `command` in `dir` on `hostName`,
   // and switch to it.
   void innerLaunchCommand(

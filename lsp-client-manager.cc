@@ -634,12 +634,7 @@ void LSPClientManager::closeFile(NamedTextDocument *ntd)
 
 void LSPClientManager::resetDocumentLSPData(NamedTextDocument *ntd)
 {
-  // Clear the diagnostics.
-  ntd->updateDiagnostics(nullptr);
-
-  // Stop tracking LSP changes since we have an invariant that the set
-  // of files tracking changes is equal to the set of LSP open files.
-  ntd->stopTrackingChanges();
+  ntd->discardLanguageServicesData();
 }
 
 
