@@ -1260,14 +1260,6 @@ void EditorWindow::setDocumentType(
   // Make the change.
   ntd->setDocumentType(newDT);
 
-  if (newDT == DocumentType::DT_DIFF) {
-    // Diff output has lots of lines that are not empty and have
-    // whitespace on them.  I do not want that highlighted.
-    //
-    // TODO: This should not be done by changing state.
-    ntd->m_highlightTrailingWhitespace = false;
-  }
-
   // Notify observers.
   m_editorGlobal->notifyDocumentAttributeChanged(ntd);
 }
@@ -2036,10 +2028,14 @@ void EditorWindow::viewToggleHighlightTrailingWS() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  editorWidget()->toggleHighlightTrailingWhitespace();
-
-  // Includes firing 'editorViewChanged'.
-  editorWidget()->redraw();
+  if (std::optional<std::string> whyCannot =
+        editorWidget()->toggleHighlightTrailingWhitespace()) {
+    complain(*whyCannot);
+  }
+  else {
+    // Includes firing 'editorViewChanged'.
+    editorWidget()->redraw();
+  }
 
   GENERIC_CATCH_END
 }

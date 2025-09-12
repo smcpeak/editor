@@ -1,0 +1,96 @@
+// view-highlight-trailws.ev
+// Test "View | Highlight trailing whitespace".
+
+// In editor with expected document.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
+
+// Trailing WS is initially enabled.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "true")
+
+// Disable it.
+Shortcut("window1.m_menuBar" "Alt+V")
+KeyPress("window1.m_menuBar.viewMenu" "Key_T" "t")
+
+// Check that worked.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "false")
+
+// Re-enable and check.
+Shortcut("window1.m_menuBar" "Alt+V")
+KeyPress("window1.m_menuBar.viewMenu" "Key_T" "t")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "true")
+
+// Change the document type to "Unified diff".
+Shortcut("window1.m_menuBar" "Alt+F")
+KeyPress("window1.m_menuBar.fileMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.fileMenu" "Key_T" "t")
+CheckFocusWidget("window1.chooseDocumentType.#4")
+FocusKeySequence("un")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor with new document type.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "Unified diff")
+
+// This doc type disables trailing WS automatically.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "false")
+
+// Try to enable it.
+Shortcut("window1.m_menuBar" "Alt+V")
+KeyPress("window1.m_menuBar.viewMenu" "Key_T" "t")
+
+// Get error message.
+CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
+CheckMessageBoxTextMatches("window1.#5", "unified diff")
+
+// Dismiss dialog.
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Change the type back to C++.
+Shortcut("window1.m_menuBar" "Alt+F")
+KeyPress("window1.m_menuBar.fileMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.fileMenu" "Key_T" "t")
+CheckFocusWidget("window1.chooseDocumentType.#4")
+FocusKeyPR("Shift+Key_C" "C")
+FocusKeyPR("Shift+Key_Plus" "+")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor with C++ type.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
+
+// Trailing WS is once again enabled, even though it was disabled while
+// showing unified diff.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "true")
+
+// Now run the "true" command.
+Shortcut("window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R")
+CheckFocusWidget("RunCommandDialog.m_prevCommandsListWidget")
+Shortcut("RunCommandDialog.m_newCommandLabel" "Alt+N")
+CheckFocusWidget("RunCommandDialog.m_newCommandLineEdit")
+FocusKeySequence("true")
+FocusKeyPR("Key_Return" "\r")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Trailing WS is disabled for process output.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "false")
+
+// Try to enable it.
+Shortcut("window1.m_menuBar" "Alt+V")
+KeyPress("window1.m_menuBar.viewMenu" "Key_T" "t")
+
+// Get error message.
+CheckFocusWidget("window1.#5.qt_msgbox_buttonbox.#1")
+CheckMessageBoxTextMatches("window1.#5", "process output")
+
+// Dismiss.
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// EOF

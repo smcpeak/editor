@@ -794,8 +794,10 @@ public:      // funcs
   // True if trailing whitespace should be shown.
   bool highlightTrailingWhitespace() const;
 
-  // Toggle whether trailing whitespace should be shown for this document.
-  void toggleHighlightTrailingWhitespace();
+  // Toggle whether trailing whitespace should be shown for this
+  // document.  If that is not possible, return a string with an English
+  // sentence that explains why not.
+  std::optional<std::string> toggleHighlightTrailingWhitespace();
 
   // Get whether to update LSP continously.
   bool getLSPUpdateContinuously() const;

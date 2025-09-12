@@ -87,6 +87,15 @@ private:     // data
   // Current highlighter, if any.
   std::unique_ptr<Highlighter> m_highlighter;
 
+  // When true, the widget will highlight instances of whitespace at the
+  // end of a line, unless that is suppressed due to the document type
+  // or process status.
+  //
+  // In a sense, this is a sort of "overlay" highlighter, as it acts
+  // after the main highlighter.  I could perhaps generalize the idea
+  // of highlighting compositions at some point.
+  bool m_highlightTrailingWhitespace;
+
 public:      // data
   // Modification timestamp (unix time) the last time we interacted
   // with it on the file system.
@@ -106,15 +115,6 @@ public:      // data
   // but perhaps shortened so long as it remains unique.
   string m_title;
 
-  // When true, the widget will highlight instances of whitespace at
-  // the end of a line.  Initially true, but is set to false by
-  // 'setProcessOutputStatus' for other than DPS_NONE.
-  //
-  // In a sense, this is a sort of "overlay" highlighter, as it acts
-  // after the main highlighter.  I could perhaps generalize the idea
-  // of highlighting compositions at some point.
-  bool m_highlightTrailingWhitespace;
-
   // When true, and the file is open on the LSP server, every time the
   // file is modified, we send updated contents.
   bool m_lspUpdateContinuously;
@@ -129,9 +129,6 @@ public:      // funcs
   virtual void selfCheck() const override;
 
   virtual operator gdv::GDValue() const override;
-
-  // Perform additional actions when setting process status.
-  virtual void setDocumentProcessStatus(DocumentProcessStatus status) OVERRIDE;
 
   // ------------------------------ names ------------------------------
   DocumentName const &documentName() const
@@ -166,6 +163,28 @@ public:      // funcs
   //
   // Requires: !hasLanguageServicesData()
   void setDocumentType(DocumentType dt);
+
+  // True if highlighting trailing whitespace is sensible for the
+  // current document type and process status.
+  //
+  // Returns: !reasonCannotHighlightTrailingWhitespace().has_value()
+  bool canHighlightTrailingWhitespace() const;
+
+  // If trailing whitespace is not appropriate for this document, return
+  // an English sentence explaining why.  This message is intented to be
+  // shown to the user when the try to enable trailing ws for such a
+  // document.  Otherwise (trailing ws is appropriate), return nullopt.
+  std::optional<std::string>
+  reasonCannotHighlightTrailingWhitespace() const;
+
+  // Return true if `m_highlightTrailingWhitespace` and
+  // `canHighlightTrailingWhitespace()`.
+  bool highlightTrailingWhitespace() const;
+
+  // Set `m_highlightTrailingWhitespace`.
+  //
+  // Requires: canHighlightTrailingWhitespace()
+  void setHighlightTrailingWhitespace(bool htws);
 
   // ---------------------------- status -------------------------------
   // Document name, process status, and unsaved changes.

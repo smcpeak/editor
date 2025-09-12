@@ -1633,7 +1633,7 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
     // terminator characters).
     if (withinTrailingWhitespace &&
         (codePoint == ' ' || codePoint=='\t') &&
-        m_editor->m_namedDoc->m_highlightTrailingWhitespace) {
+        m_editor->m_namedDoc->highlightTrailingWhitespace()) {
       paint.fillRect(bounds, m_trailingWhitespaceBgColor);
     }
 
@@ -2405,13 +2405,24 @@ void EditorWidget::hideInfo()
 
 bool EditorWidget::highlightTrailingWhitespace() const
 {
-  return m_editor->m_namedDoc->m_highlightTrailingWhitespace;
+  return m_editor->m_namedDoc->highlightTrailingWhitespace();
 }
 
-void EditorWidget::toggleHighlightTrailingWhitespace()
+
+std::optional<std::string>
+EditorWidget::toggleHighlightTrailingWhitespace()
 {
-  m_editor->m_namedDoc->m_highlightTrailingWhitespace =
-    !m_editor->m_namedDoc->m_highlightTrailingWhitespace;
+  NamedTextDocument *ntd = getDocument();
+
+  std::optional<std::string> reason =
+    ntd->reasonCannotHighlightTrailingWhitespace();
+
+  if (!reason) {
+    ntd->setHighlightTrailingWhitespace(
+      !ntd->highlightTrailingWhitespace());
+  }
+
+  return reason;
 }
 
 
@@ -3948,6 +3959,9 @@ string EditorWidget::eventReplayQuery(string const &state)
   }
   else if (state == "markPosition") {
     return markPositionUIString();
+  }
+  else if (state == "highlightTrailingWhitespace") {
+    return boolToString(highlightTrailingWhitespace());
   }
   else if (state == "lspIsFakeServer") {
     return boolToString(editorGlobal()->lspIsFakeServer());

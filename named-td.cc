@@ -46,10 +46,10 @@ NamedTextDocument::NamedTextDocument()
     m_observationRecorder(getCore()),
     m_documentType(DocumentType::DT_UNKNOWN),
     m_highlighter(),
+    m_highlightTrailingWhitespace(true),
     m_lastFileTimestamp(0),
     m_modifiedOnDisk(false),
     m_title(),
-    m_highlightTrailingWhitespace(true),
     m_lspUpdateContinuously(true)
 {
   selfCheck();
@@ -122,16 +122,6 @@ NamedTextDocument::operator gdv::GDValue() const
 }
 
 
-void NamedTextDocument::setDocumentProcessStatus(DocumentProcessStatus status)
-{
-  this->TextDocument::setDocumentProcessStatus(status);
-
-  if (this->isProcessOutput()) {
-    this->m_highlightTrailingWhitespace = false;
-  }
-}
-
-
 HostAndResourceName NamedTextDocument::directoryHarn() const
 {
   return HostAndResourceName(hostName(), directory());
@@ -144,6 +134,48 @@ void NamedTextDocument::setDocumentType(DocumentType dt)
 
   m_documentType = dt;
   m_highlighter = makeHighlighterForLanguage(dt, getCore());
+}
+
+
+bool NamedTextDocument::canHighlightTrailingWhitespace() const
+{
+  return !reasonCannotHighlightTrailingWhitespace().has_value();
+}
+
+
+std::optional<std::string>
+NamedTextDocument::reasonCannotHighlightTrailingWhitespace() const
+{
+  if (isProcessOutput()) {
+    // No point in highlighting trailing whitespace for a document the
+    // user isn't editing.
+    return "The trailing whitespace display is suppressed because "
+           "this document is showing process output.";
+  }
+
+  if (m_documentType == DocumentType::DT_DIFF) {
+    return "The trailing whitespace display is suppressed because "
+           "this document shows unified diff output, which has "
+           "trailing whitespace for every unmodified blank line.";
+  }
+
+  return std::nullopt;
+}
+
+
+bool NamedTextDocument::highlightTrailingWhitespace() const
+{
+  return
+    m_highlightTrailingWhitespace &&
+    canHighlightTrailingWhitespace();
+}
+
+
+void NamedTextDocument::setHighlightTrailingWhitespace(bool htws)
+{
+  xassertPrecondition(canHighlightTrailingWhitespace());
+
+  m_highlightTrailingWhitespace = htws;
 }
 
 
