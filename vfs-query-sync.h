@@ -4,6 +4,7 @@
 #ifndef EDITOR_VFS_QUERY_SYNC_H
 #define EDITOR_VFS_QUERY_SYNC_H
 
+#include "fail-reason-opt.h"           // FailReasonOpt
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
 #include "nearby-file.h"               // IHFExists
@@ -148,7 +149,7 @@ VFS_QuerySync::issueTypedRequestSynchronously(
          replyOrError.left()->m_success == true
 */
 template <class REPLY_TYPE>
-std::optional<std::string> getROEErrorMessage(
+FailReasonOpt getROEErrorMessage(
   smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
     const &replyOrError)
 {

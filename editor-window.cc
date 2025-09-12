@@ -2028,7 +2028,7 @@ void EditorWindow::viewToggleHighlightTrailingWS() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (std::optional<std::string> whyCannot =
+  if (FailReasonOpt whyCannot =
         editorWidget()->toggleHighlightTrailingWhitespace()) {
     complain(*whyCannot);
   }
@@ -2138,7 +2138,7 @@ void EditorWindow::lspStartServer() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (std::optional<std::string> failureReason =
+  if (FailReasonOpt failureReason =
         lspClientManager()->startServer(currentDocument())) {
     complain(*failureReason);
   }
@@ -2295,7 +2295,7 @@ void EditorWindow::lspShowDiagnosticAtCursor() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (std::optional<std::string> msg =
+  if (FailReasonOpt msg =
         editorWidget()->lspShowDiagnosticAtCursor(
           EditorNavigationOptions::ENO_NORMAL)) {
     inform(*msg);
@@ -2309,7 +2309,7 @@ void EditorWindow::lspShowDiagnosticAtCursorOtherWindow() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  if (std::optional<std::string> msg =
+  if (FailReasonOpt msg =
         editorWidget()->lspShowDiagnosticAtCursor(
           EditorNavigationOptions::ENO_OTHER_WINDOW)) {
     inform(*msg);

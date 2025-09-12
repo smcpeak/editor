@@ -16,6 +16,7 @@
 #include "editor-window.h"                       // EditorWindow
 #include "event-recorder.h"                      // EventRecorder
 #include "event-replay.h"                        // EventReplay
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "line-index.h"                          // LineIndex
@@ -567,7 +568,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
     auto replyOrError(
       readFileSynchronously(&m_vfsConnections, waiter, doc->harn()));
 
-    if (std::optional<std::string> errorMsg =
+    if (FailReasonOpt errorMsg =
           getROEErrorMessage(replyOrError)) {
       messageBox(parentWidget, "Error", toQString(*errorMsg));
       return false;

@@ -4,6 +4,7 @@
 #include "lsp-client.h"                          // this module
 
 #include "command-runner.h"                      // CommandRunner
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "json-rpc-client.h"                     // JSON_RPC_Client
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-index.h"                          // LineIndex
@@ -641,7 +642,7 @@ void LSPClient::logToLSPStderr(std::string const &msg)
 }
 
 
-std::optional<std::string> LSPClient::startServer(
+FailReasonOpt LSPClient::startServer(
   LSPClientScope const &scope)
 {
   // ---- Start the server process ----

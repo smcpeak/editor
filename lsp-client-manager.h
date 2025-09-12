@@ -9,6 +9,7 @@
 #include "lsp-client-manager-fwd.h"    // fwds for this module
 
 #include "doc-name-fwd.h"              // DocumentName [n]
+#include "fail-reason-opt.h"           // FailReasonOpt
 #include "host-file-line-fwd.h"        // HostFileLine [n]
 #include "lsp-client-scope.h"          // LSPClientScope
 #include "lsp-client.h"                // LSPClient
@@ -214,7 +215,7 @@ public:      // methods
     NamedTextDocument const *ntd);
 
   // Start the LSP server.  Return an explanation string on failure.
-  std::optional<std::string> startServer(
+  FailReasonOpt startServer(
     NamedTextDocument const *ntd);
 
   // Get the LSP protocol state.

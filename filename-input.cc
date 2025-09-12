@@ -4,6 +4,7 @@
 #include "filename-input.h"            // this module
 
 // editor
+#include "fail-reason-opt.h"           // FailReasonOpt
 #include "vfs-query-sync.h"            // VFS_QuerySync
 
 // smqtutil
@@ -705,7 +706,7 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
     querySync.issueTypedRequestSynchronously<VFS_MakeDirectoryReply>(
       m_currentHostName, std::move(req));
 
-  if (std::optional<std::string> errorMsg =
+  if (FailReasonOpt errorMsg =
         getROEErrorMessage(replyOrError)) {
     TRACE("FilenameInputDialog",
       "Directory creation error: " << *errorMsg);

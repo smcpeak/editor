@@ -15,6 +15,7 @@
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-window.h"                       // EditorWindow
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-line.h"                      // HostFileLine
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
@@ -636,7 +637,7 @@ HostAndResourceName EditorWidget::getDocumentDirectoryHarn() const
 void EditorWidget::openDiagnosticOrFileAtCursor(
   EditorNavigationOptions opts)
 {
-  if (std::optional<std::string> msg = lspShowDiagnosticAtCursor(opts);
+  if (FailReasonOpt msg = lspShowDiagnosticAtCursor(opts);
       !msg.has_value()) {
     // We successfully showed the diagnostic messge, so do not proceed
     // with trying to open a file.
@@ -2409,12 +2410,11 @@ bool EditorWidget::highlightTrailingWhitespace() const
 }
 
 
-std::optional<std::string>
-EditorWidget::toggleHighlightTrailingWhitespace()
+FailReasonOpt EditorWidget::toggleHighlightTrailingWhitespace()
 {
   NamedTextDocument *ntd = getDocument();
 
-  std::optional<std::string> reason =
+  FailReasonOpt reason =
     ntd->reasonCannotHighlightTrailingWhitespace();
 
   if (!reason) {
@@ -2717,7 +2717,7 @@ RCSerfOpt<LSPClient const> EditorWidget::lspRunningClientOptC(
   bool wantErrors)
 {
   // Make sure the document can have LSP services.
-  if (std::optional<std::string> reason =
+  if (FailReasonOpt reason =
         getDocument()->isIncompatibleWithLSP()) {
     if (wantErrors) {
       complain(*reason);
@@ -2840,7 +2840,7 @@ void EditorWidget::lspDoFileOperation(LSPFileOperation operation)
 
   try {
     if (!alreadyOpen) {
-      if (std::optional<std::string> languageIdOpt =
+      if (FailReasonOpt languageIdOpt =
             lspLanguageIdForDTOpt(ntd->documentType())) {
         lcm->openFile(ntd, *languageIdOpt);
       }
@@ -2909,7 +2909,7 @@ void EditorWidget::showDiagnosticDetailsDialog(
 }
 
 
-std::optional<std::string> EditorWidget::lspShowDiagnosticAtCursor(
+FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
   EditorNavigationOptions opts)
 {
   SMFileUtil sfu;
@@ -3617,7 +3617,7 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
   NamedTextDocument *ntd = getDocument();
   TD_VersionNumber origVersion = ntd->getVersionNumber();
 
-  if (std::optional<std::string> msg = innerCommand(cmd.get())) {
+  if (FailReasonOpt msg = innerCommand(cmd.get())) {
     QMessageBox::information(this, "Error", toQString(*msg));
   }
   else {
@@ -3631,8 +3631,7 @@ void EditorWidget::command(std::unique_ptr<EditorCommand> cmd)
 }
 
 
-std::optional<std::string> EditorWidget::innerCommand(
-  EditorCommand const *cmd)
+FailReasonOpt EditorWidget::innerCommand(EditorCommand const *cmd)
 {
   // As this is where we act on the command to make a change, suppress
   // notifications here that might be caused by the change.

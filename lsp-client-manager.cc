@@ -4,6 +4,7 @@
 #include "lsp-client-manager.h"                  // this module
 
 #include "doc-name.h"                            // DocumentName
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-name.h"                           // HostName
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, lspSendUpdatedContents
@@ -409,7 +410,7 @@ NNRCSerf<LSPClient> LSPClientManager::getOrCreateClient(
 }
 
 
-std::optional<std::string> LSPClientManager::startServer(
+FailReasonOpt LSPClientManager::startServer(
   NamedTextDocument const *ntd)
 {
   try {

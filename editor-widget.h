@@ -17,6 +17,7 @@
 #include "editor-settings-fwd.h"                 // EditorSettings
 #include "editor-window-fwd.h"                   // EditorWindow
 #include "event-replay.h"                        // EventReplayQueryable
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-difference.h"                     // LineDifference
 #include "line-index.h"                          // LineIndex
@@ -559,7 +560,7 @@ public:      // funcs
   // The dialog that appears can be used to navigate to the relevant
   // lines; the navigation takes place in a widget that depends on
   // `opts`.
-  std::optional<std::string> lspShowDiagnosticAtCursor(
+  FailReasonOpt lspShowDiagnosticAtCursor(
     EditorNavigationOptions opts);
 
   // Move the cursor to the next or previous diagnostic message.  Do
@@ -704,7 +705,7 @@ public:      // funcs
 
   // Perform `cmd`, but do not steal or record it.  If the action cannot
   // be performed, return a string that explains to the user why not.
-  std::optional<std::string> innerCommand(EditorCommand const *cmd);
+  FailReasonOpt innerCommand(EditorCommand const *cmd);
 
   // Execute a named macro that is stored in `EditorGlobal`.
   void runMacro(std::string const &name);
@@ -795,9 +796,8 @@ public:      // funcs
   bool highlightTrailingWhitespace() const;
 
   // Toggle whether trailing whitespace should be shown for this
-  // document.  If that is not possible, return a string with an English
-  // sentence that explains why not.
-  std::optional<std::string> toggleHighlightTrailingWhitespace();
+  // document.  If that is not possible, return an explanation.
+  FailReasonOpt toggleHighlightTrailingWhitespace();
 
   // Get whether to update LSP continously.
   bool getLSPUpdateContinuously() const;

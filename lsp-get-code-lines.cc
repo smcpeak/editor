@@ -3,9 +3,10 @@
 
 #include "lsp-get-code-lines.h"                  // this module
 
-#include "td-core.h"                             // TextDocumentCore
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-line.h"                      // HostFileLine
 #include "lsp-client.h"                          // LSPClientDocumentState
+#include "td-core.h"                             // TextDocumentCore
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-query-sync.h"                      // readFileSynchronously
 
@@ -100,7 +101,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
     auto replyOrError(
       readFileSynchronously(&vfsConnections, waiter, harn));
 
-    if (std::optional<std::string> errorMsg =
+    if (FailReasonOpt errorMsg =
           getROEErrorMessage(replyOrError)) {
       // Store the error message.
       TRACE2("lspGetCodeLines: got error for " << toGDValue(harn) <<

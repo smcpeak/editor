@@ -1,11 +1,12 @@
 // lsp-client-test.cc
 // Tests for `lsp-client`.
 
-#include "lsp-client-test.h"                    // this module
+#include "lsp-client-test.h"                     // this module
 #include "unit-tests.h"                          // decl for my entry point
 
 #include "lsp-client.h"                          // module under test
 
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-client-scope.h"                    // LSPClientScope
@@ -113,7 +114,7 @@ void LSPClientTester::startServer()
   m_lspClient.selfCheck();
   xassert(m_lspClient.getProtocolState() == LSP_PS_CLIENT_INACTIVE);
 
-  if (std::optional<std::string> failureReason =
+  if (FailReasonOpt failureReason =
         m_lspClient.startServer(LSPClientScope::localCPP())) {
     xfailure_stringbc("startServer: " << *failureReason);
   }

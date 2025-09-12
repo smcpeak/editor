@@ -4,6 +4,7 @@
 #include "named-td.h"                  // this module
 
 #include "doc-type-hilite.h"           // makeHighlighterForLanguage
+#include "fail-reason-opt.h"           // FailReasonOpt
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
@@ -143,7 +144,7 @@ bool NamedTextDocument::canHighlightTrailingWhitespace() const
 }
 
 
-std::optional<std::string>
+FailReasonOpt
 NamedTextDocument::reasonCannotHighlightTrailingWhitespace() const
 {
   if (isProcessOutput()) {
@@ -242,8 +243,7 @@ bool NamedTextDocument::isCompatibleWithLSP() const
 }
 
 
-std::optional<std::string>
-NamedTextDocument::isIncompatibleWithLSP() const
+FailReasonOpt NamedTextDocument::isIncompatibleWithLSP() const
 {
   if (m_documentName.isLocalFilename()) {
     return std::nullopt;

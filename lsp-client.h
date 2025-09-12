@@ -7,6 +7,7 @@
 #include "lsp-client-fwd.h"                      // fwds for this module
 
 #include "command-runner-fwd.h"                  // CommandRunner [n]
+#include "fail-reason-opt.h"                     // FailReasonOpt
 #include "json-rpc-client-fwd.h"                 // JSON_RPC_Client [n]
 #include "json-rpc-reply-fwd.h"                  // JSON_RPC_Error, JSON_RPC_Reply [n]
 #include "line-index-fwd.h"                      // LineIndex [n]
@@ -317,7 +318,7 @@ public:      // methods
   // user regarding what happened.  The string may consist of multiple
   // lines separated by newlines, but there is no final newline.
   //
-  std::optional<std::string> startServer(LSPClientScope const &scope);
+  FailReasonOpt startServer(LSPClientScope const &scope);
 
   // Stop the server process.  Return a success report for the user.
   std::string stopServer();

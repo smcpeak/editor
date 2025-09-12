@@ -8,6 +8,7 @@
 
 #include "doc-name.h"                  // DocumentName
 #include "doc-type.h"                  // DocumentType
+#include "fail-reason-opt.h"           // FailReasonOpt
 #include "hilite.h"                    // Highlighter
 #include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
@@ -174,8 +175,7 @@ public:      // funcs
   // an English sentence explaining why.  This message is intented to be
   // shown to the user when the try to enable trailing ws for such a
   // document.  Otherwise (trailing ws is appropriate), return nullopt.
-  std::optional<std::string>
-  reasonCannotHighlightTrailingWhitespace() const;
+  FailReasonOpt reasonCannotHighlightTrailingWhitespace() const;
 
   // Return true if `m_highlightTrailingWhitespace` and
   // `canHighlightTrailingWhitespace()`.
@@ -207,7 +207,7 @@ public:      // funcs
 
   // If this file can be opened with the LSP server, return nullopt.
   // Otherwise return a user-facing explanation of why not.
-  std::optional<std::string> isIncompatibleWithLSP() const;
+  FailReasonOpt isIncompatibleWithLSP() const;
 
   // True if we have diagnostics or are tracking changes (or both).  If
   // this returns false, then this document is completely disassociated
