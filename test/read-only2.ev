@@ -18,7 +18,7 @@ KeyPress("RunCommandDialog" "Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Wait until it finishes.
-WaitUntilCheckQuery(200 "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" "DPS_FINISHED")
+WaitUntilCheckQuery(200 "window1.frame1.editorFrame.m_editorWidget" "documentProcessState" DPS_FINISHED)
 
 // Check that it is marked as read-only in the File menu.
 CheckActionChecked("window1.m_menuBar.fileMenu.fileToggleReadOnly" true)

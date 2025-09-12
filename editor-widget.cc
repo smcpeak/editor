@@ -3926,7 +3926,7 @@ GDValue EditorWidget::eventReplayQuery(string const &state)
     return stringb(m_editor->lastVisible());
   }
   else if (state == "documentProcessState") {
-    return toString(m_editor->documentProcessStatus());
+    return toGDValue(m_editor->documentProcessStatus());
   }
   else if (state == "hasUnsavedChanges") {
     return m_editor->unsavedChanges();
