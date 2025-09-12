@@ -1,0 +1,22 @@
+// help-debug-open-log-file.ev
+// Test "Help | Debug | Open editor log file".
+
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Open the log file.
+Shortcut("window1.m_menuBar" "Alt+H")
+KeyPress("window1.m_menuBar.helpMenu" "Key_D" "d")
+KeyPress("window1.m_menuBar.helpMenu.helpDebugMenu" "Key_L" "l")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Check its name.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget"
+  "documentFileName" "editor\\.log")
+
+// Check its content.
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget"
+  "documentText" "^Editor version:")
+
+// EOF

@@ -15,6 +15,7 @@
 #include "filename-input.h"                      // FilenameInputDialog
 #include "fonts-dialog.h"                        // FontsDialog
 #include "git-version.h"                         // editor_git_version
+#include "host-and-resource-name.h"              // HostAndResourceName
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-client-manager.h"                  // LSPClientManager
 #include "lsp-client.h"                          // LSPClient
@@ -627,8 +628,9 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("helpDebugMenu");
       QMenu *menu = submenu;
 
-      // Used letters: agsw
+      // Used letters: aglsw
 
+      MENU_ITEM    ("Open editor &log file", helpDebugOpenLogFile);
       MENU_ITEM    ("Dump &window object tree", helpDebugDumpWindowObjectTree);
       MENU_ITEM    ("Dump &application object tree", helpDebugDumpApplicationObjectTree);
       MENU_ITEM_KEY("Run &global invariant self-check ...",
@@ -2656,6 +2658,23 @@ void EditorWindow::helpAboutQt() NOEXCEPT
   GENERIC_CATCH_BEGIN
 
   QMessageBox::aboutQt(this, "An editor");
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::helpDebugOpenLogFile() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (std::optional<std::string> logFnameOpt =
+        editorGlobal()->getEditorLogFileNameOpt()) {
+    openOrSwitchToFile(
+      HostAndResourceName::localFile(*logFnameOpt));
+  }
+  else {
+    complain("The editor log file is disabled.");
+  }
 
   GENERIC_CATCH_END
 }

@@ -327,6 +327,7 @@ public Q_SLOTS:
   void helpKeybindings() NOEXCEPT;
   void helpAbout() NOEXCEPT;
   void helpAboutQt() NOEXCEPT;
+  void helpDebugOpenLogFile() NOEXCEPT;
   void helpDebugDumpWindowObjectTree() NOEXCEPT;
   void helpDebugDumpApplicationObjectTree() NOEXCEPT;
   void helpDebugGlobalSelfCheck() NOEXCEPT;

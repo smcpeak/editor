@@ -545,6 +545,16 @@ void EventReplay::replayCall(GDValue const &command)
              doubleQuote(state));
   }
 
+  else if (funcName == "CheckQueryMatches") {
+    auto [receiver, state, expectRE] =
+      gdvpToTuple<std::string, std::string, std::string>(parser);
+
+    EventReplayQueryable *q = getQueryableFromPath(receiver);
+    string actual = q->eventReplayQuery(state);
+    CHECK_RE_MATCH("CheckQueryMatches " << doubleQuote(receiver) << ' ' <<
+                   doubleQuote(state));
+  }
+
   else if (funcName == "CheckLabel") {
     BIND_STRING_ARGS2(path, expect);
 
