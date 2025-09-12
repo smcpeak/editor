@@ -2698,8 +2698,7 @@ void test_toAdjustedLCoord()
     "three\n");
 
   auto one = [&tde](int ili, int ibi, int oli, int oci) -> void {
-    EXN_CONTEXT_EXPR(ili);
-    EXN_CONTEXT_EXPR(ibi);
+    EXN_CONTEXT_CALL(one, (ili, ibi));
     EXPECT_EQ(tde.toAdjustedLCoord(tmc(ili,ibi)), lmc(oli,oci));
   };
 
