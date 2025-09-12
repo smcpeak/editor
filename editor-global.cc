@@ -1617,6 +1617,11 @@ static int innerMain(int argc, char **argv)
 
       EditorGlobal app(argc, argv);
 
+      // Self-check function to run after every event.
+      auto selfCheck = [&app]() -> void {
+        app.selfCheck();
+      };
+
       Owner<EventRecorder> recorder;
       if (app.m_recordInputEvents) {
         recorder = new EventRecorder("events.out");
@@ -1626,12 +1631,14 @@ static int innerMain(int argc, char **argv)
         // Automated GUI test.
         g_abortUponDevWarning = true;
         cout << "running test: " << app.m_eventFileTest << endl;
-        EventReplay replay(app.m_eventFileTest);
+        EventReplay replay(app.m_eventFileTest, selfCheck);
         std::string error = replay.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;
 
-          // Check all invariants before declaring victory.
+          // Check all invariants before declaring victory.  (This is
+          // redundant with the calls to `selfCheck` done during replay,
+          // but harmless.)
           app.selfCheck();
 
           ret = 0;   // It could still fail, depending on object counts.

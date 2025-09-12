@@ -103,6 +103,10 @@ private:     // instance data
   // Active timer ID, or 0 if none.
   int m_timerId;
 
+  // Function to invoke after every event to check invariants.  This
+  // should throw an exception to indicate a failure.
+  std::function<void ()> m_globalSelfCheck;
+
 private:     // funcs
   // Change the size of the top-level window containing 'widget' so that
   // the widget itself reaches the target size.  This assumes that the
@@ -164,7 +168,8 @@ private:     // funcs
   void killTimerIf();
 
 public:      // funcs
-  explicit EventReplay(string const &fname);
+  explicit EventReplay(
+    string const &fname, std::function<void ()> globalSelfCheck);
   ~EventReplay();
 
   // Inject all the events and check all the assertions.  If everything

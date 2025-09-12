@@ -29,6 +29,7 @@
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
 #include "smbase/run-process.h"        // RunProcess
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote
@@ -107,15 +108,19 @@ EventReplay::QuiescenceEvent::~QuiescenceEvent()
 {}
 
 
-EventReplay::EventReplay(string const &fname)
-  : m_fname(fname),
+EventReplay::EventReplay(
+  string const &fname,
+  std::function<void ()> globalSelfCheck)
+:
+    m_fname(fname),
     m_in(m_fname.c_str()),
     m_gdvalueReader(m_in, fname),
     m_queuedFocusKeySequence(),
     m_testResult(),
     m_eventLoop(),
     m_eventReplayDelayMS(0),
-    m_timerId(0)
+    m_timerId(0),
+    IMEMBFP(globalSelfCheck)
 {
   if (m_in.fail()) {
     // Unfortunately there is no portable way to get the error cause
@@ -939,6 +944,7 @@ bool EventReplay::replayNextEvent()
       // appropriate since the file and line number are still correct
       // when we get here.
       this->replayFocusKey(m_queuedFocusKeySequence.pop());
+      m_globalSelfCheck();
       return true;
     }
 
@@ -954,6 +960,7 @@ bool EventReplay::replayNextEvent()
       EXN_CONTEXT(loc);
 
       this->replayCall(*command);
+      m_globalSelfCheck();
       return true;
     }
     else {
@@ -1063,6 +1070,10 @@ void EventReplay::killTimerIf()
 
 string EventReplay::runTest()
 {
+  // Do one self-check at the start so a later failure is known to be
+  // caused by something that happened while replaying.
+  m_globalSelfCheck();
+
   if (m_eventReplayDelayMS) {
     // Use timer-based notification.
     TRACE1("installing first timer");
