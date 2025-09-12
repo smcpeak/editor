@@ -3964,11 +3964,14 @@ GDValue EditorWidget::eventReplayQuery(string const &state)
   }
   else if (state == "lspNumDiagnostics") {
     // Returns a number or "null".
-    return stringb(toGDValue(getDocument()->getNumDiagnostics()));
+    return toGDValue(getDocument()->getNumDiagnostics());
   }
   else if (state == "selfCheck") {
     // Just invoke self check, throwing if it fails.  The returned
     // string is not meaningful.
+    //
+    // Note: This should be unnecessary since the event replay
+    // infrastructure does a global self-check after every event.
     this->selfCheck();
     return "";
   }

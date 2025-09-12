@@ -15,14 +15,14 @@ KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
 
 // Status should change to "-".
 WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "null")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" null)
 
 // Open the file.
 Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
 
 // Status widget should change to 2.
 WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "2")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" 2)
 
 // Change the document type to "Plain text".
 Shortcut("window1.m_menuBar" "Alt+F")
@@ -41,7 +41,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "Plain tex
 
 // LSP status should reflect there being no server and no diagnostics.
 CheckLabel("window1.m_statusArea.m_lspStatusWidget" "_")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "null")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" null)
 
 // Change the type back to "C++".
 Shortcut("window1.m_menuBar" "Alt+F")
@@ -62,13 +62,13 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
 CheckLabel("window1.m_statusArea.m_lspStatusWidget" "-")
 
 // But there are no diagnostics.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "null")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" null)
 
 // Open the file again.
 Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
 
 // Status widget should change to 2.
 WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" "2")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" 2)
 
 // EOF
