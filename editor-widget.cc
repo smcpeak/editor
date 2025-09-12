@@ -3917,12 +3917,6 @@ int EditorWidget::getFullLineHeight() const
 }
 
 
-static char const *boolToString(bool b)
-{
-  return b? "true" : "false";
-}
-
-
 GDValue EditorWidget::eventReplayQuery(string const &state)
 {
   if (state == "firstVisible") {
@@ -3960,14 +3954,13 @@ GDValue EditorWidget::eventReplayQuery(string const &state)
     return markPositionUIString();
   }
   else if (state == "highlightTrailingWhitespace") {
-    return boolToString(highlightTrailingWhitespace());
+    return highlightTrailingWhitespace();
   }
   else if (state == "lspIsFakeServer") {
-    return boolToString(editorGlobal()->lspIsFakeServer());
+    return editorGlobal()->lspIsFakeServer();
   }
   else if (state == "lspIsRunningNormally") {
-    return boolToString(
-      lspClientManager()->isRunningNormally(getDocument()));
+    return lspClientManager()->isRunningNormally(getDocument());
   }
   else if (state == "lspNumDiagnostics") {
     // Returns a number or "null".

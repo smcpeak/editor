@@ -7,7 +7,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
 
 // Trailing WS is initially enabled.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" true)
 
 // Disable it.
 Shortcut("window1.m_menuBar" "Alt+V")
@@ -15,13 +15,13 @@ KeyPress("window1.m_menuBar.viewMenu" "Key_T" "t")
 
 // Check that worked.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" false)
 
 // Re-enable and check.
 Shortcut("window1.m_menuBar" "Alt+V")
 KeyPress("window1.m_menuBar.viewMenu" "Key_T" "t")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" true)
 
 // Change the document type to "Unified diff".
 Shortcut("window1.m_menuBar" "Alt+F")
@@ -36,7 +36,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "Unified diff")
 
 // This doc type disables trailing WS automatically.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" false)
 
 // Try to enable it.
 Shortcut("window1.m_menuBar" "Alt+V")
@@ -65,7 +65,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "C++")
 
 // Trailing WS is once again enabled, even though it was disabled while
 // showing unified diff.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" true)
 
 // Now run the "true" command.
 Shortcut("window1.m_menuBar.fileMenu.fileLaunchCommand" "Alt+R")
@@ -79,7 +79,7 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Trailing WS is disabled for process output.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" "false")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "highlightTrailingWhitespace" false)
 
 // Try to enable it.
 Shortcut("window1.m_menuBar" "Alt+V")

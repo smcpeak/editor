@@ -9,7 +9,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 RemoveFileIfExists("test/language-test-copy.cc")
 
 // Activate fake LSP server.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" true)
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
 

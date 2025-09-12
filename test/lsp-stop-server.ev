@@ -8,7 +8,7 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 CheckLabel("window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Start LSP.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" true)
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
 

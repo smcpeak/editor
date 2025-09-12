@@ -5,7 +5,7 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-arbitrary-requests.cc")
 
 // Start LSP and open the file.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" "true")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspIsFakeServer" true)
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
 Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
