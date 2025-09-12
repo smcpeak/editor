@@ -449,7 +449,9 @@ void LSPClient::on_childProcessTerminated() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE1("LSP server process terminated");
+  logToLSPStderr(stringb(
+    "LSP server process terminated: " <<
+    toString(m_commandRunner->getTerminationDescription())));
 
   // The child has already shut down, but we need to clean up the
   // associated objects and reset the protocol state.
@@ -515,7 +517,7 @@ LSPClient::LSPClient(
 
   if (m_lspStderrFile) {
     TRACE1("Server log file: " << m_lspStderrFile->getFname());
-    m_lspStderrFile->stream() << "Started LSP client at " <<
+    m_lspStderrFile->stream() << "Created LSPClient object at " <<
       localTimeString() << "\n";
     m_lspStderrFile->stream().flush();
   }
@@ -569,6 +571,13 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
       // shebang.
       m_commandRunner->setProgram("env");
 
+      // `lspScopeForNTD` ensures the directory is set.
+      xassert(scope.hasDirectory());
+      m_commandRunner->setWorkingDirectory(
+        toQString(scope.directory()));
+      logToLSPStderr(stringb(
+        "Set working directory to: " << scope.directory()));
+
       QStringList args;
       args << "pylsp";
       if (envAsBool("PYLSP_VERBOSE_LOG")) {
@@ -618,6 +627,20 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
 }
 
 
+void LSPClient::logToLSPStderr(std::string const &msg)
+{
+  if (m_lspStderrFile) {
+    TRACE1("Logged to server stderr: " << msg);
+    m_lspStderrFile->stream() << localTimeString() << ": "
+                              << msg << "\n";
+    m_lspStderrFile->stream().flush();
+  }
+  else {
+    TRACE1("Wanted to log to server stderr but there is none: " << msg);
+  }
+}
+
+
 std::optional<std::string> LSPClient::startServer(
   LSPClientScope const &scope)
 {
@@ -632,8 +655,9 @@ std::optional<std::string> LSPClient::startServer(
 
   configureCommandRunner(scope);
 
-  TRACE1("Starting server process: " <<
-         toString(m_commandRunner->getCommandLine()));
+  logToLSPStderr(stringb(
+    "Starting server process: " <<
+    toString(m_commandRunner->getCommandLine())));
   m_commandRunner->startAsynchronous();
 
   // Synchronously wait for the process to start.  Starting the server

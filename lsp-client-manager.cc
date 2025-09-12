@@ -20,7 +20,6 @@
 #include "smbase/sm-is-equal.h"                  // smbase::is_equal
 #include "smbase/sm-macros.h"                    // IMEMBFP
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
-#include "smbase/string-util.h"                  // replaceNonAlnumWith
 #include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
 #include <memory>                                // std::unique_ptr
@@ -312,7 +311,7 @@ void LSPClientManager::disconnectAllClientSignals()
 RCSerfOpt<LSPClient const> LSPClientManager::getClientOptC(
   NamedTextDocument const *ntd) const
 {
-  LSPClientScope scope(ntd->hostName(), ntd->documentType());
+  LSPClientScope scope = LSPClientScope::forNTD(ntd);
   auto it = m_clients.find(scope);
   if (it != m_clients.end()) {
     return RCSerf<LSPClient const>(& (*it).second->client() );
@@ -357,9 +356,13 @@ std::string LSPClientManager::makeStderrLogFileInitialName(
   return stringb(
     m_logFileDirectory << "/"
     "lsp-server-" <<
-    replaceNonAlnumWith(scope.m_hostName.toString(), '-') <<
-    "-" <<
-    lspLanguageIdForDT(scope.m_documentType) <<
+
+    // The fact that this name is not necessarily unique is not a
+    // problem because the log file infrastructure will add a suffix, if
+    // needed, to ensure the name is unique on disk (not already in use
+    // by any process).
+    scope.semiUniqueIDString() <<
+
     ".log");
 }
 
@@ -367,7 +370,7 @@ std::string LSPClientManager::makeStderrLogFileInitialName(
 NNRCSerf<LSPClient> LSPClientManager::getOrCreateClient(
   NamedTextDocument const *ntd)
 {
-  LSPClientScope scope(ntd->hostName(), ntd->documentType());
+  LSPClientScope scope = LSPClientScope::forNTD(ntd);
 
   {
     auto it = m_clients.find(scope);
@@ -473,6 +476,9 @@ std::string LSPClientManager::getServerStatus(
 
   oss << "Using fake server: " << GDValue(!useRealServer()) << ".\n";
 
+  LSPClientScope scope = LSPClientScope::forNTD(ntd);
+  oss << "LSP scope: " << scope.description() << ".\n";
+
   if (auto client = getClientOptC(ntd)) {
     oss << "Status: " << client->checkStatus() << "\n";
 
@@ -498,7 +504,7 @@ std::string LSPClientManager::getServerStatus(
 std::string LSPClientManager::stopServer(
   NamedTextDocument const *ntd)
 {
-  LSPClientScope scope(ntd->hostName(), ntd->documentType());
+  LSPClientScope scope = LSPClientScope::forNTD(ntd);
   auto it = m_clients.find(scope);
   if (it != m_clients.end()) {
     LSPClient &client = (*it).second->client();

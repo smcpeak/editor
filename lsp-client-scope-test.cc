@@ -15,14 +15,33 @@ OPEN_ANONYMOUS_NAMESPACE
 
 void test_basics()
 {
-  EXPECT_EQ(
-    LSPClientScope::localCPP().description(),
-    "C++ files on local host");
+  {
+    LSPClientScope s = LSPClientScope::localCPP();
+    EXPECT_EQ(s.hostString(), "local");
+    EXPECT_EQ(s.hasDirectory(), false);
+    EXPECT_EQ(s.languageName(), "C++");
+    EXPECT_EQ(s.description(),
+      "C++ files on local host");
+    EXPECT_EQ(s.semiUniqueIDString(),
+      "local-cpp");
+  }
 
-  EXPECT_EQ(
-    LSPClientScope(HostName::asSSH("some-machine"),
-                   DocumentType::DT_OCAML).description(),
-    "OCaml files on ssh:some-machine host");
+  {
+    LSPClientScope s =
+      LSPClientScope(HostName::asSSH("some-machine"),
+                     "/home/user/project/",
+                     DocumentType::DT_PYTHON);
+    EXPECT_EQ(s.hostString(), "ssh:some-machine");
+    EXPECT_EQ(s.hasDirectory(), true);
+    EXPECT_EQ(s.directory(), "/home/user/project/");
+    EXPECT_EQ(s.directoryFinalName(), "project");
+    EXPECT_EQ(s.languageName(), "Python");
+    EXPECT_EQ(s.description(),
+      "Python files on ssh:some-machine host "
+      "and in directory \"/home/user/project/\"");
+    EXPECT_EQ(s.semiUniqueIDString(),
+      "ssh-some-machine-project-python");
+  }
 }
 
 

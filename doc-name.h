@@ -112,7 +112,8 @@ public:      // methods
   void setNonFileResourceName(HostName const &hostName,
     string const &name, string const &dir);
 
-  // Get the directory associated with the document.
+  // Get the directory associated with the document.  As noted above, it
+  // ends with a path separator (unless it is empty).
   string directory() const             { return m_directory; }
 
   // Return `harn.toString()`.

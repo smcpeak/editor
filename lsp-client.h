@@ -255,6 +255,12 @@ private:     // methods
   // Set `m_commandRunner` to run the LSP server program for `scope`.
   void configureCommandRunner(LSPClientScope const &scope);
 
+  // Append `msg` to the file that holds the server's stderr.  A
+  // timestamp is prepended, a newline appended, and the file
+  // immediately flushed.  This should generally only be used when we
+  // know the server process is not running.
+  void logToLSPStderr(std::string const &msg);
+
 private Q_SLOTS:
   // Slots to respond to similarly-named `JSON_RPC_Client` signals.
   void on_hasPendingNotifications() NOEXCEPT;
