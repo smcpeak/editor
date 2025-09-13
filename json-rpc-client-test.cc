@@ -159,10 +159,32 @@ void checkInvalidRequestError(JSON_RPC_Error const &error)
 }
 
 
+// Increment the expectation by the specified amounts, then check that
+// it agrees with the actual protocol object.
+void checkStats(
+  JSON_RPC_Client &lsp,
+  JSON_RPC_Stats &expect,
+  int nrs,
+  int nrr,
+  int nns,
+  int nnr)
+{
+  expect.m_numRequestsSent += nrs;
+  expect.m_numRepliesReceived += nrr;
+  expect.m_numNotificationsSent += nns;
+  expect.m_numNotificationsReceived += nnr;
+
+  EXPECT_EQ_GDV(lsp.stats(), expect);
+}
+
+
 void performLSPInteractionSemiSynchronously(
   JSON_RPC_Client &lsp,
   LSPTestRequestParams const &params)
 {
+  JSON_RPC_Stats expectStats;
+  checkStats(lsp, expectStats, 0,0,0,0);
+
   // Initialize the protocol.
   sendRequestPrintReply(lsp, "initialize", GDVMap{
     // It seems `clangd` ignores this.
@@ -178,7 +200,9 @@ void performLSPInteractionSemiSynchronously(
 
     { "capabilities", GDVMap{} },
   });
+  checkStats(lsp, expectStats, 1,1,0,0);
   lsp.sendNotification("initialized", GDVMap{});
+  checkStats(lsp, expectStats, 0,0,1,0);
 
   // Prepare to ask questions about the source file.
   DIAG("Sending notification textDocument/didOpen ...");
@@ -195,6 +219,7 @@ void performLSPInteractionSemiSynchronously(
       }
     }
   });
+  checkStats(lsp, expectStats, 0,0,1,0);
 
   // Parameters from the command line that will be passed to each of the
   // next few commands, expressed as GDV.
@@ -216,22 +241,30 @@ void performLSPInteractionSemiSynchronously(
 
   // Get some info from the LSP server.
   sendRequestPrintSuccessReply(lsp, "textDocument/hover", paramsGDV);
+  checkStats(lsp, expectStats, 1,1,0,1);
   sendRequestPrintSuccessReply(lsp, "textDocument/declaration", paramsGDV);
+  checkStats(lsp, expectStats, 1,1,0,0);
   sendRequestPrintSuccessReply(lsp, "textDocument/definition", paramsGDV);
+  checkStats(lsp, expectStats, 1,1,0,0);
   sendRequestPrintSuccessReply(lsp, "textDocument/completion", paramsGDV);
+  checkStats(lsp, expectStats, 1,1,0,0);
 
   {
     JSON_RPC_Error error = sendRequestPrintErrorReply(lsp, "$/methodNotFound", {});
     checkMethodNotFoundError(error);
+    checkStats(lsp, expectStats, 1,1,0,0);
 
     error = sendRequestPrintErrorReply(lsp, "$/invalidRequest", {});
     checkInvalidRequestError(error);
+    checkStats(lsp, expectStats, 1,1,0,0);
   }
 
   // Shut down the protocol.
   sendRequestPrintReply(lsp, "shutdown", GDVMap{});
+  checkStats(lsp, expectStats, 1,1,0,0);
   DIAG("Sending notification exit ...");
   lsp.sendNotification("exit", GDVMap{});
+  checkStats(lsp, expectStats, 0,0,1,0);
 
   DIAG("Waiting for child to terminate ...");
   while (lsp.isChildRunning()) {
@@ -241,6 +274,7 @@ void performLSPInteractionSemiSynchronously(
   if (lsp.hasErrorData()) {
     DIAG("Server stderr: " << lsp.takeErrorData().toStdString());
   }
+  checkStats(lsp, expectStats, 0,0,0,0);
 }
 
 

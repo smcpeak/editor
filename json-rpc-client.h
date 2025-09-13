@@ -27,6 +27,21 @@
 #include <vector>                      // std::vector
 
 
+// Collection of stats maintained for diagnostics and curiosity.
+class JSON_RPC_Stats {
+public:      // data
+  // Numbers of various communication events.
+  int m_numRequestsSent = 0;
+  int m_numRepliesReceived = 0;
+  int m_numNotificationsSent = 0;
+  int m_numNotificationsReceived = 0;
+
+public:
+  // Return them as an ordered map.
+  operator gdv::GDValue() const;
+};
+
+
 // Manage communication with a child process that is a JSON-RPC server
 // communicating over stdin and stdout.
 class JSON_RPC_Client : public QObject {
@@ -104,6 +119,9 @@ private:     // data
   // makes further communication with the child impossible.
   std::optional<std::string> m_protocolError;
 
+  // Various statistics for diagnostic purposes.
+  JSON_RPC_Stats m_stats;
+
 private:     // methods
   // Return a string describing `res`.
   static char const *toString(MessageParseResult res);
@@ -178,6 +196,9 @@ public:      // methods
 
   // Dump some internals for diagnostic purposes.
   operator gdv::GDValue() const;
+
+  JSON_RPC_Stats const &stats() const
+    { return m_stats; }
 
   // Send a notification.  Do not wait for any responses.
   //

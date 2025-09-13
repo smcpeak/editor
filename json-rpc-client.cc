@@ -45,6 +45,20 @@ using namespace smbase;
 INIT_TRACE("json-rpc-client");
 
 
+// -------------------------- JSON_RPC_Stats ---------------------------
+JSON_RPC_Stats::operator GDValue() const
+{
+  GDValue m(GDVK_TAGGED_ORDERED_MAP, "JSON_RPC_Stats"_sym);
+
+  GDV_WRITE_MEMBER_SYM(m_numRequestsSent);
+  GDV_WRITE_MEMBER_SYM(m_numRepliesReceived);
+  GDV_WRITE_MEMBER_SYM(m_numNotificationsSent);
+  GDV_WRITE_MEMBER_SYM(m_numNotificationsReceived);
+
+  return m;
+}
+
+
 // -------------------------- JSON_RPC_Client --------------------------
 /*static*/ char const *JSON_RPC_Client::toString(MessageParseResult res)
 {
@@ -262,6 +276,7 @@ auto JSON_RPC_Client::innerProcessOutputData() -> MessageParseResult
 
   // If it has an "id" field then it is a reply.
   if (msg.mapContains("id")) {
+    ++m_stats.m_numRepliesReceived;
     GDValueParser gdvId = msg.mapGetValueAt("id");
 
     // Make sure the value is an integer in the proper range.
@@ -301,6 +316,7 @@ auto JSON_RPC_Client::innerProcessOutputData() -> MessageParseResult
   }
 
   else {
+    ++m_stats.m_numNotificationsReceived;
     TRACE1("received notification: " << msgValue.asIndentedString());
 
     msg.clearParserPointers();
@@ -407,7 +423,8 @@ JSON_RPC_Client::JSON_RPC_Client(
     m_pendingReplies(),
     m_canceledRequests(),
     m_pendingNotifications(),
-    m_protocolError()
+    m_protocolError(),
+    m_stats()
 {
   QObject::connect(&child, &CommandRunner::signal_outputDataReady,
                    this, &JSON_RPC_Client::processOutputData);
@@ -469,6 +486,7 @@ JSON_RPC_Client::operator GDValue() const
   m.mapSetValueAtSym("numPendingNotifications",
     m_pendingNotifications.size());
   GDV_WRITE_MEMBER_SYM(m_protocolError);
+  GDV_WRITE_MEMBER_SYM(m_stats);
 
   return m;
 }
@@ -486,6 +504,7 @@ void JSON_RPC_Client::sendNotification(
   std::string body = makeNotificationBody(method, params);
 
   send(std::move(body));
+  ++m_stats.m_numNotificationsSent;
 }
 
 
@@ -526,6 +545,7 @@ int JSON_RPC_Client::sendRequest(
 
   setInsertUnique(m_outstandingRequests, id);
   send(std::move(body));
+  ++m_stats.m_numRequestsSent;
 
   return id;
 }
