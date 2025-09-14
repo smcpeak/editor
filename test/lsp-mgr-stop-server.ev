@@ -11,8 +11,8 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 // Start LSP.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
 
 // Open the file.
 Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")

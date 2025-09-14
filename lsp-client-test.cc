@@ -382,8 +382,9 @@ void LSPClientTester::testSynchronously()
   stopServer();
   setState(S_STOPPING);
 
-  // TODO: The number of open files should be 0 here, not 1.
-  EXPECT_EQ(m_lspClient.numOpenFiles(), 1);
+  // The number of open files drops to 0 as soon as we initiate the
+  // server shutdown.
+  EXPECT_EQ(m_lspClient.numOpenFiles(), 0);
 
   // Cannot use `waitUntil` because the goal is to wait until the server
   // is not running normally.

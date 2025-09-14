@@ -237,8 +237,15 @@ private:     // data
   URIPathSemantics m_uriPathSemantics;
 
 private:     // methods
+  // Clear the set of open documents.
+  //
+  // Ensures: numOpenFiles() == 0
+  void resetDocumentState();
+
   // Reset the state associated with the protocol.  This is done when we
   // shut down the server, and prepares for starting it again.
+  //
+  // Ensures: numOpenFiles() == 0
   void resetProtocolState();
 
   // Kill the server and return this object to its initial state.
@@ -266,6 +273,9 @@ private:     // methods
   // immediately flushed.  This should generally only be used when we
   // know the server process is not running.
   void logToLSPStderr(std::string const &msg);
+
+  // Main logic of `stopServer`.
+  std::string innerStopServer();
 
 private Q_SLOTS:
   // Slots to respond to similarly-named `JSON_RPC_Client` signals.
@@ -330,6 +340,8 @@ public:      // methods
   FailReasonOpt startServer(LSPClientScope const &scope);
 
   // Stop the server process.  Return a success report for the user.
+  //
+  // Ensures: numOpenFiles() == 0
   std::string stopServer();
 
   // Report on the current status of the LSP server.  This string

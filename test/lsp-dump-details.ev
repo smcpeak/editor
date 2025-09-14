@@ -121,16 +121,8 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 // Stop the C++ LSP without first closing the file.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-
-// If we don't wait here, then an assertion will fail:
-//
-//   test FAILED: test/lsp-dump-details.ev: 124:1: EditorGlobal::selfCheck: xassert-eq-container.h:46: assertion failed: Expected equal sets, but `openLSPDocs` has element DocumentName[hostName:HostName[sshHostName:""] resourceName:"D:/cygwin/home/Scott/wrk/editor/test/language-test.cc" hasFilename:true directory:"D:/cygwin/home/Scott/wrk/editor/test/"] that `trackedDocs` lacks.
-//
-// This means there is a short period where the invariant does not hold.
-// TODO: Fix that invariant.
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
-
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Dump LSP.
 Shortcut("window1.m_menuBar" "Alt+L")
@@ -179,8 +171,8 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-t
 // Stop Python LSP server.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Dump LSP.
 Shortcut("window1.m_menuBar" "Alt+L")

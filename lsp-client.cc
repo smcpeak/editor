@@ -219,19 +219,44 @@ RCSerf<LSPDocumentInfo const> LSPClientDocumentState::getDocInfo(
 
 
 // ----------------------------- LSPClient -----------------------------
+void LSPClient::resetDocumentState()
+{
+  m_documentInfo.clear();
+  m_filesWithPendingDiagnostics.clear();
+
+  // Emitting a signal here presents an interesting theoretical problem:
+  // what if the recipient of this signal, which is delivered
+  // synchronously by default, turns around and calls back into this
+  // object, opening files, etc.?  That would invalidate the
+  // postcondition.
+  //
+  // One idea is to insist that this signal only use a queued
+  // connection, since that makes it easier to reason about
+  // postconditions, although I don't think Qt provides a way to enforce
+  // that.
+  //
+  // Another idea is to temporarily "lock" this object by setting a flag
+  // that must be false whenever any public non-const method is invoked.
+  Q_EMIT signal_changedNumOpenFiles();
+
+  xassertPostcondition(numOpenFiles() == 0);
+}
+
+
 void LSPClient::resetProtocolState()
 {
   m_initializeRequestID = 0;
   m_shutdownRequestID = 0;
   m_waitingForTermination = false;
   m_serverCapabilities.reset();
-  m_documentInfo.clear();
-  m_filesWithPendingDiagnostics.clear();
   m_pendingErrorMessages.clear();
   m_lspClientProtocolError.reset();
   m_uriPathSemantics = URIPathSemantics::NORMAL;
 
-  Q_EMIT signal_changedNumOpenFiles();
+  // Do this last because it emits a signal.
+  resetDocumentState();
+
+  xassertPostcondition(numOpenFiles() == 0);
 }
 
 
@@ -794,8 +819,17 @@ FailReasonOpt LSPClient::startServer(
 
 std::string LSPClient::stopServer()
 {
-  // TODO: This function should ensure that `numOpenFiles()==0`.
+  std::string ret = innerStopServer();
 
+  // Check our advertised postcondition on all paths.
+  xassertPostcondition(numOpenFiles() == 0);
+
+  return ret;
+}
+
+
+std::string LSPClient::innerStopServer()
+{
   if (!m_lsp) {
     if (m_commandRunner) {
       forciblyShutDown();
@@ -841,6 +875,11 @@ std::string LSPClient::stopServer()
     TRACE1("Sending shutdown request.");
     m_shutdownRequestID = m_lsp->sendRequest("shutdown", GDVMap{});
     msgs.push_back("Initiated server shutdown.");
+
+    // Although the server process is still running, from the
+    // perspective of a user of this class, all files should now appear
+    // closed.
+    resetDocumentState();
 
     // Now in `LSP_PS_SHUTDOWN1`.
     Q_EMIT signal_changedProtocolState();

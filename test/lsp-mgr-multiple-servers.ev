@@ -72,11 +72,8 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 // Stop LSP #3.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-
-// TODO: I have to check this first in order to avoid an assertion
-// violation.
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Switch to lsp-test-server.py.
 Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
@@ -89,8 +86,8 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-t
 // Stop LSP #2.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Switch to create-tuple-class.py.
 Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
@@ -104,8 +101,8 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "creat
 // Stop LSP #1.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Open the dialog.
 Shortcut("window1.m_menuBar" "Alt+L")

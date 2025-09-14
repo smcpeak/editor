@@ -23,8 +23,8 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 // Start LSP server.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
 
 // Now there is an entry for that server.
 CheckTableWidgetContents("LSPServersDialog.m_table" [
@@ -52,8 +52,8 @@ CheckTableWidgetContents("LSPServersDialog.m_table" [
 // Stop LSP.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Server is inactive.
 CheckTableWidgetContents("LSPServersDialog.m_table" [

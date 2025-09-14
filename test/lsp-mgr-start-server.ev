@@ -11,14 +11,14 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 // Start LSP.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
 
 // Stop it.  This way we have an entry in the dialog.
 Shortcut("window1.m_menuBar" "Alt+L")
 KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
-WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 
 // Open the dialog.
 Shortcut("window1.m_menuBar" "Alt+L")
