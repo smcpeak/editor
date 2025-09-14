@@ -22,13 +22,15 @@
 #include "smbase/c-string-reader.h"    // parseQuotedCString
 #include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
 #include "smbase/exc.h"                // smbase::{XBase, XMessage}, EXN_CONTEXT
-#include "smbase/gdvalue-tuple.h"      // gdv::gdvpToTuple
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpTo}
+#include "smbase/gdvalue-tuple.h"      // gdv::gdvpToTuple
+#include "smbase/gdvalue-vector.h"     // gdv::gdvpTo<std::vector>
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/overflow.h"           // safeToInt
 #include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
 #include "smbase/run-process.h"        // RunProcess
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-is-equal.h"        // smbase::is_equal
 #include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -329,6 +331,14 @@ static bool regexSearch(string const &str, string const &re)
 }
 
 
+static void checkRegexSearch(string const &actual, string const &expectRE)
+{
+  if (!regexSearch(actual, expectRE)) {
+    xmessagesb("re match fail: " << GDVN_OMAP_EXPRS(actual, expectRE));
+  }
+}
+
+
 static string getListWidgetContents(QListWidget *listWidget)
 {
   std::vector<std::string> items;
@@ -336,6 +346,131 @@ static string getListWidgetContents(QListWidget *listWidget)
     items.push_back(toString(listWidget->item(i)->text()));
   }
   return join(suffixAll(items, "\n"), "");
+}
+
+
+template <typename AT, typename ET>
+void checkEquality(
+  char const *actualName,
+  AT const &actual,
+  ET const &expect)
+{
+  if (!is_equal(actual, expect)) {
+    xmessagesb(actualName << ": mismatch: " <<
+               GDVN_OMAP_EXPRS(actual, expect));
+  }
+}
+
+#define CHECK_EQUALITY(actual, expect) \
+  checkEquality(#actual, actual, expect)
+
+
+// Check `actual` against `expect`, which can be either a string, for
+// exact comparison, or a tuple like re("blah"), for regex match.
+static void checkString(
+  char const *actualName,
+  std::string const &actual,
+  GDValueParser const &expect)
+{
+  if (expect.isString()) {
+    checkEquality(actualName, actual, expect.stringGet());
+    return;
+  }
+
+  if (expect.isTaggedTupleSize("re", 1)) {
+    std::string expectRE = expect.tupleGetValueAt(0).stringGet();
+    checkRegexSearch(actual, expectRE);
+    return;
+  }
+
+  xmessagesb("unrecognized match target: " << expect.getValue());
+}
+
+
+static std::string getTableWidgetCell(
+  QTableWidget const *table,
+  int row,
+  int col)
+{
+  QTableWidgetItem *item = table->item(row, col);
+  xassert(item);
+  return toString(item->text());
+}
+
+
+static void checkTableWidgetCell(
+  QTableWidget const *table,
+  int row,
+  int col,
+  GDValueParser const &expect)
+{
+  EXN_CONTEXT_EXPR(col);
+  checkString("cell text", getTableWidgetCell(table, row, col), expect);
+}
+
+
+static std::vector<std::string> getTableWidgetRow(
+  QTableWidget const *table,
+  int row)
+{
+  std::vector<std::string> ret;
+
+  int const numColumns = table->columnCount();
+  for (int col=0; col < numColumns; ++col) {
+    ret.push_back(getTableWidgetCell(table, row, col));
+  }
+
+  return ret;
+}
+
+
+static void checkTableWidgetRow(
+  QTableWidget const *table,
+  int row,
+  GDValueParser const &expect)
+{
+  EXN_CONTEXT_EXPR(row);
+
+  int const numColumns = table->columnCount();
+  CHECK_EQUALITY(numColumns, expect.sequenceSize());
+
+  for (int col=0; col < numColumns; ++col) {
+    checkTableWidgetCell(table, row, col,
+      expect.sequenceGetValueAt(col));
+  }
+}
+
+
+static std::vector<std::vector<std::string>> getTableWidgetContents(
+  QTableWidget const *table)
+{
+  std::vector<std::vector<std::string>> ret;
+
+  int const numRows = table->rowCount();
+
+  for (int row=0; row < numRows; ++row) {
+    ret.push_back(getTableWidgetRow(table, row));
+  }
+
+  return ret;
+}
+
+
+// TODO: Generalize this to a GDValue-vs-GDValue matcher.
+static void checkTableWidgetContents(
+  QTableWidget const *table,
+  GDValueParser const &expect)
+{
+  EXN_CONTEXT("actual contents: " <<
+              toGDValue(getTableWidgetContents(table)).asIndentedString());
+
+  int const numRows = table->rowCount();
+  CHECK_EQUALITY(numRows, expect.sequenceSize());
+
+  for (int row=0; row < numRows; ++row) {
+    checkTableWidgetRow(table, row,
+      expect.sequenceGetValueAt(row));
+  }
 }
 
 
@@ -398,7 +533,10 @@ void EventReplay::replayCall(GDValue const &command)
 {
   GDValueParser parser(command);
   parser.checkIsTuple();
+
   QString const funcName(toQString(parser.taggedContainerGetTagName()));
+  EXN_CONTEXT_EXPR(funcName);
+
   int const numArgs = safeToInt(parser.containerSize());
 
   // --------------- events/actions ---------------
@@ -648,14 +786,41 @@ void EventReplay::replayCall(GDValue const &command)
     CHECK_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
   }
 
+  else if (funcName == "CheckTableWidgetRowCount") {
+    auto [objPath, expect] =
+      gdvpToTuple<std::string, int>(parser);
+    EXN_CONTEXT_EXPR(objPath);
+
+    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
+    int actual = table->rowCount();
+    CHECK_EQ("CheckTableWidgetRowCount " << doubleQuote(objPath));
+  }
+
+  else if (funcName == "CheckTableWidgetRow") {
+    auto [objPath, r, expect] =
+      gdvpToTuple<std::string, int, std::vector<std::string>>(parser);
+
+    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
+    std::vector<std::string> actual = getTableWidgetRow(table, r);
+    CHECK_EQ("CheckTableWidgetRow " << doubleQuote(objPath) <<
+             " " << r);
+  }
+
+  else if (funcName == "CheckTableWidgetContents") {
+    auto [objPath, expect] =
+      gdvpToTuple<std::string, GDValue>(parser);
+    EXN_CONTEXT_EXPR(objPath);
+
+    QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
+    checkTableWidgetContents(table, GDValueParser(expect));
+  }
+
   else if (funcName == "CheckTableWidgetCellMatches") {
     auto [objPath, r, c, expectRE] =
       gdvpToTuple<std::string, int, int, std::string>(parser);
 
     QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
-    QTableWidgetItem *item = table->item(r, c);
-    xassert(item);
-    string actual = toString(item->text());
+    string actual = getTableWidgetCell(table, r, c);
     CHECK_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
                    " " << r << " " << c);
   }

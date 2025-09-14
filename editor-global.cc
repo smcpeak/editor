@@ -21,10 +21,11 @@
 #include "keybindings.doc.gen.h"                 // doc_keybindings
 #include "line-index.h"                          // LineIndex
 #include "lsp-client-manager.h"                  // LSPClientScope
+#include "lsp-client.h"                          // LSPClient, LSPDocumentInfo
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
 #include "lsp-get-code-lines.h"                  // lspGetCodeLinesFunction
-#include "lsp-client.h"                          // LSPClient, LSPDocumentInfo
+#include "lsp-servers-dialog.h"                  // LSPServersDialog
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "recent-items-list.h"                   // RecentItemsList
@@ -120,6 +121,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_applyCommandDialogs(),
     m_connectionsDialog(),
     m_diagnosticDetailsDialog(),
+    m_lspServersDialog(),
     m_recentCommands(),
     m_settings(),
     m_doNotSaveSettings(false),
@@ -242,6 +244,11 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
 
 EditorGlobal::~EditorGlobal()
 {
+  // Destroy auxiliary dialogs.
+  //
+  // TODO: Destroy the others too.
+  m_lspServersDialog.reset();
+
   // First get rid of the windows so I don't have other entities
   // watching documents and potentially getting confused and/or sending
   // signals I am not prepared for.
@@ -312,6 +319,7 @@ void EditorGlobal::selfCheck() const
 
   m_documentList.selfCheck();
 
+  xassert(m_editorWindows.isNotEmpty());
   FOREACH_OBJLIST(EditorWindow, m_editorWindows, iter) {
     iter.data()->selfCheck();
   }
@@ -1227,6 +1235,21 @@ RCSerf<DiagnosticDetailsDialog> EditorGlobal::getDiagnosticDetailsDialog()
 }
 
 
+void EditorGlobal::showLSPServersDialog()
+{
+  if (!m_lspServersDialog) {
+    m_lspServersDialog =
+      std::make_unique<LSPServersDialog>(lspClientManager());
+
+    QObject::connect(
+      m_lspServersDialog.get(), &LSPServersDialog::signal_openFileInEditor,
+      this, &EditorGlobal::openLocalFileInEditor);
+  }
+
+  m_lspServersDialog->show();
+}
+
+
 void EditorGlobal::warningBox(
   QWidget * NULLABLE parent,
   std::string const &str) const
@@ -1239,6 +1262,10 @@ void EditorGlobal::hideModelessDialogs()
 {
   if (m_connectionsDialog) {
     m_connectionsDialog->hide();
+  }
+
+  if (m_lspServersDialog) {
+    m_lspServersDialog->hide();
   }
 }
 
@@ -1253,6 +1280,21 @@ void EditorGlobal::addRecentEditorWidget(EditorWidget *ew)
 void EditorGlobal::removeRecentEditorWidget(EditorWidget *ew)
 {
   m_recentEditorWidgets.remove(ew);
+}
+
+
+EditorWidget *EditorGlobal::getRecentEditorWidget()
+{
+  if (auto ptrOpt = m_recentEditorWidgets.firstOpt()) {
+    return *ptrOpt;
+  }
+
+  // This should never happen since it would mean none of the existing
+  // widgets have ever had the focus, but we should be able to fall back
+  // on `m_editorWindow`.
+  TRACE1("No recent widget?");
+  xassert(m_editorWindows.isNotEmpty());
+  return m_editorWindows.first()->editorWidget();
 }
 
 
@@ -1515,6 +1557,19 @@ void EditorGlobal::slot_broadcastSearchPanelChanged(
   FOREACH_OBJLIST_NC(EditorWindow, m_editorWindows, iter) {
     iter.data()->searchPanelChanged(panel);
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorGlobal::openLocalFileInEditor(std::string fname) NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  TRACE1_GDVN_EXPRS("openLocalFileInEditor", fname);
+
+  HostAndResourceName harn = HostAndResourceName::localFile(fname);
+  getRecentEditorWidget()->editorWindow()->openOrSwitchToFile(harn);
 
   GENERIC_CATCH_END
 }

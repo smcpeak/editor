@@ -11,6 +11,7 @@
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 #include <list>                        // std::list
+#include <optional>                    // std::optional
 
 
 /* The type `T` must allow:
@@ -63,6 +64,9 @@ public:      // methods
   // Get the most recent item other than `t`.  If there isn't anything
   // other than `t`, return `t`.
   inline T const &getRecentOther(T const &t);
+
+  // Get the first, i.e. most recent, element, if there is one.
+  inline std::optional<T> firstOpt() const;
 };
 
 

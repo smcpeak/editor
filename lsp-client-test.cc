@@ -22,7 +22,7 @@
 #include "smbase/sm-env.h"                       // smbase::envAsBool
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE, smbase_loopi
-#include "smbase/sm-test.h"                      // DIAG, envRandomizedTestIters
+#include "smbase/sm-test.h"                      // DIAG, envRandomizedTestIters, EXPECT_EQ
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/string-util.h"                  // stringVectorFromPointerArray
 #include "smbase/xassert.h"                      // xassert
@@ -73,6 +73,7 @@ LSPClientTester::LSPClientTester(
   m_doc.replaceWholeFileString(m_params.m_fileContents);
 
   xassert(m_lspClient.getOpenFileNames().empty());
+  EXPECT_EQ(m_lspClient.numOpenFiles(), 0);
 
   // I do not connect the signals here because the synchronous tests are
   // meant to run without using signals.
@@ -121,6 +122,7 @@ void LSPClientTester::startServer()
 
   DIAG("Status: " << m_lspClient.checkStatus());
   m_lspClient.selfCheck();
+  EXPECT_EQ(m_lspClient.numOpenFiles(), 0);
 
   DIAG("Initializing...");
 }
@@ -333,7 +335,9 @@ void LSPClientTester::testSynchronously()
     m_lspClient.selfCheck();
   }
 
+  EXPECT_EQ(m_lspClient.numOpenFiles(), 0);
   sendDidOpen();
+  EXPECT_EQ(m_lspClient.numOpenFiles(), 1);
   setState(S_AWAITING_INITIAL_DIAGNOSTICS);
 
   waitUntil([this]() -> bool
@@ -377,6 +381,9 @@ void LSPClientTester::testSynchronously()
 
   stopServer();
   setState(S_STOPPING);
+
+  // TODO: The number of open files should be 0 here, not 1.
+  EXPECT_EQ(m_lspClient.numOpenFiles(), 1);
 
   // Cannot use `waitUntil` because the goal is to wait until the server
   // is not running normally.

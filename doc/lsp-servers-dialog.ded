@@ -1,0 +1,437 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "fillColor": "White",
+      "loc": {
+        "x": 15,
+        "y": 25
+      },
+      "name": "LSP Servers",
+      "shape": "ES_WINDOW",
+      "shapeFlags": [
+        "SF_HAS_MAXIMIZE",
+        "SF_HAS_MINIMIZE",
+        "SF_HAS_CLOSE",
+        "SF_HAS_WINDOW_OPS"
+      ],
+      "shapeParams": [
+        810,
+        260
+      ],
+      "size": {
+        "h": 265,
+        "w": 815
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 185,
+        "y": 95
+      },
+      "name": "N/A",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 210
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 95
+      },
+      "name": "1",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 185,
+        "y": 115
+      },
+      "name": "D:/cygwin/home/Scott/wrk/scripts",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 210
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 25,
+        "y": 115
+      },
+      "name": "2",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "loc": {
+        "x": 800,
+        "y": 55
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 165,
+        "w": 20
+      }
+    },
+    {
+      "loc": {
+        "x": 185,
+        "y": 55
+      },
+      "name": "Directory",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 210
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 55
+      },
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 220
+      },
+      "shape": "ES_SCROLLBAR",
+      "shapeParams": [
+        0,
+        25
+      ],
+      "size": {
+        "h": 20,
+        "w": 775
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 185,
+        "y": 75
+      },
+      "name": "N/A",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 210
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 25,
+        "y": 75
+      },
+      "name": "0",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 25
+      }
+    },
+    {
+      "loc": {
+        "x": 50,
+        "y": 55
+      },
+      "name": "Host",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 135
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 50,
+        "y": 75
+      },
+      "name": "local",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 135
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 95
+      },
+      "name": "ssh:leyte",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 135
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 50,
+        "y": 115
+      },
+      "name": "local",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 135
+      }
+    },
+    {
+      "loc": {
+        "x": 395,
+        "y": 55
+      },
+      "name": "Doc Type",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "loc": {
+        "x": 670,
+        "y": 55
+      },
+      "name": "State",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 130
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 395,
+        "y": 75
+      },
+      "name": "C++",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 670,
+        "y": 75
+      },
+      "name": "LSP_PS_NORMAL",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 130
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 395,
+        "y": 95
+      },
+      "name": "C++",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 395,
+        "y": 115
+      },
+      "name": "Python",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 670,
+        "y": 95
+      },
+      "name": "LSP_PS_NORMAL",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 130
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 670,
+        "y": 115
+      },
+      "name": "LSP_PS_NORMAL",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 130
+      }
+    },
+    {
+      "loc": {
+        "x": 720,
+        "y": 255
+      },
+      "name": "Close",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 25,
+        "y": 255
+      },
+      "name": "Help",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 135,
+        "y": 255
+      },
+      "name": "Start server",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 355,
+        "y": 255
+      },
+      "name": "Open LSP stderr in editor",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 165
+      }
+    },
+    {
+      "loc": {
+        "x": 245,
+        "y": 255
+      },
+      "name": "Stop server",
+      "shape": "ES_PUSHBUTTON",
+      "size": {
+        "h": 25,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 485,
+        "y": 55
+      },
+      "name": "Open Docs",
+      "nameAlign": "TA_LEFT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Green",
+      "loc": {
+        "x": 485,
+        "y": 75
+      },
+      "name": "20",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 485,
+        "y": 95
+      },
+      "name": "1",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    },
+    {
+      "fillColor": "Light Gray",
+      "loc": {
+        "x": 485,
+        "y": 115
+      },
+      "name": "1",
+      "nameAlign": "TA_RIGHT",
+      "size": {
+        "h": 20,
+        "w": 90
+      }
+    }
+  ],
+  "inheritances": [],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 305,
+    "w": 840
+  }
+}

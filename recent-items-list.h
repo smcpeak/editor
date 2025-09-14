@@ -101,4 +101,17 @@ T const &RecentItemsList<T>::getRecentOther(T const &t)
 }
 
 
+template <typename T>
+std::optional<T> RecentItemsList<T>::firstOpt() const
+{
+  auto it = m_list.begin();
+  if (it != m_list.end()) {
+    return (*it);
+  }
+  else {
+    return std::nullopt;
+  }
+}
+
+
 #endif // EDITOR_RECENT_ITEMS_LIST_H

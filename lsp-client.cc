@@ -184,6 +184,12 @@ void LSPClientDocumentState::selfCheck() const
 }
 
 
+int LSPClientDocumentState::numOpenFiles() const
+{
+  return safeToInt(m_documentInfo.size());
+}
+
+
 bool LSPClientDocumentState::isFileOpen(std::string const &fname) const
 {
   xassertPrecondition(isValidLSPPath(fname));
@@ -224,6 +230,8 @@ void LSPClient::resetProtocolState()
   m_pendingErrorMessages.clear();
   m_lspClientProtocolError.reset();
   m_uriPathSemantics = URIPathSemantics::NORMAL;
+
+  Q_EMIT signal_changedNumOpenFiles();
 }
 
 
@@ -786,6 +794,8 @@ FailReasonOpt LSPClient::startServer(
 
 std::string LSPClient::stopServer()
 {
+  // TODO: This function should ensure that `numOpenFiles()==0`.
+
   if (!m_lsp) {
     if (m_commandRunner) {
       forciblyShutDown();
@@ -1053,6 +1063,8 @@ void LSPClient::notify_textDocument_didOpen(
 
   // We expect to get diagnostics back for the initial version.
   mapGetValueAt(m_documentInfo, fname).m_waitingForDiagnostics = true;
+
+  Q_EMIT signal_changedNumOpenFiles();
 }
 
 
@@ -1117,6 +1129,8 @@ void LSPClient::notify_textDocument_didClose(
 
   mapRemoveExisting(m_documentInfo, fname);
   xassert(!isFileOpen(fname));
+
+  Q_EMIT signal_changedNumOpenFiles();
 }
 
 

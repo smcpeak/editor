@@ -26,6 +26,7 @@
 #include "lsp-client-fwd.h"                      // LSPDocumentInfo [n]
 #include "lsp-client-manager-fwd.h"              // LSPClientManager [n]
 #include "lsp-protocol-state.h"                  // LSPProtocolState
+#include "lsp-servers-dialog-fwd.h"              // LSPServersDialog [n]
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
 #include "named-td-list.h"                       // NamedTextDocumentList
@@ -92,6 +93,8 @@ private:     // instance data
 
   // Currently open editor windows.  Once the last one of these closes,
   // the app quits.
+  //
+  // Invariant: Not empty.
   ObjList<EditorWindow> m_editorWindows;
 
   // List of recently used editor widgets.  This is used to support
@@ -148,6 +151,11 @@ private:     // instance data
 
   // Dialog for showing LSP diagnostics.
   std::unique_ptr<DiagnosticDetailsDialog> m_diagnosticDetailsDialog;
+
+  // Dialog for LSP servers.  This is null until the dialog is shown for
+  // the first time, after which it persists until `EditorGlobal` is
+  // destroyed.
+  std::unique_ptr<LSPServersDialog> m_lspServersDialog;
 
   // Partial history of recently executed commands.  The element at the
   // back is the most recent, such that the sequence is in chronological
@@ -458,12 +466,16 @@ public:       // funcs
   // Get this dialog, creating it if needed.
   RCSerf<DiagnosticDetailsDialog> getDiagnosticDetailsDialog();
 
+  // Show the LSP servers dialog.
+  void showLSPServersDialog();
+
   // Pop up a warning dialog box on top of `parent`.
   void warningBox(
     QWidget * NULLABLE parent,
     std::string const &str) const;
 
-  // Hide any open modeless dialogs since we are about to quit.
+  // Hide any open modeless dialogs since we are about to quit, and if
+  // they remain open, then the app will not terminate.
   void hideModelessDialogs();
 
   // ---------------------- Recent editor widgets ----------------------
@@ -472,6 +484,9 @@ public:       // funcs
 
   // Remove `ew` from the "recent" list.
   void removeRecentEditorWidget(EditorWidget *ew);
+
+  // Get the most recently used editor widget.  Never null.
+  EditorWidget *getRecentEditorWidget();
 
   // Get the most recently used widget other than `ew`.  Return `ew` if
   // there is no alternative.
@@ -535,6 +550,10 @@ public Q_SLOTS:
   // Called when the search panel in some window has changed.  Broadcast
   // that fact to the others.
   void slot_broadcastSearchPanelChanged(SearchAndReplacePanel *panel) NOEXCEPT;
+
+  // In the most recently used editor widget, open and show `fname`.
+  // Show an error if there is a problem.
+  void openLocalFileInEditor(std::string fname) NOEXCEPT;
 };
 
 

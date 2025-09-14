@@ -19,6 +19,7 @@ void test_basics()
   xassert(r.empty());
   xassert(r.getListC() == std::list<int>{});
   xassert(r.getRecentOther(1) == 1);
+  xassert(!r.firstOpt().has_value());
 
   r.add(3);
   r.selfCheck();
@@ -26,6 +27,7 @@ void test_basics()
   xassert(r.getListC() == std::list<int>{3});
   xassert(r.getRecentOther(1) == 3);
   xassert(r.getRecentOther(3) == 3);
+  xassert(r.firstOpt().value() == 3);
 
   r.add(5);
   r.selfCheck();
@@ -34,6 +36,7 @@ void test_basics()
   xassert(r.getRecentOther(1) == 5);
   xassert(r.getRecentOther(3) == 5);
   xassert(r.getRecentOther(5) == 3);
+  xassert(r.firstOpt().value() == 5);
 
   r.add(4);
   r.selfCheck();
@@ -43,6 +46,7 @@ void test_basics()
   xassert(r.getRecentOther(4) == 5);
   xassert(r.getRecentOther(5) == 4);
   xassert(r.getRecentOther(3) == 4);
+  xassert(r.firstOpt().value() == 4);
 
   r.add(3);
   r.selfCheck();
@@ -52,6 +56,7 @@ void test_basics()
   xassert(r.getRecentOther(3) == 4);
   xassert(r.getRecentOther(4) == 3);
   xassert(r.getRecentOther(5) == 3);
+  xassert(r.firstOpt().value() == 3);
 
   r.add(4);
   r.selfCheck();
@@ -61,6 +66,7 @@ void test_basics()
   xassert(r.getRecentOther(4) == 3);
   xassert(r.getRecentOther(3) == 4);
   xassert(r.getRecentOther(5) == 4);
+  xassert(r.firstOpt().value() == 4);
 
   r.remove(4);
   r.selfCheck();
@@ -70,6 +76,7 @@ void test_basics()
   xassert(r.getRecentOther(3) == 5);
   xassert(r.getRecentOther(5) == 3);
   xassert(r.getRecentOther(4) == 3);
+  xassert(r.firstOpt().value() == 3);
 
   r.remove(44);
   r.selfCheck();
@@ -79,6 +86,7 @@ void test_basics()
   xassert(r.getRecentOther(3) == 5);
   xassert(r.getRecentOther(5) == 3);
   xassert(r.getRecentOther(4) == 3);
+  xassert(r.firstOpt().value() == 3);
 
   r.remove(5);
   r.selfCheck();
@@ -88,6 +96,7 @@ void test_basics()
   xassert(r.getRecentOther(3) == 3);
   xassert(r.getRecentOther(5) == 3);
   xassert(r.getRecentOther(4) == 3);
+  xassert(r.firstOpt().value() == 3);
 
   r.remove(3);
   r.selfCheck();
@@ -97,11 +106,13 @@ void test_basics()
   xassert(r.getRecentOther(3) == 3);
   xassert(r.getRecentOther(4) == 4);
   xassert(r.getRecentOther(5) == 5);
+  xassert(!r.firstOpt().has_value());
 
   // This clear is a no-op.
   r.clear();
   r.selfCheck();
   xassert(r.empty());
+  xassert(!r.firstOpt().has_value());
 }
 
 

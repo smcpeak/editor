@@ -145,12 +145,17 @@ public:      // methods
   // Assert invariants.
   void selfCheck() const;
 
+  // Number of files open with the server.
+  int numOpenFiles() const;
+
   // True if `fname` is open w.r.t. the LSP protocol.
   //
   // Requires: isValidLSPPath(fname)
   bool isFileOpen(std::string const &fname) const;
 
   // Return the set of names for which `isFileOpen` would return true.
+  //
+  // Ensures: return.size() == numOpenFiles()
   std::set<std::string> getOpenFileNames() const;
 
   // Get the document details for `fname`, or nullptr if it is not open.
@@ -467,6 +472,9 @@ Q_SIGNALS:
   // some cases will be the same as the previous state (which this class
   // does not keep track of).
   void signal_changedProtocolState();
+
+  // Emitted when `numOpenFiles()` changes.
+  void signal_changedNumOpenFiles();
 
   // Emitted when diagnostics arrive, so `hasPendingDiagnostics()` is
   // true.

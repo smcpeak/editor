@@ -181,6 +181,7 @@ private:     // methods
 private Q_SLOTS:
   // Slots to receive signals from `m_clients`.
   void slot_changedProtocolState() noexcept;
+  void slot_changedNumOpenFiles() noexcept;
   void slot_hasPendingDiagnostics() noexcept;
   void slot_hasPendingErrorMessages() noexcept;
   void slot_hasReplyForID(int id) noexcept;
@@ -205,6 +206,15 @@ public:      // methods
   bool useRealServer() const
     { return m_useRealServer; }
 
+  // ----------------------------- Global ------------------------------
+  // Number of existing client objects.
+  int numClients() const;
+
+  // Get the client at `i`.
+  //
+  // Requires: 0 <= i < numClients()
+  NNRCSerf<ScopedLSPClient const> getClientAtIndex(int i) const;
+
   // ---------------------------- Per-scope ----------------------------
   // Each of the following queries accepts an `ntd` parameter that, at
   // least, specifies which LSP server to talk to.
@@ -222,10 +232,14 @@ public:      // methods
   // one.  Throws an exception if doing so is not possible.
   NNRCSerf<LSPClient> getOrCreateClient(
     NamedTextDocument const *ntd);
+  NNRCSerf<LSPClient> getOrCreateClientForScope(
+    LSPClientScope const &scope);
 
   // Start the LSP server.  Return an explanation string on failure.
   FailReasonOpt startServer(
     NamedTextDocument const *ntd);
+  FailReasonOpt startServerForScope(
+    LSPClientScope const &scope);
 
   // Get the LSP protocol state.
   LSPProtocolState getProtocolState(
@@ -256,6 +270,8 @@ public:      // methods
   // human-readable string describing what happened during the attempt.
   std::string stopServer(
     NamedTextDocument const *ntd);
+  std::string stopServerForScope(
+    LSPClientScope const &scope);
 
   /* Get all of the code lines for `locations`.  The returned vector has
      one result for each element of `locations`.  If there is a problem
@@ -371,9 +387,15 @@ Q_SIGNALS:
   // `LSPClient` signals.  Whenever one `LSPClient` emits one of these
   // signals, the `LSPClientManager` emits that same signal.
 
+  // Called when `numClients()` changes.
+  void signal_changedNumClients();
+
   // Indicates some client changed protocol state, which is useful to
   // the LSP status widget.
   void signal_changedProtocolState();
+
+  // Some client's number of open files changed.
+  void signal_changedNumOpenFiles();
 
   // Some client had an error message.  Currently nothing listens to
   // this signal since this class just accumulates the errors (and then

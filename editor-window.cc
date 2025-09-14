@@ -478,12 +478,14 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: acdiopuw
+    // Used mnemonics: acdimopuw
 
     MENU_ITEM    ("St&art LSP server",
                   lspStartServer);
     MENU_ITEM    ("Sto&p LSP server",
                   lspStopServer);
+    MENU_ITEM    ("&Manage LSP servers ...",
+                  lspManageServers);
 
     menu->addSeparator();
 
@@ -2168,6 +2170,16 @@ void EditorWindow::lspStopServer() NOEXCEPT
 }
 
 
+void EditorWindow::lspManageServers() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  editorGlobal()->showLSPServersDialog();
+
+  GENERIC_CATCH_END
+}
+
+
 void EditorWindow::lspCheckStatus() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -2985,8 +2997,12 @@ void EditorWindow::windowCloseWindow() NOEXCEPT
 
 void EditorWindow::closeEvent(QCloseEvent *event)
 {
+  TRACE1("closeEvent");
+
   if (this->m_editorGlobal->numEditorWindows() == 1) {
+    TRACE1("closeEvent: this is the last window");
     if (!this->canQuitApplication()) {
+      TRACE1("closeEvent: user canceled");
       event->ignore();    // Prevent app from closing.
       return;
     }
@@ -2994,6 +3010,8 @@ void EditorWindow::closeEvent(QCloseEvent *event)
     // Close the connections dialog if it is open, since otherwise that
     // will prevent the program from terminating.
     m_editorGlobal->hideModelessDialogs();
+
+    TRACE1("closeEvent: app should now terminate");
   }
   else {
     // When there are other windows open, the user can keep editing

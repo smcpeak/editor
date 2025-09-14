@@ -1,0 +1,98 @@
+// lsp-mgr-simple-lifecycle.ev
+// Use the LSP Servers dialog to monitor a simple LSP server lifecycle.
+
+// In editor with language-test.cc open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Observe that the table is empty.
+CheckTableWidgetRowCount("LSPServersDialog.m_table" 0)
+
+// Close it.
+FocusKeyPR("Key_Escape" "\u{1B}")
+
+// Back in editor.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Start the LSP server.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+
+// Open dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check the table contents.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_NORMAL"]
+])
+
+// Close it.
+FocusKeyPR("Key_Escape" "\u{1B}")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Open the file.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check its contents.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "1" "LSP_PS_NORMAL"]
+])
+
+// Close the dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Close the file with LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspCloseFile" "Ctrl+F7")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check its contents.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_NORMAL"]
+])
+
+// Close the dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Stop the LSP server.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check its contents.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_CLIENT_INACTIVE"]
+])
+
+// Close the dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// EOF

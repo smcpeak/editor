@@ -18,11 +18,13 @@
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "vfs-connections.h"                     // VFS_AbstractConnections
 
+#include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/exc.h"                          // smbase::xmessage, GENERIC_CATCH_{BEGIN,END}
 #include "smbase/gdvalue-list.h"                 // gdv::toGDValue(std::list)
 #include "smbase/gdvalue-map.h"                  // gdv::toGDValue(std::map)
 #include "smbase/gdvalue-unique-ptr.h"           // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/overflow.h"                     // safeToInt
 #include "smbase/set-util.h"                     // smbase::setInsertAll
 #include "smbase/sm-is-equal.h"                  // smbase::is_equal
 #include "smbase/sm-macros.h"                    // IMEMBFP
@@ -214,6 +216,16 @@ void LSPClientManager::slot_changedProtocolState() noexcept
 }
 
 
+void LSPClientManager::slot_changedNumOpenFiles() noexcept
+{
+  GENERIC_CATCH_BEGIN
+
+  Q_EMIT signal_changedNumOpenFiles();
+
+  GENERIC_CATCH_END
+}
+
+
 void LSPClientManager::slot_hasPendingDiagnostics() noexcept
 {
   GENERIC_CATCH_BEGIN
@@ -300,6 +312,29 @@ void LSPClientManager::slot_hasReplyForID(int id) noexcept
 }
 
 
+int LSPClientManager::numClients() const
+{
+  return safeToInt(m_clients.size());
+}
+
+
+NNRCSerf<ScopedLSPClient const> LSPClientManager::getClientAtIndex(
+  int i) const
+{
+  xassertPrecondition(cc::z_le_lt(i, numClients()));
+
+  int atIndex = 0;
+  for (auto const &kv : m_clients) {
+    if (i == atIndex) {
+      return kv.second.get();
+    }
+    ++atIndex;
+  }
+
+  xfailure("Can't happen");
+}
+
+
 // ----------------------------- Per-scope -----------------------------
 void LSPClientManager::connectSignals(LSPClient *client)
 {
@@ -307,6 +342,9 @@ void LSPClientManager::connectSignals(LSPClient *client)
   QObject::connect(
     client,    &LSPClient::signal_changedProtocolState,
     this, &LSPClientManager::slot_changedProtocolState);
+  QObject::connect(
+    client,    &LSPClient::signal_changedNumOpenFiles,
+    this, &LSPClientManager::slot_changedNumOpenFiles);
   QObject::connect(
     client,    &LSPClient::signal_hasPendingDiagnostics,
     this, &LSPClientManager::slot_hasPendingDiagnostics);
@@ -397,7 +435,13 @@ NNRCSerf<LSPClient> LSPClientManager::getOrCreateClient(
   NamedTextDocument const *ntd)
 {
   LSPClientScope scope = LSPClientScope::forNTD(ntd);
+  return getOrCreateClientForScope(scope);
+}
 
+
+NNRCSerf<LSPClient> LSPClientManager::getOrCreateClientForScope(
+  LSPClientScope const &scope)
+{
   {
     auto it = m_clients.find(scope);
     if (it != m_clients.end()) {
@@ -431,6 +475,8 @@ NNRCSerf<LSPClient> LSPClientManager::getOrCreateClient(
 
   connectSignals(&client);
 
+  Q_EMIT signal_changedNumClients();
+
   return NNRCSerf<LSPClient>(&client);
 }
 
@@ -438,9 +484,15 @@ NNRCSerf<LSPClient> LSPClientManager::getOrCreateClient(
 FailReasonOpt LSPClientManager::startServer(
   NamedTextDocument const *ntd)
 {
+  return startServerForScope(LSPClientScope::forNTD(ntd));
+}
+
+
+FailReasonOpt LSPClientManager::startServerForScope(
+  LSPClientScope const &scope)
+{
   try {
-    return getOrCreateClient(ntd)->startServer(
-      LSPClientScope::forNTD(ntd));
+    return getOrCreateClientForScope(scope)->startServer(scope);
   }
   catch (XBase &x) {
     return x.getMessage();
@@ -531,6 +583,13 @@ std::string LSPClientManager::stopServer(
   NamedTextDocument const *ntd)
 {
   LSPClientScope scope = LSPClientScope::forNTD(ntd);
+  return stopServerForScope(scope);
+}
+
+
+std::string LSPClientManager::stopServerForScope(
+  LSPClientScope const &scope)
+{
   auto it = m_clients.find(scope);
   if (it != m_clients.end()) {
     LSPClient &client = (*it).second->client();
