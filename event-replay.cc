@@ -794,6 +794,15 @@ void EventReplay::replayCall(GDValue const &command)
     CHECK_EQ("CheckListWidgetCurrentRow " << doubleQuote(path));
   }
 
+  else if (funcName == "CheckTableWidgetCurrentRow") {
+    auto [path, expect] =
+      gdvpToTuple<std::string, int>(parser);
+
+    QTableWidget *tableWidget = getObjectFromPath<QTableWidget>(path);
+    int actual = tableWidget->currentRow();
+    CHECK_EQ("CheckTableWidgetCurrentRow " << doubleQuote(path));
+  }
+
   else if (funcName == "CheckTableWidgetRowCount") {
     auto [objPath, expect] =
       gdvpToTuple<std::string, int>(parser);

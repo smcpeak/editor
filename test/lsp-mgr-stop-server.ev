@@ -1,0 +1,75 @@
+// lsp-mgr-stop-server.ev
+// Test LSP Servers dialog "Stop server" button.
+
+// Expected command line args:
+// test/language-test.cc
+
+// In editor with right file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Start LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Open the file.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check table.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "1" "LSP_PS_NORMAL"]
+])
+
+// Initially no row is selected.  Select it.
+FocusKeySequence(" ")
+CheckTableWidgetCurrentRow("LSPServersDialog.m_table" 0)
+
+// Try to start the server in this state.
+Shortcut("LSPServersDialog.startSelectedServerButton" "Alt+A")
+
+// Get error message.
+CheckFocusWidget("LSPServersDialog.#7.qt_msgbox_buttonbox.#1")
+CheckMessageBoxTextMatches("LSPServersDialog.#7"
+  "Server process has already been started and not stopped.")
+
+// Dismiss error.
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Stop the server.
+Shortcut("LSPServersDialog.stopSelectedServerButton" "Alt+P")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+
+// A message pops up saying it started killing the server.
+CheckFocusWidget("LSPServersDialog.#7.qt_msgbox_buttonbox.#1")
+CheckMessageBoxTextMatches("LSPServersDialog.#7"
+  "Initiated server shutdown.")
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check table.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_CLIENT_INACTIVE"]
+])
+
+// Open the stderr log file.
+Shortcut("LSPServersDialog.openSelectedStderrButton" "Alt+O")
+
+// Close the dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
+
+// We should be in the editor with the log file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentFileName"
+  // It might have ".2" or similar appended, which is fine.
+  "lsp-server-local-cpp.log")
+
+// EOF
