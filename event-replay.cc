@@ -14,7 +14,7 @@
 // smqtutil
 #include "smqtutil/gdvalue-qt.h"       // gdvpTo(QSize)
 #include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtguiutil.h"        // getKeyPressFromString
+#include "smqtutil/qtguiutil.h"        // getKeyPressFromString, showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"           // operator<<(QString)
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
@@ -614,6 +614,14 @@ void EventReplay::replayCall(GDValue const &command)
        using it, which seems harmless.
     */
     getObjectFromPath<QWidget>(widget)->setFocus();
+  }
+
+  else if (funcName == "ActivateWindow") {
+    auto [receiver] =
+      gdvpToTuple<std::string>(parser);
+
+    QWidget *widget = getObjectFromPath<QWidget>(receiver);
+    showRaiseAndActivateWindow(widget);
   }
 
   else if (funcName == "ResizeEvent") {

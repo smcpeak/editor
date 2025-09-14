@@ -1,0 +1,63 @@
+// lsp-mgr-live-update.ev
+// Test LSP Servers dialog's ability to track live updates.
+
+// Expected command line args:
+// test/language-test.cc
+
+// In editor with right file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Table is empty.
+CheckTableWidgetContents("LSPServersDialog.m_table" [])
+
+// Switch back to the editor window as if by Alt-Tab.
+ActivateWindow("window1")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Start LSP server.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Now there is an entry for that server.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_NORMAL"]
+])
+
+// Open the source file with LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
+
+// Now the entry shows one file open.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "1" "LSP_PS_NORMAL"]
+])
+
+// Close the source file with LSP.
+Shortcut("window1.m_menuBar.lspMenu.lspCloseFile" "Ctrl+F7")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+
+// File is closed again.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_NORMAL"]
+])
+
+// Stop LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Server is inactive.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_CLIENT_INACTIVE"]
+])
+
+// EOF
