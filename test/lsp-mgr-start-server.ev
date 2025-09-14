@@ -1,0 +1,54 @@
+// lsp-mgr-start-server.ev
+// Test LSP Servers dialog "Start server" button.
+
+// Expected command line args:
+// test/language-test.cc
+
+// In editor with right file open.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
+
+// Start LSP.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Stop it.  This way we have an entry in the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_P" "p")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Open the dialog.
+Shortcut("window1.m_menuBar" "Alt+L")
+KeyPress("window1.m_menuBar.lspMenu" "Key_M" "m")
+CheckFocusWidget("LSPServersDialog.m_table")
+
+// Check table.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_CLIENT_INACTIVE"]
+])
+
+// Initially no row is selected.  Select it.
+FocusKeySequence(" ")
+CheckTableWidgetCurrentRow("LSPServersDialog.m_table" 0)
+
+// Start the server in this state.
+Shortcut("LSPServersDialog.startSelectedServerButton" "Alt+A")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "-")
+
+// Check table.
+CheckTableWidgetContents("LSPServersDialog.m_table" [
+  ["local" "N/A" "C++" "0" "LSP_PS_NORMAL"]
+])
+
+// Close the dialog.
+FocusKeyPR("Key_Escape" "\u{1B}")
+
+// Open the file in LSP.
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
+
+// EOF
