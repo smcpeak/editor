@@ -474,6 +474,13 @@ static void checkTableWidgetContents(
 }
 
 
+// TODO: Move to `smqtutil`.
+static QPointF toQPointF(QPoint const &pt)
+{
+  return QPointF(pt.x(), pt.y());
+}
+
+
 // Complain unless 'numArgs==required'.
 #define CHECK_NUM_ARGS(required)                           \
   if (numArgs != required) {                               \
@@ -662,6 +669,54 @@ void EventReplay::replayCall(GDValue const &command)
     Q_EMIT signal_clickButton();
     QObject::disconnect(this, &EventReplay::signal_clickButton,
                         button, &QAbstractButton::click);
+  }
+
+  else if (funcName == "MouseButtonPress" ||
+           funcName == "MouseButtonRelease" ||
+           funcName == "MouseButtonDblClick") {
+    auto [receiver, pos, button, buttons, modifiers] =
+      gdvpToTuple<std::string,
+                  QPoint,
+                  Qt::MouseButton,
+                  Qt::MouseButtons,
+                  Qt::KeyboardModifiers>(parser);
+
+    // Adjust `buttons`, re-adding the redundant bit that was removed
+    // during recording.
+    if (funcName == "MouseButtonPress" ||
+        funcName == "MouseButtonDblClick") {
+      buttons |= button;
+    }
+
+    QMouseEvent *ev = new QMouseEvent(
+      qtEnumeratorFromNameOpt<QEvent::Type>(toString(funcName)).value(),
+      toQPointF(pos),
+      button,
+      buttons,
+      modifiers);
+
+    QApplication::postEvent(
+      getObjectFromPath<QWidget>(receiver),
+      ev /*ownership transfer*/);
+  }
+
+  else if (funcName == "MouseMove") {
+    auto [receiver, pos, buttons, modifiers] =
+      gdvpToTuple<std::string,
+                  QPoint,
+                  Qt::MouseButtons,
+                  Qt::KeyboardModifiers>(parser);
+
+    QMouseEvent *ev = new QMouseEvent(
+      QEvent::MouseMove,
+      toQPointF(pos),
+      Qt::NoButton,
+      buttons,
+      modifiers);
+
+    QApplication::postEvent(
+      getObjectFromPath<QWidget>(receiver),
+      ev /*ownership transfer*/);
   }
 
   // -------------------- checks --------------------

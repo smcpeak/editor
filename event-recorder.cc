@@ -7,9 +7,9 @@
 #include "event-replay.h"              // EventReplayQueryable
 
 // smqtutil
-#include "smqtutil/gdvalue-qt.h"       // toGDValue(QSize)
+#include "smqtutil/gdvalue-qt.h"       // toGDValue(QSize), toGDValue(QMouseEvent)
 #include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent)
-#include "smqtutil/qtutil.h"           // operator<<(QString), qObjectPath, isModifierKey
+#include "smqtutil/qtutil.h"           // operator<<(QString), qObjectPath, isModifierKey, isMouseEventType, toStringOpt(QEvent::Type)
 
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
@@ -17,6 +17,7 @@
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/syserr.h"             // smbase::xsyserror
+#include "smbase/xassert.h"            // xassertPtr
 
 // Qt
 #include <QApplication>
@@ -61,7 +62,7 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
   QEvent::Type type = event->type();
   if (type == QEvent::KeyPress ||
       type == QEvent::Shortcut ||
-      type == QEvent::MouseButtonPress ||
+      isMouseEventType(type) ||
       type == QEvent::FocusIn ||
       type == QEvent::Resize) {
     if (receiver &&
@@ -85,14 +86,10 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         recordShortcutEvent(receiver, shortcutEvent);
       }
     }
-    else if (type == QEvent::MouseButtonPress) {
+    else if (isMouseEventType(type)) {
       if (QMouseEvent const *mouseEvent =
             dynamic_cast<QMouseEvent const *>(event)) {
-        this->recordEvent(GDVTaggedTuple("MouseEvent"_sym, {
-          qObjectPath(receiver),
-          toString(mouseEvent->buttons()),
-          toString(mouseEvent->pos()),
-        }));
+        recordMouseEvent(receiver, mouseEvent);
       }
     }
     else if (type == QEvent::Resize) {
@@ -169,6 +166,53 @@ void EventRecorder::recordShortcutEvent(
     qObjectPath(receiver),
     toString(shortcutEvent->key().toString()),  // ->QString->std::string
   }));
+}
+
+
+void EventRecorder::recordMouseEvent(
+  QObject *receiver,
+  QMouseEvent const *mouseEvent)
+{
+  QEvent::Type type = mouseEvent->type();
+  if (type == QEvent::MouseMove &&
+      mouseEvent->buttons() == Qt::NoButton) {
+    // This is a mouse move without any button held, which is just
+    // noise for my recorder.
+    return;
+  }
+
+  std::string receiverPath = qObjectPath(receiver);
+  TRACE1_GDVN_EXPRS("recordMouseEvent", receiverPath, *mouseEvent);
+
+  // Use the event type as the "function name".
+  GDVSymbol eventSym(xassertPtr(toStringOpt(type)));
+
+  // Begin constructing the "function call" tuple.
+  GDValue event(GDVK_TAGGED_TUPLE, eventSym);
+
+  // Start with the receiver object.
+  event.tupleAppend(receiverPath);
+
+  // Always include the position.  This is just the "local" position;
+  // the other coordinates can be calculated from this during replay.
+  event.tupleAppend(toGDValue(mouseEvent->pos()));
+
+  // Include the initiating button if it is not merely a movement.
+  if (type != QEvent::MouseMove) {
+    event.tupleAppend(toGDValue(mouseEvent->button()));
+  }
+
+  // Mouse buttons held *other than* `button()`, since recording that
+  // one is redundant.
+  Qt::MouseButtons const buttons =
+    mouseEvent->buttons() & ~(mouseEvent->button());
+
+  event.tupleAppend(toGDValue(buttons));
+
+  // Keyboard modifier buttons.
+  event.tupleAppend(toGDValue(mouseEvent->modifiers()));
+
+  this->recordEvent(event);
 }
 
 

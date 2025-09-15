@@ -17,6 +17,7 @@
 #include <fstream>                     // std::ofstream
 #include <sstream>                     // std::ostringstream
 
+class QMouseEvent;
 class QShortcutEvent;
 
 
@@ -35,6 +36,8 @@ private:     // data
 private:     // funcs
   void recordShortcutEvent(
     QObject *receiver, QShortcutEvent const *shortcutEvent);
+  void recordMouseEvent(
+    QObject *receiver, QMouseEvent const *mouseEvent);
   void recordKeyEvent(QObject *receiver, QKeyEvent const *keyEvent);
   void recordOrdinaryKeyPress(char c);
   void flushOrdinaryKeyChars();
