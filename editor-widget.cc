@@ -41,6 +41,7 @@
 #include "smqtutil/editor14b.bdf.gen.h"          // bdfFontData_editor14b
 #include "smqtutil/editor14i.bdf.gen.h"          // bdfFontData_editor14i
 #include "smqtutil/editor14r.bdf.gen.h"          // bdfFontData_editor14r
+#include "smqtutil/gdvalue-qt.h"                 // toGDValue(QMouseEvent)
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
@@ -100,9 +101,9 @@ using namespace smbase;
 //
 //   1. Operations on files.
 //
-//   2. Keystrokes.
+//   2. Keystrokes, mouse clicks.
 //
-//   3. Repaint.
+//   3. Repaint, mouse drags.
 //
 INIT_TRACE("editor-widget");
 
@@ -2235,8 +2236,8 @@ void EditorWidget::mousePressEvent(QMouseEvent *m) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  // get rid of popups?
-  QWidget::mousePressEvent(m);
+  TRACE2_GDVN_EXPRS("mousePressEvent", *m);
+
   INITIATING_DOCUMENT_CHANGE();
 
   m_editor->turnSelection(!!(m->modifiers() & Qt::ShiftModifier));
@@ -2252,7 +2253,8 @@ void EditorWidget::mouseMoveEvent(QMouseEvent *m) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  QWidget::mouseMoveEvent(m);
+  TRACE3_GDVN_EXPRS("mouseMoveEvent", *m);
+
   INITIATING_DOCUMENT_CHANGE();
 
   m_editor->turnOnSelection();
@@ -2269,7 +2271,8 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *m) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  QWidget::mouseReleaseEvent(m);
+  TRACE2_GDVN_EXPRS("mouseReleaseEvent", *m);
+
   INITIATING_DOCUMENT_CHANGE();
 
   m_editor->turnOnSelection();
