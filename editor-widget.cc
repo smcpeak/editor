@@ -1361,8 +1361,10 @@ void EditorWidget::paintOneLine(
 
     // The number of columns to draw for this segment is the smaller of
     // (a) segment length and (b) the number of columns left to print.
-    ColumnCount const colsToDraw =
-      std::min(len, ColumnCount(visibleLineCols-printedCols));
+    // It could be negative, in which case the following loop will do
+    // nothing.
+    ColumnDifference const colsToDraw =
+      std::min(ColumnDifference(len), visibleLineCols-printedCols);
 
     // draw text
     for (ColumnIndex i(0); i < colsToDraw; ++i) {

@@ -1,0 +1,17 @@
+// click-drag-beyond-eol.ev
+// Click and drag the mouse beyond the end of the line.
+
+// This previously triggered an assertion violation.
+
+CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+// Click and drag.
+MouseButtonPress("window1.frame1.editorFrame.m_editorWidget" QPoint[x:355 y:8] LeftButton {} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:355 y:7] {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:344 y:7] {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:333 y:7] {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:322 y:7] {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:311 y:7] {LeftButton} {})
+MouseButtonRelease("window1.frame1.editorFrame.m_editorWidget" QPoint[x:311 y:7] LeftButton {} {})
+
+// EOF
