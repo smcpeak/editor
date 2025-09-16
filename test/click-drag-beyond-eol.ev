@@ -6,12 +6,12 @@
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Click and drag.
-MouseButtonPress("window1.frame1.editorFrame.m_editorWidget" QPoint[x:355 y:8] LeftButton {} {})
-MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:355 y:7] {LeftButton} {})
-MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:344 y:7] {LeftButton} {})
-MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:333 y:7] {LeftButton} {})
-MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:322 y:7] {LeftButton} {})
-MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint[x:311 y:7] {LeftButton} {})
-MouseButtonRelease("window1.frame1.editorFrame.m_editorWidget" QPoint[x:311 y:7] LeftButton {} {})
+MouseButtonPress("window1.frame1.editorFrame.m_editorWidget" QPoint(355 8) LeftButton {} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(355 7) {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(344 7) {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(333 7) {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(322 7) {LeftButton} {})
+MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(311 7) {LeftButton} {})
+MouseButtonRelease("window1.frame1.editorFrame.m_editorWidget" QPoint(311 7) LeftButton {} {})
 
 // EOF
