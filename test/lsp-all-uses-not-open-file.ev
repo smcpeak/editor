@@ -1,5 +1,6 @@
 // lsp-all-uses-not-open-file.ev
 // "All uses" where an occurrence is in a file that is not open.
+[
 
 // In editor with correct file open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -68,4 +69,5 @@ FocusKeyPR("Key_Escape" "\u{1B}")
 // Back in the editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

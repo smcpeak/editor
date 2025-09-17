@@ -1,5 +1,6 @@
 // lsp-mgr-multiple-servers.ev
 // Demonstrate the LSP Servers dialog with multiple servers.
+[
 
 // Expected command line args:
 // test/language-test.cc lsp-test-server.py smbase/create-tuple-class.py
@@ -120,4 +121,5 @@ CheckTableWidgetContents("LSPServersDialog.m_table" [
 FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

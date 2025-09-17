@@ -1,5 +1,6 @@
 // lsp-all-uses-other-window.ev
 // Exercise the "all uses, other window" LSP function.
+[
 
 // In editor with correct file open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -58,4 +59,5 @@ FocusKeyPR("Key_Escape" "\u{1B}")
 // Back in the editor window2.
 CheckFocusWidget("window2.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

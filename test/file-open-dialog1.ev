@@ -1,5 +1,6 @@
 // file-open-dialog1.ev
 // Use the file-open dialog to open a file, using Tab completion once.
+[
 
 // In editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -25,4 +26,5 @@ Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 // Confirm it got copied.
 CheckClipboard("foo\n")
 
+]
 // EOF

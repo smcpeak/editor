@@ -1,5 +1,6 @@
 // lsp-dump-details.ev
 // Test "LSP | Debug | Dump all server details".
+[
 
 // In editor with expected file open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -186,4 +187,5 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "resourceName"
 CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentText"
   "DT_PYTHON(.|\\n)*commandLine: null")
 
+]
 // EOF

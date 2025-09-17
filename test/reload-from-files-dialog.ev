@@ -1,5 +1,6 @@
 // reload-from-files-dialog.ev
 // Test the behavior of the reload button in the open-files dialog.
+[
 
 // Check which file is open.  This test is intended to be run with two
 // files specified on the command line, and the second will be initially
@@ -59,4 +60,5 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckLabelMatches("window1.m_statusArea.m_filename" "gets-modified.txt$")
 
 
+]
 // EOF

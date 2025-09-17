@@ -1,5 +1,6 @@
 // apply-command-same-text.ev
 // Test "Apply command" when the output is the same as the input.
+[
 
 // In editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -53,4 +54,5 @@ FocusKeyPR("Shift+Key_Up" "")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:1")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "// LANGUAGE-TEST.CC\n")
 
+]
 // EOF

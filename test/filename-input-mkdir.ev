@@ -1,5 +1,6 @@
 // filename-input-mkdir.ev
 // Test making a directory from the filename input dialog.
+[
 
 // Clear the output from a previous attempt.
 RecursivelyRemoveFilePath("out/dir1")
@@ -44,4 +45,5 @@ Shortcut("window1.m_menuBar.fileMenu.fileSave" "F2")
 // Check that it all worked.
 CheckFileContents("out/dir1/dir2/file3.txt" "In file3.txt.\n")
 
+]
 // EOF

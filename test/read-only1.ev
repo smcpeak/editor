@@ -1,5 +1,6 @@
 // read-only1.ev
 // Test some basic read-only file behavior.
+[
 
 // Expect that we have started with an untitled, empty file.
 CheckLabel("window1.m_statusArea.m_filename" "untitled.txt")
@@ -44,4 +45,5 @@ CheckFocusWindowTitle("untitled.txt * - Editor")
 // Check that the status area reflects the modified status.
 CheckLabel("window1.m_statusArea.m_filename" "untitled.txt *")
 
+]
 // EOF

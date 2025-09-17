@@ -1,5 +1,6 @@
 // open-files-close-docs.ev
 // In the open-files dialog, close some documents.
+[
 
 // Open the open-files dialog.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -46,4 +47,5 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "read-only3.ev")
 
 
+]
 // EOF

@@ -1,5 +1,6 @@
 // view-highlight-trailws.ev
 // Test "View | Highlight trailing whitespace".
+[
 
 // In editor with expected document.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -93,4 +94,5 @@ CheckMessageBoxTextMatches("window1.#5", "process output")
 FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

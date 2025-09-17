@@ -1,5 +1,6 @@
 // lsp-set-document-type.ev
 // Test changing the document type.
+[
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
@@ -71,4 +72,5 @@ Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
 WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" 2)
 
+]
 // EOF

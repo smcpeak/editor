@@ -1,5 +1,6 @@
 // sar-remote-ctlm.ev
 // Use search and replace to remove ^M characters.
+[
 
 // According to my notes, at some point this was failing, but I
 // cannot reproduce that now.
@@ -29,4 +30,5 @@ FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 Shortcut("window1.m_menuBar.fileMenu.fileSave" "F2")
 
+]
 // EOF

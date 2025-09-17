@@ -1,5 +1,6 @@
 // read-only3.ev
 // Switching between a read-only and not read-only document.
+[
 
 // Expecting to start with a single untitled document.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -85,4 +86,5 @@ KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
 CheckFocusWindow("window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box")
 KeyPress("window1.frame1.editorFrame.m_editorWidget.promptOverrideReadOnly_box" "Key_Escape" "\u{1B}")
 
+]
 // EOF

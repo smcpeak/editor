@@ -1,5 +1,6 @@
 // copy-paste.ev
 // Simple test of copy and paste.
+[
 // Assumes we start at the top of file1.h.
 
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Down" "")
@@ -17,4 +18,5 @@ KeyPress("window1.frame1.editorFrame.m_editorWidget" "Shift+Ctrl+Key_PageUp" "")
 Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 CheckClipboard("// file1.h\n// Sample file to edit during tests.\n\n#ifndef TD_H\n// Sample file to edit during tests.\n#define TD_H\n\n")
 
+]
 // EOF

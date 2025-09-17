@@ -1,5 +1,6 @@
 // apply-command-history.ev
 // Check that command history is retained by Apply Command.
+[
 
 // Initial state.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -75,4 +76,5 @@ FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckFocusWindowTitleMatches("true 2")
 
+]
 // EOF

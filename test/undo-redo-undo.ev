@@ -1,5 +1,6 @@
 // undo-redo-undo.ev
 // Reproduce a crash involving undo and redo and file save.
+[
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
@@ -53,4 +54,5 @@ FocusKeyPR("Key_Return" "\r")
 // it explicitly among my tests.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selfCheck" "")
 
+]
 // EOF

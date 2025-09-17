@@ -1,5 +1,6 @@
 // inspect-file-no-candidates.ev
 // Use "Inspect file", but there are no candidates.
+[
 
 // Editing the expected file.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -25,4 +26,5 @@ FocusKeyPR("Key_Return" "\r")
 // Back in editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

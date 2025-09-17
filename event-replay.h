@@ -6,8 +6,7 @@
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
-#include "smbase/gdvalue-reader.h"     // gdv::GDValueReader
+#include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/str.h"                // string
@@ -17,7 +16,6 @@
 #include <QEventLoop>
 
 // libc++
-#include <fstream>                     // std::ifstream
 #include <functional>                  // std::function
 
 class QImage;
@@ -79,11 +77,11 @@ private:     // instance data
   // Name of file being read.
   string m_fname;
 
-  // File we are reading from.
-  std::ifstream m_in;
+  // Sequence of replay commands to execute.
+  gdv::GDValue m_testCommands;
 
-  // Reader to get `GDValue`s from `m_in`.
-  gdv::GDValueReader m_gdvalueReader;
+  // Index in `m_textCommands` to execute next.
+  gdv::GDVIndex m_nextTestCommandIndex;
 
   // Queue of ordinary typing characters to replay before continuing
   // with the events in 'm_in'.

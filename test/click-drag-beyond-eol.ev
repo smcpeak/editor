@@ -1,5 +1,6 @@
 // click-drag-beyond-eol.ev
 // Click and drag the mouse beyond the end of the line.
+[
 
 // This previously triggered an assertion violation.
 
@@ -14,4 +15,5 @@ MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(322 7) {LeftButton}
 MouseMove("window1.frame1.editorFrame.m_editorWidget" QPoint(311 7) {LeftButton} {})
 MouseButtonRelease("window1.frame1.editorFrame.m_editorWidget" QPoint(311 7) LeftButton {} {})
 
+]
 // EOF

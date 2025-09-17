@@ -1,5 +1,6 @@
 // sar-replace-bol.ev
 // Check for a bug involving replacing the beginning of the line.
+[
 
 // Should have file1.h open and be at the top of it.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -48,4 +49,5 @@ Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 // Check them.
 CheckClipboard("blah// file1.h\nblah// Sample file to edit during tests.\n\n")
 
+]
 // EOF

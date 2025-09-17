@@ -1,5 +1,6 @@
 // file-open-nonexist.ev
 // Test the prompt for opening a file that does not exist.
+[
 
 // Try opening a non-existing file.
 Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
@@ -51,4 +52,5 @@ CheckFocusWindow("window1")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "nonexist")
 
+]
 // EOF

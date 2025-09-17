@@ -1,5 +1,6 @@
 // select-beyond-eof.ev
 // Test visual depiction of selection that extends beyond EOF.
+[
 
 // Expect to begin with an empty file.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -25,4 +26,5 @@ FocusKeyPR("Key_Down" "")
 FocusKeyPR("Shift+Key_Down" "")
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/select-beyond-eof2.png")
 
+]
 // EOF

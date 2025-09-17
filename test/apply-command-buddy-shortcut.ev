@@ -1,5 +1,6 @@
 // apply-command-buddy-shortcut.ev
 // Testing the ability of Shortcut to use a buddy shortcut.
+[
 
 // Open the Apply Command dialog.
 Shortcut("window1.m_menuBar.editMenu.editApplyCommand" "Alt+A")
@@ -14,4 +15,5 @@ CheckFocusWidget("ApplyCommandDialog.m_newCommandLineEdit")
 // Close dialog.
 FocusKeyPR("Key_Escape" "\u{1B}")
 
+]
 // EOF

@@ -1703,6 +1703,11 @@ static int innerMain(int argc, char **argv)
         // Automated GUI test.
         g_abortUponDevWarning = true;
         cout << "running test: " << app.m_eventFileTest << endl;
+
+        // Cause the event script name to be included in any failure
+        // message.
+        EXN_CONTEXT(app.m_eventFileTest);
+
         EventReplay replay(app.m_eventFileTest, selfCheck);
         std::string error = replay.runTest();
         if (error.empty()) {

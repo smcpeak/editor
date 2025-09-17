@@ -1,5 +1,6 @@
 // lsp-reload-file.ev
 // Test that reloading the file also syncs.
+[
 
 // Have the right file open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -44,4 +45,5 @@ WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "1")
 // Clean up.
 RemoveFileIfExists("test/language-test-copy.cc")
 
+]
 // EOF

@@ -1,5 +1,6 @@
 // screenshot1.ev
 // Simple test that involves taking a screenshot.
+[
 
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -50,4 +51,5 @@ CheckLabel("window1.m_statusArea.m_cursor" "21:22")
 // Take a screenshot and compare to a previous one.
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/screenshot1.png")
 
+]
 // EOF

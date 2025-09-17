@@ -1,5 +1,6 @@
 // lsp-mgr-stop-server.ev
 // Test LSP Servers dialog "Stop server" button.
+[
 
 // Expected command line args:
 // test/language-test.cc
@@ -72,4 +73,5 @@ CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget" "documentFileName"
   // It might have ".2" or similar appended, which is fine.
   "lsp-server-local-cpp.log")
 
+]
 // EOF

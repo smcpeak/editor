@@ -1,5 +1,6 @@
 // lsp-go-to-decl-bad-loc.ev
 // Try to go to the decl of a symbol with bad location info.
+[
 
 // In editor with correct file..
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -33,4 +34,5 @@ Shortcut("window1.m_menuBar.lspMenu.lspGoToMenu.lspGoToDefinition" "F12")
 // We should end up at 1:20 after adjusting the invalid coordinate.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "1:20")
 
+]
 // EOF

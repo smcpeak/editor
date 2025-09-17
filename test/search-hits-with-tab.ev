@@ -1,5 +1,6 @@
 // search-hits-with-tab.ev
 // Showing search hits in presence of Tab character.
+[
 
 // Expected file: test/tabs-test.txt
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -74,4 +75,5 @@ FocusKeyPress("Ctrl+Key_Right" "")
 FocusKeyPress("Ctrl+Key_Down" "")
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/search-hits-with-tab3.png")
 
+]
 // EOF

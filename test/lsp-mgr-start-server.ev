@@ -1,5 +1,6 @@
 // lsp-mgr-start-server.ev
 // Test LSP Servers dialog "Start server" button.
+[
 
 // Expected command line args:
 // test/language-test.cc
@@ -51,4 +52,5 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
 WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
 
+]
 // EOF

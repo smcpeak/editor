@@ -1,5 +1,6 @@
 // lsp-start-server-other-language.ev
 // Try to start an LSP server for a language we cannot handle.
+[
 
 // In editor with expected file.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -19,4 +20,5 @@ FocusKeyPR("Key_Return" "\r")
 // Back in editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

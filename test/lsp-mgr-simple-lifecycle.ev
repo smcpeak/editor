@@ -1,5 +1,6 @@
 // lsp-mgr-simple-lifecycle.ev
 // Use the LSP Servers dialog to monitor a simple LSP server lifecycle.
+[
 
 // In editor with language-test.cc open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -95,4 +96,5 @@ CheckTableWidgetContents("LSPServersDialog.m_table" [
 FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
+]
 // EOF

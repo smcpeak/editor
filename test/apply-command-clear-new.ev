@@ -2,6 +2,7 @@
 // In the Apply Command Dialog, ensure that if we type a string into the
 // "new command" box, then close and reopen the dialog, that string has
 // been cleared.
+[
 
 // Initial state.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -40,4 +41,5 @@ FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 
+]
 // EOF

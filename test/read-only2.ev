@@ -1,5 +1,6 @@
 // read-only2.ev
 // Process output document should be read-only.
+[
 
 // No particular document needs to be open initially but the edit widget
 // should have focus.
@@ -37,4 +38,5 @@ KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_K" "k")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "hasUnsavedChanges" true)
 
+]
 // EOF

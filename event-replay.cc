@@ -114,22 +114,16 @@ EventReplay::EventReplay(
   string const &fname,
   std::function<void ()> globalSelfCheck)
 :
-    m_fname(fname),
-    m_in(m_fname.c_str()),
-    m_gdvalueReader(m_in, fname),
-    m_queuedFocusKeySequence(),
-    m_testResult(),
-    m_eventLoop(),
-    m_eventReplayDelayMS(0),
-    m_timerId(0),
-    IMEMBFP(globalSelfCheck)
+  m_fname(fname),
+  m_testCommands(GDValue::readFromFile(fname)),
+  m_nextTestCommandIndex(0),
+  m_queuedFocusKeySequence(),
+  m_testResult(),
+  m_eventLoop(),
+  m_eventReplayDelayMS(0),
+  m_timerId(0),
+  IMEMBFP(globalSelfCheck)
 {
-  if (m_in.fail()) {
-    // Unfortunately there is no portable way to get the error cause
-    // when using std::ifstream.
-    throw XMessage(stringb("failed to open " << doubleQuote(m_fname)));
-  }
-
   if (s_quiescenceEventType == 0) {
     s_quiescenceEventType = QEvent::registerEventType();
     TRACE1(DEBUG_VALUES(s_quiescenceEventType));
@@ -1197,22 +1191,22 @@ bool EventReplay::replayNextEvent()
     }
 
     // Get the next command.
-    m_gdvalueReader.skipWhitespaceAndComments();
-    FileLineCol loc = m_gdvalueReader.getLocation();
-    if (std::optional<GDValue> command = m_gdvalueReader.readNextValue()) {
-      TRACE1("replaying: " << *command);
+    if (m_nextTestCommandIndex < m_testCommands.sequenceSize()) {
+      GDValue command =
+        m_testCommands.sequenceGetValueAt(m_nextTestCommandIndex++);
 
-      // Use the location of `command` as context.  (We do not push it
-      // until now because a parse error in `readNextValue` will already
-      // include it as context.)
-      EXN_CONTEXT(loc);
+      TRACE1("replaying: " << command);
 
-      this->replayCall(*command);
+      // Use the location of `command` as context.
+      EXN_CONTEXT(command.sourceLocation());
+
+      this->replayCall(command);
       m_globalSelfCheck();
       return true;
     }
     else {
       // EOF.
+      TRACE1("end of commands reached");
       return false;
     }
   }
@@ -1432,13 +1426,6 @@ void EventReplay::slot_aboutToBlock() NOEXCEPT
   }
 
   TRACE1("in slot_aboutToBlock");
-
-  if (m_in.eof()) {
-    // This should not happen since, once EOF is hit, we disconnect this
-    // slot, but I will be defensive here.
-    TRACE1("we already hit EOF in the input file");
-    return;
-  }
 
   // Getting here means the application really is quiescent; if we did
   // not do this, the app would block waiting for some external event.
