@@ -348,7 +348,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&Edit");
     menu->setObjectName("editMenu");
 
-    // Used shortcut letters: 1ACDJFGKNPRSTU
+    // Used shortcut letters: 1ACDEJFGKNPRSTU
 
     MENU_ITEM_KEY("&Undo", editUndo, Qt::ALT + Qt::Key_Backspace);
     MENU_ITEM_KEY("&Redo", editRedo, Qt::ALT + Qt::SHIFT + Qt::Key_Backspace);
@@ -420,6 +420,8 @@ void EditorWindow::buildMenu()
                   editApplyCommand, Qt::ALT + Qt::Key_A);
     MENU_ITEM_KEY("Insert current date/time",
                   editInsertDateTime, Qt::ALT + Qt::Key_D);
+    MENU_ITEM    ("Edit/insert as C string &escapes...",
+                  editEditAsCString);
   }
 
   {
@@ -1964,6 +1966,14 @@ void EditorWindow::editInsertDateTime() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
   editorWidget()->editInsertDateTime();
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::editEditAsCString() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+  editorWidget()->editSelectionAsCString();
   GENERIC_CATCH_END
 }
 

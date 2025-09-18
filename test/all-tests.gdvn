@@ -75,6 +75,7 @@
   [ "./editor.exe" "-ev=test/lsp-mgr-stop-server.ev" ]
   [ "./editor.exe" "-ev=test/lsp-mgr-start-server.ev" ]
   [ "./editor.exe" "-ev=test/click-drag-beyond-eol.ev" ]
+  [ "./editor.exe" "-ev=test/edit-as-c-escapes.ev" ]
 
   // This test also touches `gets-modified.txt`, so goes last.
   [ "./editor.exe" "-ev=test/reload-from-files-dialog.ev" ]

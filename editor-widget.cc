@@ -52,6 +52,7 @@
 // smbase
 #include "smbase/array.h"                        // Array
 #include "smbase/bdffont.h"                      // BDFFont
+#include "smbase/c-string-reader.h"              // decodeCStringEscapesToString
 #include "smbase/dev-warning.h"                  // DEV_WARNING
 #include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
 #include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
@@ -74,6 +75,7 @@
 #include <QClipboard>
 #include <QFontMetrics>
 #include <QImage>
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMessageBox>
@@ -2658,6 +2660,34 @@ void EditorWidget::editInsertDateTime()
   TDE_HistoryGrouper grouper(*m_editor);
   m_editor->insertDateTime();
   this->redrawAfterContentChange();
+}
+
+
+void EditorWidget::editSelectionAsCString()
+{
+  std::string selection = getSelectedText();
+  std::string escapedSelection = encodeWithEscapes(selection);
+
+  bool ok;
+  QString newEscapedText = QInputDialog::getText(this,
+    "Edit Text",
+    "Text using C string escapes:",
+    QLineEdit::Normal,
+    toQString(escapedSelection),
+    &ok);
+
+  if (ok) {
+    try {
+      std::string newText =
+        decodeCStringEscapesToString(toString(newEscapedText));
+
+      insertTextString(newText);
+    }
+    catch (XBase &x) {
+      complain(x.getMessage());
+      return;
+    }
+  }
 }
 
 

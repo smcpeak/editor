@@ -1,0 +1,86 @@
+// edit-as-c-escapes.ev
+// Test "Edit | Edit as C string escapes..."
+
+{
+  args: []
+  cmds: [
+
+    // In editor.
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+    // Open the dialog.
+    Shortcut("window1.m_menuBar" "Alt+E")
+    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
+
+    // Enter a first line of text.
+    FocusKeySequence("hello\\n")
+    FocusKeyPR("Key_Return" "\r")
+
+    // Back in editor.
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+
+    // Check its text.
+    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+      "documentText" "hello\n")
+
+    // Add another line.
+    Shortcut("window1.m_menuBar" "Alt+E")
+    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
+    FocusKeySequence("another\\x20word")
+    FocusKeyPR("Key_Return" "\r")
+
+    // Check result.
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+      "documentText" "hello\nanother word")
+
+    // Add a newline.
+    FocusKeyPR("Key_Return" "\r")
+
+    // Select the second line.
+    FocusKeyPR("Shift+Key_Up" "")
+
+    // Edit it.
+    Shortcut("window1.m_menuBar" "Alt+E")
+    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
+
+    // It should be populated with the selected text.
+    CheckLineEditText("window1.frame1.editorFrame.m_editorWidget.#2.#1"
+      "another word\\n")
+
+    // Replace it with some control characters.
+    FocusKeySequence("\\x00\\x01\\x02\\x03")
+    FocusKeyPR("Key_Return" "\r")
+
+    // Check the result.
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+      "documentText" "hello\n\u{0}\u{1}\u{2}\u{3}")
+
+    // Select the line again.
+    FocusKeyPR("Shift+Key_Home" "")
+    Shortcut("window1.m_menuBar" "Alt+E")
+    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
+
+    // Check the dialog text.
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
+    CheckLineEditText("window1.frame1.editorFrame.m_editorWidget.#2.#1"
+      "\\000\\001\\002\\003")
+
+    // Edit it.
+    FocusKeySequence("123\\n")
+    FocusKeyPR("Key_Return" "\r")
+
+    // Check result.
+    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+      "documentText" "hello\n123\n")
+
+  ]
+}
+
+
+// EOF

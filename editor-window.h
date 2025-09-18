@@ -273,6 +273,7 @@ public Q_SLOTS:
   void editJustifyParagraph() NOEXCEPT;
   void editApplyCommand() NOEXCEPT;
   void editInsertDateTime() NOEXCEPT;
+  void editEditAsCString() NOEXCEPT;
 
   void viewToggleVisibleWhitespace() NOEXCEPT;
   void viewSetWhitespaceOpacity() NOEXCEPT;

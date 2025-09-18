@@ -496,6 +496,10 @@ public:      // funcs
   // Insert current date/time at cursor.
   void editInsertDateTime();
 
+  // Pop up a dialog allowing the selected text to be edited using C
+  // string escapes.
+  void editSelectionAsCString();
+
   // Insert text at cursor, overwriting selection if active.
   void insertText(char const *text, ByteCount length);
   void insertTextString(std::string const &text);
