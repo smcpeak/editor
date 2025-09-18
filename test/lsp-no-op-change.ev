@@ -1,6 +1,8 @@
 // lsp-no-op-change.ev
 // Test attempting to refresh diagnostics without any change.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
@@ -31,5 +33,5 @@ Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
 // the "2*" state indicating we are awaiting diagnostics.
 WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "2")
 
-]
+]}
 // EOF

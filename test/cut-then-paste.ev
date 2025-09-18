@@ -1,6 +1,8 @@
 // cut-then-paste.ev
 // Simple test of Ctrl+K then Ctrl+V restoring the line.
-[
+{
+  args: []
+  cmds: [
 
 // This sort of thing is tested at a lower level too, but this test
 // is sensitive to the interaction with the X clipboard and selection.
@@ -29,5 +31,5 @@ Shortcut("window1.m_menuBar.editMenu.editPaste" "Ctrl+V")
 // The text should be as it was before.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "one\ntwo\nthree\n")
 
-]
+]}
 // EOF

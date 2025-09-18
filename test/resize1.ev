@@ -1,6 +1,8 @@
 // resize1.ev
 // Check that resize events can be replayed and affect the grid size.
-[
+{
+  args: ["test/file1.h"]
+  cmds: [
 
 // Should start with upper-left as (0,0).
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "firstVisible" "0:0")
@@ -13,5 +15,5 @@ ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(548 524))
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "firstVisible" "0:0")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lastVisible" "31:59")
 
-]
+]}
 // EOF

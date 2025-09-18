@@ -1,6 +1,8 @@
 // help-debug-open-log-file.ev
 // Test "Help | Debug | Open editor log file".
-[
+{
+  args: []
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
@@ -20,5 +22,5 @@ CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget"
 CheckQueryMatches("window1.frame1.editorFrame.m_editorWidget"
   "documentText" "^Editor version:")
 
-]
+]}
 // EOF

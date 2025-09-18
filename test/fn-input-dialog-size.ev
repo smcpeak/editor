@@ -1,6 +1,8 @@
 // fn-input-dialog-size.ev
 // Test ability of the filename input dialog to remember its size.
-[
+{
+  args: []
+  cmds: [
 
 // Open dialog.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -43,5 +45,5 @@ CheckSize("window1.filename_input" QSize(500 600))
 FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-]
+]}
 // EOF

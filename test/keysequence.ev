@@ -1,6 +1,8 @@
 // keysequence.ev
 // Test that FocusKeySequence works as intended.
-[
+{
+  args: []
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
@@ -11,5 +13,5 @@ FocusKeyPR("Key_Return" "\r")
 
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "hello\nthere\n")
 
-]
+]}
 // EOF

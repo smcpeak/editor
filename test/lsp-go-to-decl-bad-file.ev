@@ -1,6 +1,8 @@
 // lsp-go-to-decl-bad-file.ev
 // Try to go to the decl of a symbol with bad file name info.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // In editor with correct file..
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -42,5 +44,5 @@ FocusKeyPR("Key_Return" "\r")
 // Back in the editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-]
+]}
 // EOF

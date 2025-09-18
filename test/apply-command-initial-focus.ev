@@ -2,7 +2,9 @@
 // Check that the initial focus in the "Apply Command" dialog is on the
 // list box even if it was on a different control when it was last
 // closed.
-[
+{
+  args: []
+  cmds: [
 
 // Initial state.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -39,5 +41,5 @@ FocusKeyPR("Key_Escape" "\u{1B}")
 // Back in editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-]
+]}
 // EOF

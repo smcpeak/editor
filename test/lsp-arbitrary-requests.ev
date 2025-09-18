@@ -1,6 +1,8 @@
 // lsp-arbitrary-requests.ev
 // Issue an LSP arbitrary request.
-[
+{
+  args: ["test/lsp-arbitrary-requests.cc"]
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "lsp-arbitrary-requests.cc")
@@ -47,5 +49,5 @@ FocusKeyPR("Shift+Key_Down" "")
 // newline, as it happens).
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "null")
 
-]
+]}
 // EOF

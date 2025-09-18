@@ -1,6 +1,8 @@
 // keysequence2.ev
 // Test with some shifted characters and caps lock.
-[
+{
+  args: []
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 FocusKeySequence("1")
@@ -27,5 +29,5 @@ FocusKeyPR("Key_Return" "\r")
 
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "1!\nHello There\nCAPS\noff\n")
 
-]
+]}
 // EOF

@@ -177,7 +177,13 @@ public:      // data
   bool m_recordInputEvents;
 
   // Name of an event file test to run, or empty for none.
-  std::string m_eventFileTest;
+  //
+  // This member and the next are public because `innerMain` accesses
+  // them as it initiates the replay procedure.
+  std::string m_eventTestFileName;
+
+  // Sequence of commands to run for the test.
+  std::vector<gdv::GDValue> m_eventTestCommands;
 
 private:     // methods
   // Process the command line.  Return the sequence of files to be

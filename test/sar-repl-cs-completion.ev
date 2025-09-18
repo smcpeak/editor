@@ -1,6 +1,8 @@
 // sar-repl-cs-completion.ev
 // Test that the SAR "Repl" box does not use case-insensitive completion.
-[
+{
+  args: ["test/file1.h"]
+  cmds: [
 
 // Expected file: test/file1.h.
 
@@ -28,5 +30,5 @@ KeyPress("window1.m_sarPanel.m_replBox" "Key_Return" "\r")
 // Check that it is "OTHER", not "other".
 CheckComboBoxText("window1.m_sarPanel.m_replBox" "OTHER")
 
-]
+]}
 // EOF

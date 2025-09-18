@@ -1,6 +1,8 @@
 // inspect-decl-other-window.ev
 // Test Shift+F12, inspecting a symbol declaration in another window.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // In editor with correct file open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -50,5 +52,5 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:6")
 CheckFocusWidget("window2.frame1.editorFrame.m_editorWidget")
 CheckQuery("window2.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:3")
 
-]
+]}
 // EOF

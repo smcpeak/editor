@@ -1,6 +1,8 @@
 // fn-input-repeat-tab.ev
 // Test that I can press Tab repeatedly to drill into a
-[
+{
+  args: []
+  cmds: [
 // set of subdirectories with only one child each.
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -18,5 +20,5 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 // Make sure I opened the right file.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "placeholder.txt")
 
-]
+]}
 // EOF

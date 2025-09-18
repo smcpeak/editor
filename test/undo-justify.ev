@@ -1,6 +1,8 @@
 // undo-justify.ev
 // Test "undo" for "Justify paragraph" command.
-[
+{
+  args: []
+  cmds: [
 
 // In editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -43,5 +45,5 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc def j
 Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentText" "abc\ndef\njkl\n")
 
-]
+]}
 // EOF

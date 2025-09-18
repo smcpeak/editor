@@ -1,11 +1,13 @@
 // visible-tabs.ev
 // Test rendering of visible Tab characters.
-[
+{
+  args: ["test/tabs-test.txt"]
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "tabs-test.txt")
 ResizeEvent("window1.frame1.editorFrame.m_editorWidget" QSize(475 250))
 CheckImage("window1.frame1.editorFrame.m_editorWidget" "screenshot" "test/visible-tabs.png")
 
-]
+]}
 // EOF

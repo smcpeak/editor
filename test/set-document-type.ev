@@ -1,6 +1,8 @@
 // set-highlighting.ev
 // Test the "File | Set document type ..." menu item.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // In editor with expected file.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -31,5 +33,5 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 // Check that "Hash comment" is currently active.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentType" "Hash comment")
 
-]
+]}
 // EOF

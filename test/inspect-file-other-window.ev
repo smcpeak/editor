@@ -1,6 +1,8 @@
 // inspect-file-other-window.ev
 // Test "File | Inspect in other window" menu item when used on a file.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // In editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -44,5 +46,5 @@ Shortcut("window2.m_menuBar.fileMenu.fileInspectAtCursorOtherWindow" "Ctrl+Shift
 CheckWindowTitle("window1" "language-test.h - Editor")
 CheckWindowTitle("window2" "language-test.cc - Editor")
 
-]
+]}
 // EOF

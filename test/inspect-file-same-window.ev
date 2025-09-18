@@ -1,6 +1,8 @@
 // inspect-file-same-window.ev
 // Use "Inspect file", showing the result in the same window.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // Editing the expected file.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -32,5 +34,5 @@ Shortcut("window1.m_menuBar.fileMenu.fileInspectAtCursor" "Ctrl+I")
 // That should have opened the header file.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.h")
 
-]
+]}
 // EOF

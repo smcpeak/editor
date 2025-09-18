@@ -1,6 +1,8 @@
 // lsp-stop-server.ev
 // Test stopping the server.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "language-test.cc")
@@ -34,5 +36,5 @@ WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget" "_")
 // The diagnostics should also be cleared.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "lspNumDiagnostics" null)
 
-]
+]}
 // EOF

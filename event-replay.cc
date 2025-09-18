@@ -111,11 +111,10 @@ EventReplay::QuiescenceEvent::~QuiescenceEvent()
 
 
 EventReplay::EventReplay(
-  string const &fname,
+  std::vector<gdv::GDValue> const &testCommands,
   std::function<void ()> globalSelfCheck)
 :
-  m_fname(fname),
-  m_testCommands(GDValue::readFromFile(fname)),
+  IMEMBFP(testCommands),
   m_nextTestCommandIndex(0),
   m_queuedFocusKeySequence(),
   m_testResult(),
@@ -1191,9 +1190,9 @@ bool EventReplay::replayNextEvent()
     }
 
     // Get the next command.
-    if (m_nextTestCommandIndex < m_testCommands.sequenceSize()) {
-      GDValue command =
-        m_testCommands.sequenceGetValueAt(m_nextTestCommandIndex++);
+    if (m_nextTestCommandIndex < m_testCommands.size()) {
+      GDValue const &command =
+        m_testCommands.at(m_nextTestCommandIndex++);
 
       TRACE1("replaying: " << command);
 

@@ -1,6 +1,8 @@
 // lsp-mgr-open-after-start.ev
 // Open the LSP manager only after starting LSP.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // I had a bug where doing that would show an empty table because the
 // ctor didn't populate it.
@@ -31,5 +33,5 @@ FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 
-]
+]}
 // EOF

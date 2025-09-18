@@ -1,6 +1,8 @@
 // lsp-save-as.ev
 // Check interaction of "Save as" and having a file open in LSP.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // Have the right file open.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -36,5 +38,5 @@ RemoveFileIfExists("test/language-test-copy.cc")
 // Implicitly, we do a global self-check at the end, which would catch
 // the original problem with this sequence.
 
-]
+]}
 // EOF

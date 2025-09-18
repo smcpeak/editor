@@ -1,6 +1,8 @@
 // reload-after-modification.ev
 // Test reloading a file after it is modified on disk.
-[
+{
+  args: ["test/gets-modified.txt"]
+  cmds: [
 
 // Check which file is open.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "gets-modified.txt")
@@ -36,5 +38,5 @@ CheckLabelMatches("window1.m_statusArea.m_filename" "gets-modified.txt$")
 // of the file.
 CheckLabel("window1.m_statusArea.m_cursor" "1:1")
 
-]
+]}
 // EOF

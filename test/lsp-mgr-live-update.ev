@@ -1,6 +1,8 @@
 // lsp-mgr-live-update.ev
 // Test LSP Servers dialog's ability to track live updates.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // Expected command line args:
 // test/language-test.cc
@@ -61,5 +63,5 @@ CheckTableWidgetContents("LSPServersDialog.m_table" [
   ["local" "N/A" "C++" "0" "LSP_PS_CLIENT_INACTIVE"]
 ])
 
-]
+]}
 // EOF

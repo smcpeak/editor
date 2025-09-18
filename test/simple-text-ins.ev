@@ -1,6 +1,8 @@
 // simple-text-ins.ev
 // Starting with an empty file, insert some text and edit it slightly.
-[
+{
+  args: []
+  cmds: [
 
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_H" "h")
 KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_E" "e")
@@ -36,5 +38,5 @@ Shortcut("window1.m_menuBar.editMenu.editCopy" "Ctrl+C")
 
 CheckClipboard("hello\nse inserted cond\n")
 
-]
+]}
 // EOF

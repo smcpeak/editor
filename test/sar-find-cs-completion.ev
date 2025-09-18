@@ -1,6 +1,8 @@
 // sar-find-cs-completion.ev
 // Test that the SAR "Find" box does not use case-insensitive completion.
-[
+{
+  args: ["test/file1.h"]
+  cmds: [
 
 // Expected file: test/file1.h.
 
@@ -24,5 +26,5 @@ KeyPress("window1.m_sarPanel.m_findBox" "Key_Return" "\r")
 // The Find box should have "dps", not "DPS".
 CheckComboBoxText("window1.m_sarPanel.m_findBox" "dps")
 
-]
+]}
 // EOF

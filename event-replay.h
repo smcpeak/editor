@@ -9,6 +9,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/std-vector-fwd.h"     // std::vector
 #include "smbase/str.h"                // string
 
 // Qt
@@ -16,6 +17,7 @@
 #include <QEventLoop>
 
 // libc++
+#include <cstddef>                     // std::size_t
 #include <functional>                  // std::function
 
 class QImage;
@@ -74,14 +76,11 @@ private:     // class data
   static int s_quiescenceEventType;
 
 private:     // instance data
-  // Name of file being read.
-  string m_fname;
-
   // Sequence of replay commands to execute.
-  gdv::GDValue m_testCommands;
+  std::vector<gdv::GDValue> const &m_testCommands;
 
   // Index in `m_textCommands` to execute next.
-  gdv::GDVIndex m_nextTestCommandIndex;
+  std::size_t m_nextTestCommandIndex;
 
   // Queue of ordinary typing characters to replay before continuing
   // with the events in 'm_in'.
@@ -168,7 +167,8 @@ private:     // funcs
 
 public:      // funcs
   explicit EventReplay(
-    string const &fname, std::function<void ()> globalSelfCheck);
+    std::vector<gdv::GDValue> const &testCommands,
+    std::function<void ()> globalSelfCheck);
   ~EventReplay();
 
   // Inject all the events and check all the assertions.  If everything

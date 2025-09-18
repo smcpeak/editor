@@ -1,6 +1,8 @@
 // open-files-filter.ev
 // In the open-files dialog, apply a filter.
-[
+{
+  args: ["test/read-only1.ev" "test/read-only2.ev" "test/read-only3.ev" "test/resize1.ev"]
+  cmds: [
 
 // Open the open-files dialog.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -49,5 +51,5 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 // Check that we switched to the last one.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "read-only1.ev")
 
-]
+]}
 // EOF

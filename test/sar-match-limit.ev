@@ -1,6 +1,8 @@
 // sar-match-limit.ev
 // Test hitting the match limit.
-[
+{
+  args: ["test/file1.h"]
+  cmds: [
 
 // Expected file: test/file1.h.
 
@@ -43,5 +45,5 @@ KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_Escape" "\u{1B}")
 CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesAboveLabel" "")
 CheckLabel("window1.frame1.editorFrame.m_editorWidget.m_matchesBelowLabel" "")
 
-]
+]}
 // EOF

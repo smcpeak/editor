@@ -642,10 +642,10 @@ check:
 	./editor.exe -testCommands=test/all-tests.gdvn
 	@#
 	@# Remaining tests that can't easily run in the big batch.
-	cp test/file1.h tmp.h && $(RETRY) ./editor.exe -ev=test/undo-redo-undo.ev tmp.h && rm tmp.h
+	cp test/file1.h tmp.h && $(RETRY) ./editor.exe -ev=test/undo-redo-undo.ev && rm tmp.h
 	cd test && sh ../retry.sh 3 ../editor.exe -ev=fn-input-dialog-size.ev
 	cp test/robotank.info.json.crlf.bin tmp.h && \
-	  $(RETRY) ./editor.exe -ev=test/sar-remove-ctlm.ev tmp.h && \
+	  $(RETRY) ./editor.exe -ev=test/sar-remove-ctlm.ev && \
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
 	@#

@@ -1,6 +1,8 @@
 // prompt-unsaved-changes.ev
 // Prompt before quitting with unsaved changes.
-[
+{
+  args: []
+  cmds: [
 
 // Expect to start with focus on the editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -32,5 +34,5 @@ FocusKeyPR("Key_Space" " ")
 //
 // TODO: I have no way to confirm that from a test script.
 
-]
+]}
 // EOF

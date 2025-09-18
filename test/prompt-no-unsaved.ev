@@ -1,6 +1,8 @@
 // prompt-no-unsaved.ev
 // Test the prompt that appears when trying to save a file that does not
-[
+{
+  args: ["test/gets-saved.txt"]
+  cmds: [
 // have any unsaved changes.
 
 // This test does not confirm that saving the file actually writes to
@@ -33,5 +35,5 @@ Shortcut("window1.m_menuBar.fileMenu.fileSave" "F2")
 // No dialog appears.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
-]
+]}
 // EOF

@@ -1,6 +1,8 @@
 // lsp-go-to-decl-tabs.ev
 // Test using LSP to jump to a declaration that has tab characters.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // In editor with correct file..
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -39,5 +41,5 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "langu
 // smaller column value that would correspond to the byte index.
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "10:44")
 
-]
+]}
 // EOF

@@ -1,6 +1,8 @@
 // apply-command-nonzero-exit.ev
 // "Apply command" command has a non-zero exit status.
-[
+{
+  args: ["test/language-test.cc"]
+  cmds: [
 
 // In editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
@@ -36,5 +38,5 @@ CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "2:1")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "markPosition" "1:1")
 CheckQuery("window1.frame1.editorFrame.m_editorWidget" "selectedText" "// Syntax example for testing LSP services.\n")
 
-]
+]}
 // EOF

@@ -4,6 +4,9 @@
 // I run this without any retries, before running any other tests, so if
 // there is a problem just running the editor in the first place, the
 // retry machinery does not uselessly try two more times.
-[]
+{
+  args: []
+  cmds: []
+}
 
 // EOF

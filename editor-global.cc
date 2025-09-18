@@ -50,6 +50,7 @@
 #include "smbase/exc.h"                          // smbase::{XBase, xformat}, EXN_CONTEXT
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
+#include "smbase/gdvalue-parser-ops.h"           // gdv::gdvpOptTo
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
@@ -127,7 +128,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_doNotSaveSettings(false),
     m_filenameInputDialogHistory(),
     m_recordInputEvents(false),
-    m_eventFileTest()
+    m_eventTestFileName(),
+    m_eventTestCommands()
 {
   m_documentList.addObserver(this);
 
@@ -375,10 +377,17 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
   // Files to open specified on the command line.
   std::vector<std::string> filesToOpen;
 
+  SMFileUtil sfu;
+
+  auto addFileToOpen = [&filesToOpen, &sfu](std::string const &fname) {
+    std::string path = sfu.getAbsolutePath(fname);
+    path = sfu.normalizePathSeparators(path);
+    filesToOpen.push_back(path);
+  };
+
   // True if we will open the user settings file.
   bool useSettings = true;
 
-  SMFileUtil sfu;
   for (int i=1; i < argc; i++) {
     std::string arg(argv[i]);
     if (arg.empty()) {
@@ -394,7 +403,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
 
       else if (beginsWith(arg, "-ev=")) {
         // Replay a sequence of events as part of a test.
-        m_eventFileTest = arg.substr(4, arg.length()-4);
+        m_eventTestFileName = arg.substr(4, arg.length()-4);
 
         // We are going to run an automated test, so ignore user
         // settings.
@@ -402,6 +411,28 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
 
         // Only use the fake server with record/replay
         m_lspIsFakeServer = true;
+
+        // Read the script and parse it.
+        GDValue testScript =
+          GDValue::readFromFile(m_eventTestFileName);
+        GDValueParser parser(testScript);
+        parser.checkIsMap();
+
+        // The `args` can be missing, in which case we do not open any
+        // files initially.
+        auto args = gdvpOptTo<std::vector<std::string>>(
+          parser.mapGetValueAtSymOpt("args"));
+        cout << "args: " << toGDValue(args) << "\n";
+
+        // For now, all arguments specified this way are interpreted as
+        // files to open.
+        for (std::string const &fname : args) {
+          addFileToOpen(fname);
+        }
+
+        // The `cmds` is required.
+        m_eventTestCommands = gdvpTo<std::vector<GDValue>>(
+          parser.mapGetValueAtSym("cmds"));
       }
 
       else if (arg == "-record") {
@@ -449,10 +480,13 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
     }
 
     else {
+      if (!m_eventTestFileName.empty()) {
+        xformat("Cannot specify files to open with -ev.  Put them "
+                "into the .ev file instead.");
+      }
+
       // Open all non-option files specified on the command line.
-      std::string path = sfu.getAbsolutePath(arg);
-      path = sfu.normalizePathSeparators(path);
-      filesToOpen.push_back(path);
+      addFileToOpen(arg);
     }
   }
 
@@ -1699,16 +1733,16 @@ static int innerMain(int argc, char **argv)
         recorder = new EventRecorder("events.out");
       }
 
-      if (!app.m_eventFileTest.empty()) {
+      if (!app.m_eventTestFileName.empty()) {
         // Automated GUI test.
         g_abortUponDevWarning = true;
-        cout << "running test: " << app.m_eventFileTest << endl;
+        cout << "running test: " << app.m_eventTestFileName << endl;
 
         // Cause the event script name to be included in any failure
         // message.
-        EXN_CONTEXT(app.m_eventFileTest);
+        EXN_CONTEXT(app.m_eventTestFileName);
 
-        EventReplay replay(app.m_eventFileTest, selfCheck);
+        EventReplay replay(app.m_eventTestCommands, selfCheck);
         std::string error = replay.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;
