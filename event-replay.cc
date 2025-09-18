@@ -1,42 +1,43 @@
 // event-replay.cc
 // code for event-replay.h
 
-#include "event-replay.h"              // this module
+#include "event-replay.h"                        // this module
 
 // NOTE: There should not be any dependencies here on the editor per se.
 // If you want to, say, query an EditorWidget from a test script, use
 // the "CheckQuery" generic query.
 
 // editor
-#include "debug-values.h"              // DEBUG_VALUES
-#include "waiting-counter.h"           // g_waitingCounter, IncDecWaitingCounter
+#include "debug-values.h"                        // DEBUG_VALUES
+#include "waiting-counter.h"                     // g_waitingCounter, IncDecWaitingCounter
 
 // smqtutil
-#include "smqtutil/gdvalue-qt.h"       // gdvpTo(QSize)
-#include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtguiutil.h"        // getKeyPressFromString, showRaiseAndActivateWindow
-#include "smqtutil/qtutil.h"           // operator<<(QString)
-#include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
+#include "smqtutil/gdvalue-qt.h"                 // gdvpTo(QSize)
+#include "smqtutil/qstringb.h"                   // qstringb
+#include "smqtutil/qtguiutil.h"                  // getKeyPressFromString, showRaiseAndActivateWindow
+#include "smqtutil/qtutil.h"                     // operator<<(QString)
+#include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
-#include "smbase/c-string-reader.h"    // parseQuotedCString
-#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
-#include "smbase/exc.h"                // smbase::{XBase, XMessage}, EXN_CONTEXT
-#include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpTo}
-#include "smbase/gdvalue-tuple.h"      // gdv::gdvpToTuple
-#include "smbase/gdvalue-vector.h"     // gdv::gdvpTo<std::vector>
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/overflow.h"           // safeToInt
-#include "smbase/nonport.h"            // getMilliseconds, getFileModificationTime
-#include "smbase/run-process.h"        // RunProcess
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/sm-is-equal.h"        // smbase::is_equal
-#include "smbase/sm-macros.h"          // IMEMBFP
-#include "smbase/sm-platform.h"        // PLATFORM_IS_WINDOWS
-#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
-#include "smbase/string-util.h"        // doubleQuote
-#include "smbase/stringb.h"            // stringb
-#include "smbase/syserr.h"             // xsyserror
+#include "smbase/c-string-reader.h"              // parseQuotedCString
+#include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
+#include "smbase/exc.h"                          // smbase::{XBase, XMessage}, EXN_CONTEXT
+#include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
+#include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
+#include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
+#include "smbase/gdvalue-vector.h"               // gdv::gdvpTo<std::vector>
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/overflow.h"                     // safeToInt
+#include "smbase/nonport.h"                      // getMilliseconds, getFileModificationTime
+#include "smbase/run-process.h"                  // RunProcess
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-is-equal.h"                  // smbase::is_equal
+#include "smbase/sm-macros.h"                    // IMEMBFP
+#include "smbase/sm-platform.h"                  // PLATFORM_IS_WINDOWS
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/string-util.h"                  // doubleQuote
+#include "smbase/stringb.h"                      // stringb
+#include "smbase/syserr.h"                       // xsyserror
 
 // Qt
 #include <QAbstractButton>
@@ -62,17 +63,17 @@
 #include <QWidget>
 
 // libc++
-#include <exception>                   // std::exception
-#include <fstream>                     // std::ofstream
-#include <functional>                  // std::function
-#include <optional>                    // std::optional
-#include <regex>                       // std::regex_search
-#include <string>                      // std::string, getline
-#include <tuple>                       // std::tuple
-#include <typeinfo>                    // typeid
+#include <exception>                             // std::exception
+#include <fstream>                               // std::ofstream
+#include <functional>                            // std::function
+#include <optional>                              // std::optional
+#include <regex>                                 // std::regex_search
+#include <string>                                // std::string, getline
+#include <tuple>                                 // std::tuple
+#include <typeinfo>                              // typeid
 
 // libc
-#include <stdlib.h>                    // getenv, atoi
+#include <stdlib.h>                              // getenv, atoi
 
 using namespace gdv;
 using namespace smbase;
@@ -116,6 +117,7 @@ EventReplay::EventReplay(
 :
   IMEMBFP(testCommands),
   m_nextTestCommandIndex(0),
+  m_symbolDefinitions(),
   m_queuedFocusKeySequence(),
   m_testResult(),
   m_eventLoop(),
@@ -125,7 +127,7 @@ EventReplay::EventReplay(
 {
   if (s_quiescenceEventType == 0) {
     s_quiescenceEventType = QEvent::registerEventType();
-    TRACE1(DEBUG_VALUES(s_quiescenceEventType));
+    TRACE2(DEBUG_VALUES(s_quiescenceEventType));
     xassert(s_quiescenceEventType > 0);
   }
 
@@ -309,8 +311,8 @@ QWidget *EventReplay::getFocusWidget(QString const &funcName)
     xmessagesb("No widget has focus.");
   }
 
-  TRACE1(toString(funcName) << ": focusWidget: " <<
-         doubleQuote(focusWidget->objectName()));
+  TRACE2(toString(funcName) << ": focusWidget: " <<
+         qObjectPath(focusWidget));
 
   return focusWidget;
 }
@@ -474,6 +476,31 @@ static QPointF toQPointF(QPoint const &pt)
 }
 
 
+bool EventReplay::handleMetaCommand(GDValue const &command)
+{
+  GDValueParser parser(command);
+  if (parser.isTaggedTupleSize("Define", 2)) {
+    auto [newName, newValue] =
+      gdvpToTuple<GDVSymbol, GDValue>(parser);
+
+    // Update any existing binding.
+    m_symbolDefinitions[newName] = std::move(newValue);
+
+    return true;
+  }
+
+  return false;
+}
+
+
+GDValue EventReplay::applySubstitutions(GDValue const &command) const
+{
+  return substitutionTransformGDValue(
+    command,
+    m_symbolDefinitions);
+}
+
+
 // Complain unless 'numArgs==required'.
 #define CHECK_NUM_ARGS(required)                           \
   if (numArgs != required) {                               \
@@ -529,8 +556,17 @@ static QPointF toQPointF(QPoint const &pt)
   }
 
 
-void EventReplay::replayCall(GDValue const &command)
+void EventReplay::replayCall(GDValue const &origCommand)
 {
+  if (handleMetaCommand(origCommand)) {
+    return;
+  }
+
+  GDValue command = applySubstitutions(origCommand);
+  if (command != origCommand) {
+    TRACE1("substituted command: " << command.asIndentedString());
+  }
+
   GDValueParser parser(command);
   parser.checkIsTuple();
 
@@ -539,7 +575,7 @@ void EventReplay::replayCall(GDValue const &command)
 
   int const numArgs = safeToInt(parser.containerSize());
 
-  // --------------- events/actions ---------------
+  // ----------------------------- actions -----------------------------
   if (funcName == "KeyPress") {
     BIND_STRING_ARGS3(receiver, keys, text);
 
@@ -712,7 +748,7 @@ void EventReplay::replayCall(GDValue const &command)
       ev /*ownership transfer*/);
   }
 
-  // -------------------- checks --------------------
+  // ----------------------------- checks ------------------------------
   else if (funcName == "DumpObjectTree") {
     BIND_STRING_ARGS1(path);
 
@@ -1323,7 +1359,7 @@ string EventReplay::runTest()
   else {
     // Arrange to get notified just before the event dispatcher yields
     // control to the OS.  See doc/event-replay.txt.
-    TRACE1("connecting slot_aboutToBlock");
+    TRACE2("connecting slot_aboutToBlock");
     QObject::connect(QAbstractEventDispatcher::instance(),
                      &QAbstractEventDispatcher::aboutToBlock,
                      this, &EventReplay::slot_aboutToBlock);
@@ -1338,7 +1374,7 @@ string EventReplay::runTest()
   TRACE1("runTest starting top-level event loop");
   m_eventLoop.exec();
 
-  TRACE1("runTest finished; result: " << m_testResult);
+  TRACE1("runTest finished; result: " << doubleQuote(m_testResult));
   return m_testResult;
 }
 
@@ -1358,11 +1394,11 @@ bool EventReplay::callReplayNextEvent()
       // dialog is closed, which is misleading.)
       cout << "test FAILED: " << m_testResult << endl;
     }
-    TRACE1("test complete, stopping replay event loop");
+    TRACE2("test complete, stopping replay event loop");
     m_eventLoop.exit(0);
   }
 
-  TRACE1("callReplayNextEvent returning " << ret);
+  TRACE2("callReplayNextEvent returning " << ret);
   return ret;
 }
 
@@ -1370,9 +1406,9 @@ bool EventReplay::callReplayNextEvent()
 bool EventReplay::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
-    TRACE1("received QuiescenceEvent");
+    TRACE2("received QuiescenceEvent");
     if (g_waitingCounter) {
-      TRACE1("ignoring QuiescenceEvent because g_waitingCounter is " <<
+      TRACE2("ignoring QuiescenceEvent because g_waitingCounter is " <<
              g_waitingCounter);
     }
     else if (this->callReplayNextEvent()) {
@@ -1381,17 +1417,17 @@ bool EventReplay::event(QEvent *ev)
     }
     else {
       // Disconnect from the event dispatcher to stop getting signals.
-      TRACE1("disconnecting slot_aboutToBlock");
+      TRACE2("disconnecting slot_aboutToBlock");
       QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
                           this, NULL);
     }
 
-    TRACE1("finished with QuiescenceEvent");
+    TRACE2("finished with QuiescenceEvent");
     return true;
   }
 
   if (ev->type() == QEvent::Timer) {
-    TRACE1("received TimerEvent");
+    TRACE2("received TimerEvent");
     this->killTimerIf();
 
     // Post the next event.
@@ -1401,7 +1437,7 @@ bool EventReplay::event(QEvent *ev)
     }
     else {
       // The timer has been killed so we will not get any more events.
-      TRACE1("refraining from installing another timer");
+      TRACE2("refraining from installing another timer");
     }
 
     return true;
@@ -1424,7 +1460,7 @@ void EventReplay::slot_aboutToBlock() NOEXCEPT
     return;
   }
 
-  TRACE1("in slot_aboutToBlock");
+  TRACE2("in slot_aboutToBlock");
 
   // Getting here means the application really is quiescent; if we did
   // not do this, the app would block waiting for some external event.

@@ -5,8 +5,11 @@
   args: []
   cmds: [
 
+    // Define `editorWidget` as the following string.
+    Define(editorWidget "window1.frame1.editorFrame.m_editorWidget")
+
     // In editor.
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+    CheckFocusWidget(editorWidget)
 
     // Open the dialog.
     Shortcut("window1.m_menuBar" "Alt+E")
@@ -18,10 +21,10 @@
     FocusKeyPR("Key_Return" "\r")
 
     // Back in editor.
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
+    CheckFocusWidget(editorWidget)
 
     // Check its text.
-    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+    CheckQuery(editorWidget
       "documentText" "hello\n")
 
     // Add another line.
@@ -32,8 +35,8 @@
     FocusKeyPR("Key_Return" "\r")
 
     // Check result.
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+    CheckFocusWidget(editorWidget)
+    CheckQuery(editorWidget
       "documentText" "hello\nanother word")
 
     // Add a newline.
@@ -56,8 +59,8 @@
     FocusKeyPR("Key_Return" "\r")
 
     // Check the result.
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+    CheckFocusWidget(editorWidget)
+    CheckQuery(editorWidget
       "documentText" "hello\n\u{0}\u{1}\u{2}\u{3}")
 
     // Select the line again.
@@ -75,8 +78,8 @@
     FocusKeyPR("Key_Return" "\r")
 
     // Check result.
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
-    CheckQuery("window1.frame1.editorFrame.m_editorWidget"
+    CheckFocusWidget(editorWidget)
+    CheckQuery(editorWidget
       "documentText" "hello\n123\n")
 
   ]
