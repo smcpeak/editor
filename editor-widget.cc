@@ -2510,6 +2510,9 @@ void EditorWidget::initCursorForProcessOutput()
 
   // Bring the cursor line into view.
   m_editor->scrollToCursor();
+
+  TRACE1("initCursorForProcessOutput: firstVisible: " <<
+         m_editor->firstVisible());
 }
 
 

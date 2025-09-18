@@ -18,6 +18,7 @@
 // qt
 #include <QGridLayout>
 #include <QScrollBar>
+#include <QSignalBlocker>
 
 // libc++
 #include <algorithm>                   // std::max
@@ -123,6 +124,14 @@ void EditorWidgetFrame::setScrollbarRangesAndValues()
   // *before* setting the value, since otherwise the scrollbar's value
   // will be clamped to the old range.
   if (m_horizScroll) {
+    // The purpose of this function is to set the scrollbar data based
+    // on the current widget data.  But there is a signal that
+    // communicates in the opposite direction (to allow the user to
+    // scroll the view).  Suppress that; otherwise, the call to
+    // `setRange` will clamp the value, which will then get sent to the
+    // widget, altering its `firstVisible`.
+    QSignalBlocker blocker(m_horizScroll);
+
     m_horizScroll->setRange(0, std::max(tde->maxLineLengthColumns().get(),
                                         editorWidget()->firstVisibleCol().get()));
     m_horizScroll->setValue(editorWidget()->firstVisibleCol().get());
@@ -131,6 +140,9 @@ void EditorWidgetFrame::setScrollbarRangesAndValues()
   }
 
   if (m_vertScroll) {
+    // As above, but for the vertical scrollbar.
+    QSignalBlocker blocker(m_vertScroll);
+
     m_vertScroll->setRange(0, std::max(tde->numLines().get(),
                                        editorWidget()->firstVisibleLine().get()));
     m_vertScroll->setValue(editorWidget()->firstVisibleLine().get());
