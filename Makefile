@@ -602,6 +602,25 @@ all: check-mypy
 endif
 
 
+# --------------------- run check-coding-rules.py ----------------------
+CCR_INPUT_SPEC = *.h *.cc *.lex *.ast
+CCR_INPUTS := $(wildcard $(CCR_INPUT_SPEC))
+
+# On Windows, `moc` and `grc` generate files with CRLF line endings, so
+# exclude them from the check.
+CCR_INPUTS := $(filter-out %.moc.cc,$(CCR_INPUTS))
+CCR_INPUTS := $(filter-out %.gen.cc,$(CCR_INPUTS))
+
+out/ccr.ok: $(CCR_INPUTS) $(SMBASE)/check-coding-rules.py
+	$(CREATE_OUTPUT_DIRECTORY)
+	$(PYTHON3) $(SMBASE)/check-coding-rules.py \
+	  '--ignore=\.(moc|gen)\.cc$$' \
+	  $(CCR_INPUT_SPEC)
+	touch $@
+
+check: out/ccr.ok
+
+
 # -------------------------- lsp-test-server ---------------------------
 out/lsp-test-server.ok: lsp-test-server.py out/lsp-test-server.py.mypy.ok
 	$(CREATE_OUTPUT_DIRECTORY)
