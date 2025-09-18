@@ -13,7 +13,7 @@
 
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-map.h"        // GDValue <-> std::map
-#include "smbase/gdvalue-parser-ops.h" // gdv::GDValueParser
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"        // GDValue <-> std::set
 #include "smbase/gdvalue-unique-ptr.h" // GDValue <-> std::unique_ptr
 #include "smbase/gdvalue-vector.h"     // GDValue <-> std::vector

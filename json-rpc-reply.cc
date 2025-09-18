@@ -5,8 +5,7 @@
 
 #include "smbase/gdvalue-either.h"     // gdv::toGDValue(smbase::Either)
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
-#include "smbase/gdvalue-parser-ops.h" // gdv::gdvpOptTo
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpOptTo}
 
 #include <iostream>                    // std::ostream
 

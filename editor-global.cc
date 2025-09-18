@@ -50,8 +50,7 @@
 #include "smbase/exc.h"                          // smbase::{XBase, xformat}, EXN_CONTEXT
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
-#include "smbase/gdvalue-parser-ops.h"           // gdv::gdvpOptTo
-#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
+#include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpOptTo}
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue

@@ -8,7 +8,7 @@
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS, smbase::compare
 #include "smbase/gdvalue-list.h"       // gdv::gdvTo<std::list>
 #include "smbase/gdvalue-optional.h"   // gdv::gdvTo<std::optional>
-#include "smbase/gdvalue-parser-ops.h" // gdv::GDValueParser
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 
 #include <optional>                    // std::optional
