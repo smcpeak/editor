@@ -18,12 +18,15 @@
 #include "smbase/datetime.h"           // DateTimeSeconds
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/sm-swap.h"            // swap
-#include "smbase/trace.h"              // TRACE
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 
 // libc++
 #include <algorithm>                   // std::{min, max}
 
 using namespace smbase;
+
+
+INIT_TRACE("td-editor");
 
 
 int TextDocumentEditor::s_objectCount = 0;
@@ -51,7 +54,7 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
   selfCheck();
 
   TextDocumentEditor::s_objectCount++;
-  TRACE("TextDocumentEditor",
+  TRACE1(
     "created TDE at " << (void*)this <<
     ", doc=" << (void*)m_doc <<
     ", oc=" << s_objectCount);
@@ -61,7 +64,7 @@ TextDocumentEditor::TextDocumentEditor(TextDocument *doc)
 TextDocumentEditor::~TextDocumentEditor()
 {
   TextDocumentEditor::s_objectCount--;
-  TRACE("TextDocumentEditor",
+  TRACE1(
     "destroyed TDE at " << (void*)this <<
     ", doc=" << (void*)m_doc <<
     ", oc=" << s_objectCount);
@@ -229,7 +232,7 @@ bool TextDocumentEditor::cursorAtEnd() const
 
 void TextDocumentEditor::setCursor(TextLCoord c)
 {
-  TRACE("TextDocumentEditor", "setCursor(" << c << ")");
+  TRACE1("setCursor(" << c << ")");
 
   m_cursor = c;
 }
@@ -237,7 +240,7 @@ void TextDocumentEditor::setCursor(TextLCoord c)
 
 void TextDocumentEditor::setMark(TextLCoord m)
 {
-  TRACE("TextDocumentEditor", "setMark(" << m << ")");
+  TRACE1("setMark(" << m << ")");
 
   m_mark = m;
   m_markActive = true;
@@ -246,7 +249,7 @@ void TextDocumentEditor::setMark(TextLCoord m)
 
 void TextDocumentEditor::clearMark()
 {
-  TRACE("TextDocumentEditor", "clearMark()");
+  TRACE1("clearMark()");
 
   m_mark = TextLCoord();
   m_markActive = false;
@@ -394,7 +397,7 @@ void TextDocumentEditor::setFirstVisible(TextLCoord fv)
   m_lastVisible.m_line = fv.m_line + h;
   m_lastVisible.m_column = fv.m_column + w;
 
-  TRACE("TextDocumentEditor",
+  TRACE1(
     "setFirstVisible: fv=" << m_firstVisible <<
     " lv=" << m_lastVisible);
 }
@@ -410,11 +413,11 @@ void TextDocumentEditor::moveFirstVisibleBy(
 void TextDocumentEditor::moveFirstVisibleAndCursor(
   LineDifference deltaLine, ColumnDifference deltaCol)
 {
-  TRACE("moveFirstVisibleAndCursor",
-        "start: firstVis=" << m_firstVisible
-     << ", cursor=" << m_cursor
-     << ", deltaLine=" << deltaLine
-     << ", deltaCol=" << deltaCol);
+  TRACE1("moveFirstVisibleAndCursor start: "
+       "firstVis=" << m_firstVisible
+    << ", cursor=" << m_cursor
+    << ", deltaLine=" << deltaLine
+    << ", deltaCol=" << deltaCol);
 
   // first make sure the view contains the cursor
   this->scrollToCursor();
@@ -429,9 +432,9 @@ void TextDocumentEditor::moveFirstVisibleAndCursor(
   this->moveCursorBy(m_firstVisible.m_line - origVL,
                      m_firstVisible.m_column - origVC);
 
-  TRACE("moveFirstVisibleAndCursor",
-        "end: firstVis=" << m_firstVisible <<
-        ", cursor=" << m_cursor);
+  TRACE1("moveFirstVisibleAndCursor end: "
+       "firstVis=" << m_firstVisible
+    << ", cursor=" << m_cursor);
 }
 
 
@@ -563,7 +566,7 @@ void TextDocumentEditor::moveCursor(bool relLine, int line, bool relCol, int col
   }
   xassert(m_cursor.m_column >= 0);
 
-  TRACE("TextDocumentEditor",
+  TRACE1(
     "moveCursor(" << relLine << ", " << line << ", " <<
     relCol << ", " << col << "): m_cursor = " << m_cursor);
 }
