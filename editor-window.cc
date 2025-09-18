@@ -1269,6 +1269,12 @@ void EditorWindow::setDocumentType(
   NamedTextDocument *ntd,
   DocumentType newDT)
 {
+  if (newDT == ntd->documentType()) {
+    // If the new type is the same, don't do anything.  This avoids
+    // needlessly closing the file with LSP.
+    return;
+  }
+
   // Close the file with LSP since the document type affects its scope.
   lspClientManager()->closeFile(ntd);
 

@@ -116,7 +116,8 @@ private:     // funcs
   void printUnhandled(smbase::XBase const &x)
     { unhandledExceptionMsgbox(this, x); }
 
-  // Set the document type of `ntd` and notify observers.
+  // Set the document type of `ntd` and notify observers.  If the new
+  // type is the same as the current type, do nothing.
   void setDocumentType(
     NamedTextDocument *ntd,
     DocumentType newDT);
