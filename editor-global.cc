@@ -50,6 +50,7 @@
 #include "smbase/exc.h"                          // smbase::{XBase, xformat}, EXN_CONTEXT
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
+#include "smbase/gdvalue-fnapply-transform.h"    // gdv::fnApplyTransformGDValue
 #include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpOptTo}
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
@@ -348,6 +349,29 @@ void EditorGlobal::selfCheck() const
 }
 
 
+// Copy the elements of `src` into `dest` while flattening all sequences
+// immediately nested in it.  `null` is treated like an empty sequence,
+// and hence skipped.  Tagged sequences are not affected.
+static void gdvFlattenSequence(
+  std::vector<GDValue> &dest /*APPEND*/,
+  GDValue const &src)
+{
+  std::vector<GDValue> ret;
+
+  if (src.isSequence() && !src.isTaggedContainer()) {
+    for (GDValue const &elt : src.sequenceIterableC()) {
+      gdvFlattenSequence(dest, elt);
+    }
+  }
+  else if (src.isNull()) {
+    // Drop nulls.
+  }
+  else {
+    dest.push_back(src);
+  }
+}
+
+
 static char const *optionsDescription =
   "options:\n"
   "  -help           Print this message and exit.\n"
@@ -430,8 +454,14 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         }
 
         // The `cmds` is required.
-        m_eventTestCommands = gdvpTo<std::vector<GDValue>>(
-          parser.mapGetValueAtSym("cmds"));
+        GDValueParser origCmds = parser.mapGetValueAtSym("cmds");
+
+        // Evaluate and substitute definitions.
+        GDValue substCmds =
+          fnApplyTransformGDValue(origCmds.getValue());
+
+        // Flatten as a sequence of values.
+        gdvFlattenSequence(m_eventTestCommands /*APPEND*/, substCmds);
       }
 
       else if (arg == "-record") {

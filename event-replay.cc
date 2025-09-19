@@ -23,9 +23,8 @@
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/exc.h"                          // smbase::{XBase, XMessage}, EXN_CONTEXT
 #include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
-#include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
-#include "smbase/gdvalue-vector.h"               // gdv::gdvpTo<std::vector>
+#include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/nonport.h"                      // getMilliseconds, getFileModificationTime
@@ -117,7 +116,6 @@ EventReplay::EventReplay(
 :
   IMEMBFP(testCommands),
   m_nextTestCommandIndex(0),
-  m_symbolDefinitions(),
   m_queuedFocusKeySequence(),
   m_testResult(),
   m_eventLoop(),
@@ -476,31 +474,6 @@ static QPointF toQPointF(QPoint const &pt)
 }
 
 
-bool EventReplay::handleMetaCommand(GDValue const &command)
-{
-  GDValueParser parser(command);
-  if (parser.isTaggedTupleSize("Define", 2)) {
-    auto [newName, newValue] =
-      gdvpToTuple<GDVSymbol, GDValue>(parser);
-
-    // Update any existing binding.
-    m_symbolDefinitions[newName] = std::move(newValue);
-
-    return true;
-  }
-
-  return false;
-}
-
-
-GDValue EventReplay::applySubstitutions(GDValue const &command) const
-{
-  return substitutionTransformGDValue(
-    command,
-    m_symbolDefinitions);
-}
-
-
 // Complain unless 'numArgs==required'.
 #define CHECK_NUM_ARGS(required)                           \
   if (numArgs != required) {                               \
@@ -556,17 +529,8 @@ GDValue EventReplay::applySubstitutions(GDValue const &command) const
   }
 
 
-void EventReplay::replayCall(GDValue const &origCommand)
+void EventReplay::replayCall(GDValue const &command)
 {
-  if (handleMetaCommand(origCommand)) {
-    return;
-  }
-
-  GDValue command = applySubstitutions(origCommand);
-  if (command != origCommand) {
-    TRACE1("substituted command: " << command.asIndentedString());
-  }
-
   GDValueParser parser(command);
   parser.checkIsTuple();
 

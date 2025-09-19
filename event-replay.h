@@ -6,7 +6,7 @@
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
-#include "smbase/gdvalue.h"            // gdv::{GDValue, GDVSymbol}
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/std-vector-fwd.h"     // std::vector
@@ -19,7 +19,6 @@
 // libc++
 #include <cstddef>                     // std::size_t
 #include <functional>                  // std::function
-#include <map>                         // std::map
 #include <vector>                      // std::vector
 
 class QImage;
@@ -84,10 +83,6 @@ private:     // instance data
   // Index in `m_textCommands` to execute next.
   std::size_t m_nextTestCommandIndex;
 
-  // Set of symbols defined using `Define`.  Commands will have these
-  // definitions substituted before executing.
-  std::map<gdv::GDValue, gdv::GDValue> m_symbolDefinitions;
-
   // Queue of ordinary typing characters to replay before continuing
   // with the events in 'm_in'.
   ArrayStack<char> m_queuedFocusKeySequence;
@@ -120,14 +115,6 @@ private:     // funcs
   // Get the focus widget, throwing if there is none.  `funcName` is
   // the function we are performing, and used in a `TRACE` call.
   QWidget *getFocusWidget(QString const &funcName);
-
-  // If `command` is a "meta" command, which for now is just "Define",
-  // handle it and return true.  Otherwise return false.
-  bool handleMetaCommand(gdv::GDValue const &command);
-
-  // Apply the substitutions in `m_symbolDefinitions` to `command` and
-  // return the transformed value.
-  gdv::GDValue applySubstitutions(gdv::GDValue const &command) const;
 
   // Replay a single `command`.  Throw an exception if there is a
   // problem.
