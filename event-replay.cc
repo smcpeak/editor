@@ -1194,7 +1194,8 @@ bool EventReplay::replayNextEvent()
       GDValue const &command =
         m_testCommands.at(m_nextTestCommandIndex++);
 
-      TRACE1("replaying: " << command);
+      TRACE1("replaying: " << command.sourceLocationIndicator() <<
+             command);
 
       // Use the location of `command` as context.
       EXN_CONTEXT(command.sourceLocation());
