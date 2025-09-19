@@ -5,39 +5,45 @@
   args: []
   cmds: [
 
-    // Define `editorWidget` as the following string.
+    // Path to the editor widget.
     Define(editorWidget "window1.frame1.editorFrame.m_editorWidget")
+
+    // Check the document text.
+    Define(checkDocumentText(expect)
+      CheckQuery(editorWidget "documentText" expect))
+
+    // Path to the line edit inside the dialog we are testing.
+    Define(dialogLineEdit "window1.frame1.editorFrame.m_editorWidget.#2.#1")
+
+    // Procedure to use "Edit as C string escapes" to enter text in C
+    // string syntax.
+    Define(runEditAsCStringDialog(oldText, newText) [
+      // Open the dialog.
+      Shortcut("window1.m_menuBar" "Alt+E")
+      KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
+      CheckFocusWidget(dialogLineEdit)
+
+      // Check the old text.
+      CheckLineEditText(dialogLineEdit oldText)
+
+      // Enter the new text.
+      FocusKeySequence(newText)
+      FocusKeyPR("Key_Return" "\r")
+
+      // Back in editor.
+      CheckFocusWidget(editorWidget)
+    ])
 
     // In editor.
     CheckFocusWidget(editorWidget)
 
-    // Open the dialog.
-    Shortcut("window1.m_menuBar" "Alt+E")
-    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
-
     // Enter a first line of text.
-    FocusKeySequence("hello\\n")
-    FocusKeyPR("Key_Return" "\r")
-
-    // Back in editor.
-    CheckFocusWidget(editorWidget)
-
-    // Check its text.
-    CheckQuery(editorWidget
-      "documentText" "hello\n")
+    runEditAsCStringDialog("" "hello\\n")
+    checkDocumentText("hello\n")
 
     // Add another line.
-    Shortcut("window1.m_menuBar" "Alt+E")
-    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
-    FocusKeySequence("another\\x20word")
-    FocusKeyPR("Key_Return" "\r")
-
-    // Check result.
-    CheckFocusWidget(editorWidget)
-    CheckQuery(editorWidget
-      "documentText" "hello\nanother word")
+    runEditAsCStringDialog("" "another\\x20word")
+    checkDocumentText("hello\nanother word")
 
     // Add a newline.
     FocusKeyPR("Key_Return" "\r")
@@ -46,41 +52,15 @@
     FocusKeyPR("Shift+Key_Up" "")
 
     // Edit it.
-    Shortcut("window1.m_menuBar" "Alt+E")
-    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
-
-    // It should be populated with the selected text.
-    CheckLineEditText("window1.frame1.editorFrame.m_editorWidget.#2.#1"
-      "another word\\n")
-
-    // Replace it with some control characters.
-    FocusKeySequence("\\x00\\x01\\x02\\x03")
-    FocusKeyPR("Key_Return" "\r")
-
-    // Check the result.
-    CheckFocusWidget(editorWidget)
-    CheckQuery(editorWidget
-      "documentText" "hello\n\u{0}\u{1}\u{2}\u{3}")
+    runEditAsCStringDialog("another word\\n" "\\x00\\x01\\x02\\x03")
+    checkDocumentText("hello\n\u{0}\u{1}\u{2}\u{3}")
 
     // Select the line again.
     FocusKeyPR("Shift+Key_Home" "")
-    Shortcut("window1.m_menuBar" "Alt+E")
-    KeyPress("window1.m_menuBar.editMenu" "Key_E" "e")
 
-    // Check the dialog text.
-    CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget.#2.#1")
-    CheckLineEditText("window1.frame1.editorFrame.m_editorWidget.#2.#1"
-      "\\000\\001\\002\\003")
-
-    // Edit it.
-    FocusKeySequence("123\\n")
-    FocusKeyPR("Key_Return" "\r")
-
-    // Check result.
-    CheckFocusWidget(editorWidget)
-    CheckQuery(editorWidget
-      "documentText" "hello\n123\n")
+    // Edit it again.
+    runEditAsCStringDialog("\\000\\001\\002\\003" "123\\n")
+    checkDocumentText("hello\n123\n")
 
   ]
 }
