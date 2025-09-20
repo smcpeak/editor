@@ -19,7 +19,7 @@ class QPainter;
 
 
 // variations on the base font
-enum FontVariant {
+enum FontVariant : int {
   FV_NORMAL,              // nothing different
   FV_ITALIC,              // italic (slanted)
   FV_BOLD,                // bold

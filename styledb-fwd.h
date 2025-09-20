@@ -6,6 +6,7 @@
 #ifndef EDITOR_STYLEDB_FWD_H
 #define EDITOR_STYLEDB_FWD_H
 
+enum FontVariant : int;
 class TextStyle;
 class StyleDB;
 class TextCategoryAndStyle;

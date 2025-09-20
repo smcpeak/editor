@@ -8,7 +8,7 @@
 
 #include "editor-font-set-fwd.h"       // fwds for this module
 
-#include "styledb-fwd.h"               // StyleDB [n]
+#include "styledb-fwd.h"               // StyleDB, FontVariant [n]
 #include "textcategory.h"              // TextCategoryAOA, NUM_TEXT_OVERLAY_ATTRIBUTES
 
 #include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
@@ -17,6 +17,9 @@
 #include "smbase/bdffont-fwd.h"        // BDFFont [n]
 
 #include <array>                       // std::array
+#include <memory>                      // std::unique_ptr
+
+class QColor;
 
 
 // Collection of `QtBDFFont`s for various purposes within
@@ -26,8 +29,18 @@ private:     // data
   // Map from overlay attribute to:
   //   map from text category to:
   //     non-null font owner pointer
+  //
+  // TODO: Replace `ObjArrayStack` with `std::vector<std::unique_ptr>>`.
   std::array<ObjArrayStack<QtBDFFont>, NUM_TEXT_OVERLAY_ATTRIBUTES>
     m_fontMap;
+
+  // Font for drawing the character under the cursor, indexed by
+  // the FontVariant (modulo FV_UNDERLINE) there.
+  ObjArrayStack<QtBDFFont> m_cursorFontForFV;
+
+  // Font containing miniature hexadecimal characters for use when
+  // a glyph is missing.  Never null.
+  std::unique_ptr<QtBDFFont> m_minihexFont;
 
 public:      // methods
   ~EditorFontSet();
@@ -39,13 +52,30 @@ public:      // methods
   // Build the set of fonts.
   explicit EditorFontSet(
     StyleDB const *styleDB,
-    ObjArrayStack<BDFFont> const &bdfFonts);
+    ObjArrayStack<BDFFont> const &primaryBDFFonts,
+    BDFFont const &minihexBDFFont,
+    QColor cursorColor);
+
+  // Assert invariants.
+  void selfCheck() const;
 
   // Look up the font for `catAOA`.  Requires that it be mapped.
   //
   // Ensures: return != nullptr
   QtBDFFont const *forCatAOAC(TextCategoryAOA catAOA) const;
   QtBDFFont *forCatAOA(TextCategoryAOA catAOA);
+
+  // Get the font to use when the cursor is over `fv`.
+  //
+  // Requires: 0 <= fv <= FV_BOLD
+  //
+  // Ensures: return != nullptr
+  QtBDFFont *forCursorForFV(FontVariant fv);
+
+  // Get the minihex font for drawing characters without glyphs.
+  //
+  // Ensures: return != nullptr
+  QtBDFFont *minihex();
 
   void swapWith(EditorFontSet &obj);
 

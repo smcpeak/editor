@@ -173,9 +173,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_leftMargin(1),
     m_interLineSpace(0),
     m_cursorColor(0xFF, 0xFF, 0xFF),       // white
-    m_fontForCategory(),
-    m_cursorFontForFV(FV_BOLD + 1),
-    m_minihexFont(),
+    m_fontSet(),
     m_visibleWhitespace(true),
     m_whitespaceOpacity(32),
     m_trailingWhitespaceBgColor(255, 0, 0, 64),
@@ -252,7 +250,7 @@ EditorWidget::~EditorWidget()
   m_editor = NULL;
   m_editorList.deleteAll();
 
-  m_fontForCategory.deleteAll();
+  m_fontSet.deleteAll();
 
   // Explicit for clarity.
   m_editorWindow = nullptr;
@@ -295,8 +293,7 @@ void EditorWidget::selfCheck() const
   xassert(m_textSearch->document() == m_editor->getDocumentCore());
   m_textSearch->selfCheck();
 
-  xassert(m_minihexFont != nullptr);
-  m_minihexFont->selfCheck();
+  m_fontSet.selfCheck();
 }
 
 
@@ -378,45 +375,30 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
   // Using one fixed global style mapping.
   StyleDB *styleDB = StyleDB::instance();
 
+  // Font for missing glyphs.
+  Owner<BDFFont> minihexBDFFont(
+    makeBDFFont(bdfFontData_minihex6, "minihex font"));
+
   // Build the complete set of new fonts.
   {
-    EditorFontSet newFonts(styleDB, bdfFonts);
+    EditorFontSet newFonts(
+      styleDB,
+      bdfFonts,
+      *minihexBDFFont,
+      m_cursorColor);
 
     // Substitute the new for the old.
-    m_fontForCategory.swapWith(newFonts);
-  }
-
-  // Repeat the procedure for the cursor fonts.
-  {
-    ObjArrayStack<QtBDFFont> newFonts(FV_BOLD + 1);
-    for (int fv = 0; fv <= FV_BOLD; fv++) {
-      QtBDFFont *qfont = new QtBDFFont(*(bdfFonts[fv]));
-
-      // The character under the cursor is drawn with the normal background
-      // color, and the cursor box (its background) is drawn in 'cursorColor'.
-      qfont->setFgColor(styleDB->getStyle(TC_NORMAL).background);
-      qfont->setBgColor(m_cursorColor);
-      qfont->setTransparent(false);
-
-      newFonts.push(qfont);
-    }
-
-    m_cursorFontForFV.swapWith(newFonts);
+    m_fontSet.swapWith(newFonts);
   }
 
   // calculate metrics
   QRect const bbox =
-    m_fontForCategory.forCatAOAC(TC_NORMAL)->getAllCharsBBox();
+    m_fontSet.forCatAOAC(TC_NORMAL)->getAllCharsBBox();
   m_fontAscent = -bbox.top();
   m_fontDescent = bbox.bottom() + 1;
   m_fontHeight = m_fontAscent + m_fontDescent;
   xassert(m_fontHeight == bbox.height());    // check my assumptions
   m_fontWidth = bbox.width();
-
-  // Font for missing glyphs.
-  Owner<BDFFont> minihexBDFFont(makeBDFFont(bdfFontData_minihex6, "minihex font"));
-  m_minihexFont.reset(new QtBDFFont(*minihexBDFFont));
-  m_minihexFont->setTransparent(false);
 }
 
 
@@ -1565,7 +1547,7 @@ void EditorWidget::drawCursorOnLine(
       cursorFV = FV_NORMAL;   // 'cursorFontForFV' does not map FV_UNDERLINE
       underlineCursor = true;
     }
-    QtBDFFont *cursorFont = m_cursorFontForFV[cursorFV];
+    QtBDFFont *cursorFont = m_fontSet.forCursorForFV(cursorFV);
 
     paint.setBackground(cursorFont->getBgColor());
     paint.eraseRect(x,0, m_fontWidth, m_fontHeight);
@@ -1692,9 +1674,9 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
     // This is a somewhat expensive thing to do because it requires
     // re-rendering the offscreen glyphs.  Hence, I only do it once
     // I know I need it.
-    m_minihexFont->setSameFgBgColors(*font);
+    m_fontSet.minihex()->setSameFgBgColors(*font);
 
-    drawHexQuad(*m_minihexFont, paint, bounds, codePoint);
+    drawHexQuad(*( m_fontSet.minihex() ), paint, bounds, codePoint);
   }
 }
 
@@ -1703,7 +1685,7 @@ TextCategoryAndStyle EditorWidget::getTextCategoryAndStyle(
   TextCategoryAOA catAOA) const
 {
   return TextCategoryAndStyle(
-    m_fontForCategory,
+    m_fontSet,
     catAOA,
     getDocument()->m_modifiedOnDisk /*useDarker*/);
 }

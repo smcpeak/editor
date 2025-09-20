@@ -46,7 +46,6 @@
 #include "smbase/refct-serf.h"                   // RCSerf, RCSerfOpt SerfRefCount
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-functional-fwd.h"           // std::function [n]
-#include "smbase/std-memory-fwd.h"               // std::unique_ptr [n]
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
 #include "smbase/std-string-fwd.h"               // std::string [n]
 #include "smbase/std-string-view-fwd.h"          // std::string_view [n]
@@ -182,19 +181,7 @@ public:      // data
   // Fonts for (indexed by) each text category+overlay.
   //
   // TODO: Create one global instance rather than one per widget.
-  EditorFontSet m_fontForCategory;
-
-  // Font for drawing the character under the cursor, indexed by
-  // the FontVariant (modulo FV_UNDERLINE) there.
-  //
-  // TODO: Combine this with `m_fontForCategory`.
-  ObjArrayStack<QtBDFFont> m_cursorFontForFV;
-
-  // Font containing miniature hexadecimal characters for use when
-  // a glyph is missing.  Never null.
-  //
-  // TODO: Combine this with `m_fontForCategory`.
-  std::unique_ptr<QtBDFFont> m_minihexFont;
+  EditorFontSet m_fontSet;
 
   // When true, draw visible markers on whitespace characters.
   bool m_visibleWhitespace;
