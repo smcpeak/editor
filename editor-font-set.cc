@@ -47,7 +47,7 @@ EditorFontSet::EditorFontSet(
 }
 
 
-QtBDFFont const *EditorFontSet::atC(TextCategoryAOA catAOA) const
+QtBDFFont const *EditorFontSet::forCatAOAC(TextCategoryAOA catAOA) const
 {
   QtBDFFont const *ret =
     m_fontMap.at(catAOA.overlay())[catAOA.category()];
@@ -57,9 +57,9 @@ QtBDFFont const *EditorFontSet::atC(TextCategoryAOA catAOA) const
 }
 
 
-QtBDFFont *EditorFontSet::at(TextCategoryAOA catAOA)
+QtBDFFont *EditorFontSet::forCatAOA(TextCategoryAOA catAOA)
 {
-  return const_cast<QtBDFFont*>(atC(catAOA));
+  return const_cast<QtBDFFont*>(forCatAOAC(catAOA));
 }
 
 

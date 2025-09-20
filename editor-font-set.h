@@ -44,8 +44,8 @@ public:      // methods
   // Look up the font for `catAOA`.  Requires that it be mapped.
   //
   // Ensures: return != nullptr
-  QtBDFFont const *atC(TextCategoryAOA catAOA) const;
-  QtBDFFont *at(TextCategoryAOA catAOA);
+  QtBDFFont const *forCatAOAC(TextCategoryAOA catAOA) const;
+  QtBDFFont *forCatAOA(TextCategoryAOA catAOA);
 
   void swapWith(EditorFontSet &obj);
 

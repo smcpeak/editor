@@ -146,7 +146,7 @@ void TextCategoryAndStyle::setStyleDetails()
   // pointer to perform drawing operations.  I've added a TODO in
   // `qtbdffont.h` to fix it, but for now, just bypass it with a cast.
   m_font = const_cast<QtBDFFont*>(
-    m_fontForCategory.atC(m_textCategoryAOA));
+    m_fontForCategory.forCatAOAC(m_textCategoryAOA));
 
   xassert(m_textStyle != nullptr);
   xassert(m_font != nullptr);

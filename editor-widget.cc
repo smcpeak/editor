@@ -406,7 +406,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 
   // calculate metrics
   QRect const bbox =
-    m_fontForCategory.atC(TC_NORMAL)->getAllCharsBBox();
+    m_fontForCategory.forCatAOAC(TC_NORMAL)->getAllCharsBBox();
   m_fontAscent = -bbox.top();
   m_fontDescent = bbox.bottom() + 1;
   m_fontHeight = m_fontAscent + m_fontDescent;
