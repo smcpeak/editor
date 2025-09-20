@@ -99,6 +99,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(host_file_and_line_opt);
   RUN_TEST(range_text_repl);           // deps: textmcoord
   RUN_TEST(lsp_client_scope);
+  RUN_TEST(rle_inf_sequence);
 
   // SCC: history, td, td-core
   RUN_TEST(td_core);                   // deps: gap-gdvalue, history, line-index, td, td-line, textmcoord

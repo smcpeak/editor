@@ -51,6 +51,7 @@ void test_positive_line_count(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
 void test_range_text_repl(CmdlineArgsSpan args);
 void test_recent_items_list(CmdlineArgsSpan args);
+void test_rle_inf_sequence(CmdlineArgsSpan args);
 void test_td(CmdlineArgsSpan args);
 void test_td_change(CmdlineArgsSpan args);
 void test_td_core(CmdlineArgsSpan args);

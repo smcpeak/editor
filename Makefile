@@ -322,6 +322,7 @@ UNIT_TESTS_OBJS += positive-line-count-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += range-text-repl-test.o
 UNIT_TESTS_OBJS += recent-items-list-test.o
+UNIT_TESTS_OBJS += rle-inf-sequence-test.o
 UNIT_TESTS_OBJS += td-change-test.o
 UNIT_TESTS_OBJS += td-core-test.o
 UNIT_TESTS_OBJS += td-diagnostics-test.o
