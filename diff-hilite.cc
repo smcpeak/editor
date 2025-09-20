@@ -4,7 +4,7 @@
 #include "diff-hilite.h"               // this module
 
 // editor
-#include "textcategory.h"              // LineCategories
+#include "textcategory.h"              // LineCategoryAOAs
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
@@ -17,7 +17,7 @@ string DiffHighlighter::highlighterName() const
 
 
 void DiffHighlighter::highlight(TextDocumentCore const &doc, LineIndex line,
-                                LineCategories &categories)
+                                LineCategoryAOAs &categories)
 {
   // Get the line contents.
   ByteCount lineLength = doc.lineLengthBytes(line);

@@ -7,7 +7,7 @@
 #include "inclexer.h"                  // IncLexer
 #include "td-core.h"                   // TextDocumentCore
 #include "td-editor.h"                 // TextDocument[And]Editor
-#include "textcategory.h"              // LineCategories
+#include "textcategory.h"              // LineCategoryAOAs
 
 // smbase
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
@@ -239,7 +239,7 @@ void LexHighlighter::saveLineState(LineIndex line, LexerState _state)
 void LexHighlighter::highlight(
   TextDocumentCore const &buf,
   LineIndex line,
-  LineCategories &categories)
+  LineCategoryAOAs &categories)
 {
   xassert(&buf == buffer);
 
@@ -292,7 +292,7 @@ void LexHighlighter::highlight(
     categories.append(code, ByteOrColumnCount(len));
     len = lexer.getNextToken(code);
   }
-  categories.endCategory = code;    // line trails off with the final code
+  categories.setTailValue(code);    // line trails off with the final code
 
   saveLineState(line, lexer.getState());
 }
@@ -301,7 +301,7 @@ void LexHighlighter::highlight(
 void printHighlightedLine(TextDocumentCore const &tdc,
                           LexHighlighter &hi, LineIndex line)
 {
-  LineCategories categories(TC_NORMAL);
+  LineCategoryAOAs categories(TC_NORMAL);
   hi.highlight(tdc, line, categories);
 
   if (verbose) {
@@ -327,7 +327,7 @@ void printHighlightedLines(TextDocumentCore const &tdc,
 static void dumpActualOutput(ArrayStack<string> const &actualOutputLines)
 {
   {
-    ofstream out("actual.out");
+    ofstream out("actual.out", ios::binary);
     xassert(out);
 
     for (int line=0; line < actualOutputLines.length(); line++) {
@@ -350,12 +350,12 @@ void testHighlighter(LexHighlighter &hi, TextDocumentAndEditor &tde,
   ArrayStack<string> actualOutputLines;
   FOR_EACH_LINE_INDEX_IN(line, tde) {
     // Highlight the line in model coordinates.
-    LineCategories modelCategories(TC_NORMAL);
+    LineCategoryAOAs modelCategories(TC_NORMAL);
     hi.highlight(tde.getDocument()->getCore(),
                  line, modelCategories);
 
     // Convert to layout coordinates.
-    LineCategories layoutCategories(TC_NORMAL);
+    LineCategoryAOAs layoutCategories(TC_NORMAL);
     tde.modelToLayoutSpans(line,
       /*OUT*/ layoutCategories, /*IN*/ modelCategories);
 
@@ -428,11 +428,11 @@ static void del(int line, int col, int len)
 static void innerCheckLine(LexHighlighter &hi,
                            LexHighlighter &batch, int i)
 {
-  LineCategories categories1(TC_NORMAL);
+  LineCategoryAOAs categories1(TC_NORMAL);
   hi.highlightTDE(tde, LineIndex(i), categories1);
   string rendered1 = categories1.asUnaryString();
 
-  LineCategories categories2(TC_NORMAL);
+  LineCategoryAOAs categories2(TC_NORMAL);
   batch.highlightTDE(tde, LineIndex(i), categories2);
   string rendered2 = categories2.asUnaryString();
 

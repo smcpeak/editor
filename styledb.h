@@ -6,12 +6,13 @@
 
 #include "styledb-fwd.h"               // fwds for this module
 
-#include "textcategory.h"              // TextCategory
+#include "textcategory.h"              // TextCategoryAOA, TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES
 
-#include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont
+#include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
 
-#include "smbase/sm-macros.h"          // DMEMB
 #include "smbase/array.h"              // GrowArray, ObjArrayStack
+#include "smbase/bdffont-fwd.h"        // BDFFont [n]
+#include "smbase/sm-macros.h"          // DMEMB
 
 #include <qcolor.h>                    // QColor
 
@@ -50,16 +51,51 @@ private:     // class data
   static StyleDB *inst;
 
 private:     // instance data
-  // array of defined styles
-  ArrayStack<TextStyle> arr;
+  // Styles for use with each overlay.
+  ArrayStack<TextStyle> m_styles[
+    std::size_t(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES)];
 
 public:      // methods
   StyleDB();        // create default styles
   ~StyleDB();
 
-  TextStyle const &getStyle(TextCategory index) const;
+  TextStyle const &getStyle(TextCategoryAOA index) const;
 
   static StyleDB *instance();
+};
+
+
+// Map from `TextCategoryAOA` to `QtBDFFont`.
+class FontForCategory {
+private:     // data
+  // Map from overlay attribute to:
+  //   map from text category to:
+  //     non-null font owner pointer
+  ObjArrayStack<QtBDFFont> m_fontMap[
+    std::size_t(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES)];
+
+public:      // methods
+  ~FontForCategory();
+
+  // Build an empty set of fonts.  This cannot be used with `at`; it is
+  // a placeholder to be swapped with another set.
+  FontForCategory();
+
+  // Build the set of fonts.
+  explicit FontForCategory(
+    StyleDB const *styleDB,
+    ObjArrayStack<BDFFont> const &bdfFonts);
+
+  // Look up the font for `catAOA`.  Requires that it be mapped.
+  //
+  // Ensures: return != nullptr
+  QtBDFFont const *atC(TextCategoryAOA catAOA) const;
+  QtBDFFont *at(TextCategoryAOA catAOA);
+
+  void swapWith(FontForCategory &obj);
+
+  // Deallocate all font objects.
+  void deleteAll();
 };
 
 
@@ -71,17 +107,18 @@ public:      // data
   // Style DB to get details from.
   StyleDB const *m_styleDB;
 
-  // Map from category to font.
-  ObjArrayStack<QtBDFFont> const &m_fontForCategory;
+  // Map from categoryAOA to font.
+  FontForCategory const &m_fontForCategory;
 
   // When choosing the background color, adjust it to be slightly darker
   // than what `m_textStyle` indicates.
   bool m_useDarkerBackground;
 
   // ---- Current category and style ----
-  // The current category.  Tracking this makes it possible to avoid
-  // changing the `QPainter` if the old and new styles are the same.
-  TextCategory m_textCategory;
+  // The current category+overlay.  Tracking this makes it possible to
+  // avoid changing the `QPainter` if the old and new styles are the
+  // same.
+  TextCategoryAOA m_textCategoryAOA;
 
   // Current style.  Never null.
   TextStyle const *m_textStyle;
@@ -96,8 +133,8 @@ private:     // methods
 
 public:      // methods
   explicit TextCategoryAndStyle(
-    ObjArrayStack<QtBDFFont> const &fontForCategory,
-    TextCategory textCategory,
+    FontForCategory const &fontForCategory,
+    TextCategoryAOA textCategoryAOA,
     bool useDarkerBackground);
 
   // True if the current style calls for underlining.
@@ -112,7 +149,7 @@ public:      // methods
 
   // If `tc != m_textCategory`, update it along with other details and
   // push those into `paint`.
-  void setDrawStyleIfNewCategory(QPainter &paint, TextCategory tc);
+  void setDrawStyleIfNewCategory(QPainter &paint, TextCategoryAOA tco);
 };
 
 

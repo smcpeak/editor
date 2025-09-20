@@ -73,7 +73,7 @@ public:      // funcs
 
   // Highlighter funcs
   virtual void highlight(TextDocumentCore const &buf, LineIndex line,
-                         LineCategories &categories) OVERRIDE;
+                         LineCategoryAOAs &categories) OVERRIDE;
 };
 
 
@@ -94,7 +94,7 @@ void printHighlightedLines(TextDocumentCore const &tdc,
 
 // Test that 'hi', when run on 'inputFname', produces output matching a
 // file whose name is 'inputFname' + ".hi".  Each output line is what
-// LineCategories::asUnaryString() produces.  Throw an exception on test
+// LineCategoryAOAs::asUnaryString() produces.  Throw an exception on test
 // failure.
 //
 // 'tde' is a container for the document that 'hi' is already associated

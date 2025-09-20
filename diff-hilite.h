@@ -17,7 +17,7 @@ public:
   // Highlighter methods.
   virtual string highlighterName() const OVERRIDE;
   virtual void highlight(TextDocumentCore const &doc, LineIndex line,
-                         LineCategories &categories) OVERRIDE;
+                         LineCategoryAOAs &categories) OVERRIDE;
 };
 
 

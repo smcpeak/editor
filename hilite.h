@@ -9,10 +9,9 @@
 #include "line-index.h"                // LineIndex
 #include "td-core.h"                   // TextDocumentCore, TextDocumentObserver
 #include "td-editor.h"                 // TextDocumentEditor
+#include "textcategory-fwd.h"          // LineCategoryAOAs
 
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue
-
-class LineCategories;                  // textcategory.h
 
 
 // A highlighter can apply TextCategories to lines of text.  The
@@ -42,11 +41,11 @@ public:
   // The resulting 'categories' has spans expressed in *model*
   // (not layout) coordinates.
   virtual void highlight(TextDocumentCore const &doc, LineIndex line,
-                         LineCategories &categories) = 0;
+                         LineCategoryAOAs &categories) = 0;
 
   // Convenience method.
   void highlightTDE(TextDocumentEditor const *tde, LineIndex line,
-                    LineCategories &categories)
+                    LineCategoryAOAs &categories)
     { this->highlight(tde->getDocument()->getCore(), line, categories); }
 };
 

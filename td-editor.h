@@ -12,7 +12,7 @@
 #include "line-count.h"                // PositiveLineCount, LineCount
 #include "line-difference-fwd.h"       // LineDifference [n]
 #include "td.h"                        // TextDocument
-#include "textcategory.h"              // LineCategories
+#include "textcategory-fwd.h"          // LineCategoryAOAs [n]
 #include "textlcoord.h"                // TextLCoord
 
 // smbase
@@ -485,8 +485,8 @@ public:      // funcs
   // Given the character style info in 'modelCategories', compute
   // column style info in 'layoutCategories'.
   void modelToLayoutSpans(LineIndex line,
-    LineCategories /*OUT*/ &layoutCategories,
-    LineCategories /*IN*/ const &modelCategories);
+    LineCategoryAOAs /*OUT*/ &layoutCategories,
+    LineCategoryAOAs /*IN*/ const &modelCategories);
 
   // --------------------- whitespace text queries ---------------------
   // For the given line, count the number of whitespace characters

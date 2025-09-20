@@ -2,9 +2,10 @@
 // Tests for td-editor module.
 
 #include "unit-tests.h"                // decl for my entry point
+#include "td-editor.h"                 // module to test
 
 #include "column-difference.h"         // ColumnDifference
-#include "td-editor.h"                 // module to test
+#include "textcategory.h"              // LineCategoryAOAs
 
 // smbase
 #include "smbase/datablok.h"           // DataBlock
@@ -2439,10 +2440,10 @@ void testEditingWithTabs()
 
 void expectMTLS(TextDocumentAndEditor &tde,
   int line,
-  LineCategories const &expectLayoutCategories,
-  LineCategories const &modelCategories)
+  LineCategoryAOAs const &expectLayoutCategories,
+  LineCategoryAOAs const &modelCategories)
 {
-  LineCategories actualLayoutCategories(TC_NORMAL);
+  LineCategoryAOAs actualLayoutCategories(TC_NORMAL);
   tde.modelToLayoutSpans(LineIndex(line), actualLayoutCategories, modelCategories);
   if (expectLayoutCategories != actualLayoutCategories) {
     cout << "expect: " << expectLayoutCategories.asString() << endl;
@@ -2472,15 +2473,15 @@ void testModelToLayoutSpans()
   // Spans in model-based coordinates.  (I could invoke the C/C++
   // highlighter, but since the expected output will be written this
   // way, I think it is clearer to directly express the inputs too.)
-  LineCategories l1mc(TC_NORMAL);
+  LineCategoryAOAs l1mc(TC_NORMAL);
   l1mc.append(TC_KEYWORD, 3);
   l1mc.append(TC_NORMAL, 4);
   l1mc.append(TC_OPERATOR, 2);
 
-  LineCategories l2mc(TC_NORMAL);
+  LineCategoryAOAs l2mc(TC_NORMAL);
   l2mc.append(TC_OPERATOR, 1);
 
-  LineCategories l3mc(TC_NORMAL);
+  LineCategoryAOAs l3mc(TC_NORMAL);
   l3mc.append(TC_NORMAL, 1);     // The single tab character.
   l3mc.append(TC_KEYWORD, 3);
   l3mc.append(TC_NORMAL, 3);
@@ -2489,7 +2490,7 @@ void testModelToLayoutSpans()
   l3mc.append(TC_NUMBER, 1);
   l3mc.append(TC_OPERATOR, 1);
 
-  LineCategories l4mc(TC_NORMAL);
+  LineCategoryAOAs l4mc(TC_NORMAL);
   l4mc.append(TC_NORMAL, 7);     // "\tprintf"
   l4mc.append(TC_OPERATOR, 1);
   l4mc.append(TC_STRING, 9);
@@ -2497,7 +2498,7 @@ void testModelToLayoutSpans()
   l4mc.append(TC_NORMAL, 2);
   l4mc.append(TC_OPERATOR, 2);
 
-  LineCategories l5mc(TC_NORMAL);
+  LineCategoryAOAs l5mc(TC_NORMAL);
   l5mc.append(TC_NORMAL, 1);
   l5mc.append(TC_KEYWORD, 2);
   l5mc.append(TC_NORMAL, 1);
@@ -2505,30 +2506,30 @@ void testModelToLayoutSpans()
   l5mc.append(TC_NORMAL, 1);
   l5mc.append(TC_OPERATOR, 1);
 
-  LineCategories l6mc(TC_NORMAL);
+  LineCategoryAOAs l6mc(TC_NORMAL);
   l6mc.append(TC_NORMAL, 3);
   l6mc.append(TC_OPERATOR, 3);
 
-  LineCategories l7mc(TC_NORMAL);
+  LineCategoryAOAs l7mc(TC_NORMAL);
   l7mc.append(TC_NORMAL, 1);     // Tab.
   l7mc.append(TC_KEYWORD, 6);
   l7mc.append(TC_NORMAL, 1);     // Tab after "return".
   l7mc.append(TC_NUMBER, 1);
   l7mc.append(TC_OPERATOR, 1);
 
-  LineCategories l8mc(TC_NORMAL);
+  LineCategoryAOAs l8mc(TC_NORMAL);
   l8mc.append(TC_OPERATOR, 1);
 
   // Spans in layout coordinates.
-  LineCategories l1lc(TC_NORMAL);
+  LineCategoryAOAs l1lc(TC_NORMAL);
   l1lc.append(TC_KEYWORD, 3);
   l1lc.append(TC_NORMAL, 4);
   l1lc.append(TC_OPERATOR, 2);
 
-  LineCategories l2lc(TC_NORMAL);
+  LineCategoryAOAs l2lc(TC_NORMAL);
   l2lc.append(TC_OPERATOR, 1);
 
-  LineCategories l3lc(TC_NORMAL);
+  LineCategoryAOAs l3lc(TC_NORMAL);
   l3lc.append(TC_NORMAL, 8);     // The single tab character.
   l3lc.append(TC_KEYWORD, 3);
   l3lc.append(TC_NORMAL, 3);
@@ -2537,7 +2538,7 @@ void testModelToLayoutSpans()
   l3lc.append(TC_NUMBER, 1);
   l3lc.append(TC_OPERATOR, 1);
 
-  LineCategories l4lc(TC_NORMAL);
+  LineCategoryAOAs l4lc(TC_NORMAL);
   l4lc.append(TC_NORMAL, 14);    // "\tprintf"
   l4lc.append(TC_OPERATOR, 1);
   l4lc.append(TC_STRING, 9);
@@ -2545,7 +2546,7 @@ void testModelToLayoutSpans()
   l4lc.append(TC_NORMAL, 2);
   l4lc.append(TC_OPERATOR, 2);
 
-  LineCategories l5lc(TC_NORMAL);
+  LineCategoryAOAs l5lc(TC_NORMAL);
   l5lc.append(TC_NORMAL, 8);
   l5lc.append(TC_KEYWORD, 2);
   l5lc.append(TC_NORMAL, 1);
@@ -2553,18 +2554,18 @@ void testModelToLayoutSpans()
   l5lc.append(TC_NORMAL, 1);
   l5lc.append(TC_OPERATOR, 1);
 
-  LineCategories l6lc(TC_NORMAL);
+  LineCategoryAOAs l6lc(TC_NORMAL);
   l6lc.append(TC_NORMAL, 17);
   l6lc.append(TC_OPERATOR, 3);
 
-  LineCategories l7lc(TC_NORMAL);
+  LineCategoryAOAs l7lc(TC_NORMAL);
   l7lc.append(TC_NORMAL, 8);     // Tab.
   l7lc.append(TC_KEYWORD, 6);
   l7lc.append(TC_NORMAL, 2);     // Tab after "return".
   l7lc.append(TC_NUMBER, 1);
   l7lc.append(TC_OPERATOR, 1);
 
-  LineCategories l8lc(TC_NORMAL);
+  LineCategoryAOAs l8lc(TC_NORMAL);
   l8lc.append(TC_OPERATOR, 1);
 
   expectMTLS(tde, 1, l1lc, l1mc);

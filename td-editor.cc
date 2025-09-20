@@ -10,6 +10,7 @@
 #include "justify.h"                   // justifyNearLine
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
+#include "textcategory.h"              // LineCategoryAOAs
 
 // smbase
 #include "smbase/array.h"              // Array
@@ -949,23 +950,23 @@ string TextDocumentEditor::getWordAfter(TextLCoord tc) const
 
 
 void TextDocumentEditor::modelToLayoutSpans(LineIndex line,
-  LineCategories /*OUT*/ &layoutCategories,
-  LineCategories /*IN*/ const &modelCategories)
+  LineCategoryAOAs /*OUT*/ &layoutCategories,
+  LineCategoryAOAs /*IN*/ const &modelCategories)
 {
   // Blank out the destination spans, taking the opportunity to set
   // the end category.
-  layoutCategories.clear(modelCategories.endCategory);
+  layoutCategories.clear(modelCategories.tailValue());
 
   // We will work our way through the line in both model space and
   // layout space.
   LineIterator layoutIterator(*this, line);
 
   // Walk the input model coordinate spans.
-  for (LineCategoryIter iter(modelCategories); !iter.atEnd(); iter.nextRun()) {
+  for (LineCategoryAOAIter iter(modelCategories); !iter.atEnd(); iter.nextRun()) {
     ColumnIndex spanStartColumn = layoutIterator.columnOffset();
 
     // Iterate over 'iter.length' bytes.
-    for (int i=0; i < iter.length; i++) {
+    for (int i=0; i < iter.runLength(); i++) {
       if (layoutIterator.has()) {
         layoutIterator.advByte();
       }
@@ -982,7 +983,7 @@ void TextDocumentEditor::modelToLayoutSpans(LineIndex line,
     // Add the layout span (if it is not empty).
     if (spanEndColumn > spanStartColumn) {
       layoutCategories.append(
-        iter.category,
+        iter.value(),
         // Here, we are passing a column count.
         ByteOrColumnCount((spanEndColumn - spanStartColumn).get()));
     }

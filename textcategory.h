@@ -4,25 +4,30 @@
 #ifndef TEXTCATEGORY_H
 #define TEXTCATEGORY_H
 
+#include "textcategory-fwd.h"          // fwds for this module
+
 #include "byte-or-column-count.h"      // ByteOrColumnCount
 #include "byte-or-column-index.h"      // ByteOrColumnIndex
+#include "rle-inf-sequence.h"          // RLEInfiniteSequence
 
 #include "smbase/array.h"              // ArrayStack
+#include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
 #include "smbase/sm-macros.h"          // DMEMB, CMEMB
 #include "smbase/str.h"                // string
-
-class LineCategoryIter;
 
 
 // Standard categories; I envision being able to add more dynamically,
 // but to have this set always available by default.
-enum TextCategory {
+enum TextCategory : unsigned char {
   TC_ZERO=0,               // not used; 0 is used to signal EOL during lexing
 
   // General text editor categories.
   TC_NORMAL,               // normal text
-  TC_SELECTION,            // selected text
-  TC_HITS,                 // buffer text that matches a search string
+
+  // These slots are currently unused.  I do not collapse them because I
+  // have tests that use the numeric values of the later enumerators.
+  TC_unused1,
+  TC_unused2,
 
   // Categories for any language.
   TC_ERROR,                // text that can't be lexed
@@ -48,102 +53,122 @@ enum TextCategory {
   NUM_STANDARD_TEXT_CATEGORIES
 };
 
+// Required for it to fit into 5 bits in `TextCategoryAOA`.
+static_assert(NUM_STANDARD_TEXT_CATEGORIES <= 32);
 
-// Specify a category for a run of characters.
-//
-// This object plays a dual role of expressing spans of either
-// characters (model coordinates) or columns (layout coordinates),
-// depending on the context.  The basic design is we first populate a
-// 'LineCategories' with model coordinates, then convert those to
-// another 'LineCategories' with layout coordinates, which can then be
-// rendered to the screen.
-//
-// TODO: Find way to use a static type to distinguish whether `length`
-// is a byte or column count.
-//
-class TCSpan {
-public:
-  TextCategory category;     // color/font to use
-  ByteOrColumnCount length;  // # of characters or columns covered
 
-public:
-  TCSpan() : category(TC_NORMAL), length(1) {}
-  TCSpan(TextCategory S, ByteOrColumnCount L) : category(S), length(L)
-    { xassert(length > 0); }
-  TCSpan(TCSpan const &obj)
-    : DMEMB(category), DMEMB(length) {}
-  TCSpan& operator=(TCSpan const &obj)
-    { CMEMB(category); CMEMB(length); return *this; }
+// Overlay attributes.  At most one can be applied to a given character
+// cell.
+//
+// TODO: "enum class" is a mistake.  Use plain "enum" instead.
+enum class TextOverlayAttribute : unsigned char {
+  TOA_NONE,                // No overlay.
+  TOA_SELECTION,           // Text is selected.
+  TOA_SEARCH_HIT,          // Text is part of a search hit.
+  TOA_PREPROCESSOR,        // Text is part of a preprocessor directive.
 
-  bool operator== (TCSpan const &obj) const;
-  NOTEQUAL_OPERATOR(TCSpan);
+  NUM_TEXT_OVERLAY_ATTRIBUTES
 };
+
+// Required for it to fit into 2 bits in `TextCategoryAOA`.
+static_assert(int(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES) <= 4);
+
+
+// Iterate over the elements of `TextOverlayAttribute`.
+#define FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(var)                      \
+  for (TextOverlayAttribute var = TextOverlayAttribute::TOA_NONE; \
+       var < TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES;   \
+       var = TextOverlayAttribute(int(var) + 1))
+
+
+// A text category And an Overlay Attribute (AOA).
+class TextCategoryAOA {
+private:     // data
+  // The category.
+  //
+  // Invariant: m_category < NUM_STANDARD_TEXT_CATEGORIES
+  unsigned char m_category : 5;
+
+  // The overlay.
+  //
+  // Invariant: m_overlay < NUM_TEXT_OVERLAY_ATTRIBUTES
+  unsigned char m_overlay : 2;
+
+public:
+  // TC_NORMAL, TOA_NONE
+  TextCategoryAOA();
+
+  // TOA_NONE
+  TextCategoryAOA(TextCategory category);
+
+  TextCategoryAOA(TextCategory category, TextOverlayAttribute overlay);
+
+  TextCategoryAOA(TextCategoryAOA const &obj) = default;
+  TextCategoryAOA &operator=(TextCategoryAOA const &obj) = default;
+
+  // Assert invariants.
+  void selfCheck() const;
+
+  TextCategory category() const;
+  TextOverlayAttribute overlay() const;
+
+  // Lexicographic order: category, style.
+  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextCategoryAOA)
+
+  // Return a single-letter code that represents `m_category`.
+  char categoryLetter() const;
+
+  // Return the category as a number.
+  int categoryNumber() const;
+
+  // Return a single-letter code that represents `m_overlay`.
+  char overlayLetter() const;
+
+  // Return `*this` except with `m_overlay` set to `overlay`.
+  TextCategoryAOA withOverlay(TextOverlayAttribute overlay) const;
+
+  // Write `categoryLetter()`, followed by `overlayLetter()` unless the
+  // overlay value is `TOA_NONE`.
+  void write(std::ostream &os) const;
+  friend std::ostream &operator<<(std::ostream &os, TextCategoryAOA const &obj)
+    { obj.write(os); return os; }
+};
+
+static_assert(sizeof(TextCategoryAOA) == 1);
 
 
 // Text category info for an entire line.
 //
-// As with 'TCSpan', this class can be used with either model or layout
-// coordinates, depending on the context.
-class LineCategories : private ArrayStack<TCSpan> {
-  friend class LineCategoryIter;
+// This class can be used with either model or layout coordinates,
+// depending on the context.
+class LineCategoryAOAs : public RLEInfiniteSequence<TextCategoryAOA> {
+private:     // types
+  using Base = RLEInfiniteSequence<TextCategoryAOA>;
 
-public:      // data
-  // Category of the characters beyond the last entry.
-  TextCategory endCategory;
+public:      // methods
+  using Base::Base;
 
-public:
-  LineCategories(TextCategory end) : endCategory(end) {}
-
-  bool operator== (LineCategories const &obj) const;
-  NOTEQUAL_OPERATOR(LineCategories);
-
-  // clear existing runs
-  void clear(TextCategory end)
-    { empty(); endCategory=end; }
-
-  // Add a new category run to those already present.
-  void append(TextCategory category, ByteOrColumnCount length);
-
-  // Overwrite a subsequence of characters or columns with a given
-  // category; 'length' can be 0 to mean infinite.
+  // Adjust a subsequence of characters or columns with a given overlay;
+  // 'length' can be 0 to mean infinite.
   void overlay(
     ByteOrColumnIndex start,
     ByteOrColumnCount length,
-    TextCategory category);
+    TextOverlayAttribute overlay);
 
-  // Retrieve the category for the given 0-indexed character.
-  TextCategory getCategoryAt(ByteOrColumnIndex index) const;
+  // Overwrite [start,start+length) with `newValue`.
+  //
+  // This is only used by test code.
+  void overwrite(
+    ByteOrColumnIndex start,
+    ByteOrColumnCount length,
+    TextCategoryAOA newValue);
 
-  // debugging: render the runs as a string
-  string asString() const;          // e.g. "[1,4][2,3][4"
-  string asUnaryString() const;     // e.g. "11112224..."
+  // Retrieve the category+overlay for the given 0-indexed character.
+  TextCategoryAOA getCategoryAOAAt(ByteOrColumnIndex index) const;
 };
 
 
-// iterator for walking over LineCategory descriptors
-class LineCategoryIter {
-private:
-  LineCategories const &categories;    // array of categories
-  int entry;                           // which entry of 'categories' we're on
-
-public:
-  int length;                // how many chars remain on this run (0=infinite)
-  TextCategory category;     // category of the current run
-
-public:
-  LineCategoryIter(LineCategories const &s);
-
-  // Advance the iterator a certain number of characters or columns,
-  // depending on whether the underlying 'categories' is in model space
-  // or layout space.
-  void advanceCharsOrCols(int n);
-
-  // advance to the next run
-  void nextRun();
-
-  // true if we're on the last, infinite run
-  bool atEnd() const { return length==0; }
-};
+using LineCategoryAOAIter = LineCategoryAOAs::Iter;
 
 
 #endif // TEXTCATEGORY_H

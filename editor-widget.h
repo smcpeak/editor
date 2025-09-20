@@ -28,10 +28,10 @@
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
-#include "styledb-fwd.h"                         // TextCategoryAndStyle
+#include "styledb.h"                             // TextCategoryAndStyle, FontForCategory
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
-#include "textcategory.h"                        // TextCategory, LineCategories
+#include "textcategory.h"                        // TextCategory, LineCategoryAOAs
 #include "uri-util.h"                            // URIPathSemantics
 #include "vfs-connections.h"                     // VFS_Connections
 
@@ -183,17 +183,21 @@ public:      // data
   // colors
   QColor m_cursorColor;                // color of text cursor
 
-  // Fonts for (indexed by) each text category; all fonts must use the
-  // same character size; some entries may be NULL, indicating we
-  // do not expect to draw text with that category.
-  ObjArrayStack<QtBDFFont> m_fontForCategory;
+  // Fonts for (indexed by) each text category+overlay.
+  //
+  // TODO: Create one global instance rather than one per widget.
+  FontForCategory m_fontForCategory;
 
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
+  //
+  // TODO: Combine this with `m_fontForCategory`.
   ObjArrayStack<QtBDFFont> m_cursorFontForFV;
 
   // Font containing miniature hexadecimal characters for use when
   // a glyph is missing.  Never null.
+  //
+  // TODO: Combine this with `m_fontForCategory`.
   std::unique_ptr<QtBDFFont> m_minihexFont;
 
   // When true, draw visible markers on whitespace characters.
@@ -276,7 +280,7 @@ private:     // funcs
 
   // Add the search hits for 'line' to 'categories.
   void addSearchMatchesToLineCategories(
-    LineCategories &categories, LineIndex line);
+    LineCategoryAOAs &categories, LineIndex line);
 
   // Copy 'm_hitText' and 'm_hitTextFlags' into 'm_textSearch'.
   void setTextSearchParameters();
@@ -725,7 +729,7 @@ public:      // funcs
     QPainter &paint,
     ColumnCount visibleLineCols,
     ColumnDifference startOfTrailingWhitespaceVisibleCol,
-    LineCategories const &layoutCategories,
+    LineCategoryAOAs const &layoutCategories,
     ArrayStack<char> const &visibleText,
     TextDocumentEditor::LineIterator &&lineIter,
     TextCategoryAndStyle /*INOUT*/ &textCategoryAndStyle);
@@ -767,7 +771,7 @@ public:      // funcs
   //
   void drawCursorOnLine(
     QPainter &paint,
-    LineCategories const &layoutCategories,
+    LineCategoryAOAs const &layoutCategories,
     ArrayStack<char> const &text,
     ColumnCount lineGlyphColumns);
 
@@ -780,7 +784,8 @@ public:      // funcs
     QPoint const &pt, char c, bool withinTrailingWhitespace);
 
   // Return the style info for `cat`.
-  TextCategoryAndStyle getTextCategoryAndStyle(TextCategory cat) const;
+  TextCategoryAndStyle getTextCategoryAndStyle(
+    TextCategoryAOA catAOA) const;
 
   // Get the widget-relative pixel rectangle where the cursor is
   // onscreen.  Since the cursor can be offscreen, this rectangle can be

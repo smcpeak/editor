@@ -3,134 +3,89 @@
 
 #include "textcategory.h"              // this module
 
+#include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
+#include "smbase/compare-util.h"       // smbase::compare, RET_IF_COMPARE_MEMBERS
 
-// --------------------------- TCSpan ------------------------
-bool TCSpan::operator== (TCSpan const &obj) const
+#include <iostream>                    // std::ostream
+#include <optional>                    // std::optional
+
+using namespace smbase;
+
+
+// -------------------------- TextCategoryAOA --------------------------
+TextCategoryAOA::TextCategoryAOA()
+:
+  m_category(int(TC_NORMAL)),
+  m_overlay(int(TextOverlayAttribute::TOA_NONE))
 {
-  return EMEMB(category) &&
-         EMEMB(length);
+  selfCheck();
 }
 
 
-// ----------------------- LineCategories --------------------
-bool LineCategories::operator== (LineCategories const &obj) const
+TextCategoryAOA::TextCategoryAOA(TextCategory category)
+:
+  m_category(int(category)),
+  m_overlay(int(TextOverlayAttribute::TOA_NONE))
 {
-  return this->endCategory == obj.endCategory &&
-
-         // Use the operator== that works on ArrayStacks to compare the
-         // subobjects.
-         static_cast<ArrayStack<TCSpan> const &>(*this) ==
-           static_cast<ArrayStack<TCSpan> const &>(obj);
+  selfCheck();
 }
 
 
-void LineCategories::append(TextCategory category, ByteOrColumnCount length)
+TextCategoryAOA::TextCategoryAOA(
+  TextCategory category,
+  TextOverlayAttribute overlay)
+:
+  m_category(int(category)),
+  m_overlay(int(overlay))
 {
-  // same as preceeding category?
-  if (isNotEmpty() && (top().category == category)) {
-    // coalesce
-    top().length += length;
-  }
-  else {
-    // add new
-    push(TCSpan(category, length));
-  }
-}
-
-void LineCategories::overlay(int start, int ovlLength, TextCategory ovlCategory)
-{
-  // Walk over this category array, making a new one.
-  LineCategoryIter iter(*this);
-  LineCategories dest(endCategory);
-
-  // Skip to the start of the relevant section, copying category entries.
-  while (iter.length!=0 && iter.length <= start) {
-    dest.append(iter.category, iter.length);
-    start -= iter.length;
-    iter.nextRun();
-  }
-
-  if (iter.length!=0 && start>0) {
-    // we have a run that extends into the overlay section; copy
-    // only part of it
-    xassert(iter.length > start);
-    dest.append(iter.category, start);
-    iter.advanceCharsOrCols(start);
-    start = 0;
-  }
-
-  if (iter.length==0 && start>0) {
-    // turn the previously infinite section into a finite section
-    // to finish out the stuff before the overlay
-    dest.append(endCategory, start);
-    start = 0;
-  }
-
-  // write the overlay category into 'dest'
-  xassert(start == 0);
-  if (ovlLength == 0) {
-    // infinite; it's remaining part
-    dest.endCategory = ovlCategory;
-  }
-  else {
-    dest.append(ovlCategory, ovlLength);
-
-    // skip past the original category array's fragment under the overlay
-    iter.advanceCharsOrCols(ovlLength);
-
-    // copy the remaining category elements
-    while (!iter.atEnd()) {
-      dest.append(iter.category, iter.length);
-      iter.nextRun();
-    }
-  }
-
-  // replace *this with 'dest'
-  endCategory = dest.endCategory;
-  swapWith(dest);
+  selfCheck();
 }
 
 
-TextCategory LineCategories::getCategoryAt(int index) const
+void TextCategoryAOA::selfCheck() const
 {
-  for (LineCategoryIter iter(*this); !iter.atEnd(); iter.nextRun()) {
-    if (index < iter.length) {
-      return iter.category;
-    }
-    index -= iter.length;
-  }
-
-  return endCategory;
+  xassert(m_category < int(NUM_STANDARD_TEXT_CATEGORIES));
+  xassert(m_overlay < int(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES));
 }
 
 
-string LineCategories::asString() const
+TextCategory TextCategoryAOA::category() const
 {
-  std::ostringstream sb;
-
-  LineCategoryIter iter(*this);
-  while (!iter.atEnd()) {
-    sb << "[" << (int)iter.category << "," << iter.length << "]";
-    iter.nextRun();
-  }
-  sb << "[" << (int)endCategory;     // leave last '[' unbalanced
-
-  return sb.str();
+  return TextCategory(m_category);
 }
 
 
-
-// Get a single-character code for the category.
-static char categoryCodeChar(int category)
+TextOverlayAttribute TextCategoryAOA::overlay() const
 {
-  if (0 <= category && category <= 9) {
-    return category+'0';
+  return TextOverlayAttribute(m_overlay);
+}
+
+
+int TextCategoryAOA::compareTo(TextCategoryAOA const &b) const
+{
+  auto const &a = *this;
+
+  using smbase::compare;
+
+  RET_IF_COMPARE_MEMBERS(m_category);
+  RET_IF_COMPARE_MEMBERS(m_overlay);
+
+  return 0;
+}
+
+
+char TextCategoryAOA::categoryLetter() const
+{
+  int cat = categoryNumber();
+
+  if (0 <= cat && cat <= 9) {
+    return cat+'0';
   }
-  else if (category < 36) {
-    return category-10+'A';
+  else if (cat < 36) {
+    return cat-10+'A';
   }
-  else if (category < 62) {
-    return category-36+'a';
+  else if (cat < 62) {
+    return cat-36+'a';
   }
   else {
     // I don't expect to have anywhere near 62 categories, so
@@ -139,59 +94,118 @@ static char categoryCodeChar(int category)
   }
 }
 
-string LineCategories::asUnaryString() const
-{
-  std::ostringstream sb;
 
-  LineCategoryIter iter(*this);
-  while (!iter.atEnd()) {
-    for (int i=0; i<iter.length; i++) {
-      sb << categoryCodeChar(iter.category);
-    }
-    iter.nextRun();
+int TextCategoryAOA::categoryNumber() const
+{
+  return int(m_category);
+}
+
+
+char TextCategoryAOA::overlayLetter() const
+{
+  char const letters[] = { ' ', 's', 'h', 'p' };
+  ASSERT_TABLESIZE(letters,
+    int(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES));
+
+  int ovl = m_overlay;
+  xassert(cc::z_le_lt(ovl, TABLESIZE(letters)));
+
+  return letters[ovl];
+}
+
+
+TextCategoryAOA TextCategoryAOA::withOverlay(
+  TextOverlayAttribute overlay) const
+{
+  return TextCategoryAOA(category(), overlay);
+}
+
+
+void TextCategoryAOA::write(std::ostream &os) const
+{
+  os << categoryLetter();
+  if (overlay() != TextOverlayAttribute::TOA_NONE) {
+    os << overlayLetter();
   }
-  sb << categoryCodeChar(endCategory) << "...";
-
-  return sb.str();
 }
 
 
-// ----------------------- LineCategoryIter --------------------
-LineCategoryIter::LineCategoryIter(LineCategories const &c)
-  : categories(c),
-    entry(-1)
+void LineCategoryAOAs::overlay(
+  ByteOrColumnIndex start,
+  ByteOrColumnIndex ovlLength,
+  TextOverlayAttribute overlay)
 {
-  nextRun();
-}
+  RLEInfiniteSequence<std::optional<TextOverlayAttribute>> ovl;
 
-void LineCategoryIter::nextRun()
-{
-  entry++;
-  if (entry < categories.length()) {
-    length = categories[entry].length;
-    category = categories[entry].category;
+  ovl.append(std::nullopt, start);
+
+  if (ovlLength > 0) {
+    ovl.append(overlay, ovlLength);
   }
   else {
-    length = 0;    // infinite
-    category = categories.endCategory;
+    ovl.setTailValue(overlay);
   }
+
+  auto combine =
+    [](TextCategoryAOA catAOA,
+       std::optional<TextOverlayAttribute> overlayOpt)
+      -> TextCategoryAOA
+    {
+      if (overlayOpt) {
+        // Apply overlay.
+        return catAOA.withOverlay(*overlayOpt);
+      }
+      else {
+        // No change.
+        return catAOA;
+      }
+    };
+
+  Base dest = combineSequences<TextCategoryAOA>(*this, ovl, combine);
+  swapWith(dest);
 }
 
 
-void LineCategoryIter::advanceCharsOrCols(int n)
+// The logic here deliberately mirrors that of `overlay` since its
+// purpose is to test that logic.
+void LineCategoryAOAs::overwrite(
+  ByteOrColumnIndex start,
+  ByteOrColumnIndex replLength,
+  TextCategoryAOA newValue)
 {
-  while (length!=0 && n>0) {
-    if (length <= n) {
-      // skip past this entire run
-      n -= length;
-      nextRun();
-    }
-    else {
-      // consume part of this run
-      length -= n;
-      n = 0;
-    }
+  RLEInfiniteSequence<std::optional<TextCategoryAOA>> repl;
+
+  repl.append(std::nullopt, start);
+
+  if (replLength > 0) {
+    repl.append(newValue, replLength);
   }
+  else {
+    repl.setTailValue(newValue);
+  }
+
+  auto combine =
+    [](TextCategoryAOA catAOA,
+       std::optional<TextCategoryAOA> newValueOpt)
+      -> TextCategoryAOA
+    {
+      if (newValueOpt) {
+        return *newValueOpt;
+      }
+      else {
+        return catAOA;
+      }
+    };
+
+  Base dest = combineSequences<TextCategoryAOA>(*this, repl, combine);
+  swapWith(dest);
+}
+
+
+TextCategoryAOA LineCategoryAOAs::getCategoryAOAAt(
+  ByteOrColumnIndex index) const
+{
+  return at(index);
 }
 
 

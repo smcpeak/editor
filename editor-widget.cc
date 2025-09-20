@@ -29,7 +29,7 @@
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
-#include "textcategory.h"                        // LineCategories, etc.
+#include "textcategory.h"                        // LineCategoryAOAs, etc.
 #include "uri-util.h"                            // getFileURIPath, makeFileURI
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 #include "waiting-counter.h"                     // IncDecWaitingCounter
@@ -173,7 +173,7 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
     m_leftMargin(1),
     m_interLineSpace(0),
     m_cursorColor(0xFF, 0xFF, 0xFF),       // white
-    m_fontForCategory(NUM_STANDARD_TEXT_CATEGORIES),
+    m_fontForCategory(),
     m_cursorFontForFV(FV_BOLD + 1),
     m_minihexFont(),
     m_visibleWhitespace(true),
@@ -380,19 +380,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 
   // Build the complete set of new fonts.
   {
-    ObjArrayStack<QtBDFFont> newFonts(NUM_STANDARD_TEXT_CATEGORIES);
-    for (int category = TC_ZERO; category < NUM_STANDARD_TEXT_CATEGORIES; category++) {
-      TextStyle const &ts = styleDB->getStyle((TextCategory)category);
-
-      STATIC_ASSERT(FV_BOLD == 2);
-      BDFFont *bdfFont = bdfFonts[ts.variant % 3];
-
-      QtBDFFont *qfont = new QtBDFFont(*bdfFont);
-      qfont->setFgColor(ts.foreground);
-      qfont->setBgColor(ts.background);
-      qfont->setTransparent(false);
-      newFonts.push(qfont);
-    }
+    FontForCategory newFonts(styleDB, bdfFonts);
 
     // Substitute the new for the old.
     m_fontForCategory.swapWith(newFonts);
@@ -417,7 +405,8 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
   }
 
   // calculate metrics
-  QRect const &bbox = m_fontForCategory[TC_NORMAL]->getAllCharsBBox();
+  QRect const bbox =
+    m_fontForCategory.atC(TC_NORMAL)->getAllCharsBBox();
   m_fontAscent = -bbox.top();
   m_fontDescent = bbox.bottom() + 1;
   m_fontHeight = m_fontAscent + m_fontDescent;
@@ -1037,12 +1026,12 @@ void EditorWidget::paintFrame(QPainter &winPaint)
   paint.setBackgroundMode(Qt::OpaqueMode);
 
   // Character style info.  This gets updated as we paint each line.
-  LineCategories modelCategories(TC_NORMAL);
+  LineCategoryAOAs modelCategories(TC_NORMAL);
 
   // The style info, but expressed in layout coordinates.  For each
   // line, we first compute 'modelCategories', then 'layoutCategories'
   // is computed from the former.
-  LineCategories layoutCategories(TC_NORMAL);
+  LineCategoryAOAs layoutCategories(TC_NORMAL);
 
   // Currently selected category and style (so we can avoid possibly
   // expensive calls to change styles).
@@ -1177,17 +1166,20 @@ void EditorWidget::paintFrame(QPainter &winPaint)
     {
       if (selRange.m_start.m_line < line && line < selRange.m_end.m_line) {
         // entire line is selected
-        layoutCategories.overlay(0, 0 /*infinite*/, TC_SELECTION);
+        layoutCategories.overlay(0, 0 /*infinite*/,
+          TextOverlayAttribute::TOA_SELECTION);
       }
       else if (selRange.m_start.m_line < line && line == selRange.m_end.m_line) {
         // Left half of line is selected.
         if (selRange.m_end.m_column) {
-          layoutCategories.overlay(0, selRange.m_end.m_column.get(), TC_SELECTION);
+          layoutCategories.overlay(0, selRange.m_end.m_column.get(),
+            TextOverlayAttribute::TOA_SELECTION);
         }
       }
       else if (selRange.m_start.m_line == line && line < selRange.m_end.m_line) {
         // Right half of line is selected.
-        layoutCategories.overlay(selRange.m_start.m_column.get(), 0 /*infinite*/, TC_SELECTION);
+        layoutCategories.overlay(selRange.m_start.m_column.get(), 0 /*infinite*/,
+          TextOverlayAttribute::TOA_SELECTION);
       }
       else if (selRange.m_start.m_line == line && line == selRange.m_end.m_line) {
         // Middle part of line is selected.
@@ -1195,7 +1187,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
           layoutCategories.overlay(
             selRange.m_start.m_column.get(),
             (selRange.m_end.m_column - selRange.m_start.m_column).get(),
-            TC_SELECTION);
+            TextOverlayAttribute::TOA_SELECTION);
         }
       }
       else {
@@ -1272,7 +1264,7 @@ void EditorWidget::paintOneLine(
   // The styles to apply to the entire line of text (independent of the
   // window).  This function has to ignore whatever is outside the
   // current window area.
-  LineCategories const &layoutCategories,
+  LineCategoryAOAs const &layoutCategories,
 
   // Characters to draw, one per visible column within the window.
   // Blank space between EOL and the window edge is filled with spaces
@@ -1307,8 +1299,8 @@ void EditorWidget::paintOneLine(
   paint.eraseRect(0,0, m_leftMargin, fullLineHeight);
 
   // Next category entry to use.
-  LineCategoryIter category(layoutCategories);
-  category.advanceCharsOrCols(firstCol.get());
+  LineCategoryAOAIter category(layoutCategories);
+  category.advance(firstCol.get());
 
   // ---- render text+style segments -----
   // right edge of what has not been painted, relative to
@@ -1333,11 +1325,11 @@ void EditorWidget::paintOneLine(
 
     // set style
     textCategoryAndStyle.setDrawStyleIfNewCategory(paint,
-      category.category);
+      category.value());
 
     // compute how many characters to print in this segment
-    ColumnCount len(category.length);
-    if (category.length == 0) {
+    ColumnCount len(category.runLength());
+    if (category.runLength() == 0) {
       // actually means infinite length
       if (printedCols >= visibleLineCols) {
         // we've printed all the interesting characters on this line
@@ -1402,7 +1394,7 @@ void EditorWidget::paintOneLine(
     // Advance to next category segment.
     x += m_fontWidth * len;
     printedCols += len;
-    category.advanceCharsOrCols(len.get());
+    category.advance(len.get());
 
   } // segment loop
 }
@@ -1506,7 +1498,7 @@ void EditorWidget::drawDiagnosticBoxes(
 
 void EditorWidget::drawCursorOnLine(
   QPainter &paint,
-  LineCategories const &layoutCategories,
+  LineCategoryAOAs const &layoutCategories,
   ArrayStack<char> const &visibleText,
   ColumnCount lineGlyphColumns)
 {
@@ -1565,8 +1557,8 @@ void EditorWidget::drawCursorOnLine(
     //
     // Unfortunately, that leads to some code duplication with the
     // main painting code.
-    TextCategory cursorCategory =
-      layoutCategories.getCategoryAt(cursorCol.get());
+    TextCategoryAOA cursorCategory =
+      layoutCategories.getCategoryAOAAt(cursorCol.get());
     FontVariant cursorFV = styleDB->getStyle(cursorCategory).variant;
     bool underlineCursor = false;
     if (cursorFV == FV_UNDERLINE) {
@@ -1708,11 +1700,11 @@ void EditorWidget::drawOneChar(QPainter &paint, QtBDFFont *font,
 
 
 TextCategoryAndStyle EditorWidget::getTextCategoryAndStyle(
-  TextCategory cat) const
+  TextCategoryAOA catAOA) const
 {
   return TextCategoryAndStyle(
     m_fontForCategory,
-    cat,
+    catAOA,
     getDocument()->m_modifiedOnDisk /*useDarker*/);
 }
 
@@ -1721,7 +1713,8 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
 {
   // Use the same appearance as search hits, as that will help convey
   // what the numbers mean.
-  TextCategoryAndStyle tcas(getTextCategoryAndStyle(TC_HITS));
+  TextCategoryAndStyle tcas(getTextCategoryAndStyle(
+    TextCategoryAOA(TC_NORMAL, TextOverlayAttribute::TOA_SEARCH_HIT)));
   tcas.setDrawStyle(paint);
 
   this->drawOneCornerLabel(paint, tcas.m_font,
@@ -1760,7 +1753,7 @@ void EditorWidget::drawOneCornerLabel(
 
 
 void EditorWidget::addSearchMatchesToLineCategories(
-  LineCategories &categories, LineIndex line)
+  LineCategoryAOAs &categories, LineIndex line)
 {
   if (m_textSearch->countLineMatches(line)) {
     ArrayStack<TextSearch::MatchExtent> const &matches =
@@ -1782,13 +1775,13 @@ void EditorWidget::addSearchMatchesToLineCategories(
         // zero-width characters properly.
         if (columns) {
           categories.overlay(
-            lrange.m_start.m_column.get(),       // start
-            columns.get(),                       // length
-            TC_HITS);                            // category
+            lrange.m_start.m_column.get(),            // start
+            columns.get(),                            // length
+            TextOverlayAttribute::TOA_SEARCH_HIT);    // overlay
         }
       }
       else {
-        // LineCategories::overlay() interprets a zero length as
+        // LineCategoryAOAs::overlay() interprets a zero length as
         // meaning "infinite".  I don't currently have a good way to
         // show 0-length matches, which are possible when using
         // regexes, so I will just not show them.  It is still
