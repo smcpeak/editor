@@ -6,12 +6,11 @@
 
 #include "styledb-fwd.h"               // fwds for this module
 
+#include "editor-font-set-fwd.h"       // EditorFontSet [n]
 #include "textcategory.h"              // TextCategoryAOA, NUM_TEXT_OVERLAY_ATTRIBUTES
 
 #include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
 
-#include "smbase/array.h"              // GrowArray, ObjArrayStack
-#include "smbase/bdffont-fwd.h"        // BDFFont [n]
 #include "smbase/sm-macros.h"          // DMEMB
 
 #include <qcolor.h>                    // QColor
@@ -61,42 +60,6 @@ public:      // methods
   TextStyle const &getStyle(TextCategoryAOA index) const;
 
   static StyleDB *instance();
-};
-
-
-// Collection of `QtBDFFont`s for various purposes within the
-// `EditorWidget`.
-//
-// TODO: Move into its own module.
-class EditorFontSet {
-private:     // data
-  // Map from overlay attribute to:
-  //   map from text category to:
-  //     non-null font owner pointer
-  ObjArrayStack<QtBDFFont> m_fontMap[NUM_TEXT_OVERLAY_ATTRIBUTES];
-
-public:      // methods
-  ~EditorFontSet();
-
-  // Build an empty set of fonts.  This cannot be used with `at`; it is
-  // a placeholder to be swapped with another set.
-  EditorFontSet();
-
-  // Build the set of fonts.
-  explicit EditorFontSet(
-    StyleDB const *styleDB,
-    ObjArrayStack<BDFFont> const &bdfFonts);
-
-  // Look up the font for `catAOA`.  Requires that it be mapped.
-  //
-  // Ensures: return != nullptr
-  QtBDFFont const *atC(TextCategoryAOA catAOA) const;
-  QtBDFFont *at(TextCategoryAOA catAOA);
-
-  void swapWith(EditorFontSet &obj);
-
-  // Deallocate all font objects.
-  void deleteAll();
 };
 
 

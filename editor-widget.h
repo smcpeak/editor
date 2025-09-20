@@ -12,10 +12,11 @@
 #include "column-index.h"                        // ColumnIndex
 #include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
 #include "editor-command.ast.gen.fwd.h"          // EditorCommand
-#include "editor-global-fwd.h"                   // EditorGlobal
+#include "editor-font-set.h"                     // EditorFontSet
+#include "editor-global-fwd.h"                   // EditorGlobal [n]
 #include "editor-navigation-options.h"           // EditorNavigationOptions
-#include "editor-settings-fwd.h"                 // EditorSettings
-#include "editor-window-fwd.h"                   // EditorWindow
+#include "editor-settings-fwd.h"                 // EditorSettings [n]
+#include "editor-window-fwd.h"                   // EditorWindow [n]
 #include "event-replay.h"                        // EventReplayQueryable
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-olb.h"                       // HostFile_OptLineByte
@@ -28,6 +29,7 @@
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
+#include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
 #include "styledb.h"                             // TextCategoryAndStyle, EditorFontSet
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
@@ -36,30 +38,25 @@
 #include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
-#include "smqtutil/qtbdffont-fwd.h"              // QtBDFFont
+#include "smqtutil/qtbdffont-fwd.h"              // QtBDFFont [n]
 #include "smqtutil/qtguiutil.h"                  // unhandledExceptionMsgbox
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
 #include "smbase/refct-serf.h"                   // RCSerf, RCSerfOpt SerfRefCount
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
-#include "smbase/std-memory-fwd.h"               // std::unique_ptr
-#include "smbase/std-optional-fwd.h"             // std::optional
-#include "smbase/std-string-fwd.h"               // std::string
-#include "smbase/std-string-view-fwd.h"          // std::string_view
+#include "smbase/std-functional-fwd.h"           // std::function [n]
+#include "smbase/std-memory-fwd.h"               // std::unique_ptr [n]
+#include "smbase/std-optional-fwd.h"             // std::optional [n]
+#include "smbase/std-string-fwd.h"               // std::string [n]
+#include "smbase/std-string-view-fwd.h"          // std::string_view [n]
 
 // Qt
 #include <QRect>
 #include <QWidget>
 
 // libc++
-#include <functional>                            // std::function
 #include <memory>                                // std::unique_ptr
-#include <optional>                              // std::optional
-
-
-class SearchAndReplacePanel;                     // sar-panel.h
-class StyleDB;                                   // styledb.h
 
 class QImage;
 class QLabel;

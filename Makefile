@@ -519,6 +519,7 @@ EDITOR_OBJS += apply-command-dialog.moc.o
 EDITOR_OBJS += apply-command-dialog.o
 EDITOR_OBJS += builtin-font.o
 EDITOR_OBJS += editor-command.ast.gen.o
+EDITOR_OBJS += editor-font-set.o
 EDITOR_OBJS += editor-global.moc.o
 EDITOR_OBJS += editor-global.o
 EDITOR_OBJS += editor-settings.o
