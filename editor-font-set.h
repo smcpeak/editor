@@ -16,6 +16,8 @@
 #include "smbase/array.h"              // ObjArrayStack
 #include "smbase/bdffont-fwd.h"        // BDFFont [n]
 
+#include <array>                       // std::array
+
 
 // Collection of `QtBDFFont`s for various purposes within
 // `EditorWidget`.
@@ -24,7 +26,8 @@ private:     // data
   // Map from overlay attribute to:
   //   map from text category to:
   //     non-null font owner pointer
-  ObjArrayStack<QtBDFFont> m_fontMap[NUM_TEXT_OVERLAY_ATTRIBUTES];
+  std::array<ObjArrayStack<QtBDFFont>, NUM_TEXT_OVERLAY_ATTRIBUTES>
+    m_fontMap;
 
 public:      // methods
   ~EditorFontSet();

@@ -28,7 +28,7 @@ EditorFontSet::EditorFontSet(
   ObjArrayStack<BDFFont> const &bdfFonts)
 {
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
-    ObjArrayStack<QtBDFFont> &newFonts = m_fontMap[int(overlay)];
+    ObjArrayStack<QtBDFFont> &newFonts = m_fontMap.at(overlay);
 
     for (int category = TC_ZERO; category < NUM_STANDARD_TEXT_CATEGORIES; category++) {
       TextStyle const &ts = styleDB->getStyle(
@@ -49,12 +49,8 @@ EditorFontSet::EditorFontSet(
 
 QtBDFFont const *EditorFontSet::atC(TextCategoryAOA catAOA) const
 {
-  int ovlIndex = int(catAOA.overlay());
-  xassert(cc::z_le_lt(ovlIndex, TABLESIZE(m_fontMap)));
-
-  int catIndex = int(catAOA.category());
-
-  QtBDFFont const *ret = m_fontMap[ovlIndex][catIndex];
+  QtBDFFont const *ret =
+    m_fontMap.at(catAOA.overlay())[catAOA.category()];
   xassert(ret);
 
   return ret;
@@ -70,7 +66,7 @@ QtBDFFont *EditorFontSet::at(TextCategoryAOA catAOA)
 void EditorFontSet::swapWith(EditorFontSet &obj)
 {
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
-    m_fontMap[int(overlay)].swapWith(obj.m_fontMap[int(overlay)]);
+    m_fontMap.at(overlay).swapWith(obj.m_fontMap.at(overlay));
   }
 }
 
