@@ -28,7 +28,7 @@
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
 #include "named-td.h"                            // NamedTextDocument
-#include "styledb.h"                             // TextCategoryAndStyle, FontForCategory
+#include "styledb.h"                             // TextCategoryAndStyle, EditorFontSet
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategoryAOAs
@@ -58,7 +58,6 @@
 #include <optional>                              // std::optional
 
 
-class QtBDFFont;                                 // qtbdffont.h
 class SearchAndReplacePanel;                     // sar-panel.h
 class StyleDB;                                   // styledb.h
 
@@ -186,7 +185,7 @@ public:      // data
   // Fonts for (indexed by) each text category+overlay.
   //
   // TODO: Create one global instance rather than one per widget.
-  FontForCategory m_fontForCategory;
+  EditorFontSet m_fontForCategory;
 
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.

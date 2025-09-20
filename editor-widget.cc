@@ -380,7 +380,7 @@ void EditorWidget::setFonts(char const *normal, char const *italic, char const *
 
   // Build the complete set of new fonts.
   {
-    FontForCategory newFonts(styleDB, bdfFonts);
+    EditorFontSet newFonts(styleDB, bdfFonts);
 
     // Substitute the new for the old.
     m_fontForCategory.swapWith(newFonts);

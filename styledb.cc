@@ -135,19 +135,19 @@ STATICDEF StyleDB *StyleDB::instance()
 }
 
 
-// -------------------------- FontForCategory --------------------------
-FontForCategory::~FontForCategory()
+// --------------------------- EditorFontSet ---------------------------
+EditorFontSet::~EditorFontSet()
 {
   // Just to be explicit; this would happen anyway.
   deleteAll();
 }
 
 
-FontForCategory::FontForCategory()
+EditorFontSet::EditorFontSet()
 {}
 
 
-FontForCategory::FontForCategory(
+EditorFontSet::EditorFontSet(
   StyleDB const *styleDB,
   ObjArrayStack<BDFFont> const &bdfFonts)
 {
@@ -171,7 +171,7 @@ FontForCategory::FontForCategory(
 }
 
 
-QtBDFFont const *FontForCategory::atC(TextCategoryAOA catAOA) const
+QtBDFFont const *EditorFontSet::atC(TextCategoryAOA catAOA) const
 {
   int ovlIndex = int(catAOA.overlay());
   xassert(cc::z_le_lt(ovlIndex, TABLESIZE(m_fontMap)));
@@ -185,13 +185,13 @@ QtBDFFont const *FontForCategory::atC(TextCategoryAOA catAOA) const
 }
 
 
-QtBDFFont *FontForCategory::at(TextCategoryAOA catAOA)
+QtBDFFont *EditorFontSet::at(TextCategoryAOA catAOA)
 {
   return const_cast<QtBDFFont*>(atC(catAOA));
 }
 
 
-void FontForCategory::swapWith(FontForCategory &obj)
+void EditorFontSet::swapWith(EditorFontSet &obj)
 {
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
     m_fontMap[int(overlay)].swapWith(obj.m_fontMap[int(overlay)]);
@@ -199,7 +199,7 @@ void FontForCategory::swapWith(FontForCategory &obj)
 }
 
 
-void FontForCategory::deleteAll()
+void EditorFontSet::deleteAll()
 {
   for (ObjArrayStack<QtBDFFont> &fontMap : m_fontMap) {
     fontMap.deleteAll();
@@ -224,7 +224,7 @@ void TextCategoryAndStyle::setStyleDetails()
 
 
 TextCategoryAndStyle::TextCategoryAndStyle(
-  FontForCategory const &fontForCategory,
+  EditorFontSet const &fontForCategory,
   TextCategoryAOA textCategoryAOA,
   bool useDarkerBackground)
   : m_styleDB(StyleDB::instance()),

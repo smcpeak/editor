@@ -64,8 +64,11 @@ public:      // methods
 };
 
 
-// Map from `TextCategoryAOA` to `QtBDFFont`.
-class FontForCategory {
+// Collection of `QtBDFFont`s for various purposes within the
+// `EditorWidget`.
+//
+// TODO: Move into its own module.
+class EditorFontSet {
 private:     // data
   // Map from overlay attribute to:
   //   map from text category to:
@@ -73,14 +76,14 @@ private:     // data
   ObjArrayStack<QtBDFFont> m_fontMap[NUM_TEXT_OVERLAY_ATTRIBUTES];
 
 public:      // methods
-  ~FontForCategory();
+  ~EditorFontSet();
 
   // Build an empty set of fonts.  This cannot be used with `at`; it is
   // a placeholder to be swapped with another set.
-  FontForCategory();
+  EditorFontSet();
 
   // Build the set of fonts.
-  explicit FontForCategory(
+  explicit EditorFontSet(
     StyleDB const *styleDB,
     ObjArrayStack<BDFFont> const &bdfFonts);
 
@@ -90,7 +93,7 @@ public:      // methods
   QtBDFFont const *atC(TextCategoryAOA catAOA) const;
   QtBDFFont *at(TextCategoryAOA catAOA);
 
-  void swapWith(FontForCategory &obj);
+  void swapWith(EditorFontSet &obj);
 
   // Deallocate all font objects.
   void deleteAll();
@@ -106,7 +109,7 @@ public:      // data
   StyleDB const *m_styleDB;
 
   // Map from categoryAOA to font.
-  FontForCategory const &m_fontForCategory;
+  EditorFontSet const &m_fontForCategory;
 
   // When choosing the background color, adjust it to be slightly darker
   // than what `m_textStyle` indicates.
@@ -131,7 +134,7 @@ private:     // methods
 
 public:      // methods
   explicit TextCategoryAndStyle(
-    FontForCategory const &fontForCategory,
+    EditorFontSet const &fontForCategory,
     TextCategoryAOA textCategoryAOA,
     bool useDarkerBackground);
 
