@@ -1167,19 +1167,19 @@ void EditorWidget::paintFrame(QPainter &winPaint)
       if (selRange.m_start.m_line < line && line < selRange.m_end.m_line) {
         // entire line is selected
         layoutCategories.overlay(0, 0 /*infinite*/,
-          TextOverlayAttribute::TOA_SELECTION);
+          TOA_SELECTION);
       }
       else if (selRange.m_start.m_line < line && line == selRange.m_end.m_line) {
         // Left half of line is selected.
         if (selRange.m_end.m_column) {
           layoutCategories.overlay(0, selRange.m_end.m_column.get(),
-            TextOverlayAttribute::TOA_SELECTION);
+            TOA_SELECTION);
         }
       }
       else if (selRange.m_start.m_line == line && line < selRange.m_end.m_line) {
         // Right half of line is selected.
         layoutCategories.overlay(selRange.m_start.m_column.get(), 0 /*infinite*/,
-          TextOverlayAttribute::TOA_SELECTION);
+          TOA_SELECTION);
       }
       else if (selRange.m_start.m_line == line && line == selRange.m_end.m_line) {
         // Middle part of line is selected.
@@ -1187,7 +1187,7 @@ void EditorWidget::paintFrame(QPainter &winPaint)
           layoutCategories.overlay(
             selRange.m_start.m_column.get(),
             (selRange.m_end.m_column - selRange.m_start.m_column).get(),
-            TextOverlayAttribute::TOA_SELECTION);
+            TOA_SELECTION);
         }
       }
       else {
@@ -1714,7 +1714,7 @@ void EditorWidget::drawOffscreenMatchIndicators(QPainter &paint)
   // Use the same appearance as search hits, as that will help convey
   // what the numbers mean.
   TextCategoryAndStyle tcas(getTextCategoryAndStyle(
-    TextCategoryAOA(TC_NORMAL, TextOverlayAttribute::TOA_SEARCH_HIT)));
+    TextCategoryAOA(TC_NORMAL, TOA_SEARCH_HIT)));
   tcas.setDrawStyle(paint);
 
   this->drawOneCornerLabel(paint, tcas.m_font,
@@ -1775,9 +1775,9 @@ void EditorWidget::addSearchMatchesToLineCategories(
         // zero-width characters properly.
         if (columns) {
           categories.overlay(
-            lrange.m_start.m_column.get(),            // start
-            columns.get(),                            // length
-            TextOverlayAttribute::TOA_SEARCH_HIT);    // overlay
+            lrange.m_start.m_column.get(),       // start
+            columns.get(),                       // length
+            TOA_SEARCH_HIT);                     // overlay
         }
       }
       else {

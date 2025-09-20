@@ -6,7 +6,7 @@
 
 #include "styledb-fwd.h"               // fwds for this module
 
-#include "textcategory.h"              // TextCategoryAOA, TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES
+#include "textcategory.h"              // TextCategoryAOA, NUM_TEXT_OVERLAY_ATTRIBUTES
 
 #include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
 
@@ -52,8 +52,7 @@ private:     // class data
 
 private:     // instance data
   // Styles for use with each overlay.
-  ArrayStack<TextStyle> m_styles[
-    std::size_t(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES)];
+  ArrayStack<TextStyle> m_styles[NUM_TEXT_OVERLAY_ATTRIBUTES];
 
 public:      // methods
   StyleDB();        // create default styles
@@ -71,8 +70,7 @@ private:     // data
   // Map from overlay attribute to:
   //   map from text category to:
   //     non-null font owner pointer
-  ObjArrayStack<QtBDFFont> m_fontMap[
-    std::size_t(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES)];
+  ObjArrayStack<QtBDFFont> m_fontMap[NUM_TEXT_OVERLAY_ATTRIBUTES];
 
 public:      // methods
   ~FontForCategory();

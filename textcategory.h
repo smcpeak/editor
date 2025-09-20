@@ -59,9 +59,7 @@ static_assert(NUM_STANDARD_TEXT_CATEGORIES <= 32);
 
 // Overlay attributes.  At most one can be applied to a given character
 // cell.
-//
-// TODO: "enum class" is a mistake.  Use plain "enum" instead.
-enum class TextOverlayAttribute : unsigned char {
+enum TextOverlayAttribute : unsigned char {
   TOA_NONE,                // No overlay.
   TOA_SELECTION,           // Text is selected.
   TOA_SEARCH_HIT,          // Text is part of a search hit.
@@ -71,14 +69,14 @@ enum class TextOverlayAttribute : unsigned char {
 };
 
 // Required for it to fit into 2 bits in `TextCategoryAOA`.
-static_assert(int(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES) <= 4);
+static_assert(NUM_TEXT_OVERLAY_ATTRIBUTES <= 4);
 
 
 // Iterate over the elements of `TextOverlayAttribute`.
-#define FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(var)                      \
-  for (TextOverlayAttribute var = TextOverlayAttribute::TOA_NONE; \
-       var < TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES;   \
-       var = TextOverlayAttribute(int(var) + 1))
+#define FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(var) \
+  for (TextOverlayAttribute var = TOA_NONE;  \
+       var < NUM_TEXT_OVERLAY_ATTRIBUTES;    \
+       var = TextOverlayAttribute(var + 1))
 
 
 // A text category And an Overlay Attribute (AOA).

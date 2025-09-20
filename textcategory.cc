@@ -15,8 +15,8 @@ using namespace smbase;
 // -------------------------- TextCategoryAOA --------------------------
 TextCategoryAOA::TextCategoryAOA()
 :
-  m_category(int(TC_NORMAL)),
-  m_overlay(int(TextOverlayAttribute::TOA_NONE))
+  m_category(TC_NORMAL),
+  m_overlay(TOA_NONE)
 {
   selfCheck();
 }
@@ -24,8 +24,8 @@ TextCategoryAOA::TextCategoryAOA()
 
 TextCategoryAOA::TextCategoryAOA(TextCategory category)
 :
-  m_category(int(category)),
-  m_overlay(int(TextOverlayAttribute::TOA_NONE))
+  m_category(category),
+  m_overlay(TOA_NONE)
 {
   selfCheck();
 }
@@ -44,8 +44,8 @@ TextCategoryAOA::TextCategoryAOA(
 
 void TextCategoryAOA::selfCheck() const
 {
-  xassert(m_category < int(NUM_STANDARD_TEXT_CATEGORIES));
-  xassert(m_overlay < int(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES));
+  xassert(m_category < NUM_STANDARD_TEXT_CATEGORIES);
+  xassert(m_overlay < NUM_TEXT_OVERLAY_ATTRIBUTES);
 }
 
 
@@ -104,8 +104,7 @@ int TextCategoryAOA::categoryNumber() const
 char TextCategoryAOA::overlayLetter() const
 {
   char const letters[] = { ' ', 's', 'h', 'p' };
-  ASSERT_TABLESIZE(letters,
-    int(TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES));
+  ASSERT_TABLESIZE(letters, NUM_TEXT_OVERLAY_ATTRIBUTES);
 
   int ovl = m_overlay;
   xassert(cc::z_le_lt(ovl, TABLESIZE(letters)));
@@ -124,7 +123,7 @@ TextCategoryAOA TextCategoryAOA::withOverlay(
 void TextCategoryAOA::write(std::ostream &os) const
 {
   os << categoryLetter();
-  if (overlay() != TextOverlayAttribute::TOA_NONE) {
+  if (overlay() != TOA_NONE) {
     os << overlayLetter();
   }
 }

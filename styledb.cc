@@ -32,8 +32,7 @@ StyleDB::StyleDB()
   QColor diffFileBG(0x00, 0x40, 0x9C);// diff file bg: lighter blue
 
   // Array of styles with no overlay.
-  ArrayStack<TextStyle> &noneArr =
-    m_styles[int(TextOverlayAttribute::TOA_NONE)];
+  ArrayStack<TextStyle> &noneArr = m_styles[TOA_NONE];
 
   // Populate an entry in the "none" overlay.
   #define ENTRY(index, variant, fr, fg, fb, back)                           \
@@ -68,7 +67,7 @@ StyleDB::StyleDB()
 
   // Fill in the overlay variants.
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
-    if (overlay == TextOverlayAttribute::TOA_NONE) {
+    if (overlay == TOA_NONE) {
       // Already did it.
       continue;
     }
@@ -88,19 +87,19 @@ StyleDB::StyleDB()
       // reasons to have the concept, since I can keep all the base
       // style details and only adjust what I want to.
       switch (overlay) {
-        case TextOverlayAttribute::TOA_NONE:
-        case TextOverlayAttribute::NUM_TEXT_OVERLAY_ATTRIBUTES:
+        case TOA_NONE:
+        case NUM_TEXT_OVERLAY_ATTRIBUTES:
           xfailure("not reached");
 
-        case TextOverlayAttribute::TOA_SELECTION:
+        case TOA_SELECTION:
           ts.background = selectBG;
           break;
 
-        case TextOverlayAttribute::TOA_SEARCH_HIT:
+        case TOA_SEARCH_HIT:
           ts.background = hitBG;
           break;
 
-        case TextOverlayAttribute::TOA_PREPROCESSOR:
+        case TOA_PREPROCESSOR:
           // TODO: Define the appearance.
           break;
       }

@@ -7,7 +7,7 @@
 #define EDITOR_TEXTCATEGORY_FWD_H
 
 enum TextCategory : unsigned char;
-enum class TextOverlayAttribute : unsigned char;
+enum TextOverlayAttribute : unsigned char;
 
 class TextCategoryAOA;
 class LineCategoryAOAs;
