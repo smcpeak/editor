@@ -30,6 +30,7 @@ StyleDB::StyleDB()
   QColor selectBG(0x40, 0x40, 0xF0);  // selection background: light blue/purple
   QColor hitBG(0x00, 0x80, 0x40);     // hit background: lime
   QColor errorBG(0x00, 0x00, 0x00);   // error background: black
+  QColor preprocBG(0x28, 0x00, 0x9C); // preprocessor background: purple-ish
 
   QColor diffFileBG(0x00, 0x40, 0x9C);// diff file bg: lighter blue
 
@@ -102,7 +103,7 @@ StyleDB::StyleDB()
           break;
 
         case TOA_PREPROCESSOR:
-          // TODO: Define the appearance.
+          ts.background = preprocBG;
           break;
       }
 

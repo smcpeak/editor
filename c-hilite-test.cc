@@ -41,6 +41,16 @@ void test_c_hilite(CmdlineArgsSpan args)
   testHighlighter(hi, tde, "test/highlight/c-cpp-comment-eof4.c");
   testHighlighter(hi, tde, "test/highlight/c-fesvr-syscall.cc");
   testHighlighter(hi, tde, "test/highlight/odd-stars.c");
+
+  testHighlighter(hi, tde, "test/highlight/c-includes.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-sp-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-sp-qu-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-sp-qu-x-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-sp-qu-x-qu-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-ang-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-ang-x-eof.c");
+  testHighlighter(hi, tde, "test/highlight/c-include-ang-x-ang-eof.c");
 }
 
 

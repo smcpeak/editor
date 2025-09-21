@@ -58,7 +58,12 @@ public:      // funcs
 %x STRING
 %x CPP_COMMENT
 %x COMMENT
-%x PREPROC
+
+/* In a preprocessor directive. */
+%s PREPROC
+
+/* Saw "#include", might see "<fname>". */
+%x INCLUDE
 
 
 /* ------------------- definitions -------------------- */
@@ -102,6 +107,9 @@ CCCHAR        [^\'\n\\]
 
 /* single quote */
 TICK          [\']
+
+/* Horizontal whitespace. */
+HWSPACE       [ \t]
 
 
 /* ------------- token definition rules --------------- */
@@ -398,49 +406,78 @@ TICK          [\']
 }
 
 
-  /* preprocessor, with C++ comment */
-  /* (handling of comments w/in preprocessor directives is fairly
-   * ad-hoc right now..) */
-^[ \t]*"#".*"//".*{NL}? {
-  // find the start of the comment
-  char const *p = strchr(YY_TEXT, '/');
-  while (p && p[1]!='/') {
-    p = strchr(p+1, '/');
-  }
-  if (p) {
-    // put the comment back; it will be matched as TC_COMMENT
-    YY_LESS_TEXT(p-YY_TEXT);
-  }
-  else {
-    // shouldn't happen, but not catastrophic if it does..
-  }
+  /* Start of #include directive. */
+^{HWSPACE}*"#"{HWSPACE}*include{HWSPACE}* {
+  YY_SET_START_CONDITION(INCLUDE);
   return TC_PREPROCESSOR;
 }
 
-  /* preprocessor, continuing to next line */
-^[ \t]*"#".*{BACKSL}{NL} {
+  /* An included file name in angle brackets. */
+<INCLUDE>"<"[^>]*">"? {
+  YY_SET_START_CONDITION(INITIAL);
+  return TC_STRING;
+}
+
+  /* An included file name in double quotes. */
+<INCLUDE>{QUOTE}[^"]*{QUOTE}? {
+  YY_SET_START_CONDITION(INITIAL);
+  return TC_STRING;
+}
+
+  /* Newline after #include. */
+<INCLUDE>{NL} {
+  YY_SET_START_CONDITION(INITIAL);
+  return TC_NORMAL;
+}
+
+  /* Anything else after #include is an error. */
+<INCLUDE>. {
+  YY_SET_START_CONDITION(INITIAL);
+  return TC_ERROR;
+}
+
+
+  /* Start of non-#include preprocessor directive. */
+^{HWSPACE}*"#"{HWSPACE}*{LETTER}* {
   YY_SET_START_CONDITION(PREPROC);
   return TC_PREPROCESSOR;
 }
 
-  /* preprocessor, one line */
-^[ \t]*"#".*{NL}? {
+  /* Continuation of preprocessor. */
+<PREPROC>{BACKSL}{NL} {
   return TC_PREPROCESSOR;
 }
 
-  /* continuation of preprocessor, continuing to next line */
-<PREPROC>.*{BACKSL}{NL} {
-  return TC_PREPROCESSOR;
-}
-
-  /* continuation of preprocessor, ending here */
-<PREPROC>.*{NL}? {
+  /* End of preprocessor. */
+<PREPROC>{NL} {
   YY_SET_START_CONDITION(INITIAL);
+  return TC_NORMAL;
+}
+
+  /* Non-newline whitespace in pp. */
+<PREPROC>[ \t\f\v\r]+ {
+  return TC_NORMAL;
+}
+
+  /* Token paste / stringify. */
+<PREPROC>"#"+ {
   return TC_PREPROCESSOR;
+}
+
+  /* Spaces leading into continued C++ comment: switch to comment. */
+<PREPROC>{HWSPACE}*"//".*{BACKSL}{NL}? {
+  YY_SET_START_CONDITION(CPP_COMMENT);
+  return TC_COMMENT;
+}
+
+  /* Spaces leading into C++ comment: break out of preproc. */
+<PREPROC>{HWSPACE}*"//".*{NL}? {
+  YY_SET_START_CONDITION(INITIAL);
+  return TC_COMMENT;
 }
 
   /* continuation of preprocessor, empty line */
-<PREPROC><<EOF>> {
+<PREPROC,INCLUDE><<EOF>> {
   if (bufsrc.lineIsEmpty()) {
     YY_SET_START_CONDITION(INITIAL);
   }
@@ -449,7 +486,7 @@ TICK          [\']
 
 
   /* whitespace */
-[ \t\n\f\v\r]+ {
+<INITIAL>[ \t\n\f\v\r]+ {
   return TC_NORMAL;
 }
 
@@ -499,13 +536,20 @@ int C_Lexer::getNextToken(TextCategoryAOA &code)
       case STRING:  code = TC_STRING;       break;
       case CPP_COMMENT:
       case COMMENT: code = TC_COMMENT;      break;
-      case PREPROC: code = TC_PREPROCESSOR; break;
+
+      case PREPROC:
+        code = TextCategoryAOA(TC_PREPROCESSOR, TOA_PREPROCESSOR);
+        break;
+
       default:      code = TC_NORMAL;       break;
     }
     return 0;
   }
   else {
     code = (TextCategory)result;
+    if ((int)lexer->getState() == PREPROC) {
+      code = code.withOverlay(TOA_PREPROCESSOR);
+    }
     return lexer->yym_leng();
   }
 }
