@@ -25,9 +25,13 @@ EditorFontSet::~EditorFontSet()
 
 EditorFontSet::EditorFontSet()
 :
+  m_isEmpty(true),
+  m_fontMap(),
   m_cursorFontForFV(),
   m_minihexFont()
-{}
+{
+  selfCheck();
+}
 
 
 EditorFontSet::EditorFontSet(
@@ -35,6 +39,11 @@ EditorFontSet::EditorFontSet(
   ObjArrayStack<BDFFont> const &primaryBDFFonts,
   BDFFont const &minihexBDFFont,
   QColor cursorColor)
+:
+  m_isEmpty(false),
+  m_fontMap(),
+  m_cursorFontForFV(),
+  m_minihexFont()
 {
   xassertPrecondition(primaryBDFFonts.length() == FV_BOLD + 1);
 
@@ -68,7 +77,7 @@ EditorFontSet::EditorFontSet(
     qfont->setBgColor(cursorColor);
     qfont->setTransparent(false);
 
-    m_cursorFontForFV.push_back(std::move(qfont));
+    m_cursorFontForFV.at(fv) = std::move(qfont);
   }
 
   // Font for missing glyphs.
@@ -81,6 +90,11 @@ EditorFontSet::EditorFontSet(
 
 void EditorFontSet::selfCheck() const
 {
+  if (m_isEmpty) {
+    // The empty object does not have important invariants.
+    return;
+  }
+
   for (auto const &fonts : m_fontMap) {
     for (int i=0; i < fonts.length(); ++i) {
       xassertPtr(fonts[i])->selfCheck();
@@ -125,16 +139,24 @@ QtBDFFont *EditorFontSet::minihex()
 }
 
 
+// TODO: Move this to `smbase`.
+#define SWAP_MEMB(memb) swap(memb, obj.memb)
+
+
 void EditorFontSet::swapWith(EditorFontSet &obj)
 {
   using std::swap;
+
+  SWAP_MEMB(m_isEmpty);
 
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
     m_fontMap.at(overlay).swapWith(obj.m_fontMap.at(overlay));
   }
 
-  swap(m_cursorFontForFV, obj.m_cursorFontForFV);
-  swap(m_minihexFont, obj.m_minihexFont);
+  SWAP_MEMB(m_cursorFontForFV);
+  SWAP_MEMB(m_minihexFont);
+
+  selfCheck();
 }
 
 
@@ -144,8 +166,13 @@ void EditorFontSet::deleteAll()
     fontMap.deleteAll();
   }
 
-  m_cursorFontForFV.clear();
+  for (auto &ptr : m_cursorFontForFV) {
+    ptr.reset();
+  }
+
   m_minihexFont.reset();
+
+  m_isEmpty = true;
 }
 
 

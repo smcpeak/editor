@@ -8,7 +8,8 @@
 
 #include "editor-font-set-fwd.h"       // fwds for this module
 
-#include "styledb-fwd.h"               // StyleDB, FontVariant [n]
+#include "font-variant.h"              // FontVariant, FV_BOLD
+#include "styledb-fwd.h"               // StyleDB
 #include "textcategory.h"              // TextCategoryAOA, NUM_TEXT_OVERLAY_ATTRIBUTES
 
 #include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
@@ -18,7 +19,6 @@
 
 #include <array>                       // std::array
 #include <memory>                      // std::unique_ptr
-#include <vector>                      // std::vector
 
 class QColor;
 
@@ -27,6 +27,9 @@ class QColor;
 // `EditorWidget`.
 class EditorFontSet {
 private:     // data
+  // True of the empty placeholder object.
+  bool m_isEmpty;
+
   // Map from overlay attribute to:
   //   map from text category to:
   //     non-null font owner pointer
@@ -38,12 +41,11 @@ private:     // data
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
   //
-  // Invariant: All elements are non-null.
-  // Invariant: Size is FV_BOLD+1.
-  std::vector<std::unique_ptr<QtBDFFont>> m_cursorFontForFV;
+  // Invariant: Unless `m_isEmpty`, all elements are non-null.
+  std::array<std::unique_ptr<QtBDFFont>, FV_BOLD+1> m_cursorFontForFV;
 
   // Font containing miniature hexadecimal characters for use when
-  // a glyph is missing.  Never null.
+  // a glyph is missing.  Unless `m_isEmpty`, never null.
   std::unique_ptr<QtBDFFont> m_minihexFont;
 
 public:      // methods

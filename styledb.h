@@ -7,6 +7,7 @@
 #include "styledb-fwd.h"               // fwds for this module
 
 #include "editor-font-set-fwd.h"       // EditorFontSet [n]
+#include "font-variant.h"              // FontVariant
 #include "textcategory.h"              // TextCategoryAOA, NUM_TEXT_OVERLAY_ATTRIBUTES
 
 #include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
@@ -16,15 +17,6 @@
 #include <qcolor.h>                    // QColor
 
 class QPainter;
-
-
-// variations on the base font
-enum FontVariant : int {
-  FV_NORMAL,              // nothing different
-  FV_ITALIC,              // italic (slanted)
-  FV_BOLD,                // bold
-  FV_UNDERLINE,           // underline, achieved by overstriking underscores
-};
 
 
 // font and colors; things named by 'TextCategory'
