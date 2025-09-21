@@ -18,6 +18,7 @@
 
 #include <array>                       // std::array
 #include <memory>                      // std::unique_ptr
+#include <vector>                      // std::vector
 
 class QColor;
 
@@ -36,7 +37,10 @@ private:     // data
 
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
-  ObjArrayStack<QtBDFFont> m_cursorFontForFV;
+  //
+  // Invariant: All elements are non-null.
+  // Invariant: Size is FV_BOLD+1.
+  std::vector<std::unique_ptr<QtBDFFont>> m_cursorFontForFV;
 
   // Font containing miniature hexadecimal characters for use when
   // a glyph is missing.  Never null.

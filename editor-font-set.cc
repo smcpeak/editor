@@ -10,7 +10,8 @@
 #include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
 #include "smbase/xassert.h"            // xassertPtr
 
-#include <utility>                     // std::swap
+#include <cstddef>                     // std::size_t
+#include <utility>                     // std::{move,swap}
 
 using namespace smbase;
 
@@ -58,7 +59,8 @@ EditorFontSet::EditorFontSet(
 
   // Similar procedure for the cursor fonts.
   for (int fv = 0; fv <= FV_BOLD; fv++) {
-    QtBDFFont *qfont = new QtBDFFont(*(primaryBDFFonts[fv]));
+    std::unique_ptr<QtBDFFont> qfont(
+      new QtBDFFont(*(primaryBDFFonts[fv])));
 
     // The character under the cursor is drawn with the normal background
     // color, and the cursor box (its background) is drawn in 'cursorColor'.
@@ -66,12 +68,14 @@ EditorFontSet::EditorFontSet(
     qfont->setBgColor(cursorColor);
     qfont->setTransparent(false);
 
-    m_cursorFontForFV.push(qfont);
+    m_cursorFontForFV.push_back(std::move(qfont));
   }
 
   // Font for missing glyphs.
   m_minihexFont.reset(new QtBDFFont(minihexBDFFont));
   m_minihexFont->setTransparent(false);
+
+  selfCheck();
 }
 
 
@@ -83,9 +87,10 @@ void EditorFontSet::selfCheck() const
     }
   }
 
-  for (int i=0; i < m_cursorFontForFV.length(); ++i) {
-    xassertPtr(m_cursorFontForFV[i])->selfCheck();
+  for (std::size_t i=0; i < m_cursorFontForFV.size(); ++i) {
+    xassertPtr(m_cursorFontForFV.at(i).get())->selfCheck();
   }
+  xassert(m_cursorFontForFV.size() == FV_BOLD+1);
 
   xassertPtr(m_minihexFont.get())->selfCheck();
 }
@@ -110,7 +115,7 @@ QtBDFFont *EditorFontSet::forCursorForFV(FontVariant fv)
 {
   xassertPrecondition(cc::z_le_le(fv, FV_BOLD));
 
-  return xassertPtr(m_cursorFontForFV[fv]);
+  return xassertPtr(m_cursorFontForFV.at(fv).get());
 }
 
 
@@ -122,13 +127,13 @@ QtBDFFont *EditorFontSet::minihex()
 
 void EditorFontSet::swapWith(EditorFontSet &obj)
 {
+  using std::swap;
+
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
     m_fontMap.at(overlay).swapWith(obj.m_fontMap.at(overlay));
   }
 
-  m_cursorFontForFV.swapWith(obj.m_cursorFontForFV);
-
-  using std::swap;
+  swap(m_cursorFontForFV, obj.m_cursorFontForFV);
   swap(m_minihexFont, obj.m_minihexFont);
 }
 
@@ -139,8 +144,7 @@ void EditorFontSet::deleteAll()
     fontMap.deleteAll();
   }
 
-  m_cursorFontForFV.deleteAll();
-
+  m_cursorFontForFV.clear();
   m_minihexFont.reset();
 }
 
