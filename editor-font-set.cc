@@ -36,7 +36,7 @@ EditorFontSet::EditorFontSet()
 
 EditorFontSet::EditorFontSet(
   StyleDB const *styleDB,
-  ObjArrayStack<BDFFont> const &primaryBDFFonts,
+  FontVariantToBDFFont const &primaryBDFFonts,
   BDFFont const &minihexBDFFont,
   QColor cursorColor)
 :
@@ -45,8 +45,6 @@ EditorFontSet::EditorFontSet(
   m_cursorFontForFV(),
   m_minihexFont()
 {
-  xassertPrecondition(primaryBDFFonts.length() == FV_BOLD + 1);
-
   // Make the main fonts.
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
     CategoryToFont &newFonts = m_fontMap.at(overlay);
@@ -56,7 +54,7 @@ EditorFontSet::EditorFontSet(
         TextCategoryAOA(TextCategory(category), overlay));
 
       STATIC_ASSERT(FV_BOLD == 2);
-      BDFFont const *bdfFont = primaryBDFFonts[ts.variant % 3];
+      BDFFont const *bdfFont = primaryBDFFonts.at(ts.variant % 3).get();
 
       QtBDFFont_uptr qfont(new QtBDFFont(*bdfFont));
       qfont->setFgColor(ts.foreground);

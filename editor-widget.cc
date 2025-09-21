@@ -54,7 +54,7 @@
 #include "smbase/bdffont.h"                      // BDFFont
 #include "smbase/c-string-reader.h"              // decodeCStringEscapesToString
 #include "smbase/dev-warning.h"                  // DEV_WARNING
-#include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}
+#include "smbase/exc.h"                          // GENERIC_CATCH_BEGIN/END, smbase::{XBase, XMessage, xmessage}, EXN_CONTEXT
 #include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
@@ -332,17 +332,14 @@ void EditorWidget::cursorTo(TextLCoord tc)
 }
 
 
-static BDFFont *makeBDFFont(char const *bdfData, char const *context)
+static std::unique_ptr<BDFFont> makeBDFFont(
+  char const *bdfData, char const *context)
 {
-  try {
-    BDFFont *ret = new BDFFont;
-    parseBDFString(*ret, bdfData);
-    return ret;
-  }
-  catch (XBase &x) {
-    x.prependContext(context);
-    throw;
-  }
+  EXN_CONTEXT(context);
+
+  std::unique_ptr<BDFFont> ret(new BDFFont);
+  parseBDFString(*ret, bdfData);
+  return ret;
 }
 
 
@@ -364,19 +361,16 @@ void EditorWidget::setFontsFromEditorGlobal()
 void EditorWidget::setFonts(char const *normal, char const *italic, char const *bold)
 {
   // Read the font files, and index the results by FontVariant.
-  ObjArrayStack<BDFFont> bdfFonts(3);
-  STATIC_ASSERT(FV_NORMAL == 0);
-  bdfFonts.push(makeBDFFont(normal, "normal font"));
-  STATIC_ASSERT(FV_ITALIC == 1);
-  bdfFonts.push(makeBDFFont(italic, "italic font"));
-  STATIC_ASSERT(FV_BOLD == 2);
-  bdfFonts.push(makeBDFFont(bold, "bold font"));
+  EditorFontSet::FontVariantToBDFFont bdfFonts;
+  bdfFonts.at(FV_NORMAL) = makeBDFFont(normal, "normal font");
+  bdfFonts.at(FV_ITALIC) = makeBDFFont(italic, "italic font");
+  bdfFonts.at(FV_BOLD) = makeBDFFont(bold, "bold font");
 
   // Using one fixed global style mapping.
   StyleDB *styleDB = StyleDB::instance();
 
   // Font for missing glyphs.
-  Owner<BDFFont> minihexBDFFont(
+  std::unique_ptr<BDFFont> minihexBDFFont(
     makeBDFFont(bdfFontData_minihex6, "minihex font"));
 
   // Build the complete set of new fonts.

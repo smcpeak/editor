@@ -14,7 +14,6 @@
 
 #include "smqtutil/qtbdffont-fwd.h"    // QtBDFFont [n]
 
-#include "smbase/array.h"              // ObjArrayStack
 #include "smbase/bdffont-fwd.h"        // BDFFont [n]
 
 #include <array>                       // std::array
@@ -37,6 +36,13 @@ private:     // types
   using OverlayToCategoryToFont =
     std::array<CategoryToFont,
                NUM_TEXT_OVERLAY_ATTRIBUTES>;
+
+public:      // types
+  using BDFFont_uptr =
+    std::unique_ptr<BDFFont>;
+
+  using FontVariantToBDFFont =
+    std::array<BDFFont_uptr, FV_BOLD+1>;
 
 private:     // data
   // True of the empty placeholder object.
@@ -67,7 +73,7 @@ public:      // methods
   // Build the set of fonts.
   explicit EditorFontSet(
     StyleDB const *styleDB,
-    ObjArrayStack<BDFFont> const &primaryBDFFonts,
+    FontVariantToBDFFont const &primaryBDFFonts,
     BDFFont const &minihexBDFFont,
     QColor cursorColor);
 
