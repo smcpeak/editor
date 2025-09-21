@@ -129,7 +129,7 @@ void HashComment_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line
 }
 
 
-int HashComment_Lexer::getNextToken(TextCategory &code)
+int HashComment_Lexer::getNextToken(TextCategoryAOA &code)
 {
   int result = lexer->yym_lex();
 

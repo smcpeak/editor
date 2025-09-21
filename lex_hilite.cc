@@ -249,7 +249,7 @@ void LexHighlighter::highlight(
     TRACE("highlight", "push changed: scanning line " << changedBegin);
     lexer.beginScan(&buf, changedBegin, prevState);
 
-    TextCategory code;
+    TextCategoryAOA code;
     while (lexer.getNextToken(code))
       {}
 
@@ -269,7 +269,7 @@ void LexHighlighter::highlight(
     TRACE("highlight", "push waterline: scanning line " << waterline);
     lexer.beginScan(&buf, waterline, prevState);
 
-    TextCategory code;
+    TextCategoryAOA code;
     while (lexer.getNextToken(code))
       {}
 
@@ -285,7 +285,7 @@ void LexHighlighter::highlight(
   lexer.beginScan(&buf, line, prevState);
 
   // Append each categorized segment.
-  TextCategory code;
+  TextCategoryAOA code;
   int len = lexer.getNextToken(code);
   while (len) {
     // Here, `len` is bytes.

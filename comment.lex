@@ -181,7 +181,7 @@ void CommentLexer::beginScan(TextDocumentCore const *buffer, LineIndex line, Lex
 }
 
 
-int CommentLexer::getNextToken(TextCategory &code)
+int CommentLexer::getNextToken(TextCategoryAOA &code)
 {
   int result = lexer->yym_lex();
 

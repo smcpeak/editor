@@ -26,7 +26,7 @@ public:      // funcs
 
   // IncLexer funcs
   virtual void beginScan(TextDocumentCore const *buffer, LineIndex line, LexerState state) OVERRIDE;
-  virtual int getNextToken(TextCategory &code) OVERRIDE;
+  virtual int getNextToken(TextCategoryAOA &code) OVERRIDE;
   virtual LexerState getState() const OVERRIDE;
 };
 

@@ -422,7 +422,7 @@ void OCaml_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line, Lexe
 }
 
 
-int OCaml_Lexer::getNextToken(TextCategory &code)
+int OCaml_Lexer::getNextToken(TextCategoryAOA &code)
 {
   int result = lexer->yym_lex();
 

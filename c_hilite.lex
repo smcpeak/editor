@@ -489,7 +489,7 @@ void C_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line, LexerSta
 }
 
 
-int C_Lexer::getNextToken(TextCategory &code)
+int C_Lexer::getNextToken(TextCategoryAOA &code)
 {
   int result = lexer->yym_lex();
 

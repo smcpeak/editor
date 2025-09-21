@@ -393,7 +393,7 @@ void Python_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line, Lex
 }
 
 
-int Python_Lexer::getNextToken(TextCategory &code)
+int Python_Lexer::getNextToken(TextCategoryAOA &code)
 {
   int result = lexer->yym_lex();
 

@@ -302,7 +302,7 @@ void Makefile_Lexer::beginScan(TextDocumentCore const *buffer, LineIndex line, L
 }
 
 
-int Makefile_Lexer::getNextToken(TextCategory &code)
+int Makefile_Lexer::getNextToken(TextCategoryAOA &code)
 {
   int result = lexer->yym_lex();
 
