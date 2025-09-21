@@ -8,6 +8,7 @@
 #include "smqtutil/qtbdffont.h"        // QtBDFFont
 
 #include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
+#include "smbase/sm-macros.h"          // SWAP_MEMB
 #include "smbase/xassert.h"            // xassertPtr
 
 #include <cstddef>                     // std::size_t
@@ -134,10 +135,6 @@ QtBDFFont *EditorFontSet::minihex()
 {
   return xassertPtr(m_minihexFont.get());
 }
-
-
-// TODO: Move this to `smbase`.
-#define SWAP_MEMB(memb) swap(memb, obj.memb)
 
 
 void EditorFontSet::swapWith(EditorFontSet &obj)
