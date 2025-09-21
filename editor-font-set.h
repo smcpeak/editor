@@ -26,6 +26,18 @@ class QColor;
 // Collection of `QtBDFFont`s for various purposes within
 // `EditorWidget`.
 class EditorFontSet {
+private:     // types
+  using QtBDFFont_uptr =
+    std::unique_ptr<QtBDFFont>;
+
+  using CategoryToFont =
+    std::array<QtBDFFont_uptr,
+               NUM_STANDARD_TEXT_CATEGORIES>;
+
+  using OverlayToCategoryToFont =
+    std::array<CategoryToFont,
+               NUM_TEXT_OVERLAY_ATTRIBUTES>;
+
 private:     // data
   // True of the empty placeholder object.
   bool m_isEmpty;
@@ -33,20 +45,17 @@ private:     // data
   // Map from overlay attribute to:
   //   map from text category to:
   //     non-null font owner pointer
-  //
-  // TODO: Replace `ObjArrayStack` with `std::vector<std::unique_ptr>>`.
-  std::array<ObjArrayStack<QtBDFFont>, NUM_TEXT_OVERLAY_ATTRIBUTES>
-    m_fontMap;
+  OverlayToCategoryToFont m_fontMap;
 
   // Font for drawing the character under the cursor, indexed by
   // the FontVariant (modulo FV_UNDERLINE) there.
   //
   // Invariant: Unless `m_isEmpty`, all elements are non-null.
-  std::array<std::unique_ptr<QtBDFFont>, FV_BOLD+1> m_cursorFontForFV;
+  std::array<QtBDFFont_uptr, FV_BOLD+1> m_cursorFontForFV;
 
   // Font containing miniature hexadecimal characters for use when
   // a glyph is missing.  Unless `m_isEmpty`, never null.
-  std::unique_ptr<QtBDFFont> m_minihexFont;
+  QtBDFFont_uptr m_minihexFont;
 
 public:      // methods
   ~EditorFontSet();

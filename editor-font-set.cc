@@ -49,7 +49,7 @@ EditorFontSet::EditorFontSet(
 
   // Make the main fonts.
   FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
-    ObjArrayStack<QtBDFFont> &newFonts = m_fontMap.at(overlay);
+    CategoryToFont &newFonts = m_fontMap.at(overlay);
 
     for (int category = TC_ZERO; category < NUM_STANDARD_TEXT_CATEGORIES; category++) {
       TextStyle const &ts = styleDB->getStyle(
@@ -58,17 +58,17 @@ EditorFontSet::EditorFontSet(
       STATIC_ASSERT(FV_BOLD == 2);
       BDFFont const *bdfFont = primaryBDFFonts[ts.variant % 3];
 
-      QtBDFFont *qfont = new QtBDFFont(*bdfFont);
+      QtBDFFont_uptr qfont(new QtBDFFont(*bdfFont));
       qfont->setFgColor(ts.foreground);
       qfont->setBgColor(ts.background);
       qfont->setTransparent(false);
-      newFonts.push(qfont);
+      newFonts.at(category) = std::move(qfont);
     }
   }
 
   // Similar procedure for the cursor fonts.
   for (int fv = 0; fv <= FV_BOLD; fv++) {
-    std::unique_ptr<QtBDFFont> qfont(
+    QtBDFFont_uptr qfont(
       new QtBDFFont(*(primaryBDFFonts[fv])));
 
     // The character under the cursor is drawn with the normal background
@@ -95,16 +95,15 @@ void EditorFontSet::selfCheck() const
     return;
   }
 
-  for (auto const &fonts : m_fontMap) {
-    for (int i=0; i < fonts.length(); ++i) {
-      xassertPtr(fonts[i])->selfCheck();
+  for (CategoryToFont const &catToFont : m_fontMap) {
+    for (QtBDFFont_uptr const &ptr : catToFont) {
+      xassertPtr(ptr.get())->selfCheck();
     }
   }
 
-  for (std::size_t i=0; i < m_cursorFontForFV.size(); ++i) {
-    xassertPtr(m_cursorFontForFV.at(i).get())->selfCheck();
+  for (QtBDFFont_uptr const &ptr : m_cursorFontForFV) {
+    xassertPtr(ptr.get())->selfCheck();
   }
-  xassert(m_cursorFontForFV.size() == FV_BOLD+1);
 
   xassertPtr(m_minihexFont.get())->selfCheck();
 }
@@ -113,7 +112,7 @@ void EditorFontSet::selfCheck() const
 QtBDFFont const *EditorFontSet::forCatAOAC(TextCategoryAOA catAOA) const
 {
   QtBDFFont const *ret =
-    m_fontMap.at(catAOA.overlay())[catAOA.category()];
+    m_fontMap.at(catAOA.overlay()).at(catAOA.category()).get();
 
   return xassertPtr(ret);
 }
@@ -148,11 +147,7 @@ void EditorFontSet::swapWith(EditorFontSet &obj)
   using std::swap;
 
   SWAP_MEMB(m_isEmpty);
-
-  FOR_EACH_TEXT_OVERLAY_ATTRIBUTE(overlay) {
-    m_fontMap.at(overlay).swapWith(obj.m_fontMap.at(overlay));
-  }
-
+  SWAP_MEMB(m_fontMap);
   SWAP_MEMB(m_cursorFontForFV);
   SWAP_MEMB(m_minihexFont);
 
@@ -162,11 +157,13 @@ void EditorFontSet::swapWith(EditorFontSet &obj)
 
 void EditorFontSet::deleteAll()
 {
-  for (ObjArrayStack<QtBDFFont> &fontMap : m_fontMap) {
-    fontMap.deleteAll();
+  for (CategoryToFont &catToFont : m_fontMap) {
+    for (QtBDFFont_uptr &ptr : catToFont) {
+      ptr.reset();
+    }
   }
 
-  for (auto &ptr : m_cursorFontForFV) {
+  for (QtBDFFont_uptr &ptr : m_cursorFontForFV) {
     ptr.reset();
   }
 
