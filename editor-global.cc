@@ -408,9 +408,6 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
     filesToOpen.push_back(path);
   };
 
-  // True if we will open the user settings file.
-  bool useSettings = true;
-
   for (int i=1; i < argc; i++) {
     std::string arg(argv[i]);
     if (arg.empty()) {
@@ -430,7 +427,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
 
         // We are going to run an automated test, so ignore user
         // settings.
-        useSettings = false;
+        m_useUserSettingsFile = false;
 
         // Only use the fake server with record/replay
         m_lspIsFakeServer = true;
@@ -470,7 +467,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
 
         // Since this is preparatory to an automated test, which will
         // not have user settings, turn them off here too.
-        useSettings = false;
+        m_useUserSettingsFile = false;
 
         // Only use the fake server with record/replay
         m_lspIsFakeServer = true;
@@ -496,7 +493,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         // One reason to use this option is to do interactive
         // preliminary testing or event recording meant as preparation
         // for an automated test.
-        useSettings = false;
+        m_useUserSettingsFile = false;
       }
 
       // Remember to update the "-help" output after adding a new
@@ -519,13 +516,8 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
     }
   }
 
-  if (useSettings) {
+  if (m_useUserSettingsFile) {
     loadSettingsFile_throwIfError();
-  }
-  else {
-    // If we did not read the settings, we should not write them either
-    // since that would effectively delete them.
-    m_useUserSettingsFile = false;
   }
 
   return filesToOpen;
