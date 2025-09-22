@@ -439,12 +439,32 @@ void EditorGlobal::processEventTestFile(
     addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
   }
 
+  // Build the transform object so we can populate it with definitions.
+  GDValueFnApplyTransform transform;
+
+  SMFileUtil sfu;
+
+  // Optional `includes` to read first for definitions.
+  auto includes = gdvpOptTo<std::vector<std::string>>(
+    parser.mapGetValueAtSymOpt("includes"));
+  for (std::string const &include : includes) {
+    // Treat the name as relative to where `fname` is.
+    std::string joinedInclude =
+      sfu.joinIfRelativeFilename(
+        sfu.splitPathDir(fname),
+        include);
+
+    // Add the definitions to `transform`.  The result of processing
+    // them is discarded.
+    TRACE1("processing include: " << joinedInclude);
+    transform.transform(GDValue::readFromFile(joinedInclude));
+  }
+
   // The `cmds` is required.
   GDValueParser origCmds = parser.mapGetValueAtSym("cmds");
 
   // Evaluate and substitute definitions.
-  GDValue substCmds =
-    fnApplyTransformGDValue(origCmds.getValue());
+  GDValue substCmds = transform.transform(origCmds.getValue());
 
   // Flatten as a sequence of values.
   gdvFlattenSequence(m_eventTestCommands /*APPEND*/, substCmds);

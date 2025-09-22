@@ -1,0 +1,13 @@
+// common-defns.gdvn
+// Definitions common to many test scripts.
+
+[
+  // Path to the editor widget.
+  Define(editorWidget "window1.frame1.editorFrame.m_editorWidget")
+
+  // Check the document text.
+  Define(checkDocumentText(expect)
+    CheckQuery(editorWidget "documentText" expect))
+]
+
+// EOF

@@ -734,6 +734,10 @@ void EventReplay::replayCall(GDValue const &command)
     auto [receiver, state, expect] =
       gdvpToTuple<std::string, std::string, GDValue>(parser);
 
+    // Provide the location of the expect string in case the
+    // `CheckQuery` came from an included file.
+    EXN_CONTEXT(expect.sourceLocation().asString());
+
     EventReplayQueryable *q = getQueryableFromPath(receiver);
     GDValue actual = q->eventReplayQuery(state);
     CHECK_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<

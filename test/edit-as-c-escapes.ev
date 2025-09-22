@@ -3,14 +3,8 @@
 
 {
   args: []
+  includes: ["common-defns.gdvn"]
   cmds: [
-
-    // Path to the editor widget.
-    Define(editorWidget "window1.frame1.editorFrame.m_editorWidget")
-
-    // Check the document text.
-    Define(checkDocumentText(expect)
-      CheckQuery(editorWidget "documentText" expect))
 
     // Path to the line edit inside the dialog we are testing.
     Define(dialogLineEdit "window1.frame1.editorFrame.m_editorWidget.#2.#1")
