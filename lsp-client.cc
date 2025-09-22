@@ -29,10 +29,10 @@
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/list-util.h"                    // smbase::listMoveFront
-#include "smbase/map-util.h"                     // smbase::{mapGetValueAt, mapKeySet}
+#include "smbase/map-util.h"                     // smbase::{mapGetValueAt,mapKeySet}
 #include "smbase/overflow.h"                     // safeToInt
-#include "smbase/set-util.h"                     // smbase::{setInsert, setContains}
-#include "smbase/sm-env.h"                       // smbase::envAsBool
+#include "smbase/set-util.h"                     // smbase::{setInsert,setContains}
+#include "smbase/sm-env.h"                       // smbase::{envAsBool,envAsStringOr}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // IMEMBFP, IMEMBMFP
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
@@ -637,9 +637,22 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
 {
   m_commandRunner.reset(new CommandRunner());
 
+  // Provide a crude configuration ability for these external programs.
+  static QString const clangdProgram = envAsStringOr("clangd",
+    "SM_EDITOR_CLANGD_PROGRAM");
+  static QString const pylspProgram = envAsStringOr("pylsp",
+    "SM_EDITOR_PYLSP_PROGRAM");
+  static QString const envProgram = envAsStringOr("env",
+    "SM_EDITOR_ENV_PROGRAM");
+  static QString const python3Program = envAsStringOr("python3",
+    "SM_EDITOR_PYTHON3_PROGRAM");
+  static QString const lspTestServerProgram =
+    envAsStringOr("./lsp-test-server.py",
+      "SM_EDITOR_LSP_TEST_SERVER_PROGRAM");
+
   if (m_useRealServer) {
     if (scope.m_documentType == DocumentType::DT_CPP) {
-      m_commandRunner->setProgram("clangd");
+      m_commandRunner->setProgram(clangdProgram);
       if (envAsBool("CLANGD_VERBOSE_LOG")) {
         // Causes more details to be written to its stderr log file.
         m_commandRunner->setArguments(QStringList() <<
@@ -650,7 +663,7 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
     else if (scope.m_documentType == DocumentType::DT_PYTHON) {
       // Use "env" for this too since `pylsp` is a shell script with a
       // shebang.
-      m_commandRunner->setProgram("env");
+      m_commandRunner->setProgram(envProgram);
 
       // `lspScopeForNTD` ensures the directory is set.
       xassert(scope.hasDirectory());
@@ -660,7 +673,7 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
         "Set working directory to: " << scope.directory()));
 
       QStringList args;
-      args << "pylsp";
+      args << pylspProgram;
       if (envAsBool("PYLSP_VERBOSE_LOG")) {
         // Log more details.  Without this, `pylsp` is very quiet.
         args << "--verbose";
@@ -680,9 +693,9 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
 
   else {
     // Need to use `env` due to cygwin symlink issues.
-    m_commandRunner->setProgram("env");
+    m_commandRunner->setProgram(envProgram);
     m_commandRunner->setArguments(QStringList() <<
-      "python3" << "./lsp-test-server.py");
+      python3Program << lspTestServerProgram);
   }
 
   /* Although the goal is to send the server process stderr to
