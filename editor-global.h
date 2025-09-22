@@ -188,6 +188,12 @@ public:      // data
   std::vector<gdv::GDValue> m_eventTestCommands;
 
 private:     // methods
+  // Treat `fname` like a file specified on the command line, adding it
+  // to `filesToOpen`.
+  void addFileToOpenInitially(
+    std::vector<std::string> &filesToOpen /*APPEND*/,
+    std::string const &fname);
+
   // Process the command line.  Return the sequence of files to be
   // opened initially.
   std::vector<std::string> processCommandLineOptions(

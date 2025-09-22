@@ -394,19 +394,22 @@ static char const *optionsDescription =
 DEFINE_XBASE_SUBCLASS(QuitAfterPrintingHelp);
 
 
+void EditorGlobal::addFileToOpenInitially(
+  std::vector<std::string> &filesToOpen /*APPEND*/,
+  std::string const &fname)
+{
+  SMFileUtil sfu;
+  std::string path = sfu.getAbsolutePath(fname);
+  path = sfu.normalizePathSeparators(path);
+  filesToOpen.push_back(path);
+}
+
+
 std::vector<std::string> EditorGlobal::processCommandLineOptions(
   int argc, char **argv)
 {
   // Files to open specified on the command line.
   std::vector<std::string> filesToOpen;
-
-  SMFileUtil sfu;
-
-  auto addFileToOpen = [&filesToOpen, &sfu](std::string const &fname) {
-    std::string path = sfu.getAbsolutePath(fname);
-    path = sfu.normalizePathSeparators(path);
-    filesToOpen.push_back(path);
-  };
 
   for (int i=1; i < argc; i++) {
     std::string arg(argv[i]);
@@ -447,7 +450,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         // For now, all arguments specified this way are interpreted as
         // files to open.
         for (std::string const &fname : args) {
-          addFileToOpen(fname);
+          addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
         }
 
         // The `cmds` is required.
@@ -512,7 +515,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
       }
 
       // Open all non-option files specified on the command line.
-      addFileToOpen(arg);
+      addFileToOpenInitially(filesToOpen /*APPEND*/, arg);
     }
   }
 
