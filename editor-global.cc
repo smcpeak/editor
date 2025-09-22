@@ -405,6 +405,52 @@ void EditorGlobal::addFileToOpenInitially(
 }
 
 
+void EditorGlobal::processEventTestFile(
+  std::vector<std::string> &filesToOpen /*APPEND*/,
+  std::string const &fname)
+{
+  if (!m_eventTestFileName.empty()) {
+    xformat("Multiple \"-ev=\" options are not allowed.");
+  }
+  m_eventTestFileName = fname;
+
+  // We are going to run an automated test, so ignore user
+  // settings.
+  m_useUserSettingsFile = false;
+
+  // Only use the fake server with record/replay
+  m_lspIsFakeServer = true;
+
+  // Read the script and parse it.
+  GDValue testScript =
+    GDValue::readFromFile(m_eventTestFileName);
+  GDValueParser parser(testScript);
+  parser.checkIsMap();
+
+  // The `args` can be missing, in which case we do not open any
+  // files initially.
+  auto args = gdvpOptTo<std::vector<std::string>>(
+    parser.mapGetValueAtSymOpt("args"));
+  cout << "args: " << toGDValue(args) << "\n";
+
+  // For now, all arguments specified this way are interpreted as
+  // files to open.
+  for (std::string const &fname : args) {
+    addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
+  }
+
+  // The `cmds` is required.
+  GDValueParser origCmds = parser.mapGetValueAtSym("cmds");
+
+  // Evaluate and substitute definitions.
+  GDValue substCmds =
+    fnApplyTransformGDValue(origCmds.getValue());
+
+  // Flatten as a sequence of values.
+  gdvFlattenSequence(m_eventTestCommands /*APPEND*/, substCmds);
+}
+
+
 std::vector<std::string> EditorGlobal::processCommandLineOptions(
   int argc, char **argv)
 {
@@ -426,42 +472,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
 
       else if (beginsWith(arg, "-ev=")) {
         // Replay a sequence of events as part of a test.
-        m_eventTestFileName = arg.substr(4, arg.length()-4);
-
-        // We are going to run an automated test, so ignore user
-        // settings.
-        m_useUserSettingsFile = false;
-
-        // Only use the fake server with record/replay
-        m_lspIsFakeServer = true;
-
-        // Read the script and parse it.
-        GDValue testScript =
-          GDValue::readFromFile(m_eventTestFileName);
-        GDValueParser parser(testScript);
-        parser.checkIsMap();
-
-        // The `args` can be missing, in which case we do not open any
-        // files initially.
-        auto args = gdvpOptTo<std::vector<std::string>>(
-          parser.mapGetValueAtSymOpt("args"));
-        cout << "args: " << toGDValue(args) << "\n";
-
-        // For now, all arguments specified this way are interpreted as
-        // files to open.
-        for (std::string const &fname : args) {
-          addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
-        }
-
-        // The `cmds` is required.
-        GDValueParser origCmds = parser.mapGetValueAtSym("cmds");
-
-        // Evaluate and substitute definitions.
-        GDValue substCmds =
-          fnApplyTransformGDValue(origCmds.getValue());
-
-        // Flatten as a sequence of values.
-        gdvFlattenSequence(m_eventTestCommands /*APPEND*/, substCmds);
+        processEventTestFile(filesToOpen /*APPEND*/, arg.substr(4));
       }
 
       else if (arg == "-record") {

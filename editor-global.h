@@ -194,6 +194,12 @@ private:     // methods
     std::vector<std::string> &filesToOpen /*APPEND*/,
     std::string const &fname);
 
+  // Process `fname`, the argument to an "-ev=" option.  Among other
+  // things, augment `filesToOpen`.
+  void processEventTestFile(
+    std::vector<std::string> &filesToOpen /*APPEND*/,
+    std::string const &fname);
+
   // Process the command line.  Return the sequence of files to be
   // opened initially.
   std::vector<std::string> processCommandLineOptions(
