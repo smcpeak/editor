@@ -125,7 +125,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_lspServersDialog(),
     m_recentCommands(),
     m_settings(),
-    m_doNotSaveSettings(false),
+    m_useUserSettingsFile(true),
     m_filenameInputDialogHistory(),
     m_recordInputEvents(false),
     m_eventTestFileName(),
@@ -525,7 +525,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
   else {
     // If we did not read the settings, we should not write them either
     // since that would effectively delete them.
-    m_doNotSaveSettings = true;
+    m_useUserSettingsFile = false;
   }
 
   return filesToOpen;
@@ -1100,8 +1100,8 @@ bool EditorGlobal::saveSettingsFile(QWidget * NULLABLE parent) NOEXCEPT
     // Convert settings to GDV.
     GDValue gdvSettings(m_settings);
 
-    if (m_doNotSaveSettings) {
-      TRACE1("saveSettingsFile: Not saving settings due to `m_doNotSaveSettings`.");
+    if (!m_useUserSettingsFile) {
+      TRACE1("saveSettingsFile: Not saving settings due to `m_useUserSettingsFile`.");
     }
     else {
       // Write as GDVN, atomically.

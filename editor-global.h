@@ -165,9 +165,11 @@ private:     // instance data
   // User settings.
   EditorSettings m_settings;
 
-  // When true, we ignore requests to save settings.  This is meant for
-  // use during automated testing.
-  bool m_doNotSaveSettings;
+  // When true, load user settings on startup, and save them in response
+  // to various events.  This is set to false during automated testing,
+  // both to provide a consistent starting point and to avoid clobbering
+  // the real settings as a result of test behavior.
+  bool m_useUserSettingsFile;
 
 public:      // data
   // Shared history for a dialog.
