@@ -9,9 +9,9 @@
 #include "td-editor.h"                 // TextDocumentAndEditor
 
 // smbase
-#include "smbase/nonport.h"            // getMilliseconds
+#include "smbase/nonport.h"            // getMilliseconds, GetMillisecondsAccumulator
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ, VPVAL
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ, VPVAL, [TIMED_]TEST_FUNC
 
 
 OPEN_ANONYMOUS_NAMESPACE
@@ -54,6 +54,8 @@ void expectMatches(TextSearch const &ts, string const &expect)
 
 void testEmpty()
 {
+  TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
   expectTotalMatches(ts, 0);
@@ -65,6 +67,8 @@ void testEmpty()
 
 void testSimple()
 {
+  TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
   tde.insertNulTermText(
@@ -181,6 +185,8 @@ void expectNM_false(TextSearch const &ts,
 
 void testCaseInsensitive()
 {
+  TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
   ts.setSearchString("a");
@@ -332,6 +338,8 @@ void testCaseInsensitive()
 
 void testRegex()
 {
+  TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
   tde.insertNulTermText(
@@ -383,6 +391,8 @@ void expectGRT(TextSearch const &ts,
 
 void testGetReplacementText()
 {
+  TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
 
@@ -419,6 +429,8 @@ void populateDocument(TextDocumentEditor &tde, int lines)
 
 void testPerformance()
 {
+  TIMED_TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
   ts.setSearchString("roam");
@@ -426,11 +438,14 @@ void testPerformance()
   int const NUM_LINES = 1000;      // Right at match limit.
   populateDocument(tde, NUM_LINES);
 
+  // Default takes ~0.5s without optimization.
+  int const ITERS =
+    envRandomizedTestIters(25, "TST_PERF_ITERS");
+
   for (int opts=0; opts <= TextSearch::SS_ALL; opts++) {
     ts.setSearchStringFlags((TextSearch::SearchStringFlags)opts);
 
     long start = getMilliseconds();
-    int const ITERS = 200;
     for (int i=0; i < ITERS; i++) {
       // Trigger a complete re-evaluation.
       ts.observeTotalChange(tde.writableDoc().getCore());
@@ -462,17 +477,27 @@ void testPerformance()
 
 void testRegexPerf2(bool nolimit)
 {
+  TIMED_TEST_FUNC();
+
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
 
-  int const NUM_LINES = 10000;
-  populateDocument(tde, NUM_LINES);
+  // This is surprisingly slow with 10000 lines.
+  int const NUM_LINES =
+    envRandomizedTestIters(1000, "TST_PERF2_LINES");
+  {
+    TimedTestCase timer("populate");
+    populateDocument(tde, NUM_LINES);
+  }
 
   if (nolimit) {
     ts.setMatchCountLimit(100000000);
   }
 
-  ts.setSearchStringFlags(TextSearch::SS_REGEX);
+  {
+    TimedTestCase timer("set flags");
+    ts.setSearchStringFlags(TextSearch::SS_REGEX);
+  }
 
   long start = getMilliseconds();
   ts.setSearchString(".");
@@ -480,7 +505,9 @@ void testRegexPerf2(bool nolimit)
 
   DIAG("perf2 init: " << elapsed);
 
-  int const ITERS = 10;
+  int const ITERS =
+    envRandomizedTestIters(10, "TST_PERF2_ITERS");
+
   for (int i=0; i < ITERS; i++) {
     start = getMilliseconds();
     ts.setSearchString("");
@@ -506,7 +533,7 @@ void testRegexPerf2(bool nolimit)
 
 void testPerf3()
 {
-  DIAG("testPerf3");
+  TIMED_TEST_FUNC();
 
   TextDocumentAndEditor tde;
   TextSearch ts(tde.getDocumentCore());
