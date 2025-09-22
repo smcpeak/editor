@@ -171,6 +171,9 @@ def check_sorted(lst: List[Any]) -> None:
 # True if we are running Cygwin Python.
 is_cygwin: bool = (sys.platform == "cygwin")
 
+# True if we are running Native Windows Python.
+is_win32: bool = (sys.platform == "win32")
+
 
 def cygwin_to_mixed_path(src_path: str) -> str:
   """Convert `path` to a Cygwin "mixed" Windows path."""
@@ -192,6 +195,8 @@ def get_abspath(fname: str) -> str:
   ret: str = os.path.abspath(fname)
   if is_cygwin:
     ret = cygwin_to_mixed_path(ret)
+  elif is_win32:
+    ret = ret.replace("\\", "/")
 
   return ret;
 
