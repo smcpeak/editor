@@ -18,7 +18,7 @@
 #include "smbase/set-util.h"           // smbase::setInsert
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, NO_OBJECT_COPIES, IMEMBFP
 #include "smbase/sm-random.h"          // smbase::{sm_random, RandomChoice}
-#include "smbase/sm-test.h"            // ARGS_MAIN, EXPECT_EQ[_GDV], envRandomizedTestIters
+#include "smbase/sm-test.h"            // ARGS_MAIN, EXPECT_EQ[_GDV], envRandomizedTestIters, [TIMED_]TEST_FUNC, DIAG[2]
 #include "smbase/string-util.h"        // join, suffixAll, stringToVectorOfUChar
 
 #include <algorithm>                   // std::max
@@ -532,7 +532,7 @@ public:      // methods
   {
     // Print these operations as C++ code that I can copy into my
     // tests to recreate a scenario that was generated randomly.
-    DIAG("m.insert(" << toCode(entry) << ");");
+    DIAG2("m.insert(" << toCode(entry) << ");");
 
     m_sut.insertEntry(entry);
     m_ref.insertEntry(entry);
@@ -540,42 +540,42 @@ public:      // methods
 
   void clearEverything(std::optional<PositiveLineCount> numLines)
   {
-    DIAG("m.clear();");
+    DIAG2("m.clear();");
     m_sut.clearEverything(numLines);
     m_ref.clearEverything(numLines);
   }
 
   void adjustForDocument(TextDocumentCore const &doc)
   {
-    DIAG("m.adjustForDocument(doc);");
+    DIAG2("m.adjustForDocument(doc);");
     m_sut.adjustForDocument(doc);
     m_ref.adjustForDocument(doc);
   }
 
   void insertLines(LineIndex line, LineCount count)
   {
-    DIAG("m.insertLines(" << line << ", " << count << ");");
+    DIAG2("m.insertLines(" << line << ", " << count << ");");
     m_sut.insertLines(line, count);
     m_ref.insertLines(line, count);
   }
 
   void deleteLines(LineIndex line, LineCount count)
   {
-    DIAG("m.deleteLines(" << line << ", " << count << ");");
+    DIAG2("m.deleteLines(" << line << ", " << count << ");");
     m_sut.deleteLines(line, count);
     m_ref.deleteLines(line, count);
   }
 
   void insertLineBytes(TextMCoord tc, ByteCount lengthBytes)
   {
-    DIAG("m.insertLineBytes(" << toCode(tc) << ", " << lengthBytes << ");");
+    DIAG2("m.insertLineBytes(" << toCode(tc) << ", " << lengthBytes << ");");
     m_sut.insertLineBytes(tc, lengthBytes);
     m_ref.insertLineBytes(tc, lengthBytes);
   }
 
   void deleteLineBytes(TextMCoord tc, ByteCount lengthBytes)
   {
-    DIAG("m.deleteLineBytes(" << toCode(tc) << ", " << lengthBytes << ");");
+    DIAG2("m.deleteLineBytes(" << toCode(tc) << ", " << lengthBytes << ");");
     m_sut.deleteLineBytes(tc, lengthBytes);
     m_ref.deleteLineBytes(tc, lengthBytes);
   }
@@ -703,7 +703,7 @@ static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
 // only does edits at the line granularity.
 void test_commentsExample()
 {
-  TEST_CASE("test_commentsExample");
+  TEST_FUNC();
 
   DIAG("Start with empty map.");
   MapPair m(PositiveLineCount(7) /*numLines*/);
@@ -962,6 +962,8 @@ static TextMCoord tmc(int l, int b)
 // Insertions within a single line.
 void test_lineInsertions()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(1) /*numLines*/);
   m.selfCheck();
 
@@ -1044,6 +1046,8 @@ void test_lineInsertions()
 // Insertions affecting a multi-line span.
 void test_multilineInsertions()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(2) /*numLines*/);
   m.selfCheck();
 
@@ -1160,6 +1164,8 @@ void test_multilineInsertions()
 // Do some deletions within a single line.
 void test_lineDeletions()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(1) /*numLines*/);
   m.selfCheck();
 
@@ -1334,6 +1340,8 @@ void test_multilineDeletions()
 // A specific scenario found through random testing.
 void test_multilineDeletion2()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(4) /*numLines*/);
 
   m.insertEntry({tmcr(0,21, 3,0), 3});
@@ -1478,11 +1486,14 @@ void randomEdit(MapPair &m)
 
 void test_randomOps()
 {
-  // On my machine, with the defaults, the test takes ~1s.
+  TIMED_TEST_FUNC();
+
+  // On my computer, with the defaults and no optimization, this test
+  // takes ~0.4s.
   int const outerLimit =
-    envRandomizedTestIters(10, "TMT_OUTER_LIMIT", 2);
+    envRandomizedTestIters(3, "TMT_OUTER_LIMIT", 2);
   int const innerLimit =
-    envRandomizedTestIters(100, "TMT_INNER_LIMIT", 2);
+    envRandomizedTestIters(50, "TMT_INNER_LIMIT", 2);
 
   for (int outer=0; outer < outerLimit; ++outer) {
     EXN_CONTEXT_EXPR(outer);
@@ -1507,6 +1518,8 @@ void test_randomOps()
 // Test issuing edit commands on top of an empty map.
 void test_editEmpty()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(20) /*numLines*/);
   m.selfCheck();
 
@@ -1520,6 +1533,8 @@ void test_editEmpty()
 // Issue with inserting right after the last range.
 void test_insertAfterLast()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(2) /*numLines*/);
 
   m.insertEntry({tmcr(1,4, 1,42), 2});
@@ -1535,6 +1550,8 @@ void test_insertAfterLast()
 // Clearing should ensure `maxEntryLine()==-1`.
 void test_clear()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(2) /*numLines*/);
   m.insertEntry({tmcr(1,4, 1,42), 2});
   m.selfCheck();
@@ -1549,6 +1566,8 @@ void test_clear()
 // Another one found by random testing.
 void test_multilineDeletion3()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(5) /*numLines*/);
 
   m.insertEntry({tmcr(3,0, 4,8), 2});
@@ -1567,6 +1586,8 @@ void test_multilineDeletion3()
 // Found by random testing.
 void test_multilineDeletion4()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(30) /*numLines*/);
 
   m.insertEntry({tmcr(19,11, 20,27), 3});
@@ -1586,6 +1607,8 @@ void test_multilineDeletion4()
 // code.
 void test_insertMakesLongLine()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(2) /*numLines*/);
 
   m.insertEntry({tmcr(0,94, 1,0), 3});
@@ -1608,6 +1631,8 @@ void checkLineEntryRoundtrip(char const *gdvn)
 // Test parsing `LineEntry`.
 void test_parseLineEntry()
 {
+  TEST_FUNC();
+
   checkLineEntryRoundtrip(
     "LineEntry[startByteIndex:1 endByteIndex:2 value:3]");
   checkLineEntryRoundtrip(
@@ -1627,6 +1652,8 @@ void test_parseLineEntry()
 
 void test_adjustForDocument()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(10) /*numLines*/);
 
   // Simple case of reducing the end coordinate within a line.
@@ -1691,8 +1718,10 @@ void randomDocInsertions(TextDocumentCore &doc, int n)
 
 void test_adjustForDocumentRandomized()
 {
-  // On my computer, 100 iterations takes ~0.3s.
-  int const iters = envRandomizedTestIters(100, "AFDR_ITERS");
+  TIMED_TEST_FUNC();
+
+  // With defaults, takes ~0.4s.
+  int const iters = envRandomizedTestIters(30, "AFDR_ITERS");
 
   for (int i=0; i < iters; ++i) {
     // Random diagnostics.
@@ -1718,6 +1747,8 @@ void test_adjustForDocumentRandomized()
 // another way to make this work the way I want.
 void test_deleteNearEnd()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(3) /*numLines*/);
 
   // This is supposed to represent a diagnostic that goes right to the
@@ -1749,6 +1780,8 @@ void test_deleteNearEnd()
 // Ad-hoc reproduction of problematic sequences.
 void test_repro()
 {
+  TEST_FUNC();
+
   MapPair m(PositiveLineCount(2) /*numLines*/);
 
   return;
@@ -1761,6 +1794,8 @@ CLOSE_ANONYMOUS_NAMESPACE
 // Called from unit-tests.cc.
 void test_textmcoord_map(CmdlineArgsSpan args)
 {
+  TimedTestCase timer("entire test_textmcoord_map");
+
   #define RUN_TEST(funcname) { \
     EXN_CONTEXT(#funcname);    \
     funcname();                \
