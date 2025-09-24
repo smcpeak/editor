@@ -246,6 +246,9 @@ public:      // methods
   // This returns the value of the "result" field of the entire reply.
   JSON_RPC_Reply takeReplyForID(int id);
 
+  // Like `takeReplyForID`, but without removing it from `this`.
+  JSON_RPC_Reply peekReplyForID(int id) const;
+
   // If the reply for `id` is pending, discard it.  If not, arrange to
   // discard it when it arrives.
   //

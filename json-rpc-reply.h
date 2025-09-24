@@ -30,13 +30,16 @@ public:      // data
   gdv::GDValue m_data;
 
 public:      // methods
-  // ---- create-tuple-class: declarations for JSON_RPC_Error +move +gdvWrite
+  // ---- create-tuple-class: declarations for JSON_RPC_Error +move +gdvWrite +compare
   /*AUTO_CTC*/ explicit JSON_RPC_Error(int code, std::string const &message, gdv::GDValue const &data);
   /*AUTO_CTC*/ explicit JSON_RPC_Error(int code, std::string &&message, gdv::GDValue &&data);
   /*AUTO_CTC*/ JSON_RPC_Error(JSON_RPC_Error const &obj) noexcept;
   /*AUTO_CTC*/ JSON_RPC_Error(JSON_RPC_Error &&obj) noexcept;
   /*AUTO_CTC*/ JSON_RPC_Error &operator=(JSON_RPC_Error const &obj) noexcept;
   /*AUTO_CTC*/ JSON_RPC_Error &operator=(JSON_RPC_Error &&obj) noexcept;
+  /*AUTO_CTC*/ // For +compare:
+  /*AUTO_CTC*/ friend int compare(JSON_RPC_Error const &a, JSON_RPC_Error const &b);
+  /*AUTO_CTC*/ DEFINE_FRIEND_RELATIONAL_OPERATORS(JSON_RPC_Error)
   /*AUTO_CTC*/ // For +gdvWrite:
   /*AUTO_CTC*/ operator gdv::GDValue() const;
   /*AUTO_CTC*/ std::string toString() const;

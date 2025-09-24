@@ -3,12 +3,14 @@
 
 #include "json-rpc-reply.h"            // this module
 
+#include "smbase/compare-util.h"       // smbase::compare, RET_IF_COMPARE_MEMBERS
 #include "smbase/gdvalue-either.h"     // gdv::toGDValue(smbase::Either)
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, gdvpOptTo}
 
 #include <iostream>                    // std::ostream
 
+using namespace smbase;
 using namespace gdv;
 
 
@@ -62,6 +64,15 @@ using namespace gdv;
 /*AUTO_CTC*/     MCMEMB(m_data);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ int compare(JSON_RPC_Error const &a, JSON_RPC_Error const &b)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   // Remember to #include "smbase/compare-util.h" for these.
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_code);
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_message);
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_data);
+/*AUTO_CTC*/   return 0;
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
 /*AUTO_CTC*/ std::string JSON_RPC_Error::toString() const

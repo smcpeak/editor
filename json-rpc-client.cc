@@ -577,6 +577,14 @@ JSON_RPC_Reply JSON_RPC_Client::takeReplyForID(int id)
 }
 
 
+JSON_RPC_Reply JSON_RPC_Client::peekReplyForID(int id) const
+{
+  xassertPrecondition(hasReplyForID(id));
+
+  return mapGetValueAt(m_pendingReplies, id);
+}
+
+
 void JSON_RPC_Client::cancelRequestWithID(int id)
 {
   if (setRemove(m_outstandingRequests, id)) {

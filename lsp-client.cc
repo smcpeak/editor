@@ -52,6 +52,12 @@ using namespace gdv;
 using namespace smbase;
 
 
+/* Tracing levels:
+
+     1. Indicators for all traffic, contents for infrequent ones.
+
+     2. Contents for everything.
+*/
 INIT_TRACE("lsp-client");
 
 
@@ -461,6 +467,7 @@ void LSPClient::on_hasReplyForID(int id) NOEXCEPT
 
   else {
     TRACE1("received reply with ID " << id);
+    TRACE2("reply ID " << id << ": " << m_lsp->peekReplyForID(id));
 
     // Relay to our client.
     Q_EMIT signal_hasReplyForID(id);
@@ -1281,10 +1288,7 @@ JSON_RPC_Reply LSPClient::takeReplyForID(int id)
   xassertPrecondition(isRunningNormally());
   xassertPrecondition(hasReplyForID(id));
 
-  JSON_RPC_Reply ret = m_lsp->takeReplyForID(id);
-  TRACE2("reply " << id << ": " << ret);
-
-  return ret;
+  return m_lsp->takeReplyForID(id);
 }
 
 

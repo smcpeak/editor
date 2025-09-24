@@ -88,7 +88,10 @@ JSON_RPC_Reply printNotificationsUntil(JSON_RPC_Client &lsp, int id)
     printNotifications(lsp);
 
     if (lsp.hasReplyForID(id)) {
-      return lsp.takeReplyForID(id);
+      JSON_RPC_Reply peeked = lsp.peekReplyForID(id);
+      JSON_RPC_Reply taken = lsp.takeReplyForID(id);
+      xassert(peeked == taken);
+      return taken;
     }
 
     waitForQtEvent();
