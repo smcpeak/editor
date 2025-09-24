@@ -285,6 +285,11 @@ private:     // funcs
     QVector<DiagnosticElement> &&elts,
     std::string const &windowTitle);
 
+  // Inform the user that the LSP server did not have `lsrk` information
+  // for the symbol at the cursor.
+  void informNoSymbolInfo(
+    LSPSymbolRequestKind lsrk);
+
   // An attempt to parse `gdvReply` in response to `lsrk` yielded
   // exception `x`.  Log the details and warn the user.
   void logAndWarnFailedLocationReply(

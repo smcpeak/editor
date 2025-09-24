@@ -3076,16 +3076,21 @@ void EditorWidget::lspGoToRelatedLocation(
 }
 
 
+void EditorWidget::informNoSymbolInfo(
+  LSPSymbolRequestKind lsrk)
+{
+  inform(stringb(
+    "No " << toMessageString(lsrk) << " found for symbol at cursor."));
+}
+
+
 void EditorWidget::lspHandleLocationReply(
   GDValue const &gdvReply,
   LSPSymbolRequestKind lsrk,
   URIPathSemantics uriPathSemantics)
 {
-  char const *lsrkMsgStr = toMessageString(lsrk);
-
   if (gdvReply.isNull()) {
-    inform(stringb(
-      "No " << lsrkMsgStr << " found for symbol at cursor."));
+    informNoSymbolInfo(lsrk);
     return;
   }
 
@@ -3103,9 +3108,8 @@ void EditorWidget::lspHandleLocationReply(
     LSP_LocationSequence lseq{GDValueParser(gdvReply)};
     if (lseq.m_locations.empty()) {
       // Note that an empty sequence is different from `null`, which is
-      // handled above (with the same message).
-      inform(stringb(
-        "No " << lsrkMsgStr << " found for symbol at cursor."));
+      // handled above.
+      informNoSymbolInfo(lsrk);
     }
     else if (lseq.m_locations.size() == 1) {
       LSP_Location const &loc = lseq.m_locations.front();
@@ -3145,7 +3149,7 @@ void EditorWidget::lspHandleLocationReply(
 
         // Show the results.
         showDiagnosticDetailsDialog(std::move(elts),
-          stringb("Symbol query: " << lsrkMsgStr));
+          stringb("Symbol query: " << toMessageString(lsrk)));
       }
       else {
         // User canceled the wait.
@@ -3175,13 +3179,35 @@ void EditorWidget::lspHandleHoverInfoReply(
   GDValue const &gdvReply)
 {
   try {
-    // Elsewhere I first parse the GDV into a more structured format
-    // defined in `lsp-data`, but let's try just taking the GDV apart
-    // directly here.
-    GDValueParser top(gdvReply);
-    GDValueParser contents = top.mapGetValueAtStr("contents");
-    GDValueParser value = contents.mapGetValueAtStr("value");
-    inform(value.stringGet());
+    // Get the data to show from the reply, which for now I just treat
+    // as a string.
+    std::string message;
+    {
+      // Elsewhere I first parse the GDV into a more structured format
+      // defined in `lsp-data`, but let's try just taking the GDV apart
+      // directly here.
+      GDValueParser top(gdvReply);
+      GDValueParser contents = top.mapGetValueAtStr("contents");
+
+      // The contents can be a string directly (which happens with
+      // `pylsp` when I hover an invalid location) or a map with a
+      // "value" attribute.
+      if (contents.isString()) {
+        message = contents.stringGet();
+      }
+      else {
+        GDValueParser value = contents.mapGetValueAtStr("value");
+        message = value.stringGet();
+      }
+    }
+
+    if (message.empty()) {
+      // This is how `pylsp` reports not having hover information.
+      informNoSymbolInfo(LSPSymbolRequestKind::K_HOVER_INFO);
+    }
+    else {
+      inform(message);
+    }
   }
   catch (XBase &x) {
     logAndWarnFailedLocationReply(
