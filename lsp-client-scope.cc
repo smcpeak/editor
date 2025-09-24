@@ -82,6 +82,7 @@ using namespace smbase;
 /*AUTO_CTC*/
 /*AUTO_CTC*/ int compare(LSPClientScope const &a, LSPClientScope const &b)
 /*AUTO_CTC*/ {
+/*AUTO_CTC*/   // Remember to #include "smbase/compare-util.h" for these.
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_hostName);
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_directory);
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_documentType);

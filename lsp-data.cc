@@ -50,6 +50,7 @@ using namespace smbase;
 /*AUTO_CTC*/
 /*AUTO_CTC*/ int compare(LSP_Position const &a, LSP_Position const &b)
 /*AUTO_CTC*/ {
+/*AUTO_CTC*/   // Remember to #include "smbase/compare-util.h" for these.
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_line);
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_character);
 /*AUTO_CTC*/   return 0;
@@ -135,6 +136,7 @@ LSP_Position LSP_Position::plusCharacters(ByteDifference n) const
 /*AUTO_CTC*/
 /*AUTO_CTC*/ int compare(LSP_Range const &a, LSP_Range const &b)
 /*AUTO_CTC*/ {
+/*AUTO_CTC*/   // Remember to #include "smbase/compare-util.h" for these.
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_start);
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_end);
 /*AUTO_CTC*/   return 0;
