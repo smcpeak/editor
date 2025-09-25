@@ -578,6 +578,7 @@ CTC_HEADERS += host-file-line.h
 CTC_HEADERS += json-rpc-reply.h
 CTC_HEADERS += lsp-client-scope.h
 CTC_HEADERS += lsp-data.h
+CTC_HEADERS += range-text-repl.h
 CTC_HEADERS += tdd-proposed-fix.h
 
 # Corresponding implementation files.
