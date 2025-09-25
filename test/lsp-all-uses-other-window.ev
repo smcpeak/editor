@@ -45,7 +45,7 @@ CheckFocusWidget("diagnostic_details.m_splitter.m_table")
 FocusKeyPR("Key_Return" "\r")
 
 // Confirm we navigated there in window1.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:6")
 
 // Focus stays on the table.
 CheckFocusWidget("diagnostic_details.m_splitter.m_table")
@@ -53,7 +53,7 @@ CheckFocusWidget("diagnostic_details.m_splitter.m_table")
 // Go to the second entry.
 FocusKeyPR("Key_Down" "")
 FocusKeyPR("Key_Return" "\r")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "31:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "31:6")
 
 // Close the dialog.
 FocusKeyPR("Key_Escape" "\u{1B}")

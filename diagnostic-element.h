@@ -9,7 +9,7 @@
 #include "diagnostic-element-fwd.h"    // fwds for this module
 
 #include "host-and-resource-name.h"    // HostAndResourceName
-#include "line-index.h"                // LineIndex
+#include "textmcoord.h"                // TextMCoord
 
 #include <string>                      // std::string
 
@@ -19,8 +19,8 @@ struct DiagnosticElement {
   // Host and file the message refers to.
   HostAndResourceName m_harn;
 
-  // Line index within `m_harn` where the syntax of interest is.
-  LineIndex m_lineIndex;
+  // Where within `m_harn` where the syntax of interest is.
+  TextMCoord m_loc;
 
   // The relevance of the indicated line.  This might be very long,
   // often hundreds and occasionally more than 1000 characters, due to

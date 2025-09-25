@@ -40,9 +40,9 @@ TDD_Related::~TDD_Related()
 
 
 TDD_Related::TDD_Related(
-  std::string &&file, LineIndex lineIndex, std::string &&message)
+  std::string &&file, TextMCoord loc, std::string &&message)
   : IMEMBMFP(file),
-    IMEMBMFP(lineIndex),
+    IMEMBMFP(loc),
     IMEMBMFP(message)
 {}
 
@@ -52,7 +52,7 @@ TDD_Related::operator gdv::GDValue() const
   GDValue m(GDVK_TAGGED_ORDERED_MAP, "TDD_Related"_sym);
 
   GDV_WRITE_MEMBER_SYM(m_file);
-  GDV_WRITE_MEMBER_SYM(m_lineIndex);
+  GDV_WRITE_MEMBER_SYM(m_loc);
   GDV_WRITE_MEMBER_SYM(m_message);
 
   return m;
@@ -63,7 +63,7 @@ int TDD_Related::compareTo(TDD_Related const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_file);
-  RET_IF_COMPARE_MEMBERS(m_lineIndex);
+  RET_IF_COMPARE_MEMBERS(m_loc);
   RET_IF_COMPARE_MEMBERS(m_message);
   return 0;
 }

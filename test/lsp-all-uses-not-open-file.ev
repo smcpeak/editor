@@ -39,9 +39,9 @@ CheckFocusWidget("diagnostic_details.m_splitter.m_table")
 // Check the table contents.  We particularly want to observe that the
 // code line in the first row is right, since that file was not open in
 // the editor beforehand.
-CheckQuery("diagnostic_details" "cell(0 1)" "language-test.h:9")
+CheckQuery("diagnostic_details" "cell(0 1)" "language-test.h:9:12")
 CheckQuery("diagnostic_details" "cell(0 2)" "extern int g_var3;")
-CheckQuery("diagnostic_details" "cell(1 1)" "language-test.cc:58")
+CheckQuery("diagnostic_details" "cell(1 1)" "language-test.cc:58:3")
 CheckQuery("diagnostic_details" "cell(1 2)" "  g_var3 = 3;")
 
 // Go to the first entry.
@@ -50,9 +50,8 @@ FocusKeyPR("Key_Return" "\r")
 // This should open `language-test.h` in the editor window.
 CheckWindowTitle("window1" "language-test.h - Editor")
 
-// And it should be positioned on the declaration of `g_var3`, albeit at
-// column 1.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "9:1")
+// And it should be positioned on the declaration of `g_var3`.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "9:12")
 
 // Focus stays on the table.
 CheckFocusWidget("diagnostic_details.m_splitter.m_table")
@@ -63,7 +62,7 @@ FocusKeyPR("Key_Return" "\r")
 
 // This is back in the first file.
 CheckWindowTitle("window1" "language-test.cc - Editor")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "58:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "58:3")
 
 // Close the dialog.
 FocusKeyPR("Key_Escape" "\u{1B}")

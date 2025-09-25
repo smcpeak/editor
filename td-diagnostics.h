@@ -25,6 +25,7 @@
 #include "td-core.h"                   // TextDocumentObserver, TextDocumentCore
 #include "tdd-proposed-fix-fwd.h"      // TDD_ProposedFix [n]
 #include "textmcoord-map.h"            // TextMCoordMap
+#include "textmcoord.h"                // TextMCoord
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
@@ -42,20 +43,20 @@ public:      // data
   // Absolute file name.
   std::string m_file;
 
-  // 0-based line index.
+  // Location of interest.
   //
   // Unlike the primary, the related message locations do not get
   // updated automatically when the file is edited.
   //
   // TODO: Maybe design a way that they can be?
-  LineIndex m_lineIndex;
+  TextMCoord m_loc;
 
   // Relevance of this line to the primary diagnostic.
   std::string m_message;
 
 public:      // methods
   ~TDD_Related();
-  TDD_Related(std::string &&file, LineIndex lineIndex, std::string &&message);
+  TDD_Related(std::string &&file, TextMCoord loc, std::string &&message);
 
   operator gdv::GDValue() const;
 

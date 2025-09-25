@@ -41,7 +41,8 @@ void DiagnosticDetailsDialog::updateTopPanel()
     DiagnosticElement const &elt = m_diagnostics[row];
     m_locationLabel->setText(qstringb(
       // TODO: Adjust when `m_harn` can be remote.
-      elt.m_harn.resourceName() << ":" << elt.m_lineIndex.toLineNumber()));
+      elt.m_harn.resourceName() << ":" <<
+      elt.m_loc.toLineColNumberString()));
     m_messageText->setPlainText(toQString(elt.m_message));
   }
 }
@@ -81,7 +82,7 @@ void DiagnosticDetailsDialog::repopulateTable()
 
     {
       QTableWidgetItem *item = new QTableWidgetItem(qstringb(
-        base << ":" << elt.m_lineIndex.toLineNumber()));
+        base << ":" << elt.m_loc.toLineColNumberString()));
       m_table->setItem(row, c++, item);
     }
 

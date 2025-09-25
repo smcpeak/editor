@@ -38,9 +38,8 @@ CheckFocusWindowTitle("Symbol query: references")
 // Go to the first entry.
 FocusKeyPR("Key_Return" "\r")
 
-// We should be there.  But right now I don't have column information so
-// we go to column 1.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:1")
+// We should be there.
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "28:6")
 
 // Focus stays on the table.
 CheckFocusWidget("diagnostic_details.m_splitter.m_table")
@@ -48,22 +47,22 @@ CheckFocusWidget("diagnostic_details.m_splitter.m_table")
 // Go to the second entry.
 FocusKeyPR("Key_Down" "")
 FocusKeyPR("Key_Return" "\r")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "31:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "31:6")
 
 // Go to the third entry.
 FocusKeyPR("Key_Down" "")
 FocusKeyPR("Key_Return" "\r")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "45:3")
 
 // Go to the fourth entry.
 FocusKeyPR("Key_Down" "")
 FocusKeyPR("Key_Return" "\r")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "48:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "48:3")
 
 // Go to the fifth entry.
 FocusKeyPR("Key_Down" "")
 FocusKeyPR("Key_Return" "\r")
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "49:1")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "cursorPosition" "49:3")
 
 // Close the dialog.
 FocusKeyPR("Key_Escape" "\u{1B}")

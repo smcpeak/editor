@@ -2956,7 +2956,11 @@ FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
     DocumentName docName = getDocument()->documentName();
     elts.push_back(DiagnosticElement{
       docName.harn(),
-      cursorMC.m_line,
+
+      // TODO: Not right!  The cursor location should come from the
+      // actual diagnostic report.
+      cursorMC,
+
       diag->m_message
     });
 
@@ -2964,7 +2968,7 @@ FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
     for (TDD_Related const &rel : diag->m_related) {
       elts.push_back(DiagnosticElement{
         HostAndResourceName::localFile(rel.m_file),
-        rel.m_lineIndex,
+        rel.m_loc,
         rel.m_message
       });
     }
@@ -3074,12 +3078,12 @@ void EditorWidget::on_jumpToDiagnosticLocation(
 
   TRACE1("on_jumpToDiagnosticLocation:"
     " harn=" << element.m_harn <<
-    " lineIndex=" << element.m_lineIndex);
+    " loc=" << element.m_loc);
 
   goToLocalFileAndLineOpt(
     element.m_harn.resourceName(),
-    element.m_lineIndex,
-    std::nullopt);
+    element.m_loc.m_line,
+    element.m_loc.m_byteIndex);
 
   GENERIC_CATCH_END
 }
@@ -3229,12 +3233,15 @@ void EditorWidget::lspHandleLocationReply(
 
         // Populate the information vector for the dialog.
         QVector<DiagnosticElement> elts;
-        for (std::size_t i=0; i < locations.size(); ++i) {
+        std::size_t i=0;
+        for (LSP_Location const &loc : lseq.m_locations) {
           elts.push_back(DiagnosticElement{
             locations.at(i).getHarn(),
-            locations.at(i).getLineIndex(),
+            toMCoord(loc.m_range.m_start),
             codeLines->at(i)
           });
+
+          ++i;
         }
 
         // Show the results.

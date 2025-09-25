@@ -44,7 +44,7 @@ static TDD_Related convertLSPRelated(
 {
   return TDD_Related(
     lspRelated.m_location.m_uri.getFname(semantics),
-    lspRelated.m_location.m_range.m_start.m_line,
+    toMCoord(lspRelated.m_location.m_range.m_start),
     std::string(lspRelated.m_message) /*move*/);
 }
 

@@ -198,12 +198,12 @@ void test_PublishDiagnosticsParams_withRelated()
         related: [
           TDD_Related[
             file: "D:/home/User/other.h"
-            lineIndex: 14
+            loc: MC(14 15)
             message: "aux message 1"
           ]
           TDD_Related[
             file: "D:/home/User/other.h"
-            lineIndex: 114
+            loc: MC(114 115)
             message: "aux message 2"
           ]
         ]
