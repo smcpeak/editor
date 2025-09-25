@@ -25,11 +25,10 @@
     Shortcut("window1.m_menuBar" "Alt+L")
     KeyPress("window1.m_menuBar.lspMenu" "Key_F" "f")
     CheckFocusWidget(choiceList)
-
-    // TODO: Change this to work with a list.
-    CheckListWidgetContents(choiceList
-      "insert ';'\ninsert ';' and change \"diagnostic\" to \"diagNOstic\" (2 edits)\n")
-
+    CheckListWidgetContents(choiceList [
+      "insert ';'"
+      "insert ';' and change \"diagnostic\" to \"diagNOstic\" (2 edits)"
+    ])
     CheckListViewSelectedItem(choiceList "insert ';'")
 
     // Choose the second item.

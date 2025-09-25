@@ -13,7 +13,7 @@ CheckFocusWidget("RunCommandDialog.m_prevCommandsListWidget")
 
 //  When testing, the list is initially empty.
 CheckListWidgetCount("RunCommandDialog.m_prevCommandsListWidget" 0)
-CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" "")
+CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" [])
 
 // Run a command.
 SetFocus("RunCommandDialog.m_newCommandLineEdit")
@@ -32,7 +32,9 @@ CheckFocusWidget("RunCommandDialog.m_prevCommandsListWidget")
 // The command should be in the list now.
 CheckListWidgetCount("RunCommandDialog.m_prevCommandsListWidget" 1)
 CheckListWidgetCurrentRow("RunCommandDialog.m_prevCommandsListWidget" 0)
-CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" "true 1\n")
+CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" [
+  "true 1"
+])
 
 // Run another command.
 SetFocus("RunCommandDialog.m_newCommandLineEdit")
@@ -51,7 +53,10 @@ CheckFocusWidget("RunCommandDialog.m_prevCommandsListWidget")
 // The list should have both entries, with the most recent selected.
 CheckListWidgetCount("RunCommandDialog.m_prevCommandsListWidget" 2)
 CheckListWidgetCurrentRow("RunCommandDialog.m_prevCommandsListWidget" 1)
-CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" "true 1\ntrue 2\n")
+CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" [
+  "true 1"
+  "true 2"
+])
 
 // Arrow up to "true 1" and run it.
 FocusKeyPR("Key_Up" "")
@@ -68,7 +73,10 @@ CheckFocusWidget("RunCommandDialog.m_prevCommandsListWidget")
 // List now has "true 1" selected.
 CheckListWidgetCount("RunCommandDialog.m_prevCommandsListWidget" 2)
 CheckListWidgetCurrentRow("RunCommandDialog.m_prevCommandsListWidget" 0)
-CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" "true 1\ntrue 2\n")
+CheckListWidgetContents("RunCommandDialog.m_prevCommandsListWidget" [
+  "true 1"
+  "true 2"
+])
 
 // Arrow down to "true 2" and run it.
 FocusKeyPR("Key_Down" "")

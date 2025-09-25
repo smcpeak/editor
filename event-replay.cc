@@ -332,13 +332,14 @@ static void checkRegexSearch(string const &actual, string const &expectRE)
 }
 
 
-static string getListWidgetContents(QListWidget *listWidget)
+static std::vector<std::string> getListWidgetContents(
+  QListWidget *listWidget)
 {
   std::vector<std::string> items;
   for (int i=0; i < listWidget->count(); ++i) {
     items.push_back(toString(listWidget->item(i)->text()));
   }
-  return join(suffixAll(items, "\n"), "");
+  return items;
 }
 
 
@@ -830,10 +831,11 @@ void EventReplay::replayCall(GDValue const &command)
   }
 
   else if (funcName == "CheckListWidgetContents") {
-    BIND_STRING_ARGS2(path, expect);
+    auto [path, expect] =
+      gdvpToTuple<std::string, std::vector<std::string>>(parser);
 
     QListWidget *listWidget = getObjectFromPath<QListWidget>(path);
-    string actual = getListWidgetContents(listWidget);
+    std::vector<std::string> actual = getListWidgetContents(listWidget);
     CHECK_EQ("CheckListWidgetContents " << doubleQuote(path));
   }
 
