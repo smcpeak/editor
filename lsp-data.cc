@@ -269,6 +269,69 @@ LSP_Location::LSP_Location(gdv::GDValueParser const &p)
 {}
 
 
+// --------------------------- LSP_TextEdit ----------------------------
+// create-tuple-class: definitions for LSP_TextEdit
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
+/*AUTO_CTC*/   LSP_Range const &range,
+/*AUTO_CTC*/   std::string const &newText)
+/*AUTO_CTC*/   : IMEMBFP(range),
+/*AUTO_CTC*/     IMEMBFP(newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
+/*AUTO_CTC*/   LSP_Range &&range,
+/*AUTO_CTC*/   std::string &&newText)
+/*AUTO_CTC*/   : IMEMBMFP(range),
+/*AUTO_CTC*/     IMEMBMFP(newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(LSP_TextEdit const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_range),
+/*AUTO_CTC*/     DMEMB(m_newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(LSP_TextEdit &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_range),
+/*AUTO_CTC*/     MDMEMB(m_newText)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit &LSP_TextEdit::operator=(LSP_TextEdit const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_range);
+/*AUTO_CTC*/     CMEMB(m_newText);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_TextEdit &LSP_TextEdit::operator=(LSP_TextEdit &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_range);
+/*AUTO_CTC*/     MCMEMB(m_newText);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_TextEdit::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_range);
+  GDV_WRITE_MEMBER_STR(m_newText);
+
+  return m;
+}
+
+
+LSP_TextEdit::LSP_TextEdit(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_range),
+    GDVP_READ_MEMBER_STR(m_newText)
+{}
+
+
 // ----------------- LSP_DiagnosticRelatedInformation ------------------
 // create-tuple-class: definitions for LSP_DiagnosticRelatedInformation
 /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(
@@ -473,69 +536,6 @@ LSP_LocationSequence::LSP_LocationSequence(gdv::GDValueParser const &p)
     // wrapped in an array container, and `null`, but `clangd` appears
     // to always provide the container.
   : m_locations(gdvpTo<std::list<LSP_Location>>(p))
-{}
-
-
-// --------------------------- LSP_TextEdit ----------------------------
-// create-tuple-class: definitions for LSP_TextEdit
-/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
-/*AUTO_CTC*/   LSP_Range const &range,
-/*AUTO_CTC*/   std::string const &newText)
-/*AUTO_CTC*/   : IMEMBFP(range),
-/*AUTO_CTC*/     IMEMBFP(newText)
-/*AUTO_CTC*/ {}
-/*AUTO_CTC*/
-/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(
-/*AUTO_CTC*/   LSP_Range &&range,
-/*AUTO_CTC*/   std::string &&newText)
-/*AUTO_CTC*/   : IMEMBMFP(range),
-/*AUTO_CTC*/     IMEMBMFP(newText)
-/*AUTO_CTC*/ {}
-/*AUTO_CTC*/
-/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(LSP_TextEdit const &obj) noexcept
-/*AUTO_CTC*/   : DMEMB(m_range),
-/*AUTO_CTC*/     DMEMB(m_newText)
-/*AUTO_CTC*/ {}
-/*AUTO_CTC*/
-/*AUTO_CTC*/ LSP_TextEdit::LSP_TextEdit(LSP_TextEdit &&obj) noexcept
-/*AUTO_CTC*/   : MDMEMB(m_range),
-/*AUTO_CTC*/     MDMEMB(m_newText)
-/*AUTO_CTC*/ {}
-/*AUTO_CTC*/
-/*AUTO_CTC*/ LSP_TextEdit &LSP_TextEdit::operator=(LSP_TextEdit const &obj) noexcept
-/*AUTO_CTC*/ {
-/*AUTO_CTC*/   if (this != &obj) {
-/*AUTO_CTC*/     CMEMB(m_range);
-/*AUTO_CTC*/     CMEMB(m_newText);
-/*AUTO_CTC*/   }
-/*AUTO_CTC*/   return *this;
-/*AUTO_CTC*/ }
-/*AUTO_CTC*/
-/*AUTO_CTC*/ LSP_TextEdit &LSP_TextEdit::operator=(LSP_TextEdit &&obj) noexcept
-/*AUTO_CTC*/ {
-/*AUTO_CTC*/   if (this != &obj) {
-/*AUTO_CTC*/     MCMEMB(m_range);
-/*AUTO_CTC*/     MCMEMB(m_newText);
-/*AUTO_CTC*/   }
-/*AUTO_CTC*/   return *this;
-/*AUTO_CTC*/ }
-/*AUTO_CTC*/
-
-
-LSP_TextEdit::operator gdv::GDValue() const
-{
-  GDValue m(GDVK_MAP);
-
-  GDV_WRITE_MEMBER_STR(m_range);
-  GDV_WRITE_MEMBER_STR(m_newText);
-
-  return m;
-}
-
-
-LSP_TextEdit::LSP_TextEdit(gdv::GDValueParser const &p)
-  : GDVP_READ_MEMBER_STR(m_range),
-    GDVP_READ_MEMBER_STR(m_newText)
 {}
 
 

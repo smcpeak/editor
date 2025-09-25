@@ -163,6 +163,32 @@ public:      // methods
 };
 
 
+// An edit that serves as the action for a chosen completion, or as
+// part of a proposed fix for a diagnostic.
+class LSP_TextEdit final {
+public:      // data
+  // The range of text to be replaced with `newText`.  For a pure
+  // insertion, the range has zero length.
+  LSP_Range m_range;
+
+  // Text to insert.
+  std::string m_newText;
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_TextEdit +move
+  /*AUTO_CTC*/ explicit LSP_TextEdit(LSP_Range const &range, std::string const &newText);
+  /*AUTO_CTC*/ explicit LSP_TextEdit(LSP_Range &&range, std::string &&newText);
+  /*AUTO_CTC*/ LSP_TextEdit(LSP_TextEdit const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextEdit(LSP_TextEdit &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextEdit &operator=(LSP_TextEdit const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_TextEdit &operator=(LSP_TextEdit &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_TextEdit(gdv::GDValueParser const &p);
+};
+
+
 // An auxiliary message for some primary diagnostic.
 class LSP_DiagnosticRelatedInformation final {
 public:      // data
@@ -267,31 +293,6 @@ public:      // methods
   operator gdv::GDValue() const;
 
   explicit LSP_LocationSequence(gdv::GDValueParser const &p);
-};
-
-
-// An edit that serves as the action for a chosen completion.
-class LSP_TextEdit final {
-public:      // data
-  // The range of text to be replaced with `newText`.  For a pure
-  // insertion, the range has zero length.
-  LSP_Range m_range;
-
-  // Text to insert.
-  std::string m_newText;
-
-public:      // methods
-  // create-tuple-class: declarations for LSP_TextEdit +move
-  /*AUTO_CTC*/ explicit LSP_TextEdit(LSP_Range const &range, std::string const &newText);
-  /*AUTO_CTC*/ explicit LSP_TextEdit(LSP_Range &&range, std::string &&newText);
-  /*AUTO_CTC*/ LSP_TextEdit(LSP_TextEdit const &obj) noexcept;
-  /*AUTO_CTC*/ LSP_TextEdit(LSP_TextEdit &&obj) noexcept;
-  /*AUTO_CTC*/ LSP_TextEdit &operator=(LSP_TextEdit const &obj) noexcept;
-  /*AUTO_CTC*/ LSP_TextEdit &operator=(LSP_TextEdit &&obj) noexcept;
-
-  operator gdv::GDValue() const;
-
-  explicit LSP_TextEdit(gdv::GDValueParser const &p);
 };
 
 
