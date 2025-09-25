@@ -465,6 +465,7 @@ void EditorGlobal::processEventTestFile(
 
   // Evaluate and substitute definitions.
   GDValue substCmds = transform.transform(origCmds.getValue());
+  TRACE3("substCmds dump: " << substCmds.dumpToString());
 
   // Flatten as a sequence of values.
   gdvFlattenSequence(m_eventTestCommands /*APPEND*/, substCmds);

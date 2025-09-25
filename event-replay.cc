@@ -764,7 +764,7 @@ void EventReplay::replayCall(GDValue const &command)
 
   else if (funcName == "WaitUntilCheckLabel") {
     auto [durationMS, path, expect] =
-      gdvpToTuple<int, std::string, std::string>(parser);
+      gdvpToTuple<int, std::string, GDValue>(parser);
 
     QLabel *label = getObjectFromPath<QLabel>(path);
     auto gdvFunc = [label]() -> GDValue {
@@ -1200,6 +1200,7 @@ bool EventReplay::replayNextEvent()
 
       TRACE1("replaying: " << command.sourceLocationIndicator() <<
              command);
+      TRACE3("command dump: " << command.dumpToString());
 
       // Use the location of `command` as context.
       EXN_CONTEXT(command.sourceLocation());
@@ -1252,6 +1253,10 @@ void EventReplay::waitUntilCheckGDValueFunction(
   int checkCount = 0;
 
   TRACE1("waiting for up to " << durationMS << " ms");
+
+  // Put the `expect` location onto the context stack in case we are
+  // executing a function from another file.
+  EXN_CONTEXT(expect.sourceLocation().asString());
 
   // Arrange to receive an event after 'durationMS'.  We do not directly
   // handle the event; rather, we use it to cause 'processEvents' to
