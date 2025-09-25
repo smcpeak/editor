@@ -44,6 +44,11 @@ public:      // methods
   // Inherit ctors.
   using Base::Base;
 
+  // Return a 1-based byte-granular column number.
+  //
+  // I don't currently have a separate type for this, so return `int`.
+  int toByteColumnNumber() const;
+
   // --------------------------- Conversion ----------------------------
   // These check for range compatibility.
   //

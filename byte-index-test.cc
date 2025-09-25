@@ -109,6 +109,14 @@ void test_substr()
 }
 
 
+void test_toByteColumnNumber()
+{
+  EXPECT_EQ(ByteIndex(0).toByteColumnNumber(), 1);
+  EXPECT_EQ(ByteIndex(1).toByteColumnNumber(), 2);
+  EXPECT_EQ(ByteIndex(2).toByteColumnNumber(), 3);
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -123,6 +131,7 @@ void test_byte_index(CmdlineArgsSpan args)
   test_clampDecrease();
   test_at();
   test_substr();
+  test_toByteColumnNumber();
 }
 
 

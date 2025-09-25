@@ -19,6 +19,12 @@ using namespace smbase;
 template class WrappedInteger<int, ByteIndex>;
 
 
+int ByteIndex::toByteColumnNumber() const
+{
+  return get() + 1;
+}
+
+
 // ---------------------------- Conversion -----------------------------
 ByteIndex::ByteIndex(std::ptrdiff_t size)
   : Base(convertNumber<int>(size))
