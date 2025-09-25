@@ -8,6 +8,29 @@
   // Check the document text.
   Define(checkDocumentText(expect)
     CheckQuery(editorWidget "documentText" expect))
+
+  // Check the document file name.
+  Define(checkDocumentFileName(expect)
+    CheckQuery(editorWidget "documentFileName" expect))
+
+
+  Define(lspWaitForStatus(status) [
+    WaitUntilCheckLabel(2000 "window1.m_statusArea.m_lspStatusWidget"
+      status)
+  ])
+
+  Define(lspStartServer() [
+    CheckQuery(editorWidget "lspIsFakeServer" true)
+    Shortcut("window1.m_menuBar" "Alt+L")
+    KeyPress("window1.m_menuBar.lspMenu" "Key_A" "a")
+    CheckFocusWidget(editorWidget)
+    lspWaitForStatus("-")
+  ])
+
+  Define(lspOpenFile() [
+    Shortcut("window1.m_menuBar.lspMenu.lspOpenOrUpdateFile" "F7")
+  ])
+
 ]
 
 // EOF

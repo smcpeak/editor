@@ -4,7 +4,7 @@
 int foo(int x)
 {
   // Fix: Insert ';'.
-  return x
+  return x         // diagnostic
 }
 
 // EOF

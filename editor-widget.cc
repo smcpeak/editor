@@ -20,6 +20,7 @@
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "line-number.h"                         // LineNumber
+#include "list-choice-dialog.h"                  // ListChoiceDialog
 #include "lsp-data.h"                            // LSP_LocationSequence
 #include "lsp-conv.h"                            // toMCoordRange, toLSP_VersionNumber, lspLanguageIdForDTOpt
 #include "lsp-client-manager.h"                  // LSPClientManager
@@ -28,6 +29,7 @@
 #include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
+#include "range-text-repl.h"                     // RangeTextReplacement
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "tdd-proposed-fix.h"                    // TDD_ProposedFix
 #include "textcategory.h"                        // LineCategoryAOAs, etc.
@@ -2988,9 +2990,54 @@ FailReasonOpt EditorWidget::lspFixDiagnosticAtCursor()
       return "There are no proposed fixes.";
     }
 
-    // TODO: Show this properly.
-    GDValue fixesGDV(toGDValue(diag->m_fixes));
-    inform(fixesGDV.asIndentedString());
+    // Get titles of available fixes.
+    std::vector<std::string> titles;
+    for (TDD_ProposedFix const &pfix : diag->m_fixes) {
+      std::string title = pfix.m_title;
+
+      if (pfix.numFiles() != 1) {
+        title += stringb(" (" << pfix.numFiles() << " files)");
+      }
+
+      if (pfix.numEdits() != 1) {
+        title += stringb(" (" << pfix.numEdits() << " edits)");
+      }
+
+      titles.push_back(title);
+    }
+
+    // Let the user pick one.
+    ListChoiceDialog dlg("Choose Fix", this);
+    dlg.setChoices(titles);
+    if (dlg.exec()) {
+      // Apply the chosen fix.
+      TDD_ProposedFix const &pfix = diag->m_fixes.at(dlg.chosenItem());
+
+      if (pfix.numFiles() != 1) {
+        return stringb("Chosen fix involves " << pfix.numFiles() <<
+                       "; currently I can only do single-file fixes.");
+      }
+      if (pfix.numEdits() != 1) {
+        return stringb("Chosen fix involves " << pfix.numEdits() <<
+                       "; currently I can only do single-edit fixes.");
+      }
+
+      auto [fname, edits] =
+        (*( pfix.m_changesForFile.begin() ));
+
+      DocumentName docName = DocumentName::fromLocalFilename(fname);
+      if (getDocument()->documentName() != docName) {
+        return stringb(
+          "The chosen fix edits " << docName <<
+          " but the current file is " << getDocument()->documentName() <<
+          " and I can't currently handle editing a different file.");
+      }
+
+      TDD_TextEdit const &edit = edits.front();
+      RangeTextReplacement rtr(edit.m_range, edit.m_newText);
+
+      EDIT_COMMAND_MU(EC_RangeTextReplace, rtr);
+    }
 
     return {};
   }
@@ -3838,6 +3885,12 @@ FailReasonOpt EditorWidget::innerCommand(EditorCommand const *cmd)
         m_editor->deleteSelection();
         redrawAfterContentChange();
       }
+    }
+
+    // ----------------------- Text replacement ------------------------
+    ASTNEXTC(EC_RangeTextReplace, ec) {
+      m_editor->applyRangeTextReplacement(ec->m_rtr);
+      redrawAfterContentChange();
     }
 
     // ----------------------- Adding whitespace -----------------------

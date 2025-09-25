@@ -980,9 +980,9 @@ def handle_symbol_query(
 # ---------------------- diagnostics_for_contents ----------------------
 DIAGNOSTIC_RE = re.compile(r"\bdiagnostic\b")
 
-def diagnostics_for_contents(contents: str) -> List[Dict[str, Any]]:
-  """Get diagnostics for `contents`.  This returns one diagnostic for
-  every occurrence of the string "diagnostic"."""
+def diagnostics_for_contents(uri: str, contents: str) -> List[Dict[str, Any]]:
+  """Get diagnostics for `contents` in `uri`.  This returns one
+  iagnostic for every occurrence of the string "diagnostic"."""
 
   lines: List[str] = split_lines(contents)
   ret: List[Dict[str, Any]] = []
@@ -990,10 +990,37 @@ def diagnostics_for_contents(contents: str) -> List[Dict[str, Any]]:
   line_index: int = 0
   for line in lines:
     for m in DIAGNOSTIC_RE.finditer(line):
-      ret.append({
+      diag: Dict[str, Any] = {
         "range": lspRange(line_index, m.start(), line_index, m.end()),
         "message": "The string \"diagnostic\" occurs."
-      })
+      }
+
+      # Add a proposed fix for a certain line in
+      # `test/fix-available1.cc`.
+      if line == "  return x         // diagnostic\n":
+        diag["codeActions"] = [
+          {
+            "edit": {
+              "changes": {
+                uri: [
+                  # This is the fix that `clangd` offers.
+                  {
+                    "newText": ";",
+                    "range": {
+                      "start": {"character":10, "line":6},
+                      "end": {"character":10, "line":6},
+                    }
+                  }
+                ]
+              }
+            },
+            "isPreferred": True,
+            "kind": "quickfix",
+            "title": "insert ';'"
+          }
+        ]
+
+      ret.append(diag)
 
     line_index += 1
 
@@ -1003,6 +1030,7 @@ def diagnostics_for_contents(contents: str) -> List[Dict[str, Any]]:
 def test_diagnostics_for_contents() -> None:
   """Unit tests for `diagnostics_for_contents`."""
 
+  uri: str = uri_from_path("dir/myURI")
   contents = (
 """zero
 one diagnostic blah diagnostic
@@ -1017,7 +1045,7 @@ diagnostic three
       "message": msg
     }
 
-  expect_eq(diagnostics_for_contents(contents), [
+  expect_eq(diagnostics_for_contents(uri, contents), [
     oneDiag(1,4, 1,14),
     oneDiag(1,20, 1,30),
     oneDiag(3,0, 3,10)
@@ -1166,7 +1194,7 @@ def publish_diagnostics(uri: str) -> None:
     "method": "textDocument/publishDiagnostics",
     "params": {
       "uri": uri,
-      "diagnostics": diagnostics_for_contents(text),
+      "diagnostics": diagnostics_for_contents(uri, text),
 
       # My `lsp-client` module will discard diagnostics that do
       # not have a version number.

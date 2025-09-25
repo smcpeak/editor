@@ -1,0 +1,45 @@
+// lsp-fix-available1.ev
+// Test when a diagnostic has a fix available.
+
+{
+  args: ["test/fix-available1.cc"]
+  includes: ["common-defns.gdvn"]
+  cmds: [
+
+    // In editor.
+    CheckFocusWidget(editorWidget)
+    checkDocumentFileName("fix-available1.cc")
+
+    // Start LSP.
+    lspStartServer()
+    lspOpenFile()
+    lspWaitForStatus("1")
+
+    // Go to the diagnostic.
+    Shortcut("window1.m_menuBar.lspMenu.lspGoToNextDiagnostic" "F8")
+
+    Define(choiceList
+      "window1.frame1.editorFrame.m_editorWidget.list_choice_dialog.m_listWidget")
+
+    // Look at list of fixes.
+    Shortcut("window1.m_menuBar" "Alt+L")
+    KeyPress("window1.m_menuBar.lspMenu" "Key_F" "f")
+    CheckFocusWidget(choiceList)
+    CheckListViewSelectedItem(choiceList "insert ';'")
+
+    // Choose the first.
+    FocusKeyPR("Key_Return" "\r")
+    CheckFocusWidget(editorWidget)
+
+    // Select the entire line.
+    FocusKeyPR("Ctrl+Key_A" "\u{1}")
+    FocusKeyPR("Shift+Key_Down" "")
+
+    // Check its contents, which should show the inserted semicolon.
+    CheckQuery(editorWidget "selectedText"
+      "  return x;         // diagnostic\n")
+
+  ]
+}
+
+// EOF
