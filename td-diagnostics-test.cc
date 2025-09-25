@@ -396,7 +396,11 @@ void test_deleteNearEnd()
     {
       TDD_DocEntry[
         range: MCR(MC(1 0) MC(1 0))
-        diagnostic: TDD_Diagnostic[message:"msg8740" related:[]]
+        diagnostic: TDD_Diagnostic[
+          message:"msg8740"
+          related:[]
+          fixes:[]
+        ]
       ]
     }
   )"));

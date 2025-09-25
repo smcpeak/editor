@@ -1,14 +1,18 @@
 // lsp-data.cc
 // Code for `lsp-data.h`.
 
+#include "smbase/gdvalue-vector-fwd.h" // gdv::gdvTo<std::vector>
+
 #include "lsp-data.h"                  // this module
 
 #include "uri-util.h"                  // makeFileURI, getFileURIPath
 
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS, smbase::compare
 #include "smbase/gdvalue-list.h"       // gdv::gdvTo<std::list>
+#include "smbase/gdvalue-map.h"        // gdv::gdvTo<std::map>
 #include "smbase/gdvalue-optional.h"   // gdv::gdvTo<std::optional>
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
+#include "smbase/gdvalue-vector.h"     // gdv::gdvTo<std::vector>
 #include "smbase/gdvalue.h"            // gdv::GDValue
 
 #include <optional>                    // std::optional
@@ -201,6 +205,13 @@ LSP_Range::LSP_Range(gdv::GDValueParser const &p)
 /*AUTO_CTC*/   return *this;
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
+/*AUTO_CTC*/ int compare(LSP_FilenameURI const &a, LSP_FilenameURI const &b)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   // Remember to #include "smbase/compare-util.h" for these.
+/*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_innerUri);
+/*AUTO_CTC*/   return 0;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
 
 
 LSP_FilenameURI::operator gdv::GDValue() const
@@ -332,6 +343,122 @@ LSP_TextEdit::LSP_TextEdit(gdv::GDValueParser const &p)
 {}
 
 
+// ------------------------- LSP_WorkspaceEdit -------------------------
+// create-tuple-class: definitions for LSP_WorkspaceEdit
+/*AUTO_CTC*/ LSP_WorkspaceEdit::LSP_WorkspaceEdit(
+/*AUTO_CTC*/   std::map<LSP_FilenameURI, stdfwd::vector<LSP_TextEdit>> const &changes)
+/*AUTO_CTC*/   : IMEMBFP(changes)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_WorkspaceEdit::LSP_WorkspaceEdit(
+/*AUTO_CTC*/   std::map<LSP_FilenameURI, stdfwd::vector<LSP_TextEdit>> &&changes)
+/*AUTO_CTC*/   : IMEMBMFP(changes)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_WorkspaceEdit::LSP_WorkspaceEdit(LSP_WorkspaceEdit const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_changes)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_WorkspaceEdit::LSP_WorkspaceEdit(LSP_WorkspaceEdit &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_changes)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_WorkspaceEdit &LSP_WorkspaceEdit::operator=(LSP_WorkspaceEdit const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_changes);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_WorkspaceEdit &LSP_WorkspaceEdit::operator=(LSP_WorkspaceEdit &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_changes);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_WorkspaceEdit::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_changes);
+
+  return m;
+}
+
+
+LSP_WorkspaceEdit::LSP_WorkspaceEdit(gdv::GDValueParser const &p)
+  : GDVP_READ_OPT_MEMBER_STR(m_changes)
+{}
+
+
+// -------------------------- LSP_CodeAction ---------------------------
+// create-tuple-class: definitions for LSP_CodeAction
+/*AUTO_CTC*/ LSP_CodeAction::LSP_CodeAction(
+/*AUTO_CTC*/   std::string const &title,
+/*AUTO_CTC*/   std::optional<LSP_WorkspaceEdit> const &edit)
+/*AUTO_CTC*/   : IMEMBFP(title),
+/*AUTO_CTC*/     IMEMBFP(edit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CodeAction::LSP_CodeAction(
+/*AUTO_CTC*/   std::string &&title,
+/*AUTO_CTC*/   std::optional<LSP_WorkspaceEdit> &&edit)
+/*AUTO_CTC*/   : IMEMBMFP(title),
+/*AUTO_CTC*/     IMEMBMFP(edit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CodeAction::LSP_CodeAction(LSP_CodeAction const &obj) noexcept
+/*AUTO_CTC*/   : DMEMB(m_title),
+/*AUTO_CTC*/     DMEMB(m_edit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CodeAction::LSP_CodeAction(LSP_CodeAction &&obj) noexcept
+/*AUTO_CTC*/   : MDMEMB(m_title),
+/*AUTO_CTC*/     MDMEMB(m_edit)
+/*AUTO_CTC*/ {}
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CodeAction &LSP_CodeAction::operator=(LSP_CodeAction const &obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     CMEMB(m_title);
+/*AUTO_CTC*/     CMEMB(m_edit);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ LSP_CodeAction &LSP_CodeAction::operator=(LSP_CodeAction &&obj) noexcept
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   if (this != &obj) {
+/*AUTO_CTC*/     MCMEMB(m_title);
+/*AUTO_CTC*/     MCMEMB(m_edit);
+/*AUTO_CTC*/   }
+/*AUTO_CTC*/   return *this;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+LSP_CodeAction::operator gdv::GDValue() const
+{
+  GDValue m(GDVK_MAP);
+
+  GDV_WRITE_MEMBER_STR(m_title);
+  GDV_WRITE_MEMBER_STR(m_edit);
+
+  return m;
+}
+
+
+LSP_CodeAction::LSP_CodeAction(gdv::GDValueParser const &p)
+  : GDVP_READ_MEMBER_STR(m_title),
+    GDVP_READ_OPT_MEMBER_STR(m_edit)
+{}
+
+
 // ----------------- LSP_DiagnosticRelatedInformation ------------------
 // create-tuple-class: definitions for LSP_DiagnosticRelatedInformation
 /*AUTO_CTC*/ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(
@@ -381,12 +508,14 @@ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(gdv::GDValueP
 /*AUTO_CTC*/   int severity,
 /*AUTO_CTC*/   std::optional<std::string> const &source,
 /*AUTO_CTC*/   std::string const &message,
-/*AUTO_CTC*/   std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation)
+/*AUTO_CTC*/   std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation,
+/*AUTO_CTC*/   std::list<LSP_CodeAction> const &codeActions)
 /*AUTO_CTC*/   : IMEMBFP(range),
 /*AUTO_CTC*/     IMEMBFP(severity),
 /*AUTO_CTC*/     IMEMBFP(source),
 /*AUTO_CTC*/     IMEMBFP(message),
-/*AUTO_CTC*/     IMEMBFP(relatedInformation)
+/*AUTO_CTC*/     IMEMBFP(relatedInformation),
+/*AUTO_CTC*/     IMEMBFP(codeActions)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Diagnostic::LSP_Diagnostic(LSP_Diagnostic const &obj) noexcept
@@ -394,7 +523,8 @@ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(gdv::GDValueP
 /*AUTO_CTC*/     DMEMB(m_severity),
 /*AUTO_CTC*/     DMEMB(m_source),
 /*AUTO_CTC*/     DMEMB(m_message),
-/*AUTO_CTC*/     DMEMB(m_relatedInformation)
+/*AUTO_CTC*/     DMEMB(m_relatedInformation),
+/*AUTO_CTC*/     DMEMB(m_codeActions)
 /*AUTO_CTC*/ {}
 /*AUTO_CTC*/
 /*AUTO_CTC*/ LSP_Diagnostic &LSP_Diagnostic::operator=(LSP_Diagnostic const &obj) noexcept
@@ -405,6 +535,7 @@ LSP_DiagnosticRelatedInformation::LSP_DiagnosticRelatedInformation(gdv::GDValueP
 /*AUTO_CTC*/     CMEMB(m_source);
 /*AUTO_CTC*/     CMEMB(m_message);
 /*AUTO_CTC*/     CMEMB(m_relatedInformation);
+/*AUTO_CTC*/     CMEMB(m_codeActions);
 /*AUTO_CTC*/   }
 /*AUTO_CTC*/   return *this;
 /*AUTO_CTC*/ }
@@ -421,6 +552,15 @@ LSP_Diagnostic::operator gdv::GDValue() const
   GDV_WRITE_MEMBER_STR(m_message);
   GDV_WRITE_MEMBER_STR(m_relatedInformation);
 
+  if (m_codeActions.empty()) {
+    // If we don't have actions, omit the attribute entirely.  This is a
+    // `clangd` extension, so omitting it improves interoperability.
+    // Also I have some tests that don't mention it.
+  }
+  else {
+    GDV_WRITE_MEMBER_STR(m_codeActions);
+  }
+
   return m;
 }
 
@@ -430,7 +570,8 @@ LSP_Diagnostic::LSP_Diagnostic(gdv::GDValueParser const &p)
     GDVP_READ_OPT_MEMBER_STR(m_severity),
     GDVP_READ_OPT_MEMBER_STR(m_source),
     GDVP_READ_MEMBER_STR    (m_message),
-    GDVP_READ_OPT_MEMBER_STR(m_relatedInformation)
+    GDVP_READ_OPT_MEMBER_STR(m_relatedInformation),
+    GDVP_READ_OPT_MEMBER_STR(m_codeActions)
 {
   // The LSP spec says an omitted `severity` should be treated as Error.
   if (!p.mapContains("severity")) {

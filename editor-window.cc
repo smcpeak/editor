@@ -480,7 +480,7 @@ void EditorWindow::buildMenu()
     QMenu *menu = this->m_menuBar->addMenu("&LSP");
     menu->setObjectName("lspMenu");
 
-    // Used mnemonics: acdimopuw
+    // Used mnemonics: acdfimopuw
 
     MENU_ITEM    ("St&art LSP server",
                   lspStartServer);
@@ -519,6 +519,9 @@ void EditorWindow::buildMenu()
                   lspShowDiagnosticAtCursor);
     MENU_ITEM    ("Inspect diagnostic, other &window\tCtrl+Shift+I",
                   lspShowDiagnosticAtCursorOtherWindow);
+
+    MENU_ITEM    ("&Fix diagnostic at cursor...",
+                  lspFixDiagnostic);
 
     menu->addSeparator();
 
@@ -2362,6 +2365,19 @@ void EditorWindow::lspShowDiagnosticAtCursorOtherWindow() NOEXCEPT
   if (FailReasonOpt msg =
         editorWidget()->lspShowDiagnosticAtCursor(
           EditorNavigationOptions::ENO_OTHER_WINDOW)) {
+    inform(*msg);
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::lspFixDiagnostic() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  if (FailReasonOpt msg =
+        editorWidget()->lspFixDiagnosticAtCursor()) {
     inform(*msg);
   }
 

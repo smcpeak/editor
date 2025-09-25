@@ -198,12 +198,18 @@ void test_basics()
     // Make some diagnostics that could have applied to `ver1`.
     TextDocumentDiagnostics diagnostics(ver1, std::nullopt);
     diagnostics.insertDiagnostic(tmcr(1,0,1,0), TDD_Diagnostic("msg"));
-    EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
-      "TDD_DocEntry["
-        "range:MCR(MC(1 0) MC(1 0)) "
-        "diagnostic:TDD_Diagnostic[message:\"msg\" related:[]]"
-      "]"
-    "}"));
+    EXPECT_EQ_GDV(diagnostics, fromGDVN(R"(
+      {
+        TDD_DocEntry[
+          range:MCR(MC(1 0) MC(1 0))
+          diagnostic:TDD_Diagnostic[
+            message:"msg"
+            related:[]
+            fixes:[]
+          ]
+        ]
+      }
+    )"));
 
     // Roll them forward, transitioning `ver` to having diagnostics.
     recorder.applyChangesToDiagnostics(&diagnostics);
@@ -235,7 +241,7 @@ void test_basics()
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(4 0) MC(4 0)) "
-        "diagnostic:TDD_Diagnostic[message:\"msg\" related:[]]"
+        "diagnostic:TDD_Diagnostic[message:\"msg\" related:[] fixes:[]]"
       "]"
     "}"));
   }
@@ -249,11 +255,11 @@ void test_basics()
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(0 0) MC(0 0)) "
-        "diagnostic:TDD_Diagnostic[message:\"msg0\" related:[]]"
+        "diagnostic:TDD_Diagnostic[message:\"msg0\" related:[] fixes:[]]"
       "]"
       "TDD_DocEntry["
         "range:MCR(MC(1 0) MC(1 0)) "
-        "diagnostic:TDD_Diagnostic[message:\"msg1\" related:[]]"
+        "diagnostic:TDD_Diagnostic[message:\"msg1\" related:[] fixes:[]]"
       "]"
     "}"));
 
@@ -279,11 +285,11 @@ void test_basics()
     EXPECT_EQ(toGDValue(diagnostics), fromGDVN( "{"
       "TDD_DocEntry["
         "range:MCR(MC(3 0) MC(3 0)) "
-        "diagnostic:TDD_Diagnostic[message:\"msg0\" related:[]]"
+        "diagnostic:TDD_Diagnostic[message:\"msg0\" related:[] fixes:[]]"
       "]"
       "TDD_DocEntry["
         "range:MCR(MC(4 0) MC(4 0)) "
-        "diagnostic:TDD_Diagnostic[message:\"msg1\" related:[]]"
+        "diagnostic:TDD_Diagnostic[message:\"msg1\" related:[] fixes:[]]"
       "]"
     "}"));
   }
@@ -599,7 +605,7 @@ void test_DDRH()
     {
       TDD_DocEntry[
         range: MCR(MC(4 0) MC(4 0))
-        diagnostic: TDD_Diagnostic[message:"msg" related:[]]
+        diagnostic: TDD_Diagnostic[message:"msg" related:[] fixes:[]]
       ]
     }
   )"));
@@ -607,11 +613,11 @@ void test_DDRH()
     {
       TDD_DocEntry[
         range: MCR(MC(0 0) MC(0 0))
-        diagnostic: TDD_Diagnostic[message:"msg0" related:[]]
+        diagnostic: TDD_Diagnostic[message:"msg0" related:[] fixes:[]]
       ]
       TDD_DocEntry[
         range: MCR(MC(4 0) MC(4 0))
-        diagnostic: TDD_Diagnostic[message:"msg1" related:[]]
+        diagnostic: TDD_Diagnostic[message:"msg1" related:[] fixes:[]]
       ]
     }
   )"));

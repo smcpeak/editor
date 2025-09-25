@@ -822,6 +822,12 @@ FailReasonOpt LSPClient::startServer(
                 // rather than piling all of the info into the
                 // "message".
                 { "relatedInformation", true },
+
+                // Request that diagnostics include proposed fixes.
+                // This is a `clangd` extension:
+                //
+                // https://clangd.llvm.org/extensions#inline-fixes-for-diagnostics
+                { "codeActionsInline", true },
               },
             },
           },

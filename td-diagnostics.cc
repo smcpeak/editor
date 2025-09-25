@@ -11,8 +11,9 @@
 
 #include "byte-count.h"                          // sizeBC
 #include "named-td.h"                            // NamedTextDocument
-#include "td-change.h"                           // TextDocumentChange
 #include "td-change-seq.h"                       // TextDocumentChangeSequence
+#include "td-change.h"                           // TextDocumentChange
+#include "tdd-proposed-fix.h"                    // TDD_ProposedFix
 #include "textmcoord-map.h"                      // TextMCoordMap
 
 #include "smbase/ast-switch.h"                   // ASTSWITCHC
@@ -75,14 +76,18 @@ TDD_Diagnostic::~TDD_Diagnostic()
 
 TDD_Diagnostic::TDD_Diagnostic(std::string &&message)
   : IMEMBMFP(message),
-    m_related()
+    m_related(),
+    m_fixes()
 {}
 
 
-TDD_Diagnostic::TDD_Diagnostic(std::string &&message,
-                       std::vector<TDD_Related> &&related)
-  : IMEMBMFP(message),
-    IMEMBMFP(related)
+TDD_Diagnostic::TDD_Diagnostic(
+  std::string &&message,
+  std::vector<TDD_Related> &&related)
+:
+  IMEMBMFP(message),
+  IMEMBMFP(related),
+  m_fixes()
 {}
 
 
@@ -91,6 +96,7 @@ int TDD_Diagnostic::compareTo(TDD_Diagnostic const &b) const
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_message);
   RET_IF_COMPARE_MEMBERS(m_related);
+  RET_IF_COMPARE_MEMBERS(m_fixes);
   return 0;
 }
 
@@ -101,6 +107,7 @@ TDD_Diagnostic::operator gdv::GDValue() const
 
   GDV_WRITE_MEMBER_SYM(m_message);
   GDV_WRITE_MEMBER_SYM(m_related);
+  GDV_WRITE_MEMBER_SYM(m_fixes);
 
   return m;
 }

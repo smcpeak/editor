@@ -43,6 +43,7 @@
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
+#include "smbase/either.h"                       // smbase::Either
 #include "smbase/refct-serf.h"                   // RCSerf, RCSerfOpt SerfRefCount
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 #include "smbase/std-functional-fwd.h"           // std::function [n]
@@ -92,6 +93,9 @@ public:      // types
     LSPFO_UPDATE_IF_OPEN,    // Update if it is open.
     LSPFO_CLOSE,             // Close the file.
   };
+
+  using DiagnosticOrError =
+    smbase::Either<RCSerf<TDD_Diagnostic const>, std::string>;
 
 public:     // static data
   // Instances created minus instances destroyed.
@@ -284,6 +288,10 @@ private:     // funcs
   void showDiagnosticDetailsDialog(
     QVector<DiagnosticElement> &&elts,
     std::string const &windowTitle);
+
+  // Get the diagnostic at the cursor, or return a string explaining to
+  // the user why we cannot.
+  DiagnosticOrError lspGetDiagnosticAtCursor();
 
   // Inform the user that the LSP server did not have `lsrk` information
   // for the symbol at the cursor.
@@ -558,6 +566,9 @@ public:      // funcs
   // `opts`.
   FailReasonOpt lspShowDiagnosticAtCursor(
     EditorNavigationOptions opts);
+
+  // Pop up a menu of available fixes for the diagnostic at the cursor.
+  FailReasonOpt lspFixDiagnosticAtCursor();
 
   // Move the cursor to the next or previous diagnostic message.  Do
   // nothing if we have no diagnostics or there are no more in the

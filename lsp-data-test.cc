@@ -14,7 +14,7 @@
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // TEST_CASE
+#include "smbase/sm-test.h"            // TEST_FUNC
 
 using namespace gdv;
 using namespace smbase;
@@ -56,16 +56,14 @@ void convertToTDDExpect(
   GDValue tddGDV = toGDValue(*tdd);
 
   // Compare to expectation.
-  GDValueWriteOptions opts;
-  opts.m_indentLevel = 1;
-  EXPECT_EQ(tddGDV.asIndentedString(opts), expectGDVN);
+  EXPECT_EQ_GDV(tddGDV, fromGDVN(expectGDVN));
 }
 
 
 // Do a round-trip serialization test with a simple example.
 void test_PublishDiagnosticsParams_simple()
 {
-  TEST_CASE("test_PublishDiagnosticsParams_simple");
+  TEST_FUNC();
 
   GDValue v(GDVMap{
     { "uri", "file:///D:/home/User/foo.cc" },
@@ -115,7 +113,11 @@ void test_PublishDiagnosticsParams_simple()
   convertToTDDExpect(lspPDP, R"({
     TDD_DocEntry[
       range: MCR(MC(4 5) MC(6 7))
-      diagnostic: TDD_Diagnostic[message:"primary message" related:[]]
+      diagnostic: TDD_Diagnostic[
+        message:"primary message"
+        related:[]
+        fixes:[]
+      ]
     ]
   })");
 }
@@ -124,7 +126,7 @@ void test_PublishDiagnosticsParams_simple()
 // Add some "relatedInformation".
 void test_PublishDiagnosticsParams_withRelated()
 {
-  TEST_CASE("test_PublishDiagnosticsParams_withRelated");
+  TEST_FUNC();
 
   GDValue v(GDVMap{
     { "uri", "file:///D:/home/User/foo.cc" },
@@ -205,6 +207,7 @@ void test_PublishDiagnosticsParams_withRelated()
             message: "aux message 2"
           ]
         ]
+        fixes: []
       ]
     ]
   })");
@@ -284,6 +287,54 @@ void test_LocationSequence2()
 }
 
 
+void test_diagnosticsWithFix()
+{
+  GDValue diagGDV(fromGDVN(R"gdvn(
+    // This is an example of something `clangd` sends.  The commented
+    // fields are things I do not currently parse, so would break the
+    // round-trip test.
+    {
+      //"code": "expected_semi_after_stmt"
+      "codeActions": [
+        {
+          "edit": {
+            "changes": {
+              "file:///D:/cygwin/home/Scott/wrk/editor/test/fix-available1.cc":
+                [
+                  {
+                    "newText": ";"
+                    "range": {
+                      "end": {"character":10 "line":6}
+                      "start": {"character":10 "line":6}
+                    }
+                  }
+                ]
+            }
+          }
+          //"isPreferred": true
+          //"kind": "quickfix"
+          "title": "insert ';'"
+        }
+      ]
+      "message": "Expected ';' after return statement (fix available)"
+      "range": {
+        "end": {"character":1 "line":7}
+        "start": {"character":0 "line":7}
+      }
+      "relatedInformation": []
+      "severity": 1
+      "source": "clang"
+    }
+  )gdvn"));
+
+  // Parse the GDV.
+  LSP_Diagnostic diag{GDValueParser(diagGDV)};
+
+  // Re-serialize and check it is the same.
+  EXPECT_EQ_GDV(diag, diagGDV);
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -293,6 +344,7 @@ void test_lsp_data(CmdlineArgsSpan args)
   test_PublishDiagnosticsParams_withRelated();
   test_LocationSequence1();
   test_LocationSequence2();
+  test_diagnosticsWithFix();
 }
 
 

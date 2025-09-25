@@ -30,11 +30,13 @@
 #include "uri-util.h"                  // URIPathSemantics
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
-#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
+#include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
 
 #include <iosfwd>                      // std::ostream
 #include <list>                        // std::list
+#include <map>                         // std::map
 #include <optional>                    // std::optional
 #include <string>                      // std::string
 
@@ -118,10 +120,13 @@ public:      // data
   std::string m_innerUri;
 
 public:
-  // create-tuple-class: declarations for LSP_FilenameURI
+  // create-tuple-class: declarations for LSP_FilenameURI +compare
   /*AUTO_CTC*/ explicit LSP_FilenameURI(std::string const &innerUri);
   /*AUTO_CTC*/ LSP_FilenameURI(LSP_FilenameURI const &obj) noexcept;
   /*AUTO_CTC*/ LSP_FilenameURI &operator=(LSP_FilenameURI const &obj) noexcept;
+  /*AUTO_CTC*/ // For +compare:
+  /*AUTO_CTC*/ friend int compare(LSP_FilenameURI const &a, LSP_FilenameURI const &b);
+  /*AUTO_CTC*/ DEFINE_FRIEND_RELATIONAL_OPERATORS(LSP_FilenameURI)
 
   // Yields a string in URI form.
   operator gdv::GDValue() const;
@@ -189,6 +194,63 @@ public:      // methods
 };
 
 
+// Set of changes to apply to files.
+class LSP_WorkspaceEdit final {
+public:      // data
+  // For each file, a sequence of edits to perform.
+  std::map<LSP_FilenameURI, stdfwd::vector<LSP_TextEdit>> m_changes;
+
+  // TODO: documentChanges
+  // TODO: changeAnnotations
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_WorkspaceEdit +move
+  /*AUTO_CTC*/ explicit LSP_WorkspaceEdit(std::map<LSP_FilenameURI, stdfwd::vector<LSP_TextEdit>> const &changes);
+  /*AUTO_CTC*/ explicit LSP_WorkspaceEdit(std::map<LSP_FilenameURI, stdfwd::vector<LSP_TextEdit>> &&changes);
+  /*AUTO_CTC*/ LSP_WorkspaceEdit(LSP_WorkspaceEdit const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_WorkspaceEdit(LSP_WorkspaceEdit &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_WorkspaceEdit &operator=(LSP_WorkspaceEdit const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_WorkspaceEdit &operator=(LSP_WorkspaceEdit &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_WorkspaceEdit(gdv::GDValueParser const &p);
+};
+
+
+// A code change that the server proposes, for example as part of a
+// diagnostic with "fix available".
+class LSP_CodeAction final {
+public:      // data
+  // Summary of the change.  Example: "insert ';'".
+  std::string m_title;
+
+  // TODO: kind
+  // TODO: diagnostics
+  // TODO: isPreferred
+  // TODO: disabled
+
+  // Code edits to perform.
+  std::optional<LSP_WorkspaceEdit> m_edit;
+
+  // TODO: command
+  // TODO: data
+
+public:      // methods
+  // create-tuple-class: declarations for LSP_CodeAction +move
+  /*AUTO_CTC*/ explicit LSP_CodeAction(std::string const &title, std::optional<LSP_WorkspaceEdit> const &edit);
+  /*AUTO_CTC*/ explicit LSP_CodeAction(std::string &&title, std::optional<LSP_WorkspaceEdit> &&edit);
+  /*AUTO_CTC*/ LSP_CodeAction(LSP_CodeAction const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_CodeAction(LSP_CodeAction &&obj) noexcept;
+  /*AUTO_CTC*/ LSP_CodeAction &operator=(LSP_CodeAction const &obj) noexcept;
+  /*AUTO_CTC*/ LSP_CodeAction &operator=(LSP_CodeAction &&obj) noexcept;
+
+  operator gdv::GDValue() const;
+
+  explicit LSP_CodeAction(gdv::GDValueParser const &p);
+};
+
+
 // An auxiliary message for some primary diagnostic.
 class LSP_DiagnosticRelatedInformation final {
 public:      // data
@@ -238,9 +300,13 @@ public:      // data
 
   // TODO: data
 
+  // List of possible actions proposed by the server to resolve the
+  // diagnostic.  The user can choose one of them.
+  std::list<LSP_CodeAction> m_codeActions;
+
 public:      // methods
   // create-tuple-class: declarations for LSP_Diagnostic
-  /*AUTO_CTC*/ explicit LSP_Diagnostic(LSP_Range const &range, int severity, std::optional<std::string> const &source, std::string const &message, std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation);
+  /*AUTO_CTC*/ explicit LSP_Diagnostic(LSP_Range const &range, int severity, std::optional<std::string> const &source, std::string const &message, std::list<LSP_DiagnosticRelatedInformation> const &relatedInformation, std::list<LSP_CodeAction> const &codeActions);
   /*AUTO_CTC*/ LSP_Diagnostic(LSP_Diagnostic const &obj) noexcept;
   /*AUTO_CTC*/ LSP_Diagnostic &operator=(LSP_Diagnostic const &obj) noexcept;
 

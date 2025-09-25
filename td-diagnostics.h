@@ -23,6 +23,7 @@
 #include "td-change-fwd.h"             // TextDocumentChange [n]
 #include "td-change-seq-fwd.h"         // TextDocumentChangeSequence [n]
 #include "td-core.h"                   // TextDocumentObserver, TextDocumentCore
+#include "tdd-proposed-fix-fwd.h"      // TDD_ProposedFix [n]
 #include "textmcoord-map.h"            // TextMCoordMap
 
 #include "smbase/compare-util-iface.h" // DEFINE_FRIEND_RELATIONAL_OPERATORS
@@ -64,10 +65,10 @@ public:      // methods
 
 // A single diagnostic message.
 //
-// Aside from the locations in `m_related`, this object is not directly
-// associated with a location.  Instead, the `TextDocumentDiagnostics`
-// map keeps the association with a range, and has facilities for
-// updating the association as the document changes.
+// Aside from the locations in `m_related` and `m_fixes`, this object is
+// not directly associated with a location.  Instead, the
+// `TextDocumentDiagnostics` map keeps the association with a range, and
+// has facilities for updating the association as the document changes.
 //
 class TDD_Diagnostic : public SerfRefCount {
 public:      // data
@@ -76,6 +77,9 @@ public:      // data
 
   // Sequence of related locations.
   std::vector<TDD_Related> m_related;
+
+  // Set of proposed fixes for the issue.
+  std::vector<TDD_ProposedFix> m_fixes;
 
 public:      // methods
   ~TDD_Diagnostic();

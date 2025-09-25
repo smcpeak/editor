@@ -29,6 +29,7 @@
 #include "nearby-file.h"                         // getNearbyFilename
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
+#include "tdd-proposed-fix.h"                    // TDD_ProposedFix
 #include "textcategory.h"                        // LineCategoryAOAs, etc.
 #include "uri-util.h"                            // getFileURIPath, makeFileURI
 #include "vfs-query-sync.h"                      // VFS_QuerySync
@@ -58,6 +59,7 @@
 #include "smbase/gdvalue-optional.h"             // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
+#include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/list-util.h"                    // smbase::listAtC
 #include "smbase/nonport.h"                      // getMilliseconds
@@ -2916,41 +2918,14 @@ void EditorWidget::showDiagnosticDetailsDialog(
 }
 
 
-FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
-  EditorNavigationOptions opts)
+auto EditorWidget::lspGetDiagnosticAtCursor() -> DiagnosticOrError
 {
-  SMFileUtil sfu;
-
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
     TextMCoord cursorMC = m_editor->cursorAsModelCoord();
     if (RCSerf<TDD_Diagnostic const> diag =
           tdd->getDiagnosticAt(cursorMC)) {
-
-      // Copy `diag` into a vector of elements for the dialog.
-      QVector<DiagnosticElement> elts;
-
-      // Primary location and message.
-      DocumentName docName = getDocument()->documentName();
-      elts.push_back(DiagnosticElement{
-        docName.harn(),
-        cursorMC.m_line,
-        diag->m_message
-      });
-
-      // Related messages.
-      for (TDD_Related const &rel : diag->m_related) {
-        elts.push_back(DiagnosticElement{
-          HostAndResourceName::localFile(rel.m_file),
-          rel.m_lineIndex,
-          rel.m_message
-        });
-      }
-
-      editorGlobal()->selectEditorWidget(this, opts)
-        ->showDiagnosticDetailsDialog(std::move(elts),
-            "Diagnostic Details");
-      return {};
+      return diag;
     }
     else {
       return "No diagnostics at cursor.";
@@ -2958,6 +2933,69 @@ FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
   }
   else {
     return "There are no diagnostics for this file.";
+  }
+}
+
+
+FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
+  EditorNavigationOptions opts)
+{
+  SMFileUtil sfu;
+
+  DiagnosticOrError diagOrError = lspGetDiagnosticAtCursor();
+  if (diagOrError.isLeft()) {
+    RCSerf<TDD_Diagnostic const> diag = diagOrError.left();
+
+    // Copy `diag` into a vector of elements for the dialog.
+    QVector<DiagnosticElement> elts;
+
+    // Primary location and message.
+    TextMCoord cursorMC = m_editor->cursorAsModelCoord();
+    DocumentName docName = getDocument()->documentName();
+    elts.push_back(DiagnosticElement{
+      docName.harn(),
+      cursorMC.m_line,
+      diag->m_message
+    });
+
+    // Related messages.
+    for (TDD_Related const &rel : diag->m_related) {
+      elts.push_back(DiagnosticElement{
+        HostAndResourceName::localFile(rel.m_file),
+        rel.m_lineIndex,
+        rel.m_message
+      });
+    }
+
+    editorGlobal()->selectEditorWidget(this, opts)
+      ->showDiagnosticDetailsDialog(std::move(elts),
+          "Diagnostic Details");
+    return {};
+  }
+  else {
+    return diagOrError.right();
+  }
+}
+
+
+FailReasonOpt EditorWidget::lspFixDiagnosticAtCursor()
+{
+  DiagnosticOrError diagOrError = lspGetDiagnosticAtCursor();
+  if (diagOrError.isLeft()) {
+    RCSerf<TDD_Diagnostic const> diag = diagOrError.left();
+
+    if (diag->m_fixes.empty()) {
+      return "There are no proposed fixes.";
+    }
+
+    // TODO: Show this properly.
+    GDValue fixesGDV(toGDValue(diag->m_fixes));
+    inform(fixesGDV.asIndentedString());
+
+    return {};
+  }
+  else {
+    return diagOrError.right();
   }
 }
 

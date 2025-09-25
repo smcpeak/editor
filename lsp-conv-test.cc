@@ -11,6 +11,7 @@
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::toGDValue for TEST_CASE_EXPRS
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE, smbase_loopi
 #include "smbase/sm-test.h"            // EXPECT_EQ
@@ -250,6 +251,85 @@ void test_randomEdits()
 }
 
 
+void test_proposedFix()
+{
+  GDValue diagGDV(fromGDVN(R"gdvn(
+    // This is an example of something `clangd` sends.  The commented
+    // fields are things I do not currently parse, so would break the
+    // round-trip test.
+    {
+      //"code": "expected_semi_after_stmt"
+      "codeActions": [
+        {
+          "edit": {
+            "changes": {
+              "file:///D:/cygwin/home/user/fix-available1.cc":
+                [
+                  {
+                    "newText": ";"
+                    "range": {
+                      "end": {"character":10 "line":6}
+                      "start": {"character":10 "line":6}
+                    }
+                  }
+                ]
+            }
+          }
+          //"isPreferred": true
+          //"kind": "quickfix"
+          "title": "insert ';'"
+        }
+      ]
+      "message": "Expected ';' after return statement (fix available)"
+      "range": {
+        "end": {"character":1 "line":7}
+        "start": {"character":0 "line":7}
+      }
+      "relatedInformation": []
+      "severity": 1
+      "source": "clang"
+    }
+  )gdvn"));
+
+  // Parse the GDV.
+  LSP_Diagnostic diag{GDValueParser(diagGDV)};
+
+  // Put it into a publish report, since the converter requires this
+  // wrapper due to how locations are handled.
+  LSP_PublishDiagnosticsParams lspParams(
+    "file:///anything", LSP_VersionNumber(1), {});
+  lspParams.m_diagnostics.push_back(std::move(diag));
+
+  // Convert to TDD format.
+  std::unique_ptr<TextDocumentDiagnostics> tdd =
+    convertLSPDiagsToTDD(&lspParams, URIPathSemantics::NORMAL);
+  std::set<TextDocumentDiagnostics::DocEntry> diagnostics =
+    tdd->getAllEntries();
+
+  // Get the converted entry.
+  xassert(diagnostics.size() == 1);
+  RCSerf<TDD_Diagnostic const> diagnostic =
+    (*( diagnostics.begin() )).m_diagnostic;
+
+  // Check it has all the details of the proposed fix.
+  EXPECT_EQ_GDV(*diagnostic, fromGDVN(R"END(
+    TDD_Diagnostic[
+      message: "Expected ';' after return statement (fix available)"
+      related: []
+      fixes: [
+        TDD_ProposedFix[
+          title: "insert ';'"
+          changesForFile: {
+            "D:/cygwin/home/user/fix-available1.cc":
+              [TDD_TextEdit[range:MCR(MC(6 10) MC(6 10)) newText:";"]]
+          }
+        ]
+      ]
+    ]
+  )END"));
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -258,6 +338,7 @@ void test_lsp_conv(CmdlineArgsSpan args)
 {
   test_replace();
   test_randomEdits();
+  test_proposedFix();
 }
 
 

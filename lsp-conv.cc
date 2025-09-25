@@ -13,6 +13,7 @@
 #include "td-change.h"                 // TextDocumentChange
 #include "td-core.h"                   // TextDocumentCore
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
+#include "tdd-proposed-fix.h"          // TDD_ProposedFix
 #include "textmcoord.h"                // TextMCoord[Range]
 #include "uri-util.h"                  // getFileURIPath
 
@@ -62,6 +63,47 @@ static std::vector<TDD_Related> convertLSPRelatedList(
 }
 
 
+static std::vector<TDD_ProposedFix> convertLSPProposedFixes(
+  std::list<LSP_CodeAction> const &codeActions,
+  URIPathSemantics pathSemantics)
+{
+  std::vector<TDD_ProposedFix> ret;
+
+  for (LSP_CodeAction const &action : codeActions) {
+    if (!action.m_edit) {
+      // The LSP protocol has some other possibilities like renaming
+      // files.  I don't currently deal with those.
+      TRACE1("Proposed fix is not an edit, discarding it.");
+      continue;
+    }
+
+    TDD_ProposedFix tddProposedFix(action.m_title, {});
+
+    // Convert `action.m_edit` to `tddProposedFix.m_changesForFile`.
+    for (auto const &kv : action.m_edit->m_changes) {
+      LSP_FilenameURI const &fnameURI = kv.first;
+      std::vector<LSP_TextEdit> const &lspTextEdits = kv.second;
+
+      std::string fname = fnameURI.getFname(pathSemantics);
+      std::vector<TDD_TextEdit> tddTextEdits;
+
+      for (LSP_TextEdit const &lspTextEdit : lspTextEdits) {
+        TextMCoordRange range = toMCoordRange(lspTextEdit.m_range);
+
+        tddTextEdits.push_back(
+          TDD_TextEdit(range, lspTextEdit.m_newText));
+      }
+
+      tddProposedFix.m_changesForFile[fname] = std::move(tddTextEdits);
+    }
+
+    ret.push_back(std::move(tddProposedFix));
+  }
+
+  return ret;
+}
+
+
 std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
   LSP_PublishDiagnosticsParams const *lspDiags,
   URIPathSemantics semantics)
@@ -82,6 +124,11 @@ std::unique_ptr<TextDocumentDiagnostics> convertLSPDiagsToTDD(
       convertLSPRelatedList(lspDiag.m_relatedInformation, semantics);
 
     TDD_Diagnostic tddDiag(std::move(message), std::move(related));
+
+    if (!lspDiag.m_codeActions.empty()) {
+      tddDiag.m_fixes =
+        convertLSPProposedFixes(lspDiag.m_codeActions, semantics);
+    }
 
     ret->insertDiagnostic(range, std::move(tddDiag));
   }

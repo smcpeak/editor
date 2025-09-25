@@ -261,6 +261,7 @@ EDITOR_OBJS += td-line.o
 EDITOR_OBJS += td-obs-recorder.o
 EDITOR_OBJS += td-version-number.o
 EDITOR_OBJS += td.o
+EDITOR_OBJS += tdd-proposed-fix.o
 EDITOR_OBJS += text-search.o
 EDITOR_OBJS += textcategory.o
 EDITOR_OBJS += textlcoord.o
