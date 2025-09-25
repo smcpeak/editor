@@ -34,6 +34,7 @@ int innerMain(int argc, char **argv)
   TEST_MODULE(completions_dialog);
   TEST_MODULE(connections_dialog);
   TEST_MODULE(diagnostic_details_dialog);
+  TEST_MODULE(list_choice_dialog);
 
   #undef TEST_MODULE
 

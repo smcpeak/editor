@@ -419,6 +419,8 @@ EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
 EDITOR_OBJS += event-replay.o
 EDITOR_OBJS += event-replay.moc.o
+EDITOR_OBJS += list-choice-dialog.o
+EDITOR_OBJS += list-choice-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
@@ -428,6 +430,7 @@ GUI_TESTS_OBJS += completions-dialog-test.o
 GUI_TESTS_OBJS += connections-dialog-test.o
 GUI_TESTS_OBJS += diagnostic-details-dialog-test.o
 GUI_TESTS_OBJS += gui-tests.o
+GUI_TESTS_OBJS += list-choice-dialog-test.o
 GUI_TESTS_OBJS += resources.qrc.gen.o
 
 gui-tests.exe: $(GUI_TESTS_OBJS) $(GUI_LIBRARIES)
