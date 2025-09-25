@@ -723,6 +723,18 @@ void TextDocumentEditor::deleteKeyFunction()
 }
 
 
+void TextDocumentEditor::applyRangeTextReplacement(
+  RangeTextReplacement const &repl)
+{
+  TDE_HistoryGrouper grouper(*this);
+
+  this->clearMark();
+  m_doc->applyRangeTextReplacement(repl);
+
+  // For now at least, I just leave the cursor where it was.
+}
+
+
 void TextDocumentEditor::undo()
 {
   this->setCursor(this->toLCoord(m_doc->undo()));

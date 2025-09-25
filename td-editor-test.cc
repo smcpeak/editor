@@ -5,6 +5,7 @@
 #include "td-editor.h"                 // module to test
 
 #include "column-difference.h"         // ColumnDifference
+#include "range-text-repl.h"           // RangeTextReplacement
 #include "textcategory.h"              // LineCategoryAOAs
 
 // smbase
@@ -2711,6 +2712,55 @@ void test_toAdjustedLCoord()
 }
 
 
+// ------------------ test_applyRangeTextReplacement -------------------
+void test_applyRangeTextReplacement()
+{
+  TEST_FUNC();
+
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "one\n"
+    "two\n"
+    "three\n");
+
+  auto one = [&tde](int sl, int sb, int el, int eb, char const *newText,
+                    char const *expectDocText) {
+    EXN_CONTEXT_CALL(sl, (sb, el, eb, newText));
+
+    tde.applyRangeTextReplacement(
+      RangeTextReplacement(
+        TextMCoordRange(tmc(sl, sb), tmc(el, eb)),
+        newText));
+
+    string actual = tde.getTextForLRangeString(tde.documentLRange());
+    EXPECT_EQ(actual, expectDocText);
+  };
+
+  // Insert at start.
+  one(0,0, 0,0, "ABC",
+    "ABCone\n"
+    "two\n"
+    "three\n");
+
+  // Delete on second line.
+  one(1,1, 1,2, "",
+    "ABCone\n"
+    "to\n"
+    "three\n");
+
+  // Replace across lines.
+  one(0,1, 2,2, "some new text",
+    "Asome new textree\n");
+
+  // Replacement adding lines.
+  one(0,10, 0,15, "1\n2\n3\n",
+    "Asome new 1\n"
+    "2\n"
+    "3\n"
+    "ee\n");
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -2759,6 +2809,7 @@ void test_td_editor(CmdlineArgsSpan args)
   testSelectEntireFile();
   test_clipboardPaste_cursorStart();
   test_toAdjustedLCoord();
+  test_applyRangeTextReplacement();
 }
 
 

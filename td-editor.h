@@ -594,6 +594,10 @@ public:      // funcs
   // do nothing.
   void deleteKeyFunction();
 
+  // ------------------------ Text replacement -------------------------
+  // Replace a range with text.
+  void applyRangeTextReplacement(RangeTextReplacement const &repl);
+
   // ---------------------- adding whitespace ----------------------
   // Add minimum whitespace near 'tc' to ensure it is not beyond EOL
   // or EOF.
