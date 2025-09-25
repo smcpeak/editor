@@ -78,6 +78,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(recent_items_list);         // deps: (none)
   RUN_TEST(td_line);                   // deps: (none)
   RUN_TEST(textcategory);              // deps: (none)
+  RUN_TEST(textmcoord);
   RUN_TEST(uri_util);                  // deps: (none)
 
   // Wrapped integers.

@@ -11,7 +11,8 @@
 #include "line-index.h"                // LineIndex
 
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/sm-macros.h"          // DMEMB
 
 #include <iosfwd>                      // std::ostream
@@ -27,7 +28,7 @@
 //
 // Another difference is the handling of UTF-8 multibyte code points,
 // which are typically just one column in the layout.
-class TextMCoord {
+class TextMCoord final {
 public:      // data
   // 0-based line number.  "Line" is a concept defined by
   // TextDocumentCore.  This should be in [0,numLines()-1] for the
@@ -61,6 +62,7 @@ public:      // funcs
   void insert(std::ostream &os) const;
 
   operator gdv::GDValue() const;
+  explicit TextMCoord(gdv::GDValueParser const &p);
 };
 
 
@@ -76,7 +78,7 @@ inline std::ostream& operator<< (std::ostream &os, TextMCoord const &tc)
 // Note that it is not possible from a TextMCoordRange alone to
 // determine how many characters are enclosed since that depends on the
 // document.
-class TextMCoordRange {
+class TextMCoordRange final {
 public:      // data
   // First byte in the range.
   TextMCoord m_start;
@@ -144,6 +146,7 @@ public:      // funcs
   void insert(std::ostream &os) const;
 
   operator gdv::GDValue() const;
+  explicit TextMCoordRange(gdv::GDValueParser const &p);
 };
 
 

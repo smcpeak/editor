@@ -62,6 +62,7 @@ void test_td_obs_recorder(CmdlineArgsSpan args);
 void test_td_version_number(CmdlineArgsSpan args);
 void test_text_search(CmdlineArgsSpan args);
 void test_textcategory(CmdlineArgsSpan args);
+void test_textmcoord(CmdlineArgsSpan args);
 void test_textmcoord_map(CmdlineArgsSpan args);
 void test_uri_util(CmdlineArgsSpan args);
 void test_vfs_connections(CmdlineArgsSpan args);

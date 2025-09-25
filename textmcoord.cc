@@ -6,6 +6,7 @@
 #include "byte-difference.h"           // ByteDifference
 
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-swap.h"            // swap
 
@@ -55,6 +56,15 @@ TextMCoord::operator GDValue() const
 }
 
 
+TextMCoord::TextMCoord(GDValueParser const &p)
+:
+  m_line(p.tupleGetValueAt(0)),
+  m_byteIndex(p.tupleGetValueAt(1))
+{
+  p.checkTaggedTupleSize("MC", 2);
+}
+
+
 // ------------------------ TextMCoordRange -----------------------------
 TextMCoordRange& TextMCoordRange::operator= (TextMCoordRange const &obj)
 {
@@ -91,6 +101,15 @@ TextMCoordRange::operator GDValue() const
     toGDValue(m_start),
     toGDValue(m_end)
   });
+}
+
+
+TextMCoordRange::TextMCoordRange(GDValueParser const &p)
+:
+  m_start(p.tupleGetValueAt(0)),
+  m_end(p.tupleGetValueAt(1))
+{
+  p.checkTaggedTupleSize("MCR", 2);
 }
 
 

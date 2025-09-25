@@ -335,6 +335,7 @@ UNIT_TESTS_OBJS += td-version-number-test.o
 UNIT_TESTS_OBJS += text-search-test.o
 UNIT_TESTS_OBJS += textcategory-test.o
 UNIT_TESTS_OBJS += textmcoord-map-test.o
+UNIT_TESTS_OBJS += textmcoord-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
 UNIT_TESTS_OBJS += vfs-connections-test.moc.o
