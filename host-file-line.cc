@@ -33,6 +33,7 @@ using namespace smbase;
 /*AUTO_CTC*/
 /*AUTO_CTC*/ int compare(HostFileLine const &a, HostFileLine const &b)
 /*AUTO_CTC*/ {
+/*AUTO_CTC*/   // Remember to #include "smbase/compare-util.h" for these.
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_harn);
 /*AUTO_CTC*/   RET_IF_COMPARE_MEMBERS(m_lineIndex);
 /*AUTO_CTC*/   return 0;
@@ -43,14 +44,6 @@ using namespace smbase;
 /*AUTO_CTC*/   std::ostringstream oss;
 /*AUTO_CTC*/   write(oss);
 /*AUTO_CTC*/   return oss.str();
-/*AUTO_CTC*/ }
-/*AUTO_CTC*/
-/*AUTO_CTC*/ void HostFileLine::write(std::ostream &os) const
-/*AUTO_CTC*/ {
-/*AUTO_CTC*/   os << "{";
-/*AUTO_CTC*/   WRITE_MEMBER(m_harn);
-/*AUTO_CTC*/   WRITE_MEMBER(m_lineIndex);
-/*AUTO_CTC*/   os << " }";
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
 /*AUTO_CTC*/ std::ostream &operator<<(std::ostream &os, HostFileLine const &obj)
@@ -66,6 +59,11 @@ using namespace smbase;
 /*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_harn);
 /*AUTO_CTC*/   GDV_WRITE_MEMBER_SYM(m_lineIndex);
 /*AUTO_CTC*/   return m;
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+/*AUTO_CTC*/ void HostFileLine::write(std::ostream &os) const
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   operator gdv::GDValue().writeIndented(os);
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
 

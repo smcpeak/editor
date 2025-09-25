@@ -573,9 +573,11 @@ compile_commands.json:
 # -------------- check create-tuple-class.py outputs -------------------
 # Set of header files that use create-tuple-class.py.
 CTC_HEADERS :=
+CTC_HEADERS += host-file-line.h
 CTC_HEADERS += json-rpc-reply.h
 CTC_HEADERS += lsp-client-scope.h
 CTC_HEADERS += lsp-data.h
+CTC_HEADERS += tdd-proposed-fix.h
 
 # Corresponding implementation files.
 CTC_IMPL_FILES := $(CTC_HEADERS:.h=.cc)

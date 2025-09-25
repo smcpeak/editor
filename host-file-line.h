@@ -24,19 +24,18 @@ public:      // data
   LineIndex m_lineIndex;
 
 public:      // methods
-  // ---- create-tuple-class: declarations for HostFileLine +compare +write +gdvWrite
+  // ---- create-tuple-class: declarations for HostFileLine +compare +gdvWrite
   /*AUTO_CTC*/ explicit HostFileLine(HostAndResourceName const &harn, LineIndex const &lineIndex);
   /*AUTO_CTC*/ HostFileLine(HostFileLine const &obj) noexcept;
   /*AUTO_CTC*/ HostFileLine &operator=(HostFileLine const &obj) noexcept;
   /*AUTO_CTC*/ // For +compare:
   /*AUTO_CTC*/ friend int compare(HostFileLine const &a, HostFileLine const &b);
   /*AUTO_CTC*/ DEFINE_FRIEND_RELATIONAL_OPERATORS(HostFileLine)
-  /*AUTO_CTC*/ // For +write:
+  /*AUTO_CTC*/ // For +gdvWrite:
+  /*AUTO_CTC*/ operator gdv::GDValue() const;
   /*AUTO_CTC*/ std::string toString() const;
   /*AUTO_CTC*/ void write(std::ostream &os) const;
   /*AUTO_CTC*/ friend std::ostream &operator<<(std::ostream &os, HostFileLine const &obj);
-  /*AUTO_CTC*/ // For +gdvWrite:
-  /*AUTO_CTC*/ operator gdv::GDValue() const;
 
   HostAndResourceName const &getHarn() const
     { return m_harn; }
