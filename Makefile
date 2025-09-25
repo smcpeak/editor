@@ -332,6 +332,7 @@ UNIT_TESTS_OBJS += td-line-test.o
 UNIT_TESTS_OBJS += td-obs-recorder-test.o
 UNIT_TESTS_OBJS += td-test.o
 UNIT_TESTS_OBJS += td-version-number-test.o
+UNIT_TESTS_OBJS += tdd-proposed-fix-test.o
 UNIT_TESTS_OBJS += text-search-test.o
 UNIT_TESTS_OBJS += textcategory-test.o
 UNIT_TESTS_OBJS += textmcoord-map-test.o

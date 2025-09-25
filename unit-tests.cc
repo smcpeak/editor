@@ -109,6 +109,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(td_change);                 // deps: line-index, range-text-repl, td-core, textmcoord
 
   RUN_TEST(textmcoord_map);            // deps: line-index, td-core, textmcoord
+  RUN_TEST(tdd_proposed_fix);
 
   // SCC: justify, td-editor
   RUN_TEST(justify);                   // deps: line-index, td-editor

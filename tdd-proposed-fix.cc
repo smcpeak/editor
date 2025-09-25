@@ -95,6 +95,13 @@ using namespace smbase;
 /*AUTO_CTC*/   operator gdv::GDValue().writeIndented(os);
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
+/*AUTO_CTC*/ TDD_TextEdit::TDD_TextEdit(gdv::GDValueParser const &p)
+/*AUTO_CTC*/   : GDVP_READ_MEMBER_SYM(m_range),
+/*AUTO_CTC*/     GDVP_READ_MEMBER_SYM(m_newText)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   p.checkTaggedOrderedMapTag("TDD_TextEdit");
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
 
 
 // -------------------------- TDD_ProposedFix --------------------------
@@ -176,6 +183,31 @@ using namespace smbase;
 /*AUTO_CTC*/   operator gdv::GDValue().writeIndented(os);
 /*AUTO_CTC*/ }
 /*AUTO_CTC*/
+/*AUTO_CTC*/ TDD_ProposedFix::TDD_ProposedFix(gdv::GDValueParser const &p)
+/*AUTO_CTC*/   : GDVP_READ_MEMBER_SYM(m_title),
+/*AUTO_CTC*/     GDVP_READ_MEMBER_SYM(m_changesForFile)
+/*AUTO_CTC*/ {
+/*AUTO_CTC*/   p.checkTaggedOrderedMapTag("TDD_ProposedFix");
+/*AUTO_CTC*/ }
+/*AUTO_CTC*/
+
+
+int TDD_ProposedFix::numFiles() const
+{
+  return m_changesForFile.size();
+}
+
+
+int TDD_ProposedFix::numEdits() const
+{
+  int ret = 0;
+
+  for (auto const &kv : m_changesForFile) {
+    ret += kv.second.size();
+  }
+
+  return ret;
+}
 
 
 // EOF
