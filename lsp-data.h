@@ -42,7 +42,7 @@
 
 
 // A position in a document.
-class LSP_Position final {
+class LSP_Position {
 public:      // data
   // 0-based line number.  Non-negative.
   LineIndex m_line;
@@ -80,7 +80,7 @@ public:      // methods
 // A range of characters.  The character pointed to by `m_start` is
 // included in the range, while the character pointed to by `m_end` is
 // *not* in the range.
-class LSP_Range final {
+class LSP_Range {
 public:      // data
   LSP_Position m_start;
   LSP_Position m_end;
@@ -112,7 +112,7 @@ public:      // methods
 // `TextDocumentIdentifier`, which arguably *should* play that role, but
 // it is not used consistently.
 //
-class LSP_FilenameURI final {
+class LSP_FilenameURI {
 public:      // data
   // File name, encoded as a "file:" URI.  This is called "inner"
   // because Names of fields of this type carry the name `m_uri` to
@@ -144,7 +144,7 @@ public:
 
 
 // Location potentially in another file.
-class LSP_Location final {
+class LSP_Location {
 public:      // data
   // File containing the location.
   LSP_FilenameURI m_uri;
@@ -170,7 +170,7 @@ public:      // methods
 
 // An edit that serves as the action for a chosen completion, or as
 // part of a proposed fix for a diagnostic.
-class LSP_TextEdit final {
+class LSP_TextEdit {
 public:      // data
   // The range of text to be replaced with `newText`.  For a pure
   // insertion, the range has zero length.
@@ -195,7 +195,7 @@ public:      // methods
 
 
 // Set of changes to apply to files.
-class LSP_WorkspaceEdit final {
+class LSP_WorkspaceEdit {
 public:      // data
   // For each file, a sequence of edits to perform.
   std::map<LSP_FilenameURI, stdfwd::vector<LSP_TextEdit>> m_changes;
@@ -220,7 +220,7 @@ public:      // methods
 
 // A code change that the server proposes, for example as part of a
 // diagnostic with "fix available".
-class LSP_CodeAction final {
+class LSP_CodeAction {
 public:      // data
   // Summary of the change.  Example: "insert ';'".
   std::string m_title;
@@ -252,7 +252,7 @@ public:      // methods
 
 
 // An auxiliary message for some primary diagnostic.
-class LSP_DiagnosticRelatedInformation final {
+class LSP_DiagnosticRelatedInformation {
 public:      // data
   // Code the message applies to, generally in a different file from the
   // main message.
@@ -274,7 +274,7 @@ public:      // methods
 
 
 // One diagnostic, such as a compiler error.
-class LSP_Diagnostic final {
+class LSP_Diagnostic {
 public:      // data
   // Primary affected text range.
   LSP_Range m_range;
@@ -317,7 +317,7 @@ public:      // methods
 
 
 // The data for "textDocument/publishDiagnostics".
-class LSP_PublishDiagnosticsParams final {
+class LSP_PublishDiagnosticsParams {
 public:      // data
   // URI of the file the diagnostics pertain to.
   std::string m_uri;
@@ -341,7 +341,7 @@ public:      // methods
 
 
 // The data received for "textDocument/declaration".
-class LSP_LocationSequence final {
+class LSP_LocationSequence {
 public:      // data
   // The locations of, e.g., declarations, definition, or uses,
   // depending on the originating request.
@@ -363,7 +363,7 @@ public:      // methods
 
 
 // One possible completion for "textDocument/completion".
-class LSP_CompletionItem final {
+class LSP_CompletionItem {
 public:      // data
   // The completion "label".  I take it this is the text that should
   // appear in the list of choices presented to the user.  It is also
@@ -434,7 +434,7 @@ public:      // methods
 
 
 // The data received for "textDocument/completion".
-class LSP_CompletionList final {
+class LSP_CompletionList {
 public:      // data
   // The list is not complete.
   //
