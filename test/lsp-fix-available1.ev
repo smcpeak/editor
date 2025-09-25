@@ -25,6 +25,50 @@
     Shortcut("window1.m_menuBar" "Alt+L")
     KeyPress("window1.m_menuBar.lspMenu" "Key_F" "f")
     CheckFocusWidget(choiceList)
+
+    // TODO: Change this to work with a list.
+    CheckListWidgetContents(choiceList
+      "insert ';'\ninsert ';' and change \"diagnostic\" to \"diagNOstic\" (2 edits)\n")
+
+    CheckListViewSelectedItem(choiceList "insert ';'")
+
+    // Choose the second item.
+    FocusKeyPR("Key_Down" "")
+    FocusKeyPR("Key_Return" "\r")
+    CheckFocusWidget(editorWidget)
+
+    // Select the line.
+    FocusKeyPR("Ctrl+Key_A" "\u{1}")
+    FocusKeyPR("Shift+Key_Down" "")
+
+    // Check its contents, which should show the inserted semicolon and
+    // modified content.
+    CheckQuery(editorWidget "selectedText"
+      "  return x;         // diagNOstic\n")
+
+    // Changing the comment should cause the number of diagnostics to
+    // reduce to 0.
+    lspWaitForStatus("0")
+
+    // Undo the edit.
+    Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+
+    // Check that both edits have been reverted.
+    FocusKeyPR("Ctrl+Key_A" "\u{1}")
+    FocusKeyPR("Shift+Key_Down" "")
+    CheckQuery(editorWidget "selectedText"
+      "  return x         // diagnostic\n")
+
+    // And the report should be back.
+    lspWaitForStatus("1")
+
+    // Go to the diagnostic again.
+    Shortcut("window1.m_menuBar.lspMenu.lspGoToPreviousDiagnostic" "Shift+F8")
+
+    // Open the fixes dialog again.
+    Shortcut("window1.m_menuBar" "Alt+L")
+    KeyPress("window1.m_menuBar.lspMenu" "Key_F" "f")
+    CheckFocusWidget(choiceList)
     CheckListViewSelectedItem(choiceList "insert ';'")
 
     // Choose the first.
@@ -35,7 +79,8 @@
     FocusKeyPR("Ctrl+Key_A" "\u{1}")
     FocusKeyPR("Shift+Key_Down" "")
 
-    // Check its contents, which should show the inserted semicolon.
+    // Check its contents, which should show the inserted semicolon
+    // only.
     CheckQuery(editorWidget "selectedText"
       "  return x;         // diagnostic\n")
 

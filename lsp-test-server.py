@@ -978,6 +978,71 @@ def handle_symbol_query(
 
 
 # ---------------------- diagnostics_for_contents ----------------------
+def get_diagnostic_code_actions(
+  uri: str,
+  line: str) -> Optional[List[Dict[str, Any]]]:
+  """
+  If `line` has a special form, return an object to act as the
+  "codeActions" (proposed fixes) of a diagnostic report.
+  """
+
+  # Fixes for a certain line in `test/fix-available1.cc`.
+  if line == "  return x         // diagnostic\n":
+    return [
+      # Primary proposed fix with what `clangd` offers.
+      {
+        "edit": {
+          "changes": {
+            uri: [
+              {
+                "newText": ";",
+                "range": {
+                  "start": {"character":10, "line":6},
+                  "end": {"character":10, "line":6},
+                }
+              }
+            ]
+          }
+        },
+        "isPreferred": True,
+        "kind": "quickfix",
+        "title": "insert ';'"
+      },
+
+      # Second proposed fix with multiple edits.
+      {
+        "edit": {
+          "changes": {
+            uri: [
+              {
+                "newText": ";",
+                "range": {
+                  "start": {"character":10, "line":6},
+                  "end": {"character":10, "line":6},
+                }
+              },
+              # Change "diagnostic" to "diagNOstic" so that this
+              # script will stop reporting it, and to exercise
+              # multiple edits.
+              {
+                "newText": "NO",
+                "range": {
+                  "start": {"character":27, "line":6},
+                  "end": {"character":29, "line":6},
+                }
+              }
+            ]
+          }
+        },
+        "isPreferred": False,
+        "kind": "quickfix",
+        "title": "insert ';' and change \"diagnostic\" to \"diagNOstic\""
+      }
+    ]
+
+  return None
+
+
 DIAGNOSTIC_RE = re.compile(r"\bdiagnostic\b")
 
 def diagnostics_for_contents(uri: str, contents: str) -> List[Dict[str, Any]]:
@@ -995,30 +1060,8 @@ def diagnostics_for_contents(uri: str, contents: str) -> List[Dict[str, Any]]:
         "message": "The string \"diagnostic\" occurs."
       }
 
-      # Add a proposed fix for a certain line in
-      # `test/fix-available1.cc`.
-      if line == "  return x         // diagnostic\n":
-        diag["codeActions"] = [
-          {
-            "edit": {
-              "changes": {
-                uri: [
-                  # This is the fix that `clangd` offers.
-                  {
-                    "newText": ";",
-                    "range": {
-                      "start": {"character":10, "line":6},
-                      "end": {"character":10, "line":6},
-                    }
-                  }
-                ]
-              }
-            },
-            "isPreferred": True,
-            "kind": "quickfix",
-            "title": "insert ';'"
-          }
-        ]
+      if codeActions := get_diagnostic_code_actions(uri, line):
+        diag["codeActions"] = codeActions
 
       ret.append(diag)
 

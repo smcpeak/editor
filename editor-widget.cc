@@ -2990,6 +2990,11 @@ FailReasonOpt EditorWidget::lspFixDiagnosticAtCursor()
       return "There are no proposed fixes.";
     }
 
+    if (!editSafetyCheck()) {
+      // The user canceled the edit.
+      return {};
+    }
+
     // Get titles of available fixes.
     std::vector<std::string> titles;
     for (TDD_ProposedFix const &pfix : diag->m_fixes) {
@@ -3017,10 +3022,6 @@ FailReasonOpt EditorWidget::lspFixDiagnosticAtCursor()
         return stringb("Chosen fix involves " << pfix.numFiles() <<
                        "; currently I can only do single-file fixes.");
       }
-      if (pfix.numEdits() != 1) {
-        return stringb("Chosen fix involves " << pfix.numEdits() <<
-                       "; currently I can only do single-edit fixes.");
-      }
 
       auto [fname, edits] =
         (*( pfix.m_changesForFile.begin() ));
@@ -3033,10 +3034,14 @@ FailReasonOpt EditorWidget::lspFixDiagnosticAtCursor()
           " and I can't currently handle editing a different file.");
       }
 
-      TDD_TextEdit const &edit = edits.front();
-      RangeTextReplacement rtr(edit.m_range, edit.m_newText);
+      // Combine all edits into one undo action.
+      TDE_HistoryGrouper hbgrouper(*m_editor);
 
-      EDIT_COMMAND_MU(EC_RangeTextReplace, rtr);
+      for (TDD_TextEdit const &edit : edits) {
+        RangeTextReplacement rtr(edit.m_range, edit.m_newText);
+
+        EDIT_COMMAND_MU(EC_RangeTextReplace, rtr);
+      }
     }
 
     return {};
