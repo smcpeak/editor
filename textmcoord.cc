@@ -4,11 +4,13 @@
 #include "textmcoord.h"                // this module
 
 #include "byte-difference.h"           // ByteDifference
+#include "line-number.h"               // LineNumber
 
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-swap.h"            // swap
+#include "smbase/stringb.h"            // stringb
 
 #include <iostream>                    // std::ostream
 
@@ -44,6 +46,13 @@ TextMCoord TextMCoord::plusBytes(ByteDifference n) const
 void TextMCoord::insert(std::ostream &os) const
 {
   os << this->m_line << ':' << this->m_byteIndex;
+}
+
+
+std::string TextMCoord::toLineColNumberString() const
+{
+  return stringb(m_line.toLineNumber() << ':' <<
+                 m_byteIndex.toByteColumnNumber());
 }
 
 

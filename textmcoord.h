@@ -61,6 +61,9 @@ public:      // funcs
   // Insert as "<line>:<byteIndex>".
   void insert(std::ostream &os) const;
 
+  // Return "<line+1>:<byteIndex+1>".
+  std::string toLineColNumberString() const;
+
   operator gdv::GDValue() const;
   explicit TextMCoord(gdv::GDValueParser const &p);
 };

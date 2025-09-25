@@ -14,13 +14,23 @@ using namespace smbase;
 OPEN_ANONYMOUS_NAMESPACE
 
 
+TextMCoord tmc(int li, int bi)
+{
+  return TextMCoord(LineIndex(li), ByteIndex(bi));
+}
+
+
 void test_serialization()
 {
-  TextMCoordRange mcr(
-    TextMCoord(LineIndex(1), ByteIndex(2)),
-    TextMCoord(LineIndex(3), ByteIndex(4)));
+  TextMCoordRange mcr(tmc(1, 2), tmc(3, 4));
 
   gdvnTestRoundtrip(mcr, "MCR(MC(1 2) MC(3 4))");
+}
+
+
+void test_toLineColNumberString()
+{
+  EXPECT_EQ(tmc(1, 2).toLineColNumberString(), "2:3");
 }
 
 
@@ -31,6 +41,7 @@ CLOSE_ANONYMOUS_NAMESPACE
 void test_textmcoord(CmdlineArgsSpan args)
 {
   test_serialization();
+  test_toLineColNumberString();
 }
 
 
