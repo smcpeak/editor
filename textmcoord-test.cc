@@ -34,6 +34,40 @@ void test_toLineColNumberString()
 }
 
 
+void test_rangeContains_orAtCollapsed()
+{
+  EXPECT_FALSE(rangeContains_orAtCollapsed(2, 4, 1));
+  EXPECT_TRUE(rangeContains_orAtCollapsed(2, 4, 2));
+  EXPECT_TRUE(rangeContains_orAtCollapsed(2, 4, 3));
+  EXPECT_FALSE(rangeContains_orAtCollapsed(2, 4, 4));
+
+  EXPECT_FALSE(rangeContains_orAtCollapsed(2, 2, 1));
+  EXPECT_TRUE(rangeContains_orAtCollapsed(2, 2, 2));
+  EXPECT_FALSE(rangeContains_orAtCollapsed(2, 2, 3));
+}
+
+
+void test_contains_orAtCollapsed()
+{
+  {
+    TextMCoordRange mcr(tmc(1, 2), tmc(3, 4));
+    EXPECT_FALSE(mcr.contains_orAtCollapsed(tmc(1, 1)));
+    EXPECT_TRUE(mcr.contains_orAtCollapsed(tmc(1, 2)));
+    EXPECT_TRUE(mcr.contains_orAtCollapsed(tmc(2, 2)));
+    EXPECT_TRUE(mcr.contains_orAtCollapsed(tmc(3, 2)));
+    EXPECT_TRUE(mcr.contains_orAtCollapsed(tmc(3, 3)));
+    EXPECT_FALSE(mcr.contains_orAtCollapsed(tmc(3, 4)));
+  }
+
+  {
+    TextMCoordRange mcr(tmc(1, 2), tmc(1, 2));
+    EXPECT_FALSE(mcr.contains_orAtCollapsed(tmc(1, 1)));
+    EXPECT_TRUE(mcr.contains_orAtCollapsed(tmc(1, 2)));
+    EXPECT_FALSE(mcr.contains_orAtCollapsed(tmc(1, 3)));
+  }
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -42,6 +76,8 @@ void test_textmcoord(CmdlineArgsSpan args)
 {
   test_serialization();
   test_toLineColNumberString();
+  test_rangeContains_orAtCollapsed();
+  test_contains_orAtCollapsed();
 }
 
 

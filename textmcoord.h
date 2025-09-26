@@ -145,6 +145,9 @@ public:      // funcs
     }
   }
 
+  // True if the range contains `tc`, or is collapsed at `tc`.
+  bool contains_orAtCollapsed(TextMCoord tc) const;
+
   // Insert as "<start>-<end>".
   void insert(std::ostream &os) const;
 
@@ -157,6 +160,28 @@ inline std::ostream& operator<< (std::ostream &os, TextMCoordRange const &tcr)
 {
   tcr.insert(os);
   return os;
+}
+
+
+// For a type with relational operators, return true if `value` is in
+// `[start, end)`, or if `start==end==value`.
+template <typename T>
+bool rangeContains_orAtCollapsed(
+  T const &start, T const &end, T const &value)
+{
+  if (start <= value) {
+    if (value < end) {
+      // In the non-collapsed range.
+      return true;
+    }
+
+    if (value == end && value == start) {
+      // At the collapsed range location.
+      return true;
+    }
+  }
+
+  return false;
 }
 
 

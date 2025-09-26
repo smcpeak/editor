@@ -98,6 +98,12 @@ void TextMCoordRange::swapEnds()
 }
 
 
+bool TextMCoordRange::contains_orAtCollapsed(TextMCoord tc) const
+{
+  return rangeContains_orAtCollapsed(m_start, m_end, tc);
+}
+
+
 void TextMCoordRange::insert(std::ostream &os) const
 {
   os << this->m_start << '-' << this->m_end;
