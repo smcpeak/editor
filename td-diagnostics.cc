@@ -208,6 +208,10 @@ TextDocumentDiagnostics::LineEntry::operator gdv::GDValue() const
 }
 
 
+// 2025-09-25: `getDiagnosticAt_orAtCollapsed` now uses the order of
+// `TextMCoordRange`, which is compatible, but makes the order here
+// irrelevant.  This comparator is still used since we return sets of
+// `LineEntry`, but the importance is less clear.
 int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
 {
   auto const &a = *this;
@@ -218,7 +222,7 @@ int TextDocumentDiagnostics::LineEntry::compareTo(LineEntry const &b) const
   // *Larger* end is less, since I want smaller ranges to be considered
   // to come after larger ranges, since then I can say that a range that
   // compares as greater is "better" in the context of
-  // `getDiagnosticAt`.
+  // `getDiagnosticAt` (but see comment above).
   //
   // But, semantically, for the end point, an absent value should be
   // treated as numerically larger (and hence order-wise smaller) than a
@@ -355,6 +359,17 @@ auto TextDocumentDiagnostics::getLineEntries(LineIndex line) const
 }
 
 
+auto TextDocumentDiagnostics::underEntryToDocEntry(
+  TextMCoordMap::DocEntry const &underEntry) const
+  -> DocEntry
+{
+  return DocEntry(
+    underEntry.m_range,
+    &( m_diagnostics.at(underEntry.m_value) )
+  );
+}
+
+
 auto TextDocumentDiagnostics::getAllEntries() const
   -> std::set<DocEntry>
 {
@@ -364,38 +379,30 @@ auto TextDocumentDiagnostics::getAllEntries() const
     m_rangeToDiagIndex.getAllEntries();
 
   for (auto const &underEntry : underEntries) {
-    ret.insert(DocEntry(
-      underEntry.m_range,
-      &( m_diagnostics.at(underEntry.m_value) )
-    ));
+    ret.insert(underEntryToDocEntry(underEntry));
   }
 
   return ret;
 }
 
 
-auto TextDocumentDiagnostics::getDiagnosticAt(TextMCoord tc) const
-  -> RCSerf<TDD_Diagnostic const>
+auto TextDocumentDiagnostics::getDiagnosticAt_orAtCollapsed(
+  TextMCoord tc) const -> std::optional<DocEntry>
 {
-  std::set<LineEntry> lineEntries = getLineEntries(tc.m_line);
+  std::set<TextMCoordMap::DocEntry> underEntries =
+    m_rangeToDiagIndex.getEntriesContaining_orAtCollapsed(tc);
 
-  std::optional<LineEntry> best;
+  if (underEntries.empty()) {
+    // No diagnostic here.
+    return {};
+  }
 
-  // Get the last that contains `tc`; the comparison order of
+  // Get the last one that contains `tc`; the comparison order of
   // `LineEntry` has been designed specifically to work as desired in
   // this context.
-  for (LineEntry const &entry : lineEntries) {
-    if (entry.containsByteIndex(tc.m_byteIndex)) {
-      best = entry;
-    }
-  }
+  auto const &underEntry = underEntries.rbegin().operator*();
 
-  if (best) {
-    return best->m_diagnostic;
-  }
-
-  // Not found.
-  return {};
+  return underEntryToDocEntry(underEntry);
 }
 
 

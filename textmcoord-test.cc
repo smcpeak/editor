@@ -6,7 +6,9 @@
 
 #include "smbase/gdvn-test-roundtrip.h"          // gdvnTestRoundtrip
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-test-order.h"                // checkStrictlyOrdered
 #include "smbase/sm-test.h"                      // EXPECT_EQ
+#include "smbase/vector-util.h"                  // vecArrayToCRefs
 
 using namespace smbase;
 
@@ -66,6 +68,41 @@ void test_contains_orAtCollapsed()
 }
 
 
+void test_range_order()
+{
+  TextMCoordRange ranges[] = {
+    tmcr(0,0, 1,2),
+    tmcr(0,0, 1,1),
+    tmcr(0,0, 1,0),
+    tmcr(0,0, 0,2),
+    tmcr(0,0, 0,1),
+    tmcr(0,0, 0,0),
+
+    tmcr(0,1, 1,2),
+    tmcr(0,1, 1,1),
+    tmcr(0,1, 1,0),
+    tmcr(0,1, 0,2),
+    tmcr(0,1, 0,1),
+
+    tmcr(0,2, 1,2),
+    tmcr(0,2, 1,1),
+    tmcr(0,2, 1,0),
+    tmcr(0,2, 0,2),
+
+    tmcr(1,0, 1,2),
+    tmcr(1,0, 1,1),
+    tmcr(1,0, 1,0),
+
+    tmcr(1,1, 1,2),
+    tmcr(1,1, 1,1),
+
+    tmcr(1,2, 1,2),
+  };
+
+  checkStrictlyOrdered("ranges", vecArrayToCRefs(ranges));
+}
+
+
 CLOSE_ANONYMOUS_NAMESPACE
 
 
@@ -76,6 +113,7 @@ void test_textmcoord(CmdlineArgsSpan args)
   test_toLineColNumberString();
   test_rangeContains_orAtCollapsed();
   test_contains_orAtCollapsed();
+  test_range_order();
 }
 
 

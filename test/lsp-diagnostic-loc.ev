@@ -1,0 +1,39 @@
+// lsp-diagnostic-loc.ev
+// When we go to the main diagnostic location, it is accurate.
+
+{
+  args: ["test/language-test.cc"]
+  includes: ["common-defns.gdvn"]
+  cmds: [
+    lspStartServer()
+    lspOpenFile()
+    lspWaitForStatus("2")
+
+    // Go to first diagnostic.
+    Shortcut("window1.m_menuBar.lspMenu.lspGoToNextDiagnostic" "F8")
+    CheckQuery(editorWidget "cursorPosition" "11:43")
+
+    // Move to a different location that is still in the diagnostic
+    // area.
+    FocusKeyPR("Key_Right" "")
+    FocusKeyPR("Key_Right" "")
+    CheckQuery(editorWidget "cursorPosition" "11:45")
+
+    // Open the diagnostic details.
+    Shortcut("window1.m_menuBar.fileMenu.fileInspectAtCursor" "Ctrl+I")
+    CheckFocusWidget("diagnostic_details.m_splitter.m_table")
+
+    // Go to the location of the main issue.
+    FocusKeyPR("Key_Return" "\r")
+
+    // Close the dialog.
+    FocusKeyPR("Key_Escape" "\u{1B}")
+    CheckFocusWidget(editorWidget)
+
+    // Despite moving the cursor earlier, we are now once again on the
+    // first character of the diagnostic range.
+    CheckQuery(editorWidget "cursorPosition" "11:43")
+  ]
+}
+
+// EOF

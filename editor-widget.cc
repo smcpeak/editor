@@ -2925,9 +2925,9 @@ auto EditorWidget::lspGetDiagnosticAtCursor() -> DiagnosticOrError
   if (TextDocumentDiagnostics const *tdd =
         getDocument()->getDiagnostics()) {
     TextMCoord cursorMC = m_editor->cursorAsModelCoord();
-    if (RCSerf<TDD_Diagnostic const> diag =
-          tdd->getDiagnosticAt(cursorMC)) {
-      return diag;
+    if (std::optional<TDD_DocEntry> diag =
+          tdd->getDiagnosticAt_orAtCollapsed(cursorMC)) {
+      return *diag;
     }
     else {
       return "No diagnostics at cursor.";
@@ -2946,21 +2946,17 @@ FailReasonOpt EditorWidget::lspShowDiagnosticAtCursor(
 
   DiagnosticOrError diagOrError = lspGetDiagnosticAtCursor();
   if (diagOrError.isLeft()) {
-    RCSerf<TDD_Diagnostic const> diag = diagOrError.left();
+    TDD_DocEntry const &diagDocEntry = diagOrError.left();
+    TDD_Diagnostic const *diag = diagDocEntry.m_diagnostic;
 
     // Copy `diag` into a vector of elements for the dialog.
     QVector<DiagnosticElement> elts;
 
     // Primary location and message.
-    TextMCoord cursorMC = m_editor->cursorAsModelCoord();
     DocumentName docName = getDocument()->documentName();
     elts.push_back(DiagnosticElement{
       docName.harn(),
-
-      // TODO: Not right!  The cursor location should come from the
-      // actual diagnostic report.
-      cursorMC,
-
+      diagDocEntry.m_range.m_start,
       diag->m_message
     });
 
@@ -2988,7 +2984,8 @@ FailReasonOpt EditorWidget::lspFixDiagnosticAtCursor()
 {
   DiagnosticOrError diagOrError = lspGetDiagnosticAtCursor();
   if (diagOrError.isLeft()) {
-    RCSerf<TDD_Diagnostic const> diag = diagOrError.left();
+    TDD_DocEntry const &diagDocEntry = diagOrError.left();
+    TDD_Diagnostic const *diag = diagDocEntry.m_diagnostic;
 
     if (diag->m_fixes.empty()) {
       return "There are no proposed fixes.";

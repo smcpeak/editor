@@ -378,11 +378,12 @@ void NamedTextDocument::updateDiagnostics(
 }
 
 
-RCSerf<TDD_Diagnostic const> NamedTextDocument::getDiagnosticAt(
+std::optional<TextDocumentDiagnostics::DocEntry>
+NamedTextDocument::getDiagnosticAt_orAtCollapsed(
   TextMCoord tc) const
 {
   if (m_diagnostics.get()) {
-    return m_diagnostics->getDiagnosticAt(tc);
+    return m_diagnostics->getDiagnosticAt_orAtCollapsed(tc);
   }
   else {
     return {};

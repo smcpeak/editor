@@ -10,11 +10,11 @@
 #include "doc-type.h"                  // DocumentType
 #include "fail-reason-opt.h"           // FailReasonOpt
 #include "hilite.h"                    // Highlighter
-#include "td-diagnostics-fwd.h"        // TextDocumentDiagnostics
+#include "td-diagnostics.h"            // TextDocumentDiagnostics::DocEntry
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 #include "td.h"                        // TextDocument
 
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/str.h"                // string
 
@@ -252,8 +252,10 @@ public:      // funcs
   void removeObservationRecordersBefore(TD_VersionNumber version);
 
   // Get diagnostic at `tc`.  See
-  // `TextDocumentDiagnostics::getDiagnosticAt` for details.
-  RCSerf<TDD_Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
+  // `TextDocumentDiagnostics::getDiagnosticAt_orAtCollapsed` for
+  // details.
+  std::optional<TextDocumentDiagnostics::DocEntry>
+  getDiagnosticAt_orAtCollapsed(TextMCoord tc) const;
 
   // We sent the current contents and version to an LSP server.  Begin
   // tracking subsequent document changes so that (1) when the

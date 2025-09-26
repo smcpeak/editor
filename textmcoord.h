@@ -104,6 +104,11 @@ public:      // funcs
 
   TextMCoordRange& operator= (TextMCoordRange const &obj);
 
+  // For a range, the order is lexicographic, except the order of the
+  // second element (`m_end`) is reversed.  That way, whenever one range
+  // is contained in another, the larger one is always considered to be
+  // less than the smaller one.  This can be interpreted as
+  // "specificity", as the more specific range comes later.
   DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(TextMCoordRange)
 
   // Both coordinates are zero.

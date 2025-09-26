@@ -96,6 +96,11 @@ public:      // methods
 };
 
 
+// TODO: Move `DocEntry` out here as `TDD_DocEntry` so it can be
+// forward-declared and used as such in `named-td.h`.  Or rather, figure
+// out a better name for both it and `TDD_Diagnostic`.
+
+
 // A set of `(TextMCoordRange, TDD_Diagnostic)` tuples, stored in a way
 // that allows efficient incremental updating when the document changes.
 //
@@ -115,8 +120,15 @@ public:      // types
   // `m_diagnostics`.
   typedef TextMCoordMap::Value DiagnosticIndex;
 
-  // One mapping, with document-wide boundary scope.  That is, this is
-  // logically what this data structure contains a set of.
+  /* One mapping, with document-wide boundary scope.  That is, this is
+     logically what this data structure contains a set of.
+
+     When a `DocEntry` object is returned from an API call,
+     `m_diagnostic` points into the internal data of the
+     `TextDocumentDiagnostics`, and can be deallocated any time the
+     diagnostics change.  Consequently, the client should not store such
+     `DocEntry` objects, but rather use them and then discard them.
+  */
   class DocEntry {
   public:      // data
     // Range of text the diagnostic pertains to.
@@ -187,6 +199,12 @@ private:     // data
   // [0, m_diagnostics.size()-1].
   TextMCoordMap m_rangeToDiagIndex;
 
+private:     // methods
+  // Convert a `DocEntry` from the underlying index to a `DocEntry` that
+  // we can export to our client.
+  DocEntry underEntryToDocEntry(
+    TextMCoordMap::DocEntry const &underEntry) const;
+
 public:      // methods
   ~TextDocumentDiagnostics();
 
@@ -241,12 +259,12 @@ public:      // methods
   // Return all entries for the entire document.
   std::set<DocEntry> getAllEntries() const;
 
-  // If there is a diagnostic containing `coord`, return a pointer to
-  // it.  This pointer becomes invalid if the diagnostics change, so
-  // must be immediately used and then discarded.  If there is none,
-  // return a null pointer.  If there is more than one, first prefer one
-  // with a closer start, then a closer end, then resolve arbitrarily.
-  RCSerf<TDD_Diagnostic const> getDiagnosticAt(TextMCoord tc) const;
+  // If there is a diagnostic containing `coord`, or one with a
+  // collapsed range at `tc`, return it.  If there is more than one,
+  // first prefer one with a closer start, then a closer end, then
+  // resolve arbitrarily.
+  std::optional<DocEntry> getDiagnosticAt_orAtCollapsed(
+    TextMCoord tc) const;
 
   // If there is a diagnostic that starts after `tc`, return the start
   // location of the one closest to `tc`; otherwise nullopt.

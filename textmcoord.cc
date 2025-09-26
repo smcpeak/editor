@@ -88,8 +88,10 @@ int TextMCoordRange::compareTo(TextMCoordRange const &b) const
 {
   auto const &a = *this;
   RET_IF_COMPARE_MEMBERS(m_start);
-  RET_IF_COMPARE_MEMBERS(m_end);
-  return 0;
+
+  // Flip the order of the end comparison so that a larger range always
+  // compares as less than a smaller range when they overlap.
+  return -COMPARE_MEMBERS(m_end);
 }
 
 

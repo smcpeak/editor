@@ -31,6 +31,7 @@
 #include "named-td.h"                            // NamedTextDocument
 #include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
 #include "styledb.h"                             // TextCategoryAndStyle, EditorFontSet
+#include "td-diagnostics.h"                      // TextDocumentDiagnostics::DocEntry
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategoryAOAs
@@ -94,8 +95,10 @@ public:      // types
     LSPFO_CLOSE,             // Close the file.
   };
 
+  using TDD_DocEntry =
+    TextDocumentDiagnostics::DocEntry;
   using DiagnosticOrError =
-    smbase::Either<RCSerf<TDD_Diagnostic const>, std::string>;
+    smbase::Either<TDD_DocEntry, std::string>;
 
 public:     // static data
   // Instances created minus instances destroyed.

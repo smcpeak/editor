@@ -84,14 +84,36 @@ void testOneGetDiagnosticsAt(
   EXN_CONTEXT_EXPR(line);
   EXN_CONTEXT_EXPR(byteIndex);
 
-  RCSerf<TDD_Diagnostic const> actual =
-    tdd.getDiagnosticAt(TextMCoord(LineIndex(line), ByteIndex(byteIndex)));
+  std::optional<TextDocumentDiagnostics::DocEntry> actual =
+    tdd.getDiagnosticAt_orAtCollapsed(tmc(line, byteIndex));
 
-  EXPECT_EQ(actual==nullptr, expect==nullptr);
+  EXPECT_EQ(actual==std::nullopt, expect==nullptr);
 
   if (expect) {
-    EXPECT_EQ(actual->m_message, expect);
+    EXPECT_EQ(actual->m_diagnostic->m_message, expect);
   }
+}
+
+
+// Similar to above, but expect the diagnostic to be found and to have
+// the specified range.
+void testOneGetDiagnosticsAt(
+  TextDocumentDiagnostics const &tdd,
+  int line,
+  int byteIndex,
+  char const *expectMessage,
+  int sl, int sb, int el, int eb)
+{
+  EXN_CONTEXT_EXPR(line);
+  EXN_CONTEXT_EXPR(byteIndex);
+
+  std::optional<TextDocumentDiagnostics::DocEntry> actual =
+    tdd.getDiagnosticAt_orAtCollapsed(tmc(line, byteIndex));
+
+  EXPECT_TRUE(actual.has_value());
+
+  EXPECT_EQ(actual->m_diagnostic->m_message, expectMessage);
+  EXPECT_EQ_GDVSER(actual->m_range, tmcr(sl, sb, el, eb));
 }
 
 
@@ -232,19 +254,19 @@ void test_TDD_getDiagnosticAt()
 
   testOneGetDiagnosticsAt(tdd, 0,0, nullptr);
   testOneGetDiagnosticsAt(tdd, 0,2, nullptr);
-  testOneGetDiagnosticsAt(tdd, 0,3, "1");
-  testOneGetDiagnosticsAt(tdd, 0,4, "1");
-  testOneGetDiagnosticsAt(tdd, 0,5, "1");
+  testOneGetDiagnosticsAt(tdd, 0,3, "1",         0,3, 0,6);
+  testOneGetDiagnosticsAt(tdd, 0,4, "1",         0,3, 0,6);
+  testOneGetDiagnosticsAt(tdd, 0,5, "1",         0,3, 0,6);
   testOneGetDiagnosticsAt(tdd, 0,6, nullptr);
   testOneGetDiagnosticsAt(tdd, 0,10, nullptr);
-  testOneGetDiagnosticsAt(tdd, 0,11, "2");
-  testOneGetDiagnosticsAt(tdd, 0,15, "2");
+  testOneGetDiagnosticsAt(tdd, 0,11, "2",        0,11, 0,16);
+  testOneGetDiagnosticsAt(tdd, 0,15, "2",        0,11, 0,16);
   testOneGetDiagnosticsAt(tdd, 0,16, nullptr);
 
   testOneGetDiagnosticsAt(tdd, 1,3, nullptr);
 
   testOneGetDiagnosticsAt(tdd, 2,1, nullptr);
-  testOneGetDiagnosticsAt(tdd, 2,2, "3");
+  testOneGetDiagnosticsAt(tdd, 2,2, "3",         2,2, 2,17);
   testOneGetDiagnosticsAt(tdd, 2,4, "3");
   testOneGetDiagnosticsAt(tdd, 2,5, "4");
   testOneGetDiagnosticsAt(tdd, 2,7, "4");
@@ -266,16 +288,16 @@ void test_TDD_getDiagnosticAt()
   testOneGetDiagnosticsAt(tdd, 3,18, nullptr);
 
   testOneGetDiagnosticsAt(tdd, 4,9, nullptr);
-  testOneGetDiagnosticsAt(tdd, 4,10, "9");
+  testOneGetDiagnosticsAt(tdd, 4,10, "9",        4,10, 4,10);
   testOneGetDiagnosticsAt(tdd, 4,11, nullptr);
 
   testOneGetDiagnosticsAt(tdd, 5,5, nullptr);
-  testOneGetDiagnosticsAt(tdd, 5,6, "10");
+  testOneGetDiagnosticsAt(tdd, 5,6, "10",        5,6, 6,18);
   testOneGetDiagnosticsAt(tdd, 5,10, "10");
   testOneGetDiagnosticsAt(tdd, 5,11, "11");
   testOneGetDiagnosticsAt(tdd, 5,14, "11");
   testOneGetDiagnosticsAt(tdd, 5,15, "10");
-  testOneGetDiagnosticsAt(tdd, 6,2, "10");
+  testOneGetDiagnosticsAt(tdd, 6,2, "10",        5,6, 6,18);
   testOneGetDiagnosticsAt(tdd, 6,3, "12");
   testOneGetDiagnosticsAt(tdd, 6,6, "12");
   testOneGetDiagnosticsAt(tdd, 6,7, "10");
