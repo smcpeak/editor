@@ -123,6 +123,9 @@ public:      // types
 
     void selfCheck() const;
 
+    // True if `m_range` contains `tc`, or is collapsed at `tc`.
+    bool contains_orAtCollapsed(TextMCoord tc) const;
+
     operator gdv::GDValue() const;
 
     DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(DocEntry)
@@ -184,6 +187,13 @@ private:     // types
       ByteIndex startByteIndex, ByteIndex endByteIndex, Value value);
 
     void selfCheck() const;
+
+    // True if this span contains `bi`, or the span is zero-length and
+    // `bi` is the collapsed location.
+    bool containsByteIndex_orAtCollapsed(ByteIndex bi) const;
+
+    // Make a `DocEntry` for this span, assuming it is on `line`.
+    DocEntry makeDocEntry(LineIndex line) const;
 
     operator gdv::GDValue() const;
 
@@ -291,6 +301,9 @@ private:     // types
   // Array of owner pointers to `LineData`.
   typedef LineGapArray<LineData * NULLABLE /*owner*/> LineDataGapArray;
 
+  // A line index and a relevant boundary found on that line.
+  using LineAndBoundary = std::pair<LineIndex, Boundary const &>;
+
 private:     // data
   // Set of values that are part of some range.
   //
@@ -360,6 +373,24 @@ private:     // methods
   //
   // Requires: maxNumLines > 0
   void confineLineIndices(PositiveLineCount maxNumLines);
+
+  // Given that there is a value end or continuation for `value` on
+  // `seedLineIndex`, search for and return its end point.
+  LineAndBoundary findStartBoundary(
+    LineIndex seedLineIndex, Value value) const;
+
+  // Given that there is a value start or continuation for `value` on
+  // `seedLineIndex`, search for and return its end point.
+  LineAndBoundary findEndBoundary(
+    LineIndex seedLineIndex, Value value) const;
+
+  // Given the boundaries for a common value, return a single `DocEntry`
+  // for the entire span.
+  DocEntry makeDocEntryFromBoundaries(
+    LineAndBoundary start, LineAndBoundary end) const;
+
+  // Build a coordinate from a `LineAndBoundary`.
+  static TextMCoord labToTMC(LineAndBoundary lab);
 
 public:      // methods
   ~TextMCoordMap();
@@ -489,6 +520,11 @@ public:      // methods
   // been no text changes, this will return exactly the set of entries
   // that have been passed to `insert`.)
   std::set<DocEntry> getAllEntries() const;
+
+  // Get the set of entries that contain `tc`, or have a collapsed range
+  // at `tc`.
+  std::set<DocEntry> getEntriesContaining_orAtCollapsed(
+    TextMCoord tc) const;
 
   // Get the set of values that are mapped.
   std::set<Value> getMappedValues() const;

@@ -9,6 +9,7 @@
 #include "textmcoord-map.h"                      // this module
 
 #include "td-core.h"                             // TextDocumentCore
+#include "textmcoord.h"                          // TextMCoord[Range], rangeContains_orAtCollapsed
 
 #include "smbase/chained-cond.h"                 // smbase::cc::{z_le_lt, etc.}
 #include "smbase/compare-util-iface.h"           // RET_IF_COMPARE_MEMBERS
@@ -44,6 +45,13 @@ TextMCoordMap::DocEntry::DocEntry(TextMCoordRange range, Value value)
 void TextMCoordMap::DocEntry::selfCheck() const
 {
   xassert(m_range.m_start <= m_range.m_end);
+}
+
+
+bool TextMCoordMap::DocEntry::contains_orAtCollapsed(
+  TextMCoord tc) const
+{
+  return m_range.contains_orAtCollapsed(tc);
 }
 
 
@@ -153,6 +161,27 @@ void TextMCoordMap::SingleLineSpan::selfCheck() const
 {
   xassert(0 <= m_startByteIndex);
   xassert(     m_startByteIndex <= m_endByteIndex);
+}
+
+
+bool TextMCoordMap::SingleLineSpan::containsByteIndex_orAtCollapsed(
+  ByteIndex bi) const
+{
+  return rangeContains_orAtCollapsed(
+    m_startByteIndex, m_endByteIndex, bi);
+}
+
+
+auto TextMCoordMap::SingleLineSpan::makeDocEntry(
+  LineIndex line) const -> DocEntry
+{
+  return DocEntry(
+    TextMCoordRange(
+      TextMCoord(line, m_startByteIndex),
+      TextMCoord(line, m_endByteIndex)
+    ),
+    m_value
+  );
 }
 
 
@@ -1264,14 +1293,7 @@ auto TextMCoordMap::getAllEntries() const -> std::set<DocEntry>
     if (LineData const *lineData = getLineDataC(line)) {
 
       for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
-        ret.insert(
-          DocEntry(
-            TextMCoordRange(
-              TextMCoord(line, span.m_startByteIndex),
-              TextMCoord(line, span.m_endByteIndex)
-            ),
-            span.m_value
-          ));
+        ret.insert(span.makeDocEntry(line));
       }
 
       for (Boundary const &b : lineData->m_startsHere) {
@@ -1298,6 +1320,127 @@ auto TextMCoordMap::getAllEntries() const -> std::set<DocEntry>
   }
 
   xassert(openSpans.empty());
+
+  return ret;
+}
+
+
+auto TextMCoordMap::findStartBoundary(
+  LineIndex seedLineIndex, Value value) const -> LineAndBoundary
+{
+  for (LineIndex line = seedLineIndex.pred();
+       true;
+       --line) {
+    LineData const *lineData = getLineDataC(line);
+
+    // There must be line data here if there was an end or continuation
+    // at `seedLineIndex`.
+    xassert(lineData);
+
+    for (Boundary const &b : lineData->m_startsHere) {
+      if (b.m_value == value) {
+        return {line, b};
+      }
+    }
+
+    // `LineIndex` is not allowed to go negative, so we have to check
+    // for zero before decrementing.
+    if (line.isZero()) {
+      break;
+    }
+  }
+
+  xfailure("findStartBoundary: missed the end!");
+
+  // Not reached.
+}
+
+
+auto TextMCoordMap::findEndBoundary(
+  LineIndex seedLineIndex, Value value) const -> LineAndBoundary
+{
+  for (LineIndex line = seedLineIndex.succ();
+       line < numLinesWithData();
+       ++line) {
+    LineData const *lineData = getLineDataC(line);
+
+    // There must be line data here if there was a start or continuation
+    // at `seedLineIndex`.
+    xassert(lineData);
+
+    for (Boundary const &b : lineData->m_endsHere) {
+      if (b.m_value == value) {
+        return {line, b};
+      }
+    }
+  }
+
+  xfailure("findEndBoundary: missed the end!");
+
+  // Not reached.
+}
+
+
+auto TextMCoordMap::makeDocEntryFromBoundaries(
+  LineAndBoundary start, LineAndBoundary end) const -> DocEntry
+{
+  xassertPrecondition(start.second.m_value == end.second.m_value);
+
+  return DocEntry(
+    TextMCoordRange(
+      labToTMC(start),
+      labToTMC(end)),
+    start.second.m_value);
+}
+
+
+/*static*/ TextMCoord TextMCoordMap::labToTMC(LineAndBoundary lab)
+{
+  return TextMCoord(lab.first, lab.second.m_byteIndex);
+}
+
+
+auto TextMCoordMap::getEntriesContaining_orAtCollapsed(
+  TextMCoord tc) const -> std::set<DocEntry>
+{
+  std::set<DocEntry> ret;
+
+  LineData const *lineData = getLineDataC(tc.m_line);
+  if (!lineData) {
+    return ret;
+  }
+
+  for (SingleLineSpan const &span : lineData->m_singleLineSpans) {
+    if (span.containsByteIndex_orAtCollapsed(tc.m_byteIndex)) {
+      ret.insert(span.makeDocEntry(tc.m_line));
+    }
+  }
+
+  for (Boundary const &start : lineData->m_startsHere) {
+    if (start.m_byteIndex <= tc.m_byteIndex) {
+      // Find the corresponding end location.
+      LineAndBoundary end = findEndBoundary(tc.m_line, start.m_value);
+
+      ret.insert(makeDocEntryFromBoundaries({tc.m_line, start}, end));
+    }
+  }
+
+  for (Value value : lineData->m_continuesHere) {
+    // Find the start and end locations.
+    LineAndBoundary start = findStartBoundary(tc.m_line, value);
+    LineAndBoundary end = findEndBoundary(tc.m_line, value);
+
+    ret.insert(makeDocEntryFromBoundaries(start, end));
+  }
+
+  for (Boundary const &end : lineData->m_endsHere) {
+    if (tc.m_byteIndex < end.m_byteIndex) {
+      // Find the corresponding start location.
+      LineAndBoundary start = findStartBoundary(tc.m_line, end.m_value);
+
+      ret.insert(makeDocEntryFromBoundaries(start, {tc.m_line, end}));
+    }
+  }
 
   return ret;
 }

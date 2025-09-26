@@ -87,6 +87,58 @@ public:      // methods
 OPEN_ANONYMOUS_NAMESPACE
 
 
+TextMCoord tmc(int l, int b)
+{
+  return TextMCoord(LineIndex(l), ByteIndex(b));
+}
+
+
+// Adjust `mc` by `amt`, capping at relevant boundaries.  This is just
+// meant to compute a nearby location if possible for probing purposes.
+TextMCoord incMC(TextMCoord mc, int amt)
+{
+  if (amt < 0) {
+    if (mc.m_byteIndex < -amt) {
+      if (mc.m_line == 0) {
+        // At start, return zero.
+        return TextMCoord();
+      }
+      else {
+        // Go to previous line.
+        return TextMCoord(mc.m_line.pred(), mc.m_byteIndex);
+      }
+    }
+  }
+
+  return TextMCoord(mc.m_line, ByteIndex(mc.m_byteIndex.get() + amt));
+}
+
+
+TextMCoordRange tmcr(int sl, int sb, int el, int eb)
+{
+  return TextMCoordRange(
+    TextMCoord(LineIndex(sl), ByteIndex(sb)),
+    TextMCoord(LineIndex(el), ByteIndex(eb)));
+}
+
+
+void test_DocEntry_contains_orAtCollapsed()
+{
+  {
+    TextMCoordMap::DocEntry de(tmcr(1, 2, 3, 4), 5);
+    EXPECT_FALSE(de.contains_orAtCollapsed(tmc(1, 1)));
+    EXPECT_TRUE(de.contains_orAtCollapsed(tmc(1, 2)));
+  }
+
+  {
+    TextMCoordMap::DocEntry de(tmcr(1, 2, 1, 2), 5);
+    EXPECT_FALSE(de.contains_orAtCollapsed(tmc(1, 1)));
+    EXPECT_TRUE(de.contains_orAtCollapsed(tmc(1, 2)));
+    EXPECT_FALSE(de.contains_orAtCollapsed(tmc(1, 3)));
+  }
+}
+
+
 void test_lineData()
 {
   TextMCoordMap_LineData_Tester tester;
@@ -423,6 +475,20 @@ public:
     return m_entries;
   }
 
+  std::set<DocEntry> getEntriesContaining_orAtCollapsed(
+    TextMCoord tc) const
+  {
+    std::set<DocEntry> ret;
+
+    for (DocEntry const &e : m_entries) {
+      if (e.contains_orAtCollapsed(tc)) {
+        ret.insert(e);
+      }
+    }
+
+    return ret;
+  }
+
   std::set<Value> getMappedValues() const
   {
     std::set<Value> ret;
@@ -462,7 +528,38 @@ void checkSame(TextMCoordMap const &m, ReferenceMap const &r)
 
   // But then also compare without the conversion.  I don't know why
   // this would ever fail if the above succeeded, but it won't hurt.
-  xassert(m.getAllEntries() == r.getAllEntries());
+  std::set<TextMCoordMap::DocEntry> actualEntries = m.getAllEntries();
+  xassert(actualEntries == r.getAllEntries());
+
+  // Probe the perimeter locations of every entry to test the behavior
+  // of `getEntriesContaining_orAtCollapsed`.  That function should
+  // behave the same for *all* coordinates, but probing them all would
+  // be fairly expensive, and the boundaries are probably sufficient.
+  for (auto const &entry : actualEntries) {
+    EXN_CONTEXT(toGDValue(entry));
+
+    auto probe = [&m, &r](TextMCoord tc) {
+      EXN_CONTEXT(tc);
+
+      EXPECT_EQ_GDVSER(
+        m.getEntriesContaining_orAtCollapsed(tc),
+        r.getEntriesContaining_orAtCollapsed(tc));
+    };
+
+    probe(incMC(entry.m_range.m_start, -1));
+    probe(incMC(entry.m_range.m_start,  0));
+    probe(incMC(entry.m_range.m_start, +1));
+
+    probe(incMC(entry.m_range.m_end, -1));
+    probe(incMC(entry.m_range.m_end,  0));
+    probe(incMC(entry.m_range.m_end, +1));
+
+    if (entry.m_range.m_start < entry.m_range.m_end) {
+      // Probe the second line of a multiline range.
+      probe(TextMCoord(entry.m_range.m_start.m_line.succ(),
+                       entry.m_range.m_start.m_byteIndex));
+    }
+  }
 
   for (LineIndex i(0); i < r.numLinesWithData(); ++i) {
     EXN_CONTEXT_EXPR(i);
@@ -617,6 +714,12 @@ public:      // methods
     return m_sut.getAllEntries();
   }
 
+  std::set<DocEntry> getEntriesContaining_orAtCollapsed(
+    TextMCoord tc) const
+  {
+    return m_sut.getEntriesContaining_orAtCollapsed(tc);
+  }
+
   std::set<Value> getMappedValues() const
   {
     return m_sut.getMappedValues();
@@ -687,14 +790,6 @@ void checkLineEntriesRoundtrip(MapPair const &m)
     EXPECT_EQ(toGDValue(after), v);
     xassert(after == lineEntries);
   }
-}
-
-
-static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
-{
-  return TextMCoordRange(
-    TextMCoord(LineIndex(sl), ByteIndex(sb)),
-    TextMCoord(LineIndex(el), ByteIndex(eb)));
 }
 
 
@@ -950,12 +1045,6 @@ void test_commentsExample()
 std::string allEntriesString(MapPair const &m)
 {
   return toGDValue(m.getAllEntries()).asIndentedString();
-}
-
-
-static TextMCoord tmc(int l, int b)
-{
-  return TextMCoord(LineIndex(l), ByteIndex(b));
 }
 
 
@@ -1802,6 +1891,7 @@ void test_textmcoord_map(CmdlineArgsSpan args)
   }
 
   RUN_TEST(test_repro);
+  RUN_TEST(test_DocEntry_contains_orAtCollapsed);
   RUN_TEST(test_lineData);
   RUN_TEST(test_editEmpty);
   RUN_TEST(test_commentsExample);
