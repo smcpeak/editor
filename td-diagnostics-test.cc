@@ -23,6 +23,10 @@ using namespace smbase;
 OPEN_ANONYMOUS_NAMESPACE
 
 
+// Get `tmc` and `tmcr`.
+using namespace textmcoord_test;
+
+
 void testOneContainsByteIndex(
   std::optional<int> startByteIndex,
   std::optional<int> endByteIndex,
@@ -165,14 +169,6 @@ public:      // methods
     TextDocumentDiagnosticsUpdater::selfCheck();
   }
 };
-
-
-static TextMCoordRange tmcr(int sl, int sb, int el, int eb)
-{
-  return TextMCoordRange(
-    TextMCoord(LineIndex(sl), ByteIndex(sb)),
-    TextMCoord(LineIndex(el), ByteIndex(eb)));
-}
 
 
 // This also tests next/previous diagnostic navigation.

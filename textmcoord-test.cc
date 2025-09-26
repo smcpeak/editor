@@ -14,10 +14,8 @@ using namespace smbase;
 OPEN_ANONYMOUS_NAMESPACE
 
 
-TextMCoord tmc(int li, int bi)
-{
-  return TextMCoord(LineIndex(li), ByteIndex(bi));
-}
+// Get `tmc` and `tmcr`.
+using namespace textmcoord_test;
 
 
 void test_serialization()

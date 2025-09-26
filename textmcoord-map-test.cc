@@ -87,10 +87,8 @@ public:      // methods
 OPEN_ANONYMOUS_NAMESPACE
 
 
-TextMCoord tmc(int l, int b)
-{
-  return TextMCoord(LineIndex(l), ByteIndex(b));
-}
+// Get `tmc` and `tmcr`.
+using namespace textmcoord_test;
 
 
 // Adjust `mc` by `amt`, capping at relevant boundaries.  This is just
@@ -111,14 +109,6 @@ TextMCoord incMC(TextMCoord mc, int amt)
   }
 
   return TextMCoord(mc.m_line, ByteIndex(mc.m_byteIndex.get() + amt));
-}
-
-
-TextMCoordRange tmcr(int sl, int sb, int el, int eb)
-{
-  return TextMCoordRange(
-    TextMCoord(LineIndex(sl), ByteIndex(sb)),
-    TextMCoord(LineIndex(el), ByteIndex(eb)));
 }
 
 

@@ -185,4 +185,16 @@ bool rangeContains_orAtCollapsed(
 }
 
 
+// Convenience functions meant to be imported by test code in order to
+// reduce verbosity there.  Non-test code should use the usual
+// constructors for the additional type safety.
+namespace textmcoord_test {
+  // Build a `TextMCoord` from a pair of integers.
+  TextMCoord tmc(int l, int b);
+
+  // Build a `TextMCoordRange` from a quad of integers.
+  TextMCoordRange tmcr(int sl, int sb, int el, int eb);
+}
+
+
 #endif // EDITOR_TEXTMCOORD_H

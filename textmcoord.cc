@@ -9,6 +9,7 @@
 #include "smbase/compare-util.h"       // RET_IF_COMPARE_MEMBERS
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/sm-macros.h"          // OPEN_NAMESPACE
 #include "smbase/sm-swap.h"            // swap
 #include "smbase/stringb.h"            // stringb
 
@@ -126,6 +127,27 @@ TextMCoordRange::TextMCoordRange(GDValueParser const &p)
 {
   p.checkTaggedTupleSize("MCR", 2);
 }
+
+
+// -------------------------- textmcoord_test --------------------------
+OPEN_NAMESPACE(textmcoord_test)
+
+
+TextMCoord tmc(int l, int b)
+{
+  return TextMCoord(LineIndex(l), ByteIndex(b));
+}
+
+
+TextMCoordRange tmcr(int sl, int sb, int el, int eb)
+{
+  return TextMCoordRange(
+    TextMCoord(LineIndex(sl), ByteIndex(sb)),
+    TextMCoord(LineIndex(el), ByteIndex(eb)));
+}
+
+
+CLOSE_NAMESPACE(textmcoord_test)
 
 
 // EOF
