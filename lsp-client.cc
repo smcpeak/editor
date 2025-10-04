@@ -687,8 +687,14 @@ void LSPClient::configureCommandRunner(LSPClientScope const &scope)
       }
       m_commandRunner->setArguments(args);
 
-      // For the moment I am using a Cygwin `pylsp`.
-      m_uriPathSemantics = URIPathSemantics::CYGWIN;
+      // For the moment I am using a Cygwin `pylsp`, so make that the
+      // default.
+      static bool const pylspIsCygwin =
+        bool(envAsIntOr(1, "SM_EDITOR_PYLSP_IS_CYGWIN"));
+      m_uriPathSemantics =
+        pylspIsCygwin?
+          URIPathSemantics::CYGWIN :
+          URIPathSemantics::NORMAL;
     }
 
     else {
