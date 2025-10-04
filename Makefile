@@ -166,7 +166,7 @@ TOCLEAN += *.gen.*
 
 # Encode help files as C string literals.
 %.doc.gen.cc %.doc.gen.h: doc/%.txt
-	perl $(SMBASE)/file-to-strlit.pl doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
+	$(PYTHON3) $(SMBASE)/file-to-strlit.py doc_$* $^ $*.doc.gen.h $*.doc.gen.cc
 
 # Run astgen to generate C++ data classes.
 %.ast.gen.fwd.h %.ast.gen.h %.ast.gen.cc: %.ast $(ASTGEN)/astgen.exe
@@ -477,10 +477,8 @@ endif
 endif
 
 # I do not use the generated header file but the generated .cc wants it.
-#
-# TODO: I should change file-to-strlit.pl so it can avoid making that.
 git-version.gen.cc: git-version.gen.txt
-	perl $(SMBASE)/file-to-strlit.pl editor_git_version $^ git-version.gen.h $@
+	$(PYTHON3) $(SMBASE)/file-to-strlit.py editor_git_version $^ - $@
 
 TOCLEAN += git-version.gen.*
 
