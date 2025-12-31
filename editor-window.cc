@@ -661,6 +661,11 @@ void EditorWindow::buildMenu()
     }
   }
 
+  // Allow the menu bar to get smaller than the sum of all its labels.
+  // This is needed for test/screenshot1.ev when running on a high-DPI
+  // display.
+  this->m_menuBar->setMinimumWidth(200);
+
   #undef CHECKABLE_ACTION
   #undef CHECKABLE_ACTION_KEY
 }

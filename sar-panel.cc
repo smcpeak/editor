@@ -143,6 +143,11 @@ SearchAndReplacePanel::SearchAndReplacePanel(QWidget *parent,
     m_helpButton->setText("?");
     QObject::connect(m_helpButton, &QToolButton::clicked,
                      this, &SearchAndReplacePanel::slot_help);
+
+    // For test/search-hits-with-tab.ev, on a high-DPI display, I need
+    // the combo boxes to be able to be fairly narrow.
+    m_findBox->setMinimumWidth(50);
+    m_replBox->setMinimumWidth(50);
   }
 }
 
