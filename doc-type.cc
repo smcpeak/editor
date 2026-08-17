@@ -23,6 +23,7 @@ DEFINE_ENUMERATION_TO_STRING_OR(
     "DT_OCAML",
     "DT_PYTHON",
     "DT_DIFF",
+    "DT_LUA",
   ),
   "DT_invalid"
 )
@@ -54,6 +55,7 @@ char const *languageName(DocumentType sl)
       "OCaml",
       "Python",
       "Unified diff",
+      "Lua",
     ),
     sl,
     "<invalid language>"

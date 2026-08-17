@@ -239,6 +239,13 @@ DocumentType detectDocumentType(DocumentName const &docName)
     if (stringAmong(ext, pythonExts, TABLESIZE(pythonExts))) {
       return DocumentType::DT_PYTHON;
     }
+
+    static char const * const luaExts[] = {
+      "lua",
+    };
+    if (stringAmong(ext, luaExts, TABLESIZE(luaExts))) {
+      return DocumentType::DT_LUA;
+    }
   }
 
   if (endsWith(filename, "Makefile")) {

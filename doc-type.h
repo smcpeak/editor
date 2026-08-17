@@ -19,11 +19,12 @@ enum class DocumentType : int {
 
   DT_C_LIKE,                 // C-like for highlighting only.
   DT_CPP,                    // C++; can use `clangd` language services.
-  DT_MAKEFILE,
+  DT_MAKEFILE,               // Makefile with GNU extensions.
   DT_HASH_COMMENT,           // Something that uses '#' for comments.
-  DT_OCAML,
+  DT_OCAML,                  // OCaml.
   DT_PYTHON,                 // Can use `pylsp` language services.
   DT_DIFF,                   // Unified `diff` output.
+  DT_LUA,                    // Lua.
 
   NUM_KNOWN_DOCUMENT_TYPES
 };

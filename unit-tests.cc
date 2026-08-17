@@ -119,6 +119,7 @@ static void entry(int argc, char **argv)
 
   RUN_TEST(c_hilite);                  // deps: bufferlinesource, textcategory
   RUN_TEST(hashcomment_hilite);        // deps: bufferlinesource, textcategory
+  RUN_TEST(lua_hilite);                // deps: bufferlinesource, textcategory
   RUN_TEST(makefile_hilite);           // deps: bufferlinesource, textcategory
   RUN_TEST(ocaml_hilite);              // deps: bufferlinesource, textcategory
   RUN_TEST(python_hilite);             // deps: bufferlinesource, textcategory

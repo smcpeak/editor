@@ -41,6 +41,7 @@ void test_lsp_conv(CmdlineArgsSpan args);
 void test_lsp_data(CmdlineArgsSpan args);
 void test_lsp_get_code_lines(CmdlineArgsSpan args);
 void test_lsp_version_number(CmdlineArgsSpan args);
+void test_lua_hilite(CmdlineArgsSpan args);
 void test_makefile_hilite(CmdlineArgsSpan args);
 void test_named_td(CmdlineArgsSpan args);
 void test_named_td_editor(CmdlineArgsSpan args);

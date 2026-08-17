@@ -6,6 +6,7 @@
 #include "c_hilite.h"                  // C_Highlighter
 #include "diff-hilite.h"               // DiffHighlighter
 #include "doc-type.h"                  // DocumentType
+#include "lua_hilite.h"                // Lua_Highlighter
 #include "hashcomment_hilite.h"        // HashComment_Highlighter
 #include "makefile_hilite.h"           // Makefile_Highlighter
 #include "ocaml_hilite.h"              // OCaml_Highlighter
@@ -40,6 +41,9 @@ std::unique_ptr<Highlighter> makeHighlighterForLanguage(
 
     case DocumentType::DT_DIFF:
       return std::make_unique<DiffHighlighter>();
+
+    case DocumentType::DT_LUA:
+      return std::make_unique<Lua_Highlighter>(core);
   }
 }
 
