@@ -68,7 +68,10 @@ void VFS_ConnectionsTest::waitForConnection(HostName const &hostName)
     m_eventLoop.exec();
   }
   if (!m_vfsConnections.isReady(hostName)) {
-    xfatal("connection to " << hostName << " not ready");
+    VFS_AbstractConnections::ConnectionState cs =
+      m_vfsConnections.connectionState(hostName);
+    xfatal("connection to " << hostName << " not ready; "
+           "its state is " << toString(cs));
   }
 }
 
@@ -274,8 +277,13 @@ void VFS_ConnectionsTest::on_vfsReplyAvailable(
 void VFS_ConnectionsTest::on_vfsFailed(
   HostName hostName, string reason) NOEXCEPT
 {
-  DIAG("connection lost: host=" << hostName <<
-       " reason: " << reason);
+  // The test infrastructure doesn't have a better way to report
+  // connection errors than just printing them and then letting the
+  // harness notice the connection isn't ready.
+  std::cout <<
+    "connection lost: host=" << hostName <<
+    " reason: " << reason << std::endl;
+
   m_eventLoop.exit();
 }
 

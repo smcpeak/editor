@@ -590,6 +590,8 @@ void VFS_Connections::on_vfsFailureAvailable() NOEXCEPT
 
   if (Connection *c = signalRecipientConnection()) {
     string reason = c->m_fsQuery->getFailureReason();
+    TRACE("VFS_Connections", "reason: " << reason);
+
     c->m_currentRequestID = 0;
     xassert(connectionFailed(c->m_hostName));
 

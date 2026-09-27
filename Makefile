@@ -394,15 +394,29 @@ all: editor-fs-server.exe
 # Optionally run tests that use SSH to connect to localhost.
 ifeq ($(TEST_SSH_LOCALHOST),1)
 
+# Check that editor-fs-server.exe has been copied to someplace on the
+# PATH, which is a requirement for TEST_SSH_LOCALHOST.  I usually copy
+# it to my ~/bin directory.
+out/editor-fs-server-on-path.ok: editor-fs-server.exe
+	$(CREATE_OUTPUT_DIRECTORY)
+	if which editor-fs-server.exe; then \
+	  echo "server is on the PATH"; \
+	else \
+	  echo "The TEST_SSH_LOCALHOST setting requires that "; \
+	  echo "editor-fs-server.exe be copied to someplace on the PATH."; \
+	  exit 2; \
+	fi
+	touch $@
+
 test-prog-outs: out/vfs-connections-test-localhost.ok
-out/vfs-connections-test-localhost.ok: unit-tests.exe editor-fs-server.exe
+out/vfs-connections-test-localhost.ok: unit-tests.exe editor-fs-server.exe out/editor-fs-server-on-path.ok
 	$(CREATE_OUTPUT_DIRECTORY)
 	$(RUN_WITH_TIMEOUT) ./unit-tests.exe vfs_connections localhost \
 	  </dev/null >out/vfs-connections-test-localhost.out 2>&1
 	touch $@
 
 test-prog-outs: out/editor-fs-server-test-localhost.ok
-out/editor-fs-server-test-localhost.ok: unit-tests.exe editor-fs-server.exe
+out/editor-fs-server-test-localhost.ok: unit-tests.exe editor-fs-server.exe out/editor-fs-server-on-path.ok
 	$(CREATE_OUTPUT_DIRECTORY)
 	$(RUN_WITH_TIMEOUT) ./unit-tests.exe editor_fs_server localhost \
 	  </dev/null >out/editor-fs-server-test-localhost.out 2>&1
