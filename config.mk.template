@@ -1,9 +1,16 @@
 # config.mk
 
-# This file must set QT5INCLUDE, QT5LIB, and QT5BIN.  The simplest
-# way to do that is to pull in the smqtutil configuration.  (That
-# is not done automatically because config.mk might need to set
-# the location of smqtutil.)
-include smqtutil/config.mk
+# Nothing needs to be set in config.mk, but some settings to consider:
+
+# Treat warnings as errors.
+#EXTRA_CCFLAGS += -Werror
+
+# Run tests that assume "ssh localhost" works and that
+# editor-fs-server.exe has been compiled and copied to someplace on the
+# PATH.
+#TEST_SSH_LOCALHOST := 1
+
+# Run `mypy` on Python scripts.
+#ENABLE_MYPY = 1
 
 # EOF
