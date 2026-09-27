@@ -311,9 +311,8 @@ void testExitCode()
   runCmdExpectExit("true", 0);
   runCmdExpectExit("false", 1);
 
-  // Use `env` to run `python` since it might be a symlink.
-  runCmdArgsExpectExit("env",
-    QStringList() << "python" << "-c" << "import sys; sys.exit(42)",
+  runCmdArgsExpectExit("sh",
+    QStringList() << "-c" << "exit 42",
     42);
 }
 
