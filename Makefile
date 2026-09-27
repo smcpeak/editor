@@ -38,7 +38,7 @@ RUN_WITH_TIMEOUT := timeout 50
 PYTHON3 = python3
 
 # https://mypy-lang.org/
-MYPY = mypy
+MYPY = $(PYTHON3) -m mypy
 
 # If 1, hook the `mypy` checks into the `all` target.
 ENABLE_MYPY = 0
