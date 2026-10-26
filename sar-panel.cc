@@ -41,8 +41,13 @@ int const SAR_PANEL_MARGIN = 5;
 // I've now disabled this by setting it to 0 (was 7) because the bug
 // only happens when using the "windows" style instead of
 // "windowsvista".  The latter requires
-// plugins/styles/qwindowsvista.dll, which I'd neglected to copy.
-int const SAR_PANEL_COMBO_BOX_ADJUST = 0;
+// plugins/styles/qwindowsvistastyle.dll, which I'd neglected to copy.
+//
+// 2026-10-26: The bug has returned now that I am running on Windows 11,
+// even when using the "windowsvista" style.  So, the adjustment is
+// back.
+//
+int const SAR_PANEL_COMBO_BOX_ADJUST = 7;
 
 
 // Adjust the vertical height of editable combobox 'cb' so its text is
