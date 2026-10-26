@@ -13,10 +13,10 @@
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-fstream.h"         // ofstream
-#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ
+#include "smbase/sm-test.h"            // DIAG, EXPECT_EQ, PVAL
+#include "smbase/sm-trace.h"           // INIT_TRACE, etc.
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/strutil.h"            // readLinesFromFile
-#include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xfailure_stringbc
 
 // libc++
@@ -24,6 +24,9 @@
 
 // libc
 #include <stdlib.h>                    // exit
+
+
+INIT_TRACE("lex_hilite");
 
 
 LexHighlighter::LexHighlighter(TextDocumentCore const &buf, IncLexer &L)
@@ -68,35 +71,39 @@ void LexHighlighter::addToChanged(LineIndex line)
   // the topmost contiguous subset of actual changed lines, and the
   // water begins at the next actual changed line after that
 
+  TRACE2("addToChanged: line=" << line);
+
   if (line >= waterline) {
-    // do nothing, it's in the water
+    TRACE2("  do nothing, it's in the water");
   }
   else if (changedIsEmpty()) {
+    TRACE2("  changed is empty, make it one line");
     changedBegin = line;
     changedEnd = line.succ();
   }
   else if (line.succ() == changedBegin) {
-    // extend changed region up by 1
+    TRACE2("  extend changed region up by 1");
     --changedBegin;
   }
   else if (line == changedEnd) {
-    // extend changed region down by 1
+    TRACE2("  extend changed region down by 1");
     ++changedEnd;
   }
   else if (line < changedBegin) {
-    // line is discontiguous with existing changed region, so absorb
-    // the current region into the water and set the new changed region
-    // to contain just this line
+    TRACE2("  line is discontiguous with existing changed region");
+
+    // Absorb the current region into the water and set the new changed
+    // region to contain just this line.
     waterline = changedBegin;
     changedBegin = line;
     changedEnd = line.succ();
   }
   else if (line > changedEnd) {
-    // line is below changed region, move the water up to absorb it
+    TRACE2("  line is below changed region, move the water up to absorb it");
     waterline = line;
   }
   else {
-    // line must be in changed region already, nothing to do
+    TRACE2("  line must be in changed region already, nothing to do");
     xassert(changedBegin <= line &&
                             line < changedEnd);
   }
@@ -119,6 +126,8 @@ LexerState LexHighlighter::getPreviousLineSavedState(LineIndex line) const
 void LexHighlighter::observeInsertLine(TextDocumentCore const &, LineIndex line) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+
+  TRACE1("observeInsertLine: line=" << line)
 
   // if region ends after 'line', then now it ends one line later
   if (!changedIsEmpty() &&
@@ -145,6 +154,8 @@ void LexHighlighter::observeDeleteLine(TextDocumentCore const &, LineIndex line)
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE1("observeDeleteLine: line=" << line)
+
   // if region ends after 'line', then now it ends one line earlier
   if (!changedIsEmpty() &&
       changedEnd > line) {
@@ -165,16 +176,25 @@ void LexHighlighter::observeDeleteLine(TextDocumentCore const &, LineIndex line)
 }
 
 
-void LexHighlighter::observeInsertText(TextDocumentCore const &, TextMCoord tc, char const *, ByteCount) NOEXCEPT
+void LexHighlighter::observeInsertText(
+  TextDocumentCore const &,
+  TextMCoord tc,
+  char const *,
+  ByteCount len) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+  TRACE1("observeInsertText: tc=" << tc << " len=" << len)
   addToChanged(tc.m_line);
   GENERIC_CATCH_END
 }
 
-void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextMCoord tc, ByteCount) NOEXCEPT
+void LexHighlighter::observeDeleteText(
+  TextDocumentCore const &,
+  TextMCoord tc,
+  ByteCount len) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+  TRACE1("observeDeleteText: tc=" << tc << " len=" << len)
   addToChanged(tc.m_line);
   GENERIC_CATCH_END
 }
@@ -183,6 +203,8 @@ void LexHighlighter::observeDeleteText(TextDocumentCore const &, TextMCoord tc, 
 void LexHighlighter::observeTotalChange(TextDocumentCore const &doc) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
+
+  TRACE1("observeTotalChange")
 
   changedBegin = LineIndex(0);
   changedEnd = LineIndex(0);
@@ -244,44 +266,48 @@ void LexHighlighter::highlight(
   xassert(&buf == buffer);
 
   // push the changed region down to the line of interest
-  LexerState prevState = getPreviousLineSavedState(changedBegin);
-  while (!changedIsEmpty() && changedBegin < line) {
-    TRACE("highlight", "push changed: scanning line " << changedBegin);
-    lexer.beginScan(&buf, changedBegin, prevState);
+  if (!changedIsEmpty()) {
+    LexerState prevState = getPreviousLineSavedState(changedBegin);
+    while (!changedIsEmpty() && changedBegin < line) {
+      TRACE1("push changed: scanning line " << changedBegin);
+      lexer.beginScan(&buf, changedBegin, prevState);
 
-    TextCategoryAOA code;
-    while (lexer.getNextToken(code))
-      {}
+      TextCategoryAOA code;
+      while (lexer.getNextToken(code))
+        {}
 
-    prevState = lexer.getState();
+      prevState = lexer.getState();
 
-    // this increments 'changedBegin', and if the state doesn't change
-    // then it won't increment 'changedEnd', so we might exit the loop
-    // due to changedIsEmpty() becoming true
-    saveLineState(changedBegin, prevState);
+      // this increments 'changedBegin', and if the state doesn't change
+      // then it won't increment 'changedEnd', so we might exit the loop
+      // due to changedIsEmpty() becoming true
+      saveLineState(changedBegin, prevState);
+    }
   }
 
   // push the waterline down also; do this after moving 'changed'
   // because 'changes' is above and we need those highlighting actions
   // to have completed so we're not working with stale saved stages
-  prevState = getPreviousLineSavedState(waterline);
-  while (waterline < line) {
-    TRACE("highlight", "push waterline: scanning line " << waterline);
-    lexer.beginScan(&buf, waterline, prevState);
+  if (waterline < line) {
+    LexerState prevState = getPreviousLineSavedState(waterline);
+    while (waterline < line) {
+      TRACE1("push waterline: scanning line " << waterline);
+      lexer.beginScan(&buf, waterline, prevState);
 
-    TextCategoryAOA code;
-    while (lexer.getNextToken(code))
-      {}
+      TextCategoryAOA code;
+      while (lexer.getNextToken(code))
+        {}
 
-    prevState = lexer.getState();
+      prevState = lexer.getState();
 
-    // this increments 'waterline'
-    saveLineState(waterline, prevState);
+      // this increments 'waterline'
+      saveLineState(waterline, prevState);
+    }
   }
 
   // recall the saved state for the line of interest
-  TRACE("highlight", "at requested: scanning line " << line);
-  prevState = getPreviousLineSavedState(line);
+  TRACE1("at requested: scanning line " << line);
+  LexerState prevState = getPreviousLineSavedState(line);
   lexer.beginScan(&buf, line, prevState);
 
   // Append each categorized segment.
@@ -529,6 +555,21 @@ void exerciseHighlighter(MakeHighlighterFunc func)
 
   insert(2, 30, "*/");
   checkLine(hi, 3);
+  check(hi);
+
+  // Reproduce an assertion failure involving inserting and then
+  // deleting text at the end, with highlighting after each step.
+  insert(5, 0, "x");
+  check(hi);
+  insert(5, 1, "\n");
+  check(hi);
+
+  // Previously we had a crash here: "gap.h:50: assertion failed: 0 <=
+  // elt && elt < left+right".  This was fixed in `highlight()` by
+  // adding "if (!changedIsEmpty()" before
+  // "getPreviousLineSavedState(changedBegin)".
+  del(5, 1, 1);
+
   check(hi);
 
   tde = NULL;
