@@ -79,10 +79,12 @@ to `UNIT_TESTS_OBJS` in the `Makefile`. Test assertions use the smbase
   for the app to go idle between steps.
 - `gui-tests.exe` tests individual dialogs and is run by hand.
 
-The GUI tests pop up windows on the desktop, and a failed test often
-requires manual intervention to kill the process where it failed (it
-stays open to facilitate diagnosis), so Claude should not run them
-unless specifically directed to.
+Claude should not run the GUI tests unless specifically directed to
+(they pop up windows, and may require manual intervention).
+
+Furthermore, most features should *not* have GUI tests.  Instead,
+functionality should be tested via unit tests whenever possible; that
+may affect how it is designed and implemented too.
 
 ## Architecture
 
