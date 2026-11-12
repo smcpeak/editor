@@ -53,7 +53,7 @@ byte-count has functions like `strlenBC` that return or accept a
 byte-index has functions like `at` that operate on `std::string` in a
 manner similar to the corresponding `std::string` methods, but taking
 `ByteIndex` and `ByteCount` (as appropriate) in place of
-`std::string:size_type`.
+`std::string::size_type`.
 
 
 Future work
