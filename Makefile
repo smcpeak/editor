@@ -37,8 +37,9 @@ RUN_WITH_TIMEOUT := timeout 50
 # Python interpreter.
 PYTHON3 = python3
 
-# https://mypy-lang.org/
-MYPY = $(PYTHON3) -m mypy
+# I install this with "pipx install mypy<2".  (mypy version 2 is not
+# installable with reasonable effort on Cygwin.)
+MYPY = mypy
 
 # If 1, hook the `mypy` checks into the `all` target.
 ENABLE_MYPY = 0
