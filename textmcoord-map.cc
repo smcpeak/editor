@@ -345,7 +345,7 @@ public:
   void execute(Set &s)
   {
     setRemoveMany(s, m_toRemove);
-    setInsertMany(s, std::move(m_toInsert));
+    setInsertAll_move(s, std::move(m_toInsert));
   }
 };
 
@@ -894,7 +894,7 @@ void TextMCoordMap::selfCheck() const
       setRemoveMany(activeValues, endedValues);
 
       // Activate all started values.
-      setInsertMany(activeValues, std::move(startedValues));
+      setInsertAll_move(activeValues, std::move(startedValues));
     }
 
     else /*lineData==nullptr*/ {
@@ -1092,7 +1092,7 @@ void TextMCoordMap::deleteLines(LineIndex line, LineCount count)
   for (int i=0; i < count; ++i) {
     // The line at `line` will be removed.
     if (LineData *lineData = getLineData(line)) {
-      setInsertMany(singleLineSpans,
+      setInsertAll_move(singleLineSpans,
         std::move(lineData->m_singleLineSpans));
 
       for (Boundary const &b : lineData->m_startsHere) {
