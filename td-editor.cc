@@ -1312,8 +1312,37 @@ void TextDocumentEditor::insertNewline()
 }
 
 
+void TextDocumentEditor::deleteWhitespaceLeftOfCursorIfOnlyWhitespace()
+{
+  LineIndex line = m_cursor.m_line;
+  if (!m_doc->validLine(line)) {
+    // Beyond EOF, so there is nothing to the left of the cursor.
+    return;
+  }
+
+  // Model location of the cursor, clamped to EOL.
+  TextMCoord cursorMC = this->toMCoord(m_cursor);
+
+  // Number of whitespace bytes at the start of the line.
+  ByteCount leadingWS = this->countLeadingSpacesTabs(line);
+
+  if (cursorMC.m_byteIndex > 0 &&
+      cursorMC.m_byteIndex <= leadingWS) {
+    // Only whitespace is to the left of the cursor.  This sets the
+    // cursor to the start of the line and clears the mark.
+    this->deleteTextMRange(TextMCoordRange(
+      TextMCoord(line, ByteIndex(0)),
+      cursorMC));
+  }
+}
+
+
 void TextDocumentEditor::insertNewlineAutoIndent()
 {
+  // Make the whitespace removal, selection deletion, and newline
+  // insertion a single undo step.
+  TDE_HistoryGrouper grouper(*this);
+
   // The code below this assumes cursor > mark if mark is active.
   this->normalizeCursorGTEMark();
 
@@ -1322,6 +1351,11 @@ void TextDocumentEditor::insertNewlineAutoIndent()
 
   // typing replaces selection
   this->deleteSelectionIf();
+
+  // If everything to the left of the cursor is whitespace, remove that
+  // whitespace so the line above the cursor's final position is
+  // entirely empty rather than containing just whitespace.
+  this->deleteWhitespaceLeftOfCursorIfOnlyWhitespace();
 
   // Actually insert the newline character.  This will scroll
   // to the left edge too.

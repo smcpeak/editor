@@ -622,7 +622,17 @@ public:      // funcs
   // and cursor col==0
   void insertNewline();
 
+  // If the cursor is within the document, and everything to its left
+  // on its line is whitespace (spaces and tabs), delete that
+  // whitespace, leaving the cursor at the start of the line.  If the
+  // cursor is at or beyond EOL of a line that is entirely whitespace,
+  // all of that line's content is deleted.  Otherwise, do nothing.
+  void deleteWhitespaceLeftOfCursorIfOnlyWhitespace();
+
   // This is what my Enter key does:
+  //   - Delete the selection, if any.
+  //   - If only whitespace is to the left of the cursor, delete it,
+  //     so the line above the cursor ends up empty.
   //   - If beyond EOL, move back to EOL.
   //   - If beyond EOF, append newlines to meet cursor.
   //   - Insert the newline.

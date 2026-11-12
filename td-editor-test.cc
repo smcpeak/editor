@@ -1560,23 +1560,24 @@ void testInsertNewlineAutoIndentWithTab()
     "\tb\n"
     "\t\n");
 
-  // Again.
+  // Again.  Since the line with the cursor is entirely whitespace, that
+  // whitespace is removed, leaving the line empty.
   tde.insertNewlineAutoIndent();
   expectNM(tde, 3,8,
     "a\n"
     "\tb\n"
-    "\t\n"
+    "\n"
     "\n");
   tde.insertNulTermText("d");
   tde.backspaceFunction();
   expectNM(tde, 3,8,
     "a\n"
     "\tb\n"
-    "\t\n"
+    "\n"
     "\t\n");
 
   // Adding another tab to this line will not affect indentation because
-  // it is entirely whitespace.
+  // it is entirely whitespace.  (And that whitespace gets removed.)
   tde.insertNulTermText("\t");
   tde.insertNewlineAutoIndent();
   tde.insertNulTermText("e");
@@ -1584,8 +1585,8 @@ void testInsertNewlineAutoIndentWithTab()
   expectNM(tde, 4,8,
     "a\n"
     "\tb\n"
-    "\t\n"
-    "\t\t\n"
+    "\n"
+    "\n"
     "\t\n");
 
   // But adding a Tab and another character will.
@@ -1594,8 +1595,8 @@ void testInsertNewlineAutoIndentWithTab()
   expectNM(tde, 5,16,
     "a\n"
     "\tb\n"
-    "\t\n"
-    "\t\t\n"
+    "\n"
+    "\n"
     "\t\tc\n"
     "\n");
   tde.insertNulTermText("x");
@@ -1603,8 +1604,8 @@ void testInsertNewlineAutoIndentWithTab()
   expectNM(tde, 5,16,
     "a\n"
     "\tb\n"
-    "\t\n"
-    "\t\t\n"
+    "\n"
+    "\n"
     "\t\tc\n"
     "\t\t\n");
 
@@ -1614,8 +1615,8 @@ void testInsertNewlineAutoIndentWithTab()
   expectNM(tde, 6,25,
     "a\n"
     "\tb\n"
-    "\t\n"
-    "\t\t\n"
+    "\n"
+    "\n"
     "\t\tc\n"
     "\t\t \t d\n"
     "\n");
@@ -1624,8 +1625,8 @@ void testInsertNewlineAutoIndentWithTab()
   expectNM(tde, 6,25,
     "a\n"
     "\tb\n"
-    "\t\n"
-    "\t\t\n"
+    "\n"
+    "\n"
     "\t\tc\n"
     "\t\t \t d\n"
     "\t\t \t \n");
@@ -1636,13 +1637,139 @@ void testInsertNewlineAutoIndentWithTab()
   expectNM(tde, 8,26,
     "a\n"
     "\tb\n"
-    "\t\n"
-    "\t\t\n"
+    "\n"
+    "\n"
     "\t\tc\n"
     "\t\t \t d\n"
     "\t\t \t \n"
     "\n"
     "\t\t \t y");
+}
+
+
+// When only whitespace is to the left of the cursor, pressing Enter
+// removes that whitespace, so the line above the cursor is empty.
+void testInsertNewlineAutoIndentRemovesLeftWhitespace()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "  a\n"
+    "  b\n");
+
+  // Cursor on top of "b".
+  tde.setCursor(TextILCoord(1, 2));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,2,
+    "  a\n"
+    "\n"
+    "  b\n");
+
+  // A single undo restores the removed whitespace.  (Undo and redo put
+  // the cursor at the start of the affected text.)
+  tde.undo();
+  expectNM(tde, 1,0,
+    "  a\n"
+    "  b\n");
+
+  // And redo removes it again.
+  tde.redo();
+  expectNM(tde, 1,0,
+    "  a\n"
+    "\n"
+    "  b\n");
+  tde.undo();
+
+  // Cursor in the middle of the leading whitespace.  The whitespace to
+  // the left is removed; the whitespace to the right is carried forward
+  // after the auto-indentation.
+  tde.setCursor(TextILCoord(1, 1));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,2,
+    "  a\n"
+    "\n"
+    "   b\n");
+  tde.undo();
+  expectNM(tde, 1,0,
+    "  a\n"
+    "  b\n");
+
+  // Cursor at the left edge: nothing to remove.  As before this
+  // feature, auto-indentation is added in front of the carried text.
+  tde.setCursor(TextILCoord(1, 0));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,2,
+    "  a\n"
+    "\n"
+    "    b\n");
+  tde.undo();
+
+  // Non-whitespace to the left of the cursor: nothing is removed.
+  tde.setCursor(TextILCoord(1, 3));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,2,
+    "  a\n"
+    "  b\n"
+    "\n");
+  tde.undo();
+  expectNM(tde, 1,3,
+    "  a\n"
+    "  b\n");
+}
+
+
+// Same idea, with tabs, and with a line that is entirely whitespace.
+void testInsertNewlineAutoIndentRemovesLeftWhitespaceTabs()
+{
+  TextDocumentAndEditor tde;
+  tde.insertNulTermText(
+    "\ta\n"
+    "\t \tb\n"
+    " \t\n");
+
+  // Cursor on top of "b", which is in column 16.
+  tde.setCursor(TextILCoord(1, 16));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 2,8,
+    "\ta\n"
+    "\n"
+    "\tb\n"
+    " \t\n");
+
+  // Undo restores the original whitespace, including the tabs.
+  tde.undo();
+  expectNM(tde, 1,0,
+    "\ta\n"
+    "\t \tb\n"
+    " \t\n");
+
+  // Line containing only whitespace, cursor at its end.  The whole
+  // line becomes empty.
+  tde.setCursor(TextILCoord(2, 8));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,16,
+    "\ta\n"
+    "\t \tb\n"
+    "\n"
+    "\n");
+  tde.undo();
+  expectNM(tde, 2,0,
+    "\ta\n"
+    "\t \tb\n"
+    " \t\n");
+
+  // Same, but with the cursor beyond EOL.
+  tde.setCursor(TextILCoord(2, 20));
+  tde.insertNewlineAutoIndent();
+  expectNM(tde, 3,16,
+    "\ta\n"
+    "\t \tb\n"
+    "\n"
+    "\n");
+  tde.undo();
+  expectNM(tde, 2,0,
+    "\ta\n"
+    "\t \tb\n"
+    " \t\n");
 }
 
 
@@ -2788,6 +2915,8 @@ void test_td_editor(CmdlineArgsSpan args)
   testInsertNewlineAutoIndent3();
   testInsertNewlineAutoIndent4();
   testInsertNewlineAutoIndentWithTab();
+  testInsertNewlineAutoIndentRemovesLeftWhitespace();
+  testInsertNewlineAutoIndentRemovesLeftWhitespaceTabs();
   testSetVisibleSize();
   testCursorRestorer();
   testSetMark();
