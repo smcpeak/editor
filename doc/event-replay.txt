@@ -3,6 +3,8 @@ event-replay.txt
 
 This document explains how the event replay system works.
 
+TODO: The following paragraph, describing the syntax, is out of date.
+
 Event replay executes events, and checks application state, based on
 instructions in a text file.  The format is one action or check per line
 (other than blank or comments).  The "-record" switch can create a
