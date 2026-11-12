@@ -1,0 +1,171 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+A Qt5 (C++17) text editor aimed at editing source code. It has an
+infinite quarter-plane cursor model, remote file editing over SSH via a
+helper server process, flex-based syntax highlighting, and LSP (clangd)
+support. Text is currently treated as Latin-1 (no UTF-8 yet).
+
+Primary development is on Windows under Cygwin (`g++`, GNU make), and it
+also builds on Linux. Build artifacts (`*.o`, `*.d`, `*.o.json`,
+`*.moc.cc`, `*.gen.*`, `*.yy.cc`, `*.exe`) live in the source directory
+next to the sources.
+
+## Dependencies (git submodules)
+
+`smbase` (general C++ utility library, `smbase/...` includes),
+`smqtutil` (Qt utilities, and the Qt configuration in
+`smqtutil/config.mk`), `smflex` (flex fork used for highlighters), and
+`ast` (`astgen`, a code generator for C++ data classes). Each has its own
+Makefile and must be built before the editor; for example, the editor
+build stops with an error if `ast/astgen.exe` is missing.
+
+## Build and test commands
+
+- `make` — builds `editor.exe`, `editor-fs-server.exe`, `gui-tests.exe`,
+  and runs the non-GUI test programs (`test-prog-outs`). Parallel `make -j`
+  works for this target.
+- `make check` — runs everything in `all`, plus the GUI event-replay
+  tests, the coding-rules check, the extradep validation, and
+  `lsp-test-server.py` self-tests. GUI tests pop up windows, so they run
+  serially and must not be run in parallel. Some are wrapped in
+  `retry.sh` because of known focus/timing races on Windows.
+- `make compile_commands.json` — combines the `*.o.json` files.
+- `make clean`
+
+Optional settings go in `config.mk` (see `config.mk.template`):
+`EXTRA_CCFLAGS += -Werror`, `TEST_SSH_LOCALHOST := 1` (needs passwordless
+`ssh localhost` and `editor-fs-server.exe` on the PATH), and
+`ENABLE_MYPY = 1`.
+
+### Unit tests
+
+All non-GUI unit tests link into one program, `unit-tests.exe`. Its
+output goes to `out/unit-tests.out` when run through make.
+
+- Run all of them: `./unit-tests.exe`
+- Run one module's tests: `./unit-tests.exe <module>`, where `<module>`
+  is the module name with underscores, such as `./unit-tests.exe td_core`
+  or `./unit-tests.exe lsp_client`. Any arguments after that go to that
+  test.
+- Tracing can be turned on through an environment variable (smbase
+  `traceAddFromEnvVar`).
+
+To add a test module: write `foo-test.cc` defining `test_foo(CmdlineArgsSpan)`,
+declare it in `unit-tests.h`, add a `RUN_TEST(foo)` line to
+`unit-tests.cc` (kept in bottom-up dependency order), and add `foo-test.o`
+to `UNIT_TESTS_OBJS` in the `Makefile`. Test assertions use the smbase
+`sm-test.h` macros (`EXPECT_EQ`, `EXPECT_EXN_REGEX`, etc.).
+
+### GUI / event-replay tests
+
+- Run one: `./editor.exe -ev=test/<name>.ev`
+- Run the main batch: `./editor.exe -testCommands=test/all-tests.gdvn`
+  (add new `.ev` tests to that list).
+- `.ev` files have one action or check per line, aimed at widgets by
+  QObject name paths (for example,
+  `KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"`,
+  `CheckLabel ...`). Use `-record` to capture an input sequence, then
+  add checks by hand. See `doc/event-replay.txt` for how replay waits
+  for the app to go idle between steps.
+- `gui-tests.exe` tests individual dialogs and is run by hand.
+
+## Architecture
+
+The layers, from the bottom up:
+
+1. **Wrapped integer measure types** (`wrapped-integer*.h`,
+   `line-index`, `line-count`, `line-difference`, `line-number`,
+   `positive-line-count`, `byte-*`, `column-*`). These are distinct
+   strongly typed wrappers around `int`, used everywhere instead of raw
+   integers. `LineIndex` is 0-based and `LineNumber` is 1-based. The
+   intended relationships and allowed arithmetic are in
+   `doc/line-measures.txt` and `doc/byte-measures.txt`.
+2. **Coordinates.** `TextMCoord` (`textmcoord.h`) is a *model*
+   coordinate: a line plus a byte index into the document.
+   `TextLCoord` (`textlcoord.h`) is a *layout* coordinate: a line plus a
+   screen column, and it can lie beyond end of line or end of file.
+   Converting between the two (tabs, and later multibyte characters) is
+   central to the design.
+3. **Document model.** `TextDocumentCore` (`td-core`) is the lines of
+   text, stored in gap buffers (`gap.h`), and has observers
+   (`TextDocumentObserver`). `TextDocument` (`td`) wraps a core and adds
+   undo/redo `history`. It repeats the core's interface and delegates
+   rather than inheriting. `td-change`, `td-change-seq`, and
+   `td-obs-recorder` record document changes so they can be sent to LSP
+   (design in `doc/td-obs-recorder-design.txt`).
+4. **Editing logic.** `TextDocumentEditor` (`td-editor`) holds the
+   cursor, selection, and scroll state for one view of a document, and
+   implements editing operations in layout coordinates. It does not
+   depend on any widget.
+5. **Named documents.** `NamedTextDocument` (`named-td`) ties a
+   `TextDocument` to a `DocumentName` (a host plus a file path, or a
+   command line), its on-disk state, its highlighter, and its LSP
+   diagnostics (`td-diagnostics`). It is shared by every window.
+   `NamedTextDocumentList` holds all open documents.
+   `NamedTextDocumentEditor` is a per-widget editor for one named
+   document.
+6. **GUI.** `EditorGlobal` (`editor-global`, the `QApplication`) holds
+   the shared state: the document list, the VFS connections, the LSP
+   manager, and the windows. `EditorWindow` contains an
+   `EditorWidgetFrame`, which contains an `EditorWidget` (painting and
+   key handling) plus the search-and-replace panel (`sar-panel`) and the
+   status bar. The dialogs are separate modules (`*-dialog.cc`).
+   User-level editing actions are described as `EditorCommand` objects,
+   generated by astgen from `editor-command.ast`, and macros use them.
+
+Subsystems:
+
+- **VFS (remote files).** `vfs-msg` defines the request and reply
+  messages. `editor-fs-server.exe` (`editor-fs-server.cc` +
+  `vfs-local`) is a statically linked server that serves them over
+  stdin/stdout, run either locally or through `ssh host
+  editor-fs-server.exe`. `VFS_FileSystemQuery` (`vfs-query`) is one
+  connection, and `VFS_Connections` manages one per host with an async
+  request/reply API. `vfs-query-sync` gives a synchronous wrapper. See the
+  lifecycle diagrams in `doc/vfs-*.ded.png`.
+- **LSP.** `command-runner` (wraps `QProcess`), then `json-rpc-client`,
+  then `lsp-client`, which speaks the LSP protocol and keeps the state
+  machine in `lsp-protocol-state` (see `doc/lsp-state-diagram.ded.png`).
+  `lsp-client-manager` keeps one client per scope (`lsp-client-scope`).
+  `lsp-data` holds the wire-format data and `lsp-conv` converts it to and
+  from editor types. `lsp-test-server.py` is a fake server used by the
+  tests.
+- **Highlighting.** `Highlighter` (`hilite.h`). Most languages use
+  `LexHighlighter` (`lex_hilite`), an incremental lexer driven by an
+  smflex spec `<lang>_hilite.lex`, which generates `<lang>_hilite.yy.cc`
+  with prefix `<lang>_hilite_yy`. Lexer base names can contain only
+  C-identifier characters. To add a language, write the `.lex` and `.h`,
+  hook it into `doc-type` / `doc-type-detect` / `doc-type-hilite`, add
+  the `.yy.o` to `EDITOR_OBJS`, and add a `*-hilite-test` with expected
+  output under `test/highlight/`.
+
+## Code conventions and generated code
+
+- Each module `foo` normally has `foo.h`, `foo.cc`, `foo-fwd.h` (forward
+  declarations, included by other headers in place of the full header),
+  and often `foo-test.cc`. Files start with a `// filename` line and a
+  one-line description, and end with `// EOF`. Each `#include` has a
+  trailing comment naming what it provides.
+- Includes from submodules always use the directory prefix
+  (`"smbase/str.h"`, `"smqtutil/..."`), since only `-I.` is passed.
+- New `.o` files have to be added by hand to `EDITOR_OBJS` /
+  `UNIT_TESTS_OBJS` / `GUI_TESTS_OBJS` in the `Makefile`. Qt classes
+  that use `Q_OBJECT` also need `foo.moc.o`.
+- `check-coding-rules.py` (run by `make check`) rejects CR characters
+  in sources and top-level `using namespace` in headers.
+- **create-tuple-class.** Code between
+  `// create-tuple-class: declarations for X ...` /
+  `definitions for X` markers (lines tagged `/*AUTO_CTC*/`) is generated
+  by `smbase/create-tuple-class.py`. Don't edit it by hand. Edit the
+  fields and rerun the script (see its docstring). `make` checks that
+  the headers listed in `CTC_HEADERS` are up to date.
+- **extradep.mk** lists dependencies on generated files. If you add a
+  generated file, run `make remake-extradep`. `make check` verifies it.
+- `doc/keybindings.txt` is compiled into the binary (`*.doc.gen.cc`) as
+  the in-app help, so update it when you change key bindings.
+- Design specs for dialogs and features are in `doc/` (`*-spec.html`,
+  `*.txt`, `.ded` diagrams with `.png` renderings).
