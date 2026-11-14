@@ -42,8 +42,10 @@
 
 // smbase
 #include "smbase/chained-cond.h"                 // cc::z_le_lt
-#include "smbase/exc.h"                          // XOpen, GENERIC_CATCH_BEGIN/END
+#include "smbase/exc.h"                          // smbase::{XBase, XOpen}, GENERIC_CATCH_BEGIN/END, checkFormat
 #include "smbase/gdvalue-optional.h"             // gdv::GDValue(td::optional)
+#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
+#include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/mysig.h"                        // printSegfaultAddrs
 #include "smbase/nonport.h"                      // fileOrDirectoryExists
@@ -73,6 +75,7 @@
 #include <QDesktopWidget>
 #include <QFontDialog>
 #include <QInputDialog>
+#include <QRect>
 
 // libc++
 #include <exception>                             // std::exception
@@ -156,8 +159,7 @@ EditorWindow::EditorWindow(EditorGlobal *editorGlobal,
   this->setWindowIcon(g_editorPixmaps->icon);
 
   this->setLayout(mainArea);
-  this->setGeometry(400,100,      // initial location
-                    800,800);     // initial size
+  this->setInitialGeometry();
 
   // Set scrollbar ranges, status bar text, and window title.
   this->updateForChangedFile();
@@ -214,6 +216,36 @@ void EditorWindow::selfCheck() const
   xassert(m_editorGlobal != nullptr);
 
   m_editorWidgetFrame->selfCheck();
+}
+
+
+void EditorWindow::setInitialGeometry()
+{
+  QRect geom(400, 100,      // initial location (x,y)
+             800, 800);     // initial size (w,h)
+
+  // Allow an envvar to override the default.  For the moment this is
+  // just used for ad-hoc testing, so I haven't made it a command line
+  // argument.
+  char const * const envvar = "EDITOR_WINDOW_INITIAL_GEOMETRY";
+  if (char const *geomSpec = std::getenv(envvar)) {
+    try {
+      // Parse `geomSpec` as a GDVN tuple: "(x y w h)".
+      GDValue v(fromGDVN(geomSpec));
+      auto [x, y, w, h] =
+        gdvpToTuple<int, int, int, int>(GDValueParser(v));
+      checkFormat(w > 0, "Width must be positive.");
+      checkFormat(h > 0, "Height must be positive.");
+      geom = QRect(x, y, w, h);
+    }
+    catch (XBase &x) {
+      std::cerr << "Invalid (will ignore) " << envvar
+                << " value " << doubleQuote(geomSpec)
+                << ": " << x.getMessage() << std::endl;
+    }
+  }
+
+  this->setGeometry(geom);
 }
 
 

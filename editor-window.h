@@ -77,6 +77,9 @@ private:     // data
   QAction *m_toggleLSPUpdateContinuously;
 
 private:     // funcs
+  // Set the geometry the first time a window is opened.
+  void setInitialGeometry();
+
   void buildMenu();
   void writeTheFile();
 
