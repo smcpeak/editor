@@ -13,7 +13,7 @@
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
-#include "smbase/fasttime.h"           // fastTimeMilliseconds
+#include "smbase/fasttime.h"           // smbase::{fastTimeMilliseconds, FastTimeAccumulator}
 #include "smbase/nonport.h"            // getMilliseconds
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT(className)
 #include "smbase/sm-swap.h"            // swap
@@ -27,6 +27,8 @@
 
 // libc
 #include <string.h>                    // strstr
+
+using namespace smbase;
 
 
 // ------------------------- MatchExtent ---------------------------
