@@ -215,7 +215,6 @@ EDITOR_OBJS += doc-type-detect.o
 EDITOR_OBJS += doc-type-hilite.o
 EDITOR_OBJS += doc-type.o
 EDITOR_OBJS += editor-strutil.o
-EDITOR_OBJS += fasttime.o
 EDITOR_OBJS += gap-gdvalue.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += hilite.o

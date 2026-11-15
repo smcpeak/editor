@@ -5,7 +5,6 @@
 
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
-#include "fasttime.h"                  // fastTimeMilliseconds
 #include "line-difference.h"           // LineDifference
 
 // smqtutil
@@ -14,6 +13,7 @@
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
+#include "smbase/fasttime.h"           // fastTimeMilliseconds
 #include "smbase/nonport.h"            // getMilliseconds
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT(className)
 #include "smbase/sm-swap.h"            // swap
