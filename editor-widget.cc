@@ -2140,9 +2140,10 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k) NOEXCEPT
 
   TRACE3("keyRelease: " << keysString(*k));
 
-  // Not sure if this is the best place for this, but it seems
-  // worth a try.
-  this->selfCheck();
+  // 2026-11-14: In the past, I did `this->selfCheck();` here, but that
+  // causes performance problems when large files are loaded.  Since the
+  // event replay does per-event self-check, and there is a menu option
+  // to invoke self-check manually, I've removed the automatic check.
 
   k->ignore();
 
