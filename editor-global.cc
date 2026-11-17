@@ -1802,7 +1802,7 @@ static int innerMain(int argc, char **argv)
         // Cause the event script name to be included in any failure
         // message.
         EXN_CONTEXT(app.m_eventTestFileName);
-        HTT_TASK("Event replay");      // TODO: Allow dynamic task labels.
+        HTT_TASK_DYNAMIC_LABEL(app.m_eventTestFileName);
 
         EventReplay replay(app.m_eventTestCommands, selfCheck);
         std::string error = replay.runTest();
@@ -1840,14 +1840,6 @@ static int innerMain(int argc, char **argv)
           restorer(g_devWarningHandler, &editorDevWarningHandler);
         ret = app.exec();
       }
-
-      // Log the accumulated timer data.  Strip the final newline
-      // because `log()` adds one.
-      //
-      // Note: If we are running multiple commands in one process, the
-      // timer data will accumulate across, and the final log file will
-      // hence contain the data for all runs in that process.
-      app.log(removeSuffix(HTT_Singleton::asTableString(), "\n"));
     }
     catch (QuitAfterPrintingHelp &) {
       return 0;
@@ -1991,28 +1983,33 @@ static int runCommandList(std::string const &cmdsFname)
 
 int main(int argc, char **argv)
 {
-  fastTimeInitialize();
-  unsigned startMS = fastTimeMilliseconds;
+  // Start the root timer.
+  HTT_Singleton::ensureCreated();
+
+  std::optional<int> exitCode;
 
   if (argc >= 2) {
     std::string firstArg(argv[1]);
     char const *prefix = "-testCommands=";
     if (beginsWith(firstArg, prefix)) {
       std::string cmdsFname = firstArg.substr(std::strlen(prefix));
-      return runCommandList(cmdsFname);
+      exitCode = runCommandList(cmdsFname);
     }
   }
 
-  int ret = innerMain(argc, argv);
-
-  // This allows me to compare what the HTT system can account for to
-  // the entire time spent in `main()`.
-  if (fastTimeIsImplemented()) {
-    TRACE1("Total time in `main()`: " <<
-           (fastTimeMilliseconds - startMS) << " ms.");
+  if (!exitCode.has_value()) {
+    exitCode = innerMain(argc, argv);
   }
 
-  return ret;
+  if (fastTimeIsImplemented()) {
+    // Trace the accumulated timer data.  Prepend a newline so the
+    // header stays aligned, but strip the final newline because
+    // `TRACE1()` adds one.
+    TRACE1(string("Timing data:\n") +
+           removeSuffix(HTT_Singleton::asTableString(), "\n"));
+  }
+
+  return *exitCode;
 }
 
 
