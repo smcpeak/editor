@@ -49,19 +49,21 @@
 #include "smbase/either.h"                       // smbase::Either
 #include "smbase/exc.h"                          // smbase::{XBase, xformat}, EXN_CONTEXT
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
+#include "smbase/fasttime.h"                     // smbase::{fastTimeInitialize, fastTimeMilliseconds, fastTimeIsImplemented}
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
 #include "smbase/gdvalue-fnapply-transform.h"    // gdv::fnApplyTransformGDValue
 #include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpOptTo}
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/htt.h"                          // HTT_TASK, HTT_Singleton
 #include "smbase/objcount.h"                     // CheckObjectCount
 #include "smbase/save-restore.h"                 // SET_RESTORE, SetRestore
 #include "smbase/set-util.h"                     // smbase::{setInsertUnique, setContains}
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-test.h"                      // PVAL
-#include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand
+#include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand, removeSuffix
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/strtokp.h"                      // StrtokParse
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
@@ -131,6 +133,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_eventTestFileName(),
     m_eventTestCommands()
 {
+  HTT_TASK("EditorGlobal ctor");
+
   m_documentList.addObserver(this);
 
   // Optionally print the list of styles Qt supports.
@@ -318,6 +322,7 @@ EditorGlobal::~EditorGlobal()
 void EditorGlobal::selfCheck() const
 {
   EXN_CONTEXT("EditorGlobal::selfCheck");
+  HTT_TASK("EditorGlobal::selfCheck");
 
   m_documentList.selfCheck();
 
@@ -1797,6 +1802,7 @@ static int innerMain(int argc, char **argv)
         // Cause the event script name to be included in any failure
         // message.
         EXN_CONTEXT(app.m_eventTestFileName);
+        HTT_TASK("Event replay");      // TODO: Allow dynamic task labels.
 
         EventReplay replay(app.m_eventTestCommands, selfCheck);
         std::string error = replay.runTest();
@@ -1829,10 +1835,19 @@ static int innerMain(int argc, char **argv)
 
       else {
         // Run the app normally.
+        HTT_TASK("app.exec");
         SetRestore< void (*)(char const*, int, char const *) >
           restorer(g_devWarningHandler, &editorDevWarningHandler);
         ret = app.exec();
       }
+
+      // Log the accumulated timer data.  Strip the final newline
+      // because `log()` adds one.
+      //
+      // Note: If we are running multiple commands in one process, the
+      // timer data will accumulate across, and the final log file will
+      // hence contain the data for all runs in that process.
+      app.log(removeSuffix(HTT_Singleton::asTableString(), "\n"));
     }
     catch (QuitAfterPrintingHelp &) {
       return 0;
@@ -1976,6 +1991,9 @@ static int runCommandList(std::string const &cmdsFname)
 
 int main(int argc, char **argv)
 {
+  fastTimeInitialize();
+  unsigned startMS = fastTimeMilliseconds;
+
   if (argc >= 2) {
     std::string firstArg(argv[1]);
     char const *prefix = "-testCommands=";
@@ -1985,7 +2003,16 @@ int main(int argc, char **argv)
     }
   }
 
-  return innerMain(argc, argv);
+  int ret = innerMain(argc, argv);
+
+  // This allows me to compare what the HTT system can account for to
+  // the entire time spent in `main()`.
+  if (fastTimeIsImplemented()) {
+    TRACE1("Total time in `main()`: " <<
+           (fastTimeMilliseconds - startMS) << " ms.");
+  }
+
+  return ret;
 }
 
 
