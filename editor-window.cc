@@ -853,6 +853,10 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   }
 
   // Load the file contents.
+  //
+  // TODO: This duplicates logic that is in
+  // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
+  // the shared logic in a module that can be unit tested.
   SynchronousWaiter waiter(this);
   auto replyOrError(
     readFileSynchronously(vfsConnections(), waiter, harn));

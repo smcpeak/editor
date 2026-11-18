@@ -81,6 +81,8 @@ void readFile(NamedTextDocument &doc)
 
   bool readOnly = sfu.isReadOnly(fname);
 
+  // This is what `EditorWindow::openOrSwitchToFile` and
+  // `EditorGlobal::reloadDocumentFile` do after reading a file.
   doc.replaceFileAndStats(bytes, modTime, readOnly);
 }
 
@@ -115,6 +117,9 @@ void testSetDocumentProcessStatus()
 
 // Write 'doc' to its file name.  This approximates what the editor app
 // does when writing a file.
+//
+// TODO: Factor the actual file reading and writing code so it can be
+// tested here.
 void writeFile(NamedTextDocument &doc)
 {
   xassert(doc.hasFilename());
@@ -125,9 +130,11 @@ void writeFile(NamedTextDocument &doc)
 
   sfu.writeFile(fname, bytes);
 
-  doc.noUnsavedChanges();
-
+  // This is what `EditorWindow::writeTheFile` does after a successful
+  // file write.
   (void)getFileModificationTime(fname.c_str(), doc.m_lastFileTimestamp);
+  doc.m_modifiedOnDisk = false;
+  doc.noUnsavedChanges();
 }
 
 
@@ -149,6 +156,7 @@ void testUndoPastSavePoint()
   xassert(doc.unsavedChanges());
   writeFile(doc);
   xassert(!doc.unsavedChanges());
+  xassert(!doc.m_modifiedOnDisk);
   doc.selfCheck();
 
   // Now, the saved history point is 2 (after those two edits).
