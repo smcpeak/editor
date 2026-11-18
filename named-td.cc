@@ -124,12 +124,14 @@ NamedTextDocument::operator gdv::GDValue() const
 }
 
 
+// ------------------------------- names -------------------------------
 HostAndResourceName NamedTextDocument::directoryHarn() const
 {
   return HostAndResourceName(hostName(), directory());
 }
 
 
+// ----------------------------- language ------------------------------
 void NamedTextDocument::setDocumentType(DocumentType dt)
 {
   xassertPrecondition(!hasLanguageServicesData());
@@ -181,6 +183,7 @@ void NamedTextDocument::setHighlightTrailingWhitespace(bool htws)
 }
 
 
+// ----------------------------- status --------------------------------
 static char const *documentProcessStatusIndicator(
   NamedTextDocument const *doc)
 {
@@ -220,6 +223,7 @@ string NamedTextDocument::fileStatusString() const
 }
 
 
+// -------------------------- file contents ----------------------------
 void NamedTextDocument::replaceFileAndStats(
   std::vector<unsigned char> const &contents,
   std::int64_t fileModificationTime,
@@ -239,6 +243,7 @@ void NamedTextDocument::replaceFileAndStats(
 }
 
 
+// -------------------------- LSP diagnostics --------------------------
 bool NamedTextDocument::isCompatibleWithLSP() const
 {
   return !isIncompatibleWithLSP().has_value();

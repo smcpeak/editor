@@ -200,7 +200,7 @@ public:      // funcs
                            std::int64_t fileModificationTime,
                            bool readOnly);
 
-  // --------------------------- diagnostics ---------------------------
+  // ------------------------- LSP diagnostics -------------------------
   // True if we could open this file with the LSP server, just based on
   // where it is stored, not its document type.
   bool isCompatibleWithLSP() const;
