@@ -159,8 +159,41 @@ public:      // methods
 
   // -------------------------- Binary tests ---------------------------
   // Compare in the usual order for integers.
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Derived);
-  DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(Derived, UnderInt);
+  //DECLARE_COMPARETO_AND_DEFINE_RELATIONALS(Derived);
+  //DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER(Derived, UnderInt);
+
+  // Relational comparisons, particularly `<`, are common in inner
+  // loops, so it is important to inline them.  But the approach using
+  // `compare` causes problems because inlining brings heavier
+  // compile-time dependencies than I would like.  So, just implement
+  // the operators directly here.
+  #define DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(op)          \
+    friend bool operator op (Derived const &a, Derived const &b)  \
+      { return a.get() op b.get(); }                              \
+    friend bool operator op (Derived const &a, UnderInt const &b) \
+      { return a.get() op b; }                                    \
+    friend bool operator op (UnderInt const &a, Derived const &b) \
+      { return a op b.get(); }
+
+  DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(==)
+  DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(!=)
+  DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(< )
+  DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(<=)
+  DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(> )
+  DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR(>=)
+
+  #undef DEFINE_WRAPPED_INTEGER_RELATIONAL_OPERATOR
+
+  // I'll retain the general `compare` declarations, but not try to
+  // inline them for now.
+  int compareTo(Derived const &b) const;
+  friend int compare(Derived const &a, Derived const &b)
+    { return a.compareTo(b); }
+  int compareTo(UnderInt const &b) const;
+  friend int compare(Derived const &a, UnderInt const &b)
+    { return a.compareTo(b); }
+  friend int compare(UnderInt const &a, Derived const &b)
+    { return -(b.compareTo(a)); }
 
   // ---------------------------- Addition -----------------------------
   Derived operator+() const;
