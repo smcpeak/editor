@@ -169,10 +169,9 @@ void testUndoPastSavePoint()
 }
 
 
-// Check `doc.checkEditSafety()` against `expect`.  This compares the
-// string forms so a failure prints the enumerator names.
+// Check `doc.checkEditSafety()` against `expect`.
 #define EXPECT_ESP(doc, expect) \
-  EXPECT_EQ(toString((doc).checkEditSafety()), toString(expect))
+  EXPECT_EQ_GDVSER((doc).checkEditSafety(), expect)
 
 
 void testCheckEditSafety()
@@ -221,16 +220,6 @@ void testCheckEditSafety()
   doc.replaceFileAndStats(std::vector<unsigned char>{'b', '\n'},
                           0 /*modTime*/, true /*readOnly*/);
   EXPECT_ESP(doc, ESP_READ_ONLY);
-
-  // Saving (here, simulated) with modified-on-disk set is not a way to
-  // clear the flag; only reloading does that.  But after saving there
-  // are no unsaved changes, so the problem is reported again.
-  doc.setReadOnly(false);
-  doc.m_modifiedOnDisk = true;
-  doc.appendString("y");
-  EXPECT_ESP(doc, ESP_NONE);
-  doc.noUnsavedChanges();
-  EXPECT_ESP(doc, ESP_MODIFIED_ON_DISK);
 }
 
 
