@@ -336,6 +336,7 @@ public Q_SLOTS:
   void helpAbout() NOEXCEPT;
   void helpAboutQt() NOEXCEPT;
   void helpDebugOpenLogFile() NOEXCEPT;
+  void helpDebugDumpTimers() NOEXCEPT;
   void helpDebugDumpWindowObjectTree() NOEXCEPT;
   void helpDebugDumpApplicationObjectTree() NOEXCEPT;
   void helpDebugGlobalSelfCheck() NOEXCEPT;

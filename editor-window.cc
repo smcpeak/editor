@@ -47,6 +47,7 @@
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/htt.h"                          // smbase:HTT_Singleton
 #include "smbase/mysig.h"                        // printSegfaultAddrs
 #include "smbase/nonport.h"                      // fileOrDirectoryExists
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
@@ -676,9 +677,10 @@ void EditorWindow::buildMenu()
       submenu->setObjectName("helpDebugMenu");
       QMenu *menu = submenu;
 
-      // Used letters: aglsw
+      // Used letters: aglstw
 
       MENU_ITEM    ("Open editor &log file", helpDebugOpenLogFile);
+      MENU_ITEM    ("Dump &timers", helpDebugDumpTimers);
       MENU_ITEM    ("Dump &window object tree", helpDebugDumpWindowObjectTree);
       MENU_ITEM    ("Dump &application object tree", helpDebugDumpApplicationObjectTree);
       MENU_ITEM_KEY("Run &global invariant self-check ...",
@@ -2776,6 +2778,16 @@ void EditorWindow::helpDebugOpenLogFile() NOEXCEPT
   else {
     complain("The editor log file is disabled.");
   }
+
+  GENERIC_CATCH_END
+}
+
+
+void EditorWindow::helpDebugDumpTimers() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  std::cout << '\n' << HTT_Singleton::asTableString();
 
   GENERIC_CATCH_END
 }
