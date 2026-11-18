@@ -169,6 +169,74 @@ void testUndoPastSavePoint()
 }
 
 
+// Check `doc.checkEditSafety()` against `expect`.  This compares the
+// string forms so a failure prints the enumerator names.
+#define EXPECT_ESP(doc, expect) \
+  EXPECT_EQ(toString((doc).checkEditSafety()), toString(expect))
+
+
+void testCheckEditSafety()
+{
+  NamedTextDocument doc;
+
+  // Initially, there are no problems.
+  EXPECT_ESP(doc, ESP_NONE);
+
+  // Read-only is a problem.
+  doc.setReadOnly(true);
+  EXPECT_ESP(doc, ESP_READ_ONLY);
+
+  // Read-only takes precedence over modified-on-disk.
+  doc.m_modifiedOnDisk = true;
+  EXPECT_ESP(doc, ESP_READ_ONLY);
+
+  // Clearing read-only exposes the modified-on-disk problem.
+  doc.setReadOnly(false);
+  EXPECT_ESP(doc, ESP_MODIFIED_ON_DISK);
+
+  // Once there are unsaved changes, modified-on-disk is not reported,
+  // on the assumption that the warning was already dismissed.
+  doc.appendString("x");
+  xassert(doc.unsavedChanges());
+  EXPECT_ESP(doc, ESP_NONE);
+
+  // But read-only is still reported even with unsaved changes.
+  doc.setReadOnly(true);
+  EXPECT_ESP(doc, ESP_READ_ONLY);
+  doc.setReadOnly(false);
+  EXPECT_ESP(doc, ESP_NONE);
+
+  // Undoing back to the save point brings back the modified-on-disk
+  // problem.
+  doc.undo();
+  xassert(!doc.unsavedChanges());
+  EXPECT_ESP(doc, ESP_MODIFIED_ON_DISK);
+
+  // Reloading the file contents clears modified-on-disk.
+  doc.replaceFileAndStats(std::vector<unsigned char>{'a', '\n'},
+                          0 /*modTime*/, false /*readOnly*/);
+  EXPECT_ESP(doc, ESP_NONE);
+
+  // Reloading as read-only yields a read-only problem.
+  doc.replaceFileAndStats(std::vector<unsigned char>{'b', '\n'},
+                          0 /*modTime*/, true /*readOnly*/);
+  EXPECT_ESP(doc, ESP_READ_ONLY);
+
+  // Saving (here, simulated) with modified-on-disk set is not a way to
+  // clear the flag; only reloading does that.  But after saving there
+  // are no unsaved changes, so the problem is reported again.
+  doc.setReadOnly(false);
+  doc.m_modifiedOnDisk = true;
+  doc.appendString("y");
+  EXPECT_ESP(doc, ESP_NONE);
+  doc.noUnsavedChanges();
+  EXPECT_ESP(doc, ESP_MODIFIED_ON_DISK);
+}
+
+
+#undef EXPECT_ESP
+
+
 void test_toGDValue()
 {
   NamedTextDocument doc;
@@ -215,6 +283,7 @@ void test_named_td(CmdlineArgsSpan args)
   testReadFile();
   testSetDocumentProcessStatus();
   testUndoPastSavePoint();
+  testCheckEditSafety();
   test_toGDValue();
 
   xassert(NamedTextDocument::s_objectCount == 0);
