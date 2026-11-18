@@ -63,10 +63,12 @@
 #include "smbase/gdvalue-subst-transform.h"      // gdv::substitutionTransformGDValue
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
+#include "smbase/htt.h"                          // HTT_TASK
 #include "smbase/list-util.h"                    // smbase::listAtC
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
 #include "smbase/save-restore.h"                 // SetRestore
+#include "smbase/sm-env.h"                       // envAsBool
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/stringb.h"                      // stringb
@@ -263,6 +265,8 @@ EditorWidget::~EditorWidget()
 
 void EditorWidget::selfCheck() const
 {
+  HTT_TASK("EditorWidget::selfCheck");
+
   // Check that `editor` is among `m_editors` and that the files in
   // `m_editors` are a subset of those known to `editorGlobal()`.
   bool foundEditor = false;
@@ -2144,6 +2148,15 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k) NOEXCEPT
   // causes performance problems when large files are loaded.  Since the
   // event replay does per-event self-check, and there is a menu option
   // to invoke self-check manually, I've removed the automatic check.
+
+  // 2026-11-17: Optionally perform the check so I can gather some
+  // performance data to compare behavior with and without it.  This
+  // should eventually be removed, but it's useful for now as an example
+  // of a somewhat subtle performance problem that profiling should be
+  // able to highlight.
+  if (envAsBool("SELFCHECK_ON_RELEASE")) {
+    this->selfCheck();
+  }
 
   k->ignore();
 

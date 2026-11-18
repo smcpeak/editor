@@ -31,6 +31,7 @@
 #include "named-td-fwd.h"                        // NamedTextDocument [n]
 #include "named-td-list.h"                       // NamedTextDocumentList
 #include "open-files-dialog-fwd.h"               // OpenFilesDialog [n]
+#include "os-wait-timer.h"                       // OSWaitTimer
 #include "pixmaps.h"                             // Pixmaps
 #include "process-watcher-fwd.h"                 // ProcessWatcher [n]
 #include "recent-items-list-iface.h"             // RecentItemsList
@@ -77,6 +78,9 @@ public:      // class data
   static int const MAX_NUM_RECENT_COMMANDS;
 
 private:     // instance data
+  // Object that arranges to track time spent waiting for the OS.
+  OSWaitTimer m_osWaitTimer;
+
   // Pixmap set.  This appears unused at first, but creating it sets a
   // global pointer that allows other classes to use it.
   Pixmaps m_pixmaps;

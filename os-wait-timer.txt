@@ -1,0 +1,117 @@
+os-wait-timer.txt
+Module documentation for `os-wait-timer`.
+
+
+Goal
+----
+
+The goal here is, in a profiling context, to account for time spent
+waiting for the operating system to deliver an OS-level event, i.e.,
+time the app spends blocked on the OS.  That time can then be manually
+subtracted from any surrounding timer's elapsed time since it isn't time
+the app itself spent on the CPU.
+
+When using the `smbase/htt` module, we would conceptually like to do
+something like:
+
+  {
+    HTT_TASK("Blocking");
+    waitForOSEvent();
+  }
+
+Then, anyplace within the hierarchical timers that we spend time waiting
+on the OS will appear as a recognizable "Blocking" task whose wallclock
+time can be excluded during performance analysis.
+
+
+Mechanism in Qt
+---------------
+
+To do this, we arrange to receive the `aboutToBlock` and `awake` signals
+from the `QAbstractEventDispatcher` instance.  We can start a timer in
+`aboutToBlock`, and stop it in `awake`.
+
+
+Behavior on Windows
+-------------------
+
+On Windows, these signals are emitted just before and just after calling
+the function that blocks the process to wait for an OS-level event to
+arrive:
+
+  // qt-5.15: qtbase/src/corelib/kernel/qeventdispatcher_win.cpp
+  bool QEventDispatcherWin32::processEvents(QEventLoop::ProcessEventsFlags flags)
+  {
+      ...
+          emit awake();                <---- awake (unpaired)
+      ...
+              emit aboutToBlock();     <---- aboutToBlock (paired)
+              waitRet = MsgWaitForMultipleObjectsEx(nCount, pHandles, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
+              emit awake();            <---- awake (paired)
+      ...
+  }
+
+That `MsgWaitForMultipleObjectsEx` call site is the only place in Qt
+that that function is called with a non-zero timeout, and hence can
+block.  Those two `aboutToBlock` and `awake` signals are always paired,
+and immediately surround the blocking call.  Therefore, no other
+processing will take place between them, except for any other code that
+also reacts to these two signals.  (`event-replay.cc` reacts to
+`aboutToBlock`, but does not do significant work there.)
+
+However, there is also an `emit awake` near the top that is unpaired
+(and seems unnecessary to me), so we have to tolerate extra `awake`
+signals.
+
+
+Behavior on Linux
+-----------------
+
+Unfortunately, the situation on Linux is more complicated:
+
+  // qt-5.15: qtbase/src/corelib/kernel/qeventdispatcher_unix.cpp
+  bool QEventDispatcherUNIX::processEvents(QEventLoop::ProcessEventsFlags flags)
+  {
+      Q_D(QEventDispatcherUNIX);
+      d->interrupt.storeRelaxed(0);
+
+      // we are awake, broadcast it
+      emit awake();                    <---- awake
+
+      auto threadData = d->threadData.loadRelaxed();
+      QCoreApplicationPrivate::sendPostedEvents(nullptr, 0, threadData);
+
+      const bool include_timers = (flags & QEventLoop::X11ExcludeTimers) == 0;
+      const bool include_notifiers = (flags & QEventLoop::ExcludeSocketNotifiers) == 0;
+      const bool wait_for_events = flags & QEventLoop::WaitForMoreEvents;
+
+      const bool canWait = (threadData->canWaitLocked()
+                            && !d->interrupt.loadRelaxed()
+                            && wait_for_events);
+
+      if (canWait)
+          emit aboutToBlock();         <---- aboutToBlock
+      ...
+      switch (qt_safe_poll(d->pollfds.data(), d->pollfds.size(), tm)) {
+      ...
+      // NOTE: No `emit awake` down here.
+  }
+
+Here, the pair are inside out, with `awake` preceding in-app event
+dispatch, and `aboutToBlock` after it, with the blocking `qt_safe_poll`
+call a bit later.  After `qt_safe_poll`, `processEvents` returns to the
+caller without calling `emit awake`, so control flow could go all over
+the place in the app, including entering and leaving sections of code
+that have their own timers, and doing arbitrary amounts of CPU-bound
+work.
+
+I see no reason the Linux code doesn't work like the Windows code (all
+it would take is an `emit awake` after `qt_safe_poll`), but that's the
+way it is.  And, with it that way, I can't see any simple way on Linux
+of hooking into the moments just before and after `qt_safe_poll`.
+
+Consequently, this module is inactive on Linux, making performance
+analysis for interactive tasks more difficult there.
+
+
+EOF

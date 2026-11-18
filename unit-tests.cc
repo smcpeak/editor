@@ -75,6 +75,7 @@ static void entry(int argc, char **argv)
   // No deps in this repo (except for `command-runner`).
   RUN_TEST(editor_strutil);            // deps: (none)
   RUN_TEST(gap);                       // deps: (none)
+  RUN_TEST(os_wait_timer);
   RUN_TEST(recent_items_list);         // deps: (none)
   RUN_TEST(td_line);                   // deps: (none)
   RUN_TEST(textcategory);              // deps: (none)

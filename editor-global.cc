@@ -38,7 +38,7 @@
 #include "smqtutil/gdvalue-qt.h"                 // toGDValue(QString)
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
-#include "smqtutil/qtutil.h"                     // toQString
+#include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
@@ -107,6 +107,7 @@ int const EditorGlobal::MAX_NUM_RECENT_COMMANDS = 100;
 
 EditorGlobal::EditorGlobal(int argc, char **argv)
   : QApplication(argc, argv),
+    m_osWaitTimer(),
     m_pixmaps(),
     m_documentList(),
     m_editorWindows(),
