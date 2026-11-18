@@ -13,6 +13,7 @@
 
 // smbase
 #include "smbase/codepoint.h"          // isUppercaseLetter
+#include "smbase/htt.h"                // HTT_TASK
 #include "smbase/save-restore.h"       // SetRestore
 #include "smbase/trace.h"              // TRACE
 
@@ -349,6 +350,8 @@ static bool hasUppercaseLetter(string const &t)
 
 void SearchAndReplacePanel::updateEditorHitText(bool scrollToHit)
 {
+  HTT_TASK("SearchAndReplacePanel::updateEditorHitText");
+
   string s(toString(m_findBox->currentText()));
   TRACE("sar", "update hit text: text=\"" << s << "\" scroll=" << scrollToHit);
 

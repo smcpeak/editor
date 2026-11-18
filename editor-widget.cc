@@ -1791,6 +1791,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *k) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  HTT_TASK("EditorWidget::keyPressEvent");
   TRACE2("keyPressEvent: " << keysString(*k));
 
   if (!this->hasFocus()) {
@@ -2519,6 +2520,7 @@ std::string EditorWidget::markPositionUIString() const
 
 void EditorWidget::setTextSearchParameters()
 {
+  HTT_TASK("EditorWidget::setTextSearchParameters");
   m_textSearch->setSearchStringAndFlags(m_hitText, m_hitTextFlags);
 }
 

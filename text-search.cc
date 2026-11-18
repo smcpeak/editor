@@ -14,6 +14,7 @@
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/fasttime.h"           // smbase::{fastTimeMilliseconds, FastTimeAccumulator}
+#include "smbase/htt.h"                // HTT_TASK
 #include "smbase/nonport.h"            // getMilliseconds
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT(className)
 #include "smbase/sm-swap.h"            // swap
@@ -96,6 +97,8 @@ void TextSearch::recomputeMatches()
 
 void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOne)
 {
+  HTT_TASK("TextSearch::recomputeLineRange");
+
   this->selfCheck();
   xassert(startLine <= endLinePlusOne &&
                        endLinePlusOne <= m_document->numLines());
@@ -129,6 +132,7 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
   // each line, but only rarely reallocated.
   ArrayStack<MatchExtent> lineMatches;
 
+  HTT_TASK("line loop");
   for (LineIndex line=startLine; line < endLinePlusOne; ++line) {
     // Discard matches from prior lines.
     lineMatches.clear();
@@ -138,6 +142,8 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
       // Empty string never matches anything.
     }
     else {
+      HTT_TASK("process the line text");
+
       // Get the line of text.
       contents.clear();
       m_document->getWholeLine(line, contents);
@@ -169,6 +175,7 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
         // something that can operate on UTF-8 directly.
         QString lineQString(QString::fromUtf8(buffer, lineLength));
 
+        HTT_TASK("globalMatch and iteration");
         QRegularExpressionMatchIterator iter(m_regex->globalMatch(lineQString));
         while (iter.hasNext()) {
           QRegularExpressionMatch match(iter.next());
@@ -181,6 +188,8 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
         }
       }
       else {
+        HTT_TASK("recomputeLineRange: substring search");
+
         // Byte offset within the line to begin the next search.
         ByteIndex offset(0);
 
@@ -230,14 +239,14 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
         // Both empty.
       }
       else {
-        // Remove and deallocate.
+        HTT_TASK("Remove and deallocate.");
         FastTimeAccumulator acc(totalDeletionTime);
         delete m_lineToMatches.replace(line.get(), NULL);
       }
     }
     else {
       if (existing == NULL) {
-        // Install copy of new array.
+        HTT_TASK("Install copy of new array.");
         m_lineToMatches.replace(line.get(),
           new ArrayStack<MatchExtent>(lineMatches));
       }
@@ -245,7 +254,7 @@ void TextSearch::recomputeLineRange(LineIndex startLine, LineIndex endLinePlusOn
         // Same contents.
       }
       else {
-        // Copy contents.
+        HTT_TASK("Copy contents.");
         *existing = lineMatches;
       }
     }
