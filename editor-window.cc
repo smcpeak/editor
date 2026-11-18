@@ -28,7 +28,7 @@
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "td-editor.h"                           // TextDocumentEditor
 #include "textinput.h"                           // TextInputDialog
-#include "vfs-query-sync.h"                      // VFS_QuerySync
+#include "vfs-query-sync.h"                      // VFS_QuerySync, readFileSynchronously
 #include "vfs-msg.h"                             // VFS_ReadFileRequest
 #include "waiting-counter.h"                     // IncDecWaitingCounter
 
@@ -730,6 +730,8 @@ void EditorWindow::fileNewFile() NOEXCEPT
 
 void EditorWindow::setDocumentFile(NamedTextDocument *file)
 {
+  HTT_TASK("EditorWindow::setDocumentFile");
+
   // Before switching documents, put the old one at the top.  The idea
   // is that this document is the most recently used since it was just
   // shown to the user, even if it hasn't been explicitly switched to
@@ -830,6 +832,7 @@ void EditorWindow::fileInspectAtCursorOtherWindow() NOEXCEPT
 
 void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 {
+  HTT_TASK("EditorWindow::openOrSwitchToFile");
   TRACE1("openOrSwitchToFile: " << harn);
 
   if (harn.empty()) {

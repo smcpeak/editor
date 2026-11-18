@@ -14,6 +14,7 @@
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
 #include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/htt.h"                // HTT_TASK
 #include "smbase/map-util.h"           // smbase::mapContains
 #include "smbase/objcount.h"           // CHECK_OBJECT_COUNT
 #include "smbase/overflow.h"           // smbase::convertNumber
@@ -224,6 +225,7 @@ void NamedTextDocument::replaceFileAndStats(
   std::int64_t fileModificationTime,
   bool readOnly)
 {
+  HTT_TASK("NamedTextDocument::replaceFileAndStats");
   TRACE1(
     "replaceFileAndStats: docName=" << documentName() <<
     " contents.size()=" << contents.size() <<

@@ -11,6 +11,7 @@
 #include "smqtutil/sync-wait.h"        // synchronouslyWaitUntil
 
 // smbase
+#include "smbase/htt.h"                // HTT_TASK
 #include "smbase/sm-macros.h"          // IMEMBFP, USED_FOR_DEBUGGING
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassert
@@ -170,6 +171,8 @@ readFileSynchronously(
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
+  HTT_TASK("readFileSynchronously");
+
   std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
   req->m_path = harn.resourceName();
 
