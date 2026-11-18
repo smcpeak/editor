@@ -7,7 +7,7 @@
 
 // smbase
 #include "smbase/gdvalue.h"                      // gdv::GDValue
-#include "smbase/nonport.h"                      // fileOrDirectoryExists, removeFile
+#include "smbase/nonport.h"                      // getFileModificationTime
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
@@ -26,20 +26,22 @@ OPEN_ANONYMOUS_NAMESPACE
 
 void testWhenUntitledExists()
 {
+  SMFileUtil sfu;
+
   NamedTextDocument file;
   file.setDocumentName(DocumentName::fromNonFileResourceName(
     HostName::asLocal(), "untitled.txt",
-    SMFileUtil().currentDirectory()));
+    sfu.currentDirectory()));
 
   // Create a file with that name.
   bool created = false;
-  if (!fileOrDirectoryExists(file.resourceName().c_str())) {
+  if (!sfu.pathExists(file.resourceName())) {
     ofstream of(file.resourceName().c_str());
     created = true;
   }
 
   if (created) {
-    (void)removeFile(file.resourceName().c_str());
+    sfu.removeFile(file.resourceName());
   }
 }
 
@@ -133,9 +135,14 @@ void writeFile(NamedTextDocument &doc)
 // in history corresponding to file contents, then make a change.
 void testUndoPastSavePoint()
 {
+  char const * const fname = "out/tmp.h";
+
+  SMFileUtil sfu;
+  sfu.createParentDirectories(fname);
+
   NamedTextDocument doc;
   doc.setDocumentName(DocumentName::fromFilename(
-    HostName::asLocal(), "tmp.h"));
+    HostName::asLocal(), fname));
 
   doc.appendString("x");
   doc.appendString("x");
@@ -165,7 +172,7 @@ void testUndoPastSavePoint()
 
   // Current history point is 2.
 
-  (void)removeFile("tmp.h");
+  sfu.removeFile(fname);
 }
 
 
