@@ -6,6 +6,7 @@
 // editor
 #include "debug-values.h"              // DEBUG_VALUES
 #include "line-difference.h"           // LineDifference
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 // smqtutil
 #include "smqtutil/qtutil.h"           // toQString(QString), operator<<(QString)

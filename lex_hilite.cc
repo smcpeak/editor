@@ -8,6 +8,7 @@
 #include "td-core.h"                   // TextDocumentCore
 #include "td-editor.h"                 // TextDocument[And]Editor
 #include "textcategory.h"              // LineCategoryAOAs
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 // smbase
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END

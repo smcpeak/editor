@@ -12,4 +12,10 @@
 template class WrappedInteger<std::int64_t, TD_VersionNumber>;
 
 
+TD_VersionNumber &preIncrementWithOverflowCheck(TD_VersionNumber &obj)
+{
+  return ++obj;
+}
+
+
 // EOF

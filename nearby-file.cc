@@ -9,6 +9,7 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-olb.h"             // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 #include "smbase/codepoint.h"          // isDecimalDigit, isLetter, etc.
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)

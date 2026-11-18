@@ -4,9 +4,11 @@
 #include "unit-tests.h"                // decl for my entry point
 #include "td-editor.h"                 // module to test
 
+// editor
 #include "column-difference.h"         // ColumnDifference
 #include "range-text-repl.h"           // RangeTextReplacement
 #include "textcategory.h"              // LineCategoryAOAs
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 // smbase
 #include "smbase/datablok.h"           // DataBlock

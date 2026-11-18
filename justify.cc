@@ -3,18 +3,24 @@
 
 #include "justify.h"                   // this module
 
+// editor
 #include "column-count.h"              // ColumnCount
 #include "column-difference.h"         // ColumnDifference
 #include "line-index.h"                // LineIndex
 #include "td-editor.h"                 // TextDocumentEditor
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
+// smqtutil
 #include "smqtutil/qtutil.h"           // toString(QString)
 
+// smbase
 #include "smbase/str.h"                // stringBuilder
 #include "smbase/stringb.h"            // stringb
 
+// Qt
 #include <QRegularExpression>
 
+// libc++
 #include <string>                      // std::string
 #include <vector>                      // std::vector
 

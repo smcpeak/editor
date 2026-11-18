@@ -4,6 +4,8 @@
 #include "unit-tests.h"                // decl for my entry point
 #include "line-difference.h"           // module under test
 
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
+
 #include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test-order.h"      // EXPECT_STRICTLY_ORDERED
 #include "smbase/sm-test.h"            // EXPECT_EQ

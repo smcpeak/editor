@@ -15,6 +15,7 @@
 #include "td-change.h"                           // TextDocumentChange
 #include "tdd-proposed-fix.h"                    // TDD_ProposedFix
 #include "textmcoord-map.h"                      // TextMCoordMap
+#include "wrapped-integer-inl.h"                 // WrappedInteger::operator++ defn
 
 #include "smbase/ast-switch.h"                   // ASTSWITCHC
 #include "smbase/compare-util.h"                 // smbase::compare

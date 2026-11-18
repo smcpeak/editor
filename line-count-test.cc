@@ -5,6 +5,7 @@
 #include "line-count.h"                // module under test
 
 #include "line-difference.h"           // LineDifference
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 #include "smbase/exc.h"                // smbase::XAssert
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, XGDValueError}

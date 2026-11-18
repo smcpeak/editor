@@ -5,6 +5,7 @@
 
 #include "byte-count.h"                // ByteCount, memcpyBC
 #include "byte-difference.h"           // ByteDifference
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 #include "smbase/array.h"              // Array
 #include "smbase/strutil.h"            // encodeWithEscapes

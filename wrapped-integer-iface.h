@@ -171,7 +171,10 @@ public:      // methods
 
   Derived &operator+=(Derived delta);
 
-  Derived &operator++();
+  // Experiment: This method is showing up in the profiling data, so
+  // what happens if we declare it `inline`?
+  inline Derived &operator++();
+
   Derived operator++(int);
 
   // ---------------------- Subtraction/inversion ----------------------

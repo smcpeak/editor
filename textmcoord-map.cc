@@ -3,14 +3,18 @@
 
 // See license.txt for copyright and terms of use.
 
+// Must-be-first forward decls.
 #include "smbase/gdvalue-optional-fwd.h"         // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-set-fwd.h"              // gdv::toGDValue(std::set)
 
 #include "textmcoord-map.h"                      // this module
 
+// editor
 #include "td-core.h"                             // TextDocumentCore
 #include "textmcoord.h"                          // TextMCoord[Range], rangeContains_orAtCollapsed
+#include "wrapped-integer-inl.h"                 // WrappedInteger::operator++ defn
 
+// smbase
 #include "smbase/chained-cond.h"                 // smbase::cc::{z_le_lt, etc.}
 #include "smbase/compare-util-iface.h"           // RET_IF_COMPARE_MEMBERS
 #include "smbase/container-util.h"               // smbase::contains
@@ -24,6 +28,7 @@
 #include "smbase/sm-macros.h"                    // DMEMB, EMEMB, IMEMBFP
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 
+// libc++
 #include <optional>                              // std::optional
 
 using namespace gdv;

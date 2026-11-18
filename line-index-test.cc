@@ -6,6 +6,7 @@
 
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 #include "smbase/gdvalue-parser.h"     // gdv::{GDValueParser, XGDValueError}
 #include "smbase/gdvalue.h"            // gdv::GDValue

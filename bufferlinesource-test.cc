@@ -7,6 +7,7 @@
 
 // editor
 #include "td-editor.h"                 // TextDocumentAndEditor
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 // smbase
 #include "smbase/sm-test.h"            // EXPECT_EQ

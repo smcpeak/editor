@@ -42,16 +42,14 @@ protected:   // methods
 public:      // methods
   // Inherit ctors.
   using Base::Base;
-
-  // `WrappedInteger::operator++()` does an overflow check.  I have at
-  // least one line of code that was using this more explicit call to
-  // also do that check.  I'll overload it so the call site still
-  // explicitly advertises its safety.
-  friend TD_VersionNumber &preIncrementWithOverflowCheck(TD_VersionNumber &obj)
-  {
-    return ++obj;
-  }
 };
+
+
+// `WrappedInteger::operator++()` does an overflow check.  I have at
+// least one line of code that was using this more explicit call to also
+// do that check.  I'll overload it so the call site still explicitly
+// advertises its safety.
+TD_VersionNumber &preIncrementWithOverflowCheck(TD_VersionNumber &obj);
 
 
 #endif // EDITOR_TD_VERSION_NUMBER_H

@@ -5,6 +5,9 @@
 
 #include "td-core.h"                   // module to test
 
+// editor
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
+
 // smbase
 #include "smbase/autofile.h"           // AutoFILE
 #include "smbase/exc.h"                // smbase::xmessage

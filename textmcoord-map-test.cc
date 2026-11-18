@@ -1,15 +1,18 @@
 // textmcoord-map-test.cc
 // Tests for `textmcoord-map` module.
 
+// must-be-first fwds
 #include "smbase/gdvalue-set-fwd.h"    // gdv::toGDValue(std::set)
 
 #include "unit-tests.h"                // decl for my entry point
-
 #include "textmcoord-map.h"            // module under test
 
+// editor
 #include "line-count.h"                // PositiveLineCount
 #include "td-core.h"                   // TextDocumentCore
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
+// smbase
 #include "smbase/chained-cond.h"       // smbase::cc::{z_le_le_le, le_lt, z_le_lt}
 #include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
@@ -21,6 +24,7 @@
 #include "smbase/sm-test.h"            // ARGS_MAIN, EXPECT_EQ[_GDV], envRandomizedTestIters, [TIMED_]TEST_FUNC, DIAG[2]
 #include "smbase/string-util.h"        // join, suffixAll, stringToVectorOfUChar
 
+// c++
 #include <algorithm>                   // std::max
 #include <cstdlib>                     // std::rand
 #include <iostream>                    // std::cout

@@ -36,6 +36,7 @@
 #include "uri-util.h"                            // getFileURIPath, makeFileURI
 #include "vfs-query-sync.h"                      // VFS_QuerySync
 #include "waiting-counter.h"                     // IncDecWaitingCounter
+#include "wrapped-integer-inl.h"                 // WrappedInteger::operator++ defn
 
 // smqtutil
 #include "smqtutil/courB24_ISO8859_1.bdf.gen.h"  // bdfFontData_courB24_ISO8859_1

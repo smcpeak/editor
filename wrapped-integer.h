@@ -8,10 +8,11 @@
 #define EDITOR_WRAPPED_INTEGER_H
 
 #include "wrapped-integer-iface.h"     // interface decls for this module
+#include "wrapped-integer-inl.h"       // inline ops for this module
 
 #include "smbase/compare-util.h"       // smbase::compare
-#include "smbase/gdvalue.h"            // gdv::GDValue [n]
-#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser [n]
+#include "smbase/gdvalue.h"            // gdv::GDValue
+#include "smbase/gdvalue-parser.h"     // gdv::GDValueParser
 #include "smbase/overflow.h"           // {add,subtract,multiply}WithOverflowCheck, convertNumber
 #include "smbase/xassert.h"            // xassert, xfailure_stringbc
 
@@ -94,12 +95,7 @@ Derived &WrappedInteger<UnderInt, Derived>::operator+=(Derived delta)
 }
 
 
-template <typename UnderInt, typename Derived>
-Derived &WrappedInteger<UnderInt, Derived>::operator++()
-{
-  derived().set(addWithOverflowCheck<UnderInt>(derivedC().get(), 1));
-  return derived();
-}
+// Pre-increment operator++ is defined in `wrapped-integer-inl.h`.
 
 
 template <typename UnderInt, typename Derived>

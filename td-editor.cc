@@ -11,6 +11,7 @@
 #include "line-count.h"                // LineCount
 #include "line-difference.h"           // LineDifference
 #include "textcategory.h"              // LineCategoryAOAs
+#include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
 // smbase
 #include "smbase/array.h"              // Array
