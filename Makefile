@@ -22,6 +22,13 @@ CXX := g++
 # Set to 1 to activate coverage (gcov) support.
 COVERAGE := 0
 
+# Flags to control optimization.
+OPTIMIZATION_FLAGS = -O2 -DNDEBUG
+
+# Flags to control compiler warnings.  The default is no warnings since
+# it's aimed at users rather than developers.
+WARNING_FLAGS =
+
 # Additional compile/link flags.
 EXTRA_CCFLAGS :=
 EXTRA_LDFLAGS :=
@@ -68,6 +75,8 @@ CCFLAGS += -I.
 # prefixes to access files in subdirectories, so they are not passed as
 # -I arguments.
 
+CCFLAGS += $(OPTIMIZATION_FLAGS)
+CCFLAGS += $(WARNING_FLAGS)
 CCFLAGS += $(QT_CCFLAGS)
 CCFLAGS += $(EXTRA_CCFLAGS)
 
