@@ -11,7 +11,7 @@
 #include "smqtutil/sync-wait.h"        // synchronouslyWaitUntil
 
 // smbase
-#include "smbase/sm-macros.h"          // IMEMBFP
+#include "smbase/sm-macros.h"          // IMEMBFP, USED_FOR_DEBUGGING
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassert
 
@@ -62,7 +62,8 @@ bool VFS_QuerySync::issueRequestSynchronously(
   string requestDescription = request->description();
   m_vfsConnections->issueRequest(m_requestID /*OUT*/,
     m_hostName, std::move(request));
-  RequestID origRequestID = m_requestID;
+
+  USED_FOR_DEBUGGING RequestID origRequestID = m_requestID;
 
   TRACE("VFS_QuerySync",
     "request " << origRequestID << ": issued: " << requestDescription);

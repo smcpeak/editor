@@ -10,6 +10,7 @@
 // smbase
 #include "smbase/codepoint.h"          // isShellMetacharacter
 #include "smbase/sm-iostream.h"        // cerr, etc.
+#include "smbase/sm-macros.h"          // USED_FOR_DEBUGGING
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassertPrecondition, xassert
 
@@ -47,6 +48,7 @@ int const CommandRunner::DEFAULT_SYNCHRONOUS_TIME_LIMIT_MS = 2000;
 static int const KILL_WAIT_TIMEOUT_MS = 500;
 
 
+USED_FOR_DEBUGGING
 static char const *toString(QProcess::ProcessState state)
 {
   switch (state) {
@@ -428,7 +430,8 @@ void CommandRunner::startAndWait()
   // returns when we are finished working with the process, either
   // because it completed successfully or we encountered an error.
   TRACE_CR("startAndWait: starting event loop");
-  int r = m_eventLoop.exec();
+  USED_FOR_DEBUGGING int r =
+    m_eventLoop.exec();
 
   // The return from exec() is not supposed to be important because I
   // should have already recorded all the relevant information in the
@@ -819,6 +822,7 @@ void CommandRunner::on_errorOccurred(QProcess::ProcessError error)
 }
 
 
+USED_FOR_DEBUGGING
 static char const *toString(QProcess::ExitStatus s)
 {
   switch (s) {
