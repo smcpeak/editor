@@ -33,8 +33,10 @@ void test_ctor()
 
   EXPECT_EXN_SUBSTR(LSP_VersionNumber(UINT32_C(0x80000000)),
     XNumericConversion, "cannot be represented");
-  EXPECT_EXN_SUBSTR(LSP_VersionNumber(-1),
-    XAssert, "Value violates constraint for LSP_VersionNumber: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(LSP_VersionNumber(-1),
+      XAssert, "Value violates constraint for LSP_VersionNumber: -1.");
+  )
 }
 
 

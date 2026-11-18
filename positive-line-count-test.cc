@@ -54,8 +54,10 @@ void test_ctor_LineDifference()
   PositiveLineCount c(LineDifference(3));
   EXPECT_EQ(c.get(), 3);
 
-  EXPECT_EXN_SUBSTR(PositiveLineCount(LineDifference(-1)),
-    XAssert, "Value violates constraint for PositiveLineCount: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(PositiveLineCount(LineDifference(-1)),
+      XAssert, "Value violates constraint for PositiveLineCount: -1.");
+  )
 }
 
 
@@ -66,8 +68,10 @@ void test_ctor_LineCount()
   PositiveLineCount c(LineCount(3));
   EXPECT_EQ(c.get(), 3);
 
-  EXPECT_EXN_SUBSTR(PositiveLineCount(LineCount(0)),
-    XAssert, "Value violates constraint for PositiveLineCount: 0.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(PositiveLineCount(LineCount(0)),
+      XAssert, "Value violates constraint for PositiveLineCount: 0.");
+  )
 }
 
 
@@ -138,8 +142,10 @@ void test_set_get()
   d.set(42);
   EXPECT_EQ(d.get(), 42);
 
-  EXPECT_EXN_SUBSTR(d.set(-7),
-    XAssert, "Value violates constraint for PositiveLineCount: -7.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(d.set(-7),
+      XAssert, "Value violates constraint for PositiveLineCount: -7.");
+  )
 }
 
 
@@ -275,8 +281,10 @@ void test_predPLC()
   d = d.predPLC();
   EXPECT_EQ(d.get(), 1);
 
-  EXPECT_EXN_SUBSTR(d.predPLC(),
-    XAssert, "Value violates constraint for PositiveLineCount: 0.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(d.predPLC(),
+      XAssert, "Value violates constraint for PositiveLineCount: 0.");
+  )
 }
 
 

@@ -50,8 +50,10 @@ void test_ctor()
 
   EXPECT_STRICTLY_ORDERED(LineIndex, i0, i1, i2);
 
-  EXPECT_EXN_SUBSTR(LineIndex(-1),
-    XAssert, "Value violates constraint for LineIndex: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(LineIndex(-1),
+      XAssert, "Value violates constraint for LineIndex: -1.");
+  )
 
   EXPECT_EQ(stringb(i0), "0");
   EXPECT_EQ(stringb(i1), "1");
@@ -272,8 +274,10 @@ void test_succ_pred()
   EXPECT_EQ(i1.predClamped().get(), 0);
   EXPECT_EQ(i2.predClamped().get(), 1);
 
-  EXPECT_EXN_SUBSTR(i0.pred(),
-    XAssert, "Value violates constraint for LineIndex: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(i0.pred(),
+      XAssert, "Value violates constraint for LineIndex: -1.");
+  )
   EXPECT_EQ(i1.pred().get(), 0);
   EXPECT_EQ(i2.pred().get(), 1);
 }

@@ -145,8 +145,10 @@ void test_set_get()
   d.set(42);
   EXPECT_EQ(d.get(), 42);
 
-  EXPECT_EXN_SUBSTR(d.set(-7),
-    XAssert, "Value violates constraint for NonNegativeInteger: -7.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(d.set(-7),
+      XAssert, "Value violates constraint for NonNegativeInteger: -7.");
+  )
 }
 
 
@@ -356,9 +358,11 @@ void test_addOther()
   EXPECT_EQ(NonNegativeInteger(3) + IntegerDifference(2), 5);
   EXPECT_EQ(NonNegativeInteger(3) + IntegerDifference(-2), 1);
 
-  EXPECT_EXN_SUBSTR(NonNegativeInteger(3) + IntegerDifference(-5),
-    XAssert,
-    "Value violates constraint for NonNegativeInteger: -2.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(NonNegativeInteger(3) + IntegerDifference(-5),
+      XAssert,
+      "Value violates constraint for NonNegativeInteger: -2.");
+  )
 
   NonNegativeInteger nni(5);
   nni += IntegerDifference(7);

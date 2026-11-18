@@ -14,11 +14,19 @@
 #include "smbase/compare-util-iface.h" // DECLARE_COMPARETO_AND_DEFINE_RELATIONALS, DECLARE_COMPARETO_AND_DEFINE_RELATIONALS_TO_OTHER, smbase::compare
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [n]
-#include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB
+#include "smbase/sm-macros.h"          // IMEMBFP, CMEMB, DMEMB, IFDEBUG
 #include "smbase/std-string-fwd.h"     // std::string
 
 #include <iosfwd>                      // std::ostream
 #include <type_traits>                 // std::{enable_if_t, is_integral_v}
+
+
+// Provide a facility to control safety checks in WrappedInteger, as
+// profiling indicates they impose a significant low-level cost.
+//
+// For the moment, I'm not sure if I want these on by default, I'm
+// just providing a way to measure the cost under various scenarios.
+#define WRAPPED_INTEGER_SAFETY_CHECK(stuff) IFDEBUG(stuff)
 
 
 /* Class template to use a common base for purpose-specific wrapped
@@ -94,20 +102,20 @@ public:      // methods
   explicit WrappedInteger(UnderInt value = 0)
     : m_value(value)
   {
-    derivedC().selfCheck();
+    WRAPPED_INTEGER_SAFETY_CHECK( derivedC().selfCheck(); )
   }
 
   WrappedInteger(WrappedInteger const &obj)
     : DMEMB(m_value)
   {
-    derivedC().selfCheck();
+    WRAPPED_INTEGER_SAFETY_CHECK( derivedC().selfCheck(); )
   }
 
   Derived &operator=(WrappedInteger const &obj)
   {
     if (this != &obj) {
       CMEMB(m_value);
-      derivedC().selfCheck();
+      WRAPPED_INTEGER_SAFETY_CHECK( derivedC().selfCheck(); )
     }
     return derived();
   }
@@ -123,7 +131,7 @@ public:      // methods
   void set(UnderInt value)
   {
     m_value = value;
-    derivedC().selfCheck();
+    WRAPPED_INTEGER_SAFETY_CHECK( derivedC().selfCheck(); )
   }
 
   // --------------------------- Conversion ----------------------------

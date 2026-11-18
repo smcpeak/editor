@@ -23,8 +23,10 @@ void test_ctor()
   EXPECT_EQ(TD_VersionNumber(INT64_C(0x80000000)).get(),
                              INT64_C(0x80000000));
 
-  EXPECT_EXN_SUBSTR(TD_VersionNumber(-1),
-    XAssert, "Value violates constraint for TD_VersionNumber: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(TD_VersionNumber(-1),
+      XAssert, "Value violates constraint for TD_VersionNumber: -1.");
+  )
 }
 
 

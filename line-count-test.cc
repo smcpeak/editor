@@ -65,8 +65,10 @@ void test_ctor_LineDifference()
   LineCount c(LineDifference(3));
   EXPECT_EQ(c.get(), 3);
 
-  EXPECT_EXN_SUBSTR(LineCount(LineDifference(-1)),
-    XAssert, "Value violates constraint for LineCount: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(LineCount(LineDifference(-1)),
+      XAssert, "Value violates constraint for LineCount: -1.");
+  )
 }
 
 
@@ -93,8 +95,10 @@ void test_set_get()
   d.set(42);
   EXPECT_EQ(d.get(), 42);
 
-  EXPECT_EXN_SUBSTR(d.set(-7),
-    XAssert, "Value violates constraint for LineCount: -7.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(d.set(-7),
+      XAssert, "Value violates constraint for LineCount: -7.");
+  )
 }
 
 
@@ -230,8 +234,10 @@ void test_pred()
   d = d.pred();
   EXPECT_EQ(d.get(), 0);
 
-  EXPECT_EXN_SUBSTR(d.pred(),
-    XAssert, "Value violates constraint for LineCount: -1.");
+  WRAPPED_INTEGER_SAFETY_CHECK(
+    EXPECT_EXN_SUBSTR(d.pred(),
+      XAssert, "Value violates constraint for LineCount: -1.");
+  )
 }
 
 
