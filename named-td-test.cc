@@ -199,6 +199,9 @@ void test_toGDValue()
       lspUpdateContinuously: true
     ]
   )"));
+
+  // Quick check of EditSafetyProblem stringification.
+  EXPECT_EQ_GDV(ESP_MODIFIED_ON_DISK, "ESP_MODIFIED_ON_DISK"_sym);
 }
 
 

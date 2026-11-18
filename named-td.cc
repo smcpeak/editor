@@ -35,6 +35,25 @@ using namespace smbase;
 INIT_TRACE("named-td");
 
 
+DEFINE_ENUMERATION_TO_STRING_OR(
+  EditSafetyProblem,
+  NUM_EDIT_SAFETY_PROBLEMS,
+  (
+    "ESP_NONE",
+    "ESP_READ_ONLY",
+    "ESP_MODIFIED_ON_DISK",
+  ),
+  "ESP_<invalid>"
+)
+
+
+gdv::GDValue toGDValue(EditSafetyProblem esp)
+{
+  return GDValue(GDVSymbol(toString(esp)));
+}
+
+
+// ------------------------- NamedTextDocument -------------------------
 int NamedTextDocument::s_objectCount = 0;
 
 CHECK_OBJECT_COUNT(NamedTextDocument);
@@ -220,6 +239,27 @@ string NamedTextDocument::fileStatusString() const
     sb << " [DISKMOD]";
   }
   return sb.str();
+}
+
+
+EditSafetyProblem NamedTextDocument::checkEditSafety() const
+{
+  if (isReadOnly()) {
+    return ESP_READ_ONLY;
+  }
+
+  if (unsavedChanges()) {
+    // We already have unsaved changes, so assume that the safety
+    // check has already passed or its warning dismissed.  (I do not
+    // want to hit the disk for every edit operation.)
+    return ESP_NONE;
+  }
+
+  if (m_modifiedOnDisk) {
+    return ESP_MODIFIED_ON_DISK;
+  }
+
+  return ESP_NONE;
 }
 
 

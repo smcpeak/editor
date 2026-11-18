@@ -320,6 +320,10 @@ private:     // funcs
   // Prompt to override the flag.
   bool promptOverrideReadOnly();
 
+  // The user is trying to make a change when the underlying file has
+  // changed.  Prompt to edit anyway.
+  bool promptEditDespiteModified();
+
   // True if we are currently ignoring document change notifications.
   bool ignoringChangeNotifications() const;
 

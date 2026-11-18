@@ -3710,23 +3710,43 @@ bool EditorWidget::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 
 bool EditorWidget::editSafetyCheck()
 {
-  if (m_editor->isReadOnly() && !this->promptOverrideReadOnly()) {
-    // Document is still read-only, user does not want to override.
-    return false;
+  EditSafetyProblem esp = getDocument()->checkEditSafety();
+  if (esp == ESP_READ_ONLY) {
+    if (!promptOverrideReadOnly()) {
+      // Document is still read-only, user does not want to override.
+      return false;
+    }
+    else {
+      // The read-only flag has been cleared, but there might still be a
+      // different safety problem, so check again.
+      esp = getDocument()->checkEditSafety();
+    }
+  }
+  xassert(esp != ESP_READ_ONLY);
+
+  if (esp == ESP_MODIFIED_ON_DISK) {
+    if (!promptEditDespiteModified()) {
+      // User canceled the edit.
+      return false;
+    }
+    else {
+      // No state has changed yet, but when we return true from this
+      // function, the document contents will presumably be changed.
+    }
+  }
+  else {
+    // The only remaining possibility is no problem.
+    xassert(esp == ESP_NONE);
   }
 
-  if (m_editor->unsavedChanges()) {
-    // We already have unsaved changes, so assume that the safety
-    // check has already passed or its warning dismissed.  (I do not
-    // want to hit the disk for every edit operation.)
-    return true;
-  }
+  // Either there is no problem, or any issues have been seen and
+  // dismissed by the user.
+  return true;
+}
 
-  if (!m_editor->m_namedDoc->m_modifiedOnDisk) {
-    // No concurrent changes, safe to go ahead.
-    return true;
-  }
 
+bool EditorWidget::promptEditDespiteModified()
+{
   // Prompt the user.
   QMessageBox box(this);
   box.setObjectName("editSafetyCheck_box");

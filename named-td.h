@@ -6,6 +6,7 @@
 
 #include "named-td-fwd.h"              // fwds for this module
 
+// editor
 #include "doc-name.h"                  // DocumentName
 #include "doc-type.h"                  // DocumentType
 #include "fail-reason-opt.h"           // FailReasonOpt
@@ -14,14 +15,38 @@
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 #include "td.h"                        // TextDocument
 
+// smbase
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
 #include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/str.h"                // string
 
+// c++
 #include <cstdint>                     // std::int64_t
 #include <map>                         // std::map
 #include <memory>                      // std::unique_ptr
 #include <optional>                    // std::optional
+
+
+// Possible reasons to prompt before allowing an edit.
+enum EditSafetyProblem : int {
+  // No issues, go ahead with the edit.
+  ESP_NONE,
+
+  // The file is currently read-only.  This takes precedence over
+  // ESP_MODIFIED_ON_DISK when both apply.
+  ESP_READ_ONLY,
+
+  // The file was modified on disk since it was last read by the editor.
+  ESP_MODIFIED_ON_DISK,
+
+  NUM_EDIT_SAFETY_PROBLEMS
+};
+
+// Return "ESP_NONE", etc.
+char const *toString(EditSafetyProblem esp);
+
+// Return a symbol named as `toString`.
+gdv::GDValue toGDValue(EditSafetyProblem esp);
 
 
 // This class binds a TextDocument, which is an abstract mathematical
@@ -193,6 +218,10 @@ public:      // funcs
   // Empty string, plus " *" if the file has been modified in memory,
   // plus " [DISKMOD]" if the contents on disk have been modified.
   string fileStatusString() const;
+
+  // The user is about to change the file.  Report on whether and why we
+  // should prompt before allowing it.
+  EditSafetyProblem checkEditSafety() const;
 
   // ------------------------- file contents ---------------------------
   // Discard existing contents and set them based on the given info.
