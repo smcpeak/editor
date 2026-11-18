@@ -1785,9 +1785,16 @@ static int innerMain(int argc, char **argv)
 
       EditorGlobal app(argc, argv);
 
-      // Self-check function to run after every event.
-      auto selfCheck = [&app]() -> void {
-        app.selfCheck();
+      // Optionally disable the replay selfCheck.  This is mainly useful
+      // when I'm trying to do performance analysis.
+      bool const runEventSelfCheck =
+        !envAsBool("REPLAY_DISABLE_SELFCHECK");
+
+      // Self-check function to run after every event during replay.
+      auto selfCheck = [&app, runEventSelfCheck]() -> void {
+        if (runEventSelfCheck) {
+          app.selfCheck();
+        }
       };
 
       Owner<EventRecorder> recorder;
