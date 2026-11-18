@@ -1,6 +1,6 @@
 // os-wait-timer.h
 // `OSWaitTimer`, a class to track time spent waiting for an OS event.
-// See `os-wait-timer.txt`.
+// See `doc/os-wait-timer.txt`.
 
 // See license.txt for copyright and terms of use.
 
@@ -22,7 +22,7 @@ class QAbstractEventDispatcher;
 
 // React to `QAbstractEventDispatcher` events `aboutToBlock` and `awake`
 // to start and stop a timer associated with being blocked on the OS.
-// See `os-wait-timer.txt`.
+// See `doc/os-wait-timer.txt`.
 class OSWaitTimer : public QObject {
   Q_OBJECT
   NO_OBJECT_COPIES(OSWaitTimer);
