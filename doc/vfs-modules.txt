@@ -1,0 +1,106 @@
+vfs-modules.txt
+Explanation of the main VFS-related modules
+
+
+See also vfs-module-dependencies.ded[.png].
+
+
+VFS-related modules with no Qt dependence:
+
+  vfs-msg
+
+    Defines VFS_* (most of which end in "Request" or "Reply"), the
+    serializable message structures for the protocol.  Also defines
+    VFS_MT_*, the associated numeric message type codes.
+
+  vfs-local
+
+    VFS_LocalImpl, which performs the VFS file system access locally
+    as part of the VFS server process.
+
+  nearby-file
+
+    Defines IFHExists, a synchronous, non-cancelable, and Qt-free
+    interface to a subset of VFS capability.  Implemented by
+    VFS_QuerySync for production use, and TestIFHExists for testing.
+
+    TODO: It should expose cancelation and error messages.
+
+VFS-related modules that use Qt core (QObject) but no GUI depedence:
+
+  vfs-query
+
+    VFS_FileSystemQuery, the asynchronous VFS client.  Uses Qt slots
+    and signals in its interface, and CommandRunner to manage its
+    connection to the server process.
+
+  vfs-connections
+
+    VFS_Connections, which manages a set of VFS_FileSystemQuery
+    connections to VFS servers, one per host.  Also exposes
+    VFS_AbstractConnections, an interface that can be mocked for
+    testing.  The interface uses Qt slots and signals.
+
+  vfs-query-sync
+
+    VFS_QuerySync, which offers a synchronous but cancelable interface
+    on top of VFS_AbstractConnections.  Waiting and cancelation are
+    provided by SynchronousWaiter (hence there is a small GUI
+    dependency).  This has Qt slots to interface with
+    VFS_AbstractConnections, but does not use Qt in its public
+    interface.
+
+VFS-related that depends on Qt GUI:
+
+  smqtutil/sync-wait
+
+    SynchronousWaiter, an interface that allows a client to wait until
+    a condition is true, but the wait can be canceled.  Depends on Qt
+    QWidget but probably shouldn't.  Also provides a production
+    implementation that pops up a GUI with a Cancel button, and a test
+    implementation that does not.
+
+Editor non-GUI modules that use VFS:
+
+  editor-fs-server
+
+    VFS server process, uses vfs-local.
+
+Editor GUI modules that use VFS:
+
+  editor-global
+
+    Uses vfs-query-sync to read editor files.  Uses sync-wait too.
+
+  editor-window
+
+    Uses vfs-query-sync to read and write editor files.  Uses
+    sync-wait (with GUI dependence) for wait/cancel.
+
+  editor-widget
+
+    Uses vfs-query-sync, sync-wait, and nearby-file for "open file at
+    cursor".  Also uses vfs-query (async) to update file status such as
+    modified-on-disk.
+
+  filename-input
+
+    Uses vfs-query-sync and sync-wait to create new directories.
+    However, it primarily uses vfs-query (async) to retrieve directory
+    contents as the user navigates.
+
+LSP modules that use VFS:
+
+  lsp-get-code-lines
+
+    Uses vfs-query-sync, vfs-connections, and sync-wait to read file
+    contents in order to show lines of code for the locations returned
+    by an LSP query for "all uses", etc.
+
+  lsp-client-manager
+
+    Uses vfs-connections and sync-wait, passing them along to
+    lsp-get-code-lines.
+
+
+EOF

@@ -1,0 +1,223 @@
+{
+  "drawFileName": true,
+  "entities": [
+    {
+      "loc": {
+        "x": 355,
+        "y": 380
+      },
+      "name": "vfs-msg",
+      "size": {
+        "h": 20,
+        "w": 210
+      }
+    },
+    {
+      "loc": {
+        "x": 465,
+        "y": 340
+      },
+      "name": "vfs-local",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 205,
+        "y": 380
+      },
+      "name": "nearby-file (IHFExists)",
+      "size": {
+        "h": 20,
+        "w": 140
+      }
+    },
+    {
+      "loc": {
+        "x": 355,
+        "y": 340
+      },
+      "name": "vfs-query",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 150,
+        "y": 240
+      },
+      "name": "vfs-query-sync",
+      "size": {
+        "h": 20,
+        "w": 305
+      }
+    },
+    {
+      "loc": {
+        "x": 150,
+        "y": 275
+      },
+      "name": "sync-wait",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 20,
+        "y": 240
+      },
+      "name": "Qt Core",
+      "size": {
+        "h": 120,
+        "w": 55
+      }
+    },
+    {
+      "loc": {
+        "x": 75,
+        "y": 275
+      },
+      "name": "Qt GUI",
+      "size": {
+        "h": 20,
+        "w": 50
+      }
+    },
+    {
+      "loc": {
+        "x": 355,
+        "y": 300
+      },
+      "name": "vfs-connections",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "loc": {
+        "x": 465,
+        "y": 135
+      },
+      "name": "editor-fs-server",
+      "size": {
+        "h": 20,
+        "w": 100
+      }
+    },
+    {
+      "attributes": "vfs-connections\nvfs-query-sync\nvfs-msg\nsync-wait\n",
+      "loc": {
+        "x": 150,
+        "y": 135
+      },
+      "name": "VFS GUI client bundle",
+      "size": {
+        "h": 85,
+        "w": 190
+      }
+    },
+    {
+      "attributes": "editor-global\neditor-window\neditor-widget\nfilename-input\n",
+      "loc": {
+        "x": 150,
+        "y": 30
+      },
+      "name": "Editor GUI modules",
+      "size": {
+        "h": 85,
+        "w": 115
+      }
+    },
+    {
+      "attributes": "lsp-client-manager\nlsp-get-code-lines\n",
+      "loc": {
+        "x": 280,
+        "y": 30
+      },
+      "name": "LSP bundle",
+      "size": {
+        "h": 65,
+        "w": 130
+      }
+    }
+  ],
+  "inheritances": [],
+  "objectGraph": {},
+  "objectGraphConfig": {
+    "newNodeAttributes": null,
+    "newNodeName": null,
+    "showFields": []
+  },
+  "relations": [
+    {
+      "end": {"entityRef": 0},
+      "start": {"entityRef": 1}
+    },
+    {
+      "end": {"entityRef": 0},
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 6},
+      "routingAlg": "RA_MANHATTAN_VERT",
+      "start": {"entityRef": 3}
+    },
+    {
+      "end": {"entityRef": 7},
+      "start": {"entityRef": 5}
+    },
+    {
+      "end": {"entityRef": 5},
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 6},
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 8},
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 2},
+      "start": {"entityRef": 4}
+    },
+    {
+      "end": {"entityRef": 3},
+      "start": {"entityRef": 8}
+    },
+    {
+      "end": {"entityRef": 6},
+      "start": {"entityRef": 8}
+    },
+    {
+      "end": {"entityRef": 1},
+      "start": {"entityRef": 9}
+    },
+    {
+      "end": {"entityRef": 4},
+      "start": {"entityRef": 10}
+    },
+    {
+      "end": {"entityRef": 10},
+      "start": {"entityRef": 11}
+    },
+    {
+      "end": {"entityRef": 10},
+      "start": {"entityRef": 12}
+    }
+  ],
+  "type": "Diagram Editor Diagram",
+  "version": 32,
+  "windowSize": {
+    "h": 421,
+    "w": 584
+  }
+}
