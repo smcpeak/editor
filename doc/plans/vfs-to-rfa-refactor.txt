@@ -133,10 +133,6 @@ Layer 2: Depends on Qt core
       SynchronousWaiter) on top of RFA_AsyncMultiClient.  It also will
       implement RFA_AbstractSyncMultiClient.
 
-      It will be changed to allow access to its underlying
-      RFA_AsyncMultiClient so it offers both sync and async
-      capabilities.
-
 Layer 3: Depends on Qt GUI
 
   sync-wait -> sync-wait, gui-sync-wait, mock-sync-wait (split)
@@ -159,27 +155,18 @@ Layer 3: Depends on Qt GUI
 
     All three modules stay in smqtutil.
 
-  new: rfa-gui-sync-multi-client
-
-    Defines RFA_GUISyncMultiClient, which combines
-    RFA_SyncMultiClient and GUISynchronousWaiter.
-
 Layer 4: Editor clients
 
-  editor-{global,window,widget}, filename-input:
+  editor-{global,window,widget}, filename-input,
+  lsp-get-code-lines, lsp-client-manager, connection-dialog:
 
-    Work on top of RFA_GUISyncMultiClient, using its sync or async
-    aspects as needed, each in the same places they are used now.
+    These will be modified to use the new names, but otherwise stay the
+    same.
 
-  lsp-get-code-lines, lsp-client-manager:
-
-    As they exclusively use synchronous access, they switch to accepting
-    RFA_AbstractSyncMultiClient.
-
-  connection-dialog
-
-    Operates on RFA_AsyncMultiClient (renamed VFS_Connections).
-    Otherwise no changes should be needed.
+    I originally planned to create RFA_GUISyncMultiClient to combines
+    RFA_SyncMultiClient and GUISynchronousWaiter in order to address
+    problem P4, but there might be problems with that, and regardless
+    that can be done as a separate step.
 
 Server program
 
