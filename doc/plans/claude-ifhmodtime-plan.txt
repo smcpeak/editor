@@ -1,0 +1,208 @@
+claude-ifhmodtime-plan.txt
+2026-11-19
+
+This file was created by Claude Code while the repo state was as after
+commit 1a2103f919 in response to:
+
+  I want to modify `NamedTextDocument::checkEditSafety` so that, if the
+  file does not have unsaved changes, it re-checks the file modification
+  time rather than relying on `m_modifiedOnDisk`.  However, the way that
+  flag is currently set is by issuing an asynchronous VFS query and later
+  handling the subsequent reply (`EditorWidget::on_vfsReplyAvailable`).
+  `NamedTextDocument` should not do anything asynchronous, should not have
+  any GUI dependencies, and ideally should not have any Qt core
+  dependencies (like `QObject`) either.
+
+  Make a plan for how to change `NamedTextDocument` so it can refresh the
+  file modification time without radically altering its dependencies.
+  Presumably, this will involve creating (or extending) an interface
+  that has a production implementation on top of VFS (`VFS_QuerySync`?)
+  and a test implementation that uses ordinary file system access.  Don't
+  change any code yet.
+
+I think the overall plan is fine, but after studying it and the related
+code, I decided that the VFS design should be substantially revised
+first.  So I'm saving the plan for reference, but don't have immediate
+intent to execute it.
+
+
+Plan: refresh the file modification time in
+NamedTextDocument::checkEditSafety
+==========================================================
+
+I read the async file-status path, VFS_QuerySync, and the existing
+IHFExists interface.  Here's the plan.  No code has been changed.
+
+
+The model to copy: IHFExists
+----------------------------
+
+The codebase already has what you describe.  IHFExists
+(nearby-file.h:19) is a pure abstract interface with no Qt in it.
+VFS_QuerySync is its production implementation
+(vfs-query-sync.cc:119), built on
+issueTypedRequestSynchronously<VFS_FileStatusReply> with a
+SynchronousWaiter.  TestIHFExists (nearby-file-test.cc:99) is a
+map-based fake.  I'd add a sibling interface for modification times
+and implement it the same way.
+
+
+1. New interface: IHFModTime in hf-mod-time.h (+ hf-mod-time-fwd.h)
+-------------------------------------------------------------------
+
+The header has no implementation and depends only on
+host-and-resource-name.h and smbase/either.h, so the Makefile needs no
+new .o:
+
+    // Interface to get a host+file's modification time synchronously.
+    class IHFModTime {
+    public:
+      virtual ~IHFModTime() = default;
+
+      // Return the unix modification time of `harn` if it is a regular
+      // file.  Otherwise return an error description in the right
+      // alternative.  That covers a missing file, a non-regular file, a
+      // communication failure, or the user canceling the wait.
+      virtual smbase::Either<std::int64_t, std::string>
+        hfModificationTime(HostAndResourceName const &harn) = 0;
+    };
+
+Like hfExists, it's non-const, because the VFS implementation keeps
+request state.
+
+Alternative: rename IHFExists into a broader IHFQuery with both
+methods.  That forces every IHFExists fake to implement both, so I'd
+keep them separate.
+
+
+2. Changes to NamedTextDocument
+-------------------------------
+
+    // The user is about to change the file.  Report on whether and why
+    // we should prompt.  May query `hfModTime` to refresh
+    // `m_modifiedOnDisk`.
+    EditSafetyProblem checkEditSafety(IHFModTime &hfModTime);
+
+named-td.h only needs hf-mod-time-fwd.h, and named-td.cc includes the
+full header.  Neither gains a Qt dependency.  The logic, in order:
+
+  1. If read-only, return ESP_READ_ONLY without touching the disk, as
+     now.
+
+  2. If unsavedChanges(), return ESP_NONE, as now.  This keeps disk
+     queries to the first edit after a load, save or undo-to-save-point.
+
+  3. If !hasFilename() (untitled or process output), skip the query and
+     use the cached flag.
+
+  4. Otherwise call hfModTime.hfModificationTime(harn()):
+     - On success, set m_modifiedOnDisk = (modTime != m_lastFileTimestamp).
+     - On error, TRACE1 the message and leave m_modifiedOnDisk as it is.
+       A failure doesn't newly flag the file, which matches what
+       on_vfsReplyAvailable does today.
+
+  5. Return ESP_MODIFIED_ON_DISK if m_modifiedOnDisk, else ESP_NONE.
+
+The method stops being const.  The side effect is useful because it
+updates the [DISKMOD] indicator too.
+
+Two choices for you:
+
+  - Should a matching timestamp clear the flag?  Setting the flag both
+    ways in step 4 is a true re-check, so a file restored to its old
+    timestamp would be treated as unmodified.  on_vfsReplyAvailable
+    only ever sets it to true.  I lean toward both ways, but it's easy
+    to switch.
+
+  - What should cancel do?  If the user cancels a slow remote query,
+    the plan above falls back to the cached flag and lets the edit go
+    ahead.  If you'd rather a cancel abort the edit, the interface
+    needs a separate "canceled" result, probably a three-way result
+    type instead of Either, and probably a new ESP_ value too.
+
+
+3. Production implementation on VFS_QuerySync
+---------------------------------------------
+
+Add IHFModTime as a third base of VFS_QuerySync, next to IHFExists,
+and implement hfModificationTime like hfExists:
+
+  - Issue a VFS_FileStatusRequest through
+    issueTypedRequestSynchronously<VFS_FileStatusReply>.
+  - A null reply means canceled.  A failed reply, or
+    m_fileKind != FK_REGULAR, also becomes an error string.  Otherwise
+    return m_fileModificationTime.
+
+Then EditorWidget::editSafetyCheck builds one the same way
+editor-widget.cc:637 already does:
+
+    SynchronousWaiter waiter(this);
+    VFS_QuerySync querySync(vfsConnections(), waiter);
+    EditSafetyProblem esp = getDocument()->checkEditSafety(querySync);
+    ...  // the second call, after the read-only override, reuses querySync
+
+When the check flags the file, it should also redraw() so the
+indicator shows.
+
+The async requestFileStatus / on_vfsReplyAvailable path stays.  It
+still updates the indicator when focus changes, before any edit.  Its
+early return when the flag is already set (editor-widget.cc:493) is
+still correct.
+
+
+4. Test implementation
+----------------------
+
+In named-td-test.cc, add a map-based fake like TestIHFExists:
+
+    class TestHFModTime : public IHFModTime {
+    public:
+      std::map<HostAndResourceName, std::int64_t> m_modTimes;  // missing => error
+      int m_queryCount = 0;
+      ...
+    };
+
+You suggested real file-system access.  I'd use the fake instead: unix
+modification times have 1-second resolution, so a test that rewrites a
+file and expects a new timestamp would have to sleep or set the time
+explicitly.  The fake also lets tests count queries and simulate
+errors.  If you want real-disk coverage anyway, a small LocalHFModTime
+using getFileModificationTime could sit alongside it and run one smoke
+test on a temp file.
+
+Changes to testCheckEditSafety:
+
+  - Give the document a filename.  Untitled documents now skip the
+    query, so they need their own case.
+  - Set the mod time through the fake instead of writing
+    m_modifiedOnDisk directly.
+  - Add cases:
+    - Matching time gives ESP_NONE and makes no change.
+    - A different time gives ESP_MODIFIED_ON_DISK and sets the flag.
+    - A query error keeps the cached flag.
+    - Read-only and unsaved changes don't query at all (m_queryCount
+      stays at 0).
+    - An untitled document doesn't query.
+
+
+5. Optional: test the VFS adapter itself
+----------------------------------------
+
+VFS_TestConnections only handles read-file requests right now
+(processRFR).  Adding a file-status handler would let a unit test
+drive VFS_QuerySync::hfModificationTime with TestSynchronousWaiter,
+including its cancel countdown.  That would cover the
+reply-to-Either mapping without the GUI.  It's worth doing but could
+be a separate step.
+
+
+Files touched
+-------------
+
+  - New: hf-mod-time.h, hf-mod-time-fwd.h
+  - named-td.h / .cc, named-td-test.cc
+  - vfs-query-sync.h / .cc (the moc output regenerates automatically)
+  - editor-widget.cc
+  - Optional: vfs-test-connections.* plus a test
+
+EOF
