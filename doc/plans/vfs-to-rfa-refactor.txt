@@ -79,6 +79,8 @@ Layer 1: No Qt dependence
       message data classes so they are less prone to be confused with
       the "active" RFA_* classes.
 
+      All other VFS_* get renamed to RFA_*.
+
   nearby-file -> nearby-file, rfa-abs-sync-multi-client (split)
 
     IHFExists -> RFA_AbstractSyncMultiClient
@@ -107,9 +109,9 @@ Layer 1: No Qt dependence
 
 Layer 2: Depends on Qt core
 
-  vfs-query -> rfa-async-client
+  vfs-query -> rfa-async-single-client
 
-    VFS_FileSystemQuery -> RFA_AsyncClient
+    VFS_FileSystemQuery -> RFA_AsyncSingleClient
 
       This is (still) the client implementation of the RFA protocol,
       exposing an asynchronous interface to a single host.
@@ -119,9 +121,9 @@ Layer 2: Depends on Qt core
     VFS_Connections -> RFA_AsyncMultiClient
     VFS_AbstractConnections -> RFA_AbstractAsyncMultiClient
 
-      This (still) bundles RFA_AsyncClients so one object can be used to
-      uniformly access files on all connected hosts (including the
-      local machine).
+      This (still) bundles RFA_AsyncSingleClients so one object can be
+      used to uniformly access files on all connected hosts (including
+      the local machine).
 
   vfs-query-sync -> rfa-sync-multi-client
 
