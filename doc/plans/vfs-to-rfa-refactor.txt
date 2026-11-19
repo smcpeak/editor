@@ -79,13 +79,6 @@ Layer 1: No Qt dependence
       message data classes so they are less prone to be confused with
       the "active" RFA_* classes.
 
-  vfs-local -> rfa-local
-
-    VFS_LocalImpl -> RFA_LocalAccess
-
-      "Impl" is misleading because it suggests the class implements some
-      C++ interface, but it does not.
-
   nearby-file -> nearby-file, rfa-abs-sync-multi-client (split)
 
     IHFExists -> RFA_AbstractSyncMultiClient
@@ -94,7 +87,23 @@ Layer 1: No Qt dependence
       back a reply, error, or cancelation.  IHFExists::hfExists becomes
       a non-virtual method that calls the general pure virtual request
       method.  More non-virtual methods (e.g., to get a timestamp) will
-      be added for convenience.
+      be added later for convenience.
+
+  vfs-local -> rfa-sync-local-client
+
+    VFS_LocalImpl -> RFA_SyncLocalClient
+
+      "Impl" is misleading because it suggests the class implements some
+      C++ interface, but it does not.
+
+      RFA_SyncLocalClient will implement RFA_AbstractSyncMultiClient,
+      rejecting requests that try to access a host other than
+      HostName::asLocal(), and using ordinary local filesystem calls to
+      implement its functions.
+
+      editor-fs-server then sits on top of RFA_SyncLocalClient (same as
+      now).  But it additionally exposes the possibility in the editor
+      of doing local file access without starting a server process.
 
 Layer 2: Depends on Qt core
 
