@@ -4,7 +4,7 @@ Plan to refactor VFS into RFA
 
 
 Motivation
-----------
+==========
 
 The current Virtual File System (VFS) subsystem organization is
 described in doc/vfs-modules.txt.  It has several problems:
@@ -48,7 +48,7 @@ G3. Module dependencies are minimized, especially on things like Qt.
 
 
 New subsystem name
-------------------
+==================
 
 The most visible change is the new name: Remote File Access (RFA).  The
 new "RFA" moniker replaces the misleading "VFS".  The core of RFA is the
@@ -63,7 +63,7 @@ I think "RFA" would still be accurate enough.
 
 
 Module renaming and realigning
-------------------------------
+==============================
 
 Going through what's currently in doc/vfs-modules.txt, the new module
 names and purposes are:
@@ -169,7 +169,8 @@ Layer 4: Editor clients
     I originally planned to create RFA_GUISyncMultiClient to combines
     RFA_SyncMultiClient and GUISynchronousWaiter in order to address
     problem P4, but there might be problems with that, and regardless
-    that can be done as a separate step.
+    that can be done separately after this refactoring project if
+    desired.
 
 Server program
 
@@ -223,6 +224,107 @@ Other places that just rename "VFS"
 
   Some stale build artifacts will have to be removed by "make clean",
   and extradep.mk adjusted.
+
+
+Project plan
+============
+
+The work will be done in multiple steps, each with its own git commit.
+The steps are grouped into three parts.
+
+
+Part 1: Renaming and splitting
+------------------------------
+
+1.1. Rename vfs-msg:
+
+  vfs-msg -> rfa-msg
+
+    VFS_* -> RFA_Msg_*
+    VFS_MT_* -> RFA_MT_*
+    All other VFS_* declared in `rfa-msg` -> RFA_*
+
+    All code in the repo using the old names is updated to use the new
+    names, but documentation changes are deferred.  The same applies to
+    all symbol rename steps below.
+
+1.2. Split nearby-file:
+
+  nearby-file -> nearby-file, rfa-abs-sync-multi-client (split)
+
+    IHFExists -> RFA_AbstractSyncMultiClient
+
+      Class body is unchanged.
+
+1.3. Rename vfs-local:
+
+  vfs-local -> rfa-sync-local-client
+
+    VFS_LocalImpl -> RFA_SyncLocalClient
+
+      Class body is unchanged.
+
+1.4. Rename vfs-query:
+
+  vfs-query -> rfa-async-single-client
+
+    VFS_FileSystemQuery -> RFA_AsyncSingleClient
+
+1.5. Rename vfs-connections:
+
+  vfs-connections -> rfa-async-multi-client
+
+    VFS_Connections -> RFA_AsyncMultiClient
+    VFS_AbstractConnections -> RFA_AbstractAsyncMultiClient
+
+  vfs-connections-test -> rfa-async-multi-client-test
+
+    VFS_ConnectionsTest -> RFA_AsyncMultiClientTest
+
+  vfs-test-connections -> rfa-mock-async-multi-client
+
+    VFS_TestConnections -> RFA_MockAsyncMultiClient
+
+1.6. Rename vfs-query-sync:
+
+  vfs-query-sync -> rfa-sync-multi-client
+
+    VFS_QuerySync -> RFA_SyncMultiClient
+
+1.7. Split sync-wait:
+
+  sync-wait -> sync-wait, gui-sync-wait, mock-sync-wait (split)
+
+    Split GUISynchronousWaiter class off from SynchronousWaiter.
+
+    TestSynchronousWaiter -> MockSynchronousWaiter
+
+  This is a commit in smqtutil and a corresponding one in editor.
+
+
+Part 2: Refactoring
+-------------------
+
+2.1. Change RFA_AbstractSyncMultiClient:
+
+  Generally accept RFA requests and respond with RFA replies.
+
+  Implement hfExists on top of the general procedure.
+
+2.2. Change RFA_SyncLocalClient to implement RFA_AbstractSyncMultiClient.
+
+  Change editor-fs-server accordingly.
+
+
+Part 3: Documentation
+---------------------
+
+3.1. Rename and update documentation:
+
+  vfs-modules.txt -> rfa-modules.txt
+  vfs-module-dependencies.ded[.png] -> rfa-...
+  vfs-connections-lifecycle.ded[.png] -> rfa-...
+  CLAUDE.md
 
 
 EOF
