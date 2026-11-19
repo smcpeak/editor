@@ -411,8 +411,8 @@ ifeq ($(TEST_SSH_LOCALHOST),1)
 # it to my ~/bin directory.
 out/editor-fs-server-on-path.ok: editor-fs-server.exe
 	$(CREATE_OUTPUT_DIRECTORY)
-	if which editor-fs-server.exe; then \
-	  echo "server is on the PATH"; \
+	@if which editor-fs-server.exe; then \
+	  echo "editor-fs-server.exe is on the PATH"; \
 	else \
 	  echo "The TEST_SSH_LOCALHOST setting requires that "; \
 	  echo "editor-fs-server.exe be copied to someplace on the PATH."; \
