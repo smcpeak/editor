@@ -86,14 +86,15 @@ Layer 1: No Qt dependence
       "Impl" is misleading because it suggests the class implements some
       C++ interface, but it does not.
 
-  nearby-file -> nearby-file, ismh-file-access (split)
+  nearby-file -> nearby-file, rfa-abs-sync-multi-client (split)
 
-    IHFExists -> ISyncMultiHostFileAccess
+    IHFExists -> RFA_AbstractSyncMultiClient
 
-      Interface for synchronously accessing a HostAndResourceName (i.e.,
-      resources on multiple machines), initially just existence (like
-      IHFExists), but with a plan to expand to timestamps and more.
-      Will be expanded to allow for requests that fail or are canceled.
+      Interface for synchronously issuing any RFA request and getting
+      back a reply, error, or cancelation.  IHFExists::hfExists becomes
+      a non-virtual method that calls the general pure virtual request
+      method.  More non-virtual methods (e.g., to get a timestamp) will
+      be added for convenience.
 
 Layer 2: Depends on Qt core
 
@@ -119,7 +120,7 @@ Layer 2: Depends on Qt core
 
       This (still) layers a synchronous interface (with the help of
       SynchronousWaiter) on top of RFA_AsyncMultiClient.  It also will
-      implement ISyncMultiHostFileAccess.
+      implement RFA_AbstractSyncMultiClient.
 
       It will be changed to allow access to its underlying
       RFA_AsyncMultiClient so it offers both sync and async
