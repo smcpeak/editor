@@ -81,6 +81,9 @@ Layer 1: No Qt dependence
 
       All other VFS_* get renamed to RFA_*.
 
+      As no renumbering will be done, the binary protocol format does
+      not change.
+
   nearby-file -> nearby-file, rfa-abs-sync-multi-client (split)
 
     IHFExists -> RFA_AbstractSyncMultiClient
@@ -175,6 +178,9 @@ Server program
     The "VFS_LocalImpl -> RFA_SyncLocalClient" change has some interface
     changes that will need to be accomodated.
 
+    The executable name does not change; it remains accurate to call it
+    a "file system server".
+
 Test modules
 
   vfs-test-connections -> rfa-mock-async-multi-client
@@ -213,6 +219,10 @@ Other places that just rename "VFS"
 
   All other places that mention "VFS" or "vfs" are to be renamed to
   "RFA" or "rfa", or a more specific name if one is specified above.
+  This includes things like INIT_TRACE arguments.
+
+  Some stale build artifacts will have to be removed by "make clean",
+  and extradep.mk adjusted.
 
 
 EOF
