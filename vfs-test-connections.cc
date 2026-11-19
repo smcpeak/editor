@@ -3,6 +3,10 @@
 
 #include "vfs-test-connections.h"                // this module
 
+// editor
+#include "vfs-msg.h"                             // VFS_ReadFile{Request,Reply}
+
+// smbase
 #include "smbase/either.h"                       // smbase::Either
 #include "smbase/map-util.h"                     // smbase::{mapInsertUniqueMove, mapInsertUnique}
 #include "smbase/overflow.h"                     // safeToInt
@@ -12,6 +16,7 @@
 #include "smbase/string-util.h"                  // stringToVectorOfUChar
 #include "smbase/xassert.h"                      // xassert
 
+// c++
 #include <memory>                                // std::unique_ptr
 #include <utility>                               // std::move
 

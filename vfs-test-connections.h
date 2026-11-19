@@ -13,6 +13,8 @@
 #include "smbase/either-fwd.h"                   // smbase::Either
 #include "smbase/portable-error-code-fwd.h"      // smbase::PortableErrorCode [n]
 
+#include <QObject>                               // Q_OBJECT, Q_SIGNALS, Q_SLOTS
+
 #include <map>                                   // std::map
 #include <memory>                                // std::unique_ptr
 #include <string>                                // std::string
