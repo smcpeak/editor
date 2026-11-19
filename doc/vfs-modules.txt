@@ -20,9 +20,9 @@ VFS-related modules with no Qt dependence:
 
   nearby-file
 
-    Defines IFHExists, a synchronous, non-cancelable, and Qt-free
+    Defines IHFExists, a synchronous, non-cancelable, and Qt-free
     interface to a subset of VFS capability.  Implemented by
-    VFS_QuerySync for production use, and TestIFHExists for testing.
+    VFS_QuerySync for production use, and TestIHFExists for testing.
 
     TODO: It should expose cancelation and error messages.
 

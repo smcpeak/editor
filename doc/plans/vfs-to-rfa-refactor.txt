@@ -7,7 +7,7 @@ Motivation
 ----------
 
 The current Virtual File System (VFS) subsystem organization is
-described in doc/vfs-modules.txt.  It has has several problems:
+described in doc/vfs-modules.txt.  It has several problems:
 
 P1. It's misnamed.  I called it "VFS" because it originated from the
     desire to allow the editor to edit files on remote machines
@@ -73,7 +73,7 @@ Layer 1: No Qt dependence
   vfs-msg -> rfa-msg
 
     VFS_* -> RFA_Msg_*
-    VFA_MT_* -> RFA_MT_*
+    VFS_MT_* -> RFA_MT_*
 
       I'll take the opportunity to insert "Msg" into the names of the
       message data classes so they are less prone to be confused with
@@ -92,7 +92,7 @@ Layer 1: No Qt dependence
 
       Interface for synchronously accessing a HostAndResourceName (i.e.,
       resources on multiple machines), initially just existence (like
-      IFHExists), but with a plan to expand to timestamps and more.
+      IHFExists), but with a plan to expand to timestamps and more.
       Will be expanded to allow for requests that fail or are canceled.
 
 Layer 2: Depends on Qt core
@@ -101,7 +101,7 @@ Layer 2: Depends on Qt core
 
     VFS_FileSystemQuery -> RFA_AsyncClient
 
-      This is (still) the client implementation of the RFA protoocl,
+      This is (still) the client implementation of the RFA protocol,
       exposing an asynchronous interface to a single host.
 
   vfs-connections -> rfa-async-multi-client
@@ -113,7 +113,7 @@ Layer 2: Depends on Qt core
       uniformly access files on all connected hosts (including the
       local machine).
 
-  vfs-query-sync - rfa-sync-multi-client
+  vfs-query-sync -> rfa-sync-multi-client
 
     VFS_QuerySync -> RFA_SyncMultiClient
 
@@ -139,12 +139,12 @@ Layer 3: Depends on Qt GUI
 
     Both modules stay in smqtutil.
 
-Layer 4: Editor clients
-
   new: rfa-gui-sync-multi-client
 
     Defines RFA_GUISyncMultiClient, which combines
     RFA_SyncMultiClient and GUISynchronousWaiter.
+
+Layer 4: Editor clients
 
   editor-{global,window,widget}, filename-input,
   lsp-get-code-lines, lsp-client-manager:
