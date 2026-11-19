@@ -139,7 +139,7 @@ Layer 2: Depends on Qt core
 
 Layer 3: Depends on Qt GUI
 
-  sync-wait -> sync-wait, gui-sync-wait (split)
+  sync-wait -> sync-wait, gui-sync-wait, mock-sync-wait (split)
 
     sync-wait will just have the interface that
     SynchronousWaiter::waitUntil exposes, and hence no Qt
@@ -149,7 +149,15 @@ Layer 3: Depends on Qt GUI
     GUISynchronousWaiter, which pops up a dialog.  It depends on the
     Qt GUI.
 
-    Both modules stay in smqtutil.
+    mock-sync-wait defines MockSynchronousWaiter (renaming
+    TestSynchronousWaiter), which depends on Qt core.
+
+      mock-sync-wait will call `waitForQtEvent`, which is defined in
+      `smqtutil/qtutil`, which happens to have a Qt GUI dependence due
+      to including <QColor>.  For the purpose of this refactor, that's
+      close enough to "Qt core only".
+
+    All three modules stay in smqtutil.
 
   new: rfa-gui-sync-multi-client
 
