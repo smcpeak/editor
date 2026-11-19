@@ -156,11 +156,15 @@ Layer 3: Depends on Qt GUI
 
 Layer 4: Editor clients
 
-  editor-{global,window,widget}, filename-input,
-  lsp-get-code-lines, lsp-client-manager:
+  editor-{global,window,widget}, filename-input:
 
     Work on top of RFA_GUISyncMultiClient, using its sync or async
     aspects as needed, each in the same places they are used now.
+
+  lsp-get-code-lines, lsp-client-manager:
+
+    As they exclusively use synchronous access, they switch to accepting
+    RFA_AbstractSyncMultiClient.
 
 
 EOF
