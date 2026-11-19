@@ -1,0 +1,156 @@
+vfs-to-rfa-refactor.txt
+Plan to refactor VFS into RFA
+2026-11-19
+
+
+Motivation
+----------
+
+The current Virtual File System (VFS) subsystem organization is
+described in doc/vfs-modules.txt.  It has has several problems:
+
+P1. It's misnamed.  I called it "VFS" because it originated from the
+    desire to allow the editor to edit files on remote machines
+    similarly to how it edits local files, and interposing a true
+    virtual file system was my initial rough plan.  However, it instead
+    became centered around a remote file access *protocol*, with clients
+    using an interface very different from a typical file system.
+
+P2. Beyond "VFS", the module and class names are confusing, as they don't
+    clearly indicate things like:
+
+    * Synchronous vs. asynchronous
+    * Single machine vs. multiple machine access
+    * Dependency on Qt GUI vs. Qt Core vs. no Qt
+    * Client vs. server (w.r.t. the protocol)
+
+P3. Some mixed purposes.  nearby-file is the worst offender, as it
+    defines the orthogonal IFHExists simply because it is its only
+    current user.  sync-wait has a GUI dependence but half of that
+    module is conceptually independent of GUI issues.
+
+P4. Proliferation of access points.  The editor modules that use VFS
+    typically each depend on 3-4 VFS modules even though the latter all
+    basically need each other to be useful, so they really aren't
+    separable modules from the client's perspective.
+
+This document describes my plan for how to rename and refactor VFS to
+address those problems.
+
+In general, my design goals are (in order):
+
+G1. Each module has a cohesive purpose, and a name that reflects it.
+
+G2. Functionality is exposed in a way that allows it to be thoroughly
+    unit tested.
+
+G3. Module dependencies are minimized, especially on things like Qt.
+
+
+New subsystem name
+------------------
+
+The most visible change is the new name: Remote File Access (RFA).  The
+new "RFA" moniker replaces the misleading "VFS".  The core of RFA is the
+protocol of messages and (very simple) exchange semantics whose purpose
+is to allow access to a remote file system.
+
+Currently, RFA is not used to run commands on remote computers; instead,
+that is done by invoking a new ssh process.  (RFA itself also runs over
+ssh.)  It's conceivable I might extend RFA to perform remote command
+invocation too, but I have no immediate plans, and even if I added that,
+I think "RFA" would still be accurate enough.
+
+
+Module renaming and realigning
+------------------------------
+
+Going through what's currently in doc/vfs-modules.txt, the new module
+names and purposes are:
+
+Layer 1: No Qt dependence
+
+  vfs-msg -> rfa-msg
+
+    VFS_* -> RFA_Msg_*
+    VFA_MT_* -> RFA_MT_*
+
+      I'll take the opportunity to insert "Msg" into the names of the
+      message data classes so they are less prone to be confused with
+      the "active" RFA_* classes.
+
+  vfs-local -> rfa-local
+
+    VFS_LocalImpl -> RFA_LocalAccess
+
+      "Impl" is misleading because it suggests the class implements some
+      C++ interface, but it does not.
+
+  nearby-file -> nearby-file, ismh-file-access (split)
+
+    IHFExists -> ISyncMultiHostFileAccess
+
+      Interface for synchronously accessing a HostAndResourceName (i.e.,
+      resources on multiple machines), initially just existence (like
+      IFHExists), but with a plan to expand to timestamps and more.
+      Will be expanded to allow for requests that fail or are canceled.
+
+Layer 2: Depends on Qt core
+
+  vfs-query -> rfa-async-client
+
+    VFS_FileSystemQuery -> RFA_AsyncClient
+
+      This is (still) the client implementation of the RFA protoocl,
+      exposing an asynchronous interface to a single host.
+
+  vfs-connections -> rfa-async-multi-client
+
+    VFS_Connections -> RFA_AsyncMultiClient
+    VFS_AbstractConnections -> RFA_AbstractAsyncMultiClient
+
+      This (still) bundles RFA_AsyncClients so one object can be used to
+      uniformly access files on all connected hosts (including the
+      local machine).
+
+  vfs-query-sync - rfa-sync-multi-client
+
+    VFS_QuerySync -> RFA_SyncMultiClient
+
+      This (still) layers a synchronous interface (with the help of
+      SynchronousWaiter) on top of RFA_AsyncMultiClient.  It also will
+      implement ISyncMultiHostFileAccess.
+
+      It will be changed to allow access to its underlying
+      RFA_AsyncMultiClient so it offers both sync and async
+      capabilities.
+
+Layer 3: Depends on Qt GUI
+
+  sync-wait -> sync-wait, gui-sync-wait (split)
+
+    sync-wait will just have the interface that
+    SynchronousWaiter::waitUntil exposes, and hence no Qt
+    dependence (moves to level 1).
+
+    gui-sync-wait will then implement that interface in
+    GUISynchronousWaiter, which pops up a dialog.  It depends on the
+    Qt GUI.
+
+    Both modules stay in smqtutil.
+
+Layer 4: Editor clients
+
+  new: rfa-gui-sync-multi-client
+
+    Defines RFA_GUISyncMultiClient, which combines
+    RFA_SyncMultiClient and GUISynchronousWaiter.
+
+  editor-{global,window,widget}, filename-input,
+  lsp-get-code-lines, lsp-client-manager:
+
+    Work on top of RFA_GUISyncMultiClient, using its sync or async
+    aspects as needed, each in the same places they are used now.
+
+
+EOF
