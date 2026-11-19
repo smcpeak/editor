@@ -168,5 +168,56 @@ Layer 4: Editor clients
     As they exclusively use synchronous access, they switch to accepting
     RFA_AbstractSyncMultiClient.
 
+  connection-dialog
+
+    Operates on RFA_AsyncMultiClient (renamed VFS_Connections).
+    Otherwise no changes should be needed.
+
+Server program
+
+  editor-fs-server
+
+    The "VFS_LocalImpl -> RFA_SyncLocalClient" change has some interface
+    changes that will need to be accomodated.
+
+Test modules
+
+  vfs-test-connections -> rfa-mock-async-multi-client
+
+    VFS_TestConnections -> RFA_MockAsyncMultiClient
+
+      It's confusing to have "Test" in the name of something that is not
+      itself a unit test module.  This is a mock class, used when
+      testing something that (ordinarily) uses RFA_AsyncMultiClient.
+
+  vfs-connections-test -> rfa-async-multi-client-test
+
+    VFS_ConnectionsTest -> RFA_AsyncMultiClientTest
+
+      This is the test *of* RFA_AsyncMultiClient.
+
+  editor-fs-server-test
+
+    This acts as an RFA client, using RFA_AsyncSingleClient to talk to
+    editor-fs-server.  Should only need renames.
+
+Documentation
+
+  vfs-modules.txt -> rfa-modules.txt
+  vfs-module-dependencies.ded[.png] -> rfa-...
+  vfs-connections-lifecycle.ded[.png] -> rfa-...
+  CLAUDE.md
+
+    Update the docs with new names and roles.
+
+  doc/plans/claude-ifhmodtime-plan.txt
+
+    This does *not* get changed; it's part of the historical record.
+
+Other places that just rename "VFS"
+
+  All other places that mention "VFS" or "vfs" are to be renamed to
+  "RFA" or "rfa", or a more specific name if one is specified above.
+
 
 EOF
