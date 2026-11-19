@@ -24,7 +24,6 @@
 #include "lsp-client.h"                          // LSPClient, LSPDocumentInfo
 #include "lsp-conv.h"                            // convertLSPDiagsToTDD, toLSP_VersionNumber, lspSendUpdatedContents
 #include "lsp-data.h"                            // LSP_PublishDiagnosticsParams
-#include "lsp-get-code-lines.h"                  // lspGetCodeLinesFunction
 #include "lsp-servers-dialog.h"                  // LSPServersDialog
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher

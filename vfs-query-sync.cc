@@ -16,11 +16,6 @@
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassert
 
-// qt
-#include <QCursor>
-#include <QGuiApplication>
-#include <QProgressDialog>
-
 // libc++
 #include <utility>                     // std::move
 

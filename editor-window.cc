@@ -29,7 +29,6 @@
 #include "td-editor.h"                           // TextDocumentEditor
 #include "textinput.h"                           // TextInputDialog
 #include "vfs-query-sync.h"                      // VFS_QuerySync, readFileSynchronously
-#include "vfs-msg.h"                             // VFS_ReadFileRequest
 #include "waiting-counter.h"                     // IncDecWaitingCounter
 
 // smqtutil
