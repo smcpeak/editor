@@ -273,10 +273,12 @@ public:      // methods
   std::string stopServerForScope(
     LSPClientScope const &scope);
 
-  /* Get all of the code lines for `locations`.  The returned vector has
-     one result for each element of `locations`.  If there is a problem
-     with a particular file, just encode that in the returned string, as
-     this is going straight to the user.
+  /* Get all of the code lines for `locations`.  These are then shown to
+     the user as part of the "all uses" (etc.) query mechanism.
+
+     The returned vector has one result for each element of `locations`.
+     If there is a problem with a particular file, just encode that in
+     the returned string, as this is going straight to the user.
 
      This may perform a synchronous wait, in which case it will use
      `waiter`, possibly multiple times.  It returns `nullopt` if the

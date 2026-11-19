@@ -3,9 +3,8 @@
 
 // See license.txt for copyright and terms of use.
 
-// Conceptually this module is just one method of `EditorGlobal`, but it
-// is separated out to enable automated testing that is, in the current
-// design, difficult to do with `EditorGlobal` directly.
+// Conceptually this module is just one method of `LSPClientManager`,
+// but it is separated out to enable automated testing.
 
 #ifndef EDITOR_LSP_GET_CODE_LINES_H
 #define EDITOR_LSP_GET_CODE_LINES_H

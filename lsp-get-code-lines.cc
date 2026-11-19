@@ -40,7 +40,12 @@ using namespace smbase;
 INIT_TRACE("lsp-get-code-lines");
 
 
-/* It might seem excessive to factor this one function, and each of
+/* See comments on `LSPClientManager::getCodeLines` for details on what
+   this function accomplishes.
+
+   Rationale for putting this function into its own module:
+
+   It might seem excessive to factor this one function, and each of
    the interfaces it uses, just so it can be tested in isolation.  The
    code is not that long after all, just a little over 100 lines.
 
