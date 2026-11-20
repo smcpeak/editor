@@ -46,7 +46,7 @@ public:      // methods
   // Wait until the connection to 'hostName' is ready.
   void waitForConnection(HostName const &hostName);
 
-  // Send a single VFS_Echo request, returning the request ID.
+  // Send a single RFA_Echo request, returning the request ID.
   RFA_AsyncMultiClient::RequestID sendEchoRequest(HostName const &hostName);
 
   // Wait until a given reply is available.

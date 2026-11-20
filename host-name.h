@@ -15,7 +15,7 @@
 #include <iosfwd>                      // std::ostream
 
 
-// Name of a machine or server that can respond to VFS queries.
+// Name of a machine or server that can respond to RFA queries.
 //
 // I expect to at some point expand this with protocol information,
 // although currently it only knows about SSH.

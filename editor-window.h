@@ -179,7 +179,7 @@ public:      // funcs
   // The LSP widget inside the status area.
   LSPStatusWidget *lspStatusWidget() const;
 
-  // Get VFS query object.
+  // Get RFA query object.
   RFA_AsyncMultiClient *rfaAMClient() const;
 
   // Open and begin editing a particular file, or just switch to it if

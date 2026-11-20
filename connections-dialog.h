@@ -21,7 +21,7 @@
 class QPushButton;
 
 
-// Modeless dialog to show and manipulate the set of VFS connections.
+// Modeless dialog to show and manipulate the set of RFA connections.
 class ConnectionsDialog : public QDialog {
   Q_OBJECT
 

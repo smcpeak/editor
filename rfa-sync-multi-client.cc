@@ -77,7 +77,7 @@ bool RFA_SyncMultiClient::issueRequestSynchronously(
   bool completed = m_waiter.waitUntil(
     doneCondition,
     500 /*msec*/,
-    "Waiting for VFS query",
+    "Waiting for RFA query",
     requestDescription);
 
   if (!completed) {

@@ -80,7 +80,7 @@ public:      // data
     "THREE\n",
   };
 
-  // File names for files yielding errors from VFS.
+  // File names for files yielding errors from RFA.
   std::string const errFname[1] = {
     "/home/user/errfile0.cc",
   };
@@ -166,8 +166,8 @@ public:      // methods
       fnameData[fileIndex]));
   }
 
-  // Add `fileIndex` to VFS.
-  void addFileToVFS(int fileIndex)
+  // Add `fileIndex` to RFA.
+  void addFileToRFA(int fileIndex)
   {
     xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
     mapInsertUnique(rfaAMClient.m_files,
@@ -175,8 +175,8 @@ public:      // methods
       FileReplyData(std::string(fnameData[fileIndex])));
   }
 
-  // Add `errFileIndex` to VFS.
-  void addErrFileToVFS(int errFileIndex)
+  // Add `errFileIndex` to RFA.
+  void addErrFileToRFA(int errFileIndex)
   {
     xassert(cc::z_le_lt(errFileIndex, TABLESIZE(errFname)));
     mapInsertUnique(rfaAMClient.m_files,
@@ -207,15 +207,15 @@ public:      // methods
   }
 
 
-  // As in the previous test, but get one file from VFS.
-  void test_oneVFSLookup()
+  // As in the previous test, but get one file from RFA.
+  void test_oneRFALookup()
   {
-    TEST_CASE("test_oneVFSLookup");
+    TEST_CASE("test_oneRFALookup");
 
     locAddFileLine(0, 2);
 
-    // Serve the data from VFS.
-    addFileToVFS(0);
+    // Serve the data from RFA.
+    addFileToRFA(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -227,18 +227,18 @@ public:      // methods
   }
 
 
-  // Single VFS lookup but the user cancels it.
-  void test_cancelVFSLookup()
+  // Single RFA lookup but the user cancels it.
+  void test_cancelRFALookup()
   {
-    TEST_CASE("test_cancelVFSLookup");
+    TEST_CASE("test_cancelRFALookup");
 
     locAddFileLine(0, 2);
 
     // Cancel the first wait attempt.
     waiter.m_cancelCountdown = 0;
 
-    // Serve the data from VFS.
-    addFileToVFS(0);
+    // Serve the data from RFA.
+    addFileToRFA(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -248,10 +248,10 @@ public:      // methods
   }
 
 
-  // Two VFS lookups, and the second gets canceled.
-  void test_cancelSecondVFSLookup()
+  // Two RFA lookups, and the second gets canceled.
+  void test_cancelSecondRFALookup()
   {
-    TEST_CASE("test_cancelSecondVFSLookup");
+    TEST_CASE("test_cancelSecondRFALookup");
 
     locAddFileLine(0, 2);
     locAddFileLine(1, 3);
@@ -259,9 +259,9 @@ public:      // methods
     // Cancel the second wait attempt.
     waiter.m_cancelCountdown = 1;
 
-    // Serve both files from VFS.
-    addFileToVFS(0);
-    addFileToVFS(1);
+    // Serve both files from RFA.
+    addFileToRFA(0);
+    addFileToRFA(1);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -271,10 +271,10 @@ public:      // methods
   }
 
 
-  // One lookup goes to LSP and one to VFS.
-  void test_oneLSP_oneVFS(bool lspFirst)
+  // One lookup goes to LSP and one to RFA.
+  void test_oneLSP_oneRFA(bool lspFirst)
   {
-    TEST_CASE_EXPRS("test_oneLSP_oneVFS", lspFirst);
+    TEST_CASE_EXPRS("test_oneLSP_oneRFA", lspFirst);
 
     locAddFileLine(0, 2);
     locAddFileLine(1, 3);
@@ -282,8 +282,8 @@ public:      // methods
     // Serve file 0/1 data from the LSP client's copy.
     addFileToLSP(lspFirst? 0:1);
 
-    // Serve file 1/0 data from VFS.
-    addFileToVFS(lspFirst? 1:0);
+    // Serve file 1/0 data from RFA.
+    addFileToRFA(lspFirst? 1:0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -293,7 +293,7 @@ public:      // methods
     EXPECT_EQ(linesOpt->at(0), "two");
     EXPECT_EQ(linesOpt->at(1), "THREE");
 
-    // Reading LSP does not require a wait, but reading VFS does.
+    // Reading LSP does not require a wait, but reading RFA does.
     EXPECT_EQ(waiter.m_waitUntilCount, 1);
   }
 
@@ -320,15 +320,15 @@ public:      // methods
   }
 
 
-  // Line number too large for VFS.
-  void test_largeLineNumberVFS()
+  // Line number too large for RFA.
+  void test_largeLineNumberRFA()
   {
-    TEST_CASE("test_largeLuneNumberVFS");
+    TEST_CASE("test_largeLuneNumberRFA");
 
     locAddFileLine(0, 5);
 
-    // Serve the data from VFS.
-    addFileToVFS(0);
+    // Serve the data from RFA.
+    addFileToRFA(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -342,15 +342,15 @@ public:      // methods
   }
 
 
-  // One lookup to VFS, and it yields an error.
-  void test_errorVFSLookup()
+  // One lookup to RFA, and it yields an error.
+  void test_errorRFALookup()
   {
-    TEST_CASE("test_errorVFSLookup");
+    TEST_CASE("test_errorRFALookup");
 
     locAddErrFileLine(0, 5);
 
-    // Serve the data from VFS.
-    addErrFileToVFS(0);
+    // Serve the data from RFA.
+    addErrFileToRFA(0);
 
     std::optional<std::vector<std::string>> linesOpt =
       callLspGetCodeLinesFunction();
@@ -398,14 +398,14 @@ void test_lsp_get_code_lines(CmdlineArgsSpan args)
   // Each test runs with a fresh copy of `Tester` to avoid
   // cross-contamination.
   Tester().test_oneLSPLookup();
-  Tester().test_oneVFSLookup();
-  Tester().test_cancelVFSLookup();
-  Tester().test_cancelSecondVFSLookup();
-  Tester().test_oneLSP_oneVFS(true /*lspFirst*/);
-  Tester().test_oneLSP_oneVFS(false /*lspFirst*/);
+  Tester().test_oneRFALookup();
+  Tester().test_cancelRFALookup();
+  Tester().test_cancelSecondRFALookup();
+  Tester().test_oneLSP_oneRFA(true /*lspFirst*/);
+  Tester().test_oneLSP_oneRFA(false /*lspFirst*/);
   Tester().test_largeLineNumberLSP();
-  Tester().test_largeLineNumberVFS();
-  Tester().test_errorVFSLookup();
+  Tester().test_largeLineNumberRFA();
+  Tester().test_errorRFALookup();
   Tester().test_nonLocal();
 }
 

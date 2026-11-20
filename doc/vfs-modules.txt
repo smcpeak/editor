@@ -1,43 +1,43 @@
 vfs-modules.txt
-Explanation of the main VFS-related modules
+Explanation of the main RFA-related modules
 
 
 See also vfs-module-dependencies.ded[.png].
 
 
-VFS-related modules with no Qt dependence:
+RFA-related modules with no Qt dependence:
 
   rfa-msg
 
-    Defines VFS_* (most of which end in "Request" or "Reply"), the
+    Defines RFA_* (most of which end in "Request" or "Reply"), the
     serializable message structures for the protocol.  Also defines
-    VFS_MT_*, the associated numeric message type codes.
+    RFA_MT_*, the associated numeric message type codes.
 
   rfa-sync-local-client
 
-    RFA_SyncLocalClient, which performs the VFS file system access locally
-    as part of the VFS server process.
+    RFA_SyncLocalClient, which performs the RFA file system access locally
+    as part of the RFA server process.
 
   nearby-file
 
     Defines IHFExists, a synchronous, non-cancelable, and Qt-free
-    interface to a subset of VFS capability.  Implemented by
+    interface to a subset of RFA capability.  Implemented by
     RFA_SyncMultiClient for production use, and TestIHFExists for testing.
 
     TODO: It should expose cancelation and error messages.
 
-VFS-related modules that use Qt core (QObject) but no GUI depedence:
+RFA-related modules that use Qt core (QObject) but no GUI depedence:
 
   rfa-async-single-client
 
-    RFA_AsyncSingleClient, the asynchronous VFS client.  Uses Qt slots
+    RFA_AsyncSingleClient, the asynchronous RFA client.  Uses Qt slots
     and signals in its interface, and CommandRunner to manage its
     connection to the server process.
 
   rfa-async-multi-client
 
     RFA_AsyncMultiClient, which manages a set of RFA_AsyncSingleClient
-    connections to VFS servers, one per host.  Also exposes
+    connections to RFA servers, one per host.  Also exposes
     RFA_AbstractAsyncMultiClient, an interface that can be mocked for
     testing.  The interface uses Qt slots and signals.
 
@@ -50,7 +50,7 @@ VFS-related modules that use Qt core (QObject) but no GUI depedence:
     RFA_AbstractAsyncMultiClient, but does not use Qt in its public
     interface.
 
-VFS-related that depends on Qt GUI:
+RFA-related that depends on Qt GUI:
 
   smqtutil/sync-wait
 
@@ -60,13 +60,13 @@ VFS-related that depends on Qt GUI:
     implementation that pops up a GUI with a Cancel button, and a test
     implementation that does not.
 
-Editor non-GUI modules that use VFS:
+Editor non-GUI modules that use RFA:
 
   editor-fs-server
 
-    VFS server process, uses rfa-sync-local-client.
+    RFA server process, uses rfa-sync-local-client.
 
-Editor GUI modules that use VFS:
+Editor GUI modules that use RFA:
 
   editor-global
 
@@ -89,7 +89,7 @@ Editor GUI modules that use VFS:
     However, it primarily uses rfa-async-single-client to retrieve directory
     contents as the user navigates.
 
-LSP modules that use VFS:
+LSP modules that use RFA:
 
   lsp-get-code-lines
 

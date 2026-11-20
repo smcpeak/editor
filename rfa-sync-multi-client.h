@@ -127,7 +127,7 @@ RFA_SyncMultiClient::issueTypedRequestSynchronously(
   }
 
   if (!connLostMessage.empty()) {
-    return stringb("VFS connection lost: " << connLostMessage);
+    return stringb("RFA connection lost: " << connLostMessage);
   }
 
   if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(genericReply.get())) {

@@ -227,7 +227,7 @@ private:     // methods
     openEditorLogFile();
 
 private Q_SLOTS:
-  // Called when a VFS connection fails.
+  // Called when an RFA connection fails.
   void on_rfaConnectionFailed(HostName hostName, std::string reason) NOEXCEPT;
 
   // Find the watcher feeding data to 'fileDoc', if any.

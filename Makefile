@@ -402,7 +402,7 @@ editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LIBRARIES)
 all: editor-fs-server.exe
 
 
-# ---------------------- VFS localhost SSH tests -----------------------
+# ---------------------- RFA localhost SSH tests -----------------------
 # Optionally run tests that use SSH to connect to localhost.
 ifeq ($(TEST_SSH_LOCALHOST),1)
 

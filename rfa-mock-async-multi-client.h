@@ -1,5 +1,5 @@
 // rfa-mock-async-multi-client.h
-// `RFA_MockAsyncMultiClient`, a VFS mock object for testing.
+// `RFA_MockAsyncMultiClient`, an RFA mock object for testing.
 
 // See license.txt for copyright and terms of use.
 
@@ -20,7 +20,7 @@
 #include <string>                                // std::string
 
 
-// VFS access for testing purposes, without actual IPC.
+// RFA access for testing purposes, without actual IPC.
 class RFA_MockAsyncMultiClient : public RFA_AbstractAsyncMultiClient {
   Q_OBJECT
   NO_OBJECT_COPIES(RFA_MockAsyncMultiClient);

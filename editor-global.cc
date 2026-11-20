@@ -187,8 +187,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   // Do this after setting the font since it depends on it.
   installEditorStyleSheet(*this);
 
-  // Establish the initial VFS connection before creating the first
-  // EditorWindow, since the EW can issue VFS requests.
+  // Establish the initial RFA connection before creating the first
+  // EditorWindow, since the EW can issue RFA requests.
   QObject::connect(&m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaFailed,
                    this, &EditorGlobal::on_rfaConnectionFailed);
   m_rfaAMClient.connectLocal();

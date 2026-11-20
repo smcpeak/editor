@@ -90,7 +90,7 @@ private:     // data
   QPushButton *m_refreshButton;
 
   // ---- vfs access state ----
-  // Interface to issue VFS queries.
+  // Interface to issue RFA queries.
   //
   // Assumption: The set of valid hosts does not change while this
   // dialog is active due to it being application modal.  (If a host
@@ -115,7 +115,7 @@ private:     // data
   // 'm_cachedDirectoryEntries'.  Empty to indicate nothing is cached.
   string m_cachedDirectory;
 
-  // Results of 'VFS_GetDirEntryRequest' on 'm_cachedDirectory'.
+  // Results of 'RFA_Msg_GetDirEntriesRequest' on 'm_cachedDirectory'.
   std::vector<SMFileUtil::DirEntryInfo> m_cachedDirectoryEntries;
 
   // ---- other state ----

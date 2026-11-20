@@ -1,5 +1,5 @@
 // rfa-async-multi-client.h
-// `RFA_AsyncMultiClient`, which accesses the VFS distributed virtual file
+// `RFA_AsyncMultiClient`, which accesses the RFA distributed virtual file
 // system.
 
 // See license.txt for copyright and terms of use.
@@ -32,7 +32,7 @@
 #include <vector>                                // std::vector
 
 
-/* Interface to a collection of VFS connections.  This is separated from
+/* Interface to a collection of RFA connections.  This is separated from
    `RFA_AsyncMultiClient` to facilitate testing; a test class can provide
    definitions of the virtual functions that avoids making actual IPC
    calls.
@@ -51,7 +51,7 @@
 
      1. The request becomes "queued" as a result of `issueRequest`.
 
-     2. The request is transmitted to the VFS server for the appropriate
+     2. The request is transmitted to the RFA server for the appropriate
         host, at which point we are "waiting" for the reply.  In states
         1 and 2 collectively, the request is "outstanding".  (A client
         of this class cannot distinguish between states 1 and 2.)
@@ -342,7 +342,7 @@ private:      // methods
   Connection       *conn (HostName const &hostName)
     { return const_cast<Connection*>(connC(hostName)); }
 
-  // Assuming we received a signal from a RFA_AsyncSingleClient, find and
+  // Assuming we received a signal from an RFA_AsyncSingleClient, find and
   // return the Connection associated with the sender.  Return nullptr
   // if one cannot be found.
   Connection * NULLABLE signalRecipientConnection();

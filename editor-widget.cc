@@ -2706,7 +2706,7 @@ void EditorWidget::focusInEvent(QFocusEvent *e) NOEXCEPT
   QWidget::focusInEvent(e);
 
   // Refreshing when we gain focus interacts badly with the window that
-  // pops up when a VFS operation is delayed.  Let's turn this off for
+  // pops up when an RFA operation is delayed.  Let's turn this off for
   // now.
   //this->requestFileStatus();
 

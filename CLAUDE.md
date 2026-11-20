@@ -122,7 +122,7 @@ The layers, from the bottom up:
    `NamedTextDocumentEditor` is a per-widget editor for one named
    document.
 6. **GUI.** `EditorGlobal` (`editor-global`, the `QApplication`) holds
-   the shared state: the document list, the VFS connections, the LSP
+   the shared state: the document list, the RFA connections, the LSP
    manager, and the windows. `EditorWindow` contains an
    `EditorWidgetFrame`, which contains an `EditorWidget` (painting and
    key handling) plus the search-and-replace panel (`sar-panel`) and the
@@ -132,7 +132,7 @@ The layers, from the bottom up:
 
 Subsystems:
 
-- **VFS (remote files).** `rfa-msg` defines the request and reply
+- **RFA (remote files).** `rfa-msg` defines the request and reply
   messages. `editor-fs-server.exe` (`editor-fs-server.cc` +
   `rfa-sync-local-client`) is a statically linked server that serves them over
   stdin/stdout, run either locally or through `ssh host

@@ -59,7 +59,7 @@ INIT_TRACE("lsp-get-code-lines");
         hence the `const` qualifier, but it accesses data closely
         related to it.)
 
-     3. Communication with the VFS server(s), embodied by
+     3. Communication with the RFA server(s), embodied by
         `rfaAMClient`.
 
    Since each of these can be in various states on entry, and the
@@ -75,7 +75,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
 {
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
 
-  // First, get the set of files that require a VFS query.
+  // First, get the set of files that require an RFA query.
   std::set<HostAndResourceName> filesToQuery;
   for (HostFileLine const &hfal : locations) {
     HostAndResourceName const &harn = hfal.getHarn();
