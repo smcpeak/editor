@@ -7,11 +7,10 @@
 // editor
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-olb.h"             // HostFile_OptLineByte
-#include "ihfexists.h"                 // IHFExists
 #include "line-number.h"               // LineNumber
+#include "mock-hfexists.h"             // IHFExists, MockHFExists
 
 // smbase
-#include "smbase/container-util.h"     // smbase::contains
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional) for EXPECT_EQ_GDVSER
 #include "smbase/gdvalue-vector.h"     // gdv::toGDValue(std::vector) for TEST_FUNC_EXPRS
 #include "smbase/sm-file-util.h"       // TestSMFileUtil
@@ -97,22 +96,8 @@ static void expectLocalIGNF(
 }
 
 
-// Class that recognizes a fixed set of host+file pairs.
-class TestIHFExists : public IHFExists {
-public:      // data
-  // Set of recognized names.
-  std::set<HostAndResourceName> m_existingHARNs;
-
-public:      // methods
-  virtual bool hfExists(HostAndResourceName const &harn) override
-  {
-    return contains(m_existingHARNs, harn);
-  }
-};
-
-
 // Insert some entries for testing.
-static void populate(TestIHFExists &hfe)
+static void populate(MockHFExists &hfe)
 {
   // Some local paths.
   static char const * const localPaths[] = {
@@ -139,7 +124,7 @@ static void populate(TestIHFExists &hfe)
 
 static void test1()
 {
-  TestIHFExists hfe;
+  MockHFExists hfe;
   populate(hfe);
 
   std::vector<HostAndResourceName> prefixes;
@@ -276,7 +261,7 @@ static void expectRemoteIGNFL(
 
 static void testLineNumbers()
 {
-  TestIHFExists hfe;
+  MockHFExists hfe;
   populate(hfe);
 
   std::vector<HostAndResourceName> prefixes;
@@ -314,7 +299,7 @@ static void testLineNumbers()
 
 static void testRemoteFiles()
 {
-  TestIHFExists hfe;
+  MockHFExists hfe;
   populate(hfe);
 
   std::vector<HostAndResourceName> prefixes;

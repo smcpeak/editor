@@ -9,12 +9,14 @@
 #include "ihfexists-fwd.h"                       // fwds for this module
 
 // editor
-#include "host-and-resource-name-fwd.h"          // HostAndResourceName [n]
+#include "host-and-resource-name-fwd.h"          // HostAndResourceName [f]
 
 
 // Interface with which to test the existence of a host+file.
 class IHFExists {
 public:      // methods
+  virtual ~IHFExists();
+
   /* From the client's perspective, invoking this method does not change
      the state of the receiver object.  However, this method is not
      `const` because the main implementor of it, `RFA_SyncMultiClient`, needs
