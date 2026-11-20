@@ -667,7 +667,13 @@ out/lsp-test-server.ok: lsp-test-server.py out/lsp-test-server.py.mypy.ok
 check: out/lsp-test-server.ok
 
 
-# --------------------- misc ------------------------
+# ------------------------ clipboard-experiment ------------------------
+# This is not automatically built; it is for ad-hoc experimentation.
+clipboard-experiment.exe: clipboard-experiment.o
+	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS) -lgdi32
+
+
+# -------------------------------- misc --------------------------------
 clean:
 	$(RM) $(TOCLEAN)
 	$(RM) -r out
