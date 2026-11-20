@@ -1,7 +1,7 @@
-// vfs-test-connections.cc
-// Code for `vfs-test-connections` module.
+// rfa-mock-async-multi-client.cc
+// Code for `rfa-mock-async-multi-client` module.
 
-#include "vfs-test-connections.h"                // this module
+#include "rfa-mock-async-multi-client.h"         // this module
 
 // editor
 #include "rfa-msg.h"                             // RFA_ReadFile{Request,Reply}
@@ -24,30 +24,30 @@ using namespace gdv;
 using namespace smbase;
 
 
-INIT_TRACE("vfs-test-connections");
+INIT_TRACE("rfa-mock-async-multi-client");
 
 
 // An explicit definition of this dtor is required because, without it,
 // it gets implicitly defined in the .moc.cc file, which only has a
 // forward declaration of `smbase::Either`, so that fails to compile.
-VFS_TestConnections::~VFS_TestConnections()
+RFA_MockAsyncMultiClient::~RFA_MockAsyncMultiClient()
 {}
 
 
-VFS_TestConnections::VFS_TestConnections()
+RFA_MockAsyncMultiClient::RFA_MockAsyncMultiClient()
   : m_hosts(),
     m_issuedRequests()
 {
   // The purpose of this signal and slot pair is to defer processing
   // until we return to the main event loop.
   QObject::connect(
-    this, &VFS_TestConnections::signal_processRequests,
-    this, &VFS_TestConnections::  slot_processRequests,
+    this, &RFA_MockAsyncMultiClient::signal_processRequests,
+    this, &RFA_MockAsyncMultiClient::  slot_processRequests,
     Qt::QueuedConnection);
 }
 
 
-void VFS_TestConnections::selfCheck() const
+void RFA_MockAsyncMultiClient::selfCheck() const
 {
   RFA_AbstractAsyncMultiClient::selfCheck();
 
@@ -59,8 +59,8 @@ void VFS_TestConnections::selfCheck() const
 }
 
 
-VFS_TestConnections::ConnectionState
-VFS_TestConnections::connectionState(
+RFA_MockAsyncMultiClient::ConnectionState
+RFA_MockAsyncMultiClient::connectionState(
   HostName const &hostName) const
 {
   if (auto value = mapFindOpt(m_hosts, hostName)) {
@@ -72,7 +72,7 @@ VFS_TestConnections::connectionState(
 }
 
 
-void VFS_TestConnections::issueRequest(
+void RFA_MockAsyncMultiClient::issueRequest(
   RequestID &requestID /*OUT*/,
   HostName const &hostName,
   std::unique_ptr<RFA_Message> req)
@@ -85,26 +85,26 @@ void VFS_TestConnections::issueRequest(
 }
 
 
-bool VFS_TestConnections::requestIsOutstanding(RequestID requestID) const
+bool RFA_MockAsyncMultiClient::requestIsOutstanding(RequestID requestID) const
 {
   return mapContains(m_issuedRequests, requestID);
 }
 
 
-void VFS_TestConnections::cancelRequest(RequestID requestID)
+void RFA_MockAsyncMultiClient::cancelRequest(RequestID requestID)
 {
   // I don't call this in this test.
   xfailure("unimplemented");
 }
 
 
-int VFS_TestConnections::numOutstandingRequests() const
+int RFA_MockAsyncMultiClient::numOutstandingRequests() const
 {
   return safeToInt(m_issuedRequests.size());
 }
 
 
-void VFS_TestConnections::slot_processRequests()
+void RFA_MockAsyncMultiClient::slot_processRequests()
 {
   TRACE1("in slot_processRequests; num issued requests is " <<
          m_issuedRequests.size());
@@ -131,7 +131,7 @@ void VFS_TestConnections::slot_processRequests()
 }
 
 
-std::unique_ptr<RFA_Msg_ReadFileReply> VFS_TestConnections::processRFR(
+std::unique_ptr<RFA_Msg_ReadFileReply> RFA_MockAsyncMultiClient::processRFR(
   RFA_Msg_ReadFileRequest const *rfr)
 {
   std::unique_ptr<RFA_Msg_ReadFileReply> reply(new RFA_Msg_ReadFileReply);

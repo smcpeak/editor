@@ -1,10 +1,10 @@
-// vfs-test-connections.h
-// `VFS_TestConnections`, a VFS mock object for testing.
+// rfa-mock-async-multi-client.h
+// `RFA_MockAsyncMultiClient`, a VFS mock object for testing.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_VFS_TEST_CONNECTIONS_H
-#define EDITOR_VFS_TEST_CONNECTIONS_H
+#ifndef EDITOR_RFA_MOCK_ASYNC_MULTI_CLIENT_H
+#define EDITOR_RFA_MOCK_ASYNC_MULTI_CLIENT_H
 
 #include "host-name-fwd.h"                       // HostName [n]
 #include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
@@ -21,9 +21,9 @@
 
 
 // VFS access for testing purposes, without actual IPC.
-class VFS_TestConnections : public RFA_AbstractAsyncMultiClient {
+class RFA_MockAsyncMultiClient : public RFA_AbstractAsyncMultiClient {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_TestConnections);
+  NO_OBJECT_COPIES(RFA_MockAsyncMultiClient);
 
 public:      // types
   // Data we know about one file: either its contents for a successful
@@ -50,10 +50,10 @@ protected Q_SLOTS:
     RFA_Msg_ReadFileRequest const *rfr);
 
 public:      // methods
-  virtual ~VFS_TestConnections() override;
+  virtual ~RFA_MockAsyncMultiClient() override;
 
   // Initially empty maps.
-  VFS_TestConnections();
+  RFA_MockAsyncMultiClient();
 
   virtual void selfCheck() const override;
 
@@ -74,4 +74,4 @@ Q_SIGNALS:
 };
 
 
-#endif // EDITOR_VFS_TEST_CONNECTIONS_H
+#endif // EDITOR_RFA_MOCK_ASYNC_MULTI_CLIENT_H

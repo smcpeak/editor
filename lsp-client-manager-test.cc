@@ -1,24 +1,24 @@
 // lsp-client-manager-test.cc
 // Tests for `lsp-client-manager` module.
 
-#include "unit-tests.h"                // decl for my entry point
-#include "lsp-client-manager.h"        // module under test
+#include "unit-tests.h"                          // decl for my entry point
+#include "lsp-client-manager.h"                  // module under test
 
-#include "doc-type-detect.h"           // detectDocumentType
-#include "json-rpc-reply.h"            // JSON_RPC_Reply
-#include "lsp-client.h"                // normalizeLSPPath
-#include "lsp-conv.h"                  // lspLanguageIdForDT
-#include "named-td-list.h"             // NamedTextDocumentList
-#include "uri-util.h"                  // makeFileURI
-#include "vfs-test-connections.h"      // VFS_TestConnections
+#include "doc-type-detect.h"                     // detectDocumentType
+#include "json-rpc-reply.h"                      // JSON_RPC_Reply
+#include "lsp-client.h"                          // normalizeLSPPath
+#include "lsp-conv.h"                            // lspLanguageIdForDT
+#include "named-td-list.h"                       // NamedTextDocumentList
+#include "rfa-mock-async-multi-client.h"         // RFA_MockAsyncMultiClient
+#include "uri-util.h"                            // makeFileURI
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent
+#include "smqtutil/qtutil.h"                     // waitForQtEvent
 
-#include "smbase/gdvalue.h"            // gdv::fromGDVN
-#include "smbase/sm-macros.h"          // OPEN_ANONYMOUS_NAMESPACE
-#include "smbase/sm-test.h"            // EXPECT_EQ, EXPECT_{TRUE,FALSE}
+#include "smbase/gdvalue.h"                      // gdv::fromGDVN
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-test.h"                      // EXPECT_EQ, EXPECT_{TRUE,FALSE}
 
-#include <functional>                  // std::function
+#include <functional>                            // std::function
 
 using namespace gdv;
 using namespace smbase;
@@ -48,7 +48,7 @@ void waitUntil(char const *desc, std::function<bool()> condition)
 void test_basics()
 {
   NamedTextDocumentList documentList;
-  VFS_TestConnections rfaAMClient;
+  RFA_MockAsyncMultiClient rfaAMClient;
 
   LSPClientManager lcm(
     &documentList,

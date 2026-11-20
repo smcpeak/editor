@@ -7,7 +7,7 @@
 #include "host-file-line.h"                      // HostFileLine
 #include "line-number.h"                         // LineNumber
 #include "lsp-client.h"                          // LSPClientDocumentState
-#include "vfs-test-connections.h"                // VFS_TestConnections
+#include "rfa-mock-async-multi-client.h"         // RFA_MockAsyncMultiClient
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
@@ -58,7 +58,7 @@ public:      // methods
 // Class to encapsulate some common data.
 class Tester {
 public:      // types
-  using FileReplyData = VFS_TestConnections::FileReplyData;
+  using FileReplyData = RFA_MockAsyncMultiClient::FileReplyData;
 
 public:      // data
   std::string const languageId = "cpp";
@@ -97,7 +97,7 @@ public:      // data
 
   TestLSPClient lspClient;
 
-  VFS_TestConnections rfaAMClient;
+  RFA_MockAsyncMultiClient rfaAMClient;
 
 public:      // methods
   Tester()

@@ -268,6 +268,8 @@ EDITOR_OBJS += rfa-async-multi-client.moc.o
 EDITOR_OBJS += rfa-async-multi-client.o
 EDITOR_OBJS += rfa-async-single-client.moc.o
 EDITOR_OBJS += rfa-async-single-client.o
+EDITOR_OBJS += rfa-mock-async-multi-client.moc.o
+EDITOR_OBJS += rfa-mock-async-multi-client.o
 EDITOR_OBJS += rfa-msg.o
 EDITOR_OBJS += td-change-seq.o
 EDITOR_OBJS += td-change.o
@@ -287,8 +289,6 @@ EDITOR_OBJS += textmcoord.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += vfs-query-sync.moc.o
 EDITOR_OBJS += vfs-query-sync.o
-EDITOR_OBJS += vfs-test-connections.moc.o
-EDITOR_OBJS += vfs-test-connections.o
 EDITOR_OBJS += waiting-counter.o
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
