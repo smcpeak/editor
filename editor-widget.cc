@@ -49,7 +49,7 @@
 #include "smqtutil/minihex6.bdf.gen.h"           // bdfFontData_minihex6
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
-#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow
+#include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow, setClipboardWithRetry
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
 #include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil, SynchronousWaiter
 
@@ -2291,18 +2291,20 @@ void EditorWidget::editRedo()
 }
 
 
-static void setClipboard(string newText)
+static void setClipboard(string const &newText)
 {
-  QClipboard *cb = QApplication::clipboard();
+  /*
+    Use the retry mechanism when reading the clipboard, mainly to ensure
+    we don't have occasional automated test failures due to random
+    things happening in other processes.
 
-  TRACE1("setClipboard: newText=" << doubleQuote(newText) <<
-         " supportsSelection=" << cb->supportsSelection());
+    The specific problem was observed while running `all-tests.gdvn`.
+    To reproduce it, build and run `clipboard-experiment.exe`, open the
+    clipboard, then run:
 
-  cb->setText(toQString(newText), QClipboard::Clipboard);
-  if (cb->supportsSelection()) {
-    // Also set the X selection so I can paste it into an xterm.
-    cb->setText(toQString(newText), QClipboard::Selection);
-  }
+      ./editor.exe -ev=test/file-open-dialog1.ev
+  */
+  setClipboardWithRetry(newText);
 }
 
 
