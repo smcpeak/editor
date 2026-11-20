@@ -275,8 +275,8 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
   TRACE("FilenameInputDialog",
     "queryDirectoryIfNeeded: will issue request for: " << dir);
 
-  std::unique_ptr<VFS_GetDirEntriesRequest> req(
-    new VFS_GetDirEntriesRequest);
+  std::unique_ptr<RFA_GetDirEntriesRequest> req(
+    new RFA_GetDirEntriesRequest);
   req->m_path = dir;
 
   m_currentRequestDir = dir;
@@ -308,9 +308,9 @@ void FilenameInputDialog::on_vfsReplyAvailable(
     TRACE("FilenameInputDialog",
       "on_vfsReplyAvailable: reply arrived for: " << m_currentRequestDir);
 
-    std::unique_ptr<VFS_Message> reply(
+    std::unique_ptr<RFA_Message> reply(
       m_vfsConnections->takeReply(requestID));
-    VFS_GetDirEntriesReply const *gde = reply->asGetDirEntriesReplyC();
+    RFA_GetDirEntriesReply const *gde = reply->asGetDirEntriesReplyC();
 
     m_cachedDirectory = m_currentRequestDir;
     if (gde->m_success) {
@@ -701,12 +701,12 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
   SynchronousWaiter waiter(this);
   VFS_QuerySync querySync(m_vfsConnections, waiter);
 
-  auto req = std::make_unique<VFS_MakeDirectoryRequest>();
+  auto req = std::make_unique<RFA_MakeDirectoryRequest>();
   req->m_path = filename;
 
   // Synchronous request.
   auto replyOrError =
-    querySync.issueTypedRequestSynchronously<VFS_MakeDirectoryReply>(
+    querySync.issueTypedRequestSynchronously<RFA_MakeDirectoryReply>(
       m_currentHostName, std::move(req));
 
   if (FailReasonOpt errorMsg =

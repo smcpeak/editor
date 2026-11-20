@@ -9,7 +9,7 @@
 // editor
 #include "command-runner.h"            // CommandRunner
 #include "host-name.h"                 // HostName
-#include "vfs-msg.h"                   // VFS_Message
+#include "rfa-msg.h"                   // RFA_Message
 
 // smbase
 #include "smbase/sm-file-util.h"       // SMFileUtil
@@ -67,7 +67,7 @@ private:     // data
   QByteArray m_errorBytes;
 
   // If not empty, the complete reply message that is available.
-  std::unique_ptr<VFS_Message> m_replyMessage;
+  std::unique_ptr<RFA_Message> m_replyMessage;
 
   // Human-readable string explaining the failure.
   string m_failureReason;
@@ -90,7 +90,7 @@ private:     // methods
 
   // Send 'msg', but without the state() manipulation that the public
   // 'sendRequest' does.
-  void innerSendRequest(VFS_Message const &msg);
+  void innerSendRequest(RFA_Message const &msg);
 
 public:      // methods
   VFS_FileSystemQuery();
@@ -124,12 +124,12 @@ public:      // methods
   // Send 'msg' to the server for processing.
   //
   // Requires: state() == S_READY
-  void sendRequest(VFS_Message const &msg);
+  void sendRequest(RFA_Message const &msg);
 
   // Take the reply object.
   //
   // Requires: state() == S_HAS_REPLY
-  std::unique_ptr<VFS_Message> takeReply();
+  std::unique_ptr<RFA_Message> takeReply();
 
   // Transition to the S_FAILED state with the given reason.
   //

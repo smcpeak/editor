@@ -8,7 +8,7 @@
 
 #include "host-name-fwd.h"                       // HostName [n]
 #include "vfs-connections.h"                     // VFS_AbstractConnections
-#include "vfs-msg-fwd.h"                         // VFS_ReadFile{Request,Reply} [n]
+#include "rfa-msg-fwd.h"                         // RFA_ReadFile{Request,Reply} [n]
 
 #include "smbase/either-fwd.h"                   // smbase::Either
 #include "smbase/portable-error-code-fwd.h"      // smbase::PortableErrorCode [n]
@@ -36,7 +36,7 @@ public:      // data
   std::map<HostName, ConnectionState> m_hosts;
 
   // Issued requests.
-  std::map<RequestID, std::unique_ptr<VFS_Message>> m_issuedRequests;
+  std::map<RequestID, std::unique_ptr<RFA_Message>> m_issuedRequests;
 
   // Map from file names to reply data.
   std::map<std::string, FileReplyData> m_files;
@@ -46,8 +46,8 @@ protected Q_SLOTS:
   void slot_processRequests();
 
   // Process the RFR request.
-  std::unique_ptr<VFS_ReadFileReply> processRFR(
-    VFS_ReadFileRequest const *rfr);
+  std::unique_ptr<RFA_ReadFileReply> processRFR(
+    RFA_ReadFileRequest const *rfr);
 
 public:      // methods
   virtual ~VFS_TestConnections() override;
@@ -63,7 +63,7 @@ public:      // methods
   virtual void issueRequest(
     RequestID &requestID /*OUT*/,
     HostName const &hostName,
-    std::unique_ptr<VFS_Message> req) override;
+    std::unique_ptr<RFA_Message> req) override;
   virtual bool requestIsOutstanding(RequestID requestID) const override;
   virtual void cancelRequest(RequestID requestID) override;
   virtual int numOutstandingRequests() const override;

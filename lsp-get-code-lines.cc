@@ -115,7 +115,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
         DocOrError(*errorMsg));
     }
     else {
-      std::unique_ptr<VFS_ReadFileReply> &rfr = replyOrError.left();
+      std::unique_ptr<RFA_ReadFileReply> &rfr = replyOrError.left();
       if (rfr) {
         // Error would be handled above.
         xassert(rfr->m_success);
@@ -165,7 +165,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
         ret.push_back(docInfo->getLastContentsCodeLine(lineIndex));
       }
       else /*not LSP*/ {
-        // We should have queried this file's details via VFS.
+        // We should have queried this file's details via RFA.
         auto const &docOrError = mapGetValueAtC(nameToDocOrError, harn);
         if (docOrError.isLeft()) {
           ret.push_back(

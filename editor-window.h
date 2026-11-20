@@ -20,7 +20,7 @@
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "status-bar-fwd.h"                      // StatusBarDisplay
 #include "vfs-connections-fwd.h"                 // VFS_Connections
-#include "vfs-msg-fwd.h"                         // VFS_Message
+#include "rfa-msg-fwd.h"                         // RFA_Message
 
 // smqtutil
 #include "smqtutil/qtguiutil.h"                  // unhandledExceptionMsgbox
@@ -111,7 +111,7 @@ private:     // funcs
   // pointer.
   template <class REPLY_TYPE>
   std::unique_ptr<REPLY_TYPE> vfsQuerySynchronously(
-    HostName const &hostName, std::unique_ptr<VFS_Message> request);
+    HostName const &hostName, std::unique_ptr<RFA_Message> request);
 
   // Return true if 'harn' exists, blocking during the check.
   bool checkFileExistenceSynchronously(HostAndResourceName const &harn);

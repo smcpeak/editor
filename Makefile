@@ -264,6 +264,7 @@ EDITOR_OBJS += os-wait-timer.o
 EDITOR_OBJS += positive-line-count.o
 EDITOR_OBJS += python_hilite.yy.o
 EDITOR_OBJS += range-text-repl.o
+EDITOR_OBJS += rfa-msg.o
 EDITOR_OBJS += td-change-seq.o
 EDITOR_OBJS += td-change.o
 EDITOR_OBJS += td-core.o
@@ -282,7 +283,6 @@ EDITOR_OBJS += textmcoord.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += vfs-connections.moc.o
 EDITOR_OBJS += vfs-connections.o
-EDITOR_OBJS += vfs-msg.o
 EDITOR_OBJS += vfs-query-sync.moc.o
 EDITOR_OBJS += vfs-query-sync.o
 EDITOR_OBJS += vfs-query.moc.o
@@ -381,8 +381,8 @@ EDITOR_FS_SERVER_OBJS :=
 EDITOR_FS_SERVER_OBJS += editor-fs-server.o
 EDITOR_FS_SERVER_OBJS += editor-version.o
 EDITOR_FS_SERVER_OBJS += git-version.gen.o
+EDITOR_FS_SERVER_OBJS += rfa-msg.o
 EDITOR_FS_SERVER_OBJS += vfs-local.o
-EDITOR_FS_SERVER_OBJS += vfs-msg.o
 
 editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LIBRARIES)
 	@# Link this with -static because it gets invoked over an SSH

@@ -497,20 +497,20 @@ void EditorWidget::requestFileStatus()
 
   cancelFileStatusRequestIfAny();
 
-  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  std::unique_ptr<RFA_FileStatusRequest> req(new RFA_FileStatusRequest);
   req->m_path = getDocument()->filename();
   vfsConnections()->issueRequest(m_fileStatusRequestID,
     getDocument()->hostName(), std::move(req));
   m_fileStatusRequestEditor = m_editor;
 
-  TRACE1("requestFileStatus: VFS request id=" << m_fileStatusRequestID);
+  TRACE1("requestFileStatus: RFA request id=" << m_fileStatusRequestID);
 }
 
 
 void EditorWidget::cancelFileStatusRequestIfAny()
 {
   if (m_fileStatusRequestID) {
-    TRACE1("cancelFileStatusRequestIfAny: VFS id=" << m_fileStatusRequestID);
+    TRACE1("cancelFileStatusRequestIfAny: RFA id=" << m_fileStatusRequestID);
     vfsConnections()->cancelRequest(m_fileStatusRequestID);
     m_fileStatusRequestID = 0;
     m_fileStatusRequestEditor = nullptr;
@@ -531,9 +531,9 @@ void EditorWidget::on_vfsReplyAvailable(
     m_fileStatusRequestID = 0;
     m_fileStatusRequestEditor = nullptr;
 
-    std::unique_ptr<VFS_Message> genericReply(
+    std::unique_ptr<RFA_Message> genericReply(
       vfsConnections()->takeReply(requestID));
-    VFS_FileStatusReply const *reply =
+    RFA_FileStatusReply const *reply =
       genericReply->asFileStatusReplyC();
     if (reply->m_success &&
         reply->m_fileKind == SMFileUtil::FK_REGULAR) {

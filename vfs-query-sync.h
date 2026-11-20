@@ -50,7 +50,7 @@ private:     // data
   HostName m_hostName;
 
   // Reply, if one has arrived.
-  std::unique_ptr<VFS_Message> m_reply;
+  std::unique_ptr<RFA_Message> m_reply;
 
   // Connection lost message, or empty string.
   string m_connLostMessage;
@@ -69,8 +69,8 @@ public:      // instance methods
   // user cancels the request, return false.
   bool issueRequestSynchronously(
     HostName const &hostName,
-    std::unique_ptr<VFS_Message> request,
-    std::unique_ptr<VFS_Message> /*OUT*/ &reply,
+    std::unique_ptr<RFA_Message> request,
+    std::unique_ptr<RFA_Message> /*OUT*/ &reply,
     string /*OUT*/ &connLostMessage);
 
   // Issue 'request' synchronously, expecting to get 'REPLY_TYPE' in the
@@ -86,7 +86,7 @@ public:      // instance methods
   smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
   issueTypedRequestSynchronously(
     HostName const &hostName,
-    std::unique_ptr<VFS_Message> request);
+    std::unique_ptr<RFA_Message> request);
 
   // Pop up a modal error dialog, returning when it is dismissed.
   void complain(string message);
@@ -105,7 +105,7 @@ template <class REPLY_TYPE>
 smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
 VFS_QuerySync::issueTypedRequestSynchronously(
   HostName const &hostName,
-  std::unique_ptr<VFS_Message> request)
+  std::unique_ptr<RFA_Message> request)
 {
   // Initially empty pointer, used for error returns.
   std::unique_ptr<REPLY_TYPE> typedReply;
@@ -115,7 +115,7 @@ VFS_QuerySync::issueTypedRequestSynchronously(
   }
 
   // Issue the request.
-  std::unique_ptr<VFS_Message> genericReply;
+  std::unique_ptr<RFA_Message> genericReply;
   string connLostMessage;
   if (!issueRequestSynchronously(
          hostName, std::move(request), genericReply, connLostMessage)) {
@@ -187,13 +187,13 @@ FailReasonOpt getROEErrorMessage(
 
      3. Null pointer in left alternative: user canceled the wait.
 
-     4. Error message in right alternative: VFS communication error, for
+     4. Error message in right alternative: RFA communication error, for
         example the connection was terminated.
 
    The `getROEErrorMessage` function above can be used to combine the
    handling of the error cases (2 and 4).
 */
-smbase::Either<std::unique_ptr<VFS_ReadFileReply>, std::string>
+smbase::Either<std::unique_ptr<RFA_ReadFileReply>, std::string>
 readFileSynchronously(
   VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
@@ -203,7 +203,7 @@ readFileSynchronously(
 // Get timestamp, etc., for 'fname'.
 //
 // This has the same return cases as `readFileSynchronously`.
-smbase::Either<std::unique_ptr<VFS_FileStatusReply>, std::string>
+smbase::Either<std::unique_ptr<RFA_FileStatusReply>, std::string>
 getFileStatusSynchronously(
   VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,

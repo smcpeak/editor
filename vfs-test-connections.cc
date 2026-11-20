@@ -4,7 +4,7 @@
 #include "vfs-test-connections.h"                // this module
 
 // editor
-#include "vfs-msg.h"                             // VFS_ReadFile{Request,Reply}
+#include "rfa-msg.h"                             // RFA_ReadFile{Request,Reply}
 
 // smbase
 #include "smbase/either.h"                       // smbase::Either
@@ -75,7 +75,7 @@ VFS_TestConnections::connectionState(
 void VFS_TestConnections::issueRequest(
   RequestID &requestID /*OUT*/,
   HostName const &hostName,
-  std::unique_ptr<VFS_Message> req)
+  std::unique_ptr<RFA_Message> req)
 {
   requestID = m_nextRequestID++;
   mapInsertUniqueMove(m_issuedRequests, requestID, std::move(req));
@@ -113,12 +113,12 @@ void VFS_TestConnections::slot_processRequests()
     // Dequeue the next request.
     auto it = m_issuedRequests.begin();
     RequestID id = (*it).first;
-    std::unique_ptr<VFS_Message> msg = std::move((*it).second);
+    std::unique_ptr<RFA_Message> msg = std::move((*it).second);
     m_issuedRequests.erase(it);
 
-    if (auto rfr = dynamic_cast<VFS_ReadFileRequest const *>(msg.get())) {
+    if (auto rfr = dynamic_cast<RFA_ReadFileRequest const *>(msg.get())) {
       mapInsertUniqueMove(m_availableReplies, id,
-        std::unique_ptr<VFS_Message>(processRFR(rfr).release()));
+        std::unique_ptr<RFA_Message>(processRFR(rfr).release()));
 
       TRACE1("emitting signal_vfsReplyAvailable(" << id << ")");
       Q_EMIT signal_vfsReplyAvailable(id);
@@ -131,10 +131,10 @@ void VFS_TestConnections::slot_processRequests()
 }
 
 
-std::unique_ptr<VFS_ReadFileReply> VFS_TestConnections::processRFR(
-  VFS_ReadFileRequest const *rfr)
+std::unique_ptr<RFA_ReadFileReply> VFS_TestConnections::processRFR(
+  RFA_ReadFileRequest const *rfr)
 {
-  std::unique_ptr<VFS_ReadFileReply> reply(new VFS_ReadFileReply);
+  std::unique_ptr<RFA_ReadFileReply> reply(new RFA_ReadFileReply);
 
   if (auto itOpt = mapFindOpt(m_files, rfr->m_path)) {
     FileReplyData const &fdata = (**itOpt).second;

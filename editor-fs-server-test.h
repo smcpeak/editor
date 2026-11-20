@@ -6,8 +6,8 @@
 
 // editor
 #include "host-name.h"                 // HostName
+#include "rfa-msg.h"                   // RFA_FileStatusReply
 #include "vfs-query.h"                 // VFS_FileSystemQuery
-#include "vfs-msg.h"                   // VFS_FileStatusReply
 
 // smbase
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
@@ -37,7 +37,7 @@ public:      // methods
   ~FSServerTest();
 
   // Wait for and return the next reply, or throw on error.
-  std::unique_ptr<VFS_Message> getNextReply();
+  std::unique_ptr<RFA_Message> getNextReply();
 
   // Run the sequence of tests.
   void runTests(HostName const &hostName);

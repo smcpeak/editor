@@ -4,7 +4,7 @@
 #include "editor-version.h"            // this module
 
 #include "git-version.h"               // editor_git_version
-#include "vfs-msg.h"                   // VFS_currentVersion
+#include "rfa-msg.h"                   // RFA_currentVersion
 
 #include "smbase/stringb.h"            // stringb
 
@@ -17,7 +17,7 @@ std::string getEditorVersionString()
     // `editor_git_version` has a newline.
     "Editor version: " << editor_git_version <<
 
-    "VFS protocol version: " << VFS_currentVersion << "\n");
+    "RFA protocol version: " << RFA_currentVersion << "\n");
 }
 
 

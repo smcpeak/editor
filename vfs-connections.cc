@@ -61,13 +61,13 @@ bool VFS_AbstractConnections::replyIsAvailable(RequestID requestID) const
 }
 
 
-std::unique_ptr<VFS_Message> VFS_AbstractConnections::takeReply(
+std::unique_ptr<RFA_Message> VFS_AbstractConnections::takeReply(
   RequestID requestID)
 {
   auto it = m_availableReplies.find(requestID);
   xassert(it != m_availableReplies.end());
 
-  std::unique_ptr<VFS_Message> ret(std::move((*it).second));
+  std::unique_ptr<RFA_Message> ret(std::move((*it).second));
 
   TRACE("VFS_Connections",
     "takeReply: requestID=" << requestID <<
@@ -275,7 +275,7 @@ void VFS_Connections::connect(HostName const &hostName)
   // connection is ready for use.
   Connection *c = conn(hostName);
   xassert(!c->m_haveStartingDirectory);
-  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  std::unique_ptr<RFA_FileStatusRequest> req(new RFA_FileStatusRequest);
   req->m_path = ".";
   c->issueRequest(m_nextRequestID++, std::move(req));
 }
@@ -315,7 +315,7 @@ void VFS_Connections::shutdownAll()
 // --------------- VFS_Connections: Requests and replies ---------------
 void VFS_Connections::issueRequest(RequestID /*OUT*/ &requestID,
                                    HostName const &hostName,
-                                   std::unique_ptr<VFS_Message> req)
+                                   std::unique_ptr<RFA_Message> req)
 {
   requestID = m_nextRequestID++;
   Connection *c = conn(hostName);
@@ -325,7 +325,7 @@ void VFS_Connections::issueRequest(RequestID /*OUT*/ &requestID,
 
 
 void VFS_Connections::Connection::issueRequest(
-  RequestID requestID, std::unique_ptr<VFS_Message> req)
+  RequestID requestID, std::unique_ptr<RFA_Message> req)
 {
   TRACE("VFS_Connections",
     "enqueued: requestID=" << requestID <<
@@ -520,12 +520,12 @@ void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
       // This is supposed to be the reply for the initial directory
       // request.
       xassert(c->connectionState() == CS_CONNECTING);
-      std::unique_ptr<VFS_Message> genericReply(c->m_fsQuery->takeReply());
+      std::unique_ptr<RFA_Message> genericReply(c->m_fsQuery->takeReply());
       TRACE("VFS_Connections",
         "  for host " << c->m_hostName <<
         ", got starting directory reply: " << genericReply->description());
 
-      if (VFS_FileStatusReply const *reply =
+      if (RFA_FileStatusReply const *reply =
             genericReply->asFileStatusReplyC()) {
         if (reply->m_success) {
           if (reply->m_dirExists) {

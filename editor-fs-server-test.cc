@@ -37,7 +37,7 @@ FSServerTest::~FSServerTest()
 }
 
 
-std::unique_ptr<VFS_Message> FSServerTest::getNextReply()
+std::unique_ptr<RFA_Message> FSServerTest::getNextReply()
 {
   DIAG("getNextReply");
 
@@ -88,14 +88,14 @@ void FSServerTest::runPathQuery(string const &path)
 
   // Send.
   {
-    VFS_FileStatusRequest req;
+    RFA_FileStatusRequest req;
     req.m_path = path;
     m_fsQuery.sendRequest(req);
   }
 
   // Receive.
-  std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_FileStatusReply *reply = replyMsg->asFileStatusReply();
+  std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+  RFA_FileStatusReply *reply = replyMsg->asFileStatusReply();
   xassert(reply->m_success);
   VPVAL(reply->m_dirName);
   VPVAL(reply->m_fileName);
@@ -109,12 +109,12 @@ void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
 {
   DIAG("runEchoTest: data size is " << data.size());
 
-  VFS_Echo request;
+  RFA_Echo request;
   request.m_data = data;
   m_fsQuery.sendRequest(request);
 
-  std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_Echo const *reply = replyMsg->asEchoC();
+  std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+  RFA_Echo const *reply = replyMsg->asEchoC();
 
   // Verify that the reply is what was sent.
   xassert(reply->m_data == data);
@@ -181,13 +181,13 @@ void FSServerTest::runFileReadWriteTests()
 
   // Write.
   {
-    VFS_WriteFileRequest req;
+    RFA_WriteFileRequest req;
     req.m_path = fname;
     req.m_contents = data;
     m_fsQuery.sendRequest(req);
 
-    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-    VFS_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
+    std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+    RFA_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
     if (reply->m_success) {
       modTime = reply->m_fileModificationTime;
       VPVAL(modTime);
@@ -199,12 +199,12 @@ void FSServerTest::runFileReadWriteTests()
 
   // Read.
   {
-    VFS_ReadFileRequest req;
+    RFA_ReadFileRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
-    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-    VFS_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
+    std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+    RFA_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
     if (reply->m_success) {
       xassert(reply->m_contents == data);
       xassert(reply->m_fileModificationTime == modTime);
@@ -217,12 +217,12 @@ void FSServerTest::runFileReadWriteTests()
 
   // Delete.
   {
-    VFS_DeleteFileRequest req;
+    RFA_DeleteFileRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
-    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-    VFS_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
+    std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+    RFA_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
     if (!reply->m_success) {
       xfatal(reply->m_failureReasonString);
     }
@@ -230,23 +230,23 @@ void FSServerTest::runFileReadWriteTests()
 
   // Check deletion.
   {
-    VFS_FileStatusRequest req;
+    RFA_FileStatusRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
-    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-    VFS_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
+    std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+    RFA_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
     xassert(reply->m_fileKind == SMFileUtil::FK_NONE);
   }
 
   // Read non-existent.
   {
-    VFS_ReadFileRequest req;
+    RFA_ReadFileRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
-    std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-    VFS_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
+    std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+    RFA_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
     xassert(!reply->m_success);
     xassert(reply->m_failureReasonCode == PortableErrorCode::PEC_FILE_NOT_FOUND);
   }
@@ -255,12 +255,12 @@ void FSServerTest::runFileReadWriteTests()
 
 void FSServerTest::runGetDirEntriesTest()
 {
-  VFS_GetDirEntriesRequest req;
+  RFA_GetDirEntriesRequest req;
   req.m_path = ".";
   m_fsQuery.sendRequest(req);
 
-  std::unique_ptr<VFS_Message> replyMsg(getNextReply());
-  VFS_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
+  std::unique_ptr<RFA_Message> replyMsg(getNextReply());
+  RFA_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
   xassert(reply->m_success);
   DIAG("number of entries: " << reply->m_entries.size());
 

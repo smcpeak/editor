@@ -169,7 +169,7 @@ void sendMessage(FILE *stream, std::string const &reply)
 
 
 // Send 'msg' as a message on stdout.
-void sendReply(VFS_Message const &msg)
+void sendReply(RFA_Message const &msg)
 {
   // Serialize the reply.
   std::ostringstream oss;
@@ -206,8 +206,8 @@ int innerMain()
     // Deserialize the request.
     std::istringstream iss(requestData);
     StreamFlatten flatInput(&iss);
-    std::unique_ptr<VFS_Message> message(
-      VFS_Message::deserialize(flatInput));
+    std::unique_ptr<RFA_Message> message(
+      RFA_Message::deserialize(flatInput));
 
     if (artificialDelay) {
       LOG("sleeping for " << artificialDelay << " ms");
@@ -219,42 +219,42 @@ int innerMain()
       default:
         xformat(stringb("Bad message type: " << message->messageType()));
 
-      case VFS_MT_GetVersion:
+      case RFA_MT_GetVersion:
         // For now, have the server just ignore the incoming version
         // number, and let the client diagnose mismatches.
-        sendReply(VFS_GetVersion());
+        sendReply(RFA_GetVersion());
         break;
 
-      case VFS_MT_Echo: {
-        VFS_Echo const *echo = message->asEchoC();
+      case RFA_MT_Echo: {
+        RFA_Echo const *echo = message->asEchoC();
         sendReply(*echo);
         break;
       }
 
-      case VFS_MT_FileStatusRequest: {
-        VFS_FileStatusRequest const *pathRequest = message->asFileStatusRequestC();
-        VFS_FileStatusReply pathReply(localImpl.queryPath(*pathRequest));
+      case RFA_MT_FileStatusRequest: {
+        RFA_FileStatusRequest const *pathRequest = message->asFileStatusRequestC();
+        RFA_FileStatusReply pathReply(localImpl.queryPath(*pathRequest));
         sendReply(pathReply);
         break;
       }
 
-      case VFS_MT_ReadFileRequest:
+      case RFA_MT_ReadFileRequest:
         sendReply(localImpl.readFile(*(message->asReadFileRequestC())));
         break;
 
-      case VFS_MT_WriteFileRequest:
+      case RFA_MT_WriteFileRequest:
         sendReply(localImpl.writeFile(*(message->asWriteFileRequestC())));
         break;
 
-      case VFS_MT_DeleteFileRequest:
+      case RFA_MT_DeleteFileRequest:
         sendReply(localImpl.deleteFile(*(message->asDeleteFileRequestC())));
         break;
 
-      case VFS_MT_GetDirEntriesRequest:
+      case RFA_MT_GetDirEntriesRequest:
         sendReply(localImpl.getDirEntries(*(message->asGetDirEntriesRequestC())));
         break;
 
-      case VFS_MT_MakeDirectoryRequest:
+      case RFA_MT_MakeDirectoryRequest:
         sendReply(localImpl.makeDirectory(*(message->asMakeDirectoryRequestC())));
         break;
     }

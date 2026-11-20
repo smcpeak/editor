@@ -48,8 +48,8 @@ VFS_QuerySync::~VFS_QuerySync()
 
 bool VFS_QuerySync::issueRequestSynchronously(
   HostName const &hostName,
-  std::unique_ptr<VFS_Message> request,
-  std::unique_ptr<VFS_Message> /*OUT*/ &reply,
+  std::unique_ptr<RFA_Message> request,
+  std::unique_ptr<RFA_Message> /*OUT*/ &reply,
   string /*OUT*/ &connLostMessage)
 {
   xassert(!m_requestID);
@@ -113,15 +113,15 @@ bool VFS_QuerySync::issueRequestSynchronously(
 
 bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
 {
-  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  std::unique_ptr<RFA_FileStatusRequest> req(new RFA_FileStatusRequest);
   req->m_path = harn.resourceName();
 
   auto replyOrError(
-    issueTypedRequestSynchronously<VFS_FileStatusReply>(
+    issueTypedRequestSynchronously<RFA_FileStatusReply>(
       harn.hostName(), std::move(req)));
 
   if (replyOrError.isLeft()) {
-    std::unique_ptr<VFS_FileStatusReply> &reply = replyOrError.left();
+    std::unique_ptr<RFA_FileStatusReply> &reply = replyOrError.left();
     if (reply) {
       return reply->m_success &&
              reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -160,7 +160,7 @@ void VFS_QuerySync::on_vfsFailed(
 }
 
 
-smbase::Either<std::unique_ptr<VFS_ReadFileReply>, std::string>
+smbase::Either<std::unique_ptr<RFA_ReadFileReply>, std::string>
 readFileSynchronously(
   VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
@@ -168,26 +168,26 @@ readFileSynchronously(
 {
   HTT_TASK("readFileSynchronously");
 
-  std::unique_ptr<VFS_ReadFileRequest> req(new VFS_ReadFileRequest);
+  std::unique_ptr<RFA_ReadFileRequest> req(new RFA_ReadFileRequest);
   req->m_path = harn.resourceName();
 
   VFS_QuerySync querySync(vfsConnections, waiter);
-  return querySync.issueTypedRequestSynchronously<VFS_ReadFileReply>(
+  return querySync.issueTypedRequestSynchronously<RFA_ReadFileReply>(
     harn.hostName(), std::move(req));
 }
 
 
-smbase::Either<std::unique_ptr<VFS_FileStatusReply>, std::string>
+smbase::Either<std::unique_ptr<RFA_FileStatusReply>, std::string>
 getFileStatusSynchronously(
   VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
-  std::unique_ptr<VFS_FileStatusRequest> req(new VFS_FileStatusRequest);
+  std::unique_ptr<RFA_FileStatusRequest> req(new RFA_FileStatusRequest);
   req->m_path = harn.resourceName();
 
   VFS_QuerySync querySync(vfsConnections, waiter);
-  return querySync.issueTypedRequestSynchronously<VFS_FileStatusReply>(
+  return querySync.issueTypedRequestSynchronously<RFA_FileStatusReply>(
     harn.hostName(), std::move(req));
 }
 

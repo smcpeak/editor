@@ -136,7 +136,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
   std::string messageBytes(m_replyBytes.data()+4, replyLen);
   std::istringstream iss(messageBytes);
   StreamFlatten flat(&iss);
-  m_replyMessage.reset(VFS_Message::deserialize(flat));
+  m_replyMessage.reset(RFA_Message::deserialize(flat));
 
   TRACE("VFS_FileSystemQuery",
     "received reply: type=" << toString(m_replyMessage->messageType()) <<
@@ -155,9 +155,9 @@ void VFS_FileSystemQuery::checkForCompleteReply()
 
   if (state() == S_CONNECTING) {
     // Check that the reply is the version message.
-    if (VFS_GetVersion const *getVer = m_replyMessage->ifGetVersionC()) {
+    if (RFA_GetVersion const *getVer = m_replyMessage->ifGetVersionC()) {
       // Confirm compatibility.
-      if (getVer->m_version == VFS_currentVersion) {
+      if (getVer->m_version == RFA_currentVersion) {
         // Good to go.
         TRACE("VFS_FileSystemQuery", "confirmed protocol compatibility");
         setState(S_READY);
@@ -167,7 +167,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
       else {
         recordFailure(stringb(
           "fs-server reports version " << getVer->m_version <<
-          " but this client uses version " << VFS_currentVersion <<
+          " but this client uses version " << RFA_currentVersion <<
           "."));
         return;
       }
@@ -246,7 +246,7 @@ void VFS_FileSystemQuery::connect(HostName const &hostname)
   m_commandRunner.startAsynchronous();
 
   // Attempt to establish version compatibility.
-  VFS_GetVersion getVer;
+  RFA_GetVersion getVer;
   innerSendRequest(getVer);
 }
 
@@ -257,7 +257,7 @@ HostName VFS_FileSystemQuery::getHostName() const
 }
 
 
-void VFS_FileSystemQuery::innerSendRequest(VFS_Message const &msg)
+void VFS_FileSystemQuery::innerSendRequest(RFA_Message const &msg)
 {
   // Serialize the message.
   std::string serMessage;
@@ -290,7 +290,7 @@ void VFS_FileSystemQuery::innerSendRequest(VFS_Message const &msg)
 }
 
 
-void VFS_FileSystemQuery::sendRequest(VFS_Message const &msg)
+void VFS_FileSystemQuery::sendRequest(RFA_Message const &msg)
 {
   xassert(state() == S_READY);
 
@@ -300,7 +300,7 @@ void VFS_FileSystemQuery::sendRequest(VFS_Message const &msg)
 }
 
 
-std::unique_ptr<VFS_Message> VFS_FileSystemQuery::takeReply()
+std::unique_ptr<RFA_Message> VFS_FileSystemQuery::takeReply()
 {
   xassert(state() == S_HAS_REPLY);
   setState(S_READY);

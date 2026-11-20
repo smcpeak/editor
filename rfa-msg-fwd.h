@@ -1,18 +1,18 @@
-// vfs-msg-fwd.h
-// Forwards for vfs-msg.h.
+// rfa-msg-fwd.h
+// Forwards for rfa-msg.h.
 
-#ifndef EDITOR_VFS_MSG_FWD_H
-#define EDITOR_VFS_MSG_FWD_H
+#ifndef EDITOR_RFA_MSG_FWD_H
+#define EDITOR_RFA_MSG_FWD_H
 
 // Abstract message classes.
-class VFS_Message;
-class VFS_PathRequest;
-class VFS_PathReply;
+class RFA_Message;
+class RFA_PathRequest;
+class RFA_PathReply;
 
-// Do 'macro' for every kind of VFS message.
+// Do 'macro' for every kind of RFA message.
 //
 // This defines the list of message types.
-#define FOR_EACH_VFS_MESSAGE_TYPE(macro) \
+#define FOR_EACH_RFA_MESSAGE_TYPE(macro) \
   macro(GetVersion)                      \
   macro(Echo)                            \
   macro(FileStatusRequest)               \
@@ -29,11 +29,12 @@ class VFS_PathReply;
   macro(MakeDirectoryReply)              \
   /*nothing*/
 
-#define FORWARD_DECLARE_VFS_CLASS(type) class VFS_##type;
+// TODO: Rename the message classes as RFA_Msg_*.
+#define FORWARD_DECLARE_RFA_CLASS(type) class RFA_##type;
 
-FOR_EACH_VFS_MESSAGE_TYPE(FORWARD_DECLARE_VFS_CLASS)
+FOR_EACH_RFA_MESSAGE_TYPE(FORWARD_DECLARE_RFA_CLASS)
 
-#undef FORWARD_DECLARE_VFS_CLASS
+#undef FORWARD_DECLARE_RFA_CLASS
 
 
-#endif // EDITOR_VFS_MSG_FWD_H
+#endif // EDITOR_RFA_MSG_FWD_H

@@ -9,7 +9,7 @@
 
 // editor
 #include "host-name.h"                 // HostName
-#include "vfs-msg.h"                   // VFS_Message
+#include "rfa-msg.h"                   // RFA_Message
 #include "vfs-query-fwd.h"             // VFS_FileSystemQuery
 
 // smbase
@@ -98,7 +98,7 @@ protected:   // data
 
   // Map from request ID to the corresponding reply object, for those
   // requests whose reply is available.
-  std::map<RequestID, std::unique_ptr<VFS_Message> > m_availableReplies;
+  std::map<RequestID, std::unique_ptr<RFA_Message> > m_availableReplies;
 
 public:      // methods
   virtual ~VFS_AbstractConnections() override;
@@ -163,7 +163,7 @@ public:      // methods
   virtual void issueRequest(
     RequestID &requestID /*OUT*/,
     HostName const &hostName,
-    std::unique_ptr<VFS_Message> req) = 0;
+    std::unique_ptr<RFA_Message> req) = 0;
 
   // True if the given request is being processed.  False once the reply
   // is available.
@@ -179,7 +179,7 @@ public:      // methods
   // originated has failed or been shut down.
   //
   // Requires: replyIsAvailable(requestID)
-  std::unique_ptr<VFS_Message> takeReply(RequestID requestID);
+  std::unique_ptr<RFA_Message> takeReply(RequestID requestID);
 
   // Stop delivery of 'signal_replyArrived' for the named request if it
   // has not already been delivered.  Remove it from
@@ -236,11 +236,11 @@ private:     // types
     RequestID m_requestID;
 
     // The request object.
-    std::unique_ptr<VFS_Message> m_requestObject;
+    std::unique_ptr<RFA_Message> m_requestObject;
 
   public:      // methods
     QueuedRequest(RequestID requestID,
-                  std::unique_ptr<VFS_Message> requestObject)
+                  std::unique_ptr<RFA_Message> requestObject)
       : m_requestID(requestID),
         m_requestObject(std::move(requestObject))
     {}
@@ -296,7 +296,7 @@ private:     // types
     ConnectionState connectionState() const;
 
     // Enqueue 'req' as 'requestID', and send it when ready.
-    void issueRequest(RequestID requestID, std::unique_ptr<VFS_Message> req);
+    void issueRequest(RequestID requestID, std::unique_ptr<RFA_Message> req);
 
     // True if 'requestID' has not received its reply.
     bool requestIsOutstanding(RequestID requestID) const;
@@ -393,7 +393,7 @@ public:      // methods
   virtual void issueRequest(
     RequestID &requestID /*OUT*/,
     HostName const &hostName,
-    std::unique_ptr<VFS_Message> req) override;
+    std::unique_ptr<RFA_Message> req) override;
   virtual bool requestIsOutstanding(RequestID requestID) const override;
   virtual void cancelRequest(RequestID requestID) override;
   virtual int numOutstandingRequests() const override;

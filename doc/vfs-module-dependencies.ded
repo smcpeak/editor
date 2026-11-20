@@ -6,7 +6,7 @@
         "x": 355,
         "y": 380
       },
-      "name": "vfs-msg",
+      "name": "rfa-msg",
       "size": {
         "h": 20,
         "w": 210
@@ -112,7 +112,7 @@
       }
     },
     {
-      "attributes": "vfs-connections\nvfs-query-sync\nvfs-msg\nsync-wait\n",
+      "attributes": "vfs-connections\nvfs-query-sync\nrfa-msg\nsync-wait\n",
       "loc": {
         "x": 150,
         "y": 135

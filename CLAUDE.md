@@ -132,7 +132,7 @@ The layers, from the bottom up:
 
 Subsystems:
 
-- **VFS (remote files).** `vfs-msg` defines the request and reply
+- **VFS (remote files).** `rfa-msg` defines the request and reply
   messages. `editor-fs-server.exe` (`editor-fs-server.cc` +
   `vfs-local`) is a statically linked server that serves them over
   stdin/stdout, run either locally or through `ssh host

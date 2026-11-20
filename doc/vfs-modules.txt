@@ -7,7 +7,7 @@ See also vfs-module-dependencies.ded[.png].
 
 VFS-related modules with no Qt dependence:
 
-  vfs-msg
+  rfa-msg
 
     Defines VFS_* (most of which end in "Request" or "Reply"), the
     serializable message structures for the protocol.  Also defines
