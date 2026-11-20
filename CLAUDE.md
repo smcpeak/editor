@@ -165,6 +165,7 @@ Subsystems:
   trailing comment naming what it provides.
 - Includes from submodules always use the directory prefix
   (`"smbase/str.h"`, `"smqtutil/..."`), since only `-I.` is passed.
+  See `doc/include-style.txt` for more details on `#include` style.
 - New `.o` files have to be added by hand to `EDITOR_OBJS` /
   `UNIT_TESTS_OBJS` / `GUI_TESTS_OBJS` in the `Makefile`. Qt classes
   that use `Q_OBJECT` also need `foo.moc.o`.

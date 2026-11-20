@@ -1,0 +1,194 @@
+include-style.txt
+Explanation of #include style in the `editor` repo
+
+
+Header include file names
+=========================
+
+
+Directories in #includes
+------------------------
+
+Files that live in `editor` are #included without any directory name:
+
+  #include "line-number.h"             // LineNumber
+
+Files that come from a submodule library name their directory:
+
+  #include "smbase/sm-env.h"           // envAsBool
+
+
+Vertical grouping
+-----------------
+
+Headers are grouped together by purpose or library.  Each group is
+preceded by a blank line, and often a comment that names its group.
+
+The groups are, in order:
+
+  * "// must-be-first": Forward headers for functions used inside a
+    template that is defined in another header, and hence must come
+    before that header.  This is uncommon, but not especially rare.
+
+  * "This module" headers, with no group name, generally one of:
+
+    - Including foo-fwd.h from foo.h or foo-iface.h (if present).
+    - Including foo.h from foo.cc or foo-test.cc.
+    - Including foo-iface.h from foo.h.
+
+    A full explanation of all the files that might comprise one "module"
+    (my terminology, unrelated to the abomination that is C++20 modules)
+    is out of scope here.
+
+  * "// editor": Headers from `editor`.
+
+  * "// ast": Headers from `ast`.
+
+  * "// smqtutil": Headers from `smqtutil`.
+
+  * "// smbase": Headers from `smbase`.
+
+  * "// Qt": Qt headers.
+
+  * "// libc++": C++ standard library headers.
+
+  * "// libc": C standard library headers.
+
+  * "// POSIX" or "// Windows": POSIX or Windows headers.
+
+The general order is meant to be top-down, although the must-be-first
+headers of course break that.
+
+
+Using declarations
+------------------
+
+Any "using" or "using namespace" declarations at file scope come after
+all of the #includes, before anything else in the file.
+
+Rationale: I see the "using" lines as closely related to the module
+dependencies that the #includes represent, so want them together.
+
+
+Header comments
+===============
+
+In the editor repo, and in the submodules smbase, ast, and smqtutil,
+every #include line should have a comment that lists the symbols
+obtained from that header that are used in the including file.
+
+Rationale: Every dependency contributes maintenance cost, and
+#includes closely track module dependencies, so I want to be able to
+easily see why a given #include is present.  If I suspect a header
+might not be needed anymore, I can do a text search for whatever
+symbols are listed in the comment, and if that gets no hits, remove
+the #include and attempt to recompile.  This works the other way too:
+when I see a symbol usage site, I can do a text search for it, and
+thereby see which header it comes from.
+
+
+Exception for Qt headers
+------------------------
+
+The Qt header files like <QObject> already say exactly what class they
+provide, so those are normally not commented.  A comment is present only
+if the header is included to get some other symbol than the one in the
+file name.
+
+
+Namespaces
+----------
+
+Symbols declared inside a namespace are commented with that namespace,
+for example:
+
+  #include <string>                    // std::string
+
+
+Vertical comment alignment
+--------------------------
+
+Every #include comment uses C++-style "//" syntax, and is separated from
+the file name closing delimiter (quote or angle bracket) by at least one
+space.
+
+Every #include comment starts in a 1-based column number that is a
+multiple of 10 and at least 40.
+
+All #include comments in a file start in the same column, specifically
+the leftmost column that satisfies the other constraints.
+
+Rationale: I find the alignment to be aesthetic and easy to read, while
+unaligned comments are harder to read and look careless.
+
+During maintenance, if a header is added or renamed and that pushes its
+comment beyond where it can be aligned with the others, then all of the
+comments in the file are pushed out.  For example:
+
+  Before:
+
+    #include "bar.h"                   // bar
+    #include "foo.h"                   // foo
+
+  After:
+
+    #include "bar.h"                             // bar
+    #include "foo.h"                             // foo
+    #include "smbase/virtual-address-space.h"    // smbase::VirtualASManager
+
+However, if a header line is removed, such that the remaining comments
+could be moved to the left, I usually do not do that.  (It's a minor
+hassle, it creates extra revision control churn, and there is a decent
+chance I'll have to push them to the right again soon.)
+
+
+Brace notation
+--------------
+
+When multiple symbols come from the same namespace, I use shell-like
+brace notation (except with spaces after commas), for example:
+
+  #include <iostream>                  // std::{cout, endl}
+
+I also sometimes use this when several symbols share a common prefix:
+
+  #include "smbase/fasttime.h"         // fastTime{Initialize, Milliseconds}
+
+but since that breaks the text-search properties described above, that
+style is uncommon.
+
+
+Bracket annotations
+-------------------
+
+Note: This part is recent and evolving.
+
+When a header is included for the purpose of obtaining a forward
+declaration, the associated name is followed by "[f]" ("forward"):
+
+  #include <iosfwd>                    // std::ostream [f]
+
+Rationale: Seeing the "[f]" signals that the dependency is significantly
+lighter than others, which is sometimes useful design information, and
+also means that particular #include is cheaper at compile time.
+
+Note: Previously, I used "[n]" ("name-only") where I now use "[f]", and
+there are still #include lines that do that.  "[f]" is preferred, but a
+single file should not mix the two (as that would falsely imply they
+mean different things).
+
+Sometimes a header must be included, but the symbol we need never
+textually appears in the #including file, for example because it is only
+used in a macro expansion, or inside a template that is provided by a
+different header file.  For that case, I annotate it with "[h]"
+("hidden") to signal that the symbol is (or was) needed despite the
+absence of a textual occurrence.  For example:
+
+  #include "smbase/gdvalue.h"          // gdv::toGDValue [h]
+
+I may also indicate where the hidden dependency comes from, for example:
+
+  #include "smbase/gdvalue.h"          // GDVN_OMAP_EXPRS [h] (for TEST_CASE_EXPRS)
+
+
+EOF
